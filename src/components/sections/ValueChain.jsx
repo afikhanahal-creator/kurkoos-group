@@ -23,6 +23,8 @@ export default function ValueChain() {
           <div className="value-chain__progress" aria-hidden="true">
             <span style={{ '--p': `${((open + 1) / valueChain.length) * 100}%` }} />
           </div>
+          {/* דסקטופ: מודל קבלן אינטראקטיבי תלת-מימדי. מובייל: הדמיית הוילה */}
+          <InteractiveContractor className="value-chain__model" />
           <VillaBlueprint className="value-chain__art" />
         </Reveal>
 

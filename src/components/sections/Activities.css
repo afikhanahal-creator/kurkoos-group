@@ -1,0 +1,225 @@
+.activities__head { max-width: 64ch; margin: 0 auto 3.5rem; text-align: center; }
+.activities__head .eyebrow { justify-content: center; }
+.activities__head .section-lead { margin-inline: auto; }
+
+.activities__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-5);
+}
+
+/* ============================================================
+   כרטיס 3D — מבוסס Uiverse (srinivasaiml), בצבעי המותג.
+   ============================================================ */
+.card-effect {
+  perspective: 1000px;
+  display: block;
+  height: 100%;
+}
+
+.card-inner {
+  --card-bg: var(--color-surface);
+  --card-accent: var(--color-accent-500);
+  --card-text: var(--color-primary-900);
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: var(--shadow-2);
+  border: 1px solid var(--color-border);
+  transform-style: preserve-3d;
+}
+
+.card-inner:hover {
+  transform: rotateY(10deg) rotateX(10deg) translateZ(10px);
+  box-shadow: var(--shadow-4);
+}
+[dir='rtl'] .card-inner:hover { transform: rotateY(-10deg) rotateX(10deg) translateZ(10px); }
+
+/* נוזל מטושטש ברקע — טורקיז המותג */
+.card__liquid {
+  position: absolute;
+  top: -80px;
+  left: 0;
+  width: 300px;
+  height: 200px;
+  background: var(--color-secondary);
+  border-radius: 50%;
+  transform: translateZ(-80px);
+  filter: blur(80px);
+  transition:
+    transform 0.7s cubic-bezier(0.36, 0, 0.66, -0.56),
+    opacity 0.3s ease-in-out;
+  opacity: 0;
+}
+.card-inner:hover .card__liquid {
+  transform: translateZ(-50px) translateY(30px) translateX(-20px) rotate(-20deg) scale(1.2);
+  opacity: 0.6;
+}
+
+/* ברק חולף */
+.card__shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.1) 30%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.1) 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+.card-inner:hover .card__shine {
+  opacity: 1;
+  animation: card-shine 2s infinite linear;
+}
+
+/* זוהר עליון — אדום המותג */
+.card__glow {
+  position: absolute;
+  inset: -15px;
+  background: radial-gradient(circle at 50% 0%,
+    rgba(169, 11, 12, 0.4) 0%,
+    rgba(169, 11, 12, 0) 60%);
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+}
+.card-inner:hover .card__glow { opacity: 1; }
+
+.card__content {
+  padding: 1.5em;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  position: relative;
+  z-index: 2;
+}
+
+/* אזור האייקון */
+.card__image {
+  width: 100%;
+  height: 120px;
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), background 0.4s, color 0.4s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+.card-inner:hover .card__image {
+  transform: translateY(-8px) scale(1.05);
+  background: var(--color-secondary);
+  color: #fff;
+}
+.card__image > svg { position: relative; z-index: 1; }
+
+.card__text { display: flex; flex-direction: column; gap: 0.4em; }
+.card__title {
+  color: var(--card-text);
+  font-family: var(--font-heading);
+  font-size: 1.25em;
+  margin: 0;
+  font-weight: 700;
+  transition: color 0.4s ease-in-out, transform 0.4s ease-in-out;
+}
+.card-inner:hover .card__title { color: var(--card-accent); }
+.card__description {
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+  line-height: 1.5;
+  margin: 0;
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+.card__price {
+  color: var(--card-text);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95em;
+  transition: color 0.4s ease-in-out;
+}
+.card-inner:hover .card__price { color: var(--card-accent); }
+
+.card__button {
+  width: 36px;
+  height: 36px;
+  background: var(--card-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: transform 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
+  transform: scale(0.85);
+}
+[dir='rtl'] .card__button svg { transform: scaleX(-1); }
+.card-inner:hover .card__button {
+  transform: scale(1);
+  box-shadow: 0 0 0 5px rgba(169, 11, 12, 0.25);
+}
+
+@keyframes card-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* ============================================================
+   שדרוג אפקט כרטיסי הדסקטופ — חיות מתמשכת (לא רק ב-hover):
+   ריחוף עדין מדורג + ברק שחולף אוטומטית על כל כרטיס.
+   ה-hover העשיר (הטיה/נוזל/זוהר) ממשיך לעבוד מעליהם.
+   ============================================================ */
+.activities__grid .card-effect {
+  animation: card-float 6.5s var(--ease-in-out) infinite;
+}
+.activities__grid > :nth-child(2) .card-effect { animation-delay: 0.8s; }
+.activities__grid > :nth-child(3) .card-effect { animation-delay: 1.6s; }
+.activities__grid > :nth-child(4) .card-effect { animation-delay: 2.4s; }
+
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ברק שחולף אוטומטית — מדורג בין הכרטיסים */
+.activities__grid .card__shine {
+  animation: card-shine-auto 7s var(--ease-in-out) infinite;
+}
+.activities__grid > :nth-child(2) .card__shine { animation-delay: 1.4s; }
+.activities__grid > :nth-child(3) .card__shine { animation-delay: 2.8s; }
+.activities__grid > :nth-child(4) .card__shine { animation-delay: 4.2s; }
+.card-inner:hover .card__shine { animation: card-shine 2s infinite linear; } /* hover גובר */
+
+@keyframes card-shine-auto {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  6%   { opacity: 0.5; }
+  18%  { transform: translateX(200%); opacity: 0; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+
+@media (max-width: 1024px) { .activities__grid { grid-template-columns: repeat(2, 1fr); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-inner, .card-inner:hover { transform: none; }
+  .card-inner:hover .card__shine { animation: none; }
+}
+
+@media (max-width: 540px) { .activities__grid { grid-template-columns: 1fr; } }

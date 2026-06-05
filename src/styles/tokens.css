@@ -1,0 +1,118 @@
+/* ============================================================
+   KURKOOS GROUP — DESIGN TOKENS  ·  FLAT DESIGN 2.0
+   ------------------------------------------------------------
+   מקור אמת יחיד לעיצוב. מבנה לפי מסמך האפיון Flat 2.0,
+   עם צבעי המותג של קורקוס ממופים לתוך התפקידים.
+   רכיבים צורכים אך ורק tokens — אין hex/צללים קשיחים בקוד.
+   ============================================================ */
+
+:root {
+  /* ============ 3.1 COLOR SYSTEM ============ */
+
+  /* --- Brand / Primary (טורקיז המותג) --- */
+  --color-primary-900: #07293a;   /* כהה ביותר — כותרות על בהיר, סקשנים כהים */
+  --color-primary-700: #105572;   /* צבע המותג הראשי — ניווט, כותרות מפתח */
+  --color-primary-500: #16688c;   /* כפתורים, קישורים, מצב פעיל */
+  --color-primary-300: #8fb6c8;   /* גווני hover, מילויים משניים */
+  --color-primary-100: #e7eef1;   /* רקעים רכים, שורות נבחרות */
+
+  /* --- Accent (CTA ראשי — אדום המותג) --- */
+  --color-accent-600: #8c0809;    /* hover ל-CTA */
+  --color-accent-500: #a90b0c;    /* CTA ראשי, הדגשת מחיר, תגיות "חם" */
+  --color-accent-100: #f7e5e5;    /* רקע רך ל-CTA, באדג'ים */
+
+  /* --- Neutrals / Surfaces --- */
+  --color-bg: #f7f8fa;            /* רקע האפליקציה (אוף-וייט) */
+  --color-surface: #ffffff;       /* כרטיסים, פאנלים */
+  --color-surface-alt: #f1f3f6;   /* סקשנים מתחלפים */
+  --color-border: #e2e6ec;        /* קווי הפרדה, גבולות דקיקים */
+  --color-border-strong: #cbd2db;
+  --color-text: #1a1f2b;          /* טקסט גוף */
+  --color-text-muted: #6b7280;    /* טקסט משני, כיתובים */
+
+  /* --- Semantic --- */
+  --color-success: #2e9e6b;
+  --color-warning: #e0a106;
+  --color-error: #d64545;
+  --color-info: #3a7bd5;
+
+  /* ---- Aliases לתאימות לאחור (שמות שהרכיבים כבר משתמשים בהם) ---- */
+  --color-primary: var(--color-primary-900);
+  --color-secondary: var(--color-primary-700);
+  --color-accent: var(--color-accent-500);
+  --color-bg-soft: var(--color-surface-alt);
+  --color-bg-dark: #07222e;
+  --color-text-soft: var(--color-text-muted);
+  --color-text-inverse: #ffffff;
+  --color-secondary-soft: var(--color-primary-100);
+  --color-accent-soft: var(--color-accent-100);
+
+  /* ============ 3.2 TYPOGRAPHY ============ */
+  /* פונטי מותג (בתשלום) עם fallback ל-Google Fonts עד שיותקנו */
+  --font-heading: 'Fb Metropolis', 'Rubik', system-ui, sans-serif;
+  --font-body: 'Almoni', 'Assistant', system-ui, sans-serif;
+  --font-display: 'PowerStation Solid', 'Fb Metropolis', 'Rubik', system-ui, sans-serif;
+
+  --fs-hero: clamp(2.5rem, 5.5vw, 3.75rem);   /* display 40–60 */
+  --fs-h1: clamp(2rem, 4vw, 2.6rem);          /* 32–42 */
+  --fs-h2: clamp(1.5rem, 3vw, 1.9rem);        /* 24–30 */
+  --fs-h3: clamp(1.2rem, 2vw, 1.35rem);       /* 19–22 */
+  --fs-body-lg: 1.125rem;   /* 18 */
+  --fs-body: 1rem;          /* 16 */
+  --fs-small: 0.875rem;     /* 14 */
+  --fs-eyebrow: 0.8rem;
+  --fs-price: clamp(1.4rem, 2.4vw, 1.75rem);
+
+  --lh-tight: 1.15;
+  --lh-base: 1.6;
+
+  /* ============ 3.3 SPACING (8px base) ============ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --space-10: 64px;
+  --space-12: 96px;
+  /* aliases ישנים */
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  --section-padding: clamp(4rem, 9vw, 6rem);
+  --container-max: 1280px;
+  --container-pad: clamp(1.25rem, 4vw, 3rem);
+
+  /* ============ 3.5 BORDER RADIUS ============ */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* ============ 3.4 ELEVATION (Flat 2.0 — רך, מותג-tinted) ============ */
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgba(10, 40, 55, 0.06);
+  --shadow-2: 0 2px 8px rgba(10, 40, 55, 0.08);
+  --shadow-3: 0 6px 16px rgba(10, 40, 55, 0.10);
+  --shadow-4: 0 12px 28px rgba(10, 40, 55, 0.14);
+  /* aliases ישנים */
+  --shadow-sm: var(--shadow-2);
+  --shadow-md: var(--shadow-3);
+  --shadow-lg: var(--shadow-4);
+
+  /* ============ MOTION (§6) ============ */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 160ms;
+  --dur-base: 200ms;
+  --dur-slow: 450ms;
+
+  /* ============ Z-INDEX ============ */
+  --z-base: 1;
+  --z-raised: 10;
+  --z-header: 50;
+  --z-overlay: 80;
+  --z-modal: 100;
+}

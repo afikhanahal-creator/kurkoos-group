@@ -1,0 +1,19 @@
+.infinite-grid {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.ig__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.ig__layer svg { width: 100%; height: 100%; display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* הרשת תישאר סטטית (האנימציה דרך JS — נשמרת מינימלית) */
+  .infinite-grid { opacity: 0.7; }
+}

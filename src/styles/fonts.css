@@ -1,0 +1,56 @@
+/* ============================================================
+   פונטי המותג של קורקוס גרופ  (woff2)
+   ------------------------------------------------------------
+   ✅ Almoni (גוף) — מותקן ופעיל (public/fonts/almoni-*.woff2)
+   ⏳ Fb Metropolis (כותרות) + PowerStation Solid (דקורטיבי) —
+      בתשלום, עדיין לא הותקנו → fallback ל-Rubik עד שתוסיף אותם
+      ל-public/fonts/ בשמות שלמטה. מדריך מלא: FONTS.md
+   ============================================================ */
+
+/* ---- Almoni (גוף הטקסט) — AlefAlefAlef ---- */
+@font-face {
+  font-family: 'Almoni';
+  src: url('/fonts/almoni-300.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Almoni';
+  src: url('/fonts/almoni-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Almoni';
+  src: url('/fonts/almoni-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---- Fb Metropolis (כותרות) — fontbit / נדב עזרא ---- */
+@font-face {
+  font-family: 'Fb Metropolis';
+  src: url('/fonts/fb-metropolis-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fb Metropolis';
+  src: url('/fonts/fb-metropolis-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---- PowerStation Solid (דקורטיבי) ---- */
+@font-face {
+  font-family: 'PowerStation Solid';
+  src: url('/fonts/powerstation-solid-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

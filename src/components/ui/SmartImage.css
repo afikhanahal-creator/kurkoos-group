@@ -1,0 +1,43 @@
+.smart-image {
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-out);
+}
+.smart-image.is-loaded { opacity: 1; }
+
+.smart-image-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  position: relative;
+  background:
+    radial-gradient(120% 120% at 30% 20%, #15617f 0%, #0c3a4e 55%, #07293a 100%);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+  padding: 1.2rem;
+  overflow: hidden;
+}
+/* סימן מים עדין של האות K */
+.smart-image-placeholder::before {
+  content: 'K';
+  position: absolute;
+  inset-block-start: -8%;
+  inset-inline-end: -2%;
+  font-size: 12rem;
+  font-weight: 900;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.05);
+}
+.smart-image-placeholder span { position: relative; z-index: 1; font-size: 1.05rem; }
+.smart-image-placeholder span::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 3px;
+  background: var(--color-accent);
+  margin: 0.6rem auto 0;
+}

@@ -1,0 +1,55 @@
+.contact-popup__inner { padding: clamp(1.8rem, 4vw, 2.8rem); }
+.contact-popup__title { font-size: var(--fs-h3); margin: 0.4rem 0 0.8rem; }
+.contact-popup__choose { color: var(--color-text-soft); margin-bottom: 1.2rem; }
+
+.contact-popup__topics { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.2rem; }
+.contact-popup__topic {
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.contact-popup__topic:hover { border-color: var(--color-secondary); }
+.contact-popup__topic.is-active { background: var(--color-secondary); color: #fff; border-color: var(--color-secondary); }
+
+.contact-popup__form { display: flex; flex-direction: column; gap: 0.8rem; }
+.contact-popup__form input,
+.contact-popup__form textarea {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  color: var(--color-text);
+  /* יישור RTL אחיד — שדה tel/email נדחף אחרת שמאלה */
+  direction: rtl;
+  text-align: right;
+}
+.contact-popup__form input::placeholder,
+.contact-popup__form textarea::placeholder { text-align: right; }
+.contact-popup__form input:focus,
+.contact-popup__form textarea:focus { outline: none; border-color: var(--color-secondary); background: #fff; }
+
+.contact-popup__success { text-align: center; padding: 1.5rem 0; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.contact-popup__success-icon {
+  display: grid; place-items: center;
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--color-secondary-soft); color: var(--color-secondary);
+}
+.contact-popup__success p { font-family: var(--font-heading); font-weight: 700; font-size: 1.2rem; }
+
+@media (max-width: 560px) {
+  .contact-popup__inner { padding: 1.6rem 1.25rem; }
+  .contact-popup__title { margin: 0.3rem 0 0.6rem; }
+  .contact-popup__choose { margin-bottom: 1rem; }
+  .contact-popup__topics { gap: 0.4rem; margin-bottom: 1rem; }
+  .contact-popup__topic { padding: 0.38rem 0.8rem; font-size: 0.8rem; }
+  .contact-popup__form { gap: 0.6rem; }
+  .contact-popup__form input,
+  .contact-popup__form textarea { font-size: 0.95rem; padding: 0.75rem 0.9rem; }
+}

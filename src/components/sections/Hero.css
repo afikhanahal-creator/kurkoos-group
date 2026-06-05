@@ -1,0 +1,217 @@
+.hero {
+  position: relative;
+  min-height: 94svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: var(--color-bg);
+  isolation: isolate;
+}
+
+/* רקע לבן נקי עם רמז עדין של גוון מותג */
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60% 55% at 82% 18%, rgba(16, 85, 114, 0.07), transparent 70%),
+    radial-gradient(50% 50% at 10% 90%, rgba(169, 11, 12, 0.05), transparent 70%),
+    var(--color-bg);
+}
+.hero__bg-overlay { display: none; }
+.hero__shape { position: absolute; display: block; }
+.hero__shape--2 {
+  width: 170px; height: 170px;
+  inset-block-end: 14%; inset-inline-start: 5%;
+  background: linear-gradient(135deg, rgba(16, 85, 114, 0.08), transparent);
+  border-radius: 24px;
+}
+
+/* ---- Layout ---- */
+.hero__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: 3rem;
+  padding-top: 92px;
+  width: 100%;
+  color: var(--color-text);
+}
+
+/* ---- Stat (rolling number) ---- */
+.hero__stat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1.4rem;
+  margin-bottom: 1.6rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.hero__stat-number {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(2.4rem, 4vw, 3.4rem);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  color: var(--color-secondary);
+}
+.hero__stat-suffix { color: var(--color-accent); margin-inline-start: 2px; }
+.hero__stat-labels { display: flex; flex-direction: column; }
+.hero__stat-label { font-family: var(--font-heading); font-weight: 700; font-size: 1.05rem; color: var(--color-text); }
+.hero__stat-sub { color: var(--color-text-soft); font-size: 0.9rem; }
+
+/* ---- Animated headline ---- */
+.hero__title {
+  font-size: var(--fs-hero);
+  color: var(--color-primary);
+  font-weight: 900;
+  margin-bottom: 1.4rem;
+  letter-spacing: -0.015em;
+}
+.hero__title-inner { display: block; }
+.hero__line-mask { display: block; overflow: hidden; padding-block: 0.02em; }
+.hero__line { display: block; }
+.hero__line-mask:last-child .hero__line { color: var(--color-secondary); }
+
+.hero__subtitle {
+  font-size: 1.2rem;
+  line-height: 1.7;
+  color: var(--color-text-soft);
+  max-width: 40rem;
+  margin-bottom: 2rem;
+}
+
+.hero__actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2.4rem; }
+.hero__ghost { color: var(--color-text); border-color: var(--color-border-strong); }
+.hero__ghost:hover { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.hero__play-ic { color: var(--color-accent); }
+.hero__ghost:hover .hero__play-ic { color: #fff; }
+.hero__cta-arrow { transition: transform var(--dur-base); }
+[dir='rtl'] .hero__cta-arrow { transform: scaleX(-1); }
+
+/* ---- Controls ---- */
+.hero__controls { display: flex; align-items: center; gap: 1.4rem; }
+.hero__play, .hero__arrow {
+  display: grid;
+  place-items: center;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  color: var(--color-primary);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.hero__play:hover, .hero__arrow:hover { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.hero__arrows { display: flex; gap: 0.6rem; }
+.hero__dots { display: flex; gap: 0.5rem; margin-inline-start: auto; }
+.hero__dot {
+  width: 28px; height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+  transition: background var(--dur-base);
+}
+.hero__dot--active { background: var(--color-accent); }
+
+/* ---- אפקט WebGL + לוגו במרכז ---- */
+.hero__media { display: grid; place-items: center; position: relative; }
+.hero__effect {
+  position: relative;
+  width: clamp(280px, 34vw, 460px);
+  aspect-ratio: 1 / 1;
+  background: transparent;   /* שקוף — רקע האתר נשאר */
+}
+/* הלוגו "בתוך" הקובייה — ממורכז מעל הקנבס */
+.hero__effect-logo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 2;
+}
+.hero__effect-logo img {
+  width: 52%;
+  max-width: 240px;
+  filter: drop-shadow(0 4px 12px rgba(16, 85, 114, 0.18));
+  animation: hero-logo-float 6s ease-in-out infinite;
+}
+@keyframes hero-logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__effect-logo img { animation: none; }
+}
+
+/* ---- Scroll indicator ---- */
+.hero__scroll {
+  position: absolute;
+  inset-block-end: 1.8rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--color-text-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-family: var(--font-heading);
+  z-index: 1;
+}
+.hero__scroll-line { display: block; width: 1.5px; height: 40px; background: var(--color-border-strong); }
+
+/* ---- Responsive ---- */
+@media (max-width: 980px) {
+  /* פריסת מובייל: מספרים מתגלגלים → קובייה → כותרת, הכל ממורכז */
+  .hero__grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.6rem;
+    padding-top: 118px;
+    padding-bottom: 2.6rem;
+  }
+  /* display:contents מקדם את ילדי התוכן לפריטים ישירים של העמודה כדי לשלב את הקובייה ביניהם */
+  .hero__content { display: contents; }
+  .hero__stat     { order: 1; }
+  .hero__media    { order: 2; }
+  .hero__title    { order: 3; }
+  .hero__subtitle { order: 4; }
+  .hero__actions  { order: 5; }
+
+  /* מספרים מתגלגלים — ממורכזים, ללא קו הפרדה רוחבי */
+  .hero__stat {
+    justify-content: center;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .hero__title { margin-bottom: 0; }
+  .hero__subtitle { margin-inline: auto; margin-bottom: 0; }
+  .hero__actions { justify-content: center; margin-bottom: 0; }
+
+  .hero__scroll { display: none; }
+}
+
+@media (max-width: 600px) {
+  .hero { min-height: auto; }
+  .hero__grid { gap: 1.35rem; padding-top: 108px; }
+  .hero__subtitle { font-size: 1.02rem; }
+
+  /* קובייה קומפקטית שמתאימה לרוחב המסך */
+  .hero__effect { width: min(72vw, 280px); }
+
+  /* כפתורי הפעולה — קטנים ומתאימים, לא נמתחים לרוחב מלא */
+  .hero__actions { flex-wrap: wrap; gap: 0.7rem; }
+  .hero__actions .btn--lg {
+    min-height: 46px;
+    padding: 0.62em 1.25em;
+    font-size: 0.95rem;
+  }
+  .hero__actions .btn--lg .hero__cta-arrow { width: 18px; height: 18px; }
+}

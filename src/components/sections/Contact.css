@@ -1,0 +1,191 @@
+.contact {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+/* רקע דקורטיבי של "+" */
+.contact__plus-grid {
+  position: absolute;
+  inset-block: 10% 5%;
+  inset-inline-end: 0;
+  width: 220px;
+  background-image: radial-gradient(var(--color-border-strong) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  -webkit-mask-image: linear-gradient(to var(--mask-dir, left), #000, transparent);
+  mask-image: linear-gradient(to left, #000, transparent);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.contact__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  /* התמונה והטופס מצומצמים (~40%) ובאותו סדר גודל — ממורכזים יחד */
+  grid-template-columns: minmax(0, clamp(340px, 34vw, 480px)) minmax(0, clamp(320px, 32vw, 460px));
+  justify-content: center;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+}
+
+/* ---- Angled visual ---- */
+.contact__visual {
+  position: relative;
+  min-height: 100%;
+}
+.contact__visual-shape {
+  position: absolute;
+  inset: 0;
+  inset-inline-start: -40px;
+  background: linear-gradient(160deg, #2f8f5a, var(--color-secondary));
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+  border-radius: var(--radius-lg);
+}
+.contact__visual-img {
+  position: relative;
+  height: 100%;
+  min-height: clamp(330px, 32vw, 410px);
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transform: translateX(20px);
+}
+.contact__visual-img img,
+.contact__visual-img .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- Dark form panel ---- */
+.contact__panel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, var(--color-secondary), #07293a 90%);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: clamp(1.5rem, 2.2vw, 2.2rem);
+  box-shadow: var(--shadow-lg);
+}
+.contact__panel > *:not(.infinite-grid) { position: relative; z-index: 1; }
+.contact__panel .contact__eyebrow {
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.55rem;
+  opacity: 1;
+}
+.contact__panel .contact__eyebrow::before {
+  background: var(--color-accent);
+  width: 42px;
+  height: 3px;
+  border-radius: 2px;
+}
+.contact__title { font-size: clamp(1.5rem, 2vw, 2.05rem); color: #fff; margin: 0.3rem 0 0.6rem; line-height: 1.15; }
+.contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 1.1rem; max-width: 42ch; font-size: 0.95rem; }
+
+.contact__topics { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1rem; }
+.contact__topic {
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.contact__topic:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+.contact__topic.is-active { background: #fff; color: var(--color-secondary); border-color: #fff; }
+
+.contact__form { display: flex; flex-direction: column; gap: 0.65rem; }
+.contact__required { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); }
+.contact__form .field input,
+.contact__form .field textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0.72rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: #fff;
+  color: var(--color-text);
+  /* יישור RTL אחיד — שדה tel/email נדחף אחרת שמאלה */
+  direction: rtl;
+  text-align: right;
+}
+.contact__form .field input::placeholder,
+.contact__form .field textarea::placeholder { color: #8a8a8a; }
+.contact__form .field input:focus,
+.contact__form .field textarea:focus { outline: 3px solid var(--color-accent); }
+.contact__form textarea { resize: vertical; }
+
+.contact__submit {
+  align-self: center;
+  margin-top: 0.5rem;
+  min-width: 170px;
+  background: #fff;
+  color: var(--color-secondary);
+  border-radius: var(--radius-pill);
+  padding: 0.8em 2em;
+}
+.contact__submit:hover { background: var(--color-accent); color: #fff; }
+
+.contact__phones {
+  margin-top: 2rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+}
+
+.contact__success { text-align: center; padding: 2.5rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.contact__success-icon {
+  display: grid; place-items: center;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+.contact__success p { font-size: 1.3rem; font-family: var(--font-heading); font-weight: 700; color: #fff; }
+
+@media (max-width: 900px) {
+  .contact__inner { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }
+  .contact__visual { display: none; }
+  .contact__plus-grid { display: none; }
+  /* טופס ממורכז ומוגבל ברוחב — לא נמתח לרוחב מלא בטאבלט */
+  .contact__panel { width: 100%; max-width: 520px; }
+}
+
+@media (max-width: 560px) {
+  .contact__panel { padding: 1.4rem 1.15rem; border-radius: var(--radius-md); }
+  .contact__panel .contact__eyebrow { font-size: 0.95rem; margin-bottom: 0.6rem; }
+  .contact__title { font-size: 1.5rem; margin: 0.2rem 0 0.5rem; }
+  .contact__choose { font-size: 0.88rem; margin-bottom: 1rem; }
+
+  .contact__topics { gap: 0.4rem; margin-bottom: 1rem; }
+  .contact__topic { padding: 0.34rem 0.75rem; font-size: 0.78rem; }
+
+  /* שדות קומפקטיים */
+  .contact__form { gap: 0.6rem; }
+  .contact__required { font-size: 0.78rem; }
+  .contact__form .field input,
+  .contact__form .field textarea {
+    font-size: 0.92rem;
+    padding: 0.7rem 0.9rem;
+  }
+  .contact__form textarea { min-height: 80px; }
+
+  .contact__submit { width: 100%; min-width: 0; margin-top: 0.4rem; padding: 0.8em 1.5em; }
+
+  .contact__phones {
+    margin-top: 1.3rem;
+    padding-top: 1rem;
+    font-size: 0.85rem;
+  }
+}

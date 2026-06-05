@@ -1,0 +1,236 @@
+.projects-gallery__head { margin-bottom: 2.5rem; max-width: 60ch; }
+.projects-gallery__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+[dir='rtl'] .projects-gallery__hint svg { transform: scaleX(-1); }
+
+/* ---- Swipeable scroll-snap carousel ---- */
+.projects-gallery__viewport {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;   /* החלקה חלקה ב-iOS */
+  scrollbar-width: none;
+  padding-block: 0.5rem;
+}
+.projects-gallery__viewport::-webkit-scrollbar { display: none; }
+.projects-gallery__track {
+  display: flex;
+  gap: 1.25rem;
+  width: max-content;
+  padding-inline: var(--container-pad);
+}
+
+/* ---- Project card (image + rising "shutter" panel) ---- */
+.pg-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(228px, 66vw, 300px);
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  outline: none;
+  scroll-snap-align: start;
+}
+.pg-card:focus-visible { outline: 3px solid var(--color-primary-300); outline-offset: 4px; }
+
+/* ---- BorderGlow wrapper: רק טבעת הזוהר הטורקיזית, בלי ה־chrome הכהה ---- */
+.pg-card__glow.border-glow-card {
+  width: 100%;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.pg-card:hover .pg-card__glow.border-glow-card,
+.pg-card:focus-visible .pg-card__glow.border-glow-card { transform: translateY(-4px); }
+.pg-card__glow .border-glow-inner { overflow: visible; }
+/* ההרמה עוברת לעטיפת הזוהר — שהטבעת והכרטיס יזוזו יחד */
+.pg-card:hover .pg-card__glow .pg-card__media,
+.pg-card:focus-visible .pg-card__glow .pg-card__media { transform: none; }
+
+.pg-card__media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface-alt);
+  box-shadow: var(--shadow-2);
+  transition: box-shadow var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-out);
+}
+
+/* ---- SpotlightCard: ממלא את אזור התמונה בלבד, בלי ה-chrome הכהה ---- */
+.pg-card__spot {
+  position: absolute;
+  inset: 0;
+  z-index: 1;            /* מתחת לבאנר הלבן (z-index: 2) */
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: inherit;
+}
+.pg-card:hover .pg-card__media,
+.pg-card:focus-visible .pg-card__media {
+  box-shadow: var(--shadow-4);
+  transform: translateY(-4px);
+}
+
+.pg-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.pg-card:hover .pg-card__img,
+.pg-card:focus-visible .pg-card__img { transform: scale(1.06); }
+
+/* תגית סטטוס */
+.pg-card__badge {
+  position: absolute;
+  inset-block-start: 1rem;
+  inset-inline-start: 1rem;
+  z-index: 3;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  padding: 0.3em 0.85em;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-primary-900);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow-1);
+  pointer-events: none;
+}
+.pg-card__badge--construction { background: var(--color-secondary); color: #fff; }
+.pg-card__badge--marketing { background: var(--color-accent-500); color: #fff; }
+.pg-card__badge--completed { background: var(--color-primary-900); color: #fff; }
+
+/* ---- התריס: פאנל לבן שעולה בריחוף ---- */
+.pg-card__panel {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 2;
+  padding: 0.95rem 1.25rem 1.3rem;
+  background: var(--color-surface);
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  box-shadow: 0 -8px 24px rgba(7, 41, 58, 0.16);
+  /* כברירת מחדל מציץ רק פס הכותרת */
+  transform: translateY(calc(100% - 3.5rem));
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.pg-card:hover .pg-card__panel,
+.pg-card:focus-visible .pg-card__panel { transform: translateY(0); }
+
+.pg-card__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-primary-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pg-card__reveal {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s var(--ease-out) 0.08s,
+              transform 0.4s var(--ease-out) 0.08s;
+}
+.pg-card:hover .pg-card__reveal,
+.pg-card:focus-visible .pg-card__reveal { opacity: 1; transform: translateY(0); }
+
+.pg-card__desc {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pg-card__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+.pg-card__meta svg { color: var(--color-primary-500); }
+
+.projects-gallery__footer { text-align: center; margin-top: 2.4rem; }
+[dir='rtl'] .projects-gallery__footer .btn svg { /* arrow handled by name swap */ }
+
+/* ---- Lightbox ---- */
+.pg-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: rgba(7, 18, 26, 0.85);
+  backdrop-filter: blur(6px);
+}
+.pg-lightbox__panel {
+  position: relative;
+  width: 100%;
+  max-width: 60rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-4);
+}
+.pg-lightbox__img { width: 100%; max-height: 70vh; object-fit: cover; display: block; }
+.pg-lightbox__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1.3rem 1.6rem;
+}
+.pg-lightbox__bar strong { display: block; font-family: var(--font-heading); font-size: 1.4rem; color: var(--color-primary-900); }
+.pg-lightbox__bar span { color: var(--color-text-muted); font-size: 0.95rem; }
+.pg-lightbox__close {
+  position: absolute;
+  inset-block-start: 1.2rem;
+  inset-inline-end: 1.2rem;
+  display: grid;
+  place-items: center;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transition: background var(--dur-fast);
+}
+.pg-lightbox__close:hover { background: var(--color-accent-500); }
+[dir='rtl'] .pg-lightbox__bar .btn svg { transform: scaleX(-1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pg-card__img,
+  .pg-card__panel,
+  .pg-card__reveal { transition: none; }
+  /* ללא תנועה — הכותרת מוצגת תמיד, התיאור נחשף בריחוף בלבד */
+}

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="קורקוס גרופ - יזמות, בנייה, פיקוח ותיווך נדלן ברמה הגבוהה ביותר. מקרקע ועד מסירת מפתח." />
+    <meta name="theme-color" content="#105572" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="קורקוס גרופ | Kurkoos Group" />
+    <meta property="og:description" content="יזמות, בנייה, פיקוח ותיווך נדלן ברמה הגבוהה ביותר." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.kurkoos-group.co.il/" />
+    <link rel="canonical" href="https://www.kurkoos-group.co.il/" />
+
+    <!-- Organization structured data (SEO) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "קורקוס גרופ",
+        "alternateName": "Kurkoos Group",
+        "url": "https://www.kurkoos-group.co.il/",
+        "logo": "https://www.kurkoos-group.co.il/kurkoos-logo.svg",
+        "description": "יזמות, בנייה, פיקוח ותיווך נדל\"ן ברמה הגבוהה ביותר — מקרקע ועד מסירת מפתח.",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "רחוב הנגר 24, מגדלי Amy קומה 2",
+          "addressLocality": "הוד השרון",
+          "addressCountry": "IL"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+972-3-000-0000",
+          "contactType": "sales",
+          "email": "info@kurkoos-group.co.il"
+        }
+      }
+    </script>
+
+    <!-- ============================================================
+         FONTS
+         פונטי המותג (Almoni / Fb Metropolis) נטענים מ-/fonts/ דרך
+         src/styles/fonts.css. עד שהקבצים יותקנו — fallback מ-Google.
+         מדריך מלא: ראה FONTS.md בשורש הפרויקט.
+         ============================================================ -->
+
+    <!-- Preload לפונטי המותג הקריטיים (גוף + כותרות) להאצת טעינה.
+         עד שהקבצים קיימים ב-public/fonts/ תופיע אזהרה בקונסול — זה תקין
+         וייעלם אוטומטית ברגע שהקבצים שם. -->
+    <link rel="preload" href="/fonts/almoni-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/fb-metropolis-700.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Fallback זמני: Rubik (כותרות) + Assistant (גוף) — תמיכה מלאה עברית + לטינית -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700&family=Rubik:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>קורקוס גרופ | Kurkoos Group</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

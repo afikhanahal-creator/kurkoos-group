@@ -1,0 +1,61 @@
+/* ---- Breadcrumbs (Flat 2.0) ----
+   צבעים מנוהלים דרך משתנים, כך שהקשר כהה (PageHeader / Division hero)
+   יכול לעקוף אותם בלי לשכפל סלקטורים. ברירת המחדל מתאימה לרקע בהיר. */
+.breadcrumbs {
+  --bc-muted: var(--color-text-soft);
+  --bc-current: var(--color-text);
+  --bc-back: var(--color-secondary);
+  --bc-back-bg: var(--color-secondary-soft);
+  --bc-back-fg-hover: #fff;
+  --bc-sep: var(--color-border-strong);
+  padding-block: 1.2rem 0;
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.breadcrumbs__item { display: inline-flex; align-items: center; gap: 0.6rem; }
+
+/* מפריד עדין (נקודה) בין פריטים */
+.breadcrumbs__item:not(:last-child)::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bc-sep);
+}
+
+/* קישור רגיל (פריט ביניים) */
+.breadcrumbs__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--bc-muted);
+  transition: color var(--dur-fast);
+}
+.breadcrumbs__link:hover { color: var(--color-accent); }
+
+/* קישור הבית — affordance ברור של "חזרה": גלולה עם חץ */
+.breadcrumbs__link--back {
+  gap: 0.4rem;
+  padding: 0.34rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: var(--bc-back-bg);
+  color: var(--bc-back);
+  font-weight: 700;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.breadcrumbs__link--back:hover { background: var(--bc-back); color: var(--bc-back-fg-hover); }
+.breadcrumbs__back-ic { transition: transform var(--dur-fast) var(--ease-out); }
+/* תזוזה קלה לכיוון "אחורה" בריחוף (ימינה ב-RTL, שמאלה ב-LTR) */
+.breadcrumbs__link--back:hover .breadcrumbs__back-ic { transform: translateX(-3px); }
+[dir='rtl'] .breadcrumbs__link--back:hover .breadcrumbs__back-ic { transform: translateX(3px); }
+
+/* העמוד הנוכחי */
+.breadcrumbs__current { color: var(--bc-current); font-weight: 700; }

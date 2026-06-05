@@ -1,0 +1,170 @@
+/* ============================================================
+   TeamGrid — כרטיסי פליפ קומפקטיים. לחיצה הופכת את הכרטיס.
+   צד קדמי: תמונה + שם + תפקיד. צד אחורי: ביוגרפיה (רקע כהה).
+   ============================================================ */
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);   /* כרטיסים קטנים → 4 בשורה */
+  gap: 1.6rem;
+  max-width: 960px;
+  margin-inline: auto;
+}
+
+/* עטיפת הפרספקטיבה — לחיצה הופכת את הכרטיס (נגיש במקלדת) */
+.flip-card {
+  background-color: transparent;
+  perspective: 1000px;
+  width: 100%;
+  aspect-ratio: 3 / 4.1;   /* פרופורציה דקה ומאוזנת */
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+.flip-card:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 4px;
+}
+
+/* לחיצה — הכרטיס גדל ביחס לשאר ומתרומם מעליהם (בנוסף לסיבוב) */
+.flip-card.is-active {
+  transform: scale(1.12);
+  z-index: 5;
+}
+.flip-card.is-active .flip-card-front,
+.flip-card.is-active .flip-card-back { box-shadow: var(--shadow-lg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .flip-card { transition: none; }
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  transition: transform 0.6s cubic-bezier(0.61, 0.98, 0.48, 1.01);
+  transform-style: preserve-3d;
+}
+.flip-card-inner.is-flipped { transform: rotateY(180deg); }
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- צד קדמי ---------- */
+.flip-card-front {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+.flip-card-media { flex: 1; overflow: hidden; }
+.flip-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+  filter: grayscale(1);
+  transition: filter 0.5s var(--ease-out), transform 0.6s var(--ease-out);
+}
+.flip-card:hover .flip-card-img { filter: grayscale(0); transform: scale(1.04); }
+
+.flip-card-caption { padding: 0.75rem 0.85rem 0.9rem; background: #fff; }
+.flip-card-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-primary-900);
+  margin: 0;
+  line-height: 1.2;
+}
+.flip-card-role {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--color-accent-500);
+  margin-top: 0.2rem;
+}
+/* ---------- צד אחורי ---------- */
+.flip-card-back {
+  background: var(--color-primary-900, #000);
+  color: #fff;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.1rem 1.05rem;
+  text-align: center;
+}
+/* שכבת גוון רך מעל המשבצות */
+.flip-card-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, var(--color-secondary) 0%, transparent 55%);
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: 1;
+}
+/* רקע משבצות נעות — גריד שזז באלכסון ברצף */
+.flip-card-back::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+  background-size: 26px 26px;
+  animation: flip-grid-move 5s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes flip-grid-move {
+  to { transform: translate(26px, 26px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flip-card-back::after { animation: none; }
+}
+/* הטקסט תמיד מעל שכבות הרקע */
+.flip-card-back > * { position: relative; z-index: 2; }
+
+.flip-card-name--back { color: #fff; font-size: 1rem; }
+.flip-card-role--back { color: #ff6b5e; margin-bottom: 0.6rem; }   /* אדום בהיר — קונטרסט גבוה על רקע כהה */
+.flip-card-bio {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0;
+}
+.flip-card-link {
+  margin-top: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ff6b5e;
+  align-self: center;
+}
+.flip-card-link:hover { text-decoration: underline; }
+
+/* ---------- רספונסיביות ---------- */
+@media (max-width: 900px) {
+  .team-grid { grid-template-columns: repeat(2, 1fr); max-width: 520px; }
+}
+@media (max-width: 480px) {
+  .team-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; max-width: 380px; }
+  .flip-card-name { font-size: 0.95rem; }
+}

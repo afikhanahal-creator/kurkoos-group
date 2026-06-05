@@ -1,0 +1,103 @@
+.project-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.project-card__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+.project-card:hover .project-card__media { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+
+.project-card__img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
+.project-card:hover .project-card__img { transform: scale(1.07); }
+
+.project-card__status {
+  position: absolute;
+  inset-block-start: 0.9rem;
+  inset-inline-start: 0.9rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  padding: 0.3em 0.85em;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-primary);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+.project-card__status--construction { background: var(--color-secondary); color: #fff; }
+.project-card__status--marketing { background: var(--color-accent); color: #fff; }
+.project-card__status--completed { background: var(--color-primary); color: #fff; }
+
+.project-card__cat {
+  position: absolute;
+  inset-block-start: 0.9rem;
+  inset-inline-end: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 0.3em 0.7em;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+.project-card__cat::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.project-card__cat--residential { color: var(--color-secondary); }
+.project-card__cat--commercial { color: var(--color-accent); }
+.project-card__cat--renewal { color: #5a8a1a; }
+
+/* שכבת hover עם CTA */
+.project-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1.4rem;
+  background: linear-gradient(to top, rgba(10, 10, 10, 0.7), transparent 55%);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+  z-index: 1;
+}
+.project-card:hover .project-card__overlay { opacity: 1; }
+.project-card__view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  transform: translateY(10px);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.project-card:hover .project-card__view { transform: translateY(0); }
+[dir='rtl'] .project-card__arrow { transform: scaleX(-1); }
+
+/* כיתוב ממורכז מתחת לתמונה */
+.project-card__caption { text-align: center; padding-top: 1rem; }
+.project-card__title {
+  font-size: 1.3rem;
+  color: var(--color-secondary);
+  transition: color var(--dur-fast);
+}
+.project-card:hover .project-card__title { color: var(--color-accent); }
+.project-card__city {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+}
+.project-card__city svg { color: var(--color-secondary); }

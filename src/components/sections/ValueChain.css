@@ -1,0 +1,159 @@
+.value-chain__inner {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 4rem;
+  align-items: start;
+}
+.value-chain__intro { position: sticky; top: 120px; }
+
+.value-chain__progress {
+  position: relative;
+  margin-top: 2rem;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.value-chain__progress span {
+  display: block;
+  height: 100%;
+  width: var(--p, 16%);
+  background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
+  border-radius: var(--radius-pill);
+  transition: width var(--dur-slow) var(--ease-out);
+}
+/* הברקה אדומה שחולפת לאורך הקו מימין לשמאל ברצף */
+.value-chain__progress::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 34%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg,
+    transparent,
+    var(--color-accent) 45%,
+    #ff4d4f 50%,
+    var(--color-accent) 55%,
+    transparent);
+  filter: blur(0.5px);
+  pointer-events: none;
+  animation: vc-glint 3s var(--ease-in-out) infinite;
+}
+@keyframes vc-glint {
+  0%   { transform: translateX(300%); }   /* מחוץ לקצה הימני */
+  55%  { transform: translateX(-110%); }  /* יוצא מהקצה השמאלי */
+  100% { transform: translateX(-110%); }  /* השהיה ואז חזרה לימין */
+}
+@media (prefers-reduced-motion: reduce) {
+  .value-chain__progress::after { animation: none; opacity: 0; }
+}
+
+.value-chain__list { display: flex; flex-direction: column; }
+
+.vc-item {
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--dur-base);
+}
+.vc-item--open { background: var(--color-bg-soft); border-radius: var(--radius-md); }
+
+.vc-item__head {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  width: 100%;
+  padding: 1.5rem 1.2rem;
+  text-align: start;
+}
+.vc-item__num {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+.vc-item__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+.vc-item__tag {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  opacity: 0.85;
+}
+.vc-item__title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--color-text);
+  transition: color var(--dur-fast);
+}
+.vc-item__head:hover .vc-item__title { color: var(--color-secondary); }
+.vc-item__chevron {
+  color: var(--color-text-soft);
+  transition: transform var(--dur-base) var(--ease-out), color var(--dur-base);
+  flex-shrink: 0;
+}
+.vc-item--open .vc-item__chevron { transform: rotate(180deg); color: var(--color-accent); }
+
+.vc-item__panel { overflow: hidden; }
+.vc-item__panel p {
+  padding: 0 1.2rem 1.6rem calc(1.2rem + 1.1rem + 1.2rem);
+  color: var(--color-text-soft);
+  font-size: 1.05rem;
+}
+
+/* ---- הדמיית וילה / שרטוט תלת-מימד ---- */
+.value-chain__art {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 2.4rem;
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.1));
+}
+.villa-blueprint .vb-bg { fill: color-mix(in srgb, var(--color-secondary) 4%, transparent); stroke: var(--color-border); stroke-width: 1; }
+.villa-blueprint .vb-grid-dot { fill: var(--color-secondary); opacity: 0.12; }
+.villa-blueprint .vb-line {
+  fill: none;
+  stroke: var(--color-secondary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.villa-blueprint .vb-face { fill: color-mix(in srgb, var(--color-secondary) 6%, transparent); }
+.villa-blueprint .vb-glass {
+  fill: color-mix(in srgb, var(--color-secondary) 13%, transparent);
+  stroke: var(--color-secondary);
+  stroke-width: 1.4;
+}
+.villa-blueprint .vb-glass-mullion { stroke: var(--color-secondary); stroke-width: 1; opacity: 0.55; }
+.villa-blueprint .vb-accent {
+  fill: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+.villa-blueprint .vb-accent-line { stroke: var(--color-accent); stroke-width: 2.4; stroke-linecap: round; }
+.villa-blueprint .vb-thin { stroke: var(--color-secondary); stroke-width: 1; opacity: 0.5; }
+.villa-blueprint .vb-dash { stroke: var(--color-secondary); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.4; }
+.villa-blueprint .vb-dot { fill: var(--color-accent); }
+.villa-blueprint .vb-label {
+  fill: var(--color-text-soft);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+@media (max-width: 880px) {
+  .value-chain__inner { grid-template-columns: 1fr; gap: 2.5rem; }
+  .value-chain__intro { position: static; }
+  .vc-item__panel p { padding-inline-start: 1.2rem; }
+  .value-chain__art { max-width: 460px; margin-inline: auto; margin-top: 1.5rem; }
+}

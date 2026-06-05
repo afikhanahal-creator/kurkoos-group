@@ -1,0 +1,27 @@
+.floating-actions {
+  position: fixed;
+  inset-block-end: 1.5rem;
+  inset-inline-start: 1.5rem;
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.fab {
+  display: grid;
+  place-items: center;
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast);
+}
+.fab:hover { transform: translateY(-4px) scale(1.05); }
+.fab--wa { background: #25d366; }
+.fab--phone { background: var(--color-secondary); }
+.fab--top { background: var(--color-primary); }
+
+/* הסרת הכפתורים הצפים (וואטסאפ / טלפון / חזרה למעלה) במובייל — לפי בקשה */
+@media (max-width: 768px) {
+  .floating-actions { display: none; }
+}

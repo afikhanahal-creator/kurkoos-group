@@ -5,6 +5,7 @@ import valueChain from '../../data/valueChain.js'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
 import VillaBlueprint from '../ui/VillaBlueprint.jsx'
+import InteractiveContractor from '../ui/InteractiveContractor.jsx'
 import './ValueChain.css'
 
 export default function ValueChain() {

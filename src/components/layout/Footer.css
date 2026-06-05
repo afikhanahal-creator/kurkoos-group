@@ -141,25 +141,29 @@
   }
   .footer__social { margin-top: 0; justify-content: center; }
 
-  /* טיפוגרפיה אחידה לעמודות במובייל */
+  /* טיפוגרפיה אחידה לעמודות במובייל — מעט גדולה יותר */
   .footer__heading {
-    font-size: 0.95rem;
+    font-size: 1.02rem;
     margin-bottom: 0.7rem;
     letter-spacing: 0.02em;
   }
   .footer__col { gap: 0.55rem; }
   .footer__col a,
   .footer__contact {
-    font-size: 0.85rem;
+    font-size: 0.92rem;
     line-height: 1.5;
     align-items: flex-start;          /* האייקון מתיישר לשורה הראשונה בטקסט שנשבר */
     gap: 0.4rem;
     overflow-wrap: anywhere;          /* אימייל/כתובת נשברים בצורה נקייה */
   }
   .footer__contact svg { margin-top: 0.2rem; }
-  .footer__contact--muted { font-size: 0.8rem; }
+  .footer__contact--muted { font-size: 0.86rem; }
 
-  /* השורה התחתונה — ממורכזת */
+  /* טקסט התגית מעט גדול יותר */
+  .footer__tagline { font-size: 0.95rem; }
+
+  /* השורה התחתונה — ממורכזת, מעט גדולה יותר */
+  .footer__bottom { font-size: 0.9rem; }
   .footer__bottom-inner {
     flex-direction: column;
     align-items: center;

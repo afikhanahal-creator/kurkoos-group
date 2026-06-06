@@ -1,0 +1,53 @@
+/* ============================================================
+   KineticText — אפקט קינטי per-letter (מבוסס MagicUI kinetic-text)
+   הותאם ל-RTL ולעיצוב הקיים: inline-block לכל אות (שומר סדר RTL
+   ושבירת מילים תקינה), רווחים כ-text-node לאפשר גלישה בין מילים.
+   ============================================================ */
+.kinetic {
+  --hover-padding: calc(1em / 12);
+  --text-stroke-width: calc(1em * 125 / 6000);
+  font-weight: 600;
+}
+
+.kinetic__char {
+  display: inline-block;
+  font-weight: 600;
+  -webkit-text-stroke-color: transparent;
+  -webkit-text-stroke-width: var(--text-stroke-width);
+  will-change: font-weight, -webkit-text-stroke-width, padding;
+  transition: font-weight 0.4s, -webkit-text-stroke-color 0.4s, padding 0.4s;
+}
+
+/* האות שמתחת לסמן — הכי כבדה + קו מתאר בצבע הטקסט */
+.kinetic__char:hover {
+  padding-inline: var(--hover-padding);
+  font-weight: 900;
+  -webkit-text-stroke-color: currentcolor;
+  -webkit-text-stroke-width: calc(var(--text-stroke-width) * 2);
+}
+
+/* שכן ראשון משני הצדדים — כבד מאוד (800) + ריווח */
+.kinetic__char:has(+ .kinetic__char:hover),
+.kinetic__char:hover + .kinetic__char {
+  padding-inline: var(--hover-padding);
+  font-weight: 800;
+}
+
+/* שכן שני משני הצדדים — כבד (700) */
+.kinetic__char:has(+ .kinetic__char + .kinetic__char:hover),
+.kinetic__char:hover + .kinetic__char + .kinetic__char {
+  font-weight: 700;
+}
+
+/* טקסט לקוראי מסך — האותיות עצמן aria-hidden */
+.kinetic .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

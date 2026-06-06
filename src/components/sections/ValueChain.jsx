@@ -5,7 +5,7 @@ import valueChain from '../../data/valueChain.js'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
 import VillaBlueprint from '../ui/VillaBlueprint.jsx'
-import InteractiveContractor from '../ui/InteractiveContractor.jsx'
+import KineticText from '../ui/KineticText.jsx'
 import './ValueChain.css'
 
 export default function ValueChain() {
@@ -18,13 +18,11 @@ export default function ValueChain() {
       <div className="container value-chain__inner">
         <Reveal className="value-chain__intro" variant="right">
           <span className="eyebrow">{t('valueChain.eyebrow')}</span>
-          <h2 className="section-title">{t('valueChain.title')}</h2>
+          <KineticText as="h2" className="section-title" text={t('valueChain.title')} />
           <p className="section-lead">{t('valueChain.lead')}</p>
           <div className="value-chain__progress" aria-hidden="true">
             <span style={{ '--p': `${((open + 1) / valueChain.length) * 100}%` }} />
           </div>
-          {/* דסקטופ: מודל קבלן אינטראקטיבי תלת-מימדי. מובייל: הדמיית הוילה */}
-          <InteractiveContractor className="value-chain__model" />
           <VillaBlueprint className="value-chain__art" />
         </Reveal>
 

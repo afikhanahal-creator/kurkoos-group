@@ -6,6 +6,7 @@
   --bc-current: var(--color-text);
   --bc-back: var(--color-secondary);
   --bc-back-bg: var(--color-secondary-soft);
+  --bc-back-border: color-mix(in srgb, var(--color-secondary) 30%, transparent);
   --bc-back-fg-hover: #fff;
   --bc-sep: var(--color-border-strong);
   padding-block: 1.2rem 0;
@@ -41,19 +42,32 @@
 }
 .breadcrumbs__link:hover { color: var(--color-accent); }
 
-/* קישור הבית — affordance ברור של "חזרה": גלולה עם חץ */
+/* קישור הבית — affordance ברור של "חזרה": גלולה-כפתור עם חץ וגבול */
 .breadcrumbs__link--back {
-  gap: 0.4rem;
-  padding: 0.34rem 0.85rem;
+  gap: 0.45rem;
+  padding: 0.5rem 1.05rem;
   border-radius: var(--radius-pill);
   background: var(--bc-back-bg);
+  border: 1.5px solid var(--bc-back-border);
   color: var(--bc-back);
   font-weight: 700;
-  transition: background var(--dur-fast), color var(--dur-fast);
+  box-shadow: var(--shadow-1);
+  transition: background var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
-.breadcrumbs__link--back:hover { background: var(--bc-back); color: var(--bc-back-fg-hover); }
-.breadcrumbs__back-ic { transition: transform var(--dur-fast) var(--ease-out); }
-/* תזוזה קלה לכיוון "אחורה" בריחוף (ימינה ב-RTL, שמאלה ב-LTR) */
+.breadcrumbs__link--back:hover {
+  background: var(--bc-back);
+  color: var(--bc-back-fg-hover);
+  border-color: var(--bc-back);
+  box-shadow: var(--shadow-3);
+  transform: translateY(-1px);
+}
+.breadcrumbs__link--back:active { transform: translateY(0) scale(0.97); }
+.breadcrumbs__back-ic { flex-shrink: 0; transition: transform var(--dur-base) var(--ease-out); }
+/* בריחוף — החץ "נדחף" לכיוון אחורה (ימינה ב-RTL, שמאלה ב-LTR) */
 .breadcrumbs__link--back:hover .breadcrumbs__back-ic { transform: translateX(-3px); }
 [dir='rtl'] .breadcrumbs__link--back:hover .breadcrumbs__back-ic { transform: translateX(3px); }
 

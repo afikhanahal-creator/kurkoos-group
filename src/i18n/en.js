@@ -19,6 +19,7 @@ export default {
       'At Kurkoos Group we plan, build and accompany your home from the ground up to the key. Development, construction, supervision and brokerage under one roof, with a genuine commitment to quality, transparency and meeting deadlines.',
     ctaPrimary: 'View our projects',
     ctaSecondary: 'Get in touch',
+    watchFilm: 'A little about us',
     scroll: 'Scroll to explore',
   },
   activities: {
@@ -157,5 +158,6 @@ export default {
     close: 'Close',
     backToTop: 'Back to top',
     home: 'Home',
+    skipToContent: 'Skip to content',
   },
 }

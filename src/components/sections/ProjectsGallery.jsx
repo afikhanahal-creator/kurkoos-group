@@ -8,6 +8,7 @@ import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
 import BorderGlow from '../ui/BorderGlow.jsx'
 import SpotlightCard from '../ui/SpotlightCard.jsx'
+import KineticText from '../ui/KineticText.jsx'
 import './ProjectsGallery.css'
 
 const AUTOPLAY = 3000 // משך הצגה לכל כרטיס (מ"ש)
@@ -148,7 +149,7 @@ export default function ProjectsGallery() {
     <section className="section section--soft projects-gallery" id="projects">
       <div className="container">
         <Reveal className="projects-gallery__head">
-          <h2 className="section-title">{t('projects.title')}</h2>
+          <KineticText as="h2" className="section-title" text={t('projects.title')} />
           <p className="section-lead">{t('projects.lead')}</p>
         </Reveal>
       </div>

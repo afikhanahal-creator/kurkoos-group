@@ -27,6 +27,7 @@
   --bc-current: #fff;
   --bc-back: #fff;
   --bc-back-bg: rgba(255, 255, 255, 0.12);
+  --bc-back-border: rgba(255, 255, 255, 0.4);
   --bc-back-fg-hover: var(--color-primary-900);
   --bc-sep: rgba(255, 255, 255, 0.32);
 }

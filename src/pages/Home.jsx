@@ -15,15 +15,17 @@ export default function Home() {
   return (
     <>
       <Seo description={t('hero.subtitle')} />
-      <Hero />
-      <Activities />
-      <Story />
-      <ProjectsGallery />
-      <ValueChain />
-      <Stats />
-      <Testimonials />
-      <Partners />
-      <Contact />
+      <div className="home">
+        <Hero />
+        <Activities />
+        <Story />
+        <ProjectsGallery />
+        <ValueChain />
+        <Stats />
+        <Testimonials />
+        <Partners />
+        <Contact />
+      </div>
     </>
   )
 }

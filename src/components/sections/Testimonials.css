@@ -2,48 +2,147 @@
 .testimonials__head .section-lead { margin-inline: auto; }
 .testimonials__head .eyebrow { justify-content: center; }
 
-.testimonials__stage {
+/* ============================================================
+   כרטיס המלצה (Profile card) + קרוסלה אוטומטית.
+   אפקט ה-hover זהה לכרטיסי "מה אנחנו עושים" שלמעלה:
+   הטיית 3D, נוזל טורקיז מטושטש, ברק חולף וזוהר אדום — בצבעי הפאלטה.
+   ============================================================ */
+.tc { max-width: 736px; margin: 0 auto; }   /* ~20% קטן יותר בדסקטופ */
+.tc__card-effect { perspective: 1000px; }
+
+.tc__card {
   position: relative;
-  max-width: 800px;
-  margin: 0 auto;
-  min-height: 220px;
-  display: grid;
-  place-items: center;
-  text-align: center;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-2);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
-.testimonials__quote-mark {
+
+@media (hover: hover) {
+  .tc__card:hover {
+    transform: rotateY(6deg) rotateX(6deg) translateZ(10px);
+    box-shadow: var(--shadow-4);
+  }
+  [dir='rtl'] .tc__card:hover { transform: rotateY(-6deg) rotateX(6deg) translateZ(10px); }
+}
+
+/* נוזל טורקיז מטושטש */
+.tc__liquid {
   position: absolute;
-  inset-block-start: -30px;
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-  color: var(--color-secondary);
-  opacity: 0.18;
+  top: -90px;
+  inset-inline-start: 0;
+  width: 340px;
+  height: 220px;
+  background: var(--color-secondary);
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.7s cubic-bezier(0.36, 0, 0.66, -0.56), opacity 0.3s ease-in-out;
 }
-.testimonials__card { display: flex; flex-direction: column; gap: 1.6rem; }
-.testimonials__text {
+.tc__card:hover .tc__liquid {
+  opacity: 0.5;
+  transform: translateY(30px) translateX(20px) rotate(-20deg) scale(1.2);
+}
+
+/* ברק חולף */
+.tc__shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.08) 30%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.08) 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease-in-out;
+}
+.tc__card:hover .tc__shine { opacity: 1; animation: tc-shine 2.2s linear infinite; }
+@keyframes tc-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* זוהר אדום עליון — מצבע ה-accent של הפאלטה */
+.tc__glow {
+  position: absolute;
+  inset: -15px;
+  background: radial-gradient(circle at 50% 0%,
+    color-mix(in srgb, var(--color-accent) 40%, transparent) 0%,
+    transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease-in-out;
+}
+.tc__card:hover .tc__glow { opacity: 1; }
+
+/* פריסת הכרטיס: תמונה | תוכן */
+.tc__grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 230px) 1fr;
+  gap: clamp(1.2rem, 2.4vw, 2rem);
+  align-items: center;
+  padding: clamp(1.1rem, 2.4vw, 1.8rem);
+}
+
+.tc__avatar {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--color-bg-soft);
+  box-shadow: var(--shadow-1);
+}
+.tc__avatar-inner { width: 100%; height: 100%; }
+.tc__avatar :is(img, .smart-image, .smart-image-placeholder) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tc__content { position: relative; min-height: 184px; display: flex; flex-direction: column; justify-content: center; }
+.tc__quote-mark {
+  position: absolute;
+  top: -8px;
+  inset-inline-start: -4px;
+  color: var(--color-secondary);
+  opacity: 0.16;
+  pointer-events: none;
+}
+.tc__text {
   font-family: var(--font-heading);
   font-weight: 500;
-  font-size: clamp(1.3rem, 2.6vw, 1.9rem);
-  line-height: 1.5;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  line-height: 1.55;
   color: var(--color-text);
+  margin-bottom: 1rem;
 }
-.testimonials__author strong {
+.tc__stars { display: flex; gap: 0.22rem; margin-bottom: 0.85rem; }
+.tc__stars svg { fill: var(--color-accent); width: 16px; height: 16px; }
+.tc__author strong {
   display: block;
   font-family: var(--font-heading);
-  font-size: 1.15rem;
+  font-size: 1.02rem;
   color: var(--color-primary);
 }
-.testimonials__author span { color: var(--color-accent); font-weight: 600; }
+.tc__author span { color: var(--color-accent); font-weight: 600; font-size: 0.9rem; }
 
+/* ---- ניווט: חיצים + נקודות ---- */
 .testimonials__nav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  margin-top: 2.5rem;
+  margin-top: 2.2rem;
 }
-
-/* חיצי ניווט — עיגול שטוח (Flat 2.0) עם hover בצבעי הפאלטה */
 .testimonials__nav .carousel__arrow {
   display: grid;
   place-items: center;
@@ -66,14 +165,25 @@
   box-shadow: var(--shadow-2);
   transform: translateY(-2px);
 }
-.testimonials__nav .carousel__arrow:disabled { opacity: 0.35; cursor: not-allowed; }
 
-.testimonials__dots { display: flex; gap: 0.5rem; }
-.testimonials__dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: var(--color-border-strong);
-  transition: background var(--dur-base), transform var(--dur-base);
+/* ---- מובייל ---- */
+@media (max-width: 720px) {
+  .tc__grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 1.2rem;
+    padding: 1.3rem 1.1rem;
+  }
+  .tc__avatar { max-width: 210px; margin: 0 auto; }
+  .tc__content { min-height: 0; }
+  .tc__quote-mark { position: static; display: block; margin: 0 auto 0.2rem; }
+  .tc__text { font-size: 1.08rem; margin-bottom: 0.9rem; }
+  .tc__stars { justify-content: center; }
+  .testimonials__nav { gap: 1.1rem; margin-top: 1.6rem; }
+  .testimonials__nav .carousel__arrow { width: 42px; height: 42px; }
 }
-.testimonials__dot:hover { background: var(--color-primary-300); transform: scale(1.25); }
-.testimonials__dot--active { background: var(--color-accent); transform: scale(1.3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tc__card, .tc__card:hover { transform: none; }
+  .tc__card:hover .tc__shine { animation: none; }
+}

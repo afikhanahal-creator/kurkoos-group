@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useI18n } from './i18n/index.jsx'
 import Header from './components/layout/Header.jsx'
 import Footer from './components/layout/Footer.jsx'
 import CookieBanner from './components/ui/CookieBanner.jsx'
@@ -20,6 +21,7 @@ import Innovation from './pages/Innovation.jsx'
 import Legal from './pages/Legal.jsx'
 import StyleGuide from './pages/StyleGuide.jsx'
 import NotFound from './pages/NotFound.jsx'
+import Admin from './pages/admin/Admin.jsx'
 
 // גלילה לראש העמוד במעבר בין דפים; גלילה לעוגן (#) אם קיים.
 function ScrollManager() {
@@ -60,13 +62,25 @@ const pageMotion = {
 
 export default function App() {
   const location = useLocation()
+  const { t } = useI18n()
+
+  // אזור האדמין — עמוד מלא נפרד, ללא ה-Header/Footer של האתר הציבורי
+  if (location.pathname.startsWith('/admin')) {
+    return (
+      <>
+        <ScrollManager />
+        <Admin />
+      </>
+    )
+  }
 
   return (
     <>
+      <a href="#top" className="skip-link">{t('common.skipToContent')}</a>
       <IntroVideo />
       <ScrollManager />
       <Header />
-      <main id="top">
+      <main id="top" tabIndex={-1}>
         <AnimatePresence mode="wait">
           <motion.div key={location.pathname} {...pageMotion}>
             <Routes location={location}>

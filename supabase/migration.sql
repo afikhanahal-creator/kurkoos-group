@@ -1,0 +1,182 @@
+-- ============================================================
+-- KURKOOS CMS — schema, RLS, storage, seed
+-- ============================================================
+
+-- updated_at helper
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin new.updated_at = now(); return new; end; $$;
+
+-- ---------- projects ----------
+create table if not exists public.projects (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  subtitle text,
+  description text,
+  location text,
+  address text,
+  gush text,
+  chelka text,
+  status text default 'planning',
+  hero_image_url text,
+  gallery jsonb default '[]'::jsonb,
+  amenities jsonb default '[]'::jsonb,
+  seo_title text,
+  seo_description text,
+  is_published boolean default true,
+  is_archived boolean default false,
+  sort_order int default 0,
+  extra jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- ---------- properties ----------
+create table if not exists public.properties (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references public.projects(id) on delete cascade,
+  unit_number text,
+  type text,
+  rooms numeric,
+  floor text,
+  size_sqm numeric,
+  garden_sqm numeric,
+  balcony_sqm numeric,
+  price numeric,
+  price_visible boolean default true,
+  status text default 'available',
+  floor_plan_url text,
+  gallery jsonb default '[]'::jsonb,
+  features jsonb default '[]'::jsonb,
+  description text,
+  is_published boolean default true,
+  is_archived boolean default false,
+  sort_order int default 0,
+  extra jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index if not exists properties_project_id_idx on public.properties(project_id);
+
+-- ---------- site_counters ----------
+create table if not exists public.site_counters (
+  id uuid primary key default gen_random_uuid(),
+  key text unique not null,
+  label_he text,
+  value text,
+  suffix text,
+  location_hint text,
+  sort_order int default 0,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- ---------- site_logos (logo carousel) ----------
+create table if not exists public.site_logos (
+  id uuid primary key default gen_random_uuid(),
+  name text,
+  image_url text,
+  sort_order int default 0,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- updated_at triggers
+drop trigger if exists trg_projects_updated on public.projects;
+create trigger trg_projects_updated before update on public.projects for each row execute function public.set_updated_at();
+drop trigger if exists trg_properties_updated on public.properties;
+create trigger trg_properties_updated before update on public.properties for each row execute function public.set_updated_at();
+drop trigger if exists trg_counters_updated on public.site_counters;
+create trigger trg_counters_updated before update on public.site_counters for each row execute function public.set_updated_at();
+drop trigger if exists trg_logos_updated on public.site_logos;
+create trigger trg_logos_updated before update on public.site_logos for each row execute function public.set_updated_at();
+
+-- ============================================================
+-- RLS
+-- ============================================================
+alter table public.projects enable row level security;
+alter table public.properties enable row level security;
+alter table public.site_counters enable row level security;
+alter table public.site_logos enable row level security;
+
+-- public (anon) read of published/active rows
+drop policy if exists "projects public read" on public.projects;
+create policy "projects public read" on public.projects for select to anon, authenticated
+  using (is_published = true and is_archived = false);
+
+drop policy if exists "properties public read" on public.properties;
+create policy "properties public read" on public.properties for select to anon, authenticated
+  using (is_published = true and is_archived = false);
+
+drop policy if exists "counters public read" on public.site_counters;
+create policy "counters public read" on public.site_counters for select to anon, authenticated
+  using (is_active = true);
+
+drop policy if exists "logos public read" on public.site_logos;
+create policy "logos public read" on public.site_logos for select to anon, authenticated
+  using (is_active = true);
+
+-- authenticated admin: full access on everything
+drop policy if exists "projects admin all" on public.projects;
+create policy "projects admin all" on public.projects for all to authenticated using (true) with check (true);
+drop policy if exists "properties admin all" on public.properties;
+create policy "properties admin all" on public.properties for all to authenticated using (true) with check (true);
+drop policy if exists "counters admin all" on public.site_counters;
+create policy "counters admin all" on public.site_counters for all to authenticated using (true) with check (true);
+drop policy if exists "logos admin all" on public.site_logos;
+create policy "logos admin all" on public.site_logos for all to authenticated using (true) with check (true);
+
+-- ============================================================
+-- Storage bucket for media (public read, authenticated write)
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('media', 'media', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "media public read" on storage.objects;
+create policy "media public read" on storage.objects for select to anon, authenticated
+  using (bucket_id = 'media');
+drop policy if exists "media auth insert" on storage.objects;
+create policy "media auth insert" on storage.objects for insert to authenticated
+  with check (bucket_id = 'media');
+drop policy if exists "media auth update" on storage.objects;
+create policy "media auth update" on storage.objects for update to authenticated
+  using (bucket_id = 'media');
+drop policy if exists "media auth delete" on storage.objects;
+create policy "media auth delete" on storage.objects for delete to authenticated
+  using (bucket_id = 'media');
+
+-- ============================================================
+-- Seed: counters
+-- ============================================================
+insert into public.site_counters (key, label_he, value, suffix, location_hint, sort_order) values
+  ('years_experience', 'שנות ניסיון', '25', '+', 'סקשן "במספרים" + הירו', 1),
+  ('projects_total',   'פרויקטים',     '80', '+', 'סקשן "במספרים" + הירו', 2),
+  ('housing_units',    'יחידות דיור',  '3200', '+', 'סקשן "במספרים" + הירו', 3),
+  ('sqm_built',        'מ"ר שנבנו',     '450', 'K', 'סקשן "במספרים"', 4)
+on conflict (key) do nothing;
+
+-- ============================================================
+-- Seed: logos (logo carousel)
+-- ============================================================
+insert into public.site_logos (name, sort_order) values
+  ('Bank Leumi', 1),
+  ('Shikun & Binui', 2),
+  ('Azrieli', 3),
+  ('Electra', 4),
+  ('Africa Israel', 5),
+  ('Menora', 6)
+on conflict do nothing;
+
+-- ============================================================
+-- Seed: projects (from existing site data)
+-- ============================================================
+insert into public.projects (slug, name, subtitle, description, location, status, hero_image_url, gallery, sort_order) values
+  ('park-residence', 'פארק רזידנס', 'מגורי יוקרה', 'פרויקט הדגל של הקבוצה: מגדל מגורים יוקרתי המשלב אדריכלות עכשווית, שטחים ירוקים ותחושת קהילה. כל דירה תוכננה למקסם אור טבעי ונוף פתוח.', 'תל אביב', 'marketing', 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1280&q=80', '["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1280&q=80","https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1280&q=80","https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1280&q=80"]'::jsonb, 1),
+  ('marina-towers', 'מגדלי המרינה', 'מגורים ומסחר', 'מתחם מגורים ומסחר המשלב חיי עיר עם שלווה של קו החוף. תכנון מוקפד יוצר איזון בין פרטיות לקהילתיות.', 'הרצליה', 'construction', 'https://images.unsplash.com/photo-1496307653780-42ee777d4833?auto=format&fit=crop&w=1280&q=80', '["https://images.unsplash.com/photo-1496307653780-42ee777d4833?auto=format&fit=crop&w=1280&q=80","https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1280&q=80"]'::jsonb, 2),
+  ('green-heights', 'גרין הייטס', 'מגורים', 'פרויקט מגורים בסטנדרט בנייה ירוקה, עם מערכות חיסכון באנרגיה, גגות ירוקים ועיצוב נוף עשיר.', 'רעננה', 'completed', 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1280&q=80', '["https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1280&q=80","https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1280&q=80"]'::jsonb, 3),
+  ('city-center-renewal', 'התחדשות מרכז העיר', 'התחדשות עירונית', 'התחדשות עירונית בקנה מידה גדול, המשלבת שדרוג איכות החיים של הדיירים הקיימים עם תוספת יחידות דיור ומרחב ציבורי מזמין.', 'בת ים', 'planning', 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1280&q=80', '["https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1280&q=80","https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1280&q=80"]'::jsonb, 4)
+on conflict (slug) do nothing;

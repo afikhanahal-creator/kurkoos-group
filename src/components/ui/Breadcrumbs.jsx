@@ -8,7 +8,8 @@ import './Breadcrumbs.css'
 export default function Breadcrumbs({ items = [] }) {
   const { t, isRTL } = useI18n()
   const all = [{ label: t('common.home'), to: '/' }, ...items]
-  const backIcon = isRTL ? 'arrow' : 'arrowLeft' // מצביע "אחורה" אל הבית
+  // חץ "חזרה" — מצביע לכיוון אחורה: ימינה ב-RTL, שמאלה ב-LTR
+  const backIcon = isRTL ? 'arrow' : 'arrowLeft'
 
   return (
     <nav className="breadcrumbs" aria-label="Breadcrumb">
@@ -25,7 +26,7 @@ export default function Breadcrumbs({ items = [] }) {
                   to={item.to}
                   className={`breadcrumbs__link${isHome ? ' breadcrumbs__link--back' : ''}`}
                 >
-                  {isHome && <Icon name={backIcon} size={16} className="breadcrumbs__back-ic" />}
+                  {isHome && <Icon name={backIcon} size={18} className="breadcrumbs__back-ic" />}
                   <span>{item.label}</span>
                 </Link>
               )}

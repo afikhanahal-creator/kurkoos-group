@@ -7,7 +7,9 @@ import './HeroCollage.css'
    בריחוף על כרטיס עולה "תריס" שחושף שם + תיאור קצר + קישור.
    items: [{ url, name, desc, to }]
    ============================================================ */
-const HEIGHTS = [300, 230, 360, 260, 330, 240, 350, 270, 300, 320]
+/* יחסי-גובה (width/height) במקום גבהים קבועים — כך התמונות מתכווצות
+   ומתאימות את עצמן לרוחב העמודה בכל מסך (רספונסיבי מלא). */
+const RATIOS = [0.82, 1.1, 0.72, 1.0, 0.88, 1.15, 0.76, 1.05, 0.92, 0.95]
 
 export default function HeroCollage({ title, subtitle, stats = [], items = [], cta = '' }) {
   return (
@@ -31,7 +33,8 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
                 src={it.url}
                 alt={it.name}
                 draggable={false}
-                style={{ height: HEIGHTS[i % HEIGHTS.length] }}
+                loading="lazy"
+                style={{ aspectRatio: RATIOS[i % RATIOS.length] }}
               />
 
               {/* תווית שם תמידית */}

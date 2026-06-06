@@ -1,4 +1,15 @@
-.projects-gallery__head { margin-bottom: 2.5rem; max-width: 60ch; }
+.projects-gallery__head { margin-bottom: 2.5rem; max-width: 60ch; margin-inline: auto; text-align: center; }
+.projects-gallery__head .section-lead { margin-inline: auto; }
+.projects-gallery__head .section-title { display: inline-block; }
+.projects-gallery__head .section-title::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  margin: 0.8rem auto 0;
+}
 .projects-gallery__hint {
   display: inline-flex;
   align-items: center;
@@ -19,7 +30,8 @@
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;   /* החלקה חלקה ב-iOS */
   scrollbar-width: none;
-  padding-block: 0.5rem;
+  /* ריווח עליון/תחתון כדי שהחלק העליון של הכרטיס, ההרמה בריחוף והזוהר לא ייחתכו */
+  padding-block: 1.25rem;
 }
 .projects-gallery__viewport::-webkit-scrollbar { display: none; }
 .projects-gallery__track {
@@ -33,7 +45,7 @@
 .pg-card {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(228px, 66vw, 300px);
+  width: clamp(210px, 60vw, 250px);   /* קטן ~17% בדסקטופ — יותר כרטיסים נראים בבת אחת */
   cursor: pointer;
   border-radius: var(--radius-lg);
   outline: none;

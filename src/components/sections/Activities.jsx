@@ -2,6 +2,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import activities from '../../data/activities.js'
 import Reveal from '../ui/Reveal.jsx'
 import FeatureCard from '../ui/FeatureCard.jsx'
+import KineticText from '../ui/KineticText.jsx'
 import './Activities.css'
 
 export default function Activities() {
@@ -13,7 +14,7 @@ export default function Activities() {
       <div className="container">
         <Reveal className="activities__head">
           <span className="eyebrow">{t('activities.eyebrow')}</span>
-          <h2 className="section-title">{t('activities.title')}</h2>
+          <KineticText as="h2" className="section-title" text={t('activities.title')} />
           <p className="section-lead">{t('activities.lead')}</p>
         </Reveal>
 

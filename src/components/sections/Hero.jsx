@@ -117,8 +117,8 @@ export default function Hero() {
               <Icon name="arrow" size={20} className="hero__cta-arrow" />
             </Link>
             <button type="button" className="btn btn--ghost btn--lg hero__ghost" onClick={() => setFilmOpen(true)}>
-              {t('hero.ctaSecondary')}
-              <Icon name="arrow" size={20} className="hero__cta-arrow" />
+              <Icon name="play" size={16} className="hero__play-ic" />
+              {t('hero.watchFilm')}
             </button>
           </div>
         </div>

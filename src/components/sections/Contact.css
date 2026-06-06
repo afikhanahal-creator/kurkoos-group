@@ -8,12 +8,12 @@
 .contact__plus-grid {
   position: absolute;
   inset-block: 10% 5%;
-  inset-inline-end: 0;
+  inset-inline-start: 0;
   width: 220px;
   background-image: radial-gradient(var(--color-border-strong) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
-  -webkit-mask-image: linear-gradient(to var(--mask-dir, left), #000, transparent);
-  mask-image: linear-gradient(to left, #000, transparent);
+  -webkit-mask-image: linear-gradient(to var(--mask-dir, right), #000, transparent);
+  mask-image: linear-gradient(to right, #000, transparent);
   opacity: 0.6;
   pointer-events: none;
 }
@@ -22,12 +22,15 @@
   position: relative;
   z-index: 1;
   display: grid;
-  /* התמונה והטופס מצומצמים (~40%) ובאותו סדר גודל — ממורכזים יחד */
-  grid-template-columns: minmax(0, clamp(340px, 34vw, 480px)) minmax(0, clamp(320px, 32vw, 460px));
+  /* טופס בצד ימין ותמונה בצד שמאל. עמודה ראשונה = inline-start = ימין ב-RTL */
+  grid-template-columns: minmax(0, clamp(300px, 30vw, 420px)) minmax(0, clamp(340px, 34vw, 480px));
   justify-content: center;
   align-items: center;
   gap: clamp(1rem, 2.5vw, 2.5rem);
 }
+/* סדר הצגה: טופס ראשון (ימין), תמונה שנייה (שמאל) — בלי לשנות את ה-DOM */
+.contact__panel { order: 0; }
+.contact__visual { order: 1; }
 
 /* ---- Angled visual ---- */
 .contact__visual {
@@ -37,19 +40,19 @@
 .contact__visual-shape {
   position: absolute;
   inset: 0;
-  inset-inline-start: -40px;
-  background: linear-gradient(160deg, #2f8f5a, var(--color-secondary));
-  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+  inset-inline-end: -40px;
+  background: linear-gradient(200deg, #2f8f5a, var(--color-secondary));
+  clip-path: polygon(0 0, 88% 0, 100% 100%, 12% 100%);
   border-radius: var(--radius-lg);
 }
 .contact__visual-img {
   position: relative;
   height: 100%;
   min-height: clamp(330px, 32vw, 410px);
-  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+  clip-path: polygon(0 0, 88% 0, 100% 100%, 12% 100%);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transform: translateX(20px);
+  transform: translateX(-20px);
 }
 .contact__visual-img img,
 .contact__visual-img .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; }
@@ -61,7 +64,7 @@
   background: linear-gradient(165deg, var(--color-secondary), #07293a 90%);
   color: #fff;
   border-radius: var(--radius-lg);
-  padding: clamp(1.5rem, 2.2vw, 2.2rem);
+  padding: clamp(1.2rem, 1.8vw, 1.75rem);
   box-shadow: var(--shadow-lg);
 }
 .contact__panel > *:not(.infinite-grid) { position: relative; z-index: 1; }
@@ -79,35 +82,45 @@
   height: 3px;
   border-radius: 2px;
 }
-.contact__title { font-size: clamp(1.5rem, 2vw, 2.05rem); color: #fff; margin: 0.3rem 0 0.6rem; line-height: 1.15; }
-.contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 1.1rem; max-width: 42ch; font-size: 0.95rem; }
+.contact__title { font-size: clamp(1.25rem, 1.7vw, 1.65rem); color: #fff; margin: 0.25rem 0 0.5rem; line-height: 1.15; }
+.contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 0.9rem; max-width: 42ch; font-size: 0.88rem; }
 
-.contact__topics { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1rem; }
+.contact__topics { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.85rem; }
 .contact__topic {
-  padding: 0.4rem 0.9rem;
+  padding: 0.26rem 0.6rem;
   border-radius: var(--radius-pill);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border: 1.25px solid rgba(255, 255, 255, 0.35);
   color: #fff;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.85rem;
-  transition: all var(--dur-fast) var(--ease-out);
+  font-size: 0.68rem;
+  transition: transform var(--dur-fast) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
 }
 .contact__topic:hover {
   border-color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.16);
   transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
 }
-.contact__topic.is-active { background: #fff; color: var(--color-secondary); border-color: #fff; }
+.contact__topic:active { transform: translateY(0) scale(0.96); }
+.contact__topic.is-active {
+  background: #fff;
+  color: var(--color-secondary);
+  border-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
 
-.contact__form { display: flex; flex-direction: column; gap: 0.65rem; }
-.contact__required { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); }
+.contact__form { display: flex; flex-direction: column; gap: 0.55rem; }
+.contact__required { font-size: 0.76rem; color: rgba(255, 255, 255, 0.6); }
 .contact__form .field input,
 .contact__form .field textarea {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 0.95rem;
-  padding: 0.72rem 0.95rem;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.82rem;
   border-radius: var(--radius-md);
   border: none;
   background: #fff;
@@ -124,14 +137,21 @@
 
 .contact__submit {
   align-self: center;
-  margin-top: 0.5rem;
-  min-width: 170px;
+  margin-top: 0.4rem;
+  min-width: 140px;
+  font-size: 0.92rem;
   background: #fff;
   color: var(--color-secondary);
   border-radius: var(--radius-pill);
-  padding: 0.8em 2em;
+  padding: 0.7em 1.7em;
 }
-.contact__submit:hover { background: var(--color-accent); color: #fff; }
+.contact__submit:hover {
+  background: var(--color-accent);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+}
+.contact__submit:active { transform: translateY(0) scale(0.98); }
 
 .contact__phones {
   margin-top: 2rem;
@@ -159,7 +179,7 @@
   .contact__visual { display: none; }
   .contact__plus-grid { display: none; }
   /* טופס ממורכז ומוגבל ברוחב — לא נמתח לרוחב מלא בטאבלט */
-  .contact__panel { width: 100%; max-width: 520px; }
+  .contact__panel { width: 100%; max-width: 460px; }
 }
 
 @media (max-width: 560px) {
@@ -168,8 +188,8 @@
   .contact__title { font-size: 1.5rem; margin: 0.2rem 0 0.5rem; }
   .contact__choose { font-size: 0.88rem; margin-bottom: 1rem; }
 
-  .contact__topics { gap: 0.4rem; margin-bottom: 1rem; }
-  .contact__topic { padding: 0.34rem 0.75rem; font-size: 0.78rem; }
+  .contact__topics { gap: 0.35rem; margin-bottom: 1rem; }
+  .contact__topic { padding: 0.3rem 0.66rem; font-size: 0.72rem; }
 
   /* שדות קומפקטיים */
   .contact__form { gap: 0.6rem; }

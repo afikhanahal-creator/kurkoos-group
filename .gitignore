@@ -5,6 +5,11 @@ node_modules
 dist
 dist-ssr
 
+# env / secrets
+.env
+.env.*
+!.env.example
+
 # local / editor
 *.local
 .DS_Store

@@ -28,7 +28,7 @@
   --color-border: #e2e6ec;        /* קווי הפרדה, גבולות דקיקים */
   --color-border-strong: #cbd2db;
   --color-text: #1a1f2b;          /* טקסט גוף */
-  --color-text-muted: #6b7280;    /* טקסט משני, כיתובים */
+  --color-text-muted: #58606e;    /* טקסט משני, כיתובים — כהה דיו ל-WCAG AA על רקעים בהירים/מוטים */
 
   /* --- Semantic --- */
   --color-success: #2e9e6b;

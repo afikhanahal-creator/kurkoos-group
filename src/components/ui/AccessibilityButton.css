@@ -1,74 +1,496 @@
-.a11y {
-  position: fixed;
-  inset-block-end: 1.5rem;
-  inset-inline-end: 1.5rem;
-  z-index: var(--z-overlay);
+/* ============================================================
+   תפריט נגישות — צבעי הפאלטה (טורקיז-נייבי + אדום).
+   הפאנל משתמש בצבעים קבועים (לא tokens) כדי שמצב כהה/התאמת
+   צבעים לא ישפיעו עליו עצמו.
+   ============================================================ */
+.a11y-fab,
+.a11y-overlay,
+.a11y-panel,
+.a11y-vk {
+  --a11y-blue: #105572;
+  --a11y-navy: #07293a;
+  --a11y-red: #a90b0c;
+  --a11y-ink: #1a1f2b;
+  --a11y-line: #e2e6ec;
 }
-.a11y__btn {
+
+/* ---------- כפתור צף ---------- */
+.a11y-fab {
+  position: fixed;
+  inset-block-end: 5.5rem;          /* קצת למעלה */
+  inset-inline-start: auto;
+  left: 1.4rem;                     /* תמיד בצד שמאל (וואטסאפ נשאר בימין) */
+  right: auto;
+  z-index: 200;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  width: 54px; height: 54px;
-  border-radius: 50%;
-  background: var(--color-secondary);
-  color: #fff;
-  box-shadow: var(--shadow-md);
-  transition: transform var(--dur-fast) var(--ease-out);
-}
-.a11y__btn { transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast); }
-.a11y__btn:hover { transform: scale(1.06); background: var(--color-primary-900); }
-
-.a11y__panel {
-  position: absolute;
-  inset-block-end: calc(100% + 0.8rem);
-  inset-inline-end: 0;
-  width: 270px;
+  color: var(--a11y-blue);          /* האייקון בכחול המותג */
   background: #fff;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border);
-  padding: 1.3rem;
+  box-shadow: 0 8px 22px rgba(7, 41, 58, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
-.a11y__title { font-size: 1.2rem; margin-bottom: 1rem; color: var(--color-secondary); }
-.a11y__row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.6rem 0; font-family: var(--font-heading); font-weight: 600; font-size: 0.95rem;
+.a11y-fab:hover {
+  transform: scale(1.08);
+  background: var(--a11y-blue);     /* בריחוף מתהפך לכחול מלא */
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(7, 41, 58, 0.4);
 }
-.a11y__row > span, .a11y__toggle > span { display: inline-flex; align-items: center; gap: 0.5rem; }
-.a11y__stepper { display: flex; align-items: center; gap: 0.6rem; }
-.a11y__stepper button {
+.a11y-fab:focus-visible { outline: 3px solid var(--a11y-red); outline-offset: 3px; }
+
+/* ---------- שכבת רקע ---------- */
+/* שקופה (רואים את האתר) אך לוחצת לסגירה — כמו במקור */
+.a11y-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  background: transparent;
+}
+
+/* ---------- הפאנל ---------- */
+.a11y-panel {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: auto;
+  left: 0;                 /* תמיד בצד שמאל */
+  right: auto;
+  z-index: 220;
+  width: min(430px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: #f3f5f8;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+  font-family: var(--font-body, system-ui, sans-serif);
+  direction: rtl;
+}
+:root[dir='ltr'] .a11y-panel { direction: ltr; }
+
+.a11y-panel__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem 1.6rem;
+  background: linear-gradient(135deg, var(--a11y-blue), var(--a11y-navy));
+  color: #fff;
+}
+.a11y-panel__close,
+.a11y-panel__quick {
+  width: 38px; height: 38px;
+  border-radius: 50%;
   display: grid; place-items: center;
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--color-bg-soft); color: var(--color-primary);
-  transition: background var(--dur-fast);
+  color: #fff;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.18s ease;
+  flex-shrink: 0;
 }
-.a11y__stepper button:hover { background: var(--color-secondary); color: #fff; }
+.a11y-panel__close:hover,
+.a11y-panel__quick:hover { background: rgba(255, 255, 255, 0.25); }
+.a11y-panel__brandtag {
+  flex: 1;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill, 999px);
+  padding: 0.4rem 1rem;
+  margin-inline: 0.4rem;
+}
+.a11y-panel__titlebar {
+  margin-top: -1.1rem;
+  display: flex;
+  justify-content: center;
+}
+.a11y-panel__titlebar span {
+  background: #fff;
+  color: var(--a11y-navy);
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 800;
+  font-size: 1.05rem;
+  padding: 0.5rem 2.4rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(7, 34, 48, 0.15);
+}
 
-.a11y__toggle {
-  display: flex; align-items: center; justify-content: space-between;
-  width: 100%; padding: 0.6rem 0;
-  font-family: var(--font-heading); font-weight: 600; font-size: 0.95rem;
-  color: var(--color-text);
-  transition: color var(--dur-fast);
+.a11y-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.1rem 1rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
-.a11y__toggle:hover { color: var(--color-secondary); }
-.a11y__toggle:hover .a11y__switch { background: var(--color-primary-300); }
-.a11y__toggle.is-on:hover .a11y__switch { background: var(--color-primary-900); }
-.a11y__switch {
-  position: relative; width: 42px; height: 24px; border-radius: var(--radius-pill);
-  background: var(--color-border-strong); transition: background var(--dur-fast);
-}
-.a11y__switch::after {
-  content: ''; position: absolute; inset-block-start: 3px; inset-inline-start: 3px;
-  width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform var(--dur-fast);
-}
-.a11y__toggle.is-on .a11y__switch { background: var(--color-secondary); }
-.a11y__toggle.is-on .a11y__switch::after { transform: translateX(18px); }
-[dir='rtl'] .a11y__toggle.is-on .a11y__switch::after { transform: translateX(-18px); }
 
-.a11y__reset {
-  width: 100%; margin-top: 0.8rem; padding: 0.6rem;
-  border-radius: var(--radius-md); border: 1.5px solid var(--color-border);
-  font-family: var(--font-heading); font-weight: 600; color: var(--color-text-soft);
-  transition: all var(--dur-fast);
+/* ---------- רשת כלים ---------- */
+.a11y-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
 }
-.a11y__reset:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.a11y-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  padding: 1rem 0.5rem 0.85rem;
+  min-height: 112px;
+  background: #fff;
+  border: 1.5px solid var(--a11y-line);
+  border-radius: 14px;
+  color: var(--a11y-blue);
+  text-align: center;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+.a11y-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(7, 34, 48, 0.12); border-color: var(--a11y-blue); }
+.a11y-tile:focus-visible { outline: 3px solid var(--a11y-red); outline-offset: 2px; }
+.a11y-tile__ic { color: var(--a11y-blue); display: grid; place-items: center; }
+.a11y-tile__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--a11y-navy);
+}
+.a11y-tile.is-on { background: var(--a11y-navy); border-color: var(--a11y-navy); }
+.a11y-tile.is-on .a11y-tile__ic,
+.a11y-tile.is-on .a11y-tile__label { color: #fff; }
+.a11y-tile.is-on::after {
+  content: '✓';
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-end: 8px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--a11y-red);
+  color: #fff;
+  font-size: 0.7rem;
+  display: grid; place-items: center;
+}
+.a11y-tile__lvl {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 8px;
+  min-width: 18px; height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--a11y-red);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: grid; place-items: center;
+}
+
+/* ---------- כרטיסי הגדרה ---------- */
+.a11y-card {
+  background: #fff;
+  border: 1.5px solid var(--a11y-line);
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.a11y-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; }
+.a11y-card__head strong { display: block; color: var(--a11y-navy); font-family: var(--font-heading, sans-serif); font-size: 1.05rem; }
+.a11y-card__head span { color: #6b7280; font-size: 0.82rem; }
+.a11y-card__ic { color: var(--a11y-blue); flex-shrink: 0; }
+
+.a11y-tabs { display: flex; gap: 0.5rem; }
+.a11y-tabs--wrap { flex-wrap: wrap; }
+.a11y-tab {
+  flex: 1;
+  min-width: max-content;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1.5px solid var(--a11y-line);
+  background: #fff;
+  color: var(--a11y-navy);
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.16s ease;
+}
+.a11y-tab:hover { border-color: var(--a11y-blue); }
+.a11y-tab.is-on { background: var(--a11y-blue); border-color: var(--a11y-blue); color: #fff; }
+
+/* פס גוון (התאמת צבעים) */
+.a11y-hue {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  outline: none;
+  background: linear-gradient(to right,
+    #808080, #000, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+}
+.a11y-hue::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--a11y-blue);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+.a11y-hue::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--a11y-blue);
+  border: 3px solid #fff;
+  cursor: pointer;
+}
+
+.a11y-duo { display: flex; gap: 0.6rem; }
+.a11y-chip {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1.5px solid var(--a11y-line);
+  background: #fff;
+  color: var(--a11y-navy);
+  font-weight: 700;
+  transition: all 0.16s ease;
+}
+.a11y-chip:hover { border-color: var(--a11y-blue); }
+.a11y-chip.is-on { background: var(--a11y-navy); color: #fff; border-color: var(--a11y-navy); }
+
+/* stepper גופן */
+.a11y-stepper { display: flex; align-items: center; gap: 0.7rem; }
+.a11y-stepper > button {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--a11y-navy);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  transition: background 0.16s ease, transform 0.12s ease;
+}
+.a11y-stepper > button:hover { background: var(--a11y-blue); transform: scale(1.06); }
+.a11y-stepper__track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: #e8ecf1;
+  overflow: hidden;
+}
+.a11y-stepper__track span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--a11y-blue), var(--a11y-red));
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.a11y-link-btn {
+  align-self: flex-start;
+  color: var(--a11y-blue);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+.a11y-link-btn:hover { color: var(--a11y-red); text-decoration: underline; }
+
+/* ---------- סיכום עמוד ---------- */
+.a11y-summary { display: flex; flex-direction: column; gap: 0.7rem; }
+.a11y-summary__back { align-self: flex-start; color: var(--a11y-blue); font-weight: 700; }
+.a11y-summary h4 { color: var(--a11y-navy); font-size: 1.1rem; }
+.a11y-summary ul { display: flex; flex-direction: column; gap: 0.2rem; }
+.a11y-summary li a {
+  display: block;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  color: var(--a11y-ink);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.a11y-summary li a:hover { background: #eef2f5; color: var(--a11y-blue); }
+.a11y-summary__l2 { padding-inline-start: 0.8rem; }
+.a11y-summary__l3 { padding-inline-start: 1.6rem; font-size: 0.9rem; }
+.a11y-summary__l3 a { color: #6b7280; }
+.a11y-summary__empty { color: #6b7280; }
+
+/* ---------- פוטר ---------- */
+.a11y-panel__foot {
+  border-top: 1px solid var(--a11y-line);
+  background: #fff;
+}
+.a11y-disable {
+  width: 100%;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, var(--a11y-blue), var(--a11y-navy));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.a11y-disable:hover { filter: brightness(1.08); }
+.a11y-brandline {
+  display: block;
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+  background: #eef1f4;
+}
+
+/* ---------- מקלדת וירטואלית ---------- */
+.a11y-vk {
+  position: fixed;
+  inset-block-end: 0;
+  inset-inline: 0;
+  z-index: 230;
+  background: var(--a11y-navy);
+  padding: 0.6rem clamp(0.4rem, 2vw, 1rem) 0.9rem;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+  direction: ltr;
+}
+.a11y-vk__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  padding-inline: 0.4rem;
+}
+.a11y-vk__lang, .a11y-vk__close {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.3rem 0.7rem;
+  font-weight: 700;
+}
+.a11y-vk__row { display: flex; justify-content: center; gap: 0.3rem; margin-bottom: 0.35rem; }
+.a11y-vk__key {
+  min-width: clamp(26px, 7vw, 44px);
+  height: clamp(36px, 8vw, 46px);
+  padding: 0 0.3rem;
+  background: #fff;
+  color: var(--a11y-navy);
+  border-radius: 8px;
+  font-size: clamp(0.85rem, 2.4vw, 1.05rem);
+  font-weight: 600;
+}
+.a11y-vk__key:hover { background: #dbe7ee; }
+.a11y-vk__key:active { background: var(--a11y-blue); color: #fff; }
+.a11y-vk__key--wide { min-width: clamp(44px, 10vw, 64px); font-size: 1.2rem; }
+.a11y-vk__key--space { flex: 1; max-width: 320px; }
+
+@media (max-width: 480px) {
+  .a11y-grid { grid-template-columns: repeat(2, 1fr); }
+  .a11y-fab { width: 50px; height: 50px; inset-block-end: 5rem; inset-inline-start: auto; left: 1rem; right: auto; }
+}
+
+/* ============================================================
+   הפעלות גלובליות — מוחלות על #root (הפאנל מחוץ ל-#root דרך
+   portal, ולכן אינו מושפע מהפילטרים).
+   ============================================================ */
+main { zoom: var(--a11y-zoom, 1); }
+
+/* ניגודיות כהה — דריסת tokens */
+html.a11y-dark {
+  --color-bg: #0c1418; --color-surface: #13212a; --color-surface-alt: #0f1b22;
+  --color-bg-soft: #0f1b22; --color-border: #2a3a44; --color-border-strong: #3a4c57;
+  --color-text: #f1f5f8; --color-text-muted: #b9c4cc;
+  --color-primary-900: #e7eef1; --color-primary-700: #cfe0e8; --color-primary-500: #aecdda;
+  --color-primary: #e7eef1; --color-secondary: #cfe0e8;
+  background: #0c1418;
+}
+html.a11y-dark body { background: #0c1418; }
+
+/* ניגודיות בהירה — חדה */
+html.a11y-light {
+  --color-bg: #ffffff; --color-surface: #ffffff; --color-surface-alt: #ffffff;
+  --color-text: #000000; --color-text-muted: #1a1a1a;
+  --color-border: #000000; --color-border-strong: #000000;
+}
+html.a11y-light body { background: #fff; }
+html.a11y-light #root :is(a, button) { text-decoration: underline; }
+
+/* מונוכרום / מוד ניגודיות — פילטרים על #root */
+html.a11y-monochrome #root { filter: grayscale(1); }
+html.a11y-contrast #root { filter: contrast(1.45); }
+html.a11y-monochrome.a11y-contrast #root { filter: grayscale(1) contrast(1.45); }
+
+/* גופן קריא */
+html.a11y-readable #root,
+html.a11y-readable #root :where(p, span, a, li, h1, h2, h3, h4, h5, h6, button, input, textarea, label) {
+  font-family: Arial, 'Assistant', 'Segoe UI', sans-serif !important;
+  letter-spacing: 0.01em;
+}
+
+/* הדגשת קישורים */
+html.a11y-links #root a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  outline: 2px solid #a90b0c;
+  outline-offset: 1px;
+  background: rgba(169, 11, 12, 0.06);
+}
+/* הדגשת כותרות */
+html.a11y-headings #root :is(h1, h2, h3, h4) {
+  outline: 2px dashed #105572;
+  outline-offset: 3px;
+  background: rgba(16, 85, 114, 0.06);
+}
+/* הדגש אלמנטים אינטראקטיביים */
+html.a11y-highlight-all #root :is(a, button, input, select, textarea, [role='button'], [tabindex]) {
+  outline: 2px solid #105572 !important;
+  outline-offset: 2px;
+}
+
+/* הגדלת כפתורים */
+html.a11y-big-buttons #root :is(.btn, button) {
+  font-size: 1.08em;
+  padding-block: 0.85em;
+  padding-inline: 1.5em;
+}
+
+/* תצוגה קריאה */
+html.a11y-reading #root {
+  background: #fbfaf7;
+  --color-bg: #fbfaf7;
+  --color-surface: #fff;
+}
+html.a11y-reading #root :is(p, li) {
+  font-size: 1.12em;
+  line-height: 1.9;
+  max-width: 70ch;
+}
+html.a11y-reading #root :is(.hero__bg, .infinite-grid, [class*='parallax'], video) { filter: saturate(0.85); }
+
+/* ניווט מקלדת — פוקוס חזק */
+html.a11y-kbd #root :is(a, button, input, select, textarea, [tabindex]):focus {
+  outline: 3px solid #a90b0c !important;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* הגדלת תכנים */
+html.a11y-enlarge-1 #root { font-size: 1.1em; }
+html.a11y-enlarge-2 #root { font-size: 1.22em; }
+
+/* ריווחים */
+html.a11y-line #root :where(p, li, a, span, h1, h2, h3, h4, h5, h6) { line-height: var(--a11y-line) !important; }
+html.a11y-word #root :where(p, li, a, span, h1, h2, h3, h4, h5, h6) { word-spacing: var(--a11y-word) !important; }
+html.a11y-letter #root :where(p, li, a, span, h1, h2, h3, h4, h5, h6) { letter-spacing: var(--a11y-letter) !important; }
+
+/* הקראת טקסט — סמן מצביע */
+html.a11y-readaloud #root :is(p, h1, h2, h3, h4, li, a, button) { cursor: help; }
+
+/* סמן עכבר מוגדל */
+html.a11y-cursor-black #root,
+html.a11y-cursor-black #root * {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='40'%20height='40'%20viewBox='0%200%2040%2040'%3E%3Cpath%20d='M8%204v28l7-7%205%2010%204-2-5-10h10z'%20fill='%23000'%20stroke='%23fff'%20stroke-width='2'/%3E%3C/svg%3E") 8 5, auto !important;
+}
+html.a11y-cursor-white #root,
+html.a11y-cursor-white #root * {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='40'%20height='40'%20viewBox='0%200%2040%2040'%3E%3Cpath%20d='M8%204v28l7-7%205%2010%204-2-5-10h10z'%20fill='%23fff'%20stroke='%23000'%20stroke-width='2'/%3E%3C/svg%3E") 8 5, auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .a11y-fab, .a11y-tile { transition: none; }
+}

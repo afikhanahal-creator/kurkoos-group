@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../../i18n/index.jsx'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
+import KineticText from '../ui/KineticText.jsx'
 import './Story.css'
 
 export default function Story() {
@@ -14,7 +15,7 @@ export default function Story() {
       <div className="container story__inner">
         <Reveal variant="up">
           <span className="eyebrow story__eyebrow">{t('story.eyebrow')}</span>
-          <h2 className="story__title">{t('story.title')}</h2>
+          <KineticText as="h2" className="story__title" text={t('story.title')} />
         </Reveal>
 
         <Reveal variant="up" delay={0.1}>

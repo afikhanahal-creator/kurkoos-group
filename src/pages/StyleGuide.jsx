@@ -93,7 +93,7 @@ export default function StyleGuide() {
             ))}
           </div>
 
-          <p className="sg__back"><Link to="/" className="btn btn--ghost"><Icon name={'arrowLeft'} size={18} /> חזרה לאתר</Link></p>
+          <p className="sg__back"><Link to="/" className="btn btn--ghost"><Icon name={'arrow'} size={18} /> חזרה לאתר</Link></p>
         </div>
       </section>
     </>

@@ -18,30 +18,58 @@
   gap: 2rem;
 }
 .stat {
+  position: relative;
   text-align: center;
   padding: 1.5rem 1rem;
-  border-inline-start: 1px solid var(--color-border);
+  transition: transform var(--dur-base) var(--ease-out);
 }
-.stat:first-child { border-inline-start: none; }
+/* מפריד אנכי רך שמתעמעם בקצוות — עדין יותר מקו מלא */
+.stat:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  inset-block: 12%;
+  inset-inline-start: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--color-border-strong), transparent);
+}
+.stat:hover { transform: translateY(-4px); }
 
 .stat__value {
   display: block;
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: clamp(2.6rem, 5vw, 4rem);
+  font-size: clamp(2.8rem, 5.5vw, 4.6rem);
   line-height: 1;
+  letter-spacing: -0.02em;
   color: var(--color-secondary);
 }
-.stat__suffix { color: var(--color-accent); margin-inline-start: 2px; }
+.stat__suffix {
+  color: var(--color-accent);
+  font-size: 0.7em;
+  font-weight: 800;
+  margin-inline-start: 3px;
+}
+/* קו הדגשה קצר בצבע המותג בין המספר לתווית; מתרחב בריחוף */
+.stat__value::after {
+  content: '';
+  display: block;
+  width: 30px;
+  height: 3px;
+  margin: 0.85rem auto 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  transition: width var(--dur-base) var(--ease-out);
+}
+.stat:hover .stat__value::after { width: 52px; }
 .stat__label {
   display: block;
-  margin-top: 0.8rem;
+  margin-top: 0.7rem;
   color: var(--color-text-soft);
   font-size: 1.02rem;
   letter-spacing: 0.02em;
 }
 
 @media (max-width: 720px) {
-  .stats__grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-  .stat:nth-child(odd) { border-inline-start: none; }
+  .stats__grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 1rem; }
+  .stat:nth-child(odd)::before { display: none; }
 }

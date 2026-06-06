@@ -1,25 +1,27 @@
+import { useState, useEffect } from 'react'
 import { useI18n } from '../../i18n/index.jsx'
-import partners from '../../data/partners.js'
+import partnersData from '../../data/partners.js'
+import LogoCarousel from '../ui/LogoCarousel.jsx'
+import { supabase } from '../../lib/supabase.js'
+import { listLogos } from '../../lib/cms.js'
 import './Partners.css'
 
 export default function Partners() {
   const { t } = useI18n()
-  // משכפלים את הרשימה כדי שהאנימציה (marquee) תהיה רציפה
-  const loop = [...partners, ...partners]
+  const [logos, setLogos] = useState(partnersData)
+
+  useEffect(() => {
+    if (!supabase) return
+    listLogos({ activeOnly: true })
+      .then((rows) => { if (rows && rows.length) setLogos(rows) })
+      .catch(() => {})
+  }, [])
 
   return (
     <section className="partners">
       <div className="container">
         <p className="partners__title">{t('partners.title')}</p>
-      </div>
-      <div className="partners__marquee" aria-hidden="false">
-        <div className="partners__track">
-          {loop.map((p, i) => (
-            <span className="partners__item" key={`${p.id}-${i}`}>
-              {p.name}
-            </span>
-          ))}
-        </div>
+        <LogoCarousel logos={logos} interval={2600} />
       </div>
     </section>
   )

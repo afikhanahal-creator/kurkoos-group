@@ -42,12 +42,21 @@
 
 /* ---- Stat (rolling number) ---- */
 .hero__stat {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 1rem;
   padding-bottom: 1.4rem;
   margin-bottom: 1.6rem;
-  border-bottom: 1px solid var(--color-border);
+}
+/* קו הפרדה רך שמתעמעם בקצוות (במקום קו מלא) */
+.hero__stat::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 1px;
+  background: linear-gradient(to left, transparent, var(--color-border-strong), transparent);
 }
 .hero__stat-number {
   font-family: var(--font-heading);
@@ -189,8 +198,8 @@
     justify-content: center;
     margin-bottom: 0;
     padding-bottom: 0;
-    border-bottom: none;
   }
+  .hero__stat::after { display: none; }
   .hero__title { margin-bottom: 0; }
   .hero__subtitle { margin-inline: auto; margin-bottom: 0; }
   .hero__actions { justify-content: center; margin-bottom: 0; }

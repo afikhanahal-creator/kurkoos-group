@@ -22,22 +22,34 @@
 }
 [dir='rtl'] .projects-gallery__hint svg { transform: scaleX(-1); }
 
-/* ---- 4-up grid: כל הפרויקטים נראים יחד בדסקטופ ---- */
-.projects-gallery__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.4rem;
-  /* ריווח עליון/תחתון כדי שההרמה בריחוף והזוהר לא ייחתכו */
-  padding-block: 1rem;
+/* ---- Swipeable scroll-snap carousel ---- */
+.projects-gallery__viewport {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;   /* החלקה חלקה ב-iOS */
+  scrollbar-width: none;
+  /* ריווח עליון/תחתון כדי שהחלק העליון של הכרטיס, ההרמה בריחוף והזוהר לא ייחתכו */
+  padding-block: 1.25rem;
+}
+.projects-gallery__viewport::-webkit-scrollbar { display: none; }
+.projects-gallery__track {
+  display: flex;
+  gap: 1.25rem;
+  width: max-content;
+  padding-inline: var(--container-pad);
 }
 
 /* ---- Project card (image + rising "shutter" panel) ---- */
 .pg-card {
   position: relative;
-  width: 100%;
+  flex: 0 0 auto;
+  width: clamp(210px, 60vw, 250px);   /* כרטיס קומפקטי — יותר כרטיסים נראים בבת אחת */
   cursor: pointer;
   border-radius: var(--radius-lg);
   outline: none;
+  scroll-snap-align: start;
 }
 .pg-card:focus-visible { outline: 3px solid var(--color-primary-300); outline-offset: 4px; }
 
@@ -227,11 +239,6 @@
 }
 .pg-lightbox__close:hover { background: var(--color-accent-500); }
 [dir='rtl'] .pg-lightbox__bar .btn svg { transform: scaleX(-1); }
-
-/* ---- רספונסיביות הרשת ---- */
-@media (max-width: 1024px) { .projects-gallery__grid { grid-template-columns: repeat(2, 1fr); gap: 1.1rem; } }
-@media (max-width: 560px) { .projects-gallery__grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; } }
-@media (max-width: 380px) { .projects-gallery__grid { grid-template-columns: 1fr; } }
 
 @media (prefers-reduced-motion: reduce) {
   .pg-card__img,

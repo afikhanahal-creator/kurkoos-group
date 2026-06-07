@@ -14,10 +14,12 @@ const RATIOS = [0.82, 1.1, 0.72, 1.0, 0.88, 1.15, 0.76, 1.05, 0.92, 0.95]
 export default function HeroCollage({ title, subtitle, stats = [], items = [], cta = '' }) {
   return (
     <section className="hero-collage">
-      <div className="container hero-collage__head">
-        <h1 className="hero-collage__title">{title}</h1>
-        {subtitle && <p className="hero-collage__subtitle">{subtitle}</p>}
-      </div>
+      {title && (
+        <div className="container hero-collage__head">
+          <h1 className="hero-collage__title">{title}</h1>
+          {subtitle && <p className="hero-collage__subtitle">{subtitle}</p>}
+        </div>
+      )}
 
       <div className="container">
         <div className="hc-grid">

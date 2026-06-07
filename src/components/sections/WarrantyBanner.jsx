@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useI18n } from '../../i18n/index.jsx'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
+import KineticText from '../ui/KineticText.jsx'
 import './WarrantyBanner.css'
 
 export default function WarrantyBanner() {
@@ -24,7 +25,7 @@ export default function WarrantyBanner() {
 
         <Reveal className="warranty__content" variant="left" delay={0.1}>
           <span className="eyebrow">{t('warranty.eyebrow')}</span>
-          <h2 className="section-title">{t('warranty.title')}</h2>
+          <KineticText as="h2" className="section-title" text={t('warranty.title')} />
           <p className="section-lead">{t('warranty.lead')}</p>
 
           <ul className="warranty__points">

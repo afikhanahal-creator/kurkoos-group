@@ -1,46 +1,57 @@
 /* ============================================================
-   KineticText — אפקט קינטי per-letter (מבוסס MagicUI kinetic-text)
-   הותאם ל-RTL ולעיצוב הקיים: inline-block לכל אות (שומר סדר RTL
-   ושבירת מילים תקינה), רווחים כ-text-node לאפשר גלישה בין מילים.
+   KineticText — אפקט "גל משקל" אינטראקטיבי בריחוף (CSS טהור).
+   פורט מ-magicui/kinetic-text. מבוסס font-weight משתנה (Rubik variable),
+   קו-מתאר (-webkit-text-stroke) ומרווח, עם בוררי-אחים ל"גל" סביב האות.
    ============================================================ */
-.kinetic {
-  --hover-padding: calc(1em / 12);
-  --text-stroke-width: calc(1em * 125 / 6000);
-  font-weight: 600;
+
+.kinetic-text {
+  font-weight: 300;
+  font-family: var(--font-heading);
+  --kt-hover-padding: calc(1em / 12);
+  --kt-stroke-width: calc(1em * 125 / 6000);
 }
 
-.kinetic__char {
-  display: inline-block;
-  font-weight: 600;
+.kinetic-text__letter {
+  display: inline;
   -webkit-text-stroke-color: transparent;
-  -webkit-text-stroke-width: var(--text-stroke-width);
+  -webkit-text-stroke-width: var(--kt-stroke-width);
   will-change: font-weight, -webkit-text-stroke-width, padding;
-  transition: font-weight 0.4s, -webkit-text-stroke-color 0.4s, padding 0.4s;
+  transition:
+    font-weight 0.4s ease,
+    -webkit-text-stroke-color 0.4s ease,
+    padding 0.4s ease;
 }
 
-/* האות שמתחת לסמן — הכי כבדה + קו מתאר בצבע הטקסט */
-.kinetic__char:hover {
-  padding-inline: var(--hover-padding);
+/* האות שמרחפים מעליה — הכי כבדה + קו-מתאר + מרווח */
+.kinetic-text__letter:hover {
+  padding-inline: var(--kt-hover-padding);
   font-weight: 900;
-  -webkit-text-stroke-color: currentcolor;
-  -webkit-text-stroke-width: calc(var(--text-stroke-width) * 2);
+  -webkit-text-stroke-color: currentColor;
+  -webkit-text-stroke-width: calc(var(--kt-stroke-width) * 2);
 }
 
-/* שכן ראשון משני הצדדים — כבד מאוד (800) + ריווח */
-.kinetic__char:has(+ .kinetic__char:hover),
-.kinetic__char:hover + .kinetic__char {
-  padding-inline: var(--hover-padding);
-  font-weight: 800;
+/* האות שאחרי המרחפת → 600 + מרווח */
+.kinetic-text__letter:hover + .kinetic-text__letter {
+  padding-inline: var(--kt-hover-padding);
+  font-weight: 600;
+}
+/* שתי אותיות אחרי → 400 */
+.kinetic-text__letter:hover + .kinetic-text__letter + .kinetic-text__letter {
+  font-weight: 400;
 }
 
-/* שכן שני משני הצדדים — כבד (700) */
-.kinetic__char:has(+ .kinetic__char + .kinetic__char:hover),
-.kinetic__char:hover + .kinetic__char + .kinetic__char {
-  font-weight: 700;
+/* האות שלפני המרחפת (האות הבאה אחריה מרחפת) → 600 + מרווח */
+.kinetic-text__letter:has(+ .kinetic-text__letter:hover) {
+  padding-inline: var(--kt-hover-padding);
+  font-weight: 600;
+}
+/* שתי אותיות לפני → 400 */
+.kinetic-text__letter:has(+ .kinetic-text__letter + .kinetic-text__letter:hover) {
+  font-weight: 400;
 }
 
-/* טקסט לקוראי מסך — האותיות עצמן aria-hidden */
-.kinetic .sr-only {
+/* טקסט נגיש לקוראי מסך (האותיות aria-hidden) */
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;

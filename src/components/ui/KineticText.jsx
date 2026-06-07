@@ -1,23 +1,20 @@
+/* ============================================================
+   KineticText — פורט של רכיב magicui/kinetic-text (קרדיט @abdmjd1)
+   ל-stack של הפרויקט (JSX + CSS, ללא Tailwind/cn).
+   אפקט: כל אות מתעבה (font-weight) ומקבלת קו-מתאר ומרווח בריחוף,
+   והאותיות השכנות מגיבות ב"גל". דורש גופן variable (Rubik 300..900).
+   props: text (חובה), as (תג, ברירת מחדל h2), className.
+   ============================================================ */
 import './KineticText.css'
 
-/* ============================================================
-   KineticText — טיפוגרפיה קינטית שמגיבה לעכבר (מבוסס MagicUI).
-   כל אות מפוצלת ל-span; האות שמתחת לסמן מתעבה ומקבלת קו מתאר,
-   והשכנות מתעדנות בהדרגה — נוצר "גל" שעוקב אחרי העכבר.
-   טהור-CSS (\u200E:has + שכנים), בלי JS.
-   ============================================================ */
-export default function KineticText({ text, as: Tag = 'h2', className = '', ...rest }) {
+export default function KineticText({ text = '', as: Tag = 'h2', className = '', ...rest }) {
   return (
-    <Tag className={`kinetic ${className}`.trim()} {...rest}>
-      {Array.from(text).map((ch, i) =>
-        ch === ' ' ? (
-          ' '
-        ) : (
-          <span key={i} className="kinetic__char" aria-hidden="true">
-            {ch}
-          </span>
-        )
-      )}
+    <Tag {...rest} className={`kinetic-text ${className}`.trim()}>
+      {text.split('').map((ch, i) => (
+        <span key={i} aria-hidden="true" className="kinetic-text__letter">
+          {ch === ' ' ? ' ' : ch}
+        </span>
+      ))}
       <span className="sr-only">{text}</span>
     </Tag>
   )

@@ -43,6 +43,66 @@ export const projects = [
       { he: 'בריכה וחדר כושר', en: 'Pool & gym' },
       { he: 'חניון תת-קרקעי', en: 'Underground parking' },
     ],
+    floors: 24,
+    towers: 1,
+    architects: { he: 'יסקי מור סיון אדריכלים', en: 'Yaski Mor Sivan Architects' },
+    mapQuery: 'Rothschild Blvd, Tel Aviv',
+    environment: {
+      title: { he: 'בלב תל אביב הירוקה', en: 'In the heart of green Tel Aviv' },
+      text: {
+        he: 'הפרויקט ממוקם בסמיכות לפארק, לשדרות הירוקות ולמוקדי הבילוי והתרבות של העיר — איזון מושלם בין שלווה עירונית לנגישות מלאה לתחבורה, חינוך ומסחר.',
+        en: 'Located steps from the park, the green boulevards and the city’s culture and leisure hubs — a perfect balance of urban calm and full access to transit, education and commerce.',
+      },
+      image: img('1502672260266-1c1ef2d93688'),
+    },
+    plans: [img('1600585154340-be6161a56a0c'), img('1600607687939-ce8a6c25118c')],
+    planGroups: [
+      {
+        rooms: 2,
+        label: { he: 'דירות 2 חדרים', en: '2-room apartments' },
+        plans: [
+          { label: { he: 'דגם A', en: 'Type A' }, img: img('1600585154340-be6161a56a0c') },
+          { label: { he: 'דגם B', en: 'Type B' }, img: img('1600607687939-ce8a6c25118c') },
+        ],
+      },
+      {
+        rooms: 3,
+        label: { he: 'דירות 3 חדרים', en: '3-room apartments' },
+        plans: [
+          { label: { he: 'דגם A', en: 'Type A' }, img: img('1600566753086-00f18fb6b3ea') },
+          { label: { he: 'דגם B', en: 'Type B' }, img: img('1600210492493-0946911123ea') },
+          { label: { he: 'דגם C', en: 'Type C' }, img: img('1600585154340-be6161a56a0c') },
+        ],
+      },
+      {
+        rooms: 4,
+        label: { he: 'דירות 4 חדרים', en: '4-room apartments' },
+        plans: [
+          { label: { he: 'דגם A', en: 'Type A' }, img: img('1600607687939-ce8a6c25118c') },
+          { label: { he: 'דגם B', en: 'Type B' }, img: img('1600566753086-00f18fb6b3ea') },
+        ],
+      },
+      {
+        rooms: 5,
+        label: { he: 'דירות 5 חדרים', en: '5-room apartments' },
+        plans: [
+          { label: { he: 'דגם A', en: 'Type A' }, img: img('1600210492493-0946911123ea') },
+          { label: { he: 'דגם B', en: 'Type B' }, img: img('1600585154340-be6161a56a0c') },
+        ],
+      },
+      {
+        rooms: 6,
+        label: { he: 'דירות 6 חדרים (פנטהאוז)', en: '6-room apartments (penthouse)' },
+        plans: [
+          { label: { he: 'פנטהאוז', en: 'Penthouse' }, img: img('1600607687939-ce8a6c25118c') },
+        ],
+      },
+    ],
+    galleryGroups: [
+      { label: { he: 'הפרויקט', en: 'Project' }, images: [img('1545324418-cc1a3fa10c00'), img('1496307653780-42ee777d4833')] },
+      { label: { he: 'הדמיות פנים', en: 'Interiors' }, images: [img('1600585154340-be6161a56a0c'), img('1600607687939-ce8a6c25118c')] },
+      { label: { he: 'שטחים ציבוריים', en: 'Public areas' }, images: [img('1512917774080-9991f1c4c750'), img('1564013799919-ab600027ffc6')] },
+    ],
   },
   {
     slug: 'marina-towers',
@@ -69,6 +129,19 @@ export const projects = [
       { he: 'רחוב מסחרי', en: 'Commercial street' },
       { he: 'גינה קהילתית', en: 'Community garden' },
     ],
+    floors: 30,
+    towers: 2,
+    architects: { he: 'משרד אדריכלים ים-נוף', en: 'Sea-View Architects' },
+    mapQuery: 'Herzliya Marina',
+    environment: {
+      title: { he: 'על קו המים של הרצליה', en: 'On the Herzliya waterline' },
+      text: {
+        he: 'מיקום מבוקש סמוך למרינה, לחופים ולאזור העסקים — שילוב נדיר של חיי עיר תוססים עם שלווה של קו החוף ושטחים ירוקים.',
+        en: 'A sought-after location near the marina, the beaches and the business district — a rare blend of vibrant city life with the calm of the coastline and green spaces.',
+      },
+      image: img('1493809842364-78817add7ffb'),
+    },
+    plans: [img('1496307653780-42ee777d4833')],
   },
   {
     slug: 'green-heights',
@@ -95,6 +168,19 @@ export const projects = [
       { he: 'דירות גן ופנטהאוז', en: 'Garden & penthouse units' },
       { he: 'מערכות חכמות', en: 'Smart-home systems' },
     ],
+    floors: 8,
+    towers: 1,
+    architects: { he: 'גרין אדריכלים', en: 'Green Architects' },
+    mapQuery: 'Raanana',
+    environment: {
+      title: { he: 'ירוק, שקט ומחובר', en: 'Green, quiet and connected' },
+      text: {
+        he: 'שכונה בוטיק שקטה במרכז רעננה, מוקפת פארקים ושבילי הליכה, בקרבת מוסדות חינוך מובילים ומרכזי מסחר — איכות חיים גבוהה לכל המשפחה.',
+        en: 'A quiet boutique neighborhood in central Raanana, surrounded by parks and walking trails, near leading schools and commercial centers — high quality of life for the whole family.',
+      },
+      image: img('1512917774080-9991f1c4c750'),
+    },
+    plans: [img('1564013799919-ab600027ffc6')],
   },
   {
     slug: 'city-center-renewal',
@@ -121,6 +207,19 @@ export const projects = [
       { he: 'מרחב ציבורי חדש', en: 'New public realm' },
       { he: 'דיור בר-השגה', en: 'Affordable housing mix' },
     ],
+    floors: 18,
+    towers: 3,
+    architects: { he: 'אורבן סטודיו אדריכלים', en: 'Urban Studio Architects' },
+    mapQuery: 'Bat Yam',
+    environment: {
+      title: { he: 'לב חדש לבת ים', en: 'A new heart for Bat Yam' },
+      text: {
+        he: 'התחדשות עירונית רחבת היקף המחדשת שכונה שלמה — מרחב ציבורי מזמין, שדרוג תשתיות, מוסדות חינוך ומסחר, וקרבה לים ולתחבורה.',
+        en: 'Large-scale urban renewal revitalizing an entire neighborhood — inviting public space, upgraded infrastructure, education and commerce, and proximity to the sea and transit.',
+      },
+      image: img('1449824913935-59a10b8d2000'),
+    },
+    plans: [img('1486325212027-8081e485255e')],
   },
 ]
 

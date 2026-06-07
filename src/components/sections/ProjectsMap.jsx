@@ -5,6 +5,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import projects from '../../data/projects.js'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
+import KineticText from '../ui/KineticText.jsx'
 import './ProjectsMap.css'
 
 /* מיקומי סיכות על המפה (אחוזים). ערוך כאן כדי למקם פרויקט. */
@@ -91,7 +92,7 @@ export default function ProjectsMap() {
           {/* תוכן + מקרא */}
           <Reveal className="projects-map__intro" variant="left" delay={0.1}>
             <span className="eyebrow">{t('map.eyebrow')}</span>
-            <h2 className="section-title projects-map__title">{t('map.title')}</h2>
+            <KineticText as="h2" className="section-title projects-map__title" text={t('map.title')} />
 
             <div className="projects-map__legend">
               {LEGEND.map((l) => (

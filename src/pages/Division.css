@@ -52,6 +52,8 @@
 .division-projects__head { text-align: center; margin-bottom: 3rem; }
 .division-projects__head .eyebrow { justify-content: center; }
 .division-projects__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.8rem; }
+/* ערימת הכרטיסים מוצגת רק במובייל (חוסכת מקום); הרשת מוסתרת שם */
+.division-projects__stack { display: none; }
 
 /* ---- Guide band ---- */
 .division-guide__band {
@@ -74,5 +76,7 @@
   .division-projects__grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
-  .division-why__grid, .division-projects__grid { grid-template-columns: 1fr; }
+  .division-why__grid { grid-template-columns: 1fr; }
+  .division-projects__grid { display: none; }
+  .division-projects__stack { display: block; }
 }

@@ -4,7 +4,6 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import testimonials from '../../data/testimonials.js'
 import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
-import KineticText from '../ui/KineticText.jsx'
 import './Testimonials.css'
 
 const AUTO_MS = 3500 // החלפה אוטומטית כל ~3.5 שניות
@@ -46,7 +45,7 @@ export default function Testimonials() {
       <div className="container">
         <div className="testimonials__head">
           <span className="eyebrow">{t('testimonials.eyebrow')}</span>
-          <KineticText as="h2" className="section-title" text={t('testimonials.title')} />
+          <h2 className="section-title">{t('testimonials.title')}</h2>
           <p className="section-lead">{t('testimonials.lead')}</p>
         </div>
 

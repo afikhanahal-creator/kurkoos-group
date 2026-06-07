@@ -3,7 +3,6 @@ import jobs from '../data/jobs.js'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
-import KineticText from '../components/ui/KineticText.jsx'
 import './Careers.css'
 
 export default function Careers() {
@@ -20,7 +19,7 @@ export default function Careers() {
       />
       <section className="section careers-page">
         <div className="container">
-          <KineticText as="h2" className="section-title careers-page__heading" text={t('pages.careers.openings')} />
+          <h2 className="section-title careers-page__heading">{t('pages.careers.openings')}</h2>
           <ul className="careers-list">
             {jobs.map((j, i) => (
               <Reveal as="li" key={j.id} className="job-card" delay={i * 0.06}>

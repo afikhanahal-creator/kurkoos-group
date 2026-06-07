@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import { getDivision } from '../data/divisions.js'
 import projects from '../data/projects.js'
-import HeroCollage from '../components/ui/HeroCollage.jsx'
+import ProjectCard from '../components/ui/ProjectCard.jsx'
+import CardStack from '../components/ui/CardStack.jsx'
 import Testimonials from '../components/sections/Testimonials.jsx'
 import Contact from '../components/sections/Contact.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -13,7 +14,6 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
-import KineticText from '../components/ui/KineticText.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import './Division.css'
 
@@ -25,18 +25,8 @@ export default function Division() {
 
   if (!division) return <Navigate to="/" replace />
 
-  // קולאז' התמונות של כל הפרויקטים — כמו בעמוד "כל הפרויקטים".
-  // תמונות ייחודיות (כיסוי + גלריה) מכל הפרויקטים, כל אחת מקושרת לעמוד הפרויקט.
-  const seen = new Set()
-  const collageItems = []
-  projects.forEach((p) => {
-    ;[p.cover, ...(p.gallery || [])].forEach((url) => {
-      if (url && !seen.has(url)) {
-        seen.add(url)
-        collageItems.push({ url, name: L(p.name), to: `/projects/${p.slug}` })
-      }
-    })
-  })
+  // מציג את כל הפרויקטים (עד 4), בדומה לעמוד "כל הפרויקטים".
+  const list = projects.slice(0, 4)
 
   return (
     <article className="division">
@@ -84,7 +74,7 @@ export default function Division() {
         <div className="container">
           <Reveal className="division-why__head">
             <span className="eyebrow">{t('activities.eyebrow')}</span>
-            <KineticText as="h2" className="section-title" text={L(division.name)} />
+            <h2 className="section-title">{L(division.name)}</h2>
           </Reveal>
           <div className="division-why__grid">
             {division.why.map((w, i) => (
@@ -96,14 +86,33 @@ export default function Division() {
         </div>
       </section>
 
-      {/* פרויקטים — קולאז' התמונות של כל הפרויקטים */}
-      <section className="division-projects" id="projects">
+      {/* פרויקטים */}
+      <section className="section division-projects" id="projects">
         <div className="container">
           <Reveal className="division-projects__head">
-            <KineticText as="h2" className="section-title" text={t('projects.title')} />
+            <h2 className="section-title">{t('projects.title')}</h2>
           </Reveal>
+          {/* דסקטופ — רשת כרטיסים */}
+          <div className="division-projects__grid">
+            {list.map((p, i) => (
+              <Reveal key={p.slug} delay={(i % 3) * 0.08}>
+                <ProjectCard project={p} />
+              </Reveal>
+            ))}
+          </div>
+          {/* מובייל — ערימת כרטיסים אינטראקטיבית (חוסכת מקום) */}
+          <div className="division-projects__stack">
+            <CardStack
+              items={list.map((p) => ({
+                image: p.cover,
+                title: L(p.name),
+                tagline: `${L(p.city)} · ${L(p.type)}`,
+                to: `/projects/${p.slug}`,
+              }))}
+              cta={t('projects.viewProject')}
+            />
+          </div>
         </div>
-        <HeroCollage items={collageItems} cta={t('projects.viewProject')} />
       </section>
 
       {/* מדריך */}

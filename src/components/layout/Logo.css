@@ -1,27 +1,23 @@
 .logo {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: transparent;
 }
 
 .logo__img {
-  height: 60px;
+  height: 88px;
   width: auto;
-  max-width: 220px;             /* מונע גלישה מלוגו רחב */
+  max-width: 240px;
   object-fit: contain;
   display: block;
-  margin-inline: auto;          /* ממורכז בכל מיכל שמקצה לו רוחב */
-  background: transparent;
   transition: height var(--dur-base) var(--ease-out);
 }
 
-/* מתכווץ עם ה-Header בגלילה */
-.header--scrolled .logo__img { height: 56px; }
+/* מתכווץ מעט בגלילה — עדיין גדול */
+.header--scrolled .logo__img { height: 70px; }
 
-/* בפוטר — מעט גדול יותר */
-.footer .logo__img { height: 60px; }
+/* בפוטר */
+.footer .logo__img { height: 72px; }
 
 @media (max-width: 600px) {
-  .logo__img { height: 50px; }
+  .logo__img { height: 62px; }
 }

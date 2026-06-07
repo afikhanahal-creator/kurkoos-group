@@ -1,7 +1,6 @@
 import { useI18n } from '../i18n/index.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
-import KineticText from '../components/ui/KineticText.jsx'
 import Stats from '../components/sections/Stats.jsx'
 import ValueChain from '../components/sections/ValueChain.jsx'
 import Partners from '../components/sections/Partners.jsx'
@@ -51,7 +50,7 @@ export default function About() {
         <div className="container">
           <Reveal className="about-vision__inner">
             <span className="eyebrow">{vision.eyebrow}</span>
-            <KineticText as="h2" className="section-title about-vision__heading" text={vision.heading} />
+            <h2 className="section-title about-vision__heading">{vision.heading}</h2>
             {vision.paragraphs.map((p, i) => (
               <p className="about-vision__p" key={i}>{p}</p>
             ))}

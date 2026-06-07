@@ -1,0 +1,85 @@
+.card-stack { width: 100%; max-width: 22rem; margin-inline: auto; }
+
+.card-stack__deck {
+  position: relative;
+  height: 24rem;
+}
+.card-stack__card {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-4);
+  overflow: hidden;
+  cursor: grab;
+  will-change: transform;
+  transform-origin: 50% 0%;
+}
+.card-stack__card:active { cursor: grabbing; }
+
+.card-stack__img {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+.card-stack__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-stack__title {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 1.4rem 1.1rem 0.9rem;
+  background: linear-gradient(to top, rgba(7, 34, 48, 0.92), transparent);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.card-stack__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.9rem 1.1rem 1.1rem;
+}
+.card-stack__tagline { font-size: 0.9rem; color: var(--color-text-soft); }
+.card-stack__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-accent-500);
+  white-space: nowrap;
+}
+[dir='rtl'] .card-stack__cta svg { transform: scaleX(-1); }
+
+.card-stack__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.2rem;
+}
+.card-stack__next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-900);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+[dir='rtl'] .card-stack__next svg { transform: scaleX(-1); }
+.card-stack__dots { display: flex; gap: 0.35rem; }
+.card-stack__dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--color-border-strong);
+  transition: background var(--dur-fast), transform var(--dur-fast);
+}
+.card-stack__dot.is-active { background: var(--color-accent-500); transform: scale(1.3); }

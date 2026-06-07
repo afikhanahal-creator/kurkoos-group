@@ -30,8 +30,7 @@
   font-display: swap;
 }
 
-/* ---- Miriam Libre (כותרות) — SIL OFL · variable wght 400–700 ----
-   קובץ אחד מכסה את כל המשקלים (Regular→Bold). הסטטיים ב-static/ כגיבוי. */
+/* ---- Miriam Libre (כותרות/גוף) — SIL OFL · variable wght 400–700 ---- */
 @font-face {
   font-family: 'Miriam Libre';
   src: url('/fonts/miriam-libre/MiriamLibre-VariableFont_wght.ttf') format('truetype-variations');

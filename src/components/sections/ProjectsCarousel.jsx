@@ -5,7 +5,6 @@ import projects from '../../data/projects.js'
 import ProjectCard from '../ui/ProjectCard.jsx'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
-import KineticText from '../ui/KineticText.jsx'
 import './ProjectsCarousel.css'
 
 export default function ProjectsCarousel() {
@@ -51,7 +50,7 @@ export default function ProjectsCarousel() {
         <div className="projects-carousel__head">
           <Reveal>
             <span className="eyebrow">{t('projects.eyebrow')}</span>
-            <KineticText as="h2" className="section-title" text={t('projects.title')} />
+            <h2 className="section-title">{t('projects.title')}</h2>
             <p className="section-lead">{t('projects.lead')}</p>
           </Reveal>
 

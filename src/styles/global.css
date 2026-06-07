@@ -368,22 +368,3 @@ html.a11y-links a { text-decoration: underline; text-underline-offset: 3px; }
     transition-duration: 0.001ms !important;
   }
 }
-
-/* ---------- Polish: selection, scrollbar, broken-image ---------- */
-::selection { background: var(--color-secondary); color: #fff; }
-
-/* פס גלילה מעוצב — דסקטופ בלבד, מותג עדין */
-@media (min-width: 900px) {
-  * { scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
-  ::-webkit-scrollbar { width: 11px; height: 11px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-border-strong);
-    border-radius: var(--radius-pill);
-    border: 3px solid var(--color-bg);
-  }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-primary-300); }
-}
-
-/* טקסט alt קריא כשתמונה לא נטענת */
-img { font-style: italic; font-size: 0.85rem; color: var(--color-text-muted); }

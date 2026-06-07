@@ -116,7 +116,8 @@
 .header__actions { display: flex; align-items: center; gap: 0.6rem; }
 .header__lang { color: var(--color-primary); }
 .header__icon-btn {
-  display: grid;
+  /* הוסר מהדסקטופ לפי בקשה (במובייל ממילא מוסתר) */
+  display: none;
   place-items: center;
   width: 42px; height: 42px;
   border-radius: 50%;
@@ -124,13 +125,25 @@
   transition: background var(--dur-fast), color var(--dur-fast);
 }
 .header__icon-btn:hover { background: var(--color-bg-soft); color: var(--color-secondary); }
-.header__cta-btn { padding: 0.45em 1.1em; font-size: 0.85rem; min-height: 36px; }
+.header__cta-btn { padding: 0.5em 1.25em; font-size: 0.92rem; min-height: 40px; }
+/* דסקטוף — "צור קשר" ו-EN קומפקטיים ותואמי גובה */
+@media (min-width: 981px) {
+  .header__cta-btn { padding: 0.24em 0.62em; font-size: 0.7rem; min-height: 24px; }
+  .header__lang { padding: 0; }
+  .lang-switch { font-size: 0.66rem; padding: 0.24rem 0.5rem; }
+}
 
 .header__burger {
   display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   color: var(--color-primary);
-  padding: 0.3rem;
+  border-radius: var(--radius-md);
+  transition: color var(--dur-fast), background var(--dur-fast), transform var(--dur-fast);
 }
+.header__burger:hover { color: var(--color-secondary); background: var(--color-bg-soft); }
+.header__burger:active { transform: scale(0.92); }
 
 /* ---- Mobile menu ---- */
 .header__mobile {
@@ -161,7 +174,8 @@
 .header__mobile-group { border-bottom: 1px solid var(--color-border); }
 .header__mobile-row { display: flex; align-items: center; justify-content: space-between; }
 .header__mobile-group .header__mobile-link { border-bottom: none; flex: 1; }
-.header__mobile-toggle { padding: 0.5rem; color: var(--color-text-soft); }
+.header__mobile-toggle { padding: 0.5rem; color: var(--color-text-soft); transition: color var(--dur-fast); }
+.header__mobile-toggle:hover { color: var(--color-secondary); }
 .header__mobile-toggle svg { transition: transform var(--dur-base); }
 .header__mobile-sub { overflow: hidden; padding-inline-start: 1rem; }
 .header__mobile-sublink {
@@ -176,9 +190,9 @@
 .lang-switch {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   letter-spacing: 0.05em;
-  padding: 0.3rem 0.7rem;
+  padding: 0.28rem 0.6rem;
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   color: inherit;
@@ -189,12 +203,67 @@
 
 /* ---- Responsive ---- */
 @media (max-width: 980px) {
-  .header__nav, .header__cta-btn { display: none; }
-  .header__burger { display: inline-flex; }
-  .header__actions { margin-inline-start: auto; }
-  .header__main-inner { height: 78px; }
-  .header--scrolled .header__main-inner { height: 66px; }
+  .header__nav { display: none; }
+  .header__burger { display: inline-grid; }
+
+  /* שלוש "אוזניים": המבורגר | לוגו ממורכז | צור קשר.
+     עמודות הצד שוות (1fr) והאמצע auto → הלוגו ממורכז במדויק
+     ללא תלות ברוחב האוזניים. min-width:0 מונע מהן "לתפוח". */
+  .header__main-inner {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    height: 76px;
+  }
+  .header--scrolled .header__main-inner { height: 64px; }
+  .header__burger  { justify-self: start; min-width: 0; }
+  .logo            { justify-self: center; min-width: 0; }
+  .header__actions { justify-self: end; min-width: 0; gap: 0.4rem; }
+
+  /* הסרת כפתור החיפוש במובייל */
+  .header__icon-btn { display: none; }
+
+  /* לוגו ממורכז — גדול יותר (specificity מוגבר כדי לנצח את ברירת המחדל) */
+  .header__main-inner .logo__img { height: 60px; max-width: 100%; }
+  .header--scrolled .header__main-inner .logo__img { height: 52px; }
+
+  /* כפתור "צור קשר" — גלולה אדומה מעוצבת, יעד מגע נוח, שורה אחת.
+     selector מוגבר (0,2,0) שמנצח את .btn. */
+  .header__actions .header__cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 0.6em 1.3em;
+    font-size: 0.85rem;
+    font-weight: 700;
+    min-height: 40px;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent-500);
+    color: #fff;
+    box-shadow: 0 5px 16px -4px rgba(169, 11, 12, 0.5);
+  }
+  .header__actions .header__cta-btn:hover { background: var(--color-accent-600); }
+  .header__actions .header__cta-btn:active { transform: scale(0.96); }
 }
 @media (max-width: 600px) {
   .header__lang { display: none; }
+  .header__main-inner { gap: 0.4rem; height: 70px; }
+  .header--scrolled .header__main-inner { height: 60px; }
+
+  .header__main-inner .logo__img { height: 46px; }
+  .header--scrolled .header__main-inner .logo__img { height: 42px; }
+
+  .header__actions .header__cta-btn {
+    padding: 0.55em 1.1em;
+    font-size: 0.8rem;
+    min-height: 38px;
+  }
+}
+@media (max-width: 380px) {
+  .header__main-inner { gap: 0.25rem; }
+  .header__main-inner .logo__img { height: 40px; }
+  .header__burger { width: 40px; height: 40px; }
+  .header__actions .header__cta-btn { font-size: 0.74rem; padding: 0.5em 0.95em; min-height: 36px; }
 }

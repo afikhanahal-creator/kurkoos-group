@@ -38,6 +38,9 @@
   display: flex;
   gap: 1.25rem;
   width: max-content;
+  max-width: 100%;
+  /* margin auto ממרכז את 4 הכרטיסים בדסקטופ כשהם נכנסים; במסך צר נשאר גלילה */
+  margin-inline: auto;
   padding-inline: var(--container-pad);
 }
 

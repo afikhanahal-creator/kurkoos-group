@@ -11,8 +11,8 @@ import SpotlightCard from '../ui/SpotlightCard.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './ProjectsGallery.css'
 
-const AUTOPLAY = 3000 // משך הצגה לכל כרטיס (מ"ש)
-const COPIES = 3      // משכפלים את הרשימה ליצירת לולאה אינסופית חלקה
+const FEATURED = 4    // מציגים בדיוק 4 פרויקטים בדף הבית
+const AUTOPLAY = 3500 // משך הצגה לכל כרטיס (מ"ש) — פעיל רק כשיש גלילה (מובייל/מסך צר)
 const GAP = 20        // מרווח בין כרטיסים (1.25rem)
 
 const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
@@ -65,61 +65,14 @@ export default function ProjectsGallery() {
   const pausedRef = useRef(false)
   const elapsedRef = useRef(0)
   const lastTsRef = useRef(0)
-  const metricsRef = useRef({ step: 0, setWidth: 0 })
 
-  // כיוון ההתקדמות: ב-RTL מתקדמים שמאלה => scrollLeft קטֵן (שלילי)
+  // כיוון ההתקדמות: ב-RTL מתקדמים שמאלה => scrollLeft שלילי
   const dir = isRTL ? -1 : 1
 
-  // רשימה משוכפלת ×3 — מאפשרת לולאה בלי קצוות
-  const loop = []
-  for (let c = 0; c < COPIES; c++) {
-    for (const p of projects) loop.push({ p, key: `${p.slug}-${c}` })
-  }
+  // בדיוק 4 פרויקטים — בלי שכפול
+  const items = projects.slice(0, FEATURED)
 
-  const measure = useCallback(() => {
-    const el = viewportRef.current
-    if (!el) return
-    const card = el.querySelector('.pg-card')
-    const step = card ? card.offsetWidth + GAP : 300
-    metricsRef.current = { step, setWidth: step * projects.length }
-  }, [])
-
-  // "גלישה" בלתי-נראית: שומר את המיקום בתוך עותק האמצע. כיוון שהתוכן
-  // חוזר על עצמו כל setWidth — קפיצה בגודל setWidth אינה נראית לעין.
-  const normalize = useCallback(() => {
-    const el = viewportRef.current
-    const { setWidth } = metricsRef.current
-    if (!el || !setWidth) return
-    const abs = Math.abs(el.scrollLeft)
-    if (abs >= 2 * setWidth) el.scrollLeft -= dir * setWidth
-    else if (abs < setWidth) el.scrollLeft += dir * setWidth
-  }, [dir])
-
-  // מיקום התחלתי בעותק האמצעי (יש "מרווח ריצה" לשני הכיוונים)
-  useEffect(() => {
-    const el = viewportRef.current
-    if (!el) return
-    measure()
-    el.scrollLeft = dir * metricsRef.current.setWidth
-    const onResize = () => { measure(); normalize() }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [measure, normalize, dir])
-
-  // לאחר שהגלילה נעצרת (אוטומטית או ידנית) — מנרמלים את המיקום ללולאה
-  useEffect(() => {
-    const el = viewportRef.current
-    if (!el) return
-    let tid
-    const onScroll = () => {
-      clearTimeout(tid)
-      tid = setTimeout(normalize, 140)
-    }
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => { el.removeEventListener('scroll', onScroll); clearTimeout(tid) }
-  }, [normalize])
-
-  // ניגון אוטומטי — מתקדם כרטיס אחד שמאלה, נעצר במגע/ריחוף
+  // ניגון אוטומטי — רק כשהתוכן רחב מהמסך (יש גלילה). מגיע לסוף → חוזר להתחלה.
   useEffect(() => {
     let raf
     lastTsRef.current = 0
@@ -127,13 +80,21 @@ export default function ProjectsGallery() {
       const last = lastTsRef.current || ts
       const dt = ts - last
       lastTsRef.current = ts
-      if (!pausedRef.current) {
-        elapsedRef.current += dt
-        if (elapsedRef.current >= AUTOPLAY) {
-          elapsedRef.current = 0
-          const el = viewportRef.current
-          const { step } = metricsRef.current
-          if (el && step) el.scrollBy({ left: dir * step, behavior: 'smooth' })
+      const el = viewportRef.current
+      if (el && !pausedRef.current) {
+        const max = el.scrollWidth - el.clientWidth
+        if (max > 4) { // יש גלילה בפועל
+          elapsedRef.current += dt
+          if (elapsedRef.current >= AUTOPLAY) {
+            elapsedRef.current = 0
+            const card = el.querySelector('.pg-card')
+            const step = card ? card.offsetWidth + GAP : 270
+            if (Math.abs(el.scrollLeft) >= max - 4) {
+              el.scrollTo({ left: 0, behavior: 'smooth' })
+            } else {
+              el.scrollBy({ left: dir * step, behavior: 'smooth' })
+            }
+          }
         }
       }
       raf = requestAnimationFrame(tick)
@@ -169,9 +130,9 @@ export default function ProjectsGallery() {
           whileInView="visible"
           viewport={{ once: true, amount: 'some' }}
         >
-          {loop.map(({ p, key }) => (
+          {items.map((p) => (
             <motion.article
-              key={key}
+              key={p.slug}
               className="pg-card"
               variants={itemVariants}
               onClick={() => setSelected(p)}

@@ -1,12 +1,13 @@
 import { useRef } from 'react'
 import { motion, useSpring, useMotionTemplate } from 'framer-motion'
 
-/* קוביית סטטיסטיקה אינטראקטיבית עם נפח (3D) — הטיה לפי מיקום הסמן, הרמה,
-   צל דינמי ונצנוץ אור שעוקב אחרי הסמן. שומר על העיצוב הקיים של .pd-stat.
-   ההטיה פעילה רק במכשירים עם עכבר/הצבעה מדויקת (לא במגע) ומכבדת reduce-motion. */
+/* קוביית סטטיסטיקה אינטראקטיבית עם נפח (3D) — הטיה לפי מיקום הסמן, דחיפה קדימה
+   (translateZ) שמגדילה את הנפח בריחוף, הרמה, צל דינמי ונצנוץ אור שעוקב אחרי הסמן.
+   שומר על העיצוב הקיים של .pd-stat. פעיל רק עם עכבר/הצבעה מדויקת ומכבד reduce-motion. */
 
-const TILT = 13 // מעלות מקסימום לכל ציר
-const SPRING = { stiffness: 260, damping: 18, mass: 0.6 }
+const TILT = 22 // מעלות מקסימום לכל ציר
+const PUSH = 70 // כמה הקוביה "נדחפת" קדימה בריחוף (px translateZ) — זה הנפח הנוסף
+const SPRING = { stiffness: 280, damping: 17, mass: 0.6 }
 
 const canTilt =
   typeof window !== 'undefined' &&
@@ -17,6 +18,7 @@ export default function StatCube({ className = '', children }) {
   const ref = useRef(null)
   const rotateX = useSpring(0, SPRING)
   const rotateY = useSpring(0, SPRING)
+  const z = useSpring(0, SPRING) // דחיפה קדימה → נפח 3D בריחוף
   const scale = useSpring(1, SPRING)
   const lift = useSpring(0, SPRING)
   const gx = useSpring(50, SPRING) // מיקום הנצנוץ (%) — אופקי
@@ -24,6 +26,7 @@ export default function StatCube({ className = '', children }) {
   const shX = useSpring(0, SPRING) // היסט צל אופקי
   const shY = useSpring(8, SPRING) // היסט צל אנכי
   const shBlur = useSpring(16, SPRING)
+  const shAlpha = useSpring(0.05, SPRING)
 
   const handleMove = (e) => {
     if (!canTilt) return
@@ -33,18 +36,21 @@ export default function StatCube({ className = '', children }) {
     const py = (e.clientY - r.top) / r.height // 0..1
     rotateY.set((px - 0.5) * TILT * 2)
     rotateX.set((0.5 - py) * TILT * 2)
-    scale.set(1.07)
-    lift.set(-6)
+    z.set(PUSH)
+    scale.set(1.06)
+    lift.set(-10)
     gx.set(px * 100)
     gy.set(py * 100)
-    shX.set((0.5 - px) * 26)
-    shY.set(18 + (1 - py) * 10)
-    shBlur.set(34)
+    shX.set((0.5 - px) * 30)
+    shY.set(22 + (1 - py) * 12)
+    shBlur.set(40)
+    shAlpha.set(0.28)
   }
 
   const reset = () => {
     rotateX.set(0)
     rotateY.set(0)
+    z.set(0)
     scale.set(1)
     lift.set(0)
     gx.set(50)
@@ -52,10 +58,11 @@ export default function StatCube({ className = '', children }) {
     shX.set(0)
     shY.set(8)
     shBlur.set(16)
+    shAlpha.set(0.05)
   }
 
-  const glare = useMotionTemplate`radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.6), rgba(255,255,255,0) 60%)`
-  const boxShadow = useMotionTemplate`${shX}px ${shY}px ${shBlur}px rgba(16,85,114,0.22)`
+  const glare = useMotionTemplate`radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.65), rgba(255,255,255,0) 60%)`
+  const boxShadow = useMotionTemplate`${shX}px ${shY}px ${shBlur}px rgba(16,85,114,${shAlpha})`
 
   return (
     <motion.div
@@ -64,10 +71,11 @@ export default function StatCube({ className = '', children }) {
       onPointerMove={handleMove}
       onPointerLeave={reset}
       style={{
-        transformPerspective: 800,
+        transformPerspective: 480, // פרספקטיבה קצרה = תלת-ממד דרמטי יותר
         transformStyle: 'preserve-3d',
         rotateX,
         rotateY,
+        z,
         scale,
         y: lift,
         boxShadow,

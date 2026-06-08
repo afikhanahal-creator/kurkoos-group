@@ -356,9 +356,9 @@
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 0.5rem;
-    height: 76px;
+    height: 84px;
   }
-  .header--scrolled .header__main-inner { height: 64px; }
+  .header--scrolled .header__main-inner { height: 70px; }
   .header__burger  { justify-self: start; min-width: 0; }
   .logo            { justify-self: center; min-width: 0; }
   .header__actions { justify-self: end; min-width: 0; gap: 0.4rem; }
@@ -367,8 +367,8 @@
   .header__icon-btn { display: none; }
 
   /* לוגו ממורכז — גדול יותר (specificity מוגבר כדי לנצח את ברירת המחדל) */
-  .header__main-inner .logo__img { height: 66px; max-width: 100%; }
-  .header--scrolled .header__main-inner .logo__img { height: 56px; }
+  .header__main-inner .logo__img { height: 74px; max-width: 100%; }
+  .header--scrolled .header__main-inner .logo__img { height: 62px; }
 
   /* כפתור "צור קשר" — גלולה אדומה מעוצבת, יעד מגע נוח, שורה אחת.
      selector מוגבר (0,2,0) שמנצח את .btn. */
@@ -391,11 +391,11 @@
 }
 @media (max-width: 600px) {
   .header__lang { display: none; }
-  .header__main-inner { gap: 0.4rem; height: 70px; }
-  .header--scrolled .header__main-inner { height: 60px; }
+  .header__main-inner { gap: 0.4rem; height: 78px; }
+  .header--scrolled .header__main-inner { height: 66px; }
 
-  .header__main-inner .logo__img { height: 58px; }
-  .header--scrolled .header__main-inner .logo__img { height: 50px; }
+  .header__main-inner .logo__img { height: 68px; }
+  .header--scrolled .header__main-inner .logo__img { height: 58px; }
 
   .header__actions .header__cta-btn {
     padding: 0.55em 1.1em;

@@ -101,9 +101,9 @@
   transform-style: preserve-3d;   /* מאפשר נפח לתוכן הפנימי */
   will-change: transform;
 }
-/* נפח 3D — הערך והתווית "מרחפים" מעל פני הקוביה */
-.pd-stat__value { transform: translateZ(24px); }
-.pd-stat__label { transform: translateZ(12px); }
+/* נפח 3D — הערך והתווית "מרחפים" מעל פני הקוביה (עמוק יותר → נפח חזק יותר) */
+.pd-stat__value { transform: translateZ(58px); }
+.pd-stat__label { transform: translateZ(32px); }
 /* נצנוץ אור שעוקב אחרי הסמן (המיקום נשלט ע"י StatCube) */
 .pd-stat__glare {
   position: absolute;
@@ -462,10 +462,10 @@
   position: relative;
   z-index: 1;
   display: grid;
-  /* טופס בצד ימין (inline-start) ותמונה בצד שמאל — כמו בטופס הקבוע */
-  grid-template-columns: minmax(0, clamp(320px, 32vw, 440px)) minmax(0, clamp(340px, 34vw, 500px));
+  /* שני טורים שווים בגודלם (טופס + יומן), ממורכזים יחד */
+  grid-template-columns: repeat(2, minmax(0, clamp(320px, 31vw, 430px)));
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   gap: clamp(1rem, 2.5vw, 2.5rem);
 }
 .pd-contact__panel { order: 0; }
@@ -605,20 +605,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1rem, 2vw, 1.75rem);
-}
-/* הילה רכה בגוון המותג מאחורי היומן — עומק עדין, בלי משטח ירוק */
-.pd-contact__media::before {
-  content: '';
-  position: absolute;
-  inset: 4%;
-  background: radial-gradient(78% 68% at 72% 22%, var(--color-secondary-soft), transparent 72%);
-  filter: blur(6px);
-  pointer-events: none;
+  padding: clamp(0.4rem, 1.2vw, 0.9rem);
 }
 .pd-contact__media .bcal {
   position: relative;
   z-index: 1;
+  width: 100%;
 }
 
 /* ---------- Lightbox ---------- */

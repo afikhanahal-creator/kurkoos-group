@@ -548,7 +548,15 @@ export default function ProjectDetail() {
               )}
             </div>
             <div className="pd-contact__media">
-              <BookingCalendar title={L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })} />
+              <BookingCalendar
+                title={L({ he: 'קבעו פגישה', en: 'Book a meeting' })}
+                onPickDate={(label) =>
+                  setForm((f) => ({
+                    ...f,
+                    message: f.message || L({ he: `אשמח לתאם פגישה ל-${label}`, en: `I'd like to book a meeting on ${label}` }),
+                  }))
+                }
+              />
             </div>
           </div>
         </div>

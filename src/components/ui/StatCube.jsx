@@ -5,9 +5,9 @@ import { motion, useSpring, useMotionTemplate } from 'framer-motion'
    (translateZ) שמגדילה את הנפח בריחוף, הרמה, צל דינמי ונצנוץ אור שעוקב אחרי הסמן.
    שומר על העיצוב הקיים של .pd-stat. פעיל רק עם עכבר/הצבעה מדויקת ומכבד reduce-motion. */
 
-const TILT = 22 // מעלות מקסימום לכל ציר
-const PUSH = 70 // כמה הקוביה "נדחפת" קדימה בריחוף (px translateZ) — זה הנפח הנוסף
-const SPRING = { stiffness: 280, damping: 17, mass: 0.6 }
+const TILT = 12 // מעלות מקסימום לכל ציר (עדין)
+const PUSH = 26 // כמה הקוביה "נדחפת" קדימה בריחוף (px translateZ) — נפח עדין
+const SPRING = { stiffness: 280, damping: 18, mass: 0.6 }
 
 const canTilt =
   typeof window !== 'undefined' &&
@@ -37,14 +37,14 @@ export default function StatCube({ className = '', children }) {
     rotateY.set((px - 0.5) * TILT * 2)
     rotateX.set((0.5 - py) * TILT * 2)
     z.set(PUSH)
-    scale.set(1.06)
-    lift.set(-10)
+    scale.set(1.035)
+    lift.set(-6)
     gx.set(px * 100)
     gy.set(py * 100)
-    shX.set((0.5 - px) * 30)
-    shY.set(22 + (1 - py) * 12)
-    shBlur.set(40)
-    shAlpha.set(0.28)
+    shX.set((0.5 - px) * 20)
+    shY.set(14 + (1 - py) * 8)
+    shBlur.set(28)
+    shAlpha.set(0.16)
   }
 
   const reset = () => {
@@ -71,7 +71,7 @@ export default function StatCube({ className = '', children }) {
       onPointerMove={handleMove}
       onPointerLeave={reset}
       style={{
-        transformPerspective: 480, // פרספקטיבה קצרה = תלת-ממד דרמטי יותר
+        transformPerspective: 800, // פרספקטיבה רכה = תלת-ממד עדין
         transformStyle: 'preserve-3d',
         rotateX,
         rotateY,

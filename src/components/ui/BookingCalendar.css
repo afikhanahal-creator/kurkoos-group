@@ -1,18 +1,32 @@
-/* ---- יומן תיאום פגישה (Flat 2.0, פלטת המותג) ----
-   רקע שקוף-למחצה (glass) שממלא את הטור וממורכז — באותו גודל כמו הטופס. */
+/* ---- יומן תיאום פגישה — בהשראת רכיב ה-bento, בפלטת המותג ---- */
 .bcal {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   max-width: 100%;
   margin-inline: auto;
-  background: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.42));
   border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 20px;
-  box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.32);
+  border-radius: 24px;
+  box-shadow: 0 24px 56px -28px rgba(7, 41, 58, 0.34);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: clamp(1.25rem, 2vw, 1.85rem);
   font-family: var(--font-body);
 }
+/* זוהר עדין בריחוף (כמו ברפרנס) */
+.bcal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(to top left, color-mix(in srgb, var(--color-secondary) 15%, transparent), transparent 58%);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+.bcal:hover::after { opacity: 1; }
+.bcal > * { position: relative; z-index: 1; }
 
 /* כותרת */
 .bcal__eyebrow {
@@ -24,53 +38,92 @@
 }
 .bcal__title {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
   font-weight: 800;
   color: var(--color-primary-900);
-  margin: 0.2rem 0 0.4rem;
-  letter-spacing: -0.01em;
+  margin: 0.25rem 0 0.4rem;
+  letter-spacing: -0.015em;
 }
-.bcal__note {
+.bcal__sub {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  max-width: 34ch;
+  margin-bottom: 1rem;
+}
+.bcal__cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
   font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #fff;
+  background: var(--color-secondary);
+  border-radius: 14px;
+  padding: 0.6rem 1.4rem;
+  box-shadow: var(--shadow-2);
+  transition: transform var(--dur-fast) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
 }
-.bcal__note svg { color: var(--color-secondary); flex-shrink: 0; }
+.bcal__cta:hover { background: var(--color-accent); transform: translateY(-2px); box-shadow: var(--shadow-3); }
+.bcal__cta:active { transform: translateY(0) scale(0.97); }
 
-/* גוף היומן — משטח שקוף-למחצה עם צל פנימי עדין */
-.bcal__cal {
+/* פאנל היומן — מסגרת כפולה + צל פנימי (כמו ברפרנס) */
+.bcal__panel {
+  position: relative;
   margin-top: 1.1rem;
-  background: linear-gradient(180deg, rgba(231, 238, 241, 0.65) -10%, rgba(255, 255, 255, 0.4) 60%);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: clamp(0.7rem, 1.4vw, 1rem);
-  box-shadow: inset 0 2px 2px rgba(16, 85, 114, 0.08);
+  border-radius: 24px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.35);
 }
-.bcal__month { text-align: center; margin-bottom: 0.7rem; }
+.bcal__panel-inner {
+  border: 1.5px solid color-mix(in srgb, var(--color-secondary) 12%, transparent);
+  border-radius: 18px;
+  padding: clamp(0.7rem, 1.4vw, 1rem);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 2px 1.5px rgba(16, 85, 114, 0.14);
+}
+
+/* שורת חודש + משך */
+.bcal__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
 .bcal__month-name {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 1rem;
-  color: var(--color-secondary);
+  font-size: 0.95rem;
+  color: var(--color-primary-900);
 }
+.bcal__sep { width: 4px; height: 4px; border-radius: 50%; background: var(--color-border-strong); }
+.bcal__dur {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+.bcal__dur svg { color: var(--color-secondary); }
 
+/* רשת — minmax(0,1fr) מונע גלישת מספרים */
 .bcal__weekdays,
 .bcal__grid {
   display: grid;
-  /* minmax(0,1fr) — מאפשר לתאים להתכווץ כך שהמספרים לא גולשים החוצה */
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
-.bcal__weekdays { margin-bottom: 0.4rem; }
+.bcal__weekdays { margin-bottom: 0.35rem; }
 .bcal__wd {
   text-align: center;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--color-text-muted);
 }
 
@@ -79,75 +132,68 @@
   min-width: 0;
   display: grid;
   place-items: center;
-  border-radius: 11px;
+  border-radius: 50%;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: clamp(0.8rem, 1.5vw, 0.92rem);
-  color: var(--color-text);
+  font-size: clamp(0.78rem, 1.5vw, 0.9rem);
+  color: var(--color-primary-900);
   background: transparent;
-  border: 1px solid transparent;
+  border: 0;
   transition: transform var(--dur-fast) var(--ease-out),
     background var(--dur-base) var(--ease-out),
     color var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out),
-    border-color var(--dur-base) var(--ease-out);
+    box-shadow var(--dur-base) var(--ease-out);
 }
 .bcal__cell--empty { background: transparent; }
+.bcal__cell:disabled { cursor: default; }
 
-/* ימים חסומים (עבר / שבת) */
-.bcal__cell.is-off { color: var(--color-border-strong); cursor: default; }
+/* עבר / שבת — מעומעם */
+.bcal__cell.is-off { color: var(--color-border-strong); }
 
-/* ימים זמינים */
-.bcal__cell.is-available {
-  background: #fff;
-  border-color: var(--color-border);
-  color: var(--color-primary-900);
-  cursor: pointer;
-}
-.bcal__cell.is-available:hover:not(.is-selected) {
-  background: var(--color-secondary-soft);
-  border-color: var(--color-secondary);
-  transform: translateY(-1px);
-}
+/* יום פנוי (לחיץ) */
+.bcal__cell.is-available { cursor: pointer; }
+.bcal__cell.is-available:hover:not(.is-selected):not(.is-slot) { background: var(--color-secondary-soft); }
 
-/* היום */
-.bcal__cell.is-today {
+/* מועד פנוי מודגש — עיגול טורקיז מלא */
+.bcal__cell.is-slot { background: var(--color-secondary); color: #fff; box-shadow: 0 4px 10px -3px rgba(16, 85, 114, 0.5); }
+.bcal__cell.is-slot:hover:not(.is-selected) { background: var(--color-primary-500); }
+
+/* היום — טבעת אדומה */
+.bcal__cell.is-today:not(.is-selected) {
+  box-shadow: inset 0 0 0 1.5px var(--color-accent);
   color: var(--color-accent);
-  font-weight: 800;
-  box-shadow: 0 0 0 1.5px var(--color-accent) inset;
-  border-color: transparent;
 }
 
-/* יום נבחר */
+/* יום נבחר — עיגול אדום מלא (גובר על הכל) */
 .bcal__cell.is-selected {
-  background: var(--color-secondary);
-  border-color: var(--color-secondary);
+  background: var(--color-accent);
   color: #fff;
-  box-shadow: 0 6px 14px -4px rgba(16, 85, 114, 0.6);
+  box-shadow: 0 6px 14px -4px rgba(169, 11, 12, 0.55);
 }
-.bcal__cell.is-selected.is-today { color: #fff; }
 
-/* תחתית */
-.bcal__foot { margin-top: 0.9rem; min-height: 2.2rem; display: flex; align-items: center; justify-content: center; }
-.bcal__hint {
-  font-size: 0.82rem;
-  color: var(--color-text-muted);
-  text-align: center;
-}
-.bcal__picked {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.84rem;
-  font-weight: 600;
+/* כפתור חץ צף (כמו ברפרנס) */
+.bcal__fab {
+  position: absolute;
+  inset-inline-start: 12px;
+  bottom: 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
   color: var(--color-secondary);
-  background: var(--color-secondary-soft);
-  padding: 0.5rem 0.85rem;
-  border-radius: var(--radius-pill);
-  text-align: center;
+  box-shadow: var(--shadow-3);
+  transform: rotate(6deg);
+  transition: transform var(--dur-base) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
-.bcal__picked svg { color: var(--color-success); flex-shrink: 0; }
+[dir='rtl'] .bcal__fab svg { transform: scaleX(-1); }
+.bcal__fab:hover { transform: translateY(-4px) rotate(0deg); background: var(--color-secondary); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bcal__cell { transition: none; }
+  .bcal__cell,
+  .bcal__fab,
+  .bcal::after { transition: none; }
 }

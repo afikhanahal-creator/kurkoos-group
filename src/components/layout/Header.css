@@ -405,7 +405,7 @@
 }
 @media (max-width: 380px) {
   .header__main-inner { gap: 0.25rem; }
-  .header__main-inner .logo__img { height: 50px; }
+  .header__main-inner .logo__img { height: 58px; }
   .header__burger { width: 40px; height: 40px; }
   .header__actions .header__cta-btn { font-size: 0.74rem; padding: 0.5em 0.95em; min-height: 36px; }
 }

@@ -18,6 +18,7 @@ const paths = {
   close: 'M18 6L6 18M6 6l12 12',
   chevron: 'M6 9l6 6 6-6',
   clock: 'M12 8v4l2.5 2.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+  arrowDiagonal: 'M17.25 15.25V6.75H8.75M17 7L6.75 17.25',
   play: 'M5 3l14 9-14 9z',
   pause: 'M7 4v16M17 4v16',
   check: 'M20 6L9 17l-5-5',

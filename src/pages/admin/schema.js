@@ -67,6 +67,82 @@ export const projectSchema = [
     ],
   },
   {
+    section: 'נתוני הפרויקט',
+    fields: [
+      { key: 'towers', label: 'בניינים', type: 'number' },
+      { key: 'units', label: 'יחידות דיור', type: 'number' },
+      { key: 'floors', label: 'קומות', type: 'text', dir: 'ltr', hint: 'אפשר טווח, למשל "7-8"' },
+      { key: 'architects', label: 'אדריכלים', type: 'text' },
+      { key: 'year', label: 'שנת אכלוס', type: 'number' },
+    ],
+  },
+  {
+    section: 'סרטון',
+    fields: [
+      {
+        key: 'video',
+        label: 'סרטון YouTube',
+        type: 'video',
+        hint: 'הדביקו את מזהה הסרטון מ-YouTube (החלק שאחרי v= בכתובת). מפעיל את כפתור ה-Play בבאנר.',
+      },
+    ],
+  },
+  {
+    section: 'מיקום על המפה',
+    fields: [
+      {
+        key: 'coords',
+        label: 'קואורדינטות (אופציונלי)',
+        type: 'coords',
+        hint: 'קו רוחב (lat) וקו אורך (lng) — מציגים סמן מפה מלוטש. ללא ערכים תוצג המפה לפי הכתובת.',
+      },
+    ],
+  },
+  {
+    section: 'הסביבה',
+    fields: [
+      {
+        key: 'environment',
+        label: 'מקטע הסביבה',
+        type: 'environment',
+        hint: 'כותרת, טקסט ותמונה למקטע "הסביבה" בעמוד הפרויקט.',
+      },
+    ],
+  },
+  {
+    section: 'תוכניות דירות',
+    fields: [
+      {
+        key: 'plan_groups',
+        label: 'תוכניות לפי מספר חדרים',
+        type: 'plan_groups',
+        hint: 'קבוצות תוכניות — לכל קבוצה מספר חדרים, כותרת ורשימת תשריטים (כותרת + תמונה).',
+      },
+    ],
+  },
+  {
+    section: 'גלריה לפי קטגוריות',
+    fields: [
+      {
+        key: 'gallery_groups',
+        label: 'קטגוריות גלריה',
+        type: 'gallery_groups',
+        hint: 'חלוקת הגלריה ללשוניות — לכל קטגוריה כותרת ורשימת תמונות. ריק = גלריה אחת רגילה.',
+      },
+    ],
+  },
+  {
+    section: 'מאפיינים',
+    fields: [
+      {
+        key: 'amenities',
+        label: 'מאפייני הפרויקט',
+        type: 'features',
+        hint: 'רשימת מאפיינים שתופיע במקטע "הפרויקט" (למשל: לובי מלונאי, בריכה, חניון).',
+      },
+    ],
+  },
+  {
     section: 'מקטעים בעמוד הפרויקט',
     fields: [
       {
@@ -166,7 +242,14 @@ export const newProjectDefaults = () => ({
   is_published: false,
   pages: [],
   sections: PROJECT_SECTIONS.map((s) => s.value),
+  card_layout: 'normal',
   gallery: [],
+  amenities: [],
+  video: {},
+  coords: {},
+  environment: {},
+  plan_groups: [],
+  gallery_groups: [],
 })
 
 export const newPropertyDefaults = (projectId) => ({

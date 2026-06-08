@@ -312,6 +312,38 @@
   .ed__dev-del { justify-self: end; }
 }
 
+/* ---- ווידג'טים נוספים (סביבה / תוכניות / גלריה / מאפיינים / קואורדינטות) ---- */
+.ed__coords { display: flex; gap: 1rem; flex-wrap: wrap; }
+.ed__coords label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem; color: var(--adm-muted); flex: 1 1 180px; }
+.ed__coords input { padding: 0.6rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; background: #fff; }
+.ed__coords input:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
+
+.ed__env { display: flex; flex-direction: column; gap: 0.6rem; }
+.ed__env input, .ed__env textarea { padding: 0.6rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; width: 100%; background: #fff; line-height: 1.6; }
+.ed__env input:focus-visible, .ed__env textarea:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
+.ed__env-img { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; max-width: 200px; }
+.ed__env-img img { width: 100%; height: 110px; object-fit: cover; background: #fff; border: 1px solid var(--adm-border); border-radius: 8px; }
+
+.ed__list { display: flex; flex-direction: column; gap: 0.5rem; }
+.ed__list-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center; }
+.ed__list-row input { padding: 0.6rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; background: #fff; }
+.ed__list-row input:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
+
+.ed__groups { display: flex; flex-direction: column; gap: 0.9rem; }
+.ed__group { padding: 1rem; background: #fcfdff; border: 1px solid var(--adm-border); border-radius: 12px; display: flex; flex-direction: column; gap: 0.8rem; }
+.ed__group-head { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.ed__group-head input { padding: 0.6rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; background: #fff; flex: 1 1 200px; }
+.ed__group-head input:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
+.ed__plans { display: flex; flex-direction: column; gap: 0.6rem; }
+.ed__plan { display: grid; grid-template-columns: 200px 1fr auto; gap: 0.8rem; align-items: center; }
+.ed__plan input { padding: 0.6rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; background: #fff; }
+.ed__plan input:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
+
+@media (max-width: 560px) {
+  .ed__plan { grid-template-columns: 1fr; }
+  .ed__env-img, .ed__plan .ed__env-img { max-width: none; }
+}
+
 /* ============================================================
    IMAGE MANAGER
    ============================================================ */

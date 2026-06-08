@@ -37,6 +37,21 @@ create table if not exists public.projects (
 alter table public.projects add column if not exists pages jsonb default '[]'::jsonb;
 alter table public.projects add column if not exists sections jsonb default '[]'::jsonb;     -- אילו מקטעים מוצגים בעמוד הפרויקט
 alter table public.projects add column if not exists developers jsonb default '[]'::jsonb;   -- יזמי הפרויקט [{name, logo, bio}]
+alter table public.projects add column if not exists card_layout text default 'normal';      -- תצוגת כרטיס בגלריה: normal | wide | tall
+-- ⚠️ יש להריץ קובץ זה מחדש ב-Supabase (SQL editor) אחרי כל הוספת עמודות, אחרת שמירה מהאדמין תיכשל.
+-- נתוני הפרויקט (סקלרים) — תיבות הסטטיסטיקה בבאנר
+alter table public.projects add column if not exists towers int;                              -- מספר בניינים
+alter table public.projects add column if not exists units int;                               -- יחידות דיור
+alter table public.projects add column if not exists floors text;                             -- קומות (טקסט, למשל "7-8")
+alter table public.projects add column if not exists architects text;                         -- אדריכלים
+alter table public.projects add column if not exists year int;                                -- שנת אכלוס
+-- שדות מובנים (jsonb)
+alter table public.projects add column if not exists video jsonb default '{}'::jsonb;          -- {type:'youtube', id}
+alter table public.projects add column if not exists coords jsonb default '{}'::jsonb;          -- {lat, lng} — סמן מפה מלוטש
+alter table public.projects add column if not exists environment jsonb default '{}'::jsonb;     -- {title, text, image}
+alter table public.projects add column if not exists plan_groups jsonb default '[]'::jsonb;     -- [{rooms, label, plans:[{label, img}]}]
+alter table public.projects add column if not exists gallery_groups jsonb default '[]'::jsonb;  -- [{label, images:[url]}]
+-- מאפיינים (features) נשמרים בעמודת amenities הקיימת
 
 -- ---------- properties ----------
 create table if not exists public.properties (

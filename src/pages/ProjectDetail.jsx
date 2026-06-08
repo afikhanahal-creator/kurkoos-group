@@ -37,24 +37,55 @@ function DottedGrid({ className = '' }) {
 }
 
 // עוטף ערך טקסט ל-{he,en} (Supabase מחזיר מחרוזות, האתר מצפה לאובייקט דו-לשוני)
-const wrap = (v) => (v == null ? undefined : typeof v === 'object' ? v : { he: String(v), en: String(v) })
+const wrap = (v) => (v == null || v === '' ? undefined : typeof v === 'object' ? v : { he: String(v), en: String(v) })
+const has = (v) => v != null && v !== '' && !(Array.isArray(v) && v.length === 0)
 
 // מאחד נתון מקומי מועשר (planGroups/environment/...) עם שכבת-על מה-CMS (שדות בסיסיים)
 function buildProject(local, cms) {
   if (!local && !cms) return null
   const base = local ? { ...local } : {}
   if (cms) {
+    // סביבה — מאחד את שלושת השדות, עוטף כותרת/טקסט; שומר על ערך מקומי כשה-CMS ריק
+    const env = cms.environment && typeof cms.environment === 'object' ? cms.environment : {}
+    const environment = (has(env.title) || has(env.text) || has(env.image))
+      ? { ...(base.environment || {}), title: wrap(env.title) ?? base.environment?.title, text: wrap(env.text) ?? base.environment?.text, image: env.image || base.environment?.image }
+      : undefined
+    // קבוצות תוכניות — עוטף את כותרת הקבוצה וכותרת כל תשריט
+    const planGroups = Array.isArray(cms.plan_groups) && cms.plan_groups.length
+      ? cms.plan_groups.map((g) => ({ rooms: g.rooms, label: wrap(g.label), plans: (Array.isArray(g.plans) ? g.plans : []).map((p) => ({ label: wrap(p.label), img: p.img })) }))
+      : undefined
+    // קטגוריות גלריה — עוטף את כותרת הקטגוריה
+    const galleryGroups = Array.isArray(cms.gallery_groups) && cms.gallery_groups.length
+      ? cms.gallery_groups.map((g) => ({ label: wrap(g.label), images: Array.isArray(g.images) ? g.images : [] })).filter((g) => g.images.length)
+      : undefined
+    // מאפיינים — נשמרים ב-amenities, כל מאפיין נעטף לדו-לשוני
+    const features = Array.isArray(cms.amenities) && cms.amenities.length
+      ? cms.amenities.map((x) => wrap(x)).filter(Boolean)
+      : undefined
+    const coords = cms.coords && cms.coords.lat != null && cms.coords.lng != null ? cms.coords : undefined
+    const video = cms.video && cms.video.id ? cms.video : undefined
+
     const over = {
       name: wrap(cms.name),
       city: wrap(cms.location ?? cms.city),
       description: wrap(cms.description),
+      short: wrap(cms.subtitle),
       status: cms.status,
       cover: cms.hero_image_url || (cms.gallery && cms.gallery[0]),
       gallery: cms.gallery && cms.gallery.length ? cms.gallery : undefined,
-      units: cms.units,
-      year: cms.year,
+      towers: has(cms.towers) ? cms.towers : undefined,
+      units: has(cms.units) ? cms.units : undefined,
+      floors: has(cms.floors) ? cms.floors : undefined,
+      architects: wrap(cms.architects),
+      year: has(cms.year) ? cms.year : undefined,
       // הכתובת מה-CMS מזינה את המפה בעמוד הפרויקט
       mapQuery: cms.address || cms.map_query || undefined,
+      coords,
+      video,
+      environment,
+      planGroups,
+      galleryGroups,
+      features,
       // אילו מקטעים להציג + יזמי הפרויקט (נשמרים בענן)
       sections: Array.isArray(cms.sections) ? cms.sections : undefined,
       developers: Array.isArray(cms.developers) && cms.developers.length ? cms.developers : undefined,

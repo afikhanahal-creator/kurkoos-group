@@ -144,10 +144,15 @@
   z-index: 3;
   background: transparent;          /* מבטל את רקע ה-soft כדי שלא יכסה את הבאנר */
   padding-top: 0;
-  margin-top: clamp(-180px, -11vw, -90px);
+  margin-top: clamp(-130px, -8vw, -90px);
 }
 @media (max-width: 600px) {
-  .division-showcase { margin-top: -56px; }
+  .division-showcase { margin-top: -48px; }
+}
+
+/* בעמוד הביצוע: באנר נמוך יותר → הכותרת לא נתקעת למטה והסרטון מציץ במסך הראשון */
+.division--execution .division-hero {
+  min-height: clamp(380px, 50vh, 480px);
 }
 
 /* ---- Why us ---- */

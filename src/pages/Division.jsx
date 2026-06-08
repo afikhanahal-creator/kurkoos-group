@@ -50,7 +50,7 @@ export default function Division() {
   if (!division) return <Navigate to="/" replace />
 
   return (
-    <article className="division">
+    <article className={`division division--${slug}`}>
       <Seo title={L(division.menuTitle)} description={L(division.intro)} image={division.hero?.image} />
       {/* באנר */}
       <header className="division-hero">

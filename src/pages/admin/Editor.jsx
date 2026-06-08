@@ -60,6 +60,13 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) }
   }
 
+  // העלאת תמונה בודדת לשדה כלשהו; מחזירה את ה-URL דרך callback
+  const uploadOne = async (sub, file, onUrl) => {
+    if (!file) return
+    try { onUrl(await uploadMedia(file, `${folder}/${sub}`)) }
+    catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) }
+  }
+
   const renderField = (f) => {
     const v = form[f.key]
     if (f.type === 'textarea')
@@ -89,6 +96,124 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
             </div>
           ))}
           <button type="button" className="ed__dev-add" onClick={() => setField(f.key, [...arr, { name: '', logo: '', bio: '' }])}>+ הוסף יזם</button>
+        </div>
+      )
+    }
+    if (f.type === 'video') {
+      const obj = v && typeof v === 'object' ? v : {}
+      return (
+        <input
+          type="text" dir="ltr" placeholder="מזהה YouTube (למשל dQw4w9WgXcQ)"
+          value={obj.id || ''}
+          onChange={(e) => { const id = e.target.value.trim(); setField(f.key, id ? { type: 'youtube', id } : {}) }}
+        />
+      )
+    }
+    if (f.type === 'coords') {
+      const obj = v && typeof v === 'object' ? v : {}
+      const set = (k, raw) => {
+        const num = raw === '' ? undefined : Number(raw)
+        const next = { ...obj, [k]: num }
+        if (next.lat === undefined) delete next.lat
+        if (next.lng === undefined) delete next.lng
+        setField(f.key, next)
+      }
+      return (
+        <div className="ed__coords">
+          <label>קו רוחב (lat)<input type="number" step="any" dir="ltr" value={obj.lat ?? ''} onChange={(e) => set('lat', e.target.value)} /></label>
+          <label>קו אורך (lng)<input type="number" step="any" dir="ltr" value={obj.lng ?? ''} onChange={(e) => set('lng', e.target.value)} /></label>
+        </div>
+      )
+    }
+    if (f.type === 'environment') {
+      const obj = v && typeof v === 'object' ? v : {}
+      const upd = (patch) => setField(f.key, { ...obj, ...patch })
+      return (
+        <div className="ed__env">
+          <input dir="rtl" placeholder="כותרת (למשל: בלב העיר הירוקה)" value={obj.title || ''} onChange={(e) => upd({ title: e.target.value })} />
+          <textarea dir="rtl" rows={4} placeholder="טקסט על הסביבה" value={obj.text || ''} onChange={(e) => upd({ text: e.target.value })} />
+          <div className="ed__env-img">
+            {obj.image ? <img src={obj.image} alt="" /> : <span className="ed__dev-logo-empty">אין תמונה</span>}
+            <label className="ed__dev-upload">
+              {obj.image ? 'החלפת תמונה' : 'העלאת תמונה'}
+              <input type="file" accept="image/*" hidden onChange={(e) => uploadOne('environment', e.target.files[0], (url) => upd({ image: url }))} />
+            </label>
+          </div>
+        </div>
+      )
+    }
+    if (f.type === 'features') {
+      const arr = Array.isArray(v) ? v : []
+      const upd = (i, val) => setField(f.key, arr.map((x, j) => (j === i ? val : x)))
+      return (
+        <div className="ed__list">
+          {arr.length === 0 && <p className="ed__devs-empty">אין מאפיינים. הוסיפו את הראשון.</p>}
+          {arr.map((item, i) => (
+            <div className="ed__list-row" key={i}>
+              <input dir="rtl" value={typeof item === 'object' ? (item.he || '') : (item || '')} placeholder="מאפיין" onChange={(e) => upd(i, e.target.value)} />
+              <button type="button" className="ed__dev-del" onClick={() => setField(f.key, arr.filter((_, j) => j !== i))} aria-label="מחיקה" title="מחיקה"><XIcon width={16} height={16} /></button>
+            </div>
+          ))}
+          <button type="button" className="ed__dev-add" onClick={() => setField(f.key, [...arr, ''])}>+ הוסף מאפיין</button>
+        </div>
+      )
+    }
+    if (f.type === 'plan_groups') {
+      const groups = Array.isArray(v) ? v : []
+      const updG = (gi, patch) => setField(f.key, groups.map((g, j) => (j === gi ? { ...g, ...patch } : g)))
+      const updPlans = (gi, plans) => updG(gi, { plans })
+      return (
+        <div className="ed__groups">
+          {groups.length === 0 && <p className="ed__devs-empty">אין קבוצות תוכניות. הוסיפו קבוצה לפי מספר חדרים.</p>}
+          {groups.map((g, gi) => {
+            const plans = Array.isArray(g.plans) ? g.plans : []
+            const updPlan = (pi, patch) => updPlans(gi, plans.map((p, j) => (j === pi ? { ...p, ...patch } : p)))
+            return (
+              <div className="ed__group" key={gi}>
+                <div className="ed__group-head">
+                  <input type="number" dir="ltr" style={{ maxWidth: 90 }} placeholder="חדרים" value={g.rooms ?? ''} onChange={(e) => updG(gi, { rooms: e.target.value === '' ? null : Number(e.target.value) })} />
+                  <input dir="rtl" placeholder="כותרת הקבוצה (למשל: דירות 3 חדרים)" value={typeof g.label === 'object' ? (g.label.he || '') : (g.label || '')} onChange={(e) => updG(gi, { label: e.target.value })} />
+                  <button type="button" className="ed__dev-del" onClick={() => setField(f.key, groups.filter((_, j) => j !== gi))} aria-label="מחיקת קבוצה" title="מחיקת קבוצה"><XIcon width={16} height={16} /></button>
+                </div>
+                <div className="ed__plans">
+                  {plans.map((p, pi) => (
+                    <div className="ed__plan" key={pi}>
+                      <div className="ed__env-img">
+                        {p.img ? <img src={p.img} alt="" /> : <span className="ed__dev-logo-empty">אין תשריט</span>}
+                        <label className="ed__dev-upload">
+                          {p.img ? 'החלפה' : 'העלאת תשריט'}
+                          <input type="file" accept="image/*" hidden onChange={(e) => uploadOne('plans', e.target.files[0], (url) => updPlan(pi, { img: url }))} />
+                        </label>
+                      </div>
+                      <input dir="rtl" placeholder="כותרת התשריט (למשל: דגם A)" value={typeof p.label === 'object' ? (p.label.he || '') : (p.label || '')} onChange={(e) => updPlan(pi, { label: e.target.value })} />
+                      <button type="button" className="ed__dev-del" onClick={() => updPlans(gi, plans.filter((_, j) => j !== pi))} aria-label="מחיקת תשריט" title="מחיקה"><XIcon width={16} height={16} /></button>
+                    </div>
+                  ))}
+                  <button type="button" className="ed__dev-add" onClick={() => updPlans(gi, [...plans, { label: '', img: '' }])}>+ הוסף תשריט</button>
+                </div>
+              </div>
+            )
+          })}
+          <button type="button" className="ed__dev-add" onClick={() => setField(f.key, [...groups, { rooms: null, label: '', plans: [] }])}>+ הוסף קבוצת חדרים</button>
+        </div>
+      )
+    }
+    if (f.type === 'gallery_groups') {
+      const groups = Array.isArray(v) ? v : []
+      const updG = (gi, patch) => setField(f.key, groups.map((g, j) => (j === gi ? { ...g, ...patch } : g)))
+      return (
+        <div className="ed__groups">
+          {groups.length === 0 && <p className="ed__devs-empty">אין קטגוריות. ריק = גלריה אחת רגילה לפי התמונות למטה.</p>}
+          {groups.map((g, gi) => (
+            <div className="ed__group" key={gi}>
+              <div className="ed__group-head">
+                <input dir="rtl" placeholder="שם הקטגוריה (למשל: הדמיות פנים)" value={typeof g.label === 'object' ? (g.label.he || '') : (g.label || '')} onChange={(e) => updG(gi, { label: e.target.value })} />
+                <button type="button" className="ed__dev-del" onClick={() => setField(f.key, groups.filter((_, j) => j !== gi))} aria-label="מחיקת קטגוריה" title="מחיקת קטגוריה"><XIcon width={16} height={16} /></button>
+              </div>
+              <ImageManager value={Array.isArray(g.images) ? g.images : []} onChange={(imgs) => updG(gi, { images: imgs })} folder={`${folder}/gallery`} max={20} />
+            </div>
+          ))}
+          <button type="button" className="ed__dev-add" onClick={() => setField(f.key, [...groups, { label: '', images: [] }])}>+ הוסף קטגוריה</button>
         </div>
       )
     }
@@ -156,7 +281,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <legend>{sec.section}</legend>
           <div className="ed__grid">
             {sec.fields.map((f) => (
-              <div className={`ed__field ${f.type === 'textarea' || f.type === 'multiselect' || f.type === 'developers' ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
+              <div className={`ed__field ${['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords'].includes(f.type) ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
                 <label>{f.label}{f.required && <span className="ed__req">*</span>}</label>
                 {renderField(f)}
                 {f.hint && <small className="ed__hint">{f.hint}</small>}

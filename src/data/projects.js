@@ -107,6 +107,7 @@ export const projects = [
   },
   {
     slug: 'marina-towers',
+    card_layout: 'wide',
     name: { he: 'מגדלי המרינה', en: 'Marina Towers' },
     city: { he: 'הרצליה', en: 'Herzliya' },
     status: 'construction',
@@ -187,6 +188,7 @@ export const projects = [
   },
   {
     slug: 'city-center-renewal',
+    card_layout: 'wide',
     name: { he: 'התחדשות מרכז העיר', en: 'City Center Renewal' },
     city: { he: 'בת ים', en: 'Bat Yam' },
     status: 'planning',

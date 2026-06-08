@@ -157,7 +157,7 @@
 .pd-anchors__inner {
   display: flex;
   justify-content: center;
-  gap: clamp(0.2rem, 1.6vw, 1.7rem);   /* מרווחים גדולים בין הפריטים בדסקטופ — כמו בתדהר */
+  gap: clamp(0.2rem, 2.8vw, 3.6rem);   /* מרווחים גדולים בין הפריטים בדסקטופ — כמו בתדהר */
   overflow-x: auto;
   scrollbar-width: none;
 }

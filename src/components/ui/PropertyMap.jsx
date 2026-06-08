@@ -25,33 +25,34 @@ function loadGoogleMaps(key) {
   return mapsPromise
 }
 
-/* סגנון מפה מותג — מאוזן "כחול + חום": בלוקים עירוניים בכחול-אפרפר (יותר כחול),
-   שטחים טבעיים בחול חם, מים וכבישים מהירים בכחול עמוק, פארקים בטורקיז-ירקרק. */
+/* סגנון מפה מותג — "חום + כחול" שניהם בולטים יחד: יבשה ובלוקים בגוון חול חם,
+   מים וכבישים מהירים בכחול חזק, פארקים בטורקיז — כך ששני הצבעים נראים במפה. */
 const MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#e4e9ec' }] },                 /* בסיס — אפור-תכלת קריר */
+  { elementType: 'geometry', stylers: [{ color: '#eadfca' }] },                 /* בסיס — חול חם (החום) */
   { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#3f566a' }] },         /* כיתוב — כחול-צפחה */
+  { elementType: 'labels.text.fill', stylers: [{ color: '#5a5240' }] },         /* כיתוב — חום כהה */
   { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }, { weight: 3 }] },
   { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
   { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
   { featureType: 'administrative.neighborhood', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#bfdcd6' }] }, /* פארקים — טורקיז-ירקרק */
-  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#e7ddc8' }] }, /* טבע — חול חם (נגיעת החום) */
-  { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#dde6ec' }] },   /* בלוקים עירוניים — כחול-אפרפר */
-  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#c8d6e0' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#d3dfe7' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#a9d2cc' }] }, /* פארקים — טורקיז (כחול-ירקרק) */
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#e6dcc6' }] }, /* טבע — חול חם */
+  { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#ecd9bd' }] },   /* בלוקים — חום */
+  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#dcc7a3' }] },
+  /* כבישים בכחול רך — כך הכחול מופיע בכל זום, על היבשה החומה (שילוב שני הצבעים) */
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#d2e6f2' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#aacde0' }] },
   { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },        /* רחובות קטנים — בלי שמות */
-  /* רחובות ראשיים — שמות גלויים בכחול-צפחה */
+  /* רחובות ראשיים — שמות גלויים */
   { featureType: 'road.arterial', elementType: 'labels', stylers: [{ visibility: 'on' }] },
-  { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#3f566a' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#cfe0ea' }] },  /* כבישים מהירים — כחול */
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#aacbdb' }] },
+  { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#2f5366' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#a9cfe2' }] },  /* כבישים מהירים — כחול עמוק יותר */
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#84b4d0' }] },
   { featureType: 'road.highway', elementType: 'labels', stylers: [{ visibility: 'on' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#2f4f63' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#2f5366' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#5fa3c2' }] },      /* מים — כחול מותג חזק */
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#4f9fc2' }] },      /* מים — כחול חזק (הכחול הבולט) */
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
 ]
 

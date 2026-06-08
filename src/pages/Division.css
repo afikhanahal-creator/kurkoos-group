@@ -93,6 +93,14 @@
   box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
 }
 
+/* ---- לוגו זרוע הביצוע (במקום האייקון) ---- */
+.division-hero__logo {
+  width: clamp(140px, 16vw, 190px);
+  height: auto;
+  margin-bottom: clamp(1rem, 2.4vw, 1.5rem);
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+}
+
 /* ---- כותרת + תקציר ---- */
 .division-hero__title {
   position: relative;

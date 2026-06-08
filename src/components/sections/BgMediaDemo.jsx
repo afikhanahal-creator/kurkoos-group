@@ -3,20 +3,26 @@ import './BgMediaDemo.css'
 
 /* ============================================================
    BgMediaDemo — באנר וידאו רקע (סרטון התקדמות הבנייה של קורקוס).
+   כולל אפקט glow כחול מאחורי הסרטון + קרדיט "קבוצת קורקוס".
    רספונסיבי: ממולא לרוחב המכל, יחס 16:9, מתכווץ יפה במובייל.
    ============================================================ */
 export default function BgMediaDemo() {
   return (
     <div className="bg-media-demo">
-      <div className="bg-media-demo__frame">
-        <BackgroundMedia
-          type="video"
-          variant="light"
-          src="/divisions/kurkoos-showcase.mp4"
-          poster="/divisions/kurkoos-showcase-poster.jpg"
-          alt="זרוע הביצוע של קורקוס — סרטון התקדמות בנייה"
-        />
+      <div className="bg-media-demo__stage">
+        {/* אפקט זוהר כחול מאחורי הסרטון (צבעי המותג) */}
+        <div className="bg-media-demo__glow" aria-hidden="true" />
+        <div className="bg-media-demo__frame">
+          <BackgroundMedia
+            type="video"
+            variant="light"
+            src="/divisions/kurkoos-showcase.mp4"
+            poster="/divisions/kurkoos-showcase-poster.jpg"
+            alt="זרוע הביצוע של קורקוס — סרטון התקדמות בנייה"
+          />
+        </div>
       </div>
+      <p className="bg-media-demo__caption">פרוייקט הנרייטה סאלד - קבוצת ראיתה חברה לבנין 2026</p>
     </div>
   )
 }

@@ -11,28 +11,30 @@
 /* חלונית הלוגו על הפין (InfoWindow מותג) — שם מימין, מפריד, לוגו משמאל */
 .pm-info {
   display: flex;
-  align-items: center;
+  align-items: center;       /* מרכוז אנכי מדויק של כל הפריטים */
   gap: 10px;
-  padding: 3px 5px;
+  padding: 9px 14px;         /* padding סימטרי משלנו → התוכן בדיוק באמצע */
   font-family: var(--font-heading, sans-serif);
 }
 .pm-info__name {
+  display: flex;
+  align-items: center;
   font-weight: 800;
   font-size: 1rem;
-  line-height: 1.1;
+  line-height: 1;            /* בלי תוספת גובה מעל/מתחת → מרכוז מדויק */
   color: #07293a;
   white-space: nowrap;
   letter-spacing: -0.01em;
 }
 .pm-info__sep {
   width: 1px;
-  align-self: stretch;
-  min-height: 22px;
+  height: 22px;
   background: var(--color-border, #e2e6ec);
 }
 .pm-info__logo { height: 26px; width: auto; display: block; }
 
 /* מסתיר את כפתור ה-X ומצמצם ריווח של ה-InfoWindow למראה נקי */
 .property-map .gm-style-iw button.gm-ui-hover-effect { display: none !important; }
-.property-map .gm-style-iw-c { padding: 8px 12px !important; }
-.property-map .gm-style-iw-d { overflow: hidden !important; }
+/* מסירים את ה-padding הפנימי של Google כדי שהמרכוז שלנו יהיה מדויק */
+.property-map .gm-style-iw-c { padding: 0 !important; }
+.property-map .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }

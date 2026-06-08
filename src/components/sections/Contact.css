@@ -23,10 +23,10 @@
   z-index: 1;
   display: grid;
   /* טופס בצד ימין ותמונה בצד שמאל. עמודה ראשונה = inline-start = ימין ב-RTL */
-  grid-template-columns: minmax(0, clamp(300px, 30vw, 420px)) minmax(0, clamp(340px, 34vw, 480px));
+  grid-template-columns: minmax(0, clamp(360px, 34vw, 480px)) minmax(0, clamp(340px, 34vw, 480px));
   justify-content: center;
   align-items: center;
-  gap: clamp(1rem, 2.5vw, 2.5rem);
+  gap: clamp(1.5rem, 3vw, 3rem);
 }
 /* סדר הצגה: טופס ראשון (ימין), תמונה שנייה (שמאל) — בלי לשנות את ה-DOM */
 .contact__panel { order: 0; }
@@ -64,7 +64,7 @@
   background: linear-gradient(165deg, var(--color-secondary), #07293a 90%);
   color: #fff;
   border-radius: var(--radius-lg);
-  padding: clamp(1.2rem, 1.8vw, 1.75rem);
+  padding: clamp(1.75rem, 2.6vw, 2.6rem);
   box-shadow: var(--shadow-lg);
 }
 .contact__panel > *:not(.infinite-grid) { position: relative; z-index: 1; }
@@ -83,17 +83,17 @@
   border-radius: 2px;
 }
 .contact__title { font-size: clamp(1.25rem, 1.7vw, 1.65rem); color: #fff; margin: 0.25rem 0 0.5rem; line-height: 1.15; }
-.contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 0.9rem; max-width: 42ch; font-size: 0.88rem; }
+.contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 1.2rem; max-width: 42ch; font-size: 0.92rem; }
 
-.contact__topics { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.85rem; }
+.contact__topics { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.3rem; }
 .contact__topic {
-  padding: 0.26rem 0.6rem;
+  padding: 0.42rem 0.9rem;
   border-radius: var(--radius-pill);
-  border: 1.25px solid rgba(255, 255, 255, 0.35);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
   color: #fff;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   transition: transform var(--dur-fast) var(--ease-out),
     background var(--dur-base) var(--ease-out),
     border-color var(--dur-base) var(--ease-out),
@@ -113,14 +113,14 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
-.contact__form { display: flex; flex-direction: column; gap: 0.55rem; }
-.contact__required { font-size: 0.76rem; color: rgba(255, 255, 255, 0.6); }
+.contact__form { display: flex; flex-direction: column; gap: 0.85rem; }
+.contact__required { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); }
 .contact__form .field input,
 .contact__form .field textarea {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 0.85rem;
-  padding: 0.6rem 0.82rem;
+  font-size: 0.95rem;
+  padding: 0.85rem 1rem;
   border-radius: var(--radius-md);
   border: none;
   background: #fff;
@@ -137,13 +137,14 @@
 
 .contact__submit {
   align-self: center;
-  margin-top: 0.4rem;
-  min-width: 140px;
-  font-size: 0.92rem;
+  margin-top: 0.6rem;
+  min-width: 160px;
+  font-size: 1.02rem;
+  font-weight: 700;
   background: #fff;
   color: var(--color-secondary);
   border-radius: var(--radius-pill);
-  padding: 0.7em 1.7em;
+  padding: 0.85em 2em;
 }
 .contact__submit:hover {
   background: var(--color-accent);
@@ -178,18 +179,20 @@
   .contact__inner { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }
   .contact__visual { display: none; }
   .contact__plus-grid { display: none; }
-  /* טופס ממורכז ומוגבל ברוחב — מעט גדול יותר במובייל */
-  .contact__panel { width: 100%; max-width: 520px; }
+  /* טופס ממורכז ומוגבל ברוחב — רחב יותר במובייל/טאבלט */
+  .contact__panel { width: 100%; max-width: 600px; }
 }
 
 @media (max-width: 560px) {
+  /* צמצום ריווח הצדדים של הסקשן → הטופס מנצל יותר מרוחב המסך */
+  .contact__inner { padding-inline: 0.9rem; }
   .contact__panel { padding: 1.4rem 1.15rem; border-radius: var(--radius-md); }
   .contact__panel .contact__eyebrow { font-size: 0.95rem; margin-bottom: 0.6rem; }
   .contact__title { font-size: 1.5rem; margin: 0.2rem 0 0.5rem; }
   .contact__choose { font-size: 0.88rem; margin-bottom: 1rem; }
 
-  .contact__topics { gap: 0.35rem; margin-bottom: 1rem; }
-  .contact__topic { padding: 0.3rem 0.66rem; font-size: 0.72rem; }
+  .contact__topics { gap: 0.45rem; margin-bottom: 1.1rem; }
+  .contact__topic { padding: 0.48rem 1rem; font-size: 0.85rem; }
 
   /* שדות קומפקטיים */
   .contact__form { gap: 0.6rem; }
@@ -201,7 +204,7 @@
   }
   .contact__form textarea { min-height: 88px; }
 
-  .contact__submit { width: 100%; min-width: 0; margin-top: 0.4rem; padding: 0.8em 1.5em; }
+  .contact__submit { width: 100%; min-width: 0; margin-top: 0.6rem; padding: 0.95em 1.6em; font-size: 1.05rem; }
 
   .contact__phones {
     margin-top: 1.3rem;

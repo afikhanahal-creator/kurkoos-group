@@ -411,7 +411,7 @@
 .lcard--off { opacity: 0.55; }
 .lcard__handle { position: absolute; inset-block-start: 0.5rem; inset-inline-start: 0.5rem; color: var(--adm-muted); cursor: grab; }
 .lcard__thumb { height: 84px; display: grid; place-items: center; background: var(--adm-bg); border-radius: 9px; overflow: hidden; }
-.lcard__thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.lcard__thumb img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.18s ease; }
 .lcard__placeholder { font-family: var(--font-heading); font-weight: 800; color: var(--color-primary-300); font-size: 1rem; text-align: center; padding: 0 0.5rem; }
 .lcard__name { padding: 0.55rem 0.6rem; border: 1.5px solid var(--adm-border-strong); border-radius: 8px; font: inherit; text-align: center; }
 .lcard__name:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
@@ -420,6 +420,29 @@
 .lcard__btn:hover { background: var(--adm-bg); }
 .lcard__del { color: var(--color-accent); font-size: 0.8rem; font-weight: 700; }
 .lcard__toggle { font-size: 0.85rem; font-family: var(--font-heading); }
+
+/* שליטת גודל הלוגו */
+.lcard__size { display: flex; align-items: center; gap: 0.4rem; }
+.lcard__size-btn {
+  width: 26px; height: 26px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--adm-border-strong); border-radius: 7px;
+  font-weight: 800; font-size: 1.05rem; line-height: 1; color: var(--color-secondary);
+}
+.lcard__size-btn:hover { background: var(--adm-bg); }
+.lcard__size-range { flex: 1; min-width: 0; accent-color: var(--color-secondary); cursor: pointer; }
+.lcard__size-val { flex: 0 0 auto; font-size: 0.75rem; font-weight: 700; color: var(--adm-muted); min-width: 34px; text-align: center; }
+
+/* שמירה + חיווי ענן */
+.lcard__save { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.1rem; }
+.lcard__save-btn {
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem; color: #fff;
+  background: var(--color-secondary); border-radius: 8px; padding: 0.4rem 0.9rem;
+}
+.lcard__save-btn:hover { filter: brightness(0.95); }
+.lcard__status { font-size: 0.74rem; font-weight: 600; color: var(--adm-muted); }
+.lcard__status--saving { color: var(--color-secondary); }
+.lcard__status--saved { color: #1a7f4b; }
 
 /* ============================================================
    RESPONSIVE

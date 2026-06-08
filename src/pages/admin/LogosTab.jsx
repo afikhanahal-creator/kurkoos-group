@@ -10,32 +10,70 @@ function LogoCard({ logo, onChange, onDelete }) {
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [name, setName] = useState(logo.name || '')
-  const timer = useRef()
+  const [scale, setScale] = useState(Number(logo.scale) || 1)
+  const [status, setStatus] = useState('idle') // idle | saving | saved
+  const nameTimer = useRef()
+  const scaleTimer = useRef()
+  const savedTimer = useRef()
+
+  // שמירה לענן (Supabase) עם חיווי סטטוס — לא לוקאלי
+  const save = useCallback((patch, reload = false) => {
+    setStatus('saving')
+    clearTimeout(savedTimer.current)
+    return updateLogo(logo.id, patch)
+      .then(() => {
+        setStatus('saved')
+        savedTimer.current = setTimeout(() => setStatus('idle'), 1600)
+        if (reload) onChange?.()
+      })
+      .catch((e) => { setStatus('idle'); alert('שגיאה בשמירה: ' + (e.message || e)) })
+  }, [logo.id, onChange])
 
   const saveName = (v) => {
-    setName(v); clearTimeout(timer.current)
-    timer.current = setTimeout(() => updateLogo(logo.id, { name: v }).then(() => onChange()), 700)
+    setName(v); clearTimeout(nameTimer.current)
+    nameTimer.current = setTimeout(() => save({ name: v }), 600)
+  }
+
+  const clamp = (v) => Math.min(2.5, Math.max(0.4, Math.round(v * 100) / 100))
+  const onScale = (v) => {
+    const n = clamp(v)
+    setScale(n); clearTimeout(scaleTimer.current)
+    scaleTimer.current = setTimeout(() => save({ scale: n }), 350)
   }
 
   const upload = async (file) => {
     if (!file) return
-    setBusy(true)
+    setBusy(true); setStatus('saving')
     try {
       const url = await uploadMedia(file, 'logos')
       if (logo.image_url) deleteMedia(logo.image_url).catch(() => {})
-      await updateLogo(logo.id, { image_url: url }); onChange()
-    } catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) } finally { setBusy(false) }
+      await updateLogo(logo.id, { image_url: url })
+      setStatus('saved'); savedTimer.current = setTimeout(() => setStatus('idle'), 1600)
+      onChange()
+    } catch (e) { setStatus('idle'); alert('שגיאה בהעלאה: ' + (e.message || e)) } finally { setBusy(false) }
   }
 
-  const toggleActive = async () => { await updateLogo(logo.id, { is_active: !logo.is_active }); onChange() }
+  const toggleActive = () => save({ is_active: !logo.is_active }, true)
 
   return (
     <div ref={setNodeRef} style={style} className={`lcard ${!logo.is_active ? 'lcard--off' : ''}`}>
       <button type="button" className="lcard__handle" {...attributes} {...listeners} title="גרור לסידור">⠿</button>
       <div className="lcard__thumb">
-        {logo.image_url ? <img src={logo.image_url} alt={logo.name} /> : <span className="lcard__placeholder">{logo.name || 'ללא לוגו'}</span>}
+        {logo.image_url
+          ? <img src={logo.image_url} alt={logo.name} style={{ transform: `scale(${scale})` }} />
+          : <span className="lcard__placeholder">{logo.name || 'ללא לוגו'}</span>}
       </div>
       <input className="lcard__name" value={name} placeholder="שם" onChange={(e) => saveName(e.target.value)} />
+
+      {/* שליטת גודל — סליידר + כפתורי −/+ */}
+      <div className="lcard__size">
+        <button type="button" className="lcard__size-btn" onClick={() => onScale(scale - 0.1)} aria-label="הקטן">−</button>
+        <input className="lcard__size-range" type="range" min="0.4" max="2.5" step="0.05" value={scale}
+          onChange={(e) => onScale(Number(e.target.value))} aria-label="גודל הלוגו" />
+        <button type="button" className="lcard__size-btn" onClick={() => onScale(scale + 0.1)} aria-label="הגדל">+</button>
+        <span className="lcard__size-val">{Math.round(scale * 100)}%</span>
+      </div>
+
       <div className="lcard__row">
         <button type="button" className="lcard__btn" disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? 'מעלה…' : (logo.image_url ? 'החלף תמונה' : 'העלה תמונה')}</button>
         <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => upload(e.target.files[0])} />
@@ -43,6 +81,14 @@ function LogoCard({ logo, onChange, onDelete }) {
       <div className="lcard__row">
         <label className="lcard__toggle"><input type="checkbox" checked={!!logo.is_active} onChange={toggleActive} /> פעיל</label>
         <button type="button" className="lcard__del" onClick={() => onDelete(logo)} title="מחק">מחק ✕</button>
+      </div>
+
+      {/* שמירה ידנית + חיווי שמירה אוטומטית בענן */}
+      <div className="lcard__save">
+        <button type="button" className="lcard__save-btn" onClick={() => save({ name, scale })}>שמור</button>
+        <span className={`lcard__status lcard__status--${status}`}>
+          {status === 'saving' ? 'שומר…' : status === 'saved' ? 'נשמר בענן ✓' : 'נשמר אוטומטית'}
+        </span>
       </div>
     </div>
   )

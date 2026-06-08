@@ -66,10 +66,17 @@ export default function Division() {
               { label: L(division.menuTitle) },
             ]}
           />
-          <motion.span className="division-hero__icon"
-            initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
-            <Icon name={division.icon} size={40} stroke={1.5} />
-          </motion.span>
+          {slug === 'execution' ? (
+            <motion.img className="division-hero__logo"
+              src="/divisions/raita-logo.png"
+              alt={'ראיתה חברה לבניין בע"מ'}
+              initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
+          ) : (
+            <motion.span className="division-hero__icon"
+              initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
+              <Icon name={division.icon} size={40} stroke={1.5} />
+            </motion.span>
+          )}
           <motion.h1 className="division-hero__title"
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}>
             {L(division.hero.title)}

@@ -5,13 +5,45 @@
   width: 100%;
 }
 
-.bg-media-demo__frame {
+/* במה: מכל ממורכז שמחזיק את ה-glow (מאחור) ואת הסרטון (מלפנים) */
+.bg-media-demo__stage {
+  position: relative;
   width: 100%;
   max-width: 1100px;          /* מתאים יפה למסך דסקטופ, ממורכז */
   margin-inline: auto;
+}
+
+/* ---- אפקט זוהר כחול מאחורי הסרטון (צבעי המותג) ---- */
+.bg-media-demo__glow {
+  position: absolute;
+  inset: -3%;
+  z-index: 0;
+  border-radius: 30px;
+  background: linear-gradient(125deg, #105572 0%, #16688c 28%, #0894ff 55%, #2bb7d6 78%, #105572 100%);
+  filter: blur(48px);
+  opacity: 0.55;
+  transform: translateY(12px) scale(0.99);
+}
+
+/* ---- מסגרת הסרטון ---- */
+.bg-media-demo__frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
   border-radius: var(--radius-lg, 18px);
   overflow: hidden;
   box-shadow: 0 24px 60px -24px rgba(7, 41, 58, 0.45);
+}
+
+/* ---- קרדיט מתחת לסרטון, מיושר לשמאל ---- */
+.bg-media-demo__caption {
+  max-width: 1100px;
+  margin: 0.75rem auto 0;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--color-text-soft);
 }
 
 @media (max-width: 600px) {
@@ -19,4 +51,10 @@
     border-radius: 12px;
     box-shadow: 0 14px 34px -18px rgba(7, 41, 58, 0.4);
   }
+  .bg-media-demo__glow { filter: blur(34px); opacity: 0.5; }
+  .bg-media-demo__caption { font-size: 0.78rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-media-demo__glow { transform: none; }
 }

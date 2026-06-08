@@ -105,6 +105,9 @@ create table if not exists public.site_logos (
   updated_at timestamptz default now()
 );
 
+-- לוגו: סקלת גודל לכל לוגו (קרוסלת שותפים)
+alter table public.site_logos add column if not exists scale numeric default 1;
+
 -- updated_at triggers
 drop trigger if exists trg_projects_updated on public.projects;
 create trigger trg_projects_updated before update on public.projects for each row execute function public.set_updated_at();

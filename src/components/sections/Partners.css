@@ -7,8 +7,10 @@
 .partners__title {
   text-align: center;
   font-family: var(--font-heading);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-soft);
-  margin-bottom: 2.5rem;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--color-primary-900);
+  margin-bottom: 2.75rem;
 }

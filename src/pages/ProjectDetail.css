@@ -60,13 +60,13 @@
   margin-bottom: 2rem;
 }
 
-/* קו הפרדה דק מתחת למיקום (תל אביב) — בסגנון תדהר */
+/* קו הפרדה מתחת למיקום (תל אביב) — בסגנון תדהר, ברור ונראה */
 .pd-banner__rule {
   display: block;
   width: 100%;
   height: 1px;
-  background: var(--color-border);
-  margin: 0.1rem 0 1.1rem;
+  background: var(--color-border-strong);
+  margin: 0.7rem 0 1.4rem;
 }
 
 .pd-banner__stats-wrap { position: relative; }
@@ -157,13 +157,14 @@
 .pd-anchors__inner {
   display: flex;
   justify-content: center;
-  gap: clamp(0.2rem, 2.8vw, 3.6rem);   /* מרווחים גדולים בין הפריטים בדסקטופ — כמו בתדהר */
+  gap: clamp(0.3rem, 3.6vw, 5rem);     /* מרווחים גדולים בין הפריטים בדסקטופ — כמו בתדהר */
   overflow-x: auto;
   scrollbar-width: none;
 }
 .pd-anchors__inner::-webkit-scrollbar { display: none; }
 .pd-anchors__item {
-  padding: 1rem 1.5rem;
+  padding: 1rem 0.6rem;
+  letter-spacing: 0.015em;
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 1rem;
@@ -229,6 +230,7 @@
   position: absolute;
   inset-block-start: 1rem;
   inset-inline-start: 1rem;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -240,8 +242,24 @@
   font-weight: 600;
   font-size: 0.92rem;
   color: var(--color-primary-900);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
-.pd-map__pin svg { color: var(--color-accent); }
+.pd-map__pin svg { color: var(--color-accent); transition: color var(--dur-fast); }
+/* ריחוף/מגע — זוהר אדום עדין לפי פלטת המותג */
+.pd-map__pin:hover,
+.pd-map__pin:focus-visible,
+.pd-map__pin:active {
+  transform: translateY(-2px) scale(1.03);
+  color: var(--color-accent-500);
+  box-shadow: 0 0 0 3px rgba(169, 11, 12, 0.18),
+    0 10px 24px -6px rgba(169, 11, 12, 0.45);
+}
+.pd-map__pin:hover svg,
+.pd-map__pin:focus-visible svg,
+.pd-map__pin:active svg { color: var(--color-accent-600); }
 
 /* ---------- Plans accordion ---------- */
 .plan-acc {

@@ -282,6 +282,18 @@
 .adm__logo-error { display: block; color: var(--color-error); font-size: 0.85rem; margin-bottom: 0.6rem; }
 .adm__logo-actions { display: flex; gap: 0.5rem; }
 
+/* logo size slider */
+.adm__logo-size {
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  padding: 1.2rem; background: var(--color-bg-soft); margin-bottom: 1.3rem;
+}
+.adm__logo-size-row { display: flex; align-items: center; gap: 1rem; margin-top: 0.8rem; }
+.adm__logo-size-row input[type='range'] { flex: 1; accent-color: var(--color-secondary); cursor: pointer; }
+.adm__logo-size-val {
+  font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem;
+  color: var(--color-secondary); min-width: 3.2rem; text-align: center;
+}
+
 @media (max-width: 600px) {
   .adm__grid2 { grid-template-columns: 1fr; }
   .adm__row--stat { grid-template-columns: 1fr 1fr; }

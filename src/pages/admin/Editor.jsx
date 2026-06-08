@@ -61,6 +61,31 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       )
+    if (f.type === 'multiselect') {
+      const arr = Array.isArray(v) ? v : []
+      const toggle = (val) =>
+        setField(f.key, arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val])
+      return (
+        <div className="ed__chips" role="group">
+          {f.options.map((o) => {
+            const on = arr.includes(o.value)
+            return (
+              <button
+                type="button"
+                key={o.value}
+                className={`ed__chip ${on ? 'ed__chip--on' : ''}`}
+                aria-pressed={on}
+                onClick={() => toggle(o.value)}
+                title={o.hint || ''}
+              >
+                <span className="ed__chip-check" aria-hidden="true">{on ? '✓' : '+'}</span>
+                {o.label}
+              </button>
+            )
+          })}
+        </div>
+      )
+    }
     if (f.type === 'bool')
       return (
         <label className="ed__switch">
@@ -87,7 +112,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <legend>{sec.section}</legend>
           <div className="ed__grid">
             {sec.fields.map((f) => (
-              <div className={`ed__field ${f.type === 'textarea' ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
+              <div className={`ed__field ${f.type === 'textarea' || f.type === 'multiselect' ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
                 <label>{f.label}{f.required && <span className="ed__req">*</span>}</label>
                 {renderField(f)}
                 {f.hint && <small className="ed__hint">{f.hint}</small>}

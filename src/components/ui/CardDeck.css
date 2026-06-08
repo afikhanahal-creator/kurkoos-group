@@ -1,0 +1,92 @@
+/* ============================================================
+   CardDeck — ערימת כרטיסים נלחצת (מובייל). מציג כרטיס FeatureCard
+   אחד פעיל + הצצה לשניים מאחור. אפקט ה-hover/תנועה של הכרטיס נשמר
+   (מוגדר ב-Activities.css ופעיל גלובלית על .card-inner).
+   ============================================================ */
+.card-deck {
+  width: 100%;
+  max-width: 24rem;
+  margin-inline: auto;
+}
+
+.card-deck__trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.card-deck__trigger:focus-visible {
+  outline: 2px solid var(--color-accent-500);
+  outline-offset: 6px;
+  border-radius: 24px;
+}
+
+.card-deck__viewport {
+  position: relative;
+  width: 100%;
+  padding-top: 1.75rem; /* מקום ל"הצצה" של הכרטיסים האחוריים שמעל */
+  min-height: 23.5rem;
+  overflow: visible;
+}
+
+.card-deck__card {
+  position: absolute;
+  inset-inline: 0;
+  top: 1.75rem;
+  width: 100%;
+  will-change: transform;
+}
+
+/* ============================================================
+   אפקט "שלנו" על כרטיס הערימה:
+   - מכשירי hover: ה-:hover הגלובלי על .card-inner כבר עובד.
+   - מכשירי מגע (hover:none): מריצים את אותו אפקט אוטומטי כמו
+     ב-.activities__grid, אבל רק על הכרטיס הפעיל (z העליון).
+   ה-keyframes (card-auto-*) מוגדרים ב-Activities.css.
+   ============================================================ */
+@media (hover: none) {
+  .card-deck .card-inner { animation: card-auto-tilt 6s var(--ease-in-out) infinite; }
+  .card-deck .card__liquid { animation: card-auto-liquid 6s var(--ease-in-out) infinite; }
+  .card-deck .card__glow { animation: card-auto-glow 6s var(--ease-in-out) infinite; }
+  .card-deck .card__image { animation: card-auto-image 6s var(--ease-in-out) infinite; }
+  .card-deck .card__title { animation: card-auto-accent 6s var(--ease-in-out) infinite; }
+}
+
+@media (hover: none) and (prefers-reduced-motion: reduce) {
+  .card-deck .card-inner,
+  .card-deck .card__liquid,
+  .card-deck .card__glow,
+  .card-deck .card__image,
+  .card-deck .card__title { animation: none; }
+}
+
+/* ============================================================
+   מלל הכרטיס בערימה — ממורכז (אופקית + אנכית) וגדול יותר, כך
+   שהכותרת והתיאור בולטים ומרוכזים. חל בכל העמודים שמשתמשים
+   ב-CardDeck (דף הבית + עמודי החטיבות).
+   ============================================================ */
+.card-deck .card__content {
+  justify-content: center;
+  text-align: center;
+}
+.card-deck .card__text {
+  align-items: center;
+  gap: 0.55em;
+}
+.card-deck .card__title {
+  font-size: 1.55em;
+  line-height: 1.2;
+}
+.card-deck .card__description {
+  font-size: 1em;
+  line-height: 1.6;
+  max-width: 30ch;
+  margin-inline: auto;
+  -webkit-line-clamp: 4;
+}
+

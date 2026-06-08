@@ -24,6 +24,7 @@ create table if not exists public.projects (
   amenities jsonb default '[]'::jsonb,
   seo_title text,
   seo_description text,
+  pages jsonb default '[]'::jsonb,     -- עמודים שבהם הפרויקט מופיע: ["development","execution","featured","brokerage"]
   is_published boolean default true,
   is_archived boolean default false,
   sort_order int default 0,
@@ -31,6 +32,9 @@ create table if not exists public.projects (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- שדרוג למסדי-נתונים קיימים: הוספת עמודת "עמודים" אם חסרה
+alter table public.projects add column if not exists pages jsonb default '[]'::jsonb;
 
 -- ---------- properties ----------
 create table if not exists public.properties (

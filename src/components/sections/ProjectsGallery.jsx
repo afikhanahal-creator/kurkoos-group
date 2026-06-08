@@ -1,8 +1,9 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import projects from '../../data/projects.js'
+import useIsMobile from '../../hooks/useIsMobile.js'
 import Reveal from '../ui/Reveal.jsx'
 import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -11,9 +12,9 @@ import SpotlightCard from '../ui/SpotlightCard.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './ProjectsGallery.css'
 
-const FEATURED = 4    // מציגים בדיוק 4 פרויקטים בדף הבית
-const AUTOPLAY = 3500 // משך הצגה לכל כרטיס (מ"ש) — פעיל רק כשיש גלילה (מובייל/מסך צר)
+const FEATURED = 4    // מציגים בדיוק 4 פרויקטים כברירת מחדל
 const GAP = 20        // מרווח בין כרטיסים (1.25rem)
+const SPEED = 0.05    // מהירות הלולאה הרציפה (px/ms) — מובייל בלבד
 
 const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
 const itemVariants = {
@@ -24,13 +25,7 @@ const itemVariants = {
 /* Lightbox */
 function Lightbox({ item, onClose, L, t }) {
   return (
-    <motion.div
-      className="pg-lightbox"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
+    <motion.div className="pg-lightbox" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.div
         className="pg-lightbox__panel"
         initial={{ scale: 0.92, y: 20 }}
@@ -57,57 +52,103 @@ function Lightbox({ item, onClose, L, t }) {
   )
 }
 
-export default function ProjectsGallery() {
+/* כרטיס פרויקט בודד */
+function ProjectCard({ p, L, t, onSelect }) {
+  return (
+    <motion.article
+      className="pg-card"
+      variants={itemVariants}
+      onClick={() => onSelect(p)}
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onSelect(p)}
+      aria-label={L(p.name)}
+    >
+      <BorderGlow
+        className="pg-card__glow"
+        backgroundColor="transparent"
+        borderRadius={16}
+        glowColor="197 78 48"
+        glowRadius={30}
+        glowIntensity={1.15}
+        edgeSensitivity={28}
+        coneSpread={24}
+        colors={['#16688c', '#105572', '#8fb6c8']}
+      >
+        <div className="pg-card__media">
+          <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
+            <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" />
+            <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
+          </SpotlightCard>
+          <div className="pg-card__panel">
+            <h3 className="pg-card__title">{L(p.name)}</h3>
+            <div className="pg-card__reveal">
+              <p className="pg-card__desc">{L(p.short)}</p>
+              <span className="pg-card__meta">
+                <Icon name="location" size={14} /> {L(p.city)} · {p.year}
+              </span>
+            </div>
+          </div>
+        </div>
+      </BorderGlow>
+    </motion.article>
+  )
+}
+
+/* ============================================================
+   ProjectsGallery — קרוסלת פרויקטים.
+   במובייל: לולאה אינסופית רציפה (marquee) — הפריטים משוכפלים והגלילה
+   חוזרת על עצמה בצורה חלקה בלי קפיצה להתחלה.
+   props: items, sectionId, showFooter.
+   ============================================================ */
+export default function ProjectsGallery({ items: itemsProp, sectionId = 'projects', showFooter = true }) {
   const { t, isRTL } = useI18n()
   const L = useLocalized()
+  const isMobile = useIsMobile()
   const [selected, setSelected] = useState(null)
   const viewportRef = useRef(null)
   const pausedRef = useRef(false)
-  const elapsedRef = useRef(0)
-  const lastTsRef = useRef(0)
+  const posRef = useRef(0)
 
-  // כיוון ההתקדמות: ב-RTL מתקדמים שמאלה => scrollLeft שלילי
   const dir = isRTL ? -1 : 1
+  const items = itemsProp && itemsProp.length ? itemsProp : projects.slice(0, FEATURED)
+  // במובייל משכפלים את הפריטים כדי ליצור לולאה אינסופית חלקה
+  const renderItems = isMobile ? [...items, ...items] : items
 
-  // בדיוק 4 פרויקטים — בלי שכפול
-  const items = projects.slice(0, FEATURED)
-
-  // ניגון אוטומטי — רק כשהתוכן רחב מהמסך (יש גלילה). מגיע לסוף → חוזר להתחלה.
+  // לולאה רציפה (marquee) — מובייל בלבד, כשהתוכן רחב מהמסך
   useEffect(() => {
+    if (!isMobile) return
     let raf
-    lastTsRef.current = 0
+    let last = 0
+    const el = viewportRef.current
+    if (el) posRef.current = el.scrollLeft
     const tick = (ts) => {
-      const last = lastTsRef.current || ts
-      const dt = ts - last
-      lastTsRef.current = ts
-      const el = viewportRef.current
-      if (el && !pausedRef.current) {
-        const max = el.scrollWidth - el.clientWidth
-        if (max > 4) { // יש גלילה בפועל
-          elapsedRef.current += dt
-          if (elapsedRef.current >= AUTOPLAY) {
-            elapsedRef.current = 0
-            const card = el.querySelector('.pg-card')
-            const step = card ? card.offsetWidth + GAP : 270
-            if (Math.abs(el.scrollLeft) >= max - 4) {
-              el.scrollTo({ left: 0, behavior: 'smooth' })
-            } else {
-              el.scrollBy({ left: dir * step, behavior: 'smooth' })
-            }
-          }
+      const dt = last ? ts - last : 0
+      last = ts
+      const node = viewportRef.current
+      if (node && !pausedRef.current) {
+        const half = node.scrollWidth / 2 // רוחב סט יחיד (לפני השכפול)
+        if (half > node.clientWidth - 4) {
+          posRef.current += dir * SPEED * dt
+          if (dir > 0 && posRef.current >= half) posRef.current -= half
+          if (dir < 0 && posRef.current <= -half) posRef.current += half
+          node.scrollLeft = posRef.current
         }
       }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [dir])
+  }, [isMobile, dir, renderItems.length])
 
   const pause = () => { pausedRef.current = true }
-  const resume = () => { pausedRef.current = false; lastTsRef.current = 0 }
+  const resume = () => {
+    pausedRef.current = false
+    const el = viewportRef.current
+    if (el) posRef.current = el.scrollLeft
+  }
 
   return (
-    <section className="section section--soft projects-gallery" id="projects">
+    <section className="section section--soft projects-gallery" id={sectionId || undefined}>
       <div className="container">
         <Reveal className="projects-gallery__head">
           <KineticText as="h2" className="section-title" text={t('projects.title')} />
@@ -130,65 +171,22 @@ export default function ProjectsGallery() {
           whileInView="visible"
           viewport={{ once: true, amount: 'some' }}
         >
-          {items.map((p) => (
-            <motion.article
-              key={p.slug}
-              className="pg-card"
-              variants={itemVariants}
-              onClick={() => setSelected(p)}
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setSelected(p)}
-              aria-label={L(p.name)}
-            >
-              <BorderGlow
-                className="pg-card__glow"
-                backgroundColor="transparent"
-                borderRadius={16}
-                glowColor="197 78 48"
-                glowRadius={30}
-                glowIntensity={1.15}
-                edgeSensitivity={28}
-                coneSpread={24}
-                colors={['#16688c', '#105572', '#8fb6c8']}
-              >
-                <div className="pg-card__media">
-                  {/* ספוטלייט — רק מעל התמונה (הבאנר הלבן נשאר מעליו) */}
-                  <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-                    <SmartImage
-                      src={p.cover}
-                      alt={L(p.name)}
-                      label={L(p.name)}
-                      className="pg-card__img"
-                    />
-                    <span className={`pg-card__badge pg-card__badge--${p.status}`}>
-                      {t(`projects.status.${p.status}`)}
-                    </span>
-                  </SpotlightCard>
-                  {/* התריס — עולה בריחוף ויורד חלק */}
-                  <div className="pg-card__panel">
-                    <h3 className="pg-card__title">{L(p.name)}</h3>
-                    <div className="pg-card__reveal">
-                      <p className="pg-card__desc">{L(p.short)}</p>
-                      <span className="pg-card__meta">
-                        <Icon name="location" size={14} /> {L(p.city)} · {p.year}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </BorderGlow>
-            </motion.article>
+          {renderItems.map((p, i) => (
+            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} onSelect={setSelected} />
           ))}
         </motion.div>
       </div>
 
-      <div className="container">
-        <Reveal className="projects-gallery__footer">
-          <Link to="/projects" className="btn btn--dark btn--lg">
-            {t('projects.all')}
-            <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
-          </Link>
-        </Reveal>
-      </div>
+      {showFooter && (
+        <div className="container">
+          <Reveal className="projects-gallery__footer">
+            <Link to="/projects" className="btn btn--dark btn--lg">
+              {t('projects.all')}
+              <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
+            </Link>
+          </Reveal>
+        </div>
+      )}
 
       <AnimatePresence>
         {selected && <Lightbox item={selected} onClose={() => setSelected(null)} L={L} t={t} />}

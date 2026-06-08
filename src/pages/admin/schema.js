@@ -9,6 +9,14 @@ export const PROJECT_STATUS = [
   { value: 'sold', label: 'נמכר' },
 ]
 
+// העמודים שבהם הפרויקט יכול להופיע. בחירת כמה = הפרויקט משוכפל לכל העמודים.
+export const PROJECT_PAGES = [
+  { value: 'development', label: 'יזמות', hint: '/divisions/development' },
+  { value: 'execution', label: 'ביצוע', hint: '/divisions/execution' },
+  { value: 'featured', label: 'פרויקטים נבחרים', hint: '/projects' },
+  { value: 'brokerage', label: 'תיווך', hint: '/divisions/brokerage' },
+]
+
 export const PROPERTY_TYPE = [
   { value: 'apartment', label: 'דירה' },
   { value: 'garden_apartment', label: 'דירת גן' },
@@ -33,18 +41,30 @@ export const projectSchema = [
       { key: 'subtitle', label: 'כותרת משנה', type: 'text' },
       { key: 'status', label: 'סטטוס', type: 'select', options: PROJECT_STATUS },
       { key: 'location', label: 'עיר', type: 'text' },
-      { key: 'address', label: 'כתובת מלאה', type: 'text' },
+      { key: 'address', label: 'כתובת מלאה (תופיע על המפה)', type: 'text', hint: 'הכתובת המדויקת — נטענת אוטומטית למפה בעמוד הפרויקט' },
       { key: 'gush', label: 'גוש', type: 'text' },
       { key: 'chelka', label: 'חלקה', type: 'text' },
       { key: 'description', label: 'תיאור הפרויקט', type: 'textarea' },
     ],
   },
   {
-    section: 'SEO ונראות',
+    section: 'עמודים ופרסום',
+    fields: [
+      {
+        key: 'pages',
+        label: 'באילו עמודים יופיע?',
+        type: 'multiselect',
+        options: PROJECT_PAGES,
+        hint: 'בחרו עמוד אחד או יותר — הפרויקט יופיע בכל אחד מהם',
+      },
+      { key: 'is_published', label: 'מפורסם באתר', type: 'bool' },
+    ],
+  },
+  {
+    section: 'SEO',
     fields: [
       { key: 'seo_title', label: 'כותרת SEO', type: 'text' },
       { key: 'seo_description', label: 'תיאור SEO', type: 'textarea' },
-      { key: 'is_published', label: 'מפורסם באתר', type: 'bool' },
     ],
   },
 ]
@@ -95,6 +115,7 @@ export const newProjectDefaults = () => ({
   slug: 'project-' + Math.random().toString(36).slice(2, 7),
   status: 'planning',
   is_published: false,
+  pages: [],
   gallery: [],
 })
 

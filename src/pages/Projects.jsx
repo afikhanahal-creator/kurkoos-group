@@ -23,7 +23,12 @@ export default function Projects() {
     if (!supabase) return
     listProjects()
       .then((rows) => {
-        if (rows && rows.length) setProjects(rows.map((p) => ({ name: p.name, slug: p.slug, cover: p.hero_image_url || (p.gallery && p.gallery[0]), gallery: p.gallery || [] })))
+        if (rows && rows.length) {
+          // אם יש פרויקטים שתויגו "פרויקטים נבחרים" — מציגים אותם; אחרת את כולם
+          const featured = rows.filter((p) => Array.isArray(p.pages) && p.pages.includes('featured'))
+          const use = featured.length ? featured : rows
+          setProjects(use.map((p) => ({ name: p.name, slug: p.slug, cover: p.hero_image_url || (p.gallery && p.gallery[0]), gallery: p.gallery || [] })))
+        }
       })
       .catch(() => {})
     listCounters({ activeOnly: true })

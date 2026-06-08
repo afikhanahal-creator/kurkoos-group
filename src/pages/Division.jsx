@@ -1,10 +1,16 @@
 import { useParams, Navigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import { getDivision } from '../data/divisions.js'
 import projects from '../data/projects.js'
+import { supabase } from '../lib/supabase.js'
+import { listProjectsByPage, cmsRowToCard } from '../lib/cms.js'
+import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import ProjectCard from '../components/ui/ProjectCard.jsx'
 import CardStack from '../components/ui/CardStack.jsx'
+import CardDeck from '../components/ui/CardDeck.jsx'
+import useIsMobile from '../hooks/useIsMobile.js'
 import Testimonials from '../components/sections/Testimonials.jsx'
 import Contact from '../components/sections/Contact.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -22,11 +28,25 @@ export default function Division() {
   const { t } = useI18n()
   const L = useLocalized()
   const division = getDivision(slug)
+  const isMobile = useIsMobile()
+
+  // הפרויקטים שיוצגו: ברירת מחדל = מקומיים; אם הוגדרו ב-CMS לעמוד הזה — מהם.
+  const [list, setList] = useState(() => projects.slice(0, 4))
+
+  // מיפוי slug של דיוויזיה → עמוד תיוג ב-CMS (התיווך מוצג בעמוד /divisions/residential)
+  const SLUG_TO_PAGE = { development: 'development', execution: 'execution', residential: 'brokerage' }
+
+  useEffect(() => {
+    const pageKey = SLUG_TO_PAGE[slug] || null
+    if (!supabase || !pageKey) { setList(projects.slice(0, 4)); return }
+    let alive = true
+    listProjectsByPage(pageKey)
+      .then((rows) => { if (alive && rows && rows.length) setList(rows.map(cmsRowToCard)) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!division) return <Navigate to="/" replace />
-
-  // מציג את כל הפרויקטים (עד 4), בדומה לעמוד "כל הפרויקטים".
-  const list = projects.slice(0, 4)
 
   return (
     <article className="division">
@@ -76,44 +96,26 @@ export default function Division() {
             <span className="eyebrow">{t('activities.eyebrow')}</span>
             <h2 className="section-title">{L(division.name)}</h2>
           </Reveal>
-          <div className="division-why__grid">
-            {division.why.map((w, i) => (
-              <Reveal key={i} delay={i * 0.08}>
-                <FeatureCard icon={w.icon} title={L(w.title)} desc={L(w.desc)} />
-              </Reveal>
-            ))}
-          </div>
+          {isMobile ? (
+            <CardDeck
+              className="division-why__deck"
+              items={division.why.map((w, i) => ({ id: String(i), ...w }))}
+              renderCard={(w) => <FeatureCard icon={w.icon} title={L(w.title)} desc={L(w.desc)} />}
+            />
+          ) : (
+            <div className="division-why__grid">
+              {division.why.map((w, i) => (
+                <Reveal key={i} delay={i * 0.08}>
+                  <FeatureCard icon={w.icon} title={L(w.title)} desc={L(w.desc)} />
+                </Reveal>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* פרויקטים */}
-      <section className="section division-projects" id="projects">
-        <div className="container">
-          <Reveal className="division-projects__head">
-            <h2 className="section-title">{t('projects.title')}</h2>
-          </Reveal>
-          {/* דסקטופ — רשת כרטיסים */}
-          <div className="division-projects__grid">
-            {list.map((p, i) => (
-              <Reveal key={p.slug} delay={(i % 3) * 0.08}>
-                <ProjectCard project={p} />
-              </Reveal>
-            ))}
-          </div>
-          {/* מובייל — ערימת כרטיסים אינטראקטיבית (חוסכת מקום) */}
-          <div className="division-projects__stack">
-            <CardStack
-              items={list.map((p) => ({
-                image: p.cover,
-                title: L(p.name),
-                tagline: `${L(p.city)} · ${L(p.type)}`,
-                to: `/projects/${p.slug}`,
-              }))}
-              cta={t('projects.viewProject')}
-            />
-          </div>
-        </div>
-      </section>
+      {/* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */}
+      <ProjectsGallery items={list} showFooter={false} />
 
       {/* מדריך */}
       <section className="section division-guide">

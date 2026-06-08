@@ -9,13 +9,26 @@ const SLOTS = [
 
 export default function LogosAdmin() {
   const [settings, setSettings] = useState({})
+  const [scale, setScale] = useState(1)
   const [busy, setBusy] = useState(null)
   const [saved, setSaved] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => { clearCmsCache(); fetchSettings().then(setSettings) }, [])
+  useEffect(() => {
+    clearCmsCache()
+    fetchSettings().then((s) => { setSettings(s); setScale(Number(s.logo_scale) || 1) })
+  }, [])
 
   const flashSaved = (slot) => { setSaved(slot); setTimeout(() => setSaved((s) => (s === slot ? null : s)), 2500) }
+
+  const saveScale = async (val) => {
+    setError(null)
+    try {
+      await setSetting('logo_scale', val)
+      setSettings((s) => ({ ...s, logo_scale: val }))
+      flashSaved('scale')
+    } catch (e) { setError({ slot: 'scale', msg: e.message }) }
+  }
 
   const onUpload = async (slot, file) => {
     if (!file) return
@@ -49,6 +62,27 @@ export default function LogosAdmin() {
         העלו קובץ לוגו (מומלץ PNG שקוף או SVG). ההעלאה <strong>נשמרת אוטומטית</strong> ומופיעה באתר מיד.
         “איפוס” מחזיר ללוגו ברירת המחדל.
       </p>
+
+      {/* שליטת גודל הלוגו באתר */}
+      <div className="adm__logo-size">
+        <div className="adm__logo-top">
+          <span className="adm__logo-name">גודל הלוגו באתר</span>
+          {saved === 'scale' && <span className="adm__saved-pill"><Icon name="check" size={14} /> נשמר</span>}
+        </div>
+        <span className="adm__logo-hint">גררו כדי להגדיל או להקטין את הלוגו בכל האתר. השינוי נשמר עם שחרור.</span>
+        <div className="adm__logo-size-row">
+          <input
+            type="range" min="0.6" max="1.8" step="0.05" value={scale}
+            onChange={(e) => setScale(Number(e.target.value))}
+            onMouseUp={(e) => saveScale(Number(e.target.value))}
+            onTouchEnd={(e) => saveScale(Number(e.target.value))}
+            onKeyUp={(e) => saveScale(Number(e.target.value))}
+          />
+          <span className="adm__logo-size-val">{Math.round(scale * 100)}%</span>
+          <button type="button" className="btn btn--ghost" onClick={() => { setScale(1); saveScale(1) }}>איפוס</button>
+        </div>
+        {error?.slot === 'scale' && <span className="adm__logo-error">שגיאה: {error.msg}</span>}
+      </div>
 
       <div className="adm__logos">
         {SLOTS.map((slot) => (

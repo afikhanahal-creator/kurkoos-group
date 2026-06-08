@@ -47,6 +47,7 @@ export const projects = [
     towers: 1,
     architects: { he: 'יסקי מור סיון אדריכלים', en: 'Yaski Mor Sivan Architects' },
     mapQuery: 'Rothschild Blvd, Tel Aviv',
+    coords: { lat: 32.0653, lng: 34.7726 },
     environment: {
       title: { he: 'בלב תל אביב הירוקה', en: 'In the heart of green Tel Aviv' },
       text: {
@@ -133,6 +134,7 @@ export const projects = [
     towers: 2,
     architects: { he: 'משרד אדריכלים ים-נוף', en: 'Sea-View Architects' },
     mapQuery: 'Herzliya Marina',
+    coords: { lat: 32.1631, lng: 34.7958 },
     environment: {
       title: { he: 'על קו המים של הרצליה', en: 'On the Herzliya waterline' },
       text: {
@@ -172,6 +174,7 @@ export const projects = [
     towers: 1,
     architects: { he: 'גרין אדריכלים', en: 'Green Architects' },
     mapQuery: 'Raanana',
+    coords: { lat: 32.1848, lng: 34.8713 },
     environment: {
       title: { he: 'ירוק, שקט ומחובר', en: 'Green, quiet and connected' },
       text: {
@@ -211,6 +214,7 @@ export const projects = [
     towers: 3,
     architects: { he: 'אורבן סטודיו אדריכלים', en: 'Urban Studio Architects' },
     mapQuery: 'Bat Yam',
+    coords: { lat: 32.0171, lng: 34.7457 },
     environment: {
       title: { he: 'לב חדש לבת ים', en: 'A new heart for Bat Yam' },
       text: {

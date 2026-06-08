@@ -33,6 +33,28 @@ export const testimonials = [
       en: 'After handover, the service did not disappear, and every request got a fast response. That is what sets a great company apart.',
     },
   },
+  {
+    id: 4,
+    name: { he: 'משפחת אברהמי', en: 'The Avrahami family' },
+    project: { he: 'התחדשות מרכז העיר, בת ים', en: 'City Center Renewal, Bat Yam' },
+    image:
+      'https://images.unsplash.com/photo-1545167622-3a6ac756afa4?auto=format&fit=crop&w=600&q=80',
+    quote: {
+      he: 'תהליך פינוי-בינוי יכול להלחיץ, אבל הצוות ליווה אותנו בסבלנות בכל שלב והפך אותו לפשוט וברור.',
+      en: 'An evacuation-reconstruction process can be stressful, but the team guided us patiently through every step and made it simple and clear.',
+    },
+  },
+  {
+    id: 5,
+    name: { he: 'יעל ורן', en: 'Yael & Ran' },
+    project: { he: 'מגדלי המרינה, הרצליה', en: 'Marina Towers, Herzliya' },
+    image:
+      'https://images.unsplash.com/photo-1542327897-d73f4005b533?auto=format&fit=crop&w=600&q=80',
+    quote: {
+      he: 'בחרנו בקורקוס בזכות המוניטין, ונשארנו בזכות היחס. כל הבטחה קוימה, והאיכות מורגשת בכל פרט בבית.',
+      en: 'We chose Kurkoos for the reputation, and stayed for the attitude. Every promise was kept, and the quality is felt in every detail of the home.',
+    },
+  },
 ]
 
 export default testimonials

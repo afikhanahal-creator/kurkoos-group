@@ -6,6 +6,16 @@ import CountersTab from './CountersTab.jsx'
 import LogosTab from './LogosTab.jsx'
 import './admin.css'
 
+/* אייקונים מינימליים (inline — ללא תלות חיצונית) */
+const Ico = {
+  projects: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3" /><path d="M9 9v0M9 12v0M9 15v0" /></svg>,
+  counters: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 19V10M10 19V5M16 19v-7M22 19H2" /></svg>,
+  logos: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="4" width="18" height="14" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="M21 15l-5-4-9 7" /></svg>,
+  logout: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>,
+  external: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>,
+  lock: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>,
+}
+
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -17,31 +27,37 @@ function Login() {
     setErr(''); setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
-    if (error) setErr('פרטי התחברות שגויים. נסי שוב.')
+    if (error) setErr('פרטי התחברות שגויים. נסו שוב.')
   }
 
   return (
-    <div className="adm-login">
+    <div className="adm-login" dir="rtl">
+      <div className="adm-login__aside" aria-hidden="true">
+        <span className="adm-login__mark">K</span>
+        <h2>קורקוס גרופ</h2>
+        <p>מערכת ניהול התוכן — פרויקטים, נכסים, מונים ולוגואים, במקום אחד.</p>
+      </div>
       <form className="adm-login__box" onSubmit={submit}>
+        <span className="adm-login__lock"><Ico.lock width={22} height={22} /></span>
         <h1 className="adm-login__title">כניסת מנהל</h1>
-        <p className="adm-login__sub">קורקוס גרופ · ניהול תוכן</p>
+        <p className="adm-login__sub">התחברו כדי לנהל את תוכן האתר</p>
         <label>אימייל
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="name@kurkoos.co.il" />
         </label>
         <label>סיסמה
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••" />
         </label>
         {err && <p className="adm-login__err">{err}</p>}
-        <button type="submit" className="btn btn--primary" disabled={busy}>{busy ? 'מתחבר…' : 'כניסה'}</button>
+        <button type="submit" className="btn btn--primary adm-login__submit" disabled={busy}>{busy ? 'מתחבר…' : 'כניסה למערכת'}</button>
       </form>
     </div>
   )
 }
 
 const TABS = [
-  { id: 'projects', label: 'פרויקטים ונכסים' },
-  { id: 'counters', label: 'מונים ומספרים' },
-  { id: 'logos', label: 'לוגואים' },
+  { id: 'projects', label: 'פרויקטים ונכסים', sub: 'נהלו פרויקטים, נכסים ועמודי תצוגה', icon: 'projects' },
+  { id: 'counters', label: 'מונים ומספרים', sub: 'הנתונים שמופיעים באתר', icon: 'counters' },
+  { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos' },
 ]
 
 export default function Admin() {
@@ -49,28 +65,65 @@ export default function Admin() {
   const [tab, setTab] = useState('projects')
 
   if (!hasSupabase) return <div className="adm-msg">החיבור ל‑Supabase לא מוגדר (חסרים משתני סביבה).</div>
-  if (session === undefined) return <div className="adm-msg">טוען…</div>
+  if (session === undefined) return <div className="adm-msg adm-msg--loading"><span className="adm-spin" />טוען…</div>
   if (session === null) return <Login />
+
+  const active = TABS.find((t) => t.id === tab) || TABS[0]
+  const email = session.user?.email || ''
+  const initials = (email[0] || 'A').toUpperCase()
 
   return (
     <div className="adm" dir="rtl">
-      <header className="adm__bar">
-        <div className="adm__brand">קורקוס גרופ · ניהול תוכן</div>
-        <nav className="adm__tabs">
-          {TABS.map((t) => (
-            <button key={t.id} type="button" className={`adm__tab ${tab === t.id ? 'adm__tab--active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
-          ))}
-        </nav>
-        <div className="adm__user">
-          <span>{session.user?.email}</span>
-          <button type="button" className="adm__logout" onClick={() => supabase.auth.signOut()}>יציאה</button>
+      <aside className="adm__sidebar">
+        <div className="adm__logo">
+          <span className="adm__logo-mark">K</span>
+          <span className="adm__logo-text"><strong>קורקוס גרופ</strong><small>ניהול תוכן</small></span>
         </div>
-      </header>
-      <main className="adm__content">
-        {tab === 'projects' && <ProjectsTab />}
-        {tab === 'counters' && <CountersTab />}
-        {tab === 'logos' && <LogosTab />}
-      </main>
+
+        <nav className="adm__nav" aria-label="ניווט ראשי">
+          {TABS.map((t) => {
+            const I = Ico[t.icon]
+            return (
+              <button
+                key={t.id}
+                type="button"
+                className={`adm__nav-item ${tab === t.id ? 'adm__nav-item--active' : ''}`}
+                onClick={() => setTab(t.id)}
+              >
+                <I width={20} height={20} />
+                <span>{t.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="adm__sidebar-foot">
+          <a className="adm__view-site" href="/" target="_blank" rel="noopener noreferrer">
+            <Ico.external width={16} height={16} /> צפייה באתר
+          </a>
+          <div className="adm__user">
+            <span className="adm__avatar">{initials}</span>
+            <span className="adm__user-meta"><strong>{email.split('@')[0]}</strong><small>{email}</small></span>
+            <button type="button" className="adm__logout" onClick={() => supabase.auth.signOut()} aria-label="יציאה">
+              <Ico.logout width={18} height={18} />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="adm__main">
+        <header className="adm__topbar">
+          <div className="adm__topbar-head">
+            <h1 className="adm__page-title">{active.label}</h1>
+            <p className="adm__page-sub">{active.sub}</p>
+          </div>
+        </header>
+        <main className="adm__content">
+          {tab === 'projects' && <ProjectsTab />}
+          {tab === 'counters' && <CountersTab />}
+          {tab === 'logos' && <LogosTab />}
+        </main>
+      </div>
     </div>
   )
 }

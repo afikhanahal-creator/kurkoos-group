@@ -3,11 +3,14 @@ import activities from '../../data/activities.js'
 import Reveal from '../ui/Reveal.jsx'
 import FeatureCard from '../ui/FeatureCard.jsx'
 import KineticText from '../ui/KineticText.jsx'
+import CardDeck from '../ui/CardDeck.jsx'
+import useIsMobile from '../../hooks/useIsMobile.js'
 import './Activities.css'
 
 export default function Activities() {
   const { t } = useI18n()
   const L = useLocalized()
+  const isMobile = useIsMobile()
 
   return (
     <section className="section activities" id="activities">
@@ -18,19 +21,27 @@ export default function Activities() {
           <p className="section-lead">{t('activities.lead')}</p>
         </Reveal>
 
-        <div className="activities__grid">
-          {activities.map((a, i) => (
-            <Reveal key={a.id} delay={(i % 4) * 0.08}>
-              <FeatureCard
-                icon={a.icon}
-                title={L(a.title)}
-                desc={L(a.desc)}
-                to={a.to || '/#contact'}
-                cta={t('common.readMore')}
-              />
-            </Reveal>
-          ))}
-        </div>
+        {isMobile ? (
+          <CardDeck
+            className="activities__deck"
+            items={activities}
+            renderCard={(a) => <FeatureCard icon={a.icon} title={L(a.title)} desc={L(a.desc)} />}
+          />
+        ) : (
+          <div className="activities__grid">
+            {activities.map((a, i) => (
+              <Reveal key={a.id} delay={(i % 4) * 0.08}>
+                <FeatureCard
+                  icon={a.icon}
+                  title={L(a.title)}
+                  desc={L(a.desc)}
+                  to={a.to || '/#contact'}
+                  cta={t('common.readMore')}
+                />
+              </Reveal>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

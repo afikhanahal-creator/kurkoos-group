@@ -32,32 +32,37 @@
 }
 .newsletter__done svg { color: #25d366; }
 
-@media (max-width: 640px) {
+/* מובייל/טאבלט — מתיישר עם הטופס שמעליו: עמודה ממורכזת */
+@media (max-width: 900px) {
   .newsletter {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 0.9rem;
-    padding-block: 1.4rem;
+    gap: 1rem;
   }
-  .newsletter__title { font-size: 1.2rem; }
-  .newsletter__lead { font-size: 0.85rem; margin-top: 0.2rem; }
   .newsletter__form {
     width: 100%;
     min-width: 0;
-    max-width: 360px;
+    max-width: 440px;
     margin: 0 auto;
-    gap: 0.5rem;
+    justify-content: center;
   }
+}
+
+@media (max-width: 560px) {
+  .newsletter { gap: 0.9rem; padding-block: 1.4rem; }
+  .newsletter__title { font-size: 1.2rem; }
+  .newsletter__lead { font-size: 0.85rem; margin-top: 0.2rem; }
+  .newsletter__form { max-width: 380px; gap: 0.5rem; }
   .newsletter__form input {
     min-width: 0;
-    padding: 0.6rem 1rem;
-    font-size: 0.9rem;
+    padding: 0.72rem 1rem;
+    font-size: 0.92rem;
     text-align: center;
   }
   .newsletter__form button {
-    padding: 0.6rem 1.3rem;
-    font-size: 0.9rem;
+    padding: 0.72rem 1.4rem;
+    font-size: 0.92rem;
     white-space: nowrap;
   }
 }

@@ -6,8 +6,20 @@
   transition: padding var(--dur-base) var(--ease-out);
 }
 
+/* שכבת רקע אפורה כשהתפריט פתוח — מבהירה שזה תפריט */
+.header__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: rgba(46, 58, 71, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
 /* ---- Main bar ---- */
 .header__main {
+  position: relative;
+  z-index: 2;            /* הבר נשאר מעל ה-scrim */
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: saturate(180%) blur(10px);
   border-bottom: 1px solid var(--color-border);
@@ -145,46 +157,130 @@
 .header__burger:hover { color: var(--color-secondary); background: var(--color-bg-soft); }
 .header__burger:active { transform: scale(0.92); }
 
-/* ---- Mobile menu ---- */
+/* ---- Mobile menu (פאנל כהה מרשים) ---- */
 .header__mobile {
   position: absolute;
   inset-inline: 0;
   inset-block-start: 100%;
-  background: #fff;
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-lg);
+  z-index: 2;            /* מעל ה-scrim */
+  max-height: calc(100vh - 100%);
+  overflow: hidden auto;
+  /* בהיר ~35% מהקודם — עדיין בגווני הטורקיז של המותג */
+  background: linear-gradient(165deg, #1a688a 0%, #0f4d6a 95%);
+  box-shadow: 0 24px 50px -12px rgba(7, 34, 48, 0.45);
+  color: #fff;
+}
+/* התוכן מעל רשת הרקע — ממורכז ומוגבל ברוחב כמו .container (תריס נקי בדסקטופ) */
+.header__mobile-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
   padding: 1.5rem var(--container-pad) 2rem;
 }
 .header__mobile .menu-cards { margin-bottom: 1.6rem; }
+
+/* בדסקטופ — הכרטיסים בשורה מרוכזת וקומפקטית (לא נמתחים על כל המסך) */
+@media (min-width: 981px) {
+  .header__mobile-inner { padding-block: 2rem 2.5rem; }
+  .header__mobile .menu-cards { max-width: 760px; margin-inline: auto; }
+  .header__mobile-nav { max-width: 760px; margin-inline: auto; }
+}
+
 .header__mobile-nav { display: flex; flex-direction: column; }
 .header__mobile-link {
+  position: relative;
+  display: block;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 1.4rem;
-  padding: 0.85rem 0;
-  border-bottom: 1px solid var(--color-border);
+  color: #fff;
+  padding: 0.95rem 0.9rem;
+  border-radius: var(--radius-md);
+  transition: color var(--dur-fast), background var(--dur-fast), padding-inline-start var(--dur-base) var(--ease-out);
 }
-.header__mobile-link:hover { color: var(--color-secondary); }
+/* פס הדגשה אדום שנכנס מצד הפתיחה בריחוף */
+.header__mobile-link::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.55rem;
+  inset-inline-start: 0;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--color-accent-500);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.header__mobile-link:hover,
+.header__mobile-link:focus-visible {
+  background: rgba(255, 255, 255, 0.07);
+  padding-inline-start: 1.4rem;
+}
+.header__mobile-link:hover::before,
+.header__mobile-link:focus-visible::before { transform: scaleY(1); }
+
 .header__mobile-footer {
   display: flex;
-  align-items: center;
+  flex-direction: column;           /* כפתור אדום למעלה, EN בתחתית-שמאל */
+  align-items: stretch;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1.8rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
-.header__mobile-group { border-bottom: 1px solid var(--color-border); }
-.header__mobile-row { display: flex; align-items: center; justify-content: space-between; }
-.header__mobile-group .header__mobile-link { border-bottom: none; flex: 1; }
-.header__mobile-toggle { padding: 0.5rem; color: var(--color-text-soft); transition: color var(--dur-fast); }
-.header__mobile-toggle:hover { color: var(--color-secondary); }
+/* הכפתור האדום — גדול ובולט (~25-30% גדול יותר) */
+.header__mobile-cta {
+  width: 100%;
+  min-height: 58px;
+  font-size: 1.18rem;
+  padding: 0.9em 2rem;
+  border-radius: var(--radius-pill);
+}
+/* EN — צמוד לשמאל למטה (inline-end ב-RTL) */
+.header__mobile-lang { align-self: flex-end; }
+
+.header__mobile-group { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+/* row-reverse → חץ ההרחבה עובר לצד ימין (התווית צמודה אליו) */
+.header__mobile-row { display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; }
+.header__mobile-group .header__mobile-link { flex: 1; }
+.header__mobile-toggle { padding: 0.5rem; color: rgba(255, 255, 255, 0.65); transition: color var(--dur-fast); }
+.header__mobile-toggle:hover { color: #fff; }
 .header__mobile-toggle svg { transition: transform var(--dur-base); }
-.header__mobile-sub { overflow: hidden; padding-inline-start: 1rem; }
+.header__mobile-sub { overflow: hidden; padding-inline-start: 1.2rem; }
 .header__mobile-sublink {
-  display: block;
-  padding: 0.6rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0;
   font-size: 1.05rem;
-  color: var(--color-text-soft);
+  color: rgba(255, 255, 255, 0.72);
+  transition: color var(--dur-fast), transform var(--dur-fast);
 }
-.header__mobile-sublink:hover { color: var(--color-secondary); }
+.header__mobile-sublink-ic { opacity: 0; transition: opacity var(--dur-fast); }
+[dir='rtl'] .header__mobile-sublink-ic { transform: scaleX(-1); }
+.header__mobile-sublink:hover { color: #fff; transform: translateX(-4px); }
+[dir='rtl'] .header__mobile-sublink:hover { transform: translateX(4px); }
+.header__mobile-sublink:hover .header__mobile-sublink-ic { opacity: 1; }
+
+/* מתג שפה בתפריט הכהה — גלולה מעודנת */
+.header__mobile .lang-switch--block {
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1.6rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast);
+}
+.header__mobile .lang-switch--block:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
 
 /* ---- Language switch ---- */
 .lang-switch {

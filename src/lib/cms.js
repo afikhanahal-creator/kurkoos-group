@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { supabase } from './supabase.js'
 
 /* ============================================================
@@ -41,6 +42,30 @@ export async function getProjectBySlug(slug) {
   const { data, error } = await supabase.from('projects').select('*').eq('slug', slug).maybeSingle()
   if (error) throw error
   return data
+}
+
+// פרויקטים מפורסמים המשויכים לעמוד יעד מסוים
+// (development | execution | featured | brokerage). פרויקט יכול להיות בכמה עמודים.
+export async function listProjectsByPage(page, { includeArchived = false } = {}) {
+  const rows = await listProjects({ includeArchived })
+  return (rows || []).filter(
+    (p) => p.is_published !== false && Array.isArray(p.pages) && p.pages.includes(page)
+  )
+}
+
+// ממיר שורת CMS למבנה שכרטיס הפרויקט הציבורי מצפה לו
+export function cmsRowToCard(p) {
+  return {
+    slug: p.slug,
+    name: p.name,
+    city: p.location,
+    type: p.subtitle,
+    short: p.subtitle || p.description,
+    year: p.year,
+    status: p.status,
+    category: p.category,
+    cover: p.hero_image_url || (p.gallery && p.gallery[0]) || '',
+  }
 }
 
 export async function createProject(row) {
@@ -142,4 +167,57 @@ export async function deleteLogo(id, imageUrl) {
   if (imageUrl) await deleteMedia(imageUrl).catch(() => {})
   const { error } = await supabase.from('site_logos').delete().eq('id', id)
   if (error) throw error
+}
+
+/* ============================================================
+   שכבת תאימות (legacy) — לרכיבי האדמין הקיימים + גודל הלוגו.
+   עובדת מעל הטבלאות stats / projects / site_settings (הקיימות).
+   אינה נוגעת ב-API החדש למעלה.
+   ============================================================ */
+export function clearCmsCache() {}
+
+export async function fetchStats() {
+  if (!supabase) return []
+  const { data, error } = await supabase.from('stats').select('*').order('sort_order')
+  return error ? [] : (data || [])
+}
+export async function upsertStat(stat) {
+  const { error } = await supabase.from('stats').upsert(stat)
+  if (error) throw error
+}
+
+export async function fetchProjects() {
+  if (!supabase) return []
+  const { data, error } = await supabase.from('projects').select('*').order('sort_order')
+  return error ? [] : (data || [])
+}
+export async function upsertProject(project) {
+  const { data, error } = await supabase.from('projects').upsert(project, { onConflict: 'slug' }).select()
+  if (error) throw error
+  return data?.[0]
+}
+export async function deleteProject(id) {
+  const { error } = await supabase.from('projects').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function fetchSettings() {
+  if (!supabase) return {}
+  const { data, error } = await supabase.from('site_settings').select('*')
+  if (error) return {}
+  return Object.fromEntries((data || []).map((r) => [r.key, r.value]))
+}
+export async function setSetting(key, value) {
+  const { error } = await supabase.from('site_settings').upsert({ key, value })
+  if (error) throw error
+}
+
+export function useSettings() {
+  const [settings, setSettings] = useState({})
+  useEffect(() => {
+    let on = true
+    fetchSettings().then((s) => on && setSettings(s)).catch(() => {})
+    return () => { on = false }
+  }, [])
+  return settings
 }

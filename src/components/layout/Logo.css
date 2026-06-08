@@ -3,21 +3,23 @@
   align-items: center;
 }
 
+/* --logo-scale נקבע מה-CMS (LogosAdmin) דרך Logo.jsx; ברירת מחדל 1 */
 .logo__img {
-  height: 88px;
+  height: calc(88px * var(--logo-scale, 1));
   width: auto;
-  max-width: 240px;
+  max-width: calc(240px * var(--logo-scale, 1));
   object-fit: contain;
   display: block;
   transition: height var(--dur-base) var(--ease-out);
 }
 
 /* מתכווץ מעט בגלילה — עדיין גדול */
-.header--scrolled .logo__img { height: 70px; }
+.header--scrolled .logo__img { height: calc(70px * var(--logo-scale, 1)); }
 
 /* בפוטר */
-.footer .logo__img { height: 72px; }
+.footer .logo__img { height: calc(72px * var(--logo-scale, 1)); }
 
+/* מובייל — לוגו גדול יותר */
 @media (max-width: 600px) {
-  .logo__img { height: 62px; }
+  .logo__img { height: calc(78px * var(--logo-scale, 1)); }
 }

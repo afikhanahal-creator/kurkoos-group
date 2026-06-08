@@ -178,8 +178,8 @@
   .contact__inner { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }
   .contact__visual { display: none; }
   .contact__plus-grid { display: none; }
-  /* טופס ממורכז ומוגבל ברוחב — לא נמתח לרוחב מלא בטאבלט */
-  .contact__panel { width: 100%; max-width: 460px; }
+  /* טופס ממורכז ומוגבל ברוחב — מעט גדול יותר במובייל */
+  .contact__panel { width: 100%; max-width: 520px; }
 }
 
 @media (max-width: 560px) {
@@ -196,10 +196,10 @@
   .contact__required { font-size: 0.78rem; }
   .contact__form .field input,
   .contact__form .field textarea {
-    font-size: 0.92rem;
-    padding: 0.7rem 0.9rem;
+    font-size: 0.95rem;
+    padding: 0.8rem 0.95rem;
   }
-  .contact__form textarea { min-height: 80px; }
+  .contact__form textarea { min-height: 88px; }
 
   .contact__submit { width: 100%; min-width: 0; margin-top: 0.4rem; padding: 0.8em 1.5em; }
 

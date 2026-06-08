@@ -11,6 +11,7 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import VideoModal from '../components/ui/VideoModal.jsx'
 import PlanAccordion from '../components/ui/PlanAccordion.jsx'
 import Lightbox from '../components/ui/Lightbox.jsx'
+import PropertyMap from '../components/ui/PropertyMap.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import './ProjectDetail.css'
 
@@ -52,6 +53,8 @@ function buildProject(local, cms) {
       gallery: cms.gallery && cms.gallery.length ? cms.gallery : undefined,
       units: cms.units,
       year: cms.year,
+      // הכתובת מה-CMS מזינה את המפה בעמוד הפרויקט
+      mapQuery: cms.address || cms.map_query || undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
   }
@@ -105,9 +108,12 @@ export default function ProjectDetail() {
     ? project.galleryGroups
     : [{ label: { he: 'הפרויקט', en: 'Project' }, images: flatGallery }]
   const currentImages = galleryGroups[galleryTab]?.images || flatGallery
-  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
-    project.mapQuery || L(project.city) || L(project.name)
-  )}&output=embed`
+  // מפה: Maps Embed API (מפה מלוטשת עם סמן) כשמוגדר מפתח; אחרת fallback בסיסי
+  const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_KEY
+  const mapQuery = project.mapQuery || L(project.city) || L(project.name)
+  const mapSrc = mapsKey
+    ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent(mapQuery)}&zoom=16&language=he&region=IL`
+    : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
 
   // קבוצות תוכניות — נתון מובנה אם קיים, אחרת נגזרות מ-plans השטוח
   const planGroups = project.planGroups?.length
@@ -258,7 +264,7 @@ export default function ProjectDetail() {
             )}
             <button type="button" className="btn btn--primary btn--lg" onClick={() => goTo('contact')}>
               {L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })}
-              <Icon name="arrow" size={20} />
+              <Icon name="arrowLeft" size={20} />
             </button>
           </Reveal>
         </div>
@@ -288,13 +294,22 @@ export default function ProjectDetail() {
             <h2 className="section-title">{L({ he: 'המיקום על המפה', en: 'On the map' })}</h2>
           </Reveal>
           <Reveal className="pd-map" delay={0.05}>
-            <iframe
-              title={L(project.name)}
-              src={mapSrc}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              allowFullScreen
-            />
+            {mapsKey && project.coords ? (
+              <PropertyMap
+                lat={project.coords.lat}
+                lng={project.coords.lng}
+                label={L(project.name)}
+                zoom={15}
+              />
+            ) : (
+              <iframe
+                title={L(project.name)}
+                src={mapSrc}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            )}
             <span className="pd-map__pin">
               <Icon name="location" size={18} /> {L(project.name)} · {L(project.city)}
             </span>
@@ -426,10 +441,6 @@ export default function ProjectDetail() {
                   </button>
                 </form>
               )}
-
-              <p className="pd-contact__call">
-                <a href="tel:03-0000000"><Icon name="phone" size={16} /> {L({ he: 'או חייגו 03-0000000', en: 'Or call 03-0000000' })}</a>
-              </p>
             </div>
             <div className="pd-contact__media">
               <img src={CAL_IMG} alt="" loading="lazy" />

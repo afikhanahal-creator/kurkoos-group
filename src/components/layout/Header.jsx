@@ -149,7 +149,18 @@ export default function Header() {
                 {site.nav.map((item, i) => (
                   <motion.div key={item.key || item.to} className="header__mobile-group" variants={mItem}>
                     <div className="header__mobile-row">
-                      <Link to={item.to} className="header__mobile-link">{navLabel(item, t, L)}</Link>
+                      {item.children ? (
+                        <button
+                          type="button"
+                          className="header__mobile-link header__mobile-link--toggle"
+                          onClick={() => setOpenSub(openSub === i ? null : i)}
+                          aria-expanded={openSub === i}
+                        >
+                          {navLabel(item, t, L)}
+                        </button>
+                      ) : (
+                        <Link to={item.to} className="header__mobile-link">{navLabel(item, t, L)}</Link>
+                      )}
                       {item.children && (
                         <button
                           type="button"

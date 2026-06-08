@@ -106,6 +106,7 @@ export default function ProjectsTab() {
               folder={`projects/${selProject.slug || selProject.id}`}
               coverField="hero_image_url"
               onArchive={onArchiveProject}
+              onClose={() => setSelProjectId(null)}
               title={`עריכת פרויקט: ${selProject.name}`}
             />
 
@@ -141,6 +142,7 @@ export default function ProjectsTab() {
               onSave={saveProperty}
               folder={`properties/${selProp.id}`}
               onArchive={onArchiveProperty}
+              onClose={() => { setEditingProp(false); setSelPropId(null) }}
               title={`עריכת נכס · ${selProject.name}`}
             />
           </>

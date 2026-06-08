@@ -3,18 +3,20 @@ import ImageManager from './ImageManager.jsx'
 
 const STRIP = ['id', 'created_at', 'updated_at']
 
+const XIcon = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>
+
 function StatusPill({ status }) {
   const map = {
-    saved: { t: 'נשמר ✓', c: 'ok' },
-    dirty: { t: 'שינויים לא שמורים', c: 'dirty' },
+    saved: { t: 'נשמר אוטומטית', c: 'ok' },
+    dirty: { t: 'שומר…', c: 'dirty' },
     saving: { t: 'שומר…', c: 'saving' },
-    error: { t: 'שגיאת שמירה', c: 'error' },
+    error: { t: 'שגיאת שמירה — נסו שוב', c: 'error' },
   }
   const s = map[status] || map.saved
   return <span className={`ed__status ed__status--${s.c}`}>{s.t}</span>
 }
 
-export default function Editor({ schema, record, onSave, folder = 'general', coverField = null, onArchive, title }) {
+export default function Editor({ schema, record, onSave, folder = 'general', coverField = null, onArchive, onClose, title }) {
   const [form, setForm] = useState(record)
   const [status, setStatus] = useState('saved')
   const timer = useRef()
@@ -48,6 +50,8 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const setField = (key, val) => setForm((prev) => { const next = { ...prev, [key]: val }; schedule(next); return next })
   const setGallery = (arr) => setForm((prev) => { const next = { ...prev, gallery: arr }; schedule(next); return next })
   const saveNow = () => { clearTimeout(timer.current); commit(form) }
+  // X = שמירה ויציאה: מוודא שכל שינוי תלוי נשמר, ואז סוגר
+  const closeNow = async () => { clearTimeout(timer.current); if (status !== 'saved') await commit(form); onClose && onClose() }
 
   const renderField = (f) => {
     const v = form[f.key]
@@ -99,11 +103,18 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   return (
     <div className="ed">
       <div className="ed__top">
-        <h3 className="ed__title">{title}</h3>
-        <div className="ed__actions">
+        <div className="ed__heading">
+          <h3 className="ed__title">{title}</h3>
           <StatusPill status={status} />
-          <button type="button" className="btn btn--primary" disabled={status === 'saved' || status === 'saving'} onClick={saveNow}>שמירה</button>
+        </div>
+        <div className="ed__actions">
           {onArchive && <button type="button" className="ed__archive" onClick={onArchive}>העברה לארכיון</button>}
+          <button type="button" className="btn btn--primary ed__save" disabled={status === 'saved' || status === 'saving'} onClick={saveNow}>שמירה</button>
+          {onClose && (
+            <button type="button" className="ed__close" onClick={closeNow} aria-label="שמירה ויציאה" title="שמירה ויציאה">
+              <XIcon width={20} height={20} />
+            </button>
+          )}
         </div>
       </div>
 

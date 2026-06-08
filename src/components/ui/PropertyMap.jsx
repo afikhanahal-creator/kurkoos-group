@@ -37,6 +37,9 @@ const MAP_STYLE = [
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#b9d6e2' }] }, /* פארקים — טורקיז בהיר במקום ירוק */
   { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#dde9ef' }] },
+  /* בניינים — "בלוקים" בגוון חם, מראה מאויר בסגנון הצילום */
+  { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#ecd9bd' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#dcc4a0' }] },
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
   { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#d4e1e9' }] },
   { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },

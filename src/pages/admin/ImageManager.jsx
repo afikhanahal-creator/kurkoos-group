@@ -24,7 +24,14 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [over, setOver] = useState(false)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  const onDrop = (e) => {
+    e.preventDefault()
+    setOver(false)
+    if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files)
+  }
 
   const handleFiles = async (files) => {
     setErr('')
@@ -66,7 +73,12 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
   }
 
   return (
-    <div className="im">
+    <div
+      className={`im ${over ? 'im--over' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); if (!over) setOver(true) }}
+      onDragLeave={(e) => { if (e.currentTarget === e.target) setOver(false) }}
+      onDrop={onDrop}
+    >
       <div className="im__head">
         <span>תמונות ({value.length}/{max})</span>
         <button type="button" className="btn btn--primary im__add" disabled={busy || value.length >= max} onClick={() => inputRef.current?.click()}>
@@ -81,10 +93,17 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
             {value.map((url, i) => (
               <SortableImage key={url} url={url} index={i} onDelete={handleDelete} onCover={handleCover} />
             ))}
-            {value.length === 0 && <p className="im__empty">אין תמונות עדיין. לחצי "הוסף תמונות".</p>}
+            {value.length === 0 && (
+              <button type="button" className="im__empty im__dropzone" onClick={() => inputRef.current?.click()}>
+                <span className="im__dropzone-ic" aria-hidden="true">↑</span>
+                <strong>גררו לכאן תמונות או לחצו להעלאה</strong>
+                <small>PNG · JPG · WEBP — עד {max} תמונות. הראשונה תהיה תמונת השער.</small>
+              </button>
+            )}
           </div>
         </SortableContext>
       </DndContext>
+      {over && <div className="im__overlay" aria-hidden="true"><span>שחררו כדי להעלות</span></div>}
     </div>
   )
 }

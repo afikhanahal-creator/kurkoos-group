@@ -299,7 +299,7 @@ export default function ProjectDetail() {
                 lat={project.coords.lat}
                 lng={project.coords.lng}
                 label={L(project.name)}
-                zoom={15}
+                zoom={16}
               />
             ) : (
               <iframe

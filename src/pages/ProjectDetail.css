@@ -181,6 +181,17 @@
 .pd-head { text-align: center; max-width: 60ch; margin: 0 auto 2.5rem; }
 .pd-head .eyebrow { justify-content: center; }
 
+/* כרטיס לבן — "שבירה" בסגנון תדהר (תוכן לבן על רקע אפור) */
+.pd-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: clamp(1.4rem, 3vw, 2.6rem);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+}
+.pd-card .pd-head { margin-bottom: 2rem; }
+.pd-card .pd-map { box-shadow: none; }
+
 /* ---------- Map ---------- */
 .pd-map {
   position: relative;
@@ -212,10 +223,12 @@
 /* ---------- Plans accordion ---------- */
 .plan-acc {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 0.9fr 1.1fr;   /* RTL: ימין=אקורדיון (צר), שמאל=תמונה (רחב) */
   gap: 2rem;
   align-items: start;
 }
+.plan-acc__list { order: 1; }      /* מימין */
+.plan-acc__preview { order: 2; }   /* משמאל */
 .plan-acc__preview {
   position: sticky;
   top: 140px;
@@ -598,6 +611,64 @@
 .pd-lightbox__nav:hover { background: rgba(255, 255, 255, 0.24); }
 .pd-lightbox__nav--prev { inset-inline-start: 1.2rem; }
 .pd-lightbox__nav--next { inset-inline-end: 1.2rem; }
+
+/* ---------- יזמי הפרויקט ---------- */
+.pd-developers__lead { color: var(--color-text-soft); margin-top: 0.4rem; }
+.pd-dev-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(2rem, 5vw, 4rem);
+  max-width: 980px;
+  margin: 2.6rem auto 0;
+}
+.pd-dev { text-align: center; }
+.pd-dev__logo { display: grid; place-items: center; height: 92px; margin-bottom: 1.4rem; }
+.pd-dev__logo img { max-height: 70px; max-width: 230px; object-fit: contain; }
+.pd-dev__name { font-family: var(--font-heading); font-weight: 800; font-size: 1.4rem; color: var(--color-primary-900); }
+.pd-dev__bio {
+  color: var(--color-text-soft);
+  line-height: 1.9;
+  font-size: 1.02rem;
+  max-width: 48ch;
+  margin-inline: auto;
+  text-align: start;
+}
+
+/* ---------- פרויקטים נוספים ---------- */
+.pd-more__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.6rem;
+  margin-top: 2.6rem;
+}
+.pd-more__card { display: flex; flex-direction: column; }
+.pd-more__img {
+  display: block;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  box-shadow: var(--shadow-2);
+  transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+.pd-more__img img,
+.pd-more__img .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
+.pd-more__card:hover .pd-more__img { box-shadow: var(--shadow-4); transform: translateY(-4px); }
+.pd-more__card:hover .pd-more__img img { transform: scale(1.06); }
+.pd-more__title {
+  text-align: center;
+  margin-top: 1rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--color-primary-700);
+  transition: color var(--dur-fast);
+}
+.pd-more__card:hover .pd-more__title { color: var(--color-accent); }
+
+@media (max-width: 760px) {
+  .pd-more__grid { grid-template-columns: 1fr; }
+  .pd-dev-grid { grid-template-columns: 1fr; gap: 2.4rem; }
+}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 980px) {

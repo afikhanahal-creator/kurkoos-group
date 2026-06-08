@@ -33,8 +33,10 @@ create table if not exists public.projects (
   updated_at timestamptz default now()
 );
 
--- שדרוג למסדי-נתונים קיימים: הוספת עמודת "עמודים" אם חסרה
+-- שדרוג למסדי-נתונים קיימים: עמודות חדשות אם חסרות
 alter table public.projects add column if not exists pages jsonb default '[]'::jsonb;
+alter table public.projects add column if not exists sections jsonb default '[]'::jsonb;     -- אילו מקטעים מוצגים בעמוד הפרויקט
+alter table public.projects add column if not exists developers jsonb default '[]'::jsonb;   -- יזמי הפרויקט [{name, logo, bio}]
 
 -- ---------- properties ----------
 create table if not exists public.properties (

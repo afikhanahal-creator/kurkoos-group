@@ -100,9 +100,9 @@ export const projects = [
       },
     ],
     galleryGroups: [
-      { label: { he: 'הפרויקט', en: 'Project' }, images: [img('1545324418-cc1a3fa10c00'), img('1496307653780-42ee777d4833')] },
-      { label: { he: 'הדמיות פנים', en: 'Interiors' }, images: [img('1600585154340-be6161a56a0c'), img('1600607687939-ce8a6c25118c')] },
-      { label: { he: 'שטחים ציבוריים', en: 'Public areas' }, images: [img('1512917774080-9991f1c4c750'), img('1564013799919-ab600027ffc6')] },
+      { label: { he: 'הפרויקט', en: 'Project' }, images: [img('1545324418-cc1a3fa10c00'), img('1496307653780-42ee777d4833'), img('1486325212027-8081e485255e'), img('1493809842364-78817add7ffb')] },
+      { label: { he: 'הדמיות פנים', en: 'Interiors' }, images: [img('1600585154340-be6161a56a0c'), img('1600607687939-ce8a6c25118c'), img('1502672260266-1c1ef2d93688'), img('1449824913935-59a10b8d2000')] },
+      { label: { he: 'שטחים ציבוריים', en: 'Public areas' }, images: [img('1512917774080-9991f1c4c750'), img('1564013799919-ab600027ffc6'), img('1486325212027-8081e485255e'), img('1502672260266-1c1ef2d93688')] },
     ],
   },
   {

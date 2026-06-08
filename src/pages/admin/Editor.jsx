@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import ImageManager from './ImageManager.jsx'
+import { uploadMedia } from '../../lib/cms.js'
 
 const STRIP = ['id', 'created_at', 'updated_at']
 
@@ -53,12 +54,44 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   // X = שמירה ויציאה: מוודא שכל שינוי תלוי נשמר, ואז סוגר
   const closeNow = async () => { clearTimeout(timer.current); if (status !== 'saved') await commit(form); onClose && onClose() }
 
+  const uploadDevLogo = async (arr, i, file) => {
+    if (!file) return
+    try { const url = await uploadMedia(file, `${folder}/developers`); setField('developers', arr.map((d, j) => (j === i ? { ...d, logo: url } : d))) }
+    catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) }
+  }
+
   const renderField = (f) => {
     const v = form[f.key]
     if (f.type === 'textarea')
-      return <textarea value={v ?? ''} onChange={(e) => setField(f.key, e.target.value)} rows={4} />
+      return <textarea dir={f.dir || 'auto'} value={v ?? ''} onChange={(e) => setField(f.key, e.target.value)} rows={4} />
     if (f.type === 'number')
-      return <input type="number" value={v ?? ''} onChange={(e) => setField(f.key, e.target.value === '' ? null : Number(e.target.value))} />
+      return <input type="number" dir="ltr" value={v ?? ''} onChange={(e) => setField(f.key, e.target.value === '' ? null : Number(e.target.value))} />
+    if (f.type === 'developers') {
+      const arr = Array.isArray(v) ? v : []
+      const upd = (i, patch) => setField(f.key, arr.map((d, j) => (j === i ? { ...d, ...patch } : d)))
+      return (
+        <div className="ed__devs">
+          {arr.length === 0 && <p className="ed__devs-empty">עדיין אין יזמים. הוסיפו את הגוף הראשון שמקים את הפרויקט.</p>}
+          {arr.map((d, i) => (
+            <div className="ed__dev" key={i}>
+              <div className="ed__dev-logo">
+                {d.logo ? <img src={d.logo} alt={d.name || ''} /> : <span className="ed__dev-logo-empty">אין לוגו</span>}
+                <label className="ed__dev-upload">
+                  {d.logo ? 'החלפת לוגו' : 'העלאת לוגו'}
+                  <input type="file" accept="image/*" hidden onChange={(e) => uploadDevLogo(arr, i, e.target.files[0])} />
+                </label>
+              </div>
+              <div className="ed__dev-fields">
+                <input dir="rtl" value={d.name || ''} placeholder="שם היזם (למשל: קבוצת תדהר)" onChange={(e) => upd(i, { name: e.target.value })} />
+                <textarea dir="rtl" rows={3} value={d.bio || ''} placeholder="טקסט קצר על היזם" onChange={(e) => upd(i, { bio: e.target.value })} />
+              </div>
+              <button type="button" className="ed__dev-del" onClick={() => setField(f.key, arr.filter((_, j) => j !== i))} aria-label="מחיקת יזם" title="מחיקה"><XIcon width={16} height={16} /></button>
+            </div>
+          ))}
+          <button type="button" className="ed__dev-add" onClick={() => setField(f.key, [...arr, { name: '', logo: '', bio: '' }])}>+ הוסף יזם</button>
+        </div>
+      )
+    }
     if (f.type === 'select')
       return (
         <select value={v ?? ''} onChange={(e) => setField(f.key, e.target.value)}>
@@ -97,7 +130,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <span />
         </label>
       )
-    return <input type="text" value={v ?? ''} onChange={(e) => setField(f.key, e.target.value)} />
+    return <input type="text" dir={f.dir || 'auto'} value={v ?? ''} onChange={(e) => setField(f.key, e.target.value)} />
   }
 
   return (
@@ -123,7 +156,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <legend>{sec.section}</legend>
           <div className="ed__grid">
             {sec.fields.map((f) => (
-              <div className={`ed__field ${f.type === 'textarea' || f.type === 'multiselect' ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
+              <div className={`ed__field ${f.type === 'textarea' || f.type === 'multiselect' || f.type === 'developers' ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
                 <label>{f.label}{f.required && <span className="ed__req">*</span>}</label>
                 {renderField(f)}
                 {f.hint && <small className="ed__hint">{f.hint}</small>}

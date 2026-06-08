@@ -47,8 +47,9 @@
 .header__nav {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-  margin-inline-end: auto;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 1;               /* תופס את המרכז → הטאבים ממורכזים בין הלוגו לפעולות */
 }
 .header__nav-item { position: relative; }
 .header__nav-link {
@@ -58,10 +59,11 @@
   gap: 0.25rem;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 1rem;
-  padding: 0.5rem 0.9rem;
+  font-size: 1.02rem;
+  padding: 0.55rem 1.05rem;
+  border-radius: var(--radius-pill);
   color: var(--color-text);
-  transition: color var(--dur-fast);
+  transition: color var(--dur-fast), background var(--dur-fast);
 }
 .header__nav-link::after {
   content: '';
@@ -74,8 +76,8 @@
   transform-origin: center;
   transition: transform var(--dur-base) var(--ease-out);
 }
-.header__nav-link:hover { color: var(--color-secondary); }
-.header__nav-link:hover::after { transform: scaleX(1); }
+.header__nav-link:hover { color: var(--color-secondary); background: var(--color-primary-100); }
+.header__nav-link:hover::after { transform: scaleX(0.55); }
 .header__nav-caret { transition: transform var(--dur-fast); opacity: 0.7; }
 .header__nav-item:hover .header__nav-caret { transform: rotate(180deg); }
 
@@ -137,12 +139,12 @@
   transition: background var(--dur-fast), color var(--dur-fast);
 }
 .header__icon-btn:hover { background: var(--color-bg-soft); color: var(--color-secondary); }
-.header__cta-btn { padding: 0.5em 1.25em; font-size: 0.92rem; min-height: 40px; }
-/* דסקטוף — "צור קשר" ו-EN קומפקטיים ותואמי גובה */
+.header__cta-btn { padding: 0.6em 1.5em; font-size: 0.95rem; min-height: 42px; box-shadow: 0 6px 16px -4px rgba(169, 11, 12, 0.35); }
+/* דסקטופ — "צור קשר" ו-EN בגודל נעים ותואמי גובה */
 @media (min-width: 981px) {
-  .header__cta-btn { padding: 0.24em 0.62em; font-size: 0.7rem; min-height: 24px; }
+  .header__cta-btn { padding: 0.6em 1.6em; font-size: 0.92rem; min-height: 42px; }
   .header__lang { padding: 0; }
-  .lang-switch { font-size: 0.66rem; padding: 0.24rem 0.5rem; }
+  .lang-switch { font-size: 0.8rem; padding: 0.42rem 0.85rem; }
 }
 
 .header__burger {
@@ -181,11 +183,25 @@
 }
 .header__mobile .menu-cards { margin-bottom: 1.6rem; }
 
-/* בדסקטופ — הכרטיסים בשורה מרוכזת וקומפקטית (לא נמתחים על כל המסך) */
+/* בדסקטופ — מציגים את ה-burger, והתפריט נפתח כתריס בצד ימין (~30%) ולא על כל העמוד */
 @media (min-width: 981px) {
-  .header__mobile-inner { padding-block: 2rem 2.5rem; }
-  .header__mobile .menu-cards { max-width: 760px; margin-inline: auto; }
-  .header__mobile-nav { max-width: 760px; margin-inline: auto; }
+  .header__burger { display: inline-grid; }   /* ה"אוזניים" גלויות בדסקטופ */
+
+  .header__mobile {
+    position: fixed;
+    inset-block-start: 92px;        /* מתחת ל-Header */
+    inset-block-end: 0;
+    inset-inline-end: auto;         /* משחרר את צד שמאל → נשאר עוגן ימני (RTL) */
+    width: clamp(360px, 32vw, 480px);
+    max-height: none;
+    box-shadow: -26px 0 60px -16px rgba(7, 34, 48, 0.5);
+  }
+  .header--scrolled .header__mobile { inset-block-start: 74px; }
+
+  /* בתוך הצד הצר — כרטיסים בשתי עמודות, ניווט מלא ברוחב התריס */
+  .header__mobile-inner { max-width: none; margin-inline: 0; padding-block: 1.8rem 2rem; }
+  .header__mobile .menu-cards { grid-template-columns: repeat(2, 1fr); max-width: none; margin: 0 0 1.4rem; }
+  .header__mobile-nav { max-width: none; margin: 0; }
 }
 
 .header__mobile-nav { display: flex; flex-direction: column; }
@@ -242,9 +258,9 @@
 .header__mobile-cta {
   align-self: center;
   width: auto;
-  min-height: 40px;
-  font-size: 0.85rem;
-  padding: 0.6em 1.6em;
+  min-height: 48px;
+  font-size: 1.02rem;
+  padding: 0.72em 1.95em;
   border-radius: var(--radius-pill);
 }
 /* EN — צמוד לשמאל למטה (inline-end ב-RTL) */
@@ -272,6 +288,9 @@
 .header__mobile-sublink:hover { color: #fff; transform: translateX(-4px); }
 [dir='rtl'] .header__mobile-sublink:hover { transform: translateX(4px); }
 .header__mobile-sublink:hover .header__mobile-sublink-ic { opacity: 1; }
+/* קישור עמוד האב — מודגש מעט */
+.header__mobile-sublink--parent { font-weight: 700; color: #fff; }
+.header__mobile-sublink--parent .header__mobile-sublink-ic { opacity: 0.85; }
 
 /* מתג שפה בתפריט הכהה — גלולה מעודנת */
 .header__mobile .lang-switch--block {

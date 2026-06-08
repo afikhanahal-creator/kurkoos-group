@@ -277,6 +277,41 @@
 .ed__chip--on { border-color: var(--color-secondary); background: var(--color-secondary); color: #fff; box-shadow: 0 4px 12px rgba(16,104,140,0.25); }
 .ed__chip--on .ed__chip-check { background: rgba(255,255,255,0.25); color: #fff; }
 
+/* ---- עורך יזמי הפרויקט ---- */
+.ed__devs { display: flex; flex-direction: column; gap: 0.8rem; }
+.ed__devs-empty { color: var(--adm-muted); font-size: 0.88rem; padding: 0.9rem 1rem; background: var(--adm-bg); border: 1.5px dashed var(--adm-border-strong); border-radius: 10px; text-align: center; }
+.ed__dev {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem;
+  background: #fcfdff;
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+}
+.ed__dev-logo { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
+.ed__dev-logo img { width: 100%; height: 64px; object-fit: contain; background: #fff; border: 1px solid var(--adm-border); border-radius: 8px; padding: 0.3rem; }
+.ed__dev-logo-empty { display: grid; place-items: center; width: 100%; height: 64px; background: var(--adm-bg); border: 1px dashed var(--adm-border-strong); border-radius: 8px; color: var(--adm-muted); font-size: 0.78rem; }
+.ed__dev-upload { font-family: var(--font-heading); font-weight: 600; font-size: 0.78rem; color: var(--color-secondary); border: 1.5px solid var(--adm-border-strong); border-radius: 8px; padding: 0.35rem 0.5rem; text-align: center; cursor: pointer; width: 100%; transition: background var(--dur-fast), border-color var(--dur-fast); }
+.ed__dev-upload:hover { background: var(--adm-bg); border-color: var(--color-secondary); }
+.ed__dev-fields { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.ed__dev-fields input, .ed__dev-fields textarea {
+  padding: 0.6rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; width: 100%; background: #fff; line-height: 1.6;
+}
+.ed__dev-fields input:focus-visible, .ed__dev-fields textarea:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
+.ed__dev-del { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--adm-muted); background: var(--adm-bg); border: 1px solid var(--adm-border); transition: background var(--dur-fast), color var(--dur-fast); }
+.ed__dev-del:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.ed__dev-add { align-self: flex-start; font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--color-secondary); border: 1.5px dashed var(--adm-border-strong); border-radius: 10px; padding: 0.6rem 1.1rem; transition: background var(--dur-fast), border-color var(--dur-fast); }
+.ed__dev-add:hover { background: var(--color-primary-100); border-color: var(--color-secondary); }
+
+@media (max-width: 560px) {
+  .ed__dev { grid-template-columns: 1fr; }
+  .ed__dev-logo { flex-direction: row; align-items: center; }
+  .ed__dev-logo img, .ed__dev-logo-empty { width: 90px; }
+  .ed__dev-del { justify-self: end; }
+}
+
 /* ============================================================
    IMAGE MANAGER
    ============================================================ */

@@ -1,7 +1,7 @@
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
-import { getProject } from '../data/projects.js'
+import projects, { getProject } from '../data/projects.js'
 import { getProjectBySlug } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -55,6 +55,9 @@ function buildProject(local, cms) {
       year: cms.year,
       // הכתובת מה-CMS מזינה את המפה בעמוד הפרויקט
       mapQuery: cms.address || cms.map_query || undefined,
+      // אילו מקטעים להציג + יזמי הפרויקט (נשמרים בענן)
+      sections: Array.isArray(cms.sections) ? cms.sections : undefined,
+      developers: Array.isArray(cms.developers) && cms.developers.length ? cms.developers : undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
   }
@@ -126,14 +129,23 @@ export default function ProjectDetail() {
         }]
       : []
 
-  // עוגנים דינמיים — רק סקשנים עם תוכן
+  // בקרת מקטעים (נשמרת בענן). ללא בחירה → כל המקטעים מוצגים (תאימות לאחור).
+  const enabled = Array.isArray(project.sections) && project.sections.length ? project.sections : null
+  const show = (id) => !enabled || enabled.includes(id)
+
+  // יזמי הפרויקט + פרויקטים נוספים
+  const developers = project.developers || []
+  const moreProjects = projects.filter((p) => p.slug !== project.slug).slice(0, 3)
+
+  // עוגנים דינמיים — רק מקטעים מוצגים עם תוכן
   const anchors = [
-    { id: 'project', label: { he: 'הפרויקט', en: 'Project' } },
-    project.environment && { id: 'environment', label: { he: 'הסביבה', en: 'Environment' } },
-    { id: 'map', label: { he: 'מפה', en: 'Map' } },
-    planGroups.length && { id: 'plans', label: { he: 'תוכניות', en: 'Plans' } },
-    { id: 'gallery', label: { he: 'גלריה', en: 'Gallery' } },
-    { id: 'contact', label: { he: 'לתיאום פגישה', en: 'Schedule' } },
+    show('project') && { id: 'project', label: { he: 'הפרויקט', en: 'Project' } },
+    show('environment') && project.environment && { id: 'environment', label: { he: 'הסביבה', en: 'Environment' } },
+    show('map') && { id: 'map', label: { he: 'מפה', en: 'Map' } },
+    show('plans') && planGroups.length && { id: 'plans', label: { he: 'תוכניות', en: 'Plans' } },
+    show('gallery') && { id: 'gallery', label: { he: 'גלריה', en: 'Gallery' } },
+    show('developers') && developers.length && { id: 'developers', label: { he: 'יזמים', en: 'Developers' } },
+    show('contact') && { id: 'contact', label: { he: 'לתיאום פגישה', en: 'Schedule' } },
   ].filter(Boolean)
 
   const goTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
@@ -246,6 +258,7 @@ export default function ProjectDetail() {
       </nav>
 
       {/* ===== הפרויקט ===== */}
+      {show('project') && (
       <section id="project" className="section pd-anchor pd-split">
         <div className="container pd-split__grid">
           <Reveal className="pd-split__media" variant="right">
@@ -270,8 +283,10 @@ export default function ProjectDetail() {
         </div>
       </section>
 
+      )}
+
       {/* ===== הסביבה ===== */}
-      {project.environment && (
+      {show('environment') && project.environment && (
         <section id="environment" className="section section--soft pd-anchor pd-split pd-split--reverse">
           <div className="container pd-split__grid">
             <Reveal className="pd-split__body" variant="right">
@@ -287,52 +302,60 @@ export default function ProjectDetail() {
       )}
 
       {/* ===== מפה ===== */}
-      <section id="map" className="section pd-anchor">
+      {show('map') && (
+      <section id="map" className="section section--soft pd-anchor">
         <div className="container">
-          <Reveal className="pd-head">
-            <span className="eyebrow">{L({ he: 'מיקום', en: 'Location' })}</span>
-            <h2 className="section-title">{L({ he: 'המיקום על המפה', en: 'On the map' })}</h2>
-          </Reveal>
-          <Reveal className="pd-map" delay={0.05}>
-            {mapsKey && project.coords ? (
-              <PropertyMap
-                lat={project.coords.lat}
-                lng={project.coords.lng}
-                label={L(project.name)}
-                zoom={16}
-              />
-            ) : (
-              <iframe
-                title={L(project.name)}
-                src={mapSrc}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
-            )}
-            <span className="pd-map__pin">
-              <Icon name="location" size={18} /> {L(project.name)} · {L(project.city)}
-            </span>
-          </Reveal>
+          <div className="pd-card">
+            <Reveal className="pd-head">
+              <span className="eyebrow">{L({ he: 'מיקום', en: 'Location' })}</span>
+              <h2 className="section-title">{L({ he: 'המיקום על המפה', en: 'On the map' })}</h2>
+            </Reveal>
+            <Reveal className="pd-map" delay={0.05}>
+              {mapsKey && project.coords ? (
+                <PropertyMap
+                  lat={project.coords.lat}
+                  lng={project.coords.lng}
+                  label={L(project.name)}
+                  zoom={16}
+                />
+              ) : (
+                <iframe
+                  title={L(project.name)}
+                  src={mapSrc}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              )}
+              <span className="pd-map__pin">
+                <Icon name="location" size={18} /> {L(project.name)} · {L(project.city)}
+              </span>
+            </Reveal>
+          </div>
         </div>
       </section>
 
+      )}
+
       {/* ===== תוכניות — אקורדיון ===== */}
-      {planGroups.length > 0 && (
+      {show('plans') && planGroups.length > 0 && (
         <section id="plans" className="section section--soft pd-anchor">
           <div className="container">
-            <Reveal className="pd-head">
-              <span className="eyebrow">{L({ he: 'תכנון', en: 'Planning' })}</span>
-              <h2 className="section-title">{L({ he: 'תוכניות הדירות', en: 'Apartment plans' })}</h2>
-            </Reveal>
-            <Reveal delay={0.05}>
-              <PlanAccordion groups={planGroups} onEnlarge={(img) => openLightbox([img], 0)} />
-            </Reveal>
+            <div className="pd-card">
+              <Reveal className="pd-head">
+                <span className="eyebrow">{L({ he: 'תכנון', en: 'Planning' })}</span>
+                <h2 className="section-title">{L({ he: 'תוכניות הדירות', en: 'Apartment plans' })}</h2>
+              </Reveal>
+              <Reveal delay={0.05}>
+                <PlanAccordion groups={planGroups} onEnlarge={(img) => openLightbox([img], 0)} />
+              </Reveal>
+            </div>
           </div>
         </section>
       )}
 
       {/* ===== גלריה ===== */}
+      {show('gallery') && (
       <section id="gallery" className="section pd-anchor">
         <div className="container">
           <Reveal className="pd-head">
@@ -373,8 +396,58 @@ export default function ProjectDetail() {
           </div>
         </div>
       </section>
+      )}
+
+      {/* ===== יזמי הפרויקט ===== */}
+      {show('developers') && developers.length > 0 && (
+        <section id="developers" className="section section--soft pd-anchor pd-developers">
+          <div className="container">
+            <Reveal className="pd-head">
+              <span className="eyebrow">{L({ he: 'שותפים', en: 'Partners' })}</span>
+              <h2 className="section-title">{L({ he: 'יזמי הפרויקט', en: 'Project developers' })}</h2>
+              <p className="pd-developers__lead">{L({ he: 'הגופים שמקימים יחד את הפרויקט', en: 'The partners building this project together' })}</p>
+            </Reveal>
+            <div className="pd-dev-grid">
+              {developers.map((d, i) => (
+                <Reveal key={i} className="pd-dev" delay={i * 0.08}>
+                  <div className="pd-dev__logo">
+                    {d.logo
+                      ? <img src={d.logo} alt={L(d.name) || ''} loading="lazy" />
+                      : <span className="pd-dev__name">{L(d.name)}</span>}
+                  </div>
+                  <p className="pd-dev__bio">{L(d.bio)}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== פרויקטים נוספים ===== */}
+      {show('more') && moreProjects.length > 0 && (
+        <section id="more" className="section pd-anchor pd-more">
+          <div className="container">
+            <Reveal className="pd-head">
+              <h2 className="section-title">{L({ he: 'פרויקטים נוספים', en: 'More projects' })}</h2>
+            </Reveal>
+            <div className="pd-more__grid">
+              {moreProjects.map((p, i) => (
+                <Reveal key={p.slug} delay={i * 0.08}>
+                  <Link to={`/projects/${p.slug}`} className="pd-more__card">
+                    <span className="pd-more__img">
+                      <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} />
+                    </span>
+                    <span className="pd-more__title">{L(p.name)}</span>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== לתיאום פגישה — פאנל דו-טורי עם טופס ===== */}
+      {show('contact') && (
       <section id="contact" className="section pd-anchor pd-cta-sec">
         <div className="container">
           <div className="pd-contact">
@@ -448,6 +521,7 @@ export default function ProjectDetail() {
           </div>
         </div>
       </section>
+      )}
 
       <VideoModal open={videoOpen} onClose={() => setVideoOpen(false)} video={project.video} title={L(project.name)} />
 

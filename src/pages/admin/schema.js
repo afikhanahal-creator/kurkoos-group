@@ -49,7 +49,7 @@ export const projectSchema = [
     section: 'פרטים בסיסיים',
     fields: [
       { key: 'name', label: 'שם הפרויקט', type: 'text', required: true },
-      { key: 'slug', label: 'מזהה כתובת (אנגלית, ללא רווחים)', type: 'text', required: true, hint: 'משמש בכתובת הדף: /projects/<slug>' },
+      { key: 'slug', label: 'מזהה כתובת (אנגלית, ללא רווחים)', type: 'text', required: true, dir: 'ltr', hint: 'משמש בכתובת הדף: /projects/<slug>' },
       { key: 'subtitle', label: 'כותרת משנה', type: 'text' },
       { key: 'status', label: 'סטטוס', type: 'select', options: PROJECT_STATUS },
       { key: 'location', label: 'עיר', type: 'text' },
@@ -68,6 +68,17 @@ export const projectSchema = [
         type: 'multiselect',
         options: PROJECT_SECTIONS,
         hint: 'סמנו אילו חלקים יופיעו בעמוד הפרויקט. ללא בחירה — כל המקטעים מוצגים.',
+      },
+    ],
+  },
+  {
+    section: 'יזמי הפרויקט',
+    fields: [
+      {
+        key: 'developers',
+        label: 'יזמים ושותפים',
+        type: 'developers',
+        hint: 'הוסיפו את הגופים שמקימים את הפרויקט — שם, לוגו וטקסט קצר. מופיע במקטע "יזמי הפרויקט".',
       },
     ],
   },

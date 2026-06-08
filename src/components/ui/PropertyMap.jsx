@@ -29,8 +29,8 @@ function loadGoogleMaps(key) {
 const MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#e9f1f5' }] },
   { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#5b7a89' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }, { weight: 2 }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] }, /* כיתוב — כחול כהה מותג */
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }, { weight: 3 }] },
   { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
   { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
   { featureType: 'administrative.neighborhood', stylers: [{ visibility: 'off' }] },
@@ -47,7 +47,7 @@ const MAP_STYLE = [
   { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#b4cdd9' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#7fb1c9' }] }, /* מים — כחול המותג */
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
 ]
 
 /* סמן הנכס — pin אדום מותג */
@@ -79,12 +79,25 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
           clickableIcons: false,
           backgroundColor: '#e9f1f5',
         })
-        new maps.Marker({
+        const marker = new maps.Marker({
           position: center,
           map,
           title: label,
           icon: { url: PIN, scaledSize: new maps.Size(40, 52), anchor: new maps.Point(20, 52) },
         })
+        // חלונית מותג — לוגו קורקוס + שם הפרויקט, בריחוף/לחיצה על הפין
+        const info = new maps.InfoWindow({
+          disableAutoPan: true,
+          content:
+            '<div class="pm-info">' +
+            '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="Kurkoos Group" />' +
+            '<span class="pm-info__name">' + label + '</span>' +
+            '</div>',
+        })
+        const openInfo = () => info.open({ anchor: marker, map })
+        marker.addListener('mouseover', openInfo)
+        marker.addListener('mouseout', () => info.close())
+        marker.addListener('click', openInfo)
       })
       .catch(() => { if (!cancelled) setFailed(true) })
     return () => { cancelled = true }

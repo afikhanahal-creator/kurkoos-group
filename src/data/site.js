@@ -34,8 +34,6 @@ export const site = {
         { label: { he: 'אודות הקבוצה', en: 'About the group' }, to: '/about' },
         { label: { he: 'הצוות וההנהלה', en: 'Team & management' }, to: '/team' },
         { label: { he: 'שרשרת הערך', en: 'Value chain' }, to: '/about#value-chain' },
-        { label: { he: 'קיימות ו-ESG', en: 'Sustainability & ESG' }, to: '/sustainability' },
-        { label: { he: 'חדשנות', en: 'Innovation' }, to: '/innovation' },
       ],
     },
     {

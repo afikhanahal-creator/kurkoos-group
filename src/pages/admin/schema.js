@@ -9,6 +9,18 @@ export const PROJECT_STATUS = [
   { value: 'sold', label: 'נמכר' },
 ]
 
+// מקטעים בעמוד הפרויקט — בחירה אילו חלקים יוצגו (נשמר בענן לכל פרויקט)
+export const PROJECT_SECTIONS = [
+  { value: 'project', label: 'הפרויקט' },
+  { value: 'environment', label: 'הסביבה' },
+  { value: 'map', label: 'מפה' },
+  { value: 'plans', label: 'תוכניות' },
+  { value: 'gallery', label: 'גלריה' },
+  { value: 'contact', label: 'לתיאום פגישה' },
+  { value: 'developers', label: 'יזמי הפרויקט' },
+  { value: 'more', label: 'פרויקטים נוספים' },
+]
+
 // העמודים שבהם הפרויקט יכול להופיע. בחירת כמה = הפרויקט משוכפל לכל העמודים.
 export const PROJECT_PAGES = [
   { value: 'development', label: 'יזמות', hint: '/divisions/development' },
@@ -45,6 +57,18 @@ export const projectSchema = [
       { key: 'gush', label: 'גוש', type: 'text' },
       { key: 'chelka', label: 'חלקה', type: 'text' },
       { key: 'description', label: 'תיאור הפרויקט', type: 'textarea' },
+    ],
+  },
+  {
+    section: 'מקטעים בעמוד הפרויקט',
+    fields: [
+      {
+        key: 'sections',
+        label: 'אילו מקטעים יוצגו בעמוד?',
+        type: 'multiselect',
+        options: PROJECT_SECTIONS,
+        hint: 'סמנו אילו חלקים יופיעו בעמוד הפרויקט. ללא בחירה — כל המקטעים מוצגים.',
+      },
     ],
   },
   {
@@ -116,6 +140,7 @@ export const newProjectDefaults = () => ({
   status: 'planning',
   is_published: false,
   pages: [],
+  sections: PROJECT_SECTIONS.map((s) => s.value),
   gallery: [],
 })
 

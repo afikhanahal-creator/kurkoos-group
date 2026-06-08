@@ -49,8 +49,6 @@ export default function Footer() {
           <Link to="/about">{t('nav.about')}</Link>
           <Link to="/projects">{t('nav.projects')}</Link>
           <Link to="/team">{t('nav.team')}</Link>
-          <Link to="/sustainability">{t('pages.sustainability.title')}</Link>
-          <Link to="/innovation">{t('pages.innovation.title')}</Link>
           <Link to="/blog">{t('pages.blog.title')}</Link>
           <Link to="/careers">{t('nav.careers')}</Link>
         </nav>

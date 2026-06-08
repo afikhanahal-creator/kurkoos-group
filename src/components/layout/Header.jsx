@@ -182,6 +182,11 @@ export default function Header() {
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.25 }}
                         >
+                          {/* קישור לעמוד האב עצמו */}
+                          <Link to={item.to} className="header__mobile-sublink header__mobile-sublink--parent">
+                            <Icon name="arrow" size={14} className="header__mobile-sublink-ic" />
+                            {L({ he: 'לעמוד ', en: 'Visit ' })}{navLabel(item, t, L)}
+                          </Link>
                           {item.children.map((c) => (
                             <Link key={c.to + L(c.label)} to={c.to} className="header__mobile-sublink">
                               <Icon name="arrow" size={14} className="header__mobile-sublink-ic" />

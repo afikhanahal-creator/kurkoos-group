@@ -16,8 +16,6 @@ import Team from './pages/Team.jsx'
 import About from './pages/About.jsx'
 import Blog from './pages/Blog.jsx'
 import Careers from './pages/Careers.jsx'
-import Sustainability from './pages/Sustainability.jsx'
-import Innovation from './pages/Innovation.jsx'
 import Legal from './pages/Legal.jsx'
 import StyleGuide from './pages/StyleGuide.jsx'
 import NotFound from './pages/NotFound.jsx'
@@ -92,8 +90,6 @@ export default function App() {
               <Route path="/team" element={<Team />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/careers" element={<Careers />} />
-              <Route path="/sustainability" element={<Sustainability />} />
-              <Route path="/innovation" element={<Innovation />} />
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />
               <Route path="/terms" element={<Legal kind="terms" />} />

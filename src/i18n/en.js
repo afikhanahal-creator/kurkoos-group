@@ -147,8 +147,6 @@ export default {
   pages: {
     blog: { eyebrow: 'News & articles', title: 'Kurkoos Blog', lead: 'Insights, updates and behind-the-scenes stories.', read: 'Read' },
     careers: { eyebrow: 'Join us', title: 'Careers', lead: 'We are always looking for great people. Come build with us.', apply: 'Apply', openings: 'Open positions' },
-    sustainability: { eyebrow: 'Corporate responsibility', title: 'Sustainability & ESG', lead: 'Green building, social responsibility and corporate governance are part of our DNA.' },
-    innovation: { eyebrow: 'Innovation', title: 'Building the future', lead: 'Advanced construction tech, smart homes and innovative work methods.' },
     legal: { accessibility: 'Accessibility statement', privacy: 'Privacy policy', terms: 'Terms of use' },
   },
   common: {

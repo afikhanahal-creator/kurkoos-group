@@ -221,6 +221,14 @@
 .header__mobile-link:hover::before,
 .header__mobile-link:focus-visible::before { transform: scaleY(1); }
 
+/* שם הפריט כפתור (פותח/סוגר תת-תפריט) — מיושר כמו הקישור */
+.header__mobile-link--toggle {
+  width: 100%;
+  text-align: start;
+  cursor: pointer;
+  background: none;
+}
+
 .header__mobile-footer {
   display: flex;
   flex-direction: column;           /* כפתור אדום למעלה, EN בתחתית-שמאל */
@@ -230,12 +238,13 @@
   padding-top: 1.4rem;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
-/* הכפתור האדום — גדול ובולט (~25-30% גדול יותר) */
+/* הכפתור האדום — קומפקטי (~30% קטן יותר) */
 .header__mobile-cta {
-  width: 100%;
-  min-height: 58px;
-  font-size: 1.18rem;
-  padding: 0.9em 2rem;
+  align-self: center;
+  width: auto;
+  min-height: 40px;
+  font-size: 0.85rem;
+  padding: 0.6em 1.6em;
   border-radius: var(--radius-pill);
 }
 /* EN — צמוד לשמאל למטה (inline-end ב-RTL) */

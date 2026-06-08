@@ -25,28 +25,33 @@ function loadGoogleMaps(key) {
   return mapsPromise
 }
 
-/* סגנון מפה מותג — כחול/טורקיז במקום ירוק, נקי ומאויר */
+/* סגנון מפה מותג — מאוזן "כחול + חום": בלוקים עירוניים בכחול-אפרפר (יותר כחול),
+   שטחים טבעיים בחול חם, מים וכבישים מהירים בכחול עמוק, פארקים בטורקיז-ירקרק. */
 const MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#e9f1f5' }] },
+  { elementType: 'geometry', stylers: [{ color: '#e4e9ec' }] },                 /* בסיס — אפור-תכלת קריר */
   { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] }, /* כיתוב — כחול כהה מותג */
+  { elementType: 'labels.text.fill', stylers: [{ color: '#3f566a' }] },         /* כיתוב — כחול-צפחה */
   { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }, { weight: 3 }] },
   { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
   { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
   { featureType: 'administrative.neighborhood', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#b9d6e2' }] }, /* פארקים — טורקיז בהיר במקום ירוק */
-  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#dde9ef' }] },
-  /* בניינים — "בלוקים" בגוון חם, מראה מאויר בסגנון הצילום */
-  { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#ecd9bd' }] },
-  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#dcc4a0' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#bfdcd6' }] }, /* פארקים — טורקיז-ירקרק */
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#e7ddc8' }] }, /* טבע — חול חם (נגיעת החום) */
+  { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#dde6ec' }] },   /* בלוקים עירוניים — כחול-אפרפר */
+  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#c8d6e0' }] },
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#d4e1e9' }] },
-  { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#cfe0e9' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#b4cdd9' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#d3dfe7' }] },
+  { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },        /* רחובות קטנים — בלי שמות */
+  /* רחובות ראשיים — שמות גלויים בכחול-צפחה */
+  { featureType: 'road.arterial', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#3f566a' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#cfe0ea' }] },  /* כבישים מהירים — כחול */
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#aacbdb' }] },
+  { featureType: 'road.highway', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#2f4f63' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#7fb1c9' }] }, /* מים — כחול המותג */
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#5fa3c2' }] },      /* מים — כחול מותג חזק */
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
 ]
 
@@ -89,9 +94,10 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
         const info = new maps.InfoWindow({
           disableAutoPan: true,
           content:
-            '<div class="pm-info">' +
-            '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="Kurkoos Group" />' +
+            '<div class="pm-info" dir="rtl">' +
             '<span class="pm-info__name">' + label + '</span>' +
+            '<span class="pm-info__sep"></span>' +
+            '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="Kurkoos Group" />' +
             '</div>',
         })
         const openInfo = () => info.open({ anchor: marker, map })
@@ -103,6 +109,10 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
     return () => { cancelled = true }
   }, [lat, lng, zoom, label])
 
-  if (failed) return null
+  // נפילה-לאחור: אם ה-Maps JS API לא זמין/מאופשר — embed רגיל (לא ריק)
+  if (failed) {
+    const src = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&output=embed`
+    return <iframe className="property-map" title={label} src={src} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+  }
   return <div ref={ref} className="property-map" role="img" aria-label={label} />
 }

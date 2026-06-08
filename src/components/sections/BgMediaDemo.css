@@ -1,0 +1,22 @@
+/* ============================================================
+   BgMediaDemo — באנר הווידאו בעמוד הביצוע.
+   ============================================================ */
+.bg-media-demo {
+  width: 100%;
+}
+
+.bg-media-demo__frame {
+  width: 100%;
+  max-width: 1100px;          /* מתאים יפה למסך דסקטופ, ממורכז */
+  margin-inline: auto;
+  border-radius: var(--radius-lg, 18px);
+  overflow: hidden;
+  box-shadow: 0 24px 60px -24px rgba(7, 41, 58, 0.45);
+}
+
+@media (max-width: 600px) {
+  .bg-media-demo__frame {
+    border-radius: 12px;
+    box-shadow: 0 14px 34px -18px rgba(7, 41, 58, 0.4);
+  }
+}

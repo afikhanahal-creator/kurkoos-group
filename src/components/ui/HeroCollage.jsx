@@ -3,14 +3,11 @@ import Icon from './Icon.jsx'
 import './HeroCollage.css'
 
 /* ============================================================
-   HeroCollage — גלריית masonry בגדלים משתנים, עם ריחוף (float).
-   בריחוף על כרטיס עולה "תריס" שחושף שם + תיאור קצר + קישור.
-   items: [{ url, name, desc, to }]
+   HeroCollage — גלריית "בנטו": כרטיסים לאורך + כרטיסים רחבים (לרוחב),
+   כמו במקור. בריחוף עולה "תריס" עם שם + תיאור + קישור.
+   items: [{ url, name, desc, to, layout }]
+   layout: 'wide' (לרוחב, 2 עמודות) | 'tall' (גבוה) | רגיל (ברירת מחדל)
    ============================================================ */
-/* יחסי-גובה (width/height) במקום גבהים קבועים — כך התמונות מתכווצות
-   ומתאימות את עצמן לרוחב העמודה בכל מסך (רספונסיבי מלא). */
-const RATIOS = [0.82, 1.1, 0.72, 1.0, 0.88, 1.15, 0.76, 1.05, 0.92, 0.95]
-
 export default function HeroCollage({ title, subtitle, stats = [], items = [], cta = '' }) {
   return (
     <section className="hero-collage">
@@ -25,8 +22,7 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
             <Link
               key={i}
               to={it.to}
-              className="hc-card"
-              style={{ animationDelay: `${-(i * 0.55)}s` }}
+              className={`hc-card hc-card--${it.layout || 'normal'}`}
               aria-label={it.name}
             >
               <img
@@ -34,7 +30,6 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
                 alt={it.name}
                 draggable={false}
                 loading="lazy"
-                style={{ aspectRatio: RATIOS[i % RATIOS.length] }}
               />
 
               {/* תווית שם תמידית */}

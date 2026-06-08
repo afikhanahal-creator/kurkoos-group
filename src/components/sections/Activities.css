@@ -230,27 +230,35 @@
    וכפתור שמתרומם — בדיוק כמו ה-hover בדסקטופ, אבל קבוע.
    ============================================================ */
 @media (hover: none) {
-  .activities__grid .card-inner {
+  /* האפקט חל גם על רשת הדסקטופ (אם נראית במגע) וגם על ערימת המובייל (CardDeck) */
+  .activities__grid .card-inner,
+  .activities__deck .card-inner {
     animation: card-auto-tilt 6s var(--d, 0s) var(--ease-in-out) infinite;
   }
-  .activities__grid .card__liquid {
+  .activities__grid .card__liquid,
+  .activities__deck .card__liquid {
     animation: card-auto-liquid 6s var(--d, 0s) var(--ease-in-out) infinite;
   }
-  .activities__grid .card__glow {
+  .activities__grid .card__glow,
+  .activities__deck .card__glow {
     animation: card-auto-glow 6s var(--d, 0s) var(--ease-in-out) infinite;
   }
-  .activities__grid .card__image {
+  .activities__grid .card__image,
+  .activities__deck .card__image {
     animation: card-auto-image 6s var(--d, 0s) var(--ease-in-out) infinite;
   }
   .activities__grid .card__title,
-  .activities__grid .card__price {
+  .activities__grid .card__price,
+  .activities__deck .card__title,
+  .activities__deck .card__price {
     animation: card-auto-accent 6s var(--d, 0s) var(--ease-in-out) infinite;
   }
-  .activities__grid .card__button {
+  .activities__grid .card__button,
+  .activities__deck .card__button {
     animation: card-auto-button 6s var(--d, 0s) var(--ease-in-out) infinite;
   }
 
-  /* פיזור בין הכרטיסים — משתנה יחיד שיורד בירושה לכל ילדי הכרטיס */
+  /* פיזור בין הכרטיסים ברשת — משתנה יחיד שיורד בירושה לכל ילדי הכרטיס */
   .activities__grid > :nth-child(1) { --d: 0s; }
   .activities__grid > :nth-child(2) { --d: 1.5s; }
   .activities__grid > :nth-child(3) { --d: 3s; }
@@ -290,5 +298,12 @@
   .activities__grid .card__image,
   .activities__grid .card__title,
   .activities__grid .card__price,
-  .activities__grid .card__button { animation: none; }
+  .activities__grid .card__button,
+  .activities__deck .card-inner,
+  .activities__deck .card__liquid,
+  .activities__deck .card__glow,
+  .activities__deck .card__image,
+  .activities__deck .card__title,
+  .activities__deck .card__price,
+  .activities__deck .card__button { animation: none; }
 }

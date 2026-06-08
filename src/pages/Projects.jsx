@@ -13,7 +13,7 @@ export default function Projects() {
   const L = useLocalized()
 
   const [projects, setProjects] = useState(() =>
-    localProjects.map((p) => ({ name: L(p.name), slug: p.slug, cover: p.cover, gallery: p.gallery || [] }))
+    localProjects.map((p) => ({ name: L(p.name), slug: p.slug, cover: p.cover, gallery: p.gallery || [], card_layout: p.card_layout }))
   )
   const [statItems, setStatItems] = useState(() =>
     localStats.slice(0, 3).map((s) => ({ value: `${s.value.toLocaleString('en-US')}${s.suffix}`, label: L(s.label) }))
@@ -27,7 +27,7 @@ export default function Projects() {
           // אם יש פרויקטים שתויגו "פרויקטים נבחרים" — מציגים אותם; אחרת את כולם
           const featured = rows.filter((p) => Array.isArray(p.pages) && p.pages.includes('featured'))
           const use = featured.length ? featured : rows
-          setProjects(use.map((p) => ({ name: p.name, slug: p.slug, cover: p.hero_image_url || (p.gallery && p.gallery[0]), gallery: p.gallery || [] })))
+          setProjects(use.map((p) => ({ name: p.name, slug: p.slug, cover: p.hero_image_url || (p.gallery && p.gallery[0]), gallery: p.gallery || [], card_layout: p.card_layout })))
         }
       })
       .catch(() => {})
@@ -41,11 +41,12 @@ export default function Projects() {
   const seen = new Set()
   const collageItems = []
   projects.forEach((p) => {
-    ;[p.cover, ...(p.gallery || [])].forEach((url) => {
-      if (url && !seen.has(url)) {
-        seen.add(url)
-        collageItems.push({ url, name: p.name, to: `/projects/${p.slug}` })
-      }
+    const urls = [p.cover, ...(p.gallery || [])].filter(Boolean)
+    urls.forEach((url, idx) => {
+      if (seen.has(url)) return
+      seen.add(url)
+      // תצוגת הכרטיס (רחב/גבוה) חלה על תמונת הכיסוי; שאר התמונות רגילות
+      collageItems.push({ url, name: p.name, to: `/projects/${p.slug}`, layout: idx === 0 ? (p.card_layout || 'normal') : 'normal' })
     })
   })
 

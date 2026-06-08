@@ -53,7 +53,8 @@ export const divisions = [
         he: 'מהיסודות ועד מסירת המפתח, בנייה איכותית, בזמן ובתקציב, עם צוותי שטח מהמנוסים בארץ.',
         en: 'From foundations to handover, quality construction, on time and on budget, with some of Israel’s most experienced field teams.',
       },
-      image: img('1581094794329-c8112a89af12'),
+      // תמונת רקע מאתר בנייה אמיתי — שמור את הקובץ ב: public/divisions/execution-bg.jpg
+      image: '/divisions/execution-bg.jpg',
     },
     intro: {
       he: 'זרוע הביצוע של קורקוס מתרגמת תכניות לבניינים. אנחנו מבצעים פרויקטים מורכבים בסטנדרט הגבוה ביותר, שלד, מעטפת וגימור, תוך בקרת איכות בכל שלב, ניהול קבלני משנה ועמידה קפדנית בלוחות זמנים ובתקציב. אנחנו בונים גם עבור הפרויקטים שלנו וגם כקבלן מבצע עבור יזמים וגופים מוסדיים.',

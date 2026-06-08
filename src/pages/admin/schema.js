@@ -9,6 +9,13 @@ export const PROJECT_STATUS = [
   { value: 'sold', label: 'נמכר' },
 ]
 
+// תצוגת כרטיס הפרויקט בגלריית "כל הפרויקטים" — משפיע על הפריסה בעמוד
+export const PROJECT_CARD_LAYOUT = [
+  { value: 'normal', label: 'רגיל (לאורך)' },
+  { value: 'wide', label: 'רחב (לרוחב)' },
+  { value: 'tall', label: 'גבוה' },
+]
+
 // מקטעים בעמוד הפרויקט — בחירה אילו חלקים יוצגו (נשמר בענן לכל פרויקט)
 export const PROJECT_SECTIONS = [
   { value: 'project', label: 'הפרויקט' },
@@ -91,6 +98,13 @@ export const projectSchema = [
         type: 'multiselect',
         options: PROJECT_PAGES,
         hint: 'בחרו עמוד אחד או יותר — הפרויקט יופיע בכל אחד מהם',
+      },
+      {
+        key: 'card_layout',
+        label: 'תצוגת הכרטיס בגלריית הפרויקטים',
+        type: 'select',
+        options: PROJECT_CARD_LAYOUT,
+        hint: 'כך התמונה תופיע בעמוד "כל הפרויקטים" — רחב = לרוחב, גבוה = בולט לגובה',
       },
       { key: 'is_published', label: 'מפורסם באתר', type: 'bool' },
     ],

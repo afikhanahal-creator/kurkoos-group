@@ -133,8 +133,22 @@
 }
 
 /* ---- Intro ---- */
-.division-intro__text { max-width: 60rem; }
+.division-intro__text { max-width: 60rem; margin-inline: auto; text-align: center; }
 .division-intro__text p { font-size: 1.3rem; line-height: 1.85; color: var(--color-text-soft); }
+
+/* ---- סרטון התקדמות הבנייה ---- */
+/* מושכים את כרטיס הווידאו כלפי מעלה כך שיציץ כבר במסך הראשון
+   ויחפוף קלות לתחתית הבאנר (אזור ללא טקסט) — אפקט כרטיס מגשר. */
+.division-showcase {
+  position: relative;
+  z-index: 3;
+  background: transparent;          /* מבטל את רקע ה-soft כדי שלא יכסה את הבאנר */
+  padding-top: 0;
+  margin-top: clamp(-180px, -11vw, -90px);
+}
+@media (max-width: 600px) {
+  .division-showcase { margin-top: -56px; }
+}
 
 /* ---- Why us ---- */
 .division-why__head { text-align: center; margin-bottom: 3rem; }

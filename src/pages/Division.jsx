@@ -21,6 +21,7 @@ import Seo from '../components/ui/Seo.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
 import Icon from '../components/ui/Icon.jsx'
+import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
 import './Division.css'
 
 export default function Division() {
@@ -80,7 +81,18 @@ export default function Division() {
         </div>
       </header>
 
-      {/* אינטרו */}
+      {/* סרטון התקדמות הבנייה — רק בעמוד הביצוע (מעל הפסקה) */}
+      {slug === 'execution' && (
+        <section className="section section--soft division-showcase">
+          <div className="container">
+            <Reveal variant="scale">
+              <BgMediaDemo />
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      {/* אינטרו (מתחת לסרטון) */}
       <section className="section division-intro">
         <div className="container">
           <Reveal className="division-intro__text">

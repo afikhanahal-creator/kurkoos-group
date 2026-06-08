@@ -182,6 +182,7 @@ export default function ProjectDetail() {
               <span className="pd-banner__location">
                 <Icon name="location" size={16} /> {L(project.city)}
               </span>
+              <span className="pd-banner__rule" aria-hidden="true" />
               <h1 className="pd-banner__name">{L(project.name)}</h1>
               <p className="pd-banner__desc">{L(project.short || project.description)}</p>
 
@@ -193,16 +194,16 @@ export default function ProjectDetail() {
                       <span className="pd-stat__label">{L({ he: 'בניינים', en: 'Buildings' })}</span>
                     </div>
                   )}
-                  {project.floors && (
-                    <div className="pd-stat">
-                      <span className="pd-stat__value" dir="ltr">{project.floors}</span>
-                      <span className="pd-stat__label">{L({ he: 'קומות', en: 'Floors' })}</span>
-                    </div>
-                  )}
                   {project.units > 0 && (
                     <div className="pd-stat">
                       <span className="pd-stat__value" dir="ltr">{project.units}</span>
                       <span className="pd-stat__label">{L({ he: 'יחידות דיור', en: 'Units' })}</span>
+                    </div>
+                  )}
+                  {project.floors && (
+                    <div className="pd-stat">
+                      <span className="pd-stat__value" dir="ltr">{project.floors}</span>
+                      <span className="pd-stat__label">{L({ he: 'קומות', en: 'Floors' })}</span>
                     </div>
                   )}
                   {project.architects && (

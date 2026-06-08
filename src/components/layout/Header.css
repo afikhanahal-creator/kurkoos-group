@@ -172,12 +172,16 @@
   box-shadow: 0 24px 50px -12px rgba(7, 34, 48, 0.45);
   color: #fff;
 }
-/* התוכן מעל רשת הרקע — ממורכז ומוגבל ברוחב כמו .container (תריס נקי בדסקטופ) */
+/* התוכן מעל רשת הרקע — ממורכז ומוגבל ברוחב כמו .container (תריס נקי בדסקטופ).
+   flex-column + min-height ממלא את גובה הפאנל → התוכן מתפרס יפה (footer בתחתית). */
 .header__mobile-inner {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: var(--container-max);
+  min-height: calc(100dvh - 78px);
   margin-inline: auto;
   padding: 1.5rem var(--container-pad) 2rem;
 }
@@ -195,24 +199,38 @@
     width: clamp(360px, 32vw, 480px);
     max-height: none;
     box-shadow: -26px 0 60px -16px rgba(7, 34, 48, 0.5);
+    /* בלי פס גלילה מכוער בתוך התריס */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
+  .header__mobile::-webkit-scrollbar { width: 0; height: 0; display: none; }
   .header--scrolled .header__mobile { inset-block-start: 74px; }
 
-  /* בתוך הצד הצר — כרטיסים בשתי עמודות, ניווט מלא ברוחב התריס */
-  .header__mobile-inner { max-width: none; margin-inline: 0; padding-block: 1.8rem 2rem; }
-  .header__mobile .menu-cards { grid-template-columns: repeat(2, 1fr); max-width: none; margin: 0 0 1.4rem; }
+  /* בתוך הצד הצר — כרטיסים בשתי עמודות, ניווט מלא ברוחב התריס.
+     מכווצים מעט כדי שהכול ייכנס בלי גלילה. */
+  .header__mobile-inner { max-width: none; margin-inline: 0; min-height: 100%; padding-block: 1.4rem 1.6rem; }
+  .header__mobile .menu-cards { grid-template-columns: repeat(2, 1fr); max-width: none; margin: 0 0 1.1rem; gap: 0.7rem; }
+  .header__mobile .menu-card .card__content { padding: 1rem 0.7rem; gap: 0.55rem; }
+  .header__mobile .menu-card .card__image.menu-card__icon { width: 46px; height: 46px; }
   .header__mobile-nav { max-width: none; margin: 0; }
+  .header__mobile-link { font-size: 1.08rem; padding-block: 0.72rem; }
+  .header__mobile-footer { padding-top: 1.1rem; gap: 0.8rem; }   /* margin-top: auto נשמר → footer בתחתית */
+  .header__mobile-cta { min-height: 44px; font-size: 0.95rem; }
 }
 
 .header__mobile-nav { display: flex; flex-direction: column; }
+/* מפרידים עדינים ועקביים בין כל פריטי הניווט */
+.header__mobile-nav > div { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.header__mobile-nav > div:last-child { border-bottom: none; }
 .header__mobile-link {
   position: relative;
   display: block;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.01em;
   color: #fff;
-  padding: 0.95rem 0.9rem;
+  padding: 1rem 0.9rem;
   border-radius: var(--radius-md);
   transition: color var(--dur-fast), background var(--dur-fast), padding-inline-start var(--dur-base) var(--ease-out);
 }
@@ -249,9 +267,9 @@
   display: flex;
   flex-direction: column;           /* כפתור אדום למעלה, EN בתחתית-שמאל */
   align-items: stretch;
-  gap: 1rem;
-  margin-top: 1.8rem;
-  padding-top: 1.4rem;
+  gap: 1.1rem;
+  margin-top: auto;                 /* נדחף לתחתית הפאנל → פריסה מאוזנת */
+  padding-top: 1.6rem;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 /* הכפתור האדום — קומפקטי (~30% קטן יותר) */

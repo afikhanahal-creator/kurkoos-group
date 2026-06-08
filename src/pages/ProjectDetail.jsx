@@ -12,10 +12,10 @@ import VideoModal from '../components/ui/VideoModal.jsx'
 import PlanAccordion from '../components/ui/PlanAccordion.jsx'
 import Lightbox from '../components/ui/Lightbox.jsx'
 import PropertyMap from '../components/ui/PropertyMap.jsx'
+import BookingCalendar from '../components/ui/BookingCalendar.jsx'
+import StatCube from '../components/ui/StatCube.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import './ProjectDetail.css'
-
-const CAL_IMG = 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1000&q=80'
 
 /* דקורציה — רשת נקודות עדינה עם כמה "+" צבעוניים, ברקע אזורי banner/contact */
 function DottedGrid({ className = '' }) {
@@ -220,33 +220,33 @@ export default function ProjectDetail() {
               <div className="pd-banner__stats-wrap">
                 <div className="pd-banner__stats">
                   {project.towers > 0 && (
-                    <div className="pd-stat">
+                    <StatCube>
                       <span className="pd-stat__value" dir="ltr">{project.towers}</span>
                       <span className="pd-stat__label">{L({ he: 'בניינים', en: 'Buildings' })}</span>
-                    </div>
+                    </StatCube>
                   )}
                   {project.units > 0 && (
-                    <div className="pd-stat">
+                    <StatCube>
                       <span className="pd-stat__value" dir="ltr">{project.units}</span>
                       <span className="pd-stat__label">{L({ he: 'יחידות דיור', en: 'Units' })}</span>
-                    </div>
+                    </StatCube>
                   )}
                   {project.floors && (
-                    <div className="pd-stat">
+                    <StatCube>
                       <span className="pd-stat__value" dir="ltr">{project.floors}</span>
                       <span className="pd-stat__label">{L({ he: 'קומות', en: 'Floors' })}</span>
-                    </div>
+                    </StatCube>
                   )}
                   {project.architects && (
-                    <div className="pd-stat">
+                    <StatCube>
                       <span className="pd-stat__value pd-stat__value--sm">{L(project.architects)}</span>
                       <span className="pd-stat__label">{L({ he: 'אדריכלים', en: 'Architects' })}</span>
-                    </div>
+                    </StatCube>
                   )}
-                  <div className={`pd-stat pd-stat--status pd-stat--status-${project.status}`}>
+                  <StatCube className={`pd-stat--status pd-stat--status-${project.status}`}>
                     <span className="pd-stat__value pd-stat__value--sm">{t(`projects.status.${project.status}`)}</span>
                     <span className="pd-stat__label">{L({ he: 'סטטוס', en: 'Status' })}</span>
-                  </div>
+                  </StatCube>
                 </div>
                 <DottedGrid className="pd-dots--banner" />
               </div>
@@ -548,7 +548,7 @@ export default function ProjectDetail() {
               )}
             </div>
             <div className="pd-contact__media">
-              <img src={CAL_IMG} alt="" loading="lazy" />
+              <BookingCalendar title={L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })} />
             </div>
           </div>
         </div>

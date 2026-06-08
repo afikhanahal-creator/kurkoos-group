@@ -13,6 +13,18 @@
 }
 @media (max-width: 980px) {
   .division-hero { margin-top: -76px; padding-top: 76px; min-height: clamp(420px, 66vh, 560px); }
+
+  /* מובייל: גוש הכותרת והתקציר ממורכזים ומאוזנים */
+  .division-hero__content {
+    align-items: center;
+    text-align: center;
+    /* ריווח תחתון נדיב → אזור פנוי שאליו "מציץ" כרטיס הסרטון בלי לכסות את המשפט */
+    padding-block: clamp(1.5rem, 5vw, 2.5rem) clamp(3.5rem, 9vw, 5rem);
+  }
+  .division-hero__title { max-width: 22ch; }
+  /* פס האקסנט מתחת לכותרת — ממורכז */
+  .division-hero__title::after { inset-inline-start: 50%; transform: translateX(-50%); }
+  .division-hero__subtitle { max-width: 60ch; margin-inline: auto; }
 }
 .division-hero__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 /* שכבת קריאוּת — כהה בראש (מאחורי המלל) ובתחתית, בהיר באמצע → עומק ופרימיום */
@@ -154,8 +166,12 @@
   padding-top: 0;
   margin-top: clamp(-130px, -8vw, -90px);
 }
+/* בטאבלט/מובייל התוכן ממלא את הבאנר → חפיפה עדינה בלבד כדי לא לכסות את המשפט */
+@media (max-width: 980px) {
+  .division-showcase { margin-top: -36px; }
+}
 @media (max-width: 600px) {
-  .division-showcase { margin-top: -48px; }
+  .division-showcase { margin-top: -28px; }
 }
 
 /* בעמוד הביצוע: באנר נמוך יותר → הכותרת לא נתקעת למטה והסרטון מציץ במסך הראשון */

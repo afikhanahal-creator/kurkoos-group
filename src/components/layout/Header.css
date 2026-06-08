@@ -367,8 +367,8 @@
   .header__icon-btn { display: none; }
 
   /* לוגו ממורכז — גדול יותר (specificity מוגבר כדי לנצח את ברירת המחדל) */
-  .header__main-inner .logo__img { height: 60px; max-width: 100%; }
-  .header--scrolled .header__main-inner .logo__img { height: 52px; }
+  .header__main-inner .logo__img { height: 66px; max-width: 100%; }
+  .header--scrolled .header__main-inner .logo__img { height: 56px; }
 
   /* כפתור "צור קשר" — גלולה אדומה מעוצבת, יעד מגע נוח, שורה אחת.
      selector מוגבר (0,2,0) שמנצח את .btn. */
@@ -394,8 +394,8 @@
   .header__main-inner { gap: 0.4rem; height: 70px; }
   .header--scrolled .header__main-inner { height: 60px; }
 
-  .header__main-inner .logo__img { height: 46px; }
-  .header--scrolled .header__main-inner .logo__img { height: 42px; }
+  .header__main-inner .logo__img { height: 58px; }
+  .header--scrolled .header__main-inner .logo__img { height: 50px; }
 
   .header__actions .header__cta-btn {
     padding: 0.55em 1.1em;
@@ -405,7 +405,7 @@
 }
 @media (max-width: 380px) {
   .header__main-inner { gap: 0.25rem; }
-  .header__main-inner .logo__img { height: 40px; }
+  .header__main-inner .logo__img { height: 50px; }
   .header__burger { width: 40px; height: 40px; }
   .header__actions .header__cta-btn { font-size: 0.74rem; padding: 0.5em 0.95em; min-height: 36px; }
 }

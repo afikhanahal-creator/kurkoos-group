@@ -17,6 +17,7 @@ const paths = {
   menu: 'M3 6h18M3 12h18M3 18h18',
   close: 'M18 6L6 18M6 6l12 12',
   chevron: 'M6 9l6 6 6-6',
+  clock: 'M12 8v4l2.5 2.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
   play: 'M5 3l14 9-14 9z',
   pause: 'M7 4v16M17 4v16',
   check: 'M20 6L9 17l-5-5',

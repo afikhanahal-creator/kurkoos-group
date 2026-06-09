@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
@@ -13,8 +13,6 @@ import KineticText from '../ui/KineticText.jsx'
 import './ProjectsGallery.css'
 
 const FEATURED = 4    // מציגים בדיוק 4 פרויקטים כברירת מחדל
-const GAP = 20        // מרווח בין כרטיסים (1.25rem)
-const SPEED = 0.05    // מהירות הלולאה הרציפה (px/ms) — מובייל בלבד
 
 const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
 const itemVariants = {
@@ -52,8 +50,36 @@ function Lightbox({ item, onClose, L, t }) {
   )
 }
 
-/* כרטיס פרויקט בודד */
-function ProjectCard({ p, L, t, onSelect }) {
+/* כרטיס פרויקט בודד.
+   במובייל מוותרים על BorderGlow/SpotlightCard (אפקטים של מצביע/ריחוף
+   בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
+   כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
+function ProjectCard({ p, L, t, onSelect, isMobile }) {
+  const media = (
+    <div className="pg-card__media">
+      {isMobile ? (
+        <div className="pg-card__spot">
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" />
+          <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
+        </div>
+      ) : (
+        <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" />
+          <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
+        </SpotlightCard>
+      )}
+      <div className="pg-card__panel">
+        <h3 className="pg-card__title">{L(p.name)}</h3>
+        <div className="pg-card__reveal">
+          <p className="pg-card__desc">{L(p.short)}</p>
+          <span className="pg-card__meta">
+            <Icon name="location" size={14} /> {L(p.city)} · {p.year}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <motion.article
       className="pg-card"
@@ -63,33 +89,21 @@ function ProjectCard({ p, L, t, onSelect }) {
       onKeyDown={(e) => e.key === 'Enter' && onSelect(p)}
       aria-label={L(p.name)}
     >
-      <BorderGlow
-        className="pg-card__glow"
-        backgroundColor="transparent"
-        borderRadius={16}
-        glowColor="197 78 48"
-        glowRadius={30}
-        glowIntensity={1.15}
-        edgeSensitivity={28}
-        coneSpread={24}
-        colors={['#16688c', '#105572', '#8fb6c8']}
-      >
-        <div className="pg-card__media">
-          <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-            <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" />
-            <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
-          </SpotlightCard>
-          <div className="pg-card__panel">
-            <h3 className="pg-card__title">{L(p.name)}</h3>
-            <div className="pg-card__reveal">
-              <p className="pg-card__desc">{L(p.short)}</p>
-              <span className="pg-card__meta">
-                <Icon name="location" size={14} /> {L(p.city)} · {p.year}
-              </span>
-            </div>
-          </div>
-        </div>
-      </BorderGlow>
+      {isMobile ? media : (
+        <BorderGlow
+          className="pg-card__glow"
+          backgroundColor="transparent"
+          borderRadius={16}
+          glowColor="197 78 48"
+          glowRadius={30}
+          glowIntensity={1.15}
+          edgeSensitivity={28}
+          coneSpread={24}
+          colors={['#16688c', '#105572', '#8fb6c8']}
+        >
+          {media}
+        </BorderGlow>
+      )}
     </motion.article>
   )
 }
@@ -105,47 +119,8 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const L = useLocalized()
   const isMobile = useIsMobile()
   const [selected, setSelected] = useState(null)
-  const viewportRef = useRef(null)
-  const pausedRef = useRef(false)
-  const posRef = useRef(0)
 
-  const dir = isRTL ? -1 : 1
   const items = itemsProp && itemsProp.length ? itemsProp : projects.slice(0, FEATURED)
-  // במובייל משכפלים את הפריטים כדי ליצור לולאה אינסופית חלקה
-  const renderItems = isMobile ? [...items, ...items] : items
-
-  // לולאה רציפה (marquee) — מובייל בלבד, כשהתוכן רחב מהמסך
-  useEffect(() => {
-    if (!isMobile) return
-    let raf
-    let last = 0
-    const el = viewportRef.current
-    if (el) posRef.current = el.scrollLeft
-    const tick = (ts) => {
-      const dt = last ? ts - last : 0
-      last = ts
-      const node = viewportRef.current
-      if (node && !pausedRef.current) {
-        const half = node.scrollWidth / 2 // רוחב סט יחיד (לפני השכפול)
-        if (half > node.clientWidth - 4) {
-          posRef.current += dir * SPEED * dt
-          if (dir > 0 && posRef.current >= half) posRef.current -= half
-          if (dir < 0 && posRef.current <= -half) posRef.current += half
-          node.scrollLeft = posRef.current
-        }
-      }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [isMobile, dir, renderItems.length])
-
-  const pause = () => { pausedRef.current = true }
-  const resume = () => {
-    pausedRef.current = false
-    const el = viewportRef.current
-    if (el) posRef.current = el.scrollLeft
-  }
 
   return (
     <section className="section section--soft projects-gallery" id={sectionId || undefined}>
@@ -156,14 +131,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
         </Reveal>
       </div>
 
-      <div
-        className="projects-gallery__viewport"
-        ref={viewportRef}
-        onMouseEnter={pause}
-        onMouseLeave={resume}
-        onTouchStart={pause}
-        onTouchEnd={resume}
-      >
+      <div className="projects-gallery__viewport">
         <motion.div
           className="projects-gallery__track"
           variants={containerVariants}
@@ -171,8 +139,8 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           whileInView="visible"
           viewport={{ once: true, amount: 'some' }}
         >
-          {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} onSelect={setSelected} />
+          {items.map((p, i) => (
+            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} onSelect={setSelected} isMobile={isMobile} />
           ))}
         </motion.div>
       </div>

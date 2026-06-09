@@ -27,8 +27,9 @@
   position: relative;
   width: 100%;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;   /* החלקה חלקה ב-iOS */
+  scroll-snap-type: x proximity;       /* רך יותר ממ-mandatory → גלילה חופשית וחלקה */
+  -webkit-overflow-scrolling: touch;   /* אינרציה חלקה ב-iOS */
+  overscroll-behavior-x: contain;      /* בלי "מתיחת" העמוד בגלילה אופקית */
   scrollbar-width: none;
   /* ריווח עליון/תחתון כדי שהחלק העליון של הכרטיס, ההרמה בריחוף והזוהר לא ייחתכו */
   padding-block: 1.25rem;

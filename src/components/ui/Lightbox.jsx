@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import Icon from './Icon.jsx'
 
@@ -53,7 +54,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
     go(dx < 0 ? (isRtl ? -1 : 1) : (isRtl ? 1 : -1))
   }
 
-  return (
+  return createPortal(
     <div
       className="pd-lightbox"
       role="dialog"
@@ -112,6 +113,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
           </figcaption>
         )}
       </figure>
-    </div>
+    </div>,
+    document.body
   )
 }

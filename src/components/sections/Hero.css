@@ -69,7 +69,7 @@
 }
 .hero__stat-suffix { color: var(--color-accent); margin-inline-start: 2px; }
 .hero__stat-labels { display: flex; flex-direction: column; }
-.hero__stat-label { font-family: var(--font-heading); font-weight: 700; font-size: 1.05rem; color: var(--color-text); }
+.hero__stat-label { font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem; color: var(--color-text); }
 .hero__stat-sub { color: var(--color-text-soft); font-size: 0.9rem; }
 
 /* מובייל — הגדלת מספר הסטטיסטיקה והתוויות ב-2px */

@@ -90,7 +90,7 @@
 }
 .vc-item__title {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1.3rem;
   color: var(--color-text);
   transition: color var(--dur-fast);

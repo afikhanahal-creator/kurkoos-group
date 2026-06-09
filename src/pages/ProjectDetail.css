@@ -493,18 +493,17 @@
 .pd-carousel__main img,
 .pd-carousel__main .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--dur-slow) var(--ease-out); }
 .pd-carousel__main:hover img { transform: scale(1.04); }
-/* שורת בקרה מתחת לגלריה: נקודות במרכז, חצים פשוטים בקצה ימין */
+/* שורת בקרה מתחת לגלריה: נקודות + חצים מיושרים לצד ימין (RTL) */
 .pd-carousel__controls {
-  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: flex-start;   /* ב-RTL → צד ימין */
+  gap: 1.1rem;
   min-height: 32px;
   margin-top: 1.2rem;
+  padding-inline: var(--container-pad);
 }
 .pd-carousel__nav {
-  position: absolute;
-  right: 0;                /* תמיד בצד ימין (כמו תדהר) */
   direction: ltr;          /* כדי שהחצים יופיעו כ-‹ › בסדר הזה */
   display: flex;
   align-items: center;
@@ -519,11 +518,11 @@
 .pd-carousel__arrow:hover { color: var(--color-secondary); }
 .pd-carousel__arrow--prev svg { transform: rotate(90deg); }
 .pd-carousel__arrow--next svg { transform: rotate(-90deg); }
-.pd-carousel__dots { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
+.pd-carousel__dots { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
 .pd-carousel__dot {
   flex: 0 0 auto;          /* לא להתכווץ → עיגול מושלם תמיד */
   padding: 0;
-  width: 12px; height: 12px;
+  width: 13px; height: 13px;
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--color-primary-300);
@@ -533,7 +532,7 @@
 .pd-carousel__dot.is-active { background: var(--color-secondary); transform: scale(1.2); }
 @media (max-width: 600px) {
   .pd-carousel__main { aspect-ratio: 4 / 3; }
-  .pd-carousel__dot { width: 11px; height: 11px; }
+  .pd-carousel__dot { width: 12px; height: 12px; }
 }
 
 .pd-gallery {

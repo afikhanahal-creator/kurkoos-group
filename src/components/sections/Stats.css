@@ -72,4 +72,6 @@
 @media (max-width: 720px) {
   .stats__grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 1rem; }
   .stat:nth-child(odd)::before { display: none; }
+  /* הגדלת המספרים ב-2px במובייל */
+  .stat__value { font-size: calc(clamp(2.8rem, 5.5vw, 4.6rem) + 2px); }
 }

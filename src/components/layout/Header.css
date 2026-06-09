@@ -497,3 +497,17 @@
   .header__burger { width: 40px; height: 40px; }
   .header__actions .header__cta-btn { font-size: 0.74rem; padding: 0.5em 0.95em; min-height: 36px; }
 }
+
+/* ===== מובייל (טלפון, ≤768px): הבר העליון = לוגו ממורכז בלבד.
+   התפריט/החיפוש/צור-קשר כבר זמינים בבר התחתון הקבוע, ולכן ההמבורגר
+   וכפתור ה-CTA בבר העליון מיותרים — והסרתם מאפשרת מרכוז מדויק של הלוגו.
+   ממוקם אחרי שאר ה-queries כדי לנצח את פריסת ה-grid (max-width:980px). ===== */
+@media (max-width: 768px) {
+  .header__main-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .header__main-inner .header__burger,
+  .header__main-inner .header__actions { display: none; }
+}

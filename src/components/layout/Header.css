@@ -55,7 +55,8 @@
     box-shadow: 0 6px 16px -4px rgba(7, 41, 58, 0.45), 0 0 0 6px #fff;
     transition: background var(--dur-fast), transform var(--dur-fast);
   }
-  .header__bb-menu.is-open .header__bb-menu-circle { background: var(--color-accent-500); transform: rotate(90deg); }
+  /* הכפתור התחתון נשאר "תפריט" (פסים, טורקיז) גם כשהתפריט פתוח —
+     הסגירה מתבצעת מה-X שלמעלה. */
   /* מרווח כדי שהתוכן/תמונות לא ייחתכו מאחורי הבר — רק כשהבר מוצג בפועל */
   body.has-bottombar { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
   /* תפריט המובייל — מרווח תחתון שלא ייחתך מאחורי הבר */

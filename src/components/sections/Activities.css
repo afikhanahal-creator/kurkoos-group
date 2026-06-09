@@ -128,7 +128,7 @@
   font-family: var(--font-heading);
   font-size: 1.45em;
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
   transition: color 0.4s ease-in-out, transform 0.4s ease-in-out;
 }
 .card-inner:hover .card__title { color: var(--card-accent); }

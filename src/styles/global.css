@@ -80,7 +80,7 @@ main:has(.hero) {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   line-height: var(--lh-tight);
-  font-weight: 800;
+  font-weight: 900;
   color: var(--color-primary-900);
   letter-spacing: -0.015em;
   /* איזון שורות בכותרות — מונע "מילה יתומה" בשורה האחרונה (חשוב בעברית) */

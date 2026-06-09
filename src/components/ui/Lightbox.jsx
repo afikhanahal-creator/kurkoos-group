@@ -17,6 +17,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
   const total = images?.length || 0
   const isRtl = document.documentElement.dir === 'rtl'
   const touchX = useRef(null)
+  const swiped = useRef(false)   // החלקה התרחשה → לא לקדם גם בלחיצה
 
   const go = useCallback(
     (dir) => {
@@ -44,14 +45,21 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
   const item = images[index]
   const isVideo = item && typeof item === 'object'
 
-  const onTouchStart = (e) => { touchX.current = e.touches[0]?.clientX ?? null }
+  const onTouchStart = (e) => { touchX.current = e.touches[0]?.clientX ?? null; swiped.current = false }
   const onTouchEnd = (e) => {
     if (touchX.current == null) return
     const dx = (e.changedTouches[0]?.clientX ?? touchX.current) - touchX.current
     touchX.current = null
     if (Math.abs(dx) < 45) return
+    swiped.current = true
     // אותו כיוון כמו החיצים: שמאלה = הבא, ימינה = הקודם (RTL-aware)
     go(dx < 0 ? (isRtl ? -1 : 1) : (isRtl ? 1 : -1))
+  }
+  // לחיצה על התמונה = מעבר לתמונה הבאה (כמו במובייל)
+  const onImageClick = (e) => {
+    e.stopPropagation()
+    if (swiped.current) { swiped.current = false; return }
+    go(isRtl ? -1 : 1)
   }
 
   return createPortal(
@@ -105,7 +113,12 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
             </div>
           )
         ) : (
-          <img src={item} alt={L({ he: 'תמונת גלריה', en: 'Gallery image' })} />
+          <img
+            src={item}
+            alt={L({ he: 'תמונת גלריה', en: 'Gallery image' })}
+            onClick={onImageClick}
+            style={{ cursor: total > 1 ? 'pointer' : 'default' }}
+          />
         )}
         {total > 1 && (
           <figcaption className="pd-lightbox__counter">

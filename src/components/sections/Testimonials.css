@@ -2,6 +2,12 @@
 .testimonials__head .section-lead { margin-inline: auto; }
 .testimonials__head .eyebrow { justify-content: center; }
 
+/* מובייל — הגדלת ה-eyebrow והכותרת ב-2px */
+@media (max-width: 768px) {
+  .testimonials__head .eyebrow { font-size: calc(var(--fs-eyebrow) + 2px); }
+  .testimonials__head .section-title { font-size: calc(var(--fs-h2) + 2px); }
+}
+
 /* ============================================================
    כרטיס המלצה (Profile card) + קרוסלה אוטומטית.
    אפקט ה-hover זהה לכרטיסי "מה אנחנו עושים" שלמעלה:

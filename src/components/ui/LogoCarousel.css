@@ -47,7 +47,13 @@
 }
 .logo-carousel__col:hover .logo-carousel__img { filter: grayscale(0); opacity: 1; }
 
+/* מובייל — הגדלת הלוגואים (טקסט) קצת */
+@media (max-width: 768px) {
+  .logo-carousel__col { height: 80px; width: clamp(150px, 40vw, 240px); }
+  .logo-carousel__logo { font-size: clamp(1.55rem, 6vw, 1.95rem); }
+}
+
 @media (max-width: 420px) {
-  .logo-carousel__col { height: 60px; }
-  .logo-carousel__logo { font-size: 1.1rem; }
+  .logo-carousel__col { height: 70px; }
+  .logo-carousel__logo { font-size: 1.45rem; }
 }

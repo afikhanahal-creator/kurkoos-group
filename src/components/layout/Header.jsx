@@ -245,7 +245,7 @@ export default function Header() {
             aria-expanded={menuOpen}
           >
             <span className="header__bb-menu-circle">
-              <Icon name={menuOpen ? 'close' : 'menu'} size={24} />
+              <Icon name="menu" size={24} />
             </span>
             <span>{t('common.menu')}</span>
           </button>

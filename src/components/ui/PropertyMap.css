@@ -46,8 +46,8 @@
    ============================================================ */
 .pm-cube-marker {
   position: absolute;
-  width: 46px;
-  height: 46px;
+  width: 37px;
+  height: 37px;
   transform: translate(-50%, -50%);   /* ממורכזת על נקודת המיקום */
   perspective: 260px;                  /* עומק 3D */
   cursor: pointer;
@@ -58,9 +58,9 @@
   content: '';
   position: absolute;
   left: 50%;
-  bottom: -6px;
-  width: 30px;
-  height: 9px;
+  bottom: -5px;
+  width: 24px;
+  height: 8px;
   transform: translateX(-50%);
   background: radial-gradient(ellipse, rgba(7, 41, 58, 0.35), transparent 70%);
   pointer-events: none;
@@ -79,7 +79,7 @@
 .pm-cube-marker:hover .pm-cube {
   animation: pm-cube-spin 6s infinite linear;
 }
-/* 6 פאות הקוביה — כל אחת 46px, חצי = 23px. מילוי שקוף + מסגרת אדומה = מקצועות נראים */
+/* 6 פאות הקוביה — כל אחת 37px, חצי = 18.5px. מילוי שקוף + מסגרת אדומה = מקצועות נראים */
 .pm-cube > div {
   position: absolute;
   width: 100%;
@@ -88,12 +88,12 @@
   background-color: var(--clr-alpha);
   border: 2px solid var(--clr);
 }
-.pm-cube > div:nth-of-type(1) { transform: rotateY(0deg)   translateZ(23px); } /* קדמית */
-.pm-cube > div:nth-of-type(2) { transform: rotateY(180deg) translateZ(23px); } /* אחורית */
-.pm-cube > div:nth-of-type(3) { transform: rotateY(90deg)  translateZ(23px); } /* ימין */
-.pm-cube > div:nth-of-type(4) { transform: rotateY(-90deg) translateZ(23px); } /* שמאל */
-.pm-cube > div:nth-of-type(5) { transform: rotateX(90deg)  translateZ(23px); } /* עליונה */
-.pm-cube > div:nth-of-type(6) { transform: rotateX(-90deg) translateZ(23px); } /* תחתונה */
+.pm-cube > div:nth-of-type(1) { transform: rotateY(0deg)   translateZ(18.5px); } /* קדמית */
+.pm-cube > div:nth-of-type(2) { transform: rotateY(180deg) translateZ(18.5px); } /* אחורית */
+.pm-cube > div:nth-of-type(3) { transform: rotateY(90deg)  translateZ(18.5px); } /* ימין */
+.pm-cube > div:nth-of-type(4) { transform: rotateY(-90deg) translateZ(18.5px); } /* שמאל */
+.pm-cube > div:nth-of-type(5) { transform: rotateX(90deg)  translateZ(18.5px); } /* עליונה */
+.pm-cube > div:nth-of-type(6) { transform: rotateX(-90deg) translateZ(18.5px); } /* תחתונה */
 
 @keyframes pm-cube-spin {
   from { transform: rotateX(-26deg) rotateY(-38deg); }

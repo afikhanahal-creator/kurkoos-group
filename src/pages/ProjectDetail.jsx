@@ -2,6 +2,7 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
+import divisions from '../data/divisions.js'
 import { getProjectBySlug, createLead } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -162,6 +163,12 @@ export default function ProjectDetail() {
   const project = buildProject(local, cms)
   if (!project) return <Navigate to="/projects" replace />
 
+  // פירורי לחם: בית / חטיבה (לפי קטגוריית הפרויקט) / שם הפרויקט
+  const projDivision = divisions.find((d) => d.category && d.category === project.category)
+  const crumbItems = projDivision
+    ? [{ label: L(projDivision.menuTitle), to: `/divisions/${projDivision.slug}` }, { label: L(project.name) }]
+    : [{ label: t('projects.title'), to: '/projects' }, { label: L(project.name) }]
+
   const hasVideo =
     (project.video?.id && project.video.type === 'youtube') ||
     (project.video?.src && project.video.type === 'file')
@@ -244,12 +251,16 @@ export default function ProjectDetail() {
 
   return (
     <article className="project-detail">
+      {/* ===== סרגל פירורי לחם (רקע תכלת בהיר) ===== */}
+      <div className="pd-crumbbar">
+        <div className="container">
+          <Breadcrumbs items={crumbItems} />
+        </div>
+      </div>
+
       {/* ===== Banner ===== */}
       <header className="pd-banner">
         <div className="container">
-          <Breadcrumbs
-            items={[{ label: t('projects.title'), to: '/projects' }, { label: L(project.name) }]}
-          />
           <div className="pd-banner__grid">
             {/* תוכן */}
             <div className="pd-banner__content">

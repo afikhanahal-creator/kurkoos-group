@@ -157,7 +157,7 @@ export default {
     menu: 'תפריט',
     close: 'סגירה',
     backToTop: 'חזרה למעלה',
-    home: 'בית',
+    home: 'עמוד הבית',
     skipToContent: 'דלג לתוכן',
   },
 }

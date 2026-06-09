@@ -448,8 +448,7 @@ export default function ProjectDetail() {
       <section id="gallery" className="section pd-anchor">
         <div className="container">
           <Reveal className="pd-head">
-            <span className="eyebrow">{L({ he: 'תמונות', en: 'Images' })}</span>
-            <h2 className="section-title">{L({ he: 'גלריה', en: 'Gallery' })}</h2>
+            <h2 className="section-title">{L({ he: 'מבט מקרוב', en: 'A closer look' })}</h2>
           </Reveal>
 
           {galleryGroups.length > 1 && (

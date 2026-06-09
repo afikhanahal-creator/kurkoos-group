@@ -79,16 +79,17 @@
   gap: 0.55em;
 }
 .card-deck .card__title {
-  font-size: 1.85em;
+  font-size: 2.1em;          /* ~34px — כותרת גדולה ובולטת */
   line-height: 1.2;
 }
 .card-deck .card__description {
-  font-size: 1.2em;
-  line-height: 1.65;
+  font-size: 1.35em;         /* ~22px — תיאור גדול וקריא */
+  line-height: 1.6;
   font-weight: 500;          /* קצת יותר נוכח → קריא יותר */
   opacity: 1;                /* בלי עמעום → ברור לקריאה */
-  max-width: 32ch;
+  color: var(--color-text);  /* כהה יותר מ-muted → ניגודיות גבוהה */
+  max-width: 34ch;
   margin-inline: auto;
-  -webkit-line-clamp: 5;     /* יותר שורות כדי שטקסט גדול לא ייחתך */
+  -webkit-line-clamp: 6;     /* יותר שורות כדי שטקסט גדול לא ייחתך */
 }
 

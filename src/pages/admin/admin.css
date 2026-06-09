@@ -387,6 +387,12 @@
 .ed__env-img img { width: 100%; height: 110px; object-fit: cover; background: #fff; border: 1px solid var(--adm-border); border-radius: 8px; }
 
 .ed__list { display: flex; flex-direction: column; gap: 0.5rem; }
+/* שורת סרטון — סוג / מזהה-קישור / כותרת / העלאה / מחיקה */
+.ed__vid { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.5rem; border: 1.5px solid var(--adm-border-strong); border-radius: 10px; background: #fff; }
+.ed__vid select { padding: 0.55rem 0.6rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; background: #fff; }
+.ed__vid input { flex: 1; min-width: 140px; padding: 0.55rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; background: #fff; }
+.ed__vid input:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
+.ed__vid-ok { font-size: 0.78rem; font-weight: 700; color: #1a7f4b; white-space: nowrap; }
 .ed__list-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center; }
 .ed__list-row input { padding: 0.6rem 0.7rem; border: 1.5px solid var(--adm-border-strong); border-radius: 9px; font: inherit; background: #fff; }
 .ed__list-row input:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }
@@ -581,10 +587,16 @@
 .adm-leads__err { background: #fde8e8; color: #b42323; padding: 0.7rem 1rem; border-radius: 10px; font-size: 0.9rem; }
 .adm-leads__empty { padding: 2rem; text-align: center; color: var(--adm-muted); border: 1.5px dashed var(--adm-border-strong); border-radius: var(--adm-radius); }
 
-.adm-leads__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-.adm-leads__count { font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--adm-ink); }
-.adm-leads__tools { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.adm-leads__search { padding: 0.55rem 0.9rem; border: 1.5px solid var(--adm-border); border-radius: 10px; background: var(--adm-surface); font-size: 0.92rem; min-width: 180px; }
+/* סרגל כלים — בר נקי היושב ישירות מעל הלידים */
+.adm-leads__bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  background: var(--adm-surface); border: 1.5px solid var(--adm-border); border-radius: 14px;
+  padding: 0.6rem 0.8rem; box-shadow: var(--adm-shadow-sm);
+}
+.adm-leads__bar-group { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.adm-leads__count { font-family: var(--font-heading); font-weight: 600; font-size: 0.92rem; color: var(--adm-muted); padding-inline-end: 0.4rem; border-inline-end: 1.5px solid var(--adm-border); margin-inline-end: 0.2rem; }
+.adm-leads__count b { font-weight: 800; font-size: 1.15rem; color: var(--adm-navy); margin-inline-start: 0.2rem; }
+.adm-leads__search { padding: 0.55rem 0.9rem; border: 1.5px solid var(--adm-border); border-radius: 10px; background: var(--adm-bg); font-size: 0.92rem; min-width: 200px; }
 .adm-leads__search:focus { outline: none; border-color: #16688c; box-shadow: var(--adm-ring); }
 .adm-leads__btn {
   padding: 0.55rem 1rem; border-radius: 10px; border: 1.5px solid var(--adm-border-strong);
@@ -655,7 +667,92 @@
   .adm-leads__board { flex-direction: column; overflow-x: visible; }
   .adm-stage { flex: 1 1 auto; max-width: none; width: 100%; }
   .adm-leads__grid { grid-template-columns: 1fr; }
-  .adm-leads__toolbar { flex-direction: column; align-items: stretch; }
-  .adm-leads__tools { justify-content: space-between; }
+  .adm-leads__bar { flex-direction: column; align-items: stretch; }
+  .adm-leads__bar-group { justify-content: space-between; }
   .adm-leads__search { flex: 1; min-width: 0; }
+}
+
+/* ============================================================
+   Leads — דשבורד, מתג תצוגות, רשימה, טבלה
+   ============================================================ */
+.adm-leads__setup {
+  background: #fff6e9; border: 1.5px solid #f0c97a; color: #7a5a18;
+  padding: 0.85rem 1.1rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem;
+}
+.adm-leads__setup strong { font-family: var(--font-heading); font-size: 0.98rem; }
+.adm-leads__err { direction: rtl; text-align: right; }
+
+/* מתג תצוגות */
+.adm-leads__views { display: inline-flex; background: var(--adm-bg); border: 1.5px solid var(--adm-border); border-radius: 10px; padding: 2px; gap: 2px; }
+.adm-leads__view { border: 0; background: transparent; padding: 0.42rem 0.85rem; border-radius: 8px; font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--adm-muted); cursor: pointer; transition: all .15s; }
+.adm-leads__view:hover { color: var(--adm-ink); }
+.adm-leads__view.is-active { background: var(--adm-surface); color: #105572; box-shadow: var(--adm-shadow-sm); }
+
+/* דשבורד */
+.adm-dash { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 0.4rem; }
+.adm-dash__cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; }
+.adm-dash__card {
+  background: var(--adm-surface); border: 1.5px solid var(--adm-border); border-radius: 14px;
+  padding: 0.9rem 1rem 0.85rem; display: flex; flex-direction: column; gap: 0.12rem;
+  position: relative; overflow: hidden; transition: box-shadow .15s, transform .12s;
+}
+.adm-dash__card:hover { box-shadow: var(--adm-shadow); transform: translateY(-1px); }
+.adm-dash__card::before { content: ''; position: absolute; inset-inline-start: 0; inset-inline-end: 0; top: 0; height: 3px; background: linear-gradient(90deg, #105572, #16688c); }
+.adm-dash__val { font-family: var(--font-heading); font-weight: 800; font-size: 1.85rem; color: var(--adm-navy); line-height: 1.05; }
+.adm-dash__lbl { font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--adm-ink); margin-top: 0.2rem; }
+.adm-dash__hint { font-size: 0.72rem; color: var(--adm-muted); }
+
+.adm-dash__funnel { background: var(--adm-surface); border: 1.5px solid var(--adm-border); border-radius: 14px; padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.45rem; }
+.adm-dash__funnel-title { font-family: var(--font-heading); font-weight: 800; font-size: 0.92rem; color: var(--adm-ink); margin-bottom: 0.1rem; }
+.adm-funnel__row { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 0.6rem; }
+.adm-funnel__label { font-size: 0.78rem; color: var(--adm-ink); text-align: right; white-space: nowrap; }
+.adm-funnel__track { background: var(--adm-bg); border-radius: 7px; height: 22px; overflow: hidden; }
+.adm-funnel__bar { height: 100%; border-radius: 7px; min-width: 26px; display: flex; align-items: center; justify-content: flex-end; padding-inline-end: 7px; transition: width .4s ease; }
+.adm-funnel__bar span { color: #fff; font-size: 0.74rem; font-weight: 800; }
+
+/* תצוגת רשימה */
+.adm-list { display: flex; flex-direction: column; gap: 0.45rem; }
+.adm-list__row {
+  display: grid; align-items: center; gap: 0.7rem;
+  grid-template-columns: 22px 8px minmax(110px, 1.2fr) minmax(150px, 1.6fr) minmax(90px, 1fr) 40px 130px 78px 70px;
+  background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 11px;
+  padding: 0.55rem 0.7rem; box-shadow: var(--adm-shadow-sm); transition: box-shadow .15s, opacity .12s, border-color .15s;
+}
+.adm-list__row:hover { box-shadow: var(--adm-shadow); }
+.adm-list__row.is-dragging { opacity: 0.4; }
+.adm-list__row.is-over { border-color: #16688c; }
+.adm-list__grip { cursor: grab; color: var(--adm-muted); font-size: 0.85rem; letter-spacing: -2px; user-select: none; }
+.adm-list__stage { width: 8px; height: 30px; border-radius: 5px; }
+.adm-list__name { border: 0; background: 0; padding: 0; cursor: pointer; font-family: var(--font-heading); font-weight: 800; font-size: 0.94rem; color: var(--adm-ink); text-align: right; }
+.adm-list__name:hover { color: #105572; text-decoration: underline; }
+.adm-list__contacts { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; }
+.adm-list__contacts a { font-size: 0.82rem; color: #105572; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-list__email { color: var(--adm-muted) !important; }
+.adm-list__project { font-size: 0.82rem; color: var(--adm-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-list__contacted { display: flex; justify-content: center; }
+.adm-list__contacted input { accent-color: #2e9e6b; width: 17px; height: 17px; }
+.adm-list__stage-sel { font-size: 0.78rem; padding: 0.3rem 0.4rem; border: 1px solid var(--adm-border); border-radius: 7px; background: var(--adm-surface); color: var(--adm-ink); }
+.adm-list__date { font-size: 0.78rem; color: var(--adm-muted); white-space: nowrap; }
+.adm-list__acts { display: flex; gap: 0.3rem; }
+
+/* תצוגת טבלה */
+.adm-table-wrap { overflow-x: auto; border: 1.5px solid var(--adm-border); border-radius: 14px; background: var(--adm-surface); }
+.adm-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.adm-table th { text-align: right; font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem; color: var(--adm-muted); padding: 0.7rem 0.8rem; border-bottom: 1.5px solid var(--adm-border); white-space: nowrap; background: var(--adm-bg); }
+.adm-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--adm-border); color: var(--adm-ink); white-space: nowrap; }
+.adm-table tr:last-child td { border-bottom: 0; }
+.adm-table tbody tr:hover { background: var(--adm-bg); }
+.adm-table a { color: #105572; text-decoration: none; }
+.adm-table__name { border: 0; background: 0; padding: 0; cursor: pointer; font-family: var(--font-heading); font-weight: 800; font-size: 0.9rem; color: var(--adm-ink); }
+.adm-table__name:hover { color: #105572; text-decoration: underline; }
+
+@media (max-width: 980px) {
+  .adm-dash { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .adm-leads__toolbar { flex-direction: column-reverse; align-items: stretch; }
+  .adm-leads__tools { flex-wrap: wrap; }
+  .adm-dash__cards { grid-template-columns: repeat(2, 1fr); }
+  .adm-list__row { grid-template-columns: 20px 8px 1fr auto; row-gap: 0.4rem; }
+  .adm-list__contacts, .adm-list__project, .adm-list__date { grid-column: 3 / -1; }
 }

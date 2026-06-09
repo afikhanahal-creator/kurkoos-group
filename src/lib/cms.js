@@ -8,6 +8,29 @@ import { supabase } from './supabase.js'
 
 const BUCKET = 'media'
 
+// ---------- Cloudinary (וידאו/מדיה כבדה) ----------
+export const hasCloudinary = Boolean(
+  import.meta.env.VITE_CLOUDINARY_CLOUD_NAME && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+)
+export async function uploadToCloudinary(file) {
+  const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+  const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+  if (!cloud || !preset) throw new Error('Cloudinary לא מוגדר (חסרים משתני סביבה)')
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', preset)
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/auto/upload`, { method: 'POST', body: fd })
+  if (!res.ok) throw new Error('שגיאת העלאה ל-Cloudinary')
+  const data = await res.json()
+  return data.secure_url
+}
+
+// העלאת וידאו — מעדיף Cloudinary (מתאים לקבצים כבדים) ונופל-לאחור ל-Supabase
+export async function uploadVideoFile(file, folder = 'videos') {
+  if (hasCloudinary) return uploadToCloudinary(file)
+  return uploadMedia(file, folder)
+}
+
 // ---------- Media (Storage) ----------
 export async function uploadMedia(file, folder = 'general') {
   if (!supabase) throw new Error('Supabase לא מוגדר')

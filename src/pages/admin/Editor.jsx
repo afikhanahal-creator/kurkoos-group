@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import ImageManager from './ImageManager.jsx'
-import { uploadMedia } from '../../lib/cms.js'
+import { uploadMedia, uploadVideoFile, hasCloudinary } from '../../lib/cms.js'
 
 const STRIP = ['id', 'created_at', 'updated_at']
 
@@ -20,6 +20,7 @@ function StatusPill({ status }) {
 export default function Editor({ schema, record, onSave, folder = 'general', coverField = null, onArchive, onClose, previewUrl = null, title }) {
   const [form, setForm] = useState(record)
   const [status, setStatus] = useState('saved')
+  const [vidUp, setVidUp] = useState(-1) // אינדקס סרטון שמתבצעת לו העלאה
   const timer = useRef()
 
   useEffect(() => {
@@ -77,6 +78,21 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     if (!file) return
     try { onUrl(await uploadMedia(file, `${folder}/${sub}`)) }
     catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) }
+  }
+
+  // העלאת קובץ וידאו (מהמחשב/נייד) — Cloudinary אם מוגדר, אחרת אחסון Supabase
+  const uploadVid = async (key, i, file) => {
+    if (!file) return
+    setVidUp(i)
+    try {
+      const url = await uploadVideoFile(file, `${folder}/videos`)
+      setForm((prev) => {
+        const list = Array.isArray(prev[key]) ? prev[key] : []
+        const next = { ...prev, [key]: list.map((d, j) => (j === i ? { ...d, type: 'file', src: url } : d)) }
+        schedule(next)
+        return next
+      })
+    } catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) } finally { setVidUp(-1) }
   }
 
   const renderField = (f) => {
@@ -140,9 +156,13 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
                   : <input dir="ltr" placeholder="כתובת קובץ וידאו (mp4)" value={vid.src || ''} onChange={(e) => upd(i, { src: e.target.value.trim() })} />}
                 <input dir="rtl" placeholder="כותרת (אופציונלי)" value={vid.title || ''} onChange={(e) => upd(i, { title: e.target.value })} />
                 {type === 'file' && (
-                  <label className="ed__dev-upload">העלאת קובץ
-                    <input type="file" accept="video/*" hidden onChange={(e) => uploadOne('videos', e.target.files[0], (url) => upd(i, { src: url }))} />
-                  </label>
+                  <>
+                    <label className="ed__dev-upload">
+                      {vidUp === i ? 'מעלה…' : (vid.src ? 'החלפת קובץ' : 'העלאה מהמחשב/נייד')}
+                      <input type="file" accept="video/*" hidden disabled={vidUp === i} onChange={(e) => uploadVid(f.key, i, e.target.files[0])} />
+                    </label>
+                    {vid.src && <span className="ed__vid-ok">✓ הועלה ({hasCloudinary ? 'Cloudinary' : 'שרת'})</span>}
+                  </>
                 )}
                 <button type="button" className="ed__dev-del" onClick={() => setField(f.key, arr.filter((_, j) => j !== i))} aria-label="מחיקת סרטון" title="מחיקה"><XIcon width={16} height={16} /></button>
               </div>

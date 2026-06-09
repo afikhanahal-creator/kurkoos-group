@@ -41,6 +41,22 @@ function DottedGrid({ className = '' }) {
 const wrap = (v) => (v == null || v === '' ? undefined : typeof v === 'object' ? v : { he: String(v), en: String(v) })
 const has = (v) => v != null && v !== '' && !(Array.isArray(v) && v.length === 0)
 
+/* מחלץ קואורדינטות מקישור Google Maps (תבניות @lat,lng / !3d!4d / q=lat,lng / זוג כללי) */
+function extractLatLng(url) {
+  if (!url || typeof url !== 'string') return null
+  const patterns = [
+    /@(-?\d+\.\d+),(-?\d+\.\d+)/,
+    /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,
+    /[?&](?:q|ll|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/,
+    /(-?\d{1,2}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/,
+  ]
+  for (const re of patterns) {
+    const m = url.match(re)
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) }
+  }
+  return null
+}
+
 // מאחד נתון מקומי מועשר (planGroups/environment/...) עם שכבת-על מה-CMS (שדות בסיסיים)
 function buildProject(local, cms) {
   if (!local && !cms) return null
@@ -98,6 +114,7 @@ function buildProject(local, cms) {
       sections: Array.isArray(cms.sections) ? cms.sections : undefined,
       developers: Array.isArray(cms.developers) && cms.developers.length ? cms.developers : undefined,
       stats_scale: cms.stats_scale || undefined,
+      mapLink: cms.map_link || undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
   }
@@ -158,7 +175,9 @@ export default function ProjectDetail() {
   const mediaItems = [...currentImages, ...videos]
   // מפה: Maps Embed API (מפה מלוטשת עם סמן) כשמוגדר מפתח; אחרת fallback בסיסי
   const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_KEY
-  const mapQuery = project.mapQuery || L(project.city) || L(project.name)
+  // קואורדינטות: שדה coords, אחרת חילוץ מקישור Google Maps שהוזן ב-CMS
+  const mapCoords = (project.coords && project.coords.lat != null) ? project.coords : extractLatLng(project.mapLink)
+  const mapQuery = project.mapQuery || (mapCoords ? `${mapCoords.lat},${mapCoords.lng}` : (L(project.city) || L(project.name)))
   const mapSrc = mapsKey
     ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent(mapQuery)}&zoom=16&language=he&region=IL`
     : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
@@ -368,10 +387,10 @@ export default function ProjectDetail() {
               <h2 className="section-title">{L({ he: 'המיקום על המפה', en: 'On the map' })}</h2>
             </Reveal>
             <Reveal className="pd-map" delay={0.05}>
-              {mapsKey && project.coords ? (
+              {mapsKey && mapCoords ? (
                 <PropertyMap
-                  lat={project.coords.lat}
-                  lng={project.coords.lng}
+                  lat={mapCoords.lat}
+                  lng={mapCoords.lng}
                   label={L(project.name)}
                   zoom={16}
                 />
@@ -615,27 +634,26 @@ export default function ProjectDetail() {
                       aria-label={L({ he: 'הודעה', en: 'Message' })}
                     />
                   </div>
-                  <label className="pd-consent">
-                    <input type="checkbox" checked={form.consent} onChange={setField('consent')} />
-                    <span>{L({ he: 'אני מאשר/ת קבלת דיוור שיווקי', en: 'I agree to receive marketing communications' })}</span>
-                  </label>
                   <button type="submit" className="pd-contact__submit">
                     {L({ he: 'שליחה', en: 'Send' })}
                   </button>
                 </form>
               )}
             </div>
-            <div className="pd-contact__media">
-              <BookingCalendar
-                title={L({ he: 'קבעו פגישה', en: 'Book a meeting' })}
-                onPickDate={(label) =>
-                  setForm((f) => ({
-                    ...f,
-                    message: f.message || L({ he: `אשמח לתאם פגישה ל-${label}`, en: `I'd like to book a meeting on ${label}` }),
-                  }))
-                }
-              />
-            </div>
+            {/* היומן מוצג רק בדסקטופ — במובייל הטופס לבדו, נקי וממוקד */}
+            {!isMobile && (
+              <div className="pd-contact__media">
+                <BookingCalendar
+                  title={L({ he: 'קבעו פגישה', en: 'Book a meeting' })}
+                  onPickDate={(label) =>
+                    setForm((f) => ({
+                      ...f,
+                      message: f.message || L({ he: `אשמח לתאם פגישה ל-${label}`, en: `I'd like to book a meeting on ${label}` }),
+                    }))
+                  }
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>

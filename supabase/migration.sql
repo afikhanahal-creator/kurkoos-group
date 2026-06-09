@@ -50,6 +50,7 @@ alter table public.projects add column if not exists year int;                  
 alter table public.projects add column if not exists video jsonb default '{}'::jsonb;          -- {type:'youtube', id} — סרטון בודד (הירו)
 alter table public.projects add column if not exists videos jsonb default '[]'::jsonb;          -- [{type:'youtube'|'file', id|src, title}] — מספר סרטונים לפרויקט
 alter table public.projects add column if not exists coords jsonb default '{}'::jsonb;          -- {lat, lng} — סמן מפה מלוטש
+alter table public.projects add column if not exists map_link text;                            -- קישור Google Maps (נגזרות ממנו קואורדינטות למפה)
 alter table public.projects add column if not exists environment jsonb default '{}'::jsonb;     -- {title, text, image}
 alter table public.projects add column if not exists plan_groups jsonb default '[]'::jsonb;     -- [{rooms, label, plans:[{label, img}]}]
 alter table public.projects add column if not exists gallery_groups jsonb default '[]'::jsonb;  -- [{label, images:[url]}]

@@ -61,6 +61,7 @@ export const projectSchema = [
       { key: 'status', label: 'סטטוס', type: 'select', options: PROJECT_STATUS },
       { key: 'location', label: 'עיר', type: 'text' },
       { key: 'address', label: 'כתובת מלאה (תופיע על המפה)', type: 'text', hint: 'הכתובת המדויקת — נטענת אוטומטית למפה בעמוד הפרויקט' },
+      { key: 'map_link', label: 'לינק Google Maps (אופציונלי)', type: 'text', dir: 'ltr', hint: 'הדביקו קישור מ-Google Maps (פתחו את המיקום, העתיקו את כתובת הדפדפן עם ה-@lat,lng). גובר על הכתובת ומציב את הסמן במדויק.' },
       { key: 'gush', label: 'גוש', type: 'text' },
       { key: 'chelka', label: 'חלקה', type: 'text' },
       { key: 'description', label: 'תיאור הפרויקט', type: 'textarea' },

@@ -290,20 +290,6 @@
   34%, 58%      { transform: scale(1); box-shadow: 0 0 0 5px rgba(169, 11, 12, 0.25); }
 }
 
-/* ============================================================
-   מובייל — הגדלת הטקסט בכרטיסי הערימה (CardDeck) לקריאוּת טובה.
-   ה-deck מוצג רק במובייל, ולכן אין השפעה על רשת הדסקטופ.
-   ============================================================ */
-.activities__deck .card__title {
-  font-size: 1.75rem;
-  line-height: 1.25;
-}
-.activities__deck .card__description {
-  font-size: 1.2rem;
-  line-height: 1.65;
-  opacity: 1;
-}
-
 /* נגישות — בהפחתת תנועה האפקט האוטומטי לא רץ */
 @media (hover: none) and (prefers-reduced-motion: reduce) {
   .activities__grid .card-inner,

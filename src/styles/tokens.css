@@ -48,10 +48,11 @@
   --color-accent-soft: var(--color-accent-100);
 
   /* ============ 3.2 TYPOGRAPHY ============ */
-  /* פונטי מותג (בתשלום) עם fallback ל-Google Fonts עד שיותקנו */
-  --font-heading: 'Heebo', 'Miriam Libre', 'Rubik', system-ui, sans-serif;   /* כותרות — עבה */
-  --font-body: 'Miriam Libre', 'Almoni', 'Assistant', system-ui, sans-serif;
-  --font-display: 'Heebo', 'Miriam Libre', 'Rubik', system-ui, sans-serif;
+  /* פונט אחיד לכל האתר — Almoni (self-hosted, מותג). הבחנה במשקל/גודל בלבד.
+     fallback ל-Google (Heebo/Assistant) עד שה-Almoni נטען. */
+  --font-heading: 'Almoni', 'Heebo', 'Assistant', system-ui, sans-serif;   /* כותרות — bold */
+  --font-body: 'Almoni', 'Assistant', 'Heebo', system-ui, sans-serif;
+  --font-display: 'Almoni', 'Heebo', 'Assistant', system-ui, sans-serif;
 
   --fs-hero: clamp(2.5rem, 5.8vw, 4.25rem);   /* display — גדול יותר בדסקטופ */
   --fs-h1: clamp(2rem, 4.4vw, 3rem);          /* 32–48 */

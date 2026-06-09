@@ -7,7 +7,10 @@
       ל-public/fonts/ בשמות שלמטה. מדריך מלא: FONTS.md
    ============================================================ */
 
-/* ---- Almoni (גוף הטקסט) — AlefAlefAlef ---- */
+/* ---- Almoni (פונט אחיד לכל האתר — גוף + כותרות) — AlefAlefAlef ----
+   קיימים 3 משקלים בלבד (300/400/700). מיפוי טווחים כדי שכל בקשת משקל
+   (כולל 500/600/800/900) תיפול על קובץ אמיתי — בלי faux-bold מכוער:
+   300 → Light · 400-500 → Regular · 600-900 → Bold. */
 @font-face {
   font-family: 'Almoni';
   src: url('/fonts/almoni-300.woff2') format('woff2');
@@ -18,14 +21,14 @@
 @font-face {
   font-family: 'Almoni';
   src: url('/fonts/almoni-400.woff2') format('woff2');
-  font-weight: 400;
+  font-weight: 400 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Almoni';
   src: url('/fonts/almoni-700.woff2') format('woff2');
-  font-weight: 700;
+  font-weight: 600 900;
   font-style: normal;
   font-display: swap;
 }

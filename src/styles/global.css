@@ -195,6 +195,11 @@ p, .section-lead { text-wrap: pretty; }
 .home .story__title { text-align: center; }
 .home .section-lead { text-align: center; margin-inline: auto; max-width: 54ch; }
 
+/* מובייל — הגדלת ה-eyebrow (הטקסט האדום) ב-2px בדף הבית בלבד */
+@media (max-width: 768px) {
+  .home .eyebrow { font-size: calc(var(--fs-eyebrow) + 2px); }
+}
+
 .section-title { font-size: var(--fs-h2); margin-bottom: var(--space-4); }
 
 /* כותרת צרה — Fb Metropolis Bold עם letter-spacing שלילי */

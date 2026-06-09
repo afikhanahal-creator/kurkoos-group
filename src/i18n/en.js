@@ -67,6 +67,8 @@ export default {
   footer: {
     tagline: 'Development · Construction · Supervision · Brokerage',
     quickLinks: 'Quick links',
+    linkExec: 'Execution',
+    linkBrokerage: 'Brokerage',
     contact: 'Contact',
     follow: 'Follow us',
     rights: 'All rights reserved',

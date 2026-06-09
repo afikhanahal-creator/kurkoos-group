@@ -67,6 +67,8 @@ export default {
   footer: {
     tagline: 'יזמות · בנייה · פיקוח · תיווך',
     quickLinks: 'ניווט מהיר',
+    linkExec: 'ביצוע',
+    linkBrokerage: 'תיווך',
     contact: 'יצירת קשר',
     follow: 'עקבו אחרינו',
     rights: 'כל הזכויות שמורות',

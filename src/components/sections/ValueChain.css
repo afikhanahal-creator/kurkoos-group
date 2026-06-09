@@ -157,3 +157,8 @@
   .vc-item__panel p { padding-inline-start: 1.2rem; }
   .value-chain__art { max-width: 460px; margin-inline: auto; margin-top: 1.5rem; }
 }
+
+/* מובייל — הגדלת התגית האדומה (vc-item__tag) ב-3px */
+@media (max-width: 768px) {
+  .vc-item__tag { font-size: calc(0.7rem + 3px); }
+}

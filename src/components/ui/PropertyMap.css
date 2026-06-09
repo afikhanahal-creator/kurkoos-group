@@ -51,6 +51,19 @@
   perspective: 260px;                  /* עומק 3D */
   cursor: pointer;
 }
+/* צל קרקע רך — שכבה שטוחה נפרדת, כדי לא לשטח את ה-3D של הקוביה
+   (filter על אלמנט preserve-3d מבטל את התלת-ממד!) */
+.pm-cube-marker::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 30px;
+  height: 9px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(7, 41, 58, 0.35), transparent 70%);
+  pointer-events: none;
+}
 .pm-cube {
   position: relative;
   width: 100%;
@@ -58,7 +71,6 @@
   transform-style: preserve-3d;
   /* מצב מנוחה — מבט איזומטרי שמראה פאה עליונה + שתי פאות צד (זהה ל-from של האנימציה) */
   transform: rotateX(-26deg) rotateY(-38deg);
-  filter: drop-shadow(0 7px 10px rgba(7, 41, 58, 0.35));
   --clr: #a90b0c;                       /* אדום המותג (accent-500) */
   --clr-alpha: rgba(169, 11, 12, 0.14); /* מילוי שקוף אדום — רואים דרכו את שאר הפאות */
 }

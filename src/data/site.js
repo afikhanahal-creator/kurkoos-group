@@ -66,6 +66,16 @@ export const site = {
         { label: { he: 'המדריך לפיקוח בנייה', en: 'Supervision guide' }, to: '/blog' },
       ],
     },
+    {
+      label: { he: 'תיווך', en: 'Brokerage' },
+      to: '/divisions/brokerage',
+      children: [
+        { label: { he: 'תיווך ושיווק', en: 'Brokerage & marketing' }, to: '/divisions/brokerage' },
+        { label: { he: 'קנייה ומכירה', en: 'Buying & selling' }, to: '/divisions/brokerage#why' },
+        { label: { he: 'פרויקטים בשיווק', en: 'Projects in marketing' }, to: '/divisions/brokerage#projects' },
+        { label: { he: 'המדריך לרוכש ולמוכר', en: 'Buyer & seller guide' }, to: '/blog' },
+      ],
+    },
     { key: 'contact', to: '/#contact' },
   ],
 }

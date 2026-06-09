@@ -34,8 +34,8 @@ export default function Division() {
   // הפרויקטים שיוצגו: ברירת מחדל = מקומיים; אם הוגדרו ב-CMS לעמוד הזה — מהם.
   const [list, setList] = useState(() => projects.slice(0, 4))
 
-  // מיפוי slug של דיוויזיה → עמוד תיוג ב-CMS (התיווך מוצג בעמוד /divisions/residential)
-  const SLUG_TO_PAGE = { development: 'development', execution: 'execution', residential: 'brokerage' }
+  // מיפוי slug של דיוויזיה → עמוד תיוג ב-CMS
+  const SLUG_TO_PAGE = { development: 'development', execution: 'execution', brokerage: 'brokerage' }
 
   useEffect(() => {
     const pageKey = SLUG_TO_PAGE[slug] || null

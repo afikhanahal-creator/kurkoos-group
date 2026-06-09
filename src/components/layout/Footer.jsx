@@ -49,8 +49,8 @@ export default function Footer() {
           <Link to="/about">{t('nav.about')}</Link>
           <Link to="/projects">{t('nav.projects')}</Link>
           <Link to="/team">{t('nav.team')}</Link>
-          <Link to="/blog">{t('footer.linkExec')}</Link>
-          <Link to="/careers">{t('footer.linkBrokerage')}</Link>
+          <Link to="/divisions/execution">{t('footer.linkExec')}</Link>
+          <Link to="/divisions/brokerage">{t('footer.linkBrokerage')}</Link>
         </nav>
 
         <div className="footer__col">

@@ -55,17 +55,18 @@
   --font-body: 'Almoni', 'Assistant', 'Heebo', system-ui, sans-serif;
   --font-display: 'Heebo', 'Almoni', 'Assistant', system-ui, sans-serif;
 
-  --fs-hero: clamp(2.5rem, 5.8vw, 4.25rem);   /* display — גדול יותר בדסקטופ */
-  --fs-h1: clamp(2rem, 4.4vw, 3rem);          /* 32–48 */
-  --fs-h2: clamp(1.5rem, 3.4vw, 2.2rem);      /* 24–35 */
-  --fs-h3: clamp(1.2rem, 2.2vw, 1.5rem);      /* 19–24 */
+  /* מינימום מוגדל (מובייל) כדי שכותרות יבלטו חזק כמו בתדהר; מקסימום (דסקטופ) נשמר */
+  --fs-hero: clamp(2.9rem, 8vw, 4.25rem);     /* display — בולט במובייל */
+  --fs-h1: clamp(2.5rem, 7vw, 3rem);          /* 40–48 */
+  --fs-h2: clamp(1.95rem, 5.6vw, 2.2rem);     /* 31–35 */
+  --fs-h3: clamp(1.4rem, 3.4vw, 1.55rem);     /* 22–25 */
   --fs-body-lg: 1.2rem;     /* ~19 */
   --fs-body: 1rem;          /* 16 */
   --fs-small: 0.875rem;     /* 14 */
   --fs-eyebrow: 0.8rem;
   --fs-price: clamp(1.4rem, 2.4vw, 1.75rem);
 
-  --lh-tight: 1.15;
+  --lh-tight: 1.08;   /* כותרות צפופות ובולטות (בלוק כותרת "כבד") */
   --lh-base: 1.6;
 
   /* ============ 3.3 SPACING (8px base) ============ */

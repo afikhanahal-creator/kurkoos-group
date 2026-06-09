@@ -72,6 +72,13 @@
 .hero__stat-label { font-family: var(--font-heading); font-weight: 700; font-size: 1.05rem; color: var(--color-text); }
 .hero__stat-sub { color: var(--color-text-soft); font-size: 0.9rem; }
 
+/* מובייל — הגדלת מספר הסטטיסטיקה והתוויות ב-2px */
+@media (max-width: 768px) {
+  .hero__stat-number { font-size: calc(clamp(2.4rem, 4vw, 3.4rem) + 2px); }
+  .hero__stat-label { font-size: calc(1.05rem + 2px); }
+  .hero__stat-sub { font-size: calc(0.9rem + 2px); }
+}
+
 /* ---- Animated headline ---- */
 .hero__title {
   font-size: var(--fs-hero);

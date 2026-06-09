@@ -1,5 +1,5 @@
 import { useParams, Link, Navigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
 import divisions from '../data/divisions.js'
@@ -133,6 +133,8 @@ export default function ProjectDetail() {
   const [videoOpen, setVideoOpen] = useState(false)
   const [galleryTab, setGalleryTab] = useState(0)
   const [gallerySlide, setGallerySlide] = useState(0)
+  const galTouchX = useRef(null)   // נקודת התחלה להחלקה (swipe) בגלריה
+  const galSwiped = useRef(false)  // האם בוצעה החלקה — כדי לא לפתוח לייטבוקס בטעות
   const [activeSection, setActiveSection] = useState('project')
   const [lightbox, setLightbox] = useState(null) // { images, index }
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', consent: false })
@@ -471,13 +473,24 @@ export default function ProjectDetail() {
             const n = currentImages.length
             const slide = Math.min(gallerySlide, Math.max(0, n - 1))
             const go = (d) => setGallerySlide((s) => (Math.min(s, n - 1) + d + n) % n)
+            const isRtl = document.documentElement.dir === 'rtl'
+            const onTouchStart = (e) => { galTouchX.current = e.touches[0]?.clientX ?? null; galSwiped.current = false }
+            const onTouchEnd = (e) => {
+              if (galTouchX.current == null || n < 2) return
+              const dx = (e.changedTouches[0]?.clientX ?? galTouchX.current) - galTouchX.current
+              galTouchX.current = null
+              if (Math.abs(dx) < 45) return
+              galSwiped.current = true
+              // החלקה שמאלה = הבא, ימינה = הקודם (מותאם RTL)
+              go(dx < 0 ? (isRtl ? -1 : 1) : (isRtl ? 1 : -1))
+            }
             return (
               <div className="pd-carousel">
-                <div className="pd-carousel__stage">
+                <div className="pd-carousel__stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
                   <button
                     type="button"
                     className="pd-carousel__main"
-                    onClick={() => openLightbox(mediaItems, slide)}
+                    onClick={() => { if (galSwiped.current) { galSwiped.current = false; return } openLightbox(mediaItems, slide) }}
                     aria-label={`${L(project.name)} — ${L({ he: 'הגדלה', en: 'Enlarge' })}`}
                   >
                     <SmartImage key={`${galleryTab}-${slide}`} src={currentImages[slide]} alt={`${L(project.name)} ${slide + 1}`} label={L(project.name)} />

@@ -47,8 +47,9 @@
   position: absolute;
   width: 46px;
   height: 46px;
-  transform: translate(-50%, -50%);   /* ממורכזת על נקודת המיקום */
-  perspective: 260px;                  /* עומק 3D */
+  /* ממורכזת על נקודת המיקום + הוקטנה ב-50% (scale שומר על הפרופורציות) */
+  transform: translate(-50%, -50%) scale(0.5);
+  perspective: 600px;                  /* עומק 3D עדין — קוביה נקייה, לא "מעוכה" */
   cursor: pointer;
 }
 .pm-cube {

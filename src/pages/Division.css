@@ -116,15 +116,15 @@
   position: absolute;
   inset-block-end: 0;
   inset-inline-start: 0;
-  width: 68px;
-  height: 4px;
+  width: 52px;
+  height: 2px;
   border-radius: var(--radius-pill);
   background: var(--color-accent-500);
-  box-shadow: 0 0 18px 1px rgba(169, 11, 12, 0.7);
+  box-shadow: 0 0 9px rgba(169, 11, 12, 0.4);
   transition: width var(--dur-slow) var(--ease-out);
 }
 /* hover על גוש הטקסט — הפס "נמתח" ומדגיש */
-.division-hero__content:hover .division-hero__title::after { width: 120px; }
+.division-hero__content:hover .division-hero__title::after { width: 88px; }
 
 .division-hero__subtitle {
   font-size: clamp(1.05rem, 2.2vw, 1.3rem);
@@ -148,7 +148,8 @@
   }
   /* פירורי לחם / כפתור "חזרה" ממורכזים יחד עם שאר התוכן */
   .division-hero .breadcrumbs ol { justify-content: center; }
-  /* לוגו ראיתה ממורכז */
+  /* אייקון התחום / לוגו ראיתה — ממורכזים בכל עמודי התחומים */
+  .division-hero__icon,
   .division-hero__logo { margin-inline: auto; }
   .division-hero__title { max-width: 22ch; }
   /* פס האקסנט מתחת לכותרת — ממורכז */
@@ -176,8 +177,8 @@
     overflow-wrap: break-word;
     margin-bottom: clamp(0.9rem, 3.5vw, 1.2rem);
   }
-  /* לוגו מעט קטן יותר במובייל כדי לא לצופף */
-  .division-hero__logo { width: clamp(180px, 52vw, 240px); }
+  /* לוגו ראיתה — מוקטן ב-~20% במובייל כדי שלא יהיה גדול מדי */
+  .division-hero__logo { width: clamp(144px, 42vw, 192px); }
 }
 
 /* ---- Intro ---- */

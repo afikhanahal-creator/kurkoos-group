@@ -14,16 +14,25 @@
 @media (max-width: 980px) {
   .division-hero { margin-top: -84px; padding-top: 84px; min-height: clamp(420px, 66vh, 560px); }
 
-  /* מובייל: יישור טבעי לכיוון הקריאה (RTL → לימין), זהה לדסקטופ — נראה מסודר ומכוון */
+  /* מובייל: כל גוש התוכן ממורכז ומאוזן — מראה מסודר ונקי */
   .division-hero__content {
-    align-items: flex-start;
-    text-align: start;
+    align-items: center;
+    text-align: center;
     /* ריווח תחתון נדיב → אזור פנוי שאליו "מציץ" כרטיס הסרטון בלי לכסות את המשפט */
     padding-block: clamp(1.5rem, 5vw, 2.5rem) clamp(3.5rem, 9vw, 5rem);
   }
-  .division-hero__title { max-width: 100%; }
-  /* פס האקסנט נשאר בקצה ההתחלה (ימין ב-RTL) — אין צורך לעקוף */
-  .division-hero__subtitle { max-width: 46ch; }
+  /* פירורי לחם / כפתור "חזרה" ממורכזים יחד עם שאר התוכן */
+  .division-hero .breadcrumbs ol { justify-content: center; }
+  .division-hero__title { max-width: 22ch; }
+  /* פס האקסנט מתחת לכותרת — ממורכז */
+  .division-hero__title::after { inset-inline-start: 50%; transform: translateX(-50%); }
+  .division-hero__subtitle { max-width: 46ch; margin-inline: auto; }
+
+  /* תמונת הרקע בעמוד הביצוע — מסיטים את המוקד ימינה כך שהפועל
+     ייכנס לקדר במובייל (במקום להיחתך בצד) */
+  .division--execution .division-hero__bg .parallax__inner img {
+    object-position: 70% center;
+  }
 }
 .division-hero__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 /* שכבת קריאוּת — כהה בראש (מאחורי המלל) ובתחתית, בהיר באמצע → עומק ופרימיום */

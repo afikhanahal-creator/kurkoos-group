@@ -79,14 +79,16 @@
   gap: 0.55em;
 }
 .card-deck .card__title {
-  font-size: 1.55em;
+  font-size: 1.85em;
   line-height: 1.2;
 }
 .card-deck .card__description {
-  font-size: 1em;
-  line-height: 1.6;
-  max-width: 30ch;
+  font-size: 1.2em;
+  line-height: 1.65;
+  font-weight: 500;          /* קצת יותר נוכח → קריא יותר */
+  opacity: 1;                /* בלי עמעום → ברור לקריאה */
+  max-width: 32ch;
   margin-inline: auto;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;     /* יותר שורות כדי שטקסט גדול לא ייחתך */
 }
 

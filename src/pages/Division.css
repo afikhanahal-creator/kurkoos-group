@@ -179,7 +179,7 @@
   /* הכותרת תפורה לרוחב הטקסט וממורכזת → הקו תחתיה מתיישר בדיוק עם מרכז הטקסט */
   .division-hero__title { max-width: 22ch; width: fit-content; margin-inline: auto; }
   /* פס האקסנט מתחת לכותרת — ממורכז בשיטת margin auto (חסין RTL, בלי translateX שבר את המרכוז) */
-  .division-hero__title::after { inset-inline-start: 0; inset-inline-end: 0; left: auto; right: auto; margin-inline: auto; transform: none; }
+  .division-hero__title::after { inset-inline-start: 0; inset-inline-end: 0; width: 52px; margin-inline: auto; transform: none; }
   .division-hero__subtitle { max-width: 46ch; margin-inline: auto; }
 
   /* תמונת הרקע בעמוד הביצוע — מסיטים את המוקד ימינה כך שהפועל

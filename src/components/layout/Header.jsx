@@ -215,6 +215,29 @@ export default function Header() {
         )}
       </AnimatePresence>
 
+      {/* בר תחתון קבוע במובייל (בסגנון תדהר): חיפוש · תפריט · צור קשר */}
+      <nav className="header__bottombar" aria-label="Mobile quick actions">
+        <button type="button" className="header__bb-item" onClick={() => setSearchOpen(true)}>
+          <Icon name="search" size={22} />
+          <span>{t('search.label')}</span>
+        </button>
+        <button
+          type="button"
+          className={`header__bb-item header__bb-menu ${menuOpen ? 'is-open' : ''}`}
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-expanded={menuOpen}
+        >
+          <span className="header__bb-menu-circle">
+            <Icon name={menuOpen ? 'close' : 'menu'} size={24} />
+          </span>
+          <span>{t('common.menu')}</span>
+        </button>
+        <button type="button" className="header__bb-item" onClick={() => setContactOpen(true)}>
+          <Icon name="mail" size={22} />
+          <span>{t('nav.contact')}</span>
+        </button>
+      </nav>
+
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ContactPopup open={contactOpen} onClose={() => setContactOpen(false)} />
     </header>

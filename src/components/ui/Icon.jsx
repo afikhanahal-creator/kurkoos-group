@@ -1,9 +1,29 @@
 /* ערכת אייקונים SVG אחידה (viewBox 24x24). אין אמוג'י. */
+
+/* אייקוני SVG ייעודיים נטענים inline מקבצים שבתיקייה (src/assets/icons/)
+   דרך ?raw, כדי שיירשו currentColor (אפקט ה-hover) ואת גודל/עובי-הקו מה-props.
+   מקור: Tabler Icons (MIT). */
+import developmentSvg from '../../assets/icons/development.svg?raw'
+import executionSvg from '../../assets/icons/execution.svg?raw'
+import supervisionSvg from '../../assets/icons/supervision.svg?raw'
+import brokerageSvg from '../../assets/icons/brokerage.svg?raw'
+
+const rawIcons = {
+  development: developmentSvg,
+  execution: executionSvg,
+  supervision: supervisionSvg,
+  brokerage: brokerageSvg,
+}
+
+// מחלץ את תוכן ה-<svg> (ה-<path>-ים) כדי להזריקו ל-<svg> של הרכיב עם ה-props שלנו
+const innerOf = (raw) => raw.replace(/<svg[\s\S]*?>/i, '').replace(/<\/svg>\s*$/i, '').trim()
+
 const paths = {
-  building: 'M3 21h18M5 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M13 9h5a1 1 0 0 1 1 1v11M8 8h2M8 12h2M8 16h2M16 13h0M16 17h0',
-  crane: 'M5 21h14M6 21V8m0 0L4 4m2 4l14-1M6 8h14M12 7V3m6 4v6m0 0l-3 0m3 0l0 4',
+  // building + crane: אייקוני Tabler (line-icons מקצועיים, סגנון תדהר)
+  building: ['M3 21l18 0', 'M5 21v-14l8 -4v18', 'M19 21v-10l-6 -4', 'M9 9l0 .01', 'M9 12l0 .01', 'M9 15l0 .01', 'M9 18l0 .01'],
+  crane: ['M6 21h6', 'M9 21v-18l-6 6h18', 'M9 3l10 6', 'M17 9v4a2 2 0 1 1 -2 2'],
   shield: 'M12 3l8 3v6c0 4.5-3.5 7.5-8 9-4.5-1.5-8-4.5-8-9V6l8-3zM9 12l2 2 4-4',
-  handshake: 'M11 17l-3-3m0 0l-2.5 2.5a2 2 0 0 1-3-3L8 8l4 1 3-3 6 6-2 2m-7-2l2 2',
+  handshake: 'M11 17l2 2a1 1 0 1 0 3-3M14 14l2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4M21 3l1 11h-2M3 3L2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8',
   facebook: 'M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z',
   instagram: 'M2 2m4 0h12a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4zM16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37zM17.5 6.5h0',
   linkedin: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM6 9H2v12h4zM4 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
@@ -37,26 +57,46 @@ const paths = {
 }
 
 export default function Icon({ name, size = 24, stroke = 2, fill = false, className = '', style }) {
+  const raw = rawIcons[name]
   const d = paths[name]
-  if (!d) return null
+  if (!raw && !d) return null
+
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    className,
+    style,
+    'aria-hidden': true,
+    focusable: 'false',
+  }
+
+  // אייקון מקובץ (Tabler) — מזריק את ה-<path>-ים פנימה, יורש currentColor + size/stroke
+  if (raw) {
+    return (
+      <svg
+        {...common}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={stroke}
+        dangerouslySetInnerHTML={{ __html: innerOf(raw) }}
+      />
+    )
+  }
+
   const filledIcons = ['facebook', 'instagram', 'youtube', 'play', 'whatsapp']
   const isFilled = fill || filledIcons.includes(name)
+  const subPaths = Array.isArray(d) ? d : [d] // תמיכה באייקונים רב-נתיביים (Tabler וכו')
   return (
     <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
+      {...common}
       fill={isFilled ? 'currentColor' : 'none'}
       stroke={isFilled ? 'none' : 'currentColor'}
       strokeWidth={stroke}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      aria-hidden="true"
-      focusable="false"
     >
-      <path d={d} />
+      {subPaths.map((p, i) => <path key={i} d={p} />)}
     </svg>
   )
 }

@@ -7,10 +7,10 @@ import './MenuCards.css'
 /* רצועת כרטיסי תחומים — עם אותו אפקט hover של כל כרטיסי האתר.
    סדר RTL (ימין→שמאל): יזמות, ביצוע, פיקוח פרויקטים, תיווך. */
 const items = [
-  { id: 'development', icon: 'building', to: '/divisions/development', title: { he: 'יזמות', en: 'Development' } },
-  { id: 'execution', icon: 'crane', to: '/divisions/execution', title: { he: 'ביצוע', en: 'Execution' } },
-  { id: 'supervision', icon: 'shield', to: '/divisions/supervision', title: { he: 'פיקוח פרויקטים', en: 'Project supervision' } },
-  { id: 'brokerage', icon: 'handshake', to: '/divisions/residential', title: { he: 'תיווך', en: 'Brokerage' } },
+  { id: 'development', icon: 'development', to: '/divisions/development', title: { he: 'יזמות', en: 'Development' } },
+  { id: 'execution', icon: 'execution', to: '/divisions/execution', title: { he: 'ביצוע', en: 'Execution' } },
+  { id: 'supervision', icon: 'supervision', to: '/divisions/supervision', title: { he: 'פיקוח פרויקטים', en: 'Project supervision' } },
+  { id: 'brokerage', icon: 'brokerage', to: '/divisions/residential', title: { he: 'תיווך', en: 'Brokerage' } },
 ]
 
 export default function MenuCards({ onNavigate }) {

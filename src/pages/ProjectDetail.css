@@ -117,6 +117,14 @@
 }
 .pd-stat__label { font-size: 0.7rem; font-weight: 600; color: var(--color-text-soft); }
 
+/* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
+.pd-banner__stats--small .pd-stat { min-height: 66px; padding: 0.55rem 0.9rem; }
+.pd-banner__stats--small .pd-stat__value { font-size: 1.2rem; }
+.pd-banner__stats--small .pd-stat__value--sm { font-size: 0.74rem; }
+.pd-banner__stats--large .pd-stat { min-height: 104px; padding: 1rem 1.55rem; }
+.pd-banner__stats--large .pd-stat__value { font-size: 2rem; }
+.pd-banner__stats--large .pd-stat__value--sm { font-size: 0.95rem; }
+
 /* קוביית סטטוס — זהה לחלוטין לשאר הקוביות (כמו בתדהר): אותו גרדיאנט, ערך טורקיז */
 
 /* מדיה + כפתור וידאו */
@@ -173,7 +181,7 @@
   border-bottom: 3px solid transparent;
   transition: color var(--dur-fast), border-color var(--dur-fast);
 }
-.pd-anchors__item:hover { color: var(--color-secondary); }
+/* ללא אפקט hover על הסרגל — נשמר רק מצב active */
 .pd-anchors__item.is-active { color: var(--color-primary-900); border-bottom-color: var(--color-accent); }
 
 /* ---------- Split sections ---------- */
@@ -498,6 +506,16 @@
   font-size: 0.9rem;
   line-height: 1.6;
 }
+/* שם הפרויקט בתוך הטקסט — מקושר לעמוד, מודגש עם קו אדום */
+.pd-contact__project {
+  color: #fff;
+  font-weight: 800;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--color-accent-500);
+  padding-bottom: 1px;
+  transition: color var(--dur-fast), border-color var(--dur-fast);
+}
+.pd-contact__project:hover { color: var(--color-accent-100); border-color: var(--color-accent-100); }
 
 .pd-contact__form { display: flex; flex-direction: column; gap: 0.6rem; }
 .pd-contact__required { font-size: 0.76rem; color: rgba(255, 255, 255, 0.6); }
@@ -505,19 +523,25 @@
 .pd-field textarea {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  padding: 0.7rem 0.9rem;
+  font-size: 0.95rem;
+  padding: 0.8rem 1rem;
   border-radius: var(--radius-md);
-  border: 2px solid transparent;
-  background: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.97);
   color: var(--color-text);
   direction: rtl;
   text-align: right;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast);
 }
 .pd-field input::placeholder,
-.pd-field textarea::placeholder { color: #8a8a8a; }
+.pd-field textarea::placeholder { color: #9aa0a8; }
 .pd-field input:focus,
-.pd-field textarea:focus { outline: 3px solid var(--color-accent); border-color: transparent; }
+.pd-field textarea:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--color-accent-500);
+  box-shadow: 0 0 0 3px rgba(169, 11, 12, 0.22);
+}
 .pd-field input.has-error,
 .pd-field textarea.has-error { border-color: var(--color-error); background: #fff5f5; }
 .pd-contact__form textarea { resize: vertical; min-height: 84px; }
@@ -731,14 +755,32 @@
   .pd-gallery__item:nth-child(4n + 3) { grid-row: span 1; }
   .pd-gallery__item:nth-child(6n + 5) { grid-column: span 1; }
 }
-/* נתוני הפרויקט במובייל — 5 הקוביות נשארות בשורה אחת, אחידות ומיושרות */
+/* נתוני הפרויקט במובייל — כל קוביה לפי גודל התוכן שלה (לא אחיד), בדיוק כמו בתדהר */
 @media (max-width: 600px) {
-  .pd-banner__stats-wrap { padding: 0.5rem; }
-  .pd-banner__stats { gap: 0.35rem; }
-  .pd-stat { min-height: 66px; padding: 0.5rem 0.2rem; gap: 0.15rem; }
-  .pd-stat__value { font-size: 1.15rem; }
-  .pd-stat__value--sm { font-size: 0.64rem; line-height: 1.12; }
-  .pd-stat__label { font-size: 0.58rem; }
+  .pd-banner__stats-wrap { padding: 0; }
+  .pd-banner__stats { gap: 0.5rem; justify-content: flex-start; }
+
+  /* רוחב לפי תוכן — מנצח גם את וריאנטי הגודל מה-CMS (small/large) */
+  .pd-banner__stats .pd-stat,
+  .pd-banner__stats--small .pd-stat,
+  .pd-banner__stats--large .pd-stat {
+    flex: 0 0 auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 0.55rem 0.95rem;
+    gap: 0.15rem;
+  }
+  .pd-banner__stats .pd-stat__value,
+  .pd-banner__stats--small .pd-stat__value,
+  .pd-banner__stats--large .pd-stat__value { font-size: 1.25rem; }
+  .pd-banner__stats .pd-stat__value--sm,
+  .pd-banner__stats--small .pd-stat__value--sm,
+  .pd-banner__stats--large .pd-stat__value--sm {
+    font-size: 0.8rem;
+    line-height: 1.15;
+    max-width: 13ch;
+  }
+  .pd-stat__label { font-size: 0.62rem; }
 }
 @media (max-width: 520px) {
   /* טופס לתיאום פגישה — קומפקטי ונוח לאצבע בטלפון */

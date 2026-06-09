@@ -93,9 +93,14 @@
   box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
 }
 
+/* DEBUG */
+.division-hero__content { outline: 2px solid lime; }
+.division-hero__title { outline: 2px solid magenta; }
+.division-hero__logo { outline: 2px solid cyan; }
+
 /* ---- לוגו זרוע הביצוע (במקום האייקון) ---- */
 .division-hero__logo {
-  width: clamp(140px, 16vw, 190px);
+  width: clamp(190px, 20vw, 250px);
   height: auto;
   margin-bottom: clamp(1rem, 2.4vw, 1.5rem);
   filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
@@ -137,7 +142,13 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 18px rgba(0, 0, 0, 0.4);
 }
 @media (max-width: 600px) {
-  .division-hero__subtitle { max-width: 90%; }
+  .division-hero__subtitle { max-width: 100%; }
+  /* כותרת קטנה יותר במובייל כדי שלא תגלוש מהמסך */
+  .division-hero__title { font-size: clamp(1.85rem, 8vw, 2.4rem); max-width: 100%; overflow-wrap: break-word; }
+  /* לוגו מעט קטן יותר במובייל כדי לא לצופף */
+  .division-hero__logo { width: clamp(150px, 44vw, 200px); }
+  /* יישור אחיד של כל תוכן הבאנר לקצה אחד (RTL: ימין) */
+  .division-hero__content { padding-inline: 0; }
 }
 
 /* ---- Intro ---- */

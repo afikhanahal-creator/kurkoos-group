@@ -12,6 +12,7 @@ import VideoModal from '../components/ui/VideoModal.jsx'
 import PlanAccordion from '../components/ui/PlanAccordion.jsx'
 import Lightbox from '../components/ui/Lightbox.jsx'
 import PropertyMap from '../components/ui/PropertyMap.jsx'
+import useIsMobile from '../hooks/useIsMobile.js'
 import Icon from '../components/ui/Icon.jsx'
 import './ProjectDetail.css'
 
@@ -89,6 +90,7 @@ function buildProject(local, cms) {
       // אילו מקטעים להציג + יזמי הפרויקט (נשמרים בענן)
       sections: Array.isArray(cms.sections) ? cms.sections : undefined,
       developers: Array.isArray(cms.developers) && cms.developers.length ? cms.developers : undefined,
+      stats_scale: cms.stats_scale || undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
   }
@@ -100,6 +102,7 @@ export default function ProjectDetail() {
   const { t } = useI18n()
   const L = useLocalized()
   const local = getProject(slug)
+  const isMobile = useIsMobile()
   const [cms, setCms] = useState(null)
 
   const [videoOpen, setVideoOpen] = useState(false)
@@ -218,7 +221,7 @@ export default function ProjectDetail() {
               <p className="pd-banner__desc">{L(project.short || project.description)}</p>
 
               <div className="pd-banner__stats-wrap">
-                <div className="pd-banner__stats">
+                <div className={`pd-banner__stats pd-banner__stats--${project.stats_scale || 'normal'}`}>
                   {project.towers > 0 && (
                     <div className="pd-stat">
                       <span className="pd-stat__value" dir="ltr">{project.towers}</span>
@@ -238,12 +241,12 @@ export default function ProjectDetail() {
                     </div>
                   )}
                   {project.architects && (
-                    <div className="pd-stat">
+                    <div className="pd-stat pd-stat--wide">
                       <span className="pd-stat__value pd-stat__value--sm">{L(project.architects)}</span>
                       <span className="pd-stat__label">{L({ he: 'אדריכלים', en: 'Architects' })}</span>
                     </div>
                   )}
-                  <div className={`pd-stat pd-stat--status pd-stat--status-${project.status}`}>
+                  <div className={`pd-stat pd-stat--wide pd-stat--status pd-stat--status-${project.status}`}>
                     <span className="pd-stat__value pd-stat__value--sm">{t(`projects.status.${project.status}`)}</span>
                     <span className="pd-stat__label">{L({ he: 'סטטוס', en: 'Status' })}</span>
                   </div>
@@ -275,7 +278,8 @@ export default function ProjectDetail() {
       {/* ===== Sticky anchors ===== */}
       <nav className="pd-anchors" aria-label="Project sections">
         <div className="container pd-anchors__inner">
-          {anchors.map((a) => (
+          {/* במובייל מציגים בר מינימלי — רק "הפרויקט" ו"מפה" (בסגנון תדהר) */}
+          {(isMobile ? anchors.filter((a) => a.id === 'project' || a.id === 'map') : anchors).map((a) => (
             <button
               key={a.id}
               type="button"
@@ -485,13 +489,12 @@ export default function ProjectDetail() {
           <div className="pd-contact">
             <DottedGrid className="pd-dots--contact" />
             <div className="pd-contact__panel">
-              <span className="eyebrow pd-contact__eyebrow">{L({ he: 'דברו איתנו', en: 'Get in touch' })}</span>
-              <h2 className="pd-contact__title">{L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })}</h2>
+              <span className="eyebrow pd-contact__eyebrow">{L({ he: 'קביעת מועד', en: 'Schedule' })}</span>
+              <h2 className="pd-contact__title">{L({ he: 'קבעו פגישה עם קבוצת קורקוס', en: 'Schedule a meeting with Kurkoos Group' })}</h2>
               <p className="pd-contact__text">
-                {L({
-                  he: `השאירו פרטים ונציג מכירות של ${L(project.name)} יחזור אליכם בהקדם.`,
-                  en: `Leave your details and a ${L(project.name)} sales representative will get back to you shortly.`,
-                })}
+                {L({ he: 'למידע נוסף על פרויקט ', en: 'For more about ' })}
+                <Link to={`/projects/${slug}`} className="pd-contact__project">{L(project.name)}</Link>
+                {L({ he: ' — השאירו פרטים ונחזור אליכם בהקדם לתיאום פגישה.', en: ' — leave your details and we’ll get back to you shortly to schedule.' })}
               </p>
 
               {sent ? (
@@ -537,10 +540,6 @@ export default function ProjectDetail() {
                       aria-label={L({ he: 'הודעה', en: 'Message' })}
                     />
                   </div>
-                  <label className="pd-consent">
-                    <input type="checkbox" checked={form.consent} onChange={setField('consent')} />
-                    <span>{L({ he: 'אני מאשר/ת קבלת דיוור שיווקי', en: 'I agree to receive marketing communications' })}</span>
-                  </label>
                   <button type="submit" className="pd-contact__submit">
                     {L({ he: 'שליחה', en: 'Send' })}
                   </button>

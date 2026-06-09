@@ -33,7 +33,7 @@ function Login() {
   return (
     <div className="adm-login" dir="rtl">
       <div className="adm-login__aside" aria-hidden="true">
-        <span className="adm-login__mark">K</span>
+        <img className="adm-login__logo" src="/kurkoos-logo-white.svg" alt="Kurkoos Group" />
         <h2>קורקוס גרופ</h2>
         <p>מערכת ניהול התוכן — פרויקטים, נכסים, מונים ולוגואים, במקום אחד.</p>
       </div>
@@ -76,8 +76,8 @@ export default function Admin() {
     <div className="adm" dir="rtl">
       <aside className="adm__sidebar">
         <div className="adm__logo">
-          <span className="adm__logo-mark">K</span>
-          <span className="adm__logo-text"><strong>קורקוס גרופ</strong><small>ניהול תוכן</small></span>
+          <img className="adm__logo-img" src="/kurkoos-logo-white.svg" alt="Kurkoos Group" />
+          <span className="adm__logo-caption">ניהול תוכן</span>
         </div>
 
         <nav className="adm__nav" aria-label="ניווט ראשי">

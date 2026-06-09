@@ -83,13 +83,14 @@
   gap: 0.6rem;
 }
 .pd-stat {
+  position: relative;       /* עוגן לנצנוץ האור */
   flex: 0 0 auto;            /* רוחב לפי תוכן → קוביות לא-סימטריות */
   min-height: 80px;
   /* גרדיאנט אפור רך + צל עדין — רפליקציה מדויקת לקוביות של תדהר */
   background: linear-gradient(180deg, #eef2f4 0%, #e4eaed 100%);
   border: 0;
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(16, 85, 114, 0.05);
+  box-shadow: 0 1px 2px rgba(16, 85, 114, 0.05);  /* fallback — StatCube דורס בצל דינמי */
   padding: 0.7rem 1.15rem;  /* ריווח אופקי נדיב כמו בתדהר */
   display: flex;
   flex-direction: column;
@@ -97,6 +98,23 @@
   justify-content: center;
   gap: 0.2rem;
   text-align: center;
+  transform-style: preserve-3d;   /* מאפשר נפח לתוכן הפנימי */
+  will-change: transform;
+}
+/* נפח 3D — הערך והתווית "מרחפים" מעל פני הקוביה (עמוק יותר → נפח חזק יותר) */
+.pd-stat__value { transform: translateZ(22px); }
+.pd-stat__label { transform: translateZ(11px); }
+/* נצנוץ אור שעוקב אחרי הסמן (המיקום נשלט ע"י StatCube) */
+.pd-stat__glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transform: translateZ(6px);
+}
+/* ללא הטיה במכשירי מגע / כשמבקשים פחות תנועה — מסתירים את הנצנוץ */
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .pd-stat__glare { display: none; }
 }
 .pd-stat__value {
   font-family: var(--font-heading);
@@ -116,14 +134,6 @@
   overflow: hidden;
 }
 .pd-stat__label { font-size: 0.7rem; font-weight: 600; color: var(--color-text-soft); }
-
-/* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
-.pd-banner__stats--small .pd-stat { min-height: 66px; padding: 0.55rem 0.9rem; }
-.pd-banner__stats--small .pd-stat__value { font-size: 1.2rem; }
-.pd-banner__stats--small .pd-stat__value--sm { font-size: 0.74rem; }
-.pd-banner__stats--large .pd-stat { min-height: 104px; padding: 1rem 1.55rem; }
-.pd-banner__stats--large .pd-stat__value { font-size: 2rem; }
-.pd-banner__stats--large .pd-stat__value--sm { font-size: 0.95rem; }
 
 /* קוביית סטטוס — זהה לחלוטין לשאר הקוביות (כמו בתדהר): אותו גרדיאנט, ערך טורקיז */
 
@@ -165,12 +175,14 @@
 .pd-anchors__inner {
   display: flex;
   justify-content: center;
-  gap: clamp(0.3rem, 3.6vw, 5rem);     /* מרווחים גדולים בין הפריטים בדסקטופ — כמו בתדהר */
+  gap: clamp(0.4rem, 4.6vw, 6.5rem);   /* מרווחים גדולים בין הפריטים בדסקטופ — מקום לזוהר לנשום */
   overflow-x: auto;
   scrollbar-width: none;
 }
 .pd-anchors__inner::-webkit-scrollbar { display: none; }
 .pd-anchors__item {
+  position: relative;
+  z-index: 0;
   padding: 1rem 0.6rem;
   letter-spacing: 0.015em;
   font-family: var(--font-heading);
@@ -181,8 +193,37 @@
   border-bottom: 3px solid transparent;
   transition: color var(--dur-fast), border-color var(--dur-fast);
 }
-/* ללא אפקט hover על הסרגל — נשמר רק מצב active */
+/* זוהר (glow) רדיאלי רך מאחורי הפריט — מופיע בריחוף ובטאב הפעיל */
+.pd-anchors__item::before {
+  content: '';
+  position: absolute;
+  inset: -2px -12px 2px;
+  z-index: -1;
+  border-radius: 16px;
+  background: radial-gradient(
+    60% 75% at 50% 50%,
+    color-mix(in srgb, var(--color-accent) 26%, transparent) 0%,
+    color-mix(in srgb, var(--color-accent) 10%, transparent) 45%,
+    transparent 72%
+  );
+  filter: blur(7px);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+.pd-anchors__item:hover::before,
+.pd-anchors__item.is-active::before { opacity: 1; transform: scale(1); }
+.pd-anchors__item:hover { color: var(--color-secondary); }
+/* קו תחתון רך באקסנט שמופיע/נע כשעוברים בין הטאבים (נפרד מהמצב הפעיל) */
+@media (hover: hover) {
+  .pd-anchors__item:hover { border-bottom-color: color-mix(in srgb, var(--color-accent) 40%, transparent); }
+}
 .pd-anchors__item.is-active { color: var(--color-primary-900); border-bottom-color: var(--color-accent); }
+/* כיבוד reduce-motion — בלי אנימציית סקייל, רק הופעה רכה */
+@media (prefers-reduced-motion: reduce) {
+  .pd-anchors__item::before { transition: opacity var(--dur-base); transform: none; }
+}
 
 /* ---------- Split sections ---------- */
 .pd-split__grid {
@@ -448,10 +489,10 @@
   position: relative;
   z-index: 1;
   display: grid;
-  /* טופס בצד ימין (inline-start) ותמונה בצד שמאל — כמו בטופס הקבוע */
-  grid-template-columns: minmax(0, clamp(320px, 32vw, 440px)) minmax(0, clamp(340px, 34vw, 500px));
+  /* שני טורים שווים בגודלם (טופס + יומן), ממורכזים יחד */
+  grid-template-columns: repeat(2, minmax(0, clamp(320px, 31vw, 430px)));
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   gap: clamp(1rem, 2.5vw, 2.5rem);
 }
 .pd-contact__panel { order: 0; }
@@ -506,16 +547,6 @@
   font-size: 0.9rem;
   line-height: 1.6;
 }
-/* שם הפרויקט בתוך הטקסט — מקושר לעמוד, מודגש עם קו אדום */
-.pd-contact__project {
-  color: #fff;
-  font-weight: 800;
-  white-space: nowrap;
-  border-bottom: 2px solid var(--color-accent-500);
-  padding-bottom: 1px;
-  transition: color var(--dur-fast), border-color var(--dur-fast);
-}
-.pd-contact__project:hover { color: var(--color-accent-100); border-color: var(--color-accent-100); }
 
 .pd-contact__form { display: flex; flex-direction: column; gap: 0.6rem; }
 .pd-contact__required { font-size: 0.76rem; color: rgba(255, 255, 255, 0.6); }
@@ -523,25 +554,19 @@
 .pd-field textarea {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 0.95rem;
-  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  padding: 0.7rem 0.9rem;
   border-radius: var(--radius-md);
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.97);
+  border: 2px solid transparent;
+  background: #fff;
   color: var(--color-text);
   direction: rtl;
   text-align: right;
-  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast);
 }
 .pd-field input::placeholder,
-.pd-field textarea::placeholder { color: #9aa0a8; }
+.pd-field textarea::placeholder { color: #8a8a8a; }
 .pd-field input:focus,
-.pd-field textarea:focus {
-  outline: none;
-  background: #fff;
-  border-color: var(--color-accent-500);
-  box-shadow: 0 0 0 3px rgba(169, 11, 12, 0.22);
-}
+.pd-field textarea:focus { outline: 3px solid var(--color-accent); border-color: transparent; }
 .pd-field input.has-error,
 .pd-field textarea.has-error { border-color: var(--color-error); background: #fff5f5; }
 .pd-contact__form textarea { resize: vertical; min-height: 84px; }
@@ -599,29 +624,20 @@
 }
 .pd-contact__success p { font-size: 1.3rem; font-family: var(--font-heading); font-weight: 700; color: #fff; max-width: 34ch; }
 
-/* ---- תמונה בזווית (זהה ל-contact__visual) ---- */
+/* ---- מדיה: יומן תיאום פגישה על משטח מותג בזווית ---- */
 .pd-contact__media {
   position: relative;
   height: 100%;
   min-height: clamp(330px, 32vw, 410px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.4rem, 1.2vw, 0.9rem);
 }
-.pd-contact__media::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  inset-inline-end: -40px;
-  background: linear-gradient(200deg, #2f8f5a, var(--color-secondary));
-  clip-path: polygon(0 0, 88% 0, 100% 100%, 12% 100%);
-  border-radius: var(--radius-lg);
-}
-.pd-contact__media img {
+.pd-contact__media .bcal {
   position: relative;
+  z-index: 1;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  clip-path: polygon(0 0, 88% 0, 100% 100%, 12% 100%);
-  border-radius: var(--radius-lg);
-  transform: translateX(-20px);
 }
 
 /* ---------- Lightbox ---------- */
@@ -739,6 +755,22 @@
 @media (max-width: 980px) {
   .pd-anchors { top: 66px; }
 }
+/* בר העוגנים במובייל — מיושר לתחילת השורה (לא ממורכז) כך שניתן לגלול לכל הפריטים
+   ואף אחד לא נחתך; gap קטן יותר וריווח גלילה בקצוות */
+@media (max-width: 880px) {
+  .pd-anchors__inner {
+    justify-content: flex-start;
+    gap: 1.1rem;
+    scroll-padding-inline: var(--container-pad);
+  }
+  /* רווח קצה בסוף הגלילה כדי שהפריט האחרון לא יידבק לשוליים */
+  .pd-anchors__inner::after { content: ''; flex: 0 0 var(--container-pad); }
+  .pd-anchors__item {
+    font-size: 0.92rem;
+    padding: 0.9rem 0.25rem;
+    border-bottom-width: 2px;
+  }
+}
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 2rem; }
   .pd-banner__media { order: -1; }
@@ -746,41 +778,46 @@
   .pd-split__media { order: -1; }
   .plan-acc { grid-template-columns: 1fr; gap: 1.4rem; }
   .plan-acc__preview { position: static; order: -1; }
-  /* טופס לתיאום פגישה — ממורכז כמו הטופס הקבוע; התמונה בזווית מוסתרת */
+  /* טופס לתיאום פגישה — ממורכז; היומן מוצג מתחת לטופס גם במובייל */
   .pd-contact { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }
   .pd-contact__panel { width: 100%; max-width: 460px; }
-  .pd-contact__media { display: none; }
+  .pd-contact__media { width: 100%; max-width: 460px; min-height: 0; padding: 0.5rem; }
   .pd-dots--contact { display: none; }
   .pd-gallery { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 180px; }
   .pd-gallery__item:nth-child(4n + 3) { grid-row: span 1; }
   .pd-gallery__item:nth-child(6n + 5) { grid-column: span 1; }
 }
-/* נתוני הפרויקט במובייל — כל קוביה לפי גודל התוכן שלה (לא אחיד), בדיוק כמו בתדהר */
-@media (max-width: 600px) {
+/* נתוני הפרויקט במסכים קטנים (מהרגע שהבאנר עובר לטור אחד) — קוביות גדולות
+   שמתמלאות את כל רוחב המסך, נפרשות לרשת מסודרת וממורכזת. אותו עיצוב גרדיאנט/צל. */
+@media (max-width: 880px) {
   .pd-banner__stats-wrap { padding: 0; }
-  .pd-banner__stats { gap: 0.5rem; justify-content: flex-start; }
-
-  /* רוחב לפי תוכן — מנצח גם את וריאנטי הגודל מה-CMS (small/large) */
-  .pd-banner__stats .pd-stat,
-  .pd-banner__stats--small .pd-stat,
-  .pd-banner__stats--large .pd-stat {
-    flex: 0 0 auto;
-    min-width: 0;
-    min-height: 0;
-    padding: 0.55rem 0.95rem;
-    gap: 0.15rem;
+  .pd-banner__stats {
+    gap: 0.7rem;
+    justify-content: center;
   }
-  .pd-banner__stats .pd-stat__value,
-  .pd-banner__stats--small .pd-stat__value,
-  .pd-banner__stats--large .pd-stat__value { font-size: 1.25rem; }
-  .pd-banner__stats .pd-stat__value--sm,
-  .pd-banner__stats--small .pd-stat__value--sm,
-  .pd-banner__stats--large .pd-stat__value--sm {
-    font-size: 0.8rem;
-    line-height: 1.15;
-    max-width: 13ch;
+  .pd-stat {
+    flex: 1 1 auto;
+    min-width: 108px;
+    max-width: 210px;
+    min-height: 106px;
+    padding: 1.05rem 0.7rem;
+    gap: 0.3rem;
   }
-  .pd-stat__label { font-size: 0.62rem; }
+  .pd-stat__value { font-size: 2.1rem; }
+  .pd-stat__value--sm { font-size: 0.95rem; line-height: 1.2; }
+  .pd-stat__label { font-size: 0.74rem; }
+}
+/* טלפונים צרים — מקטינים מעט את הרוחב המינימלי כדי שיישבו 3 בשורה יפה (לא ענקיים מדי) */
+@media (max-width: 430px) {
+  .pd-banner__stats { gap: 0.5rem; }
+  .pd-stat {
+    min-width: 88px;
+    min-height: 90px;
+    padding: 0.8rem 0.5rem;
+  }
+  .pd-stat__value { font-size: 1.75rem; }
+  .pd-stat__value--sm { font-size: 0.82rem; }
+  .pd-stat__label { font-size: 0.66rem; }
 }
 @media (max-width: 520px) {
   /* טופס לתיאום פגישה — קומפקטי ונוח לאצבע בטלפון */

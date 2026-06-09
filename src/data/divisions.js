@@ -129,6 +129,35 @@ export const divisions = [
       desc: { he: 'מה תפקיד המפקח ולמה הוא חוסך לכם זמן וכסף.', en: 'What a supervisor does and why it saves you time and money.' },
     },
   },
+  {
+    slug: 'brokerage',
+    icon: 'brokerage',
+    category: null,
+    name: { he: 'קורקוס תיווך', en: 'Kurkoos Brokerage' },
+    menuTitle: { he: 'תיווך', en: 'Brokerage' },
+    hero: {
+      title: { he: 'תיווך ושיווק', en: 'Brokerage & Marketing' },
+      subtitle: {
+        he: 'ליווי מלא ברכישה ובמכירה, שיווק פרויקטים והתאמת הנכס המדויק לצרכים ולחלום של כל לקוח.',
+        en: 'Full guidance in buying and selling, project marketing and matching the exact property to each client’s needs.',
+      },
+      image: img('1560518883-ce09059eeffa'),
+    },
+    intro: {
+      he: 'זרוע התיווך והשיווק של קורקוס מחברת בין אנשים לבתים. אנחנו משווקים את הפרויקטים של הקבוצה ושל לקוחותינו, מלווים רוכשים ומוכרים לאורך כל העסקה, ומתאימים לכל לקוח את הנכס המדויק לצרכים, לתקציב ולחלום שלו. עם היכרות עמוקה של השוק, שקיפות מלאה ושירות אישי, אנחנו הופכים את אחת ההחלטות הגדולות בחיים לתהליך בטוח ונעים.',
+      en: 'The Kurkoos brokerage and marketing arm connects people with homes. We market the group’s projects and our clients’ properties, accompany buyers and sellers throughout the deal, and match each client with the exact property for their needs, budget and dream. With deep market knowledge, full transparency and personal service, we turn one of life’s biggest decisions into a safe, pleasant process.',
+    },
+    why: [
+      { icon: 'handshake', title: { he: 'ליווי אישי לאורך העסקה', en: 'Personal guidance throughout' }, desc: { he: 'מתווך ייעודי שמלווה אתכם מהחיפוש ועד חתימת החוזה.', en: 'A dedicated agent guiding you from search to signing.' } },
+      { icon: 'building', title: { he: 'שיווק פרויקטים', en: 'Project marketing' }, desc: { he: 'אסטרטגיית שיווק חכמה שמציגה כל פרויקט במלוא הערך שלו.', en: 'Smart marketing strategy that presents each project at its full value.' } },
+      { icon: 'check', title: { he: 'התאמת הנכס המדויק', en: 'The right-fit property' }, desc: { he: 'הבנה עמוקה של הצרכים והתאמה מדויקת מתוך השוק כולו.', en: 'A deep grasp of your needs and a precise match from the whole market.' } },
+      { icon: 'shield', title: { he: 'שקיפות וביטחון', en: 'Transparency & confidence' }, desc: { he: 'מידע מלא, מחירים הוגנים וליווי משפטי בכל שלב.', en: 'Full information, fair pricing and legal support at every stage.' } },
+    ],
+    guide: {
+      title: { he: 'המדריך לרוכש ולמוכר', en: 'The buyer & seller guide' },
+      desc: { he: 'איך לקנות או למכור נכון, צעד אחר צעד, בלי הפתעות.', en: 'How to buy or sell right, step by step, with no surprises.' },
+    },
+  },
 ]
 
 export function getDivision(slug) {

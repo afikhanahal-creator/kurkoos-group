@@ -37,7 +37,7 @@ export const activities = [
   {
     id: 'brokerage',
     icon: 'handshake',
-    to: '/divisions/residential',
+    to: '/divisions/brokerage',
     title: { he: 'תיווך ושיווק', en: 'Brokerage & marketing' },
     desc: {
       he: 'ליווי מלא ברכישה ובמכירה, שיווק פרויקטים והתאמת הנכס המדויק לצרכים ולחלום של כל לקוח.',

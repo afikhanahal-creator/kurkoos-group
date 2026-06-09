@@ -10,7 +10,7 @@ const items = [
   { id: 'development', icon: 'development', to: '/divisions/development', title: { he: 'יזמות', en: 'Development' } },
   { id: 'execution', icon: 'execution', to: '/divisions/execution', title: { he: 'ביצוע', en: 'Execution' } },
   { id: 'supervision', icon: 'supervision', to: '/divisions/supervision', title: { he: 'פיקוח פרויקטים', en: 'Project supervision' } },
-  { id: 'brokerage', icon: 'brokerage', to: '/divisions/residential', title: { he: 'תיווך', en: 'Brokerage' } },
+  { id: 'brokerage', icon: 'brokerage', to: '/divisions/brokerage', title: { he: 'תיווך', en: 'Brokerage' } },
 ]
 
 export default function MenuCards({ onNavigate }) {

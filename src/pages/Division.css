@@ -155,12 +155,10 @@
 }
 @media (max-width: 600px) {
   .division-hero__subtitle { max-width: 100%; }
-  /* כותרת קטנה יותר במובייל כדי שלא תגלוש מהמסך */
-  .division-hero__title { font-size: clamp(1.85rem, 8vw, 2.4rem); max-width: 100%; overflow-wrap: break-word; }
+  /* כותרת רוחב מלא כדי שתגלוש לשורה שנייה ולא תחרוג מהקצה */
+  .division-hero__title { font-size: clamp(1.85rem, 8vw, 2.4rem); width: 100%; max-width: 100%; overflow-wrap: break-word; }
   /* לוגו מעט קטן יותר במובייל כדי לא לצופף */
   .division-hero__logo { width: clamp(150px, 44vw, 200px); }
-  /* יישור אחיד של כל תוכן הבאנר לקצה אחד (RTL: ימין) */
-  .division-hero__content { padding-inline: 0; }
 }
 
 /* ---- Intro ---- */

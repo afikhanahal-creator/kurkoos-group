@@ -78,34 +78,25 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
           clickableIcons: false,
           backgroundColor: '#e9f1f5',
         })
-        // חלונית מותג ("שלט") — שם הפרויקט + לוגו קורקוס, בריחוף/לחיצה על הקוביה
-        const info = new maps.InfoWindow({
-          disableAutoPan: true,
-          position: center,
-          content:
-            '<div class="pm-info" dir="rtl">' +
-            '<span class="pm-info__name">' + label + '</span>' +
-            '<span class="pm-info__sep"></span>' +
-            '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="Kurkoos Group" />' +
-            '</div>',
-        })
-        const openInfo = () => info.open(map)
-
-        // סמן הנכס — קוביה תלת-ממדית (אדום שקוף, מסתובבת לאט רק בריחוף).
+        // סמן הנכס — קוביה תלת-ממדית + שלט מותג קבוע מעליה (שם + לוגו).
         // מומש כ-OverlayView כדי שיהיה אלמנט DOM אמיתי (CSS 3D), לא תמונה.
+        const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
         const latLng = new maps.LatLng(lat, lng)
         class CubeMarker extends maps.OverlayView {
           onAdd() {
             const el = document.createElement('div')
             el.className = 'pm-cube-marker'
             el.setAttribute('title', label)
+            // שלט קבוע (תמיד גלוי, ממורכז) מעל הקוביה + 6 פאות הקוביה
             el.innerHTML =
+              '<div class="pm-cube-label" dir="rtl">' +
+              '<span class="pm-info__name">' + esc(label) + '</span>' +
+              '<span class="pm-info__sep"></span>' +
+              '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="Kurkoos Group" />' +
+              '</div>' +
               '<div class="pm-cube">' +
               '<div></div><div></div><div></div><div></div><div></div><div></div>' +
               '</div>'
-            el.addEventListener('mouseenter', openInfo)
-            el.addEventListener('mouseleave', () => info.close())
-            el.addEventListener('click', openInfo)
             this.el = el
             this.getPanes().overlayMouseTarget.appendChild(el)
           }

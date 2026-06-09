@@ -472,29 +472,29 @@ export default function ProjectDetail() {
                     <SmartImage key={`${galleryTab}-${slide}`} src={currentImages[slide]} alt={`${L(project.name)} ${slide + 1}`} label={L(project.name)} />
                     <span className="pd-gallery__zoom"><Icon name="search" size={20} /></span>
                   </button>
-                  {n > 1 && (
-                    <>
+                </div>
+                {n > 1 && (
+                  <div className="pd-carousel__controls">
+                    <div className="pd-carousel__dots" role="tablist" aria-label={L({ he: 'תמונות', en: 'Images' })}>
+                      {currentImages.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          className={`pd-carousel__dot ${i === slide ? 'is-active' : ''}`}
+                          aria-label={`${L({ he: 'תמונה', en: 'Image' })} ${i + 1}`}
+                          aria-current={i === slide}
+                          onClick={() => setGallerySlide(i)}
+                        />
+                      ))}
+                    </div>
+                    <div className="pd-carousel__nav">
                       <button type="button" className="pd-carousel__arrow pd-carousel__arrow--prev" onClick={() => go(-1)} aria-label={L({ he: 'הקודם', en: 'Previous' })}>
                         <Icon name="chevron" size={22} />
                       </button>
                       <button type="button" className="pd-carousel__arrow pd-carousel__arrow--next" onClick={() => go(1)} aria-label={L({ he: 'הבא', en: 'Next' })}>
                         <Icon name="chevron" size={22} />
                       </button>
-                    </>
-                  )}
-                </div>
-                {n > 1 && (
-                  <div className="pd-carousel__dots" role="tablist" aria-label={L({ he: 'תמונות', en: 'Images' })}>
-                    {currentImages.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`pd-carousel__dot ${i === slide ? 'is-active' : ''}`}
-                        aria-label={`${L({ he: 'תמונה', en: 'Image' })} ${i + 1}`}
-                        aria-current={i === slide}
-                        onClick={() => setGallerySlide(i)}
-                      />
-                    ))}
+                    </div>
                   </div>
                 )}
               </div>

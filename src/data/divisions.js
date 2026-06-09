@@ -45,7 +45,7 @@ export const divisions = [
     slug: 'execution',
     icon: 'crane',
     category: null,
-    name: { he: 'קורקוס ביצוע', en: 'Kurkoos Execution' },
+    name: { he: 'ראיתה. ביצוע מנצח.', en: 'Raita. Winning execution.' },
     menuTitle: { he: 'ביצוע', en: 'Execution' },
     hero: {
       title: { he: 'ביצוע ובנייה', en: 'Execution & Construction' },

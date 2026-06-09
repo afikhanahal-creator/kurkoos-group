@@ -2,7 +2,7 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
-import { getProjectBySlug } from '../lib/cms.js'
+import { getProjectBySlug, createLead } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import Parallax from '../components/ui/Parallax.jsx'
@@ -65,6 +65,12 @@ function buildProject(local, cms) {
       : undefined
     const coords = cms.coords && cms.coords.lat != null && cms.coords.lng != null ? cms.coords : undefined
     const video = cms.video && cms.video.id ? cms.video : undefined
+    // סרטונים מרובים — מנרמל כל פריט ומסנן ריקים
+    const videos = Array.isArray(cms.videos) && cms.videos.length
+      ? cms.videos
+          .map((x) => ({ type: x.type || 'youtube', id: x.id, src: x.src, title: x.title }))
+          .filter((x) => x.id || x.src)
+      : undefined
 
     const over = {
       name: wrap(cms.name),
@@ -83,6 +89,7 @@ function buildProject(local, cms) {
       mapQuery: cms.address || cms.map_query || undefined,
       coords,
       video,
+      videos,
       environment,
       planGroups,
       galleryGroups,
@@ -146,6 +153,9 @@ export default function ProjectDetail() {
     ? project.galleryGroups
     : [{ label: { he: 'הפרויקט', en: 'Project' }, images: flatGallery }]
   const currentImages = galleryGroups[galleryTab]?.images || flatGallery
+  // סרטונים + מדיה מאוחדת ללייטבוקס (תמונות ואז סרטונים → swipe עובר על הכל)
+  const videos = (project.videos || []).filter((v) => v?.id || v?.src)
+  const mediaItems = [...currentImages, ...videos]
   // מפה: Maps Embed API (מפה מלוטשת עם סמן) כשמוגדר מפתח; אחרת fallback בסיסי
   const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_KEY
   const mapQuery = project.mapQuery || L(project.city) || L(project.name)
@@ -200,7 +210,17 @@ export default function ProjectDetail() {
     if (!/^[\d\s\-+()]{9,}$/.test(form.phone.trim())) next.phone = true
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) next.email = true
     if (Object.keys(next).length) { setErrors(next); return }
-    setSent(true) // client-side only — no backend
+    setSent(true)
+    // שמירת הפנייה כליד במערכת הניהול (לא חוסם את חוויית המשתמש)
+    createLead({
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim(),
+      message: form.message.trim(),
+      project: project?.name || '',
+      source: 'project',
+      status: 'new',
+    }).catch(() => {})
   }
 
   return (
@@ -427,7 +447,7 @@ export default function ProjectDetail() {
                   <button
                     type="button"
                     className="pd-carousel__main"
-                    onClick={() => openLightbox(currentImages, slide)}
+                    onClick={() => openLightbox(mediaItems, slide)}
                     aria-label={`${L(project.name)} — ${L({ he: 'הגדלה', en: 'Enlarge' })}`}
                   >
                     <SmartImage key={`${galleryTab}-${slide}`} src={currentImages[slide]} alt={`${L(project.name)} ${slide + 1}`} label={L(project.name)} />
@@ -461,6 +481,29 @@ export default function ProjectDetail() {
               </div>
             )
           })()}
+
+          {videos.length > 0 && (
+            <div className="pd-videos">
+              {videos.map((vid, vi) => {
+                const thumb = vid.type === 'youtube' && vid.id ? `https://img.youtube.com/vi/${vid.id}/hqdefault.jpg` : null
+                return (
+                  <button
+                    key={vi}
+                    type="button"
+                    className="pd-video-tile"
+                    onClick={() => openLightbox(mediaItems, currentImages.length + vi)}
+                    aria-label={vid.title || L({ he: 'נגן סרטון', en: 'Play video' })}
+                  >
+                    {thumb
+                      ? <img src={thumb} alt={vid.title || ''} loading="lazy" />
+                      : <span className="pd-video-tile__file" aria-hidden="true" />}
+                    <span className="pd-video-tile__play"><Icon name="play" size={24} /></span>
+                    {vid.title && <span className="pd-video-tile__title">{vid.title}</span>}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
       )}

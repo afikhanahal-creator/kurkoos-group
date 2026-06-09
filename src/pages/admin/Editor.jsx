@@ -17,7 +17,7 @@ function StatusPill({ status }) {
   return <span className={`ed__status ed__status--${s.c}`}>{s.t}</span>
 }
 
-export default function Editor({ schema, record, onSave, folder = 'general', coverField = null, onArchive, onClose, title }) {
+export default function Editor({ schema, record, onSave, folder = 'general', coverField = null, onArchive, onClose, previewUrl = null, title }) {
   const [form, setForm] = useState(record)
   const [status, setStatus] = useState('saved')
   const timer = useRef()
@@ -53,6 +53,18 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const saveNow = () => { clearTimeout(timer.current); commit(form) }
   // X = שמירה ויציאה: מוודא שכל שינוי תלוי נשמר, ואז סוגר
   const closeNow = async () => { clearTimeout(timer.current); if (status !== 'saved') await commit(form); onClose && onClose() }
+
+  // קיצורי מקלדת: Esc = שמירה ויציאה · Ctrl/⌘+S = שמירה מיידית
+  const actionRef = useRef({})
+  actionRef.current = { closeNow, saveNow }
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); actionRef.current.closeNow() }
+      else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); actionRef.current.saveNow() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const uploadDevLogo = async (arr, i, file) => {
     if (!file) return
@@ -297,6 +309,12 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <StatusPill status={status} />
         </div>
         <div className="ed__actions">
+          {previewUrl && (
+            <a className="ed__preview" href={previewUrl} target="_blank" rel="noopener noreferrer" title="צפייה בדף הציבורי">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>
+              צפייה בדף
+            </a>
+          )}
           {onArchive && <button type="button" className="ed__archive" onClick={onArchive}>העברה לארכיון</button>}
           <button type="button" className="btn btn--primary ed__save" disabled={status === 'saved' || status === 'saving'} onClick={saveNow}>שמירה</button>
           {onClose && (

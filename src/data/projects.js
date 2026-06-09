@@ -48,6 +48,11 @@ export const projects = [
     architects: { he: 'יסקי מור סיון אדריכלים', en: 'Yaski Mor Sivan Architects' },
     mapQuery: 'Rothschild Blvd, Tel Aviv',
     coords: { lat: 32.0653, lng: 34.7726 },
+    videos: [
+      { type: 'youtube', id: 'aqz-KE-bpKQ', title: 'סרטון הדמיה' },
+      { type: 'youtube', id: 'ScMzIvxBSi4', title: 'סיור בפרויקט' },
+      { type: 'youtube', id: 'YE7VzlLtp-4', title: 'הסביבה והשכונה' },
+    ],
     environment: {
       title: { he: 'בלב תל אביב הירוקה', en: 'In the heart of green Tel Aviv' },
       text: {

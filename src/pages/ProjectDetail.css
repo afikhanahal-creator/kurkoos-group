@@ -198,13 +198,11 @@
   font-size: 1rem;
   color: var(--color-text-soft);
   white-space: nowrap;
-  border-bottom: 3px solid transparent;
-  transition: color var(--dur-fast), border-color var(--dur-fast);
+  transition: color var(--dur-fast);
 }
-/* זוהר (glow) רדיאלי רך מאחורי הפריט — מופיע בריחוף ובטאב הפעיל */
 .pd-anchors__item:hover { color: var(--color-secondary); }
-/* מצב פעיל — חיווי נקי בכהה, ללא אדום ולא זוהר */
-.pd-anchors__item.is-active { color: var(--color-primary-900); border-bottom-color: var(--color-primary-900); }
+/* מצב פעיל — חיווי נקי בצבע ומשקל בלבד, ללא קו תחתון */
+.pd-anchors__item.is-active { color: var(--color-primary-900); font-weight: 800; }
 
 /* ---------- Split sections ---------- */
 .pd-split__grid {
@@ -691,6 +689,48 @@
 }
 .pd-lightbox__fig { position: relative; z-index: 1; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
 .pd-lightbox__fig img { max-width: 90vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); }
+/* וידאו בלייטבוקס — יחס 16:9 רספונסיבי */
+.pd-lightbox__video { max-width: 92vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); background: #000; }
+.pd-lightbox__video-wrap { width: min(92vw, 1100px); aspect-ratio: 16 / 9; max-height: 82vh; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-lg); background: #000; }
+.pd-lightbox__video-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+/* ---------- Videos — תצוגת סרטוני הפרויקט ---------- */
+.pd-videos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.4rem;
+}
+.pd-video-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  background: var(--color-primary-900);
+}
+.pd-video-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out), filter var(--dur-base); filter: brightness(0.82); }
+.pd-video-tile:hover img { transform: scale(1.05); filter: brightness(0.7); }
+.pd-video-tile__file { position: absolute; inset: 0; background: linear-gradient(160deg, var(--color-primary-700), var(--color-primary-900)); }
+.pd-video-tile__play {
+  position: absolute; inset: 0; margin: auto;
+  width: 54px; height: 54px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-primary-900);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.18);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.pd-video-tile:hover .pd-video-tile__play { transform: scale(1.1); }
+.pd-video-tile__play svg { margin-inline-start: 3px; }
+.pd-video-tile__title {
+  position: absolute; inset-inline: 0; inset-block-end: 0;
+  padding: 0.7rem 0.9rem 0.6rem;
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.92rem; color: #fff; text-align: start;
+  background: linear-gradient(to top, rgba(7, 41, 58, 0.85), transparent);
+}
 .pd-lightbox__counter {
   font-family: var(--font-heading);
   font-weight: 600;
@@ -787,20 +827,17 @@
 @media (max-width: 980px) {
   .pd-anchors { top: 66px; }
 }
-/* בר העוגנים במובייל — מיושר לתחילת השורה (לא ממורכז) כך שניתן לגלול לכל הפריטים
-   ואף אחד לא נחתך; gap קטן יותר וריווח גלילה בקצוות */
+/* בר העוגנים במובייל — רק 2 טאבים (הפרויקט / מפה) ולכן ממורכזים ומאוזנים */
 @media (max-width: 880px) {
   .pd-anchors__inner {
-    justify-content: flex-start;
-    gap: 1.1rem;
-    scroll-padding-inline: var(--container-pad);
+    justify-content: center;
+    gap: clamp(2rem, 12vw, 3.5rem);
+    overflow-x: visible;
   }
-  /* רווח קצה בסוף הגלילה כדי שהפריט האחרון לא יידבק לשוליים */
-  .pd-anchors__inner::after { content: ''; flex: 0 0 var(--container-pad); }
   .pd-anchors__item {
-    font-size: 0.92rem;
-    padding: 0.9rem 0.25rem;
-    border-bottom-width: 2px;
+    font-size: 1rem;
+    padding: 0.95rem 0.5rem;
+    border-bottom-width: 3px;
   }
 }
 @media (max-width: 880px) {

@@ -16,9 +16,13 @@ export default function ProjectsTab() {
   const [selPropId, setSelPropId] = useState(null)
   const [editingProp, setEditingProp] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
 
   const selProject = projects.find((p) => p.id === selProjectId) || null
   const selProp = properties.find((p) => p.id === selPropId) || null
+
+  const q = query.trim().toLowerCase()
+  const filtered = q ? projects.filter((p) => (p.name || '').toLowerCase().includes(q)) : projects
 
   const loadProjects = useCallback(async () => {
     setLoading(true)
@@ -84,21 +88,30 @@ export default function ProjectsTab() {
     <div className="ptab">
       <aside className="ptab__side">
         <div className="ptab__side-head">
-          <span>פרויקטים</span>
+          <span>פרויקטים {projects.length > 0 && <em className="ptab__count">{projects.length}</em>}</span>
           <button type="button" className="btn btn--primary ptab__add" onClick={addProject}>+ פרויקט</button>
         </div>
+        {projects.length > 4 && (
+          <div className="ptab__search">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="חיפוש פרויקט…" aria-label="חיפוש פרויקט" />
+            {query && <button type="button" className="ptab__search-clear" onClick={() => setQuery('')} aria-label="ניקוי">✕</button>}
+          </div>
+        )}
         {loading ? <p className="ptab__muted">טוען…</p> : (
           <SortableList
-            items={projects}
+            items={filtered}
             getId={(p) => p.id}
             getLabel={(p) => p.name}
             getBadge={(p) => statusLabel(PROJECT_STATUS, p.status)}
             activeId={selProjectId}
             onSelect={selectProject}
-            onReorder={(ids) => { setProjects((prev) => ids.map((id) => prev.find((p) => p.id === id))); reorderRows('projects', ids) }}
+            onDelete={removeProject}
+            onReorder={(ids) => { if (q) return; setProjects((prev) => ids.map((id) => prev.find((p) => p.id === id))); reorderRows('projects', ids) }}
           />
         )}
         {!loading && projects.length === 0 && <p className="ptab__muted">אין פרויקטים. לחצי "+ פרויקט".</p>}
+        {!loading && projects.length > 0 && filtered.length === 0 && <p className="ptab__muted">לא נמצאו פרויקטים התואמים "{query}".</p>}
       </aside>
 
       <main className="ptab__main">
@@ -115,6 +128,7 @@ export default function ProjectsTab() {
               coverField="hero_image_url"
               onArchive={onArchiveProject}
               onClose={() => setSelProjectId(null)}
+              previewUrl={selProject.slug ? `/projects/${selProject.slug}` : null}
               title={`עריכת פרויקט: ${selProject.name}`}
             />
 

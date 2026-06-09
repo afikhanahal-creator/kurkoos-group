@@ -32,6 +32,12 @@ export default function Header() {
   const [openSub, setOpenSub] = useState(null) // mobile submenu toggle
   const location = useLocation()
 
+  // הבר התחתון במובייל מוצג רק בעמודי הפרויקטים (רשימה + עמוד פרויקט בודד),
+  // וגם בכל עמוד כשתפריט המובייל פתוח (כי הכפתור המרכזי הוא טוגל התפריט/סגירה).
+  const onProjectsPage =
+    location.pathname === '/projects' || location.pathname.startsWith('/projects/')
+  const showBottomBar = onProjectsPage || menuOpen
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
@@ -48,6 +54,13 @@ export default function Header() {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [menuOpen])
+
+  // ריווח תחתון לגוף הדף רק כשהבר התחתון מוצג — כדי שלא ייווצר שטח מת
+  // בעמודים שבהם הבר מוסתר, ושתוכן/תמונות לא ייחתכו מאחורי הבר כשהוא כן מוצג.
+  useEffect(() => {
+    document.body.classList.toggle('has-bottombar', showBottomBar)
+    return () => document.body.classList.remove('has-bottombar')
+  }, [showBottomBar])
 
   return (
     <header className={`header ${scrolled ? 'header--scrolled' : ''}`}>
@@ -217,28 +230,31 @@ export default function Header() {
         )}
       </AnimatePresence>
 
-      {/* בר תחתון קבוע במובייל (בסגנון תדהר): חיפוש · תפריט · צור קשר */}
-      <nav className="header__bottombar" aria-label="Mobile quick actions">
-        <button type="button" className="header__bb-item" onClick={() => setSearchOpen(true)}>
-          <Icon name="search" size={22} />
-          <span>{t('search.label')}</span>
-        </button>
-        <button
-          type="button"
-          className={`header__bb-item header__bb-menu ${menuOpen ? 'is-open' : ''}`}
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-expanded={menuOpen}
-        >
-          <span className="header__bb-menu-circle">
-            <Icon name={menuOpen ? 'close' : 'menu'} size={24} />
-          </span>
-          <span>{t('common.menu')}</span>
-        </button>
-        <button type="button" className="header__bb-item" onClick={() => setContactOpen(true)}>
-          <Icon name="mail" size={22} />
-          <span>{t('nav.contact')}</span>
-        </button>
-      </nav>
+      {/* בר תחתון קבוע במובייל (בסגנון תדהר): חיפוש · תפריט · צור קשר.
+          מוצג רק בעמודי הפרויקטים ובכל עמוד כשהתפריט פתוח. */}
+      {showBottomBar && (
+        <nav className="header__bottombar" aria-label="Mobile quick actions">
+          <button type="button" className="header__bb-item" onClick={() => setSearchOpen(true)}>
+            <Icon name="search" size={22} />
+            <span>{t('search.label')}</span>
+          </button>
+          <button
+            type="button"
+            className={`header__bb-item header__bb-menu ${menuOpen ? 'is-open' : ''}`}
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+          >
+            <span className="header__bb-menu-circle">
+              <Icon name={menuOpen ? 'close' : 'menu'} size={24} />
+            </span>
+            <span>{t('common.menu')}</span>
+          </button>
+          <button type="button" className="header__bb-item" onClick={() => setContactOpen(true)}>
+            <Icon name="mail" size={22} />
+            <span>{t('nav.contact')}</span>
+          </button>
+        </nav>
+      )}
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ContactPopup open={contactOpen} onClose={() => setContactOpen(false)} />

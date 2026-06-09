@@ -169,6 +169,28 @@ export async function deleteLogo(id, imageUrl) {
   if (error) throw error
 }
 
+// ---------- Leads (CRM) ----------
+// יצירת ליד — נקראת גם מטפסי האתר (אנונימי, RLS מתיר insert לכולם)
+export async function createLead(row) {
+  if (!supabase) return
+  const { error } = await supabase.from('leads').insert(row)
+  if (error) throw error
+}
+export async function listLeads() {
+  const { data, error } = await supabase.from('leads').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+export async function updateLead(id, patch) {
+  const { data, error } = await supabase.from('leads').update(patch).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+export async function deleteLead(id) {
+  const { error } = await supabase.from('leads').delete().eq('id', id)
+  if (error) throw error
+}
+
 /* ============================================================
    שכבת תאימות (legacy) — לרכיבי האדמין הקיימים + גודל הלוגו.
    עובדת מעל הטבלאות stats / projects / site_settings (הקיימות).

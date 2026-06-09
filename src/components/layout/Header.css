@@ -197,6 +197,8 @@
   .header__cta-btn { padding: 0.6em 1.6em; font-size: 0.92rem; min-height: 42px; }
   .header__lang { padding: 0; }
   .lang-switch { font-size: 0.8rem; padding: 0.42rem 0.85rem; }
+  /* "צור קשר" מופיע ככפתור CTA אדום — מסתירים את פריט הניווט הכפול במרכז */
+  .header__nav-item:last-child { display: none; }
 }
 
 .header__burger {

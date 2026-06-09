@@ -3,7 +3,7 @@ import SortableList from './SortableList.jsx'
 import Editor from './Editor.jsx'
 import { projectSchema, propertySchema, newProjectDefaults, newPropertyDefaults, PROJECT_STATUS, PROPERTY_STATUS } from './schema.js'
 import {
-  listProjects, createProject, updateProject, archiveProject, reorderRows,
+  listProjects, createProject, updateProject, archiveProject, deleteProject, reorderRows,
   listProperties, createProperty, updateProperty, archiveProperty,
 } from '../../lib/cms.js'
 
@@ -51,6 +51,14 @@ export default function ProjectsTab() {
     if (!window.confirm('להעביר את הפרויקט לארכיון? הוא יוסר מהאתר הציבורי.')) return
     await archiveProject(selProjectId)
     setSelProjectId(null)
+    loadProjects()
+  }
+
+  const removeProject = async (id) => {
+    const p = projects.find((x) => x.id === id)
+    if (!window.confirm(`למחוק לצמיתות את "${p?.name || 'הפרויקט'}"? הפעולה אינה הפיכה.`)) return
+    await deleteProject(id)
+    if (selProjectId === id) { setSelProjectId(null); setEditingProp(false); setSelPropId(null) }
     loadProjects()
   }
 

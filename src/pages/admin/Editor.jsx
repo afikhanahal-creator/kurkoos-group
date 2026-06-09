@@ -109,6 +109,37 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
         />
       )
     }
+    if (f.type === 'videos') {
+      const arr = Array.isArray(v) ? v : []
+      const upd = (i, patch) => setField(f.key, arr.map((d, j) => (j === i ? { ...d, ...patch } : d)))
+      return (
+        <div className="ed__list">
+          {arr.length === 0 && <p className="ed__devs-empty">אין סרטונים. הוסיפו 3–5 סרטונים (YouTube או קובץ).</p>}
+          {arr.map((vid, i) => {
+            const type = vid.type || 'youtube'
+            return (
+              <div className="ed__vid" key={i}>
+                <select value={type} onChange={(e) => upd(i, { type: e.target.value })}>
+                  <option value="youtube">YouTube</option>
+                  <option value="file">קובץ</option>
+                </select>
+                {type === 'youtube'
+                  ? <input dir="ltr" placeholder="מזהה YouTube (למשל dQw4w9WgXcQ)" value={vid.id || ''} onChange={(e) => upd(i, { id: e.target.value.trim() })} />
+                  : <input dir="ltr" placeholder="כתובת קובץ וידאו (mp4)" value={vid.src || ''} onChange={(e) => upd(i, { src: e.target.value.trim() })} />}
+                <input dir="rtl" placeholder="כותרת (אופציונלי)" value={vid.title || ''} onChange={(e) => upd(i, { title: e.target.value })} />
+                {type === 'file' && (
+                  <label className="ed__dev-upload">העלאת קובץ
+                    <input type="file" accept="video/*" hidden onChange={(e) => uploadOne('videos', e.target.files[0], (url) => upd(i, { src: url }))} />
+                  </label>
+                )}
+                <button type="button" className="ed__dev-del" onClick={() => setField(f.key, arr.filter((_, j) => j !== i))} aria-label="מחיקת סרטון" title="מחיקה"><XIcon width={16} height={16} /></button>
+              </div>
+            )
+          })}
+          <button type="button" className="ed__dev-add" onClick={() => setField(f.key, [...arr, { type: 'youtube', id: '', title: '' }])}>+ הוסף סרטון</button>
+        </div>
+      )
+    }
     if (f.type === 'coords') {
       const obj = v && typeof v === 'object' ? v : {}
       const set = (k, raw) => {
@@ -281,7 +312,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <legend>{sec.section}</legend>
           <div className="ed__grid">
             {sec.fields.map((f) => (
-              <div className={`ed__field ${['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords'].includes(f.type) ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
+              <div className={`ed__field ${['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords', 'videos'].includes(f.type) ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
                 <label>{f.label}{f.required && <span className="ed__req">*</span>}</label>
                 {renderField(f)}
                 {f.hint && <small className="ed__hint">{f.hint}</small>}

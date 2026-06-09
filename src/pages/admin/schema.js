@@ -74,6 +74,17 @@ export const projectSchema = [
       { key: 'floors', label: 'קומות', type: 'text', dir: 'ltr', hint: 'אפשר טווח, למשל "7-8"' },
       { key: 'architects', label: 'אדריכלים', type: 'text' },
       { key: 'year', label: 'שנת אכלוס', type: 'number' },
+      {
+        key: 'stats_scale',
+        label: 'גודל קוביות הנתונים',
+        type: 'select',
+        options: [
+          { value: 'small', label: 'קטן (קומפקטי)' },
+          { value: 'normal', label: 'רגיל' },
+          { value: 'large', label: 'גדול ובולט' },
+        ],
+        hint: 'שולט בגודל קוביות הנתונים בראש עמוד הפרויקט',
+      },
     ],
   },
   {
@@ -84,6 +95,17 @@ export const projectSchema = [
         label: 'סרטון YouTube',
         type: 'video',
         hint: 'הדביקו את מזהה הסרטון מ-YouTube (החלק שאחרי v= בכתובת). מפעיל את כפתור ה-Play בבאנר.',
+      },
+    ],
+  },
+  {
+    section: 'סרטונים',
+    fields: [
+      {
+        key: 'videos',
+        label: 'סרטוני הפרויקט',
+        type: 'videos',
+        hint: 'הוסיפו מספר סרטונים (מומלץ 3–5). לכל סרטון: סוג (YouTube/קובץ), מזהה YouTube או קישור לקובץ, וכותרת אופציונלית. מופיעים כגלריית סרטונים בעמוד ונפתחים בלייטבוקס.',
       },
     ],
   },
@@ -246,6 +268,7 @@ export const newProjectDefaults = () => ({
   gallery: [],
   amenities: [],
   video: {},
+  videos: [],
   coords: {},
   environment: {},
   plan_groups: [],

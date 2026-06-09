@@ -38,6 +38,7 @@ alter table public.projects add column if not exists pages jsonb default '[]'::j
 alter table public.projects add column if not exists sections jsonb default '[]'::jsonb;     -- אילו מקטעים מוצגים בעמוד הפרויקט
 alter table public.projects add column if not exists developers jsonb default '[]'::jsonb;   -- יזמי הפרויקט [{name, logo, bio}]
 alter table public.projects add column if not exists card_layout text default 'normal';      -- תצוגת כרטיס בגלריה: normal | wide | tall
+alter table public.projects add column if not exists stats_scale text default 'normal';       -- גודל קוביות הנתונים: small | normal | large
 -- ⚠️ יש להריץ קובץ זה מחדש ב-Supabase (SQL editor) אחרי כל הוספת עמודות, אחרת שמירה מהאדמין תיכשל.
 -- נתוני הפרויקט (סקלרים) — תיבות הסטטיסטיקה בבאנר
 alter table public.projects add column if not exists towers int;                              -- מספר בניינים
@@ -46,7 +47,8 @@ alter table public.projects add column if not exists floors text;               
 alter table public.projects add column if not exists architects text;                         -- אדריכלים
 alter table public.projects add column if not exists year int;                                -- שנת אכלוס
 -- שדות מובנים (jsonb)
-alter table public.projects add column if not exists video jsonb default '{}'::jsonb;          -- {type:'youtube', id}
+alter table public.projects add column if not exists video jsonb default '{}'::jsonb;          -- {type:'youtube', id} — סרטון בודד (הירו)
+alter table public.projects add column if not exists videos jsonb default '[]'::jsonb;          -- [{type:'youtube'|'file', id|src, title}] — מספר סרטונים לפרויקט
 alter table public.projects add column if not exists coords jsonb default '{}'::jsonb;          -- {lat, lng} — סמן מפה מלוטש
 alter table public.projects add column if not exists environment jsonb default '{}'::jsonb;     -- {title, text, image}
 alter table public.projects add column if not exists plan_groups jsonb default '[]'::jsonb;     -- [{rooms, label, plans:[{label, img}]}]

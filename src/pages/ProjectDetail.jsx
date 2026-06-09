@@ -14,6 +14,7 @@ import Lightbox from '../components/ui/Lightbox.jsx'
 import PropertyMap from '../components/ui/PropertyMap.jsx'
 import BookingCalendar from '../components/ui/BookingCalendar.jsx'
 import StatCube from '../components/ui/StatCube.jsx'
+import useIsMobile from '../hooks/useIsMobile.js'
 import Icon from '../components/ui/Icon.jsx'
 import './ProjectDetail.css'
 
@@ -89,6 +90,7 @@ function buildProject(local, cms) {
       // אילו מקטעים להציג + יזמי הפרויקט (נשמרים בענן)
       sections: Array.isArray(cms.sections) ? cms.sections : undefined,
       developers: Array.isArray(cms.developers) && cms.developers.length ? cms.developers : undefined,
+      stats_scale: cms.stats_scale || undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
   }
@@ -100,10 +102,12 @@ export default function ProjectDetail() {
   const { t } = useI18n()
   const L = useLocalized()
   const local = getProject(slug)
+  const isMobile = useIsMobile()
   const [cms, setCms] = useState(null)
 
   const [videoOpen, setVideoOpen] = useState(false)
   const [galleryTab, setGalleryTab] = useState(0)
+  const [gallerySlide, setGallerySlide] = useState(0)
   const [activeSection, setActiveSection] = useState('project')
   const [lightbox, setLightbox] = useState(null) // { images, index }
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', consent: false })
@@ -218,7 +222,7 @@ export default function ProjectDetail() {
               <p className="pd-banner__desc">{L(project.short || project.description)}</p>
 
               <div className="pd-banner__stats-wrap">
-                <div className="pd-banner__stats">
+                <div className={`pd-banner__stats pd-banner__stats--${project.stats_scale || 'normal'}`}>
                   {project.towers > 0 && (
                     <StatCube>
                       <span className="pd-stat__value" dir="ltr">{project.towers}</span>
@@ -238,12 +242,12 @@ export default function ProjectDetail() {
                     </StatCube>
                   )}
                   {project.architects && (
-                    <StatCube>
+                    <StatCube className="pd-stat--wide">
                       <span className="pd-stat__value pd-stat__value--sm">{L(project.architects)}</span>
                       <span className="pd-stat__label">{L({ he: 'אדריכלים', en: 'Architects' })}</span>
                     </StatCube>
                   )}
-                  <StatCube className={`pd-stat--status pd-stat--status-${project.status}`}>
+                  <StatCube className={`pd-stat--wide pd-stat--status pd-stat--status-${project.status}`}>
                     <span className="pd-stat__value pd-stat__value--sm">{t(`projects.status.${project.status}`)}</span>
                     <span className="pd-stat__label">{L({ he: 'סטטוס', en: 'Status' })}</span>
                   </StatCube>
@@ -275,7 +279,8 @@ export default function ProjectDetail() {
       {/* ===== Sticky anchors ===== */}
       <nav className="pd-anchors" aria-label="Project sections">
         <div className="container pd-anchors__inner">
-          {anchors.map((a) => (
+          {/* במובייל בר מינימלי — רק "הפרויקט" ו"מפה" (בסגנון תדהר) */}
+          {(isMobile ? anchors.filter((a) => a.id === 'project' || a.id === 'map') : anchors).map((a) => (
             <button
               key={a.id}
               type="button"
@@ -404,7 +409,7 @@ export default function ProjectDetail() {
                   role="tab"
                   aria-selected={galleryTab === i}
                   className={`pd-gtab ${galleryTab === i ? 'is-active' : ''}`}
-                  onClick={() => setGalleryTab(i)}
+                  onClick={() => { setGalleryTab(i); setGallerySlide(0) }}
                 >
                   {L(g.label)}
                 </button>
@@ -412,20 +417,50 @@ export default function ProjectDetail() {
             </div>
           )}
 
-          <div className="pd-gallery">
-            {currentImages.map((src, i) => (
-              <button
-                key={`${galleryTab}-${i}`}
-                type="button"
-                className="pd-gallery__item"
-                onClick={() => openLightbox(currentImages, i)}
-                aria-label={`${L(project.name)} ${i + 1}`}
-              >
-                <SmartImage src={src} alt={`${L(project.name)} ${i + 1}`} label={L(project.name)} />
-                <span className="pd-gallery__zoom"><Icon name="search" size={20} /></span>
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const n = currentImages.length
+            const slide = Math.min(gallerySlide, Math.max(0, n - 1))
+            const go = (d) => setGallerySlide((s) => (Math.min(s, n - 1) + d + n) % n)
+            return (
+              <div className="pd-carousel">
+                <div className="pd-carousel__stage">
+                  <button
+                    type="button"
+                    className="pd-carousel__main"
+                    onClick={() => openLightbox(currentImages, slide)}
+                    aria-label={`${L(project.name)} — ${L({ he: 'הגדלה', en: 'Enlarge' })}`}
+                  >
+                    <SmartImage key={`${galleryTab}-${slide}`} src={currentImages[slide]} alt={`${L(project.name)} ${slide + 1}`} label={L(project.name)} />
+                    <span className="pd-gallery__zoom"><Icon name="search" size={20} /></span>
+                  </button>
+                  {n > 1 && (
+                    <>
+                      <button type="button" className="pd-carousel__arrow pd-carousel__arrow--prev" onClick={() => go(-1)} aria-label={L({ he: 'הקודם', en: 'Previous' })}>
+                        <Icon name="chevron" size={22} />
+                      </button>
+                      <button type="button" className="pd-carousel__arrow pd-carousel__arrow--next" onClick={() => go(1)} aria-label={L({ he: 'הבא', en: 'Next' })}>
+                        <Icon name="chevron" size={22} />
+                      </button>
+                    </>
+                  )}
+                </div>
+                {n > 1 && (
+                  <div className="pd-carousel__dots" role="tablist" aria-label={L({ he: 'תמונות', en: 'Images' })}>
+                    {currentImages.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`pd-carousel__dot ${i === slide ? 'is-active' : ''}`}
+                        aria-label={`${L({ he: 'תמונה', en: 'Image' })} ${i + 1}`}
+                        aria-current={i === slide}
+                        onClick={() => setGallerySlide(i)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </section>
       )}

@@ -135,6 +135,14 @@
 }
 .pd-stat__label { font-size: 0.7rem; font-weight: 600; color: var(--color-text-soft); }
 
+/* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
+.pd-banner__stats--small .pd-stat { min-height: 64px; padding: 0.5rem 0.85rem; }
+.pd-banner__stats--small .pd-stat__value { font-size: 1.2rem; }
+.pd-banner__stats--small .pd-stat__value--sm { font-size: 0.74rem; }
+.pd-banner__stats--large .pd-stat { min-height: 104px; padding: 1rem 1.55rem; }
+.pd-banner__stats--large .pd-stat__value { font-size: 2.05rem; }
+.pd-banner__stats--large .pd-stat__value--sm { font-size: 0.95rem; }
+
 /* קוביית סטטוס — זהה לחלוטין לשאר הקוביות (כמו בתדהר): אותו גרדיאנט, ערך טורקיז */
 
 /* מדיה + כפתור וידאו */
@@ -194,36 +202,9 @@
   transition: color var(--dur-fast), border-color var(--dur-fast);
 }
 /* זוהר (glow) רדיאלי רך מאחורי הפריט — מופיע בריחוף ובטאב הפעיל */
-.pd-anchors__item::before {
-  content: '';
-  position: absolute;
-  inset: -2px -12px 2px;
-  z-index: -1;
-  border-radius: 16px;
-  background: radial-gradient(
-    60% 75% at 50% 50%,
-    color-mix(in srgb, var(--color-accent) 26%, transparent) 0%,
-    color-mix(in srgb, var(--color-accent) 10%, transparent) 45%,
-    transparent 72%
-  );
-  filter: blur(7px);
-  opacity: 0;
-  transform: scale(0.7);
-  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
-  pointer-events: none;
-}
-.pd-anchors__item:hover::before,
-.pd-anchors__item.is-active::before { opacity: 1; transform: scale(1); }
 .pd-anchors__item:hover { color: var(--color-secondary); }
-/* קו תחתון רך באקסנט שמופיע/נע כשעוברים בין הטאבים (נפרד מהמצב הפעיל) */
-@media (hover: hover) {
-  .pd-anchors__item:hover { border-bottom-color: color-mix(in srgb, var(--color-accent) 40%, transparent); }
-}
-.pd-anchors__item.is-active { color: var(--color-primary-900); border-bottom-color: var(--color-accent); }
-/* כיבוד reduce-motion — בלי אנימציית סקייל, רק הופעה רכה */
-@media (prefers-reduced-motion: reduce) {
-  .pd-anchors__item::before { transition: opacity var(--dur-base); transform: none; }
-}
+/* מצב פעיל — חיווי נקי בכהה, ללא אדום ולא זוהר */
+.pd-anchors__item.is-active { color: var(--color-primary-900); border-bottom-color: var(--color-primary-900); }
 
 /* ---------- Split sections ---------- */
 .pd-split__grid {
@@ -456,6 +437,57 @@
 }
 .pd-gtab:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
 .pd-gtab.is-active { background: var(--color-secondary); border-color: var(--color-secondary); color: #fff; }
+
+/* ---------- גלריה — קרוסלה (תמונה גדולה + חיצים + נקודות), בסגנון תדהר ---------- */
+.pd-carousel { max-width: 1000px; margin-inline: auto; }
+.pd-carousel__stage {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.pd-carousel__main {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: var(--color-bg-soft);
+  cursor: zoom-in;
+}
+.pd-carousel__main img,
+.pd-carousel__main .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--dur-slow) var(--ease-out); }
+.pd-carousel__main:hover img { transform: scale(1.04); }
+.pd-carousel__arrow {
+  position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  display: grid; place-items: center;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-primary-900);
+  box-shadow: var(--shadow-3);
+  transition: background var(--dur-fast), transform var(--dur-fast);
+}
+.pd-carousel__arrow:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+.pd-carousel__arrow--prev { inset-inline-start: 1rem; }
+.pd-carousel__arrow--next { inset-inline-end: 1rem; }
+.pd-carousel__arrow--prev svg { transform: rotate(90deg); }
+.pd-carousel__arrow--next svg { transform: rotate(-90deg); }
+.pd-carousel__dots { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.2rem; }
+.pd-carousel__dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--color-primary-300);
+  transition: background var(--dur-fast), transform var(--dur-fast);
+}
+.pd-carousel__dot:hover { transform: scale(1.25); }
+.pd-carousel__dot.is-active { background: var(--color-secondary); transform: scale(1.15); }
+@media (max-width: 600px) {
+  .pd-carousel__main { aspect-ratio: 4 / 3; }
+  .pd-carousel__arrow { width: 40px; height: 40px; }
+  .pd-carousel__arrow--prev { inset-inline-start: 0.5rem; }
+  .pd-carousel__arrow--next { inset-inline-end: 0.5rem; }
+  .pd-carousel__dot { width: 9px; height: 9px; }
+}
 
 .pd-gallery {
   display: grid;

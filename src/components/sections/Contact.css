@@ -57,6 +57,10 @@
 .contact__visual-img img,
 .contact__visual-img .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; }
 
+/* גרסת יומן — היומן מחליף את התמונה: ממורכז, בלי ה-clip של פאנל התמונה */
+.contact__visual--cal { display: flex; align-items: center; }
+.contact__visual--cal .bcal { width: 100%; }
+
 /* ---- Dark form panel ---- */
 .contact__panel {
   position: relative;
@@ -70,7 +74,7 @@
 .contact__panel > *:not(.infinite-grid) { position: relative; z-index: 1; }
 .contact__panel .contact__eyebrow {
   color: #fff;
-  font-size: 0.92rem;
+  font-size: var(--fs-small);
   font-weight: 700;
   letter-spacing: 0.1em;
   margin-bottom: 0.55rem;
@@ -82,8 +86,8 @@
   height: 3px;
   border-radius: 2px;
 }
-.contact__title { font-size: clamp(1.25rem, 1.7vw, 1.65rem); color: #fff; margin: 0.25rem 0 0.5rem; line-height: 1.15; }
-.contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 1.2rem; max-width: 42ch; font-size: 0.92rem; }
+.contact__title { font-size: var(--fs-h4); color: #fff; margin: 0.25rem 0 0.5rem; line-height: 1.15; }
+.contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 1.2rem; max-width: 42ch; font-size: var(--fs-small); }
 
 .contact__topics { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.3rem; }
 .contact__topic {
@@ -93,7 +97,7 @@
   color: #fff;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: var(--fs-small);
   transition: transform var(--dur-fast) var(--ease-out),
     background var(--dur-base) var(--ease-out),
     border-color var(--dur-base) var(--ease-out),
@@ -114,12 +118,12 @@
 }
 
 .contact__form { display: flex; flex-direction: column; gap: 0.85rem; }
-.contact__required { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); }
+.contact__required { font-size: var(--fs-small); color: rgba(255, 255, 255, 0.6); }
 .contact__form .field input,
 .contact__form .field textarea {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--fs-body);
   padding: 0.85rem 1rem;
   border-radius: var(--radius-md);
   border: none;
@@ -139,7 +143,7 @@
   align-self: center;
   margin-top: 0.6rem;
   min-width: 160px;
-  font-size: 1.02rem;
+  font-size: var(--fs-body);
   font-weight: 700;
   background: #fff;
   color: var(--color-secondary);
@@ -162,7 +166,7 @@
   font-family: var(--font-heading);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
-  font-size: 0.95rem;
+  font-size: var(--fs-body);
 }
 
 .contact__success { text-align: center; padding: 2.5rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
@@ -173,7 +177,7 @@
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
 }
-.contact__success p { font-size: 1.3rem; font-family: var(--font-heading); font-weight: 700; color: #fff; }
+.contact__success p { font-size: var(--fs-lead); font-family: var(--font-heading); font-weight: 700; color: #fff; }
 
 @media (max-width: 900px) {
   .contact__inner { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }

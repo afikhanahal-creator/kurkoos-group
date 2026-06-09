@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
-import site from '../../data/site.js'
-import projects from '../../data/projects.js'
 import Reveal from '../ui/Reveal.jsx'
-import SmartImage from '../ui/SmartImage.jsx'
+import BookingCalendar from '../ui/BookingCalendar.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
 import Icon from '../ui/Icon.jsx'
 import './Contact.css'
@@ -22,18 +20,22 @@ export default function Contact() {
     setSent(true)
   }
 
-  const heroImg = projects[0]?.cover
-
   return (
     <section className="section contact" id="contact">
       <span className="contact__plus-grid" aria-hidden="true" />
       <div className="container contact__inner">
-        {/* פאנל תמונה בזווית */}
-        <Reveal className="contact__visual" variant="right">
-          <span className="contact__visual-shape" aria-hidden="true" />
-          <div className="contact__visual-img">
-            <SmartImage src={heroImg} alt={L(site.name)} label={L(site.name)} />
-          </div>
+        {/* יומן קביעת פגישה — דסקטופ בלבד (.contact__visual מוסתר ב-≤900px) */}
+        <Reveal className="contact__visual contact__visual--cal" variant="right">
+          <BookingCalendar
+            title={L({ he: 'קבעו פגישה', en: 'Book a meeting' })}
+            ctaTargetId="cf-name"
+            onPickDate={(label) => {
+              const el = document.getElementById('cf-message')
+              if (el && !el.value) {
+                el.value = L({ he: `אשמח לתאם פגישה ל-${label}`, en: `I'd like to book a meeting on ${label}` })
+              }
+            }}
+          />
         </Reveal>
 
         {/* פאנל טופס כהה */}

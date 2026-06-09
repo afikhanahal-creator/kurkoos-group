@@ -27,6 +27,7 @@ export default function SmartImage({ src, alt = '', label, className = '', style
       src={src}
       alt={alt}
       loading="lazy"
+      decoding="async"
       className={`smart-image ${loaded ? 'is-loaded' : ''} ${className}`}
       style={style}
       onError={() => setFailed(true)}

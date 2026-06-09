@@ -34,6 +34,37 @@
 }
 .pm-info__logo { height: 30px; width: auto; display: block; }
 
+/* ---- שלט מותג קבוע מעל הקוביה (תמיד גלוי, ממורכז, לא נעלם) ---- */
+.pm-cube-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 14px);          /* מרחף מעל הקוביה */
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;                /* מרכוז אנכי מדויק של הכיתוב */
+  justify-content: center;
+  gap: 11px;
+  padding: 9px 16px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 10px 26px -6px rgba(7, 41, 58, 0.32), 0 0 0 1px rgba(7, 41, 58, 0.05);
+  white-space: nowrap;
+  font-family: var(--font-heading, sans-serif);
+  pointer-events: none;               /* לא חוסם אינטראקציה עם המפה */
+  z-index: 2;
+}
+/* זנב משולש קטן שמצביע אל הקוביה */
+.pm-cube-label::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: #fff;
+  filter: drop-shadow(0 4px 3px rgba(7, 41, 58, 0.12));
+}
+
 /* מסתיר את כפתור ה-X ומצמצם ריווח של ה-InfoWindow למראה נקי */
 .property-map .gm-style-iw button.gm-ui-hover-effect { display: none !important; }
 /* מסירים את ה-padding הפנימי של Google כדי שהמרכוז שלנו יהיה מדויק */
@@ -103,10 +134,10 @@
   .pm-cube-marker:hover .pm-cube { animation: none; }
 }
 
-/* ---- השלט (InfoWindow) במובייל — קטן יותר כדי שייכנס במלואו ולא ייחתך ---- */
+/* ---- השלט במובייל — מעט קטן יותר כדי שייכנס במלואו ---- */
 @media (max-width: 600px) {
-  .pm-info { padding: 8px 13px; gap: 9px; }
-  .pm-info__name { font-size: 0.98rem; }
+  .pm-cube-label { padding: 8px 14px; gap: 9px; bottom: calc(100% + 12px); }
+  .pm-info__name { font-size: 1rem; }
   .pm-info__sep { height: 20px; }
-  .pm-info__logo { height: 25px; }
+  .pm-info__logo { height: 26px; }
 }

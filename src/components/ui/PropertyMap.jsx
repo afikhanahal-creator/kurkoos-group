@@ -56,13 +56,6 @@ const MAP_STYLE = [
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
 ]
 
-/* סמן הנכס — pin אדום מותג */
-const PIN = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">' +
-  '<path d="M20 0C9 0 0 9 0 20c0 14 20 32 20 32s20-18 20-32C40 9 31 0 20 0z" fill="#a90b0c"/>' +
-  '<circle cx="20" cy="20" r="7" fill="#ffffff"/></svg>'
-)
-
 export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
   const ref = useRef(null)
   const [failed, setFailed] = useState(false)
@@ -85,15 +78,10 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
           clickableIcons: false,
           backgroundColor: '#e9f1f5',
         })
-        const marker = new maps.Marker({
-          position: center,
-          map,
-          title: label,
-          icon: { url: PIN, scaledSize: new maps.Size(40, 52), anchor: new maps.Point(20, 52) },
-        })
-        // חלונית מותג — לוגו קורקוס + שם הפרויקט, בריחוף/לחיצה על הפין
+        // חלונית מותג ("שלט") — שם הפרויקט + לוגו קורקוס, בריחוף/לחיצה על הקוביה
         const info = new maps.InfoWindow({
           disableAutoPan: true,
+          position: center,
           content:
             '<div class="pm-info" dir="rtl">' +
             '<span class="pm-info__name">' + label + '</span>' +
@@ -101,10 +89,36 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
             '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="Kurkoos Group" />' +
             '</div>',
         })
-        const openInfo = () => info.open({ anchor: marker, map })
-        marker.addListener('mouseover', openInfo)
-        marker.addListener('mouseout', () => info.close())
-        marker.addListener('click', openInfo)
+        const openInfo = () => info.open(map)
+
+        // סמן הנכס — קוביה תלת-ממדית (אדום שקוף, מסתובבת לאט רק בריחוף).
+        // מומש כ-OverlayView כדי שיהיה אלמנט DOM אמיתי (CSS 3D), לא תמונה.
+        const latLng = new maps.LatLng(lat, lng)
+        class CubeMarker extends maps.OverlayView {
+          onAdd() {
+            const el = document.createElement('div')
+            el.className = 'pm-cube-marker'
+            el.setAttribute('title', label)
+            el.innerHTML =
+              '<div class="pm-cube">' +
+              '<div></div><div></div><div></div><div></div><div></div><div></div>' +
+              '</div>'
+            el.addEventListener('mouseenter', openInfo)
+            el.addEventListener('mouseleave', () => info.close())
+            el.addEventListener('click', openInfo)
+            this.el = el
+            this.getPanes().overlayMouseTarget.appendChild(el)
+          }
+          draw() {
+            const proj = this.getProjection()
+            if (!proj || !this.el) return
+            const p = proj.fromLatLngToDivPixel(latLng)
+            this.el.style.left = p.x + 'px'
+            this.el.style.top = p.y + 'px'
+          }
+          onRemove() { if (this.el) { this.el.remove(); this.el = null } }
+        }
+        new CubeMarker().setMap(map)
       })
       .catch(() => { if (!cancelled) setFailed(true) })
     return () => { cancelled = true }

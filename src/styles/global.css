@@ -3,6 +3,7 @@
    ============================================================ */
 
 @import './tokens.css';
+@import './design-system.css';
 @import './fonts.css';
 
 *,

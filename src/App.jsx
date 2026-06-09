@@ -8,6 +8,7 @@ import CookieBanner from './components/ui/CookieBanner.jsx'
 import FloatingActions from './components/ui/FloatingActions.jsx'
 import AccessibilityButton from './components/ui/AccessibilityButton.jsx'
 import IntroVideo from './components/sections/IntroVideo.jsx'
+import FontLoader from './components/ui/FontLoader.jsx'
 import Home from './pages/Home.jsx'
 import Projects from './pages/Projects.jsx'
 import ProjectDetail from './pages/ProjectDetail.jsx'
@@ -66,6 +67,7 @@ export default function App() {
   if (location.pathname.startsWith('/admin')) {
     return (
       <>
+        <FontLoader />
         <ScrollManager />
         <Admin />
       </>
@@ -74,6 +76,7 @@ export default function App() {
 
   return (
     <>
+      <FontLoader />
       <a href="#top" className="skip-link">{t('common.skipToContent')}</a>
       <IntroVideo />
       <ScrollManager />

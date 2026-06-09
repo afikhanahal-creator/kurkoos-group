@@ -1,0 +1,84 @@
+/* ============================================================
+   DESIGN SYSTEM — טוקני טיפוגרפיה (מבוסס skill design-system)
+   ------------------------------------------------------------
+   מקור-אמת יחיד לטיפוגרפיה. החלפת פונט נעשית ממקום אחד:
+   • בקוד — המשתנים --font-heading / --font-body שב-tokens.css.
+   • בזמן ריצה — טאב "פונטים" ב-CMS (דורס את שני המשתנים).
+   הטוקנים כאן *מוסיפים* קנה-מידה אחיד (--text-*) ומחלקות עזר,
+   בלי לשבור את ה-tokens הקיימים של המותג.
+   ============================================================ */
+
+:root {
+  /* 1. FONT FAMILY — מצביע על פונט הגוף הראשי (master) */
+  --font-sans: var(--font-body);
+
+  /* 2. TYPE SCALE — רספונסיבי (clamp: מובייל → דסקטופ) */
+  --text-h1:       clamp(2rem,    1.40rem + 3.00vw, 3rem);
+  --text-h2:       clamp(1.5rem,  1.10rem + 2.00vw, 2.25rem);
+  --text-h3:       clamp(1.25rem, 1.05rem + 1.00vw, 1.5rem);
+  --text-subtitle: clamp(1.05rem, 0.95rem + 0.50vw, 1.25rem);
+  --text-body:     clamp(1rem,    0.97rem + 0.15vw, 1.0625rem);
+  --text-small:    0.875rem;
+  --text-field:    0.95rem;
+
+  /* 3. FONT WEIGHTS */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* 4. LINE HEIGHTS */
+  --leading-tight:   1.15;
+  --leading-heading: 1.25;
+  --leading-snug:    1.40;
+  --leading-body:    1.60;
+
+  /* 5. LETTER SPACING */
+  --tracking-heading: -0.01em;
+  --tracking-normal:   0;
+
+  /* 6. SPACING — מקצב "פנימי → חוץ" */
+  --space-panel-padding: clamp(1.75rem, 1.40rem + 1.5vw, 2.6rem);
+  --space-field-gap:     0.85rem;
+  --space-field-pad-y:   0.85rem;
+  --space-field-pad-x:   1rem;
+  --space-below-text:    clamp(1.2rem, 1.10rem + 0.4vw, 1.3rem);
+  --space-column-gap:    clamp(1.5rem, 1.00rem + 2.0vw, 3rem);
+
+  /* 7. LAYOUT — רוחב עמודות טופס */
+  --form-column-min: 360px;
+  --form-column-max: 480px;
+}
+
+/* ----- מחלקות עזר טיפוגרפיות (שימוש סמנטי במקום ערכים קשיחים) ----- */
+.text-h1 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h1); font-weight: var(--weight-bold);
+  line-height: var(--leading-tight); letter-spacing: var(--tracking-heading);
+}
+.text-h2 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2); font-weight: var(--weight-bold);
+  line-height: var(--leading-heading); letter-spacing: var(--tracking-heading);
+}
+.text-h3 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h3); font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+}
+.text-subtitle {
+  font-size: var(--text-subtitle); font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+}
+.text-body  { font-size: var(--text-body);  font-weight: var(--weight-regular); line-height: var(--leading-body); }
+.text-small { font-size: var(--text-small); font-weight: var(--weight-regular); line-height: 1.5; }
+
+/* ----- עזרי פריסה ----- */
+.min-w-0 { min-width: 0; }
+.panel { padding: var(--space-panel-padding); }
+.field-stack { display: flex; flex-direction: column; gap: var(--space-field-gap); }
+.below-text { margin-bottom: var(--space-below-text); }
+.two-col { display: grid; grid-template-columns: 1fr; gap: var(--space-column-gap); }
+@media (min-width: 768px) {
+  .two-col { grid-template-columns: minmax(var(--form-column-min), var(--form-column-max)) 1fr; }
+}

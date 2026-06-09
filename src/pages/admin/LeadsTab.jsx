@@ -24,6 +24,11 @@ const FUNNEL = ['new', 'contacted', 'meeting', 'negotiation', 'won']
 
 const SOURCE_LABEL = { project: 'עמוד פרויקט', home: 'דף הבית', contact: 'צור קשר', manual: 'ידני' }
 
+const VIEW_ICONS = {
+  board: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>,
+  list: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>,
+  table: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18M3 14.5h18M9 9v11M15 9v11" /></svg>,
+}
 const VIEWS = [
   { id: 'board', label: 'קוביות' },
   { id: 'list', label: 'רשימה' },
@@ -149,10 +154,18 @@ export default function LeadsTab() {
       <div className="adm-leads__bar">
         <div className="adm-leads__bar-group">
           <span className="adm-leads__count"><b>{filtered.length}</b> לידים</span>
-          <div className="adm-leads__views">
-            {VIEWS.map((v) => (
-              <button key={v.id} type="button" className={`adm-leads__view ${view === v.id ? 'is-active' : ''}`} onClick={() => setView(v.id)}>{v.label}</button>
-            ))}
+          <span className="adm-leads__views-label">תצוגה</span>
+          <div className="adm-leads__views" role="tablist" aria-label="תצוגות">
+            {VIEWS.map((v) => {
+              const I = VIEW_ICONS[v.id]
+              return (
+                <button key={v.id} type="button" role="tab" aria-selected={view === v.id}
+                  className={`adm-leads__view ${view === v.id ? 'is-active' : ''}`} onClick={() => setView(v.id)}>
+                  <I width={16} height={16} />
+                  <span>{v.label}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
         <div className="adm-leads__bar-group">

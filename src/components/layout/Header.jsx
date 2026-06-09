@@ -56,12 +56,14 @@ export default function Header() {
         <div className="container header__main-inner">
           <button
             type="button"
-            className="header__burger"
+            className={`header__burger ${menuOpen ? 'is-open' : ''}`}
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? t('common.close') : t('common.menu')}
             aria-expanded={menuOpen}
           >
-            <Icon name={menuOpen ? 'close' : 'menu'} size={26} />
+            <span className="header__burger-bar header__burger-bar--1" />
+            <span className="header__burger-bar header__burger-bar--2" />
+            <span className="header__burger-bar header__burger-bar--3" />
           </button>
 
           <Logo />

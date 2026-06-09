@@ -5,6 +5,7 @@ import ProjectsTab from './ProjectsTab.jsx'
 import CountersTab from './CountersTab.jsx'
 import LogosTab from './LogosTab.jsx'
 import LeadsTab from './LeadsTab.jsx'
+import FontsTab from './FontsTab.jsx'
 import './admin.css'
 
 /* אייקונים מינימליים (inline — ללא תלות חיצונית) */
@@ -16,6 +17,7 @@ const Ico = {
   logout: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>,
   external: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>,
   lock: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>,
+  fonts: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 20V5a1 1 0 0 1 1-1h7M9 20h6M17 20v-9a1 1 0 0 1 1-1h2M9 4v16" /></svg>,
 }
 
 function Login() {
@@ -61,6 +63,7 @@ const TABS = [
   { id: 'counters', label: 'מונים ומספרים', sub: 'הנתונים שמופיעים באתר', icon: 'counters' },
   { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads' },
+  { id: 'fonts', label: 'פונטים', sub: 'הפונטים של האתר — בחירה או העלאה', icon: 'fonts' },
 ]
 
 export default function Admin() {
@@ -126,6 +129,7 @@ export default function Admin() {
           {tab === 'counters' && <CountersTab />}
           {tab === 'logos' && <LogosTab />}
           {tab === 'leads' && <LeadsTab />}
+          {tab === 'fonts' && <FontsTab />}
         </main>
       </div>
     </div>

@@ -57,4 +57,26 @@
 @media (max-width: 600px) {
   .page-header .breadcrumbs { padding-block: 0 1.2rem; }
   .page-header__lead { margin-top: 0.85rem; }
+
+  /* ---- סרגל הניווט (פירורי לחם) — בר זכוכית מלוכד גם בכותרות העמודים ---- */
+  .page-header .breadcrumbs ol {
+    width: fit-content;
+    gap: 0.55rem;
+    padding: 0.34rem 0.55rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-pill);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .page-header .breadcrumbs__link--back {
+    padding: 0.32rem 0.72rem;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .page-header .breadcrumbs__link--back:hover { background: #fff; color: var(--color-primary-900); }
+  .page-header .breadcrumbs__current,
+  .page-header .breadcrumbs__link { font-size: 0.92rem; }
 }

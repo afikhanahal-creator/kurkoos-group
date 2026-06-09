@@ -146,8 +146,33 @@
     /* ריווח תחתון נדיב → אזור פנוי שאליו "מציץ" כרטיס הסרטון בלי לכסות את המשפט */
     padding-block: clamp(1.5rem, 5vw, 2.5rem) clamp(3.5rem, 9vw, 5rem);
   }
-  /* פירורי לחם / כפתור "חזרה" ממורכזים יחד עם שאר התוכן */
-  .division-hero .breadcrumbs ol { justify-content: center; }
+  /* ---- סרגל הניווט (פירורי לחם) — עיצוב מחודש למובייל ----
+     בר זכוכית מלוכד, ממורכז, עם כפתור "חזרה" משולב כצ'יפ נקי */
+  .division-hero .breadcrumbs { margin-bottom: clamp(1.4rem, 4vw, 2.25rem); }
+  .division-hero .breadcrumbs ol {
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.34rem 0.55rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-pill);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+  /* כפתור "חזרה" — צ'יפ קומפקטי בתוך הבר (בלי כפל גבולות/טשטוש) */
+  .division-hero .breadcrumbs__link--back {
+    padding: 0.32rem 0.72rem;
+    background: rgba(255, 255, 255, 0.18);
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .division-hero .breadcrumbs__link--back:hover { background: #fff; color: var(--color-primary-900); }
+  /* טקסט הנתיב — ברור וקריא */
+  .division-hero .breadcrumbs__current,
+  .division-hero .breadcrumbs__link { font-size: 0.92rem; }
   /* אייקון התחום / לוגו ראיתה — ממורכזים בכל עמודי התחומים */
   .division-hero__icon,
   .division-hero__logo { margin-inline: auto; }

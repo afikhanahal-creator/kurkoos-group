@@ -20,6 +20,45 @@
 /* ---------- Banner ---------- */
 /* רקע נקי בגוון טורקיז בהיר של הפלטה — אפקט בסגנון הכחול של תדהר.
    מעט עמוק יותר מ-primary-100 כדי שהקוביות האפורות יבלטו עליו. */
+/* ===== סרגל פירורי לחם — רקע תכלת בהיר, סגנון נקי עם לוכסנים ===== */
+.pd-crumbbar {
+  background: linear-gradient(180deg, #e9f1f4, #dfe9ed);
+}
+.pd-crumbbar .breadcrumbs { padding-block: 1.1rem; }
+.pd-crumbbar .breadcrumbs ol { font-size: 0.95rem; }
+/* מפריד "/" במקום נקודה */
+.pd-crumbbar .breadcrumbs__item:not(:last-child)::after {
+  content: '/';
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
+  color: var(--color-text-soft);
+  font-weight: 400;
+  opacity: 0.55;
+}
+/* קישור הבית — טקסט רגיל, בלי גלולה/חץ */
+.pd-crumbbar .breadcrumbs__link--back {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: var(--color-text-soft);
+  font-weight: 600;
+  transform: none;
+}
+.pd-crumbbar .breadcrumbs__link--back:hover {
+  background: none;
+  color: var(--color-accent);
+  transform: none;
+}
+.pd-crumbbar .breadcrumbs__back-ic { display: none; }
+/* הפריט הנוכחי (האחרון) — מודגש כהה */
+.pd-crumbbar .breadcrumbs__current {
+  color: var(--color-primary-900);
+  font-weight: 800;
+}
+
 .pd-banner {
   padding-top: 1.5rem;
   background: #dfe9ed;

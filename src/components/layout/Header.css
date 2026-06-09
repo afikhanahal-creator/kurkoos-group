@@ -52,8 +52,8 @@
     transition: background var(--dur-fast), transform var(--dur-fast);
   }
   .header__bb-menu.is-open .header__bb-menu-circle { background: var(--color-accent-500); transform: rotate(90deg); }
-  /* מרווח כדי שהתוכן לא ייחתך מאחורי הבר */
-  body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
+  /* מרווח כדי שהתוכן/תמונות לא ייחתכו מאחורי הבר — רק כשהבר מוצג בפועל */
+  body.has-bottombar { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
   /* תפריט המובייל — מרווח תחתון שלא ייחתך מאחורי הבר */
   .header__mobile-inner { padding-block-end: 88px; }
 }

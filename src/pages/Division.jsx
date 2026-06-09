@@ -136,6 +136,8 @@ export default function Division() {
       {/* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */}
       <ProjectsGallery items={list} showFooter={false} />
 
+      <Testimonials />
+
       {/* מדריך */}
       <section className="section division-guide">
         <div className="container">
@@ -153,7 +155,6 @@ export default function Division() {
         </div>
       </section>
 
-      <Testimonials />
       <Contact />
     </article>
   )

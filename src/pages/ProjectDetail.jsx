@@ -267,7 +267,7 @@ export default function ProjectDetail() {
             {/* תוכן */}
             <div className="pd-banner__content">
               <span className="pd-banner__location">
-                <Icon name="location" size={16} /> {L(project.city)}
+                {L(project.city)}
               </span>
               <span className="pd-banner__rule" aria-hidden="true" />
               <h1 className="pd-banner__name">{L(project.name)}</h1>

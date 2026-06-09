@@ -971,8 +971,8 @@
 
 /* ---------- כפתורים מוקטנים במובייל (חיסכון מקום) ---------- */
 @media (max-width: 600px) {
-  /* גובה מפה מוקצר 50% */
-  .pd-map { height: 230px; }
+  /* גובה המפה במובייל — מוגדל לבקשת המשתמש (היה 230px) */
+  .pd-map { height: 330px; }
   .project-detail .btn {
     min-height: 34px;
     padding: 0.4em 0.95em;

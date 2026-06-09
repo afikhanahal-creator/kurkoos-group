@@ -955,3 +955,9 @@
 .pd-unit__specs { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; color: var(--color-text-soft); font-size: 0.88rem; font-family: var(--font-heading); }
 .pd-unit__desc { color: var(--color-text-soft); font-size: 0.9rem; line-height: 1.5; }
 .pd-unit__price { font-family: var(--font-heading); font-weight: 800; color: var(--color-secondary); font-size: 1.05rem; }
+
+/* מובייל — הגדלת ה-eyebrow והכותרות (כל זוגות "על הפרויקט / כותרת") ב-2px */
+@media (max-width: 768px) {
+  .project-detail .eyebrow { font-size: calc(var(--fs-eyebrow) + 2px); }
+  .project-detail .section-title { font-size: calc(var(--fs-h2) + 2px); }
+}

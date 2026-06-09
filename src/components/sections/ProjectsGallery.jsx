@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
@@ -119,8 +119,65 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const L = useLocalized()
   const isMobile = useIsMobile()
   const [selected, setSelected] = useState(null)
+  const viewportRef = useRef(null)
+  const pausedRef = useRef(false)
+  const resumeRef = useRef(null)
 
   const items = itemsProp && itemsProp.length ? itemsProp : projects.slice(0, FEATURED)
+  // במובייל משכפלים את הפריטים → לולאה אינסופית חלקה (בלי חזרה להתחלה)
+  const renderItems = isMobile ? [...items, ...items] : items
+
+  /* קרוסלה חכמה (מובייל): קופצת כרטיס ימינה כל 2 שניות, נגלשת native
+     (חלק), נעצרת בנגיעה, ומתאפסת בצורה בלתי-נראית בגבול הסט → ריצה
+     אינסופית רציפה בלי "קפיצה" להתחלה. */
+  useEffect(() => {
+    if (!isMobile) return
+    const el = viewportRef.current
+    if (!el) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const track = el.querySelector('.projects-gallery__track')
+    const card = el.querySelector('.pg-card')
+    if (!track || !card) return
+
+    const cs = getComputedStyle(track)
+    const gap = parseFloat(cs.columnGap || cs.gap) || 20
+    const step = card.getBoundingClientRect().width + gap
+    const setWidth = items.length * step               // רוחב סט יחיד (לפני השכפול)
+    const sign = getComputedStyle(el).direction === 'rtl' ? -1 : 1
+
+    // איפוס בלתי-נראה בגבול: קופצים סט שלם אחורה/קדימה (תוכן זהה → חלק)
+    const onScroll = () => {
+      const x = el.scrollLeft
+      if (x >= setWidth) el.scrollLeft = x - setWidth
+      else if (x <= -setWidth) el.scrollLeft = x + setWidth
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+
+    // עצירה בעת אינטראקציה, חידוש אחרי 2.5 שניות
+    const pause = () => {
+      pausedRef.current = true
+      clearTimeout(resumeRef.current)
+      resumeRef.current = setTimeout(() => { pausedRef.current = false }, 2500)
+    }
+    el.addEventListener('pointerdown', pause)
+    el.addEventListener('touchstart', pause, { passive: true })
+    el.addEventListener('wheel', pause, { passive: true })
+
+    const timer = setInterval(() => {
+      if (pausedRef.current) return
+      el.scrollBy({ left: sign * step, behavior: 'smooth' })   // קפיצה חלקה של כרטיס
+    }, 2000)
+
+    return () => {
+      clearInterval(timer)
+      clearTimeout(resumeRef.current)
+      el.removeEventListener('scroll', onScroll)
+      el.removeEventListener('pointerdown', pause)
+      el.removeEventListener('touchstart', pause)
+      el.removeEventListener('wheel', pause)
+    }
+  }, [isMobile, items.length])
 
   return (
     <section className="section section--soft projects-gallery" id={sectionId || undefined}>
@@ -131,7 +188,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
         </Reveal>
       </div>
 
-      <div className="projects-gallery__viewport">
+      <div className="projects-gallery__viewport" ref={viewportRef}>
         <motion.div
           className="projects-gallery__track"
           variants={containerVariants}
@@ -139,7 +196,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           whileInView="visible"
           viewport={{ once: true, amount: 'some' }}
         >
-          {items.map((p, i) => (
+          {renderItems.map((p, i) => (
             <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} onSelect={setSelected} isMobile={isMobile} />
           ))}
         </motion.div>

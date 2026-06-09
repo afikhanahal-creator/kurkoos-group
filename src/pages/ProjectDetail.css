@@ -282,7 +282,7 @@
 /* ---------- Map ---------- */
 .pd-map {
   position: relative;
-  height: 552px;                /* +20% גובה */
+  height: 662px;                /* מובייל — +20% נוספים בגובה */
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);

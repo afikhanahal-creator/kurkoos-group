@@ -1,5 +1,5 @@
 .partners {
-  padding-block: var(--space-16);
+  padding-block: clamp(2.25rem, 5vw, 3.5rem);   /* תואם לרִיתמוס המצומצם של שאר המקטעים */
   background: #fff;
   border-block: 1px solid var(--color-border);
   overflow: hidden;

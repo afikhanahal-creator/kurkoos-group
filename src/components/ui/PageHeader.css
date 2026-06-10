@@ -3,7 +3,7 @@
     radial-gradient(120% 120% at 100% 0%, rgba(16, 85, 114, 0.45), transparent 55%),
     var(--color-bg-dark);
   color: #fff;
-  padding-block: clamp(2.75rem, 6vw, 5rem);
+  padding-block: clamp(2.25rem, 5vw, 4.25rem);
   position: relative;
   overflow: hidden;
 }

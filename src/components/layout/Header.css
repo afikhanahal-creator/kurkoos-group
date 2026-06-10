@@ -374,6 +374,10 @@
   padding: 0.72em 1.95em;
   border-radius: var(--radius-pill);
 }
+/* CTA בתפריט הכהה — נשאר אדום מלא ובולט (לא מתאר, שלא ייעלם על הרקע הכהה) */
+.header__mobile-cta.btn--primary { background: var(--color-accent-500); color: #fff; border-color: var(--color-accent-500); }
+.header__mobile-cta.btn--primary:hover:not(:disabled),
+.header__mobile-cta.btn--primary:active { background: var(--color-accent-600); color: #fff; border-color: var(--color-accent-600); }
 /* החלפת שפה (EN) — שורה קטנה בראש התפריט, צמודה לשמאל */
 .header__mobile-top { display: flex; justify-content: flex-end; margin-bottom: 0.3rem; }
 .header__mobile-lang {

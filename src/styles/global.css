@@ -247,13 +247,7 @@ p, .section-lead { text-wrap: pretty; }
 /* אייקונים בתוך כפתורים — גודל ויישור אחידים (תומך גם ב-data-icon) */
 .btn svg,
 .btn [data-icon] { width: 1.15em; height: 1.15em; flex-shrink: 0; }
-/* לחיצה — "שקיעה" טקטילית: מתכווץ, יורד מעט, מתכהה וצל פנימי (כמו תדהר) */
-.btn:active {
-  transform: scale(0.95) translateY(1px);
-  filter: brightness(0.92);
-  box-shadow: inset 0 3px 9px rgba(7, 41, 58, 0.28);
-  transition-duration: 0.05s;   /* הלחיצה מיידית; השחרור חוזר חלק */
-}
+.btn:active { transform: scale(0.98); }
 .btn:focus-visible {
   outline: 3px solid var(--color-primary-500);
   outline-offset: 2px;
@@ -278,7 +272,7 @@ button:not(.btn) {
     filter var(--dur-base) var(--ease-out);
 }
 button:not(.btn):not(:disabled):hover { filter: brightness(0.97); }
-button:not(.btn):not(:disabled):active { transform: scale(0.9); filter: brightness(0.9); transition-duration: 0.05s; }
+button:not(.btn):not(:disabled):active { transform: scale(0.94); }
 button:disabled { cursor: not-allowed; }
 
 /* ---------- Ripple (אדווה) בלחיצה — מוזרק ע"י src/lib/ripple.js ---------- */
@@ -300,30 +294,39 @@ button:disabled { cursor: not-allowed; }
 }
 
 /* ראשי — אדום המותג, מילוי עשיר עם צל מותג-tinted */
+/* אפקט תדהר: מתאר במנוחה → מתמלא בצבע מלא + טקסט לבן בריחוף/לחיצה */
 .btn--primary {
-  background: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600));
+  background: transparent;
+  color: var(--color-accent-500);
+  border-color: var(--color-accent-500);
+  box-shadow: none;
+}
+.btn--primary:hover:not(:disabled),
+.btn--primary:active {
+  background: var(--color-accent-500);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(169, 11, 12, 0.28);
+  border-color: var(--color-accent-500);
+  box-shadow: 0 6px 18px rgba(169, 11, 12, 0.3);
+  transform: scale(0.98);
 }
-.btn--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--color-accent-600), var(--color-accent-600));
-  box-shadow: 0 8px 22px rgba(169, 11, 12, 0.38);
-  transform: translateY(-2px);
-}
-.btn--primary:active { transform: translateY(0) scale(0.98); }
+.btn--primary:hover:not(:disabled) { transform: none; }
 
-/* כהה — נייבי→טורקיז */
+/* כהה — מתאר נייבי שמתמלא */
 .btn--dark {
-  background: linear-gradient(135deg, var(--color-primary-900), var(--color-primary-700));
+  background: transparent;
+  color: var(--color-primary-900);
+  border-color: var(--color-primary-900);
+  box-shadow: none;
+}
+.btn--dark:hover:not(:disabled),
+.btn--dark:active {
+  background: var(--color-primary-900);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(7, 41, 58, 0.28);
+  border-color: var(--color-primary-900);
+  box-shadow: 0 6px 18px rgba(7, 41, 58, 0.32);
+  transform: scale(0.98);
 }
-.btn--dark:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--color-primary-700), var(--color-primary-500));
-  box-shadow: 0 8px 22px rgba(7, 41, 58, 0.4);
-  transform: translateY(-2px);
-}
-.btn--dark:active { transform: translateY(0) scale(0.98); }
+.btn--dark:hover:not(:disabled) { transform: none; }
 
 /* משני — נקי, גוון טורקיז רך (כמו secondary במקור) */
 .btn--secondary {

@@ -183,7 +183,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.pd-stat__label { font-size: 0.82rem; font-weight: 500; line-height: 1; color: var(--color-secondary); margin-top: 0.08rem; }
+.pd-stat__label { font-size: 0.9rem; font-weight: 500; line-height: 1; color: #647c8c; margin-top: 0.1rem; }
 
 /* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
 .pd-banner__stats--small .pd-stat { min-height: 64px; padding: 0.5rem 0.85rem; }
@@ -954,7 +954,7 @@
   }
   .pd-stat__value { font-size: 2.05rem; }
   .pd-stat__value--sm { font-size: 1.05rem; line-height: 1.05; }
-  .pd-stat__label { font-size: 0.86rem; }
+  .pd-stat__label { font-size: 0.94rem; }
 }
 /* טלפונים צרים — מקטינים מעט את הרוחב המינימלי כדי שיישבו 3 בשורה יפה (לא ענקיים מדי) */
 @media (max-width: 430px) {
@@ -966,7 +966,7 @@
   }
   .pd-stat__value { font-size: 1.85rem; }
   .pd-stat__value--sm { font-size: 0.98rem; }
-  .pd-stat__label { font-size: 0.8rem; }
+  .pd-stat__label { font-size: 0.9rem; }
 }
 @media (max-width: 520px) {
   /* טופס לתיאום פגישה — קומפקטי ונוח לאצבע בטלפון */

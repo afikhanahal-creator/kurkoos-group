@@ -78,6 +78,9 @@
   background:
     radial-gradient(120% 90% at 88% 0%, rgba(16, 85, 114, 0.20), transparent 58%),
     linear-gradient(180deg, #cfe0e8 0%, #dfe9ed 42%);
+  /* סיומת "כרטיסיה" — פינות תחתונות עגולות על רקע העמוד (כמו תדהר) */
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
 }
 .pd-banner__grid {
   display: grid;

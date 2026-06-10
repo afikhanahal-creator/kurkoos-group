@@ -62,9 +62,13 @@ export async function listProjects({ includeArchived = false } = {}) {
 }
 
 export async function getProjectBySlug(slug) {
+  // קודם לפי slug; אם לפרויקט אין slug — מנסים לפי id (כך שהעמוד ייפתח תמיד)
   const { data, error } = await supabase.from('projects').select('*').eq('slug', slug).maybeSingle()
   if (error) throw error
-  return data
+  if (data) return data
+  const byId = await supabase.from('projects').select('*').eq('id', slug).maybeSingle()
+  if (!byId.error && byId.data) return byId.data
+  return null
 }
 
 // פרויקטים מפורסמים המשויכים לעמוד יעד מסוים
@@ -79,7 +83,7 @@ export async function listProjectsByPage(page, { includeArchived = false } = {})
 // ממיר שורת CMS למבנה שכרטיס הפרויקט הציבורי מצפה לו
 export function cmsRowToCard(p) {
   return {
-    slug: p.slug,
+    slug: p.slug || p.id,   // אם אין slug — נופלים ל-id כדי שהקישור לעמוד הפרויקט יעבוד
     name: p.name,
     city: p.location,
     type: p.subtitle,

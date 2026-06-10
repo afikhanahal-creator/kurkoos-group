@@ -27,7 +27,7 @@ export default function Projects() {
           // אם יש פרויקטים שתויגו "פרויקטים נבחרים" — מציגים אותם; אחרת את כולם
           const featured = rows.filter((p) => Array.isArray(p.pages) && p.pages.includes('featured'))
           const use = featured.length ? featured : rows
-          setProjects(use.map((p) => ({ name: p.name, slug: p.slug, cover: p.hero_image_url || (p.gallery && p.gallery[0]), gallery: p.gallery || [], card_layout: p.card_layout })))
+          setProjects(use.map((p) => ({ name: p.name, slug: p.slug || p.id, cover: p.hero_image_url || (p.gallery && p.gallery[0]), gallery: p.gallery || [], card_layout: p.card_layout })))
         }
       })
       .catch(() => {})

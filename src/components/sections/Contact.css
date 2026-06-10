@@ -188,8 +188,7 @@
 }
 
 @media (max-width: 560px) {
-  /* צמצום ריווח הצדדים של הסקשן → הטופס מנצל יותר מרוחב המסך */
-  .contact__inner { padding-inline: 0.9rem; }
+  /* שולי הצד אחידים עם שאר האתר (var(--container-pad)) — בלי override נפרד */
   .contact__panel { padding: 1.4rem 1.15rem; border-radius: var(--radius-md); }
   .contact__panel .contact__eyebrow { font-size: 0.95rem; margin-bottom: 0.6rem; }
   .contact__title { font-size: 1.5rem; margin: 0.2rem 0 0.5rem; }

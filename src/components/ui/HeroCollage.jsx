@@ -1,6 +1,22 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icon.jsx'
+import useCountUp from '../../hooks/useCountUp.js'
 import './HeroCollage.css'
+
+/* מספר שסופר מ-0 ליעד כשנכנס לתצוגה — שומר על קידומת/סיומת (כמו "+" או "K").
+   value הוא מחרוזת מוכנה (למשל "3200+"); מחלצים את החלק המספרי ומנפישים אותו. */
+function StatValue({ value }) {
+  const str = String(value ?? '')
+  const m = str.match(/[\d,.]+/)
+  const target = m ? Number(m[0].replace(/[^\d.]/g, '')) : NaN
+  const [n, ref] = useCountUp(Number.isNaN(target) ? 0 : target)
+  if (!m || Number.isNaN(target)) return <span ref={ref}>{str}</span>
+  return (
+    <span ref={ref}>
+      {str.slice(0, m.index)}{n.toLocaleString('en-US')}{str.slice(m.index + m[0].length)}
+    </span>
+  )
+}
 
 /* ============================================================
    HeroCollage — גלריית "בנטו": כרטיסים לאורך + כרטיסים רחבים (לרוחב),
@@ -51,7 +67,7 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
         <div className="container hero-collage__stats">
           {stats.map((s, i) => (
             <div key={i} className="hc-stat">
-              <p className="hc-stat__v">{s.value}</p>
+              <p className="hc-stat__v"><StatValue value={s.value} /></p>
               <p className="hc-stat__l">{s.label}</p>
             </div>
           ))}

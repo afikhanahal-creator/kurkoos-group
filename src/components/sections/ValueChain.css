@@ -69,7 +69,7 @@
   font-family: var(--font-heading);
   font-weight: 900;
   font-size: 1.1rem;
-  color: var(--color-accent);
+  color: var(--color-primary-900);
   flex-shrink: 0;
 }
 .vc-item__titles {
@@ -85,8 +85,8 @@
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-accent);
-  opacity: 0.85;
+  color: var(--color-primary-900);
+  opacity: 0.6;
 }
 .vc-item__title {
   font-family: var(--font-heading);
@@ -101,7 +101,7 @@
   transition: transform var(--dur-base) var(--ease-out), color var(--dur-base);
   flex-shrink: 0;
 }
-.vc-item--open .vc-item__chevron { transform: rotate(180deg); color: var(--color-accent); }
+.vc-item--open .vc-item__chevron { transform: rotate(180deg); color: var(--color-secondary); }
 
 .vc-item__panel { overflow: hidden; }
 .vc-item__panel p {

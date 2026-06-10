@@ -44,7 +44,7 @@
   color: var(--color-secondary);
 }
 .stat__suffix {
-  color: var(--color-accent);
+  color: var(--color-secondary);
   font-size: 0.7em;
   font-weight: 800;
   margin-inline-start: 3px;

@@ -8,7 +8,7 @@
 
 .logo-carousel__col {
   position: relative;
-  height: 70px;
+  height: 84px;                        /* מרווח אנכי לזום פר-לוגו בלי חיתוך */
   width: clamp(150px, 28vw, 270px);   /* רחב מספיק כדי שגם לוגו עם כיתוב יישאר בגובה האחיד */
   overflow: hidden;
   transform-style: preserve-3d;

@@ -196,8 +196,9 @@ export async function deleteLogo(id, imageUrl) {
 // יצירת ליד — נקראת גם מטפסי האתר (אנונימי, RLS מתיר insert לכולם)
 export async function createLead(row) {
   if (!supabase) return
-  const { error } = await supabase.from('leads').insert(row)
+  const { data, error } = await supabase.from('leads').insert(row).select().single()
   if (error) throw error
+  return data
 }
 export async function listLeads() {
   const { data, error } = await supabase.from('leads').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false })

@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy, rectSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
 /* ============================================================
-   StatCubesField — עורך קוביות נתונים (drag & drop) למערכת ה-CMS.
+   StatCubesField — עורך קוביות נתונים למערכת ה-CMS.
    כל קוביה: value (ערך) · label דו-לשוני · size (גודל/מראה).
-   גרירה לסידור · הוספה/הסרה · עריכה חיה. value="" + label="" → לא יוצג.
+   • תצוגה חיה שניתן לגרור בה את הקוביות לרוחב (אחת אחרי השנייה),
+     בדיוק כפי שיופיעו בבאנר — עם מתג דסקטופ/מובייל.
+   • שורות עריכה למטה (טקסט/גודל/מחיקה) עם גרירה אנכית.
+   value="" + label="" → לא יוצג.
    ============================================================ */
 
 const SIZES = [
@@ -25,6 +29,31 @@ const DragIcon = (p) => (
 const XIcon = (p) => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>
 )
+
+/* קוביה בתצוגה החיה — היא עצמה ידית הגרירה (גוררים את מה שרואים) */
+function PvCube({ id, cube }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const size = cube.size || 'md'
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.55 : 1,
+    zIndex: isDragging ? 5 : 'auto',
+  }
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`cubed__pv cubed__pv--${size} ${isDragging ? 'cubed__pv--drag' : ''}`}
+      {...attributes}
+      {...listeners}
+      title="גררו לסידור"
+    >
+      <span className="cubed__pv-val" dir={size === 'wide' ? 'auto' : 'ltr'}>{cube.value || '—'}</span>
+      <span className="cubed__pv-lbl">{cube.label?.he || ''}</span>
+    </div>
+  )
+}
 
 function CubeRow({ id, cube, onChange, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
@@ -70,6 +99,7 @@ function CubeRow({ id, cube, onChange, onDelete }) {
 
 export default function StatCubesField({ value, onChange }) {
   const cubes = Array.isArray(value) ? value : []
+  const [device, setDevice] = useState('desktop')
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -88,18 +118,29 @@ export default function StatCubesField({ value, onChange }) {
 
   return (
     <div className="cubed">
-      <div className="cubed__preview" dir="rtl" aria-label="תצוגה חיה">
-        {cubes.length === 0 ? (
-          <span className="cubed__preview-empty">תצוגה חיה — הוסיפו קוביה כדי לראות אותה כאן בדיוק כפי שתופיע בבאנר הפרויקט</span>
-        ) : (
-          cubes.map((c, i) => (
-            <div key={i} className={`cubed__pv cubed__pv--${c.size || 'md'}`}>
-              <span className="cubed__pv-val" dir={c.size === 'wide' ? 'auto' : 'ltr'}>{c.value || '—'}</span>
-              <span className="cubed__pv-lbl">{c.label?.he || ''}</span>
-            </div>
-          ))
-        )}
+      {/* ===== תצוגה חיה הניתנת לגרירה ===== */}
+      <div className="cubed__pvbar">
+        <span className="cubed__pvbar-title">תצוגה חיה — גררו את הקוביות לסידור</span>
+        <div className="cubed__devtoggle" role="group" aria-label="תצוגת מכשיר">
+          <button type="button" className={device === 'desktop' ? 'is-active' : ''} onClick={() => setDevice('desktop')}>דסקטופ</button>
+          <button type="button" className={device === 'mobile' ? 'is-active' : ''} onClick={() => setDevice('mobile')}>מובייל</button>
+        </div>
       </div>
+      <div className={`cubed__preview-wrap cubed__preview-wrap--${device}`}>
+        <div className="cubed__preview" dir="rtl" aria-label="תצוגה חיה">
+          {cubes.length === 0 ? (
+            <span className="cubed__preview-empty">תצוגה חיה — הוסיפו קוביה כדי לראות אותה כאן בדיוק כפי שתופיע בבאנר הפרויקט. גררו את הקוביות לסידור.</span>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext items={ids} strategy={rectSortingStrategy}>
+                {cubes.map((cube, i) => <PvCube key={ids[i]} id={ids[i]} cube={cube} />)}
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+      </div>
+
+      {/* ===== שורות עריכה ===== */}
       {cubes.length === 0 && (
         <p className="cubed__empty">אין קוביות מותאמות — מוצגות קוביות ברירת המחדל (בניינים/דיור/קומות/אדריכלים/סטטוס). הוסיפו קוביה כדי לשלוט במלל, בגודל ובסדר.</p>
       )}

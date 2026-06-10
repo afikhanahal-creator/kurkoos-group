@@ -700,6 +700,45 @@
 .adm-leads__chk input { width: 17px; height: 17px; accent-color: #2e9e6b; }
 .adm-leads__modal-foot { display: flex; justify-content: flex-start; gap: 0.6rem; margin-top: 0.3rem; }
 
+/* ===== פאנל ליד בסגנון מאנדיי (drawer מימין, שמירה אוטומטית) ===== */
+.adm-leads__modal { justify-items: end; }   /* הפאנל נצמד לקצה */
+.adm-leads__panel {
+  width: 100%; max-width: 30rem; height: 100%; max-height: 100vh;
+  background: var(--adm-surface); box-shadow: var(--adm-shadow-lg);
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: adm-panel-in .22s var(--ease-out, ease);
+}
+@keyframes adm-panel-in { from { transform: translateX(-6%); opacity: 0; } to { transform: none; opacity: 1; } }
+.adm-leads__panel-head {
+  display: flex; align-items: center; gap: 0.7rem; padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--adm-border); border-top: 4px solid var(--stage, #16688c);
+}
+.adm-leads__panel-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--stage, #16688c); flex-shrink: 0; }
+.adm-leads__panel-titles { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+.adm-leads__panel-name {
+  font-family: var(--font-heading); font-weight: 800; font-size: 1.15rem; color: var(--adm-ink);
+  border: 0; background: transparent; padding: 0.1rem 0; border-bottom: 1.5px solid transparent; width: 100%;
+}
+.adm-leads__panel-name:focus { outline: none; border-bottom-color: #16688c; }
+.adm-leads__panel-status { font-size: 0.74rem; font-weight: 700; font-family: var(--font-heading); }
+.adm-leads__panel-status--saved { color: #2e9e6b; }
+.adm-leads__panel-status--dirty, .adm-leads__panel-status--saving { color: #e0a106; }
+.adm-leads__panel-status--error { color: #d64545; }
+.adm-leads__panel-close { width: 32px; height: 32px; border: 0; background: var(--adm-bg); border-radius: 9px; cursor: pointer; font-size: 0.95rem; color: var(--adm-muted); flex-shrink: 0; }
+.adm-leads__panel-close:hover { background: #ffe7e7; color: #d64545; }
+.adm-leads__panel-body { flex: 1; overflow: auto; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.adm-leads__panel label, .adm-leads__field-wide { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.82rem; font-weight: 600; color: var(--adm-ink); }
+.adm-leads__panel input, .adm-leads__panel select, .adm-leads__panel textarea {
+  padding: 0.55rem 0.7rem; border: 1.5px solid var(--adm-border); border-radius: 9px; background: var(--adm-surface); font-size: 0.92rem; font-weight: 400; color: var(--adm-ink); font-family: var(--font-body);
+}
+.adm-leads__panel .adm-leads__panel-name { padding: 0.1rem 0; border-radius: 0; }
+.adm-leads__panel input:focus, .adm-leads__panel select:focus, .adm-leads__panel textarea:focus { outline: none; border-color: #16688c; box-shadow: var(--adm-ring); }
+.adm-leads__panel-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.9rem 1.2rem; border-top: 1px solid var(--adm-border); background: var(--adm-bg); }
+.adm-leads__panel-hint { font-size: 0.78rem; color: var(--adm-muted); }
+
+/* סרגל עליון — נצמד לראש בעת גלילה (סגנון מאנדיי) */
+.adm-leads__bar--top { position: sticky; top: 0; z-index: 30; }
+
 /* רספונסיבי — עמודות נערמות במובייל */
 @media (max-width: 720px) {
   .adm-leads__board { flex-direction: column; overflow-x: visible; }
@@ -840,17 +879,38 @@
 .cubed__add:hover { background: var(--color-primary-300); color: #fff; }
 
 /* ===== תצוגה חיה של הקוביות (כפי שיופיעו בבאנר) ===== */
-.cubed__preview {
-  display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.4rem;
-  background: #07293a; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.3rem;
+.cubed__pvbar { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.45rem; }
+.cubed__pvbar-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.84rem; color: var(--adm-muted); }
+.cubed__devtoggle { display: inline-flex; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 999px; padding: 2px; }
+.cubed__devtoggle button {
+  border: 0; background: 0; cursor: pointer; font-family: var(--font-heading); font-weight: 700;
+  font-size: 0.78rem; color: var(--adm-muted); padding: 0.32rem 0.85rem; border-radius: 999px;
+  transition: background var(--dur-fast), color var(--dur-fast);
 }
-.cubed__preview-empty { color: rgba(255,255,255,0.6); font-size: 0.82rem; line-height: 1.5; }
+.cubed__devtoggle button.is-active { background: var(--color-primary-900); color: #fff; }
+/* מעטפת — במצב מובייל מצמצמת את הרוחב כדי להדגים גלישת קוביות בנייד */
+.cubed__preview-wrap { margin-bottom: 0.55rem; transition: max-width var(--dur-base) var(--ease-out); }
+.cubed__preview-wrap--desktop { max-width: 100%; }
+.cubed__preview-wrap--mobile {
+  max-width: 390px; margin-inline: auto;
+  border: 1px solid var(--adm-border); border-radius: 22px; padding: 6px;
+  background: repeating-linear-gradient(45deg, #f2f5f7, #f2f5f7 6px, #eef2f4 6px, #eef2f4 12px);
+}
+.cubed__preview {
+  display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center; gap: 0.4rem;
+  background: #07293a; border-radius: 12px; padding: 0.9rem 1rem; min-height: 56px;
+}
+.cubed__preview-empty { color: rgba(255,255,255,0.6); font-size: 0.82rem; line-height: 1.5; align-self: center; }
 .cubed__pv {
   flex: 0 0 auto; display: flex; flex-direction: column;
   align-items: center; justify-content: center; text-align: center;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px; padding: 0.4rem 1.1rem;
+  cursor: grab; touch-action: none; user-select: none;
+  transition: box-shadow var(--dur-fast), border-color var(--dur-fast);
 }
+.cubed__pv:hover { border-color: rgba(255,255,255,0.28); }
+.cubed__pv:active, .cubed__pv--drag { cursor: grabbing; box-shadow: 0 10px 24px -8px rgba(0,0,0,0.5); }
 .cubed__pv-val {
   font-family: var(--font-heading); font-weight: 900; color: #fff;
   line-height: 0.92; letter-spacing: -0.03em;

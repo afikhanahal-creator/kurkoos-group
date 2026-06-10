@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
 
 /* ============================================================
@@ -128,6 +128,19 @@ export default function LeadsTab() {
     } catch (e) { setErr(e.message) }
   }
 
+  // שמירה אוטומטית של ליד קיים (ללא סגירת החלון) — סגנון מאנדיי
+  const autoSave = async (data) => {
+    if (!data.id) return
+    patchLocal(data.id, data)
+    await updateLead(data.id, data)
+  }
+  // יצירת ליד חדש "תוך כדי" — מחזיר את הרשומה החדשה כדי שהחלון ימשיך לערוך אותה
+  const createNow = async (data) => {
+    const created = await createLead({ ...data, source: data.source || 'manual' })
+    setLeads((ls) => [created, ...ls])
+    return created
+  }
+
   // שינוי סדר ברשימה (גרירה) — מעדכן sort_order לכל הלידים
   const reorder = async (sourceId, targetId) => {
     if (sourceId === targetId) return
@@ -147,11 +160,8 @@ export default function LeadsTab() {
 
   return (
     <div className="adm-leads" dir="rtl">
-      {/* ===== דשבורד ===== */}
-      {!tableMissing && <Dashboard leads={leads} />}
-
-      {/* ===== סרגל כלים — יושב ישירות מעל הלידים ===== */}
-      <div className="adm-leads__bar">
+      {/* ===== סרגל כלים — צמוד לראש המסך, מעל הדשבורד ופרטי הלידים ===== */}
+      <div className="adm-leads__bar adm-leads__bar--top">
         <div className="adm-leads__bar-group">
           <span className="adm-leads__count"><b>{filtered.length}</b> לידים</span>
           <span className="adm-leads__views-label">תצוגה</span>
@@ -174,6 +184,9 @@ export default function LeadsTab() {
           <button type="button" className="adm-leads__btn adm-leads__btn--primary" onClick={() => setEditing(blankLead())}>＋ ליד חדש</button>
         </div>
       </div>
+
+      {/* ===== דשבורד ===== */}
+      {!tableMissing && <Dashboard leads={leads} />}
 
       {tableMissing && (
         <div className="adm-leads__setup">
@@ -201,7 +214,7 @@ export default function LeadsTab() {
         </>
       )}
 
-      {editing && <LeadEditor lead={editing} onClose={() => setEditing(null)} onSave={save} />}
+      {editing && <LeadEditor lead={editing} onClose={() => setEditing(null)} onAutoSave={autoSave} onCreate={createNow} />}
     </div>
   )
 }
@@ -402,33 +415,83 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing }) {
   )
 }
 
-/* ============================ מודאל עריכה/הוספה ============================ */
-function LeadEditor({ lead, onClose, onSave }) {
+/* ============================ פאנל עריכה/הוספה (סגנון מאנדיי, שמירה אוטומטית) ============================ */
+function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
   const [f, setF] = useState(lead)
-  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
+  const [status, setStatus] = useState('saved') // saved | dirty | saving | error
+  const timer = useRef()
+  const fRef = useRef(f)
+  fRef.current = f
+
+  // שמירה (debounce). ליד חדש → נוצר אוטומטית ברגע שיש שם או טלפון, ואז ממשיך לעדכן.
+  const persist = useCallback(async () => {
+    const data = fRef.current
+    const hasContent = (data.name || '').trim() || (data.phone || '').trim() || (data.email || '').trim()
+    setStatus('saving')
+    try {
+      if (!data.id) {
+        if (!hasContent) { setStatus('saved'); return }
+        const created = await onCreate(data)
+        setF((p) => ({ ...p, id: created.id, created_at: created.created_at }))
+      } else {
+        await onAutoSave(data)
+      }
+      setStatus('saved')
+    } catch (e) { console.error(e); setStatus('error') }
+  }, [onAutoSave, onCreate])
+
+  const schedule = useCallback(() => {
+    setStatus('dirty')
+    clearTimeout(timer.current)
+    timer.current = setTimeout(persist, 700)
+  }, [persist])
+
+  const set = (k) => (e) => {
+    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    setF((p) => ({ ...p, [k]: val }))
+    schedule()
+  }
+
+  // יציאה = ודא ששמרנו את השינוי האחרון
+  const close = async () => { clearTimeout(timer.current); if (status !== 'saved' && status !== 'saving') await persist(); onClose() }
+  useEffect(() => () => clearTimeout(timer.current), [])
+
+  const st = stageOf(f.status)
+  const STATUS_TXT = { saved: '✓ נשמר אוטומטית', dirty: 'שומר…', saving: 'שומר…', error: 'שגיאת שמירה' }
+
   return (
-    <div className="adm-leads__modal" onClick={onClose}>
-      <form className="adm-leads__modal-box" dir="rtl" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); onSave(f) }}>
-        <h3>{f.id ? 'עריכת ליד' : 'ליד חדש'}</h3>
-        <div className="adm-leads__grid">
-          <label>שם<input value={f.name || ''} onChange={set('name')} /></label>
-          <label>טלפון<input dir="ltr" value={f.phone || ''} onChange={set('phone')} /></label>
-          <label>אימייל<input dir="ltr" value={f.email || ''} onChange={set('email')} /></label>
-          <label>פרויקט<input value={f.project || ''} onChange={set('project')} /></label>
-          <label>שלב
-            <select value={f.status || 'new'} onChange={set('status')}>
-              {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
-          </label>
-          <label className="adm-leads__chk"><input type="checkbox" checked={!!f.contacted} onChange={set('contacted')} /> נוצר קשר</label>
+    <div className="adm-leads__modal" onClick={close}>
+      <div className="adm-leads__panel" dir="rtl" onClick={(e) => e.stopPropagation()}>
+        <header className="adm-leads__panel-head" style={{ '--stage': st.color }}>
+          <span className="adm-leads__panel-dot" />
+          <div className="adm-leads__panel-titles">
+            <input className="adm-leads__panel-name" placeholder="שם הליד" value={f.name || ''} onChange={set('name')} />
+            <span className={`adm-leads__panel-status adm-leads__panel-status--${status}`}>{STATUS_TXT[status]}</span>
+          </div>
+          <button type="button" className="adm-leads__panel-close" onClick={close} aria-label="סגירה ושמירה" title="סגירה ושמירה">✕</button>
+        </header>
+
+        <div className="adm-leads__panel-body">
+          <div className="adm-leads__grid">
+            <label>טלפון<input dir="ltr" value={f.phone || ''} onChange={set('phone')} /></label>
+            <label>אימייל<input dir="ltr" value={f.email || ''} onChange={set('email')} /></label>
+            <label>פרויקט<input value={f.project || ''} onChange={set('project')} /></label>
+            <label>שלב
+              <select value={f.status || 'new'} onChange={set('status')}>
+                {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+            </label>
+            <label className="adm-leads__chk"><input type="checkbox" checked={!!f.contacted} onChange={set('contacted')} /> נוצר קשר</label>
+          </div>
+          <label className="adm-leads__field-wide">הודעת הפונה<textarea rows={2} value={f.message || ''} onChange={set('message')} /></label>
+          <label className="adm-leads__field-wide">הערות פנימיות<textarea rows={3} value={f.notes || ''} onChange={set('notes')} /></label>
         </div>
-        <label>הודעת הפונה<textarea rows={2} value={f.message || ''} onChange={set('message')} /></label>
-        <label>הערות פנימיות<textarea rows={2} value={f.notes || ''} onChange={set('notes')} /></label>
-        <div className="adm-leads__modal-foot">
-          <button type="button" className="adm-leads__btn" onClick={onClose}>ביטול</button>
-          <button type="submit" className="adm-leads__btn adm-leads__btn--primary">שמירה</button>
-        </div>
-      </form>
+
+        <footer className="adm-leads__panel-foot">
+          <span className="adm-leads__panel-hint">השינויים נשמרים אוטומטית</span>
+          <button type="button" className="adm-leads__btn adm-leads__btn--primary" onClick={close}>סיום</button>
+        </footer>
+      </div>
     </div>
   )
 }

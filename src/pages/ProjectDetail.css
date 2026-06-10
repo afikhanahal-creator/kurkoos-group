@@ -996,12 +996,12 @@
 @media (max-width: 880px) {
   .pd-crumbbar { background: #fff; }
 }
-/* בר העוגנים במובייל — כל המקטעים בשורה נגללת; הפעיל נגלל לאזור הנראה */
+/* בר העוגנים במובייל — "הסביבה" ו"מפה" ממורכזים; המתאים מודגש בעת גלילה */
 @media (max-width: 880px) {
   .pd-anchors__inner {
-    justify-content: flex-start;
-    gap: 1.6rem;
-    overflow-x: auto;
+    justify-content: center;
+    gap: 2.4rem;
+    overflow-x: visible;
     padding-inline: var(--container-pad);
   }
   .pd-anchors__item {

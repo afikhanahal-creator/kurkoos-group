@@ -257,15 +257,10 @@ export default function ProjectDetail() {
   const developers = project.developers || []
   const moreProjects = projects.filter((p) => p.slug !== project.slug).slice(0, 3)
 
-  // עוגנים דינמיים — כל המקטעים שמוצגים; הפעיל מודגש בעת גלילה
+  // בר העוגנים — 2 פריטים בלבד: "הסביבה" ו"מפה". המתאים מודגש בעת גלילה.
   const anchors = [
-    show('project') && { id: 'project', label: { he: 'הפרויקט', en: 'Project' } },
     show('environment') && project.environment && { id: 'environment', label: { he: 'הסביבה', en: 'Environment' } },
     show('map') && { id: 'map', label: { he: 'מפה', en: 'Map' } },
-    show('plans') && planGroups.length && { id: 'plans', label: { he: 'תוכניות', en: 'Plans' } },
-    show('gallery') && { id: 'gallery', label: { he: 'גלריה', en: 'Gallery' } },
-    show('developers') && developers.length && { id: 'developers', label: { he: 'יזמים', en: 'Developers' } },
-    show('contact') && { id: 'contact', label: { he: 'לתיאום פגישה', en: 'Schedule' } },
   ].filter(Boolean)
 
   const goTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })

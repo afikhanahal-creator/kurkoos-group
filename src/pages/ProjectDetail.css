@@ -3,7 +3,9 @@
    Banner מפוצל · sticky anchors · split sections · מפה · גלריה · CTA.
    ============================================================ */
 
-.project-detail { overflow-x: hidden; }
+/* overflow-x: clip (ולא hidden) — מונע חריגה אופקית בלי להפוך את העמוד
+   ל-scroll-container, כך ש-position:sticky של בר העוגנים (הבאנר הצף) עובד. */
+.project-detail { overflow-x: clip; }
 .pd-anchor { scroll-margin-top: 140px; }
 
 /* מרווחים אנכיים הדוקים יותר בעמוד הפרויקט (בקשת המשתמש — פחות padding) */
@@ -136,7 +138,7 @@
   border: 0;
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(16, 85, 114, 0.05);  /* fallback — StatCube דורס בצל דינמי */
-  padding: 0.5rem 0.85rem;  /* הדוק — הכיתוב "נדחס" בקוביה */
+  padding: 0.45rem 0.75rem;  /* הדוק — הכיתוב צמוד לקוביה */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -181,7 +183,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.pd-stat__label { font-size: 0.7rem; font-weight: 700; line-height: 1; color: var(--color-text-soft); margin-top: 0.15rem; }
+.pd-stat__label { font-size: 0.82rem; font-weight: 500; line-height: 1; color: var(--color-secondary); margin-top: 0.08rem; }
 
 /* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
 .pd-banner__stats--small .pd-stat { min-height: 64px; padding: 0.5rem 0.85rem; }
@@ -952,7 +954,7 @@
   }
   .pd-stat__value { font-size: 2.05rem; }
   .pd-stat__value--sm { font-size: 1.05rem; line-height: 1.05; }
-  .pd-stat__label { font-size: 0.72rem; }
+  .pd-stat__label { font-size: 0.86rem; }
 }
 /* טלפונים צרים — מקטינים מעט את הרוחב המינימלי כדי שיישבו 3 בשורה יפה (לא ענקיים מדי) */
 @media (max-width: 430px) {
@@ -964,7 +966,7 @@
   }
   .pd-stat__value { font-size: 1.85rem; }
   .pd-stat__value--sm { font-size: 0.98rem; }
-  .pd-stat__label { font-size: 0.68rem; }
+  .pd-stat__label { font-size: 0.8rem; }
 }
 @media (max-width: 520px) {
   /* טופס לתיאום פגישה — קומפקטי ונוח לאצבע בטלפון */

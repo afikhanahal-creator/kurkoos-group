@@ -2,7 +2,15 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   listRecipients, createRecipient, updateRecipient, deleteRecipient,
   getNotifySettings, saveNotifySettings, sendTestNotification,
+  fetchSettings, setSetting,
 } from '../../lib/cms.js'
+
+const WD_LABELS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
+const DEFAULT_BOOKING = { start: '09:00', end: '18:00', step: 30, days: [0, 1, 2, 3, 4, 5] }
+function parseBooking(v) {
+  if (!v) return DEFAULT_BOOKING
+  try { const o = typeof v === 'string' ? JSON.parse(v) : v; return { ...DEFAULT_BOOKING, ...o } } catch { return DEFAULT_BOOKING }
+}
 
 /* ============================================================
    SettingsTab — הגדרות התראות מייל על לידים חדשים.
@@ -36,14 +44,17 @@ export default function SettingsTab() {
   const [status, setStatus] = useState('saved') // saved | saving | error
   const [testMsg, setTestMsg] = useState(null)   // { ok, text }
   const [testing, setTesting] = useState(false)
+  const [booking, setBooking] = useState(DEFAULT_BOOKING)
+  const [bookingStatus, setBookingStatus] = useState('saved')
   const timer = useRef()
 
   const load = () => {
     setLoading(true)
-    Promise.all([listRecipients(), getNotifySettings()])
-      .then(([recs, st]) => {
+    Promise.all([listRecipients(), getNotifySettings(), fetchSettings().catch(() => ({}))])
+      .then(([recs, st, site]) => {
         setRecipients(recs)
         setSettings(st || { enabled: true, subject: 'ליד חדש מהאתר: {{name}}', reply_to: '', include_fields: DEFAULT_FIELDS })
+        setBooking(parseBooking(site?.booking_hours))
         setErr('')
       })
       .catch((e) => {
@@ -98,6 +109,25 @@ export default function SettingsTab() {
   const removeRecipient = async (id) => {
     setRecipients((rs) => rs.filter((r) => r.id !== id))
     try { await deleteRecipient(id) } catch (e) { setErr(e.message); load() }
+  }
+
+  // שמירת שעות פנויות לשיחה (booking_hours) — debounce
+  const bookingTimer = useRef()
+  const patchBooking = (patch) => {
+    setBooking((b) => {
+      const next = { ...b, ...patch }
+      clearTimeout(bookingTimer.current)
+      setBookingStatus('saving')
+      bookingTimer.current = setTimeout(async () => {
+        try { await setSetting('booking_hours', JSON.stringify(next)); setBookingStatus('saved') }
+        catch (e) { setBookingStatus('error'); setErr(e.message) }
+      }, 500)
+      return next
+    })
+  }
+  const toggleDay = (d) => {
+    const days = booking.days.includes(d) ? booking.days.filter((x) => x !== d) : [...booking.days, d].sort()
+    patchBooking({ days })
   }
 
   const runTest = async () => {
@@ -218,6 +248,50 @@ export default function SettingsTab() {
             })}
           </div>
         </div>
+      </section>
+
+      {/* שעות פנויות לשיחה (יומן תיאום פגישה) */}
+      <section className="adm-set__card">
+        <h3 className="adm-set__card-title">שעות פנויות לשיחה
+          <span className={`adm-set__status adm-set__status--${bookingStatus}`}>
+            {bookingStatus === 'saving' ? 'שומר…' : bookingStatus === 'error' ? 'שגיאה' : '✓ נשמר'}
+          </span>
+        </h3>
+        <p className="adm-set__hint">בחרו את הימים והשעות שבהם פתוח לשיחה — אלו הסלוטים שיוצגו ביומן תיאום הפגישה באתר (אחרי בחירת תאריך).</p>
+
+        <div className="adm-set__bk-row">
+          <label className="adm-set__field"><span>משעה</span>
+            <input type="time" value={booking.start} onChange={(e) => patchBooking({ start: e.target.value })} />
+          </label>
+          <label className="adm-set__field"><span>עד שעה</span>
+            <input type="time" value={booking.end} onChange={(e) => patchBooking({ end: e.target.value })} />
+          </label>
+          <label className="adm-set__field"><span>משך סלוט</span>
+            <select value={booking.step} onChange={(e) => patchBooking({ step: Number(e.target.value) })}>
+              <option value={15}>15 דק׳</option>
+              <option value={30}>30 דק׳</option>
+              <option value={45}>45 דק׳</option>
+              <option value={60}>שעה</option>
+            </select>
+          </label>
+        </div>
+        <div className="adm-set__field" style={{ marginTop: '0.6rem' }}>
+          <span>ימים פתוחים</span>
+          <div className="ed__chips" role="group">
+            {WD_LABELS.map((lbl, d) => {
+              const on = booking.days.includes(d)
+              return (
+                <button key={d} type="button" className={`ed__chip ${on ? 'ed__chip--on' : ''}`} aria-pressed={on} onClick={() => toggleDay(d)}>
+                  <span className="ed__chip-check" aria-hidden="true">{on ? '✓' : '+'}</span>{lbl}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <details className="adm-set__setup">
+          <summary>סנכרון עם יומן Google (אופציונלי)</summary>
+          <p>השעות שמוגדרות כאן נשלטות ידנית. לסנכרון דו-כיווני אמיתי עם Google Calendar (חסימת שעות תפוסות אוטומטית + יצירת אירוע) נדרש חיבור OAuth של חשבון Google + פונקציית שרת. תגידו לי ואחבר זאת בנפרד.</p>
+        </details>
       </section>
 
       {/* בדיקה */}

@@ -1033,3 +1033,8 @@
 .ltab__shuffle.is-on .ltab__shuffle-track { background: var(--color-secondary); }
 .ltab__shuffle-knob { position: absolute; top: 2px; inset-inline-start: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform 0.18s; }
 .ltab__shuffle.is-on .ltab__shuffle-knob { transform: translateX(-16px); }
+
+/* שעות פנויות לשיחה — שורת שדות */
+.adm-set__bk-row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+.adm-set__bk-row .adm-set__field { flex: 1 1 8rem; }
+.adm-set__field > select { padding: 0.6rem 0.75rem; border: 1.5px solid var(--adm-border); border-radius: 9px; background: var(--adm-surface); font: inherit; color: var(--adm-ink); }

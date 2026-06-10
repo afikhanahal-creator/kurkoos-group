@@ -8,8 +8,8 @@
 
 .logo-carousel__col {
   position: relative;
-  height: 84px;                        /* מרווח אנכי לזום פר-לוגו בלי חיתוך */
-  width: clamp(150px, 28vw, 270px);   /* רחב מספיק כדי שגם לוגו עם כיתוב יישאר בגובה האחיד */
+  height: 76px;
+  width: clamp(170px, 32vw, 300px);   /* רחב מספיק שגם לוגו לרוחב יישאר באותו גובה ולא יתכווץ */
   overflow: hidden;
   transform-style: preserve-3d;
 }
@@ -33,8 +33,8 @@
 }
 
 .logo-carousel__img {
-  /* גודל אחיד לכל הלוגואים — אותו גובה תיבה, התאמה פנימית (contain) */
-  height: 58px;
+  /* גובה אחיד לכל הלוגואים — כולל לוגואים לרוחב (העמודה רחבה מספיק שלא יתכווצו) */
+  height: 50px;
   max-width: 100%;
   width: auto;
   object-fit: contain;

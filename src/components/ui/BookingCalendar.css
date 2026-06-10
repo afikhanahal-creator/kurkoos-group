@@ -197,3 +197,21 @@
   .bcal__fab,
   .bcal::after { transition: none; }
 }
+
+/* ===== בורר שעות — נפתח לאחר בחירת תאריך ===== */
+.bcal__times { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--color-border); animation: bcal-slot-in 0.2s var(--ease-out, ease) both; }
+@keyframes bcal-slot-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.bcal__times-head { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--color-primary-900); margin-bottom: 0.7rem; }
+.bcal__times-head svg { color: var(--color-secondary); }
+.bcal__times-empty { font-size: 0.84rem; color: var(--color-text-soft); margin: 0; }
+.bcal__times-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; max-height: 160px; overflow-y: auto; }
+.bcal__time {
+  padding: 0.5rem 0.2rem; border-radius: 9px; cursor: pointer;
+  border: 1.5px solid var(--color-border-strong); background: #fff;
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; color: var(--color-primary-900);
+  transition: border-color var(--dur-fast), background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
+}
+.bcal__time:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
+.bcal__time:active { transform: scale(0.95); }
+.bcal__time.is-selected { background: var(--color-accent-500); border-color: var(--color-accent-500); color: #fff; }
+@media (max-width: 600px) { .bcal__times-grid { grid-template-columns: repeat(3, 1fr); } }

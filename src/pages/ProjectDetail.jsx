@@ -153,6 +153,18 @@ export default function ProjectDetail() {
     return () => obs.disconnect()
   }, [slug])
 
+  // בר העוגנים — ממרכז את שם המקטע הפעיל בתוך הסרגל (בלי לגלול את העמוד)
+  useEffect(() => {
+    if (!activeSection) return
+    const bar = document.querySelector('.pd-anchors__inner')
+    const item = bar?.querySelector('.pd-anchors__item.is-active')
+    if (!bar || !item) return
+    const b = bar.getBoundingClientRect()
+    const i = item.getBoundingClientRect()
+    const delta = (i.left + i.width / 2) - (b.left + b.width / 2)
+    if (Math.abs(delta) > 2) bar.scrollBy({ left: delta, behavior: 'smooth' })
+  }, [activeSection])
+
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {
     setCms(null)
@@ -331,8 +343,8 @@ export default function ProjectDetail() {
       {/* ===== Sticky anchors ===== */}
       <nav className="pd-anchors" aria-label="Project sections">
         <div className="container pd-anchors__inner">
-          {/* במובייל בר מינימלי — רק "הפרויקט" ו"מפה" (בסגנון תדהר) */}
-          {(isMobile ? anchors.filter((a) => a.id === 'project' || a.id === 'map') : anchors).map((a) => (
+          {/* כל המקטעים הקיימים — נגללים אופקית; הפעיל מודגש (bold) */}
+          {anchors.map((a) => (
             <button
               key={a.id}
               type="button"

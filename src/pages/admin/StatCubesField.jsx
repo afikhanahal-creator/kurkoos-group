@@ -30,6 +30,8 @@ const XIcon = (p) => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>
 )
 
+const clampW = (v) => Math.max(0.6, Math.min(3.2, Math.round(v * 10) / 10))
+
 /* קוביה בתצוגה החיה — היא עצמה ידית הגרירה (גוררים את מה שרואים) */
 function PvCube({ id, cube }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
@@ -39,12 +41,13 @@ function PvCube({ id, cube }) {
     transition,
     opacity: isDragging ? 0.55 : 1,
     zIndex: isDragging ? 5 : 'auto',
+    ...(cube.w ? { paddingInline: `${cube.w}rem` } : {}),
   }
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`cubed__pv cubed__pv--${size} ${isDragging ? 'cubed__pv--drag' : ''}`}
+      className={`cubed__pv cubed__pv--${size} ${cube.spread ? 'cubed__pv--spread' : ''} ${isDragging ? 'cubed__pv--drag' : ''}`}
       {...attributes}
       {...listeners}
       title="גררו לסידור"
@@ -90,6 +93,20 @@ function CubeRow({ id, cube, onChange, onDelete }) {
       >
         {SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
       </select>
+      {/* רוחב הפיאה — הרחבה/הצרה */}
+      <span className="cubed__w" title="רוחב הפיאה">
+        <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) - 0.3) })} aria-label="הצר פיאה">−</button>
+        <span className="cubed__w-ic" aria-hidden="true">↔</span>
+        <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) + 0.3) })} aria-label="הרחב פיאה">+</button>
+      </span>
+      {/* הצמדת הכיתוב לפאות (ערך למעלה, תווית למטה) */}
+      <button
+        type="button"
+        className={`cubed__spread ${cube.spread ? 'is-on' : ''}`}
+        onClick={() => onChange({ spread: !cube.spread })}
+        title="הצמדת הכיתוב לפאות הקוביה"
+        aria-pressed={!!cube.spread}
+      >⇕</button>
       <button type="button" className="cubed__del" onClick={onDelete} aria-label="הסר קוביה">
         <XIcon />
       </button>

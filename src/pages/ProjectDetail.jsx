@@ -117,7 +117,7 @@ function buildProject(local, cms) {
       stats_scale: cms.stats_scale || undefined,
       // קוביות נתונים מותאמות מה-CMS (גרירה/עריכה) — עוקפות את ברירת המחדל
       statCubes: Array.isArray(cms.stat_cubes) && cms.stat_cubes.length
-        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md' })).filter((c) => has(c.value) || has(c.label))
+        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, spread: !!c.spread })).filter((c) => has(c.value) || has(c.label))
         : undefined,
       mapLink: cms.map_link || undefined,
     }
@@ -293,7 +293,11 @@ export default function ProjectDetail() {
                   {project.statCubes?.length ? (
                     /* קוביות מותאמות מה-CMS (גרירה/עריכה/גודל פר-קוביה) */
                     project.statCubes.map((cube, i) => (
-                      <StatCube key={i} className={`pd-stat--sz-${cube.size || 'md'}${cube.size === 'wide' ? ' pd-stat--wide' : ''}`}>
+                      <StatCube
+                        key={i}
+                        className={`pd-stat--sz-${cube.size || 'md'}${cube.size === 'wide' ? ' pd-stat--wide' : ''}${cube.spread ? ' pd-stat--spread' : ''}`}
+                        style={cube.w ? { paddingInline: `${cube.w}rem` } : undefined}
+                      >
                         <span
                           className={`pd-stat__value${cube.size === 'wide' ? ' pd-stat__value--sm' : ''}`}
                           dir="auto"

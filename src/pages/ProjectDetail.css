@@ -1093,3 +1093,7 @@
   .project-detail .eyebrow { font-size: calc(var(--fs-eyebrow) + 3px); }
   .project-detail .section-title { font-size: calc(var(--fs-h2) + 7px); }
 }
+
+/* קוביה עם כיתוב צמוד לפאות — ערך למעלה, תווית למטה (לא ממורכז) */
+.pd-stat--spread { justify-content: space-between; min-height: 74px; }
+.pd-stat--spread .pd-stat__label { margin-top: 0; }

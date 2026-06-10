@@ -14,7 +14,7 @@ const canTilt =
   window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
   !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-export default function StatCube({ className = '', children }) {
+export default function StatCube({ className = '', children, style: extraStyle }) {
   const ref = useRef(null)
   const rotateX = useSpring(0, SPRING)
   const rotateY = useSpring(0, SPRING)
@@ -71,6 +71,7 @@ export default function StatCube({ className = '', children }) {
       onPointerMove={handleMove}
       onPointerLeave={reset}
       style={{
+        ...(extraStyle || {}),
         transformPerspective: 800, // פרספקטיבה רכה = תלת-ממד עדין
         transformStyle: 'preserve-3d',
         rotateX,

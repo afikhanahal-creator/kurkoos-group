@@ -53,11 +53,14 @@ function ScrollManager() {
   return null
 }
 
-// עוטף כל עמוד באנימציית כניסה/יציאה אחידה
+// עוטף כל עמוד באנימציית כניסה/יציאה אחידה.
+// חשוב: מעבר ב-opacity בלבד (בלי y/transform) — כך framer-motion לא משאיר
+// transform על עוטף-העמוד. transform על אב של אלמנט sticky גורם לבר העוגנים
+// "לרעוד" (jitter) בגלילת אינרציה במובייל. fade נקי = בר דביק יציב לחלוטין.
 const pageMotion = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
   transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
 }
 

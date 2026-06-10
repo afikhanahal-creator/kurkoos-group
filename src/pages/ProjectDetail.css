@@ -562,7 +562,7 @@
 .pd-carousel__controls {
   display: flex;
   align-items: center;
-  justify-content: flex-start;   /* ב-RTL → צד ימין */
+  justify-content: space-between;   /* נקודות בצד ימין, חצים בצד שמאל */
   gap: 1.1rem;
   min-height: 32px;
   margin-top: 1.2rem;
@@ -828,14 +828,17 @@
 
 /* ---------- Videos — תצוגת סרטוני הפרויקט ---------- */
 .pd-videos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;   /* ממורכזים מתחת לתמונה, לא בצד */
   gap: 1rem;
-  margin-top: 1.4rem;
+  max-width: 1000px;         /* תואם לרוחב הקרוסלה */
+  margin: 1.4rem auto 0;
 }
 .pd-video-tile {
   position: relative;
   display: block;
+  flex: 0 1 300px;           /* רוחב בסיס אחיד; מתכווץ/גולש יפה */
   aspect-ratio: 16 / 9;
   border-radius: var(--radius-lg);
   overflow: hidden;

@@ -969,6 +969,10 @@
 @media (max-width: 980px) {
   .pd-anchors { top: 66px; }
 }
+/* במובייל — סרגל פירורי הלחם בלבן נקי (לא כחול) */
+@media (max-width: 880px) {
+  .pd-crumbbar { background: #fff; }
+}
 /* בר העוגנים במובייל — כל המקטעים מוצגים בשורה נגללת (בלי הסתרה/הצגה שגרמה לריצוד) */
 @media (max-width: 880px) {
   .pd-anchors__inner {

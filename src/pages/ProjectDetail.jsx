@@ -160,7 +160,8 @@ export default function ProjectDetail() {
     return () => obs.disconnect()
   }, [slug])
 
-  // בר העוגנים — ממרכז את שם המקטע הפעיל בתוך הסרגל (בלי לגלול את העמוד)
+  // בר העוגנים — ממרכז את המקטע הפעיל רק אם הוא חורג מהאזור הנראה
+  // (גלילה רק בעת הצורך → בלי ריצוד של גלילה מתמדת בכל שינוי מקטע)
   useEffect(() => {
     if (!activeSection) return
     const bar = document.querySelector('.pd-anchors__inner')
@@ -168,8 +169,10 @@ export default function ProjectDetail() {
     if (!bar || !item) return
     const b = bar.getBoundingClientRect()
     const i = item.getBoundingClientRect()
-    const delta = (i.left + i.width / 2) - (b.left + b.width / 2)
-    if (Math.abs(delta) > 2) bar.scrollBy({ left: delta, behavior: 'smooth' })
+    if (i.left < b.left + 12 || i.right > b.right - 12) {
+      const delta = (i.left + i.width / 2) - (b.left + b.width / 2)
+      bar.scrollBy({ left: delta, behavior: 'smooth' })
+    }
   }, [activeSection])
 
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי

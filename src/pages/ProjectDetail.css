@@ -30,10 +30,8 @@
    מעט עמוק יותר מ-primary-100 כדי שהקוביות האפורות יבלטו עליו. */
 /* ===== סרגל פירורי לחם — רקע תכלת בהיר, סגנון נקי עם לוכסנים ===== */
 .pd-crumbbar {
-  /* המשך הילה כחולה מהראש — שבירה עדינה בחלק העליון */
-  background:
-    radial-gradient(140% 180% at 88% 0%, rgba(16, 85, 114, 0.18), transparent 55%),
-    linear-gradient(180deg, #cfe0e8, #dfe9ed);
+  /* סרגל פירורי-הלחם בלבן נקי (דסקטופ ומובייל) */
+  background: #fff;
 }
 .pd-crumbbar .breadcrumbs { padding-block: 1.1rem; }
 .pd-crumbbar .breadcrumbs ol { font-size: 0.95rem; }

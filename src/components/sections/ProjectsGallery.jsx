@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import projects from '../../data/projects.js'
+import { supabase } from '../../lib/supabase.js'
+import { listProjects, cmsRowToCard } from '../../lib/cms.js'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Reveal from '../ui/Reveal.jsx'
 import SmartImage from '../ui/SmartImage.jsx'
@@ -118,14 +120,39 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const { t, isRTL } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
-  const [selected, setSelected] = useState(null)
+  const navigate = useNavigate()
+  const [cmsItems, setCmsItems] = useState(null)
   const viewportRef = useRef(null)
   const pausedRef = useRef(false)
   const resumeRef = useRef(null)
 
-  const items = itemsProp && itemsProp.length ? itemsProp : projects.slice(0, FEATURED)
-  // במובייל משכפלים את הפריטים → לולאה אינסופית חלקה (בלי חזרה להתחלה)
-  const renderItems = isMobile ? [...items, ...items] : items
+  // פרויקטים אמיתיים מה-CMS (מפורסמים) — "פרויקטים נבחרים" אם תויגו, אחרת הכול
+  useEffect(() => {
+    if (!supabase || (itemsProp && itemsProp.length)) return
+    let alive = true
+    listProjects()
+      .then((rows) => {
+        if (!alive || !rows || !rows.length) return
+        const featured = rows.filter((p) => Array.isArray(p.pages) && p.pages.includes('featured'))
+        setCmsItems((featured.length ? featured : rows).map(cmsRowToCard))
+      })
+      .catch(() => {})
+    return () => { alive = false }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // מקור הפריטים: prop → CMS → נתוני ברירת מחדל מקומיים. עד FEATURED, ללא כפילויות slug.
+  const source = (itemsProp && itemsProp.length)
+    ? itemsProp
+    : (cmsItems && cmsItems.length ? cmsItems : projects.slice(0, FEATURED))
+  const seen = new Set()
+  const items = source.filter((p) => {
+    const k = p.slug || p.name
+    if (seen.has(k)) return false
+    seen.add(k)
+    return true
+  }).slice(0, FEATURED)
+  // במובייל משכפלים לפריסת marquee — אבל רק כשיש מספיק פריטים (אחרת זה נראה ככפילות)
+  const renderItems = (isMobile && items.length >= 3) ? [...items, ...items] : items
 
   /* קרוסלה חכמה (מובייל): קופצת כרטיס ימינה כל 2 שניות, נגלשת native
      (חלק), נעצרת בנגיעה, ומתאפסת בצורה בלתי-נראית בגבול הסט → ריצה
@@ -198,7 +225,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           viewport={{ once: true, amount: 'some' }}
         >
           {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} onSelect={setSelected} isMobile={isMobile} />
+            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} onSelect={(proj) => navigate(`/projects/${proj.slug}`)} isMobile={isMobile} />
           ))}
         </motion.div>
       </div>
@@ -214,9 +241,6 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
         </div>
       )}
 
-      <AnimatePresence>
-        {selected && <Lightbox item={selected} onClose={() => setSelected(null)} L={L} t={t} />}
-      </AnimatePresence>
     </section>
   )
 }

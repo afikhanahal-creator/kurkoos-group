@@ -172,20 +172,8 @@ export default function ProjectDetail() {
     return () => obs.disconnect()
   }, [slug])
 
-  // בר העוגנים — ממרכז את המקטע הפעיל רק אם הוא חורג מהאזור הנראה
-  // (גלילה רק בעת הצורך → בלי ריצוד של גלילה מתמדת בכל שינוי מקטע)
-  useEffect(() => {
-    if (!activeSection) return
-    const bar = document.querySelector('.pd-anchors__inner')
-    const item = bar?.querySelector('.pd-anchors__item.is-active')
-    if (!bar || !item) return
-    const b = bar.getBoundingClientRect()
-    const i = item.getBoundingClientRect()
-    if (i.left < b.left + 12 || i.right > b.right - 12) {
-      const delta = (i.left + i.width / 2) - (b.left + b.width / 2)
-      bar.scrollBy({ left: delta, behavior: 'smooth' })
-    }
-  }, [activeSection])
+  // הבר נשאר קבוע — לא מבצעים גלילה תכנותית בכל שינוי מקטע (זה היה מקור הריצוד).
+  // רק המילה של המקטע הפעיל הופכת בולטת, בלי תזוזה של הבר.
 
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {

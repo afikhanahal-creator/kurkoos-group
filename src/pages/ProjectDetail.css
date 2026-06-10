@@ -933,15 +933,19 @@
 .pd-more__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.6rem;
+  gap: 2rem;
   margin-top: 2.6rem;
+  /* רוחב מצומצם + ממורכז — יוצר "שבירה" עם שוליים בצדדים, הכרטיסים צרים יותר */
+  max-width: 860px;
+  margin-inline: auto;
 }
 .pd-more__card { display: flex; flex-direction: column; }
 .pd-more__img {
   display: block;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  /* פחות רחב — יחס כמעט-ריבועי (היה 4/3 רחב) */
+  aspect-ratio: 1 / 1;
   box-shadow: var(--shadow-2);
   transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }

@@ -146,6 +146,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   }
 
   const setFf = (k) => (e) => setF((p) => ({ ...p, [k]: Number(e.target.value) }))
+  const bumpScale = (d) => setT((p) => ({ ...p, scale: Math.min(5, Math.max(0.2, Math.round((p.scale + d) * 100) / 100)) }))
 
   return createPortal((
     <div className="imed" onClick={onClose}>
@@ -180,7 +181,13 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
                 <button type="button" onClick={() => setT((p) => ({ ...p, flipH: !p.flipH }))}>⇋ היפוך אופקי</button>
                 <button type="button" onClick={() => setT((p) => ({ ...p, flipV: !p.flipV }))}>⥯ היפוך אנכי</button>
               </div>
-              <label className="imed__slider">זום <input type="range" min="0.2" max="4" step="0.01" value={t.scale} onChange={(e) => setT((p) => ({ ...p, scale: Number(e.target.value) }))} /><b>{Math.round(t.scale * 100)}%</b></label>
+              <div className="imed__zoom">
+                <span className="imed__zoom-lbl">זום</span>
+                <button type="button" className="imed__step" onClick={() => bumpScale(-0.1)} aria-label="הקטנה">−</button>
+                <input type="range" min="0.2" max="5" step="0.01" value={t.scale} onChange={(e) => setT((p) => ({ ...p, scale: Number(e.target.value) }))} aria-label="זום" />
+                <button type="button" className="imed__step" onClick={() => bumpScale(0.1)} aria-label="הגדלה">+</button>
+                <b className="imed__zoom-val">{Math.round(t.scale * 100)}%</b>
+              </div>
               <label className="imed__slider">סיבוב <input type="range" min="-180" max="180" step="1" value={t.rot} onChange={(e) => setT((p) => ({ ...p, rot: Number(e.target.value) }))} /><b>{t.rot}°</b></label>
             </section>
 

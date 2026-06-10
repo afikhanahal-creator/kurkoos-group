@@ -971,10 +971,10 @@
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }
   .pd-banner__media-col { order: -1; }
-  /* במובייל — תוכן ממורכז וקריא, אייקון/כותרת/קוביות/כפתור באמצע */
-  .pd-banner__content { align-items: center; text-align: center; }
-  .pd-banner__cta { align-self: center; width: 100%; max-width: 360px; }
-  .pd-banner__arrows { justify-content: center; }
+  /* במובייל — תוכן צמוד לימין בדיוק כמו תדהר (לא ממורכז): מיקום → קו → כותרת → תיאור → קוביות */
+  .pd-banner__content { align-items: flex-end; text-align: right; }
+  .pd-banner__cta { align-self: flex-end; width: auto; }
+  .pd-banner__arrows { justify-content: flex-start; }
   .pd-split__grid { grid-template-columns: 1fr; gap: 2.2rem; }
   .pd-split__media { order: -1; }
   .plan-acc { grid-template-columns: 1fr; gap: 1.4rem; }
@@ -994,7 +994,7 @@
   .pd-banner__stats-wrap { padding: 0; width: 100%; }
   .pd-banner__stats {
     gap: 0.4rem;
-    justify-content: center;   /* במובייל — קוביות ממורכזות מתחת לכותרת */
+    justify-content: flex-start;   /* ב-RTL → קוביות נצמדות לימין, נפרשות שמאלה (כמו תדהר) */
   }
   .pd-stat {
     flex: 0 0 auto;                /* רוחב לפי תוכן → קוביות לא-סימטריות, דחוסות */

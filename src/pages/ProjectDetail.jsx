@@ -134,6 +134,7 @@ export default function ProjectDetail() {
   const local = getProject(slug)
   const isMobile = useIsMobile()
   const [cms, setCms] = useState(null)
+  const [cmsLoaded, setCmsLoaded] = useState(false)   // האם סיימנו לנסות לטעון מהענן
 
   const [videoOpen, setVideoOpen] = useState(false)
   const [bannerSlide, setBannerSlide] = useState(0)   // תמונת הבאנר הנוכחית (חצים מתחת לתמונה)
@@ -174,14 +175,23 @@ export default function ProjectDetail() {
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {
     setCms(null)
-    if (!supabase) return
+    setCmsLoaded(false)
+    if (!supabase) { setCmsLoaded(true); return }
     let alive = true
-    getProjectBySlug(slug).then((row) => { if (alive && row) setCms(row) }).catch(() => {})
+    getProjectBySlug(slug)
+      .then((row) => { if (alive) { if (row) setCms(row); setCmsLoaded(true) } })
+      .catch(() => { if (alive) setCmsLoaded(true) })
     return () => { alive = false }
   }, [slug])
 
   const project = buildProject(local, cms)
-  if (!project) return <Navigate to="/projects" replace />
+  if (!project) {
+    // פרויקט שקיים רק ב-CMS: לא מפנים בזמן שעדיין טוענים מהענן (אחרת העמוד "לא נפתח")
+    if (!local && supabase && !cmsLoaded) {
+      return <div className="pd-loading" role="status" aria-live="polite"><span className="pd-loading__spin" /> טוען פרויקט…</div>
+    }
+    return <Navigate to="/projects" replace />
+  }
 
   // פירורי לחם: בית / חטיבה (לפי קטגוריית הפרויקט) / שם הפרויקט
   const projDivision = divisions.find((d) => d.category && d.category === project.category)

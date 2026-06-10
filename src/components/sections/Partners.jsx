@@ -16,6 +16,7 @@ const shuffleArr = (arr) => {
 export default function Partners() {
   const { t } = useI18n()
   const [logos, setLogos] = useState(partnersData)
+  const [shuffleOn, setShuffleOn] = useState(false)
 
   useEffect(() => {
     if (!supabase) return
@@ -25,6 +26,7 @@ export default function Partners() {
         if (!alive || !rows || !rows.length) return
         const v = settings?.logo_shuffle
         const on = v === true || v === 'true' || v === 1 || v === '1'
+        setShuffleOn(on)
         setLogos(on ? shuffleArr(rows) : rows)
       })
       .catch(() => {})
@@ -35,7 +37,7 @@ export default function Partners() {
     <section className="partners">
       <div className="container">
         <p className="partners__title">{t('partners.title')}</p>
-        <LogoCarousel logos={logos} interval={2600} />
+        <LogoCarousel logos={logos} interval={2600} shuffle={shuffleOn} />
       </div>
     </section>
   )

@@ -1,6 +1,13 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import './LogoCarousel.css'
+
+// ערבוב Fisher-Yates — מחזיר עותק מעורבב
+const shuffleArr = (arr) => {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] }
+  return a
+}
 
 /* ============================================================
    LogoCarousel — לוגואים מתחלפים בעמודות עם אפקט היפוך חלק.
@@ -20,21 +27,33 @@ function distribute(logos, columnCount) {
   return cols
 }
 
-function LogoColumn({ logos, index, interval }) {
+function LogoColumn({ logos, index, interval, shuffle = false }) {
+  const [seq, setSeq] = useState(() => (shuffle ? shuffleArr(logos) : logos))
   const [current, setCurrent] = useState(0)
+  const seqRef = useRef(seq)
+  const curRef = useRef(0)
+  seqRef.current = seq
+
+  // רשימת לוגואים השתנתה (או מצב הערבוב) — אתחול מחדש
+  useEffect(() => { setSeq(shuffle ? shuffleArr(logos) : logos); setCurrent(0); curRef.current = 0 }, [logos, shuffle])
 
   useEffect(() => {
-    if (logos.length <= 1) return
+    if (seq.length <= 1) return
     const stagger = index * 700 // התחלה מדורגת בין העמודות
     let id
-    const to = setTimeout(() => {
-      setCurrent((c) => (c + 1) % logos.length)
-      id = setInterval(() => setCurrent((c) => (c + 1) % logos.length), interval)
-    }, stagger + interval)
+    const advance = () => {
+      const len = seqRef.current.length
+      const next = (curRef.current + 1) % len
+      curRef.current = next
+      setCurrent(next)
+      // השלמת סבב מלא → ערבוב מחדש (כשהמצב מופעל) כדי שהתצוגה "חיה" ומשתנה כל הזמן
+      if (shuffle && next === 0) setSeq((s) => shuffleArr(s))
+    }
+    const to = setTimeout(() => { advance(); id = setInterval(advance, interval) }, stagger + interval)
     return () => { clearTimeout(to); if (id) clearInterval(id) }
-  }, [logos.length, index, interval])
+  }, [seq.length, index, interval, shuffle])
 
-  const logo = logos[current]
+  const logo = seq[current]
 
   return (
     <div className="logo-carousel__col">
@@ -56,7 +75,7 @@ function LogoColumn({ logos, index, interval }) {
   )
 }
 
-export default function LogoCarousel({ logos = [], columnCount, interval = 2600 }) {
+export default function LogoCarousel({ logos = [], columnCount, interval = 2600, shuffle = false }) {
   // עמודות רספונסיביות: 3 בדסקטופ, 2 במובייל (אלא אם נכפה דרך prop)
   const [cols, setCols] = useState(columnCount || 3)
   useEffect(() => {
@@ -72,7 +91,7 @@ export default function LogoCarousel({ logos = [], columnCount, interval = 2600 
   return (
     <div className="logo-carousel" role="list" aria-label="שותפים ולקוחות">
       {columns.map((colLogos, i) => (
-        <LogoColumn key={i} logos={colLogos} index={i} interval={interval} />
+        <LogoColumn key={i} logos={colLogos} index={i} interval={interval} shuffle={shuffle} />
       ))}
     </div>
   )

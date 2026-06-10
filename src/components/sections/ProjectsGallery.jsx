@@ -164,10 +164,11 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     el.addEventListener('touchstart', pause, { passive: true })
     el.addEventListener('wheel', pause, { passive: true })
 
+    // קצב רגוע — מעבר כל 4.5 שניות (היה 2 שניות → מהיר/מלחיץ)
     const timer = setInterval(() => {
       if (pausedRef.current) return
       el.scrollBy({ left: sign * step, behavior: 'smooth' })   // קפיצה חלקה של כרטיס
-    }, 2000)
+    }, 4500)
 
     return () => {
       clearInterval(timer)

@@ -138,12 +138,12 @@
   border: 0;
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(16, 85, 114, 0.05);  /* fallback — StatCube דורס בצל דינמי */
-  padding: 0.45rem 0.75rem;  /* הדוק — הכיתוב צמוד לקוביה */
+  padding: 0.4rem 1.1rem;    /* אנכי הדוק (צמוד לפאה) · אופקי נדיב → קוביה רחבה */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.02rem;
+  gap: 0;
   text-align: center;
   transform-style: preserve-3d;   /* מאפשר נפח לתוכן הפנימי */
   will-change: transform;
@@ -183,7 +183,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.pd-stat__label { font-size: 0.9rem; font-weight: 500; line-height: 1; color: #647c8c; margin-top: 0.1rem; }
+.pd-stat__label { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 500; line-height: 1; color: #647c8c; margin-top: 0.04rem; }
 
 /* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
 .pd-banner__stats--small .pd-stat { min-height: 64px; padding: 0.5rem 0.85rem; }
@@ -910,13 +910,13 @@
 @media (max-width: 880px) {
   .pd-anchors__inner {
     justify-content: flex-start;
-    gap: 1.6rem;
+    gap: 2rem;
     overflow-x: auto;
     scroll-behavior: smooth;
-    padding-inline: var(--container-pad);
+    padding-inline: 50%;           /* מרווח שמאפשר למרכז כל פריט (כולל ראשון/אחרון) → המקטע הפעיל תמיד באמצע */
   }
   .pd-anchors__item {
-    font-size: 1rem;
+    font-size: 1.05rem;
     padding: 0.95rem 0.2rem;
   }
 }
@@ -949,7 +949,7 @@
     min-width: 0;
     max-width: none;
     min-height: 0;
-    padding: 0.5rem 0.9rem;
+    padding: 0.4rem 1.15rem;
     gap: 0.02rem;
   }
   .pd-stat__value { font-size: 2.05rem; }
@@ -962,7 +962,7 @@
   .pd-stat {
     min-width: 0;
     min-height: 0;
-    padding: 0.45rem 0.72rem;
+    padding: 0.4rem 0.95rem;
   }
   .pd-stat__value { font-size: 1.85rem; }
   .pd-stat__value--sm { font-size: 0.98rem; }

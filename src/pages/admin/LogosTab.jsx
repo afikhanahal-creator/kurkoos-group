@@ -3,12 +3,14 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { listLogos, createLogo, updateLogo, deleteLogo, reorderRows, uploadMedia, deleteMedia } from '../../lib/cms.js'
+import ImageEditor from './ImageEditor.jsx'
 
 function LogoCard({ logo, onChange, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: logo.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [name, setName] = useState(logo.name || '')
   const [scale, setScale] = useState(Number(logo.scale) || 1)
   const [posX, setPosX] = useState(Number(logo.pos_x) || 0)
@@ -81,6 +83,21 @@ function LogoCard({ logo, onChange, onDelete }) {
     } catch (e) { setStatus('idle'); alert('שגיאה בהעלאה: ' + (e.message || e)) } finally { setBusy(false) }
   }
 
+  // החלת עריכה מעורך התמונות — מעלה PNG חדש ומחליף את הלוגו
+  const applyEdit = async (blob) => {
+    setBusy(true); setStatus('saving')
+    try {
+      const file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' })
+      const url = await uploadMedia(file, 'logos')
+      if (logo.image_url) deleteMedia(logo.image_url).catch(() => {})
+      await updateLogo(logo.id, { image_url: url, pos_x: 0, pos_y: 0, scale: 1 })
+      setPosX(0); setPosY(0); setScale(1)
+      setStatus('saved'); savedTimer.current = setTimeout(() => setStatus('idle'), 1600)
+      setEditing(false)
+      onChange()
+    } catch (e) { setStatus('idle'); alert('שגיאה בשמירת העריכה: ' + (e.message || e)) } finally { setBusy(false) }
+  }
+
   const toggleActive = () => save({ is_active: !logo.is_active }, true)
 
   return (
@@ -117,6 +134,14 @@ function LogoCard({ logo, onChange, onDelete }) {
         <button type="button" className="lcard__btn" disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? 'מעלה…' : (logo.image_url ? 'החלף תמונה' : 'העלה תמונה')}</button>
         <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => upload(e.target.files[0])} />
       </div>
+      {logo.image_url && (
+        <div className="lcard__row">
+          <button type="button" className="lcard__btn lcard__btn--edit" onClick={() => setEditing(true)}>✎ עריכה (חיתוך · צבעים · רקע)</button>
+        </div>
+      )}
+      {editing && (
+        <ImageEditor src={logo.image_url} busy={busy} onApply={applyEdit} onClose={() => setEditing(false)} />
+      )}
       <div className="lcard__row">
         <label className="lcard__toggle"><input type="checkbox" checked={!!logo.is_active} onChange={toggleActive} /> פעיל</label>
         <button type="button" className="lcard__del" onClick={() => onDelete(logo)} title="מחק">מחק ✕</button>

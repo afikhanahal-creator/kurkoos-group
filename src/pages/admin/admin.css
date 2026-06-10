@@ -1013,3 +1013,7 @@
   .adm-set__rec { flex-wrap: wrap; }
   .adm-set__rec-name { flex: 1 1 100%; }
 }
+
+/* כפתור עריכת תמונה בכרטיס לוגו */
+.lcard__btn--edit { border-color: var(--color-secondary); color: var(--color-secondary); font-weight: 700; }
+.lcard__btn--edit:hover { background: var(--color-secondary); color: #fff; }

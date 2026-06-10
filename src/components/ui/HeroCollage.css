@@ -76,7 +76,8 @@
   justify-content: flex-end;
   gap: 0.6rem;
   padding: 1.6rem;
-  background: linear-gradient(160deg, rgba(16, 85, 114, 0.95), rgba(7, 34, 48, 0.97));
+  /* כיסוי כחול שקוף יותר — רואים את תמונת הבניין מאחור */
+  background: linear-gradient(160deg, rgba(16, 85, 114, 0.6), rgba(7, 34, 48, 0.7));
   color: #fff;
   transform: translateY(101%);
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);

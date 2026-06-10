@@ -147,7 +147,7 @@ export default function ProjectDetail() {
     if (!els.length) return
     const obs = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) setActiveSection(e.target.id) }),
-      { rootMargin: '-160px 0px -60% 0px', threshold: 0 }
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 }   // פס דק במרכז → מקטע פעיל יציב, בלי ריצוד
     )
     els.forEach((el) => obs.observe(el))
     return () => obs.disconnect()

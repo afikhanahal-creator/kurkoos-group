@@ -205,7 +205,7 @@ export default function ProjectDetail() {
   const mapCoords = (project.coords && project.coords.lat != null) ? project.coords : extractLatLng(project.mapLink)
   const mapQuery = project.mapQuery || (mapCoords ? `${mapCoords.lat},${mapCoords.lng}` : (L(project.city) || L(project.name)))
   const mapSrc = mapsKey
-    ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent(mapQuery)}&zoom=16&language=he&region=IL`
+    ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent(mapQuery)}&zoom=14&language=he&region=IL`
     : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
 
   // קבוצות תוכניות — נתון מובנה אם קיים, אחרת נגזרות מ-plans השטוח
@@ -468,7 +468,7 @@ export default function ProjectDetail() {
                   lat={mapCoords.lat}
                   lng={mapCoords.lng}
                   label={L(project.name)}
-                  zoom={16}
+                  zoom={14}
                 />
               ) : (
                 <iframe

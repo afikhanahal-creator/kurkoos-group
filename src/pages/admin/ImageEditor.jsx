@@ -36,6 +36,8 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const drag = useRef(null)
   const [ready, setReady] = useState(false)
   const [err, setErr] = useState('')
+  const [ver, setVer] = useState(0)          // מאלץ ציור מחדש אחרי החלפת תמונת הבסיס (AI)
+  const [aiBusy, setAiBusy] = useState(false)
   const [t, setT] = useState({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false })
   const [f, setF] = useState(PRESETS[0].f)
   const [tint, setTint] = useState({ color: '#105572', alpha: 0, blend: 'multiply' })
@@ -93,7 +95,23 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
     }
   }, [filterStr, t, bg, tint])
 
-  useEffect(() => { if (ready) draw(canvasRef.current, 1) }, [draw, ready])
+  useEffect(() => { if (ready) draw(canvasRef.current, 1) }, [draw, ready, ver])
+
+  // הסרת רקע אוטומטית (AI) — רץ בדפדפן, חינמי, ללא מפתח (@imgly/background-removal)
+  const removeBgAi = async () => {
+    setAiBusy(true); setErr('')
+    try {
+      const { removeBackground } = await import('@imgly/background-removal')
+      const resultBlob = await removeBackground(src)
+      const url = URL.createObjectURL(resultBlob)
+      const img = new Image()
+      img.onload = () => { imgRef.current = img; URL.revokeObjectURL(url); setVer((v) => v + 1) }
+      img.onerror = () => { URL.revokeObjectURL(url); setErr('טעינת התוצאה נכשלה') }
+      img.src = url
+    } catch (e) {
+      setErr('הסרת הרקע נכשלה: ' + (e?.message || e))
+    } finally { setAiBusy(false) }
+  }
 
   const onDown = (e) => { drag.current = { sx: e.clientX, sy: e.clientY, bx: t.x, by: t.y }; try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* noop */ } }
   const onMove = (e) => { const d = drag.current; if (!d) return; setT((p) => ({ ...p, x: d.bx + (e.clientX - d.sx), y: d.by + (e.clientY - d.sy) })) }
@@ -182,7 +200,10 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
             {/* רקע */}
             <section className="imed__group">
               <h4>רקע</h4>
-              <label className="imed__check"><input type="checkbox" checked={bg.remove} onChange={(e) => setBg((p) => ({ ...p, remove: e.target.checked }))} /> הסר רקע לבן</label>
+              <button type="button" className="imed__btn imed__btn--ai" disabled={aiBusy} onClick={removeBgAi}>
+                {aiBusy ? '✨ מסיר רקע… (טעינה ראשונה עד דקה)' : '✨ הסר רקע אוטומטית (AI)'}
+              </button>
+              <label className="imed__check"><input type="checkbox" checked={bg.remove} onChange={(e) => setBg((p) => ({ ...p, remove: e.target.checked }))} /> הסר רקע לבן (מהיר)</label>
               {bg.remove && <label className="imed__slider">סף <input type="range" min="180" max="255" value={bg.threshold} onChange={(e) => setBg((p) => ({ ...p, threshold: Number(e.target.value) }))} /><b>{bg.threshold}</b></label>}
             </section>
 

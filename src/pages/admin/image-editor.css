@@ -54,3 +54,8 @@
   .imed__panel { border-inline-start: 0; border-top: 1px solid var(--adm-border, #e2e8ee); max-height: 38vh; }
   .imed__canvas { width: 100% !important; height: auto !important; aspect-ratio: 560 / 380; }
 }
+
+/* כפתור הסרת רקע AI */
+.imed__btn--ai { width: 100%; margin-bottom: 0.5rem; border-color: var(--color-secondary, #105572); color: var(--color-secondary, #105572); }
+.imed__btn--ai:hover:not(:disabled) { background: var(--color-secondary, #105572); color: #fff; }
+.imed__btn--ai:disabled { opacity: 0.7; cursor: progress; }

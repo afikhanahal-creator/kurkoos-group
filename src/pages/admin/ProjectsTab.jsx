@@ -6,6 +6,7 @@ import {
   listProjects, createProject, updateProject, archiveProject, deleteProject, reorderRows,
   listProperties, createProperty, updateProperty, archiveProperty,
 } from '../../lib/cms.js'
+import { toast } from '../../lib/toast.js'
 
 const statusLabel = (opts, v) => (opts.find((o) => o.value === v)?.label || v || '')
 
@@ -41,9 +42,12 @@ export default function ProjectsTab() {
   }
 
   const addProject = async () => {
-    const row = await createProject(newProjectDefaults())
-    await loadProjects()
-    selectProject(row.id)
+    try {
+      const row = await createProject(newProjectDefaults())
+      await loadProjects()
+      selectProject(row.id)
+      toast.success('פרויקט חדש נוצר — אפשר להתחיל לערוך')
+    } catch { toast.error('יצירת הפרויקט נכשלה') }
   }
 
   const saveProject = async (patch) => {
@@ -58,23 +62,39 @@ export default function ProjectsTab() {
 
   const onArchiveProject = async () => {
     if (!window.confirm('להעביר את הפרויקט לארכיון? הוא יוסר מהאתר הציבורי.')) return
-    await archiveProject(selProjectId)
-    setSelProjectId(null)
-    loadProjects()
+    try {
+      await archiveProject(selProjectId)
+      setSelProjectId(null)
+      loadProjects()
+      toast.success('הפרויקט הועבר לארכיון')
+    } catch { toast.error('ההעברה לארכיון נכשלה') }
   }
 
-  const removeProject = async (id) => {
+  // מחיקה עם "ביטול": מסירים מהרשימה מיד (optimistic), והמחיקה בפועל
+  // מתבצעת רק אחרי 5 שניות — אם לא בוטלה. כך אין צורך בדיאלוג אישור מפחיד.
+  const removeProject = (id) => {
     const p = projects.find((x) => x.id === id)
-    if (!window.confirm(`למחוק לצמיתות את "${p?.name || 'הפרויקט'}"? הפעולה אינה הפיכה.`)) return
-    await deleteProject(id)
+    setProjects((prev) => prev.filter((x) => x.id !== id))
     if (selProjectId === id) { setSelProjectId(null); setEditingProp(false); setSelPropId(null) }
-    loadProjects()
+    let undone = false
+    const timer = setTimeout(async () => {
+      if (undone) return
+      try { await deleteProject(id); toast.success(`"${p?.name || 'הפרויקט'}" נמחק`) }
+      catch { toast.error('המחיקה נכשלה'); loadProjects() }
+    }, 5000)
+    toast(`"${p?.name || 'הפרויקט'}" יימחק`, {
+      duration: 5000,
+      action: { label: 'ביטול', onClick: () => { undone = true; clearTimeout(timer); loadProjects() } },
+    })
   }
 
   const addProperty = async () => {
-    const row = await createProperty(newPropertyDefaults(selProjectId))
-    await loadProperties(selProjectId)
-    setSelPropId(row.id); setEditingProp(true)
+    try {
+      const row = await createProperty(newPropertyDefaults(selProjectId))
+      await loadProperties(selProjectId)
+      setSelPropId(row.id); setEditingProp(true)
+      toast.success('נכס חדש נוסף')
+    } catch { toast.error('הוספת הנכס נכשלה') }
   }
 
   const saveProperty = async (patch) => {
@@ -84,9 +104,12 @@ export default function ProjectsTab() {
 
   const onArchiveProperty = async () => {
     if (!window.confirm('להעביר את הנכס לארכיון?')) return
-    await archiveProperty(selPropId)
-    setEditingProp(false); setSelPropId(null)
-    loadProperties(selProjectId)
+    try {
+      await archiveProperty(selPropId)
+      setEditingProp(false); setSelPropId(null)
+      loadProperties(selProjectId)
+      toast.success('הנכס הועבר לארכיון')
+    } catch { toast.error('ההעברה לארכיון נכשלה') }
   }
 
   return (

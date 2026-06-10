@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import ImageManager from './ImageManager.jsx'
 import StatCubesField from './StatCubesField.jsx'
 import { uploadMedia, uploadVideoFile, hasCloudinary } from '../../lib/cms.js'
+import { toast } from '../../lib/toast.js'
 
 const STRIP = ['id', 'created_at', 'updated_at']
 
@@ -66,9 +67,12 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
       STRIP.forEach((k) => delete patch[k])
       await onSave(patch)
       setStatus('saved')
+      return true
     } catch (e) {
       console.error(e)
       setStatus('error')
+      toast.error('השמירה נכשלה — נסו שוב')
+      return false
     }
   }, [onSave, coverField])
 
@@ -80,9 +84,16 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
 
   const setField = (key, val) => setForm((prev) => { const next = { ...prev, [key]: val }; schedule(next); return next })
   const setGallery = (arr) => setForm((prev) => { const next = { ...prev, gallery: arr }; schedule(next); return next })
-  const saveNow = () => { clearTimeout(timer.current); commit(form) }
+  const saveNow = async () => { clearTimeout(timer.current); if (await commit(form)) toast.success('נשמר') }
   // X = שמירה ויציאה: מוודא שכל שינוי תלוי נשמר, ואז סוגר
   const closeNow = async () => { clearTimeout(timer.current); if (status !== 'saved') await commit(form); onClose && onClose() }
+
+  // אזהרת יציאה כשיש שינויים שטרם נשמרו (ריענון/סגירת טאב)
+  useEffect(() => {
+    const handler = (e) => { if (status === 'dirty' || status === 'saving') { e.preventDefault(); e.returnValue = '' } }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [status])
 
   // קיצורי מקלדת: Esc = שמירה ויציאה · Ctrl/⌘+S = שמירה מיידית
   const actionRef = useRef({})
@@ -99,14 +110,14 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const uploadDevLogo = async (arr, i, file) => {
     if (!file) return
     try { const url = await uploadMedia(file, `${folder}/developers`); setField('developers', arr.map((d, j) => (j === i ? { ...d, logo: url } : d))) }
-    catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) }
+    catch (e) { toast.error('שגיאה בהעלאה: ' + (e.message || e)) }
   }
 
   // העלאת תמונה בודדת לשדה כלשהו; מחזירה את ה-URL דרך callback
   const uploadOne = async (sub, file, onUrl) => {
     if (!file) return
     try { onUrl(await uploadMedia(file, `${folder}/${sub}`)) }
-    catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) }
+    catch (e) { toast.error('שגיאה בהעלאה: ' + (e.message || e)) }
   }
 
   // העלאת קובץ וידאו (מהמחשב/נייד) — Cloudinary אם מוגדר, אחרת אחסון Supabase
@@ -121,7 +132,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
         schedule(next)
         return next
       })
-    } catch (e) { alert('שגיאה בהעלאה: ' + (e.message || e)) } finally { setVidUp(-1) }
+    } catch (e) { toast.error('שגיאה בהעלאה: ' + (e.message || e)) } finally { setVidUp(-1) }
   }
 
   const renderField = (f) => {

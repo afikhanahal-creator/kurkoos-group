@@ -48,7 +48,7 @@ function LogoColumn({ logos, index, interval }) {
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
         >
           {logo?.image_url
-            ? <img className="logo-carousel__img" src={logo.image_url} alt={logo.name || ''} style={{ transform: `scale(${logo.scale || 1})` }} />
+            ? <img className="logo-carousel__img" src={logo.image_url} alt={logo.name || ''} style={{ transform: `translate(${logo.pos_x || 0}%, ${logo.pos_y || 0}%) scale(${logo.scale || 1})` }} />
             : logo?.name}
         </motion.div>
       </AnimatePresence>

@@ -11,9 +11,13 @@ function LogoCard({ logo, onChange, onDelete }) {
   const [busy, setBusy] = useState(false)
   const [name, setName] = useState(logo.name || '')
   const [scale, setScale] = useState(Number(logo.scale) || 1)
+  const [posX, setPosX] = useState(Number(logo.pos_x) || 0)
+  const [posY, setPosY] = useState(Number(logo.pos_y) || 0)
   const [status, setStatus] = useState('idle') // idle | saving | saved
   const nameTimer = useRef()
   const scaleTimer = useRef()
+  const posTimer = useRef()
+  const drag = useRef(null)
   const savedTimer = useRef()
 
   // שמירה לענן (Supabase) עם חיווי סטטוס — לא לוקאלי
@@ -41,6 +45,30 @@ function LogoCard({ logo, onChange, onDelete }) {
     scaleTimer.current = setTimeout(() => save({ scale: n }), 350)
   }
 
+  // גרירת הלוגו בתוך המסגרת — למרכוז/סידור לוגו חתוך (אחוזי הזזה)
+  const clampPos = (v) => Math.max(-120, Math.min(120, Math.round(v)))
+  const onPointerDown = (e) => {
+    if (!logo.image_url) return
+    const r = e.currentTarget.getBoundingClientRect()
+    drag.current = { sx: e.clientX, sy: e.clientY, bx: posX, by: posY, w: r.width, h: r.height, nx: posX, ny: posY }
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* noop */ }
+  }
+  const onPointerMove = (e) => {
+    const d = drag.current
+    if (!d) return
+    d.nx = clampPos(d.bx + ((e.clientX - d.sx) / d.w) * 100)
+    d.ny = clampPos(d.by + ((e.clientY - d.sy) / d.h) * 100)
+    setPosX(d.nx); setPosY(d.ny)
+  }
+  const onPointerUp = () => {
+    const d = drag.current
+    if (!d) return
+    drag.current = null
+    clearTimeout(posTimer.current)
+    posTimer.current = setTimeout(() => save({ pos_x: d.nx, pos_y: d.ny }), 200)
+  }
+  const recenter = () => { setPosX(0); setPosY(0); setScale(1); save({ pos_x: 0, pos_y: 0, scale: 1 }) }
+
   const upload = async (file) => {
     if (!file) return
     setBusy(true); setStatus('saving')
@@ -58,10 +86,20 @@ function LogoCard({ logo, onChange, onDelete }) {
   return (
     <div ref={setNodeRef} style={style} className={`lcard ${!logo.is_active ? 'lcard--off' : ''}`}>
       <button type="button" className="lcard__handle" {...attributes} {...listeners} title="גרור לסידור">⠿</button>
-      <div className="lcard__thumb">
+      <div
+        className={`lcard__thumb ${logo.image_url ? 'is-draggable' : ''}`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        title={logo.image_url ? 'גררו למרכוז הלוגו' : ''}
+      >
         {logo.image_url
-          ? <img src={logo.image_url} alt={logo.name} style={{ transform: `scale(${scale})` }} />
+          ? <img src={logo.image_url} alt={logo.name} draggable={false} style={{ transform: `translate(${posX}%, ${posY}%) scale(${scale})` }} />
           : <span className="lcard__placeholder">{logo.name || 'ללא לוגו'}</span>}
+        {logo.image_url && (
+          <button type="button" className="lcard__recenter" onClick={recenter} title="איפוס למרכז">⌖</button>
+        )}
       </div>
       <input className="lcard__name" value={name} placeholder="שם" onChange={(e) => saveName(e.target.value)} />
 
@@ -85,7 +123,7 @@ function LogoCard({ logo, onChange, onDelete }) {
 
       {/* שמירה ידנית + חיווי שמירה אוטומטית בענן */}
       <div className="lcard__save">
-        <button type="button" className="lcard__save-btn" onClick={() => save({ name, scale })}>שמור</button>
+        <button type="button" className="lcard__save-btn" onClick={() => save({ name, scale, pos_x: posX, pos_y: posY })}>שמור</button>
         <span className={`lcard__status lcard__status--${status}`}>
           {status === 'saving' ? 'שומר…' : status === 'saved' ? 'נשמר בענן ✓' : 'נשמר אוטומטית'}
         </span>

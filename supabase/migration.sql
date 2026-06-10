@@ -110,6 +110,9 @@ create table if not exists public.site_logos (
 
 -- לוגו: סקלת גודל לכל לוגו (קרוסלת שותפים)
 alter table public.site_logos add column if not exists scale numeric default 1;
+-- לוגו: מיקום (גרירה למרכוז) — אחוזי הזזה אופקי/אנכי
+alter table public.site_logos add column if not exists pos_x numeric default 0;
+alter table public.site_logos add column if not exists pos_y numeric default 0;
 
 -- ---------- leads (CRM — פניות מטופסי האתר) ----------
 create table if not exists public.leads (

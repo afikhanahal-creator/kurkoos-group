@@ -479,8 +479,18 @@
 .lcard:hover { box-shadow: var(--adm-shadow); transform: translateY(-2px); }
 .lcard--off { opacity: 0.55; }
 .lcard__handle { position: absolute; inset-block-start: 0.5rem; inset-inline-start: 0.5rem; color: var(--adm-muted); cursor: grab; }
-.lcard__thumb { height: 84px; display: grid; place-items: center; background: var(--adm-bg); border-radius: 9px; overflow: hidden; }
-.lcard__thumb img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.18s ease; }
+.lcard__thumb { position: relative; height: 84px; display: grid; place-items: center; background: var(--adm-bg); border-radius: 9px; overflow: hidden; touch-action: none; }
+.lcard__thumb.is-draggable { cursor: move; }
+.lcard__thumb img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+/* כפתור איפוס/מרכוז הלוגו */
+.lcard__recenter {
+  position: absolute; inset-block-start: 4px; inset-inline-end: 4px;
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border: 1px solid var(--adm-border); border-radius: 7px;
+  background: rgba(255,255,255,0.9); color: var(--adm-muted); cursor: pointer;
+  font-size: 0.9rem; line-height: 1;
+}
+.lcard__recenter:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
 .lcard__placeholder { font-family: var(--font-heading); font-weight: 800; color: var(--color-primary-300); font-size: 1rem; text-align: center; padding: 0 0.5rem; }
 .lcard__name { padding: 0.55rem 0.6rem; border: 1.5px solid var(--adm-border-strong); border-radius: 8px; font: inherit; text-align: center; }
 .lcard__name:focus-visible { outline: none; border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(16,104,140,0.14); }

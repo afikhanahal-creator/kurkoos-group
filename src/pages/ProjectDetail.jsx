@@ -58,6 +58,18 @@ function extractLatLng(url) {
   return null
 }
 
+/* מחלץ שם-מקום/כתובת מקישור Google Maps (כש-אין קואורדינטות מפורשות, למשל
+   קישור /place/שם/ או q=כתובת) — משמש כשאילתת geocoding כדי לקבע את המיקום. */
+function extractPlaceQuery(url) {
+  if (!url || typeof url !== 'string') return null
+  const decode = (s) => { try { return decodeURIComponent(s.replace(/\+/g, ' ')).trim() } catch { return s.replace(/\+/g, ' ').trim() } }
+  const place = url.match(/\/place\/([^/@?]+)/)
+  if (place && place[1]) { const q = decode(place[1]); if (q) return q }
+  const qp = url.match(/[?&](?:q|query|destination)=([^&]+)/)
+  if (qp && qp[1] && !/^-?\d/.test(qp[1])) { const q = decode(qp[1]); if (q) return q }
+  return null
+}
+
 // מאחד נתון מקומי מועשר (planGroups/environment/...) עם שכבת-על מה-CMS (שדות בסיסיים)
 function buildProject(local, cms) {
   if (!local && !cms) return null
@@ -217,7 +229,10 @@ export default function ProjectDetail() {
   const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_KEY
   // קואורדינטות: שדה coords, אחרת חילוץ מקישור Google Maps שהוזן ב-CMS
   const mapCoords = (project.coords && project.coords.lat != null) ? project.coords : extractLatLng(project.mapLink)
-  const mapQuery = project.mapQuery || (mapCoords ? `${mapCoords.lat},${mapCoords.lng}` : (L(project.city) || L(project.name)))
+  // אילתת geocoding כשאין קואורדינטות: כתובת מפורשת → שם-מקום מתוך הקישור → עיר/שם הפרויקט
+  const mapQuery = mapCoords
+    ? `${mapCoords.lat},${mapCoords.lng}`
+    : (project.mapQuery || extractPlaceQuery(project.mapLink) || L(project.city) || L(project.name))
   const mapSrc = mapsKey
     ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent(mapQuery)}&zoom=14&language=he&region=IL`
     : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`

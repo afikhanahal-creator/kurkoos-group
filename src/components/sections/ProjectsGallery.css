@@ -250,3 +250,6 @@
   .pg-card__reveal { transition: none; }
   /* ללא תנועה — הכותרת מוצגת תמיד, התיאור נחשף בריחוף בלבד */
 }
+
+/* עטיפת קישור לכרטיס — ממלאת את הכרטיס, ניווט native לעמוד הפרויקט */
+.pg-card__link { display: block; height: 100%; color: inherit; text-decoration: none; }

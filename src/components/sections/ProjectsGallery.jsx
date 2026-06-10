@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import projects from '../../data/projects.js'
@@ -56,7 +56,7 @@ function Lightbox({ item, onClose, L, t }) {
    במובייל מוותרים על BorderGlow/SpotlightCard (אפקטים של מצביע/ריחוף
    בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
    כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
-function ProjectCard({ p, L, t, onSelect, isMobile }) {
+function ProjectCard({ p, L, t, isMobile }) {
   const media = (
     <div className="pg-card__media">
       {isMobile ? (
@@ -83,29 +83,25 @@ function ProjectCard({ p, L, t, onSelect, isMobile }) {
   )
 
   return (
-    <motion.article
-      className="pg-card"
-      variants={itemVariants}
-      onClick={() => onSelect(p)}
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onSelect(p)}
-      aria-label={L(p.name)}
-    >
-      {isMobile ? media : (
-        <BorderGlow
-          className="pg-card__glow"
-          backgroundColor="transparent"
-          borderRadius={16}
-          glowColor="197 78 48"
-          glowRadius={30}
-          glowIntensity={1.15}
-          edgeSensitivity={28}
-          coneSpread={24}
-          colors={['#16688c', '#105572', '#8fb6c8']}
-        >
-          {media}
-        </BorderGlow>
-      )}
+    <motion.article className="pg-card" variants={itemVariants}>
+      {/* קישור native אמיתי לעמוד הפרויקט (אמין יותר מ-onClick) */}
+      <Link to={`/projects/${p.slug}`} className="pg-card__link" aria-label={L(p.name)}>
+        {isMobile ? media : (
+          <BorderGlow
+            className="pg-card__glow"
+            backgroundColor="transparent"
+            borderRadius={16}
+            glowColor="197 78 48"
+            glowRadius={30}
+            glowIntensity={1.15}
+            edgeSensitivity={28}
+            coneSpread={24}
+            colors={['#16688c', '#105572', '#8fb6c8']}
+          >
+            {media}
+          </BorderGlow>
+        )}
+      </Link>
     </motion.article>
   )
 }
@@ -120,7 +116,6 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const { t, isRTL } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
-  const navigate = useNavigate()
   const [cmsItems, setCmsItems] = useState(null)
   const viewportRef = useRef(null)
   const pausedRef = useRef(false)
@@ -225,7 +220,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           viewport={{ once: true, amount: 'some' }}
         >
           {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} onSelect={(proj) => navigate(`/projects/${proj.slug}`)} isMobile={isMobile} />
+            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} />
           ))}
         </motion.div>
       </div>

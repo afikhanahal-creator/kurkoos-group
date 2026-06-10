@@ -802,3 +802,39 @@
   .adm-list__row { grid-template-columns: 20px 8px 1fr auto; row-gap: 0.4rem; }
   .adm-list__contacts, .adm-list__project, .adm-list__date { grid-column: 3 / -1; }
 }
+
+/* ===== עורך קוביות נתונים (drag & drop) ===== */
+.cubed { display: flex; flex-direction: column; gap: 0.5rem; }
+.cubed__empty { font-size: 0.82rem; color: var(--adm-muted); line-height: 1.5; margin: 0; }
+.cubed__list { display: flex; flex-direction: column; gap: 0.45rem; }
+.cubed__row {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px;
+  padding: 0.4rem 0.5rem;
+}
+.cubed__handle {
+  flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 30px;
+  color: var(--adm-muted); cursor: grab; touch-action: none; background: 0; border: 0;
+}
+.cubed__handle:active { cursor: grabbing; }
+.cubed__field {
+  min-width: 0; flex: 1 1 0; padding: 0.42rem 0.55rem; font-size: 0.86rem;
+  border: 1px solid var(--adm-border); border-radius: 7px; background: #fff; color: var(--adm-ink);
+}
+.cubed__field--val { flex: 0 0 6.5rem; font-weight: 700; }
+.cubed__field:focus { outline: 2px solid var(--color-secondary); outline-offset: -1px; }
+.cubed__size {
+  flex: 0 0 auto; padding: 0.42rem 0.4rem; font-size: 0.82rem;
+  border: 1px solid var(--adm-border); border-radius: 7px; background: #fff; color: var(--adm-ink);
+}
+.cubed__del {
+  flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px;
+  border-radius: 7px; color: var(--color-accent); background: 0; border: 0; cursor: pointer;
+}
+.cubed__del:hover { background: var(--color-accent-100); }
+.cubed__add {
+  align-self: flex-start; padding: 0.5rem 1rem; font-size: 0.85rem; font-weight: 700;
+  font-family: var(--font-heading); color: var(--color-secondary);
+  background: var(--color-primary-100); border: 0; border-radius: 8px; cursor: pointer;
+}
+.cubed__add:hover { background: var(--color-primary-300); color: #fff; }

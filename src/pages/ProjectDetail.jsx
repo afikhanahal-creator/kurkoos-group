@@ -115,6 +115,10 @@ function buildProject(local, cms) {
       sections: Array.isArray(cms.sections) ? cms.sections : undefined,
       developers: Array.isArray(cms.developers) && cms.developers.length ? cms.developers : undefined,
       stats_scale: cms.stats_scale || undefined,
+      // קוביות נתונים מותאמות מה-CMS (גרירה/עריכה) — עוקפות את ברירת המחדל
+      statCubes: Array.isArray(cms.stat_cubes) && cms.stat_cubes.length
+        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md' })).filter((c) => has(c.value) || has(c.label))
+        : undefined,
       mapLink: cms.map_link || undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
@@ -287,34 +291,51 @@ export default function ProjectDetail() {
 
               <div className="pd-banner__stats-wrap">
                 <div className={`pd-banner__stats pd-banner__stats--${project.stats_scale || 'normal'}`}>
-                  {project.towers > 0 && (
-                    <StatCube>
-                      <span className="pd-stat__value" dir="ltr">{project.towers}</span>
-                      <span className="pd-stat__label">{L({ he: 'בניינים', en: 'Buildings' })}</span>
-                    </StatCube>
+                  {project.statCubes?.length ? (
+                    /* קוביות מותאמות מה-CMS (גרירה/עריכה/גודל פר-קוביה) */
+                    project.statCubes.map((cube, i) => (
+                      <StatCube key={i} className={`pd-stat--sz-${cube.size || 'md'}${cube.size === 'wide' ? ' pd-stat--wide' : ''}`}>
+                        <span
+                          className={`pd-stat__value${cube.size === 'wide' ? ' pd-stat__value--sm' : ''}`}
+                          dir={cube.size === 'wide' ? 'auto' : 'ltr'}
+                        >
+                          {cube.value}
+                        </span>
+                        <span className="pd-stat__label">{L(cube.label)}</span>
+                      </StatCube>
+                    ))
+                  ) : (
+                    <>
+                      {project.towers > 0 && (
+                        <StatCube>
+                          <span className="pd-stat__value" dir="ltr">{project.towers}</span>
+                          <span className="pd-stat__label">{L({ he: 'בניינים', en: 'Buildings' })}</span>
+                        </StatCube>
+                      )}
+                      {project.units > 0 && (
+                        <StatCube>
+                          <span className="pd-stat__value" dir="ltr">{project.units}</span>
+                          <span className="pd-stat__label">{L({ he: 'יחידות דיור', en: 'Units' })}</span>
+                        </StatCube>
+                      )}
+                      {project.floors && (
+                        <StatCube>
+                          <span className="pd-stat__value" dir="ltr">{project.floors}</span>
+                          <span className="pd-stat__label">{L({ he: 'קומות', en: 'Floors' })}</span>
+                        </StatCube>
+                      )}
+                      {project.architects && (
+                        <StatCube className="pd-stat--wide">
+                          <span className="pd-stat__value pd-stat__value--sm">{L(project.architects)}</span>
+                          <span className="pd-stat__label">{L({ he: 'אדריכלים', en: 'Architects' })}</span>
+                        </StatCube>
+                      )}
+                      <StatCube className={`pd-stat--wide pd-stat--status pd-stat--status-${project.status}`}>
+                        <span className="pd-stat__value pd-stat__value--sm">{t(`projects.status.${project.status}`)}</span>
+                        <span className="pd-stat__label">{L({ he: 'סטטוס', en: 'Status' })}</span>
+                      </StatCube>
+                    </>
                   )}
-                  {project.units > 0 && (
-                    <StatCube>
-                      <span className="pd-stat__value" dir="ltr">{project.units}</span>
-                      <span className="pd-stat__label">{L({ he: 'יחידות דיור', en: 'Units' })}</span>
-                    </StatCube>
-                  )}
-                  {project.floors && (
-                    <StatCube>
-                      <span className="pd-stat__value" dir="ltr">{project.floors}</span>
-                      <span className="pd-stat__label">{L({ he: 'קומות', en: 'Floors' })}</span>
-                    </StatCube>
-                  )}
-                  {project.architects && (
-                    <StatCube className="pd-stat--wide">
-                      <span className="pd-stat__value pd-stat__value--sm">{L(project.architects)}</span>
-                      <span className="pd-stat__label">{L({ he: 'אדריכלים', en: 'Architects' })}</span>
-                    </StatCube>
-                  )}
-                  <StatCube className={`pd-stat--wide pd-stat--status pd-stat--status-${project.status}`}>
-                    <span className="pd-stat__value pd-stat__value--sm">{t(`projects.status.${project.status}`)}</span>
-                    <span className="pd-stat__label">{L({ he: 'סטטוס', en: 'Status' })}</span>
-                  </StatCube>
                 </div>
                 <DottedGrid className="pd-dots--banner" />
               </div>

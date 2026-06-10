@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import ImageManager from './ImageManager.jsx'
+import StatCubesField from './StatCubesField.jsx'
 import { uploadMedia, uploadVideoFile, hasCloudinary } from '../../lib/cms.js'
 
 const STRIP = ['id', 'created_at', 'updated_at']
@@ -220,6 +221,9 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <button type="button" className="ed__dev-add" onClick={() => setField(f.key, [...arr, ''])}>+ הוסף מאפיין</button>
         </div>
       )
+    }
+    if (f.type === 'stat_cubes') {
+      return <StatCubesField value={v} onChange={(arr) => setField(f.key, arr)} />
     }
     if (f.type === 'plan_groups') {
       const groups = Array.isArray(v) ? v : []

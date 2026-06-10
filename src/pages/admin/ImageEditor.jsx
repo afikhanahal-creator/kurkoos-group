@@ -12,8 +12,13 @@ import './image-editor.css'
    הכל בצד-לקוח (Canvas). פלט: Blob שמועלה לאחסון.
    ============================================================ */
 
-const FRAME_W = 560
-const FRAME_H = 380
+// צורת/כיוון המסגרת (חיתוך) — לאורך / לרוחב / ריבוע
+const ASPECTS = [
+  { id: 'landscape', label: 'לרוחב', w: 560, h: 380 },
+  { id: 'portrait', label: 'לאורך', w: 400, h: 540 },
+  { id: 'square', label: 'ריבוע', w: 470, h: 470 },
+  { id: 'wide', label: 'פס רחב', w: 660, h: 300 },
+]
 
 const PRESETS = [
   { id: 'none',  label: 'מקורי',     f: { brightness: 100, contrast: 100, saturate: 100, hue: 0, sepia: 0, grayscale: 0 } },
@@ -39,6 +44,10 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const [err, setErr] = useState('')
   const [ver, setVer] = useState(0)          // מאלץ ציור מחדש אחרי החלפת תמונת הבסיס (AI)
   const [aiBusy, setAiBusy] = useState(false)
+  const [aspectId, setAspectId] = useState('landscape')
+  const ASP = ASPECTS.find((a) => a.id === aspectId) || ASPECTS[0]
+  const FRAME_W = ASP.w
+  const FRAME_H = ASP.h
   const [t, setT] = useState({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false })
   const [f, setF] = useState(PRESETS[0].f)
   const [tint, setTint] = useState({ color: '#105572', alpha: 0, blend: 'multiply' })
@@ -111,7 +120,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
       ctx.fillRect(0, 0, w, h)
       ctx.restore()
     }
-  }, [filterStr, t, bg, tint])
+  }, [filterStr, t, bg, tint, FRAME_W, FRAME_H])
 
   useEffect(() => { if (ready) draw(canvasRef.current, 1) }, [draw, ready, ver])
 
@@ -230,6 +239,16 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
               </button>
               <label className="imed__check"><input type="checkbox" checked={bg.remove} onChange={(e) => setBg((p) => ({ ...p, remove: e.target.checked }))} /> הסר רקע לבן (מהיר)</label>
               {bg.remove && <label className="imed__slider">סף <input type="range" min="180" max="255" value={bg.threshold} onChange={(e) => setBg((p) => ({ ...p, threshold: Number(e.target.value) }))} /><b>{bg.threshold}</b></label>}
+            </section>
+
+            {/* כיוון / צורת החיתוך */}
+            <section className="imed__group">
+              <h4>כיוון התמונה (לאורך / לרוחב)</h4>
+              <div className="imed__btnrow imed__btnrow--seg">
+                {ASPECTS.map((a) => (
+                  <button key={a.id} type="button" className={aspectId === a.id ? 'is-active' : ''} onClick={() => setAspectId(a.id)}>{a.label}</button>
+                ))}
+              </div>
             </section>
 
             {/* רזולוציה */}

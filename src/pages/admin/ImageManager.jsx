@@ -3,8 +3,9 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { uploadMedia, deleteMedia } from '../../lib/cms.js'
+import ImageEditor from './ImageEditor.jsx'
 
-function SortableImage({ url, index, onDelete, onCover }) {
+function SortableImage({ url, index, onDelete, onCover, onEdit }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: url })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   return (
@@ -12,6 +13,7 @@ function SortableImage({ url, index, onDelete, onCover }) {
       <img src={url} alt="" />
       <div className="im__bar">
         <button type="button" className="im__drag" {...attributes} {...listeners} title="גרור לסידור">⠿</button>
+        <button type="button" className="im__edit" onClick={() => onEdit(url)} title="עריכה / חיתוך / כיוון">✎</button>
         {index !== 0 && <button type="button" className="im__cover" onClick={() => onCover(url)} title="קבע ככריכה">★</button>}
         <button type="button" className="im__del" onClick={() => onDelete(url)} title="מחק">✕</button>
       </div>
@@ -25,7 +27,21 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [over, setOver] = useState(false)
+  const [editing, setEditing] = useState(null)   // url שנערך כרגע
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  // החלת עריכה — מעלה תמונה חדשה ומחליפה את המקור באותו מיקום ברשימה
+  const applyEdit = async (blob) => {
+    if (!editing) return
+    setBusy(true)
+    try {
+      const file = new File([blob], `img-${Date.now()}.png`, { type: 'image/png' })
+      const url = await uploadMedia(file, folder)
+      onChange(value.map((u) => (u === editing ? url : u)))
+      deleteMedia(editing).catch(() => {})
+      setEditing(null)
+    } catch (e) { setErr('שגיאה בשמירת העריכה: ' + (e.message || e)) } finally { setBusy(false) }
+  }
 
   const onDrop = (e) => {
     e.preventDefault()
@@ -91,7 +107,7 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
         <SortableContext items={value} strategy={rectSortingStrategy}>
           <div className="im__grid">
             {value.map((url, i) => (
-              <SortableImage key={url} url={url} index={i} onDelete={handleDelete} onCover={handleCover} />
+              <SortableImage key={url} url={url} index={i} onDelete={handleDelete} onCover={handleCover} onEdit={setEditing} />
             ))}
             {value.length === 0 && (
               <button type="button" className="im__empty im__dropzone" onClick={() => inputRef.current?.click()}>
@@ -104,6 +120,7 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
         </SortableContext>
       </DndContext>
       {over && <div className="im__overlay" aria-hidden="true"><span>שחררו כדי להעלות</span></div>}
+      {editing && <ImageEditor src={editing} busy={busy} onApply={applyEdit} onClose={() => setEditing(null)} />}
     </div>
   )
 }

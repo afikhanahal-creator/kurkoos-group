@@ -445,6 +445,7 @@
 .im__bar button { width: 27px; height: 27px; border-radius: 7px; background: rgba(255,255,255,0.94); color: var(--adm-ink); font-size: 0.8rem; display: grid; place-items: center; }
 .im__drag { cursor: grab; }
 .im__del:hover { background: var(--color-accent); color: #fff; }
+.im__edit:hover { background: var(--color-secondary); color: #fff; }
 .im__badge { position: absolute; inset-block-end: 0.3rem; inset-inline-start: 0.3rem; background: var(--color-accent); color: #fff; font-size: 0.66rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: var(--radius-pill); }
 
 /* ============================================================

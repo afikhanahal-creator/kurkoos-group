@@ -91,7 +91,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;          /* הכל לקצה הימני */
+  align-items: flex-start;        /* ב-RTL flex-start = הקצה הימני → הכל צמוד לימין */
   text-align: right;
 }
 /* אייקון עליון — נלקח מהתפריט, בצבע המותג, מיושר לימין */
@@ -139,7 +139,7 @@
 }
 /* כפתור הבאנר — אדום מלא, מיושר לימין, מתחת לקוביות */
 .pd-banner__cta {
-  align-self: flex-end;
+  align-self: flex-start;   /* ב-RTL = הקצה הימני */
   margin-top: 1.7rem;
 }
 
@@ -980,9 +980,9 @@
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }
   .pd-banner__media-col { order: -1; }
-  /* במובייל — תוכן צמוד לימין בדיוק כמו תדהר (לא ממורכז): מיקום → קו → כותרת → תיאור → קוביות */
-  .pd-banner__content { align-items: flex-end; text-align: right; }
-  .pd-banner__cta { align-self: flex-end; width: auto; }
+  /* במובייל — תוכן צמוד לימין בדיוק כמו תדהר (flex-start ב-RTL = ימין): מיקום → קו → כותרת → תיאור → קוביות */
+  .pd-banner__content { align-items: flex-start; text-align: right; }
+  .pd-banner__cta { align-self: flex-start; width: auto; }
   .pd-banner__arrows { display: none; }   /* בלי חצים במובייל (כמו בתדהר) */
   .pd-split__grid { grid-template-columns: 1fr; gap: 2.2rem; }
   .pd-split__media { order: -1; }

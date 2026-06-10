@@ -997,7 +997,8 @@
 @media (max-width: 880px) {
   .pd-crumbbar { background: #fff; }
 }
-/* בר העוגנים במובייל — "הסביבה" ו"מפה" ממורכזים; המתאים מודגש בעת גלילה */
+/* בר העוגנים במובייל — מציגים רק "הסביבה" ו"מפה" (--m), ממורכזים.
+   שאר המקטעים מוסתרים ב-CSS (בלי toggle בזמן ריצה → בלי ריצוד). */
 @media (max-width: 880px) {
   .pd-anchors__inner {
     justify-content: center;
@@ -1010,6 +1011,7 @@
     padding: 0.62rem 0.2rem;
     flex: 0 0 auto;
   }
+  .pd-anchors__item:not(.pd-anchors__item--m) { display: none; }
 }
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }

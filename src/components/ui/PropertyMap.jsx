@@ -15,11 +15,16 @@ function loadGoogleMaps(key) {
   mapsPromise = new Promise((resolve, reject) => {
     const cb = '__kgMapsReady'
     window[cb] = () => resolve(window.google.maps)
+    // Google קורא לזה כשהמפתח לא תקין / לא מורשה / ללא billing / הגבלת domain
+    window.gm_authFailure = () => {
+      console.error('[המפה] Google דחה את המפתח. בדקו ב-Google Cloud: (1) Maps JavaScript API + Geocoding API מופעלים (2) Billing מופעל (3) הגבלות ה-domain של המפתח כוללות את האתר.')
+      reject(new Error('gm_authFailure'))
+    }
     const s = document.createElement('script')
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=${cb}&language=he&region=IL`
     s.async = true
     s.defer = true
-    s.onerror = reject
+    s.onerror = () => reject(new Error('script_load_error'))
     document.head.appendChild(s)
   })
   return mapsPromise
@@ -63,7 +68,11 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
   useEffect(() => {
     const key = import.meta.env.VITE_GOOGLE_MAPS_KEY
     const hasCoords = lat != null && lng != null
-    if (!key || (!hasCoords && !query)) { setFailed(true); return }
+    if (!key) {
+      console.warn('[המפה] חסר VITE_GOOGLE_MAPS_KEY ב-build. הגדירו אותו ב-Vercel ואז עשו Redeploy ללא build cache (Vite מטמיע משתנים בזמן build).')
+      setFailed(true); return
+    }
+    if (!hasCoords && !query) { setFailed(true); return }
     let cancelled = false
     loadGoogleMaps(key)
       .then(async (maps) => {
@@ -125,7 +134,12 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
         }
         new CubeMarker().setMap(map)
       })
-      .catch(() => { if (!cancelled) setFailed(true) })
+      .catch((e) => {
+        if (!cancelled) {
+          console.warn('[המפה] טעינת מפת Google נכשלה — מציג מפה רגילה במקום. סיבה:', e?.message || e)
+          setFailed(true)
+        }
+      })
     return () => { cancelled = true }
   }, [lat, lng, query, zoom, label])
 

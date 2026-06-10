@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import he from './he.js'
 import en from './en.js'
+import { loadHeadingOverrides } from '../lib/headings.js'
 
 const dictionaries = { he, en }
 const I18nContext = createContext(null)
@@ -12,6 +13,14 @@ export function I18nProvider({ children }) {
     if (typeof window === 'undefined') return 'he'
     return localStorage.getItem(STORAGE_KEY) || 'he'
   })
+
+  // overrides לכותרות מה-CMS (טאב "כותרות") — חלים על העברית (השפה הראשית)
+  const [overrides, setOverrides] = useState({})
+  useEffect(() => {
+    let on = true
+    loadHeadingOverrides().then((o) => { if (on) setOverrides(o) }).catch(() => {})
+    return () => { on = false }
+  }, [])
 
   const dict = dictionaries[lang]
 
@@ -25,13 +34,14 @@ export function I18nProvider({ children }) {
     setLang((prev) => (prev === 'he' ? 'en' : 'he'))
   }, [])
 
-  // t('hero.title') -> nested lookup
+  // t('hero.title') -> override (עברית) אם הוגדר, אחרת חיפוש מקונן במילון
   const t = useCallback(
     (path) => {
+      if (lang === 'he' && overrides[path] != null && overrides[path] !== '') return overrides[path]
       const value = path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), dict)
       return value ?? path
     },
-    [dict]
+    [dict, overrides, lang]
   )
 
   return (

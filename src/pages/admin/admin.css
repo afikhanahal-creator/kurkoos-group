@@ -1060,3 +1060,79 @@
 /* תצוגה חיה — פריסת קוביות בשורה אחת לרוחב */
 .cubed__preview--row { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
 .cubed__preview--row .cubed__pv--wide { flex: 0 0 auto; }
+
+/* ============================================================
+   טאב "כותרות" (Headings Manager) + אינדיקטור שמירה
+   ============================================================ */
+.hdg { display: flex; flex-direction: column; gap: 1.1rem; }
+.hdg__toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+}
+.hdg__hint { color: var(--adm-muted); font-size: 0.9rem; max-width: 46ch; line-height: 1.5; margin: 0; }
+.hdg__search {
+  position: relative; display: flex; align-items: center;
+  background: var(--adm-surface); border: 1px solid var(--adm-border);
+  border-radius: 10px; padding-inline: 0.7rem; min-width: 16rem; color: var(--adm-muted);
+}
+.hdg__search input { border: 0; background: none; padding: 0.6rem 0.5rem; flex: 1; font: inherit; color: var(--adm-ink); outline: none; }
+.hdg__search-clear { border: 0; background: none; cursor: pointer; color: var(--adm-muted); font-size: 0.85rem; }
+
+.hdg__empty { color: var(--adm-muted); padding: 1.5rem; text-align: center; }
+.hdg__pages { display: flex; flex-direction: column; gap: 0.8rem; }
+
+.hdg__page {
+  background: var(--adm-surface); border: 1px solid var(--adm-border);
+  border-radius: var(--adm-radius); box-shadow: var(--adm-shadow-sm); overflow: hidden;
+}
+.hdg__page-head {
+  width: 100%; display: flex; align-items: center; gap: 0.7rem;
+  padding: 1rem 1.2rem; background: none; border: 0; cursor: pointer;
+  font-family: var(--font-heading); font-weight: 700; color: var(--adm-ink); text-align: start;
+}
+.hdg__page-head:hover { background: #f7f9fc; }
+.hdg__chev { color: var(--adm-muted); transition: transform 0.2s ease; flex: 0 0 auto; }
+.hdg__chev--open { transform: rotate(180deg); }
+.hdg__page-label { flex: 1; }
+.hdg__page-path { color: var(--adm-muted); font-size: 0.82rem; font-weight: 500; font-family: ui-monospace, monospace; }
+.hdg__page-body { padding: 0.4rem 1.2rem 0.8rem; border-top: 1px solid var(--adm-border); }
+
+.hdg__row { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.9rem 0; border-bottom: 1px solid var(--adm-border); }
+.hdg__row:last-child { border-bottom: 0; }
+.hdg__row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.hdg__row-meta { display: flex; align-items: center; gap: 0.55rem; }
+.hdg__row-label { font-weight: 600; color: var(--adm-ink); font-size: 0.92rem; }
+.hdg__badge {
+  font-size: 0.68rem; font-weight: 700; padding: 0.12rem 0.45rem; border-radius: 999px;
+  background: var(--adm-bg); color: var(--adm-muted); letter-spacing: 0.02em;
+}
+.hdg__badge--h1 { background: #e7f0fb; color: #1769a6; }
+.hdg__badge--h2 { background: #eaf6ef; color: #1aa564; }
+.hdg__reset { border: 0; background: none; color: var(--color-secondary); font-size: 0.8rem; font-weight: 700; cursor: pointer; padding: 0.1rem 0.3rem; border-radius: 6px; }
+.hdg__reset:hover { background: var(--color-primary-100); }
+
+.hdg__input {
+  width: 100%; font: inherit; color: var(--adm-ink);
+  background: #fbfcfe; border: 1px solid var(--adm-border); border-radius: 10px;
+  padding: 0.6rem 0.8rem; resize: vertical; line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.hdg__input:focus { outline: none; border-color: var(--color-secondary); box-shadow: var(--adm-ring); background: #fff; }
+.hdg__count { font-size: 0.76rem; color: var(--adm-muted); align-self: flex-start; }
+.hdg__count--over { color: #d6342c; font-weight: 700; }
+
+.hdg__skeleton { height: 86px; border-radius: var(--adm-radius); background: linear-gradient(90deg, #eef1f6 25%, #e4e9f0 37%, #eef1f6 63%); background-size: 400% 100%; animation: hdg-sk 1.3s ease infinite; }
+@keyframes hdg-sk { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+/* אינדיקטור שמירה */
+.svi { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; font-weight: 600; }
+.svi__ic { width: 0.95rem; height: 0.95rem; }
+.svi__ic--spin { animation: adm-spin 0.8s linear infinite; }
+.svi--saving { color: var(--adm-muted); }
+.svi--saved { color: #1aa564; }
+.svi--error { color: #d6342c; }
+
+@media (max-width: 640px) {
+  .hdg__search { min-width: 0; width: 100%; }
+  .hdg__toolbar { gap: 0.6rem; }
+}

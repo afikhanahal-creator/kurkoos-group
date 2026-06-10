@@ -1,0 +1,76 @@
+/* Toaster — נערם בפינה התחתונה-שמאלית (RTL: רחוק מהתוכן), מעל הכול */
+.tst-wrap {
+  position: fixed;
+  inset-block-end: 1.25rem;
+  inset-inline-start: 1.25rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  pointer-events: none;
+  max-width: min(92vw, 26rem);
+}
+
+.tst {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.7rem;
+  background: #fff;
+  color: #16202b;
+  border: 1px solid #e6e9ee;
+  box-shadow: 0 12px 32px -10px rgba(16, 32, 48, 0.28), 0 2px 6px rgba(16, 32, 48, 0.06);
+  font-size: 0.95rem;
+  font-weight: 500;
+  animation: tst-in 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tst--out { animation: tst-out 0.22s ease forwards; }
+
+.tst__ic { width: 1.2rem; height: 1.2rem; flex: 0 0 auto; }
+.tst__msg { flex: 1 1 auto; line-height: 1.4; }
+
+.tst--success { border-inline-start: 4px solid #1aa564; }
+.tst--success .tst__ic { color: #1aa564; }
+.tst--error { border-inline-start: 4px solid #d6342c; }
+.tst--error .tst__ic { color: #d6342c; }
+.tst--info { border-inline-start: 4px solid #1769a6; }
+.tst--info .tst__ic { color: #1769a6; }
+
+.tst__action {
+  flex: 0 0 auto;
+  background: none;
+  border: 0;
+  color: #1769a6;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.4rem;
+}
+.tst__action:hover { background: #eef4f9; }
+
+.tst__x {
+  flex: 0 0 auto;
+  background: none;
+  border: 0;
+  color: #9aa4b0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.2rem;
+}
+.tst__x:hover { color: #16202b; }
+
+@keyframes tst-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes tst-out {
+  to { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tst, .tst--out { animation: none; }
+}

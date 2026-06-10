@@ -384,7 +384,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <legend>{sec.section}</legend>
           <div className="ed__grid">
             {sec.fields.map((f) => (
-              <div className={`ed__field ${['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords', 'videos'].includes(f.type) ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
+              <div className={`ed__field ${['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords', 'videos', 'stat_cubes'].includes(f.type) ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
                 <label>{f.label}{f.required && <span className="ed__req">*</span>}</label>
                 {renderField(f)}
                 {f.hint && <small className="ed__hint">{f.hint}</small>}

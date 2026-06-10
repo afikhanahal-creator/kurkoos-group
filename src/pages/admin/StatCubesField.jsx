@@ -67,42 +67,33 @@ function CubeRow({ id, cube, onChange, onDelete }) {
         <DragIcon />
       </button>
       <div className="cubed__row-main">
-        {/* שורה 1 — הטקסטים */}
-        <div className="cubed__row-line">
-          <input
-            className="cubed__field cubed__field--val"
-            value={cube.value || ''}
-            placeholder="ערך (96 / בשיווק)"
-            onChange={(e) => onChange({ value: e.target.value })}
-          />
-          <input
-            className="cubed__field"
-            value={cube.label?.he || ''}
-            placeholder="תווית"
-            onChange={(e) => onChange({ label: { ...(cube.label || {}), he: e.target.value } })}
-          />
-          <input
-            className="cubed__field"
-            dir="ltr"
-            value={cube.label?.en || ''}
-            placeholder="Label (EN)"
-            onChange={(e) => onChange({ label: { ...(cube.label || {}), en: e.target.value } })}
-          />
+        {/* שדות עם תוויות — ברורים וקריאים */}
+        <div className="cubed__fields">
+          <label className="cubed__f cubed__f--val">
+            <span>ערך</span>
+            <input value={cube.value || ''} placeholder="96 / בשיווק" onChange={(e) => onChange({ value: e.target.value })} />
+          </label>
+          <label className="cubed__f">
+            <span>תווית (עברית)</span>
+            <input value={cube.label?.he || ''} placeholder="דירות" onChange={(e) => onChange({ label: { ...(cube.label || {}), he: e.target.value } })} />
+          </label>
+          <label className="cubed__f">
+            <span>Label (EN)</span>
+            <input dir="ltr" value={cube.label?.en || ''} placeholder="Units" onChange={(e) => onChange({ label: { ...(cube.label || {}), en: e.target.value } })} />
+          </label>
+          <label className="cubed__f">
+            <span>גודל</span>
+            <select value={cube.size || 'md'} onChange={(e) => onChange({ size: e.target.value })}>
+              {SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </label>
         </div>
-        {/* שורה 2 — פקדים */}
+        {/* פקדים — רוחב הקוביה + הצמדת טקסט */}
         <div className="cubed__row-ctrls">
-          <select
-            className="cubed__size"
-            value={cube.size || 'md'}
-            onChange={(e) => onChange({ size: e.target.value })}
-            aria-label="גודל הקוביה"
-          >
-            {SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-          <span className="cubed__w" title="רוחב הפיאה">
-            <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) - 0.3) })} aria-label="הצר פיאה">−</button>
+          <span className="cubed__w" title="רוחב הקוביה">
+            <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) - 0.3) })} aria-label="הקטן רוחב">−</button>
             <span className="cubed__w-lbl">רוחב</span>
-            <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) + 0.3) })} aria-label="הרחב פיאה">+</button>
+            <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) + 0.3) })} aria-label="הגדל רוחב">+</button>
           </span>
           <button
             type="button"
@@ -110,7 +101,7 @@ function CubeRow({ id, cube, onChange, onDelete }) {
             onClick={() => onChange({ spread: !cube.spread })}
             title="הצמדת הכיתוב לפאות הקוביה"
             aria-pressed={!!cube.spread}
-          >⇕ הצמד</button>
+          >⇕ הצמד טקסט</button>
         </div>
       </div>
       <button type="button" className="cubed__del" onClick={onDelete} aria-label="הסר קוביה">

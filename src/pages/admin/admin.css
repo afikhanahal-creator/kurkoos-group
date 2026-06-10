@@ -873,20 +873,19 @@
   color: var(--adm-muted); cursor: grab; touch-action: none; background: 0; border: 0;
 }
 .cubed__handle:active { cursor: grabbing; }
-/* גוף השורה — שתי שורות: טקסטים למעלה, פקדים למטה */
-.cubed__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.cubed__row-line { display: flex; gap: 0.45rem; }
+/* גוף השורה — שדות עם תוויות (גריד) למעלה, פקדים למטה */
+.cubed__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+/* שדות עם תוויות — גריד שמסתדר לפי הרוחב הזמין */
+.cubed__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.55rem 0.6rem; }
+.cubed__f { display: flex; flex-direction: column; gap: 0.22rem; min-width: 0; }
+.cubed__f > span { font-size: 0.72rem; font-weight: 600; color: var(--adm-muted); }
+.cubed__f input, .cubed__f select {
+  width: 100%; min-width: 0; box-sizing: border-box; padding: 0.5rem 0.6rem; font-size: 0.9rem;
+  border: 1.5px solid var(--adm-border); border-radius: 8px; background: #fff; color: var(--adm-ink);
+}
+.cubed__f--val input { font-weight: 700; }
+.cubed__f input:focus, .cubed__f select:focus { outline: none; border-color: var(--color-secondary); box-shadow: var(--adm-ring); }
 .cubed__row-ctrls { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
-.cubed__field {
-  min-width: 0; flex: 1 1 0; padding: 0.5rem 0.6rem; font-size: 0.88rem;
-  border: 1.5px solid var(--adm-border); border-radius: 8px; background: #fff; color: var(--adm-ink);
-}
-.cubed__field--val { flex: 0 0 7rem; font-weight: 700; }
-.cubed__field:focus { outline: none; border-color: var(--color-secondary); box-shadow: var(--adm-ring); }
-.cubed__size {
-  flex: 0 0 auto; padding: 0.45rem 0.55rem; font-size: 0.84rem;
-  border: 1.5px solid var(--adm-border); border-radius: 8px; background: #fff; color: var(--adm-ink);
-}
 .cubed__del {
   flex-shrink: 0; align-self: center; display: grid; place-items: center; width: 32px; height: 32px;
   border-radius: 8px; color: var(--color-accent); background: 0; border: 1.5px solid transparent; cursor: pointer;

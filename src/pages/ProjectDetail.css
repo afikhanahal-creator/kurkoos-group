@@ -816,7 +816,10 @@
 .pd-lightbox__bg {
   position: absolute;
   inset: 0;
-  background: rgba(7, 16, 22, 0.92);
+  /* רקע שקוף יותר — רואים מעט מהאתר מאחור */
+  background: rgba(7, 16, 22, 0.62);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   cursor: zoom-out;
 }
 .pd-lightbox__fig { position: relative; z-index: 1; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
@@ -868,9 +871,12 @@
 }
 .pd-lightbox__counter {
   font-family: var(--font-heading);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  color: #fff;
   font-size: 0.95rem;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-pill);
 }
 .pd-lightbox__close {
   position: absolute;
@@ -1043,9 +1049,8 @@
   .pd-field textarea { font-size: 0.95rem; padding: 0.78rem 0.95rem; }
   .pd-contact__submit { width: 100%; min-width: 0; }
   .pd-gallery__item:first-child { grid-column: span 2; grid-row: span 1; }
-  .pd-lightbox__nav { width: 44px; height: 44px; }
-  .pd-lightbox__nav--prev { inset-inline-start: 0.5rem; }
-  .pd-lightbox__nav--next { inset-inline-end: 0.5rem; }
+  /* במובייל — בלי חצים; מחליפים תמונות בלחיצה/החלקה */
+  .pd-lightbox__nav { display: none; }
 }
 
 /* ---------- כפתורים מוקטנים במובייל (חיסכון מקום) ---------- */

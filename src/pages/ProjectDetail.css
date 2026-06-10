@@ -987,6 +987,12 @@
   .pd-banner__content { align-items: flex-start; text-align: right; }
   .pd-banner__cta { align-self: flex-start; width: auto; }
   .pd-banner__arrows { display: none; }   /* בלי חצים במובייל (כמו בתדהר) */
+  /* ריווח אנכי נדיב יותר בין האלמנטים — שלא יהיה דחוס */
+  .pd-banner__location { margin-bottom: 0.85rem; }
+  .pd-banner__rule { margin: 0 0 1.7rem; }
+  .pd-banner__name { margin-bottom: 1.1rem; line-height: 1.1; }
+  .pd-banner__subtitle { margin-bottom: 2.2rem; }
+  .pd-banner__cta { margin-top: 2.3rem; }
   .pd-split__grid { grid-template-columns: 1fr; gap: 2.2rem; }
   .pd-split__media { order: -1; }
   .plan-acc { grid-template-columns: 1fr; gap: 1.4rem; }

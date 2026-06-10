@@ -289,8 +289,9 @@
   /* ללא שום קווי הפרדה (כמו בתדהר) — בר נקי לחלוטין */
   border: 0;
   box-shadow: none;
-  transform: translateZ(0);   /* שכבת GPU — מונע ריצוד/הבהוב של הבר הדביק בגלילה */
-  backface-visibility: hidden;
+  /* חשוב: ללא transform/translateZ/backface על אלמנט sticky — קידום לשכבת
+     GPU גורם לבר הדביק "לרעוד" (jitter) בגלילת אינרציה במובייל. בלי זה,
+     הדפדפן מצמיד את הבר בדיוק לגלילה ואין ריצוד. */
 }
 .pd-anchors__inner {
   display: flex;

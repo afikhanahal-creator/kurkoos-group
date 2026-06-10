@@ -289,6 +289,7 @@ export default function ProjectDetail() {
                 <Icon name={bannerIcon} size={42} stroke={1.6} />
               </span>
               {L(project.city) && <span className="pd-banner__location">{L(project.city)}</span>}
+              <span className="pd-banner__rule" aria-hidden="true" />
               <h1 className="pd-banner__name">{L(project.name)}</h1>
               {L(project.short) && <p className="pd-banner__subtitle">{L(project.short)}</p>}
 

@@ -864,30 +864,34 @@
 .cubed__empty { font-size: 0.82rem; color: var(--adm-muted); line-height: 1.5; margin: 0; }
 .cubed__list { display: flex; flex-direction: column; gap: 0.45rem; }
 .cubed__row {
-  display: flex; align-items: center; gap: 0.4rem;
-  background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px;
-  padding: 0.4rem 0.5rem;
+  display: flex; align-items: stretch; gap: 0.5rem;
+  background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 12px;
+  padding: 0.6rem;
 }
 .cubed__handle {
-  flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 30px;
+  flex-shrink: 0; display: grid; place-items: center; width: 26px;
   color: var(--adm-muted); cursor: grab; touch-action: none; background: 0; border: 0;
 }
 .cubed__handle:active { cursor: grabbing; }
+/* גוף השורה — שתי שורות: טקסטים למעלה, פקדים למטה */
+.cubed__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.cubed__row-line { display: flex; gap: 0.45rem; }
+.cubed__row-ctrls { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
 .cubed__field {
-  min-width: 0; flex: 1 1 0; padding: 0.42rem 0.55rem; font-size: 0.86rem;
-  border: 1px solid var(--adm-border); border-radius: 7px; background: #fff; color: var(--adm-ink);
+  min-width: 0; flex: 1 1 0; padding: 0.5rem 0.6rem; font-size: 0.88rem;
+  border: 1.5px solid var(--adm-border); border-radius: 8px; background: #fff; color: var(--adm-ink);
 }
-.cubed__field--val { flex: 0 0 6.5rem; font-weight: 700; }
-.cubed__field:focus { outline: 2px solid var(--color-secondary); outline-offset: -1px; }
+.cubed__field--val { flex: 0 0 7rem; font-weight: 700; }
+.cubed__field:focus { outline: none; border-color: var(--color-secondary); box-shadow: var(--adm-ring); }
 .cubed__size {
-  flex: 0 0 auto; padding: 0.42rem 0.4rem; font-size: 0.82rem;
-  border: 1px solid var(--adm-border); border-radius: 7px; background: #fff; color: var(--adm-ink);
+  flex: 0 0 auto; padding: 0.45rem 0.55rem; font-size: 0.84rem;
+  border: 1.5px solid var(--adm-border); border-radius: 8px; background: #fff; color: var(--adm-ink);
 }
 .cubed__del {
-  flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px;
-  border-radius: 7px; color: var(--color-accent); background: 0; border: 0; cursor: pointer;
+  flex-shrink: 0; align-self: center; display: grid; place-items: center; width: 32px; height: 32px;
+  border-radius: 8px; color: var(--color-accent); background: 0; border: 1.5px solid transparent; cursor: pointer;
 }
-.cubed__del:hover { background: var(--color-accent-100); }
+.cubed__del:hover { background: var(--color-accent-100); border-color: var(--color-accent-100); }
 .cubed__add {
   align-self: flex-start; padding: 0.5rem 1rem; font-size: 0.85rem; font-weight: 700;
   font-family: var(--font-heading); color: var(--color-secondary);
@@ -1044,11 +1048,12 @@
 .cubed__pv--spread { justify-content: space-between; min-height: 64px; }
 .cubed__pv--spread .cubed__pv-lbl { margin-top: 0; }
 /* פקדי רוחב/הצמדה בשורת העריכה */
-.cubed__w { display: inline-flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
-.cubed__w button { width: 24px; height: 28px; border: 1px solid var(--adm-border); background: #fff; border-radius: 7px; cursor: pointer; font-size: 1rem; line-height: 1; color: var(--adm-ink); }
-.cubed__w button:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
+.cubed__w { display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0; border: 1.5px solid var(--adm-border); border-radius: 8px; background: #fff; padding: 0 0.25rem; }
+.cubed__w button { width: 26px; height: 30px; border: 0; background: 0; cursor: pointer; font-size: 1.1rem; line-height: 1; color: var(--adm-ink); }
+.cubed__w button:hover { color: var(--color-secondary); }
+.cubed__w-lbl { font-size: 0.78rem; font-weight: 600; color: var(--adm-muted); }
 .cubed__w-ic { color: var(--adm-muted); font-size: 0.85rem; }
-.cubed__spread { flex-shrink: 0; width: 30px; height: 28px; border: 1px solid var(--adm-border); background: #fff; border-radius: 7px; cursor: pointer; font-size: 0.95rem; color: var(--adm-muted); }
+.cubed__spread { flex-shrink: 0; height: 32px; padding: 0 0.7rem; border: 1.5px solid var(--adm-border); background: #fff; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--adm-muted); }
 .cubed__spread:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
 .cubed__spread.is-on { background: var(--color-primary-900); border-color: var(--color-primary-900); color: #fff; }
 

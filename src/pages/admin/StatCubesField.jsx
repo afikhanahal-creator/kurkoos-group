@@ -66,47 +66,53 @@ function CubeRow({ id, cube, onChange, onDelete }) {
       <button type="button" className="cubed__handle" {...attributes} {...listeners} aria-label="גרור לסידור">
         <DragIcon />
       </button>
-      <input
-        className="cubed__field cubed__field--val"
-        value={cube.value || ''}
-        placeholder="ערך (96 / BLK / בשיווק)"
-        onChange={(e) => onChange({ value: e.target.value })}
-      />
-      <input
-        className="cubed__field"
-        value={cube.label?.he || ''}
-        placeholder="תווית"
-        onChange={(e) => onChange({ label: { ...(cube.label || {}), he: e.target.value } })}
-      />
-      <input
-        className="cubed__field"
-        dir="ltr"
-        value={cube.label?.en || ''}
-        placeholder="Label (EN)"
-        onChange={(e) => onChange({ label: { ...(cube.label || {}), en: e.target.value } })}
-      />
-      <select
-        className="cubed__size"
-        value={cube.size || 'md'}
-        onChange={(e) => onChange({ size: e.target.value })}
-        aria-label="גודל הקוביה"
-      >
-        {SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-      </select>
-      {/* רוחב הפיאה — הרחבה/הצרה */}
-      <span className="cubed__w" title="רוחב הפיאה">
-        <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) - 0.3) })} aria-label="הצר פיאה">−</button>
-        <span className="cubed__w-ic" aria-hidden="true">↔</span>
-        <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) + 0.3) })} aria-label="הרחב פיאה">+</button>
-      </span>
-      {/* הצמדת הכיתוב לפאות (ערך למעלה, תווית למטה) */}
-      <button
-        type="button"
-        className={`cubed__spread ${cube.spread ? 'is-on' : ''}`}
-        onClick={() => onChange({ spread: !cube.spread })}
-        title="הצמדת הכיתוב לפאות הקוביה"
-        aria-pressed={!!cube.spread}
-      >⇕</button>
+      <div className="cubed__row-main">
+        {/* שורה 1 — הטקסטים */}
+        <div className="cubed__row-line">
+          <input
+            className="cubed__field cubed__field--val"
+            value={cube.value || ''}
+            placeholder="ערך (96 / בשיווק)"
+            onChange={(e) => onChange({ value: e.target.value })}
+          />
+          <input
+            className="cubed__field"
+            value={cube.label?.he || ''}
+            placeholder="תווית"
+            onChange={(e) => onChange({ label: { ...(cube.label || {}), he: e.target.value } })}
+          />
+          <input
+            className="cubed__field"
+            dir="ltr"
+            value={cube.label?.en || ''}
+            placeholder="Label (EN)"
+            onChange={(e) => onChange({ label: { ...(cube.label || {}), en: e.target.value } })}
+          />
+        </div>
+        {/* שורה 2 — פקדים */}
+        <div className="cubed__row-ctrls">
+          <select
+            className="cubed__size"
+            value={cube.size || 'md'}
+            onChange={(e) => onChange({ size: e.target.value })}
+            aria-label="גודל הקוביה"
+          >
+            {SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <span className="cubed__w" title="רוחב הפיאה">
+            <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) - 0.3) })} aria-label="הצר פיאה">−</button>
+            <span className="cubed__w-lbl">רוחב</span>
+            <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) + 0.3) })} aria-label="הרחב פיאה">+</button>
+          </span>
+          <button
+            type="button"
+            className={`cubed__spread ${cube.spread ? 'is-on' : ''}`}
+            onClick={() => onChange({ spread: !cube.spread })}
+            title="הצמדת הכיתוב לפאות הקוביה"
+            aria-pressed={!!cube.spread}
+          >⇕ הצמד</button>
+        </div>
+      </div>
       <button type="button" className="cubed__del" onClick={onDelete} aria-label="הסר קוביה">
         <XIcon />
       </button>

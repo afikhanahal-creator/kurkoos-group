@@ -157,3 +157,6 @@
   .hc-card__shutter-desc { font-size: 0.78rem; }
   .hc-card__shutter-cta { font-size: 0.82rem; }
 }
+
+/* כרטיס ללא תמונה — רקע גרדיאנט עדין במקום תמונה שבורה */
+.hc-card__ph { position: absolute; inset: 0; background: linear-gradient(150deg, var(--color-primary-700, #0f4d6a), var(--color-primary-900, #07293a)); }

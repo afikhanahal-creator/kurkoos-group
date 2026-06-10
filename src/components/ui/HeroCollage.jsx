@@ -25,12 +25,9 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
               className={`hc-card hc-card--${it.layout || 'normal'}`}
               aria-label={it.name}
             >
-              <img
-                src={it.url}
-                alt={it.name}
-                draggable={false}
-                loading="lazy"
-              />
+              {it.url
+                ? <img src={it.url} alt={it.name} draggable={false} loading="lazy" />
+                : <span className="hc-card__ph" aria-hidden="true" />}
 
               {/* תווית שם תמידית */}
               <span className="hc-card__name">{it.name}</span>

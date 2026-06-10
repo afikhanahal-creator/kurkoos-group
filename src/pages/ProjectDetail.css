@@ -210,7 +210,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.pd-stat__label { font-family: var(--font-heading); font-size: 0.84rem; font-weight: 500; line-height: 1; color: #647c8c; margin-top: 0.22rem; }
+.pd-stat__label { font-family: var(--font-body); font-size: 0.82rem; font-weight: 400; line-height: 1; letter-spacing: 0.01em; color: #7d93a1; margin-top: 0.45rem; }
 
 /* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
 .pd-banner__stats--small .pd-stat { min-height: 64px; padding: 0.5rem 0.85rem; }

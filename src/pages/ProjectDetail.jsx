@@ -546,6 +546,25 @@ export default function ProjectDetail() {
               // החלקה שמאלה = הבא, ימינה = הקודם (מותאם RTL)
               go(dx < 0 ? (isRtl ? -1 : 1) : (isRtl ? 1 : -1))
             }
+            // דסקטופ — פסיפס תמונות בסגנון תדהר (כל התמונות יחד); מובייל — קרוסלה עם החלקה
+            if (!isMobile) {
+              return (
+                <div className="pd-gallery">
+                  {currentImages.map((img, i) => (
+                    <button
+                      key={`${galleryTab}-${i}`}
+                      type="button"
+                      className="pd-gallery__item"
+                      onClick={() => openLightbox(mediaItems, i)}
+                      aria-label={`${L(project.name)} ${i + 1} — ${L({ he: 'הגדלה', en: 'Enlarge' })}`}
+                    >
+                      <SmartImage src={img} alt={`${L(project.name)} ${i + 1}`} label={L(project.name)} />
+                      <span className="pd-gallery__zoom"><Icon name="search" size={20} /></span>
+                    </button>
+                  ))}
+                </div>
+              )
+            }
             return (
               <div className="pd-carousel">
                 <div className="pd-carousel__stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>

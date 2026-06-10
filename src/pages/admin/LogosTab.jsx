@@ -97,6 +97,7 @@ function LogoCard({ logo, onChange, onDelete }) {
         {logo.image_url
           ? <img src={logo.image_url} alt={logo.name} draggable={false} style={{ transform: `translate(${posX}%, ${posY}%) scale(${scale})` }} />
           : <span className="lcard__placeholder">{logo.name || 'ללא לוגו'}</span>}
+        {logo.image_url && <span className="lcard__cropguide" aria-hidden="true" />}
         {logo.image_url && (
           <button type="button" className="lcard__recenter" onClick={recenter} title="איפוס למרכז">⌖</button>
         )}

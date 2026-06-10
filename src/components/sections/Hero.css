@@ -103,7 +103,7 @@
 .hero__actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2.4rem; }
 .hero__ghost { color: var(--color-text); border-color: var(--color-border-strong); }
 .hero__ghost:hover { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-.hero__play-ic { color: var(--color-accent); }
+.hero__play-ic { color: var(--color-primary-900); }
 .hero__ghost:hover .hero__play-ic { color: #fff; }
 .hero__cta-arrow { transition: transform var(--dur-base); }
 [dir='rtl'] .hero__cta-arrow { transform: scaleX(-1); }

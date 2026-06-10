@@ -479,9 +479,15 @@
 .lcard:hover { box-shadow: var(--adm-shadow); transform: translateY(-2px); }
 .lcard--off { opacity: 0.55; }
 .lcard__handle { position: absolute; inset-block-start: 0.5rem; inset-inline-start: 0.5rem; color: var(--adm-muted); cursor: grab; }
-.lcard__thumb { position: relative; height: 84px; display: grid; place-items: center; background: var(--adm-bg); border-radius: 9px; overflow: hidden; touch-action: none; }
+.lcard__thumb { position: relative; height: 120px; display: grid; place-items: center; background: var(--adm-bg); border-radius: 9px; overflow: hidden; touch-action: none; }
 .lcard__thumb.is-draggable { cursor: move; }
 .lcard__thumb img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+/* תיבת חיתוך — מסגרת מקווקוות וקווי מרכז לעזרה ביישור (לא חוסמת גרירה) */
+.lcard__cropguide { position: absolute; inset: 8px; pointer-events: none; border: 1.5px dashed rgba(16,104,140,0.45); border-radius: 7px; opacity: 0; transition: opacity 0.15s; }
+.lcard__cropguide::before, .lcard__cropguide::after { content: ''; position: absolute; background: rgba(16,104,140,0.3); }
+.lcard__cropguide::before { inset-block: 0; inset-inline-start: 50%; width: 1px; transform: translateX(-50%); }
+.lcard__cropguide::after { inset-inline: 0; inset-block-start: 50%; height: 1px; transform: translateY(-50%); }
+.lcard__thumb.is-draggable:hover .lcard__cropguide { opacity: 1; }
 /* כפתור איפוס/מרכוז הלוגו */
 .lcard__recenter {
   position: absolute; inset-block-start: 4px; inset-inline-end: 4px;

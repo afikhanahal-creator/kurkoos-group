@@ -248,12 +248,11 @@
   font-size: 1rem;
   color: var(--color-text-soft);
   white-space: nowrap;
-  opacity: 0.4;                     /* מקטעים לא-פעילים מעומעמים → רק הנוכחי בולט */
   transition: color var(--dur-fast), opacity var(--dur-fast);
 }
 .pd-anchors__item:hover { color: var(--color-secondary); }
 /* מצב פעיל — שם המקטע הנוכחי הופך לבולד, כהה ומלא */
-.pd-anchors__item.is-active { color: var(--color-primary-900); font-weight: 800; opacity: 1; }
+.pd-anchors__item.is-active { color: var(--color-primary-900); font-weight: 800; }
 
 /* ---------- Split sections ---------- */
 .pd-split__grid {
@@ -916,10 +915,14 @@
     scroll-behavior: smooth;
     padding-inline: 50%;           /* מרווח שמאפשר למרכז כל פריט (כולל ראשון/אחרון) → המקטע הפעיל תמיד באמצע */
   }
+  /* במובייל מציגים רק את שם המקטע הנוכחי (ממורכז); השאר מוסתרים ומופיעים בתורם בגלילה */
   .pd-anchors__item {
-    font-size: 0.88rem;
+    font-size: 0.95rem;
     padding: 0.62rem 0.2rem;
+    opacity: 0;
+    pointer-events: none;
   }
+  .pd-anchors__item.is-active { opacity: 1; pointer-events: auto; }
 }
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 2rem; }

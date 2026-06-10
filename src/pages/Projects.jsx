@@ -4,6 +4,7 @@ import localProjects from '../data/projects.js'
 import localStats from '../data/stats.js'
 import HeroCollage from '../components/ui/HeroCollage.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
+import Seo from '../components/ui/Seo.jsx'
 import { supabase } from '../lib/supabase.js'
 import { listProjects, listCounters } from '../lib/cms.js'
 import './Projects.css'
@@ -60,6 +61,7 @@ export default function Projects() {
 
   return (
     <>
+      <Seo title={allTitle} description={t('projects.lead')} />
       <PageHeader eyebrow={t('projects.eyebrow')} title={allTitle} lead={t('projects.lead')} crumbs={[{ label: allTitle }]} />
       <HeroCollage title={allTitle} subtitle={t('projects.lead')} stats={statItems} items={collageItems} />
     </>

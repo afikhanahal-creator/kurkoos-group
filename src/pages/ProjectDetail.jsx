@@ -15,6 +15,7 @@ import Lightbox from '../components/ui/Lightbox.jsx'
 import PropertyMap from '../components/ui/PropertyMap.jsx'
 import BookingCalendar from '../components/ui/BookingCalendar.jsx'
 import StatCube from '../components/ui/StatCube.jsx'
+import Seo from '../components/ui/Seo.jsx'
 import useIsMobile from '../hooks/useIsMobile.js'
 import Icon from '../components/ui/Icon.jsx'
 import './ProjectDetail.css'
@@ -257,6 +258,21 @@ export default function ProjectDetail() {
 
   const goTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
+  // SEO — כותרת/תיאור/תמונה ייחודיים לעמוד הפרויקט + נתונים מובנים (schema.org)
+  const seoName = L(project.name)
+  const seoCity = L(project.city)
+  const seoDesc = (L(project.short) || '').trim() ||
+    `${seoName}${seoCity ? ` · ${seoCity}` : ''} — פרויקט של קבוצת קורקוס. יזמות, בנייה ופיקוח ברמה הגבוהה ביותר.`
+  const seoJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Residence',
+    name: seoName,
+    description: seoDesc,
+    url: `https://www.kurkoos-group.co.il/projects/${project.slug}`,
+    ...(project.cover ? { image: project.cover } : {}),
+    ...(seoCity ? { address: { '@type': 'PostalAddress', addressLocality: seoCity, addressCountry: 'IL' } } : {}),
+  }
+
   const openLightbox = (images, index) => setLightbox({ images, index })
 
   const setField = (key) => (e) => {
@@ -287,6 +303,7 @@ export default function ProjectDetail() {
 
   return (
     <article className="project-detail">
+      <Seo title={seoName} description={seoDesc} image={project.cover} jsonLd={seoJsonLd} />
       {/* ===== סרגל פירורי לחם (רקע תכלת בהיר) ===== */}
       <div className="pd-crumbbar">
         <div className="container">

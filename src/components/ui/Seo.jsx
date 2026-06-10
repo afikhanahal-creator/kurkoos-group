@@ -29,7 +29,7 @@ function upsertLink(rel, href) {
   el.setAttribute('href', href)
 }
 
-export default function Seo({ title, description, image, noindex = false }) {
+export default function Seo({ title, description, image, noindex = false, jsonLd = null }) {
   const { lang } = useI18n()
   const { pathname } = useLocation()
 
@@ -57,7 +57,19 @@ export default function Seo({ title, description, image, noindex = false }) {
     upsertMeta('name', 'twitter:card', 'summary_large_image')
     upsertMeta('name', 'twitter:title', fullTitle)
     upsertMeta('name', 'twitter:description', desc)
-  }, [title, description, image, noindex, lang, pathname])
+    if (image) upsertMeta('name', 'twitter:image', image.startsWith('http') ? image : origin + image)
+
+    // נתונים מובנים per-page (schema.org) — נוסף ומוסר בעת ניווט
+    let ld = null
+    if (jsonLd) {
+      ld = document.createElement('script')
+      ld.type = 'application/ld+json'
+      ld.setAttribute('data-seo', 'page')
+      ld.textContent = JSON.stringify(jsonLd)
+      document.head.appendChild(ld)
+    }
+    return () => { if (ld) ld.remove() }
+  }, [title, description, image, noindex, lang, pathname, jsonLd])
 
   return null
 }

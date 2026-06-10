@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from './i18n/index.jsx'
 import Header from './components/layout/Header.jsx'
@@ -18,9 +18,11 @@ import About from './pages/About.jsx'
 import Blog from './pages/Blog.jsx'
 import Careers from './pages/Careers.jsx'
 import Legal from './pages/Legal.jsx'
-import StyleGuide from './pages/StyleGuide.jsx'
 import NotFound from './pages/NotFound.jsx'
-import Admin from './pages/admin/Admin.jsx'
+// קוד-ספליטינג: עורך האדמין (כולל עורך התמונות הכבד) ומדריך הסגנון
+// נטענים רק לפי דרישה — כך החבילה של האתר הציבורי קלה ומהירה יותר במובייל.
+const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'))
+const Admin = lazy(() => import('./pages/admin/Admin.jsx'))
 
 // גלילה לראש העמוד במעבר בין דפים; גלילה לעוגן (#) אם קיים.
 function ScrollManager() {
@@ -69,7 +71,9 @@ export default function App() {
       <>
         <FontLoader />
         <ScrollManager />
-        <Admin />
+        <Suspense fallback={null}>
+          <Admin />
+        </Suspense>
       </>
     )
   }
@@ -96,7 +100,7 @@ export default function App() {
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />
               <Route path="/terms" element={<Legal kind="terms" />} />
-              <Route path="/style-guide" element={<StyleGuide />} />
+              <Route path="/style-guide" element={<Suspense fallback={null}><StyleGuide /></Suspense>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </motion.div>

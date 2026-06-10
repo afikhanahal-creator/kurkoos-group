@@ -72,11 +72,13 @@
   box-shadow: var(--shadow-lg);
 }
 .contact__panel > *:not(.infinite-grid) { position: relative; z-index: 1; }
-.contact__panel .contact__eyebrow {
-  color: #fff;
+/* ספציפיות גבוהה (.contact .contact__panel ...) כדי לגבור על '.contact .eyebrow'
+   (אדום) — על הפאנל הכהה צריך גוון בהיר וברור. */
+.contact .contact__panel .contact__eyebrow {
+  color: #ff9e8f;   /* אלמוגי בהיר — קריא היטב על הרקע הכהה, ונשאר במשפחת האדום של המותג */
   font-size: var(--fs-small);
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   margin-bottom: 0.55rem;
   opacity: 1;
 }

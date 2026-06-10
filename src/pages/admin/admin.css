@@ -6,6 +6,7 @@
 :root {
   --adm-bg: #eef1f6;
   --adm-surface: #ffffff;
+  --adm-surface-2: #fcfdff;   /* משטח מוגבה — שדות קלט, כרטיסים פנימיים */
   --adm-border: #e3e7ee;
   --adm-border-strong: #d2d8e3;
   --adm-ink: #16202e;
@@ -1136,3 +1137,75 @@
   .hdg__search { min-width: 0; width: 100%; }
   .hdg__toolbar { gap: 0.6rem; }
 }
+
+/* ============================================================
+   כפתור החלפת מצב בהיר/כהה (Topbar)
+   ============================================================ */
+.adm__topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.adm__topbar-actions { display: flex; align-items: center; gap: 0.5rem; padding-inline-end: 0.4rem; }
+.adm__theme-toggle {
+  display: grid; place-items: center; width: 40px; height: 40px;
+  border-radius: 11px; border: 1px solid var(--adm-border);
+  background: var(--adm-surface); color: var(--adm-ink); cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast);
+}
+.adm__theme-toggle:hover { background: var(--adm-bg); color: var(--color-secondary); transform: translateY(-1px); }
+.adm__theme-toggle:focus-visible { outline: none; box-shadow: var(--adm-ring); }
+
+/* ============================================================
+   מצב כהה (Dark mode) — מוגבל לאזור האדמין (.adm[data-theme="dark"])
+   רוב המערכת בנויה על tokens, ולכן עיקר העבודה היא דריסת ה-tokens.
+   ============================================================ */
+.adm[data-theme="dark"] {
+  --adm-bg: #0e1620;
+  --adm-surface: #16212e;
+  --adm-surface-2: #1d2a39;
+  --adm-border: #27333f;
+  --adm-border-strong: #36434f;
+  --adm-ink: #e8eef4;
+  --adm-muted: #97a4b3;
+  --adm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --adm-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --adm-shadow-lg: 0 20px 52px rgba(0, 0, 0, 0.62);
+  --adm-ring: 0 0 0 3px rgba(89, 168, 200, 0.32);
+  background: var(--adm-bg);
+  color: var(--adm-ink);
+}
+
+/* Topbar שקוף-כהה במקום הלבן */
+.adm[data-theme="dark"] .adm__topbar { background: rgba(16, 33, 46, 0.82); }
+
+/* שדות קלט — דריסה רחבה של רקעים לבנים מקודדים-קשיח */
+.adm[data-theme="dark"] input,
+.adm[data-theme="dark"] textarea,
+.adm[data-theme="dark"] select {
+  background: var(--adm-surface-2);
+  color: var(--adm-ink);
+  border-color: var(--adm-border-strong);
+}
+.adm[data-theme="dark"] input::placeholder,
+.adm[data-theme="dark"] textarea::placeholder { color: #5d6b7a; }
+.adm[data-theme="dark"] select option { background: var(--adm-surface-2); color: var(--adm-ink); }
+
+/* משטחים פנימיים שהיו עם רקע לבן מקודד */
+.adm[data-theme="dark"] .ed__group,
+.adm[data-theme="dark"] .ed__dev,
+.adm[data-theme="dark"] .hdg__input,
+.adm[data-theme="dark"] .ptab__search input:focus,
+.adm[data-theme="dark"] .im__dropzone:hover { background: var(--adm-surface-2); }
+.adm[data-theme="dark"] .ed__dev-logo img,
+.adm[data-theme="dark"] .ed__env-img img { background: #0b1119; }
+.adm[data-theme="dark"] .hdg__page-head:hover { background: rgba(255, 255, 255, 0.04); }
+
+/* כיתוב חזק על רקע כהה */
+.adm[data-theme="dark"] .ed__section legend,
+.adm[data-theme="dark"] .hdg__row-label,
+.adm[data-theme="dark"] .ed__field > label { color: var(--adm-ink); }
+
+/* פסי-סטטוס בהירים — מעט עמומים יותר במצב כהה (קריאים, לא זוהרים) */
+.adm[data-theme="dark"] .ed__status--ok,
+.adm[data-theme="dark"] .lcard__status--saved { background: rgba(31, 122, 77, 0.18); color: #6fd6a3; }
+.adm[data-theme="dark"] .ed__status--dirty { background: rgba(138, 109, 0, 0.22); color: #e8c766; }
+.adm[data-theme="dark"] .hdg__badge { background: var(--adm-surface-2); color: var(--adm-muted); }
+.adm[data-theme="dark"] .hdg__badge--h1 { background: rgba(23, 105, 166, 0.25); color: #7db9e6; }
+.adm[data-theme="dark"] .hdg__badge--h2 { background: rgba(26, 165, 100, 0.22); color: #6fd6a3; }

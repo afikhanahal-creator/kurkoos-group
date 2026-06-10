@@ -1017,3 +1017,19 @@
 /* כפתור עריכת תמונה בכרטיס לוגו */
 .lcard__btn--edit { border-color: var(--color-secondary); color: var(--color-secondary); font-weight: 700; }
 .lcard__btn--edit:hover { background: var(--color-secondary); color: #fff; }
+
+/* ===== מתג ערבוב (shuffle) ללוגואים ===== */
+.ltab__head-actions { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.ltab__shuffle {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.45rem 0.8rem; border-radius: 999px; cursor: pointer;
+  border: 1.5px solid var(--adm-border-strong); background: var(--adm-surface);
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.85rem; color: var(--adm-muted);
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.ltab__shuffle.is-on { border-color: var(--color-secondary); color: var(--color-secondary); background: var(--color-primary-100); }
+.ltab__shuffle-ic { font-size: 0.95rem; }
+.ltab__shuffle-track { width: 34px; height: 18px; border-radius: 999px; background: var(--adm-border-strong); position: relative; transition: background 0.18s; flex-shrink: 0; }
+.ltab__shuffle.is-on .ltab__shuffle-track { background: var(--color-secondary); }
+.ltab__shuffle-knob { position: absolute; top: 2px; inset-inline-start: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform 0.18s; }
+.ltab__shuffle.is-on .ltab__shuffle-knob { transform: translateX(-16px); }

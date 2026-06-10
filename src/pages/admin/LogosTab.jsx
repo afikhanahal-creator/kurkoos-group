@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { listLogos, createLogo, updateLogo, deleteLogo, reorderRows, uploadMedia, deleteMedia } from '../../lib/cms.js'
+import { listLogos, createLogo, updateLogo, deleteLogo, reorderRows, uploadMedia, deleteMedia, fetchSettings, setSetting } from '../../lib/cms.js'
 import ImageEditor from './ImageEditor.jsx'
 
 function LogoCard({ logo, onChange, onDelete }) {
@@ -161,13 +161,25 @@ function LogoCard({ logo, onChange, onDelete }) {
 export default function LogosTab() {
   const [logos, setLogos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [shuffle, setShuffle] = useState(false)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setLogos(await listLogos()) } catch (e) { console.error(e) } finally { setLoading(false) }
+    try {
+      const [rows, settings] = await Promise.all([listLogos(), fetchSettings().catch(() => ({}))])
+      setLogos(rows)
+      const v = settings?.logo_shuffle
+      setShuffle(v === true || v === 'true' || v === 1 || v === '1')
+    } catch (e) { console.error(e) } finally { setLoading(false) }
   }, [])
   useEffect(() => { load() }, [load])
+
+  const toggleShuffle = async () => {
+    const next = !shuffle
+    setShuffle(next)
+    try { await setSetting('logo_shuffle', next) } catch (e) { setShuffle(!next); alert('שגיאה בשמירה: ' + (e.message || e)) }
+  }
 
   const add = async () => {
     const row = await createLogo({ name: 'לוגו חדש', sort_order: logos.length, is_active: true })
@@ -192,7 +204,21 @@ export default function LogosTab() {
           <h3>לוגואים (קרוסלת שותפים)</h3>
           <p className="ltab__muted">העלי לוגו לכל שותף, גררי לסידור, או הסירי. אם אין תמונה — מוצג השם כטקסט.</p>
         </div>
-        <button type="button" className="btn btn--primary" onClick={add}>+ לוגו</button>
+        <div className="ltab__head-actions">
+          <button
+            type="button"
+            className={`ltab__shuffle ${shuffle ? 'is-on' : ''}`}
+            role="switch"
+            aria-checked={shuffle}
+            onClick={toggleShuffle}
+            title="כשמופעל — סדר הלוגואים בקרוסלה משתנה אקראית בכל טעינה"
+          >
+            <span className="ltab__shuffle-ic" aria-hidden="true">🔀</span>
+            <span>ערבוב {shuffle ? 'פעיל' : 'כבוי'}</span>
+            <span className="ltab__shuffle-track"><span className="ltab__shuffle-knob" /></span>
+          </button>
+          <button type="button" className="btn btn--primary" onClick={add}>+ לוגו</button>
+        </div>
       </div>
       {loading ? <p className="ltab__muted">טוען…</p> : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>

@@ -3,8 +3,15 @@ import { useI18n } from '../../i18n/index.jsx'
 import partnersData from '../../data/partners.js'
 import LogoCarousel from '../ui/LogoCarousel.jsx'
 import { supabase } from '../../lib/supabase.js'
-import { listLogos } from '../../lib/cms.js'
+import { listLogos, fetchSettings } from '../../lib/cms.js'
 import './Partners.css'
+
+// ערבוב Fisher-Yates — מחזיר עותק מעורבב
+const shuffleArr = (arr) => {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] }
+  return a
+}
 
 export default function Partners() {
   const { t } = useI18n()
@@ -12,9 +19,16 @@ export default function Partners() {
 
   useEffect(() => {
     if (!supabase) return
-    listLogos({ activeOnly: true })
-      .then((rows) => { if (rows && rows.length) setLogos(rows) })
+    let alive = true
+    Promise.all([listLogos({ activeOnly: true }), fetchSettings().catch(() => ({}))])
+      .then(([rows, settings]) => {
+        if (!alive || !rows || !rows.length) return
+        const v = settings?.logo_shuffle
+        const on = v === true || v === 'true' || v === 1 || v === '1'
+        setLogos(on ? shuffleArr(rows) : rows)
+      })
       .catch(() => {})
+    return () => { alive = false }
   }, [])
 
   return (

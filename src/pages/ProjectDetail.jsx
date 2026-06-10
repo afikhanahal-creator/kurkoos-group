@@ -485,26 +485,28 @@ export default function ProjectDetail() {
       {/* ===== הפרויקט ===== */}
       {show('project') && (
       <section id="project" className="section pd-anchor pd-split">
-        <div className="container pd-split__grid">
-          <Reveal className="pd-split__media" variant="right">
-            <SmartImage src={flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
-          </Reveal>
-          <Reveal className="pd-split__body" variant="left" delay={0.1}>
-            <span className="eyebrow">{L({ he: 'על הפרויקט', en: 'About the project' })}</span>
-            <h2 className="section-title">{L(project.name)}</h2>
-            <p className="pd-prose">{L(project.description)}</p>
-            {project.features?.length > 0 && (
-              <ul className="pd-features">
-                {project.features.map((f, i) => (
-                  <li key={i}><Icon name="check" size={18} /> {L(f)}</li>
-                ))}
-              </ul>
-            )}
-            <button type="button" className="btn btn--primary btn--lg" onClick={() => goTo('contact')}>
-              {L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })}
-              <Icon name="arrowLeft" size={20} />
-            </button>
-          </Reveal>
+        <div className="container">
+          <div className="pd-split__grid pd-card">
+            <Reveal className="pd-split__media" variant="right">
+              <SmartImage src={flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
+            </Reveal>
+            <Reveal className="pd-split__body" variant="left" delay={0.1}>
+              <span className="eyebrow">{L({ he: 'על הפרויקט', en: 'About the project' })}</span>
+              <h2 className="section-title">{L(project.name)}</h2>
+              <p className="pd-prose">{L(project.description)}</p>
+              {project.features?.length > 0 && (
+                <ul className="pd-features">
+                  {project.features.map((f, i) => (
+                    <li key={i}><Icon name="check" size={18} /> {L(f)}</li>
+                  ))}
+                </ul>
+              )}
+              <button type="button" className="btn btn--primary btn--lg" onClick={() => goTo('contact')}>
+                {L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })}
+                <Icon name="arrowLeft" size={20} />
+              </button>
+            </Reveal>
+          </div>
         </div>
       </section>
 
@@ -513,15 +515,17 @@ export default function ProjectDetail() {
       {/* ===== הסביבה ===== */}
       {show('environment') && project.environment && (
         <section id="environment" className="section section--soft pd-anchor pd-split pd-split--reverse">
-          <div className="container pd-split__grid">
-            <Reveal className="pd-split__body" variant="right">
-              <span className="eyebrow">{L({ he: 'על הסביבה', en: 'The environment' })}</span>
-              <h2 className="section-title">{L(project.environment.title)}</h2>
-              <p className="pd-prose">{L(project.environment.text)}</p>
-            </Reveal>
-            <Reveal className="pd-split__media" variant="left" delay={0.1}>
-              <SmartImage src={project.environment.image} alt={L(project.environment.title)} label={L(project.name)} />
-            </Reveal>
+          <div className="container">
+            <div className="pd-split__grid pd-card">
+              <Reveal className="pd-split__body" variant="right">
+                <span className="eyebrow">{L({ he: 'על הסביבה', en: 'The environment' })}</span>
+                <h2 className="section-title">{L(project.environment.title)}</h2>
+                <p className="pd-prose">{L(project.environment.text)}</p>
+              </Reveal>
+              <Reveal className="pd-split__media" variant="left" delay={0.1}>
+                <SmartImage src={project.environment.image} alt={L(project.environment.title)} label={L(project.name)} />
+              </Reveal>
+            </div>
           </div>
         </section>
       )}

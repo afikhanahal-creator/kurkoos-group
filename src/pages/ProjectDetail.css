@@ -337,17 +337,28 @@
 }
 
 /* ---------- Split sections ---------- */
+/* כרטיסיה לבנה אחת — תמונה מחוברת (flush) לטקסט, בסגנון תדהר */
 .pd-split__grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3.5rem;
-  align-items: center;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+.pd-card {
+  background: var(--color-surface);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.26), 0 2px 8px rgba(7, 41, 58, 0.05);
 }
 .pd-split__media {
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
-  aspect-ratio: 4 / 3;
+  box-shadow: none;
+  min-height: 340px;     /* התמונה ממלאת את גובה הכרטיס */
+}
+.pd-split__body {
+  align-self: center;
+  padding: clamp(1.6rem, 3.2vw, 3.4rem);
 }
 .pd-split__media img,
 .pd-split__media .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; }
@@ -1029,8 +1040,9 @@
   .pd-banner__name { margin-bottom: 1.1rem; line-height: 1.1; }
   .pd-banner__subtitle { margin-bottom: 2.2rem; }
   .pd-banner__cta { margin-top: 2.3rem; }
-  .pd-split__grid { grid-template-columns: 1fr; gap: 2.2rem; }
-  .pd-split__media { order: -1; }
+  .pd-split__grid { grid-template-columns: 1fr; gap: 0; }
+  .pd-split__media { order: -1; min-height: 0; aspect-ratio: 16 / 10; }
+  .pd-split__body { padding: clamp(1.3rem, 5vw, 1.8rem); }
   .plan-acc { grid-template-columns: 1fr; gap: 1.4rem; }
   .plan-acc__preview { position: static; order: -1; }
   /* טופס לתיאום פגישה — ממורכז; היומן מוצג מתחת לטופס גם במובייל */

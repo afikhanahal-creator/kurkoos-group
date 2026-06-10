@@ -45,13 +45,21 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const [bg, setBg] = useState({ remove: false, threshold: 238 })
   const [out, setOut] = useState(2)
 
-  // סגירה ב-Escape + נעילת גלילת הרקע כל עוד העורך פתוח
+  // סגירה ב-Escape + נעילת גלילת הרקע. מפצים על רוחב הסקרולבר כדי שלא תהיה "קפיצה"
+  // (כשמסתירים את הגלילה הסקרולבר נעלם והעמוד — והחלון הממורכז — קופצים הצידה).
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
     window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
+    const sbw = window.innerWidth - document.documentElement.clientWidth
+    const prevOverflow = document.body.style.overflow
+    const prevPad = document.body.style.paddingInlineEnd
     document.body.style.overflow = 'hidden'
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+    if (sbw > 0) document.body.style.paddingInlineEnd = `${sbw}px`
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+      document.body.style.paddingInlineEnd = prevPad
+    }
   }, [onClose])
 
   useEffect(() => {

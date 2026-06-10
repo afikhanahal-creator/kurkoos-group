@@ -52,14 +52,14 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
     touchX.current = null
     if (Math.abs(dx) < 45) return
     swiped.current = true
-    // אותו כיוון כמו החיצים: שמאלה = הבא, ימינה = הקודם (RTL-aware)
-    go(dx < 0 ? (isRtl ? -1 : 1) : (isRtl ? 1 : -1))
+    // החלקה שמאלה = קדימה (המונה עולה 1→2→3), ימינה = אחורה
+    go(dx < 0 ? 1 : -1)
   }
-  // לחיצה על התמונה = מעבר לתמונה הבאה (כמו במובייל)
+  // לחיצה על התמונה = קדימה לתמונה הבאה — המונה תמיד עולה (1/7 → 2/7)
   const onImageClick = (e) => {
     e.stopPropagation()
     if (swiped.current) { swiped.current = false; return }
-    go(isRtl ? -1 : 1)
+    go(1)
   }
 
   return createPortal(

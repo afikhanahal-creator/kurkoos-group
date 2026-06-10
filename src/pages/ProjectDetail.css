@@ -3,9 +3,9 @@
    Banner מפוצל · sticky anchors · split sections · מפה · גלריה · CTA.
    ============================================================ */
 
-/* overflow-x: clip (ולא hidden) — מונע חריגה אופקית בלי להפוך את העמוד
-   ל-scroll-container, כך ש-position:sticky של בר העוגנים (הבאנר הצף) עובד. */
-.project-detail { overflow-x: clip; }
+/* חשוב: אין overflow-x כאן! overflow (clip/hidden) על אב של אלמנט sticky
+   גורם לבר העוגנים "לרעוד" (jitter) בגלילת אינרציה במובייל. חריגה אופקית
+   ממילא נחסמת ע"י html/body/#root (overflow-x: clip ב-global.css). */
 .pd-anchor { scroll-margin-top: 140px; }
 
 /* מרווחים אנכיים הדוקים יותר בעמוד הפרויקט (בקשת המשתמש — פחות padding) */
@@ -842,7 +842,7 @@
   cursor: zoom-out;
 }
 .pd-lightbox__fig { position: relative; z-index: 1; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
-.pd-lightbox__fig img { max-width: 90vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); }
+.pd-lightbox__fig img { max-width: 90vw; max-height: 82vh; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
 /* וידאו בלייטבוקס — יחס 16:9 רספונסיבי */
 .pd-lightbox__video { max-width: 92vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); background: #000; }
 .pd-lightbox__video-wrap { width: min(92vw, 1100px); aspect-ratio: 16 / 9; max-height: 82vh; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-lg); background: #000; }

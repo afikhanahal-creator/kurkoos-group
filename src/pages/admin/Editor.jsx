@@ -7,6 +7,34 @@ const STRIP = ['id', 'created_at', 'updated_at']
 
 const XIcon = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>
 
+const CUSTOM = '__custom__'
+/* בחירה מרשימה + אפשרות להקליד ערך מותאם ("אחר") — נוח לערוך ולשנות בכל עת. */
+function SelectText({ value, options, onChange }) {
+  const known = (val) => options.some((o) => o.value === val)
+  const [custom, setCustom] = useState(value != null && value !== '' && !known(value))
+  return (
+    <div className="ed__seltext">
+      <select
+        value={custom ? CUSTOM : (value ?? '')}
+        onChange={(e) => {
+          if (e.target.value === CUSTOM) { setCustom(true); onChange('') }
+          else { setCustom(false); onChange(e.target.value) }
+        }}
+      >
+        <option value="">— בחרו —</option>
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        <option value={CUSTOM}>אחר (הקלדה חופשית)…</option>
+      </select>
+      {custom && (
+        <input
+          type="text" dir="rtl" autoFocus placeholder="הקלידו סוג מותאם"
+          value={value ?? ''} onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </div>
+  )
+}
+
 function StatusPill({ status }) {
   const map = {
     saved: { t: 'נשמר אוטומטית', c: 'ok' },
@@ -290,6 +318,8 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       )
+    if (f.type === 'select_text')
+      return <SelectText value={v} options={f.options} onChange={(val) => setField(f.key, val)} />
     if (f.type === 'multiselect') {
       const arr = Array.isArray(v) ? v : []
       const toggle = (val) =>

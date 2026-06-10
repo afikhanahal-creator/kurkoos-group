@@ -36,13 +36,54 @@ export const PROJECT_PAGES = [
   { value: 'brokerage', label: 'תיווך', hint: '/divisions/brokerage' },
 ]
 
+// סוג הפרויקט — רשימה עשירה לבחירה ביצירת פרויקט. ניתן גם להקליד סוג מותאם (select_text).
+// הערך זהה לתווית (עברית) כדי שיהיה נוח להציג/לערוך בלי טבלת תרגום.
+export const PROJECT_TYPE = [
+  { value: 'בניין מגורים', label: 'בניין מגורים' },
+  { value: 'בניין בוטיק', label: 'בניין בוטיק' },
+  { value: 'מגדל מגורים', label: 'מגדל מגורים' },
+  { value: 'מתחם מגורים', label: 'מתחם מגורים' },
+  { value: 'דירות גן', label: 'דירות גן' },
+  { value: 'פנטהאוזים', label: 'פנטהאוזים' },
+  { value: 'בית פרטי / קוטג׳', label: 'בית פרטי / קוטג׳' },
+  { value: 'דו משפחתי', label: 'דו משפחתי' },
+  { value: 'וילות', label: 'וילות' },
+  { value: 'דופלקס', label: 'דופלקס' },
+  { value: 'טריפלקס', label: 'טריפלקס' },
+  { value: 'מגרש', label: 'מגרש' },
+  { value: 'נחלה', label: 'נחלה' },
+  { value: 'קרקע חקלאית', label: 'קרקע חקלאית' },
+  { value: 'קרקע מסחרית', label: 'קרקע מסחרית' },
+  { value: 'בניין משרדים', label: 'בניין משרדים' },
+  { value: 'מסחר / חנויות', label: 'מסחר / חנויות' },
+  { value: 'נכס מסחרי', label: 'נכס מסחרי' },
+  { value: 'מבנה תעשייתי', label: 'מבנה תעשייתי' },
+  { value: 'מתחם מסחרי', label: 'מתחם מסחרי' },
+  { value: 'מעורב שימושים (מגורים ומסחר)', label: 'מעורב שימושים (מגורים ומסחר)' },
+  { value: 'פינוי בינוי', label: 'פינוי בינוי' },
+  { value: 'תמ״א 38 / התחדשות עירונית', label: 'תמ״א 38 / התחדשות עירונית' },
+  { value: 'דיור מוגן', label: 'דיור מוגן' },
+  { value: 'מלונאות', label: 'מלונאות' },
+]
+
 export const PROPERTY_TYPE = [
   { value: 'apartment', label: 'דירה' },
   { value: 'garden_apartment', label: 'דירת גן' },
-  { value: 'penthouse', label: 'פנטהאוז' },
+  { value: 'private_house', label: 'בית פרטי / קוטג׳' },
+  { value: 'penthouse', label: 'גג / פנטהאוז' },
+  { value: 'plot', label: 'מגרש' },
   { value: 'duplex', label: 'דופלקס' },
+  { value: 'triplex', label: 'טריפלקס' },
+  { value: 'vacation', label: 'דירת נופש' },
+  { value: 'two_family', label: 'דו משפחתי' },
   { value: 'villa', label: 'וילה' },
-  { value: 'commercial', label: 'מסחרי' },
+  { value: 'estate', label: 'נחלה' },
+  { value: 'agricultural_land', label: 'קרקע חקלאית' },
+  { value: 'office', label: 'משרד' },
+  { value: 'shop', label: 'חנות' },
+  { value: 'commercial', label: 'נכס מסחרי' },
+  { value: 'industrial', label: 'מבנה תעשייתי' },
+  { value: 'commercial_land', label: 'קרקע מסחרית' },
 ]
 
 export const PROPERTY_STATUS = [
@@ -58,6 +99,7 @@ export const projectSchema = [
       { key: 'name', label: 'שם הפרויקט', type: 'text', required: true },
       { key: 'slug', label: 'מזהה כתובת (אנגלית, ללא רווחים)', type: 'text', required: true, dir: 'ltr', hint: 'משמש בכתובת הדף: /projects/<slug>' },
       { key: 'subtitle', label: 'כותרת משנה', type: 'text' },
+      { key: 'project_type', label: 'סוג הפרויקט', type: 'select_text', options: PROJECT_TYPE, hint: 'בחרו סוג מהרשימה — או "אחר" כדי להקליד סוג מותאם. ניתן לערוך ולשנות בכל עת.' },
       { key: 'status', label: 'סטטוס', type: 'select', options: PROJECT_STATUS },
       { key: 'location', label: 'עיר', type: 'text' },
       { key: 'address', label: 'כתובת מלאה (תופיע על המפה)', type: 'text', hint: 'הכתובת המדויקת — נטענת אוטומטית למפה בעמוד הפרויקט' },
@@ -228,7 +270,7 @@ export const propertySchema = [
     section: 'פרטים בסיסיים',
     fields: [
       { key: 'unit_number', label: 'מספר יחידה', type: 'text' },
-      { key: 'type', label: 'סוג נכס', type: 'select', options: PROPERTY_TYPE },
+      { key: 'type', label: 'סוג נכס', type: 'select_text', options: PROPERTY_TYPE, hint: 'בחרו מהרשימה או "אחר" להקלדה חופשית' },
       { key: 'status', label: 'סטטוס', type: 'select', options: PROPERTY_STATUS },
       { key: 'rooms', label: 'חדרים', type: 'number' },
       { key: 'floor', label: 'קומה', type: 'text' },

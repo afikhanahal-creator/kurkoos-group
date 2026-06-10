@@ -864,3 +864,6 @@
 .cubed__pv--lg   .cubed__pv-val { font-size: 2rem; }
 .cubed__pv--wide .cubed__pv-val { font-size: 0.95rem; }
 .cubed__pv--wide { flex: 1 1 100%; }
+
+/* ---- select + הקלדה חופשית (select_text) ---- */
+.ed__seltext { display: flex; flex-direction: column; gap: 0.5rem; }

@@ -229,6 +229,8 @@
   z-index: 40;
   background: #fff;   /* רקע מלא — בלי backdrop-filter שמרצד/מהבהב בזמן גלילה */
   border-bottom: 1px solid var(--color-border);
+  transform: translateZ(0);   /* שכבת GPU — מונע ריצוד/הבהוב של הבר הדביק בגלילה */
+  backface-visibility: hidden;
 }
 .pd-anchors__inner {
   display: flex;

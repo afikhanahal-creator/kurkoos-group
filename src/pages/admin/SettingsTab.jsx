@@ -6,7 +6,8 @@ import {
 } from '../../lib/cms.js'
 
 const WD_LABELS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
-const DEFAULT_BOOKING = { start: '09:00', end: '18:00', step: 30, days: [0, 1, 2, 3, 4, 5] }
+const DEFAULT_BOOKING = { start: '09:00', end: '18:00', step: 30, days: [0, 1, 2, 3, 4, 5], blocked: [] }
+const TODAY_STR = new Date().toISOString().slice(0, 10)
 function parseBooking(v) {
   if (!v) return DEFAULT_BOOKING
   try { const o = typeof v === 'string' ? JSON.parse(v) : v; return { ...DEFAULT_BOOKING, ...o } } catch { return DEFAULT_BOOKING }
@@ -129,6 +130,15 @@ export default function SettingsTab() {
     const days = booking.days.includes(d) ? booking.days.filter((x) => x !== d) : [...booking.days, d].sort()
     patchBooking({ days })
   }
+  // חסימת תאריכים ספציפיים (חגים/חופשות) — גם אם היום פתוח בדרך כלל
+  const [blockInput, setBlockInput] = useState('')
+  const addBlocked = () => {
+    if (!blockInput) return
+    const list = booking.blocked || []
+    if (!list.includes(blockInput)) patchBooking({ blocked: [...list, blockInput].sort() })
+    setBlockInput('')
+  }
+  const removeBlocked = (d) => patchBooking({ blocked: (booking.blocked || []).filter((x) => x !== d) })
 
   const runTest = async () => {
     setTesting(true); setTestMsg(null)
@@ -288,6 +298,26 @@ export default function SettingsTab() {
             })}
           </div>
         </div>
+        <div className="adm-set__field" style={{ marginTop: '0.9rem' }}>
+          <span>חסימת תאריכים (חגים / חופשות / ימים תפוסים)</span>
+          <div className="adm-set__block-add">
+            <input type="date" min={TODAY_STR} value={blockInput} onChange={(e) => setBlockInput(e.target.value)} />
+            <button type="button" className="btn btn--primary" onClick={addBlocked} disabled={!blockInput}>חסום תאריך</button>
+          </div>
+          {(booking.blocked || []).length > 0 ? (
+            <div className="adm-set__blocked-list">
+              {(booking.blocked || []).map((d) => (
+                <span key={d} className="adm-set__blocked-chip">
+                  {new Date(d + 'T00:00:00').toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  <button type="button" onClick={() => removeBlocked(d)} aria-label={`הסרת חסימה ל-${d}`}>✕</button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="adm-set__hint" style={{ marginTop: '0.4rem' }}>אין תאריכים חסומים. בחרו תאריך ולחצו "חסום תאריך" — הוא לא יופיע כפנוי ביומן.</p>
+          )}
+        </div>
+
         <details className="adm-set__setup">
           <summary>סנכרון עם יומן Google (אופציונלי)</summary>
           <p>השעות שמוגדרות כאן נשלטות ידנית. לסנכרון דו-כיווני אמיתי עם Google Calendar (חסימת שעות תפוסות אוטומטית + יצירת אירוע) נדרש חיבור OAuth של חשבון Google + פונקציית שרת. תגידו לי ואחבר זאת בנפרד.</p>

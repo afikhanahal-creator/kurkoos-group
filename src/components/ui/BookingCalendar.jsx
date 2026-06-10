@@ -15,7 +15,8 @@ const WD = {
   he: ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'],
   en: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
 }
-const DEFAULT_HOURS = { start: '09:00', end: '18:00', step: 30, days: [0, 1, 2, 3, 4, 5] }
+const DEFAULT_HOURS = { start: '09:00', end: '18:00', step: 30, days: [0, 1, 2, 3, 4, 5], blocked: [] }
+const ymd = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 
 function parseHours(v) {
   if (!v) return DEFAULT_HOURS
@@ -63,7 +64,9 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
   const firstWeekday = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
-  const openDay = (d) => hoursCfg.days.includes(new Date(year, month, d).getDay())
+  const blockedSet = useMemo(() => new Set(hoursCfg.blocked || []), [hoursCfg])
+  // יום פתוח = יום-בשבוע מאופשר וגם התאריך לא נחסם ידנית באדמין
+  const openDay = (d) => hoursCfg.days.includes(new Date(year, month, d).getDay()) && !blockedSet.has(ymd(year, month, d))
   // בחודש הנוכחי — רק מהיום והלאה; בחודשים עתידיים — כל הימים הפתוחים זמינים
   const available = (d) => openDay(d) && (!isCurrentMonth || d >= todayDate)
 

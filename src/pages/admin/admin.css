@@ -1209,3 +1209,25 @@
 .adm[data-theme="dark"] .hdg__badge { background: var(--adm-surface-2); color: var(--adm-muted); }
 .adm[data-theme="dark"] .hdg__badge--h1 { background: rgba(23, 105, 166, 0.25); color: #7db9e6; }
 .adm[data-theme="dark"] .hdg__badge--h2 { background: rgba(26, 165, 100, 0.22); color: #6fd6a3; }
+
+/* ===== חסימת תאריכים ביומן (Settings) ===== */
+.adm-set__block-add { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.35rem; }
+.adm-set__block-add input[type="date"] {
+  padding: 0.5rem 0.7rem; border: 1.5px solid var(--adm-border-strong);
+  border-radius: 9px; font: inherit; color: var(--adm-ink); background: var(--adm-surface-2);
+}
+.adm-set__blocked-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; }
+.adm-set__blocked-chip {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.35rem 0.4rem 0.35rem 0.7rem;
+  background: var(--color-primary-100, #e7f0f5); color: var(--color-primary-900, #07293a);
+  border: 1px solid var(--adm-border); border-radius: 999px;
+  font-size: 0.82rem; font-weight: 600;
+}
+.adm-set__blocked-chip button {
+  display: grid; place-items: center; width: 18px; height: 18px;
+  border: 0; border-radius: 50%; cursor: pointer; font-size: 0.7rem;
+  background: rgba(7, 41, 58, 0.12); color: var(--color-primary-900, #07293a);
+}
+.adm-set__blocked-chip button:hover { background: #d6342c; color: #fff; }
+.adm[data-theme="dark"] .adm-set__blocked-chip { background: rgba(89, 168, 200, 0.16); color: #cfe3ee; }

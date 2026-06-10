@@ -374,8 +374,14 @@
   padding: 0.72em 1.95em;
   border-radius: var(--radius-pill);
 }
-/* EN — צמוד לשמאל למטה (inline-end ב-RTL) */
-.header__mobile-lang { align-self: flex-end; }
+/* החלפת שפה (EN) — שורה קטנה בראש התפריט, צמודה לשמאל */
+.header__mobile-top { display: flex; justify-content: flex-end; margin-bottom: 0.3rem; }
+.header__mobile-lang {
+  font-size: 0.72rem;
+  padding: 0.22rem 0.6rem;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+}
 
 .header__mobile-group { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 /* row-reverse → חץ ההרחבה עובר לצד ימין (התווית צמודה אליו) */

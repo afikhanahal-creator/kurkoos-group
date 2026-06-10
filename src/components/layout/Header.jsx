@@ -153,6 +153,11 @@ export default function Header() {
               initial="hidden"
               animate="show"
             >
+              {/* החלפת שפה — קטן, בראש התפריט (לא נחתך בתחתית) */}
+              <motion.div className="header__mobile-top" variants={mItem}>
+                <LanguageSwitcher className="header__mobile-lang" />
+              </motion.div>
+
               <motion.div variants={mItem}>
                 <MenuCards onNavigate={() => setMenuOpen(false)} />
               </motion.div>
@@ -223,7 +228,6 @@ export default function Header() {
                 >
                   {t('nav.contact')}
                 </button>
-                <LanguageSwitcher className="lang-switch--block header__mobile-lang" />
               </motion.div>
             </motion.div>
           </motion.div>

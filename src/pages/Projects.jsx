@@ -40,6 +40,7 @@ export default function Projects() {
 
   // כרטיס אחד לכל פרויקט (לא להתפוצץ לכל תמונות הגלריה). מציגים כל פרויקט גם אם
   // אין לו תמונת כיסוי (placeholder), ונמנעים מכפילויות לפי slug.
+  // (deploy: force production refresh)
   const seen = new Set()
   const collageItems = []
   projects.forEach((p, idx) => {

@@ -162,13 +162,13 @@ export default function ProjectDetail() {
   const [sent, setSent] = useState(false)
 
   // scroll-spy — קובע את המקטע הפעיל לפי המקטע האחרון שעבר את קו-הייחוס
-  // (38% מגובה החלון). דטרמיניסטי → תמיד בדיוק מקטע פעיל אחד, וההדגשה (bold)
-  // מתחלפת חלק תוך כדי גלילה. מופעל גם מ-scroll/resize וגם מ-IntersectionObserver
-  // (שמופעל בכל פעם שמקטע משנה נראות) → אמין בכל תרחיש, בדסקטופ ובמובייל.
+  // (38% מגובה החלון). pick() שואל את ה-DOM מחדש בכל פעם, וה-effect מורץ מחדש
+  // אחרי טעינת ה-CMS (cms/cmsLoaded) — כך גם מקטעים שנוצרים מאוחר נצפים, וההדגשה
+  // (bold) לא נתקעת על "הפרויקט". מופעל מ-scroll/resize וגם מ-IntersectionObserver.
   useEffect(() => {
-    const els = Array.from(document.querySelectorAll('.pd-anchor'))
-    if (!els.length) return
     const pick = () => {
+      const els = Array.from(document.querySelectorAll('.pd-anchor'))
+      if (!els.length) return
       const line = window.innerHeight * 0.38
       let current = els[0].id
       for (const el of els) {
@@ -183,7 +183,7 @@ export default function ProjectDetail() {
       requestAnimationFrame(() => { pick(); ticking = false })
     }
     const obs = new IntersectionObserver(schedule, { threshold: [0, 0.25, 0.5, 0.75, 1] })
-    els.forEach((el) => obs.observe(el))
+    document.querySelectorAll('.pd-anchor').forEach((el) => obs.observe(el))
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule, { passive: true })
     pick()
@@ -192,7 +192,7 @@ export default function ProjectDetail() {
       window.removeEventListener('scroll', schedule)
       window.removeEventListener('resize', schedule)
     }
-  }, [slug])
+  }, [slug, cms, cmsLoaded])
 
   // בר העוגנים — מחזיר את המקטע הפעיל לאזור הנראה רק כשהוא חורג ממנו
   // (גלילה אופקית עדינה, כדי שבמובייל יראו את שם הסקשן הנוכחי תוך כדי גלילה).

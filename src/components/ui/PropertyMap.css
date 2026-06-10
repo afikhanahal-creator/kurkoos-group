@@ -34,12 +34,12 @@
 }
 .pm-info__logo { height: 30px; width: auto; display: block; }
 
-/* ---- שלט מותג קבוע מעל הקוביה (תמיד גלוי, ממורכז, לא נעלם) ---- */
+/* ---- שלט מותג מעל הקוביה — מופיע רק בריחוף (hover) על הקוביה ---- */
 .pm-cube-label {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 14px);          /* מרחף מעל הקוביה */
-  transform: translateX(-50%);
+  bottom: calc(100% + 12px);          /* מרחף מעל הקוביה */
+  transform: translateX(-50%) translateY(6px);
   display: flex;
   align-items: center;                /* מרכוז אנכי מדויק של הכיתוב */
   justify-content: center;
@@ -52,6 +52,18 @@
   font-family: var(--font-heading, sans-serif);
   pointer-events: none;               /* לא חוסם אינטראקציה עם המפה */
   z-index: 2;
+  /* מוסתר כברירת מחדל — נחשף רק בריחוף */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--dur-base, 0.25s) var(--ease-out, ease),
+    transform var(--dur-base, 0.25s) var(--ease-out, ease),
+    visibility var(--dur-base, 0.25s);
+}
+/* בריחוף על הקוביה — השלט מופיע (יחד עם סיבוב הקוביה) */
+.pm-cube-marker:hover .pm-cube-label {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 /* זנב משולש קטן שמצביע אל הקוביה */
 .pm-cube-label::after {
@@ -77,10 +89,10 @@
    ============================================================ */
 .pm-cube-marker {
   position: absolute;
-  width: 37px;
-  height: 37px;
+  width: 31px;                         /* הוקטנה ב-15% נוספים (37→31) */
+  height: 31px;
   transform: translate(-50%, -50%);   /* ממורכזת על נקודת המיקום */
-  perspective: 260px;                  /* עומק 3D */
+  perspective: 220px;                  /* עומק 3D */
   cursor: pointer;
 }
 /* צל קרקע רך — שכבה שטוחה נפרדת, כדי לא לשטח את ה-3D של הקוביה
@@ -119,12 +131,12 @@
   background-color: var(--clr-alpha);
   border: 2px solid var(--clr);
 }
-.pm-cube > div:nth-of-type(1) { transform: rotateY(0deg)   translateZ(18.5px); } /* קדמית */
-.pm-cube > div:nth-of-type(2) { transform: rotateY(180deg) translateZ(18.5px); } /* אחורית */
-.pm-cube > div:nth-of-type(3) { transform: rotateY(90deg)  translateZ(18.5px); } /* ימין */
-.pm-cube > div:nth-of-type(4) { transform: rotateY(-90deg) translateZ(18.5px); } /* שמאל */
-.pm-cube > div:nth-of-type(5) { transform: rotateX(90deg)  translateZ(18.5px); } /* עליונה */
-.pm-cube > div:nth-of-type(6) { transform: rotateX(-90deg) translateZ(18.5px); } /* תחתונה */
+.pm-cube > div:nth-of-type(1) { transform: rotateY(0deg)   translateZ(15.5px); } /* קדמית */
+.pm-cube > div:nth-of-type(2) { transform: rotateY(180deg) translateZ(15.5px); } /* אחורית */
+.pm-cube > div:nth-of-type(3) { transform: rotateY(90deg)  translateZ(15.5px); } /* ימין */
+.pm-cube > div:nth-of-type(4) { transform: rotateY(-90deg) translateZ(15.5px); } /* שמאל */
+.pm-cube > div:nth-of-type(5) { transform: rotateX(90deg)  translateZ(15.5px); } /* עליונה */
+.pm-cube > div:nth-of-type(6) { transform: rotateX(-90deg) translateZ(15.5px); } /* תחתונה */
 
 @keyframes pm-cube-spin {
   from { transform: rotateX(-26deg) rotateY(-38deg); }

@@ -162,13 +162,14 @@ export default function ProjectDetail() {
   const [sent, setSent] = useState(false)
 
   // scroll-spy — קובע את המקטע הפעיל לפי המקטע האחרון שעבר את קו-הייחוס
-  // (40% מגובה החלון). דטרמיניסטי → תמיד בדיוק מקטע פעיל אחד, וההדגשה
-  // (bold) מתחלפת חלק תוך כדי גלילה, בדסקטופ ובמובייל כאחד.
+  // (38% מגובה החלון). דטרמיניסטי → תמיד בדיוק מקטע פעיל אחד, וההדגשה (bold)
+  // מתחלפת חלק תוך כדי גלילה. מופעל גם מ-scroll/resize וגם מ-IntersectionObserver
+  // (שמופעל בכל פעם שמקטע משנה נראות) → אמין בכל תרחיש, בדסקטופ ובמובייל.
   useEffect(() => {
-    const compute = () => {
-      const els = Array.from(document.querySelectorAll('.pd-anchor'))
-      if (!els.length) return
-      const line = window.innerHeight * 0.4
+    const els = Array.from(document.querySelectorAll('.pd-anchor'))
+    if (!els.length) return
+    const pick = () => {
+      const line = window.innerHeight * 0.38
       let current = els[0].id
       for (const el of els) {
         if (el.getBoundingClientRect().top <= line) current = el.id
@@ -176,17 +177,20 @@ export default function ProjectDetail() {
       setActiveSection((prev) => (prev === current ? prev : current))
     }
     let ticking = false
-    const onScroll = () => {
+    const schedule = () => {
       if (ticking) return
       ticking = true
-      requestAnimationFrame(() => { compute(); ticking = false })
+      requestAnimationFrame(() => { pick(); ticking = false })
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll, { passive: true })
-    compute()
+    const obs = new IntersectionObserver(schedule, { threshold: [0, 0.25, 0.5, 0.75, 1] })
+    els.forEach((el) => obs.observe(el))
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule, { passive: true })
+    pick()
     return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
+      obs.disconnect()
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
     }
   }, [slug])
 

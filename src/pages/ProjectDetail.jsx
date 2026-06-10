@@ -173,8 +173,20 @@ export default function ProjectDetail() {
     return () => obs.disconnect()
   }, [slug])
 
-  // הבר נשאר קבוע — לא מבצעים גלילה תכנותית בכל שינוי מקטע (זה היה מקור הריצוד).
-  // רק המילה של המקטע הפעיל הופכת בולטת, בלי תזוזה של הבר.
+  // בר העוגנים — מחזיר את המקטע הפעיל לאזור הנראה רק כשהוא חורג ממנו
+  // (גלילה אופקית עדינה, כדי שבמובייל יראו את שם הסקשן הנוכחי תוך כדי גלילה).
+  useEffect(() => {
+    if (!activeSection) return
+    const bar = document.querySelector('.pd-anchors__inner')
+    const item = bar?.querySelector('.pd-anchors__item.is-active')
+    if (!bar || !item) return
+    const b = bar.getBoundingClientRect()
+    const i = item.getBoundingClientRect()
+    if (i.left < b.left + 8 || i.right > b.right - 8) {
+      const delta = (i.left + i.width / 2) - (b.left + b.width / 2)
+      bar.scrollBy({ left: delta, behavior: 'smooth' })
+    }
+  }, [activeSection])
 
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {
@@ -245,10 +257,15 @@ export default function ProjectDetail() {
   const developers = project.developers || []
   const moreProjects = projects.filter((p) => p.slug !== project.slug).slice(0, 3)
 
-  // בר העוגנים — לפי בקשת הלקוח מציג רק "הסביבה" ו"מפה".
+  // עוגנים דינמיים — כל המקטעים שמוצגים; הפעיל מודגש בעת גלילה
   const anchors = [
+    show('project') && { id: 'project', label: { he: 'הפרויקט', en: 'Project' } },
     show('environment') && project.environment && { id: 'environment', label: { he: 'הסביבה', en: 'Environment' } },
     show('map') && { id: 'map', label: { he: 'מפה', en: 'Map' } },
+    show('plans') && planGroups.length && { id: 'plans', label: { he: 'תוכניות', en: 'Plans' } },
+    show('gallery') && { id: 'gallery', label: { he: 'גלריה', en: 'Gallery' } },
+    show('developers') && developers.length && { id: 'developers', label: { he: 'יזמים', en: 'Developers' } },
+    show('contact') && { id: 'contact', label: { he: 'לתיאום פגישה', en: 'Schedule' } },
   ].filter(Boolean)
 
   const goTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })

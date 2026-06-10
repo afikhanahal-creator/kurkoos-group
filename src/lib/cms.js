@@ -198,7 +198,66 @@ export async function createLead(row) {
   if (!supabase) return
   const { data, error } = await supabase.from('leads').insert(row).select().single()
   if (error) throw error
+  // התראת מייל אוטומטית בזמן אמת — רק לפניות מהאתר (לא לידים שנוספו ידנית בניהול)
+  if (data && row.source !== 'manual') notifyNewLead(data)
   return data
+}
+
+/* שולח את הליד לפונקציית /api/notify-lead (Vercel) שמפיצה מייל לנמענים.
+   Fire-and-forget — לא חוסם את חוויית המשתמש, ובולע שגיאות (למשל בפיתוח מקומי). */
+function notifyNewLead(lead) {
+  try {
+    fetch('/api/notify-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead }),
+      keepalive: true,
+    }).catch(() => {})
+  } catch { /* אין רשת / אין endpoint — מתעלמים */ }
+}
+
+// ---------- Lead notifications (settings) ----------
+export async function listRecipients() {
+  if (!supabase) return []
+  const { data, error } = await supabase.from('lead_notify_recipients').select('*').order('sort_order').order('created_at')
+  if (error) throw error
+  return data || []
+}
+export async function createRecipient(row) {
+  const { data, error } = await supabase.from('lead_notify_recipients').insert(row).select().single()
+  if (error) throw error
+  return data
+}
+export async function updateRecipient(id, patch) {
+  const { data, error } = await supabase.from('lead_notify_recipients').update(patch).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+export async function deleteRecipient(id) {
+  const { error } = await supabase.from('lead_notify_recipients').delete().eq('id', id)
+  if (error) throw error
+}
+export async function getNotifySettings() {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('lead_notify_settings').select('*').eq('id', 1).maybeSingle()
+  if (error) throw error
+  return data
+}
+export async function saveNotifySettings(patch) {
+  const { data, error } = await supabase.from('lead_notify_settings').upsert({ id: 1, ...patch }).select().single()
+  if (error) throw error
+  return data
+}
+// שליחת מייל בדיקה — מפעיל את אותה פונקציית /api/notify-lead עם דגל test
+export async function sendTestNotification() {
+  const res = await fetch('/api/notify-lead', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ test: true }),
+  })
+  const out = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(out.error || `שגיאה (${res.status})`)
+  return out
 }
 export async function listLeads() {
   const { data, error } = await supabase.from('leads').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false })

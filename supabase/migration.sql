@@ -234,3 +234,44 @@ insert into public.projects (slug, name, subtitle, description, location, status
   ('green-heights', 'גרין הייטס', 'מגורים', 'פרויקט מגורים בסטנדרט בנייה ירוקה, עם מערכות חיסכון באנרגיה, גגות ירוקים ועיצוב נוף עשיר.', 'רעננה', 'completed', 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1280&q=80', '["https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1280&q=80","https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1280&q=80"]'::jsonb, 3),
   ('city-center-renewal', 'התחדשות מרכז העיר', 'התחדשות עירונית', 'התחדשות עירונית בקנה מידה גדול, המשלבת שדרוג איכות החיים של הדיירים הקיימים עם תוספת יחידות דיור ומרחב ציבורי מזמין.', 'בת ים', 'planning', 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1280&q=80', '["https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1280&q=80","https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1280&q=80"]'::jsonb, 4)
 on conflict (slug) do nothing;
+
+-- ============================================================
+-- Lead email notifications (settings tab)
+--   • lead_notify_recipients — נמענים שיקבלו מייל על כל ליד חדש
+--   • lead_notify_settings    — הגדרת האוטומציה (שורת בודדת, id=1)
+-- ============================================================
+create table if not exists public.lead_notify_recipients (
+  id uuid primary key default gen_random_uuid(),
+  name text,
+  email text not null,
+  active boolean default true,
+  sort_order int default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists public.lead_notify_settings (
+  id int primary key default 1,
+  enabled boolean default true,
+  subject text default 'ליד חדש מהאתר: {{name}}',
+  reply_to text,
+  include_fields jsonb default '["name","phone","email","project","message","source","created_at"]'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  constraint lead_notify_settings_singleton check (id = 1)
+);
+insert into public.lead_notify_settings (id) values (1) on conflict (id) do nothing;
+
+drop trigger if exists trg_notify_recipients_updated on public.lead_notify_recipients;
+create trigger trg_notify_recipients_updated before update on public.lead_notify_recipients for each row execute function public.set_updated_at();
+drop trigger if exists trg_notify_settings_updated on public.lead_notify_settings;
+create trigger trg_notify_settings_updated before update on public.lead_notify_settings for each row execute function public.set_updated_at();
+
+alter table public.lead_notify_recipients enable row level security;
+alter table public.lead_notify_settings enable row level security;
+
+-- רק מנהל מחובר רואה/מנהל את הנמענים וההגדרות (ה-API שולח המיילים משתמש ב-service role ועוקף RLS)
+drop policy if exists "notify recipients admin all" on public.lead_notify_recipients;
+create policy "notify recipients admin all" on public.lead_notify_recipients for all to authenticated using (true) with check (true);
+drop policy if exists "notify settings admin all" on public.lead_notify_settings;
+create policy "notify settings admin all" on public.lead_notify_settings for all to authenticated using (true) with check (true);

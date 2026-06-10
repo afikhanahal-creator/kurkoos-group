@@ -6,6 +6,7 @@ import CountersTab from './CountersTab.jsx'
 import LogosTab from './LogosTab.jsx'
 import LeadsTab from './LeadsTab.jsx'
 import FontsTab from './FontsTab.jsx'
+import SettingsTab from './SettingsTab.jsx'
 import './admin.css'
 
 /* אייקונים מינימליים (inline — ללא תלות חיצונית) */
@@ -18,6 +19,7 @@ const Ico = {
   external: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>,
   lock: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>,
   fonts: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 20V5a1 1 0 0 1 1-1h7M9 20h6M17 20v-9a1 1 0 0 1 1-1h2M9 4v16" /></svg>,
+  settings: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
 }
 
 function Login() {
@@ -64,6 +66,7 @@ const TABS = [
   { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads' },
   { id: 'fonts', label: 'פונטים', sub: 'הפונטים של האתר — בחירה או העלאה', icon: 'fonts' },
+  { id: 'settings', label: 'הגדרות', sub: 'התראות מייל אוטומטיות על לידים חדשים', icon: 'settings' },
 ]
 
 export default function Admin() {
@@ -130,6 +133,7 @@ export default function Admin() {
           {tab === 'logos' && <LogosTab />}
           {tab === 'leads' && <LeadsTab />}
           {tab === 'fonts' && <FontsTab />}
+          {tab === 'settings' && <SettingsTab />}
         </main>
       </div>
     </div>

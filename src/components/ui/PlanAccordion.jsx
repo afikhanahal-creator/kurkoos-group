@@ -48,18 +48,18 @@ function AccordionRow({ group, isOpen, onToggle, activeImg, onPickPlan }) {
         hidden={!isOpen && maxH === 0}
       >
         <div className="plan-acc__panel-inner" ref={bodyRef}>
-          <div className="plan-acc__strip" role="list">
+          {/* בחירת טיפוס דירה כקישורי טקסט (בסגנון תדהר) — לחיצה מחליפה את התשריט הגדול */}
+          <div className="plan-acc__types" role="list">
             {group.plans.map((plan, i) => (
               <button
                 key={i}
                 type="button"
                 role="listitem"
-                className={`plan-acc__thumb ${activeImg === plan.img ? 'is-active' : ''}`}
+                className={`plan-acc__type ${activeImg === plan.img ? 'is-active' : ''}`}
                 onClick={() => onPickPlan(plan.img)}
                 aria-pressed={activeImg === plan.img}
               >
-                <SmartImage src={plan.img} alt={L(plan.label) || `${L(group.label)} ${i + 1}`} label={L(group.label)} />
-                <span className="plan-acc__thumb-label">{L(plan.label) || `${i + 1}`}</span>
+                {L(plan.label) || `טיפוס ${i + 1}`}
               </button>
             ))}
           </div>

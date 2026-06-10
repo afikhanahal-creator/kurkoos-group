@@ -424,38 +424,34 @@
   overflow: hidden;
   transition: max-height var(--dur-slow) var(--ease-out);
 }
-.plan-acc__panel-inner { padding: 0 1.4rem 1.4rem; }
-.plan-acc__strip {
+.plan-acc__panel-inner { padding: 0 1.4rem 1.3rem; }
+/* טיפוסי דירה כקישורי טקסט (בסגנון תדהר) — מוערמים, הנבחר מודגש בגלולה אפורה */
+.plan-acc__types {
   display: flex;
-  gap: 0.8rem;
-  overflow-x: auto;
-  padding-block-end: 0.4rem;
-  scrollbar-width: thin;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
 }
-.plan-acc__thumb {
-  position: relative;
-  flex: 0 0 110px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 2px solid var(--color-border);
-  background: #fff;
-  transition: border-color var(--dur-fast) var(--ease-out);
-}
-.plan-acc__thumb img,
-.plan-acc__thumb .smart-image-placeholder { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
-.plan-acc__thumb:hover { border-color: var(--color-primary-300); }
-.plan-acc__thumb.is-active { border-color: var(--color-accent); }
-.plan-acc__thumb-label {
-  display: block;
-  text-align: center;
-  padding: 0.35rem 0.3rem;
+.plan-acc__type {
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.82rem;
-  color: var(--color-text-soft);
-  background: var(--color-bg-soft);
+  font-size: 1.02rem;
+  color: var(--color-secondary);
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  text-decoration-thickness: 1.5px;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
+  text-align: start;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast);
 }
-.plan-acc__thumb.is-active .plan-acc__thumb-label { color: var(--color-accent); }
+.plan-acc__type:hover { color: var(--color-primary-900); }
+.plan-acc__type.is-active {
+  background: var(--color-bg-soft);
+  color: var(--color-primary-900);
+  font-weight: 800;
+  text-decoration: none;
+}
 
 .pd-gallery__zoom {
   position: absolute;

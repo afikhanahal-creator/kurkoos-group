@@ -191,6 +191,9 @@ p, .section-lead { text-wrap: pretty; }
   /* צבע אחיד לכל הכותב — נייבי המותג (אדום נשמר לכפתורים בלבד) */
   color: var(--color-primary-900);
 }
+/* חריג — "בואו נדבר" בטופס יצירת הקשר באדום */
+.contact-popup .eyebrow,
+.contact .eyebrow { color: var(--color-accent); }
 
 /* ---------- דף הבית — מרכוז כל כותרות הסקשנים ---------- */
 .home .eyebrow { display: flex; justify-content: center; }
@@ -294,36 +297,36 @@ button:disabled { cursor: not-allowed; }
 }
 
 /* ראשי — אדום המותג, מילוי עשיר עם צל מותג-tinted */
-/* אפקט תדהר: מתאר במנוחה → מתמלא בצבע מלא + טקסט לבן בריחוף/לחיצה */
+/* אדום מלא במנוחה → לבן (עם טקסט אדום) בריחוף/לחיצה */
 .btn--primary {
-  background: transparent;
-  color: var(--color-accent-500);
-  border-color: var(--color-accent-500);
-  box-shadow: none;
-}
-.btn--primary:hover:not(:disabled),
-.btn--primary:active {
   background: var(--color-accent-500);
   color: #fff;
   border-color: var(--color-accent-500);
-  box-shadow: 0 6px 18px rgba(169, 11, 12, 0.3);
+  box-shadow: 0 4px 14px rgba(169, 11, 12, 0.25);
+}
+.btn--primary:hover:not(:disabled),
+.btn--primary:active {
+  background: #fff;
+  color: var(--color-accent-500);
+  border-color: var(--color-accent-500);
+  box-shadow: 0 6px 16px rgba(169, 11, 12, 0.16);
   transform: scale(0.98);
 }
 .btn--primary:hover:not(:disabled) { transform: none; }
 
-/* כהה — מתאר נייבי שמתמלא */
+/* כהה — נייבי מלא במנוחה → לבן (טקסט נייבי) בלחיצה */
 .btn--dark {
-  background: transparent;
-  color: var(--color-primary-900);
-  border-color: var(--color-primary-900);
-  box-shadow: none;
-}
-.btn--dark:hover:not(:disabled),
-.btn--dark:active {
   background: var(--color-primary-900);
   color: #fff;
   border-color: var(--color-primary-900);
-  box-shadow: 0 6px 18px rgba(7, 41, 58, 0.32);
+  box-shadow: 0 4px 14px rgba(7, 41, 58, 0.25);
+}
+.btn--dark:hover:not(:disabled),
+.btn--dark:active {
+  background: #fff;
+  color: var(--color-primary-900);
+  border-color: var(--color-primary-900);
+  box-shadow: 0 6px 16px rgba(7, 41, 58, 0.16);
   transform: scale(0.98);
 }
 .btn--dark:hover:not(:disabled) { transform: none; }

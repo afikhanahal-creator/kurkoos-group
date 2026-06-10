@@ -248,11 +248,12 @@
   font-size: 1rem;
   color: var(--color-text-soft);
   white-space: nowrap;
-  transition: color var(--dur-fast);
+  opacity: 0.4;                     /* מקטעים לא-פעילים מעומעמים → רק הנוכחי בולט */
+  transition: color var(--dur-fast), opacity var(--dur-fast);
 }
 .pd-anchors__item:hover { color: var(--color-secondary); }
-/* מצב פעיל — שם המקטע הנוכחי הופך לבולד וכהה */
-.pd-anchors__item.is-active { color: var(--color-primary-900); font-weight: 800; }
+/* מצב פעיל — שם המקטע הנוכחי הופך לבולד, כהה ומלא */
+.pd-anchors__item.is-active { color: var(--color-primary-900); font-weight: 800; opacity: 1; }
 
 /* ---------- Split sections ---------- */
 .pd-split__grid {
@@ -916,8 +917,8 @@
     padding-inline: 50%;           /* מרווח שמאפשר למרכז כל פריט (כולל ראשון/אחרון) → המקטע הפעיל תמיד באמצע */
   }
   .pd-anchors__item {
-    font-size: 1.05rem;
-    padding: 0.95rem 0.2rem;
+    font-size: 0.88rem;
+    padding: 0.62rem 0.2rem;
   }
 }
 @media (max-width: 880px) {

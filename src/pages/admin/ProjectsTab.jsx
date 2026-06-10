@@ -47,7 +47,12 @@ export default function ProjectsTab() {
   }
 
   const saveProject = async (patch) => {
-    const updated = await updateProject(selProjectId, patch)
+    // אם ה-slug רוקן/חסר — מייצרים אחד אוטומטית כדי שהקישור לעמוד הפרויקט תמיד יעבוד
+    const next = { ...patch }
+    if (Object.prototype.hasOwnProperty.call(next, 'slug') && !String(next.slug || '').trim()) {
+      next.slug = 'project-' + Math.random().toString(36).slice(2, 8)
+    }
+    const updated = await updateProject(selProjectId, next)
     setProjects((prev) => prev.map((p) => (p.id === selProjectId ? { ...p, ...updated } : p)))
   }
 
@@ -128,7 +133,7 @@ export default function ProjectsTab() {
               coverField="hero_image_url"
               onArchive={onArchiveProject}
               onClose={() => setSelProjectId(null)}
-              previewUrl={selProject.slug ? `/projects/${selProject.slug}` : null}
+              previewUrl={`/projects/${selProject.slug || selProject.id}`}
               title={`עריכת פרויקט: ${selProject.name}`}
             />
 

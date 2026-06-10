@@ -114,7 +114,7 @@ function CubeRow({ id, cube, onChange, onDelete }) {
   )
 }
 
-export default function StatCubesField({ value, onChange }) {
+export default function StatCubesField({ value, onChange, row = false }) {
   const cubes = Array.isArray(value) ? value : []
   const [device, setDevice] = useState('desktop')
   const sensors = useSensors(
@@ -144,7 +144,7 @@ export default function StatCubesField({ value, onChange }) {
         </div>
       </div>
       <div className={`cubed__preview-wrap cubed__preview-wrap--${device}`}>
-        <div className="cubed__preview" dir="rtl" aria-label="תצוגה חיה">
+        <div className={`cubed__preview ${row ? 'cubed__preview--row' : ''}`} dir="rtl" aria-label="תצוגה חיה">
           {cubes.length === 0 ? (
             <span className="cubed__preview-empty">תצוגה חיה — הוסיפו קוביה כדי לראות אותה כאן בדיוק כפי שתופיע בבאנר הפרויקט. גררו את הקוביות לסידור.</span>
           ) : (

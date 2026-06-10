@@ -251,7 +251,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
       )
     }
     if (f.type === 'stat_cubes') {
-      return <StatCubesField value={v} onChange={(arr) => setField(f.key, arr)} />
+      return <StatCubesField value={v} onChange={(arr) => setField(f.key, arr)} row={!!form.stat_cubes_row} />
     }
     if (f.type === 'plan_groups') {
       const groups = Array.isArray(v) ? v : []

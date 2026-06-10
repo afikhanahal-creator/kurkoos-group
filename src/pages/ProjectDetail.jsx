@@ -119,6 +119,7 @@ function buildProject(local, cms) {
       statCubes: Array.isArray(cms.stat_cubes) && cms.stat_cubes.length
         ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, spread: !!c.spread })).filter((c) => has(c.value) || has(c.label))
         : undefined,
+      statCubesRow: !!cms.stat_cubes_row,
       mapLink: cms.map_link || undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
@@ -289,7 +290,7 @@ export default function ProjectDetail() {
               {L(project.short) && <p className="pd-banner__subtitle">{L(project.short)}</p>}
 
               <div className="pd-banner__stats-wrap">
-                <div className={`pd-banner__stats pd-banner__stats--${project.stats_scale || 'normal'}`}>
+                <div className={`pd-banner__stats pd-banner__stats--${project.stats_scale || 'normal'}${project.statCubesRow ? ' pd-banner__stats--row' : ''}`}>
                   {project.statCubes?.length ? (
                     /* קוביות מותאמות מה-CMS (גרירה/עריכה/גודל פר-קוביה) */
                     project.statCubes.map((cube, i) => (

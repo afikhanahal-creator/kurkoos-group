@@ -1051,3 +1051,7 @@
 .cubed__spread { flex-shrink: 0; width: 30px; height: 28px; border: 1px solid var(--adm-border); background: #fff; border-radius: 7px; cursor: pointer; font-size: 0.95rem; color: var(--adm-muted); }
 .cubed__spread:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
 .cubed__spread.is-on { background: var(--color-primary-900); border-color: var(--color-primary-900); color: #fff; }
+
+/* תצוגה חיה — פריסת קוביות בשורה אחת לרוחב */
+.cubed__preview--row { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
+.cubed__preview--row .cubed__pv--wide { flex: 0 0 auto; }

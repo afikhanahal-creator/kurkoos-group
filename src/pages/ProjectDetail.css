@@ -1097,3 +1097,12 @@
 /* קוביה עם כיתוב צמוד לפאות — ערך למעלה, תווית למטה (לא ממורכז) */
 .pd-stat--spread { justify-content: space-between; min-height: 74px; }
 .pd-stat--spread .pd-stat__label { margin-top: 0; }
+
+/* פריסת קוביות בשורה אחת לרוחב — כל הקוביות בשורה, גלילה אופקית אם צריך */
+.pd-banner__stats--row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.pd-banner__stats--row::-webkit-scrollbar { display: none; }
+.pd-banner__stats--row .pd-stat { flex: 0 0 auto; }
+.pd-banner__stats--row .pd-stat--wide { flex: 0 0 auto; }   /* קוביות "רחב" לא תופסות שורה מלאה */
+@media (max-width: 880px) {
+  .pd-banner__stats--row { justify-content: flex-start; flex-wrap: nowrap; }
+}

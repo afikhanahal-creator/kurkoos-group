@@ -111,6 +111,24 @@ create table if not exists public.site_logos (
 -- לוגו: סקלת גודל לכל לוגו (קרוסלת שותפים)
 alter table public.site_logos add column if not exists scale numeric default 1;
 
+-- ---------- leads (CRM — פניות מטופסי האתר) ----------
+create table if not exists public.leads (
+  id uuid primary key default gen_random_uuid(),
+  name text,
+  phone text,
+  email text,
+  message text,
+  project jsonb,            -- שם הפרויקט שממנו הגיעה הפנייה ({he,en} או טקסט)
+  source text default 'project',  -- מקור הפנייה: project | contact | ...
+  status text default 'new',      -- new | in_progress | done | ...
+  contacted boolean default false,
+  notes text,
+  is_archived boolean default false,
+  sort_order int default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- updated_at triggers
 drop trigger if exists trg_projects_updated on public.projects;
 create trigger trg_projects_updated before update on public.projects for each row execute function public.set_updated_at();
@@ -120,6 +138,8 @@ drop trigger if exists trg_counters_updated on public.site_counters;
 create trigger trg_counters_updated before update on public.site_counters for each row execute function public.set_updated_at();
 drop trigger if exists trg_logos_updated on public.site_logos;
 create trigger trg_logos_updated before update on public.site_logos for each row execute function public.set_updated_at();
+drop trigger if exists trg_leads_updated on public.leads;
+create trigger trg_leads_updated before update on public.leads for each row execute function public.set_updated_at();
 
 -- ============================================================
 -- RLS
@@ -128,6 +148,7 @@ alter table public.projects enable row level security;
 alter table public.properties enable row level security;
 alter table public.site_counters enable row level security;
 alter table public.site_logos enable row level security;
+alter table public.leads enable row level security;
 
 -- public (anon) read of published/active rows
 drop policy if exists "projects public read" on public.projects;
@@ -155,6 +176,12 @@ drop policy if exists "counters admin all" on public.site_counters;
 create policy "counters admin all" on public.site_counters for all to authenticated using (true) with check (true);
 drop policy if exists "logos admin all" on public.site_logos;
 create policy "logos admin all" on public.site_logos for all to authenticated using (true) with check (true);
+
+-- leads: כל מבקר יכול לשלוח פנייה (insert), אך רק מנהל מחובר רואה/מנהל אותן
+drop policy if exists "leads public insert" on public.leads;
+create policy "leads public insert" on public.leads for insert to anon, authenticated with check (true);
+drop policy if exists "leads admin all" on public.leads;
+create policy "leads admin all" on public.leads for all to authenticated using (true) with check (true);
 
 -- ============================================================
 -- Storage bucket for media (public read, authenticated write)

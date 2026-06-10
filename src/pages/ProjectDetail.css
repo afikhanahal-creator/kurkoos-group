@@ -316,6 +316,22 @@
 /* מצב פעיל — שם המקטע הנוכחי הופך לבולד, כהה ומלא */
 .pd-anchors__item.is-active { color: var(--color-primary-900); font-weight: 800; }
 
+/* תווית שומרת-רוחב: עותק מודגש נסתר מתחת לטקסט שומר את הרוחב המקסימלי,
+   כך שהמעבר ל-bold לא משנה את רוחב הפריט → הבר לא זז/מרצד בגלילה. */
+.pd-anchors__label {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pd-anchors__label::after {
+  content: attr(data-text);
+  font-weight: 800;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* ---------- Split sections ---------- */
 .pd-split__grid {
   display: grid;
@@ -613,6 +629,7 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  transform: translateZ(0);   /* מאלץ חיתוך פינות עגולות גם ב-iOS Safari (תמונה עם transform) */
 }
 /* מסקה א-סימטרית: אריח גדול + פיזור spans מעורב */
 .pd-gallery__item:first-child { grid-column: span 2; grid-row: span 2; }
@@ -621,6 +638,7 @@
 .pd-gallery__item img,
 .pd-gallery__item .smart-image-placeholder {
   width: 100%; height: 100%; object-fit: cover;
+  border-radius: var(--radius-lg);   /* פינות עגולות גם על התמונה עצמה — בכל הדפדפנים */
   transition: transform var(--dur-slow) var(--ease-out);
 }
 .pd-gallery__item:hover img { transform: scale(1.05); }

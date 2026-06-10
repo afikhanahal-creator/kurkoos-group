@@ -165,7 +165,7 @@
   border: 0;
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(16, 85, 114, 0.05);  /* fallback — StatCube דורס בצל דינמי */
-  padding: 0.4rem 1.1rem;    /* אנכי הדוק (צמוד לפאה) · אופקי נדיב → קוביה רחבה */
+  padding: 0.6rem 1.15rem;   /* גובה נדיב יותר — קוביות מלאות כמו בתדהר */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -200,17 +200,17 @@
 }
 /* טקסט ארוך (שם אדריכל / סטטוס) — נחתך לשתי שורות לשמירת גובה אחיד */
 .pd-stat__value--sm {
-  font-size: 0.95rem;
+  font-size: 1.2rem;        /* ערכי טקסט (סטטוס/אדריכל) בולטים כמו בתדהר */
   font-weight: 900;
-  line-height: 1.05;
+  line-height: 1.1;
   letter-spacing: -0.01em;
-  max-width: 10ch;          /* שם ארוך נשבר ל-2 שורות, הקוביה לא מתרחבת מדי */
+  max-width: 11ch;          /* שם ארוך נשבר ל-2 שורות, הקוביה לא מתרחבת מדי */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.pd-stat__label { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 500; line-height: 1; color: #647c8c; margin-top: 0.04rem; }
+.pd-stat__label { font-family: var(--font-heading); font-size: 0.84rem; font-weight: 500; line-height: 1; color: #647c8c; margin-top: 0.22rem; }
 
 /* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
 .pd-banner__stats--small .pd-stat { min-height: 64px; padding: 0.5rem 0.85rem; }
@@ -224,7 +224,7 @@
 .pd-stat--sz-sm .pd-stat__value { font-size: 1.25rem; }
 .pd-stat--sz-md .pd-stat__value { font-size: 1.7rem; }
 .pd-stat--sz-lg .pd-stat__value { font-size: 2.2rem; }
-.pd-stat--sz-wide .pd-stat__value { font-size: 0.98rem; }
+.pd-stat--sz-wide .pd-stat__value { font-size: 1.2rem; }
 
 /* קוביית סטטוס — זהה לחלוטין לשאר הקוביות (כמו בתדהר): אותו גרדיאנט, ערך טורקיז */
 
@@ -1022,9 +1022,9 @@
     padding: 0.7rem 1.25rem;       /* גובה נדיב יותר — קוביות מלאות כמו בתדהר */
     gap: 0.12rem;
   }
-  .pd-stat__value { font-size: 2.1rem; }
-  .pd-stat__value--sm { font-size: 1.15rem; line-height: 1.08; }
-  .pd-stat__label { font-size: 0.92rem; }
+  .pd-stat__value { font-size: 1.95rem; }
+  .pd-stat__value--sm { font-size: 1.4rem; line-height: 1.1; }
+  .pd-stat__label { font-size: 0.85rem; }
 }
 /* טלפונים צרים — מקטינים מעט את הרוחב המינימלי כדי שיישבו 3 בשורה יפה (לא ענקיים מדי) */
 @media (max-width: 430px) {

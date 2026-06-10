@@ -38,16 +38,14 @@ export default function Projects() {
       .catch(() => {})
   }, [])
 
+  // כרטיס אחד לכל פרויקט (תמונת הכיסוי בלבד) — לא להתפוצץ לכל תמונות הגלריה.
+  // נמנע כפילויות לפי slug, ומדלגים על פרויקטים ללא כיסוי או ללא slug.
   const seen = new Set()
   const collageItems = []
   projects.forEach((p) => {
-    const urls = [p.cover, ...(p.gallery || [])].filter(Boolean)
-    urls.forEach((url, idx) => {
-      if (seen.has(url)) return
-      seen.add(url)
-      // תצוגת הכרטיס (רחב/גבוה) חלה על תמונת הכיסוי; שאר התמונות רגילות
-      collageItems.push({ url, name: p.name, to: `/projects/${p.slug}`, layout: idx === 0 ? (p.card_layout || 'normal') : 'normal' })
-    })
+    if (!p.slug || !p.cover || seen.has(p.slug)) return
+    seen.add(p.slug)
+    collageItems.push({ url: p.cover, name: p.name, to: `/projects/${p.slug}`, layout: p.card_layout || 'normal' })
   })
 
   const allTitle = lang === 'he' ? 'כל הפרויקטים' : 'All projects'

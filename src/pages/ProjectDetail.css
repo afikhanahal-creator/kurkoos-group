@@ -30,7 +30,10 @@
    מעט עמוק יותר מ-primary-100 כדי שהקוביות האפורות יבלטו עליו. */
 /* ===== סרגל פירורי לחם — רקע תכלת בהיר, סגנון נקי עם לוכסנים ===== */
 .pd-crumbbar {
-  background: linear-gradient(180deg, #e9f1f4, #dfe9ed);
+  /* המשך הילה כחולה מהראש — שבירה עדינה בחלק העליון */
+  background:
+    radial-gradient(140% 180% at 88% 0%, rgba(16, 85, 114, 0.18), transparent 55%),
+    linear-gradient(180deg, #cfe0e8, #dfe9ed);
 }
 .pd-crumbbar .breadcrumbs { padding-block: 1.1rem; }
 .pd-crumbbar .breadcrumbs ol { font-size: 0.95rem; }
@@ -69,7 +72,11 @@
 
 .pd-banner {
   padding-top: 1.5rem;
-  background: #dfe9ed;
+  position: relative;
+  /* שבירה עדינה בחלק העליון — הילה כחולה מצד התוכן (ימין) שמתמזגת לרקע התכלת */
+  background:
+    radial-gradient(120% 90% at 88% 0%, rgba(16, 85, 114, 0.20), transparent 58%),
+    linear-gradient(180deg, #cfe0e8 0%, #dfe9ed 42%);
 }
 .pd-banner__grid {
   display: grid;
@@ -278,8 +285,9 @@
   top: 74px;
   z-index: 40;
   background: #fff;   /* רקע מלא — בלי backdrop-filter שמרצד/מהבהב בזמן גלילה */
-  /* ללא קווי הפרדה (בסגנון תדהר) — צל רך עדין בלבד שמפריד את הסרגל מהתוכן */
-  box-shadow: 0 1px 0 rgba(7, 41, 58, 0.04);
+  /* ללא שום קווי הפרדה (כמו בתדהר) — בר נקי לחלוטין */
+  border: 0;
+  box-shadow: none;
   transform: translateZ(0);   /* שכבת GPU — מונע ריצוד/הבהוב של הבר הדביק בגלילה */
   backface-visibility: hidden;
 }

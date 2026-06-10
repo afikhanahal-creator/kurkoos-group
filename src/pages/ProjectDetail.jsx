@@ -296,7 +296,7 @@ export default function ProjectDetail() {
                       <StatCube key={i} className={`pd-stat--sz-${cube.size || 'md'}${cube.size === 'wide' ? ' pd-stat--wide' : ''}`}>
                         <span
                           className={`pd-stat__value${cube.size === 'wide' ? ' pd-stat__value--sm' : ''}`}
-                          dir={cube.size === 'wide' ? 'auto' : 'ltr'}
+                          dir="auto"
                         >
                           {cube.value}
                         </span>
@@ -307,19 +307,19 @@ export default function ProjectDetail() {
                     <>
                       {project.towers > 0 && (
                         <StatCube>
-                          <span className="pd-stat__value" dir="ltr">{project.towers}</span>
+                          <span className="pd-stat__value" dir="auto">{project.towers}</span>
                           <span className="pd-stat__label">{L({ he: 'בניינים', en: 'Buildings' })}</span>
                         </StatCube>
                       )}
                       {project.units > 0 && (
                         <StatCube>
-                          <span className="pd-stat__value" dir="ltr">{project.units}</span>
+                          <span className="pd-stat__value" dir="auto">{project.units}</span>
                           <span className="pd-stat__label">{L({ he: 'יחידות דיור', en: 'Units' })}</span>
                         </StatCube>
                       )}
                       {project.floors && (
                         <StatCube>
-                          <span className="pd-stat__value" dir="ltr">{project.floors}</span>
+                          <span className="pd-stat__value" dir="auto">{project.floors}</span>
                           <span className="pd-stat__label">{L({ he: 'קומות', en: 'Floors' })}</span>
                         </StatCube>
                       )}

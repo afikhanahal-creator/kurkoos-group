@@ -838,3 +838,29 @@
   background: var(--color-primary-100); border: 0; border-radius: 8px; cursor: pointer;
 }
 .cubed__add:hover { background: var(--color-primary-300); color: #fff; }
+
+/* ===== תצוגה חיה של הקוביות (כפי שיופיעו בבאנר) ===== */
+.cubed__preview {
+  display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.4rem;
+  background: #07293a; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.3rem;
+}
+.cubed__preview-empty { color: rgba(255,255,255,0.6); font-size: 0.82rem; line-height: 1.5; }
+.cubed__pv {
+  flex: 0 0 auto; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; padding: 0.4rem 1.1rem;
+}
+.cubed__pv-val {
+  font-family: var(--font-heading); font-weight: 900; color: #fff;
+  line-height: 0.92; letter-spacing: -0.03em;
+}
+.cubed__pv-lbl {
+  font-family: var(--font-heading); font-weight: 500; color: #9fb6c2;
+  font-size: 0.82rem; margin-top: 0.1rem;
+}
+.cubed__pv--sm   .cubed__pv-val { font-size: 1.25rem; }
+.cubed__pv--md   .cubed__pv-val { font-size: 1.6rem; }
+.cubed__pv--lg   .cubed__pv-val { font-size: 2rem; }
+.cubed__pv--wide .cubed__pv-val { font-size: 0.95rem; }
+.cubed__pv--wide { flex: 1 1 100%; }

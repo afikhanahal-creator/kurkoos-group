@@ -88,6 +88,18 @@ export default function StatCubesField({ value, onChange }) {
 
   return (
     <div className="cubed">
+      <div className="cubed__preview" dir="rtl" aria-label="תצוגה חיה">
+        {cubes.length === 0 ? (
+          <span className="cubed__preview-empty">תצוגה חיה — הוסיפו קוביה כדי לראות אותה כאן בדיוק כפי שתופיע בבאנר הפרויקט</span>
+        ) : (
+          cubes.map((c, i) => (
+            <div key={i} className={`cubed__pv cubed__pv--${c.size || 'md'}`}>
+              <span className="cubed__pv-val" dir={c.size === 'wide' ? 'auto' : 'ltr'}>{c.value || '—'}</span>
+              <span className="cubed__pv-lbl">{c.label?.he || ''}</span>
+            </div>
+          ))
+        )}
+      </div>
       {cubes.length === 0 && (
         <p className="cubed__empty">אין קוביות מותאמות — מוצגות קוביות ברירת המחדל (בניינים/דיור/קומות/אדריכלים/סטטוס). הוסיפו קוביה כדי לשלוט במלל, בגודל ובסדר.</p>
       )}

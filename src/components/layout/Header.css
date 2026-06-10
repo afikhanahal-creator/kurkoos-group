@@ -196,7 +196,7 @@
   transition: background var(--dur-fast), color var(--dur-fast);
 }
 .header__icon-btn:hover { background: var(--color-bg-soft); color: var(--color-secondary); }
-.header__cta-btn { padding: 0.6em 1.5em; font-size: 0.95rem; min-height: 42px; box-shadow: 0 6px 16px -4px rgba(169, 11, 12, 0.35); }
+.header__cta-btn { padding: 0.6em 1.5em; font-size: 0.76rem; min-height: 34px; box-shadow: 0 6px 16px -4px rgba(169, 11, 12, 0.35); }
 /* דסקטופ — "צור קשר" ו-EN בגודל נעים ותואמי גובה */
 @media (min-width: 981px) {
   /* "צור קשר" קומפקטי — קטן ב-~20% נוסף */

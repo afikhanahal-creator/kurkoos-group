@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import './image-editor.css'
 
 /* ============================================================
@@ -43,6 +44,15 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const [tint, setTint] = useState({ color: '#105572', alpha: 0, blend: 'multiply' })
   const [bg, setBg] = useState({ remove: false, threshold: 238 })
   const [out, setOut] = useState(2)
+
+  // סגירה ב-Escape + נעילת גלילת הרקע כל עוד העורך פתוח
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
+    window.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [onClose])
 
   useEffect(() => {
     setReady(false); setErr('')
@@ -129,12 +139,12 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
 
   const setFf = (k) => (e) => setF((p) => ({ ...p, [k]: Number(e.target.value) }))
 
-  return (
+  return createPortal((
     <div className="imed" onClick={onClose}>
       <div className="imed__box" dir="rtl" onClick={(e) => e.stopPropagation()}>
         <header className="imed__head">
           <h3>עורך התמונה</h3>
-          <button type="button" className="imed__x" onClick={onClose} aria-label="סגירה">✕</button>
+          <button type="button" className="imed__x" onClick={onClose} aria-label="סגירה" title="סגירה (Esc)">✕</button>
         </header>
 
         <div className="imed__body">
@@ -229,5 +239,5 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
         </footer>
       </div>
     </div>
-  )
+  ), document.body)
 }

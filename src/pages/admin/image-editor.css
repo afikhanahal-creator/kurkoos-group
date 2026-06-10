@@ -1,13 +1,18 @@
 /* ===== ImageEditor (Canva-style) ===== */
-.imed { position: fixed; inset: 0; z-index: 300; background: rgba(7,41,58,0.6); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 1rem; }
+.imed { position: fixed; inset: 0; z-index: 1000; background: rgba(7,41,58,0.6); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 1rem; animation: imed-fade 0.18s ease both; }
 .imed__box {
   width: 100%; max-width: 1000px; max-height: 94vh; display: flex; flex-direction: column;
   background: var(--adm-surface, #fff); border-radius: 16px; box-shadow: var(--adm-shadow-lg, 0 30px 80px -20px rgba(0,0,0,0.5)); overflow: hidden;
+  animation: imed-pop 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+@keyframes imed-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes imed-pop { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .imed, .imed__box { animation: none; } }
 .imed__head { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--adm-border, #e2e8ee); }
 .imed__head h3 { font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--adm-ink, #07293a); }
-.imed__x { width: 32px; height: 32px; border: 0; background: var(--adm-bg, #f1f5f8); border-radius: 9px; cursor: pointer; font-size: 0.95rem; color: var(--adm-muted, #647c8c); }
+.imed__x { width: 40px; height: 40px; border: 0; background: var(--adm-bg, #f1f5f8); border-radius: 10px; cursor: pointer; font-size: 1.15rem; line-height: 1; color: var(--adm-muted, #647c8c); transition: background 0.15s, color 0.15s, transform 0.12s; }
 .imed__x:hover { background: #ffe7e7; color: #d64545; }
+.imed__x:active { transform: scale(0.92); }
 
 .imed__body { display: grid; grid-template-columns: 1fr 320px; gap: 0; flex: 1; min-height: 0; }
 .imed__stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; padding: 1.2rem; background: #eef2f4; min-height: 0; }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './bg-media.css'
 
 /* ============================================================
@@ -31,9 +31,16 @@ export default function BackgroundMedia({
   className = '',
   style,
   children,
+  forcePlay = false,   // כשדולק — הווידאו תמיד מתנגן (מתעלם מ-reduced-motion)
 }) {
   const [loaded, setLoaded] = useState(false)
-  const showStill = type !== 'video' || (prefersReducedMotion && poster)
+  const videoRef = useRef(null)
+  // מאלץ ניגון אוטומטי גם בדפדפנים שמתעלמים מ-autoPlay (דסקטופ ומובייל)
+  useEffect(() => {
+    const v = videoRef.current
+    if (v) { const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
+  }, [src])
+  const showStill = type !== 'video' || (!forcePlay && prefersReducedMotion && poster)
 
   return (
     <div
@@ -50,6 +57,7 @@ export default function BackgroundMedia({
         />
       ) : (
         <video
+          ref={videoRef}
           className="bg-media__el"
           src={src}
           poster={poster}
@@ -57,9 +65,9 @@ export default function BackgroundMedia({
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           onLoadedData={() => setLoaded(true)}
-          onCanPlay={() => setLoaded(true)}
+          onCanPlay={(e) => { setLoaded(true); const p = e.currentTarget.play?.(); if (p && p.catch) p.catch(() => {}) }}
         />
       )}
 

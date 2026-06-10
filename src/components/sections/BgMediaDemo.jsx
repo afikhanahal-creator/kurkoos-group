@@ -16,6 +16,7 @@ export default function BgMediaDemo() {
           <BackgroundMedia
             type="video"
             variant="light"
+            forcePlay
             src="/divisions/kurkoos-showcase.mp4"
             poster="/divisions/kurkoos-showcase-poster.jpg"
             alt="זרוע הביצוע של קורקוס — סרטון התקדמות בנייה"

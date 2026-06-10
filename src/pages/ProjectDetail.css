@@ -256,7 +256,7 @@
 
 /* עמודת המדיה — תמונה ומתחתיה חצי ניווט בצד שמאל (בסגנון תדהר) */
 .pd-banner__media-col { display: flex; flex-direction: column; gap: 1.1rem; }
-.pd-banner__arrows { display: flex; gap: 0.9rem; justify-content: flex-start; }  /* flex-start ב-RTL = שמאל */
+.pd-banner__arrows { display: flex; gap: 0.9rem; justify-content: flex-end; }  /* flex-end ב-RTL = שמאל → החצים בצד שמאל מתחת לתמונה */
 .pd-banner__arrow {
   width: 52px;
   height: 52px;

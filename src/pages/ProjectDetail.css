@@ -344,7 +344,7 @@
   gap: 0;
   align-items: stretch;
 }
-.pd-card {
+.pd-split-card {
   background: var(--color-surface);
   border-radius: 22px;
   overflow: hidden;

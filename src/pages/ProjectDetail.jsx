@@ -486,7 +486,7 @@ export default function ProjectDetail() {
       {show('project') && (
       <section id="project" className="section pd-anchor pd-split">
         <div className="container">
-          <div className="pd-split__grid pd-card">
+          <div className="pd-split__grid pd-split-card">
             <Reveal className="pd-split__media" variant="right">
               <SmartImage src={flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
             </Reveal>
@@ -516,7 +516,7 @@ export default function ProjectDetail() {
       {show('environment') && project.environment && (
         <section id="environment" className="section section--soft pd-anchor pd-split pd-split--reverse">
           <div className="container">
-            <div className="pd-split__grid pd-card">
+            <div className="pd-split__grid pd-split-card">
               <Reveal className="pd-split__body" variant="right">
                 <span className="eyebrow">{L({ he: 'על הסביבה', en: 'The environment' })}</span>
                 <h2 className="section-title">{L(project.environment.title)}</h2>

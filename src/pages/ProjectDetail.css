@@ -908,21 +908,20 @@
 }
 /* בר העוגנים במובייל — כל המקטעים, נגללים אופקית, מיושרים לימין */
 @media (max-width: 880px) {
+  /* מציגים 2 מילים ממורכזות באמצע הבר: המקטע הנוכחי + הבא; מתחלפות בגלילה */
   .pd-anchors__inner {
-    justify-content: flex-start;
-    gap: 2rem;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    padding-inline: 50%;           /* מרווח שמאפשר למרכז כל פריט (כולל ראשון/אחרון) → המקטע הפעיל תמיד באמצע */
+    justify-content: center;
+    gap: 2.4rem;
+    overflow-x: hidden;
+    padding-inline: var(--container-pad);
   }
-  /* במובייל מציגים רק את שם המקטע הנוכחי (ממורכז); השאר מוסתרים ומופיעים בתורם בגלילה */
   .pd-anchors__item {
+    display: none;
     font-size: 0.95rem;
     padding: 0.62rem 0.2rem;
-    opacity: 0;
-    pointer-events: none;
   }
-  .pd-anchors__item.is-active { opacity: 1; pointer-events: auto; }
+  .pd-anchors__item.is-active,
+  .pd-anchors__item.is-active + .pd-anchors__item { display: inline-flex; }
 }
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 2rem; }

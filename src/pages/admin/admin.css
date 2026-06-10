@@ -875,8 +875,9 @@
 .cubed__handle:active { cursor: grabbing; }
 /* גוף השורה — שדות עם תוויות (גריד) למעלה, פקדים למטה */
 .cubed__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-/* שדות עם תוויות — גריד שמסתדר לפי הרוחב הזמין */
-.cubed__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.55rem 0.6rem; }
+/* שדות עם תוויות — גריד אופקי שמסתדר לפי הרוחב הזמין */
+.cubed__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.6rem 0.7rem; align-items: end; }
+.cubed__f--val { grid-column: span 1; }
 .cubed__f { display: flex; flex-direction: column; gap: 0.22rem; min-width: 0; }
 .cubed__f > span { font-size: 0.72rem; font-weight: 600; color: var(--adm-muted); }
 .cubed__f input, .cubed__f select {

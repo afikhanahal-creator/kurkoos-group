@@ -37,7 +37,7 @@ export default function Partners() {
     <section className="partners">
       <div className="container">
         <p className="partners__title">{t('partners.title')}</p>
-        <LogoCarousel logos={logos} interval={2600} shuffle={shuffleOn} />
+        <LogoCarousel logos={logos} interval={3100} shuffle={shuffleOn} />
       </div>
     </section>
   )

@@ -33,19 +33,21 @@
 }
 
 .logo-carousel__img {
-  max-height: 56px;
+  /* גודל אחיד לכל הלוגואים — אותו גובה תיבה, התאמה פנימית (contain) */
+  height: 58px;
   max-width: 100%;
   width: auto;
   object-fit: contain;
-  filter: grayscale(1);
-  opacity: 0.85;
+  /* בצבע מלא כברירת מחדל; הופך לשחור-לבן בריחוף */
+  filter: none;
+  opacity: 1;
   transition: filter var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
 }
 .logo-carousel__col:hover .logo-carousel__logo {
   opacity: 1;
   color: var(--color-secondary);
 }
-.logo-carousel__col:hover .logo-carousel__img { filter: grayscale(0); opacity: 1; }
+.logo-carousel__col:hover .logo-carousel__img { filter: grayscale(1); opacity: 0.92; }
 
 /* מובייל — הגדלת הלוגואים (טקסט) קצת */
 @media (max-width: 768px) {

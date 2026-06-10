@@ -161,16 +161,33 @@ export default function ProjectDetail() {
   const [errors, setErrors] = useState({})
   const [sent, setSent] = useState(false)
 
-  // scroll-spy — מסמן את העוגן הפעיל לפי הסקשן הנראה
+  // scroll-spy — קובע את המקטע הפעיל לפי המקטע האחרון שעבר את קו-הייחוס
+  // (40% מגובה החלון). דטרמיניסטי → תמיד בדיוק מקטע פעיל אחד, וההדגשה
+  // (bold) מתחלפת חלק תוך כדי גלילה, בדסקטופ ובמובייל כאחד.
   useEffect(() => {
-    const els = Array.from(document.querySelectorAll('.pd-anchor'))
-    if (!els.length) return
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) setActiveSection(e.target.id) }),
-      { rootMargin: '-48% 0px -48% 0px', threshold: 0 }   // כמעט-קו במרכז → מקטע פעיל יחיד ויציב, בלי ריצוד
-    )
-    els.forEach((el) => obs.observe(el))
-    return () => obs.disconnect()
+    const compute = () => {
+      const els = Array.from(document.querySelectorAll('.pd-anchor'))
+      if (!els.length) return
+      const line = window.innerHeight * 0.4
+      let current = els[0].id
+      for (const el of els) {
+        if (el.getBoundingClientRect().top <= line) current = el.id
+      }
+      setActiveSection((prev) => (prev === current ? prev : current))
+    }
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => { compute(); ticking = false })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    compute()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [slug])
 
   // בר העוגנים — מחזיר את המקטע הפעיל לאזור הנראה רק כשהוא חורג ממנו

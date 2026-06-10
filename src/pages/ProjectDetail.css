@@ -111,12 +111,12 @@
   margin-bottom: 0.55rem;
 }
 .pd-banner__location svg { color: var(--color-accent); }
-/* קו הפרדה מתחת למיקום — משתרע על כל רוחב התוכן (בדיוק כמו בתדהר) */
+/* קו הפרדה דק מתחת למיקום — בכחול כהה (נייבי), משתרע על כל רוחב התוכן (כמו בתדהר) */
 .pd-banner__rule {
-  align-self: stretch;          /* גובר על align-items:flex-end → קו ברוחב מלא */
+  align-self: stretch;          /* גובר על align-items:flex-start → קו ברוחב מלא */
   width: 100%;
-  height: 1px;
-  background: var(--color-border-strong);
+  height: 2px;
+  background: var(--color-primary-900);
   margin: 0 0 1.4rem;
 }
 .pd-banner__name {

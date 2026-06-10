@@ -135,6 +135,7 @@ export default function ProjectDetail() {
   const [cms, setCms] = useState(null)
 
   const [videoOpen, setVideoOpen] = useState(false)
+  const [bannerSlide, setBannerSlide] = useState(0)   // תמונת הבאנר הנוכחית (חצים מתחת לתמונה)
   const [galleryTab, setGalleryTab] = useState(0)
   const [gallerySlide, setGallerySlide] = useState(0)
   const galTouchX = useRef(null)   // נקודת התחלה להחלקה (swipe) בגלריה
@@ -183,6 +184,8 @@ export default function ProjectDetail() {
 
   // פירורי לחם: בית / חטיבה (לפי קטגוריית הפרויקט) / שם הפרויקט
   const projDivision = divisions.find((d) => d.category && d.category === project.category)
+  // אייקון הבאנר — נלקח מהתפריט (אייקון החטיבה הרלוונטית), עם נפילה לאייקון בניין
+  const bannerIcon = projDivision?.icon || 'building'
   const crumbItems = projDivision
     ? [{ label: L(projDivision.menuTitle), to: `/divisions/${projDivision.slug}` }, { label: L(project.name) }]
     : [{ label: t('projects.title'), to: '/projects' }, { label: L(project.name) }]
@@ -280,14 +283,14 @@ export default function ProjectDetail() {
       <header className="pd-banner">
         <div className="container">
           <div className="pd-banner__grid">
-            {/* תוכן */}
+            {/* תוכן — מיושר לימין, אייקון למעלה, כפתור למטה (בסגנון תדהר) */}
             <div className="pd-banner__content">
-              <span className="pd-banner__location">
-                {L(project.city)}
+              <span className="pd-banner__icon" aria-hidden="true">
+                <Icon name={bannerIcon} size={42} stroke={1.6} />
               </span>
-              <span className="pd-banner__rule" aria-hidden="true" />
+              {L(project.city) && <span className="pd-banner__location">{L(project.city)}</span>}
               <h1 className="pd-banner__name">{L(project.name)}</h1>
-              <p className="pd-banner__desc">{L(project.short || project.description)}</p>
+              {L(project.short) && <p className="pd-banner__subtitle">{L(project.short)}</p>}
 
               <div className="pd-banner__stats-wrap">
                 <div className={`pd-banner__stats pd-banner__stats--${project.stats_scale || 'normal'}`}>
@@ -339,22 +342,53 @@ export default function ProjectDetail() {
                 </div>
                 <DottedGrid className="pd-dots--banner" />
               </div>
+
+              <button type="button" className="btn btn--primary pd-banner__cta" onClick={() => goTo('contact')}>
+                {L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })}
+              </button>
             </div>
 
-            {/* מדיה */}
-            <div className="pd-banner__media">
-              <Parallax className="pd-banner__media-img">
-                <SmartImage src={project.cover} alt={L(project.name)} label={L(project.name)} />
-              </Parallax>
-              {hasVideo && (
-                <button
-                  type="button"
-                  className="pd-banner__play"
-                  onClick={() => setVideoOpen(true)}
-                  aria-label={t('hero.ctaSecondary')}
-                >
-                  <Icon name="play" size={30} />
-                </button>
+            {/* מדיה — תמונה למעלה, חצי ניווט מתחתיה בצד שמאל (בסגנון תדהר) */}
+            <div className="pd-banner__media-col">
+              <div className="pd-banner__media">
+                <Parallax className="pd-banner__media-img">
+                  <SmartImage
+                    key={bannerSlide}
+                    src={flatGallery[Math.min(bannerSlide, flatGallery.length - 1)]}
+                    alt={L(project.name)}
+                    label={L(project.name)}
+                  />
+                </Parallax>
+                {hasVideo && (
+                  <button
+                    type="button"
+                    className="pd-banner__play"
+                    onClick={() => setVideoOpen(true)}
+                    aria-label={t('hero.ctaSecondary')}
+                  >
+                    <Icon name="play" size={30} />
+                  </button>
+                )}
+              </div>
+              {flatGallery.length > 1 && (
+                <div className="pd-banner__arrows">
+                  <button
+                    type="button"
+                    className="pd-banner__arrow"
+                    onClick={() => setBannerSlide((s) => (s - 1 + flatGallery.length) % flatGallery.length)}
+                    aria-label={L({ he: 'תמונה קודמת', en: 'Previous image' })}
+                  >
+                    <Icon name="arrow" size={22} />
+                  </button>
+                  <button
+                    type="button"
+                    className="pd-banner__arrow"
+                    onClick={() => setBannerSlide((s) => (s + 1) % flatGallery.length)}
+                    aria-label={L({ he: 'תמונה הבאה', en: 'Next image' })}
+                  >
+                    <Icon name="arrowLeft" size={22} />
+                  </button>
+                </div>
               )}
             </div>
           </div>

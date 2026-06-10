@@ -75,10 +75,23 @@
   display: grid;
   grid-template-columns: 1fr 1.1fr;
   gap: 3rem;
-  align-items: center;
-  padding-block: 1.25rem 2.25rem;
+  align-items: start;             /* התמונה נצמדת למעלה — "מורמת" כמו בתדהר */
+  padding-block: 1.25rem 2.5rem;
 }
-.pd-banner__content { min-width: 0; }
+/* תוכן — מיושר לימין במלואו (טקסט, אייקון, קוביות, כפתור) */
+.pd-banner__content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;          /* הכל לקצה הימני */
+  text-align: right;
+}
+/* אייקון עליון — נלקח מהתפריט, בצבע המותג, מיושר לימין */
+.pd-banner__icon {
+  display: inline-flex;
+  color: var(--color-primary-900);
+  margin-bottom: 0.9rem;
+}
 .pd-banner__location {
   display: inline-flex;
   align-items: center;
@@ -87,7 +100,7 @@
   font-weight: 600;
   font-size: 1.05rem;
   color: var(--color-text-soft);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.35rem;
 }
 .pd-banner__location svg { color: var(--color-accent); }
 .pd-banner__name {
@@ -97,23 +110,19 @@
   font-size: clamp(2.6rem, 5vw, 4.2rem);
   line-height: 1.02;
   color: var(--color-primary-900);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
-.pd-banner__desc {
+.pd-banner__subtitle {
   font-size: 1.15rem;
   line-height: 1.6;
   color: var(--color-text-soft);
   max-width: 46ch;
-  margin-bottom: 2rem;
+  margin-bottom: 1.6rem;
 }
-
-/* קו הפרדה מתחת למיקום (תל אביב) — בסגנון תדהר, ברור ונראה */
-.pd-banner__rule {
-  display: block;
-  width: 100%;
-  height: 1px;
-  background: var(--color-border-strong);
-  margin: 0.7rem 0 1.4rem;
+/* כפתור הבאנר — אדום מלא, מיושר לימין, מתחת לקוביות */
+.pd-banner__cta {
+  align-self: flex-end;
+  margin-top: 1.7rem;
 }
 
 .pd-banner__stats-wrap { position: relative; }
@@ -227,6 +236,31 @@
 .pd-banner__play:hover { transform: scale(1.08); background: var(--color-secondary); }
 .pd-banner__play svg { margin-inline-start: 4px; }
 
+/* עמודת המדיה — תמונה ומתחתיה חצי ניווט בצד שמאל (בסגנון תדהר) */
+.pd-banner__media-col { display: flex; flex-direction: column; gap: 1.1rem; }
+.pd-banner__arrows { display: flex; gap: 0.9rem; justify-content: flex-start; }  /* flex-start ב-RTL = שמאל */
+.pd-banner__arrow {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-primary-900);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+.pd-banner__arrow:hover {
+  border-color: var(--color-primary-900);
+  background: var(--color-primary-900);
+  color: #fff;
+}
+.pd-banner__arrow:active { transform: scale(0.94); }
+
 /* ---------- Sticky anchors ---------- */
 /* תפריט עוגנים נקי — ללא קווי הפרדה למעלה/למטה (בסגנון תדהר) */
 .pd-anchors {
@@ -234,7 +268,8 @@
   top: 74px;
   z-index: 40;
   background: #fff;   /* רקע מלא — בלי backdrop-filter שמרצד/מהבהב בזמן גלילה */
-  border-bottom: 1px solid var(--color-border);
+  /* ללא קווי הפרדה (בסגנון תדהר) — צל רך עדין בלבד שמפריד את הסרגל מהתוכן */
+  box-shadow: 0 1px 0 rgba(7, 41, 58, 0.04);
   transform: translateZ(0);   /* שכבת GPU — מונע ריצוד/הבהוב של הבר הדביק בגלילה */
   backface-visibility: hidden;
 }
@@ -924,8 +959,12 @@
   .pd-anchors__item.is-active + .pd-anchors__item { display: inline-flex; }
 }
 @media (max-width: 880px) {
-  .pd-banner__grid { grid-template-columns: 1fr; gap: 2rem; }
-  .pd-banner__media { order: -1; }
+  .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }
+  .pd-banner__media-col { order: -1; }
+  /* במובייל — תוכן ממורכז וקריא, אייקון/כותרת/קוביות/כפתור באמצע */
+  .pd-banner__content { align-items: center; text-align: center; }
+  .pd-banner__cta { align-self: center; width: 100%; max-width: 360px; }
+  .pd-banner__arrows { justify-content: center; }
   .pd-split__grid { grid-template-columns: 1fr; gap: 2.2rem; }
   .pd-split__media { order: -1; }
   .plan-acc { grid-template-columns: 1fr; gap: 1.4rem; }
@@ -942,10 +981,10 @@
 /* נתוני הפרויקט במסכים קטנים (מהרגע שהבאנר עובר לטור אחד) — קוביות גדולות
    שמתמלאות את כל רוחב המסך, נפרשות לרשת מסודרת וממורכזת. אותו עיצוב גרדיאנט/צל. */
 @media (max-width: 880px) {
-  .pd-banner__stats-wrap { padding: 0; }
+  .pd-banner__stats-wrap { padding: 0; width: 100%; }
   .pd-banner__stats {
     gap: 0.4rem;
-    justify-content: flex-start;   /* ב-RTL → נצמדות לימין, עם הכותרת */
+    justify-content: center;   /* במובייל — קוביות ממורכזות מתחת לכותרת */
   }
   .pd-stat {
     flex: 0 0 auto;                /* רוחב לפי תוכן → קוביות לא-סימטריות, דחוסות */

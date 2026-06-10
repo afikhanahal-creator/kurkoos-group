@@ -61,3 +61,8 @@
   .logo-carousel__col { height: 70px; }
   .logo-carousel__logo { font-size: 1.45rem; }
 }
+
+/* דסקטופ — מגדילים את הלוגואים ב-3px (46→49) לבקשת המשתמש; מובייל נשאר 46 */
+@media (min-width: 769px) {
+  .logo-carousel__img { max-height: 49px; }
+}

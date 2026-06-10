@@ -84,7 +84,8 @@
   --space-24: 96px;
   --space-32: 128px;
 
-  --section-padding: clamp(4rem, 9vw, 6rem);
+  /* מרווח אנכי בין מקטעים — צומצם לאוורור הדוק יותר (היה clamp(4rem,9vw,6rem)) */
+  --section-padding: clamp(2.5rem, 6vw, 4.5rem);
   --container-max: 1280px;
   --container-pad: clamp(1.25rem, 4vw, 3rem);
 

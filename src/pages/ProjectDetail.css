@@ -6,6 +6,12 @@
 .project-detail { overflow-x: hidden; }
 .pd-anchor { scroll-margin-top: 140px; }
 
+/* מרווחים אנכיים הדוקים יותר בעמוד הפרויקט (בקשת המשתמש — פחות padding) */
+.project-detail .section { padding-block: clamp(2rem, 5vw, 3.5rem); }
+@media (max-width: 880px) {
+  .project-detail .section { padding-block: 1.9rem; }
+}
+
 /* ---------- Dotted-grid decoration (inline SVG) ---------- */
 .pd-dots {
   position: absolute;
@@ -68,7 +74,7 @@
   grid-template-columns: 1fr 1.1fr;
   gap: 3rem;
   align-items: center;
-  padding-block: 1.5rem 3.5rem;
+  padding-block: 1.25rem 2.25rem;
 }
 .pd-banner__content { min-width: 0; }
 .pd-banner__location {
@@ -276,7 +282,7 @@
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
 }
-.pd-card .pd-head { margin-bottom: 2rem; }
+.pd-card .pd-head { margin-bottom: 1.4rem; }
 .pd-card .pd-map { box-shadow: none; }
 
 /* ---------- Map ---------- */
@@ -462,7 +468,7 @@
 .pd-gallery__item:hover .pd-gallery__zoom { opacity: 1; transform: translateY(0); }
 
 /* ---------- Gallery ---------- */
-.pd-gtabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin-bottom: 2rem; }
+.pd-gtabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin-bottom: 1.3rem; }
 .pd-gtab {
   padding: 0.5rem 1.3rem;
   border-radius: var(--radius-pill);

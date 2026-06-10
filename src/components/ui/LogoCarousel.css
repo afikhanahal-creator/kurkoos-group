@@ -9,7 +9,7 @@
 .logo-carousel__col {
   position: relative;
   height: 70px;
-  width: clamp(120px, 26vw, 240px);
+  width: clamp(150px, 28vw, 270px);   /* רחב מספיק כדי שגם לוגו עם כיתוב יישאר בגובה האחיד */
   overflow: hidden;
   transform-style: preserve-3d;
 }

@@ -184,8 +184,6 @@ export default function ProjectDetail() {
 
   // פירורי לחם: בית / חטיבה (לפי קטגוריית הפרויקט) / שם הפרויקט
   const projDivision = divisions.find((d) => d.category && d.category === project.category)
-  // אייקון הבאנר — נלקח מהתפריט (אייקון החטיבה הרלוונטית), עם נפילה לאייקון בניין
-  const bannerIcon = projDivision?.icon || 'building'
   const crumbItems = projDivision
     ? [{ label: L(projDivision.menuTitle), to: `/divisions/${projDivision.slug}` }, { label: L(project.name) }]
     : [{ label: t('projects.title'), to: '/projects' }, { label: L(project.name) }]
@@ -283,11 +281,8 @@ export default function ProjectDetail() {
       <header className="pd-banner">
         <div className="container">
           <div className="pd-banner__grid">
-            {/* תוכן — מיושר לימין, אייקון למעלה, כפתור למטה (בסגנון תדהר) */}
+            {/* תוכן — מיושר לימין, מיקום → קו → כותרת → תיאור → קוביות → כפתור (בסגנון תדהר) */}
             <div className="pd-banner__content">
-              <span className="pd-banner__icon" aria-hidden="true">
-                <Icon name={bannerIcon} size={42} stroke={1.6} />
-              </span>
               {L(project.city) && <span className="pd-banner__location">{L(project.city)}</span>}
               <span className="pd-banner__rule" aria-hidden="true" />
               <h1 className="pd-banner__name">{L(project.name)}</h1>

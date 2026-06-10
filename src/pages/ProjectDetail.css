@@ -188,7 +188,7 @@
   font-size: 1.6rem;
   line-height: 0.92;
   letter-spacing: -0.03em;  /* "נדחס" — אותיות צמודות */
-  color: var(--color-secondary);
+  color: var(--color-primary-900);   /* נייבי כהה — בדיוק כמו הערכים בקוביות של תדהר */
 }
 /* טקסט ארוך (שם אדריכל / סטטוס) — נחתך לשתי שורות לשמירת גובה אחיד */
 .pd-stat__value--sm {
@@ -974,7 +974,7 @@
   /* במובייל — תוכן צמוד לימין בדיוק כמו תדהר (לא ממורכז): מיקום → קו → כותרת → תיאור → קוביות */
   .pd-banner__content { align-items: flex-end; text-align: right; }
   .pd-banner__cta { align-self: flex-end; width: auto; }
-  .pd-banner__arrows { justify-content: flex-start; }
+  .pd-banner__arrows { display: none; }   /* בלי חצים במובייל (כמו בתדהר) */
   .pd-split__grid { grid-template-columns: 1fr; gap: 2.2rem; }
   .pd-split__media { order: -1; }
   .plan-acc { grid-template-columns: 1fr; gap: 1.4rem; }
@@ -1001,12 +1001,12 @@
     min-width: 0;
     max-width: none;
     min-height: 0;
-    padding: 0.4rem 1.15rem;
-    gap: 0.02rem;
+    padding: 0.7rem 1.25rem;       /* גובה נדיב יותר — קוביות מלאות כמו בתדהר */
+    gap: 0.12rem;
   }
-  .pd-stat__value { font-size: 2.05rem; }
-  .pd-stat__value--sm { font-size: 1.05rem; line-height: 1.05; }
-  .pd-stat__label { font-size: 0.94rem; }
+  .pd-stat__value { font-size: 2.1rem; }
+  .pd-stat__value--sm { font-size: 1.15rem; line-height: 1.08; }
+  .pd-stat__label { font-size: 0.92rem; }
 }
 /* טלפונים צרים — מקטינים מעט את הרוחב המינימלי כדי שיישבו 3 בשורה יפה (לא ענקיים מדי) */
 @media (max-width: 430px) {

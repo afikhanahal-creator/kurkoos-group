@@ -478,10 +478,11 @@ export default function ProjectDetail() {
               <h2 className="section-title">{L({ he: 'המיקום על המפה', en: 'On the map' })}</h2>
             </Reveal>
             <Reveal className="pd-map" delay={0.05}>
-              {mapsKey && mapCoords ? (
+              {mapsKey ? (
                 <PropertyMap
-                  lat={mapCoords.lat}
-                  lng={mapCoords.lng}
+                  lat={mapCoords?.lat}
+                  lng={mapCoords?.lng}
+                  query={!mapCoords ? mapQuery : undefined}
                   label={L(project.name)}
                   zoom={14}
                 />

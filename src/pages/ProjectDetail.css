@@ -963,22 +963,19 @@
 @media (max-width: 980px) {
   .pd-anchors { top: 66px; }
 }
-/* בר העוגנים במובייל — כל המקטעים, נגללים אופקית, מיושרים לימין */
+/* בר העוגנים במובייל — כל המקטעים מוצגים בשורה נגללת (בלי הסתרה/הצגה שגרמה לריצוד) */
 @media (max-width: 880px) {
-  /* מציגים 2 מילים ממורכזות באמצע הבר: המקטע הנוכחי + הבא; מתחלפות בגלילה */
   .pd-anchors__inner {
-    justify-content: center;
-    gap: 2.4rem;
-    overflow-x: hidden;
+    justify-content: flex-start;
+    gap: 1.4rem;
+    overflow-x: auto;
     padding-inline: var(--container-pad);
   }
   .pd-anchors__item {
-    display: none;
     font-size: 0.95rem;
     padding: 0.62rem 0.2rem;
+    flex: 0 0 auto;
   }
-  .pd-anchors__item.is-active,
-  .pd-anchors__item.is-active + .pd-anchors__item { display: inline-flex; }
 }
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }
@@ -1103,6 +1100,11 @@
 .pd-banner__stats--row::-webkit-scrollbar { display: none; }
 .pd-banner__stats--row .pd-stat { flex: 0 0 auto; }
 .pd-banner__stats--row .pd-stat--wide { flex: 0 0 auto; }   /* קוביות "רחב" לא תופסות שורה מלאה */
+/* במובייל — הקוביות נכנסות לרוחב המסך (גולשות לשורות) ולא חורגות החוצה */
 @media (max-width: 880px) {
-  .pd-banner__stats--row { justify-content: flex-start; flex-wrap: nowrap; }
+  .pd-banner__stats,
+  .pd-banner__stats--row { flex-wrap: wrap; overflow-x: visible; max-width: 100%; }
+  .pd-banner__stats--row .pd-stat,
+  .pd-banner__stats--row .pd-stat--wide { flex: 0 1 auto; min-width: 0; max-width: 100%; }
+  .pd-stat__value--sm { max-width: 100%; }
 }

@@ -56,18 +56,32 @@ const MAP_STYLE = [
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
 ]
 
-export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
+export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) {
   const ref = useRef(null)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     const key = import.meta.env.VITE_GOOGLE_MAPS_KEY
-    if (!key || lat == null || lng == null) { setFailed(true); return }
+    const hasCoords = lat != null && lng != null
+    if (!key || (!hasCoords && !query)) { setFailed(true); return }
     let cancelled = false
     loadGoogleMaps(key)
-      .then((maps) => {
+      .then(async (maps) => {
         if (cancelled || !ref.current) return
-        const center = { lat, lng }
+        // אם אין קואורדינטות — מאתרים אותן מהכתובת (geocoding) כדי להציג את המפה המעוצבת
+        let center = hasCoords ? { lat, lng } : null
+        if (!center && query) {
+          center = await new Promise((resolve) => {
+            new maps.Geocoder().geocode({ address: query, region: 'IL' }, (res, status) => {
+              if (status === 'OK' && res && res[0]) {
+                const loc = res[0].geometry.location
+                resolve({ lat: loc.lat(), lng: loc.lng() })
+              } else resolve(null)
+            })
+          })
+        }
+        if (cancelled) return
+        if (!center) { setFailed(true); return }
         const map = new maps.Map(ref.current, {
           center,
           zoom,
@@ -81,7 +95,7 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
         // סמן הנכס — קוביה תלת-ממדית + שלט מותג קבוע מעליה (שם + לוגו).
         // מומש כ-OverlayView כדי שיהיה אלמנט DOM אמיתי (CSS 3D), לא תמונה.
         const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
-        const latLng = new maps.LatLng(lat, lng)
+        const latLng = new maps.LatLng(center.lat, center.lng)
         class CubeMarker extends maps.OverlayView {
           onAdd() {
             const el = document.createElement('div')
@@ -113,7 +127,7 @@ export default function PropertyMap({ lat, lng, label = '', zoom = 15 }) {
       })
       .catch(() => { if (!cancelled) setFailed(true) })
     return () => { cancelled = true }
-  }, [lat, lng, zoom, label])
+  }, [lat, lng, query, zoom, label])
 
   // נפילה-לאחור: אם ה-Maps JS API לא זמין/מאופשר — embed רגיל (לא ריק)
   if (failed) {

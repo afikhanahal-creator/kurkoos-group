@@ -74,10 +74,10 @@
 .pd-banner {
   padding-top: 1.5rem;
   position: relative;
-  /* שבירה עדינה בחלק העליון — הילה כחולה מצד התוכן (ימין) שמתמזגת לרקע התכלת */
+  /* חלק עליון כחול (מלא) שמתבהר ללבן בתחתית — כמו כרטיסיה לבנה שמבצבצת מתחת (תדהר) */
   background:
-    radial-gradient(120% 90% at 88% 0%, rgba(16, 85, 114, 0.20), transparent 58%),
-    linear-gradient(180deg, #cfe0e8 0%, #dfe9ed 42%);
+    radial-gradient(120% 90% at 88% 0%, rgba(16, 85, 114, 0.20), transparent 52%),
+    linear-gradient(180deg, #cfe0e8 0%, #dfe9ed 28%, #eef4f6 58%, #ffffff 90%);
   /* סיומת "כרטיסיה" — פינות תחתונות עגולות על רקע העמוד (כמו תדהר) */
   border-bottom-left-radius: 30px;
   border-bottom-right-radius: 30px;

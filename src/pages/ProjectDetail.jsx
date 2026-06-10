@@ -714,22 +714,24 @@ export default function ProjectDetail() {
       {show('developers') && developers.length > 0 && (
         <section id="developers" className="section section--soft pd-anchor pd-developers">
           <div className="container">
-            <Reveal className="pd-head">
-              <span className="eyebrow">{L({ he: 'שותפים', en: 'Partners' })}</span>
-              <h2 className="section-title">{L({ he: 'יזמי הפרויקט', en: 'Project developers' })}</h2>
-              <p className="pd-developers__lead">{L({ he: 'הגופים שמקימים יחד את הפרויקט', en: 'The partners building this project together' })}</p>
-            </Reveal>
-            <div className="pd-dev-grid">
-              {developers.map((d, i) => (
-                <Reveal key={i} className="pd-dev" delay={i * 0.08}>
-                  <div className="pd-dev__logo">
-                    {d.logo
-                      ? <img src={d.logo} alt={L(d.name) || ''} loading="lazy" />
-                      : <span className="pd-dev__name">{L(d.name)}</span>}
-                  </div>
-                  <p className="pd-dev__bio">{L(d.bio)}</p>
-                </Reveal>
-              ))}
+            <div className="pd-card">
+              <Reveal className="pd-head">
+                <span className="eyebrow">{L({ he: 'שותפים', en: 'Partners' })}</span>
+                <h2 className="section-title">{L({ he: 'יזמי הפרויקט', en: 'Project developers' })}</h2>
+                <p className="pd-developers__lead">{L({ he: 'הגופים שמקימים יחד את הפרויקט', en: 'The partners building this project together' })}</p>
+              </Reveal>
+              <div className="pd-dev-grid">
+                {developers.map((d, i) => (
+                  <Reveal key={i} className="pd-dev" delay={i * 0.08}>
+                    <div className="pd-dev__logo">
+                      {d.logo
+                        ? <img src={d.logo} alt={L(d.name) || ''} loading="lazy" />
+                        : <span className="pd-dev__name">{L(d.name)}</span>}
+                    </div>
+                    <p className="pd-dev__bio">{L(d.bio)}</p>
+                  </Reveal>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -739,20 +741,22 @@ export default function ProjectDetail() {
       {show('more') && moreProjects.length > 0 && (
         <section id="more" className="section pd-anchor pd-more">
           <div className="container">
-            <Reveal className="pd-head">
-              <h2 className="section-title">{L({ he: 'פרויקטים נוספים', en: 'More projects' })}</h2>
-            </Reveal>
-            <div className="pd-more__grid">
-              {moreProjects.map((p, i) => (
-                <Reveal key={p.slug} delay={i * 0.08}>
-                  <Link to={`/projects/${p.slug}`} className="pd-more__card">
-                    <span className="pd-more__img">
-                      <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} />
-                    </span>
-                    <span className="pd-more__title">{L(p.name)}</span>
-                  </Link>
-                </Reveal>
-              ))}
+            <div className="pd-card">
+              <Reveal className="pd-head">
+                <h2 className="section-title">{L({ he: 'פרויקטים נוספים', en: 'More projects' })}</h2>
+              </Reveal>
+              <div className="pd-more__grid">
+                {moreProjects.map((p, i) => (
+                  <Reveal key={p.slug} delay={i * 0.08}>
+                    <Link to={`/projects/${p.slug}`} className="pd-more__card">
+                      <span className="pd-more__img">
+                        <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} />
+                      </span>
+                      <span className="pd-more__title">{L(p.name)}</span>
+                    </Link>
+                  </Reveal>
+                ))}
+              </div>
             </div>
           </div>
         </section>

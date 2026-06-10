@@ -70,6 +70,7 @@
   font-weight: 800;
 }
 
+/* deploy: ensure production reflects latest banner design */
 .pd-banner {
   padding-top: 1.5rem;
   position: relative;

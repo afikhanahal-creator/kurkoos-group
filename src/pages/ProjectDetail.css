@@ -298,8 +298,8 @@
 }
 .pd-anchors__inner {
   display: flex;
-  justify-content: space-evenly;   /* פורסים את המילים באופן שווה לרוחב הבר */
-  gap: clamp(0.4rem, 4.6vw, 6.5rem);
+  justify-content: space-between;   /* מקצה לקצה — הפריט הימני בקצה ימין, השמאלי בקצה שמאל */
+  gap: 1rem;
   overflow-x: auto;
   scrollbar-width: none;
 }

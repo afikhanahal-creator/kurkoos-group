@@ -75,8 +75,8 @@
      הסגירה מתבצעת מה-X שלמעלה. */
   /* מרווח כדי שהתוכן/תמונות לא ייחתכו מאחורי הבר — רק כשהבר מוצג בפועל */
   body.has-bottombar { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
-  /* תפריט המובייל — מרווח תחתון שלא ייחתך מאחורי הבר */
-  .header__mobile-inner { padding-block-end: 88px; }
+  /* תפריט המובייל — מרווח תחתון שלא ייחתך מאחורי הבר (רק כשהבר מוצג) */
+  body.has-bottombar .header__mobile-inner { padding-block-end: 88px; }
 }
 
 /* שכבת רקע אפורה כשהתפריט פתוח — מבהירה שזה תפריט */

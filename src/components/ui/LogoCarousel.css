@@ -51,18 +51,20 @@
 }
 .logo-carousel__col:hover .logo-carousel__img { filter: grayscale(1); opacity: 0.92; }
 
-/* מובייל — הגדלת הלוגואים (טקסט) קצת */
+/* מובייל — לוגואים גדולים ב-~20% כדי שיהיו ברורים יותר */
 @media (max-width: 768px) {
-  .logo-carousel__col { height: 80px; width: clamp(150px, 40vw, 240px); }
-  .logo-carousel__logo { font-size: clamp(1.55rem, 6vw, 1.95rem); }
+  .logo-carousel__col { height: 84px; width: clamp(150px, 40vw, 240px); }
+  .logo-carousel__img { max-height: 67px; }
+  .logo-carousel__logo { font-size: 1.5rem; }
 }
 
 @media (max-width: 420px) {
-  .logo-carousel__col { height: 70px; }
-  .logo-carousel__logo { font-size: 1.45rem; }
+  .logo-carousel__col { height: 72px; }
+  .logo-carousel__img { max-height: 62px; }
+  .logo-carousel__logo { font-size: 1.32rem; }
 }
 
-/* דסקטופ — מגדילים את הלוגואים ב-3px (46→49) לבקשת המשתמש; מובייל נשאר 46 */
+/* דסקטופ — מגדילים את הלוגואים ב-3px (46→49) לבקשת המשתמש; מובייל נשאר גדול יותר */
 @media (min-width: 769px) {
   .logo-carousel__img { max-height: 49px; }
 }

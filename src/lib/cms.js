@@ -8,6 +8,24 @@ import { supabase } from './supabase.js'
 
 const BUCKET = 'media'
 
+/* ---------- מטמון קצר-מועד בזיכרון (TTL) ----------
+   בעת טעינת עמוד, כמה רכיבים מבקשים את אותם נתונים (הגדרות, פרויקטים,
+   לוגואים) בו-זמנית. המטמון משתף בקשה אחת בתעופה (in-flight) ושומר את
+   התוצאה לזמן קצר — פחות בקשות רשת, טעינה מהירה יותר, והנתונים נשארים
+   טריים (TTL קצר + פינוי מיידי אחרי כל כתיבה מהאדמין). */
+const _cache = new Map()
+function cached(key, ttlMs, fetcher) {
+  const hit = _cache.get(key)
+  if (hit && Date.now() - hit.t < ttlMs) return hit.p
+  const p = Promise.resolve().then(fetcher)
+  p.catch(() => _cache.delete(key))   // כישלון לא ננעל במטמון
+  _cache.set(key, { t: Date.now(), p })
+  return p
+}
+function invalidate(prefix) {
+  for (const k of _cache.keys()) if (k.startsWith(prefix)) _cache.delete(k)
+}
+
 // ---------- Cloudinary (וידאו/מדיה כבדה) ----------
 export const hasCloudinary = Boolean(
   import.meta.env.VITE_CLOUDINARY_CLOUD_NAME && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
@@ -54,27 +72,48 @@ export async function deleteMedia(url) {
 
 // ---------- Projects ----------
 export async function listProjects({ includeArchived = false } = {}) {
-  let q = supabase.from('projects').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
-  if (!includeArchived) q = q.eq('is_archived', false)
-  const { data, error } = await q
-  if (error) throw error
-  return data
+  return cached(`projects:${includeArchived}`, 30_000, async () => {
+    let q = supabase.from('projects').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+    if (!includeArchived) q = q.eq('is_archived', false)
+    const { data, error } = await q
+    if (error) throw error
+    return data
+  })
+}
+
+/* עמודות כרטיס בלבד — לרשימות הציבוריות (גלריית הבית, עמוד הפרויקטים).
+   מדלג על עמודות ה-JSONB הכבדות (תוכניות, גלריות-משנה, קוביות, סביבה,
+   יזמים, סרטונים) → payload קטן משמעותית ותגובה מהירה יותר. */
+const CARD_COLS = 'id, slug, name, location, subtitle, description, year, status, category, hero_image_url, gallery, pages, card_layout, is_published'
+export async function listProjectCards() {
+  return cached('projects:cards', 30_000, async () => {
+    const { data, error } = await supabase
+      .from('projects').select(CARD_COLS)
+      .eq('is_archived', false)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
+    if (error) throw error
+    return data
+  })
 }
 
 export async function getProjectBySlug(slug) {
-  // קודם לפי slug; אם לפרויקט אין slug — מנסים לפי id (כך שהעמוד ייפתח תמיד)
-  const { data, error } = await supabase.from('projects').select('*').eq('slug', slug).maybeSingle()
-  if (error) throw error
-  if (data) return data
-  const byId = await supabase.from('projects').select('*').eq('id', slug).maybeSingle()
-  if (!byId.error && byId.data) return byId.data
-  return null
+  return cached(`projects:one:${slug}`, 30_000, async () => {
+    // קודם לפי slug; אם לפרויקט אין slug — מנסים לפי id (כך שהעמוד ייפתח תמיד)
+    const { data, error } = await supabase.from('projects').select('*').eq('slug', slug).maybeSingle()
+    if (error) throw error
+    if (data) return data
+    const byId = await supabase.from('projects').select('*').eq('id', slug).maybeSingle()
+    if (!byId.error && byId.data) return byId.data
+    return null
+  })
 }
 
 // פרויקטים מפורסמים המשויכים לעמוד יעד מסוים
 // (development | execution | featured | brokerage). פרויקט יכול להיות בכמה עמודים.
-export async function listProjectsByPage(page, { includeArchived = false } = {}) {
-  const rows = await listProjects({ includeArchived })
+export async function listProjectsByPage(page) {
+  // לעמודי תצוגה ציבוריים — מספיקות עמודות הכרטיס (קל ומהיר יותר)
+  const rows = await listProjectCards()
   return (rows || []).filter(
     (p) => p.is_published !== false && Array.isArray(p.pages) && p.pages.includes(page)
   )
@@ -98,12 +137,14 @@ export function cmsRowToCard(p) {
 export async function createProject(row) {
   const { data, error } = await supabase.from('projects').insert(row).select().single()
   if (error) throw error
+  invalidate('projects')
   return data
 }
 
 export async function updateProject(id, patch) {
   const { data, error } = await supabase.from('projects').update(patch).eq('id', id).select().single()
   if (error) throw error
+  invalidate('projects')
   return data
 }
 
@@ -115,6 +156,8 @@ export async function reorderRows(table, orderedIds) {
   // עדכון sort_order לפי הסדר החדש
   const updates = orderedIds.map((id, i) => supabase.from(table).update({ sort_order: i }).eq('id', id))
   await Promise.all(updates)
+  const prefix = { projects: 'projects', properties: 'projects', site_logos: 'logos', site_counters: 'counters' }[table]
+  if (prefix) invalidate(prefix)
 }
 
 // ---------- Properties ----------
@@ -151,49 +194,59 @@ export async function archiveProperty(id) {
 
 // ---------- Counters ----------
 export async function listCounters({ activeOnly = false } = {}) {
-  let q = supabase.from('site_counters').select('*').order('sort_order', { ascending: true })
-  if (activeOnly) q = q.eq('is_active', true)
-  const { data, error } = await q
-  if (error) throw error
-  return data
+  return cached(`counters:${activeOnly}`, 60_000, async () => {
+    let q = supabase.from('site_counters').select('*').order('sort_order', { ascending: true })
+    if (activeOnly) q = q.eq('is_active', true)
+    const { data, error } = await q
+    if (error) throw error
+    return data
+  })
 }
 export async function createCounter(row) {
   const { data, error } = await supabase.from('site_counters').insert(row).select().single()
   if (error) throw error
+  invalidate('counters')
   return data
 }
 export async function updateCounter(id, patch) {
   const { data, error } = await supabase.from('site_counters').update(patch).eq('id', id).select().single()
   if (error) throw error
+  invalidate('counters')
   return data
 }
 export async function deleteCounter(id) {
   const { error } = await supabase.from('site_counters').delete().eq('id', id)
   if (error) throw error
+  invalidate('counters')
 }
 
 // ---------- Logos (carousel) ----------
 export async function listLogos({ activeOnly = false } = {}) {
-  let q = supabase.from('site_logos').select('*').order('sort_order', { ascending: true })
-  if (activeOnly) q = q.eq('is_active', true)
-  const { data, error } = await q
-  if (error) throw error
-  return data
+  return cached(`logos:${activeOnly}`, 60_000, async () => {
+    let q = supabase.from('site_logos').select('*').order('sort_order', { ascending: true })
+    if (activeOnly) q = q.eq('is_active', true)
+    const { data, error } = await q
+    if (error) throw error
+    return data
+  })
 }
 export async function createLogo(row) {
   const { data, error } = await supabase.from('site_logos').insert(row).select().single()
   if (error) throw error
+  invalidate('logos')
   return data
 }
 export async function updateLogo(id, patch) {
   const { data, error } = await supabase.from('site_logos').update(patch).eq('id', id).select().single()
   if (error) throw error
+  invalidate('logos')
   return data
 }
 export async function deleteLogo(id, imageUrl) {
   if (imageUrl) await deleteMedia(imageUrl).catch(() => {})
   const { error } = await supabase.from('site_logos').delete().eq('id', id)
   if (error) throw error
+  invalidate('logos')
 }
 
 // ---------- Leads (CRM) ----------
@@ -283,7 +336,7 @@ export async function deleteLead(id) {
    עובדת מעל הטבלאות stats / projects / site_settings (הקיימות).
    אינה נוגעת ב-API החדש למעלה.
    ============================================================ */
-export function clearCmsCache() {}
+export function clearCmsCache() { _cache.clear() }
 
 export async function fetchStats() {
   if (!supabase) return []
@@ -308,17 +361,23 @@ export async function upsertProject(project) {
 export async function deleteProject(id) {
   const { error } = await supabase.from('projects').delete().eq('id', id)
   if (error) throw error
+  invalidate('projects')
 }
 
 export async function fetchSettings() {
   if (!supabase) return {}
-  const { data, error } = await supabase.from('site_settings').select('*')
-  if (error) return {}
-  return Object.fromEntries((data || []).map((r) => [r.key, r.value]))
+  // הגדרות האתר נקראות ע"י כמה רכיבים בו-זמנית (פונטים, לוגו, יומן, כותרות)
+  // — המטמון מאחד אותן לבקשת רשת אחת.
+  return cached('settings', 60_000, async () => {
+    const { data, error } = await supabase.from('site_settings').select('*')
+    if (error) return {}
+    return Object.fromEntries((data || []).map((r) => [r.key, r.value]))
+  })
 }
 export async function setSetting(key, value) {
   const { error } = await supabase.from('site_settings').upsert({ key, value })
   if (error) throw error
+  invalidate('settings')
 }
 
 export function useSettings() {

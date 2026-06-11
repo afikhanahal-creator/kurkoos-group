@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import projects from '../../data/projects.js'
 import { supabase } from '../../lib/supabase.js'
-import { listProjects, cmsRowToCard } from '../../lib/cms.js'
+import { listProjectCards, cmsRowToCard } from '../../lib/cms.js'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Reveal from '../ui/Reveal.jsx'
 import SmartImage from '../ui/SmartImage.jsx'
@@ -125,7 +125,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   useEffect(() => {
     if (!supabase || (itemsProp && itemsProp.length)) return
     let alive = true
-    listProjects()
+    listProjectCards()
       .then((rows) => {
         if (!alive || !rows || !rows.length) return
         const featured = rows.filter((p) => Array.isArray(p.pages) && p.pages.includes('featured'))

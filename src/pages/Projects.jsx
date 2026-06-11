@@ -6,7 +6,7 @@ import HeroCollage from '../components/ui/HeroCollage.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import { supabase } from '../lib/supabase.js'
-import { listProjects, listCounters } from '../lib/cms.js'
+import { listProjectCards, listCounters } from '../lib/cms.js'
 import './Projects.css'
 
 export default function Projects() {
@@ -22,7 +22,7 @@ export default function Projects() {
 
   useEffect(() => {
     if (!supabase) return
-    listProjects()
+    listProjectCards()
       .then((rows) => {
         if (rows && rows.length) {
           // אם יש פרויקטים שתויגו "פרויקטים נבחרים" — מציגים אותם; אחרת את כולם

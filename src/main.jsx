@@ -8,6 +8,16 @@ import './styles/global.css'
 
 initRipples()
 
+// חיבור-מוקדם (preconnect) למקורות הנתונים — DNS+TLS נפתחים במקביל לטעינת
+// הקוד, כך שהבקשה הראשונה ל-Supabase/Cloudinary יוצאת בלי המתנה.
+for (const href of [import.meta.env.VITE_SUPABASE_URL, 'https://res.cloudinary.com'].filter(Boolean)) {
+  const l = document.createElement('link')
+  l.rel = 'preconnect'
+  l.href = href
+  l.crossOrigin = 'anonymous'
+  document.head.appendChild(l)
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>

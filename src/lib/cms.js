@@ -84,16 +84,21 @@ export async function listProjects({ includeArchived = false } = {}) {
 /* עמודות כרטיס בלבד — לרשימות הציבוריות (גלריית הבית, עמוד הפרויקטים).
    מדלג על עמודות ה-JSONB הכבדות (תוכניות, גלריות-משנה, קוביות, סביבה,
    יזמים, סרטונים) → payload קטן משמעותית ותגובה מהירה יותר. */
-const CARD_COLS = 'id, slug, name, location, subtitle, description, year, status, category, hero_image_url, gallery, pages, card_layout, is_published'
+const CARD_COLS = 'id, slug, name, location, subtitle, description, year, status, hero_image_url, gallery, pages, card_layout, is_published'
 export async function listProjectCards() {
   return cached('projects:cards', 30_000, async () => {
-    const { data, error } = await supabase
-      .from('projects').select(CARD_COLS)
+    const fetchCards = (cols) => supabase
+      .from('projects').select(cols)
       .eq('is_archived', false)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true })
-    if (error) throw error
-    return data
+    let res = await fetchCards(CARD_COLS)
+    // רשת ביטחון: אם עמודה חסרה במסד (סכמה ישנה) — נופלים-לאחור לשליפה
+    // מלאה. שאילתה כושלת לעולם לא תעלים פרויקטים מהאתר.
+    if (res.error) res = await fetchCards('*')
+    if (res.error) throw res.error
+    // רק פרויקטים מפורסמים — גם כשמנהל מחובר (RLS מחזיר לו טיוטות)
+    return (res.data || []).filter((p) => p.is_published !== false)
   })
 }
 

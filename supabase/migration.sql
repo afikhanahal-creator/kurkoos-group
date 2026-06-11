@@ -298,3 +298,21 @@ drop policy if exists "newsletter admin delete" on public.newsletter_subscribers
 create policy "newsletter admin delete" on public.newsletter_subscribers for delete using (auth.role() = 'authenticated');
 -- בלי כפילויות (אותו מייל פעם אחת)
 create unique index if not exists newsletter_email_unique on public.newsletter_subscribers (lower(email));
+
+-- ============================================================
+-- השלמות — קוביות נתונים + ביטחון ל-site_settings
+-- ============================================================
+alter table public.projects add column if not exists stat_cubes jsonb default '[]'::jsonb;
+alter table public.projects add column if not exists stat_cubes_row boolean default false;
+
+create table if not exists public.site_settings (
+  key text primary key,
+  value jsonb
+);
+alter table public.site_settings enable row level security;
+drop policy if exists "settings public read" on public.site_settings;
+create policy "settings public read" on public.site_settings
+  for select using (true);
+drop policy if exists "settings admin write" on public.site_settings;
+create policy "settings admin write" on public.site_settings
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');

@@ -20,9 +20,11 @@ export default defineConfig({
              דרישה. שאר ה-node_modules (כמו @imgly) נשארים בברירת המחדל של
              Rollup כדי שמודולים שנטענים דינמית לא ייגררו לטעינה מוקדמת. */
         manualChunks(id) {
-          /* מודולים וירטואליים של Vite (כמו ה-preload-helper) משותפים לכל הצ'אנקים —
-             חייבים להיות ב'shared', אחרת ה-entry ייבא סטטית את צ'אנק האדמין. */
-          if (id.startsWith('\0') || id.includes('vite/preload-helper')) return 'shared'
+          /* מודולים וירטואליים של Vite (preload-helper, commonjs-helpers) משותפים
+             לכל הצ'אנקים — מוצמדים ל-vendor-react (הצ'אנק העמוק ביותר שכולם
+             מייבאים) כדי שלא ייווצר מעגל-ייבוא בין צ'אנקים (shared⇄vendor-react),
+             שגורם לשגיאת אתחול (TDZ) ולמסך לבן. */
+          if (id.startsWith('\0') || id.includes('vite/preload-helper')) return 'vendor-react'
           if (id.includes('node_modules')) {
             if (id.includes('framer-motion')) return 'vendor-motion'
             if (id.includes('@supabase/')) return 'vendor-supabase'

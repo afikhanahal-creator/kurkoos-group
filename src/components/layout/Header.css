@@ -17,15 +17,31 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     align-items: end;
-    /* גובה = 64px לתוכן + שטח בטוח (home indicator) כדי שהפריטים לא ייחתכו */
-    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    /* גובה כולל את בליטת העיגול (30px) + 64px בר + שטח בטוח — כך העיגול
+       נשאר בתוך קופסת האלמנט ואין מה להיחתך (Safari חותך overflow על fixed) */
+    height: calc(94px + env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: transparent;
+    border-top: 0;
+    box-shadow: none;
+    /* הרצועה השקופה למעלה לא חוסמת הקלקות על התוכן שמאחוריה */
+    pointer-events: none;
+  }
+  /* הרקע הלבן של הבר עצמו — רק על 64px התחתונים (+safe area) */
+  .header__bottombar::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
     background: #fff;
     border-top: 1px solid var(--color-border);
     box-shadow: 0 -6px 22px -10px rgba(7, 41, 58, 0.22);
-    overflow: visible;   /* שהעיגול המוגבה (FAB) לא ייחתך */
   }
   .header__bb-item {
+    pointer-events: auto;     /* הפריטים עצמם כן לחיצים */
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;

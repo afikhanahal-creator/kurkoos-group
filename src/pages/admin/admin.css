@@ -1351,3 +1351,33 @@
   .tsc__row { position: relative; }
   .tsc__row-reset { inset-inline-end: 0; inset-block-start: 0.75rem; }
 }
+
+/* ============================================================
+   טאב ניוזלטר — מאגר נרשמים + וובהוק
+   ============================================================ */
+.nlt__count {
+  font-size: 0.72rem; font-weight: 800; padding: 0.12rem 0.55rem;
+  border-radius: 999px; background: var(--color-primary-100, #e7f0f5);
+  color: var(--color-secondary, #105572); margin-inline-start: 0.5rem;
+}
+.nlt__toolbar { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 0.8rem 0 1rem; }
+.nlt__search {
+  flex: 1 1 14rem; padding: 0.55rem 0.9rem;
+  border: 1.5px solid var(--adm-border); border-radius: 10px;
+  background: var(--adm-surface-2, #fcfdff); font: inherit; color: var(--adm-ink);
+}
+.nlt__table { display: flex; flex-direction: column; border: 1px solid var(--adm-border); border-radius: 12px; overflow: hidden; }
+.nlt__tr {
+  display: grid; grid-template-columns: 1fr 140px 90px 40px;
+  gap: 0.6rem; align-items: center;
+  padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--adm-border);
+  font-size: 0.88rem; color: var(--adm-ink);
+}
+.nlt__tr:last-child { border-bottom: 0; }
+.nlt__tr--head { background: var(--adm-bg); font-size: 0.74rem; font-weight: 800; color: var(--adm-muted); }
+.nlt__email { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nlt__source { font-size: 0.74rem; color: var(--adm-muted); }
+@media (max-width: 640px) {
+  .nlt__tr { grid-template-columns: 1fr 40px; }
+  .nlt__tr > :nth-child(2), .nlt__tr > :nth-child(3) { display: none; }
+}

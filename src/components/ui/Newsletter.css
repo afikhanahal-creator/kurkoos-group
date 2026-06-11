@@ -66,3 +66,6 @@
     white-space: nowrap;
   }
 }
+
+/* הודעת שגיאה בהרשמה — קטנה מתחת לטופס */
+.newsletter__err { flex-basis: 100%; font-size: 0.82rem; color: #ffb3a8; margin-top: 0.3rem; }

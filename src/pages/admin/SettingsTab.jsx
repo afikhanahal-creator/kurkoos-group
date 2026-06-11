@@ -47,6 +47,10 @@ export default function SettingsTab() {
   const [testing, setTesting] = useState(false)
   const [booking, setBooking] = useState(DEFAULT_BOOKING)
   const [bookingStatus, setBookingStatus] = useState('saved')
+  // פרטי התקשרות של ה-footer — נערכים כאן ונשמרים אוטומטית בענן
+  const [contact, setContact] = useState({ contact_phone: '', contact_email: '', contact_address: '', contact_hours: '' })
+  const [contactStatus, setContactStatus] = useState('saved')
+  const contactTimer = useRef()
   const timer = useRef()
 
   const load = () => {
@@ -56,6 +60,12 @@ export default function SettingsTab() {
         setRecipients(recs)
         setSettings(st || { enabled: true, subject: 'ליד חדש מהאתר: {{name}}', reply_to: '', include_fields: DEFAULT_FIELDS })
         setBooking(parseBooking(site?.booking_hours))
+        setContact({
+          contact_phone: site?.contact_phone || '',
+          contact_email: site?.contact_email || '',
+          contact_address: site?.contact_address || '',
+          contact_hours: site?.contact_hours || '',
+        })
         setErr('')
       })
       .catch((e) => {
@@ -110,6 +120,17 @@ export default function SettingsTab() {
   const removeRecipient = async (id) => {
     setRecipients((rs) => rs.filter((r) => r.id !== id))
     try { await deleteRecipient(id) } catch (e) { setErr(e.message); load() }
+  }
+
+  // פרטי התקשרות (footer) — שמירה אוטומטית עם debounce לכל שדה
+  const patchContact = (key, value) => {
+    setContact((c) => ({ ...c, [key]: value }))
+    clearTimeout(contactTimer.current)
+    setContactStatus('saving')
+    contactTimer.current = setTimeout(async () => {
+      try { await setSetting(key, value); setContactStatus('saved') }
+      catch (e) { setContactStatus('error'); setErr(e.message) }
+    }, 700)
   }
 
   // שמירת שעות פנויות לשיחה (booking_hours) — debounce
@@ -257,6 +278,34 @@ export default function SettingsTab() {
               )
             })}
           </div>
+        </div>
+      </section>
+
+      {/* פרטי התקשרות — מוצגים ב-footer של האתר */}
+      <section className="adm-set__card">
+        <h3 className="adm-set__card-title">פרטי התקשרות (Footer)
+          <span className={`adm-set__status adm-set__status--${contactStatus}`}>
+            {contactStatus === 'saving' ? 'שומר…' : contactStatus === 'error' ? 'שגיאה' : '✓ נשמר'}
+          </span>
+        </h3>
+        <p className="adm-set__hint">הפרטים שמופיעים בתחתית כל עמודי האתר. כל שינוי נשמר אוטומטית ומתעדכן באתר. שדה ריק = ערך ברירת המחדל.</p>
+        <div className="adm-set__bk-row">
+          <label className="adm-set__field"><span>טלפון</span>
+            <input type="tel" dir="ltr" placeholder="03-000-0000" value={contact.contact_phone} onChange={(e) => patchContact('contact_phone', e.target.value)} />
+          </label>
+          <label className="adm-set__field"><span>אימייל</span>
+            <input type="email" dir="ltr" placeholder="info@kurkoos-group.co.il" value={contact.contact_email} onChange={(e) => patchContact('contact_email', e.target.value)} />
+          </label>
+        </div>
+        <div className="adm-set__bk-row" style={{ marginTop: '0.6rem' }}>
+          <label className="adm-set__field" style={{ flex: '1 1 100%' }}><span>כתובת</span>
+            <input type="text" dir="rtl" placeholder="רחוב הנגר 24, הוד השרון, מגדלי Amy קומה 2" value={contact.contact_address} onChange={(e) => patchContact('contact_address', e.target.value)} />
+          </label>
+        </div>
+        <div className="adm-set__bk-row" style={{ marginTop: '0.6rem' }}>
+          <label className="adm-set__field" style={{ flex: '1 1 100%' }}><span>שעות פעילות</span>
+            <input type="text" dir="rtl" placeholder="א'–ה' 09:00–18:00" value={contact.contact_hours} onChange={(e) => patchContact('contact_hours', e.target.value)} />
+          </label>
         </div>
       </section>
 

@@ -75,7 +75,7 @@
 /* ספציפיות גבוהה (.contact .contact__panel ...) כדי לגבור על '.contact .eyebrow'
    (אדום) — על הפאנל הכהה צריך גוון בהיר וברור. */
 .contact .contact__panel .contact__eyebrow {
-  color: #ff9e8f;   /* אלמוגי בהיר — קריא היטב על הרקע הכהה, ונשאר במשפחת האדום של המותג */
+  color: #e8795a;   /* אלמוגי עמוק — כהה יותר, יושב טבעי בפאלטת המותג וקריא על הרקע הכהה */
   font-size: var(--fs-small);
   font-weight: 800;
   letter-spacing: 0.12em;

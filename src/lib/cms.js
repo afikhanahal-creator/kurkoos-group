@@ -394,3 +394,36 @@ export function useSettings() {
   }, [])
   return settings
 }
+
+// ---------- Newsletter (מאגר נרשמים + וובהוק לאוטומציות) ----------
+export async function subscribeNewsletter(email, source = 'site') {
+  if (!supabase) throw new Error('Supabase לא מוגדר')
+  const clean = String(email || '').trim().toLowerCase()
+  if (!clean) throw new Error('אימייל ריק')
+  const { error } = await supabase.from('newsletter_subscribers').insert({ email: clean, source })
+  // 23505 = כבר רשום (אינדקס ייחודי) — נחשב הצלחה שקטה
+  if (error && error.code !== '23505') throw error
+  // וובהוק לאוטומציות (Make / Zapier / ESP) — שיגור-ושכח, לא חוסם את המשתמש
+  try {
+    const s = await fetchSettings()
+    if (s.newsletter_webhook) {
+      fetch(s.newsletter_webhook, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'newsletter_subscribe', email: clean, source, ts: new Date().toISOString() }),
+      }).catch(() => {})
+    }
+  } catch { /* הוובהוק הוא תוסף — כישלון בו לא מפיל את ההרשמה */ }
+}
+
+export async function listSubscribers() {
+  const { data, error } = await supabase.from('newsletter_subscribers').select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export async function deleteSubscriber(id) {
+  const { error } = await supabase.from('newsletter_subscribers').delete().eq('id', id)
+  if (error) throw error
+}

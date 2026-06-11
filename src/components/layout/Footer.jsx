@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import site from '../../data/site.js'
+import { useSettings } from '../../lib/cms.js'
 import Logo from './Logo.jsx'
 import Icon from '../ui/Icon.jsx'
 import Newsletter from '../ui/Newsletter.jsx'
@@ -11,6 +12,16 @@ export default function Footer() {
   const { t } = useI18n()
   const L = useLocalized()
   const year = 2026
+  // פרטי התקשרות — ניתנים לעריכה מהאדמין (הגדרות ← פרטי התקשרות);
+  // ללא ערך בענן נופלים לערכי ברירת המחדל שבקובץ site.js
+  const s = useSettings()
+  const contact = {
+    phone: s.contact_phone || site.contact.phone,
+    phoneDisplay: s.contact_phone || site.contact.phoneDisplay,
+    email: s.contact_email || site.contact.email,
+    address: s.contact_address ? { he: s.contact_address, en: s.contact_address } : site.contact.address,
+    hours: s.contact_hours ? { he: s.contact_hours, en: s.contact_hours } : site.contact.hours,
+  }
 
   return (
     <footer className="footer">
@@ -35,7 +46,7 @@ export default function Footer() {
               </a>
             ))}
             <a
-              href={`mailto:${site.contact.email}`}
+              href={`mailto:${contact.email}`}
               aria-label={L({ he: 'שלחו לנו מייל', en: 'Email us' })}
               className="footer__social-link"
             >
@@ -55,16 +66,16 @@ export default function Footer() {
 
         <div className="footer__col">
           <h4 className="footer__heading">{t('footer.contact')}</h4>
-          <a href={`tel:${site.contact.phone}`} className="footer__contact">
-            <Icon name="phone" size={17} /> {site.contact.phoneDisplay}
+          <a href={`tel:${String(contact.phone).replace(/[^+\d]/g, "")}`} className="footer__contact">
+            <Icon name="phone" size={17} /> {contact.phoneDisplay}
           </a>
-          <a href={`mailto:${site.contact.email}`} className="footer__contact">
-            <Icon name="mail" size={17} /> {site.contact.email}
+          <a href={`mailto:${contact.email}`} className="footer__contact">
+            <Icon name="mail" size={17} /> {contact.email}
           </a>
           <span className="footer__contact">
-            <Icon name="location" size={17} /> {L(site.contact.address)}
+            <Icon name="location" size={17} /> {L(contact.address)}
           </span>
-          <span className="footer__contact footer__contact--muted">{L(site.contact.hours)}</span>
+          <span className="footer__contact footer__contact--muted">{L(contact.hours)}</span>
         </div>
       </div>
 

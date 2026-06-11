@@ -278,3 +278,23 @@ drop policy if exists "notify recipients admin all" on public.lead_notify_recipi
 create policy "notify recipients admin all" on public.lead_notify_recipients for all to authenticated using (true) with check (true);
 drop policy if exists "notify settings admin all" on public.lead_notify_settings;
 create policy "notify settings admin all" on public.lead_notify_settings for all to authenticated using (true) with check (true);
+
+-- ============================================================
+-- מאגר נרשמי ניוזלטר (הסכימו להשאיר מייל) — לחיבור ESP/וובהוק
+-- ============================================================
+create table if not exists public.newsletter_subscribers (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  source text default 'site',          -- מאיפה נרשם (site / popup / ...)
+  created_at timestamptz default now()
+);
+alter table public.newsletter_subscribers enable row level security;
+-- הציבור יכול להירשם; רק מנהל מחובר רואה/מוחק
+drop policy if exists "newsletter insert public" on public.newsletter_subscribers;
+create policy "newsletter insert public" on public.newsletter_subscribers for insert with check (true);
+drop policy if exists "newsletter admin read" on public.newsletter_subscribers;
+create policy "newsletter admin read" on public.newsletter_subscribers for select using (auth.role() = 'authenticated');
+drop policy if exists "newsletter admin delete" on public.newsletter_subscribers;
+create policy "newsletter admin delete" on public.newsletter_subscribers for delete using (auth.role() = 'authenticated');
+-- בלי כפילויות (אותו מייל פעם אחת)
+create unique index if not exists newsletter_email_unique on public.newsletter_subscribers (lower(email));

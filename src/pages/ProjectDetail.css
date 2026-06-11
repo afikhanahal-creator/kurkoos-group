@@ -1156,3 +1156,8 @@
   .pd-banner__stats--row .pd-stat--wide { flex: 0 1 auto; min-width: 0; max-width: 100%; }
   .pd-stat__value--sm { max-width: 100%; }
 }
+
+/* גלריה — בדסקטופ בלי רצועת רקע לבנה מאחורי התמונות (רקע רך כמו השכנים) */
+@media (min-width: 881px) {
+  #gallery.section { background: var(--color-bg-soft); }
+}

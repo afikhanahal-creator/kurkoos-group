@@ -389,3 +389,25 @@ html.a11y-links a { text-decoration: underline; text-underline-offset: 3px; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ============================================================
+   כפתורי שליחה בטפסים — אחיד בכל האתר: אדום מותג, ובלחיצה
+   (active) מתהפכים ללבן עם טקסט אדום. תופס כל form submit
+   (צור קשר, פופאפ, ניוזלטר, טופס עמוד פרויקט).
+   ============================================================ */
+form button[type='submit'] {
+  background: var(--color-accent-500);
+  border-color: var(--color-accent-500);
+  color: #fff;
+}
+form button[type='submit']:hover {
+  background: var(--color-accent-600);
+  border-color: var(--color-accent-600);
+  color: #fff;
+}
+form button[type='submit']:active {
+  background: #fff !important;
+  border-color: #fff !important;
+  color: var(--color-accent-600) !important;
+  transform: scale(0.98);
+}

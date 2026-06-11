@@ -123,7 +123,7 @@ export default function HeadingsTab() {
   return (
     <div className="hdg">
       <div className="hdg__toolbar">
-        <p className="hdg__hint">עורכים כאן את כל הכותרות והטקסטים של האתר. כל שינוי נשמר אוטומטית ומתעדכן באתר (ייתכן שיידרש רענון בעמוד הציבורי).</p>
+        <p className="hdg__hint">עורכים כאן את כל הכותרות והטקסטים של האתר. כל שינוי נשמר אוטומטית ומתעדכן באתר (ייתכן שיידרש רענון בעמוד הציבורי). לשליטה ב<strong>גדלים ובמשקלים</strong> של הכותרות (H1–H5) — טאב <strong>פונטים</strong>.</p>
         <div className="hdg__search">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
           <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="חיפוש כותרת או עמוד…" aria-label="חיפוש כותרת" />

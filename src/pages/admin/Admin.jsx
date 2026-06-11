@@ -66,14 +66,15 @@ function Login() {
 }
 
 const TABS = [
-  { id: 'projects', label: 'פרויקטים ונכסים', sub: 'נהלו פרויקטים, נכסים ועמודי תצוגה', icon: 'projects' },
-  { id: 'headings', label: 'כותרות', sub: 'עריכת כל הכותרות והטקסטים באתר — במקום אחד', icon: 'headings' },
-  { id: 'counters', label: 'מונים ומספרים', sub: 'הנתונים שמופיעים באתר', icon: 'counters' },
-  { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos' },
-  { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads' },
-  { id: 'fonts', label: 'פונטים', sub: 'הפונטים של האתר — בחירה או העלאה', icon: 'fonts' },
-  { id: 'settings', label: 'הגדרות', sub: 'התראות מייל אוטומטיות על לידים חדשים', icon: 'settings' },
+  { id: 'projects', label: 'פרויקטים ונכסים', sub: 'נהלו פרויקטים, נכסים ועמודי תצוגה', icon: 'projects', group: 'תוכן' },
+  { id: 'headings', label: 'כותרות וטקסטים', sub: 'עריכת כל הכותרות והטקסטים באתר — במקום אחד', icon: 'headings', group: 'תוכן' },
+  { id: 'counters', label: 'מונים ומספרים', sub: 'הנתונים שמופיעים באתר', icon: 'counters', group: 'תוכן' },
+  { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos', group: 'תוכן' },
+  { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads', group: 'לקוחות' },
+  { id: 'fonts', label: 'פונטים וטיפוגרפיה', sub: 'פונטים, גדלים ומשקלים (H1–H5) של כל האתר', icon: 'fonts', group: 'עיצוב' },
+  { id: 'settings', label: 'הגדרות', sub: 'התראות מייל, יומן פגישות והגדרות מערכת', icon: 'settings', group: 'מערכת' },
 ]
+const NAV_GROUPS = ['תוכן', 'לקוחות', 'עיצוב', 'מערכת']
 
 const THEME_KEY = 'kurkoos-adm-theme'
 
@@ -99,24 +100,29 @@ export default function Admin() {
       <aside className="adm__sidebar">
         <div className="adm__logo">
           <img className="adm__logo-img" src="/kurkoos-logo-white.svg" alt="Kurkoos Group" />
-          <span className="adm__logo-caption">ניהול תוכן</span>
+          <span className="adm__logo-caption">ניהול תוכן <em className="adm__ver">2.0</em></span>
         </div>
 
         <nav className="adm__nav" aria-label="ניווט ראשי">
-          {TABS.map((t) => {
-            const I = Ico[t.icon]
-            return (
-              <button
-                key={t.id}
-                type="button"
-                className={`adm__nav-item ${tab === t.id ? 'adm__nav-item--active' : ''}`}
-                onClick={() => setTab(t.id)}
-              >
-                <I width={20} height={20} />
-                <span>{t.label}</span>
-              </button>
-            )
-          })}
+          {NAV_GROUPS.map((group) => (
+            <div className="adm__nav-group" key={group}>
+              <span className="adm__nav-group-label">{group}</span>
+              {TABS.filter((t) => t.group === group).map((t) => {
+                const I = Ico[t.icon]
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`adm__nav-item ${tab === t.id ? 'adm__nav-item--active' : ''}`}
+                    onClick={() => setTab(t.id)}
+                  >
+                    <I width={20} height={20} />
+                    <span>{t.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="adm__sidebar-foot">

@@ -96,3 +96,60 @@ export function applyFonts(settings = {}) {
     style.remove()
   }
 }
+
+/* ============================================================
+   סולם טיפוגרפי (Type Scale) — שליטה בגדלים ובמשקלים של כל רמת
+   טקסט באתר (Hero / H1–H5 / טקסט מוביל / גוף / קטן) מתוך האדמין.
+   נשמר ב-site_settings תחת 'type_scale' (JSON). ערך ריק = ברירת
+   המחדל של העיצוב — כלום לא משתנה עד שבוחרים ערך במפורש.
+   ============================================================ */
+export const TYPE_LEVELS = [
+  { key: 'hero',  label: 'כותרת ענק (Hero)', tag: 'Hero', cssVar: '--fs-hero',    sample: 'בונים את הבית הבא שלכם' },
+  { key: 'h1',    label: 'כותרת ראשית',      tag: 'H1',   cssVar: '--fs-h1',      selector: 'h1',  sample: 'כותרת ראשית לדוגמה' },
+  { key: 'h2',    label: 'כותרת מקטע',       tag: 'H2',   cssVar: '--fs-h2',      selector: 'h2',  sample: 'כותרת מקטע לדוגמה' },
+  { key: 'h3',    label: 'תת-כותרת',         tag: 'H3',   cssVar: '--fs-h3',      selector: 'h3',  sample: 'תת-כותרת לדוגמה' },
+  { key: 'h4',    label: 'כותרת קטנה',       tag: 'H4',   selector: 'h4',         sample: 'כותרת קטנה לדוגמה' },
+  { key: 'h5',    label: 'כותרת זעירה',      tag: 'H5',   selector: 'h5',         sample: 'כותרת זעירה לדוגמה' },
+  { key: 'lead',  label: 'טקסט מוביל',       tag: 'Lead', cssVar: '--fs-body-lg', sample: 'משפט פתיחה שמוביל את הקורא פנימה.' },
+  { key: 'body',  label: 'טקסט רץ (גוף)',    tag: 'P',    cssVar: '--fs-body',    selector: 'body', sample: 'טקסט רץ רגיל של פסקאות התוכן באתר.' },
+  { key: 'small', label: 'טקסט קטן',         tag: 'Small', cssVar: '--fs-small',  sample: 'הערות שוליים ותוויות קטנות.' },
+]
+export const TYPE_WEIGHTS = [300, 400, 500, 600, 700, 800, 900]
+
+export function parseTypeScale(v) {
+  if (!v) return {}
+  try { const o = typeof v === 'string' ? JSON.parse(v) : v; return o && typeof o === 'object' ? o : {} } catch { return {} }
+}
+
+/* מחיל את הסולם על האתר: גדלים דרך משתני ה-CSS הקיימים (--fs-*),
+   ומשקלים/גדלים לתגיות בלי משתנה (h4/h5) דרך כללי style מוזרקים.
+   בטוח להרצה חוזרת; ללא ערכים — מנקה הכול וחוזרים לברירת המחדל. */
+export function applyTypeScale(settings = {}) {
+  if (typeof document === 'undefined') return
+  const scale = parseTypeScale(settings.type_scale)
+  const root = document.documentElement
+  let css = ''
+  TYPE_LEVELS.forEach((lvl) => {
+    const cfg = scale[lvl.key] || {}
+    const size = Number(cfg.size) > 0 ? Number(cfg.size) : null
+    const weight = Number(cfg.weight) > 0 ? Number(cfg.weight) : null
+    if (lvl.cssVar) {
+      if (size) root.style.setProperty(lvl.cssVar, `${size}px`)
+      else root.style.removeProperty(lvl.cssVar)
+    } else if (lvl.selector && size) {
+      css += `${lvl.selector}{font-size:${size}px !important;}\n`
+    }
+    if (weight && lvl.selector) css += `${lvl.selector}{font-weight:${weight} !important;}\n`
+  })
+  let style = document.getElementById('cms-type-scale')
+  if (css) {
+    if (!style) {
+      style = document.createElement('style')
+      style.id = 'cms-type-scale'
+      document.head.appendChild(style)
+    }
+    if (style.textContent !== css) style.textContent = css
+  } else if (style) {
+    style.remove()
+  }
+}

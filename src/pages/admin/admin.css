@@ -1231,3 +1231,123 @@
 }
 .adm-set__blocked-chip button:hover { background: #d6342c; color: #fff; }
 .adm[data-theme="dark"] .adm-set__blocked-chip { background: rgba(89, 168, 200, 0.16); color: #cfe3ee; }
+
+/* ============================================================
+   CMS 2.0 — שדרוג נראות המעטפת
+   ============================================================ */
+
+/* תג גרסה בלוגו */
+.adm__ver {
+  font-style: normal; font-size: 0.62rem; font-weight: 800;
+  padding: 0.1rem 0.4rem; border-radius: 999px;
+  background: rgba(89, 168, 200, 0.22); color: #9fd2e8;
+  margin-inline-start: 0.35rem; letter-spacing: 0.04em;
+}
+
+/* קבוצות ניווט בסיידבר — תוויות מקטע קטנות */
+.adm__nav-group { display: flex; flex-direction: column; gap: 2px; }
+.adm__nav-group + .adm__nav-group { margin-top: 0.9rem; }
+.adm__nav-group-label {
+  font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.38); text-transform: uppercase;
+  padding: 0 0.85rem 0.3rem;
+}
+
+/* פריט ניווט — אינטראקציה מלוטשת + פס מותג בצד הפנימי כשפעיל */
+.adm__nav-item { position: relative; transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease; }
+.adm__nav-item:hover { transform: translateX(-2px); }
+.adm__nav-item--active::before {
+  content: '';
+  position: absolute;
+  inset-block: 18%;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #59a8c8, var(--color-accent, #a90b0c));
+}
+
+/* כרטיסים אחידים בכל הטאבים — צל רך בשכבות + ריחוף עדין */
+.adm-set__card, .ftab__card, .hdg__page, .ed__section {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.adm-set__card:hover, .ftab__card:hover, .hdg__page:hover {
+  box-shadow: 0 10px 30px -14px rgba(13, 38, 56, 0.18), 0 2px 6px rgba(13, 38, 56, 0.05);
+}
+
+/* שדות קלט — פוקוס עקבי וברור בכל המערכת */
+.adm input:focus-visible, .adm select:focus-visible, .adm textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-secondary, #105572);
+  box-shadow: var(--adm-ring);
+}
+
+/* פס גלילה עדין בכל אזורי האדמין */
+.adm ::-webkit-scrollbar { width: 10px; height: 10px; }
+.adm ::-webkit-scrollbar-thumb { background: var(--adm-border-strong); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+.adm ::-webkit-scrollbar-thumb:hover { background: var(--adm-muted); border: 2px solid transparent; background-clip: content-box; }
+.adm ::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================
+   עורך הסולם הטיפוגרפי (TypeScaleEditor) — טאב פונטים
+   ============================================================ */
+.tsc {
+  margin-top: 1.4rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-radius);
+  box-shadow: var(--adm-shadow-sm);
+  padding: 1.4rem 1.6rem 1rem;
+}
+.tsc__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.tsc__title { font-size: 1.05rem; font-weight: 800; color: var(--adm-ink); }
+.tsc__sub { font-size: 0.85rem; color: var(--adm-muted); margin-top: 0.2rem; max-width: 52ch; }
+.tsc__head-actions { display: flex; align-items: center; gap: 0.7rem; }
+.tsc__status { font-size: 0.8rem; font-weight: 600; color: var(--adm-muted); }
+.tsc__status--ok { color: #1aa564; }
+.tsc__reset-all {
+  border: 1px solid var(--adm-border-strong); background: none; cursor: pointer;
+  padding: 0.35rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
+  color: var(--adm-muted); transition: color 0.15s, border-color 0.15s;
+}
+.tsc__reset-all:hover { color: #d6342c; border-color: #d6342c; }
+
+.tsc__rows { display: flex; flex-direction: column; }
+.tsc__row {
+  display: grid;
+  grid-template-columns: 56px 1fr 130px 170px 30px;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--adm-border);
+}
+.tsc__row:last-child { border-bottom: 0; }
+.tsc__tag {
+  display: grid; place-items: center;
+  height: 30px; border-radius: 8px;
+  background: var(--adm-bg); color: var(--color-secondary, #105572);
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.03em;
+}
+.tsc__meta { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.tsc__label { font-size: 0.78rem; font-weight: 600; color: var(--adm-muted); }
+.tsc__preview { color: var(--adm-ink); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsc__field { display: flex; flex-direction: column; gap: 0.25rem; }
+.tsc__field > span { font-size: 0.7rem; font-weight: 700; color: var(--adm-muted); }
+.tsc__field input, .tsc__field select {
+  padding: 0.5rem 0.6rem; border: 1.5px solid var(--adm-border-strong);
+  border-radius: 9px; font: inherit; font-size: 0.86rem;
+  color: var(--adm-ink); background: var(--adm-surface-2, #fcfdff);
+}
+.tsc__row-reset {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; cursor: pointer; font-size: 0.7rem;
+  background: var(--adm-bg); color: var(--adm-muted);
+}
+.tsc__row-reset:hover { background: #ffe7e7; color: #d6342c; }
+
+@media (max-width: 760px) {
+  .tsc__row { grid-template-columns: 44px 1fr; grid-template-rows: auto auto; }
+  .tsc__field { grid-column: span 1; }
+  .tsc__row-reset { position: absolute; }
+  .tsc__row { position: relative; }
+  .tsc__row-reset { inset-inline-end: 0; inset-block-start: 0.75rem; }
+}

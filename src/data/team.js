@@ -26,7 +26,7 @@ export const team = [
     name: { he: 'מוטי בן עמי', en: 'Moti Ben Ami' },
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
     photo: '/6D41D358-693B-4F94-95D7-AFAEC6439126.png',
-    imgPos: '56% 12%',   /* פחות headroom — מרים את ראשו לגובה יעקב ושלומי */
+    imgPos: '56% 20%',   /* מרים את ראשו עוד טיפה — לגובה ראשו של שלומי */
     imgZoom: 1.22,   /* עוד זום-אין; transform-origin עליון שומר על גובה הראש */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
@@ -40,7 +40,7 @@ export const team = [
     name: { he: 'יעקב קורקוס', en: 'Yaakov Kurkoos' },
     role: { he: 'מנהל פרויקטים', en: 'Project Manager' },
     photo: '/B59B1CBE-8EFB-449E-B0F3-359571EF70D9.png',
-    imgPos: 'center 25%',   /* מעלה את התמונה עוד טיפה — מיישר את ראש יעקב לגובה ראשו של מוטי */
+    imgPos: 'center 32%',   /* מרים את ראשו עוד טיפה — לגובה ראשו של שלומי */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
       he: 'מלווה את הפרויקטים מהתכנון ועד המסירה, בתיאום מול כל הגורמים.',

@@ -80,7 +80,7 @@ export default function ProjectsMap() {
                     }}
                     transition={{ y: { duration: 1.4, repeat: isActive ? Infinity : 0, ease: 'easeInOut' } }}
                   >
-                    <Icon name="box3d" size={26} stroke={1.6} />
+                    <Icon name="box3d" size={23} stroke={1.6} />
                     <span className="map-cube__label">{L(p.city)}</span>
                   </motion.button>
                 )

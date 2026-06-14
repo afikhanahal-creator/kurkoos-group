@@ -278,6 +278,18 @@ export default function ProjectDetail() {
     show('contact') && { id: 'contact', label: { he: 'לתיאום פגישה', en: 'Schedule' } },
   ].filter(Boolean)
 
+  // רשימת המקטעים המלאה (לפי סדר הגלילה) — לאינדיקטור המובייל שמציג שם נוכחי + הבא
+  const mobiNav = [
+    show('project') && { id: 'project', label: { he: 'הפרויקט', en: 'Project' } },
+    show('environment') && project.environment && { id: 'environment', label: { he: 'הסביבה', en: 'Environment' } },
+    show('map') && { id: 'map', label: { he: 'מפה', en: 'Map' } },
+    show('plans') && planGroups.length && { id: 'plans', label: { he: 'תוכניות', en: 'Plans' } },
+    show('gallery') && { id: 'gallery', label: { he: 'גלריה', en: 'Gallery' } },
+    show('developers') && developers.length && { id: 'developers', label: { he: 'יזמים', en: 'Developers' } },
+    show('more') && moreProjects.length && { id: 'more', label: { he: 'פרויקטים נוספים', en: 'More' } },
+    show('contact') && { id: 'contact', label: { he: 'לתיאום פגישה', en: 'Schedule' } },
+  ].filter(Boolean)
+
   const goTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
   // SEO — כותרת/תיאור/תמונה ייחודיים לעמוד הפרויקט + נתונים מובנים (schema.org)
@@ -468,6 +480,24 @@ export default function ProjectDetail() {
             </button>
           ))}
         </div>
+
+        {/* מובייל — אינדיקטור 2 שמות במרכז: הסקשן הנוכחי (מודגש) + הבא. מתחלף בגלילה. */}
+        {(() => {
+          let idx = mobiNav.findIndex((s) => s.id === activeSection)
+          if (idx < 0) idx = 0
+          const cur = mobiNav[idx]
+          const nxt = mobiNav[idx + 1]
+          if (!cur) return null
+          return (
+            <div className="pd-anchors__mobi">
+              <button type="button" className="pd-anchors__mobi-cur" onClick={() => goTo(cur.id)}>{L(cur.label)}</button>
+              {nxt && <>
+                <span className="pd-anchors__mobi-sep" aria-hidden="true">·</span>
+                <button type="button" className="pd-anchors__mobi-next" onClick={() => goTo(nxt.id)}>{L(nxt.label)}</button>
+              </>}
+            </div>
+          )
+        })()}
       </nav>
 
       {/* ===== הפרויקט ===== */}

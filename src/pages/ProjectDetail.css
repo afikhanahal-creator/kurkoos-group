@@ -383,7 +383,7 @@
   box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.26), 0 2px 8px rgba(7, 41, 58, 0.05);
 }
 .pd-split__media {
-  border-radius: 0;
+  border-radius: var(--radius-lg);   /* פינות עגולות לתמונה (כמו הבאנר) */
   overflow: hidden;
   box-shadow: none;
   min-height: 340px;     /* התמונה ממלאת את גובה הכרטיס */
@@ -597,7 +597,7 @@
   position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;     /* ללא צללית — לבקשת המשתמש */
 }
 .pd-carousel__main {
   display: block;

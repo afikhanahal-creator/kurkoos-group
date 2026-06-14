@@ -4,7 +4,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import valueChain from '../../data/valueChain.js'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
-import VillaBlueprint from '../ui/VillaBlueprint.jsx'
+import Model3D from '../ui/Model3D.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './ValueChain.css'
 
@@ -23,7 +23,11 @@ export default function ValueChain() {
           <div className="value-chain__progress" aria-hidden="true">
             <span style={{ '--p': `${((open + 1) / valueChain.length) * 100}%` }} />
           </div>
-          <VillaBlueprint className="value-chain__art" />
+          <Model3D
+            className="value-chain__art"
+            src="/modern_luxury_villa_house_building_with_pool.glb"
+            alt={L({ he: 'דגם תלת-מימד של וילת יוקרה עם בריכה', en: '3D model of a luxury villa with pool' })}
+          />
         </Reveal>
 
         <Reveal className="value-chain__list" variant="left" delay={0.1}>

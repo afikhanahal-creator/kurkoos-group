@@ -45,6 +45,7 @@ export const team = [
     name: { he: 'יעקב קורקוס', en: 'Yaakov Kurkoos' },
     role: { he: 'מנהל פרויקטים', en: 'Project Manager' },
     photo: '/B59B1CBE-8EFB-449E-B0F3-359571EF70D9.png',
+    imgPos: 'center 22%',   /* מעלה את התמונה — פחות headroom */
     bio: {
       he: 'מלווה את הפרויקטים מהתכנון ועד המסירה, בתיאום מול כל הגורמים.',
       en: 'Accompanies projects from planning to handover, coordinating with all stakeholders.',

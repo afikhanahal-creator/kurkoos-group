@@ -1009,32 +1009,42 @@
 @media (max-width: 880px) {
   .pd-crumbbar { background: #fff; }
 }
-/* אינדיקטור מובייל — מוסתר בדסקטופ (שם מוצגת רשימת הפריטים המלאה) */
+/* חלון נע במובייל — מוסתר בדסקטופ (שם מוצגת רשימת הפריטים המלאה) */
 .pd-anchors__mobi { display: none; }
 
-/* בר העוגנים במובייל — מסתירים את רשימת הפריטים ומציגים אינדיקטור 2-שמות
-   ממורכז: הסקשן הנוכחי (מודגש) + הבא. מתחלף בגלילה. בלי גלילה/רשימה → בלי ריצוד. */
+/* בר העוגנים במובייל — חלון נע: כל השמות בשורה אחת, הנוכחי ממורכז ומודגש.
+   הגלילה מתבצעת ב-transform (GPU) על ה-track → חלק, רואים את הבאים, בלי ריצוד. */
 @media (max-width: 880px) {
   .pd-anchors__inner { display: none; }
   .pd-anchors__mobi {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.7rem;
-    padding: 0.7rem var(--container-pad);
-    font-family: var(--font-heading);
+    display: block;
+    overflow: hidden;          /* חלון — חותך את מה שמחוץ למרכז */
+    padding-block: 0.72rem;
   }
-  .pd-anchors__mobi-cur {
-    font-size: 1.02rem;
+  .pd-anchors__mobi-track {
+    display: flex;
+    gap: 2.2rem;
+    width: max-content;
+    margin-inline-start: 50%;   /* נקודת-אפס במרכז → הפריט הראשון מתחיל במרכז */
+    will-change: transform;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .pd-anchors__mobi-item {
+    flex: 0 0 auto;
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-soft);
+    white-space: nowrap;
+    transition: color var(--dur-fast), font-weight var(--dur-fast);
+  }
+  .pd-anchors__mobi-item.is-active {
     font-weight: 800;
     color: var(--color-primary-900);
   }
-  .pd-anchors__mobi-sep { color: var(--color-border-strong); }
-  .pd-anchors__mobi-next {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--color-text-soft);
-  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pd-anchors__mobi-track { transition: none; }
 }
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }

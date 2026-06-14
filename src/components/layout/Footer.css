@@ -146,8 +146,10 @@
     font-size: 1.02rem;
     margin-bottom: 0.7rem;
     letter-spacing: 0.02em;
+    text-align: center;             /* כותרת ממורכזת בכל עמודה */
   }
-  .footer__col { gap: 0.55rem; }
+  /* שתי העמודות (ניווט מהיר / יצירת קשר) ממורכזות במובייל */
+  .footer__col { gap: 0.55rem; align-items: center; text-align: center; }
   .footer__col a,
   .footer__contact {
     font-size: 0.92rem;

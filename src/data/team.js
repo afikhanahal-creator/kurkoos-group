@@ -15,7 +15,7 @@ export const team = [
     name: { he: 'בני קורקוס', en: 'Benny Kurkoos' },
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
     photo: '/Benni-Kurkoos.png',
-    imgPos: 'center 12%',   /* מיישר את ראשו לגובה שאר הראשים עם מספיק headroom */
+    imgPos: 'center center',   /* תמונה צרה/גבוהה — מוצגת ב-contain, ממורכזת */
     bio: {
       he: 'אחראי על ניהול הביצוע בשטח ועמידה בלוחות הזמנים והתקציב.',
       en: 'Responsible for on-site execution management and meeting schedule and budget.',

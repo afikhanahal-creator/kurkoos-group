@@ -34,6 +34,7 @@ export const team = [
     name: { he: 'מוטי בן עמי', en: 'Moti Ben Ami' },
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
     photo: '/6D41D358-693B-4F94-95D7-AFAEC6439126.png',
+    imgZoom: 1.06,   /* זום-אין עדין — ממש טיפה פנימה */
     bio: {
       he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
       en: 'Manages field teams and ensures execution quality and safety at every construction stage.',

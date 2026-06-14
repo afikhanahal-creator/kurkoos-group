@@ -16,6 +16,7 @@ export default function Team() {
     bio: L(m.bio),
     image: m.photo,
     imgPos: m.imgPos,
+    imgZoom: m.imgZoom,
     link: m.linkedin,
   }))
 

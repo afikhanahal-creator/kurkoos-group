@@ -43,7 +43,7 @@ export default function TeamGrid({ members = [] }) {
               {/* צד קדמי */}
               <div className="flip-card-front">
                 <div className="flip-card-media">
-                  <img src={m.image} alt={m.name} className="flip-card-img" loading="lazy" style={m.imgPos ? { objectPosition: m.imgPos } : undefined} />
+                  <img src={m.image} alt={m.name} className="flip-card-img" loading="lazy" style={{ ...(m.imgPos ? { objectPosition: m.imgPos } : {}), ...(m.imgZoom ? { '--img-zoom': m.imgZoom } : {}) }} />
                 </div>
                 <div className="flip-card-caption">
                   <h3 className="flip-card-name">{m.name}</h3>

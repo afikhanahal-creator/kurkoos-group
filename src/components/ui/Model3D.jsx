@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import VillaBlueprint from './VillaBlueprint.jsx'
 import './Model3D.css'
 
 /* ============================================================
@@ -7,6 +8,8 @@ import './Model3D.css'
    נטענת מ-CDN (כ-module) רק כשהמרכיב מתקרב למסך, וגם המודל
    עצמו (GLB) נטען רק אז — כך שטעינת העמוד הראשונית לא מושפעת
    כלל מהמשקל של התלת-מימד. ללא AR.
+   אם הספרייה/המודל לא נטענים (רשת/חסימה) — מוצג איור הווילה
+   כגיבוי, כך שהסקשן לעולם לא ריק.
    ============================================================ */
 
 const MV_SRC =
@@ -30,16 +33,22 @@ function loadModelViewer() {
 
 export default function Model3D({ src, alt = '', className = '' }) {
   const ref = useRef(null)
-  const [ready, setReady] = useState(false)
+  // idle → loading → ready (script נטען) / error (גיבוי)
+  const [status, setStatus] = useState('idle')
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
     let io
-    const start = () =>
+    let timeout
+    const start = () => {
+      setStatus('loading')
+      // אם משהו תקוע מעבר ל-15ש' — נציג גיבוי במקום ספינר אינסופי
+      timeout = setTimeout(() => setStatus((s) => (s === 'ready' ? s : 'error')), 15000)
       loadModelViewer()
-        .then(() => setReady(true))
-        .catch(() => {})
+        .then(() => { clearTimeout(timeout); setStatus('ready') })
+        .catch(() => { clearTimeout(timeout); setStatus('error') })
+    }
     if (typeof IntersectionObserver !== 'undefined') {
       io = new IntersectionObserver(
         (entries) =>
@@ -52,12 +61,12 @@ export default function Model3D({ src, alt = '', className = '' }) {
     } else {
       start()
     }
-    return () => io && io.disconnect()
+    return () => { io && io.disconnect(); clearTimeout(timeout) }
   }, [])
 
   return (
     <div ref={ref} className={`model3d ${className}`}>
-      {ready ? (
+      {status === 'ready' ? (
         <model-viewer
           src={src}
           alt={alt}
@@ -71,9 +80,12 @@ export default function Model3D({ src, alt = '', className = '' }) {
           shadow-softness="0.9"
           exposure="1"
           environment-image="neutral"
-          loading="lazy"
+          loading="eager"
           reveal="auto"
+          onError={() => setStatus('error')}
         />
+      ) : status === 'error' ? (
+        <VillaBlueprint className="model3d__fallback" />
       ) : (
         <div className="model3d__placeholder" aria-label={alt} role="img">
           <span className="model3d__spinner" aria-hidden="true" />

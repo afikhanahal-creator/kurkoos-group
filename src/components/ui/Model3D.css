@@ -21,6 +21,9 @@
   --progress-bar-color: var(--color-accent);
 }
 
+/* גיבוי — איור הווילה ממלא את המיכל אם התלת-מימד לא נטען */
+.model3d__fallback { width: 100%; height: 100%; object-fit: contain; padding: 6%; }
+
 /* מצב טעינה — ספינר עדין במרכז */
 .model3d__placeholder {
   position: absolute;

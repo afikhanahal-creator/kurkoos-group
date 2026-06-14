@@ -4,7 +4,6 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import valueChain from '../../data/valueChain.js'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
-import VillaBlueprint from '../ui/VillaBlueprint.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './ValueChain.css'
 
@@ -23,7 +22,12 @@ export default function ValueChain() {
           <div className="value-chain__progress" aria-hidden="true">
             <span style={{ '--p': `${((open + 1) / valueChain.length) * 100}%` }} />
           </div>
-          <VillaBlueprint className="value-chain__art" />
+          <img
+            src="/kurkoos-chain.png"
+            alt={L({ he: 'שרשרת הערך של קבוצת קורקוס — ששת שלבי הפרויקט', en: 'Kurkoos Group value chain — six project stages' })}
+            className="value-chain__art"
+            loading="lazy"
+          />
         </Reveal>
 
         <Reveal className="value-chain__list" variant="left" delay={0.1}>

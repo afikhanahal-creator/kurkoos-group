@@ -304,6 +304,17 @@
   opacity: 1;
 }
 
+/* דק הכרטיסים בעמודי החטיבות (מובייל בלבד — ה-deck מוצג רק במובייל):
+   טקסט ממורכז יותר + הגדלת הגופן הקטן ב-3px לבקשת המשתמש. */
+.division-why__deck .card__content { align-items: center; }
+.division-why__deck .card__text { text-align: center; align-items: center; }
+.division-why__deck .card__title { font-size: 1.75rem; line-height: 1.25; }
+.division-why__deck .card__description {
+  font-size: calc(1.2rem + 3px);   /* הגופן הקטן — גדול ב-3px */
+  line-height: 1.6;
+  opacity: 1;
+}
+
 /* נגישות — בהפחתת תנועה האפקט האוטומטי לא רץ */
 @media (hover: none) and (prefers-reduced-motion: reduce) {
   .activities__grid .card-inner,

@@ -42,6 +42,7 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
   const [pressed, setPressed] = useState(false)
   const throwRef = useRef(throwImpulse())
   const timerRef = useRef(null)
+  const touchX = useRef(null)
 
   const reduce =
     typeof window !== 'undefined' &&
@@ -65,6 +66,24 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
     }
   }, [list.length, busy, reduce])
 
+  // ניווט אוטומטי — קלף מתחלף כל 2 שניות (נעצר כשמכבדים reduced-motion)
+  const advanceRef = useRef(advance)
+  advanceRef.current = advance
+  useEffect(() => {
+    if (reduce || items.length <= 1) return
+    const id = setInterval(() => advanceRef.current(), 2000)
+    return () => clearInterval(id)
+  }, [reduce, items.length])
+
+  // החלקה (swipe) שמאלה/ימינה → מעבר לקלף הבא
+  const onTouchStart = (e) => { touchX.current = e.touches[0]?.clientX ?? null }
+  const onTouchEnd = (e) => {
+    if (touchX.current == null) return
+    const dx = (e.changedTouches[0]?.clientX ?? touchX.current) - touchX.current
+    touchX.current = null
+    if (Math.abs(dx) > 40) advance()
+  }
+
   const visible = list.slice(0, DEPTH)
 
   return (
@@ -74,6 +93,8 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
         className="card-deck__trigger"
         aria-label={ariaLabel}
         onClick={advance}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
         onPointerDown={() => { if (!busy && !reduce) setPressed(true) }}
         onPointerUp={() => setPressed(false)}
         onPointerLeave={() => setPressed(false)}

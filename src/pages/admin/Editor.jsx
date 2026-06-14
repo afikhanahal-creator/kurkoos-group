@@ -507,11 +507,20 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   }
 
   // ---------- אשף רב-שלבי ----------
-  const clampIdx = Math.min(stepIdx, steps.length - 1)
-  const step = steps[clampIdx]
+  // רשת ביטחון: מקטעים בסכימה שלא שובצו לאף שלב יתווספו לשלב הלא-סקירה הראשון,
+  // כדי שתוספת מקטע עתידית לא "תיעלם" מהטופס.
+  const assigned = new Set(steps.flatMap((s) => s.sections || []))
+  const orphans = schema.map((sec) => sec.section).filter((name) => !assigned.has(name))
+  const wizardSteps = orphans.length
+    ? steps.map((s) => (!s.review && s === steps.find((x) => !x.review)
+        ? { ...s, sections: [...(s.sections || []), ...orphans] } : s))
+    : steps
+
+  const clampIdx = Math.min(stepIdx, wizardSteps.length - 1)
+  const step = wizardSteps[clampIdx]
   const isReview = step.review
-  const isLast = clampIdx === steps.length - 1
-  const goStep = (i) => setStepIdx(Math.max(0, Math.min(steps.length - 1, i)))
+  const isLast = clampIdx === wizardSteps.length - 1
+  const goStep = (i) => setStepIdx(Math.max(0, Math.min(wizardSteps.length - 1, i)))
 
   return (
     <div className="ed ed--wizard">
@@ -519,7 +528,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
 
       {/* מחוון צעדים — לחיץ לקפיצה בין שלבים */}
       <ol className="ed__steps" role="tablist" aria-label="שלבי עריכת הפרויקט">
-        {steps.map((s, i) => {
+        {wizardSteps.map((s, i) => {
           const done = i < clampIdx
           const active = i === clampIdx
           // חיווי "חסר" על שלב שמכיל שדות חובה ריקים
@@ -576,7 +585,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
         <button type="button" className="ed__nav-btn" disabled={clampIdx === 0} onClick={() => goStep(clampIdx - 1)}>
           → הקודם
         </button>
-        <span className="ed__nav-count">שלב {clampIdx + 1} מתוך {steps.length}</span>
+        <span className="ed__nav-count">שלב {clampIdx + 1} מתוך {wizardSteps.length}</span>
         {!isLast && (
           <button type="button" className="btn btn--primary ed__nav-btn ed__nav-next" onClick={() => goStep(clampIdx + 1)}>
             הבא ←

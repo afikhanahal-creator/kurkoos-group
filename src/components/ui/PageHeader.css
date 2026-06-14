@@ -67,9 +67,11 @@
   .page-header__eyebrow { text-align: center; justify-content: center; }
 
   /* ---- סרגל הניווט (פירורי לחם) — בר זכוכית מעודן ----
-     רוחב מלא של המכל כך שקצותיו מיושרים בדיוק עם הכותרת והטקסט; הפריטים ממורכזים בתוכו */
+     רוחב לפי התוכן (hug) וממורכז, כך שאין רווחים ריקים בתוכו והוא בדיוק במידה הנכונה */
   .page-header .breadcrumbs ol {
-    width: 100%;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
     justify-content: center;
     gap: 0.3rem;
     padding: 0.16rem 0.34rem;

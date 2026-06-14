@@ -194,18 +194,8 @@ export default function ProjectDetail() {
     }
   }, [slug, cms, cmsLoaded])
 
-  // בר העוגנים — מגלגל את הסקשן הפעיל למרכז כשהוא משתנה, אבל ב-instant
-  // (לא smooth) כדי שלא ייווצרו אנימציות-גלילה חופפות שגרמו לרעידה.
-  // רץ רק כשהבר נגלל (מובייל); בדסקטופ הכול נכנס ואין מה לגלול.
-  useEffect(() => {
-    if (!activeSection) return
-    const bar = document.querySelector('.pd-anchors__inner')
-    const item = bar?.querySelector('.pd-anchors__item.is-active')
-    if (!bar || !item) return
-    if (bar.scrollWidth <= bar.clientWidth + 4) return   // אין גלילה (דסקטופ) → לא נוגעים
-    const target = item.offsetLeft + item.offsetWidth / 2 - bar.clientWidth / 2
-    bar.scrollTo({ left: target, behavior: 'auto' })     // מיידי → בלי ריצוד
-  }, [activeSection])
+  // אין גלילה-אוטומטית של הבר. במובייל יש רק 2 פריטים ממורכזים (הסביבה/מפה),
+  // וה-bold מתחלף ביניהם לפי הסקשן הנוכחי דרך ה-scroll-spy. הבר קבוע → בלי ריצוד.
 
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {

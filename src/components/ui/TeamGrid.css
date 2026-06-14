@@ -72,26 +72,6 @@
   flex-direction: column;
 }
 .flip-card-media { flex: 1; overflow: hidden; }
-
-/* בני — תמונת פורטרייט צרה/גבוהה: מציגים את כל הדמות (כולל החולצה הלבנה,
-   בלי חיתוך וקרוב מדי) עם object-fit: contain, וממלאים את צידי המסגרת
-   בגרסה מטושטשת של אותה תמונה כך שהרקע נקי ומותגי. */
-.flip-card--benny .flip-card-media { position: relative; }
-.flip-card--benny .flip-card-media::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url('/Benni-Kurkoos.png') center / cover no-repeat;
-  filter: blur(22px) brightness(0.65);
-  transform: scale(1.18);
-  z-index: 0;
-}
-.flip-card--benny .flip-card-img {
-  position: relative;
-  z-index: 1;
-  object-fit: contain;
-  transform-origin: center center;   /* הזום-אאוט מתכווץ למרכז (לא לראש) */
-}
 .flip-card-img {
   width: 100%;
   height: 100%;

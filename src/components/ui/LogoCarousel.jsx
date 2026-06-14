@@ -18,10 +18,14 @@ export default function LogoCarousel({ logos = [], shuffle = false }) {
   const list = useMemo(() => (shuffle ? shuffleArr(logos) : logos), [logos, shuffle])
   if (!list.length) return null
 
-  // משכפלים את הרשימה פעמיים → לולאה רציפה וחלקה (translateX -50%)
-  const track = [...list, ...list]
-  // משך מחזור פרופורציונלי לכמות הלוגואים → מהירות אחידה ונעימה
-  const duration = Math.max(22, list.length * 3.4)
+  // "יחידה" שחוזרת מספיק פעמים כדי למלא גם מסך רחב (לא ריק / לא חתוך),
+  // ואז משכפלים אותה פעמיים → לולאה אינסופית חלקה (translateX -50%).
+  const MIN_ITEMS = 18
+  const repeat = Math.max(2, Math.ceil(MIN_ITEMS / list.length))
+  const unit = Array.from({ length: repeat }, () => list).flat()
+  const track = [...unit, ...unit]
+  // משך מחזור פרופורציונלי לאורך היחידה → מהירות אחידה ונעימה בכל כמות
+  const duration = Math.max(24, unit.length * 2.6)
 
   return (
     <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">

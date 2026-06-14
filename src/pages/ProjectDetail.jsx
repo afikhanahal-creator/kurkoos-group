@@ -194,20 +194,9 @@ export default function ProjectDetail() {
     }
   }, [slug, cms, cmsLoaded])
 
-  // בר העוגנים — מחזיר את המקטע הפעיל לאזור הנראה רק כשהוא חורג ממנו
-  // (גלילה אופקית עדינה, כדי שבמובייל יראו את שם הסקשן הנוכחי תוך כדי גלילה).
-  useEffect(() => {
-    if (!activeSection) return
-    const bar = document.querySelector('.pd-anchors__inner')
-    const item = bar?.querySelector('.pd-anchors__item.is-active')
-    if (!bar || !item) return
-    const b = bar.getBoundingClientRect()
-    const i = item.getBoundingClientRect()
-    if (i.left < b.left + 8 || i.right > b.right - 8) {
-      const delta = (i.left + i.width / 2) - (b.left + b.width / 2)
-      bar.scrollBy({ left: delta, behavior: 'smooth' })
-    }
-  }, [activeSection])
+  // הערה: אין גלילה-אוטומטית של הבר. scrollBy עם behavior:'smooth' בכל שינוי
+  // סקשן גרם לאנימציות חופפות = רעידה. הבר קבוע, רק ההדגשה (bold) מתחלפת לפי
+  // הסקשן הנוכחי דרך ה-scroll-spy למעלה — חלק ויציב לחלוטין.
 
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {

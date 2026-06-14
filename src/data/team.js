@@ -33,7 +33,7 @@ export const team = [
     id: 'moti',
     name: { he: 'מוטי בן עמי', en: 'Moti Ben Ami' },
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
-    photo: photo('1500648767791-00dcc994a43e'),
+    photo: '/6D41D358-693B-4F94-95D7-AFAEC6439126.png',
     bio: {
       he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
       en: 'Manages field teams and ensures execution quality and safety at every construction stage.',
@@ -44,7 +44,7 @@ export const team = [
     id: 'yaakov',
     name: { he: 'יעקב קורקוס', en: 'Yaakov Kurkoos' },
     role: { he: 'מנהל פרויקטים', en: 'Project Manager' },
-    photo: photo('1472099645785-5658abf4ff4e'),
+    photo: '/B59B1CBE-8EFB-449E-B0F3-359571EF70D9.png',
     bio: {
       he: 'מלווה את הפרויקטים מהתכנון ועד המסירה, בתיאום מול כל הגורמים.',
       en: 'Accompanies projects from planning to handover, coordinating with all stakeholders.',

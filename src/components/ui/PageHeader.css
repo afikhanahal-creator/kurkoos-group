@@ -58,6 +58,12 @@
   .page-header .breadcrumbs { padding-block: 0 1.2rem; }
   .page-header__lead { margin-top: 0.85rem; }
 
+  /* מובייל — מרכוז הכותרת, התיאור, התווית וסרגל הניווט (כמו בעמודי החטיבות) */
+  .page-header__title { text-align: center; }
+  .page-header__lead { text-align: center; margin-inline: auto; }
+  .page-header__eyebrow { text-align: center; justify-content: center; }
+  .page-header .breadcrumbs ol { margin-inline: auto; }
+
   /* ---- סרגל הניווט (פירורי לחם) — בר זכוכית מלוכד גם בכותרות העמודים ---- */
   .page-header .breadcrumbs ol {
     width: fit-content;

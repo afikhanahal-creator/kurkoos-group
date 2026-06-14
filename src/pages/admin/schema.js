@@ -176,6 +176,17 @@ export const projectSchema = [
     ],
   },
   {
+    section: 'תמונת "על הפרויקט"',
+    fields: [
+      {
+        key: 'about_image_url',
+        label: 'תמונה למקטע "על הפרויקט"',
+        type: 'image',
+        hint: 'תמונה ייעודית למקטע "על הפרויקט". יכולה להיות לאורך (portrait) ותוצג במלואה ללא חיתוך. אם ריק — תוצג התמונה הראשונה בגלריה.',
+      },
+    ],
+  },
+  {
     section: 'הסביבה',
     fields: [
       {

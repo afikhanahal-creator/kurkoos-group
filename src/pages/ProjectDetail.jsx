@@ -109,6 +109,7 @@ function buildProject(local, cms) {
       short: wrap(cms.subtitle),
       status: cms.status,
       cover: cms.hero_image_url || (cms.gallery && cms.gallery[0]),
+      aboutImage: cms.about_image_url || undefined,
       gallery: cms.gallery && cms.gallery.length ? cms.gallery : undefined,
       towers: has(cms.towers) ? cms.towers : undefined,
       units: has(cms.units) ? cms.units : undefined,
@@ -537,7 +538,7 @@ export default function ProjectDetail() {
         <div className="container">
           <div className="pd-split__grid pd-split-card">
             <Reveal className="pd-split__media" variant="right">
-              <SmartImage src={flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
+              <SmartImage src={project.aboutImage || flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
             </Reveal>
             <Reveal className="pd-split__body" variant="left" delay={0.1}>
               <span className="eyebrow">{L({ he: 'על הפרויקט', en: 'About the project' })}</span>

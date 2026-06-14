@@ -37,6 +37,7 @@ create table if not exists public.projects (
 alter table public.projects add column if not exists pages jsonb default '[]'::jsonb;
 alter table public.projects add column if not exists sections jsonb default '[]'::jsonb;     -- אילו מקטעים מוצגים בעמוד הפרויקט
 alter table public.projects add column if not exists developers jsonb default '[]'::jsonb;   -- יזמי הפרויקט [{name, logo, bio}]
+alter table public.projects add column if not exists about_image_url text;                   -- תמונה ייעודית למקטע "על הפרויקט"
 alter table public.projects add column if not exists card_layout text default 'normal';      -- תצוגת כרטיס בגלריה: normal | wide | tall
 alter table public.projects add column if not exists stats_scale text default 'normal';       -- גודל קוביות הנתונים: small | normal | large
 -- ⚠️ יש להריץ קובץ זה מחדש ב-Supabase (SQL editor) אחרי כל הוספת עמודות, אחרת שמירה מהאדמין תיכשל.

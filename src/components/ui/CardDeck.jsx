@@ -43,6 +43,7 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
   const throwRef = useRef(throwImpulse())
   const timerRef = useRef(null)
   const touchX = useRef(null)
+  const rootRef = useRef(null)
 
   const reduce =
     typeof window !== 'undefined' &&
@@ -66,17 +67,34 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
     }
   }, [list.length, busy, reduce])
 
-  // ניווט אוטומטי — הקלף הראשון מתחיל אחרי 4 שניות (זמן קריאה), ואז כל 3 שניות
+  // ניווט אוטומטי — הספירה (4 שניות לקלף הראשון, ואז כל 3 שניות) מתחילה רק
+  // כשהמשתמש גולל והערימה נכנסת למסך, לא מרגע טעינת הדף.
   const advanceRef = useRef(advance)
   advanceRef.current = advance
   useEffect(() => {
     if (reduce || items.length <= 1) return
-    let interval
-    const start = setTimeout(() => {
-      advanceRef.current()
-      interval = setInterval(() => advanceRef.current(), 3000)
-    }, 4000)
-    return () => { clearTimeout(start); clearInterval(interval) }
+    const el = rootRef.current
+    if (!el) return
+    let start, interval, started = false
+    const begin = () => {
+      if (started) return
+      started = true
+      start = setTimeout(() => {
+        advanceRef.current()
+        interval = setInterval(() => advanceRef.current(), 3000)
+      }, 4000)
+    }
+    let io
+    if (typeof IntersectionObserver !== 'undefined') {
+      io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => { if (e.isIntersecting) { begin(); io.disconnect() } }),
+        { threshold: 0.4 }
+      )
+      io.observe(el)
+    } else {
+      begin() // fallback ללא IO — מתחיל מיד
+    }
+    return () => { if (io) io.disconnect(); clearTimeout(start); clearInterval(interval) }
   }, [reduce, items.length])
 
   // החלקה (swipe) שמאלה/ימינה → מעבר לקלף הבא
@@ -91,7 +109,7 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
   const visible = list.slice(0, DEPTH)
 
   return (
-    <div className={`card-deck ${className}`}>
+    <div ref={rootRef} className={`card-deck ${className}`}>
       <button
         type="button"
         className="card-deck__trigger"

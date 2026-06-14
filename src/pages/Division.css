@@ -183,9 +183,10 @@
   .division-hero__subtitle { max-width: 46ch; margin-inline: auto; }
 
   /* תמונת הרקע בעמוד הביצוע — מסיטים את המוקד ימינה כך שהפועל
-     ייכנס לקדר במובייל (במקום להיחתך בצד) */
+     ייכנס לקדר במובייל (במקום להיחתך בצד), ומורידים את התמונה
+     (מוקד אנכי גבוה יותר) כדי שנראה את הפועל במלואו ולא חתוך */
   .division--execution .division-hero__bg .parallax__inner img {
-    object-position: 70% center;
+    object-position: 70% 22%;
   }
 }
 @media (max-width: 600px) {
@@ -232,6 +233,12 @@
 /* בעמוד הביצוע: באנר נמוך יותר → הכותרת לא נתקעת למטה והסרטון מציץ במסך הראשון */
 .division--execution .division-hero {
   min-height: clamp(380px, 50vh, 480px);
+}
+/* מורידים מעט את תמונת הפועל גם בדסקטופ כדי שייראה במלואו ולא חתוך */
+@media (min-width: 981px) {
+  .division--execution .division-hero__bg .parallax__inner img {
+    object-position: center 25%;
+  }
 }
 
 /* ---- Why us ---- */

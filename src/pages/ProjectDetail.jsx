@@ -197,6 +197,20 @@ export default function ProjectDetail() {
   // אין גלילה/transform על בר העוגנים. במובייל מוצג אינדיקטור 2-שמות פשוט
   // (נוכחי מודגש + הבא) שנגזר ישירות מ-activeSection — מתחלף בגלילה, בלי ריצוד.
 
+  // החלפת שם בבר הצף — כשכותרת הבאנר יוצאת מהמסך בגלילה (דסקטופ), שם הפרויקט
+  // מופיע בבר הדביק. observer על כותרת הבאנר; מורץ מחדש אחרי טעינת ה-CMS.
+  const [nameStuck, setNameStuck] = useState(false)
+  useEffect(() => {
+    const el = document.querySelector('.pd-banner__name')
+    if (!el) { setNameStuck(false); return }
+    const obs = new IntersectionObserver(
+      ([e]) => setNameStuck(!e.isIntersecting),
+      { rootMargin: '-90px 0px 0px 0px' },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [slug, cms, cmsLoaded])
+
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {
     setCms(null)
@@ -414,6 +428,16 @@ export default function ProjectDetail() {
               <button type="button" className="btn btn--primary pd-banner__cta" onClick={() => goTo('contact')}>
                 {L({ he: 'לתיאום פגישה', en: 'Schedule a meeting' })}
               </button>
+
+              {/* גרפיקת רשת דקורטיבית — מופיעה בכל עמודי הפרויקטים מתחת ל-CTA */}
+              <img
+                className="pd-banner__art"
+                src="/on-every-project-page.png"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
 
             {/* מדיה — תמונה למעלה, חצי ניווט מתחתיה בצד שמאל (בסגנון תדהר) */}
@@ -466,6 +490,10 @@ export default function ProjectDetail() {
       {/* ===== Sticky anchors ===== */}
       <nav className="pd-anchors" aria-label="Project sections">
         <div className="container pd-anchors__inner">
+          {/* שם הפרויקט — מופיע בבר הצף בדסקטופ כשגוללים מעבר לכותרת הבאנר */}
+          <span className={`pd-anchors__name ${nameStuck ? 'is-visible' : ''}`} aria-hidden={!nameStuck}>
+            {L(project.name)}
+          </span>
           {/* כל המקטעים הקיימים — נגללים אופקית; הפעיל מודגש (bold) */}
           {anchors.map((a) => (
             <button

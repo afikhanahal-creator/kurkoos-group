@@ -8,8 +8,16 @@ export default function ProjectCard({ project }) {
   const { t } = useI18n()
   const L = useLocalized()
 
+  // מעקב אחרי הסמן → זוהר כחול "אורב" שזז עם העכבר (אפקט MagicCard)
+  const onMove = (e) => {
+    const el = e.currentTarget
+    const r = el.getBoundingClientRect()
+    el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`)
+    el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`)
+  }
+
   return (
-    <Link to={`/projects/${project.slug}`} className="project-card">
+    <Link to={`/projects/${project.slug}`} className="project-card" onMouseMove={onMove}>
       <div className="project-card__media">
         <SmartImage
           src={project.cover}

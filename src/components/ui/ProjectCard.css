@@ -12,7 +12,14 @@
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
-.project-card:hover .project-card__media { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+.project-card:hover .project-card__media {
+  transform: translateY(-4px);
+  /* זוהר כחול מהפאלטה סביב הכרטיס במקום התריס הכהה */
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px color-mix(in srgb, var(--color-secondary) 45%, transparent),
+    0 18px 50px -12px color-mix(in srgb, var(--color-secondary) 55%, transparent);
+}
 
 .project-card__img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
 .project-card:hover .project-card__img { transform: scale(1.07); }
@@ -57,7 +64,7 @@
 .project-card__cat--commercial { color: var(--color-accent); }
 .project-card__cat--renewal { color: #5a8a1a; }
 
-/* שכבת hover עם CTA */
+/* שכבת hover עם CTA — זוהר כחול "אורב" מהפאלטה שעוקב אחרי הסמן */
 .project-card__overlay {
   position: absolute;
   inset: 0;
@@ -65,7 +72,13 @@
   align-items: flex-end;
   justify-content: center;
   padding: 1.4rem;
-  background: linear-gradient(to top, rgba(10, 10, 10, 0.7), transparent 55%);
+  background:
+    radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--color-secondary) 60%, transparent), transparent 62%),
+    linear-gradient(to top,
+      color-mix(in srgb, var(--color-primary-900, #0a2540) 82%, transparent),
+      color-mix(in srgb, var(--color-secondary) 14%, transparent) 55%,
+      transparent 82%);
   opacity: 0;
   transition: opacity var(--dur-base) var(--ease-out);
   z-index: 1;

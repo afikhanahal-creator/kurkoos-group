@@ -6,19 +6,10 @@
 const photo = (id) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=80`
 
+/* סדר התצוגה ב-RTL: האיבר הראשון מימין, האחרון משמאל.
+   מצד שמאל לימין על המסך: שלומי, יעקב, מוטי, בני
+   ⇐ ולכן הסדר במערך (ימין→שמאל): בני, מוטי, יעקב, שלומי. */
 export const team = [
-  {
-    id: 'shlomi',
-    name: { he: 'שלומי קורקוס', en: 'Shlomi Kurkoos' },
-    role: { he: 'מנכ"ל ומייסד', en: 'CEO & Founder' },
-    photo: '/F09639CC-EA6A-425D-BAD3-F417B9E28E69.png',
-    imgPos: 'center 20%',   /* מיישר את ראשו לגובה ראשם של מוטי ויעקב */
-    bio: {
-      he: 'מוביל את הקבוצה מאז הקמתה עם חזון של בנייה איכותית ושקיפות מלאה מול הלקוח.',
-      en: 'Leads the group since its founding with a vision of quality construction and full client transparency.',
-    },
-    linkedin: '',
-  },
   {
     id: 'benny',
     name: { he: 'בני קורקוס', en: 'Benny Kurkoos' },
@@ -54,6 +45,18 @@ export const team = [
     bio: {
       he: 'מלווה את הפרויקטים מהתכנון ועד המסירה, בתיאום מול כל הגורמים.',
       en: 'Accompanies projects from planning to handover, coordinating with all stakeholders.',
+    },
+    linkedin: '',
+  },
+  {
+    id: 'shlomi',
+    name: { he: 'שלומי קורקוס', en: 'Shlomi Kurkoos' },
+    role: { he: 'מנכ"ל ומייסד', en: 'CEO & Founder' },
+    photo: '/F09639CC-EA6A-425D-BAD3-F417B9E28E69.png',
+    imgPos: 'center 20%',   /* מיישר את ראשו לגובה ראשם של מוטי ויעקב */
+    bio: {
+      he: 'מוביל את הקבוצה מאז הקמתה עם חזון של בנייה איכותית ושקיפות מלאה מול הלקוח.',
+      en: 'Leads the group since its founding with a vision of quality construction and full client transparency.',
     },
     linkedin: '',
   },

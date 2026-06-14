@@ -66,12 +66,12 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
     }
   }, [list.length, busy, reduce])
 
-  // ניווט אוטומטי — קלף מתחלף כל 2 שניות (נעצר כשמכבדים reduced-motion)
+  // ניווט אוטומטי — קלף מתחלף כל 3 שניות (גם הקלף הראשון זז רק אחרי 3 שניות)
   const advanceRef = useRef(advance)
   advanceRef.current = advance
   useEffect(() => {
     if (reduce || items.length <= 1) return
-    const id = setInterval(() => advanceRef.current(), 2000)
+    const id = setInterval(() => advanceRef.current(), 3000)
     return () => clearInterval(id)
   }, [reduce, items.length])
 

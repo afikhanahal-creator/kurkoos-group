@@ -35,7 +35,7 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
     if (!editing) return
     setBusy(true)
     try {
-      const file = new File([blob], `img-${Date.now()}.png`, { type: 'image/png' })
+      const file = new File([blob], `img-${Date.now()}.webp`, { type: blob.type || 'image/webp' })
       const url = await uploadMedia(file, folder)
       onChange(value.map((u) => (u === editing ? url : u)))
       deleteMedia(editing).catch(() => {})

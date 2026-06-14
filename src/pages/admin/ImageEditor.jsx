@@ -150,7 +150,8 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
     try {
       const c = document.createElement('canvas')
       draw(c, out)
-      c.toBlob((blob) => { if (blob) onApply(blob); else setErr('הייצוא נכשל') }, 'image/png')
+      // ייצוא ל-WebP (קל בהרבה מ-PNG) → העלאה וטעינה מהירות, איכות כמעט-זהה
+      c.toBlob((blob) => { if (blob) onApply(blob); else setErr('הייצוא נכשל') }, 'image/webp', 0.9)
     } catch { setErr('הייצוא נכשל (ייתכן שמקור התמונה חוסם עריכה)') }
   }
 

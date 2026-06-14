@@ -126,7 +126,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const applyEnvEdit = async (blob) => {
     if (!envEdit) return
     try {
-      const file = new File([blob], `env-${Date.now()}.png`, { type: 'image/png' })
+      const file = new File([blob], `env-${Date.now()}.webp`, { type: blob.type || 'image/webp' })
       const url = await uploadMedia(file, `${folder}/environment`)
       setField(envEdit.key, { ...(form[envEdit.key] || {}), image: url })
       setEnvEdit(null)

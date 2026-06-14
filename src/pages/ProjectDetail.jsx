@@ -449,6 +449,7 @@ export default function ProjectDetail() {
                     src={flatGallery[Math.min(bannerSlide, flatGallery.length - 1)]}
                     alt={L(project.name)}
                     label={L(project.name)}
+                    priority={bannerSlide === 0}
                   />
                 </Parallax>
                 {hasVideo && (

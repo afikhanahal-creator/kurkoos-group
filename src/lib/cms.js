@@ -50,12 +50,36 @@ export async function uploadVideoFile(file, folder = 'videos') {
 }
 
 // ---------- Media (Storage) ----------
+/* דחיסת תמונה בצד-לקוח לפני העלאה: מקטין רזולוציה (עד 1920px) וממיר ל-WebP.
+   → העלאה הרבה יותר מהירה + קבצים קלים שנטענים מהר באתר, בלי שינוי נראה לעין.
+   מדלג על SVG/GIF, ועל קבצים שכבר קטנים/לא משתפרים. */
+export async function compressImage(file, { maxW = 1920, maxH = 1920, quality = 0.85 } = {}) {
+  if (typeof document === 'undefined' || !file || !file.type || !file.type.startsWith('image/')) return file
+  if (file.type === 'image/svg+xml' || file.type === 'image/gif') return file
+  if (file.size < 120 * 1024) return file   // כבר קטן — לא נוגעים
+  try {
+    const bmp = await createImageBitmap(file)
+    const scale = Math.min(1, maxW / bmp.width, maxH / bmp.height)
+    const w = Math.round(bmp.width * scale)
+    const h = Math.round(bmp.height * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = w; canvas.height = h
+    canvas.getContext('2d').drawImage(bmp, 0, 0, w, h)
+    bmp.close && bmp.close()
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', quality))
+    if (!blob || blob.size >= file.size) return file   // לא השתפר → משאירים מקור
+    return new File([blob], file.name.replace(/\.\w+$/, '') + '.webp', { type: 'image/webp' })
+  } catch { return file }
+}
+
 export async function uploadMedia(file, folder = 'general') {
   if (!supabase) throw new Error('Supabase לא מוגדר')
+  file = await compressImage(file)   // דחיסה אוטומטית לתמונות → העלאה וטעינה מהירות
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
   const rand = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.round(Math.random() * 1e9)}`
   const path = `${folder}/${rand}.${ext}`
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { cacheControl: '3600', upsert: false })
+  // קבצים ייחודיים (שם אקראי) → ניתן למטמן לטווח ארוך מאוד (immutable)
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { cacheControl: '31536000', upsert: false })
   if (error) throw error
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
   return data.publicUrl

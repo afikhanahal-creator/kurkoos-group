@@ -852,7 +852,7 @@ export default function ProjectDetail() {
                       aria-label={L({ he: 'הודעה', en: 'Message' })}
                     />
                   </div>
-                  <button type="submit" className="pd-contact__submit">
+                  <button type="submit" className="btn btn--primary pd-contact__submit">
                     {L({ he: 'שליחה', en: 'Send' })}
                   </button>
                 </form>

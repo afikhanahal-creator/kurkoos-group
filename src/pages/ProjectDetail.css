@@ -232,10 +232,8 @@
 /* מדיה + כפתור וידאו */
 .pd-banner__media {
   position: relative;
-  border-radius: var(--radius-lg);
   overflow: hidden;
   aspect-ratio: 4 / 3;
-  box-shadow: var(--shadow-lg);
 }
 .pd-banner__media-img,
 .pd-banner__media-img img,
@@ -775,24 +773,13 @@
 .pd-field textarea.has-error { border-color: var(--color-error); background: #fff5f5; box-shadow: 0 0 0 3px rgba(214, 69, 69, 0.18); }
 .pd-contact__form textarea { resize: vertical; min-height: 90px; }
 
+/* כפתור "שליחה" — אחיד לסטנדרט האתר (.btn--primary: אדום → לבן בלחיצה/ריחוף).
+   כאן רק פריסה וגודל: בדסקטופ קומפקטי וצמוד לתחילת השורה (לא נמתח על כל הרוחב). */
 .pd-contact__submit {
-  align-self: stretch;
+  align-self: center;        /* ממורכז בדסקטופ */
   margin-top: 0.9rem;
-  width: 100%;
-  padding: 1em 2.1em;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.04rem;
-  letter-spacing: 0.02em;
-  background: #fff;
-  color: var(--color-secondary);
-  border-radius: var(--radius-pill);
-  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5);
-  transition: background var(--dur-base) var(--ease-out), color var(--dur-base),
-    transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-base);
+  font-size: 1.3rem;         /* גדול ב-30% (בסיס .btn = 1rem; padding ב-em גדל יחד) */
 }
-.pd-contact__submit:hover { background: var(--color-accent); color: #fff; transform: translateY(-2px); box-shadow: 0 14px 30px -10px rgba(169, 11, 12, 0.6); }
-.pd-contact__submit:active { transform: translateY(0) scale(0.98); }
 
 .pd-contact__call {
   margin-top: 1.4rem;
@@ -1111,7 +1098,7 @@
   .pd-contact__title { font-size: 1.5rem; }
   .pd-field input,
   .pd-field textarea { font-size: 0.95rem; padding: 0.78rem 0.95rem; }
-  .pd-contact__submit { width: 100%; min-width: 0; font-size: 0.83rem; }
+  .pd-contact__submit { align-self: stretch; width: 100%; min-width: 0; font-size: 0.83rem; }
   .pd-gallery__item:first-child { grid-column: span 2; grid-row: span 1; }
   /* במובייל — בלי חצים; מחליפים תמונות בלחיצה/החלקה */
   .pd-lightbox__nav { display: none; }

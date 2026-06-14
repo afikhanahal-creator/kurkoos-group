@@ -11,7 +11,8 @@ export const team = [
     id: 'shlomi',
     name: { he: 'שלומי קורקוס', en: 'Shlomi Kurkoos' },
     role: { he: 'מנכ"ל ומייסד', en: 'CEO & Founder' },
-    photo: photo('1560250097-0b93528c311a'),
+    photo: '/F09639CC-EA6A-425D-BAD3-F417B9E28E69.png',
+    imgPos: 'center 20%',   /* מיישר את ראשו לגובה ראשם של מוטי ויעקב */
     bio: {
       he: 'מוביל את הקבוצה מאז הקמתה עם חזון של בנייה איכותית ושקיפות מלאה מול הלקוח.',
       en: 'Leads the group since its founding with a vision of quality construction and full client transparency.',
@@ -34,8 +35,8 @@ export const team = [
     name: { he: 'מוטי בן עמי', en: 'Moti Ben Ami' },
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
     photo: '/6D41D358-693B-4F94-95D7-AFAEC6439126.png',
-    imgPos: '60% top',   /* מזיז את הדמות טיפה שמאלה (מוקד אופקי ימינה יותר) */
-    imgZoom: 1.14,   /* זום-אין נוסף כדי שהדמות תהיה ממורכזת */
+    imgPos: '56% top',   /* טיפה שמאלה ולמרכז ביחס לקודם */
+    imgZoom: 1.22,   /* עוד זום-אין; transform-origin עליון שומר על גובה הראש */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
       he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',

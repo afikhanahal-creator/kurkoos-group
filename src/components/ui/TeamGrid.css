@@ -81,6 +81,7 @@
   /* צבע מקורי כברירת מחדל. --img-bright מבהיר דמויות נבחרות (יעקב/מוטי) */
   filter: grayscale(0) brightness(var(--img-bright, 1));
   transform: scale(var(--img-zoom, 1));   /* זום-אין אישי (אופציונלי, פר-איש) */
+  transform-origin: center top;   /* הזום מתרחב כלפי מטה → גובה הראש נשמר */
   transition: filter 0.5s var(--ease-out), transform 0.6s var(--ease-out);
 }
 /* ב-hover (דסקטופ) או במגע במובייל — התמונה הופכת לשחור-לבן (הבהירות נשמרת) */

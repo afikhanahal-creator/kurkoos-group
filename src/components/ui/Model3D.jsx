@@ -5,29 +5,18 @@ import './Model3D.css'
 /* ============================================================
    Model3D — מציג מודל GLB בעזרת <model-viewer> של גוגל.
    טעינה "עצלה" אגרסיבית לטובת מהירות: ספריית model-viewer
-   נטענת מ-CDN (כ-module) רק כשהמרכיב מתקרב למסך, וגם המודל
-   עצמו (GLB) נטען רק אז — כך שטעינת העמוד הראשונית לא מושפעת
-   כלל מהמשקל של התלת-מימד. ללא AR.
-   אם הספרייה/המודל לא נטענים (רשת/חסימה) — מוצג איור הווילה
-   כגיבוי, כך שהסקשן לעולם לא ריק.
+   מיובאת (dynamic import, נארזת כ-chunk נפרד) רק כשהמרכיב
+   מתקרב למסך, וגם המודל עצמו (GLB) נטען רק אז — כך שטעינת
+   העמוד הראשונית לא מושפעת כלל מהמשקל של התלת-מימד. ללא AR.
+   אם הספרייה/המודל לא נטענים — מוצג איור הווילה כגיבוי.
    ============================================================ */
-
-const MV_SRC =
-  'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js'
 
 let mvPromise = null
 function loadModelViewer() {
   if (typeof window === 'undefined') return Promise.resolve()
   if (window.customElements?.get('model-viewer')) return Promise.resolve()
   if (mvPromise) return mvPromise
-  mvPromise = new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.type = 'module'
-    s.src = MV_SRC
-    s.onload = resolve
-    s.onerror = reject
-    document.head.appendChild(s)
-  })
+  mvPromise = import('@google/model-viewer')
   return mvPromise
 }
 

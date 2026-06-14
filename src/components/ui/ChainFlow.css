@@ -1,0 +1,74 @@
+/* ============================================================
+   ChainFlow — אנימציית גל-אור פרימיום על תמונת שרשרת הערך
+   ============================================================ */
+.chainflow {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  isolation: isolate;            /* מבודד את mix-blend-mode לתוך הרכיב */
+  animation: chainflow-float 7s ease-in-out infinite;
+}
+.chainflow__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* גל-אור לבן מבריק — פס אלכסוני צר שנע מימין לשמאל בלולאה.
+   ממוקם כפס אופקי על אזור השרשרת (מרכז-תחתון של התמונה) דרך mask. */
+.chainflow__shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.25) 47%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0.25) 53%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  mix-blend-mode: screen;        /* מבריק את מה שמתחת במקום לכסות */
+  /* ממקד את הברק לרצועת השרשרת (≈ 52%–78% גובה) */
+  -webkit-mask-image: linear-gradient(180deg, transparent 50%, #000 56%, #000 80%, transparent 86%);
+  mask-image: linear-gradient(180deg, transparent 50%, #000 56%, #000 80%, transparent 86%);
+  animation: chainflow-sweep 4.5s linear infinite;
+}
+
+/* סוויפ אדום עדין שמדגיש את האלמנטים האדומים — מסונכרן, מעט אחרי הברק */
+.chainflow__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 42%,
+    rgba(169, 11, 12, 0.28) 50%,
+    transparent 58%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  mix-blend-mode: multiply;      /* מעמיק את האדום הקיים */
+  animation: chainflow-sweep 4.5s linear infinite;
+  animation-delay: 0.35s;
+  opacity: 0.9;
+}
+
+/* תנועת הברק: מצד ימin (מחוץ) לצד שמאל (מחוץ) — RTL-friendly, לופ מושלם */
+@keyframes chainflow-sweep {
+  from { background-position: 220% 0; }
+  to   { background-position: -120% 0; }
+}
+@keyframes chainflow-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chainflow { animation: none; }
+  .chainflow__shine, .chainflow__glow { display: none; }
+}

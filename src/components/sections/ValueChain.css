@@ -162,3 +162,9 @@
 @media (max-width: 768px) {
   .vc-item__tag { font-size: calc(0.7rem + 3px); }
 }
+
+/* באנר אנימציית שרשרת הערך — משתרע על כל רוחב הסקשן, מתחת לתוכן */
+.value-chain__flow {
+  grid-column: 1 / -1;
+  margin-top: clamp(1.6rem, 4vw, 3rem);
+}

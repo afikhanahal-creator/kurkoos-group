@@ -180,6 +180,6 @@
   .flip-card--benny  { order: 4; }
 }
 @media (max-width: 480px) {
-  .team-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; max-width: 380px; }
+  .team-grid { grid-template-columns: repeat(2, 1fr); gap: 0.85rem; max-width: 380px; }
   .flip-card-name { font-size: 0.95rem; }
 }

@@ -52,3 +52,9 @@
 
 @media (max-width: 1024px) { .team-page__grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .team-page__grid { grid-template-columns: 1fr; } }
+
+/* מובייל — מרימים טיפה את הכרטיסיות למעלה (פחות padding עליון) כדי שכל
+   ארבע הכרטיסיות ייראו במסך אחד */
+@media (max-width: 600px) {
+  .section.team-page { padding-block: 1rem 1.75rem; }
+}

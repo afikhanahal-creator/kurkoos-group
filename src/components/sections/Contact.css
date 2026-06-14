@@ -209,7 +209,15 @@
   }
   .contact__form textarea { min-height: 88px; }
 
-  .contact__submit { width: 100%; min-width: 0; margin-top: 0.6rem; padding: 0.95em 1.6em; font-size: 0.84rem; }
+  /* כפתור "שליחה" במובייל — שמנמן: רוחב קצר יותר (לא מלא) וגובה מעט גדול יותר */
+  .contact__submit {
+    width: auto;
+    min-width: 200px;
+    align-self: center;
+    margin-top: 0.6rem;
+    padding: 1.2em 2.2em;
+    font-size: 0.9rem;
+  }
 
   .contact__phones {
     margin-top: 1.3rem;

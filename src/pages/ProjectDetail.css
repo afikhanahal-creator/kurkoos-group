@@ -144,7 +144,7 @@
   margin-top: 1.7rem;
 }
 
-/* גרפיקת רשת דקורטיבית מתחת ל-CTA — בכל עמודי הפרויקטים, רספונסיבית */
+/* גרפיקת רשת דקורטיבית מתחת ל-CTA — בדסקטופ בלבד, רספונסיבית */
 .pd-banner__art {
   display: block;
   width: 100%;
@@ -152,6 +152,10 @@
   margin-top: 1.6rem;
   pointer-events: none;
   user-select: none;
+}
+/* במובייל — מוסתרת לגמרי (כולל המרווח שמעליה) */
+@media (max-width: 880px) {
+  .pd-banner__art { display: none; margin-top: 0; }
 }
 
 .pd-banner__stats-wrap { position: relative; }

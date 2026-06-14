@@ -25,7 +25,7 @@ export default function TeamGrid({ members = [] }) {
         const isFlipped = flipped === id
         return (
           <div
-            className={`flip-card${isFlipped ? ' is-active' : ''}`}
+            className={`flip-card flip-card--${id}${isFlipped ? ' is-active' : ''}`}
             key={id}
             role="button"
             tabIndex={0}

@@ -172,6 +172,12 @@
 /* ---------- רספונסיביות ---------- */
 @media (max-width: 900px) {
   .team-grid { grid-template-columns: repeat(2, 1fr); max-width: 520px; }
+  /* סידור 2x2 ייעודי למובייל (RTL: order:1=ימין-עליון, 2=שמאל-עליון, 3=ימין-תחתון, 4=שמאל-תחתון)
+     שמאל-עליון: שלומי · ימין-עליון: יעקב · ימין-תחתון: מוטי · שמאל-תחתון: בני */
+  .flip-card--yaakov { order: 1; }
+  .flip-card--shlomi { order: 2; }
+  .flip-card--moti   { order: 3; }
+  .flip-card--benny  { order: 4; }
 }
 @media (max-width: 480px) {
   .team-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; max-width: 380px; }

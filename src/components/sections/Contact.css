@@ -218,6 +218,12 @@
     padding: 1.2em 2.2em;
     font-size: 0.9rem;
   }
+  /* במובייל אין hover — בלחיצה (active) הכפתור הופך ללבן עם טקסט כחול */
+  .contact__submit:active {
+    background: #fff;
+    color: var(--color-secondary);
+    border-color: #fff;
+  }
 
   .contact__phones {
     margin-top: 1.3rem;

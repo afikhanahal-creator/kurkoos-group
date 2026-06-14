@@ -144,10 +144,11 @@
   margin-top: 1.7rem;
 }
 
-/* גרפיקת רשת דקורטיבית מתחת ל-CTA — בדסקטופ בלבד, רספונסיבית */
+/* גרפיקת רשת דקורטיבית מתחת ל-CTA — בדסקטופ בלבד, רספונסיבית.
+   רוחב 80% (הוקטנה ב-20% לבקשת המשתמש). */
 .pd-banner__art {
   display: block;
-  width: 100%;
+  width: 80%;
   height: auto;
   margin-top: 1.6rem;
   pointer-events: none;

@@ -511,6 +511,8 @@
 .im__head { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.9rem; font-family: var(--font-heading); font-weight: 700; }
 .im__add { min-height: 0; padding: 0.45em 1.1em; font-size: 0.85rem; }
 .im__err { color: var(--color-accent); font-size: 0.85rem; }
+.im__progress { height: 6px; border-radius: var(--radius-pill); background: var(--adm-border); overflow: hidden; margin: 0.2rem 0 0.4rem; }
+.im__progress span { display: block; height: 100%; background: var(--color-secondary); border-radius: inherit; transition: width var(--dur-fast) ease; }
 .im__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 0.7rem; }
 .im__empty { color: var(--adm-muted); grid-column: 1 / -1; padding: 1.4rem; text-align: center; border: 1.5px dashed var(--adm-border-strong); border-radius: 10px; }
 /* אזור גרירת תמונות */

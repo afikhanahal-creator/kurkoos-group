@@ -25,6 +25,7 @@ function SortableImage({ url, index, onDelete, onCover, onEdit }) {
 export default function ImageManager({ value = [], onChange, folder = 'general', max = 20 }) {
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
+  const [progress, setProgress] = useState(null)  // { done, total } בזמן העלאה מרובה
   const [err, setErr] = useState('')
   const [over, setOver] = useState(false)
   const [editing, setEditing] = useState(null)   // url שנערך כרגע
@@ -54,19 +55,23 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
     const list = Array.from(files)
     const room = max - value.length
     if (room <= 0) { setErr(`אפשר עד ${max} תמונות`); return }
-    const toUpload = list.slice(0, room)
+    const toUpload = list.slice(0, room).filter((f) => f.type.startsWith('image/'))
+    if (list.length > toUpload.length && list.length > room) setErr(`אפשר עד ${max} תמונות — חלק לא נוספו`)
+    if (toUpload.length === 0) return
     setBusy(true)
+    setProgress({ done: 0, total: toUpload.length })
     try {
       const urls = []
       for (const f of toUpload) {
-        if (!f.type.startsWith('image/')) continue
         urls.push(await uploadMedia(f, folder))
+        setProgress((p) => (p ? { ...p, done: p.done + 1 } : p))
       }
       onChange([...value, ...urls])
     } catch (e) {
       setErr('שגיאה בהעלאה: ' + (e.message || e))
     } finally {
       setBusy(false)
+      setProgress(null)
       if (inputRef.current) inputRef.current.value = ''
     }
   }
@@ -98,10 +103,15 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
       <div className="im__head">
         <span>תמונות ({value.length}/{max})</span>
         <button type="button" className="btn btn--primary im__add" disabled={busy || value.length >= max} onClick={() => inputRef.current?.click()}>
-          {busy ? 'מעלה…' : '+ הוסף תמונות'}
+          {busy ? (progress ? `מעלה ${progress.done}/${progress.total}…` : 'מעלה…') : '+ הוסף תמונות'}
         </button>
         <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={(e) => handleFiles(e.target.files)} />
       </div>
+      {progress && (
+        <div className="im__progress" role="progressbar" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done}>
+          <span style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }} />
+        </div>
+      )}
       {err && <p className="im__err">{err}</p>}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={value} strategy={rectSortingStrategy}>

@@ -65,11 +65,12 @@
   .page-header__title { text-align: center; }
   .page-header__lead { text-align: center; margin-inline: auto; }
   .page-header__eyebrow { text-align: center; justify-content: center; }
-  .page-header .breadcrumbs ol { margin-inline: auto; }
 
-  /* ---- סרגל הניווט (פירורי לחם) — בר זכוכית מעודן וקומפקטי במובייל ---- */
+  /* ---- סרגל הניווט (פירורי לחם) — בר זכוכית מעודן ----
+     רוחב מלא של המכל כך שקצותיו מיושרים בדיוק עם הכותרת והטקסט; הפריטים ממורכזים בתוכו */
   .page-header .breadcrumbs ol {
-    width: fit-content;
+    width: 100%;
+    justify-content: center;
     gap: 0.45rem;
     padding: 0.26rem 0.4rem;
     font-size: 0.8rem;

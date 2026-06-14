@@ -24,9 +24,9 @@ export default function StatCube({ className = '', children, style: extraStyle }
   const gx = useSpring(50, SPRING) // מיקום הנצנוץ (%) — אופקי
   const gy = useSpring(50, SPRING) // מיקום הנצנוץ (%) — אנכי
   const shX = useSpring(0, SPRING) // היסט צל אופקי
-  const shY = useSpring(8, SPRING) // היסט צל אנכי
-  const shBlur = useSpring(16, SPRING)
-  const shAlpha = useSpring(0.05, SPRING)
+  const shY = useSpring(10, SPRING) // היסט צל אנכי — מובלט יותר במנוחה (סגנון תדהר)
+  const shBlur = useSpring(22, SPRING)
+  const shAlpha = useSpring(0.14, SPRING)
 
   const handleMove = (e) => {
     if (!canTilt) return
@@ -56,13 +56,14 @@ export default function StatCube({ className = '', children, style: extraStyle }
     gx.set(50)
     gy.set(50)
     shX.set(0)
-    shY.set(8)
-    shBlur.set(16)
-    shAlpha.set(0.05)
+    shY.set(10)
+    shBlur.set(22)
+    shAlpha.set(0.14)
   }
 
   const glare = useMotionTemplate`radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.65), rgba(255,255,255,0) 60%)`
-  const boxShadow = useMotionTemplate`${shX}px ${shY}px ${shBlur}px rgba(16,85,114,${shAlpha})`
+  /* צל "מובלט" + הדגשת קצה עליון (inset) לתחושת קוביה מורמת ויוקרתית כמו תדהר */
+  const boxShadow = useMotionTemplate`${shX}px ${shY}px ${shBlur}px rgba(16,85,114,${shAlpha}), 0 1px 2px rgba(16,85,114,0.06), inset 0 1px 0 rgba(255,255,255,0.9)`
 
   return (
     <motion.div

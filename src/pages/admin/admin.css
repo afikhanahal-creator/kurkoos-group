@@ -414,6 +414,96 @@
 }
 
 /* ============================================================
+   WIZARD (אשף רב-שלבי ליצירת/עריכת פרויקט)
+   ============================================================ */
+.ed__steps {
+  display: flex; gap: 0.4rem; list-style: none; margin: 0 0 1.5rem; padding: 0.4rem;
+  background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 14px;
+  overflow-x: auto; scrollbar-width: thin;
+}
+.ed__step { flex: 1 1 0; min-width: max-content; }
+.ed__step-btn {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center;
+  padding: 0.6rem 0.9rem; border-radius: 10px; font-family: var(--font-heading);
+  font-weight: 700; font-size: 0.86rem; color: var(--adm-muted); position: relative;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.ed__step-btn:hover { background: var(--color-primary-100); color: var(--color-secondary); }
+.ed__step--active .ed__step-btn { background: var(--color-secondary); color: #fff; box-shadow: 0 4px 12px rgba(16,104,140,0.25); }
+.ed__step--done .ed__step-btn { color: var(--color-secondary); }
+.ed__step-num {
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--adm-border); color: var(--adm-ink); font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
+}
+.ed__step--active .ed__step-num { background: rgba(255,255,255,0.22); color: #fff; }
+.ed__step--done .ed__step-num { background: var(--color-success); color: #fff; }
+.ed__step-dot {
+  display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  background: #8a6d00; color: #fff; font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
+}
+.ed__step--active .ed__step-dot { background: #fff; color: #8a6d00; }
+
+.ed__step-body { min-height: 200px; }
+
+.ed__nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--adm-border);
+}
+.ed__nav-btn {
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; color: var(--color-secondary);
+  border: 1.5px solid var(--adm-border-strong); border-radius: 10px; padding: 0.6rem 1.3rem;
+  transition: background var(--dur-fast), border-color var(--dur-fast), opacity var(--dur-fast);
+}
+.ed__nav-btn:hover:not(:disabled) { background: var(--color-primary-100); border-color: var(--color-secondary); }
+.ed__nav-btn:disabled { opacity: 0.4; cursor: default; }
+.ed__nav-next { color: #fff; border: none; }
+.ed__nav-count { color: var(--adm-muted); font-size: 0.82rem; font-weight: 600; }
+
+/* חיווי שדה לא תקין + הודעת שגיאה */
+.ed__field--invalid input, .ed__field--invalid textarea, .ed__field--invalid select {
+  border-color: var(--color-accent) !important; box-shadow: 0 0 0 3px rgba(169,11,12,0.12) !important;
+}
+.ed__error { color: var(--color-accent); font-size: 0.76rem; font-weight: 700; }
+
+/* סיכום "מה חסר" */
+.ed__summary .ed__missing { margin: 0.3rem 0 0; padding-inline-start: 1.2rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.ed__summary .ed__missing li { color: var(--color-accent); font-weight: 600; font-size: 0.9rem; }
+.ed__ok { color: #1f7a4d; font-weight: 700; font-size: 0.95rem; }
+.ed__publish { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; padding: 0.7rem 0.9rem; background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 10px; font-family: var(--font-heading); font-weight: 600; }
+.ed__publish .ed__switch input:disabled + span { opacity: 0.4; cursor: not-allowed; }
+
+.ed__review { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; align-items: start; }
+@media (max-width: 900px) { .ed__review { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   PROJECT PREVIEW (תצוגה מקדימה קומפקטית)
+   ============================================================ */
+.edpv { display: flex; flex-direction: column; gap: 1.3rem; font-size: 0.9rem; }
+.edpv__banner { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: center; }
+.edpv__loc { color: var(--color-secondary); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em; }
+.edpv__rule { display: block; width: 36px; height: 3px; background: var(--color-accent); border-radius: var(--radius-pill); margin: 0.4rem 0; }
+.edpv__name { font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem; color: var(--adm-ink); line-height: 1.2; }
+.edpv__sub { color: var(--adm-muted); font-size: 0.86rem; margin-top: 0.25rem; }
+.edpv__cubes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+.edpv__cube { background: var(--color-primary-100); border-radius: 10px; padding: 0.5rem 0.7rem; text-align: center; min-width: 64px; }
+.edpv__cube-val { display: block; font-family: var(--font-heading); font-weight: 800; color: var(--color-secondary); font-size: 1rem; }
+.edpv__cube-label { display: block; color: var(--adm-muted); font-size: 0.7rem; margin-top: 0.15rem; }
+.edpv__media { aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: var(--adm-bg); border: 1px solid var(--adm-border); display: grid; place-items: center; }
+.edpv__media img { width: 100%; height: 100%; object-fit: cover; }
+.edpv__media-empty { color: var(--adm-muted); font-size: 0.8rem; }
+.edpv__eyebrow { color: var(--color-accent); font-weight: 700; font-size: 0.75rem; letter-spacing: 0.05em; }
+.edpv__h { font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem; color: var(--adm-ink); margin: 0.2rem 0 0.4rem; }
+.edpv__prose { color: var(--adm-ink); line-height: 1.7; font-size: 0.86rem; white-space: pre-wrap; }
+.edpv__features { list-style: none; margin: 0.7rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 0.8rem; }
+.edpv__features li { color: var(--adm-ink); font-size: 0.82rem; }
+.edpv__thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.5rem; }
+.edpv__thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid var(--adm-border); }
+@media (max-width: 560px) {
+  .edpv__banner { grid-template-columns: 1fr; }
+  .edpv__features { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
    IMAGE MANAGER
    ============================================================ */
 .im { position: relative; }

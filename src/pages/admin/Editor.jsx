@@ -1,13 +1,22 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import ImageManager from './ImageManager.jsx'
 import ImageEditor from './ImageEditor.jsx'
 import StatCubesField from './StatCubesField.jsx'
+import ProjectPreview from './ProjectPreview.jsx'
+import { slugify } from '../../lib/slugify.js'
 import { uploadMedia, uploadVideoFile, hasCloudinary } from '../../lib/cms.js'
 import { toast } from '../../lib/toast.js'
 
 const STRIP = ['id', 'created_at', 'updated_at']
+const GALLERY_STEP = '__gallery__'   // מזהה מיוחד למקטע המדיה (גלריה) בתוך הצעדים
 
 const XIcon = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>
+
+// בדיקת "ריקוּת" אחידה לשדה — מטפלת במחרוזות, מערכים ואובייקטים
+const isEmpty = (v) =>
+  v == null || v === '' ||
+  (Array.isArray(v) && v.length === 0) ||
+  (typeof v === 'object' && !Array.isArray(v) && Object.values(v).every((x) => x == null || x === ''))
 
 const CUSTOM = '__custom__'
 /* בחירה מרשימה + אפשרות להקליד ערך מותאם ("אחר") — נוח לערוך ולשנות בכל עת. */
@@ -48,16 +57,21 @@ function StatusPill({ status }) {
   return <span className={`ed__status ed__status--${s.c}`}>{s.t}</span>
 }
 
-export default function Editor({ schema, record, onSave, folder = 'general', coverField = null, onArchive, onClose, previewUrl = null, title }) {
+export default function Editor({ schema, record, onSave, folder = 'general', coverField = null, onArchive, onClose, previewUrl = null, title, steps = null }) {
   const [form, setForm] = useState(record)
   const [status, setStatus] = useState('saved')
   const [vidUp, setVidUp] = useState(-1) // אינדקס סרטון שמתבצעת לו העלאה
   const [envEdit, setEnvEdit] = useState(null) // עריכת תמונת הסביבה: { key, src }
+  const [stepIdx, setStepIdx] = useState(0)    // הצעד הנוכחי באשף (כשפעיל)
   const timer = useRef()
+  const slugEdited = useRef(false)             // האם ה-slug נערך ידנית (אז לא ממלאים אוטומטית)
 
   useEffect(() => {
     setForm(record)
     setStatus('saved')
+    setStepIdx(0)
+    // אם כבר קיים slug שלא נגזר אוטומטית מהשם — מסמנים כ"נערך ידנית"
+    slugEdited.current = !!record.slug && record.slug !== slugify(record.name)
     return () => clearTimeout(timer.current)
   }, [record.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -84,7 +98,14 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     timer.current = setTimeout(() => commit(next), 1000)
   }, [commit])
 
-  const setField = (key, val) => setForm((prev) => { const next = { ...prev, [key]: val }; schedule(next); return next })
+  const setField = (key, val) => setForm((prev) => {
+    const next = { ...prev, [key]: val }
+    // מילוי אוטומטי של ה-slug מתוך השם — רק כל עוד לא נערך ידנית
+    if (key === 'name' && !slugEdited.current && 'slug' in prev) next.slug = slugify(val)
+    if (key === 'slug') slugEdited.current = true
+    schedule(next)
+    return next
+  })
   const setGallery = (arr) => setForm((prev) => { const next = { ...prev, gallery: arr }; schedule(next); return next })
   const saveNow = async () => { clearTimeout(timer.current); if (await commit(form)) toast.success('נשמר') }
   // X = שמירה ויציאה: מוודא שכל שינוי תלוי נשמר, ואז סוגר
@@ -405,51 +426,164 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     return <input type="text" dir={f.dir || 'auto'} value={v ?? ''} onChange={(e) => setField(f.key, e.target.value)} />
   }
 
+  // רשימת השדות החסרים (חובה אך ריקים) — לסיכום "מה חסר" ולחיווי בצעדים
+  const missing = useMemo(() => {
+    const out = []
+    for (const sec of schema)
+      for (const f of sec.fields)
+        if (f.required && isEmpty(form[f.key])) out.push({ key: f.key, label: f.label })
+    return out
+  }, [schema, form])
+  const missingKeys = useMemo(() => new Set(missing.map((m) => m.key)), [missing])
+
+  const fieldWide = (t) => ['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords', 'videos', 'stat_cubes'].includes(t)
+
+  // רינדור מקטע שדות יחיד (משותף לתצוגה הרגילה ולאשף)
+  const renderSection = (sec) => (
+    <fieldset className="ed__section" key={sec.section}>
+      <legend>{sec.section}</legend>
+      <div className="ed__grid">
+        {sec.fields.map((f) => {
+          const invalid = f.required && missingKeys.has(f.key)
+          return (
+            <div className={`ed__field ${fieldWide(f.type) ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''} ${invalid ? 'ed__field--invalid' : ''}`} key={f.key}>
+              <label>{f.label}{f.required && <span className="ed__req">*</span>}</label>
+              {renderField(f)}
+              {invalid && <small className="ed__error">שדה חובה — נא למלא</small>}
+              {f.hint && <small className="ed__hint">{f.hint}</small>}
+            </div>
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+
+  const gallerySection = (
+    <fieldset className="ed__section" key={GALLERY_STEP}>
+      <legend>מדיה (תמונות)</legend>
+      <ImageManager value={form.gallery || []} onChange={setGallery} folder={folder} max={20} />
+    </fieldset>
+  )
+
+  // מפת מקטע→תוכן (לפי שם המקטע, או GALLERY_STEP לגלריה)
+  const sectionsByName = {}
+  schema.forEach((sec) => { sectionsByName[sec.section] = renderSection(sec) })
+  sectionsByName[GALLERY_STEP] = gallerySection
+
+  const header = (
+    <div className="ed__top">
+      <div className="ed__heading">
+        <h3 className="ed__title">{title}</h3>
+        <StatusPill status={status} />
+      </div>
+      <div className="ed__actions">
+        {previewUrl && (
+          <a className="ed__preview" href={previewUrl} target="_blank" rel="noopener noreferrer" title="צפייה בדף הציבורי">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>
+            צפייה בדף
+          </a>
+        )}
+        {onArchive && <button type="button" className="ed__archive" onClick={onArchive}>העברה לארכיון</button>}
+        <button type="button" className="btn btn--primary ed__save" disabled={status === 'saved' || status === 'saving'} onClick={saveNow}>שמירה</button>
+        {onClose && (
+          <button type="button" className="ed__close" onClick={closeNow} aria-label="שמירה ויציאה" title="שמירה ויציאה">
+            <XIcon width={20} height={20} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+
+  // ---------- תצוגה רגילה (ללא אשף) — נכסים וכו' ----------
+  if (!steps || !steps.length) {
+    return (
+      <div className="ed">
+        {header}
+        {schema.map(renderSection)}
+        {gallerySection}
+        {envEdit && <ImageEditor src={envEdit.src} onApply={applyEnvEdit} onClose={() => setEnvEdit(null)} />}
+      </div>
+    )
+  }
+
+  // ---------- אשף רב-שלבי ----------
+  const clampIdx = Math.min(stepIdx, steps.length - 1)
+  const step = steps[clampIdx]
+  const isReview = step.review
+  const isLast = clampIdx === steps.length - 1
+  const goStep = (i) => setStepIdx(Math.max(0, Math.min(steps.length - 1, i)))
+
   return (
-    <div className="ed">
-      <div className="ed__top">
-        <div className="ed__heading">
-          <h3 className="ed__title">{title}</h3>
-          <StatusPill status={status} />
-        </div>
-        <div className="ed__actions">
-          {previewUrl && (
-            <a className="ed__preview" href={previewUrl} target="_blank" rel="noopener noreferrer" title="צפייה בדף הציבורי">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>
-              צפייה בדף
-            </a>
-          )}
-          {onArchive && <button type="button" className="ed__archive" onClick={onArchive}>העברה לארכיון</button>}
-          <button type="button" className="btn btn--primary ed__save" disabled={status === 'saved' || status === 'saving'} onClick={saveNow}>שמירה</button>
-          {onClose && (
-            <button type="button" className="ed__close" onClick={closeNow} aria-label="שמירה ויציאה" title="שמירה ויציאה">
-              <XIcon width={20} height={20} />
-            </button>
-          )}
-        </div>
+    <div className="ed ed--wizard">
+      {header}
+
+      {/* מחוון צעדים — לחיץ לקפיצה בין שלבים */}
+      <ol className="ed__steps" role="tablist" aria-label="שלבי עריכת הפרויקט">
+        {steps.map((s, i) => {
+          const done = i < clampIdx
+          const active = i === clampIdx
+          // חיווי "חסר" על שלב שמכיל שדות חובה ריקים
+          const stepMissing = (s.sections || []).some((name) =>
+            (schema.find((sec) => sec.section === name)?.fields || []).some((f) => f.required && missingKeys.has(f.key))
+          )
+          return (
+            <li key={s.label} className={`ed__step ${active ? 'ed__step--active' : ''} ${done ? 'ed__step--done' : ''}`}>
+              <button type="button" role="tab" aria-selected={active} className="ed__step-btn" onClick={() => goStep(i)}>
+                <span className="ed__step-num">{done ? '✓' : i + 1}</span>
+                <span className="ed__step-label">{s.label}</span>
+                {stepMissing && !s.review && <span className="ed__step-dot" title="יש שדות חובה חסרים" aria-label="חסר">!</span>}
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+
+      <div className="ed__step-body">
+        {isReview ? (
+          <div className="ed__review">
+            <fieldset className="ed__section ed__summary">
+              <legend>{missing.length ? 'מה חסר לפני פרסום' : 'הכול מוכן לפרסום'}</legend>
+              {missing.length ? (
+                <ul className="ed__missing">
+                  {missing.map((m) => <li key={m.key}>{m.label}</li>)}
+                </ul>
+              ) : (
+                <p className="ed__ok">כל שדות החובה מולאו. ניתן לפרסם את הפרויקט. ✓</p>
+              )}
+              <label className="ed__publish">
+                <span>מפורסם באתר</span>
+                <span className="ed__switch">
+                  <input type="checkbox" checked={!!form.is_published} disabled={missing.length > 0}
+                    onChange={(e) => setField('is_published', e.target.checked)} />
+                  <span />
+                </span>
+              </label>
+              {missing.length > 0 && <small className="ed__hint">יש להשלים את שדות החובה לפני פרסום.</small>}
+            </fieldset>
+
+            <fieldset className="ed__section ed__previewbox">
+              <legend>תצוגה מקדימה</legend>
+              <ProjectPreview form={form} />
+            </fieldset>
+          </div>
+        ) : (
+          (step.sections || []).map((name) => sectionsByName[name]).filter(Boolean)
+        )}
       </div>
 
-      {schema.map((sec) => (
-        <fieldset className="ed__section" key={sec.section}>
-          <legend>{sec.section}</legend>
-          <div className="ed__grid">
-            {sec.fields.map((f) => (
-              <div className={`ed__field ${['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords', 'videos', 'stat_cubes'].includes(f.type) ? 'ed__field--wide' : ''} ${f.type === 'bool' ? 'ed__field--bool' : ''}`} key={f.key}>
-                <label>{f.label}{f.required && <span className="ed__req">*</span>}</label>
-                {renderField(f)}
-                {f.hint && <small className="ed__hint">{f.hint}</small>}
-              </div>
-            ))}
-          </div>
-        </fieldset>
-      ))}
+      {/* ניווט בין שלבים */}
+      <div className="ed__nav">
+        <button type="button" className="ed__nav-btn" disabled={clampIdx === 0} onClick={() => goStep(clampIdx - 1)}>
+          → הקודם
+        </button>
+        <span className="ed__nav-count">שלב {clampIdx + 1} מתוך {steps.length}</span>
+        {!isLast && (
+          <button type="button" className="btn btn--primary ed__nav-btn ed__nav-next" onClick={() => goStep(clampIdx + 1)}>
+            הבא ←
+          </button>
+        )}
+      </div>
 
-      <fieldset className="ed__section">
-        <legend>מדיה (תמונות)</legend>
-        <ImageManager value={form.gallery || []} onChange={setGallery} folder={folder} max={20} />
-      </fieldset>
-
-      {/* עורך תמונת הסביבה — חיתוך + בחירת כיוון (לרוחב/לאורך) */}
       {envEdit && <ImageEditor src={envEdit.src} onApply={applyEnvEdit} onClose={() => setEnvEdit(null)} />}
     </div>
   )

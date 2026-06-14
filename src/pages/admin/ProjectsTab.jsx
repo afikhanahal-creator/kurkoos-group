@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import SortableList from './SortableList.jsx'
 import Editor from './Editor.jsx'
-import { projectSchema, propertySchema, newProjectDefaults, newPropertyDefaults, PROJECT_STATUS, PROPERTY_STATUS } from './schema.js'
+import { projectSchema, projectSteps, propertySchema, newProjectDefaults, newPropertyDefaults, PROJECT_STATUS, PROPERTY_STATUS } from './schema.js'
 import {
   listProjects, createProject, updateProject, archiveProject, deleteProject, reorderRows,
   listProperties, createProperty, updateProperty, archiveProperty,
@@ -150,6 +150,7 @@ export default function ProjectsTab() {
             <Editor
               key={selProject.id}
               schema={projectSchema}
+              steps={projectSteps}
               record={selProject}
               onSave={saveProject}
               folder={`projects/${selProject.slug || selProject.id}`}

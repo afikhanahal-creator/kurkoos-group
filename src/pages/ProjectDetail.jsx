@@ -490,11 +490,13 @@ export default function ProjectDetail() {
           if (!cur) return null
           return (
             <div className="pd-anchors__mobi">
-              <button type="button" className="pd-anchors__mobi-cur" onClick={() => goTo(cur.id)}>{L(cur.label)}</button>
+              {/* ב-RTL: האלמנט הראשון בימין, האחרון בשמאל. המילה המודגשת (הנוכחי)
+                  היא האחרונה → מופיעה בצד שמאל, כפי שביקש המשתמש. */}
               {nxt && <>
-                <span className="pd-anchors__mobi-sep" aria-hidden="true">›</span>
                 <button type="button" className="pd-anchors__mobi-next" onClick={() => goTo(nxt.id)}>{L(nxt.label)}</button>
+                <span className="pd-anchors__mobi-sep" aria-hidden="true">·</span>
               </>}
+              <button type="button" className="pd-anchors__mobi-cur" onClick={() => goTo(cur.id)}>{L(cur.label)}</button>
             </div>
           )
         })()}

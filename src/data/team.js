@@ -53,8 +53,8 @@ export const team = [
     name: { he: 'שלומי קורקוס', en: 'Shlomi Kurkoos' },
     role: { he: 'מנכ"ל ומייסד', en: 'CEO & Founder' },
     photo: '/AD2EB011-F33E-40FC-9639-627E92C2A4D7.jpeg',
-    imgPos: 'center 15%',   /* מיישר את ראשו לגובה יעקב ומוטי עם אותו headroom */
-    imgZoom: 1.1,    /* זום-אין עדין; transform-origin עליון שומר על גובה הראש */
+    imgPos: 'center 12%',   /* מקזז את דחיפת הזום כלפי מטה — הראש נשאר בגובה יעקב ומוטי */
+    imgZoom: 1.2,    /* עוד זום-אין; transform-origin עליון שומר על גובה הראש */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
       he: 'מוביל את הקבוצה מאז הקמתה עם חזון של בנייה איכותית ושקיפות מלאה מול הלקוח.',

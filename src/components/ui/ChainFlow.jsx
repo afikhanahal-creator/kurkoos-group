@@ -3,21 +3,33 @@ import './ChainFlow.css'
 
 /* ============================================================
    ChainFlow — באנר אנימציה לסקשן "שרשרת הערך".
-   מציג את תמונת השרשרת (public/value-chain.png) ומוסיף עליה
-   אנימציית-וב פרימיום: גל-אור מבריק שעובר לאורך השרשרת מימין
-   לשמאל בלולאה חלקה ("shine transfer"), פלוס נדנוד עדין.
-   הרקע נשאר סטטי. מכבד prefers-reduced-motion.
-   ניתן להעביר src אחר כ-prop.
+   מנגן את סרטון השרשרת המונפש (public/value-chain.mp4) בלולאה
+   רציפה, ללא קול, autoplay — עם תמונת ה-poster כ-fallback בזמן
+   טעינה / אם הווידאו לא נתמך. מכבד prefers-reduced-motion:
+   במצב זה מוצגת התמונה הסטטית בלבד.
    ============================================================ */
-export default function ChainFlow({ src = '/value-chain.png', alt }) {
+export default function ChainFlow({
+  src = '/value-chain.mp4',
+  poster = '/value-chain.png',
+  alt,
+}) {
   const { t } = useI18n()
+  const label = alt || t('valueChain.title')
   return (
-    <figure className="chainflow" aria-label={alt || t('valueChain.title')}>
-      <img className="chainflow__img" src={src} alt={alt || t('valueChain.title')} loading="lazy" decoding="async" />
-      {/* גל-אור לבן שנע לאורך השרשרת (shine transfer) */}
-      <span className="chainflow__shine" aria-hidden="true" />
-      {/* הדגשת אלמנטים אדומים — סוויפ אדום עדין מסונכרן */}
-      <span className="chainflow__glow" aria-hidden="true" />
+    <figure className="chainflow" aria-label={label}>
+      <video
+        className="chainflow__video"
+        src={src}
+        poster={poster}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={label}
+      />
+      {/* fallback סטטי כשהווידאו מושבת (reduced-motion) */}
+      <img className="chainflow__fallback" src={poster} alt={label} loading="lazy" decoding="async" />
     </figure>
   )
 }

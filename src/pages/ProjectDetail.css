@@ -408,6 +408,19 @@
 .pd-split--reverse .pd-split__media .smart-image-placeholder {
   border-radius: var(--radius-lg);
 }
+
+/* ===== בקרת פריסה לתמונה הראשית ("על הפרויקט") — נשלט מה-CMS ===== */
+/* פינות: עגולות מול ישרות */
+.pd-split--square .pd-split-card { border-radius: 0; }
+.pd-split--rounded .pd-split__media,
+.pd-split--rounded .pd-split__media img,
+.pd-split--rounded .pd-split__media .smart-image-placeholder { border-radius: var(--radius-lg); }
+
+/* מרווח: צמוד לטקסט (תדהר) מול מרווח אוויר בין התמונה לטקסט */
+.pd-split--spaced .pd-split__grid { gap: clamp(1.5rem, 3.5vw, 3.5rem); }
+.pd-split--spaced .pd-split-card { background: transparent; box-shadow: none; overflow: visible; }
+.pd-split--spaced .pd-split__body { padding-inline: 0; }
+.pd-split--spaced.pd-split--rounded .pd-split__media { box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.28); }
 .pd-split__body .eyebrow { margin-bottom: 0.6rem; }
 .pd-prose { font-size: 1.1rem; line-height: 1.75; color: var(--color-text-soft); margin-bottom: 1.5rem; }
 .pd-features { display: flex; flex-direction: column; gap: 0.7rem; margin: 0 0 2rem; }

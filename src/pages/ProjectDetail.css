@@ -394,7 +394,7 @@
   padding: clamp(1.6rem, 3.2vw, 3.4rem);
 }
 .pd-split__media img,
-.pd-split__media .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; }
+.pd-split__media .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg); }
 .pd-split__body .eyebrow { margin-bottom: 0.6rem; }
 .pd-prose { font-size: 1.1rem; line-height: 1.75; color: var(--color-text-soft); margin-bottom: 1.5rem; }
 .pd-features { display: flex; flex-direction: column; gap: 0.7rem; margin: 0 0 2rem; }
@@ -804,7 +804,7 @@
 .btn.pd-contact__submit {
   align-self: center;        /* ממורכז בדסקטופ */
   margin-top: 0.9rem;
-  font-size: 1.3rem;         /* גדול ב-30% (בסיס .btn = 1rem; padding ב-em גדל יחד) */
+  font-size: 1.04rem;        /* הוקטן ב-20% בדסקטופ (padding ב-em מתכווץ יחד) */
 }
 
 .pd-contact__call {

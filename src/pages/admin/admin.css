@@ -1381,3 +1381,7 @@
   .nlt__tr { grid-template-columns: 1fr 40px; }
   .nlt__tr > :nth-child(2), .nlt__tr > :nth-child(3) { display: none; }
 }
+
+/* פעולות תמונת הסביבה — העלאה + עריכה/כיוון זו לצד זו */
+.ed__env-imgactions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ed__env-edit { cursor: pointer; }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import ImageManager from './ImageManager.jsx'
+import ImageEditor from './ImageEditor.jsx'
 import StatCubesField from './StatCubesField.jsx'
 import { uploadMedia, uploadVideoFile, hasCloudinary } from '../../lib/cms.js'
 import { toast } from '../../lib/toast.js'
@@ -51,6 +52,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const [form, setForm] = useState(record)
   const [status, setStatus] = useState('saved')
   const [vidUp, setVidUp] = useState(-1) // אינדקס סרטון שמתבצעת לו העלאה
+  const [envEdit, setEnvEdit] = useState(null) // עריכת תמונת הסביבה: { key, src }
   const timer = useRef()
 
   useEffect(() => {
@@ -118,6 +120,18 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     if (!file) return
     try { onUrl(await uploadMedia(file, `${folder}/${sub}`)) }
     catch (e) { toast.error('שגיאה בהעלאה: ' + (e.message || e)) }
+  }
+
+  // החלת עריכת תמונת הסביבה (חיתוך/כיוון לרוחב-לאורך) — מעלה את הקובץ ומעדכן
+  const applyEnvEdit = async (blob) => {
+    if (!envEdit) return
+    try {
+      const file = new File([blob], `env-${Date.now()}.png`, { type: 'image/png' })
+      const url = await uploadMedia(file, `${folder}/environment`)
+      setField(envEdit.key, { ...(form[envEdit.key] || {}), image: url })
+      setEnvEdit(null)
+      toast.success('התמונה עודכנה')
+    } catch (e) { toast.error('שגיאה בשמירת העריכה: ' + (e.message || e)) }
   }
 
   // העלאת קובץ וידאו (מהמחשב/נייד) — Cloudinary אם מוגדר, אחרת אחסון Supabase
@@ -237,10 +251,17 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           <textarea dir="rtl" rows={4} placeholder="טקסט על הסביבה" value={obj.text || ''} onChange={(e) => upd({ text: e.target.value })} />
           <div className="ed__env-img">
             {obj.image ? <img src={obj.image} alt="" /> : <span className="ed__dev-logo-empty">אין תמונה</span>}
-            <label className="ed__dev-upload">
-              {obj.image ? 'החלפת תמונה' : 'העלאת תמונה'}
-              <input type="file" accept="image/*" hidden onChange={(e) => uploadOne('environment', e.target.files[0], (url) => upd({ image: url }))} />
-            </label>
+            <div className="ed__env-imgactions">
+              <label className="ed__dev-upload">
+                {obj.image ? 'החלפת תמונה' : 'העלאת תמונה'}
+                <input type="file" accept="image/*" hidden onChange={(e) => uploadOne('environment', e.target.files[0], (url) => upd({ image: url }))} />
+              </label>
+              {obj.image && (
+                <button type="button" className="ed__dev-upload ed__env-edit" onClick={() => setEnvEdit({ key: f.key, src: obj.image })}>
+                  ✎ עריכה / חיתוך / כיוון
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )
@@ -409,6 +430,9 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
         <legend>מדיה (תמונות)</legend>
         <ImageManager value={form.gallery || []} onChange={setGallery} folder={folder} max={20} />
       </fieldset>
+
+      {/* עורך תמונת הסביבה — חיתוך + בחירת כיוון (לרוחב/לאורך) */}
+      {envEdit && <ImageEditor src={envEdit.src} onApply={applyEnvEdit} onClose={() => setEnvEdit(null)} />}
     </div>
   )
 }

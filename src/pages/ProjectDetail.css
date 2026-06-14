@@ -1090,7 +1090,7 @@
   .pd-contact__title { font-size: 1.5rem; }
   .pd-field input,
   .pd-field textarea { font-size: 0.95rem; padding: 0.78rem 0.95rem; }
-  .pd-contact__submit { width: 100%; min-width: 0; }
+  .pd-contact__submit { width: 100%; min-width: 0; font-size: 0.83rem; }
   .pd-gallery__item:first-child { grid-column: span 2; grid-row: span 1; }
   /* במובייל — בלי חצים; מחליפים תמונות בלחיצה/החלקה */
   .pd-lightbox__nav { display: none; }

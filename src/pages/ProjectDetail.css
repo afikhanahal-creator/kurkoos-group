@@ -384,7 +384,7 @@
   box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.26), 0 2px 8px rgba(7, 41, 58, 0.05);
 }
 .pd-split__media {
-  border-radius: var(--radius-lg);   /* פינות עגולות לתמונה (כמו הבאנר) */
+  border-radius: 0;      /* התמונה הראשית ("על הפרויקט") — ללא פינות עגולות */
   overflow: hidden;
   box-shadow: none;
   align-self: center;    /* ממורכזת אנכית לצד הטקסט — מתאימה לכל יחס */
@@ -400,6 +400,12 @@
   height: auto;
   display: block;
   object-fit: contain;
+  border-radius: 0;
+}
+/* מקטע "על הסביבה" (pd-split--reverse) — התמונה כן עם פינות עגולות */
+.pd-split--reverse .pd-split__media,
+.pd-split--reverse .pd-split__media img,
+.pd-split--reverse .pd-split__media .smart-image-placeholder {
   border-radius: var(--radius-lg);
 }
 .pd-split__body .eyebrow { margin-bottom: 0.6rem; }

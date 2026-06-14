@@ -1009,13 +1009,13 @@
 @media (max-width: 880px) {
   .pd-crumbbar { background: #fff; }
 }
-/* בר העוגנים במובייל — מציגים רק "הסביבה" ו"מפה" (--m), ממורכזים.
-   שאר המקטעים מוסתרים ב-CSS (בלי toggle בזמן ריצה → בלי ריצוד). */
+/* בר העוגנים במובייל — כל המקטעים מוצגים בשורה נגללת אופקית;
+   ההדגשה (bold) עוברת בין כולם בעת גלילה. */
 @media (max-width: 880px) {
   .pd-anchors__inner {
-    justify-content: center;
-    gap: 2.4rem;
-    overflow-x: visible;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    overflow-x: auto;
     padding-inline: var(--container-pad);
   }
   .pd-anchors__item {
@@ -1023,7 +1023,6 @@
     padding: 0.62rem 0.2rem;
     flex: 0 0 auto;
   }
-  .pd-anchors__item:not(.pd-anchors__item--m) { display: none; }
 }
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }

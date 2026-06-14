@@ -486,7 +486,7 @@ export default function ProjectDetail() {
           let idx = mobiNav.findIndex((s) => s.id === activeSection)
           if (idx < 0) idx = 0
           const cur = mobiNav[idx]
-          const nxt = mobiNav[idx + 1] || mobiNav[idx - 1]
+          const nxt = mobiNav[idx + 1]   // אין הבא (הסקשן האחרון) → מוצג לבד וממורכז
           if (!cur) return null
           return (
             <div className="pd-anchors__mobi">

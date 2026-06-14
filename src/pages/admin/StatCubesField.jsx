@@ -30,7 +30,7 @@ const XIcon = (p) => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>
 )
 
-const clampW = (v) => Math.max(0.6, Math.min(3.2, Math.round(v * 10) / 10))
+const clampW = (v) => Math.max(0.2, Math.min(5, Math.round(v * 10) / 10))
 
 /* קוביה בתצוגה החיה — היא עצמה ידית הגרירה (גוררים את מה שרואים) */
 function PvCube({ id, cube }) {

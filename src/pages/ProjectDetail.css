@@ -387,14 +387,21 @@
   border-radius: var(--radius-lg);   /* פינות עגולות לתמונה (כמו הבאנר) */
   overflow: hidden;
   box-shadow: none;
-  min-height: 340px;     /* התמונה ממלאת את גובה הכרטיס */
+  align-self: center;    /* ממורכזת אנכית לצד הטקסט — מתאימה לכל יחס */
 }
 .pd-split__body {
   align-self: center;
   padding: clamp(1.6rem, 3.2vw, 3.4rem);
 }
+/* גובה לפי היחס הטבעי של התמונה → תמונה לאורך (portrait) מוצגת במלואה ולא נחתכת */
 .pd-split__media img,
-.pd-split__media .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg); }
+.pd-split__media .smart-image-placeholder {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+}
 .pd-split__body .eyebrow { margin-bottom: 0.6rem; }
 .pd-prose { font-size: 1.1rem; line-height: 1.75; color: var(--color-text-soft); margin-bottom: 1.5rem; }
 .pd-features { display: flex; flex-direction: column; gap: 0.7rem; margin: 0 0 2rem; }

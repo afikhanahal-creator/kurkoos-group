@@ -110,13 +110,12 @@
   font-size: 1.05rem;
 }
 
-/* ---- תמונת שרשרת הערך (KURKOOS CHAIN) — רספונסיבית עם פינות עגולות ---- */
+/* ---- הדמיית וילה / שרטוט תלת-מימד ---- */
 .value-chain__art {
   display: block;
   width: 100%;
   height: auto;
   margin-top: 2.4rem;
-  border-radius: var(--radius-lg);
   filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.1));
 }
 .villa-blueprint .vb-bg { fill: color-mix(in srgb, var(--color-secondary) 4%, transparent); stroke: var(--color-border); stroke-width: 1; }

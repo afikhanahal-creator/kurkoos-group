@@ -75,12 +75,31 @@
 /* ספציפיות גבוהה (.contact .contact__panel ...) כדי לגבור על '.contact .eyebrow'
    (אדום) — על הפאנל הכהה צריך גוון בהיר וברור. */
 .contact .contact__panel .contact__eyebrow {
-  color: #e8795a;   /* אלמוגי עמוק — כהה יותר, יושב טבעי בפאלטת המותג וקריא על הרקע הכהה */
+  color: #ffd9cc;   /* אלמוגי בהיר — קריא על רקע ההדגשה הכהה */
   font-size: var(--fs-small);
   font-weight: 800;
   letter-spacing: 0.12em;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.7rem;
   opacity: 1;
+  width: fit-content;
+  /* הדגשה מאחורי הטקסט כדי שייקרא היטב, בגוון הפאלטה */
+  background: color-mix(in srgb, var(--color-accent) 38%, transparent);
+  padding: 0.34em 0.95em;
+  border-radius: var(--radius-pill);
+}
+/* דסקטופ — "בואו נדבר" וגוש הכותרת מיושרים לימין */
+@media (min-width: 901px) {
+  .contact .contact__panel .contact__eyebrow { justify-content: flex-start; margin-inline-start: 0; }
+  .contact__panel .contact__title,
+  .contact__panel .contact__choose { text-align: right; }
+  .contact__panel .contact__choose { margin-inline-start: 0; margin-inline-end: 0; }
+}
+/* מובייל — ממורכז */
+@media (max-width: 900px) {
+  .contact .contact__panel .contact__eyebrow { justify-content: center; margin-inline: auto; }
+  .contact__panel .contact__title,
+  .contact__panel .contact__choose { text-align: center; }
+  .contact__panel .contact__choose { margin-inline: auto; }
 }
 .contact__panel .contact__eyebrow::before {
   background: var(--color-accent);

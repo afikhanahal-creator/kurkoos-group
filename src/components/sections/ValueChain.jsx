@@ -5,7 +5,6 @@ import valueChain from '../../data/valueChain.js'
 import Reveal from '../ui/Reveal.jsx'
 import Icon from '../ui/Icon.jsx'
 import VillaBlueprint from '../ui/VillaBlueprint.jsx'
-import ChainFlow from '../ui/ChainFlow.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './ValueChain.css'
 
@@ -63,11 +62,6 @@ export default function ValueChain() {
               </div>
             )
           })}
-        </Reveal>
-
-        {/* באנר אנימציה — שרשרת הערך עם גל-אור נע (public/value-chain.png) */}
-        <Reveal className="value-chain__flow" variant="up" delay={0.15}>
-          <ChainFlow />
         </Reveal>
       </div>
     </section>

@@ -66,13 +66,17 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
     }
   }, [list.length, busy, reduce])
 
-  // ניווט אוטומטי — קלף מתחלף כל 3 שניות (גם הקלף הראשון זז רק אחרי 3 שניות)
+  // ניווט אוטומטי — הקלף הראשון מתחיל אחרי 4 שניות (זמן קריאה), ואז כל 3 שניות
   const advanceRef = useRef(advance)
   advanceRef.current = advance
   useEffect(() => {
     if (reduce || items.length <= 1) return
-    const id = setInterval(() => advanceRef.current(), 3000)
-    return () => clearInterval(id)
+    let interval
+    const start = setTimeout(() => {
+      advanceRef.current()
+      interval = setInterval(() => advanceRef.current(), 3000)
+    }, 4000)
+    return () => { clearTimeout(start); clearInterval(interval) }
   }, [reduce, items.length])
 
   // החלקה (swipe) שמאלה/ימינה → מעבר לקלף הבא

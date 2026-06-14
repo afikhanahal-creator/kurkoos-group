@@ -35,11 +35,38 @@ export default function BackgroundMedia({
 }) {
   const [loaded, setLoaded] = useState(false)
   const videoRef = useRef(null)
-  // מאלץ ניגון אוטומטי גם בדפדפנים שמתעלמים מ-autoPlay (דסקטופ ומובייל)
+  // מאלץ ניגון אוטומטי ושומר שהסרטון *תמיד* רץ — גם במובייל (iOS עוצר וידאו
+  // שיוצא מהמסך / במצב חיסכון). מנגן מחדש כשחוזר לתצוגה, אחרי גלילה/החזרת טאב,
+  // ואם מסיבה כלשהי הוא נעצר.
   useEffect(() => {
     const v = videoRef.current
-    if (v) { const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
-  }, [src])
+    if (!v || type !== 'video') return
+    // iOS דורש את הדגלים מוגדרים גם ב-JS כדי לאפשר autoplay מושתק
+    v.muted = true
+    v.defaultMuted = true
+    v.playsInline = true
+    const tryPlay = () => { const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
+    tryPlay()
+
+    // מנגן מחדש כשהסרטון חוזר להיות נראה על המסך
+    let io
+    if (typeof IntersectionObserver !== 'undefined') {
+      io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => { if (e.isIntersecting) tryPlay() }),
+        { threshold: 0.15 }
+      )
+      io.observe(v)
+    }
+    const onVisible = () => { if (!document.hidden) tryPlay() }
+    const onPause = () => { if (!v.ended) tryPlay() }
+    document.addEventListener('visibilitychange', onVisible)
+    v.addEventListener('pause', onPause)
+    return () => {
+      if (io) io.disconnect()
+      document.removeEventListener('visibilitychange', onVisible)
+      v.removeEventListener('pause', onPause)
+    }
+  }, [src, type])
   const showStill = type !== 'video' || (!forcePlay && prefersReducedMotion && poster)
 
   return (

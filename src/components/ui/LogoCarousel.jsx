@@ -26,18 +26,21 @@ export default function LogoCarousel({ logos = [], shuffle = false }) {
   return (
     <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">
       <div className="logo-marquee__track" style={{ '--marquee-duration': `${duration}s` }}>
-        {track.map((logo, i) => (
-          <div
-            className="logo-marquee__item"
-            key={`${logo.id ?? logo.name ?? 'logo'}-${i}`}
-            role="listitem"
-            aria-hidden={i >= list.length ? 'true' : undefined}
-          >
-            {logo.image_url
-              ? <img className="logo-marquee__img" src={logo.image_url} alt={logo.name || ''} loading="lazy" />
-              : <span className="logo-marquee__name">{logo.name}</span>}
-          </div>
-        ))}
+        {track.map((logo, i) => {
+          const src = logo.image_url || logo.logo || logo.image || logo.url
+          return (
+            <div
+              className="logo-marquee__item"
+              key={`${logo.id ?? logo.name ?? 'logo'}-${i}`}
+              role="listitem"
+              aria-hidden={i >= list.length ? 'true' : undefined}
+            >
+              {src
+                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="lazy" />
+                : <span className="logo-marquee__name">{logo.name}</span>}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

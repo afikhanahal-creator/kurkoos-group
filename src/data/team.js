@@ -35,6 +35,7 @@ export const team = [
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
     photo: '/6D41D358-693B-4F94-95D7-AFAEC6439126.png',
     imgZoom: 1.06,   /* זום-אין עדין — ממש טיפה פנימה */
+    imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
       he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
       en: 'Manages field teams and ensures execution quality and safety at every construction stage.',
@@ -47,6 +48,7 @@ export const team = [
     role: { he: 'מנהל פרויקטים', en: 'Project Manager' },
     photo: '/B59B1CBE-8EFB-449E-B0F3-359571EF70D9.png',
     imgPos: 'center 22%',   /* מעלה את התמונה — פחות headroom */
+    imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
       he: 'מלווה את הפרויקטים מהתכנון ועד המסירה, בתיאום מול כל הגורמים.',
       en: 'Accompanies projects from planning to handover, coordinating with all stakeholders.',

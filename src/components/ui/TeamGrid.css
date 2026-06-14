@@ -78,13 +78,18 @@
   object-fit: cover;
   object-position: top;
   display: block;
-  filter: grayscale(0);   /* צבע מקורי כברירת מחדל */
+  /* צבע מקורי כברירת מחדל. --img-bright מבהיר דמויות נבחרות (יעקב/מוטי) */
+  filter: grayscale(0) brightness(var(--img-bright, 1));
   transform: scale(var(--img-zoom, 1));   /* זום-אין אישי (אופציונלי, פר-איש) */
   transition: filter 0.5s var(--ease-out), transform 0.6s var(--ease-out);
 }
-.flip-card:hover .flip-card-img { transform: scale(calc(var(--img-zoom, 1) * 1.04)); }
-/* בלחיצה — התמונה הופכת לשחור-לבן בזמן שהכרטיס מסתובב לצד האחורי */
-.flip-card.is-active .flip-card-img { filter: grayscale(1); }
+/* ב-hover (דסקטופ) או במגע במובייל — התמונה הופכת לשחור-לבן (הבהירות נשמרת) */
+.flip-card:hover .flip-card-img {
+  filter: grayscale(1) brightness(var(--img-bright, 1));
+  transform: scale(calc(var(--img-zoom, 1) * 1.04));
+}
+/* בלחיצה הכרטיס מסתובב לצד האחורי — והתמונה נשארת שחור-לבן בזמן הסיבוב */
+.flip-card.is-active .flip-card-img { filter: grayscale(1) brightness(var(--img-bright, 1)); }
 
 .flip-card-caption { padding: 0.75rem 0.85rem 0.9rem; background: #fff; }
 .flip-card-name {

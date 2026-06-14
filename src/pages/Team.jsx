@@ -17,6 +17,7 @@ export default function Team() {
     image: m.photo,
     imgPos: m.imgPos,
     imgZoom: m.imgZoom,
+    imgBright: m.imgBright,
     link: m.linkedin,
   }))
 

@@ -34,6 +34,7 @@ export const team = [
     name: { he: 'מוטי בן עמי', en: 'Moti Ben Ami' },
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
     photo: '/6D41D358-693B-4F94-95D7-AFAEC6439126.png',
+    imgPos: '60% top',   /* מזיז את הדמות טיפה שמאלה (מוקד אופקי ימינה יותר) */
     imgZoom: 1.14,   /* זום-אין נוסף כדי שהדמות תהיה ממורכזת */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {

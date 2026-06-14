@@ -1009,21 +1009,21 @@
 @media (max-width: 880px) {
   .pd-crumbbar { background: #fff; }
 }
-/* בר העוגנים במובייל — מציגים רק "הסביבה" ו"מפה" (--m), ממורכזים.
-   ההדגשה (bold) מתחלפת ביניהם כשגוללים. שאר המקטעים מוסתרים ב-CSS. */
+/* בר העוגנים במובייל — כל המקטעים בשורה נגללת; הפעיל נגלל למרכז ומודגש.
+   הבר צר אז רואים ~2 בכל רגע, וה-bold "זז" עם הגלילה. */
 @media (max-width: 880px) {
   .pd-anchors__inner {
-    justify-content: center;
-    gap: 2.4rem;
-    overflow-x: visible;
-    padding-inline: var(--container-pad);
+    justify-content: flex-start;
+    gap: 1.6rem;
+    overflow-x: auto;
+    padding-inline: 50%;   /* ריפוד חצי-רוחב → הפריט הפעיל יכול להגיע למרכז ממש */
+    scroll-behavior: auto;
   }
   .pd-anchors__item {
     font-size: 0.95rem;
     padding: 0.62rem 0.2rem;
     flex: 0 0 auto;
   }
-  .pd-anchors__item:not(.pd-anchors__item--m) { display: none; }
 }
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }

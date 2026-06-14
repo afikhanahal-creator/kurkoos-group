@@ -90,6 +90,7 @@
   position: relative;
   z-index: 1;
   object-fit: contain;
+  transform-origin: center center;   /* הזום-אאוט מתכווץ למרכז (לא לראש) */
 }
 .flip-card-img {
   width: 100%;

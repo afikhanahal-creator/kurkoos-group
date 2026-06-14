@@ -55,8 +55,11 @@
 }
 
 @media (max-width: 600px) {
-  .page-header .breadcrumbs { padding-block: 0 1.2rem; }
-  .page-header__lead { margin-top: 0.85rem; }
+  /* גובה נמוך יותר לחלק הכחול במובייל — שייראו הכרטיסיות והחלק הלבן מיד */
+  .page-header { padding-block: 1.5rem 1.7rem; }
+  .page-header .breadcrumbs { padding-block: 0 1rem; }
+  .page-header__title { margin-top: 0.4rem; }
+  .page-header__lead { margin-top: 0.6rem; }
 
   /* מובייל — מרכוז הכותרת, התיאור, התווית וסרגל הניווט (כמו בעמודי החטיבות) */
   .page-header__title { text-align: center; }

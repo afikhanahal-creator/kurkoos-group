@@ -22,7 +22,7 @@ export default function Team() {
 
   return (
     <>
-      <PageHeader eyebrow={t('team.eyebrow')} title={t('team.title')} lead={t('team.lead')} crumbs={[{ label: t('nav.about'), to: '/about' }, { label: t('team.title') }]} />
+      <PageHeader title={t('team.title')} lead={t('team.lead')} crumbs={[{ label: t('nav.about'), to: '/about' }, { label: t('team.title') }]} />
 
       <section className="section team-page">
         <div className="container">

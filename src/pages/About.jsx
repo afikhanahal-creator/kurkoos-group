@@ -22,7 +22,7 @@ export default function About() {
           'החזון שלנו הוא להוביל סטנדרט חדש של איכות מגורים, כזה המשלב תכנון חכם, עיצוב מוקפד, מפרט עשיר וביצוע ברמה הגבוהה ביותר. לא רק לבנות בתים, אלא ליצור סביבות מגורים שמעניקות ערך אמיתי לדיירים ומשביחות את איכות חייהם לאורך שנים.',
           'גם לאחר האכלוס המחויבות שלנו אינה מסתיימת. אנו ממשיכים לעמוד לצד לקוחותינו באחריות מלאה, מתוך הבנה שבניית אמון חשובה לא פחות מבניית בית.',
         ],
-        tagline: 'קורקוס גרופ. יוזמים, בונים ומלווים מתוך אחריות, מקצועיות ותשוקה למצוינות.',
+        tagline: 'קורקוס גרופ. יוזמים, בונים ומלווים מתוך אחריות, מקצועיות ותשוקה למצוינות, ומאמינים בראש ובראשונה במצוות יישוב ארץ ישראל.',
       }
     : {
         eyebrow: 'Our vision',
@@ -35,7 +35,7 @@ export default function About() {
           'Our vision is to lead a new standard of residential quality, one that combines smart planning, meticulous design, a rich specification and execution at the highest level. Not merely to build houses, but to create living environments that deliver real value to residents and enhance their quality of life for years to come.',
           'Even after move in, our commitment does not end. We continue to stand by our clients with full responsibility, understanding that building trust matters no less than building a home.',
         ],
-        tagline: 'Kurkoos Group. Initiating, building and accompanying with responsibility, professionalism and a passion for excellence.',
+        tagline: 'Kurkoos Group. Initiating, building and accompanying with responsibility, professionalism and a passion for excellence, and believing first and foremost in the mitzvah of settling the Land of Israel.',
       }
 
   return (

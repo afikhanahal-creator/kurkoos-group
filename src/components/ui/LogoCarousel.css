@@ -1,70 +1,73 @@
-.logo-carousel {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: clamp(2rem, 7vw, 6rem);
-  perspective: 700px;
-}
-
-.logo-carousel__col {
+/* ============================================================
+   סרט לוגואים רץ בלולאה (marquee) — כל הלוגואים בגודל אחיד.
+   ============================================================ */
+.logo-marquee {
   position: relative;
-  height: 76px;
-  width: clamp(170px, 32vw, 300px);   /* רחב מספיק שגם לוגו לרוחב יישאר באותו גובה ולא יתכווץ */
+  width: 100%;
   overflow: hidden;
-  transform-style: preserve-3d;
+  /* דהייה עדינה בשני הקצוות כדי שהכניסה/יציאה תהיה חלקה */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 
-.logo-carousel__logo {
-  position: absolute;
-  inset: 0;
+.logo-marquee__track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  direction: ltr;   /* כיוון קבוע כדי שלולאת ה-translateX תהיה חלקה ב-RTL */
+  animation: logo-marquee var(--marquee-duration, 40s) linear infinite;
+  will-change: transform;
+}
+.logo-marquee:hover .logo-marquee__track { animation-play-state: paused; }
+
+@keyframes logo-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* תיבה זהה לכל לוגו → גודל אחיד מובטח */
+.logo-marquee__item {
+  flex: 0 0 auto;
+  height: 64px;
+  width: clamp(120px, 14vw, 168px);
+  margin-inline-end: clamp(2rem, 5vw, 4.5rem);   /* מרווח אחיד (כולל בקצה) → לולאה מושלמת */
   display: grid;
   place-items: center;
-  text-align: center;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: clamp(1.2rem, 2.5vw, 1.85rem);
-  letter-spacing: 0.01em;
-  line-height: 1.1;
-  color: var(--color-primary-700);
-  opacity: 0.5;
-  white-space: nowrap;
-  backface-visibility: hidden;
-  transition: opacity var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
 }
 
-.logo-carousel__img {
-  /* תיבה אחידה לכל הלוגואים — אותו "מעטפת" מקסימלית (גובה ורוחב), object-fit contain.
-     כך אף לוגו לא גדול מאחר; לרוחב/מרובע — כולם נכנסים לאותה תיבה זהה. */
-  width: auto;
-  height: auto;
-  max-height: 46px;
-  max-width: 150px;
+.logo-marquee__img {
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
-  /* בצבע מלא כברירת מחדל; הופך לשחור-לבן בריחוף */
-  filter: none;
+  filter: none;            /* צבע מלא כברירת מחדל */
   opacity: 1;
   transition: filter var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
 }
-.logo-carousel__col:hover .logo-carousel__logo {
-  opacity: 1;
-  color: var(--color-secondary);
-}
-.logo-carousel__col:hover .logo-carousel__img { filter: grayscale(1); opacity: 0.92; }
+.logo-marquee__item:hover .logo-marquee__img { filter: grayscale(1); opacity: 0.9; }
 
-/* מובייל — לוגואים גדולים ב-~20% כדי שיהיו ברורים יותר */
+.logo-marquee__name {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  letter-spacing: 0.01em;
+  color: var(--color-primary-700);
+  white-space: nowrap;
+}
+
+/* מובייל — תיבה מעט קטנה יותר */
 @media (max-width: 768px) {
-  .logo-carousel__col { height: 84px; width: clamp(150px, 40vw, 240px); }
-  .logo-carousel__img { max-height: 67px; }
-  .logo-carousel__logo { font-size: 1.5rem; }
+  .logo-marquee__item { height: 56px; width: clamp(104px, 30vw, 150px); margin-inline-end: clamp(1.6rem, 8vw, 3rem); }
 }
 
-@media (max-width: 420px) {
-  .logo-carousel__col { height: 72px; }
-  .logo-carousel__img { max-height: 62px; }
-  .logo-carousel__logo { font-size: 1.32rem; }
-}
-
-/* דסקטופ — מגדילים את הלוגואים ב-3px (46→49) לבקשת המשתמש; מובייל נשאר גדול יותר */
-@media (min-width: 769px) {
-  .logo-carousel__img { max-height: 49px; }
+/* נגישות — בלי תנועה: מציגים את כל הלוגואים בשורות סטטיות וממורכזות */
+@media (prefers-reduced-motion: reduce) {
+  .logo-marquee { -webkit-mask-image: none; mask-image: none; }
+  .logo-marquee__track {
+    animation: none;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem 2rem;
+  }
+  .logo-marquee__item { margin-inline-end: 0; }
 }

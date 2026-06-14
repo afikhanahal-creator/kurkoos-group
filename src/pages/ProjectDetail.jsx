@@ -156,9 +156,6 @@ export default function ProjectDetail() {
   const galTouchX = useRef(null)   // נקודת התחלה להחלקה (swipe) בגלריה
   const galSwiped = useRef(false)  // האם בוצעה החלקה — כדי לא לפתוח לייטבוקס בטעות
   const [activeSection, setActiveSection] = useState('project')
-  const [mobiOffset, setMobiOffset] = useState(0)   // הזחה (transform) לחלון הנע במובייל
-  const mobiVpRef = useRef(null)
-  const mobiTrackRef = useRef(null)
   const [lightbox, setLightbox] = useState(null) // { images, index }
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', consent: false })
   const [errors, setErrors] = useState({})
@@ -197,19 +194,8 @@ export default function ProjectDetail() {
     }
   }, [slug, cms, cmsLoaded])
 
-  // חלון נע במובייל — ממרכז את הסקשן הפעיל ע"י transform (לא scrollLeft).
-  // רץ רק כשהסקשן מתחלף, ה-transform מונפש ב-CSS (GPU) → חלק, בלי ריצוד.
-  useEffect(() => {
-    const vp = mobiVpRef.current
-    const track = mobiTrackRef.current
-    if (!vp || !track) return
-    const item = track.querySelector('.pd-anchors__mobi-item.is-active')
-    if (!item) return
-    const vpRect = vp.getBoundingClientRect()
-    const itemRect = item.getBoundingClientRect()
-    const delta = (vpRect.left + vpRect.width / 2) - (itemRect.left + itemRect.width / 2)
-    if (Math.abs(delta) > 1) setMobiOffset((prev) => prev + delta)
-  }, [activeSection])
+  // אין גלילה/transform על בר העוגנים. במובייל מוצג אינדיקטור 2-שמות פשוט
+  // (נוכחי מודגש + הבא) שנגזר ישירות מ-activeSection — מתחלף בגלילה, בלי ריצוד.
 
   // שכבת-על מה-CMS (אם מחובר) — מעדכן שדות בסיסיים מעל הנתון המקומי
   useEffect(() => {
@@ -495,22 +481,23 @@ export default function ProjectDetail() {
           ))}
         </div>
 
-        {/* מובייל — חלון נע: כל השמות בשורה, הנוכחי ממורכז ומודגש. נגלל בחלקות
-            עם transform (לא scrollLeft) → רואים את הסקשנים הבאים (מפה, גלריה...) בלי ריצוד. */}
-        <div className="pd-anchors__mobi" ref={mobiVpRef}>
-          <div className="pd-anchors__mobi-track" ref={mobiTrackRef} style={{ transform: `translateX(${mobiOffset}px)` }}>
-            {mobiNav.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                className={`pd-anchors__mobi-item ${activeSection === s.id ? 'is-active' : ''}`}
-                onClick={() => goTo(s.id)}
-              >
-                {L(s.label)}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* מובייל — 2 שמות במרכז: הסקשן הנוכחי (מודגש) + הבא (בהיר). מתחלף בגלילה. */}
+        {(() => {
+          let idx = mobiNav.findIndex((s) => s.id === activeSection)
+          if (idx < 0) idx = 0
+          const cur = mobiNav[idx]
+          const nxt = mobiNav[idx + 1] || mobiNav[idx - 1]
+          if (!cur) return null
+          return (
+            <div className="pd-anchors__mobi">
+              <button type="button" className="pd-anchors__mobi-cur" onClick={() => goTo(cur.id)}>{L(cur.label)}</button>
+              {nxt && <>
+                <span className="pd-anchors__mobi-sep" aria-hidden="true">›</span>
+                <button type="button" className="pd-anchors__mobi-next" onClick={() => goTo(nxt.id)}>{L(nxt.label)}</button>
+              </>}
+            </div>
+          )
+        })()}
       </nav>
 
       {/* ===== הפרויקט ===== */}

@@ -492,10 +492,10 @@
     align-items: center;
     justify-content: center;
     white-space: nowrap;
-    padding: 0.6em 1.3em;
-    font-size: 0.82rem;
+    padding: 0.6em 1.3em;       /* ב-em → מתכווץ יחד עם הפונט */
+    font-size: 0.57rem;          /* הוקטן ב-30% בדסקטופ (0.82 → 0.57) */
     font-weight: 700;
-    min-height: 38px;
+    min-height: 27px;            /* הוקטן ב-30% (38 → 27) */
     border-radius: var(--radius-pill);
     background: var(--color-accent-500);
     color: #fff;

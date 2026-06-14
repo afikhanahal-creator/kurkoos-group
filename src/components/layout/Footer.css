@@ -124,7 +124,10 @@
   .footer__brand { grid-column: 1 / -1; }
   /* שתי העמודות ממורכזות בכל המסכים הקטנים (לא רק מתחת ל-560) */
   .footer__col { align-items: center; text-align: center; }
-  .footer__heading { text-align: center; }
+  .footer__heading { text-align: center; width: 100%; }
+  /* גם תוכן השורות (קישורים / שורות יצירת קשר) ממורכז */
+  .footer__col a,
+  .footer__contact { justify-content: center; text-align: center; width: 100%; }
 }
 @media (max-width: 560px) {
   /* פוטר מובייל — padding מצומצם */

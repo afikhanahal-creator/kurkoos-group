@@ -251,6 +251,15 @@ p, .section-lead { text-wrap: pretty; }
 .btn svg,
 .btn [data-icon] { width: 1.15em; height: 1.15em; flex-shrink: 0; }
 .btn:active { transform: scale(0.98); }
+/* אפקט אחיד לכל הכפתורים — בלחיצה הכפתור הופך ללבן עם טקסט כחול מהפאלטה.
+   ספציפיות (0,3,0) כדי לגבור על :active של הווריאנטים (primary/dark וכו'). */
+.btn:active:not(:disabled):not([aria-disabled='true']) {
+  background: #fff;
+  color: var(--color-secondary);
+  border-color: #fff;
+  box-shadow: none;
+}
+.btn:active:not(:disabled) svg { color: var(--color-secondary); }
 .btn:focus-visible {
   outline: 3px solid var(--color-primary-500);
   outline-offset: 2px;

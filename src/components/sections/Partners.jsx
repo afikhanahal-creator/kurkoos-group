@@ -29,11 +29,14 @@ export default function Partners() {
         // מתג ראשי: כבוי במפורש (false/0) → מסתירים את כל הרצועה
         const en = settings?.logos_enabled
         if (en === false || en === 'false' || en === 0 || en === '0') { setHidden(true); return }
-        if (!rows || !rows.length) return
         const v = settings?.logo_shuffle
         const on = v === true || v === 'true' || v === 1 || v === '1'
         setShuffleOn(on)
-        setLogos(on ? shuffleArr(rows) : rows)
+        // משתמשים בשורות מ-Supabase רק אם יש בהן לוגואים עם תמונה.
+        // אחרת — נשארים עם הלוגואים מ-GitHub (public/logos) → הרצועה אף פעם לא מתרוקנת.
+        const withImg = (rows || []).filter((r) => r.image_url)
+        const base = withImg.length ? withImg : githubLogos
+        setLogos(on ? shuffleArr(base) : base)
       })
       .catch(() => {})
     return () => { alive = false }

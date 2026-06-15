@@ -38,6 +38,8 @@
   object-fit: contain;
   display: block;
 }
+/* לוגו ריבועי (עם שוליים שקופים פנימיים) — גבוה יותר כדי שהתוכן הנראה יהיה באותו גודל */
+.logo-marquee__img.is-square { height: 66px; }
 
 .logo-marquee__name {
   font-family: var(--font-heading);
@@ -48,6 +50,7 @@
 }
 
 @media (max-width: 600px) {
-  .logo-marquee__item { height: 60px; margin-inline-end: clamp(1.5rem, 9vw, 2.6rem); }
+  .logo-marquee__item { height: 64px; margin-inline-end: clamp(1.5rem, 9vw, 2.6rem); }
   .logo-marquee__img { height: 44px; max-width: 150px; }
+  .logo-marquee__img.is-square { height: 60px; }
 }

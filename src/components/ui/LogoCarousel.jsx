@@ -72,7 +72,19 @@ export default function LogoCarousel({ logos = [] }) {
               aria-hidden={i >= list.length ? 'true' : undefined}
             >
               {src
-                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="eager" decoding="async" />
+                ? <img
+                    className="logo-marquee__img"
+                    src={src}
+                    alt={logo.name || ''}
+                    loading="eager"
+                    decoding="async"
+                    onLoad={(e) => {
+                      const im = e.currentTarget
+                      const r = im.naturalWidth / im.naturalHeight
+                      // לוגו ריבועי = בד"כ עם שוליים שקופים פנימיים → מגדילים כדי שייראה באותו גודל
+                      if (r >= 0.82 && r <= 1.25) im.classList.add('is-square')
+                    }}
+                  />
                 : <span className="logo-marquee__name">{logo.name}</span>}
             </div>
           )

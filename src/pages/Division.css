@@ -185,6 +185,10 @@
   .ah-site__frame { width: 100%; }
   .ah-site__screen { max-height: clamp(320px, 96vw, 520px); }
   .ah-site__frame:hover { transform: scale(1.005); }   /* בלי הטיית 3D במגע */
+  .ah-site__enter { display: none; }   /* מסירים את הכפתור הפנימי במובייל */
+  /* מקטינים את הכפתור התחתון ב-~20% */
+  .ah-site__btn { padding: 0.68rem 1.6rem; font-size: 0.82rem; }
+  .ah-site__btn svg { width: 15px; height: 15px; }
 }
 
 /* לוגו קורקוס בעמוד הייזום — הקובץ שחור על רקע לבן; invert הופך שחור→לבן,

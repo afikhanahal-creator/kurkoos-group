@@ -1,0 +1,66 @@
+/* ============================================================
+   CircularGallery — גלריית מורפינג עיגול→ריבוע (GSAP).
+   ============================================================ */
+.cgal { display: flex; justify-content: center; width: 100%; }
+
+.cgal__stage {
+  position: relative;
+  width: min(80vmin, 600px);
+  height: min(80vmin, 600px);
+  overflow: hidden;
+  border-radius: 20px;
+  background: #0c1722;
+  box-shadow:
+    0 2.8px 2.2px rgba(0, 0, 0, 0.02),
+    0 12.5px 10px rgba(0, 0, 0, 0.05),
+    0 41.8px 33.4px rgba(0, 0, 0, 0.08),
+    0 100px 80px rgba(0, 0, 0, 0.12);
+}
+
+.cgal__layer { position: absolute; inset: 0; }
+.cgal__svg { width: 100%; height: 100%; display: block; }
+
+.cgal__tabs { position: absolute; inset: 0; z-index: 100; pointer-events: none; }
+.cgal__tab { pointer-events: auto; }
+.cgal__tab image { pointer-events: none; }
+.cgal__tab-hit {
+  cursor: pointer;
+  fill: rgba(255, 255, 255, 0);
+  stroke: rgba(255, 255, 255, 0.7);
+  transition: stroke 0.25s;
+}
+.cgal__tab-hit:hover { stroke: rgba(255, 255, 255, 1); }
+
+.cgal__img { pointer-events: none; }
+/* דסקטופ — מבהירים את התמונות ב-20% (הרגישו כהות) */
+@media (min-width: 861px) {
+  .cgal__img { filter: brightness(1.2); }
+}
+
+/* חצי ניווט */
+.cgal__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 101;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a2b38;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+.cgal__nav:hover { transform: translateY(-50%) scale(1.1); background: #fff; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24); }
+.cgal__nav:active { transform: translateY(-50%) scale(0.95); }
+.cgal__nav:disabled { opacity: 0.4; cursor: not-allowed; }
+.cgal__nav--prev { left: 12px; }
+.cgal__nav--next { right: 12px; }
+
+@media (max-width: 520px) {
+  .cgal__nav { width: 42px; height: 42px; }
+}

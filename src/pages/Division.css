@@ -260,9 +260,14 @@
   .division-showcase { margin-top: -28px; }
 }
 
-/* בעמוד הביצוע: באנר נמוך יותר → הכותרת לא נתקעת למטה והסרטון מציץ במסך הראשון */
+/* בעמוד הביצוע: גובה מספיק כך שהלוגו + הכותרת "ביצוע ובנייה" ייכנסו במלואם */
 .division--execution .division-hero {
-  min-height: clamp(380px, 50vh, 480px);
+  min-height: clamp(440px, 58vh, 560px);
+}
+/* לוגו ראיתה — מוקטן כך שהכותרת מתחתיו תיראה בדסקטופ ולא תיחתך */
+.division--execution .division-hero__logo {
+  width: clamp(150px, 16vw, 210px);
+  margin-bottom: clamp(0.6rem, 1.6vw, 1rem);
 }
 /* מורידים מעט את תמונת הפועל גם בדסקטופ כדי שייראה במלואו ולא חתוך */
 @media (min-width: 981px) {

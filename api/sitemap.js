@@ -8,7 +8,7 @@
 // משתני סביבה: VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY (קריאה ציבורית, RLS).
 // ============================================================
 
-const SITE = 'https://www.kurkoos-group.co.il'
+const SITE = 'https://kurkoos-groupmd.vercel.app'
 
 // עמודים קבועים (תואם ל-Routes ב-App.jsx)
 const STATIC = [

@@ -8,7 +8,7 @@ export const site = {
   logoText: { he: 'קורקוס', en: 'KURKOOS' },
   /* כתובת האתר בפרודקשן — משמשת ל-URLs מוחלטים ב-structured data (SEO).
      עדכן אם הדומיין שונה. */
-  url: 'https://www.kurkoos-group.co.il',
+  url: 'https://kurkoos-groupmd.vercel.app',
 
   contact: {
     phone: '03-0000000',

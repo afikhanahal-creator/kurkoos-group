@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import './LogoCarousel.css'
 
 // ערבוב Fisher-Yates — מחזיר עותק מעורבב
@@ -9,33 +8,20 @@ const shuffleArr = (arr) => {
 }
 
 /* ============================================================
-   LogoCarousel — סרט לוגואים רץ בלולאה אינסופית (marquee).
-   מציג את *כל* הלוגואים, כולם בדיוק באותו גודל (תיבה אחידה +
-   object-fit: contain), וזורם ברצף חלק. עוצר בריחוף.
-   logos: [{ id, name, image_url }]
+   LogoCarousel — סרט לוגואים רץ בלולאה (marquee), פשוט וחסין:
+   מכפילים את הרשימה פעמיים ומריצים translateX 0 → -50%. כל לוגו
+   בתוך כרטיס אחיד (object-fit: contain) → גודל זהה, אף פעם לא חתוך.
+   בלי סינון/חישובים מורכבים — מציג תמיד את כל הלוגואים.
    ============================================================ */
 const srcOf = (l) => l.image_url || l.logo || l.image || l.url
+
 export default function LogoCarousel({ logos = [], shuffle = false }) {
-  // תמונות שנכשלו בטעינה (404) — מדלגים עליהן כך שאין "חורים" ולא תיבות חתוכות
-  const [failed, setFailed] = useState(() => new Set())
-  const onErr = (src) => setFailed((f) => { if (f.has(src)) return f; const n = new Set(f); n.add(src); return n })
-
-  // מסננים לוגואים ריקים לגמרי (בלי תמונה ובלי שם) או כאלה שתמונתם נכשלה
-  const clean = useMemo(
-    () => (logos || []).filter((l) => { const s = srcOf(l); return (s && !failed.has(s)) || (!s && l.name) }),
-    [logos, failed]
-  )
-  const list = useMemo(() => (shuffle ? shuffleArr(clean) : clean), [clean, shuffle])
-  if (!list.length) return null
-
-  // "יחידה" שחוזרת מספיק פעמים כדי למלא בוודאות גם מסך רחב מאוד (לעולם לא ריק),
-  // ואז משכפלים אותה פעמיים → לולאה אינסופית חלקה (translateX -50%).
-  const MIN_ITEMS = 30
-  const repeat = Math.max(3, Math.ceil(MIN_ITEMS / list.length))
-  const unit = Array.from({ length: repeat }, () => list).flat()
-  const track = [...unit, ...unit]
-  // משך מחזור פרופורציונלי לאורך היחידה → מהירות אחידה ונעימה בכל כמות
-  const duration = Math.max(24, unit.length * 2.6)
+  const base = (logos || []).filter((l) => srcOf(l) || l.name)
+  if (!base.length) return null
+  const list = shuffle ? shuffleArr(base) : base
+  // משכפלים פעמיים → לולאה רציפה חלקה (עותק אחד רחב מהמסך, אז אין רווח ריק)
+  const track = [...list, ...list]
+  const duration = Math.max(28, list.length * 3.2)
 
   return (
     <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">
@@ -45,12 +31,12 @@ export default function LogoCarousel({ logos = [], shuffle = false }) {
           return (
             <div
               className="logo-marquee__item"
-              key={`${logo.id ?? logo.name ?? 'logo'}-${i}`}
+              key={i}
               role="listitem"
               aria-hidden={i >= list.length ? 'true' : undefined}
             >
               {src
-                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="lazy" onError={() => onErr(src)} />
+                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="lazy" decoding="async" />
                 : <span className="logo-marquee__name">{logo.name}</span>}
             </div>
           )

@@ -438,7 +438,7 @@ export default function ProjectDetail() {
               {/* גרפיקת רשת דקורטיבית — מופיעה בכל עמודי הפרויקטים מתחת ל-CTA */}
               <img
                 className="pd-banner__art"
-                src="/banner-grid-art.png"
+                src="/banner-diamonds.png"
                 alt=""
                 aria-hidden="true"
                 loading="lazy"

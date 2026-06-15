@@ -7,15 +7,17 @@
   overflow-x: auto;
   overflow-y: hidden;
   direction: ltr;               /* גלילה צפויה (scrollLeft חיובי) גם ב-RTL */
-  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;        /* הסתרת פס הגלילה */
+  /* בלי -webkit-overflow-scrolling: touch — הוא מתנגש בגלילה תכנותית וגורם לריצוד */
 }
 .logo-marquee::-webkit-scrollbar { display: none; }
 
 .logo-marquee__track {
   display: flex;
-  align-items: center;
+  align-items: center;       /* יישור אנכי אחיד לכל הלוגואים */
   width: max-content;
+  transform: translateZ(0);  /* שכבת GPU — מייצב רינדור, מונע ריצוד */
+  backface-visibility: hidden;
 }
 
 /* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (צף), הלוגו תמיד נכנס במלואו */
@@ -48,6 +50,6 @@
 }
 
 @media (max-width: 600px) {
-  .logo-marquee__item { width: 120px; height: 60px; margin-inline-end: clamp(1.2rem, 7vw, 2rem); }
-  .logo-marquee__img { max-height: 42px; }
+  .logo-marquee__item { width: 120px; height: 62px; margin-inline-end: clamp(1.2rem, 7vw, 2rem); }
+  .logo-marquee__img { max-height: 45px; }   /* גדול ב-3px במובייל */
 }

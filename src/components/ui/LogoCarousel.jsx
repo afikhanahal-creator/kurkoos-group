@@ -21,14 +21,14 @@ export default function LogoCarousel({ logos = [] }) {
     let raf
     let pos = 0
     let paused = false
-    const speed = 0.6 // פיקסל לפריים (~36px/שנייה) — תנועה רציפה וברורה
+    const speed = 1 // פיקסל שלם לפריים (~60px/שנייה) — מהיר יותר, ובלי ריצוד תת-פיקסל
 
     const step = () => {
       const copy = el.scrollWidth / 2   // רוחב עותק אחד
       if (!paused && copy) {
         pos += speed
         if (pos >= copy) pos -= copy     // איפוס חלק בגבול → לולאה רציפה
-        el.scrollLeft = pos
+        el.scrollLeft = Math.round(pos)  // פיקסלים שלמים → בלי ריצוד
       }
       raf = requestAnimationFrame(step)
     }

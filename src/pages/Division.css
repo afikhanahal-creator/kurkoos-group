@@ -15,6 +15,12 @@
 /* עמוד תיווך — רקע הבאנר הוא קאבר "אפיק הנחל"; עוגנים לראש כדי שהלוגו לא ייחתך */
 .division--brokerage .division-hero__bg .parallax__inner img,
 .division--brokerage .division-hero__bg img { object-position: center top; }
+/* התמונה כבר כהה (לוגו לבן על רקע שחור) → overlay עדין בלבד, אחרת הלוגו
+   "נבלע" מתחת לשכבה הכהה שבראש. שקיפות גבוהה למעלה כדי שהלוגו ייראה. */
+.division--brokerage .division-hero__overlay {
+  background:
+    linear-gradient(180deg, rgba(7, 41, 58, 0.18) 0%, rgba(7, 41, 58, 0.1) 45%, rgba(7, 41, 58, 0.5) 100%);
+}
 /* שכבת קריאוּת — כהה בראש (מאחורי המלל) ובתחתית, בהיר באמצע → עומק ופרימיום */
 .division-hero__overlay {
   position: absolute; inset: 0; z-index: 1;

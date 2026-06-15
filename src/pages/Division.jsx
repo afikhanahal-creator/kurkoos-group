@@ -21,13 +21,14 @@ import Seo from '../components/ui/Seo.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
 import ExpandableGallery from '../components/ui/ExpandableGallery.jsx'
+import FocusRail from '../components/ui/FocusRail.jsx'
 import executionGallery from '../data/executionGallery.js'
 import Icon from '../components/ui/Icon.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
 import './Division.css'
 
-// כתובת האתר של אפיק הנחל — עדכן כאן את הכתובת המלאה (https://...)
-const AFIK_SITE_URL = 'https://afik-hanachal.co.il'
+// כתובת האתר של אפיק הנחל
+const AFIK_SITE_URL = 'https://www.afikhanahal.co.il/'
 
 export default function Division() {
   const { slug } = useParams()
@@ -163,9 +164,18 @@ export default function Division() {
                   <span className="ah-site__dot" />
                   <span className="ah-site__dot" />
                   <span className="ah-site__dot" />
-                  <span className="ah-site__addr">afik-hanachal.co.il</span>
+                  <span className="ah-site__addr">www.afikhanahal.co.il</span>
                 </span>
                 <span className="ah-site__screen">
+                  {/* צילום מסך אמיתי של האתר (יעלה ל-public/afik-site-preview.jpg);
+                      עד שהקובץ יועלה — נופלים אוטומטית ללוגו על רקע המותג */}
+                  <img
+                    className="ah-site__shot"
+                    src="/afik-site-preview.jpg"
+                    alt={'תצוגה מקדימה של אתר אפיק הנחל'}
+                    loading="lazy"
+                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  />
                   <img className="ah-site__logo" src="/afik-hanahal-logo.png" alt={'אפיק הנחל נדל"ן'} loading="lazy" />
                   <span className="ah-site__enter">כניסה לאתר ↗</span>
                 </span>
@@ -194,7 +204,10 @@ export default function Division() {
               <span className="eyebrow">{L({ he: 'מהשטח', en: 'From the field' })}</span>
               <h2 className="section-title">{L({ he: 'רגעים מהביצוע', en: 'Moments from execution' })}</h2>
             </Reveal>
-            <ExpandableGallery images={executionGallery} />
+            {/* מובייל — קרוסלת עומק תלת-מימדית; דסקטופ — גלריה נפתחת */}
+            {isMobile
+              ? <FocusRail images={executionGallery} />
+              : <ExpandableGallery images={executionGallery} />}
           </div>
         </section>
       )}

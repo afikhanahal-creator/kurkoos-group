@@ -21,7 +21,7 @@ export default function ExpandableGallery({ images = [] }) {
   const list = (images || []).filter((s) => s && !failed.has(s))
   if (!list.length) return null
 
-  const flexVal = (i) => (hovered === null ? 1 : hovered === i ? 2.6 : 0.6)
+  const flexVal = (i) => (hovered === null ? 1 : hovered === i ? 2.1 : 0.7)
   const open = (i) => setSelected(i)
   const close = () => setSelected(null)
   const next = (e) => { e.stopPropagation(); setSelected((s) => (s + 1) % list.length) }
@@ -45,7 +45,7 @@ export default function ExpandableGallery({ images = [] }) {
             aria-label={`הגדלת תמונה ${i + 1}`}
           >
             <img className="xgal__img" src={src} alt={`גלריית ביצוע ${i + 1}`} loading="lazy" decoding="async" onError={() => onErr(src)} />
-            <span className="xgal__shade" style={{ opacity: hovered === i ? 0 : 0.32 }} aria-hidden="true" />
+            <span className="xgal__shade" style={{ opacity: hovered === i ? 0 : 0.16 }} aria-hidden="true" />
             <span className="xgal__zoom" aria-hidden="true"><Icon name="search" size={20} /></span>
           </motion.button>
         ))}

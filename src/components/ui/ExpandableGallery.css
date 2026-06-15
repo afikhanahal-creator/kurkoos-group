@@ -24,10 +24,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 32%;   /* מטה את החיתוך כלפי מעלה — פנים/דמויות לא נחתכות */
   display: block;
   transition: transform var(--dur-slow) var(--ease-out);
 }
-.xgal__item:hover .xgal__img { transform: scale(1.04); }
+.xgal__item:hover .xgal__img { transform: scale(1.02); }
 .xgal__shade {
   position: absolute;
   inset: 0;

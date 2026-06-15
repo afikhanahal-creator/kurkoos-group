@@ -64,7 +64,7 @@ export default function Footer() {
           <Link to="/divisions/brokerage">{t('footer.linkBrokerage')}</Link>
         </nav>
 
-        <div className="footer__col">
+        <div className="footer__col footer__col--contact">
           <h4 className="footer__heading">{t('footer.contact')}</h4>
           <a href={`tel:${String(contact.phone).replace(/[^+\d]/g, "")}`} className="footer__contact">
             <Icon name="phone" size={17} /> {contact.phoneDisplay}

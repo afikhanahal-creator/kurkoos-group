@@ -52,12 +52,14 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
     upsertMeta('property', 'og:description', desc)
     upsertMeta('property', 'og:url', url)
     upsertMeta('property', 'og:type', 'website')
-    if (image) upsertMeta('property', 'og:image', image.startsWith('http') ? image : origin + image)
+    // תמונת ברירת מחדל לשיתוף (וואטסאפ/רשתות) — לוגו על רקע לבן
+    const ogImg = image || '/og-image.jpg'
+    upsertMeta('property', 'og:image', ogImg.startsWith('http') ? ogImg : origin + ogImg)
 
-    upsertMeta('name', 'twitter:card', 'summary_large_image')
+    upsertMeta('name', 'twitter:card', image ? 'summary_large_image' : 'summary')
     upsertMeta('name', 'twitter:title', fullTitle)
     upsertMeta('name', 'twitter:description', desc)
-    if (image) upsertMeta('name', 'twitter:image', image.startsWith('http') ? image : origin + image)
+    upsertMeta('name', 'twitter:image', ogImg.startsWith('http') ? ogImg : origin + ogImg)
 
     // נתונים מובנים per-page (schema.org) — נוסף ומוסר בעת ניווט
     let ld = null

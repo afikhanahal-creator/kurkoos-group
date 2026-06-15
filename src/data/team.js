@@ -13,13 +13,13 @@ export const team = [
   {
     id: 'benny',
     name: { he: 'בני קורקוס', en: 'Benny Kurkoos' },
-    role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
+    role: { he: 'מנהל עבודה ראשי', en: 'Chief Site Manager' },
     photo: '/5E83C911-4E64-4FCD-8C30-D5620C507520.png',
     imgPos: 'center center',   /* תמונה מרובעת — cover חותך רק את הצדדים */
     imgZoom: 1.16,   /* זום-אין קל כדי שהדמות תהיה בגודל של השאר */
     bio: {
-      he: 'אחראי על ניהול הביצוע בשטח ועמידה בלוחות הזמנים והתקציב.',
-      en: 'Responsible for on-site execution management and meeting schedule and budget.',
+      he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
+      en: 'Manages field teams and ensures execution quality and safety at every construction stage.',
     },
     linkedin: '',
   },
@@ -32,8 +32,8 @@ export const team = [
     imgZoom: 1.22,   /* עוד זום-אין; transform-origin עליון שומר על גובה הראש */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
-      he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
-      en: 'Manages field teams and ensures execution quality and safety at every construction stage.',
+      he: 'אחראי על ניהול הביצוע בשטח ועמידה בלוחות הזמנים, התקציב והכמויות.',
+      en: 'Responsible for on-site execution management and meeting schedule, budget and quantities.',
     },
     linkedin: '',
   },

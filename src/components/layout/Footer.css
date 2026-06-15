@@ -92,6 +92,15 @@
 .footer__contact--muted { color: rgba(255,255,255,0.45); }
 .footer__contact svg { color: var(--color-secondary); flex-shrink: 0; }
 
+/* עמודת "יצירת קשר" — כל השורות ברוחב מלא והאייקון (ראשון ב-RTL) בקצה הימני,
+   כך שכל האייקונים מיושרים בדיוק על אותו קו ימני (בכל גודל מסך). */
+.footer__col--contact .footer__heading { text-align: right; width: 100%; }
+.footer__col--contact .footer__contact {
+  width: 100%;
+  justify-content: flex-start;   /* RTL: התחלה = ימין → האייקון ראשון בקו הימני */
+  text-align: right;
+}
+
 .footer__bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 0.85rem;

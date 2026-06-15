@@ -16,7 +16,13 @@ export default function Logo({ variant = 'dark' }) {
   const scale = Number(settings.logo_scale) || 1
 
   return (
-    <Link to="/" className={`logo logo--${variant}`} aria-label={L(site.name)} style={{ '--logo-scale': scale }}>
+    <Link
+      to="/"
+      className={`logo logo--${variant}`}
+      aria-label={L(site.name)}
+      style={{ '--logo-scale': scale }}
+      onClick={() => { try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch { window.scrollTo(0, 0) } }}
+    >
       <img src={src} alt={L(site.name)} className="logo__img" />
     </Link>
   )

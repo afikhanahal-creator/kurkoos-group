@@ -221,13 +221,13 @@
 @media (max-width: 600px) {
   .hero { min-height: auto; }
   .hero__grid { gap: 1.35rem; padding-top: 108px; }
-  .hero__subtitle { font-size: 1.02rem; }
+  .hero__subtitle { font-size: calc(1.02rem + 2px); }   /* גדול ב-2px במובייל */
 
   /* קובייה קומפקטית שמתאימה לרוחב המסך */
   .hero__effect { width: min(72vw, 280px); }
 
-  /* כפתורי הפעולה — קטנים ומתאימים, לא נמתחים לרוחב מלא */
-  .hero__actions { flex-wrap: wrap; gap: 0.7rem; }
+  /* כפתורי הפעולה — קטנים ומתאימים, מורדים מעט מטה במובייל */
+  .hero__actions { flex-wrap: wrap; gap: 0.7rem; margin-top: 0.9rem; }
   .hero__actions .btn--lg {
     min-height: 46px;
     padding: 0.62em 1.25em;

@@ -221,7 +221,7 @@
 @media (max-width: 600px) {
   .hero { min-height: auto; }
   .hero__grid { gap: 1.35rem; padding-top: 108px; }
-  .hero__subtitle { font-size: calc(1.02rem + 2px); }   /* גדול ב-2px במובייל */
+  .hero__subtitle { font-size: calc(1.02rem + 2px); margin-inline: -0.5rem; }   /* גדול ב-2px + שוליים צרים מעט יותר */
 
   /* קובייה קומפקטית שמתאימה לרוחב המסך */
   .hero__effect { width: min(72vw, 280px); }

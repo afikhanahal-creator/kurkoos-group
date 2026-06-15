@@ -1,5 +1,5 @@
 /* ============================================================
-   סרט לוגואים רץ — כרטיסים אחידים שזזים ברצף, לא חתוכים.
+   סרט לוגואים רץ (marquee, CSS טהור) — כרטיסים אחידים שזזים ברצף.
    ============================================================ */
 .logo-marquee {
   position: relative;
@@ -12,14 +12,22 @@
 .logo-marquee__track {
   display: flex;
   width: max-content;
+  direction: ltr;   /* כיוון קבוע ללולאה חלקה גם ב-RTL */
+  animation: logo-scroll var(--marquee-dur, 40s) linear infinite;
   will-change: transform;
+}
+.logo-marquee:hover .logo-marquee__track { animation-play-state: paused; }
+
+@keyframes logo-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 .logo-marquee__item {
   flex: 0 0 auto;
   width: 172px;
   height: 96px;
-  margin-inline-end: 1rem;   /* מרווח אחיד (כולל בקצה) → לולאה רציפה מדויקת */
+  margin-inline-end: 1rem;   /* מרווח אחיד (כולל בקצה) → -50% נופל בדיוק על עותק אחד */
   display: grid;
   place-items: center;
   padding: 14px 20px;

@@ -1,46 +1,21 @@
-import { useRef, useEffect } from 'react'
-import { motion, useMotionValue, animate } from 'framer-motion'
 import './LogoCarousel.css'
 
 /* ============================================================
-   LogoCarousel — סרט לוגואים רץ ברצף (marquee) בהשראת InfiniteSlider.
-   התנועה מונעת ב-JS (framer-motion animate על motion value) ולכן אמינה
-   ולא נתקעת. כל לוגו בכרטיס אחיד (contain → גודל זהה, לא חתוך).
-   משכפלים את הרשימה פעמיים ומזיזים עותק שלם → לולאה רציפה חלקה.
+   LogoCarousel — סרט לוגואים רץ (marquee) ב-CSS טהור. משכפלים את
+   הרשימה פעמיים ומריצים translateX 0 → -50% → לולאה רציפה חלקה.
+   בלי מדידות JS (חסין). כל לוגו בכרטיס אחיד (contain, לא חתוך).
    ============================================================ */
 const srcOf = (l) => l.image_url || l.logo || l.image || l.url
 
 export default function LogoCarousel({ logos = [] }) {
   const list = (logos || []).filter((l) => srcOf(l) || l.name)
-  const x = useMotionValue(0)
-  const trackRef = useRef(null)
-
-  useEffect(() => {
-    const track = trackRef.current
-    if (!track || list.length < 2) return
-    let raf
-    let controls
-    const start = () => {
-      const half = track.scrollWidth / 2   // רוחב עותק אחד
-      if (!half) { raf = requestAnimationFrame(start); return }
-      const speed = 55 // פיקסל/שנייה — תנועה רציפה וברורה לעין
-      controls = animate(x, [0, -half], {
-        ease: 'linear',
-        duration: half / speed,
-        repeat: Infinity,
-        repeatType: 'loop',
-      })
-    }
-    raf = requestAnimationFrame(start)
-    return () => { cancelAnimationFrame(raf); controls && controls.stop() }
-  }, [list.length, x])
-
   if (!list.length) return null
   const track = [...list, ...list]
+  const duration = Math.max(30, list.length * 3.4)
 
   return (
     <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">
-      <motion.div className="logo-marquee__track" ref={trackRef} style={{ x }}>
+      <div className="logo-marquee__track" style={{ '--marquee-dur': `${duration}s` }}>
         {track.map((logo, i) => {
           const src = srcOf(logo)
           return (
@@ -56,7 +31,7 @@ export default function LogoCarousel({ logos = [] }) {
             </div>
           )
         })}
-      </motion.div>
+      </div>
     </div>
   )
 }

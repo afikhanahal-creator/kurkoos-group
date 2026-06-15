@@ -21,6 +21,17 @@
   background:
     linear-gradient(180deg, rgba(7, 41, 58, 0.18) 0%, rgba(7, 41, 58, 0.1) 45%, rgba(7, 41, 58, 0.5) 100%);
 }
+/* מובייל — הבאנר רחב והמסך צר, אז cover חותך את הלוגו (שנמצא בשמאל-עליון).
+   contain מציג את כל הבאנר; הרקע השחור ממלא סביב בצורה חלקה (התמונה ממילא שחורה). */
+@media (max-width: 768px) {
+  .division--brokerage .division-hero,
+  .division--brokerage .division-hero__bg { background-color: #050d14; }
+  .division--brokerage .division-hero__bg .parallax__inner img,
+  .division--brokerage .division-hero__bg img {
+    object-fit: contain;
+    object-position: center top;
+  }
+}
 /* שכבת קריאוּת — כהה בראש (מאחורי המלל) ובתחתית, בהיר באמצע → עומק ופרימיום */
 .division-hero__overlay {
   position: absolute; inset: 0; z-index: 1;

@@ -66,24 +66,20 @@ export default function CircularGallery({ images = [] }) {
 
   return (
     <div className="cgal">
-      <div className="cgal__stage">
+      <div
+        className="cgal__stage"
+        role="button"
+        tabIndex={0}
+        onClick={() => { if (!disabled && total > 1) next() }}
+        onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !disabled && total > 1) next() }}
+        aria-label="התמונה הבאה"
+      >
         {gsapReady && valid.map((src, i) => (
           <div key={src} className="cgal__layer" style={{ zIndex: inPlace === i ? i : total + 1 }}>
             <GalleryImage total={total} id={i} url={src} open={opened === i} inPlace={inPlace === i} onInPlace={onInPlace} />
           </div>
         ))}
         <div className="cgal__tabs"><Tabs images={valid} onSelect={onClick} /></div>
-
-        {total > 1 && (
-          <>
-            <button className="cgal__nav cgal__nav--prev" onClick={prev} disabled={disabled} aria-label="הקודם">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
-            <button className="cgal__nav cgal__nav--next" onClick={next} disabled={disabled} aria-label="הבא">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-            </button>
-          </>
-        )}
       </div>
     </div>
   )
@@ -177,7 +173,7 @@ function Tabs({ images, onSelect }) {
             </clipPath>
           </defs>
           <image x={getPosX(i) - circleRadius} y={getPosY() - circleRadius} width={circleRadius * 2} height={circleRadius * 2} href={src} clipPath={`url(#tab_${i}_clip)`} preserveAspectRatio="xMidYMid slice" />
-          <circle onClick={() => onSelect(i)} className="cgal__tab-hit" strokeWidth="2" cx={getPosX(i)} cy={getPosY()} r={circleRadius + 2} />
+          <circle onClick={(e) => { e.stopPropagation(); onSelect(i) }} className="cgal__tab-hit" strokeWidth="2" cx={getPosX(i)} cy={getPosY()} r={circleRadius + 2} />
         </g>
       ))}
     </svg>

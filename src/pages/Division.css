@@ -33,13 +33,13 @@
 /* כרטיסי "למה אנחנו" בעמוד תיווך — אפקט שחור/אפרפר (מותג אפיק הנחל)
    במקום הטורקיז/אדום. דריסת המשתנים מוגבלת לכרטיס בלבד → לא משפיע על שאר העמוד. */
 .division--brokerage .card-inner {
-  --color-secondary: #1f2024;   /* שחור-אפרפר → רקע האייקון בריחוף + "הנוזל" */
-  --card-accent: #45484e;       /* אפור כהה → כותרת בריחוף + כפתור */
+  --color-secondary: #7680c1;   /* סגול-כחול → רקע האייקון בריחוף + "הנוזל" */
+  --card-accent: #5a64a8;       /* סגול כהה יותר → כותרת בריחוף + כפתור */
 }
 .division--brokerage .card__glow {
   background: radial-gradient(circle at 50% 0%,
-    rgba(28, 28, 30, 0.42) 0%,
-    rgba(28, 28, 30, 0) 60%);
+    rgba(118, 128, 193, 0.45) 0%,
+    rgba(118, 128, 193, 0) 60%);
 }
 
 /* ===== תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה (עמוד תיווך) ===== */
@@ -157,9 +157,9 @@
 .ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translate(-50%, 0); }
 
 @media (max-width: 860px) {
-  /* מסך קטן ב-~30% במובייל */
-  .ah-site__frame { width: 70%; }
-  .ah-site__screen { max-height: clamp(240px, 70vw, 380px); }
+  /* גדול יותר במובייל (~30% מעבר לקודם) */
+  .ah-site__frame { width: 92%; }
+  .ah-site__screen { max-height: clamp(300px, 88vw, 480px); }
   .ah-site__frame:hover { transform: scale(1.01); }   /* בלי הטיית 3D במגע */
 }
 

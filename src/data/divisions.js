@@ -138,8 +138,8 @@ export const divisions = [
     hero: {
       title: { he: 'תיווך ושיווק', en: 'Brokerage & Marketing' },
       subtitle: {
-        he: 'ליווי מלא ברכישה ובמכירה, שיווק פרויקטים והתאמת הנכס המדויק לצרכים ולחלום של כל לקוח.',
-        en: 'Full guidance in buying and selling, project marketing and matching the exact property to each client’s needs.',
+        he: 'מומחים בשיווק בתי יוקרה ואיתור מגרשים וקרקעות בשרון ובמרכז, המלווים אתכם בתהליך הרכישה והמכירה עד למציאת הנכס המדויק עבורכם',
+        en: 'Experts in luxury home marketing and sourcing plots and land across the Sharon and central regions, guiding you through buying and selling until we find the exact property for you.',
       },
       image: img('1560518883-ce09059eeffa'),
     },

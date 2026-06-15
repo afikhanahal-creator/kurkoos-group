@@ -98,6 +98,17 @@
   filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
 }
 
+/* ---- קאבר לוגו "אפיק הנחל" (תיווך) ---- */
+/* התמונה היא לוגו לבן על רקע שחור; mix-blend-mode: screen מסיר את השחור
+   ומשאיר רק את הכיתוב הלבן מעל רקע הבאנר. צד ימין בדסקטופ (flex-start ב-RTL). */
+.division-hero__cover {
+  width: clamp(300px, 36vw, 480px);
+  height: auto;
+  margin-bottom: clamp(1rem, 2.4vw, 1.5rem);
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.5));
+}
+
 /* ---- כותרת + תקציר ---- */
 .division-hero__title {
   position: relative;
@@ -184,7 +195,8 @@
   .division-hero .breadcrumbs__current { font-weight: 600; }
   /* אייקון התחום / לוגו ראיתה — ממורכזים בכל עמודי התחומים */
   .division-hero__icon,
-  .division-hero__logo { margin-inline: auto; }
+  .division-hero__logo,
+  .division-hero__cover { margin-inline: auto; }
   /* הכותרת תפורה לרוחב הטקסט וממורכזת → הקו תחתיה מתיישר בדיוק עם מרכז הטקסט */
   .division-hero__title { max-width: 22ch; width: fit-content; margin-inline: auto; }
   /* פס האקסנט מתחת לכותרת — ממורכז בשיטת margin auto (חסין RTL, בלי translateX שבר את המרכוז) */
@@ -215,6 +227,8 @@
   }
   /* לוגו ראיתה — מוקטן ב-~20% במובייל כדי שלא יהיה גדול מדי */
   .division-hero__logo { width: clamp(144px, 42vw, 192px); }
+  /* קאבר אפיק הנחל — ממורכז ומותאם לרוחב המסך במובייל */
+  .division-hero__cover { width: clamp(240px, 82vw, 360px); }
 }
 
 /* ---- Intro ---- */

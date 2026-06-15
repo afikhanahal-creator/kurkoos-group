@@ -48,6 +48,29 @@
   color: #fff;
 }
 
+/* ===== עמוד תיווך — כפתורים וטופס בגווני אפיק הנחל (שחור + סגול #7680c1) ===== */
+/* כפתור "קראו עוד" במדריך → סגול */
+.division--brokerage .division-guide .btn--primary { background: #7680c1; }
+.division--brokerage .division-guide .btn--primary:hover { background: #5a64a8; }
+
+/* טופס יצירת קשר — פאנל כהה (כמו הקאבר) + כפתורים סגולים במקום אדומים */
+.division--brokerage .contact__panel {
+  background: linear-gradient(165deg, #15293a 0%, #0b1620 95%);
+}
+.division--brokerage .contact .contact__panel .contact__eyebrow { background: #7680c1; }
+.division--brokerage .contact__topic.is-active {
+  background: #7680c1;
+  color: #fff;
+  border-color: #7680c1;
+}
+.division--brokerage .contact__submit,
+.division--brokerage .contact__submit:hover,
+.division--brokerage .contact__submit:active {
+  background: #7680c1;
+  color: #fff;
+}
+.division--brokerage .contact__submit:hover { background: #5a64a8; }
+
 /* ===== תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה (עמוד תיווך) ===== */
 .ah-site__head { text-align: center; margin-bottom: clamp(1.25rem, 3vw, 2rem); }
 .ah-site__wrap { perspective: 1600px; display: flex; flex-direction: column; align-items: center; gap: clamp(1.25rem, 3vw, 1.75rem); }

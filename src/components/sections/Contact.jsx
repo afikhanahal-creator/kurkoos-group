@@ -81,7 +81,7 @@ export default function Contact() {
                 <div className="field">
                   <textarea id="cf-message" name="message" rows={3} placeholder={t('contact.message')} />
                 </div>
-                <button type="submit" className="btn contact__submit">{t('contact.submit')}</button>
+                <button type="submit" className="btn btn--primary contact__submit">{t('contact.submit')}</button>
               </form>
             </>
           )}

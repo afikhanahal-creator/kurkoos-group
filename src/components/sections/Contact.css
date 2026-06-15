@@ -75,17 +75,18 @@
 /* ספציפיות גבוהה (.contact .contact__panel ...) כדי לגבור על '.contact .eyebrow'
    (אדום) — על הפאנל הכהה צריך גוון בהיר וברור. */
 .contact .contact__panel .contact__eyebrow {
-  color: #ffd9cc;   /* אלמוגי בהיר — קריא על רקע ההדגשה הכהה */
-  font-size: var(--fs-small);
+  color: #fff;                       /* טקסט לבן — ברור על רקע אדום */
+  font-size: 0.72rem;                /* קטן יותר */
   font-weight: 800;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.7rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.8rem;
   opacity: 1;
   width: fit-content;
-  /* הדגשה מאחורי הטקסט כדי שייקרא היטב, בגוון הפאלטה */
-  background: color-mix(in srgb, var(--color-accent) 38%, transparent);
-  padding: 0.34em 0.95em;
+  /* גלולה אדומה מלאה מהפאלטה — בולטת וברורה על הפאנל הכהה */
+  background: var(--color-accent-500);
+  padding: 0.32em 0.85em;
   border-radius: var(--radius-pill);
+  box-shadow: 0 4px 12px -4px rgba(169, 11, 12, 0.5);
 }
 /* דסקטופ — "בואו נדבר" וגוש הכותרת מיושרים לימין */
 @media (min-width: 901px) {
@@ -101,12 +102,8 @@
   .contact__panel .contact__choose { text-align: center; }
   .contact__panel .contact__choose { margin-inline: auto; }
 }
-.contact__panel .contact__eyebrow::before {
-  background: var(--color-accent);
-  width: 42px;
-  height: 3px;
-  border-radius: 2px;
-}
+/* הקו הקטן מיותר עכשיו כשהתווית היא גלולה אדומה מלאה */
+.contact__panel .contact__eyebrow::before { display: none; }
 .contact__title { font-size: var(--fs-h4); color: #fff; margin: 0.25rem 0 0.5rem; line-height: 1.15; }
 .contact__choose { color: rgba(255, 255, 255, 0.78); margin-bottom: 1.2rem; max-width: 42ch; font-size: var(--fs-small); }
 
@@ -160,33 +157,13 @@
 .contact__form .field textarea:focus { outline: 3px solid var(--color-accent); }
 .contact__form textarea { resize: vertical; }
 
+/* פריסה בלבד — הצבעים מגיעים מ-.btn--primary (אדום במנוחה, לבן בלחיצה/ריחוף),
+   אחיד עם כל שאר כפתורי ה-CTA באתר. */
 .contact__submit {
   align-self: center;
   margin-top: 0.6rem;
   min-width: 160px;
-  font-size: var(--fs-body);
-  font-weight: 700;
-  background: #fff;
-  color: var(--color-secondary);
-  border-radius: var(--radius-pill);
   padding: 0.85em 2em;
-}
-/* אפקט ה-hover רק במכשירים עם hover אמיתי (דסקטופ) — כך במובייל אין hover "תקוע"
-   אדום שמסתיר את אפקט הלחיצה הלבן */
-@media (hover: hover) {
-  .contact__submit:hover {
-    background: var(--color-accent);
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-3);
-  }
-}
-/* בלחיצה (כולל מובייל) — הכפתור הופך ללבן עם טקסט כחול */
-.contact__submit:active {
-  transform: translateY(0) scale(0.98);
-  background: #fff;
-  color: var(--color-secondary);
-  border-color: #fff;
 }
 
 .contact__phones {

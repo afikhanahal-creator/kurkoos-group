@@ -12,44 +12,25 @@
   padding-top: 92px;                 /* פינוי ל-Header הקבוע */
 }
 .division-hero__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-/* עמוד תיווך — רקע הבאנר הוא קאבר "אפיק הנחל"; עוגנים לראש כדי שהלוגו לא ייחתך */
-.division--brokerage .division-hero__bg .parallax__inner img,
-.division--brokerage .division-hero__bg img { object-position: center top; }
-/* התמונה כבר כהה (לוגו לבן על רקע שחור) → overlay עדין בלבד, אחרת הלוגו
-   "נבלע" מתחת לשכבה הכהה שבראש. שקיפות גבוהה למעלה כדי שהלוגו ייראה. */
+
+/* ===== עמוד תיווך (אפיק הנחל) ===== */
+/* מעלימים לגמרי את תמונת הקאבר הישנה (שכללה לוגו צרוב) — בדסקטופ ובמובייל.
+   במקומה: פאנל כהה בהיר-יותר ושקוף, עם רשת ריבועים לבנה שנראית מאחור,
+   ועליו הלוגו הלבן הנקי (afik-hanahal-logo.png). */
+.division--brokerage .division-hero {
+  background: linear-gradient(160deg, #1b3245 0%, #122537 55%, #0d1a26 100%);
+}
+.division--brokerage .division-hero__bg { opacity: 0; }
 .division--brokerage .division-hero__overlay {
   background:
-    linear-gradient(180deg, rgba(7, 41, 58, 0.18) 0%, rgba(7, 41, 58, 0.1) 45%, rgba(7, 41, 58, 0.5) 100%);
+    linear-gradient(180deg, rgba(13, 26, 38, 0.28) 0%, rgba(13, 26, 38, 0.14) 45%, rgba(10, 20, 30, 0.58) 100%);
 }
-/* מובייל — הבאנר רחב והמסך צר, אז cover חותך את הלוגו (שנמצא בשמאל-עליון).
-   contain מציג את כל הבאנר; הרקע השחור ממלא סביב בצורה חלקה (התמונה ממילא שחורה). */
-@media (max-width: 768px) {
-  .division--brokerage .division-hero,
-  .division--brokerage .division-hero__bg { background-color: #060708; }
-  .division--brokerage .division-hero__bg .parallax__inner img,
-  .division--brokerage .division-hero__bg img {
-    object-fit: contain;
-    object-position: center top;
-  }
-  /* מובייל — מעט כהה יותר, וגוון ניטרלי (פחות כחול) */
-  .division--brokerage .division-hero__overlay {
-    background:
-      linear-gradient(180deg, rgba(6, 8, 10, 0.5) 0%, rgba(6, 8, 10, 0.38) 45%, rgba(6, 8, 10, 0.78) 100%);
-  }
-}
-
-/* דסקטופ — מסתירים לגמרי את הלוגו; נשאר קאבר כהה ובהיר-יותר עם רשת
-   ריבועים לבנה שנראית מעט מאחור (שקופה). */
-@media (min-width: 769px) {
-  .division--brokerage .division-hero {
-    background:
-      linear-gradient(160deg, #15293a 0%, #0e1c29 55%, #0a141d 100%);
-  }
-  .division--brokerage .division-hero__bg { opacity: 0; }   /* מעלים את תמונת הלוגו */
-  .division--brokerage .division-hero__overlay {
-    background:
-      linear-gradient(180deg, rgba(10, 22, 32, 0.32) 0%, rgba(10, 22, 32, 0.18) 45%, rgba(8, 16, 24, 0.62) 100%);
-  }
+/* הלוגו הלבן בקאבר */
+.division-hero__ah-logo {
+  width: clamp(160px, 18vw, 240px);
+  height: auto;
+  margin-bottom: clamp(1rem, 2.4vw, 1.5rem);
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.4));
 }
 /* שכבת קריאוּת — כהה בראש (מאחורי המלל) ובתחתית, בהיר באמצע → עומק ופרימיום */
 .division-hero__overlay {
@@ -223,7 +204,8 @@
   .division-hero .breadcrumbs__current { font-weight: 600; }
   /* אייקון התחום / לוגו ראיתה — ממורכזים בכל עמודי התחומים */
   .division-hero__icon,
-  .division-hero__logo { margin-inline: auto; }
+  .division-hero__logo,
+  .division-hero__ah-logo { margin-inline: auto; }
   /* הכותרת תפורה לרוחב הטקסט וממורכזת → הקו תחתיה מתיישר בדיוק עם מרכז הטקסט */
   .division-hero__title { max-width: 22ch; width: fit-content; margin-inline: auto; }
   /* פס האקסנט מתחת לכותרת — ממורכז בשיטת margin auto (חסין RTL, בלי translateX שבר את המרכוז) */

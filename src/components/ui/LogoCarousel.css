@@ -1,16 +1,16 @@
 /* ============================================================
-   סרט לוגואים רץ (marquee, CSS טהור) — כרטיסים אחידים שזזים ברצף.
+   סרט לוגואים רץ (marquee, CSS טהור) — לוגואים צפים (בלי ריבוע מאחור),
+   בגודל אחיד (contain → לא חתוכים), זזים ברצף. בלי mask (תקלת Safari).
    ============================================================ */
 .logo-marquee {
   position: relative;
   width: 100%;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
-          mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
 }
 
 .logo-marquee__track {
   display: flex;
+  align-items: center;
   width: max-content;
   direction: ltr;   /* כיוון קבוע ללולאה חלקה גם ב-RTL */
   animation: logo-scroll var(--marquee-dur, 40s) linear infinite;
@@ -23,18 +23,14 @@
   to   { transform: translateX(-50%); }
 }
 
+/* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (לוגו צף), הלוגו תמיד נכנס במלואו */
 .logo-marquee__item {
   flex: 0 0 auto;
-  width: 172px;
-  height: 96px;
-  margin-inline-end: 1rem;   /* מרווח אחיד (כולל בקצה) → -50% נופל בדיוק על עותק אחד */
+  width: 150px;
+  height: 72px;
+  margin-inline-end: clamp(1.5rem, 4vw, 3rem);
   display: grid;
   place-items: center;
-  padding: 14px 20px;
-  background: #f6f8fa;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  box-shadow: 0 6px 16px -12px rgba(16, 85, 114, 0.22);
 }
 
 .logo-marquee__img {
@@ -49,16 +45,11 @@
 .logo-marquee__name {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
   color: var(--color-primary-700);
   white-space: nowrap;
 }
 
 @media (max-width: 600px) {
-  .logo-marquee__item {
-    width: 132px;
-    height: 78px;
-    margin-inline-end: 0.7rem;
-    padding: 10px 14px;
-  }
+  .logo-marquee__item { width: 120px; height: 60px; margin-inline-end: clamp(1.2rem, 7vw, 2rem); }
 }

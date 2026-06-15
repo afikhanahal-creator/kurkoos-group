@@ -43,9 +43,9 @@
 .about-vision__inner {
   max-width: 56rem;
   margin-inline: auto;
-  text-align: center;   /* כל המלל ממורכז — אחיד ונקי */
+  text-align: right;   /* דסקטופ — מיושר לימין (RTL), לא ממורכז */
 }
-.about-vision__inner .eyebrow { justify-content: center; }
+.about-vision__inner .eyebrow { justify-content: flex-start; }
 .about-vision__heading {
   color: var(--color-secondary);
   margin-bottom: 1.8rem;
@@ -65,28 +65,28 @@
   color: var(--color-primary-900);
 }
 
-/* בלוק סוגר: tagline + חותם האמינות (Dun & Bradstreet) */
+/* בלוק סוגר: המשפט מעל, חותם האמינות (Dun & Bradstreet) מתחת */
 .about-vision__closing {
   display: flex;
-  align-items: center;
-  justify-content: center;   /* ממורכז — אחיד עם שאר המלל */
-  gap: 2.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;     /* המשפט מעל הלוגו, הלוגו מתחת */
+  align-items: flex-start;    /* מיושר לימין ב-RTL */
+  gap: 1.6rem;
   margin-top: 1.6rem;
-  text-align: center;
+  text-align: right;
 }
-/* פס מפריד קצר, דק וממורכז בין המלל לכותרת הסוגרת (אלמנט עצמאי — לא pseudo) */
+/* פס מפריד קצר ודק בין המלל לכותרת הסוגרת (אלמנט עצמאי — לא pseudo) */
 .about-vision__divider {
   display: block;
-  width: 70px;               /* רוחב קצר */
-  height: 2px;               /* דק */
-  margin: 2.5rem auto 0;     /* ממורכז */
+  width: 35px;               /* רוחב קצר (הוקטן ב-50%) */
+  height: 1.5px;             /* דק יותר */
+  margin: 2.5rem 0 0;        /* מיושר להתחלה (ימין ב-RTL) */
+  margin-inline-end: auto;
   background: var(--color-accent-500);
   border-radius: 2px;
 }
 .about-vision__closing .about-vision__tagline {
   margin-top: 0;
-  flex: 1 1 320px;
+  width: 100%;
 }
 .about-vision__badge {
   flex-shrink: 0;
@@ -99,6 +99,13 @@
 .about-vision__badge:hover {
   transform: scale(1.06) rotate(-4deg);
   box-shadow: 0 18px 46px rgba(16, 85, 114, 0.42);
+}
+/* מובייל — חוזרים למרכוז (לפי בקשה קודמת) */
+@media (max-width: 860px) {
+  .about-vision__inner { text-align: center; }
+  .about-vision__inner .eyebrow { justify-content: center; }
+  .about-vision__divider { margin-inline: auto; }
+  .about-vision__closing { align-items: center; text-align: center; }
 }
 @media (max-width: 600px) {
   .about-vision__closing { justify-content: center; text-align: center; }

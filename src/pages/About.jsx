@@ -54,6 +54,7 @@ export default function About() {
             {vision.paragraphs.map((p, i) => (
               <p className="about-vision__p" key={i}>{p}</p>
             ))}
+            <span className="about-vision__divider" aria-hidden="true" />
             <div className="about-vision__closing">
               <p className="about-vision__tagline">{vision.tagline}</p>
               <img

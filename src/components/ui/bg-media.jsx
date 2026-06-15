@@ -13,9 +13,9 @@ import './bg-media.css'
      alt      טקסט חלופי (נגישות)
      className / style   — מועברים לאלמנט החיצוני
      children  תוכן שמרחף מעל המדיה (כותרות, כפתורים...)
-   הגודל נקבע ע"י ההורה — הרכיב פשוט ממלא אותו (object-fit: cover),
-   ולכן הוא responsive: דסקטופ מלא, מובייל מתכווץ יחד עם המכל.
    נגישות: אם המשתמש ביקש "פחות תנועה" — מוצגת תמונת הפוסטר במקום וידאו.
+   iOS: כשמדיניות ה-autoplay חוסמת (מצב חיסכון) — מופיע כפתור Play שמאפשר
+   הפעלה ידנית במגע (מחווה של המשתמש תמיד מותרת ב-iOS).
    ============================================================ */
 
 const prefersReducedMotion =
@@ -34,21 +34,24 @@ export default function BackgroundMedia({
   forcePlay = false,   // כשדולק — הווידאו תמיד מתנגן (מתעלם מ-reduced-motion)
 }) {
   const [loaded, setLoaded] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const [failed, setFailed] = useState(false)
   const videoRef = useRef(null)
-  // מאלץ ניגון אוטומטי ושומר שהסרטון *תמיד* רץ — גם במובייל (iOS עוצר וידאו
-  // שיוצא מהמסך / במצב חיסכון). מנגן מחדש כשחוזר לתצוגה, אחרי גלילה/החזרת טאב,
-  // ואם מסיבה כלשהי הוא נעצר.
+
   useEffect(() => {
     const v = videoRef.current
     if (!v || type !== 'video') return
-    // iOS דורש את הדגלים מוגדרים גם ב-JS כדי לאפשר autoplay מושתק
+    // iOS דורש את הדגלים גם כ-properties וגם כ-attributes לאמינות מלאה
     v.muted = true
     v.defaultMuted = true
     v.playsInline = true
+    v.setAttribute('muted', '')
+    v.setAttribute('playsinline', '')
+    v.setAttribute('webkit-playsinline', 'true')
     const tryPlay = () => { const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
     tryPlay()
 
-    // מנגן מחדש כשהסרטון חוזר להיות נראה על המסך
+    // מנגן מחדש כשהסרטון חוזר להיות נראה על המסך (iOS עוצר וידאו שיוצא מהמסך)
     let io
     if (typeof IntersectionObserver !== 'undefined') {
       io = new IntersectionObserver(
@@ -58,15 +61,22 @@ export default function BackgroundMedia({
       io.observe(v)
     }
     const onVisible = () => { if (!document.hidden) tryPlay() }
-    const onPause = () => { if (!v.ended) tryPlay() }
     document.addEventListener('visibilitychange', onVisible)
-    v.addEventListener('pause', onPause)
     return () => {
       if (io) io.disconnect()
       document.removeEventListener('visibilitychange', onVisible)
-      v.removeEventListener('pause', onPause)
     }
   }, [src, type])
+
+  // הפעלה ידנית (מחווה של המשתמש) — תמיד מותרת ב-iOS גם כשה-autoplay חסום
+  const manualPlay = () => {
+    const v = videoRef.current
+    if (!v) return
+    v.muted = true
+    const p = v.play?.()
+    if (p && p.catch) p.catch(() => setFailed(true))
+  }
+
   const showStill = type !== 'video' || (!forcePlay && prefersReducedMotion && poster)
 
   return (
@@ -83,19 +93,33 @@ export default function BackgroundMedia({
           onLoad={() => setLoaded(true)}
         />
       ) : (
-        <video
-          ref={videoRef}
-          className="bg-media__el"
-          src={src}
-          poster={poster}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onLoadedData={() => setLoaded(true)}
-          onCanPlay={(e) => { setLoaded(true); const p = e.currentTarget.play?.(); if (p && p.catch) p.catch(() => {}) }}
-        />
+        <>
+          <video
+            ref={videoRef}
+            className="bg-media__el"
+            src={src}
+            poster={poster}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onLoadedData={() => setLoaded(true)}
+            onPlaying={() => { setLoaded(true); setPlaying(true) }}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onError={() => setFailed(true)}
+            onCanPlay={(e) => { setLoaded(true); const p = e.currentTarget.play?.(); if (p && p.catch) p.catch(() => {}) }}
+          />
+          {/* כפתור Play — מופיע כשהסרטון לא מתנגן (iOS שחוסם autoplay) */}
+          {!playing && (
+            <button type="button" className="bg-media__play" onClick={manualPlay} aria-label="הפעלת הסרטון">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+          )}
+        </>
       )}
 
       {variant !== 'none' && <div className="bg-media__overlay" aria-hidden="true" />}

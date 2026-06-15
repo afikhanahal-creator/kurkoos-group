@@ -62,3 +62,28 @@
 @media (prefers-reduced-motion: reduce) {
   .bg-media__el { animation: none; opacity: 1; }
 }
+
+/* כפתור Play — מופיע כשה-autoplay חסום (בעיקר iOS/מצב חיסכון). מחווה של
+   המשתמש מאפשרת הפעלה. מעל שכבת-העל, ממורכז, נגיש למגע. */
+.bg-media__play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  z-index: 3;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(16, 85, 114, 0.82);
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.5), 0 0 0 8px rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  transition: transform 0.2s var(--ease-out, ease), background 0.2s ease;
+}
+.bg-media__play svg { margin-inline-start: 4px; }  /* איזון אופטי של המשולש */
+.bg-media__play:hover { transform: scale(1.06); background: var(--color-accent, #a90b0c); }
+.bg-media__play:active { transform: scale(0.96); }

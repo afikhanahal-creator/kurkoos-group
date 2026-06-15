@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import Icon from './Icon.jsx'
 
@@ -113,12 +114,19 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
             </div>
           )
         ) : (
-          <img
-            src={item}
-            alt={L({ he: 'תמונת גלריה', en: 'Gallery image' })}
-            onClick={onImageClick}
-            style={{ cursor: total > 1 ? 'pointer' : 'default' }}
-          />
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.img
+              key={index}
+              src={item}
+              alt={L({ he: 'תמונת גלריה', en: 'Gallery image' })}
+              onClick={onImageClick}
+              style={{ cursor: total > 1 ? 'pointer' : 'default' }}
+              initial={{ opacity: 0, scale: 0.985 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.985 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </AnimatePresence>
         )}
         {total > 1 && (
           <figcaption className="pd-lightbox__counter">

@@ -901,6 +901,12 @@
 }
 .pd-lightbox__fig { position: relative; z-index: 1; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
 .pd-lightbox__fig img { max-width: 90vw; max-height: 82vh; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+/* מובייל — התמונה רחבה וממורכזת יותר, padding מצומצם */
+@media (max-width: 768px) {
+  .pd-lightbox { padding: 0.75rem; }
+  .pd-lightbox__fig { gap: 1.1rem; width: 100%; }
+  .pd-lightbox__fig img { max-width: 95vw; max-height: 74vh; width: auto; margin-inline: auto; }
+}
 /* וידאו בלייטבוקס — יחס 16:9 רספונסיבי */
 .pd-lightbox__video { max-width: 92vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); background: #000; }
 .pd-lightbox__video-wrap { width: min(92vw, 1100px); aspect-ratio: 16 / 9; max-height: 82vh; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-lg); background: #000; }

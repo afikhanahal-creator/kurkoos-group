@@ -141,7 +141,7 @@ export const divisions = [
         he: 'מומחים בשיווק בתי יוקרה ואיתור מגרשים וקרקעות בשרון ובמרכז, המלווים אתכם בתהליך הרכישה והמכירה עד למציאת הנכס המדויק עבורכם',
         en: 'Experts in luxury home marketing and sourcing plots and land across the Sharon and central regions, guiding you through buying and selling until we find the exact property for you.',
       },
-      image: img('1560518883-ce09059eeffa'),
+      image: '/afik-hanahal-cover.png',
     },
     intro: {
       he: 'זרוע התיווך והשיווק של קורקוס מחברת בין אנשים לבתים. אנחנו משווקים את הפרויקטים של הקבוצה ושל לקוחותינו, מלווים רוכשים ומוכרים לאורך כל העסקה, ומתאימים לכל לקוח את הנכס המדויק לצרכים, לתקציב ולחלום שלו. עם היכרות עמוקה של השוק, שקיפות מלאה ושירות אישי, אנחנו הופכים את אחת ההחלטות הגדולות בחיים לתהליך בטוח ונעים.',

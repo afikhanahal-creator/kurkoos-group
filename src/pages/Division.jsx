@@ -73,11 +73,6 @@ export default function Division() {
               src="/divisions/raita-logo.png"
               alt={'ראיתה חברה לבניין בע"מ'}
               initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
-          ) : slug === 'brokerage' ? (
-            <motion.img className="division-hero__cover"
-              src="/afik-hanahal-cover.png"
-              alt={'אפיק הנחל נדל"ן'}
-              initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
           ) : (
             <motion.span className="division-hero__icon"
               initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>

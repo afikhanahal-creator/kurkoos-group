@@ -206,7 +206,8 @@ p, .section-lead { text-wrap: pretty; }
   .home .eyebrow { font-size: calc(var(--fs-eyebrow) + 2px); }
 }
 
-.section-title { font-size: var(--fs-h2); margin-bottom: var(--space-4); }
+.section-title { font-size: var(--fs-h2); margin-bottom: var(--space-4); font-weight: 900; }
+.story__title, .partners__title { font-weight: 900; }
 
 /* כותרת צרה — Fb Metropolis Bold עם letter-spacing שלילי */
 .heading-condensed {

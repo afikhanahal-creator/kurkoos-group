@@ -51,7 +51,7 @@
   --ah-glow: rgba(118, 128, 193, 0.42);   /* #7680c1 */
   position: relative;
   display: block;
-  width: min(980px, 100%);
+  width: min(680px, 100%);   /* קטן ב-~30% בדסקטופ — פרופורציה נעימה יותר לעמוד */
   border-radius: 20px;
   overflow: hidden;
   background: #0d1a26;

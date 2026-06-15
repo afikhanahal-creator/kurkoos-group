@@ -48,28 +48,28 @@
 
 /* "חלון" מרכזי — מסגרת עם הילה סגולה, הטיית 3D וברק בריחוף (סגנון ה-Ticket) */
 .ah-site__frame {
-  --ah-glow: rgba(124, 58, 237, 0.55);
+  --ah-glow: rgba(118, 128, 193, 0.42);   /* #7680c1 */
   position: relative;
   display: block;
   width: min(980px, 100%);
   border-radius: 20px;
   overflow: hidden;
   background: #0d1a26;
-  border: 1px solid rgba(124, 58, 237, 0.4);
+  border: 1px solid rgba(118, 128, 193, 0.4);
   transform-style: preserve-3d;
   box-shadow:
     0 30px 70px -26px rgba(0, 0, 0, 0.7),
     0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 0 70px -8px var(--ah-glow);
+    0 0 56px -14px var(--ah-glow);
   transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s ease;
 }
 .ah-site__frame:hover {
   transform: perspective(1200px) rotateX(4deg) rotateY(-6deg) scale(1.02);
   box-shadow:
     22px 22px 50px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    -8px -8px 40px var(--ah-glow),
-    0 0 110px -4px var(--ah-glow);
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    -6px -6px 26px rgba(118, 128, 193, 0.28),
+    0 0 68px -14px var(--ah-glow);
 }
 
 /* ברק אלכסוני שנע על החלון בריחוף */
@@ -98,7 +98,7 @@
   gap: 0.5rem;
   padding: 0.7rem 1rem;
   background: #15212e;
-  border-bottom: 1px solid rgba(124, 58, 237, 0.25);
+  border-bottom: 1px solid rgba(118, 128, 193, 0.28);
 }
 .ah-site__dot { width: 11px; height: 11px; border-radius: 50%; }
 .ah-site__dot:nth-child(1) { background: #ef5f5b; }
@@ -125,8 +125,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(124, 58, 237, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124, 58, 237, 0.12) 1px, transparent 1px);
+    linear-gradient(rgba(118, 128, 193, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(118, 128, 193, 0.12) 1px, transparent 1px);
   background-size: 38px 38px;
   pointer-events: none;
 }
@@ -140,23 +140,26 @@
   position: absolute;
   z-index: 5;
   inset-block-end: 1rem;
-  inset-inline-end: 1.1rem;
+  inset-inline-start: 50%;          /* ממורכז אופקית */
+  inset-inline-end: auto;
   font-size: 0.85rem;
   font-weight: 600;
   color: #fff;
-  background: rgba(124, 58, 237, 0.85);
+  background: rgba(118, 128, 193, 0.9);   /* #7680c1 */
   border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 0.4rem 0.9rem;
+  padding: 0.4rem 0.95rem;
   border-radius: var(--radius-pill);
-  box-shadow: 0 6px 20px -6px var(--ah-glow);
+  box-shadow: 0 6px 20px -8px var(--ah-glow);
   opacity: 0;
-  transform: translateY(6px);
+  transform: translate(-50%, 6px);
   transition: opacity var(--dur-base), transform var(--dur-base);
 }
-.ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translateY(0); }
+.ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translate(-50%, 0); }
 
 @media (max-width: 860px) {
-  .ah-site__screen { max-height: clamp(300px, 86vw, 460px); }
+  /* מסך קטן ב-~30% במובייל */
+  .ah-site__frame { width: 70%; }
+  .ah-site__screen { max-height: clamp(240px, 70vw, 380px); }
   .ah-site__frame:hover { transform: scale(1.01); }   /* בלי הטיית 3D במגע */
 }
 

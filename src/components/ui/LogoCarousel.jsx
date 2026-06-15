@@ -28,10 +28,10 @@ export default function LogoCarousel({ logos = [], shuffle = false }) {
   const list = useMemo(() => (shuffle ? shuffleArr(clean) : clean), [clean, shuffle])
   if (!list.length) return null
 
-  // "יחידה" שחוזרת מספיק פעמים כדי למלא גם מסך רחב (לא ריק / לא חתוך),
+  // "יחידה" שחוזרת מספיק פעמים כדי למלא בוודאות גם מסך רחב מאוד (לעולם לא ריק),
   // ואז משכפלים אותה פעמיים → לולאה אינסופית חלקה (translateX -50%).
-  const MIN_ITEMS = 18
-  const repeat = Math.max(2, Math.ceil(MIN_ITEMS / list.length))
+  const MIN_ITEMS = 30
+  const repeat = Math.max(3, Math.ceil(MIN_ITEMS / list.length))
   const unit = Array.from({ length: repeat }, () => list).flat()
   const track = [...unit, ...unit]
   // משך מחזור פרופורציונלי לאורך היחידה → מהירות אחידה ונעימה בכל כמות

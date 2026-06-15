@@ -71,7 +71,7 @@ export const site = {
       to: '/divisions/brokerage',
       children: [
         { label: { he: 'תיווך ושיווק', en: 'Brokerage & marketing' }, to: '/divisions/brokerage' },
-        { label: { he: 'קנייה ומכירה', en: 'Buying & selling' }, to: '/divisions/brokerage#why' },
+        { label: { he: 'מה אנחנו עושים', en: 'What we do' }, to: '/divisions/brokerage#why' },
         { label: { he: 'פרויקטים בשיווק', en: 'Projects in marketing' }, to: '/divisions/brokerage#projects' },
         { label: { he: 'המדריך לרוכש ולמוכר', en: 'Buyer & seller guide' }, to: '/blog' },
       ],

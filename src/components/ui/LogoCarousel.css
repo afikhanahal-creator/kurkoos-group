@@ -1,18 +1,27 @@
 /* ============================================================
-   רשת לוגואים — כל הלוגואים גלויים בבת אחת, בגודל אחיד, לא חתוכים.
+   סרט לוגואים רץ — כרטיסים אחידים שזזים ברצף, לא חתוכים.
    ============================================================ */
-.logo-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
-  max-width: 1080px;
-  margin: 0 auto;
+.logo-marquee {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
 }
 
-.logo-grid__item {
+.logo-marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.logo-marquee__item {
+  flex: 0 0 auto;
+  width: 172px;
+  height: 96px;
+  margin-inline-end: 1rem;   /* מרווח אחיד (כולל בקצה) → לולאה רציפה מדויקת */
   display: grid;
   place-items: center;
-  height: 96px;
   padding: 14px 20px;
   background: #f6f8fa;
   border: 1px solid var(--color-border);
@@ -20,7 +29,7 @@
   box-shadow: 0 6px 16px -12px rgba(16, 85, 114, 0.22);
 }
 
-.logo-grid__img {
+.logo-marquee__img {
   max-width: 100%;
   max-height: 100%;
   width: auto;
@@ -29,20 +38,19 @@
   display: block;
 }
 
-.logo-grid__name {
+.logo-marquee__name {
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: clamp(0.95rem, 1.4vw, 1.15rem);
   color: var(--color-primary-700);
-  text-align: center;
+  white-space: nowrap;
 }
 
-/* טאבלט — 4 בשורה */
-@media (max-width: 900px) {
-  .logo-grid { grid-template-columns: repeat(4, 1fr); }
-}
-/* מובייל — 3 בשורה, כרטיס מעט קטן יותר */
 @media (max-width: 600px) {
-  .logo-grid { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
-  .logo-grid__item { height: 76px; padding: 10px 12px; border-radius: 12px; }
+  .logo-marquee__item {
+    width: 132px;
+    height: 78px;
+    margin-inline-end: 0.7rem;
+    padding: 10px 14px;
+  }
 }

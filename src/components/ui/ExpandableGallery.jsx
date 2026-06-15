@@ -1,22 +1,24 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useIsMobile from '../../hooks/useIsMobile.js'
-import SmartImage from './SmartImage.jsx'
 import Icon from './Icon.jsx'
 import './ExpandableGallery.css'
 
 /* ============================================================
    ExpandableGallery — גלריית תמונות "נפתחת": בדסקטופ התמונות הן רצועות
    שמתרחבות בריחוף (accordion אופקי), לחיצה פותחת לייטבוקס עם ניווט.
-   במובייל — רצועת גלילה אופקית עם snap (אין hover). חכם לכל כמות תמונות.
+   במובייל — רצועת גלילה אופקית עם snap (אין hover). חכם לכל כמות תמונות,
+   ומדלג אוטומטית על תמונות שלא נטענו (404) כך שאפשר להגדיר משבצות מראש.
    מימוש נטיבי (framer-motion + CSS) של רעיון shadcn/Tailwind. RTL.
    ============================================================ */
 export default function ExpandableGallery({ images = [] }) {
   const [hovered, setHovered] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [failed, setFailed] = useState(() => new Set())
   const isMobile = useIsMobile()
 
-  const list = (images || []).filter(Boolean)
+  // מסננים תמונות שלא קיימות/נכשלו → אין "חורים" וניתן להגדיר 1..10 מראש
+  const list = (images || []).filter((s) => s && !failed.has(s))
   if (!list.length) return null
 
   const flexVal = (i) => (hovered === null ? 1 : hovered === i ? 2.6 : 0.6)
@@ -24,6 +26,7 @@ export default function ExpandableGallery({ images = [] }) {
   const close = () => setSelected(null)
   const next = (e) => { e.stopPropagation(); setSelected((s) => (s + 1) % list.length) }
   const prev = (e) => { e.stopPropagation(); setSelected((s) => (s - 1 + list.length) % list.length) }
+  const onErr = (src) => setFailed((f) => { const n = new Set(f); n.add(src); return n })
 
   return (
     <div className="xgal">
@@ -31,7 +34,7 @@ export default function ExpandableGallery({ images = [] }) {
         {list.map((src, i) => (
           <motion.button
             type="button"
-            key={i}
+            key={src}
             className="xgal__item"
             style={{ flex: 1 }}
             animate={{ flex: isMobile ? 1 : flexVal(i) }}
@@ -41,7 +44,7 @@ export default function ExpandableGallery({ images = [] }) {
             onClick={() => open(i)}
             aria-label={`הגדלת תמונה ${i + 1}`}
           >
-            <SmartImage src={src} alt={`גלריית ביצוע ${i + 1}`} className="xgal__img" w={1100} />
+            <img className="xgal__img" src={src} alt={`גלריית ביצוע ${i + 1}`} loading="lazy" decoding="async" onError={() => onErr(src)} />
             <span className="xgal__shade" style={{ opacity: hovered === i ? 0 : 0.32 }} aria-hidden="true" />
             <span className="xgal__zoom" aria-hidden="true"><Icon name="search" size={20} /></span>
           </motion.button>
@@ -49,7 +52,7 @@ export default function ExpandableGallery({ images = [] }) {
       </div>
 
       <AnimatePresence>
-        {selected !== null && (
+        {selected !== null && list[selected] && (
           <motion.div
             className="xgal__modal"
             initial={{ opacity: 0 }}

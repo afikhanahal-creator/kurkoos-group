@@ -38,7 +38,7 @@
   display: block;
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: clamp(2.8rem, 5.5vw, 4.6rem);
+  font-size: clamp(1.96rem, 3.85vw, 3.22rem);   /* הוקטן ב-30% בדסקטופ (מובייל ≤720 נשאר כפי שהיה) */
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--color-secondary);

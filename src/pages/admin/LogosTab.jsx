@@ -162,6 +162,7 @@ export default function LogosTab() {
   const [logos, setLogos] = useState([])
   const [loading, setLoading] = useState(true)
   const [shuffle, setShuffle] = useState(false)
+  const [enabled, setEnabled] = useState(true)   // מתג ראשי: הצגת רצועת הלוגואים באתר
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const load = useCallback(async () => {
@@ -171,6 +172,9 @@ export default function LogosTab() {
       setLogos(rows)
       const v = settings?.logo_shuffle
       setShuffle(v === true || v === 'true' || v === 1 || v === '1')
+      // ברירת מחדל = דלוק; כבוי רק אם נשמר במפורש false/0
+      const e = settings?.logos_enabled
+      setEnabled(!(e === false || e === 'false' || e === 0 || e === '0'))
     } catch (e) { console.error(e) } finally { setLoading(false) }
   }, [])
   useEffect(() => { load() }, [load])
@@ -179,6 +183,13 @@ export default function LogosTab() {
     const next = !shuffle
     setShuffle(next)
     try { await setSetting('logo_shuffle', next) } catch (e) { setShuffle(!next); alert('שגיאה בשמירה: ' + (e.message || e)) }
+  }
+
+  // מתג ראשי — הדלקה/כיבוי של כל רצועת הלוגואים באתר בבת אחת
+  const toggleEnabled = async () => {
+    const next = !enabled
+    setEnabled(next)
+    try { await setSetting('logos_enabled', next) } catch (e) { setEnabled(!next); alert('שגיאה בשמירה: ' + (e.message || e)) }
   }
 
   const add = async () => {
@@ -205,6 +216,18 @@ export default function LogosTab() {
           <p className="ltab__muted">העלי לוגו לכל שותף, גררי לסידור, או הסירי. אם אין תמונה — מוצג השם כטקסט.</p>
         </div>
         <div className="ltab__head-actions">
+          <button
+            type="button"
+            className={`ltab__shuffle ${enabled ? 'is-on' : ''}`}
+            role="switch"
+            aria-checked={enabled}
+            onClick={toggleEnabled}
+            title="מתג ראשי — הדלקה/כיבוי של כל רצועת הלוגואים באתר בבת אחת"
+          >
+            <span className="ltab__shuffle-ic" aria-hidden="true">{enabled ? '👁️' : '🚫'}</span>
+            <span>לוגואים {enabled ? 'מוצגים' : 'מוסתרים'}</span>
+            <span className="ltab__shuffle-track"><span className="ltab__shuffle-knob" /></span>
+          </button>
           <button
             type="button"
             className={`ltab__shuffle ${shuffle ? 'is-on' : ''}`}

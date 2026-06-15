@@ -185,7 +185,8 @@
   /* גרדיאנט אפור רך מובלט יותר + צל עדין — קוביות מורמות בסגנון תדהר */
   background: linear-gradient(180deg, #f4f7f9 0%, #dde6ea 100%);
   border: 0;
-  border-radius: 12px;
+  border-radius: 7px;
+  max-width: 100%;          /* לעולם לא נחתך מעבר לרוחב הזמין */
   box-shadow: 0 10px 22px -10px rgba(16, 85, 114, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);  /* fallback — StatCube דורס בצל דינמי */
   padding: 0.6rem 1.15rem;   /* גובה נדיב יותר — קוביות מלאות כמו בתדהר */
   display: flex;

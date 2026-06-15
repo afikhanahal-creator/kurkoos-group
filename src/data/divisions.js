@@ -133,7 +133,7 @@ export const divisions = [
     slug: 'brokerage',
     icon: 'brokerage',
     category: null,
-    name: { he: 'קורקוס תיווך', en: 'Kurkoos Brokerage' },
+    name: { he: 'אפיק הנחל', en: 'Afik Hanachal' },
     menuTitle: { he: 'תיווך', en: 'Brokerage' },
     hero: {
       title: { he: 'תיווך ושיווק', en: 'Brokerage & Marketing' },

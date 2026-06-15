@@ -438,11 +438,17 @@ export default function ProjectDetail() {
               {/* גרפיקת רשת דקורטיבית — מופיעה בכל עמודי הפרויקטים מתחת ל-CTA */}
               <img
                 className="pd-banner__art"
-                src="/on-every-project-page.png"
+                src="/banner-grid-art.png"
                 alt=""
                 aria-hidden="true"
                 loading="lazy"
                 decoding="async"
+                onError={(e) => {
+                  if (!e.currentTarget.dataset.fb) {
+                    e.currentTarget.dataset.fb = '1'
+                    e.currentTarget.src = '/on-every-project-page.png'
+                  }
+                }}
               />
             </div>
 

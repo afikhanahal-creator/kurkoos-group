@@ -32,28 +32,53 @@ const XIcon = (p) => (
 
 const clampW = (v) => Math.max(0.2, Math.min(5, Math.round(v * 10) / 10))
 
-/* קוביה בתצוגה החיה — היא עצמה ידית הגרירה (גוררים את מה שרואים) */
-function PvCube({ id, cube }) {
+/* קוביה בתצוגה החיה — גוררים אותה לסידור, ויש ידיות בצדדים לשינוי רוחב
+   בעכבר (כמו עריכת תמונה). השינוי נשמר (cube.w) ומופיע באתר. */
+function PvCube({ id, cube, onResize }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const [resizing, setResizing] = useState(false)
   const size = cube.size || 'md'
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: resizing ? 'none' : transition,
     opacity: isDragging ? 0.55 : 1,
-    zIndex: isDragging ? 5 : 'auto',
+    zIndex: isDragging || resizing ? 5 : 'auto',
     ...(cube.w ? { paddingInline: `${cube.w}rem` } : {}),
+  }
+  // התחלת גרירת-שינוי-רוחב מאחת הידיות (start=ימין, end=שמאל ב-RTL).
+  // גרירה כלפי חוץ מרחיבה; כלפי פנים מצרה. נשמר מיידית דרך onResize.
+  const startResize = (dir) => (e) => {
+    e.stopPropagation()   // לא להפעיל גרירת-סידור (DnD)
+    e.preventDefault()
+    setResizing(true)
+    const startX = e.clientX
+    const startW = cube.w ?? 1.1
+    const move = (ev) => {
+      const dx = ev.clientX - startX
+      const delta = (dir === 'end' ? -dx : dx) / 55   // ~55px ≈ 1rem
+      onResize(clampW(startW + delta))
+    }
+    const up = () => {
+      setResizing(false)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
   }
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`cubed__pv cubed__pv--${size} ${cube.spread ? 'cubed__pv--spread' : ''} ${isDragging ? 'cubed__pv--drag' : ''}`}
+      className={`cubed__pv cubed__pv--${size} ${cube.spread ? 'cubed__pv--spread' : ''} ${isDragging ? 'cubed__pv--drag' : ''} ${resizing ? 'cubed__pv--resizing' : ''}`}
       {...attributes}
       {...listeners}
-      title="גררו לסידור"
+      title="גררו לסידור · ידיות הצד לשינוי רוחב"
     >
+      <span className="cubed__pv-handle cubed__pv-handle--start" onPointerDown={startResize('start')} title="גררו לשינוי רוחב" aria-hidden="true" />
       <span className="cubed__pv-val" dir={size === 'wide' ? 'auto' : 'ltr'}>{cube.value || '—'}</span>
       <span className="cubed__pv-lbl">{cube.label?.he || ''}</span>
+      <span className="cubed__pv-handle cubed__pv-handle--end" onPointerDown={startResize('end')} title="גררו לשינוי רוחב" aria-hidden="true" />
     </div>
   )
 }
@@ -147,7 +172,7 @@ export default function StatCubesField({ value, onChange, row = false }) {
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
               <SortableContext items={ids} strategy={rectSortingStrategy}>
-                {cubes.map((cube, i) => <PvCube key={ids[i]} id={ids[i]} cube={cube} />)}
+                {cubes.map((cube, i) => <PvCube key={ids[i]} id={ids[i]} cube={cube} onResize={(w) => upd(i, { w })} />)}
               </SortableContext>
             </DndContext>
           )}

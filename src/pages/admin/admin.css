@@ -1016,6 +1016,7 @@
 }
 .cubed__preview-empty { color: rgba(255,255,255,0.6); font-size: 0.82rem; line-height: 1.5; align-self: center; }
 .cubed__pv {
+  position: relative;   /* עוגן לידיות שינוי-הרוחב */
   flex: 0 0 auto; display: flex; flex-direction: column;
   align-items: center; justify-content: center; text-align: center;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
@@ -1025,6 +1026,25 @@
 }
 .cubed__pv:hover { border-color: rgba(255,255,255,0.28); }
 .cubed__pv:active, .cubed__pv--drag { cursor: grabbing; box-shadow: 0 10px 24px -8px rgba(0,0,0,0.5); }
+.cubed__pv--resizing { cursor: ew-resize; box-shadow: 0 0 0 2px var(--color-secondary, #105572); }
+
+/* ידיות שינוי-רוחב בעכבר (כמו עריכת תמונה) — בשני צדי הקוביה */
+.cubed__pv-handle {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 12px; height: 64%;
+  cursor: ew-resize; touch-action: none; z-index: 3;
+  background: transparent;
+}
+.cubed__pv-handle--start { inset-inline-start: -3px; }
+.cubed__pv-handle--end { inset-inline-end: -3px; }
+.cubed__pv-handle::before {
+  content: ''; position: absolute; inset: 0; margin: auto;
+  width: 4px; height: 70%; border-radius: 4px;
+  background: rgba(255,255,255,0.5);
+  opacity: 0; transition: opacity var(--dur-fast);
+}
+.cubed__pv:hover .cubed__pv-handle::before,
+.cubed__pv--resizing .cubed__pv-handle::before { opacity: 1; }
 .cubed__pv-val {
   font-family: var(--font-heading); font-weight: 900; color: #fff;
   line-height: 0.92; letter-spacing: -0.03em;

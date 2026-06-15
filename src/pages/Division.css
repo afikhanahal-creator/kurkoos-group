@@ -21,12 +21,14 @@
    במקומה: פאנל כהה בהיר-יותר ושקוף, עם רשת ריבועים לבנה שנראית מאחור,
    ועליו הלוגו הלבן הנקי (afik-hanahal-logo.png). */
 .division--brokerage .division-hero {
-  background: linear-gradient(160deg, #1b3245 0%, #122537 55%, #0d1a26 100%);
+  /* גרדיאנט כהה וחלק (2 עצירות) — בלי "פס"/באנדינג באמצע */
+  background: linear-gradient(165deg, #112334 0%, #0a141d 100%);
 }
 .division--brokerage .division-hero__bg { opacity: 0; }
 .division--brokerage .division-hero__overlay {
+  /* שכבה כהה אחידה (בלי עצירה בהירה באמצע שיוצרת קו) */
   background:
-    linear-gradient(180deg, rgba(13, 26, 38, 0.28) 0%, rgba(13, 26, 38, 0.14) 45%, rgba(10, 20, 30, 0.58) 100%);
+    linear-gradient(180deg, rgba(6, 12, 18, 0.42) 0%, rgba(6, 12, 18, 0.5) 100%);
 }
 /* כרטיסי "למה אנחנו" בעמוד תיווך — אפקט שחור/אפרפר (מותג אפיק הנחל)
    במקום הטורקיז/אדום. דריסת המשתנים מוגבלת לכרטיס בלבד → לא משפיע על שאר העמוד. */

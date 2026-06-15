@@ -23,20 +23,18 @@
 /* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (צף), הלוגו תמיד נכנס במלואו */
 .logo-marquee__item {
   flex: 0 0 auto;
-  width: 150px;
-  height: 72px;
-  margin-inline-end: clamp(1.5rem, 4vw, 3rem);
-  display: grid;
-  place-items: center;
-  overflow: hidden;   /* בטיחות — לוגו לעולם לא חורג מהמשבצת */
+  height: 72px;                /* רוחב לפי הלוגו, גובה אחיד */
+  display: flex;
+  align-items: center;         /* כל הלוגואים על אותו קו גובה בדיוק */
+  justify-content: center;
+  margin-inline-end: clamp(2rem, 5vw, 3.5rem);
 }
 
-/* גובה מקסימלי קבוע (px) — אוכף גודל אחיד לכל הלוגואים ומונע חיתוך */
+/* גובה קבוע זהה לכל לוגו → כולם באותו גודל ועל אותו קו; רוחב לפי יחס התמונה */
 .logo-marquee__img {
-  max-width: 100%;
-  max-height: 52px;
+  height: 48px;
   width: auto;
-  height: auto;
+  max-width: 200px;            /* בטיחות ללוגו רחב במיוחד */
   object-fit: contain;
   display: block;
 }
@@ -50,6 +48,6 @@
 }
 
 @media (max-width: 600px) {
-  .logo-marquee__item { width: 120px; height: 62px; margin-inline-end: clamp(1.2rem, 7vw, 2rem); }
-  .logo-marquee__img { max-height: 45px; }   /* גדול ב-3px במובייל */
+  .logo-marquee__item { height: 60px; margin-inline-end: clamp(1.5rem, 9vw, 2.6rem); }
+  .logo-marquee__img { height: 44px; max-width: 150px; }
 }

@@ -61,12 +61,12 @@ function ProjectCard({ p, L, t, isMobile }) {
     <div className="pg-card__media">
       {isMobile ? (
         <div className="pg-card__spot">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={760} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </div>
       ) : (
         <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={760} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </SpotlightCard>
       )}

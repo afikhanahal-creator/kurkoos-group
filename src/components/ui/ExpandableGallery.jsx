@@ -79,7 +79,8 @@ export default function ExpandableGallery({ images = [] }) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
               transition={{ duration: 0.3 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={next}
+              style={{ cursor: list.length > 1 ? 'pointer' : 'default' }}
             />
             {list.length > 1 && (
               <button type="button" className="xgal__nav xgal__nav--next" onClick={next} aria-label="הבא">

@@ -26,6 +26,9 @@ import Icon from '../components/ui/Icon.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
 import './Division.css'
 
+// כתובת האתר של אפיק הנחל — עדכן כאן את הכתובת המלאה (https://...)
+const AFIK_SITE_URL = 'https://afik-hanachal.co.il'
+
 export default function Division() {
   const { slug } = useParams()
   const { t } = useI18n()
@@ -143,6 +146,45 @@ export default function Division() {
           )}
         </div>
       </section>
+
+      {/* כרטיס תצוגה מקדימה לאתר אפיק הנחל — רק בעמוד התיווך, אחרי הכרטיסיות */}
+      {slug === 'brokerage' && (
+        <section className="section ah-site">
+          <div className="container">
+            <Reveal className="ah-site__inner" variant="scale">
+              <a
+                href={AFIK_SITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ah-site__frame"
+                aria-label="כניסה לאתר אפיק הנחל"
+              >
+                <span className="ah-site__bar" aria-hidden="true">
+                  <span className="ah-site__dot" />
+                  <span className="ah-site__dot" />
+                  <span className="ah-site__dot" />
+                  <span className="ah-site__addr">afik-hanachal.co.il</span>
+                </span>
+                <span className="ah-site__screen">
+                  <img className="ah-site__logo" src="/afik-hanahal-logo.png" alt={'אפיק הנחל נדל"ן'} loading="lazy" />
+                  <span className="ah-site__enter">כניסה לאתר ↗</span>
+                </span>
+              </a>
+              <div className="ah-site__cta">
+                <span className="eyebrow">{L({ he: 'האתר שלנו', en: 'Our website' })}</span>
+                <h2 className="section-title">{L({ he: 'אפיק הנחל — נדל"ן', en: 'Afik Hanachal — Real Estate' })}</h2>
+                <p className="ah-site__desc">
+                  {L({ he: 'מומחי שיווק בתי יוקרה ואיתור מגרשים וקרקעות בשרון ובמרכז. הציצו באתר שלנו.', en: 'Luxury home marketing and land sourcing in the Sharon and central regions. Take a look at our site.' })}
+                </p>
+                <a href={AFIK_SITE_URL} target="_blank" rel="noopener noreferrer" className="btn btn--primary btn--lg">
+                  {L({ he: 'כניסה לאתר אפיק הנחל', en: 'Visit Afik Hanachal' })}
+                  <Icon name="arrow" size={20} />
+                </a>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      )}
 
       {/* גלריית ביצוע נפתחת — רק בעמוד הביצוע, מעל "פרויקטים נבחרים" */}
       {slug === 'execution' && executionGallery.length > 0 && (

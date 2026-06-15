@@ -42,6 +42,96 @@
     rgba(28, 28, 30, 0) 60%);
 }
 
+/* ===== כרטיס תצוגה מקדימה לאתר אפיק הנחל (עמוד תיווך) ===== */
+.ah-site__inner {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 4rem);
+}
+/* "חלון דפדפן" — מסגרת עם פס עליון ונקודות, מסך כהה עם הלוגו */
+.ah-site__frame {
+  display: block;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0d1a26;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 30px 60px -28px rgba(8, 18, 28, 0.6);
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.ah-site__frame:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 40px 80px -30px rgba(8, 18, 28, 0.7);
+}
+.ah-site__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  background: #15212e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.ah-site__dot { width: 11px; height: 11px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); }
+.ah-site__dot:nth-child(1) { background: #ef5f5b; }
+.ah-site__dot:nth-child(2) { background: #f4be4f; }
+.ah-site__dot:nth-child(3) { background: #5bc46b; }
+.ah-site__addr {
+  margin-inline-start: auto;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+  direction: ltr;
+}
+.ah-site__screen {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: clamp(220px, 26vw, 320px);
+  background:
+    radial-gradient(120% 90% at 50% 0%, #16293a 0%, #0c1722 70%);
+}
+/* רשת ריבועים עדינה ברקע המסך */
+.ah-site__screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 38px 38px;
+  pointer-events: none;
+}
+.ah-site__logo { position: relative; width: clamp(150px, 22vw, 230px); height: auto; }
+.ah-site__enter {
+  position: absolute;
+  inset-block-end: 1rem;
+  inset-inline-end: 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--dur-base), transform var(--dur-base);
+}
+.ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translateY(0); }
+.ah-site__cta { text-align: right; }
+.ah-site__desc {
+  color: var(--color-text-soft);
+  font-size: 1.08rem;
+  line-height: 1.7;
+  margin: 0.6rem 0 1.5rem;
+}
+@media (max-width: 860px) {
+  .ah-site__inner { grid-template-columns: 1fr; gap: 1.75rem; }
+  .ah-site__cta { text-align: center; }
+  .ah-site__cta .section-title, .ah-site__cta .eyebrow { text-align: center; }
+}
+
 /* הלוגו הלבן בקאבר */
 .division-hero__ah-logo {
   height: var(--hero-badge-h);          /* גובה אחיד עם שאר הסמלים → כותרות מיושרות */

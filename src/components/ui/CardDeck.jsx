@@ -67,8 +67,8 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
     }
   }, [list.length, busy, reduce])
 
-  // ניווט אוטומטי — הספירה (4 שניות לקלף הראשון, ואז כל 3 שניות) מתחילה רק
-  // כשהמשתמש גולל והערימה נכנסת למסך, לא מרגע טעינת הדף.
+  // ניווט אוטומטי — קלף מתחלף כל 4 שניות. הספירה מתחילה רק כשהערימה נכנסת
+  // למסך (גם אם לקח זמן לגלול), לא מרגע טעינת הדף.
   const advanceRef = useRef(advance)
   advanceRef.current = advance
   useEffect(() => {
@@ -81,14 +81,14 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
       started = true
       start = setTimeout(() => {
         advanceRef.current()
-        interval = setInterval(() => advanceRef.current(), 3000)
+        interval = setInterval(() => advanceRef.current(), 4000)
       }, 4000)
     }
     let io
     if (typeof IntersectionObserver !== 'undefined') {
       io = new IntersectionObserver(
         (entries) => entries.forEach((e) => { if (e.isIntersecting) { begin(); io.disconnect() } }),
-        { threshold: 0.4 }
+        { threshold: 0.35 }
       )
       io.observe(el)
     } else {

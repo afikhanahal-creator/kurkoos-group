@@ -163,15 +163,33 @@ export function cmsRowToCard(p) {
   }
 }
 
+/* עמודות אופציונליות שנוספו לאחרונה — אם ה-migration עדיין לא הורץ ב-Supabase,
+   העמודות לא קיימות ושמירה תיכשל. מסירים אותן ומנסים שוב כדי שהשמירה לא תישבר. */
+const OPTIONAL_PROJECT_COLS = ['about_image_url', 'about_rounded', 'about_spaced']
+const isMissingColumnError = (error) =>
+  !!error && (error.code === 'PGRST204' || error.code === '42703' ||
+    /column .* does not exist|could not find the .* column|schema cache/i.test(error.message || ''))
+const stripOptional = (obj) => {
+  const clean = { ...obj }
+  OPTIONAL_PROJECT_COLS.forEach((c) => delete clean[c])
+  return clean
+}
+
 export async function createProject(row) {
-  const { data, error } = await supabase.from('projects').insert(row).select().single()
+  let { data, error } = await supabase.from('projects').insert(row).select().single()
+  if (isMissingColumnError(error)) {
+    ;({ data, error } = await supabase.from('projects').insert(stripOptional(row)).select().single())
+  }
   if (error) throw error
   invalidate('projects')
   return data
 }
 
 export async function updateProject(id, patch) {
-  const { data, error } = await supabase.from('projects').update(patch).eq('id', id).select().single()
+  let { data, error } = await supabase.from('projects').update(patch).eq('id', id).select().single()
+  if (isMissingColumnError(error)) {
+    ;({ data, error } = await supabase.from('projects').update(stripOptional(patch)).eq('id', id).select().single())
+  }
   if (error) throw error
   invalidate('projects')
   return data

@@ -32,7 +32,9 @@ export default function useCountUp(target, { duration = 1800 } = {}) {
           }
         })
       },
-      { threshold: 0.4 }
+      // מופעל ברגע שמגיעים לאזור המונה (גם אם לקח זמן לגלול) — סף נמוך
+      // ו-rootMargin שמקדים מעט את ההפעלה כשהאלמנט מתקרב לתצוגה
+      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
     )
     observer.observe(el)
     return () => observer.disconnect()

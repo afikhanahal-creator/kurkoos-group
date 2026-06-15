@@ -390,43 +390,35 @@
   box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.26), 0 2px 8px rgba(7, 41, 58, 0.05);
 }
 .pd-split__media {
-  border-radius: 0;      /* התמונה הראשית ("על הפרויקט") — ללא פינות עגולות */
+  border-radius: var(--radius-lg);   /* פינות עגולות לתמונה */
   overflow: hidden;
   box-shadow: none;
-  align-self: center;    /* ממורכזת אנכית לצד הטקסט — מתאימה לכל יחס */
+  min-height: 100%;                  /* ממלאת את גובה הכרטיס → תואם לגובה הטקסט */
 }
 .pd-split__body {
   align-self: center;
   padding: clamp(1.6rem, 3.2vw, 3.4rem);
 }
-/* גובה לפי היחס הטבעי של התמונה → תמונה לאורך (portrait) מוצגת במלואה ולא נחתכת */
+/* התמונה מכסה את כל הכרטיס — בלי שוליים לבנים, עם פינות עגולות */
 .pd-split__media img,
 .pd-split__media .smart-image-placeholder {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
-  object-fit: contain;
-  border-radius: 0;
-}
-/* מקטע "על הסביבה" (pd-split--reverse) — התמונה כן עם פינות עגולות */
-.pd-split--reverse .pd-split__media,
-.pd-split--reverse .pd-split__media img,
-.pd-split--reverse .pd-split__media .smart-image-placeholder {
+  object-fit: cover;
   border-radius: var(--radius-lg);
 }
 
 /* ===== בקרת פריסה לתמונה הראשית ("על הפרויקט") — נשלט מה-CMS ===== */
-/* פינות: עגולות מול ישרות */
-.pd-split--square .pd-split-card { border-radius: 0; }
-.pd-split--rounded .pd-split__media,
-.pd-split--rounded .pd-split__media img,
-.pd-split--rounded .pd-split__media .smart-image-placeholder { border-radius: var(--radius-lg); }
+/* תמונה לאורך (portrait) — עמודת התמונה צרה יותר כדי שתתאים ליחס לאורך,
+   והתמונה ממלאת את כל גובה הטקסט (cover) ללא חיתוך מוזר. */
+.pd-split--portrait .pd-split__grid { grid-template-columns: 0.82fr 1.18fr; }
 
 /* מרווח: צמוד לטקסט (תדהר) מול מרווח אוויר בין התמונה לטקסט */
 .pd-split--spaced .pd-split__grid { gap: clamp(1.5rem, 3.5vw, 3.5rem); }
 .pd-split--spaced .pd-split-card { background: transparent; box-shadow: none; overflow: visible; }
 .pd-split--spaced .pd-split__body { padding-inline: 0; }
-.pd-split--spaced.pd-split--rounded .pd-split__media { box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.28); }
+.pd-split--spaced .pd-split__media { box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.28); }
 .pd-split__body .eyebrow { margin-bottom: 0.6rem; }
 .pd-prose { font-size: 1.1rem; line-height: 1.75; color: var(--color-text-soft); margin-bottom: 1.5rem; }
 .pd-features { display: flex; flex-direction: column; gap: 0.7rem; margin: 0 0 2rem; }

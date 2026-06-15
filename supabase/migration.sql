@@ -40,6 +40,7 @@ alter table public.projects add column if not exists developers jsonb default '[
 alter table public.projects add column if not exists about_image_url text;                   -- תמונה ייעודית למקטע "על הפרויקט"
 alter table public.projects add column if not exists about_rounded boolean default false;    -- פינות עגולות לתמונה הראשית
 alter table public.projects add column if not exists about_spaced boolean default false;     -- מרווח בין התמונה לטקסט (כבוי = צמוד, סגנון תדהר)
+alter table public.projects add column if not exists about_portrait boolean default false;   -- תמונה ראשית לאורך (Portrait) — ממלאת את גובה הטקסט
 alter table public.projects add column if not exists card_layout text default 'normal';      -- תצוגת כרטיס בגלריה: normal | wide | tall
 alter table public.projects add column if not exists stats_scale text default 'normal';       -- גודל קוביות הנתונים: small | normal | large
 -- ⚠️ יש להריץ קובץ זה מחדש ב-Supabase (SQL editor) אחרי כל הוספת עמודות, אחרת שמירה מהאדמין תיכשל.

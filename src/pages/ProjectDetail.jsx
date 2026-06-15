@@ -110,8 +110,8 @@ function buildProject(local, cms) {
       status: cms.status,
       cover: cms.hero_image_url || (cms.gallery && cms.gallery[0]),
       aboutImage: cms.about_image_url || undefined,
-      aboutRounded: !!cms.about_rounded,
       aboutSpaced: !!cms.about_spaced,
+      aboutPortrait: !!cms.about_portrait,
       gallery: cms.gallery && cms.gallery.length ? cms.gallery : undefined,
       towers: has(cms.towers) ? cms.towers : undefined,
       units: has(cms.units) ? cms.units : undefined,
@@ -536,7 +536,7 @@ export default function ProjectDetail() {
 
       {/* ===== הפרויקט ===== */}
       {show('project') && (
-      <section id="project" className={`section pd-anchor pd-split ${project.aboutRounded ? 'pd-split--rounded' : 'pd-split--square'} ${project.aboutSpaced ? 'pd-split--spaced' : 'pd-split--flush'}`}>
+      <section id="project" className={`section pd-anchor pd-split ${project.aboutSpaced ? 'pd-split--spaced' : 'pd-split--flush'} ${project.aboutPortrait ? 'pd-split--portrait' : 'pd-split--landscape'}`}>
         <div className="container">
           <div className="pd-split__grid pd-split-card">
             <Reveal className="pd-split__media" variant="right">

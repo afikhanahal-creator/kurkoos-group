@@ -85,6 +85,11 @@ export default function Division() {
               src="/afik-hanahal-logo.png"
               alt={'אפיק הנחל נדל"ן'}
               initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
+          ) : slug === 'development' ? (
+            <motion.img className="division-hero__nadlan-logo"
+              src="/kurkoos-logo-nadlan.png"
+              alt={'קורקוס גרופ'}
+              initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
           ) : (
             <motion.span className="division-hero__icon"
               initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>

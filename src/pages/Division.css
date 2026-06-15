@@ -163,6 +163,17 @@
   .ah-site__frame:hover { transform: scale(1.01); }   /* בלי הטיית 3D במגע */
 }
 
+/* לוגו קורקוס בעמוד הייזום — הקובץ שחור על רקע לבן; invert הופך שחור→לבן,
+   grayscale+brightness מנטרל את העיגולים הצבעוניים ללבן, ו-screen מסיר את הרקע הלבן
+   כך שנשאר לוגו לבן "שקוף" מעל הבאנר הכהה. */
+.division-hero__nadlan-logo {
+  height: calc(var(--hero-badge-h) * 1.15);
+  width: auto;
+  margin-bottom: var(--hero-badge-gap);
+  filter: invert(1) grayscale(1) brightness(1.7);
+  mix-blend-mode: screen;
+}
+
 /* הלוגו הלבן בקאבר */
 .division-hero__ah-logo {
   height: var(--hero-badge-h);          /* גובה אחיד עם שאר הסמלים → כותרות מיושרות */
@@ -351,7 +362,8 @@
   /* אייקון התחום / לוגו ראיתה — ממורכזים בכל עמודי התחומים */
   .division-hero__icon,
   .division-hero__logo,
-  .division-hero__ah-logo { margin-inline: auto; }
+  .division-hero__ah-logo,
+  .division-hero__nadlan-logo { margin-inline: auto; }
   /* הכותרת תפורה לרוחב הטקסט וממורכזת → הקו תחתיה מתיישר בדיוק עם מרכז הטקסט */
   .division-hero__title { max-width: 22ch; width: fit-content; margin-inline: auto; }
   /* פס האקסנט מתחת לכותרת — ממורכז בשיטת margin auto (חסין RTL, בלי translateX שבר את המרכוז) */

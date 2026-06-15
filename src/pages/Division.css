@@ -271,9 +271,15 @@
   .division-showcase { margin-top: -28px; }
 }
 
-/* בעמוד הביצוע: גובה מספיק כך שהלוגו + הכותרת "ביצוע ובנייה" ייכנסו במלואם */
+/* בעמוד הביצוע: לוגו ראיתה קצת קטן יותר + מרווחים מצומצמים → הכותרת והתקציר
+   עולים ונכנסים במלואם בדסקטופ (התקציר לא "נעלם" יותר). */
 .division--execution .division-hero {
-  min-height: clamp(440px, 58vh, 560px);
+  min-height: clamp(460px, 60vh, 580px);
+  --hero-badge-h: clamp(84px, 10vw, 116px);
+  --hero-badge-gap: clamp(0.7rem, 1.8vw, 1.1rem);
+}
+.division--execution .division-hero .breadcrumbs {
+  margin-bottom: clamp(1rem, 2.6vw, 1.7rem);
 }
 /* מורידים מעט את תמונת הפועל גם בדסקטופ כדי שייראה במלואו ולא חתוך */
 @media (min-width: 981px) {

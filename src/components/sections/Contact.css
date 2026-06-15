@@ -25,7 +25,7 @@
   /* טופס בצד ימין ותמונה בצד שמאל. עמודה ראשונה = inline-start = ימין ב-RTL */
   grid-template-columns: minmax(0, clamp(360px, 34vw, 480px)) minmax(0, clamp(340px, 34vw, 480px));
   justify-content: center;
-  align-items: center;
+  align-items: start;   /* כל עמודה בגובה עצמאי — בחירת שעות בצד שמאל לא "מגדילה" את הפאנל הכחול */
   gap: clamp(1.5rem, 3vw, 3rem);
 }
 /* סדר הצגה: טופס ראשון (ימין), תמונה שנייה (שמאל) — בלי לשנות את ה-DOM */

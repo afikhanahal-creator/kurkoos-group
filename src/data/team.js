@@ -17,6 +17,7 @@ export const team = [
     photo: '/5E83C911-4E64-4FCD-8C30-D5620C507520.png',
     imgPos: 'center center',   /* תמונה מרובעת — cover חותך רק את הצדדים */
     imgZoom: 1.16,   /* זום-אין קל כדי שהדמות תהיה בגודל של השאר */
+    imgBright: 1.2,  /* +20% תאורה על הפנים — אפקט תאורת פורטרייט */
     bio: {
       he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
       en: 'Manages field teams and ensures execution quality and safety at every construction stage.',

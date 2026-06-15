@@ -183,11 +183,13 @@
 @media (max-width: 860px) {
   /* כמעט רוחב מלא, אך משאיר מקום להילה הסגולה מסביב */
   .ah-site__frame {
-    width: 92%;
+    width: 90%;
+    /* הילה סגולה בולטת וברורה (חזקה יותר כדי שתיראה על רקע בהיר) */
     box-shadow:
-      0 20px 50px -20px rgba(0, 0, 0, 0.55),
-      0 0 0 1px rgba(255, 255, 255, 0.05),
-      0 0 46px -6px var(--ah-glow);   /* הילה סגולה ברורה גם במובייל */
+      0 16px 40px -24px rgba(0, 0, 0, 0.4),
+      0 0 0 1.5px rgba(118, 128, 193, 0.55),
+      0 0 38px 2px rgba(118, 128, 193, 0.6),
+      0 0 70px 6px rgba(118, 128, 193, 0.4);
   }
   .ah-site__screen { max-height: clamp(320px, 96vw, 520px); }
   .ah-site__frame:hover { transform: scale(1.005); }   /* בלי הטיית 3D במגע */

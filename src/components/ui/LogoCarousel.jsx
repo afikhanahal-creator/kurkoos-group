@@ -1,21 +1,67 @@
+import { useRef, useEffect } from 'react'
 import './LogoCarousel.css'
 
 /* ============================================================
-   LogoCarousel — סרט לוגואים רץ (marquee) ב-CSS טהור. משכפלים את
-   הרשימה פעמיים ומריצים translateX 0 → -50% → לולאה רציפה חלקה.
-   בלי מדידות JS (חסין). כל לוגו בכרטיס אחיד (contain, לא חתוך).
+   LogoCarousel — סרט לוגואים רץ ברצף בעזרת גלילה נטיבית (scrollLeft +
+   requestAnimationFrame). שיטה מוכחת שעובדת ב-iOS Safari (כמו קרוסלת
+   הפרויקטים). הרשימה משוכפלת → איפוס בלתי-נראה בגבול → לולאה רציפה.
+   לוגואים צפים (בלי ריבוע), בגודל אחיד (contain → לא חתוכים).
    ============================================================ */
 const srcOf = (l) => l.image_url || l.logo || l.image || l.url
 
 export default function LogoCarousel({ logos = [] }) {
   const list = (logos || []).filter((l) => srcOf(l) || l.name)
+  const scrollerRef = useRef(null)
+
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el || list.length < 2) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    let raf
+    let pos = 0
+    let paused = false
+    const speed = 0.6 // פיקסל לפריים (~36px/שנייה) — תנועה רציפה וברורה
+
+    const step = () => {
+      const copy = el.scrollWidth / 2   // רוחב עותק אחד
+      if (!paused && copy) {
+        pos += speed
+        if (pos >= copy) pos -= copy     // איפוס חלק בגבול → לולאה רציפה
+        el.scrollLeft = pos
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+
+    const pause = () => { paused = true }
+    const resume = () => { pos = el.scrollLeft; paused = false }
+    el.addEventListener('pointerdown', pause)
+    el.addEventListener('pointerup', resume)
+    el.addEventListener('pointercancel', resume)
+    el.addEventListener('mouseenter', pause)
+    el.addEventListener('mouseleave', resume)
+    el.addEventListener('touchstart', pause, { passive: true })
+    el.addEventListener('touchend', resume)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      el.removeEventListener('pointerdown', pause)
+      el.removeEventListener('pointerup', resume)
+      el.removeEventListener('pointercancel', resume)
+      el.removeEventListener('mouseenter', pause)
+      el.removeEventListener('mouseleave', resume)
+      el.removeEventListener('touchstart', pause)
+      el.removeEventListener('touchend', resume)
+    }
+  }, [list.length])
+
   if (!list.length) return null
   const track = [...list, ...list]
-  const duration = Math.max(30, list.length * 3.4)
 
   return (
-    <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">
-      <div className="logo-marquee__track" style={{ '--marquee-dur': `${duration}s` }}>
+    <div className="logo-marquee" ref={scrollerRef} role="list" aria-label="שותפים ולקוחות">
+      <div className="logo-marquee__track">
         {track.map((logo, i) => {
           const src = srcOf(logo)
           return (

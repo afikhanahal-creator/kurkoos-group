@@ -1,29 +1,24 @@
 /* ============================================================
-   סרט לוגואים רץ (marquee, CSS טהור) — לוגואים צפים (בלי ריבוע מאחור),
-   בגודל אחיד (contain → לא חתוכים), זזים ברצף. בלי mask (תקלת Safari).
+   סרט לוגואים רץ — גלילה נטיבית (scrollLeft) שעובדת ב-iOS.
+   לוגואים צפים (בלי ריבוע), בגודל אחיד (contain → לא חתוכים).
    ============================================================ */
 .logo-marquee {
-  position: relative;
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  direction: ltr;               /* גלילה צפויה (scrollLeft חיובי) גם ב-RTL */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;        /* הסתרת פס הגלילה */
 }
+.logo-marquee::-webkit-scrollbar { display: none; }
 
 .logo-marquee__track {
   display: flex;
   align-items: center;
   width: max-content;
-  direction: ltr;   /* כיוון קבוע ללולאה חלקה גם ב-RTL */
-  animation: logo-scroll var(--marquee-dur, 40s) linear infinite;
-  will-change: transform;
-}
-.logo-marquee:hover .logo-marquee__track { animation-play-state: paused; }
-
-@keyframes logo-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
 }
 
-/* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (לוגו צף), הלוגו תמיד נכנס במלואו */
+/* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (צף), הלוגו תמיד נכנס במלואו */
 .logo-marquee__item {
   flex: 0 0 auto;
   width: 150px;

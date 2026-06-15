@@ -79,8 +79,8 @@
 .about-vision__closing::before {
   content: '';
   flex-basis: 100%;          /* שורה משלו מעל התגית והחותם */
-  width: 140px;              /* רוחב קצר */
-  height: 2px;               /* דק (חצי מהעובי הקודם) */
+  width: 70px;               /* רוחב קצר (הוקטן ב-50% נוסף) */
+  height: 2px;               /* דק */
   margin: 0 auto 1.6rem;     /* ממורכז */
   background: var(--color-accent-500);
   border-radius: 2px;

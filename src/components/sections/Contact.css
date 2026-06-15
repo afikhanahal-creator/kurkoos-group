@@ -171,13 +171,23 @@
   border-radius: var(--radius-pill);
   padding: 0.85em 2em;
 }
-.contact__submit:hover {
-  background: var(--color-accent);
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-3);
+/* אפקט ה-hover רק במכשירים עם hover אמיתי (דסקטופ) — כך במובייל אין hover "תקוע"
+   אדום שמסתיר את אפקט הלחיצה הלבן */
+@media (hover: hover) {
+  .contact__submit:hover {
+    background: var(--color-accent);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+  }
 }
-.contact__submit:active { transform: translateY(0) scale(0.98); }
+/* בלחיצה (כולל מובייל) — הכפתור הופך ללבן עם טקסט כחול */
+.contact__submit:active {
+  transform: translateY(0) scale(0.98);
+  background: #fff;
+  color: var(--color-secondary);
+  border-color: #fff;
+}
 
 .contact__phones {
   margin-top: 2rem;

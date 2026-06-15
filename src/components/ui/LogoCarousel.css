@@ -23,23 +23,22 @@
 /* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (צף), הלוגו תמיד נכנס במלואו */
 .logo-marquee__item {
   flex: 0 0 auto;
-  height: 72px;                /* רוחב לפי הלוגו, גובה אחיד */
+  height: 96px;                /* גבוה מספיק כדי להכיל לוגו מוגדל (אחרי "קיצור השוליים") */
   display: flex;
-  align-items: center;         /* כל הלוגואים על אותו קו גובה בדיוק */
+  align-items: center;         /* כל הלוגואים על אותו קו */
   justify-content: center;
   margin-inline-end: clamp(2rem, 5vw, 3.5rem);
 }
 
-/* גובה קבוע זהה לכל לוגו → כולם באותו גודל ועל אותו קו; רוחב לפי יחס התמונה */
+/* גובה בסיס; ה-JS מודד את התוכן ומגדיל (scale) כך שהתוכן הנראה זהה לכולם */
 .logo-marquee__img {
-  height: 48px;
+  height: 50px;
   width: auto;
-  max-width: 200px;            /* בטיחות ללוגו רחב במיוחד */
+  max-width: 180px;
   object-fit: contain;
+  transform-origin: center;
   display: block;
 }
-/* לוגו ריבועי (עם שוליים שקופים פנימיים) — גבוה יותר כדי שהתוכן הנראה יהיה באותו גודל */
-.logo-marquee__img.is-square { height: 66px; }
 
 .logo-marquee__name {
   font-family: var(--font-heading);
@@ -50,7 +49,6 @@
 }
 
 @media (max-width: 600px) {
-  .logo-marquee__item { height: 64px; margin-inline-end: clamp(1.5rem, 9vw, 2.6rem); }
+  .logo-marquee__item { height: 84px; margin-inline-end: clamp(1.5rem, 9vw, 2.6rem); }
   .logo-marquee__img { height: 44px; max-width: 150px; }
-  .logo-marquee__img.is-square { height: 60px; }
 }

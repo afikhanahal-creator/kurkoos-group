@@ -9,6 +9,37 @@ import './LogoCarousel.css'
    ============================================================ */
 const srcOf = (l) => l.image_url || l.logo || l.image || l.url
 
+/* מודד את שטח התוכן האמיתי של הלוגו (מתעלם משוליים שקופים פנימיים) ומגדיל
+   אותו כך שהתוכן הנראה יגיע לגובה אחיד — "מקצר שוליים" ומיישר גדלים. */
+const fitLogo = (e) => {
+  const img = e.currentTarget
+  if (img.dataset.fit) return
+  img.dataset.fit = '1'
+  try {
+    const nw = img.naturalWidth, nh = img.naturalHeight
+    if (!nw || !nh) return
+    const s = Math.min(1, 160 / Math.max(nw, nh))
+    const cw = Math.max(1, Math.round(nw * s))
+    const ch = Math.max(1, Math.round(nh * s))
+    const cv = document.createElement('canvas')
+    cv.width = cw; cv.height = ch
+    const ctx = cv.getContext('2d', { willReadFrequently: true })
+    ctx.drawImage(img, 0, 0, cw, ch)
+    const d = ctx.getImageData(0, 0, cw, ch).data
+    let top = ch, bottom = -1
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        if (d[(y * cw + x) * 4 + 3] > 24) { if (y < top) top = y; bottom = y; break }
+      }
+    }
+    if (bottom >= top) {
+      const ratio = (bottom - top + 1) / ch       // יחס גובה-התוכן לגובה-התמונה
+      const k = Math.max(1, Math.min(1.85, 1.04 / ratio))
+      img.style.transform = `scale(${k})`
+    }
+  } catch { /* תמונה לא-קריאה (CORS) — מדלגים */ }
+}
+
 export default function LogoCarousel({ logos = [] }) {
   const list = (logos || []).filter((l) => srcOf(l) || l.name)
   const scrollerRef = useRef(null)
@@ -78,12 +109,7 @@ export default function LogoCarousel({ logos = [] }) {
                     alt={logo.name || ''}
                     loading="eager"
                     decoding="async"
-                    onLoad={(e) => {
-                      const im = e.currentTarget
-                      const r = im.naturalWidth / im.naturalHeight
-                      // לוגו ריבועי = בד"כ עם שוליים שקופים פנימיים → מגדילים כדי שייראה באותו גודל
-                      if (r >= 0.82 && r <= 1.25) im.classList.add('is-square')
-                    }}
+                    onLoad={fitLogo}
                   />
                 : <span className="logo-marquee__name">{logo.name}</span>}
             </div>

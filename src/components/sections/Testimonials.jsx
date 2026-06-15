@@ -4,8 +4,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import testimonials from '../../data/testimonials.js'
 import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
-import Text3DFlip from '../ui/Text3DFlip.jsx'
-import useIsMobile from '../../hooks/useIsMobile.js'
+import KineticText from '../ui/KineticText.jsx'
 import './Testimonials.css'
 
 const AUTO_MS = 3500 // החלפה אוטומטית כל ~3.5 שניות
@@ -25,7 +24,6 @@ function Stars() {
 export default function Testimonials() {
   const { t, isRTL } = useI18n()
   const L = useLocalized()
-  const isMobile = useIsMobile()
   const [i, setI] = useState(0)
   const [paused, setPaused] = useState(false)
   const count = testimonials.length
@@ -48,7 +46,7 @@ export default function Testimonials() {
       <div className="container">
         <div className="testimonials__head">
           <span className="eyebrow">{t('testimonials.eyebrow')}</span>
-          <h2 className="section-title">{isMobile ? t('testimonials.title') : <Text3DFlip text={t('testimonials.title')} />}</h2>
+          <KineticText as="h2" className="section-title" text={t('testimonials.title')} />
           <p className="section-lead">{t('testimonials.lead')}</p>
         </div>
 

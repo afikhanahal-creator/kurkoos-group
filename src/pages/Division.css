@@ -28,6 +28,18 @@
   background:
     linear-gradient(180deg, rgba(13, 26, 38, 0.28) 0%, rgba(13, 26, 38, 0.14) 45%, rgba(10, 20, 30, 0.58) 100%);
 }
+/* כרטיסי "למה אנחנו" בעמוד תיווך — אפקט שחור/אפרפר (מותג אפיק הנחל)
+   במקום הטורקיז/אדום. דריסת המשתנים מוגבלת לכרטיס בלבד → לא משפיע על שאר העמוד. */
+.division--brokerage .card-inner {
+  --color-secondary: #1f2024;   /* שחור-אפרפר → רקע האייקון בריחוף + "הנוזל" */
+  --card-accent: #45484e;       /* אפור כהה → כותרת בריחוף + כפתור */
+}
+.division--brokerage .card__glow {
+  background: radial-gradient(circle at 50% 0%,
+    rgba(28, 28, 30, 0.42) 0%,
+    rgba(28, 28, 30, 0) 60%);
+}
+
 /* הלוגו הלבן בקאבר */
 .division-hero__ah-logo {
   height: var(--hero-badge-h);          /* גובה אחיד עם שאר הסמלים → כותרות מיושרות */

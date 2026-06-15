@@ -160,7 +160,8 @@ export default function Division() {
       {/* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */}
       <ProjectsGallery items={list} showFooter={false} />
 
-      <Testimonials />
+      {/* בעמוד התיווך (אפיק הנחל) — בלי סקשן ההמלצות */}
+      {slug !== 'brokerage' && <Testimonials />}
 
       {/* מדריך */}
       <section className="section division-guide">

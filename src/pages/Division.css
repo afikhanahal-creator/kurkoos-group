@@ -37,6 +37,20 @@
       linear-gradient(180deg, rgba(6, 8, 10, 0.5) 0%, rgba(6, 8, 10, 0.38) 45%, rgba(6, 8, 10, 0.78) 100%);
   }
 }
+
+/* דסקטופ — מסתירים לגמרי את הלוגו; נשאר קאבר כהה ובהיר-יותר עם רשת
+   ריבועים לבנה שנראית מעט מאחור (שקופה). */
+@media (min-width: 769px) {
+  .division--brokerage .division-hero {
+    background:
+      linear-gradient(160deg, #15293a 0%, #0e1c29 55%, #0a141d 100%);
+  }
+  .division--brokerage .division-hero__bg { opacity: 0; }   /* מעלים את תמונת הלוגו */
+  .division--brokerage .division-hero__overlay {
+    background:
+      linear-gradient(180deg, rgba(10, 22, 32, 0.32) 0%, rgba(10, 22, 32, 0.18) 45%, rgba(8, 16, 24, 0.62) 100%);
+  }
+}
 /* שכבת קריאוּת — כהה בראש (מאחורי המלל) ובתחתית, בהיר באמצע → עומק ופרימיום */
 .division-hero__overlay {
   position: absolute; inset: 0; z-index: 1;

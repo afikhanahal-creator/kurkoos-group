@@ -60,7 +60,11 @@ export default function Division() {
           <SmartImage src={division.hero.image} alt={L(division.hero.title)} label={L(division.name)} />
         </Parallax>
         <div className="division-hero__overlay" />
-        <InfiniteGrid color="rgba(255,255,255,0.5)" baseOpacity={0.08} revealOpacity={0.28} />
+        <InfiniteGrid
+          color="rgba(255,255,255,0.5)"
+          baseOpacity={slug === 'brokerage' ? 0.16 : 0.08}
+          revealOpacity={slug === 'brokerage' ? 0.4 : 0.28}
+        />
         <div className="container division-hero__content">
           <Breadcrumbs
             items={[

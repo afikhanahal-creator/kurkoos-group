@@ -57,11 +57,7 @@
   margin-bottom: 1.4rem;
 }
 .about-vision__tagline {
-  margin-top: 2rem;
-  /* קו הדגשה עליון ממורכז (במקום קו צד) — מתאים למלל ממורכז */
-  padding-top: 1.3rem;
-  border-top: 4px solid var(--color-accent-500);
-  display: inline-block;
+  margin-top: 1.4rem;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 1.35rem;
@@ -78,6 +74,16 @@
   flex-wrap: wrap;
   margin-top: 2.5rem;
   text-align: center;
+}
+/* פס מפריד קצר, דק וממורכז בין המלל לכותרת הסוגרת */
+.about-vision__closing::before {
+  content: '';
+  flex-basis: 100%;          /* שורה משלו מעל התגית והחותם */
+  width: 140px;              /* רוחב קצר */
+  height: 2px;               /* דק (חצי מהעובי הקודם) */
+  margin: 0 auto 1.6rem;     /* ממורכז */
+  background: var(--color-accent-500);
+  border-radius: 2px;
 }
 .about-vision__closing .about-vision__tagline {
   margin-top: 0;

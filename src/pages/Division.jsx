@@ -20,6 +20,8 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
+import ExpandableGallery from '../components/ui/ExpandableGallery.jsx'
+import executionGallery from '../data/executionGallery.js'
 import Icon from '../components/ui/Icon.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
 import './Division.css'
@@ -132,6 +134,19 @@ export default function Division() {
           )}
         </div>
       </section>
+
+      {/* גלריית ביצוע נפתחת — רק בעמוד הביצוע, מעל "פרויקטים נבחרים" */}
+      {slug === 'execution' && executionGallery.length > 0 && (
+        <section className="section section--soft">
+          <div className="container">
+            <Reveal className="division-why__head">
+              <span className="eyebrow">{L({ he: 'מהשטח', en: 'From the field' })}</span>
+              <h2 className="section-title">{L({ he: 'רגעים מהביצוע', en: 'Moments from execution' })}</h2>
+            </Reveal>
+            <ExpandableGallery images={executionGallery} />
+          </div>
+        </section>
+      )}
 
       {/* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */}
       <ProjectsGallery items={list} showFooter={false} />

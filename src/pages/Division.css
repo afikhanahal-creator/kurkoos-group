@@ -181,8 +181,14 @@
 .ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translate(-50%, 0); }
 
 @media (max-width: 860px) {
-  /* רוחב מלא — עד השוליים */
-  .ah-site__frame { width: 100%; }
+  /* כמעט רוחב מלא, אך משאיר מקום להילה הסגולה מסביב */
+  .ah-site__frame {
+    width: 92%;
+    box-shadow:
+      0 20px 50px -20px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 0 46px -6px var(--ah-glow);   /* הילה סגולה ברורה גם במובייל */
+  }
   .ah-site__screen { max-height: clamp(320px, 96vw, 520px); }
   .ah-site__frame:hover { transform: scale(1.005); }   /* בלי הטיית 3D במגע */
   .ah-site__enter { display: none; }   /* מסירים את הכפתור הפנימי במובייל */

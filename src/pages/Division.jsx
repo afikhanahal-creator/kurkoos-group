@@ -168,12 +168,6 @@ export default function Division() {
                 aria-label="כניסה לאתר אפיק הנחל"
               >
                 <span className="ah-site__sheen" aria-hidden="true" />
-                <span className="ah-site__bar" aria-hidden="true">
-                  <span className="ah-site__dot" />
-                  <span className="ah-site__dot" />
-                  <span className="ah-site__dot" />
-                  <span className="ah-site__addr">www.afikhanahal.co.il</span>
-                </span>
                 <span className="ah-site__screen">
                   {/* צילום מסך אמיתי של האתר; אם חסר (404) — נופל ללוגו על רקע המותג */}
                   <img

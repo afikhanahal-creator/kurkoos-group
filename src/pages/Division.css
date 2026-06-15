@@ -181,22 +181,32 @@
 .ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translate(-50%, 0); }
 
 @media (max-width: 860px) {
-  /* כמעט רוחב מלא, אך משאיר מקום להילה הסגולה מסביב */
+  /* כמעט רוחב מלא, עם מקום להילה הסגולה מסביב */
   .ah-site__frame {
-    width: 90%;
-    /* הילה סגולה בולטת וברורה (חזקה יותר כדי שתיראה על רקע בהיר) */
+    width: 88%;
+    /* מסגרת סגולה מלאה — לא נחתכת ע"י overflow, אז ההילה הסגולה תמיד נראית */
+    border: 2px solid rgba(118, 128, 193, 0.85);
     box-shadow:
-      0 16px 40px -24px rgba(0, 0, 0, 0.4),
-      0 0 0 1.5px rgba(118, 128, 193, 0.55),
-      0 0 38px 2px rgba(118, 128, 193, 0.6),
-      0 0 70px 6px rgba(118, 128, 193, 0.4);
+      0 14px 36px -22px rgba(0, 0, 0, 0.4),
+      0 0 30px 0 rgba(118, 128, 193, 0.55),
+      0 0 60px 6px rgba(118, 128, 193, 0.4);
+    /* תזוזה עדינה ומתמשכת — "כמו בדסקטופ" (אין hover במגע) */
+    animation: ah-float 5.5s ease-in-out infinite;
   }
   .ah-site__screen { max-height: clamp(320px, 96vw, 520px); }
-  .ah-site__frame:hover { transform: scale(1.005); }   /* בלי הטיית 3D במגע */
   .ah-site__enter { display: none; }   /* מסירים את הכפתור הפנימי במובייל */
   /* מקטינים את הכפתור התחתון ב-~20% */
   .ah-site__btn { padding: 0.68rem 1.6rem; font-size: 0.82rem; }
   .ah-site__btn svg { width: 15px; height: 15px; }
+}
+
+/* תזוזה עדינה לכרטיס האתר במובייל (הטיה קלה הלוך-ושוב) */
+@keyframes ah-float {
+  0%, 100% { transform: perspective(1100px) rotateY(0deg) translateY(0); }
+  50%      { transform: perspective(1100px) rotateY(-5deg) translateY(-5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ah-site__frame { animation: none !important; }
 }
 
 /* לוגו קורקוס בעמוד הייזום — הקובץ שחור על רקע לבן; invert הופך שחור→לבן,
@@ -437,7 +447,7 @@
 .division-intro__text p { font-size: 1.3rem; line-height: 1.85; color: var(--color-text-soft); }
 /* מובייל — מגדילים את משפט האינטרו ב-2px */
 @media (max-width: 768px) {
-  .division-intro__text p { font-size: calc(1.3rem + 2px); }
+  .division-intro__text p { font-size: calc(1.3rem - 1px); }   /* קטן ב-3px מהקודם */
 }
 
 /* ---- סרטון התקדמות הבנייה ---- */

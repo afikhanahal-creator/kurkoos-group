@@ -72,6 +72,10 @@
   flex-direction: column;
 }
 .flip-card-media { flex: 1; overflow: hidden; }
+
+/* בני — תמונה מרובעת: עוגן הזום מעט מתחת למרכז כך שהזום מצמצם את המרווח
+   העליון ומרים את הראש לגובה של שאר הדמויות. */
+.flip-card--benny .flip-card-img { transform-origin: center 72%; }
 .flip-card-img {
   width: 100%;
   height: 100%;

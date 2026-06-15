@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   font-weight: 800;
-  font-size: 1.12rem;
+  font-size: 0.98rem;
   line-height: 1;            /* בלי תוספת גובה מעל/מתחת → מרכוז מדויק */
   color: #07293a;
   white-space: nowrap;
@@ -29,10 +29,10 @@
 }
 .pm-info__sep {
   width: 1px;
-  height: 24px;
+  height: 19px;
   background: var(--color-border, #e2e6ec);
 }
-.pm-info__logo { height: 30px; width: auto; display: block; }
+.pm-info__logo { height: 25px; width: auto; display: block; }
 
 /* ---- שלט מותג מעל הקוביה — מופיע רק בריחוף (hover) על הקוביה ---- */
 .pm-cube-label {
@@ -43,15 +43,17 @@
   display: flex;
   align-items: center;                /* מרכוז אנכי מדויק של הכיתוב */
   justify-content: center;
-  gap: 11px;
-  padding: 9px 16px;
+  gap: 9px;
+  padding: 7px 13px;
   background: #fff;
   border-radius: 999px;
-  box-shadow: 0 10px 26px -6px rgba(7, 41, 58, 0.32), 0 0 0 1px rgba(7, 41, 58, 0.05);
+  box-shadow: 0 8px 20px -6px rgba(7, 41, 58, 0.3), 0 0 0 1px rgba(7, 41, 58, 0.05);
   white-space: nowrap;
   font-family: var(--font-heading, sans-serif);
   pointer-events: none;               /* לא חוסם אינטראקציה עם המפה */
   z-index: 2;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;        /* רינדור חד ויציב (בלי ריצוד) */
   /* מוסתר כברירת מחדל — נחשף רק בריחוף */
   opacity: 0;
   visibility: hidden;
@@ -94,6 +96,9 @@
   transform: translate(-50%, -50%);   /* ממורכזת על נקודת המיקום */
   perspective: 220px;                  /* עומק 3D */
   cursor: pointer;
+  will-change: transform;              /* שכבת GPU יציבה — בלי ריצוד */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 /* צל קרקע רך — שכבה שטוחה נפרדת, כדי לא לשטח את ה-3D של הקוביה
    (filter על אלמנט preserve-3d מבטל את התלת-ממד!) */
@@ -148,8 +153,8 @@
 
 /* ---- השלט במובייל — מעט קטן יותר כדי שייכנס במלואו ---- */
 @media (max-width: 600px) {
-  .pm-cube-label { padding: 8px 14px; gap: 9px; bottom: calc(100% + 12px); }
-  .pm-info__name { font-size: 1rem; }
-  .pm-info__sep { height: 20px; }
-  .pm-info__logo { height: 26px; }
+  .pm-cube-label { padding: 6px 12px; gap: 8px; bottom: calc(100% + 11px); }
+  .pm-info__name { font-size: 0.9rem; }
+  .pm-info__sep { height: 17px; }
+  .pm-info__logo { height: 22px; }
 }

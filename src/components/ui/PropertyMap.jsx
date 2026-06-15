@@ -127,8 +127,9 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
             const proj = this.getProjection()
             if (!proj || !this.el) return
             const p = proj.fromLatLngToDivPixel(latLng)
-            this.el.style.left = p.x + 'px'
-            this.el.style.top = p.y + 'px'
+            // עיגול לפיקסל שלם — מונע טשטוש/ריצוד (subpixel) של השלט והקוביה
+            this.el.style.left = Math.round(p.x) + 'px'
+            this.el.style.top = Math.round(p.y) + 'px'
           }
           onRemove() { if (this.el) { this.el.remove(); this.el = null } }
         }

@@ -112,7 +112,7 @@ function ProjectCard({ p, L, t, isMobile }) {
    חוזרת על עצמה בצורה חלקה בלי קפיצה להתחלה.
    props: items, sectionId, showFooter.
    ============================================================ */
-export default function ProjectsGallery({ items: itemsProp, sectionId = 'projects', showFooter = true }) {
+export default function ProjectsGallery({ items: itemsProp, sectionId = 'projects', showFooter = true, title, lead }) {
   const { t, isRTL } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
@@ -206,8 +206,8 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     <section className="section section--soft projects-gallery" id={sectionId || undefined}>
       <div className="container">
         <Reveal className="projects-gallery__head">
-          <KineticText as="h2" className="section-title" text={t('projects.title')} />
-          <p className="section-lead">{t('projects.lead')}</p>
+          <KineticText as="h2" className="section-title" text={title || t('projects.title')} />
+          <p className="section-lead">{lead || t('projects.lead')}</p>
         </Reveal>
       </div>
 

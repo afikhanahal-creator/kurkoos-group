@@ -205,7 +205,14 @@ export default function Division() {
       )}
 
       {/* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */}
-      <ProjectsGallery items={list} showFooter={false} />
+      <ProjectsGallery
+        items={list}
+        showFooter={false}
+        title={slug === 'brokerage' ? L({ he: 'פרויקטים בשיווק', en: 'Projects in marketing' }) : undefined}
+        lead={slug === 'brokerage'
+          ? L({ he: 'מבחר פרויקטים בשיווק, בתהליך מסירה וליווי ברחבי הארץ', en: 'A selection of projects in marketing, handover and guidance across the country.' })
+          : undefined}
+      />
 
       {/* בעמוד התיווך (אפיק הנחל) — בלי סקשן ההמלצות */}
       {slug !== 'brokerage' && <Testimonials />}

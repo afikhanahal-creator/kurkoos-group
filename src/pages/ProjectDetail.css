@@ -389,8 +389,10 @@
   overflow: hidden;
   box-shadow: 0 22px 54px -26px rgba(7, 41, 58, 0.26), 0 2px 8px rgba(7, 41, 58, 0.05);
 }
+/* התמונה בלי פינות משלה — הצד החיצוני מתעגל ע"י חיתוך הכרטיס (border-radius
+   + overflow:hidden של .pd-split-card), והצד הפנימי (לכיוון הטקסט) נשאר ישר/צמוד. */
 .pd-split__media {
-  border-radius: var(--radius-lg);   /* פינות עגולות לתמונה */
+  border-radius: 0;
   overflow: hidden;
   box-shadow: none;
   min-height: 100%;                  /* ממלאת את גובה הכרטיס → תואם לגובה הטקסט */
@@ -399,13 +401,19 @@
   align-self: center;
   padding: clamp(1.6rem, 3.2vw, 3.4rem);
 }
-/* התמונה מכסה את כל הכרטיס — בלי שוליים לבנים, עם פינות עגולות */
+/* התמונה מכסה את כל הכרטיס — בלי שוליים לבנים */
 .pd-split__media img,
 .pd-split__media .smart-image-placeholder {
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
+  border-radius: 0;
+}
+/* במצב "מרווח" (spaced) התמונה עומדת בנפרד → פינות עגולות בכל הצדדים */
+.pd-split--spaced .pd-split__media,
+.pd-split--spaced .pd-split__media img,
+.pd-split--spaced .pd-split__media .smart-image-placeholder {
   border-radius: var(--radius-lg);
 }
 

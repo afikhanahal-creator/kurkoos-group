@@ -427,6 +427,10 @@
 /* ---- Intro ---- */
 .division-intro__text { max-width: 60rem; margin-inline: auto; text-align: center; }
 .division-intro__text p { font-size: 1.3rem; line-height: 1.85; color: var(--color-text-soft); }
+/* מובייל — מגדילים את משפט האינטרו ב-2px */
+@media (max-width: 768px) {
+  .division-intro__text p { font-size: calc(1.3rem + 2px); }
+}
 
 /* ---- סרטון התקדמות הבנייה ---- */
 /* מושכים את כרטיס הווידאו כלפי מעלה כך שיציץ כבר במסך הראשון

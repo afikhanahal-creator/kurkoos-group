@@ -424,6 +424,11 @@
 .division--execution .division-hero {
   min-height: clamp(460px, 60vh, 580px);
 }
+/* overlay חלק בעמוד הביצוע — בלי הרצועה הבהירה באמצע שנראתה כ"קו" */
+.division--execution .division-hero__overlay {
+  background:
+    linear-gradient(180deg, rgba(7, 41, 58, 0.6) 0%, rgba(7, 41, 58, 0.62) 55%, rgba(7, 41, 58, 0.84) 100%);
+}
 /* אזור-חיץ נקי בתחתית הבאנר — שם כרטיס הווידאו חופף, מתחת לתת-הכותרת */
 .division--execution .division-hero__content {
   padding-bottom: clamp(3.5rem, 6vw, 5rem);

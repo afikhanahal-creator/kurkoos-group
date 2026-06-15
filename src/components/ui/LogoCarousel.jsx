@@ -14,8 +14,11 @@ const shuffleArr = (arr) => {
    object-fit: contain), וזורם ברצף חלק. עוצר בריחוף.
    logos: [{ id, name, image_url }]
    ============================================================ */
+const srcOf = (l) => l.image_url || l.logo || l.image || l.url
 export default function LogoCarousel({ logos = [], shuffle = false }) {
-  const list = useMemo(() => (shuffle ? shuffleArr(logos) : logos), [logos, shuffle])
+  // מסננים לוגואים ריקים לגמרי (בלי תמונה ובלי שם) כדי שלא ייווצרו "חורים" ברצועה
+  const clean = useMemo(() => (logos || []).filter((l) => srcOf(l) || l.name), [logos])
+  const list = useMemo(() => (shuffle ? shuffleArr(clean) : clean), [clean, shuffle])
   if (!list.length) return null
 
   // "יחידה" שחוזרת מספיק פעמים כדי למלא גם מסך רחב (לא ריק / לא חתוך),
@@ -31,7 +34,7 @@ export default function LogoCarousel({ logos = [], shuffle = false }) {
     <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">
       <div className="logo-marquee__track" style={{ '--marquee-duration': `${duration}s` }}>
         {track.map((logo, i) => {
-          const src = logo.image_url || logo.logo || logo.image || logo.url
+          const src = srcOf(logo)
           return (
             <div
               className="logo-marquee__item"

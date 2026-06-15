@@ -17,6 +17,7 @@ import BookingCalendar from '../components/ui/BookingCalendar.jsx'
 import StatCube from '../components/ui/StatCube.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import useIsMobile from '../hooks/useIsMobile.js'
+import Text3DFlip from '../components/ui/Text3DFlip.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import './ProjectDetail.css'
 
@@ -370,7 +371,9 @@ export default function ProjectDetail() {
             <div className="pd-banner__content">
               {L(project.city) && <span className="pd-banner__location">{L(project.city)}</span>}
               <span className="pd-banner__rule" aria-hidden="true" />
-              <h1 className="pd-banner__name">{L(project.name)}</h1>
+              <h1 className="pd-banner__name">
+                {isMobile ? L(project.name) : <Text3DFlip text={L(project.name)} />}
+              </h1>
               {L(project.short) && <p className="pd-banner__subtitle">{L(project.short)}</p>}
 
               <div className="pd-banner__stats-wrap">

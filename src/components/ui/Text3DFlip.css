@@ -1,0 +1,19 @@
+/* אפקט היפוך תלת-מימד לכותרת — RTL */
+.t3df {
+  display: inline-block;
+  perspective: 700px;
+  /* האותיות זורמות מימין לשמאל (RTL) → ההיפוך מתפשט מהימין שמאלה */
+  direction: rtl;
+}
+.t3df__char {
+  display: inline-block;
+  transform-origin: top center;     /* rotateDirection: top — היפוך מהחלק העליון */
+  backface-visibility: hidden;
+  white-space: pre;                 /* שמירת רווחים */
+  will-change: transform, opacity;
+}
+
+/* נגישות — בלי תנועה: מציגים את הטקסט רגיל, בלי היפוך */
+@media (prefers-reduced-motion: reduce) {
+  .t3df__char { transform: none !important; opacity: 1 !important; }
+}

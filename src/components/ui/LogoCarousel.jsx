@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import './LogoCarousel.css'
 
 // ערבוב Fisher-Yates — מחזיר עותק מעורבב
@@ -16,8 +16,15 @@ const shuffleArr = (arr) => {
    ============================================================ */
 const srcOf = (l) => l.image_url || l.logo || l.image || l.url
 export default function LogoCarousel({ logos = [], shuffle = false }) {
-  // מסננים לוגואים ריקים לגמרי (בלי תמונה ובלי שם) כדי שלא ייווצרו "חורים" ברצועה
-  const clean = useMemo(() => (logos || []).filter((l) => srcOf(l) || l.name), [logos])
+  // תמונות שנכשלו בטעינה (404) — מדלגים עליהן כך שאין "חורים" ולא תיבות חתוכות
+  const [failed, setFailed] = useState(() => new Set())
+  const onErr = (src) => setFailed((f) => { if (f.has(src)) return f; const n = new Set(f); n.add(src); return n })
+
+  // מסננים לוגואים ריקים לגמרי (בלי תמונה ובלי שם) או כאלה שתמונתם נכשלה
+  const clean = useMemo(
+    () => (logos || []).filter((l) => { const s = srcOf(l); return (s && !failed.has(s)) || (!s && l.name) }),
+    [logos, failed]
+  )
   const list = useMemo(() => (shuffle ? shuffleArr(clean) : clean), [clean, shuffle])
   if (!list.length) return null
 
@@ -43,7 +50,7 @@ export default function LogoCarousel({ logos = [], shuffle = false }) {
               aria-hidden={i >= list.length ? 'true' : undefined}
             >
               {src
-                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="lazy" />
+                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="lazy" onError={() => onErr(src)} />
                 : <span className="logo-marquee__name">{logo.name}</span>}
             </div>
           )

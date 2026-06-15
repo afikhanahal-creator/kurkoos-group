@@ -3,6 +3,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { listLogos, createLogo, updateLogo, deleteLogo, reorderRows, uploadMedia, deleteMedia, fetchSettings, setSetting } from '../../lib/cms.js'
+import githubLogos from '../../data/logos.js'
 import ImageEditor from './ImageEditor.jsx'
 
 function LogoCard({ logo, onChange, onDelete }) {
@@ -196,6 +197,26 @@ export default function LogosTab() {
     const row = await createLogo({ name: 'לוגו חדש', sort_order: logos.length, is_active: true })
     setLogos((prev) => [...prev, row])
   }
+
+  // ייבוא הלוגואים מהאתר (public/logos שב-GitHub) לתוך המערכת — כדי שיופיעו כאן
+  // ויהיו ניתנים לגרירה/סידור. מדלג על כאלה שכבר קיימים (לפי image_url).
+  const [importing, setImporting] = useState(false)
+  const importFromSite = async () => {
+    setImporting(true)
+    try {
+      const have = new Set(logos.map((l) => l.image_url).filter(Boolean))
+      const missing = githubLogos.filter((g) => !have.has(g.image_url))
+      if (!missing.length) { alert('כל הלוגואים מהאתר כבר קיימים במערכת.'); return }
+      const created = []
+      for (let i = 0; i < missing.length; i++) {
+        const g = missing[i]
+        // eslint-disable-next-line no-await-in-loop
+        const row = await createLogo({ name: g.name || '', image_url: g.image_url, sort_order: logos.length + i, is_active: true })
+        created.push(row)
+      }
+      setLogos((prev) => [...prev, ...created])
+    } catch (e) { alert('שגיאה בייבוא: ' + (e.message || e)) } finally { setImporting(false) }
+  }
   const remove = async (logo) => {
     if (!window.confirm('למחוק את הלוגו?')) return
     await deleteLogo(logo.id, logo.image_url); setLogos((prev) => prev.filter((l) => l.id !== logo.id))
@@ -239,6 +260,9 @@ export default function LogosTab() {
             <span className="ltab__shuffle-ic" aria-hidden="true">🔀</span>
             <span>ערבוב {shuffle ? 'פעיל' : 'כבוי'}</span>
             <span className="ltab__shuffle-track"><span className="ltab__shuffle-knob" /></span>
+          </button>
+          <button type="button" className="btn btn--ghost" disabled={importing} onClick={importFromSite} title="ייבוא הלוגואים שהועלו ל-GitHub (public/logos) לתוך המערכת — כדי לסדר/לערוך אותם">
+            {importing ? 'מייבא…' : '⬇ ייבא לוגואים מהאתר'}
           </button>
           <button type="button" className="btn btn--primary" onClick={add}>+ לוגו</button>
         </div>

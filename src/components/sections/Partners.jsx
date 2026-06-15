@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useI18n } from '../../i18n/index.jsx'
-import partnersData from '../../data/partners.js'
+import githubLogos from '../../data/logos.js'
 import LogoCarousel from '../ui/LogoCarousel.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { listLogos, fetchSettings } from '../../lib/cms.js'
@@ -15,7 +15,8 @@ const shuffleArr = (arr) => {
 
 export default function Partners() {
   const { t } = useI18n()
-  const [logos, setLogos] = useState(partnersData)
+  // ברירת מחדל: הלוגואים מ-GitHub (public/logos) → הרצועה תמיד מלאה, גם בלי Supabase.
+  const [logos, setLogos] = useState(githubLogos)
   const [shuffleOn, setShuffleOn] = useState(false)
   const [hidden, setHidden] = useState(false)   // מתג ראשי מה-CMS — הסתרת כל הרצועה
 

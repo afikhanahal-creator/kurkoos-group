@@ -25,11 +25,16 @@
    contain מציג את כל הבאנר; הרקע השחור ממלא סביב בצורה חלקה (התמונה ממילא שחורה). */
 @media (max-width: 768px) {
   .division--brokerage .division-hero,
-  .division--brokerage .division-hero__bg { background-color: #050d14; }
+  .division--brokerage .division-hero__bg { background-color: #060708; }
   .division--brokerage .division-hero__bg .parallax__inner img,
   .division--brokerage .division-hero__bg img {
     object-fit: contain;
     object-position: center top;
+  }
+  /* מובייל — מעט כהה יותר, וגוון ניטרלי (פחות כחול) */
+  .division--brokerage .division-hero__overlay {
+    background:
+      linear-gradient(180deg, rgba(6, 8, 10, 0.5) 0%, rgba(6, 8, 10, 0.38) 45%, rgba(6, 8, 10, 0.78) 100%);
   }
 }
 /* שכבת קריאוּת — כהה בראש (מאחורי המלל) ובתחתית, בהיר באמצע → עומק ופרימיום */

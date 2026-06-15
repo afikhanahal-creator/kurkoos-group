@@ -148,11 +148,14 @@ export default function Division() {
         </div>
       </section>
 
-      {/* כרטיס תצוגה מקדימה לאתר אפיק הנחל — רק בעמוד התיווך, אחרי הכרטיסיות */}
+      {/* תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה, רק בעמוד התיווך */}
       {slug === 'brokerage' && (
         <section className="section ah-site">
           <div className="container">
-            <Reveal className="ah-site__inner" variant="scale">
+            <Reveal className="ah-site__head">
+              <span className="eyebrow">{L({ he: 'האתר שלנו', en: 'Our website' })}</span>
+            </Reveal>
+            <Reveal className="ah-site__wrap" variant="scale">
               <a
                 href={AFIK_SITE_URL}
                 target="_blank"
@@ -160,6 +163,7 @@ export default function Division() {
                 className="ah-site__frame"
                 aria-label="כניסה לאתר אפיק הנחל"
               >
+                <span className="ah-site__sheen" aria-hidden="true" />
                 <span className="ah-site__bar" aria-hidden="true">
                   <span className="ah-site__dot" />
                   <span className="ah-site__dot" />
@@ -167,12 +171,11 @@ export default function Division() {
                   <span className="ah-site__addr">www.afikhanahal.co.il</span>
                 </span>
                 <span className="ah-site__screen">
-                  {/* צילום מסך אמיתי של האתר (יעלה ל-public/afik-site-preview.jpg);
-                      עד שהקובץ יועלה — נופלים אוטומטית ללוגו על רקע המותג */}
+                  {/* צילום מסך אמיתי של האתר; אם חסר (404) — נופל ללוגו על רקע המותג */}
                   <img
                     className="ah-site__shot"
-                    src="/afik-site-preview.jpg"
-                    alt={'תצוגה מקדימה של אתר אפיק הנחל'}
+                    src="/afik-website.png"
+                    alt={'אתר אפיק הנחל'}
                     loading="lazy"
                     onError={(e) => { e.currentTarget.style.display = 'none' }}
                   />
@@ -180,17 +183,6 @@ export default function Division() {
                   <span className="ah-site__enter">כניסה לאתר ↗</span>
                 </span>
               </a>
-              <div className="ah-site__cta">
-                <span className="eyebrow">{L({ he: 'האתר שלנו', en: 'Our website' })}</span>
-                <h2 className="section-title">{L({ he: 'אפיק הנחל — נדל"ן', en: 'Afik Hanachal — Real Estate' })}</h2>
-                <p className="ah-site__desc">
-                  {L({ he: 'מומחי שיווק בתי יוקרה ואיתור מגרשים וקרקעות בשרון ובמרכז. הציצו באתר שלנו.', en: 'Luxury home marketing and land sourcing in the Sharon and central regions. Take a look at our site.' })}
-                </p>
-                <a href={AFIK_SITE_URL} target="_blank" rel="noopener noreferrer" className="btn btn--primary btn--lg">
-                  {L({ he: 'כניסה לאתר אפיק הנחל', en: 'Visit Afik Hanachal' })}
-                  <Icon name="arrow" size={20} />
-                </a>
-              </div>
             </Reveal>
           </div>
         </section>

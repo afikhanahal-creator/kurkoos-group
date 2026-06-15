@@ -42,97 +42,122 @@
     rgba(28, 28, 30, 0) 60%);
 }
 
-/* ===== כרטיס תצוגה מקדימה לאתר אפיק הנחל (עמוד תיווך) ===== */
-.ah-site__inner {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  align-items: center;
-  gap: clamp(2rem, 5vw, 4rem);
-}
-/* "חלון דפדפן" — מסגרת עם פס עליון ונקודות, מסך כהה עם הלוגו */
+/* ===== תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה (עמוד תיווך) ===== */
+.ah-site__head { text-align: center; margin-bottom: clamp(1.25rem, 3vw, 2rem); }
+.ah-site__wrap { perspective: 1600px; display: flex; justify-content: center; }
+
+/* "חלון" מרכזי — מסגרת עם הילה סגולה, הטיית 3D וברק בריחוף (סגנון ה-Ticket) */
 .ah-site__frame {
+  --ah-glow: rgba(124, 58, 237, 0.55);
+  position: relative;
   display: block;
-  border-radius: 16px;
+  width: min(980px, 100%);
+  border-radius: 20px;
   overflow: hidden;
   background: #0d1a26;
-  border: 1px solid var(--color-border);
-  box-shadow: 0 30px 60px -28px rgba(8, 18, 28, 0.6);
-  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  transform-style: preserve-3d;
+  box-shadow:
+    0 30px 70px -26px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 70px -8px var(--ah-glow);
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s ease;
 }
 .ah-site__frame:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 40px 80px -30px rgba(8, 18, 28, 0.7);
+  transform: perspective(1200px) rotateX(4deg) rotateY(-6deg) scale(1.02);
+  box-shadow:
+    22px 22px 50px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    -8px -8px 40px var(--ah-glow),
+    0 0 110px -4px var(--ah-glow);
 }
+
+/* ברק אלכסוני שנע על החלון בריחוף */
+.ah-site__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(115deg,
+    transparent 0%, transparent 40%,
+    rgba(255, 255, 255, 0.12) 45%, rgba(255, 255, 255, 0.32) 50%, rgba(255, 255, 255, 0.12) 55%,
+    transparent 60%, transparent 100%);
+  background-size: 250% 250%;
+  background-position: 100% 100%;
+  transition: background-position 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  mix-blend-mode: overlay;
+}
+.ah-site__frame:hover .ah-site__sheen { background-position: 0% 0%; }
+
 .ah-site__bar {
+  position: relative;
+  z-index: 4;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.7rem 1rem;
   background: #15212e;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(124, 58, 237, 0.25);
 }
-.ah-site__dot { width: 11px; height: 11px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); }
+.ah-site__dot { width: 11px; height: 11px; border-radius: 50%; }
 .ah-site__dot:nth-child(1) { background: #ef5f5b; }
 .ah-site__dot:nth-child(2) { background: #f4be4f; }
 .ah-site__dot:nth-child(3) { background: #5bc46b; }
 .ah-site__addr {
   margin-inline-start: auto;
   font-family: var(--font-body);
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.02em;
   direction: ltr;
 }
+
 .ah-site__screen {
   position: relative;
-  display: grid;
-  place-items: center;
-  min-height: clamp(220px, 26vw, 320px);
-  background:
-    radial-gradient(120% 90% at 50% 0%, #16293a 0%, #0c1722 70%);
+  overflow: hidden;
+  min-height: clamp(240px, 40vw, 340px);
+  max-height: clamp(360px, 58vh, 560px);
+  background: radial-gradient(120% 90% at 50% 0%, #16293a 0%, #0c1722 70%);
 }
-/* רשת ריבועים עדינה ברקע המסך */
 .ah-site__screen::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(124, 58, 237, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.12) 1px, transparent 1px);
   background-size: 38px 38px;
   pointer-events: none;
 }
-/* צילום מסך אמיתי של האתר — ממלא את כל ה"מסך"; אם לא הועלה (404) מוסתר ונראה הלוגו */
-.ah-site__shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; z-index: 1; }
-.ah-site__logo { position: relative; z-index: 0; width: clamp(150px, 22vw, 230px); height: auto; }
+/* צילום מסך אמיתי — ממלא את רוחב החלון (החלק העליון של האתר נראה); אם חסר → לוגו */
+.ah-site__shot { position: relative; z-index: 1; display: block; width: 100%; height: auto; }
+.ah-site__logo {
+  position: absolute; z-index: 0; inset: 0; margin: auto;
+  width: clamp(150px, 22vw, 230px); height: auto;
+}
 .ah-site__enter {
   position: absolute;
-  z-index: 2;
+  z-index: 5;
   inset-block-end: 1rem;
   inset-inline-end: 1.1rem;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.35rem 0.8rem;
+  color: #fff;
+  background: rgba(124, 58, 237, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.4rem 0.9rem;
   border-radius: var(--radius-pill);
+  box-shadow: 0 6px 20px -6px var(--ah-glow);
   opacity: 0;
   transform: translateY(6px);
   transition: opacity var(--dur-base), transform var(--dur-base);
 }
 .ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translateY(0); }
-.ah-site__cta { text-align: right; }
-.ah-site__desc {
-  color: var(--color-text-soft);
-  font-size: 1.08rem;
-  line-height: 1.7;
-  margin: 0.6rem 0 1.5rem;
-}
+
 @media (max-width: 860px) {
-  .ah-site__inner { grid-template-columns: 1fr; gap: 1.75rem; }
-  .ah-site__cta { text-align: center; }
-  .ah-site__cta .section-title, .ah-site__cta .eyebrow { text-align: center; }
+  .ah-site__screen { max-height: clamp(300px, 86vw, 460px); }
+  .ah-site__frame:hover { transform: scale(1.01); }   /* בלי הטיית 3D במגע */
 }
 
 /* הלוגו הלבן בקאבר */

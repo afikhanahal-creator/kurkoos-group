@@ -26,6 +26,7 @@
   margin-inline-end: clamp(1.5rem, 4vw, 3rem);
   display: grid;
   place-items: center;
+  overflow: hidden;   /* בטיחות — לוגו לעולם לא חורג מהמשבצת */
 }
 
 /* גובה מקסימלי קבוע (px) — אוכף גודל אחיד לכל הלוגואים ומונע חיתוך */

@@ -72,7 +72,7 @@ export default function LogoCarousel({ logos = [] }) {
               aria-hidden={i >= list.length ? 'true' : undefined}
             >
               {src
-                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="lazy" decoding="async" />
+                ? <img className="logo-marquee__img" src={src} alt={logo.name || ''} loading="eager" decoding="async" />
                 : <span className="logo-marquee__name">{logo.name}</span>}
             </div>
           )

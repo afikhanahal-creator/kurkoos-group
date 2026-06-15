@@ -6,37 +6,29 @@
 .kinetic {
   --hover-padding: calc(1em / 12);
   --text-stroke-width: calc(1em * 125 / 6000);
-  font-weight: 600;
+  font-weight: inherit;   /* זהה לכותרות האחרות (h2/section-title = 900) */
 }
 
 .kinetic__char {
   display: inline-block;
-  font-weight: 600;
+  font-weight: inherit;
   -webkit-text-stroke-color: transparent;
   -webkit-text-stroke-width: var(--text-stroke-width);
-  will-change: font-weight, -webkit-text-stroke-width, padding;
-  transition: font-weight 0.4s, -webkit-text-stroke-color 0.4s, padding 0.4s;
+  will-change: -webkit-text-stroke-width, padding;
+  transition: -webkit-text-stroke-color 0.4s, -webkit-text-stroke-width 0.4s, padding 0.4s;
 }
 
-/* האות שמתחת לסמן — הכי כבדה + קו מתאר בצבע הטקסט */
+/* האות שמתחת לסמן — קו מתאר מודגש + ריווח (בלי שינוי משקל → נשאר זהה לכותרות) */
 .kinetic__char:hover {
   padding-inline: var(--hover-padding);
-  font-weight: 900;
   -webkit-text-stroke-color: currentcolor;
   -webkit-text-stroke-width: calc(var(--text-stroke-width) * 2);
 }
 
-/* שכן ראשון משני הצדדים — כבד מאוד (800) + ריווח */
+/* שכנים — ריווח עדין שיוצר "גל" בלי לשנות משקל */
 .kinetic__char:has(+ .kinetic__char:hover),
 .kinetic__char:hover + .kinetic__char {
   padding-inline: var(--hover-padding);
-  font-weight: 800;
-}
-
-/* שכן שני משני הצדדים — כבד (700) */
-.kinetic__char:has(+ .kinetic__char + .kinetic__char:hover),
-.kinetic__char:hover + .kinetic__char + .kinetic__char {
-  font-weight: 700;
 }
 
 /* טקסט לקוראי מסך — האותיות עצמן aria-hidden */

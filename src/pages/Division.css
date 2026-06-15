@@ -44,7 +44,25 @@
 
 /* ===== תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה (עמוד תיווך) ===== */
 .ah-site__head { text-align: center; margin-bottom: clamp(1.25rem, 3vw, 2rem); }
-.ah-site__wrap { perspective: 1600px; display: flex; justify-content: center; }
+.ah-site__wrap { perspective: 1600px; display: flex; flex-direction: column; align-items: center; gap: clamp(1.25rem, 3vw, 1.75rem); }
+
+/* כפתור "כניסה לאתר" — סגול, תמיד גלוי, מתחת לחלון */
+.ah-site__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 2rem;
+  border-radius: var(--radius-pill);
+  background: #7680c1;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.02rem;
+  box-shadow: 0 14px 32px -12px rgba(118, 128, 193, 0.7);
+  transition: transform var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.ah-site__btn:hover { background: #5a64a8; transform: translateY(-2px); box-shadow: 0 18px 40px -12px rgba(118, 128, 193, 0.8); }
+.ah-site__btn svg { transform: scaleX(-1); }   /* חץ לכיוון RTL */
 
 /* "חלון" מרכזי — מסגרת עם הילה סגולה, הטיית 3D וברק בריחוף (סגנון ה-Ticket) */
 .ah-site__frame {
@@ -157,10 +175,10 @@
 .ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translate(-50%, 0); }
 
 @media (max-width: 860px) {
-  /* גדול יותר במובייל (~30% מעבר לקודם) */
-  .ah-site__frame { width: 92%; }
-  .ah-site__screen { max-height: clamp(300px, 88vw, 480px); }
-  .ah-site__frame:hover { transform: scale(1.01); }   /* בלי הטיית 3D במגע */
+  /* רוחב מלא — עד השוליים */
+  .ah-site__frame { width: 100%; }
+  .ah-site__screen { max-height: clamp(320px, 96vw, 520px); }
+  .ah-site__frame:hover { transform: scale(1.005); }   /* בלי הטיית 3D במגע */
 }
 
 /* לוגו קורקוס בעמוד הייזום — הקובץ שחור על רקע לבן; invert הופך שחור→לבן,

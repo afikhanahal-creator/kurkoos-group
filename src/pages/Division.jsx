@@ -187,6 +187,10 @@ export default function Division() {
                   <span className="ah-site__enter">כניסה לאתר ↗</span>
                 </span>
               </a>
+              <a href={AFIK_SITE_URL} target="_blank" rel="noopener noreferrer" className="ah-site__btn">
+                {L({ he: 'כניסה לאתר', en: 'Visit the site' })}
+                <Icon name="arrow" size={18} />
+              </a>
             </Reveal>
           </div>
         </section>

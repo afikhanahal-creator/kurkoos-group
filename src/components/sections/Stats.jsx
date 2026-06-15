@@ -3,6 +3,8 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import statsData from '../../data/stats.js'
 import useCountUp from '../../hooks/useCountUp.js'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
+import Text3DFlip from '../ui/Text3DFlip.jsx'
+import useIsMobile from '../../hooks/useIsMobile.js'
 import { supabase } from '../../lib/supabase.js'
 import { listCounters } from '../../lib/cms.js'
 import './Stats.css'
@@ -25,6 +27,7 @@ function StatItem({ value, suffix, label }) {
 export default function Stats() {
   const { t } = useI18n()
   const L = useLocalized()
+  const isMobile = useIsMobile()
   const [items, setItems] = useState(() =>
     statsData.map((s) => ({ id: s.id, value: s.value, suffix: s.suffix, label: L(s.label) }))
   )
@@ -44,7 +47,7 @@ export default function Stats() {
       <div className="container">
         <div className="stats__head">
           <span className="eyebrow">{t('stats.eyebrow')}</span>
-          <h2 className="section-title">{t('stats.title')}</h2>
+          <h2 className="section-title">{isMobile ? t('stats.title') : <Text3DFlip text={t('stats.title')} />}</h2>
         </div>
         <div className="stats__grid">
           {items.map((s) => (

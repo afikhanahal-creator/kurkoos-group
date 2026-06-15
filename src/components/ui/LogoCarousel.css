@@ -36,8 +36,8 @@
 }
 
 .logo-marquee__img {
-  max-height: 100%;
-  max-width: 100%;
+  max-height: 74%;   /* קצת מרווח אנכי → לוגואים לא "נדבקים" לקצוות ולא נראים חתוכים */
+  max-width: 86%;
   object-fit: contain;
   filter: none;            /* צבע מלא כברירת מחדל */
   opacity: 1;

@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { fetchSettings } from '../../lib/cms.js'
 import Icon from './Icon.jsx'
+import Text3DFlip from './Text3DFlip.jsx'
+import useIsMobile from '../../hooks/useIsMobile.js'
 import './BookingCalendar.css'
 
 /* ============================================================
@@ -36,6 +38,7 @@ function genSlots(cfg) {
 export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-name' }) {
   const { isRTL } = useI18n()
   const L = useLocalized()
+  const isMobile = useIsMobile()
   const [selected, setSelected] = useState(null)
   const [time, setTime] = useState(null)
   const [hoursCfg, setHoursCfg] = useState(DEFAULT_HOURS)
@@ -123,7 +126,7 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
     <div className="bcal" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="bcal__head">
         <span className="bcal__eyebrow">{L({ he: 'קביעת מועד', en: 'Book a slot' })}</span>
-        <h3 className="bcal__title">{headTitle}</h3>
+        <h3 className="bcal__title">{isMobile ? headTitle : <Text3DFlip text={headTitle} />}</h3>
         <p className="bcal__sub">
           {L({ he: 'בחרו תאריך ואז שעה פנויה — ונחזור אליכם לאישור', en: 'Pick a date then an open time — we’ll confirm' })}
         </p>

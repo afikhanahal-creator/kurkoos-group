@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useI18n } from '../../i18n/index.jsx'
 import githubLogos from '../../data/logos.js'
 import LogoCarousel from '../ui/LogoCarousel.jsx'
+import Text3DFlip from '../ui/Text3DFlip.jsx'
+import useIsMobile from '../../hooks/useIsMobile.js'
 import { supabase } from '../../lib/supabase.js'
 import { listLogos, fetchSettings } from '../../lib/cms.js'
 import './Partners.css'
@@ -15,6 +17,7 @@ const shuffleArr = (arr) => {
 
 export default function Partners() {
   const { t } = useI18n()
+  const isMobile = useIsMobile()
   // ברירת מחדל: הלוגואים מ-GitHub (public/logos) → הרצועה תמיד מלאה, גם בלי Supabase.
   const [logos, setLogos] = useState(githubLogos)
   const [shuffleOn, setShuffleOn] = useState(false)
@@ -47,7 +50,7 @@ export default function Partners() {
   return (
     <section className="partners">
       <div className="container">
-        <p className="partners__title">{t('partners.title')}</p>
+        <p className="partners__title">{isMobile ? t('partners.title') : <Text3DFlip text={t('partners.title')} />}</p>
         <LogoCarousel logos={logos} interval={3100} shuffle={shuffleOn} />
       </div>
     </section>

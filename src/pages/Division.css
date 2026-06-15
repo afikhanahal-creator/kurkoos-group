@@ -33,13 +33,19 @@
 /* כרטיסי "למה אנחנו" בעמוד תיווך — אפקט שחור/אפרפר (מותג אפיק הנחל)
    במקום הטורקיז/אדום. דריסת המשתנים מוגבלת לכרטיס בלבד → לא משפיע על שאר העמוד. */
 .division--brokerage .card-inner {
-  --color-secondary: #7680c1;   /* סגול-כחול → רקע האייקון בריחוף + "הנוזל" */
-  --card-accent: #5a64a8;       /* סגול כהה יותר → כותרת בריחוף + כפתור */
+  --color-secondary: #767a9c;   /* סגול-אפרפר → "הנוזל" + ברירת מחדל */
+  --card-accent: #5a64a8;       /* סגול כהה → כותרת בריחוף + כפתור */
 }
 .division--brokerage .card__glow {
   background: radial-gradient(circle at 50% 0%,
-    rgba(118, 128, 193, 0.45) 0%,
-    rgba(118, 128, 193, 0) 60%);
+    rgba(118, 122, 156, 0.42) 0%,
+    rgba(118, 122, 156, 0) 60%);
+}
+/* רקע האייקון בכרטיס — מעבר סגול→אפרפר (גוון אפור בנוסף לסגול) */
+.division--brokerage .card-inner:hover .card__image,
+.division--brokerage .division-why__deck .card__image {
+  background: linear-gradient(155deg, #7680c1 0%, #6a6d84 100%);
+  color: #fff;
 }
 
 /* ===== תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה (עמוד תיווך) ===== */

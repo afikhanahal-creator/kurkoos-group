@@ -87,7 +87,11 @@
   grid-template-columns: 1fr 1.1fr;
   gap: 3rem;
   align-items: start;             /* התמונה נצמדת למעלה — "מורמת" כמו בתדהר */
-  padding-block: 1.25rem 2.5rem;
+  padding-block: 1.25rem 1.35rem; /* פחות padding תחתון — קרוב יותר לסרגל העוגנים */
+}
+/* דסקטופ — התמונה יורדת מעט כך שראשה מתיישר לקו שמתחת לכותרת (כמו בתדהר) */
+@media (min-width: 981px) {
+  .pd-banner__media-col { margin-top: 2.6rem; }
 }
 /* תוכן — מיושר לימין במלואו (טקסט, אייקון, קוביות, כפתור) */
 .pd-banner__content {

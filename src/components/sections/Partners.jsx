@@ -35,10 +35,12 @@ export default function Partners() {
         const v = settings?.logo_shuffle
         const on = v === true || v === 'true' || v === 1 || v === '1'
         setShuffleOn(on)
-        // משתמשים בשורות מ-Supabase רק אם יש בהן לוגואים עם תמונה.
-        // אחרת — נשארים עם הלוגואים מ-GitHub (public/logos) → הרצועה אף פעם לא מתרוקנת.
-        const withImg = (rows || []).filter((r) => r.image_url)
-        const base = withImg.length ? withImg : githubLogos
+        // הלוגואים מ-GitHub (public/logos) הם הבסיס המובטח — תמיד מוצגים, אף פעם לא מתרוקן.
+        // שורות מ-Supabase עם תמונה *מתווספות* (ללא כפילויות), אבל לעולם לא דורסות/מרוקנות.
+        const ghBase = githubLogos
+        const ghUrls = new Set(ghBase.map((g) => g.image_url))
+        const extra = (rows || []).filter((r) => r.image_url && !ghUrls.has(r.image_url))
+        const base = [...ghBase, ...extra]
         setLogos(on ? shuffleArr(base) : base)
       })
       .catch(() => {})

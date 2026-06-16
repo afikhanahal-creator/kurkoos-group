@@ -1127,17 +1127,45 @@
   /* טופס לתיאום פגישה — ממורכז; היומן מוצג מתחת לטופס גם במובייל */
   .pd-contact { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }
   .pd-contact__panel { width: 100%; max-width: 460px; }
-  /* כותרות הטופס ממורכזות במובייל */
+  /* כותרות הטופס ממורכזות ומשודרגות במובייל */
   .pd-contact .pd-contact__eyebrow {
     justify-content: center;
     margin-inline: auto;
     color: var(--color-accent);   /* "דברו איתנו" באדום */
+    font-size: 0.78rem;
+    letter-spacing: 0.24em;
+    gap: 0.7rem;
+    margin-bottom: 0.7rem;
   }
-  .pd-contact .pd-contact__eyebrow::before { display: none; }   /* בלי הקו האדום */
-  .pd-contact__title,
-  .pd-contact__text,
+  /* קווי הדגשה אדומים סימטריים משני צידי ה-eyebrow */
+  .pd-contact .pd-contact__eyebrow::before,
+  .pd-contact .pd-contact__eyebrow::after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--color-accent);
+    border-radius: 2px;
+    opacity: 0.9;
+  }
+  .pd-contact__title {
+    text-align: center;
+    font-size: clamp(2.1rem, 9vw, 2.7rem);
+    font-weight: 900;
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.7rem;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25);
+  }
+  .pd-contact__text {
+    text-align: center;
+    margin-inline: auto;
+    font-size: 1.02rem;
+    line-height: 1.6;
+    max-width: 32ch;
+    color: rgba(255, 255, 255, 0.85);
+  }
   .pd-contact__required { text-align: center; }
-  .pd-contact__text { margin-inline: auto; }   /* מרכוז גוש המשפט "השאירו פרטים…" */
   /* שדות צרים וממורכזים */
   .pd-field { width: 90%; margin-inline: auto; }
   .pd-contact__media { width: 100%; max-width: 460px; min-height: 0; padding: 0.5rem; }
@@ -1180,8 +1208,7 @@
 }
 @media (max-width: 520px) {
   /* טופס לתיאום פגישה — קומפקטי ונוח לאצבע בטלפון */
-  .pd-contact__panel { padding: 1.4rem 1.15rem; border-radius: var(--radius-md); }
-  .pd-contact__title { font-size: 1.5rem; }
+  .pd-contact__panel { padding: 1.6rem 1.2rem; border-radius: var(--radius-md); }
   .pd-field input,
   .pd-field textarea { font-size: 0.95rem; padding: 0.78rem 0.95rem; }
   /* כפתור "שליחה" — מוגדל ב-~30% במובייל לבקשת המשתמש.

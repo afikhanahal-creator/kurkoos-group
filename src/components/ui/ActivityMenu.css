@@ -1,0 +1,106 @@
+/* ============================================================
+   ActivityMenu — תפריט (ימין) + תמונה (שמאל), מובייל בלבד.
+   ============================================================ */
+.actmenu {
+  display: flex;
+  gap: 0.85rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* ---- תפריט ימין ---- */
+.actmenu__list {
+  flex: 1 1 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.actmenu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1.5px solid var(--color-border);
+  text-align: right;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(7, 41, 58, 0.05);
+  transition: border-color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+.actmenu__item:active { transform: scale(0.985); }
+.actmenu__item.is-active {
+  border-color: var(--color-accent);
+  background: linear-gradient(180deg, #fff 60%, rgba(169, 11, 12, 0.06));
+  box-shadow: 0 10px 26px rgba(169, 11, 12, 0.14);
+}
+
+.actmenu__icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 0.7rem;
+  background: var(--color-bg-soft, #eef2f4);
+  color: var(--color-secondary);
+}
+.actmenu__item.is-active .actmenu__icon {
+  background: rgba(169, 11, 12, 0.08);
+  color: var(--color-accent);
+}
+
+.actmenu__texts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+.actmenu__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--color-primary-900);
+  line-height: 1.15;
+}
+.actmenu__short {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--color-text-soft);
+}
+
+.actmenu__arrow {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  color: var(--color-accent);
+}
+
+/* ---- תמונה שמאל ---- */
+.actmenu__media {
+  flex: 1 1 45%;
+  position: relative;
+  border-radius: 1.2rem;
+  overflow: hidden;
+  background: var(--color-bg-soft, #eef2f4);
+  min-height: 100%;
+}
+.actmenu__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* מסכים צרים מאוד — מקטינים מעט טקסטים כדי שלא ייחתכו */
+@media (max-width: 360px) {
+  .actmenu__title { font-size: 0.92rem; }
+  .actmenu__short { font-size: 0.72rem; }
+  .actmenu__icon { width: 36px; height: 36px; }
+}

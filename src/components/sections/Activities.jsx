@@ -3,7 +3,7 @@ import activities from '../../data/activities.js'
 import Reveal from '../ui/Reveal.jsx'
 import FeatureCard from '../ui/FeatureCard.jsx'
 import KineticText from '../ui/KineticText.jsx'
-import CardDeck from '../ui/CardDeck.jsx'
+import ActivityMenu from '../ui/ActivityMenu.jsx'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import './Activities.css'
 
@@ -22,11 +22,7 @@ export default function Activities() {
         </Reveal>
 
         {isMobile ? (
-          <CardDeck
-            className="activities__deck"
-            items={activities}
-            renderCard={(a) => <FeatureCard icon={a.icon} title={L(a.title)} desc={L(a.desc)} />}
-          />
+          <ActivityMenu items={activities} />
         ) : (
           <div className="activities__grid">
             {activities.map((a, i) => (

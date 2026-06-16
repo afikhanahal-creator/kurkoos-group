@@ -93,3 +93,28 @@
   color: #fff;
   border-color: var(--color-secondary, #0b2a3a);
 }
+
+/* כיוון המסגרת — מעל הקנבס */
+.imed__aspects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 0.8rem;
+}
+.imed__aspbtn {
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.18));
+  background: #fff;
+  color: var(--color-secondary, #0b2a3a);
+  border-radius: 8px;
+  padding: 0.5rem 0.95rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.imed__aspbtn.is-active {
+  background: var(--color-secondary, #0b2a3a);
+  color: #fff;
+  border-color: var(--color-secondary, #0b2a3a);
+}

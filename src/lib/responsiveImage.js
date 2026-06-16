@@ -32,8 +32,23 @@ function mergeView(v) {
   return out
 }
 
-// מנרמל כל ערך (מחרוזת/אובייקט/null) למבנה אחיד או null
+// ערך שמור עשוי להגיע כמחרוזת JSON (עמודת text ב-DB) — מפענחים בבטחה לאובייקט
+function maybeParse(value) {
+  if (typeof value === 'string') {
+    const s = value.trim()
+    if (s.startsWith('{')) {
+      try {
+        const o = JSON.parse(s)
+        if (o && typeof o === 'object') return o
+      } catch { /* לא JSON — נשאר מחרוזת (URL) */ }
+    }
+  }
+  return value
+}
+
+// מנרמל כל ערך (מחרוזת/אובייקט/מחרוזת-JSON/null) למבנה אחיד או null
 export function normalizeResponsiveImage(value) {
+  value = maybeParse(value)
   if (!value) return null
   if (typeof value === 'string') {
     return {
@@ -59,6 +74,7 @@ export function normalizeResponsiveImage(value) {
 
 // שליפת ה-URL בלבד (למקומות שצריכים רק מקור)
 export function srcOfResponsive(value) {
+  value = maybeParse(value)
   if (!value) return ''
   if (typeof value === 'string') return value
   return value.src || value.url || value.image_url || ''

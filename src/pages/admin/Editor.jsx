@@ -185,7 +185,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           mobileAspect={f.aspectMobile || '4 / 5'}
           breakpoints={f.breakpoints || ['desktop', 'mobile']}
           allowOrientation={!!f.allowOrientation}
-          onChange={(val) => setField(f.key, val)}
+          onChange={(val) => setField(f.key, val ? JSON.stringify(val) : null)}
         />
       )
     }

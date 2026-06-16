@@ -191,6 +191,21 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
 
         <div className="imed__body">
           <div className="imed__stage">
+            {/* כיוון המסגרת — לרוחב / לאורך / ריבוע / רחב (מעל המסגרת) */}
+            <div className="imed__aspects" role="tablist" aria-label="כיוון המסגרת">
+              {ASPECTS.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={aspectId === a.id}
+                  className={`imed__aspbtn ${aspectId === a.id ? 'is-active' : ''}`}
+                  onClick={() => setAspectId(a.id)}
+                >
+                  {a.id === 'portrait' ? '▯ ' : a.id === 'landscape' || a.id === 'wide' ? '▭ ' : '◻ '}{a.label}
+                </button>
+              ))}
+            </div>
             {err
               ? <div className="imed__err">{err}</div>
               : (

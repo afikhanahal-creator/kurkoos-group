@@ -177,7 +177,7 @@ export default function Division() {
               altBefore={L({ he: 'שרטוט', en: 'Blueprint' })}
               altAfter={L({ he: 'הבית הגמור', en: 'Finished home' })}
             />
-            <p className="imgcmp__caption">פרוייקט החומש 22-24 - קבוצת קורקוס חברה לבניין 2021</p>
+            <p className="imgcmp__caption">פרוייקט החומש 22-24 - קבוצת קורקוס 2021</p>
           </div>
         </section>
       )}

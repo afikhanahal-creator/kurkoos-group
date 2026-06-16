@@ -49,7 +49,8 @@ export default function ImageComparison({
     <div className="imgcmp" ref={ref}>
       {/* שכבת בסיס: "אחרי" (הבית הגמור) — נראית בצד ימין */}
       <img className="imgcmp__before ri-img" src={srcOfResponsive(afterImage)} style={responsiveStyle(afterImage)} alt={altAfter} draggable="false" />
-      <span className="imgcmp__tag imgcmp__tag--after">{altAfter}</span>
+      {/* תווית "הבית הגמור" מוסתרת כשהשרטוט נפתח כמעט/לגמרי (אין בית גמור גלוי) */}
+      <span className="imgcmp__tag imgcmp__tag--after" style={{ opacity: pos >= 90 ? 0 : 1 }}>{altAfter}</span>
 
       {/* שכבה עליונה נחתכת: "לפני" (השרטוט) — נראית בצד שמאל */}
       <div className="imgcmp__after" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>

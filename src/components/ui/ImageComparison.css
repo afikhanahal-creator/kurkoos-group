@@ -44,6 +44,7 @@
   background: rgba(7, 41, 58, 0.72);
   backdrop-filter: blur(3px);
   pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 .imgcmp__tag--before { inset-inline-end: 0.9rem; }   /* "לפני" בצד ימין (RTL) */
 .imgcmp__tag--after { inset-inline-start: 0.9rem; }  /* "אחרי" בצד שמאל */

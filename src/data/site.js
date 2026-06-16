@@ -41,7 +41,7 @@ export const site = {
       to: '/divisions/development',
       children: [
         { label: { he: 'ייזום נדל"ן', en: 'Real-estate development' }, to: '/divisions/development' },
-        { label: { he: 'מקרקע ועד מפתח', en: 'From land to key' }, to: '/divisions/development#why' },
+        { label: { he: 'מהתכנון ועד מפתח', en: 'From planning to key' }, to: '/divisions/development#why' },
         { label: { he: 'פרויקטים בייזום', en: 'Projects in development' }, to: '/divisions/development#projects' },
         { label: { he: 'המדריך ליזמות נדל"ן', en: 'Development guide' }, to: '/blog' },
       ],

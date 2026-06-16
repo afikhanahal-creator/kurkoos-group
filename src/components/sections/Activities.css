@@ -323,7 +323,8 @@
    מובייל — תפריט הפעילות (ActivityMenu) קרוב לשוליים, יותר מקום.
    ============================================================ */
 @media (max-width: 768px) {
-  .activities .container { padding-inline: 0.7rem; }
+  /* שוליים זהים משני צידי הכרטיסיה */
+  .activities .container { padding-inline: 0.9rem; }
   .activities__head { margin-bottom: 1.6rem; }
 }
 

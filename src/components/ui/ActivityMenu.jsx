@@ -79,7 +79,11 @@ export default function ActivityMenu({ items = [] }) {
               <motion.div
                 key={a.id}
                 className="actmenu__chip-slot"
-                animate={{ y: d * CHIP_H, opacity: 1 - Math.abs(d) * 0.36 }}
+                animate={{
+                  y: d * CHIP_H,
+                  /* מציגים רק שכן אחד מעל ואחד מתחת לפעיל → מאוזן סביב המרכז */
+                  opacity: Math.abs(d) >= 1.5 ? 0 : 1 - Math.abs(d) * 0.5,
+                }}
                 transition={{ type: 'spring', stiffness: 90, damping: 22, mass: 1 }}
               >
                 <Link

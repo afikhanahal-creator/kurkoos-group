@@ -139,21 +139,32 @@ export default function ResponsiveImageField({
     <div className="rif">
       {label && <div className="rif__label">{label}</div>}
 
-      {/* פעולות קובץ */}
-      <div className="rif__actions">
-        <button type="button" className="btn btn--primary rif__btn" disabled={busy} onClick={() => inputRef.current?.click()}>
-          {busy ? 'מעלה…' : draft ? 'החלפת תמונה' : '+ העלאת תמונה'}
+      {/* פעולות קובץ — סרגל עליון נקי */}
+      <div className="rif__toolbar">
+        <button type="button" className="rif__act rif__act--primary" disabled={busy} onClick={() => inputRef.current?.click()}>
+          <span className="rif__act-ic" aria-hidden="true">⤒</span>
+          {busy ? 'מעלה…' : draft ? 'החלפת תמונה' : 'העלאת תמונה'}
         </button>
         {draft && (
           <>
-            <button type="button" className="rif__btn rif__btn--ghost" disabled={busy} onClick={() => setEditing(true)}>חיתוך / עריכה</button>
-            <button type="button" className="rif__btn rif__btn--danger" disabled={busy} onClick={handleRemove}>הסרה</button>
+            <button type="button" className="rif__act" disabled={busy} onClick={() => setEditing(true)}>
+              <span className="rif__act-ic" aria-hidden="true">✎</span> עריכה מתקדמת
+            </button>
+            <button type="button" className="rif__act rif__act--danger" disabled={busy} onClick={handleRemove}>
+              <span className="rif__act-ic" aria-hidden="true">🗑</span> הסרה
+            </button>
           </>
         )}
         <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => handleUpload(e.target.files?.[0])} />
       </div>
 
-      {!draft && <p className="rif__empty">לא הוגדרה תמונה — מוצגת ברירת המחדל של האתר.</p>}
+      {!draft && (
+        <button type="button" className="rif__dropzone" disabled={busy} onClick={() => inputRef.current?.click()}>
+          <span className="rif__dropzone-ic" aria-hidden="true">＋</span>
+          <strong>העלאת תמונה</strong>
+          <small>ללא תמונה — מוצגת ברירת המחדל של האתר</small>
+        </button>
+      )}
 
       {draft && (
         <>
@@ -230,54 +241,64 @@ export default function ResponsiveImageField({
             </p>
           </div>
 
-          {/* בקרות */}
-          <div className="rif__controls">
+          {/* בקרות עיצוב — פאנל מסודר עם שורות ברורות */}
+          <div className="rif__settings">
             {allowOrientation && (
-              <label className="rif__ctl">
-                <span>כיוון התמונה ({bp === 'mobile' ? 'מובייל' : 'דסקטופ'})</span>
-                <div className="rif__seg">
+              <div className="rif__row">
+                <span className="rif__row-lbl">כיוון</span>
+                <div className="rif__seg rif__seg--grow">
                   {ORIENTS.map((o) => (
                     <button key={o.id} type="button" className={`rif__segbtn ${view.aspectRatio === o.id ? 'is-active' : ''}`} onClick={() => setView({ aspectRatio: o.id })}>{o.label}</button>
                   ))}
                 </div>
-              </label>
+              </div>
             )}
-            <label className="rif__ctl">
-              <span>אופן הצגה</span>
-              <div className="rif__seg">
+            <div className="rif__row">
+              <span className="rif__row-lbl">הצגה</span>
+              <div className="rif__seg rif__seg--grow">
                 {FITS.map((f) => (
                   <button key={f.id} type="button" className={`rif__segbtn ${view.objectFit === f.id ? 'is-active' : ''}`} onClick={() => setView({ objectFit: f.id })}>{f.label}</button>
                 ))}
               </div>
-            </label>
-            <label className="rif__ctl rif__ctl--zoom">
-              <span>זום ({Math.round((view.zoom || 1) * 100)}%)</span>
-              <div className="rif__zoom">
-                <button type="button" className="rif__zoombtn" onClick={() => setView({ zoom: Math.max(1, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
+            </div>
+            <div className="rif__row">
+              <span className="rif__row-lbl">זום</span>
+              <div className="rif__slider">
+                <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.max(1, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
                 <input type="range" min="1" max="3" step="0.05" value={view.zoom || 1} onChange={(e) => setView({ zoom: Number(e.target.value) })} aria-label="זום" />
-                <button type="button" className="rif__zoombtn" onClick={() => setView({ zoom: Math.min(3, Math.round(((view.zoom || 1) + 0.1) * 100) / 100) })} aria-label="הגדלה">+</button>
+                <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.min(3, Math.round(((view.zoom || 1) + 0.1) * 100) / 100) })} aria-label="הגדלה">+</button>
+                <span className="rif__val">{Math.round((view.zoom || 1) * 100)}%</span>
               </div>
-            </label>
-            <label className="rif__ctl rif__ctl--zoom">
-              <span>פינות</span>
+            </div>
+            <div className="rif__row">
+              <span className="rif__row-lbl">פינות</span>
               <div className="rif__seg">
-                <button type="button" className={`rif__segbtn ${(!view.radius) ? 'is-active' : ''}`} onClick={() => setView({ radius: 0 })}>⬜ רגילות</button>
-                <button type="button" className={`rif__segbtn ${view.radius > 0 ? 'is-active' : ''}`} onClick={() => setView({ radius: view.radius > 0 ? view.radius : 16 })}>▢ מעוגלות</button>
+                <button type="button" className={`rif__segbtn ${(!view.radius) ? 'is-active' : ''}`} onClick={() => setView({ radius: 0 })}>חדות</button>
+                <button type="button" className={`rif__segbtn ${view.radius > 0 ? 'is-active' : ''}`} onClick={() => setView({ radius: view.radius > 0 ? view.radius : 16 })}>מעוגלות</button>
               </div>
-              <div className="rif__zoom">
+              <div className="rif__slider rif__slider--inline">
                 <input type="range" min="0" max="48" step="1" value={view.radius || 0} onChange={(e) => setView({ radius: Number(e.target.value) })} aria-label="עוצמת עיגול" />
-                <b style={{ minWidth: '3ch', textAlign: 'center' }}>{view.radius || 0}px</b>
+                <span className="rif__val">{view.radius || 0}px</span>
               </div>
-            </label>
+            </div>
           </div>
 
-          <div className="rif__save">
-            <button type="button" className="btn btn--primary rif__savebtn" disabled={!dirty} onClick={saveBp}>
-              {dirty ? `שמירת תצוגת ${bp === 'mobile' ? 'מובייל' : 'דסקטופ'}` : '✓ נשמר'}
-            </button>
-            <button type="button" className="rif__btn rif__btn--ghost" onClick={copyToOther}>
-              העתקה ל{bp === 'mobile' ? 'דסקטופ' : 'מובייל'}
-            </button>
+          {/* סרגל שמירה בולט */}
+          <div className={`rif__savebar ${dirty ? 'is-dirty' : ''}`}>
+            <div className="rif__savebar-state">
+              {dirty
+                ? <span className="rif__dot rif__dot--on" />
+                : <span className="rif__dot" />}
+              {dirty ? 'יש שינויים שלא נשמרו' : 'הכול שמור'}
+            </div>
+            <div className="rif__savebar-actions">
+              <button type="button" className="rif__copy" onClick={copyToOther}>
+                העתקה ל{bp === 'mobile' ? 'דסקטופ' : 'מובייל'}
+              </button>
+              <button type="button" className="rif__save" disabled={!dirty} onClick={saveBp}>
+                {dirty ? `שמירת תצוגת ${bp === 'mobile' ? 'מובייל' : 'דסקטופ'}` : '✓ נשמר'}
+              </button>
+            </div>
           </div>
         </>
       )}

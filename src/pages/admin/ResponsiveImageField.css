@@ -1,34 +1,57 @@
+/* ============================================================
+   ResponsiveImageField — עיצוב תמונה רספונסיבי. ממשק נקי ונוח.
+   ============================================================ */
 .rif {
   border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.12));
-  border-radius: 12px;
-  padding: 0.9rem;
+  border-radius: 14px;
+  padding: 1rem;
   background: var(--adm-card, #fff);
 }
-.rif__label { font-weight: 800; margin-bottom: 0.6rem; }
+.rif__label { font-weight: 800; margin-bottom: 0.7rem; font-size: 0.95rem; }
 
-.rif__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
-.rif__btn {
+/* ---- סרגל פעולות עליון ---- */
+.rif__toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.9rem; }
+.rif__act {
+  display: inline-flex; align-items: center; gap: 0.4rem;
   border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.16));
-  background: transparent;
-  color: inherit;
-  border-radius: 8px;
-  padding: 0.5rem 0.9rem;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
+  background: #fff; color: var(--color-secondary, #0b2a3a);
+  border-radius: 9px; padding: 0.55rem 0.95rem;
+  font-weight: 700; font-size: 0.85rem; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
-.rif__btn--ghost:hover { background: rgba(0, 0, 0, 0.04); }
-.rif__btn--danger { color: #c0392b; border-color: rgba(192, 57, 43, 0.4); }
-.rif__empty { font-size: 0.85rem; color: var(--adm-text-soft, #778); margin: 0; }
+.rif__act:hover { background: rgba(0, 0, 0, 0.04); }
+.rif__act:active { transform: scale(0.97); }
+.rif__act:disabled { opacity: 0.55; cursor: default; }
+.rif__act-ic { font-size: 1rem; line-height: 1; }
+.rif__act--primary { background: var(--color-secondary, #0b2a3a); color: #fff; border-color: var(--color-secondary, #0b2a3a); }
+.rif__act--primary:hover { background: #07293a; }
+.rif__act--danger { color: #c0392b; border-color: rgba(192, 57, 43, 0.35); }
+.rif__act--danger:hover { background: rgba(192, 57, 43, 0.06); }
 
-/* מתג breakpoint */
-.rif__bptabs { display: inline-flex; gap: 0.3rem; background: rgba(0,0,0,0.05); padding: 0.25rem; border-radius: 10px; margin-bottom: 0.8rem; }
-.rif__bptab { border: none; background: transparent; padding: 0.4rem 0.9rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: inherit; }
-.rif__bptab.is-active { background: var(--adm-card, #fff); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+/* ---- Dropzone כשאין תמונה ---- */
+.rif__dropzone {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+  padding: 1.8rem 1rem;
+  border: 2px dashed var(--adm-border-strong, #cdd8e0);
+  border-radius: 12px;
+  background: var(--adm-bg, #f6f8fa);
+  color: var(--adm-text-soft, #778);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.rif__dropzone:hover { border-color: var(--color-secondary, #0b2a3a); background: #eef2f4; }
+.rif__dropzone-ic { font-size: 1.6rem; color: var(--color-secondary, #0b2a3a); }
+.rif__dropzone strong { color: var(--color-secondary, #0b2a3a); font-size: 0.95rem; }
+.rif__dropzone small { font-size: 0.78rem; }
 
-/* מסגרת תצוגה — מוקאפ מכשיר אמיתי */
-/* תצוגה מקדימה חיה — כמו הכרטיסייה באתר */
-.rif__preview { margin-bottom: 0.9rem; }
+/* ---- מתג מובייל / דסקטופ ---- */
+.rif__bptabs { display: inline-flex; gap: 0.25rem; background: rgba(0,0,0,0.05); padding: 0.25rem; border-radius: 10px; margin-bottom: 0.9rem; }
+.rif__bptab { border: none; background: transparent; padding: 0.45rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--adm-text-soft, #778); }
+.rif__bptab.is-active { background: #fff; color: var(--color-secondary, #0b2a3a); box-shadow: 0 1px 5px rgba(0,0,0,0.14); }
+
+/* ---- תצוגה מקדימה חיה ---- */
+.rif__preview { margin-bottom: 1rem; }
 .rif__realcard {
   margin-inline: auto;
   max-width: 380px;
@@ -38,78 +61,121 @@
   background: #eef1f4;
 }
 .rif__realcard--card { width: 100%; }
-
-/* פריסת "כרטיס תחום הפעילות": תמונה (שמאל) + פאנל כהה עם צ'יפ (ימין) */
-.rif__realcard--split {
-  display: flex;
-  direction: rtl;
-  height: 300px;
-}
+.rif__realcard--split { display: flex; direction: rtl; height: 300px; }
 .rif__realcard--split .rif__imgarea { flex: 0 0 47%; }
 .rif__realcard--split .rif__panel {
   flex: 1;
   background: linear-gradient(165deg, var(--color-secondary, #0b2a3a), #07293a 92%);
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  display: flex; align-items: center; justify-content: flex-start;
   padding: 0 0.9rem;
 }
 .rif__panelchip {
-  background: var(--color-accent-500, #a90b0c);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.82rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: 999px;
-  white-space: nowrap;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  background: var(--color-accent-500, #a90b0c); color: #fff;
+  font-weight: 800; font-size: 0.82rem; padding: 0.5rem 0.9rem;
+  border-radius: 999px; white-space: nowrap; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis;
 }
-
-/* אזור התמונה — שטח הגרירה של נקודת המיקוד */
 .rif__imgarea {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  cursor: crosshair;
-  touch-action: none;
-  background: #dfe4e8;
+  position: relative; width: 100%; height: 100%;
+  overflow: hidden; cursor: crosshair; touch-action: none; background: #dfe4e8;
 }
 .rif__surface { display: block; color: var(--color-secondary, #0b2a3a); margin-bottom: 0.2rem; font-weight: 800; }
 .rif__img { width: 100%; height: 100%; display: block; }
 .rif__focal {
-  position: absolute;
-  width: 28px; height: 28px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 2px solid #fff;
-  background: rgba(118, 128, 193, 0.6);
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.45);
+  position: absolute; width: 30px; height: 30px;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  border: 3px solid #fff; background: rgba(118, 128, 193, 0.55);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.45);
   pointer-events: none;
 }
-.rif__hint { font-size: 0.8rem; color: var(--adm-text-soft, #889); margin: 0.5rem 0 0; text-align: center; }
+.rif__hint { font-size: 0.8rem; color: var(--adm-text-soft, #889); margin: 0.55rem 0 0; text-align: center; }
 
-/* בקרות */
-.rif__controls { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.8rem; }
-.rif__ctl { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; font-weight: 700; }
-.rif__ctl select { padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid var(--adm-border, rgba(0,0,0,0.16)); background: var(--adm-card,#fff); color: inherit; }
-.rif__seg { display: inline-flex; gap: 0.3rem; }
-.rif__segbtn { border: 1px solid var(--adm-border, rgba(0,0,0,0.16)); background: transparent; color: inherit; border-radius: 8px; padding: 0.4rem 0.7rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
-.rif__segbtn.is-active { background: var(--color-secondary, #0b2a3a); color: #fff; border-color: var(--color-secondary, #0b2a3a); }
+/* ---- פאנל בקרות העיצוב ---- */
+.rif__settings {
+  display: flex; flex-direction: column; gap: 0.7rem;
+  background: var(--adm-bg, #f6f8fa);
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.1));
+  border-radius: 12px;
+  padding: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+.rif__row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.rif__row-lbl {
+  flex: 0 0 52px;
+  font-weight: 800; font-size: 0.82rem;
+  color: var(--color-secondary, #0b2a3a);
+}
 
-.rif__save { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-.rif__savebtn:disabled { opacity: 0.6; cursor: default; }
+/* קבוצת כפתורים (segmented) */
+.rif__seg { display: inline-flex; gap: 0.3rem; background: rgba(0,0,0,0.05); padding: 0.25rem; border-radius: 10px; }
+.rif__seg--grow { flex: 1; }
+.rif__seg--grow .rif__segbtn { flex: 1; }
+.rif__segbtn {
+  border: none; background: transparent; color: var(--adm-text-soft, #677);
+  border-radius: 8px; padding: 0.45rem 0.8rem;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.rif__segbtn:hover { color: var(--color-secondary, #0b2a3a); }
+.rif__segbtn.is-active { background: #fff; color: var(--color-secondary, #0b2a3a); box-shadow: 0 1px 4px rgba(0,0,0,0.16); }
 
-/* בקרת זום */
-.rif__ctl--zoom { flex: 1 1 220px; }
-.rif__zoom { display: flex; align-items: center; gap: 0.4rem; }
-.rif__zoom input[type="range"] { flex: 1; }
-.rif__zoombtn {
+/* סליידרים */
+.rif__slider { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 180px; }
+.rif__slider--inline { flex: 1; }
+.rif__slider input[type="range"] { flex: 1; accent-color: var(--color-secondary, #0b2a3a); height: 4px; }
+.rif__rndbtn {
   width: 30px; height: 30px; flex-shrink: 0;
   display: grid; place-items: center;
   border: 1px solid var(--adm-border, rgba(0,0,0,0.16));
-  background: #fff; color: inherit;
-  border-radius: 7px; cursor: pointer; font-size: 1.1rem; line-height: 1;
+  background: #fff; color: var(--color-secondary, #0b2a3a);
+  border-radius: 8px; cursor: pointer; font-size: 1.15rem; line-height: 1;
+}
+.rif__rndbtn:hover { background: rgba(0,0,0,0.04); }
+.rif__val {
+  flex-shrink: 0; min-width: 3.4ch; text-align: center;
+  font-weight: 800; font-size: 0.82rem; color: var(--color-secondary, #0b2a3a);
+}
+
+/* ---- סרגל שמירה בולט ---- */
+.rif__savebar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.8rem; flex-wrap: wrap;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.1));
+  background: #fff;
+}
+.rif__savebar.is-dirty {
+  border-color: rgba(169, 11, 12, 0.35);
+  background: linear-gradient(180deg, #fff, rgba(169, 11, 12, 0.04));
+}
+.rif__savebar-state { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; font-weight: 700; color: var(--adm-text-soft, #778); }
+.rif__dot { width: 9px; height: 9px; border-radius: 50%; background: #2ecc71; }
+.rif__dot--on { background: var(--color-accent-500, #a90b0c); box-shadow: 0 0 0 4px rgba(169,11,12,0.15); }
+.rif__savebar-actions { display: inline-flex; align-items: center; gap: 0.5rem; }
+.rif__copy {
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.16));
+  background: #fff; color: var(--color-secondary, #0b2a3a);
+  border-radius: 9px; padding: 0.6rem 1rem; font-weight: 700; font-size: 0.84rem; cursor: pointer;
+}
+.rif__copy:hover { background: rgba(0,0,0,0.04); }
+.rif__save {
+  border: none;
+  background: var(--color-accent-500, #a90b0c); color: #fff;
+  border-radius: 9px; padding: 0.6rem 1.4rem; font-weight: 800; font-size: 0.9rem; cursor: pointer;
+  box-shadow: 0 8px 20px -8px rgba(169, 11, 12, 0.5);
+  transition: transform 0.1s, filter 0.15s;
+}
+.rif__save:hover:not(:disabled) { filter: brightness(1.05); }
+.rif__save:active:not(:disabled) { transform: scale(0.97); }
+.rif__save:disabled {
+  background: #e7ebee; color: #9aa6ae; box-shadow: none; cursor: default;
+}
+
+@media (max-width: 560px) {
+  .rif__row { gap: 0.5rem; }
+  .rif__row-lbl { flex-basis: 100%; }
+  .rif__savebar { flex-direction: column; align-items: stretch; }
+  .rif__savebar-actions { justify-content: space-between; }
+  .rif__save { flex: 1; }
 }

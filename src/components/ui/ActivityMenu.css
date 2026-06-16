@@ -8,6 +8,8 @@
   align-items: stretch;           /* שני הטורים באותו גובה בדיוק */
   gap: 0;                         /* תפר שטוח במרכז — בלי רווח */
   width: 100%;
+  max-width: 520px;               /* נשאר ממורכז גם במסכים רחבים יותר */
+  margin-inline: auto;            /* ממורכז בדיוק באמצע */
   height: clamp(320px, 82vw, 400px);
   border-radius: 1.5rem;
   overflow: hidden;               /* פינות חיצוניות מעוגלות, תפר פנימי שטוח */
@@ -31,17 +33,17 @@
 }
 .actmenu__chip-slot {
   position: absolute;
-  inset-inline: 0.7rem;
-  top: calc(50% - 27px);          /* מרכוז; framer מזיז ב-y */
+  inset-inline: 0.6rem;
+  top: calc(50% - 25px);          /* מרכוז; framer מזיז ב-y */
   display: flex;
-  justify-content: flex-start;    /* RTL: צמוד לימין */
+  justify-content: center;        /* הכפתורים בדיוק באמצע הפאנל */
 }
 .actmenu__chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   max-width: 100%;
-  padding: 0.72rem 1rem;
+  padding: 0.6rem 0.9rem;
   border-radius: var(--radius-pill, 999px);
   border: 1.5px solid rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.1);
@@ -70,7 +72,7 @@
   color: inherit;
 }
 .actmenu__chip-label {
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -118,7 +120,7 @@
   .actmenu { height: clamp(300px, 86vw, 360px); }
   .actmenu__panel { flex-basis: 48%; }
   .actmenu__stage { flex-basis: 52%; }
-  .actmenu__chip { padding: 0.62rem 0.85rem; }
-  .actmenu__chip-label { font-size: 0.86rem; }
+  .actmenu__chip { padding: 0.55rem 0.78rem; }
+  .actmenu__chip-label { font-size: 0.82rem; }
   .actmenu__caption { font-size: 0.8rem; padding: 2.3rem 0.85rem 0.9rem; }
 }

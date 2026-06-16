@@ -14,7 +14,7 @@ import './ActivityMenu.css'
    ============================================================ */
 
 const AUTO_PLAY = 3700
-const CHIP_H = 62
+const CHIP_H = 58
 
 const wrap = (min, max, v) => {
   const range = max - min
@@ -66,7 +66,7 @@ export default function ActivityMenu({ items = [] }) {
                   aria-current={active ? 'true' : undefined}
                 >
                   <span className="actmenu__chip-icon" aria-hidden="true">
-                    <Icon name={a.icon} size={18} />
+                    <Icon name={a.icon} size={16} />
                   </span>
                   <span className="actmenu__chip-label">{L(a.title)}</span>
                 </Link>

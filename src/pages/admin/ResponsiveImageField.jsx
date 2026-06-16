@@ -34,11 +34,13 @@ export default function ResponsiveImageField({
   label,
   desktopAspect = '16 / 9',
   mobileAspect = '4 / 5',
+  breakpoints = ['desktop', 'mobile'],
+  surfaceLabel = '',
 }) {
   const base = normalizeResponsiveImage(value)
   const inputRef = useRef(null)
   const frameRef = useRef(null)
-  const [bp, setBp] = useState('desktop')
+  const [bp, setBp] = useState(breakpoints[0] || 'desktop')
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -154,40 +156,53 @@ export default function ResponsiveImageField({
 
       {draft && (
         <>
-          {/* מתג מובייל / דסקטופ */}
-          <div className="rif__bptabs" role="tablist">
-            <button type="button" role="tab" aria-selected={bp === 'desktop'} className={`rif__bptab ${bp === 'desktop' ? 'is-active' : ''}`} onClick={() => setBp('desktop')}>🖥️ דסקטופ</button>
-            <button type="button" role="tab" aria-selected={bp === 'mobile'} className={`rif__bptab ${bp === 'mobile' ? 'is-active' : ''}`} onClick={() => setBp('mobile')}>📱 מובייל</button>
-          </div>
-
-          {/* תצוגה מקדימה — מסגרת לפי ה-breakpoint, עם נקודת מיקוד נגררת */}
-          <div className={`rif__stage rif__stage--${bp}`}>
-            <div
-              ref={frameRef}
-              className="rif__frame"
-              style={{ aspectRatio: aspect || (bp === 'mobile' ? mobileAspect : desktopAspect) }}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-            >
-              <img
-                className="rif__img"
-                src={draft.src}
-                alt=""
-                draggable="false"
-                style={{ objectFit: view.objectFit, objectPosition: view.objectPosition }}
-              />
-              {view.objectFit === 'cover' && (
-                <span
-                  className="rif__focal"
-                  style={{ left: `${(view.focalPoint?.x ?? 0.5) * 100}%`, top: `${(view.focalPoint?.y ?? 0.5) * 100}%` }}
-                  aria-hidden="true"
-                />
+          {/* מתג מובייל / דסקטופ — רק לפי ה-breakpoints שבהם התמונה באמת מוצגת */}
+          {breakpoints.length > 1 && (
+            <div className="rif__bptabs" role="tablist">
+              {breakpoints.includes('desktop') && (
+                <button type="button" role="tab" aria-selected={bp === 'desktop'} className={`rif__bptab ${bp === 'desktop' ? 'is-active' : ''}`} onClick={() => setBp('desktop')}>🖥️ דסקטופ</button>
+              )}
+              {breakpoints.includes('mobile') && (
+                <button type="button" role="tab" aria-selected={bp === 'mobile'} className={`rif__bptab ${bp === 'mobile' ? 'is-active' : ''}`} onClick={() => setBp('mobile')}>📱 מובייל</button>
               )}
             </div>
+          )}
+
+          {/* תצוגה מקדימה אמיתית — מסגרת מכשיר (טלפון/חלון דפדפן) ביחס האמיתי של הרכיב */}
+          <div className={`rif__stage rif__stage--${bp}`}>
+            <div className="rif__device">
+              {bp === 'desktop' && (
+                <div className="rif__winbar" aria-hidden="true"><span /><span /><span /></div>
+              )}
+              <div
+                ref={frameRef}
+                className="rif__frame"
+                style={{ aspectRatio: aspect || (bp === 'mobile' ? mobileAspect : desktopAspect) }}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
+              >
+                <img
+                  className="rif__img"
+                  src={draft.src}
+                  alt=""
+                  draggable="false"
+                  style={{ objectFit: view.objectFit, objectPosition: view.objectPosition }}
+                />
+                {view.objectFit === 'cover' && (
+                  <span
+                    className="rif__focal"
+                    style={{ left: `${(view.focalPoint?.x ?? 0.5) * 100}%`, top: `${(view.focalPoint?.y ?? 0.5) * 100}%` }}
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+              {bp === 'mobile' && <span className="rif__notch" aria-hidden="true" />}
+            </div>
             <p className="rif__hint">
-              {view.objectFit === 'cover' ? 'גררו את הנקודה כדי לכוון את מוקד התמונה' : 'מצב התאמה (contain) — התמונה כולה נראית'}
+              {surfaceLabel && <strong className="rif__surface">{surfaceLabel} · {bp === 'mobile' ? 'מובייל' : 'דסקטופ'}</strong>}
+              {view.objectFit === 'cover' ? 'גררו את הנקודה כדי לכוון את מוקד התמונה — כך זה ייראה בדיוק ברכיב' : 'מצב התאמה (contain) — התמונה כולה נראית'}
             </p>
           </div>
 

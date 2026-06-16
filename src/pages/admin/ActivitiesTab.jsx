@@ -90,8 +90,9 @@ export default function ActivitiesTab() {
               <ResponsiveImageField
                 value={val}
                 folder="activities"
-                desktopAspect="4 / 5"
-                mobileAspect="4 / 5"
+                breakpoints={['mobile']}
+                surfaceLabel="כרטיס תחום הפעילות"
+                mobileAspect="3 / 5"
                 onChange={(v) => save(a.id, v)}
               />
 
@@ -121,6 +122,7 @@ export default function ActivitiesTab() {
             <ResponsiveImageField
               value={ba.before}
               folder="beforeafter"
+              surfaceLabel="סליידר לפני/אחרי"
               desktopAspect="16 / 9"
               mobileAspect="4 / 3"
               onChange={(v) => saveBa('before', v)}
@@ -133,6 +135,7 @@ export default function ActivitiesTab() {
             <ResponsiveImageField
               value={ba.after}
               folder="beforeafter"
+              surfaceLabel="סליידר לפני/אחרי"
               desktopAspect="16 / 9"
               mobileAspect="4 / 3"
               onChange={(v) => saveBa('after', v)}

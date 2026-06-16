@@ -20,7 +20,8 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
-import CircularGallery from '../components/ui/CircularGallery.jsx'
+import ExpandableGallery from '../components/ui/ExpandableGallery.jsx'
+import FocusRail from '../components/ui/FocusRail.jsx'
 import executionGallery from '../data/executionGallery.js'
 import Icon from '../components/ui/Icon.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
@@ -190,7 +191,7 @@ export default function Division() {
         </section>
       )}
 
-      {/* גלריית ביצוע — מורפינג עיגול→ריבוע (GSAP), רק בעמוד הביצוע */}
+      {/* גלריית ביצוע נפתחת — רק בעמוד הביצוע, מעל "פרויקטים נבחרים" */}
       {slug === 'execution' && executionGallery.length > 0 && (
         <section className="section section--soft">
           <div className="container">
@@ -198,7 +199,10 @@ export default function Division() {
               <span className="eyebrow">{L({ he: 'תיעוד מהשטח', en: 'Field documentation' })}</span>
               <h2 className="section-title">{L({ he: 'הופכים תוכניות לביצוע', en: 'Turning plans into reality' })}</h2>
             </Reveal>
-            <CircularGallery images={executionGallery} />
+            {/* מובייל — קרוסלת עומק תלת-מימדית; דסקטופ — גלריית אקורדיון נפתחת */}
+            {isMobile
+              ? <FocusRail images={executionGallery} />
+              : <ExpandableGallery images={executionGallery} />}
           </div>
         </section>
       )}

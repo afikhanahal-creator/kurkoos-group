@@ -36,6 +36,18 @@ const BLENDS = [
   { id: 'color', label: 'צבע' },
 ]
 
+// נתיב מלבן עם פינות מעוגלות (לעיגול פינות התמונה בעת הייצוא)
+function roundRectPath(ctx, x, y, w, h, r) {
+  const rr = Math.max(0, Math.min(r, w / 2, h / 2))
+  ctx.beginPath()
+  ctx.moveTo(x + rr, y)
+  ctx.arcTo(x + w, y, x + w, y + h, rr)
+  ctx.arcTo(x + w, y + h, x, y + h, rr)
+  ctx.arcTo(x, y + h, x, y, rr)
+  ctx.arcTo(x, y, x + w, y, rr)
+  ctx.closePath()
+}
+
 export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const canvasRef = useRef(null)
   const imgRef = useRef(null)
@@ -52,6 +64,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const [f, setF] = useState(PRESETS[0].f)
   const [tint, setTint] = useState({ color: '#105572', alpha: 0, blend: 'multiply' })
   const [bg, setBg] = useState({ remove: false, threshold: 238 })
+  const [radius, setRadius] = useState(0)   // עיגול פינות (יחס 0..0.5 מהצד הקצר)
   const [out, setOut] = useState(2)
 
   // סגירה ב-Escape + נעילת גלילת הרקע. מפצים על רוחב הסקרולבר כדי שלא תהיה "קפיצה"
@@ -120,7 +133,17 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
       ctx.fillRect(0, 0, w, h)
       ctx.restore()
     }
-  }, [filterStr, t, bg, tint, FRAME_W, FRAME_H])
+    // עיגול פינות — מסכה אחרונה (destination-in) כך שהפינות שקופות גם אחרי הסרת רקע
+    if (radius > 0) {
+      const r = radius * Math.min(w, h)
+      ctx.save()
+      ctx.globalCompositeOperation = 'destination-in'
+      ctx.fillStyle = '#000'
+      roundRectPath(ctx, 0, 0, w, h, r)
+      ctx.fill()
+      ctx.restore()
+    }
+  }, [filterStr, t, bg, tint, radius, FRAME_W, FRAME_H])
 
   useEffect(() => { if (ready) draw(canvasRef.current, 1) }, [draw, ready, ver])
 
@@ -144,7 +167,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const onMove = (e) => { const d = drag.current; if (!d) return; setT((p) => ({ ...p, x: d.bx + (e.clientX - d.sx), y: d.by + (e.clientY - d.sy) })) }
   const onUp = () => { drag.current = null }
 
-  const reset = () => { setT({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false }); setF(PRESETS[0].f); setTint({ color: '#105572', alpha: 0, blend: 'multiply' }); setBg({ remove: false, threshold: 238 }) }
+  const reset = () => { setT({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false }); setF(PRESETS[0].f); setTint({ color: '#105572', alpha: 0, blend: 'multiply' }); setBg({ remove: false, threshold: 238 }); setRadius(0) }
 
   const apply = () => {
     try {
@@ -199,6 +222,17 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
                 <b className="imed__zoom-val">{Math.round(t.scale * 100)}%</b>
               </div>
               <label className="imed__slider">סיבוב <input type="range" min="-180" max="180" step="1" value={t.rot} onChange={(e) => setT((p) => ({ ...p, rot: Number(e.target.value) }))} /><b>{t.rot}°</b></label>
+            </section>
+
+            {/* פינות — רגילות / מעוגלות (להתאמה לכרטיסיות) */}
+            <section className="imed__group">
+              <h4>פינות</h4>
+              <div className="imed__seg">
+                <button type="button" className={`imed__segbtn ${radius === 0 ? 'is-active' : ''}`} onClick={() => setRadius(0)}>⬜ רגילות</button>
+                <button type="button" className={`imed__segbtn ${radius > 0 && radius < 0.5 ? 'is-active' : ''}`} onClick={() => setRadius((r) => (r > 0 && r < 0.5 ? r : 0.12))}>▢ מעוגלות</button>
+                <button type="button" className={`imed__segbtn ${radius >= 0.5 ? 'is-active' : ''}`} onClick={() => setRadius(0.5)}>⬭ עיגול מלא</button>
+              </div>
+              <label className="imed__slider">עוצמת עיגול <input type="range" min="0" max="0.5" step="0.01" value={radius} onChange={(e) => setRadius(Number(e.target.value))} /><b>{Math.round(radius * 100)}%</b></label>
             </section>
 
             {/* פילטרים מוכנים */}

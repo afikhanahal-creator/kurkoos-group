@@ -964,19 +964,20 @@
 .pd-lightbox__close {
   position: absolute;
   z-index: 2;
-  inset-block-start: 1.2rem;
-  inset-inline-end: 1.2rem;
+  /* קצת יותר למטה — יושב בתוך התמונה, לא בקצה העליון */
+  inset-block-start: 2.4rem;
+  inset-inline-end: 1.1rem;
   color: #fff;
-  width: 54px; height: 54px;
+  width: 40px; height: 40px;
   display: grid; place-items: center;
   border-radius: 50%;
-  /* רקע מלא + טבעת לבנה — האיקס ברור גם מעל תמונה בהירה */
-  background: rgba(10, 14, 18, 0.82);
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  /* עדין: שקוף-למחצה עם טבעת דקה, בלי צל כבד */
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(2px);
 }
-.pd-lightbox__close svg { width: 30px; height: 30px; stroke-width: 2.6; }
-.pd-lightbox__close:hover { background: #000; }
+.pd-lightbox__close svg { width: 20px; height: 20px; }
+.pd-lightbox__close:hover { background: rgba(0, 0, 0, 0.6); }
 .pd-lightbox__nav {
   position: absolute;
   z-index: 2;

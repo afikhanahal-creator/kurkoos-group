@@ -18,7 +18,9 @@
 .imed__stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; padding: 1.2rem; background: #eef2f4; min-height: 0; }
 /* רקע משובץ כדי לראות שקיפות */
 .imed__canvas {
-  max-width: 100%; touch-action: none; cursor: move; border-radius: 10px;
+  /* בלי border-radius קבוע — העיגול נקבע ע"י בקרת "פינות" ונצרב לתמונה,
+     כך שהתצוגה משקפת בדיוק את התוצאה (רגילות = פינות חדות). */
+  max-width: 100%; touch-action: none; cursor: move;
   background-image: linear-gradient(45deg, #d7dee3 25%, transparent 25%), linear-gradient(-45deg, #d7dee3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d7dee3 75%), linear-gradient(-45deg, transparent 75%, #d7dee3 75%);
   background-size: 18px 18px; background-position: 0 0, 0 9px, 9px -9px, -9px 0;
   box-shadow: 0 8px 28px -10px rgba(7,41,58,0.35);

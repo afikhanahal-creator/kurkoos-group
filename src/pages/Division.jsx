@@ -44,8 +44,8 @@ export default function Division() {
   let beforeAfter = settings.development_beforeafter
   if (typeof beforeAfter === 'string') { try { beforeAfter = JSON.parse(beforeAfter) } catch { beforeAfter = null } }
   const ba = beforeAfter && typeof beforeAfter === 'object' ? beforeAfter : {}
-  const baBefore = ba.before || '/divisions/execution-bg.jpg'
-  const baAfter = ba.after || 'https://images.unsplash.com/photo-1496307653780-42ee777d4833?auto=format&fit=crop&w=1400&q=80'
+  const baBefore = ba.before || '/divisions/humash-22-24-sketch.png'
+  const baAfter = ba.after || '/divisions/humash-22-24-house.PNG'
 
   // הפרויקטים שיוצגו: ברירת מחדל = מקומיים; אם הוגדרו ב-CMS לעמוד הזה — מהם.
   const [list, setList] = useState(() => projects.slice(0, 4))

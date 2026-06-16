@@ -1089,18 +1089,17 @@
   }
 }
 @media (max-width: 880px) {
-  .pd-banner__grid { grid-template-columns: 1fr; gap: 1.6rem; }
+  .pd-banner__grid { grid-template-columns: 1fr; gap: 1.2rem; padding-block: 0.5rem 0.8rem; }
   .pd-banner__media-col { order: -1; }
   /* במובייל — תוכן צמוד לימין בדיוק כמו תדהר (flex-start ב-RTL = ימין): מיקום → קו → כותרת → תיאור → קוביות */
   .pd-banner__content { align-items: flex-start; text-align: right; }
-  .pd-banner__cta { align-self: flex-start; width: auto; }
+  .pd-banner__cta { display: none; }   /* בלי כפתור "לתיאום פגישה" בראש העמוד במובייל */
   .pd-banner__arrows { display: none; }   /* בלי חצים במובייל (כמו בתדהר) */
-  /* ריווח אנכי נדיב יותר בין האלמנטים — שלא יהיה דחוס */
-  .pd-banner__location { margin-bottom: 0.85rem; }
-  .pd-banner__rule { margin: 0 0 1.7rem; }
-  .pd-banner__name { margin-bottom: 1.1rem; line-height: 1.1; }
-  .pd-banner__subtitle { margin-bottom: 2.2rem; }
-  .pd-banner__cta { margin-top: 2.3rem; }
+  /* ריווח אנכי מצומצם — קומפקטי ונקי */
+  .pd-banner__location { margin-bottom: 0.6rem; }
+  .pd-banner__rule { margin: 0 0 1.1rem; }
+  .pd-banner__name { margin-bottom: 0.8rem; line-height: 1.1; }
+  .pd-banner__subtitle { margin-bottom: 1.4rem; }
   .pd-split__grid { grid-template-columns: 1fr; gap: 0; }
   .pd-split__media { order: -1; min-height: 0; aspect-ratio: 16 / 10; }
   .pd-split__body { padding: clamp(1.3rem, 5vw, 1.8rem); }

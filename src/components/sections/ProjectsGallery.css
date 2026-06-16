@@ -166,8 +166,7 @@
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 0.4s var(--ease-out) 0.08s,
-              transform 0.4s var(--ease-out) 0.08s;
-}
+              transform 0.4s var(--ease-out) 0.08s;}
 .pg-card:hover .pg-card__reveal,
 .pg-card:focus-visible .pg-card__reveal { opacity: 1; transform: translateY(0); }
 
@@ -253,3 +252,8 @@
 
 /* עטיפת קישור לכרטיס — ממלאת את הכרטיס, ניווט native לעמוד הפרויקט */
 .pg-card__link { display: block; height: 100%; color: inherit; text-decoration: none; }
+
+/* מובייל בלבד — שם הפרויקט בכרטיסיה ממורכז */
+@media (max-width: 768px) {
+  .pg-card__title { text-align: center; }
+}

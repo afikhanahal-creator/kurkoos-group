@@ -1,0 +1,23 @@
+/* קרוסלת ה-WebGL (OGL) — ממלאת את גובה המעטפת.
+   הצבע/פונט נקראים ע"י getComputedStyle כדי לצבוע את הכיתוב בקנבס. */
+.cgal-ogl {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  /* ערכי בסיס שה-getComputedStyle קורא ליצירת טקסטורת הטקסט */
+  color: var(--color-secondary, #0b2a3a);
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 800;
+  font-size: 26px;
+  touch-action: pan-y;        /* גלילת העמוד אנכית נשמרת; הקרוסלה תופסת אופקית */
+}
+.cgal-ogl:active { cursor: grabbing; }
+.cgal-ogl canvas { display: block; width: 100%; height: 100%; }
+
+/* מעטפת עם גובה מוגדר — בלעדיה הקנבס נכווץ ל-0 */
+.cgal-ogl-wrap {
+  width: 100%;
+  height: clamp(340px, 62vh, 460px);
+}

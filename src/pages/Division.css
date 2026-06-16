@@ -483,6 +483,10 @@
 /* ערימת הכרטיסים מוצגת רק במובייל (חוסכת מקום); הרשת מוסתרת שם */
 .division-projects__stack { display: none; }
 
+/* ---- לפני/אחרי (עמוד יזמות) — מרווחים מצומצמים ---- */
+.division-beforeafter { padding-block: clamp(1.4rem, 3.5vw, 2.4rem); }
+.division-beforeafter__head { margin-bottom: 1.1rem; }
+
 /* ---- Guide band ---- */
 .division-guide__band {
   display: flex;

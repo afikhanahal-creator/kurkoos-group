@@ -165,9 +165,9 @@ export default function Division() {
 
       {/* לפני/אחרי — רק בעמוד יזמות, מתחת לכרטיסיות (מהשרטוט אל הבית הגמור) */}
       {slug === 'development' && (
-        <section className="section section--soft">
+        <section className="section section--soft division-beforeafter">
           <div className="container">
-            <Reveal className="division-why__head">
+            <Reveal className="division-why__head division-beforeafter__head">
               <span className="eyebrow">{L({ he: 'מהשרטוט אל הבית', en: 'From blueprint to home' })}</span>
               <h2 className="section-title">{L({ he: 'לפני ואחרי', en: 'Before & after' })}</h2>
             </Reveal>

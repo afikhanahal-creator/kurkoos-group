@@ -101,3 +101,15 @@
 
 .rif__save { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .rif__savebtn:disabled { opacity: 0.6; cursor: default; }
+
+/* בקרת זום */
+.rif__ctl--zoom { flex: 1 1 220px; }
+.rif__zoom { display: flex; align-items: center; gap: 0.4rem; }
+.rif__zoom input[type="range"] { flex: 1; }
+.rif__zoombtn {
+  width: 30px; height: 30px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.16));
+  background: #fff; color: inherit;
+  border-radius: 7px; cursor: pointer; font-size: 1.1rem; line-height: 1;
+}

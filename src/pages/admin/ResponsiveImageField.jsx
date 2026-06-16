@@ -186,7 +186,12 @@ export default function ResponsiveImageField({
                     src={draft.src}
                     alt=""
                     draggable="false"
-                    style={{ objectFit: view.objectFit, objectPosition: view.objectPosition }}
+                    style={{
+                      objectFit: view.objectFit,
+                      objectPosition: view.objectPosition,
+                      transform: `scale(${view.zoom || 1})`,
+                      transformOrigin: view.objectPosition,
+                    }}
                   />
                   {view.objectFit === 'cover' && (
                     <span
@@ -242,6 +247,14 @@ export default function ResponsiveImageField({
                 {FITS.map((f) => (
                   <button key={f.id} type="button" className={`rif__segbtn ${view.objectFit === f.id ? 'is-active' : ''}`} onClick={() => setView({ objectFit: f.id })}>{f.label}</button>
                 ))}
+              </div>
+            </label>
+            <label className="rif__ctl rif__ctl--zoom">
+              <span>זום ({Math.round((view.zoom || 1) * 100)}%)</span>
+              <div className="rif__zoom">
+                <button type="button" className="rif__zoombtn" onClick={() => setView({ zoom: Math.max(1, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
+                <input type="range" min="1" max="3" step="0.05" value={view.zoom || 1} onChange={(e) => setView({ zoom: Number(e.target.value) })} aria-label="זום" />
+                <button type="button" className="rif__zoombtn" onClick={() => setView({ zoom: Math.min(3, Math.round(((view.zoom || 1) + 0.1) * 100) / 100) })} aria-label="הגדלה">+</button>
               </div>
             </label>
           </div>

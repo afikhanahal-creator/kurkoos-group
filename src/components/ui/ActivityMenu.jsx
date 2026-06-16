@@ -115,10 +115,15 @@ export default function ActivityMenu({ items = [] }) {
             /* תצוגת המובייל מתוך ה-CMS (focal point / fit) — מקומפוננטה מובייל בלבד */
             style={(() => {
               const v = normalizeResponsiveImage(current.image)?.views.mobile
-              return v ? { objectFit: v.objectFit, objectPosition: v.objectPosition } : undefined
+              return v ? {
+                objectFit: v.objectFit,
+                objectPosition: v.objectPosition,
+                transform: `scale(${v.zoom || 1})`,
+                transformOrigin: v.objectPosition,
+              } : undefined
             })()}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             loading="lazy"

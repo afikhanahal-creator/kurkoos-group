@@ -1,12 +1,17 @@
 /* תמונה שמכבדת תצוגות-לפי-breakpoint שנשמרו ב-CMS.
-   ברירת מחדל = דסקטופ; מתחת ל-768px = הגדרות המובייל. */
+   ברירת מחדל = דסקטופ; מתחת ל-768px = הגדרות המובייל.
+   זום מיושם כ-scale עם מקור-טרנספורם בנקודת המיקוד. ברירת מחדל scale(1) = ללא שינוי. */
 .ri-img {
   object-fit: var(--ri-fit-d, cover);
   object-position: var(--ri-pos-d, 50% 50%);
+  transform: scale(var(--ri-scale-d, 1));
+  transform-origin: var(--ri-pos-d, 50% 50%);
 }
 @media (max-width: 768px) {
   .ri-img {
     object-fit: var(--ri-fit-m, cover);
     object-position: var(--ri-pos-m, 50% 50%);
+    transform: scale(var(--ri-scale-m, 1));
+    transform-origin: var(--ri-pos-m, 50% 50%);
   }
 }

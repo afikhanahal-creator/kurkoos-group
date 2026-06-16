@@ -88,7 +88,9 @@ export function responsiveStyle(value) {
   return {
     '--ri-fit-d': desktop.objectFit,
     '--ri-pos-d': desktop.objectPosition,
+    '--ri-scale-d': desktop.zoom || 1,
     '--ri-fit-m': mobile.objectFit,
     '--ri-pos-m': mobile.objectPosition,
+    '--ri-scale-m': mobile.zoom || 1,
   }
 }

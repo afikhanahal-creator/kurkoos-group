@@ -3,8 +3,9 @@
    ============================================================ */
 .actmenu {
   display: flex;
-  align-items: stretch;
-  gap: 0.7rem;
+  align-items: center;          /* תמונה וצ'יפים ממורכזים אנכית יחד */
+  justify-content: center;      /* שוליים משני הצדדים — לא צמוד לקצה */
+  gap: 1.1rem;
   width: 100%;
 }
 
@@ -12,7 +13,7 @@
 .actmenu__chips {
   flex: 0 0 46%;
   position: relative;
-  height: 290px;
+  height: 258px;
   overflow: hidden;
   /* דהייה עדינה למעלה/למטה כדי שהצ'יפים הרחוקים "ייעלמו" */
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
@@ -67,7 +68,7 @@
 
 /* ---- ערימת תמונות — צד שמאל ---- */
 .actmenu__stage {
-  flex: 1 1 54%;
+  flex: 0 0 42%;
   position: relative;
   aspect-ratio: 4 / 5;
   min-width: 0;
@@ -114,8 +115,9 @@
 
 /* מסכים צרים — שמירה על קריאות וקרבה לשוליים */
 @media (max-width: 380px) {
-  .actmenu { gap: 0.5rem; }
-  .actmenu__chips { flex-basis: 48%; height: 270px; }
+  .actmenu { gap: 0.8rem; }
+  .actmenu__chips { flex-basis: 48%; height: 240px; }
+  .actmenu__stage { flex-basis: 44%; }
   .actmenu__chip { padding: 0.62rem 0.8rem; }
   .actmenu__chip-label { font-size: 0.83rem; }
   .actmenu__caption { font-size: 0.85rem; padding: 2.2rem 0.85rem 0.85rem; }

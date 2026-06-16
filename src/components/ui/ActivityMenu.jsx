@@ -96,10 +96,10 @@ export default function ActivityMenu({ items = [] }) {
               className="actmenu__card"
               initial={false}
               animate={{
-                x: active ? 0 : prev ? '-24%' : nxt ? '24%' : 0,
-                scale: active ? 1 : prev || nxt ? 0.85 : 0.7,
-                opacity: active ? 1 : prev || nxt ? 0.4 : 0,
-                rotate: prev ? -3 : nxt ? 3 : 0,
+                y: active ? 0 : prev || nxt ? '5%' : 0,
+                scale: active ? 1 : prev || nxt ? 0.9 : 0.8,
+                opacity: active ? 1 : prev || nxt ? 0.32 : 0,
+                rotate: prev ? -2.5 : nxt ? 2.5 : 0,
                 zIndex: active ? 20 : prev || nxt ? 10 : 0,
               }}
               style={{ pointerEvents: active ? 'auto' : 'none' }}

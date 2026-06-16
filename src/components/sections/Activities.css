@@ -319,6 +319,14 @@
   margin-top: 0.55rem;   /* הורדת הטקסט הקטן טיפה למטה */
 }
 
+/* ============================================================
+   מובייל — תפריט הפעילות (ActivityMenu) קרוב לשוליים, יותר מקום.
+   ============================================================ */
+@media (max-width: 768px) {
+  .activities .container { padding-inline: 0.7rem; }
+  .activities__head { margin-bottom: 1.6rem; }
+}
+
 /* נגישות — בהפחתת תנועה האפקט האוטומטי לא רץ */
 @media (hover: none) and (prefers-reduced-motion: reduce) {
   .activities__grid .card-inner,

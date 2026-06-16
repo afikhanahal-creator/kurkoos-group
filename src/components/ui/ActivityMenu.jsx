@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocalized } from '../../i18n/index.jsx'
@@ -6,56 +6,129 @@ import Icon from './Icon.jsx'
 import './ActivityMenu.css'
 
 /* ============================================================
-   ActivityMenu — תצוגת מובייל לתחומי הפעילות (במקום הכרטיסיות):
-   תפריט בצד ימין (4 תחומים) ותמונה מתחלפת בצד שמאל.
-   לחיצה על פריט בתפריט מנווטת לדף התחום (יזמות/ביצוע/פיקוח/תיווך).
-   מגע/פוקוס על פריט מעדכן את התמונה משמאל (תצוגה מקדימה).
+   ActivityMenu — תצוגת מובייל לתחומי הפעילות (במקום הכרטיסיות).
+   עיבוד של FeatureCarousel (shadcn/Tailwind/motion) ל-JSX + framer-motion + CSS:
+   • תפריט בצד ימין — צ'יפים מתגלגלים אנכית, הפעיל מודגש (כותרת בלבד).
+   • תמונה בצד שמאל — ערימת כרטיסים (active/prev/next), עם משפט קצר בתחתית.
+   • לחיצה על צ'יפ מנווטת לדף התחום (יזמות/ביצוע/פיקוח/תיווך).
+   • ניגון אוטומטי; נעצר בנגיעה. בלי "Live Session" ובלי כפתור לבן על התמונה.
    ============================================================ */
+
+const AUTO_PLAY = 3200
+const CHIP_H = 58
+
+const wrap = (min, max, v) => {
+  const range = max - min
+  return ((((v - min) % range) + range) % range) + min
+}
+
 export default function ActivityMenu({ items = [] }) {
   const L = useLocalized()
-  const [active, setActive] = useState(0)
-  if (!items.length) return null
-  const current = items[active] || items[0]
+  const len = items.length
+  const [step, setStep] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  const idx = len ? ((step % len) + len) % len : 0
+  const next = useCallback(() => setStep((s) => s + 1), [])
+
+  useEffect(() => {
+    if (paused || len < 2) return
+    const id = setInterval(next, AUTO_PLAY)
+    return () => clearInterval(id)
+  }, [next, paused, len])
+
+  if (!len) return null
+
+  const cardStatus = (i) => {
+    let d = i - idx
+    if (d > len / 2) d -= len
+    if (d < -len / 2) d += len
+    if (d === 0) return 'active'
+    if (d === -1) return 'prev'
+    if (d === 1) return 'next'
+    return 'hidden'
+  }
 
   return (
-    <div className="actmenu">
-      {/* תפריט — צד ימין (ב-RTL הילד הראשון הוא הימני) */}
-      <nav className="actmenu__list" aria-label="תחומי הפעילות">
-        {items.map((a, i) => (
-          <Link
-            key={a.id}
-            to={a.to}
-            className={`actmenu__item ${i === active ? 'is-active' : ''}`}
-            onPointerEnter={() => setActive(i)}
-            onTouchStart={() => setActive(i)}
-            onFocus={() => setActive(i)}
-          >
-            <span className="actmenu__icon" aria-hidden="true">
-              <Icon name={a.icon} size={22} />
-            </span>
-            <span className="actmenu__texts">
-              <span className="actmenu__title">{L(a.title)}</span>
-              <span className="actmenu__short">{L(a.short)}</span>
-            </span>
-            <Icon name="arrowLeft" size={18} className="actmenu__arrow" />
-          </Link>
-        ))}
-      </nav>
+    <div
+      className="actmenu"
+      onPointerDown={() => setPaused(true)}
+      onPointerUp={() => setPaused(false)}
+      onPointerLeave={() => setPaused(false)}
+    >
+      {/* תפריט ימין — צ'יפים מתגלגלים אנכית (כותרת בלבד) */}
+      <div className="actmenu__chips">
+        {items.map((a, i) => {
+          const d = wrap(-(len / 2), len / 2, i - idx)
+          const active = i === idx
+          return (
+            <motion.div
+              key={a.id}
+              className="actmenu__chip-slot"
+              animate={{ y: d * CHIP_H, opacity: 1 - Math.abs(d) * 0.34 }}
+              transition={{ type: 'spring', stiffness: 90, damping: 22, mass: 1 }}
+            >
+              <Link
+                to={a.to}
+                className={`actmenu__chip ${active ? 'is-active' : ''}`}
+                aria-current={active ? 'true' : undefined}
+              >
+                <span className="actmenu__chip-icon" aria-hidden="true">
+                  <Icon name={a.icon} size={16} />
+                </span>
+                <span className="actmenu__chip-label">{L(a.title)}</span>
+              </Link>
+            </motion.div>
+          )
+        })}
+      </div>
 
-      {/* תמונה — צד שמאל, מתחלפת לפי הפריט הפעיל */}
-      <div className="actmenu__media" aria-hidden="true">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.img
-            key={current.id}
-            className="actmenu__img"
-            src={current.image}
-            alt=""
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          />
-        </AnimatePresence>
+      {/* תמונה שמאל — ערימת כרטיסים, משפט קצר בתחתית (RTL) */}
+      <div className="actmenu__stage">
+        {items.map((a, i) => {
+          const st = cardStatus(i)
+          const active = st === 'active'
+          const prev = st === 'prev'
+          const nxt = st === 'next'
+          return (
+            <motion.div
+              key={a.id}
+              className="actmenu__card"
+              initial={false}
+              animate={{
+                x: active ? 0 : prev ? '-24%' : nxt ? '24%' : 0,
+                scale: active ? 1 : prev || nxt ? 0.85 : 0.7,
+                opacity: active ? 1 : prev || nxt ? 0.4 : 0,
+                rotate: prev ? -3 : nxt ? 3 : 0,
+                zIndex: active ? 20 : prev || nxt ? 10 : 0,
+              }}
+              style={{ pointerEvents: active ? 'auto' : 'none' }}
+              transition={{ type: 'spring', stiffness: 260, damping: 25, mass: 0.8 }}
+            >
+              <img
+                className={`actmenu__img ${active ? '' : 'is-dim'}`}
+                src={a.image}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                draggable="false"
+              />
+              <AnimatePresence>
+                {active && (
+                  <motion.p
+                    className="actmenu__caption"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {L(a.short)}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )
+        })}
       </div>
     </div>
   )

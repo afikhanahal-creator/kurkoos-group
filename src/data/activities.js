@@ -42,7 +42,7 @@ export const activities = [
     icon: 'shield',
     to: '/divisions/supervision',
     image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=900&q=80',
-    title: { he: 'פיקוח על פרויקטים', en: 'Project supervision' },
+    title: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
     short: {
       he: 'מנהלים ומפקחים על כל שלבי הביצוע',
       en: 'Managing and supervising every stage of execution',

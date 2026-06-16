@@ -14,7 +14,7 @@ export default {
   },
   hero: {
     eyebrow: 'Kurkoos Group',
-    title: 'Building your next home\nfrom land to key',
+    title: 'Building your next home\nfrom planning to key',
     subtitle:
       'At Kurkoos Group we plan, build and accompany your home from the ground up to the key. Development, construction, supervision and brokerage under one roof, with a genuine commitment to quality, transparency and meeting deadlines.',
     ctaPrimary: 'View our projects',

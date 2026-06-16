@@ -21,7 +21,7 @@ import Seo from '../components/ui/Seo.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
 import ExpandableGallery from '../components/ui/ExpandableGallery.jsx'
-import CircularGalleryOGL from '../components/ui/CircularGalleryOGL.jsx'
+import StackGallery from '../components/ui/StackGallery.jsx'
 import executionGallery from '../data/executionGallery.js'
 import Icon from '../components/ui/Icon.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
@@ -199,16 +199,9 @@ export default function Division() {
               <span className="eyebrow">{L({ he: 'תיעוד מהשטח', en: 'Field documentation' })}</span>
               <h2 className="section-title">{L({ he: 'הופכים תוכניות לביצוע', en: 'Turning plans into reality' })}</h2>
             </Reveal>
-            {/* מובייל — קרוסלת WebGL מעוקלת (OGL); דסקטופ — גלריית אקורדיון נפתחת */}
+            {/* מובייל — מניפת תמונות נפתחת לרשת + מסך מלא; דסקטופ — גלריית אקורדיון נפתחת */}
             {isMobile ? (
-              <div className="cgal-ogl-wrap">
-                <CircularGalleryOGL
-                  items={executionGallery.map((image) => ({ image, text: '' }))}
-                  bend={3}
-                  borderRadius={0.05}
-                  scrollEase={0.02}
-                />
-              </div>
+              <StackGallery images={executionGallery} />
             ) : (
               <ExpandableGallery images={executionGallery} />
             )}

@@ -39,9 +39,13 @@ export default function Division() {
   const isMobile = useIsMobile()
   const settings = useSettings()
 
-  // תמונות "לפני/אחרי" לעמוד יזמות — נשמרות ב-CMS (development_beforeafter)
+  // תמונות "לפני/אחרי" לעמוד יזמות — נשמרות ב-CMS (development_beforeafter).
+  // ברירת מחדל (אתר בנייה → בניין גמור) כדי שהסליידר תמיד יוצג; CMS גובר.
   let beforeAfter = settings.development_beforeafter
   if (typeof beforeAfter === 'string') { try { beforeAfter = JSON.parse(beforeAfter) } catch { beforeAfter = null } }
+  const ba = beforeAfter && typeof beforeAfter === 'object' ? beforeAfter : {}
+  const baBefore = ba.before || '/divisions/execution-bg.jpg'
+  const baAfter = ba.after || 'https://images.unsplash.com/photo-1496307653780-42ee777d4833?auto=format&fit=crop&w=1400&q=80'
 
   // הפרויקטים שיוצגו: ברירת מחדל = מקומיים; אם הוגדרו ב-CMS לעמוד הזה — מהם.
   const [list, setList] = useState(() => projects.slice(0, 4))
@@ -160,7 +164,7 @@ export default function Division() {
       </section>
 
       {/* לפני/אחרי — רק בעמוד יזמות, מתחת לכרטיסיות (מהשרטוט אל הבית הגמור) */}
-      {slug === 'development' && beforeAfter?.before && beforeAfter?.after && (
+      {slug === 'development' && (
         <section className="section section--soft">
           <div className="container">
             <Reveal className="division-why__head">
@@ -168,8 +172,8 @@ export default function Division() {
               <h2 className="section-title">{L({ he: 'לפני ואחרי', en: 'Before & after' })}</h2>
             </Reveal>
             <ImageComparison
-              beforeImage={beforeAfter.before}
-              afterImage={beforeAfter.after}
+              beforeImage={baBefore}
+              afterImage={baAfter}
               altBefore={L({ he: 'שרטוט', en: 'Blueprint' })}
               altAfter={L({ he: 'הבית הגמור', en: 'Finished home' })}
             />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import ImageManager from './ImageManager.jsx'
 import ImageEditor from './ImageEditor.jsx'
+import ResponsiveImageField from './ResponsiveImageField.jsx'
 import StatCubesField from './StatCubesField.jsx'
 import ProjectPreview from './ProjectPreview.jsx'
 import { slugify } from '../../lib/slugify.js'
@@ -175,21 +176,16 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     if (f.type === 'textarea')
       return <textarea dir={f.dir || 'auto'} value={v ?? ''} onChange={(e) => setField(f.key, e.target.value)} rows={4} />
     if (f.type === 'image') {
-      const onPick = async (e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        try { const url = await uploadMedia(file, folder); setField(f.key, url) }
-        catch (err) { toast.error('שגיאה בהעלאה: ' + (err.message || err)) }
-        finally { e.target.value = '' }
-      }
       return (
-        <div className="ed__env-img">
-          {v ? <img src={v} alt="" /> : <span className="ed__dev-logo-empty">אין תמונה</span>}
-          <div className="ed__env-imgactions">
-            <label className="ed__dev-upload">{v ? 'החלף תמונה' : 'בחר תמונה'}<input type="file" accept="image/*" hidden onChange={onPick} /></label>
-            {v && <button type="button" className="ed__dev-del ed__img-remove" onClick={() => setField(f.key, null)} title="הסר תמונה"><XIcon width={16} height={16} /></button>}
-          </div>
-        </div>
+        <ResponsiveImageField
+          value={v}
+          folder={folder}
+          surfaceLabel={f.surfaceLabel || f.label}
+          desktopAspect={f.aspectDesktop || '4 / 3'}
+          mobileAspect={f.aspectMobile || '4 / 5'}
+          breakpoints={f.breakpoints || ['desktop', 'mobile']}
+          onChange={(val) => setField(f.key, val)}
+        />
       )
     }
     if (f.type === 'number')

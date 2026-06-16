@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { srcOfResponsive, responsiveStyle } from '../../lib/responsiveImage.js'
 import './SmartImage.css'
+import './ResponsiveImage.css'
 
 /* אופטימיזציית Cloudinary: f_auto,q_auto (פורמט מודרני WebP/AVIF + דחיסה
    ויזואלית-זהה) + הגבלת רוחב (c_limit,w_...) כדי שמקור ענק יוקטן לרוחב התצוגה.
@@ -33,11 +35,14 @@ export function optimizeSrc(src, w = 1920) {
    ל-Cloudinary, לתמונות קטנות כמו תמונות גלריה).
    ============================================================ */
 export default function SmartImage({ src, alt = '', label, className = '', style, priority = false, w = 1920, ...rest }) {
-  const [failed, setFailed] = useState(!src)
+  // src יכול להיות מחרוזת (legacy) או אובייקט תמונה רספונסיבי { src, views }
+  const url = srcOfResponsive(src)
+  const riStyle = responsiveStyle(src)
+  const [failed, setFailed] = useState(!url)
   const [loaded, setLoaded] = useState(false)
   // אם הגרסה המאופטמת נכשלת (חשבון שחוסם טרנספורמציות) — חוזרים למקור
   const [useOriginal, setUseOriginal] = useState(false)
-  const finalSrc = useOriginal ? src : optimizeSrc(src, w)
+  const finalSrc = useOriginal ? url : optimizeSrc(url, w)
 
   if (failed) {
     return (
@@ -59,9 +64,9 @@ export default function SmartImage({ src, alt = '', label, className = '', style
       loading={priority ? 'eager' : 'lazy'}
       fetchpriority={priority ? 'high' : 'auto'}
       decoding="async"
-      className={`smart-image ${loaded ? 'is-loaded' : ''} ${className}`}
-      style={style}
-      onError={() => { if (!useOriginal && finalSrc !== src) setUseOriginal(true); else setFailed(true) }}
+      className={`smart-image ri-img ${loaded ? 'is-loaded' : ''} ${className}`}
+      style={{ ...riStyle, ...style }}
+      onError={() => { if (!useOriginal && finalSrc !== url) setUseOriginal(true); else setFailed(true) }}
       onLoad={() => setLoaded(true)}
       {...rest}
     />

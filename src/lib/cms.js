@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase.js'
+import { srcOfResponsive } from './responsiveImage.js'
 
 /* ============================================================
    שכבת גישה לנתונים (CMS) מול Supabase.
@@ -159,7 +160,7 @@ export function cmsRowToCard(p) {
     year: p.year,
     status: p.status,
     category: p.category,
-    cover: p.hero_image_url || (p.gallery && p.gallery[0]) || '',
+    cover: srcOfResponsive(p.hero_image_url) || srcOfResponsive(p.gallery && p.gallery[0]) || '',
   }
 }
 

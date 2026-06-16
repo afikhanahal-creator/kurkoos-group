@@ -6,6 +6,7 @@ import divisions from '../data/divisions.js'
 import { getProjectBySlug, createLead } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
+import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Parallax from '../components/ui/Parallax.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
@@ -109,7 +110,7 @@ function buildProject(local, cms) {
       description: wrap(cms.description),
       short: wrap(cms.subtitle),
       status: cms.status,
-      cover: cms.hero_image_url || (cms.gallery && cms.gallery[0]),
+      cover: srcOfResponsive(cms.hero_image_url) || srcOfResponsive(cms.gallery && cms.gallery[0]),
       aboutImage: cms.about_image_url || undefined,
       aboutSpaced: !!cms.about_spaced,
       aboutPortrait: !!cms.about_portrait,

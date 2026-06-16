@@ -1,4 +1,5 @@
 import { PROJECT_STATUS } from './schema.js'
+import { srcOfResponsive } from '../../lib/responsiveImage.js'
 
 /* תצוגה מקדימה קומפקטית של עמוד הפרויקט — נבנית מאותם שדות שעמוד
    הפרויקט הציבורי (ProjectDetail) משתמש בהם, כדי שהמנהל יראה איך ייראה
@@ -23,7 +24,7 @@ function buildCubes(form) {
 }
 
 export default function ProjectPreview({ form }) {
-  const cover = form.hero_image_url || (form.gallery && form.gallery[0]) || ''
+  const cover = srcOfResponsive(form.hero_image_url) || srcOfResponsive(form.gallery && form.gallery[0]) || ''
   const cubes = buildCubes(form)
   const amenities = Array.isArray(form.amenities) ? form.amenities.filter(Boolean) : []
   const gallery = Array.isArray(form.gallery) ? form.gallery : []

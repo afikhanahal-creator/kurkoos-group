@@ -179,7 +179,6 @@ export default function Division() {
                     onError={(e) => { e.currentTarget.style.display = 'none' }}
                   />
                   <img className="ah-site__logo" src="/afik-hanahal-logo.png" alt={'אפיק הנחל נדל"ן'} loading="lazy" />
-                  <span className="ah-site__enter">כניסה לאתר ↗</span>
                 </span>
               </a>
               <a href={AFIK_SITE_URL} target="_blank" rel="noopener noreferrer" className="ah-site__btn">

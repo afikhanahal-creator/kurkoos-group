@@ -160,26 +160,6 @@
   position: absolute; z-index: 0; inset: 0; margin: auto;
   width: clamp(150px, 22vw, 230px); height: auto;
 }
-.ah-site__enter {
-  position: absolute;
-  z-index: 5;
-  inset-block-end: 1rem;
-  inset-inline-start: 50%;          /* ממורכז אופקית */
-  inset-inline-end: auto;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #fff;
-  background: rgba(118, 128, 193, 0.9);   /* #7680c1 */
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 0.4rem 0.95rem;
-  border-radius: var(--radius-pill);
-  box-shadow: 0 6px 20px -8px var(--ah-glow);
-  opacity: 0;
-  transform: translate(-50%, 6px);
-  transition: opacity var(--dur-base), transform var(--dur-base);
-}
-.ah-site__frame:hover .ah-site__enter { opacity: 1; transform: translate(-50%, 0); }
-
 @media (max-width: 860px) {
   /* כמעט רוחב מלא, עם מקום להילה הסגולה מסביב */
   .ah-site__frame {
@@ -194,7 +174,6 @@
     animation: ah-float 5.5s ease-in-out infinite;
   }
   .ah-site__screen { max-height: clamp(320px, 96vw, 520px); }
-  .ah-site__enter { display: none; }   /* מסירים את הכפתור הפנימי במובייל */
   /* מקטינים את הכפתור התחתון ב-~20% */
   .ah-site__btn { padding: 0.68rem 1.6rem; font-size: 0.82rem; }
   .ah-site__btn svg { width: 15px; height: 15px; }
@@ -507,12 +486,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
+  gap: clamp(1.5rem, 4vw, 3rem);
   flex-wrap: wrap;
-  padding: clamp(2rem, 4vw, 3.4rem);
+  /* לא מקצה-לקצה: ממורכז ברוחב מוגבל בדסקטופ */
+  max-width: 880px;
+  margin-inline: auto;
+  padding: clamp(1.8rem, 3vw, 2.8rem);
   border-radius: var(--radius-lg);
   background: linear-gradient(150deg, var(--color-bg-soft), #eef2f4);
   border: 1px solid var(--color-border);
+  box-shadow: 0 18px 44px -28px rgba(7, 41, 58, 0.35);
 }
 .division-guide__title { font-size: var(--fs-h3); margin: 0.4rem 0 0.6rem; }
 .division-guide__desc { color: var(--color-text-soft); max-width: 50ch; }

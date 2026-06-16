@@ -1,36 +1,35 @@
 /* ============================================================
-   סרט לוגואים רץ — גלילה נטיבית (scrollLeft) שעובדת ב-iOS.
-   לוגואים צפים (בלי ריבוע), בגודל אחיד (contain → לא חתוכים).
+   סרט לוגואים רץ — אנימציית transform (translate3d) ב-GPU, חלקה
+   ובלי ריצוד. הרשימה משוכפלת → לולאה רציפה. לוגואים צפים (בלי ריבוע),
+   בגודל אחיד (contain → לא חתוכים), כולם על אותו קו גובה.
    ============================================================ */
 .logo-marquee {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  direction: ltr;               /* גלילה צפויה (scrollLeft חיובי) גם ב-RTL */
-  scrollbar-width: none;        /* הסתרת פס הגלילה */
-  /* בלי -webkit-overflow-scrolling: touch — הוא מתנגש בגלילה תכנותית וגורם לריצוד */
+  overflow: hidden;             /* בלי גלילה נטיבית — התנועה דרך transform */
+  direction: ltr;               /* כיוון תנועה צפוי */
 }
-.logo-marquee::-webkit-scrollbar { display: none; }
 
 .logo-marquee__track {
   display: flex;
-  align-items: center;       /* יישור אנכי אחיד לכל הלוגואים */
+  align-items: center;          /* יישור אנכי אחיד לכל הלוגואים */
   width: max-content;
-  transform: translateZ(0);  /* שכבת GPU — מייצב רינדור, מונע ריצוד */
+  will-change: transform;       /* רמז ל-GPU — תנועה חלקה */
   backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
 }
 
-/* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (צף), הלוגו תמיד נכנס במלואו */
+/* משבצת אחידה לכל לוגו — בלי רקע/מסגרת (צף), הלוגו תמיד נכנס במלואו.
+   מרווח נשימה רחב יותר בין לוגו ללוגו. */
 .logo-marquee__item {
   flex: 0 0 auto;
-  height: 96px;                /* גבוה מספיק כדי להכיל לוגו מוגדל (אחרי "קיצור השוליים") */
+  height: 96px;
   display: flex;
-  align-items: center;         /* כל הלוגואים על אותו קו */
+  align-items: center;
   justify-content: center;
-  margin-inline-end: clamp(2rem, 5vw, 3.5rem);
+  margin-inline-end: clamp(3rem, 7vw, 5rem);
 }
 
-/* גובה בסיס; ה-JS מודד את התוכן ומגדיל (scale) כך שהתוכן הנראה זהה לכולם */
+/* גובה בסיס אחיד; ה-JS מודד את התוכן ומגדיל (scale) כך שהתוכן הנראה זהה לכולם */
 .logo-marquee__img {
   height: 50px;
   width: auto;
@@ -49,6 +48,6 @@
 }
 
 @media (max-width: 600px) {
-  .logo-marquee__item { height: 84px; margin-inline-end: clamp(2.4rem, 13vw, 3.6rem); }
-  .logo-marquee__img { height: 44px; max-width: 150px; }
+  .logo-marquee__item { height: 84px; margin-inline-end: clamp(3rem, 16vw, 4.5rem); }
+  .logo-marquee__img { height: 46px; max-width: 150px; }
 }

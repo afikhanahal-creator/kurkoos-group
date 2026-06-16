@@ -34,7 +34,9 @@ const fitLogo = (e) => {
     }
     if (bottom >= top) {
       const ratio = (bottom - top + 1) / ch       // יחס גובה-התוכן לגובה-התמונה
-      const k = Math.max(1, Math.min(1.85, 1.04 / ratio))
+      // מגדילים את התוכן לגובה אחיד; תקרה גבוהה יותר כדי שגם לוגואים קטנים/מרופדים
+      // יגיעו לאותו גודל נראה כמו השאר
+      const k = Math.max(1, Math.min(2.2, 1.06 / ratio))
       img.style.transform = `scale(${k})`
     }
   } catch { /* תמונה לא-קריאה (CORS) — מדלגים */ }
@@ -42,48 +44,52 @@ const fitLogo = (e) => {
 
 export default function LogoCarousel({ logos = [] }) {
   const list = (logos || []).filter((l) => srcOf(l) || l.name)
-  const scrollerRef = useRef(null)
+  const trackRef = useRef(null)
 
   useEffect(() => {
-    const el = scrollerRef.current
-    if (!el || list.length < 2) return
+    const track = trackRef.current
+    if (!track || list.length < 2) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     let raf
     let pos = 0
     let paused = false
-    const speed = 1 // פיקסל שלם לפריים (~60px/שנייה) — מהיר יותר, ובלי ריצוד תת-פיקסל
+    let last = performance.now()
+    const speed = 90 // פיקסלים לשנייה — מעט יותר מהיר
 
-    const step = () => {
-      const copy = el.scrollWidth / 2   // רוחב עותק אחד
+    const step = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000) // שניות (מוגבל לקפיצות)
+      last = now
+      const copy = track.scrollWidth / 2 // רוחב עותק אחד (הרשימה משוכפלת)
       if (!paused && copy) {
-        pos += speed
-        if (pos >= copy) pos -= copy     // איפוס חלק בגבול → לולאה רציפה
-        el.scrollLeft = Math.round(pos)  // פיקסלים שלמים → בלי ריצוד
+        pos += speed * dt
+        if (pos >= copy) pos -= copy // איפוס חלק בגבול → לולאה רציפה
+        // טרנספורם ב-GPU (translate3d) — חלק, בלי ריצוד גלילה תת-פיקסל
+        track.style.transform = `translate3d(${-pos}px, 0, 0)`
       }
       raf = requestAnimationFrame(step)
     }
     raf = requestAnimationFrame(step)
 
     const pause = () => { paused = true }
-    const resume = () => { pos = el.scrollLeft; paused = false }
-    el.addEventListener('pointerdown', pause)
-    el.addEventListener('pointerup', resume)
-    el.addEventListener('pointercancel', resume)
-    el.addEventListener('mouseenter', pause)
-    el.addEventListener('mouseleave', resume)
-    el.addEventListener('touchstart', pause, { passive: true })
-    el.addEventListener('touchend', resume)
+    const resume = () => { last = performance.now(); paused = false }
+    track.addEventListener('pointerdown', pause)
+    track.addEventListener('pointerup', resume)
+    track.addEventListener('pointercancel', resume)
+    track.addEventListener('mouseenter', pause)
+    track.addEventListener('mouseleave', resume)
+    track.addEventListener('touchstart', pause, { passive: true })
+    track.addEventListener('touchend', resume)
 
     return () => {
       cancelAnimationFrame(raf)
-      el.removeEventListener('pointerdown', pause)
-      el.removeEventListener('pointerup', resume)
-      el.removeEventListener('pointercancel', resume)
-      el.removeEventListener('mouseenter', pause)
-      el.removeEventListener('mouseleave', resume)
-      el.removeEventListener('touchstart', pause)
-      el.removeEventListener('touchend', resume)
+      track.removeEventListener('pointerdown', pause)
+      track.removeEventListener('pointerup', resume)
+      track.removeEventListener('pointercancel', resume)
+      track.removeEventListener('mouseenter', pause)
+      track.removeEventListener('mouseleave', resume)
+      track.removeEventListener('touchstart', pause)
+      track.removeEventListener('touchend', resume)
     }
   }, [list.length])
 
@@ -91,8 +97,8 @@ export default function LogoCarousel({ logos = [] }) {
   const track = [...list, ...list]
 
   return (
-    <div className="logo-marquee" ref={scrollerRef} role="list" aria-label="שותפים ולקוחות">
-      <div className="logo-marquee__track">
+    <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">
+      <div className="logo-marquee__track" ref={trackRef}>
         {track.map((logo, i) => {
           const src = srcOf(logo)
           return (

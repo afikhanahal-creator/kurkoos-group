@@ -251,8 +251,12 @@ export default function ProjectDetail() {
   // אם אין תמונה אמיתית למקטע "על הפרויקט" — לא מציגים placeholder, רק טקסט
   const aboutSrc = srcOfResponsive(project.aboutImage) || srcOfResponsive(flatGallery[0])
   const aboutRI = normalizeResponsiveImage(project.aboutImage)
-  const aboutArD = aboutRI?.views.desktop.aspectRatio
-  const aboutArM = aboutRI?.views.mobile.aspectRatio
+  // האם זו תמונה רספונסיבית (פורמט חדש) ולא כתובת URL ישנה — רק אז נכפה יחס קבוע
+  const aboutIsResponsive = typeof project.aboutImage === 'object' ||
+    (typeof project.aboutImage === 'string' && project.aboutImage.trim().startsWith('{'))
+  // יחס התצוגה זהה בדיוק למסך העריכה: הבחירה המפורשת, או ברירת המחדל של השדה (דסקטופ 3/4, מובייל 4/3)
+  const aboutArD = aboutRI?.views.desktop.aspectRatio || (aboutIsResponsive ? '3 / 4' : undefined)
+  const aboutArM = aboutRI?.views.mobile.aspectRatio || (aboutIsResponsive ? '4 / 3' : undefined)
   const aboutArStyle = (aboutArD || aboutArM)
     ? { '--about-ar-d': aboutArD || aboutArM, '--about-ar-m': aboutArM || aboutArD }
     : undefined

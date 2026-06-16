@@ -135,17 +135,21 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     return () => { alive = false }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // מקור הפריטים: prop → CMS → נתוני ברירת מחדל מקומיים. עד FEATURED, ללא כפילויות slug.
+  // מקור הפריטים: prop → CMS → נתוני ברירת מחדל מקומיים.
+  // פרויקטים אמיתיים (prop/CMS) מוצגים *כולם* — בלי הגבלת מספר; רק ברירת
+  // המחדל המקומית מוגבלת ל-FEATURED כדי לא להציף בדוגמאות.
+  const usingReal = (itemsProp && itemsProp.length) || (cmsItems && cmsItems.length)
   const source = (itemsProp && itemsProp.length)
     ? itemsProp
     : (cmsItems && cmsItems.length ? cmsItems : projects.slice(0, FEATURED))
   const seen = new Set()
-  const items = source.filter((p) => {
+  const deduped = source.filter((p) => {
     const k = p.slug || p.name
     if (seen.has(k)) return false
     seen.add(k)
     return true
-  }).slice(0, FEATURED)
+  })
+  const items = usingReal ? deduped : deduped.slice(0, FEATURED)
   // במובייל משכפלים לפריסת marquee — אבל רק כשיש מספיק פריטים (אחרת זה נראה ככפילות)
   const renderItems = (isMobile && items.length >= 3) ? [...items, ...items] : items
 

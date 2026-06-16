@@ -526,4 +526,11 @@
   .division-why__grid { grid-template-columns: 1fr; }
   .division-projects__grid { display: none; }
   .division-projects__stack { display: block; }
+  /* כפתור "קראו עוד" במדריך — קטן ב-~30% במובייל */
+  .division-guide__band .btn--lg {
+    font-size: 0.8rem;
+    padding: 0.6em 1.45em;
+    min-height: 0;
+  }
+  .division-guide__band .btn--lg .division-guide__arrow { width: 15px; height: 15px; }
 }

@@ -33,10 +33,14 @@
 }
 .actmenu__chip-slot {
   position: absolute;
-  inset-inline: 0.6rem;
-  top: calc(50% - 25px);          /* מרכוז; framer מזיז ב-y */
+  inset-inline: 0.7rem;
+  /* תיבת-משבצת בגובה קבוע ממורכזת אנכית; framer מזיז אותה ב-y.
+     הפריט הפעיל (y=0) יושב בדיוק במרכז גובה הכרטיסיה. */
+  height: 58px;
+  top: calc(50% - 29px);
   display: flex;
-  justify-content: center;        /* הכפתורים בדיוק באמצע הפאנל */
+  align-items: center;
+  justify-content: flex-start;    /* RTL: צמוד לימין */
 }
 .actmenu__chip {
   display: inline-flex;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocalized } from '../../i18n/index.jsx'
@@ -26,15 +26,36 @@ export default function ActivityMenu({ items = [] }) {
   const len = items.length
   const [step, setStep] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [inView, setInView] = useState(false)
+  const rootRef = useRef(null)
 
   const idx = len ? ((step % len) + len) % len : 0
   const next = useCallback(() => setStep((s) => s + 1), [])
 
+  // מתחילים מ"יזמות" (הפריט הראשון) בכל פעם שהסקשן נכנס למסך
   useEffect(() => {
-    if (paused || len < 2) return
+    const el = rootRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStep(0)
+          setInView(true)
+        } else {
+          setInView(false)
+        }
+      },
+      { threshold: 0.4 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!inView || paused || len < 2) return
     const id = setInterval(next, AUTO_PLAY)
     return () => clearInterval(id)
-  }, [next, paused, len])
+  }, [next, paused, len, inView])
 
   if (!len) return null
   const current = items[idx] || items[0]
@@ -42,6 +63,7 @@ export default function ActivityMenu({ items = [] }) {
   return (
     <div
       className="actmenu"
+      ref={rootRef}
       onPointerDown={() => setPaused(true)}
       onPointerUp={() => setPaused(false)}
       onPointerLeave={() => setPaused(false)}

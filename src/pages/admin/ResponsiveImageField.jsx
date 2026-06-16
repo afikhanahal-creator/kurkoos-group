@@ -176,6 +176,7 @@ export default function ResponsiveImageField({
                 <div
                   ref={frameRef}
                   className="rif__imgarea"
+                  style={{ borderRadius: `${view.radius || 0}px` }}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
@@ -213,11 +214,11 @@ export default function ResponsiveImageField({
                   </div>
                 )
               }
-              // ברירת מחדל: כרטיס מעוגל ביחס האמיתי של הרכיב
+              // ברירת מחדל: כרטיס ביחס האמיתי של הרכיב, עם עיגול פינות לפי הבחירה
               return (
                 <div
                   className="rif__realcard rif__realcard--card"
-                  style={{ aspectRatio: view.aspectRatio || (bp === 'mobile' ? mobileAspect : desktopAspect) }}
+                  style={{ aspectRatio: view.aspectRatio || (bp === 'mobile' ? mobileAspect : desktopAspect), borderRadius: `${view.radius || 0}px` }}
                 >
                   {imgEl}
                 </div>
@@ -255,6 +256,17 @@ export default function ResponsiveImageField({
                 <button type="button" className="rif__zoombtn" onClick={() => setView({ zoom: Math.max(1, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
                 <input type="range" min="1" max="3" step="0.05" value={view.zoom || 1} onChange={(e) => setView({ zoom: Number(e.target.value) })} aria-label="זום" />
                 <button type="button" className="rif__zoombtn" onClick={() => setView({ zoom: Math.min(3, Math.round(((view.zoom || 1) + 0.1) * 100) / 100) })} aria-label="הגדלה">+</button>
+              </div>
+            </label>
+            <label className="rif__ctl rif__ctl--zoom">
+              <span>פינות</span>
+              <div className="rif__seg">
+                <button type="button" className={`rif__segbtn ${(!view.radius) ? 'is-active' : ''}`} onClick={() => setView({ radius: 0 })}>⬜ רגילות</button>
+                <button type="button" className={`rif__segbtn ${view.radius > 0 ? 'is-active' : ''}`} onClick={() => setView({ radius: view.radius > 0 ? view.radius : 16 })}>▢ מעוגלות</button>
+              </div>
+              <div className="rif__zoom">
+                <input type="range" min="0" max="48" step="1" value={view.radius || 0} onChange={(e) => setView({ radius: Number(e.target.value) })} aria-label="עוצמת עיגול" />
+                <b style={{ minWidth: '3ch', textAlign: 'center' }}>{view.radius || 0}px</b>
               </div>
             </label>
           </div>

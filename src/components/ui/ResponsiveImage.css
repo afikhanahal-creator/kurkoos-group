@@ -6,6 +6,7 @@
   object-position: var(--ri-pos-d, 50% 50%);
   transform: scale(var(--ri-scale-d, 1));
   transform-origin: var(--ri-pos-d, 50% 50%);
+  border-radius: var(--ri-rad-d, 0);
 }
 @media (max-width: 768px) {
   .ri-img {
@@ -13,5 +14,6 @@
     object-position: var(--ri-pos-m, 50% 50%);
     transform: scale(var(--ri-scale-m, 1));
     transform-origin: var(--ri-pos-m, 50% 50%);
+    border-radius: var(--ri-rad-m, 0);
   }
 }

@@ -120,6 +120,7 @@ export default function ActivityMenu({ items = [] }) {
                 objectPosition: v.objectPosition,
                 transform: `scale(${v.zoom || 1})`,
                 transformOrigin: v.objectPosition,
+                borderRadius: `${v.radius || 0}px`,
               } : undefined
             })()}
             initial={{ opacity: 0 }}

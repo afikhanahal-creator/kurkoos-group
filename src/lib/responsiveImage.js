@@ -15,6 +15,7 @@ export const DEFAULT_VIEW = {
   focalPoint: { x: 0.5, y: 0.5 },
   aspectRatio: '', // '' = לפי המיכל באתר
   zoom: 1,
+  radius: 0, // עיגול פינות בפיקסלים (0 = פינות רגילות/חדות)
 }
 
 // המרת focal point (0..1) ל-object-position
@@ -89,8 +90,10 @@ export function responsiveStyle(value) {
     '--ri-fit-d': desktop.objectFit,
     '--ri-pos-d': desktop.objectPosition,
     '--ri-scale-d': desktop.zoom || 1,
+    '--ri-rad-d': `${desktop.radius || 0}px`,
     '--ri-fit-m': mobile.objectFit,
     '--ri-pos-m': mobile.objectPosition,
     '--ri-scale-m': mobile.zoom || 1,
+    '--ri-rad-m': `${mobile.radius || 0}px`,
   }
 }

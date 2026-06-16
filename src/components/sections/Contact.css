@@ -207,9 +207,9 @@
 
   /* שדות קומפקטיים — רוחב קטן ב-30% וממורכזים */
   .contact__form { gap: 0.6rem; }
-  .contact__required { font-size: 0.78rem; }
+  .contact__required { font-size: 0.78rem; text-align: center; }
   .contact__form .field {
-    width: 85%;
+    width: 95%;
     margin-inline: auto;
   }
   .contact__form .field input,

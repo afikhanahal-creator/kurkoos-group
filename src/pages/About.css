@@ -106,13 +106,18 @@
   .about-vision__inner .eyebrow { justify-content: center; }
   .about-vision__divider { margin-inline: auto; }
   .about-vision__closing { align-items: center; text-align: center; }
-  /* פסקאות הגוף — מיושרות לשני הצדדים (שוליים זהים) והשורה האחרונה ממורכזת */
+  /* פסקאות הגוף — מיושרות לשני הצדדים (שוליים זהים) והשורה האחרונה ממורכזת + פונט מצומצם */
   .about-vision__p {
     text-align: justify;
     text-align-last: center;
     -moz-text-align-last: center;
     text-justify: inter-character;   /* פיזור נעים יותר בעברית */
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 1.1rem;
   }
+  .about-vision__heading { font-size: 1.5rem; margin-bottom: 1.2rem; }
+  .about-vision__tagline { font-size: 1.1rem; line-height: 1.5; }
 }
 @media (max-width: 600px) {
   .about-vision__closing { justify-content: center; text-align: center; }

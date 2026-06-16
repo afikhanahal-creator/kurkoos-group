@@ -134,6 +134,9 @@
   line-height: 1.02;
   color: var(--color-primary-900);
   margin-bottom: 0.7rem;
+  /* ספרות "lining" — באותו גובה ועל קו הבסיס של האותיות (מתקן את "14" שיושב נמוך) */
+  font-variant-numeric: lining-nums proportional-nums;
+  font-feature-settings: "lnum" 1, "onum" 0;
 }
 /* תיאור — בצבע המותג (טורקיז), בדיוק כמו הטקסט הצבעוני בתדהר */
 .pd-banner__subtitle {
@@ -185,7 +188,7 @@
   /* גרדיאנט אפור רך מובלט יותר + צל עדין — קוביות מורמות בסגנון תדהר */
   background: linear-gradient(180deg, #f4f7f9 0%, #dde6ea 100%);
   border: 0;
-  border-radius: 7px;
+  border-radius: 4px;       /* פינות עדינות — פחות עגול, יותר "מרובע" */
   max-width: 100%;          /* לעולם לא נחתך מעבר לרוחב הזמין */
   box-shadow: 0 10px 22px -10px rgba(16, 85, 114, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);  /* fallback — StatCube דורס בצל דינמי */
   padding: 0.6rem 1.15rem;   /* גובה נדיב יותר — קוביות מלאות כמו בתדהר */
@@ -940,7 +943,9 @@
   box-shadow: var(--shadow-sm);
   background: var(--color-primary-900);
 }
-.pd-video-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out), filter var(--dur-base); filter: brightness(0.82); }
+.pd-video-tile img,
+.pd-video-tile__vid { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out), filter var(--dur-base); filter: brightness(0.82); }
+.pd-video-tile__vid { display: block; pointer-events: none; }
 .pd-video-tile:hover img { transform: scale(1.05); filter: brightness(0.7); }
 .pd-video-tile__file { position: absolute; inset: 0; background: linear-gradient(160deg, var(--color-primary-700), var(--color-primary-900)); }
 .pd-video-tile__play {

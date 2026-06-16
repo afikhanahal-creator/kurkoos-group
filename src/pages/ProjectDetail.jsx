@@ -771,7 +771,9 @@ export default function ProjectDetail() {
                   >
                     {thumb
                       ? <img src={thumb} alt={vid.title || ''} loading="lazy" />
-                      : <span className="pd-video-tile__file" aria-hidden="true" />}
+                      : (vid.src
+                        ? <video className="pd-video-tile__vid" src={`${vid.src}#t=0.5`} muted playsInline preload="metadata" tabIndex={-1} aria-hidden="true" />
+                        : <span className="pd-video-tile__file" aria-hidden="true" />)}
                     <span className="pd-video-tile__play"><Icon name="play" size={24} /></span>
                     {vid.title && <span className="pd-video-tile__title">{vid.title}</span>}
                   </button>

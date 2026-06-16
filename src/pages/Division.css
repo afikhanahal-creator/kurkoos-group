@@ -526,6 +526,15 @@
   .division-why__grid { grid-template-columns: 1fr; }
   .division-projects__grid { display: none; }
   .division-projects__stack { display: block; }
+  /* מדריך ליזמות נדל"ן — מרכוז מלא במובייל (כותרת, תיאור, כפתור) */
+  .division-guide__band {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.2rem;
+  }
+  .division-guide__band .eyebrow { justify-content: center; }
+  .division-guide__desc { margin-inline: auto; }
   /* כפתור "קראו עוד" במדריך — קטן ב-~30% במובייל */
   .division-guide__band .btn--lg {
     font-size: 0.8rem;

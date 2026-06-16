@@ -1093,7 +1093,7 @@
   .pd-banner__media-col { order: -1; }
   /* במובייל — תוכן צמוד לימין בדיוק כמו תדהר (flex-start ב-RTL = ימין): מיקום → קו → כותרת → תיאור → קוביות */
   .pd-banner__content { align-items: flex-start; text-align: right; }
-  .pd-banner__cta { display: none; }   /* בלי כפתור "לתיאום פגישה" בראש העמוד במובייל */
+  .pd-banner__cta { display: none !important; }   /* בלי כפתור "לתיאום פגישה" בראש העמוד במובייל */
   .pd-banner__arrows { display: none; }   /* בלי חצים במובייל (כמו בתדהר) */
   /* ריווח אנכי מצומצם — קומפקטי ונקי */
   .pd-banner__location { margin-bottom: 0.6rem; }
@@ -1109,10 +1109,16 @@
   .pd-contact { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }
   .pd-contact__panel { width: 100%; max-width: 460px; }
   /* כותרות הטופס ממורכזות במובייל */
-  .pd-contact .pd-contact__eyebrow { justify-content: center; margin-inline: auto; }
+  .pd-contact .pd-contact__eyebrow {
+    justify-content: center;
+    margin-inline: auto;
+    color: var(--color-accent);   /* "דברו איתנו" באדום */
+  }
+  .pd-contact .pd-contact__eyebrow::before { display: none; }   /* בלי הקו האדום */
   .pd-contact__title,
   .pd-contact__text,
   .pd-contact__required { text-align: center; }
+  .pd-contact__text { margin-inline: auto; }   /* מרכוז גוש המשפט "השאירו פרטים…" */
   /* שדות צרים וממורכזים */
   .pd-field { width: 90%; margin-inline: auto; }
   .pd-contact__media { width: 100%; max-width: 460px; min-height: 0; padding: 0.5rem; }
@@ -1159,7 +1165,9 @@
   .pd-contact__title { font-size: 1.5rem; }
   .pd-field input,
   .pd-field textarea { font-size: 0.95rem; padding: 0.78rem 0.95rem; }
-  .btn.pd-contact__submit { align-self: center; width: auto; min-width: 0; padding: 0.7em 1.6em; font-size: 0.78rem; }
+  /* כפתור "שליחה" — מוגדל ב-~30% במובייל לבקשת המשתמש.
+     ספציפיות (0,3,0) כדי לגבור על '.project-detail .btn' (≤600) שמקטין כפתורים */
+  .project-detail .btn.pd-contact__submit { align-self: center; width: auto; min-width: 0; padding: 0.85em 2em; font-size: 1.05rem; min-height: 50px; }
   .pd-gallery__item:first-child { grid-column: span 2; grid-row: span 1; }
   /* במובייל — בלי חצים; מחליפים תמונות בלחיצה/החלקה */
   .pd-lightbox__nav { display: none; }

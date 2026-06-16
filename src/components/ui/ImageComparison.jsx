@@ -45,15 +45,15 @@ export default function ImageComparison({
 
   return (
     <div className="imgcmp" ref={ref}>
-      {/* תמונת "אחרי" — שכבה עליונה, נחשפת לפי מיקום הסליידר */}
-      <div className="imgcmp__after" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-        <img src={afterImage} alt={altAfter} draggable="false" />
-        <span className="imgcmp__tag imgcmp__tag--after">{altAfter}</span>
-      </div>
+      {/* שכבת בסיס: "אחרי" (הבית הגמור) — נראית בצד ימין */}
+      <img className="imgcmp__before" src={afterImage} alt={altAfter} draggable="false" />
+      <span className="imgcmp__tag imgcmp__tag--after">{altAfter}</span>
 
-      {/* תמונת "לפני" — שכבת בסיס */}
-      <img className="imgcmp__before" src={beforeImage} alt={altBefore} draggable="false" />
-      <span className="imgcmp__tag imgcmp__tag--before">{altBefore}</span>
+      {/* שכבה עליונה נחתכת: "לפני" (השרטוט) — נראית בצד שמאל */}
+      <div className="imgcmp__after" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
+        <img src={beforeImage} alt={altBefore} draggable="false" />
+        <span className="imgcmp__tag imgcmp__tag--before">{altBefore}</span>
+      </div>
 
       {/* ידית הגרירה */}
       <div

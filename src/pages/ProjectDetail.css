@@ -967,12 +967,16 @@
   inset-block-start: 1.2rem;
   inset-inline-end: 1.2rem;
   color: #fff;
-  width: 48px; height: 48px;
+  width: 54px; height: 54px;
   display: grid; place-items: center;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
+  /* רקע מלא + טבעת לבנה — האיקס ברור גם מעל תמונה בהירה */
+  background: rgba(10, 14, 18, 0.82);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
-.pd-lightbox__close:hover { background: rgba(0, 0, 0, 0.72); }
+.pd-lightbox__close svg { width: 30px; height: 30px; stroke-width: 2.6; }
+.pd-lightbox__close:hover { background: #000; }
 .pd-lightbox__nav {
   position: absolute;
   z-index: 2;

@@ -12,7 +12,9 @@
 .sgal__area.is-stacked {
   position: relative;
   width: 100%;
-  height: clamp(300px, 48vh, 360px);
+  /* גובה מצומצם — מקרב את המניפה לכותרת (פחות רווח מעל) */
+  height: clamp(250px, 60vw, 300px);
+  margin-top: -0.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,8 +42,9 @@
 /* מצב מניפה — כרטיסים מרובעים ממורכזים, נערמים */
 .sgal__card.is-fan {
   position: absolute;
-  width: clamp(150px, 44vw, 188px);
-  height: clamp(150px, 44vw, 188px);
+  /* +15% מהגודל הקודם — קרוב יותר לשוליים במצב סגור */
+  width: clamp(172px, 51vw, 216px);
+  height: clamp(172px, 51vw, 216px);
   border: 5px solid #fff;
 }
 /* מצב רשת — מרובע מלא בעמודה */

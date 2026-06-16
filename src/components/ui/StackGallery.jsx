@@ -14,9 +14,9 @@ import './StackGallery.css'
 
 // פריסת המניפה לשלוש התמונות הראשונות (מותאם למובייל — px קטנים)
 const FAN = [
-  { rotate: -14, x: -64, y: 12, zIndex: 10 },
-  { rotate: -2, x: 0, y: -10, zIndex: 20 },
-  { rotate: 12, x: 64, y: 6, zIndex: 30 },
+  { rotate: -14, x: -74, y: 14, zIndex: 10 },
+  { rotate: -2, x: 0, y: -12, zIndex: 20 },
+  { rotate: 12, x: 74, y: 7, zIndex: 30 },
 ]
 
 const transition = { type: 'spring', stiffness: 160, damping: 18, mass: 1 }

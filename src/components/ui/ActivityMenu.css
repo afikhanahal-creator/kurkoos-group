@@ -3,17 +3,18 @@
    ============================================================ */
 .actmenu {
   display: flex;
+  direction: rtl;               /* ודאות RTL — "התחלה" = ימין */
   align-items: center;          /* תמונה וצ'יפים ממורכזים אנכית יחד */
-  justify-content: center;      /* שוליים משני הצדדים — לא צמוד לקצה */
-  gap: 1.1rem;
+  justify-content: center;      /* ממורכז באמצע המסך */
+  gap: 0.65rem;
   width: 100%;
 }
 
 /* ---- צ'יפים מתגלגלים — צד ימין ---- */
 .actmenu__chips {
-  flex: 0 0 46%;
+  flex: 0 0 50%;
   position: relative;
-  height: 258px;
+  height: 320px;
   overflow: hidden;
   /* דהייה עדינה למעלה/למטה כדי שהצ'יפים הרחוקים "ייעלמו" */
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
@@ -22,16 +23,16 @@
 .actmenu__chip-slot {
   position: absolute;
   inset-inline: 0;
-  top: calc(50% - 26px);   /* מרכוז אנכי; ה-y של framer מזיז ממנו */
+  top: calc(50% - 30px);   /* מרכוז אנכי; ה-y של framer מזיז ממנו */
   display: flex;
-  justify-content: flex-end;   /* צמוד לימין */
+  justify-content: flex-start;   /* RTL: "התחלה" = ימין → צ'יפים צמודים לימין */
 }
 .actmenu__chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   max-width: 100%;
-  padding: 0.7rem 0.95rem;
+  padding: 0.92rem 1.15rem;
   border-radius: var(--radius-pill, 999px);
   border: 1.5px solid var(--color-border-strong, rgba(11, 42, 58, 0.16));
   background: #fff;
@@ -61,14 +62,14 @@
 }
 .actmenu__chip.is-active .actmenu__chip-icon { color: #fff; }
 .actmenu__chip-label {
-  font-size: 0.9rem;
+  font-size: 1.02rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* ---- ערימת תמונות — צד שמאל ---- */
 .actmenu__stage {
-  flex: 0 0 42%;
+  flex: 0 0 47%;
   position: relative;
   aspect-ratio: 4 / 5;
   min-width: 0;
@@ -105,8 +106,8 @@
   color: #fff;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.92rem;
-  line-height: 1.35;
+  font-size: 1rem;
+  line-height: 1.4;
   text-align: right;
   direction: rtl;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
@@ -115,10 +116,10 @@
 
 /* מסכים צרים — שמירה על קריאות וקרבה לשוליים */
 @media (max-width: 380px) {
-  .actmenu { gap: 0.8rem; }
-  .actmenu__chips { flex-basis: 48%; height: 240px; }
-  .actmenu__stage { flex-basis: 44%; }
-  .actmenu__chip { padding: 0.62rem 0.8rem; }
-  .actmenu__chip-label { font-size: 0.83rem; }
-  .actmenu__caption { font-size: 0.85rem; padding: 2.2rem 0.85rem 0.85rem; }
+  .actmenu { gap: 0.5rem; }
+  .actmenu__chips { flex-basis: 51%; height: 300px; }
+  .actmenu__stage { flex-basis: 47%; }
+  .actmenu__chip { padding: 0.8rem 0.95rem; }
+  .actmenu__chip-label { font-size: 0.94rem; }
+  .actmenu__caption { font-size: 0.92rem; padding: 2.4rem 0.85rem 0.9rem; }
 }

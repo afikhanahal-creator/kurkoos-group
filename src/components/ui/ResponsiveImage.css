@@ -1,0 +1,12 @@
+/* תמונה שמכבדת תצוגות-לפי-breakpoint שנשמרו ב-CMS.
+   ברירת מחדל = דסקטופ; מתחת ל-768px = הגדרות המובייל. */
+.ri-img {
+  object-fit: var(--ri-fit-d, cover);
+  object-position: var(--ri-pos-d, 50% 50%);
+}
+@media (max-width: 768px) {
+  .ri-img {
+    object-fit: var(--ri-fit-m, cover);
+    object-position: var(--ri-pos-m, 50% 50%);
+  }
+}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocalized } from '../../i18n/index.jsx'
+import { normalizeResponsiveImage, srcOfResponsive } from '../../lib/responsiveImage.js'
 import Icon from './Icon.jsx'
 import InfiniteGrid from './InfiniteGrid.jsx'
 import './ActivityMenu.css'
@@ -109,8 +110,13 @@ export default function ActivityMenu({ items = [] }) {
           <motion.img
             key={current.id}
             className="actmenu__img"
-            src={current.image}
+            src={srcOfResponsive(current.image)}
             alt=""
+            /* תצוגת המובייל מתוך ה-CMS (focal point / fit) — מקומפוננטה מובייל בלבד */
+            style={(() => {
+              const v = normalizeResponsiveImage(current.image)?.views.mobile
+              return v ? { objectFit: v.objectFit, objectPosition: v.objectPosition } : undefined
+            })()}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}

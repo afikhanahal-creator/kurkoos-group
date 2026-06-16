@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
 import activities from '../../data/activities.js'
-import ImageManager from './ImageManager.jsx'
+import ResponsiveImageField from './ResponsiveImageField.jsx'
+import { srcOfResponsive } from '../../lib/responsiveImage.js'
 import { toast } from '../../lib/toast.js'
 import './ActivitiesTab.css'
 
@@ -78,7 +79,7 @@ export default function ActivitiesTab() {
 
       <div className="acts-tab__grid">
         {activities.map((a) => {
-          const url = map[a.id]
+          const val = map[a.id]
           return (
             <section className="acts-card" key={a.id}>
               <header className="acts-card__head">
@@ -86,14 +87,15 @@ export default function ActivitiesTab() {
                 <span className="acts-card__short">{a.short?.he}</span>
               </header>
 
-              <ImageManager
-                value={url ? [url] : []}
-                max={1}
+              <ResponsiveImageField
+                value={val}
                 folder="activities"
-                onChange={(arr) => save(a.id, arr[0] || null)}
+                desktopAspect="4 / 5"
+                mobileAspect="4 / 5"
+                onChange={(v) => save(a.id, v)}
               />
 
-              {!url && (
+              {!srcOfResponsive(val) && (
                 <small className="acts-card__hint">
                   כרגע מוצגת תמונת ברירת המחדל של התחום. העלו תמונה כדי להחליף.
                 </small>
@@ -116,22 +118,24 @@ export default function ActivitiesTab() {
             <header className="acts-card__head">
               <h3 className="acts-card__title">לפני (שרטוט)</h3>
             </header>
-            <ImageManager
-              value={ba.before ? [ba.before] : []}
-              max={1}
+            <ResponsiveImageField
+              value={ba.before}
               folder="beforeafter"
-              onChange={(arr) => saveBa('before', arr[0] || null)}
+              desktopAspect="16 / 9"
+              mobileAspect="4 / 3"
+              onChange={(v) => saveBa('before', v)}
             />
           </section>
           <section className="acts-card">
             <header className="acts-card__head">
               <h3 className="acts-card__title">אחרי (בית גמור)</h3>
             </header>
-            <ImageManager
-              value={ba.after ? [ba.after] : []}
-              max={1}
+            <ResponsiveImageField
+              value={ba.after}
               folder="beforeafter"
-              onChange={(arr) => saveBa('after', arr[0] || null)}
+              desktopAspect="16 / 9"
+              mobileAspect="4 / 3"
+              onChange={(v) => saveBa('after', v)}
             />
           </section>
         </div>

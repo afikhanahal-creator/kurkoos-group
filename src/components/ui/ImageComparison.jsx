@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { srcOfResponsive, responsiveStyle } from '../../lib/responsiveImage.js'
+import './ResponsiveImage.css'
 import './ImageComparison.css'
 
 /* ============================================================
@@ -41,17 +43,17 @@ export default function ImageComparison({
     }
   }, [dragging, move])
 
-  if (!beforeImage || !afterImage) return null
+  if (!srcOfResponsive(beforeImage) || !srcOfResponsive(afterImage)) return null
 
   return (
     <div className="imgcmp" ref={ref}>
       {/* שכבת בסיס: "אחרי" (הבית הגמור) — נראית בצד ימין */}
-      <img className="imgcmp__before" src={afterImage} alt={altAfter} draggable="false" />
+      <img className="imgcmp__before ri-img" src={srcOfResponsive(afterImage)} style={responsiveStyle(afterImage)} alt={altAfter} draggable="false" />
       <span className="imgcmp__tag imgcmp__tag--after">{altAfter}</span>
 
       {/* שכבה עליונה נחתכת: "לפני" (השרטוט) — נראית בצד שמאל */}
       <div className="imgcmp__after" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-        <img src={beforeImage} alt={altBefore} draggable="false" />
+        <img className="ri-img" src={srcOfResponsive(beforeImage)} style={responsiveStyle(beforeImage)} alt={altBefore} draggable="false" />
         <span className="imgcmp__tag imgcmp__tag--before">{altBefore}</span>
       </div>
 

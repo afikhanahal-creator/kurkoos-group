@@ -248,6 +248,8 @@ export default function ProjectDetail() {
     (project.video?.src && project.video.type === 'file')
   const flatGallery = project.gallery?.length ? project.gallery : [project.cover]
   // כיוון תמונת "על הפרויקט" לפי breakpoint (נשמר ב-CMS) — לאורך/לרוחב
+  // אם אין תמונה אמיתית למקטע "על הפרויקט" — לא מציגים placeholder, רק טקסט
+  const aboutSrc = srcOfResponsive(project.aboutImage) || srcOfResponsive(flatGallery[0])
   const aboutRI = normalizeResponsiveImage(project.aboutImage)
   const aboutArD = aboutRI?.views.desktop.aspectRatio
   const aboutArM = aboutRI?.views.mobile.aspectRatio
@@ -553,12 +555,14 @@ export default function ProjectDetail() {
 
       {/* ===== הפרויקט ===== */}
       {show('project') && (
-      <section id="project" className={`section pd-anchor pd-split ${project.aboutSpaced ? 'pd-split--spaced' : 'pd-split--flush'} ${project.aboutPortrait ? 'pd-split--portrait' : 'pd-split--landscape'}`}>
+      <section id="project" className={`section pd-anchor pd-split ${project.aboutSpaced ? 'pd-split--spaced' : 'pd-split--flush'} ${project.aboutPortrait ? 'pd-split--portrait' : 'pd-split--landscape'} ${aboutSrc ? '' : 'pd-split--noimg'}`}>
         <div className="container">
           <div className="pd-split__grid pd-split-card">
-            <Reveal className={`pd-split__media ${aboutArStyle ? 'pd-split__media--ar' : ''}`} style={aboutArStyle} variant="right">
-              <SmartImage src={project.aboutImage || flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
-            </Reveal>
+            {aboutSrc && (
+              <Reveal className={`pd-split__media ${aboutArStyle ? 'pd-split__media--ar' : ''}`} style={aboutArStyle} variant="right">
+                <SmartImage src={project.aboutImage || flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
+              </Reveal>
+            )}
             <Reveal className="pd-split__body" variant="left" delay={0.1}>
               <span className="eyebrow">{L({ he: 'על הפרויקט', en: 'About the project' })}</span>
               <h2 className="section-title">{L(project.name)}</h2>

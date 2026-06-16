@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
+import { useSettings } from '../../lib/cms.js'
 import activities from '../../data/activities.js'
 import Reveal from '../ui/Reveal.jsx'
 import FeatureCard from '../ui/FeatureCard.jsx'
@@ -11,6 +13,15 @@ export default function Activities() {
   const { t } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
+  const settings = useSettings()
+
+  // תמונות מותאמות מה-CMS (key: activity_images = מיפוי id→url) גוברות על ברירת המחדל
+  const items = useMemo(() => {
+    let map = settings.activity_images
+    if (typeof map === 'string') { try { map = JSON.parse(map) } catch { map = null } }
+    if (!map || typeof map !== 'object') return activities
+    return activities.map((a) => (map[a.id] ? { ...a, image: map[a.id] } : a))
+  }, [settings.activity_images])
 
   return (
     <section className="section activities" id="activities">
@@ -22,7 +33,7 @@ export default function Activities() {
         </Reveal>
 
         {isMobile ? (
-          <ActivityMenu items={activities} />
+          <ActivityMenu items={items} />
         ) : (
           <div className="activities__grid">
             {activities.map((a, i) => (

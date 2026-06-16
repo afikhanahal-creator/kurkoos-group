@@ -29,11 +29,13 @@
   margin-inline-end: clamp(3rem, 7vw, 5rem);
 }
 
-/* גובה בסיס אחיד; ה-JS מודד את התוכן ומגדיל (scale) כך שהתוכן הנראה זהה לכולם */
+/* גובה בסיס אחיד; ה-JS מודד את התוכן ומגדיל (scale) כך שהתוכן הנראה זהה לכולם.
+   בלי max-width — אחרת לוגואים רחבים (אביאלי/צבי טל/הלביץ/אביעד) נחתכים ל-contain
+   ונראים נמוכים יותר. רוחב אוטומטי לפי הגובה → כולם בדיוק באותו גובה. */
 .logo-marquee__img {
   height: 50px;
   width: auto;
-  max-width: 180px;
+  max-width: none;
   object-fit: contain;
   transform-origin: center;
   display: block;
@@ -49,5 +51,5 @@
 
 @media (max-width: 600px) {
   .logo-marquee__item { height: 84px; margin-inline-end: clamp(3rem, 16vw, 4.5rem); }
-  .logo-marquee__img { height: 46px; max-width: 150px; }
+  .logo-marquee__img { height: 46px; max-width: none; }
 }

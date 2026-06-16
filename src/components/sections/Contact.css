@@ -97,7 +97,12 @@
 }
 /* מובייל — ממורכז */
 @media (max-width: 900px) {
-  .contact .contact__panel .contact__eyebrow { justify-content: center; margin-inline: auto; }
+  .contact .contact__panel .contact__eyebrow {
+    display: flex;
+    width: fit-content;
+    justify-content: center;
+    margin-inline: auto;
+  }
   .contact__panel .contact__title,
   .contact__panel .contact__choose { text-align: center; }
   .contact__panel .contact__choose { margin-inline: auto; }
@@ -205,13 +210,9 @@
   .contact__topics { gap: 0.45rem; margin-bottom: 1.1rem; }
   .contact__topic { padding: 0.48rem 1rem; font-size: 0.85rem; }
 
-  /* שדות קומפקטיים — רוחב קטן ב-30% וממורכזים */
+  /* שדות במלוא הרוחב + ריווח כמו במקור */
   .contact__form { gap: 0.6rem; }
   .contact__required { font-size: 0.78rem; text-align: center; }
-  .contact__form .field {
-    width: 95%;
-    margin-inline: auto;
-  }
   .contact__form .field input,
   .contact__form .field textarea {
     font-size: 0.95rem;
@@ -219,14 +220,14 @@
   }
   .contact__form textarea { min-height: 88px; }
 
-  /* כפתור "שליחה" במובייל — קטן ב-~20% */
+  /* כפתור "שליחה" — גודל מקורי (שמנמן) */
   .contact__submit {
     width: auto;
-    min-width: 160px;
+    min-width: 200px;
     align-self: center;
     margin-top: 0.6rem;
-    padding: 0.95em 1.75em;
-    font-size: 0.72rem;
+    padding: 1.2em 2.2em;
+    font-size: 0.9rem;
   }
   /* במובייל אין hover — בלחיצה (active) הכפתור הופך ללבן עם טקסט כחול */
   .contact__submit:active {

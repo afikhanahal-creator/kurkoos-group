@@ -27,74 +27,69 @@
 .rif__bptab.is-active { background: var(--adm-card, #fff); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 
 /* מסגרת תצוגה — מוקאפ מכשיר אמיתי */
-.rif__stage { margin-bottom: 0.8rem; }
-.rif__device { margin-inline: auto; position: relative; }
-
-/* מובייל — בזל טלפון */
-.rif__stage--mobile .rif__device {
-  width: 292px;
-  max-width: 100%;
-  padding: 11px;
-  background: #1b2330;
-  border-radius: 38px;
-  box-shadow: 0 18px 44px rgba(7, 41, 58, 0.3), inset 0 0 0 2px rgba(255,255,255,0.06);
-}
-.rif__stage--mobile .rif__frame { border-radius: 28px; }
-.rif__notch {
-  position: absolute;
-  top: 11px; left: 50%; transform: translateX(-50%);
-  width: 92px; height: 16px;
-  background: #1b2330;
-  border-radius: 0 0 12px 12px;
-  z-index: 3;
-}
-
-/* דסקטופ — חלון דפדפן */
-.rif__stage--desktop .rif__device {
-  width: 560px;
-  max-width: 100%;
-  border-radius: 12px;
+/* תצוגה מקדימה חיה — כמו הכרטיסייה באתר */
+.rif__preview { margin-bottom: 0.9rem; }
+.rif__realcard {
+  margin-inline: auto;
+  max-width: 380px;
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid var(--adm-border, rgba(0,0,0,0.14));
-  box-shadow: 0 16px 40px rgba(7, 41, 58, 0.22);
-  background: #fff;
+  box-shadow: 0 16px 40px rgba(7, 41, 58, 0.18);
+  background: #eef1f4;
 }
-.rif__winbar {
-  height: 30px;
+.rif__realcard--card { width: 100%; }
+
+/* פריסת "כרטיס תחום הפעילות": תמונה (שמאל) + פאנל כהה עם צ'יפ (ימין) */
+.rif__realcard--split {
+  display: flex;
+  direction: rtl;
+  height: 300px;
+}
+.rif__realcard--split .rif__imgarea { flex: 0 0 47%; }
+.rif__realcard--split .rif__panel {
+  flex: 1;
+  background: linear-gradient(165deg, var(--color-secondary, #0b2a3a), #07293a 92%);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px;
-  background: #eef1f4;
-  border-bottom: 1px solid rgba(0,0,0,0.07);
+  justify-content: flex-start;
+  padding: 0 0.9rem;
 }
-.rif__winbar span { width: 10px; height: 10px; border-radius: 50%; background: #cdd4db; }
-.rif__winbar span:nth-child(1) { background: #ef5f5b; }
-.rif__winbar span:nth-child(2) { background: #f4be4f; }
-.rif__winbar span:nth-child(3) { background: #5bc46b; }
+.rif__panelchip {
+  background: var(--color-accent-500, #a90b0c);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.rif__frame {
+/* אזור התמונה — שטח הגרירה של נקודת המיקוד */
+.rif__imgarea {
   position: relative;
   width: 100%;
-  margin-inline: auto;
+  height: 100%;
   overflow: hidden;
-  background: repeating-conic-gradient(#e9edf0 0% 25%, #f6f8f9 0% 50%) 50% / 22px 22px;
   cursor: crosshair;
   touch-action: none;
+  background: #dfe4e8;
 }
 .rif__surface { display: block; color: var(--color-secondary, #0b2a3a); margin-bottom: 0.2rem; font-weight: 800; }
 .rif__img { width: 100%; height: 100%; display: block; }
 .rif__focal {
   position: absolute;
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   border: 2px solid #fff;
-  background: rgba(118, 128, 193, 0.5);
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.4);
+  background: rgba(118, 128, 193, 0.6);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.45);
   pointer-events: none;
 }
-.rif__hint { font-size: 0.78rem; color: var(--adm-text-soft, #889); margin: 0.45rem 0 0; text-align: center; }
+.rif__hint { font-size: 0.8rem; color: var(--adm-text-soft, #889); margin: 0.5rem 0 0; text-align: center; }
 
 /* בקרות */
 .rif__controls { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.8rem; }

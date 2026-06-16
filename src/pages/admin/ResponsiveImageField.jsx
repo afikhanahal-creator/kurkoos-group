@@ -36,6 +36,8 @@ export default function ResponsiveImageField({
   mobileAspect = '4 / 5',
   breakpoints = ['desktop', 'mobile'],
   surfaceLabel = '',
+  chrome = 'card',
+  chromeLabel = '',
 }) {
   const base = normalizeResponsiveImage(value)
   const inputRef = useRef(null)
@@ -168,59 +170,70 @@ export default function ResponsiveImageField({
             </div>
           )}
 
-          {/* תצוגה מקדימה אמיתית — מסגרת מכשיר (טלפון/חלון דפדפן) ביחס האמיתי של הרכיב */}
-          <div className={`rif__stage rif__stage--${bp}`}>
-            <div className="rif__device">
-              {bp === 'desktop' && (
-                <div className="rif__winbar" aria-hidden="true"><span /><span /><span /></div>
-              )}
-              <div
-                ref={frameRef}
-                className="rif__frame"
-                style={{ aspectRatio: aspect || (bp === 'mobile' ? mobileAspect : desktopAspect) }}
-                onPointerDown={onPointerDown}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-                onPointerCancel={onPointerUp}
-              >
-                <img
-                  className="rif__img"
-                  src={draft.src}
-                  alt=""
-                  draggable="false"
-                  style={{ objectFit: view.objectFit, objectPosition: view.objectPosition }}
-                />
-                {view.objectFit === 'cover' && (
-                  <span
-                    className="rif__focal"
-                    style={{ left: `${(view.focalPoint?.x ?? 0.5) * 100}%`, top: `${(view.focalPoint?.y ?? 0.5) * 100}%` }}
-                    aria-hidden="true"
+          {/* תצוגה מקדימה חיה — בדיוק כמו הכרטיסייה/הרכיב באתר */}
+          <div className="rif__preview">
+            {(() => {
+              const imgEl = (
+                <div
+                  ref={frameRef}
+                  className="rif__imgarea"
+                  onPointerDown={onPointerDown}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onPointerCancel={onPointerUp}
+                >
+                  <img
+                    className="rif__img"
+                    src={draft.src}
+                    alt=""
+                    draggable="false"
+                    style={{ objectFit: view.objectFit, objectPosition: view.objectPosition }}
                   />
-                )}
-              </div>
-              {bp === 'mobile' && <span className="rif__notch" aria-hidden="true" />}
-            </div>
+                  {view.objectFit === 'cover' && (
+                    <span
+                      className="rif__focal"
+                      style={{ left: `${(view.focalPoint?.x ?? 0.5) * 100}%`, top: `${(view.focalPoint?.y ?? 0.5) * 100}%` }}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+              )
+              if (chrome === 'split') {
+                // כרטיס תחום הפעילות: תמונה משמאל + פאנל כהה עם צ'יפ אדום מימין
+                return (
+                  <div className="rif__realcard rif__realcard--split">
+                    {imgEl}
+                    <div className="rif__panel" aria-hidden="true">
+                      <span className="rif__panelchip">{chromeLabel || surfaceLabel || 'תחום'}</span>
+                    </div>
+                  </div>
+                )
+              }
+              // ברירת מחדל: כרטיס מעוגל ביחס האמיתי של הרכיב
+              return (
+                <div
+                  className="rif__realcard rif__realcard--card"
+                  style={{ aspectRatio: bp === 'mobile' ? mobileAspect : desktopAspect }}
+                >
+                  {imgEl}
+                </div>
+              )
+            })()}
             <p className="rif__hint">
-              {surfaceLabel && <strong className="rif__surface">{surfaceLabel} · {bp === 'mobile' ? 'מובייל' : 'דסקטופ'}</strong>}
-              {view.objectFit === 'cover' ? 'גררו את הנקודה כדי לכוון את מוקד התמונה — כך זה ייראה בדיוק ברכיב' : 'מצב התאמה (contain) — התמונה כולה נראית'}
+              {surfaceLabel && <strong className="rif__surface">כך זה ייראה ב{surfaceLabel} · {bp === 'mobile' ? 'מובייל' : 'דסקטופ'}</strong>}
+              {view.objectFit === 'cover' ? 'גררו את הנקודה הכחולה על התמונה כדי לבחור איזה חלק יוצג' : 'מצב "התאמה" — כל התמונה נראית (בלי חיתוך)'}
             </p>
           </div>
 
-          {/* בקרות לכל breakpoint */}
+          {/* בקרה: מילוי או התאמה */}
           <div className="rif__controls">
             <label className="rif__ctl">
-              <span>מילוי</span>
+              <span>אופן הצגה</span>
               <div className="rif__seg">
                 {FITS.map((f) => (
                   <button key={f.id} type="button" className={`rif__segbtn ${view.objectFit === f.id ? 'is-active' : ''}`} onClick={() => setView({ objectFit: f.id })}>{f.label}</button>
                 ))}
               </div>
-            </label>
-            <label className="rif__ctl">
-              <span>יחס תצוגה</span>
-              <select value={view.aspectRatio} onChange={(e) => setView({ aspectRatio: e.target.value })}>
-                {ASPECTS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
-              </select>
             </label>
           </div>
 

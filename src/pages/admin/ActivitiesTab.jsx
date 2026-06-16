@@ -92,6 +92,8 @@ export default function ActivitiesTab() {
                 folder="activities"
                 breakpoints={['mobile']}
                 surfaceLabel="כרטיס תחום הפעילות"
+                chrome="split"
+                chromeLabel={a.title.he}
                 mobileAspect="3 / 5"
                 onChange={(v) => save(a.id, v)}
               />

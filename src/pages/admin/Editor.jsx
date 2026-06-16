@@ -184,6 +184,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           desktopAspect={f.aspectDesktop || '4 / 3'}
           mobileAspect={f.aspectMobile || '4 / 5'}
           breakpoints={f.breakpoints || ['desktop', 'mobile']}
+          allowOrientation={!!f.allowOrientation}
           onChange={(val) => setField(f.key, val)}
         />
       )

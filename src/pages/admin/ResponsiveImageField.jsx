@@ -18,13 +18,11 @@ const FITS = [
   { id: 'cover', label: 'מילוי (cover)' },
   { id: 'contain', label: 'התאמה (contain)' },
 ]
-const ASPECTS = [
-  { id: '', label: 'לפי המיכל' },
-  { id: '16 / 9', label: '16:9' },
-  { id: '4 / 3', label: '4:3' },
-  { id: '1 / 1', label: '1:1' },
-  { id: '4 / 5', label: '4:5' },
-  { id: '3 / 4', label: '3:4' },
+const ORIENTS = [
+  { id: '4 / 3', label: 'לרוחב' },
+  { id: '3 / 4', label: 'לאורך' },
+  { id: '1 / 1', label: 'ריבוע' },
+  { id: '16 / 9', label: 'רחב' },
 ]
 
 export default function ResponsiveImageField({
@@ -38,6 +36,7 @@ export default function ResponsiveImageField({
   surfaceLabel = '',
   chrome = 'card',
   chromeLabel = '',
+  allowOrientation = false,
 }) {
   const base = normalizeResponsiveImage(value)
   const inputRef = useRef(null)
@@ -213,7 +212,7 @@ export default function ResponsiveImageField({
               return (
                 <div
                   className="rif__realcard rif__realcard--card"
-                  style={{ aspectRatio: bp === 'mobile' ? mobileAspect : desktopAspect }}
+                  style={{ aspectRatio: view.aspectRatio || (bp === 'mobile' ? mobileAspect : desktopAspect) }}
                 >
                   {imgEl}
                 </div>
@@ -225,8 +224,18 @@ export default function ResponsiveImageField({
             </p>
           </div>
 
-          {/* בקרה: מילוי או התאמה */}
+          {/* בקרות */}
           <div className="rif__controls">
+            {allowOrientation && (
+              <label className="rif__ctl">
+                <span>כיוון התמונה ({bp === 'mobile' ? 'מובייל' : 'דסקטופ'})</span>
+                <div className="rif__seg">
+                  {ORIENTS.map((o) => (
+                    <button key={o.id} type="button" className={`rif__segbtn ${view.aspectRatio === o.id ? 'is-active' : ''}`} onClick={() => setView({ aspectRatio: o.id })}>{o.label}</button>
+                  ))}
+                </div>
+              </label>
+            )}
             <label className="rif__ctl">
               <span>אופן הצגה</span>
               <div className="rif__seg">

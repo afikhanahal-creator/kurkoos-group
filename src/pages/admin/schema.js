@@ -183,6 +183,7 @@ export const projectSchema = [
         label: 'תמונה למקטע "על הפרויקט"',
         type: 'image',
         surfaceLabel: 'מקטע "על הפרויקט"',
+        allowOrientation: true,
         aspectDesktop: '3 / 4',
         aspectMobile: '4 / 3',
         hint: 'תמונה ייעודית למקטע "על הפרויקט". יכולה להיות לאורך (portrait) ותוצג במלואה ללא חיתוך. אם ריק — תוצג התמונה הראשונה בגלריה.',

@@ -6,7 +6,7 @@ import divisions from '../data/divisions.js'
 import { getProjectBySlug, createLead } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
-import { srcOfResponsive } from '../lib/responsiveImage.js'
+import { srcOfResponsive, normalizeResponsiveImage } from '../lib/responsiveImage.js'
 import Parallax from '../components/ui/Parallax.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
@@ -247,6 +247,13 @@ export default function ProjectDetail() {
     (project.video?.id && project.video.type === 'youtube') ||
     (project.video?.src && project.video.type === 'file')
   const flatGallery = project.gallery?.length ? project.gallery : [project.cover]
+  // כיוון תמונת "על הפרויקט" לפי breakpoint (נשמר ב-CMS) — לאורך/לרוחב
+  const aboutRI = normalizeResponsiveImage(project.aboutImage)
+  const aboutArD = aboutRI?.views.desktop.aspectRatio
+  const aboutArM = aboutRI?.views.mobile.aspectRatio
+  const aboutArStyle = (aboutArD || aboutArM)
+    ? { '--about-ar-d': aboutArD || aboutArM, '--about-ar-m': aboutArM || aboutArD }
+    : undefined
   const galleryGroups = project.galleryGroups?.length
     ? project.galleryGroups
     : [{ label: { he: 'הפרויקט', en: 'Project' }, images: flatGallery }]
@@ -549,7 +556,7 @@ export default function ProjectDetail() {
       <section id="project" className={`section pd-anchor pd-split ${project.aboutSpaced ? 'pd-split--spaced' : 'pd-split--flush'} ${project.aboutPortrait ? 'pd-split--portrait' : 'pd-split--landscape'}`}>
         <div className="container">
           <div className="pd-split__grid pd-split-card">
-            <Reveal className="pd-split__media" variant="right">
+            <Reveal className={`pd-split__media ${aboutArStyle ? 'pd-split__media--ar' : ''}`} style={aboutArStyle} variant="right">
               <SmartImage src={project.aboutImage || flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
             </Reveal>
             <Reveal className="pd-split__body" variant="left" delay={0.1}>

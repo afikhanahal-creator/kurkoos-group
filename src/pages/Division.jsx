@@ -5,7 +5,7 @@ import { useI18n, useLocalized } from '../i18n/index.jsx'
 import { getDivision } from '../data/divisions.js'
 import projects from '../data/projects.js'
 import { supabase } from '../lib/supabase.js'
-import { listProjectsByPage, cmsRowToCard } from '../lib/cms.js'
+import { listProjectsByPage, cmsRowToCard, useSettings } from '../lib/cms.js'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import ProjectCard from '../components/ui/ProjectCard.jsx'
 import CardStack from '../components/ui/CardStack.jsx'
@@ -22,6 +22,7 @@ import Reveal from '../components/ui/Reveal.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
 import ExpandableGallery from '../components/ui/ExpandableGallery.jsx'
 import StackGallery from '../components/ui/StackGallery.jsx'
+import ImageComparison from '../components/ui/ImageComparison.jsx'
 import executionGallery from '../data/executionGallery.js'
 import Icon from '../components/ui/Icon.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
@@ -36,6 +37,11 @@ export default function Division() {
   const L = useLocalized()
   const division = getDivision(slug)
   const isMobile = useIsMobile()
+  const settings = useSettings()
+
+  // תמונות "לפני/אחרי" לעמוד יזמות — נשמרות ב-CMS (development_beforeafter)
+  let beforeAfter = settings.development_beforeafter
+  if (typeof beforeAfter === 'string') { try { beforeAfter = JSON.parse(beforeAfter) } catch { beforeAfter = null } }
 
   // הפרויקטים שיוצגו: ברירת מחדל = מקומיים; אם הוגדרו ב-CMS לעמוד הזה — מהם.
   const [list, setList] = useState(() => projects.slice(0, 4))
@@ -152,6 +158,24 @@ export default function Division() {
           )}
         </div>
       </section>
+
+      {/* לפני/אחרי — רק בעמוד יזמות, מתחת לכרטיסיות (מהשרטוט אל הבית הגמור) */}
+      {slug === 'development' && beforeAfter?.before && beforeAfter?.after && (
+        <section className="section section--soft">
+          <div className="container">
+            <Reveal className="division-why__head">
+              <span className="eyebrow">{L({ he: 'מהשרטוט אל הבית', en: 'From blueprint to home' })}</span>
+              <h2 className="section-title">{L({ he: 'לפני ואחרי', en: 'Before & after' })}</h2>
+            </Reveal>
+            <ImageComparison
+              beforeImage={beforeAfter.before}
+              afterImage={beforeAfter.after}
+              altBefore={L({ he: 'שרטוט', en: 'Blueprint' })}
+              altAfter={L({ he: 'הבית הגמור', en: 'Finished home' })}
+            />
+          </div>
+        </section>
+      )}
 
       {/* תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה, רק בעמוד התיווך */}
       {slug === 'brokerage' && (

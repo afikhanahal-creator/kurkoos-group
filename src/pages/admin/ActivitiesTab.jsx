@@ -24,12 +24,28 @@ function parseMap(raw) {
 
 export default function ActivitiesTab() {
   const [map, setMap] = useState(null) // null = טוען
+  const [ba, setBa] = useState({}) // לפני/אחרי (עמוד יזמות): { before, after }
 
   useEffect(() => {
     fetchSettings()
-      .then((s) => setMap(parseMap(s.activity_images)))
-      .catch(() => setMap({}))
+      .then((s) => {
+        setMap(parseMap(s.activity_images))
+        setBa(parseMap(s.development_beforeafter))
+      })
+      .catch(() => { setMap({}); setBa({}) })
   }, [])
+
+  const saveBa = (key, url) => {
+    setBa((prev) => {
+      const next = { ...(prev || {}) }
+      if (url) next[key] = url
+      else delete next[key]
+      setSetting('development_beforeafter', JSON.stringify(next))
+        .then(() => toast.success('התמונה נשמרה'))
+        .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
+      return next
+    })
+  }
 
   const save = async (id, url) => {
     setMap((prev) => {
@@ -85,6 +101,40 @@ export default function ActivitiesTab() {
             </section>
           )
         })}
+      </div>
+
+      {/* לפני/אחרי — עמוד יזמות */}
+      <div className="acts-tab__section">
+        <h2 className="acts-tab__section-title">לפני / אחרי — עמוד יזמות</h2>
+        <p className="acts-tab__intro">
+          סליידר השוואה שמופיע בעמוד היזמות מתחת לכרטיסיות. העלו תמונת "לפני" (למשל שרטוט)
+          ותמונת "אחרי" (הבית הגמור). אפשר לערוך/לחתוך/להזיז כל תמונה. הסליידר יופיע באתר רק
+          כששתי התמונות הוגדרו.
+        </p>
+        <div className="acts-tab__grid">
+          <section className="acts-card">
+            <header className="acts-card__head">
+              <h3 className="acts-card__title">לפני (שרטוט)</h3>
+            </header>
+            <ImageManager
+              value={ba.before ? [ba.before] : []}
+              max={1}
+              folder="beforeafter"
+              onChange={(arr) => saveBa('before', arr[0] || null)}
+            />
+          </section>
+          <section className="acts-card">
+            <header className="acts-card__head">
+              <h3 className="acts-card__title">אחרי (בית גמור)</h3>
+            </header>
+            <ImageManager
+              value={ba.after ? [ba.after] : []}
+              max={1}
+              folder="beforeafter"
+              onChange={(arr) => saveBa('after', arr[0] || null)}
+            />
+          </section>
+        </div>
       </div>
     </div>
   )

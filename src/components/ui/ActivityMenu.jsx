@@ -80,9 +80,10 @@ export default function ActivityMenu({ items = [] }) {
                 key={a.id}
                 className="actmenu__chip-slot"
                 animate={{
-                  y: d * CHIP_H,
-                  /* מציגים רק שכן אחד מעל ואחד מתחת לפעיל → מאוזן סביב המרכז */
-                  opacity: Math.abs(d) >= 1.5 ? 0 : 1 - Math.abs(d) * 0.5,
+                  /* +CHIP_H/2 ממרכז את קבוצת ארבעת הכפתורים אנכית (2 מעל / 2 מתחת) */
+                  y: d * CHIP_H + CHIP_H / 2,
+                  /* כל ארבעת הכפתורים תמיד גלויים; הרחוקים דהויים יותר */
+                  opacity: 1 - Math.abs(d) * 0.3,
                 }}
                 transition={{ type: 'spring', stiffness: 90, damping: 22, mass: 1 }}
               >

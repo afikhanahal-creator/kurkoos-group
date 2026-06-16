@@ -209,7 +209,7 @@
   .contact__form { gap: 0.6rem; }
   .contact__required { font-size: 0.78rem; }
   .contact__form .field {
-    width: 70%;
+    width: 85%;
     margin-inline: auto;
   }
   .contact__form .field input,

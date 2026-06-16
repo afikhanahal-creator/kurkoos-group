@@ -205,9 +205,13 @@
   .contact__topics { gap: 0.45rem; margin-bottom: 1.1rem; }
   .contact__topic { padding: 0.48rem 1rem; font-size: 0.85rem; }
 
-  /* שדות קומפקטיים */
+  /* שדות קומפקטיים — רוחב קטן ב-30% וממורכזים */
   .contact__form { gap: 0.6rem; }
   .contact__required { font-size: 0.78rem; }
+  .contact__form .field {
+    width: 70%;
+    margin-inline: auto;
+  }
   .contact__form .field input,
   .contact__form .field textarea {
     font-size: 0.95rem;
@@ -215,14 +219,14 @@
   }
   .contact__form textarea { min-height: 88px; }
 
-  /* כפתור "שליחה" במובייל — שמנמן: רוחב קצר יותר (לא מלא) וגובה מעט גדול יותר */
+  /* כפתור "שליחה" במובייל — קטן ב-~20% */
   .contact__submit {
     width: auto;
-    min-width: 200px;
+    min-width: 160px;
     align-self: center;
     margin-top: 0.6rem;
-    padding: 1.2em 2.2em;
-    font-size: 0.9rem;
+    padding: 0.95em 1.75em;
+    font-size: 0.72rem;
   }
   /* במובייל אין hover — בלחיצה (active) הכפתור הופך ללבן עם טקסט כחול */
   .contact__submit:active {

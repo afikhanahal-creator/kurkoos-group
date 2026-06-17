@@ -169,7 +169,7 @@ export default function Admin() {
             </button>
           </div>
         </header>
-        <main className="adm__content">
+        <main className="adm__content" key={tab}>
           {tab === 'projects' && <ProjectsTab />}
           {tab === 'headings' && <HeadingsTab />}
           {tab === 'counters' && <CountersTab />}

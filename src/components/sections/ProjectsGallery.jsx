@@ -56,17 +56,17 @@ function Lightbox({ item, onClose, L, t }) {
    במובייל מוותרים על BorderGlow/SpotlightCard (אפקטים של מצביע/ריחוף
    בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
    כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
-function ProjectCard({ p, L, t, isMobile }) {
+function ProjectCard({ p, L, t, isMobile, eager }) {
   const media = (
     <div className="pg-card__media">
       {isMobile ? (
         <div className="pg-card__spot">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={760} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </div>
       ) : (
         <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={760} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </SpotlightCard>
       )}
@@ -75,7 +75,7 @@ function ProjectCard({ p, L, t, isMobile }) {
         <div className="pg-card__reveal">
           <p className="pg-card__desc">{L(p.short)}</p>
           <span className="pg-card__meta">
-            <Icon name="location" size={14} /> {L(p.city)} · {p.year}
+            {L(p.city)} · {p.year}
           </span>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           viewport={{ once: true, amount: 'some' }}
         >
           {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} />
+            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 2} />
           ))}
         </motion.div>
       </div>

@@ -43,7 +43,7 @@ export default function ProjectCard({ project }) {
       <div className="project-card__caption">
         <h3 className="project-card__title">{L(project.name)}</h3>
         <span className="project-card__city">
-          <Icon name="location" size={14} /> {L(project.city)} · {project.year}
+          {L(project.city)} · {project.year}
         </span>
       </div>
     </Link>

@@ -116,6 +116,7 @@ function buildProject(local, cms) {
       aboutPortrait: !!cms.about_portrait,
       gallery: cms.gallery && cms.gallery.length ? cms.gallery : undefined,
       towers: has(cms.towers) ? cms.towers : undefined,
+      towersLabel: (cms.towers_label && String(cms.towers_label).trim()) || undefined,
       units: has(cms.units) ? cms.units : undefined,
       floors: has(cms.floors) ? cms.floors : undefined,
       architects: wrap(cms.architects),
@@ -435,7 +436,7 @@ export default function ProjectDetail() {
                       {project.towers > 0 && (
                         <StatCube>
                           <span className="pd-stat__value" dir="auto">{project.towers}</span>
-                          <span className="pd-stat__label">{L({ he: 'בניינים', en: 'Buildings' })}</span>
+                          <span className="pd-stat__label">{project.towersLabel || L({ he: 'בניינים', en: 'Buildings' })}</span>
                         </StatCube>
                       )}
                       {project.units > 0 && (

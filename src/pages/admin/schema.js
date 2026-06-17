@@ -113,6 +113,13 @@ export const projectSchema = [
     section: 'נתוני הפרויקט',
     fields: [
       { key: 'towers', label: 'בניינים', type: 'number' },
+      {
+        key: 'towers_label',
+        label: 'תווית מונה הבניינים',
+        type: 'select_text',
+        options: PROJECT_TYPE,
+        hint: 'בחרו מהרשימה (או הקלידו) מה ייכתב מתחת למספר הבניינים — למשל "וילות", "מגדל מגורים". ריק = "בניינים".',
+      },
       { key: 'units', label: 'יחידות דיור', type: 'number' },
       { key: 'floors', label: 'קומות', type: 'text', dir: 'ltr', hint: 'אפשר טווח, למשל "7-8"' },
       { key: 'architects', label: 'אדריכלים', type: 'text' },

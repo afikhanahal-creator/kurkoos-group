@@ -711,8 +711,9 @@
   width: 100%;
   margin: 0 0 1rem;          /* רווח אנכי בין תמונות באותו טור */
   break-inside: avoid;       /* תמונה לא נחתכת בין טורים */
-  border-radius: var(--radius-lg);
+  border-radius: 18px;
   overflow: hidden;
+  isolation: isolate;        /* הקשר-ערימה — שומר על חיתוך הפינות גם כשלתמונה יש transform */
   background: none;          /* בלי רקע לבן מאחור */
   box-shadow: none;          /* בלי צל */
 }
@@ -721,7 +722,7 @@
   display: block;
   width: 100%;
   height: auto;              /* גובה לפי היחס הטבעי של התמונה */
-  border-radius: var(--radius-lg);
+  border-radius: 18px;       /* התמונה עצמה מעוגלת — בלתי-תלוי בחיתוך ההורה (ה-transform מבטל אותו) */
   transition: transform var(--dur-slow) var(--ease-out);
 }
 .pd-gallery__item:hover img { transform: scale(1.04); }

@@ -118,8 +118,14 @@ export default function ActivityMenu({ items = [] }) {
         )}
       </div>
 
-      {/* תמונה — צד שמאל, קצה פנימי (ליד הצ'יפים) שטוח */}
-      <div className="actmenu__stage" style={{ '--actmenu-bg': `url("${optimizeSrc(srcOfResponsive(current.image), 700)}")` }}>
+      {/* תמונה — צד שמאל, קצה פנימי (ליד הצ'יפים) שטוח.
+          לחיצה על התמונה מנווטת לעמוד התחום הפעיל (אותו אחד שמודגש בצ'יפים). */}
+      <Link
+        to={current.to}
+        className="actmenu__stage"
+        aria-label={L(current.title)}
+        style={{ '--actmenu-bg': `url("${optimizeSrc(srcOfResponsive(current.image), 700)}")` }}
+      >
         {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשהתמונה הוקטנה (zoom-out) או ב-contain */}
         <span className="actmenu__backdrop" aria-hidden="true" />
         <AnimatePresence mode="wait" initial={false}>
@@ -160,7 +166,7 @@ export default function ActivityMenu({ items = [] }) {
             {L(current.short)}
           </motion.p>
         </AnimatePresence>
-      </div>
+      </Link>
     </div>
   )
 }

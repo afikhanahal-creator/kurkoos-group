@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 
 /* ============================================================
    InfoCard — מסגרת קונית מסתובבת (עוקבת אחרי העכבר) +
@@ -108,7 +109,7 @@ export default function InfoCard({
           }}
         >
           {media ? media : (
-            <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={optimizeSrc(image, 640)} alt={title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
         </div>
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: contentPadding, minHeight: 0 }}>

@@ -105,6 +105,30 @@ export function srcOfResponsive(value) {
   return value.src || value.url || value.image_url || ''
 }
 
+/* אופטימיזציית URL לתמונות מרוחקות (Cloudinary / Unsplash): פורמט מודרני
+   (WebP/AVIF), דחיסה ויזואלית-זהה והגבלת רוחב לפי גודל התצוגה בפועל — חוסך
+   משקל רב בלי שינוי נראה לעין. כתובות אחרות מוחזרות כמו שהן. */
+export function optimizeSrc(src, w = 1920) {
+  if (typeof src !== 'string') return src
+  if (src.includes('images.unsplash.com/')) {
+    try {
+      const u = new URL(src)
+      const cur = parseInt(u.searchParams.get('w') || '0', 10)
+      if (!cur || w < cur) u.searchParams.set('w', String(w))
+      u.searchParams.set('q', '70')
+      u.searchParams.set('auto', 'format')
+      return u.toString()
+    } catch { return src }
+  }
+  if (!src.includes('res.cloudinary.com/')) return src
+  const marker = '/image/upload/'
+  const i = src.indexOf(marker)
+  if (i === -1) return src
+  const rest = src.slice(i + marker.length)
+  if (/^[a-z]+_[^/]*\//.test(rest)) return src   // יש כבר טרנספורמציה — לא נוגעים
+  return src.slice(0, i + marker.length) + `f_auto,q_auto,c_limit,w_${w}/` + rest
+}
+
 // משתני CSS שמוחלים על תמונה כדי לכבד את התצוגות השמורות בכל breakpoint
 export function responsiveStyle(value) {
   const ri = normalizeResponsiveImage(value)

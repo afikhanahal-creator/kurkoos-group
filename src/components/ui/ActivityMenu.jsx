@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocalized } from '../../i18n/index.jsx'
-import { normalizeResponsiveImage, srcOfResponsive } from '../../lib/responsiveImage.js'
+import { normalizeResponsiveImage, srcOfResponsive, optimizeSrc } from '../../lib/responsiveImage.js'
 import Icon from './Icon.jsx'
 import InfiniteGrid from './InfiniteGrid.jsx'
 import './ActivityMenu.css'
@@ -119,14 +119,14 @@ export default function ActivityMenu({ items = [] }) {
       </div>
 
       {/* תמונה — צד שמאל, קצה פנימי (ליד הצ'יפים) שטוח */}
-      <div className="actmenu__stage" style={{ '--actmenu-bg': `url("${srcOfResponsive(current.image)}")` }}>
+      <div className="actmenu__stage" style={{ '--actmenu-bg': `url("${optimizeSrc(srcOfResponsive(current.image), 700)}")` }}>
         {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשהתמונה הוקטנה (zoom-out) או ב-contain */}
         <span className="actmenu__backdrop" aria-hidden="true" />
         <AnimatePresence mode="wait" initial={false}>
           <motion.img
             key={current.id}
             className="actmenu__img"
-            src={srcOfResponsive(current.image)}
+            src={optimizeSrc(srcOfResponsive(current.image), 700)}
             alt=""
             /* תצוגת המובייל מתוך ה-CMS (focal point / fit) — מקומפוננטה מובייל בלבד */
             style={(() => {

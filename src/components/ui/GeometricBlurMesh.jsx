@@ -94,6 +94,7 @@ export default function GeometricBlurMesh() {
   const programRef = useRef(null)
   const uniformsRef = useRef({})
   const startTimeRef = useRef(Date.now())
+  const visibleRef = useRef(true)
 
   // אתחול WebGL
   useEffect(() => {
@@ -183,37 +184,36 @@ export default function GeometricBlurMesh() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // תנועת עכבר (אפקט blur)
+  // תנועת עכבר (אפקט blur) — עכבר בלבד; לא touchmove, כדי לא להוסיף קריאת
+  // layout בכל החלקה במובייל (פוגע בחלקות הגלילה).
   useEffect(() => {
     const handleMouseMove = (e) => {
       const canvas = canvasRef.current
-      if (!canvas) return
+      if (!canvas || !visibleRef.current) return
       const rect = canvas.getBoundingClientRect()
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-      mouseRef.current = { x: clientX - rect.left, y: clientY - rect.top }
+      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
     }
     window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('touchmove', handleMouseMove)
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('touchmove', handleMouseMove)
-    }
+    return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
 
-  // לולאת אנימציה
+  // לולאת אנימציה — רצה רק כשהקנבס על המסך; ב-reduced-motion מציירת פריים
+  // סטטי יחיד ועוצרת. כך לא נשרף GPU/CPU לאורך כל הסשן כשההירו לא נראה.
   useEffect(() => {
+    const reduced = typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let lastTime = performance.now()
-    const animate = (time) => {
-      const deltaTime = (time - lastTime) / 1000
-      lastTime = time
+    let running = true
+
+    const draw = () => {
       const canvas = canvasRef.current
       const gl = glRef.current
       const program = programRef.current
-      if (!canvas || !gl || !program) { animationFrameRef.current = requestAnimationFrame(animate); return }
+      if (!canvas || !gl || !program) return false
       const dampingFactor = 8
-      mouseDampRef.current.x += (mouseRef.current.x - mouseDampRef.current.x) * dampingFactor * deltaTime
-      mouseDampRef.current.y += (mouseRef.current.y - mouseDampRef.current.y) * dampingFactor * deltaTime
+      const dt = Math.min((performance.now() - lastTime) / 1000, 0.05)
+      mouseDampRef.current.x += (mouseRef.current.x - mouseDampRef.current.x) * dampingFactor * dt
+      mouseDampRef.current.y += (mouseRef.current.y - mouseDampRef.current.y) * dampingFactor * dt
       gl.clearColor(0, 0, 0, 0)
       gl.clear(gl.COLOR_BUFFER_BIT)
       const dpr = Math.min(window.devicePixelRatio, 2)
@@ -225,10 +225,39 @@ export default function GeometricBlurMesh() {
       if (u.u_time) gl.uniform1f(u.u_time, elapsedTime)
       if (u.u_shape) gl.uniform1i(u.u_shape, 0)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+      return true
+    }
+
+    const animate = () => {
+      if (!running) return
+      if (!visibleRef.current) { running = false; return }   // מחוץ למסך → עוצר
+      lastTime = performance.now()
+      const drawn = draw()
+      if (reduced && drawn) { running = false; return }       // פריים סטטי יחיד
       animationFrameRef.current = requestAnimationFrame(animate)
     }
+    const ensureRunning = () => {
+      if (!running && visibleRef.current) {
+        running = true
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
+    }
     animationFrameRef.current = requestAnimationFrame(animate)
-    return () => { if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current) }
+
+    let io
+    const el = containerRef.current
+    if (el && typeof IntersectionObserver !== 'undefined') {
+      io = new IntersectionObserver(
+        ([entry]) => { visibleRef.current = entry.isIntersecting; if (entry.isIntersecting) ensureRunning() },
+        { rootMargin: '150px' }
+      )
+      io.observe(el)
+    }
+    return () => {
+      running = false
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
+      if (io) io.disconnect()
+    }
   }, [])
 
   return (

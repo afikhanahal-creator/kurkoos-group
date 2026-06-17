@@ -25,10 +25,29 @@ export default function InfiniteGrid({
   const offX = useMotionValue(0)
   const offY = useMotionValue(0)
 
+  // מצב הרצה: עובד רק כשהרשת באמת על המסך, ובלי תנועה בכלל ב-reduced-motion.
+  // כך נמנעת אנימציית-SVG רציפה (re-paint יקר) שרצה לכל אורך הסשן בכל מופע.
+  const runningRef = useRef(false)
+  const reducedRef = useRef(false)
+
   useEffect(() => {
+    reducedRef.current = typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => { runningRef.current = entry.isIntersecting },
+      { rootMargin: '120px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (reducedRef.current) return   // ללא תנועה — אין צורך במעקב עכבר
     const onMove = (e) => {
       const el = ref.current
-      if (!el) return
+      if (!el || !runningRef.current) return
       const r = el.getBoundingClientRect()
       mouseX.set(e.clientX - r.left)
       mouseY.set(e.clientY - r.top)
@@ -38,6 +57,8 @@ export default function InfiniteGrid({
   }, [mouseX, mouseY])
 
   useAnimationFrame(() => {
+    // לא מצויר/לא על המסך → לא מעדכנים את ה-pattern (בלי re-paint מיותר)
+    if (reducedRef.current || !runningRef.current) return
     offX.set((offX.get() + speed) % size)
     offY.set((offY.get() + speed) % size)
   })

@@ -1,33 +1,9 @@
 import { useState } from 'react'
-import { srcOfResponsive, responsiveStyle } from '../../lib/responsiveImage.js'
+import { srcOfResponsive, responsiveStyle, optimizeSrc } from '../../lib/responsiveImage.js'
 import './SmartImage.css'
 import './ResponsiveImage.css'
 
-/* אופטימיזציית Cloudinary: f_auto,q_auto (פורמט מודרני WebP/AVIF + דחיסה
-   ויזואלית-זהה) + הגבלת רוחב (c_limit,w_...) כדי שמקור ענק יוקטן לרוחב התצוגה.
-   חוסך משקל רב בלי שינוי נראה לעין. כתובות שאינן Cloudinary מוחזרות כמו שהן. */
-export function optimizeSrc(src, w = 1920) {
-  if (typeof src !== 'string') return src
-  // Unsplash — מקטינים את הרוחב לפי הצורך (אף פעם לא מגדילים) + דחיסה + פורמט מודרני.
-  // קריטי לביצועים: כרטיסי פרויקט מבקשים רוחב קטן → תמונה קלה במקום 1280px.
-  if (src.includes('images.unsplash.com/')) {
-    try {
-      const u = new URL(src)
-      const cur = parseInt(u.searchParams.get('w') || '0', 10)
-      if (!cur || w < cur) u.searchParams.set('w', String(w))
-      u.searchParams.set('q', '70')
-      u.searchParams.set('auto', 'format')
-      return u.toString()
-    } catch { return src }
-  }
-  if (!src.includes('res.cloudinary.com/')) return src
-  const marker = '/image/upload/'
-  const i = src.indexOf(marker)
-  if (i === -1) return src
-  const rest = src.slice(i + marker.length)
-  if (/^[a-z]+_[^/]*\//.test(rest)) return src   // יש כבר טרנספורמציה — לא נוגעים
-  return src.slice(0, i + marker.length) + `f_auto,q_auto,c_limit,w_${w}/` + rest
-}
+export { optimizeSrc }
 
 /* ============================================================
    תמונה עם fallback אלגנטי + fade-in בעת טעינה.

@@ -1,5 +1,5 @@
 import { useParams, Link, Navigate } from 'react-router-dom'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
 import divisions from '../data/divisions.js'
@@ -135,7 +135,7 @@ function buildProject(local, cms) {
       stats_scale: cms.stats_scale || undefined,
       // קוביות נתונים מותאמות מה-CMS (גרירה/עריכה) — עוקפות את ברירת המחדל
       statCubes: Array.isArray(cms.stat_cubes) && cms.stat_cubes.length
-        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, spread: !!c.spread })).filter((c) => has(c.value) || has(c.label))
+        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, spread: !!c.spread, brk: !!c.brk })).filter((c) => has(c.value) || has(c.label))
         : undefined,
       statCubesRow: !!cms.stat_cubes_row,
       mapLink: cms.map_link || undefined,
@@ -395,19 +395,21 @@ export default function ProjectDetail() {
                   {project.statCubes?.length ? (
                     /* קוביות מותאמות מה-CMS (גרירה/עריכה/גודל פר-קוביה) */
                     project.statCubes.map((cube, i) => (
-                      <StatCube
-                        key={i}
-                        className={`pd-stat--sz-${cube.size || 'md'}${cube.size === 'wide' ? ' pd-stat--wide' : ''}${cube.spread ? ' pd-stat--spread' : ''}`}
-                        style={cube.w ? { paddingInline: `${cube.w}rem` } : undefined}
-                      >
-                        <span
-                          className={`pd-stat__value${cube.size === 'wide' ? ' pd-stat__value--sm' : ''}`}
-                          dir="auto"
+                      <Fragment key={i}>
+                        {cube.brk && i > 0 && <span className="pd-stat__break" aria-hidden="true" />}
+                        <StatCube
+                          className={`pd-stat--sz-${cube.size || 'md'}${cube.size === 'wide' ? ' pd-stat--wide' : ''}${cube.spread ? ' pd-stat--spread' : ''}`}
+                          style={cube.w ? { paddingInline: `${cube.w}rem` } : undefined}
                         >
-                          {cube.value}
-                        </span>
-                        <span className="pd-stat__label">{L(cube.label)}</span>
-                      </StatCube>
+                          <span
+                            className={`pd-stat__value${cube.size === 'wide' ? ' pd-stat__value--sm' : ''}`}
+                            dir="auto"
+                          >
+                            {cube.value}
+                          </span>
+                          <span className="pd-stat__label">{L(cube.label)}</span>
+                        </StatCube>
+                      </Fragment>
                     ))
                   ) : (
                     <>

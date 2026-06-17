@@ -181,6 +181,8 @@
   flex-wrap: wrap;
   gap: 0.4rem;              /* הדוק יותר בין הקוביות */
 }
+/* שובר-שורה — מאלץ את הקובייה הבאה לרדת לשורה חדשה */
+.pd-stat__break { flex-basis: 100%; width: 100%; height: 0; margin: 0; }
 .pd-stat {
   position: relative;       /* עוגן לנצנוץ האור */
   flex: 0 0 auto;            /* רוחב לפי תוכן → קוביות לא-סימטריות */

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, rectSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -127,6 +127,13 @@ function CubeRow({ id, cube, onChange, onDelete }) {
             title="הצמדת הכיתוב לפאות הקוביה"
             aria-pressed={!!cube.spread}
           >⇕ הצמד טקסט</button>
+          <button
+            type="button"
+            className={`cubed__spread ${cube.brk ? 'is-on' : ''}`}
+            onClick={() => onChange({ brk: !cube.brk })}
+            title="התחל שורה חדשה — הקובייה תרד לשורה הבאה"
+            aria-pressed={!!cube.brk}
+          >↵ שורה חדשה</button>
         </div>
       </div>
       <button type="button" className="cubed__del" onClick={onDelete} aria-label="הסר קוביה">
@@ -172,7 +179,12 @@ export default function StatCubesField({ value, onChange, row = false }) {
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
               <SortableContext items={ids} strategy={rectSortingStrategy}>
-                {cubes.map((cube, i) => <PvCube key={ids[i]} id={ids[i]} cube={cube} onResize={(w) => upd(i, { w })} />)}
+                {cubes.map((cube, i) => (
+                  <Fragment key={ids[i]}>
+                    {cube.brk && i > 0 && <span className="cubed__pv-break" aria-hidden="true" />}
+                    <PvCube id={ids[i]} cube={cube} onResize={(w) => upd(i, { w })} />
+                  </Fragment>
+                ))}
               </SortableContext>
             </DndContext>
           )}

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { fetchSettings, setSetting, listProjectCards, cmsRowToCard } from '../../lib/cms.js'
+import { useState, useEffect, useRef } from 'react'
+import { fetchSettings, setSetting, listProjectCards, cmsRowToCard, uploadMedia } from '../../lib/cms.js'
 import { divisions } from '../../data/divisions.js'
 import projectsLocal from '../../data/projects.js'
 import { executionGallery } from '../../data/executionGallery.js'
@@ -28,10 +28,66 @@ function parseArr(raw) {
 // חטיבות אמיתיות בלבד — "מגורים" (residential) הוסר כי העמוד לא קיים
 const DIVISIONS = divisions.filter((d) => d.slug !== 'residential')
 
+// לוגואים קבועים לעמודי הקאבר (חייב להישאר זהה ל-Division.jsx)
+const DEFAULT_DIVISION_LOGOS = {
+  execution: '/divisions/raita-logo.png',
+  brokerage: '/afik-hanahal-logo.png',
+  development: '/divisions/development-logo.png',
+}
+
+/* שדה לוגו לעמוד קאבר — העלאה / החלפה / הסרה. כל הלוגואים מוצגים באתר
+   באותו מיקום ובאותו גודל (.division-hero__logo). תצוגה על רקע כהה כמו הקאבר. */
+function LogoField({ value, defaultSrc, onChange }) {
+  const inputRef = useRef(null)
+  const [busy, setBusy] = useState(false)
+  // value: url=מותאם · ''=הוסר (יוצג אייקון) · undefined=ברירת מחדל
+  const shown = value !== undefined ? value : (defaultSrc || '')
+  const handle = async (file) => {
+    if (!file) return
+    setBusy(true)
+    try { const url = await uploadMedia(file, 'cover-logos'); onChange(url); toast.success('הלוגו נשמר') }
+    catch (e) { toast.error('שגיאה בהעלאה: ' + (e.message || e)) }
+    finally { setBusy(false); if (inputRef.current) inputRef.current.value = '' }
+  }
+  return (
+    <div className="cov-logo">
+      <div className="cov-logo__head">
+        <h3 className="cov-logo__title">לוגו הקאבר</h3>
+        <span className="cov-logo__note">מוצג באתר באותו מיקום ובאותו גודל בכל העמודים</span>
+      </div>
+      <div className="cov-logo__row">
+        <div className="cov-logo__preview">
+          {shown
+            ? <img src={shown} alt="" />
+            : <span className="cov-logo__empty">ללא לוגו — יוצג אייקון התחום</span>}
+        </div>
+        <div className="cov-logo__actions">
+          <button type="button" className="rif__act rif__act--primary" disabled={busy} onClick={() => inputRef.current?.click()}>
+            <span className="rif__act-ic" aria-hidden="true">⤒</span>
+            {busy ? 'מעלה…' : (shown ? 'החלפת לוגו' : 'העלאת לוגו')}
+          </button>
+          {shown && (
+            <button type="button" className="rif__act rif__act--danger" disabled={busy} onClick={() => onChange('')}>
+              <span className="rif__act-ic" aria-hidden="true">🗑</span> הסרה
+            </button>
+          )}
+          {value !== undefined && defaultSrc && (
+            <button type="button" className="rif__act" disabled={busy} onClick={() => onChange(undefined)}>
+              שחזור לברירת המחדל
+            </button>
+          )}
+          <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => handle(e.target.files?.[0])} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const projName = (p) => (p?.name?.he || p?.name?.en || (typeof p?.name === 'string' ? p.name : '') || p?.slug || 'פרויקט')
 
 export default function CoverImagesTab() {
   const [divMap, setDivMap] = useState(null)   // { slug: imageValue }
+  const [divLogos, setDivLogos] = useState({}) // { slug: logoUrl | '' } — לוגו הקאבר לכל עמוד
   const [exGallery, setExGallery] = useState([])
   const [projMap, setProjMap] = useState({})   // { slug: imageValue } — קאבר לכל פרויקט
   const [projects, setProjects] = useState([]) // רשימת הפרויקטים (CMS + מקומיים)
@@ -41,10 +97,11 @@ export default function CoverImagesTab() {
     fetchSettings()
       .then((s) => {
         setDivMap(parseObj(s.cover_divisions))
+        setDivLogos(parseObj(s.cover_division_logos))
         setExGallery(parseArr(s.cover_execution_gallery))
         setProjMap(parseObj(s.cover_projects))
       })
-      .catch(() => { setDivMap({}); setExGallery([]); setProjMap({}) })
+      .catch(() => { setDivMap({}); setDivLogos({}); setExGallery([]); setProjMap({}) })
     // פרויקטים: CMS מפורסמים; נפילה-לאחור למקומיים
     listProjectCards()
       .then((rows) => {
@@ -63,6 +120,19 @@ export default function CoverImagesTab() {
       else delete next[slug]
       setSetting('cover_projects', JSON.stringify(next))
         .then(() => toast.success('תמונת הקאבר נשמרה'))
+        .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
+      return next
+    })
+  }
+
+  // שמירת לוגו הקאבר: url=מותאם · ''=הוסר · undefined=שחזור לברירת המחדל (מוחק מהמפה)
+  const saveDivLogo = (slug, value) => {
+    setDivLogos((prev) => {
+      const next = { ...(prev || {}) }
+      if (value === undefined) delete next[slug]
+      else next[slug] = value
+      setSetting('cover_division_logos', JSON.stringify(next))
+        .then(() => toast.success(value === undefined ? 'הוחזר לברירת המחדל' : (value ? 'הלוגו נשמר' : 'הלוגו הוסר')))
         .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
       return next
     })
@@ -163,6 +233,11 @@ export default function CoverImagesTab() {
                 <h2 className="cov__content-title">באנר — {current.label}</h2>
                 <span className="cov__content-path">/divisions/{current.id}</span>
               </div>
+              <LogoField
+                value={divLogos[current.id]}
+                defaultSrc={DEFAULT_DIVISION_LOGOS[current.id]}
+                onChange={(v) => saveDivLogo(current.id, v)}
+              />
               <ResponsiveImageField
                 value={divValue}
                 folder="covers"

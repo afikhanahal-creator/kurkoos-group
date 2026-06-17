@@ -31,6 +31,14 @@ import './Division.css'
 // כתובת האתר של אפיק הנחל
 const AFIK_SITE_URL = 'https://www.afikhanahal.co.il/'
 
+// לוגואים קבועים לעמודי הקאבר (נפילה-לאחור כש-CMS לא הגדיר לוגו).
+// חייב להישאר זהה למפה ב-CoverImagesTab כדי שהתצוגה במערכת תתאים לאתר.
+const DEFAULT_DIVISION_LOGOS = {
+  execution: '/divisions/raita-logo.png',
+  brokerage: '/afik-hanahal-logo.png',
+  development: '/divisions/development-logo.png',
+}
+
 export default function Division() {
   const { slug } = useParams()
   const { t } = useI18n()
@@ -51,6 +59,14 @@ export default function Division() {
   let coverDiv = settings.cover_divisions
   if (typeof coverDiv === 'string') { try { coverDiv = JSON.parse(coverDiv) } catch { coverDiv = null } }
   const heroImage = (coverDiv && typeof coverDiv === 'object' && coverDiv[slug]) || division?.hero?.image
+
+  // לוגו הקאבר — override מה-CMS (cover_division_logos): ניתן להעלות/להחליף/להסיר לוגו
+  // בכל עמוד קאבר. כל הלוגואים מוצגים באותו מיקום ובאותו גודל (.division-hero__logo).
+  // ערך url = לוגו מותאם · '' = הוסר ידנית (יוצג אייקון) · חסר = ברירת המחדל של העמוד.
+  let divLogos = settings.cover_division_logos
+  if (typeof divLogos === 'string') { try { divLogos = JSON.parse(divLogos) } catch { divLogos = null } }
+  const hasCmsLogo = divLogos && typeof divLogos === 'object' && Object.prototype.hasOwnProperty.call(divLogos, slug)
+  const logoSrc = hasCmsLogo ? divLogos[slug] : (DEFAULT_DIVISION_LOGOS[slug] || '')
 
   // גלריית הביצוע — override מה-CMS (cover_execution_gallery) עם נפילה-לאחור לסטטי
   let exOverride = settings.cover_execution_gallery
@@ -96,20 +112,10 @@ export default function Division() {
               { label: L(division.menuTitle) },
             ]}
           />
-          {slug === 'execution' ? (
+          {logoSrc ? (
             <motion.img className="division-hero__logo"
-              src="/divisions/raita-logo.png"
-              alt={'ראיתה חברה לבניין בע"מ'}
-              initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
-          ) : slug === 'brokerage' ? (
-            <motion.img className="division-hero__ah-logo"
-              src="/afik-hanahal-logo.png"
-              alt={'אפיק הנחל נדל"ן'}
-              initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
-          ) : slug === 'development' ? (
-            <motion.img className="division-hero__nadlan-logo"
-              src="/divisions/development-logo.png"
-              alt={'קורקוס גרופ'}
+              src={logoSrc}
+              alt={L(division.name)}
               initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
           ) : (
             <motion.span className="division-hero__icon"

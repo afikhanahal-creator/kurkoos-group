@@ -44,3 +44,22 @@
 @media (max-width: 760px) {
   .cov__tab-group { flex-basis: 100%; }
 }
+
+/* ---- שדה לוגו הקאבר ---- */
+.cov-logo {
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.1));
+  border-radius: 12px; padding: 0.9rem 1rem; background: var(--adm-bg, #f6f8fa);
+}
+.cov-logo__head { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+.cov-logo__title { font-size: 0.98rem; font-weight: 800; margin: 0; }
+.cov-logo__note { font-size: 0.78rem; color: var(--adm-muted, #889); }
+.cov-logo__row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.cov-logo__preview {
+  flex: 0 0 auto; width: 180px; height: 110px; border-radius: 10px;
+  display: grid; place-items: center; padding: 0.7rem;
+  /* רקע כהה כמו הקאבר באתר — כדי לראות איך לוגו לבן/שקוף ייראה */
+  background: linear-gradient(165deg, #15617f, #07293a 92%);
+}
+.cov-logo__preview img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.4)); }
+.cov-logo__empty { color: rgba(255,255,255,0.8); font-size: 0.8rem; text-align: center; }
+.cov-logo__actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }

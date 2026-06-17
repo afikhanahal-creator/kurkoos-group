@@ -189,8 +189,10 @@
     background var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out);
 }
-[dir='rtl'] .bcal__fab svg { transform: scaleX(-1); }
-.bcal__fab:hover { transform: translateY(-4px) rotate(0deg); background: var(--color-secondary); color: #fff; }
+.bcal__fab svg { transition: transform 0.2s var(--ease-out); }
+/* פתוח: צ'evron כלפי מטה (סגירה); סגור: כלפי מעלה (פתיחה) */
+.bcal__fab--closed svg { transform: rotate(180deg); }
+.bcal__fab:hover { transform: translateY(-4px); background: var(--color-secondary); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
   .bcal__cell,

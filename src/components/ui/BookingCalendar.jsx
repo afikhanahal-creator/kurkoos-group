@@ -39,6 +39,7 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
   const L = useLocalized()
   const [selected, setSelected] = useState(null)
   const [time, setTime] = useState(null)
+  const [timesOpen, setTimesOpen] = useState(true)   // אזור השעות — ניתן לקיפול בלחיצת החץ
   const [hoursCfg, setHoursCfg] = useState(DEFAULT_HOURS)
   // החודש המוצג (ברירת מחדל = החודש הנוכחי) + מצב פתיחת בורר החודשים
   const [view, setView] = useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() } })
@@ -114,7 +115,7 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true }) }
   }
 
-  const pickDate = (d) => { setSelected(d); setTime(null) }
+  const pickDate = (d) => { setSelected(d); setTime(null); setTimesOpen(true) }
   const pickTime = (tm) => {
     setTime(tm)
     onPickDate?.(`${selected} ${monthName}`, tm)
@@ -206,8 +207,8 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
             })}
           </div>
 
-          {/* בורר שעות — נפתח לאחר בחירת תאריך */}
-          {selected != null && (
+          {/* בורר שעות — נפתח לאחר בחירת תאריך, ניתן לקיפול בחץ */}
+          {selected != null && timesOpen && (
             <div className="bcal__times">
               <div className="bcal__times-head">
                 <Icon name="clock" size={14} />
@@ -233,14 +234,18 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
           )}
         </div>
 
-        <button
-          type="button"
-          className="bcal__fab"
-          onClick={focusForm}
-          aria-label={L({ he: 'מעבר לטופס', en: 'Go to form' })}
-        >
-          <Icon name="arrowDiagonal" size={22} />
-        </button>
+        {/* החץ מקפל/פותח את אזור השעות (לא משפיע על הטופס שבצד) */}
+        {selected != null && (
+          <button
+            type="button"
+            className={`bcal__fab ${timesOpen ? '' : 'bcal__fab--closed'}`}
+            onClick={() => setTimesOpen((o) => !o)}
+            aria-label={timesOpen ? L({ he: 'סגירת השעות', en: 'Close times' }) : L({ he: 'פתיחת השעות', en: 'Open times' })}
+            aria-expanded={timesOpen}
+          >
+            <Icon name="chevron" size={22} />
+          </button>
+        )}
       </div>
     </div>
   )

@@ -47,6 +47,16 @@ export default function Division() {
   const baBefore = ba.before || '/divisions/humash-22-24-sketch.png'
   const baAfter = ba.after || '/divisions/humash-22-24-house.PNG'
 
+  // תמונת באנר החטיבה — override מה-CMS (cover_divisions) עם נפילה-לאחור לתמונה הקבועה
+  let coverDiv = settings.cover_divisions
+  if (typeof coverDiv === 'string') { try { coverDiv = JSON.parse(coverDiv) } catch { coverDiv = null } }
+  const heroImage = (coverDiv && typeof coverDiv === 'object' && coverDiv[slug]) || division?.hero?.image
+
+  // גלריית הביצוע — override מה-CMS (cover_execution_gallery) עם נפילה-לאחור לסטטי
+  let exOverride = settings.cover_execution_gallery
+  if (typeof exOverride === 'string') { try { exOverride = JSON.parse(exOverride) } catch { exOverride = null } }
+  const exGallery = Array.isArray(exOverride) && exOverride.length ? exOverride : executionGallery
+
   // הפרויקטים שיוצגו: ברירת מחדל = מקומיים; אם הוגדרו ב-CMS לעמוד הזה — מהם.
   const [list, setList] = useState(() => projects.slice(0, 4))
 
@@ -71,7 +81,7 @@ export default function Division() {
       {/* באנר */}
       <header className="division-hero">
         <Parallax className="division-hero__bg">
-          <SmartImage src={division.hero.image} alt={L(division.hero.title)} label={L(division.name)} />
+          <SmartImage src={heroImage} alt={L(division.hero.title)} label={L(division.name)} />
         </Parallax>
         <div className="division-hero__overlay" />
         <InfiniteGrid
@@ -220,7 +230,7 @@ export default function Division() {
       )}
 
       {/* גלריית ביצוע נפתחת — רק בעמוד הביצוע, מעל "פרויקטים נבחרים" */}
-      {slug === 'execution' && executionGallery.length > 0 && (
+      {slug === 'execution' && exGallery.length > 0 && (
         <section className="section section--soft">
           <div className="container">
             <Reveal className="division-why__head">
@@ -229,9 +239,9 @@ export default function Division() {
             </Reveal>
             {/* מובייל — מניפת תמונות נפתחת לרשת + מסך מלא; דסקטופ — גלריית אקורדיון נפתחת */}
             {isMobile ? (
-              <StackGallery images={executionGallery} />
+              <StackGallery images={exGallery} />
             ) : (
-              <ExpandableGallery images={executionGallery} />
+              <ExpandableGallery images={exGallery} />
             )}
           </div>
         </section>

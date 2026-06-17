@@ -115,7 +115,10 @@ export default function LogoCarousel({ logos = [] }) {
                     alt={logo.name || ''}
                     loading="eager"
                     decoding="async"
-                    onLoad={fitLogo}
+                    /* לוגו מה-CMS: גודל/מיקום ידני בדיוק כמו במערכת (בלי fit אוטומטי).
+                       לוגו סטטי: מדידת תוכן אוטומטית (fitLogo) לאחידות. */
+                    style={logo.cms ? { transform: `translate(${logo.pos_x || 0}%, ${logo.pos_y || 0}%) scale(${logo.scale || 1})` } : undefined}
+                    onLoad={logo.cms ? undefined : fitLogo}
                   />
                 : <span className="logo-marquee__name">{logo.name}</span>}
             </div>

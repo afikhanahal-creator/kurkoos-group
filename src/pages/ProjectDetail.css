@@ -711,7 +711,7 @@
   width: 100%;
   margin: 0 0 1rem;          /* רווח אנכי בין תמונות באותו טור */
   break-inside: avoid;       /* תמונה לא נחתכת בין טורים */
-  border-radius: 18px;
+  border-radius: 24px;
   overflow: hidden;
   isolation: isolate;        /* הקשר-ערימה — שומר על חיתוך הפינות גם כשלתמונה יש transform */
   background: none;          /* בלי רקע לבן מאחור */
@@ -722,7 +722,9 @@
   display: block;
   width: 100%;
   height: auto;              /* גובה לפי היחס הטבעי של התמונה */
-  border-radius: 18px;       /* התמונה עצמה מעוגלת — בלתי-תלוי בחיתוך ההורה (ה-transform מבטל אותו) */
+  /* התמונה עצמה מעוגלת — !important גובר על .ri-img (שמאפס דרך --ri-rad-d),
+     וכך הפינות עגולות בלי תלות בחיתוך ההורה (ה-transform של ה-scale מבטל אותו) */
+  border-radius: 24px !important;
   transition: transform var(--dur-slow) var(--ease-out);
 }
 .pd-gallery__item:hover img { transform: scale(1.04); }

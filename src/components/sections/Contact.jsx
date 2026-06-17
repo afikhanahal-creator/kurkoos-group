@@ -29,8 +29,14 @@ export default function Contact() {
           <BookingCalendar
             title={L({ he: 'קבעו פגישה', en: 'Book a meeting' })}
             ctaTargetId="cf-name"
+            onPickDate={(label, time) => {
+              // בחירת שעה ממלאת את שדה ההודעה בטופס שמימין — לקיצור תהליך השליחה
+              const when = time ? `${label} ${L({ he: 'בשעה', en: 'at' })} ${time}` : label
+              const el = document.getElementById('cf-message')
+              if (el) el.value = L({ he: `אשמח לתאם פגישה ל-${when}`, en: `I'd like to book a meeting for ${when}` })
+            }}
           />
-          {/* בחירת תאריך/שעה ביומן נשארת בצד שמאל בלבד; לחיצה על "מלאו פרטים" עוברת לטופס */}
+          {/* בחירת שעה ביומן ממלאת את שדה ההודעה בטופס; "מלאו פרטים" מדלג לשדה השם */}
         </Reveal>
 
         {/* פאנל טופס כהה */}

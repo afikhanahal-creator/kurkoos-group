@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { fetchSettings, setSetting, listProjectCards, cmsRowToCard } from '../../lib/cms.js'
 import { divisions } from '../../data/divisions.js'
 import projectsLocal from '../../data/projects.js'
+import { executionGallery } from '../../data/executionGallery.js'
 import { srcOfResponsive } from '../../lib/responsiveImage.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
 import ImageManager from './ImageManager.jsx'
@@ -97,6 +98,13 @@ export default function CoverImagesTab() {
   ]
   const current = tabs.find((t) => t.id === active) || tabs[0]
   const activeDivision = DIVISIONS.find((d) => d.slug === current.id)
+  const activeProject = current.kind === 'project' ? projects.find((p) => p.slug === current.slug) : null
+
+  // ערך אפקטיבי: override שנשמר במערכת, ואם אין — התמונה הקיימת באתר (ברירת המחדל),
+  // כדי שהתמונות הקיימות יופיעו כ"קיימות" וניתן יהיה לערוך/להחליף אותן ישירות.
+  const divValue = divMap[current.id] || activeDivision?.hero?.image || ''
+  const projValue = projMap[current.slug] || activeProject?.cover || ''
+  const exValue = exGallery.length ? exGallery : executionGallery
 
   return (
     <div className="cov">
@@ -138,7 +146,7 @@ export default function CoverImagesTab() {
                 <span className="cov__content-path">/projects/{current.slug}</span>
               </div>
               <ResponsiveImageField
-                value={projMap[current.slug]}
+                value={projValue}
                 folder="covers"
                 surfaceLabel={`קאבר ${current.label}`}
                 desktopAspect="4 / 3"
@@ -146,7 +154,7 @@ export default function CoverImagesTab() {
                 onChange={(v) => saveProj(current.slug, v)}
               />
               {!srcOfResponsive(projMap[current.slug]) && (
-                <p className="cov__fallback">כרגע מוצגת תמונת השער מהגלריה של הפרויקט. העלו תמונה כדי להחליף את הקאבר.</p>
+                <p className="cov__fallback">מוצגת כעת תמונת השער הקיימת של הפרויקט. ערכו/החליפו אותה — וההגדרה תישמר לאתר.</p>
               )}
             </>
           ) : current.kind === 'division' ? (
@@ -156,7 +164,7 @@ export default function CoverImagesTab() {
                 <span className="cov__content-path">/divisions/{current.id}</span>
               </div>
               <ResponsiveImageField
-                value={divMap[current.id]}
+                value={divValue}
                 folder="covers"
                 surfaceLabel={`באנר ${current.label}`}
                 desktopAspect="16 / 9"
@@ -164,7 +172,7 @@ export default function CoverImagesTab() {
                 onChange={(v) => saveDiv(current.id, v)}
               />
               {!srcOfResponsive(divMap[current.id]) && activeDivision && (
-                <p className="cov__fallback">כרגע מוצגת תמונת ברירת המחדל של החטיבה. העלו תמונה כדי להחליף.</p>
+                <p className="cov__fallback">מוצגת כעת תמונת הבאנר הקיימת של החטיבה. ערכו/החליפו אותה — וההגדרה תישמר לאתר.</p>
               )}
             </>
           ) : (
@@ -174,13 +182,13 @@ export default function CoverImagesTab() {
                 <span className="cov__content-path">עמוד ביצוע · "הופכים תוכניות לביצוע"</span>
               </div>
               <ImageManager
-                value={exGallery}
+                value={exValue}
                 onChange={saveEx}
                 folder="execution-gallery"
                 max={12}
               />
               {exGallery.length === 0 && (
-                <p className="cov__fallback">כרגע מוצגות תמונות ברירת המחדל מהשטח. הוסיפו תמונות כדי להחליף את הגלריה.</p>
+                <p className="cov__fallback">מוצגות כעת תמונות הגלריה הקיימות מהשטח. גררו לסידור, הוסיפו או הסירו — והשינוי יישמר לאתר.</p>
               )}
             </>
           )}

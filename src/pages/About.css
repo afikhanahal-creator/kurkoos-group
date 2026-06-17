@@ -90,6 +90,7 @@
 }
 .about-vision__badge {
   flex-shrink: 0;
+  align-self: center;        /* חותם האמינות ממורכז גם בדסקטופ (לא צמוד לימין) */
   width: clamp(120px, 13vw, 160px);
   height: clamp(120px, 13vw, 160px);
   border-radius: 50%;

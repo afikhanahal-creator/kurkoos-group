@@ -365,10 +365,11 @@ export default function ProjectDetail() {
     setSent(true)
     // שמירת הפנייה כליד במערכת הניהול (לא חוסם את חוויית המשתמש)
     // מצרפים את המועד שנבחר ביומן להודעת הליד (בלי לשנות את הטופס בזמן הבחירה)
-    const bookingNote = booking
+    const msg = form.message.trim()
+    const bookingNote = booking && !msg.includes(booking)
       ? L({ he: `מועד מבוקש: ${booking}`, en: `Requested slot: ${booking}` })
       : ''
-    const fullMessage = [form.message.trim(), bookingNote].filter(Boolean).join(' · ')
+    const fullMessage = [msg, bookingNote].filter(Boolean).join(' · ')
     createLead({
       name: form.name.trim(),
       phone: form.phone.trim(),
@@ -928,8 +929,9 @@ export default function ProjectDetail() {
                   title={L({ he: 'קבעו פגישה', en: 'Book a meeting' })}
                   onPickDate={(label, time) => {
                     const when = time ? `${label} ${L({ he: 'בשעה', en: 'at' })} ${time}` : label
-                    // בחירה ביומן משפיעה רק על הצד השמאלי (היומן) — לא ממלאת/פותחת את הטופס בצד ימין
+                    // בחירת שעה ממלאת את שדה ההודעה בטופס שמימין — לקיצור תהליך השליחה
                     setBooking(when)
+                    setForm((f) => ({ ...f, message: L({ he: `אשמח לתאם פגישה ל-${when}`, en: `I'd like to book a meeting for ${when}` }) }))
                   }}
                 />
               </div>

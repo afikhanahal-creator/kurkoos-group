@@ -432,8 +432,33 @@ export function useSettings() {
   const [settings, setSettings] = useState({})
   useEffect(() => {
     let on = true
-    fetchSettings().then((s) => on && setSettings(s)).catch(() => {})
-    return () => { on = false }
+    const load = () => fetchSettings().then((s) => on && setSettings(s)).catch(() => {})
+    load()
+
+    // עדכון בזמן אמת — מאזינים לשינויים בטבלת ההגדרות (Supabase Realtime).
+    // כל שינוי באדמין (תמונות קאבר, פונטים, לוגו, כותרות) מתפנה במטמון
+    // ומרענן את כל הצרכנים מיד — בלי להמתין ל-TTL ובלי רענון עמוד.
+    // אם ה-Realtime לא מאופשר על הטבלה — המנוי פשוט לא נורה ואין נזק.
+    let channel
+    if (supabase?.channel) {
+      channel = supabase
+        .channel('site_settings_rt')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, () => {
+          invalidate('settings')
+          load()
+        })
+        .subscribe()
+    }
+
+    // מנגנון גיבוי: רענון בעת חזרה ללשונית/פוקוס — מבטיח שנתונים טריים
+    const onFocus = () => { invalidate('settings'); load() }
+    if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
+
+    return () => {
+      on = false
+      if (channel) supabase.removeChannel(channel)
+      if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
+    }
   }, [])
   return settings
 }

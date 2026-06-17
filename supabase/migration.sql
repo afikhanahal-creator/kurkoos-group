@@ -59,6 +59,7 @@ alter table public.projects add column if not exists map_link text;             
 alter table public.projects add column if not exists environment jsonb default '{}'::jsonb;     -- {title, text, image}
 alter table public.projects add column if not exists plan_groups jsonb default '[]'::jsonb;     -- [{rooms, label, plans:[{label, img}]}]
 alter table public.projects add column if not exists gallery_groups jsonb default '[]'::jsonb;  -- [{label, images:[url]}]
+alter table public.projects add column if not exists more_projects jsonb default '[]'::jsonb;    -- slugים של "פרויקטים נוספים" שנבחרו ידנית
 -- מאפיינים (features) נשמרים בעמודת amenities הקיימת
 
 -- ---------- properties ----------

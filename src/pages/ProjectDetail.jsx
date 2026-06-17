@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
 import divisions from '../data/divisions.js'
-import { getProjectBySlug, createLead, useSettings } from '../lib/cms.js'
+import { getProjectBySlug, createLead, useSettings, listProjectCards, cmsRowToCard } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { srcOfResponsive, normalizeResponsiveImage } from '../lib/responsiveImage.js'
@@ -169,6 +169,16 @@ export default function ProjectDetail() {
   const [sent, setSent] = useState(false)
   const settings = useSettings()   // הגדרות אתר — בין השאר override לתמונות קאבר של פרויקטים
 
+  // כל כרטיסי הפרויקטים מה-CMS (אמיתיים) — ל"פרויקטים נוספים" (במקום דמו מקומי)
+  const [allCards, setAllCards] = useState([])
+  useEffect(() => {
+    let alive = true
+    listProjectCards()
+      .then((rows) => { if (alive && rows) setAllCards(rows.map(cmsRowToCard)) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+
   // scroll-spy — קובע את המקטע הפעיל לפי המקטע האחרון שעבר את קו-הייחוס
   // (38% מגובה החלון). pick() שואל את ה-DOM מחדש בכל פעם, וה-effect מורץ מחדש
   // אחרי טעינת ה-CMS (cms/cmsLoaded) — כך גם מקטעים שנוצרים מאוחר נצפים, וההדגשה
@@ -310,7 +320,14 @@ export default function ProjectDetail() {
 
   // יזמי הפרויקט + פרויקטים נוספים
   const developers = project.developers || []
-  const moreProjects = projects.filter((p) => p.slug !== project.slug).slice(0, 3)
+  // "פרויקטים נוספים": אם בחרת ידנית פרויקטים בעורך (more_projects) — מציגים אותם
+  // בסדר שבחרת; אחרת — שאר הפרויקטים האמיתיים מה-CMS. נפילה-לאחור לדמו רק אם אין CMS.
+  const realCards = allCards && allCards.length ? allCards : null
+  let moreSlugs = cms?.more_projects
+  if (typeof moreSlugs === 'string') { try { moreSlugs = JSON.parse(moreSlugs) } catch { moreSlugs = null } }
+  const moreProjects = (Array.isArray(moreSlugs) && moreSlugs.length && realCards)
+    ? moreSlugs.map((s) => realCards.find((p) => p.slug === s)).filter(Boolean)
+    : (realCards || projects).filter((p) => p.slug !== project.slug).slice(0, 3)
 
   // בר העוגנים — בדסקטופ כל המקטעים (פרוסים לרוחב); במובייל רק אלה עם mobile:true
   // (הסביבה + מפה). המתאים מודגש בעת גלילה. ההסתרה במובייל היא ב-CSS (בלי ריצוד).

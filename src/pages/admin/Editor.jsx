@@ -5,7 +5,7 @@ import ResponsiveImageField from './ResponsiveImageField.jsx'
 import StatCubesField from './StatCubesField.jsx'
 import ProjectPreview from './ProjectPreview.jsx'
 import { slugify } from '../../lib/slugify.js'
-import { uploadMedia, uploadVideoFile, hasCloudinary, fetchSettings, setSetting } from '../../lib/cms.js'
+import { uploadMedia, uploadVideoFile, hasCloudinary, fetchSettings, setSetting, listProjectCards } from '../../lib/cms.js'
 import { toast } from '../../lib/toast.js'
 
 const STRIP = ['id', 'created_at', 'updated_at']
@@ -43,6 +43,46 @@ function SelectText({ value, options, onChange }) {
           value={value ?? ''} onChange={(e) => onChange(e.target.value)}
         />
       )}
+    </div>
+  )
+}
+
+/* בורר "פרויקטים נוספים" — בחירה מתוך הפרויקטים האמיתיים במערכת (לפי slug).
+   ריק = מציג אוטומטית את שאר הפרויקטים. שומר מערך של slugים בסדר הבחירה. */
+function RelatedProjectsField({ value, currentSlug, onChange }) {
+  const [opts, setOpts] = useState([])
+  useEffect(() => {
+    let on = true
+    listProjectCards()
+      .then((rows) => {
+        if (!on || !rows) return
+        setOpts(rows.map((r) => ({
+          slug: r.slug || r.id,
+          name: r.name?.he || r.name?.en || (typeof r.name === 'string' ? r.name : '') || r.slug || r.id,
+        })))
+      })
+      .catch(() => {})
+    return () => { on = false }
+  }, [])
+  const sel = Array.isArray(value)
+    ? value
+    : (typeof value === 'string' && value.trim()
+        ? (() => { try { const a = JSON.parse(value); return Array.isArray(a) ? a : [] } catch { return [] } })()
+        : [])
+  const toggle = (slug) => onChange(sel.includes(slug) ? sel.filter((x) => x !== slug) : [...sel, slug])
+  const list = opts.filter((o) => o.slug && o.slug !== currentSlug)
+  return (
+    <div className="ed__chips" role="group">
+      {list.length === 0 && <span className="ed__seltext" style={{ color: 'var(--adm-muted,#889)' }}>אין עדיין פרויקטים אחרים במערכת.</span>}
+      {list.map((o) => {
+        const on = sel.includes(o.slug)
+        return (
+          <button type="button" key={o.slug} className={`ed__chip ${on ? 'ed__chip--on' : ''}`} aria-pressed={on} onClick={() => toggle(o.slug)}>
+            <span className="ed__chip-check" aria-hidden="true">{on ? '✓' : '+'}</span>
+            {o.name}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -419,6 +459,8 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
       )
     if (f.type === 'select_text')
       return <SelectText value={v} options={f.options} onChange={(val) => setField(f.key, val)} />
+    if (f.type === 'related_projects')
+      return <RelatedProjectsField value={v} currentSlug={form.slug || record.slug} onChange={(val) => setField(f.key, val)} />
     // מונה + תווית נבחרת מרשימה (במקום שדה נפרד): מספר + dropdown שמחליף את הכיתוב
     if (f.type === 'count_label')
       return (
@@ -482,7 +524,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   }, [schema, form])
   const missingKeys = useMemo(() => new Set(missing.map((m) => m.key)), [missing])
 
-  const fieldWide = (t) => ['textarea', 'multiselect', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords', 'videos', 'stat_cubes'].includes(t)
+  const fieldWide = (t) => ['textarea', 'multiselect', 'related_projects', 'developers', 'environment', 'plan_groups', 'gallery_groups', 'features', 'coords', 'videos', 'stat_cubes'].includes(t)
 
   // רינדור מקטע שדות יחיד (משותף לתצוגה הרגילה ולאשף)
   const renderSection = (sec) => (

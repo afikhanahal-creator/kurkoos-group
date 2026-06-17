@@ -71,7 +71,10 @@ export default function ActivityMenu({ items = [] }) {
     >
       {/* פאנל ימין — רקע כהה + רשת ריבועים + צ'יפים אדומים */}
       <div className="actmenu__panel">
-        <InfiniteGrid color="rgba(255,255,255,0.5)" baseOpacity={0.08} revealOpacity={0.2} />
+        {/* רשת עדינה יותר — פחות "אפקט לבן" שמבלבל ליד קו התפר */}
+        <InfiniteGrid color="rgba(255,255,255,0.32)" baseOpacity={0.05} revealOpacity={0.13} />
+        {/* האפלת קצה התפר (לכיוון התמונה) — תפר נקי ועדין */}
+        <span className="actmenu__seam" aria-hidden="true" />
         <div className="actmenu__chips">
           {items.map((a, i) => {
             const d = wrap(-(len / 2), len / 2, i - idx)
@@ -97,11 +100,22 @@ export default function ActivityMenu({ items = [] }) {
                     <Icon name={a.icon} size={16} />
                   </span>
                   <span className="actmenu__chip-label">{L(a.title)}</span>
+                  <Icon name="arrow" size={14} className="actmenu__chip-arrow" aria-hidden="true" />
                 </Link>
               </motion.div>
             )
           })}
         </div>
+
+        {/* מחוון התקדמות עדין — מראה מתי תוחלף הכרטיסייה הבאה (UI חכם) */}
+        {len > 1 && inView && (
+          <span
+            key={idx}
+            className="actmenu__progress"
+            style={{ animationDuration: `${AUTO_PLAY}ms`, animationPlayState: paused ? 'paused' : 'running' }}
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       {/* תמונה — צד שמאל, קצה פנימי (ליד הצ'יפים) שטוח */}

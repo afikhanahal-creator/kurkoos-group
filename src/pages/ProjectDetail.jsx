@@ -164,6 +164,7 @@ export default function ProjectDetail() {
   const [lightbox, setLightbox] = useState(null) // { images, index }
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', consent: false })
   const [errors, setErrors] = useState({})
+  const [booking, setBooking] = useState('')   // מועד שנבחר ביומן (צד שמאל) — מצורף לליד בשליחה
   const [sent, setSent] = useState(false)
 
   // scroll-spy — קובע את המקטע הפעיל לפי המקטע האחרון שעבר את קו-הייחוס
@@ -356,11 +357,16 @@ export default function ProjectDetail() {
     if (Object.keys(next).length) { setErrors(next); return }
     setSent(true)
     // שמירת הפנייה כליד במערכת הניהול (לא חוסם את חוויית המשתמש)
+    // מצרפים את המועד שנבחר ביומן להודעת הליד (בלי לשנות את הטופס בזמן הבחירה)
+    const bookingNote = booking
+      ? L({ he: `מועד מבוקש: ${booking}`, en: `Requested slot: ${booking}` })
+      : ''
+    const fullMessage = [form.message.trim(), bookingNote].filter(Boolean).join(' · ')
     createLead({
       name: form.name.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
-      message: form.message.trim(),
+      message: fullMessage,
       project: project?.name || '',
       source: 'project',
       status: 'new',
@@ -915,10 +921,8 @@ export default function ProjectDetail() {
                   title={L({ he: 'קבעו פגישה', en: 'Book a meeting' })}
                   onPickDate={(label, time) => {
                     const when = time ? `${label} ${L({ he: 'בשעה', en: 'at' })} ${time}` : label
-                    setForm((f) => ({
-                      ...f,
-                      message: L({ he: `אשמח לתאם פגישה ל-${when}`, en: `I'd like to book a meeting on ${when}` }),
-                    }))
+                    // בחירה ביומן משפיעה רק על הצד השמאלי (היומן) — לא ממלאת/פותחת את הטופס בצד ימין
+                    setBooking(when)
                   }}
                 />
               </div>

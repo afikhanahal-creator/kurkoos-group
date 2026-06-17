@@ -8,7 +8,9 @@ import './Text3DFlip.css'
    מופעל כשנכנס לתצוגה. מכבד prefers-reduced-motion.
    ============================================================ */
 export default function Text3DFlip({ text = '', className = '', stagger = 0.045 }) {
-  const chars = Array.from(String(text))
+  // טוקניזציה: רצף ספרות נשאר טוקן אחד (כדי שלא יתהפך ב-RTL, למשל "70"→"07"),
+  // רווח כטוקן, וכל תו אחר (אות) כטוקן נפרד — לשמירת אנימציית אות-אחר-אות.
+  const chars = String(text).match(/\d+|\s|[^\d\s]/g) || []
 
   const container = {
     hidden: {},
@@ -35,7 +37,7 @@ export default function Text3DFlip({ text = '', className = '', stagger = 0.045 
       aria-label={text}
     >
       {chars.map((c, i) => (
-        <motion.span key={i} className="t3df__char" variants={char} aria-hidden="true">
+        <motion.span key={i} className="t3df__char" variants={char} aria-hidden="true" dir={/^\d/.test(c) ? 'ltr' : undefined}>
           {c === ' ' ? ' ' : c}
         </motion.span>
       ))}

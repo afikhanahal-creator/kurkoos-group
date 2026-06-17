@@ -44,6 +44,7 @@ export default function Activities() {
                   desc={L(a.desc)}
                   to={a.to || '/#contact'}
                   cta={t('common.readMore')}
+                  image={a.image}
                 />
               </Reveal>
             ))}

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icon.jsx'
+import ResponsiveImage from './ResponsiveImage.jsx'
+import { srcOfResponsive } from '../../lib/responsiveImage.js'
 import '../sections/Activities.css'
 
 /* ============================================================
@@ -8,15 +10,23 @@ import '../sections/Activities.css'
    icon, title, desc חובה. to + cta אופציונליים → מציגים פוטר
    "קראו עוד" והופכים את הכרטיס לקישור.
    ============================================================ */
-export default function FeatureCard({ icon, title, desc, to, cta, className = '' }) {
+export default function FeatureCard({ icon, title, desc, to, cta, image, className = '' }) {
+  const hasImage = !!srcOfResponsive(image)
   const inner = (
     <div className="card-inner">
       <span className="card__liquid" aria-hidden="true" />
       <span className="card__shine" aria-hidden="true" />
       <span className="card__glow" aria-hidden="true" />
       <div className="card__content">
-        <div className="card__image">
-          <Icon name={icon} size={48} stroke={1.5} />
+        <div className={`card__image ${hasImage ? 'card__image--photo' : ''}`}>
+          {hasImage ? (
+            <>
+              <ResponsiveImage value={image} className="card__img" alt="" />
+              <span className="card__img-badge" aria-hidden="true"><Icon name={icon} size={22} stroke={1.8} /></span>
+            </>
+          ) : (
+            <Icon name={icon} size={48} stroke={1.5} />
+          )}
         </div>
         <div className="card__text">
           <h3 className="card__title">{title}</h3>

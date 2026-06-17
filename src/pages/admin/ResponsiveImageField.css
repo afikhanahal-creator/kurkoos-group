@@ -61,12 +61,13 @@
   background: #eef1f4;
 }
 .rif__realcard--card { width: 100%; }
-.rif__realcard--split { display: flex; direction: rtl; height: 300px; }
+/* תמונה משמאל + פאנל הצ'יפ מימין — בדיוק כמו הכרטיס באתר (ActivityMenu) */
+.rif__realcard--split { display: flex; direction: ltr; height: 300px; }
 .rif__realcard--split .rif__imgarea { flex: 0 0 47%; }
 .rif__realcard--split .rif__panel {
   flex: 1;
   background: linear-gradient(165deg, var(--color-secondary, #0b2a3a), #07293a 92%);
-  display: flex; align-items: center; justify-content: flex-start;
+  display: flex; align-items: center; justify-content: flex-end;
   padding: 0 0.9rem;
 }
 .rif__panelchip {

@@ -525,9 +525,10 @@
   .header__actions .header__cta-btn { font-size: 0.71rem; padding: 0.5em 0.95em; min-height: 34px; }
 }
 
-/* ---- לוגו ממורכז בדסקטופ: ניווט בימין, לוגו במרכז, פעולות בשמאל ---- */
+/* ---- שדרוג Header בדסקטופ: לוגו בימין, ניווט במרכז, פעולות בשמאל (העיצוב המקורי) ---- */
 @media (min-width: 981px) {
-  .header__main-inner .header__nav { order: 1; justify-content: flex-start; }
-  .header__main-inner .logo { order: 2; flex: 0 0 auto; }
-  .header__main-inner .header__actions { order: 3; flex: 1; justify-content: flex-end; }
+  .header__main-inner { gap: 1.5rem; }
+  /* הניווט ממורכז בין הלוגו (ימין) לפעולות (שמאל) — כמו קודם */
+  .header__nav { gap: 0.15rem; }
+  .header__nav-link { letter-spacing: 0.01em; }
 }

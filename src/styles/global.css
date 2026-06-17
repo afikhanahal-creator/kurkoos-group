@@ -168,6 +168,8 @@ p, .section-lead { text-wrap: pretty; }
 .section {
   padding-block: var(--section-padding);
 }
+/* דף הבית — ריווח אנכי מצומצם מעט בין הסקשנים (קומפקטי ונקי יותר) */
+.home .section { padding-block: calc(var(--section-padding) * 0.8); }
 
 .section--soft { background: var(--color-bg-soft); }
 .section--dark {

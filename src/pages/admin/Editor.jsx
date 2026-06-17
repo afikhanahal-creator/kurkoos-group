@@ -420,7 +420,13 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     if (f.type === 'select_text')
       return <SelectText value={v} options={f.options} onChange={(val) => setField(f.key, val)} />
     if (f.type === 'multiselect') {
-      const arr = Array.isArray(v) ? v : []
+      // v עשוי להגיע כמערך או כמחרוזת JSON (סכמת DB ישנה) — מנרמלים למערך כדי
+      // שהבחירות הקיימות (כמו "פרויקטים נבחרים") יוצגו ויישמרו תקין
+      const arr = Array.isArray(v)
+        ? v
+        : (typeof v === 'string' && v.trim()
+            ? (() => { try { const a = JSON.parse(v); return Array.isArray(a) ? a : [] } catch { return v.split(',').map((x) => x.trim()).filter(Boolean) } })()
+            : [])
       const toggle = (val) =>
         setField(f.key, arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val])
       return (

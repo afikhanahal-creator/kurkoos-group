@@ -6,7 +6,7 @@ import HeroCollage from '../components/ui/HeroCollage.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import { supabase } from '../lib/supabase.js'
-import { listProjectCards, listCounters } from '../lib/cms.js'
+import { listProjectCards, listCounters, projectPages } from '../lib/cms.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import './Projects.css'
 
@@ -27,7 +27,7 @@ export default function Projects() {
       .then((rows) => {
         if (rows && rows.length) {
           // אם יש פרויקטים שתויגו "פרויקטים נבחרים" — מציגים אותם; אחרת את כולם
-          const featured = rows.filter((p) => Array.isArray(p.pages) && p.pages.includes('featured'))
+          const featured = rows.filter((p) => projectPages(p).includes('featured'))
           const use = featured.length ? featured : rows
           setProjects(use.map((p) => ({ name: p.name, slug: p.slug || p.id, cover: srcOfResponsive(p.hero_image_url) || srcOfResponsive(p.gallery && p.gallery[0]), gallery: p.gallery || [], card_layout: p.card_layout })))
         }

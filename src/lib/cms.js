@@ -139,13 +139,27 @@ export async function getProjectBySlug(slug) {
   })
 }
 
+// pages עשוי לחזור מה-DB כמערך (jsonb/text[]) או כמחרוזת JSON / מופרד-פסיקים —
+// מנרמלים תמיד למערך כדי שסינון "עמודים נבחרים/יעד" יעבוד בלי תקלות.
+export function projectPages(p) {
+  const v = p?.pages
+  if (Array.isArray(v)) return v
+  if (typeof v === 'string') {
+    const s = v.trim()
+    if (!s) return []
+    try { const arr = JSON.parse(s); return Array.isArray(arr) ? arr : [] }
+    catch { return s.split(',').map((x) => x.trim()).filter(Boolean) }
+  }
+  return []
+}
+
 // פרויקטים מפורסמים המשויכים לעמוד יעד מסוים
 // (development | execution | featured | brokerage). פרויקט יכול להיות בכמה עמודים.
 export async function listProjectsByPage(page) {
   // לעמודי תצוגה ציבוריים — מספיקות עמודות הכרטיס (קל ומהיר יותר)
   const rows = await listProjectCards()
   return (rows || []).filter(
-    (p) => p.is_published !== false && Array.isArray(p.pages) && p.pages.includes(page)
+    (p) => p.is_published !== false && projectPages(p).includes(page)
   )
 }
 

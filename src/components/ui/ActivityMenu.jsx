@@ -73,8 +73,6 @@ export default function ActivityMenu({ items = [] }) {
       <div className="actmenu__panel">
         {/* רשת עדינה יותר — פחות "אפקט לבן" שמבלבל ליד קו התפר */}
         <InfiniteGrid color="rgba(255,255,255,0.32)" baseOpacity={0.05} revealOpacity={0.13} />
-        {/* האפלת קצה התפר (לכיוון התמונה) — תפר נקי ועדין */}
-        <span className="actmenu__seam" aria-hidden="true" />
         <div className="actmenu__chips">
           {items.map((a, i) => {
             const d = wrap(-(len / 2), len / 2, i - idx)

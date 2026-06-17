@@ -348,10 +348,10 @@
     /* ריווח תחתון נדיב → אזור פנוי שאליו "מציץ" כרטיס הסרטון בלי לכסות את המשפט */
     padding-block: clamp(1.5rem, 5vw, 2.5rem) clamp(3.5rem, 9vw, 5rem);
   }
-  /* יזמות בלבד — אין מתחת סרטון/כרטיס שמציץ, אז מקטינים את גובה הקאבר ואת
-     הריווח התחתון במובייל כדי שלא יישאר מרווח ריק גדול מתחת למשפט */
-  .division--development .division-hero { min-height: clamp(340px, 50vh, 440px); }
-  .division--development .division-hero__content { padding-block-end: clamp(1.5rem, 4vw, 2.25rem); }
+  /* יזמות בלבד — אין מתחת סרטון/כרטיס שמציץ, אז הקאבר "מתכווץ" לגובה התוכן
+     (בלי min-height גבוה) כדי שלא יישאר מרווח ריק מתחת למשפט. רק במובייל. */
+  .division--development .division-hero { min-height: auto; }
+  .division--development .division-hero__content { padding-block-end: clamp(1.1rem, 3.5vw, 1.85rem); }
   /* ---- סרגל הניווט (פירורי לחם) — עיצוב מחודש למובייל ----
      בר זכוכית מלוכד, ממורכז, עם כפתור "חזרה" משולב כצ'יפ נקי */
   .division-hero .breadcrumbs { margin-bottom: clamp(1.4rem, 4vw, 2.25rem); }

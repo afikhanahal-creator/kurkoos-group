@@ -419,6 +419,18 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
       )
     if (f.type === 'select_text')
       return <SelectText value={v} options={f.options} onChange={(val) => setField(f.key, val)} />
+    // מונה + תווית נבחרת מרשימה (במקום שדה נפרד): מספר + dropdown שמחליף את הכיתוב
+    if (f.type === 'count_label')
+      return (
+        <div className="ed__countlabel">
+          <input
+            type="number" inputMode="numeric" min="0" placeholder="מספר"
+            value={v ?? ''}
+            onChange={(e) => setField(f.key, e.target.value === '' ? null : Number(e.target.value))}
+          />
+          <SelectText value={form[f.labelKey]} options={f.options} onChange={(val) => setField(f.labelKey, val)} />
+        </div>
+      )
     if (f.type === 'multiselect') {
       // v עשוי להגיע כמערך או כמחרוזת JSON (סכמת DB ישנה) — מנרמלים למערך כדי
       // שהבחירות הקיימות (כמו "פרויקטים נבחרים") יוצגו ויישמרו תקין

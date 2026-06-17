@@ -1074,6 +1074,10 @@
 
 /* ---- select + הקלדה חופשית (select_text) ---- */
 .ed__seltext { display: flex; flex-direction: column; gap: 0.5rem; }
+/* מונה + תווית-נבחרת בשדה אחד (במקום שדה "בניינים" + שדה תווית נפרד) */
+.ed__countlabel { display: flex; gap: 0.5rem; align-items: flex-start; }
+.ed__countlabel > input[type="number"] { flex: 0 0 5.5rem; }
+.ed__countlabel .ed__seltext { flex: 1 1 auto; min-width: 0; }
 
 /* ============================================================
    SETTINGS — התראות מייל על לידים

@@ -428,6 +428,25 @@ export async function setSetting(key, value) {
   invalidate('settings')
 }
 
+/* ---- עדכון בזמן אמת להגדרות האתר ----
+   מנוי Realtime *יחיד* לכל האפליקציה (לא ערוץ לכל קומפוננטה — כדי להימנע
+   מערוצים כפולים באותו topic). הכול עטוף ב-try/catch כך שגם אם Realtime
+   לא מאופשר על הטבלה / נכשל — זה לעולם לא יפיל את הרינדור. */
+let _settingsChannel = null
+const _settingsListeners = new Set()
+function ensureSettingsRealtime() {
+  if (_settingsChannel || !supabase || typeof supabase.channel !== 'function') return
+  try {
+    _settingsChannel = supabase
+      .channel('site_settings_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, () => {
+        invalidate('settings')
+        _settingsListeners.forEach((fn) => { try { fn() } catch { /* noop */ } })
+      })
+      .subscribe()
+  } catch { _settingsChannel = null }
+}
+
 export function useSettings() {
   const [settings, setSettings] = useState({})
   useEffect(() => {
@@ -435,28 +454,15 @@ export function useSettings() {
     const load = () => fetchSettings().then((s) => on && setSettings(s)).catch(() => {})
     load()
 
-    // עדכון בזמן אמת — מאזינים לשינויים בטבלת ההגדרות (Supabase Realtime).
-    // כל שינוי באדמין (תמונות קאבר, פונטים, לוגו, כותרות) מתפנה במטמון
-    // ומרענן את כל הצרכנים מיד — בלי להמתין ל-TTL ובלי רענון עמוד.
-    // אם ה-Realtime לא מאופשר על הטבלה — המנוי פשוט לא נורה ואין נזק.
-    let channel
-    if (supabase?.channel) {
-      channel = supabase
-        .channel('site_settings_rt')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, () => {
-          invalidate('settings')
-          load()
-        })
-        .subscribe()
-    }
-
-    // מנגנון גיבוי: רענון בעת חזרה ללשונית/פוקוס — מבטיח שנתונים טריים
+    // הצטרפות למנוי המשותף + רענון בעת חזרה ללשונית (גיבוי לנתונים טריים)
+    _settingsListeners.add(load)
+    ensureSettingsRealtime()
     const onFocus = () => { invalidate('settings'); load() }
     if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
 
     return () => {
       on = false
-      if (channel) supabase.removeChannel(channel)
+      _settingsListeners.delete(load)
       if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
     }
   }, [])

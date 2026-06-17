@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocalized } from '../../i18n/index.jsx'
-import { normalizeResponsiveImage, srcOfResponsive } from '../../lib/responsiveImage.js'
+import { normalizeResponsiveImage, srcOfResponsive, optimizeSrc } from '../../lib/responsiveImage.js'
 import Icon from './Icon.jsx'
 import InfiniteGrid from './InfiniteGrid.jsx'
 import './ActivityMenu.css'
@@ -71,7 +71,10 @@ export default function ActivityMenu({ items = [] }) {
     >
       {/* פאנל ימין — רקע כהה + רשת ריבועים + צ'יפים אדומים */}
       <div className="actmenu__panel">
-        <InfiniteGrid color="rgba(255,255,255,0.5)" baseOpacity={0.08} revealOpacity={0.2} />
+        {/* רשת עדינה יותר — פחות "אפקט לבן" שמבלבל ליד קו התפר */}
+        <InfiniteGrid color="rgba(255,255,255,0.32)" baseOpacity={0.05} revealOpacity={0.13} />
+        {/* האפלת קצה התפר (לכיוון התמונה) — תפר נקי ועדין */}
+        <span className="actmenu__seam" aria-hidden="true" />
         <div className="actmenu__chips">
           {items.map((a, i) => {
             const d = wrap(-(len / 2), len / 2, i - idx)
@@ -97,22 +100,39 @@ export default function ActivityMenu({ items = [] }) {
                     <Icon name={a.icon} size={16} />
                   </span>
                   <span className="actmenu__chip-label">{L(a.title)}</span>
+                  <Icon name="arrow" size={14} className="actmenu__chip-arrow" aria-hidden="true" />
                 </Link>
               </motion.div>
             )
           })}
         </div>
+
+        {/* מחוון התקדמות עדין — מראה מתי תוחלף הכרטיסייה הבאה (UI חכם) */}
+        {len > 1 && inView && (
+          <span
+            key={idx}
+            className="actmenu__progress"
+            style={{ animationDuration: `${AUTO_PLAY}ms`, animationPlayState: paused ? 'paused' : 'running' }}
+            aria-hidden="true"
+          />
+        )}
       </div>
 
-      {/* תמונה — צד שמאל, קצה פנימי (ליד הצ'יפים) שטוח */}
-      <div className="actmenu__stage" style={{ '--actmenu-bg': `url("${srcOfResponsive(current.image)}")` }}>
+      {/* תמונה — צד שמאל, קצה פנימי (ליד הצ'יפים) שטוח.
+          לחיצה על התמונה מנווטת לעמוד התחום הפעיל (אותו אחד שמודגש בצ'יפים). */}
+      <Link
+        to={current.to}
+        className="actmenu__stage"
+        aria-label={L(current.title)}
+        style={{ '--actmenu-bg': `url("${optimizeSrc(srcOfResponsive(current.image), 700)}")` }}
+      >
         {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשהתמונה הוקטנה (zoom-out) או ב-contain */}
         <span className="actmenu__backdrop" aria-hidden="true" />
         <AnimatePresence mode="wait" initial={false}>
           <motion.img
             key={current.id}
             className="actmenu__img"
-            src={srcOfResponsive(current.image)}
+            src={optimizeSrc(srcOfResponsive(current.image), 700)}
             alt=""
             /* תצוגת המובייל מתוך ה-CMS (focal point / fit) — מקומפוננטה מובייל בלבד */
             style={(() => {
@@ -146,7 +166,7 @@ export default function ActivityMenu({ items = [] }) {
             {L(current.short)}
           </motion.p>
         </AnimatePresence>
-      </div>
+      </Link>
     </div>
   )
 }

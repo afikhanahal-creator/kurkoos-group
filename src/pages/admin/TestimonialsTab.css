@@ -1,0 +1,115 @@
+.tst-tab__bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+.tst-tab__intro {
+  color: var(--adm-text-soft, #667);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 62ch;
+  margin: 0;
+}
+.tst-tab__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+.tst-tab__reset {
+  border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.14));
+  background: transparent;
+  color: var(--adm-text-soft, #667);
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tst-tab__reset:hover:not(:disabled) { background: var(--adm-bg, rgba(0, 0, 0, 0.04)); }
+.tst-tab__add { white-space: nowrap; }
+.tst-tab__empty {
+  color: var(--adm-text-soft, #889);
+  font-size: 0.95rem;
+  padding: 1.4rem;
+  border: 1px dashed var(--adm-border, rgba(0, 0, 0, 0.14));
+  border-radius: 12px;
+  text-align: center;
+}
+.tst-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.4rem;
+}
+.tst-card {
+  border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.1));
+  border-radius: 14px;
+  padding: 1.1rem;
+  background: var(--adm-card, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.tst-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.tst-card__num {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--adm-text-soft, #778);
+}
+.tst-card__order {
+  display: flex;
+  gap: 0.3rem;
+  margin-inline-start: auto;
+}
+.tst-card__order button,
+.tst-card__del {
+  border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.14));
+  background: var(--adm-bg, transparent);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--adm-text, inherit);
+}
+.tst-card__order button:disabled { opacity: 0.4; cursor: default; }
+.tst-card__del:hover { border-color: #d33; color: #d33; }
+.tst-card__lbl {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: var(--adm-text-soft, #667);
+}
+.tst-card__image { }
+.tst-card__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+.tst-field--full { grid-column: 1 / -1; }
+.tst-field input,
+.tst-field textarea {
+  width: 100%;
+  border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.16));
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--adm-input-bg, #fff);
+  color: var(--adm-text, inherit);
+  resize: vertical;
+}
+.tst-field input:focus,
+.tst-field textarea:focus {
+  outline: none;
+  border-color: var(--adm-accent, #105572);
+  box-shadow: 0 0 0 3px rgba(16, 85, 114, 0.12);
+}

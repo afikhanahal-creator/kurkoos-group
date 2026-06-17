@@ -138,7 +138,7 @@ function buildProject(local, cms) {
       stats_scale: cms.stats_scale || undefined,
       // קוביות נתונים מותאמות מה-CMS (גרירה/עריכה) — עוקפות את ברירת המחדל
       statCubes: Array.isArray(cms.stat_cubes) && cms.stat_cubes.length
-        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, spread: !!c.spread, brk: !!c.brk })).filter((c) => has(c.value) || has(c.label))
+        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, fw: c.fw, spread: !!c.spread, brk: !!c.brk })).filter((c) => has(c.value) || has(c.label))
         : undefined,
       statCubesRow: !!cms.stat_cubes_row,
       mapLink: cms.map_link || undefined,
@@ -327,9 +327,22 @@ export default function ProjectDetail() {
   const realCards = allCards && allCards.length ? allCards : null
   let moreSlugs = cms?.more_projects
   if (typeof moreSlugs === 'string') { try { moreSlugs = JSON.parse(moreSlugs) } catch { moreSlugs = null } }
-  const moreProjects = (Array.isArray(moreSlugs) && moreSlugs.length && realCards)
+  // כל המזהים האפשריים של הפרויקט הנוכחי (slug מה-URL / מה-CMS / id) — כדי
+  // שלעולם לא יופיע בעצמו ב"פרויקטים נוספים", גם אם נבחר ידנית בטעות.
+  const currentKeys = new Set([slug, project.slug, cms?.slug, cms?.id].filter(Boolean))
+  const isManualMore = Array.isArray(moreSlugs) && moreSlugs.length && realCards
+  const moreCandidates = isManualMore
     ? moreSlugs.map((s) => realCards.find((p) => p.slug === s)).filter(Boolean)
-    : (realCards || projects).filter((p) => p.slug !== project.slug).slice(0, 3)
+    : (realCards || projects)
+  // מסננים תמיד את הפרויקט הנוכחי ומסירים כפילויות (לפי slug) — בלי קשר אם
+  // הבחירה ידנית או אוטומטית, כך שהמשתמש לעולם לא רואה את אותו פרויקט פעמיים.
+  const seenMore = new Set()
+  const moreProjects = moreCandidates.filter((p) => {
+    if (!p || currentKeys.has(p.slug)) return false
+    if (seenMore.has(p.slug)) return false
+    seenMore.add(p.slug)
+    return true
+  }).slice(0, isManualMore ? moreCandidates.length : 3)
 
   // בר העוגנים — בדסקטופ כל המקטעים (פרוסים לרוחב); במובייל רק אלה עם mobile:true
   // (הסביבה + מפה). המתאים מודגש בעת גלילה. ההסתרה במובייל היא ב-CSS (בלי ריצוד).
@@ -443,6 +456,7 @@ export default function ProjectDetail() {
                           <span
                             className={`pd-stat__value${cube.size === 'wide' ? ' pd-stat__value--sm' : ''}`}
                             dir="auto"
+                            style={cube.fw && cube.fw !== 1 ? { display: 'inline-block', transform: `scaleX(${cube.fw})`, transformOrigin: 'center' } : undefined}
                           >
                             {cube.value}
                           </span>

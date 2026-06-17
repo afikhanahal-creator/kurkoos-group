@@ -1,4 +1,4 @@
-import { normalizeResponsiveImage, responsiveStyle } from '../../lib/responsiveImage.js'
+import { normalizeResponsiveImage, responsiveStyle, optimizeSrc } from '../../lib/responsiveImage.js'
 import './ResponsiveImage.css'
 
 /* ============================================================
@@ -15,6 +15,7 @@ export default function ResponsiveImage({
   decoding = 'async',
   draggable = false,
   style,
+  w = 1280,
   ...rest
 }) {
   const ri = normalizeResponsiveImage(value)
@@ -22,7 +23,7 @@ export default function ResponsiveImage({
   return (
     <img
       className={`ri-img ${className}`.trim()}
-      src={ri.src}
+      src={optimizeSrc(ri.src, w)}
       alt={alt ?? ri.alt ?? ''}
       style={{ ...responsiveStyle(value), ...style }}
       loading={loading}

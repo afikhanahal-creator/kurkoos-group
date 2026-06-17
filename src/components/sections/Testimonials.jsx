@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
-import testimonials from '../../data/testimonials.js'
+import { useSettings } from '../../lib/cms.js'
+import defaultTestimonials from '../../data/testimonials.js'
 import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
 import KineticText from '../ui/KineticText.jsx'
@@ -24,12 +25,24 @@ function Stars() {
 export default function Testimonials() {
   const { t, isRTL } = useI18n()
   const L = useLocalized()
+  const settings = useSettings()
   const [i, setI] = useState(0)
   const [paused, setPaused] = useState(false)
+
+  // המלצות מנוהלות מה-CMS (key: testimonials) גוברות על ברירת המחדל
+  const testimonials = useMemo(() => {
+    let list = settings.testimonials
+    if (typeof list === 'string') { try { list = JSON.parse(list) } catch { list = null } }
+    return Array.isArray(list) && list.length ? list : defaultTestimonials
+  }, [settings.testimonials])
+
   const count = testimonials.length
 
   const next = useCallback(() => setI((p) => (p + 1) % count), [count])
   const prev = useCallback(() => setI((p) => (p - 1 + count) % count), [count])
+
+  // אם מספר ההמלצות הצטמצם (עריכה ב-CMS) — מוודאים שהאינדקס בתחום
+  useEffect(() => { setI((p) => (p >= count ? 0 : p)) }, [count])
 
   // החלפה אוטומטית — נעצרת בריחוף ומכבדת prefers-reduced-motion
   useEffect(() => {
@@ -39,7 +52,8 @@ export default function Testimonials() {
     return () => clearInterval(id)
   }, [next, paused, i])
 
-  const item = testimonials[i]
+  const item = testimonials[i] || testimonials[0]
+  if (!item) return null
 
   return (
     <section className="section section--soft testimonials">

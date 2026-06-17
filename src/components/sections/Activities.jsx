@@ -7,6 +7,7 @@ import FeatureCard from '../ui/FeatureCard.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import ActivityMenu from '../ui/ActivityMenu.jsx'
 import useIsMobile from '../../hooks/useIsMobile.js'
+import { pickResponsive } from '../../lib/responsiveImage.js'
 import './Activities.css'
 
 export default function Activities() {
@@ -15,12 +16,22 @@ export default function Activities() {
   const isMobile = useIsMobile()
   const settings = useSettings()
 
-  // תמונות מותאמות מה-CMS (key: activity_images = מיפוי id→url) גוברות על ברירת המחדל
-  const items = useMemo(() => {
+  // תמונות מותאמות מה-CMS (key: activity_images = מיפוי id→ערך תמונה) גוברות על
+  // ברירת המחדל. הערך יכול להיות מפוצל ({ desktop, mobile }) — כך אפשר לבחור
+  // תמונת *מקור* שונה לחלוטין לכל מכשיר. ללא בידול — אותה תמונה משמשת לשניהם.
+  const { desktopItems, mobileItems } = useMemo(() => {
     let map = settings.activity_images
     if (typeof map === 'string') { try { map = JSON.parse(map) } catch { map = null } }
-    if (!map || typeof map !== 'object') return activities
-    return activities.map((a) => (map[a.id] ? { ...a, image: map[a.id] } : a))
+    const valid = map && typeof map === 'object'
+    const desk = activities.map((a) => {
+      const v = valid ? pickResponsive(map[a.id], 'desktop') : null
+      return v ? { ...a, image: v } : a
+    })
+    const mob = activities.map((a) => {
+      const v = valid ? pickResponsive(map[a.id], 'mobile') : null
+      return v ? { ...a, image: v } : a
+    })
+    return { desktopItems: desk, mobileItems: mob }
   }, [settings.activity_images])
 
   return (
@@ -33,10 +44,10 @@ export default function Activities() {
         </Reveal>
 
         {isMobile ? (
-          <ActivityMenu items={items} />
+          <ActivityMenu items={mobileItems} />
         ) : (
           <div className="activities__grid">
-            {items.map((a, i) => (
+            {desktopItems.map((a, i) => (
               <Reveal key={a.id} delay={(i % 4) * 0.08}>
                 <FeatureCard
                   icon={a.icon}

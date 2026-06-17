@@ -50,6 +50,7 @@
 }
 
 @media (max-width: 600px) {
-  .logo-marquee__item { height: 84px; margin-inline-end: clamp(3rem, 16vw, 4.5rem); }
-  .logo-marquee__img { height: 46px; max-width: none; }
+  /* לוגואים מעט גדולים יותר (+2px) עם מרווח נשימה רחב יותר ביניהם — לא צפוף */
+  .logo-marquee__item { height: 84px; margin-inline-end: clamp(3.4rem, 17vw, 5rem); }
+  .logo-marquee__img { height: 48px; max-width: none; }
 }

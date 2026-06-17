@@ -5,6 +5,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import projects from '../../data/projects.js'
 import { supabase } from '../../lib/supabase.js'
 import { listProjectCards, cmsRowToCard, projectPages } from '../../lib/cms.js'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Reveal from '../ui/Reveal.jsx'
 import SmartImage from '../ui/SmartImage.jsx'
@@ -33,7 +34,7 @@ function Lightbox({ item, onClose, L, t }) {
         exit={{ scale: 0.92, y: 20 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <img src={item.cover} alt={L(item.name)} className="pg-lightbox__img" />
+        <img src={optimizeSrc(item.cover, 1200)} alt={L(item.name)} className="pg-lightbox__img" loading="lazy" decoding="async" />
         <div className="pg-lightbox__bar">
           <div>
             <strong>{L(item.name)}</strong>
@@ -56,17 +57,17 @@ function Lightbox({ item, onClose, L, t }) {
    במובייל מוותרים על BorderGlow/SpotlightCard (אפקטים של מצביע/ריחוף
    בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
    כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
-function ProjectCard({ p, L, t, isMobile }) {
+function ProjectCard({ p, L, t, isMobile, eager }) {
   const media = (
     <div className="pg-card__media">
       {isMobile ? (
         <div className="pg-card__spot">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={760} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </div>
       ) : (
         <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={760} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </SpotlightCard>
       )}
@@ -75,7 +76,7 @@ function ProjectCard({ p, L, t, isMobile }) {
         <div className="pg-card__reveal">
           <p className="pg-card__desc">{L(p.short)}</p>
           <span className="pg-card__meta">
-            <Icon name="location" size={14} /> {L(p.city)} · {p.year}
+            {L(p.city)} · {p.year}
           </span>
         </div>
       </div>
@@ -224,7 +225,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           viewport={{ once: true, amount: 'some' }}
         >
           {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} />
+            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 2} />
           ))}
         </motion.div>
       </div>

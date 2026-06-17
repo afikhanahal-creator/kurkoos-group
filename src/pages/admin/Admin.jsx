@@ -11,6 +11,7 @@ import FontsTab from './FontsTab.jsx'
 import SettingsTab from './SettingsTab.jsx'
 import NewsletterTab from './NewsletterTab.jsx'
 import HeadingsTab from './HeadingsTab.jsx'
+import TestimonialsTab from './TestimonialsTab.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
 import './admin.css'
 
@@ -29,6 +30,7 @@ const Ico = {
   activities: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>,
   covers: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8" cy="10" r="1.6" /><path d="M21 16l-5-5L5 19" /></svg>,
   newsletter: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>,
+  testimonials: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 10h.01M12 10h.01M16 10h.01" /></svg>,
   sun: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>,
   moon: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>,
 }
@@ -76,7 +78,8 @@ const TABS = [
   { id: 'headings', label: 'כותרות וטקסטים', sub: 'עריכת כל הכותרות והטקסטים באתר — במקום אחד', icon: 'headings', group: 'תוכן' },
   { id: 'counters', label: 'מונים ומספרים', sub: 'הנתונים שמופיעים באתר', icon: 'counters', group: 'תוכן' },
   { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos', group: 'תוכן' },
-  { id: 'activities', label: 'תחומי הפעילות', sub: 'תמונות ארבעת התחומים בעמוד הבית (מובייל)', icon: 'activities', group: 'תוכן' },
+  { id: 'activities', label: 'תחומי הפעילות', sub: 'תמונות ארבעת התחומים — דסקטופ ומובייל בנפרד', icon: 'activities', group: 'תוכן' },
+  { id: 'testimonials', label: 'המלצות לקוחות', sub: 'כרטיסיות סיפורי ההצלחה בעמוד הבית — טקסט ותמונה', icon: 'testimonials', group: 'תוכן' },
   { id: 'covers', label: 'תמונות קאבר', sub: 'באנרי החטיבות וגלריית הביצוע — החלפה/סידור/גרירה', icon: 'covers', group: 'תוכן' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads', group: 'לקוחות' },
   { id: 'newsletter', label: 'ניוזלטר', sub: 'מאגר הנרשמים + חיבור ESP/וובהוק לאוטומציות', icon: 'newsletter', group: 'לקוחות' },
@@ -166,12 +169,13 @@ export default function Admin() {
             </button>
           </div>
         </header>
-        <main className="adm__content">
+        <main className="adm__content" key={tab}>
           {tab === 'projects' && <ProjectsTab />}
           {tab === 'headings' && <HeadingsTab />}
           {tab === 'counters' && <CountersTab />}
           {tab === 'logos' && <LogosTab />}
           {tab === 'activities' && <ActivitiesTab />}
+          {tab === 'testimonials' && <TestimonialsTab />}
           {tab === 'covers' && <CoverImagesTab />}
           {tab === 'leads' && <LeadsTab />}
           {tab === 'newsletter' && <NewsletterTab />}

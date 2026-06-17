@@ -11,7 +11,7 @@ import { srcOfResponsive } from '../lib/responsiveImage.js'
 import './Projects.css'
 
 export default function Projects() {
-  const { t, lang } = useI18n()
+  const { t } = useI18n()
   const L = useLocalized()
 
   const [projects, setProjects] = useState(() =>
@@ -58,13 +58,14 @@ export default function Projects() {
     })
   })
 
-  const allTitle = lang === 'he' ? 'כל הפרויקטים' : 'All projects'
+  const allTitle = t('pages.projects.title')
+  const lead = t('pages.projects.lead')
 
   return (
     <>
-      <Seo title={allTitle} description={t('projects.lead')} />
-      <PageHeader eyebrow={t('projects.eyebrow')} title={allTitle} lead={t('projects.lead')} crumbs={[{ label: allTitle }]} />
-      <HeroCollage title={allTitle} subtitle={t('projects.lead')} stats={statItems} items={collageItems} />
+      <Seo title={allTitle} description={lead} />
+      <PageHeader eyebrow={t('pages.projects.eyebrow')} title={allTitle} lead={lead} crumbs={[{ label: allTitle }]} />
+      <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
     </>
   )
 }

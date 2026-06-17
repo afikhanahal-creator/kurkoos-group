@@ -781,36 +781,31 @@
   z-index: 0;
 }
 .pd-contact__panel > * { position: relative; z-index: 1; }
-/* כיתוב לבן נקי עם קו אדום — ניגודיות גבוהה על הרקע הכהה, ללא מראה של כפתור.
+/* תווית "דברו איתנו" — כפתור אדום מלא עם כיתוב לבן: בולט וברור על הרקע הכהה.
    הספציפיות הכפולה (.pd-contact .pd-contact__eyebrow) גוברת על .eyebrow הבסיסי */
 .pd-contact .pd-contact__eyebrow {
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
-  background: none;
-  color: #ffffff;
-  font-size: 0.84rem;
+  background: var(--color-accent);     /* כפתור אדום מלא */
+  color: #ffffff;                      /* כיתוב לבן */
+  font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   gap: 0.6rem;
-  padding: 0;
+  padding: 0.42em 1.05em;
+  border-radius: var(--radius-pill);
   margin-bottom: 0.95rem;
   opacity: 1;
-  box-shadow: none;
+  box-shadow: 0 6px 16px -6px rgba(169, 11, 12, 0.55);
 }
-.pd-contact .pd-contact__eyebrow::before {
-  content: '';
-  display: block;
-  background: var(--color-accent);
-  width: 32px;
-  height: 3px;
-  border-radius: 2px;
-}
+/* התווית כבר כפתור אדום מלא — אין צורך בקו ההדגשה */
+.pd-contact .pd-contact__eyebrow::before { display: none; }
 .pd-contact__title {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: clamp(1.45rem, 2vw, 1.9rem);
+  font-size: clamp(1.3rem, 1.8vw, 1.7rem);
   color: #fff;
   margin: 0 0 0.55rem;
   line-height: 1.12;
@@ -1137,32 +1132,24 @@
   /* טופס לתיאום פגישה — ממורכז; היומן מוצג מתחת לטופס גם במובייל */
   .pd-contact { grid-template-columns: 1fr; gap: 1.5rem; justify-items: center; }
   .pd-contact__panel { width: 100%; max-width: 460px; }
-  /* כותרות הטופס ממורכזות ומשודרגות במובייל */
+  /* כותרות הטופס ממורכזות במובייל — התווית נשארת כפתור אדום עם כיתוב לבן */
   .pd-contact .pd-contact__eyebrow {
     justify-content: center;
     margin-inline: auto;
-    color: var(--color-accent);   /* "דברו איתנו" באדום */
-    font-size: 0.78rem;
-    letter-spacing: 0.24em;
-    gap: 0.7rem;
-    margin-bottom: 0.7rem;
+    color: #fff;                  /* כיתוב לבן על הכפתור האדום */
+    font-size: 0.76rem;
+    letter-spacing: 0.16em;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
   }
-  /* קווי הדגשה אדומים סימטריים משני צידי ה-eyebrow */
+  /* ללא קווי הדגשה — התווית כבר כפתור אדום מלא וברור */
   .pd-contact .pd-contact__eyebrow::before,
-  .pd-contact .pd-contact__eyebrow::after {
-    content: '';
-    display: block;
-    width: 24px;
-    height: 2px;
-    background: var(--color-accent);
-    border-radius: 2px;
-    opacity: 0.9;
-  }
+  .pd-contact .pd-contact__eyebrow::after { display: none; }
   .pd-contact__title {
     text-align: center;
-    font-size: clamp(2.1rem, 9vw, 2.7rem);
+    font-size: clamp(1.85rem, 7.5vw, 2.3rem);
     font-weight: 900;
-    line-height: 1.04;
+    line-height: 1.06;
     letter-spacing: -0.01em;
     margin-bottom: 0.7rem;
     text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25);

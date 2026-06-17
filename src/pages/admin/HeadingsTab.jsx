@@ -120,6 +120,14 @@ export default function HeadingsTab() {
 
   const current = HEADINGS_REGISTRY.find((p) => p.pageId === activePage) || HEADINGS_REGISTRY[0]
 
+  // קיבוץ הטאבים לפי מקור: דף הבית מול עמודים פנימיים (לתצוגה מסודרת)
+  const groupOf = (page) => (page.pageId.startsWith('page-') ? 'עמודים פנימיים' : 'דף הבית')
+  const tabGroups = HEADINGS_REGISTRY.reduce((acc, page) => {
+    const g = groupOf(page)
+    ;(acc[g] = acc[g] || []).push(page)
+    return acc
+  }, {})
+
   if (loading) {
     return (
       <div className="hdg">
@@ -159,20 +167,25 @@ export default function HeadingsTab() {
         // מצב רגיל — טאבים של עמודים + תוכן העמוד הנבחר
         <div className="hdg__layout">
           <nav className="hdg__tabs" aria-label="עמודים">
-            {HEADINGS_REGISTRY.map((page) => {
-              const n = changedCount(page)
-              return (
-                <button
-                  key={page.pageId}
-                  type="button"
-                  className={`hdg__tab ${page.pageId === current.pageId ? 'is-active' : ''}`}
-                  onClick={() => setActivePage(page.pageId)}
-                >
-                  <span className="hdg__tab-label">{page.pageLabel}</span>
-                  {n > 0 && <span className="hdg__tab-count" title={`${n} כותרות נערכו`}>{n}</span>}
-                </button>
-              )
-            })}
+            {Object.entries(tabGroups).map(([groupLabel, pages]) => (
+              <div className="hdg__tabgroup" key={groupLabel}>
+                <span className="hdg__tabgroup-label">{groupLabel}</span>
+                {pages.map((page) => {
+                  const n = changedCount(page)
+                  return (
+                    <button
+                      key={page.pageId}
+                      type="button"
+                      className={`hdg__tab ${page.pageId === current.pageId ? 'is-active' : ''}`}
+                      onClick={() => setActivePage(page.pageId)}
+                    >
+                      <span className="hdg__tab-label">{page.pageLabel}</span>
+                      {n > 0 && <span className="hdg__tab-count" title={`${n} כותרות נערכו`}>{n}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
           </nav>
 
           <div className="hdg__content">

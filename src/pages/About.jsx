@@ -41,8 +41,9 @@ export default function About() {
   return (
     <>
       <PageHeader
-        eyebrow={t('nav.about')}
-        title={t('hero.eyebrow')}
+        eyebrow={t('pages.about.eyebrow')}
+        title={t('pages.about.title')}
+        lead={t('pages.about.lead')}
         crumbs={[{ label: t('nav.about') }]}
       />
 

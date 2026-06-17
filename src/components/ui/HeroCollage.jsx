@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icon.jsx'
 import useCountUp from '../../hooks/useCountUp.js'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 import './HeroCollage.css'
 
 /* מספר שסופר מ-0 ליעד כשנכנס לתצוגה — שומר על קידומת/סיומת (כמו "+" או "K").
@@ -42,7 +43,7 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
               aria-label={it.name}
             >
               {it.url
-                ? <img src={it.url} alt={it.name} draggable={false} loading="lazy" />
+                ? <img src={optimizeSrc(it.url, 720)} alt={it.name} draggable={false} loading="lazy" />
                 : <span className="hc-card__ph" aria-hidden="true" />}
 
               {/* תווית שם תמידית */}

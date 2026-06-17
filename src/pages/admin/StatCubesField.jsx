@@ -31,6 +31,13 @@ const XIcon = (p) => (
 )
 
 const clampW = (v) => Math.max(0.2, Math.min(5, Math.round(v * 10) / 10))
+// מתיחת/כיווץ הפונט לצדדים (scaleX) — שומר על יחס ומרווח אותיות אחיד
+const clampFw = (v) => Math.max(0.6, Math.min(2, Math.round(v * 10) / 10))
+// סגנון מתיחת הפונט: scaleX שומר על היחס והמרווח בין האותיות זהים
+const fontStretchStyle = (cube) =>
+  cube.fw && cube.fw !== 1
+    ? { display: 'inline-block', transform: `scaleX(${cube.fw})`, transformOrigin: 'center' }
+    : undefined
 
 /* קוביה בתצוגה החיה — גוררים אותה לסידור, ויש ידיות בצדדים לשינוי רוחב
    בעכבר (כמו עריכת תמונה). השינוי נשמר (cube.w) ומופיע באתר. */
@@ -76,7 +83,7 @@ function PvCube({ id, cube, onResize }) {
       title="גררו לסידור · ידיות הצד לשינוי רוחב"
     >
       <span className="cubed__pv-handle cubed__pv-handle--start" onPointerDown={startResize('start')} title="גררו לשינוי רוחב" aria-hidden="true" />
-      <span className="cubed__pv-val" dir={size === 'wide' ? 'auto' : 'ltr'}>{cube.value || '—'}</span>
+      <span className="cubed__pv-val" dir={size === 'wide' ? 'auto' : 'ltr'} style={fontStretchStyle(cube)}>{cube.value || '—'}</span>
       <span className="cubed__pv-lbl">{cube.label?.he || ''}</span>
       <span className="cubed__pv-handle cubed__pv-handle--end" onPointerDown={startResize('end')} title="גררו לשינוי רוחב" aria-hidden="true" />
     </div>
@@ -119,6 +126,11 @@ function CubeRow({ id, cube, onChange, onDelete }) {
             <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) - 0.3) })} aria-label="הקטן רוחב">−</button>
             <span className="cubed__w-lbl">רוחב</span>
             <button type="button" onClick={() => onChange({ w: clampW((cube.w ?? 1.1) + 0.3) })} aria-label="הגדל רוחב">+</button>
+          </span>
+          <span className="cubed__w" title="מתיחת/כיווץ הפונט לצדדים — היחס והמרווח בין האותיות נשמרים">
+            <button type="button" onClick={() => onChange({ fw: clampFw((cube.fw ?? 1) - 0.1) })} aria-label="כווץ פונט">−</button>
+            <span className="cubed__w-lbl">מתיחת פונט {cube.fw && cube.fw !== 1 ? `· ${Math.round(cube.fw * 100)}%` : ''}</span>
+            <button type="button" onClick={() => onChange({ fw: clampFw((cube.fw ?? 1) + 0.1) })} aria-label="מתח פונט">+</button>
           </span>
           <button
             type="button"

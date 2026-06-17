@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
 import activities from '../../data/activities.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
-import { srcOfResponsive } from '../../lib/responsiveImage.js'
+import { srcOfResponsive, pickResponsive } from '../../lib/responsiveImage.js'
 import { toast } from '../../lib/toast.js'
 import './ActivitiesTab.css'
 
@@ -48,14 +48,22 @@ export default function ActivitiesTab() {
     })
   }
 
-  const save = async (id, url) => {
+  // שמירת תמונת מקור לפי מכשיר — דסקטופ ומובייל נשמרים בנפרד לחלוטין.
+  // המבנה במסד: activity_images[id] = { desktop, mobile }. ערך ישן (יחיד) מהגר
+  // אוטומטית — הוא משמש כברירת מחדל לשני המכשירים עד שמחליפים אחד מהם.
+  const saveBp = (id, bp, val) => {
     setMap((prev) => {
+      const cur = (prev || {})[id]
+      const entry = {
+        desktop: pickResponsive(cur, 'desktop'),
+        mobile: pickResponsive(cur, 'mobile'),
+      }
+      entry[bp] = val || null
       const next = { ...(prev || {}) }
-      if (url) next[id] = url
-      else delete next[id]
-      // שמירה אסינכרונית מתוך ה-updater (ה-next המעודכן)
+      if (!entry.desktop && !entry.mobile) delete next[id]
+      else next[id] = entry
       setSetting('activity_images', JSON.stringify(next))
-        .then(() => toast.success('התמונה נשמרה'))
+        .then(() => toast.success(bp === 'mobile' ? 'תמונת המובייל נשמרה' : 'תמונת הדסקטופ נשמרה'))
         .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
       return next
     })
@@ -72,38 +80,54 @@ export default function ActivitiesTab() {
   return (
     <div className="acts-tab">
       <p className="acts-tab__intro">
-        ניהול התמונות של ארבעת תחומי הפעילות בעמוד הבית — גם בדסקטופ וגם במובייל. עברו בין
-        תצוגת 🖥️ דסקטופ ל-📱 מובייל כדי לערוך כל אחת בנפרד (חיתוך, מיקוד, זום וכיוון).
-        אפשר להעלות/להחליף/להסיר תמונה. ללא תמונה מותאמת — מוצגת תמונת ברירת המחדל של התחום.
+        ניהול התמונות של ארבעת תחומי הפעילות בעמוד הבית. לכל תחום יש שתי תמונות
+        <strong> נפרדות לחלוטין</strong>: אחת ל-🖥️ <strong>דסקטופ</strong> (ארבע הכרטיסיות) ואחת
+        ל-📱 <strong>מובייל</strong> (תפריט התחומים). כל כפתור מעלה/מחליף/עורך את התמונה שלו בלבד —
+        עריכה באחד לא משפיעה על השני. ללא תמונה מותאמת — מוצגת תמונת ברירת המחדל של התחום.
       </p>
 
       <div className="acts-tab__grid">
         {activities.map((a) => {
-          const val = map[a.id]
+          const deskVal = pickResponsive(map[a.id], 'desktop')
+          const mobVal = pickResponsive(map[a.id], 'mobile')
           return (
-            <section className="acts-card" key={a.id}>
+            <section className="acts-card acts-card--split" key={a.id}>
               <header className="acts-card__head">
                 <h3 className="acts-card__title">{a.title.he}</h3>
                 <span className="acts-card__short">{a.short?.he}</span>
               </header>
 
-              <ResponsiveImageField
-                value={val}
-                folder="activities"
-                breakpoints={['desktop', 'mobile']}
-                surfaceLabel="כרטיס תחום הפעילות"
-                chrome="split"
-                chromeLabel={a.title.he}
-                desktopAspect="16 / 10"
-                mobileAspect="3 / 5"
-                onChange={(v) => save(a.id, v)}
-              />
+              <div className="acts-card__device">
+                <span className="acts-card__device-label">🖥️ תמונת דסקטופ <small>(ארבע הכרטיסיות)</small></span>
+                <ResponsiveImageField
+                  value={deskVal}
+                  folder="activities"
+                  breakpoints={['desktop']}
+                  surfaceLabel="כרטיס תחום הפעילות"
+                  desktopAspect="16 / 10"
+                  onChange={(v) => saveBp(a.id, 'desktop', v)}
+                />
+                {!srcOfResponsive(deskVal) && (
+                  <small className="acts-card__hint">ללא תמונת דסקטופ — מוצגת ברירת המחדל של התחום.</small>
+                )}
+              </div>
 
-              {!srcOfResponsive(val) && (
-                <small className="acts-card__hint">
-                  כרגע מוצגת תמונת ברירת המחדל של התחום. העלו תמונה כדי להחליף.
-                </small>
-              )}
+              <div className="acts-card__device">
+                <span className="acts-card__device-label">📱 תמונת מובייל <small>(תפריט התחומים)</small></span>
+                <ResponsiveImageField
+                  value={mobVal}
+                  folder="activities"
+                  breakpoints={['mobile']}
+                  surfaceLabel="כרטיס תחום הפעילות"
+                  chrome="split"
+                  chromeLabel={a.title.he}
+                  mobileAspect="3 / 5"
+                  onChange={(v) => saveBp(a.id, 'mobile', v)}
+                />
+                {!srcOfResponsive(mobVal) && (
+                  <small className="acts-card__hint">ללא תמונת מובייל — מוצגת ברירת המחדל של התחום.</small>
+                )}
+              </div>
             </section>
           )
         })}

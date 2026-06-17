@@ -48,7 +48,9 @@ alter table public.projects add column if not exists stats_scale text default 'n
 alter table public.projects add column if not exists towers int;                              -- מספר בניינים
 alter table public.projects add column if not exists towers_label text;                        -- תווית מונה הבניינים (למשל "וילות")
 alter table public.projects add column if not exists units int;                               -- יחידות דיור
+alter table public.projects add column if not exists units_label text;                         -- תווית מונה יחידות הדיור (למשל "דירות")
 alter table public.projects add column if not exists floors text;                             -- קומות (טקסט, למשל "7-8")
+alter table public.projects add column if not exists floors_label text;                        -- תווית מונה הקומות (למשל "מפלסים")
 alter table public.projects add column if not exists architects text;                         -- אדריכלים
 alter table public.projects add column if not exists year int;                                -- שנת אכלוס
 -- שדות מובנים (jsonb)

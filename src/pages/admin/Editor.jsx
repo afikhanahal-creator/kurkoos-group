@@ -465,11 +465,19 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     if (f.type === 'count_label')
       return (
         <div className="ed__countlabel">
-          <input
-            type="number" inputMode="numeric" min="0" placeholder="מספר"
-            value={v ?? ''}
-            onChange={(e) => setField(f.key, e.target.value === '' ? null : Number(e.target.value))}
-          />
+          {f.valueType === 'text' ? (
+            <input
+              type="text" dir={f.dir || 'ltr'} placeholder="מספר"
+              value={v ?? ''}
+              onChange={(e) => setField(f.key, e.target.value)}
+            />
+          ) : (
+            <input
+              type="number" inputMode="numeric" min="0" placeholder="מספר"
+              value={v ?? ''}
+              onChange={(e) => setField(f.key, e.target.value === '' ? null : Number(e.target.value))}
+            />
+          )}
           <SelectText value={form[f.labelKey]} options={f.options} onChange={(val) => setField(f.labelKey, val)} />
         </div>
       )

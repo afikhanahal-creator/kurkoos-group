@@ -180,7 +180,7 @@ export function cmsRowToCard(p) {
 
 /* עמודות אופציונליות שנוספו לאחרונה — אם ה-migration עדיין לא הורץ ב-Supabase,
    העמודות לא קיימות ושמירה תיכשל. מסירים אותן ומנסים שוב כדי שהשמירה לא תישבר. */
-const OPTIONAL_PROJECT_COLS = ['about_image_url', 'about_rounded', 'about_spaced', 'towers_label', 'more_projects']
+const OPTIONAL_PROJECT_COLS = ['about_image_url', 'about_rounded', 'about_spaced', 'towers_label', 'more_projects', 'units_label', 'floors_label']
 const isMissingColumnError = (error) =>
   !!error && (error.code === 'PGRST204' || error.code === '42703' ||
     /column .* does not exist|could not find the .* column|schema cache/i.test(error.message || ''))

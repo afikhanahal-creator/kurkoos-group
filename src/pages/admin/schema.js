@@ -66,6 +66,26 @@ export const PROJECT_TYPE = [
   { value: 'מלונאות', label: 'מלונאות' },
 ]
 
+// תוויות למונה "יחידות דיור" (מה ייכתב מתחת למספר). ניתן גם להקליד חופשי.
+export const UNITS_LABELS = [
+  { value: 'יחידות דיור', label: 'יחידות דיור' },
+  { value: 'דירות', label: 'דירות' },
+  { value: 'יחידות', label: 'יחידות' },
+  { value: 'בתים', label: 'בתים' },
+  { value: 'וילות', label: 'וילות' },
+  { value: 'קוטג׳ים', label: 'קוטג׳ים' },
+  { value: 'מגרשים', label: 'מגרשים' },
+  { value: 'משרדים', label: 'משרדים' },
+  { value: 'חנויות', label: 'חנויות' },
+]
+
+// תוויות למונה "קומות". ניתן גם להקליד חופשי.
+export const FLOORS_LABELS = [
+  { value: 'קומות', label: 'קומות' },
+  { value: 'מפלסים', label: 'מפלסים' },
+  { value: 'קומות מעל הקרקע', label: 'קומות מעל הקרקע' },
+]
+
 export const PROPERTY_TYPE = [
   { value: 'apartment', label: 'דירה' },
   { value: 'garden_apartment', label: 'דירת גן' },
@@ -120,8 +140,24 @@ export const projectSchema = [
         options: PROJECT_TYPE,
         hint: 'הזינו מספר, ובחרו מהרשימה (או הקלידו) מה ייכתב מתחת אליו — למשל "וילות", "מגדל מגורים". ריק = "בניינים".',
       },
-      { key: 'units', label: 'יחידות דיור', type: 'number' },
-      { key: 'floors', label: 'קומות', type: 'text', dir: 'ltr', hint: 'אפשר טווח, למשל "7-8"' },
+      {
+        key: 'units',
+        label: 'יחידות דיור',
+        type: 'count_label',
+        labelKey: 'units_label',
+        options: UNITS_LABELS,
+        hint: 'הזינו מספר, ובחרו מהרשימה (או הקלידו) מה ייכתב מתחת — למשל "דירות". ריק = "יחידות דיור".',
+      },
+      {
+        key: 'floors',
+        label: 'קומות',
+        type: 'count_label',
+        valueType: 'text',
+        dir: 'ltr',
+        labelKey: 'floors_label',
+        options: FLOORS_LABELS,
+        hint: 'אפשר טווח (למשל "7-8"); בחרו/הקלידו תווית. ריק = "קומות".',
+      },
       { key: 'architects', label: 'אדריכלים', type: 'text' },
       { key: 'year', label: 'שנת אכלוס', type: 'number' },
       {

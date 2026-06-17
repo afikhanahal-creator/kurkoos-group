@@ -118,7 +118,9 @@ function buildProject(local, cms) {
       towers: has(cms.towers) ? cms.towers : undefined,
       towersLabel: (cms.towers_label && String(cms.towers_label).trim()) || undefined,
       units: has(cms.units) ? cms.units : undefined,
+      unitsLabel: (cms.units_label && String(cms.units_label).trim()) || undefined,
       floors: has(cms.floors) ? cms.floors : undefined,
+      floorsLabel: (cms.floors_label && String(cms.floors_label).trim()) || undefined,
       architects: wrap(cms.architects),
       year: has(cms.year) ? cms.year : undefined,
       // הכתובת מה-CMS מזינה את המפה בעמוד הפרויקט
@@ -459,13 +461,13 @@ export default function ProjectDetail() {
                       {project.units > 0 && (
                         <StatCube>
                           <span className="pd-stat__value" dir="auto">{project.units}</span>
-                          <span className="pd-stat__label">{L({ he: 'יחידות דיור', en: 'Units' })}</span>
+                          <span className="pd-stat__label">{project.unitsLabel || L({ he: 'יחידות דיור', en: 'Units' })}</span>
                         </StatCube>
                       )}
                       {project.floors && (
                         <StatCube>
                           <span className="pd-stat__value" dir="auto">{project.floors}</span>
-                          <span className="pd-stat__label">{L({ he: 'קומות', en: 'Floors' })}</span>
+                          <span className="pd-stat__label">{project.floorsLabel || L({ he: 'קומות', en: 'Floors' })}</span>
                         </StatCube>
                       )}
                       {project.architects && (

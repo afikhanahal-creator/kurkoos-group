@@ -5,8 +5,8 @@ import { motion, useSpring, useMotionTemplate } from 'framer-motion'
    (translateZ) שמגדילה את הנפח בריחוף, הרמה, צל דינמי ונצנוץ אור שעוקב אחרי הסמן.
    שומר על העיצוב הקיים של .pd-stat. פעיל רק עם עכבר/הצבעה מדויקת ומכבד reduce-motion. */
 
-const TILT = 12 // מעלות מקסימום לכל ציר (עדין)
-const PUSH = 26 // כמה הקוביה "נדחפת" קדימה בריחוף (px translateZ) — נפח עדין
+const TILT = 8 // מעלות מקסימום לכל ציר (עדין יותר)
+const PUSH = 14 // דחיפה קדימה בריחוף — בליטה עדינה (סגנון תדהר)
 const SPRING = { stiffness: 280, damping: 18, mass: 0.6 }
 
 const canTilt =
@@ -24,9 +24,9 @@ export default function StatCube({ className = '', children, style: extraStyle }
   const gx = useSpring(50, SPRING) // מיקום הנצנוץ (%) — אופקי
   const gy = useSpring(50, SPRING) // מיקום הנצנוץ (%) — אנכי
   const shX = useSpring(0, SPRING) // היסט צל אופקי
-  const shY = useSpring(10, SPRING) // היסט צל אנכי — מובלט יותר במנוחה (סגנון תדהר)
-  const shBlur = useSpring(22, SPRING)
-  const shAlpha = useSpring(0.14, SPRING)
+  const shY = useSpring(4, SPRING) // היסט צל אנכי — עדין במנוחה (סגנון תדהר)
+  const shBlur = useSpring(14, SPRING)
+  const shAlpha = useSpring(0.08, SPRING)
 
   const handleMove = (e) => {
     if (!canTilt) return
@@ -37,14 +37,14 @@ export default function StatCube({ className = '', children, style: extraStyle }
     rotateY.set((px - 0.5) * TILT * 2)
     rotateX.set((0.5 - py) * TILT * 2)
     z.set(PUSH)
-    scale.set(1.035)
-    lift.set(-6)
+    scale.set(1.02)
+    lift.set(-4)
     gx.set(px * 100)
     gy.set(py * 100)
-    shX.set((0.5 - px) * 20)
-    shY.set(14 + (1 - py) * 8)
-    shBlur.set(28)
-    shAlpha.set(0.16)
+    shX.set((0.5 - px) * 10)
+    shY.set(8 + (1 - py) * 4)
+    shBlur.set(18)
+    shAlpha.set(0.1)
   }
 
   const reset = () => {
@@ -56,14 +56,14 @@ export default function StatCube({ className = '', children, style: extraStyle }
     gx.set(50)
     gy.set(50)
     shX.set(0)
-    shY.set(10)
-    shBlur.set(22)
-    shAlpha.set(0.14)
+    shY.set(4)
+    shBlur.set(14)
+    shAlpha.set(0.08)
   }
 
   const glare = useMotionTemplate`radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.65), rgba(255,255,255,0) 60%)`
   /* צל "מובלט" + הדגשת קצה עליון (inset) לתחושת קוביה מורמת ויוקרתית כמו תדהר */
-  const boxShadow = useMotionTemplate`${shX}px ${shY}px ${shBlur}px rgba(16,85,114,${shAlpha}), 0 1px 2px rgba(16,85,114,0.06), inset 0 1px 0 rgba(255,255,255,0.9)`
+  const boxShadow = useMotionTemplate`${shX}px ${shY}px ${shBlur}px rgba(16,85,114,${shAlpha}), inset 0 1px 0 rgba(255,255,255,0.55)`
 
   return (
     <motion.div

@@ -6,24 +6,10 @@
 const photo = (id) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=80`
 
-/* סדר התצוגה ב-RTL: האיבר הראשון מימין, האחרון משמאל.
-   מצד שמאל לימין על המסך: שלומי, יעקב, מוטי, בני
-   ⇐ ולכן הסדר במערך (ימין→שמאל): בני, מוטי, יעקב, שלומי. */
+/* סדר התצוגה: האיבר הראשון במערך = השמאלי ביותר על המסך, האחרון = הימני ביותר.
+   מימין לשמאל על המסך: שלומי, בני, יעקב, מוטי
+   ⇐ ולכן הסדר במערך (שמאל→ימין): מוטי, יעקב, בני, שלומי. */
 export const team = [
-  {
-    id: 'benny',
-    name: { he: 'בני קורקוס', en: 'Benny Kurkoos' },
-    role: { he: 'מנהל עבודה ראשי', en: 'Chief Site Manager' },
-    photo: '/5E83C911-4E64-4FCD-8C30-D5620C507520.png',
-    imgPos: 'center center',   /* תמונה מרובעת — cover חותך רק את הצדדים */
-    imgZoom: 1.16,   /* זום-אין קל כדי שהדמות תהיה בגודל של השאר */
-    imgBright: 1.2,  /* +20% תאורה על הפנים — אפקט תאורת פורטרייט */
-    bio: {
-      he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
-      en: 'Manages field teams and ensures execution quality and safety at every construction stage.',
-    },
-    linkedin: '',
-  },
   {
     id: 'moti',
     name: { he: 'מוטי בן עמי', en: 'Moti Ben Ami' },
@@ -48,6 +34,20 @@ export const team = [
     bio: {
       he: 'מלווה את הפרויקטים מהתכנון ועד המסירה, בתיאום מול כל הגורמים.',
       en: 'Accompanies projects from planning to handover, coordinating with all stakeholders.',
+    },
+    linkedin: '',
+  },
+  {
+    id: 'benny',
+    name: { he: 'בני קורקוס', en: 'Benny Kurkoos' },
+    role: { he: 'מנהל עבודה ראשי', en: 'Chief Site Manager' },
+    photo: '/5E83C911-4E64-4FCD-8C30-D5620C507520.png',
+    imgPos: 'center center',   /* תמונה מרובעת — cover חותך רק את הצדדים */
+    imgZoom: 1.16,   /* זום-אין קל כדי שהדמות תהיה בגודל של השאר */
+    imgBright: 1.2,  /* +20% תאורה על הפנים — אפקט תאורת פורטרייט */
+    bio: {
+      he: 'מנהל צוותי שטח ומבטיח איכות ביצוע ובטיחות בכל שלבי הבנייה.',
+      en: 'Manages field teams and ensures execution quality and safety at every construction stage.',
     },
     linkedin: '',
   },

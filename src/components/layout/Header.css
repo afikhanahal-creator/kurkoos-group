@@ -524,3 +524,10 @@
   .header__burger { width: 40px; height: 40px; }
   .header__actions .header__cta-btn { font-size: 0.71rem; padding: 0.5em 0.95em; min-height: 34px; }
 }
+
+/* ---- לוגו ממורכז בדסקטופ: ניווט בימין, לוגו במרכז, פעולות בשמאל ---- */
+@media (min-width: 981px) {
+  .header__main-inner .header__nav { order: 1; justify-content: flex-start; }
+  .header__main-inner .logo { order: 2; flex: 0 0 auto; }
+  .header__main-inner .header__actions { order: 3; flex: 1; justify-content: flex-end; }
+}

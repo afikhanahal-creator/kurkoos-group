@@ -26,3 +26,21 @@
   .cov__tabs { flex-direction: row; flex-wrap: wrap; position: static; }
   .cov__tab { width: auto; }
 }
+
+/* קיבוץ הטאבים (חטיבות / גלריות / פרויקטים) */
+.cov__tab-wrap { display: contents; }
+.cov__tab-group {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--adm-muted, #889);
+  margin: 0.7rem 0.2rem 0.2rem;
+  text-transform: none;
+}
+.cov__tab-wrap:first-child .cov__tab-group { margin-top: 0; }
+.cov__tabs { max-height: calc(100vh - 9rem); overflow-y: auto; padding-inline-end: 0.2rem; }
+
+@media (max-width: 760px) {
+  .cov__tab-group { flex-basis: 100%; }
+}

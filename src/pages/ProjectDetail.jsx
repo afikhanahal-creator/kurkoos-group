@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
 import divisions from '../data/divisions.js'
-import { getProjectBySlug, createLead } from '../lib/cms.js'
+import { getProjectBySlug, createLead, useSettings } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { srcOfResponsive, normalizeResponsiveImage } from '../lib/responsiveImage.js'
@@ -166,6 +166,7 @@ export default function ProjectDetail() {
   const [errors, setErrors] = useState({})
   const [booking, setBooking] = useState('')   // מועד שנבחר ביומן (צד שמאל) — מצורף לליד בשליחה
   const [sent, setSent] = useState(false)
+  const settings = useSettings()   // הגדרות אתר — בין השאר override לתמונות קאבר של פרויקטים
 
   // scroll-spy — קובע את המקטע הפעיל לפי המקטע האחרון שעבר את קו-הייחוס
   // (38% מגובה החלון). pick() שואל את ה-DOM מחדש בכל פעם, וה-effect מורץ מחדש
@@ -247,7 +248,13 @@ export default function ProjectDetail() {
   const hasVideo =
     (project.video?.id && project.video.type === 'youtube') ||
     (project.video?.src && project.video.type === 'file')
-  const flatGallery = project.gallery?.length ? project.gallery : [project.cover]
+  // תמונת קאבר לעמוד הפרויקט שהוגדרה בטאב "תמונות קאבר" (override) — קודמת לגלריה
+  let coverProjects = settings.cover_projects
+  if (typeof coverProjects === 'string') { try { coverProjects = JSON.parse(coverProjects) } catch { coverProjects = null } }
+  const projCover = (coverProjects && typeof coverProjects === 'object' && coverProjects[slug]) || null
+  const flatGallery = projCover
+    ? [projCover, ...(project.gallery?.length ? project.gallery : [])]
+    : (project.gallery?.length ? project.gallery : [project.cover])
   // כיוון תמונת "על הפרויקט" לפי breakpoint (נשמר ב-CMS) — לאורך/לרוחב
   // אם אין תמונה אמיתית למקטע "על הפרויקט" — לא מציגים placeholder, רק טקסט
   const aboutSrc = srcOfResponsive(project.aboutImage) || srcOfResponsive(flatGallery[0])

@@ -1036,41 +1036,41 @@
 /* ---------- פרויקטים נוספים ---------- */
 .pd-more__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
+  grid-template-columns: 1fr;        /* כרטיס גדול אחד בכל שורה — כמו הדוגמה */
+  gap: 2.6rem;
   margin-top: 2.6rem;
-  /* רוחב מצומצם + ממורכז — יוצר "שבירה" עם שוליים בצדדים, הכרטיסים צרים יותר */
-  max-width: 860px;
+  max-width: 960px;                  /* רוחב נדיב וממורכז */
   margin-inline: auto;
 }
 .pd-more__card { display: flex; flex-direction: column; }
 .pd-more__img {
   display: block;
-  border-radius: var(--radius-lg);
+  border-radius: 26px;               /* פינות מעוגלות ובולטות */
   overflow: hidden;
-  /* פחות רחב — יחס כמעט-ריבועי (היה 4/3 רחב) */
-  aspect-ratio: 1 / 1;
-  box-shadow: var(--shadow-2);
+  aspect-ratio: 16 / 10;             /* תמונת לרוחב גדולה */
+  box-shadow: 0 26px 60px -28px rgba(7, 41, 58, 0.4);
   transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 .pd-more__img img,
 .pd-more__img .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
-.pd-more__card:hover .pd-more__img { box-shadow: var(--shadow-4); transform: translateY(-4px); }
-.pd-more__card:hover .pd-more__img img { transform: scale(1.06); }
+.pd-more__card:hover .pd-more__img { box-shadow: 0 32px 70px -26px rgba(7, 41, 58, 0.5); transform: translateY(-5px); }
+.pd-more__card:hover .pd-more__img img { transform: scale(1.05); }
 .pd-more__title {
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 1.1rem;
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--color-primary-700);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--color-primary-900);
   transition: color var(--dur-fast);
 }
 .pd-more__card:hover .pd-more__title { color: var(--color-accent); }
 
 @media (max-width: 760px) {
   /* פרויקטים נוספים — מצמצמים טיפה את רוחב התמונות במובייל (ממורכז) */
-  .pd-more__grid { grid-template-columns: 1fr; max-width: 84%; margin-inline: auto; }
+  .pd-more__grid { grid-template-columns: 1fr; max-width: 100%; margin-inline: auto; gap: 1.8rem; }
+  .pd-more__img { aspect-ratio: 4 / 3; border-radius: 20px; }
+  .pd-more__title { font-size: 1.3rem; }
   .pd-dev-grid { grid-template-columns: 1fr; gap: 2.4rem; }
 }
 

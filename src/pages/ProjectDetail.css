@@ -742,7 +742,9 @@
   /* שני טורים שווים בגודלם (טופס + יומן), ממורכזים יחד */
   grid-template-columns: repeat(2, minmax(0, clamp(320px, 31vw, 430px)));
   justify-content: center;
-  align-items: stretch;
+  /* start (לא stretch) — כשפותחים את השעות ביומן, רק טור היומן גדל;
+     פאנל הטופס הכהה לא "נמתח/נפתח" יחד איתו */
+  align-items: start;
   gap: clamp(1rem, 2.5vw, 2.5rem);
 }
 .pd-contact__panel { order: 0; }

@@ -653,9 +653,12 @@
   aspect-ratio: 16 / 10;
   background: var(--color-bg-soft);
   cursor: zoom-in;
+  border-radius: var(--pd-g-radius, 18px);
+  overflow: hidden;
+  isolation: isolate;
 }
 .pd-carousel__main img,
-.pd-carousel__main .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--dur-slow) var(--ease-out); }
+.pd-carousel__main .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--pd-g-radius, 18px) !important; transition: transform var(--dur-slow) var(--ease-out); }
 .pd-carousel__main:hover img { transform: scale(1.04); }
 /* שורת בקרה מתחת לגלריה: נקודות + חצים מיושרים לצד ימין (RTL) */
 .pd-carousel__controls {
@@ -711,7 +714,7 @@
   width: 100%;
   margin: 0 0 1rem;          /* רווח אנכי בין תמונות באותו טור */
   break-inside: avoid;       /* תמונה לא נחתכת בין טורים */
-  border-radius: 24px;
+  border-radius: var(--pd-g-radius, 18px);
   overflow: hidden;
   isolation: isolate;        /* הקשר-ערימה — שומר על חיתוך הפינות גם כשלתמונה יש transform */
   background: none;          /* בלי רקע לבן מאחור */
@@ -722,9 +725,9 @@
   display: block;
   width: 100%;
   height: auto;              /* גובה לפי היחס הטבעי של התמונה */
-  /* התמונה עצמה מעוגלת — !important גובר על .ri-img (שמאפס דרך --ri-rad-d),
-     וכך הפינות עגולות בלי תלות בחיתוך ההורה (ה-transform של ה-scale מבטל אותו) */
-  border-radius: 24px !important;
+  /* עיגול הפינות נשלט מה-CMS (--pd-g-radius). !important גובר על .ri-img
+     (שמאפס דרך --ri-rad-d), כך שהפינות מתעגלות בלי תלות בחיתוך ההורה. */
+  border-radius: var(--pd-g-radius, 18px) !important;
   transition: transform var(--dur-slow) var(--ease-out);
 }
 .pd-gallery__item:hover img { transform: scale(1.04); }

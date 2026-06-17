@@ -252,6 +252,11 @@ export default function ProjectDetail() {
   let coverProjects = settings.cover_projects
   if (typeof coverProjects === 'string') { try { coverProjects = JSON.parse(coverProjects) } catch { coverProjects = null } }
   const projCover = (coverProjects && typeof coverProjects === 'object' && coverProjects[slug]) || null
+  // עיגול פינות גלריית "מבט מקרוב" — נשלט מה-CMS (לכל הגלריה), ברירת מחדל 18px (מעוגלות)
+  let galleryCornersMap = settings.project_gallery_corners
+  if (typeof galleryCornersMap === 'string') { try { galleryCornersMap = JSON.parse(galleryCornersMap) } catch { galleryCornersMap = null } }
+  const galleryRadius = (galleryCornersMap && typeof galleryCornersMap === 'object' && galleryCornersMap[slug] != null)
+    ? Number(galleryCornersMap[slug]) : 18
   const flatGallery = projCover
     ? [projCover, ...(project.gallery?.length ? project.gallery : [])]
     : (project.gallery?.length ? project.gallery : [project.cover])
@@ -679,7 +684,7 @@ export default function ProjectDetail() {
 
       {/* ===== גלריה ===== */}
       {show('gallery') && (
-      <section id="gallery" className="section pd-anchor">
+      <section id="gallery" className="section pd-anchor" style={{ '--pd-g-radius': `${galleryRadius}px` }}>
         <div className="container">
           <Reveal className="pd-head">
             <h2 className="section-title">{L({ he: 'מבט מקרוב', en: 'A closer look' })}</h2>

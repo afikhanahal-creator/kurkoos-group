@@ -22,7 +22,14 @@ function SortableImage({ url, index, onDelete, onCover, onEdit }) {
   )
 }
 
-export default function ImageManager({ value = [], onChange, folder = 'general', max = 20 }) {
+/* אפשרויות עיגול פינות לכלל הגלריה (הגדרה אחת לכל הגלריה) */
+export const GALLERY_CORNERS = [
+  { v: 0, t: 'חדות' },
+  { v: 18, t: 'מעוגלות' },
+  { v: 30, t: 'מעוגלות מאוד' },
+]
+
+export default function ImageManager({ value = [], onChange, folder = 'general', max = 20, corners = null, onCornersChange = null }) {
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState(null)  // { done, total } בזמן העלאה מרובה
@@ -102,6 +109,21 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
     >
       <div className="im__head">
         <span>תמונות ({value.length}/{max})</span>
+        {onCornersChange && (
+          <div className="im__corners" role="group" aria-label="עיגול פינות התמונות בגלריה">
+            <span className="im__corners-lbl">פינות:</span>
+            {GALLERY_CORNERS.map((o) => (
+              <button
+                key={o.v}
+                type="button"
+                className={`im__corner ${Number(corners ?? 18) === o.v ? 'is-active' : ''}`}
+                onClick={() => onCornersChange(o.v)}
+              >
+                {o.t}
+              </button>
+            ))}
+          </div>
+        )}
         <button type="button" className="btn btn--primary im__add" disabled={busy || value.length >= max} onClick={() => inputRef.current?.click()}>
           {busy ? (progress ? `מעלה ${progress.done}/${progress.total}…` : 'מעלה…') : '+ הוסף תמונות'}
         </button>

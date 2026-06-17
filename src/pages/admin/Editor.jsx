@@ -5,7 +5,7 @@ import ResponsiveImageField from './ResponsiveImageField.jsx'
 import StatCubesField from './StatCubesField.jsx'
 import ProjectPreview from './ProjectPreview.jsx'
 import { slugify } from '../../lib/slugify.js'
-import { uploadMedia, uploadVideoFile, hasCloudinary } from '../../lib/cms.js'
+import { uploadMedia, uploadVideoFile, hasCloudinary, fetchSettings, setSetting } from '../../lib/cms.js'
 import { toast } from '../../lib/toast.js'
 
 const STRIP = ['id', 'created_at', 'updated_at']
@@ -64,6 +64,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const [vidUp, setVidUp] = useState(-1) // אינדקס סרטון שמתבצעת לו העלאה
   const [envEdit, setEnvEdit] = useState(null) // עריכת תמונת הסביבה: { key, src }
   const [stepIdx, setStepIdx] = useState(0)    // הצעד הנוכחי באשף (כשפעיל)
+  const [galleryCorners, setGalleryCorners] = useState(null) // עיגול פינות הגלריה (נשמר ב-site_settings לפי slug)
   const timer = useRef()
   const slugEdited = useRef(false)             // האם ה-slug נערך ידנית (אז לא ממלאים אוטומטית)
 
@@ -108,6 +109,36 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     return next
   })
   const setGallery = (arr) => setForm((prev) => { const next = { ...prev, gallery: arr }; schedule(next); return next })
+
+  // עיגול פינות הגלריה — נשמר ב-site_settings (מפת slug→רדיוס), בלי תלות בעמודת DB.
+  // כך אותה תמונה יכולה להופיע עם פינות שונות בקאבר ובגלריה, וההגדרה אחת לכל הגלריה.
+  const gallerySlug = form.slug || record.slug || record.id
+  useEffect(() => {
+    if (!gallerySlug) { setGalleryCorners(null); return }
+    let on = true
+    fetchSettings()
+      .then((s) => {
+        if (!on) return
+        let map = {}
+        try { map = s.project_gallery_corners ? (typeof s.project_gallery_corners === 'string' ? JSON.parse(s.project_gallery_corners) : s.project_gallery_corners) : {} } catch { map = {} }
+        setGalleryCorners(map[gallerySlug] ?? null)
+      })
+      .catch(() => {})
+    return () => { on = false }
+  }, [gallerySlug])
+
+  const saveGalleryCorners = (v) => {
+    setGalleryCorners(v)
+    if (!gallerySlug) return
+    fetchSettings().then((s) => {
+      let map = {}
+      try { map = s.project_gallery_corners ? (typeof s.project_gallery_corners === 'string' ? JSON.parse(s.project_gallery_corners) : s.project_gallery_corners) : {} } catch { map = {} }
+      map[gallerySlug] = v
+      setSetting('project_gallery_corners', JSON.stringify(map))
+        .then(() => toast.success('עיגול הפינות של הגלריה נשמר'))
+        .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
+    })
+  }
   const saveNow = async () => { clearTimeout(timer.current); if (await commit(form)) toast.success('נשמר') }
   // X = שמירה ויציאה: מוודא שכל שינוי תלוי נשמר, ואז סוגר
   const closeNow = async () => { clearTimeout(timer.current); if (status !== 'saved') await commit(form); onClose && onClose() }
@@ -458,7 +489,14 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const gallerySection = (
     <fieldset className="ed__section" key={GALLERY_STEP}>
       <legend>מדיה (תמונות)</legend>
-      <ImageManager value={form.gallery || []} onChange={setGallery} folder={folder} max={20} />
+      <ImageManager
+        value={form.gallery || []}
+        onChange={setGallery}
+        folder={folder}
+        max={20}
+        corners={galleryCorners}
+        onCornersChange={gallerySlug ? saveGalleryCorners : null}
+      />
     </fieldset>
   )
 

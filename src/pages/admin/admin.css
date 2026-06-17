@@ -510,6 +510,17 @@
 .im--over { outline: 2px dashed var(--color-secondary); outline-offset: 5px; border-radius: 12px; }
 .im__head { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.9rem; font-family: var(--font-heading); font-weight: 700; }
 .im__add { min-height: 0; padding: 0.45em 1.1em; font-size: 0.85rem; }
+/* בורר עיגול פינות לכל הגלריה (הגדרה אחת לכל הגלריה) */
+.im__corners { display: inline-flex; align-items: center; gap: 0.4rem; margin-inline-start: auto; flex-wrap: wrap; }
+.im__corners-lbl { font-size: 0.82rem; color: var(--adm-muted, #889); font-weight: 700; }
+.im__corner {
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.14)); background: #fff;
+  color: var(--adm-ink, #07293a); border-radius: 8px; padding: 0.34em 0.7em;
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem; cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.im__corner:hover { border-color: var(--color-secondary, #15617f); color: var(--color-secondary, #15617f); }
+.im__corner.is-active { background: var(--color-secondary, #15617f); border-color: var(--color-secondary, #15617f); color: #fff; }
 .im__err { color: var(--color-accent); font-size: 0.85rem; }
 .im__progress { height: 6px; border-radius: var(--radius-pill); background: var(--adm-border); overflow: hidden; margin: 0.2rem 0 0.4rem; }
 .im__progress span { display: block; height: 100%; background: var(--color-secondary); border-radius: inherit; transition: width var(--dur-fast) ease; }

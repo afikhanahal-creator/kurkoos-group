@@ -3,7 +3,6 @@ import { useI18n, useLocalized } from '../i18n/index.jsx'
 import localProjects from '../data/projects.js'
 import localStats from '../data/stats.js'
 import HeroCollage from '../components/ui/HeroCollage.jsx'
-import PageHeader from '../components/ui/PageHeader.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import { supabase } from '../lib/supabase.js'
 import { listProjectCards, listCounters, projectPages } from '../lib/cms.js'
@@ -64,7 +63,6 @@ export default function Projects() {
   return (
     <>
       <Seo title={allTitle} description={lead} />
-      <PageHeader eyebrow={t('pages.projects.eyebrow')} title={allTitle} lead={lead} crumbs={[{ label: allTitle }]} />
       <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
     </>
   )

@@ -187,12 +187,14 @@ export default function ResponsiveImageField({
                 <div
                   ref={frameRef}
                   className="rif__imgarea"
-                  style={{ borderRadius: `${view.radius || 0}px` }}
+                  style={{ borderRadius: `${view.radius || 0}px`, '--rif-bg': `url("${draft.src}")` }}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                   onPointerCancel={onPointerUp}
                 >
+                  {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשמקטינים זום (zoom-out) או ב-contain */}
+                  <span className="rif__backdrop" aria-hidden="true" />
                   <img
                     className="rif__img"
                     src={draft.src}
@@ -264,8 +266,8 @@ export default function ResponsiveImageField({
             <div className="rif__row">
               <span className="rif__row-lbl">זום</span>
               <div className="rif__slider">
-                <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.max(1, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
-                <input type="range" min="1" max="3" step="0.05" value={view.zoom || 1} onChange={(e) => setView({ zoom: Number(e.target.value) })} aria-label="זום" />
+                <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.max(0.4, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
+                <input type="range" min="0.4" max="3" step="0.05" value={view.zoom || 1} onChange={(e) => setView({ zoom: Number(e.target.value) })} aria-label="זום" />
                 <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.min(3, Math.round(((view.zoom || 1) + 0.1) * 100) / 100) })} aria-label="הגדלה">+</button>
                 <span className="rif__val">{Math.round((view.zoom || 1) * 100)}%</span>
               </div>

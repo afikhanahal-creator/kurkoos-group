@@ -18,9 +18,14 @@ export default function FeatureCard({ icon, title, desc, to, cta, image, classNa
       <span className="card__shine" aria-hidden="true" />
       <span className="card__glow" aria-hidden="true" />
       <div className="card__content">
-        <div className={`card__image ${hasImage ? 'card__image--photo' : ''}`}>
+        <div
+          className={`card__image ${hasImage ? 'card__image--photo' : ''}`}
+          style={hasImage ? { '--card-bg': `url("${srcOfResponsive(image)}")` } : undefined}
+        >
           {hasImage ? (
             <>
+              {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשהתמונה הוקטנה (zoom-out) או ב-contain */}
+              <span className="card__img-backdrop" aria-hidden="true" />
               <ResponsiveImage value={image} className="card__img" alt="" />
               <span className="card__img-badge" aria-hidden="true"><Icon name={icon} size={22} stroke={1.8} /></span>
             </>

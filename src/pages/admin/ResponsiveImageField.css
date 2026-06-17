@@ -80,6 +80,15 @@
   position: relative; width: 100%; height: 100%;
   overflow: hidden; cursor: crosshair; touch-action: none; background: #dfe4e8;
 }
+/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשמקטינים זום מתחת ל-100% או ב-contain,
+   כך שהכרטיס תמיד "מכוסה" גם כשרואים את כל התמונה */
+.rif__backdrop {
+  position: absolute; inset: 0; z-index: 0;
+  background-image: var(--rif-bg); background-size: cover; background-position: center;
+  filter: blur(16px) saturate(1.1); transform: scale(1.12);
+}
+.rif__img { position: relative; z-index: 1; }
+.rif__focal { z-index: 2; }
 .rif__surface { display: block; color: var(--color-secondary, #0b2a3a); margin-bottom: 0.2rem; font-weight: 800; }
 .rif__img { width: 100%; height: 100%; display: block; }
 .rif__focal {

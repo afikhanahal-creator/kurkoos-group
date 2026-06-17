@@ -105,7 +105,9 @@ export default function ActivityMenu({ items = [] }) {
       </div>
 
       {/* תמונה — צד שמאל, קצה פנימי (ליד הצ'יפים) שטוח */}
-      <div className="actmenu__stage">
+      <div className="actmenu__stage" style={{ '--actmenu-bg': `url("${srcOfResponsive(current.image)}")` }}>
+        {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשהתמונה הוקטנה (zoom-out) או ב-contain */}
+        <span className="actmenu__backdrop" aria-hidden="true" />
         <AnimatePresence mode="wait" initial={false}>
           <motion.img
             key={current.id}

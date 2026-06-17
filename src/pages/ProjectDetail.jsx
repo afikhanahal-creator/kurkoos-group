@@ -138,7 +138,7 @@ function buildProject(local, cms) {
       stats_scale: cms.stats_scale || undefined,
       // קוביות נתונים מותאמות מה-CMS (גרירה/עריכה) — עוקפות את ברירת המחדל
       statCubes: Array.isArray(cms.stat_cubes) && cms.stat_cubes.length
-        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, spread: !!c.spread, brk: !!c.brk })).filter((c) => has(c.value) || has(c.label))
+        ? cms.stat_cubes.map((c) => ({ value: c.value, label: wrap(c.label), size: c.size || 'md', w: c.w, fw: c.fw, spread: !!c.spread, brk: !!c.brk })).filter((c) => has(c.value) || has(c.label))
         : undefined,
       statCubesRow: !!cms.stat_cubes_row,
       mapLink: cms.map_link || undefined,
@@ -456,6 +456,7 @@ export default function ProjectDetail() {
                           <span
                             className={`pd-stat__value${cube.size === 'wide' ? ' pd-stat__value--sm' : ''}`}
                             dir="auto"
+                            style={cube.fw && cube.fw !== 1 ? { display: 'inline-block', transform: `scaleX(${cube.fw})`, transformOrigin: 'center' } : undefined}
                           >
                             {cube.value}
                           </span>

@@ -218,22 +218,14 @@
   background:
     linear-gradient(180deg, rgba(7, 41, 58, 0.92) 0%, rgba(16, 85, 114, 0.52) 42%, rgba(7, 41, 58, 0.55) 66%, rgba(7, 41, 58, 0.88) 100%);
 }
-/* scrim ממוקד מאחורי גוש הטקסט — מבטיח קריאוּת גם על תמונות בהירות */
+/* scrim ממוקד מאחורי גוש הטקסט — פריסה מלאה (בלי קצה אנכי "מוזר"), דהייה רכה */
 .division-hero__content::before {
   content: '';
   position: absolute;
   z-index: -1;
-  inset-block-start: 0;
-  inset-inline-start: -10vw;
-  width: min(760px, 88%);
-  height: 100%;
-  background: radial-gradient(110% 70% at 0% 18%, rgba(4, 26, 37, 0.6), transparent 72%);
+  inset: 0;
+  background: radial-gradient(125% 85% at 50% 32%, rgba(4, 26, 37, 0.55), transparent 72%);
   pointer-events: none;
-}
-[dir='rtl'] .division-hero__content::before {
-  inset-inline-start: auto;
-  inset-inline-end: -10vw;
-  background: radial-gradient(110% 70% at 100% 18%, rgba(4, 26, 37, 0.6), transparent 72%);
 }
 
 .division-hero__content {
@@ -292,15 +284,16 @@
   box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
 }
 
-/* ---- לוגו זרוע הביצוע (במקום האייקון) ---- */
+/* ---- לוגו הקאבר (אחיד לכל העמודים) ---- */
 .division-hero__logo {
-  height: var(--hero-badge-h);           /* גובה אחיד עם שאר הסמלים → כותרות מיושרות */
+  height: calc(var(--hero-badge-h) * 1.25);  /* מעט גדול יותר — הקווים הדקים של הלוגו קריאים */
   width: auto;
-  max-width: clamp(220px, 26vw, 320px);
+  max-width: clamp(220px, 30vw, 340px);
   object-fit: contain;
-  object-position: right bottom;
+  object-position: center;       /* ממורכז — הלוגו שלם, בלי חיתוך/הסטה */
   margin-bottom: var(--hero-badge-gap);
-  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+  /* הבהרה + ניגודיות → ה"פסים הלבנים" (המגדלים) בולטים על הרקע; צל לעומק */
+  filter: brightness(1.35) contrast(1.06) drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
 }
 
 /* ---- כותרת + תקציר ---- */

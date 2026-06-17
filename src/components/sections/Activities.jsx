@@ -36,7 +36,7 @@ export default function Activities() {
           <ActivityMenu items={items} />
         ) : (
           <div className="activities__grid">
-            {activities.map((a, i) => (
+            {items.map((a, i) => (
               <Reveal key={a.id} delay={(i % 4) * 0.08}>
                 <FeatureCard
                   icon={a.icon}

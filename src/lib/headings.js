@@ -75,6 +75,27 @@ export const HEADINGS_REGISTRY = [
     ],
   },
   {
+    pageId: 'home-stats', pageLabel: 'דף הבית — במספרים', pagePath: '/',
+    fields: [
+      { key: 'stats.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
+      { key: 'stats.title', label: 'כותרת', level: 'h2', maxLength: 60 },
+    ],
+  },
+  {
+    pageId: 'home-testimonials', pageLabel: 'דף הבית — המלצות לקוחות', pagePath: '/',
+    fields: [
+      { key: 'testimonials.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
+      { key: 'testimonials.title', label: 'כותרת', level: 'h2', maxLength: 60 },
+      { key: 'testimonials.lead', label: 'טקסט מוביל', level: 'subtitle', maxLength: 200 },
+    ],
+  },
+  {
+    pageId: 'home-partners', pageLabel: 'דף הבית — שותפים ולקוחות', pagePath: '/',
+    fields: [
+      { key: 'partners.title', label: 'כותרת', level: 'h2', maxLength: 60 },
+    ],
+  },
+  {
     pageId: 'contact', pageLabel: 'צור קשר', pagePath: '/#contact',
     fields: [
       { key: 'contact.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
@@ -87,6 +108,57 @@ export const HEADINGS_REGISTRY = [
     fields: [
       { key: 'newsletter.title', label: 'כותרת', level: 'h2', maxLength: 50 },
       { key: 'newsletter.lead', label: 'טקסט מוביל', level: 'subtitle', maxLength: 160 },
+    ],
+  },
+
+  /* ---- עמודים פנימיים (לא דף הבית) ---- */
+  {
+    pageId: 'page-about', pageLabel: 'עמוד אודות', pagePath: '/about',
+    fields: [
+      { key: 'pages.about.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
+      { key: 'pages.about.title', label: 'כותרת ראשית', level: 'h1', maxLength: 60 },
+      { key: 'pages.about.lead', label: 'טקסט מוביל', level: 'subtitle', maxLength: 220 },
+    ],
+  },
+  {
+    pageId: 'page-projects', pageLabel: 'עמוד פרויקטים', pagePath: '/projects',
+    fields: [
+      { key: 'pages.projects.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
+      { key: 'pages.projects.title', label: 'כותרת ראשית', level: 'h1', maxLength: 60 },
+      { key: 'pages.projects.lead', label: 'טקסט מוביל', level: 'subtitle', maxLength: 220 },
+    ],
+  },
+  {
+    pageId: 'page-team', pageLabel: 'עמוד הצוות', pagePath: '/team',
+    fields: [
+      { key: 'pages.team.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
+      { key: 'pages.team.title', label: 'כותרת ראשית', level: 'h1', maxLength: 60 },
+      { key: 'pages.team.lead', label: 'טקסט מוביל', level: 'subtitle', maxLength: 220 },
+    ],
+  },
+  {
+    pageId: 'page-careers', pageLabel: 'עמוד דרושים', pagePath: '/careers',
+    fields: [
+      { key: 'pages.careers.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
+      { key: 'pages.careers.title', label: 'כותרת ראשית', level: 'h1', maxLength: 60 },
+      { key: 'pages.careers.lead', label: 'טקסט מוביל', level: 'subtitle', maxLength: 220 },
+      { key: 'pages.careers.openings', label: 'כותרת "משרות פתוחות"', level: 'h2', maxLength: 60 },
+    ],
+  },
+  {
+    pageId: 'page-blog', pageLabel: 'עמוד בלוג', pagePath: '/blog',
+    fields: [
+      { key: 'pages.blog.eyebrow', label: 'תווית עליונה', level: 'subtitle', maxLength: 40 },
+      { key: 'pages.blog.title', label: 'כותרת ראשית', level: 'h1', maxLength: 60 },
+      { key: 'pages.blog.lead', label: 'טקסט מוביל', level: 'subtitle', maxLength: 220 },
+    ],
+  },
+  {
+    pageId: 'page-legal', pageLabel: 'עמודים משפטיים', pagePath: '/accessibility · /privacy · /terms',
+    fields: [
+      { key: 'pages.legal.accessibility', label: 'כותרת — הצהרת נגישות', level: 'h1', maxLength: 60 },
+      { key: 'pages.legal.privacy', label: 'כותרת — מדיניות פרטיות', level: 'h1', maxLength: 60 },
+      { key: 'pages.legal.terms', label: 'כותרת — תקנון ותנאי שימוש', level: 'h1', maxLength: 60 },
     ],
   },
 ]

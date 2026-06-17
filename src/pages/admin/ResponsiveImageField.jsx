@@ -296,9 +296,11 @@ export default function ResponsiveImageField({
               {dirty ? 'יש שינויים שלא נשמרו' : 'הכול שמור'}
             </div>
             <div className="rif__savebar-actions">
-              <button type="button" className="rif__copy" onClick={copyToOther}>
-                העתקה ל{bp === 'mobile' ? 'דסקטופ' : 'מובייל'}
-              </button>
+              {breakpoints.length > 1 && (
+                <button type="button" className="rif__copy" onClick={copyToOther}>
+                  העתקה ל{bp === 'mobile' ? 'דסקטופ' : 'מובייל'}
+                </button>
+              )}
               <button type="button" className="rif__save" disabled={!dirty} onClick={saveBp}>
                 {dirty ? `שמירת תצוגת ${bp === 'mobile' ? 'מובייל' : 'דסקטופ'}` : '✓ נשמר'}
               </button>

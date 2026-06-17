@@ -37,6 +37,27 @@
   font-size: 0.8rem;
   color: var(--adm-text-soft, #889);
 }
+.acts-card--split {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.acts-card__device {
+  border: 1px dashed var(--adm-border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: var(--adm-bg, rgba(0, 0, 0, 0.015));
+}
+.acts-card__device-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-bottom: 0.7rem;
+}
+.acts-card__device-label small {
+  font-weight: 600;
+  color: var(--adm-text-soft, #889);
+}
 .acts-tab__section {
   margin-top: 2.4rem;
   padding-top: 1.6rem;

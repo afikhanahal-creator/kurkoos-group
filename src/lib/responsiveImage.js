@@ -73,9 +73,33 @@ export function normalizeResponsiveImage(value) {
   return null
 }
 
+/* בידול תמונה לפי breakpoint — מאפשר תמונת *מקור* שונה לדסקטופ ולמובייל.
+   ערך יכול להיות:
+     • legacy — מחרוזת / { src, views } → אותה תמונה לשני המכשירים (תאימות לאחור).
+     • מפוצל — { desktop, mobile } כאשר כל צד הוא ערך תמונה עצמאי משלו.
+   מחזיר את ערך התמונה (legacy-shape) המתאים ל-breakpoint המבוקש, או null. */
+export function isSplitImage(value) {
+  const v = maybeParse(value)
+  return !!(
+    v && typeof v === 'object' && !Array.isArray(v) &&
+    !v.src && !v.url && !v.image_url &&
+    ('desktop' in v || 'mobile' in v)
+  )
+}
+
+export function pickResponsive(value, breakpoint = 'desktop') {
+  const v = maybeParse(value)
+  if (isSplitImage(v)) {
+    const other = breakpoint === 'mobile' ? 'desktop' : 'mobile'
+    return v[breakpoint] ?? v[other] ?? null
+  }
+  return v ?? null
+}
+
 // שליפת ה-URL בלבד (למקומות שצריכים רק מקור)
 export function srcOfResponsive(value) {
   value = maybeParse(value)
+  if (isSplitImage(value)) value = pickResponsive(value, 'desktop')
   if (!value) return ''
   if (typeof value === 'string') return value
   return value.src || value.url || value.image_url || ''

@@ -1525,6 +1525,13 @@
   max-height: calc(100vh - 9rem); overflow-y: auto;
   padding-inline-end: 0.2rem;
 }
+.hdg__tabgroup { display: flex; flex-direction: column; gap: 0.3rem; }
+.hdg__tabgroup + .hdg__tabgroup { margin-top: 0.7rem; }
+.hdg__tabgroup-label {
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--adm-text-soft, #8a98a5);
+  padding: 0 0.4rem; margin-bottom: 0.15rem;
+}
 .hdg__tab {
   display: flex; align-items: center; gap: 0.5rem;
   text-align: start; width: 100%;
@@ -1561,6 +1568,8 @@
 
 @media (max-width: 760px) {
   .hdg__layout { grid-template-columns: 1fr; }
-  .hdg__tabs { flex-direction: row; flex-wrap: wrap; position: static; max-height: none; }
+  .hdg__tabs { position: static; max-height: none; }
+  .hdg__tabgroup { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .hdg__tabgroup-label { width: 100%; }
   .hdg__tab { width: auto; }
 }

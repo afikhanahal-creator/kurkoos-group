@@ -147,6 +147,9 @@ export default {
     renewal: 'Urban renewal',
   },
   pages: {
+    about: { eyebrow: 'About', title: 'Kurkoos Group', lead: '' },
+    projects: { eyebrow: 'Our Projects', title: 'All projects', lead: 'A selection of projects we have planned, built and supervised across the country.' },
+    team: { eyebrow: 'Our people', title: 'The team behind Kurkoos', lead: 'Engineers, architects and project managers with decades of combined experience.' },
     blog: { eyebrow: 'News & articles', title: 'Kurkoos Blog', lead: 'Insights, updates and behind-the-scenes stories.', read: 'Read' },
     careers: { eyebrow: 'Join us', title: 'Careers', lead: 'We are always looking for great people. Come build with us.', apply: 'Apply', openings: 'Open positions' },
     legal: { accessibility: 'Accessibility statement', privacy: 'Privacy policy', terms: 'Terms of use' },

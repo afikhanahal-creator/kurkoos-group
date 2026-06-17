@@ -216,7 +216,9 @@ export default function ResponsiveImageField({
                   )}
                 </div>
               )
-              if (chrome === 'split') {
+              // split = כרטיס המובייל (תמונה משמאל + פאנל). בדסקטופ הכרטיס הוא לרוחב
+              // (תמונה מלמעלה) — אז מציגים מסגרת "card" כדי שהתצוגה תתאים לאתר.
+              if (chrome === 'split' && bp === 'mobile') {
                 // כרטיס תחום הפעילות: תמונה משמאל + פאנל כהה עם צ'יפ אדום מימין
                 return (
                   <div className="rif__realcard rif__realcard--split">

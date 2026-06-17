@@ -72,9 +72,9 @@ export default function ActivitiesTab() {
   return (
     <div className="acts-tab">
       <p className="acts-tab__intro">
-        ניהול התמונות של ארבעת תחומי הפעילות (תצוגת המובייל בעמוד הבית). אפשר לגרור/להעלות
-        תמונה, לערוך אותה (חיתוך, הזזה וכיוון) או להסיר. ללא תמונה מותאמת — מוצגת תמונת
-        ברירת המחדל של התחום.
+        ניהול התמונות של ארבעת תחומי הפעילות בעמוד הבית — גם בדסקטופ וגם במובייל. עברו בין
+        תצוגת 🖥️ דסקטופ ל-📱 מובייל כדי לערוך כל אחת בנפרד (חיתוך, מיקוד, זום וכיוון).
+        אפשר להעלות/להחליף/להסיר תמונה. ללא תמונה מותאמת — מוצגת תמונת ברירת המחדל של התחום.
       </p>
 
       <div className="acts-tab__grid">
@@ -90,10 +90,11 @@ export default function ActivitiesTab() {
               <ResponsiveImageField
                 value={val}
                 folder="activities"
-                breakpoints={['mobile']}
+                breakpoints={['desktop', 'mobile']}
                 surfaceLabel="כרטיס תחום הפעילות"
                 chrome="split"
                 chromeLabel={a.title.he}
+                desktopAspect="16 / 10"
                 mobileAspect="3 / 5"
                 onChange={(v) => save(a.id, v)}
               />

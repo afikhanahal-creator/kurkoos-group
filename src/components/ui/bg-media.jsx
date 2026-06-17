@@ -51,6 +51,16 @@ export default function BackgroundMedia({
     const tryPlay = () => { const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
     tryPlay()
 
+    // iOS (במיוחד במצב חיסכון בסוללה) חוסם autoplay עד למחווה כלשהי של המשתמש.
+    // מאזינים פעם-אחת למגע/לחיצה/גלילה הראשונים בעמוד ומנגנים מיד — וכך הסרטון
+    // תמיד יתחיל ברגע שהמשתמש נוגע במסך, גם אם ה-autoplay האוטומטי נחסם.
+    const gestureEvents = ['touchstart', 'pointerdown', 'click', 'keydown', 'scroll']
+    const onGesture = () => {
+      tryPlay()
+      gestureEvents.forEach((e) => window.removeEventListener(e, onGesture))
+    }
+    gestureEvents.forEach((e) => window.addEventListener(e, onGesture, { passive: true }))
+
     // מנגן מחדש כשהסרטון חוזר להיות נראה על המסך (iOS עוצר וידאו שיוצא מהמסך)
     let io
     if (typeof IntersectionObserver !== 'undefined') {
@@ -65,6 +75,7 @@ export default function BackgroundMedia({
     return () => {
       if (io) io.disconnect()
       document.removeEventListener('visibilitychange', onVisible)
+      gestureEvents.forEach((e) => window.removeEventListener(e, onGesture))
     }
   }, [src, type])
 

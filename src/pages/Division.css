@@ -194,11 +194,12 @@
    grayscale+brightness מנטרל את העיגולים הצבעוניים ללבן, ו-screen מסיר את הרקע הלבן
    כך שנשאר לוגו לבן "שקוף" מעל הבאנר הכהה. */
 .division-hero__nadlan-logo {
-  height: calc(var(--hero-badge-h) * 1.15);
+  /* לוגו קבוצת קורקוס — שקוף (PNG עם אלפא), לבן עם טבעות אדום/כחול.
+     אין צורך ב-invert/blend (אלה היו ללוגו השחור הישן); רק צל עדין לעומק. */
+  height: calc(var(--hero-badge-h) * 1.6);
   width: auto;
   margin-bottom: var(--hero-badge-gap);
-  filter: invert(1) grayscale(1) brightness(1.7);
-  mix-blend-mode: screen;
+  filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.45));
 }
 
 /* הלוגו הלבן בקאבר */

@@ -218,12 +218,16 @@
   background:
     linear-gradient(180deg, rgba(7, 41, 58, 0.92) 0%, rgba(16, 85, 114, 0.52) 42%, rgba(7, 41, 58, 0.55) 66%, rgba(7, 41, 58, 0.88) 100%);
 }
-/* scrim ממוקד מאחורי גוש הטקסט — פריסה מלאה (בלי קצה אנכי "מוזר"), דהייה רכה */
+/* scrim ממוקד מאחורי גוש הטקסט — פריסה מלאה לרוחב הבאנר (100vw, לא רוחב הקונטיינר),
+   כדי שלא ייווצר קצה אנכי ("פס") בגבול הקונטיינר. דהייה רכה. */
 .division-hero__content::before {
   content: '';
   position: absolute;
   z-index: -1;
-  inset: 0;
+  inset-block: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
   background: radial-gradient(125% 85% at 50% 32%, rgba(4, 26, 37, 0.55), transparent 72%);
   pointer-events: none;
 }

@@ -195,15 +195,15 @@
 .pg-card:focus-visible .pg-card__reveal { opacity: 1; transform: translateY(0); }
 
 .pg-card__desc {
-  margin: 0.55rem 0 0;
+  margin: 0.5rem 0 0;
   font-family: var(--font-body);
   font-size: 0.92rem;
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--color-text);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  /* סוג הפרויקט — שורה אחת תמציתית (לא תיאור ארוך) */
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 .pg-card__meta {
   display: inline-flex;
@@ -282,4 +282,14 @@
 .pg-card__meta { justify-content: flex-start; }
 @media (max-width: 768px) {
   .pg-card__title { text-align: start; }
+  /* במובייל אין ריחוף — הפאנל מוצג קבוע (פתוח) עם פורמט תמציתי:
+     שם / סוג / עיר · שנה, בדיוק כמו בכרטיס "חנקין 41". לא חבוי מאחורי hover. */
+  .pg-card__panel {
+    transform: none;
+    padding: 0.75rem 0.9rem 0.85rem;
+  }
+  .pg-card__reveal { opacity: 1; transform: none; transition: none; }
+  .pg-card__title { font-size: 1.05rem; }
+  .pg-card__desc { margin-top: 0.2rem; font-size: 0.85rem; }
+  .pg-card__meta { margin-top: 0.3rem; font-size: 0.78rem; }
 }

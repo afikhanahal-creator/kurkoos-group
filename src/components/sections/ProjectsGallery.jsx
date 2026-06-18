@@ -74,9 +74,10 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
       <div className="pg-card__panel">
         <h3 className="pg-card__title">{L(p.name)}</h3>
         <div className="pg-card__reveal">
-          <p className="pg-card__desc">{L(p.short)}</p>
+          {/* פורמט תמציתי כמו "חנקין 41": שם → סוג → עיר · שנה (בלי תיאור ארוך) */}
+          {L(p.type) ? <p className="pg-card__desc">{L(p.type)}</p> : null}
           <span className="pg-card__meta">
-            {L(p.city)} · {p.year}
+            {[L(p.city), p.year].filter(Boolean).join(' · ')}
           </span>
         </div>
       </div>

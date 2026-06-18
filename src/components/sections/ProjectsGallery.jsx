@@ -59,12 +59,12 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
     <div className="pg-card__media">
       {isMobile ? (
         <div className="pg-card__spot">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={720} priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </div>
       ) : (
         <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={720} priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </SpotlightCard>
       )}
@@ -81,7 +81,7 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
   )
 
   return (
-    <motion.article className="pg-card" variants={itemVariants}>
+    <motion.article className={`pg-card pg-card--${p.layout || 'normal'}`} variants={itemVariants}>
       {/* קישור native אמיתי לעמוד הפרויקט (אמין יותר מ-onClick) */}
       <Link to={`/projects/${p.slug}`} className="pg-card__link" aria-label={L(p.name)}>
         {isMobile ? media : (
@@ -185,7 +185,12 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     const cs = getComputedStyle(track)
     const gap = parseFloat(cs.columnGap || cs.gap) || 20
     const step = card.getBoundingClientRect().width + gap
-    const setWidth = items.length * step               // רוחב סט יחיד (לפני השכפול)
+    // רוחב סט יחיד — נמדד מהמיקום בפועל (כרטיסים יכולים להיות ברוחב משתנה לפי
+    // כיוון התמונה), כדי שהאיפוס בלולאה האינסופית יהיה חלק בלי "קפיצה".
+    const cards = track.querySelectorAll('.pg-card')
+    const setWidth = (cards.length >= items.length * 2)
+      ? Math.abs(cards[items.length].offsetLeft - cards[0].offsetLeft)
+      : items.length * step
     const sign = getComputedStyle(el).direction === 'rtl' ? -1 : 1
 
     // איפוס בלתי-נראה בגבול: קופצים סט שלם אחורה/קדימה (תוכן זהה → חלק)
@@ -222,6 +227,17 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     }
   }, [isMobile, items.length])
 
+  // גלילה ידנית בדסקטופ (חיצים) — קדימה/אחורה בכרטיס בכל לחיצה, מכבד RTL
+  const scrollByDir = (dir) => {
+    const el = viewportRef.current
+    if (!el) return
+    const card = el.querySelector('.pg-card')
+    const amount = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.8
+    const sign = getComputedStyle(el).direction === 'rtl' ? -1 : 1
+    el.scrollBy({ left: dir * sign * amount, behavior: 'smooth' })
+  }
+  const showArrows = !isMobile && items.length > 3
+
   // אין פרויקטים להצגה (לא דרך prop ולא מה-CMS) → לא מציגים את הסקשן כלל,
   // במקום fallback לפרויקטי דמו ישנים.
   if (!items.length) return null
@@ -235,18 +251,32 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
         </Reveal>
       </div>
 
-      <div className="projects-gallery__viewport" ref={viewportRef}>
-        <motion.div
-          className="projects-gallery__track"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 'some' }}
-        >
-          {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 3} />
-          ))}
-        </motion.div>
+      <div className="pg-carousel">
+        {showArrows && (
+          <button type="button" className="pg-arrow pg-arrow--prev" onClick={() => scrollByDir(-1)} aria-label={t('common.back') || 'הקודם'}>
+            <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={22} />
+          </button>
+        )}
+
+        <div className="projects-gallery__viewport" ref={viewportRef}>
+          <motion.div
+            className="projects-gallery__track"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 'some' }}
+          >
+            {renderItems.map((p, i) => (
+              <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 3} />
+            ))}
+          </motion.div>
+        </div>
+
+        {showArrows && (
+          <button type="button" className="pg-arrow pg-arrow--next" onClick={() => scrollByDir(1)} aria-label="הבא">
+            <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={22} />
+          </button>
+        )}
       </div>
 
       {showFooter && (

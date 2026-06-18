@@ -195,6 +195,8 @@ export function cmsRowToCard(p) {
     year: p.year,
     status: p.status,
     category: p.category,
+    // כיוון הכרטיס (wide/normal/tall) → כרטיס מותאם-פרופורציה כך שתמונות לא נחתכות
+    layout: p.card_layout || 'normal',
     cover: srcOfResponsive(p.hero_image_url) || srcOfResponsive(p.gallery && p.gallery[0]) || '',
   }
 }

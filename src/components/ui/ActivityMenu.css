@@ -131,6 +131,7 @@
   position: relative;
   display: block;
   min-width: 0;
+  overflow: hidden;              /* חוסם את הרקע המטושטש (scale) מלגלוש מעבר לתמונה → בלי "זכוכית" בתפר */
   background: #07293a;            /* כהה — אם התמונה לא מכסה עד הקצה, התפר נשאר עדין ולא לבן */
   color: inherit;
   text-decoration: none;

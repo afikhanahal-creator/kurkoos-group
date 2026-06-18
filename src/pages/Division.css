@@ -444,12 +444,12 @@
   /* חפיפה עדינה בלבד לתחתית הבאנר — לא מכסה את תת-הכותרת (שהוסתרה קודם) */
   margin-top: clamp(-48px, -3vw, -28px);
 }
-/* בטאבלט/מובייל התוכן ממלא את הבאנר → חפיפה עדינה בלבד כדי לא לכסות את המשפט */
+/* במובייל — בלי חפיפה לקאבר: מרווח קטן בין תמונת הקאבר לכרטיס הווידאו */
 @media (max-width: 980px) {
-  .division-showcase { margin-top: -36px; }
+  .division-showcase { margin-top: 14px; }
 }
 @media (max-width: 600px) {
-  .division-showcase { margin-top: -28px; }
+  .division-showcase { margin-top: 12px; }
 }
 
 /* בעמוד הביצוע: אותו אזור-סמל ומרווחים כמו שאר העמודים (כך שהכותרת מיושרת),
@@ -465,6 +465,10 @@
 /* אזור-חיץ נקי בתחתית הבאנר — שם כרטיס הווידאו חופף, מתחת לתת-הכותרת */
 .division--execution .division-hero__content {
   padding-bottom: clamp(3.5rem, 6vw, 5rem);
+}
+/* במובייל — מקצרים מעט את תחתית הקאבר (הווידאו כבר לא חופף אלא יושב מתחת עם מרווח) */
+@media (max-width: 980px) {
+  .division--execution .division-hero__content { padding-bottom: clamp(1.75rem, 5vw, 2.5rem); }
 }
 /* מורידים מעט את תמונת הפועל גם בדסקטופ כדי שייראה במלואו ולא חתוך */
 @media (min-width: 981px) {

@@ -149,12 +149,15 @@
 @media (max-width: 600px) {
   /* פסיפס א-סימטרי שמראה את *כל* ההדמיה לפי הפרופורציות שלה (בלי חיתוך) —
      מסונרי של 2 טורים: גובה כל כרטיס נקבע לפי יחס התמונה עצמה. */
-  .hc-grid { display: block; column-count: 2; column-gap: 0.55rem; }
+  .hc-grid { display: block; column-count: 2; column-gap: 0.6rem; }
   .hc-card {
-    display: block; break-inside: avoid; margin: 0 0 0.55rem;
+    display: block; break-inside: avoid; margin: 0 0 0.6rem;
     grid-row: auto; grid-column: auto;   /* מבטל את פריסת הגריד */
     border-radius: var(--radius-md);
   }
+  /* כרטיס "לרוחב" = פרויקט אחד לכל הרוחב (גדול ובולט); שאר הכרטיסים זורמים ב-2 טורים
+     זה לצד זה (אחד לאורך, אחד לרוחב) → קולאז' א-סימטרי, "אפשר לשחק עם זה" דרך card_layout */
+  .hc-card--wide { column-span: all; margin-bottom: 0.7rem; }
   /* התמונה במלואה: רוחב מלא, גובה לפי היחס הטבעי — בלי object-fit/חיתוך */
   .hc-card img { width: 100%; height: auto; object-fit: fill; display: block; }
   .hc-card .smart-image-placeholder { min-height: 150px; }

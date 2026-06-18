@@ -144,19 +144,22 @@
 .hc-stat__l { margin-top: 0.2rem; font-size: 0.9rem; color: var(--color-text-muted); }
 
 @media (max-width: 860px) {
-  .hc-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); grid-auto-rows: 130px; gap: 0.9rem; }
+  .hc-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows: 92px; grid-auto-flow: dense; gap: 0.7rem; }
 }
 @media (max-width: 600px) {
-  /* 2 עמודות בטלפון; כרטיס רחב = רוחב מלא */
-  .hc-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 116px; gap: 0.7rem; }
-  .hc-card { border-radius: var(--radius-md); }
-  .hc-card--wide { grid-column: span 2; }
+  /* פסיפס "שתי וערב" בטלפון — 2 עמודות, כרטיסים קטנים יותר (~30%) בגבהים מתחלפים */
+  .hc-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 80px; grid-auto-flow: dense; gap: 0.55rem; }
+  .hc-card { grid-row: span 2; border-radius: var(--radius-md); }
+  /* שתי-וערב: כרטיסים "רגילים" מתחלפים בין נמוך לגבוה → אריזה משולבת ויפה */
+  .hc-card--normal:nth-child(odd)  { grid-row: span 3; }
+  .hc-card--normal:nth-child(even) { grid-row: span 2; }
+  .hc-card--wide { grid-column: span 2; grid-row: span 2; }
   .hc-card--tall { grid-row: span 3; }
-  .hc-card__name { padding: 1rem 0.7rem 0.7rem; font-size: 0.85rem; }
-  .hc-card__shutter { padding: 0.9rem; gap: 0.4rem; }
-  .hc-card__shutter-title { font-size: 1rem; }
-  .hc-card__shutter-desc { font-size: 0.78rem; }
-  .hc-card__shutter-cta { font-size: 0.82rem; }
+  .hc-card__name { padding: 0.8rem 0.6rem 0.55rem; font-size: 0.78rem; }
+  .hc-card__shutter { padding: 0.8rem; gap: 0.35rem; }
+  .hc-card__shutter-title { font-size: 0.92rem; }
+  .hc-card__shutter-desc { font-size: 0.72rem; }
+  .hc-card__shutter-cta { font-size: 0.78rem; }
 }
 
 /* כרטיס ללא תמונה — רקע גרדיאנט עדין במקום תמונה שבורה */

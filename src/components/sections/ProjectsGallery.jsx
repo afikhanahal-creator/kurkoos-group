@@ -166,11 +166,12 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const coverKey = items.map((p) => p.cover).filter(Boolean).join('|')
   useEffect(() => {
     if (!coverKey) return
+    // טעינה-מוקדמת מיידית של כל תמונות הכריכה (במקביל לטעינת העמוד) → מופיעות מיד
     const covers = coverKey.split('|')
-    const warm = () => covers.forEach((src) => { const im = new Image(); im.decoding = 'async'; im.src = optimizeSrc(src, 560) })
-    const ric = typeof window !== 'undefined' && window.requestIdleCallback
-    const id = ric ? window.requestIdleCallback(warm, { timeout: 2500 }) : setTimeout(warm, 1000)
-    return () => { if (ric && window.cancelIdleCallback) window.cancelIdleCallback(id); else clearTimeout(id) }
+    const id = setTimeout(() => {
+      covers.forEach((src) => { const im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low'; im.src = optimizeSrc(src, 560) })
+    }, 150)
+    return () => clearTimeout(id)
   }, [coverKey])
 
   /* קרוסלה חכמה (מובייל): קופצת כרטיס ימינה כל 2 שניות, נגלשת native
@@ -244,7 +245,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           viewport={{ once: true, amount: 'some' }}
         >
           {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 2} />
+            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 3} />
           ))}
         </motion.div>
       </div>

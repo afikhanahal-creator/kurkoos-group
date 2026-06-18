@@ -34,7 +34,9 @@
   scrollbar-width: none;
   /* ריווח עליון/תחתון כדי שהחלק העליון של הכרטיס, ההרמה בריחוף והזוהר לא ייחתכו */
   padding-block: 1.25rem;
+  cursor: grab;          /* רמז לגרירה בעכבר */
 }
+.projects-gallery__viewport.is-grabbing { cursor: grabbing; user-select: none; }
 .projects-gallery__viewport::-webkit-scrollbar { display: none; }
 .projects-gallery__track {
   display: flex;
@@ -43,7 +45,7 @@
   max-width: 100%;
   /* margin auto ממרכז את הכרטיסים בדסקטופ כשהם נכנסים; במסך צר/הרבה כרטיסים נשאר גלילה */
   margin-inline: auto;
-  padding-inline: clamp(var(--container-pad), 4vw, 4.5rem);
+  padding-inline: var(--container-pad);
 }
 
 /* ---- Project card (image + rising "shutter" panel) ---- */
@@ -57,9 +59,10 @@
 /* רוחב + פרופורציה לפי כיוון התמונה — כך הוילות (לרוחב) נראות במלואן בלי חיתוך,
    ותמונות לאורך נשארות בפרופורציות אורך. כרטיסי "לרוחב" קומפקטיים (≈40% קטן)
    כך שנכנסות 4 כרטיסיות במסך, באותו יחס תמונה. */
-.pg-card--normal { width: clamp(264px, 24vw, 322px); }
-.pg-card--wide   { width: clamp(236px, 23vw, 298px); }
-.pg-card--tall   { width: clamp(252px, 22vw, 300px); }
+/* גדלים שמכוונים לכ-4 כרטיסיות גלויות בו-זמנית בדסקטופ (≈22vw), עם גלילה לשאר */
+.pg-card--normal { width: clamp(240px, 22vw, 300px); }
+.pg-card--wide   { width: clamp(248px, 23vw, 312px); }
+.pg-card--tall   { width: clamp(212px, 19vw, 268px); }
 .pg-card--normal .pg-card__media { aspect-ratio: 4 / 5; }
 .pg-card--wide   .pg-card__media { aspect-ratio: 16 / 10; }
 .pg-card--tall   .pg-card__media { aspect-ratio: 3 / 4; }

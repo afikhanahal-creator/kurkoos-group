@@ -171,8 +171,8 @@
 .tc-shots__row { display: flex; align-items: center; }
 .tc-shots__tile {
   position: relative;
-  width: 57px;
-  height: 57px;
+  width: 74px;
+  height: 74px;
   flex: 0 0 auto;
   margin-inline-start: -14px;   /* חפיפה עדינה → מראה של ערימה */
   border-radius: 12px;

@@ -11,9 +11,9 @@ export const PROJECT_STATUS = [
 
 // תצוגת כרטיס הפרויקט בגלריית "כל הפרויקטים" — משפיע על הפריסה בעמוד
 export const PROJECT_CARD_LAYOUT = [
-  { value: 'normal', label: 'רגיל (לאורך)' },
-  { value: 'wide', label: 'רחב (לרוחב)' },
-  { value: 'tall', label: 'גבוה' },
+  { value: 'wide', label: '▭ לרוחב (תמונת Landscape — לא נחתכת)' },
+  { value: 'normal', label: '◻ מרובע (רגיל)' },
+  { value: 'tall', label: '▯ לאורך (תמונת Portrait)' },
 ]
 
 // מקטעים בעמוד הפרויקט — בחירה אילו חלקים יוצגו (נשמר בענן לכל פרויקט)
@@ -335,10 +335,10 @@ export const projectSchema = [
       },
       {
         key: 'card_layout',
-        label: 'תצוגת הכרטיס בגלריית הפרויקטים',
+        label: 'כיוון התמונה בעמוד "כל הפרויקטים"',
         type: 'select',
         options: PROJECT_CARD_LAYOUT,
-        hint: 'כך התמונה תופיע בעמוד "כל הפרויקטים" — רחב = לרוחב, גבוה = בולט לגובה',
+        hint: 'בחרו לפי כיוון התמונה: "לרוחב" לתמונות Landscape (מציג אותן רחב ובלי חיתוך הצדדים), "לאורך" לתמונות Portrait, "מרובע" לרגיל. אם תמונה נחתכת — בחרו "לרוחב".',
       },
       { key: 'is_published', label: 'מפורסם באתר', type: 'bool' },
     ],

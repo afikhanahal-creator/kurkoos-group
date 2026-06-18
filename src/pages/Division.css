@@ -339,19 +339,17 @@
 /* ====== מובייל / טאבלט (≤980px) ======
    ממוקם אחרי כללי הבסיס כדי שהמירכוז ינצח (אותה ספציפיות → סדר קובע). */
 @media (max-width: 980px) {
-  .division-hero { margin-top: -84px; padding-top: 84px; min-height: clamp(420px, 66vh, 560px); }
+  /* כל עמודי החטיבות: הקאבר "מתכווץ" לגובה התוכן (בלי min-height גבוה) → אין מרווח
+     ריק מיותר מתחת לתת-הכותרת, כמו בעמוד יזמות. */
+  .division-hero { margin-top: -84px; padding-top: 84px; min-height: auto; }
+  .division--execution .division-hero { min-height: auto; }   /* גובר על ה-min-height הספציפי של ביצוע */
 
   /* מובייל: כל גוש התוכן ממורכז ומאוזן — לוגו, כותרת, פס ומשפט באמצע */
   .division-hero__content {
     align-items: center;
     text-align: center;
-    /* ריווח תחתון נדיב → אזור פנוי שאליו "מציץ" כרטיס הסרטון בלי לכסות את המשפט */
-    padding-block: clamp(1.5rem, 5vw, 2.5rem) clamp(3.5rem, 9vw, 5rem);
+    padding-block: clamp(1.4rem, 5vw, 2.25rem) clamp(1.1rem, 3.5vw, 1.85rem);
   }
-  /* יזמות בלבד — אין מתחת סרטון/כרטיס שמציץ, אז הקאבר "מתכווץ" לגובה התוכן
-     (בלי min-height גבוה) כדי שלא יישאר מרווח ריק מתחת למשפט. רק במובייל. */
-  .division--development .division-hero { min-height: auto; }
-  .division--development .division-hero__content { padding-block-end: clamp(1.1rem, 3.5vw, 1.85rem); }
   /* ---- סרגל הניווט (פירורי לחם) — עיצוב מחודש למובייל ----
      בר זכוכית מלוכד, ממורכז, עם כפתור "חזרה" משולב כצ'יפ נקי */
   .division-hero .breadcrumbs { margin-bottom: clamp(1.4rem, 4vw, 2.25rem); }
@@ -452,10 +450,12 @@
   .division-showcase { margin-top: 12px; }
 }
 
-/* בעמוד הביצוע: אותו אזור-סמל ומרווחים כמו שאר העמודים (כך שהכותרת מיושרת),
-   רק עם גובה באנר מעט גדול יותר כדי שהתקציר ייכנס במלואו ולא "ייעלם". */
-.division--execution .division-hero {
-  min-height: clamp(460px, 60vh, 580px);
+/* בעמוד הביצוע (דסקטופ בלבד): גובה באנר מעט גדול יותר. במובייל הקאבר מתכווץ
+   לגובה התוכן (ככל העמודים) כדי שלא יישאר מרווח ריק מתחת לתת-הכותרת. */
+@media (min-width: 981px) {
+  .division--execution .division-hero {
+    min-height: clamp(460px, 60vh, 580px);
+  }
 }
 /* overlay חלק בעמוד הביצוע — בלי הרצועה הבהירה באמצע שנראתה כ"קו" */
 .division--execution .division-hero__overlay {

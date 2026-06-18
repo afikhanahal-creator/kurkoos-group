@@ -153,7 +153,9 @@
   /* שתי-וערב: כרטיסים "רגילים" מתחלפים בין נמוך לגבוה → אריזה משולבת ויפה */
   .hc-card--normal:nth-child(odd)  { grid-row: span 3; }
   .hc-card--normal:nth-child(even) { grid-row: span 2; }
-  .hc-card--wide { grid-column: span 2; grid-row: span 2; }
+  /* "רחב" בטלפון = עמודה אחת ונמוך (יחס לרוחב) — כך נכנסים 2 כרטיסים בשורה
+     (למשל אחד רחב ואחד לאורך), בלי שכרטיס יתפוס את כל הרוחב */
+  .hc-card--wide { grid-column: span 1; grid-row: span 2; }
   .hc-card--tall { grid-row: span 3; }
   .hc-card__name { padding: 0.8rem 0.6rem 0.55rem; font-size: 0.78rem; }
   .hc-card__shutter { padding: 0.8rem; gap: 0.35rem; }

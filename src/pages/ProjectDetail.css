@@ -1115,8 +1115,8 @@
 @media (max-width: 880px) {
   .pd-banner__grid { grid-template-columns: 1fr; gap: 1.2rem; padding-block: 0.5rem 0.8rem; }
   .pd-banner__media-col { order: -1; }
-  /* במובייל — תוכן הקאבר ממורכז (כמו שאר הקאברים באתר): מיקום → קו → כותרת → תיאור → קוביות */
-  .pd-banner__content { align-items: center; text-align: center; }
+  /* במובייל — תוכן הקאבר מיושר לימין למעלה (לבקשת המשתמש): מיקום → קו → כותרת → תיאור → קוביות */
+  .pd-banner__content { align-items: flex-start; text-align: right; }
   .pd-banner__cta { display: none !important; }   /* בלי כפתור "לתיאום פגישה" בראש העמוד במובייל */
   .pd-banner__arrows { display: none; }   /* בלי חצים במובייל (כמו בתדהר) */
   /* ריווח אנכי מצומצם — קומפקטי ונקי */
@@ -1177,7 +1177,7 @@
   .pd-banner__stats-wrap { padding: 0; width: 100%; }
   .pd-banner__stats {
     gap: 0.4rem;
-    justify-content: center;   /* קוביות ממורכזות תחת הכותרת הממורכזת */
+    justify-content: flex-start;   /* קוביות נצמדות לימין תחת הכותרת (RTL) */
   }
   .pd-stat {
     flex: 0 0 auto;                /* רוחב לפי תוכן → קוביות לא-סימטריות, דחוסות */

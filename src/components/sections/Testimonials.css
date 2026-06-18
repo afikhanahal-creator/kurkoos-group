@@ -1,4 +1,5 @@
-.testimonials__head { text-align: center; max-width: 60ch; margin: 0 auto 3rem; }
+/* מרווח שווה מעל הכרטיס (מתחת לכותרת) ומתחתיו (לחלק התחתון) — הכותרת קרובה יותר לכרטיס */
+.testimonials__head { text-align: center; max-width: 60ch; margin: 0 auto 2.2rem; }
 .testimonials__head .section-lead { margin-inline: auto; }
 .testimonials__head .eyebrow { justify-content: center; }
 
@@ -13,7 +14,7 @@
    אפקט ה-hover זהה לכרטיסי "מה אנחנו עושים" שלמעלה:
    הטיית 3D, נוזל טורקיז מטושטש, ברק חולף וזוהר אדום — בצבעי הפאלטה.
    ============================================================ */
-.tc { max-width: 736px; margin: 0 auto; }   /* ~20% קטן יותר בדסקטופ */
+.tc { max-width: 884px; margin: 0 auto; }   /* הוגדל ב-~20% לבקשת המשתמש */
 .tc__card-effect { perspective: 1000px; }
 
 .tc__card {
@@ -92,7 +93,7 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 230px) 1fr;
+  grid-template-columns: minmax(0, 264px) 1fr;
   gap: clamp(1.2rem, 2.4vw, 2rem);
   align-items: center;
   padding: clamp(1.1rem, 2.4vw, 1.8rem);
@@ -145,7 +146,7 @@
 /* ---- כותרת תחתונה: תמונות הבית (שמאל) + חיצי ניווט (מרכז) ---- */
 .testimonials__footer {
   position: relative;
-  margin-top: 2.2rem;
+  margin-top: 2.2rem;   /* שווה למרווח שמעל הכרטיס (testimonials__head) */
   min-height: 56px;
   display: flex;
   align-items: center;

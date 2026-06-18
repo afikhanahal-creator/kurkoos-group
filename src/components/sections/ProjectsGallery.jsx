@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { supabase } from '../../lib/supabase.js'
-import { listProjectCards, cmsRowToCard, projectPages, cachedSnapshot } from '../../lib/cms.js'
+import { listProjectCards, cmsRowToCard, projectPages, cachedSnapshot, useSettings } from '../../lib/cms.js'
 import { optimizeSrc } from '../../lib/responsiveImage.js'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Reveal from '../ui/Reveal.jsx'
@@ -114,37 +114,39 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const { t, isRTL } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
-  // בחירת "פרויקטים נבחרים" מתוך שורות CMS — מפורסמים מתויגי featured, אחרת הכול
-  const pickFeatured = (rows) => {
-    if (!rows || !rows.length) return null
-    const featured = rows.filter((p) => projectPages(p).includes('featured'))
-    return (featured.length ? featured : rows).map(cmsRowToCard)
-  }
-  // זריעה מיידית מתמונת-מצב שמורה → "פרויקטים נבחרים" מופיעים מיד בטעינה חוזרת/רענון
-  const [cmsItems, setCmsItems] = useState(() => (itemsProp && itemsProp.length) ? null : pickFeatured(cachedSnapshot('projects:cards')))
+  const settings = useSettings()
+  const usingProp = !!(itemsProp && itemsProp.length)
+  // שורות CMS גולמיות (כולל pages) — זריעה מיידית מתמונת-מצב שמורה לטעינה חוזרת מהירה
+  const [rows, setRows] = useState(() => usingProp ? null : (cachedSnapshot('projects:cards') || null))
   const viewportRef = useRef(null)
   const pausedRef = useRef(false)
   const resumeRef = useRef(null)
 
-  // פרויקטים אמיתיים מה-CMS (מפורסמים) — "פרויקטים נבחרים" אם תויגו, אחרת הכול
   useEffect(() => {
-    if (!supabase || (itemsProp && itemsProp.length)) return
+    if (!supabase || usingProp) return
     let alive = true
-    listProjectCards()
-      .then((rows) => {
-        if (!alive) return
-        const items = pickFeatured(rows)
-        if (items) setCmsItems(items)
-      })
-      .catch(() => {})
+    listProjectCards().then((r) => { if (alive && r) setRows(r) }).catch(() => {})
     return () => { alive = false }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // מקור הפריטים: prop → CMS בלבד. אין יותר fallback לנתוני דמו מקומיים —
-  // מה שנמחק בניהול לא יופיע, ושום פרויקט "ישן" לא יוצג.
-  const source = (itemsProp && itemsProp.length)
-    ? itemsProp
-    : (cmsItems && cmsItems.length ? cmsItems : [])
+  // "פרויקטים נבחרים" = מפורסמים מתויגי featured, אחרת הכול
+  const featuredItems = useMemo(() => {
+    if (!rows || !rows.length) return []
+    const f = rows.filter((p) => projectPages(p).includes('featured'))
+    return (f.length ? f : rows).map(cmsRowToCard)
+  }, [rows])
+  // כל הפרויקטים לפי slug — לבחירה הידנית של דף הבית
+  const allItems = useMemo(() => (rows || []).map(cmsRowToCard), [rows])
+
+  // בחירה ידנית מהניהול (home_featured) — מערך slugs מסודר, עד 4
+  const homeFeatured = useMemo(() => {
+    let v = settings.home_featured
+    if (typeof v === 'string') { try { v = JSON.parse(v) } catch { v = null } }
+    return Array.isArray(v) ? v.filter(Boolean) : []
+  }, [settings.home_featured])
+
+  // מקור הפריטים: prop → CMS בלבד (בלי דמו ישן)
+  const source = usingProp ? itemsProp : featuredItems
   const seen = new Set()
   const items = source.filter((p) => {
     const k = p.slug || p.name
@@ -152,12 +154,18 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     seen.add(k)
     return true
   })
+
+  // הגבלה ל-4 הנבחרים — *רק בדסקטופ* (במובייל נשארת הקרוסלה עם כל הנבחרים).
+  const curated = (!usingProp && !isMobile && homeFeatured.length)
+    ? homeFeatured.map((slug) => allItems.find((c) => c.slug === slug)).filter(Boolean).slice(0, 4)
+    : null
+  const baseItems = (curated && curated.length) ? curated : items
   // במובייל משכפלים לפריסת marquee — אבל רק כשיש מספיק פריטים (אחרת זה נראה ככפילות)
-  const renderItems = (isMobile && items.length >= 3) ? [...items, ...items] : items
+  const renderItems = (isMobile && baseItems.length >= 3) ? [...baseItems, ...baseItems] : baseItems
 
   // טעינה-מוקדמת (prefetch) של תמונות הכריכה בזמן idle — כך "פרויקטים נבחרים"
   // מופיעים מיד כשגוללים אליהם, במקום להתחיל להיטען רק כשמגיעים לאזור.
-  const coverKey = items.map((p) => p.cover).filter(Boolean).join('|')
+  const coverKey = baseItems.map((p) => p.cover).filter(Boolean).join('|')
   useEffect(() => {
     if (!coverKey) return
     // טעינה-מוקדמת רק של הכריכות הראשונות (לא כולן בבת אחת) — כדי לא להציף את

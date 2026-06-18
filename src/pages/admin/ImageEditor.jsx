@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import './image-editor.css'
 
@@ -48,7 +48,15 @@ function roundRectPath(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-export default function ImageEditor({ src, onApply, onClose, busy = false }) {
+// יחס תצוגה של המקום באתר ("16 / 10" / "3 / 5" וכו') → מספר
+function parseAspect(a) {
+  if (typeof a !== 'string') return null
+  const p = a.split('/').map((x) => parseFloat(x.trim()))
+  if (p.length === 2 && p[0] > 0 && p[1] > 0) return p[0] / p[1]
+  return null
+}
+
+export default function ImageEditor({ src, onApply, onClose, busy = false, aspect = null }) {
   const canvasRef = useRef(null)
   const imgRef = useRef(null)
   const drag = useRef(null)
@@ -56,8 +64,17 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
   const [err, setErr] = useState('')
   const [ver, setVer] = useState(0)          // מאלץ ציור מחדש אחרי החלפת תמונת הבסיס (AI)
   const [aiBusy, setAiBusy] = useState(false)
-  const [aspectId, setAspectId] = useState('landscape')
-  const ASP = ASPECTS.find((a) => a.id === aspectId) || ASPECTS[0]
+  // מסגרת "לפי המקום באתר" — נגזרת מיחס התצוגה בפועל, כך שמה שממסגרים = מה שיוצג
+  const surfaceFrame = useMemo(() => {
+    const r = parseAspect(aspect)
+    if (!r) return null
+    return r >= 1
+      ? { id: 'surface', label: 'לפי המקום', w: 560, h: Math.max(150, Math.round(560 / r)) }
+      : { id: 'surface', label: 'לפי המקום', w: Math.max(150, Math.round(540 * r)), h: 540 }
+  }, [aspect])
+  const aspects = useMemo(() => (surfaceFrame ? [surfaceFrame, ...ASPECTS] : ASPECTS), [surfaceFrame])
+  const [aspectId, setAspectId] = useState(surfaceFrame ? 'surface' : 'landscape')
+  const ASP = aspects.find((a) => a.id === aspectId) || aspects[0]
   const FRAME_W = ASP.w
   const FRAME_H = ASP.h
   const [t, setT] = useState({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false })
@@ -196,7 +213,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
           <div className="imed__stage">
             {/* כיוון המסגרת — לרוחב / לאורך / ריבוע / רחב (מעל המסגרת) */}
             <div className="imed__aspects" role="tablist" aria-label="כיוון המסגרת">
-              {ASPECTS.map((a) => (
+              {aspects.map((a) => (
                 <button
                   key={a.id}
                   type="button"

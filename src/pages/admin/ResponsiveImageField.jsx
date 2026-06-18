@@ -315,7 +315,7 @@ export default function ResponsiveImageField({
       )}
 
       {editing && draft && (
-        <ImageEditor src={draft.src} busy={busy} onApply={applyCrop} onClose={() => setEditing(false)} />
+        <ImageEditor src={draft.src} busy={busy} aspect={aspect} onApply={applyCrop} onClose={() => setEditing(false)} />
       )}
     </div>
   )

@@ -90,7 +90,10 @@ export default function ImageEditor({ src, onApply, onClose, busy = false }) {
     img.crossOrigin = 'anonymous'
     img.onload = () => { imgRef.current = img; setReady(true) }
     img.onerror = () => setErr('לא ניתן לטעון את התמונה לעריכה')
-    img.src = src
+    // cache-bust: התמונה כבר נטענה בעמוד ללא CORS ונשמרה ב-cache (immutable). בקשת
+    // ה-CORS של העורך עלולה לקבל את הגרסה ללא-CORS → קנבס "מזוהם" ו-toBlob נכשל
+    // (השמירה לא מתבצעת). פרמטר ייחודי מאלץ שליפת CORS נקייה כך שאפשר לייצא ולשמור.
+    img.src = src + (src.includes('?') ? '&' : '?') + 'cors=' + Date.now()
   }, [src])
 
   const filterStr = `brightness(${f.brightness}%) contrast(${f.contrast}%) saturate(${f.saturate}%) hue-rotate(${f.hue}deg) sepia(${f.sepia}%) grayscale(${f.grayscale}%)`

@@ -470,12 +470,21 @@ export function useSettings() {
 
     // הצטרפות למנוי המשותף + רענון בעת חזרה ללשונית (גיבוי לנתונים טריים)
     _settingsListeners.add(load)
-    ensureSettingsRealtime()
+    // Realtime נפתח רק למשתמש מחובר (אדמין) — מבקרים אנונימיים אינם פותחים
+    // חיבור websocket (חיסכון משמעותי במכסת ה-Realtime של Supabase). הם
+    // מתעדכנים ממילא בטעינת העמוד ובחזרה ללשונית (focus).
+    let cancelled = false
+    if (supabase?.auth?.getSession) {
+      supabase.auth.getSession()
+        .then(({ data }) => { if (!cancelled && data?.session) ensureSettingsRealtime() })
+        .catch(() => {})
+    }
     const onFocus = () => { invalidate('settings'); load() }
     if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
 
     return () => {
       on = false
+      cancelled = true
       _settingsListeners.delete(load)
       if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
     }

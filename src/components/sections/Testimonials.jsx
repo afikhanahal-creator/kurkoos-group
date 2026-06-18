@@ -166,7 +166,6 @@ export default function Testimonials() {
               {canFlip && (
               <div className="tc__face tc__face--back" aria-hidden={!flipped}>
                 <div className="tc__card tc__card--back">
-                  <h3 className="tc__back-title">{t('testimonials.photosCtaBack')}</h3>
                   <div className="tc-shots__row tc-shots__row--back">
                     {shots.slice(0, 3).map((url, idx) => (
                       <button
@@ -178,12 +177,12 @@ export default function Testimonials() {
                         onClick={(e) => { e.stopPropagation(); setShot(idx) }}
                         aria-label={`${t('testimonials.photosCtaBack')} ${idx + 1}`}
                       >
-                        <img src={optimizeSrc(url, 480)} alt="" loading="lazy" decoding="async" />
+                        <img src={optimizeSrc(url, 640)} alt="" loading="lazy" decoding="async" />
                       </button>
                     ))}
                   </div>
                   <span className="tc__back-hint">
-                    <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={14} />{t('common.back')}
+                    <Icon name="arrow" size={14} />{t('common.back')}
                   </span>
                 </div>
               </div>
@@ -242,21 +241,23 @@ export default function Testimonials() {
               <Icon name="close" size={26} />
             </button>
 
-            {/* לחיצה על התמונה → התמונה הבאה (בלי חצים); לחיצה ברקע/X → סגירה */}
-            <motion.img
-              key={shot}
-              className={`tc-lb__img${shots.length > 1 ? ' is-clickable' : ''}`}
-              src={optimizeSrc(shots[shot], 1600)}
-              alt={L(item.project)}
-              onClick={(e) => { e.stopPropagation(); if (shots.length > 1) shotNext() }}
-              initial={{ scale: 0.96, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            />
-
-            {shots.length > 1 && (
-              <div className="tc-lb__count">{shot + 1} / {shots.length}</div>
-            )}
+            {/* לחיצה על התמונה → התמונה הבאה (בלי חצים); לחיצה ברקע/X → סגירה.
+                מונה התמונות יושב מתחת לתמונה. */}
+            <div className="tc-lb__stage" onClick={(e) => e.stopPropagation()}>
+              <motion.img
+                key={shot}
+                className={`tc-lb__img${shots.length > 1 ? ' is-clickable' : ''}`}
+                src={optimizeSrc(shots[shot], 1600)}
+                alt={L(item.project)}
+                onClick={() => { if (shots.length > 1) shotNext() }}
+                initial={{ scale: 0.96, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              />
+              {shots.length > 1 && (
+                <div className="tc-lb__count">{shot + 1} / {shots.length}</div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

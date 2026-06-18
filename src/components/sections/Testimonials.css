@@ -203,10 +203,10 @@
 .tc-shots__row { display: flex; align-items: center; }
 .tc-shots__tile {
   position: relative;
-  width: 89px;
-  height: 89px;
+  width: 100px;
+  height: 100px;
   flex: 0 0 auto;
-  margin-inline-start: -16px;   /* חפיפה עדינה → מראה של ערימה */
+  margin-inline-start: -18px;   /* חפיפה עדינה → מראה של ערימה */
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid var(--color-surface);
@@ -265,8 +265,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.9rem, 2vw, 1.3rem);
-  padding: clamp(1.2rem, 2.6vw, 1.9rem);
+  gap: clamp(0.7rem, 1.6vw, 1.05rem);
+  padding: clamp(1rem, 2.2vw, 1.6rem);
   text-align: center;
 }
 /* גוון טורקיז רך מעל המשבצות */
@@ -312,13 +312,13 @@
   padding-inline: clamp(1rem, 6%, 3rem);
 }
 .tc-shots__row--back .tc-shots__tile {
-  width: clamp(120px, 25%, 196px);
+  width: clamp(150px, 31%, 244px);
   height: auto;
   aspect-ratio: 4 / 3;
   border-width: 3px;
   border-color: #fff;
   border-radius: 14px;
-  margin-inline-start: -24px;
+  margin-inline-start: -26px;
   transform: rotate(-6deg);
 }
 .tc-shots__row--back .tc-shots__tile:first-child { margin-inline-start: 0; }
@@ -337,7 +337,6 @@
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.7);
 }
-[dir='rtl'] .tc__back-hint svg { transform: scaleX(-1); }
 
 /* ---- ניווט: חיצים + נקודות ---- */
 .testimonials__nav {
@@ -405,7 +404,7 @@
 }
 .tc-lb__img {
   max-width: min(92vw, 1100px);
-  max-height: 86vh;
+  max-height: 80vh;   /* משאיר מקום למונה שמתחת לתמונה */
   object-fit: contain;
   border-radius: 12px;
   box-shadow: var(--shadow-4);
@@ -428,17 +427,20 @@
 .tc-lb__nav:hover { background: var(--color-primary); }
 .tc-lb__nav--prev { inset-inline-start: 1rem; }
 .tc-lb__nav--next { inset-inline-end: 1rem; }
+/* במה: תמונה + מונה מתחתיה (בזרימה רגילה — לא צף בתחתית המסך) */
+.tc-lb__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
 .tc-lb__count {
-  position: absolute;
-  inset-block-end: 1.2rem;
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
   color: #fff;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   background: rgba(0, 0, 0, 0.42);
-  padding: 0.3rem 0.85rem;
+  padding: 0.32rem 0.95rem;
   border-radius: var(--radius-pill);
 }
 

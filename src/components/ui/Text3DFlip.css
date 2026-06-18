@@ -12,6 +12,9 @@
   white-space: pre;                 /* שמירת רווחים */
   will-change: transform, opacity;
 }
+/* מילה כיחידה שלא נשברת באמצע — שבירת שורה רק בין מילים (ברווחים) */
+.t3df__word { display: inline-block; white-space: nowrap; }
+.t3df__space { white-space: normal; }
 
 /* נגישות — בלי תנועה: מציגים את הטקסט רגיל, בלי היפוך */
 @media (prefers-reduced-motion: reduce) {

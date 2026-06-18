@@ -117,7 +117,7 @@
 .tc__content { position: relative; min-height: 184px; display: flex; flex-direction: column; justify-content: center; }
 .tc__quote-mark {
   position: absolute;
-  top: -8px;
+  top: -20px;
   inset-inline-start: -4px;
   color: var(--color-secondary);
   opacity: 0.16;
@@ -151,18 +151,28 @@
   justify-content: center;
 }
 
-/* ערימת תמונות קטנה ("מניפה") — מוצגת בקטן בצד שמאל, נפתחת למסך מלא בלחיצה */
+/* ערימת תמונות ("מניפה") — מוצגת בצד שמאל עם כיתוב מעליה, נפתחת למסך מלא בלחיצה */
 .tc-shots {
   position: absolute;
   left: 0;            /* בצד שמאל פיזית (גם ב-RTL) — כמו בצילום המסך */
   bottom: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
 }
+.tc-shots__label {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  color: var(--color-accent);
+}
+.tc-shots__row { display: flex; align-items: center; }
 .tc-shots__tile {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: 57px;
+  height: 57px;
   flex: 0 0 auto;
   margin-inline-start: -14px;   /* חפיפה עדינה → מראה של ערימה */
   border-radius: 12px;
@@ -239,7 +249,7 @@
   .tc__stars { justify-content: center; }
   /* במובייל — הערמת התמונות מעל החיצים, הכל ממורכז */
   .testimonials__footer { flex-direction: column; gap: 1rem; margin-top: 1.6rem; }
-  .tc-shots { position: static; }
+  .tc-shots { position: static; align-items: center; }
   .testimonials__nav { gap: 1.1rem; }
   .testimonials__nav .carousel__arrow { width: 42px; height: 42px; }
 }

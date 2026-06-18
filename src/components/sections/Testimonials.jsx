@@ -147,21 +147,24 @@ export default function Testimonials() {
           <div className="testimonials__footer">
             {shots.length > 0 && (
               <div className="tc-shots" aria-label={t('testimonials.photosLabel')}>
-                {shots.slice(0, 4).map((url, idx) => (
-                  <button
-                    type="button"
-                    key={idx}
-                    className="tc-shots__tile"
-                    style={{ zIndex: 10 - idx }}
-                    onClick={() => setShot(idx)}
-                    aria-label={`${t('testimonials.photosLabel')} ${idx + 1}`}
-                  >
-                    <img src={optimizeSrc(url, 140)} alt="" loading="lazy" decoding="async" />
-                    {idx === 3 && shots.length > 4 && (
-                      <span className="tc-shots__more">+{shots.length - 4}</span>
-                    )}
-                  </button>
-                ))}
+                <span className="tc-shots__label">{t('testimonials.photosCta')}</span>
+                <div className="tc-shots__row">
+                  {shots.slice(0, 4).map((url, idx) => (
+                    <button
+                      type="button"
+                      key={idx}
+                      className="tc-shots__tile"
+                      style={{ zIndex: 10 - idx }}
+                      onClick={() => setShot(idx)}
+                      aria-label={`${t('testimonials.photosLabel')} ${idx + 1}`}
+                    >
+                      <img src={optimizeSrc(url, 160)} alt="" loading="lazy" decoding="async" />
+                      {idx === 3 && shots.length > 4 && (
+                        <span className="tc-shots__more">+{shots.length - 4}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 

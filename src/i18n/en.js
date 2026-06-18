@@ -100,6 +100,7 @@ export default {
     title: 'Success stories',
     lead: 'Hundreds of families have already found their home with us.',
     photosLabel: 'Photos from the home',
+    photosCta: 'Tap to view the home',
   },
   partners: {
     title: 'Among our partners and clients',

@@ -33,7 +33,7 @@ export default {
     lead: 'מבחר מהפרויקטים שתכננו, בנינו וליווינו ברחבי הארץ.',
     all: 'לכל הפרויקטים',
     viewProject: 'לצפייה בפרויקט',
-    status: { planning: 'בתכנון', construction: 'בבנייה', completed: 'הושלם', marketing: 'בשיווק' },
+    status: { planning: 'בתכנון', construction: 'בבנייה', completed: 'הושלם', marketing: 'בשיווק', sold: 'נמכר' },
   },
   valueChain: {
     eyebrow: 'התהליך שלנו',

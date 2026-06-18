@@ -33,7 +33,7 @@ export default {
     lead: 'A selection of projects we have planned, built and supervised across the country.',
     all: 'All projects',
     viewProject: 'View project',
-    status: { planning: 'Planning', construction: 'Under construction', completed: 'Completed', marketing: 'Marketing' },
+    status: { planning: 'Planning', construction: 'Under construction', completed: 'Completed', marketing: 'Marketing', sold: 'Sold' },
   },
   valueChain: {
     eyebrow: 'Our process',

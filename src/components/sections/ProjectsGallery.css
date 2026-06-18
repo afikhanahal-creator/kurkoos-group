@@ -282,14 +282,4 @@
 .pg-card__meta { justify-content: flex-start; }
 @media (max-width: 768px) {
   .pg-card__title { text-align: start; }
-  /* במובייל אין ריחוף — הפאנל מוצג קבוע (פתוח) עם פורמט תמציתי:
-     שם / סוג / עיר · שנה, בדיוק כמו בכרטיס "חנקין 41". לא חבוי מאחורי hover. */
-  .pg-card__panel {
-    transform: none;
-    padding: 0.75rem 0.9rem 0.85rem;
-  }
-  .pg-card__reveal { opacity: 1; transform: none; transition: none; }
-  .pg-card__title { font-size: 1.05rem; }
-  .pg-card__desc { margin-top: 0.2rem; font-size: 0.85rem; }
-  .pg-card__meta { margin-top: 0.3rem; font-size: 0.78rem; }
 }

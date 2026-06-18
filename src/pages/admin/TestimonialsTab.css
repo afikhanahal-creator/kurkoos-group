@@ -88,6 +88,12 @@
   margin-bottom: 0.35rem;
   color: var(--adm-text-soft, #667);
 }
+.tst-card__hint {
+  margin: -0.1rem 0 0.6rem;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--adm-text-soft, #889);
+}
 .tst-card__image { }
 .tst-card__fields {
   display: grid;

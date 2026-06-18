@@ -99,6 +99,7 @@ export default {
     eyebrow: 'Clients speak',
     title: 'Success stories',
     lead: 'Hundreds of families have already found their home with us.',
+    photosLabel: 'Photos from the home',
   },
   partners: {
     title: 'Among our partners and clients',

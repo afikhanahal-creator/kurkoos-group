@@ -141,13 +141,65 @@
 }
 .tc__author span { color: var(--color-accent); font-weight: 600; font-size: 0.9rem; }
 
+/* ---- כותרת תחתונה: תמונות הבית (שמאל) + חיצי ניווט (מרכז) ---- */
+.testimonials__footer {
+  position: relative;
+  margin-top: 2.2rem;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ערימת תמונות קטנה ("מניפה") — מוצגת בקטן בצד שמאל, נפתחת למסך מלא בלחיצה */
+.tc-shots {
+  position: absolute;
+  left: 0;            /* בצד שמאל פיזית (גם ב-RTL) — כמו בצילום המסך */
+  bottom: 0;
+  display: flex;
+  align-items: center;
+}
+.tc-shots__tile {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  margin-inline-start: -14px;   /* חפיפה עדינה → מראה של ערימה */
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--color-surface);
+  background: var(--color-bg-soft);
+  box-shadow: var(--shadow-2);
+  cursor: pointer;
+  transform: rotate(-5deg);
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.tc-shots__tile:first-child { margin-inline-start: 0; }
+.tc-shots__tile:nth-child(even) { transform: rotate(5deg); }
+.tc-shots__tile:hover {
+  transform: translateY(-5px) rotate(0deg) scale(1.06);
+  z-index: 40 !important;
+  box-shadow: var(--shadow-4);
+}
+.tc-shots__tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tc-shots__more {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 34, 48, 0.62);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
 /* ---- ניווט: חיצים + נקודות ---- */
 .testimonials__nav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  margin-top: 2.2rem;
 }
 .testimonials__nav .carousel__arrow {
   display: grid;
@@ -185,8 +237,63 @@
   .tc__quote-mark { position: static; display: block; margin: 0 auto 0.2rem; }
   .tc__text { font-size: 1.08rem; margin-bottom: 0.9rem; }
   .tc__stars { justify-content: center; }
-  .testimonials__nav { gap: 1.1rem; margin-top: 1.6rem; }
+  /* במובייל — הערמת התמונות מעל החיצים, הכל ממורכז */
+  .testimonials__footer { flex-direction: column; gap: 1rem; margin-top: 1.6rem; }
+  .tc-shots { position: static; }
+  .testimonials__nav { gap: 1.1rem; }
   .testimonials__nav .carousel__arrow { width: 42px; height: 42px; }
+}
+
+/* ============================================================
+   Lightbox — תצוגת תמונת הבית במסך מלא, עם X גלוי ומעבר בין תמונות.
+   ============================================================ */
+.tc-lb {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: rgba(7, 18, 26, 0.9);
+  backdrop-filter: blur(6px);
+}
+.tc-lb__img {
+  max-width: min(92vw, 1100px);
+  max-height: 86vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: var(--shadow-4);
+  background: #0b1a24;
+}
+.tc-lb__close,
+.tc-lb__nav {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.tc-lb__close { inset-block-start: 1.1rem; inset-inline-end: 1.1rem; width: 46px; height: 46px; }
+.tc-lb__close:hover { background: var(--color-accent); }
+.tc-lb__nav { top: 50%; transform: translateY(-50%); width: 50px; height: 50px; }
+.tc-lb__nav:hover { background: var(--color-primary); }
+.tc-lb__nav--prev { inset-inline-start: 1rem; }
+.tc-lb__nav--next { inset-inline-end: 1rem; }
+.tc-lb__count {
+  position: absolute;
+  inset-block-end: 1.2rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.42);
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--radius-pill);
 }
 
 @media (prefers-reduced-motion: reduce) {

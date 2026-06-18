@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { useSettings } from '../../lib/cms.js'
+import { optimizeSrc, srcOfResponsive } from '../../lib/responsiveImage.js'
 import defaultTestimonials from '../../data/testimonials.js'
 import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -28,6 +29,7 @@ export default function Testimonials() {
   const settings = useSettings()
   const [i, setI] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [shot, setShot] = useState(null) // אינדקס התמונה הפתוחה ב-lightbox (או null)
 
   // המלצות מנוהלות מה-CMS (key: testimonials) גוברות על ברירת המחדל
   const testimonials = useMemo(() => {
@@ -44,15 +46,40 @@ export default function Testimonials() {
   // אם מספר ההמלצות הצטמצם (עריכה ב-CMS) — מוודאים שהאינדקס בתחום
   useEffect(() => { setI((p) => (p >= count ? 0 : p)) }, [count])
 
-  // החלפה אוטומטית — נעצרת בריחוף ומכבדת prefers-reduced-motion
+  // החלפה אוטומטית — נעצרת בריחוף, כשה-lightbox פתוח, ומכבדת prefers-reduced-motion
   useEffect(() => {
-    if (paused) return
+    if (paused || shot !== null) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const id = setInterval(next, AUTO_MS)
     return () => clearInterval(id)
-  }, [next, paused, i])
+  }, [next, paused, i, shot])
 
   const item = testimonials[i] || testimonials[0]
+
+  // תמונות הבית המצורפות להמלצה הנוכחית (מנורמלות לכתובות URL)
+  const shots = useMemo(() => {
+    const arr = Array.isArray(item?.photos) ? item.photos : []
+    return arr.map((p) => srcOfResponsive(p) || (typeof p === 'string' ? p : '')).filter(Boolean)
+  }, [item])
+
+  const shotNext = useCallback(() => setShot((p) => (p === null ? p : (p + 1) % shots.length)), [shots.length])
+  const shotPrev = useCallback(() => setShot((p) => (p === null ? p : (p - 1 + shots.length) % shots.length)), [shots.length])
+
+  // סוגרים את ה-lightbox כשמחליפים המלצה
+  useEffect(() => { setShot(null) }, [i])
+
+  // מקלדת: Esc לסגירה, חצים למעבר בין תמונות
+  useEffect(() => {
+    if (shot === null) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setShot(null)
+      else if (e.key === 'ArrowRight') setShot((p) => (p + 1) % shots.length)
+      else if (e.key === 'ArrowLeft') setShot((p) => (p - 1 + shots.length) % shots.length)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [shot, shots.length])
+
   if (!item) return null
 
   return (
@@ -116,17 +143,91 @@ export default function Testimonials() {
             </div>
           </div>
 
-          {/* ניווט */}
-          <div className="testimonials__nav">
-            <button type="button" className="carousel__arrow" onClick={prev} aria-label="Previous">
-              <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={20} />
-            </button>
-            <button type="button" className="carousel__arrow" onClick={next} aria-label="Next">
-              <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
-            </button>
+          {/* כותרת תחתונה: תמונות הבית (בצד שמאל) + חיצי ניווט (במרכז) */}
+          <div className="testimonials__footer">
+            {shots.length > 0 && (
+              <div className="tc-shots" aria-label={t('testimonials.photosLabel')}>
+                {shots.slice(0, 4).map((url, idx) => (
+                  <button
+                    type="button"
+                    key={idx}
+                    className="tc-shots__tile"
+                    style={{ zIndex: 10 - idx }}
+                    onClick={() => setShot(idx)}
+                    aria-label={`${t('testimonials.photosLabel')} ${idx + 1}`}
+                  >
+                    <img src={optimizeSrc(url, 140)} alt="" loading="lazy" decoding="async" />
+                    {idx === 3 && shots.length > 4 && (
+                      <span className="tc-shots__more">+{shots.length - 4}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="testimonials__nav">
+              <button type="button" className="carousel__arrow" onClick={prev} aria-label="Previous">
+                <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={20} />
+              </button>
+              <button type="button" className="carousel__arrow" onClick={next} aria-label="Next">
+                <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Lightbox לתמונות הבית — מסך מלא, X גלוי, מעבר בין תמונות */}
+      <AnimatePresence>
+        {shot !== null && shots[shot] && (
+          <motion.div
+            className="tc-lb"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShot(null)}
+          >
+            <button className="tc-lb__close" onClick={() => setShot(null)} aria-label={t('common.close')}>
+              <Icon name="close" size={26} />
+            </button>
+
+            {shots.length > 1 && (
+              <button
+                className="tc-lb__nav tc-lb__nav--prev"
+                onClick={(e) => { e.stopPropagation(); shotPrev() }}
+                aria-label="Previous"
+              >
+                <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={26} />
+              </button>
+            )}
+
+            <motion.img
+              key={shot}
+              className="tc-lb__img"
+              src={optimizeSrc(shots[shot], 1600)}
+              alt={L(item.project)}
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            />
+
+            {shots.length > 1 && (
+              <button
+                className="tc-lb__nav tc-lb__nav--next"
+                onClick={(e) => { e.stopPropagation(); shotNext() }}
+                aria-label="Next"
+              >
+                <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={26} />
+              </button>
+            )}
+
+            {shots.length > 1 && (
+              <div className="tc-lb__count">{shot + 1} / {shots.length}</div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

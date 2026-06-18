@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
 import defaultTestimonials from '../../data/testimonials.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
+import ImageManager from './ImageManager.jsx'
 import { toast } from '../../lib/toast.js'
 import './TestimonialsTab.css'
 
@@ -29,6 +30,7 @@ const blank = () => ({
   project: { he: '', en: '' },
   quote: { he: '', en: '' },
   image: '',
+  photos: [],   // תמונות מהבית — מוצגות בקטן בכרטיס, נפתחות במסך מלא
 })
 
 // משכפל המלצה ברירת-מחדל למבנה אחיד (id מחרוזת, שדות דו-לשוניים)
@@ -38,6 +40,7 @@ const fromDefault = (t) => ({
   project: { he: t.project?.he || '', en: t.project?.en || '' },
   quote: { he: t.quote?.he || '', en: t.quote?.en || '' },
   image: t.image || '',
+  photos: Array.isArray(t.photos) ? t.photos : [],
 })
 
 export default function TestimonialsTab() {
@@ -94,6 +97,14 @@ export default function TestimonialsTab() {
   const setImage = (id, val) => {
     setList((prev) => {
       const next = prev.map((it) => (it.id === id ? { ...it, image: val || '' } : it))
+      persist(next)
+      return next
+    })
+  }
+
+  const setPhotos = (id, photos) => {
+    setList((prev) => {
+      const next = prev.map((it) => (it.id === id ? { ...it, photos: Array.isArray(photos) ? photos : [] } : it))
       persist(next)
       return next
     })
@@ -207,6 +218,17 @@ export default function TestimonialsTab() {
               <div className="tst-field tst-field--full">
                 <label className="tst-card__lbl">ציטוט (אנגלית)</label>
                 <textarea dir="ltr" rows={3} value={it.quote.en} onChange={(e) => setField(it.id, ['quote', 'en'], e.target.value)} onBlur={commit} placeholder="What the client said…" />
+              </div>
+
+              <div className="tst-field tst-field--full">
+                <label className="tst-card__lbl">תמונות מהבית (גלריה)</label>
+                <p className="tst-card__hint">תמונות יפות של הבית הגמור. מוצגות בקטן בצד הכרטיס, ונפתחות במסך מלא עם מעבר בין תמונה לתמונה — מעלה משמעותית את האמון של הקוראים.</p>
+                <ImageManager
+                  value={Array.isArray(it.photos) ? it.photos : []}
+                  onChange={(v) => setPhotos(it.id, v)}
+                  folder="testimonials"
+                  max={8}
+                />
               </div>
             </div>
           </section>

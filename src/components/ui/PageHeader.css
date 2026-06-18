@@ -54,6 +54,17 @@
   max-width: 60ch;
 }
 
+/* ---- מובייל: מרכוז מלא של תוכן הקאבר (תווית, כותרת, תיאור, פירורי-לחם) ----
+   חל על כל טווח המובייל (≤768px) כדי שכל הקאברים בכל העמודים יהיו ממורכזים. */
+@media (max-width: 768px) {
+  .page-header .container { text-align: center; }
+  .page-header__title { text-align: center; }
+  .page-header__lead { text-align: center; margin-inline: auto; }
+  /* ה-eyebrow הוא inline-flex — הופכים אותו לבלוק-flex ממורכז כדי שיתמרכז בפועל */
+  .page-header__eyebrow { display: flex; justify-content: center; }
+  .page-header .breadcrumbs ol { margin-inline: auto; justify-content: center; }
+}
+
 @media (max-width: 600px) {
   /* גובה נמוך יותר לחלק הכחול במובייל — שייראו הכרטיסיות והחלק הלבן מיד */
   .page-header { padding-block: 1.5rem 1.7rem; }

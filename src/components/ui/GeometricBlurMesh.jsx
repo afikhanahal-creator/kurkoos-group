@@ -215,7 +215,11 @@ export default function GeometricBlurMesh() {
       const program = programRef.current
       if (!canvas || !gl || !program) return false
       const dampingFactor = 8
-      const dt = Math.min((performance.now() - lastTime) / 1000, 0.05)
+      // דלתא-זמן אמיתי בין פריימים (ומעדכנים את lastTime כאן) — כך הריכוך עוקב
+      // אחרי העכבר ואפשר "לשחק" עם פאות הקובייה כמו קודם.
+      const now = performance.now()
+      const dt = Math.min((now - lastTime) / 1000, 0.05)
+      lastTime = now
       mouseDampRef.current.x += (mouseRef.current.x - mouseDampRef.current.x) * dampingFactor * dt
       mouseDampRef.current.y += (mouseRef.current.y - mouseDampRef.current.y) * dampingFactor * dt
       gl.clearColor(0, 0, 0, 0)
@@ -235,7 +239,6 @@ export default function GeometricBlurMesh() {
     const animate = () => {
       if (!running) return
       if (!visibleRef.current) { running = false; return }   // מחוץ למסך → עוצר (אופטימיזציה נשמרת)
-      lastTime = performance.now()
       draw()
       animationFrameRef.current = requestAnimationFrame(animate)
     }

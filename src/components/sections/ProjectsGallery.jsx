@@ -161,6 +161,18 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   // במובייל משכפלים לפריסת marquee — אבל רק כשיש מספיק פריטים (אחרת זה נראה ככפילות)
   const renderItems = (isMobile && items.length >= 3) ? [...items, ...items] : items
 
+  // טעינה-מוקדמת (prefetch) של תמונות הכריכה בזמן idle — כך "פרויקטים נבחרים"
+  // מופיעים מיד כשגוללים אליהם, במקום להתחיל להיטען רק כשמגיעים לאזור.
+  const coverKey = items.map((p) => p.cover).filter(Boolean).join('|')
+  useEffect(() => {
+    if (!coverKey) return
+    const covers = coverKey.split('|')
+    const warm = () => covers.forEach((src) => { const im = new Image(); im.decoding = 'async'; im.src = optimizeSrc(src, 560) })
+    const ric = typeof window !== 'undefined' && window.requestIdleCallback
+    const id = ric ? window.requestIdleCallback(warm, { timeout: 2500 }) : setTimeout(warm, 1000)
+    return () => { if (ric && window.cancelIdleCallback) window.cancelIdleCallback(id); else clearTimeout(id) }
+  }, [coverKey])
+
   /* קרוסלה חכמה (מובייל): קופצת כרטיס ימינה כל 2 שניות, נגלשת native
      (חלק), נעצרת בנגיעה, ומתאפסת בצורה בלתי-נראית בגבול הסט → ריצה
      אינסופית רציפה בלי "קפיצה" להתחלה. */

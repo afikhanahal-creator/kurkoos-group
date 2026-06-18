@@ -36,6 +36,19 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
   const [err, setErr] = useState('')
   const [over, setOver] = useState(false)
   const [editing, setEditing] = useState(null)   // url שנערך כרגע
+  const [urlInput, setUrlInput] = useState('')   // הוספת תמונה לפי כתובת (URL)
+
+  // הוספת תמונה לפי כתובת חיצונית — בלי העלאה (שימושי להדבקת קישור מוכן)
+  const addByUrl = () => {
+    setErr('')
+    const u = urlInput.trim()
+    if (!u) return
+    if (!/^https?:\/\//i.test(u)) { setErr('כתובת לא תקינה — חייבת להתחיל ב-http/https'); return }
+    if (value.length >= max) { setErr(`אפשר עד ${max} תמונות`); return }
+    if (value.includes(u)) { setErr('התמונה כבר קיימת ברשימה'); return }
+    onChange([...value, u])
+    setUrlInput('')
+  }
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   // החלת עריכה — מעלה תמונה חדשה ומחליפה את המקור באותו מיקום ברשימה
@@ -128,6 +141,20 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
           {busy ? (progress ? `מעלה ${progress.done}/${progress.total}…` : 'מעלה…') : '+ הוסף תמונות'}
         </button>
         <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={(e) => handleFiles(e.target.files)} />
+      </div>
+      <div className="im__url">
+        <input
+          type="url"
+          className="im__url-input"
+          placeholder="או הדביקו כתובת תמונה (URL) והקישו Enter…"
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addByUrl() } }}
+          disabled={busy || value.length >= max}
+        />
+        <button type="button" className="im__url-add" onClick={addByUrl} disabled={busy || !urlInput.trim() || value.length >= max}>
+          הוסף קישור
+        </button>
       </div>
       {progress && (
         <div className="im__progress" role="progressbar" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done}>

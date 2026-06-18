@@ -522,6 +522,33 @@
 .im__corner:hover { border-color: var(--color-secondary, #15617f); color: var(--color-secondary, #15617f); }
 .im__corner.is-active { background: var(--color-secondary, #15617f); border-color: var(--color-secondary, #15617f); color: #fff; }
 .im__err { color: var(--color-accent); font-size: 0.85rem; }
+.im__url { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.9rem; }
+.im__url-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.45em 0.8em;
+  font-size: 0.85rem;
+  border: 1px solid var(--adm-border, #d8dee3);
+  border-radius: 8px;
+  direction: ltr;
+  text-align: left;
+}
+.im__url-input:focus { outline: none; border-color: var(--color-secondary, #15617f); }
+.im__url-add {
+  flex: 0 0 auto;
+  padding: 0.45em 1em;
+  font-size: 0.85rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  border: 1px solid var(--color-secondary, #15617f);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-secondary, #15617f);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.im__url-add:hover:not(:disabled) { background: var(--color-secondary, #15617f); color: #fff; }
+.im__url-add:disabled { opacity: 0.5; cursor: not-allowed; }
 .im__progress { height: 6px; border-radius: var(--radius-pill); background: var(--adm-border); overflow: hidden; margin: 0.2rem 0 0.4rem; }
 .im__progress span { display: block; height: 100%; background: var(--color-secondary); border-radius: inherit; transition: width var(--dur-fast) ease; }
 .im__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 0.7rem; }

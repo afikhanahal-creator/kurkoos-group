@@ -350,12 +350,6 @@
    כרטיסי תחומי הפעילות (דסקטופ) עם תמונה אמיתית מה-CMS — שדרוג ויזואלי.
    ============================================================ */
 .card__image--photo { height: 168px; }
-/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשהתמונה הוקטנה (zoom-out) או ב-contain */
-.card__img-backdrop {
-  position: absolute; inset: 0; z-index: 0;
-  background-image: var(--card-bg); background-size: cover; background-position: center;
-  filter: blur(16px) saturate(1.1); transform: scale(1.14);
-}
 .card__img {
   position: absolute;
   inset: 0;

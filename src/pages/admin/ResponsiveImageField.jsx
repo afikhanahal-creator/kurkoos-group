@@ -187,21 +187,21 @@ export default function ResponsiveImageField({
                 <div
                   ref={frameRef}
                   className="rif__imgarea"
-                  style={{ borderRadius: `${view.radius || 0}px`, '--rif-bg': `url("${draft.src}")` }}
+                  style={{ borderRadius: `${view.radius || 0}px` }}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                   onPointerCancel={onPointerUp}
                 >
-                  {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשמקטינים זום (zoom-out) או ב-contain */}
-                  <span className="rif__backdrop" aria-hidden="true" />
                   <img
                     className="rif__img"
                     src={draft.src}
                     alt=""
                     draggable="false"
                     style={{
-                      objectFit: view.objectFit,
+                      /* בזום-אאוט (מתחת ל-100%) מציגים את כל התמונה (contain) בלי חיתוך,
+                         לפי הפרופורציות — עם שוליים נקיים (בלי רקע מטושטש) */
+                      objectFit: (view.zoom || 1) < 1 ? 'contain' : view.objectFit,
                       objectPosition: view.objectPosition,
                       transform: `scale(${view.zoom || 1})`,
                       transformOrigin: view.objectPosition,

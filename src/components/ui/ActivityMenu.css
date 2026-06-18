@@ -138,12 +138,6 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-/* רקע מטושטש של אותה תמונה — ממלא את התא כשהתמונה הוקטנה מתחת ל-100% (zoom-out) */
-.actmenu__backdrop {
-  position: absolute; inset: 0; z-index: 0;
-  background-image: var(--actmenu-bg); background-size: cover; background-position: center;
-  filter: blur(18px) saturate(1.1); transform: scale(1.14);
-}
 .actmenu__img { z-index: 1; }
 .actmenu__img {
   position: absolute;

@@ -122,10 +122,7 @@ export default function ActivityMenu({ items = [] }) {
         to={current.to}
         className="actmenu__stage"
         aria-label={L(current.title)}
-        style={{ '--actmenu-bg': `url("${optimizeSrc(srcOfResponsive(current.image), 700)}")` }}
       >
-        {/* רקע מטושטש של אותה תמונה — ממלא את הכרטיס כשהתמונה הוקטנה (zoom-out) או ב-contain */}
-        <span className="actmenu__backdrop" aria-hidden="true" />
         <AnimatePresence mode="wait" initial={false}>
           <motion.img
             key={current.id}

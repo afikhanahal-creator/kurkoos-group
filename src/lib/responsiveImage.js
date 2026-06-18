@@ -134,12 +134,14 @@ export function responsiveStyle(value) {
   const ri = normalizeResponsiveImage(value)
   if (!ri) return {}
   const { mobile, desktop } = ri.views
+  // בזום-אאוט (מתחת ל-100%) מציגים את כל התמונה (contain) בלי חיתוך — לפי הפרופורציות
+  const fitOf = (v) => ((v.zoom || 1) < 1 ? 'contain' : v.objectFit)
   return {
-    '--ri-fit-d': desktop.objectFit,
+    '--ri-fit-d': fitOf(desktop),
     '--ri-pos-d': desktop.objectPosition,
     '--ri-scale-d': desktop.zoom || 1,
     '--ri-rad-d': `${desktop.radius || 0}px`,
-    '--ri-fit-m': mobile.objectFit,
+    '--ri-fit-m': fitOf(mobile),
     '--ri-pos-m': mobile.objectPosition,
     '--ri-scale-m': mobile.zoom || 1,
     '--ri-rad-m': `${mobile.radius || 0}px`,

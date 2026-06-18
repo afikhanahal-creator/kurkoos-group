@@ -27,23 +27,20 @@
   position: relative;
   width: 100%;
   overflow-x: auto;
-  /* בלי snap → גלילה חופשית וחלקה לגמרי (עכבר + אצבע), עם אינרציה native */
-  scroll-snap-type: none;
+  scroll-snap-type: x proximity;       /* רך יותר ממ-mandatory → גלילה חופשית וחלקה */
   -webkit-overflow-scrolling: touch;   /* אינרציה חלקה ב-iOS */
   overscroll-behavior-x: contain;      /* בלי "מתיחת" העמוד בגלילה אופקית */
   scrollbar-width: none;
   /* ריווח עליון/תחתון כדי שהחלק העליון של הכרטיס, ההרמה בריחוף והזוהר לא ייחתכו */
   padding-block: 1.25rem;
-  cursor: grab;          /* רמז לגרירה בעכבר */
 }
-.projects-gallery__viewport.is-grabbing { cursor: grabbing; user-select: none; }
 .projects-gallery__viewport::-webkit-scrollbar { display: none; }
 .projects-gallery__track {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.25rem;
   width: max-content;
   max-width: 100%;
-  /* margin auto ממרכז את הכרטיסים בדסקטופ כשהם נכנסים; במסך צר/הרבה כרטיסים נשאר גלילה */
+  /* margin auto ממרכז את הכרטיסים בדסקטופ כשהם נכנסים; במסך צר נשאר גלילה */
   margin-inline: auto;
   padding-inline: var(--container-pad);
 }
@@ -52,20 +49,12 @@
 .pg-card {
   position: relative;
   flex: 0 0 auto;
+  width: clamp(210px, 60vw, 250px);   /* כרטיס קומפקטי אחיד — כמו במקור */
   cursor: pointer;
   border-radius: var(--radius-lg);
   outline: none;
+  scroll-snap-align: start;
 }
-/* רוחב + פרופורציה לפי כיוון התמונה — כך הוילות (לרוחב) נראות במלואן בלי חיתוך,
-   ותמונות לאורך נשארות בפרופורציות אורך. כרטיסי "לרוחב" קומפקטיים (≈40% קטן)
-   כך שנכנסות 4 כרטיסיות במסך, באותו יחס תמונה. */
-/* גדלים שמכוונים לכ-4 כרטיסיות גלויות בו-זמנית בדסקטופ (≈22vw), עם גלילה לשאר */
-.pg-card--normal { width: clamp(240px, 22vw, 300px); }
-.pg-card--wide   { width: clamp(248px, 23vw, 312px); }
-.pg-card--tall   { width: clamp(212px, 19vw, 268px); }
-.pg-card--normal .pg-card__media { aspect-ratio: 4 / 5; }
-.pg-card--wide   .pg-card__media { aspect-ratio: 16 / 10; }
-.pg-card--tall   .pg-card__media { aspect-ratio: 3 / 4; }
 .pg-card:focus-visible { outline: 3px solid var(--color-primary-300); outline-offset: 4px; }
 
 /* ---- BorderGlow wrapper: רק טבעת הזוהר הטורקיזית, בלי ה־chrome הכהה ---- */
@@ -293,10 +282,4 @@
 .pg-card__meta { justify-content: flex-start; }
 @media (max-width: 768px) {
   .pg-card__title { text-align: start; }
-  /* מובייל — רוחבי כרטיסים לפי כיוון. כרטיסי "לרוחב" רחבים ב-~10% (חשוב!)
-     כדי שתמונות הוילה לא ייחתכו; פרופורציה לרוחב לתמונות לרוחב. */
-  .pg-card--normal { width: clamp(212px, 64vw, 264px); }
-  .pg-card--wide   { width: clamp(248px, 74vw, 322px); }
-  .pg-card--tall   { width: clamp(198px, 58vw, 244px); }
-  .pg-card--wide .pg-card__media { aspect-ratio: 4 / 3; }
 }

@@ -9,18 +9,18 @@ import FloatingActions from './components/ui/FloatingActions.jsx'
 import AccessibilityButton from './components/ui/AccessibilityButton.jsx'
 import IntroVideo from './components/sections/IntroVideo.jsx'
 import FontLoader from './components/ui/FontLoader.jsx'
-import Home from './pages/Home.jsx'
-import Projects from './pages/Projects.jsx'
-import ProjectDetail from './pages/ProjectDetail.jsx'
-import Division from './pages/Division.jsx'
-import Team from './pages/Team.jsx'
-import About from './pages/About.jsx'
-import Blog from './pages/Blog.jsx'
-import Careers from './pages/Careers.jsx'
-import Legal from './pages/Legal.jsx'
-import NotFound from './pages/NotFound.jsx'
-// קוד-ספליטינג: עורך האדמין (כולל עורך התמונות הכבד) ומדריך הסגנון
-// נטענים רק לפי דרישה — כך החבילה של האתר הציבורי קלה ומהירה יותר במובייל.
+import Home from './pages/Home.jsx'   // עמוד הבית נטען מיידית (נחיתה) — בלי השהיית chunk
+// קוד-ספליטינג: כל שאר העמודים נטענים לפי דרישה → חבילת התחלה קטנה וטעינה מהירה יותר.
+// (עמוד הבית נשאר eager כדי שהנחיתה תהיה מיידית; שאר העמודים נטענים בניווט ונשמרים במטמון.)
+const Projects = lazy(() => import('./pages/Projects.jsx'))
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail.jsx'))
+const Division = lazy(() => import('./pages/Division.jsx'))
+const Team = lazy(() => import('./pages/Team.jsx'))
+const About = lazy(() => import('./pages/About.jsx'))
+const Blog = lazy(() => import('./pages/Blog.jsx'))
+const Careers = lazy(() => import('./pages/Careers.jsx'))
+const Legal = lazy(() => import('./pages/Legal.jsx'))
+const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'))
 const Admin = lazy(() => import('./pages/admin/Admin.jsx'))
 
@@ -68,6 +68,20 @@ export default function App() {
   const location = useLocation()
   const { t } = useI18n()
 
+  // טעינה-מוקדמת (prefetch) של ה-chunks של העמודים הנפוצים בזמן idle — כך הניווט
+  // נשאר מיידי (בלי השהיית chunk/הבהוב), ועם זאת חבילת ההתחלה נשארת קטנה.
+  useEffect(() => {
+    const warm = () => {
+      import('./pages/ProjectDetail.jsx')
+      import('./pages/Division.jsx')
+      import('./pages/Projects.jsx')
+      import('./pages/About.jsx')
+    }
+    const ric = typeof window !== 'undefined' && window.requestIdleCallback
+    const id = ric ? window.requestIdleCallback(warm, { timeout: 3000 }) : setTimeout(warm, 1800)
+    return () => { if (ric && window.cancelIdleCallback) window.cancelIdleCallback(id); else clearTimeout(id) }
+  }, [])
+
   // אזור האדמין — עמוד מלא נפרד, ללא ה-Header/Footer של האתר הציבורי
   if (location.pathname.startsWith('/admin')) {
     return (
@@ -91,6 +105,7 @@ export default function App() {
       <main id="top" tabIndex={-1}>
         <AnimatePresence mode="wait">
           <motion.div key={location.pathname} {...pageMotion}>
+            <Suspense fallback={null}>
             <Routes location={location}>
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
@@ -103,9 +118,10 @@ export default function App() {
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />
               <Route path="/terms" element={<Legal kind="terms" />} />
-              <Route path="/style-guide" element={<Suspense fallback={null}><StyleGuide /></Suspense>} />
+              <Route path="/style-guide" element={<StyleGuide />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

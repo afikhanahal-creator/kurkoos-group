@@ -176,6 +176,12 @@ export default function GeometricBlurMesh() {
       canvas.height = height * dpr
       canvas.style.width = `${width}px`
       canvas.style.height = `${height}px`
+      // ברירת מחדל: נקודת ההשפעה במרכז — כך האפקט נראה מלכתחילה, בלי צורך בתנועת עכבר.
+      // (לא דורסים אם המשתמש כבר הזיז את העכבר → אז הערך כבר אינו 0,0.)
+      if (mouseRef.current.x === 0 && mouseRef.current.y === 0) {
+        mouseRef.current = { x: width / 2, y: height / 2 }
+        mouseDampRef.current = { x: width / 2, y: height / 2 }
+      }
       const gl = glRef.current
       if (gl) gl.viewport(0, 0, canvas.width, canvas.height)
     }
@@ -200,8 +206,6 @@ export default function GeometricBlurMesh() {
   // לולאת אנימציה — רצה רק כשהקנבס על המסך; ב-reduced-motion מציירת פריים
   // סטטי יחיד ועוצרת. כך לא נשרף GPU/CPU לאורך כל הסשן כשההירו לא נראה.
   useEffect(() => {
-    const reduced = typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let lastTime = performance.now()
     let running = true
 
@@ -230,10 +234,9 @@ export default function GeometricBlurMesh() {
 
     const animate = () => {
       if (!running) return
-      if (!visibleRef.current) { running = false; return }   // מחוץ למסך → עוצר
+      if (!visibleRef.current) { running = false; return }   // מחוץ למסך → עוצר (אופטימיזציה נשמרת)
       lastTime = performance.now()
-      const drawn = draw()
-      if (reduced && drawn) { running = false; return }       // פריים סטטי יחיד
+      draw()
       animationFrameRef.current = requestAnimationFrame(animate)
     }
     const ensureRunning = () => {

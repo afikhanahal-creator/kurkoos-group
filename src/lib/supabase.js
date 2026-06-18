@@ -7,3 +7,15 @@ const anon = import.meta.env.VITE_SUPABASE_ANON_KEY
    נופל בחן חזרה לנתונים המקומיים (לא קורס). */
 export const supabase = url && anon ? createClient(url, anon) : null
 export const hasSupabase = !!supabase
+
+// preconnect ל-Supabase (Storage + REST) — מקצר את זמן ההתחברות לבקשה הראשונה
+if (supabase && typeof document !== 'undefined') {
+  try {
+    const origin = new URL(url).origin
+    const link = document.createElement('link')
+    link.rel = 'preconnect'
+    link.href = origin
+    link.crossOrigin = 'anonymous'
+    document.head.appendChild(link)
+  } catch { /* noop */ }
+}

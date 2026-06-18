@@ -15,16 +15,36 @@ const BUCKET = 'media'
    התוצאה לזמן קצר — פחות בקשות רשת, טעינה מהירה יותר, והנתונים נשארים
    טריים (TTL קצר + פינוי מיידי אחרי כל כתיבה מהאדמין). */
 const _cache = new Map()
+
+/* התמדה ל-localStorage (stale-while-revalidate): שומרים תוצאה אחרונה כדי
+   שטעינה חוזרת/רענון תרנדר *מיד* מהמטמון, ואז תתרענן ברקע. גם פחות המתנה
+   לרשת וגם פחות בקשות חוזרות ל-Supabase. */
+const LS_PREFIX = 'kc_cache_'
+function lsGet(key) {
+  try { const raw = localStorage.getItem(LS_PREFIX + key); return raw ? JSON.parse(raw) : null } catch { return null }
+}
+function lsSet(key, data) {
+  try { localStorage.setItem(LS_PREFIX + key, JSON.stringify({ t: Date.now(), data })) } catch { /* SSR/quota — מתעלמים */ }
+}
+// תמונת-מצב סינכרונית אחרונה (לזריעת state התחלתי) — null אם אין/ישן מדי
+export function cachedSnapshot(key, maxAgeMs = 86_400_000) {
+  const hit = lsGet(key)
+  if (hit && (maxAgeMs === Infinity || Date.now() - hit.t < maxAgeMs)) return hit.data
+  return null
+}
+
 function cached(key, ttlMs, fetcher) {
   const hit = _cache.get(key)
   if (hit && Date.now() - hit.t < ttlMs) return hit.p
-  const p = Promise.resolve().then(fetcher)
+  const p = Promise.resolve().then(fetcher).then((data) => { lsSet(key, data); return data })
   p.catch(() => _cache.delete(key))   // כישלון לא ננעל במטמון
   _cache.set(key, { t: Date.now(), p })
   return p
 }
 function invalidate(prefix) {
   for (const k of _cache.keys()) if (k.startsWith(prefix)) _cache.delete(k)
+  // מנקים גם את ה-localStorage כדי שלא תוגש תמונת-מצב ישנה אחרי כתיבה מהאדמין
+  try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(LS_PREFIX + prefix)) localStorage.removeItem(k) } } catch { /* noop */ }
 }
 
 // ---------- Cloudinary (וידאו/מדיה כבדה) ----------
@@ -462,7 +482,8 @@ function ensureSettingsRealtime() {
 }
 
 export function useSettings() {
-  const [settings, setSettings] = useState({})
+  // זריעה מיידית מתמונת-המצב השמורה → ההגדרות (פונטים/לוגו/תמונות) חלות מיד, בלי המתנה לרשת
+  const [settings, setSettings] = useState(() => cachedSnapshot('settings') || {})
   useEffect(() => {
     let on = true
     const load = () => fetchSettings().then((s) => on && setSettings(s)).catch(() => {})

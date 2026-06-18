@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import projects from '../../data/projects.js'
 import { supabase } from '../../lib/supabase.js'
-import { listProjectCards, cmsRowToCard, projectPages } from '../../lib/cms.js'
+import { listProjectCards, cmsRowToCard, projectPages, cachedSnapshot } from '../../lib/cms.js'
 import { optimizeSrc } from '../../lib/responsiveImage.js'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Reveal from '../ui/Reveal.jsx'
@@ -117,7 +117,14 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const { t, isRTL } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
-  const [cmsItems, setCmsItems] = useState(null)
+  // בחירת "פרויקטים נבחרים" מתוך שורות CMS — מפורסמים מתויגי featured, אחרת הכול
+  const pickFeatured = (rows) => {
+    if (!rows || !rows.length) return null
+    const featured = rows.filter((p) => projectPages(p).includes('featured'))
+    return (featured.length ? featured : rows).map(cmsRowToCard)
+  }
+  // זריעה מיידית מתמונת-מצב שמורה → "פרויקטים נבחרים" מופיעים מיד בטעינה חוזרת/רענון
+  const [cmsItems, setCmsItems] = useState(() => (itemsProp && itemsProp.length) ? null : pickFeatured(cachedSnapshot('projects:cards')))
   const viewportRef = useRef(null)
   const pausedRef = useRef(false)
   const resumeRef = useRef(null)
@@ -128,9 +135,9 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     let alive = true
     listProjectCards()
       .then((rows) => {
-        if (!alive || !rows || !rows.length) return
-        const featured = rows.filter((p) => projectPages(p).includes('featured'))
-        setCmsItems((featured.length ? featured : rows).map(cmsRowToCard))
+        if (!alive) return
+        const items = pickFeatured(rows)
+        if (items) setCmsItems(items)
       })
       .catch(() => {})
     return () => { alive = false }

@@ -64,7 +64,6 @@ export default function Testimonials() {
   }, [item])
 
   const shotNext = useCallback(() => setShot((p) => (p === null ? p : (p + 1) % shots.length)), [shots.length])
-  const shotPrev = useCallback(() => setShot((p) => (p === null ? p : (p - 1 + shots.length) % shots.length)), [shots.length])
 
   const canFlip = shots.length > 0
 
@@ -243,36 +242,17 @@ export default function Testimonials() {
               <Icon name="close" size={26} />
             </button>
 
-            {shots.length > 1 && (
-              <button
-                className="tc-lb__nav tc-lb__nav--prev"
-                onClick={(e) => { e.stopPropagation(); shotPrev() }}
-                aria-label="Previous"
-              >
-                <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={26} />
-              </button>
-            )}
-
+            {/* לחיצה על התמונה → התמונה הבאה (בלי חצים); לחיצה ברקע/X → סגירה */}
             <motion.img
               key={shot}
-              className="tc-lb__img"
+              className={`tc-lb__img${shots.length > 1 ? ' is-clickable' : ''}`}
               src={optimizeSrc(shots[shot], 1600)}
               alt={L(item.project)}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); if (shots.length > 1) shotNext() }}
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             />
-
-            {shots.length > 1 && (
-              <button
-                className="tc-lb__nav tc-lb__nav--next"
-                onClick={(e) => { e.stopPropagation(); shotNext() }}
-                aria-label="Next"
-              >
-                <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={26} />
-              </button>
-            )}
 
             {shots.length > 1 && (
               <div className="tc-lb__count">{shot + 1} / {shots.length}</div>

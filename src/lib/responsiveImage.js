@@ -120,6 +120,13 @@ export function optimizeSrc(src, w = 1920) {
       return u.toString()
     } catch { return src }
   }
+  // Supabase Storage — מגישים דרך ה-CDN של Cloudinary (שינוי-גודל + פורמט מודרני
+   // f_auto/q_auto) → תמונות קלות בהרבה וטעינה מהירה. נופל-לאחור לכתובת המקורית
+   // אם משהו נכשל (onError ברכיבי התמונה).
+  const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+  if (cloud && src.includes('.supabase.co/storage/')) {
+    return `https://res.cloudinary.com/${cloud}/image/fetch/f_auto,q_auto,c_limit,w_${w}/${encodeURIComponent(src)}`
+  }
   if (!src.includes('res.cloudinary.com/')) return src
   const marker = '/image/upload/'
   const i = src.indexOf(marker)

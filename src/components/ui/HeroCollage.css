@@ -147,21 +147,21 @@
   .hc-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows: 92px; grid-auto-flow: dense; gap: 0.7rem; }
 }
 @media (max-width: 600px) {
-  /* פסיפס א-סימטרי שמראה את *כל* ההדמיה לפי הפרופורציות שלה (בלי חיתוך) —
-     מסונרי של 2 טורים: גובה כל כרטיס נקבע לפי יחס התמונה עצמה. */
-  .hc-grid { display: block; column-count: 2; column-gap: 0.6rem; }
+  /* קולאז' מגזיני יציב (גריד — בלי חפיפות): 2 טורים, גבהים מתחלפים, ובאנר רחב
+     מדי פעם → "אחד גדול, שניים קטנים". כרטיסים לעולם לא מסתתרים זה מאחורי זה. */
+  .hc-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 82px; grid-auto-flow: dense; gap: 0.55rem; }
   .hc-card {
-    display: block; break-inside: avoid; margin: 0 0 0.6rem;
-    grid-row: auto; grid-column: auto;   /* מבטל את פריסת הגריד */
+    display: block; grid-column: span 1; grid-row: span 3;   /* ~252px (לאורך) */
     border-radius: var(--radius-md);
   }
-  /* קצב קולאז' מגזיני: כל פרויקט שלישי גדול לכל הרוחב, והשניים שאחריו זה-לצד-זה
-     → "אחד גדול, שניים קטנים" שחוזר על עצמו. גם כרטיס שסומן "לרוחב" נעשה מלא-רוחב. */
-  .hc-card:nth-child(3n+1),
-  .hc-card--wide { column-span: all; margin-bottom: 0.7rem; }
-  /* התמונה במלואה: רוחב מלא, גובה לפי היחס הטבעי — בלי object-fit/חיתוך */
-  .hc-card img { width: 100%; height: auto; object-fit: fill; display: block; }
-  .hc-card .smart-image-placeholder { min-height: 150px; }
+  .hc-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hc-card .smart-image-placeholder { height: 100%; }
+  /* באנר רחב לכל הרוחב — כרטיס שסומן "לרוחב", וגם אוטומטית מדי פעם לקצב קולאז' */
+  .hc-card--wide { grid-column: span 2; grid-row: span 3; }
+  .hc-card--normal:nth-child(5n+1) { grid-column: span 2; grid-row: span 3; }
+  /* גבהים מתחלפים לכרטיסים רגילים → שתי-וערב */
+  .hc-card--tall { grid-row: span 4; }
+  .hc-card--normal:nth-child(3n+2) { grid-row: span 2; }
   .hc-card__name { padding: 0.8rem 0.6rem 0.55rem; font-size: 0.78rem; }
   .hc-card__shutter { padding: 0.8rem; gap: 0.35rem; }
   .hc-card__shutter-title { font-size: 0.92rem; }

@@ -93,9 +93,14 @@ export default function ResponsiveImageField({
       const file = new File([blob], `img-${Date.now()}.webp`, { type: blob.type || 'image/webp' })
       const url = await uploadMedia(file, folder)
       const old = draft?.src
-      const next = draft
-        ? { ...draft, src: url }
-        : { src: url, alt: '', views: { mobile: { ...DEFAULT_VIEW }, desktop: { ...DEFAULT_VIEW } } }
+      // העריכה המתקדמת כבר "צרובה" בתמונה (חיתוך/זום/סיבוב/פינות/פילטרים),
+      // לכן מאפסים את התצוגות לניטרלי — כך האתר מציג בדיוק את מה שהוגדר בעורך,
+      // בלי להחיל שוב זום/מיקוד/פינות מעל התוצאה.
+      const next = {
+        src: url,
+        alt: draft?.alt || '',
+        views: { mobile: { ...DEFAULT_VIEW }, desktop: { ...DEFAULT_VIEW } },
+      }
       commit(next)
       if (old) deleteMedia(old).catch(() => {})
       setEditing(false)

@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
-import projects from '../../data/projects.js'
+import { supabase } from '../../lib/supabase.js'
+import { listProjectCards, cmsRowToCard, cachedSnapshot } from '../../lib/cms.js'
 import Icon from '../ui/Icon.jsx'
 import './SearchOverlay.css'
 
@@ -10,8 +11,20 @@ export default function SearchOverlay({ open, onClose }) {
   const { t } = useI18n()
   const L = useLocalized()
   const [q, setQ] = useState('')
+  // החיפוש על פרויקטים אמיתיים מה-CMS (לא דמו) — זריעה מיידית מתמונת-מצב שמורה
+  const [projects, setProjects] = useState(() => (cachedSnapshot('projects:cards') || []).map(cmsRowToCard))
   const inputRef = useRef(null)
   const navigate = useNavigate()
+
+  // טעינת רשימת הפרויקטים לחיפוש כשנפתח החלון (מטמון משותף → מהיר)
+  useEffect(() => {
+    if (!open || !supabase) return
+    let alive = true
+    listProjectCards()
+      .then((rows) => { if (alive && rows) setProjects(rows.map(cmsRowToCard)) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [open])
 
   useEffect(() => {
     if (open) {

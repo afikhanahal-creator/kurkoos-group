@@ -1,21 +1,33 @@
 import { useState, useEffect } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
-import localProjects from '../data/projects.js'
 import localStats from '../data/stats.js'
 import HeroCollage from '../components/ui/HeroCollage.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import { supabase } from '../lib/supabase.js'
-import { listProjectCards, listCounters, projectPages } from '../lib/cms.js'
+import { listProjectCards, listCounters, projectPages, cachedSnapshot } from '../lib/cms.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import './Projects.css'
+
+// ממיר שורות CMS לפריטי הקולאז' — "פרויקטים נבחרים" אם תויגו, אחרת כל הפרויקטים
+function mapRows(rows) {
+  if (!rows || !rows.length) return []
+  const featured = rows.filter((p) => projectPages(p).includes('featured'))
+  const use = featured.length ? featured : rows
+  return use.map((p) => ({
+    name: p.name,
+    slug: p.slug || p.id,
+    cover: srcOfResponsive(p.hero_image_url) || srcOfResponsive(p.gallery && p.gallery[0]),
+    gallery: p.gallery || [],
+    card_layout: p.card_layout,
+  }))
+}
 
 export default function Projects() {
   const { t } = useI18n()
   const L = useLocalized()
 
-  const [projects, setProjects] = useState(() =>
-    localProjects.map((p) => ({ name: L(p.name), slug: p.slug, cover: p.cover, gallery: p.gallery || [], card_layout: p.card_layout }))
-  )
+  // זריעה מיידית מתמונת-מצב שמורה → הפרויקטים מופיעים מיד ברענון/חזרה לעמוד (בלי דמו)
+  const [projects, setProjects] = useState(() => mapRows(cachedSnapshot('projects:cards')))
   const [statItems, setStatItems] = useState(() =>
     localStats.slice(0, 3).map((s) => ({ value: `${s.value.toLocaleString('en-US')}${s.suffix}`, label: L(s.label) }))
   )
@@ -23,14 +35,7 @@ export default function Projects() {
   useEffect(() => {
     if (!supabase) return
     listProjectCards()
-      .then((rows) => {
-        if (rows && rows.length) {
-          // אם יש פרויקטים שתויגו "פרויקטים נבחרים" — מציגים אותם; אחרת את כולם
-          const featured = rows.filter((p) => projectPages(p).includes('featured'))
-          const use = featured.length ? featured : rows
-          setProjects(use.map((p) => ({ name: p.name, slug: p.slug || p.id, cover: srcOfResponsive(p.hero_image_url) || srcOfResponsive(p.gallery && p.gallery[0]), gallery: p.gallery || [], card_layout: p.card_layout })))
-        }
-      })
+      .then((rows) => { if (rows) setProjects(mapRows(rows)) })
       .catch(() => {})
     listCounters({ activeOnly: true })
       .then((rows) => {

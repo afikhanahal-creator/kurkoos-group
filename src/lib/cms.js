@@ -127,9 +127,10 @@ export async function listProjects({ includeArchived = false } = {}) {
 }
 
 /* עמודות כרטיס בלבד — לרשימות הציבוריות (גלריית הבית, עמוד הפרויקטים).
-   מדלג על עמודות ה-JSONB הכבדות (תוכניות, גלריות-משנה, קוביות, סביבה,
-   יזמים, סרטונים) → payload קטן משמעותית ותגובה מהירה יותר. */
-const CARD_COLS = 'id, slug, name, location, subtitle, description, year, status, hero_image_url, gallery, pages, card_layout, is_published'
+   מדלג על עמודות ה-JSONB/טקסט הכבדות (גלריות, תוכניות, תיאור ארוך, קוביות,
+   סביבה, יזמים, סרטונים) → payload קטן בהרבה וטעינה מהירה משמעותית. תמונת
+   הכריכה נלקחת מ-hero_image_url. */
+const CARD_COLS = 'id, slug, name, location, subtitle, year, status, hero_image_url, pages, card_layout, is_published'
 export async function listProjectCards() {
   return cached('projects:cards', 30_000, async () => {
     const fetchCards = (cols) => supabase

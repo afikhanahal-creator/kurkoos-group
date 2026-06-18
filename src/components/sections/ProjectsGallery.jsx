@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
-import projects from '../../data/projects.js'
 import { supabase } from '../../lib/supabase.js'
 import { listProjectCards, cmsRowToCard, projectPages, cachedSnapshot } from '../../lib/cms.js'
 import { optimizeSrc } from '../../lib/responsiveImage.js'
@@ -14,8 +13,6 @@ import BorderGlow from '../ui/BorderGlow.jsx'
 import SpotlightCard from '../ui/SpotlightCard.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './ProjectsGallery.css'
-
-const FEATURED = 4    // מציגים בדיוק 4 פרויקטים כברירת מחדל
 
 const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
 const itemVariants = {
@@ -143,21 +140,18 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     return () => { alive = false }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // מקור הפריטים: prop → CMS → נתוני ברירת מחדל מקומיים.
-  // פרויקטים אמיתיים (prop/CMS) מוצגים *כולם* — בלי הגבלת מספר; רק ברירת
-  // המחדל המקומית מוגבלת ל-FEATURED כדי לא להציף בדוגמאות.
-  const usingReal = (itemsProp && itemsProp.length) || (cmsItems && cmsItems.length)
+  // מקור הפריטים: prop → CMS בלבד. אין יותר fallback לנתוני דמו מקומיים —
+  // מה שנמחק בניהול לא יופיע, ושום פרויקט "ישן" לא יוצג.
   const source = (itemsProp && itemsProp.length)
     ? itemsProp
-    : (cmsItems && cmsItems.length ? cmsItems : projects.slice(0, FEATURED))
+    : (cmsItems && cmsItems.length ? cmsItems : [])
   const seen = new Set()
-  const deduped = source.filter((p) => {
+  const items = source.filter((p) => {
     const k = p.slug || p.name
     if (seen.has(k)) return false
     seen.add(k)
     return true
   })
-  const items = usingReal ? deduped : deduped.slice(0, FEATURED)
   // במובייל משכפלים לפריסת marquee — אבל רק כשיש מספיק פריטים (אחרת זה נראה ככפילות)
   const renderItems = (isMobile && items.length >= 3) ? [...items, ...items] : items
 
@@ -166,8 +160,9 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const coverKey = items.map((p) => p.cover).filter(Boolean).join('|')
   useEffect(() => {
     if (!coverKey) return
-    // טעינה-מוקדמת מיידית של כל תמונות הכריכה (במקביל לטעינת העמוד) → מופיעות מיד
-    const covers = coverKey.split('|')
+    // טעינה-מוקדמת רק של הכריכות הראשונות (לא כולן בבת אחת) — כדי לא להציף את
+    // החיבור ולהאיץ את ההופעה של הכרטיסים הראשונים. השאר נטענים בעצלתיים בגלילה.
+    const covers = coverKey.split('|').slice(0, 6)
     const id = setTimeout(() => {
       covers.forEach((src) => { const im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low'; im.src = optimizeSrc(src, 560) })
     }, 150)
@@ -226,6 +221,10 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
       el.removeEventListener('wheel', pause)
     }
   }, [isMobile, items.length])
+
+  // אין פרויקטים להצגה (לא דרך prop ולא מה-CMS) → לא מציגים את הסקשן כלל,
+  // במקום fallback לפרויקטי דמו ישנים.
+  if (!items.length) return null
 
   return (
     <section className="section section--soft projects-gallery" id={sectionId || undefined}>

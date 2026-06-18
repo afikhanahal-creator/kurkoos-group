@@ -144,9 +144,14 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     if (typeof v === 'string') { try { v = JSON.parse(v) } catch { v = null } }
     return Array.isArray(v) ? v.filter(Boolean) : []
   }, [settings.home_featured])
+  // מצב "כל הפרויקטים" — דורס את ההגבלה ל-4 ומציג את כולם
+  const homeFeaturedAll = useMemo(() => {
+    const v = settings.home_featured_all
+    return v === true || v === 'true'
+  }, [settings.home_featured_all])
 
-  // מקור הפריטים: prop → CMS בלבד (בלי דמו ישן)
-  const source = usingProp ? itemsProp : featuredItems
+  // מקור הפריטים: prop → CMS. במצב "כל הפרויקטים" מציגים את כולם; אחרת את הנבחרים.
+  const source = usingProp ? itemsProp : (homeFeaturedAll ? allItems : featuredItems)
   const seen = new Set()
   const items = source.filter((p) => {
     const k = p.slug || p.name
@@ -155,8 +160,8 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     return true
   })
 
-  // הגבלה ל-4 הנבחרים — *רק בדסקטופ* (במובייל נשארת הקרוסלה עם כל הנבחרים).
-  const curated = (!usingProp && !isMobile && homeFeatured.length)
+  // הגבלה ל-4 הנבחרים — *רק בדסקטופ*, וכשמצב "כל הפרויקטים" כבוי.
+  const curated = (!usingProp && !isMobile && !homeFeaturedAll && homeFeatured.length)
     ? homeFeatured.map((slug) => allItems.find((c) => c.slug === slug)).filter(Boolean).slice(0, 4)
     : null
   const baseItems = (curated && curated.length) ? curated : items

@@ -18,6 +18,7 @@ const cityOf = (p) => (typeof p?.city === 'string' ? p.city : (p?.city?.he || p?
 export default function HomeFeaturedTab() {
   const [projects, setProjects] = useState(null) // null = טוען
   const [selected, setSelected] = useState([])    // מערך slugs מסודר
+  const [showAll, setShowAll] = useState(false)    // מצב "כל הפרויקטים בדף הבית"
   const [saving, setSaving] = useState(false)
   const selRef = useRef([])
 
@@ -33,9 +34,24 @@ export default function HomeFeaturedTab() {
         sel = sel.filter((x) => exist.has(x)).slice(0, MAX)   // משאירים רק slugs קיימים
         selRef.current = sel
         setSelected(sel)
+        setShowAll(s.home_featured_all === true || s.home_featured_all === 'true')
       })
       .catch(() => setProjects([]))
   }, [])
+
+  const toggleAll = async () => {
+    const next = !showAll
+    setShowAll(next)
+    setSaving(true)
+    try {
+      await setSetting('home_featured_all', next)
+      toast.success(next ? 'כל הפרויקטים יוצגו בדף הבית' : 'חזרה לבחירה ידנית של עד 4')
+    } catch (e) {
+      toast.error('שמירה נכשלה: ' + (e.message || e))
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const persist = async (next) => {
     selRef.current = next
@@ -85,6 +101,27 @@ export default function HomeFeaturedTab() {
         </p>
         <span className={`hf-tab__count ${full ? 'is-full' : ''}`}>{selected.length}/{MAX}</span>
       </div>
+
+      {/* מצב "כל הפרויקטים" — דריסת ההגבלה ל-4 והצגת כולם בדף הבית */}
+      <button
+        type="button"
+        className={`hf-allbtn ${showAll ? 'is-on' : ''}`}
+        onClick={toggleAll}
+        disabled={saving}
+        aria-pressed={showAll}
+      >
+        <span className="hf-allbtn__check">{showAll ? '✓' : ''}</span>
+        <span className="hf-allbtn__txt">
+          <strong>הצגת כל הפרויקטים בדף הבית</strong>
+          <small>{showAll ? 'פעיל — כל הפרויקטים מוצגים. כבו כדי לבחור ידנית עד 4.' : 'הפעלה תציג את כל הפרויקטים (מתעלם מהבחירה הידנית).'}</small>
+        </span>
+      </button>
+
+      {showAll && (
+        <p className="hf-allnote">מצב "כל הפרויקטים" פעיל — הבחירה הידנית למטה שמורה אך אינה בתוקף כרגע.</p>
+      )}
+
+      <div className={showAll ? 'hf-dim' : ''}>
 
       {/* הנבחרים — בסדר התצוגה */}
       <div className="hf-chosen">
@@ -141,6 +178,7 @@ export default function HomeFeaturedTab() {
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -29,7 +29,8 @@ export default function Testimonials() {
   const settings = useSettings()
   const [i, setI] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [shot, setShot] = useState(null) // אינדקס התמונה הפתוחה ב-lightbox (או null)
+  const [shot, setShot] = useState(null)   // אינדקס התמונה הפתוחה ב-lightbox (או null)
+  const [flipped, setFlipped] = useState(false)   // הכרטיס מוצג בצדו האחורי (תמונות הנכס)
 
   // המלצות מנוהלות מה-CMS (key: testimonials) גוברות על ברירת המחדל
   const testimonials = useMemo(() => {
@@ -46,13 +47,13 @@ export default function Testimonials() {
   // אם מספר ההמלצות הצטמצם (עריכה ב-CMS) — מוודאים שהאינדקס בתחום
   useEffect(() => { setI((p) => (p >= count ? 0 : p)) }, [count])
 
-  // החלפה אוטומטית — נעצרת בריחוף, כשה-lightbox פתוח, ומכבדת prefers-reduced-motion
+  // החלפה אוטומטית — נעצרת בריחוף, כשה-lightbox פתוח, כשהכרטיס מהופך, ומכבדת prefers-reduced-motion
   useEffect(() => {
-    if (paused || shot !== null) return
+    if (paused || shot !== null || flipped) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const id = setInterval(next, AUTO_MS)
     return () => clearInterval(id)
-  }, [next, paused, i, shot])
+  }, [next, paused, i, shot, flipped])
 
   const item = testimonials[i] || testimonials[0]
 
@@ -65,8 +66,10 @@ export default function Testimonials() {
   const shotNext = useCallback(() => setShot((p) => (p === null ? p : (p + 1) % shots.length)), [shots.length])
   const shotPrev = useCallback(() => setShot((p) => (p === null ? p : (p - 1 + shots.length) % shots.length)), [shots.length])
 
-  // סוגרים את ה-lightbox כשמחליפים המלצה
-  useEffect(() => { setShot(null) }, [i])
+  const canFlip = shots.length > 0
+
+  // איפוס lightbox + היפוך כשמחליפים המלצה
+  useEffect(() => { setShot(null); setFlipped(false) }, [i])
 
   // מקלדת: Esc לסגירה, חצים למעבר בין תמונות
   useEffect(() => {
@@ -97,49 +100,95 @@ export default function Testimonials() {
           onMouseLeave={() => setPaused(false)}
         >
           <div className="tc__card-effect">
-            <div className="tc__card">
-              <span className="tc__liquid" aria-hidden="true" />
-              <span className="tc__shine" aria-hidden="true" />
-              <span className="tc__glow" aria-hidden="true" />
+            <div
+              className={`tc__flip${flipped ? ' is-flipped' : ''}${canFlip ? ' tc__flip--enabled' : ''}`}
+              role={canFlip ? 'button' : undefined}
+              tabIndex={canFlip ? 0 : undefined}
+              aria-pressed={canFlip ? flipped : undefined}
+              aria-label={canFlip ? t('testimonials.photosCtaBack') : undefined}
+              onClick={canFlip ? () => setFlipped((f) => !f) : undefined}
+              onKeyDown={canFlip ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFlipped((f) => !f) } } : undefined}
+            >
+              {/* ===== צד קדמי — ההמלצה ===== */}
+              <div className="tc__face tc__face--front">
+                <div className="tc__card">
+                  <span className="tc__liquid" aria-hidden="true" />
+                  <span className="tc__shine" aria-hidden="true" />
+                  <span className="tc__glow" aria-hidden="true" />
 
-              <div className="tc__grid">
-                {/* תמונת הלקוח */}
-                <div className="tc__avatar">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={item.id}
-                      className="tc__avatar-inner"
-                      initial={{ opacity: 0, scale: 1.04 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <SmartImage src={item.image} alt={L(item.name)} label={L(item.name)} />
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
+                  <div className="tc__grid">
+                    {/* תמונת הלקוח */}
+                    <div className="tc__avatar">
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={item.id}
+                          className="tc__avatar-inner"
+                          initial={{ opacity: 0, scale: 1.04 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          <SmartImage src={item.image} alt={L(item.name)} label={L(item.name)} />
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
 
-                {/* התוכן */}
-                <div className="tc__content">
-                  <span className="tc__quote-mark"><Icon name="quote" size={46} /></span>
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -12 }}
-                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <p className="tc__text">{L(item.quote)}</p>
-                      <Stars />
-                      <div className="tc__author">
-                        <strong>{L(item.name)}</strong>
-                        <span>{L(item.project)}</span>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
+                    {/* התוכן */}
+                    <div className="tc__content">
+                      <span className="tc__quote-mark"><Icon name="quote" size={46} /></span>
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -12 }}
+                          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          <p className="tc__text">{L(item.quote)}</p>
+                          <Stars />
+                          <div className="tc__author">
+                            <strong>{L(item.name)}</strong>
+                            <span>{L(item.project)}</span>
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  {canFlip && (
+                    <span className="tc__flip-hint">
+                      <Icon name="house" size={15} />{t('testimonials.photosCtaBack')}
+                    </span>
+                  )}
                 </div>
               </div>
+
+              {/* ===== צד אחורי — תמונות הנכס (אפקט הריבועים הכחולים) ===== */}
+              {canFlip && (
+              <div className="tc__face tc__face--back" aria-hidden={!flipped}>
+                <div className="tc__card tc__card--back">
+                  <h3 className="tc__back-title">{t('testimonials.photosCtaBack')}</h3>
+                  <div className="tc-shots__row tc-shots__row--back">
+                    {shots.slice(0, 3).map((url, idx) => (
+                      <button
+                        type="button"
+                        key={idx}
+                        className="tc-shots__tile tc-shots__tile--back"
+                        style={{ zIndex: 10 - idx }}
+                        tabIndex={flipped ? 0 : -1}
+                        onClick={(e) => { e.stopPropagation(); setShot(idx) }}
+                        aria-label={`${t('testimonials.photosCtaBack')} ${idx + 1}`}
+                      >
+                        <img src={optimizeSrc(url, 480)} alt="" loading="lazy" decoding="async" />
+                      </button>
+                    ))}
+                  </div>
+                  <span className="tc__back-hint">
+                    <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={14} />{t('common.back')}
+                  </span>
+                </div>
+              </div>
+              )}
             </div>
           </div>
 

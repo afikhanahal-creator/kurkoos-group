@@ -99,8 +99,9 @@ export default {
     eyebrow: 'לקוחות מספרים',
     title: 'סיפורי הצלחה',
     lead: 'מאות משפחות כבר מצאו את הבית שלהן איתנו.',
-    photosLabel: 'תמונות מהבית',
-    photosCta: 'לחצו לצפייה בבית',
+    photosLabel: 'תמונות מהנכס',
+    photosCta: 'לחצו לצפייה בנכס',
+    photosCtaBack: 'לצפייה בתמונות של הנכס',
   },
   partners: {
     title: 'בין השותפים והלקוחות שלנו',

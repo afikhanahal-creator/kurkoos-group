@@ -20,6 +20,44 @@
 }
 .hf-tab__count.is-full { background: color-mix(in srgb, var(--color-accent, #c54e30) 15%, transparent); color: var(--color-accent, #c54e30); }
 
+/* ---- כפתור "כל הפרויקטים" ---- */
+.hf-allbtn {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  text-align: start;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--adm-border, #d8dee3);
+  border-radius: 12px;
+  background: var(--adm-card, #fff);
+  cursor: pointer;
+  transition: border-color var(--dur-fast, .15s), background var(--dur-fast, .15s);
+}
+.hf-allbtn:hover { border-color: var(--color-secondary, #15617f); }
+.hf-allbtn.is-on { border-color: var(--color-secondary, #15617f); background: color-mix(in srgb, var(--color-secondary, #15617f) 9%, #fff); }
+.hf-allbtn__check {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border-radius: 7px;
+  border: 2px solid var(--color-secondary, #15617f);
+  color: #fff;
+  font-weight: 900; font-size: 0.95rem;
+  background: transparent;
+}
+.hf-allbtn.is-on .hf-allbtn__check { background: var(--color-secondary, #15617f); }
+.hf-allbtn__txt { display: flex; flex-direction: column; gap: 0.15rem; }
+.hf-allbtn__txt strong { font-family: var(--font-heading); font-size: 0.95rem; }
+.hf-allbtn__txt small { font-size: 0.78rem; color: var(--adm-text-soft, #889); }
+.hf-allnote {
+  margin: -0.4rem 0 0;
+  font-size: 0.82rem;
+  color: var(--color-secondary, #15617f);
+  font-weight: 600;
+}
+.hf-dim { opacity: 0.45; pointer-events: none; filter: grayscale(0.3); transition: opacity var(--dur-base, .25s); }
+
 /* ---- הנבחרים ---- */
 .hf-chosen { background: var(--adm-card, #fff); border: 1px solid var(--adm-border, #e6e9ee); border-radius: 14px; padding: 1rem 1.1rem; }
 .hf-chosen__title, .hf-lib__title { font-family: var(--font-heading); font-weight: 800; font-size: 1rem; margin: 0 0 0.8rem; }

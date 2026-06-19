@@ -311,6 +311,8 @@
   position: sticky;
   top: 74px;
   z-index: 40;
+  /* כשהבר העליון מוחלק החוצה (גלילה למטה) — הסרגל עולה ל-top:0 בסנכרון איתו */
+  transition: top var(--dur-base) var(--ease-out);
   background: #fff;   /* רקע מלא — בלי backdrop-filter שמרצד/מהבהב בזמן גלילה */
   /* ללא שום קווי הפרדה (כמו בתדהר) — בר נקי לחלוטין */
   border: 0;
@@ -332,6 +334,9 @@
   background: linear-gradient(180deg, #fff 0%, var(--color-bg) 100%);
   pointer-events: none;
 }
+/* הבר העליון מוסתר (גלילה למטה בעמוד פרויקט) → סרגל העוגנים נצמד לראש המסך.
+   גובר על כל ערכי ה-top הרספונסיביים (74/66/61) הודות לסלקטור הכולל html. */
+html.header-top-hidden .pd-anchors { top: 0; }
 .pd-anchors__inner {
   display: flex;
   justify-content: space-between;   /* מקצה לקצה — הפריט הימני בקצה ימין, השמאלי בקצה שמאל */

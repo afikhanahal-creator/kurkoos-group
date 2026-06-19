@@ -113,6 +113,10 @@
 @media (max-width: 768px) {
   .header--scrolled .header__main { box-shadow: none; }
 }
+/* בעמוד פרויקט, בגלילה למטה — הבר העליון מחליק מעלה ונעלם, ונשאר רק סרגל
+   העוגנים הדק בראש המסך. מזיזים רק את .header__main (לא את כל ה-header) כדי
+   לא לפגוע בבר התחתון הקבוע במובייל (header__bottombar). */
+.header--hidden .header__main { transform: translateY(-100%); }
 .header__main-inner {
   display: flex;
   align-items: center;

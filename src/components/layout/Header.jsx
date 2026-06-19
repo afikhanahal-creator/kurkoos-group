@@ -26,6 +26,7 @@ export default function Header() {
   const { t } = useI18n()
   const L = useLocalized()
   const [scrolled, setScrolled] = useState(false)
+  const [hidden, setHidden] = useState(false)   // הבר העליון מוסתר בגלילה למטה (בעמוד פרויקט)
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
@@ -38,12 +39,39 @@ export default function Header() {
     location.pathname === '/projects' || location.pathname.startsWith('/projects/')
   const showBottomBar = onProjectsPage || menuOpen
 
+  // גלילה: מסמן "נגלל" (>24px), ובעמוד פרויקט בודד מסתיר את הבר העליון בגלילה
+  // למטה ומחזיר אותו בגלילה למעלה — כך נשאר רק סרגל העוגנים הדק בראש המסך.
+  const isProjectDetail = location.pathname.startsWith('/projects/')
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
+    let lastY = window.scrollY
+    let ticking = false
+    const update = () => {
+      const y = window.scrollY
+      setScrolled(y > 24)
+      if (isProjectDetail) {
+        if (y < 140) setHidden(false)                         // קרוב לראש — תמיד מציגים
+        else if (y > lastY + 4) setHidden(true)               // גלילה למטה — מסתירים
+        else if (y < lastY - 4) setHidden(false)              // גלילה למעלה — מציגים
+      } else {
+        setHidden(false)
+      }
+      lastY = y
+      ticking = false
+    }
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update) } }
+    update()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [isProjectDetail])
+
+  // דגל גלובלי כדי שסרגל העוגנים (ProjectDetail) יידע לעלות ל-top:0 כשהבר העליון מוסתר
+  useEffect(() => {
+    document.documentElement.classList.toggle('header-top-hidden', hidden)
+    return () => document.documentElement.classList.remove('header-top-hidden')
+  }, [hidden])
+
+  // כשהתפריט נפתח — תמיד מציגים את הבר העליון (החלק העליון של ה-overlay)
+  useEffect(() => { if (menuOpen) setHidden(false) }, [menuOpen])
 
   useEffect(() => {
     setMenuOpen(false)
@@ -63,7 +91,7 @@ export default function Header() {
   }, [showBottomBar])
 
   return (
-    <header className={`header ${scrolled ? 'header--scrolled' : ''}`}>
+    <header className={`header ${scrolled ? 'header--scrolled' : ''} ${hidden ? 'header--hidden' : ''}`}>
       {/* ניווט ראשי */}
       <div className="header__main">
         <div className="container header__main-inner">

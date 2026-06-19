@@ -256,7 +256,6 @@ export default function Division() {
       {/* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */}
       <ProjectsGallery
         items={list}
-        collage
         showFooter={false}
         title={slug === 'brokerage' ? L({ he: 'פרויקטים בשיווק', en: 'Projects in marketing' }) : undefined}
         lead={slug === 'brokerage'

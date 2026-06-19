@@ -27,7 +27,7 @@
   position: relative;
   width: 100%;
   overflow-x: auto;
-  scroll-snap-type: x proximity;       /* רך יותר ממ-mandatory → גלילה חופשית וחלקה */
+  scroll-snap-type: none;              /* בלי snap → גלילה רציפה וחלקה, לא נתקעת */
   -webkit-overflow-scrolling: touch;   /* אינרציה חלקה ב-iOS */
   overscroll-behavior-x: contain;      /* בלי "מתיחת" העמוד בגלילה אופקית */
   scrollbar-width: none;
@@ -53,7 +53,6 @@
   cursor: pointer;
   border-radius: var(--radius-lg);
   outline: none;
-  scroll-snap-align: start;
 }
 .pg-card:focus-visible { outline: 3px solid var(--color-primary-300); outline-offset: 4px; }
 

@@ -165,8 +165,8 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     ? homeFeatured.map((slug) => allItems.find((c) => c.slug === slug)).filter(Boolean).slice(0, 4)
     : null
   const baseItems = (curated && curated.length) ? curated : items
-  // במובייל משכפלים לפריסת marquee — אבל רק כשיש מספיק פריטים (אחרת זה נראה ככפילות)
-  const renderItems = (isMobile && baseItems.length >= 3) ? [...baseItems, ...baseItems] : baseItems
+  // במובייל משכפלים ל-3 עותקים → לולאה אינסופית חלקה לשני הכיוונים (גלילה מהאמצע)
+  const renderItems = (isMobile && baseItems.length >= 2) ? [...baseItems, ...baseItems, ...baseItems] : baseItems
 
   // טעינה-מוקדמת (prefetch) של תמונות הכריכה בזמן idle — כך "פרויקטים נבחרים"
   // מופיעים מיד כשגוללים אליהם, במקום להתחיל להיטען רק כשמגיעים לאזור.
@@ -182,61 +182,73 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     return () => clearTimeout(id)
   }, [coverKey])
 
-  /* קרוסלה חכמה (מובייל): קופצת כרטיס ימינה כל 2 שניות, נגלשת native
-     (חלק), נעצרת בנגיעה, ומתאפסת בצורה בלתי-נראית בגבול הסט → ריצה
-     אינסופית רציפה בלי "קפיצה" להתחלה. */
+  /* קרוסלה רציפה וחלקה (מובייל): תנועה קבועה ועדינה (requestAnimationFrame),
+     לולאה אינסופית חלקה לשני הכיוונים (3 עותקים, גלילה מהאמצע), נעצרת בנגיעה
+     ומתחדשת — וניתן להחליק/לגרור חופשי ימינה ושמאלה בלי להיתקע. */
   useEffect(() => {
     if (!isMobile) return
     const el = viewportRef.current
     if (!el) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const track = el.querySelector('.projects-gallery__track')
-    const card = el.querySelector('.pg-card')
-    if (!track || !card) return
+    const cards = track ? track.querySelectorAll('.pg-card') : []
+    if (!track || cards.length < items.length * 2) return
 
-    const cs = getComputedStyle(track)
-    const gap = parseFloat(cs.columnGap || cs.gap) || 20
-    const step = card.getBoundingClientRect().width + gap
-    // רוחב סט יחיד — נמדד מהמיקום בפועל (כרטיסים יכולים להיות ברוחב משתנה לפי
-    // כיוון התמונה), כדי שהאיפוס בלולאה האינסופית יהיה חלק בלי "קפיצה".
-    const cards = track.querySelectorAll('.pg-card')
-    const setWidth = (cards.length >= items.length * 2)
-      ? Math.abs(cards[items.length].offsetLeft - cards[0].offsetLeft)
-      : items.length * step
+    // רוחב סט יחיד (נמדד מהמיקום בפועל) + כיוון RTL
+    let setWidth = Math.abs(cards[items.length].offsetLeft - cards[0].offsetLeft)
     const sign = getComputedStyle(el).direction === 'rtl' ? -1 : 1
+    if (!setWidth) return
 
-    // איפוס בלתי-נראה בגבול: קופצים סט שלם אחורה/קדימה (תוכן זהה → חלק)
-    const onScroll = () => {
+    // מתחילים מהעותק האמצעי → יש "אוויר" של עותק שלם לכל כיוון לגלילה ידנית
+    el.scrollLeft = sign > 0 ? setWidth : -setWidth
+
+    // שומרים את המיקום בעותק האמצעי (קפיצה של עותק שלם = חלק כי התוכן זהה)
+    const normalize = () => {
       const x = el.scrollLeft
-      if (x >= setWidth) el.scrollLeft = x - setWidth
-      else if (x <= -setWidth) el.scrollLeft = x + setWidth
+      if (sign > 0) {
+        if (x < setWidth) el.scrollLeft = x + setWidth
+        else if (x > 2 * setWidth) el.scrollLeft = x - setWidth
+      } else {
+        if (x > -setWidth) el.scrollLeft = x - setWidth
+        else if (x < -2 * setWidth) el.scrollLeft = x + setWidth
+      }
     }
-    el.addEventListener('scroll', onScroll, { passive: true })
 
-    // עצירה בעת אינטראקציה, חידוש אחרי 2.5 שניות
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const SPEED = 26 // פיקסלים לשנייה — איטי ועדין
+    let last = performance.now()
+    let raf
+    const tick = (now) => {
+      const dt = Math.min((now - last) / 1000, 0.05)
+      last = now
+      if (!reduce && !pausedRef.current) el.scrollLeft += sign * SPEED * dt
+      normalize()
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+
+    // עצירת התנועה האוטומטית בזמן אינטראקציה, חידוש אחרי השהייה קצרה
     const pause = () => {
       pausedRef.current = true
       clearTimeout(resumeRef.current)
-      resumeRef.current = setTimeout(() => { pausedRef.current = false }, 2500)
+      resumeRef.current = setTimeout(() => { pausedRef.current = false }, 1800)
     }
     el.addEventListener('pointerdown', pause)
     el.addEventListener('touchstart', pause, { passive: true })
+    el.addEventListener('touchmove', pause, { passive: true })
     el.addEventListener('wheel', pause, { passive: true })
 
-    // קצב רגוע — מעבר כל 4.5 שניות (היה 2 שניות → מהיר/מלחיץ)
-    const timer = setInterval(() => {
-      if (pausedRef.current) return
-      el.scrollBy({ left: sign * step, behavior: 'smooth' })   // קפיצה חלקה של כרטיס
-    }, 4500)
+    const onResize = () => { setWidth = Math.abs(cards[items.length].offsetLeft - cards[0].offsetLeft) || setWidth }
+    window.addEventListener('resize', onResize)
 
     return () => {
-      clearInterval(timer)
+      cancelAnimationFrame(raf)
       clearTimeout(resumeRef.current)
-      el.removeEventListener('scroll', onScroll)
       el.removeEventListener('pointerdown', pause)
       el.removeEventListener('touchstart', pause)
+      el.removeEventListener('touchmove', pause)
       el.removeEventListener('wheel', pause)
+      window.removeEventListener('resize', onResize)
     }
   }, [isMobile, items.length])
 

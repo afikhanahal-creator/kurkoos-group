@@ -49,13 +49,15 @@ export default function Header() {
       const y = window.scrollY
       setScrolled(y > 24)
       if (isProjectDetail) {
-        if (y < 140) setHidden(false)                         // קרוב לראש — תמיד מציגים
-        else if (y > lastY + 4) setHidden(true)               // גלילה למטה — מסתירים
-        else if (y < lastY - 4) setHidden(false)              // גלילה למעלה — מציגים
+        // תנועה זעירה (פחות מ-10px) לא משנה מצב ולא מאפסת את נקודת-הייחוס —
+        // כך שינויי כיוון קטנים/ריבאונד לא מקפיצים את הבר (בלי ריצוד).
+        if (y < 140) { setHidden(false); lastY = y }          // קרוב לראש — תמיד מציגים
+        else if (y > lastY + 10) { setHidden(true); lastY = y }   // גלילה למטה — מסתירים
+        else if (y < lastY - 10) { setHidden(false); lastY = y }  // גלילה למעלה — מציגים
       } else {
         setHidden(false)
+        lastY = y
       }
-      lastY = y
       ticking = false
     }
     const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update) } }

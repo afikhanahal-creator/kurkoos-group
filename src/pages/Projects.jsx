@@ -17,6 +17,7 @@ function mapRows(rows) {
   const use = all.length ? all : (featured.length ? featured : rows)
   return use.map((p) => ({
     name: p.name,
+    city: p.location,
     slug: p.slug || p.id,
     cover: srcOfResponsive(p.hero_image_url) || srcOfResponsive(p.gallery && p.gallery[0]),
     gallery: p.gallery || [],
@@ -59,6 +60,7 @@ export default function Projects() {
     collageItems.push({
       url,
       name: p.name || 'פרויקט',
+      city: p.city || '',
       to: p.slug ? `/projects/${p.slug}` : '/projects',
       layout: p.card_layout || 'normal',
     })

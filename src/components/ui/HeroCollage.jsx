@@ -53,6 +53,7 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
               <span className="hc-card__shutter">
                 <span className="hc-card__shutter-bar" />
                 <strong className="hc-card__shutter-title">{it.name}</strong>
+                {it.city && <span className="hc-card__shutter-city">{it.city}</span>}
                 {it.desc && <span className="hc-card__shutter-desc">{it.desc}</span>}
                 <span className="hc-card__shutter-cta">
                   {cta}

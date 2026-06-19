@@ -212,10 +212,10 @@ export default function Testimonials() {
 
             <div className="testimonials__nav">
               <button type="button" className="carousel__arrow" onClick={prev} aria-label="Previous">
-                <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={20} />
+                <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
               </button>
               <button type="button" className="carousel__arrow" onClick={next} aria-label="Next">
-                <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
+                <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={20} />
               </button>
             </div>
           </div>

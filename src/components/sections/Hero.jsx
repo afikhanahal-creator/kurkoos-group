@@ -39,12 +39,14 @@ export default function Hero() {
   const L = useLocalized()
   const [turn, setTurn] = useState(0)
   const [filmOpen, setFilmOpen] = useState(false)
-  // מונים מה-CMS דורסים את ערכי ברירת המחדל של ה-Hero לפי התווית (label),
-  // כך שעריכת "מונים ומספרים" בניהול מעדכנת גם את המונה שבראש עמוד הבית.
+  // ה-Hero מציג את המונים מהניהול ("מונים ומספרים") ישירות — לפי הסדר. כך
+  // עריכת המונים מעדכנת מיד גם את המונה שבראש עמוד הבית. הכותרות והתמונות
+  // של ה-Hero נשמרות (מתחלפות לפי אינדקס). אם אין מונים — ברירת המחדל.
   const [slides, setSlides] = useState(heroSlides)
 
-  const active = ((turn % COUNT) + COUNT) % COUNT
-  const slide = slides[active]
+  const count = slides.length || 1
+  const active = ((turn % count) + count) % count
+  const slide = slides[active] || slides[0]
 
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -59,20 +61,22 @@ export default function Hero() {
     listCounters({ activeOnly: true })
       .then((rows) => {
         if (!alive || !rows || !rows.length) return
-        const byLabel = new Map(rows.map((c) => [String(c.label_he || '').trim(), c]))
-        setSlides(heroSlides.map((s) => {
-          const c = byLabel.get(String(s.stat.label?.he || '').trim())
-          if (!c) return s
+        // עד 4 מונים (לפי הסדר בניהול) → 4 שקופיות ה-Hero, עם הכותרות/תמונות הקיימות
+        const mapped = rows.slice(0, heroSlides.length).map((c, i) => {
+          const base = heroSlides[i % heroSlides.length]
           const num = Number(c.value)
           return {
-            ...s,
+            id: c.id ?? `c-${i}`,
             stat: {
-              ...s.stat,
-              value: Number.isNaN(num) ? s.stat.value : num,
-              suffix: c.suffix != null ? c.suffix : s.stat.suffix,
+              value: Number.isNaN(num) ? c.value : num,
+              suffix: c.suffix || '',
+              label: { he: c.label_he || '', en: c.label_he || '' },
             },
+            lines: base.lines,
+            image: base.image,
           }
-        }))
+        })
+        if (mapped.length) setSlides(mapped)
       })
       .catch(() => {})
     return () => { alive = false }
@@ -114,7 +118,7 @@ export default function Hero() {
                 transition={{ duration: 0.4 }}
               >
                 <span className="hero__stat-label">{L(slide.stat.label)}</span>
-                <span className="hero__stat-sub">{L(slide.stat.sub)}</span>
+                {slide.stat.sub && <span className="hero__stat-sub">{L(slide.stat.sub)}</span>}
               </motion.div>
             </AnimatePresence>
           </div>

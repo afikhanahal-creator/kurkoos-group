@@ -299,7 +299,7 @@
 .tc__back-title {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: clamp(1.2rem, 2.3vw, 1.65rem);
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
   color: #ff6b5e;   /* אדום בהיר — קונטרסט גבוה על הרקע הכהה */
   margin: 0;
 }
@@ -312,7 +312,7 @@
   padding-inline: clamp(1rem, 6%, 3rem);
 }
 .tc-shots__row--back .tc-shots__tile {
-  width: clamp(150px, 31%, 244px);
+  width: clamp(140px, 29%, 216px);
   height: auto;
   aspect-ratio: 4 / 3;
   border-width: 3px;

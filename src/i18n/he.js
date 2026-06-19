@@ -101,7 +101,7 @@ export default {
     lead: 'מאות משפחות כבר מצאו את הבית שלהן איתנו.',
     photosLabel: 'תמונות מהנכס',
     photosCta: 'לחצו לצפייה בנכס',
-    photosCtaBack: 'לצפייה בתמונות של הנכס',
+    photosCtaBack: 'לצפייה בתמונות הנכס',
   },
   partners: {
     title: 'בין השותפים והלקוחות שלנו',

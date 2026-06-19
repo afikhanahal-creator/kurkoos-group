@@ -9,7 +9,7 @@ import Icon from '../ui/Icon.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './Testimonials.css'
 
-const AUTO_MS = 3500 // החלפה אוטומטית כל ~3.5 שניות
+const AUTO_MS = 4500 // החלפה אוטומטית כל ~4.5 שניות (האטה — שנייה נוספת בין כרטיסים)
 
 function Stars() {
   return (
@@ -153,12 +153,6 @@ export default function Testimonials() {
                       </AnimatePresence>
                     </div>
                   </div>
-
-                  {canFlip && (
-                    <span className="tc__flip-hint">
-                      <Icon name="house" size={15} />{t('testimonials.photosCtaBack')}
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -166,6 +160,7 @@ export default function Testimonials() {
               {canFlip && (
               <div className="tc__face tc__face--back" aria-hidden={!flipped}>
                 <div className="tc__card tc__card--back">
+                  <h3 className="tc__back-title">{t('testimonials.photosCtaBack')}</h3>
                   <div className="tc-shots__row tc-shots__row--back">
                     {shots.slice(0, 3).map((url, idx) => (
                       <button

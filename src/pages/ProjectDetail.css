@@ -319,6 +319,19 @@
      GPU גורם לבר הדביק "לרעוד" (jitter) בגלילת אינרציה במובייל. בלי זה,
      הדפדפן מצמיד את הבר בדיוק לגלילה ואין ריצוד. */
 }
+/* מסכה רכה מתחת לבר הדביק — מבטלת את "הפס השחור": כשהתוכן (כרטיסיה לבנה עם צל)
+   נגלל מתחת לבר, קצה הצל העליון נצמד לתחתית הבר ונראה כקו כהה חד. שכבת fade
+   קצרה (לבן → רקע העמוד) מכסה בדיוק את אזור התפר → אין קו, רק מעבר חלק.
+   נגללת יחד עם הבר (absolute יחסית ל-sticky) ומשתלבת ברקע העמוד שמתחתיה. */
+.pd-anchors::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  height: 14px;
+  background: linear-gradient(180deg, #fff 0%, var(--color-bg) 100%);
+  pointer-events: none;
+}
 .pd-anchors__inner {
   display: flex;
   justify-content: space-between;   /* מקצה לקצה — הפריט הימני בקצה ימין, השמאלי בקצה שמאל */

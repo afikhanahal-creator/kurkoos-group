@@ -311,14 +311,14 @@
   margin: 0;
 }
 
-/* תמונות הנכס — מניפה ממורכזת (כמו שהיה), בגודל קטן ומסודר */
+/* תמונות הנכס — מניפה ממורכזת, מעט רחבה יותר בדסקטופ (יחס 4/3, מרווח מהשוליים) */
 .tc-shots__row--back {
-  --shot-w: clamp(118px, 24%, 162px);
+  --shot-w: clamp(136px, 27%, 190px);
   --shot-ar: 4 / 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-inline: clamp(1rem, 5%, 2.5rem);
+  padding-inline: clamp(1.25rem, 6%, 3rem);
 }
 .tc-shots__row--back .tc-shots__tile {
   width: var(--shot-w);

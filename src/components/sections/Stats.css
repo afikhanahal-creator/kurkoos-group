@@ -41,6 +41,7 @@
   font-size: clamp(1.96rem, 3.85vw, 3.22rem);   /* הוקטן ב-30% בדסקטופ (מובייל ≤720 נשאר כפי שהיה) */
   line-height: 1;
   letter-spacing: -0.02em;
+  direction: ltr;   /* המספר משמאל, ה-% / + מימין */
   color: var(--color-secondary);
 }
 .stat__suffix {

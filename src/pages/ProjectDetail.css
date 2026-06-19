@@ -436,8 +436,10 @@
 /* אין תמונה למקטע "על הפרויקט" — טקסט במלוא הרוחב, בלי placeholder */
 .pd-split--noimg .pd-split__grid { grid-template-columns: 1fr; }
 
-/* כיוון תמונת "על הפרויקט" שנשמר ב-CMS (לאורך/לרוחב) — לכל breakpoint */
-.pd-split__media--ar {
+/* כיוון תמונת "על הפרויקט" שנשמר ב-CMS (לאורך/לרוחב) — מוחל רק במצב "מרווח"
+   (spaced), שבו התמונה עומדת בנפרד עם יחס קבוע. במצב הרגיל (flush) התמונה
+   ממלאת את כל הכרטיס עד השוליים (cover) — אחרת נוצרים רווחים והיא לא מגיעה לקצה. */
+.pd-split--spaced .pd-split__media--ar {
   aspect-ratio: var(--about-ar-d, auto);
   min-height: 0;
   align-self: center;

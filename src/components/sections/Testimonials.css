@@ -314,7 +314,7 @@
 /* שלוש תמונות הנכס — מניפה ממורכזת בגודל מתאים לכרטיס עם מרווח מהצדדים */
 .tc-shots__row--back {
   /* קל לכוונון — אפשר לבקש כל רוחב/יחס שתרצה: */
-  --shot-w: clamp(160px, 32%, 236px);
+  --shot-w: clamp(148px, 30%, 212px);
   --shot-ar: 4 / 3;
   display: flex;
   align-items: center;
@@ -346,6 +346,7 @@
   font-weight: 600;
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.7);
+  margin-block-start: clamp(0.4rem, 1.6vw, 1rem);   /* "חזרה" מעט נמוך יותר */
 }
 
 /* ---- ניווט: חיצים + נקודות ---- */
@@ -403,9 +404,9 @@
   .tc__card--back { gap: 0.7rem; }
   .tc-shots__row--back { flex-direction: column; padding-inline: 0; }
   .tc-shots__row--back .tc-shots__tile {
-    width: clamp(165px, 58%, 225px);
+    width: clamp(150px, 54%, 205px);
     margin-inline-start: 0;
-    margin-block-start: -86px;     /* חפיפה אנכית עמוקה → ערימה שממלאת את הגובה בלי לגלוש */
+    margin-block-start: -80px;     /* חפיפה אנכית עמוקה → ערימה שממלאת את הגובה בלי לגלוש */
     transform: rotate(-4deg);
   }
   .tc-shots__row--back .tc-shots__tile:first-child { margin-block-start: 0; }

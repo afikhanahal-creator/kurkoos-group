@@ -136,6 +136,20 @@ export function optimizeSrc(src, w = 1920) {
   return src.slice(0, i + marker.length) + `f_auto,q_auto,c_limit,w_${w}/` + rest
 }
 
+/* בניית srcset רספונסיבי — סולם רוחבים סביב הרוחב המבוקש, כל אחד דרך optimizeSrc
+   (פורמט מודרני + הגבלת רוחב). מאפשר לדפדפן לבחור את הגודל האופטימלי לפי המכשיר
+   ו-DPR → במובייל יורדת תמונה קלה בהרבה במקום רוחב דסקטופ מלא. מחזיר '' אם הכתובת
+   אינה ניתנת לאופטימיזציה (אז נשארים על src בודד). */
+export function buildSrcSet(src, w = 1920) {
+  if (typeof src !== 'string' || !src) return ''
+  // רק כתובות שבאמת עוברות טרנספורמציה (Cloudinary / Supabase / Unsplash)
+  if (optimizeSrc(src, w) === src) return ''
+  const ladder = [0.5, 0.75, 1, 1.5]
+    .map((m) => Math.round(w * m))
+    .filter((x, i, a) => x > 0 && a.indexOf(x) === i)
+  return ladder.map((x) => `${optimizeSrc(src, x)} ${x}w`).join(', ')
+}
+
 // משתני CSS שמוחלים על תמונה כדי לכבד את התצוגות השמורות בכל breakpoint
 export function responsiveStyle(value) {
   const ri = normalizeResponsiveImage(value)

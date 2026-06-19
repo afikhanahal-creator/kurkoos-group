@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { srcOfResponsive, responsiveStyle, optimizeSrc } from '../../lib/responsiveImage.js'
+import { srcOfResponsive, responsiveStyle, optimizeSrc, buildSrcSet } from '../../lib/responsiveImage.js'
 import './SmartImage.css'
 import './ResponsiveImage.css'
 
@@ -10,7 +10,7 @@ export { optimizeSrc }
    props נוספים: priority (LCP — טעינה מיידית בעדיפות גבוהה), w (רוחב יעד
    ל-Cloudinary, לתמונות קטנות כמו תמונות גלריה).
    ============================================================ */
-export default function SmartImage({ src, alt = '', label, className = '', style, priority = false, w = 1920, ...rest }) {
+export default function SmartImage({ src, alt = '', label, className = '', style, priority = false, w = 1920, sizes, ...rest }) {
   // src יכול להיות מחרוזת (legacy) או אובייקט תמונה רספונסיבי { src, views }
   const url = srcOfResponsive(src)
   const riStyle = responsiveStyle(src)
@@ -19,6 +19,9 @@ export default function SmartImage({ src, alt = '', label, className = '', style
   // אם הגרסה המאופטמת נכשלת (חשבון שחוסם טרנספורמציות) — חוזרים למקור
   const [useOriginal, setUseOriginal] = useState(false)
   const finalSrc = useOriginal ? url : optimizeSrc(url, w)
+  // srcset רספונסיבי — רק כש-sizes סופק וטרם נפלנו-לאחור למקור. מאפשר לדפדפן
+  // להוריד את הרוחב המתאים למכשיר (חיסכון משמעותי במשקל במובייל).
+  const srcSet = (sizes && !useOriginal) ? buildSrcSet(url, w) : ''
 
   if (failed) {
     return (
@@ -36,6 +39,7 @@ export default function SmartImage({ src, alt = '', label, className = '', style
   return (
     <img
       src={finalSrc}
+      {...(srcSet ? { srcSet, sizes } : {})}
       alt={alt}
       loading={priority ? 'eager' : 'lazy'}
       fetchpriority={priority ? 'high' : 'auto'}

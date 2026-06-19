@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { listProjectCards, cmsRowToCard, projectPages, cachedSnapshot, useSettings } from '../../lib/cms.js'
-import { optimizeSrc } from '../../lib/responsiveImage.js'
+import { optimizeSrc, srcOfResponsive, buildSrcSet } from '../../lib/responsiveImage.js'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Reveal from '../ui/Reveal.jsx'
 import SmartImage from '../ui/SmartImage.jsx'
@@ -59,12 +59,12 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
     <div className="pg-card__media">
       {isMobile ? (
         <div className="pg-card__spot">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </div>
       ) : (
         <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </SpotlightCard>
       )}
@@ -174,14 +174,24 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
 
   // טעינה-מוקדמת (prefetch) של תמונות הכריכה בזמן idle — כך "פרויקטים נבחרים"
   // מופיעים מיד כשגוללים אליהם, במקום להתחיל להיטען רק כשמגיעים לאזור.
-  const coverKey = baseItems.map((p) => p.cover).filter(Boolean).join('|')
+  const coverKey = baseItems.map((p) => srcOfResponsive(p.cover)).filter(Boolean).join('|')
   useEffect(() => {
     if (!coverKey) return
     // טעינה-מוקדמת רק של הכריכות הראשונות (לא כולן בבת אחת) — כדי לא להציף את
     // החיבור ולהאיץ את ההופעה של הכרטיסים הראשונים. השאר נטענים בעצלתיים בגלילה.
+    // מצרפים srcset+sizes זהים לכרטיס → הדפדפן מחמם בדיוק את הגרסה שתיטען בפועל
+    // (במובייל גרסה קלה), בלי בזבוז רוחב-פס על רוחב דסקטופ מלא.
     const covers = coverKey.split('|').slice(0, 6)
     const id = setTimeout(() => {
-      covers.forEach((src) => { const im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low'; im.src = optimizeSrc(src, 560) })
+      covers.forEach((src) => {
+        const im = new Image()
+        im.decoding = 'async'
+        im.fetchPriority = 'low'
+        im.sizes = '(max-width: 768px) 60vw, 250px'
+        const ss = buildSrcSet(src, 560)
+        if (ss) im.srcset = ss
+        im.src = optimizeSrc(src, 560)
+      })
     }, 150)
     return () => clearTimeout(id)
   }, [coverKey])

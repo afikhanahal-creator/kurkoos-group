@@ -108,9 +108,9 @@
   box-shadow: 0 10px 30px -8px rgba(7, 41, 58, 0.22);
   border-bottom-color: transparent;
 }
-/* מובייל — בלי קו/צל בתחתית ההדר (נראה כ"פס שחור" ליד סרגל העוגנים הדביק) */
+/* מובייל — מסירים רק את צל ההדר (הנמשך מטה ונראה כ"פס" כהה בתחתית סרגל
+   העוגנים הדביק). הקו העליון (border-bottom) נשאר. */
 @media (max-width: 768px) {
-  .header__main { border-bottom: none; }
   .header--scrolled .header__main { box-shadow: none; }
 }
 .header__main-inner {

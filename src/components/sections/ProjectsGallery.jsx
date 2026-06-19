@@ -161,8 +161,10 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     return true
   })
 
-  // הגבלה ל-4 הנבחרים — *רק בדסקטופ*, וכשמצב "כל הפרויקטים" כבוי.
-  const curated = (!usingProp && !isMobile && !homeFeaturedAll && homeFeatured.length)
+  // הבחירה הידנית של עד 4 פרויקטים נבחרים (מה-CMS) — חלה גם בדסקטופ וגם
+  // במובייל, כל עוד מצב "כל הפרויקטים" כבוי. כך "פרויקטים נבחרים" מציג בדיוק
+  // את הפרויקטים שנבחרו בניהול, בכל המכשירים.
+  const curated = (!usingProp && !homeFeaturedAll && homeFeatured.length)
     ? homeFeatured.map((slug) => allItems.find((c) => c.slug === slug)).filter(Boolean).slice(0, 4)
     : null
   const baseItems = (curated && curated.length) ? curated : items

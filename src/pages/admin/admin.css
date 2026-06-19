@@ -130,7 +130,20 @@
   text-transform: uppercase; color: rgba(255,255,255,0.5);
 }
 
-.adm__nav { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; margin-top: 0.3rem; }
+.adm__nav {
+  display: flex; flex-direction: column; gap: 0.25rem; flex: 1; margin-top: 0.3rem;
+  /* גלילה פנימית כשרשימת הטאבים ארוכה מהמסך (min-height:0 חיוני ב-flex כדי לאפשר כיווץ+גלילה) */
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+  margin-inline: -0.2rem;
+  padding-inline: 0.2rem;
+}
+.adm__nav::-webkit-scrollbar { width: 6px; }
+.adm__nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 3px; }
+.adm__nav::-webkit-scrollbar-track { background: transparent; }
 .adm__nav-item {
   display: flex; align-items: center; gap: 0.7rem;
   padding: 0.72rem 0.85rem; border-radius: 11px;

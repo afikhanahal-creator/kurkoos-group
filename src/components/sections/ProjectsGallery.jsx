@@ -252,6 +252,51 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     }
   }, [isMobile, items.length])
 
+  /* גלילה בדסקטופ: גרירה עם העכבר (grab) + גלגל אנכי→אופקי. שניהם מכבדים RTL
+     (התוכן יושב ב-scrollLeft שלילי), כך שאפשר לגלול ימינה ושמאלה בחופשיות.
+     גרירה שזזה לא מפעילה ניווט לעמוד הפרויקט. */
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el || isMobile) return
+    const rtlSign = isRTL ? -1 : 1
+
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return  // כבר אופקי (טאצ'פד)
+      const before = el.scrollLeft
+      el.scrollLeft += e.deltaY * rtlSign
+      if (el.scrollLeft !== before) e.preventDefault()
+    }
+
+    let down = false, startX = 0, startLeft = 0, moved = false
+    const onDown = (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return
+      if (e.button !== 0) return
+      down = true; moved = false; startX = e.clientX; startLeft = el.scrollLeft
+      el.classList.add('is-grabbing')
+    }
+    const onMove = (e) => {
+      if (!down) return
+      const dx = e.clientX - startX
+      if (Math.abs(dx) > 4) moved = true
+      el.scrollLeft = startLeft - dx
+    }
+    const onUp = () => { down = false; el.classList.remove('is-grabbing') }
+    const onClick = (e) => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false } }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('pointerdown', onDown)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    el.addEventListener('click', onClick, true)
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      el.removeEventListener('click', onClick, true)
+    }
+  }, [isMobile, isRTL])
+
   // אין פרויקטים להצגה (לא דרך prop ולא מה-CMS) → לא מציגים את הסקשן כלל,
   // במקום fallback לפרויקטי דמו ישנים.
   if (!items.length) return null

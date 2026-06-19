@@ -34,6 +34,10 @@
   /* ריווח עליון/תחתון כדי שהחלק העליון של הכרטיס, ההרמה בריחוף והזוהר לא ייחתכו */
   padding-block: 1.25rem;
 }
+@media (min-width: 769px) {
+  .projects-gallery__viewport { cursor: grab; }            /* רמז לגרירה בדסקטופ */
+  .projects-gallery__viewport.is-grabbing { cursor: grabbing; user-select: none; }
+}
 .projects-gallery__viewport::-webkit-scrollbar { display: none; }
 .projects-gallery__track {
   display: flex;

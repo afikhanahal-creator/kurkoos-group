@@ -119,7 +119,7 @@ export const projectSchema = [
     fields: [
       { key: 'name', label: 'שם הפרויקט', type: 'text', required: true },
       { key: 'slug', label: 'מזהה כתובת (אנגלית, ללא רווחים)', type: 'text', required: true, dir: 'ltr', hint: 'משמש בכתובת הדף: /projects/<slug>' },
-      { key: 'subtitle', label: 'כותרת משנה', type: 'text' },
+      { key: 'subtitle', label: 'תיאור קצר (שורה אחת מתחת לשם)', type: 'text', hint: 'משפט קצר שמופיע בבאנר הפרויקט מתחת לשם הפרויקט — למשל: "הפרויקט הבולט בשכונת ביצרון, הכולל 2 מגדלי מגורים, שטחי מסחר ועסקים".' },
       { key: 'project_type', label: 'סוג הפרויקט', type: 'select_text', options: PROJECT_TYPE, hint: 'בחרו סוג מהרשימה — או "אחר" כדי להקליד סוג מותאם. ניתן לערוך ולשנות בכל עת.' },
       { key: 'status', label: 'סטטוס', type: 'select', options: PROJECT_STATUS },
       { key: 'location', label: 'עיר', type: 'text' },

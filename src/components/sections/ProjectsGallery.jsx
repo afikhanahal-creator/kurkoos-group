@@ -331,7 +331,11 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.05, margin: '0px 0px 15% 0px' }}
+          /* amount:'some' → נדלק ברגע שחלק כלשהו מהרצועה נכנס למסך. קריטי
+             במובייל: שם הרצועה משולשת ברוחב (לולאה אינסופית) ורחבה בהרבה מהמסך,
+             כך ש-5% ממנה לעולם לא גלויים בו-זמנית — וההצגה (opacity:0→1) לא הייתה
+             נדלקת והכרטיסים נשארו בלתי-נראים. */
+          viewport={{ once: true, amount: 'some', margin: '0px 0px 15% 0px' }}
         >
           {renderItems.map((p, i) => (
             <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 3} />

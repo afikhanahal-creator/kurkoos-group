@@ -49,11 +49,15 @@ export default function Header() {
       const y = window.scrollY
       setScrolled(y > 24)
       if (isProjectDetail) {
-        // תנועה זעירה (פחות מ-10px) לא משנה מצב ולא מאפסת את נקודת-הייחוס —
-        // כך שינויי כיוון קטנים/ריבאונד לא מקפיצים את הבר (בלי ריצוד).
-        if (y < 140) { setHidden(false); lastY = y }          // קרוב לראש — תמיד מציגים
-        else if (y > lastY + 10) { setHidden(true); lastY = y }   // גלילה למטה — מסתירים
-        else if (y < lastY - 10) { setHidden(false); lastY = y }  // גלילה למעלה — מציגים
+        // מסתירים את ההדר *רק* אחרי שסרגל העוגנים כבר נעוץ בראש המסך — אחרת
+        // נוצר "אזור מת" בראש העמוד (ההדר נעלם אך הסרגל עדיין לא הגיע לראש, כי
+        // הבאנר גבוה), והסרגל נראה נעלם. כך הסרגל תמיד קבוע בראש בגלילה למטה.
+        const bar = document.querySelector('.pd-anchors')
+        const barPinned = !!bar && bar.getBoundingClientRect().top <= 80
+        // תנועה זעירה (פחות מ-10px) לא משנה מצב — כך שינויי כיוון/ריבאונד לא מקפיצים.
+        if (!barPinned || y < 140) { setHidden(false); lastY = y }   // עוד לא נעוץ/קרוב לראש — מציגים
+        else if (y > lastY + 10) { setHidden(true); lastY = y }      // נעוץ + גלילה למטה — מסתירים
+        else if (y < lastY - 10) { setHidden(false); lastY = y }     // גלילה למעלה — מציגים
       } else {
         setHidden(false)
         lastY = y

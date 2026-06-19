@@ -40,6 +40,13 @@
   z-index: 1;
 }
 .tc__face--back .tc__card { height: 100%; }
+/* גובה מינימלי לכרטיס → מקום לתמונות גדולות יותר בגב; הצד הקדמי ממרכז את תוכנו */
+.tc__face--front .tc__card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: clamp(300px, 36vh, 348px);
+}
 /* הכרטיס עצמו שטוח — כדי שה-backface-visibility של ה-face יסתיר אותו כשמהופך
    (preserve-3d על צאצא "שובר" את ה-backface ועלול לגרום לצד הקדמי להציץ). */
 .tc__face .tc__card { transform-style: flat; }
@@ -264,9 +271,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: clamp(0.7rem, 1.6vw, 1.05rem);
-  padding: clamp(1rem, 2.2vw, 1.6rem);
+  justify-content: flex-start;   /* הכותרת למעלה (לא ממורכזת אנכית) */
+  gap: clamp(0.9rem, 2.2vw, 1.4rem);
+  padding: clamp(1.3rem, 3vw, 2.1rem) clamp(1rem, 2.2vw, 1.6rem) clamp(1rem, 2.2vw, 1.6rem);
   text-align: center;
 }
 /* גוון טורקיז רך מעל המשבצות */
@@ -306,19 +313,22 @@
 
 /* שלוש תמונות הנכס — מניפה ממורכזת בגודל מתאים לכרטיס עם מרווח מהצדדים */
 .tc-shots__row--back {
+  /* קל לכוונון — אפשר לבקש כל רוחב/יחס שתרצה: */
+  --shot-w: clamp(160px, 32%, 236px);
+  --shot-ar: 4 / 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-inline: clamp(1rem, 6%, 3rem);
+  padding-inline: clamp(1rem, 5%, 2.5rem);
 }
 .tc-shots__row--back .tc-shots__tile {
-  width: clamp(140px, 29%, 216px);
+  width: var(--shot-w);
   height: auto;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: var(--shot-ar);
   border-width: 3px;
   border-color: #fff;
   border-radius: 14px;
-  margin-inline-start: -26px;
+  margin-inline-start: -22px;
   transform: rotate(-6deg);
 }
 .tc-shots__row--back .tc-shots__tile:first-child { margin-inline-start: 0; }
@@ -344,12 +354,13 @@
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
+  transform: translateY(10px);   /* החצים מעט נמוך יותר */
 }
 .testimonials__nav .carousel__arrow {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1.5px solid var(--color-border-strong);
   background: var(--color-surface);

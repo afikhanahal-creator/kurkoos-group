@@ -14,7 +14,7 @@ function StatItem({ value, suffix, label }) {
   const [counted, ref] = useCountUp(isNum ? num : 0)
   return (
     <div className="stat" ref={ref}>
-      <span className="stat__value">
+      <span className="stat__value" dir="ltr">
         {isNum ? counted.toLocaleString('en-US') : value}
         <span className="stat__suffix">{suffix}</span>
       </span>

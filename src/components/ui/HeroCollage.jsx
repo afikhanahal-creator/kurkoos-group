@@ -69,7 +69,7 @@ export default function HeroCollage({ title, subtitle, stats = [], items = [], c
         <div className="container hero-collage__stats">
           {stats.map((s, i) => (
             <div key={i} className="hc-stat">
-              <p className="hc-stat__v"><StatValue value={s.value} /></p>
+              <p className="hc-stat__v" dir="ltr"><StatValue value={s.value} /></p>
               <p className="hc-stat__l">{s.label}</p>
             </div>
           ))}

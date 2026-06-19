@@ -110,7 +110,7 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
    חוזרת על עצמה בצורה חלקה בלי קפיצה להתחלה.
    props: items, sectionId, showFooter.
    ============================================================ */
-export default function ProjectsGallery({ items: itemsProp, sectionId = 'projects', showFooter = true, title, lead }) {
+export default function ProjectsGallery({ items: itemsProp, sectionId = 'projects', showFooter = true, title, lead, collage = false }) {
   const { t, isRTL } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
@@ -165,8 +165,12 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     ? homeFeatured.map((slug) => allItems.find((c) => c.slug === slug)).filter(Boolean).slice(0, 4)
     : null
   const baseItems = (curated && curated.length) ? curated : items
-  // במובייל משכפלים ל-3 עותקים → לולאה אינסופית חלקה לשני הכיוונים (גלילה מהאמצע)
-  const renderItems = (isMobile && baseItems.length >= 2) ? [...baseItems, ...baseItems, ...baseItems] : baseItems
+  // קולאז' שתי-שורות (עמודי החטיבות) כשיש הרבה פרויקטים — במקום שורה אחת צפופה
+  const twoRows = collage && baseItems.length > 5
+  // במובייל משכפלים ל-3 עותקים → לולאה אינסופית חלקה (לא בקולאז' שתי-שורות)
+  const renderItems = (!twoRows && isMobile && baseItems.length >= 2)
+    ? [...baseItems, ...baseItems, ...baseItems]
+    : baseItems
 
   // טעינה-מוקדמת (prefetch) של תמונות הכריכה בזמן idle — כך "פרויקטים נבחרים"
   // מופיעים מיד כשגוללים אליהם, במקום להתחיל להיטען רק כשמגיעים לאזור.
@@ -186,7 +190,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
      לולאה אינסופית חלקה לשני הכיוונים (3 עותקים, גלילה מהאמצע), נעצרת בנגיעה
      ומתחדשת — וניתן להחליק/לגרור חופשי ימינה ושמאלה בלי להיתקע. */
   useEffect(() => {
-    if (!isMobile) return
+    if (!isMobile || twoRows) return
     const el = viewportRef.current
     if (!el) return
 
@@ -250,7 +254,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
       el.removeEventListener('wheel', pause)
       window.removeEventListener('resize', onResize)
     }
-  }, [isMobile, items.length])
+  }, [isMobile, items.length, twoRows])
 
   /* גלילה בדסקטופ: גרירה עם העכבר (grab) + גלגל אנכי→אופקי. שניהם מכבדים RTL
      (התוכן יושב ב-scrollLeft שלילי), כך שאפשר לגלול ימינה ושמאלה בחופשיות.
@@ -312,7 +316,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
 
       <div className="projects-gallery__viewport" ref={viewportRef}>
         <motion.div
-          className="projects-gallery__track"
+          className={`projects-gallery__track${twoRows ? ' projects-gallery__track--rows2' : ''}`}
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"

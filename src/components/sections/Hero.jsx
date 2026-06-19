@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { heroSlides, companyFilm } from '../../data/hero.js'
+import { supabase } from '../../lib/supabase.js'
+import { listCounters } from '../../lib/cms.js'
 import VideoModal from '../ui/VideoModal.jsx'
 import GeometricBlurMesh from '../ui/GeometricBlurMesh.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
@@ -37,15 +39,43 @@ export default function Hero() {
   const L = useLocalized()
   const [turn, setTurn] = useState(0)
   const [filmOpen, setFilmOpen] = useState(false)
+  // מונים מה-CMS דורסים את ערכי ברירת המחדל של ה-Hero לפי התווית (label),
+  // כך שעריכת "מונים ומספרים" בניהול מעדכנת גם את המונה שבראש עמוד הבית.
+  const [slides, setSlides] = useState(heroSlides)
 
   const active = ((turn % COUNT) + COUNT) % COUNT
-  const slide = heroSlides[active]
+  const slide = slides[active]
 
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduce) return
     const id = setInterval(() => setTurn((t) => t + 1), 5000)
     return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    if (!supabase) return
+    let alive = true
+    listCounters({ activeOnly: true })
+      .then((rows) => {
+        if (!alive || !rows || !rows.length) return
+        const byLabel = new Map(rows.map((c) => [String(c.label_he || '').trim(), c]))
+        setSlides(heroSlides.map((s) => {
+          const c = byLabel.get(String(s.stat.label?.he || '').trim())
+          if (!c) return s
+          const num = Number(c.value)
+          return {
+            ...s,
+            stat: {
+              ...s.stat,
+              value: Number.isNaN(num) ? s.stat.value : num,
+              suffix: c.suffix != null ? c.suffix : s.stat.suffix,
+            },
+          }
+        }))
+      })
+      .catch(() => {})
+    return () => { alive = false }
   }, [])
 
   // וריאנטים לחשיפת הכותרת שורה-אחר-שורה

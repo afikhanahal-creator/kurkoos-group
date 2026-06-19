@@ -14,10 +14,11 @@ import SpotlightCard from '../ui/SpotlightCard.jsx'
 import KineticText from '../ui/KineticText.jsx'
 import './ProjectsGallery.css'
 
-const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
+// כניסה מהירה וקצבית — סטגר קטן ותנועה קצרה כדי שהכרטיסים "יעלו" מיד כשמגיעים אליהם
+const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.045 } } }
 const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.96 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 100, damping: 15 } },
+  hidden: { opacity: 0, y: 12, scale: 0.98 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 150, damping: 18 } },
 }
 
 /* Lightbox */
@@ -59,12 +60,12 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
     <div className="pg-card__media">
       {isMobile ? (
         <div className="pg-card__spot">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" quality="auto:eco" priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </div>
       ) : (
         <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" quality="auto:eco" priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </SpotlightCard>
       )}
@@ -188,9 +189,9 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
         im.decoding = 'async'
         im.fetchPriority = 'low'
         im.sizes = '(max-width: 768px) 60vw, 250px'
-        const ss = buildSrcSet(src, 560)
+        const ss = buildSrcSet(src, 560, 'auto:eco')
         if (ss) im.srcset = ss
-        im.src = optimizeSrc(src, 560)
+        im.src = optimizeSrc(src, 560, 'auto:eco')
       })
     }, 150)
     return () => clearTimeout(id)
@@ -330,7 +331,7 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 'some' }}
+          viewport={{ once: true, amount: 0.05, margin: '0px 0px 15% 0px' }}
         >
           {renderItems.map((p, i) => (
             <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 3} />

@@ -108,14 +108,15 @@ export function srcOfResponsive(value) {
 /* אופטימיזציית URL לתמונות מרוחקות (Cloudinary / Unsplash): פורמט מודרני
    (WebP/AVIF), דחיסה ויזואלית-זהה והגבלת רוחב לפי גודל התצוגה בפועל — חוסך
    משקל רב בלי שינוי נראה לעין. כתובות אחרות מוחזרות כמו שהן. */
-export function optimizeSrc(src, w = 1920) {
+export function optimizeSrc(src, w = 1920, q = 'auto') {
   if (typeof src !== 'string') return src
   if (src.includes('images.unsplash.com/')) {
     try {
       const u = new URL(src)
       const cur = parseInt(u.searchParams.get('w') || '0', 10)
       if (!cur || w < cur) u.searchParams.set('w', String(w))
-      u.searchParams.set('q', '70')
+      // eco → איכות נמוכה יותר (תמונות תמונה/thumbnail), אחרת ברירת-מחדל
+      u.searchParams.set('q', q.includes('eco') ? '55' : '70')
       u.searchParams.set('auto', 'format')
       return u.toString()
     } catch { return src }
@@ -125,7 +126,7 @@ export function optimizeSrc(src, w = 1920) {
    // אם משהו נכשל (onError ברכיבי התמונה).
   const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
   if (cloud && src.includes('.supabase.co/storage/')) {
-    return `https://res.cloudinary.com/${cloud}/image/fetch/f_auto,q_auto,c_limit,w_${w}/${encodeURIComponent(src)}`
+    return `https://res.cloudinary.com/${cloud}/image/fetch/f_auto,q_${q},c_limit,w_${w}/${encodeURIComponent(src)}`
   }
   if (!src.includes('res.cloudinary.com/')) return src
   const marker = '/image/upload/'
@@ -133,21 +134,21 @@ export function optimizeSrc(src, w = 1920) {
   if (i === -1) return src
   const rest = src.slice(i + marker.length)
   if (/^[a-z]+_[^/]*\//.test(rest)) return src   // יש כבר טרנספורמציה — לא נוגעים
-  return src.slice(0, i + marker.length) + `f_auto,q_auto,c_limit,w_${w}/` + rest
+  return src.slice(0, i + marker.length) + `f_auto,q_${q},c_limit,w_${w}/` + rest
 }
 
 /* בניית srcset רספונסיבי — סולם רוחבים סביב הרוחב המבוקש, כל אחד דרך optimizeSrc
    (פורמט מודרני + הגבלת רוחב). מאפשר לדפדפן לבחור את הגודל האופטימלי לפי המכשיר
    ו-DPR → במובייל יורדת תמונה קלה בהרבה במקום רוחב דסקטופ מלא. מחזיר '' אם הכתובת
    אינה ניתנת לאופטימיזציה (אז נשארים על src בודד). */
-export function buildSrcSet(src, w = 1920) {
+export function buildSrcSet(src, w = 1920, q = 'auto') {
   if (typeof src !== 'string' || !src) return ''
   // רק כתובות שבאמת עוברות טרנספורמציה (Cloudinary / Supabase / Unsplash)
-  if (optimizeSrc(src, w) === src) return ''
+  if (optimizeSrc(src, w, q) === src) return ''
   const ladder = [0.5, 0.75, 1, 1.5]
     .map((m) => Math.round(w * m))
     .filter((x, i, a) => x > 0 && a.indexOf(x) === i)
-  return ladder.map((x) => `${optimizeSrc(src, x)} ${x}w`).join(', ')
+  return ladder.map((x) => `${optimizeSrc(src, x, q)} ${x}w`).join(', ')
 }
 
 // משתני CSS שמוחלים על תמונה כדי לכבד את התצוגות השמורות בכל breakpoint

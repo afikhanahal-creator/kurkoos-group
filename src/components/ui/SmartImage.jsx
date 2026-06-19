@@ -10,7 +10,7 @@ export { optimizeSrc }
    props נוספים: priority (LCP — טעינה מיידית בעדיפות גבוהה), w (רוחב יעד
    ל-Cloudinary, לתמונות קטנות כמו תמונות גלריה).
    ============================================================ */
-export default function SmartImage({ src, alt = '', label, className = '', style, priority = false, w = 1920, sizes, ...rest }) {
+export default function SmartImage({ src, alt = '', label, className = '', style, priority = false, w = 1920, sizes, quality = 'auto', ...rest }) {
   // src יכול להיות מחרוזת (legacy) או אובייקט תמונה רספונסיבי { src, views }
   const url = srcOfResponsive(src)
   const riStyle = responsiveStyle(src)
@@ -18,10 +18,10 @@ export default function SmartImage({ src, alt = '', label, className = '', style
   const [loaded, setLoaded] = useState(false)
   // אם הגרסה המאופטמת נכשלת (חשבון שחוסם טרנספורמציות) — חוזרים למקור
   const [useOriginal, setUseOriginal] = useState(false)
-  const finalSrc = useOriginal ? url : optimizeSrc(url, w)
+  const finalSrc = useOriginal ? url : optimizeSrc(url, w, quality)
   // srcset רספונסיבי — רק כש-sizes סופק וטרם נפלנו-לאחור למקור. מאפשר לדפדפן
   // להוריד את הרוחב המתאים למכשיר (חיסכון משמעותי במשקל במובייל).
-  const srcSet = (sizes && !useOriginal) ? buildSrcSet(url, w) : ''
+  const srcSet = (sizes && !useOriginal) ? buildSrcSet(url, w, quality) : ''
 
   if (failed) {
     return (

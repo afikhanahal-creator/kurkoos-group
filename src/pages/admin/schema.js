@@ -32,8 +32,9 @@ export const PROJECT_SECTIONS = [
 export const PROJECT_PAGES = [
   { value: 'development', label: 'יזמות', hint: '/divisions/development' },
   { value: 'execution', label: 'ביצוע', hint: '/divisions/execution' },
-  { value: 'featured', label: 'פרויקטים נבחרים', hint: '/projects' },
   { value: 'brokerage', label: 'תיווך', hint: '/divisions/brokerage' },
+  { value: 'featured', label: 'פרויקטים נבחרים', hint: 'דף הבית' },
+  { value: 'all', label: 'כל הפרויקטים', hint: '/projects' },
 ]
 
 // סוג הפרויקט — רשימה עשירה לבחירה ביצירת פרויקט. ניתן גם להקליד סוג מותאם (select_text).

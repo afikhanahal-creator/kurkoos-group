@@ -11,8 +11,10 @@ import './Projects.css'
 // ממיר שורות CMS לפריטי הקולאז' — "פרויקטים נבחרים" אם תויגו, אחרת כל הפרויקטים
 function mapRows(rows) {
   if (!rows || !rows.length) return []
+  // מסוננים לפי תיוג "כל הפרויקטים"; אם אין מתויגים — נופלים ל"פרויקטים נבחרים", ואז להכול
+  const all = rows.filter((p) => projectPages(p).includes('all'))
   const featured = rows.filter((p) => projectPages(p).includes('featured'))
-  const use = featured.length ? featured : rows
+  const use = all.length ? all : (featured.length ? featured : rows)
   return use.map((p) => ({
     name: p.name,
     slug: p.slug || p.id,

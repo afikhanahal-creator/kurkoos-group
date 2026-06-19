@@ -18,7 +18,7 @@ export default function FloatingActions() {
   return (
     <div className="floating-actions">
       <a
-        href={`https://wa.me/${site.contact.whatsapp}`}
+        href={`https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent(t('contact.waOpener'))}`}
         target="_blank"
         rel="noopener noreferrer"
         className="fab fab--wa"

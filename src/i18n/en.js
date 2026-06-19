@@ -54,6 +54,7 @@ export default {
     eyebrow: "Let's talk",
     title: 'Interested in a project? We would love to meet',
     lead: 'Leave your details and we will get back to you shortly, or reach us directly.',
+    waOpener: 'Hi, I came from the Kurkoos Group website and would love to get more details 🙂',
     name: 'Full name',
     phone: 'Phone',
     email: 'Email',

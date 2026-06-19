@@ -112,6 +112,10 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     setForm(record)
     setStatus('saved')
     setStepIdx(0)
+    // פתיחת פרויקט → גלילה לראש העורך כדי שסרגל הטאבים יהיה גלוי מיד (אפשר לעבור בין הטאבים)
+    const main = typeof document !== 'undefined' && document.querySelector('.adm__main')
+    if (main) main.scrollTo({ top: 0, behavior: 'smooth' })
+    else if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
     // אם כבר קיים slug שלא נגזר אוטומטית מהשם — מסמנים כ"נערך ידנית"
     slugEdited.current = !!record.slug && record.slug !== slugify(record.name)
     return () => clearTimeout(timer.current)

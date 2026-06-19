@@ -8,12 +8,26 @@ export const stats = [
   { id: 'projects', value: 80, suffix: '+', label: { he: 'פרויקטים בוטיק', en: 'Boutique projects' } },
 ]
 
-/* מונים נוספים מומלצים — להוספה/החלפה דרך הניהול לפי הצורך. */
+/* מונים נוספים מומלצים לחברת בוטיק — אמון / איכות / אישיות / בלעדיות.
+   להוספה או החלפה דרך הניהול → "מונים ומספרים" לפי הצורך. */
 export const statsSuggestions = [
-  { value: 1500, suffix: '+', label: { he: 'משפחות מרוצות', en: 'Happy families' } },
-  { value: 10, suffix: '', label: { he: 'שנות אחריות וליווי', en: 'Years of warranty & support' } },
-  { value: 100, suffix: '%', label: { he: 'ליווי אישי לכל לקוח', en: 'Personal guidance for every client' } },
+  // אמון
+  { value: 98, suffix: '%', label: { he: 'שביעות רצון לקוחות', en: 'Client satisfaction' } },
+  { value: 100, suffix: '%', label: { he: 'מסירה בזמן', en: 'On-time delivery' } },
   { value: 95, suffix: '%', label: { he: 'לקוחות שממליצים', en: 'Clients who recommend us' } },
+  { value: 1500, suffix: '+', label: { he: 'משפחות מרוצות', en: 'Happy families' } },
+  // איכות
+  { value: 10, suffix: '', label: { he: 'שנות אחריות וליווי', en: 'Years of warranty & support' } },
+  { value: 100, suffix: '%', label: { he: 'עמידה בתקציב', en: 'On-budget delivery' } },
+  { value: 7, suffix: '', label: { he: 'תקני בנייה ירוקה', en: 'Green-building standards' } },
+  // אישיות
+  { value: 1, suffix: ':1', label: { he: 'מנהל פרויקט אישי', en: 'Dedicated project manager' } },
+  { value: 24, suffix: '/7', label: { he: 'זמינות לאורך הדרך', en: 'Availability throughout' } },
+  { value: 4, suffix: '', label: { he: 'דורות של בנייה למשפחה', en: 'Generations of building' } },
+  // בלעדיות / בוטיק
+  { value: 80, suffix: '+', label: { he: 'פרויקטים בוטיק', en: 'Boutique projects' } },
+  { value: 100, suffix: '%', label: { he: 'דירות שנמכרו לפני אכלוס', en: 'Sold before move-in' } },
+  { value: 30, suffix: '+', label: { he: 'אדריכלים ומהנדסים בצוות', en: 'Architects & engineers' } },
 ]
 
 export default stats

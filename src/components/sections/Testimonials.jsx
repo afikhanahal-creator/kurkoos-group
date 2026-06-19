@@ -134,7 +134,6 @@ export default function Testimonials() {
 
                     {/* התוכן */}
                     <div className="tc__content">
-                      <span className="tc__quote-mark"><Icon name="quote" size={46} /></span>
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={item.id}

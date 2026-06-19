@@ -150,7 +150,7 @@
 .tc__content { position: relative; min-height: 184px; display: flex; flex-direction: column; justify-content: center; }
 .tc__quote-mark {
   position: absolute;
-  top: -20px;
+  top: -8px;
   inset-inline-start: -4px;
   color: var(--color-secondary);
   opacity: 0.16;

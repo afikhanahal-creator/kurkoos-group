@@ -128,13 +128,24 @@ export function optimizeSrc(src, w = 1920, q = 'auto') {
   if (cloud && src.includes('.supabase.co/storage/')) {
     return `https://res.cloudinary.com/${cloud}/image/fetch/f_auto,q_${q},c_limit,w_${w}/${encodeURIComponent(src)}`
   }
-  if (!src.includes('res.cloudinary.com/')) return src
-  const marker = '/image/upload/'
-  const i = src.indexOf(marker)
-  if (i === -1) return src
-  const rest = src.slice(i + marker.length)
-  if (/^[a-z]+_[^/]*\//.test(rest)) return src   // יש כבר טרנספורמציה — לא נוגעים
-  return src.slice(0, i + marker.length) + `f_auto,q_${q},c_limit,w_${w}/` + rest
+  // כתובות Cloudinary upload — מוסיפים טרנספורמציה (פורמט/איכות/רוחב) אם אין כבר
+  if (src.includes('res.cloudinary.com/')) {
+    const marker = '/image/upload/'
+    const i = src.indexOf(marker)
+    if (i === -1) return src
+    const rest = src.slice(i + marker.length)
+    if (/^[a-z]+_[^/]*\//.test(rest)) return src   // יש כבר טרנספורמציה — לא נוגעים
+    return src.slice(0, i + marker.length) + `f_auto,q_${q},c_limit,w_${w}/` + rest
+  }
+  // ברירת-מחדל ללא Cloudinary — פרוקסי תמונות חינמי (wsrv.nl): שינוי-גודל + WebP,
+  // בלי שום הגדרה. עובד על כל כתובת ציבורית (כולל Supabase Storage) → במקום
+  // להוריד תמונת-מקור במלוא הרוחב (1920px) לכרטיס של 250px, יורדת תמונה קלה.
+  // אם הפרוקסי נכשל — רכיב התמונה נופל-לאחור למקור (onError) → במקרה הגרוע
+  // מתנהג כמו היום (תמונת-מקור), כך שזה תמיד בטוח.
+  if (!/^https?:\/\//.test(src)) return src                  // כתובת מקומית/יחסית — משאירים
+  if (src.includes('wsrv.nl') || src.includes('weserv.nl')) return src
+  const wq = q.includes('eco') ? 60 : 78
+  return `https://wsrv.nl/?url=${encodeURIComponent(src)}&w=${w}&q=${wq}&output=webp`
 }
 
 /* בניית srcset רספונסיבי — סולם רוחבים סביב הרוחב המבוקש, כל אחד דרך optimizeSrc

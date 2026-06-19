@@ -28,6 +28,19 @@ export const statsSuggestions = [
   { value: 80, suffix: '+', label: { he: 'פרויקטים בוטיק', en: 'Boutique projects' } },
   { value: 100, suffix: '%', label: { he: 'דירות שנמכרו לפני אכלוס', en: 'Sold before move-in' } },
   { value: 30, suffix: '+', label: { he: 'אדריכלים ומהנדסים בצוות', en: 'Architects & engineers' } },
+  // ---- באטץ' שני: מונים מעניינים ומבדלים ----
+  { value: 4.9, suffix: '/5', label: { he: 'דירוג לקוחות ממוצע', en: 'Average client rating' } },
+  { value: 70, suffix: '%', label: { he: 'לקוחות שהגיעו מהמלצה', en: 'Clients from referrals' } },
+  { value: 12, suffix: '', label: { he: 'ערים שבהן אנחנו בונים', en: 'Cities we build in' } },
+  { value: 200, suffix: '+', label: { he: 'נקודות בקרת איכות לדירה', en: 'Quality checkpoints per home' } },
+  { value: 12, suffix: '', label: { he: 'חודשי ליווי אחרי מסירה', en: 'Months of post-handover support' } },
+  { value: 50, suffix: '+', label: { he: 'אפשרויות התאמה אישית לדירה', en: 'Personalization options' } },
+  { value: 40, suffix: '%', label: { he: 'שטחים פתוחים וירוקים', en: 'Open & green space' } },
+  { value: 98, suffix: '%', label: { he: 'שביעות רצון שנה אחרי האכלוס', en: 'Satisfaction a year after move-in' } },
+  { value: 25, suffix: '+', label: { he: 'משפחות שרכשו דירה שנייה', en: 'Families who bought again' } },
+  { value: 5, suffix: '', label: { he: 'פרסי עיצוב ואדריכלות', en: 'Design & architecture awards' } },
+  { value: 15, suffix: '+', label: { he: 'מעצבים ואדריכלים מובילים בשת"פ', en: 'Leading designers we partner with' } },
+  { value: 90, suffix: '%', label: { he: 'דירות עם מפרט משודרג', en: 'Homes with upgraded spec' } },
 ]
 
 export default stats

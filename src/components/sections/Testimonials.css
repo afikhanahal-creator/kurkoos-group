@@ -205,7 +205,7 @@
   font-weight: 700;
   font-size: 0.8rem;
   letter-spacing: 0.01em;
-  color: var(--color-accent);
+  color: var(--color-secondary);   /* כחול (במקום אדום) */
 }
 .tc-shots__row { display: flex; align-items: center; }
 .tc-shots__tile {

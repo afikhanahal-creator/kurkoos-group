@@ -598,7 +598,16 @@
 .ctab__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; }
 .ctab__head .btn { min-height: 0; padding: 0.5em 1.1em; }
 .ctab__muted { color: var(--adm-muted); font-size: 0.85rem; }
-.ctab__labels, .ctab__row { display: grid; grid-template-columns: 1.4fr 0.8fr 0.7fr 1.4fr 1fr auto auto auto; gap: 0.5rem; align-items: center; }
+.ctab__labels, .ctab__row { display: grid; grid-template-columns: auto 1.4fr 0.8fr 0.7fr 1.4fr 1fr auto auto auto; gap: 0.5rem; align-items: center; }
+.ctab__order { display: inline-flex; flex-direction: column; gap: 2px; }
+.ctab__order button {
+  width: 24px; height: 18px; line-height: 1;
+  border: 1px solid var(--adm-border-strong); border-radius: 6px;
+  background: var(--adm-surface); color: var(--adm-ink); cursor: pointer; font-size: 0.7rem;
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+}
+.ctab__order button:hover:not(:disabled) { border-color: var(--color-secondary); }
+.ctab__order button:disabled { opacity: 0.35; cursor: not-allowed; }
 .ctab__labels { font-family: var(--font-heading); font-weight: 700; font-size: 0.74rem; color: var(--adm-muted); padding: 0 0.4rem 0.5rem; }
 .ctab__row { background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 11px; padding: 0.6rem; margin-bottom: 0.5rem; box-shadow: var(--adm-shadow-sm); transition: border-color var(--dur-fast), box-shadow var(--dur-fast); }
 .ctab__row:hover { border-color: var(--adm-border-strong); box-shadow: var(--adm-shadow); }

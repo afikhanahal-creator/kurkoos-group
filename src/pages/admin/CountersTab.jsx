@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { listCounters, createCounter, updateCounter, deleteCounter } from '../../lib/cms.js'
+import { listCounters, createCounter, updateCounter, deleteCounter, reorderRows } from '../../lib/cms.js'
 
-function CounterRow({ row, onDelete }) {
+function CounterRow({ row, index, total, onMove, onDelete }) {
   const [form, setForm] = useState(row)
   const [status, setStatus] = useState('saved')
   const timer = useRef()
@@ -22,6 +22,10 @@ function CounterRow({ row, onDelete }) {
 
   return (
     <div className="ctab__row">
+      <div className="ctab__order">
+        <button type="button" onClick={() => onMove(form.id, -1)} disabled={index === 0} title="ימינה (מוקדם יותר)">↑</button>
+        <button type="button" onClick={() => onMove(form.id, 1)} disabled={index === total - 1} title="שמאלה (מאוחר יותר)">↓</button>
+      </div>
       <input className="ctab__cell" value={form.label_he ?? ''} placeholder="תווית" onChange={(e) => set('label_he', e.target.value)} />
       <input className="ctab__cell ctab__cell--num" value={form.value ?? ''} placeholder="ערך" onChange={(e) => set('value', e.target.value)} />
       <input className="ctab__cell ctab__cell--sm" value={form.suffix ?? ''} placeholder="סיומת" onChange={(e) => set('suffix', e.target.value)} />
@@ -52,6 +56,17 @@ export default function CountersTab() {
     if (!window.confirm('למחוק את המונה?')) return
     await deleteCounter(id); setRows((prev) => prev.filter((r) => r.id !== id))
   }
+  const move = (id, dir) => {
+    setRows((prev) => {
+      const i = prev.findIndex((r) => r.id === id)
+      const j = i + dir
+      if (i < 0 || j < 0 || j >= prev.length) return prev
+      const next = [...prev]
+      ;[next[i], next[j]] = [next[j], next[i]]
+      reorderRows('site_counters', next.map((r) => r.id)).catch((e) => console.error(e))
+      return next
+    })
+  }
 
   return (
     <div className="ctab">
@@ -63,9 +78,9 @@ export default function CountersTab() {
         <button type="button" className="btn btn--primary" onClick={add}>+ מונה</button>
       </div>
       <div className="ctab__labels">
-        <span>תווית</span><span>ערך</span><span>סיומת</span><span>היכן מופיע</span><span>מזהה</span><span>פעיל</span><span /><span />
+        <span>סדר</span><span>תווית</span><span>ערך</span><span>סיומת</span><span>היכן מופיע</span><span>מזהה</span><span>פעיל</span><span /><span />
       </div>
-      {loading ? <p className="ctab__muted">טוען…</p> : rows.map((r) => <CounterRow key={r.id} row={r} onDelete={remove} />)}
+      {loading ? <p className="ctab__muted">טוען…</p> : rows.map((r, idx) => <CounterRow key={r.id} row={r} index={idx} total={rows.length} onMove={move} onDelete={remove} />)}
     </div>
   )
 }

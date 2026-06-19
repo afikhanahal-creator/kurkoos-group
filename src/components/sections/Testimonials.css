@@ -399,14 +399,14 @@
   .testimonials__nav { gap: 1.1rem; }
   .testimonials__nav .carousel__arrow { width: 42px; height: 42px; }
 
-  /* גב הכרטיס במובייל — ערימת "פולארויד" גדולה שממלאת את הכרטיס (במקום שורה
-     דקה עם הרבה מקום ריק). שומר על המראה המנייפה ועל אנימציית ההיפוך. */
-  .tc__card--back { gap: 0.7rem; }
-  .tc-shots__row--back { flex-direction: column; padding-inline: 0; }
+  /* גב הכרטיס במובייל — ערימת "פולארויד" אנכית, עם חפיפה עדינה (לא צפופה)
+     ואוויר מתחת לכותרת. שומר על המראה המנייפה ועל אנימציית ההיפוך. */
+  .tc__card--back { gap: 1rem; }
+  .tc-shots__row--back { flex-direction: column; padding-inline: 0; margin-block-start: 0.5rem; }
   .tc-shots__row--back .tc-shots__tile {
-    width: clamp(150px, 54%, 205px);
+    width: clamp(165px, 58%, 202px);
     margin-inline-start: 0;
-    margin-block-start: -80px;     /* חפיפה אנכית עמוקה → ערימה שממלאת את הגובה בלי לגלוש */
+    margin-block-start: -42px;     /* חפיפה עדינה — התמונות נושמות, לא נדחסות */
     transform: rotate(-4deg);
   }
   .tc-shots__row--back .tc-shots__tile:first-child { margin-block-start: 0; }

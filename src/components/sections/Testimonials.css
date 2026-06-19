@@ -271,9 +271,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;   /* הכותרת למעלה (לא ממורכזת אנכית) */
-  gap: clamp(0.9rem, 2.2vw, 1.4rem);
-  padding: clamp(1.3rem, 3vw, 2.1rem) clamp(1rem, 2.2vw, 1.6rem) clamp(1rem, 2.2vw, 1.6rem);
+  justify-content: center;   /* התוכן ממורכז אנכית — בלי מקום ריק גדול */
+  gap: clamp(1rem, 2.4vw, 1.5rem);
+  padding: clamp(1.1rem, 2.6vw, 1.7rem) clamp(1rem, 2.2vw, 1.6rem);
   text-align: center;
 }
 /* גוון טורקיז רך מעל המשבצות */
@@ -387,7 +387,7 @@
     gap: 1.2rem;
     padding: 1.3rem 1.1rem;
   }
-  .tc__avatar { max-width: 210px; margin: 0 auto; }
+  .tc__avatar { max-width: 180px; margin: 0 auto; }
   .tc__content { min-height: 0; }
   .tc__quote-mark { position: static; display: block; margin: 0 auto 0.2rem; }
   .tc__text { font-size: 0.8925rem; margin-bottom: 0.9rem; }
@@ -397,6 +397,21 @@
   .tc-shots { align-items: center; }
   .testimonials__nav { gap: 1.1rem; }
   .testimonials__nav .carousel__arrow { width: 42px; height: 42px; }
+
+  /* גב הכרטיס במובייל — ערימת "פולארויד" גדולה שממלאת את הכרטיס (במקום שורה
+     דקה עם הרבה מקום ריק). שומר על המראה המנייפה ועל אנימציית ההיפוך. */
+  .tc__card--back { gap: 0.7rem; }
+  .tc-shots__row--back { flex-direction: column; padding-inline: 0; }
+  .tc-shots__row--back .tc-shots__tile {
+    width: clamp(165px, 58%, 225px);
+    margin-inline-start: 0;
+    margin-block-start: -86px;     /* חפיפה אנכית עמוקה → ערימה שממלאת את הגובה בלי לגלוש */
+    transform: rotate(-4deg);
+  }
+  .tc-shots__row--back .tc-shots__tile:first-child { margin-block-start: 0; }
+  .tc-shots__row--back .tc-shots__tile:nth-child(2) { transform: rotate(4deg); }
+  .tc-shots__row--back .tc-shots__tile:nth-child(3) { transform: rotate(-2deg); }
+  .tc-shots__row--back .tc-shots__tile:hover { transform: translateY(-4px) rotate(0deg) scale(1.03); z-index: 40; }
 }
 
 /* ============================================================

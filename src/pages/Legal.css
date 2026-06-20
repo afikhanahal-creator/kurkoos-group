@@ -105,7 +105,72 @@
 .priv-contact a { color: var(--color-primary-700); text-decoration: underline; }
 .priv-contact a:hover { color: var(--color-primary-900); }
 
+/* ---- הצהרת נגישות: כרטיסי דגש ---- */
+.a11y-feats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 0.5rem 0 2.6rem;
+}
+.a11y-feat {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.3rem 1.4rem;
+  transition: transform var(--dur-base), box-shadow var(--dur-base), border-color var(--dur-base);
+}
+.a11y-feat:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--color-primary-700) 35%, transparent);
+}
+.a11y-feat__ic {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary-700) 10%, transparent);
+  color: var(--color-primary-700);
+  margin-bottom: 0.9rem;
+}
+.a11y-feat strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--color-primary-900);
+  margin-bottom: 0.35rem;
+}
+.a11y-feat p { color: var(--color-text-soft); font-size: 0.98rem; line-height: 1.6; margin: 0; }
+
+/* ---- רשימת כלים עם סימוני וי ---- */
+.a11y-checks { list-style: none; padding: 0; margin: 0.4rem 0 0.9rem; }
+.a11y-checks li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0;
+  color: var(--color-text-soft);
+  font-size: 1.02rem;
+  line-height: 1.7;
+  margin-bottom: 0.55rem;
+}
+.a11y-checks li::before { content: none; }
+.a11y-checks__ic {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 0.18em;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary-700) 12%, transparent);
+  color: var(--color-primary-700);
+}
+
 @media (max-width: 600px) {
   .priv-sec p, .priv-sec li { font-size: 1rem; }
   .priv-contact { padding: 1.3rem 1.3rem; }
+  .a11y-feats { grid-template-columns: 1fr; }
 }

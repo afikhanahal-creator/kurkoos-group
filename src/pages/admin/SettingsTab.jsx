@@ -294,7 +294,7 @@ export default function SettingsTab() {
             <input type="tel" dir="ltr" placeholder="03-000-0000" value={contact.contact_phone} onChange={(e) => patchContact('contact_phone', e.target.value)} />
           </label>
           <label className="adm-set__field"><span>אימייל</span>
-            <input type="email" dir="ltr" placeholder="info@kurkoos-group.co.il" value={contact.contact_email} onChange={(e) => patchContact('contact_email', e.target.value)} />
+            <input type="email" dir="ltr" placeholder="kurkoosgroup.sales@gmail.com" value={contact.contact_email} onChange={(e) => patchContact('contact_email', e.target.value)} />
           </label>
         </div>
         <div className="adm-set__bk-row" style={{ marginTop: '0.6rem' }}>

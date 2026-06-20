@@ -14,7 +14,7 @@ export const site = {
     phone: '03-0000000',
     phoneDisplay: '03-000-0000',
     whatsapp: '972506855656',
-    email: 'info@kurkoos-group.co.il',
+    email: 'kurkoosgroup.sales@gmail.com',
     address: { he: 'רחוב הנגר 24, הוד השרון, מגדלי Amy קומה 2', en: '24 HaNagar St., Hod HaSharon, Amy Towers, Floor 2' },
     hours: { he: "א'–ה' 09:00–18:00", en: 'Sun–Thu 09:00–18:00' },
   },

@@ -1,6 +1,7 @@
 import { useI18n } from '../i18n/index.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
+import Icon from '../components/ui/Icon.jsx'
 import './InfoPage.css'
 import './Legal.css'
 
@@ -10,14 +11,15 @@ import './Legal.css'
    פרטי קבוצת קורקוס. accessibility/terms — טקסט תמציתי.
    ============================================================ */
 
-// פרטי החברה — מקור אמת אחד. ⚠️ ח.פ. + שם החברה הרשום להשלמה ע"י הלקוח.
+// פרטי החברה — מקור אמת אחד. ⚠️ ח.פ. להשלמה כשיתקבל.
 const COMPANY = {
-  name: { he: 'קבוצת קורקוס', en: 'Kurkoos Group' },
+  name: { he: 'קבוצת קורקוס נכסים חברה לבניין ויזמות בע״מ', en: 'Kurkoos Group Assets — Construction & Development Ltd.' },
+  shortName: { he: 'קבוצת קורקוס', en: 'Kurkoos Group' },
   regNo: '',                         // ח.פ. — להשלמה
   addr: { he: 'הנגר 24, הוד-השרון, מגדלי Amy — מגדל A', en: '24 HaNagar St., Hod HaSharon, Amy Towers — Tower A' },
   phone: '050-685-5656',
   phoneHref: '+972506855656',
-  email: 'kurkoos.sales@gmail.com',
+  email: 'kurkoosgroup.sales@gmail.com',
   site: 'kurkoos-group.co.il',
   siteHref: 'https://kurkoos-group.co.il',
   updated: '20/06/2026',
@@ -28,7 +30,7 @@ const EMAIL = COMPANY.email
 const privacyDoc = {
   he: [
     { h: 'מבוא', p: [
-      `ברוך הבא לאתר האינטרנט ו/או הפלטפורמה ו/או כלל השירותים המוצעים בהם (להלן: "השירותים הדיגיטליים") של קבוצת קורקוס (להלן: "החברה").`,
+      `ברוך הבא לאתר האינטרנט ו/או הפלטפורמה ו/או כלל השירותים המוצעים בהם (להלן: "השירותים הדיגיטליים") של קבוצת קורקוס נכסים חברה לבניין ויזמות בע״מ (להלן: "החברה").`,
       'החברה מייחסת חשיבות רבה לפרטיות המשתמשים בשירותים הדיגיטליים (להלן: "המשתמשים" או "אתה") ופועלת לשמירת המידע האישי שלך. אנו סבורים כי זכותך להכיר ולהבין כיצד אנו אוספים, מעבדים ומשתמשים במידע המתקבל במהלך שימושך בשירותינו. השימוש שלך בשירותים הדיגיטליים כפוף למדיניות פרטיות זו ולתקנון ותנאי השימוש, המהווים הסכם משפטי מחייב בינך לבין החברה.',
       'מדיניות פרטיות זו מפרטת את סוגי המידע הנאספים אודותיך במסגרת השימוש בשירותים הדיגיטליים, וכן את המטרות והשימושים שאנו עושים במידע זה.',
       'החברה שומרת לעצמה את הזכות להפסיק, באופן מלא או חלקי, זמני או קבוע, את פעילות השירותים הדיגיטליים בכל עת, בין היתר לצורך תחזוקה, שדרוג, תיקון תקלות, או כתוצאה מהפרעות זמניות ברשת. המשתמש מוותר מראש על כל טענה בקשר להפסקות מסוג זה.',
@@ -174,6 +176,115 @@ const privacyDoc = {
   ],
 }
 
+/* ============================================================
+   הצהרת נגישות — תוכן מפורט בעברית גבוהה (ובאנגלית).
+   ============================================================ */
+const a11yFeatures = {
+  he: [
+    { icon: 'accessibility', t: 'תפריט נגישות מתקדם', d: 'סרגל כלים ייעודי הנפתח מכל עמוד באתר ומאפשר התאמה אישית של חוויית הגלישה.' },
+    { icon: 'contrast', t: 'ניגודיות והתאמת צבעים', d: 'מצבי ניגודיות כהה, בהיר ומונוכרום, לצד התאמה חופשית של צבעי הרקע, הכותרות והתכנים.' },
+    { icon: 'textSize', t: 'התאמות גופן וריווח', d: 'הגדלת הטקסט, גופן קריא וכוונון הריווח בין שורות, מילים ואותיות.' },
+    { icon: 'shield', t: 'עמידה בתקן הישראלי', d: 'האתר הונגש בהתאם לתקנות הנגישות והתקן הישראלי ת״י 5568 ברמת AA.' },
+  ],
+  en: [
+    { icon: 'accessibility', t: 'Advanced accessibility menu', d: 'A dedicated toolbar, available on every page, for personalising the browsing experience.' },
+    { icon: 'contrast', t: 'Contrast & colour control', d: 'Dark, light and monochrome contrast modes, plus free adjustment of background, heading and text colours.' },
+    { icon: 'textSize', t: 'Font & spacing controls', d: 'Larger text, a readable font and tuning of line, word and letter spacing.' },
+    { icon: 'shield', t: 'Standards compliance', d: 'Built per the Israeli accessibility regulations and standard SI 5568, level AA.' },
+  ],
+}
+
+const a11yDoc = {
+  he: {
+    commitTitle: 'מחויבות החברה לנגישות',
+    commit: [
+      'קבוצת קורקוס נכסים חברה לבניין ויזמות בע״מ רואה בהנגשת שירותיה ערך עליון, ופועלת מתוך תפיסה כי לכל אדם — לרבות אנשים עם מוגבלות — שמורה הזכות לגלוש באתר באופן עצמאי, נוח ושוויוני.',
+      'השקענו משאבים רבים בהנגשת האתר ובהתאמתו לקהל רחב ככל הניתן, מתוך אמונה כי נגישות אינה דרישה טכנית בלבד אלא ביטוי מוחשי לכבוד האדם ולשוויון ההזדמנויות.',
+    ],
+    standardTitle: 'כפיפות לתקן ולהנחיות',
+    standard: [
+      'האתר נבנה והונגש בהתאם להוראות תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע״ג–2013, ובכפוף להמלצות התקן הישראלי ת״י 5568 לנגישות תכנים באינטרנט, המבוסס על הנחיות הנגישות הבין-לאומיות WCAG 2.1 ברמת AA.',
+      'תהליך ההנגשה נבחן ומתוחזק באופן שוטף, ואנו ממשיכים לשפר את נגישות האתר מעת לעת בהתאם להתפתחות התקנים והטכנולוגיה.',
+    ],
+    toolsTitle: 'אמצעי הנגישות הזמינים באתר',
+    toolsIntro: 'באתר מוטמע תפריט נגישות הנפתח באמצעות הסמל הקבוע בפינת המסך, ומציע, בין היתר, את ההתאמות הבאות:',
+    tools: [
+      'מצבי ניגודיות — כהה, בהיר, ניגודיות מוגברת ותצוגת מונוכרום בגווני אפור.',
+      'התאמת צבעים אישית לרקעים, לכותרות ולתכני האתר.',
+      'הגדלת הגופן וכוונון הריווח בין שורות, בין מילים ובין אותיות.',
+      'גופן קריא וברור להקלה על הקריאה.',
+      'הגדלת התצוגה, הגדלת התכנים והגדלת לחצנים ואזורי לחיצה.',
+      'הדגשת קישורים, כותרות ואלמנטים אינטראקטיביים בעמוד.',
+      'ניווט מלא באמצעות מקלדת, לצד מקלדת וירטואלית להזנת טקסט.',
+      'הקראת טקסט בלחיצה (Text-to-Speech) בעברית ובאנגלית.',
+      'הצגת תיאורים חלופיים לתמונות (טקסט חלופי).',
+      'תצוגת קריאה ממוקדת וסיכום עמוד לניווט מהיר לפי כותרות.',
+      'הגדלת סמן העכבר ושינוי צבעו, והשתקת מדיה אוטומטית.',
+      'שמירת ההעדפות בין הביקורים באתר, לצד אפשרות לאיפוס מלא של ההתאמות.',
+    ],
+    extraTitle: 'התאמות נגישות נוספות שיושמו',
+    extra: [
+      'בניית האתר על בסיס מבנה (HTML) סמנטי ותקין, עם היררכיית כותרות ברורה.',
+      'תיוג ARIA ותמיכה בקוראי מסך נפוצים.',
+      'שמירה על ניגודיות צבעים מספקת בין הטקסט לרקע.',
+      'אזורי לחיצה מרווחים ונוחים לתפעול.',
+      'אתר רספונסיבי המותאם למגוון מסכים, ותמיכה בהגדלת תצוגת הדפדפן.',
+    ],
+    limitsTitle: 'הסתייגויות ומגבלות ידועות',
+    limits: [
+      'אנו עושים כל מאמץ להנגיש את מלוא התכנים באתר. עם זאת, ייתכן כי חלקים מסוימים — ובכלל זה תכנים של צד שלישי, קבצים מצורפים או רכיבים שטרם הותאמו במלואם — לא יהיו נגישים באופן מיטבי.',
+      'אנו רואים בנגישות תהליך מתמשך, ופועלים לתיקון ולשיפור באופן שוטף. אם נתקלתם ברכיב שאינו נגיש — נשמח שתעדכנו אותנו ונפעל לתיקונו בהקדם.',
+    ],
+    contactTitle: 'פנייה בנושאי נגישות',
+    contactIntro: 'נתקלתם בקושי בגלישה, או שיש לכם הצעה לשיפור הנגישות? נשמח לסייע. ניתן לפנות לרכז הנגישות של קבוצת קורקוס באמצעות פרטי הקשר הבאים, ואנו מתחייבים לטפל בפנייתכם במהירות ובמקצועיות:',
+    coordinator: 'רכז נגישות',
+  },
+  en: {
+    commitTitle: 'Our commitment to accessibility',
+    commit: [
+      'Kurkoos Group Assets — Construction & Development Ltd. regards the accessibility of its services as a core value, and acts on the belief that every person — including people with disabilities — is entitled to browse the site independently, comfortably and equally.',
+      'We have invested significant resources in making the site accessible to the widest possible audience, in the belief that accessibility is not merely a technical requirement but a tangible expression of human dignity and equal opportunity.',
+    ],
+    standardTitle: 'Standards and guidelines',
+    standard: [
+      'The site was built and made accessible in accordance with the Equal Rights for Persons with Disabilities Regulations (Service Accessibility Adjustments), 2013, and the Israeli standard SI 5568 for web content accessibility, based on the international WCAG 2.1 guidelines at level AA.',
+      'The accessibility of the site is reviewed and maintained on an ongoing basis, and we continue to improve it as standards and technology evolve.',
+    ],
+    toolsTitle: 'Accessibility features available on the site',
+    toolsIntro: 'The site includes an accessibility menu, opened via the fixed icon in the corner of the screen, offering among others the following adjustments:',
+    tools: [
+      'Contrast modes — dark, light, high-contrast and monochrome (greyscale).',
+      'Custom colour adjustment for backgrounds, headings and content.',
+      'Larger font and tuning of line, word and letter spacing.',
+      'A clear, readable font for easier reading.',
+      'Display zoom, content enlargement and larger buttons and click areas.',
+      'Highlighting of links, headings and interactive elements.',
+      'Full keyboard navigation, alongside a virtual keyboard for text input.',
+      'Click-to-read text-to-speech in Hebrew and English.',
+      'Alternative text descriptions for images.',
+      'A focused reading view and a page summary for quick heading navigation.',
+      'Enlarged cursor with colour change, and automatic media muting.',
+      'Saving preferences between visits, with an option to fully reset all adjustments.',
+    ],
+    extraTitle: 'Additional accessibility measures',
+    extra: [
+      'Built on valid, semantic HTML with a clear heading hierarchy.',
+      'ARIA labelling and support for common screen readers.',
+      'Sufficient colour contrast between text and background.',
+      'Spacious, comfortable click areas.',
+      'A responsive site adapted to a range of screens, with browser-zoom support.',
+    ],
+    limitsTitle: 'Known limitations',
+    limits: [
+      'We make every effort to make all content accessible. Nevertheless, certain parts — including third-party content, attached files or components not yet fully adapted — may not be optimally accessible.',
+      'We see accessibility as an ongoing process and work continuously to fix and improve it. If you encounter an inaccessible element, please let us know and we will act to correct it promptly.',
+    ],
+    contactTitle: 'Accessibility contact',
+    contactIntro: 'Encountered a difficulty browsing, or have a suggestion to improve accessibility? We are happy to help. You can reach the accessibility coordinator at Kurkoos Group using the details below, and we are committed to handling your request quickly and professionally:',
+    coordinator: 'Accessibility coordinator',
+  },
+}
+
 function Section({ s }) {
   return (
     <section className="priv-sec">
@@ -235,14 +346,75 @@ export default function Legal({ kind }) {
     )
   }
 
-  // ---- accessibility / terms ----
+  // ---- הצהרת נגישות: מסמך מפורט ----
+  if (kind === 'accessibility') {
+    const L = (o) => (typeof o === 'string' ? o : (o[lang] || o.he))
+    const isHe = lang !== 'en'
+    const d = a11yDoc[lang] || a11yDoc.he
+    const feats = a11yFeatures[lang] || a11yFeatures.he
+    const updatedLbl = isHe ? 'תאריך עדכון אחרון' : 'Last updated'
+    return (
+      <>
+        <PageHeader title={title} crumbs={[{ label: title }]} />
+        <section className="section">
+          <Reveal className="container priv-doc">
+            <div className="priv-meta">
+              <span className="priv-meta__eyebrow">{isHe ? 'הצהרת נגישות' : 'Accessibility statement'}</span>
+              <span className="priv-meta__date">{updatedLbl}: {COMPANY.updated}</span>
+            </div>
+
+            {/* כרטיסי דגש */}
+            <div className="a11y-feats">
+              {feats.map((f, i) => (
+                <div className="a11y-feat" key={i}>
+                  <span className="a11y-feat__ic"><Icon name={f.icon} size={26} /></span>
+                  <strong>{f.t}</strong>
+                  <p>{f.d}</p>
+                </div>
+              ))}
+            </div>
+
+            <Section s={{ h: d.commitTitle, p: d.commit }} />
+            <Section s={{ h: d.standardTitle, p: d.standard }} />
+
+            {/* רשימת כלים עם סימוני וי */}
+            <section className="priv-sec">
+              <h2>{d.toolsTitle}</h2>
+              <p>{d.toolsIntro}</p>
+              <ul className="a11y-checks">
+                {d.tools.map((it, i) => (
+                  <li key={i}><span className="a11y-checks__ic"><Icon name="check" size={15} /></span>{it}</li>
+                ))}
+              </ul>
+            </section>
+
+            <Section s={{ h: d.extraTitle, ul: d.extra }} />
+            <Section s={{ h: d.limitsTitle, p: d.limits }} />
+
+            {/* פנייה / רכז נגישות */}
+            <section className="priv-sec">
+              <h2>{d.contactTitle}</h2>
+              <p>{d.contactIntro}</p>
+              <div className="priv-contact">
+                <strong className="priv-contact__name">{d.coordinator} — {L(COMPANY.name)}</strong>
+                <p><b>{isHe ? 'כתובת' : 'Address'}:</b> {L(COMPANY.addr)}</p>
+                <p><b>{isHe ? 'טלפון' : 'Phone'}:</b> <a href={`tel:${COMPANY.phoneHref}`}>{COMPANY.phone}</a></p>
+                <p><b>{isHe ? 'דוא"ל' : 'Email'}:</b> <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a></p>
+                <p><b>{isHe ? 'אתר' : 'Site'}:</b> <a href={COMPANY.siteHref} target="_blank" rel="noopener noreferrer">{COMPANY.site}</a></p>
+              </div>
+            </section>
+          </Reveal>
+        </section>
+      </>
+    )
+  }
+
+  // ---- terms ----
   const body = {
     he: {
-      accessibility: 'אתר קורקוס גרופ שואף לאפשר גלישה נוחה ונגישה לכלל המשתמשים, לרבות אנשים עם מוגבלות. האתר נבנה בהתאם להנחיות הנגישות (WCAG) וכולל תמיכה בניווט מקלדת, ניגודיות צבעים וטקסט חלופי לתמונות. נתקלתם בבעיה? נשמח לשמוע בכתובת kurkoos.sales@gmail.com.',
       terms: 'השימוש באתר כפוף לתנאים אלה. התכנים באתר מוצגים למטרות מידע כללי בלבד ואינם מהווים התחייבות או הצעה מחייבת. קבוצת קורקוס שומרת על זכותה לעדכן את התכנים והתנאים בכל עת.',
     },
     en: {
-      accessibility: 'The Kurkoos Group website strives to provide a comfortable and accessible experience for all users, including people with disabilities. The site is built per WCAG accessibility guidelines and supports keyboard navigation, color contrast and alternative text for images. Found an issue? We would love to hear at kurkoos.sales@gmail.com.',
       terms: 'Use of this website is subject to these terms. Content is provided for general information only and does not constitute a binding commitment or offer. Kurkoos Group reserves the right to update content and terms at any time.',
     },
   }

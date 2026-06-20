@@ -93,13 +93,16 @@ export default function ResponsiveImageField({
       const file = new File([blob], `img-${Date.now()}.webp`, { type: blob.type || 'image/webp' })
       const url = await uploadMedia(file, folder)
       const old = draft?.src
-      // העריכה המתקדמת כבר "צרובה" בתמונה (חיתוך/זום/סיבוב/פינות/פילטרים),
-      // לכן מאפסים את התצוגות לניטרלי — כך האתר מציג בדיוק את מה שהוגדר בעורך,
-      // בלי להחיל שוב זום/מיקוד/פינות מעל התוצאה.
+      // העריכה המתקדמת כבר "צרובה" בתמונה (חיתוך/זום/סיבוב/פינות/פילטרים + יחס
+      // המסגרת והשוליים). לכן מציגים אותה באתר ב'התאמה' (contain) — כל התמונה,
+      // בלי חיתוך-יתר (cover) מעל התוצאה. כך מה שרואים בעורך = מה שמופיע באתר.
       const next = {
         src: url,
         alt: draft?.alt || '',
-        views: { mobile: { ...DEFAULT_VIEW }, desktop: { ...DEFAULT_VIEW } },
+        views: {
+          mobile: { ...DEFAULT_VIEW, objectFit: 'contain' },
+          desktop: { ...DEFAULT_VIEW, objectFit: 'contain' },
+        },
       }
       commit(next)
       if (old) deleteMedia(old).catch(() => {})

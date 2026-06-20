@@ -178,8 +178,10 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   else baseItems = items.slice(0, MAX_FEATURED)
   // קולאז' שתי-שורות (עמודי החטיבות) כשיש הרבה פרויקטים (6+) — במקום שורה אחת צפופה
   const twoRows = collage && baseItems.length > 5
-  // במובייל משכפלים ל-3 עותקים → לולאה אינסופית חלקה (לא בקולאז' שתי-שורות)
-  const renderItems = (!twoRows && isMobile && baseItems.length >= 2)
+  // משכפלים ל-3 עותקים (לולאה אינסופית חלקה) רק כשיש מספיק פרויקטים (5+).
+  // בחירה של עד 4 "פרויקטים נבחרים" מוצגת בדיוק כמו שהיא — בלי חזרות שנראות
+  // כאילו יש יותר מ-4 (אותם 4 חזרו שוב ושוב בגלל הלולאה).
+  const renderItems = (!twoRows && isMobile && baseItems.length >= 5)
     ? [...baseItems, ...baseItems, ...baseItems]
     : baseItems
 

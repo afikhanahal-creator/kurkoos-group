@@ -273,8 +273,8 @@ export default function ResponsiveImageField({
             <div className="rif__row">
               <span className="rif__row-lbl">זום</span>
               <div className="rif__slider">
-                <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.max(0.4, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
-                <input type="range" min="0.4" max="3" step="0.05" value={view.zoom || 1} onChange={(e) => setView({ zoom: Number(e.target.value) })} aria-label="זום" />
+                <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.max(0.2, Math.round(((view.zoom || 1) - 0.1) * 100) / 100) })} aria-label="הקטנה">−</button>
+                <input type="range" min="0.2" max="3" step="0.05" value={view.zoom || 1} onChange={(e) => setView({ zoom: Number(e.target.value) })} aria-label="זום" />
                 <button type="button" className="rif__rndbtn" onClick={() => setView({ zoom: Math.min(3, Math.round(((view.zoom || 1) + 0.1) * 100) / 100) })} aria-label="הגדלה">+</button>
                 <span className="rif__val">{Math.round((view.zoom || 1) * 100)}%</span>
               </div>

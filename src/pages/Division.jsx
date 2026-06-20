@@ -77,7 +77,7 @@ export default function Division() {
   const [list, setList] = useState(() => projects.slice(0, 4))
 
   // מיפוי slug של דיוויזיה → עמוד תיוג ב-CMS
-  const SLUG_TO_PAGE = { development: 'development', execution: 'execution', brokerage: 'brokerage' }
+  const SLUG_TO_PAGE = { development: 'development', execution: 'execution', supervision: 'supervision', brokerage: 'brokerage' }
 
   useEffect(() => {
     const pageKey = SLUG_TO_PAGE[slug] || null

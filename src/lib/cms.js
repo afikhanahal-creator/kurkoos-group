@@ -175,7 +175,7 @@ export function projectPages(p) {
 }
 
 // פרויקטים מפורסמים המשויכים לעמוד יעד מסוים
-// (development | execution | featured | brokerage). פרויקט יכול להיות בכמה עמודים.
+// (development | execution | supervision | brokerage | featured | all). פרויקט יכול להיות בכמה עמודים.
 export async function listProjectsByPage(page) {
   // לעמודי תצוגה ציבוריים — מספיקות עמודות הכרטיס (קל ומהיר יותר)
   const rows = await listProjectCards()

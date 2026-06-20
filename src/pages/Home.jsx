@@ -5,7 +5,6 @@ import Activities from '../components/sections/Activities.jsx'
 import Story from '../components/sections/Story.jsx'
 import Stats from '../components/sections/Stats.jsx'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
-import BuildingShowcase from '../components/sections/BuildingShowcase.jsx'
 import ValueChain from '../components/sections/ValueChain.jsx'
 import Testimonials from '../components/sections/Testimonials.jsx'
 import Partners from '../components/sections/Partners.jsx'
@@ -21,7 +20,6 @@ export default function Home() {
         <Activities />
         <Story />
         <ProjectsGallery />
-        <BuildingShowcase />
         <ValueChain />
         <Stats />
         <Testimonials />

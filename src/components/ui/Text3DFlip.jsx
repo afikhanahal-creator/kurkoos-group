@@ -40,8 +40,10 @@ export default function Text3DFlip({ text = '', className = '', stagger = 0.045 
       {words.map((word, wi) => {
         // טוקן רווח — שבירת שורה מותרת כאן (רווח רגיל)
         if (/^\s+$/.test(word)) return <span key={wi} className="t3df__space"> </span>
-        // רצף ספרות נשאר טוקן אחד (כדי שלא יתהפך ב-RTL, למשל "70"→"07"); שאר התווים — אות-אות
-        const tokens = word.match(/\d+|[^\d]/g) || []
+        // רצף מספרים — כולל טווח/מפריד פנימי (22-24, 6-8, 3.5, 12/3) — נשאר טוקן
+        // אחד LTR, כדי שלא יתהפך ב-RTL (כמה תיבות inline-block נפרדות מסתדרות
+        // מימין-לשמאל והופכות את הטווח, למשל "22-24"→"24-22"). שאר התווים — אות-אות.
+        const tokens = word.match(/\d+(?:[-–—/.,:]\d+)*|[^\d]/g) || []
         return (
           <span key={wi} className="t3df__word">
             {tokens.map((c, ci) => {

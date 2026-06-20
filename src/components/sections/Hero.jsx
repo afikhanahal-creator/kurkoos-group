@@ -6,7 +6,7 @@ import { heroSlides, companyFilm } from '../../data/hero.js'
 import { supabase } from '../../lib/supabase.js'
 import { listCounters } from '../../lib/cms.js'
 import VideoModal from '../ui/VideoModal.jsx'
-import GeometricBlurMesh from '../ui/GeometricBlurMesh.jsx'
+import HeroVilla from '../ui/HeroVilla.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
 import Icon from '../ui/Icon.jsx'
 import './Hero.css'
@@ -157,7 +157,7 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* אפקט WebGL — קובייה תיל מסתובבת עם הלוגו בתוכה */}
+        {/* שרטוט אדריכלי — וילה בת 3 קומות עם גינה ובריכה (SVG וקטורי) */}
         <div className="hero__media">
           <motion.div
             className="hero__effect"
@@ -165,10 +165,7 @@ export default function Hero() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
-            <GeometricBlurMesh />
-            <div className="hero__effect-logo">
-              <img src="/kurkoos-logo.svg" alt="Kurkoos Group" />
-            </div>
+            <HeroVilla />
           </motion.div>
         </div>
       </div>

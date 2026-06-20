@@ -140,8 +140,9 @@
   stroke-width: 2;
 }
 .villa-blueprint .vb-accent-line { stroke: var(--color-accent); stroke-width: 2.4; stroke-linecap: round; }
-.villa-blueprint .vb-thin { stroke: var(--color-secondary); stroke-width: 1; opacity: 0.5; }
-.villa-blueprint .vb-dash { stroke: var(--color-secondary); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.4; }
+.villa-blueprint .vb-thin { fill: none; stroke: var(--color-secondary); stroke-width: 1; opacity: 0.5; }
+.villa-blueprint .vb-dash { fill: none; stroke: var(--color-secondary); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.4; }
+.villa-blueprint .vb-water { fill: color-mix(in srgb, var(--color-primary-500) 14%, transparent); stroke: var(--color-primary-500); stroke-width: 1.4; }
 .villa-blueprint .vb-dot { fill: var(--color-accent); }
 .villa-blueprint .vb-label {
   fill: var(--color-text-soft);

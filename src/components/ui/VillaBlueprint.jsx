@@ -1,27 +1,48 @@
 import { useLocalized } from '../../i18n/index.jsx'
 
 /* ============================================================
-   שרטוט אדריכלי של וילה — חזית (elevation) רחבה ונמוכה: וילה בת 3
-   קומות עם גינה פרטית ובריכה. איור SVG וקטורי, ממותג לפי הפאלטה
-   (secondary + accent). קליל, נטען מיידית. פרופורציות לרוחב (600×320).
+   שרטוט אדריכלי של וילה — חזית רחבה ונמוכה: וילה בת 3 קומות עם גג
+   משופע, מרפסות, כניסת פורטיקו, חצר פרטית (דשא, שביל, גדר-חיה),
+   עצים משני הצדדים ובריכה. איור SVG וקטורי ממותג. viewBox 620×340.
    ============================================================ */
 export default function VillaBlueprint({ className = '' }) {
   const L = useLocalized()
-  const label = L({ he: 'שרטוט אדריכלי של וילה בת שלוש קומות עם גינה ובריכה', en: 'Architectural blueprint of a three-story villa with garden and pool' })
+  const label = L({
+    he: 'שרטוט אדריכלי של וילה בת שלוש קומות עם חצר, גינה ובריכה',
+    en: 'Architectural blueprint of a three-story villa with a yard, garden and pool',
+  })
 
-  // חלון מזוגג עם חלוקה (mullions)
+  // חלון מזוגג עם חלוקה + אדן
   const Win = ({ x, y, w, h }) => (
     <g>
       <rect className="vb-glass" x={x} y={y} width={w} height={h} />
       <line className="vb-glass-mullion" x1={x + w / 2} y1={y} x2={x + w / 2} y2={y + h} />
       <line className="vb-glass-mullion" x1={x} y1={y + h / 2} x2={x + w} y2={y + h / 2} />
+      <line className="vb-thin" x1={x - 3} y1={y + h} x2={x + w + 3} y2={y + h} />
     </g>
   )
+
+  // עץ — גזע + צמרת מרובדת
+  const Tree = ({ x, cy, r }) => (
+    <g>
+      <line className="vb-thin" x1={x} y1="272" x2={x} y2={cy + r * 0.5} />
+      <circle className="vb-face vb-line" cx={x} cy={cy} r={r} />
+      <circle className="vb-face vb-line" cx={x - r * 0.62} cy={cy + r * 0.45} r={r * 0.6} />
+      <circle className="vb-face vb-line" cx={x + r * 0.62} cy={cy + r * 0.45} r={r * 0.6} />
+    </g>
+  )
+
+  // גדר-חיה משוננת
+  const hedge = (x0, x1, y, w = 16) => {
+    let d = `M${x0} ${y}`
+    for (let x = x0; x < x1; x += w) d += ` q${w / 2} -11 ${w} 0`
+    return d
+  }
 
   return (
     <svg
       className={`villa-blueprint ${className}`}
-      viewBox="0 0 600 320"
+      viewBox="0 0 620 340"
       role="img"
       aria-label={label}
       xmlns="http://www.w3.org/2000/svg"
@@ -32,78 +53,96 @@ export default function VillaBlueprint({ className = '' }) {
         </pattern>
       </defs>
 
-      {/* רקע שרטוט עם נקודות */}
-      <rect x="0" y="0" width="600" height="320" rx="18" className="vb-bg" />
-      <rect x="0" y="0" width="600" height="320" rx="18" fill="url(#vbGrid)" />
+      {/* רקע שרטוט */}
+      <rect x="0" y="0" width="620" height="340" rx="18" className="vb-bg" />
+      <rect x="0" y="0" width="620" height="340" rx="18" fill="url(#vbGrid)" />
 
+      {/* ===== חצר ===== */}
       {/* קו קרקע */}
-      <line x1="40" y1="262" x2="560" y2="262" className="vb-line" />
+      <line x1="30" y1="272" x2="592" y2="272" className="vb-line" />
+      {/* גדר-חיה משני צדי החצר */}
+      <path d={hedge(34, 146, 272)} className="vb-thin" />
+      <path d={hedge(566, 590, 272)} className="vb-thin" />
+      {/* פקעי דשא */}
+      {[60, 132, 360, 560].map((x) => (
+        <path key={x} d={`M${x} 272 l-3 -7 M${x} 272 l3 -7 M${x + 5} 272 l3 -7`} className="vb-thin" />
+      ))}
 
-      {/* גינה — עצים ושיחים */}
-      <g>
-        <line x1="300" y1="262" x2="300" y2="242" className="vb-thin" />
-        <circle cx="300" cy="224" r="20" className="vb-face vb-line" />
-        <line x1="566" y1="262" x2="566" y2="244" className="vb-thin" />
-        <circle cx="566" cy="228" r="17" className="vb-face vb-line" />
-        <path d="M44 262 q7 -12 14 0 q7 -12 14 0" className="vb-thin" />
-      </g>
+      {/* עצים — שני הצדדים */}
+      <Tree x={70} cy={224} r={23} />
+      <Tree x={116} cy={236} r={15} />
+      <Tree x={576} cy={228} r={21} />
+      <Tree x={604} cy={240} r={13} />
 
-      {/* ===== הוילה — חזית, 3 קומות ===== */}
-      {/* מעקה גג / פרפט */}
-      <rect x="62" y="84" width="226" height="12" className="vb-line vb-face" />
-      {/* מעטפת */}
-      <rect x="70" y="96" width="210" height="166" className="vb-line" />
-      {/* קווי הפרדת קומות */}
-      <line x1="70" y1="152" x2="280" y2="152" className="vb-line" />
-      <line x1="70" y1="207" x2="280" y2="207" className="vb-line" />
+      {/* ===== הוילה — 3 קומות עם גג משופע ===== */}
+      {/* גג היפ (טרפז) */}
+      <polygon points="138,96 206,64 304,64 372,96" className="vb-face vb-line" />
+      <line x1="138" y1="96" x2="372" y2="96" className="vb-line" />
+
+      {/* מעטפת + הפרדת קומות */}
+      <rect x="152" y="96" width="206" height="176" className="vb-line" />
+      <line x1="152" y1="155" x2="358" y2="155" className="vb-line" />
+      <line x1="152" y1="214" x2="358" y2="214" className="vb-line" />
 
       {/* קומה 3 — שלושה חלונות */}
-      <Win x={96} y={110} w={42} h={30} />
-      <Win x={154} y={110} w={42} h={30} />
-      <Win x={212} y={110} w={42} h={30} />
+      <Win x={177} y={112} w={40} h={30} />
+      <Win x={235} y={112} w={40} h={30} />
+      <Win x={293} y={112} w={40} h={30} />
 
-      {/* קומה 2 — דלת-מרפסת מרכזית + שני חלונות */}
-      <Win x={96} y={164} w={38} h={36} />
-      <Win x={150} y={158} w={54} h={49} />
-      <Win x={216} y={164} w={38} h={36} />
-      {/* מעקה מרפסת בקדמת קומה 2 */}
+      {/* קומה 2 — דלת-מרפסת מרכזית + שני חלונות + מעקה */}
+      <Win x={177} y={167} w={38} h={38} />
+      <Win x={228} y={161} w={54} h={44} />
+      <Win x={295} y={167} w={38} h={38} />
       <g>
-        <line x1="140" y1="207" x2="214" y2="207" className="vb-thin" />
-        <line x1="140" y1="197" x2="214" y2="197" className="vb-thin" />
-        {[148, 161, 174, 187, 200].map((x) => (
-          <line key={x} x1={x} y1="197" x2={x} y2="207" className="vb-thin" />
+        <line x1="216" y1="214" x2="294" y2="214" className="vb-thin" />
+        <line x1="216" y1="205" x2="294" y2="205" className="vb-thin" />
+        {[224, 237, 250, 263, 276, 289].map((x) => (
+          <line key={x} x1={x} y1="205" x2={x} y2="214" className="vb-thin" />
         ))}
       </g>
 
-      {/* קומת קרקע — כניסה (אדום מותג) + שני חלונות */}
-      <Win x={96} y={224} w={38} h={30} />
-      <Win x={216} y={224} w={38} h={30} />
-      <rect x="160" y="220" width="34" height="42" className="vb-accent" />
-      <line x1="187" y1="242" x2="183" y2="242" className="vb-accent-line" />
+      {/* קומת קרקע — חלונות + כניסת פורטיקו */}
+      <Win x={177} y={234} w={38} h={30} />
+      <Win x={295} y={234} w={38} h={30} />
+      {/* גג הפורטיקו + עמודים + מדרגות */}
+      <rect x="222" y="224" width="66" height="7" className="vb-line vb-face" />
+      <line x1="227" y1="231" x2="227" y2="272" className="vb-thin" />
+      <line x1="283" y1="231" x2="283" y2="272" className="vb-thin" />
+      <line x1="232" y1="268" x2="278" y2="268" className="vb-thin" />
+      {/* דלת כניסה (אדום מותג) */}
+      <rect x="238" y="234" width="34" height="38" className="vb-accent" />
+      <line x1="265" y1="253" x2="261" y2="253" className="vb-accent-line" />
+
+      {/* שביל מהכניסה אל החצר */}
+      <path d="M240 272 L272 272 L286 300 L226 300 Z" className="vb-thin" />
+      <line x1="234" y1="286" x2="278" y2="286" className="vb-thin" />
 
       {/* צמתי שרטוט */}
-      <circle cx="70" cy="96" r="3" className="vb-dot" />
-      <circle cx="280" cy="96" r="3" className="vb-dot" />
+      <circle cx="152" cy="96" r="3" className="vb-dot" />
+      <circle cx="358" cy="96" r="3" className="vb-dot" />
 
-      {/* ===== בריכה פרטית (קדמת השטח, ימין) ===== */}
+      {/* ===== בריכה פרטית ===== */}
       <g>
-        <ellipse cx="442" cy="250" rx="116" ry="19" className="vb-glass" />
-        <ellipse cx="442" cy="250" rx="82" ry="13" className="vb-thin" />
-        <ellipse cx="442" cy="250" rx="46" ry="8" className="vb-thin" />
+        <ellipse cx="455" cy="256" rx="96" ry="17" className="vb-water" />
+        <ellipse cx="455" cy="256" rx="66" ry="11" className="vb-thin" />
+        <ellipse cx="455" cy="256" rx="36" ry="6" className="vb-thin" />
+        {/* קרש קפיצה */}
+        <line x1="361" y1="248" x2="384" y2="248" className="vb-thin" />
+        <line x1="382" y1="248" x2="382" y2="258" className="vb-thin" />
         {/* סולם */}
-        <line x1="520" y1="234" x2="520" y2="256" className="vb-thin" />
-        <line x1="528" y1="234" x2="528" y2="256" className="vb-thin" />
-        <line x1="520" y1="242" x2="528" y2="242" className="vb-thin" />
-        <line x1="520" y1="250" x2="528" y2="250" className="vb-thin" />
+        <line x1="536" y1="242" x2="536" y2="262" className="vb-thin" />
+        <line x1="544" y1="242" x2="544" y2="262" className="vb-thin" />
+        <line x1="536" y1="248" x2="544" y2="248" className="vb-thin" />
+        <line x1="536" y1="255" x2="544" y2="255" className="vb-thin" />
       </g>
 
       {/* קו מידה — רוחב הבניין + תווית */}
-      <line x1="70" y1="262" x2="70" y2="292" className="vb-dash" />
-      <line x1="280" y1="262" x2="280" y2="292" className="vb-dash" />
-      <line x1="70" y1="288" x2="280" y2="288" className="vb-thin" />
-      <line x1="66" y1="284" x2="74" y2="292" className="vb-thin" />
-      <line x1="276" y1="284" x2="284" y2="292" className="vb-thin" />
-      <text x="175" y="306" textAnchor="middle" className="vb-label">VILLA · 1:100</text>
+      <line x1="152" y1="272" x2="152" y2="300" className="vb-dash" />
+      <line x1="358" y1="272" x2="358" y2="300" className="vb-dash" />
+      <line x1="152" y1="296" x2="358" y2="296" className="vb-thin" />
+      <line x1="148" y1="292" x2="156" y2="300" className="vb-thin" />
+      <line x1="354" y1="292" x2="362" y2="300" className="vb-thin" />
+      <text x="255" y="314" textAnchor="middle" className="vb-label">VILLA · 1:100</text>
     </svg>
   )
 }

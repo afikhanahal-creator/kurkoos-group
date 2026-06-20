@@ -257,6 +257,7 @@ export default function Division() {
       <ProjectsGallery
         items={list}
         collage
+        masonry={slug === 'development'}
         showFooter={false}
         title={slug === 'brokerage' ? L({ he: 'פרויקטים בשיווק', en: 'Projects in marketing' }) : undefined}
         lead={slug === 'brokerage'

@@ -287,6 +287,30 @@
   /* ללא תנועה — הכותרת מוצגת תמיד, התיאור נחשף בריחוף בלבד */
 }
 
+/* ============================================================
+   פריסת "שתי וערב" (masonry) — עמוד יזמות, דסקטופ בלבד.
+   עמודות CSS עם יחס-גובה לכל כרטיס לפי card_layout, כך שהתצוגה
+   מגוונת (לרוחב / מרובע / לאורך) ונעימה לעין. במובייל נשמרת הקרוסלה.
+   ============================================================ */
+.pg-masonry {
+  columns: 2;
+  column-gap: 1.6rem;
+}
+@media (min-width: 1025px) {
+  .pg-masonry { columns: 3; }
+}
+.pg-masonry .pg-card {
+  width: 100%;                 /* רוחב כרטיס נורמלי — ממלא את העמודה */
+  display: inline-block;       /* פריט עמודה תקין למולטי-קולומן */
+  break-inside: avoid;
+  margin: 0 0 1.6rem;
+  vertical-align: top;
+}
+/* יחס-הגובה נקבע לפי הכיוון שסומן בניהול */
+.pg-card--masonry.pg-card--normal .pg-card__media { aspect-ratio: 1 / 1; }   /* מרובע */
+.pg-card--masonry.pg-card--wide   .pg-card__media { aspect-ratio: 4 / 3; }   /* לרוחב */
+.pg-card--masonry.pg-card--tall   .pg-card__media { aspect-ratio: 3 / 4; }   /* לאורך */
+
 /* עטיפת קישור לכרטיס — ממלאת את הכרטיס, ניווט native לעמוד הפרויקט */
 .pg-card__link { display: block; height: 100%; color: inherit; text-decoration: none; }
 

@@ -55,7 +55,7 @@ function Lightbox({ item, onClose, L, t }) {
    במובייל מוותרים על BorderGlow/SpotlightCard (אפקטים של מצביע/ריחוף
    בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
    כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
-function ProjectCard({ p, L, t, isMobile, eager }) {
+function ProjectCard({ p, L, t, isMobile, eager, masonry }) {
   const media = (
     <div className="pg-card__media">
       {isMobile ? (
@@ -82,7 +82,7 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
   )
 
   return (
-    <motion.article className="pg-card" variants={itemVariants}>
+    <motion.article className={`pg-card${masonry ? ` pg-card--masonry pg-card--${p.layout || 'normal'}` : ''}`} variants={itemVariants}>
       {/* קישור native אמיתי לעמוד הפרויקט (אמין יותר מ-onClick) */}
       <Link to={`/projects/${p.slug}`} className="pg-card__link" aria-label={L(p.name)}>
         {isMobile ? media : (
@@ -111,7 +111,7 @@ function ProjectCard({ p, L, t, isMobile, eager }) {
    חוזרת על עצמה בצורה חלקה בלי קפיצה להתחלה.
    props: items, sectionId, showFooter.
    ============================================================ */
-export default function ProjectsGallery({ items: itemsProp, sectionId = 'projects', showFooter = true, title, lead, collage = false }) {
+export default function ProjectsGallery({ items: itemsProp, sectionId = 'projects', showFooter = true, title, lead, collage = false, masonry = false }) {
   const { t, isRTL } = useI18n()
   const L = useLocalized()
   const isMobile = useIsMobile()
@@ -337,22 +337,40 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
         </Reveal>
       </div>
 
-      <div className="projects-gallery__viewport" ref={viewportRef}>
-        <motion.div
-          className={`projects-gallery__track${twoRows ? ' projects-gallery__track--rows2' : ''}`}
-          variants={containerVariants}
-          initial="hidden"
-          /* הצגה מיד עם טעינת הרכיב — ללא תלות בגלילה / IntersectionObserver.
-             קודם השתמשנו ב-whileInView, אך במובייל הרצועה משולשת ברוחב (לולאה
-             אינסופית) ורחבה בהרבה מהמסך, כך שטריגר הגלילה לא נדלק והכרטיסים
-             נשארו שקופים (opacity:0). animate="visible" חסין לחלוטין. */
-          animate="visible"
-        >
-          {renderItems.map((p, i) => (
-            <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 3} />
-          ))}
-        </motion.div>
-      </div>
+      {masonry && !isMobile ? (
+        /* פריסת "שתי וערב" (masonry) — דסקטופ בלבד. אותו כרטיס בדיוק (שם/עיר/שנה/
+           תריס) בעמודות, עם יחס-גובה לפי card_layout (wide=לרוחב, normal=מרובע,
+           tall=לאורך) → תצוגה מגוונת ונעימה לעין. במובייל נשארת הקרוסלה. */
+        <div className="container">
+          <motion.div
+            className="pg-masonry"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {baseItems.map((p, i) => (
+              <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={false} eager={i < 6} masonry />
+            ))}
+          </motion.div>
+        </div>
+      ) : (
+        <div className="projects-gallery__viewport" ref={viewportRef}>
+          <motion.div
+            className={`projects-gallery__track${twoRows ? ' projects-gallery__track--rows2' : ''}`}
+            variants={containerVariants}
+            initial="hidden"
+            /* הצגה מיד עם טעינת הרכיב — ללא תלות בגלילה / IntersectionObserver.
+               קודם השתמשנו ב-whileInView, אך במובייל הרצועה משולשת ברוחב (לולאה
+               אינסופית) ורחבה בהרבה מהמסך, כך שטריגר הגלילה לא נדלק והכרטיסים
+               נשארו שקופים (opacity:0). animate="visible" חסין לחלוטין. */
+            animate="visible"
+          >
+            {renderItems.map((p, i) => (
+              <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={isMobile} eager={i < 3} />
+            ))}
+          </motion.div>
+        </div>
+      )}
 
       {showFooter && (
         <div className="container">

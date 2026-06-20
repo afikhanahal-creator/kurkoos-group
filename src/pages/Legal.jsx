@@ -317,7 +317,7 @@ export default function Legal({ kind }) {
       <>
         <PageHeader title={title} crumbs={[{ label: title }]} />
         <section className="section">
-          <Reveal className="container priv-doc">
+          <div className="container priv-doc">
             <div className="priv-meta">
               <span className="priv-meta__eyebrow">{isHe ? 'מסמך משפטי רשמי' : 'Official legal document'}</span>
               <span className="priv-meta__date">{updatedLbl}: {COMPANY.updated}</span>
@@ -340,7 +340,7 @@ export default function Legal({ kind }) {
                 <p><b>{isHe ? 'אתר' : 'Site'}:</b> <a href={COMPANY.siteHref} target="_blank" rel="noopener noreferrer">{COMPANY.site}</a></p>
               </div>
             </section>
-          </Reveal>
+          </div>
         </section>
       </>
     )
@@ -357,7 +357,7 @@ export default function Legal({ kind }) {
       <>
         <PageHeader title={title} crumbs={[{ label: title }]} />
         <section className="section">
-          <Reveal className="container priv-doc">
+          <div className="container priv-doc">
             <div className="priv-meta">
               <span className="priv-meta__eyebrow">{isHe ? 'הצהרת נגישות' : 'Accessibility statement'}</span>
               <span className="priv-meta__date">{updatedLbl}: {COMPANY.updated}</span>
@@ -403,7 +403,7 @@ export default function Legal({ kind }) {
                 <p><b>{isHe ? 'אתר' : 'Site'}:</b> <a href={COMPANY.siteHref} target="_blank" rel="noopener noreferrer">{COMPANY.site}</a></p>
               </div>
             </section>
-          </Reveal>
+          </div>
         </section>
       </>
     )

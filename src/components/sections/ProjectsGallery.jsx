@@ -161,13 +161,21 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
     return true
   })
 
-  // הבחירה הידנית של עד 4 פרויקטים נבחרים (מה-CMS) — חלה גם בדסקטופ וגם
-  // במובייל, כל עוד מצב "כל הפרויקטים" כבוי. כך "פרויקטים נבחרים" מציג בדיוק
-  // את הפרויקטים שנבחרו בניהול, בכל המכשירים.
+  // הבחירה הידנית מהניהול (home_featured). השוואת slug חסינת-טיפוס
+  // (String) — כדי שהתאמה לא תיכשל אם id נשמר כמספר במקום מחרוזת.
   const curated = (!usingProp && !homeFeaturedAll && homeFeatured.length)
-    ? homeFeatured.map((slug) => allItems.find((c) => c.slug === slug)).filter(Boolean).slice(0, 4)
+    ? homeFeatured.map((slug) => allItems.find((c) => String(c.slug) === String(slug))).filter(Boolean)
     : null
-  const baseItems = (curated && curated.length) ? curated : items
+  // מקור התצוגה:
+  //  • prop מפורש (עמודי חטיבות) → כפי שהוא.
+  //  • "הצג את כל הפרויקטים" פעיל → כל הפרויקטים.
+  //  • אחרת (מצב בחירה ידנית) → הנבחרים בלבד. גם אם מסיבה כלשהי לא נמצאה
+  //    התאמה, *לא* מציגים את כולם — מגבילים ל-4 כדי לכבד את "פרויקטים נבחרים".
+  const MAX_FEATURED = 4
+  let baseItems
+  if (usingProp || homeFeaturedAll) baseItems = items
+  else if (curated && curated.length) baseItems = curated.slice(0, MAX_FEATURED)
+  else baseItems = items.slice(0, MAX_FEATURED)
   // קולאז' שתי-שורות (עמודי החטיבות) כשיש הרבה פרויקטים (6+) — במקום שורה אחת צפופה
   const twoRows = collage && baseItems.length > 5
   // במובייל משכפלים ל-3 עותקים → לולאה אינסופית חלקה (לא בקולאז' שתי-שורות)

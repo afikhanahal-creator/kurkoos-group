@@ -161,7 +161,7 @@ export default function Testimonials() {
                 <div className="tc__card tc__card--back">
                   <h3 className="tc__back-title">{t('testimonials.photosCtaBack')}</h3>
                   <div className="tc-shots__row tc-shots__row--back">
-                    {shots.slice(0, 3).map((url, idx) => (
+                    {shots.slice(0, 4).map((url, idx) => (
                       <button
                         type="button"
                         key={idx}

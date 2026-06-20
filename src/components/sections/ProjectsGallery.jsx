@@ -21,6 +21,10 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 150, damping: 18 } },
 }
 
+// מקצב כיוונים לקולאז' ה-masonry (כשאין כיוון מפורש לכרטיס) — מערבב לרוחב,
+// מרובע ולאורך כדי לייצר תחושת "שתי וערב" חיה במקום רשת אחידה.
+const COLLAGE_RHYTHM = ['tall', 'wide', 'normal', 'wide', 'tall', 'normal', 'normal', 'tall']
+
 /* Lightbox */
 function Lightbox({ item, onClose, L, t }) {
   return (
@@ -55,17 +59,24 @@ function Lightbox({ item, onClose, L, t }) {
    במובייל מוותרים על BorderGlow/SpotlightCard (אפקטים של מצביע/ריחוף
    בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
    כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
-function ProjectCard({ p, L, t, isMobile, eager, masonry }) {
+function ProjectCard({ p, L, t, isMobile, eager, masonry, mLayout }) {
+  // איכות תמונה: בלי 'eco' (דחיסה אגרסיבית) → תמונות חדות. ב-masonry הכרטיסים
+  // גדולים יותר ולכן רוחב יעד גדול יותר + sizes שתואם את הרוחב בפועל (גם retina).
+  const imgW = masonry ? 1000 : 640
+  const imgSizes = masonry
+    ? '(max-width: 768px) 90vw, (max-width: 1200px) 46vw, 32vw'
+    : '(max-width: 768px) 60vw, 250px'
+  const cardLayout = mLayout || p.layout || 'normal'
   const media = (
     <div className="pg-card__media">
       {isMobile ? (
         <div className="pg-card__spot">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" quality="auto:eco" priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={imgW} sizes={imgSizes} quality="auto" priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </div>
       ) : (
         <SpotlightCard className="pg-card__spot" spotlightColor="rgba(255, 255, 255, 0.35)">
-          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={560} sizes="(max-width: 768px) 60vw, 250px" quality="auto:eco" priority={eager} />
+          <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} className="pg-card__img" w={imgW} sizes={imgSizes} quality="auto" priority={eager} />
           <span className={`pg-card__badge pg-card__badge--${p.status}`}>{t(`projects.status.${p.status}`)}</span>
         </SpotlightCard>
       )}
@@ -82,7 +93,7 @@ function ProjectCard({ p, L, t, isMobile, eager, masonry }) {
   )
 
   return (
-    <motion.article className={`pg-card${masonry ? ` pg-card--masonry pg-card--${p.layout || 'normal'}` : ''}`} variants={itemVariants}>
+    <motion.article className={`pg-card${masonry ? ` pg-card--masonry pg-card--${cardLayout}` : ''}`} variants={itemVariants}>
       {/* קישור native אמיתי לעמוד הפרויקט (אמין יותר מ-onClick) */}
       <Link to={`/projects/${p.slug}`} className="pg-card__link" aria-label={L(p.name)}>
         {isMobile ? media : (
@@ -348,9 +359,15 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
             initial="hidden"
             animate="visible"
           >
-            {baseItems.map((p, i) => (
-              <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={false} eager={i < 6} masonry />
-            ))}
+            {baseItems.map((p, i) => {
+              // כיוון מפורש שסומן בניהול (wide/tall) מנצח; לכרטיס "רגיל"/לא-מסומן
+              // נבחר כיוון מתוך מקצב קולאז' מגוון לפי המיקום → תצוגה חיה ולא אחידה.
+              const explicit = p.layout === 'wide' || p.layout === 'tall'
+              const mLayout = explicit ? p.layout : COLLAGE_RHYTHM[i % COLLAGE_RHYTHM.length]
+              return (
+                <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={false} eager={i < 6} masonry mLayout={mLayout} />
+              )
+            })}
           </motion.div>
         </div>
       ) : (

@@ -294,7 +294,7 @@
    ============================================================ */
 .pg-masonry {
   columns: 2;
-  column-gap: 1.6rem;
+  column-gap: 1.3rem;
 }
 @media (min-width: 1025px) {
   .pg-masonry { columns: 3; }
@@ -303,12 +303,13 @@
   width: 100%;                 /* רוחב כרטיס נורמלי — ממלא את העמודה */
   display: inline-block;       /* פריט עמודה תקין למולטי-קולומן */
   break-inside: avoid;
-  margin: 0 0 1.6rem;
+  margin: 0 0 1.3rem;
   vertical-align: top;
 }
-/* יחס-הגובה נקבע לפי הכיוון שסומן בניהול */
+/* יחס-הגובה נקבע לפי הכיוון (מפורש בניהול או ממקצב הקולאז') — שילוב של לרוחב,
+   מרובע ולאורך יוצר את אפקט ה"שתי וערב". */
 .pg-card--masonry.pg-card--normal .pg-card__media { aspect-ratio: 1 / 1; }   /* מרובע */
-.pg-card--masonry.pg-card--wide   .pg-card__media { aspect-ratio: 4 / 3; }   /* לרוחב */
+.pg-card--masonry.pg-card--wide   .pg-card__media { aspect-ratio: 3 / 2; }   /* לרוחב */
 .pg-card--masonry.pg-card--tall   .pg-card__media { aspect-ratio: 3 / 4; }   /* לאורך */
 
 /* עטיפת קישור לכרטיס — ממלאת את הכרטיס, ניווט native לעמוד הפרויקט */

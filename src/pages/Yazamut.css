@@ -167,7 +167,7 @@
   .yz-hero__content .breadcrumbs { margin-bottom: 1rem; }
   .yz-hero__content .breadcrumbs ol { justify-content: center; }  /* פירורי-לחם ממורכזים במובייל */
   .yz-hero__cat { margin-bottom: 0.8rem; }
-  .yz-hero__title { font-size: clamp(1.7rem, 6.6vw, 2.2rem); line-height: 1.2; max-width: none; margin-bottom: 0.9rem; }
+  .yz-hero__title { font-size: clamp(1.45rem, 5.4vw, 1.9rem); line-height: 1.28; max-width: none; margin-bottom: 0.9rem; }
   .yz-hero__meta { font-size: 0.85rem; padding-top: 1rem; }
   /* המוטיב לא יתנגש עם הטקסט: עדין, קטן ומוזז לפינה (צד שמאל ב-RTL) */
   .yz-hero .acover__motif { align-items: flex-start; opacity: 0.3; inset-inline: auto 4%; }

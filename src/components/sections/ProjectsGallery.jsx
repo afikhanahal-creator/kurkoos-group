@@ -56,12 +56,12 @@ function Lightbox({ item, onClose, L, t }) {
    בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
    כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
 function ProjectCard({ p, L, t, isMobile, eager, masonry }) {
-  // איכות תמונה: בלי 'eco' (דחיסה אגרסיבית) → תמונות חדות. ב-masonry הכרטיסים
-  // גדולים יותר ולכן רוחב יעד גדול יותר + sizes שתואם את הרוחב בפועל (גם retina).
-  const imgW = masonry ? 1000 : 640
+  // איכות תמונה: בלי 'eco' (דחיסה אגרסיבית) → תמונות חדות. רוחב יעד גדול ו-sizes
+  // נדיב (גם retina) כדי שכרטיסי הקרוסלה/דף הבית לא יימתחו מתמונה קטנה מדי.
+  const imgW = masonry ? 1000 : 900
   const imgSizes = masonry
     ? '(max-width: 768px) 90vw, (max-width: 1200px) 46vw, 32vw'
-    : '(max-width: 768px) 60vw, 250px'
+    : '(max-width: 768px) 72vw, 400px'
   // כיוון הכרטיס בקולאז': סימון מפורש (wide/tall) מנצח; אחרת הכיוון נגזר
   // מהפרופורציה האמיתית של התמונה (לרוחב→wide, לאורך→tall) — כך תמונות לאורך
   // (כמו מגדל) לא נחתכות, והקולאז' משקף את התמונות עצמן. 'normal' עד שנמדד.

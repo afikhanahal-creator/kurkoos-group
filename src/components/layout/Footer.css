@@ -141,8 +141,8 @@
 @media (max-width: 560px) {
   /* פוטר מובייל — padding מצומצם */
   .footer__grid {
-    grid-template-columns: 0.8fr 1.2fr;   /* עמודת "יצירת קשר" (משמאל) רחבה יותר כדי שהאימייל ייכנס בשורה אחת */
-    gap: 1.2rem 1.2rem;
+    grid-template-columns: 0.68fr 1.32fr;   /* עמודת "יצירת קשר" (משמאל) רחבה יותר כדי שהאימייל והכתובת ייכנסו */
+    gap: 1.2rem 1rem;
     padding-block: 0.9rem 1.5rem;     /* מרווח מצומצם מהשדה שמעל ללוגו */
   }
 

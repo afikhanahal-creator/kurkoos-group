@@ -4,6 +4,7 @@
 
 /* ---- סינון קטגוריות ---- */
 .yz-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+@media (max-width: 700px) { .yz-filters { justify-content: center; } }
 .yz-chip {
   font-family: var(--font-heading);
   font-weight: 700;

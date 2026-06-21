@@ -74,10 +74,10 @@
 .acover__kw {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: clamp(2.1rem, 7vw, 3.4rem);
+  font-size: clamp(1.7rem, 5.4vw, 2.7rem);
   line-height: 1;
   color: rgba(245, 242, 236, 0.16);
-  align-self: flex-end;
+  align-self: flex-start;        /* המילה הגדולה בצד ימין (RTL) */
   margin-block: auto 0;
   letter-spacing: -0.01em;
   pointer-events: none;

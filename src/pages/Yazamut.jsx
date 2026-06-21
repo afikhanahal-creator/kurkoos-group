@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useI18n } from '../i18n/index.jsx'
 import { getArticles, getCategories } from '../lib/yazamut.js'
 import PageHeader from '../components/ui/PageHeader.jsx'
-import SmartImage from '../components/ui/SmartImage.jsx'
+import ArticleCover from '../components/ui/ArticleCover.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import './Yazamut.css'
@@ -29,8 +29,7 @@ export default function Yazamut() {
     <Reveal as="article" className="yz-card">
       <Link to={`/yazamut-nadlan/${a.slug}`} className="yz-card__link">
         <div className="yz-card__media">
-          <SmartImage src={a.cover} alt={a.coverAlt || a.title} label={a.title} w={700} sizes="(max-width: 600px) 100vw, (max-width: 980px) 50vw, 380px" />
-          {a.category && <span className="yz-card__cat">{a.category}</span>}
+          <ArticleCover article={a} variant="card" />
         </div>
         <div className="yz-card__body">
           <div className="yz-card__meta">

@@ -1,0 +1,108 @@
+import './ArticleCover.css'
+
+/* ============================================================
+   ArticleCover — כריכת-מערכת מעוצבת לכתבה (במקום צילום סטוק).
+   רקע אדריכלי כהה + רשת "תוכנית" + מוטיב גרפי לפי הקטגוריה, בצבעי
+   המותג. variant: 'card' (עם תג + מילת-מפתח) | 'hero' (רקע בלבד).
+   ============================================================ */
+
+const PAPER = 'rgba(245,242,236,0.9)'
+const PAPER_SOFT = 'rgba(245,242,236,0.5)'
+const BRASS = '#C9A24B'
+
+const Motif = ({ k }) => {
+  const common = { fill: 'none', stroke: PAPER, strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  switch (k) {
+    case 'urban': // התחדשות עירונית — בניין ישן נמוך → מגדל חדש
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <rect x="26" y="86" width="46" height="50" />
+            <path d="M34 96h8M50 96h8M34 110h8M50 110h8M34 124h8M50 124h8" stroke={PAPER_SOFT} />
+            <rect x="96" y="30" width="54" height="106" />
+            <path d="M106 44h10M128 44h10M106 62h10M128 62h10M106 80h10M128 80h10M106 98h10M128 98h10M106 116h10M128 116h10" stroke={PAPER_SOFT} />
+          </g>
+          <path d="M84 60l8-8 8 8" fill="none" stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M92 52v40" stroke={BRASS} strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      )
+    case 'finance': // מימון ויזמות — עמודות עולות + אחוז
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <rect x="34" y="100" width="22" height="36" />
+            <rect x="66" y="78" width="22" height="58" />
+            <rect x="98" y="54" width="22" height="82" />
+          </g>
+          <circle cx="150" cy="52" r="22" fill="none" stroke={BRASS} strokeWidth="3" />
+          <path d="M141 61l18-18" stroke={BRASS} strokeWidth="3" strokeLinecap="round" />
+          <circle cx="145" cy="47" r="2.6" fill={BRASS} />
+          <circle cx="155" cy="57" r="2.6" fill={BRASS} />
+        </svg>
+      )
+    case 'reg': // רגולציה ותכנון — מסמך + חותמת + האצה
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M48 26h54l18 18v80H48z" />
+            <path d="M102 26v18h18" />
+            <path d="M60 64h48M60 80h48M60 96h30" stroke={PAPER_SOFT} />
+          </g>
+          <circle cx="138" cy="104" r="18" fill="none" stroke={BRASS} strokeWidth="3" />
+          <path d="M130 104l6 6 10-12" fill="none" stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+    case 'land': // קרקע ומכרזים — מגרשים + פטיש מכרז
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M30 118l54-22 54 22-54 22z" />
+            <path d="M48 111l54 22M66 104l54 22M84 96v44" stroke={PAPER_SOFT} />
+          </g>
+          <g stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <rect x="128" y="36" width="34" height="14" transform="rotate(38 145 43)" />
+            <path d="M150 52l18 24" />
+          </g>
+        </svg>
+      )
+    case 'trends': // מגמות שוק — גרף עולה
+    default:
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M30 132V30M30 132h140" stroke={PAPER_SOFT} />
+          </g>
+          <polyline points="40,118 74,92 100,104 132,60 168,40" fill="none" stroke={BRASS} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+          {[[40, 118], [74, 92], [100, 104], [132, 60], [168, 40]].map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r="3.4" fill={BRASS} />
+          ))}
+          <path d="M150 40h18v18" fill="none" stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+  }
+}
+
+const CAT = {
+  'התחדשות עירונית': { k: 'urban', kw: 'התחדשות' },
+  'מימון ויזמות': { k: 'finance', kw: 'מימון' },
+  'רגולציה ותכנון': { k: 'reg', kw: 'רגולציה' },
+  'קרקע ומכרזים': { k: 'land', kw: 'קרקע' },
+  'מגמות שוק': { k: 'trends', kw: 'מגמות' },
+}
+
+export default function ArticleCover({ article, variant = 'card' }) {
+  const meta = CAT[article?.category] || { k: 'trends', kw: 'נדל״ן' }
+  return (
+    <div className={`acover acover--${variant} acover--${meta.k}`} role="img" aria-label={article?.coverAlt || article?.title || 'כתבה'}>
+      <span className="acover__grid" aria-hidden="true" />
+      <span className="acover__motif" aria-hidden="true"><Motif k={meta.k} /></span>
+      {variant === 'card' && (
+        <div className="acover__fg">
+          {article?.category && <span className="acover__cat">{article.category}</span>}
+          <span className="acover__kw" aria-hidden="true">{meta.kw}</span>
+          <span className="acover__brand">טור יזמות נדל״ן · קורקוס</span>
+        </div>
+      )}
+    </div>
+  )
+}

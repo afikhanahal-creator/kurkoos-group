@@ -5,7 +5,7 @@ import { getArticle, getArticles } from '../lib/yazamut.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
-import SmartImage from '../components/ui/SmartImage.jsx'
+import ArticleCover from '../components/ui/ArticleCover.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
@@ -55,7 +55,7 @@ export default function YazamutArticle() {
 
       <header className="yz-hero">
         <div className="yz-hero__bg">
-          <SmartImage src={article.cover} alt={article.coverAlt || article.title} label={article.title} w={1800} sizes="100vw" priority />
+          <ArticleCover article={article} variant="hero" />
         </div>
         <div className="yz-hero__overlay" />
         <div className="container yz-hero__content">
@@ -109,8 +109,7 @@ export default function YazamutArticle() {
                 <Reveal as="article" key={a.slug} className="yz-card">
                   <Link to={`/yazamut-nadlan/${a.slug}`} className="yz-card__link">
                     <div className="yz-card__media">
-                      <SmartImage src={a.cover} alt={a.coverAlt || a.title} label={a.title} w={700} sizes="(max-width: 700px) 100vw, 380px" />
-                      {a.category && <span className="yz-card__cat">{a.category}</span>}
+                      <ArticleCover article={a} variant="card" />
                     </div>
                     <div className="yz-card__body">
                       <div className="yz-card__meta"><time>{fmtDate(a.date)}</time></div>

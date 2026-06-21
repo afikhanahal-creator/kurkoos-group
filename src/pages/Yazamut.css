@@ -158,9 +158,10 @@
   border-top: 1px solid rgba(255,255,255,0.2);
 }
 @media (max-width: 768px) {
-  .yz-hero { min-height: clamp(300px, 48vh, 420px); }
+  /* בלי גובה קבוע במובייל — הקאבר בגובה התוכן בלבד, בלי רווח ריק מיותר למעלה */
+  .yz-hero { min-height: 0; }
   .yz-hero__content {
-    padding-block: 1.8rem 2rem;
+    padding-block: 1.6rem 1.8rem;
     text-align: right;                 /* יישור מלא לימין במובייל */
   }
   .yz-hero__content .breadcrumbs { margin-bottom: 1rem; }

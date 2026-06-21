@@ -64,12 +64,6 @@
   /* ה-eyebrow הוא inline-flex — הופכים אותו לבלוק-flex ממורכז כדי שיתמרכז בפועל */
   .page-header__eyebrow { display: flex; justify-content: center; }
   .page-header .breadcrumbs ol { margin-inline: auto; justify-content: center; }
-  /* כפתור "עמוד הבית" בולט וברור יותר במובייל */
-  .page-header .breadcrumbs__link--back {
-    padding: 0.62rem 1.3rem;
-    font-size: 1rem;
-    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.45);
-  }
 }
 
 @media (max-width: 600px) {

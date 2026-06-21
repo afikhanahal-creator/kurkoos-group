@@ -169,12 +169,6 @@
   .yz-hero__cat { margin-bottom: 0.8rem; }
   .yz-hero__title { font-size: clamp(1.7rem, 6.6vw, 2.2rem); line-height: 1.2; max-width: none; margin-bottom: 0.9rem; }
   .yz-hero__meta { font-size: 0.85rem; padding-top: 1rem; }
-  /* כפתור "עמוד הבית" בולט וברור יותר במובייל */
-  .yz-hero .breadcrumbs__link--back {
-    padding: 0.6rem 1.25rem;
-    font-size: 0.95rem;
-    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.45);
-  }
   /* המוטיב לא יתנגש עם הטקסט: עדין, קטן ומוזז לפינה (צד שמאל ב-RTL) */
   .yz-hero .acover__motif { align-items: flex-start; opacity: 0.3; inset-inline: auto 4%; }
   .yz-hero .acover--hero .acover__svg { width: 110px; margin-top: 1.1rem; }

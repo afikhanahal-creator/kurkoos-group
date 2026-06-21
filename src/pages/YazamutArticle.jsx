@@ -67,7 +67,6 @@ export default function YazamutArticle() {
             items={[
               { label: 'יזמות נדל״ן', to: '/divisions/development' },
               { label: 'הטור', to: '/yazamut-nadlan' },
-              { label: article.category || 'כתבה' },
             ]}
           />
           {article.category && <span className="yz-hero__cat">{article.category}</span>}

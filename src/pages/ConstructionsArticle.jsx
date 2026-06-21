@@ -72,7 +72,6 @@ export default function ConstructionsArticle() {
             items={[
               { label: 'ביצוע', to: '/divisions/execution' },
               { label: 'הטור', to: '/constructions' },
-              { label: article.category || 'כתבה' },
             ]}
           />
           {article.category && <span className="yz-hero__cat">{article.category}</span>}

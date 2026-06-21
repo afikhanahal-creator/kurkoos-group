@@ -72,7 +72,6 @@ export default function SupervisionArticle() {
             items={[
               { label: 'פיקוח פרויקטים', to: '/divisions/supervision' },
               { label: 'הטור', to: '/construction-supervision' },
-              { label: article.category || 'כתבה' },
             ]}
           />
           {article.category && <span className="yz-hero__cat">{article.category}</span>}

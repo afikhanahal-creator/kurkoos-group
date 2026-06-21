@@ -72,7 +72,6 @@ export default function RealEstateGuideArticle() {
             items={[
               { label: 'תיווך', to: '/divisions/brokerage' },
               { label: 'המדריך', to: '/real-estate-guide' },
-              { label: article.category || 'כתבה' },
             ]}
           />
           {article.category && <span className="yz-hero__cat">{article.category}</span>}

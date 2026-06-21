@@ -132,13 +132,17 @@ export default function ActivityMenu({ items = [] }) {
             /* תצוגת המובייל מתוך ה-CMS (focal point / fit) — מקומפוננטה מובייל בלבד */
             style={(() => {
               const v = normalizeResponsiveImage(current.image)?.views.mobile
-              return v ? {
-                objectFit: v.objectFit,
-                objectPosition: v.objectPosition,
-                transform: `scale(${v.zoom || 1})`,
-                transformOrigin: v.objectPosition,
-                borderRadius: `${v.radius || 0}px`,
-              } : undefined
+              // אפיק הנחל = לוגו על רקע כהה → 'contain' כדי שהלוגו המלא ייראה (גם
+              // כשהתמונה מגיעה מה-CMS), במקום 'cover' שחותך אותו לשחור.
+              const fit = current.id === 'brokerage' ? 'contain' : (v?.objectFit || 'cover')
+              const pos = v?.objectPosition || '50% 50%'
+              return {
+                objectFit: fit,
+                objectPosition: pos,
+                transform: `scale(${v?.zoom || 1})`,
+                transformOrigin: pos,
+                borderRadius: `${v?.radius || 0}px`,
+              }
             })()}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -493,6 +493,8 @@
 
 /* ---- Guide band ---- */
 .division-guide__band {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -506,7 +508,38 @@
   background: linear-gradient(150deg, var(--color-bg-soft), #eef2f4);
   border: 1px solid var(--color-border);
   box-shadow: 0 18px 44px -28px rgba(7, 41, 58, 0.35);
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
 }
+/* אפקט כמו בכרטיסי הממליצים: זוהר accent + ברק חולף בריחוף */
+.division-guide__band::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  z-index: 0;
+  background: radial-gradient(circle at 50% 0%,
+    color-mix(in srgb, var(--color-accent) 32%, transparent) 0%, transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease-in-out;
+}
+.division-guide__band::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0.08) 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+.division-guide__band > * { position: relative; z-index: 1; }
+@media (hover: hover) {
+  .division-guide__band:hover { transform: translateY(-4px); box-shadow: 0 28px 60px -28px rgba(7, 41, 58, 0.5); }
+  .division-guide__band:hover::before { opacity: 1; }
+  .division-guide__band:hover::after { opacity: 1; animation: dg-shine 2.2s linear infinite; }
+}
+@keyframes dg-shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+@media (prefers-reduced-motion: reduce) { .division-guide__band:hover::after { animation: none; } }
 .division-guide__title { font-size: var(--fs-h3); margin: 0.4rem 0 0.6rem; }
 .division-guide__desc { color: var(--color-text-soft); max-width: 50ch; }
 [dir='rtl'] .division-guide__arrow { transform: scaleX(-1); }

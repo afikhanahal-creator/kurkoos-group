@@ -100,7 +100,7 @@ export default function SupervisionArticle() {
           <div className="yz-author-card">
             <div className="yz-author-card__txt">
               <strong>לפני בנייה או במהלך פרויקט?</strong>
-              <span>קבוצת קורקוס מספקת שירותי פיקוח וניהול פרויקטים לאורך כל שלבי הביצוע.</span>
+              <span>שכינתא, חברת ניהול ויזום הפרויקטים של קבוצת קורקוס, מלווה אתכם לאורך כל שלבי הביצוע.</span>
             </div>
             <Link to="/divisions/supervision" className="btn btn--dark">
               לשירותי הפיקוח <Icon name="arrowLeft" size={18} />

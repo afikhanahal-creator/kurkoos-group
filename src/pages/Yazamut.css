@@ -25,13 +25,13 @@
 .yz-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.6rem;
-  margin-top: 1.8rem;
+  gap: 1.9rem;
+  margin-top: 0.6rem;
 }
-@media (max-width: 980px) { .yz-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 980px) { .yz-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; } }
 @media (max-width: 600px) { .yz-grid { grid-template-columns: 1fr; } }
 
-/* ---- כרטיס כתבה (אחיד בגודלו) ---- */
+/* ---- כרטיס כתבה (אחיד בגודלו, מראה מגזין) ---- */
 .yz-card {
   display: flex;
   flex-direction: column;
@@ -41,14 +41,19 @@
   /* פינות עליונות מעוגלות, תחתית ישרה — אחידות עם כרטיסי הפרויקטים */
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   overflow: hidden;
-  transition: transform var(--dur-base), box-shadow var(--dur-base), border-color var(--dur-base);
+  box-shadow: 0 10px 30px -22px rgba(7, 41, 58, 0.4);
+  transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), border-color var(--dur-base);
 }
-.yz-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--color-primary-700) 30%, transparent); }
+.yz-card:hover { transform: translateY(-7px); box-shadow: 0 28px 56px -28px rgba(7, 41, 58, 0.5); border-color: color-mix(in srgb, var(--color-primary-700) 35%, transparent); }
 .yz-card__link { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
 .yz-card__media { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--color-surface-alt); }
 .yz-card__media .smart-image,
-.yz-card__media .ri-img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
-.yz-card:hover .yz-card__media .ri-img { transform: scale(1.05); }
+.yz-card__media .ri-img,
+.yz-card__media .acover { width: 100%; height: 100%; transition: transform 0.6s var(--ease-out); }
+.yz-card__media .smart-image,
+.yz-card__media .ri-img { object-fit: cover; }
+.yz-card:hover .yz-card__media .ri-img,
+.yz-card:hover .yz-card__media .acover { transform: scale(1.05); }
 .yz-card__cat {
   position: absolute;
   inset-block-start: 0.9rem;
@@ -91,12 +96,16 @@
   font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem;
   color: var(--color-primary-700);
 }
+.yz-card__read svg { transition: transform var(--dur-base) var(--ease-out); }
 [dir='rtl'] .yz-card__read svg { transform: scaleX(-1); }
+.yz-card:hover .yz-card__read svg { transform: translateX(4px); }
+[dir='rtl'] .yz-card:hover .yz-card__read svg { transform: scaleX(-1) translateX(4px); }
+.yz-card:hover .yz-card__title { color: var(--color-primary-700); }
 
 /* ============================================================
    עמוד כתבה
    ============================================================ */
-.yz-hero { position: relative; min-height: 66vh; display: flex; align-items: flex-end; overflow: hidden; }
+.yz-hero { position: relative; min-height: clamp(320px, 44vh, 480px); display: flex; align-items: flex-end; overflow: hidden; }
 .yz-hero__bg { position: absolute; inset: 0; z-index: 0; }
 .yz-hero__bg .smart-image,
 .yz-hero__bg .ri-img { width: 100%; height: 100%; object-fit: cover; }
@@ -107,7 +116,7 @@
 }
 .yz-hero__content {
   position: relative; z-index: 2; color: #fff;
-  padding-block: 3.4rem 3.6rem;
+  padding-block: 2.4rem 2.6rem;
   max-width: 62rem;
 }
 .yz-hero__content .breadcrumbs {
@@ -149,11 +158,11 @@
   border-top: 1px solid rgba(255,255,255,0.2);
 }
 @media (max-width: 768px) {
-  .yz-hero { min-height: 70vh; }
-  .yz-hero__content { padding-block: 2.4rem 2.6rem; }
-  .yz-hero__content .breadcrumbs { margin-bottom: 1.2rem; }
-  .yz-hero__cat { margin-bottom: 0.9rem; }
-  .yz-hero__title { margin-bottom: 1.1rem; }
+  .yz-hero { min-height: clamp(300px, 50vh, 440px); }
+  .yz-hero__content { padding-block: 2rem 2.2rem; }
+  .yz-hero__content .breadcrumbs { margin-bottom: 1.1rem; }
+  .yz-hero__cat { margin-bottom: 0.85rem; }
+  .yz-hero__title { margin-bottom: 1rem; }
 }
 
 /* גוף הכתבה — עמודת קריאה ממורכזת בסגנון מגזין */

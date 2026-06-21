@@ -30,7 +30,7 @@ const COLUMNS = [
     id: 'supervision', label: 'פיקוח פרויקטים',
     key: 'supervision_articles', merge: mergeSupervision, route: '/construction-supervision', folder: 'supervision',
     cats: ['פיקוח ביצוע', 'בקרת איכות', 'ליקויים ובדק', 'ניהול תקציב וסיכונים', 'לוחות זמנים', 'מסירה וטופס 4'],
-    author: 'המערכת, פיקוח פרויקטים', authorTitle: 'פיקוח וניהול פרויקטים · קבוצת קורקוס',
+    author: 'המערכת, שכינתא', authorTitle: 'שכינתא · ניהול ויזום פרויקטים בקבוצת קורקוס',
     aiStyle: 'Israeli construction site supervision, editorial magazine photography, building inspection and quality control detail, professional, clean composition, natural light, premium, photorealistic, ultra detailed, no text, no logos, no watermark',
   },
   {

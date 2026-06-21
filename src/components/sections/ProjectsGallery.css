@@ -293,21 +293,23 @@
    מגוונת (לרוחב / מרובע / לאורך) ונעימה לעין. במובייל נשמרת הקרוסלה.
    ============================================================ */
 .pg-masonry {
-  columns: 2;
-  column-gap: 1.3rem;
+  display: flex;
+  gap: 1.4rem;
+  justify-content: center;     /* מעט פריטים → הבלוק נשאר ממורכז */
+  align-items: flex-start;
 }
-@media (min-width: 1025px) {
-  .pg-masonry { columns: 3; }
+.pg-mcol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 380px;            /* רוחב כרטיס נורמלי — לא נמתח לרוחב מלא */
 }
-.pg-masonry .pg-card {
-  width: 100%;                 /* רוחב כרטיס נורמלי — ממלא את העמודה */
-  display: inline-block;       /* פריט עמודה תקין למולטי-קולומן */
-  break-inside: avoid;
-  margin: 0 0 1.3rem;
-  vertical-align: top;
+.pg-mcol .pg-card {
+  width: 100%;                 /* ממלא את רוחב העמודה */
 }
-/* יחס-הגובה נקבע לפי הכיוון (מפורש בניהול או ממקצב הקולאז') — שילוב של לרוחב,
-   מרובע ולאורך יוצר את אפקט ה"שתי וערב". */
+/* יחס-הגובה נקבע לפי כיוון התמונה (לרוחב/מרובע/לאורך) — יוצר את אפקט ה"שתי וערב". */
 .pg-card--masonry.pg-card--normal .pg-card__media { aspect-ratio: 1 / 1; }   /* מרובע */
 .pg-card--masonry.pg-card--wide   .pg-card__media { aspect-ratio: 3 / 2; }   /* לרוחב */
 .pg-card--masonry.pg-card--tall   .pg-card__media { aspect-ratio: 3 / 4; }   /* לאורך */

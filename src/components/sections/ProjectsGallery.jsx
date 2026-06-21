@@ -21,10 +21,6 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 150, damping: 18 } },
 }
 
-// מקצב כיוונים לקולאז' ה-masonry (כשאין כיוון מפורש לכרטיס) — מערבב לרוחב,
-// מרובע ולאורך כדי לייצר תחושת "שתי וערב" חיה במקום רשת אחידה.
-const COLLAGE_RHYTHM = ['tall', 'wide', 'normal', 'wide', 'tall', 'normal', 'normal', 'tall']
-
 /* Lightbox */
 function Lightbox({ item, onClose, L, t }) {
   return (
@@ -59,14 +55,32 @@ function Lightbox({ item, onClose, L, t }) {
    במובייל מוותרים על BorderGlow/SpotlightCard (אפקטים של מצביע/ריחוף
    בלבד) — הם גורמים ל-layout-thrash בכל touchmove ומקפיאים את הגלילה.
    כך הגלילה האופקית במובייל היא native חלקה לגמרי. */
-function ProjectCard({ p, L, t, isMobile, eager, masonry, mLayout }) {
+function ProjectCard({ p, L, t, isMobile, eager, masonry }) {
   // איכות תמונה: בלי 'eco' (דחיסה אגרסיבית) → תמונות חדות. ב-masonry הכרטיסים
   // גדולים יותר ולכן רוחב יעד גדול יותר + sizes שתואם את הרוחב בפועל (גם retina).
   const imgW = masonry ? 1000 : 640
   const imgSizes = masonry
     ? '(max-width: 768px) 90vw, (max-width: 1200px) 46vw, 32vw'
     : '(max-width: 768px) 60vw, 250px'
-  const cardLayout = mLayout || p.layout || 'normal'
+  // כיוון הכרטיס בקולאז': סימון מפורש (wide/tall) מנצח; אחרת הכיוון נגזר
+  // מהפרופורציה האמיתית של התמונה (לרוחב→wide, לאורך→tall) — כך תמונות לאורך
+  // (כמו מגדל) לא נחתכות, והקולאז' משקף את התמונות עצמן. 'normal' עד שנמדד.
+  const [autoOri, setAutoOri] = useState(null)
+  useEffect(() => {
+    if (!masonry) return
+    const url = srcOfResponsive(p.cover)
+    if (!url) return
+    let alive = true
+    const im = new Image()
+    im.onload = () => {
+      if (!alive) return
+      const r = (im.naturalWidth || 1) / (im.naturalHeight || 1)
+      setAutoOri(r >= 1.18 ? 'wide' : r <= 0.82 ? 'tall' : 'normal')
+    }
+    im.src = optimizeSrc(url, 96)
+    return () => { alive = false }
+  }, [masonry, p.cover])
+  const cardLayout = (p.layout === 'wide' || p.layout === 'tall') ? p.layout : (autoOri || 'normal')
   const media = (
     <div className="pg-card__media">
       {isMobile ? (
@@ -133,6 +147,18 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
   const viewportRef = useRef(null)
   const pausedRef = useRef(false)
   const resumeRef = useRef(null)
+
+  // מספר עמודות הקולאז' (דסקטופ 3 / טאבלט 2) — נחסם למספר הפריטים כדי שלא יישארו
+  // עמודות ריקות בצד (במעט פריטים) → הבלוק תמיד ממורכז ומאוזן.
+  const [mcols, setMcols] = useState(3)
+  useEffect(() => {
+    if (!masonry) return
+    const mq = window.matchMedia('(min-width: 1025px)')
+    const upd = () => setMcols(mq.matches ? 3 : 2)
+    upd()
+    mq.addEventListener('change', upd)
+    return () => mq.removeEventListener('change', upd)
+  }, [masonry])
 
   useEffect(() => {
     if (!supabase || usingProp) return
@@ -349,9 +375,10 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
       </div>
 
       {masonry && !isMobile ? (
-        /* פריסת "שתי וערב" (masonry) — דסקטופ בלבד. אותו כרטיס בדיוק (שם/עיר/שנה/
-           תריס) בעמודות, עם יחס-גובה לפי card_layout (wide=לרוחב, normal=מרובע,
-           tall=לאורך) → תצוגה מגוונת ונעימה לעין. במובייל נשארת הקרוסלה. */
+        /* פריסת "שתי וערב" (masonry) — דסקטופ בלבד. מחלקים את הכרטיסים לעמודות
+           שוות (round-robin) בתוך מיכל flex ממורכז, כך שגם במעט פרויקטים הבלוק
+           נשאר באמצע ומאוזן. כיוון כל כרטיס נגזר מהתמונה (ראו ProjectCard).
+           במובייל נשארת הקרוסלה. */
         <div className="container">
           <motion.div
             className="pg-masonry"
@@ -359,15 +386,18 @@ export default function ProjectsGallery({ items: itemsProp, sectionId = 'project
             initial="hidden"
             animate="visible"
           >
-            {baseItems.map((p, i) => {
-              // כיוון מפורש שסומן בניהול (wide/tall) מנצח; לכרטיס "רגיל"/לא-מסומן
-              // נבחר כיוון מתוך מקצב קולאז' מגוון לפי המיקום → תצוגה חיה ולא אחידה.
-              const explicit = p.layout === 'wide' || p.layout === 'tall'
-              const mLayout = explicit ? p.layout : COLLAGE_RHYTHM[i % COLLAGE_RHYTHM.length]
-              return (
-                <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={false} eager={i < 6} masonry mLayout={mLayout} />
-              )
-            })}
+            {(() => {
+              const effCols = Math.max(1, Math.min(mcols, baseItems.length))
+              const cols = Array.from({ length: effCols }, () => [])
+              baseItems.forEach((p, i) => cols[i % effCols].push({ p, i }))
+              return cols.map((col, ci) => (
+                <motion.div className="pg-mcol" key={ci} variants={containerVariants}>
+                  {col.map(({ p, i }) => (
+                    <ProjectCard key={`${p.slug}-${i}`} p={p} L={L} t={t} isMobile={false} eager={i < 6} masonry />
+                  ))}
+                </motion.div>
+              ))
+            })()}
           </motion.div>
         </div>
       ) : (

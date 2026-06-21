@@ -30,7 +30,7 @@ export default {
   projects: {
     eyebrow: 'Our Projects',
     title: 'Selected projects',
-    lead: 'A selection of projects we have planned, built and supervised across the country.',
+    lead: 'A selection of projects we built and guided from planning to handover, across the country.',
     all: 'All projects',
     viewProject: 'View project',
     status: { planning: 'Planning', construction: 'Under construction', completed: 'Completed', marketing: 'Marketing', sold: 'Sold' },

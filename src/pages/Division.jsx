@@ -257,12 +257,16 @@ export default function Division() {
       <ProjectsGallery
         items={list}
         collage
-        masonry={slug === 'development' || slug === 'execution' || slug === 'supervision'}
+        masonry={['development', 'execution', 'supervision', 'brokerage'].includes(slug)}
         showFooter={false}
         title={slug === 'brokerage' ? L({ he: 'פרויקטים בשיווק', en: 'Projects in marketing' }) : undefined}
-        lead={slug === 'brokerage'
-          ? L({ he: 'מבחר פרויקטים בשיווק, בתהליך מסירה וליווי ברחבי הארץ', en: 'A selection of projects in marketing, handover and guidance across the country.' })
-          : undefined}
+        lead={
+          slug === 'brokerage'
+            ? L({ he: 'מבחר פרויקטים בשיווק, בתהליך מסירה וליווי ברחבי הארץ', en: 'A selection of projects in marketing, handover and guidance across the country.' })
+            : slug === 'development'
+              ? L({ he: 'מבחר פרויקטים בייזום והובלת החברה ברחבי הארץ', en: 'A selection of development projects led by the company, across the country.' })
+              : undefined
+        }
       />
 
       {/* בעמוד התיווך (אפיק הנחל) — בלי סקשן ההמלצות */}

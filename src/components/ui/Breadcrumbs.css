@@ -73,3 +73,10 @@
 
 /* העמוד הנוכחי */
 .breadcrumbs__current { color: var(--bc-current); font-weight: 700; }
+
+/* מובייל — פירורי-לחם וכפתור "עמוד הבית" מעט קטנים יותר (אחיד בכל האתר) */
+@media (max-width: 768px) {
+  .breadcrumbs ol { font-size: 0.8rem; gap: 0.45rem; }
+  .breadcrumbs__link--back { padding: 0.4rem 0.9rem; }
+  .breadcrumbs__back-ic { width: 15px; height: 15px; }
+}

@@ -136,7 +136,10 @@
   position: relative; z-index: 2; color: #fff;
   padding-block: 2.4rem 2.6rem;
   max-width: 62rem;
+  margin-inline: auto;
+  text-align: center;            /* כותרות הקאבר ממורכזות — מסודר לעין */
 }
+.yz-hero__content .breadcrumbs ol { justify-content: center; }
 .yz-hero__content .breadcrumbs {
   padding: 0;
   margin-bottom: 1.7rem;
@@ -164,12 +167,12 @@
   line-height: 1.15;
   letter-spacing: -0.01em;
   max-width: 21ch;
-  margin: 0 0 1.5rem;
+  margin: 0 auto 1.5rem;
   color: #fff;
   text-shadow: 0 2px 30px rgba(0,0,0,0.28);
 }
 .yz-hero__meta {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.55rem;
   font-size: 0.95rem; color: rgba(255,255,255,0.9);
   font-family: var(--font-heading); font-weight: 600;
   padding-top: 1.2rem;
@@ -180,7 +183,7 @@
   .yz-hero { min-height: 0; }
   .yz-hero__content {
     padding-block: 1.8rem 2rem;        /* מרווח נשימה */
-    text-align: right;                 /* יישור מלא לימין במובייל */
+    text-align: center;                /* תוכן הקאבר ממורכז במובייל */
   }
   .yz-hero__content .breadcrumbs { margin-bottom: 1.3rem; }
   .yz-hero__content .breadcrumbs ol { justify-content: center; }  /* פירורי-לחם ממורכזים במובייל */

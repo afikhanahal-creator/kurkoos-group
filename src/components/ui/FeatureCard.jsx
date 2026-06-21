@@ -21,7 +21,7 @@ export default function FeatureCard({ icon, title, desc, to, cta, image, classNa
         <div className={`card__image ${hasImage ? 'card__image--photo' : ''}`}>
           {hasImage ? (
             <>
-              <ResponsiveImage value={image} className="card__img" alt="" w={700} />
+              <ResponsiveImage value={image} className="card__img" alt="" w={1100} sizes="(max-width: 600px) 90vw, 360px" />
               <span className="card__img-badge" aria-hidden="true"><Icon name={icon} size={22} stroke={1.8} /></span>
             </>
           ) : (

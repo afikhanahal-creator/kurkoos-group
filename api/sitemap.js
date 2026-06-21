@@ -17,6 +17,11 @@ const STATIC = [
   { path: '/projects', changefreq: 'weekly', priority: '0.9' },
   { path: '/team', changefreq: 'monthly', priority: '0.6' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },
+  { path: '/yazamut-nadlan', changefreq: 'weekly', priority: '0.8' },
+  // טור יזמות נדל"ן — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
+  { path: '/yazamut-nadlan/tama38-pkiaa-hok-67', changefreq: 'monthly', priority: '0.7' },
+  { path: '/yazamut-nadlan/bank-israel-10-90', changefreq: 'monthly', priority: '0.7' },
+  { path: '/yazamut-nadlan/maslul-mahir-arvuyot', changefreq: 'monthly', priority: '0.7' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },
   { path: '/divisions/development', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/execution', changefreq: 'monthly', priority: '0.8' },

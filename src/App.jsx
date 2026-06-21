@@ -18,6 +18,8 @@ const Division = lazy(() => import('./pages/Division.jsx'))
 const Team = lazy(() => import('./pages/Team.jsx'))
 const About = lazy(() => import('./pages/About.jsx'))
 const Blog = lazy(() => import('./pages/Blog.jsx'))
+const Yazamut = lazy(() => import('./pages/Yazamut.jsx'))
+const YazamutArticle = lazy(() => import('./pages/YazamutArticle.jsx'))
 const Careers = lazy(() => import('./pages/Careers.jsx'))
 const Legal = lazy(() => import('./pages/Legal.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
@@ -114,6 +116,8 @@ export default function App() {
               <Route path="/divisions/:slug" element={<Division />} />
               <Route path="/team" element={<Team />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/yazamut-nadlan" element={<Yazamut />} />
+              <Route path="/yazamut-nadlan/:slug" element={<YazamutArticle />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />

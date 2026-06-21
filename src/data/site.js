@@ -43,7 +43,7 @@ export const site = {
         { label: { he: 'ייזום נדל"ן', en: 'Real-estate development' }, to: '/divisions/development' },
         { label: { he: 'קורקוס יזמות', en: 'Kurkoos Development' }, to: '/divisions/development#why' },
         { label: { he: 'פרויקטים נבחרים', en: 'Selected projects' }, to: '/divisions/development#projects' },
-        { label: { he: 'המדריך ליזמות נדל"ן', en: 'The development guide' }, to: '/blog' },
+        { label: { he: 'המדריך ליזמות נדל"ן', en: 'The development guide' }, to: '/yazamut-nadlan' },
       ],
     },
     {

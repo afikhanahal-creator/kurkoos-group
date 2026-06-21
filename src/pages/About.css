@@ -103,10 +103,13 @@
 }
 /* מובייל — חוזרים למרכוז (לפי בקשה קודמת) */
 @media (max-width: 860px) {
+  /* כותרת, eyebrow, סלוגן ולוגו נשארים ממורכזים */
   .about-vision__inner { text-align: center; }
   .about-vision__inner .eyebrow { justify-content: center; }
   .about-vision__divider { margin-inline: auto; }
   .about-vision__closing { align-items: center; text-align: center; }
+  /* רק המלל (הפסקאות הקטנות) מיושר לימין, לא ממורכז */
+  .about-vision__p { text-align: right; }
 }
 @media (max-width: 600px) {
   .about-vision__closing { justify-content: center; text-align: center; }

@@ -163,6 +163,12 @@
   .yz-hero__content .breadcrumbs { margin-bottom: 1.1rem; }
   .yz-hero__cat { margin-bottom: 0.85rem; }
   .yz-hero__title { margin-bottom: 1rem; }
+  /* כפתור "עמוד הבית" בולט וברור יותר במובייל */
+  .yz-hero .breadcrumbs__link--back {
+    padding: 0.62rem 1.3rem;
+    font-size: 1rem;
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.45);
+  }
 }
 
 /* גוף הכתבה — עמודת קריאה ממורכזת בסגנון מגזין */

@@ -31,16 +31,20 @@
 @media (max-width: 980px) { .yz-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .yz-grid { grid-template-columns: 1fr; } }
 
-/* ---- כרטיס כתבה ---- */
+/* ---- כרטיס כתבה (אחיד בגודלו) ---- */
 .yz-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;                 /* כל הכרטיסים מתמתחים לגובה זהה בשורה */
   background: #fff;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  /* פינות עליונות מעוגלות, תחתית ישרה — אחידות עם כרטיסי הפרויקטים */
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   overflow: hidden;
   transition: transform var(--dur-base), box-shadow var(--dur-base), border-color var(--dur-base);
 }
 .yz-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--color-primary-700) 30%, transparent); }
-.yz-card__link { display: block; color: inherit; text-decoration: none; }
+.yz-card__link { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
 .yz-card__media { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--color-surface-alt); }
 .yz-card__media .smart-image,
 .yz-card__media .ri-img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
@@ -59,7 +63,7 @@
   color: #fff;
   box-shadow: var(--shadow-1);
 }
-.yz-card__body { padding: 1.3rem 1.4rem 1.5rem; }
+.yz-card__body { display: flex; flex-direction: column; flex: 1; padding: 1.3rem 1.4rem 1.5rem; }
 .yz-card__meta {
   display: flex; align-items: center; gap: 0.45rem;
   font-size: 0.82rem; color: var(--color-text-muted);
@@ -73,27 +77,21 @@
   line-height: 1.3;
   color: var(--color-primary-900);
   margin: 0 0 0.6rem;
+  /* שתי שורות לכל היותר → גובה כותרת אחיד בכל הכרטיסים */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  min-height: calc(2 * 1.3em);
 }
-.yz-card__excerpt { color: var(--color-text-soft); line-height: 1.6; margin: 0 0 1rem; }
+.yz-card__excerpt {
+  color: var(--color-text-soft); line-height: 1.6; margin: 0 0 1rem;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
 .yz-card__read {
   display: inline-flex; align-items: center; gap: 0.4rem;
+  margin-top: auto;             /* "קראו" תמיד נצמד לתחתית → שורת בסיס אחידה */
   font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem;
   color: var(--color-primary-700);
 }
 [dir='rtl'] .yz-card__read svg { transform: scaleX(-1); }
-
-/* ---- כרטיס ראשי (featured) ---- */
-.yz-card--lg { display: grid; grid-template-columns: 1.15fr 1fr; align-items: stretch; }
-.yz-card--lg .yz-card__media { aspect-ratio: auto; height: 100%; min-height: 340px; }
-.yz-card--lg .yz-card__body { display: flex; flex-direction: column; justify-content: center; padding: 2.4rem 2.4rem; }
-.yz-card--lg .yz-card__title { font-size: 2rem; }
-.yz-card--lg .yz-card__excerpt { font-size: 1.1rem; }
-@media (max-width: 760px) {
-  .yz-card--lg { grid-template-columns: 1fr; }
-  .yz-card--lg .yz-card__media { aspect-ratio: 16 / 10; min-height: 0; }
-  .yz-card--lg .yz-card__body { padding: 1.4rem; }
-  .yz-card--lg .yz-card__title { font-size: 1.5rem; }
-}
 
 /* ============================================================
    עמוד כתבה

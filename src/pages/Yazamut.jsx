@@ -24,13 +24,12 @@ export default function Yazamut() {
     })
 
   const filtered = cat === 'all' ? all : all.filter((a) => a.category === cat)
-  const [featured, ...rest] = filtered
 
-  const Card = ({ a, large = false }) => (
-    <Reveal as="article" className={`yz-card${large ? ' yz-card--lg' : ''}`}>
+  const Card = ({ a }) => (
+    <Reveal as="article" className="yz-card">
       <Link to={`/yazamut-nadlan/${a.slug}`} className="yz-card__link">
         <div className="yz-card__media">
-          <SmartImage src={a.cover} alt={a.coverAlt || a.title} label={a.title} w={large ? 1200 : 700} sizes={large ? '(max-width: 900px) 100vw, 760px' : '(max-width: 700px) 100vw, 380px'} />
+          <SmartImage src={a.cover} alt={a.coverAlt || a.title} label={a.title} w={700} sizes="(max-width: 600px) 100vw, (max-width: 980px) 50vw, 380px" />
           {a.category && <span className="yz-card__cat">{a.category}</span>}
         </div>
         <div className="yz-card__body">
@@ -70,13 +69,9 @@ export default function Yazamut() {
                 </div>
               )}
 
-              {featured && <Card a={featured} large />}
-
-              {rest.length > 0 && (
-                <div className="yz-grid">
-                  {rest.map((a) => <Card key={a.slug} a={a} />)}
-                </div>
-              )}
+              <div className="yz-grid">
+                {filtered.map((a) => <Card key={a.slug} a={a} />)}
+              </div>
             </>
           )}
         </div>

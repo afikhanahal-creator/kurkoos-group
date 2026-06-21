@@ -31,6 +31,7 @@ const blank = () => ({
   quote: { he: '', en: '' },
   image: '',
   photos: [],   // תמונות מהבית — מוצגות בקטן בכרטיס, נפתחות במסך מלא
+  archived: false, // בארכיון = מוסתר מהאתר, נשמר ב-CMS לשחזור
 })
 
 // משכפל המלצה ברירת-מחדל למבנה אחיד (id מחרוזת, שדות דו-לשוניים)
@@ -41,6 +42,7 @@ const fromDefault = (t) => ({
   quote: { he: t.quote?.he || '', en: t.quote?.en || '' },
   image: t.image || '',
   photos: Array.isArray(t.photos) ? t.photos : [],
+  archived: !!t.archived,
 })
 
 export default function TestimonialsTab() {
@@ -116,9 +118,17 @@ export default function TestimonialsTab() {
     persist(next)
   }
 
+  // מחיקה לצמיתות — מסירה את הממליץ מה-CMS ומהאתר לחלוטין (לא ניתן לשחזר)
   const removeItem = (id) => {
-    if (!window.confirm('למחוק את ההמלצה?')) return
+    if (!window.confirm('למחוק את הממליץ לצמיתות? הוא יוסר כליל מה-CMS ומהאתר — לא ניתן לשחזר.')) return
     const next = listRef.current.filter((it) => it.id !== id)
+    setList(next)
+    persist(next)
+  }
+
+  // העברה לארכיון / החזרה לאתר — מוסתר מהפרונט אך נשמר ב-CMS לשחזור מהיר
+  const toggleArchive = (id) => {
+    const next = listRef.current.map((it) => (it.id === id ? { ...it, archived: !it.archived } : it))
     setList(next)
     persist(next)
   }
@@ -172,14 +182,23 @@ export default function TestimonialsTab() {
 
       <div className="tst-grid">
         {list.map((it, idx) => (
-          <section className="tst-card" key={it.id}>
+          <section className={`tst-card${it.archived ? ' tst-card--archived' : ''}`} key={it.id}>
             <header className="tst-card__head">
               <span className="tst-card__num">#{idx + 1}</span>
+              {it.archived && <span className="tst-card__badge">בארכיון · לא מוצג באתר</span>}
               <div className="tst-card__order">
                 <button type="button" onClick={() => move(it.id, -1)} disabled={idx === 0} aria-label="העלאה" title="העלאה">↑</button>
                 <button type="button" onClick={() => move(it.id, 1)} disabled={idx === list.length - 1} aria-label="הורדה" title="הורדה">↓</button>
               </div>
-              <button type="button" className="tst-card__del" onClick={() => removeItem(it.id)} aria-label="מחיקה" title="מחיקה">🗑</button>
+              <button
+                type="button"
+                className="tst-card__archive"
+                onClick={() => toggleArchive(it.id)}
+                title={it.archived ? 'החזרה לאתר' : 'העברה לארכיון'}
+              >
+                {it.archived ? '↩ החזרה לאתר' : '📥 לארכיון'}
+              </button>
+              <button type="button" className="tst-card__del" onClick={() => removeItem(it.id)} aria-label="מחיקה לצמיתות" title="מחיקה לצמיתות">🗑</button>
             </header>
 
             <div className="tst-card__image">

@@ -32,11 +32,13 @@ export default function Testimonials() {
   const [shot, setShot] = useState(null)   // אינדקס התמונה הפתוחה ב-lightbox (או null)
   const [flipped, setFlipped] = useState(false)   // הכרטיס מוצג בצדו האחורי (תמונות הנכס)
 
-  // המלצות מנוהלות מה-CMS (key: testimonials) גוברות על ברירת המחדל
+  // המלצות מנוהלות מה-CMS (key: testimonials) גוברות על ברירת המחדל.
+  // המלצות בארכיון (archived) מוסתרות מהאתר — נשארות ב-CMS לשחזור.
   const testimonials = useMemo(() => {
     let list = settings.testimonials
     if (typeof list === 'string') { try { list = JSON.parse(list) } catch { list = null } }
-    return Array.isArray(list) && list.length ? list : defaultTestimonials
+    const arr = Array.isArray(list) && list.length ? list : defaultTestimonials
+    return arr.filter((t) => !t.archived)
   }, [settings.testimonials])
 
   const count = testimonials.length

@@ -88,7 +88,8 @@
 .pg-card__media {
   position: relative;
   aspect-ratio: 4 / 5;
-  border-radius: var(--radius-lg);
+  /* פינות עליונות מעוגלות, תחתית ישרה — אחידות בכל כרטיסי הפרויקטים */
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   overflow: hidden;
   background: var(--color-surface-alt);
   box-shadow: var(--shadow-2);

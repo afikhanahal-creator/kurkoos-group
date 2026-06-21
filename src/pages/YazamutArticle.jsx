@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { useI18n } from '../i18n/index.jsx'
-import { getArticle, getArticles } from '../lib/yazamut.js'
+import { useYazamutArticle, useYazamutArticles } from '../lib/yazamut.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
+import SmartImage from '../components/ui/SmartImage.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
@@ -16,10 +17,11 @@ const SITE = 'https://kurkoos-groupmd.vercel.app'
 export default function YazamutArticle() {
   const { slug } = useParams()
   const { lang } = useI18n()
-  const article = useMemo(() => getArticle(slug), [slug])
+  const article = useYazamutArticle(slug)
+  const allArticles = useYazamutArticles()
   const related = useMemo(
-    () => getArticles().filter((a) => a.slug !== slug).slice(0, 3),
-    [slug]
+    () => allArticles.filter((a) => a.slug !== slug).slice(0, 3),
+    [allArticles, slug]
   )
 
   if (!article) return <Navigate to="/yazamut-nadlan" replace />
@@ -55,7 +57,9 @@ export default function YazamutArticle() {
 
       <header className="yz-hero">
         <div className="yz-hero__bg">
-          <ArticleCover article={article} variant="hero" />
+          {srcOfResponsive(article.cover)
+            ? <SmartImage src={article.cover} alt={article.coverAlt || article.title} label={article.title} w={1800} sizes="100vw" priority />
+            : <ArticleCover article={article} variant="hero" />}
         </div>
         <div className="yz-hero__overlay" />
         <div className="container yz-hero__content">
@@ -109,7 +113,14 @@ export default function YazamutArticle() {
                 <Reveal as="article" key={a.slug} className="yz-card">
                   <Link to={`/yazamut-nadlan/${a.slug}`} className="yz-card__link">
                     <div className="yz-card__media">
-                      <ArticleCover article={a} variant="card" />
+                      {srcOfResponsive(a.cover) ? (
+                        <>
+                          <SmartImage src={a.cover} alt={a.coverAlt || a.title} label={a.title} w={700} sizes="(max-width: 700px) 100vw, 380px" />
+                          {a.category && <span className="yz-card__cat">{a.category}</span>}
+                        </>
+                      ) : (
+                        <ArticleCover article={a} variant="card" />
+                      )}
                     </div>
                     <div className="yz-card__body">
                       <div className="yz-card__meta"><time>{fmtDate(a.date)}</time></div>

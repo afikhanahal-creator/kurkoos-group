@@ -170,6 +170,6 @@
 .yz-author-card__txt { display: flex; flex-direction: column; }
 .yz-author-card__txt strong { font-family: var(--font-heading); color: var(--color-primary-900); font-size: 1.05rem; }
 .yz-author-card__txt span { color: var(--color-text-muted); font-size: 0.9rem; }
-[dir='rtl'] .yz-author-card .btn svg { transform: scaleX(-1); }
+/* החץ "לכל הכתבות" — מצביע שמאלה (arrowLeft) ויושב משמאל לטקסט (RTL). בלי היפוך. */
 
 .yz-related__title { font-family: var(--font-heading); font-size: 1.6rem; color: var(--color-primary-900); margin: 0 0 0.4rem; }

@@ -15,7 +15,7 @@
 /* רשת "תוכנית" (blueprint) */
 .acover__grid {
   position: absolute;
-  inset: 0;
+  inset: -40px;                 /* שוליים עודפים כדי שהזחילה לא תחשוף קצוות */
   z-index: 0;
   background-image:
     linear-gradient(rgba(245, 242, 236, 0.10) 1px, transparent 1px),
@@ -23,6 +23,17 @@
   background-size: 30px 30px;
   mask-image: radial-gradient(130% 100% at 80% 10%, #000 35%, transparent 100%);
   -webkit-mask-image: radial-gradient(130% 100% at 80% 10%, #000 35%, transparent 100%);
+  /* הריבועים זוחלים באלכסון, גם בכרטיסים וגם בקאבר */
+  animation: acover-drift 26s linear infinite alternate;
+}
+@keyframes acover-drift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 64px 38px, 64px 38px; }
+}
+/* בריחוף על כרטיס — הריבועים זזים מהר יותר */
+.yz-card:hover .acover__grid { animation-duration: 7s; }
+@media (prefers-reduced-motion: reduce) {
+  .acover__grid { animation: none; }
 }
 
 /* מוטיב גרפי לפי קטגוריה */

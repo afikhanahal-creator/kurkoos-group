@@ -1,0 +1,57 @@
+.yzt__bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.2rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.yzt__intro { color: var(--adm-text-soft, #667); font-size: 0.95rem; line-height: 1.6; max-width: 70ch; margin: 0; }
+.yzt__intro code { background: var(--adm-bg, rgba(0,0,0,0.05)); padding: 0.1em 0.4em; border-radius: 5px; font-size: 0.85em; }
+.yzt__add { white-space: nowrap; }
+
+/* טאבים */
+.yzt__tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--adm-border, rgba(0,0,0,0.1)); padding-bottom: 0.8rem; }
+.yzt__tab {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  max-width: 280px;
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.14));
+  background: var(--adm-card, #fff);
+  border-radius: 10px; padding: 0.5rem 0.8rem;
+  cursor: pointer; font: inherit; font-size: 0.9rem; font-weight: 600;
+  color: var(--adm-text, inherit);
+}
+.yzt__tab:hover { border-color: var(--adm-accent, #105572); }
+.yzt__tab.is-on { background: var(--adm-accent, #105572); border-color: var(--adm-accent, #105572); color: #fff; }
+.yzt__tab.is-del { opacity: 0.55; }
+.yzt__tab-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.yzt-badge { font-size: 0.66rem; font-weight: 800; padding: 0.18em 0.55em; border-radius: 999px; background: #e8edf1; color: #44606e; white-space: nowrap; }
+.yzt__tab.is-on .yzt-badge { background: rgba(255,255,255,0.22); color: #fff; }
+.yzt-badge--live { background: #d9f3e2; color: #1c7a45; }
+.yzt-badge--arc { background: #fde7c7; color: #8a5a12; }
+.yzt-badge--del { background: #fde0e0; color: #c0322f; }
+.yzt-badge--sch { background: #e3e0fb; color: #4b3da0; }
+
+/* עורך */
+.yzt-edit { background: var(--adm-card, #fff); border: 1px solid var(--adm-border, rgba(0,0,0,0.1)); border-radius: 14px; padding: 1.4rem; }
+.yzt-edit__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.yzt-edit__head h3 { margin: 0; font-size: 1.2rem; color: var(--adm-text, inherit); }
+.yzt-edit__actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.yzt-btn {
+  border: 1px solid var(--adm-border, rgba(0,0,0,0.14)); background: var(--adm-bg, transparent);
+  border-radius: 8px; height: 34px; padding: 0 0.8rem; cursor: pointer;
+  font: inherit; font-size: 0.82rem; font-weight: 700; color: var(--adm-text, inherit); white-space: nowrap;
+}
+.yzt-btn:hover { border-color: var(--adm-accent, #105572); color: var(--adm-accent, #105572); }
+.yzt-btn--del { border-color: #e2b6b6; background: #fdecec; color: #c0322f; }
+.yzt-btn--del:hover { background: #f7d6d6; border-color: #d33; color: #c0322f; }
+
+.yzt-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-bottom: 0.9rem; }
+@media (max-width: 720px) { .yzt-grid2 { grid-template-columns: 1fr; } }
+.yzt-field { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.9rem; }
+.yzt-field > span { font-size: 0.82rem; font-weight: 700; color: var(--adm-text-soft, #667); }
+.yzt-field input, .yzt-field select, .yzt-field textarea {
+  width: 100%; border: 1px solid var(--adm-border, rgba(0,0,0,0.16)); border-radius: 10px;
+  padding: 0.55rem 0.7rem; font: inherit; font-size: 0.92rem;
+  background: var(--adm-input-bg, #fff); color: var(--adm-text, inherit); resize: vertical;
+}
+.yzt-field input:focus, .yzt-field select:focus, .yzt-field textarea:focus {
+  outline: none; border-color: var(--adm-accent, #105572); box-shadow: 0 0 0 3px rgba(16,85,114,0.12);
+}
+.yzt-readonly { background: var(--adm-bg, #f3f4f6); color: var(--adm-text-soft, #889); }
+.yzt-body { font-family: 'Heebo', monospace; line-height: 1.7; }
+.yzt-altinput { margin-top: 0.6rem; }

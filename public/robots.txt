@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /style-guide
 
-Sitemap: https://kurkoos-groupmd.vercel.app/sitemap.xml
+Sitemap: https://kurkoos-group.co.il/sitemap.xml

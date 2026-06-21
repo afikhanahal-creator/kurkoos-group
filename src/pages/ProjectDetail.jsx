@@ -380,7 +380,7 @@ export default function ProjectDetail() {
     '@type': 'Residence',
     name: seoName,
     description: seoDesc,
-    url: `https://kurkoos-groupmd.vercel.app/projects/${project.slug}`,
+    url: `https://kurkoos-group.co.il/projects/${project.slug}`,
     ...(project.cover ? { image: project.cover } : {}),
     ...(seoCity ? { address: { '@type': 'PostalAddress', addressLocality: seoCity, addressCountry: 'IL' } } : {}),
   }

@@ -12,7 +12,7 @@ import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 
-const SITE = 'https://kurkoos-groupmd.vercel.app'
+const SITE = 'https://kurkoos-group.co.il'
 
 export default function ConstructionsArticle() {
   const { slug } = useParams()

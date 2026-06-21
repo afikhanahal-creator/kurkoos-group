@@ -22,6 +22,8 @@ const Yazamut = lazy(() => import('./pages/Yazamut.jsx'))
 const YazamutArticle = lazy(() => import('./pages/YazamutArticle.jsx'))
 const Constructions = lazy(() => import('./pages/Constructions.jsx'))
 const ConstructionsArticle = lazy(() => import('./pages/ConstructionsArticle.jsx'))
+const Supervision = lazy(() => import('./pages/Supervision.jsx'))
+const SupervisionArticle = lazy(() => import('./pages/SupervisionArticle.jsx'))
 const Careers = lazy(() => import('./pages/Careers.jsx'))
 const Legal = lazy(() => import('./pages/Legal.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
@@ -122,6 +124,8 @@ export default function App() {
               <Route path="/yazamut-nadlan/:slug" element={<YazamutArticle />} />
               <Route path="/constructions" element={<Constructions />} />
               <Route path="/constructions/:slug" element={<ConstructionsArticle />} />
+              <Route path="/construction-supervision" element={<Supervision />} />
+              <Route path="/construction-supervision/:slug" element={<SupervisionArticle />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />

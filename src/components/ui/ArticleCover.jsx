@@ -129,6 +129,35 @@ const Motif = ({ k }) => {
           </g>
         </svg>
       )
+    case 'checklist': // בקרת איכות — לוח בקרה עם וי
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <rect x="48" y="26" width="80" height="104" rx="4" />
+            <rect x="74" y="18" width="28" height="14" rx="3" />
+            <path d="M64 56h36M64 78h36M64 100h24" stroke={PAPER_SOFT} />
+          </g>
+          <g stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d="M58 54l4 4 6 -8" />
+            <path d="M58 76l4 4 6 -8" />
+            <path d="M58 98l4 4 6 -8" />
+          </g>
+        </svg>
+      )
+    case 'oversight': // פיקוח ביצוע — עין מעל מבנה
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <rect x="40" y="92" width="36" height="44" />
+            <rect x="84" y="74" width="40" height="62" />
+            <path d="M48 104h8M60 104h8M92 88h10M110 88h6M92 108h10M110 108h6" stroke={PAPER_SOFT} />
+          </g>
+          <g stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d="M118 48c14 0 26 10 32 18 -6 8 -18 18 -32 18 -14 0 -26 -10 -32 -18 6 -8 18 -18 32 -18z" />
+            <circle cx="118" cy="66" r="6" />
+          </g>
+        </svg>
+      )
     case 'trends': // מגמות שוק — גרף עולה
     default:
       return (
@@ -160,6 +189,13 @@ const CAT = {
   'בירוקרטיה ורישוי': { k: 'reg', kw: 'רישוי' },
   'ניהול אתר': { k: 'schedule', kw: 'ניהול' },
   'חומרים ושיטות': { k: 'materials', kw: 'חומרים' },
+  // פיקוח פרויקטים
+  'פיקוח ביצוע': { k: 'oversight', kw: 'פיקוח' },
+  'בקרת איכות': { k: 'checklist', kw: 'בקרה' },
+  'ליקויים ובדק': { k: 'defects', kw: 'בדק' },
+  'ניהול תקציב וסיכונים': { k: 'finance', kw: 'תקציב' },
+  'לוחות זמנים': { k: 'schedule', kw: 'זמנים' },
+  'מסירה וטופס 4': { k: 'reg', kw: 'מסירה' },
 }
 
 export default function ArticleCover({ article, variant = 'card' }) {

@@ -27,6 +27,11 @@ const STATIC = [
   { path: '/constructions/tofes-4-ichlus', changefreq: 'monthly', priority: '0.7' },
   { path: '/constructions/likuei-bniya-tkufat-bedek', changefreq: 'monthly', priority: '0.7' },
   { path: '/constructions/betihut-atar-bniya', changefreq: 'monthly', priority: '0.7' },
+  { path: '/construction-supervision', changefreq: 'weekly', priority: '0.8' },
+  // פיקוח פרויקטים — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
+  { path: '/construction-supervision/pikuach-yetzikat-beton', changefreq: 'monthly', priority: '0.7' },
+  { path: '/construction-supervision/likuei-itum', changefreq: 'monthly', priority: '0.7' },
+  { path: '/construction-supervision/mefakeach-mul-kablan', changefreq: 'monthly', priority: '0.7' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },
   { path: '/divisions/development', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/execution', changefreq: 'monthly', priority: '0.8' },

@@ -141,8 +141,8 @@
 @media (max-width: 560px) {
   /* פוטר מובייל — padding מצומצם */
   .footer__grid {
-    grid-template-columns: 1fr 1fr;   /* טקסט ב-2 הצדדים */
-    gap: 1.2rem 1.5rem;
+    grid-template-columns: 0.8fr 1.2fr;   /* עמודת "יצירת קשר" (משמאל) רחבה יותר כדי שהאימייל ייכנס בשורה אחת */
+    gap: 1.2rem 1.2rem;
     padding-block: 0.9rem 1.5rem;     /* מרווח מצומצם מהשדה שמעל ללוגו */
   }
 
@@ -167,10 +167,10 @@
   .footer__col { gap: 0.55rem; align-items: center; text-align: center; }
   .footer__col a,
   .footer__contact {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     line-height: 1.5;
     align-items: flex-start;          /* האייקון מתיישר לשורה הראשונה בטקסט שנשבר */
-    gap: 0.4rem;
+    gap: 0.35rem;
     overflow-wrap: anywhere;          /* אימייל/כתובת נשברים בצורה נקייה */
   }
   .footer__contact svg { margin-top: 0.2rem; }

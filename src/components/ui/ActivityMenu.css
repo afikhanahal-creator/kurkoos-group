@@ -108,8 +108,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* חץ עדין — מופיע רק על הצ'יפ הפעיל, מסמן שהוא לחיץ (ניווט לדף התחום) */
+/* חץ הוסר במובייל כדי שכל שמות התחומים ייראו במלואם בצ'יפים */
 .actmenu__chip-arrow {
+  display: none;
   flex-shrink: 0;
   margin-inline-start: -0.2rem;
   opacity: 0;

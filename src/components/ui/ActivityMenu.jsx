@@ -151,6 +151,14 @@ export default function ActivityMenu({ items = [] }) {
             loading="lazy"
             decoding="async"
             draggable="false"
+            onError={(e) => {
+              // אם הגרסה המאופטמת נכשלת — נופלים-לאחור לכתובת המקורית, ואז
+              // (לתיווך) לקובץ הלוגו המקומי, כך שלעולם לא תופיע "תמונה שבורה".
+              const el = e.currentTarget
+              const raw = srcOfResponsive(current.image)
+              if (el.dataset.fb !== 'raw' && raw && el.src !== raw) { el.dataset.fb = 'raw'; el.src = raw; return }
+              if (el.dataset.fb !== 'local' && current.id === 'brokerage') { el.dataset.fb = 'local'; el.src = '/afik-hanahal-cover.png' }
+            }}
           />
         </AnimatePresence>
         <AnimatePresence mode="wait" initial={false}>

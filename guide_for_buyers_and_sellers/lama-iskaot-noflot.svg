@@ -1,0 +1,28 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ציר עסקה מהחוזה עד המסירה עם נקודת שבר">
+<rect width="1600" height="900" fill="#16202E"/>
+<g stroke="#2C3A4D" stroke-width="1" opacity="0.16">
+<line x1="0" y1="150" x2="1600" y2="150"/><line x1="0" y1="300" x2="1600" y2="300"/><line x1="0" y1="450" x2="1600" y2="450"/><line x1="0" y1="600" x2="1600" y2="600"/><line x1="0" y1="750" x2="1600" y2="750"/>
+<line x1="200" y1="0" x2="200" y2="900"/><line x1="400" y1="0" x2="400" y2="900"/><line x1="600" y1="0" x2="600" y2="900"/><line x1="800" y1="0" x2="800" y2="900"/><line x1="1000" y1="0" x2="1000" y2="900"/><line x1="1200" y1="0" x2="1200" y2="900"/><line x1="1400" y1="0" x2="1400" y2="900"/>
+</g>
+<line x1="0" y1="800" x2="1600" y2="800" stroke="#C9A24B" stroke-width="3"/>
+<!-- timeline -->
+<g font-family="Heebo,Assistant,Segoe UI,sans-serif">
+<!-- segment 1 solid -->
+<line x1="180" y1="450" x2="640" y2="450" stroke="#C9A24B" stroke-width="6"/>
+<!-- fracture gap in the middle -->
+<path d="M640 450 L690 410 L720 470 L770 420 L800 460" fill="none" stroke="#b4452f" stroke-width="6" stroke-linejoin="round"/>
+<!-- segment 2 faded/dashed (deal at risk) -->
+<line x1="800" y1="450" x2="1420" y2="450" stroke="#9A9486" stroke-width="6" stroke-dasharray="3 14" opacity="0.7"/>
+<!-- nodes -->
+<g>
+<circle cx="180" cy="450" r="40" fill="#F5F2EC"/><text x="180" y="458" text-anchor="middle" direction="rtl" fill="#16202E" font-weight="700" font-size="18">חתימה</text>
+<circle cx="450" cy="450" r="40" fill="#F5F2EC"/><text x="450" y="458" text-anchor="middle" direction="rtl" fill="#16202E" font-weight="700" font-size="18">מימון</text>
+<circle cx="1080" cy="450" r="40" fill="none" stroke="#9A9486" stroke-width="4"/><text x="1080" y="458" text-anchor="middle" direction="rtl" fill="#9A9486" font-weight="700" font-size="18">בדיקות</text>
+<circle cx="1380" cy="450" r="40" fill="none" stroke="#9A9486" stroke-width="4"/><text x="1380" y="458" text-anchor="middle" direction="rtl" fill="#9A9486" font-weight="700" font-size="18">מסירה</text>
+</g>
+<!-- break label -->
+<text x="720" y="360" text-anchor="middle" direction="rtl" fill="#b4452f" font-weight="800" font-size="26">כאן נופלת העסקה</text>
+</g>
+<text x="1480" y="110" text-anchor="end" direction="rtl" fill="#C9A24B" font-family="Heebo,Assistant,Segoe UI,sans-serif" font-weight="700" letter-spacing="2" font-size="26">בין חתימה למסירה</text>
+<text x="1480" y="855" text-anchor="end" fill="#F5F2EC" font-family="Heebo,Assistant,Segoe UI,sans-serif" font-weight="800" letter-spacing="6" font-size="30">KURKOOS</text>
+</svg>

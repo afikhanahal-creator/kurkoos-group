@@ -32,6 +32,11 @@ const STATIC = [
   { path: '/construction-supervision/pikuach-yetzikat-beton', changefreq: 'monthly', priority: '0.7' },
   { path: '/construction-supervision/likuei-itum', changefreq: 'monthly', priority: '0.7' },
   { path: '/construction-supervision/mefakeach-mul-kablan', changefreq: 'monthly', priority: '0.7' },
+  { path: '/real-estate-guide', changefreq: 'weekly', priority: '0.8' },
+  // המדריך לרוכש ולמוכר — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
+  { path: '/real-estate-guide/heskem-bladiyut', changefreq: 'monthly', priority: '0.7' },
+  { path: '/real-estate-guide/dmei-tivuch-zchuyot', changefreq: 'monthly', priority: '0.7' },
+  { path: '/real-estate-guide/iskaot-noflot', changefreq: 'monthly', priority: '0.7' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },
   { path: '/divisions/development', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/execution', changefreq: 'monthly', priority: '0.8' },

@@ -158,6 +158,53 @@ const Motif = ({ k }) => {
           </g>
         </svg>
       )
+    case 'tag': // מכירה — תווית מחיר
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M40 70l40 -40h40v40l-40 40z" />
+            <circle cx="104" cy="46" r="6" />
+          </g>
+          <path d="M70 96l34 34" stroke={BRASS} strokeWidth="3" strokeLinecap="round" />
+          <path d="M150 70h18M150 84h18M150 98h12" stroke={BRASS} strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      )
+    case 'key': // רכישה — מפתח ובית
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M40 120V72l30 -24 30 24v48z" />
+            <path d="M62 120v-22h16v22" />
+          </g>
+          <g stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <circle cx="140" cy="58" r="12" />
+            <path d="M150 66l22 22M164 80l8 -8M158 74l8 -8" />
+          </g>
+        </svg>
+      )
+    case 'rent': // השכרה — בית עם חץ מחזורי
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M52 124V80l34 -26 34 26v44z" />
+            <rect x="74" y="98" width="24" height="26" />
+          </g>
+          <g stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d="M138 64a22 22 0 1 1 -6 -15" />
+            <path d="M132 38v12h-12" />
+          </g>
+        </svg>
+      )
+    case 'deal': // משא ומתן — מאזניים
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M100 36v92M70 128h60M58 56h84" />
+            <path d="M58 56l-16 30h32zM142 56l-16 30h32z" />
+          </g>
+          <circle cx="100" cy="40" r="5" fill={BRASS} stroke="none" />
+        </svg>
+      )
     case 'trends': // מגמות שוק — גרף עולה
     default:
       return (
@@ -196,6 +243,13 @@ const CAT = {
   'ניהול תקציב וסיכונים': { k: 'finance', kw: 'תקציב' },
   'לוחות זמנים': { k: 'schedule', kw: 'זמנים' },
   'מסירה וטופס 4': { k: 'reg', kw: 'מסירה' },
+  // תיווך ועסקאות
+  'מכירה': { k: 'tag', kw: 'מכירה' },
+  'רכישה': { k: 'key', kw: 'רכישה' },
+  'השכרה': { k: 'rent', kw: 'השכרה' },
+  'השקעות': { k: 'finance', kw: 'השקעה' },
+  'משא ומתן': { k: 'deal', kw: 'מו״מ' },
+  'רגולציה ומיסוי': { k: 'reg', kw: 'רגולציה' },
 }
 
 export default function ArticleCover({ article, variant = 'card' }) {

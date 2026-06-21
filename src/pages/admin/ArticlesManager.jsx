@@ -1,83 +1,86 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
-import { mergeSupervision } from '../../lib/supervision.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
 import AiImageButton from './AiImageButton.jsx'
 import { toast } from '../../lib/toast.js'
 import './YazamutTab.css'
 
-/* SupervisionTab — ניהול כתבות "המדריך לפיקוח בנייה" (/construction-supervision).
-   זהה במבנה לשאר טאבי הכתבות. נשמר בהגדרה 'supervision_articles'. */
-
-const CATS = ['פיקוח ביצוע', 'בקרת איכות', 'ליקויים ובדק', 'ניהול תקציב וסיכונים', 'לוחות זמנים', 'מסירה וטופס 4']
-
-const aiPrompt = (a) => [
-  a.coverAlt || a.title,
-  a.category,
-  'Israeli construction site supervision, editorial magazine photography, building inspection and quality control detail, professional, clean composition, natural light, premium, photorealistic, ultra detailed, no text, no logos, no watermark',
-].filter(Boolean).join('. ')
-
-const blank = () => ({
-  slug: `katava-${Date.now()}`,
-  title: '',
-  date: new Date().toISOString().slice(0, 10),
-  author: 'המערכת, פיקוח פרויקטים',
-  authorTitle: 'פיקוח וניהול פרויקטים · קבוצת קורקוס',
-  category: 'פיקוח ביצוע',
-  tags: [],
-  focusKeyword: '',
-  metaTitle: '',
-  metaDescription: '',
-  cover: '',
-  coverAlt: '',
-  excerpt: '',
-  readingTime: '5 דקות קריאה',
-  published: true,
-  archived: false,
-  deleted: false,
-  body: '',
-})
-
-export default function SupervisionTab() {
+/* ============================================================
+   ArticlesManager — מנהל כתבות גנרי לטור בודד.
+   מקבל config: { key, merge, cats, folder, author, authorTitle, route, aiStyle }
+   ומספק: טאב לכל כתבה, עריכה מלאה, החלפת תמונה + תמונת AI, ארכיון ומחיקה.
+   נשמר בהגדרה config.key (מערך JSON). משמש את כל ארבעת הטורים מתוך טאב אחד.
+   ============================================================ */
+export default function ArticlesManager({ config }) {
   const [list, setList] = useState(null)
   const [activeId, setActiveId] = useState(null)
   const [saving, setSaving] = useState(false)
   const listRef = useRef([])
 
+  const aiPrompt = (a) => [
+    a.coverAlt || a.title,
+    a.category,
+    config.aiStyle,
+  ].filter(Boolean).join('. ')
+
+  const blank = () => ({
+    slug: `katava-${Date.now()}`,
+    title: '',
+    date: new Date().toISOString().slice(0, 10),
+    author: config.author,
+    authorTitle: config.authorTitle,
+    category: config.cats[0],
+    tags: [],
+    focusKeyword: '',
+    metaTitle: '',
+    metaDescription: '',
+    cover: '',
+    coverAlt: '',
+    excerpt: '',
+    readingTime: '5 דקות קריאה',
+    published: true,
+    archived: false,
+    deleted: false,
+    body: '',
+  })
+
   useEffect(() => {
+    let alive = true
     fetchSettings()
       .then((s) => {
-        const merged = mergeSupervision(s.supervision_articles)
+        if (!alive) return
+        const merged = config.merge(s[config.key])
           .sort((a, b) => new Date(b.date) - new Date(a.date))
         listRef.current = merged
         setList(merged)
         setActiveId(merged[0]?.slug || null)
       })
-      .catch(() => { listRef.current = []; setList([]) })
-  }, [])
+      .catch(() => { if (alive) { listRef.current = []; setList([]) } })
+    return () => { alive = false }
+  }, [config])
 
   const persist = async (next) => {
     listRef.current = next
     setSaving(true)
     try {
-      await setSetting('supervision_articles', JSON.stringify(next))
+      await setSetting(config.key, JSON.stringify(next))
       toast.success('הכתבות נשמרו')
     } catch (e) {
       toast.error('שמירה נכשלה: ' + (e.message || e))
     } finally { setSaving(false) }
   }
 
-  const setField = (slug, key, value) => {
+  const setField = (slug, k, value) => {
     setList((prev) => {
-      const next = prev.map((a) => (a.slug === slug ? { ...a, [key]: value } : a))
+      const next = prev.map((a) => (a.slug === slug ? { ...a, [k]: value } : a))
       listRef.current = next
       return next
     })
   }
   const commit = () => persist(listRef.current)
-  const setAndSave = (slug, key, value) => {
+  const setAndSave = (slug, k, value) => {
     setList((prev) => {
-      const next = prev.map((a) => (a.slug === slug ? { ...a, [key]: value } : a))
+      const next = prev.map((a) => (a.slug === slug ? { ...a, [k]: value } : a))
       persist(next)
       return next
     })
@@ -114,9 +117,8 @@ export default function SupervisionTab() {
     <div className="yzt">
       <div className="yzt__bar">
         <p className="yzt__intro">
-          ניהול כתבות "המדריך לפיקוח בנייה" שמופיעות ב-<code>/construction-supervision</code>. בחרו כתבה בטאב,
-          ערכו ונסחו מחדש כל שדה, החליפו תמונה (שדה ריק = כריכה מעוצבת אוטומטית), ארכבו או מחקו.
-          שינויים נשמרים אוטומטית.
+          ניהול הכתבות שמופיעות ב-<code>{config.route}</code>. בחרו כתבה בטאב, ערכו ונסחו מחדש כל שדה,
+          החליפו תמונה (ריק = כריכה מעוצבת אוטומטית) או צרו תמונת AI, ארכבו או מחקו. שינויים נשמרים אוטומטית.
         </p>
         <button type="button" className="btn btn--primary yzt__add" onClick={addItem} disabled={saving}>＋ כתבה חדשה</button>
       </div>
@@ -162,7 +164,7 @@ export default function SupervisionTab() {
             </label>
             <label className="yzt-field"><span>קטגוריה (קובעת את הכריכה המעוצבת)</span>
               <select value={active.category} onChange={(e) => setAndSave(active.slug, 'category', e.target.value)}>
-                {CATS.map((c) => <option key={c} value={c}>{c}</option>)}
+                {config.cats.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </label>
             <label className="yzt-field"><span>תאריך פרסום (עתידי = יעלה לבד באותו יום)</span>
@@ -172,10 +174,10 @@ export default function SupervisionTab() {
               <input dir="rtl" value={active.readingTime || ''} onChange={(e) => setField(active.slug, 'readingTime', e.target.value)} onBlur={commit} placeholder="5 דקות קריאה" />
             </label>
             <label className="yzt-field"><span>מילת מפתח ראשית (SEO)</span>
-              <input dir="rtl" value={active.focusKeyword || ''} onChange={(e) => setField(active.slug, 'focusKeyword', e.target.value)} onBlur={commit} placeholder="למשל: פיקוח בנייה" />
+              <input dir="rtl" value={active.focusKeyword || ''} onChange={(e) => setField(active.slug, 'focusKeyword', e.target.value)} onBlur={commit} placeholder="מילת המפתח של הכתבה" />
             </label>
             <label className="yzt-field"><span>תגיות (מופרדות בפסיק)</span>
-              <input dir="rtl" value={(active.tags || []).join(', ')} onChange={(e) => setField(active.slug, 'tags', e.target.value.split(',').map((t) => t.trim()).filter(Boolean))} onBlur={commit} placeholder="פיקוח, בקרת איכות, ליקויים" />
+              <input dir="rtl" value={(active.tags || []).join(', ')} onChange={(e) => setField(active.slug, 'tags', e.target.value.split(',').map((t) => t.trim()).filter(Boolean))} onBlur={commit} placeholder="תגית, תגית, תגית" />
             </label>
             <label className="yzt-field"><span>meta title (עד 60 תווים)</span>
               <input dir="rtl" maxLength={70} value={active.metaTitle || ''} onChange={(e) => setField(active.slug, 'metaTitle', e.target.value)} onBlur={commit} placeholder="כותרת ל-SEO עם מילת המפתח" />
@@ -200,14 +202,14 @@ export default function SupervisionTab() {
             <span>תמונת כריכה (ריק = כריכה מעוצבת אוטומטית לפי הקטגוריה)</span>
             <ResponsiveImageField
               value={active.cover}
-              folder="supervision"
+              folder={config.folder}
               breakpoints={['desktop']}
               surfaceLabel="כריכת הכתבה"
               desktopAspect="16 / 10"
               onChange={(v) => setAndSave(active.slug, 'cover', v || '')}
             />
             <div className="yzt-ai-row">
-              <AiImageButton promptText={aiPrompt(active)} folder="supervision" onImage={(url) => setAndSave(active.slug, 'cover', url)} />
+              <AiImageButton promptText={aiPrompt(active)} folder={config.folder} onImage={(url) => setAndSave(active.slug, 'cover', url)} />
               <span className="yzt-ai-hint">יוצר תמונה אוטומטית (OpenAI) ומעלה אותה ככריכה. דורש OPENAI_API_KEY ב-Vercel.</span>
             </div>
             <input dir="rtl" className="yzt-altinput" value={active.coverAlt || ''} onChange={(e) => setField(active.slug, 'coverAlt', e.target.value)} onBlur={commit} placeholder="תיאור התמונה (alt) לנגישות ו-SEO" />

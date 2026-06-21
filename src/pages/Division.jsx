@@ -281,7 +281,7 @@ export default function Division() {
               <h2 className="division-guide__title">{L(division.guide.title)}</h2>
               <p className="division-guide__desc">{L(division.guide.desc)}</p>
             </div>
-            <Link to={slug === 'development' ? '/yazamut-nadlan' : slug === 'execution' ? '/constructions' : slug === 'supervision' ? '/construction-supervision' : '/blog'} className="btn btn--primary btn--lg">
+            <Link to={slug === 'development' ? '/yazamut-nadlan' : slug === 'execution' ? '/constructions' : slug === 'supervision' ? '/construction-supervision' : slug === 'brokerage' ? '/real-estate-guide' : '/blog'} className="btn btn--primary btn--lg">
               {t('common.readMore')}
               <Icon name="arrow" size={20} className="division-guide__arrow" />
             </Link>

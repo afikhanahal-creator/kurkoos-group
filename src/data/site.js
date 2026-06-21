@@ -73,7 +73,7 @@ export const site = {
         { label: { he: 'תיווך ושיווק', en: 'Brokerage & Marketing' }, to: '/divisions/brokerage' },
         { label: { he: 'אפיק הנחל', en: 'Afik Hanachal' }, to: '/divisions/brokerage#why' },
         { label: { he: 'פרויקטים בשיווק', en: 'Projects in marketing' }, to: '/divisions/brokerage#projects' },
-        { label: { he: 'המדריך לרוכש ולמוכר', en: 'The buyer & seller guide' }, to: '/blog' },
+        { label: { he: 'המדריך לרוכש ולמוכר', en: 'The buyer & seller guide' }, to: '/real-estate-guide' },
       ],
     },
     { key: 'contact', to: '/#contact' },

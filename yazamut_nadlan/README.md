@@ -1,29 +1,50 @@
-# 📦 טור יזמות נדל"ן — קבוצת קורקוס
+# 📦 חבילת טור יזמות נדל"ן — קבוצת קורקוס
 
-סוכן + תשתית לכתבה שבועית על **יזמות נדל"ן**, שמתפרסמת בעמוד `/yazamut-nadlan`
-(עמוד היזמות מפנה לשם במקום לבלוג).
+החבילה לבניית סקשן "טור יזמות נדל"ן" באתר, עם סוכן שמייצר כתבה שבועית בקו עיצובי אחיד.
 
-## מה יש כאן
+## מה יש פה
 ```
-yazamut_nadlan/
-├── prompt.md             ← פרומפט הסוכן (system prompt). הלב.
-├── content-calendar.md   ← 24 נושאים, כ-6 חודשים קדימה.
-├── AUTOMATION.md         ← איך מפרסמים כל ראשון (ידני / GitHub Action).
-├── scripts/
-│   └── generate-article.mjs   ← מחולל: Claude → קובץ כתבה ב-src/content/yazamut/
-└── README.md
+kurkoos-content/
+├── agents/
+│   └── real-estate-development-columnist.md   ← הסוכן (הפרומפט לאתר). זה הלב.
+├── articles/                                   ← 3 כתבות מוכנות (MDX + frontmatter)
+│   ├── 2026-06-21-tama38-pokaat-pinui-binui.mdx
+│   ├── 2026-06-28-bank-israel-10-90.mdx
+│   └── 2026-07-05-maslul-mahir-arbuyot.mdx
+├── images/                                     ← 3 תמונות כותרת (SVG, קו עיצובי אחד)
+│   ├── 01-tama38-pinui-binui.svg
+│   ├── 02-bank-israel-10-90.svg
+│   └── 03-fast-track-guarantees.svg
+├── content-calendar.md                         ← 24 נושאים = חצי שנה קדימה
+├── AUTOMATION.md                               ← פרסום כל ראשון 8:00 (2 דרכים)
+└── README.md                                   ← הקובץ הזה
 ```
 
-## איפה התוכן באתר
-- **כתבות:** `src/content/yazamut/*.js` — כל קובץ = כתבה. נטענות אוטומטית.
-- **טעינה:** `src/lib/yazamut.js`
-- **עמודים:** `src/pages/Yazamut.jsx` (רשימה) · `src/pages/YazamutArticle.jsx` (כתבה)
-- **נתיבים:** `/yazamut-nadlan` ו-`/yazamut-nadlan/:slug`
+## קו עיצוב התמונות
+כל תמונה ארכיטקטונית-עיתונאית, רקע כהה, מוטיב גיאומטרי לפי הנושא. **5 צבעים** מוגדרים בהערה בראש כל קובץ SVG — find-replace כדי להתאים למותג קורקוס המדויק:
+- `#16202E` רקע (ink) · `#F5F2EC` נייר (paper) · `#C9A24B` נחושת/אקסנט (brass) · `#9A9486` אבן (stone) · `#2C3A4D` קווי תוכנית (line)
 
-## להוספת כתבה ידנית
-צרו קובץ `src/content/yazamut/2026-07-12-<slug>.js` במבנה של הכתבות הקיימות
-(slug, title, date, author, authorTitle, category, tags, cover, coverAlt, excerpt,
-readingTime, published, body). תאריך עתידי = יעלה לבד באותו יום.
+הפונט בתמונות הוא `Heebo` (עם fallback). אם הוא בשימוש באתר — התמונות יישבו בול.
 
-## להפעלה אוטומטית
-ראו `AUTOMATION.md` — צריך רק להגדיר `ANTHROPIC_API_KEY` ב-Secrets של GitHub.
+## חיווט מהיר ל-Next.js (3 צעדים)
+1. **תמונות:** העתק את `images/*.svg` ל-`public/images/blog/`. שדה `coverImage` בכתבות כבר מצביע ל-`/images/blog/...`.
+2. **כתבות:** העתק את `articles/*.mdx` לתיקיית התוכן (למשל `content/blog/`).
+3. **שדות frontmatter:** ודא שהשמות (`title, slug, date, coverImage, excerpt...`) תואמים ל-loader/CMS שלך. אם לא — שנה את השמות בכתבות **ובפלט של הסוכן** (בקובץ הסוכן, בחלק "פורמט הפלט").
+
+> כדי שכתבה תופיע **רק** ביום ראשון 8:00, הסקשן צריך לסנן `published === true && date <= now`. ככה כתבה מתוזמנת קדימה יושבת "רדומה" עד הזמן שלה.
+
+## איך מייצרים את כתבת השבוע
+מדביקים את `agents/real-estate-development-columnist.md` כ-system prompt, ואז:
+```
+כתוב את כתבת יום ראשון הקרוב. התאריך היום: [DATE].
+```
+מקבלים MDX מלא + הצעת תמונה. את התמונה אפשר לייצר כ-SVG חדש באותו קו, או לבקש ממני.
+
+## להפעלה האוטומטית
+ראה `AUTOMATION.md` — שתי דרכים (תזמון ב-CMS / GitHub Action cron), עם דגשי בטיחות למפתחות ול-git.
+
+## הצעדים הבאים שאני יכול לעשות איתך
+- להתאים את שמות שדות ה-frontmatter למבנה האמיתי של אתר קורקוס (תגיד לי איך נראה ה-loader).
+- לכתוב את `scripts/generate-article.mjs` המלא לפי ה-API.
+- לעצב את סקשן הבלוג עצמו (כרטיסי כתבה, עמוד כתבה, RTL מלא).
+- לייצר תמונות SVG לכתבות 4–24 מהלוח.

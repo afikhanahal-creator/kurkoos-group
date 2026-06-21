@@ -1,0 +1,316 @@
+<div id="kurkoos-cms" dir="rtl"></div>
+
+<style>
+  #kurkoos-cms{--ink:#16202E;--paper:#F5F2EC;--brass:#C9A24B;--stone:#9A9486;--line:#2C3A4D;
+    font-family:'Heebo','Assistant','Segoe UI',sans-serif;color:var(--ink);max-width:1180px;margin:0 auto;}
+  #kurkoos-cms *{box-sizing:border-box}
+  .kc-top{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--ink);color:var(--paper);padding:16px 20px;border-radius:14px 14px 0 0;}
+  .kc-top h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.5px}
+  .kc-top .brand{font-weight:800;letter-spacing:4px;color:var(--brass);font-size:13px}
+  .kc-btn{border:none;border-radius:9px;padding:9px 14px;font-family:inherit;font-weight:700;
+    cursor:pointer;font-size:14px;background:var(--brass);color:var(--ink)}
+  .kc-btn.ghost{background:transparent;color:var(--paper);border:1px solid rgba(245,242,236,.3)}
+  .kc-btn.danger{background:#b4452f;color:#fff}
+  .kc-btn.sm{padding:6px 10px;font-size:13px}
+  .kc-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;
+    border:1px solid #e7e2d6;border-top:none;padding:12px 16px}
+  .kc-tab{border:none;background:#efeadd;color:var(--ink);border-radius:999px;padding:7px 14px;
+    font-family:inherit;font-weight:700;cursor:pointer;font-size:13px}
+  .kc-tab.on{background:var(--ink);color:var(--paper)}
+  .kc-sel{margin-inline-start:auto;display:flex;gap:8px;align-items:center}
+  select.kc-sel-i{font-family:inherit;padding:7px 10px;border-radius:9px;border:1px solid #d9d3c5;background:#fff;font-weight:600}
+  .kc-wrap{display:grid;grid-template-columns:360px 1fr;gap:0;border:1px solid #e7e2d6;border-top:none;
+    border-radius:0 0 14px 14px;overflow:hidden;min-height:520px;background:#fbf9f4}
+  .kc-list{border-inline-start:1px solid #e7e2d6;background:#f4f1ea;overflow:auto;max-height:680px}
+  .kc-card{display:flex;gap:10px;padding:11px 12px;cursor:pointer;border-bottom:1px solid #e7e2d6;align-items:center}
+  .kc-card:hover{background:#efeadd}
+  .kc-card.on{background:#fff;box-shadow:inset 3px 0 0 var(--brass)}
+  .kc-thumb{width:74px;height:46px;border-radius:6px;flex:0 0 auto;object-fit:cover;background:var(--ink)}
+  .kc-card h3{margin:0 0 3px;font-size:14px;font-weight:700;line-height:1.25}
+  .kc-meta{font-size:11px;color:#8a857a;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .kc-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px}
+  .b-published{background:#dff0e0;color:#1f6b34}
+  .b-scheduled{background:#fdebcf;color:#9a6a12}
+  .b-draft{background:#e7e2d6;color:#6b6457}
+  .kc-edit{padding:18px 20px;overflow:auto;max-height:680px}
+  .kc-edit label{display:block;font-size:12px;font-weight:700;color:#6b6457;margin:12px 0 4px}
+  .kc-edit input,.kc-edit textarea,.kc-edit select{width:100%;font-family:inherit;font-size:14px;
+    padding:9px 11px;border:1px solid #d9d3c5;border-radius:9px;background:#fff;color:var(--ink)}
+  .kc-edit textarea{resize:vertical;line-height:1.6}
+  .kc-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .kc-cover{display:flex;gap:12px;align-items:center;margin-top:6px}
+  .kc-cover img{width:150px;height:90px;object-fit:cover;border-radius:9px;border:1px solid #d9d3c5;background:var(--ink)}
+  .kc-cover .col{display:flex;flex-direction:column;gap:6px}
+  .kc-count{font-size:11px;color:#8a857a;font-weight:600}
+  .kc-actions{display:flex;gap:8px;margin-top:18px;border-top:1px solid #e7e2d6;padding-top:14px}
+  .kc-actions .save{margin-inline-end:auto}
+  .kc-empty{padding:60px 20px;text-align:center;color:#8a857a}
+  .kc-seo{background:#fff;border:1px solid #e7e2d6;border-radius:10px;padding:12px;margin-top:8px}
+  .kc-seo .ttl{font-size:12px;font-weight:800;color:var(--brass);margin-bottom:6px}
+  .kc-charcount{font-size:11px;color:#8a857a;text-align:end;margin-top:2px}
+  .kc-charcount.over{color:#b4452f;font-weight:700}
+  .kc-notes textarea{min-height:80px}
+  .kc-note{background:#fff;border:1px solid #e7e2d6;border-radius:9px;padding:10px 12px;margin-bottom:8px;font-size:14px}
+  .kc-note .nd{font-size:11px;color:#8a857a;margin-top:4px}
+  .kc-toast{position:fixed;bottom:24px;inset-inline-start:50%;transform:translateX(50%);
+    background:var(--ink);color:var(--paper);padding:11px 20px;border-radius:10px;font-weight:700;
+    font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
+  .kc-toast.show{opacity:1}
+  @media(max-width:760px){.kc-wrap{grid-template-columns:1fr}.kc-list{max-height:260px}.kc-row{grid-template-columns:1fr}}
+</style>
+
+<script>
+(function(){
+  const root = document.getElementById('kurkoos-cms');
+  const C = {ink:'#16202E',paper:'#F5F2EC',brass:'#C9A24B',stone:'#9A9486',line:'#2C3A4D'};
+  const KEY='kurkoos:articles', NKEY='kurkoos:agentNotes';
+  let mem=null, memNotes=null; // in-memory fallback
+
+  // ---- storage helpers (window.storage with graceful fallback) ----
+  async function load(key, fallback){
+    try{ if(window.storage){ const r=await window.storage.get(key,false); return r? JSON.parse(r.value): fallback; } }catch(e){}
+    return key===KEY ? (mem??fallback) : (memNotes??fallback);
+  }
+  async function save(key,val){
+    try{ if(window.storage){ await window.storage.set(key,JSON.stringify(val),false); return; } }catch(e){}
+    if(key===KEY) mem=val; else memNotes=val;
+  }
+
+  // ---- on-brand inline cover generator (data URI) ----
+  function seedCover(title,category){
+    const wrap=(s,m)=>{const w=s.split(/\s+/),L=[];let c='';for(const x of w){if((c+' '+x).trim().length>m){if(c)L.push(c);c=x;}else c=(c+' '+x).trim();}if(c)L.push(c);return L;};
+    const lines=wrap(title,20).slice(0,3);
+    const sy=300-(lines.length-1)*30;
+    const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const tsp=lines.map((l,i)=>`<text x="940" y="${sy+i*64}" text-anchor="end" direction="rtl" fill="${C.paper}" font-family="Heebo,Arial,sans-serif" font-weight="800" font-size="50">${esc(l)}</text>`).join('');
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560"><rect width="1000" height="560" fill="${C.ink}"/><g stroke="${C.line}" stroke-width="1" opacity="0.18"><line x1="0" y1="140" x2="1000" y2="140"/><line x1="0" y1="280" x2="1000" y2="280"/><line x1="0" y1="420" x2="1000" y2="420"/><line x1="250" y1="0" x2="250" y2="560"/><line x1="500" y1="0" x2="500" y2="560"/><line x1="750" y1="0" x2="750" y2="560"/></g><line x1="0" y1="470" x2="1000" y2="470" stroke="${C.brass}" stroke-width="3"/><rect x="70" y="180" width="110" height="290" fill="${C.brass}" opacity="0.92"/><rect x="70" y="120" width="110" height="60" fill="${C.paper}" opacity="0.10"/><text x="940" y="70" text-anchor="end" direction="rtl" fill="${C.brass}" font-family="Heebo,Arial,sans-serif" font-weight="700" font-size="22">${esc(category)}</text>${tsp}<text x="940" y="525" text-anchor="end" fill="${C.paper}" font-family="Heebo,Arial,sans-serif" font-weight="800" letter-spacing="5" font-size="24">KURKOOS</text></svg>`;
+    return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+  }
+  function coverSrc(a){
+    if(a.coverType==='url'||a.coverType==='data') return a.coverValue;
+    return seedCover(a.title||'כתבה', a.category||'קורקוס');
+  }
+
+  // ---- seed data: both columns ----
+  function seed(){return [
+    {id:'c1',column:'biba',status:'published',date:'2026-06-21',category:'בטיחות באתר',
+     title:'בטיחות באתר בנייה: השער שננעל, והחור שאף אחד לא מדבר עליו',slug:'betihut-atar-bniya-2026',
+     focusKeyword:'בטיחות באתר בנייה',metaTitle:'בטיחות באתר בנייה 2026: החור שנפער בשטח',
+     metaDescription:'חוק עוזרי הבטיחות פקע, התקנות החדשות רק באוקטובר. מה זה אומר על בטיחות באתר בנייה, ולמה אתר שנסגר בצו לא בונה.',
+     excerpt:'בסוף מאי פקע החוק שחייב אתרים גדולים להעסיק עוזר בטיחות, והתקנות שאמורות להחליף אותו נכנסות רק באוקטובר. בין שני התאריכים האלה יש שטח, ובשטח עובדים אנשים.',
+     coverType:'seed',coverValue:'',
+     body:'ארבעים ושבעה בני אדם לא חזרו הביתה מהעבודה בשנה שעברה. כולם בענף אחד, ענף הבנייה.\n\nבסוף מאי פקע החוק שחייב אתרים גדולים להעסיק עוזר בטיחות. התקנות החדשות נכנסות רק באוקטובר, וביניהם יש כמה חודשים שבהם חלק מהאתרים יישארו עם מנהל עבודה לבד מול הסיכונים.\n\n[הטקסט המלא בקובץ ה-MDX. כאן אפשר לערוך, לקצר או לשכתב.]'},
+    {id:'c2',column:'biba',status:'scheduled',date:'2026-06-28',category:'איכות וליקויים',
+     title:'ליקויי בנייה: כל מה שמכוסה היום, חוזר אליך עוד שבע שנים',slug:'likuyei-bniya-madrich-bitsua-2026',
+     focusKeyword:'ליקויי בנייה',metaTitle:'ליקויי בנייה 2026: מדריך ביצוע ותקופות הבדק',
+     metaDescription:'ליקויי בנייה לא נעלמים מעצמם. מדריך ביצוע מעשי לתקופות הבדק לפי חוק המכר, איפה נכשלים, ואיך בונים נכון מהשלד.',
+     excerpt:'כ-80 אחוז מהליקויים באתרים חוזרים על עצמם, אותם סדקים ואותה רטיבות. מי שמכיר אותם מראש בונה אחרת.',
+     coverType:'seed',coverValue:'',
+     body:'יש סטטיסטיקה אחת שכל מבצע צריך לחקוק על הקיר. כשמומחה בדק בית נכנס לדירה חדשה, כ-80 אחוז מהליקויים שהוא מוצא הם אותם ליקויים שמצא בדירה הקודמת.\n\n[הטקסט המלא בקובץ ה-MDX.]'},
+    {id:'c3',column:'biba',status:'draft',date:'2026-07-05',category:'בירוקרטיה ורישוי',
+     title:'טופס 4: הבניין גמור, אז למה אסור עדיין לגור בו',slug:'tofes-4-achlus-bniya-2026',
+     focusKeyword:'טופס 4',metaTitle:'טופס 4: למה הקילומטר האחרון בבנייה הכי יקר',
+     metaDescription:'טופס 4 הוא הקו שמפריד בין בניין גמור לבניין שאפשר לגור בו. מדריך ביצוע לשלבים, לבירוקרטיה, ולמה פרויקטים נתקעים ממש לפני הסוף.',
+     excerpt:'המבנה עומד, הדירות מוכנות, והרוכשים אורזים. ואז מתברר שבלי טופס 4 אי אפשר לחבר חשמל ומים.',
+     coverType:'seed',coverValue:'',
+     body:'ראיתי פרויקטים שבנו מצוין במשך שלוש שנים, ואיבדו ארבעה חודשים בקילומטר האחרון.\n\n[הטקסט המלא בקובץ ה-MDX.]'},
+    {id:'y1',column:'yazamut',status:'published',date:'2026-06-21',category:'התחדשות עירונית',
+     title:'תמ"א 38 פוקעת. מה שבא במקומה משנה את כללי המשחק ליזמים',slug:'tama38-pokaat-pinui-binui-2026',
+     focusKeyword:'פינוי בינוי',metaTitle:'תמ"א 38 פוקעת: מה שבא במקומה',metaDescription:'אחרי כמעט עשרים שנה תמ"א 38 יורדת מהבמה. נולד שוק חדש עם כלל אחד שמשנה את כל הכלכלה של הפרויקט.',
+     excerpt:'אחרי כמעט עשרים שנה, תמ"א 38 יורדת מהבמה. מי שמסתכל על זה כסוף עידן מפספס את העיקר.',
+     coverType:'seed',coverValue:'',body:'יש מספר אחד שצריך לזכור מהשנה הזו, והוא לא מחיר למ"ר. הוא 67%.\n\n[הטקסט המלא בקובץ ה-MDX של טור היזמות.]'},
+    {id:'y2',column:'yazamut',status:'scheduled',date:'2026-06-28',category:'מימון ויזמות',
+     title:'כשבנק ישראל סגר את ברז ה-10/90, התגלה מי באמת בנה ערך',slug:'bank-israel-10-90-2026',
+     focusKeyword:'מבצעי מימון',metaTitle:'בנק ישראל בולם 10/90: מי בנה ערך',metaDescription:'מבצעי ה-10/90 היו הדלק של השוק. כשבנק ישראל הגביל אותם נחשף הפער בין מי שמכר נכס למי שמכר מבצע.',
+     excerpt:'מבצעי ה-10/90 היו הדלק של השוק. כשבנק ישראל הגביל אותם, חלק מהקבלנים נאלצו להוריד מחירים בפועל.',
+     coverType:'seed',coverValue:'',body:'תשלם 10% היום, את ה-90% רק במסירה.\n\n[הטקסט המלא בקובץ ה-MDX של טור היזמות.]'},
+    {id:'y3',column:'yazamut',status:'scheduled',date:'2026-07-05',category:'רגולציה ותכנון',
+     title:'הצוואר הבקבוק של הנדל"ן הישראלי מעולם לא היה ביקוש. הוא היה זמן',slug:'maslul-mahir-arbuyot-2026',
+     focusKeyword:'מסלול מהיר',metaTitle:'הצוואר של הנדל"ן הוא זמן, לא ביקוש',metaDescription:'שני מהלכים מ-2026, מסלול תכנון מואץ ורפורמת ערבויות, תוקפים בדיוק את מה שעיכב יזמים שנים.',
+     excerpt:'שני מהלכים שקטים מ-2026 תוקפים בדיוק את שתי הבעיות שעיכבו יזמים שנים: כמה זמן זה לוקח, וכמה זה עולה לממן.',
+     coverType:'seed',coverValue:'',body:'תשאלו כל יזם נדל"ן ותיק מה הורג פרויקטים בישראל, ורובם לא יגידו אין ביקוש.\n\n[הטקסט המלא בקובץ ה-MDX של טור היזמות.]'},
+  ];}
+
+  // ---- state ----
+  let state={articles:[],notes:[],filterStatus:'all',filterColumn:'all',selectedId:null,view:'articles'};
+  const STATUS={published:'פורסם',scheduled:'מתוזמן',draft:'טיוטה'};
+  const COLS={biba:'ביצוע ובנייה',yazamut:'יזמות נדל"ן'};
+
+  function toast(msg){let t=root.querySelector('.kc-toast');if(!t){t=document.createElement('div');t.className='kc-toast';root.appendChild(t);}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+
+  function filtered(){
+    return state.articles.filter(a=>(state.filterStatus==='all'||a.status===state.filterStatus)&&(state.filterColumn==='all'||a.column===state.filterColumn));
+  }
+
+  function render(){
+    const a=state.articles, sel=state.articles.find(x=>x.id===state.selectedId);
+    root.innerHTML=`
+    <div class="kc-top">
+      <div><h1>מערכת תוכן · טורי קורקוס</h1></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="brand">KURKOOS</span>
+        <button class="kc-btn" id="kc-new">+ כתבה חדשה</button>
+      </div>
+    </div>
+    <div class="kc-bar">
+      ${['all','published','scheduled','draft'].map(s=>`<button class="kc-tab ${state.view==='articles'&&state.filterStatus===s?'on':''}" data-st="${s}">${s==='all'?'הכל':STATUS[s]}</button>`).join('')}
+      <button class="kc-tab ${state.view==='notes'?'on':''}" data-view="notes" style="margin-inline-start:8px">הערות לסוכן</button>
+      <div class="kc-sel">
+        <span class="kc-count">${filtered().length} כתבות</span>
+        <select class="kc-sel-i" id="kc-col">
+          <option value="all" ${state.filterColumn==='all'?'selected':''}>כל הטורים</option>
+          <option value="biba" ${state.filterColumn==='biba'?'selected':''}>ביצוע ובנייה</option>
+          <option value="yazamut" ${state.filterColumn==='yazamut'?'selected':''}>יזמות נדל"ן</option>
+        </select>
+      </div>
+    </div>
+    <div class="kc-wrap">
+      ${state.view==='notes'? notesView() : `
+      <div class="kc-edit">${sel?editor(sel):'<div class="kc-empty">בחר כתבה מהרשימה כדי לערוך, או צור כתבה חדשה.</div>'}</div>
+      <div class="kc-list">${filtered().map(card).join('')||'<div class="kc-empty">אין כתבות בטאב הזה.</div>'}</div>`}
+    </div>`;
+    bind();
+  }
+
+  function card(a){
+    return `<div class="kc-card ${a.id===state.selectedId?'on':''}" data-id="${a.id}">
+      <img class="kc-thumb" src="${coverSrc(a)}" alt="">
+      <div style="min-width:0">
+        <h3>${escapeHtml(a.title)}</h3>
+        <div class="kc-meta">
+          <span class="kc-badge b-${a.status}">${STATUS[a.status]}</span>
+          <span>${COLS[a.column]}</span><span>·</span><span>${a.date}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function cc(v,max){const n=(v||'').length;return `<div class="kc-charcount ${n>max?'over':''}">${n}/${max}</div>`;}
+
+  function editor(a){
+    return `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong style="font-size:13px;color:var(--stone)">${COLS[a.column]}</strong>
+      <select id="f-status" style="width:auto">
+        ${Object.keys(STATUS).map(s=>`<option value="${s}" ${a.status===s?'selected':''}>${STATUS[s]}</option>`).join('')}
+      </select>
+    </div>
+    <label>כותרת</label><input id="f-title" value="${escapeAttr(a.title)}">
+    <div class="kc-row">
+      <div><label>Slug (לכתובת)</label><input id="f-slug" value="${escapeAttr(a.slug)}"></div>
+      <div><label>תאריך פרסום</label><input id="f-date" type="date" value="${a.date}"></div>
+    </div>
+    <label>קטגוריה</label><input id="f-cat" value="${escapeAttr(a.category)}">
+
+    <label>תמונת כותרת</label>
+    <div class="kc-cover">
+      <img id="f-coverimg" src="${coverSrc(a)}" alt="">
+      <div class="col">
+        <button class="kc-btn sm" id="f-upload">העלה תמונה</button>
+        <button class="kc-btn sm ghost" id="f-url" style="color:var(--ink);border:1px solid #d9d3c5">הדבק קישור</button>
+        <button class="kc-btn sm danger" id="f-removeimg">הסר תמונה</button>
+        <input type="file" id="f-file" accept="image/*" style="display:none">
+      </div>
+    </div>
+
+    <label>תקציר (Excerpt)</label><textarea id="f-excerpt" rows="2">${escapeHtml(a.excerpt)}</textarea>
+    <label>גוף הכתבה</label><textarea id="f-body" rows="10">${escapeHtml(a.body)}</textarea>
+
+    <div class="kc-seo">
+      <div class="ttl">SEO</div>
+      <label>מילת מפתח ראשית</label><input id="f-kw" value="${escapeAttr(a.focusKeyword)}">
+      <label>Meta Title</label><input id="f-mt" value="${escapeAttr(a.metaTitle)}">${cc(a.metaTitle,60)}
+      <label>Meta Description</label><textarea id="f-md" rows="2">${escapeHtml(a.metaDescription)}</textarea>${cc(a.metaDescription,155)}
+    </div>
+
+    <div class="kc-actions">
+      <button class="kc-btn save" id="f-save">שמור שינויים</button>
+      <button class="kc-btn ghost" id="f-mdx" style="color:var(--ink);border:1px solid #d9d3c5">העתק כ-MDX</button>
+      <button class="kc-btn danger" id="f-del">מחק כתבה</button>
+    </div>`;
+  }
+
+  function notesView(){
+    return `<div class="kc-edit kc-notes" style="grid-column:1 / -1">
+      <h2 style="margin:0 0 4px;font-size:18px">הערות בונות לסוכן</h2>
+      <p style="margin:0 0 12px;color:#6b6457;font-size:14px">כתוב כאן כיול לכתיבה של הסוכן. ההערות נשמרות, ואפשר להזין אותן חזרה לפרומפט כדי לשפר את הסבב הבא. למשל: "הפתיחות נהיות צפויות", "הקוראים הגיבו הכי חזק לכתבות כשל".</p>
+      <textarea id="n-text" rows="3" placeholder="כתוב הערה חדשה לסוכן..."></textarea>
+      <div style="margin-top:8px"><button class="kc-btn" id="n-add">הוסף הערה</button></div>
+      <div style="margin-top:16px">${state.notes.length?state.notes.map((n,i)=>`<div class="kc-note">${escapeHtml(n.text)}<div class="nd">${n.date} · <a href="#" data-del="${i}" style="color:#b4452f">מחק</a></div></div>`).join(''):'<div class="kc-empty">אין עדיין הערות.</div>'}</div>
+    </div>`;
+  }
+
+  // ---- binding ----
+  function bind(){
+    root.querySelectorAll('.kc-tab[data-st]').forEach(b=>b.onclick=()=>{state.view='articles';state.filterStatus=b.dataset.st;render();});
+    const vn=root.querySelector('.kc-tab[data-view]'); if(vn) vn.onclick=()=>{state.view='notes';render();};
+    const col=root.querySelector('#kc-col'); if(col) col.onchange=()=>{state.filterColumn=col.value;render();};
+    const nb=root.querySelector('#kc-new'); if(nb) nb.onclick=newArticle;
+    root.querySelectorAll('.kc-card').forEach(c=>c.onclick=()=>{state.view='articles';state.selectedId=c.dataset.id;render();});
+
+    const a=state.articles.find(x=>x.id===state.selectedId);
+    if(a){
+      const g=id=>root.querySelector(id);
+      const live=(el,max)=>{if(!el)return;const cnt=el.parentElement.querySelector('.kc-charcount');if(cnt)el.oninput=()=>{const n=el.value.length;cnt.textContent=n+'/'+max;cnt.classList.toggle('over',n>max);};};
+      live(g('#f-mt'),60); live(g('#f-md'),155);
+      g('#f-save').onclick=()=>{
+        a.title=g('#f-title').value;a.slug=g('#f-slug').value;a.date=g('#f-date').value;
+        a.category=g('#f-cat').value;a.status=g('#f-status').value;a.excerpt=g('#f-excerpt').value;
+        a.body=g('#f-body').value;a.focusKeyword=g('#f-kw').value;a.metaTitle=g('#f-mt').value;a.metaDescription=g('#f-md').value;
+        save(KEY,state.articles).then(()=>{toast('נשמר ✓');render();});
+      };
+      g('#f-del').onclick=()=>{if(confirm('למחוק את הכתבה לצמיתות?')){state.articles=state.articles.filter(x=>x.id!==a.id);state.selectedId=null;save(KEY,state.articles).then(()=>{toast('נמחק');render();});}};
+      g('#f-removeimg').onclick=()=>{a.coverType='seed';a.coverValue='';g('#f-coverimg').src=coverSrc(a);toast('התמונה הוסרה. נוצרה תמונת ברירת מחדל ממותגת.');};
+      g('#f-url').onclick=()=>{const u=prompt('הדבק קישור לתמונה (URL):',a.coverType==='url'?a.coverValue:'');if(u){a.coverType='url';a.coverValue=u.trim();g('#f-coverimg').src=u.trim();}};
+      g('#f-upload').onclick=()=>g('#f-file').click();
+      g('#f-file').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>1.8e6){alert('התמונה גדולה מדי (מעל ~1.8MB). בחר תמונה קלה יותר או השתמש בקישור.');return;}const r=new FileReader();r.onload=()=>{a.coverType='data';a.coverValue=r.result;g('#f-coverimg').src=r.result;toast('תמונה הוטענה. לא לשכוח לשמור.');};r.readAsDataURL(f);};
+      g('#f-mdx').onclick=()=>{const mdx=toMDX(a);navigator.clipboard?.writeText(mdx).then(()=>toast('הועתק כ-MDX ✓'),()=>toast('העתקה נכשלה'));};
+    }
+
+    if(state.view==='notes'){
+      const add=root.querySelector('#n-add'); if(add) add.onclick=()=>{const t=root.querySelector('#n-text').value.trim();if(!t)return;state.notes.unshift({text:t,date:new Date().toISOString().slice(0,10)});save(NKEY,state.notes).then(()=>{toast('הערה נוספה ✓');render();});};
+      root.querySelectorAll('a[data-del]').forEach(x=>x.onclick=ev=>{ev.preventDefault();state.notes.splice(+x.dataset.del,1);save(NKEY,state.notes).then(()=>render());});
+    }
+  }
+
+  function newArticle(){
+    const id='n'+Date.now();
+    const a={id,column:state.filterColumn==='yazamut'?'yazamut':'biba',status:'draft',
+      date:new Date().toISOString().slice(0,10),category:'',title:'כתבה חדשה',slug:'new-article',
+      focusKeyword:'',metaTitle:'',metaDescription:'',excerpt:'',coverType:'seed',coverValue:'',body:''};
+    state.articles.unshift(a);state.selectedId=id;state.view='articles';
+    save(KEY,state.articles).then(()=>{toast('נוצרה טיוטה');render();});
+  }
+
+  function toMDX(a){
+    const f=`---
+title: "${a.title.replace(/"/g,'\\"')}"
+slug: "${a.slug}"
+date: "${a.date}"
+category: "${a.category}"
+focusKeyword: "${a.focusKeyword}"
+metaTitle: "${a.metaTitle.replace(/"/g,'\\"')}"
+metaDescription: "${a.metaDescription.replace(/"/g,'\\"')}"
+coverImage: "${a.coverType==='seed'?('/images/blog/'+a.slug+'.svg'):a.coverValue.slice(0,80)}"
+excerpt: "${a.excerpt.replace(/"/g,'\\"')}"
+published: ${a.status==='published'}
+---
+
+${a.body}`;
+    return f;
+  }
+
+  function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function escapeAttr(s){return escapeHtml(s).replace(/"/g,'&quot;');}
+
+  // ---- init ----
+  (async function init(){
+    let arts=await load(KEY,null);
+    if(!arts){ arts=seed(); await save(KEY,arts); }
+    state.articles=arts;
+    state.notes=await load(NKEY,[]);
+    render();
+  })();
+})();
+</script>

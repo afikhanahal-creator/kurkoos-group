@@ -1,32 +1,105 @@
-# ⚙️ פרסום כתבה כל יום ראשון — איך זה עובד בפועל
+# ⚙️ פרסום אוטומטי כל יום ראשון ב-8:00 — איך זה באמת עובד
 
-## איך מחובר לאתר
-- כל כתבה היא קובץ נפרד תחת `src/content/yazamut/<date>-<slug>.js`.
-- העמוד טוען את כולן אוטומטית (`src/lib/yazamut.js` → `import.meta.glob`). אין צורך לגעת בקוד — מוסיפים קובץ, וזהו.
-- כתבה מוצגת רק אם `published !== false` **ו**-`date <= היום`. לכן אפשר לתזמן קדימה: כתבה עם תאריך עתידי "יושבת רדומה" ותעלה לבד ביום שלה.
-- העמוד: `/yazamut-nadlan` (רשימה) ו-`/yazamut-nadlan/<slug>` (כתבה). עמוד היזמות כבר מפנה לשם במקום לבלוג.
+## נקודת אמת קודם
 
-## אפשרות א' — ידני, 10 דק' בשבוע (הכי בשליטה)
-מריצים את הסוכן בצ'אט (Claude / Claude Code) עם `prompt.md` כ-system prompt, ואז:
+אני (Claude בצ'אט) **לא יכול לרוץ לבד כל יום ראשון ב-8:00**. אין לי טיימר, אין לי גישה ישירה ל-repo או ל-CMS שלך, ואני לא מריץ משימות מתוזמנות ברקע. מי שמבטיח לך "אני אעלה כתבה כל ראשון אוטומטית" — מוכר לך משהו שלא קיים.
+
+מה **כן** קיים: סיפקתי לך את כל החלקים — הסוכן (הפרומפט), 3 כתבות מוכנות, 3 תמונות, ולוח נושאים. נשאר רק לחבר "טיימר" אמיתי שיריץ את הסוכן וידחוף את הקובץ לאתר. יש לזה שתי דרכים מעשיות. בחר אחת.
+
+---
+
+## אפשרות א' — הכי פשוטה: תזמון פרסום ב-CMS (ידני פעם בשבוע, פרסום אוטומטי)
+
+אם יש לך CMS (גם ה-CMS שאנחנו בונים לקורקוס): פעם בשבוע אתה מריץ את הסוכן, מקבל קובץ MDX, מדביק, **מתזמן** את הפרסום ל-ראשון 8:00.
+
+**איפה:** בצ'אט עם Claude / Claude Code, פעם בשבוע (נניח חמישי).
+**מה לכתוב:**
 ```
-כתוב את כתבת יום ראשון הקרוב. התאריך: YYYY-MM-DD.
-אל תחזור על הנושאים מ-6 השבועות האחרונים.
+כתוב את כתבת יום ראשון הקרוב. התאריך היום: [DATE].
+אל תחזור על הנושאים מ-6 השבועות האחרונים: [רשימה].
 ```
-מקבלים בלוק MDX. שומרים אותו כקובץ חדש ב-`src/content/yazamut/` (אפשר דרך הסקריפט למטה, או ידנית בפורמט של שאר הקבצים). מוסיפים תאריך עתידי = ראשון 08:00 כדי שיעלה לבד.
+**אחר כך:** מדביק את ה-MDX ל-CMS → שדה תאריך = ראשון 08:00 → "תזמן פרסום".
+האתר מציג כתבות רק כש-`date <= now`, אז היא תופיע לבד בזמן.
 
-## אפשרות ב' — אוטומציה מלאה (GitHub Action)
-קיים workflow ב-`.github/workflows/weekly-article.yml` שרץ כל ראשון 05:00 UTC (08:00 בקיץ):
-1. קורא ל-Claude עם `prompt.md`.
-2. מריץ `yazamut_nadlan/scripts/generate-article.mjs` שכותב קובץ כתבה חדש.
-3. **פותח Pull Request** (לבדיקה אנושית) — לא דוחף ישר ל-main.
+✅ יתרון: שליטה מלאה, אתה רואה כל כתבה לפני שעולה.
+⚠️ חיסרון: דורש 10 דק' ממך פעם בשבוע.
 
-### מה צריך פעם אחת
-1. ב-GitHub: **Settings → Secrets and variables → Actions → New repository secret**
-   בשם `ANTHROPIC_API_KEY` עם מפתח ה-API שלך.
-   🔐 את המפתח מדביקים **רק** במסך הזה — לעולם לא בקוד, לא ב-commit, לא בצ'אט.
-2. זהו. אפשר גם להריץ ידנית: **Actions → "כתבת יום ראשון" → Run workflow**.
+---
 
-> רוצים פרסום אוטומטי מלא בלי PR? בקובץ ה-workflow מחליפים את צעד ה-PR ב-commit+push ל-main. מומלץ להתחיל ב-PR כמה שבועות, לכייל את האיכות, ורק אז לעבור לאוטומציה מלאה.
+## אפשרות ב' — אוטומציה מלאה: GitHub Action + cron (אפס מגע)
 
-## תמונות
-הסוכן מציע `coverImage` (כתובת Unsplash אדריכלית ברמה גבוהה שמתאימה לנושא). אם השדה ריק — מוסיפים תמונה ידנית לקובץ הכתבה. הקפידו על תמונה שמאפיינת את הנושא, לא גנרית.
+ה-repo שלך כבר על Vercel. אפשר להוסיף Action שרץ כל ראשון 8:00, קורא ל-API של Claude עם הפרומפט של הסוכן, שומר קובץ MDX חדש, ו-commit. Vercel מזהה את ה-commit ו-deploy אוטומטית.
+
+> **בטיחות git:** ה-Action עושה `commit` ל-branch ייעודי או ל-main דרך PR — **בלי force-push**, בלי לגעת בהיסטוריה. תואם לעבודה הבטוחה שלך על דיפלוי חי.
+
+**איפה:** קובץ חדש ב-repo בנתיב `.github/workflows/weekly-article.yml`
+**מה לכתוב בו:**
+```yaml
+name: כתבת יום ראשון
+on:
+  schedule:
+    - cron: '0 5 * * 0'   # 05:00 UTC = 08:00 בישראל (קיץ). בחורף: '0 6 * * 0'
+  workflow_dispatch: {}    # מאפשר גם הרצה ידנית מהכפתור
+
+permissions:
+  contents: write          # רק כתיבה ל-repo, בלי הרשאות מיותרות
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm install @anthropic-ai/sdk gray-matter
+      - name: ייצר כתבה
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/generate-article.mjs
+      - name: commit
+        run: |
+          git config user.name  "Kurkoos Bot"
+          git config user.email "bot@kurkoos-group.co.il"
+          git add content/blog/
+          git commit -m "טור יזמות נדל\"ן — כתבה שבועית" || echo "אין שינוי"
+          git push                       # push רגיל ל-branch הנוכחי, ללא --force
+```
+
+**ואז צריך סקריפט** `scripts/generate-article.mjs` שקורא ל-API. השלד:
+```js
+import Anthropic from "@anthropic-ai/sdk";
+import { writeFileSync } from "node:fs";
+
+const SYSTEM = `...כאן מדביקים את כל הפרומפט מ-agents/real-estate-development-columnist.md...`;
+const client = new Anthropic();              // לוקח ANTHROPIC_API_KEY מהסביבה
+
+const today = new Date().toISOString().slice(0, 10);
+const msg = await client.messages.create({
+  model: "claude-opus-4-8",                  // או claude-sonnet-4-6 לזול יותר
+  max_tokens: 3000,
+  system: SYSTEM,
+  messages: [{ role: "user",
+    content: `כתוב את כתבת יום ראשון. התאריך: ${today}. החזר רק את בלוק ה-MDX.` }],
+});
+
+const mdx = msg.content.find(b => b.type === "text").text
+            .replace(/^```mdx\n?/, "").replace(/```$/, "").trim();
+// חילוץ slug מה-frontmatter לשם הקובץ:
+const slug = (mdx.match(/slug:\s*"([^"]+)"/) || [])[1] || today;
+writeFileSync(`content/blog/${today}-${slug}.mdx`, mdx);
+console.log("נכתב:", slug);
+```
+
+**מה שצריך ממך פעם אחת:**
+1. ב-GitHub: **Settings → Secrets and variables → Actions → New secret** בשם `ANTHROPIC_API_KEY`.
+   🔐 **חשוב:** את מפתח ה-API מדביקים **רק** במסך הזה של GitHub — אף פעם לא בתוך קוד, לא ב-commit, ולא בצ'אט. (זה בדיוק המקום שבו מפתחות נחשפים בטעות.)
+2. להחליף בסקריפט את `SYSTEM` בתוכן הפרומפט של הסוכן.
+3. להתאים את הנתיב `content/blog/` ושמות שדות ה-frontmatter למבנה האמיתי של האתר.
+
+✅ יתרון: אפס מגע שבועי.
+⚠️ חיסרון: לא רואה כתבה לפני שעולה. **המלצה:** הפעל קודם במצב PR (לא push ישיר) כמה שבועות, אשר ידנית, ורק כשאתה בוטח — עבור ל-push אוטומטי.
+
+---
+
+## ההמלצה שלי
+התחל ב-**אפשרות א'** (תזמון ב-CMS). היא נותנת לך את הריטם של "כל ראשון 8:00" כבר השבוע, בלי קוד, ועם עין אנושית על כל כתבה — חשוב בהתחלה, כשמכיילים את הקול של הסוכן. אחרי 4–5 שבועות שאתה מרוצה מהאיכות — שדרג ל-**אפשרות ב'** לאוטומציה מלאה.

@@ -1,0 +1,42 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="עגורן בנייה ומד מימון - בלימת מבצעי 10/90">
+<!-- KURKOOS PALETTE: ink #16202E | paper #F5F2EC | brass #C9A24B | stone #9A9486 | line #2C3A4D -->
+<rect width="1600" height="900" fill="#16202E"/>
+<g stroke="#2C3A4D" stroke-width="1" opacity="0.16">
+<line x1="0" y1="150" x2="1600" y2="150"/><line x1="0" y1="300" x2="1600" y2="300"/><line x1="0" y1="450" x2="1600" y2="450"/><line x1="0" y1="600" x2="1600" y2="600"/><line x1="0" y1="750" x2="1600" y2="750"/>
+<line x1="200" y1="0" x2="200" y2="900"/><line x1="400" y1="0" x2="400" y2="900"/><line x1="600" y1="0" x2="600" y2="900"/><line x1="800" y1="0" x2="800" y2="900"/><line x1="1000" y1="0" x2="1000" y2="900"/><line x1="1200" y1="0" x2="1200" y2="900"/><line x1="1400" y1="0" x2="1400" y2="900"/>
+</g>
+<line x1="0" y1="770" x2="1600" y2="770" stroke="#C9A24B" stroke-width="3"/>
+<!-- building under construction -->
+<g stroke="#F5F2EC" stroke-width="2" opacity="0.45">
+<line x1="250" y1="370" x2="550" y2="370"/><line x1="250" y1="440" x2="550" y2="440"/><line x1="250" y1="510" x2="550" y2="510"/><line x1="250" y1="580" x2="550" y2="580"/><line x1="250" y1="650" x2="550" y2="650"/><line x1="250" y1="720" x2="550" y2="720"/>
+<line x1="320" y1="300" x2="320" y2="770"/><line x1="400" y1="300" x2="400" y2="770"/><line x1="480" y1="300" x2="480" y2="770"/>
+</g>
+<rect x="250" y="580" width="300" height="190" fill="#F5F2EC" opacity="0.92"/>
+<g fill="#16202E" opacity="0.6">
+<rect x="275" y="610" width="46" height="50"/><rect x="345" y="610" width="46" height="50"/><rect x="415" y="610" width="46" height="50"/><rect x="485" y="610" width="36" height="50"/>
+<rect x="275" y="690" width="46" height="50"/><rect x="345" y="690" width="46" height="50"/><rect x="415" y="690" width="46" height="50"/><rect x="485" y="690" width="36" height="50"/>
+</g>
+<!-- crane -->
+<g stroke="#F5F2EC" fill="none" opacity="0.92">
+<line x1="700" y1="180" x2="700" y2="770" stroke-width="5"/>
+<line x1="680" y1="220" x2="720" y2="180" stroke-width="3"/><line x1="680" y1="260" x2="720" y2="220" stroke-width="3"/><line x1="680" y1="300" x2="720" y2="260" stroke-width="3"/><line x1="680" y1="340" x2="720" y2="300" stroke-width="3"/>
+<line x1="700" y1="200" x2="430" y2="200" stroke-width="5"/><line x1="700" y1="200" x2="980" y2="200" stroke-width="5"/>
+</g>
+<line x1="700" y1="150" x2="430" y2="200" stroke="#C9A24B" stroke-width="3"/><line x1="700" y1="150" x2="980" y2="200" stroke="#C9A24B" stroke-width="3"/>
+<line x1="880" y1="200" x2="880" y2="430" stroke="#F5F2EC" stroke-width="2"/>
+<rect x="846" y="430" width="68" height="58" fill="#C9A24B"/>
+<!-- gauge -->
+<g transform="translate(1240,360)">
+<path d="M -150 60 A 150 150 0 0 1 150 60" fill="none" stroke="#F5F2EC" stroke-width="14" opacity="0.25"/>
+<path d="M -150 60 A 150 150 0 0 1 30 -88" fill="none" stroke="#C9A24B" stroke-width="14"/>
+<line x1="0" y1="60" x2="-96" y2="-6" stroke="#F5F2EC" stroke-width="6"/>
+<circle cx="0" cy="60" r="12" fill="#F5F2EC"/>
+<text x="0" y="120" text-anchor="middle" fill="#F5F2EC" font-family="Heebo,Assistant,Segoe UI,sans-serif" font-weight="600" font-size="22">מימון קבלן · מוגבל</text>
+</g>
+<!-- 10/90 -->
+<rect x="980" y="560" width="220" height="120" rx="6" fill="#F5F2EC"/>
+<text x="1090" y="628" text-anchor="middle" fill="#16202E" font-family="Heebo,Assistant,Segoe UI,sans-serif" font-weight="800" font-size="56">10 / 90</text>
+<text x="1090" y="662" text-anchor="middle" fill="#16202E" font-family="Heebo,Assistant,Segoe UI,sans-serif" font-weight="600" font-size="20">מבצע על הנייר</text>
+<text x="1540" y="80" text-anchor="end" fill="#C9A24B" font-family="Heebo,Assistant,Segoe UI,sans-serif" font-weight="700" letter-spacing="2" font-size="26">מימון · בנק ישראל · 2026</text>
+<text x="1540" y="850" text-anchor="end" fill="#F5F2EC" font-family="Heebo,Assistant,Segoe UI,sans-serif" font-weight="800" letter-spacing="6" font-size="30">KURKOOS</text>
+</svg>

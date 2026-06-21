@@ -23,11 +23,16 @@ export default function Activities() {
     let map = settings.activity_images
     if (typeof map === 'string') { try { map = JSON.parse(map) } catch { map = null } }
     const valid = map && typeof map === 'object'
+    // כרטיס התיווך משתמש תמיד בקובץ הלוגו המקומי שב-repo (לא דרך ה-CMS/פרוקסי),
+    // כדי שתמונת אפיק הנחל תמיד תיטען — גם אם ההעלאה ל-CMS שבורה.
+    const FORCE_LOCAL = { brokerage: '/afik-hanahal-cover.png' }
     const desk = activities.map((a) => {
+      if (FORCE_LOCAL[a.id]) return { ...a, image: FORCE_LOCAL[a.id] }
       const v = valid ? pickResponsive(map[a.id], 'desktop') : null
       return v ? { ...a, image: v } : a
     })
     const mob = activities.map((a) => {
+      if (FORCE_LOCAL[a.id]) return { ...a, image: FORCE_LOCAL[a.id] }
       const v = valid ? pickResponsive(map[a.id], 'mobile') : null
       return v ? { ...a, image: v } : a
     })

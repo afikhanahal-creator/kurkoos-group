@@ -1,0 +1,51 @@
+name: כתבת יום ראשון — טור יזמות נדל"ן
+
+on:
+  schedule:
+    # GitHub cron הוא ב-UTC ולא יודע קיץ/חורף. לכן שני זמנים:
+    - cron: '0 5 * * 0'   # 08:00 בישראל בקיץ (IDT, UTC+3)
+    - cron: '0 6 * * 0'   # 08:00 בישראל בחורף (IST, UTC+2)
+    # הסקריפט עצמו בודק שהשעה באמת 08:00 בישראל — אז רק ההרצה הנכונה מפרסמת.
+  workflow_dispatch:       # כפתור הרצה ידנית (Run workflow)
+    inputs:
+      force:
+        description: 'הרץ עכשיו בלי לבדוק שעה (1=כן)'
+        default: '1'
+
+permissions:
+  contents: write          # רק כתיבה ל-repo. בלי הרשאות מיותרות.
+
+concurrency:               # מונע שתי הרצות במקביל
+  group: weekly-article
+  cancel-in-progress: false
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: התקנת תלויות
+        run: npm install @anthropic-ai/sdk gray-matter
+
+      - name: ייצור כתבה
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.force || '0' }}
+        run: node scripts/generate-article.mjs
+
+      - name: Commit & push (בלי force)
+        run: |
+          git config user.name  "Kurkoos Bot"
+          git config user.email "bot@kurkoos-group.co.il"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "אין כתבה חדשה השבוע — לא מבצע commit."
+            exit 0
+          fi
+          git add content/blog/ public/images/blog/
+          git commit -m "טור יזמות נדל\"ן — כתבה שבועית ($(date +%Y-%m-%d))"
+          git push        # push רגיל ל-branch הנוכחי. ללא --force, ללא שינוי היסטוריה.

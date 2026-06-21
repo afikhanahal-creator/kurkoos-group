@@ -2,6 +2,17 @@
 .yzt__intro { color: var(--adm-text-soft, #667); font-size: 0.95rem; line-height: 1.6; max-width: 70ch; margin: 0; }
 .yzt__intro code { background: var(--adm-bg, rgba(0,0,0,0.05)); padding: 0.1em 0.4em; border-radius: 5px; font-size: 0.85em; }
 .yzt__add { white-space: nowrap; }
+.yzt__actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; flex-shrink: 0; }
+.yzt__picker {
+  min-width: 220px; max-width: 320px;
+  border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.16));
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  font: inherit; font-size: 0.9rem; font-weight: 600;
+  background: var(--adm-input-bg, #fff); color: var(--adm-text, inherit);
+  cursor: pointer;
+}
+.yzt__picker:focus { outline: none; border-color: var(--adm-accent, #105572); box-shadow: 0 0 0 3px rgba(16,85,114,0.12); }
 
 /* טאבים */
 .yzt__tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--adm-border, rgba(0,0,0,0.1)); padding-bottom: 0.8rem; }

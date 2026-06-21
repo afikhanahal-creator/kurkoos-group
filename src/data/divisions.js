@@ -104,7 +104,7 @@ export const divisions = [
     slug: 'supervision',
     icon: 'shield',
     category: null,
-    name: { he: 'קורקוס פיקוח', en: 'Kurkoos Supervision' },
+    name: { he: 'שכינתא פיקוח', en: 'Shechinta Supervision' },
     menuTitle: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
     hero: {
       title: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
@@ -115,8 +115,8 @@ export const divisions = [
       image: img('1486325212027-8081e485255e'),
     },
     intro: {
-      he: 'זרוע הפיקוח של קורקוס שומרת שכל פרויקט מבוצע בדיוק כפי שתוכנן. צוות המפקחים שלנו מלווה את הבנייה מההיתר ועד המסירה, בודק איכות וחומרים, מאשר חשבונות קבלן, מנהל לוחות זמנים ותקציב ואוכף תקני בטיחות. אנחנו מספקים שירותי פיקוח גם לפרויקטים שלנו וגם ללקוחות חיצוניים: יזמים, גופים מוסדיים ובעלי נכסים.',
-      en: 'The Kurkoos supervision arm ensures every project is executed exactly as planned. Our supervisors accompany construction from permit to handover, checking quality and materials, approving contractor invoices, managing schedule and budget, and enforcing safety standards. We provide supervision for our own projects and for external clients alike: developers, institutional bodies and property owners.',
+      he: 'זרוע הפיקוח של שכינתא שומרת שכל פרויקט מבוצע בדיוק כפי שתוכנן. צוות המפקחים שלנו מלווה את הבנייה מההיתר ועד המסירה, בודק איכות וחומרים, מאשר חשבונות קבלן, מנהל לוחות זמנים ותקציב ואוכף תקני בטיחות. אנחנו מספקים שירותי פיקוח גם לפרויקטים שלנו וגם ללקוחות חיצוניים: יזמים, גופים מוסדיים ובעלי נכסים.',
+      en: 'The Shechinta supervision arm ensures every project is executed exactly as planned. Our supervisors accompany construction from permit to handover, checking quality and materials, approving contractor invoices, managing schedule and budget, and enforcing safety standards. We provide supervision for our own projects and for external clients alike: developers, institutional bodies and property owners.',
     },
     why: [
       { icon: 'shield', title: { he: 'פיקוח הנדסי צמוד', en: 'Close engineering oversight' }, desc: { he: 'נוכחות בשטח ובקרה רציפה לאורך כל הבנייה.', en: 'On-site presence and continuous control throughout construction.' } },

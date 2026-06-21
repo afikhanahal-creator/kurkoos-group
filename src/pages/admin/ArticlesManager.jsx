@@ -120,7 +120,21 @@ export default function ArticlesManager({ config }) {
           ניהול הכתבות שמופיעות ב-<code>{config.route}</code>. בחרו כתבה בטאב, ערכו ונסחו מחדש כל שדה,
           החליפו תמונה (ריק = כריכה מעוצבת אוטומטית) או צרו תמונת AI, ארכבו או מחקו. שינויים נשמרים אוטומטית.
         </p>
-        <button type="button" className="btn btn--primary yzt__add" onClick={addItem} disabled={saving}>＋ כתבה חדשה</button>
+        <div className="yzt__actions">
+          <select
+            className="yzt__picker"
+            value={activeId || ''}
+            onChange={(e) => setActiveId(e.target.value)}
+            aria-label="בחירת כתבה"
+          >
+            {list.map((a) => (
+              <option key={a.slug} value={a.slug}>
+                {(a.deleted ? '🗑 ' : a.archived ? '📥 ' : '') + (a.title || '(ללא כותרת)')}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="btn btn--primary yzt__add" onClick={addItem} disabled={saving}>＋ כתבה חדשה</button>
+        </div>
       </div>
 
       <div className="yzt__tabs" role="tablist">

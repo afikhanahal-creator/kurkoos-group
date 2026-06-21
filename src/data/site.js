@@ -61,7 +61,7 @@ export const site = {
       to: '/divisions/supervision',
       children: [
         { label: { he: 'פיקוח פרויקטים', en: 'Project supervision' }, to: '/divisions/supervision' },
-        { label: { he: 'קורקוס פיקוח', en: 'Kurkoos Supervision' }, to: '/divisions/supervision#why' },
+        { label: { he: 'שכינתא ניהול ויזום פרוייקטים', en: 'Shechinta Project Management' }, to: '/divisions/supervision#why' },
         { label: { he: 'פרויקטים נבחרים', en: 'Selected projects' }, to: '/divisions/supervision#projects' },
         { label: { he: 'המדריך לפיקוח בנייה', en: 'The construction-supervision guide' }, to: '/construction-supervision' },
       ],

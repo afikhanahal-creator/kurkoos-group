@@ -56,7 +56,12 @@ export const activities = [
     id: 'brokerage',
     icon: 'handshake',
     to: '/divisions/brokerage',
-    image: '/afik-hanahal-cover.png',
+    // לוגו אפיק הנחל על רקע כהה: במובייל 'contain' כדי שהלוגו המלא ייראה (הרקע
+    // הכהה של הכרטיס מתמזג), בדסקטופ 'cover' כרגיל.
+    image: {
+      src: '/afik-hanahal-cover.png',
+      views: { mobile: { objectFit: 'contain' }, desktop: { objectFit: 'cover' } },
+    },
     title: { he: 'תיווך ושיווק', en: 'Brokerage & marketing' },
     short: {
       he: 'מחברים בין הזדמנויות לאנשים הנכונים',

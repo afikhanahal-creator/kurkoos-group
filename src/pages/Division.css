@@ -540,10 +540,6 @@
 }
 @keyframes dg-shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
 @media (prefers-reduced-motion: reduce) { .division-guide__band:hover::after { animation: none; } }
-/* במכשירי מגע (מובייל) אין hover — מציגים את הזוהר במנוחה כדי שהאפקט ייראה כמו בכרטיסי הממליצים */
-@media (hover: none) {
-  .division-guide__band::before { opacity: 0.6; }
-}
 .division-guide__title { font-size: var(--fs-h3); margin: 0.4rem 0 0.6rem; }
 .division-guide__desc { color: var(--color-text-soft); max-width: 50ch; }
 [dir='rtl'] .division-guide__arrow { transform: scaleX(-1); }

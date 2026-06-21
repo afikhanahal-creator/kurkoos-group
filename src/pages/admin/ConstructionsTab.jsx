@@ -2,8 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
 import { mergeConstructions } from '../../lib/constructions.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
+import AiImageButton from './AiImageButton.jsx'
 import { toast } from '../../lib/toast.js'
 import './YazamutTab.css'
+
+const aiPrompt = (a) => [
+  a.coverAlt || a.title,
+  a.category,
+  'Israeli construction site, editorial magazine photography, building process, professional, clean composition, natural light, premium, photorealistic, ultra detailed, no text, no logos, no watermark',
+].filter(Boolean).join('. ')
 
 /* ConstructionsTab — ניהול כתבות "המדריך לתהליך הבנייה" (/constructions).
    זהה במבנה ל-YazamutTab: טאב לכל כתבה, עריכה מלאה, החלפת תמונה, ארכיון ומחיקה.
@@ -200,6 +207,10 @@ export default function ConstructionsTab() {
               desktopAspect="16 / 10"
               onChange={(v) => setAndSave(active.slug, 'cover', v || '')}
             />
+            <div className="yzt-ai-row">
+              <AiImageButton promptText={aiPrompt(active)} folder="constructions" onImage={(url) => setAndSave(active.slug, 'cover', url)} />
+              <span className="yzt-ai-hint">יוצר תמונה אוטומטית (OpenAI) ומעלה אותה ככריכה. דורש OPENAI_API_KEY ב-Vercel.</span>
+            </div>
             <input dir="rtl" className="yzt-altinput" value={active.coverAlt || ''} onChange={(e) => setField(active.slug, 'coverAlt', e.target.value)} onBlur={commit} placeholder="תיאור התמונה (alt) לנגישות ו-SEO" />
           </div>
         </section>

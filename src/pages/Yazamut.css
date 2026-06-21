@@ -105,9 +105,16 @@
   background: linear-gradient(180deg, rgba(7,18,26,0.45) 0%, rgba(7,18,26,0.35) 35%, rgba(7,18,26,0.88) 100%);
 }
 .yz-hero__content { position: relative; z-index: 2; padding-block: 2.6rem 2.8rem; color: #fff; }
-.yz-hero__content .breadcrumbs,
-.yz-hero__content .breadcrumbs a,
-.yz-hero__content .breadcrumbs span { color: rgba(255,255,255,0.85); }
+.yz-hero__content .breadcrumbs {
+  --bc-muted: rgba(255,255,255,0.8);
+  --bc-current: #fff;
+  --bc-sep: rgba(255,255,255,0.4);
+  /* כפתור "עמוד הבית" — לבן מלא וברור */
+  --bc-back: var(--color-primary-900);
+  --bc-back-bg: #fff;
+  --bc-back-border: #fff;
+  --bc-back-fg-hover: #fff;
+}
 .yz-hero__cat {
   display: inline-block; margin: 0.8rem 0 0.6rem;
   font-family: var(--font-heading); font-weight: 700; font-size: 0.78rem;

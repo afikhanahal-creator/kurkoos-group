@@ -53,5 +53,12 @@
   outline: none; border-color: var(--adm-accent, #105572); box-shadow: 0 0 0 3px rgba(16,85,114,0.12);
 }
 .yzt-readonly { background: var(--adm-bg, #f3f4f6); color: var(--adm-text-soft, #889); }
+
+/* יצירת תמונה ב-AI */
+.yzt-ai-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; margin-top: 0.7rem; }
+.yzt-ai-hint { font-size: 0.78rem; color: var(--adm-text-soft, #889); }
+.yzt-btn--ai { border-color: #b9a6e6; background: #f1ecfb; color: #5b3da0; }
+.yzt-btn--ai:hover:not(:disabled) { background: #e7defa; border-color: #8a6bd6; color: #4b3da0; }
+.yzt-btn--ai:disabled { opacity: 0.6; cursor: default; }
 .yzt-body { font-family: 'Heebo', monospace; line-height: 1.7; }
 .yzt-altinput { margin-top: 0.6rem; }

@@ -65,6 +65,70 @@ const Motif = ({ k }) => {
           </g>
         </svg>
       )
+    case 'crane': // שלבי ביצוע — עגורן צריח
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M44 138V44" />
+            <path d="M44 44h92" />
+            <path d="M44 58h24" />
+            <path d="M44 44l18 14M44 58l18-14" />
+          </g>
+          <g stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d="M116 44v18" />
+            <rect x="109" y="62" width="14" height="9" />
+          </g>
+        </svg>
+      )
+    case 'safety': // בטיחות באתר — קסדת מגן
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <path d="M52 100a48 44 0 0 1 96 0" />
+            <path d="M40 100h120" />
+            <path d="M100 56v20" />
+          </g>
+          <g stroke={BRASS} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d="M150 40l16 28h-32z" />
+            <path d="M150 50v9M150 63v.5" />
+          </g>
+        </svg>
+      )
+    case 'defects': // איכות וליקויים — סדק בקיר + זכוכית מגדלת
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <rect x="32" y="30" width="96" height="96" />
+            <path d="M74 30l8 22-12 18 14 20-8 36" stroke={BRASS} strokeWidth="3" />
+          </g>
+          <circle cx="146" cy="106" r="17" fill="none" stroke={BRASS} strokeWidth="3" />
+          <path d="M158 118l12 12" stroke={BRASS} strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      )
+    case 'materials': // חומרים ושיטות — שורות לבנים
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <g {...common}>
+            <rect x="38" y="96" width="42" height="22" />
+            <rect x="86" y="96" width="42" height="22" />
+            <rect x="38" y="70" width="20" height="22" />
+            <rect x="64" y="70" width="42" height="22" />
+            <rect x="112" y="70" width="20" height="22" />
+          </g>
+          <rect x="120" y="42" width="42" height="22" fill="none" stroke={BRASS} strokeWidth="3" />
+        </svg>
+      )
+    case 'schedule': // ניהול אתר — תרשים גאנט
+      return (
+        <svg viewBox="0 0 200 150" className="acover__svg" aria-hidden="true">
+          <path d="M40 34v104M40 138h128" {...common} />
+          <g stroke={BRASS} strokeWidth="7" strokeLinecap="round">
+            <path d="M56 60h56" />
+            <path d="M82 86h70" />
+            <path d="M66 112h44" />
+          </g>
+        </svg>
+      )
     case 'trends': // מגמות שוק — גרף עולה
     default:
       return (
@@ -83,11 +147,19 @@ const Motif = ({ k }) => {
 }
 
 const CAT = {
+  // יזמות נדל"ן
   'התחדשות עירונית': { k: 'urban', kw: 'התחדשות' },
   'מימון ויזמות': { k: 'finance', kw: 'מימון' },
   'רגולציה ותכנון': { k: 'reg', kw: 'רגולציה' },
   'קרקע ומכרזים': { k: 'land', kw: 'קרקע' },
   'מגמות שוק': { k: 'trends', kw: 'מגמות' },
+  // ביצוע ובנייה
+  'שלבי ביצוע': { k: 'crane', kw: 'ביצוע' },
+  'בטיחות באתר': { k: 'safety', kw: 'בטיחות' },
+  'איכות וליקויים': { k: 'defects', kw: 'איכות' },
+  'בירוקרטיה ורישוי': { k: 'reg', kw: 'רישוי' },
+  'ניהול אתר': { k: 'schedule', kw: 'ניהול' },
+  'חומרים ושיטות': { k: 'materials', kw: 'חומרים' },
 }
 
 export default function ArticleCover({ article, variant = 'card' }) {

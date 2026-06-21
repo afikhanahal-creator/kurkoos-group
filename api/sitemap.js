@@ -22,6 +22,11 @@ const STATIC = [
   { path: '/yazamut-nadlan/tama38-pkiaa-hok-67', changefreq: 'monthly', priority: '0.7' },
   { path: '/yazamut-nadlan/bank-israel-10-90', changefreq: 'monthly', priority: '0.7' },
   { path: '/yazamut-nadlan/maslul-mahir-arvuyot', changefreq: 'monthly', priority: '0.7' },
+  { path: '/constructions', changefreq: 'weekly', priority: '0.8' },
+  // המדריך לתהליך הבנייה — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
+  { path: '/constructions/tofes-4-ichlus', changefreq: 'monthly', priority: '0.7' },
+  { path: '/constructions/likuei-bniya-tkufat-bedek', changefreq: 'monthly', priority: '0.7' },
+  { path: '/constructions/betihut-atar-bniya', changefreq: 'monthly', priority: '0.7' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },
   { path: '/divisions/development', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/execution', changefreq: 'monthly', priority: '0.8' },

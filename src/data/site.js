@@ -53,7 +53,7 @@ export const site = {
         { label: { he: 'ביצוע ובנייה', en: 'Execution & Construction' }, to: '/divisions/execution' },
         { label: { he: 'ראיתה. ביצוע מנצח.', en: 'Raita. Winning execution.' }, to: '/divisions/execution#why' },
         { label: { he: 'פרויקטים נבחרים', en: 'Selected projects' }, to: '/divisions/execution#projects' },
-        { label: { he: 'המדריך לתהליך הבנייה', en: 'The construction-process guide' }, to: '/blog' },
+        { label: { he: 'המדריך לתהליך הבנייה', en: 'The construction-process guide' }, to: '/constructions' },
       ],
     },
     {

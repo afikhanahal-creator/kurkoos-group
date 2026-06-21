@@ -14,6 +14,7 @@ import HeadingsTab from './HeadingsTab.jsx'
 import TestimonialsTab from './TestimonialsTab.jsx'
 import HomeFeaturedTab from './HomeFeaturedTab.jsx'
 import YazamutTab from './YazamutTab.jsx'
+import ConstructionsTab from './ConstructionsTab.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
 import './admin.css'
 
@@ -86,6 +87,7 @@ const TABS = [
   { id: 'activities', label: 'תחומי הפעילות', sub: 'תמונות ארבעת התחומים — דסקטופ ומובייל בנפרד', icon: 'activities', group: 'תוכן' },
   { id: 'testimonials', label: 'המלצות לקוחות', sub: 'כרטיסיות סיפורי ההצלחה בעמוד הבית — טקסט ותמונה', icon: 'testimonials', group: 'תוכן' },
   { id: 'yazamut', label: 'טור יזמות נדל״ן', sub: 'כתבות הטור — עריכה, ניסוח מחדש, תמונה, ארכיון ומחיקה', icon: 'yazamut', group: 'תוכן' },
+  { id: 'constructions', label: 'המדריך לתהליך הבנייה', sub: 'כתבות הביצוע — עריכה, ניסוח מחדש, תמונה, ארכיון ומחיקה', icon: 'covers', group: 'תוכן' },
   { id: 'covers', label: 'תמונות קאבר', sub: 'באנרי החטיבות וגלריית הביצוע — החלפה/סידור/גרירה', icon: 'covers', group: 'תוכן' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads', group: 'לקוחות' },
   { id: 'newsletter', label: 'ניוזלטר', sub: 'מאגר הנרשמים + חיבור ESP/וובהוק לאוטומציות', icon: 'newsletter', group: 'לקוחות' },
@@ -184,6 +186,7 @@ export default function Admin() {
           {tab === 'activities' && <ActivitiesTab />}
           {tab === 'testimonials' && <TestimonialsTab />}
           {tab === 'yazamut' && <YazamutTab />}
+          {tab === 'constructions' && <ConstructionsTab />}
           {tab === 'covers' && <CoverImagesTab />}
           {tab === 'leads' && <LeadsTab />}
           {tab === 'newsletter' && <NewsletterTab />}

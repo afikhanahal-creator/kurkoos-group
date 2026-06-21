@@ -198,7 +198,7 @@ export default function TestimonialsTab() {
               >
                 {it.archived ? '↩ החזרה לאתר' : '📥 לארכיון'}
               </button>
-              <button type="button" className="tst-card__del" onClick={() => removeItem(it.id)} aria-label="מחיקה לצמיתות" title="מחיקה לצמיתות">🗑</button>
+              <button type="button" className="tst-card__del" onClick={() => removeItem(it.id)} title="מחיקה לצמיתות">🗑 מחיקה</button>
             </header>
 
             <div className="tst-card__image">

@@ -68,8 +68,7 @@
   gap: 0.3rem;
   margin-inline-start: auto;
 }
-.tst-card__order button,
-.tst-card__del {
+.tst-card__order button {
   border: 1px solid var(--adm-border, rgba(0, 0, 0, 0.14));
   background: var(--adm-bg, transparent);
   border-radius: 8px;
@@ -81,7 +80,22 @@
   color: var(--adm-text, inherit);
 }
 .tst-card__order button:disabled { opacity: 0.4; cursor: default; }
-.tst-card__del:hover { border-color: #d33; color: #d33; }
+
+/* כפתור מחיקה לצמיתות — מסומן באדום וברור */
+.tst-card__del {
+  border: 1px solid #e2b6b6;
+  background: #fdecec;
+  color: #c0322f;
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 0.7rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.tst-card__del:hover { background: #f7d6d6; border-color: #d33; }
 
 /* כפתור ארכיון/החזרה */
 .tst-card__archive {

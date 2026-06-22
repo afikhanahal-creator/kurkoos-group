@@ -59,7 +59,7 @@ function urlTag({ loc, lastmod, changefreq, priority }) {
     `</url>`
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 

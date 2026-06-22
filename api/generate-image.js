@@ -7,7 +7,7 @@
 // אופציונלי: OPENAI_IMAGE_MODEL (ברירת מחדל 'dall-e-3').
 // 🔐 את המפתח מגדירים רק ב-Vercel, לעולם לא בקוד.
 // ============================================================
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
     return

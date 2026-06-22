@@ -15,7 +15,7 @@ const FIELD_LABELS = {
 const SOURCE_LABELS = { project: 'עמוד פרויקט', home: 'דף הבית', contact: 'צור קשר', manual: 'ידני' }
 const DEFAULT_FIELDS = ['name', 'phone', 'email', 'project', 'message', 'source', 'created_at']
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
     if (typeof fetch !== 'function') { res.status(500).json({ error: 'הסביבה לא תומכת ב-fetch (גרסת Node ישנה מדי ב-Vercel — הגדירו Node 18+)' }); return }

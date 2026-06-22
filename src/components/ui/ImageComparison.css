@@ -73,8 +73,29 @@
   color: var(--color-secondary, #0b2a3a);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   transition: transform 0.2s var(--ease-out);
+  /* רמז עדין שאפשר לגרור ימינה/שמאלה — נדנוד אופקי קל וחוזר. הנדנוד הוא על
+     הידית בלבד (לא על מיקום הקו), כך שקו ההשוואה נשאר מיושר עם קו החיתוך. */
+  animation: imgcmp-nudge 2.8s var(--ease-in-out, ease-in-out) infinite;
 }
-.imgcmp__handle.is-dragging .imgcmp__knob { transform: scale(1.12); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.36); }
+/* הבהוב זוהר עדין על הקו עצמו — מושך את העין אל קו ההשוואה */
+.imgcmp__handle { animation: imgcmp-line-glow 2.8s var(--ease-in-out, ease-in-out) infinite; }
+
+/* בזמן גרירה — מפסיקים את הרמז (המשתמש כבר גילה את הפעולה) */
+.imgcmp__handle.is-dragging { animation: none; }
+.imgcmp__handle.is-dragging .imgcmp__knob { transform: scale(1.12); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.36); animation: none; }
+
+@keyframes imgcmp-nudge {
+  0%, 100% { transform: translateX(-3.5px); }
+  50%      { transform: translateX(3.5px); }
+}
+@keyframes imgcmp-line-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(0, 0, 0, 0.3); }
+  50%      { box-shadow: 0 0 16px rgba(255, 255, 255, 0.5), 0 0 12px rgba(0, 0, 0, 0.3); }
+}
+/* כיבוד העדפת "פחות תנועה" */
+@media (prefers-reduced-motion: reduce) {
+  .imgcmp__knob, .imgcmp__handle { animation: none !important; }
+}
 
 /* קרדיט מתחת לסליידר — זהה לקרדיט שמתחת לסרטון בעמוד הביצוע */
 .imgcmp__caption {

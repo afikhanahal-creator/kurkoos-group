@@ -10,6 +10,10 @@
      בדיוק כמו שאר הכותרות בעמוד. */
 }
 
+/* מילה שלמה — מונע שבירה באמצע מילה (האותיות inline-block יוצרות נקודות
+   שבירה בין אות לאות; nowrap מבטל אותן בתוך המילה). */
+.kinetic__word { white-space: nowrap; }
+
 .kinetic__char {
   display: inline-block;
   font-weight: 900;   /* מודגש אחיד לכל הכותרות (זהה ל-section-title) */

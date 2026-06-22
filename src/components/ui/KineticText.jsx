@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import './KineticText.css'
 
 /* ============================================================
@@ -7,17 +8,21 @@ import './KineticText.css'
    טהור-CSS (\u200E:has + שכנים), בלי JS.
    ============================================================ */
 export default function KineticText({ text, as: Tag = 'h2', className = '', ...rest }) {
+  // קיבוץ האותיות למילים — כל מילה ב-span עם white-space:nowrap → לא נשברת
+  // באמצע (התיקון לכותרות חתוכות במובייל). הרווחים בין המילים נשארים ניתנים לגלישה.
+  const words = String(text ?? '').split(' ')
   return (
     <Tag className={`kinetic ${className}`.trim()} {...rest}>
-      {Array.from(text).map((ch, i) =>
-        ch === ' ' ? (
-          ' '
-        ) : (
-          <span key={i} className="kinetic__char" aria-hidden="true">
-            {ch}
+      {words.map((word, wi) => (
+        <Fragment key={wi}>
+          <span className="kinetic__word" aria-hidden="true">
+            {Array.from(word).map((ch, i) => (
+              <span key={i} className="kinetic__char">{ch}</span>
+            ))}
           </span>
-        )
-      )}
+          {wi < words.length - 1 ? ' ' : ''}
+        </Fragment>
+      ))}
       <span className="sr-only">{text}</span>
     </Tag>
   )

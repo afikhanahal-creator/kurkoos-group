@@ -21,7 +21,7 @@ const COMPANY = {
   phoneHref: '+972506855656',
   email: 'kurkoosgroup.sales@gmail.com',
   site: 'kurkoos-group.co.il',
-  siteHref: 'https://kurkoos-group.co.il',
+  siteHref: 'https://www.kurkoos-group.co.il',
   updated: '20/06/2026',
 }
 

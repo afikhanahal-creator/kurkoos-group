@@ -12,7 +12,7 @@ import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 
-const SITE = 'https://kurkoos-group.co.il'
+const SITE = 'https://www.kurkoos-group.co.il'
 
 export default function RealEstateGuideArticle() {
   const { slug } = useParams()

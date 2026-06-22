@@ -48,10 +48,12 @@ const has = (v) => v != null && v !== '' && !(Array.isArray(v) && v.length === 0
 /* מחלץ קואורדינטות מקישור Google Maps (תבניות @lat,lng / !3d!4d / q=lat,lng / זוג כללי) */
 function extractLatLng(url) {
   if (!url || typeof url !== 'string') return null
+  // הסדר חשוב: קודם קואורדינטות *הסמן* (!3d!4d) ו-q=, ורק אחר כך @ שהוא *מרכז
+  // התצוגה* (המצלמה) — שלרוב שונה במעט ממיקום הסמן וגרם לפין לא מדויק.
   const patterns = [
-    /@(-?\d+\.\d+),(-?\d+\.\d+)/,
     /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,
     /[?&](?:q|ll|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/,
+    /@(-?\d+\.\d+),(-?\d+\.\d+)/,
     /(-?\d{1,2}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/,
   ]
   for (const re of patterns) {
@@ -295,12 +297,11 @@ export default function ProjectDetail() {
   const mediaItems = [...currentImages, ...videos]
   // מפה: Maps Embed API (מפה מלוטשת עם סמן) כשמוגדר מפתח; אחרת fallback בסיסי
   const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_KEY
-  // עדיפות מיקום הסמן — כדי שיישב על הכתובת שהוזנה ב-CMS:
+  // עדיפות מיקום הסמן — לפי מה שהוגדר ב-CMS:
   //   1) שדה coords מפורש (קואורדינטות מדויקות שהוגדרו ידנית)
-  //   2) הכתובת מה-CMS (geocoding) — זה מה שנשלח, ולכן גובר על קישור Google שעלול
-  //      להצביע למקום שגוי/לא מדויק
-  //   3) קואורדינטות / שם-מקום מתוך קישור Google Maps שהוזן
-  //   4) עיר / שם הפרויקט
+  //   2) קואורדינטות הסמן מקישור Google Maps שהוזן (!3d!4d / q=) — המדויקות ביותר
+  //   3) הכתובת מה-CMS (geocoding), מועשרת בעיר ובמדינה
+  //   4) שם-מקום מתוך הקישור → עיר / שם הפרויקט
   const explicitCoords = (project.coords && project.coords.lat != null) ? project.coords : null
   const city = L(project.city)
   const addressRaw = (project.mapQuery && String(project.mapQuery).trim()) ? String(project.mapQuery).trim() : ''
@@ -310,7 +311,7 @@ export default function ProjectDetail() {
     if (city && !addressQuery.includes(city)) addressQuery += `, ${city}`
     if (!/ישראל|israel/i.test(addressQuery)) addressQuery += ', ישראל'
   }
-  const mapCoords = explicitCoords || (addressRaw ? null : extractLatLng(project.mapLink))
+  const mapCoords = explicitCoords || extractLatLng(project.mapLink)
   const mapQuery = mapCoords
     ? `${mapCoords.lat},${mapCoords.lng}`
     : (addressQuery || extractPlaceQuery(project.mapLink) || city || L(project.name))

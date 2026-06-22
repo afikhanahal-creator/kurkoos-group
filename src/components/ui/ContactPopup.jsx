@@ -30,7 +30,7 @@ export default function ContactPopup({ open, onClose }) {
       status: 'new',
     }
     try {
-      await createLead(lead)
+      await createLead(lead, { read: false })   // אנונימי — בלי קריאה חוזרת (RLS)
       setSent(true)
     } catch (err) {
       setError(L({ he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות.', en: 'Something went wrong. Please try again or call us directly.' }))

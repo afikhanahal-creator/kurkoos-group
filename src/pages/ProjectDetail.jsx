@@ -430,7 +430,7 @@ export default function ProjectDetail() {
       project: project?.name || '',
       source: 'project',
       status: 'new',
-    }).catch(() => {})
+    }, { read: false }).catch(() => {})
   }
 
   return (

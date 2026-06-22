@@ -339,13 +339,25 @@ export async function deleteLogo(id, imageUrl) {
 
 // ---------- Leads (CRM) ----------
 // יצירת ליד — נקראת גם מטפסי האתר (אנונימי, RLS מתיר insert לכולם)
-export async function createLead(row) {
+export async function createLead(row, { read = true } = {}) {
   if (!supabase) return
-  const { data, error } = await supabase.from('leads').insert(row).select().single()
-  if (error) throw error
+  let lead
+  if (read) {
+    // מסלול מנהל (מחובר) — קוראים בחזרה את השורה (כולל id) עבור ה-UI
+    const { data, error } = await supabase.from('leads').insert(row).select().single()
+    if (error) throw error
+    lead = data
+  } else {
+    // מסלול ציבורי (אנונימי) — למבקר יש הרשאת *הכנסה* אך לא *קריאה* (RLS). לכן לא
+    // מבקשים RETURNING (.select) שהיה נכשל למרות שההכנסה הצליחה. בונים את האובייקט
+    // מהנתונים שנשלחו (להתראת המייל).
+    const { error } = await supabase.from('leads').insert(row)
+    if (error) throw error
+    lead = { ...row, created_at: new Date().toISOString() }
+  }
   // התראת מייל אוטומטית בזמן אמת — רק לפניות מהאתר (לא לידים שנוספו ידנית בניהול)
-  if (data && row.source !== 'manual') notifyNewLead(data)
-  return data
+  if (lead && row.source !== 'manual') notifyNewLead(lead)
+  return lead
 }
 
 /* שולח את הליד לפונקציית /api/notify-lead (Vercel) שמפיצה מייל לנמענים.

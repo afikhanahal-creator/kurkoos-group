@@ -33,7 +33,7 @@ export default function Contact() {
       status: 'new',
     }
     try {
-      await createLead(lead)   // שמירה ל-Supabase + התראת מייל אוטומטית
+      await createLead(lead, { read: false })   // שמירה ל-Supabase + התראת מייל אוטומטית (אנונימי — בלי קריאה חוזרת)
       setSent(true)
     } catch (err) {
       setError(L({

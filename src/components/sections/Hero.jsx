@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { heroSlides, companyFilm } from '../../data/hero.js'
 import { supabase } from '../../lib/supabase.js'
-import { listCounters } from '../../lib/cms.js'
+import { listCounters, cachedSnapshot } from '../../lib/cms.js'
 import VideoModal from '../ui/VideoModal.jsx'
 import GeometricBlurMesh from '../ui/GeometricBlurMesh.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
@@ -34,6 +34,24 @@ function RollingNumber({ value, trigger }) {
   return <>{n.toLocaleString('en-US')}</>
 }
 
+// ממפה שורות מונים מהניהול לשקופיות ה-Hero (שומר כותרות/תמונות לפי אינדקס)
+function mapCounters(rows) {
+  return rows.slice(0, heroSlides.length).map((c, i) => {
+    const base = heroSlides[i % heroSlides.length]
+    const num = Number(c.value)
+    return {
+      id: c.id ?? `c-${i}`,
+      stat: {
+        value: Number.isNaN(num) ? c.value : num,
+        suffix: c.suffix || '',
+        label: { he: c.label_he || '', en: c.label_he || '' },
+      },
+      lines: base.lines,
+      image: base.image,
+    }
+  })
+}
+
 export default function Hero() {
   const { t } = useI18n()
   const L = useLocalized()
@@ -42,7 +60,17 @@ export default function Hero() {
   // ה-Hero מציג את המונים מהניהול ("מונים ומספרים") ישירות — לפי הסדר. כך
   // עריכת המונים מעדכנת מיד גם את המונה שבראש עמוד הבית. הכותרות והתמונות
   // של ה-Hero נשמרות (מתחלפות לפי אינדקס). אם אין מונים — ברירת המחדל.
-  const [slides, setSlides] = useState(heroSlides)
+  // זריעה מתמונת-מצב שמורה (אם קיימת) → ביקור חוזר מציג מיד את הערך הנכון,
+  // בלי "הבהוב" של ערך ברירת המחדל (3,200) שמתחלף לערך האמיתי.
+  const seeded = (() => {
+    const rows = cachedSnapshot('counters:true')
+    const m = rows && rows.length ? mapCounters(rows) : null
+    return m && m.length ? m : null
+  })()
+  const [slides, setSlides] = useState(seeded || heroSlides)
+  // עד שהמונים האמיתיים נטענים (ביקור ראשון, יש Supabase ואין מטמון) — לא
+  // מציגים את המספר כלל, כדי שלא יופיע ערך ברירת המחדל ואז יתחלף.
+  const [statReady, setStatReady] = useState(() => !!seeded || !supabase)
 
   const count = slides.length || 1
   const active = ((turn % count) + count) % count
@@ -60,25 +88,15 @@ export default function Hero() {
     let alive = true
     listCounters({ activeOnly: true })
       .then((rows) => {
-        if (!alive || !rows || !rows.length) return
+        if (!alive) return
         // עד 4 מונים (לפי הסדר בניהול) → 4 שקופיות ה-Hero, עם הכותרות/תמונות הקיימות
-        const mapped = rows.slice(0, heroSlides.length).map((c, i) => {
-          const base = heroSlides[i % heroSlides.length]
-          const num = Number(c.value)
-          return {
-            id: c.id ?? `c-${i}`,
-            stat: {
-              value: Number.isNaN(num) ? c.value : num,
-              suffix: c.suffix || '',
-              label: { he: c.label_he || '', en: c.label_he || '' },
-            },
-            lines: base.lines,
-            image: base.image,
-          }
-        })
-        if (mapped.length) setSlides(mapped)
+        if (rows && rows.length) {
+          const mapped = mapCounters(rows)
+          if (mapped.length) setSlides(mapped)
+        }
+        setStatReady(true)   // נטען (גם אם אין מונים) → אפשר להציג את המספר
       })
-      .catch(() => {})
+      .catch(() => { if (alive) setStatReady(true) })
     return () => { alive = false }
   }, [])
 
@@ -103,10 +121,17 @@ export default function Hero() {
         {/* צד תוכן */}
         <div className="hero__content">
           {/* מספר מתגלגל + תווית */}
-          <div className="hero__stat">
+          <div className="hero__stat" style={{ opacity: statReady ? 1 : 0, transition: 'opacity 0.45s ease' }}>
             <div className="hero__stat-number">
-              <RollingNumber value={slide.stat.value} trigger={turn} />
-              <span className="hero__stat-suffix">{slide.stat.suffix}</span>
+              {statReady ? (
+                <>
+                  <RollingNumber value={slide.stat.value} trigger={turn} />
+                  <span className="hero__stat-suffix">{slide.stat.suffix}</span>
+                </>
+              ) : (
+                /* שומר-מקום עד שהמונה האמיתי נטען — בלי להציג ערך ברירת מחדל */
+                <span aria-hidden="true">&nbsp;</span>
+              )}
             </div>
             <AnimatePresence mode="wait">
               <motion.div

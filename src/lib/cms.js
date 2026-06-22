@@ -93,9 +93,12 @@ export async function compressImage(file, { maxW = 1920, maxH = 1920, quality = 
   } catch { return file }
 }
 
-export async function uploadMedia(file, folder = 'general') {
+export async function uploadMedia(file, folder = 'general', { compress = true } = {}) {
   if (!supabase) throw new Error('Supabase לא מוגדר')
-  file = await compressImage(file)   // דחיסה אוטומטית לתמונות → העלאה וטעינה מהירות
+  // דחיסה אוטומטית לתמונות → העלאה וטעינה מהירות. מדלגים כשהקובץ כבר אופטימלי
+  // (למשל פלט עורך התמונות, שכבר יוצא ב-WebP ברזולוציה מבוקרת) — כדי לא לדחוס
+  // פעמיים / להקטין רזולוציה ולפגוע באיכות.
+  if (compress) file = await compressImage(file)
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
   const rand = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.round(Math.random() * 1e9)}`
   const path = `${folder}/${rand}.${ext}`

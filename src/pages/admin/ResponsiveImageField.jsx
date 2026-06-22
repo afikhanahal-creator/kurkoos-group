@@ -91,7 +91,10 @@ export default function ResponsiveImageField({
     setBusy(true)
     try {
       const file = new File([blob], `img-${Date.now()}.webp`, { type: blob.type || 'image/webp' })
-      const url = await uploadMedia(file, folder)
+      // פלט העורך כבר אופטימלי (WebP ברזולוציה גבוהה) — מעלים בלי דחיסה חוזרת,
+      // אחרת התמונה נדחסת/מוקטנת שוב והאיכות יורדת. שינוי-הגודל לתצוגה נעשה
+      // ממילא בזמן ההצגה (optimizeSrc/srcset).
+      const url = await uploadMedia(file, folder, { compress: false })
       const old = draft?.src
       // העריכה המתקדמת כבר "צרובה" בתמונה (חיתוך/זום/סיבוב/פינות/פילטרים + יחס
       // המסגרת והשוליים). לכן מציגים אותה באתר ב'התאמה' (contain) — כל התמונה,

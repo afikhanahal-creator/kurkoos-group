@@ -295,12 +295,25 @@ export default function ProjectDetail() {
   const mediaItems = [...currentImages, ...videos]
   // מפה: Maps Embed API (מפה מלוטשת עם סמן) כשמוגדר מפתח; אחרת fallback בסיסי
   const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_KEY
-  // קואורדינטות: שדה coords, אחרת חילוץ מקישור Google Maps שהוזן ב-CMS
-  const mapCoords = (project.coords && project.coords.lat != null) ? project.coords : extractLatLng(project.mapLink)
-  // אילתת geocoding כשאין קואורדינטות: כתובת מפורשת → שם-מקום מתוך הקישור → עיר/שם הפרויקט
+  // עדיפות מיקום הסמן — כדי שיישב על הכתובת שהוזנה ב-CMS:
+  //   1) שדה coords מפורש (קואורדינטות מדויקות שהוגדרו ידנית)
+  //   2) הכתובת מה-CMS (geocoding) — זה מה שנשלח, ולכן גובר על קישור Google שעלול
+  //      להצביע למקום שגוי/לא מדויק
+  //   3) קואורדינטות / שם-מקום מתוך קישור Google Maps שהוזן
+  //   4) עיר / שם הפרויקט
+  const explicitCoords = (project.coords && project.coords.lat != null) ? project.coords : null
+  const city = L(project.city)
+  const addressRaw = (project.mapQuery && String(project.mapQuery).trim()) ? String(project.mapQuery).trim() : ''
+  // העשרת הכתובת לדיוק geocoding: הוספת העיר (אם חסרה) והמדינה
+  let addressQuery = addressRaw
+  if (addressQuery) {
+    if (city && !addressQuery.includes(city)) addressQuery += `, ${city}`
+    if (!/ישראל|israel/i.test(addressQuery)) addressQuery += ', ישראל'
+  }
+  const mapCoords = explicitCoords || (addressRaw ? null : extractLatLng(project.mapLink))
   const mapQuery = mapCoords
     ? `${mapCoords.lat},${mapCoords.lng}`
-    : (project.mapQuery || extractPlaceQuery(project.mapLink) || L(project.city) || L(project.name))
+    : (addressQuery || extractPlaceQuery(project.mapLink) || city || L(project.name))
   const mapSrc = mapsKey
     ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent(mapQuery)}&zoom=14&language=he&region=IL`
     : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`

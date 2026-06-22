@@ -84,6 +84,11 @@ export default function App() {
       import('./pages/Division.jsx')
       import('./pages/Projects.jsx')
       import('./pages/About.jsx')
+      // עמודי הרשימה של ארבעת המדריכים — כך הכניסה לכל מדריך מהניווט מיידית
+      import('./pages/Yazamut.jsx')
+      import('./pages/Constructions.jsx')
+      import('./pages/Supervision.jsx')
+      import('./pages/RealEstateGuide.jsx')
     }
     const ric = typeof window !== 'undefined' && window.requestIdleCallback
     const id = ric ? window.requestIdleCallback(warm, { timeout: 3000 }) : setTimeout(warm, 1800)

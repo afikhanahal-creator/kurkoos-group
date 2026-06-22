@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useI18n } from '../i18n/index.jsx'
 import { useYazamutArticles, getCategoriesFrom } from '../lib/yazamut.js'
+import { whenIdle, importYazamutArticle } from '../lib/prefetch.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
@@ -20,6 +21,9 @@ export default function Yazamut() {
   const cats = useMemo(() => getCategoriesFrom(all), [all])
   const [cat, setCat] = useState('all')
 
+  // טעינה-מוקדמת של עמוד הכתבה בזמן idle → לחיצה על כרטיס פותחת את הכתבה מיידית
+  useEffect(() => whenIdle(importYazamutArticle), [])
+
   const fmtDate = (iso) =>
     new Date(iso).toLocaleDateString(lang === 'en' ? 'en-GB' : 'he-IL', {
       year: 'numeric', month: 'long', day: 'numeric',
@@ -29,7 +33,7 @@ export default function Yazamut() {
 
   const Card = ({ a }) => (
     <Reveal as="article" className="yz-card">
-      <Link to={`/yazamut-nadlan/${a.slug}`} className="yz-card__link">
+      <Link to={`/yazamut-nadlan/${a.slug}`} className="yz-card__link" onMouseEnter={importYazamutArticle} onFocus={importYazamutArticle}>
         <div className="yz-card__media">
           {srcOfResponsive(a.cover) ? (
             <>

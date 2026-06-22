@@ -27,7 +27,8 @@ export default function Contact() {
       phone: String(fd.get('phone') || '').trim(),
       email: String(fd.get('email') || '').trim(),
       message: String(fd.get('message') || '').trim(),
-      project: t(`contactExtra.topics.${topic}`),   // נושא הפנייה → מוצג בליד ובמייל
+      // עמודת project היא jsonb → שולחים אובייקט {he,en} (נושא הפנייה) ולא מחרוזת
+      project: { he: t(`contactExtra.topics.${topic}`), en: t(`contactExtra.topics.${topic}`) },
       source: 'contact',                             // לא 'manual' → מפעיל התראת מייל
       status: 'new',
     }

@@ -74,64 +74,66 @@ export default async function handler(req, res) {
     const ADMIN_URL = `${SITE}/admin`
     const LOGO = `${SITE}/kurkoos-groip-logo.png`
 
+    const serif = "Georgia,'Times New Roman','Times',serif"
     // ערך תא — טלפון/אימייל הופכים לקישור ללחיצה ישירה
     const cell = (k) => {
       const v = val(k)
-      if (v === '—') return '<span style="color:#9fb6c2">—</span>'
-      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="color:#0d3a52;text-decoration:none;font-weight:700">${v}</a>`
-      if (k === 'email') return `<a href="mailto:${lead.email}" style="color:#0d3a52;text-decoration:none;font-weight:700">${v}</a>`
+      if (v === '—') return '<span style="color:#b7bcae">—</span>'
+      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="color:#0c2230;text-decoration:none">${v}</a>`
+      if (k === 'email') return `<a href="mailto:${lead.email}" style="color:#0c2230;text-decoration:none">${v}</a>`
       return v
     }
-    const rows = fields.map((k, i) =>
-      `<tr>
-        <td style="padding:13px 18px;color:#7c8f9b;font-weight:700;font-size:13px;white-space:nowrap;width:32%;background:${i % 2 ? '#ffffff' : '#f6f9fb'};border-bottom:1px solid #eef3f5">${FIELD_LABELS[k] || k}</td>
-        <td style="padding:13px 18px;color:#07293a;font-size:15px;font-weight:600;background:${i % 2 ? '#ffffff' : '#f6f9fb'};border-bottom:1px solid #eef3f5">${cell(k)}</td>
+    const rows = fields.map((k, i, arr) => {
+      const border = i < arr.length - 1 ? 'border-bottom:1px solid #ece7da;' : ''
+      return `<tr>
+        <td style="padding:15px 0 15px 18px;vertical-align:top;width:34%;${border}"><span style="font-family:${serif};font-size:12px;color:#b08d4f;letter-spacing:0.04em">${FIELD_LABELS[k] || k}</span></td>
+        <td style="padding:15px 0;vertical-align:top;${border}"><span style="font-family:${serif};font-size:16px;color:#0c2230;line-height:1.5">${cell(k)}</span></td>
       </tr>`
-    ).join('')
+    }).join('')
 
-    // כפתורי פעולה מהירה (התקשרות / וואטסאפ / מייל) — רק כשיש טלפון/אימייל
+    // כפתורי פעולה מהירה (התקשרות / וואטסאפ / מייל) — סגנון אאוטליין מעודן
     const digits = String(lead.phone || '').replace(/\D/g, '')
     const wa = digits ? (digits.startsWith('972') ? digits : '972' + digits.replace(/^0/, '')) : ''
-    const actionBtn = (href, label, bg) => `<a href="${href}" style="display:inline-block;margin:4px 5px;padding:10px 20px;background:${bg};color:#ffffff;text-decoration:none;border-radius:9px;font-size:13px;font-weight:700">${label}</a>`
+    const actionBtn = (href, label) => `<a href="${href}" style="font-family:${serif};display:inline-block;margin:5px 4px;padding:10px 22px;border:1px solid #d8cfbd;color:#0c2230;text-decoration:none;border-radius:2px;font-size:13px;letter-spacing:0.03em">${label}</a>`
     const quickActions = (lead.phone || lead.email) ? `
-          <tr><td align="center" style="padding:2px 26px 10px">
-            ${lead.phone ? actionBtn(`tel:${digits}`, 'התקשרות', '#0d3a52') : ''}
-            ${wa ? actionBtn(`https://wa.me/${wa}`, 'וואטסאפ', '#1f7a4d') : ''}
-            ${lead.email ? actionBtn(`mailto:${lead.email}`, 'מייל ללקוח', '#0d3a52') : ''}
+          <tr><td align="center" style="padding:6px 40px 8px">
+            ${lead.phone ? actionBtn(`tel:${digits}`, 'התקשרות') : ''}
+            ${wa ? actionBtn(`https://wa.me/${wa}`, 'וואטסאפ') : ''}
+            ${lead.email ? actionBtn(`mailto:${lead.email}`, 'מייל ללקוח') : ''}
           </td></tr>` : ''
 
-    const html = `<!doctype html><html dir="rtl" lang="he"><body style="margin:0;padding:0;background:#e9eff2">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e9eff2">
-      <tr><td align="center" style="padding:30px 14px">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" dir="rtl" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 14px 44px rgba(7,41,58,0.14);font-family:'Segoe UI',Arial,Helvetica,sans-serif">
-          <!-- כותרת: תווית מימין, לוגו משמאל-למעלה -->
-          <tr><td style="padding:24px 28px 16px;background:#ffffff">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-              <td align="right" style="vertical-align:middle">
-                <div style="color:#b9962f;font-size:11px;letter-spacing:0.16em;font-weight:700">התראת מערכת</div>
-                <div style="color:#07293a;font-size:23px;font-weight:800;margin-top:5px">ליד חדש מהאתר</div>
-              </td>
-              <td align="left" style="vertical-align:middle;width:150px">
-                <img src="${LOGO}" alt="Kurkoos Group" height="42" style="display:block;height:42px;width:auto;margin-inline-start:auto" />
-              </td>
-            </tr></table>
+    const html = `<!doctype html><html dir="rtl" lang="he"><body style="margin:0;padding:0;background:#f1efe9">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1efe9">
+      <tr><td align="center" style="padding:34px 14px">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" dir="rtl" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #eae4d7;font-family:${serif}">
+          <!-- כותרת מגזין -->
+          <tr><td style="padding:42px 40px 0;text-align:center">
+            <div style="font-family:${serif};font-size:12px;letter-spacing:0.24em;color:#b08d4f">התראת מערכת</div>
+            <h1 style="font-family:${serif};font-weight:400;font-size:31px;color:#0c2230;margin:12px 0 0;letter-spacing:0.01em">ליד חדש מהאתר</h1>
           </td></tr>
-          <!-- קו זהב מפריד -->
-          <tr><td style="padding:0 28px"><div style="height:2px;background:linear-gradient(90deg,#c9a45a,#e7d6a8,rgba(201,164,90,0))"></div></td></tr>
+          <!-- קו זהב כפול -->
+          <tr><td style="padding:24px 40px 0">
+            <div style="border-top:2px solid #c2a35c"></div>
+            <div style="border-top:1px solid #e7e0d2;margin-top:3px"></div>
+          </td></tr>
           <!-- אינטרו -->
-          <tr><td style="padding:20px 28px 6px"><p style="margin:0;color:#3f535f;font-size:14px;line-height:1.6">התקבלה פנייה חדשה דרך האתר. להלן פרטי הליד:</p></td></tr>
-          <!-- טבלת פרטים -->
-          <tr><td style="padding:10px 28px 6px">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #eef3f5;border-radius:12px;overflow:hidden">${rows}</table>
+          <tr><td style="padding:20px 40px 0;text-align:center">
+            <p style="font-family:${serif};font-style:italic;font-size:15px;color:#5b6b74;margin:0">התקבלה פנייה חדשה דרך האתר · להלן הפרטים</p>
           </td></tr>
-          <!-- כפתור ראשי: צפייה בליד -->
-          <tr><td align="center" style="padding:22px 28px 6px">
-            <a href="${ADMIN_URL}" style="display:inline-block;background:#a90b0c;color:#ffffff;text-decoration:none;font-weight:800;font-size:15px;padding:14px 36px;border-radius:11px;box-shadow:0 6px 16px rgba(169,11,12,0.28)">צפייה בליד במערכת</a>
+          <!-- פרטים -->
+          <tr><td style="padding:14px 40px 0">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${rows}</table>
+          </td></tr>
+          <!-- כפתור ראשי -->
+          <tr><td align="center" style="padding:32px 40px 6px">
+            <a href="${ADMIN_URL}" style="font-family:${serif};display:inline-block;background:#0c2230;color:#ffffff;text-decoration:none;font-size:15px;letter-spacing:0.05em;padding:15px 44px;border-radius:2px">צפייה בליד במערכת</a>
           </td></tr>
           ${quickActions}
-          <!-- פוטר -->
-          <tr><td style="padding:22px 28px 26px;text-align:center;border-top:1px solid #eef3f5;background:#fbfcfd">
-            <p style="margin:0;color:#9fb6c2;font-size:11px;line-height:1.8">הודעה אוטומטית ממערכת הניהול של קבוצת קורקוס<br>נכסים · בנייה · יזמות · פיקוח · תיווך</p>
+          <!-- פוטר עם לוגו -->
+          <tr><td style="padding:36px 40px 42px;text-align:center;border-top:1px solid #ece7da">
+            <img src="${LOGO}" alt="Kurkoos Group" width="120" style="display:inline-block;width:120px;max-width:55%;height:auto" />
+            <p style="font-family:${serif};font-size:11px;letter-spacing:0.18em;color:#9aa7af;margin:18px 0 0">נכסים · בנייה · יזמות · פיקוח · תיווך</p>
+            <p style="font-family:${serif};font-size:10.5px;color:#bcc4c9;margin:8px 0 0">הודעה אוטומטית ממערכת הניהול של קבוצת קורקוס</p>
           </td></tr>
         </table>
       </td></tr>

@@ -131,7 +131,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  flex: 1;               /* תופס את המרכז → הטאבים ממורכזים בין הלוגו לפעולות */
+  /* לא תופס את כל הרוחב — כך השוליים החופשיים מתחלקים שווה בשווה משני צידי
+     הלוגו (margin-inline:auto למטה), והלוגו ממורכז בין ה"אוזניים" ל"אודות". */
+  flex: 0 1 auto;
 }
 .header__nav-item { position: relative; }
 .header__nav-link {
@@ -310,6 +312,10 @@
 /* בדסקטופ — מציגים את ה-burger, והתפריט נפתח כתריס בצד ימין (~30%) ולא על כל העמוד */
 @media (min-width: 981px) {
   .header__burger { display: inline-flex; }   /* ה"אוזניים" גלויות בדסקטופ */
+
+  /* הלוגו ממורכז במדויק בין ה"אוזניים" (ההמבורגר) למילה "אודות" — margin
+     אוטומטי בולע את כל המרווח החופשי ומחלק אותו שווה בשווה משני צידי הלוגו. */
+  .header__main-inner > .logo { margin-inline: auto; }
 
   .header__mobile {
     position: fixed;

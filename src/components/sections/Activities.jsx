@@ -23,19 +23,18 @@ export default function Activities() {
     let map = settings.activity_images
     if (typeof map === 'string') { try { map = JSON.parse(map) } catch { map = null } }
     const valid = map && typeof map === 'object'
-    // כרטיס התיווך משתמש תמיד בקובץ הלוגו המקומי שב-repo (לא דרך ה-CMS/פרוקסי),
-    // כדי שתמונת אפיק הנחל תמיד תיטען — גם אם ההעלאה ל-CMS שבורה.
-    const FORCE_LOCAL = { brokerage: '/afik-hanahal-cover.png' }
-    const desk = activities.map((a) => {
-      if (FORCE_LOCAL[a.id]) return { ...a, image: FORCE_LOCAL[a.id] }
-      const v = valid ? pickResponsive(map[a.id], 'desktop') : null
-      return v ? { ...a, image: v } : a
-    })
-    const mob = activities.map((a) => {
-      if (FORCE_LOCAL[a.id]) return { ...a, image: FORCE_LOCAL[a.id] }
-      const v = valid ? pickResponsive(map[a.id], 'mobile') : null
-      return v ? { ...a, image: v } : a
-    })
+    // ברירת-מחדל לכרטיס התיווך: קובץ הלוגו המקומי שב-repo — אבל *רק* כשאין תמונה
+    // ב-CMS. אם הועלתה/נערכה תמונה בניהול, היא גוברת (כך שמה שעורכים בעורך הוא
+    // מה שמופיע באתר). כך גם אפיק הנחל תמיד יוצג כשעדיין לא הגדירו תמונה.
+    const FALLBACK_LOCAL = { brokerage: '/afik-hanahal-cover.png' }
+    const pick = (a, bp) => {
+      const v = valid ? pickResponsive(map[a.id], bp) : null
+      if (v) return { ...a, image: v }
+      if (FALLBACK_LOCAL[a.id]) return { ...a, image: FALLBACK_LOCAL[a.id] }
+      return a
+    }
+    const desk = activities.map((a) => pick(a, 'desktop'))
+    const mob = activities.map((a) => pick(a, 'mobile'))
     return { desktopItems: desk, mobileItems: mob }
   }, [settings.activity_images])
 

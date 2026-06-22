@@ -82,7 +82,6 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
   const [tint, setTint] = useState({ color: '#105572', alpha: 0, blend: 'multiply' })
   const [bg, setBg] = useState({ remove: false, threshold: 238 })
   const [radius, setRadius] = useState(0)   // עיגול פינות (יחס 0..0.5 מהצד הקצר)
-  const [out, setOut] = useState(1)          // מכפיל איכות (×1 ≈ צד ארוך 1920px)
 
   // סגירה ב-Escape + נעילת גלילת הרקע. מפצים על רוחב הסקרולבר כדי שלא תהיה "קפיצה"
   // (כשמסתירים את הגלילה הסקרולבר נעלם והעמוד — והחלון הממורכז — קופצים הצידה).
@@ -189,11 +188,12 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
 
   const reset = () => { setT({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false }); setF(PRESETS[0].f); setTint({ color: '#105572', alpha: 0, blend: 'multiply' }); setBg({ remove: false, threshold: 238 }); setRadius(0) }
 
-  // ייצוא ברזולוציה גבוהה: ממפים את הצד הארוך של המסגרת ל-EXPORT_LONG פיקסלים
-  // (× מכפיל האיכות), במקום לגזור מגודל ה-UI הקטן. כך הפלט חד גם במסכי Retina
-  // ובדסקטופ גדול ולא "מתרכך". שינוי-הגודל לתצוגה בפועל נעשה בזמן ההצגה.
-  const EXPORT_LONG = 1920
-  const exportK = (EXPORT_LONG / Math.max(FRAME_W, FRAME_H)) * out
+  // ייצוא ברזולוציה הגבוהה ביותר שהמקור מאפשר: הצד הארוך של הפלט = רזולוציית
+  // התמונה המקורית (לא "ממציאים" פיקסלים — הגדלה מעבר למקור לא מוסיפה פרטים,
+  // רק מנפחת את הקובץ). תקרה 4096 לקובץ שפוי, רצפה 1280 למקורות קטנים.
+  const srcLong = ready && imgRef.current ? Math.max(imgRef.current.width, imgRef.current.height) : 0
+  const targetLong = srcLong ? Math.min(4096, Math.max(1280, srcLong)) : 1920
+  const exportK = targetLong / Math.max(FRAME_W, FRAME_H)
 
   const apply = () => {
     try {
@@ -327,15 +327,15 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
               </div>
             </section>
 
-            {/* רזולוציה */}
+            {/* איכות — אוטומטית, לפי רזולוציית המקור (אין טעם ב"מכפיל" שמגדיל מעבר למקור) */}
             <section className="imed__group">
-              <h4>איכות / רזולוציה</h4>
-              <div className="imed__btnrow imed__btnrow--seg">
-                {[1, 2, 3].map((k) => (
-                  <button key={k} type="button" className={out === k ? 'is-active' : ''} onClick={() => setOut(k)}>×{k}</button>
-                ))}
-              </div>
-              <p className="imed__note">פלט: {Math.round(FRAME_W * exportK)}×{Math.round(FRAME_H * exportK)}px · WebP באיכות גבוהה</p>
+              <h4>איכות</h4>
+              <p className="imed__note">
+                נשמר אוטומטית באיכות הגבוהה ביותר שהתמונה מאפשרת — {Math.round(FRAME_W * exportK)}×{Math.round(FRAME_H * exportK)}px · WebP.
+              </p>
+              <p className="imed__note imed__note--soft">
+                האיכות מוגבלת לרזולוציית התמונה שהעלית. לתוצאה חדה יותר — העלו תמונת מקור גדולה/חדה יותר.
+              </p>
             </section>
           </div>
         </div>

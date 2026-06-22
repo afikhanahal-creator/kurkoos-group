@@ -47,6 +47,7 @@
 .imed__check { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--adm-ink, #07293a); cursor: pointer; }
 .imed__check input { width: 17px; height: 17px; accent-color: var(--color-secondary, #105572); }
 .imed__note { font-size: 0.75rem; color: var(--adm-muted, #647c8c); margin: 0.4rem 0 0; }
+.imed__note--soft { opacity: 0.8; font-size: 0.72rem; }
 
 .imed__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.8rem 1.2rem; border-top: 1px solid var(--adm-border, #e2e8ee); background: var(--adm-bg, #f6f9fb); }
 .imed__foot-end { display: flex; gap: 0.6rem; }

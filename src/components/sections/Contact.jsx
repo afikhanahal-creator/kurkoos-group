@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
+import { createLead } from '../../lib/cms.js'
 import Reveal from '../ui/Reveal.jsx'
 import BookingCalendar from '../ui/BookingCalendar.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
@@ -12,12 +13,37 @@ export default function Contact() {
   const { t } = useI18n()
   const L = useLocalized()
   const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const [topic, setTopic] = useState('development')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: חבר לשירות שליחה אמיתי (EmailJS / API / Formspree).
-    setSent(true)
+    if (busy) return
+    setBusy(true); setError('')
+    const fd = new FormData(e.currentTarget)
+    const lead = {
+      name: String(fd.get('name') || '').trim(),
+      phone: String(fd.get('phone') || '').trim(),
+      email: String(fd.get('email') || '').trim(),
+      message: String(fd.get('message') || '').trim(),
+      project: t(`contactExtra.topics.${topic}`),   // נושא הפנייה → מוצג בליד ובמייל
+      source: 'contact',                             // לא 'manual' → מפעיל התראת מייל
+      status: 'new',
+    }
+    try {
+      await createLead(lead)   // שמירה ל-Supabase + התראת מייל אוטומטית
+      setSent(true)
+    } catch (err) {
+      setError(L({
+        he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות.',
+        en: 'Something went wrong. Please try again or call us directly.',
+      }))
+      // למקרה שגיאה — נשאיר את הפרטים בלוג כדי לאבחן (RLS / רשת)
+      if (typeof console !== 'undefined') console.error('createLead failed:', err?.message || err)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -80,7 +106,14 @@ export default function Contact() {
                 <div className="field">
                   <textarea id="cf-message" name="message" rows={3} placeholder={t('contact.message')} />
                 </div>
-                <button type="submit" className="btn btn--primary contact__submit">{t('contact.submit')}</button>
+                {error && (
+                  <p className="contact__error" role="alert" style={{ color: '#ffc4c4', margin: '0.2rem 0 0', fontSize: '0.9rem', fontWeight: 600 }}>
+                    {error}
+                  </p>
+                )}
+                <button type="submit" className="btn btn--primary contact__submit" disabled={busy}>
+                  {busy ? L({ he: 'שולח…', en: 'Sending…' }) : t('contact.submit')}
+                </button>
               </form>
             </>
           )}

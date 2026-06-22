@@ -16,35 +16,41 @@ const SOURCE_LABELS = { project: 'עמוד פרויקט', home: 'דף הבית',
 const DEFAULT_FIELDS = ['name', 'phone', 'email', 'project', 'message', 'source', 'created_at']
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
-
-  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const RESEND_API_KEY = process.env.RESEND_API_KEY
-  const FROM = process.env.NOTIFY_FROM || 'Kurkoos Leads <onboarding@resend.dev>'
-
-  if (!SUPABASE_URL || !SERVICE_KEY) { res.status(500).json({ error: 'חסר SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY בהגדרות Vercel' }); return }
-  if (!RESEND_API_KEY) { res.status(500).json({ error: 'חסר RESEND_API_KEY בהגדרות Vercel' }); return }
-
-  const sbHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
-  const sbGet = async (path) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: sbHeaders })
-    if (!r.ok) throw new Error(`Supabase ${r.status}`)
-    return r.json()
-  }
-
   try {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
+    if (typeof fetch !== 'function') { res.status(500).json({ error: 'הסביבה לא תומכת ב-fetch (גרסת Node ישנה מדי ב-Vercel — הגדירו Node 18+)' }); return }
+
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const RESEND_API_KEY = process.env.RESEND_API_KEY
+    const FROM = process.env.NOTIFY_FROM || 'Kurkoos Leads <onboarding@resend.dev>'
+
+    if (!SUPABASE_URL || !SERVICE_KEY) { res.status(500).json({ error: 'חסר SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY בהגדרות Vercel (ודאו גם שעשיתם Redeploy)' }); return }
+    if (!RESEND_API_KEY) { res.status(500).json({ error: 'חסר RESEND_API_KEY בהגדרות Vercel (ודאו גם שעשיתם Redeploy)' }); return }
+
+    // body — עשוי להגיע כאובייקט (Vercel פירסר) או כמחרוזת JSON
+    const body = (req.body && typeof req.body === 'object')
+      ? req.body
+      : (() => { try { return JSON.parse(req.body || '{}') } catch { return {} } })()
+
+    const sbHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+    const sbGet = async (path) => {
+      const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${path}`, { headers: sbHeaders })
+      const txt = await r.text()
+      if (!r.ok) throw new Error(`Supabase ${r.status}: ${txt.slice(0, 180)}`)
+      try { return JSON.parse(txt) } catch { return [] }
+    }
+
     const [settingsRows, recipients] = await Promise.all([
       sbGet('lead_notify_settings?id=eq.1&select=*'),
       sbGet('lead_notify_recipients?active=eq.true&select=*'),
     ])
-    const settings = settingsRows[0] || { enabled: true, subject: 'ליד חדש מהאתר: {{name}}', include_fields: DEFAULT_FIELDS }
+    const settings = (Array.isArray(settingsRows) && settingsRows[0]) || { enabled: true, subject: 'ליד חדש מהאתר: {{name}}', include_fields: DEFAULT_FIELDS }
     if (!settings.enabled) { res.status(200).json({ ok: true, skipped: 'disabled' }); return }
 
-    const to = recipients.map((r) => r.email).filter(Boolean)
+    const to = (Array.isArray(recipients) ? recipients : []).map((r) => r.email).filter(Boolean)
     if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients' }); return }
 
-    const body = req.body && typeof req.body === 'object' ? req.body : {}
     const isTest = !!body.test
     const lead = isTest
       ? { name: 'ליד בדיקה', phone: '050-0000000', email: 'test@example.com', project: 'בדיקת מערכת', message: 'זוהי הודעת בדיקה ממסך הגדרות ההתראות.', source: 'contact', created_at: new Date().toISOString() }
@@ -136,10 +142,14 @@ module.exports = async function handler(req, res) {
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: FROM, to, subject, html, reply_to: settings.reply_to || undefined }),
     })
-    const out = await r.json().catch(() => ({}))
-    if (!r.ok) { res.status(502).json({ error: out.message || 'שגיאת Resend', detail: out }); return }
+    const outTxt = await r.text()
+    let out = {}; try { out = JSON.parse(outTxt) } catch { /* non-JSON */ }
+    if (!r.ok) {
+      res.status(502).json({ error: `Resend ${r.status}: ${out.message || out.error?.message || outTxt.slice(0, 200) || 'שגיאת שליחה'}`, detail: out })
+      return
+    }
     res.status(200).json({ ok: true, sent: to.length, id: out.id })
   } catch (e) {
-    res.status(500).json({ error: e.message || 'שגיאה לא ידועה' })
+    res.status(500).json({ error: 'שגיאת שרת: ' + (e && e.message ? e.message : String(e)) })
   }
 }

@@ -413,7 +413,10 @@ export async function sendTestNotification() {
     body: JSON.stringify({ test: true }),
   })
   const out = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(out.error || `שגיאה (${res.status})`)
+  if (!res.ok) {
+    const detail = out.detail ? ' · ' + (typeof out.detail === 'string' ? out.detail : JSON.stringify(out.detail)) : ''
+    throw new Error((out.error || `שגיאה (${res.status})`) + detail)
+  }
   return out
 }
 export async function listLeads() {

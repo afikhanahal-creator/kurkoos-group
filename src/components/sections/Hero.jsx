@@ -175,10 +175,12 @@ export default function Hero() {
               {t('hero.ctaPrimary')}
               <Icon name="arrow" size={20} className="hero__cta-arrow" />
             </Link>
-            <button type="button" className="btn btn--ghost btn--lg hero__ghost" onClick={() => setFilmOpen(true)}>
+            {/* זמני: עד שסרטון החברה מוכן, "קצת עלינו" מפנה לעמוד אודות הקבוצה.
+                כשהסרטון יהיה מוכן — מחזירים ל-<button onClick={() => setFilmOpen(true)}>. */}
+            <Link to="/about" className="btn btn--ghost btn--lg hero__ghost">
               <Icon name="play" size={16} className="hero__play-ic" />
               {t('hero.watchFilm')}
-            </button>
+            </Link>
           </div>
         </div>
 

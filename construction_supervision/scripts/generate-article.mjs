@@ -50,7 +50,7 @@ for (const line of m[1].split('\n')) {
   if (i === -1) continue
   const k = line.slice(0, i).trim()
   let v = line.slice(i + 1).trim()
-  if (v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1)
+  if (v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1).replace(/\\"/g, '"')
   fm[k] = v
 }
 const body = m[2].trim()

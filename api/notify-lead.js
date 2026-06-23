@@ -78,9 +78,9 @@ export default async function handler(req, res) {
     // ערך תא — טלפון/אימייל הופכים לקישור ללחיצה ישירה
     const cell = (k) => {
       const v = val(k)
-      if (v === '—') return '<span style="color:#9aa6b2">—</span>'
-      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="color:#07293a;text-decoration:none;font-weight:800">${v}</a>`
-      if (k === 'email') return `<a href="mailto:${lead.email}" style="color:#07293a;text-decoration:none;font-weight:800">${v}</a>`
+      if (v === '—') return `<span style="font-family:${font};color:#9aa6b2">—</span>`
+      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${v}</a>`
+      if (k === 'email') return `<a href="mailto:${lead.email}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${v}</a>`
       return v
     }
     const rows = fields.map((k, i) =>

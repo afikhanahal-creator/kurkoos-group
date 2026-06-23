@@ -25,7 +25,7 @@ const calendar = readFileSync(join(__dir, '..', 'content-calendar.md'), 'utf8')
 const client = new Anthropic()
 const msg = await client.messages.create({
   model: 'claude-opus-4-8',
-  max_tokens: 4000,
+  max_tokens: 6000,
   system: SYSTEM,
   messages: [{
     role: 'user',
@@ -33,14 +33,16 @@ const msg = await client.messages.create({
       `כתוב את כתבת יום ראשון הקרוב. התאריך: ${today}.\n` +
       `אל תחזור על נושאים מהקבצים האחרונים: ${recent}.\n` +
       `לוח הנושאים לבחירה:\n${calendar}\n` +
-      `החזר רק בלוק MDX אחד, בלי טקסט נוסף.`,
+      `אין כלים זמינים בריצה זו — כתוב מתוך הידע שלך, אל תנסה לחפש.\n` +
+      `התחל את התשובה מיד בשורת "---" (ה-frontmatter), בלי שום טקסט לפני, בלי code fences, ובלי טקסט אחרי.`,
   }],
 })
 
 const text = (msg.content.find((b) => b.type === 'text') || {}).text || ''
-const mdx = text.replace(/^```(?:mdx|markdown)?\n?/, '').replace(/```\s*$/, '').trim()
-const m = mdx.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
-if (!m) { console.error('לא נמצא frontmatter תקין'); process.exit(1) }
+let mdx = text.replace(/\r\n/g, '\n').trim()
+mdx = mdx.replace(/^```[^\n]*\n/, '').replace(/\n?```\s*$/, '').trim()
+const m = mdx.match(/^\s*---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/)
+if (!m) { console.error('לא נמצא frontmatter תקין. תחילת הפלט:\n' + mdx.slice(0, 300)); process.exit(1) }
 
 const fm = {}
 for (const line of m[1].split('\n')) {

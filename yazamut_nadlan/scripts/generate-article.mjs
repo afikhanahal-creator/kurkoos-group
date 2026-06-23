@@ -72,7 +72,7 @@ const obj = {
   slug,
   title: fm.title || '',
   date,
-  author: fm.author || 'המערכת — טור יזמות נדל"ן',
+  author: fm.author || 'המערכת, טור יזמות נדל"ן',
   authorTitle: fm.authorTitle || 'פרשנות נדל"ן · קבוצת קורקוס',
   category: fm.category || 'מגמות שוק',
   tags,

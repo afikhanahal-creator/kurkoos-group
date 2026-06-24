@@ -61,7 +61,10 @@ export default async function handler(req, res) {
       let v = lead[k]
       if (k === 'source') v = SOURCE_LABELS[v] || v
       if (k === 'project' && v && typeof v === 'object') v = v.he || v.en || ''
-      if (k === 'created_at' && v) { try { v = new Date(v).toLocaleString('he-IL') } catch { /* ignore */ } }
+      if (k === 'created_at' && v) {
+        try { v = new Date(v).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) }
+        catch { try { v = new Date(v).toLocaleString('he-IL') } catch { /* ignore */ } }
+      }
       return (v == null || v === '') ? '—' : String(v)
     }
     const projectName = (lead.project && typeof lead.project === 'object') ? (lead.project.he || lead.project.en || '') : (lead.project || '')
@@ -72,7 +75,7 @@ export default async function handler(req, res) {
 
     const SITE = process.env.SITE_URL || 'https://www.kurkoos-group.co.il'
     const ADMIN_URL = `${SITE}/admin`
-    const LOGO = `${SITE}/kurkoos-groip-logo.png`
+    const LOGO = `${SITE}/kurkoos-logo-nadlan.png`
 
     const font = "'Heebo','Assistant','Segoe UI',Arial,sans-serif"
     // ערך תא — טלפון/אימייל הופכים לקישור ללחיצה ישירה
@@ -93,12 +96,14 @@ export default async function handler(req, res) {
     // כפתורי פעולה מהירה (התקשרות / וואטסאפ / מייל)
     const digits = String(lead.phone || '').replace(/\D/g, '')
     const wa = digits ? (digits.startsWith('972') ? digits : '972' + digits.replace(/^0/, '')) : ''
-    const actionBtn = (href, label) => `<a href="${href}" style="font-family:${font};display:inline-block;margin:5px 4px;padding:11px 22px;background:#105572;color:#ffffff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:700">${label}</a>`
+    // אייקון לפני הטקסט (אימוג'י נתמך בכל לקוחות המייל המודרניים, כולל מובייל)
+    const actionBtn = (href, icon, label, bg) =>
+      `<a href="${href}" style="font-family:${font};display:inline-block;margin:5px 4px;padding:11px 22px;background:${bg || '#105572'};color:#ffffff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:700"><span style="font-size:15px;vertical-align:middle">${icon}</span>&nbsp;${label}</a>`
     const quickActions = (lead.phone || lead.email) ? `
           <tr><td align="center" style="padding:6px 36px 10px">
-            ${lead.phone ? actionBtn(`tel:${digits}`, 'התקשרות') : ''}
-            ${wa ? actionBtn(`https://wa.me/${wa}`, 'וואטסאפ') : ''}
-            ${lead.email ? actionBtn(`mailto:${lead.email}`, 'מייל ללקוח') : ''}
+            ${lead.phone ? actionBtn(`tel:${digits}`, '📞', 'התקשרות') : ''}
+            ${wa ? actionBtn(`https://wa.me/${wa}`, '💬', 'וואטסאפ', '#25D366') : ''}
+            ${lead.email ? actionBtn(`mailto:${lead.email}`, '📩', 'מייל ללקוח') : ''}
           </td></tr>` : ''
 
     const html = `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8">
@@ -127,8 +132,8 @@ export default async function handler(req, res) {
           </td></tr>
           ${quickActions}
           <!-- פוטר עם לוגו -->
-          <tr><td style="padding:32px 40px 38px;text-align:center;border-top:1px solid #e7edf1;background:#f7f8fa">
-            <img src="${LOGO}" alt="Kurkoos Group" width="120" style="display:inline-block;width:120px;max-width:55%;height:auto" />
+          <tr><td style="padding:32px 40px 38px;text-align:center;border-top:1px solid #e7edf1;background:#ffffff">
+            <img src="${LOGO}" alt="Kurkoos Group" width="132" style="display:inline-block;width:132px;max-width:58%;height:auto" />
             <p style="font-family:${font};font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8a97a3;margin:16px 0 0">נכסים · בנייה · יזמות · פיקוח · תיווך</p>
             <p style="font-family:${font};font-size:11px;color:#aeb8c0;margin:7px 0 0">הודעה אוטומטית ממערכת הניהול של קבוצת קורקוס</p>
           </td></tr>

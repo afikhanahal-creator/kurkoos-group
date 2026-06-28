@@ -34,4 +34,8 @@ jobs:
           git add src/content/yazamut
           if git diff --staged --quiet; then echo "אין כתבה חדשה — מדלג."; exit 0; fi
           git commit -m 'טור יזמות נדל"ן — כתבת השבוע (אוטומטי)'
-          git push origin HEAD:main
+          for i in 1 2 3 4; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            echo "ניסיון $i נכשל, מנסה שוב בעוד $((i * 5)) שניות..."
+            sleep $((i * 5))
+          done

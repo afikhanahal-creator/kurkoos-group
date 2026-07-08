@@ -8,6 +8,18 @@
 // נקרא מ-cms.js בכל createLead (fire-and-forget), וגם לשליחת מייל בדיקה.
 // ============================================================
 
+// Rate limiter פשוט בזיכרון — מגן מפני SPAM/flood בכל instance של Vercel
+const _rl = new Map()
+function rateLimit(ip, max = 15, windowMs = 60_000) {
+  const now = Date.now()
+  const e = _rl.get(ip) || { n: 0, reset: now + windowMs }
+  if (now > e.reset) { e.n = 0; e.reset = now + windowMs }
+  e.n++
+  _rl.set(ip, e)
+  if (_rl.size > 5_000) _rl.clear()
+  return e.n > max
+}
+
 const FIELD_LABELS = {
   name: 'שם', phone: 'טלפון', email: 'אימייל', project: 'פרויקט',
   message: 'הודעה', source: 'מקור', notes: 'הערות', created_at: 'תאריך',
@@ -29,6 +41,9 @@ export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
     if (typeof fetch !== 'function') { res.status(500).json({ error: 'הסביבה לא תומכת ב-fetch (גרסת Node ישנה מדי ב-Vercel — הגדירו Node 18+)' }); return }
+
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown'
+    if (rateLimit(ip, 15, 60_000)) { res.status(429).json({ error: 'יותר מדי בקשות — נסו שוב בעוד דקה' }); return }
 
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
     const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY

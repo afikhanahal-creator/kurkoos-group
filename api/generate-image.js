@@ -7,11 +7,27 @@
 // אופציונלי: OPENAI_IMAGE_MODEL (ברירת מחדל 'dall-e-3').
 // 🔐 את המפתח מגדירים רק ב-Vercel, לעולם לא בקוד.
 // ============================================================
+
+// Rate limiter — מגן מפני בזבוז קרדיטים (3 תמונות לכל IP כל 10 דקות)
+const _rl = new Map()
+function rateLimit(ip, max = 3, windowMs = 600_000) {
+  const now = Date.now()
+  const e = _rl.get(ip) || { n: 0, reset: now + windowMs }
+  if (now > e.reset) { e.n = 0; e.reset = now + windowMs }
+  e.n++
+  _rl.set(ip, e)
+  if (_rl.size > 1_000) _rl.clear()
+  return e.n > max
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
     return
   }
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown'
+  if (rateLimit(ip, 3, 600_000)) { res.status(429).json({ error: 'יותר מדי בקשות — נסו שוב בעוד 10 דקות' }); return }
 
   // נקודת קצה זו נקראת רק ממסך האדמין — דורשת JWT תקף של Supabase
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL

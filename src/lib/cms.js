@@ -405,11 +405,15 @@ export async function saveNotifySettings(patch) {
   if (error) throw error
   return data
 }
-// שליחת מייל בדיקה — מפעיל את אותה פונקציית /api/notify-lead עם דגל test
+// שליחת מייל בדיקה — מפעיל את אותה פונקציית /api/notify-lead עם דגל test (דורש JWT)
 export async function sendTestNotification() {
+  const { data: { session } } = await supabase.auth.getSession()
   const res = await fetch('/api/notify-lead', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
     body: JSON.stringify({ test: true }),
   })
   const out = await res.json().catch(() => ({}))

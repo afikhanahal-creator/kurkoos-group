@@ -15,6 +15,16 @@ const FIELD_LABELS = {
 const SOURCE_LABELS = { project: 'עמוד פרויקט', home: 'דף הבית', contact: 'צור קשר', manual: 'ידני' }
 const DEFAULT_FIELDS = ['name', 'phone', 'email', 'project', 'message', 'source', 'created_at']
 
+// מונע HTML injection — מחליף תווים מיוחדים בישויות HTML בטוחות
+function htmlEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
@@ -32,6 +42,17 @@ export default async function handler(req, res) {
     const body = (req.body && typeof req.body === 'object')
       ? req.body
       : (() => { try { return JSON.parse(req.body || '{}') } catch { return {} } })()
+
+    // בקשות test מגיעות רק ממסך האדמין — דורשות JWT תקף של Supabase
+    const isTest = !!body.test
+    if (isTest) {
+      const authHeader = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
+      if (!authHeader) { res.status(401).json({ error: 'Unauthorized — test requires admin session' }); return }
+      const authCheck = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, {
+        headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${authHeader}` },
+      })
+      if (!authCheck.ok) { res.status(401).json({ error: 'Unauthorized — invalid session' }); return }
+    }
 
     const sbHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
     const sbGet = async (path) => {
@@ -51,7 +72,6 @@ export default async function handler(req, res) {
     const to = (Array.isArray(recipients) ? recipients : []).map((r) => r.email).filter(Boolean)
     if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients' }); return }
 
-    const isTest = !!body.test
     const lead = isTest
       ? { name: 'ליד בדיקה', phone: '050-0000000', email: 'test@example.com', project: 'בדיקת מערכת', message: 'זוהי הודעת בדיקה ממסך הגדרות ההתראות.', source: 'contact', created_at: new Date().toISOString() }
       : (body.lead || {})
@@ -68,9 +88,11 @@ export default async function handler(req, res) {
       return (v == null || v === '') ? '—' : String(v)
     }
     const projectName = (lead.project && typeof lead.project === 'object') ? (lead.project.he || lead.project.en || '') : (lead.project || '')
+    const safeName = String(lead.name || 'ללא שם').slice(0, 100).replace(/[\r\n]/g, ' ')
+    const safeProject = String(projectName).slice(0, 100).replace(/[\r\n]/g, ' ')
     const subject = (settings.subject || 'ליד חדש מהאתר: {{name}}')
-      .replace(/{{\s*name\s*}}/g, lead.name || 'ללא שם')
-      .replace(/{{\s*project\s*}}/g, projectName)
+      .replace(/{{\s*name\s*}}/g, safeName)
+      .replace(/{{\s*project\s*}}/g, safeProject)
       + (isTest ? ' (בדיקה)' : '')
 
     const SITE = process.env.SITE_URL || 'https://www.kurkoos-group.co.il'
@@ -78,13 +100,14 @@ export default async function handler(req, res) {
     const LOGO = `${SITE}/kurkoos-logo-nadlan.png`
 
     const font = "'Heebo','Assistant','Segoe UI',Arial,sans-serif"
-    // ערך תא — טלפון/אימייל הופכים לקישור ללחיצה ישירה
+    // ערך תא — כל ערכי המשתמש עוברים htmlEsc למניעת HTML injection במייל לאדמין
     const cell = (k) => {
       const v = val(k)
       if (v === '—') return `<span style="font-family:${font};color:#9aa6b2">—</span>`
-      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${v}</a>`
-      if (k === 'email') return `<a href="mailto:${lead.email}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${v}</a>`
-      return v
+      const safe = htmlEsc(v)
+      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${safe}</a>`
+      if (k === 'email') return `<a href="mailto:${htmlEsc(lead.email)}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${safe}</a>`
+      return safe
     }
     const rows = fields.map((k, i) =>
       `<tr>

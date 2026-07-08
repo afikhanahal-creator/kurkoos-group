@@ -338,9 +338,22 @@ export async function deleteLogo(id, imageUrl) {
 }
 
 // ---------- Leads (CRM) ----------
+const _LEAD_MAX = { name: 200, phone: 30, email: 200, message: 2000, notes: 2000, project: 200 }
+const _VALID_SOURCES = new Set(['project', 'contact', 'home', 'manual'])
+
+function sanitizeLead(row) {
+  const out = { ...row }
+  for (const [f, max] of Object.entries(_LEAD_MAX)) {
+    if (out[f] != null) out[f] = String(out[f]).slice(0, max)
+  }
+  if (out.source && !_VALID_SOURCES.has(out.source)) out.source = 'contact'
+  return out
+}
+
 // יצירת ליד — נקראת גם מטפסי האתר (אנונימי, RLS מתיר insert לכולם)
 export async function createLead(row, { read = true } = {}) {
   if (!supabase) return
+  row = sanitizeLead(row)
   let lead
   if (read) {
     // מסלול מנהל (מחובר) — קוראים בחזרה את השורה (כולל id) עבור ה-UI
@@ -539,25 +552,18 @@ export function useSettings() {
 }
 
 // ---------- Newsletter (מאגר נרשמים + וובהוק לאוטומציות) ----------
+// הכנסה + webhook מתבצעים דרך /api/newsletter-subscribe (צד שרת) — כך ה-webhook URL
+// לא נחשף ללקוח (לא נשלח בתגובת Supabase ולא מופיע ב-bundle).
 export async function subscribeNewsletter(email, source = 'site') {
-  if (!supabase) throw new Error('Supabase לא מוגדר')
   const clean = String(email || '').trim().toLowerCase()
   if (!clean) throw new Error('אימייל ריק')
-  const { error } = await supabase.from('newsletter_subscribers').insert({ email: clean, source })
-  // 23505 = כבר רשום (אינדקס ייחודי) — נחשב הצלחה שקטה
-  if (error && error.code !== '23505') throw error
-  // וובהוק לאוטומציות (Make / Zapier / ESP) — שיגור-ושכח, לא חוסם את המשתמש
-  try {
-    const s = await fetchSettings()
-    if (s.newsletter_webhook) {
-      fetch(s.newsletter_webhook, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'newsletter_subscribe', email: clean, source, ts: new Date().toISOString() }),
-      }).catch(() => {})
-    }
-  } catch { /* הוובהוק הוא תוסף — כישלון בו לא מפיל את ההרשמה */ }
+  const res = await fetch('/api/newsletter-subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: clean, source }),
+  })
+  const out = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(out.error || `שגיאה (${res.status})`)
 }
 
 export async function listSubscribers() {

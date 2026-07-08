@@ -150,7 +150,7 @@ export default function Admin() {
           <div className="adm__user">
             <span className="adm__avatar">{initials}</span>
             <span className="adm__user-meta"><strong>{email.split('@')[0]}</strong><small>{email}</small></span>
-            <button type="button" className="adm__logout" onClick={() => supabase.auth.signOut()} aria-label="יציאה">
+            <button type="button" className="adm__logout" onClick={() => { supabase.auth.signOut(); for (const k of Object.keys(localStorage)) { if (k.startsWith('kc_cache_')) localStorage.removeItem(k) } }} aria-label="יציאה">
               <Ico.logout width={18} height={18} />
             </button>
           </div>

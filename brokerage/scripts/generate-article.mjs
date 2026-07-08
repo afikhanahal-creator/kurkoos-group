@@ -60,8 +60,8 @@ let tags = []
 try { tags = JSON.parse(fm.tags) }
 catch { tags = String(fm.tags || '').replace(/[[\]"]/g, '').split(',').map((s) => s.trim()).filter(Boolean) }
 
-const slug = (fm.slug || today).trim()
-const date = (fm.date || today).trim()
+const slug = (fm.slug || today).trim().replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').slice(0, 80)
+const date = (fm.date || today).trim().replace(/[^0-9-]/g, '').slice(0, 10)
 const obj = {
   slug,
   title: fm.title || '',
@@ -82,5 +82,7 @@ const obj = {
 }
 
 const file = `// נוצר אוטומטית — המדריך לרוכש ולמוכר · ${date}\nexport default ${JSON.stringify(obj, null, 2)}\n`
-writeFileSync(join(contentDir, `${date}-${slug}.js`), file)
+const outPath = join(contentDir, `${date}-${slug}.js`)
+if (!outPath.startsWith(contentDir + '/')) throw new Error(`Path traversal detected: ${outPath}`)
+writeFileSync(outPath, file)
 console.log('נכתבה כתבה:', `${date}-${slug}.js`)

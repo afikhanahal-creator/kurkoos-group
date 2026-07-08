@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { uploadMedia } from '../../lib/cms.js'
+import { supabase } from '../../lib/supabase.js'
 import { toast } from '../../lib/toast.js'
 
 /* כפתור "ייצר תמונה ב-AI": שולח prompt ל-/api/generate-image (OpenAI),
@@ -12,9 +13,11 @@ export default function AiImageButton({ promptText, folder = 'ai', onImage }) {
     if (!promptText) { toast.error('הוסיפו כותרת/תיאור לכתבה לפני יצירת תמונה'); return }
     setBusy(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { toast.error('נדרשת כניסה מחדש למערכת'); return }
       const res = await fetch('/api/generate-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ prompt: promptText }),
       })
       const data = await res.json().catch(() => ({}))

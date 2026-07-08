@@ -12,6 +12,25 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method not allowed' })
     return
   }
+
+  // נקודת קצה זו נקראת רק ממסך האדמין — דורשת JWT תקף של Supabase
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const accessToken = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
+  if (!accessToken) {
+    res.status(401).json({ error: 'Unauthorized — admin session required' })
+    return
+  }
+  if (SUPABASE_URL && SERVICE_KEY) {
+    const check = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, {
+      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${accessToken}` },
+    }).catch(() => null)
+    if (!check || !check.ok) {
+      res.status(401).json({ error: 'Unauthorized — invalid or expired session' })
+      return
+    }
+  }
+
   const KEY = process.env.OPENAI_API_KEY
   if (!KEY) {
     res.status(500).json({ error: 'OPENAI_API_KEY חסר. הגדירו אותו ב-Vercel > Settings > Environment Variables.' })

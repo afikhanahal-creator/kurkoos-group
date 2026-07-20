@@ -95,7 +95,7 @@ export default async function handler(req, res) {
     const val = (k) => {
       let v = lead[k]
       if (k === 'source') v = SOURCE_LABELS[v] || v
-      if (k === 'project' && v && typeof v === 'object') v = v.he || v.en || ''
+      if (k === 'project' && v && typeof v === 'object') v = v.he || v.en || v.slug || ''
       if (k === 'created_at' && v) {
         try { v = new Date(v).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) }
         catch { try { v = new Date(v).toLocaleString('he-IL') } catch { /* ignore */ } }
@@ -103,6 +103,8 @@ export default async function handler(req, res) {
       return (v == null || v === '') ? '—' : String(v)
     }
     const projectName = (lead.project && typeof lead.project === 'object') ? (lead.project.he || lead.project.en || '') : (lead.project || '')
+    const projectSlug = (lead.project && typeof lead.project === 'object') ? (lead.project.slug || '') : ''
+    const PROJECT_URL = projectSlug ? `${SITE}/projects/${projectSlug}` : ''
     const safeName = String(lead.name || 'ללא שם').slice(0, 100).replace(/[\r\n]/g, ' ')
     const safeProject = String(projectName).slice(0, 100).replace(/[\r\n]/g, ' ')
     const subject = (settings.subject || 'ליד חדש מהאתר: {{name}}')
@@ -154,6 +156,7 @@ export default async function handler(req, res) {
           <tr><td style="background:#07293a;padding:34px 40px;text-align:center">
             <div style="font-family:${font};font-size:12px;font-weight:700;letter-spacing:0.22em;color:#8fb6c8">התראת מערכת</div>
             <h1 style="font-family:${font};font-weight:900;font-size:30px;color:#ffffff;margin:10px 0 0">ליד חדש מהאתר</h1>
+            ${projectName ? `<div style="font-family:${font};font-size:16px;font-weight:700;color:#f0c040;margin:10px 0 0">📌 פרויקט: ${htmlEsc(projectName)}</div>` : ''}
             <div style="width:54px;height:4px;background:#a90b0c;border-radius:2px;margin:16px auto 0"></div>
           </td></tr>
           <!-- אינטרו -->
@@ -164,9 +167,10 @@ export default async function handler(req, res) {
           <tr><td style="padding:16px 40px 0">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #dfe7ec;border-radius:10px;overflow:hidden">${rows}</table>
           </td></tr>
-          <!-- כפתור ראשי -->
+          <!-- כפתורים ראשיים -->
           <tr><td align="center" style="padding:30px 40px 6px">
             <a href="${ADMIN_URL}" style="font-family:${font};display:inline-block;background:#a90b0c;color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;padding:15px 46px;border-radius:10px;box-shadow:0 8px 20px rgba(169,11,12,0.30)">צפייה בליד במערכת</a>
+            ${PROJECT_URL ? `&nbsp;&nbsp;<a href="${PROJECT_URL}" style="font-family:${font};display:inline-block;background:#105572;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:15px 28px;border-radius:10px">🏢 עמוד הפרויקט</a>` : ''}
           </td></tr>
           ${quickActions}
           <!-- פוטר עם לוגו -->

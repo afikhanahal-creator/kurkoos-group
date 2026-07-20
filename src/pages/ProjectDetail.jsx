@@ -427,7 +427,10 @@ export default function ProjectDetail() {
       phone: form.phone.trim(),
       email: form.email.trim(),
       message: fullMessage,
-      project: project?.name || '',
+      // project שומר שם + slug לבניית קישור ישיר בהתראת המייל
+      project: project?.name
+        ? { ...(typeof project.name === 'object' ? project.name : { he: String(project.name), en: String(project.name) }), slug: project.slug || '' }
+        : '',
       source: 'project',
       status: 'new',
     }, { read: false }).catch(() => {})

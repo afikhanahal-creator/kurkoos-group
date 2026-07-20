@@ -1,18 +1,54 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { uploadMedia, deleteMedia } from '../../lib/cms.js'
 import ImageEditor from './ImageEditor.jsx'
 
-function SortableImage({ url, index, onDelete, onCover, onEdit }) {
+function ImgPreview({ url, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+  }, [onClose])
+
+  const download = async () => {
+    try {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = url.split('/').pop().split('?')[0] || 'image.jpg'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+    } catch { window.open(url, '_blank') }
+  }
+
+  return createPortal(
+    <div className="im-preview" onClick={onClose} role="dialog" aria-modal="true">
+      <button type="button" className="im-preview__close" onClick={onClose} aria-label="סגור">✕</button>
+      <div className="im-preview__box" onClick={(e) => e.stopPropagation()}>
+        <img className="im-preview__img" src={url} alt="תצוגה מוגדלת" />
+        <button type="button" className="im-preview__dl" onClick={download}>↓ הורד תמונה</button>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+function SortableImage({ url, index, onDelete, onCover, onEdit, onPreview }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: url })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   return (
     <div ref={setNodeRef} style={style} className={`im__item ${index === 0 ? 'im__item--cover' : ''}`}>
-      <img src={url} alt="" />
+      <img src={url} alt="" onClick={() => onPreview(url)} style={{ cursor: 'zoom-in' }} />
       <div className="im__bar">
         <button type="button" className="im__drag" {...attributes} {...listeners} title="גרור לסידור">⠿</button>
+        <button type="button" className="im__zoom" onClick={() => onPreview(url)} title="הגדל תמונה">⤢</button>
         <button type="button" className="im__edit" onClick={() => onEdit(url)} title="עריכה / חיתוך / כיוון">✎</button>
         {index !== 0 && <button type="button" className="im__cover" onClick={() => onCover(url)} title="קבע ככריכה">★</button>}
         <button type="button" className="im__del" onClick={() => onDelete(url)} title="מחק">✕</button>
@@ -37,6 +73,7 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
   const [over, setOver] = useState(false)
   const [editing, setEditing] = useState(null)   // url שנערך כרגע
   const [urlInput, setUrlInput] = useState('')   // הוספת תמונה לפי כתובת (URL)
+  const [preview, setPreview] = useState(null)   // url לתצוגה מוגדלת
 
   // הוספת תמונה לפי כתובת חיצונית — בלי העלאה (שימושי להדבקת קישור מוכן)
   const addByUrl = () => {
@@ -166,7 +203,7 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
         <SortableContext items={value} strategy={rectSortingStrategy}>
           <div className="im__grid">
             {value.map((url, i) => (
-              <SortableImage key={url} url={url} index={i} onDelete={handleDelete} onCover={handleCover} onEdit={setEditing} />
+              <SortableImage key={url} url={url} index={i} onDelete={handleDelete} onCover={handleCover} onEdit={setEditing} onPreview={setPreview} />
             ))}
             {value.length === 0 && (
               <button type="button" className="im__empty im__dropzone" onClick={() => inputRef.current?.click()}>
@@ -180,6 +217,7 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
       </DndContext>
       {over && <div className="im__overlay" aria-hidden="true"><span>שחררו כדי להעלות</span></div>}
       {editing && <ImageEditor src={editing} busy={busy} onApply={applyEdit} onClose={() => setEditing(null)} />}
+      {preview && <ImgPreview url={preview} onClose={() => setPreview(null)} />}
     </div>
   )
 }

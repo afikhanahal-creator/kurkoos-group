@@ -590,7 +590,17 @@
 .im__drag { cursor: grab; }
 .im__del:hover { background: var(--color-accent); color: #fff; }
 .im__edit:hover { background: var(--color-secondary); color: #fff; }
+.im__zoom:hover { background: var(--color-secondary); color: #fff; }
 .im__badge { position: absolute; inset-block-end: 0.3rem; inset-inline-start: 0.3rem; background: var(--color-accent); color: #fff; font-size: 0.66rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: var(--radius-pill); }
+
+/* Image Preview Modal */
+.im-preview { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+.im-preview__close { position: fixed; inset-block-start: 1rem; inset-inline-end: 1rem; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.18); color: #fff; font-size: 1.1rem; display: grid; place-items: center; transition: background 0.15s; }
+.im-preview__close:hover { background: rgba(255,255,255,0.35); }
+.im-preview__box { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: min(90vw, 1100px); }
+.im-preview__img { max-height: 80vh; max-width: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+.im-preview__dl { padding: 0.6rem 1.8rem; background: var(--color-secondary, #15617f); color: #fff; border-radius: var(--radius-pill, 999px); font-size: 0.92rem; font-weight: 700; font-family: var(--font-heading); transition: opacity 0.15s; letter-spacing: 0.01em; }
+.im-preview__dl:hover { opacity: 0.82; }
 
 /* ============================================================
    COUNTERS TAB

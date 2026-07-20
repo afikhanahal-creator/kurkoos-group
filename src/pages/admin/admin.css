@@ -924,6 +924,45 @@
 /* סרגל עליון — נצמד לראש בעת גלילה (סגנון מאנדיי) */
 .adm-leads__bar--top { position: sticky; top: 0; z-index: 30; }
 
+/* ===== פילטרים ===== */
+.adm-leads__filters { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.6rem 0 0.2rem; flex-wrap: wrap; }
+.adm-leads__filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
+.adm-leads__filter-lbl { font-size: 0.78rem; font-weight: 700; color: var(--adm-muted); min-width: 3rem; }
+.adm-filter-pill { padding: 0.3rem 0.75rem; border-radius: var(--radius-pill); border: 1.5px solid var(--adm-border-strong); background: var(--adm-bg); color: var(--adm-ink); font-size: 0.78rem; font-weight: 600; font-family: var(--font-heading); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.adm-filter-pill:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
+.adm-filter-pill.is-active { background: var(--color-secondary); color: #fff; border-color: var(--color-secondary); }
+
+/* ===== כפתורי קשר מהיר ===== */
+.adm-lead__quick { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.5rem 0 0.25rem; }
+.adm-panel__quick { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.1rem; }
+.adm-quick-btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.35rem 0.75rem; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 700; text-decoration: none; white-space: nowrap; transition: opacity 0.15s; }
+.adm-panel__quick .adm-quick-btn { padding: 0.5rem 1.1rem; font-size: 0.85rem; }
+.adm-quick-btn--call { background: #eef6ff; color: #1a5ca8; border: 1.5px solid #b8d4f5; }
+.adm-quick-btn--wa   { background: #edfaf2; color: #1a7a3f; border: 1.5px solid #a0ddb8; }
+.adm-quick-btn--mail { background: #fff8eb; color: #8c5e00; border: 1.5px solid #f0d490; }
+.adm-quick-btn--proj { background: #eef3f8; color: #105572; border: 1.5px solid #b0cfe0; }
+.adm-quick-btn:hover { opacity: 0.78; }
+
+/* ===== פייפליין שלבים בפאנל ===== */
+.adm-pipeline { display: flex; gap: 0.3rem; padding: 0.8rem 1.4rem; background: var(--adm-surface-2, #f4f6f9); border-bottom: 1px solid var(--adm-border); overflow-x: auto; flex-wrap: nowrap; }
+.adm-pipeline__step { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.4rem 0.6rem; border-radius: 8px; border: 2px solid transparent; cursor: pointer; flex: 1; min-width: 60px; max-width: 90px; transition: all 0.15s; opacity: 0.55; font-family: var(--font-heading); }
+.adm-pipeline__step:hover { opacity: 0.85; background: var(--adm-bg); }
+.adm-pipeline__step.is-active { opacity: 1; background: color-mix(in srgb, var(--c) 14%, white); border-color: var(--c); }
+.adm-pipeline__emoji { font-size: 1.25rem; }
+.adm-pipeline__lbl { font-size: 0.65rem; font-weight: 700; color: var(--adm-ink); text-align: center; line-height: 1.2; }
+.adm-pipeline__step.is-active .adm-pipeline__lbl { color: var(--c); }
+
+/* ===== תאריך ===== */
+.adm-leads__static { display: block; font-size: 0.9rem; color: var(--adm-ink); padding: 0.35rem 0; }
+
+/* ===== stage pill ברשימה ===== */
+.adm-list__stage-pill { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 0.85rem; flex-shrink: 0; }
+.adm-list__source { display: inline-block; padding: 0.2rem 0.55rem; border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 700; color: #fff; white-space: nowrap; flex-shrink: 0; }
+
+/* ===== וואטסאפ בטבלה ===== */
+.adm-table__contact-cell { display: flex; align-items: center; gap: 0.4rem; }
+.adm-table__wa { font-size: 1rem; text-decoration: none; }
+
 /* רספונסיבי — עמודות נערמות במובייל */
 @media (max-width: 720px) {
   .adm-leads__board { flex-direction: column; overflow-x: visible; }

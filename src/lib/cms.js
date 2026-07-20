@@ -344,7 +344,11 @@ const _VALID_SOURCES = new Set(['project', 'contact', 'home', 'manual'])
 function sanitizeLead(row) {
   const out = { ...row }
   for (const [f, max] of Object.entries(_LEAD_MAX)) {
-    if (out[f] != null) out[f] = String(out[f]).slice(0, max)
+    if (out[f] != null) {
+      // project is jsonb — preserve {he,en,slug} objects, only stringify plain strings
+      if (f === 'project' && typeof out[f] === 'object') continue
+      out[f] = String(out[f]).slice(0, max)
+    }
   }
   if (out.source && !_VALID_SOURCES.has(out.source)) out.source = 'contact'
   return out

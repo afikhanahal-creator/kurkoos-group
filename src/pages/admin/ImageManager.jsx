@@ -45,10 +45,12 @@ function SortableImage({ url, index, onDelete, onCover, onEdit, onPreview }) {
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   return (
     <div ref={setNodeRef} style={style} className={`im__item ${index === 0 ? 'im__item--cover' : ''}`}>
-      <img src={url} alt="" onClick={() => onPreview(url)} style={{ cursor: 'zoom-in' }} />
+      <button type="button" className="im__thumb" onClick={() => onPreview(url)} aria-label="הגדל תמונה">
+        <img src={url} alt="" />
+        <span className="im__zoom-ic" aria-hidden="true">🔍</span>
+      </button>
       <div className="im__bar">
         <button type="button" className="im__drag" {...attributes} {...listeners} title="גרור לסידור">⠿</button>
-        <button type="button" className="im__zoom" onClick={() => onPreview(url)} title="הגדל תמונה">⤢</button>
         <button type="button" className="im__edit" onClick={() => onEdit(url)} title="עריכה / חיתוך / כיוון">✎</button>
         {index !== 0 && <button type="button" className="im__cover" onClick={() => onCover(url)} title="קבע ככריכה">★</button>}
         <button type="button" className="im__del" onClick={() => onDelete(url)} title="מחק">✕</button>

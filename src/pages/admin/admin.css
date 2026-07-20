@@ -869,7 +869,8 @@
 .adm-lead__act { width: 28px; height: 28px; border: 1px solid var(--adm-border); border-radius: 7px; background: var(--adm-surface); cursor: pointer; font-size: 0.85rem; }
 .adm-lead__act:hover { border-color: #16688c; }
 .adm-lead__act--del:hover { border-color: #d64545; }
-.adm-lead__source { position: absolute; top: 0.55rem; inset-inline-start: 0.6rem; font-size: 0.64rem; color: var(--adm-muted); background: var(--adm-bg); padding: 0.05rem 0.4rem; border-radius: 999px; }
+.adm-lead__source-row { margin-top: 0.5rem; }
+.adm-lead__source-badge { display: inline-block; padding: 0.18rem 0.6rem; border-radius: var(--radius-pill); font-size: 0.68rem; font-weight: 700; color: #fff; white-space: nowrap; letter-spacing: 0.01em; }
 
 /* modal */
 .adm-leads__modal { position: fixed; inset: 0; z-index: 200; background: rgba(7, 41, 58, 0.55); backdrop-filter: blur(3px); display: grid; place-items: center; padding: 1rem; }

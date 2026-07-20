@@ -15,16 +15,19 @@ const SOURCE_LABEL = { project: 'עמוד פרויקט', home: 'דף הבית', 
 const SOURCE_COLOR = { project: '#105572', home: '#2e9e6b', contact: '#8c6d1f', manual: '#666' }
 const SITE       = 'https://www.kurkoos-group.co.il'
 
-/* מחלץ שם פרויקט — תומך במחרוזת, {he,en,slug}, ריק */
-const extractProject = (p) => {
-  if (!p || p === '[object Object]') return ''
-  if (typeof p === 'object') return p.he || p.en || ''
-  return String(p)
+/* מחלץ שם פרויקט — תומך במחרוזת, {he,en,slug}, JSON-string, ריק */
+const parseProject = (p) => {
+  if (!p) return null
+  if (typeof p === 'object') return p
+  if (typeof p === 'string') {
+    if (p === '[object Object]') return null
+    try { const o = JSON.parse(p); if (o && typeof o === 'object') return o } catch { /* plain string */ }
+    return { he: p }
+  }
+  return null
 }
-const projectUrl = (p) => {
-  if (!p || typeof p !== 'object' || !p.slug) return ''
-  return `${SITE}/projects/${p.slug}`
-}
+const extractProject = (p) => { const o = parseProject(p); return o ? (o.he || o.en || '') : '' }
+const projectUrl = (p) => { const o = parseProject(p); return o?.slug ? `${SITE}/projects/${o.slug}` : '' }
 
 const VIEW_ICONS = {
   board: (props) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
@@ -331,18 +334,20 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, compact = fals
           נוצר קשר
         </label>
         <select className="adm-lead__stage-sel" value={lead.status||'new'} onChange={(e) => onStage(lead.id, e.target.value)}
-          style={{ borderColor: st.color, color: st.color }}>
+          style={{ borderColor: st.color }}>
           {STAGES.map((s) => <option key={s.id} value={s.id}>{s.emoji} {s.label}</option>)}
         </select>
         <button type="button" className="adm-lead__act" onClick={() => onEdit(lead)} title="פתח פרטים">✎</button>
         <button type="button" className="adm-lead__act adm-lead__act--del" onClick={() => onRemove(lead)} title="מחיקה">🗑</button>
       </div>
 
-      {/* ===== badge מקור ===== */}
+      {/* ===== badge מקור — בשורה, לא absolute ===== */}
       {lead.source && (
-        <span className="adm-lead__source" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
-          {SOURCE_LABEL[lead.source]||lead.source}
-        </span>
+        <div className="adm-lead__source-row">
+          <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
+            {SOURCE_LABEL[lead.source]||lead.source}
+          </span>
+        </div>
       )}
     </article>
   )
@@ -420,11 +425,11 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
             </label>
 
             <select className="adm-list__stage-sel" value={lead.status||'new'} onChange={(e) => moveTo(lead.id, e.target.value)}
-              style={{ borderColor: st.color, color: st.color }}>
+              style={{ borderColor: st.color }}>
               {STAGES.map((s) => <option key={s.id} value={s.id}>{s.emoji} {s.label}</option>)}
             </select>
 
-            <span className="adm-list__source" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
+            <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
               {SOURCE_LABEL[lead.source]||lead.source||'—'}
             </span>
 
@@ -472,7 +477,7 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing }) {
                 <td>{proj||'—'}</td>
                 <td>
                   <select className="adm-lead__stage-sel" value={lead.status||'new'} onChange={(e) => moveTo(lead.id, e.target.value)}
-                    style={{ borderColor: st.color, color: st.color }}>
+                    style={{ borderColor: st.color }}>
                     {STAGES.map((s) => <option key={s.id} value={s.id}>{s.emoji} {s.label}</option>)}
                   </select>
                 </td>
@@ -480,7 +485,7 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing }) {
                   <input type="checkbox" checked={!!lead.contacted} onChange={() => toggleContacted(lead)}/>
                 </td>
                 <td>
-                  <span className="adm-lead__source" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
+                  <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
                     {SOURCE_LABEL[lead.source]||lead.source||'—'}
                   </span>
                 </td>

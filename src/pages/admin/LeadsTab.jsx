@@ -302,6 +302,8 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragProps = {}
 
   return (
     <article className="adm-lead" {...dragProps}>
+      {/* ===== ידית גרירה ===== */}
+      {dragProps.draggable && <div className="adm-lead__grip" aria-hidden="true">⋮⋮</div>}
       {/* ===== שורה עליונה: שם + תאריך ===== */}
       <div className="adm-lead__top">
         <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
@@ -363,14 +365,14 @@ function BoardView({ byStage, dragId, setDragId, dragOver, setDragOver, moveTo, 
           <section key={stage.id}
             className={`adm-stage ${dragOver===stage.id?'adm-stage--over':''}`}
             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOver(stage.id) }}
-            onDragLeave={() => setDragOver((s) => s===stage.id?null:s)}
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null) }}
             onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); if (id) moveTo(id, stage.id); setDragId(null); setDragOver(null) }}>
             <header className="adm-stage__head" style={{ '--stage': stage.color }}>
               <span className="adm-stage__dot"/>
               <h3>{stage.emoji} {stage.label}</h3>
               <span className="adm-stage__count">{items.length}</span>
             </header>
-            <div className="adm-stage__list">
+            <div className="adm-stage__list" onDragOver={(e) => e.preventDefault()}>
               {items.map((lead) => (
                 <LeadCard key={lead.id} lead={lead}
                   onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}

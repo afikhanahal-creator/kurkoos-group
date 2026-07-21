@@ -294,14 +294,14 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, compact = false }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragProps = {} }) {
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
   return (
-    <article className={`adm-lead ${compact?'adm-lead--compact':''}`}>
+    <article className="adm-lead" {...dragProps}>
       {/* ===== שורה עליונה: שם + תאריך ===== */}
       <div className="adm-lead__top">
         <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
@@ -320,11 +320,11 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, compact = fals
       <div className="adm-lead__quick">
         {lead.phone && (
           <>
-            <a href={`tel:${digits}`} className="adm-quick-btn adm-quick-btn--call" title={`התקשר: ${lead.phone}`}>📞 טלפון</a>
-            {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="adm-quick-btn adm-quick-btn--wa" title="פתח וואטסאפ">💬 וואטסאפ</a>}
+            <a href={`tel:${digits}`} draggable="false" className="adm-quick-btn adm-quick-btn--call" title={`התקשר: ${lead.phone}`}>📞 טלפון</a>
+            {wa && <a href={wa} draggable="false" target="_blank" rel="noopener noreferrer" className="adm-quick-btn adm-quick-btn--wa" title="פתח וואטסאפ">💬 וואטסאפ</a>}
           </>
         )}
-        {lead.email && <a href={`mailto:${lead.email}`} className="adm-quick-btn adm-quick-btn--mail" title={lead.email}>✉️ מייל</a>}
+        {lead.email && <a href={`mailto:${lead.email}`} draggable="false" className="adm-quick-btn adm-quick-btn--mail" title={lead.email}>✉️ מייל</a>}
       </div>
 
       {/* ===== שורה תחתונה: שלב + פעולות ===== */}
@@ -372,12 +372,15 @@ function BoardView({ byStage, dragId, setDragId, dragOver, setDragOver, moveTo, 
             </header>
             <div className="adm-stage__list">
               {items.map((lead) => (
-                <div key={lead.id} draggable
-                  onDragStart={() => setDragId(lead.id)}
-                  onDragEnd={() => { setDragId(null); setDragOver(null) }}
-                  className={dragId===lead.id?'adm-lead--dragging':''}>
-                  <LeadCard lead={lead} onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}/>
-                </div>
+                <LeadCard key={lead.id} lead={lead}
+                  onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}
+                  dragProps={{
+                    draggable: true,
+                    onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; setDragId(lead.id) },
+                    onDragEnd:   () => { setDragId(null); setDragOver(null) },
+                    style: dragId === lead.id ? { opacity: 0.45, transform: 'rotate(1.5deg)' } : {},
+                  }}
+                />
               ))}
               {!items.length && <div className="adm-stage__empty">גררו לכאן ליד</div>}
             </div>

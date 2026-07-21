@@ -295,15 +295,21 @@ function Dashboard({ leads }) {
 
 /* ============================ קארד ליד (board + list) ============================ */
 function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragProps = {} }) {
+  const { draggable, onDragStart, onDragEnd, style: dragStyle } = dragProps
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
   return (
-    <article className="adm-lead" {...dragProps}>
-      {/* ===== ידית גרירה ===== */}
-      {dragProps.draggable && <div className="adm-lead__grip" aria-hidden="true">⋮⋮</div>}
+    <article className="adm-lead" style={dragStyle}>
+      {/* ===== ידית גרירה — הרכיב הדרייגבל בפועל ===== */}
+      {draggable && (
+        <div className="adm-lead__grip" draggable="true"
+          onDragStart={onDragStart} onDragEnd={onDragEnd} aria-hidden="true">
+          ⋮⋮
+        </div>
+      )}
       {/* ===== שורה עליונה: שם + תאריך ===== */}
       <div className="adm-lead__top">
         <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>

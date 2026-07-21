@@ -362,9 +362,9 @@ function BoardView({ byStage, dragId, setDragId, dragOver, setDragOver, moveTo, 
         return (
           <section key={stage.id}
             className={`adm-stage ${dragOver===stage.id?'adm-stage--over':''}`}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(stage.id) }}
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOver(stage.id) }}
             onDragLeave={() => setDragOver((s) => s===stage.id?null:s)}
-            onDrop={() => { if (dragId) moveTo(dragId, stage.id); setDragId(null); setDragOver(null) }}>
+            onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); if (id) moveTo(id, stage.id); setDragId(null); setDragOver(null) }}>
             <header className="adm-stage__head" style={{ '--stage': stage.color }}>
               <span className="adm-stage__dot"/>
               <h3>{stage.emoji} {stage.label}</h3>
@@ -376,7 +376,7 @@ function BoardView({ byStage, dragId, setDragId, dragOver, setDragOver, moveTo, 
                   onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}
                   dragProps={{
                     draggable: true,
-                    onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; setDragId(lead.id) },
+                    onDragStart: (e) => { e.dataTransfer.setData('text/plain', String(lead.id)); e.dataTransfer.effectAllowed = 'move'; setDragId(lead.id) },
                     onDragEnd:   () => { setDragId(null); setDragOver(null) },
                     style: dragId === lead.id ? { opacity: 0.45, transform: 'rotate(1.5deg)' } : {},
                   }}

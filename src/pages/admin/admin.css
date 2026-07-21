@@ -853,6 +853,9 @@
 }
 .adm-lead:hover { box-shadow: var(--adm-shadow); }
 .adm-lead--dragging { opacity: 0.45; transform: rotate(1.5deg); }
+.adm-lead__grip { text-align: center; color: #c0c9d4; font-size: 0.78rem; letter-spacing: 3px; cursor: grab; padding: 0 0 4px; user-select: none; line-height: 1; }
+.adm-lead__grip:active { cursor: grabbing; }
+.adm-lead[draggable="true"] { user-select: none; }
 .adm-lead__top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
 .adm-lead__name { font-family: var(--font-heading); font-weight: 800; color: var(--adm-ink); font-size: 0.98rem; }
 .adm-lead__date { font-size: 0.74rem; color: var(--adm-muted); white-space: nowrap; }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, rectIntersection } from '@dnd-kit/core'
 
 const STAGES = [
   { id: 'new',         label: 'ליד חדש',       color: '#3a7bd5', emoji: '🆕' },
@@ -383,7 +383,7 @@ function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing
   const activeLead = leads.find((l) => String(l.id) === activeId) || null
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter}
+    <DndContext sensors={sensors} collisionDetection={rectIntersection}
       onDragStart={({ active }) => setActiveId(String(active.id))}
       onDragEnd={({ active, over }) => { setActiveId(null); if (over) moveTo(String(active.id), over.id) }}
       onDragCancel={() => setActiveId(null)}>

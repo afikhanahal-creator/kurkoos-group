@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core'
 
 const STAGES = [
   { id: 'new',         label: 'ליד חדש',       color: '#3a7bd5', emoji: '🆕' },
@@ -295,16 +295,15 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragRef, dragHandle, isDragging }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
   return (
-    <article ref={dragRef} className="adm-lead" style={isDragging ? { opacity: 0.4 } : {}}>
-      {/* ===== ידית גרירה — מועברת מ-DraggableCard ===== */}
-      {dragHandle}
+    <article className="adm-lead">
+      {showGrip && <div className="adm-lead__grip" aria-hidden="true"><span>⋮</span><span>⋮</span></div>}
       {/* ===== שורה עליונה: שם + תאריך ===== */}
       <div className="adm-lead__top">
         <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
@@ -359,16 +358,12 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragRef, dragH
 /* ============================ dnd-kit helpers ============================ */
 function DraggableCard({ lead, ...props }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(lead.id) })
+  // wrapper div = ref + listeners על אותו אלמנט (הדרך הבטוחה ב-@dnd-kit)
   return (
-    <LeadCard lead={lead} {...props}
-      dragRef={setNodeRef}
-      isDragging={isDragging}
-      dragHandle={
-        <div className="adm-lead__grip" {...listeners} {...attributes} title="גרור לעמודה אחרת">
-          <span>⋮</span><span>⋮</span>
-        </div>
-      }
-    />
+    <div ref={setNodeRef} {...listeners} {...attributes}
+      style={{ opacity: isDragging ? 0 : 1, touchAction: 'none', outline: 'none', cursor: 'grab' }}>
+      <LeadCard lead={lead} {...props} showGrip />
+    </div>
   )
 }
 
@@ -388,7 +383,7 @@ function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing
   const activeLead = leads.find((l) => String(l.id) === activeId) || null
 
   return (
-    <DndContext sensors={sensors}
+    <DndContext sensors={sensors} collisionDetection={closestCenter}
       onDragStart={({ active }) => setActiveId(String(active.id))}
       onDragEnd={({ active, over }) => { setActiveId(null); if (over) moveTo(String(active.id), over.id) }}
       onDragCancel={() => setActiveId(null)}>
@@ -413,10 +408,11 @@ function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing
           )
         })}
       </div>
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeLead && (
-          <LeadCard lead={activeLead}
-            onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}/>
+          <div style={{ pointerEvents: 'none', cursor: 'grabbing', transform: 'rotate(2deg)', boxShadow: '0 16px 40px rgba(0,0,0,0.2)', borderRadius: 14 }}>
+            <LeadCard lead={activeLead} onStage={() => {}} onContacted={() => {}} onRemove={() => {}} onEdit={() => {}} showGrip/>
+          </div>
         )}
       </DragOverlay>
     </DndContext>

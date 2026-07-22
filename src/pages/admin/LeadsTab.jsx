@@ -301,32 +301,42 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, gripListeners }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
+  /* תיאור המקור — מצביע על עמוד + פרויקט ספציפי */
+  const sourceLabel = lead.source === 'project' && proj
+    ? `📍 פנייה מעמוד: ${proj}`
+    : lead.source === 'home'    ? '🏠 מדף הבית'
+    : lead.source === 'contact' ? '📩 מטופס קשר'
+    : lead.source === 'manual'  ? '✍️ ידני'
+    : lead.source || null
+
   return (
     <article className="adm-lead" style={{ '--stage-c': st.color }}>
+      {/* ===== ידית גרירה ===== */}
       {showGrip && (
-        <div className="adm-lead__grip" aria-hidden="true"
-          {...(gripListeners || {})}
-          style={{ touchAction: 'none', cursor: 'grab', userSelect: 'none' }}>
+        <div className="adm-lead__grip" aria-hidden="true">
           <span>⋮</span><span>⋮</span>
         </div>
       )}
       <div className="adm-lead__body">
-        {/* ===== שורה עליונה: אווטאר + שם + פרויקט + תאריך ===== */}
+        {/* ===== שורה עליונה: תאריך + שם + אווטאר (RTL: אווטאר ימין → שם מרכז → תאריך שמאל) ===== */}
         <div className="adm-lead__top">
-          <div className="adm-lead__avatar">{initials(lead.name)}</div>
+          <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
           <div className="adm-lead__meta">
             <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
               {lead.name || 'ללא שם'}
             </button>
-            {proj && <div className="adm-lead__project">📍 {proj}</div>}
+            {/* פרויקט רק כאשר המקור אינו "עמוד פרויקט" (כבר מופיע ב-sourceLabel) */}
+            {proj && lead.source !== 'project' && (
+              <div className="adm-lead__project">📍 {proj}</div>
+            )}
           </div>
-          <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
+          <div className="adm-lead__avatar">{initials(lead.name)}</div>
         </div>
 
         {/* ===== הודעה (מקוצרת) ===== */}
@@ -357,11 +367,11 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, grip
           <button type="button" className="adm-lead__act adm-lead__act--del" onClick={() => onRemove(lead)} title="מחיקה">🗑</button>
         </div>
 
-        {/* ===== badge מקור ===== */}
-        {lead.source && (
+        {/* ===== badge מקור + עמוד/פרויקט ===== */}
+        {sourceLabel && (
           <div className="adm-lead__source-row">
             <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
-              {SOURCE_LABEL[lead.source]||lead.source}
+              {sourceLabel}
             </span>
           </div>
         )}
@@ -373,11 +383,10 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, grip
 /* ============================ dnd-kit helpers ============================ */
 function DraggableCard({ lead, ...props }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(lead.id) })
-  // setNodeRef + attributes on wrapper (defines draggable bounds)
-  // listeners passed to LeadCard's grip div only — buttons/inputs are not in drag path
   return (
-    <div ref={setNodeRef} {...attributes} style={{ opacity: isDragging ? 0 : 1, outline: 'none' }}>
-      <LeadCard lead={lead} {...props} showGrip gripListeners={listeners} />
+    <div ref={setNodeRef} {...listeners} {...attributes}
+      style={{ opacity: isDragging ? 0 : 1, touchAction: 'none', outline: 'none' }}>
+      <LeadCard lead={lead} {...props} showGrip />
     </div>
   )
 }

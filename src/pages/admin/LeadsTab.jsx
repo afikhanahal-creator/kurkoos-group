@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, rectIntersection } from '@dnd-kit/core'
 
 const STAGES = [
   { id: 'new',         label: 'ליד חדש',       color: '#3a7bd5', emoji: '🆕' },
@@ -56,6 +56,12 @@ const waLink = (phone) => {
   if (!d) return ''
   const intl = d.startsWith('972') ? d : '972' + d.replace(/^0/, '')
   return `https://wa.me/${intl}`
+}
+
+/* ראשי תיבות לאווטאר */
+const initials = (name) => {
+  const w = (name || '?').trim().split(/\s+/)
+  return (w.length >= 2 ? w[0][0] + w[w.length - 1][0] : (w[0][0] || '?')).toUpperCase()
 }
 
 /* ייצוא CSV */
@@ -118,10 +124,10 @@ export default function LeadsTab() {
   }, [leads, query, stageFilter, sourceFilter])
 
   const byStage    = (sid) => filtered.filter((l) => (l.status || 'new') === sid)
-  const patchLocal = (id, patch) => setLeads((ls) => ls.map((l) => (l.id === id ? {...l,...patch} : l)))
+  const patchLocal = (id, patch) => setLeads((ls) => ls.map((l) => (String(l.id) === String(id) ? {...l,...patch} : l)))
 
   const moveTo = async (id, status) => {
-    const lead = leads.find((l) => l.id === id)
+    const lead = leads.find((l) => String(l.id) === String(id))
     if (!lead || lead.status === status) return
     patchLocal(id, { status })
     try { await updateLead(id, { status }) } catch (e) { setErr(e.message); load() }
@@ -295,62 +301,71 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, gripListeners }) {
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
   return (
-    <article className="adm-lead">
-      {showGrip && <div className="adm-lead__grip" aria-hidden="true"><span>⋮</span><span>⋮</span></div>}
-      {/* ===== שורה עליונה: שם + תאריך ===== */}
-      <div className="adm-lead__top">
-        <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
-          {lead.name || 'ללא שם'}
-        </button>
-        <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
-      </div>
-
-      {/* ===== פרויקט ===== */}
-      {proj && <div className="adm-lead__project">📍 {proj}</div>}
-
-      {/* ===== הודעה (מקוצרת) ===== */}
-      {lead.message && <p className="adm-lead__msg">{lead.message}</p>}
-
-      {/* ===== כפתורי יצירת קשר מהירה ===== */}
-      <div className="adm-lead__quick">
-        {lead.phone && (
-          <>
-            <a href={`tel:${digits}`} draggable="false" className="adm-quick-btn adm-quick-btn--call" title={`התקשר: ${lead.phone}`}>📞 טלפון</a>
-            {wa && <a href={wa} draggable="false" target="_blank" rel="noopener noreferrer" className="adm-quick-btn adm-quick-btn--wa" title="פתח וואטסאפ">💬 וואטסאפ</a>}
-          </>
-        )}
-        {lead.email && <a href={`mailto:${lead.email}`} draggable="false" className="adm-quick-btn adm-quick-btn--mail" title={lead.email}>✉️ מייל</a>}
-      </div>
-
-      {/* ===== שורה תחתונה: שלב + פעולות ===== */}
-      <div className="adm-lead__foot">
-        <label className="adm-lead__contacted" title="סמן שנוצר קשר">
-          <input type="checkbox" checked={!!lead.contacted} onChange={() => onContacted(lead)}/>
-          נוצר קשר
-        </label>
-        <select className="adm-lead__stage-sel" value={lead.status||'new'} onChange={(e) => onStage(lead.id, e.target.value)}
-          style={{ borderColor: st.color }}>
-          {STAGES.map((s) => <option key={s.id} value={s.id}>{s.emoji} {s.label}</option>)}
-        </select>
-        <button type="button" className="adm-lead__act" onClick={() => onEdit(lead)} title="פתח פרטים">✎</button>
-        <button type="button" className="adm-lead__act adm-lead__act--del" onClick={() => onRemove(lead)} title="מחיקה">🗑</button>
-      </div>
-
-      {/* ===== badge מקור — בשורה, לא absolute ===== */}
-      {lead.source && (
-        <div className="adm-lead__source-row">
-          <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
-            {SOURCE_LABEL[lead.source]||lead.source}
-          </span>
+    <article className="adm-lead" style={{ '--stage-c': st.color }}>
+      {showGrip && (
+        <div className="adm-lead__grip" aria-hidden="true"
+          {...(gripListeners || {})}
+          style={{ touchAction: 'none', cursor: 'grab', userSelect: 'none' }}>
+          <span>⋮</span><span>⋮</span>
         </div>
       )}
+      <div className="adm-lead__body">
+        {/* ===== שורה עליונה: אווטאר + שם + פרויקט + תאריך ===== */}
+        <div className="adm-lead__top">
+          <div className="adm-lead__avatar">{initials(lead.name)}</div>
+          <div className="adm-lead__meta">
+            <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
+              {lead.name || 'ללא שם'}
+            </button>
+            {proj && <div className="adm-lead__project">📍 {proj}</div>}
+          </div>
+          <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
+        </div>
+
+        {/* ===== הודעה (מקוצרת) ===== */}
+        {lead.message && <p className="adm-lead__msg">{lead.message}</p>}
+
+        {/* ===== כפתורי יצירת קשר מהירה ===== */}
+        <div className="adm-lead__quick">
+          {lead.phone && (
+            <>
+              <a href={`tel:${digits}`} draggable="false" className="adm-quick-btn adm-quick-btn--call" title={`התקשר: ${lead.phone}`}>📞 טלפון</a>
+              {wa && <a href={wa} draggable="false" target="_blank" rel="noopener noreferrer" className="adm-quick-btn adm-quick-btn--wa" title="פתח וואטסאפ">💬 וואטסאפ</a>}
+            </>
+          )}
+          {lead.email && <a href={`mailto:${lead.email}`} draggable="false" className="adm-quick-btn adm-quick-btn--mail" title={lead.email}>✉️ מייל</a>}
+        </div>
+
+        {/* ===== שורה תחתונה: שלב + פעולות ===== */}
+        <div className="adm-lead__foot">
+          <label className="adm-lead__contacted" title="סמן שנוצר קשר">
+            <input type="checkbox" checked={!!lead.contacted} onChange={() => onContacted(lead)}/>
+            נוצר קשר
+          </label>
+          <select className="adm-lead__stage-sel" value={lead.status||'new'} onChange={(e) => onStage(lead.id, e.target.value)}
+            style={{ borderColor: st.color }}>
+            {STAGES.map((s) => <option key={s.id} value={s.id}>{s.emoji} {s.label}</option>)}
+          </select>
+          <button type="button" className="adm-lead__act" onClick={() => onEdit(lead)} title="פתח פרטים">✎</button>
+          <button type="button" className="adm-lead__act adm-lead__act--del" onClick={() => onRemove(lead)} title="מחיקה">🗑</button>
+        </div>
+
+        {/* ===== badge מקור ===== */}
+        {lead.source && (
+          <div className="adm-lead__source-row">
+            <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
+              {SOURCE_LABEL[lead.source]||lead.source}
+            </span>
+          </div>
+        )}
+      </div>
     </article>
   )
 }
@@ -358,11 +373,11 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
 /* ============================ dnd-kit helpers ============================ */
 function DraggableCard({ lead, ...props }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(lead.id) })
-  // wrapper div = ref + listeners על אותו אלמנט (הדרך הבטוחה ב-@dnd-kit)
+  // setNodeRef + attributes on wrapper (defines draggable bounds)
+  // listeners passed to LeadCard's grip div only — buttons/inputs are not in drag path
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes}
-      style={{ opacity: isDragging ? 0 : 1, touchAction: 'none', outline: 'none', cursor: 'grab' }}>
-      <LeadCard lead={lead} {...props} showGrip />
+    <div ref={setNodeRef} {...attributes} style={{ opacity: isDragging ? 0 : 1, outline: 'none' }}>
+      <LeadCard lead={lead} {...props} showGrip gripListeners={listeners} />
     </div>
   )
 }
@@ -383,7 +398,7 @@ function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing
   const activeLead = leads.find((l) => String(l.id) === activeId) || null
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter}
+    <DndContext sensors={sensors} collisionDetection={rectIntersection}
       onDragStart={({ active }) => setActiveId(String(active.id))}
       onDragEnd={({ active, over }) => { setActiveId(null); if (over) moveTo(String(active.id), over.id) }}
       onDragCancel={() => setActiveId(null)}>

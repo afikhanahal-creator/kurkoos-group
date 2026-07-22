@@ -324,19 +324,18 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
         </div>
       )}
       <div className="adm-lead__body">
-        {/* ===== שורה עליונה: תאריך + שם + אווטאר (RTL: אווטאר ימין → שם מרכז → תאריך שמאל) ===== */}
+        {/* RTL: avatar first in DOM → appears on the RIGHT; date last → appears on the LEFT */}
         <div className="adm-lead__top">
-          <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
+          <div className="adm-lead__avatar">{initials(lead.name)}</div>
           <div className="adm-lead__meta">
             <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
               {lead.name || 'ללא שם'}
             </button>
-            {/* פרויקט רק כאשר המקור אינו "עמוד פרויקט" (כבר מופיע ב-sourceLabel) */}
             {proj && lead.source !== 'project' && (
               <div className="adm-lead__project">📍 {proj}</div>
             )}
           </div>
-          <div className="adm-lead__avatar">{initials(lead.name)}</div>
+          <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
         </div>
 
         {/* ===== הודעה (מקוצרת) ===== */}

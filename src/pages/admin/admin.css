@@ -842,7 +842,8 @@
 .adm-stage__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--stage); flex-shrink: 0; }
 .adm-stage__head h3 { font-family: var(--font-heading); font-weight: 800; font-size: 0.98rem; color: var(--adm-ink); }
 .adm-stage__count { margin-inline-start: auto; background: var(--stage); color: #fff; font-size: 0.74rem; font-weight: 800; min-width: 22px; text-align: center; padding: 0.1rem 0.45rem; border-radius: 999px; }
-.adm-stage__list { display: flex; flex-direction: column; gap: 0.6rem; min-height: 60px; }
+.adm-stage__list { display: flex; flex-direction: column; gap: 0.6rem; min-height: 60px; border-radius: 8px; transition: background .15s; }
+.adm-stage__list--over { background: rgba(22, 104, 140, 0.08); outline: 2px dashed #16688c; outline-offset: 2px; }
 .adm-stage__empty { text-align: center; color: var(--adm-muted); font-size: 0.82rem; padding: 1.2rem 0.5rem; border: 1.5px dashed var(--adm-border-strong); border-radius: 10px; }
 
 /* lead card */

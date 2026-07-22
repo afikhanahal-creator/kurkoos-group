@@ -295,7 +295,7 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, gripListeners }) {
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
@@ -303,7 +303,13 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
 
   return (
     <article className="adm-lead">
-      {showGrip && <div className="adm-lead__grip" aria-hidden="true"><span>⋮</span><span>⋮</span></div>}
+      {showGrip && (
+        <div className="adm-lead__grip" aria-hidden="true"
+          {...(gripListeners || {})}
+          style={{ touchAction: 'none', cursor: 'grab', userSelect: 'none' }}>
+          <span>⋮</span><span>⋮</span>
+        </div>
+      )}
       {/* ===== שורה עליונה: שם + תאריך ===== */}
       <div className="adm-lead__top">
         <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
@@ -358,11 +364,11 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
 /* ============================ dnd-kit helpers ============================ */
 function DraggableCard({ lead, ...props }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(lead.id) })
-  // wrapper div = ref + listeners על אותו אלמנט (הדרך הבטוחה ב-@dnd-kit)
+  // setNodeRef + attributes on wrapper (defines draggable bounds)
+  // listeners passed to LeadCard's grip div only — buttons/inputs are not in drag path
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes}
-      style={{ opacity: isDragging ? 0 : 1, touchAction: 'none', outline: 'none', cursor: 'grab' }}>
-      <LeadCard lead={lead} {...props} showGrip />
+    <div ref={setNodeRef} {...attributes} style={{ opacity: isDragging ? 0 : 1, outline: 'none' }}>
+      <LeadCard lead={lead} {...props} showGrip gripListeners={listeners} />
     </div>
   )
 }

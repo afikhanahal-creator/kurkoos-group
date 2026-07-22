@@ -118,10 +118,10 @@ export default function LeadsTab() {
   }, [leads, query, stageFilter, sourceFilter])
 
   const byStage    = (sid) => filtered.filter((l) => (l.status || 'new') === sid)
-  const patchLocal = (id, patch) => setLeads((ls) => ls.map((l) => (l.id === id ? {...l,...patch} : l)))
+  const patchLocal = (id, patch) => setLeads((ls) => ls.map((l) => (String(l.id) === String(id) ? {...l,...patch} : l)))
 
   const moveTo = async (id, status) => {
-    const lead = leads.find((l) => l.id === id)
+    const lead = leads.find((l) => String(l.id) === String(id))
     if (!lead || lead.status === status) return
     patchLocal(id, { status })
     try { await updateLead(id, { status }) } catch (e) { setErr(e.message); load() }

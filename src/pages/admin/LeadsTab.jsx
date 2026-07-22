@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core'
 
 const STAGES = [
   { id: 'new',         label: 'ליד חדש',       color: '#3a7bd5', emoji: '🆕' },
@@ -232,7 +233,7 @@ export default function LeadsTab() {
       {/* ===== תצוגות ===== */}
       {!tableMissing && leads.length > 0 && (
         <>
-          {view==='board' && <BoardView {...{byStage, dragId, setDragId, dragOver, setDragOver, moveTo, toggleContacted, remove, setEditing}}/>}
+          {view==='board' && <BoardView byStage={byStage} leads={filtered} moveTo={moveTo} toggleContacted={toggleContacted} remove={remove} setEditing={setEditing}/>}
           {view==='list'  && <ListView  {...{leads:filtered, dragId, setDragId, dragOver, setDragOver, reorder, moveTo, toggleContacted, remove, setEditing}}/>}
           {view==='table' && <TableView {...{leads:filtered, moveTo, toggleContacted, remove, setEditing}}/>}
         </>
@@ -294,22 +295,16 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragProps = {} }) {
-  const { draggable, onDragStart, onDragEnd, style: dragStyle } = dragProps
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragRef, dragHandle, isDragging }) {
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
   return (
-    <article className="adm-lead" style={dragStyle}>
-      {/* ===== ידית גרירה — הרכיב הדרייגבל היחידי ===== */}
-      {draggable && (
-        <div className="adm-lead__grip" draggable="true"
-          onDragStart={onDragStart} onDragEnd={onDragEnd} title="גרור לעמודה אחרת">
-          <span>⋮</span><span>⋮</span>
-        </div>
-      )}
+    <article ref={dragRef} className="adm-lead" style={isDragging ? { opacity: 0.4 } : {}}>
+      {/* ===== ידית גרירה — מועברת מ-DraggableCard ===== */}
+      {dragHandle}
       {/* ===== שורה עליונה: שם + תאריך ===== */}
       <div className="adm-lead__top">
         <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
@@ -361,41 +356,70 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragProps = {}
   )
 }
 
-/* ============================ תצוגת קוביות ============================ */
-function BoardView({ byStage, dragId, setDragId, dragOver, setDragOver, moveTo, toggleContacted, remove, setEditing }) {
+/* ============================ dnd-kit helpers ============================ */
+function DraggableCard({ lead, ...props }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(lead.id) })
   return (
-    <div className="adm-leads__board">
-      {STAGES.map((stage) => {
-        const items = byStage(stage.id)
-        return (
-          <section key={stage.id}
-            className={`adm-stage ${dragOver===stage.id?'adm-stage--over':''}`}
-            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOver(stage.id) }}
-            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null) }}
-            onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); if (id) moveTo(id, stage.id); setDragId(null); setDragOver(null) }}>
-            <header className="adm-stage__head" style={{ '--stage': stage.color }}>
-              <span className="adm-stage__dot"/>
-              <h3>{stage.emoji} {stage.label}</h3>
-              <span className="adm-stage__count">{items.length}</span>
-            </header>
-            <div className="adm-stage__list" onDragOver={(e) => e.preventDefault()}>
-              {items.map((lead) => (
-                <LeadCard key={lead.id} lead={lead}
-                  onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}
-                  dragProps={{
-                    draggable: true,
-                    onDragStart: (e) => { e.dataTransfer.setData('text/plain', String(lead.id)); e.dataTransfer.effectAllowed = 'move'; setDragId(lead.id) },
-                    onDragEnd:   () => { setDragId(null); setDragOver(null) },
-                    style: dragId === lead.id ? { opacity: 0.45, transform: 'rotate(1.5deg)' } : {},
-                  }}
-                />
-              ))}
-              {!items.length && <div className="adm-stage__empty">גררו לכאן ליד</div>}
-            </div>
-          </section>
-        )
-      })}
+    <LeadCard lead={lead} {...props}
+      dragRef={setNodeRef}
+      isDragging={isDragging}
+      dragHandle={
+        <div className="adm-lead__grip" {...listeners} {...attributes} title="גרור לעמודה אחרת">
+          <span>⋮</span><span>⋮</span>
+        </div>
+      }
+    />
+  )
+}
+
+function DroppableColumn({ id, children }) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+  return (
+    <div ref={setNodeRef} className={`adm-stage__list${isOver ? ' adm-stage__list--over' : ''}`}>
+      {children}
     </div>
+  )
+}
+
+/* ============================ תצוגת קוביות ============================ */
+function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing }) {
+  const [activeId, setActiveId] = useState(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+  const activeLead = leads.find((l) => String(l.id) === activeId) || null
+
+  return (
+    <DndContext sensors={sensors}
+      onDragStart={({ active }) => setActiveId(String(active.id))}
+      onDragEnd={({ active, over }) => { setActiveId(null); if (over) moveTo(String(active.id), over.id) }}
+      onDragCancel={() => setActiveId(null)}>
+      <div className="adm-leads__board">
+        {STAGES.map((stage) => {
+          const items = byStage(stage.id)
+          return (
+            <section key={stage.id} className="adm-stage">
+              <header className="adm-stage__head" style={{ '--stage': stage.color }}>
+                <span className="adm-stage__dot"/>
+                <h3>{stage.emoji} {stage.label}</h3>
+                <span className="adm-stage__count">{items.length}</span>
+              </header>
+              <DroppableColumn id={stage.id}>
+                {items.map((lead) => (
+                  <DraggableCard key={lead.id} lead={lead}
+                    onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}/>
+                ))}
+                {!items.length && <div className="adm-stage__empty">גרור לכאן ליד</div>}
+              </DroppableColumn>
+            </section>
+          )
+        })}
+      </div>
+      <DragOverlay>
+        {activeLead && (
+          <LeadCard lead={activeLead}
+            onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}/>
+        )}
+      </DragOverlay>
+    </DndContext>
   )
 }
 

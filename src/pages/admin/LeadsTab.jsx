@@ -301,20 +301,13 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragProps = {}
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
-  const handleDragStart = (e) => {
-    // אם הגרירה התחילה על אלמנט אינטראקטיבי — בטל אותה
-    if (e.target.closest('button,select,input,a,label')) { e.preventDefault(); return }
-    if (onDragStart) onDragStart(e)
-  }
-
   return (
-    <article className={`adm-lead${draggable ? ' adm-lead--draggable' : ''}`} style={dragStyle}
-      draggable={!!draggable} onDragStart={draggable ? handleDragStart : undefined} onDragEnd={draggable ? onDragEnd : undefined}>
-      {/* ===== ידית גרירה נראית ===== */}
+    <article className="adm-lead" style={dragStyle}>
+      {/* ===== ידית גרירה — הרכיב הדרייגבל היחידי ===== */}
       {draggable && (
         <div className="adm-lead__grip" draggable="true"
-          onDragStart={onDragStart} onDragEnd={onDragEnd} aria-hidden="true">
-          ⠿⠿
+          onDragStart={onDragStart} onDragEnd={onDragEnd} title="גרור לעמודה אחרת">
+          <span>⋮</span><span>⋮</span>
         </div>
       )}
       {/* ===== שורה עליונה: שם + תאריך ===== */}
@@ -417,13 +410,13 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
         return (
           <div key={lead.id}
             className={`adm-list__row ${dragId===lead.id?'is-dragging':''} ${dragOver===lead.id?'is-over':''}`}
-            draggable
-            onDragStart={() => setDragId(lead.id)}
-            onDragEnd={() => { setDragId(null); setDragOver(null) }}
             onDragOver={(e) => { e.preventDefault(); setDragOver(lead.id) }}
-            onDrop={() => { if (dragId) reorder(dragId, lead.id); setDragId(null); setDragOver(null) }}>
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null) }}
+            onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); if (id) reorder(id, lead.id); setDragId(null); setDragOver(null) }}>
 
-            <span className="adm-list__grip" title="גרור לשינוי סדר">⋮⋮</span>
+            <span className="adm-list__grip" title="גרור לשינוי סדר" draggable="true"
+              onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(lead.id)); e.dataTransfer.effectAllowed = 'move'; setDragId(lead.id) }}
+              onDragEnd={() => { setDragId(null); setDragOver(null) }}>⋮⋮</span>
 
             {/* שלב — כ-pill צבעוני */}
             <span className="adm-list__stage-pill" style={{ background: st.color }} title={st.label}>{st.emoji}</span>

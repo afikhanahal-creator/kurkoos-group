@@ -301,13 +301,20 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, dragProps = {}
   const digits  = String(lead.phone||'').replace(/\D/g,'')
   const wa      = waLink(lead.phone)
 
+  const handleDragStart = (e) => {
+    // אם הגרירה התחילה על אלמנט אינטראקטיבי — בטל אותה
+    if (e.target.closest('button,select,input,a,label')) { e.preventDefault(); return }
+    if (onDragStart) onDragStart(e)
+  }
+
   return (
-    <article className="adm-lead" style={dragStyle}>
-      {/* ===== ידית גרירה — הרכיב הדרייגבל בפועל ===== */}
+    <article className={`adm-lead${draggable ? ' adm-lead--draggable' : ''}`} style={dragStyle}
+      draggable={!!draggable} onDragStart={draggable ? handleDragStart : undefined} onDragEnd={draggable ? onDragEnd : undefined}>
+      {/* ===== ידית גרירה נראית ===== */}
       {draggable && (
         <div className="adm-lead__grip" draggable="true"
           onDragStart={onDragStart} onDragEnd={onDragEnd} aria-hidden="true">
-          ⋮⋮
+          ⠿⠿
         </div>
       )}
       {/* ===== שורה עליונה: שם + תאריך ===== */}

@@ -1,31 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, rectIntersection } from '@dnd-kit/core'
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-
-/* Custom sensor: skip interactive elements so select/button/input still work */
-const INTERACTIVE_TAGS = new Set(['A', 'BUTTON', 'INPUT', 'LABEL', 'SELECT', 'TEXTAREA'])
-function targetIsInteractive(el) {
-  while (el) {
-    if (INTERACTIVE_TAGS.has(el.tagName) || el.contentEditable === 'true') return true
-    el = el.parentElement
-  }
-  return false
-}
-class SmartPointerSensor extends PointerSensor {
-  static activators = [
-    {
-      eventName: 'onPointerDown',
-      handler: ({ nativeEvent: event }, { onActivation }) => {
-        if (!event.isPrimary || event.button !== 0) return false
-        if (targetIsInteractive(event.target)) return false
-        onActivation?.({ event })
-        return true
-      },
-    },
-  ]
-}
 
 /* ── SVG Icon components ── */
 const IcPhone    = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
@@ -284,7 +258,7 @@ export default function LeadsTab() {
       {/* ===== תצוגות ===== */}
       {!tableMissing && leads.length > 0 && (
         <>
-          {view==='board' && <BoardView byStage={byStage} leads={filtered} moveTo={moveTo} toggleContacted={toggleContacted} remove={remove} setEditing={setEditing}/>}
+          {view==='board' && <BoardView byStage={byStage} moveTo={moveTo} toggleContacted={toggleContacted} remove={remove} setEditing={setEditing}/>}
           {view==='list'  && <ListView  {...{leads:filtered, dragId, setDragId, dragOver, setDragOver, reorder, moveTo, toggleContacted, remove, setEditing}}/>}
           {view==='table' && <TableView {...{leads:filtered, moveTo, toggleContacted, remove, setEditing}}/>}
         </>
@@ -346,7 +320,7 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, gripDragStart, gripDragEnd }) {
   const st     = stageOf(lead.status)
   const proj   = extractProject(lead.project)
   const digits = String(lead.phone||'').replace(/\D/g,'')
@@ -358,9 +332,12 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
     : null
 
   return (
-    <article className="adm-lead" style={{ '--stage-c': st.color }}>
+    <article className="adm-lead" draggable="false" style={{ '--stage-c': st.color }}>
       {showGrip && (
-        <div className="adm-lead__grip" aria-hidden="true">
+        <div className="adm-lead__grip" aria-hidden="true"
+          draggable={!!gripDragStart}
+          onDragStart={gripDragStart}
+          onDragEnd={gripDragEnd}>
           <IcGrip width={10} height={12} style={{ pointerEvents: 'none' }}/>
         </div>
       )}
@@ -403,92 +380,59 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
   )
 }
 
-/* ============================ dnd-kit helpers ============================ */
-function SortableCard({ lead, ...props }) {
-  const { attributes, listeners, setNodeRef, isDragging, transform, transition } = useSortable({ id: String(lead.id) })
-  return (
-    <div ref={setNodeRef} {...attributes} {...listeners}
-      style={{
-        opacity: isDragging ? 0 : 1,
-        outline: 'none',
-        touchAction: 'none',
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}>
-      <LeadCard lead={lead} {...props} showGrip />
-    </div>
-  )
-}
-
-function DroppableColumn({ id, children }) {
-  const { setNodeRef, isOver } = useDroppable({ id })
-  return (
-    <div ref={setNodeRef} className={`adm-stage__list${isOver ? ' adm-stage__list--over' : ''}`}>
-      {children}
-    </div>
-  )
-}
-
 /* ============================ תצוגת קוביות ============================ */
-const STAGE_IDS = STAGES.map((s) => s.id)
+function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
+  const [dragId,       setDragId]       = useState(null)
+  const [dragOverStage, setDragOverStage] = useState(null)
 
-function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing }) {
-  const [activeId, setActiveId] = useState(null)
-  const sensors = useSensors(useSensor(SmartPointerSensor, { activationConstraint: { distance: 8 } }))
-  const activeLead = leads.find((l) => String(l.id) === activeId) || null
-
-  function handleDragEnd({ active, over }) {
-    setActiveId(null)
-    if (!over) return
-    const draggedId = String(active.id)
-    const overId    = String(over.id)
-    let targetStage
-    if (STAGE_IDS.includes(overId)) {
-      targetStage = overId
-    } else {
-      const overLead = leads.find((l) => String(l.id) === overId)
-      targetStage = overLead?.status || null
-    }
-    if (targetStage) moveTo(draggedId, targetStage)
+  function handleDragStart(e, lead) {
+    e.dataTransfer.setData('text/plain', String(lead.id))
+    e.dataTransfer.effectAllowed = 'move'
+    const card = e.currentTarget.closest('article')
+    if (card) e.dataTransfer.setDragImage(card, card.offsetWidth / 2, 30)
+    setDragId(lead.id)
   }
+  function handleDragEnd() { setDragId(null); setDragOverStage(null) }
+  function handleDrop(e, stageId) {
+    e.preventDefault()
+    const id = e.dataTransfer.getData('text/plain')
+    if (id) moveTo(id, stageId)
+    setDragId(null); setDragOverStage(null)
+  }
+  function handleDragOver(e, stageId) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverStage(stageId) }
+  function handleDragLeave(e) { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverStage(null) }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={rectIntersection}
-      onDragStart={({ active }) => setActiveId(String(active.id))}
-      onDragEnd={handleDragEnd}
-      onDragCancel={() => setActiveId(null)}>
-      <div className="adm-leads__board">
-        {STAGES.map((stage) => {
-          const items    = byStage(stage.id)
-          const itemIds  = items.map((l) => String(l.id))
-          return (
-            <section key={stage.id} className="adm-stage">
-              <header className="adm-stage__head" style={{ '--stage': stage.color }}>
-                <span className="adm-stage__dot"/>
-                <h3>{stage.label}</h3>
-                <span className="adm-stage__count">{items.length}</span>
-              </header>
-              <DroppableColumn id={stage.id}>
-                <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                  {items.map((lead) => (
-                    <SortableCard key={lead.id} lead={lead}
-                      onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}/>
-                  ))}
-                  {!items.length && <div className="adm-stage__empty">גרור לכאן ליד</div>}
-                </SortableContext>
-              </DroppableColumn>
-            </section>
-          )
-        })}
-      </div>
-      <DragOverlay dropAnimation={null}>
-        {activeLead && (
-          <div style={{ pointerEvents: 'none', cursor: 'grabbing', transform: 'rotate(2deg)', boxShadow: '0 16px 40px rgba(0,0,0,0.2)', borderRadius: 14 }}>
-            <LeadCard lead={activeLead} onStage={() => {}} onContacted={() => {}} onRemove={() => {}} onEdit={() => {}} showGrip/>
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+    <div className="adm-leads__board">
+      {STAGES.map((stage) => {
+        const items = byStage(stage.id)
+        return (
+          <section key={stage.id} className="adm-stage"
+            onDragOver={(e) => handleDragOver(e, stage.id)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, stage.id)}>
+            <header className="adm-stage__head" style={{ '--stage': stage.color }}>
+              <span className="adm-stage__dot"/>
+              <h3>{stage.label}</h3>
+              <span className="adm-stage__count">{items.length}</span>
+            </header>
+            <div className={`adm-stage__list${dragOverStage===stage.id?' adm-stage__list--over':''}`}>
+              {items.map((lead) => (
+                <div key={lead.id} style={{ opacity: dragId===lead.id ? 0.4 : 1 }}>
+                  <LeadCard lead={lead}
+                    onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}
+                    showGrip
+                    gripDragStart={(e) => handleDragStart(e, lead)}
+                    gripDragEnd={handleDragEnd}
+                  />
+                </div>
+              ))}
+              {!items.length && <div className="adm-stage__empty">גרור לכאן ליד</div>}
+            </div>
+          </section>
+        )
+      })}
+    </div>
   )
 }
 

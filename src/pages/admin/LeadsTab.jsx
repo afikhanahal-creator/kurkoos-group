@@ -168,7 +168,7 @@ export default function LeadsTab() {
     const lead = leads.find((l) => String(l.id) === String(id))
     if (!lead || lead.status === status) return
     patchLocal(id, { status })
-    try { await updateLead(id, { status }) } catch (e) { setErr(e.message); load() }
+    try { await updateLead(id, { status }) } catch (e) { console.error('moveTo failed:', e); setErr(e.message); load() }
   }
   const toggleContacted = async (lead) => {
     const v = !lead.contacted
@@ -187,7 +187,13 @@ export default function LeadsTab() {
       setEditing(null)
     } catch (e) { setErr(e.message) }
   }
-  const autoSave  = async (data) => { if (!data.id) return; patchLocal(data.id, data); await updateLead(data.id, data) }
+  const autoSave  = async (data) => {
+    if (!data.id) return
+    const { name, phone, email, project, source, status, contacted, notes, message } = data
+    const patch = { name, phone, email, project, source, status, contacted, notes, message }
+    patchLocal(data.id, patch)
+    try { await updateLead(data.id, patch) } catch (e) { console.error('autoSave failed:', e); setErr(e.message) }
+  }
   const createNow = async (data) => { const c = await createLead({...data, source:data.source||'manual'}); setLeads((ls) => [c,...ls]); return c }
 
   const reorder = async (sourceId, targetId) => {

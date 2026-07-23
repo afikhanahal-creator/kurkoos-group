@@ -446,9 +446,8 @@ export async function listLeads() {
   return data || []
 }
 export async function updateLead(id, patch) {
-  const { data, error } = await supabase.from('leads').update(patch).eq('id', id).select().single()
+  const { error } = await supabase.from('leads').update(patch).eq('id', id)
   if (error) throw error
-  return data
 }
 export async function deleteLead(id) {
   const { error } = await supabase.from('leads').delete().eq('id', id)

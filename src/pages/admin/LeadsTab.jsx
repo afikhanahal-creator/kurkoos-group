@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, rectIntersection } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, rectIntersection } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 const STAGES = [
   { id: 'new',         label: 'ליד חדש',       color: '#3a7bd5', emoji: '🆕' },
@@ -301,7 +303,7 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, gripRef, gripListeners }) {
   const st      = stageOf(lead.status)
   const proj    = extractProject(lead.project)
   const digits  = String(lead.phone||'').replace(/\D/g,'')
@@ -319,7 +321,8 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
     <article className="adm-lead" style={{ '--stage-c': st.color }}>
       {/* ===== ידית גרירה ===== */}
       {showGrip && (
-        <div className="adm-lead__grip" aria-hidden="true">
+        <div className="adm-lead__grip" aria-hidden="true"
+          ref={gripRef} {...gripListeners} style={{ touchAction: 'none' }}>
           <span>⋮</span><span>⋮</span>
         </div>
       )}
@@ -380,12 +383,18 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
 }
 
 /* ============================ dnd-kit helpers ============================ */
-function DraggableCard({ lead, ...props }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(lead.id) })
+function SortableCard({ lead, ...props }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging, transform, transition } = useSortable({ id: String(lead.id) })
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes}
-      style={{ opacity: isDragging ? 0 : 1, touchAction: 'none', outline: 'none' }}>
-      <LeadCard lead={lead} {...props} showGrip />
+    <div ref={setNodeRef} {...attributes}
+      style={{
+        opacity: isDragging ? 0 : 1,
+        outline: 'none',
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}>
+      <LeadCard lead={lead} {...props} showGrip
+        gripRef={setActivatorNodeRef} gripListeners={listeners} />
     </div>
   )
 }
@@ -400,19 +409,37 @@ function DroppableColumn({ id, children }) {
 }
 
 /* ============================ תצוגת קוביות ============================ */
+const STAGE_IDS = STAGES.map((s) => s.id)
+
 function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing }) {
   const [activeId, setActiveId] = useState(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const activeLead = leads.find((l) => String(l.id) === activeId) || null
 
+  function handleDragEnd({ active, over }) {
+    setActiveId(null)
+    if (!over) return
+    const draggedId = String(active.id)
+    const overId    = String(over.id)
+    let targetStage
+    if (STAGE_IDS.includes(overId)) {
+      targetStage = overId
+    } else {
+      const overLead = leads.find((l) => String(l.id) === overId)
+      targetStage = overLead?.status || null
+    }
+    if (targetStage) moveTo(draggedId, targetStage)
+  }
+
   return (
     <DndContext sensors={sensors} collisionDetection={rectIntersection}
       onDragStart={({ active }) => setActiveId(String(active.id))}
-      onDragEnd={({ active, over }) => { setActiveId(null); if (over) moveTo(String(active.id), over.id) }}
+      onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}>
       <div className="adm-leads__board">
         {STAGES.map((stage) => {
-          const items = byStage(stage.id)
+          const items    = byStage(stage.id)
+          const itemIds  = items.map((l) => String(l.id))
           return (
             <section key={stage.id} className="adm-stage">
               <header className="adm-stage__head" style={{ '--stage': stage.color }}>
@@ -421,11 +448,13 @@ function BoardView({ byStage, leads, moveTo, toggleContacted, remove, setEditing
                 <span className="adm-stage__count">{items.length}</span>
               </header>
               <DroppableColumn id={stage.id}>
-                {items.map((lead) => (
-                  <DraggableCard key={lead.id} lead={lead}
-                    onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}/>
-                ))}
-                {!items.length && <div className="adm-stage__empty">גרור לכאן ליד</div>}
+                <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+                  {items.map((lead) => (
+                    <SortableCard key={lead.id} lead={lead}
+                      onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}/>
+                  ))}
+                  {!items.length && <div className="adm-stage__empty">גרור לכאן ליד</div>}
+                </SortableContext>
               </DroppableColumn>
             </section>
           )

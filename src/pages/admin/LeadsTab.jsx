@@ -317,7 +317,7 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, gripRef, gripListeners }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip }) {
   const st     = stageOf(lead.status)
   const proj   = extractProject(lead.project)
   const digits = String(lead.phone||'').replace(/\D/g,'')
@@ -331,9 +331,8 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, grip
   return (
     <article className="adm-lead" style={{ '--stage-c': st.color }}>
       {showGrip && (
-        <div className="adm-lead__grip" aria-hidden="true"
-          ref={gripRef} {...gripListeners} style={{ touchAction: 'none' }}>
-          <IcGrip width={10} height={12}/>
+        <div className="adm-lead__grip" aria-hidden="true">
+          <IcGrip width={10} height={12} style={{ pointerEvents: 'none' }}/>
         </div>
       )}
       <div className="adm-lead__body">
@@ -377,17 +376,17 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, grip
 
 /* ============================ dnd-kit helpers ============================ */
 function SortableCard({ lead, ...props }) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging, transform, transition } = useSortable({ id: String(lead.id) })
+  const { attributes, listeners, setNodeRef, isDragging, transform, transition } = useSortable({ id: String(lead.id) })
   return (
-    <div ref={setNodeRef} {...attributes}
+    <div ref={setNodeRef} {...attributes} {...listeners}
       style={{
         opacity: isDragging ? 0 : 1,
         outline: 'none',
+        touchAction: 'none',
         transform: CSS.Transform.toString(transform),
         transition,
       }}>
-      <LeadCard lead={lead} {...props} showGrip
-        gripRef={setActivatorNodeRef} gripListeners={listeners} />
+      <LeadCard lead={lead} {...props} showGrip />
     </div>
   )
 }
@@ -481,7 +480,7 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
 
             <span className="adm-list__grip" title="גרור לשינוי סדר" draggable="true"
               onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(lead.id)); e.dataTransfer.effectAllowed = 'move'; setDragId(lead.id) }}
-              onDragEnd={() => { setDragId(null); setDragOver(null) }}><IcGrip width={10} height={12}/></span>
+              onDragEnd={() => { setDragId(null); setDragOver(null) }}><IcGrip width={10} height={12} style={{ pointerEvents: 'none' }}/></span>
 
             <span className="adm-list__stage-pill" style={{ background: st.color }} title={st.label}/>
 

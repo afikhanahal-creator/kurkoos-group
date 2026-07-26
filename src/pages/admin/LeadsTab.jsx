@@ -162,13 +162,6 @@ export default function LeadsTab() {
     setLeads((ls) => ls.filter((l) => l.id !== lead.id))
     try { await deleteLead(lead.id) } catch (e) { setErr(e.message); load() }
   }
-  const save = async (data) => {
-    try {
-      if (data.id) { await updateLead(data.id, data); patchLocal(data.id, data) }
-      else { await createLead({...data, source:'manual'}); load() }
-      setEditing(null)
-    } catch (e) { setErr(e.message) }
-  }
   const autoSave  = async (data) => {
     if (!data.id) return
     const { name, phone, email, project, source, status, contacted, notes, message } = data

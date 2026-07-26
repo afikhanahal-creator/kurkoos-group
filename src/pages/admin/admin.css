@@ -809,7 +809,19 @@
 /* ── Root layout ── */
 .adm-leads { display: flex; flex-direction: column; gap: 0.75rem; }
 .adm-leads__msg { padding: 4rem 1rem; text-align: center; color: var(--adm-muted); display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
-.adm-leads__err { background: #fef2f2; color: #b91c1c; padding: 0.65rem 1rem; border-radius: 10px; font-size: 0.88rem; border: 1px solid #fecaca; direction: rtl; text-align: right; }
+.adm-leads__err {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  background: #fef2f2; color: #b91c1c; padding: 0.75rem 1rem;
+  border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+  border: 1.5px solid #fca5a5; direction: rtl; text-align: right;
+}
+.adm-leads__err-reload {
+  flex-shrink: 0; padding: 0.28rem 0.75rem; border-radius: 6px;
+  background: #b91c1c; color: #fff; border: none; cursor: pointer;
+  font-size: 0.78rem; font-weight: 700; white-space: nowrap;
+  transition: background .15s;
+}
+.adm-leads__err-reload:hover { background: #991b1b; }
 .adm-leads__empty { padding: 3rem; text-align: center; color: var(--adm-muted); border: 1.5px dashed var(--adm-border-strong); border-radius: var(--adm-radius); font-size: 0.9rem; }
 
 /* ── Sticky toolbar ── */
@@ -962,14 +974,16 @@
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--stage-c, #16688c) 28%, var(--adm-border));
 }
+.adm-lead--drag { cursor: grab; user-select: none; }
+.adm-lead--drag:active { cursor: grabbing; }
+.adm-lead--drag:hover .adm-lead__grip { color: #0EA5E9; background: #eef8ff; }
+.adm-card-ghost .adm-lead { opacity: 0.35; outline: 2px dashed #0EA5E9; outline-offset: 2px; }
 .adm-lead__grip {
   display: flex; align-items: center; justify-content: center;
-  height: 18px; background: var(--adm-surface-2); border-bottom: 1px solid var(--adm-border);
-  color: #cdd5df; cursor: grab; user-select: none;
+  height: 22px; background: var(--adm-surface-2); border-bottom: 1px solid var(--adm-border);
+  color: #cdd5df; cursor: inherit; user-select: none;
   transition: color .15s, background .15s;
 }
-.adm-lead__grip:hover { color: #0EA5E9; background: #eef8ff; }
-.adm-lead__grip:active { cursor: grabbing; }
 .adm-lead__body { padding: 0.68rem 0.78rem 0.58rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .adm-lead__top { display: flex; align-items: flex-start; gap: 0.55rem; }
 .adm-lead__avatar {

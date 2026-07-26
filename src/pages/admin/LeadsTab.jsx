@@ -113,10 +113,11 @@ export default function LeadsTab() {
   const [dragId,   setDragId]   = useState(null)
   const [dragOver, setDragOver] = useState(null)
 
-  const load = () => {
+  const load = (clearErr = false) => {
     setLoading(true)
+    if (clearErr) setErr('')
     listLeads()
-      .then((d) => { setLeads(d); setErr('') })
+      .then((d) => setLeads(d))
       .catch((e) => {
         const m = e.message || 'שגיאה בטעינת לידים'
         setErr(/schema cache|find the table|does not exist|relation .* does not/i.test(m) ? 'TABLE_MISSING' : m)
@@ -140,9 +141,16 @@ export default function LeadsTab() {
 
   const moveTo = async (id, status) => {
     const lead = leads.find((l) => String(l.id) === String(id))
-    if (!lead || lead.status === status) return
+    if (!lead) { console.warn('moveTo: lead not found', id); return }
+    if (lead.status === status) return
     patchLocal(id, { status })
-    try { await updateLead(id, { status }) } catch (e) { console.error('moveTo failed:', e); setErr(e.message); load() }
+    try {
+      await updateLead(id, { status })
+    } catch (e) {
+      console.error('moveTo failed — id:', id, 'status:', status, 'error:', e)
+      setErr(`שגיאת שמירה: ${e.message}`)
+      load()
+    }
   }
   const toggleContacted = async (lead) => {
     const v = !lead.contacted
@@ -250,7 +258,12 @@ export default function LeadsTab() {
           <span>היכנסו ל-Supabase → SQL Editor → הריצו את סקריפט ה-SQL שסופק, ואז רעננו. לאחר מכן הלידים יופיעו כאן אוטומטית.</span>
         </div>
       )}
-      {err && !tableMissing && <div className="adm-leads__err">{err}</div>}
+      {err && !tableMissing && (
+        <div className="adm-leads__err">
+          <span>{err}</span>
+          <button type="button" onClick={() => { setErr(''); load(true) }} className="adm-leads__err-reload">נסה שוב ✕</button>
+        </div>
+      )}
       {!leads.length && !err && (
         <div className="adm-leads__empty">אין עדיין לידים. פניות מטפסי האתר יופיעו כאן אוטומטית, או הוסיפו ליד ידנית.</div>
       )}
@@ -320,7 +333,7 @@ function Dashboard({ leads }) {
 }
 
 /* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, gripDragStart, gripDragEnd }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, cardDrag }) {
   const st     = stageOf(lead.status)
   const proj   = extractProject(lead.project)
   const digits = String(lead.phone||'').replace(/\D/g,'')
@@ -332,12 +345,14 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, grip
     : null
 
   return (
-    <article className="adm-lead" draggable="false" style={{ '--stage-c': st.color }}>
+    <article
+      className={`adm-lead${cardDrag ? ' adm-lead--drag' : ''}`}
+      draggable={!!cardDrag}
+      onDragStart={cardDrag?.start}
+      onDragEnd={cardDrag?.end}
+      style={{ '--stage-c': st.color }}>
       {showGrip && (
-        <div className="adm-lead__grip" aria-hidden="true"
-          draggable={!!gripDragStart}
-          onDragStart={gripDragStart}
-          onDragEnd={gripDragEnd}>
+        <div className="adm-lead__grip" aria-hidden="true">
           <IcGrip width={10} height={12} style={{ pointerEvents: 'none' }}/>
         </div>
       )}
@@ -345,7 +360,7 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, grip
         <div className="adm-lead__top">
           <div className="adm-lead__avatar">{initials(lead.name)}</div>
           <div className="adm-lead__meta">
-            <button type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
+            <button draggable="false" type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
               {lead.name || 'ללא שם'}
             </button>
             {sourceTxt && (
@@ -364,16 +379,17 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, grip
           {lead.phone && <a href={`tel:${digits}`} draggable="false" className="adm-ic-btn" title={lead.phone}><IcPhone width={12} height={12}/></a>}
           {wa && <a href={wa} draggable="false" target="_blank" rel="noopener noreferrer" className="adm-ic-btn adm-ic-btn--wa" title="וואטסאפ"><IcWA width={13} height={13}/></a>}
           {lead.email && <a href={`mailto:${lead.email}`} draggable="false" className="adm-ic-btn" title={lead.email}><IcMail width={12} height={12}/></a>}
-          <label className="adm-lead__contacted" title="סמן שנוצר קשר">
-            <input type="checkbox" checked={!!lead.contacted} onChange={() => onContacted(lead)}/>
+          <label draggable="false" className="adm-lead__contacted" title="סמן שנוצר קשר">
+            <input draggable="false" type="checkbox" checked={!!lead.contacted} onChange={() => onContacted(lead)}/>
             <span>קשר</span>
           </label>
-          <select className="adm-lead__stage-sel" value={lead.status||'new'} onChange={(e) => onStage(lead.id, e.target.value)}
+          <select draggable="false" className="adm-lead__stage-sel" value={lead.status||'new'}
+            onChange={(e) => onStage(lead.id, e.target.value)}
             style={{ borderColor: st.color }}>
             {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
-          <button type="button" className="adm-ic-btn" onClick={() => onEdit(lead)} title="עריכה"><IcEdit width={12} height={12}/></button>
-          <button type="button" className="adm-ic-btn adm-ic-btn--del" onClick={() => onRemove(lead)} title="מחיקה"><IcTrash width={12} height={12}/></button>
+          <button draggable="false" type="button" className="adm-ic-btn" onClick={() => onEdit(lead)} title="עריכה"><IcEdit width={12} height={12}/></button>
+          <button draggable="false" type="button" className="adm-ic-btn adm-ic-btn--del" onClick={() => onRemove(lead)} title="מחיקה"><IcTrash width={12} height={12}/></button>
         </div>
       </div>
     </article>
@@ -388,8 +404,7 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
   function handleDragStart(e, lead) {
     e.dataTransfer.setData('text/plain', String(lead.id))
     e.dataTransfer.effectAllowed = 'move'
-    const card = e.currentTarget.closest('article')
-    if (card) e.dataTransfer.setDragImage(card, card.offsetWidth / 2, 30)
+    e.dataTransfer.setDragImage(e.currentTarget, e.currentTarget.offsetWidth / 2, 24)
     setDragId(lead.id)
   }
   function handleDragEnd() { setDragId(null); setDragOverStage(null) }
@@ -400,14 +415,14 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
     setDragId(null); setDragOverStage(null)
   }
   function handleDragOver(e, stageId) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverStage(stageId) }
-  function handleDragLeave(e) { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverStage(null) }
+  function handleDragLeave(e) { if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return; setDragOverStage(null) }
 
   return (
     <div className="adm-leads__board">
       {STAGES.map((stage) => {
         const items = byStage(stage.id)
         return (
-          <section key={stage.id} className="adm-stage"
+          <section key={stage.id} className={`adm-stage${dragOverStage===stage.id?' adm-stage--over':''}`}
             onDragOver={(e) => handleDragOver(e, stage.id)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, stage.id)}>
@@ -418,12 +433,14 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
             </header>
             <div className={`adm-stage__list${dragOverStage===stage.id?' adm-stage__list--over':''}`}>
               {items.map((lead) => (
-                <div key={lead.id} style={{ opacity: dragId===lead.id ? 0.4 : 1 }}>
+                <div key={lead.id} className={dragId===lead.id?'adm-card-ghost':''}>
                   <LeadCard lead={lead}
                     onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}
                     showGrip
-                    gripDragStart={(e) => handleDragStart(e, lead)}
-                    gripDragEnd={handleDragEnd}
+                    cardDrag={{
+                      start: (e) => handleDragStart(e, lead),
+                      end: handleDragEnd,
+                    }}
                   />
                 </div>
               ))}

@@ -140,6 +140,9 @@ create table if not exists public.leads (
   updated_at timestamptz default now()
 );
 
+-- שדרוג למסדי-נתונים קיימים: updated_at חסר בטבלת לידים (נוצרה לפני הוספת העמודה)
+alter table public.leads add column if not exists updated_at timestamptz default now();
+
 -- updated_at triggers
 drop trigger if exists trg_projects_updated on public.projects;
 create trigger trg_projects_updated before update on public.projects for each row execute function public.set_updated_at();

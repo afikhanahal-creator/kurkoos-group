@@ -344,11 +344,6 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, card
       onDragStart={cardDrag?.start}
       onDragEnd={cardDrag?.end}
       style={{ '--stage-c': st.color }}>
-      {showGrip && (
-        <div className="adm-lead__grip" aria-hidden="true">
-          <IcGrip width={10} height={12} style={{ pointerEvents: 'none' }}/>
-        </div>
-      )}
       <div className="adm-lead__body">
         <div className="adm-lead__top">
           <div className="adm-lead__avatar">{initials(lead.name)}</div>
@@ -363,26 +358,32 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, card
               </span>
             )}
           </div>
-          <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
+          <div className="adm-lead__top-end">
+            <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
+            {showGrip && <IcGrip width={8} height={10} className="adm-lead__grip-icon" aria-hidden="true" style={{ pointerEvents: 'none' }}/>}
+          </div>
         </div>
 
         {lead.message && <p className="adm-lead__msg">{lead.message}</p>}
 
         <div className="adm-lead__foot">
-          {lead.phone && <a href={`tel:${digits}`} draggable="false" className="adm-ic-btn" title={lead.phone}><IcPhone width={12} height={12}/></a>}
-          {wa && <a href={wa} draggable="false" target="_blank" rel="noopener noreferrer" className="adm-ic-btn adm-ic-btn--wa" title="וואטסאפ"><IcWA width={13} height={13}/></a>}
-          {lead.email && <a href={`mailto:${lead.email}`} draggable="false" className="adm-ic-btn" title={lead.email}><IcMail width={12} height={12}/></a>}
-          <label draggable="false" className="adm-lead__contacted" title="סמן שנוצר קשר">
-            <input draggable="false" type="checkbox" checked={!!lead.contacted} onChange={() => onContacted(lead)}/>
-            <span>קשר</span>
-          </label>
-          <select draggable="false" className="adm-lead__stage-sel" value={lead.status||'new'}
-            onChange={(e) => onStage(lead.id, e.target.value)}
-            style={{ borderColor: st.color }}>
-            {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
-          <button draggable="false" type="button" className="adm-ic-btn" onClick={() => onEdit(lead)} title="עריכה"><IcEdit width={12} height={12}/></button>
-          <button draggable="false" type="button" className="adm-ic-btn adm-ic-btn--del" onClick={() => onRemove(lead)} title="מחיקה"><IcTrash width={12} height={12}/></button>
+          <div className="adm-lead__foot-contacts">
+            {lead.phone && <a href={`tel:${digits}`} draggable="false" className="adm-ic-btn" title={lead.phone}><IcPhone width={12} height={12}/></a>}
+            {wa && <a href={wa} draggable="false" target="_blank" rel="noopener noreferrer" className="adm-ic-btn adm-ic-btn--wa" title="וואטסאפ"><IcWA width={13} height={13}/></a>}
+            {lead.email && <a href={`mailto:${lead.email}`} draggable="false" className="adm-ic-btn" title={lead.email}><IcMail width={12} height={12}/></a>}
+          </div>
+          <div className="adm-lead__foot-actions">
+            <label draggable="false" className="adm-lead__contacted" title="נוצר קשר">
+              <input draggable="false" type="checkbox" checked={!!lead.contacted} onChange={() => onContacted(lead)}/>
+              <span>קשר</span>
+            </label>
+            <select draggable="false" className="adm-lead__stage-sel" value={lead.status||'new'}
+              onChange={(e) => onStage(lead.id, e.target.value)}>
+              {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+            <button draggable="false" type="button" className="adm-ic-btn" onClick={() => onEdit(lead)} title="עריכה"><IcEdit width={12} height={12}/></button>
+            <button draggable="false" type="button" className="adm-ic-btn adm-ic-btn--del" onClick={() => onRemove(lead)} title="מחיקה"><IcTrash width={12} height={12}/></button>
+          </div>
         </div>
       </div>
     </article>
@@ -482,7 +483,7 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
             </label>
 
             <select className="adm-list__stage-sel" value={lead.status||'new'} onChange={(e) => moveTo(lead.id, e.target.value)}
-              style={{ borderColor: st.color }}>
+              style={{ '--stage-c': st.color }}>
               {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
 
@@ -534,7 +535,7 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing }) {
                 <td>{proj||'—'}</td>
                 <td>
                   <select className="adm-lead__stage-sel" value={lead.status||'new'} onChange={(e) => moveTo(lead.id, e.target.value)}
-                    style={{ borderColor: st.color }}>
+                    style={{ '--stage-c': st.color }}>
                     {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                   </select>
                 </td>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { listLeads, updateLead, deleteLead, createLead, reorderRows } from '../../lib/cms.js'
+import { listLeads, updateLead, deleteLead, createLead, reorderRows, restoreLead } from '../../lib/cms.js'
 
 /* ── SVG Icon components ── */
 const IcPhone    = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
@@ -8,19 +8,21 @@ const IcWA       = (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><p
 const IcEdit     = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
 const IcTrash    = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
 const IcDownload = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-const IcExternal = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-const IcGrip     = (p) => <svg viewBox="0 0 8 12" fill="currentColor" {...p}><circle cx="2" cy="2" r="1.3"/><circle cx="6" cy="2" r="1.3"/><circle cx="2" cy="6" r="1.3"/><circle cx="6" cy="6" r="1.3"/><circle cx="2" cy="10" r="1.3"/><circle cx="6" cy="10" r="1.3"/></svg>
 const IcPlus     = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 const IcPin      = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
 const IcBuilding = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10M8 7h.01M12 7h.01M16 7h.01M8 11h.01M16 11h.01"/></svg>
+const IcGrip     = (p) => <svg viewBox="0 0 8 12" fill="currentColor" {...p}><circle cx="2" cy="2" r="1.3"/><circle cx="6" cy="2" r="1.3"/><circle cx="2" cy="6" r="1.3"/><circle cx="6" cy="6" r="1.3"/><circle cx="2" cy="10" r="1.3"/><circle cx="6" cy="10" r="1.3"/></svg>
+const IcChevron  = (p) => <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M1 1l4 4 4-4"/></svg>
+const IcCheck    = (p) => <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2 6l3 3 5-5"/></svg>
+const IcUndo     = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
 
 const STAGES = [
-  { id: 'new',         label: 'ליד חדש',       color: '#3a7bd5', emoji: '🆕' },
-  { id: 'contacted',   label: 'נוצר קשר',       color: '#e0a106', emoji: '📞' },
-  { id: 'meeting',     label: 'פגישה',           color: '#16688c', emoji: '🤝' },
-  { id: 'negotiation', label: 'משא ומתן',        color: '#8c6d1f', emoji: '💼' },
-  { id: 'won',         label: 'נסגר בהצלחה',    color: '#2e9e6b', emoji: '✅' },
-  { id: 'lost',        label: 'לא רלוונטי',     color: '#d64545', emoji: '❌' },
+  { id: 'new',         label: 'ליד חדש',       color: '#3a7bd5' },
+  { id: 'contacted',   label: 'נוצר קשר',       color: '#e0a106' },
+  { id: 'meeting',     label: 'פגישה',           color: '#16688c' },
+  { id: 'negotiation', label: 'משא ומתן',        color: '#8c6d1f' },
+  { id: 'won',         label: 'נסגר בהצלחה',    color: '#2e9e6b' },
+  { id: 'lost',        label: 'לא רלוונטי',     color: '#d64545' },
 ]
 const stageOf    = (id) => STAGES.find((s) => s.id === id) || STAGES[0]
 const FUNNEL     = ['new', 'contacted', 'meeting', 'negotiation', 'won']
@@ -28,7 +30,6 @@ const SOURCE_LABEL = { project: 'עמוד פרויקט', home: 'דף הבית', 
 const SOURCE_COLOR = { project: '#105572', home: '#2e9e6b', contact: '#8c6d1f', manual: '#666' }
 const SITE       = 'https://www.kurkoos-group.co.il'
 
-/* מחלץ שם פרויקט — תומך במחרוזת, {he,en,slug}, JSON-string, ריק */
 const parseProject = (p) => {
   if (!p) return null
   if (typeof p === 'object') return p
@@ -62,7 +63,6 @@ function fmtTime(iso) {
 const daysAgo  = (n) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(0,0,0,0); return d }
 const isAfter  = (iso, date) => { try { return new Date(iso) >= date } catch { return false } }
 
-/* וואטסאפ — ממיר מספר ישראלי לפורמט בינלאומי */
 const waLink = (phone) => {
   const d = String(phone || '').replace(/\D/g, '')
   if (!d) return ''
@@ -70,13 +70,11 @@ const waLink = (phone) => {
   return `https://wa.me/${intl}`
 }
 
-/* ראשי תיבות לאווטאר */
 const initials = (name) => {
   const w = (name || '?').trim().split(/\s+/)
   return (w.length >= 2 ? w[0][0] + w[w.length - 1][0] : (w[0][0] || '?')).toUpperCase()
 }
 
-/* ייצוא CSV */
 function exportCsv(leads) {
   const cols = [
     ['name','שם'],['phone','טלפון'],['email','אימייל'],['project','פרויקט'],
@@ -101,19 +99,163 @@ function exportCsv(leads) {
 
 const blankLead = () => ({ name:'', phone:'', email:'', project:'', message:'', notes:'', status:'new', source:'manual', contacted:false })
 
-export default function LeadsTab() {
-  const [leads,    setLeads]    = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [err,      setErr]      = useState('')
-  const [query,    setQuery]    = useState('')
-  const [stageFilter, setStageFilter] = useState('all')
-  const [sourceFilter, setSourceFilter] = useState('all')
-  const [view,     setView]     = useState('board')
-  const [editing,  setEditing]  = useState(null)
-  const [dragId,   setDragId]   = useState(null)
-  const [dragOver, setDragOver] = useState(null)
+/* ============================================================
+   StageMenu — popup מאנדיי-סגנון לבחירת שלב
+   ============================================================ */
+function StageMenu({ stageId, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [pos,  setPos]  = useState({})
+  const btnRef = useRef()
+  const popRef = useRef()
+  const st = stageOf(stageId)
 
-  const load = (clearErr = false) => {
+  const openMenu = () => {
+    if (!btnRef.current) return
+    const r = btnRef.current.getBoundingClientRect()
+    const goUp = r.bottom + 240 > window.innerHeight - 12
+    setPos({
+      position: 'fixed',
+      right: Math.max(4, Math.round(window.innerWidth - r.right)) + 'px',
+      top:    goUp ? 'auto' : Math.round(r.bottom + 4) + 'px',
+      bottom: goUp ? Math.round(window.innerHeight - r.top + 4) + 'px' : 'auto',
+      minWidth: Math.max(r.width, 152) + 'px',
+      zIndex: 400,
+    })
+    setOpen(true)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => {
+      if (!popRef.current?.contains(e.target) && !btnRef.current?.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  return (
+    <>
+      <button ref={btnRef} type="button" draggable="false"
+        className={`adm-stage-btn${open ? ' is-open' : ''}`}
+        style={{ '--stage-c': st.color }}
+        onClick={() => open ? setOpen(false) : openMenu()}>
+        <span className="adm-stage-btn__dot"/>
+        <span className="adm-stage-btn__lbl">{st.label}</span>
+        <IcChevron width={8} height={5} className="adm-stage-btn__chevron"/>
+      </button>
+      {open && (
+        <div ref={popRef} className="adm-stage-popup" style={pos}>
+          {STAGES.map((s) => (
+            <button key={s.id} type="button" draggable="false"
+              className={`adm-stage-popup__item${s.id === stageId ? ' is-active' : ''}`}
+              style={{ '--c': s.color }}
+              onClick={() => { onChange(s.id); setOpen(false) }}>
+              <span className="adm-stage-popup__dot"/>
+              <span>{s.label}</span>
+              {s.id === stageId && <IcCheck width={11} height={11} style={{ marginInlineStart: 'auto', flexShrink: 0 }}/>}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
+/* ============================================================
+   EditableCell — לחיצה לעריכה מוטבעת בטבלה
+   ============================================================ */
+function EditableCell({ value, onSave, dir, placeholder = '—' }) {
+  const [editing, setEditing] = useState(false)
+  const [draft,   setDraft]   = useState('')
+  const ref = useRef()
+
+  const start  = () => { setDraft(value || ''); setEditing(true) }
+  const commit = () => { setEditing(false); if (draft !== (value || '')) onSave(draft) }
+
+  useEffect(() => { if (editing) ref.current?.focus() }, [editing])
+
+  if (editing) return (
+    <input ref={ref} className="adm-cell-input" dir={dir}
+      value={draft} onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }}
+    />
+  )
+  return (
+    <span className={`adm-cell${!value ? ' adm-cell--empty' : ''}`} onClick={start} title="לחץ לעריכה">
+      {value || placeholder}
+    </span>
+  )
+}
+
+/* ============================================================
+   Toast
+   ============================================================ */
+function Toast({ toast, onClose }) {
+  if (!toast) return null
+  const icon = toast.type === 'saved' ? '✓' : toast.type === 'undo' ? '↩' : '⚠'
+  return (
+    <div className={`adm-toast adm-toast--${toast.type}`} onClick={onClose} role="status" aria-live="polite">
+      <span className="adm-toast__ic">{icon}</span>
+      <span className="adm-toast__msg">{toast.msg}</span>
+    </div>
+  )
+}
+
+/* ============================================================
+   LeadsTab — ראשי
+   ============================================================ */
+export default function LeadsTab() {
+  const [leads,       setLeads]       = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [err,         setErr]         = useState('')
+  const [query,       setQuery]       = useState('')
+  const [stageFilter, setStageFilter] = useState('all')
+  const [sourceFilter,setSourceFilter]= useState('all')
+  const [view,        setView]        = useState('board')
+  const [editing,     setEditing]     = useState(null)
+  const [dragId,      setDragId]      = useState(null)
+  const [dragOver,    setDragOver]    = useState(null)
+  const [undoStack,   setUndoStack]   = useState([])
+  const [toast,       setToast]       = useState(null)
+
+  /* ── toast ── */
+  const showToast = useCallback((msg, type = 'saved') => {
+    const id = Date.now()
+    setToast({ msg, type, id })
+    setTimeout(() => setToast((t) => t?.id === id ? null : t), type === 'error' ? 4000 : 2400)
+  }, [])
+
+  /* ── undo stack ── */
+  const pushUndo = useCallback((label, revert) => {
+    setUndoStack((s) => [...s.slice(-14), { label, revert }])
+  }, [])
+
+  const undo = useCallback(async () => {
+    if (!undoStack.length) return
+    const { label, revert } = undoStack[undoStack.length - 1]
+    setUndoStack((s) => s.slice(0, -1))
+    try { await revert(); showToast(`↩ בוטל: ${label}`, 'undo') }
+    catch { showToast('שגיאה בביטול', 'error') }
+  }, [undoStack, showToast])
+
+  /* Ctrl+Z global handler — ref so it always sees latest undo */
+  const undoRef = useRef(undo)
+  useEffect(() => { undoRef.current = undo })
+  useEffect(() => {
+    const handler = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== 'z' || e.shiftKey) return
+      const active = document.activeElement
+      if (active?.tagName === 'INPUT' || active?.tagName === 'TEXTAREA') return
+      e.preventDefault()
+      undoRef.current()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
+
+  /* ── data loading ── */
+  const load = useCallback((clearErr = false) => {
     setLoading(true)
     if (clearErr) setErr('')
     listLeads()
@@ -123,13 +265,13 @@ export default function LeadsTab() {
         setErr(/schema cache|find the table|does not exist|relation .* does not/i.test(m) ? 'TABLE_MISSING' : m)
       })
       .finally(() => setLoading(false))
-  }
-  useEffect(load, [])
+  }, [])
+  useEffect(() => load(), [load])
 
   const filtered = useMemo(() => {
     let list = leads
-    if (stageFilter !== 'all')  list = list.filter((l) => (l.status || 'new') === stageFilter)
-    if (sourceFilter !== 'all') list = list.filter((l) => (l.source || '') === sourceFilter)
+    if (stageFilter !== 'all')   list = list.filter((l) => (l.status || 'new') === stageFilter)
+    if (sourceFilter !== 'all')  list = list.filter((l) => (l.source || '') === sourceFilter)
     const q = query.trim().toLowerCase()
     if (q) list = list.filter((l) => [l.name, l.phone, l.email, extractProject(l.project), l.message, l.notes]
       .some((v) => String(v||'').toLowerCase().includes(q)))
@@ -139,37 +281,76 @@ export default function LeadsTab() {
   const byStage    = (sid) => filtered.filter((l) => (l.status || 'new') === sid)
   const patchLocal = (id, patch) => setLeads((ls) => ls.map((l) => (String(l.id) === String(id) ? {...l,...patch} : l)))
 
+  /* ── actions ── */
   const moveTo = async (id, status) => {
     const lead = leads.find((l) => String(l.id) === String(id))
-    if (!lead) { console.warn('moveTo: lead not found', id); return }
-    if (lead.status === status) return
+    if (!lead || lead.status === status) return
+    const prevStatus = lead.status
+    const label = `שינוי שלב "${lead.name || 'ליד'}"`
     patchLocal(id, { status })
     try {
       await updateLead(id, { status })
+      pushUndo(label, async () => { patchLocal(id, { status: prevStatus }); await updateLead(id, { status: prevStatus }) })
+      showToast('שלב עודכן', 'saved')
     } catch (e) {
-      console.error('moveTo failed — id:', id, 'status:', status, 'error:', e)
+      console.error('moveTo failed:', e)
       setErr(`שגיאת שמירה: ${e.message}`)
       load()
     }
   }
+
   const toggleContacted = async (lead) => {
     const v = !lead.contacted
     patchLocal(lead.id, { contacted: v })
-    try { await updateLead(lead.id, { contacted: v }) } catch (e) { setErr(e.message); load() }
+    try {
+      await updateLead(lead.id, { contacted: v })
+      const label = `${lead.name || 'ליד'} — ${v ? 'נוצר קשר' : 'בוטל קשר'}`
+      pushUndo(label, async () => { patchLocal(lead.id, { contacted: !v }); await updateLead(lead.id, { contacted: !v }) })
+    } catch (e) { setErr(e.message); load() }
   }
+
   const remove = async (lead) => {
     if (!confirm(`למחוק את הליד "${lead.name || 'ללא שם'}"?`)) return
+    const snapshot = { ...lead }
     setLeads((ls) => ls.filter((l) => l.id !== lead.id))
-    try { await deleteLead(lead.id) } catch (e) { setErr(e.message); load() }
+    try {
+      await deleteLead(lead.id)
+      pushUndo(`מחיקת "${lead.name || 'ליד'}"`, async () => {
+        const restored = await restoreLead(snapshot)
+        setLeads((ls) => [restored, ...ls])
+        showToast('הליד שוחזר', 'undo')
+      })
+      showToast('ליד נמחק', 'saved')
+    } catch (e) { setErr(e.message); load() }
   }
-  const autoSave  = async (data) => {
+
+  const autoSave = async (data) => {
     if (!data.id) return
     const { name, phone, email, project, source, status, contacted, notes, message } = data
     const patch = { name, phone, email, project, source, status, contacted, notes, message }
     patchLocal(data.id, patch)
     try { await updateLead(data.id, patch) } catch (e) { console.error('autoSave failed:', e); setErr(e.message) }
   }
-  const createNow = async (data) => { const c = await createLead({...data, source:data.source||'manual'}); setLeads((ls) => [c,...ls]); return c }
+
+  const quickEdit = async (id, patch) => {
+    const lead = leads.find((l) => String(l.id) === String(id))
+    if (!lead) return
+    const prev = Object.fromEntries(Object.keys(patch).map((k) => [k, lead[k]]))
+    patchLocal(id, patch)
+    try {
+      await updateLead(id, patch)
+      const FIELD = { name: 'שם', phone: 'טלפון', email: 'אימייל', notes: 'הערות', message: 'הודעה' }
+      const fieldLabel = Object.keys(patch).map((k) => FIELD[k] || k).join(', ')
+      pushUndo(`עריכת ${fieldLabel}`, async () => { patchLocal(id, prev); await updateLead(id, prev) })
+      showToast('נשמר', 'saved')
+    } catch (e) { setErr(e.message); load() }
+  }
+
+  const createNow = async (data) => {
+    const c = await createLead({...data, source: data.source || 'manual'})
+    setLeads((ls) => [c, ...ls])
+    return c
+  }
 
   const reorder = async (sourceId, targetId) => {
     if (sourceId === targetId) return
@@ -177,12 +358,13 @@ export default function LeadsTab() {
     const from = ids.indexOf(sourceId), to = ids.indexOf(targetId)
     if (from < 0 || to < 0) return
     const next = [...leads]; const [moved] = next.splice(from, 1); next.splice(to, 0, moved)
-    setLeads(next.map((l,i) => ({...l, sort_order: i})))
+    setLeads(next.map((l, i) => ({...l, sort_order: i})))
     try { await reorderRows('leads', next.map((l) => l.id)) } catch (e) { setErr(e.message); load() }
   }
 
   if (loading) return <div className="adm-leads__msg"><span className="adm-spin"/> טוען לידים…</div>
-  const tableMissing = err === 'TABLE_MISSING'
+
+  const tableMissing  = err === 'TABLE_MISSING'
   const sourcesInData = [...new Set(leads.map((l) => l.source).filter(Boolean))]
 
   return (
@@ -202,6 +384,11 @@ export default function LeadsTab() {
           </div>
         </div>
         <div className="adm-leads__bar-group">
+          {undoStack.length > 0 && (
+            <button type="button" className="adm-leads__undo-btn" onClick={undo} title="ביטול פעולה אחרונה (Ctrl+Z)">
+              <IcUndo width={13} height={13}/> ביטול
+            </button>
+          )}
           <input className="adm-leads__search" placeholder="חיפוש…" value={query} onChange={(e) => setQuery(e.target.value)}/>
           <button type="button" className="adm-leads__btn" onClick={() => exportCsv(filtered)}><IcDownload width={14} height={14}/> ייצוא</button>
           <button type="button" className="adm-leads__btn adm-leads__btn--primary" onClick={() => setEditing(blankLead())}><IcPlus width={14} height={14}/> ליד חדש</button>
@@ -248,7 +435,7 @@ export default function LeadsTab() {
       {tableMissing && (
         <div className="adm-leads__setup">
           <strong>טבלת הלידים עדיין לא נוצרה ב-Supabase.</strong>
-          <span>היכנסו ל-Supabase → SQL Editor → הריצו את סקריפט ה-SQL שסופק, ואז רעננו. לאחר מכן הלידים יופיעו כאן אוטומטית.</span>
+          <span>היכנסו ל-Supabase → SQL Editor → הריצו את סקריפט ה-SQL שסופק, ואז רעננו.</span>
         </div>
       )}
       {err && !tableMissing && (
@@ -266,11 +453,13 @@ export default function LeadsTab() {
         <>
           {view==='board' && <BoardView byStage={byStage} moveTo={moveTo} toggleContacted={toggleContacted} remove={remove} setEditing={setEditing}/>}
           {view==='list'  && <ListView  {...{leads:filtered, dragId, setDragId, dragOver, setDragOver, reorder, moveTo, toggleContacted, remove, setEditing}}/>}
-          {view==='table' && <TableView {...{leads:filtered, moveTo, toggleContacted, remove, setEditing}}/>}
+          {view==='table' && <TableView {...{leads:filtered, moveTo, toggleContacted, remove, setEditing, quickEdit}}/>}
         </>
       )}
 
       {editing && <LeadEditor lead={editing} onClose={() => setEditing(null)} onAutoSave={autoSave} onCreate={createNow}/>}
+
+      <Toast toast={toast} onClose={() => setToast(null)}/>
     </div>
   )
 }
@@ -325,8 +514,8 @@ function Dashboard({ leads }) {
   )
 }
 
-/* ============================ קארד ליד (board + list) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, cardDrag }) {
+/* ============================ קארד ליד (board) ============================ */
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
   const st     = stageOf(lead.status)
   const proj   = extractProject(lead.project)
   const digits = String(lead.phone||'').replace(/\D/g,'')
@@ -360,7 +549,7 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, card
           </div>
           <div className="adm-lead__top-end">
             <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
-            {showGrip && <IcGrip width={8} height={10} className="adm-lead__grip-icon" aria-hidden="true" style={{ pointerEvents: 'none' }}/>}
+            <IcGrip width={8} height={10} className="adm-lead__grip-icon" aria-hidden="true" style={{ pointerEvents: 'none' }}/>
           </div>
         </div>
 
@@ -377,10 +566,7 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, card
               <input draggable="false" type="checkbox" checked={!!lead.contacted} onChange={() => onContacted(lead)}/>
               <span>קשר</span>
             </label>
-            <select draggable="false" className="adm-lead__stage-sel" value={lead.status||'new'}
-              onChange={(e) => onStage(lead.id, e.target.value)}>
-              {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
+            <StageMenu stageId={lead.status || 'new'} onChange={(sid) => onStage(lead.id, sid)}/>
             <button draggable="false" type="button" className="adm-ic-btn" onClick={() => onEdit(lead)} title="עריכה"><IcEdit width={12} height={12}/></button>
             <button draggable="false" type="button" className="adm-ic-btn adm-ic-btn--del" onClick={() => onRemove(lead)} title="מחיקה"><IcTrash width={12} height={12}/></button>
           </div>
@@ -392,7 +578,7 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, showGrip, card
 
 /* ============================ תצוגת קוביות ============================ */
 function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
-  const [dragId,       setDragId]       = useState(null)
+  const [dragId,        setDragId]        = useState(null)
   const [dragOverStage, setDragOverStage] = useState(null)
 
   function handleDragStart(e, lead) {
@@ -408,8 +594,8 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
     if (id) moveTo(id, stageId)
     setDragId(null); setDragOverStage(null)
   }
-  function handleDragOver(e, stageId) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverStage(stageId) }
-  function handleDragLeave(e) { if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return; setDragOverStage(null) }
+  function handleDragOver(e, stageId)  { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverStage(stageId) }
+  function handleDragLeave(e)          { if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return; setDragOverStage(null) }
 
   return (
     <div className="adm-leads__board">
@@ -430,11 +616,7 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
                 <div key={lead.id} className={dragId===lead.id?'adm-card-ghost':''}>
                   <LeadCard lead={lead}
                     onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}
-                    showGrip
-                    cardDrag={{
-                      start: (e) => handleDragStart(e, lead),
-                      end: handleDragEnd,
-                    }}
+                    cardDrag={{ start: (e) => handleDragStart(e, lead), end: handleDragEnd }}
                   />
                 </div>
               ))}
@@ -482,10 +664,7 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
               <input type="checkbox" checked={!!lead.contacted} onChange={() => toggleContacted(lead)}/>
             </label>
 
-            <select className="adm-list__stage-sel" value={lead.status||'new'} onChange={(e) => moveTo(lead.id, e.target.value)}
-              style={{ '--stage-c': st.color }}>
-              {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
+            <StageMenu stageId={lead.status || 'new'} onChange={(sid) => moveTo(lead.id, sid)}/>
 
             <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
               {SOURCE_LABEL[lead.source]||lead.source||'—'}
@@ -505,7 +684,7 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
 }
 
 /* ============================ תצוגת טבלה ============================ */
-function TableView({ leads, moveTo, toggleContacted, remove, setEditing }) {
+function TableView({ leads, moveTo, toggleContacted, remove, setEditing, quickEdit }) {
   return (
     <div className="adm-table-wrap">
       <table className="adm-table">
@@ -522,25 +701,34 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing }) {
             const wa   = waLink(lead.phone)
             return (
               <tr key={lead.id}>
-                <td><button type="button" className="adm-table__name" onClick={() => setEditing(lead)}>{lead.name||'ללא שם'}</button></td>
+                <td>
+                  <EditableCell value={lead.name} placeholder="ללא שם"
+                    onSave={(v) => quickEdit(lead.id, { name: v })}/>
+                </td>
                 <td dir="ltr">
                   {lead.phone
                     ? <span className="adm-table__contact-cell">
                         <a href={`tel:${lead.phone}`}>{lead.phone}</a>
                         {wa && <a href={wa} target="_blank" rel="noopener noreferrer" title="וואטסאפ" className="adm-table__wa"><IcWA width={15} height={15}/></a>}
                       </span>
-                    : '—'}
+                    : <EditableCell value={lead.phone} placeholder="—" dir="ltr" onSave={(v) => quickEdit(lead.id, { phone: v })}/>}
                 </td>
-                <td dir="ltr">{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : '—'}</td>
-                <td>{proj||'—'}</td>
+                <td dir="ltr">
+                  {lead.email
+                    ? <a href={`mailto:${lead.email}`}>{lead.email}</a>
+                    : <EditableCell value={lead.email} placeholder="—" dir="ltr" onSave={(v) => quickEdit(lead.id, { email: v })}/>}
+                </td>
                 <td>
-                  <select className="adm-lead__stage-sel" value={lead.status||'new'} onChange={(e) => moveTo(lead.id, e.target.value)}
-                    style={{ '--stage-c': st.color }}>
-                    {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-                  </select>
+                  <EditableCell value={proj} placeholder="—" onSave={(v) => quickEdit(lead.id, { project: v })}/>
+                </td>
+                <td>
+                  <StageMenu stageId={lead.status || 'new'} onChange={(sid) => moveTo(lead.id, sid)}/>
                 </td>
                 <td style={{ textAlign:'center' }}>
-                  <input type="checkbox" checked={!!lead.contacted} onChange={() => toggleContacted(lead)}/>
+                  <label className="adm-lead__contacted adm-lead__contacted--table" title="נוצר קשר">
+                    <input type="checkbox" checked={!!lead.contacted} onChange={() => toggleContacted(lead)}/>
+                    <span>{lead.contacted ? 'כן' : 'לא'}</span>
+                  </label>
                 </td>
                 <td>
                   <span className="adm-lead__source-badge" style={{ background: SOURCE_COLOR[lead.source]||'#888' }}>
@@ -563,7 +751,7 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing }) {
   )
 }
 
-/* ============================ פאנל עריכה (מאנדיי-סגנון) ============================ */
+/* ============================ פאנל עריכה ============================ */
 function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
   const [f,      setF]      = useState(lead)
   const [status, setStatus] = useState('saved')
@@ -601,7 +789,6 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
     <div className="adm-leads__modal" onClick={close}>
       <div className="adm-leads__panel" dir="rtl" onClick={(e) => e.stopPropagation()}>
 
-        {/* ===== כותרת פאנל ===== */}
         <header className="adm-leads__panel-head" style={{ '--stage': st.color }}>
           <span className="adm-leads__panel-dot"/>
           <div className="adm-leads__panel-titles">
@@ -611,7 +798,6 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
           <button type="button" className="adm-leads__panel-close" onClick={close} aria-label="סגירה">✕</button>
         </header>
 
-        {/* ===== פייפליין שלבים ===== */}
         <div className="adm-pipeline">
           {STAGES.map((s) => (
             <button key={s.id} type="button"
@@ -626,8 +812,6 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
         </div>
 
         <div className="adm-leads__panel-body">
-
-          {/* ===== כפתורי יצירת קשר ===== */}
           {(f.phone||f.email) && (
             <div className="adm-panel__quick">
               {f.phone && <a href={`tel:${digits}`} className="adm-quick-btn adm-quick-btn--call"><IcPhone width={14} height={14}/> {f.phone}</a>}
@@ -637,7 +821,6 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
             </div>
           )}
 
-          {/* ===== שדות ===== */}
           <div className="adm-leads__grid">
             <label>טלפון<input dir="ltr" value={f.phone||''} onChange={set('phone')}/></label>
             <label>אימייל<input dir="ltr" value={f.email||''} onChange={set('email')}/></label>
@@ -652,7 +835,7 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
           </div>
 
           <label className="adm-leads__field-wide">הודעת הפונה<textarea rows={3} value={f.message||''} onChange={set('message')}/></label>
-          <label className="adm-leads__field-wide">הערות פנימיות (לא נשלח ללקוח)<textarea rows={3} value={f.notes||''} onChange={set('notes')}/></label>
+          <label className="adm-leads__field-wide">הערות פנימיות<textarea rows={3} value={f.notes||''} onChange={set('notes')}/></label>
         </div>
 
         <footer className="adm-leads__panel-foot">

@@ -453,6 +453,11 @@ export async function deleteLead(id) {
   const { error } = await supabase.from('leads').delete().eq('id', id)
   if (error) throw error
 }
+export async function restoreLead(lead) {
+  const { data, error } = await supabase.from('leads').insert(lead).select().single()
+  if (error) throw error
+  return data
+}
 
 /* ============================================================
    שכבת תאימות (legacy) — לרכיבי האדמין הקיימים + גודל הלוגו.

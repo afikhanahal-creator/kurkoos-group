@@ -37,6 +37,7 @@ const DEFAULT_DIVISION_LOGOS = {
   execution: '/divisions/raita-logo.png',
   brokerage: '/afik-hanahal-logo.png',
   development: '/divisions/development-logo.png',
+  supervision: '/divisions/shchinta-logo.png',
 }
 
 export default function Division() {

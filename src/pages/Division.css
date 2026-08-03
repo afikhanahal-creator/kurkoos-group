@@ -302,8 +302,8 @@
 
 /* לוגו שכינתא — עגול עם רקע שקוף, צריך להיות גדול וברור */
 .division--supervision .division-hero__logo {
-  height: clamp(180px, 20vw, 260px);
-  max-width: clamp(180px, 20vw, 260px);
+  height: clamp(130px, 14vw, 180px);
+  max-width: clamp(130px, 14vw, 180px);
   filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.55));
 }
 

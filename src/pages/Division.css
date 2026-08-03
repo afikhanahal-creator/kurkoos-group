@@ -300,6 +300,13 @@
   filter: brightness(1.35) contrast(1.06) drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
 }
 
+/* לוגו שכינתא — עגול עם רקע שקוף, צריך להיות גדול וברור */
+.division--supervision .division-hero__logo {
+  height: clamp(180px, 20vw, 260px);
+  max-width: clamp(180px, 20vw, 260px);
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.55));
+}
+
 /* ---- כותרת + תקציר ---- */
 .division-hero__title {
   position: relative;

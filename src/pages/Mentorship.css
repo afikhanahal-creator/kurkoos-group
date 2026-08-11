@@ -500,8 +500,13 @@
     text-align: center;
   }
   .mentor-stage.is-open { grid-column: 1 / -1; }
-  .mentor-stage__tools { align-items: center; }
-  .mentor-stage__tool { justify-content: center; font-size: 0.9rem; }
+  /* בולטים מיושרים לימין, ברורים לעין */
+  .mentor-stage__tools { align-items: stretch; }
+  .mentor-stage__tool {
+    justify-content: flex-start;
+    text-align: start;
+    font-size: 0.9rem;
+  }
 }
 @media (max-width: 380px) {
   .mentor-stages { grid-template-columns: 1fr; }

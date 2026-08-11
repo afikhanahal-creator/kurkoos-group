@@ -76,6 +76,13 @@ export const site = {
         { label: { he: 'המדריך לרוכש ולמוכר', en: 'The buyer & seller guide' }, to: '/real-estate-guide' },
       ],
     },
+    {
+      label: { he: 'מנטורינג', en: 'Mentorship' },
+      to: '/livy-yazamim',
+      children: [
+        { label: { he: 'ליווי יזמי נדל"ן צעירים', en: 'Young Real Estate Entrepreneur Mentorship' }, to: '/livy-yazamim' },
+      ],
+    },
     { key: 'contact', to: '/#contact' },
   ],
 }

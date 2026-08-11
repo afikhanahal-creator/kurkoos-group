@@ -11,6 +11,7 @@ const items = [
   { id: 'execution', icon: 'execution', to: '/divisions/execution', title: { he: 'ביצוע', en: 'Execution' } },
   { id: 'supervision', icon: 'supervision', to: '/divisions/supervision', title: { he: 'פיקוח פרויקטים', en: 'Project supervision' } },
   { id: 'brokerage', icon: 'brokerage', to: '/divisions/brokerage', title: { he: 'תיווך', en: 'Brokerage' } },
+  { id: 'mentorship', icon: 'bulb', to: '/livy-yazamim', title: { he: 'מנטורינג', en: 'Mentorship' } },
 ]
 
 export default function MenuCards({ onNavigate }) {

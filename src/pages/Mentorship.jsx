@@ -373,7 +373,7 @@ export default function Mentorship() {
       <section className="section section--alt mentor-guide">
         <div className="container">
           <Reveal className="mentor-section-head">
-            <span className="eyebrow">מדריך</span>
+            <span className="eyebrow">ידע מהשטח</span>
             <h2 className="section-title">המדריך ליזם המתחיל</h2>
             <p className="mentor-section-lead">
               עשרה נושאי ליבה, עשרה מאמרים שנכתבו מניסיון ישיר. לחצו על כל כתבה לקריאה מלאה.

@@ -167,6 +167,11 @@
 @media (max-width: 860px) {
   .mentor-intro__inner { grid-template-columns: 1fr; }
   .mentor-intro__quote-card { width: 100%; }
+  /* center all intro text */
+  .mentor-intro__content { text-align: center; }
+  .mentor-intro__eyebrow { display: block; }
+  .mentor-intro__heading { text-align: center; }
+  .mentor-intro__para { text-align: center; margin-inline: auto; }
   .mentor-intro__stats {
     justify-content: center;
     gap: 0;
@@ -300,7 +305,7 @@
 @media (max-width: 680px) {
   .mentor-compare { grid-template-columns: 1fr; }
   .mentor-compare__head { text-align: center; }
-  .mentor-compare__item { font-size: 0.97rem; }
+  .mentor-compare__item { font-size: 0.97rem; justify-content: center; }
 }
 
 /* ================================================================
@@ -656,7 +661,13 @@
   .mentor-guide__card.is-open .mentor-guide__card-meta { justify-content: flex-start; }
   .mentor-guide__card-body { columns: 1; }
   /* FAQ */
+  .mfaq__q { text-align: center; }
+  .mfaq__q span { flex: 1; }
   .mfaq__a { text-align: center; max-width: none; }
+  /* Guide footer */
+  .mentor-guide__footer { text-align: center; }
+  /* Section leads */
+  .mentor-section-lead { text-align: center; }
 }
 
 /* ================================================================

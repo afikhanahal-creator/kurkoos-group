@@ -1,0 +1,286 @@
+/* ============================================================
+   ליווי יזמי נדל"ן — Mentorship page
+   ============================================================ */
+
+/* ---- Intro ---- */
+.mentorship-intro__text {
+  max-width: 72ch;
+  margin-inline: auto;
+  text-align: center;
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  line-height: 1.75;
+  color: var(--color-text-soft);
+}
+
+/* ---- KPI strip ---- */
+.mentorship-kpis__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+.mentorship-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+.mentorship-kpi__val {
+  font-family: var(--font-heading);
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 900;
+  color: var(--color-secondary);
+  line-height: 1;
+}
+.mentorship-kpi__label {
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+  font-weight: 600;
+}
+
+/* ---- Pillars ---- */
+.mentorship-pillars__head {
+  text-align: center;
+  margin-bottom: 2.4rem;
+}
+.mentorship-pillars__head .eyebrow { justify-content: center; }
+.mentorship-pillars__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+/* ---- Stages accordion ---- */
+.mentorship-stages__inner {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 4rem;
+  align-items: start;
+}
+.mentorship-stages__intro { position: sticky; top: 120px; }
+.mentorship-stages__intro .section-lead {
+  margin-top: 0.8rem;
+  color: var(--color-text-soft);
+}
+
+.mentorship-stages__progress {
+  position: relative;
+  margin-top: 2rem;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.mentorship-stages__progress span {
+  display: block;
+  height: 100%;
+  width: var(--p, 10%);
+  background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
+  border-radius: var(--radius-pill);
+  transition: width var(--dur-slow) var(--ease-out);
+}
+.mentorship-stages__progress::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 34%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, transparent, var(--color-accent) 45%, #ff4d4f 50%, var(--color-accent) 55%, transparent);
+  filter: blur(0.5px);
+  pointer-events: none;
+  animation: ms-glint 3s var(--ease-in-out) infinite;
+}
+@keyframes ms-glint {
+  0%   { transform: translateX(300%); }
+  55%  { transform: translateX(-110%); }
+  100% { transform: translateX(-110%); }
+}
+@media (prefers-reduced-motion: reduce) { .mentorship-stages__progress::after { animation: none; opacity: 0; } }
+
+.mentorship-stages__list { display: flex; flex-direction: column; }
+
+.ms-item {
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--dur-base);
+}
+.ms-item--open {
+  background: var(--color-bg-soft);
+  border-radius: var(--radius-md);
+}
+.ms-item__head {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  width: 100%;
+  padding: 1.4rem 1.2rem;
+  text-align: start;
+}
+.ms-item__num {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: var(--stage-color, var(--color-secondary));
+  flex-shrink: 0;
+  min-width: 2rem;
+  transition: color var(--dur-fast);
+}
+.ms-item__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--color-text);
+  flex: 1;
+  min-width: 0;
+  transition: color var(--dur-fast);
+}
+.ms-item__head:hover .ms-item__title { color: var(--color-secondary); }
+.ms-item--open .ms-item__title { color: var(--stage-color, var(--color-secondary)); }
+.ms-item__chevron {
+  color: var(--color-text-soft);
+  transition: transform var(--dur-base) var(--ease-out), color var(--dur-base);
+  flex-shrink: 0;
+}
+.ms-item--open .ms-item__chevron { transform: rotate(180deg); color: var(--stage-color, var(--color-secondary)); }
+
+.ms-item__panel { overflow: hidden; }
+.ms-item__desc {
+  padding: 0 1.2rem 1rem calc(1.2rem + 2rem + 1.2rem);
+  color: var(--color-text-soft);
+  font-size: 1.03rem;
+  line-height: 1.7;
+}
+.ms-item__tools {
+  list-style: none;
+  padding: 0 1.2rem 1.6rem calc(1.2rem + 2rem + 1.2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.ms-item__tools li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.92rem;
+  color: var(--color-text-soft);
+}
+.ms-item__tools li svg {
+  flex-shrink: 0;
+  margin-top: 0.15em;
+  color: var(--stage-color, var(--color-secondary));
+}
+
+/* ---- FAQ ---- */
+.mentorship-faq__head {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.mentorship-faq__head .eyebrow { justify-content: center; }
+.mentorship-faq__list {
+  max-width: 72ch;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+}
+.mfaq-item {
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--dur-base);
+}
+.mfaq-item--open {
+  background: var(--color-bg-soft);
+  border-radius: var(--radius-md);
+}
+.mfaq-item__q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.3rem 1.2rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-text);
+  text-align: start;
+  transition: color var(--dur-fast);
+}
+.mfaq-item__q:hover { color: var(--color-secondary); }
+.mfaq-item__q svg {
+  flex-shrink: 0;
+  color: var(--color-text-soft);
+  transition: transform var(--dur-base) var(--ease-out), color var(--dur-base);
+}
+.mfaq-item--open .mfaq-item__q svg { transform: rotate(180deg); color: var(--color-secondary); }
+.mfaq-item__a { overflow: hidden; }
+.mfaq-item__a p {
+  padding: 0 1.2rem 1.6rem;
+  color: var(--color-text-soft);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+/* ---- CTA band ---- */
+.mentorship-cta__band {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: clamp(2rem, 4vw, 3rem) clamp(2rem, 5vw, 4rem);
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
+}
+.mentorship-cta__band::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(ellipse 60% 80% at 50% 50%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease-in-out;
+}
+.mentorship-cta__band::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+.mentorship-cta__band > * { position: relative; z-index: 1; }
+@media (hover: hover) {
+  .mentorship-cta__band:hover { transform: translateY(-4px); box-shadow: 0 28px 60px -28px rgba(7, 41, 58, 0.5); }
+  .mentorship-cta__band:hover::before { opacity: 1; }
+  .mentorship-cta__band:hover::after { opacity: 1; animation: mc-shine 2.2s linear infinite; }
+}
+@keyframes mc-shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+@media (prefers-reduced-motion: reduce) { .mentorship-cta__band:hover::after { animation: none; } }
+.mentorship-cta__title { font-size: var(--fs-h3); margin: 0.4rem 0 0.6rem; }
+.mentorship-cta__desc { color: var(--color-text-soft); max-width: 50ch; }
+[dir='rtl'] .mentorship-cta__arrow { transform: scaleX(-1); }
+
+/* ---- Responsive ---- */
+@media (max-width: 1024px) {
+  .mentorship-pillars__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 880px) {
+  .mentorship-stages__inner { grid-template-columns: 1fr; gap: 2.5rem; }
+  .mentorship-stages__intro { position: static; text-align: center; }
+  .mentorship-stages__intro .eyebrow { justify-content: center; }
+  .mentorship-stages__intro .section-lead { margin-inline: auto; }
+  .ms-item__desc { padding-inline-start: 1.2rem; }
+  .ms-item__tools { padding-inline-start: 1.2rem; }
+}
+
+@media (max-width: 768px) {
+  .mentorship-kpis__grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem 1rem; }
+  .mentorship-cta__band { flex-direction: column; align-items: center; text-align: center; gap: 1.2rem; }
+  .mentorship-cta__band .eyebrow { justify-content: center; }
+  .mentorship-cta__desc { margin-inline: auto; }
+  .mentorship-cta__band .btn--lg { font-size: 0.8rem; padding: 0.6em 1.45em; min-height: 0; }
+}

@@ -44,7 +44,6 @@ export const site = {
         { label: { he: 'קורקוס יזמות', en: 'Kurkoos Development' }, to: '/divisions/development#why' },
         { label: { he: 'פרויקטים נבחרים', en: 'Selected projects' }, to: '/divisions/development#projects' },
         { label: { he: 'המדריך ליזמות נדל"ן', en: 'The development guide' }, to: '/yazamut-nadlan' },
-        { label: { he: 'ליווי יזמי נדל"ן', en: 'Developer mentorship' }, to: '/livy-yazamim' },
       ],
     },
     {

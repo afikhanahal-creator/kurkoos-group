@@ -31,7 +31,6 @@ const Legal = lazy(() => import('./pages/Legal.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'))
 const Admin = lazy(() => import('./pages/admin/Admin.jsx'))
-const Mentorship = lazy(() => import('./pages/Mentorship.jsx'))
 
 // גלילה לראש העמוד במעבר בין דפים; גלילה לעוגן (#) אם קיים.
 function ScrollManager() {
@@ -136,7 +135,6 @@ export default function App() {
               <Route path="/construction-supervision/:slug" element={<SupervisionArticle />} />
               <Route path="/real-estate-guide" element={<RealEstateGuide />} />
               <Route path="/real-estate-guide/:slug" element={<RealEstateGuideArticle />} />
-              <Route path="/livy-yazamim" element={<Mentorship />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />

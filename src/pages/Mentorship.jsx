@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
@@ -6,8 +6,6 @@ import Icon from '../components/ui/Icon.jsx'
 import { stages, pillars, faqs } from '../data/mentorship.js'
 import '../components/sections/Activities.css'   // card-effect: נוזל/ברק/זוהר/הטיה 3D
 import './Mentorship.css'
-
-const ROTATE_MS = 9000
 
 const iconMap = {
   pin: 'location',
@@ -18,10 +16,11 @@ const iconMap = {
   crane: 'crane',
 }
 
-/* ---- כתבות מרכז הידע ---- */
-const knowledgeArticles = [
+/* ---- המדריך ליזם המתחיל: 10 כתבות (שלב → כתבה) ---- */
+const guideArticles = [
   {
-    stageNum: '01',
+    num: '01',
+    stage: 'איתור קרקע ועסקאות',
     title: 'איך מזהים הזדמנות לפני שהשוק מגלה אותה',
     lead: 'הטעות הנפוצה ביותר של יזמים מתחילים: לחפש עסקאות במקום שכולם כבר מחפשים.',
     paragraphs: [
@@ -33,19 +32,21 @@ const knowledgeArticles = [
     insight: 'ההזדמנות הטובה ביותר שתמצאו היא אחת שאתם הראשונים לראות, לפני שהיא מופיעה בפרסום.',
   },
   {
-    stageNum: '02',
+    num: '02',
+    stage: 'בדיקת היתכנות ודוח 0',
     title: 'דוח 0: הכלי שמבדיל בין יזם שמתקדם ליזם שמשלם שכר לימוד',
     lead: 'לפני שמוציאים שקל על עסקה, בונים את המספרים. דוח 0 הוא הבסיס של כל ניתוח יזמי.',
     paragraphs: [
       'דוח 0 הוא לא רק גיליון אקסל עם מספרים. הוא השיחה שאתם מנהלים עם המציאות לפני שהיא הופכת יקרה. יזמים שדילגו עליו בגלל שהעסקה נראתה ברורה שילמו ביוקר על ההבנה שהיא לא הייתה כל כך ברורה.',
       'הדוח מורכב מארבעה אזורים: הכנסות צפויות לפי מחירי עסקאות קיימות, עלויות בנייה לפי מפרט ריאלי עם חיץ של 10 עד 15 אחוז, עלויות מימון כולל ריבית ועמלות ותקופת הפרויקט, ועלויות עסקה כגון עורך דין ומס שבח. ההפרש הוא הרווח לפני שמשלמים על הקרקע.',
-      'הנקודה שכולם מדלגים עליה: ניתוח רגישות. מה קורה אם מחירי המכירה יורדים בחמישה אחוז? מה קורה אם עלויות הבנייה עולות בעשרה אחוז? מה קורה אם הפרויקט מתעכב בשישה חודשים? יזם שעבר ניתוח רגישות לא מופתע — הוא מוכן.',
+      'הנקודה שכולם מדלגים עליה: ניתוח רגישות. מה קורה אם מחירי המכירה יורדים בחמישה אחוז? מה קורה אם עלויות הבנייה עולות בעשרה אחוז? מה קורה אם הפרויקט מתעכב בשישה חודשים? יזם שעבר ניתוח רגישות לא מופתע, הוא מוכן.',
       'דוח 0 כמעט לעולם לא נשאר זהה לאורך חיי הפרויקט. הוא מתעדכן עם כל שלב: בסגירת העסקה, בתחילת הביצוע, בכל חריגה מהתכנון. היזם שמחזיק דוח עדכני תמיד יודע איפה הפרויקט שלו עומד.',
     ],
     insight: 'דוח 0 לא נועד לשכנע אתכם לקנות. הוא נועד לתת לכם את הכוח לוותר על עסקה שאינה עובדת.',
   },
   {
-    stageNum: '03',
+    num: '03',
+    stage: 'משא ומתן וסגירת עסקה',
     title: 'המשא ומתן לא מתחיל בפגישה',
     lead: 'כוח ניהול המשא ומתן נקבע הרבה לפני שיושבים מול המוכר.',
     paragraphs: [
@@ -57,7 +58,8 @@ const knowledgeArticles = [
     insight: 'ניהול משא ומתן לא נועד לנצח. הוא נועד להגיע לעסקה שעובדת לשני הצדדים ומבוצעת בפועל.',
   },
   {
-    stageNum: '04',
+    num: '04',
+    stage: 'ליווי משפטי ועורכי דין',
     title: 'עורך דין נדל"ן: נכס שמשלמים עליו פחות מהנזק שהוא מונע',
     lead: 'הבחירה בעורך הדין הנכון שווה הרבה יותר מהפרש שכר הטרחה.',
     paragraphs: [
@@ -69,7 +71,8 @@ const knowledgeArticles = [
     insight: 'עורך דין טוב לא רק בודק. הוא מלמד אתכם לראות את המלכודות לבד, עסקה אחר עסקה.',
   },
   {
-    stageNum: '05',
+    num: '05',
+    stage: 'אסטרטגיית מימון בנקאי',
     title: 'הבנק לא משקיע בחלומות — הוא משקיע בניירות',
     lead: 'תיק בנקאי מוצלח אינו עסק של כמה דפים. הוא תוצר של הכנה מדוקדקת.',
     paragraphs: [
@@ -81,7 +84,8 @@ const knowledgeArticles = [
     insight: 'הבנק מוסיף אשראי למי שמוכיח שאינו צריך אותו. ההכנה היא ההון שאינו מופיע בדפי החשבון.',
   },
   {
-    stageNum: '06',
+    num: '06',
+    stage: 'היתרים, רישוי ובירוקרטיה',
     title: 'הבירוקרטיה לא נגדכם — היא פשוט לא בצד שלכם',
     lead: 'הבנת תהליך ההיתרים מראש חוסכת חודשים של עיכוב ועשרות אלפי שקלים.',
     paragraphs: [
@@ -93,7 +97,8 @@ const knowledgeArticles = [
     insight: 'יזם שמבין בירוקרטיה אינו נלחם במערכת. הוא עובד איתה. וזה שווה חודשים בלוח הזמנים.',
   },
   {
-    stageNum: '07',
+    num: '07',
+    stage: 'ניהול תזרים ותקציב פרויקט',
     title: 'פרויקטים לא נכשלים בגלל חוסר כסף — הם נכשלים בגלל תזמון לא נכון',
     lead: 'ניהול תזרים הוא המיומנות שמבדילה בין יזם שמסיים פרויקטים ליזם שמתקשה להתקדם.',
     paragraphs: [
@@ -105,7 +110,8 @@ const knowledgeArticles = [
     insight: 'תזרים מזומנים הוא הדם של הפרויקט. ניהולו לא מסתיים עם ההכנה — הוא תהליך שבועי לאורך כל חיי הפרויקט.',
   },
   {
-    stageNum: '08',
+    num: '08',
+    stage: 'פיקוח ובנייה',
     title: 'מפקח בנייה טוב שווה כמה אחוזי רווח בסיום הפרויקט',
     lead: 'הפיקוח הוא השקעה שמשתלמת בכל פרויקט שאתם לא נמצאים בו בכל יום.',
     paragraphs: [
@@ -117,7 +123,8 @@ const knowledgeArticles = [
     insight: 'המפקח הוא לא "בן אדם שיושב באתר". הוא מנהל הפרויקט בשטח כשאתם עוסקים בדברים אחרים.',
   },
   {
-    stageNum: '09',
+    num: '09',
+    stage: 'שיווק, מכירות ומימוש',
     title: 'הפרויקט הטוב ביותר שלא נמכר הוא כישלון',
     lead: 'שיווק ומכירות הם מיומנויות שניתן ללמוד, אבל דורשות הכנה שמתחילה הרבה לפני שיש מה למכור.',
     paragraphs: [
@@ -129,7 +136,8 @@ const knowledgeArticles = [
     insight: 'שיווק טוב לא מוכר. הוא גורם לרוכש לקנות. ההבדל הוא בין לחץ לבין אמון.',
   },
   {
-    stageNum: '10',
+    num: '10',
+    stage: 'מסירה ובניית מוניטין',
     title: 'המסירה היא ה-DNA של הפרויקט הבא שלכם',
     lead: 'מסירה מוצלחת לא מסיימת פרויקט. היא מתחילה את המוניטין.',
     paragraphs: [
@@ -162,150 +170,13 @@ function FaqItem({ item, isOpen, onToggle }) {
   )
 }
 
-/* ---- Knowledge Hub ---- */
-function KnowledgeHub() {
-  const [active, setActive] = useState(0)
-  const [animKey, setAnimKey] = useState(0)
-  const [paused, setPaused] = useState(false)
-  const timerRef = useRef(null)
-  const tabsRef = useRef(null)
-
-  const go = useCallback((idx) => {
-    setActive(idx)
-    setAnimKey(k => k + 1)
-    const tabEl = tabsRef.current?.children[idx]
-    if (tabEl) tabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-  }, [])
-
-  const advance = useCallback(() => {
-    setActive(prev => {
-      const next = (prev + 1) % knowledgeArticles.length
-      setAnimKey(k => k + 1)
-      const tabEl = tabsRef.current?.children[next]
-      if (tabEl) tabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-      return next
-    })
-  }, [])
-
-  useEffect(() => {
-    if (paused) { clearInterval(timerRef.current); return }
-    timerRef.current = setInterval(advance, ROTATE_MS)
-    return () => clearInterval(timerRef.current)
-  }, [paused, advance])
-
-  const art = knowledgeArticles[active]
-  const stage = stages[active]
-
-  return (
-    <section className="section mentor-agent">
-      <div className="container">
-
-        {/* ---- כותרת הסקשן + כפתור המדריך ---- */}
-        <Reveal className="mentor-agent__head">
-          <div className="mentor-agent__head-text">
-            <span className="eyebrow">מרכז הידע</span>
-            <h2 className="section-title">ידע מהשטח, לכל שלב בדרך</h2>
-            <p className="mentor-agent__lead">
-              כל מאמר נכתב מניסיון ישיר בעשרות פרויקטים. לא תיאוריה — ידע שעובד בשטח האמיתי.
-            </p>
-          </div>
-          <Link to="/yazamut-nadlan" className="btn btn--outline mentor-agent__guide-btn">
-            המדריך ליזמות נדל"ן
-            <Icon name="arrow" size={16} className="mentor-agent__guide-arrow" />
-          </Link>
-        </Reveal>
-
-        {/* ---- טאבים ---- */}
-        <div className="mentor-agent__tabs" ref={tabsRef} role="tablist" aria-label="נושאי ידע">
-          {stages.map((s, i) => (
-            <button
-              key={s.id}
-              role="tab"
-              aria-selected={active === i}
-              className={`mentor-agent__tab ${active === i ? 'is-active' : ''}`}
-              onClick={() => go(i)}
-            >
-              <span className="mentor-agent__tab-num">{s.num}</span>
-              <span className="mentor-agent__tab-name">{s.title.he}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* ---- פס התקדמות ---- */}
-        <div className="mentor-agent__progress-track" aria-hidden="true">
-          <div
-            key={animKey}
-            className={`mentor-agent__progress-fill ${paused ? 'is-paused' : ''}`}
-            style={{ animationDuration: `${ROTATE_MS}ms` }}
-          />
-        </div>
-
-        {/* ---- כרטיס המאמר ---- */}
-        <div
-          className="mentor-agent__panel"
-          role="tabpanel"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onTouchStart={() => setPaused(true)}
-          onTouchEnd={() => setPaused(false)}
-        >
-          <div key={`art-${active}`} className="mentor-agent__article">
-
-            <header className="mentor-agent__art-header">
-              <span className="mentor-agent__art-num">שלב {art.stageNum}</span>
-              <span className="mentor-agent__art-stage">{stage.title.he}</span>
-            </header>
-
-            <h3 className="mentor-agent__art-title">{art.title}</h3>
-            <p className="mentor-agent__art-lead">{art.lead}</p>
-
-            <div className="mentor-agent__art-body">
-              {art.paragraphs.map((p, i) => <p key={i}>{p}</p>)}
-            </div>
-
-            <blockquote className="mentor-agent__insight">
-              <Icon name="quote" size={20} className="mentor-agent__insight-ic" aria-hidden="true" />
-              <span>{art.insight}</span>
-            </blockquote>
-
-            {/* ---- כפתור + ניווט ---- */}
-            <div className="mentor-agent__art-footer">
-              <Link to="/yazamut-nadlan" className="btn btn--outline btn--sm mentor-agent__art-btn">
-                כתבות נוספות במדריך ליזמות
-                <Icon name="arrow" size={15} className="mentor-agent__guide-arrow" />
-              </Link>
-              <div className="mentor-agent__nav">
-                <button
-                  className="mentor-agent__nav-btn"
-                  onClick={() => go((active - 1 + knowledgeArticles.length) % knowledgeArticles.length)}
-                  aria-label="מאמר קודם"
-                >
-                  <Icon name="arrowLeft" size={16} />
-                </button>
-                <span className="mentor-agent__nav-count">{active + 1} / {knowledgeArticles.length}</span>
-                <button
-                  className="mentor-agent__nav-btn"
-                  onClick={() => go((active + 1) % knowledgeArticles.length)}
-                  aria-label="מאמר הבא"
-                >
-                  <Icon name="arrow" size={16} />
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 /* ================================================================
    עמוד ראשי
    ================================================================ */
 export default function Mentorship() {
   const [openFaq, setOpenFaq] = useState(null)
   const [openStage, setOpenStage] = useState(null)
+  const [openArticle, setOpenArticle] = useState(null)
 
   return (
     <>
@@ -498,11 +369,67 @@ export default function Mentorship() {
         </div>
       </section>
 
-      {/* ---- מרכז הידע ---- */}
-      <KnowledgeHub />
+      {/* ---- המדריך ליזם המתחיל — 10 כתבות ---- */}
+      <section className="section section--alt mentor-guide">
+        <div className="container">
+          <Reveal className="mentor-section-head">
+            <span className="eyebrow">מדריך</span>
+            <h2 className="section-title">המדריך ליזם המתחיל</h2>
+            <p className="mentor-section-lead">
+              עשרה נושאי ליבה, עשרה מאמרים שנכתבו מניסיון ישיר. לחצו על כל כתבה לקריאה מלאה.
+            </p>
+          </Reveal>
+          <div className="mentor-guide__grid">
+            {guideArticles.map((art, i) => {
+              const isOpen = openArticle === i
+              return (
+                <Reveal key={i}>
+                  <article
+                    className={`mentor-guide__card ${isOpen ? 'is-open' : ''}`}
+                    onClick={() => setOpenArticle(isOpen ? null : i)}
+                    tabIndex={0}
+                    aria-expanded={isOpen}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setOpenArticle(isOpen ? null : i)
+                      }
+                    }}
+                  >
+                    <div className="mentor-guide__card-top">
+                      <div className="mentor-guide__card-meta">
+                        <span className="mentor-guide__card-num">{art.num}</span>
+                        <span className="mentor-guide__card-stage">{art.stage}</span>
+                      </div>
+                      <Icon name="chevron" size={14} className="mentor-guide__card-chevron" />
+                    </div>
+                    <h3 className="mentor-guide__card-title">{art.title}</h3>
+                    <p className="mentor-guide__card-lead">{art.lead}</p>
+                    <div className="mentor-guide__card-expand">
+                      <div className="mentor-guide__card-body">
+                        {art.paragraphs.map((p, pi) => <p key={pi}>{p}</p>)}
+                      </div>
+                      <blockquote className="mentor-guide__insight">
+                        <Icon name="quote" size={16} className="mentor-guide__insight-ic" aria-hidden="true" />
+                        <span>{art.insight}</span>
+                      </blockquote>
+                    </div>
+                  </article>
+                </Reveal>
+              )
+            })}
+          </div>
+          <Reveal className="mentor-guide__footer">
+            <Link to="/yazamut-nadlan" className="btn btn--outline">
+              כל הכתבות במדריך ליזמות נדל"ן
+              <Icon name="arrow" size={16} className="mentor-guide__footer-arrow" />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
 
       {/* ---- שאלות נפוצות ---- */}
-      <section className="section section--alt">
+      <section className="section">
         <div className="container mentor-faq-wrap">
           <Reveal className="mentor-section-head">
             <span className="eyebrow">שאלות נפוצות</span>
@@ -521,7 +448,7 @@ export default function Mentorship() {
         </div>
       </section>
 
-      {/* ---- CTA ---- */}
+      {/* ---- CTA — רקע לבן ---- */}
       <section className="mentor-cta">
         <div className="container">
           <Reveal className="mentor-cta__inner">

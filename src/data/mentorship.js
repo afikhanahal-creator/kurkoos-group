@@ -211,7 +211,7 @@ export const stages = [
 export const faqs = [
   {
     q: { he: 'מה ההבדל בין ליווי זה לבין קורס נדל"ן רגיל?', en: 'What is the difference between this mentorship and a regular real estate course?' },
-    a: { he: 'קורסים מלמדים תיאוריה. הליווי שלנו מבוסס על עסקאות אמיתיות, כלים שאנחנו עצמנו משתמשים בהם, ורשת קשרים שנפתחת בפועל. אנחנו לא ייעוץ, אנחנו שותפים ב DNA של הפרויקט.', en: 'Courses teach theory. Our mentorship is based on real deals, tools we use ourselves, and a network that actually opens. We are not consultants — we are partners in the project\'s DNA.' },
+    a: { he: 'קורס מלמד תיאוריה. הליווי שלנו מלמד מציאות. כל כלי, תבנית ושיטת עבודה שתקבלו נבנו מתוך עסקאות אמיתיות שביצענו בעצמנו בשטח. אתם לא מקבלים ייעוץ מהצד. אתם נכנסים לתוך ה DNA של פרויקטים אמיתיים ולומדים מבפנים איך עסקת נדל"ן באמת נסגרת. פרקטי לחלוטין, תואם לתעשייה, וההיפך הגמור מאקדמיה.', en: 'Courses teach theory. Our mentorship is based on real deals, tools we use ourselves, and a network that actually opens. We are not consultants — we are partners in the project\'s DNA.' },
   },
   {
     q: { he: 'האם צריך הון עצמי כדי להתחיל?', en: 'Do I need equity to start?' },

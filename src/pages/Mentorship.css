@@ -15,6 +15,27 @@
   margin-top: 0.75rem;
 }
 
+/* ---- Colored gradient divider between sections ---- */
+.mentor-guide {
+  position: relative;
+}
+.mentor-guide::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+    var(--color-primary-500) 0%,
+    var(--color-primary-300) 40%,
+    var(--color-accent-500) 100%);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* accent eyebrow for guide & stages sections */
+.mentor-guide .eyebrow { color: var(--color-accent-500); }
+
 /* ================================================================
    SHLOMI INTRO — white / light background
    ================================================================ */
@@ -278,6 +299,7 @@
 
 @media (max-width: 680px) {
   .mentor-compare { grid-template-columns: 1fr; }
+  .mentor-compare__head { text-align: center; }
   .mentor-compare__item { font-size: 0.97rem; }
 }
 
@@ -329,7 +351,10 @@
   border-color: var(--color-primary-300);
   box-shadow: var(--shadow-3);
 }
-.mentor-stage.is-open::before { opacity: 1; }
+.mentor-stage.is-open::before {
+  opacity: 1;
+  background: linear-gradient(90deg, var(--color-primary-500), var(--color-accent-500));
+}
 
 .mentor-stage__header {
   display: flex;
@@ -423,9 +448,13 @@
 }
 @media (max-width: 600px) {
   .mentor-stages { grid-template-columns: repeat(2, 1fr); gap: 0.9rem; }
+  .mentor-stage { text-align: center; }
+  .mentor-stage__header { justify-content: center; gap: 0.6rem; }
   .mentor-stage__desc { display: none; }
   .mentor-stage.is-open .mentor-stage__desc { display: block; }
   .mentor-stage.is-open { grid-column: 1 / -1; }
+  .mentor-stage__tools { align-items: center; }
+  .mentor-stage__tool { justify-content: center; }
 }
 @media (max-width: 380px) {
   .mentor-stages { grid-template-columns: 1fr; }
@@ -478,11 +507,14 @@
 
 .mentor-guide__card.is-open {
   grid-column: 1 / -1;
-  border-color: var(--color-primary-300);
-  box-shadow: var(--shadow-3);
+  border-color: var(--color-accent-500);
+  box-shadow: 0 0 0 1px var(--color-accent-500), var(--shadow-3);
   transform: none;
 }
-.mentor-guide__card.is-open::before { opacity: 1; }
+.mentor-guide__card.is-open::before {
+  opacity: 1;
+  background: linear-gradient(90deg, var(--color-accent-500), var(--color-primary-300));
+}
 
 .mentor-guide__card-top {
   display: flex;
@@ -503,7 +535,7 @@
   font-family: var(--font-heading);
   font-weight: 900;
   font-size: 1.5rem;
-  color: var(--color-primary-500);
+  color: var(--color-accent-500);
   line-height: 1;
 }
 
@@ -584,8 +616,8 @@
 .mentor-guide__insight {
   margin: 0;
   padding: 1.25rem 1.5rem;
-  background: color-mix(in srgb, var(--color-primary-500) 8%, var(--color-surface));
-  border-inline-start: 3px solid var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-accent-500) 6%, var(--color-surface));
+  border-inline-start: 3px solid var(--color-accent-500);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   font-style: italic;
   font-size: 1.05rem;
@@ -598,7 +630,7 @@
 
 .mentor-guide__insight-ic {
   flex-shrink: 0;
-  color: var(--color-primary-500);
+  color: var(--color-accent-500);
   margin-top: 2px;
 }
 
@@ -616,8 +648,15 @@
 
 @media (max-width: 540px) {
   .mentor-guide__grid { grid-template-columns: 1fr; }
-  .mentor-guide__card.is-open { grid-column: auto; }
+  .mentor-guide__card { text-align: center; }
+  .mentor-guide__card-top { flex-direction: column; align-items: center; gap: 0.5rem; }
+  .mentor-guide__card-meta { justify-content: center; }
+  .mentor-guide__card.is-open { grid-column: auto; text-align: start; }
+  .mentor-guide__card.is-open .mentor-guide__card-top { flex-direction: row; align-items: flex-start; }
+  .mentor-guide__card.is-open .mentor-guide__card-meta { justify-content: flex-start; }
   .mentor-guide__card-body { columns: 1; }
+  /* FAQ */
+  .mfaq__a { text-align: center; max-width: none; }
 }
 
 /* ================================================================
@@ -814,6 +853,75 @@
 @media (max-width: 680px) {
   .mentor-cta__phone { display: none; }
   .mentor-cta__actions { flex-direction: column; align-items: center; gap: 1rem; }
+}
+
+/* ================================================================
+   EXTRA PALETTE EFFECTS — אדום וכחול
+   ================================================================ */
+
+/* Section title: subtle gradient underline on key headings */
+.mentor-guide .section-title,
+.mentor-stages-eyebrow-parent .section-title {
+  display: inline-block;
+  position: relative;
+}
+
+/* Intro section: accent red highlight on quote card */
+.mentor-intro__quote-card {
+  border-block-start: 3px solid var(--color-accent-500);
+}
+
+/* Pillar cards: accent top-accent pulse on hover (red glow) */
+.mentor-pillar.card-effect:hover .card__glow {
+  background: radial-gradient(circle at 50% 0%,
+    color-mix(in srgb, var(--color-accent-500) 35%, transparent) 0%,
+    transparent 65%);
+}
+
+/* Stage card chevron when open: accent red */
+.mentor-stage.is-open .mentor-stage__chevron {
+  color: var(--color-accent-500);
+}
+
+/* Guide card chevron when open: accent red */
+.mentor-guide__card.is-open .mentor-guide__card-chevron {
+  color: var(--color-accent-500);
+}
+
+/* Guide card stage badge: red tint when card is open */
+.mentor-guide__card.is-open .mentor-guide__card-stage {
+  background: color-mix(in srgb, var(--color-accent-500) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent-500) 50%, transparent);
+  color: var(--color-accent-500);
+}
+
+/* CTA: accent bottom border above guide band */
+.mentor-cta {
+  border-bottom: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Red accent dot on compare col--accent heading */
+.mentor-compare__col--accent .mentor-compare__head::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary-300);
+  margin-inline-end: 0.55rem;
+  vertical-align: middle;
+}
+
+/* FAQ: opened item has accent left border */
+.mfaq__item.is-open {
+  border-top-color: var(--color-accent-500);
+}
+.mfaq__item.is-open .mfaq__q {
+  color: var(--color-accent-500);
+}
+.mfaq__item.is-open .mfaq__chevron {
+  color: var(--color-accent-500);
 }
 
 /* ================================================================

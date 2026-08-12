@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
+import heDict from '../../i18n/he.js'
+import enDict from '../../i18n/en.js'
 import { createLead } from '../../lib/cms.js'
 import Modal from './Modal.jsx'
 import Icon from './Icon.jsx'
 import './ContactPopup.css'
 
-const TOPICS = ['development', 'construction', 'supervision', 'brokerage', 'other']
+const TOPICS = ['development', 'construction', 'supervision', 'brokerage', 'mentorship', 'other']
 
 export default function ContactPopup({ open, onClose }) {
   const { t } = useI18n()
@@ -25,7 +27,8 @@ export default function ContactPopup({ open, onClose }) {
       phone: String(fd.get('phone') || '').trim(),
       email: String(fd.get('email') || '').trim(),
       message: String(fd.get('message') || '').trim(),
-      project: { he: t(`contactExtra.topics.${topic}`), en: t(`contactExtra.topics.${topic}`) },
+      // תיוג מדויק בשתי השפות ל-CRM, ללא תלות בשפת הממשק הנוכחית
+      project: { he: heDict.contactExtra.topics[topic], en: enDict.contactExtra.topics[topic] },
       source: 'contact',
       status: 'new',
     }

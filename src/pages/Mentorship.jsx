@@ -239,10 +239,10 @@ export default function Mentorship() {
       <section className="section">
         <div className="container">
           <Reveal className="mentor-section-head">
-            <span className="eyebrow">למה זה שונה</span>
-            <h2 className="section-title">מה שאי אפשר ללמוד בקורס</h2>
+            <span className="eyebrow">למה ליווי יזמי</span>
+            <h2 className="section-title">נכנסים לעסקה עם מי שכבר עשה את הדרך</h2>
             <p className="mentor-section-lead">
-              ניסיון, רשת קשרים ומסגרת מקצועית מלאה, שלושת הדברים שקובעים עסקת נדל"ן, אינם נמכרים בחבילת לימוד. הם נרכשים עם מנטור שחי אותם.
+              ליווי יזמי הוא לא לימוד מהצד. הוא שותפות בשטח. ניסיון של שלושים שנה, רשת קשרים חיה ומסגרת מקצועית מלאה עומדים לצידכם בכל החלטה, מהאיתור הראשון ועד מסירת המפתח. זה ההבדל בין לדעת על נדל"ן לבין לעשות נדל"ן.
             </p>
           </Reveal>
           <div className="mentor-pillars">

@@ -30,8 +30,8 @@ export const pillars = [
   },
   {
     icon: 'check',
-    title: { he: 'ליווי אקדמי עד עצמאות', en: 'Academic-style mentorship to independence' },
-    desc:  { he: 'תוכנית מובנית עם שלבים ברורים, כלים ותבניות, ומעבר אל עצמאות אמיתית. לא קורס שיווקי, אלא שותפות מקצועית.', en: 'A structured programme with clear stages, tools and templates, progressing to real independence — not a marketing course, but a professional partnership.' },
+    title: { he: 'ליווי צמוד עד עצמאות', en: 'Hands-on mentorship to independence' },
+    desc:  { he: 'מסלול מובנה עם שלבים ברורים, כלים ותבניות מהשטח, ומעבר מדורג לעצמאות מלאה. שותפות מקצועית לכל דבר.', en: 'A structured path with clear stages, field-proven tools and templates, progressing to full independence — a professional partnership in every sense.' },
   },
 ]
 

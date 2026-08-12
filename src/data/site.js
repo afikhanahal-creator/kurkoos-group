@@ -81,6 +81,7 @@ export const site = {
       to: '/livy-yazamim',
       children: [
         { label: { he: 'ליווי יזמי נדל"ן צעירים', en: 'Young Real Estate Entrepreneur Mentorship' }, to: '/livy-yazamim' },
+        { label: { he: 'המדריך ליזמי נדל"ן צעירים', en: 'The Young Entrepreneurs Guide' }, to: '/madrich-yazamim' },
       ],
     },
     { key: 'contact', to: '/#contact' },

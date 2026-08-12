@@ -24,23 +24,6 @@
   margin-inline: auto;
 }
 
-/* ---- Colored gradient divider above guide section ---- */
-.mentor-guide { position: relative; }
-.mentor-guide::before {
-  content: '';
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline: 0;
-  height: 4px;
-  background: linear-gradient(90deg,
-    var(--color-primary-500) 0%,
-    var(--color-primary-300) 40%,
-    var(--color-accent-500) 100%);
-  opacity: 0.7;
-  pointer-events: none;
-}
-.mentor-guide .mentor-section-head .eyebrow { color: var(--color-accent-500); }
-
 /* ================================================================
    SHLOMI INTRO — white background + palette decor
    ================================================================ */
@@ -408,13 +391,27 @@
   }
 }
 
+/* כרטיסייה פתוחה: מתרחבת לרוחב מלא של השורה, בכל הרזולוציות —
+   כך יש מקום לתוכן והרשת לא נראית שבורה */
 .mentor-stage.is-open {
+  grid-column: 1 / -1;
   border-color: var(--color-primary-300);
   box-shadow: var(--shadow-3);
 }
 .mentor-stage.is-open::before {
   opacity: 1;
   background: linear-gradient(90deg, var(--color-primary-500), var(--color-accent-500));
+}
+
+/* בפריסה רחבה: הכלים נפרסים בשתי עמודות בתוך הכרטיסייה הפתוחה */
+@media (min-width: 601px) {
+  .mentor-stage.is-open .mentor-stage__tools {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 2rem;
+    row-gap: 0.55rem;
+  }
+  .mentor-stage.is-open .mentor-stage__desc { max-width: 70ch; }
 }
 
 .mentor-stage__header {
@@ -532,214 +529,6 @@
 @media (max-width: 380px) {
   .mentor-stages { grid-template-columns: 1fr; }
   .mentor-stage.is-open { grid-column: auto; }
-}
-
-/* ================================================================
-   המדריך ליזם המתחיל — expandable article grid
-   ================================================================ */
-.mentor-guide__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-}
-
-.mentor-guide__card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: clamp(1.25rem, 2.5vw, 1.75rem);
-  cursor: pointer;
-  user-select: none;
-  transition:
-    transform var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out),
-    border-color var(--dur-base) var(--ease-out);
-  position: relative;
-  overflow: hidden;
-}
-
-.mentor-guide__card::before {
-  content: '';
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-300));
-  opacity: 0;
-  transition: opacity var(--dur-base) var(--ease-out);
-}
-
-@media (hover: hover) {
-  .mentor-guide__card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 18px 40px -14px rgba(22, 104, 140, 0.35);
-    border-color: var(--color-primary-300);
-  }
-  .mentor-guide__card:hover::before { opacity: 1; }
-  .mentor-guide__card:hover .mentor-guide__card-title { color: var(--color-primary-500); }
-}
-
-.mentor-guide__card.is-open {
-  grid-column: 1 / -1;
-  border-color: var(--color-accent-500);
-  box-shadow: 0 0 0 1px var(--color-accent-500), var(--shadow-3);
-  transform: none;
-}
-.mentor-guide__card.is-open::before {
-  opacity: 1;
-  background: linear-gradient(90deg, var(--color-accent-500), var(--color-primary-300));
-}
-
-.mentor-guide__card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
-}
-
-.mentor-guide__card-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.mentor-guide__card-num {
-  font-family: var(--font-heading);
-  font-weight: 900;
-  font-size: 1.5rem;
-  color: var(--color-accent-500);
-  line-height: 1;
-}
-
-.mentor-guide__card-stage {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--color-primary-700);
-  background: color-mix(in srgb, var(--color-primary-300) 20%, transparent);
-  border: 1px solid var(--color-primary-300);
-  border-radius: var(--radius-pill);
-  padding: 0.2rem 0.65rem;
-  white-space: nowrap;
-}
-
-.mentor-guide__card.is-open .mentor-guide__card-stage {
-  background: color-mix(in srgb, var(--color-accent-500) 12%, transparent);
-  border-color: color-mix(in srgb, var(--color-accent-500) 50%, transparent);
-  color: var(--color-accent-500);
-}
-
-.mentor-guide__card-chevron {
-  flex-shrink: 0;
-  color: var(--color-text-muted);
-  transition: transform var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
-  margin-top: 0.35rem;
-}
-
-.mentor-guide__card.is-open .mentor-guide__card-chevron {
-  transform: rotate(180deg);
-  color: var(--color-accent-500);
-}
-
-.mentor-guide__card-title {
-  font-size: 1.05rem;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  color: var(--color-primary-900);
-  line-height: 1.35;
-  margin-bottom: 0.5rem;
-  transition: color var(--dur-base) var(--ease-out);
-}
-
-.mentor-guide__card-lead {
-  font-size: 0.94rem;
-  line-height: 1.6;
-  color: var(--color-text-muted);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.mentor-guide__card.is-open .mentor-guide__card-lead {
-  display: block;
-  overflow: visible;
-  -webkit-line-clamp: unset;
-  font-size: 1.02rem;
-  font-weight: 500;
-  margin-bottom: 1.25rem;
-}
-
-.mentor-guide__card-expand {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s var(--ease-out);
-}
-
-.mentor-guide__card.is-open .mentor-guide__card-expand { max-height: 1200px; }
-
-.mentor-guide__card-body {
-  columns: 2;
-  column-gap: clamp(1.5rem, 4vw, 3rem);
-  margin-top: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.mentor-guide__card-body p {
-  font-size: 0.98rem;
-  line-height: 1.75;
-  color: var(--color-text);
-  break-inside: avoid;
-  margin: 0 0 0.85rem;
-}
-
-.mentor-guide__insight {
-  margin: 0;
-  padding: 1.25rem 1.5rem;
-  background: color-mix(in srgb, var(--color-accent-500) 6%, var(--color-surface));
-  border-inline-start: 3px solid var(--color-accent-500);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  font-style: italic;
-  font-size: 1.05rem;
-  color: var(--color-primary-900);
-  line-height: 1.6;
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-}
-
-.mentor-guide__insight-ic {
-  flex-shrink: 0;
-  color: var(--color-accent-500);
-  margin-top: 2px;
-}
-
-.mentor-guide__footer {
-  text-align: center;
-  margin-top: 2.5rem;
-}
-
-.mentor-guide__footer-arrow { flex-shrink: 0; }
-[dir='rtl'] .mentor-guide__footer-arrow { transform: scaleX(-1); }
-
-@media (max-width: 860px) {
-  .mentor-guide__grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 540px) {
-  .mentor-guide__grid { grid-template-columns: 1fr; }
-  .mentor-guide__card { text-align: center; }
-  .mentor-guide__card-top { flex-direction: column; align-items: center; gap: 0.5rem; }
-  .mentor-guide__card-meta { justify-content: center; }
-  .mentor-guide__card-title { text-align: center; font-size: 1.08rem; }
-  .mentor-guide__card-lead { font-size: 0.97rem; }
-  .mentor-guide__card-stage { font-size: 0.8rem; }
-  .mentor-guide__card.is-open { grid-column: auto; }
-  .mentor-guide__card.is-open .mentor-guide__card-body p { text-align: center; }
-  .mentor-guide__card.is-open .mentor-guide__insight { text-align: start; }
-  .mentor-guide__card-body { columns: 1; }
-  .mentor-section-lead { text-align: center; }
 }
 
 /* ================================================================

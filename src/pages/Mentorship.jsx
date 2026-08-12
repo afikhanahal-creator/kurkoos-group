@@ -195,7 +195,7 @@ export default function Mentorship() {
       <section className="section">
         <div className="container">
           <Reveal className="mentor-section-head">
-            <span className="eyebrow">תוכנית הליווי</span>
+            <span className="eyebrow">מה אנחנו מציעים?</span>
             <h2 className="section-title">עשרה שלבים. דרך אחת.</h2>
             <p className="mentor-section-lead">
               כל שלב בנוי על הידע שנצבר בשלב שלפניו. לחצו על כל שלב לפרטים נוספים.

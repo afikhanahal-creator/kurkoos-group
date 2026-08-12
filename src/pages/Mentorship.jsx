@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
+import KineticText from '../components/ui/KineticText.jsx'
 import { stages, pillars, faqs } from '../data/mentorship.js'
 import '../components/sections/Activities.css'   // card-effect: נוזל/ברק/זוהר/הטיה 3D
 import './Mentorship.css'
@@ -63,7 +64,8 @@ export default function Mentorship() {
             <div className="mentor-intro__content">
               <span className="eyebrow mentor-intro__eyebrow">שלומי קורקוס, מייסד קורקוס גרופ</span>
               <h2 className="mentor-intro__heading">
-                שלושים שנה בשטח.<br />בכל שלב של הדרך.
+                <KineticText as="span" className="mentor-intro__heading-line" text="שלושים שנה בשטח." />
+                <KineticText as="span" className="mentor-intro__heading-line" text="בכל שלב של הדרך." />
               </h2>
               <p className="mentor-intro__para">
                 אני לא מלמד מה שקראתי בספר. אני מלמד מה שעשיתי, פרויקט אחר פרויקט, טעות אחר טעות, עסקה אחר עסקה. הקמתי ארבע חטיבות שמכסות את כל שלבי הפרויקט: ייזום, ביצוע, פיקוח ותיווך. יזם שעובד איתי לא צריך לרכז מידע ממספר גורמים. הכל נמצא תחת מטרייה אחת.
@@ -109,7 +111,7 @@ export default function Mentorship() {
         <div className="container">
           <Reveal className="mentor-section-head">
             <span className="eyebrow">למה ליווי יזמי</span>
-            <h2 className="section-title">נכנסים לעסקה עם מי שכבר עשה את הדרך</h2>
+            <KineticText as="h2" className="section-title" text="נכנסים לעסקה עם מי שכבר עשה את הדרך" />
             <p className="mentor-section-lead">
               ליווי יזמי הוא לא לימוד מהצד. הוא שותפות בשטח. ניסיון של שלושים שנה, רשת קשרים חיה ומסגרת מקצועית מלאה עומדים לצידכם בכל החלטה, מהאיתור הראשון ועד מסירת המפתח. זה ההבדל בין לדעת על נדל"ן לבין לעשות נדל"ן.
             </p>
@@ -144,7 +146,7 @@ export default function Mentorship() {
         <div className="container">
           <Reveal className="mentor-section-head">
             <span className="eyebrow">הדרך לעסקה הראשונה</span>
-            <h2 className="section-title">מה נדרש כדי לסגור עסקת נדל"ן</h2>
+            <KineticText as="h2" className="section-title" text='מה נדרש כדי לסגור עסקת נדל"ן' />
           </Reveal>
           <div className="mentor-compare">
             <div className="mentor-compare__col">
@@ -200,7 +202,7 @@ export default function Mentorship() {
         <div className="container">
           <Reveal className="mentor-section-head">
             <span className="eyebrow">מה אנחנו מציעים?</span>
-            <h2 className="section-title">עשרה שלבים. דרך אחת.</h2>
+            <KineticText as="h2" className="section-title" text="עשרה שלבים. דרך אחת." />
             <p className="mentor-section-lead">
               כל שלב בנוי על הידע שנצבר בשלב שלפניו. לחצו על כל שלב לפרטים נוספים.
             </p>
@@ -243,9 +245,11 @@ export default function Mentorship() {
       <section className="mentor-field">
         <div className="container">
           <Reveal className="mentor-field__inner">
-            <h2 className="mentor-field__title">
-              ליווי יזמי נדל"ן צעירים מתחיל מהשטח, לא מהכיתה.
-            </h2>
+            <KineticText
+              as="h2"
+              className="mentor-field__title"
+              text='ליווי יזמי נדל"ן צעירים מתחיל מהשטח, לא מהכיתה.'
+            />
             <p className="mentor-field__para">
               מהיום הראשון אתה בתוך העבודה עצמה: ישיבות עם אנשי מקצוע, ניתוח עסקאות אמיתיות עם דוח 0, תהליכי רישוי ומימון מבפנים, והיכרות עם האנשים שמניעים את השוק.
             </p>
@@ -261,7 +265,7 @@ export default function Mentorship() {
         <div className="container mentor-faq-wrap">
           <Reveal className="mentor-section-head">
             <span className="eyebrow">שאלות נפוצות</span>
-            <h2 className="section-title">שאלות שכדאי לשאול לפני שמתחילים</h2>
+            <KineticText as="h2" className="section-title" text="שאלות שכדאי לשאול לפני שמתחילים" />
           </Reveal>
           <div className="mentor-faq">
             {faqs.map((f, i) => (
@@ -282,7 +286,7 @@ export default function Mentorship() {
           <Reveal className="mentor-cta__inner">
             <div className="mentor-cta__text">
               <span className="mentor-cta__eyebrow">בואו נדבר</span>
-              <h2 className="mentor-cta__title">הצעד הראשון הוא שיחה</h2>
+              <KineticText as="h2" className="mentor-cta__title" text="הצעד הראשון הוא שיחה" />
               <p className="mentor-cta__desc">
                 אין כאן טופס שמציב אתכם בתור. אנחנו מדברים עם יזמים ברצינות, מבינים את הרקע שלכם, ומחליטים ביחד אם הליווי מתאים. שיחת ההיכרות ללא עלות וללא מחויבות.
               </p>
@@ -303,7 +307,7 @@ export default function Mentorship() {
           <Reveal className="division-guide__band" variant="scale">
             <div>
               <span className="eyebrow">ידע מהשטח</span>
-              <h2 className="division-guide__title">המדריך ליזמי נדל"ן צעירים</h2>
+              <KineticText as="h2" className="division-guide__title" text='המדריך ליזמי נדל"ן צעירים' />
               <p className="division-guide__desc">כתבות מקצועיות שנכתבו מניסיון ישיר, לפי עשרת שלבי תוכנית הליווי: מאיתור העסקה ועד מסירת המפתח.</p>
             </div>
             <Link to="/madrich-yazamim" className="btn btn--primary btn--lg">

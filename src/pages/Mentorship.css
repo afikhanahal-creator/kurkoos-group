@@ -558,6 +558,86 @@
 }
 
 /* ================================================================
+   מהשטח, לא מהכיתה — פסקת מהות על רקע כחול כהה
+   ================================================================ */
+.mentor-field {
+  background: linear-gradient(150deg,
+    var(--color-primary-900) 0%,
+    var(--color-primary-700) 100%);
+  padding-block: clamp(3rem, 6vw, 4.75rem);
+  position: relative;
+  overflow: hidden;
+}
+
+.mentor-field::before {
+  content: '';
+  position: absolute;
+  inset-block-start: -80px;
+  inset-inline-start: -60px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-primary-300) 22%, transparent) 0%,
+    transparent 70%);
+  pointer-events: none;
+}
+
+.mentor-field::after {
+  content: '';
+  position: absolute;
+  inset-block-end: -70px;
+  inset-inline-end: 3%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-accent-500) 22%, transparent) 0%,
+    transparent 70%);
+  pointer-events: none;
+}
+
+.mentor-field .container { position: relative; z-index: 1; }
+
+.mentor-field__inner {
+  max-width: 760px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.mentor-field__title {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  line-height: 1.35;
+  color: #fff;
+  margin-bottom: 1.1rem;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.mentor-field__title::after {
+  content: '';
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-accent-500), var(--color-primary-300));
+}
+
+.mentor-field__para {
+  font-size: clamp(1rem, 1.8vw, 1.08rem);
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.85);
+  margin-inline: auto;
+  max-width: 66ch;
+}
+.mentor-field__para + .mentor-field__para { margin-top: 1rem; }
+
+/* ================================================================
    FAQ — centered questions & answers
    ================================================================ */
 /* ריווח מצומצם מעל ובתוך סקציית השאלות */

@@ -242,6 +242,23 @@ export default function Mentorship() {
         </div>
       </section>
 
+      {/* ---- מהשטח, לא מהכיתה — רקע כחול ---- */}
+      <section className="mentor-field">
+        <div className="container">
+          <Reveal className="mentor-field__inner">
+            <h2 className="mentor-field__title">
+              ליווי יזמי נדל"ן צעירים מתחיל מהשטח, לא מהכיתה.
+            </h2>
+            <p className="mentor-field__para">
+              מהיום הראשון אתה בתוך העבודה עצמה: ישיבות עם אנשי מקצוע, ניתוח עסקאות אמיתיות עם דוח 0, תהליכי רישוי ומימון מבפנים, והיכרות עם האנשים שמניעים את השוק.
+            </p>
+            <p className="mentor-field__para">
+              לאורך הדרך אתה רוכש את המקצוע שלב אחר שלב: איך מאתרים עסקה, איך בודקים כדאיות, איך עובדים מול בנקים, עורכי דין וקבלנים, ואיך מנהלים פרויקט מהיתר ועד מסירה. בסוף הדרך יש לך ארגז כלים מקצועי, הבנה אמיתית של איך התעשייה עובדת, ורשת קשרים שנבנתה תוך כדי עבודה.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ---- שאלות נפוצות ---- */}
       <section className="section">
         <div className="container mentor-faq-wrap">

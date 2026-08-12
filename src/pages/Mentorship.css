@@ -70,6 +70,9 @@
   margin: 0.75rem 0 1.5rem;
 }
 
+/* כל שורת כותרת קינטית בנפרד */
+.mentor-intro__heading-line { display: block; }
+
 .mentor-intro__para {
   font-size: clamp(1rem, 1.8vw, 1.1rem);
   line-height: 1.75;

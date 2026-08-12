@@ -122,10 +122,27 @@
   margin-top: 0.35rem;
 }
 
+/* ---- Side column: photo + quote ---- */
+.mentor-intro__side {
+  flex-shrink: 0;
+  width: clamp(240px, 30vw, 320px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mentor-intro__photo {
+  width: 100%;
+  aspect-ratio: 1 / 1.04;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 44px -20px rgba(7, 41, 58, 0.45);
+  display: block;
+}
+
 /* ---- Quote card — dark navy, centered, red accent ---- */
 .mentor-intro__quote-card {
-  flex-shrink: 0;
-  width: clamp(220px, 28vw, 300px);
+  width: 100%;
   background: var(--color-primary-900);
   border-block-start: 3px solid var(--color-accent-500);
   border-radius: var(--radius-lg);
@@ -167,7 +184,11 @@
 
 @media (max-width: 860px) {
   .mentor-intro__inner { grid-template-columns: 1fr; }
-  .mentor-intro__quote-card { width: 100%; }
+  .mentor-intro__side {
+    width: 100%;
+    max-width: 420px;
+    margin-inline: auto;
+  }
   .mentor-intro__content { text-align: center; }
   .mentor-intro__eyebrow { display: block; }
   .mentor-intro__heading { text-align: center; }

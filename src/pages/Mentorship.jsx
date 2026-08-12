@@ -217,11 +217,19 @@ export default function Mentorship() {
                 </div>
               </div>
             </div>
-            <aside className="mentor-intro__quote-card">
-              <p className="mentor-intro__quote-text">
-                "יזמות נדל"ן היא מקצוע. לא השקעה. לא הימור. מקצוע שלומדים עם מנטור שכבר עשה את הדרך."
-              </p>
-              <span className="mentor-intro__quote-sig">שלומי קורקוס</span>
+            <aside className="mentor-intro__side">
+              <img
+                src="/AD2EB011-F33E-40FC-9639-627E92C2A4D7.jpeg"
+                alt="שלומי קורקוס, מייסד קורקוס גרופ"
+                className="mentor-intro__photo"
+                loading="lazy"
+              />
+              <div className="mentor-intro__quote-card">
+                <p className="mentor-intro__quote-text">
+                  "יזמות נדל"ן היא מקצוע. לא השקעה. לא הימור. מקצוע שלומדים עם מנטור שכבר עשה את הדרך."
+                </p>
+                <span className="mentor-intro__quote-sig">שלומי קורקוס</span>
+              </div>
             </aside>
           </Reveal>
         </div>

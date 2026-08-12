@@ -46,12 +46,10 @@ export const stages = [
       he: 'לומדים לזהות הזדמנויות לפני שכולם רואים אותן: שכונות בעלייה, עסקאות מחיר מציאה, קרקעות חקלאיות לשינוי ייעוד, ופרויקטי התחדשות עירונית (תמ"א 38, פינוי בינוי).',
       en: 'Learning to spot opportunities before everyone else — rising neighbourhoods, bargain deals, agricultural land re-zoning, and urban renewal projects.',
     },
-    tools: [
-      { he: 'מפות GIS ובסיסי נתוני רשות מקרקעי ישראל', en: 'GIS maps & Israel Land Authority databases' },
-      { he: 'ניתוח שוק שכונתי ומגמות מחיר', en: 'Neighbourhood market analysis & price trends' },
-      { he: 'מתודולוגיית ה Off Market, עסקאות לפני המדיה', en: 'Off-market methodology — deals before the media' },
-      { he: 'רשימת בדיקות לאיתור קרקע', en: 'Land-sourcing checklist' },
-    ],
+    detail: {
+      he: 'העבודה נעשית עם הכלים האמיתיים של התעשייה: מפות GIS ומאגרי המידע של רשות מקרקעי ישראל לאימות ייעוד וזכויות, ניתוח שוק שכונתי ומגמות מחיר, ומתודולוגיית Off Market לאיתור עסקאות לפני שהן מגיעות לפרסום. כך נבנית שיטת איתור מסודרת, מהיכרות עם השטח ועד רשימת הבדיקות שמוודאת שלא פספסתם דבר.',
+      en: 'The work uses the industry\'s real tools: GIS maps and Israel Land Authority databases to verify zoning and rights, neighbourhood market analysis and price trends, and an off-market methodology for finding deals before they are published. This builds a systematic sourcing method, from knowing the ground to the checklist that makes sure nothing is missed.',
+    },
   },
   {
     num: '02',
@@ -63,12 +61,10 @@ export const stages = [
       he: 'כל עסקה נבחנת לפני שמוציאים שקל. נלמד לבנות דוח 0 מלא: הכנסות צפויות, עלויות בנייה, עלויות מימון, ומרווח רווח ריאלי, כולל ניתוח רגישות לשינויי שוק.',
       en: 'Every deal examined before spending a shekel. We learn to build a complete Report 0: projected revenues, construction costs, financing costs, and realistic profit margin — including sensitivity analysis for market changes.',
     },
-    tools: [
-      { he: 'תבנית דוח 0 מלאה עם נוסחאות', en: 'Full Report 0 template with formulas' },
-      { he: 'מחשבון עלויות בנייה ועסקה', en: 'Construction & transaction cost calculator' },
-      { he: 'ניתוח רגישות, מה קורה כאשר X משתנה', en: 'Sensitivity analysis — what happens when X changes' },
-      { he: 'כיצד לקרוא חוות דעת שמאי', en: 'How to read an appraiser\'s valuation' },
-    ],
+    detail: {
+      he: 'בשלב הזה בונים דוח 0 אמיתי עם נוסחאות עובדות: הכנסות צפויות לפי עסקאות שנסגרו בפועל, עלויות בנייה ועסקה עם חיץ ביטחון, ועלויות מימון לאורך כל חיי הפרויקט. על הבסיס הזה מריצים ניתוח רגישות, מה קורה כשמחירי המכירה יורדים או כשהבנייה מתייקרת, ולומדים לקרוא חוות דעת שמאי בעין ביקורתית.',
+      en: 'Here we build a real Report 0 with working formulas: projected revenues based on actual closed transactions, construction and transaction costs with a safety buffer, and financing costs across the project\'s life. On that base we run sensitivity analysis — what happens when sale prices drop or construction costs rise — and learn to read an appraiser\'s valuation critically.',
+    },
   },
   {
     num: '03',
@@ -80,12 +76,10 @@ export const stages = [
       he: 'המשא ומתן הוא המקום שבו עושים (או מפסידים) את הכסף. נלמד טכניקות מוכחות: מתי להוריד מחיר, מתי ללכת, איך לבנות term sheet שמגן על כולם, ואיך לקרוא את המוכר.',
       en: 'Negotiation is where money is made (or lost). We learn proven techniques: when to lower the price, when to walk, how to structure a term-sheet that protects everyone, and how to read the seller.',
     },
-    tools: [
-      { he: 'מסגרת מו"מ, 7 שלבים', en: 'Negotiation framework — 7 steps' },
-      { he: 'תבנית Letter of Intent (LOI)', en: 'Letter of Intent (LOI) template' },
-      { he: 'רשימת סעיפי הגנה בזיכרון דברים', en: 'MOU protective-clause checklist' },
-      { he: 'ניתוח BATNA: כוח המשא ומתן האמיתי', en: 'BATNA analysis — your real negotiation power' },
-    ],
+    detail: {
+      he: 'העבודה מתבססת על מסגרת משא ומתן סדורה: מניתוח BATNA, כוח המשא ומתן האמיתי שלכם, דרך בניית הצעת מחיר שמגובה במספרים מהדוח, ועד ניסוח זיכרון דברים עם כל סעיפי ההגנה שחייבים להופיע בו. לומדים מתי להתעקש, מתי להתגמש, ומתי פשוט לקום מהשולחן.',
+      en: 'The work rests on a structured negotiation framework: from BATNA analysis — your real negotiating power — through building an offer backed by the numbers in your report, to drafting an MOU with every protective clause it must contain. You learn when to insist, when to flex, and when to simply walk away.',
+    },
   },
   {
     num: '04',
@@ -97,12 +91,10 @@ export const stages = [
       he: 'עורך הדין הנכון הוא נכס, לא הוצאה. נלמד לבחור עורך דין נדל"ן, מה הוא צריך לבדוק (נסח טאבו, חריגות בנייה, שעבודים), ואיך לנהל את הממשק כדי שלא תהיו עיוורים.',
       en: 'The right lawyer is an asset, not an expense. We learn to choose a real estate lawyer, what they need to check (land registry, building violations, liens), and how to manage the interface so you\'re never blind.',
     },
-    tools: [
-      { he: 'שאלות חובה לראיון עורך דין', en: 'Must-ask questions when interviewing a lawyer' },
-      { he: 'רשימת בדיקות Due Diligence משפטי', en: 'Legal due diligence checklist' },
-      { he: 'הסבר: נסח טאבו, אישורי זכויות ורישום', en: 'Explained: land registry extract, rights & registration' },
-      { he: 'מה לכלול בהסכם הרכישה', en: 'What to include in the purchase agreement' },
-    ],
+    detail: {
+      he: 'לומדים לנהל את הממשק המשפטי כמו יזמים מנוסים: אילו שאלות שואלים לפני שבוחרים עורך דין, איך נראית בדיקת נאותות משפטית מלאה, איך קוראים נסח טאבו ואישורי זכויות, ומה חייב להופיע בהסכם הרכישה, מפיצוי מוסכם ועד תנאים מתלים מנוסחים במדויק, כדי שתהיו מוגנים בכל תרחיש.',
+      en: 'You learn to manage the legal interface like an experienced developer: which questions to ask before choosing a lawyer, what full legal due diligence looks like, how to read a land registry extract and rights confirmations, and what must appear in the purchase agreement — from agreed compensation to precisely drafted conditions — so you are protected in every scenario.',
+    },
   },
   {
     num: '05',
@@ -114,12 +106,10 @@ export const stages = [
       he: 'מימון הוא הדלק של כל פרויקט. נלמד לבנות תיק בנקאי מנצח, להבין מה הבנק מחפש, לנהל משא ומתן על תנאי האשראי, ואיך לבנות מבנה מימון שמגן על ההון העצמי שלכם.',
       en: 'Financing is every project\'s fuel. We learn to build a winning bank dossier, understand what the bank is looking for, negotiate credit terms, and structure financing that protects your equity.',
     },
-    tools: [
-      { he: 'מבנה תיק בנקאי: מה הבנק רוצה לראות', en: 'Bank dossier structure — what the bank wants to see' },
-      { he: 'טבלת השוואת מסלולי מימון', en: 'Financing-track comparison table' },
-      { he: 'חישוב LTV, DSCR ויחסי כיסוי', en: 'LTV, DSCR and coverage-ratio calculator' },
-      { he: 'מו"מ מול בנקים: הטריקים שעובדים', en: 'Bank negotiation — the tricks that work' },
-    ],
+    detail: {
+      he: 'בונים יחד תיק בנקאי כפי שהבנק רוצה לראות אותו: מבנה הון, כושר החזר, בטוחות ותחזית תזרים הגיונית. לומדים לחשב LTV ויחסי כיסוי, להשוות בין מסלולי מימון, ולנהל משא ומתן מול כמה בנקים במקביל, כי הצעה כתובה מבנק אחד היא המנוף החזק ביותר מול הבנק השני.',
+      en: 'Together we build a bank dossier the way the bank wants to see it: capital structure, repayment capacity, collateral and a realistic cashflow forecast. You learn to calculate LTV and coverage ratios, compare financing tracks, and negotiate with several banks in parallel — a written offer from one bank is the strongest lever against the next.',
+    },
   },
   {
     num: '06',
@@ -131,12 +121,10 @@ export const stages = [
       he: 'הבירוקרטיה היא מכשול שיזמים מתחילים מזלזלים בו, ומשלמים ביוקר. נלמד את תהליך ההיתר מהתחלה ועד הסוף: תב"ע, ועדות, תנאים מוקדמים, ואיך לנהל ציר זמן שלא ישתגע.',
       en: 'Bureaucracy is the obstacle rookie developers underestimate — and pay for. We learn the permit process end-to-end: zoning plans, committees, preconditions, and how to manage a timeline that doesn\'t spiral.',
     },
-    tools: [
-      { he: 'תרשים זרימה: מהיתר עד טופס 4', en: 'Flow chart: from permit to Form 4' },
-      { he: 'רשימת גורמים ורשויות לתיאום', en: 'Stakeholder & authority coordination list' },
-      { he: 'תבנית ניהול סיכוני רישוי', en: 'Licensing risk-management template' },
-      { he: 'שאלות לאדריכל/יועץ תכנון לפני החתימה', en: 'Questions for architect/planning consultant before signing' },
-    ],
+    detail: {
+      he: 'עוברים על תהליך הרישוי מקצה לקצה: מהגשת הבקשה לוועדה המקומית, דרך התנאים המוקדמים של תשתיות וניקוז, ועד טופס 4. לומדים לקרוא תב"ע, לזהות סיכוני רישוי מראש, לתאם בין הרשויות והיועצים, ולשאול את האדריכל את השאלות הנכונות לפני שחותמים על משהו.',
+      en: 'We walk the licensing process end to end: from filing with the local committee, through infrastructure and drainage preconditions, to Form 4. You learn to read a zoning plan, identify licensing risks in advance, coordinate authorities and consultants, and ask the architect the right questions before signing anything.',
+    },
   },
   {
     num: '07',
@@ -148,12 +136,10 @@ export const stages = [
       he: 'פרויקטים לא נכשלים מחוסר כסף. הם נכשלים מחוסר נזילות. נלמד לבנות תזרים מזומנים לפרויקט, לנהל חריגות, לדעת מתי לגייס ומתי לבלום, ולשמור שהפרויקט נושם.',
       en: 'Projects don\'t fail from lack of money — they fail from lack of liquidity. We learn to build a project cashflow, manage overruns, know when to raise and when to hold, and keep the project breathing.',
     },
-    tools: [
-      { he: 'גיליון תזרים פרויקט, 18 חודשים', en: 'Project cashflow sheet — 18 months' },
-      { he: 'מדד חריגה תקציבית: Early Warning', en: 'Budget-overrun index — Early Warning' },
-      { he: 'ניהול חשבונות קבלן ואישורים', en: 'Contractor invoicing & approval management' },
-      { he: 'תבנית דו"ח חודשי ליזם', en: 'Monthly developer report template' },
-    ],
+    detail: {
+      he: 'בונים תזרים פרויקט אמיתי, שמונה עשר חודשים קדימה: מתי נכנסים כספי מכירות, מתי משלמים לקבלן, לבנק ולרשויות. מטמיעים מנגנון אזהרה מוקדמת שמדליק נורה אדומה בכל חריגה תקציבית, ולומדים לאשר חשבונות קבלן לפי התקדמות אמיתית בשטח, לא לפי הזמן שעבר.',
+      en: 'We build a real project cashflow, eighteen months ahead: when sales money comes in, when the contractor, the bank and the authorities get paid. We embed an early warning mechanism that flags every budget overrun, and you learn to approve contractor invoices by actual progress on site, not by time elapsed.',
+    },
   },
   {
     num: '08',
@@ -165,12 +151,10 @@ export const stages = [
       he: 'הפיקוח הוא עיניים בשטח כשהכסף שלכם עובד. נלמד לבחור מפקח, מה לדרוש ממנו, כיצד לקרוא דו"חות פיקוח, ואיך להיות המנכ"ל ולא הצלחפת של הפרויקט שלכם.',
       en: 'Supervision is eyes on the ground when your money is working. We learn to choose a supervisor, what to demand from them, how to read supervision reports, and how to be the CEO — not the firefighter — of your project.',
     },
-    tools: [
-      { he: 'שאלות לבחירת מפקח בנייה', en: 'Questions for choosing a construction supervisor' },
-      { he: 'לוח ביקורות שטח חודשי', en: 'Monthly site-inspection schedule' },
-      { he: 'רשימת סעיפי איכות לבדיקה בכל שלב', en: 'Quality-item checklist per construction stage' },
-      { he: 'ניהול קבלנים: חוזים, עיכובים ובונוסים', en: 'Contractor management — contracts, delays & bonuses' },
-    ],
+    detail: {
+      he: 'לומדים איך פיקוח מקצועי עובד מבפנים: מה בודקים בכל שלב בנייה, איך קוראים דוח פיקוח ומה עושים עם מה שכתוב בו, ואיך מנהלים קבלנים דרך חוזים ברורים, לוחות זמנים מתועדים ומנגנוני בונוסים וקנסות. המטרה: להיות המנכ"ל של הפרויקט, לא הכבאי שלו.',
+      en: 'You learn how professional supervision works from the inside: what gets checked at each construction stage, how to read a supervision report and act on it, and how to manage contractors through clear contracts, documented schedules, and bonus and penalty mechanisms. The goal: be the project\'s CEO, not its firefighter.',
+    },
   },
   {
     num: '09',
@@ -182,12 +166,10 @@ export const stages = [
       he: 'שיווק טוב מתחיל עוד לפני שיש פיתרון. נלמד לתזמן שיווק לשוק, לבחור ערוצים, לעבוד עם מתווכים, לתמחר נכון, ולסגור עסקאות שמעשירות ולא רק "מוכרות".',
       en: 'Good marketing starts before there is a product. We learn to time the market, choose channels, work with brokers, price correctly, and close deals that enrich — not just "sell".',
     },
-    tools: [
-      { he: 'תוכנית שיווק לפרויקט, תבנית', en: 'Project marketing plan — template' },
-      { he: 'מדריך תמחור: ניתוח עסקאות שוק ומדדי מכירה', en: 'Pricing guide: market transactions & sales benchmarks' },
-      { he: 'ניהול סוכני מכירות ועמלות', en: 'Managing sales agents & commissions' },
-      { he: 'לוח זמנים שיווקי: מתי לפרסם ומתי לא', en: 'Marketing timeline — when to advertise and when not to' },
-    ],
+    detail: {
+      he: 'בונים תוכנית שיווק שמתוזמנת נכון: מתי יוצאים לשוק כדי לא לפספס את חלון המכירות המוקדמות, איך מתמחרים לפי ניתוח עסקאות אמיתי ולא לפי ממוצעים, מתי עובדים עם מתווכים ומתי לבד, ואיך מובילים רוכש בתהליך מסודר מהפגישה הראשונה ועד החתימה.',
+      en: 'We build a marketing plan with the right timing: when to go to market so the pre-sale window isn\'t missed, how to price from real comparative transaction analysis rather than averages, when to work with brokers and when to go direct, and how to lead a buyer through an orderly process from first meeting to signature.',
+    },
   },
   {
     num: '10',
@@ -199,12 +181,10 @@ export const stages = [
       he: 'המסירה היא הגדרת המוניטין שלכם. עסקה גרועה שנסגרת יפה יכולה להיות עסקה טובה. נלמד תהליך מסירה שמפחית ליקויים, מנהל ציפיות, ומוביל להמלצות, המנוע הטוב ביותר לעסקה הבאה.',
       en: 'Delivery defines your reputation — a poor deal that closes beautifully can become a good deal. We learn a delivery process that reduces defects, manages expectations, and leads to referrals — the best engine for the next deal.',
     },
-    tools: [
-      { he: 'פרוטוקול מסירת דירה, רשימת 100 סעיפים', en: 'Apartment handover protocol — 100+ item checklist' },
-      { he: 'ניהול ליקויים ובדק: מה החוק מחייב', en: 'Defect & warranty management — what the law requires' },
-      { he: 'בניית מותג אישי כיזם נדל"ן', en: 'Building a personal brand as a real estate developer' },
-      { he: 'תבנית להפקת לקחים בסיום פרויקט', en: 'Project post-mortem template' },
-    ],
+    detail: {
+      he: 'לומדים לנהל מסירה שמייצרת המלצות: בדיקת ליקויים יסודית לפני שהרוכש מגיע, פרוטוקול מסירה מסודר חדר אחר חדר, והבנה מדויקת של מה חוק המכר מחייב בתקופת הבדק. ובסוף כל פרויקט, הפקת לקחים כתובה שהופכת ניסיון אישי לידע מקצועי ולמוניטין שעובד בשבילכם.',
+      en: 'You learn to run a delivery that generates referrals: a thorough defect inspection before the buyer arrives, an orderly room-by-room handover protocol, and a precise understanding of what the Sale Law requires during the warranty period. And at the end of every project, a written lessons-learned review that turns personal experience into professional knowledge and a reputation that works for you.',
+    },
   },
 ]
 

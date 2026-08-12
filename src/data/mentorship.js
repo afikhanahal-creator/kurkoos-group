@@ -195,14 +195,14 @@ export const faqs = [
   },
   {
     q: { he: 'האם צריך הון עצמי כדי להתחיל?', en: 'Do I need equity to start?' },
-    a: { he: 'לא בהכרח כהון לפרויקט הראשון. חלק ניכר מהתוכנית מוקדש בדיוק לשאלה הזו: איך לבנות הון ראשוני, שותפויות אסטרטגיות ומבני מימון יצירתיים שמאפשרים להתחיל עם מינימום הון עצמי.', en: 'Not necessarily as equity for the first project. A significant part of the programme is dedicated precisely to this question — how to build initial capital, strategic partnerships and creative financing structures that allow starting with minimal equity.' },
+    a: { he: 'לא. התוכנית לא דורשת הון ולא מותנית בעסקה. אתם באים לרכוש ידע, כלים ופרקטיקה. דווקא שאלות ההון והמימון הן חלק מרכזי ממה שלומדים כאן: איך בונים מבנה מימון, איך עובדים מול בנקים ואיך יוצרים שותפויות נכונות, כך שכשתגיעו לעסקה הראשונה שלכם, תדעו בדיוק איך לגשת אליה.', en: 'No. The programme requires no capital and is not conditional on any deal. You come to acquire knowledge, tools and practice. In fact, capital and financing questions are a central part of what you learn here: how to structure financing, how to work with banks and how to build the right partnerships — so when your first deal comes, you will know exactly how to approach it.' },
   },
   {
     q: { he: 'כמה זמן לוקחת התוכנית?', en: 'How long does the programme take?' },
-    a: { he: 'תלוי בקצב שלכם ובמחויבות. יזמים שעובדים בעצימות גבוהה מוצאים את עצמם מוכנים לעסקה עצמאית תוך 12 עד 18 חודשים. אנחנו מתאימים את הקצב לחיים האמיתיים שלכם.', en: 'Depends on your pace and commitment. Entrepreneurs who work with high intensity find themselves ready for an independent deal within 12–18 months. We adapt the pace to your real life.' },
+    a: { he: 'הקצב נקבע יחד אתכם ומותאם לחיים האמיתיים שלכם. כבר בחודשים הראשונים אתם בתוך השטח: בישיבות עם אנשי מקצוע, בניתוחי עסקאות ובתהליכים עצמם, וארגז הכלים נבנה שלב אחר שלב. הידע נשאר אתכם הרבה אחרי שהתוכנית מסתיימת.', en: 'The pace is set together with you and adapted to your real life. From the very first months you are in the field: in meetings with professionals, in deal analyses and in the processes themselves, and the toolbox builds stage by stage. The knowledge stays with you long after the programme ends.' },
   },
   {
-    q: { he: 'מה קורה אם אני טועה בעסקה?', en: 'What happens if I make a mistake in a deal?' },
-    a: { he: 'קורים טעויות, זה חלק מהתהליך. המטרה שלנו היא להקטין אותן, לא למנוע אותן לחלוטין. ולכן יש צוות שיוצר רשת ביטחון. לפני שחותמים, תמיד עוצרים לבדיקה משותפת.', en: 'Mistakes happen — that is part of the process. Our goal is to minimise them, not prevent them entirely. That is why there is a team creating a "safety net" — before signing, we always stop for a joint review.' },
+    q: { he: 'עם מה אני יוצא מהתוכנית?', en: 'What do I leave the programme with?' },
+    a: { he: 'עם רשת הביטחון הטובה ביותר שיזם יכול לבקש: ידע. ארגז כלים מקצועי לכל שלב, מאיתור ובדיקת כדאיות ועד רישוי, מימון ופיקוח. הבנה אמיתית של איך התעשייה עובדת מבפנים, ורשת קשרים שנבנתה תוך כדי עבודה. מהנקודה הזאת, כל החלטה שתקבלו בהמשך הדרך מגובה בידע ובביטחון מקצועי.', en: 'With the best safety net an entrepreneur can ask for: knowledge. A professional toolbox for every stage, from sourcing and feasibility to licensing, financing and supervision. A real understanding of how the industry works from the inside, and a network built through actual work. From that point on, every decision you make down the road is backed by knowledge and professional confidence.' },
   },
 ]

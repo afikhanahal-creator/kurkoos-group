@@ -267,6 +267,7 @@ export default function Mentorship() {
         <div className="container">
           <Reveal className="mentor-cta__inner">
             <div className="mentor-cta__text">
+              <span className="mentor-cta__eyebrow">בואו נדבר</span>
               <h2 className="mentor-cta__title">הצעד הראשון הוא שיחה</h2>
               <p className="mentor-cta__desc">
                 אין כאן טופס שמציב אתכם בתור. אנחנו מדברים עם יזמים ברצינות, מבינים את הרקע שלכם, ומחליטים ביחד אם הליווי מתאים. שיחת ההיכרות ללא עלות וללא מחויבות.
@@ -276,25 +277,8 @@ export default function Mentorship() {
                   השאירו פרטים לשיחת היכרות
                   <Icon name="arrow" size={18} className="mentor-cta__arrow" />
                 </a>
-                <a href="tel:0506855656" className="mentor-cta__phone">
-                  <Icon name="phone" size={16} />
-                  050 685 5656
-                </a>
               </div>
             </div>
-            <ul className="mentor-cta__badges" aria-label="יתרונות הליווי">
-              {[
-                'ליווי אישי 1:1 לכל יזם',
-                'שלושים שנה בשטח',
-                'ארבע חטיבות עסקיות',
-                'רשת קשרים בתעשייה',
-              ].map((b) => (
-                <li key={b} className="mentor-cta__badge">
-                  <Icon name="check" size={14} className="mentor-cta__badge-ic" aria-hidden="true" />
-                  {b}
-                </li>
-              ))}
-            </ul>
           </Reveal>
         </div>
       </section>

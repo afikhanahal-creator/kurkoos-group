@@ -603,7 +603,7 @@
 }
 
 /* ================================================================
-   CTA — dark navy with glow decor
+   CTA — dark navy, centered glass panel, palette glows
    ================================================================ */
 .mentor-cta {
   background: linear-gradient(150deg,
@@ -619,11 +619,11 @@
   position: absolute;
   inset-block-end: -100px;
   inset-inline-start: -80px;
-  width: 400px;
-  height: 400px;
+  width: 420px;
+  height: 420px;
   border-radius: 50%;
   background: radial-gradient(circle,
-    color-mix(in srgb, var(--color-primary-300) 25%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary-300) 26%, transparent) 0%,
     transparent 70%);
   pointer-events: none;
 }
@@ -632,23 +632,44 @@
   content: '';
   position: absolute;
   inset-block-start: -60px;
-  inset-inline-end: 5%;
-  width: 280px;
-  height: 280px;
+  inset-inline-end: 4%;
+  width: 300px;
+  height: 300px;
   border-radius: 50%;
   background: radial-gradient(circle,
-    color-mix(in srgb, var(--color-accent-500) 22%, transparent) 0%,
+    color-mix(in srgb, var(--color-accent-500) 26%, transparent) 0%,
     transparent 70%);
   pointer-events: none;
 }
 
 .mentor-cta .container { position: relative; z-index: 1; }
 
+/* פאנל זכוכית ממורכז */
 .mentor-cta__inner {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: clamp(2rem, 5vw, 4rem);
+  max-width: 720px;
+  margin-inline: auto;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: clamp(2rem, 5vw, 3.5rem);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-align: center;
+}
+
+.mentor-cta__text {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+}
+
+.mentor-cta__eyebrow {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--color-primary-300);
+  margin-bottom: 0.6rem;
 }
 
 .mentor-cta__title {
@@ -657,85 +678,41 @@
   font-weight: 800;
   line-height: var(--lh-tight);
   color: #fff;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
+  position: relative;
+  padding-bottom: 0.85rem;
+}
+
+/* פס הדגשה ממורכז בצבעי הפאלטה */
+.mentor-cta__title::after {
+  content: '';
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-accent-500), var(--color-primary-300));
 }
 
 .mentor-cta__desc {
-  font-size: 1.02rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.78);
-  max-width: 54ch;
-  margin-bottom: 1.75rem;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 52ch;
+  margin-inline: auto;
+  margin-bottom: 1.9rem;
 }
 
 .mentor-cta__actions {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .mentor-cta__arrow { flex-shrink: 0; }
 [dir='rtl'] .mentor-cta__arrow { transform: scaleX(-1); }
-
-.mentor-cta__phone {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 1.02rem;
-  color: var(--color-primary-300);
-  direction: ltr;
-  transition: color var(--dur-fast) var(--ease-out);
-}
-.mentor-cta__phone:hover { color: #fff; }
-
-.mentor-cta__badges {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  flex-shrink: 0;
-}
-
-.mentor-cta__badge {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  font-size: 0.94rem;
-  color: rgba(255, 255, 255, 0.88);
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-pill);
-  padding: 0.55rem 1rem;
-  white-space: nowrap;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.mentor-cta__badge-ic {
-  color: var(--color-primary-300);
-  flex-shrink: 0;
-}
-
-@media (max-width: 860px) {
-  .mentor-cta__inner {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-  .mentor-cta__text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .mentor-cta__desc { margin-inline: auto; }
-  .mentor-cta__actions { justify-content: center; }
-  .mentor-cta__badges { display: none; }
-}
-
-@media (max-width: 680px) {
-  .mentor-cta__phone { display: none; }
-  .mentor-cta__actions { flex-direction: column; align-items: center; gap: 1rem; }
-}
 
 /* ================================================================
    GUIDE BAND — בתחתית הדף

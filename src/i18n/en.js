@@ -136,6 +136,7 @@ export default {
       construction: 'Construction',
       supervision: 'Project supervision',
       brokerage: 'Brokerage',
+      mentorship: 'Mentorship',
       other: 'Other',
     },
     consent: 'I agree to receive marketing communications from Kurkoos Group. This does not constitute consent to any transaction.',

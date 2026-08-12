@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
+import heDict from '../../i18n/he.js'
+import enDict from '../../i18n/en.js'
 import { createLead } from '../../lib/cms.js'
 import Reveal from '../ui/Reveal.jsx'
 import BookingCalendar from '../ui/BookingCalendar.jsx'
@@ -7,7 +9,7 @@ import InfiniteGrid from '../ui/InfiniteGrid.jsx'
 import Icon from '../ui/Icon.jsx'
 import './Contact.css'
 
-const TOPICS = ['development', 'construction', 'supervision', 'brokerage', 'other']
+const TOPICS = ['development', 'construction', 'supervision', 'brokerage', 'mentorship', 'other']
 
 export default function Contact() {
   const { t } = useI18n()
@@ -27,8 +29,9 @@ export default function Contact() {
       phone: String(fd.get('phone') || '').trim(),
       email: String(fd.get('email') || '').trim(),
       message: String(fd.get('message') || '').trim(),
-      // עמודת project היא jsonb → שולחים אובייקט {he,en} (נושא הפנייה) ולא מחרוזת
-      project: { he: t(`contactExtra.topics.${topic}`), en: t(`contactExtra.topics.${topic}`) },
+      // עמודת project היא jsonb → שולחים אובייקט {he,en} (נושא הפנייה) ולא מחרוזת.
+      // הערכים נלקחים ישירות משני המילונים כדי שב-CRM יישמר תמיד תיוג מדויק בשתי השפות.
+      project: { he: heDict.contactExtra.topics[topic], en: enDict.contactExtra.topics[topic] },
       source: 'contact',                             // לא 'manual' → מפעיל התראת מייל
       status: 'new',
     }

@@ -136,6 +136,7 @@ export default {
       construction: 'ביצוע',
       supervision: 'פיקוח פרוייקטים',
       brokerage: 'תיווך',
+      mentorship: 'מנטורינג',
       other: 'אחר',
     },
     consent: 'אני מאשר/ת קבלת פניות שיווקיות מקבוצת קורקוס. אין באמור להעיד על הסכמתי לביצוע עסקה כלשהי.',

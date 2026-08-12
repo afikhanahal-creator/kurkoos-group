@@ -29,6 +29,8 @@ const RealEstateGuideArticle = lazy(() => import('./pages/RealEstateGuideArticle
 const Careers = lazy(() => import('./pages/Careers.jsx'))
 const Legal = lazy(() => import('./pages/Legal.jsx'))
 const Mentorship = lazy(() => import('./pages/Mentorship.jsx'))
+const MentorGuide = lazy(() => import('./pages/MentorGuide.jsx'))
+const MentorGuideArticle = lazy(() => import('./pages/MentorGuideArticle.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'))
 const Admin = lazy(() => import('./pages/admin/Admin.jsx'))
@@ -137,6 +139,8 @@ export default function App() {
               <Route path="/real-estate-guide" element={<RealEstateGuide />} />
               <Route path="/real-estate-guide/:slug" element={<RealEstateGuideArticle />} />
               <Route path="/livy-yazamim" element={<Mentorship />} />
+              <Route path="/madrich-yazamim" element={<MentorGuide />} />
+              <Route path="/madrich-yazamim/:slug" element={<MentorGuideArticle />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />

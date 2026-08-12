@@ -403,8 +403,8 @@
   background: linear-gradient(90deg, var(--color-primary-500), var(--color-accent-500));
 }
 
-/* בפריסה רחבה: הכרטיסייה הפתוחה מסודרת כמאמר קצר —
-   כותרת גדולה, פסקה נוחה לקריאה, וכלים בשתי עמודות מיושרות לימין */
+/* בפריסה רחבה: הכרטיסייה הפתוחה נקראת כמאמר קצר —
+   מספר וכותרת בולטים, ושתי פסקאות ברוחב קריא */
 @media (min-width: 601px) {
   .mentor-stage.is-open {
     padding: clamp(1.5rem, 3vw, 2.25rem);
@@ -425,18 +425,8 @@
     line-height: 1.7;
     max-width: 72ch;
   }
-  .mentor-stage.is-open .mentor-stage__tools {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 2.5rem;
-    row-gap: 0.6rem;
-    margin-top: 1.1rem;
-    padding-top: 0.9rem;
-  }
-  .mentor-stage.is-open .mentor-stage__tool {
-    font-size: 0.92rem;
-    justify-content: flex-start;
-    text-align: start;
+  .mentor-stage.is-open .mentor-stage__detail {
+    font-size: 1rem;
   }
 }
 
@@ -499,31 +489,18 @@
   transition: max-height 0.4s var(--ease-out);
 }
 
-.mentor-stage.is-open .mentor-stage__expand { max-height: 280px; }
+.mentor-stage.is-open .mentor-stage__expand { max-height: 480px; }
 
-.mentor-stage__tools {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+/* פסקת ידע רציפה במקום רשימת בולטים — מדגימה בקיאות, לא מוכרת */
+.mentor-stage__detail {
   margin-top: 1rem;
-  padding-top: 0.75rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--color-border);
-}
-
-.mentor-stage__tool {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-  font-size: 0.86rem;
-  line-height: 1.5;
-  color: var(--color-text-muted);
-}
-
-.mentor-stage__tool-ic {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--color-primary-500);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--color-text);
+  text-align: start;
+  max-width: 72ch;
 }
 
 @media (max-width: 1100px) {
@@ -544,13 +521,12 @@
     text-align: center;
   }
   .mentor-stage.is-open { grid-column: 1 / -1; }
-  /* בולטים מיושרים לימין, ברורים לעין */
-  .mentor-stage__tools { align-items: stretch; }
-  .mentor-stage__tool {
-    justify-content: flex-start;
-    text-align: start;
-    font-size: 0.9rem;
-  }
+  /* כרטיסייה פתוחה נקראת כמאמר: מיושרת לימין וברורה לעין */
+  .mentor-stage.is-open { text-align: start; }
+  .mentor-stage.is-open .mentor-stage__header { justify-content: space-between; }
+  .mentor-stage.is-open .mentor-stage__title { text-align: start; }
+  .mentor-stage.is-open .mentor-stage__desc { text-align: start; }
+  .mentor-stage__detail { font-size: 0.95rem; }
 }
 @media (max-width: 380px) {
   .mentor-stages { grid-template-columns: 1fr; }

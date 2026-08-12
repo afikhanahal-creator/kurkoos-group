@@ -226,14 +226,7 @@ export default function Mentorship() {
                   <h3 className="mentor-stage__title">{s.title.he}</h3>
                   <p className="mentor-stage__desc">{s.desc.he}</p>
                   <div className="mentor-stage__expand">
-                    <ul className="mentor-stage__tools">
-                      {s.tools.map((tool, ti) => (
-                        <li key={ti} className="mentor-stage__tool">
-                          <Icon name="check" size={11} className="mentor-stage__tool-ic" />
-                          <span>{tool.he}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <p className="mentor-stage__detail">{s.detail.he}</p>
                   </div>
                 </Reveal>
               )

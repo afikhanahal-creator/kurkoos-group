@@ -25,6 +25,7 @@ import StackGallery from '../components/ui/StackGallery.jsx'
 import ImageComparison from '../components/ui/ImageComparison.jsx'
 import executionGallery from '../data/executionGallery.js'
 import Icon from '../components/ui/Icon.jsx'
+import KineticText from '../components/ui/KineticText.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
 import './Division.css'
 
@@ -160,7 +161,7 @@ export default function Division() {
         <div className="container">
           <Reveal className="division-why__head">
             <span className="eyebrow">{t('activities.eyebrow')}</span>
-            <h2 className="section-title">{L(division.name)}</h2>
+            <KineticText as="h2" className="section-title" text={L(division.name)} />
           </Reveal>
           {isMobile ? (
             <CardDeck
@@ -186,7 +187,7 @@ export default function Division() {
           <div className="container">
             <Reveal className="division-why__head division-beforeafter__head">
               <span className="eyebrow">{L({ he: 'מהשרטוט אל הבית', en: 'From blueprint to home' })}</span>
-              <h2 className="section-title">{L({ he: 'לפני ואחרי', en: 'Before & after' })}</h2>
+              <KineticText as="h2" className="section-title" text={L({ he: 'לפני ואחרי', en: 'Before & after' })} />
             </Reveal>
             <ImageComparison
               beforeImage={baBefore}
@@ -242,7 +243,7 @@ export default function Division() {
           <div className="container">
             <Reveal className="division-why__head">
               <span className="eyebrow">{L({ he: 'תיעוד מהשטח', en: 'Field documentation' })}</span>
-              <h2 className="section-title">{L({ he: 'הופכים תוכניות לביצוע', en: 'Turning plans into reality' })}</h2>
+              <KineticText as="h2" className="section-title" text={L({ he: 'הופכים תוכניות לביצוע', en: 'Turning plans into reality' })} />
             </Reveal>
             {/* מובייל — מניפת תמונות נפתחת לרשת + מסך מלא; דסקטופ — גלריית אקורדיון נפתחת */}
             {isMobile ? (
@@ -279,7 +280,7 @@ export default function Division() {
           <Reveal className="division-guide__band" variant="scale">
             <div>
               <span className="eyebrow">{t('common.readMore')}</span>
-              <h2 className="division-guide__title">{L(division.guide.title)}</h2>
+              <KineticText as="h2" className="division-guide__title" text={L(division.guide.title)} />
               <p className="division-guide__desc">{L(division.guide.desc)}</p>
             </div>
             <Link to={slug === 'development' ? '/yazamut-nadlan' : slug === 'execution' ? '/constructions' : slug === 'supervision' ? '/construction-supervision' : slug === 'brokerage' ? '/real-estate-guide' : '/blog'} className="btn btn--primary btn--lg">

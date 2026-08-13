@@ -71,11 +71,11 @@
   padding-block: 0 1.6rem;
   --bc-muted: rgba(255, 255, 255, 0.72);
   --bc-current: #fff;
-  /* כפתור "עמוד הבית" — לבן מלא וברור על הרקע הכהה */
-  --bc-back: var(--color-primary-900);
-  --bc-back-bg: #fff;
+  /* כפתור "עמוד הבית" — שקוף עם מסגרת לבנה; בהובר מתמלא לבן */
+  --bc-back: #fff;
+  --bc-back-bg: transparent;
   --bc-back-border: #fff;
-  --bc-back-fg-hover: #fff;
+  --bc-back-fg-hover: var(--color-primary-900);
   --bc-sep: rgba(255, 255, 255, 0.4);
 }
 

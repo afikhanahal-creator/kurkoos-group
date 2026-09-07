@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Icon from './Icon.jsx'
 import './ExpandableGallery.css'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 
 /* ============================================================
    ExpandableGallery — גלריית תמונות "נפתחת": בדסקטופ התמונות הן רצועות
@@ -44,7 +45,7 @@ export default function ExpandableGallery({ images = [] }) {
             onClick={() => open(i)}
             aria-label={`הגדלת תמונה ${i + 1}`}
           >
-            <img className="xgal__img" src={src} alt={`גלריית ביצוע ${i + 1}`} loading="lazy" decoding="async" onError={() => onErr(src)} />
+            <img className="xgal__img" src={optimizeSrc(src, 900)} alt={`גלריית ביצוע ${i + 1}`} loading="lazy" decoding="async" onError={() => onErr(src)} />
             <span className="xgal__shade" style={{ opacity: hovered === i ? 0 : 0.16 }} aria-hidden="true" />
             <span className="xgal__zoom" aria-hidden="true"><Icon name="search" size={20} /></span>
           </motion.button>

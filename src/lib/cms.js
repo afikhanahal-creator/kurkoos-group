@@ -36,6 +36,14 @@ export function cachedSnapshot(key, maxAgeMs = 86_400_000) {
 function cached(key, ttlMs, fetcher) {
   const hit = _cache.get(key)
   if (hit && Date.now() - hit.t < ttlMs) return hit.p
+  // תמונת-מצב מקומית טרייה (מרענון/ניווט קודם) — מגישים בלי בקשת רשת בכלל.
+  // חיסכון ישיר במכסת ה-Egress: ביקור חוזר בתוך חלון ה-TTL לא פונה ל-Supabase.
+  const snap = lsGet(key)
+  if (snap && Date.now() - snap.t < ttlMs) {
+    const p = Promise.resolve(snap.data)
+    _cache.set(key, { t: snap.t, p })
+    return p
+  }
   const p = Promise.resolve().then(fetcher).then((data) => { lsSet(key, data); return data })
   p.catch(() => _cache.delete(key))   // כישלון לא ננעל במטמון
   _cache.set(key, { t: Date.now(), p })
@@ -94,11 +102,16 @@ export async function compressImage(file, { maxW = 1920, maxH = 1920, quality = 
 }
 
 export async function uploadMedia(file, folder = 'general', { compress = true } = {}) {
-  if (!supabase) throw new Error('Supabase לא מוגדר')
   // דחיסה אוטומטית לתמונות → העלאה וטעינה מהירות. מדלגים כשהקובץ כבר אופטימלי
   // (למשל פלט עורך התמונות, שכבר יוצא ב-WebP ברזולוציה מבוקרת) — כדי לא לדחוס
   // פעמיים / להקטין רזולוציה ולפגוע באיכות.
   if (compress) file = await compressImage(file)
+  // Cloudinary תחילה (כשמוגדר): המדיה מוגשת מ-CDN חינמי במקום ממכסת ה-Egress
+  // של Supabase. נפילה חיננית ל-Storage אם ההעלאה נכשלת.
+  if (hasCloudinary) {
+    try { return await uploadToCloudinary(file) } catch { /* fallback ל-Supabase */ }
+  }
+  if (!supabase) throw new Error('Supabase לא מוגדר')
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
   const rand = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.round(Math.random() * 1e9)}`
   const path = `${folder}/${rand}.${ext}`
@@ -120,7 +133,7 @@ export async function deleteMedia(url) {
 
 // ---------- Projects ----------
 export async function listProjects({ includeArchived = false } = {}) {
-  return cached(`projects:${includeArchived}`, 30_000, async () => {
+  return cached(`projects:${includeArchived}`, 600_000, async () => {
     let q = supabase.from('projects').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
     if (!includeArchived) q = q.eq('is_archived', false)
     const { data, error } = await q
@@ -135,7 +148,7 @@ export async function listProjects({ includeArchived = false } = {}) {
    הכריכה נלקחת מ-hero_image_url. */
 const CARD_COLS = 'id, slug, name, location, subtitle, year, status, hero_image_url, pages, card_layout, is_published'
 export async function listProjectCards() {
-  return cached('projects:cards', 30_000, async () => {
+  return cached('projects:cards', 600_000, async () => {
     const fetchCards = (cols) => supabase
       .from('projects').select(cols)
       .eq('is_archived', false)
@@ -152,7 +165,7 @@ export async function listProjectCards() {
 }
 
 export async function getProjectBySlug(slug) {
-  return cached(`projects:one:${slug}`, 30_000, async () => {
+  return cached(`projects:one:${slug}`, 600_000, async () => {
     // קודם לפי slug; אם לפרויקט אין slug — מנסים לפי id (כך שהעמוד ייפתח תמיד)
     const { data, error } = await supabase.from('projects').select('*').eq('slug', slug).maybeSingle()
     if (error) throw error
@@ -282,7 +295,7 @@ export async function archiveProperty(id) {
 
 // ---------- Counters ----------
 export async function listCounters({ activeOnly = false } = {}) {
-  return cached(`counters:${activeOnly}`, 60_000, async () => {
+  return cached(`counters:${activeOnly}`, 600_000, async () => {
     let q = supabase.from('site_counters').select('*').order('sort_order', { ascending: true })
     if (activeOnly) q = q.eq('is_active', true)
     const { data, error } = await q
@@ -310,7 +323,7 @@ export async function deleteCounter(id) {
 
 // ---------- Logos (carousel) ----------
 export async function listLogos({ activeOnly = false } = {}) {
-  return cached(`logos:${activeOnly}`, 60_000, async () => {
+  return cached(`logos:${activeOnly}`, 600_000, async () => {
     let q = supabase.from('site_logos').select('*').order('sort_order', { ascending: true })
     if (activeOnly) q = q.eq('is_active', true)
     const { data, error } = await q
@@ -496,7 +509,7 @@ export async function fetchSettings() {
   if (!supabase) return {}
   // הגדרות האתר נקראות ע"י כמה רכיבים בו-זמנית (פונטים, לוגו, יומן, כותרות)
   // — המטמון מאחד אותן לבקשת רשת אחת.
-  return cached('settings', 60_000, async () => {
+  return cached('settings', 600_000, async () => {
     const { data, error } = await supabase.from('site_settings').select('*')
     if (error) return {}
     return Object.fromEntries((data || []).map((r) => [r.key, r.value]))
@@ -546,7 +559,8 @@ export function useSettings() {
         .then(({ data }) => { if (!cancelled && data?.session) ensureSettingsRealtime() })
         .catch(() => {})
     }
-    const onFocus = () => { invalidate('settings'); load() }
+    // רענון בחזרה ללשונית — רק אם תמונת-המצב כבר ישנה (חוסך בקשות ו-Egress)
+    const onFocus = () => { if (!cachedSnapshot('settings', 600_000)) { invalidate('settings'); load() } }
     if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
 
     return () => {

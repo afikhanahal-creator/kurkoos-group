@@ -6,7 +6,7 @@
    כלל פרסום: published !== false, לא archived, לא deleted, ותאריך <= היום.
    ============================================================ */
 import { useMemo } from 'react'
-import { useSettings } from './cms.js'
+import { useSettingKey } from './cms.js'
 
 const modules = import.meta.glob('../content/yazamut/*.js', { eager: true })
 const seed = Object.values(modules).map((m) => m.default).filter(Boolean)
@@ -42,16 +42,16 @@ function publishedSorted(list) {
 
 /* hooks ציבוריים — קוראים את עריכות ה-CMS בזמן אמת וממזגים עם ה-seed */
 export function useYazamutArticles() {
-  const settings = useSettings()
-  return useMemo(() => publishedSorted(mergeArticles(settings.yazamut_articles)), [settings.yazamut_articles])
+  const overrides = useSettingKey('yazamut_articles')
+  return useMemo(() => publishedSorted(mergeArticles(overrides)), [overrides])
 }
 
 export function useYazamutArticle(slug) {
-  const settings = useSettings()
+  const overrides = useSettingKey('yazamut_articles')
   return useMemo(() => {
-    const a = mergeArticles(settings.yazamut_articles).find((x) => x.slug === slug)
+    const a = mergeArticles(overrides).find((x) => x.slug === slug)
     return a && !a.deleted ? a : null
-  }, [settings.yazamut_articles, slug])
+  }, [overrides, slug])
 }
 
 export function getCategoriesFrom(list) {

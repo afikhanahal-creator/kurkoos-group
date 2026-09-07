@@ -505,20 +505,61 @@ export async function deleteProject(id) {
   invalidate('projects')
 }
 
+/* מפתחות "כבדים" — עריכות כתבות מלאות (גוף מאמרים שלם ב-JSON). לא נטענים
+   בבקשת ההגדרות הגלובלית שכל עמוד מושך; כל טור טוען את המפתח שלו בנפרד,
+   רק בעמודים שצריכים אותו. חיסכון Egress גדול: דף הבית ורוב העמודים
+   מפסיקים למשוך מאות KB של כתבות שאינן מוצגות בהם. */
+export const HEAVY_SETTING_KEYS = [
+  'yazamut_articles',
+  'brokerage_articles',
+  'constructions_articles',
+  'supervision_articles',
+  'mentorguide_articles',
+]
+
 export async function fetchSettings() {
   if (!supabase) return {}
   // הגדרות האתר נקראות ע"י כמה רכיבים בו-זמנית (פונטים, לוגו, יומן, כותרות)
-  // — המטמון מאחד אותן לבקשת רשת אחת.
+  // — המטמון מאחד אותן לבקשת רשת אחת. המפתחות הכבדים מוחרגים (ר' למעלה).
   return cached('settings', 600_000, async () => {
-    const { data, error } = await supabase.from('site_settings').select('*')
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('*')
+      .not('key', 'in', `(${HEAVY_SETTING_KEYS.join(',')})`)
     if (error) return {}
     return Object.fromEntries((data || []).map((r) => [r.key, r.value]))
   })
 }
+
+/* טעינת מפתח בודד (לרוב מפתח כבד של טור) — מטמון עצמאי, localStorage-first */
+export async function fetchSettingKey(key) {
+  if (!supabase) return null
+  return cached(`setting:${key}`, 600_000, async () => {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', key)
+      .maybeSingle()
+    if (error) return null
+    return data ? data.value : null
+  })
+}
+
+export function useSettingKey(key) {
+  const [value, setValue] = useState(() => cachedSnapshot(`setting:${key}`))
+  useEffect(() => {
+    let on = true
+    fetchSettingKey(key).then((v) => { if (on) setValue(v) }).catch(() => {})
+    return () => { on = false }
+  }, [key])
+  return value
+}
+
 export async function setSetting(key, value) {
   const { error } = await supabase.from('site_settings').upsert({ key, value })
   if (error) throw error
-  invalidate('settings')
+  // 'setting' מכסה גם את המטמון הגלובלי ('settings') וגם מפתחות בודדים ('setting:*')
+  invalidate('setting')
 }
 
 /* ---- עדכון בזמן אמת להגדרות האתר ----
@@ -533,7 +574,7 @@ function ensureSettingsRealtime() {
     _settingsChannel = supabase
       .channel('site_settings_rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, () => {
-        invalidate('settings')
+        invalidate('setting')
         _settingsListeners.forEach((fn) => { try { fn() } catch { /* noop */ } })
       })
       .subscribe()

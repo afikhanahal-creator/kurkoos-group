@@ -3,7 +3,7 @@
    זהה במבנה ל-yazamut.js: seed מקבצי הקוד + עריכות CMS (constructions_articles).
    ============================================================ */
 import { useMemo } from 'react'
-import { useSettings } from './cms.js'
+import { useSettingKey } from './cms.js'
 
 const modules = import.meta.glob('../content/constructions/*.js', { eager: true })
 const seed = Object.values(modules).map((m) => m.default).filter(Boolean)
@@ -37,16 +37,16 @@ function publishedSorted(list) {
 }
 
 export function useConstructions() {
-  const settings = useSettings()
-  return useMemo(() => publishedSorted(mergeConstructions(settings.constructions_articles)), [settings.constructions_articles])
+  const overrides = useSettingKey('constructions_articles')
+  return useMemo(() => publishedSorted(mergeConstructions(overrides)), [overrides])
 }
 
 export function useConstruction(slug) {
-  const settings = useSettings()
+  const overrides = useSettingKey('constructions_articles')
   return useMemo(() => {
-    const a = mergeConstructions(settings.constructions_articles).find((x) => x.slug === slug)
+    const a = mergeConstructions(overrides).find((x) => x.slug === slug)
     return a && !a.deleted ? a : null
-  }, [settings.constructions_articles, slug])
+  }, [overrides, slug])
 }
 
 export function getCategoriesFrom(list) {

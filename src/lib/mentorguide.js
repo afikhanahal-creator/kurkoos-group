@@ -6,7 +6,7 @@
    כלל פרסום: published !== false, לא archived, לא deleted, ותאריך <= היום.
    ============================================================ */
 import { useMemo } from 'react'
-import { useSettings } from './cms.js'
+import { useSettingKey } from './cms.js'
 
 const modules = import.meta.glob('../content/mentorguide/*.js', { eager: true })
 const seed = Object.values(modules).map((m) => m.default).filter(Boolean)
@@ -40,16 +40,16 @@ function publishedSorted(list) {
 }
 
 export function useMentorGuideArticles() {
-  const settings = useSettings()
-  return useMemo(() => publishedSorted(mergeArticles(settings.mentorguide_articles)), [settings.mentorguide_articles])
+  const overrides = useSettingKey('mentorguide_articles')
+  return useMemo(() => publishedSorted(mergeArticles(overrides)), [overrides])
 }
 
 export function useMentorGuideArticle(slug) {
-  const settings = useSettings()
+  const overrides = useSettingKey('mentorguide_articles')
   return useMemo(() => {
-    const a = mergeArticles(settings.mentorguide_articles).find((x) => x.slug === slug)
+    const a = mergeArticles(overrides).find((x) => x.slug === slug)
     return a && !a.deleted ? a : null
-  }, [settings.mentorguide_articles, slug])
+  }, [overrides, slug])
 }
 
 export function getCategoriesFrom(list) {

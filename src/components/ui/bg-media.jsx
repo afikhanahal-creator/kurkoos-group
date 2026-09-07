@@ -36,7 +36,23 @@ export default function BackgroundMedia({
   const [loaded, setLoaded] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [failed, setFailed] = useState(false)
+  // הווידאו לא נטען עד שהרכיב מתקרב למסך — חוסך מגה-בייטים לכל ביקור
+  // בעמוד שבו הגולש לא גלל עד הסרטון (הפוסטר מוצג עד אז).
+  const [near, setNear] = useState(false)
+  const wrapRef = useRef(null)
   const videoRef = useRef(null)
+
+  useEffect(() => {
+    if (type !== 'video') return
+    const el = wrapRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') { setNear(true); return }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { setNear(true); io.disconnect() } }),
+      { rootMargin: '400px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [type])
 
   useEffect(() => {
     const v = videoRef.current
@@ -77,7 +93,7 @@ export default function BackgroundMedia({
       document.removeEventListener('visibilitychange', onVisible)
       gestureEvents.forEach((e) => window.removeEventListener(e, onGesture))
     }
-  }, [src, type])
+  }, [src, type, near])
 
   // הפעלה ידנית (מחווה של המשתמש) — תמיד מותרת ב-iOS גם כשה-autoplay חסום
   const manualPlay = () => {
@@ -92,6 +108,7 @@ export default function BackgroundMedia({
 
   return (
     <div
+      ref={wrapRef}
       className={`bg-media bg-media--${variant} ${loaded ? 'is-loaded' : ''} ${className}`}
       style={style}
     >
@@ -108,7 +125,7 @@ export default function BackgroundMedia({
           <video
             ref={videoRef}
             className="bg-media__el"
-            src={src}
+            src={near ? src : undefined}
             poster={poster}
             autoPlay
             muted

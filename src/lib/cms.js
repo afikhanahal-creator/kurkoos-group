@@ -26,8 +26,10 @@ function lsGet(key) {
 function lsSet(key, data) {
   try { localStorage.setItem(LS_PREFIX + key, JSON.stringify({ t: Date.now(), data })) } catch { /* SSR/quota — מתעלמים */ }
 }
-// תמונת-מצב סינכרונית אחרונה (לזריעת state התחלתי) — null אם אין/ישן מדי
-export function cachedSnapshot(key, maxAgeMs = 86_400_000) {
+/* תמונת-מצב סינכרונית אחרונה (לזריעת state התחלתי).
+   ברירת המחדל: ללא תפוגה — "התמונה האחרונה הידועה" עדיפה על עמוד ריק
+   כשה-CMS לא זמין (מכסה/תקלה). רענון מוצלח תמיד דורס אותה מיד. */
+export function cachedSnapshot(key, maxAgeMs = Infinity) {
   const hit = lsGet(key)
   if (hit && (maxAgeMs === Infinity || Date.now() - hit.t < maxAgeMs)) return hit.data
   return null

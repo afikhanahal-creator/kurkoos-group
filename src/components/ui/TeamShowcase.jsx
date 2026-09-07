@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './TeamShowcase.css'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 
 /* ============================================================
    TeamShowcase — רשת תמונות (גווני אפור → צבע בריחוף) +
@@ -15,7 +16,7 @@ function PhotoCard({ member, col, hoveredId, onHover }) {
       onMouseEnter={() => onHover(member.id)}
       onMouseLeave={() => onHover(null)}
     >
-      <img src={member.image} alt={member.name} />
+      <img src={optimizeSrc(member.image, 640)} alt={member.name} />
     </div>
   )
 }

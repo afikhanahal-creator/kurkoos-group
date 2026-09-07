@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from './Icon.jsx'
 import './FocusRail.css'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 
 /* ============================================================
    FocusRail — "קרוסלת עומק" תלת-מימדית (coverflow): כרטיס מרכזי גדול,
@@ -44,7 +45,7 @@ export default function FocusRail({ images = [] }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
-          <img src={list[activeIndex]} alt="" />
+          <img src={optimizeSrc(list[activeIndex], 1200)} alt="" />
         </motion.div>
       </AnimatePresence>
 
@@ -76,7 +77,7 @@ export default function FocusRail({ images = [] }) {
               transition={{ default: BASE_SPRING, scale: TAP_SPRING }}
               onClick={() => { if (offset !== 0) setActive((p) => p + offset) }}
             >
-              <img src={src} alt={`רגע מהביצוע ${idx + 1}`} draggable={false} onError={() => onErr(src)} />
+              <img src={optimizeSrc(src, 480)} alt={`רגע מהביצוע ${idx + 1}`} draggable={false} onError={() => onErr(src)} />
               <span className="frail__sheen" aria-hidden="true" />
             </motion.div>
           )

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import Icon from './Icon.jsx'
 import './CardStack.css'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 
 /* ============================================================
    CardStack — ערימת כרטיסים אינטראקטיבית (מובייל, חוסך מקום).
@@ -38,7 +39,7 @@ export default function CardStack({ items = [], cta = '' }) {
               onClick={isTop ? advance : undefined}
             >
               <div className="card-stack__img">
-                <img src={item.image} alt={item.title} draggable={false} loading="lazy" />
+                <img src={optimizeSrc(item.image, 800)} alt={item.title} draggable={false} loading="lazy" />
                 <span className="card-stack__title">{item.title}</span>
               </div>
               <div className="card-stack__body">

@@ -41,7 +41,7 @@ export const activities = [
     id: 'supervision',
     icon: 'shield',
     to: '/divisions/supervision',
-    image: '/pikuah.png',
+    image: '/pikuah.webp',
     title: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
     short: {
       he: 'מנהלים ומפקחים על כל שלבי הביצוע',

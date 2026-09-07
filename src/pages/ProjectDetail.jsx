@@ -524,7 +524,7 @@ export default function ProjectDetail() {
               {/* גרפיקת רשת דקורטיבית — מופיעה בכל עמודי הפרויקטים מתחת ל-CTA */}
               <img
                 className="pd-banner__art"
-                src="/banner-diamonds.png"
+                src="/banner-diamonds.webp"
                 alt=""
                 aria-hidden="true"
                 loading="lazy"
@@ -532,7 +532,7 @@ export default function ProjectDetail() {
                 onError={(e) => {
                   if (!e.currentTarget.dataset.fb) {
                     e.currentTarget.dataset.fb = '1'
-                    e.currentTarget.src = '/on-every-project-page.png'
+                    e.currentTarget.src = '/on-every-project-page.webp'
                   }
                 }}
               />

@@ -14,7 +14,7 @@ export const team = [
     id: 'moti',
     name: { he: 'מוטי בן עמי', en: 'Moti Ben Ami' },
     role: { he: 'מנהל עבודה וביצוע', en: 'Site & Execution Manager' },
-    photo: '/6D41D358-693B-4F94-95D7-AFAEC6439126.png',
+    photo: '/team-moti.webp',
     imgPos: '56% 20%',   /* מרים את ראשו עוד טיפה — לגובה ראשו של שלומי */
     imgZoom: 1.22,   /* עוד זום-אין; transform-origin עליון שומר על גובה הראש */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
@@ -28,7 +28,7 @@ export const team = [
     id: 'yaakov',
     name: { he: 'יעקב קורקוס', en: 'Yaakov Kurkoos' },
     role: { he: 'מנהל פרויקטים', en: 'Project Manager' },
-    photo: '/B59B1CBE-8EFB-449E-B0F3-359571EF70D9.png',
+    photo: '/team-yaakov.webp',
     imgPos: 'center 32%',   /* מרים את ראשו עוד טיפה — לגובה ראשו של שלומי */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */
     bio: {
@@ -41,7 +41,7 @@ export const team = [
     id: 'benny',
     name: { he: 'בני קורקוס', en: 'Benny Kurkoos' },
     role: { he: 'מנהל עבודה ראשי', en: 'Chief Site Manager' },
-    photo: '/5E83C911-4E64-4FCD-8C30-D5620C507520.png',
+    photo: '/team-benny.webp',
     imgPos: 'center center',   /* תמונה מרובעת — cover חותך רק את הצדדים */
     imgZoom: 1.16,   /* זום-אין קל כדי שהדמות תהיה בגודל של השאר */
     imgBright: 1.2,  /* +20% תאורה על הפנים — אפקט תאורת פורטרייט */

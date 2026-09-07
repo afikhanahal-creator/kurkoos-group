@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { srcOfResponsive, responsiveStyle, optimizeSrc, buildSrcSet } from '../../lib/responsiveImage.js'
+import { srcOfResponsive, responsiveStyle, optimizeSrc, buildSrcSet, wsrvSrc } from '../../lib/responsiveImage.js'
 import './SmartImage.css'
 import './ResponsiveImage.css'
 
@@ -16,12 +16,16 @@ export default function SmartImage({ src, alt = '', label, className = '', style
   const riStyle = responsiveStyle(src)
   const [failed, setFailed] = useState(!url)
   const [loaded, setLoaded] = useState(false)
-  // אם הגרסה המאופטמת נכשלת (חשבון שחוסם טרנספורמציות) — חוזרים למקור
-  const [useOriginal, setUseOriginal] = useState(false)
-  const finalSrc = useOriginal ? url : optimizeSrc(url, w, quality)
-  // srcset רספונסיבי — רק כש-sizes סופק וטרם נפלנו-לאחור למקור. מאפשר לדפדפן
-  // להוריד את הרוחב המתאים למכשיר (חיסכון משמעותי במשקל במובייל).
-  const srcSet = (sizes && !useOriginal) ? buildSrcSet(url, w, quality) : ''
+  // שרשרת נפילה: Cloudinary fetch → wsrv.nl (proxy חינמי) → המקור.
+  // כך גם כשהטרנספורמציה הראשית נכשלת, תמונות Storage עדיין מוגשות מ-CDN
+  // ולא שורפות את מכסת ה-Egress של Supabase.
+  const [stage, setStage] = useState(0)
+  const wsrv = wsrvSrc(url, w)
+  const tiers = [optimizeSrc(url, w, quality), wsrv || url, url]
+  const finalSrc = tiers[Math.min(stage, tiers.length - 1)]
+  // srcset רספונסיבי — רק בשכבה הראשית. מאפשר לדפדפן להוריד את הרוחב
+  // המתאים למכשיר (חיסכון משמעותי במשקל במובייל).
+  const srcSet = (sizes && stage === 0) ? buildSrcSet(url, w, quality) : ''
 
   if (failed) {
     return (
@@ -46,7 +50,7 @@ export default function SmartImage({ src, alt = '', label, className = '', style
       decoding="async"
       className={`smart-image ri-img ${loaded ? 'is-loaded' : ''} ${className}`}
       style={{ ...riStyle, ...style }}
-      onError={() => { if (!useOriginal && finalSrc !== url) setUseOriginal(true); else setFailed(true) }}
+      onError={() => { if (finalSrc !== url) setStage((st) => st + 1); else setFailed(true) }}
       onLoad={() => setLoaded(true)}
       {...rest}
     />

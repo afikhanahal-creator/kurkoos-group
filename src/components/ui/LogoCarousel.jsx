@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
 import './LogoCarousel.css'
 
 /* ============================================================
@@ -7,7 +8,8 @@ import './LogoCarousel.css'
    הפרויקטים). הרשימה משוכפלת → איפוס בלתי-נראה בגבול → לולאה רציפה.
    לוגואים צפים (בלי ריבוע), בגודל אחיד (contain → לא חתוכים).
    ============================================================ */
-const srcOf = (l) => l.image_url || l.logo || l.image || l.url
+// לוגו מוגש דרך ה-CDN (רוחב קטן) — חוסך Egress של Supabase על כל צפייה בדף הבית
+const srcOf = (l) => optimizeSrc(l.image_url || l.logo || l.image || l.url, 320)
 
 /* מודד את שטח התוכן האמיתי של הלוגו (מתעלם משוליים שקופים פנימיים) ומגדיל
    אותו כך שהתוכן הנראה יגיע לגובה אחיד — "מקצר שוליים" ומיישר גדלים. */

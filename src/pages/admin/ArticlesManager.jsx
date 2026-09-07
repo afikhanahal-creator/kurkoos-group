@@ -46,8 +46,9 @@ export default function ArticlesManager({ config }) {
 
   useEffect(() => {
     let alive = true
-    fetchSettingKey(config.key)
-      .then((raw) => {
+    // טוענים במקביל את עריכות ה-CMS ואת קבצי ה-seed (נטענים עצלה)
+    Promise.all([fetchSettingKey(config.key), config.load ? config.load() : null])
+      .then(([raw]) => {
         if (!alive) return
         const merged = config.merge(raw)
           .sort((a, b) => new Date(b.date) - new Date(a.date))

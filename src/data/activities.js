@@ -11,7 +11,7 @@ export const activities = [
     id: 'development',
     icon: 'building',
     to: '/divisions/development',
-    image: 'https://images.unsplash.com/photo-1496307653780-42ee777d4833?auto=format&fit=crop&w=900&q=80',
+    image: '/divisions/humash-22-24.png',
     title: { he: 'יזמות נדל"ן', en: 'Real-estate development' },
     short: {
       he: 'איתור, תכנון והובלת פרויקטים משלב הרעיון',

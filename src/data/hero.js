@@ -5,34 +5,30 @@
    image: נתיב לתמונת פרויקט (public/hero/). אם חסר — מוצג גרדיאנט ממותג.
    ============================================================ */
 
-// תמונות דמו (Unsplash). החלף בנתיב מקומי /hero/1.jpg כשיהיו תמונות שלך.
-const img = (id, w = 1280) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`
-
 export const heroSlides = [
   {
     id: 1,
     stat: { value: 3200, suffix: '+', label: { he: 'יחידות דיור', en: 'Housing units' }, sub: { he: 'ועוד בדרך', en: 'and more on the way' } },
     lines: { he: ['בונים את הבית', 'הבא שלכם'], en: ['Building your', 'next home'] },
-    image: img('1545324418-cc1a3fa10c00'),
+    image: '/divisions/kurkoos-showcase-poster.jpg',
   },
   {
     id: 2,
     stat: { value: 80, suffix: '+', label: { he: 'פרויקטים', en: 'Projects' }, sub: { he: 'ברחבי הארץ', en: 'across the country' } },
     lines: { he: ['מהקרקע', 'ועד המפתח'], en: ['From land', 'to key'] },
-    image: img('1496307653780-42ee777d4833'),
+    image: '/execution-gallery/1.jpg',
   },
   {
     id: 3,
     stat: { value: 10, suffix: '', label: { he: 'שנות אחריות', en: 'Years warranty' }, sub: { he: 'על כל דירה', en: 'on every home' } },
     lines: { he: ['אחריות מלאה', 'ללא פשרות'], en: ['Full warranty', 'no compromise'] },
-    image: img('1564013799919-ab600027ffc6'),
+    image: '/divisions/humash-22-24.png',
   },
   {
     id: 4,
     stat: { value: 25, suffix: '+', label: { he: 'שנות ניסיון', en: 'Years experience' }, sub: { he: 'בכל שרשרת הערך', en: 'across the value chain' } },
     lines: { he: ['יזמות, בנייה,', 'פיקוח ותיווך'], en: ['Develop, build,', 'supervise, broker'] },
-    image: img('1486325212027-8081e485255e'),
+    image: '/execution-gallery/6.jpg',
   },
 ]
 

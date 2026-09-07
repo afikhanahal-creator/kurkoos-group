@@ -8,9 +8,6 @@
    category , מסנן את הפרויקטים הרלוונטיים; null = כל הפרויקטים
    ============================================================ */
 
-const img = (id, w = 1600) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`
-
 export const divisions = [
   {
     slug: 'residential',
@@ -24,7 +21,7 @@ export const divisions = [
         he: 'בתים שנבנים סביב האנשים שגרים בהם, מאיכות הבנייה ועד תחושת הקהילה.',
         en: 'Homes built around the people who live in them, from build quality to a sense of community.',
       },
-      image: img('1545324418-cc1a3fa10c00'),
+      image: '/divisions/kurkoos-showcase-poster.jpg',
     },
     intro: {
       he: 'תחום המגורים של קורקוס מתמחה בייזום והקמה של פרויקטים למגורים ברמת גימור גבוהה, עם דגש על תכנון חכם, אור טבעי ומרחבים משותפים שמייצרים קהילה. אנחנו מלווים את הרוכשים מהרגע הראשון ועד מסירת המפתח, ובאחריות מלאה גם אחרי.',
@@ -83,7 +80,7 @@ export const divisions = [
         he: 'מאיתור הקרקע ועד מסירת המפתח, יוזמים פרויקטים שמייצרים ערך לרוכשים, לשותפים ולסביבה.',
         en: 'From land acquisition to key handover, initiating projects that create value for buyers, partners and the surroundings.',
       },
-      image: img('1496307653780-42ee777d4833'),
+      image: '/divisions/humash-22-24.png',
     },
     intro: {
       he: 'זרוע הייזום של קורקוס היא המנוע שמניע כל פרויקט. אנחנו מאתרים קרקעות והזדמנויות, מובילים תכנון ורישוי מול הרשויות, בונים מבנה פיננסי איתן ומנהלים את הסיכון, ומלווים את הפרויקט מהרעיון הראשוני ועד שהדיירים מקבלים את המפתח. כל יזמה נמדדת בערך האמיתי שהיא מייצרת לכל הצדדים.',
@@ -112,7 +109,7 @@ export const divisions = [
         he: 'עיניים מקצועיות על כל פרט, פיקוח הנדסי צמוד שמבטיח איכות, בטיחות ועמידה בתקציב ובזמנים.',
         en: 'Professional eyes on every detail, close engineering supervision that ensures quality, safety, budget and schedule.',
       },
-      image: img('1486325212027-8081e485255e'),
+      image: '/execution-gallery/4.jpg',
     },
     intro: {
       he: 'זרוע הפיקוח של שכינתא שומרת שכל פרויקט מבוצע בדיוק כפי שתוכנן. צוות המפקחים שלנו מלווה את הבנייה מההיתר ועד המסירה, בודק איכות וחומרים, מאשר חשבונות קבלן, מנהל לוחות זמנים ותקציב ואוכף תקני בטיחות. אנחנו מספקים שירותי פיקוח גם לפרויקטים שלנו וגם ללקוחות חיצוניים: יזמים, גופים מוסדיים ובעלי נכסים.',

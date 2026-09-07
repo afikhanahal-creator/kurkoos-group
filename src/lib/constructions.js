@@ -61,7 +61,7 @@ function publishedSorted(list) {
 export function useConstructions() {
   const overrides = useSettingKey('constructions_articles')
   const seedList = useSeed()
-  return useMemo(() => publishedSorted(mergeConstructions(overrides)), [overrides])
+  return useMemo(() => publishedSorted(mergeConstructions(overrides)), [overrides, seedList])
 }
 
 export function useConstruction(slug) {

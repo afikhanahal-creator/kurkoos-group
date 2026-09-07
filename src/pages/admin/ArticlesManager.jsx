@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchSettings, setSetting } from '../../lib/cms.js'
+import { fetchSettingKey, setSetting } from '../../lib/cms.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
 import AiImageButton from './AiImageButton.jsx'
 import { toast } from '../../lib/toast.js'
@@ -46,10 +46,10 @@ export default function ArticlesManager({ config }) {
 
   useEffect(() => {
     let alive = true
-    fetchSettings()
-      .then((s) => {
+    fetchSettingKey(config.key)
+      .then((raw) => {
         if (!alive) return
-        const merged = config.merge(s[config.key])
+        const merged = config.merge(raw)
           .sort((a, b) => new Date(b.date) - new Date(a.date))
         listRef.current = merged
         setList(merged)

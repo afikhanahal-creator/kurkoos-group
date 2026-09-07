@@ -3,7 +3,7 @@
    זהה במבנה לשאר הטורים. seed מקבצי הקוד + עריכות CMS (brokerage_articles).
    ============================================================ */
 import { useMemo } from 'react'
-import { useSettings } from './cms.js'
+import { useSettingKey } from './cms.js'
 
 const modules = import.meta.glob('../content/brokerage/*.js', { eager: true })
 const seed = Object.values(modules).map((m) => m.default).filter(Boolean)
@@ -37,16 +37,16 @@ function publishedSorted(list) {
 }
 
 export function useBrokerage() {
-  const settings = useSettings()
-  return useMemo(() => publishedSorted(mergeBrokerage(settings.brokerage_articles)), [settings.brokerage_articles])
+  const overrides = useSettingKey('brokerage_articles')
+  return useMemo(() => publishedSorted(mergeBrokerage(overrides)), [overrides])
 }
 
 export function useBrokerageArticle(slug) {
-  const settings = useSettings()
+  const overrides = useSettingKey('brokerage_articles')
   return useMemo(() => {
-    const a = mergeBrokerage(settings.brokerage_articles).find((x) => x.slug === slug)
+    const a = mergeBrokerage(overrides).find((x) => x.slug === slug)
     return a && !a.deleted ? a : null
-  }, [settings.brokerage_articles, slug])
+  }, [overrides, slug])
 }
 
 export function getCategoriesFrom(list) {

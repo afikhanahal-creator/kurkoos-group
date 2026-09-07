@@ -4,7 +4,7 @@
    CMS (supervision_articles).
    ============================================================ */
 import { useMemo } from 'react'
-import { useSettings } from './cms.js'
+import { useSettingKey } from './cms.js'
 
 const modules = import.meta.glob('../content/supervision/*.js', { eager: true })
 const seed = Object.values(modules).map((m) => m.default).filter(Boolean)
@@ -38,16 +38,16 @@ function publishedSorted(list) {
 }
 
 export function useSupervision() {
-  const settings = useSettings()
-  return useMemo(() => publishedSorted(mergeSupervision(settings.supervision_articles)), [settings.supervision_articles])
+  const overrides = useSettingKey('supervision_articles')
+  return useMemo(() => publishedSorted(mergeSupervision(overrides)), [overrides])
 }
 
 export function useSupervisionArticle(slug) {
-  const settings = useSettings()
+  const overrides = useSettingKey('supervision_articles')
   return useMemo(() => {
-    const a = mergeSupervision(settings.supervision_articles).find((x) => x.slug === slug)
+    const a = mergeSupervision(overrides).find((x) => x.slug === slug)
     return a && !a.deleted ? a : null
-  }, [settings.supervision_articles, slug])
+  }, [overrides, slug])
 }
 
 export function getCategoriesFrom(list) {

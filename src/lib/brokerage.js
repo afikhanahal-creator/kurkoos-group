@@ -61,7 +61,7 @@ function publishedSorted(list) {
 export function useBrokerage() {
   const overrides = useSettingKey('brokerage_articles')
   const seedList = useSeed()
-  return useMemo(() => publishedSorted(mergeBrokerage(overrides)), [overrides])
+  return useMemo(() => publishedSorted(mergeBrokerage(overrides)), [overrides, seedList])
 }
 
 export function useBrokerageArticle(slug) {

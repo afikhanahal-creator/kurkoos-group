@@ -64,7 +64,7 @@ function publishedSorted(list) {
 export function useMentorGuideArticles() {
   const overrides = useSettingKey('mentorguide_articles')
   const seedList = useSeed()
-  return useMemo(() => publishedSorted(mergeArticles(overrides)), [overrides])
+  return useMemo(() => publishedSorted(mergeArticles(overrides)), [overrides, seedList])
 }
 
 export function useMentorGuideArticle(slug) {

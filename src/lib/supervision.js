@@ -62,7 +62,7 @@ function publishedSorted(list) {
 export function useSupervision() {
   const overrides = useSettingKey('supervision_articles')
   const seedList = useSeed()
-  return useMemo(() => publishedSorted(mergeSupervision(overrides)), [overrides])
+  return useMemo(() => publishedSorted(mergeSupervision(overrides)), [overrides, seedList])
 }
 
 export function useSupervisionArticle(slug) {

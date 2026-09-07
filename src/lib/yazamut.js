@@ -66,7 +66,7 @@ function publishedSorted(list) {
 export function useYazamutArticles() {
   const overrides = useSettingKey('yazamut_articles')
   const seedList = useSeed()
-  return useMemo(() => publishedSorted(mergeArticles(overrides)), [overrides])
+  return useMemo(() => publishedSorted(mergeArticles(overrides)), [overrides, seedList])
 }
 
 export function useYazamutArticle(slug) {

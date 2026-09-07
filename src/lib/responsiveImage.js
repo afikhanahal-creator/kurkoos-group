@@ -152,6 +152,14 @@ export function optimizeSrc(src, w = 1920, q = 'auto') {
    (פורמט מודרני + הגבלת רוחב). מאפשר לדפדפן לבחור את הגודל האופטימלי לפי המכשיר
    ו-DPR → במובייל יורדת תמונה קלה בהרבה במקום רוחב דסקטופ מלא. מחזיר '' אם הכתובת
    אינה ניתנת לאופטימיזציה (אז נשארים על src בודד). */
+/* שכבת גיבוי: proxy תמונות חינמי (wsrv.nl, גלובלי, מבוסס Cloudflare).
+   משמש רק אם ההגשה דרך Cloudinary fetch נכשלת — כדי שגם אז תמונות
+   Storage לא יוגשו ישירות ממכסת ה-Egress של Supabase. */
+export function wsrvSrc(src, w = 1920) {
+  if (typeof src !== 'string' || !src.includes('.supabase.co/storage/')) return ''
+  return `https://wsrv.nl/?url=${encodeURIComponent(src)}&w=${w}&output=webp&q=75`
+}
+
 export function buildSrcSet(src, w = 1920, q = 'auto') {
   if (typeof src !== 'string' || !src) return ''
   // רק כתובות שבאמת עוברות טרנספורמציה (Cloudinary / Supabase / Unsplash)

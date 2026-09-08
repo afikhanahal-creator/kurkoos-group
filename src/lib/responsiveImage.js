@@ -121,12 +121,14 @@ export function optimizeSrc(src, w = 1920, q = 'auto') {
       return u.toString()
     } catch { return src }
   }
-  // Supabase Storage — מגישים דרך ה-CDN של Cloudinary (שינוי-גודל + פורמט מודרני
-   // f_auto/q_auto) → תמונות קלות בהרבה וטעינה מהירה. נופל-לאחור לכתובת המקורית
-   // אם משהו נכשל (onError ברכיבי התמונה).
+  // Supabase Storage — לעולם לא מגישים גולמי: דרך Cloudinary fetch כשמוגדר,
+  // ואחרת דרך wsrv.nl (proxy תמונות חינמי, ללא חשבון). שתי הדרכים מקטינות
+  // רזולוציה ופורמט וחוסכות את מכסת ה-Egress של Supabase. נופל-לאחור
+  // לכתובת המקורית אם משהו נכשל (onError ברכיבי התמונה).
   const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-  if (cloud && src.includes('.supabase.co/storage/')) {
-    return `https://res.cloudinary.com/${cloud}/image/fetch/f_auto,q_${q},c_limit,w_${w}/${encodeURIComponent(src)}`
+  if (src.includes('.supabase.co/storage/')) {
+    if (cloud) return `https://res.cloudinary.com/${cloud}/image/fetch/f_auto,q_${q},c_limit,w_${w}/${encodeURIComponent(src)}`
+    return wsrvSrc(src, w)
   }
   // כתובות Cloudinary upload — מוסיפים טרנספורמציה (פורמט/איכות/רוחב) אם אין כבר
   if (src.includes('res.cloudinary.com/')) {

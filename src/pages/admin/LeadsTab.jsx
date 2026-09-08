@@ -521,10 +521,12 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
   const digits = String(lead.phone||'').replace(/\D/g,'')
   const wa     = waLink(lead.phone)
 
+  // מציגים תמיד גם את נושא הפנייה (מנטורינג/יזמות/תיווך...) כשנשמר —
+  // כדי שכל פרטי הליד ייראו כבר בכרטיס, בלי לפתוח עריכה
   const sourceTxt = lead.source === 'project' && proj ? proj
-    : lead.source === 'home'    ? 'דף הבית'
-    : lead.source === 'contact' ? 'טופס קשר'
-    : null
+    : lead.source === 'home'    ? (proj ? `דף הבית · ${proj}` : 'דף הבית')
+    : lead.source === 'contact' ? (proj ? `טופס קשר · ${proj}` : 'טופס קשר')
+    : proj || null
 
   return (
     <article

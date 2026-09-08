@@ -80,13 +80,16 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
 
       {total > 1 && (
         <>
+          {/* כל חץ מצביע החוצה, לכיוון הצד שבו הוא יושב — ב-RTL: הכפתור
+              בצד ימין מציג ← והכפתור בצד שמאל מציג ← הפוך. ככה הניווט
+              אינטואיטיבי גם כשמציגים ללקוח. */}
           <button
             type="button"
             className="pd-lightbox__nav pd-lightbox__nav--prev"
             aria-label={L({ he: 'הקודם', en: 'Previous' })}
             onClick={() => go(isRtl ? 1 : -1)}
           >
-            <Icon name="arrowLeft" size={26} />
+            <Icon name={isRtl ? 'arrow' : 'arrowLeft'} size={26} />
           </button>
           <button
             type="button"
@@ -94,7 +97,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
             aria-label={L({ he: 'הבא', en: 'Next' })}
             onClick={() => go(isRtl ? -1 : 1)}
           >
-            <Icon name="arrow" size={26} />
+            <Icon name={isRtl ? 'arrowLeft' : 'arrow'} size={26} />
           </button>
         </>
       )}

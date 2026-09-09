@@ -3,6 +3,7 @@ import { useEffect, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from './i18n/index.jsx'
 import Header from './components/layout/Header.jsx'
+import HolidayBanner from './components/ui/HolidayBanner.jsx'
 import Footer from './components/layout/Footer.jsx'
 import CookieBanner from './components/ui/CookieBanner.jsx'
 import FloatingActions from './components/ui/FloatingActions.jsx'
@@ -117,6 +118,7 @@ export default function App() {
       <a href="#top" className="skip-link">{t('common.skipToContent')}</a>
       <IntroVideo />
       <ScrollManager />
+      <HolidayBanner />
       <Header />
       <main id="top" tabIndex={-1}>
         <AnimatePresence mode="wait">

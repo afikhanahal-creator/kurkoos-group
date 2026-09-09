@@ -1,0 +1,74 @@
+/* ============================================================
+   HolidayBanner — שכבת ברכה קופצת, רספונסיבית לדסקטופ ולמובייל
+   ============================================================ */
+.holiday-banner {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  background: rgba(7, 41, 58, 0.62);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: hb-fade-in 0.3s ease-out;
+}
+
+.holiday-banner.is-leaving {
+  animation: hb-fade-out 0.28s ease-in forwards;
+}
+
+.holiday-banner__card {
+  position: relative;
+  animation: hb-pop-in 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.holiday-banner__card img {
+  display: block;
+  width: min(92vw, 460px);
+  max-height: 86vh;
+  height: auto;
+  object-fit: contain;
+  border-radius: 18px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.55);
+}
+
+/* X ברור בצד ימין — תמיד ימין פיזי, גם ב-RTL וגם ב-LTR */
+.holiday-banner__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #07293a;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.holiday-banner__close:hover { transform: scale(1.08); background: #f2f4f6; }
+.holiday-banner__close:active { transform: scale(0.95); }
+
+/* מובייל: מרווח נגיעה נוח והתמונה ממלאת יפה את המסך */
+@media (max-width: 600px) {
+  .holiday-banner__card img { width: 94vw; max-height: 82vh; }
+  .holiday-banner__close { width: 46px; height: 46px; top: 8px; right: 8px; }
+}
+
+@keyframes hb-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hb-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes hb-pop-in {
+  from { opacity: 0; transform: scale(0.92) translateY(14px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holiday-banner, .holiday-banner__card { animation: none; }
+}

@@ -17,6 +17,7 @@ import PropertyMap from '../components/ui/PropertyMap.jsx'
 import BookingCalendar from '../components/ui/BookingCalendar.jsx'
 import StatCube from '../components/ui/StatCube.jsx'
 import Seo from '../components/ui/Seo.jsx'
+import { noteProject } from '../lib/visitTrail.js'
 import useIsMobile from '../hooks/useIsMobile.js'
 import Text3DFlip from '../components/ui/Text3DFlip.jsx'
 import Icon from '../components/ui/Icon.jsx'
@@ -246,6 +247,14 @@ export default function ProjectDetail() {
   }, [slug])
 
   const project = buildProject(local, cms)
+
+  // רישום הפרויקט הנצפה — נצמד אחר-כך לכל ליד/הרשמה מהביקור הזה
+  useEffect(() => {
+    const nm = project?.name
+    const he = typeof nm === 'object' ? (nm.he || nm.en) : nm
+    if (he) noteProject(he, project.slug)
+  }, [project?.slug])
+
   if (!project) {
     // פרויקט שקיים רק ב-CMS: לא מפנים בזמן שעדיין טוענים מהענן (אחרת העמוד "לא נפתח")
     if (!local && supabase && !cmsLoaded) {

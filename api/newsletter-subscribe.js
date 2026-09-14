@@ -34,7 +34,10 @@ export default async function handler(req, res) {
 
   const email = String(body.email || '').trim().toLowerCase().slice(0, 200)
   const VALID_SOURCES = new Set(['site', 'popup', 'footer', 'contact'])
-  const source = VALID_SOURCES.has(body.source) ? body.source : 'site'
+  const baseSource = VALID_SOURCES.has(body.source) ? body.source : 'site'
+  // הקשר העמוד/פרויקט שממנו נרשמו — נשמר בתוך עמודת source (ללא שינוי סכימה)
+  const page = String(body.page || '').replace(/[\x00-\x1f<>]/g, '').trim().slice(0, 120)
+  const source = page ? `${baseSource} · ${page}` : baseSource
 
   if (!email || !EMAIL_RE.test(email)) { res.status(400).json({ error: 'כתובת מייל לא תקינה' }); return }
 
@@ -74,7 +77,7 @@ export default async function handler(req, res) {
         fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ event: 'newsletter_subscribe', email, source, ts: new Date().toISOString() }),
+          body: JSON.stringify({ event: 'newsletter_subscribe', email, source: baseSource, page, ts: new Date().toISOString() }),
         }).catch(() => {})
       }
     }

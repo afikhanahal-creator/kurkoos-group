@@ -3,6 +3,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import heDict from '../../i18n/he.js'
 import enDict from '../../i18n/en.js'
 import { createLead } from '../../lib/cms.js'
+import { getLastProject, trailSummary } from '../../lib/visitTrail.js'
 import Reveal from '../ui/Reveal.jsx'
 import BookingCalendar from '../ui/BookingCalendar.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
@@ -31,7 +32,16 @@ export default function Contact() {
       message: String(fd.get('message') || '').trim(),
       // עמודת project היא jsonb → שולחים אובייקט {he,en} (נושא הפנייה) ולא מחרוזת.
       // הערכים נלקחים ישירות משני המילונים כדי שב-CRM יישמר תמיד תיוג מדויק בשתי השפות.
-      project: { he: heDict.contactExtra.topics[topic], en: enDict.contactExtra.topics[topic] },
+      // אם הגולש צפה בפרויקט בביקור הזה — מצרפים אותו לתיוג, כדי שבמערכת
+      // הלידים יהיה ברור באיזה פרויקט הוא התעניין בלי לנחש.
+      project: (() => {
+        const interest = getLastProject()
+        const he = heDict.contactExtra.topics[topic] + (interest ? ` · התעניין ב: ${interest.name}` : '')
+        const en = enDict.contactExtra.topics[topic] + (interest ? ` · Interested in: ${interest.name}` : '')
+        return interest ? { he, en, slug: interest.slug || '' } : { he, en }
+      })(),
+      // מסלול הגלישה המלא — נשמר בהערות הפנימיות של הליד
+      notes: trailSummary() ? `מסע באתר: ${trailSummary()}` : undefined,
       source: 'contact',                             // לא 'manual' → מפעיל התראת מייל
       status: 'new',
     }

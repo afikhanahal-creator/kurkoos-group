@@ -619,13 +619,13 @@ export function useSettings() {
 // ---------- Newsletter (מאגר נרשמים + וובהוק לאוטומציות) ----------
 // הכנסה + webhook מתבצעים דרך /api/newsletter-subscribe (צד שרת) — כך ה-webhook URL
 // לא נחשף ללקוח (לא נשלח בתגובת Supabase ולא מופיע ב-bundle).
-export async function subscribeNewsletter(email, source = 'site') {
+export async function subscribeNewsletter(email, source = 'site', page = '') {
   const clean = String(email || '').trim().toLowerCase()
   if (!clean) throw new Error('אימייל ריק')
   const res = await fetch('/api/newsletter-subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: clean, source }),
+    body: JSON.stringify({ email: clean, source, page: String(page || '').slice(0, 120) }),
   })
   const out = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(out.error || `שגיאה (${res.status})`)

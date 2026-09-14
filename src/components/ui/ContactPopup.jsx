@@ -3,6 +3,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import heDict from '../../i18n/he.js'
 import enDict from '../../i18n/en.js'
 import { createLead } from '../../lib/cms.js'
+import { getLastProject, trailSummary } from '../../lib/visitTrail.js'
 import Modal from './Modal.jsx'
 import Icon from './Icon.jsx'
 import './ContactPopup.css'
@@ -27,8 +28,14 @@ export default function ContactPopup({ open, onClose }) {
       phone: String(fd.get('phone') || '').trim(),
       email: String(fd.get('email') || '').trim(),
       message: String(fd.get('message') || '').trim(),
-      // תיוג מדויק בשתי השפות ל-CRM, ללא תלות בשפת הממשק הנוכחית
-      project: { he: heDict.contactExtra.topics[topic], en: enDict.contactExtra.topics[topic] },
+      // תיוג מדויק בשתי השפות ל-CRM + הפרויקט שבו התעניין הגולש בביקור הזה
+      project: (() => {
+        const interest = getLastProject()
+        const he = heDict.contactExtra.topics[topic] + (interest ? ` · התעניין ב: ${interest.name}` : '')
+        const en = enDict.contactExtra.topics[topic] + (interest ? ` · Interested in: ${interest.name}` : '')
+        return interest ? { he, en, slug: interest.slug || '' } : { he, en }
+      })(),
+      notes: trailSummary() ? `מסע באתר: ${trailSummary()}` : undefined,
       source: 'contact',
       status: 'new',
     }

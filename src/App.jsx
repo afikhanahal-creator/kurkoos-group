@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from './i18n/index.jsx'
 import Header from './components/layout/Header.jsx'
 import HolidayBanner from './components/ui/HolidayBanner.jsx'
+import { notePage } from './lib/visitTrail.js'
 import Footer from './components/layout/Footer.jsx'
 import CookieBanner from './components/ui/CookieBanner.jsx'
 import FloatingActions from './components/ui/FloatingActions.jsx'
@@ -79,6 +80,9 @@ const pageMotion = {
 export default function App() {
   const location = useLocation()
   const { t } = useI18n()
+
+  // עקבות ביקור — כדי שכל ליד/הרשמה יידעו מאיזה עמוד ופרויקט הגיע הפונה
+  useEffect(() => { notePage(location.pathname) }, [location.pathname])
 
   // טעינה-מוקדמת (prefetch) של ה-chunks של העמודים הנפוצים בזמן idle — כך הניווט
   // נשאר מיידי (בלי השהיית chunk/הבהוב), ועם זאת חבילת ההתחלה נשארת קטנה.

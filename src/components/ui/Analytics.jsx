@@ -12,7 +12,9 @@ import { useSettings } from '../../lib/cms.js'
 export default function Analytics() {
   const settings = useSettings()
   const location = useLocation()
-  const id = String(settings.ga_measurement_id || import.meta.env.VITE_GA_MEASUREMENT_ID || '').trim()
+  // מזהה המדידה של קורקוס גרופ. אפשר לעקוף מהאדמין (טאב תנועה וסטטיסטיקות)
+  // או ממשתנה סביבה — בלי לגעת בקוד.
+  const id = String(settings.ga_measurement_id || import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-5ESLP5HKZC').trim()
   const valid = /^G-[A-Z0-9]{6,14}$/i.test(id)
 
   // טעינת gtag פעם אחת

@@ -90,6 +90,7 @@
 .an-cross { stroke: var(--an-muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .an-dot--spike { fill: var(--an-good); stroke: var(--adm-surface, #fff); stroke-width: 1.6; }
 .an-dot--drop { fill: var(--an-bad); stroke: var(--adm-surface, #fff); stroke-width: 1.6; }
+.an-dot--last { fill: var(--an-accent); stroke: var(--adm-surface, #fff); stroke-width: 1.6; }
 .an-tip {
   position: absolute; top: 4px; transform: translateX(50%);
   background: var(--adm-surface, #fff); border: 1px solid var(--an-line); border-radius: 8px;
@@ -162,12 +163,16 @@
 }
 @media (max-width: 680px) {
   .an { gap: 1.2rem; }
-  .an-metrics { grid-template-columns: repeat(2, 1fr); }
+  .an-metrics { grid-template-columns: repeat(2, 1fr); row-gap: 0.9rem; }
   .an-metric { border-inline-start: none; padding-inline: 0; }
   .an-metric__value { font-size: 1.5rem; }
+  /* גרף גבוה יותר במובייל — היחס הטבעי של ה-viewBox הופך אותו לנמוך מדי */
+  .an-hero__plot svg { height: 230px; }
   .an-section { overflow-x: auto; }
-  .an-table { min-width: 520px; }
+  .an-table { min-width: 470px; font-size: 0.78rem; }
+  .an-table td, .an-table thead th { padding-inline: 0.4rem; }
   .an-geo { grid-template-columns: 1fr; }
   .an-drill { grid-template-columns: 1fr; gap: 0.9rem; }
   .an-search { width: 130px; }
+  .an-top__side { width: 100%; justify-content: space-between; }
 }

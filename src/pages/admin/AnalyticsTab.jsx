@@ -172,6 +172,7 @@ function HeroChart({ series, prevSeries }) {
           {anomalies.map((a) => (
             <circle key={a.r.d[0]} cx={x(a.i)} cy={y(a.r.m[metric])} r="4.5" className={a.z > 0 ? 'an-dot--spike' : 'an-dot--drop'} />
           ))}
+          <circle cx={x(n - 1)} cy={y(cur[n - 1].m[metric])} r="3.5" className="an-dot--last" />
           {hover != null && <line x1={x(hover.i)} x2={x(hover.i)} y1={PT} y2={H - PB} className="an-cross" />}
         </svg>
         {hv && (

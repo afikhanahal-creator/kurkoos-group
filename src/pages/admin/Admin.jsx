@@ -101,6 +101,7 @@ const THEME_KEY = 'kurkoos-adm-theme'
 export default function Admin() {
   const session = useAuth()
   const [tab, setTab] = useState('projects')
+  const [navOpen, setNavOpen] = useState(false)   // מגירת ניווט במובייל
   const [theme, setTheme] = useState(() => {
     if (typeof localStorage !== 'undefined') return localStorage.getItem(THEME_KEY) || 'light'
     return 'light'
@@ -116,7 +117,8 @@ export default function Admin() {
   const initials = (email[0] || 'A').toUpperCase()
 
   return (
-    <div className="adm" dir="rtl" data-theme={theme}>
+    <div className={`adm${navOpen ? ' adm--nav-open' : ''}`} dir="rtl" data-theme={theme}>
+      {navOpen && <button type="button" className="adm__nav-backdrop" aria-label="סגירת התפריט" onClick={() => setNavOpen(false)} />}
       <aside className="adm__sidebar">
         <div className="adm__logo">
           <img className="adm__logo-img" src="/kurkoos-logo-white.svg" alt="Kurkoos Group" />
@@ -134,7 +136,7 @@ export default function Admin() {
                     key={t.id}
                     type="button"
                     className={`adm__nav-item ${tab === t.id ? 'adm__nav-item--active' : ''}`}
-                    onClick={() => setTab(t.id)}
+                    onClick={() => { setTab(t.id); setNavOpen(false) }}
                   >
                     <I width={20} height={20} />
                     <span>{t.label}</span>
@@ -161,6 +163,14 @@ export default function Admin() {
 
       <div className="adm__main">
         <header className="adm__topbar">
+          <button
+            type="button"
+            className="adm__burger"
+            onClick={() => setNavOpen(true)}
+            aria-label="פתיחת תפריט הניהול"
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
           <div className="adm__topbar-head">
             <h1 className="adm__page-title">{active.label}</h1>
             <p className="adm__page-sub">{active.sub}</p>

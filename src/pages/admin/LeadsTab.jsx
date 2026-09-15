@@ -897,6 +897,7 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
             </div>
           )}
 
+          <div className="adm-panel__sec-title">פרטי קשר</div>
           <div className="adm-leads__grid">
             <label>טלפון<input dir="ltr" value={f.phone||''} onChange={set('phone')}/></label>
             <label>אימייל<input dir="ltr" value={f.email||''} onChange={set('email')}/></label>
@@ -910,6 +911,7 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
             {f.created_at && <label>תאריך פנייה<span className="adm-leads__static">{fmtDate(f.created_at)} {fmtTime(f.created_at)}</span></label>}
           </div>
 
+          <div className="adm-panel__sec-title">הפנייה והערות</div>
           <label className="adm-leads__field-wide">הודעת הפונה<textarea rows={3} value={f.message||''} onChange={set('message')}/></label>
 
           {journey && journey.length > 0 && (

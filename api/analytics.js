@@ -23,10 +23,19 @@ const SCOPE = 'https://www.googleapis.com/auth/analytics.readonly'
 let _tok = { v: null, exp: 0 }
 async function googleToken() {
   if (_tok.v && Date.now() < _tok.exp) return _tok.v
-  const email = process.env.GA_SA_CLIENT_EMAIL
+  const email = (process.env.GA_SA_CLIENT_EMAIL || '').trim()
   let key = process.env.GA_SA_PRIVATE_KEY || ''
   if (!email || !key) throw new Error('NOT_CONFIGURED')
-  key = key.replace(/\\n/g, '\n')
+  // נרמול סלחני של המפתח — מתקן טעויות הדבקה נפוצות ב-Vercel:
+  key = key.trim()
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) key = key.slice(1, -1)   // מרכאות מסביב
+  key = key.replace(/\\n/g, '\n').replace(/\r/g, '').trim()   // \n מילולי מתוך ה-JSON
+  if (!key.includes('BEGIN PRIVATE KEY')) throw new Error('GA_SA_PRIVATE_KEY לא תקין: חסרות שורות BEGIN/END PRIVATE KEY — העתיקו את הערך המלא של private_key מקובץ ה-JSON')
+  if (!key.includes('\n')) {
+    // הודבק כשורה אחת בלי שבירות — משחזרים מבנה PEM תקני
+    const m = key.match(/-----BEGIN PRIVATE KEY-----(.+?)-----END PRIVATE KEY-----/)
+    if (m) key = `-----BEGIN PRIVATE KEY-----\n${m[1].replace(/\s+/g, '').replace(/(.{64})/g, '$1\n').trim()}\n-----END PRIVATE KEY-----\n`
+  }
   const now = Math.floor(Date.now() / 1000)
   const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
   const unsigned = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({ iss: email, scope: SCOPE, aud: TOKEN_URL, iat: now, exp: now + 3600 })}`

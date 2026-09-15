@@ -81,6 +81,7 @@ function reportSpecs(range, prevRange) {
     totals: { dateRanges: cur, metrics: M('totalUsers', 'newUsers', 'sessions', 'engagedSessions', 'screenPageViews', 'engagementRate', 'bounceRate', 'eventCount', 'keyEvents', 'averageSessionDuration') },
     totalsPrev: { dateRanges: [{ startDate: prevRange.start, endDate: prevRange.end }], metrics: M('totalUsers', 'newUsers', 'sessions', 'engagedSessions', 'screenPageViews', 'engagementRate', 'bounceRate', 'eventCount', 'keyEvents', 'averageSessionDuration') },
     timeseries: { dateRanges: cur, dimensions: D('date'), metrics: M('totalUsers', 'sessions', 'screenPageViews', 'keyEvents'), orderBys: [{ dimension: { dimensionName: 'date' } }], limit: 400 },
+    timeseriesPrev: { dateRanges: [{ startDate: prevRange.start, endDate: prevRange.end }], dimensions: D('date'), metrics: M('totalUsers', 'sessions', 'screenPageViews', 'keyEvents'), orderBys: [{ dimension: { dimensionName: 'date' } }], limit: 400 },
     channels: { dateRanges: cur, dimensions: D('sessionDefaultChannelGroup'), metrics: M('totalUsers', 'newUsers', 'sessions', 'engagementRate', 'keyEvents'), orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 12 },
     sources: { dateRanges: cur, dimensions: D('sessionSource', 'sessionMedium'), metrics: M('totalUsers', 'sessions', 'engagementRate', 'keyEvents'), orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 12 },
     pages: { dateRanges: cur, dimensions: D('pagePath', 'pageTitle'), metrics: M('screenPageViews', 'totalUsers', 'userEngagementDuration', 'keyEvents'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 15 },
@@ -160,6 +161,21 @@ export default async function handler(req, res) {
         return d
       })
       res.status(200).json({ configured: true, realtime: data })
+      return
+    }
+
+    if (type === 'page') {
+      // Drill-down לעמוד בודד — מגמה, מקורות ומכשירים של אותו עמוד בלבד
+      const path = String(body.path || '').slice(0, 300)
+      if (!path.startsWith('/') || !start || !end) { res.status(400).json({ error: 'bad page request' }); return }
+      const filt = { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'EXACT', value: path } } }
+      const cur = [{ startDate: start, endDate: end }]
+      const reports = await cached(`page:${prop}:${path}:${start}:${end}`, () => gaBatch(prop, token, [
+        { dateRanges: cur, dimensions: [{ name: 'date' }], metrics: [{ name: 'screenPageViews' }, { name: 'totalUsers' }], dimensionFilter: filt, orderBys: [{ dimension: { dimensionName: 'date' } }], limit: 400 },
+        { dateRanges: cur, dimensions: [{ name: 'sessionSource' }], metrics: [{ name: 'totalUsers' }, { name: 'sessions' }], dimensionFilter: filt, orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 8 },
+        { dateRanges: cur, dimensions: [{ name: 'deviceCategory' }], metrics: [{ name: 'totalUsers' }], dimensionFilter: filt, orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 4 },
+      ]))
+      res.status(200).json({ configured: true, page: path, reports: { timeseries: reports[0], sources: reports[1], devices: reports[2] } })
       return
     }
 

@@ -20,6 +20,7 @@ async function call(payload) {
 export const fetchDashboard = (start, end) => call({ type: 'dashboard', start, end })
 export const fetchRealtime = () => call({ type: 'realtime' })
 export const testConnection = () => call({ type: 'test' })
+export const fetchPageDetail = (path, start, end) => call({ type: 'page', path, start, end })
 
 /* ---- עזרי פירוק דוח GA4 ---- */
 export function rows(report) {

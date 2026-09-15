@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
-import { fetchDashboard, fetchRealtime, testConnection, rows, totalsOf } from '../../lib/analyticsApi.js'
+import { fetchDashboard, fetchRealtime, fetchPageDetail, testConnection, rows, totalsOf } from '../../lib/analyticsApi.js'
 import './AnalyticsTab.css'
 
 /* ============================================================
-   AnalyticsTab — דשבורד תנועה מלא על נתוני Google Analytics 4.
-   כל מספר כאן מגיע מ-GA4 Data API דרך צד השרת. אין נתוני דמו:
-   כשאין חיבור — מוצג מסך הקמה, לא מספרים מזויפים.
+   AnalyticsTab — מערכת אנליטיקס Data-First על נתוני GA4 אמיתיים.
+   הנתונים הם המוצר; העיצוב משרת אותם: היררכיה, צפיפות מידע,
+   השוואות ו-Drill-Down — בלי קישוטים. אין נתוני דמו בשום מצב.
    ============================================================ */
 
 const PRESETS = [
@@ -16,17 +16,12 @@ const PRESETS = [
   { id: 'tm', label: 'החודש' },
   { id: 'lm', label: 'חודש שעבר' },
 ]
-
 const iso = (d) => d.toISOString().slice(0, 10)
 function presetRange(id) {
   const now = new Date()
   const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
   if (id === 'tm') return { start: iso(new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))), end: iso(today) }
-  if (id === 'lm') {
-    const s = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 1, 1))
-    const e = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 0))
-    return { start: iso(s), end: iso(e) }
-  }
+  if (id === 'lm') return { start: iso(new Date(Date.UTC(now.getFullYear(), now.getMonth() - 1, 1))), end: iso(new Date(Date.UTC(now.getFullYear(), now.getMonth(), 0))) }
   const days = PRESETS.find((p) => p.id === id)?.days || 30
   const s = new Date(today); s.setUTCDate(s.getUTCDate() - (days - 1))
   return { start: iso(s), end: iso(today) }
@@ -38,173 +33,284 @@ const fmtNum = (n) => {
   if (n >= 10_000) return (n / 1000).toFixed(1) + 'K'
   return Math.round(n).toLocaleString('he-IL')
 }
-const fmtPct = (n) => (n == null ? '—' : (n * 100).toFixed(1) + '%')
-const fmtDur = (sec) => {
-  if (!sec) return '0:00'
-  const m = Math.floor(sec / 60), s = Math.round(sec % 60)
-  return `${m}:${String(s).padStart(2, '0')}`
-}
-const CHANNEL_HE = {
-  'Organic Search': 'חיפוש אורגני', Direct: 'ישיר', 'Paid Search': 'חיפוש ממומן',
-  'Organic Social': 'רשתות חברתיות', 'Paid Social': 'סושיאל ממומן', Referral: 'אתרים מפנים',
-  Email: 'אימייל', Display: 'דיספליי', Unassigned: 'לא משויך', 'Cross-network': 'רב-ערוצי',
-}
-const EVENT_HE = {
-  page_view: 'צפיית עמוד', session_start: 'תחילת ביקור', first_visit: 'ביקור ראשון',
-  scroll: 'גלילה', click: 'קליק', user_engagement: 'מעורבות', form_submit: 'שליחת טופס',
-  form_start: 'התחלת מילוי טופס', file_download: 'הורדת קובץ',
+const fmtPct = (n, d = 1) => (n == null || Number.isNaN(n) ? '—' : (n * 100).toFixed(d) + '%')
+const fmtDur = (sec) => { if (!sec) return '0:00'; const m = Math.floor(sec / 60); return `${m}:${String(Math.round(sec % 60)).padStart(2, '0')}` }
+const dLabel = (d) => `${d.slice(6, 8)}.${d.slice(4, 6)}`
+const CHANNEL_HE = { 'Organic Search': 'חיפוש אורגני', Direct: 'ישיר', 'Paid Search': 'חיפוש ממומן', 'Organic Social': 'רשתות חברתיות', 'Paid Social': 'סושיאל ממומן', Referral: 'אתרים מפנים', Email: 'אימייל', Display: 'דיספליי', Unassigned: 'לא משויך', 'Cross-network': 'רב-ערוצי' }
+const DEVICE_HE = { desktop: 'דסקטופ', mobile: 'מובייל', tablet: 'טאבלט' }
+
+/* ---------- delta ---------- */
+function Delta({ cur, prev, invert = false, dim = false }) {
+  if (prev == null || !prev || cur == null) return <span className="an-delta an-delta--na">—</span>
+  const d = (cur - prev) / prev
+  if (Math.abs(d) < 0.002) return <span className="an-delta an-delta--na">0%</span>
+  const up = d > 0
+  const good = invert ? !up : up
+  return (
+    <span className={`an-delta ${dim ? '' : good ? 'is-good' : 'is-bad'}`}>
+      {up ? '↑' : '↓'}{Math.abs(d * 100).toFixed(1)}%
+    </span>
+  )
 }
 
-/* ---------- כרטיס KPI עם השוואה ---------- */
-function Kpi({ label, value, prev, fmt = fmtNum, invert = false }) {
-  let delta = null
-  if (prev != null && prev !== 0 && value != null) delta = (value - prev) / prev
-  const up = delta != null && delta > 0.001
-  const down = delta != null && delta < -0.001
-  const good = invert ? down : up
-  const bad = invert ? up : down
+/* ---------- sparkline ---------- */
+function Spark({ values, w = 96, h = 26 }) {
+  if (!values || values.length < 2) return null
+  const max = Math.max(...values, 1)
+  const min = Math.min(...values)
+  const span = Math.max(1, max - min)
+  const pts = values.map((v, i) => `${(i / (values.length - 1)) * w},${h - 2 - ((v - min) / span) * (h - 4)}`).join(' ')
+  return <svg className="an-spark" viewBox={`0 0 ${w} ${h}`} width={w} height={h} dir="ltr"><polyline points={pts} fill="none" /></svg>
+}
+
+/* ---------- bucketing (יומי/שבועי/חודשי) ---------- */
+function bucket(series, gran) {
+  if (gran === 'day' || series.length === 0) return series
+  const keyOf = (d) => {
+    if (gran === 'month') return d.slice(0, 6)
+    const dt = new Date(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}T00:00:00Z`)
+    const day = (dt.getUTCDay() + 1) % 7
+    dt.setUTCDate(dt.getUTCDate() - day)
+    return iso(dt).replace(/-/g, '')
+  }
+  const map = new Map()
+  for (const r of series) {
+    const k = keyOf(r.d[0])
+    const e = map.get(k) || { d: [k], m: [0, 0, 0, 0] }
+    r.m.forEach((v, i) => { e.m[i] += v })
+    map.set(k, e)
+  }
+  return [...map.values()]
+}
+
+/* ---------- anomalies (z-score על התנועה היומית) ---------- */
+function findAnomalies(series, mi = 0) {
+  if (series.length < 8) return []
+  const vals = series.map((r) => r.m[mi])
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length
+  const std = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) || 1
+  return series
+    .map((r, i) => ({ r, i, z: (r.m[mi] - mean) / std }))
+    .filter((x) => Math.abs(x.z) > 2.2 && Math.abs(x.r.m[mi] - mean) > mean * 0.25)
+}
+
+/* ---------- הגרף המרכזי: השוואה, tooltip, granularity, anomalies ---------- */
+const METRICS = [
+  { i: 0, id: 'users', label: 'משתמשים' },
+  { i: 1, id: 'sessions', label: 'ביקורים' },
+  { i: 2, id: 'views', label: 'צפיות' },
+  { i: 3, id: 'conv', label: 'המרות' },
+]
+function HeroChart({ series, prevSeries }) {
+  const [metric, setMetric] = useState(0)
+  const [gran, setGran] = useState('day')
+  const [compare, setCompare] = useState(true)
+  const [hover, setHover] = useState(null)
+  const wrapRef = useRef(null)
+
+  const cur = useMemo(() => bucket(series, gran), [series, gran])
+  const prev = useMemo(() => bucket(prevSeries, gran), [prevSeries, gran])
+  const anomalies = useMemo(() => (gran === 'day' ? findAnomalies(cur, metric) : []), [cur, metric, gran])
+
+  if (!cur.length) return <p className="an-empty">אין נתונים בטווח שנבחר</p>
+
+  const W = 960, H = 300, PL = 46, PB = 26, PT = 14, PR = 10
+  const n = cur.length
+  const max = Math.max(1, ...cur.map((r) => r.m[metric]), ...(compare ? prev.map((r) => r.m[metric]) : [0]))
+  const x = (i, len = n) => PL + (len < 2 ? (W - PL - PR) / 2 : (i / (len - 1)) * (W - PL - PR))
+  const y = (v) => PT + (1 - v / max) * (H - PT - PB)
+  const line = (list) => list.map((r, i) => `${i ? 'L' : 'M'}${x(i, list.length).toFixed(1)},${y(r.m[metric]).toFixed(1)}`).join('')
+  const area = `${line(cur)}L${x(n - 1)},${y(0)}L${x(0)},${y(0)}Z`
+  const ticks = cur.length > 12 ? cur.filter((_, i) => i % Math.ceil(cur.length / 9) === 0) : cur
+
+  const onMove = (e) => {
+    const rect = wrapRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const rel = ((e.clientX - rect.left) / rect.width) * W
+    const i = Math.round(((rel - PL) / (W - PL - PR)) * (n - 1))
+    if (i >= 0 && i < n) setHover({ i, px: (x(i) / W) * rect.width })
+    else setHover(null)
+  }
+  const hv = hover != null ? cur[hover.i] : null
+  const hvPrev = hover != null && prev[hover.i] ? prev[hover.i] : null
+  const granLabel = { day: 'יומי', week: 'שבועי', month: 'חודשי' }
+
   return (
-    <div className="antab__kpi">
-      <span className="antab__kpi-label">{label}</span>
-      <span className="antab__kpi-value">{fmt(value)}</span>
-      {delta != null && (
-        <span className={`antab__kpi-delta ${good ? 'is-good' : ''} ${bad ? 'is-bad' : ''}`}>
-          {up ? '▲' : down ? '▼' : '•'} {Math.abs(delta * 100).toFixed(1)}%
-          <i>מול התקופה הקודמת</i>
-        </span>
+    <div className="an-hero">
+      <div className="an-hero__bar">
+        <div className="an-seg">
+          {METRICS.map((m) => (
+            <button key={m.id} type="button" className={metric === m.i ? 'is-on' : ''} onClick={() => setMetric(m.i)}>{m.label}</button>
+          ))}
+        </div>
+        <div className="an-hero__bar-side">
+          <label className="an-check"><input type="checkbox" checked={compare} onChange={() => setCompare(!compare)} /> תקופה קודמת</label>
+          <div className="an-seg an-seg--sm">
+            {['day', 'week', 'month'].map((g) => (
+              <button key={g} type="button" className={gran === g ? 'is-on' : ''} onClick={() => { setGran(g); setHover(null) }}>{granLabel[g]}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="an-hero__plot" ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" dir="ltr">
+          {[0.25, 0.5, 0.75, 1].map((f) => (
+            <g key={f}>
+              <line x1={PL} x2={W - PR} y1={y(max * f)} y2={y(max * f)} className="an-grid" />
+              <text x={PL - 7} y={y(max * f) + 4} className="an-axis" textAnchor="end">{fmtNum(max * f)}</text>
+            </g>
+          ))}
+          {ticks.map((r) => (
+            <text key={r.d[0]} x={x(cur.indexOf(r))} y={H - 7} className="an-axis" textAnchor="middle">
+              {gran === 'month' ? `${r.d[0].slice(4, 6)}/${r.d[0].slice(2, 4)}` : dLabel(r.d[0])}
+            </text>
+          ))}
+          <path d={area} className="an-area" />
+          {compare && prev.length > 1 && <path d={line(prev)} className="an-line--prev" fill="none" />}
+          <path d={line(cur)} className="an-line" fill="none" />
+          {anomalies.map((a) => (
+            <circle key={a.r.d[0]} cx={x(a.i)} cy={y(a.r.m[metric])} r="4.5" className={a.z > 0 ? 'an-dot--spike' : 'an-dot--drop'} />
+          ))}
+          {hover != null && <line x1={x(hover.i)} x2={x(hover.i)} y1={PT} y2={H - PB} className="an-cross" />}
+        </svg>
+        {hv && (
+          <div className="an-tip" style={{ insetInlineStart: `min(max(${hover.px}px, 70px), calc(100% - 90px))` }}>
+            <b>{gran === 'month' ? `${hv.d[0].slice(4, 6)}/${hv.d[0]}`.slice(0, 7) : dLabel(hv.d[0])}</b>
+            <span>{METRICS[metric].label}: <b>{fmtNum(hv.m[metric])}</b></span>
+            {hvPrev && <span className="an-tip__prev">תקופה קודמת: {fmtNum(hvPrev.m[metric])}</span>}
+          </div>
+        )}
+      </div>
+
+      {anomalies.length > 0 && (
+        <p className="an-anom-note">
+          זוהו {anomalies.length} ימים חריגים: {anomalies.map((a) => `${dLabel(a.r.d[0])} (${a.z > 0 ? 'קפיצה' : 'ירידה'} — ${fmtNum(a.r.m[metric])})`).join(' · ')}
+        </p>
       )}
     </div>
   )
 }
 
-/* ---------- גרף קווים SVG ---------- */
-const SERIES = [
-  { key: 0, id: 'users', label: 'משתמשים', color: '#16688c' },
-  { key: 1, id: 'sessions', label: 'ביקורים', color: '#2e9e6b' },
-  { key: 2, id: 'views', label: 'צפיות', color: '#8c6d1f' },
-  { key: 3, id: 'conv', label: 'המרות', color: '#a90b0c' },
-]
-function TrendChart({ series }) {
-  const [on, setOn] = useState({ users: true, sessions: true, views: false, conv: false })
-  if (!series.length) return <p className="antab__empty">אין נתונים בטווח שנבחר</p>
-  const W = 900, H = 260, PL = 44, PB = 28, PT = 12
-  const act = SERIES.filter((s) => on[s.id])
-  const max = Math.max(1, ...act.flatMap((s) => series.map((r) => r.m[s.key] || 0)))
-  const x = (i) => PL + (i / Math.max(1, series.length - 1)) * (W - PL - 8)
-  const y = (v) => PT + (1 - v / max) * (H - PT - PB)
-  const path = (k) => series.map((r, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(r.m[k] || 0).toFixed(1)}`).join('')
-  const labels = series.length > 14 ? series.filter((_, i) => i % Math.ceil(series.length / 10) === 0) : series
-  const dLabel = (d) => `${d.slice(6, 8)}.${d.slice(4, 6)}`
+/* ---------- טבלה עם מיון/חיפוש ---------- */
+function useSort(def) {
+  const [sort, setSort] = useState(def)
+  const toggle = (key) => setSort((s) => ({ key, desc: s.key === key ? !s.desc : true }))
+  return [sort, toggle]
+}
+function Th({ label, k, sort, onSort, num = true }) {
   return (
-    <div>
-      <div className="antab__legend">
-        {SERIES.map((s) => (
-          <button key={s.id} type="button" className={`antab__legend-btn ${on[s.id] ? 'is-on' : ''}`}
-            style={{ '--c': s.color }} onClick={() => setOn((p) => ({ ...p, [s.id]: !p[s.id] }))}>
-            {s.label}
-          </button>
-        ))}
+    <th className={num ? 'is-num' : ''} onClick={() => onSort(k)} role="button">
+      {label}{sort.key === k ? (sort.desc ? ' ↓' : ' ↑') : ''}
+    </th>
+  )
+}
+
+/* ---------- Drill-down לעמוד ---------- */
+function PageDrill({ path, range }) {
+  const [state, setState] = useState({ phase: 'loading' })
+  useEffect(() => {
+    let on = true
+    setState({ phase: 'loading' })
+    fetchPageDetail(path, range.start, range.end)
+      .then((d) => on && setState({ phase: 'ready', d }))
+      .catch((e) => on && setState({ phase: 'error', message: String(e.message || e) }))
+    return () => { on = false }
+  }, [path, range.start, range.end])
+
+  if (state.phase === 'loading') return <div className="an-drill an-drill--loading">טוען נתוני עמוד…</div>
+  if (state.phase === 'error') return <div className="an-drill an-drill--loading">שגיאה: {state.message}</div>
+  const ts = rows(state.d.reports.timeseries)
+  const srcs = rows(state.d.reports.sources)
+  const devs = rows(state.d.reports.devices)
+  const devTotal = devs.reduce((a, d) => a + d.m[0], 0)
+  return (
+    <div className="an-drill">
+      <div className="an-drill__col an-drill__col--chart">
+        <span className="an-h6">צפיות לאורך התקופה</span>
+        {ts.length > 1 ? <Spark values={ts.map((r) => r.m[0])} w={260} h={54} /> : <span className="an-muted">מעט נתונים</span>}
       </div>
-      <div className="antab__chart-scroll">
-        <svg viewBox={`0 0 ${W} ${H}`} className="antab__chart" preserveAspectRatio="none" dir="ltr">
-          {[0.25, 0.5, 0.75, 1].map((f) => (
-            <g key={f}>
-              <line x1={PL} x2={W - 8} y1={y(max * f)} y2={y(max * f)} className="antab__grid" />
-              <text x={PL - 6} y={y(max * f) + 4} className="antab__axis" textAnchor="end">{fmtNum(max * f)}</text>
-            </g>
-          ))}
-          {labels.map((r) => {
-            const i = series.indexOf(r)
-            return <text key={r.d[0]} x={x(i)} y={H - 8} className="antab__axis" textAnchor="middle">{dLabel(r.d[0])}</text>
-          })}
-          {act.map((s) => <path key={s.id} d={path(s.key)} fill="none" stroke={s.color} strokeWidth="2.4" strokeLinejoin="round" />)}
-        </svg>
+      <div className="an-drill__col">
+        <span className="an-h6">מקורות לעמוד זה</span>
+        {srcs.length ? srcs.slice(0, 5).map((s) => (
+          <div key={s.d[0]} className="an-row"><span dir="ltr">{s.d[0]}</span><b>{fmtNum(s.m[0])}</b></div>
+        )) : <span className="an-muted">—</span>}
+      </div>
+      <div className="an-drill__col">
+        <span className="an-h6">מכשירים</span>
+        {devs.map((d) => (
+          <div key={d.d[0]} className="an-row"><span>{DEVICE_HE[d.d[0]] || d.d[0]}</span><b>{devTotal ? Math.round((d.m[0] / devTotal) * 100) : 0}%</b></div>
+        ))}
       </div>
     </div>
   )
 }
 
-/* ---------- פס התפלגות ---------- */
-function Bar({ value, max, color }) {
-  return <span className="antab__bar"><i style={{ width: `${max ? Math.max(2, (value / max) * 100) : 0}%`, background: color || 'var(--an-accent)' }} /></span>
-}
-
-/* ---------- ייצוא CSV ---------- */
+/* ---------- CSV ---------- */
 function exportCsv(name, head, lines) {
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
   const csv = '﻿' + [head.map(esc).join(','), ...lines.map((l) => l.map(esc).join(','))].join('\r\n')
   const a = document.createElement('a')
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
   a.download = `${name}-${iso(new Date())}.csv`
-  a.click()
-  URL.revokeObjectURL(a.href)
+  a.click(); URL.revokeObjectURL(a.href)
 }
 
-/* ---------- תובנות אוטומטיות (מחושבות מהנתונים בלבד) ---------- */
-function buildInsights({ tot, prevTot, channels, pages, devices }) {
+/* ---------- תובנות (מהנתונים בלבד) ---------- */
+function buildInsights({ tot, prevTot, channels, pages, devices, anomalies }) {
   const out = []
   const pct = (a, b) => (b ? ((a - b) / b) * 100 : null)
-  const users = tot[0], prevUsers = prevTot[0]
-  const du = pct(users, prevUsers)
-  if (du != null && Math.abs(du) >= 5) {
-    out.push({ tone: du > 0 ? 'good' : 'bad', text: `התנועה ${du > 0 ? 'עלתה' : 'ירדה'} ב-${Math.abs(du).toFixed(0)}% לעומת התקופה הקודמת (${fmtNum(prevUsers)} → ${fmtNum(users)} משתמשים).` })
-  }
+  const du = pct(tot[0], prevTot[0])
+  if (du != null && Math.abs(du) >= 5) out.push({ tone: du > 0 ? 'good' : 'bad', text: `התנועה ${du > 0 ? 'עלתה' : 'ירדה'} ב-${Math.abs(du).toFixed(0)}% מול התקופה הקודמת (${fmtNum(prevTot[0])} → ${fmtNum(tot[0])} משתמשים).` })
   if (channels.length) {
     const top = channels[0]
-    out.push({ tone: 'info', text: `מקור התנועה הגדול ביותר: ${CHANNEL_HE[top.d[0]] || top.d[0]} — ${fmtNum(top.m[2])} ביקורים (${((top.m[2] / Math.max(1, tot[2])) * 100).toFixed(0)}% מהתנועה).` })
-    const best = [...channels].filter((c) => c.m[2] >= 5).sort((a, b) => b.m[4] / b.m[2] - a.m[4] / a.m[2])[0]
-    if (best && best.m[4] > 0) out.push({ tone: 'good', text: `המקור האיכותי ביותר להמרות: ${CHANNEL_HE[best.d[0]] || best.d[0]} (${best.m[4]} המרות מ-${fmtNum(best.m[2])} ביקורים).` })
+    out.push({ tone: 'info', text: `${CHANNEL_HE[top.d[0]] || top.d[0]} הוא מקור התנועה הגדול ביותר — ${((top.m[2] / Math.max(1, tot[2])) * 100).toFixed(0)}% מהביקורים.` })
+    const overallCR = tot[2] ? tot[8] / tot[2] : 0
+    const quality = channels.filter((c) => c.m[2] >= 10 && c.m[4] / c.m[2] > overallCR * 1.5 && c.m[4] > 1)
+    quality.slice(0, 1).forEach((c) => out.push({ tone: 'good', text: `${CHANNEL_HE[c.d[0]] || c.d[0]} מביא פחות תנועה אך ממיר פי ${(c.m[4] / c.m[2] / Math.max(overallCR, 0.0001)).toFixed(1)} מהממוצע — תנועה איכותית.` }))
   }
   if (devices.length >= 2) {
     const total = devices.reduce((a, d) => a + d.m[0], 0)
-    const mob = devices.find((d) => d.d[0] === 'mobile')
-    const desk = devices.find((d) => d.d[0] === 'desktop')
-    if (mob && total) {
-      const share = (mob.m[0] / total) * 100
-      out.push({ tone: 'info', text: `${share.toFixed(0)}% מהמשתמשים מגיעים מהמובייל.` })
-      if (desk && mob.m[2] && desk.m[2] && mob.m[2] < desk.m[2] * 0.75) {
-        out.push({ tone: 'warn', text: `שיעור המעורבות במובייל (${fmtPct(mob.m[2])}) נמוך משמעותית מהדסקטופ (${fmtPct(desk.m[2])}) — שווה בדיקת חוויית מובייל.` })
+    const mob = devices.find((d) => d.d[0] === 'mobile'), desk = devices.find((d) => d.d[0] === 'desktop')
+    if (mob && desk && total) {
+      const mCR = mob.m[1] ? mob.m[3] / mob.m[1] : 0, dCR = desk.m[1] ? desk.m[3] / desk.m[1] : 0
+      if (dCR > 0 && mCR < dCR * 0.6 && mob.m[0] / total > 0.4) {
+        out.push({ tone: 'warn', text: `המובייל מהווה ${Math.round((mob.m[0] / total) * 100)}% מהתנועה אך ממיר ${Math.round((1 - mCR / dCR) * 100)}% פחות מהדסקטופ — שווה בדיקת חוויית מובייל.` })
       }
     }
   }
   if (pages.length) {
-    const top = pages[0]
-    out.push({ tone: 'info', text: `העמוד הנצפה ביותר: ${top.d[1] || top.d[0]} (${fmtNum(top.m[0])} צפיות).` })
-    const lowEng = pages.filter((p) => p.m[0] >= Math.max(20, (tot[4] || 0) * 0.03)).map((p) => ({ p, avg: p.m[1] ? p.m[2] / p.m[1] : 0 })).sort((a, b) => a.avg - b.avg)[0]
-    if (lowEng && lowEng.avg < 15) out.push({ tone: 'warn', text: `העמוד "${lowEng.p.d[1] || lowEng.p.d[0]}" מקבל תנועה רבה אך זמן המעורבות בו נמוך (${fmtDur(lowEng.avg)}) — שווה לחזק את התוכן שם.` })
+    const heavy = pages.filter((p) => p.m[0] >= Math.max(20, (tot[4] || 0) * 0.04))
+    const low = heavy.map((p) => ({ p, avg: p.m[1] ? p.m[2] / p.m[1] : 0 })).sort((a, b) => a.avg - b.avg)[0]
+    if (low && low.avg < 12) out.push({ tone: 'warn', text: `"${low.p.d[1] || low.p.d[0]}" מקבל תנועה גבוהה אך זמן מעורבות נמוך במיוחד (${fmtDur(low.avg)}).` })
   }
-  const dConv = pct(tot[8], prevTot[8])
-  if (dConv != null && Math.abs(dConv) >= 10 && (tot[8] > 2 || prevTot[8] > 2)) {
-    out.push({ tone: dConv > 0 ? 'good' : 'bad', text: `ההמרות (אירועי מפתח) ${dConv > 0 ? 'עלו' : 'ירדו'} ב-${Math.abs(dConv).toFixed(0)}%.` })
-  }
+  anomalies.slice(0, 1).forEach((a) => out.push({ tone: a.z > 0 ? 'info' : 'warn', text: `ב-${dLabel(a.r.d[0])} נרשמה ${a.z > 0 ? 'קפיצה' : 'ירידה'} חריגה בתנועה (${fmtNum(a.r.m[0])} משתמשים) — חורג משמעותית מהממוצע.` }))
   return out
 }
 
 /* ============================================================ */
 export default function AnalyticsTab() {
   const [preset, setPreset] = useState('30d')
-  const [state, setState] = useState({ phase: 'loading' })   // loading | setup | error | ready
+  const [state, setState] = useState({ phase: 'loading' })
   const [rt, setRt] = useState(null)
   const [propId, setPropId] = useState('')
   const [saveMsg, setSaveMsg] = useState('')
-  const [showSetup, setShowSetup] = useState(false)
+  const [openPage, setOpenPage] = useState(null)
+  const [pageQ, setPageQ] = useState('')
+  const [srcQ, setSrcQ] = useState('')
+  const [pSort, pToggle] = useSort({ key: 0, desc: true })
+  const [sSort, sToggle] = useSort({ key: 1, desc: true })
 
   const range = useMemo(() => presetRange(preset), [preset])
 
   const load = useCallback(() => {
     setState((s) => (s.phase === 'ready' ? { ...s, refreshing: true } : { phase: 'loading' }))
     fetchDashboard(range.start, range.end)
-      .then((out) => {
-        if (!out.configured) { setState({ phase: 'setup', missing: out.missing }); return }
-        setState({ phase: 'ready', data: out })
-      })
+      .then((out) => (out.configured ? setState({ phase: 'ready', data: out }) : setState({ phase: 'setup', missing: out.missing })))
       .catch((e) => setState({ phase: 'error', message: String(e.message || e) }))
   }, [range.start, range.end])
-
   useEffect(load, [load])
   useEffect(() => { fetchSettings().then((s) => setPropId(String(s.ga4_property_id || ''))).catch(() => {}) }, [])
-
-  // זמן-אמת: רענון כל 60 שניות כשיש חיבור
   useEffect(() => {
     if (state.phase !== 'ready') return
     let on = true
@@ -217,265 +323,326 @@ export default function AnalyticsTab() {
   const saveProp = async () => {
     try {
       await setSetting('ga4_property_id', propId.replace(/\D/g, ''))
-      setSaveMsg('נשמר ✓ — בודק חיבור…')
+      setSaveMsg('נשמר — בודק חיבור…')
       const t = await testConnection().catch((e) => ({ error: String(e.message || e) }))
       setSaveMsg(t.ok ? 'החיבור תקין ✓' : t.error ? `שגיאת חיבור: ${t.error}` : 'החיבור עדיין לא מוגדר במלואו')
       load()
     } catch (e) { setSaveMsg('שמירה נכשלה: ' + (e.message || e)) }
   }
 
-  /* ---------- מסכי מצב ---------- */
-  if (state.phase === 'loading') {
-    return <div className="antab"><div className="antab__skeleton">טוען נתונים מ-Google Analytics…</div></div>
-  }
+  if (state.phase === 'loading') return <div className="an"><div className="an-skeleton">טוען נתונים מ-Google Analytics…</div></div>
 
   if (state.phase === 'setup' || state.phase === 'error') {
     return (
-      <div className="antab">
-        <section className="antab__card">
-          <div className="antab__head">
-            <h3>חיבור Google Analytics לדשבורד</h3>
-            <span className="antab__chip antab__chip--off">{state.phase === 'error' ? 'שגיאת חיבור' : 'ממתין להגדרה'}</span>
-          </div>
-          {state.phase === 'error' && <p className="antab__err">‏{state.message}</p>}
-          <p className="antab__lead">
-            תג המדידה כבר פועל באתר והנתונים נאספים בחשבון שלכם. כדי שהדשבורד כאן יציג אותם,
-            צריך חיבור קריאה חד-פעמי (כ-5 דקות):
+      <div className="an">
+        <section className="an-setup">
+          <h3>חיבור Google Analytics לדשבורד</h3>
+          {state.phase === 'error' && <p className="an-error" dir="ltr">{state.message}</p>}
+          <p className="an-muted">
+            תג המדידה כבר פועל באתר. כדי שהדשבורד יקרא את הנתונים נדרש חיבור קריאה חד-פעמי (כ-5 דקות):
           </p>
-          <ol className="antab__steps">
-            <li>היכנסו ל-<a href="https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com" target="_blank" rel="noopener noreferrer">Google Cloud Console — הפעלת Analytics Data API</a> (עם אותו חשבון Google) ולחצו <b>Enable</b>. אם תתבקשו — צרו פרויקט חדש בשם kurkoos.</li>
-            <li>עברו ל-<a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" rel="noopener noreferrer">Service Accounts</a> ← <b>Create service account</b> (שם: analytics-reader) ← Done.</li>
-            <li>לחצו על החשבון שנוצר ← לשונית <b>Keys</b> ← Add key ← Create new key ← <b>JSON</b>. יירד קובץ.</li>
-            <li>ב-<a href="https://vercel.com" target="_blank" rel="noopener noreferrer">Vercel</a> ← Project ← Settings ← Environment Variables הוסיפו שניים מתוך הקובץ: <code>GA_SA_CLIENT_EMAIL</code> (השדה client_email) ו-<code>GA_SA_PRIVATE_KEY</code> (השדה private_key, כולל BEGIN/END) ← ואז Redeploy.</li>
-            <li>ב-<a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer">Google Analytics</a> ← Admin ← Property access management ← <b>+</b> ← הדביקו את אימייל חשבון השירות ← תפקיד <b>Viewer</b>.</li>
-            <li>ב-Analytics ← Admin ← Property settings העתיקו את <b>Property ID</b> (מספר) והדביקו כאן:</li>
+          <ol className="an-steps">
+            <li><a href="https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com" target="_blank" rel="noopener noreferrer">הפעלת Analytics Data API</a> בענן של Google (Enable; צרו פרויקט אם תתבקשו)</li>
+            <li><a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" rel="noopener noreferrer">Service Accounts</a> ← Create service account (שם: analytics-reader) ← Done</li>
+            <li>בחשבון שנוצר: Keys ← Add key ← Create new key ← JSON (יירד קובץ)</li>
+            <li>ב-Vercel ← Settings ← Environment Variables: <code>GA_SA_CLIENT_EMAIL</code> (client_email מהקובץ) ו-<code>GA_SA_PRIVATE_KEY</code> (private_key, כולל BEGIN/END) ← Redeploy</li>
+            <li>ב-Analytics ← Admin ← Property access management ← הוסיפו את אימייל חשבון השירות כ-Viewer</li>
+            <li>ב-Analytics ← Admin ← Property settings העתיקו את ה-Property ID והדביקו כאן:</li>
           </ol>
-          <div className="antab__row">
-            <label className="antab__field">Property ID (מספרי)
-              <input dir="ltr" placeholder="למשל 501234567" value={propId} onChange={(e) => setPropId(e.target.value)} />
-            </label>
-            <button type="button" className="antab__btn" onClick={saveProp}>שמירה ובדיקת חיבור</button>
+          <div className="an-inline">
+            <input dir="ltr" placeholder="Property ID — למשל 501234567" value={propId} onChange={(e) => setPropId(e.target.value)} />
+            <button type="button" onClick={saveProp}>שמירה ובדיקת חיבור</button>
           </div>
-          {saveMsg && <p className="antab__status">{saveMsg}</p>}
+          {saveMsg && <p className="an-status">{saveMsg}</p>}
         </section>
       </div>
     )
   }
 
-  /* ---------- דשבורד ---------- */
-  const { data } = state
-  const R = data.reports
+  /* ---------- נתונים ---------- */
+  const R = state.data.reports
   const tot = totalsOf(R.totals)
   const prevTot = totalsOf(R.totalsPrev)
   const series = rows(R.timeseries)
+  const prevSeries = rows(R.timeseriesPrev || null)
   const channels = rows(R.channels)
   const sources = rows(R.sources)
   const pages = rows(R.pages)
   const devices = rows(R.devices)
   const countries = rows(R.countries)
-  const cities = rows(R.cities)
+  const cities = rows(R.cities).filter((c) => c.d[0] !== '(not set)')
   const events = rows(R.events)
-  const insights = buildInsights({ tot, prevTot, channels, pages, devices })
+  const anomalies = findAnomalies(series, 0)
+  const insights = buildInsights({ tot, prevTot, channels, pages, devices, anomalies })
+  const overallCR = tot[2] ? tot[8] / tot[2] : 0
   const rtUsers = rt ? rt.rows?.reduce((a, r) => a + (Number(r.metricValues?.[0]?.value) || 0), 0) ?? 0 : null
-
-  const DEVICE_HE = { desktop: 'דסקטופ', mobile: 'מובייל', tablet: 'טאבלט' }
   const devTotal = devices.reduce((a, d) => a + d.m[0], 0)
+  const chTotal = channels.reduce((a, c) => a + c.m[2], 0)
+
+  const sortRows = (list, sort, get) => [...list].sort((a, b) => (get(sort.key, b) - get(sort.key, a)) * (sort.desc ? 1 : -1))
+  const pagesView = sortRows(
+    pages.filter((p) => !pageQ || (p.d[0] + ' ' + (p.d[1] || '')).toLowerCase().includes(pageQ.toLowerCase())),
+    pSort,
+    (k, r) => (k === 'time' ? (r.m[1] ? r.m[2] / r.m[1] : 0) : r.m[k]),
+  )
+  const sourcesView = sortRows(
+    sources.filter((s) => !srcQ || (s.d[0] + s.d[1]).toLowerCase().includes(srcQ.toLowerCase())),
+    sSort,
+    (k, r) => (k === 'cr' ? (r.m[1] ? r.m[3] / r.m[1] : 0) : r.m[k]),
+  )
+
+  const primary = [
+    { label: 'משתמשים', v: tot[0], p: prevTot[0], sp: series.map((r) => r.m[0]) },
+    { label: 'ביקורים', v: tot[2], p: prevTot[2], sp: series.map((r) => r.m[1]) },
+    { label: 'צפיות עמוד', v: tot[4], p: prevTot[4], sp: series.map((r) => r.m[2]) },
+    { label: 'שיעור מעורבות', v: tot[5], p: prevTot[5], fmt: fmtPct },
+    { label: 'המרות', v: tot[8], p: prevTot[8], sp: series.map((r) => r.m[3]) },
+  ]
+  const secondary = [
+    ['משתמשים חדשים', fmtNum(tot[1]), <Delta key="d" cur={tot[1]} prev={prevTot[1]} dim />],
+    ['ביקורים מעורבים', fmtNum(tot[3]), <Delta key="d" cur={tot[3]} prev={prevTot[3]} dim />],
+    ['צפיות לביקור', tot[2] ? (tot[4] / tot[2]).toFixed(2) : '—', null],
+    ['משך ביקור ממוצע', fmtDur(tot[9]), null],
+    ['שיעור נטישה', fmtPct(tot[6]), <Delta key="d" cur={tot[6]} prev={prevTot[6]} invert dim />],
+    ['אירועים', fmtNum(tot[7]), null],
+    ['שיעור המרה', fmtPct(overallCR, 2), <Delta key="d" cur={overallCR} prev={prevTot[2] ? prevTot[8] / prevTot[2] : null} dim />],
+  ]
 
   return (
-    <div className="antab">
-      {/* כותרת + טווח */}
-      <div className="antab__toolbar">
-        <div className="antab__toolbar-info">
-          <h3>תנועת האתר</h3>
-          <span className="antab__range-label">{range.start} — {range.end} · נתוני Google Analytics</span>
+    <div className="an">
+      {/* ===== סרגל עליון ===== */}
+      <header className="an-top">
+        <div>
+          <h3 className="an-title">תנועת האתר</h3>
+          <span className="an-sub" dir="ltr">{range.start} → {range.end}</span>
+          <span className="an-sub"> · השוואה לתקופה מקבילה קודמת · Google Analytics</span>
         </div>
-        <div className="antab__presets">
-          {PRESETS.map((p) => (
-            <button key={p.id} type="button" className={`antab__preset ${preset === p.id ? 'is-on' : ''}`} onClick={() => setPreset(p.id)}>{p.label}</button>
-          ))}
-          <button type="button" className="antab__preset antab__preset--refresh" onClick={load} title="רענון">⟳</button>
+        <div className="an-top__side">
+          <span className="an-live">{rtUsers == null ? '· · ·' : rtUsers} עכשיו באתר<i /></span>
+          <div className="an-seg">
+            {PRESETS.map((p) => <button key={p.id} type="button" className={preset === p.id ? 'is-on' : ''} onClick={() => setPreset(p.id)}>{p.label}</button>)}
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* זמן אמת */}
-      <section className="antab__rt">
-        <span className="antab__rt-dot" />
-        <b>{rtUsers == null ? '…' : rtUsers}</b> גולשים באתר עכשיו
-        {rt?.rows?.length > 0 && (
-          <span className="antab__rt-pages">
-            {rt.rows.slice(0, 3).map((r) => `${r.dimensionValues[0].value} (${r.metricValues[0].value})`).join(' · ')}
-          </span>
-        )}
+      {/* ===== שורת מדדים ראשית ===== */}
+      <section className="an-metrics">
+        {primary.map((m) => (
+          <div key={m.label} className="an-metric">
+            <span className="an-metric__label">{m.label}</span>
+            <span className="an-metric__value">{(m.fmt || fmtNum)(m.v)}</span>
+            <span className="an-metric__foot">
+              <Delta cur={m.v} prev={m.p} />
+              {m.sp && <Spark values={m.sp} />}
+            </span>
+          </div>
+        ))}
+      </section>
+      <section className="an-secondary">
+        {secondary.map(([l, v, d]) => <span key={l} className="an-secondary__item"><i>{l}</i><b>{v}</b>{d}</span>)}
       </section>
 
-      {/* KPI */}
-      <div className="antab__kpis">
-        <Kpi label="משתמשים" value={tot[0]} prev={prevTot[0]} />
-        <Kpi label="משתמשים חדשים" value={tot[1]} prev={prevTot[1]} />
-        <Kpi label="ביקורים" value={tot[2]} prev={prevTot[2]} />
-        <Kpi label="ביקורים מעורבים" value={tot[3]} prev={prevTot[3]} />
-        <Kpi label="צפיות עמוד" value={tot[4]} prev={prevTot[4]} />
-        <Kpi label="צפיות לביקור" value={tot[2] ? tot[4] / tot[2] : null} prev={prevTot[2] ? prevTot[4] / prevTot[2] : null} fmt={(v) => (v == null ? '—' : v.toFixed(2))} />
-        <Kpi label="שיעור מעורבות" value={tot[5]} prev={prevTot[5]} fmt={fmtPct} />
-        <Kpi label="שיעור נטישה" value={tot[6]} prev={prevTot[6]} fmt={fmtPct} invert />
-        <Kpi label="משך ביקור ממוצע" value={tot[9]} prev={prevTot[9]} fmt={fmtDur} />
-        <Kpi label="אירועים" value={tot[7]} prev={prevTot[7]} />
-        <Kpi label="המרות (אירועי מפתח)" value={tot[8]} prev={prevTot[8]} />
-        <Kpi label="שיעור המרה" value={tot[2] ? tot[8] / tot[2] : null} prev={prevTot[2] ? prevTot[8] / prevTot[2] : null} fmt={fmtPct} />
-      </div>
+      {/* ===== הגרף המרכזי ===== */}
+      <section className="an-section">
+        <HeroChart series={series} prevSeries={prevSeries} />
+      </section>
 
-      {/* תובנות */}
+      {/* ===== תובנות ===== */}
       {insights.length > 0 && (
-        <section className="antab__card">
-          <h4 className="antab__sect-title">תובנות</h4>
-          <ul className="antab__insights">
-            {insights.map((ins, i) => <li key={i} className={`is-${ins.tone}`}>{ins.text}</li>)}
-          </ul>
+        <section className="an-section">
+          <h4 className="an-h5">תובנות</h4>
+          <ul className="an-insights">{insights.map((ins, i) => <li key={i} className={`is-${ins.tone}`}>{ins.text}</li>)}</ul>
         </section>
       )}
 
-      {/* גרף מרכזי */}
-      <section className="antab__card">
-        <h4 className="antab__sect-title">מגמה יומית</h4>
-        <TrendChart series={series} />
+      {/* ===== Acquisition ===== */}
+      <section className="an-section">
+        <div className="an-sect-head">
+          <h4 className="an-h5">מקורות תנועה</h4>
+          <button type="button" className="an-csv" onClick={() => exportCsv('channels', ['ערוץ', 'משתמשים', 'ביקורים', 'נתח', 'מעורבות', 'המרות', 'שיעור המרה'], channels.map((c) => [CHANNEL_HE[c.d[0]] || c.d[0], c.m[0], c.m[2], fmtPct(chTotal ? c.m[2] / chTotal : 0), fmtPct(c.m[3]), c.m[4], fmtPct(c.m[2] ? c.m[4] / c.m[2] : 0, 2)]))}>CSV</button>
+        </div>
+        <table className="an-table">
+          <thead><tr><th>ערוץ</th><th className="is-num">משתמשים</th><th className="is-num">ביקורים</th><th className="is-num">נתח</th><th className="is-num">מעורבות</th><th className="is-num">המרות</th><th className="is-num">שיעור המרה</th></tr></thead>
+          <tbody>
+            {channels.map((c) => {
+              const cr = c.m[2] ? c.m[4] / c.m[2] : 0
+              const quality = cr > overallCR * 1.4 && c.m[4] > 1
+              return (
+                <tr key={c.d[0]}>
+                  <td className="an-td-main">
+                    {CHANNEL_HE[c.d[0]] || c.d[0]}
+                    <span className="an-share"><i style={{ width: `${chTotal ? (c.m[2] / chTotal) * 100 : 0}%` }} /></span>
+                  </td>
+                  <td className="is-num">{fmtNum(c.m[0])}</td>
+                  <td className="is-num">{fmtNum(c.m[2])}</td>
+                  <td className="is-num an-dim">{fmtPct(chTotal ? c.m[2] / chTotal : 0, 0)}</td>
+                  <td className="is-num">{fmtPct(c.m[3], 0)}</td>
+                  <td className="is-num">{c.m[4] || 0}</td>
+                  <td className={`is-num ${quality ? 'an-quality' : ''}`}>{fmtPct(cr, 2)}{quality ? ' ★' : ''}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        <p className="an-footnote">★ = שיעור המרה גבוה משמעותית מהממוצע ({fmtPct(overallCR, 2)}) — תנועה איכותית</p>
       </section>
 
-      <div className="antab__grid2">
-        {/* ערוצי תנועה */}
-        <section className="antab__card">
-          <div className="antab__sect-head">
-            <h4 className="antab__sect-title">מקורות תנועה</h4>
-            <button type="button" className="antab__csv" onClick={() => exportCsv('channels', ['ערוץ', 'משתמשים', 'חדשים', 'ביקורים', 'מעורבות', 'המרות'], channels.map((c) => [CHANNEL_HE[c.d[0]] || c.d[0], c.m[0], c.m[1], c.m[2], fmtPct(c.m[3]), c.m[4]]))}>CSV</button>
+      {/* ===== מקורות מפורטים ===== */}
+      <section className="an-section">
+        <div className="an-sect-head">
+          <h4 className="an-h5">מקור / מדיום</h4>
+          <div className="an-sect-tools">
+            <input className="an-search" placeholder="חיפוש מקור…" value={srcQ} onChange={(e) => setSrcQ(e.target.value)} />
+            <button type="button" className="an-csv" onClick={() => exportCsv('sources', ['מקור', 'מדיום', 'משתמשים', 'ביקורים', 'מעורבות', 'המרות'], sources.map((s) => [s.d[0], s.d[1], s.m[0], s.m[1], fmtPct(s.m[2]), s.m[3]]))}>CSV</button>
           </div>
-          <table className="antab__table">
-            <thead><tr><th>ערוץ</th><th>משתמשים</th><th>ביקורים</th><th>מעורבות</th><th>המרות</th></tr></thead>
+        </div>
+        <table className="an-table">
+          <thead><tr>
+            <th>מקור / מדיום</th>
+            <Th label="משתמשים" k={0} sort={sSort} onSort={sToggle} />
+            <Th label="ביקורים" k={1} sort={sSort} onSort={sToggle} />
+            <Th label="מעורבות" k={2} sort={sSort} onSort={sToggle} />
+            <Th label="שיעור המרה" k="cr" sort={sSort} onSort={sToggle} />
+          </tr></thead>
+          <tbody>
+            {sourcesView.map((s, i) => {
+              const cr = s.m[1] ? s.m[3] / s.m[1] : 0
+              return (
+                <tr key={i}>
+                  <td className="an-td-main" dir="ltr">{s.d[0]} <span className="an-dim">/ {s.d[1]}</span></td>
+                  <td className="is-num">{fmtNum(s.m[0])}</td>
+                  <td className="is-num">{fmtNum(s.m[1])}</td>
+                  <td className="is-num">{fmtPct(s.m[2], 0)}</td>
+                  <td className={`is-num ${cr > overallCR * 1.4 && s.m[3] > 1 ? 'an-quality' : ''}`}>{fmtPct(cr, 2)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </section>
+
+      {/* ===== עמודים + Drill-down ===== */}
+      <section className="an-section">
+        <div className="an-sect-head">
+          <h4 className="an-h5">עמודים</h4>
+          <div className="an-sect-tools">
+            <input className="an-search" placeholder="חיפוש עמוד…" value={pageQ} onChange={(e) => setPageQ(e.target.value)} />
+            <button type="button" className="an-csv" onClick={() => exportCsv('pages', ['עמוד', 'נתיב', 'צפיות', 'משתמשים', 'זמן ממוצע', 'המרות'], pages.map((p) => [p.d[1], p.d[0], p.m[0], p.m[1], fmtDur(p.m[1] ? p.m[2] / p.m[1] : 0), p.m[3]]))}>CSV</button>
+          </div>
+        </div>
+        <table className="an-table an-table--click">
+          <thead><tr>
+            <th>עמוד</th>
+            <Th label="צפיות" k={0} sort={pSort} onSort={pToggle} />
+            <Th label="משתמשים" k={1} sort={pSort} onSort={pToggle} />
+            <Th label="זמן ממוצע" k="time" sort={pSort} onSort={pToggle} />
+            <Th label="המרות" k={3} sort={pSort} onSort={pToggle} />
+          </tr></thead>
+          <tbody>
+            {pagesView.map((p) => (
+              <PageRowGroup key={p.d[0]} p={p} open={openPage === p.d[0]} onToggle={() => setOpenPage(openPage === p.d[0] ? null : p.d[0])} range={range} max={pages[0]?.m[0]} />
+            ))}
+          </tbody>
+        </table>
+        <p className="an-footnote">לחיצה על עמוד פותחת פירוט: מגמה, מקורות ומכשירים של אותו עמוד</p>
+      </section>
+
+      {/* ===== קהל: מכשירים + גיאוגרפיה ===== */}
+      <div className="an-cols">
+        <section className="an-section">
+          <h4 className="an-h5">מכשירים</h4>
+          <table className="an-table">
+            <thead><tr><th>מכשיר</th><th className="is-num">נתח</th><th className="is-num">משתמשים</th><th className="is-num">שיעור המרה</th></tr></thead>
             <tbody>
-              {channels.map((c) => (
-                <tr key={c.d[0]}>
-                  <td className="antab__td-name">{CHANNEL_HE[c.d[0]] || c.d[0]}<Bar value={c.m[0]} max={channels[0]?.m[0]} /></td>
-                  <td>{fmtNum(c.m[0])}</td><td>{fmtNum(c.m[2])}</td><td>{fmtPct(c.m[3])}</td><td>{c.m[4] || 0}</td>
+              {devices.map((d) => (
+                <tr key={d.d[0]}>
+                  <td className="an-td-main">{DEVICE_HE[d.d[0]] || d.d[0]}<span className="an-share"><i style={{ width: `${devTotal ? (d.m[0] / devTotal) * 100 : 0}%` }} /></span></td>
+                  <td className="is-num">{devTotal ? Math.round((d.m[0] / devTotal) * 100) : 0}%</td>
+                  <td className="is-num">{fmtNum(d.m[0])}</td>
+                  <td className="is-num">{fmtPct(d.m[1] ? d.m[3] / d.m[1] : 0, 2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </section>
-
-        {/* מקורות ספציפיים */}
-        <section className="antab__card">
-          <div className="antab__sect-head">
-            <h4 className="antab__sect-title">מקורות מפורטים</h4>
-            <button type="button" className="antab__csv" onClick={() => exportCsv('sources', ['מקור', 'סוג', 'משתמשים', 'ביקורים', 'המרות'], sources.map((s) => [s.d[0], s.d[1], s.m[0], s.m[1], s.m[3]]))}>CSV</button>
+        <section className="an-section">
+          <h4 className="an-h5">מדינות וערים</h4>
+          <div className="an-geo">
+            <div>
+              {countries.slice(0, 7).map((c) => <div key={c.d[0]} className="an-row"><span>{c.d[0]}</span><span className="an-dim">{c.m[2] ? `${c.m[2]} המרות · ` : ''}</span><b>{fmtNum(c.m[0])}</b></div>)}
+            </div>
+            <div>
+              {cities.slice(0, 7).map((c) => <div key={c.d[0]} className="an-row"><span>{c.d[0]}</span><b>{fmtNum(c.m[0])}</b></div>)}
+            </div>
           </div>
-          <table className="antab__table">
-            <thead><tr><th>מקור / סוג</th><th>משתמשים</th><th>ביקורים</th><th>המרות</th></tr></thead>
-            <tbody>
-              {sources.map((s, i) => (
-                <tr key={i}>
-                  <td className="antab__td-name" dir="ltr">{s.d[0]} / {s.d[1]}</td>
-                  <td>{fmtNum(s.m[0])}</td><td>{fmtNum(s.m[1])}</td><td>{s.m[3] || 0}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </section>
       </div>
 
-      {/* עמודים */}
-      <section className="antab__card">
-        <div className="antab__sect-head">
-          <h4 className="antab__sect-title">העמודים הנצפים ביותר</h4>
-          <button type="button" className="antab__csv" onClick={() => exportCsv('pages', ['עמוד', 'נתיב', 'צפיות', 'משתמשים', 'זמן ממוצע', 'המרות'], pages.map((p) => [p.d[1], p.d[0], p.m[0], p.m[1], fmtDur(p.m[1] ? p.m[2] / p.m[1] : 0), p.m[3]]))}>CSV</button>
+      {/* ===== אירועים ===== */}
+      <section className="an-section">
+        <div className="an-sect-head">
+          <h4 className="an-h5">אירועים</h4>
+          <button type="button" className="an-csv" onClick={() => exportCsv('events', ['אירוע', 'כמות', 'משתמשים', 'לכל משתמש'], events.map((e) => [e.d[0], e.m[0], e.m[1], e.m[1] ? (e.m[0] / e.m[1]).toFixed(1) : '']))}>CSV</button>
         </div>
-        <table className="antab__table">
-          <thead><tr><th>עמוד</th><th>צפיות</th><th>משתמשים</th><th>זמן ממוצע</th><th>המרות</th></tr></thead>
+        <table className="an-table">
+          <thead><tr><th>אירוע</th><th className="is-num">כמות</th><th className="is-num">משתמשים</th><th className="is-num">לכל משתמש</th></tr></thead>
           <tbody>
-            {pages.map((p) => (
-              <tr key={p.d[0]}>
-                <td className="antab__td-name">
-                  <span className="antab__page-title">{p.d[1] || p.d[0]}</span>
-                  <span className="antab__page-path" dir="ltr">{p.d[0]}</span>
-                  <Bar value={p.m[0]} max={pages[0]?.m[0]} />
-                </td>
-                <td>{fmtNum(p.m[0])}</td><td>{fmtNum(p.m[1])}</td>
-                <td>{fmtDur(p.m[1] ? p.m[2] / p.m[1] : 0)}</td><td>{p.m[3] || 0}</td>
+            {events.map((e) => (
+              <tr key={e.d[0]}>
+                <td className="an-td-main" dir="ltr">{e.d[0]}</td>
+                <td className="is-num">{fmtNum(e.m[0])}</td>
+                <td className="is-num">{fmtNum(e.m[1])}</td>
+                <td className="is-num an-dim">{e.m[1] ? (e.m[0] / e.m[1]).toFixed(1) : '—'}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
 
-      <div className="antab__grid3">
-        {/* מכשירים */}
-        <section className="antab__card">
-          <h4 className="antab__sect-title">מכשירים</h4>
-          {devices.map((d) => (
-            <div key={d.d[0]} className="antab__mini-row">
-              <span className="antab__mini-name">{DEVICE_HE[d.d[0]] || d.d[0]}</span>
-              <Bar value={d.m[0]} max={devTotal} color="#16688c" />
-              <span className="antab__mini-val">{devTotal ? Math.round((d.m[0] / devTotal) * 100) : 0}% · {fmtNum(d.m[0])}</span>
-            </div>
-          ))}
-          <p className="antab__footnote">מעורבות: {devices.map((d) => `${DEVICE_HE[d.d[0]] || d.d[0]} ${fmtPct(d.m[2])}`).join(' · ')}</p>
+      {/* ===== זמן אמת ===== */}
+      {rt?.rows?.length > 0 && (
+        <section className="an-section">
+          <h4 className="an-h5">פעילות עכשיו</h4>
+          <table className="an-table">
+            <thead><tr><th>עמוד</th><th className="is-num">גולשים פעילים</th></tr></thead>
+            <tbody>
+              {rt.rows.map((r, i) => (
+                <tr key={i}><td className="an-td-main">{r.dimensionValues[0].value}</td><td className="is-num">{r.metricValues[0].value}</td></tr>
+              ))}
+            </tbody>
+          </table>
         </section>
+      )}
 
-        {/* מדינות */}
-        <section className="antab__card">
-          <h4 className="antab__sect-title">מדינות</h4>
-          {countries.map((c) => (
-            <div key={c.d[0]} className="antab__mini-row">
-              <span className="antab__mini-name">{c.d[0]}</span>
-              <Bar value={c.m[0]} max={countries[0]?.m[0]} color="#2e9e6b" />
-              <span className="antab__mini-val">{fmtNum(c.m[0])}</span>
-            </div>
-          ))}
-        </section>
-
-        {/* ערים */}
-        <section className="antab__card">
-          <h4 className="antab__sect-title">ערים</h4>
-          {cities.filter((c) => c.d[0] !== '(not set)').slice(0, 8).map((c) => (
-            <div key={c.d[0]} className="antab__mini-row">
-              <span className="antab__mini-name">{c.d[0]}</span>
-              <Bar value={c.m[0]} max={cities[0]?.m[0]} color="#8c6d1f" />
-              <span className="antab__mini-val">{fmtNum(c.m[0])}</span>
-            </div>
-          ))}
-        </section>
-      </div>
-
-      {/* אירועים */}
-      <section className="antab__card">
-        <div className="antab__sect-head">
-          <h4 className="antab__sect-title">אירועים</h4>
-          <button type="button" className="antab__csv" onClick={() => exportCsv('events', ['אירוע', 'כמות', 'משתמשים'], events.map((e) => [e.d[0], e.m[0], e.m[1]]))}>CSV</button>
+      {/* ===== הגדרות ===== */}
+      <details className="an-settings">
+        <summary>הגדרות חיבור</summary>
+        <div className="an-inline">
+          <input dir="ltr" value={propId} onChange={(e) => setPropId(e.target.value)} placeholder="GA4 Property ID" />
+          <button type="button" onClick={saveProp}>שמירה ובדיקה</button>
+          {saveMsg && <span className="an-status">{saveMsg}</span>}
         </div>
-        <div className="antab__events">
-          {events.map((e) => (
-            <div key={e.d[0]} className="antab__event">
-              <span className="antab__event-name" dir="ltr">{e.d[0]}</span>
-              {EVENT_HE[e.d[0]] && <span className="antab__event-he">{EVENT_HE[e.d[0]]}</span>}
-              <b>{fmtNum(e.m[0])}</b>
-              <i>{fmtNum(e.m[1])} משתמשים</i>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* הגדרות */}
-      <section className="antab__card antab__card--muted">
-        <button type="button" className="antab__collapse" onClick={() => setShowSetup((v) => !v)}>
-          הגדרות חיבור {showSetup ? '▴' : '▾'}
-        </button>
-        {showSetup && (
-          <div className="antab__row" style={{ marginTop: '0.8rem' }}>
-            <label className="antab__field">GA4 Property ID
-              <input dir="ltr" value={propId} onChange={(e) => setPropId(e.target.value)} />
-            </label>
-            <button type="button" className="antab__btn" onClick={saveProp}>שמירה ובדיקה</button>
-            {saveMsg && <p className="antab__status">{saveMsg}</p>}
-          </div>
-        )}
-      </section>
+      </details>
     </div>
+  )
+}
+
+/* שורת עמוד + שורת Drill-down מתחתיה */
+function PageRowGroup({ p, open, onToggle, range, max }) {
+  return (
+    <>
+      <tr className={open ? 'is-open' : ''} onClick={onToggle}>
+        <td className="an-td-main">
+          <span className="an-page-t">{p.d[1] || p.d[0]}</span>
+          <span className="an-page-p" dir="ltr">{p.d[0]}</span>
+          <span className="an-share"><i style={{ width: `${max ? (p.m[0] / max) * 100 : 0}%` }} /></span>
+        </td>
+        <td className="is-num">{fmtNum(p.m[0])}</td>
+        <td className="is-num">{fmtNum(p.m[1])}</td>
+        <td className="is-num">{fmtDur(p.m[1] ? p.m[2] / p.m[1] : 0)}</td>
+        <td className="is-num">{p.m[3] || 0}</td>
+      </tr>
+      {open && <tr className="an-drill-row"><td colSpan={5}><PageDrill path={p.d[0]} range={range} /></td></tr>}
+    </>
   )
 }

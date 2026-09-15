@@ -511,7 +511,10 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
         <div className="ldov__kpi"><i>סה"כ לידים</i><b>{s.total}</b><span className="ldov__hint">{s.byStage.new + s.inWork} פתוחים</span></div>
         <div className="ldov__kpi"><i>30 יום אחרונים</i><b>{s.in30}</b>
           {delta != null
-            ? <span className={`ldov__delta ${delta >= 0 ? 'is-up' : 'is-down'}`}>{delta >= 0 ? '↑' : '↓'}{Math.abs(delta).toFixed(0)}% מול התקופה הקודמת</span>
+            ? <span className="ldov__delta-row">
+                <i className={`ldov__delta-pill ${delta >= 0 ? 'is-up' : 'is-down'}`}>{delta >= 0 ? '↑' : '↓'}{Math.abs(delta).toFixed(0)}%</i>
+                <span className="ldov__hint">מול תקופה קודמת</span>
+              </span>
             : <span className="ldov__hint">אין עדיין השוואה</span>}
         </div>
         <div className="ldov__kpi"><i>חדשים — טרם טופלו</i><b>{s.byStage.new}</b><span className="ldov__hint">בשלב "ליד חדש"</span></div>
@@ -519,6 +522,17 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
         <div className={`ldov__kpi${s.attention ? ' ldov__kpi--warn' : ''}`}><i>דורשים טיפול</i><b>{s.attention}</b><span className="ldov__hint">מעל {ATTN_DAYS} ימים ללא מענה</span></div>
         <div className="ldov__kpi"><i>נסגרו בהצלחה</i><b>{s.won}</b><span className="ldov__hint">{(s.conv * 100).toFixed(0)}% שיעור סגירה</span></div>
       </div>
+
+      {/* פס התפלגות — תמונת מצב של תמהיל השלבים במבט אחד */}
+      {s.total > 0 && (
+        <div className="ldov__dist" aria-hidden="true">
+          {STAGES.map((st) => {
+            const n = s.byStage[st.id]
+            if (!n) return null
+            return <span key={st.id} className="ldov__dist-seg" style={{ width: `${(n / s.total) * 100}%`, background: st.color }} title={`${st.label}: ${n}`}/>
+          })}
+        </div>
+      )}
 
       {/* Pipeline אינטראקטיבי — לחיצה מסננת את הרשימה */}
       <div className="ldov__pipe" role="tablist" aria-label="Pipeline — סינון לפי שלב">

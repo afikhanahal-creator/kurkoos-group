@@ -946,19 +946,30 @@
 .ldov__kpi:hover { background: var(--adm-surface-2); }
 .ldov__kpi:first-child { border-inline-start: 0; }
 .ldov__kpi i {
-  font-style: normal; font-size: 0.75rem; font-weight: 700; color: var(--adm-muted);
+  font-style: normal; font-size: 0.78rem; font-weight: 700; color: var(--adm-muted);
   font-family: var(--font-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ldov__kpi b {
-  font-family: var(--font-heading); font-weight: 900; font-size: 1.8rem; line-height: 1;
+  font-family: var(--font-heading); font-weight: 900; font-size: 1.9rem; line-height: 1;
   color: #07293a; font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
 }
 .ldov__hint { font-size: 0.72rem; color: var(--adm-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ldov__delta { font-size: 0.72rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ldov__delta.is-up   { color: #15803d; }
-.ldov__delta.is-down { color: #b91c1c; }
+.ldov__delta-row { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.ldov__delta-pill {
+  font-style: normal; font-size: 0.72rem; font-weight: 800; line-height: 1;
+  padding: 0.16rem 0.45rem; border-radius: 999px; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ldov__delta-pill.is-up   { background: #dcfce7; color: #15803d; }
+.ldov__delta-pill.is-down { background: #fee2e2; color: #b91c1c; }
 .ldov__kpi--warn b { color: #b45309; }
 .ldov__kpi--warn { background: #fffbeb; }
+
+/* פס התפלגות שלבים — סגמנטים צבעוניים לפי נתח */
+.ldov__dist {
+  display: flex; gap: 2px; height: 7px;
+  margin: 0 1rem 0.8rem; border-radius: 4px; overflow: hidden;
+}
+.ldov__dist-seg { display: block; min-width: 5px; border-radius: 2px; transition: width .45s cubic-bezier(.4,0,.2,1); }
 
 /* Pipeline אינטראקטיבי — לחיצה על שלב מסננת את הרשימה */
 .ldov__pipe {
@@ -973,9 +984,9 @@
 }
 .ldov__stage:first-child { border-inline-start: 0; }
 .ldov__stage:hover { background: color-mix(in srgb, var(--c, #16688c) 6%, transparent); }
-.ldov__stage.is-on { background: color-mix(in srgb, var(--c, #16688c) 11%, transparent); box-shadow: inset 0 2px 0 var(--c, #16688c); }
+.ldov__stage.is-on { background: color-mix(in srgb, var(--c, #16688c) 12%, transparent); box-shadow: inset 0 3px 0 var(--c, #16688c); }
 .ldov__stage-num {
-  font-family: var(--font-heading); font-weight: 900; font-size: 1.25rem; line-height: 1;
+  font-family: var(--font-heading); font-weight: 900; font-size: 1.35rem; line-height: 1;
   color: var(--c, #16688c); font-variant-numeric: tabular-nums;
 }
 .ldov__stage-lbl { font-size: 0.76rem; font-weight: 700; color: var(--adm-ink); font-family: var(--font-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -1767,8 +1778,8 @@
 .adm[data-theme="dark"] .ldov__kpi b { color: #d6e8f4; }
 .adm[data-theme="dark"] .ldov__kpi--warn { background: rgba(133,77,14,0.14); }
 .adm[data-theme="dark"] .ldov__kpi--warn b { color: #fcd34d; }
-.adm[data-theme="dark"] .ldov__delta.is-up { color: #6fd6a3; }
-.adm[data-theme="dark"] .ldov__delta.is-down { color: #fca5a5; }
+.adm[data-theme="dark"] .ldov__delta-pill.is-up { background: rgba(22,101,52,0.28); color: #6fd6a3; }
+.adm[data-theme="dark"] .ldov__delta-pill.is-down { background: rgba(153,27,27,0.28); color: #fca5a5; }
 .adm[data-theme="dark"] .ldov__src-toggle:hover { background: rgba(14,165,233,0.12); }
 .adm[data-theme="dark"] .ldov__src .is-quality { color: #6fd6a3; }
 .adm[data-theme="dark"] .adm-lead__attn { background: rgba(133,77,14,0.16); border-color: rgba(253,230,138,0.25); color: #fcd34d; }

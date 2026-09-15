@@ -875,34 +875,39 @@
 .adm-leads__err-reload:hover { background: #991b1b; }
 .adm-leads__empty { padding: 3rem; text-align: center; color: var(--adm-muted); border: 1.5px dashed var(--adm-border-strong); border-radius: var(--adm-radius); font-size: 0.9rem; }
 
-/* ── Sticky toolbar ── */
-.adm-leads__bar--top { position: sticky; top: 0; z-index: 30; }
-.adm-leads__bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.9rem; flex-wrap: wrap;
-  background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 12px;
-  padding: 0.55rem 0.75rem; box-shadow: var(--adm-shadow-sm);
+/* ── כרטיס כותרת: סרגל כלים + פילטרים יחד, דביק בגלילה ── */
+.adm-leads__head {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; flex-direction: column; gap: 0.6rem;
+  background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 13px;
+  padding: 0.65rem 0.85rem 0.7rem; box-shadow: var(--adm-shadow-sm);
 }
-.adm-leads__bar-group { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.adm-leads__count { font-family: var(--font-heading); font-weight: 600; font-size: 0.88rem; color: var(--adm-muted); padding-inline-end: 0.65rem; border-inline-end: 1.5px solid var(--adm-border); margin-inline-end: 0.3rem; }
-.adm-leads__count b { font-weight: 900; font-size: 1.1rem; color: #0A2540; margin-inline-start: 0.2rem; }
-.adm-leads__search { padding: 0.46rem 0.9rem; border: 1px solid var(--adm-border); border-radius: 9px; background: var(--adm-bg); font-size: 0.9rem; min-width: 200px; color: var(--adm-ink); transition: border-color .15s, box-shadow .15s; }
-.adm-leads__search:focus { outline: none; border-color: #0EA5E9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
+.adm-leads__bar-row { display: flex; align-items: center; justify-content: space-between; gap: 0.9rem; flex-wrap: wrap; }
+.adm-leads__bar-group { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
+.adm-leads__count { font-family: var(--font-heading); font-weight: 600; font-size: 0.9rem; color: var(--adm-muted); padding-inline-end: 0.7rem; border-inline-end: 1.5px solid var(--adm-border); margin-inline-end: 0.3rem; white-space: nowrap; }
+.adm-leads__count b { font-weight: 900; font-size: 1.2rem; color: #0A2540; margin-inline-start: 0.25rem; font-variant-numeric: tabular-nums; }
+.adm-leads__search {
+  height: 40px; padding: 0 0.95rem; border: 1px solid var(--adm-border-strong); border-radius: 10px;
+  background: var(--adm-bg); font-size: 0.9rem; flex: 1 1 200px; min-width: 170px; max-width: 340px;
+  color: var(--adm-ink); box-sizing: border-box; transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.adm-leads__search:focus { outline: none; border-color: #0EA5E9; background: var(--adm-surface); box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
 .adm-leads__btn {
-  display: inline-flex; align-items: center; gap: 0.36rem;
-  padding: 0.46rem 0.95rem; border-radius: 9px; border: 1px solid var(--adm-border-strong);
+  display: inline-flex; align-items: center; gap: 0.4rem; height: 40px;
+  padding: 0 1rem; border-radius: 10px; border: 1px solid var(--adm-border-strong);
   background: var(--adm-surface); color: var(--adm-ink); font-family: var(--font-heading); font-weight: 700; font-size: 0.88rem;
-  cursor: pointer; transition: all .15s; white-space: nowrap;
+  cursor: pointer; transition: all .15s; white-space: nowrap; box-sizing: border-box;
 }
 .adm-leads__btn:hover { border-color: #0EA5E9; color: #0369a1; background: #f0f9ff; }
-.adm-leads__btn--primary { background: #0A2540; border-color: #0A2540; color: #fff; }
+.adm-leads__btn--primary { background: #0A2540; border-color: #0A2540; color: #fff; box-shadow: 0 2px 8px rgba(10,37,64,0.22); }
 .adm-leads__btn--primary:hover { background: #103a5e; border-color: #103a5e; color: #fff; }
 
 /* ── View switcher ── */
-.adm-leads__views { display: inline-flex; background: var(--adm-bg); border: 1px solid var(--adm-border-strong); border-radius: 10px; padding: 3px; gap: 2px; }
+.adm-leads__views { display: inline-flex; align-items: stretch; height: 40px; background: var(--adm-bg); border: 1px solid var(--adm-border-strong); border-radius: 10px; padding: 3px; gap: 2px; box-sizing: border-box; }
 .adm-leads__view {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  border: 0; background: transparent; padding: 0.42rem 0.8rem; border-radius: 7px;
-  font-family: var(--font-heading); font-weight: 700; font-size: 0.84rem; color: var(--adm-muted);
+  display: inline-flex; align-items: center; gap: 0.38rem;
+  border: 0; background: transparent; padding: 0 0.85rem; border-radius: 8px;
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.85rem; color: var(--adm-muted);
   cursor: pointer; transition: all .15s;
 }
 .adm-leads__view svg { opacity: 0.7; transition: opacity .15s; }
@@ -911,33 +916,34 @@
 .adm-leads__view.is-active svg { opacity: 1; }
 
 /* ── Filters ── */
-.adm-leads__filters { display: flex; flex-direction: column; gap: 0.32rem; padding: 0.1rem 0 0.15rem; }
-.adm-leads__filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem; }
-.adm-leads__filter-lbl { font-size: 0.74rem; font-weight: 800; color: var(--adm-muted); min-width: 2.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.adm-leads__filters { display: flex; flex-direction: column; gap: 0.42rem; padding-top: 0.6rem; border-top: 1px solid var(--adm-border); }
+.adm-leads__filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
+.adm-leads__filter-lbl { font-size: 0.72rem; font-weight: 800; color: var(--adm-muted); min-width: 2.9rem; letter-spacing: 0.08em; font-family: var(--font-heading); }
 .adm-filter-pill {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.22rem 0.62rem; border-radius: 999px; border: 1px solid var(--adm-border-strong);
-  background: var(--adm-surface); color: var(--adm-muted); font-size: 0.8rem; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 0.32rem;
+  padding: 0.3rem 0.72rem; border-radius: 999px; border: 1px solid var(--adm-border-strong);
+  background: var(--adm-surface); color: var(--adm-muted); font-size: 0.82rem; font-weight: 600;
   font-family: var(--font-heading); cursor: pointer; transition: all .15s; white-space: nowrap;
 }
 .adm-filter-pill:hover { border-color: #0EA5E9; color: #0369a1; background: #f0f9ff; }
-.adm-filter-pill.is-active { background: #0A2540; color: #fff; border-color: #0A2540; }
-.adm-filter-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.adm-filter-pill.is-active { background: #0A2540; color: #fff; border-color: #0A2540; box-shadow: 0 2px 6px rgba(10,37,64,0.18); }
+.adm-filter-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── סקירת CRM (LeadsOverview) ── */
 .ldov {
   background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 13px;
-  margin-bottom: 0.15rem; overflow: hidden;
+  margin-bottom: 0.15rem; overflow: hidden; box-shadow: var(--adm-shadow-sm);
 }
 
 /* שורת מדדים — צפופה, מופרדת בקווי שיער (בסגנון האנליטיקס) */
 .ldov__kpis { display: grid; grid-template-columns: repeat(6, 1fr); }
 .ldov__kpi {
-  display: flex; flex-direction: column; gap: 0.14rem;
-  padding: 0.72rem 0.95rem 0.66rem;
+  display: flex; flex-direction: column; gap: 0.16rem;
+  padding: 0.8rem 1rem 0.72rem;
   border-inline-start: 1px solid var(--adm-border);
-  min-width: 0;
+  min-width: 0; transition: background .15s;
 }
+.ldov__kpi:hover { background: var(--adm-surface-2); }
 .ldov__kpi:first-child { border-inline-start: 0; }
 .ldov__kpi i {
   font-style: normal; font-size: 0.75rem; font-weight: 700; color: var(--adm-muted);
@@ -979,20 +985,24 @@
 
 /* מגמת 30 יום + מתג ניתוח מקורות */
 .ldov__foot {
-  display: flex; align-items: center; gap: 0.9rem;
-  border-top: 1px solid var(--adm-border); padding: 0.5rem 0.95rem;
+  display: flex; align-items: center; gap: 1rem;
+  border-top: 1px solid var(--adm-border); padding: 0.6rem 1rem;
+  background: var(--adm-surface-2);
 }
-.ldov__trend { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
-.ldov__trend-lbl { font-size: 0.72rem; font-weight: 700; color: var(--adm-muted); font-family: var(--font-heading); white-space: nowrap; }
-.ldov__trend-bars { display: flex; align-items: flex-end; gap: 2px; height: 26px; flex: 1; min-width: 0; }
-.ldov__trend-bars span { flex: 1; min-width: 2px; border-radius: 1.5px 1.5px 0 0; background: #3a7bd5; opacity: 0.85; }
-.ldov__trend-bars span.is-zero { background: var(--adm-border); opacity: 0.7; }
+.ldov__trend { display: flex; align-items: center; gap: 0.7rem; flex: 1; min-width: 0; }
+.ldov__trend-lbl { font-size: 0.76rem; font-weight: 700; color: var(--adm-muted); font-family: var(--font-heading); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ldov__trend-bars {
+  display: flex; align-items: flex-end; gap: 2px; height: 30px; flex: 1; min-width: 0;
+  border-bottom: 1px solid var(--adm-border-strong); padding-bottom: 1px;
+}
+.ldov__trend-bars span { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, #4f8fe0, #2f66b8); }
+.ldov__trend-bars span.is-zero { height: 3px !important; background: var(--adm-border); border-radius: 1px; }
 .ldov__src-toggle {
-  border: 0; background: none; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--adm-border-strong); background: var(--adm-surface); cursor: pointer; white-space: nowrap;
   font-size: 0.8rem; font-weight: 700; color: #0369a1; font-family: var(--font-heading);
-  padding: 0.2rem 0.3rem; border-radius: 6px;
+  padding: 0.34rem 0.8rem; border-radius: 999px; transition: all .15s;
 }
-.ldov__src-toggle:hover { background: #f0f9ff; }
+.ldov__src-toggle:hover { background: #f0f9ff; border-color: #0EA5E9; }
 
 /* טבלת איכות מקורות — כמות מול שיעור סגירה */
 .ldov__src { width: 100%; border-collapse: collapse; font-size: 0.85rem; border-top: 1px solid var(--adm-border); }
@@ -1351,9 +1361,10 @@
   .adm-leads__board { flex-direction: column; overflow-x: visible; }
   .adm-stage { flex: 1 1 auto; max-width: none; width: 100%; }
   .adm-leads__grid { grid-template-columns: 1fr; }
-  .adm-leads__bar { flex-direction: column; align-items: stretch; }
+  .adm-leads__head { position: static; }
+  .adm-leads__bar-row { flex-direction: column; align-items: stretch; }
   .adm-leads__bar-group { justify-content: space-between; }
-  .adm-leads__search { flex: 1; min-width: 0; }
+  .adm-leads__search { flex: 1; min-width: 0; max-width: none; }
   .adm-leads__toolbar { flex-direction: column-reverse; align-items: stretch; }
   .adm-leads__tools { flex-wrap: wrap; }
   /* פילטרים — שורה אחת עם גלילה אופקית במקום שבירה לגובה */
@@ -2060,9 +2071,11 @@
 .adm-leads__undo-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.38rem 0.72rem;
-  border-radius: 8px;
+  gap: 0.35rem;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 0.85rem;
+  border-radius: 10px;
   border: 1.5px solid #f59e0b;
   background: #fffbeb;
   color: #b45309;

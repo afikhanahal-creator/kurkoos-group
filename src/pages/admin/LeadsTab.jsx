@@ -375,63 +375,64 @@ export default function LeadsTab() {
   return (
     <div className="adm-leads" dir="rtl">
 
-      {/* ===== סרגל עליון ===== */}
-      <div className="adm-leads__bar adm-leads__bar--top">
-        <div className="adm-leads__bar-group">
-          <span className="adm-leads__count"><b>{filtered.length}</b> לידים</span>
-          <div className="adm-leads__views" role="tablist">
-            {VIEWS.map((v) => { const I = VIEW_ICONS[v.id]; return (
-              <button key={v.id} type="button" role="tab" aria-selected={view===v.id}
-                className={`adm-leads__view ${view===v.id?'is-active':''}`} onClick={() => setView(v.id)}>
-                <I width={15} height={15}/><span>{v.label}</span>
+      {/* ===== כותרת: סרגל כלים + פילטרים בכרטיס אחד ===== */}
+      <div className="adm-leads__head">
+        <div className="adm-leads__bar-row">
+          <div className="adm-leads__bar-group">
+            <span className="adm-leads__count"><b>{filtered.length}</b> לידים</span>
+            <div className="adm-leads__views" role="tablist">
+              {VIEWS.map((v) => { const I = VIEW_ICONS[v.id]; return (
+                <button key={v.id} type="button" role="tab" aria-selected={view===v.id}
+                  className={`adm-leads__view ${view===v.id?'is-active':''}`} onClick={() => setView(v.id)}>
+                  <I width={15} height={15}/><span>{v.label}</span>
+                </button>
+              )})}
+            </div>
+          </div>
+          <div className="adm-leads__bar-group">
+            {undoStack.length > 0 && (
+              <button type="button" className="adm-leads__undo-btn" onClick={undo} title="ביטול פעולה אחרונה (Ctrl+Z)">
+                <IcUndo width={13} height={13}/> ביטול
               </button>
-            )})}
+            )}
+            <input className="adm-leads__search" placeholder="חיפוש לפי שם, טלפון, פרויקט…" value={query} onChange={(e) => setQuery(e.target.value)}/>
+            <button type="button" className="adm-leads__btn" onClick={() => exportCsv(filtered)}><IcDownload width={14} height={14}/> ייצוא</button>
+            <button type="button" className="adm-leads__btn adm-leads__btn--primary" onClick={() => setEditing(blankLead())}><IcPlus width={14} height={14}/> ליד חדש</button>
           </div>
         </div>
-        <div className="adm-leads__bar-group">
-          {undoStack.length > 0 && (
-            <button type="button" className="adm-leads__undo-btn" onClick={undo} title="ביטול פעולה אחרונה (Ctrl+Z)">
-              <IcUndo width={13} height={13}/> ביטול
-            </button>
-          )}
-          <input className="adm-leads__search" placeholder="חיפוש…" value={query} onChange={(e) => setQuery(e.target.value)}/>
-          <button type="button" className="adm-leads__btn" onClick={() => exportCsv(filtered)}><IcDownload width={14} height={14}/> ייצוא</button>
-          <button type="button" className="adm-leads__btn adm-leads__btn--primary" onClick={() => setEditing(blankLead())}><IcPlus width={14} height={14}/> ליד חדש</button>
-        </div>
-      </div>
 
-      {/* ===== פילטרים ===== */}
-      <div className="adm-leads__filters">
-        <div className="adm-leads__filter-row">
-          <span className="adm-leads__filter-lbl">שלב:</span>
-          <button type="button" className={`adm-filter-pill ${stageFilter==='all'?'is-active':''}`} onClick={() => setStageFilter('all')}>הכל ({leads.length})</button>
-          {STAGES.map((s) => {
-            const n = leads.filter((l) => (l.status||'new') === s.id).length
-            return (
-              <button key={s.id} type="button"
-                className={`adm-filter-pill ${stageFilter===s.id?'is-active':''}`}
-                style={stageFilter===s.id ? {background: s.color, color:'#fff', borderColor: s.color} : {}}
-                onClick={() => setStageFilter((cur) => cur===s.id?'all':s.id)}>
-                <span className="adm-filter-dot" style={{ background: stageFilter===s.id ? 'rgba(255,255,255,0.7)' : s.color }}/>
-                {s.label} ({n})
-              </button>
-            )
-          })}
-        </div>
-        {sourcesInData.length > 1 && (
+        <div className="adm-leads__filters">
           <div className="adm-leads__filter-row">
-            <span className="adm-leads__filter-lbl">מקור:</span>
-            <button type="button" className={`adm-filter-pill ${sourceFilter==='all'?'is-active':''}`} onClick={() => setSourceFilter('all')}>הכל</button>
-            {sourcesInData.map((src) => (
-              <button key={src} type="button"
-                className={`adm-filter-pill ${sourceFilter===src?'is-active':''}`}
-                style={sourceFilter===src ? {background: SOURCE_COLOR[src]||'#555', color:'#fff', borderColor:'transparent'} : {}}
-                onClick={() => setSourceFilter((c) => c===src?'all':src)}>
-                {SOURCE_LABEL[src]||src}
-              </button>
-            ))}
+            <span className="adm-leads__filter-lbl">שלב</span>
+            <button type="button" className={`adm-filter-pill ${stageFilter==='all'?'is-active':''}`} onClick={() => setStageFilter('all')}>הכל ({leads.length})</button>
+            {STAGES.map((s) => {
+              const n = leads.filter((l) => (l.status||'new') === s.id).length
+              return (
+                <button key={s.id} type="button"
+                  className={`adm-filter-pill ${stageFilter===s.id?'is-active':''}`}
+                  style={stageFilter===s.id ? {background: s.color, color:'#fff', borderColor: s.color} : {}}
+                  onClick={() => setStageFilter((cur) => cur===s.id?'all':s.id)}>
+                  <span className="adm-filter-dot" style={{ background: stageFilter===s.id ? 'rgba(255,255,255,0.7)' : s.color }}/>
+                  {s.label} ({n})
+                </button>
+              )
+            })}
           </div>
-        )}
+          {sourcesInData.length > 1 && (
+            <div className="adm-leads__filter-row">
+              <span className="adm-leads__filter-lbl">מקור</span>
+              <button type="button" className={`adm-filter-pill ${sourceFilter==='all'?'is-active':''}`} onClick={() => setSourceFilter('all')}>הכל</button>
+              {sourcesInData.map((src) => (
+                <button key={src} type="button"
+                  className={`adm-filter-pill ${sourceFilter===src?'is-active':''}`}
+                  style={sourceFilter===src ? {background: SOURCE_COLOR[src]||'#555', color:'#fff', borderColor:'transparent'} : {}}
+                  onClick={() => setSourceFilter((c) => c===src?'all':src)}>
+                  {SOURCE_LABEL[src]||src}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ===== דשבורד ===== */}
@@ -542,7 +543,7 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
       {/* מגמת 30 יום + ניתוח מקורות */}
       <div className="ldov__foot">
         <div className="ldov__trend" title="לידים חדשים ליום — 30 הימים האחרונים">
-          <span className="ldov__trend-lbl">30 יום</span>
+          <span className="ldov__trend-lbl">{s.in30 === 1 ? 'ליד אחד' : `${s.in30} לידים`} · 30 יום</span>
           <div className="ldov__trend-bars">
             {s.days.map((n, i) => <span key={i} style={{ height: `${Math.max(6, (n / maxDay) * 100)}%` }} className={n ? '' : 'is-zero'} title={`${n} לידים`} />)}
           </div>

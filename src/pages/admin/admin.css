@@ -924,46 +924,108 @@
 .adm-filter-pill.is-active { background: #0A2540; color: #fff; border-color: #0A2540; }
 .adm-filter-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
-/* ── Dashboard ── */
-.adm-dash { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0.85rem; margin-bottom: 0.1rem; }
-.adm-dash__cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; }
-.adm-dash__card {
+/* ── סקירת CRM (LeadsOverview) ── */
+.ldov {
   background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 13px;
-  padding: 1rem 1.15rem 0.95rem; display: flex; flex-direction: column; gap: 0;
-  position: relative; overflow: hidden; transition: box-shadow .2s, transform .15s;
+  margin-bottom: 0.15rem; overflow: hidden;
 }
-.adm-dash__card:hover { box-shadow: 0 6px 24px rgba(10,37,64,0.1); transform: translateY(-2px); }
-.adm-dash__card::before {
-  content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 3px;
-  background: linear-gradient(180deg, #38bdf8 0%, #16688c 100%);
-  border-radius: 3px 0 0 3px;
-}
-.adm-dash__val {
-  font-family: var(--font-heading); font-weight: 900; font-size: 2.35rem;
-  color: #07293a; line-height: 0.95; letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums; padding-inline-start: 0.05rem;
-}
-.adm-dash__lbl { font-family: var(--font-heading); font-weight: 700; font-size: 0.81rem; color: var(--adm-ink); margin-top: 0.32rem; }
-.adm-dash__hint { font-size: 0.68rem; color: var(--adm-muted); margin-top: 0.08rem; }
 
-/* ── Funnel ── */
-.adm-dash__funnel {
-  background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 13px;
-  padding: 0.9rem 1rem 0.85rem; display: flex; flex-direction: column; gap: 0.48rem;
+/* שורת מדדים — צפופה, מופרדת בקווי שיער (בסגנון האנליטיקס) */
+.ldov__kpis { display: grid; grid-template-columns: repeat(6, 1fr); }
+.ldov__kpi {
+  display: flex; flex-direction: column; gap: 0.14rem;
+  padding: 0.72rem 0.95rem 0.66rem;
+  border-inline-start: 1px solid var(--adm-border);
+  min-width: 0;
 }
-.adm-dash__funnel-title {
-  font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem;
-  color: var(--adm-muted); margin-bottom: 0.1rem; letter-spacing: 0.08em; text-transform: uppercase;
+.ldov__kpi:first-child { border-inline-start: 0; }
+.ldov__kpi i {
+  font-style: normal; font-size: 0.66rem; font-weight: 700; color: var(--adm-muted);
+  font-family: var(--font-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.adm-funnel__row { display: grid; grid-template-columns: 72px 1fr 24px; align-items: center; gap: 0.5rem; }
-.adm-funnel__label { font-size: 0.72rem; color: var(--adm-muted); text-align: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.adm-funnel__track { background: var(--adm-bg); border-radius: 5px; height: 18px; overflow: hidden; }
-.adm-funnel__bar {
-  height: 100%; border-radius: 5px; min-width: 20px;
-  display: flex; align-items: center; justify-content: flex-end; padding-inline-end: 6px;
-  transition: width .5s cubic-bezier(.4,0,.2,1);
+.ldov__kpi b {
+  font-family: var(--font-heading); font-weight: 900; font-size: 1.55rem; line-height: 1;
+  color: #07293a; font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
 }
-.adm-funnel__bar span { color: #fff; font-size: 0.66rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.ldov__hint { font-size: 0.63rem; color: var(--adm-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ldov__delta { font-size: 0.63rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ldov__delta.is-up   { color: #15803d; }
+.ldov__delta.is-down { color: #b91c1c; }
+.ldov__kpi--warn b { color: #b45309; }
+.ldov__kpi--warn { background: #fffbeb; }
+
+/* Pipeline אינטראקטיבי — לחיצה על שלב מסננת את הרשימה */
+.ldov__pipe {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  border-top: 1px solid var(--adm-border);
+}
+.ldov__stage {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.12rem;
+  padding: 0.6rem 0.95rem 0.68rem; border: 0; background: none; cursor: pointer;
+  border-inline-start: 1px solid var(--adm-border); text-align: start; min-width: 0;
+  transition: background .15s;
+}
+.ldov__stage:first-child { border-inline-start: 0; }
+.ldov__stage:hover { background: color-mix(in srgb, var(--c, #16688c) 6%, transparent); }
+.ldov__stage.is-on { background: color-mix(in srgb, var(--c, #16688c) 11%, transparent); box-shadow: inset 0 2px 0 var(--c, #16688c); }
+.ldov__stage-num {
+  font-family: var(--font-heading); font-weight: 900; font-size: 1.05rem; line-height: 1;
+  color: var(--c, #16688c); font-variant-numeric: tabular-nums;
+}
+.ldov__stage-lbl { font-size: 0.66rem; font-weight: 700; color: var(--adm-ink); font-family: var(--font-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.ldov__stage-pct { font-size: 0.6rem; color: var(--adm-muted); font-variant-numeric: tabular-nums; }
+.ldov__stage-bar { display: block; width: 100%; height: 3px; border-radius: 2px; background: var(--adm-bg); margin-top: 0.22rem; overflow: hidden; }
+.ldov__stage-bar i { display: block; height: 100%; border-radius: 2px; background: var(--c, #16688c); transition: width .45s cubic-bezier(.4,0,.2,1); }
+
+/* מגמת 30 יום + מתג ניתוח מקורות */
+.ldov__foot {
+  display: flex; align-items: center; gap: 0.9rem;
+  border-top: 1px solid var(--adm-border); padding: 0.5rem 0.95rem;
+}
+.ldov__trend { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
+.ldov__trend-lbl { font-size: 0.63rem; font-weight: 700; color: var(--adm-muted); font-family: var(--font-heading); white-space: nowrap; }
+.ldov__trend-bars { display: flex; align-items: flex-end; gap: 2px; height: 26px; flex: 1; min-width: 0; }
+.ldov__trend-bars span { flex: 1; min-width: 2px; border-radius: 1.5px 1.5px 0 0; background: #3a7bd5; opacity: 0.85; }
+.ldov__trend-bars span.is-zero { background: var(--adm-border); opacity: 0.7; }
+.ldov__src-toggle {
+  border: 0; background: none; cursor: pointer; white-space: nowrap;
+  font-size: 0.7rem; font-weight: 700; color: #0369a1; font-family: var(--font-heading);
+  padding: 0.2rem 0.3rem; border-radius: 6px;
+}
+.ldov__src-toggle:hover { background: #f0f9ff; }
+
+/* טבלת איכות מקורות — כמות מול שיעור סגירה */
+.ldov__src { width: 100%; border-collapse: collapse; font-size: 0.76rem; border-top: 1px solid var(--adm-border); }
+.ldov__src th {
+  text-align: right; font-family: var(--font-heading); font-weight: 700; font-size: 0.63rem;
+  color: var(--adm-muted); padding: 0.4rem 0.95rem; background: var(--adm-surface-2);
+  border-bottom: 1px solid var(--adm-border); white-space: nowrap;
+}
+.ldov__src td { padding: 0.42rem 0.95rem; border-bottom: 1px solid var(--adm-border); color: var(--adm-ink); font-variant-numeric: tabular-nums; }
+.ldov__src tr:last-child td { border-bottom: 0; }
+.ldov__src-name { font-weight: 700; font-family: var(--font-heading); }
+.ldov__src .is-quality { color: #15803d; font-weight: 800; }
+
+/* חיווי "דורש טיפול" על ליד */
+.adm-lead__attn {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.63rem; font-weight: 700; color: #92400e;
+  background: #fef3c7; border: 1px solid #fde68a; border-radius: 999px;
+  padding: 0.1rem 0.5rem; white-space: nowrap;
+}
+.adm-lead__attn::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #d97706; }
+.adm-list__name-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+
+/* מסלול הגלישה של הפונה (בפאנל העריכה) */
+.adm-journey {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  background: var(--adm-surface-2); border: 1px solid var(--adm-border);
+  border-radius: 10px; padding: 0.6rem 0.75rem;
+}
+.adm-journey__lbl { font-size: 0.68rem; font-weight: 700; color: var(--adm-muted); font-family: var(--font-heading); }
+.adm-journey__path { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.45rem; }
+.adm-journey__step { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.78rem; font-weight: 600; color: var(--adm-ink); }
+.adm-journey__sep { color: var(--adm-muted); font-size: 0.6rem; opacity: 0.75; }
 
 /* ── Board (Kanban) ── */
 .adm-leads__board {
@@ -1246,7 +1308,12 @@
 .adm-leads__setup strong { font-family: var(--font-heading); font-size: 0.95rem; }
 
 /* ── Responsive ── */
-@media (max-width: 980px) { .adm-dash { grid-template-columns: 1fr; } }
+@media (max-width: 980px) {
+  .ldov__kpis, .ldov__pipe { grid-template-columns: repeat(3, 1fr); }
+  .ldov__kpi:nth-child(3n + 1), .ldov__stage:nth-child(3n + 1) { border-inline-start: 0; }
+  .ldov__kpi:nth-child(n + 4) { border-top: 1px solid var(--adm-border); }
+  .ldov__stage:nth-child(n + 4) { border-top: 1px solid var(--adm-border); }
+}
 @media (max-width: 720px) {
   .adm-leads__board { flex-direction: column; overflow-x: visible; }
   .adm-stage { flex: 1 1 auto; max-width: none; width: 100%; }
@@ -1256,9 +1323,24 @@
   .adm-leads__search { flex: 1; min-width: 0; }
   .adm-leads__toolbar { flex-direction: column-reverse; align-items: stretch; }
   .adm-leads__tools { flex-wrap: wrap; }
-  .adm-dash__cards { grid-template-columns: repeat(2, 1fr); }
+  /* פילטרים — שורה אחת עם גלילה אופקית במקום שבירה לגובה */
+  .adm-leads__filter-row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .adm-leads__filter-row::-webkit-scrollbar { display: none; }
+  .ldov__kpis { grid-template-columns: repeat(2, 1fr); }
+  .ldov__kpi:nth-child(3n + 1) { border-inline-start: 1px solid var(--adm-border); }
+  .ldov__kpi:nth-child(2n + 1) { border-inline-start: 0; }
+  .ldov__kpi:nth-child(n + 3) { border-top: 1px solid var(--adm-border); }
+  .ldov__kpi b { font-size: 1.3rem; }
+  .ldov__pipe { grid-template-columns: repeat(3, 1fr); }
+  .ldov__foot { flex-wrap: wrap; }
+  /* שורת ליד במובייל — שורה קומפקטית ומסודרת, לא טבלה מכווצת */
   .adm-list__row { grid-template-columns: 20px 8px 1fr auto; row-gap: 0.4rem; }
-  .adm-list__contacts, .adm-list__project, .adm-list__date { grid-column: 3 / -1; }
+  .adm-list__contacts, .adm-list__project { grid-column: 3 / -1; }
+  .adm-list__contacted { grid-column: 1 / 3; }
+  .adm-list__row .adm-stage-btn { grid-column: 3; justify-self: start; }
+  .adm-list__row .adm-lead__source-badge { grid-column: 4; justify-self: end; }
+  .adm-list__date { grid-column: 3; }
+  .adm-list__acts { grid-column: 4; justify-self: end; }
 }
 
 /* ===== עורך קוביות נתונים (drag & drop) ===== */
@@ -1638,7 +1720,14 @@
 .adm[data-theme="dark"] .hdg__badge--h2 { background: rgba(26, 165, 100, 0.22); color: #6fd6a3; }
 
 /* Leads section — dark mode overrides */
-.adm[data-theme="dark"] .adm-dash__val { color: #d6e8f4; }
+.adm[data-theme="dark"] .ldov__kpi b { color: #d6e8f4; }
+.adm[data-theme="dark"] .ldov__kpi--warn { background: rgba(133,77,14,0.14); }
+.adm[data-theme="dark"] .ldov__kpi--warn b { color: #fcd34d; }
+.adm[data-theme="dark"] .ldov__delta.is-up { color: #6fd6a3; }
+.adm[data-theme="dark"] .ldov__delta.is-down { color: #fca5a5; }
+.adm[data-theme="dark"] .ldov__src-toggle:hover { background: rgba(14,165,233,0.12); }
+.adm[data-theme="dark"] .ldov__src .is-quality { color: #6fd6a3; }
+.adm[data-theme="dark"] .adm-lead__attn { background: rgba(133,77,14,0.16); border-color: rgba(253,230,138,0.25); color: #fcd34d; }
 .adm[data-theme="dark"] .adm-leads__count b { color: #9fd2e8; }
 .adm[data-theme="dark"] .adm-leads__view.is-active { background: #1e3a4e; }
 .adm[data-theme="dark"] .adm-filter-pill.is-active { background: #1e3a4e; border-color: #1e3a4e; }
@@ -1647,7 +1736,6 @@
 .adm[data-theme="dark"] .adm-lead__msg { background: var(--adm-surface-2); color: #94a3b8; }
 .adm[data-theme="dark"] .adm-lead__avatar { background: color-mix(in srgb, var(--stage-c, #16688c) 22%, #1d2a39); border-color: color-mix(in srgb, var(--stage-c, #16688c) 30%, #27333f); }
 .adm[data-theme="dark"] .adm-stage__head { background: color-mix(in srgb, var(--stage, #16688c) 10%, #16212e); }
-.adm[data-theme="dark"] .adm-dash__card::before { background: linear-gradient(180deg, #38bdf8 0%, #16688c 100%); }
 .adm[data-theme="dark"] .adm-leads__panel-foot { background: var(--adm-surface-2); }
 .adm[data-theme="dark"] .adm-quick-btn--call { background: rgba(29,78,216,0.18); color: #93c5fd; border-color: rgba(29,78,216,0.3); }
 .adm[data-theme="dark"] .adm-quick-btn--wa   { background: rgba(22,101,52,0.18);  color: #86efac; border-color: rgba(22,101,52,0.3);  }

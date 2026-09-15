@@ -97,6 +97,11 @@ function exportCsv(leads) {
   a.download = `leads-${fmtDate(new Date().toISOString())}.csv`; a.click(); URL.revokeObjectURL(a.href)
 }
 
+/* ליד שדורש טיפול: עדיין בשלב "חדש" ועברו מעל 3 ימים מאז שנכנס */
+const ATTN_DAYS = 3
+const needsAttention = (l) => (l.status || 'new') === 'new' && l.created_at && (Date.now() - new Date(l.created_at).getTime()) > ATTN_DAYS * 86400000
+const waitingDays = (l) => Math.floor((Date.now() - new Date(l.created_at).getTime()) / 86400000)
+
 const blankLead = () => ({ name:'', phone:'', email:'', project:'', message:'', notes:'', status:'new', source:'manual', contacted:false })
 
 /* ============================================================
@@ -430,7 +435,7 @@ export default function LeadsTab() {
       </div>
 
       {/* ===== דשבורד ===== */}
-      {!tableMissing && <Dashboard leads={leads}/>}
+      {!tableMissing && <LeadsOverview leads={leads} stageFilter={stageFilter} setStageFilter={setStageFilter}/>}
 
       {tableMissing && (
         <div className="adm-leads__setup">
@@ -464,52 +469,107 @@ export default function LeadsTab() {
   )
 }
 
-/* ============================ דשבורד ============================ */
-function Dashboard({ leads }) {
-  const stats = useMemo(() => {
-    const today = daysAgo(0), w = daysAgo(7), m = daysAgo(30)
-    const count = (d) => leads.filter((l) => isAfter(l.created_at, d)).length
+/* ============================ סקירת CRM ============================ */
+function LeadsOverview({ leads, stageFilter, setStageFilter }) {
+  const [showSources, setShowSources] = useState(false)
+  const s = useMemo(() => {
+    const now30 = daysAgo(30), prev60 = daysAgo(60)
+    const in30 = leads.filter((l) => isAfter(l.created_at, now30)).length
+    const inPrev = leads.filter((l) => isAfter(l.created_at, prev60) && !isAfter(l.created_at, now30)).length
     const total = leads.length
-    const won   = leads.filter((l) => l.status==='won').length
-    const contacted = leads.filter((l) => l.contacted).length
-    const open  = leads.filter((l) => l.status!=='won'&&l.status!=='lost').length
-    const conv  = total ? Math.round((won/total)*100) : 0
-    const funnel = FUNNEL.map((id) => ({...stageOf(id), n: leads.filter((l) => (l.status||'new')===id).length}))
-    const maxF  = Math.max(1,...funnel.map((f) => f.n))
-    return { today:count(today), week:count(w), month:count(m), total, won, contacted, open, conv, funnel, maxF }
+    const byStage = Object.fromEntries(STAGES.map((st) => [st.id, leads.filter((l) => (l.status || 'new') === st.id).length]))
+    const inWork = byStage.contacted + byStage.meeting + byStage.negotiation
+    const attention = leads.filter(needsAttention).length
+    const won = byStage.won
+    const conv = total ? won / total : 0
+    // לידים חדשים ליום — 30 הימים האחרונים (אמיתי, מתוך created_at)
+    const days = []
+    for (let i = 29; i >= 0; i--) {
+      const d0 = daysAgo(i), d1 = daysAgo(i - 1)
+      days.push(leads.filter((l) => isAfter(l.created_at, d0) && !isAfter(l.created_at, d1)).length)
+    }
+    // איכות לפי מקור: כמות מול שיעור סגירה
+    const srcMap = new Map()
+    for (const l of leads) {
+      const k = SOURCE_LABEL[l.source] || l.source || 'לא ידוע'
+      const e = srcMap.get(k) || { n: 0, won: 0 }
+      e.n++; if (l.status === 'won') e.won++
+      srcMap.set(k, e)
+    }
+    const sources = [...srcMap.entries()].map(([k, v]) => ({ k, ...v, conv: v.n ? v.won / v.n : 0 })).sort((a, b) => b.n - a.n)
+    return { total, in30, inPrev, byStage, inWork, attention, won, conv, days, sources }
   }, [leads])
 
+  const delta = s.inPrev ? ((s.in30 - s.inPrev) / s.inPrev) * 100 : null
+  const maxDay = Math.max(1, ...s.days)
+
   return (
-    <div className="adm-dash">
-      <div className="adm-dash__cards">
-        {[
-          { label:'היום',       value:stats.today,       hint:'לידים חדשים' },
-          { label:'השבוע',      value:stats.week,        hint:'7 ימים אחרונים' },
-          { label:'30 יום',     value:stats.month,       hint:'חודש אחרון' },
-          { label:'סה"כ לידים', value:stats.total,       hint:`${stats.open} פתוחים` },
-          { label:'נוצר קשר',   value:stats.contacted,   hint:`מתוך ${stats.total}` },
-          { label:'אחוז סגירה', value:`${stats.conv}%`,  hint:`${stats.won} נסגרו` },
-        ].map((c) => (
-          <div key={c.label} className="adm-dash__card">
-            <span className="adm-dash__val">{c.value}</span>
-            <span className="adm-dash__lbl">{c.label}</span>
-            <span className="adm-dash__hint">{c.hint}</span>
-          </div>
-        ))}
+    <div className="ldov">
+      {/* שורת מדדים */}
+      <div className="ldov__kpis">
+        <div className="ldov__kpi"><i>סה"כ לידים</i><b>{s.total}</b><span className="ldov__hint">{s.byStage.new + s.inWork} פתוחים</span></div>
+        <div className="ldov__kpi"><i>30 יום אחרונים</i><b>{s.in30}</b>
+          {delta != null
+            ? <span className={`ldov__delta ${delta >= 0 ? 'is-up' : 'is-down'}`}>{delta >= 0 ? '↑' : '↓'}{Math.abs(delta).toFixed(0)}% מול התקופה הקודמת</span>
+            : <span className="ldov__hint">אין עדיין השוואה</span>}
+        </div>
+        <div className="ldov__kpi"><i>חדשים — טרם טופלו</i><b>{s.byStage.new}</b><span className="ldov__hint">בשלב "ליד חדש"</span></div>
+        <div className="ldov__kpi"><i>בטיפול</i><b>{s.inWork}</b><span className="ldov__hint">קשר · פגישה · מו"מ</span></div>
+        <div className={`ldov__kpi${s.attention ? ' ldov__kpi--warn' : ''}`}><i>דורשים טיפול</i><b>{s.attention}</b><span className="ldov__hint">מעל {ATTN_DAYS} ימים ללא מענה</span></div>
+        <div className="ldov__kpi"><i>נסגרו בהצלחה</i><b>{s.won}</b><span className="ldov__hint">{(s.conv * 100).toFixed(0)}% שיעור סגירה</span></div>
       </div>
-      <div className="adm-dash__funnel">
-        <h4 className="adm-dash__funnel-title">משפך לידים</h4>
-        {stats.funnel.map((f) => (
-          <div key={f.id} className="adm-funnel__row">
-            <span className="adm-funnel__label">{f.label}</span>
-            <div className="adm-funnel__track">
-              <div className="adm-funnel__bar" style={{ width:`${(f.n/stats.maxF)*100}%`, background:f.color }}>
-                <span>{f.n}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+
+      {/* Pipeline אינטראקטיבי — לחיצה מסננת את הרשימה */}
+      <div className="ldov__pipe" role="tablist" aria-label="Pipeline — סינון לפי שלב">
+        {STAGES.map((st) => {
+          const n = s.byStage[st.id]
+          const pct = s.total ? Math.round((n / s.total) * 100) : 0
+          return (
+            <button key={st.id} type="button" role="tab" aria-selected={stageFilter === st.id}
+              className={`ldov__stage${stageFilter === st.id ? ' is-on' : ''}`}
+              style={{ '--c': st.color }}
+              onClick={() => setStageFilter((c) => (c === st.id ? 'all' : st.id))}
+              title={`${st.label}: ${n} לידים (${pct}%)`}>
+              <span className="ldov__stage-num">{n}</span>
+              <span className="ldov__stage-lbl">{st.label}</span>
+              <span className="ldov__stage-pct">{pct}%</span>
+              <span className="ldov__stage-bar"><i style={{ width: `${s.total ? (n / Math.max(1, ...STAGES.map((x) => s.byStage[x.id]))) * 100 : 0}%` }} /></span>
+            </button>
+          )
+        })}
       </div>
+
+      {/* מגמת 30 יום + ניתוח מקורות */}
+      <div className="ldov__foot">
+        <div className="ldov__trend" title="לידים חדשים ליום — 30 הימים האחרונים">
+          <span className="ldov__trend-lbl">30 יום</span>
+          <div className="ldov__trend-bars">
+            {s.days.map((n, i) => <span key={i} style={{ height: `${Math.max(6, (n / maxDay) * 100)}%` }} className={n ? '' : 'is-zero'} title={`${n} לידים`} />)}
+          </div>
+        </div>
+        <button type="button" className="ldov__src-toggle" onClick={() => setShowSources((v) => !v)}>
+          ניתוח מקורות {showSources ? '▴' : '▾'}
+        </button>
+      </div>
+      {showSources && (
+        <table className="ldov__src">
+          <thead><tr><th>מקור</th><th>לידים</th><th>נתח</th><th>נסגרו</th><th>שיעור סגירה</th></tr></thead>
+          <tbody>
+            {s.sources.map((r) => {
+              const quality = r.won > 0 && r.conv > s.conv * 1.3
+              return (
+                <tr key={r.k}>
+                  <td className="ldov__src-name">{r.k}</td>
+                  <td>{r.n}</td>
+                  <td>{s.total ? Math.round((r.n / s.total) * 100) : 0}%</td>
+                  <td>{r.won}</td>
+                  <td className={quality ? 'is-quality' : ''}>{(r.conv * 100).toFixed(0)}%{quality ? ' ★' : ''}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }
@@ -554,6 +614,8 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
             <IcGrip width={8} height={10} className="adm-lead__grip-icon" aria-hidden="true" style={{ pointerEvents: 'none' }}/>
           </div>
         </div>
+
+        {needsAttention(lead) && <span className="adm-lead__attn">ממתין {waitingDays(lead)} ימים ללא מענה</span>}
 
         {lead.message && <p className="adm-lead__msg">{lead.message}</p>}
 
@@ -652,7 +714,10 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
 
             <span className="adm-list__stage-pill" style={{ background: st.color }} title={st.label}/>
 
-            <button type="button" className="adm-list__name" onClick={() => setEditing(lead)}>{lead.name||'ללא שם'}</button>
+            <div className="adm-list__name-cell">
+              <button type="button" className="adm-list__name" onClick={() => setEditing(lead)}>{lead.name||'ללא שם'}</button>
+              {needsAttention(lead) && <span className="adm-lead__attn">ממתין {waitingDays(lead)} ימים</span>}
+            </div>
 
             <div className="adm-list__contacts">
               {lead.phone && <a href={`tel:${lead.phone}`} dir="ltr" title="התקשר"><IcPhone width={12} height={12}/> {lead.phone}</a>}
@@ -783,6 +848,11 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
   const st     = stageOf(f.status)
   const proj   = extractProject(f.project)
   const pUrl   = projectUrl(f.project)
+  /* מסלול הגלישה שנשמר אוטומטית בהערות (מ-visitTrail) — מוצג כציר דרך קריא */
+  const journey = useMemo(() => {
+    const m = /מסע באתר:\s*([^\n]+)/.exec(f.notes || '')
+    return m ? m[1].split('←').map((x) => x.trim()).filter(Boolean) : null
+  }, [f.notes])
   const digits = String(f.phone||'').replace(/\D/g,'')
   const wa     = waLink(f.phone)
   const STATUS_TXT = { saved: 'נשמר', dirty: 'לא שמור', saving: 'שומר…', error: 'שגיאת שמירה' }
@@ -837,6 +907,21 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
           </div>
 
           <label className="adm-leads__field-wide">הודעת הפונה<textarea rows={3} value={f.message||''} onChange={set('message')}/></label>
+
+          {journey && journey.length > 0 && (
+            <div className="adm-journey">
+              <span className="adm-journey__lbl">מסלול הגלישה באתר לפני הפנייה</span>
+              <div className="adm-journey__path">
+                {journey.map((p, i) => (
+                  <span key={i} className="adm-journey__step">
+                    {p}
+                    {i < journey.length - 1 && <span className="adm-journey__sep" aria-hidden="true">◄</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <label className="adm-leads__field-wide">הערות פנימיות<textarea rows={3} value={f.notes||''} onChange={set('notes')}/></label>
         </div>
 

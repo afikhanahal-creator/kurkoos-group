@@ -100,6 +100,26 @@
 .an-tip__prev { color: var(--an-muted); }
 .an-anom-note { margin: 0; font-size: 0.78rem; color: var(--an-warn); }
 
+/* ---------- awaiting first data ---------- */
+.an-await {
+  text-align: center;
+  padding: 3.2rem 1.5rem;
+  border: 1px dashed var(--an-line);
+  border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+}
+.an-await__badge {
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--an-good);
+  background: color-mix(in srgb, var(--an-good) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--an-good) 30%, transparent);
+  border-radius: 999px; padding: 0.3rem 0.9rem;
+}
+.an-await h4 { margin: 0.2rem 0 0; font-size: 1.15rem; }
+.an-await p { margin: 0; max-width: 52ch; font-size: 0.92rem; line-height: 1.7; color: var(--an-muted); }
+.an-await__rt { padding-top: 0.4rem; border-top: 1px solid var(--an-line); margin-top: 0.5rem !important; }
+.an-await__rt b { color: var(--an-good); }
+
 /* ---------- insights ---------- */
 .an-insights { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .an-insights li { padding: 0.5rem 0.85rem; font-size: 0.88rem; line-height: 1.55; border-inline-start: 2px solid var(--an-accent); margin-bottom: 0.35rem; background: color-mix(in srgb, var(--an-accent) 4%, transparent); }

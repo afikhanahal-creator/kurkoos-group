@@ -14,6 +14,7 @@ import HeadingsTab from './HeadingsTab.jsx'
 import TestimonialsTab from './TestimonialsTab.jsx'
 import HomeFeaturedTab from './HomeFeaturedTab.jsx'
 import ContentTab from './ContentTab.jsx'
+import AnalyticsTab from './AnalyticsTab.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
 import './admin.css'
 
@@ -89,6 +90,7 @@ const TABS = [
   { id: 'covers', label: 'תמונות קאבר', sub: 'באנרי החטיבות וגלריית הביצוע — החלפה/סידור/גרירה', icon: 'covers', group: 'תוכן' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads', group: 'לקוחות' },
   { id: 'newsletter', label: 'ניוזלטר', sub: 'מאגר הנרשמים + חיבור ESP/וובהוק לאוטומציות', icon: 'newsletter', group: 'לקוחות' },
+  { id: 'analytics', label: 'תנועה וסטטיסטיקות', sub: 'חיבור Google Analytics — כמה נכנסים לאתר ומה הם רואים', icon: 'counters', group: 'לקוחות' },
   { id: 'fonts', label: 'פונטים וטיפוגרפיה', sub: 'פונטים, גדלים ומשקלים (H1–H5) של כל האתר', icon: 'fonts', group: 'עיצוב' },
   { id: 'settings', label: 'הגדרות', sub: 'התראות מייל, יומן פגישות והגדרות מערכת', icon: 'settings', group: 'מערכת' },
 ]
@@ -187,6 +189,7 @@ export default function Admin() {
           {tab === 'covers' && <CoverImagesTab />}
           {tab === 'leads' && <LeadsTab />}
           {tab === 'newsletter' && <NewsletterTab />}
+          {tab === 'analytics' && <AnalyticsTab />}
           {tab === 'fonts' && <FontsTab />}
           {tab === 'settings' && <SettingsTab />}
         </main>

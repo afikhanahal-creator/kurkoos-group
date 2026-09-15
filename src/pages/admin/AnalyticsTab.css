@@ -1,0 +1,60 @@
+/* AnalyticsTab — חיבור Google Analytics ודוח מוטמע */
+.antab { display: flex; flex-direction: column; gap: 1.25rem; max-width: 980px; }
+
+.antab__card {
+  background: var(--adm-surface, #fff);
+  border: 1px solid var(--adm-border, #e3e7ec);
+  border-radius: 14px;
+  padding: 1.4rem 1.5rem;
+}
+
+.antab__head { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.antab__head h3 { margin: 0; font-size: 1.08rem; }
+
+.antab__chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+}
+.antab__chip--on  { background: #e5f6ec; color: #177245; border: 1px solid #b6e2c8; }
+.antab__chip--off { background: #f4f5f7; color: #6b7280; border: 1px solid #e0e3e8; }
+
+.antab__lead { color: var(--adm-muted, #5b6572); font-size: 0.94rem; line-height: 1.65; margin: 0 0 1rem; }
+
+.antab__row { display: flex; gap: 0.7rem; align-items: flex-end; flex-wrap: wrap; }
+.antab__field { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.85rem; font-weight: 600; flex: 1; min-width: 260px; }
+.antab__field input {
+  border: 1px solid var(--adm-border, #d7dce3);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.95rem;
+  background: var(--adm-bg, #fff);
+  color: inherit;
+}
+
+.antab__btn {
+  background: #a90b0c;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.62rem 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.antab__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.antab__err { color: #b42318; font-size: 0.85rem; margin: 0.5rem 0 0; }
+.antab__hint { font-size: 0.88rem; color: var(--adm-muted, #5b6572); margin: 0.9rem 0 0; }
+.antab__status { font-weight: 700; font-size: 0.9rem; }
+
+.antab__steps { margin: 0.9rem 0 0; padding-inline-start: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.92rem; line-height: 1.6; }
+.antab__steps a, .antab__hint a { color: #a90b0c; font-weight: 700; }
+
+.antab__frame { margin-top: 1.1rem; border: 1px solid var(--adm-border, #e3e7ec); border-radius: 12px; overflow: hidden; }
+.antab__frame iframe { display: block; width: 100%; height: min(72vh, 760px); border: 0; }
+
+@media (max-width: 640px) {
+  .antab__card { padding: 1.1rem 1rem; }
+  .antab__frame iframe { height: 60vh; }
+}

@@ -5,6 +5,7 @@ import { useI18n } from './i18n/index.jsx'
 import Header from './components/layout/Header.jsx'
 import HolidayBanner from './components/ui/HolidayBanner.jsx'
 import { notePage } from './lib/visitTrail.js'
+import Analytics from './components/ui/Analytics.jsx'
 import Footer from './components/layout/Footer.jsx'
 import CookieBanner from './components/ui/CookieBanner.jsx'
 import FloatingActions from './components/ui/FloatingActions.jsx'
@@ -122,6 +123,7 @@ export default function App() {
       <a href="#top" className="skip-link">{t('common.skipToContent')}</a>
       <IntroVideo />
       <ScrollManager />
+      <Analytics />
       <HolidayBanner />
       <Header />
       <main id="top" tabIndex={-1}>

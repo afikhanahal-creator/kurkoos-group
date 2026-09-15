@@ -720,9 +720,13 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
             </div>
 
             <div className="adm-list__contacts">
-              {lead.phone && <a href={`tel:${lead.phone}`} dir="ltr" title="התקשר"><IcPhone width={12} height={12}/> {lead.phone}</a>}
-              {wa && <a href={wa} target="_blank" rel="noopener noreferrer" title="וואטסאפ"><IcWA width={13} height={13}/></a>}
-              {lead.email && <a href={`mailto:${lead.email}`} dir="ltr" className="adm-list__email" title={lead.email}><IcMail width={12} height={12}/> {lead.email}</a>}
+              {lead.phone && (
+                <span className="adm-list__phone-line">
+                  <a href={`tel:${lead.phone}`} dir="ltr" title="התקשר"><IcPhone width={13} height={13}/> {lead.phone}</a>
+                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="adm-list__wa" title="וואטסאפ"><IcWA width={13} height={13}/></a>}
+                </span>
+              )}
+              {lead.email && <a href={`mailto:${lead.email}`} dir="ltr" className="adm-list__email" title={lead.email}><IcMail width={13} height={13}/> {lead.email}</a>}
             </div>
 
             <span className="adm-list__project">{proj||'—'}</span>

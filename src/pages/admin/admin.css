@@ -1259,8 +1259,8 @@
 /* ── List view ── */
 .adm-list { display: flex; flex-direction: column; gap: 0.3rem; }
 .adm-list__row {
-  display: grid; align-items: center; gap: 0.7rem;
-  grid-template-columns: 22px 8px minmax(120px, 1.2fr) minmax(160px, 1.6fr) minmax(95px, 1fr) 40px 142px 88px 76px auto;
+  display: grid; align-items: center; gap: 0.85rem;
+  grid-template-columns: 22px 8px minmax(150px, 1fr) minmax(215px, 1fr) minmax(100px, 0.8fr) 40px 148px 96px 76px auto;
   background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 10px;
   padding: 0.5rem 0.7rem; transition: box-shadow .15s, opacity .12s, border-color .15s;
 }
@@ -1273,16 +1273,23 @@
 .adm-list__stage-pill { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .adm-list__name { border: 0; background: 0; padding: 0; cursor: pointer; font-family: var(--font-heading); font-weight: 700; font-size: 0.98rem; color: var(--adm-ink); text-align: right; }
 .adm-list__name:hover { color: #0369a1; text-decoration: underline; }
-.adm-list__contacts { display: flex; flex-direction: column; gap: 0.06rem; min-width: 0; }
-.adm-list__contacts a { display: inline-flex; align-items: center; gap: 4px; font-size: 0.88rem; color: #0369a1; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* אנשי קשר — עמודה צמודה לימין: טלפון + וואטסאפ בשורה אחת, אימייל מתחת */
+.adm-list__contacts { display: flex; flex-direction: column; gap: 0.16rem; min-width: 0; align-items: flex-start; }
+.adm-list__contacts a { display: inline-flex; align-items: center; gap: 5px; font-size: 0.88rem; color: #0369a1; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .adm-list__contacts a svg { flex-shrink: 0; opacity: 0.8; }
+.adm-list__phone-line { display: inline-flex; align-items: center; gap: 0.55rem; max-width: 100%; }
+.adm-list__wa { color: #16a34a !important; }
+.adm-list__wa svg { opacity: 1 !important; }
 .adm-list__email { color: var(--adm-muted) !important; font-size: 0.82rem !important; }
 .adm-list__project { font-size: 0.88rem; color: var(--adm-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .adm-list__contacted { display: flex; justify-content: center; }
 .adm-list__contacted input { accent-color: #10b981; width: 16px; height: 16px; }
 .adm-list__stage-sel { font-size: 0.76rem; padding: 0.28rem 0.36rem; border: 1px solid var(--adm-border); border-radius: 6px; background: var(--adm-surface); color: var(--adm-ink); }
 .adm-list__date { font-size: 0.84rem; color: var(--adm-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.adm-list__acts { display: flex; gap: 0.3rem; }
+.adm-list__acts { display: flex; gap: 0.3rem; justify-content: flex-end; }
+/* עמודות אחידות: כפתור השלב ותגית המקור ממלאים את רוחב העמודה */
+.adm-list__row .adm-stage-btn { width: 100%; box-sizing: border-box; }
+.adm-list__row .adm-lead__source-badge { width: 100%; box-sizing: border-box; text-align: center; }
 .adm-list__source { display: inline-block; padding: 0.16rem 0.48rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: #fff; white-space: nowrap; }
 
 /* ── Table view ── */
@@ -1337,8 +1344,8 @@
   .adm-list__row { grid-template-columns: 20px 8px 1fr auto; row-gap: 0.4rem; }
   .adm-list__contacts, .adm-list__project { grid-column: 3 / -1; }
   .adm-list__contacted { grid-column: 1 / 3; }
-  .adm-list__row .adm-stage-btn { grid-column: 3; justify-self: start; }
-  .adm-list__row .adm-lead__source-badge { grid-column: 4; justify-self: end; }
+  .adm-list__row .adm-stage-btn { grid-column: 3; justify-self: start; width: auto; }
+  .adm-list__row .adm-lead__source-badge { grid-column: 4; justify-self: end; width: auto; }
   .adm-list__date { grid-column: 3; }
   .adm-list__acts { grid-column: 4; justify-self: end; }
 }

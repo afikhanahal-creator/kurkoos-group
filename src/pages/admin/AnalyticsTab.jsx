@@ -377,6 +377,9 @@ export default function AnalyticsTab() {
   const insights = buildInsights({ tot, prevTot, channels, pages, devices, anomalies })
   const overallCR = tot[2] ? tot[8] / tot[2] : 0
   const rtUsers = rt ? rt.rows?.reduce((a, r) => a + (Number(r.metricValues?.[0]?.value) || 0), 0) ?? 0 : null
+  // נכס חדש: Google מעבד דוחות 24-48 שעות — עד אז אין שורות כלל.
+  // מציגים מצב המתנה מעוצב במקום שלד טבלאות ריק שנראה שבור.
+  const hasData = series.length > 0 || (tot[0] || 0) > 0 || channels.length > 0 || pages.length > 0
   const devTotal = devices.reduce((a, d) => a + d.m[0], 0)
   const chTotal = channels.reduce((a, c) => a + c.m[2], 0)
 
@@ -426,6 +429,22 @@ export default function AnalyticsTab() {
         </div>
       </header>
 
+      {!hasData && (
+        <section className="an-await">
+          <span className="an-await__badge">החיבור פעיל ✓</span>
+          <h4>Google מעבד את הנתונים הראשונים</h4>
+          <p>
+            תג המדידה באתר עובד והנתונים נאספים. Google מעבד דוחות לנכס חדש תוך
+            24–48 שעות — מהרגע הזה הדשבורד יתמלא מעצמו, בלי שום פעולה נוספת.
+          </p>
+          <p className="an-await__rt">
+            בדיקה מיידית: פתחו את האתר בטלפון והביטו במונה <b>"עכשיו באתר"</b> למעלה —
+            נתוני זמן-אמת מגיעים תוך שניות, עוד לפני הדוחות המלאים.
+          </p>
+        </section>
+      )}
+
+      {hasData && <>
       {/* ===== שורת מדדים ראשית ===== */}
       <section className="an-metrics">
         {primary.map((m) => (
@@ -457,7 +476,7 @@ export default function AnalyticsTab() {
       )}
 
       {/* ===== Acquisition ===== */}
-      <section className="an-section">
+      {channels.length > 0 && <section className="an-section">
         <div className="an-sect-head">
           <h4 className="an-h5">מקורות תנועה</h4>
           <button type="button" className="an-csv" onClick={() => exportCsv('channels', ['ערוץ', 'משתמשים', 'ביקורים', 'נתח', 'מעורבות', 'המרות', 'שיעור המרה'], channels.map((c) => [CHANNEL_HE[c.d[0]] || c.d[0], c.m[0], c.m[2], fmtPct(chTotal ? c.m[2] / chTotal : 0), fmtPct(c.m[3]), c.m[4], fmtPct(c.m[2] ? c.m[4] / c.m[2] : 0, 2)]))}>CSV</button>
@@ -486,10 +505,10 @@ export default function AnalyticsTab() {
           </tbody>
         </table>
         <p className="an-footnote">★ = שיעור המרה גבוה משמעותית מהממוצע ({fmtPct(overallCR, 2)}) — תנועה איכותית</p>
-      </section>
+      </section>}
 
       {/* ===== מקורות מפורטים ===== */}
-      <section className="an-section">
+      {sources.length > 0 && <section className="an-section">
         <div className="an-sect-head">
           <h4 className="an-h5">מקור / מדיום</h4>
           <div className="an-sect-tools">
@@ -520,10 +539,10 @@ export default function AnalyticsTab() {
             })}
           </tbody>
         </table>
-      </section>
+      </section>}
 
       {/* ===== עמודים + Drill-down ===== */}
-      <section className="an-section">
+      {pages.length > 0 && <section className="an-section">
         <div className="an-sect-head">
           <h4 className="an-h5">עמודים</h4>
           <div className="an-sect-tools">
@@ -546,10 +565,10 @@ export default function AnalyticsTab() {
           </tbody>
         </table>
         <p className="an-footnote">לחיצה על עמוד פותחת פירוט: מגמה, מקורות ומכשירים של אותו עמוד</p>
-      </section>
+      </section>}
 
       {/* ===== קהל: מכשירים + גיאוגרפיה ===== */}
-      <div className="an-cols">
+      {(devices.length > 0 || countries.length > 0) && <div className="an-cols">
         <section className="an-section">
           <h4 className="an-h5">מכשירים</h4>
           <table className="an-table">
@@ -577,10 +596,10 @@ export default function AnalyticsTab() {
             </div>
           </div>
         </section>
-      </div>
+      </div>}
 
       {/* ===== אירועים ===== */}
-      <section className="an-section">
+      {events.length > 0 && <section className="an-section">
         <div className="an-sect-head">
           <h4 className="an-h5">אירועים</h4>
           <button type="button" className="an-csv" onClick={() => exportCsv('events', ['אירוע', 'כמות', 'משתמשים', 'לכל משתמש'], events.map((e) => [e.d[0], e.m[0], e.m[1], e.m[1] ? (e.m[0] / e.m[1]).toFixed(1) : '']))}>CSV</button>
@@ -598,7 +617,7 @@ export default function AnalyticsTab() {
             ))}
           </tbody>
         </table>
-      </section>
+      </section>}
 
       {/* ===== זמן אמת ===== */}
       {rt?.rows?.length > 0 && (
@@ -614,6 +633,8 @@ export default function AnalyticsTab() {
           </table>
         </section>
       )}
+
+      </>}
 
       {/* ===== הגדרות ===== */}
       <details className="an-settings">

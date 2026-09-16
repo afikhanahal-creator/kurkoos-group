@@ -4,6 +4,7 @@ import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
 import divisions from '../data/divisions.js'
 import { getProjectBySlug, createLead, useSettings, listProjectCards, cmsRowToCard } from '../lib/cms.js'
+import { track } from '../lib/track.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { srcOfResponsive, normalizeResponsiveImage } from '../lib/responsiveImage.js'
@@ -443,6 +444,7 @@ export default function ProjectDetail() {
       source: 'project',
       status: 'new',
     }, { read: false }).catch(() => {})
+    track('generate_lead', { form: 'project_page', project: project?.slug || '' })
   }
 
   return (

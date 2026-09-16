@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../../i18n/index.jsx'
 import site from '../../data/site.js'
 import Icon from './Icon.jsx'
+import { track } from '../../lib/track.js'
 import './FloatingActions.css'
 
 export default function FloatingActions() {
@@ -23,6 +24,7 @@ export default function FloatingActions() {
         rel="noopener noreferrer"
         className="fab fab--wa"
         aria-label="WhatsApp"
+        onClick={() => track('whatsapp_click', { placement: 'floating' })}
       >
         <Icon name="whatsapp" size={26} />
       </a>

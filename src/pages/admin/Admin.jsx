@@ -108,6 +108,16 @@ export default function Admin() {
   })
   useEffect(() => { try { localStorage.setItem(THEME_KEY, theme) } catch { /* noop */ } }, [theme])
 
+  /* מערכת הניהול לא מיועדת לאינדוקס במנועי חיפוש */
+  useEffect(() => {
+    document.title = 'ניהול תוכן | קורקוס גרופ'
+    let m = document.head.querySelector('meta[name="robots"]')
+    if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'robots'); document.head.appendChild(m) }
+    const prev = m.getAttribute('content')
+    m.setAttribute('content', 'noindex,nofollow')
+    return () => { if (prev) m.setAttribute('content', prev) }
+  }, [])
+
   if (!hasSupabase) return <div className="adm-msg">החיבור ל‑Supabase לא מוגדר (חסרים משתני סביבה).</div>
   if (session === undefined) return <div className="adm-msg adm-msg--loading"><span className="adm-spin" />טוען…</div>
   if (session === null) return <Login />

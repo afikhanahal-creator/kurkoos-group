@@ -3,6 +3,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import heDict from '../../i18n/he.js'
 import enDict from '../../i18n/en.js'
 import { createLead } from '../../lib/cms.js'
+import { track } from '../../lib/track.js'
 import { getLastProject, trailSummary } from '../../lib/visitTrail.js'
 import Modal from './Modal.jsx'
 import Icon from './Icon.jsx'
@@ -41,6 +42,7 @@ export default function ContactPopup({ open, onClose }) {
     }
     try {
       await createLead(lead, { read: false })   // אנונימי — בלי קריאה חוזרת (RLS)
+      track('generate_lead', { form: 'contact_popup', topic })
       setSent(true)
     } catch (err) {
       setError(L({ he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות.', en: 'Something went wrong. Please try again or call us directly.' }))

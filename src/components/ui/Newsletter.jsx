@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useI18n } from '../../i18n/index.jsx'
 import { subscribeNewsletter } from '../../lib/cms.js'
+import { track } from '../../lib/track.js'
 import { newsletterContext } from '../../lib/visitTrail.js'
 import Icon from './Icon.jsx'
 import './Newsletter.css'
@@ -18,6 +19,7 @@ export default function Newsletter() {
     try {
       // נשמר במאגר הנרשמים בענן + מפעיל וובהוק אוטומציות אם הוגדר באדמין
       await subscribeNewsletter(email, 'site', newsletterContext())
+      track('newsletter_signup', {})
       setDone(true)
     } catch {
       setErr('ההרשמה נכשלה — נסו שוב בעוד רגע.')

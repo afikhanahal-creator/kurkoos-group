@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import Seo from '../components/ui/Seo.jsx'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
@@ -44,8 +45,21 @@ export default function Mentorship() {
   const [openFaq, setOpenFaq] = useState(null)
   const [openStage, setOpenStage] = useState(null)
 
+  /* נתונים מובנים לשאלות הנפוצות — מבוסס אך ורק על ה-FAQ המוצג בעמוד */
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q.he,
+      acceptedAnswer: { '@type': 'Answer', text: f.a.he },
+    })),
+  }
+
   return (
     <>
+      {/* PageHeader מגדיר title+description; כאן רק הנתונים המובנים של ה-FAQ */}
+      <Seo jsonLd={faqJsonLd} />
       <PageHeader
         eyebrow="מנטורינג"
         title='ליווי יזמי נדל"ן'

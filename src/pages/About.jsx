@@ -45,6 +45,8 @@ export default function About() {
         title={t('pages.about.title')}
         lead={t('pages.about.lead')}
         crumbs={[{ label: t('nav.about') }]}
+        seoTitle="אודות הקבוצה"
+        seoDescription='קורקוס גרופ היא קבוצת נדל"ן הפועלת ביזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים — מקרקע ועד מסירת מפתח, עם פעילות באזור השרון והמרכז.'
       />
 
       <section className="section about-vision">

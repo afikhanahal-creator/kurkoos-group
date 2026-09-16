@@ -8,6 +8,8 @@
 // משתני סביבה: VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY (קריאה ציבורית, RLS).
 // ============================================================
 
+import CONTENT_PATHS from './_content-paths.js'
+
 const SITE = 'https://www.kurkoos-group.co.il'
 
 // עמודים קבועים (תואם ל-Routes ב-App.jsx)
@@ -18,34 +20,26 @@ const STATIC = [
   { path: '/team', changefreq: 'monthly', priority: '0.6' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },
   { path: '/yazamut-nadlan', changefreq: 'weekly', priority: '0.8' },
-  // טור יזמות נדל"ן — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
-  { path: '/yazamut-nadlan/tama38-pkiaa-hok-67', changefreq: 'monthly', priority: '0.7' },
-  { path: '/yazamut-nadlan/bank-israel-10-90', changefreq: 'monthly', priority: '0.7' },
-  { path: '/yazamut-nadlan/maslul-mahir-arvuyot', changefreq: 'monthly', priority: '0.7' },
   { path: '/constructions', changefreq: 'weekly', priority: '0.8' },
-  // המדריך לתהליך הבנייה — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
-  { path: '/constructions/tofes-4-ichlus', changefreq: 'monthly', priority: '0.7' },
-  { path: '/constructions/likuei-bniya-tkufat-bedek', changefreq: 'monthly', priority: '0.7' },
-  { path: '/constructions/betihut-atar-bniya', changefreq: 'monthly', priority: '0.7' },
   { path: '/construction-supervision', changefreq: 'weekly', priority: '0.8' },
-  // פיקוח פרויקטים — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
-  { path: '/construction-supervision/pikuach-yetzikat-beton', changefreq: 'monthly', priority: '0.7' },
-  { path: '/construction-supervision/likuei-itum', changefreq: 'monthly', priority: '0.7' },
-  { path: '/construction-supervision/mefakeach-mul-kablan', changefreq: 'monthly', priority: '0.7' },
   { path: '/real-estate-guide', changefreq: 'weekly', priority: '0.8' },
-  // המדריך לרוכש ולמוכר — כתבות (הסקריפט השבועי מוסיף נתיב חדש בכל פרסום)
-  { path: '/real-estate-guide/heskem-bladiyut', changefreq: 'monthly', priority: '0.7' },
-  { path: '/real-estate-guide/dmei-tivuch-zchuyot', changefreq: 'monthly', priority: '0.7' },
-  { path: '/real-estate-guide/iskaot-noflot', changefreq: 'monthly', priority: '0.7' },
+  { path: '/livy-yazamim', changefreq: 'monthly', priority: '0.8' },
+  { path: '/madrich-yazamim', changefreq: 'weekly', priority: '0.8' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },
   { path: '/divisions/development', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/execution', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/supervision', changefreq: 'monthly', priority: '0.8' },
+  { path: '/divisions/brokerage', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/residential', changefreq: 'monthly', priority: '0.8' },
   { path: '/accessibility', changefreq: 'yearly', priority: '0.3' },
   { path: '/privacy', changefreq: 'yearly', priority: '0.3' },
   { path: '/terms', changefreq: 'yearly', priority: '0.3' },
 ]
+
+/* כתבות הטורים — נוצר אוטומטית בזמן build מ-src/content (ראו scripts/generate-sitemap-paths.mjs) */
+const ARTICLES = CONTENT_PATHS.map((a) => ({
+  path: a.path, lastmod: a.lastmod, changefreq: 'monthly', priority: '0.7',
+}))
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]
@@ -78,6 +72,7 @@ export default async function handler(req, res) {
   const today = new Date().toISOString().slice(0, 10)
   const rows = [
     ...STATIC.map((s) => urlTag({ loc: `${SITE}${s.path}`, changefreq: s.changefreq, priority: s.priority })),
+    ...ARTICLES.map((a) => urlTag({ loc: `${SITE}${a.path}`, lastmod: a.lastmod || undefined, changefreq: a.changefreq, priority: a.priority })),
     ...projects
       .filter((p) => p && p.slug)
       .map((p) => urlTag({

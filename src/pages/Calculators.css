@@ -1,0 +1,72 @@
+/* ============================================================
+   מחשבוני נדל"ן — עיצוב נקי בשפת האתר.
+   ============================================================ */
+
+.calcs__block { max-width: 860px; margin: 0 auto 2.4rem; }
+.calcs__title {
+  display: flex; align-items: center; gap: 0.55rem;
+  font-family: var(--font-heading); font-weight: 800; font-size: 1.35rem;
+  color: var(--color-text, #16202e); margin: 0 0 1rem;
+}
+.calcs__title svg { color: var(--color-secondary, #16688c); flex-shrink: 0; }
+
+.calc {
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 16px; padding: 1.5rem 1.5rem 1.25rem;
+}
+.calc__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1.3rem; }
+.calc__fields label {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.85rem; color: var(--color-text-muted, #5a6a7a);
+}
+.calc__fields input {
+  padding: 0.7rem 0.9rem; border: 1.5px solid var(--color-border, #e3e7ee); border-radius: 10px;
+  font: inherit; font-size: 1.05rem; font-weight: 600; color: var(--color-text, #16202e);
+  background: var(--color-bg, #f7f8fa); text-align: end; font-variant-numeric: tabular-nums;
+  transition: border-color .15s, box-shadow .15s;
+}
+.calc__fields input:focus { outline: none; border-color: var(--color-secondary, #16688c); box-shadow: 0 0 0 3px rgba(22, 104, 140, 0.12); background: var(--color-surface, #fff); }
+
+.calc__results { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; }
+.calc__result {
+  background: var(--color-bg, #f7f8fa); border-radius: 12px; padding: 0.9rem 1.1rem;
+  display: flex; flex-direction: column; gap: 0.25rem;
+}
+.calc__result span { font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted, #5a6a7a); font-family: var(--font-heading); }
+.calc__result b {
+  font-family: var(--font-heading); font-weight: 900; font-size: 1.45rem; line-height: 1.1;
+  color: var(--color-text, #16202e); font-variant-numeric: tabular-nums; direction: ltr; text-align: end;
+}
+.calc__result--main { background: rgba(22, 104, 140, 0.07); border: 1px solid rgba(22, 104, 140, 0.18); }
+.calc__result--main b { color: var(--color-secondary, #16688c); font-size: 1.7rem; }
+
+.calc__how { margin: 1rem 0 0; font-size: 0.85rem; line-height: 1.6; color: var(--color-text-muted, #5a6a7a); }
+
+/* FAQ */
+.calcs__faq-list { display: flex; flex-direction: column; gap: 0.7rem; }
+.calcs__faq-item {
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 14px; overflow: hidden; transition: box-shadow .2s, border-color .2s;
+}
+.calcs__faq-item:hover { border-color: #cbd5e1; box-shadow: 0 4px 18px rgba(10, 37, 64, 0.07); }
+.calcs__faq-item summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem; cursor: pointer; list-style: none;
+  font-family: var(--font-heading); font-weight: 700; font-size: 1.02rem; color: var(--color-text, #16202e);
+}
+.calcs__faq-item summary::-webkit-details-marker { display: none; }
+.calcs__chev { flex-shrink: 0; color: var(--color-secondary, #16688c); transition: transform .25s; }
+.calcs__faq-item[open] .calcs__chev { transform: rotate(180deg); }
+.calcs__faq-item p { margin: 0; padding: 0 1.25rem 1.1rem; color: var(--color-text-muted, #5a6a7a); font-size: 0.98rem; line-height: 1.75; max-width: 72ch; }
+
+.calcs__links { text-align: center; }
+.calcs__links p { color: var(--color-text-muted, #5a6a7a); font-size: 0.95rem; }
+.calcs__links a { color: var(--color-secondary, #16688c); font-weight: 700; text-decoration: none; }
+.calcs__links a:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .calc { padding: 1.1rem 1rem 1rem; }
+  .calc__result b { font-size: 1.25rem; }
+  .calc__result--main b { font-size: 1.45rem; }
+  .calcs__title { font-size: 1.2rem; }
+}

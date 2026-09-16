@@ -9,43 +9,11 @@
 
 .lhub-head { text-align: center; margin-bottom: 2rem; }
 
-.lhub-services__grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;
-}
-.lhub-service {
-  position: relative; overflow: hidden;
-  display: flex; flex-direction: column; gap: 0.5rem; height: 100%; box-sizing: border-box;
-  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
-  border-radius: 16px; padding: 1.5rem 1.4rem 1.25rem; text-decoration: none;
-  box-shadow: 0 10px 30px -22px rgba(7, 41, 58, 0.4);
-  transition: transform 0.4s var(--ease-out, ease-out), box-shadow 0.4s var(--ease-out, ease-out), border-color 0.25s;
-}
-/* אפקט כמו בכרטיסי הממליצים והמדריכים: הרמה + זוהר accent + ברק חולף */
-.lhub-service::after {
-  content: '';
-  position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  background: linear-gradient(135deg, rgba(255,255,255,0) 35%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0) 65%);
-  opacity: 0; transition: opacity 0.4s ease-in-out;
-}
-@media (hover: hover) {
-  .lhub-service:hover {
-    transform: translateY(-7px);
-    border-color: color-mix(in srgb, var(--color-primary-700, #105572) 35%, transparent);
-    box-shadow: 0 26px 54px -26px rgba(7,41,58,0.5), 0 16px 46px -18px color-mix(in srgb, var(--color-accent, #a90b0c) 38%, transparent);
-  }
-  .lhub-service:hover::after { opacity: 1; animation: lhub-shine 2.2s linear infinite; }
-}
-@keyframes lhub-shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
-@media (prefers-reduced-motion: reduce) { .lhub-service::after { animation: none !important; } }
-.lhub-service__icon { color: var(--color-secondary, #16688c); }
-.lhub-service h3 { margin: 0.2rem 0 0; font-family: var(--font-heading); font-weight: 800; font-size: 1.12rem; color: var(--color-text, #16202e); }
-.lhub-service p { margin: 0; color: var(--color-text-muted, #5a6a7a); font-size: 0.95rem; line-height: 1.65; flex: 1; }
-.lhub-service__more {
-  display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.6rem;
-  font-family: var(--font-heading); font-weight: 700; font-size: 0.88rem; color: var(--color-secondary, #16688c);
-}
-.lhub-service__more svg { transform: scaleX(-1); transition: transform .18s; }
-.lhub-service:hover .lhub-service__more svg { transform: scaleX(-1) translateX(-3px); }
+/* רשת כרטיסי FeatureCard, זהה לפריסה בעמודי הדיוויזיות */
+.lhub-services__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+.lhub-services__grid > * { min-width: 0; }
+@media (max-width: 1024px) { .lhub-services__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .lhub-services__grid { grid-template-columns: 1fr; } }
 
 /* FAQ — אותה שפה כמו בעמודי הדיוויזיות */
 .lhub-faq__list { display: flex; flex-direction: column; gap: 0.7rem; max-width: 860px; margin-inline: auto; }

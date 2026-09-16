@@ -4,6 +4,7 @@ import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import Icon from '../components/ui/Icon.jsx'
+import FeatureCard from '../components/ui/FeatureCard.jsx'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import Contact from '../components/sections/Contact.jsx'
 import projectsSeed from '../data/projects.js'
@@ -91,15 +92,11 @@ export default function SharonHub() {
             <span className="eyebrow">מה אנחנו עושים</span>
             <h2 className="section-title">שירותי הנדל"ן שלנו בשרון והמרכז</h2>
           </Reveal>
+          {/* FeatureCard, אותו כרטיס ואותו אפקט תלת ממד כמו בדף הבית ובעמודי הדיוויזיות */}
           <div className="lhub-services__grid">
             {SERVICES.map((s, i) => (
               <Reveal key={s.to} delay={i * 0.07}>
-                <Link to={s.to} className="lhub-service">
-                  <Icon name={s.icon} size={26} className="lhub-service__icon" />
-                  <h3>{s.title}</h3>
-                  <p>{s.desc}</p>
-                  <span className="lhub-service__more">לעמוד השירות <Icon name="arrow" size={14} /></span>
-                </Link>
+                <FeatureCard icon={s.icon} title={s.title} desc={s.desc} to={s.to} cta="לעמוד השירות" />
               </Reveal>
             ))}
           </div>

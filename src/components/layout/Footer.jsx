@@ -64,6 +64,8 @@ export default function Footer() {
           <Link to="/divisions/execution">{t('footer.linkExec')}</Link>
           <Link to="/divisions/brokerage">{t('footer.linkBrokerage')}</Link>
           <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link>
+          <Link to="/real-estate-sharon">נדל"ן בשרון</Link>
+          <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link>
         </nav>
 
         <div className="footer__col footer__col--contact">

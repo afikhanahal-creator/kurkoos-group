@@ -1,0 +1,58 @@
+/* ============================================================
+   נדל"ן בהוד השרון והשרון — עמוד מוקד מקומי.
+   ============================================================ */
+
+.lhub-intro__text {
+  max-width: 78ch; margin: 0 auto; text-align: center;
+  font-size: 1.1rem; line-height: 1.85; color: var(--color-text, #16202e);
+}
+
+.lhub-head { text-align: center; margin-bottom: 2rem; }
+
+.lhub-services__grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;
+}
+.lhub-service {
+  display: flex; flex-direction: column; gap: 0.5rem; height: 100%; box-sizing: border-box;
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 16px; padding: 1.5rem 1.4rem 1.25rem; text-decoration: none;
+  transition: border-color .2s, box-shadow .2s, transform .18s;
+}
+.lhub-service:hover { border-color: var(--color-secondary, #16688c); box-shadow: 0 8px 28px rgba(10, 37, 64, 0.09); transform: translateY(-3px); }
+.lhub-service__icon { color: var(--color-secondary, #16688c); }
+.lhub-service h3 { margin: 0.2rem 0 0; font-family: var(--font-heading); font-weight: 800; font-size: 1.12rem; color: var(--color-text, #16202e); }
+.lhub-service p { margin: 0; color: var(--color-text-muted, #5a6a7a); font-size: 0.95rem; line-height: 1.65; flex: 1; }
+.lhub-service__more {
+  display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.6rem;
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.88rem; color: var(--color-secondary, #16688c);
+}
+.lhub-service__more svg { transform: scaleX(-1); transition: transform .18s; }
+.lhub-service:hover .lhub-service__more svg { transform: scaleX(-1) translateX(-3px); }
+
+/* FAQ — אותה שפה כמו בעמודי הדיוויזיות */
+.lhub-faq__list { display: flex; flex-direction: column; gap: 0.7rem; max-width: 860px; margin-inline: auto; }
+.lhub-faq__item {
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 14px; overflow: hidden; transition: box-shadow .2s, border-color .2s;
+}
+.lhub-faq__item:hover { border-color: #cbd5e1; box-shadow: 0 4px 18px rgba(10, 37, 64, 0.07); }
+.lhub-faq__item summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1.05rem 1.3rem; cursor: pointer; list-style: none;
+  font-family: var(--font-heading); font-weight: 700; font-size: 1.05rem; color: var(--color-text, #16202e);
+}
+.lhub-faq__item summary::-webkit-details-marker { display: none; }
+.lhub-faq__chev { flex-shrink: 0; color: var(--color-secondary, #16688c); transition: transform .25s; }
+.lhub-faq__item[open] .lhub-faq__chev { transform: rotate(180deg); }
+.lhub-faq__item p { margin: 0; padding: 0 1.3rem 1.15rem; color: var(--color-text-muted, #5a6a7a); font-size: 1rem; line-height: 1.75; max-width: 72ch; }
+
+.lhub-links { text-align: center; margin-top: 1.6rem; }
+.lhub-links p { color: var(--color-text-muted, #5a6a7a); font-size: 0.95rem; }
+.lhub-links a { color: var(--color-secondary, #16688c); font-weight: 700; text-decoration: none; }
+.lhub-links a:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .lhub-intro__text { font-size: 1rem; text-align: start; }
+  .lhub-faq__item summary { font-size: 0.98rem; padding: 0.9rem 1rem; }
+  .lhub-faq__item p { padding: 0 1rem 1rem; font-size: 0.95rem; }
+}

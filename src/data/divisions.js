@@ -3,9 +3,9 @@
    כל תחום מקבל דף נחיתה מלא: באנר, אינטרו, "למה אנחנו",
    פרויקטים, מדריך, סיפורי הצלחה.
    ------------------------------------------------------------
-   slug     , נתיב הדף (/divisions/<slug>)
-   icon     , שם אייקון מ-Icon.jsx
-   category , מסנן את הפרויקטים הרלוונטיים; null = כל הפרויקטים
+   slug     : נתיב הדף (/divisions/<slug>)
+   icon     : שם אייקון מ-Icon.jsx
+   category : מסנן את הפרויקטים הרלוונטיים; null = כל הפרויקטים
    ============================================================ */
 
 export const divisions = [
@@ -37,7 +37,7 @@ export const divisions = [
       title: { he: 'המדריך לרכישת דירה', en: 'The apartment-buying guide' },
       desc: { he: 'כל מה שצריך לדעת לפני שקונים דירה על הנייר, שלב אחר שלב.', en: 'Everything to know before buying off-plan, step by step.' },
     },
-    /* שאלות נפוצות — מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
+    /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
       {
             "q": {
@@ -93,7 +93,7 @@ export const divisions = [
         he: 'מהיסודות ועד מסירת המפתח, בנייה איכותית, בזמן ובתקציב, עם צוותי שטח מהמנוסים בארץ.',
         en: 'From foundations to handover, quality construction, on time and on budget, with some of Israel’s most experienced field teams.',
       },
-      // תמונת רקע מאתר בנייה אמיתי — שמור את הקובץ ב: public/divisions/execution-bg.jpg
+      // תמונת רקע מאתר בנייה אמיתי, שמור את הקובץ ב: public/divisions/execution-bg.jpg
       image: '/divisions/execution-bg.jpg',
     },
     intro: {
@@ -110,7 +110,7 @@ export const divisions = [
       title: { he: 'המדריך לתהליך הבנייה', en: 'The construction-process guide' },
       desc: { he: 'מה קורה באתר מהחפירה ועד מסירת המפתח, שלב אחר שלב.', en: 'What happens on site from excavation to handover, step by step.' },
     },
-    /* שאלות נפוצות — מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
+    /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
       {
             "q": {
@@ -182,7 +182,7 @@ export const divisions = [
       title: { he: 'המדריך ליזמות נדל"ן', en: 'The development guide' },
       desc: { he: 'איך פרויקט נולד, מאיתור הקרקע ועד קבלת ההיתר.', en: 'How a project is born, from land sourcing to building permit.' },
     },
-    /* שאלות נפוצות — מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
+    /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
       {
             "q": {
@@ -254,7 +254,7 @@ export const divisions = [
       title: { he: 'המדריך לפיקוח בנייה', en: 'The construction-supervision guide' },
       desc: { he: 'מה תפקיד המפקח ולמה הוא חוסך לכם זמן וכסף.', en: 'What a supervisor does and why it saves you time and money.' },
     },
-    /* שאלות נפוצות — מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
+    /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
       {
             "q": {
@@ -326,7 +326,7 @@ export const divisions = [
       title: { he: 'המדריך לרוכש ולמוכר', en: 'The buyer & seller guide' },
       desc: { he: 'איך לקנות או למכור נכון, צעד אחר צעד, בלי הפתעות.', en: 'How to buy or sell right, step by step, with no surprises.' },
     },
-    /* שאלות נפוצות — מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
+    /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
       {
             "q": {

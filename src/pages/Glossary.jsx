@@ -19,6 +19,8 @@ const GUIDE_LINKS = [
   { to: '/construction-supervision', label: 'המדריך לפיקוח בנייה' },
   { to: '/real-estate-guide', label: 'המדריך לרוכש ולמוכר' },
   { to: '/madrich-yazamim', label: 'המדריך ליזמי נדל"ן צעירים' },
+  { to: '/real-estate-calculators', label: 'מחשבוני נדל"ן' },
+  { to: '/real-estate-sharon', label: 'נדל"ן בהוד השרון והשרון' },
 ]
 
 export default function Glossary() {

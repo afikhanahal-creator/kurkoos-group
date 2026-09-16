@@ -6,7 +6,7 @@
   "description": "אתר תדמית לקורקוס גרופ - יזמות, בנייה, פיקוח ותיווך נדל\"ן",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/generate-sitemap-paths.mjs && vite build",
     "preview": "vite preview",
     "migrate:media": "node scripts/migrate-media-to-cloudinary.mjs"
   },

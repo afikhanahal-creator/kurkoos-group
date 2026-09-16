@@ -6,6 +6,7 @@ import Logo from './Logo.jsx'
 import Icon from '../ui/Icon.jsx'
 import Newsletter from '../ui/Newsletter.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
+import { track } from '../../lib/track.js'
 import './Footer.css'
 
 export default function Footer() {
@@ -66,10 +67,10 @@ export default function Footer() {
 
         <div className="footer__col footer__col--contact">
           <h4 className="footer__heading">{t('footer.contact')}</h4>
-          <a href={`tel:${String(contact.phone).replace(/[^+\d]/g, "")}`} className="footer__contact">
+          <a href={`tel:${String(contact.phone).replace(/[^+\d]/g, "")}`} className="footer__contact" onClick={() => track('phone_click', { placement: 'footer' })}>
             <Icon name="phone" size={17} /> {contact.phoneDisplay}
           </a>
-          <a href={`mailto:${contact.email}`} className="footer__contact">
+          <a href={`mailto:${contact.email}`} className="footer__contact" onClick={() => track('email_click', { placement: 'footer' })}>
             <Icon name="mail" size={17} /> {contact.email}
           </a>
           <span className="footer__contact">

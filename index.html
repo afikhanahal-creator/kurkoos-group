@@ -24,28 +24,91 @@
     <meta name="twitter:image" content="https://www.kurkoos-group.co.il/og-image.jpg" />
     <link rel="canonical" href="https://www.kurkoos-group.co.il/" />
 
-    <!-- Organization structured data (SEO) -->
+    <!-- Organization + WebSite structured data (SEO / AI search) — נתונים אמיתיים בלבד -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Organization",
+        "@id": "https://www.kurkoos-group.co.il/#organization",
         "name": "קורקוס גרופ",
-        "alternateName": "Kurkoos Group",
+        "alternateName": ["Kurkoos Group", "קבוצת קורקוס"],
         "url": "https://www.kurkoos-group.co.il/",
         "logo": "https://www.kurkoos-group.co.il/kurkoos-logo.svg",
-        "description": "יזמות, בנייה, פיקוח ותיווך נדל\"ן ברמה הגבוהה ביותר — מקרקע ועד מסירת מפתח.",
+        "image": "https://www.kurkoos-group.co.il/og-image.jpg",
+        "description": "קורקוס גרופ היא קבוצת נדל\"ן הפועלת בתחומי יזמות נדל\"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, תיווך ושיווק נכסים — מקרקע ועד מסירת מפתח, עם פעילות באזור השרון והמרכז.",
+        "slogan": "מקרקע ועד מסירת מפתח",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "רחוב הנגר 24, מגדלי Amy קומה 2",
           "addressLocality": "הוד השרון",
+          "addressRegion": "השרון",
           "addressCountry": "IL"
         },
+        "areaServed": [
+          { "@type": "Place", "name": "הוד השרון" },
+          { "@type": "Place", "name": "אזור השרון" },
+          { "@type": "Place", "name": "גוש דן והמרכז" }
+        ],
         "contactPoint": {
           "@type": "ContactPoint",
-          "telephone": "+972-3-000-0000",
+          "telephone": "+972-50-6855656",
           "contactType": "sales",
-          "email": "info@kurkoos-group.co.il"
-        }
+          "email": "kurkoosgroup.sales@gmail.com",
+          "availableLanguage": ["he", "en"]
+        },
+        "knowsAbout": [
+          "יזמות נדל\"ן",
+          "ביצוע ובנייה",
+          "ניהול ופיקוח פרויקטים",
+          "פיקוח בנייה",
+          "תיווך נדל\"ן",
+          "שיווק נכסים ופרויקטים",
+          "פרויקטים למגורים",
+          "ליווי יזמי נדל\"ן"
+        ],
+        "department": [
+          {
+            "@type": "Organization",
+            "name": "קורקוס יזמות",
+            "description": "זרוע הייזום של קורקוס גרופ — ייזום פרויקטים למגורים, מאיתור קרקע ותכנון ועד שיווק ומסירה.",
+            "url": "https://www.kurkoos-group.co.il/divisions/development",
+            "parentOrganization": { "@id": "https://www.kurkoos-group.co.il/#organization" }
+          },
+          {
+            "@type": "Organization",
+            "name": "ראיתה",
+            "description": "זרוע הביצוע והבנייה של קורקוס גרופ — ביצוע פרויקטים למגורים.",
+            "url": "https://www.kurkoos-group.co.il/divisions/execution",
+            "parentOrganization": { "@id": "https://www.kurkoos-group.co.il/#organization" }
+          },
+          {
+            "@type": "Organization",
+            "name": "שכינתא ניהול ויזום פרויקטים",
+            "description": "זרוע הניהול והפיקוח של קורקוס גרופ — ניהול ופיקוח על פרויקטי בנייה.",
+            "url": "https://www.kurkoos-group.co.il/divisions/supervision",
+            "parentOrganization": { "@id": "https://www.kurkoos-group.co.il/#organization" }
+          },
+          {
+            "@type": "RealEstateAgent",
+            "name": "אפיק הנחל",
+            "description": "זרוע התיווך והשיווק של קורקוס גרופ — תיווך נדל\"ן ושיווק נכסים ופרויקטים באזור השרון.",
+            "url": "https://www.kurkoos-group.co.il/divisions/brokerage",
+            "telephone": "+972-50-6855656",
+            "areaServed": { "@type": "Place", "name": "אזור השרון" },
+            "parentOrganization": { "@id": "https://www.kurkoos-group.co.il/#organization" }
+          }
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://www.kurkoos-group.co.il/#website",
+        "url": "https://www.kurkoos-group.co.il/",
+        "name": "קורקוס גרופ",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://www.kurkoos-group.co.il/#organization" }
       }
     </script>
 

@@ -3,6 +3,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import heDict from '../../i18n/he.js'
 import enDict from '../../i18n/en.js'
 import { createLead } from '../../lib/cms.js'
+import { track } from '../../lib/track.js'
 import { getLastProject, trailSummary } from '../../lib/visitTrail.js'
 import Reveal from '../ui/Reveal.jsx'
 import BookingCalendar from '../ui/BookingCalendar.jsx'
@@ -47,6 +48,7 @@ export default function Contact() {
     }
     try {
       await createLead(lead, { read: false })   // שמירה ל-Supabase + התראת מייל אוטומטית (אנונימי — בלי קריאה חוזרת)
+      track('generate_lead', { form: 'contact_section', topic })
       setSent(true)
     } catch (err) {
       setError(L({

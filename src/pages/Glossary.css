@@ -1,0 +1,68 @@
+/* ============================================================
+   מילון מונחי נדל"ן — עיצוב תואם לשפת האתר: נקי, קריא, מבוסס טקסט.
+   ============================================================ */
+
+.glossary__search-wrap { max-width: 560px; margin: 0 auto 1.6rem; }
+.glossary__search {
+  width: 100%; box-sizing: border-box; padding: 0.85rem 1.2rem;
+  border: 1.5px solid var(--color-border, #e3e7ee); border-radius: 12px;
+  font: inherit; font-size: 1rem; background: var(--color-surface, #fff);
+  color: var(--color-text, #16202e); transition: border-color .15s, box-shadow .15s;
+}
+.glossary__search:focus { outline: none; border-color: var(--color-secondary, #16688c); box-shadow: 0 0 0 3px rgba(22, 104, 140, 0.12); }
+
+.glossary__nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 2.2rem; }
+.glossary__nav-link {
+  padding: 0.42rem 1rem; border-radius: 999px; border: 1px solid var(--color-border, #e3e7ee);
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.88rem;
+  color: var(--color-text-muted, #5a6a7a); text-decoration: none; transition: all .15s;
+}
+.glossary__nav-link:hover { border-color: var(--color-secondary, #16688c); color: var(--color-secondary, #16688c); background: rgba(22, 104, 140, 0.05); }
+
+.glossary__empty { text-align: center; color: var(--color-text-muted, #5a6a7a); padding: 2.5rem 0; }
+
+.glossary__group { margin-bottom: 2.6rem; scroll-margin-top: 90px; }
+.glossary__group-title {
+  font-family: var(--font-heading); font-weight: 800; font-size: 1.45rem;
+  color: var(--color-text, #16202e); margin-bottom: 1.1rem;
+  padding-bottom: 0.5rem; border-bottom: 2px solid var(--color-secondary, #16688c);
+  display: inline-block;
+}
+.glossary__list { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.glossary__term {
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 14px; padding: 1.15rem 1.4rem 1.05rem; scroll-margin-top: 90px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.glossary__term:target { border-color: var(--color-secondary, #16688c); box-shadow: 0 0 0 3px rgba(22, 104, 140, 0.12); }
+.glossary__term-name {
+  font-family: var(--font-heading); font-weight: 800; font-size: 1.12rem;
+  color: var(--color-text, #16202e); margin: 0 0 0.45rem; display: flex; align-items: baseline; gap: 0.45rem;
+}
+.glossary__anchor { color: var(--color-border, #cbd5e1); text-decoration: none; font-size: 0.95rem; transition: color .15s; }
+.glossary__term:hover .glossary__anchor { color: var(--color-secondary, #16688c); }
+.glossary__term-def { margin: 0; color: var(--color-text-muted, #4a5a6a); font-size: 1rem; line-height: 1.75; max-width: 80ch; }
+
+.glossary__related { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem; margin: 0.7rem 0 0; font-size: 0.85rem; }
+.glossary__related span { color: var(--color-text-muted, #5a6a7a); font-weight: 600; }
+.glossary__related a { color: var(--color-secondary, #16688c); text-decoration: none; font-weight: 600; }
+.glossary__related a:hover { text-decoration: underline; }
+
+.glossary__more { margin-top: 1.4rem; padding-top: 1.8rem; border-top: 1px solid var(--color-border, #e3e7ee); }
+.glossary__more-lead { color: var(--color-text-muted, #5a6a7a); margin: 0.5rem 0 1rem; }
+.glossary__more-links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.glossary__more-link {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.1rem; border-radius: 999px; border: 1.5px solid var(--color-border, #e3e7ee);
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.92rem;
+  color: var(--color-text, #16202e); text-decoration: none; transition: all .15s;
+}
+.glossary__more-link:hover { border-color: var(--color-secondary, #16688c); color: var(--color-secondary, #16688c); background: rgba(22, 104, 140, 0.05); }
+.glossary__more-link svg { transform: scaleX(-1); }
+
+@media (max-width: 720px) {
+  .glossary__term { padding: 1rem 1.05rem 0.95rem; }
+  .glossary__term-def { font-size: 0.95rem; }
+  .glossary__group-title { font-size: 1.25rem; }
+}

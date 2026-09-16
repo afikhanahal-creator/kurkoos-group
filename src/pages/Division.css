@@ -576,3 +576,28 @@
   }
   .division-guide__band .btn--lg .division-guide__arrow { width: 15px; height: 15px; }
 }
+
+/* ── שאלות נפוצות (division-faq) ── */
+.division-faq__list { display: flex; flex-direction: column; gap: 0.7rem; max-width: 860px; margin-inline: auto; }
+.division-faq__item {
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 14px; overflow: hidden; transition: box-shadow .2s, border-color .2s;
+}
+.division-faq__item:hover { border-color: #cbd5e1; box-shadow: 0 4px 18px rgba(10, 37, 64, 0.07); }
+.division-faq__item summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1.05rem 1.3rem; cursor: pointer; list-style: none;
+  font-family: var(--font-heading); font-weight: 700; font-size: 1.05rem;
+  color: var(--color-text, #16202e);
+}
+.division-faq__item summary::-webkit-details-marker { display: none; }
+.division-faq__chev { flex-shrink: 0; color: var(--color-secondary, #16688c); transition: transform .25s; }
+.division-faq__item[open] .division-faq__chev { transform: rotate(180deg); }
+.division-faq__item p {
+  margin: 0; padding: 0 1.3rem 1.15rem; color: var(--color-text-muted, #5a6a7a);
+  font-size: 1rem; line-height: 1.75; max-width: 72ch;
+}
+@media (max-width: 720px) {
+  .division-faq__item summary { font-size: 0.98rem; padding: 0.9rem 1rem; }
+  .division-faq__item p { padding: 0 1rem 1rem; font-size: 0.95rem; }
+}

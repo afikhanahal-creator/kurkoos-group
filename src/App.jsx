@@ -22,6 +22,7 @@ const Team = lazy(() => import('./pages/Team.jsx'))
 const About = lazy(() => import('./pages/About.jsx'))
 const Blog = lazy(() => import('./pages/Blog.jsx'))
 const Yazamut = lazy(() => import('./pages/Yazamut.jsx'))
+const Glossary = lazy(() => import('./pages/Glossary.jsx'))
 const YazamutArticle = lazy(() => import('./pages/YazamutArticle.jsx'))
 const Constructions = lazy(() => import('./pages/Constructions.jsx'))
 const ConstructionsArticle = lazy(() => import('./pages/ConstructionsArticle.jsx'))
@@ -145,6 +146,7 @@ export default function App() {
               <Route path="/construction-supervision" element={<Supervision />} />
               <Route path="/construction-supervision/:slug" element={<SupervisionArticle />} />
               <Route path="/real-estate-guide" element={<RealEstateGuide />} />
+              <Route path="/real-estate-glossary" element={<Glossary />} />
               <Route path="/real-estate-guide/:slug" element={<RealEstateGuideArticle />} />
               <Route path="/livy-yazamim" element={<Mentorship />} />
               <Route path="/madrich-yazamim" element={<MentorGuide />} />

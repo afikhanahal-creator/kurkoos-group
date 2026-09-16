@@ -63,6 +63,7 @@ export default function Footer() {
           <Link to="/team">{t('nav.team')}</Link>
           <Link to="/divisions/execution">{t('footer.linkExec')}</Link>
           <Link to="/divisions/brokerage">{t('footer.linkBrokerage')}</Link>
+          <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link>
         </nav>
 
         <div className="footer__col footer__col--contact">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { trimUniformBorders } from './imageTrim.js'
 import { supabase } from './supabase.js'
 import { srcOfResponsive } from './responsiveImage.js'
 
@@ -107,7 +108,13 @@ export async function uploadMedia(file, folder = 'general', { compress = true } 
   // דחיסה אוטומטית לתמונות → העלאה וטעינה מהירות. מדלגים כשהקובץ כבר אופטימלי
   // (למשל פלט עורך התמונות, שכבר יוצא ב-WebP ברזולוציה מבוקרת) — כדי לא לדחוס
   // פעמיים / להקטין רזולוציה ולפגוע באיכות.
-  if (compress) file = await compressImage(file)
+  if (compress) {
+    // חיתוך אוטומטי של מסגרת לבנה צרובה (הדמיות שיווקיות) — כך התמונה ממלאה
+    // את הכרטיס ומקבלת פינות מעוגלות כמו כולן. לא חל על לוגואים ופונטים,
+    // ששוליים לבנים בהם הם לעיתים מכוונים.
+    if (!/logo|font/i.test(folder)) file = await trimUniformBorders(file)
+    file = await compressImage(file)
+  }
   // Cloudinary תחילה (כשמוגדר): המדיה מוגשת מ-CDN חינמי במקום ממכסת ה-Egress
   // של Supabase. נפילה חיננית ל-Storage אם ההעלאה נכשלת.
   if (hasCloudinary) {

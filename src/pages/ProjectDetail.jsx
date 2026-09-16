@@ -399,15 +399,26 @@ export default function ProjectDetail() {
   const seoCity = L(project.city)
   const seoDesc = (L(project.short) || '').trim() ||
     `${seoName}${seoCity ? ` · ${seoCity}` : ''} — פרויקט של קבוצת קורקוס. יזמות, בנייה ופיקוח ברמה הגבוהה ביותר.`
-  const seoJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Residence',
-    name: seoName,
-    description: seoDesc,
-    url: `https://www.kurkoos-group.co.il/projects/${project.slug}`,
-    ...(project.cover ? { image: project.cover } : {}),
-    ...(seoCity ? { address: { '@type': 'PostalAddress', addressLocality: seoCity, addressCountry: 'IL' } } : {}),
-  }
+  const seoJsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Residence',
+      name: seoName,
+      description: seoDesc,
+      url: `https://www.kurkoos-group.co.il/projects/${project.slug}`,
+      ...(project.cover ? { image: project.cover } : {}),
+      ...(seoCity ? { address: { '@type': 'PostalAddress', addressLocality: seoCity, addressCountry: 'IL' } } : {}),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'קורקוס גרופ', item: 'https://www.kurkoos-group.co.il/' },
+        { '@type': 'ListItem', position: 2, name: 'פרויקטים', item: 'https://www.kurkoos-group.co.il/projects' },
+        { '@type': 'ListItem', position: 3, name: seoName, item: `https://www.kurkoos-group.co.il/projects/${project.slug}` },
+      ],
+    },
+  ]
 
   const openLightbox = (images, index) => setLightbox({ images, index })
 

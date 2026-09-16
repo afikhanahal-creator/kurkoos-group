@@ -93,9 +93,31 @@ export default function Division() {
 
   if (!division) return <Navigate to="/" replace />
 
+  /* נתונים מובנים: Service (הישות של השירות) + FAQ אמיתי מהעמוד */
+  const seoJsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: L(division.menuTitle),
+      description: L(division.intro),
+      provider: { '@id': 'https://www.kurkoos-group.co.il/#organization' },
+      areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' },
+      url: `https://www.kurkoos-group.co.il/divisions/${slug}`,
+    },
+    ...(division.faqs?.length ? [{
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: division.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q.he,
+        acceptedAnswer: { '@type': 'Answer', text: f.a.he },
+      })),
+    }] : []),
+  ]
+
   return (
     <article className={`division division--${slug}`}>
-      <Seo title={L(division.menuTitle)} description={L(division.intro)} image={division.hero?.image} />
+      <Seo title={L(division.menuTitle)} description={L(division.intro)} image={division.hero?.image} jsonLd={seoJsonLd} />
       {/* באנר */}
       <header className="division-hero">
         <Parallax className="division-hero__bg">
@@ -290,6 +312,31 @@ export default function Division() {
           </Reveal>
         </div>
       </section>
+
+      {/* שאלות נפוצות — תוכן אמיתי שעונה לכוונות חיפוש, מוזן גם ל-FAQPage schema */}
+      {division.faqs?.length > 0 && (
+        <section className="section section--soft division-faq">
+          <div className="container">
+            <Reveal className="division-why__head">
+              <span className="eyebrow">{L({ he: 'שאלות נפוצות', en: 'FAQ' })}</span>
+              <KineticText as="h2" className="section-title" text={L({ he: 'שאלות שאנחנו נשאלים', en: 'Questions we hear a lot' })} />
+            </Reveal>
+            <div className="division-faq__list">
+              {division.faqs.map((f, i) => (
+                <Reveal key={i} delay={i * 0.05}>
+                  <details className="division-faq__item">
+                    <summary>
+                      <span>{L(f.q)}</span>
+                      <Icon name="chevron" size={18} className="division-faq__chev" />
+                    </summary>
+                    <p>{L(f.a)}</p>
+                  </details>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <Contact />
     </article>

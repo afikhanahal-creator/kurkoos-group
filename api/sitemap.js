@@ -23,6 +23,7 @@ const STATIC = [
   { path: '/constructions', changefreq: 'weekly', priority: '0.8' },
   { path: '/construction-supervision', changefreq: 'weekly', priority: '0.8' },
   { path: '/real-estate-guide', changefreq: 'weekly', priority: '0.8' },
+  { path: '/real-estate-glossary', changefreq: 'monthly', priority: '0.8' },
   { path: '/livy-yazamim', changefreq: 'monthly', priority: '0.8' },
   { path: '/madrich-yazamim', changefreq: 'weekly', priority: '0.8' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },

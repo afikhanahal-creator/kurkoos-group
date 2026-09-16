@@ -13,12 +13,30 @@
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;
 }
 .lhub-service {
+  position: relative; overflow: hidden;
   display: flex; flex-direction: column; gap: 0.5rem; height: 100%; box-sizing: border-box;
   background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
   border-radius: 16px; padding: 1.5rem 1.4rem 1.25rem; text-decoration: none;
-  transition: border-color .2s, box-shadow .2s, transform .18s;
+  box-shadow: 0 10px 30px -22px rgba(7, 41, 58, 0.4);
+  transition: transform 0.4s var(--ease-out, ease-out), box-shadow 0.4s var(--ease-out, ease-out), border-color 0.25s;
 }
-.lhub-service:hover { border-color: var(--color-secondary, #16688c); box-shadow: 0 8px 28px rgba(10, 37, 64, 0.09); transform: translateY(-3px); }
+/* אפקט כמו בכרטיסי הממליצים והמדריכים: הרמה + זוהר accent + ברק חולף */
+.lhub-service::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0) 35%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0) 65%);
+  opacity: 0; transition: opacity 0.4s ease-in-out;
+}
+@media (hover: hover) {
+  .lhub-service:hover {
+    transform: translateY(-7px);
+    border-color: color-mix(in srgb, var(--color-primary-700, #105572) 35%, transparent);
+    box-shadow: 0 26px 54px -26px rgba(7,41,58,0.5), 0 16px 46px -18px color-mix(in srgb, var(--color-accent, #a90b0c) 38%, transparent);
+  }
+  .lhub-service:hover::after { opacity: 1; animation: lhub-shine 2.2s linear infinite; }
+}
+@keyframes lhub-shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+@media (prefers-reduced-motion: reduce) { .lhub-service::after { animation: none !important; } }
 .lhub-service__icon { color: var(--color-secondary, #16688c); }
 .lhub-service h3 { margin: 0.2rem 0 0; font-family: var(--font-heading); font-weight: 800; font-size: 1.12rem; color: var(--color-text, #16202e); }
 .lhub-service p { margin: 0; color: var(--color-text-muted, #5a6a7a); font-size: 0.95rem; line-height: 1.65; flex: 1; }

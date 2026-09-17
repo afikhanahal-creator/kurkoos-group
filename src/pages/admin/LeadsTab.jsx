@@ -506,10 +506,10 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
 
   return (
     <div className="ldov">
-      {/* שורת מדדים */}
+      {/* שורת מדדים — עם הסבר בריחוף על כל מדד */}
       <div className="ldov__kpis">
-        <div className="ldov__kpi"><i>סה"כ לידים</i><b>{s.total}</b><span className="ldov__hint">{s.byStage.new + s.inWork} פתוחים</span></div>
-        <div className="ldov__kpi"><i>30 יום אחרונים</i><b>{s.in30}</b>
+        <div className="ldov__kpi" data-tip='כל הפניות שנכנסו אי פעם מהאתר או נוספו ידנית. "פתוחים" = לידים שעדיין לא נסגרו לכאן או לכאן.' tabIndex={0}><i>סה"כ לידים</i><b>{s.total}</b><span className="ldov__hint">{s.byStage.new + s.inWork} פתוחים</span></div>
+        <div className="ldov__kpi" data-tip="כמה לידים נכנסו בחודש האחרון, בהשוואה לחודש שלפניו. זה הדופק של שיווק האתר." tabIndex={0}><i>30 יום אחרונים</i><b>{s.in30}</b>
           {delta != null
             ? <span className="ldov__delta-row">
                 <i className={`ldov__delta-pill ${delta >= 0 ? 'is-up' : 'is-down'}`}>{delta >= 0 ? '↑' : '↓'}{Math.abs(delta).toFixed(0)}%</i>
@@ -517,10 +517,10 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
               </span>
             : <span className="ldov__hint">אין עדיין השוואה</span>}
         </div>
-        <div className="ldov__kpi"><i>חדשים — טרם טופלו</i><b>{s.byStage.new}</b><span className="ldov__hint">בשלב "ליד חדש"</span></div>
-        <div className="ldov__kpi"><i>בטיפול</i><b>{s.inWork}</b><span className="ldov__hint">קשר · פגישה · מו"מ</span></div>
-        <div className={`ldov__kpi${s.attention ? ' ldov__kpi--warn' : ''}`}><i>דורשים טיפול</i><b>{s.attention}</b><span className="ldov__hint">מעל {ATTN_DAYS} ימים ללא מענה</span></div>
-        <div className="ldov__kpi"><i>נסגרו בהצלחה</i><b>{s.won}</b><span className="ldov__hint">{(s.conv * 100).toFixed(0)}% שיעור סגירה</span></div>
+        <div className="ldov__kpi" data-tip='לידים שעדיין בשלב "ליד חדש", אף אחד עוד לא יצר איתם קשר.' tabIndex={0}><i>חדשים — טרם טופלו</i><b>{s.byStage.new}</b><span className="ldov__hint">בשלב "ליד חדש"</span></div>
+        <div className="ldov__kpi" data-tip="לידים באמצע התהליך: נוצר קשר, נקבעה פגישה או מתנהל משא ומתן." tabIndex={0}><i>בטיפול</i><b>{s.inWork}</b><span className="ldov__hint">קשר · פגישה · מו"מ</span></div>
+        <div className={`ldov__kpi${s.attention ? ' ldov__kpi--warn' : ''}`} data-tip="לידים חדשים שמחכים מעל 3 ימים בלי מענה. ליד שחוזרים אליו מהר נסגר בסיכוי גבוה יותר." tabIndex={0}><i>דורשים טיפול</i><b>{s.attention}</b><span className="ldov__hint">מעל {ATTN_DAYS} ימים ללא מענה</span></div>
+        <div className="ldov__kpi" data-tip="כמה לידים הפכו לעסקה, ואיזה אחוז מכלל הלידים זה מהווה (שיעור הסגירה)." tabIndex={0}><i>נסגרו בהצלחה</i><b>{s.won}</b><span className="ldov__hint">{(s.conv * 100).toFixed(0)}% שיעור סגירה</span></div>
       </div>
 
       {/* פס התפלגות — תמונת מצב של תמהיל השלבים במבט אחד */}
@@ -626,7 +626,6 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
           </div>
           <div className="adm-lead__top-end">
             <span className="adm-lead__date" title={fmtTime(lead.created_at)}>{fmtDate(lead.created_at)}</span>
-            <IcGrip width={8} height={10} className="adm-lead__grip-icon" aria-hidden="true" style={{ pointerEvents: 'none' }}/>
           </div>
         </div>
 

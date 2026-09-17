@@ -899,7 +899,7 @@
   cursor: pointer; transition: all .15s; white-space: nowrap; box-sizing: border-box;
 }
 .adm-leads__btn:hover { border-color: #0EA5E9; color: #0369a1; background: #f0f9ff; }
-.adm-leads__btn--primary { background: #0A2540; border-color: #0A2540; color: #fff; box-shadow: 0 2px 8px rgba(10,37,64,0.22); }
+.adm-leads__btn--primary { background: linear-gradient(135deg, #0A2540, #16688c); border-color: #0A2540; color: #fff; box-shadow: 0 2px 8px rgba(10,37,64,0.22); }
 .adm-leads__btn--primary:hover { background: #103a5e; border-color: #103a5e; color: #fff; }
 
 /* ── View switcher ── */
@@ -1048,90 +1048,82 @@
 .adm-journey__step { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.88rem; font-weight: 600; color: var(--adm-ink); }
 .adm-journey__sep { color: var(--adm-muted); font-size: 0.66rem; opacity: 0.75; }
 
-/* ── Board (Kanban) ── */
+/* ── Board (Kanban) — עמודות שקטות בסגנון Linear/Notion ── */
 .adm-leads__board {
-  display: flex; gap: 0.8rem; overflow-x: auto; padding-bottom: 0.75rem; align-items: flex-start;
+  display: flex; gap: 0.85rem; overflow-x: auto; padding-bottom: 0.75rem; align-items: flex-start;
   scrollbar-width: thin; scrollbar-color: var(--adm-border-strong) transparent;
 }
 .adm-stage {
-  flex: 0 0 288px; max-width: 288px;
+  flex: 0 0 296px; max-width: 296px;
   display: flex; flex-direction: column;
-  background: var(--adm-surface-2); border: 1px solid var(--adm-border);
-  border-radius: 14px; overflow: hidden; transition: border-color .2s, box-shadow .2s;
+  background: color-mix(in srgb, var(--adm-surface-2) 72%, var(--adm-bg));
+  border: 1px solid transparent;
+  border-radius: 16px; transition: border-color .2s, box-shadow .2s, background .2s;
 }
-.adm-stage--over { border-color: #0EA5E9; box-shadow: 0 0 0 2px rgba(14,165,233,0.2); }
+.adm-stage--over { border-color: #0EA5E9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); background: rgba(14,165,233,0.05); }
+/* כותרת עמודה שקטה: נקודת צבע + שם + מונה נייטרלי. בלי פסי צבע ורקעים */
 .adm-stage__head {
-  display: flex; align-items: center; gap: 0.5rem; padding: 0.66rem 0.9rem 0.62rem;
-  background: color-mix(in srgb, var(--stage, #16688c) 8%, var(--adm-surface));
-  border-bottom: 1px solid color-mix(in srgb, var(--stage, #16688c) 16%, var(--adm-border));
-  position: relative;
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 0.9rem 0.45rem;
 }
-/* RTL: inline-start = right side — stage color stripe on the right edge of each column */
-.adm-stage__head::after {
-  content: ''; position: absolute; inset-block: 0; inset-inline-start: 0;
-  width: 3px; background: var(--stage, #16688c);
-}
-.adm-stage__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--stage); flex-shrink: 0; }
+.adm-stage__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--stage); flex-shrink: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--stage, #16688c) 18%, transparent); }
 .adm-stage__head h3 {
-  font-family: var(--font-heading); font-weight: 700; font-size: 0.94rem;
+  font-family: var(--font-heading); font-weight: 800; font-size: 0.92rem;
   color: var(--adm-ink); flex: 1; line-height: 1.2;
 }
 .adm-stage__count {
-  background: var(--stage); color: #fff; font-size: 0.74rem; font-weight: 800;
-  min-width: 20px; text-align: center; padding: 0.09rem 0.44rem;
-  border-radius: 999px; font-variant-numeric: tabular-nums; flex-shrink: 0;
+  background: var(--adm-surface); color: var(--adm-muted); font-size: 0.74rem; font-weight: 800;
+  min-width: 22px; text-align: center; padding: 0.12rem 0.5rem;
+  border: 1px solid var(--adm-border); border-radius: 999px;
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
 }
 .adm-stage__list {
-  flex: 1; display: flex; flex-direction: column; gap: 0.45rem;
-  min-height: 130px; padding: 0.58rem 0.52rem; transition: background .15s;
+  flex: 1; display: flex; flex-direction: column; gap: 0.55rem;
+  min-height: 110px; padding: 0.35rem 0.6rem 0.65rem; transition: background .15s;
+  border-radius: 0 0 16px 16px;
 }
 .adm-stage__list--over {
-  background: rgba(14,165,233,0.07); outline: 2px dashed #0EA5E9;
-  outline-offset: -3px; border-radius: 9px;
+  background: rgba(14,165,233,0.06); outline: 2px dashed #0EA5E9;
+  outline-offset: -4px; border-radius: 12px;
 }
 .adm-stage__empty {
-  text-align: center; color: var(--adm-muted); font-size: 0.77rem;
-  padding: 2rem 0.5rem; border: 1.5px dashed var(--adm-border-strong);
-  border-radius: 9px; opacity: 0.6; line-height: 1.5;
+  text-align: center; color: var(--adm-muted); font-size: 0.76rem;
+  padding: 1.4rem 0.5rem; border: 1.5px dashed color-mix(in srgb, var(--adm-border-strong) 65%, transparent);
+  border-radius: 11px; opacity: 0.55; line-height: 1.5;
 }
 
-/* ── Lead card ── */
+/* ── Lead card — כרטיס נקי: היררכיה ברורה, פעולות נחשפות בריחוף ── */
 .adm-lead {
   background: var(--adm-surface); border: 1px solid var(--adm-border);
-  border-inline-start: 4px solid var(--stage-c, #16688c);
-  border-radius: 10px; overflow: hidden;
-  transition: box-shadow .18s, transform .14s, border-color .15s;
+  border-inline-start: 3px solid var(--stage-c, #16688c);
+  border-radius: 13px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(10,37,64,0.05);
+  transition: box-shadow .2s, transform .16s, border-color .15s;
   display: flex; flex-direction: column;
 }
 .adm-lead:hover {
-  box-shadow: 0 4px 20px rgba(10,37,64,0.11);
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--stage-c, #16688c) 28%, var(--adm-border));
+  box-shadow: 0 10px 30px -8px rgba(10,37,64,0.18);
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--stage-c, #16688c) 30%, var(--adm-border));
 }
 .adm-lead--drag { cursor: grab; user-select: none; }
 .adm-lead--drag:active { cursor: grabbing; }
-.adm-lead--drag:hover .adm-lead__grip { color: #0EA5E9; background: #eef8ff; }
 .adm-card-ghost .adm-lead { opacity: 0.35; outline: 2px dashed #0EA5E9; outline-offset: 2px; }
-.adm-lead__grip {
-  display: flex; align-items: center; justify-content: center;
-  height: 22px; background: var(--adm-surface-2); border-bottom: 1px solid var(--adm-border);
-  color: #cdd5df; cursor: inherit; user-select: none;
-  transition: color .15s, background .15s;
-}
-.adm-lead__body { padding: 0.68rem 0.78rem 0.58rem; display: flex; flex-direction: column; gap: 0.4rem; }
-.adm-lead__top { display: flex; align-items: flex-start; gap: 0.55rem; }
+.adm-lead__body { padding: 0.85rem 0.95rem 0.7rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.adm-lead__top { display: flex; align-items: flex-start; gap: 0.6rem; }
 .adm-lead__avatar {
-  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-  background: color-mix(in srgb, var(--stage-c, #16688c) 13%, white);
-  color: var(--stage-c, #16688c);
-  font-family: var(--font-heading); font-weight: 900; font-size: 0.74rem;
+  width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--stage-c, #16688c) 16%, #fff),
+    color-mix(in srgb, var(--stage-c, #16688c) 30%, #fff));
+  color: color-mix(in srgb, var(--stage-c, #16688c) 82%, #000);
+  font-family: var(--font-heading); font-weight: 900; font-size: 0.78rem;
   display: flex; align-items: center; justify-content: center;
-  border: 1.5px solid color-mix(in srgb, var(--stage-c, #16688c) 20%, white);
   letter-spacing: 0.04em;
 }
 .adm-lead__meta { flex: 1; min-width: 0; }
 .adm-lead__name {
-  font-family: var(--font-heading); font-weight: 800; color: var(--adm-ink); font-size: 1rem;
+  font-family: var(--font-heading); font-weight: 800; color: var(--adm-ink); font-size: 1.02rem;
   border: 0; background: transparent; padding: 0; cursor: pointer;
   text-align: right; display: block; max-width: 100%;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25;
@@ -1139,31 +1131,43 @@
 .adm-lead__name:hover { color: #0369a1; }
 .adm-lead__project { font-size: 0.78rem; color: var(--adm-muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .adm-lead__sub {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 0.76rem; color: var(--adm-muted); margin-top: 0.07rem;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.77rem; color: var(--adm-muted); margin-top: 0.12rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
 .adm-lead__sub svg { flex-shrink: 0; opacity: 0.6; }
-.adm-lead__date { font-size: 0.72rem; color: var(--adm-muted); white-space: nowrap; flex-shrink: 0; padding-top: 3px; font-variant-numeric: tabular-nums; }
+.adm-lead__date { font-size: 0.72rem; color: var(--adm-muted); white-space: nowrap; flex-shrink: 0; padding-top: 4px; font-variant-numeric: tabular-nums; }
+/* ההודעה — ציטוט שקט עם פס צד, בלי קופסה כבדה */
 .adm-lead__msg {
-  font-size: 0.84rem; color: #4a5568; line-height: 1.45;
-  background: var(--adm-surface-2); padding: 0.34rem 0.48rem;
-  border-radius: 6px; border: 1px solid var(--adm-border);
+  font-size: 0.85rem; color: var(--adm-muted); line-height: 1.5;
+  padding: 0.05rem 0.6rem 0.05rem 0;
+  border-inline-start: 2.5px solid color-mix(in srgb, var(--stage-c, #16688c) 30%, var(--adm-border));
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0;
 }
-.adm-lead__notes { font-size: 0.84rem; color: #6b5d1f; background: #fefce8; border: 1px solid #fde68a; padding: 0.34rem 0.48rem; border-radius: 6px; line-height: 1.45; }
+.adm-lead__notes { font-size: 0.84rem; color: #6b5d1f; background: #fefce8; border: 1px solid #fde68a; padding: 0.34rem 0.48rem; border-radius: 8px; line-height: 1.45; }
 .adm-lead__quick { display: flex; flex-wrap: wrap; gap: 0.24rem; }
 .adm-lead__foot {
-  display: flex; align-items: center; gap: 0.26rem; flex-wrap: wrap;
-  padding-top: 0.32rem; border-top: 1px solid var(--adm-border);
+  display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;
+  padding-top: 0.45rem; margin-top: 0.1rem;
+  border-top: 1px solid color-mix(in srgb, var(--adm-border) 65%, transparent);
 }
-.adm-lead__contacted { display: inline-flex; align-items: center; gap: 0.22rem; font-size: 0.76rem; color: var(--adm-muted); cursor: pointer; user-select: none; margin-inline-start: 2px; }
+/* פעולות המחיקה/עריכה שקטות עד ריחוף על הכרטיס — פחות רעש, אותה גישה */
+.adm-lead__foot .adm-ic-btn--del,
+.adm-lead__foot > button.adm-ic-btn:not(.adm-ic-btn--wa) { opacity: 0.45; transition: opacity .15s, border-color .15s, background .15s, color .15s; }
+.adm-lead:hover .adm-lead__foot .adm-ic-btn { opacity: 1; }
+.adm-lead__contacted {
+  display: inline-flex; align-items: center; gap: 0.28rem; font-size: 0.74rem; font-weight: 600;
+  color: var(--adm-muted); cursor: pointer; user-select: none;
+  padding: 0.16rem 0.5rem; border-radius: 999px; border: 1px solid var(--adm-border);
+  transition: all .15s;
+}
+.adm-lead__contacted:has(input:checked) { color: #15803d; border-color: #bbf7d0; background: #f0fdf4; }
 .adm-lead__contacted input { accent-color: #10b981; }
 /* ── Icon-only action buttons (cards) ── */
 .adm-ic-btn {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px;
-  border: 1px solid var(--adm-border); border-radius: 7px;
+  width: 28px; height: 28px;
+  border: 1px solid var(--adm-border); border-radius: 9px;
   background: var(--adm-surface); color: var(--adm-muted);
   cursor: pointer; text-decoration: none; flex-shrink: 0;
   transition: border-color .15s, background .15s, color .15s;
@@ -2463,4 +2467,16 @@
   color: #16688c; font-size: 9px; font-weight: 800; font-style: normal;
   font-family: var(--font-heading); line-height: 1;
   vertical-align: 1px;
+}
+
+/* ── תג ⓘ להסברי הריחוף בסקירת הלידים ── */
+.ldov__kpi[data-tip] { cursor: help; }
+.ldov__kpi[data-tip] > i::after {
+  content: 'i';
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; margin-inline-start: 5px;
+  border-radius: 50%; flex-shrink: 0;
+  background: color-mix(in srgb, #16688c 14%, transparent);
+  color: #16688c; font-size: 9px; font-weight: 800; font-style: normal;
+  font-family: var(--font-heading); line-height: 1; vertical-align: 1px;
 }

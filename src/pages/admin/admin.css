@@ -2451,3 +2451,16 @@
   text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent);
   text-underline-offset: 3px;
 }
+
+/* ── תג ⓘ ברור ליד כל תווית שיש לה הסבר בריחוף (סקירה כללית) ── */
+.ovw__kpi[data-tip] > i::after,
+.ovw__card-head h4[data-tip]::after {
+  content: 'i';
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; margin-inline-start: 5px;
+  border-radius: 50%; flex-shrink: 0;
+  background: color-mix(in srgb, #16688c 14%, transparent);
+  color: #16688c; font-size: 9px; font-weight: 800; font-style: normal;
+  font-family: var(--font-heading); line-height: 1;
+  vertical-align: 1px;
+}

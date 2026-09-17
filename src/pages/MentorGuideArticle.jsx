@@ -25,7 +25,12 @@ export default function MentorGuideArticle() {
     [allArticles, slug]
   )
 
-  if (!article) return <Navigate to="/madrich-yazamim" replace />
+  if (!article) {
+    // הכתבות נטענות עצלה: בזמן הטעינה לא מפנים, אחרת כניסה ישירה
+    // לכתבה (מגוגל/קישור) הייתה קופצת לעמוד הרשימה לפני שהתוכן הגיע
+    if (!allArticles.length) return null
+    return <Navigate to="/madrich-yazamim" replace />
+  }
 
   const fmtDate = (iso) =>
     new Date(iso).toLocaleDateString(lang === 'en' ? 'en-GB' : 'he-IL', {

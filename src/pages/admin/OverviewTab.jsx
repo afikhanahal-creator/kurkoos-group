@@ -11,6 +11,22 @@ import { fetchDashboard, fetchRealtime, rows, totalsOf } from '../../lib/analyti
 const fmtNum = (n) => (n == null ? '—' : Math.round(n).toLocaleString('he-IL'))
 const DAY = 86400000
 
+/* הסבר קצר בריחוף על כל מדד — בשפה של מנהל, לא של אנליסט */
+const TIPS = {
+  leads7: 'כמה פניות (לידים) נכנסו מהאתר בשבוע האחרון: טפסים, פניות מפרויקטים ומדף הבית. לחיצה פותחת את מערכת הלידים.',
+  attention: 'לידים חדשים שאף אחד עוד לא טיפל בהם מעל 3 ימים. ליד שחוזרים אליו מהר נסגר בסיכוי גבוה יותר.',
+  users7: 'כמה אנשים שונים ביקרו באתר בשבוע האחרון, לפי גוגל אנליטיקס. הקו הקטן מציג את המגמה יום אחרי יום.',
+  conversions7: 'פעולות שוות זהב שנמדדו השבוע: שליחת טופס, לחיצה על וואטסאפ או על טלפון. זה החיבור בין תנועה לעסקים.',
+  subs: 'סך כל הנרשמים לרשימת התפוצה של האתר, קהל שאפשר לחזור אליו בדיוור.',
+  recentLeads: 'הפניות האחרונות שנכנסו מהאתר, מהחדשה לישנה. תגית הצבע מציינת מאיפה הגיעה הפנייה.',
+  topPages: 'העמודים שקיבלו הכי הרבה צפיות בשבוע האחרון. עמוד חזק עם מעט פניות הוא הזדמנות לשיפור.',
+}
+
+const CHANNEL_HE = {
+  'Organic Search': 'חיפוש בגוגל', Direct: 'כניסה ישירה', 'Organic Social': 'רשתות חברתיות',
+  Social: 'רשתות חברתיות', Referral: 'הפניות מאתרים', 'Paid Search': 'חיפוש ממומן', Email: 'אימייל', Unassigned: 'לא משויך',
+}
+
 const SOURCE_HE = { project: 'עמוד פרויקט', home: 'דף הבית', contact: 'צור קשר', manual: 'ידני' }
 const SOURCE_C = { project: '#105572', home: '#2e9e6b', contact: '#8c6d1f', manual: '#666' }
 
@@ -61,7 +77,12 @@ export default function OverviewTab({ onNavigate }) {
         const tot = totalsOf(R.totals)
         const series = rows(R.timeseries).map((r) => r.m[0])
         const topPages = rows(R.pages).slice(0, 3).map((r) => ({ path: r.d[0], title: r.d[1], views: r.m[0] }))
-        setGa({ users: tot[0], conversions: tot[8], series, topPages })
+        const ch = rows(R.channels)
+        const chTotal = ch.reduce((a, c) => a + c.m[2], 0)
+        const topChannel = ch[0] && chTotal
+          ? { name: CHANNEL_HE[ch[0].d[0]] || ch[0].d[0], share: Math.round((ch[0].m[2] / chTotal) * 100) }
+          : null
+        setGa({ users: tot[0], sessions: tot[2], conversions: tot[8], series, topPages, topChannel })
       })
       .catch(() => on && setGa('none'))
     fetchRealtime()
@@ -87,6 +108,28 @@ export default function OverviewTab({ onNavigate }) {
     return { in7, prev7, attention, latest }
   }, [leads])
 
+  /* תובנות במילים: מה קורה באתר ומה כדאי לעשות, מחושב מהנתונים האמיתיים בלבד */
+  const insights = useMemo(() => {
+    const out = []
+    if (leadStats?.attention > 0) {
+      out.push({ tone: 'warn', tab: 'leads', text: `${leadStats.attention === 1 ? 'ליד אחד ממתין' : leadStats.attention + ' לידים ממתינים'} מעל 3 ימים ללא מענה, שווה לחזור אליהם היום.` })
+    }
+    if (leadStats && leadStats.prev7 > 0) {
+      const up = leadStats.in7 >= leadStats.prev7
+      out.push({ tone: up ? 'good' : 'bad', tab: 'leads', text: `${leadStats.in7} לידים נכנסו השבוע מול ${leadStats.prev7} בשבוע שעבר${up ? ', מגמה חיובית.' : ', ירידה ששווה תשומת לב.'}` })
+    }
+    if (ga && ga !== 'none') {
+      if (ga.sessions > 0 && ga.conversions > 0) {
+        out.push({ tone: 'good', tab: 'analytics', text: `שיעור ההמרה השבועי: ${((ga.conversions / ga.sessions) * 100).toFixed(1)}% מהביקורים הסתיימו בפנייה.` })
+      } else if (ga.sessions >= 20 && !ga.conversions) {
+        out.push({ tone: 'warn', tab: 'analytics', text: 'יש תנועה אבל עדיין אין המרות השבוע, שווה לבדוק שהטפסים בולטים מספיק.' })
+      }
+      if (ga.topChannel) out.push({ tone: 'info', tab: 'analytics', text: `מקור התנועה המוביל השבוע: ${ga.topChannel.name} (${ga.topChannel.share}% מהביקורים).` })
+      if (ga.topPages?.[0]) out.push({ tone: 'info', tab: 'analytics', text: `העמוד הנצפה ביותר: ${ga.topPages[0].title || ga.topPages[0].path} עם ${fmtNum(ga.topPages[0].views)} צפיות.` })
+    }
+    return out.slice(0, 4)
+  }, [leadStats, ga])
+
   const nav = (id) => () => onNavigate?.(id)
   const gaReady = ga && ga !== 'none'
   const dateStr = new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Jerusalem' })
@@ -106,7 +149,7 @@ export default function OverviewTab({ onNavigate }) {
 
       {/* מדדי מפתח — 7 הימים האחרונים */}
       <section className="ovw__kpis">
-        <button type="button" className="ovw__kpi" onClick={nav('leads')}>
+        <button type="button" className="ovw__kpi ovw__kpi--leads" data-tip={TIPS.leads7} onClick={nav('leads')}>
           <i>לידים · 7 ימים</i>
           <b>{leadStats ? leadStats.in7 : '—'}</b>
           {leadStats && leadStats.prev7 > 0 && (
@@ -116,33 +159,43 @@ export default function OverviewTab({ onNavigate }) {
           )}
           {leadStats && leadStats.prev7 === 0 && <span className="ovw__hint">בשבוע האחרון</span>}
         </button>
-        <button type="button" className={`ovw__kpi${leadStats?.attention ? ' ovw__kpi--warn' : ''}`} onClick={nav('leads')}>
+        <button type="button" className={`ovw__kpi ovw__kpi--attn${leadStats?.attention ? ' ovw__kpi--warn' : ''}`} data-tip={TIPS.attention} onClick={nav('leads')}>
           <i>דורשים טיפול</i>
           <b>{leadStats ? leadStats.attention : '—'}</b>
           <span className="ovw__hint">לידים חדשים מעל 3 ימים</span>
         </button>
-        <button type="button" className="ovw__kpi" onClick={nav('analytics')}>
+        <button type="button" className="ovw__kpi ovw__kpi--users" data-tip={TIPS.users7} onClick={nav('analytics')}>
           <i>משתמשים · 7 ימים</i>
           <b>{gaReady ? fmtNum(ga.users) : '—'}</b>
           {gaReady ? <Spark values={ga.series} /> : <span className="ovw__hint">{ga === 'none' ? 'אין עדיין נתוני תנועה' : 'טוען…'}</span>}
         </button>
-        <button type="button" className="ovw__kpi" onClick={nav('analytics')}>
+        <button type="button" className="ovw__kpi ovw__kpi--conv" data-tip={TIPS.conversions7} onClick={nav('analytics')}>
           <i>המרות · 7 ימים</i>
           <b>{gaReady ? fmtNum(ga.conversions) : '—'}</b>
           <span className="ovw__hint">טפסים, וואטסאפ וטלפון</span>
         </button>
-        <button type="button" className="ovw__kpi" onClick={nav('newsletter')}>
+        <button type="button" className="ovw__kpi ovw__kpi--subs" data-tip={TIPS.subs} onClick={nav('newsletter')}>
           <i>רשומים לניוזלטר</i>
           <b>{subs ? subs.length : '—'}</b>
           <span className="ovw__hint">סך הכול</span>
         </button>
       </section>
 
+      {insights.length > 0 && (
+        <section className="ovw__insights">
+          {insights.map((ins, i) => (
+            <button key={i} type="button" className={`ovw__insight is-${ins.tone}`} onClick={nav(ins.tab)}>
+              {ins.text}
+            </button>
+          ))}
+        </section>
+      )}
+
       <div className="ovw__cols">
         {/* לידים אחרונים */}
         <section className="ovw__card">
           <header className="ovw__card-head">
-            <h4>לידים אחרונים</h4>
+            <h4 data-tip={TIPS.recentLeads} tabIndex={0}>לידים אחרונים</h4>
             <button type="button" className="ovw__more" onClick={nav('leads')}>לכל הלידים ←</button>
           </header>
           {!leadStats && <p className="ovw__empty">טוען…</p>}
@@ -163,7 +216,7 @@ export default function OverviewTab({ onNavigate }) {
         {/* תנועה השבוע */}
         <section className="ovw__card">
           <header className="ovw__card-head">
-            <h4>העמודים החזקים השבוע</h4>
+            <h4 data-tip={TIPS.topPages} tabIndex={0}>העמודים החזקים השבוע</h4>
             <button type="button" className="ovw__more" onClick={nav('analytics')}>לדוח המלא ←</button>
           </header>
           {ga == null && <p className="ovw__empty">טוען…</p>}

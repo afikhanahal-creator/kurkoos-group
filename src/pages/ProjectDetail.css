@@ -256,15 +256,26 @@
 
 /* קוביית סטטוס — זהה לחלוטין לשאר הקוביות (כמו בתדהר): אותו גרדיאנט, ערך טורקיז */
 
-/* מדיה + כפתור וידאו */
+/* מדיה + כפתור וידאו.
+   התמונה הראשית מוצגת במלואה, ביחס הטבעי שלה: בלי חיתוך (cover) ובלי
+   מסגרת יחס כפויה, ותמיד עם פינות חדות. תקרת גובה שומרת על פרופורציות
+   הבאנר גם בתמונות לאורך. */
 .pd-banner__media {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  border-radius: 0;
 }
-.pd-banner__media-img,
+.pd-banner__media-img { width: 100%; }
 .pd-banner__media-img img,
-.pd-banner__media-img .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; }
+.pd-banner__media-img .smart-image-placeholder {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(70vh, 620px);
+  object-fit: contain;
+  object-position: center;
+  border-radius: 0;
+}
 .pd-banner__play {
   position: absolute;
   inset: 0;

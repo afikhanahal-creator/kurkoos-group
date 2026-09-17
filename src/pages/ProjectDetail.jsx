@@ -8,7 +8,6 @@ import { track } from '../lib/track.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { srcOfResponsive, normalizeResponsiveImage } from '../lib/responsiveImage.js'
-import Parallax from '../components/ui/Parallax.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import VideoModal from '../components/ui/VideoModal.jsx'
@@ -563,7 +562,9 @@ export default function ProjectDetail() {
             {/* מדיה — תמונה למעלה, חצי ניווט מתחתיה בצד שמאל (בסגנון תדהר) */}
             <div className="pd-banner__media-col">
               <div className="pd-banner__media">
-                <Parallax className="pd-banner__media-img">
+                {/* בלי Parallax: אפקט התזוזה דורש תמונה חתוכה עם שוליים נסתרים,
+                    וכאן התמונה הראשית מוצגת במלואה, בלי חיתוך */}
+                <div className="pd-banner__media-img">
                   <SmartImage
                     key={bannerSlide}
                     src={flatGallery[Math.min(bannerSlide, flatGallery.length - 1)]}
@@ -571,7 +572,7 @@ export default function ProjectDetail() {
                     label={L(project.name)}
                     priority={bannerSlide === 0}
                   />
-                </Parallax>
+                </div>
                 {hasVideo && (
                   <button
                     type="button"

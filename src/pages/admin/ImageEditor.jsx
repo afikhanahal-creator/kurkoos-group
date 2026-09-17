@@ -3,31 +3,30 @@ import { createPortal } from 'react-dom'
 import './image-editor.css'
 
 /* ============================================================
-   ImageEditor — עורך תמונות (בסגנון Canva) לוגו/תמונות.
-   • הזזה (גרירה בעכבר/נייד), זום, סיבוב, היפוך
-   • פילטרים מוכנים + סליידרים (בהירות/ניגודיות/רוויה/גוון)
-   • צביעה (tint) עם בורר צבע + שקיפות + מצב מיזוג
-   • הסרת רקע לבן (סף) — מצוין ללוגואים על רקע לבן
-   • ייצוא ברזולוציה גבוהה (x1/x2/x3) → PNG שקוף
-   הכל בצד-לקוח (Canvas). פלט: Blob שמועלה לאחסון.
+   ImageEditor — עורך תמונות מודרני לאדמין.
+   • מסגרת חיתוך (cover): לפי המקום באתר / לרוחב / לאורך / ריבוע / פס
+   • גרירה, זום (סליידר + גלגלת), סיבוב חופשי + 90°, היפוכים
+   • פילטרים עם תצוגה מקדימה חיה, כיוונון צבע, צביעה (Tint)
+   • פינות מעוגלות, הסרת רקע לבן, הסרת רקע AI (בדפדפן)
+   • השוואת לפני/אחרי בלחיצה ארוכה, ייצוא WebP ברזולוציה מלאה
+   הכל בצד לקוח (Canvas). פלט: Blob שמועלה לאחסון.
    ============================================================ */
 
-// צורת/כיוון המסגרת (חיתוך) — לאורך / לרוחב / ריבוע
 const ASPECTS = [
-  { id: 'landscape', label: 'לרוחב', w: 560, h: 380 },
-  { id: 'portrait', label: 'לאורך', w: 400, h: 540 },
-  { id: 'square', label: 'ריבוע', w: 470, h: 470 },
-  { id: 'wide', label: 'פס רחב', w: 660, h: 300 },
+  { id: 'landscape', label: 'לרוחב', icon: '▭', w: 560, h: 380 },
+  { id: 'portrait', label: 'לאורך', icon: '▯', w: 400, h: 540 },
+  { id: 'square', label: 'ריבוע', icon: '◻', w: 470, h: 470 },
+  { id: 'wide', label: 'פס רחב', icon: '▬', w: 660, h: 300 },
 ]
 
 const PRESETS = [
-  { id: 'none',  label: 'מקורי',     f: { brightness: 100, contrast: 100, saturate: 100, hue: 0, sepia: 0, grayscale: 0 } },
-  { id: 'vivid', label: 'חי',        f: { brightness: 104, contrast: 116, saturate: 160, hue: 0, sepia: 0, grayscale: 0 } },
-  { id: 'warm',  label: 'חמים',      f: { brightness: 104, contrast: 102, saturate: 120, hue: -10, sepia: 22, grayscale: 0 } },
-  { id: 'cool',  label: 'קריר',      f: { brightness: 102, contrast: 104, saturate: 112, hue: 14, sepia: 0, grayscale: 0 } },
-  { id: 'fade',  label: 'דהוי',      f: { brightness: 108, contrast: 88,  saturate: 82,  hue: 0, sepia: 10, grayscale: 0 } },
-  { id: 'sepia', label: 'ספיה',      f: { brightness: 105, contrast: 100, saturate: 100, hue: 0, sepia: 62, grayscale: 0 } },
-  { id: 'bw',    label: 'שחור-לבן',  f: { brightness: 106, contrast: 112, saturate: 0,   hue: 0, sepia: 0, grayscale: 100 } },
+  { id: 'none',  label: 'מקורי',    f: { brightness: 100, contrast: 100, saturate: 100, hue: 0, sepia: 0, grayscale: 0 } },
+  { id: 'vivid', label: 'חי',       f: { brightness: 104, contrast: 116, saturate: 160, hue: 0, sepia: 0, grayscale: 0 } },
+  { id: 'warm',  label: 'חמים',     f: { brightness: 104, contrast: 102, saturate: 120, hue: -10, sepia: 22, grayscale: 0 } },
+  { id: 'cool',  label: 'קריר',     f: { brightness: 102, contrast: 104, saturate: 112, hue: 14, sepia: 0, grayscale: 0 } },
+  { id: 'fade',  label: 'דהוי',     f: { brightness: 108, contrast: 88,  saturate: 82,  hue: 0, sepia: 10, grayscale: 0 } },
+  { id: 'sepia', label: 'ספיה',     f: { brightness: 105, contrast: 100, saturate: 100, hue: 0, sepia: 62, grayscale: 0 } },
+  { id: 'bw',    label: 'שחור לבן', f: { brightness: 106, contrast: 112, saturate: 0,   hue: 0, sepia: 0, grayscale: 100 } },
 ]
 const BLENDS = [
   { id: 'multiply', label: 'הכהיה' },
@@ -35,8 +34,17 @@ const BLENDS = [
   { id: 'overlay', label: 'חפיפה' },
   { id: 'color', label: 'צבע' },
 ]
+const TABS = [
+  { id: 'crop', label: 'חיתוך ומיקום' },
+  { id: 'look', label: 'פילטרים' },
+  { id: 'color', label: 'צבע' },
+  { id: 'bg', label: 'רקע' },
+]
 
-// נתיב מלבן עם פינות מעוגלות (לעיגול פינות התמונה בעת הייצוא)
+const NEUTRAL_F = PRESETS[0].f
+const cssFilter = (f) => `brightness(${f.brightness}%) contrast(${f.contrast}%) saturate(${f.saturate}%) hue-rotate(${f.hue}deg) sepia(${f.sepia}%) grayscale(${f.grayscale}%)`
+const sameF = (a, b) => Object.keys(NEUTRAL_F).every((k) => a[k] === b[k])
+
 function roundRectPath(ctx, x, y, w, h, r) {
   const rr = Math.max(0, Math.min(r, w / 2, h / 2))
   ctx.beginPath()
@@ -48,7 +56,6 @@ function roundRectPath(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-// יחס תצוגה של המקום באתר ("16 / 10" / "3 / 5" וכו') → מספר
 function parseAspect(a) {
   if (typeof a !== 'string') return null
   const p = a.split('/').map((x) => parseFloat(x.trim()))
@@ -56,35 +63,53 @@ function parseAspect(a) {
   return null
 }
 
+/* סליידר אחיד — מוגדר מחוץ לקומפוננטה כדי שלא יעשה remount בכל רינדור
+   (remount באמצע גרירה מפיל את ה-pointer capture ושובר את הסליידר) */
+function Slider({ label, min, max, step = 1, value, onChange, display }) {
+  return (
+    <label className="imed__slider">
+      <span className="imed__slider-lbl">{label}</span>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={onChange} />
+      <b className="imed__slider-val">{display ?? value}</b>
+    </label>
+  )
+}
+
 export default function ImageEditor({ src, onApply, onClose, busy = false, aspect = null }) {
   const canvasRef = useRef(null)
+  const stageRef = useRef(null)
   const imgRef = useRef(null)
   const drag = useRef(null)
   const [ready, setReady] = useState(false)
   const [err, setErr] = useState('')
   const [ver, setVer] = useState(0)          // מאלץ ציור מחדש אחרי החלפת תמונת הבסיס (AI)
   const [aiBusy, setAiBusy] = useState(false)
-  // מסגרת "לפי המקום באתר" — נגזרת מיחס התצוגה בפועל, כך שמה שממסגרים = מה שיוצג
+  const [tab, setTab] = useState('crop')
+  const [compare, setCompare] = useState(false)   // לחיצה ארוכה על "לפני" — מציג את המקור
+  const [thumb, setThumb] = useState('')          // תמונת בסיס קטנה לתצוגות הפילטרים
+
+  // מסגרת "לפי המקום באתר" — מה שממסגרים כאן זה בדיוק מה שיוצג
   const surfaceFrame = useMemo(() => {
     const r = parseAspect(aspect)
     if (!r) return null
     return r >= 1
-      ? { id: 'surface', label: 'לפי המקום (מומלץ)', w: 560, h: Math.max(150, Math.round(560 / r)) }
-      : { id: 'surface', label: 'לפי המקום (מומלץ)', w: Math.max(150, Math.round(540 * r)), h: 540 }
+      ? { id: 'surface', label: 'לפי המקום', icon: '★', w: 560, h: Math.max(150, Math.round(560 / r)) }
+      : { id: 'surface', label: 'לפי המקום', icon: '★', w: Math.max(150, Math.round(540 * r)), h: 540 }
   }, [aspect])
   const aspects = useMemo(() => (surfaceFrame ? [surfaceFrame, ...ASPECTS] : ASPECTS), [surfaceFrame])
   const [aspectId, setAspectId] = useState(surfaceFrame ? 'surface' : 'landscape')
   const ASP = aspects.find((a) => a.id === aspectId) || aspects[0]
   const FRAME_W = ASP.w
   const FRAME_H = ASP.h
+
   const [t, setT] = useState({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false })
-  const [f, setF] = useState(PRESETS[0].f)
+  const [f, setF] = useState(NEUTRAL_F)
   const [tint, setTint] = useState({ color: '#105572', alpha: 0, blend: 'multiply' })
   const [bg, setBg] = useState({ remove: false, threshold: 238 })
-  const [radius, setRadius] = useState(0)   // עיגול פינות (יחס 0..0.5 מהצד הקצר)
+  const [radius, setRadius] = useState(0)
+  const activePreset = useMemo(() => PRESETS.find((p) => sameF(p.f, f))?.id || 'custom', [f])
 
-  // סגירה ב-Escape + נעילת גלילת הרקע. מפצים על רוחב הסקרולבר כדי שלא תהיה "קפיצה"
-  // (כשמסתירים את הגלילה הסקרולבר נעלם והעמוד — והחלון הממורכז — קופצים הצידה).
+  /* Esc לסגירה + נעילת גלילת הרקע (עם פיצוי סקרולבר נגד "קפיצה") */
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
     window.addEventListener('keydown', onKey)
@@ -100,21 +125,19 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
     }
   }, [onClose])
 
+  /* טעינת המקור. cache-bust מאלץ שליפת CORS נקייה כדי שהקנבס יוכל לייצא */
   useEffect(() => {
     setReady(false); setErr('')
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => { imgRef.current = img; setReady(true) }
     img.onerror = () => setErr('לא ניתן לטעון את התמונה לעריכה')
-    // cache-bust: התמונה כבר נטענה בעמוד ללא CORS ונשמרה ב-cache (immutable). בקשת
-    // ה-CORS של העורך עלולה לקבל את הגרסה ללא-CORS → קנבס "מזוהם" ו-toBlob נכשל
-    // (השמירה לא מתבצעת). פרמטר ייחודי מאלץ שליפת CORS נקייה כך שאפשר לייצא ולשמור.
     img.src = src + (src.includes('?') ? '&' : '?') + 'cors=' + Date.now()
   }, [src])
 
-  const filterStr = `brightness(${f.brightness}%) contrast(${f.contrast}%) saturate(${f.saturate}%) hue-rotate(${f.hue}deg) sepia(${f.sepia}%) grayscale(${f.grayscale}%)`
+  const filterStr = cssFilter(f)
 
-  const draw = useCallback((canvas, k = 1) => {
+  const draw = useCallback((canvas, k = 1, { neutral = false } = {}) => {
     const img = imgRef.current
     if (!img || !canvas) return
     const w = FRAME_W * k, h = FRAME_H * k
@@ -122,20 +145,17 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, w, h)
     ctx.save()
-    ctx.filter = filterStr
+    if (!neutral) ctx.filter = filterStr
     ctx.translate(w / 2 + t.x * k, h / 2 + t.y * k)
     ctx.rotate((t.rot * Math.PI) / 180)
     ctx.scale(t.scale * (t.flipH ? -1 : 1), t.scale * (t.flipV ? -1 : 1))
-    // בסיס: מילוי מלא של המסגרת ("cover") — המסגרת חותכת את התמונה, לא מרפדת
-    // אותה בפסים שקופים. כך הקובץ שנשמר תמיד ממלא את הכרטיס באתר כמו כל
-    // תמונה אחרת, בלי שוליים ריקים צרובים. מיקום מדויק — בגרירה ובזום.
+    // מילוי מלא של המסגרת (cover) — המסגרת חותכת, לא מרפדת בפסים ריקים
     const ar = img.width / img.height
     let dw = FRAME_W * k, dh = dw / ar
     if (dh < FRAME_H * k) { dh = FRAME_H * k; dw = dh * ar }
     ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh)
     ctx.restore()
-    // הסרת רקע לבן
-    if (bg.remove) {
+    if (!neutral && bg.remove) {
       try {
         const id = ctx.getImageData(0, 0, w, h)
         const d = id.data, thr = bg.threshold
@@ -145,8 +165,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
         ctx.putImageData(id, 0, 0)
       } catch { /* tainted — מתעלמים */ }
     }
-    // צביעה (tint)
-    if (tint.alpha > 0) {
+    if (!neutral && tint.alpha > 0) {
       ctx.save()
       ctx.globalAlpha = tint.alpha
       ctx.globalCompositeOperation = tint.blend
@@ -154,8 +173,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
       ctx.fillRect(0, 0, w, h)
       ctx.restore()
     }
-    // עיגול פינות — מסכה אחרונה (destination-in) כך שהפינות שקופות גם אחרי הסרת רקע
-    if (radius > 0) {
+    if (!neutral && radius > 0) {
       const r = radius * Math.min(w, h)
       ctx.save()
       ctx.globalCompositeOperation = 'destination-in'
@@ -166,9 +184,26 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
     }
   }, [filterStr, t, bg, tint, radius, FRAME_W, FRAME_H])
 
-  useEffect(() => { if (ready) draw(canvasRef.current, 1) }, [draw, ready, ver])
+  useEffect(() => { if (ready) draw(canvasRef.current, 1, { neutral: compare }) }, [draw, ready, ver, compare])
 
-  // הסרת רקע אוטומטית (AI) — רץ בדפדפן, חינמי, ללא מפתח (@imgly/background-removal)
+  /* תמונת בסיס קטנה לתצוגות המקדימות של הפילטרים (הפילטר עצמו — CSS חי) */
+  useEffect(() => {
+    if (!ready || !imgRef.current) return
+    try {
+      const img = imgRef.current
+      const c = document.createElement('canvas')
+      const tw = 96, th = 64
+      c.width = tw; c.height = th
+      const ctx = c.getContext('2d')
+      const ar = img.width / img.height
+      let dw = tw, dh = dw / ar
+      if (dh < th) { dh = th; dw = dh * ar }
+      ctx.drawImage(img, (tw - dw) / 2, (th - dh) / 2, dw, dh)
+      setThumb(c.toDataURL('image/jpeg', 0.7))
+    } catch { setThumb('') }
+  }, [ready, ver])
+
+  /* הסרת רקע אוטומטית (AI) — רץ בדפדפן, ללא מפתח */
   const removeBgAi = async () => {
     setAiBusy(true); setErr('')
     try {
@@ -184,23 +219,49 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
     } finally { setAiBusy(false) }
   }
 
-  const onDown = (e) => { drag.current = { sx: e.clientX, sy: e.clientY, bx: t.x, by: t.y }; try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* noop */ } }
-  const onMove = (e) => { const d = drag.current; if (!d) return; setT((p) => ({ ...p, x: d.bx + (e.clientX - d.sx), y: d.by + (e.clientY - d.sy) })) }
+  /* גרירה — מפוצה על יחס התצוגה (הקנבס מוצג מוקטן במסכים צרים) */
+  const dispRatio = () => {
+    const el = canvasRef.current
+    return el ? (el.getBoundingClientRect().width || FRAME_W) / FRAME_W : 1
+  }
+  const onDown = (e) => {
+    drag.current = { sx: e.clientX, sy: e.clientY, bx: t.x, by: t.y, r: dispRatio() }
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* noop */ }
+  }
+  const onMove = (e) => {
+    const d = drag.current
+    if (!d) return
+    setT((p) => ({ ...p, x: d.bx + (e.clientX - d.sx) / d.r, y: d.by + (e.clientY - d.sy) / d.r }))
+  }
   const onUp = () => { drag.current = null }
 
-  const reset = () => { setT({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false }); setF(PRESETS[0].f); setTint({ color: '#105572', alpha: 0, blend: 'multiply' }); setBg({ remove: false, threshold: 238 }); setRadius(0) }
+  /* זום בגלגלת העכבר מעל הקנבס */
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    const onWheel = (e) => {
+      e.preventDefault()
+      const d = e.deltaY < 0 ? 0.08 : -0.08
+      setT((p) => ({ ...p, scale: Math.min(5, Math.max(0.2, Math.round((p.scale + d) * 100) / 100)) }))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
 
-  // ייצוא ברזולוציה הגבוהה ביותר שהמקור מאפשר: הצד הארוך של הפלט = רזולוציית
-  // התמונה המקורית (לא "ממציאים" פיקסלים — הגדלה מעבר למקור לא מוסיפה פרטים,
-  // רק מנפחת את הקובץ). תקרה 4096 לקובץ שפוי, רצפה 1280 למקורות קטנים.
+  const reset = () => {
+    setT({ scale: 1, x: 0, y: 0, rot: 0, flipH: false, flipV: false })
+    setF(NEUTRAL_F)
+    setTint({ color: '#105572', alpha: 0, blend: 'multiply' })
+    setBg({ remove: false, threshold: 238 })
+    setRadius(0)
+  }
+
+  /* ייצוא: הצד הארוך = רזולוציית המקור (תקרה 4096, רצפה 1280) */
   const srcLong = ready && imgRef.current ? Math.max(imgRef.current.width, imgRef.current.height) : 0
   const targetLong = srcLong ? Math.min(4096, Math.max(1280, srcLong)) : 1920
   const exportK = targetLong / Math.max(FRAME_W, FRAME_H)
 
-  /* רשת ביטחון בייצוא: אם נשארו פסים שקופים מסביב לתוכן (למשל אחרי הקטנת
-     זום מתחת למילוי המסגרת) — חותכים אותם, כדי שהקובץ שנשמר לעולם לא יכיל
-     שוליים ריקים שיישברו את האחידות בגלריות ובכרטיסים. פינות מעוגלות לא
-     נפגעות: אמצעי הצלעות נשארים אטומים ולכן תיבת התוכן מכסה את כל המסגרת. */
+  /* רשת ביטחון: פסים שקופים שנשארו בשוליים נחתכים לפני השמירה */
   const trimTransparentEdges = (c) => {
     try {
       const ctx = c.getContext('2d', { willReadFrequently: true })
@@ -213,8 +274,8 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
       let left = 0; while (left < w - 1 && colEmpty(left)) left++
       let right = w - 1; while (right > left && colEmpty(right)) right--
       const sw = right - left + 1, sh = bottom - top + 1
-      if (sw >= w - 2 && sh >= h - 2) return c            // אין שוליים — כמו שהוא
-      if (sw < 50 || sh < 50) return c                    // תוכן זעיר מדי — לא נוגעים
+      if (sw >= w - 2 && sh >= h - 2) return c
+      if (sw < 50 || sh < 50) return c
       const out = document.createElement('canvas')
       out.width = sw; out.height = sh
       out.getContext('2d').drawImage(c, left, top, sw, sh, 0, 0, sw, sh)
@@ -225,7 +286,6 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
   const apply = () => {
     try {
       const c = trimTransparentEdges((() => { const cv = document.createElement('canvas'); draw(cv, exportK); return cv })())
-      // ייצוא ל-WebP (קל בהרבה מ-PNG) → העלאה וטעינה מהירות, באיכות גבוהה
       c.toBlob((blob) => { if (blob) onApply(blob); else setErr('הייצוא נכשל') }, 'image/webp', 0.95)
     } catch { setErr('הייצוא נכשל (ייתכן שמקור התמונה חוסם עריכה)') }
   }
@@ -236,141 +296,172 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
   return createPortal((
     <div className="imed" onClick={onClose}>
       <div className="imed__box" dir="rtl" onClick={(e) => e.stopPropagation()}>
+
         <header className="imed__head">
           <h3>עורך התמונה</h3>
-          <button type="button" className="imed__x" onClick={onClose} aria-label="סגירה" title="סגירה (Esc)">✕</button>
+          <div className="imed__head-actions">
+            <button
+              type="button" className="imed__compare" disabled={!ready}
+              onPointerDown={() => setCompare(true)} onPointerUp={() => setCompare(false)}
+              onPointerLeave={() => setCompare(false)} onPointerCancel={() => setCompare(false)}
+              title="החזיקו כדי לראות את המקור"
+            >
+              {compare ? 'המקור' : 'לפני / אחרי'}
+            </button>
+            <button type="button" className="imed__reset" onClick={reset}>איפוס הכל</button>
+            <button type="button" className="imed__x" onClick={onClose} aria-label="סגירה" title="סגירה (Esc)">✕</button>
+          </div>
         </header>
 
         <div className="imed__body">
-          <div className="imed__stage">
-            {/* כיוון המסגרת — לרוחב / לאורך / ריבוע / רחב (מעל המסגרת) */}
-            <div className="imed__aspects" role="tablist" aria-label="כיוון המסגרת">
+          {/* ==== במה ==== */}
+          <div className="imed__stage" ref={stageRef}>
+            <div className="imed__aspects" role="tablist" aria-label="מסגרת החיתוך">
               {aspects.map((a) => (
                 <button
-                  key={a.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={aspectId === a.id}
+                  key={a.id} type="button" role="tab" aria-selected={aspectId === a.id}
                   className={`imed__aspbtn ${aspectId === a.id ? 'is-active' : ''}`}
                   onClick={() => setAspectId(a.id)}
                 >
-                  {a.id === 'portrait' ? '▯ ' : a.id === 'landscape' || a.id === 'wide' ? '▭ ' : '◻ '}{a.label}
+                  <i aria-hidden="true">{a.icon}</i>{a.label}
                 </button>
               ))}
             </div>
-            {err
-              ? <div className="imed__err">{err}</div>
-              : (
-                <canvas
-                  ref={canvasRef}
-                  className="imed__canvas"
-                  style={{ width: FRAME_W, height: FRAME_H }}
-                  onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
-                />
-              )}
-            <span className="imed__hint">גררו את התמונה להזזה · השתמשו בזום למיקום מדויק</span>
+
+            <div className="imed__canvas-wrap">
+              {err
+                ? <div className="imed__err">{err}</div>
+                : (
+                  <canvas
+                    ref={canvasRef}
+                    className={`imed__canvas ${compare ? 'is-compare' : ''}`}
+                    style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}`, maxWidth: FRAME_W }}
+                    onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+                    onDoubleClick={() => setT((p) => ({ ...p, x: 0, y: 0 }))}
+                  />
+                )}
+              {!ready && !err && <div className="imed__loading"><span className="imed__spin" />טוען תמונה…</div>}
+            </div>
+
+            <div className="imed__zoombar">
+              <button type="button" className="imed__step" onClick={() => bumpScale(-0.1)} aria-label="הקטנה">−</button>
+              <input type="range" min="0.2" max="5" step="0.01" value={t.scale} onChange={(e) => setT((p) => ({ ...p, scale: Number(e.target.value) }))} aria-label="זום" />
+              <button type="button" className="imed__step" onClick={() => bumpScale(0.1)} aria-label="הגדלה">+</button>
+              <b className="imed__zoom-val">{Math.round(t.scale * 100)}%</b>
+              <span className="imed__hint">גרירה להזזה · גלגלת לזום · לחיצה כפולה למרכוז</span>
+            </div>
           </div>
 
+          {/* ==== פאנל ==== */}
           <div className="imed__panel">
-            {/* טרנספורם */}
-            <section className="imed__group">
-              <h4>מיקום וסיבוב</h4>
-              <div className="imed__btnrow">
-                <button type="button" onClick={() => setT((p) => ({ ...p, rot: p.rot - 90 }))}>↺ 90°</button>
-                <button type="button" onClick={() => setT((p) => ({ ...p, rot: p.rot + 90 }))}>↻ 90°</button>
-                <button type="button" onClick={() => setT((p) => ({ ...p, flipH: !p.flipH }))}>⇋ היפוך אופקי</button>
-                <button type="button" onClick={() => setT((p) => ({ ...p, flipV: !p.flipV }))}>⥯ היפוך אנכי</button>
-              </div>
-              <div className="imed__zoom">
-                <span className="imed__zoom-lbl">זום</span>
-                <button type="button" className="imed__step" onClick={() => bumpScale(-0.1)} aria-label="הקטנה">−</button>
-                <input type="range" min="0.2" max="5" step="0.01" value={t.scale} onChange={(e) => setT((p) => ({ ...p, scale: Number(e.target.value) }))} aria-label="זום" />
-                <button type="button" className="imed__step" onClick={() => bumpScale(0.1)} aria-label="הגדלה">+</button>
-                <b className="imed__zoom-val">{Math.round(t.scale * 100)}%</b>
-              </div>
-              <label className="imed__slider">סיבוב <input type="range" min="-180" max="180" step="1" value={t.rot} onChange={(e) => setT((p) => ({ ...p, rot: Number(e.target.value) }))} /><b>{t.rot}°</b></label>
-            </section>
+            <div className="imed__tabs" role="tablist">
+              {TABS.map((tb) => (
+                <button key={tb.id} type="button" role="tab" aria-selected={tab === tb.id}
+                  className={`imed__tab ${tab === tb.id ? 'is-active' : ''}`} onClick={() => setTab(tb.id)}>
+                  {tb.label}
+                </button>
+              ))}
+            </div>
 
-            {/* פינות — רגילות / מעוגלות (להתאמה לכרטיסיות) */}
-            <section className="imed__group">
-              <h4>פינות</h4>
-              <div className="imed__seg">
-                <button type="button" className={`imed__segbtn ${radius === 0 ? 'is-active' : ''}`} onClick={() => setRadius(0)}>⬜ רגילות</button>
-                <button type="button" className={`imed__segbtn ${radius > 0 && radius < 0.5 ? 'is-active' : ''}`} onClick={() => setRadius((r) => (r > 0 && r < 0.5 ? r : 0.12))}>▢ מעוגלות</button>
-                <button type="button" className={`imed__segbtn ${radius >= 0.5 ? 'is-active' : ''}`} onClick={() => setRadius(0.5)}>⬭ עיגול מלא</button>
-              </div>
-              <label className="imed__slider">עוצמת עיגול <input type="range" min="0" max="0.5" step="0.01" value={radius} onChange={(e) => setRadius(Number(e.target.value))} /><b>{Math.round(radius * 100)}%</b></label>
-            </section>
+            <div className="imed__panel-body">
+              {tab === 'crop' && (
+                <>
+                  <section className="imed__group">
+                    <h4>סיבוב והיפוך</h4>
+                    <div className="imed__btnrow">
+                      <button type="button" onClick={() => setT((p) => ({ ...p, rot: p.rot - 90 }))}>↺ 90°</button>
+                      <button type="button" onClick={() => setT((p) => ({ ...p, rot: p.rot + 90 }))}>↻ 90°</button>
+                      <button type="button" className={t.flipH ? 'is-active' : ''} onClick={() => setT((p) => ({ ...p, flipH: !p.flipH }))}>⇋ אופקי</button>
+                      <button type="button" className={t.flipV ? 'is-active' : ''} onClick={() => setT((p) => ({ ...p, flipV: !p.flipV }))}>⥯ אנכי</button>
+                    </div>
+                    <Slider label="סיבוב עדין" min={-45} max={45} value={t.rot > 180 ? t.rot - 360 : t.rot} display={`${t.rot}°`} onChange={(e) => setT((p) => ({ ...p, rot: Number(e.target.value) }))} />
+                  </section>
 
-            {/* פילטרים מוכנים */}
-            <section className="imed__group">
-              <h4>פילטרים</h4>
-              <div className="imed__presets">
-                {PRESETS.map((p) => (
-                  <button key={p.id} type="button" className="imed__preset" onClick={() => setF(p.f)}>{p.label}</button>
-                ))}
-              </div>
-            </section>
+                  <section className="imed__group">
+                    <h4>פינות</h4>
+                    <div className="imed__seg">
+                      <button type="button" className={radius === 0 ? 'is-active' : ''} onClick={() => setRadius(0)}>רגילות</button>
+                      <button type="button" className={radius > 0 && radius < 0.5 ? 'is-active' : ''} onClick={() => setRadius((r) => (r > 0 && r < 0.5 ? r : 0.12))}>מעוגלות</button>
+                      <button type="button" className={radius >= 0.5 ? 'is-active' : ''} onClick={() => setRadius(0.5)}>עיגול מלא</button>
+                    </div>
+                    {radius > 0 && radius < 0.5 && (
+                      <Slider label="עוצמת עיגול" min={0.02} max={0.4} step={0.01} value={radius} display={`${Math.round(radius * 100)}%`} onChange={(e) => setRadius(Number(e.target.value))} />
+                    )}
+                    <p className="imed__note imed__note--soft">שימו לב: האתר מעגל פינות אוטומטית בכרטיסים ובגלריות — עיגול כאן נצרב בקובץ עצמו.</p>
+                  </section>
+                </>
+              )}
 
-            {/* כיוונונים */}
-            <section className="imed__group">
-              <h4>כיוונון צבע</h4>
-              <label className="imed__slider">בהירות <input type="range" min="50" max="160" value={f.brightness} onChange={setFf('brightness')} /><b>{f.brightness}</b></label>
-              <label className="imed__slider">ניגודיות <input type="range" min="50" max="180" value={f.contrast} onChange={setFf('contrast')} /><b>{f.contrast}</b></label>
-              <label className="imed__slider">רוויה <input type="range" min="0" max="220" value={f.saturate} onChange={setFf('saturate')} /><b>{f.saturate}</b></label>
-              <label className="imed__slider">גוון <input type="range" min="-180" max="180" value={f.hue} onChange={setFf('hue')} /><b>{f.hue}°</b></label>
-            </section>
+              {tab === 'look' && (
+                <section className="imed__group">
+                  <h4>פילטרים מוכנים</h4>
+                  <div className="imed__presets">
+                    {PRESETS.map((p) => (
+                      <button key={p.id} type="button"
+                        className={`imed__preset ${activePreset === p.id ? 'is-active' : ''}`}
+                        onClick={() => setF(p.f)}>
+                        {thumb
+                          ? <img src={thumb} alt="" style={{ filter: cssFilter(p.f) }} draggable="false" />
+                          : <span className="imed__preset-ph" />}
+                        <span>{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {activePreset === 'custom' && <p className="imed__note imed__note--soft">כיוונון מותאם אישית (טאב "צבע")</p>}
+                </section>
+              )}
 
-            {/* צביעה */}
-            <section className="imed__group">
-              <h4>צביעה (Tint)</h4>
-              <div className="imed__tintrow">
-                <input type="color" value={tint.color} onChange={(e) => setTint((p) => ({ ...p, color: e.target.value }))} aria-label="בחירת צבע" />
-                <select value={tint.blend} onChange={(e) => setTint((p) => ({ ...p, blend: e.target.value }))}>
-                  {BLENDS.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
-                </select>
-              </div>
-              <label className="imed__slider">עוצמה <input type="range" min="0" max="1" step="0.02" value={tint.alpha} onChange={(e) => setTint((p) => ({ ...p, alpha: Number(e.target.value) }))} /><b>{Math.round(tint.alpha * 100)}%</b></label>
-            </section>
+              {tab === 'color' && (
+                <>
+                  <section className="imed__group">
+                    <h4>כיוונון צבע</h4>
+                    <Slider label="בהירות" min={50} max={160} value={f.brightness} onChange={setFf('brightness')} />
+                    <Slider label="ניגודיות" min={50} max={180} value={f.contrast} onChange={setFf('contrast')} />
+                    <Slider label="רוויה" min={0} max={220} value={f.saturate} onChange={setFf('saturate')} />
+                    <Slider label="גוון" min={-180} max={180} value={f.hue} display={`${f.hue}°`} onChange={setFf('hue')} />
+                    <button type="button" className="imed__minireset" onClick={() => setF(NEUTRAL_F)}>איפוס כיוונון</button>
+                  </section>
 
-            {/* רקע */}
-            <section className="imed__group">
-              <h4>רקע</h4>
-              <button type="button" className="imed__btn imed__btn--ai" disabled={aiBusy} onClick={removeBgAi}>
-                {aiBusy ? '✨ מסיר רקע… (טעינה ראשונה עד דקה)' : '✨ הסר רקע אוטומטית (AI)'}
-              </button>
-              <label className="imed__check"><input type="checkbox" checked={bg.remove} onChange={(e) => setBg((p) => ({ ...p, remove: e.target.checked }))} /> הסר רקע לבן (מהיר)</label>
-              {bg.remove && <label className="imed__slider">סף <input type="range" min="180" max="255" value={bg.threshold} onChange={(e) => setBg((p) => ({ ...p, threshold: Number(e.target.value) }))} /><b>{bg.threshold}</b></label>}
-            </section>
+                  <section className="imed__group">
+                    <h4>צביעה (Tint)</h4>
+                    <div className="imed__tintrow">
+                      <input type="color" value={tint.color} onChange={(e) => setTint((p) => ({ ...p, color: e.target.value }))} aria-label="בחירת צבע" />
+                      <select value={tint.blend} onChange={(e) => setTint((p) => ({ ...p, blend: e.target.value }))}>
+                        {BLENDS.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
+                      </select>
+                    </div>
+                    <Slider label="עוצמה" min={0} max={1} step={0.02} value={tint.alpha} display={`${Math.round(tint.alpha * 100)}%`} onChange={(e) => setTint((p) => ({ ...p, alpha: Number(e.target.value) }))} />
+                  </section>
+                </>
+              )}
 
-            {/* כיוון / צורת החיתוך */}
-            <section className="imed__group">
-              <h4>כיוון התמונה (לאורך / לרוחב)</h4>
-              <div className="imed__btnrow imed__btnrow--seg">
-                {ASPECTS.map((a) => (
-                  <button key={a.id} type="button" className={aspectId === a.id ? 'is-active' : ''} onClick={() => setAspectId(a.id)}>{a.label}</button>
-                ))}
-              </div>
-            </section>
-
-            {/* איכות — אוטומטית, לפי רזולוציית המקור (אין טעם ב"מכפיל" שמגדיל מעבר למקור) */}
-            <section className="imed__group">
-              <h4>איכות</h4>
-              <p className="imed__note">
-                נשמר אוטומטית באיכות הגבוהה ביותר שהתמונה מאפשרת — {Math.round(FRAME_W * exportK)}×{Math.round(FRAME_H * exportK)}px · WebP.
-              </p>
-              <p className="imed__note imed__note--soft">
-                האיכות מוגבלת לרזולוציית התמונה שהעלית. לתוצאה חדה יותר — העלו תמונת מקור גדולה/חדה יותר.
-              </p>
-            </section>
+              {tab === 'bg' && (
+                <section className="imed__group">
+                  <h4>הסרת רקע</h4>
+                  <button type="button" className="imed__btn imed__btn--ai" disabled={aiBusy || !ready} onClick={removeBgAi}>
+                    {aiBusy ? <><span className="imed__spin" /> מסיר רקע… (טעינה ראשונה עד דקה)</> : '✨ הסרת רקע אוטומטית (AI)'}
+                  </button>
+                  <label className="imed__check">
+                    <input type="checkbox" checked={bg.remove} onChange={(e) => setBg((p) => ({ ...p, remove: e.target.checked }))} />
+                    הסרת רקע לבן (מהיר, ללוגואים)
+                  </label>
+                  {bg.remove && <Slider label="רגישות" min={180} max={255} value={bg.threshold} onChange={(e) => setBg((p) => ({ ...p, threshold: Number(e.target.value) }))} />}
+                  <p className="imed__note imed__note--soft">הרקע שמוסר נשמר כשקיפות. באתר יוצג על רקע העמוד.</p>
+                </section>
+              )}
+            </div>
           </div>
         </div>
 
         <footer className="imed__foot">
-          <button type="button" className="imed__btn" onClick={reset}>איפוס</button>
+          <span className="imed__quality">
+            נשמר ב-{Math.round(FRAME_W * exportK)}×{Math.round(FRAME_H * exportK)}px · WebP · האיכות מוגבלת לרזולוציית המקור
+          </span>
           <div className="imed__foot-end">
             <button type="button" className="imed__btn" onClick={onClose}>ביטול</button>
-            <button type="button" className="imed__btn imed__btn--primary" disabled={busy || !ready} onClick={apply}>{busy ? 'שומר…' : 'החל ושמור'}</button>
+            <button type="button" className="imed__btn imed__btn--primary" disabled={busy || !ready} onClick={apply}>
+              {busy ? <><span className="imed__spin" /> שומר…</> : 'החל ושמור'}
+            </button>
           </div>
         </footer>
       </div>

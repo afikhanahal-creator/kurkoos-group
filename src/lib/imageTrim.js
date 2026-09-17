@@ -32,11 +32,36 @@ export async function trimUniformBorders(file) {
     const data = ctx.getImageData(0, 0, w, h).data
     const px = (x, y) => { const i = (y * w + x) * 4; return [data[i], data[i + 1], data[i + 2], data[i + 3]] }
 
-    // תמונה עם שקיפות — לא נוגעים (הרקע אינו "שוליים")
-    for (let y = 0; y < h; y += 7) {
+    // שקיפות: פסים שקופים אחידים בשוליים (פלט ישן של עורך התמונות, PNG
+    // מרופד) נחתכים לפי תיבת התוכן. שקיפות אחרת (צורת לוגו וכד') — לא נוגעים.
+    let hasAlpha = false
+    for (let y = 0; y < h && !hasAlpha; y += 7) {
       for (let x = 0; x < w; x += 7) {
-        if (px(x, y)[3] < 250) { bmp.close?.(); return file }
+        if (px(x, y)[3] < 250) { hasAlpha = true; break }
       }
+    }
+    if (hasAlpha) {
+      const rowEmpty = (y) => { for (let x = 0; x < w; x += 2) if (px(x, y)[3] > 8) return false; return true }
+      const colEmpty = (x) => { for (let y = 0; y < h; y += 2) if (px(x, y)[3] > 8) return false; return true }
+      let top = 0; while (top < h / 2 && rowEmpty(top)) top++
+      let bottom = 0; while (bottom < h / 2 && rowEmpty(h - 1 - bottom)) bottom++
+      let left = 0; while (left < w / 2 && colEmpty(left)) left++
+      let right = 0; while (right < w / 2 && colEmpty(w - 1 - right)) right++
+      const minSideA = Math.max(2, Math.round(Math.min(w, h) * 0.015))
+      if (top < minSideA && bottom < minSideA && left < minSideA && right < minSideA) { bmp.close?.(); return file }
+      const invA = 1 / scale
+      const sxA = Math.round(left * invA), syA = Math.round(top * invA)
+      const swA = W - sxA - Math.round(right * invA), shA = H - syA - Math.round(bottom * invA)
+      if (swA < W * 0.3 || shA < H * 0.3 || swA < 100 || shA < 100) { bmp.close?.(); return file }
+      const outA = document.createElement('canvas')
+      outA.width = swA; outA.height = shA
+      outA.getContext('2d').drawImage(bmp, sxA, syA, swA, shA, 0, 0, swA, shA)
+      bmp.close?.()
+      /* שומרים על פורמט תומך-שקיפות (png/webp נשארים כפי שהם) */
+      const typeA = file.type === 'image/webp' ? 'image/webp' : 'image/png'
+      const blobA = await new Promise((resolve) => outA.toBlob(resolve, typeA, 0.95))
+      if (!blobA) return file
+      return new File([blobA], file.name, { type: typeA })
     }
 
     // צבע הרקע מארבע הפינות — חייב להיות אחיד ובהיר מאוד (מסגרת לבנה)

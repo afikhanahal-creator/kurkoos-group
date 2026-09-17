@@ -4,3 +4,24 @@ Disallow: /style-guide
 Disallow: /admin
 
 Sitemap: https://www.kurkoos-group.co.il/sitemap.xml
+
+# סורקי AI — מוזמנים במפורש (נראות במנועי תשובות מבוססי AI)
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin
+
+User-agent: CCBot
+Allow: /
+Disallow: /admin

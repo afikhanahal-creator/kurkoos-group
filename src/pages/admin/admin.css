@@ -2423,3 +2423,31 @@
 .adm[data-theme="dark"] .ovw__kpi--warn { background: rgba(133, 77, 14, 0.14); }
 .adm[data-theme="dark"] .ovw__kpi--warn b { color: #fcd34d; }
 .adm[data-theme="dark"] .ovw__more:hover { background: rgba(14, 165, 233, 0.12); }
+
+/* ── סקירה כללית: פס מבטא צבעוני לכל מדד + כרטיסי תובנות ── */
+.ovw__kpi { border-top: 3px solid transparent; }
+.ovw__kpi--leads { border-top-color: #3a7bd5; }
+.ovw__kpi--attn { border-top-color: #e0a106; }
+.ovw__kpi--users { border-top-color: #16688c; }
+.ovw__kpi--conv { border-top-color: #2e9e6b; }
+.ovw__kpi--subs { border-top-color: #8c6d1f; }
+
+.ovw__insights { display: flex; flex-direction: column; gap: 0.45rem; }
+.ovw__insight {
+  display: block; width: 100%; text-align: start; cursor: pointer;
+  font: inherit; font-size: 0.95rem; line-height: 1.6; color: var(--adm-ink);
+  padding: 0.6rem 0.95rem; border-radius: 10px; border: 1px solid transparent;
+  border-inline-start: 3px solid #16688c; background: color-mix(in srgb, #16688c 5%, var(--adm-surface));
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+.ovw__insight:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(10, 37, 64, 0.1); }
+.ovw__insight.is-good { border-inline-start-color: #15803d; background: color-mix(in srgb, #15803d 6%, var(--adm-surface)); }
+.ovw__insight.is-bad { border-inline-start-color: #b42318; background: color-mix(in srgb, #b42318 6%, var(--adm-surface)); }
+.ovw__insight.is-warn { border-inline-start-color: #a16207; background: color-mix(in srgb, #a16207 7%, var(--adm-surface)); }
+
+/* רמז שהמדדים מוסברים — קו מנוקד מתחת לתוויות (בסגנון טאב התנועה) */
+.ovw__kpi[data-tip] i,
+.ovw__card-head h4[data-tip] {
+  text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+}

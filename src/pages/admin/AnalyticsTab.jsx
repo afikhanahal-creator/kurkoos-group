@@ -395,6 +395,22 @@ export default function AnalyticsTab() {
     (k, r) => (k === 'cr' ? (r.m[1] ? r.m[3] / r.m[1] : 0) : r.m[k]),
   )
 
+  /* הסבר קצר לכל מדד — מוצג בריחוף, כדי שכל מספר יהיה ברור גם בלי רקע באנליטיקס */
+  const TIPS = {
+    'משתמשים': 'כמה אנשים שונים ביקרו באתר בתקופה. כל אדם נספר פעם אחת גם אם חזר כמה פעמים.',
+    'ביקורים': 'כמה כניסות היו לאתר בסך הכול. אדם שנכנס פעמיים נספר כשני ביקורים.',
+    'צפיות עמוד': 'כמה עמודים נצפו בסך הכול. מספר גבוה ביחס לביקורים אומר שגולשים ממשיכים לדפדף באתר.',
+    'שיעור מעורבות': 'אחוז הביקורים שבהם הגולש באמת התעניין: שהה באתר, צפה בכמה עמודים או ביצע פעולה. גבוה יותר = תוכן שעובד.',
+    'המרות': 'הפעולות החשובות לעסק שנמדדות: שליחת טופס ליד, לחיצה על וואטסאפ או טלפון. זה המספר שמייצר לקוחות.',
+    'משתמשים חדשים': 'כמה מהמבקרים הגיעו לאתר בפעם הראשונה. מדד לחשיפה לקהלים חדשים.',
+    'ביקורים מעורבים': 'ביקורים שבהם הגולש באמת התעניין ולא יצא מיד.',
+    'צפיות לביקור': 'כמה עמודים רואה גולש ממוצע בכל ביקור. גבוה יותר = האתר מוביל את הגולש הלאה.',
+    'משך ביקור ממוצע': 'כמה זמן שוהה גולש ממוצע באתר בביקור אחד.',
+    'שיעור נטישה': 'אחוז הביקורים שהסתיימו בלי שום התעניינות (יציאה מיידית). נמוך = טוב.',
+    'אירועים': 'סך כל הפעולות שנמדדו: לחיצות, גלילות, צפיות ופעולות המרה.',
+    'שיעור המרה': 'אחוז הביקורים שהסתיימו בפנייה (טופס, וואטסאפ, טלפון). המספר החשוב ביותר לשיפור.',
+  }
+
   const primary = [
     { label: 'משתמשים', v: tot[0], p: prevTot[0], sp: series.map((r) => r.m[0]) },
     { label: 'ביקורים', v: tot[2], p: prevTot[2], sp: series.map((r) => r.m[1]) },
@@ -448,7 +464,7 @@ export default function AnalyticsTab() {
       {/* ===== שורת מדדים ראשית ===== */}
       <section className="an-metrics">
         {primary.map((m) => (
-          <div key={m.label} className="an-metric">
+          <div key={m.label} className="an-metric" data-tip={TIPS[m.label] || undefined} tabIndex={0}>
             <span className="an-metric__label">{m.label}</span>
             <span className="an-metric__value">{(m.fmt || fmtNum)(m.v)}</span>
             <span className="an-metric__foot">
@@ -459,7 +475,7 @@ export default function AnalyticsTab() {
         ))}
       </section>
       <section className="an-secondary">
-        {secondary.map(([l, v, d]) => <span key={l} className="an-secondary__item"><i>{l}</i><b>{v}</b>{d}</span>)}
+        {secondary.map(([l, v, d]) => <span key={l} className="an-secondary__item" data-tip={TIPS[l] || undefined} tabIndex={0}><i>{l}</i><b>{v}</b>{d}</span>)}
       </section>
 
       {/* ===== הגרף המרכזי ===== */}
@@ -478,7 +494,7 @@ export default function AnalyticsTab() {
       {/* ===== Acquisition ===== */}
       {channels.length > 0 && <section className="an-section">
         <div className="an-sect-head">
-          <h4 className="an-h5">מקורות תנועה</h4>
+          <h4 className="an-h5" data-tip="מאיפה הגולשים מגיעים: חיפוש בגוגל (Organic), כניסה ישירה, רשתות חברתיות, קישורים מאתרים אחרים. כאן רואים מה מביא תנועה ומה שווה לחזק." tabIndex={0}>מקורות תנועה</h4>
           <button type="button" className="an-csv" onClick={() => exportCsv('channels', ['ערוץ', 'משתמשים', 'ביקורים', 'נתח', 'מעורבות', 'המרות', 'שיעור המרה'], channels.map((c) => [CHANNEL_HE[c.d[0]] || c.d[0], c.m[0], c.m[2], fmtPct(chTotal ? c.m[2] / chTotal : 0), fmtPct(c.m[3]), c.m[4], fmtPct(c.m[2] ? c.m[4] / c.m[2] : 0, 2)]))}>CSV</button>
         </div>
         <table className="an-table">
@@ -510,7 +526,7 @@ export default function AnalyticsTab() {
       {/* ===== מקורות מפורטים ===== */}
       {sources.length > 0 && <section className="an-section">
         <div className="an-sect-head">
-          <h4 className="an-h5">מקור / מדיום</h4>
+          <h4 className="an-h5" data-tip="פירוט מדויק יותר של מקורות התנועה, למשל google / organic (חיפוש בגוגל) או facebook / social." tabIndex={0}>מקור / מדיום</h4>
           <div className="an-sect-tools">
             <input className="an-search" placeholder="חיפוש מקור…" value={srcQ} onChange={(e) => setSrcQ(e.target.value)} />
             <button type="button" className="an-csv" onClick={() => exportCsv('sources', ['מקור', 'מדיום', 'משתמשים', 'ביקורים', 'מעורבות', 'המרות'], sources.map((s) => [s.d[0], s.d[1], s.m[0], s.m[1], fmtPct(s.m[2]), s.m[3]]))}>CSV</button>
@@ -544,7 +560,7 @@ export default function AnalyticsTab() {
       {/* ===== עמודים + Drill-down ===== */}
       {pages.length > 0 && <section className="an-section">
         <div className="an-sect-head">
-          <h4 className="an-h5">עמודים</h4>
+          <h4 className="an-h5" data-tip="העמודים הנצפים ביותר באתר. לחיצה על עמוד פותחת פירוט. עמוד עם הרבה צפיות ומעט המרות = הזדמנות לשיפור." tabIndex={0}>עמודים</h4>
           <div className="an-sect-tools">
             <input className="an-search" placeholder="חיפוש עמוד…" value={pageQ} onChange={(e) => setPageQ(e.target.value)} />
             <button type="button" className="an-csv" onClick={() => exportCsv('pages', ['עמוד', 'נתיב', 'צפיות', 'משתמשים', 'זמן ממוצע', 'המרות'], pages.map((p) => [p.d[1], p.d[0], p.m[0], p.m[1], fmtDur(p.m[1] ? p.m[2] / p.m[1] : 0), p.m[3]]))}>CSV</button>
@@ -570,7 +586,7 @@ export default function AnalyticsTab() {
       {/* ===== קהל: מכשירים + גיאוגרפיה ===== */}
       {(devices.length > 0 || countries.length > 0) && <div className="an-cols">
         <section className="an-section">
-          <h4 className="an-h5">מכשירים</h4>
+          <h4 className="an-h5" data-tip="מאיזה מכשיר גולשים: נייד, מחשב או טאבלט. רוב התנועה בנדל״ן מגיעה מהנייד." tabIndex={0}>מכשירים</h4>
           <table className="an-table">
             <thead><tr><th>מכשיר</th><th className="is-num">נתח</th><th className="is-num">משתמשים</th><th className="is-num">שיעור המרה</th></tr></thead>
             <tbody>
@@ -586,7 +602,7 @@ export default function AnalyticsTab() {
           </table>
         </section>
         <section className="an-section">
-          <h4 className="an-h5">מדינות וערים</h4>
+          <h4 className="an-h5" data-tip="מאיפה גיאוגרפית מגיעים הגולשים. ריכוז בערי השרון = קהל היעד הנכון." tabIndex={0}>מדינות וערים</h4>
           <div className="an-geo">
             <div>
               {countries.slice(0, 7).map((c) => <div key={c.d[0]} className="an-row"><span>{c.d[0]}</span><span className="an-dim">{c.m[2] ? `${c.m[2]} המרות · ` : ''}</span><b>{fmtNum(c.m[0])}</b></div>)}
@@ -601,7 +617,7 @@ export default function AnalyticsTab() {
       {/* ===== אירועים ===== */}
       {events.length > 0 && <section className="an-section">
         <div className="an-sect-head">
-          <h4 className="an-h5">אירועים</h4>
+          <h4 className="an-h5" data-tip="כל הפעולות שנמדדו באתר, כולל פעולות ההמרה: generate_lead (טופס ליד), whatsapp_click, phone_click." tabIndex={0}>אירועים</h4>
           <button type="button" className="an-csv" onClick={() => exportCsv('events', ['אירוע', 'כמות', 'משתמשים', 'לכל משתמש'], events.map((e) => [e.d[0], e.m[0], e.m[1], e.m[1] ? (e.m[0] / e.m[1]).toFixed(1) : '']))}>CSV</button>
         </div>
         <table className="an-table">

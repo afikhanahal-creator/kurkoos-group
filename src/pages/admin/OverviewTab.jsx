@@ -117,11 +117,13 @@ export default function OverviewTab({ onNavigate }) {
     if (leadStats && leadStats.prev7 > 0) {
       const up = leadStats.in7 >= leadStats.prev7
       out.push({ tone: up ? 'good' : 'bad', tab: 'leads', text: `${leadStats.in7} לידים נכנסו השבוע מול ${leadStats.prev7} בשבוע שעבר${up ? ', מגמה חיובית.' : ', ירידה ששווה תשומת לב.'}` })
+    } else if (leadStats && leadStats.in7 > 0) {
+      out.push({ tone: 'good', tab: 'leads', text: `${leadStats.in7 === 1 ? 'ליד אחד נכנס' : leadStats.in7 + ' לידים נכנסו'} מהאתר בשבוע האחרון.` })
     }
     if (ga && ga !== 'none') {
       if (ga.sessions > 0 && ga.conversions > 0) {
         out.push({ tone: 'good', tab: 'analytics', text: `שיעור ההמרה השבועי: ${((ga.conversions / ga.sessions) * 100).toFixed(1)}% מהביקורים הסתיימו בפנייה.` })
-      } else if (ga.sessions >= 20 && !ga.conversions) {
+      } else if (ga.sessions >= 5 && !ga.conversions) {
         out.push({ tone: 'warn', tab: 'analytics', text: 'יש תנועה אבל עדיין אין המרות השבוע, שווה לבדוק שהטפסים בולטים מספיק.' })
       }
       if (ga.topChannel) out.push({ tone: 'info', tab: 'analytics', text: `מקור התנועה המוביל השבוע: ${ga.topChannel.name} (${ga.topChannel.share}% מהביקורים).` })

@@ -126,10 +126,12 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
     ctx.translate(w / 2 + t.x * k, h / 2 + t.y * k)
     ctx.rotate((t.rot * Math.PI) / 180)
     ctx.scale(t.scale * (t.flipH ? -1 : 1), t.scale * (t.flipV ? -1 : 1))
-    // בסיס: התאמת התמונה ל"contain" בתוך המסגרת
+    // בסיס: מילוי מלא של המסגרת ("cover") — המסגרת חותכת את התמונה, לא מרפדת
+    // אותה בפסים שקופים. כך הקובץ שנשמר תמיד ממלא את הכרטיס באתר כמו כל
+    // תמונה אחרת, בלי שוליים ריקים צרובים. מיקום מדויק — בגרירה ובזום.
     const ar = img.width / img.height
     let dw = FRAME_W * k, dh = dw / ar
-    if (dh > FRAME_H * k) { dh = FRAME_H * k; dw = dh * ar }
+    if (dh < FRAME_H * k) { dh = FRAME_H * k; dw = dh * ar }
     ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh)
     ctx.restore()
     // הסרת רקע לבן
@@ -195,10 +197,34 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
   const targetLong = srcLong ? Math.min(4096, Math.max(1280, srcLong)) : 1920
   const exportK = targetLong / Math.max(FRAME_W, FRAME_H)
 
+  /* רשת ביטחון בייצוא: אם נשארו פסים שקופים מסביב לתוכן (למשל אחרי הקטנת
+     זום מתחת למילוי המסגרת) — חותכים אותם, כדי שהקובץ שנשמר לעולם לא יכיל
+     שוליים ריקים שיישברו את האחידות בגלריות ובכרטיסים. פינות מעוגלות לא
+     נפגעות: אמצעי הצלעות נשארים אטומים ולכן תיבת התוכן מכסה את כל המסגרת. */
+  const trimTransparentEdges = (c) => {
+    try {
+      const ctx = c.getContext('2d', { willReadFrequently: true })
+      const { width: w, height: h } = c
+      const d = ctx.getImageData(0, 0, w, h).data
+      const rowEmpty = (y) => { for (let x = 0; x < w; x += 2) if (d[(y * w + x) * 4 + 3] > 8) return false; return true }
+      const colEmpty = (x) => { for (let y = 0; y < h; y += 2) if (d[(y * w + x) * 4 + 3] > 8) return false; return true }
+      let top = 0; while (top < h - 1 && rowEmpty(top)) top++
+      let bottom = h - 1; while (bottom > top && rowEmpty(bottom)) bottom--
+      let left = 0; while (left < w - 1 && colEmpty(left)) left++
+      let right = w - 1; while (right > left && colEmpty(right)) right--
+      const sw = right - left + 1, sh = bottom - top + 1
+      if (sw >= w - 2 && sh >= h - 2) return c            // אין שוליים — כמו שהוא
+      if (sw < 50 || sh < 50) return c                    // תוכן זעיר מדי — לא נוגעים
+      const out = document.createElement('canvas')
+      out.width = sw; out.height = sh
+      out.getContext('2d').drawImage(c, left, top, sw, sh, 0, 0, sw, sh)
+      return out
+    } catch { return c }
+  }
+
   const apply = () => {
     try {
-      const c = document.createElement('canvas')
-      draw(c, exportK)
+      const c = trimTransparentEdges((() => { const cv = document.createElement('canvas'); draw(cv, exportK); return cv })())
       // ייצוא ל-WebP (קל בהרבה מ-PNG) → העלאה וטעינה מהירות, באיכות גבוהה
       c.toBlob((blob) => { if (blob) onApply(blob); else setErr('הייצוא נכשל') }, 'image/webp', 0.95)
     } catch { setErr('הייצוא נכשל (ייתכן שמקור התמונה חוסם עריכה)') }

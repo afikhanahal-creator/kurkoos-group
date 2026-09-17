@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase, hasSupabase } from '../../lib/supabase.js'
 import { useAuth } from '../../lib/useAuth.js'
+import OverviewTab from './OverviewTab.jsx'
 import ProjectsTab from './ProjectsTab.jsx'
 import CountersTab from './CountersTab.jsx'
 import LogosTab from './LogosTab.jsx'
@@ -79,6 +80,7 @@ function Login() {
 }
 
 const TABS = [
+  { id: 'overview', label: 'סקירה כללית', sub: 'לידים, תנועה והמרות במבט אחד', icon: 'home', group: 'ראשי' },
   { id: 'projects', label: 'פרויקטים ונכסים', sub: 'נהלו פרויקטים, נכסים ועמודי תצוגה', icon: 'projects', group: 'תוכן' },
   { id: 'home_featured', label: 'פרויקטים נבחרים (דף הבית)', sub: 'בחירת עד 4 הפרויקטים שיופיעו בדף הבית', icon: 'home', group: 'תוכן' },
   { id: 'headings', label: 'כותרות וטקסטים', sub: 'עריכת כל הכותרות והטקסטים באתר — במקום אחד', icon: 'headings', group: 'תוכן' },
@@ -94,13 +96,13 @@ const TABS = [
   { id: 'fonts', label: 'פונטים וטיפוגרפיה', sub: 'פונטים, גדלים ומשקלים (H1–H5) של כל האתר', icon: 'fonts', group: 'עיצוב' },
   { id: 'settings', label: 'הגדרות', sub: 'התראות מייל, יומן פגישות והגדרות מערכת', icon: 'settings', group: 'מערכת' },
 ]
-const NAV_GROUPS = ['תוכן', 'לקוחות', 'עיצוב', 'מערכת']
+const NAV_GROUPS = ['ראשי', 'תוכן', 'לקוחות', 'עיצוב', 'מערכת']
 
 const THEME_KEY = 'kurkoos-adm-theme'
 
 export default function Admin() {
   const session = useAuth()
-  const [tab, setTab] = useState('projects')
+  const [tab, setTab] = useState('overview')
   const [navOpen, setNavOpen] = useState(false)   // מגירת ניווט במובייל
   const [theme, setTheme] = useState(() => {
     if (typeof localStorage !== 'undefined') return localStorage.getItem(THEME_KEY) || 'light'
@@ -198,6 +200,7 @@ export default function Admin() {
           </div>
         </header>
         <main className="adm__content" key={tab}>
+          {tab === 'overview' && <OverviewTab onNavigate={setTab} />}
           {tab === 'projects' && <ProjectsTab />}
           {tab === 'home_featured' && <HomeFeaturedTab />}
           {tab === 'headings' && <HeadingsTab />}

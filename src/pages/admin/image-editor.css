@@ -1,123 +1,243 @@
-/* ===== ImageEditor (Canva-style) ===== */
-.imed { position: fixed; inset: 0; z-index: 1000; background: rgba(7,41,58,0.6); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 1rem; animation: imed-fade 0.16s ease both; }
+/* ============================================================
+   עורך התמונות — עיצוב מודרני: במה כהה עם שתי-וערב לשקיפות,
+   פאנל בהיר עם טאבים, סליידרים ופקדים בשפת האדמין.
+   ============================================================ */
+
+.imed {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(7, 20, 30, 0.72); backdrop-filter: blur(8px);
+  display: grid; place-items: center; padding: 1rem;
+  animation: imed-in 0.18s ease-out;
+}
+@keyframes imed-in { from { opacity: 0 } to { opacity: 1 } }
+
 .imed__box {
-  width: 100%; max-width: 1000px; max-height: 94vh; display: flex; flex-direction: column;
-  background: var(--adm-surface, #fff); border-radius: 16px; box-shadow: var(--adm-shadow-lg, 0 30px 80px -20px rgba(0,0,0,0.5)); overflow: hidden;
-  /* fade בלבד — בלי transform — כדי שהחלון לא "יקפוץ"/ירצד בפתיחה */
-  animation: imed-fade 0.18s ease both;
+  width: min(1120px, 100%); height: min(780px, calc(100vh - 2rem));
+  background: #f7f8fa; border-radius: 18px; overflow: hidden;
+  display: grid; grid-template-rows: auto 1fr auto;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.45);
+  animation: imed-pop 0.22s cubic-bezier(0.2, 0, 0, 1);
 }
-@keyframes imed-fade { from { opacity: 0; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .imed, .imed__box { animation: none; } }
-.imed__head { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--adm-border, #e2e8ee); }
-.imed__head h3 { font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--adm-ink, #07293a); }
-.imed__x { width: 40px; height: 40px; border: 0; background: var(--adm-bg, #f1f5f8); border-radius: 10px; cursor: pointer; font-size: 1.15rem; line-height: 1; color: var(--adm-muted, #647c8c); transition: background 0.15s, color 0.15s, transform 0.12s; }
-.imed__x:hover { background: #ffe7e7; color: #d64545; }
-.imed__x:active { transform: scale(0.92); }
+@keyframes imed-pop { from { transform: translateY(14px) scale(0.985); opacity: 0 } to { transform: none; opacity: 1 } }
 
-.imed__body { display: grid; grid-template-columns: 1fr 320px; gap: 0; flex: 1; min-height: 0; }
-.imed__stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; padding: 1.2rem; background: #eef2f4; min-height: 0; }
-/* רקע משובץ כדי לראות שקיפות */
-.imed__canvas {
-  /* בלי border-radius קבוע — העיגול נקבע ע"י בקרת "פינות" ונצרב לתמונה,
-     כך שהתצוגה משקפת בדיוק את התוצאה (רגילות = פינות חדות). */
-  max-width: 100%; touch-action: none; cursor: move;
-  background-image: linear-gradient(45deg, #d7dee3 25%, transparent 25%), linear-gradient(-45deg, #d7dee3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d7dee3 75%), linear-gradient(-45deg, transparent 75%, #d7dee3 75%);
-  background-size: 18px 18px; background-position: 0 0, 0 9px, 9px -9px, -9px 0;
-  box-shadow: 0 8px 28px -10px rgba(7,41,58,0.35);
+/* ── כותרת ── */
+.imed__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+  padding: 0.8rem 1.15rem; background: #fff; border-bottom: 1px solid #e3e7ee;
 }
-.imed__hint { font-size: 0.78rem; color: var(--adm-muted, #647c8c); }
-.imed__err { color: #d64545; font-weight: 600; padding: 2rem; text-align: center; }
-
-.imed__panel { overflow-y: auto; padding: 1rem 1.1rem; border-inline-start: 1px solid var(--adm-border, #e2e8ee); display: flex; flex-direction: column; gap: 1rem; }
-.imed__group h4 { font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--adm-ink, #07293a); margin: 0 0 0.5rem; }
-.imed__btnrow { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.imed__btnrow button, .imed__preset {
-  flex: 1 1 auto; padding: 0.42rem 0.5rem; font-size: 0.8rem; font-weight: 600; font-family: var(--font-heading);
-  border: 1px solid var(--adm-border-strong, #cdd8e0); background: #fff; color: var(--adm-ink, #07293a); border-radius: 8px; cursor: pointer; white-space: nowrap;
+.imed__head h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #0a2540; }
+.imed__head-actions { display: flex; align-items: center; gap: 0.5rem; }
+.imed__compare, .imed__reset {
+  height: 34px; padding: 0 0.9rem; border-radius: 9px; cursor: pointer;
+  border: 1px solid #d6dde6; background: #fff; color: #334155;
+  font: inherit; font-size: 0.82rem; font-weight: 700; white-space: nowrap;
+  transition: all 0.15s; user-select: none; touch-action: none;
 }
-.imed__btnrow button:hover, .imed__preset:hover { border-color: var(--color-secondary, #105572); color: var(--color-secondary, #105572); }
-.imed__btnrow--seg button.is-active { background: var(--color-primary-900, #07293a); color: #fff; border-color: var(--color-primary-900, #07293a); }
-.imed__presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
-.imed__slider { display: grid; grid-template-columns: 4.5rem 1fr 2.6rem; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--adm-muted, #647c8c); margin-top: 0.4rem; }
-.imed__slider input[type=range] { width: 100%; accent-color: var(--color-secondary, #105572); }
-.imed__slider b { font-weight: 700; color: var(--adm-ink, #07293a); text-align: end; }
-.imed__tintrow { display: flex; gap: 0.5rem; align-items: center; }
-.imed__tintrow input[type=color] { width: 44px; height: 34px; border: 1px solid var(--adm-border-strong, #cdd8e0); border-radius: 8px; background: #fff; cursor: pointer; padding: 2px; }
-.imed__tintrow select { flex: 1; padding: 0.45rem 0.5rem; border: 1px solid var(--adm-border-strong, #cdd8e0); border-radius: 8px; font: inherit; background: #fff; }
-.imed__check { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--adm-ink, #07293a); cursor: pointer; }
-.imed__check input { width: 17px; height: 17px; accent-color: var(--color-secondary, #105572); }
-.imed__note { font-size: 0.75rem; color: var(--adm-muted, #647c8c); margin: 0.4rem 0 0; }
-.imed__note--soft { opacity: 0.8; font-size: 0.72rem; }
-
-.imed__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.8rem 1.2rem; border-top: 1px solid var(--adm-border, #e2e8ee); background: var(--adm-bg, #f6f9fb); }
-.imed__foot-end { display: flex; gap: 0.6rem; }
-.imed__btn { padding: 0.55rem 1.1rem; border-radius: 9px; border: 1.5px solid var(--adm-border-strong, #cdd8e0); background: #fff; color: var(--adm-ink, #07293a); font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; cursor: pointer; }
-.imed__btn:hover { border-color: var(--color-secondary, #105572); color: var(--color-secondary, #105572); }
-.imed__btn--primary { background: var(--color-secondary, #105572); border-color: var(--color-secondary, #105572); color: #fff; }
-.imed__btn--primary:hover { background: #0d4760; color: #fff; }
-.imed__btn--primary:disabled { opacity: 0.6; cursor: default; }
-
-@media (max-width: 760px) {
-  .imed__body { grid-template-columns: 1fr; }
-  .imed__panel { border-inline-start: 0; border-top: 1px solid var(--adm-border, #e2e8ee); max-height: 38vh; }
-  .imed__canvas { width: 100% !important; height: auto !important; aspect-ratio: 560 / 380; }
+.imed__compare:hover, .imed__reset:hover { border-color: #0ea5e9; color: #0369a1; background: #f0f9ff; }
+.imed__compare:active { background: #0a2540; color: #fff; border-color: #0a2540; }
+.imed__x {
+  width: 34px; height: 34px; border: 0; border-radius: 9px; cursor: pointer;
+  background: #eef1f6; color: #64748b; font-size: 0.95rem;
+  display: grid; place-items: center; transition: all 0.15s;
 }
+.imed__x:hover { background: #fee2e2; color: #dc2626; }
 
-/* כפתור הסרת רקע AI */
-.imed__btn--ai { width: 100%; margin-bottom: 0.5rem; border-color: var(--color-secondary, #105572); color: var(--color-secondary, #105572); }
-.imed__btn--ai:hover:not(:disabled) { background: var(--color-secondary, #105572); color: #fff; }
-.imed__btn--ai:disabled { opacity: 0.7; cursor: progress; }
+/* ── גוף: במה + פאנל ── */
+.imed__body { display: grid; grid-template-columns: 1fr 330px; min-height: 0; }
 
-/* בקרת זום עם כפתורי +/− */
-.imed__zoom { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem; font-size: 0.8rem; color: var(--adm-muted, #647c8c); }
-.imed__zoom-lbl { width: 3rem; flex-shrink: 0; }
-.imed__zoom input[type=range] { flex: 1; min-width: 0; accent-color: var(--color-secondary, #105572); }
-.imed__zoom-val { width: 2.9rem; text-align: end; font-weight: 700; color: var(--adm-ink, #07293a); flex-shrink: 0; }
-.imed__step { width: 28px; height: 28px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid var(--adm-border-strong, #cdd8e0); border-radius: 7px; background: #fff; cursor: pointer; font-size: 1.1rem; line-height: 1; color: var(--adm-ink, #07293a); }
-.imed__step:hover { border-color: var(--color-secondary, #105572); color: var(--color-secondary, #105572); }
-.imed__step:active { transform: scale(0.92); }
-
-/* בקרת פינות (רגילות/מעוגלות/מלא) */
-.imed__seg { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
-.imed__segbtn {
-  flex: 1 1 auto;
-  border: 1px solid var(--adm-border, rgba(0,0,0,0.16));
-  background: transparent;
-  color: inherit;
-  border-radius: 8px;
-  padding: 0.45rem 0.6rem;
-  font-weight: 700;
-  font-size: 0.82rem;
-  cursor: pointer;
-  white-space: nowrap;
+/* ---- במה ---- */
+.imed__stage {
+  display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 0;
+  background: #171e27; padding: 0.85rem 1rem;
+  gap: 0.75rem; overflow: hidden;
 }
-.imed__segbtn.is-active {
-  background: var(--color-secondary, #0b2a3a);
-  color: #fff;
-  border-color: var(--color-secondary, #0b2a3a);
-}
-
-/* כיוון המסגרת — מעל הקנבס */
-.imed__aspects {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
-  margin-bottom: 0.8rem;
-}
+.imed__aspects { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; }
 .imed__aspbtn {
-  border: 1px solid var(--adm-border, rgba(0,0,0,0.18));
-  background: #fff;
-  color: var(--color-secondary, #0b2a3a);
-  border-radius: 8px;
-  padding: 0.5rem 0.95rem;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  height: 32px; padding: 0 0.8rem; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1; font: inherit; font-size: 0.8rem; font-weight: 700; transition: all 0.15s;
 }
-.imed__aspbtn.is-active {
-  background: var(--color-secondary, #0b2a3a);
-  color: #fff;
-  border-color: var(--color-secondary, #0b2a3a);
+.imed__aspbtn i { font-style: normal; opacity: 0.85; }
+.imed__aspbtn:hover { background: rgba(255, 255, 255, 0.13); color: #fff; }
+.imed__aspbtn.is-active { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+
+.imed__canvas-wrap {
+  position: relative; flex: 1; min-height: 0; width: 100%;
+  display: grid; place-items: center;
+}
+.imed__canvas {
+  width: 100%; height: auto; max-height: 100%; object-fit: contain;
+  cursor: grab; touch-action: none; border-radius: 8px;
+  /* שתי-וערב — כך רואים בדיוק אילו אזורים שקופים */
+  background:
+    conic-gradient(#252e3a 0 25%, #2e3947 0 50%, #252e3a 0 75%, #2e3947 0) 0 0 / 18px 18px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.imed__canvas:active { cursor: grabbing; }
+.imed__canvas.is-compare { outline: 2px dashed #0ea5e9; outline-offset: 3px; }
+.imed__loading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  color: #94a3b8; font-size: 0.88rem;
+}
+.imed__err {
+  color: #fca5a5; background: rgba(153, 27, 27, 0.25); border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: 12px; padding: 1.1rem 1.4rem; font-size: 0.9rem; max-width: 420px; text-align: center;
+}
+
+.imed__zoombar {
+  display: flex; align-items: center; gap: 0.55rem; width: 100%; max-width: 560px;
+  color: #cbd5e1;
+}
+.imed__zoombar input[type="range"] { flex: 1; }
+.imed__step {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07); color: #e2e8f0; font-size: 1rem; line-height: 1;
+  cursor: pointer; display: grid; place-items: center; transition: background 0.15s;
+}
+.imed__step:hover { background: rgba(255, 255, 255, 0.16); }
+.imed__zoom-val { font-size: 0.8rem; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+.imed__hint { font-size: 0.7rem; color: #7d8b9d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- פאנל ---- */
+.imed__panel { display: flex; flex-direction: column; min-height: 0; background: #fff; border-inline-start: 1px solid #e3e7ee; }
+.imed__tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid #e3e7ee; }
+.imed__tab {
+  height: 44px; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 0.8rem; font-weight: 700; color: #64748b;
+  border-bottom: 2.5px solid transparent; transition: all 0.15s; white-space: nowrap;
+}
+.imed__tab:hover { color: #0a2540; background: #f7f9fc; }
+.imed__tab.is-active { color: #0a2540; border-bottom-color: #0ea5e9; }
+.imed__panel-body { flex: 1; overflow-y: auto; padding: 1rem 1.05rem 1.2rem; display: flex; flex-direction: column; gap: 1.1rem; }
+
+.imed__group { display: flex; flex-direction: column; gap: 0.6rem; }
+.imed__group h4 {
+  margin: 0; font-size: 0.72rem; font-weight: 800; color: #64748b;
+  letter-spacing: 0.07em; text-transform: uppercase;
+}
+
+.imed__btnrow { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.imed__btnrow button {
+  height: 34px; padding: 0 0.75rem; border-radius: 9px; cursor: pointer;
+  border: 1px solid #d6dde6; background: #fff; color: #334155;
+  font: inherit; font-size: 0.8rem; font-weight: 600; transition: all 0.15s;
+}
+.imed__btnrow button:hover { border-color: #0ea5e9; color: #0369a1; background: #f0f9ff; }
+.imed__btnrow button.is-active { background: #0a2540; border-color: #0a2540; color: #fff; }
+
+.imed__seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid #d6dde6; border-radius: 10px; overflow: hidden; }
+.imed__seg button {
+  height: 36px; border: 0; background: #fff; cursor: pointer;
+  font: inherit; font-size: 0.8rem; font-weight: 700; color: #475569; transition: all 0.15s;
+}
+.imed__seg button + button { border-inline-start: 1px solid #e3e7ee; }
+.imed__seg button:hover { background: #f0f9ff; color: #0369a1; }
+.imed__seg button.is-active { background: #0a2540; color: #fff; }
+
+/* פילטרים עם תצוגה חיה */
+.imed__presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.imed__preset {
+  display: flex; flex-direction: column; gap: 0.28rem; padding: 0.3rem;
+  border: 1.5px solid #e3e7ee; border-radius: 11px; background: #fff; cursor: pointer;
+  font: inherit; font-size: 0.72rem; font-weight: 700; color: #475569;
+  transition: all 0.15s; text-align: center;
+}
+.imed__preset img, .imed__preset-ph {
+  width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 7px; display: block;
+  background: #eef1f6;
+}
+.imed__preset:hover { border-color: #7dd3fc; transform: translateY(-1px); }
+.imed__preset.is-active { border-color: #0ea5e9; box-shadow: 0 0 0 2.5px rgba(14, 165, 233, 0.22); color: #0369a1; }
+
+/* סליידרים */
+.imed__slider { display: grid; grid-template-columns: 64px 1fr 44px; align-items: center; gap: 0.55rem; font-size: 0.8rem; color: #334155; }
+.imed__slider-lbl { font-weight: 600; white-space: nowrap; }
+.imed__slider-val { font-size: 0.75rem; text-align: end; font-variant-numeric: tabular-nums; color: #0a2540; }
+
+.imed input[type="range"] {
+  -webkit-appearance: none; appearance: none; height: 5px; border-radius: 4px;
+  background: #dbe2ea; outline: none; cursor: pointer; margin: 0; min-width: 0;
+}
+.imed__stage input[type="range"] { background: rgba(255, 255, 255, 0.2); }
+.imed input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 17px; height: 17px; border-radius: 50%;
+  background: #fff; border: 2.5px solid #0ea5e9; box-shadow: 0 1px 5px rgba(2, 20, 40, 0.3);
+  cursor: grab; transition: transform 0.12s;
+}
+.imed input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
+.imed input[type="range"]::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%; background: #fff; border: 2.5px solid #0ea5e9;
+  box-shadow: 0 1px 5px rgba(2, 20, 40, 0.3); cursor: grab;
+}
+.imed input[type="range"]::-moz-range-track { height: 5px; border-radius: 4px; background: #dbe2ea; }
+
+/* צביעה */
+.imed__tintrow { display: flex; align-items: center; gap: 0.5rem; }
+.imed__tintrow input[type="color"] {
+  width: 44px; height: 36px; padding: 3px; border: 1px solid #d6dde6; border-radius: 9px;
+  background: #fff; cursor: pointer;
+}
+.imed__tintrow select {
+  flex: 1; height: 36px; padding: 0 0.6rem; border: 1px solid #d6dde6; border-radius: 9px;
+  background: #fff; font: inherit; font-size: 0.82rem; color: #334155;
+}
+
+/* רקע */
+.imed__check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer; }
+.imed__check input { width: 17px; height: 17px; accent-color: #0ea5e9; }
+
+.imed__minireset {
+  align-self: flex-start; border: 0; background: none; cursor: pointer; padding: 0.1rem 0;
+  font: inherit; font-size: 0.76rem; font-weight: 700; color: #0369a1;
+}
+.imed__minireset:hover { text-decoration: underline; }
+
+.imed__note { margin: 0; font-size: 0.76rem; line-height: 1.5; color: #475569; }
+.imed__note--soft { color: #94a3b8; font-size: 0.72rem; }
+
+/* ── כפתורים כלליים + פוטר ── */
+.imed__btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+  height: 40px; padding: 0 1.15rem; border-radius: 10px; cursor: pointer;
+  border: 1px solid #d6dde6; background: #fff; color: #334155;
+  font: inherit; font-size: 0.88rem; font-weight: 700; transition: all 0.15s; white-space: nowrap;
+}
+.imed__btn:hover { border-color: #0ea5e9; color: #0369a1; background: #f0f9ff; }
+.imed__btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.imed__btn--primary { background: #0a2540; border-color: #0a2540; color: #fff; box-shadow: 0 3px 12px rgba(10, 37, 64, 0.28); }
+.imed__btn--primary:hover:not(:disabled) { background: #103a5e; border-color: #103a5e; color: #fff; }
+.imed__btn--ai {
+  background: linear-gradient(135deg, #f5f3ff, #eff6ff); border-color: #c4b5fd; color: #5b21b6;
+  width: 100%;
+}
+.imed__btn--ai:hover:not(:disabled) { border-color: #8b5cf6; background: linear-gradient(135deg, #ede9fe, #e0f2fe); color: #4c1d95; }
+
+.imed__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+  padding: 0.75rem 1.15rem; background: #fff; border-top: 1px solid #e3e7ee;
+}
+.imed__quality { font-size: 0.72rem; color: #94a3b8; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imed__foot-end { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+.imed__spin {
+  width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid currentColor; border-top-color: transparent;
+  animation: imed-spin 0.7s linear infinite; display: inline-block;
+}
+@keyframes imed-spin { to { transform: rotate(360deg) } }
+
+/* ── מובייל ── */
+@media (max-width: 860px) {
+  .imed { padding: 0; }
+  .imed__box { width: 100%; height: 100%; border-radius: 0; }
+  .imed__body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .imed__stage { padding: 0.6rem 0.75rem; }
+  .imed__panel { border-inline-start: 0; border-top: 1px solid #e3e7ee; max-height: 46vh; }
+  .imed__panel-body { padding: 0.8rem 0.9rem 1rem; }
+  .imed__hint { display: none; }
+  .imed__quality { display: none; }
+  .imed__compare, .imed__reset { padding: 0 0.65rem; font-size: 0.76rem; }
+  .imed__presets { grid-template-columns: repeat(4, 1fr); }
+  .imed__preset { font-size: 0.66rem; }
 }

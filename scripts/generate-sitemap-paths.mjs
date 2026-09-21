@@ -1,7 +1,7 @@
 /* ============================================================
    מחולל נתיבי תוכן ל-sitemap — רץ אוטומטית לפני כל build.
    סורק את כל קבצי המאמרים ב-src/content/<טור>/ ומחלץ slug + תאריך,
-   וכותב את הרשימה ל-api/_content-paths.js שממנו פונקציית ה-sitemap
+   וכותב את הרשימה ל-server/_content-paths.js שממנו פונקציית ה-sitemap
    קוראת. כך כל מאמר חדש נכנס ל-sitemap בלי תחזוקה ידנית.
    ============================================================ */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -36,5 +36,5 @@ for (const [dir, route] of Object.entries(COLUMN_ROUTE)) {
 out.sort((a, b) => a.path.localeCompare(b.path))
 
 const banner = '/* קובץ שנוצר אוטומטית ע"י scripts/generate-sitemap-paths.mjs — אל תערכו ידנית */\n'
-writeFileSync(join(root, 'api', '_content-paths.js'), `${banner}export default ${JSON.stringify(out, null, 2)}\n`)
-console.log(`sitemap paths: ${out.length} article urls written to api/_content-paths.js`)
+writeFileSync(join(root, 'server', '_content-paths.js'), `${banner}export default ${JSON.stringify(out, null, 2)}\n`)
+console.log(`sitemap paths: ${out.length} article urls written to server/_content-paths.js`)

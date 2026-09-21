@@ -71,4 +71,24 @@ src/
     sections/   ← סקשני עמוד הבית
     ui/         ← רכיבים לשימוש חוזר (כרטיסים, אייקונים, אנימציות)
   pages/        ← Home, Projects, ProjectDetail, Team, About
+api/
+  [fn].js       ← שער ה-API היחיד (אל תוסיפו כאן קבצים, ראו למטה)
+server/         ← המטפלים עצמם: notify-lead, newsletter-subscribe, analytics...
 ```
+
+## הוספת endpoint חדש ל-API
+
+בתיקיית `api/` יש קובץ אחד בלבד, `[fn].js`, והוא מנתב לכל המטפלים
+שיושבים ב-`server/`. זה מכוון: Vercel אורזת כל קובץ בתיקיית `api/`
+לפונקציה נפרדת, וכל פונקציה נשמרת מחדש בכל גרסה שעולה לאוויר
+ונספרת במכסת ה-Function Storage. חמישה קבצים היו פי חמישה אחסון.
+
+כדי להוסיף endpoint:
+
+1. צרו מטפל חדש ב-`server/`, למשל `server/my-endpoint.js`, עם
+   `export default async function handler(req, res)`.
+2. רשמו אותו במפת `ROUTES` שבתוך `api/[fn].js`.
+3. הכתובת הציבורית תהיה `/api/my-endpoint` — בלי לגעת ב-`vercel.json`.
+
+`scripts/check-routing.mjs` רץ בסוף כל build ומפיל אותו אם נוסף קובץ
+נוסף ל-`api/` או אם `ROUTES` מפנה למטפל שלא קיים.

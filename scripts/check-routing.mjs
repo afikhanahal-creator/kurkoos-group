@@ -5,7 +5,7 @@
    ה-build נכשל ו-Vercel לא מעלה את הגרסה השבורה, הגרסה
    התקינה הקודמת נשארת באוויר.
    ============================================================ */
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -35,11 +35,30 @@ if (!v.cleanUrls && spa.destination === '/') {
 /* 3. תוצרי ה-build הקריטיים קיימים */
 if (!existsSync(join(root, 'dist', 'index.html'))) fail('dist/index.html לא קיים — ה-build לא הפיק את עמוד הבסיס.')
 if (!existsSync(join(root, 'dist', 'robots.txt'))) fail('dist/robots.txt לא קיים.')
-if (!existsSync(join(root, 'api', 'sitemap.js'))) fail('api/sitemap.js לא קיים — מפת האתר תישבר.')
+if (!existsSync(join(root, 'api', '[fn].js'))) fail('api/[fn].js לא קיים — כל ה-API של האתר יחזיר 404.')
 
 /* 4. ה-rewrite של מפת האתר במקומו */
 if (!(v.rewrites || []).some((r) => r.source === '/sitemap.xml' && r.destination === '/api/sitemap')) {
   fail('חסר ה-rewrite של ‎/sitemap.xml אל ‎/api/sitemap.')
 }
 
-console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, תוצרי build במקומם')
+/* 5. שער ה-API נשאר קובץ אחד.
+   Vercel אורזת כל קובץ בתיקיית api לחבילת פונקציה נפרדת, וכל חבילה
+   נשמרת שוב בכל deployment ונספרת במכסת ה-Function Storage. אם מישהו
+   יוסיף כאן קובץ נוסף במקום להוסיף נתיב ל-ROUTES, הצריכה תזנק. */
+const apiFiles = readdirSync(join(root, 'api')).filter((f) => !f.startsWith('_') && /\.(js|mjs|ts)$/.test(f))
+if (apiFiles.length !== 1 || apiFiles[0] !== '[fn].js') {
+  fail(
+    `תיקיית api חייבת להכיל בדיוק קובץ פונקציה אחד, ‎[fn].js, ונמצאו: ${apiFiles.join(', ') || '(כלום)'}.\n` +
+    '  כל קובץ נוסף כאן הוא פונקציה נוספת ב-Vercel שנשמרת מחדש בכל גרסה ומנפחת את ה-Function Storage.\n' +
+    '  כדי להוסיף endpoint: הוסיפו מטפל בתיקיית server ורשמו אותו ב-ROUTES שבתוך api/[fn].js.'
+  )
+}
+
+/* 6. כל נתיב שרשום בשער מצביע על מטפל שקיים בפועל */
+const gateway = readFileSync(join(root, 'api', '[fn].js'), 'utf8')
+for (const [, handlerPath] of gateway.matchAll(/import\('\.\.\/server\/([\w-]+\.js)'\)/g)) {
+  if (!existsSync(join(root, 'server', handlerPath))) fail(`api/[fn].js מפנה אל server/${handlerPath} שלא קיים.`)
+}
+
+console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם')

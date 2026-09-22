@@ -17,24 +17,24 @@ export default [
     "lastmod": "2026-06-28"
   },
   {
-    "path": "/construction-supervision/construction-supervision-likuei-sheled",
+    "path": "/construction-supervision/construction-supervision-likuei-sheled-beton",
     "lastmod": "2026-07-05"
+  },
+  {
+    "path": "/construction-supervision/construction-supervision-likuei-sheled-bitzua",
+    "lastmod": "2026-09-13"
   },
   {
     "path": "/construction-supervision/construction-supervision-likuei-sheled-critical",
     "lastmod": "2026-07-19"
   },
   {
-    "path": "/construction-supervision/construction-supervision-likuei-sheled-critical",
-    "lastmod": "2026-08-23"
-  },
-  {
-    "path": "/construction-supervision/construction-supervision-likuei-sheled-critical",
-    "lastmod": "2026-09-13"
-  },
-  {
     "path": "/construction-supervision/construction-supervision-likuei-sheled-critical-beton",
     "lastmod": "2026-08-30"
+  },
+  {
+    "path": "/construction-supervision/construction-supervision-likuei-sheled-yom-hayetzika",
+    "lastmod": "2026-08-23"
   },
   {
     "path": "/construction-supervision/likuei-itum",
@@ -61,7 +61,7 @@ export default [
     "lastmod": "2026-07-05"
   },
   {
-    "path": "/constructions/concrete-cube-test-failure",
+    "path": "/constructions/concrete-cube-test-failure-beyetzika",
     "lastmod": "2026-09-20"
   },
   {
@@ -177,7 +177,7 @@ export default [
     "lastmod": "2026-06-28"
   },
   {
-    "path": "/real-estate-guide/timchur-dira-lemchira",
+    "path": "/real-estate-guide/timchur-dira-lemchira-hamechir-harishon",
     "lastmod": "2026-08-30"
   },
   {

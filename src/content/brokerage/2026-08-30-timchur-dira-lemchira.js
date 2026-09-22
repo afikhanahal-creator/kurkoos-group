@@ -1,6 +1,6 @@
 // נוצר אוטומטית — המדריך לרוכש ולמוכר · 2026-08-30
 export default {
-  "slug": "timchur-dira-lemchira",
+  "slug": "timchur-dira-lemchira-hamechir-harishon",
   "title": "תמחור דירה למכירה: למה המחיר הראשון קובע את כל העסקה",
   "date": "2026-08-30",
   "author": "המערכת, המדריך לרוכש ולמוכר",

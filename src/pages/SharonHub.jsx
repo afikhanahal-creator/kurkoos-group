@@ -131,7 +131,7 @@ export default function SharonHub() {
             ))}
           </div>
           <Reveal className="lhub-links">
-            <p>להעמיק עוד: <Link to="/projects">כל הפרויקטים</Link> · <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link> · <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link> · <Link to="/about">אודות הקבוצה</Link></p>
+            <p>להעמיק עוד: <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link> · <Link to="/projects">כל הפרויקטים</Link> · <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link> · <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link> · <Link to="/about">אודות הקבוצה</Link></p>
           </Reveal>
         </div>
       </section>

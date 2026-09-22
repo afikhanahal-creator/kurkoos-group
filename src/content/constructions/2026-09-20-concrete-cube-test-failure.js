@@ -1,6 +1,6 @@
 // נוצר אוטומטית — המדריך לתהליך הבנייה · 2026-09-20
 export default {
-  "slug": "concrete-cube-test-failure",
+  "slug": "concrete-cube-test-failure-beyetzika",
   "title": "בדיקת בטון: מה קורה כשהקובייה נכשלת ביציקה",
   "date": "2026-09-20",
   "author": "המערכת, טור ביצוע ובנייה",

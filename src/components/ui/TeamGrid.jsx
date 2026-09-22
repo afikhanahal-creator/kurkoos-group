@@ -54,8 +54,12 @@ export default function TeamGrid({ members = [] }) {
 
               {/* צד אחורי */}
               <div className="flip-card-back">
-                <h3 className="flip-card-name flip-card-name--back">{m.name}</h3>
-                <span className="flip-card-role flip-card-role--back">{m.role}</span>
+                {/* הצד האחורי מציג שוב את השם והתפקיד. אם הם ייכתבו כטקסט
+                    הם יופיעו פעמיים בעמוד, וכך גוגל הציג "מוטי בן עמי · מוטי
+                    בן עמי". התוכן מגיע מ-CSS, כך שהמראה זהה אך הטקסט מופיע
+                    פעם אחת. הקורא המסך מקבל אותם מה-aria-label של הכרטיס. */}
+                <p className="flip-card-name flip-card-name--back" data-name={m.name} aria-hidden="true" />
+                <span className="flip-card-role flip-card-role--back" data-role={m.role} aria-hidden="true" />
                 <p className="flip-card-bio">{m.bio}</p>
                 {m.link && m.link !== '#' && (
                   <a

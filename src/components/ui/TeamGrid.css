@@ -156,7 +156,10 @@
 /* הטקסט תמיד מעל שכבות הרקע */
 .flip-card-back > * { position: relative; z-index: 2; }
 
-.flip-card-name--back { color: #fff; font-size: 1rem; }
+.flip-card-name--back { color: #fff; font-size: 1rem; margin: 0; }
+/* השם והתפקיד בצד האחורי מגיעים מ-CSS כדי שלא יופיעו פעמיים בטקסט העמוד */
+.flip-card-name--back::after { content: attr(data-name); }
+.flip-card-role--back::after { content: attr(data-role); }
 .flip-card-role--back { color: #ff6b5e; margin-bottom: 0.6rem; }   /* אדום בהיר — קונטרסט גבוה על רקע כהה */
 .flip-card-bio {
   font-size: 0.85rem;

@@ -5,7 +5,9 @@ import Reveal from '../components/ui/Reveal.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
+import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import Contact from '../components/sections/Contact.jsx'
+import { listProjectCards } from '../lib/cms.js'
 import './SharonHub.css'
 import './VillasSharon.css'
 
@@ -120,8 +122,14 @@ const FAQS = [
 
 export default function VillasSharon() {
   const [open, setOpen] = useState(PROJECTS[0].slug)
+  const [gallery, setGallery] = useState([])
 
-  useEffect(() => { /* העמוד סטטי, אין תלות ב-CMS */ }, [])
+  /* תמונות אמיתיות מהפרויקטים, מתוך מערכת הניהול */
+  useEffect(() => {
+    let on = true
+    listProjectCards().then((d) => on && setGallery(d || [])).catch(() => {})
+    return () => { on = false }
+  }, [])
 
   const jsonLd = [
     {
@@ -246,6 +254,18 @@ export default function VillasSharon() {
           ))}
         </div>
       </section>
+
+      {/* תמונות מהפרויקטים */}
+      {gallery.length > 0 && (
+        <ProjectsGallery
+          items={gallery}
+          collage
+          masonry
+          showFooter={false}
+          title="מהשטח"
+          lead="תמונות מהפרויקטים שהקבוצה מייזמת, מבצעת ומשווקת."
+        />
+      )}
 
       {/* מה מאפיין את הבנייה */}
       <section className="section lhub-services">

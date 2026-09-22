@@ -107,7 +107,7 @@ export default async function handler(req, res) {
     const PROJECT_URL = projectSlug ? `${SITE}/projects/${projectSlug}` : ''
     const safeName = String(lead.name || 'ללא שם').slice(0, 100).replace(/[\r\n]/g, ' ')
     const safeProject = String(projectName).slice(0, 100).replace(/[\r\n]/g, ' ')
-    const subject = (settings.subject || 'ליד חדש מהאתר: {{name}}')
+    const subject = (lead.saveFailed ? '⚠ ליד שלא נשמר במערכת: ' : '') + (settings.subject || 'ליד חדש מהאתר: {{name}}')
       .replace(/{{\s*name\s*}}/g, safeName)
       .replace(/{{\s*project\s*}}/g, safeProject)
       + (isTest ? ' (בדיקה)' : '')
@@ -152,6 +152,9 @@ export default async function handler(req, res) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f5">
       <tr><td align="center" style="padding:32px 14px">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" dir="rtl" style="width:100%;max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 16px 46px rgba(7,41,58,0.16)">
+          ${lead.saveFailed ? `<tr><td style="background:#b42318;padding:18px 40px;text-align:center">
+            <div style="font-family:${font};font-size:15px;font-weight:800;color:#ffffff;line-height:1.6">⚠ הליד הזה לא נשמר במערכת הניהול<br><span style="font-weight:600">השמירה למסד נכשלה והפרטים נשלחו לכאן כגיבוי. חזרו ללקוח והזינו אותו ידנית בלוח הלידים.</span></div>
+          </td></tr>` : ''}
           <!-- באנר כותרת כהה (פלטת המותג) -->
           <tr><td style="background:#07293a;padding:34px 40px;text-align:center">
             <div style="font-family:${font};font-size:12px;font-weight:700;letter-spacing:0.22em;color:#8fb6c8">התראת מערכת</div>

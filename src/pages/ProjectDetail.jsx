@@ -172,6 +172,7 @@ export default function ProjectDetail() {
   const [errors, setErrors] = useState({})
   const [booking, setBooking] = useState('')   // מועד שנבחר ביומן (צד שמאל) — מצורף לליד בשליחה
   const [sent, setSent] = useState(false)
+  const [sendError, setSendError] = useState('')
   const settings = useSettings()   // הגדרות אתר — בין השאר override לתמונות קאבר של פרויקטים
 
   // כל כרטיסי הפרויקטים מה-CMS (אמיתיים) — ל"פרויקטים נוספים" (במקום דמו מקומי)
@@ -427,34 +428,46 @@ export default function ProjectDetail() {
     if (errors[key]) setErrors((er) => ({ ...er, [key]: undefined }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const next = {}
     if (!form.name.trim()) next.name = true
     if (!/^[\d\s\-+()]{9,}$/.test(form.phone.trim())) next.phone = true
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) next.email = true
     if (Object.keys(next).length) { setErrors(next); return }
-    setSent(true)
-    // שמירת הפנייה כליד במערכת הניהול (לא חוסם את חוויית המשתמש)
+    setSendError('')
+    // שמירת הפנייה כליד במערכת הניהול — רק אם היא הצליחה מציגים "נשלח"
     // מצרפים את המועד שנבחר ביומן להודעת הליד (בלי לשנות את הטופס בזמן הבחירה)
     const msg = form.message.trim()
     const bookingNote = booking && !msg.includes(booking)
       ? L({ he: `מועד מבוקש: ${booking}`, en: `Requested slot: ${booking}` })
       : ''
     const fullMessage = [msg, bookingNote].filter(Boolean).join(' · ')
-    createLead({
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      message: fullMessage,
-      // project שומר שם + slug לבניית קישור ישיר בהתראת המייל
-      project: project?.name
-        ? { ...(typeof project.name === 'object' ? project.name : { he: String(project.name), en: String(project.name) }), slug: project.slug || '' }
-        : '',
-      source: 'project',
-      status: 'new',
-    }, { read: false }).catch(() => {})
-    track('generate_lead', { form: 'project_page', project: project?.slug || '' })
+    try {
+      await createLead({
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        message: fullMessage,
+        // project שומר שם + slug לבניית קישור ישיר בהתראת המייל
+        project: project?.name
+          ? { ...(typeof project.name === 'object' ? project.name : { he: String(project.name), en: String(project.name) }), slug: project.slug || '' }
+          : '',
+        source: 'project',
+        status: 'new',
+      }, { read: false })
+      track('generate_lead', { form: 'project_page', project: project?.slug || '' })
+      setSent(true)
+    } catch (err) {
+      /* עד היום הטופס הציג "נשלח" עוד לפני השמירה ובלע את השגיאה, כך שפנייה
+         שנכשלה נעלמה בלי שאיש ידע. עכשיו המבקר רואה שהשליחה נכשלה ומקבל
+         מספר לחייג אליו, והשגיאה נרשמת בקונסול לאבחון. */
+      setSendError(L({
+        he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות ל-055-981-1814.',
+        en: 'Something went wrong. Please try again or call us directly at +972-55-981-1814.',
+      }))
+      if (typeof console !== 'undefined') console.error('createLead failed:', err?.message || err)
+    }
   }
 
   return (
@@ -960,6 +973,7 @@ export default function ProjectDetail() {
               ) : (
                 <form className="pd-contact__form" onSubmit={handleSubmit} noValidate>
                   <p className="pd-contact__required">{L({ he: '* שדות חובה', en: '* Required fields' })}</p>
+                  {sendError && <p className="pd-contact__error" role="alert">{sendError}</p>}
                   <div className="pd-field">
                     <input
                       id="pd-name" name="name" type="text" autoComplete="name"

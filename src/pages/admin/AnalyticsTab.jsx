@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
+import { trackingDisabled, setTrackingDisabled } from '../../lib/track.js'
 import { fetchDashboard, fetchRealtime, fetchPageDetail, testConnection, rows, totalsOf } from '../../lib/analyticsApi.js'
 import './AnalyticsTab.css'
 
@@ -290,6 +291,105 @@ function buildInsights({ tot, prevTot, channels, pages, devices, anomalies }) {
 }
 
 /* ============================================================ */
+/* ============================================================
+   פאנל זמן אמת. שלושה דברים, וכל אחד מסומן במפורש לאיזה חלון זמן
+   הוא שייך, כדי שלא ייראה שהכל "עכשיו":
+   • כמה גולשים באתר ברגע זה, ועקומת חצי השעה האחרונה
+   • באילו עמודים הם צופים כרגע
+   • מאיזה מקור הגיעו — נתון של היום, לא של הרגע, כי ל-API של זמן
+     אמת של Google אין בכלל מימדי מקור תנועה
+   ============================================================ */
+/* החרגה עצמית. באתר עם עשרות משתמשים בחודש, כמה סיבובים שלנו באתר
+   מזיזים את המספרים באחוזים ניכרים. הדגל נשמר בדפדפן הזה בלבד. */
+function SelfExclude() {
+  const [off, setOff] = useState(trackingDisabled())
+  return (
+    <label className="an-selfex" data-tip="מסמן את הדפדפן הזה כ״אל תספור״. הביקורים שלך באתר לא ייכנסו לסטטיסטיקה, כך שהמספרים משקפים גולשים אמיתיים בלבד. ההגדרה נשמרת בדפדפן הזה בלבד.">
+      <input
+        type="checkbox"
+        checked={off}
+        onChange={(e) => { setTrackingDisabled(e.target.checked); setOff(e.target.checked) }}
+      />
+      אל תספור את הביקורים שלי
+    </label>
+  )
+}
+
+function LivePanel({ rt, users }) {
+  const pages = rows(rt?.now).filter((r) => r.m[0] > 0)
+  const minutes = rows(rt?.byMinute)
+  const channels = rows(rt?.todayChannels)
+  const sources = rows(rt?.todaySources)
+
+  // minutesAgo מגיע כמחרוזת "0" עד "29" — 0 זו הדקה הנוכחית
+  const buckets = Array.from({ length: 30 }, (_, i) => {
+    const hit = minutes.find((r) => Number(r.d[0]) === 29 - i)
+    return hit ? hit.m[0] : 0
+  })
+  const peak = Math.max(1, ...buckets)
+  const halfHour = buckets.reduce((a, b) => a + b, 0)
+
+  return (
+    <section className="an-live-panel">
+      <div className="an-live-panel__head">
+        <div>
+          <h3>מי באתר עכשיו</h3>
+          <span className="an-sub">מתעדכן כל דקה · Google Analytics מחזיק חלון של 30 דקות אחורה</span>
+        </div>
+        <SelfExclude />
+      </div>
+
+      <div className="an-live-panel__grid">
+        <div className="an-live-now">
+          <span className="an-live-now__num">{users == null ? '· · ·' : users}</span>
+          <span className="an-live-now__lbl">גולשים באתר ברגע זה</span>
+          <div className="an-live-spark" title="פעילות ב-30 הדקות האחרונות">
+            {buckets.map((v, i) => (
+              <i key={i} style={{ height: `${Math.max(3, (v / peak) * 100)}%` }} className={v ? '' : 'is-empty'} />
+            ))}
+          </div>
+          <span className="an-live-now__foot">
+            {halfHour ? `${halfHour} צפיות פעילות בחצי השעה האחרונה` : 'אין פעילות בחצי השעה האחרונה'}
+          </span>
+        </div>
+
+        <div className="an-live-list">
+          <h4>עמודים שנצפים כרגע</h4>
+          {pages.length ? (
+            <ul>
+              {pages.map((r) => (
+                <li key={r.d[0]}><span className="an-live-list__name" title={r.d[0]}>{r.d[0] || '(ללא כותרת)'}</span><b>{r.m[0]}</b></li>
+              ))}
+            </ul>
+          ) : <p className="an-empty an-empty--sm">אף אחד לא נמצא באתר ברגע זה</p>}
+          <p className="an-live-note">
+            Google מדווח בזמן אמת לפי כותרת העמוד ולא לפי הכתובת, ולכן מוצגות כאן הכותרות.
+          </p>
+        </div>
+
+        <div className="an-live-list">
+          <h4>מאיפה הגיעו <span className="an-live-badge">היום</span></h4>
+          {channels.length ? (
+            <ul>
+              {channels.map((r) => (
+                <li key={r.d[0]}><span className="an-live-list__name">{CHANNEL_HE[r.d[0]] || r.d[0]}</span><b>{r.m[1]}</b></li>
+              ))}
+            </ul>
+          ) : <p className="an-empty an-empty--sm">אין עדיין ביקורים היום</p>}
+          {sources.length > 0 && (
+            <p className="an-live-note">
+              מקורות מדויקים: {sources.slice(0, 4).map((r) => `${r.d[0]}${r.d[1] && r.d[1] !== '(none)' ? ` / ${r.d[1]}` : ''} (${r.m[1]})`).join(' · ')}
+            </p>
+          )}
+          <p className="an-live-note">
+            המקור הוא נתון של היום ולא של הרגע: ל-API של זמן אמת של Google אין מימד מקור תנועה.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function AnalyticsTab() {
   const [preset, setPreset] = useState('30d')
   const [state, setState] = useState({ phase: 'loading' })
@@ -315,7 +415,7 @@ export default function AnalyticsTab() {
   useEffect(() => {
     if (state.phase !== 'ready') return
     let on = true
-    const pull = () => fetchRealtime().then((d) => on && setRt(d.realtime)).catch(() => {})
+    const pull = () => fetchRealtime().then((d) => on && setRt(d.rt || { now: d.realtime })).catch(() => {})
     pull()
     const t = setInterval(pull, 60_000)
     return () => { on = false; clearInterval(t) }
@@ -376,7 +476,13 @@ export default function AnalyticsTab() {
   const anomalies = findAnomalies(series, 0)
   const insights = buildInsights({ tot, prevTot, channels, pages, devices, anomalies })
   const overallCR = tot[2] ? tot[8] / tot[2] : 0
-  const rtUsers = rt ? rt.rows?.reduce((a, r) => a + (Number(r.metricValues?.[0]?.value) || 0), 0) ?? 0 : null
+  /* הסך המדויק מגיע מ-metricAggregations של GA4, שמנכה משתמש שנמצא
+     בכמה עמודים. סכימת השורות (הגיבוי) הייתה סופרת אותו פעמיים. */
+  const rtNow = rt?.now || null
+  const rtUsers = rtNow
+    ? Number(rtNow.totals?.[0]?.metricValues?.[0]?.value)
+      || (rtNow.rows || []).reduce((a, r) => a + (Number(r.metricValues?.[0]?.value) || 0), 0)
+    : null
   // נכס חדש: Google מעבד דוחות 24-48 שעות — עד אז אין שורות כלל.
   // מציגים מצב המתנה מעוצב במקום שלד טבלאות ריק שנראה שבור.
   const hasData = series.length > 0 || (tot[0] || 0) > 0 || channels.length > 0 || pages.length > 0
@@ -444,6 +550,8 @@ export default function AnalyticsTab() {
           </div>
         </div>
       </header>
+
+      <LivePanel rt={rt} users={rtUsers} />
 
       {!hasData && (
         <section className="an-await">

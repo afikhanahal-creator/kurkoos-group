@@ -113,9 +113,9 @@ function previousRange(start, end) {
 
 /* ---------- מטמון תוצאות (5 דק') ---------- */
 const _cache = new Map()
-function cached(key, fn) {
+function cached(key, fn, ttl = 5 * 60 * 1000) {
   const hit = _cache.get(key)
-  if (hit && Date.now() - hit.t < 5 * 60 * 1000) return hit.p
+  if (hit && Date.now() - hit.t < ttl) return hit.p
   const p = fn()
   p.catch(() => _cache.delete(key))
   _cache.set(key, { t: Date.now(), p })
@@ -136,6 +136,18 @@ async function gaBatch(prop, token, reports) {
     out.push(...(data.reports || []))
   }
   return out
+}
+
+/* דוח זמן אמת בודד. ל-GA4 אין batch לדוחות זמן אמת, כל דוח הוא קריאה. */
+async function gaRealtime(prop, token, spec) {
+  const r = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${prop}:runRealtimeReport`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(spec),
+  })
+  const d = await r.json()
+  if (!r.ok) throw new Error('GA_ERROR: ' + (d.error?.message || r.status))
+  return d
 }
 
 export default async function handler(req, res) {
@@ -159,17 +171,38 @@ export default async function handler(req, res) {
     const token = await googleToken()
 
     if (type === 'realtime') {
+      /* מטמון של 25 שניות בלבד. הלקוח מרענן כל דקה, וקודם ישב כאן מטמון
+         של חמש דקות, כך שמונה "עכשיו באתר" יכול היה להציג מספר בן חמש
+         דקות. 25 שניות מבטיחות שכל רענון מקבל נתון טרי. */
       const data = await cached(`rt:${prop}`, async () => {
-        const r = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${prop}:runRealtimeReport`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metrics: [{ name: 'activeUsers' }], dimensions: [{ name: 'unifiedScreenName' }], limit: 8 }),
-        })
-        const d = await r.json()
-        if (!r.ok) throw new Error('GA_ERROR: ' + (d.error?.message || r.status))
-        return d
-      })
-      res.status(200).json({ configured: true, realtime: data })
+        const [now, byMinute, today] = await Promise.all([
+          /* מי באתר ממש עכשיו, ובאילו עמודים.
+             ב-API של זמן אמת אין נתיב עמוד, רק כותרת, ולכן מוצגות כותרות.
+             metricAggregations מחזיר גם את הסך הכולל, מנוכה כפילויות. */
+          gaRealtime(prop, token, {
+            metrics: [{ name: 'activeUsers' }],
+            dimensions: [{ name: 'unifiedScreenName' }],
+            metricAggregations: ['TOTAL'],
+            orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+            limit: 10,
+          }),
+          /* עקומת חצי השעה האחרונה. זה החלון המלא ש-GA4 מחזיק בזמן אמת. */
+          gaRealtime(prop, token, {
+            metrics: [{ name: 'activeUsers' }],
+            dimensions: [{ name: 'minutesAgo' }],
+            limit: 31,
+          }).catch(() => null),
+          /* מאיפה הם הגיעו. ל-API של זמן אמת אין מימדי מקור תנועה בכלל,
+             ולכן זה דוח רגיל של היום. מסומן בממשק כ"היום" ולא כ"עכשיו",
+             כדי לא להציג נתון כאילו הוא חי כשהוא לא. */
+          gaBatch(prop, token, [
+            { dateRanges: [{ startDate: 'today', endDate: 'today' }], dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'totalUsers' }, { name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 8 },
+            { dateRanges: [{ startDate: 'today', endDate: 'today' }], dimensions: [{ name: 'sessionSource' }, { name: 'sessionMedium' }], metrics: [{ name: 'totalUsers' }, { name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 8 },
+          ]).catch(() => []),
+        ])
+        return { now, byMinute, todayChannels: today[0] || null, todaySources: today[1] || null }
+      }, 25 * 1000)
+      res.status(200).json({ configured: true, realtime: data.now, rt: data })
       return
     }
 

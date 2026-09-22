@@ -17,7 +17,7 @@ import PropertyMap from '../components/ui/PropertyMap.jsx'
 import BookingCalendar from '../components/ui/BookingCalendar.jsx'
 import StatCube from '../components/ui/StatCube.jsx'
 import Seo from '../components/ui/Seo.jsx'
-import { noteProject } from '../lib/visitTrail.js'
+import { noteProject, trailSummary } from '../lib/visitTrail.js'
 import useIsMobile from '../hooks/useIsMobile.js'
 import Text3DFlip from '../components/ui/Text3DFlip.jsx'
 import Icon from '../components/ui/Icon.jsx'
@@ -453,6 +453,8 @@ export default function ProjectDetail() {
         project: project?.name
           ? { ...(typeof project.name === 'object' ? project.name : { he: String(project.name), en: String(project.name) }), slug: project.slug || '' }
           : '',
+        // מסלול הגלישה המלא — נשמר בהערות הליד, בדיוק כמו בשני הטפסים האחרים
+        notes: trailSummary() ? `מסע באתר: ${trailSummary()}` : undefined,
         source: 'project',
         status: 'new',
       }, { read: false })

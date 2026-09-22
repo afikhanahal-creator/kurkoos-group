@@ -22,7 +22,7 @@ export default function Newsletter() {
       track('newsletter_signup', {})
       setDone(true)
     } catch {
-      setErr('ההרשמה נכשלה — נסו שוב בעוד רגע.')
+      setErr('ההרשמה נכשלה, נסו שוב בעוד רגע.')
     } finally { setBusy(false) }
   }
 

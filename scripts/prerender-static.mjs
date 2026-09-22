@@ -61,6 +61,27 @@ const faqLd = (faqs, pick = (f) => [f.q, f.a]) => ({
 })
 
 /* בניית עמוד: החלפת ה-head והזרקת תוכן סטטי ל-#root */
+/* קישורי הניווט של האתר, בתוך ה-HTML הסטטי.
+   הפוטר האמיתי מרונדר ע"י React, ולכן סורק שלא מריץ JavaScript לא רואה
+   אף קישור פנימי בעמודים האלה. עמוד ללא קישורים נכנסים נסרק לעתים רחוקות.
+   הרשימה כאן זהה לקישורים שבפוטר החי, ולכן אין כאן שום הצגה כפולה. */
+const SITE_LINKS =
+  `<nav aria-label="ניווט באתר"><h2>עמודים באתר</h2><ul>` +
+  [
+    ['/', 'דף הבית'],
+    ['/about', 'אודות הקבוצה'],
+    ['/projects', 'הפרויקטים'],
+    ['/villas-sharon', 'בניית וילות ובתים פרטיים בשרון'],
+    ['/real-estate-sharon', 'נדל"ן בהוד השרון והשרון'],
+    ['/divisions/development', 'יזמות נדל"ן'],
+    ['/divisions/execution', 'ביצוע ובנייה'],
+    ['/divisions/supervision', 'ניהול ופיקוח פרויקטים'],
+    ['/divisions/brokerage', 'תיווך ושיווק נכסים'],
+    ['/real-estate-glossary', 'מילון מונחי נדל"ן'],
+    ['/real-estate-calculators', 'מחשבוני נדל"ן'],
+  ].map(([href, label]) => `<li><a href="${href}">${esc(label)}</a></li>`).join('') +
+  `</ul></nav>`
+
 function renderPage({ path, title, description, ogType = 'website', jsonLd = [], bodyHtml = '' }) {
   const fullTitle = `${title} | ${BRAND}`
   const url = SITE + path
@@ -79,7 +100,7 @@ function renderPage({ path, title, description, ogType = 'website', jsonLd = [],
     /* תוכן סטטי קריא במקום מסך הפתיחה, React מחליף אותו בגרסה החיה */
     const staticBlock =
       `<style>.ssr{max-width:760px;margin:0 auto;padding:24px 20px;font-family:system-ui,sans-serif;line-height:1.75;color:#16202e}.ssr h1{font-size:1.7rem;line-height:1.3}.ssr h2{font-size:1.25rem;margin-top:1.6em}.ssr h3{font-size:1.05rem}.ssr a{color:#16688c}</style>` +
-      `<div class="ssr" dir="rtl">${bodyHtml}</div>`
+      `<div class="ssr" dir="rtl">${bodyHtml}${SITE_LINKS}</div>`
     html = html.replace(/(<div id="root">)[\s\S]*?(<\/div>\s*<\/body>)/, `$1${staticBlock}$2`)
   }
   const dir = join(dist, ...path.split('/').filter(Boolean))

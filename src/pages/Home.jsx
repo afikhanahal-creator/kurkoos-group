@@ -14,7 +14,7 @@ export default function Home() {
   const { t } = useI18n()
   return (
     <>
-      <Seo title='יזמות, ביצוע ופיקוח נדל"ן בשרון והמרכז' description={t('hero.subtitle')} />
+      <Seo title='יזמות, בנייה ופיקוח נדל"ן בהוד השרון והשרון' description={t('hero.subtitle')} />
       <div className="home">
         <Hero />
         <Activities />

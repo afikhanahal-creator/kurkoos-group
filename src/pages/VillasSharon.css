@@ -1,0 +1,63 @@
+/* ============================================================
+   עמוד בניית וילות ובתים פרטיים. משלים את SharonHub.css
+   עם התצוגה של הפרויקטים והמפרט שלהם.
+   ============================================================ */
+
+.vsh-tabs { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.4rem; }
+.vsh-tab {
+  display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start;
+  padding: 0.7rem 1.1rem; border-radius: 12px; cursor: pointer;
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  font: inherit; text-align: start; transition: border-color .18s, box-shadow .2s, transform .18s;
+}
+.vsh-tab b { font-family: var(--font-heading); font-weight: 700; font-size: 1rem; color: var(--color-text, #16202e); }
+.vsh-tab span { font-size: 0.8rem; color: var(--color-text-muted, #5a6a7a); }
+.vsh-tab:hover { border-color: #cbd5e1; transform: translateY(-2px); }
+.vsh-tab.is-on {
+  border-color: var(--color-secondary, #16688c);
+  box-shadow: 0 0 0 1px var(--color-secondary, #16688c) inset, 0 6px 20px rgba(10, 37, 64, 0.09);
+}
+
+.vsh-panel {
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 16px; padding: 1.5rem 1.6rem 1.7rem;
+}
+.vsh-panel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+.vsh-panel__head h3 { margin: 0 0 0.25rem; font-family: var(--font-heading); font-weight: 800; font-size: 1.5rem; color: var(--color-text, #16202e); }
+.vsh-panel__tag { margin: 0; color: var(--color-text-muted, #5a6a7a); font-size: 1rem; }
+.vsh-status {
+  flex: none; font-size: 0.78rem; font-weight: 700; border-radius: 999px; padding: 0.3rem 0.85rem;
+  background: rgba(22, 104, 140, 0.1); color: #16688c; border: 1px solid rgba(22, 104, 140, 0.25);
+}
+.vsh-status.is-building { background: rgba(21, 128, 61, 0.1); color: #15803d; border-color: rgba(21, 128, 61, 0.28); }
+
+/* מפרט: רשת של זוגות תווית/ערך, קריאה גם לאדם וגם לסורק */
+.vsh-specs {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.9rem 1.2rem;
+  margin: 0 0 1.4rem; padding: 1.05rem 0; border-block: 1px solid var(--color-border, #e3e7ee);
+}
+.vsh-specs > div { min-width: 0; }
+.vsh-specs dt { font-size: 0.76rem; font-weight: 700; color: var(--color-text-muted, #5a6a7a); font-family: var(--font-heading); margin-bottom: 0.2rem; }
+.vsh-specs dd { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--color-text, #16202e); line-height: 1.5; }
+
+.vsh-panel__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; }
+.vsh-panel__cols h4 {
+  margin: 0 0 0.5rem; font-family: var(--font-heading); font-weight: 700; font-size: 1.05rem;
+  color: var(--color-text, #16202e); display: flex; align-items: center; gap: 0.45rem;
+}
+.vsh-panel__cols h4::before { content: ''; width: 4px; height: 15px; border-radius: 3px; background: var(--color-secondary, #16688c); }
+.vsh-panel__cols p { margin: 0; color: var(--color-text-muted, #5a6a7a); font-size: 1rem; line-height: 1.75; }
+
+.vsh-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.9rem 0 0; padding: 0; }
+.vsh-chips li {
+  font-size: 0.8rem; font-weight: 600; border-radius: 999px; padding: 0.28rem 0.8rem;
+  background: var(--color-bg-soft, #f4f6f9); color: var(--color-text, #16202e);
+  border: 1px solid var(--color-border, #e3e7ee);
+}
+
+@media (max-width: 860px) {
+  .vsh-panel__cols { grid-template-columns: 1fr; gap: 1.2rem; }
+  .vsh-panel { padding: 1.2rem 1.1rem 1.3rem; }
+  .vsh-panel__head h3 { font-size: 1.3rem; }
+  .vsh-tab { flex: 1 1 100%; }
+}

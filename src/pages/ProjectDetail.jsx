@@ -77,9 +77,10 @@ function extractPlaceQuery(url) {
 }
 
 // מאחד נתון מקומי מועשר (planGroups/environment/...) עם שכבת-על מה-CMS (שדות בסיסיים)
-function buildProject(local, cms) {
+function buildProject(local, cms, routeSlug) {
   if (!local && !cms) return null
   const base = local ? { ...local } : {}
+  if (routeSlug && !base.slug) base.slug = routeSlug
   if (cms) {
     // סביבה — מאחד את שלושת השדות, עוטף כותרת/טקסט; שומר על ערך מקומי כשה-CMS ריק
     const env = cms.environment && typeof cms.environment === 'object' ? cms.environment : {}
@@ -145,6 +146,10 @@ function buildProject(local, cms) {
         : undefined,
       statCubesRow: !!cms.stat_cubes_row,
       mapLink: cms.map_link || undefined,
+      /* ה-slug לא הועתק מה-CMS, ולכן כל ליד מעמוד פרויקט נשמר בלי מזהה
+         הפרויקט: בלוח הלידים ובמייל לא היה קישור חוזר לעמוד שממנו הגיעה
+         הפנייה, וגם עקבות הביקור נשמרו בלי מזהה. */
+      slug: cms.slug || undefined,
     }
     for (const k in over) if (over[k] !== undefined) base[k] = over[k]
   }
@@ -247,7 +252,7 @@ export default function ProjectDetail() {
     return () => { alive = false }
   }, [slug])
 
-  const project = buildProject(local, cms)
+  const project = buildProject(local, cms, slug)
 
   // רישום הפרויקט הנצפה — נצמד אחר-כך לכל ליד/הרשמה מהביקור הזה
   useEffect(() => {

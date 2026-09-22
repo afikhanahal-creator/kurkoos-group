@@ -746,7 +746,8 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
             <span className="adm-list__stage-pill" style={{ background: st.color }} title={st.label}/>
 
             <div className="adm-list__name-cell">
-              <button type="button" className="adm-list__name" onClick={() => setEditing(lead)}>{lead.name||'ללא שם'}</button>
+              {/* בתצוגת רשימה אין מקום לגוף ההודעה, ולכן הוא זמין בריחוף על השם */}
+              <button type="button" className="adm-list__name" onClick={() => setEditing(lead)} title={lead.message || undefined}>{lead.name||'ללא שם'}</button>
               {needsAttention(lead) && <span className="adm-lead__attn">ממתין {waitingDays(lead)} ימים</span>}
             </div>
 
@@ -803,7 +804,8 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing, quickEd
             const wa   = waLink(lead.phone)
             return (
               <tr key={lead.id}>
-                <td>
+                {/* גוף ההודעה זמין בריחוף — אין לו עמודה בטבלה */}
+                <td title={lead.message || undefined}>
                   <EditableCell value={lead.name} placeholder="ללא שם"
                     onSave={(v) => quickEdit(lead.id, { name: v })}/>
                 </td>

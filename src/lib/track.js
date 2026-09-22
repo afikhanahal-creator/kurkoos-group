@@ -7,8 +7,27 @@
    - newsletter_signup
    - phone_click / whatsapp_click / email_click
    ============================================================ */
+/* מפתח ההחרגה. מי שמסמן באדמין "אל תספור את הביקורים שלי" מקבל
+   את הדגל הזה בדפדפן שלו, וכל המדידה נכבית בו. זה קיים כדי שהבדיקות
+   שלנו באתר לא ייכנסו לסטטיסטיקה: באתר עם עשרות משתמשים בחודש, כמה
+   סיבובים שלנו באתר מזיזים את המספרים משמעותית. */
+export const NO_TRACK_KEY = 'kc_no_track'
+
+export function trackingDisabled() {
+  try { return typeof localStorage !== 'undefined' && localStorage.getItem(NO_TRACK_KEY) === '1' }
+  catch { return false }
+}
+
+export function setTrackingDisabled(on) {
+  try {
+    if (on) localStorage.setItem(NO_TRACK_KEY, '1')
+    else localStorage.removeItem(NO_TRACK_KEY)
+  } catch { /* דפדפן שחוסם אחסון — פשוט לא נזכור את הבחירה */ }
+}
+
 export function track(name, params = {}) {
   try {
+    if (trackingDisabled()) return
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       window.gtag('event', name, params)
     }

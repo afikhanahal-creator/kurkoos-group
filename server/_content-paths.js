@@ -5,6 +5,10 @@ export default [
     "lastmod": "2026-07-12"
   },
   {
+    "path": "/construction-supervision/construction-supervision-bdek-dira-lifney-mesira",
+    "lastmod": "2026-09-20"
+  },
+  {
     "path": "/construction-supervision/construction-supervision-harigot-taktziv",
     "lastmod": "2026-09-06"
   },
@@ -55,6 +59,10 @@ export default [
   {
     "path": "/constructions/concrete-cube-test-failure",
     "lastmod": "2026-07-05"
+  },
+  {
+    "path": "/constructions/concrete-cube-test-failure",
+    "lastmod": "2026-09-20"
   },
   {
     "path": "/constructions/hibur-hashmal-mayim-lifney-ikhlus",
@@ -129,6 +137,10 @@ export default [
     "lastmod": "2026-07-13"
   },
   {
+    "path": "/real-estate-guide/bdikot-lifney-rechishat-dira",
+    "lastmod": "2026-09-20"
+  },
+  {
     "path": "/real-estate-guide/choze-schirut-baal-bayit",
     "lastmod": "2026-07-19"
   },
@@ -199,6 +211,10 @@ export default [
   {
     "path": "/yazamut-nadlan/maslul-mahir-arvuyot",
     "lastmod": "2026-06-07"
+  },
+  {
+    "path": "/yazamut-nadlan/modular-construction-speed-promise-reality",
+    "lastmod": "2026-09-20"
   },
   {
     "path": "/yazamut-nadlan/no-mamad-price-gap-developer",

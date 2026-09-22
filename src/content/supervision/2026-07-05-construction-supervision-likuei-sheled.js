@@ -1,6 +1,6 @@
 // נוצר אוטומטית — פיקוח פרויקטים · 2026-07-05
 export default {
-  "slug": "construction-supervision-likuei-sheled",
+  "slug": "construction-supervision-likuei-sheled-beton",
   "title": "ליקויי שלד: הטעויות שנחתמות בבטון ואי אפשר לתקן",
   "date": "2026-07-05",
   "author": "המערכת, שכינתא",

@@ -1,6 +1,6 @@
 // נוצר אוטומטית — פיקוח פרויקטים · 2026-09-13
 export default {
-  "slug": "construction-supervision-likuei-sheled-critical",
+  "slug": "construction-supervision-likuei-sheled-bitzua",
   "title": "ליקויי שלד: הטעויות הקריטיות בביצוע שאי אפשר לתקן אחר כך",
   "date": "2026-09-13",
   "author": "המערכת, שכינתא",

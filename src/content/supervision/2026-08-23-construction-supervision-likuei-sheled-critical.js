@@ -1,6 +1,6 @@
 // נוצר אוטומטית — פיקוח פרויקטים · 2026-08-23
 export default {
-  "slug": "construction-supervision-likuei-sheled-critical",
+  "slug": "construction-supervision-likuei-sheled-yom-hayetzika",
   "title": "ליקויי שלד: הטעויות שנקבעות ביום היציקה ומשלמים עליהן שנים",
   "date": "2026-08-23",
   "author": "המערכת, שכינתא",

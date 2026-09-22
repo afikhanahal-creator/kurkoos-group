@@ -61,4 +61,15 @@ for (const [, handlerPath] of gateway.matchAll(/import\('\.\.\/server\/([\w-]+\.
   if (!existsSync(join(root, 'server', handlerPath))) fail(`api/[fn].js מפנה אל server/${handlerPath} שלא קיים.`)
 }
 
+/* 7. קובץ אימות הבעלות של Google Search Console נשאר במקומו ועם התוכן המדויק.
+   אם הוא נעלם או שהתוכן משתנה, האימות מתבטל וכל הדוחות נסגרים. */
+const gsc = readdirSync(join(root, 'public')).filter((f) => /^google[a-z0-9]+\.html$/.test(f))
+for (const f of gsc) {
+  const body = readFileSync(join(root, 'public', f), 'utf8').trim()
+  if (body !== `google-site-verification: ${f}`) {
+    fail(`קובץ האימות public/${f} מכיל תוכן שגוי. התוכן חייב להיות בדיוק: google-site-verification: ${f}`)
+  }
+  if (!existsSync(join(root, 'dist', f))) fail(`קובץ האימות ${f} לא הועתק ל-dist.`)
+}
+
 console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם')

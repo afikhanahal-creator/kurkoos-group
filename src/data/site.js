@@ -19,8 +19,12 @@ export const site = {
     hours: { he: "א'–ה' 9:00-18:00", en: 'Sun–Thu 9:00-18:00' },
   },
 
+  /* עמודי הרשתות של אפיק הנחל, זרוע התיווך והשיווק של הקבוצה.
+     מחוברים גם ב-sameAs בסכמה שב-index.html, כדי שגוגל יקשר בין
+     האתר לפרופילים ויזהה אותם כאותה ישות. */
   social: [
-    { name: 'Facebook', url: 'https://facebook.com', icon: 'facebook' },
+    { name: 'אפיק הנחל בפייסבוק', url: 'https://www.facebook.com/profile.php?id=61573376818745', icon: 'facebook' },
+    { name: 'אפיק הנחל באינסטגרם', url: 'https://www.instagram.com/afik.hanahal/', icon: 'instagram' },
   ],
 
   /* ניווט ראשי — מבוסס תחומים (דיוויזיות), במבנה של תדהר.

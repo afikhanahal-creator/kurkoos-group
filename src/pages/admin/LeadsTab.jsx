@@ -273,6 +273,23 @@ export default function LeadsTab() {
   }, [])
   useEffect(() => load(), [load])
 
+  /* רענון שקט של הלוח. הלוח נטען פעם אחת בלבד בכניסה, ולכן משרד שמשאיר את
+     מסך הניהול פתוח לא היה רואה ליד שנכנס אחרי הפתיחה, עד רענון ידני. כאן
+     מושכים מחדש כל דקה וגם בכל חזרה ללשונית, בלי ספינר ובלי לדרוס עריכה
+     או גרירה שמתבצעת ברגע זה. */
+  const busyEditing = editing !== null || dragId !== null
+  const busyRef = useRef(busyEditing)
+  useEffect(() => { busyRef.current = busyEditing })
+  useEffect(() => {
+    const refresh = () => {
+      if (busyRef.current || document.hidden) return
+      listLeads().then((d) => setLeads(d)).catch(() => { /* רענון שקט — שגיאה לא מפריעה לעבודה */ })
+    }
+    const timer = setInterval(refresh, 60_000)
+    document.addEventListener('visibilitychange', refresh)
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', refresh) }
+  }, [])
+
   const filtered = useMemo(() => {
     let list = leads
     if (stageFilter !== 'all')   list = list.filter((l) => (l.status || 'new') === stageFilter)

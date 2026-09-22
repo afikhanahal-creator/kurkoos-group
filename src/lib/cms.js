@@ -376,6 +376,15 @@ function sanitizeLead(row) {
   return out
 }
 
+/* שדות הליב של ליד — מה שבאמת צריך כדי לחזור לאדם. אם ההכנסה נכשלת בגלל
+   עמודה שחסרה במסד (סכמה ישנה: notes/project), מנסים שוב רק עם אלה במקום
+   לאבד את הפנייה כולה. */
+const _LEAD_CORE = ['name', 'phone', 'email', 'message', 'source', 'status']
+const _coreOnly = (row) => Object.fromEntries(_LEAD_CORE.filter((k) => row[k] != null).map((k) => [k, row[k]]))
+// עמודה חסרה / סכמה לא תואמת — PostgREST מחזיר PGRST204 או קוד Postgres 42703/42P01
+const _isSchemaError = (e) => /PGRST204|42703|42P01/.test(`${e?.code || ''} ${e?.message || ''}`)
+const _sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
 // יצירת ליד — נקראת גם מטפסי האתר (אנונימי, RLS מתיר insert לכולם)
 export async function createLead(row, { read = true } = {}) {
   if (!supabase) return
@@ -388,17 +397,31 @@ export async function createLead(row, { read = true } = {}) {
       if (error) throw error
       lead = data
     } else {
-      // מסלול ציבורי (אנונימי) — למבקר יש הרשאת *הכנסה* אך לא *קריאה* (RLS). לכן לא
-      // מבקשים RETURNING (.select) שהיה נכשל למרות שההכנסה הצליחה. בונים את האובייקט
-      // מהנתונים שנשלחו (להתראת המייל).
-      const { error } = await supabase.from('leads').insert(row)
+      /* מסלול ציבורי (אנונימי) — למבקר יש הרשאת *הכנסה* אך לא *קריאה* (RLS). לכן לא
+         מבקשים RETURNING (.select) שהיה נכשל למרות שההכנסה הצליחה. בונים את האובייקט
+         מהנתונים שנשלחו (להתראת המייל).
+         פנייה של אדם אמיתי שווה יותר מניסיון אחד: תקלת רשת רגעית אצל המבקר
+         מקבלת שני ניסיונות חוזרים, וסכמה לא תואמת מקבלת ניסיון אחרון עם שדות
+         הליב בלבד. */
+      let error = null
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt) await _sleep(400 * attempt)
+        ;({ error } = await supabase.from('leads').insert(row))
+        if (!error) break
+        if (_isSchemaError(error)) {
+          const fallback = await supabase.from('leads').insert(_coreOnly(row))
+          error = fallback.error
+          break
+        }
+      }
       if (error) throw error
       lead = { ...row, created_at: new Date().toISOString() }
     }
   } catch (err) {
-    /* רשת ביטחון: השמירה למסד נכשלה (RLS, רשת, מסד למטה). הפרטים של אדם
-       אמיתי לא יכולים פשוט להיעלם, ולכן שולחים אותם בכל זאת להתראת המייל,
-       מסומנים כ"לא נשמר", כדי שאפשר יהיה לחזור אליו ולהזין ידנית. */
+    /* רשת ביטחון אחרונה: כל הניסיונות מהדפדפן נכשלו (RLS, רשת, מסד למטה).
+       שולחים את הפרטים ל-/api/notify-lead מסומנים saveFailed. שם, עם מפתח
+       service role ומהשרת של Vercel, מנסים להכניס את הליד למסד בשם המבקר,
+       וגם שולחים מייל. כך הפנייה מגיעה ללוח הלידים גם כשהדפדפן נכשל. */
     if (row.source !== 'manual') {
       notifyNewLead({ ...row, created_at: new Date().toISOString(), saveFailed: true })
     }

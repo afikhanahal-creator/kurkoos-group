@@ -27,6 +27,22 @@ const FIELD_LABELS = {
 const SOURCE_LABELS = { project: 'עמוד פרויקט', home: 'דף הבית', contact: 'צור קשר', manual: 'ידני' }
 const DEFAULT_FIELDS = ['name', 'phone', 'email', 'project', 'message', 'source', 'created_at']
 
+// עמודות טבלת leads — כל שדה אחר שמגיע מהדפדפן (למשל saveFailed) נזרק לפני הכנסה
+const LEAD_COLS = { name: 200, phone: 30, email: 200, message: 2000, notes: 2000 }
+const VALID_SOURCES = new Set(['project', 'contact', 'home', 'manual'])
+function leadRowForInsert(lead) {
+  const row = {}
+  for (const [k, max] of Object.entries(LEAD_COLS)) {
+    if (lead[k] != null && lead[k] !== '') row[k] = String(lead[k]).slice(0, max)
+  }
+  if (lead.project != null && lead.project !== '') {
+    row.project = typeof lead.project === 'object' ? lead.project : String(lead.project).slice(0, 200)
+  }
+  row.source = VALID_SOURCES.has(lead.source) ? lead.source : 'contact'
+  row.status = lead.status || 'new'
+  return row
+}
+
 // מונע HTML injection — מחליף תווים מיוחדים בישויות HTML בטוחות
 function htmlEsc(s) {
   return String(s == null ? '' : s)
@@ -69,12 +85,37 @@ export default async function handler(req, res) {
       if (!authCheck.ok) { res.status(401).json({ error: 'Unauthorized — invalid session' }); return }
     }
 
+    const SB = SUPABASE_URL.replace(/\/$/, '')
     const sbHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
     const sbGet = async (path) => {
-      const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${path}`, { headers: sbHeaders })
+      const r = await fetch(`${SB}/rest/v1/${path}`, { headers: sbHeaders })
       const txt = await r.text()
       if (!r.ok) throw new Error(`Supabase ${r.status}: ${txt.slice(0, 180)}`)
       try { return JSON.parse(txt) } catch { return [] }
+    }
+
+    const lead = isTest
+      ? { name: 'ליד בדיקה', phone: '050-0000000', email: 'test@example.com', project: 'בדיקת מערכת', message: 'זוהי הודעת בדיקה ממסך הגדרות ההתראות.', source: 'contact', created_at: new Date().toISOString() }
+      : (body.lead || {})
+
+    /* הצלה בצד השרת: הדפדפן לא הצליח לשמור את הפנייה (RLS, רשת של המבקר,
+       מסד לא זמין לרגע). כאן יש מפתח service role והבקשה יוצאת מהשרת של
+       Vercel, ולכן היא מצליחה כמעט בכל תרחיש כשל. כך הליד בכל זאת מגיע
+       ללוח הלידים כליד חדש, ולא רק למייל. רץ לפני בדיקות ההתראה, כדי
+       שכיבוי ההתראות או היעדר נמענים לא ימנע את ההצלה. */
+    let rescued = null
+    if (lead.saveFailed && !isTest && (lead.name || lead.phone || lead.email)) {
+      try {
+        const r = await fetch(`${SB}/rest/v1/leads`, {
+          method: 'POST',
+          headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify(leadRowForInsert(lead)),
+        })
+        if (!r.ok) throw new Error(`Supabase ${r.status}: ${(await r.text()).slice(0, 180)}`)
+        rescued = true
+      } catch {
+        rescued = false
+      }
     }
 
     const [settingsRows, recipients] = await Promise.all([
@@ -82,14 +123,10 @@ export default async function handler(req, res) {
       sbGet('lead_notify_recipients?active=eq.true&select=*'),
     ])
     const settings = (Array.isArray(settingsRows) && settingsRows[0]) || { enabled: true, subject: 'ליד חדש מהאתר: {{name}}', include_fields: DEFAULT_FIELDS }
-    if (!settings.enabled) { res.status(200).json({ ok: true, skipped: 'disabled' }); return }
+    if (!settings.enabled) { res.status(200).json({ ok: true, skipped: 'disabled', rescued }); return }
 
     const to = (Array.isArray(recipients) ? recipients : []).map((r) => r.email).filter(Boolean)
-    if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients' }); return }
-
-    const lead = isTest
-      ? { name: 'ליד בדיקה', phone: '050-0000000', email: 'test@example.com', project: 'בדיקת מערכת', message: 'זוהי הודעת בדיקה ממסך הגדרות ההתראות.', source: 'contact', created_at: new Date().toISOString() }
-      : (body.lead || {})
+    if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients', rescued }); return }
 
     const fields = Array.isArray(settings.include_fields) && settings.include_fields.length ? settings.include_fields : DEFAULT_FIELDS
     const val = (k) => {
@@ -102,19 +139,23 @@ export default async function handler(req, res) {
       }
       return (v == null || v === '') ? '—' : String(v)
     }
+    /* SITE חייב להיות מוגדר לפני PROJECT_URL. כשההגדרה הייתה מתחת לשימוש,
+       כל ליד שהגיע עם slug של פרויקט הפיל את הפונקציה (TDZ) ולא נשלח עליו
+       מייל בכלל — בדיוק הלידים החמים ביותר. */
+    const SITE = process.env.SITE_URL || 'https://www.kurkoos-group.co.il'
+    const ADMIN_URL = `${SITE}/admin`
+    const LOGO = `${SITE}/kurkoos-logo-nadlan.png`
+
     const projectName = (lead.project && typeof lead.project === 'object') ? (lead.project.he || lead.project.en || '') : (lead.project || '')
     const projectSlug = (lead.project && typeof lead.project === 'object') ? (lead.project.slug || '') : ''
     const PROJECT_URL = projectSlug ? `${SITE}/projects/${projectSlug}` : ''
     const safeName = String(lead.name || 'ללא שם').slice(0, 100).replace(/[\r\n]/g, ' ')
     const safeProject = String(projectName).slice(0, 100).replace(/[\r\n]/g, ' ')
-    const subject = (lead.saveFailed ? '⚠ ליד שלא נשמר במערכת: ' : '') + (settings.subject || 'ליד חדש מהאתר: {{name}}')
+    const prefix = rescued === true ? '↻ נשמר בגיבוי שרת: ' : rescued === false ? '⚠ ליד שלא נשמר במערכת: ' : ''
+    const subject = prefix + (settings.subject || 'ליד חדש מהאתר: {{name}}')
       .replace(/{{\s*name\s*}}/g, safeName)
       .replace(/{{\s*project\s*}}/g, safeProject)
       + (isTest ? ' (בדיקה)' : '')
-
-    const SITE = process.env.SITE_URL || 'https://www.kurkoos-group.co.il'
-    const ADMIN_URL = `${SITE}/admin`
-    const LOGO = `${SITE}/kurkoos-logo-nadlan.png`
 
     const font = "'Heebo','Assistant','Segoe UI',Arial,sans-serif"
     // ערך תא — כל ערכי המשתמש עוברים htmlEsc למניעת HTML injection במייל לאדמין
@@ -152,8 +193,11 @@ export default async function handler(req, res) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f5">
       <tr><td align="center" style="padding:32px 14px">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" dir="rtl" style="width:100%;max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 16px 46px rgba(7,41,58,0.16)">
-          ${lead.saveFailed ? `<tr><td style="background:#b42318;padding:18px 40px;text-align:center">
-            <div style="font-family:${font};font-size:15px;font-weight:800;color:#ffffff;line-height:1.6">⚠ הליד הזה לא נשמר במערכת הניהול<br><span style="font-weight:600">השמירה למסד נכשלה והפרטים נשלחו לכאן כגיבוי. חזרו ללקוח והזינו אותו ידנית בלוח הלידים.</span></div>
+          ${rescued === true ? `<tr><td style="background:#0f7b3f;padding:18px 40px;text-align:center">
+            <div style="font-family:${font};font-size:15px;font-weight:800;color:#ffffff;line-height:1.6">↻ הפנייה נשמרה דרך גיבוי השרת<br><span style="font-weight:600">השמירה מהדפדפן של המבקר נכשלה, והשרת הכניס את הליד ללוח הלידים. הליד נמצא במערכת, אין צורך להזין אותו ידנית.</span></div>
+          </td></tr>` : ''}
+          ${rescued === false ? `<tr><td style="background:#b42318;padding:18px 40px;text-align:center">
+            <div style="font-family:${font};font-size:15px;font-weight:800;color:#ffffff;line-height:1.6">⚠ הליד הזה לא נשמר במערכת הניהול<br><span style="font-weight:600">גם השמירה מהדפדפן וגם גיבוי השרת נכשלו. הפרטים כאן הם העותק היחיד: חזרו ללקוח והזינו אותו ידנית בלוח הלידים.</span></div>
           </td></tr>` : ''}
           <!-- באנר כותרת כהה (פלטת המותג) -->
           <tr><td style="background:#07293a;padding:34px 40px;text-align:center">
@@ -194,10 +238,10 @@ export default async function handler(req, res) {
     const outTxt = await r.text()
     let out = {}; try { out = JSON.parse(outTxt) } catch { /* non-JSON */ }
     if (!r.ok) {
-      res.status(502).json({ error: `Resend ${r.status}: ${out.message || out.error?.message || outTxt.slice(0, 200) || 'שגיאת שליחה'}`, detail: out })
+      res.status(502).json({ error: `Resend ${r.status}: ${out.message || out.error?.message || outTxt.slice(0, 200) || 'שגיאת שליחה'}`, detail: out, rescued })
       return
     }
-    res.status(200).json({ ok: true, sent: to.length, id: out.id })
+    res.status(200).json({ ok: true, sent: to.length, id: out.id, rescued })
   } catch (e) {
     res.status(500).json({ error: 'שגיאת שרת: ' + (e && e.message ? e.message : String(e)) })
   }

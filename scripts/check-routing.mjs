@@ -61,7 +61,21 @@ for (const [, handlerPath] of gateway.matchAll(/import\('\.\.\/server\/([\w-]+\.
   if (!existsSync(join(root, 'server', handlerPath))) fail(`api/[fn].js מפנה אל server/${handlerPath} שלא קיים.`)
 }
 
-/* 7. קובץ אימות הבעלות של Google Search Console נשאר במקומו ועם התוכן המדויק.
+/* 7. תגית אימות הבעלות של Google Search Console ב-index.html.
+   זו שיטת האימות הפעילה באתר, כי תחת cleanUrls כתובת ‎.html מקבלת
+   הפניה 308 לפני שכבת הקבצים ו-Search Console דוחה הפניות. התגית
+   עוברת מ-index.html לכל העמודים הסטטיים. אם היא נעלמת, האימות
+   מתבטל וכל הדוחות נסגרים. */
+{
+  const idx = readFileSync(join(root, 'index.html'), 'utf8')
+  const m = idx.match(/<meta\s+name="google-site-verification"\s+content="([^"]*)"/)
+  if (!m) fail('חסרה תגית ה-google-site-verification ב-index.html — האימות מול Search Console יתבטל.')
+  if (m[1].trim().length < 20) fail('תגית ה-google-site-verification ב-index.html ריקה או קצרה מדי.')
+  const home = readFileSync(join(root, 'dist', 'index.html'), 'utf8')
+  if (!home.includes(m[1])) fail('תגית האימות לא הגיעה ל-dist/index.html.')
+}
+
+/* 8. קובץ אימות הבעלות של Google Search Console נשאר במקומו ועם התוכן המדויק.
    אם הוא נעלם או שהתוכן משתנה, האימות מתבטל וכל הדוחות נסגרים. */
 const gsc = readdirSync(join(root, 'public')).filter((f) => /^google[a-z0-9]+\.html$/.test(f))
 for (const f of gsc) {

@@ -2,6 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/s-projects-basic",
+      "destination": "/projects",
+      "permanent": true
+    },
+    {
+      "source": "/m/projects",
+      "destination": "/projects",
+      "permanent": true
+    },
+    {
+      "source": "/m/:path*",
+      "destination": "/:path*",
+      "permanent": true
+    }
+  ],
   "git": {
     "deploymentEnabled": {
       "**": false,

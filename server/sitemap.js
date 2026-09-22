@@ -25,6 +25,7 @@ const STATIC = [
   { path: '/real-estate-guide', changefreq: 'weekly', priority: '0.8' },
   { path: '/real-estate-glossary', changefreq: 'monthly', priority: '0.8' },
   { path: '/real-estate-sharon', changefreq: 'monthly', priority: '0.9' },
+  { path: '/villas-sharon', changefreq: 'monthly', priority: '0.9' },
   { path: '/real-estate-calculators', changefreq: 'monthly', priority: '0.8' },
   { path: '/livy-yazamim', changefreq: 'monthly', priority: '0.8' },
   { path: '/madrich-yazamim', changefreq: 'weekly', priority: '0.8' },

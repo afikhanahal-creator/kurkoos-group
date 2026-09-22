@@ -42,3 +42,16 @@
   .lhub-faq__item summary { font-size: 0.98rem; padding: 0.9rem 1rem; }
   .lhub-faq__item p { padding: 0 1rem 1rem; font-size: 0.95rem; }
 }
+
+/* כרטיס מידע סטטי בתוך רשימת ה-FAQ (מתחמי הבתים הפרטיים).
+   אין כאן summary שנושא את הריפוד, ולכן הכרטיס מרפד את עצמו. */
+.lhub-faq__item--static { cursor: default; padding: 1.05rem 1.3rem 1.15rem; }
+.lhub-faq__item--static h3 {
+  margin: 0 0 0.45rem; font-family: var(--font-heading); font-weight: 700;
+  font-size: 1.05rem; color: var(--color-text, #16202e);
+}
+.lhub-faq__item--static p { margin: 0; padding: 0; }
+@media (max-width: 720px) {
+  .lhub-faq__item--static { padding: 0.9rem 1rem 1rem; }
+  .lhub-faq__item--static h3 { font-size: 0.98rem; }
+}

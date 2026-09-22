@@ -6,7 +6,7 @@
   "description": "אתר תדמית לקורקוס גרופ - יזמות, בנייה, פיקוח ותיווך נדל\"ן",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-sitemap-paths.mjs && vite build && node scripts/prerender-static.mjs && node scripts/check-routing.mjs",
+    "build": "node scripts/generate-sitemap-paths.mjs && vite build && node scripts/prerender-static.mjs && node scripts/check-routing.mjs && node scripts/check-deploy-size.mjs",
     "preview": "vite preview",
     "migrate:media": "node scripts/migrate-media-to-cloudinary.mjs"
   },
@@ -14,7 +14,6 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@imgly/background-removal": "^1.7.0",
     "@supabase/supabase-js": "^2.107.0",
     "framer-motion": "^11.11.17",
     "react": "^18.3.1",

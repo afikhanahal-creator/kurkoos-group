@@ -7,7 +7,7 @@ import './image-editor.css'
    • מסגרת חיתוך (cover): לפי המקום באתר / לרוחב / לאורך / ריבוע / פס
    • גרירה, זום (סליידר + גלגלת), סיבוב חופשי + 90°, היפוכים
    • פילטרים עם תצוגה מקדימה חיה, כיוונון צבע, צביעה (Tint)
-   • פינות מעוגלות, הסרת רקע לבן, הסרת רקע AI (בדפדפן)
+   • פינות מעוגלות, הסרת רקע לבן (ללוגואים)
    • השוואת לפני/אחרי בלחיצה ארוכה, ייצוא WebP ברזולוציה מלאה
    הכל בצד לקוח (Canvas). פלט: Blob שמועלה לאחסון.
    ============================================================ */
@@ -83,7 +83,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
   const [ready, setReady] = useState(false)
   const [err, setErr] = useState('')
   const [ver, setVer] = useState(0)          // מאלץ ציור מחדש אחרי החלפת תמונת הבסיס (AI)
-  const [aiBusy, setAiBusy] = useState(false)
+
   const [tab, setTab] = useState('crop')
   const [compare, setCompare] = useState(false)   // לחיצה ארוכה על "לפני" — מציג את המקור
   const [thumb, setThumb] = useState('')          // תמונת בסיס קטנה לתצוגות הפילטרים
@@ -202,22 +202,6 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
       setThumb(c.toDataURL('image/jpeg', 0.7))
     } catch { setThumb('') }
   }, [ready, ver])
-
-  /* הסרת רקע אוטומטית (AI) — רץ בדפדפן, ללא מפתח */
-  const removeBgAi = async () => {
-    setAiBusy(true); setErr('')
-    try {
-      const { removeBackground } = await import('@imgly/background-removal')
-      const resultBlob = await removeBackground(src)
-      const url = URL.createObjectURL(resultBlob)
-      const img = new Image()
-      img.onload = () => { imgRef.current = img; URL.revokeObjectURL(url); setVer((v) => v + 1) }
-      img.onerror = () => { URL.revokeObjectURL(url); setErr('טעינת התוצאה נכשלה') }
-      img.src = url
-    } catch (e) {
-      setErr('הסרת הרקע נכשלה: ' + (e?.message || e))
-    } finally { setAiBusy(false) }
-  }
 
   /* גרירה — מפוצה על יחס התצוגה (הקנבס מוצג מוקטן במסכים צרים) */
   const dispRatio = () => {
@@ -438,9 +422,6 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
               {tab === 'bg' && (
                 <section className="imed__group">
                   <h4>הסרת רקע</h4>
-                  <button type="button" className="imed__btn imed__btn--ai" disabled={aiBusy || !ready} onClick={removeBgAi}>
-                    {aiBusy ? <><span className="imed__spin" /> מסיר רקע… (טעינה ראשונה עד דקה)</> : '✨ הסרת רקע אוטומטית (AI)'}
-                  </button>
                   <label className="imed__check">
                     <input type="checkbox" checked={bg.remove} onChange={(e) => setBg((p) => ({ ...p, remove: e.target.checked }))} />
                     הסרת רקע לבן (מהיר, ללוגואים)

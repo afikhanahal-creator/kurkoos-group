@@ -18,8 +18,8 @@ const COMPANY = {
   shortName: { he: 'קבוצת קורקוס', en: 'Kurkoos Group' },
   regNo: '',                         // ח.פ. — להשלמה
   addr: { he: 'הנגר 24, הוד-השרון, מגדלי Amy — מגדל A', en: '24 HaNagar St., Hod HaSharon, Amy Towers — Tower A' },
-  phone: '050-685-5656',
-  phoneHref: '+972506855656',
+  phone: '055-981-1814',
+  phoneHref: '+972559811814',
   email: 'kurkoosgroup.sales@gmail.com',
   site: 'kurkoos-group.co.il',
   siteHref: 'https://www.kurkoos-group.co.il',

@@ -1323,3 +1323,10 @@ html.header-top-hidden .pd-anchors { top: 0; }
 @media (max-width: 768px) {
   .pd-split__media--ar { aspect-ratio: var(--about-ar-m, auto); }
 }
+
+/* הודעת כשל שליחה בטופס הפרויקט — חייבת להיות בולטת, פנייה שנכשלה היא ליד אבוד */
+.pd-contact__error {
+  margin: 0 0 0.9rem; padding: 0.7rem 0.95rem; border-radius: 10px;
+  background: rgba(180, 35, 24, 0.08); border: 1px solid rgba(180, 35, 24, 0.3);
+  color: #b42318; font-size: 0.92rem; line-height: 1.6; font-weight: 600;
+}

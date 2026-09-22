@@ -381,18 +381,28 @@ export async function createLead(row, { read = true } = {}) {
   if (!supabase) return
   row = sanitizeLead(row)
   let lead
-  if (read) {
-    // מסלול מנהל (מחובר) — קוראים בחזרה את השורה (כולל id) עבור ה-UI
-    const { data, error } = await supabase.from('leads').insert(row).select().single()
-    if (error) throw error
-    lead = data
-  } else {
-    // מסלול ציבורי (אנונימי) — למבקר יש הרשאת *הכנסה* אך לא *קריאה* (RLS). לכן לא
-    // מבקשים RETURNING (.select) שהיה נכשל למרות שההכנסה הצליחה. בונים את האובייקט
-    // מהנתונים שנשלחו (להתראת המייל).
-    const { error } = await supabase.from('leads').insert(row)
-    if (error) throw error
-    lead = { ...row, created_at: new Date().toISOString() }
+  try {
+    if (read) {
+      // מסלול מנהל (מחובר) — קוראים בחזרה את השורה (כולל id) עבור ה-UI
+      const { data, error } = await supabase.from('leads').insert(row).select().single()
+      if (error) throw error
+      lead = data
+    } else {
+      // מסלול ציבורי (אנונימי) — למבקר יש הרשאת *הכנסה* אך לא *קריאה* (RLS). לכן לא
+      // מבקשים RETURNING (.select) שהיה נכשל למרות שההכנסה הצליחה. בונים את האובייקט
+      // מהנתונים שנשלחו (להתראת המייל).
+      const { error } = await supabase.from('leads').insert(row)
+      if (error) throw error
+      lead = { ...row, created_at: new Date().toISOString() }
+    }
+  } catch (err) {
+    /* רשת ביטחון: השמירה למסד נכשלה (RLS, רשת, מסד למטה). הפרטים של אדם
+       אמיתי לא יכולים פשוט להיעלם, ולכן שולחים אותם בכל זאת להתראת המייל,
+       מסומנים כ"לא נשמר", כדי שאפשר יהיה לחזור אליו ולהזין ידנית. */
+    if (row.source !== 'manual') {
+      notifyNewLead({ ...row, created_at: new Date().toISOString(), saveFailed: true })
+    }
+    throw err
   }
   // התראת מייל אוטומטית בזמן אמת — רק לפניות מהאתר (לא לידים שנוספו ידנית בניהול)
   if (lead && row.source !== 'manual') notifyNewLead(lead)

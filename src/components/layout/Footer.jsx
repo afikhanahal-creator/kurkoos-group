@@ -50,6 +50,7 @@ export default function Footer() {
               href={`mailto:${contact.email}`}
               aria-label={L({ he: 'שלחו לנו מייל', en: 'Email us' })}
               className="footer__social-link"
+              onClick={() => track('email_click', { placement: 'footer_social' })}
             >
               <Icon name="mail" size={20} />
             </a>

@@ -2,6 +2,7 @@ import { useI18n } from '../i18n/index.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
+import { track } from '../lib/track.js'
 import './InfoPage.css'
 import './Legal.css'
 
@@ -335,8 +336,8 @@ export default function Legal({ kind }) {
               <div className="priv-contact">
                 <strong className="priv-contact__name">{L(COMPANY.name)}</strong>
                 <p><b>{isHe ? 'כתובת' : 'Address'}:</b> {L(COMPANY.addr)}</p>
-                <p><b>{isHe ? 'טלפון' : 'Phone'}:</b> <a href={`tel:${COMPANY.phoneHref}`}>{COMPANY.phone}</a></p>
-                <p><b>{isHe ? 'דוא"ל' : 'Email'}:</b> <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a></p>
+                <p><b>{isHe ? 'טלפון' : 'Phone'}:</b> <a href={`tel:${COMPANY.phoneHref}`} onClick={() => track('phone_click', { placement: 'legal' })}>{COMPANY.phone}</a></p>
+                <p><b>{isHe ? 'דוא"ל' : 'Email'}:</b> <a href={`mailto:${COMPANY.email}`} onClick={() => track('email_click', { placement: 'legal' })}>{COMPANY.email}</a></p>
                 <p><b>{isHe ? 'אתר' : 'Site'}:</b> <a href={COMPANY.siteHref} target="_blank" rel="noopener noreferrer">{COMPANY.site}</a></p>
               </div>
             </section>
@@ -398,8 +399,8 @@ export default function Legal({ kind }) {
               <div className="priv-contact">
                 <strong className="priv-contact__name">{d.coordinator} — {L(COMPANY.name)}</strong>
                 <p><b>{isHe ? 'כתובת' : 'Address'}:</b> {L(COMPANY.addr)}</p>
-                <p><b>{isHe ? 'טלפון' : 'Phone'}:</b> <a href={`tel:${COMPANY.phoneHref}`}>{COMPANY.phone}</a></p>
-                <p><b>{isHe ? 'דוא"ל' : 'Email'}:</b> <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a></p>
+                <p><b>{isHe ? 'טלפון' : 'Phone'}:</b> <a href={`tel:${COMPANY.phoneHref}`} onClick={() => track('phone_click', { placement: 'legal' })}>{COMPANY.phone}</a></p>
+                <p><b>{isHe ? 'דוא"ל' : 'Email'}:</b> <a href={`mailto:${COMPANY.email}`} onClick={() => track('email_click', { placement: 'legal' })}>{COMPANY.email}</a></p>
                 <p><b>{isHe ? 'אתר' : 'Site'}:</b> <a href={COMPANY.siteHref} target="_blank" rel="noopener noreferrer">{COMPANY.site}</a></p>
               </div>
             </section>

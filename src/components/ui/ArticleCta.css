@@ -1,0 +1,97 @@
+/* ============================================================
+   בלוק הסיום של כתבה. נשען על טוקני המותג, ולכן הוא מרגיש חלק מהאתר
+   ולא באנר פרסומי. כהה, כדי לסגור את הכתבה ולמשוך את העין לפעולה.
+   ============================================================ */
+
+.art-cta {
+  background: var(--color-primary-900);
+  padding: clamp(2.6rem, 6vw, 4.2rem) 0;
+  color: #fff;
+}
+
+.art-cta__inner {
+  max-width: 720px;
+  text-align: center;
+}
+
+.art-cta__eyebrow {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--color-primary-300);
+  margin-bottom: 0.7rem;
+}
+
+.art-cta__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  line-height: 1.25;
+  margin: 0 0 0.7rem;
+  color: #fff;
+}
+
+.art-cta__text {
+  font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0 auto 1.6rem;
+  max-width: 56ch;
+}
+
+.art-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.art-cta__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+/* וואטסאפ בצבע המזוהה שלו — הערוץ שממיר הכי טוב במובייל */
+.art-cta__btn--wa {
+  background: #25d366;
+  color: #07293a;
+  border: none;
+  font-weight: 700;
+}
+.art-cta__btn--wa:hover { background: #1fb856; }
+
+/* כפתור שלישי על רקע כהה: מתאר קו, אחרת הוא נבלע ברקע ולא נראה ככפתור */
+.art-cta__btn--ghost {
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+}
+.art-cta__btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #fff;
+}
+
+.art-cta__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1.4rem;
+  color: var(--color-primary-300);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(143, 182, 200, 0.4);
+  padding-bottom: 2px;
+  transition: color .15s, border-color .15s;
+}
+.art-cta__more:hover { color: #fff; border-color: #fff; }
+
+@media (max-width: 520px) {
+  /* במובייל כפתור מלא רוחב מקבל הרבה יותר הקשות */
+  .art-cta__actions { flex-direction: column; }
+  .art-cta__btn { width: 100%; justify-content: center; }
+}

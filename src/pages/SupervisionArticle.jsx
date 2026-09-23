@@ -11,6 +11,7 @@ import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
+import ArticleCta from '../components/ui/ArticleCta.jsx'
 
 const SITE = 'https://www.kurkoos-group.co.il'
 
@@ -143,6 +144,8 @@ export default function SupervisionArticle() {
           </div>
         </section>
       )}
+      <ArticleCta column="supervision" />
+
     </article>
   )
 }

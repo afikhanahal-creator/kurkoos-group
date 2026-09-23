@@ -48,7 +48,7 @@ export default function SettingsTab() {
   const [booking, setBooking] = useState(DEFAULT_BOOKING)
   const [bookingStatus, setBookingStatus] = useState('saved')
   // פרטי התקשרות של ה-footer — נערכים כאן ונשמרים אוטומטית בענן
-  const [contact, setContact] = useState({ contact_phone: '', contact_email: '', contact_address: '', contact_hours: '' })
+  const [contact, setContact] = useState({ contact_phone: '', contact_email: '', contact_address: '', contact_hours: '', google_review_url: '' })
   const [contactStatus, setContactStatus] = useState('saved')
   const contactTimer = useRef()
   const timer = useRef()
@@ -65,6 +65,7 @@ export default function SettingsTab() {
           contact_email: site?.contact_email || '',
           contact_address: site?.contact_address || '',
           contact_hours: site?.contact_hours || '',
+          google_review_url: site?.google_review_url || '',
         })
         setErr('')
       })
@@ -305,6 +306,28 @@ export default function SettingsTab() {
         <div className="adm-set__bk-row" style={{ marginTop: '0.6rem' }}>
           <label className="adm-set__field" style={{ flex: '1 1 100%' }}><span>שעות פעילות</span>
             <input type="text" dir="rtl" placeholder="א'–ה' 09:00–18:00" value={contact.contact_hours} onChange={(e) => patchContact('contact_hours', e.target.value)} />
+          </label>
+        </div>
+      </section>
+
+      {/* קישור בקשת ביקורות — משמש את כפתור "בקשת ביקורת" בלוח הלידים */}
+      <section className="adm-set__card">
+        <h3 className="adm-set__card-title">בקשת ביקורות בגוגל
+          <span className={`adm-set__status adm-set__status--${contactStatus}`}>
+            {contactStatus === 'saving' ? 'שומר…' : contactStatus === 'error' ? 'שגיאה' : '✓ נשמר'}
+          </span>
+        </h3>
+        <p className="adm-set__hint">
+          הדביקו כאן את קישור הביקורות של הפרופיל העסקי (בפרופיל: כפתור "בקשת ביקורות"). אחרי שהוא מוגדר,
+          כל ליד שעובר לשלב "נסגר בהצלחה" מציג כפתור ששולח ללקוח בוואטסאפ בקשת ביקורת מנוסחת, עם הקישור.
+        </p>
+        <div className="adm-set__bk-row">
+          <label className="adm-set__field" style={{ flex: '1 1 100%' }}><span>קישור לכתיבת ביקורת</span>
+            <input
+              type="url" dir="ltr" placeholder="https://g.page/r/..../review"
+              value={contact.google_review_url}
+              onChange={(e) => patchContact('google_review_url', e.target.value)}
+            />
           </label>
         </div>
       </section>

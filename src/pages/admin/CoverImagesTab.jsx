@@ -30,8 +30,8 @@ const DIVISIONS = divisions.filter((d) => d.slug !== 'residential')
 
 // לוגואים קבועים לעמודי הקאבר (חייב להישאר זהה ל-Division.jsx)
 const DEFAULT_DIVISION_LOGOS = {
-  execution: '/divisions/raita-logo.png',
-  brokerage: '/afik-hanahal-logo.png',
+  execution: '/divisions/raita-logo.webp',
+  brokerage: '/afik-hanahal-logo.webp',
   development: '/divisions/development-logo.png',
 }
 

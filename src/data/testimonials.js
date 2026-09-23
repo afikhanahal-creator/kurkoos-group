@@ -27,7 +27,7 @@ export const testimonials = [
     name: { he: 'משפחת כהן', en: 'The Cohen family' },
     project: { he: 'מגדלי המרינה, הרצליה', en: 'Marina Towers, Herzliya' },
     image:
-      '/divisions/humash-22-24.png',
+      '/divisions/humash-22-24.webp',
     quote: {
       he: 'אחרי המסירה השירות לא נעלם, וכל פנייה קיבלה מענה מהיר. זה מה שמבדיל חברה טובה מחברה מצוינת.',
       en: 'After handover, the service did not disappear, and every request got a fast response. That is what sets a great company apart.',

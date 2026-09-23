@@ -61,7 +61,7 @@ export default function About() {
             <div className="about-vision__closing">
               <p className="about-vision__tagline">{vision.tagline}</p>
               <img
-                src="/aminot-badge.png"
+                src="/aminot-badge.webp"
                 alt={lang === 'he' ? 'חותם אמינות Dun & Bradstreet' : 'Dun & Bradstreet reliability seal'}
                 className="about-vision__badge"
                 width="160"

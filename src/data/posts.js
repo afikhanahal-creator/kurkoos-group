@@ -14,7 +14,7 @@ export const posts = [
     slug: 'urban-renewal-guide',
     title: { he: 'מדריך להתחדשות עירונית לדיירים', en: "Resident's guide to urban renewal" },
     date: '2026-04-11',
-    cover: '/divisions/humash-22-24.png',
+    cover: '/divisions/humash-22-24.webp',
     excerpt: {
       he: 'פינוי-בינוי או תמ"א? כל מה שצריך לדעת לפני שמתחילים בתהליך.',
       en: 'Evacuation-reconstruction or TAMA? Everything to know before you start.',

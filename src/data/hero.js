@@ -22,7 +22,7 @@ export const heroSlides = [
     id: 3,
     stat: { value: 10, suffix: '', label: { he: 'שנות אחריות', en: 'Years warranty' }, sub: { he: 'על כל דירה', en: 'on every home' } },
     lines: { he: ['אחריות מלאה', 'ללא פשרות'], en: ['Full warranty', 'no compromise'] },
-    image: '/divisions/humash-22-24.png',
+    image: '/divisions/humash-22-24.webp',
   },
   {
     id: 4,

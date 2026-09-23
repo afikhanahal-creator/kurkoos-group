@@ -157,7 +157,7 @@ export default function ActivityMenu({ items = [] }) {
               const el = e.currentTarget
               const raw = srcOfResponsive(current.image)
               if (el.dataset.fb !== 'raw' && raw && el.src !== raw) { el.dataset.fb = 'raw'; el.src = raw; return }
-              if (el.dataset.fb !== 'local' && current.id === 'brokerage') { el.dataset.fb = 'local'; el.src = '/afik-hanahal-cover.png' }
+              if (el.dataset.fb !== 'local' && current.id === 'brokerage') { el.dataset.fb = 'local'; el.src = '/afik-hanahal-cover.webp' }
             }}
           />
         </AnimatePresence>

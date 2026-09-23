@@ -307,6 +307,17 @@ export default function ProjectDetail() {
     ? project.galleryGroups
     : [{ label: { he: 'הפרויקט', en: 'Project' }, images: flatGallery }]
   const currentImages = galleryGroups[galleryTab]?.images || flatGallery
+  /* טקסט חלופי לתמונות. זה מה שגוגל קורא כדי להבין מה מופיע בתמונה, ולכן
+     הוא כולל את שם הפרויקט, היישוב וקטגוריית הגלריה, ולא רק מספר רץ. */
+  const imgAlt = (extra = '') => [
+    L(project.name),
+    L(project.city),
+    extra,
+  ].filter(Boolean).join(', ')
+  const galleryAlt = (i) => imgAlt([
+    L(galleryGroups[galleryTab]?.label),
+    L({ he: `תמונה ${i + 1}`, en: `photo ${i + 1}` }),
+  ].filter(Boolean).join(' '))
   // סרטונים + מדיה מאוחדת ללייטבוקס (תמונות ואז סרטונים → swipe עובר על הכל)
   const videos = (project.videos || []).filter((v) => v?.id || v?.src)
   const mediaItems = [...currentImages, ...videos]
@@ -591,7 +602,7 @@ export default function ProjectDetail() {
                   <SmartImage
                     key={bannerSlide}
                     src={flatGallery[Math.min(bannerSlide, flatGallery.length - 1)]}
-                    alt={L(project.name)}
+                    alt={imgAlt()}
                     label={L(project.name)}
                     priority={bannerSlide === 0}
                   />
@@ -682,7 +693,7 @@ export default function ProjectDetail() {
           <div className="pd-split__grid pd-split-card">
             {aboutSrc && (
               <Reveal className={`pd-split__media ${aboutArStyle ? 'pd-split__media--ar' : ''}`} style={aboutArStyle} variant="right">
-                <SmartImage src={project.aboutImage || flatGallery[0]} alt={L(project.name)} label={L(project.name)} />
+                <SmartImage src={project.aboutImage || flatGallery[0]} alt={imgAlt()} label={L(project.name)} />
               </Reveal>
             )}
             <Reveal className="pd-split__body" variant="left" delay={0.1}>
@@ -718,7 +729,7 @@ export default function ProjectDetail() {
                 <p className="pd-prose">{L(project.environment.text)}</p>
               </Reveal>
               <Reveal className="pd-split__media" variant="left" delay={0.1}>
-                <SmartImage src={project.environment.image} alt={L(project.environment.title)} label={L(project.name)} />
+                <SmartImage src={project.environment.image} alt={imgAlt(L(project.environment.title))} label={L(project.name)} />
               </Reveal>
             </div>
           </div>
@@ -831,7 +842,7 @@ export default function ProjectDetail() {
                       onClick={() => openLightbox(mediaItems, i)}
                       aria-label={`${L(project.name)} ${i + 1} — ${L({ he: 'הגדלה', en: 'Enlarge' })}`}
                     >
-                      <SmartImage src={img} alt={`${L(project.name)} ${i + 1}`} label={L(project.name)} />
+                      <SmartImage src={img} alt={galleryAlt(i)} label={L(project.name)} />
                       <span className="pd-gallery__zoom"><Icon name="search" size={20} /></span>
                     </button>
                   ))}
@@ -847,7 +858,7 @@ export default function ProjectDetail() {
                     onClick={() => { if (galSwiped.current) { galSwiped.current = false; return } openLightbox(mediaItems, slide) }}
                     aria-label={`${L(project.name)} — ${L({ he: 'הגדלה', en: 'Enlarge' })}`}
                   >
-                    <SmartImage key={`${galleryTab}-${slide}`} src={currentImages[slide]} alt={`${L(project.name)} ${slide + 1}`} label={L(project.name)} />
+                    <SmartImage key={`${galleryTab}-${slide}`} src={currentImages[slide]} alt={galleryAlt(slide)} label={L(project.name)} />
                     <span className="pd-gallery__zoom"><Icon name="search" size={20} /></span>
                   </button>
                 </div>

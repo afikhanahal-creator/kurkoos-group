@@ -49,6 +49,31 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]
 ))
 
+/* ---------- איסוף תמונות לסייטמאפ התמונות ----------
+   ערך תמונה ב-CMS מגיע בכמה צורות: כתובת פשוטה, מחרוזת JSON, אובייקט
+   {src|url|image_url}, אובייקט עם גרסאות mobile/desktop, מערך (גלריה),
+   או קבוצות גלריה [{label, images:[...]}]. במקום לנחש מבנה, עוברים
+   רקורסיבית על הערך ואוספים כל מחרוזת שנראית ככתובת תמונה. */
+const IMG_RE = /\.(jpe?g|png|webp|avif|gif)(\?|#|$)/i
+const IMG_HOST_RE = /res\.cloudinary\.com|\/storage\/v1\/object\/public\//i
+function collectImages(value, out = new Set(), depth = 0) {
+  if (value == null || depth > 6 || out.size >= 1000) return out
+  if (typeof value === 'string') {
+    const s = value.trim()
+    if (s.startsWith('{') || s.startsWith('[')) {
+      try { return collectImages(JSON.parse(s), out, depth + 1) } catch { /* לא JSON */ }
+    }
+    if ((s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/')) &&
+        (IMG_RE.test(s) || IMG_HOST_RE.test(s))) {
+      out.add(s.startsWith('/') ? `${SITE}${s}` : s)
+    }
+    return out
+  }
+  if (Array.isArray(value)) { for (const v of value) collectImages(v, out, depth + 1); return out }
+  if (typeof value === 'object') { for (const v of Object.values(value)) collectImages(v, out, depth + 1) }
+  return out
+}
+
 function urlTag({ loc, lastmod, changefreq, priority }) {
   return `  <url><loc>${esc(loc)}</loc>` +
     (lastmod ? `<lastmod>${esc(lastmod)}</lastmod>` : '') +
@@ -74,10 +99,44 @@ export default async function handler(req, res) {
     const lastmod = new Date().toISOString().slice(0, 10)
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-      ['/sitemap-pages.xml', '/sitemap-articles.xml']
+      ['/sitemap-pages.xml', '/sitemap-articles.xml', '/sitemap-images.xml']
         .map((p) => `  <sitemap><loc>${SITE}${p}</loc><lastmod>${lastmod}</lastmod></sitemap>`)
         .join('\n') +
       `\n</sitemapindex>\n`
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=600, stale-while-revalidate=86400')
+    res.status(200).send(xml)
+    return
+  }
+
+  /* סייטמאף תמונות: מפרט לכל עמוד פרויקט את התמונות שבו, כדי שהן ייכנסו
+     לחיפוש התמונות של גוגל. גוגל תומך היום ב-image:loc בלבד, ולכן אין כאן
+     כותרות או כיתובים: מה שמתאר את התמונה הוא ה-alt בעמוד עצמו. */
+  if (part === 'images') {
+    let rows = []
+    if (SUPABASE_URL && ANON_KEY) {
+      try {
+        const r = await fetch(
+          `${SUPABASE_URL}/rest/v1/projects?is_published=eq.true&is_archived=eq.false` +
+          `&select=slug,hero_image_url,about_image_url,gallery,gallery_groups,plan_groups,environment&order=sort_order.asc`,
+          { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } },
+        )
+        if (r.ok) rows = await r.json()
+      } catch { /* ה-CMS לא זמין — מחזירים סייטמאפ ריק ותקין */ }
+    }
+    const urls = rows
+      .filter((p) => p && p.slug)
+      .map((p) => {
+        const imgs = [...collectImages(p)].slice(0, 1000)
+        if (!imgs.length) return ''
+        return `  <url><loc>${esc(`${SITE}/projects/${p.slug}`)}</loc>\n` +
+          imgs.map((u) => `    <image:image><image:loc>${esc(u)}</image:loc></image:image>`).join('\n') +
+          `\n  </url>`
+      })
+      .filter(Boolean)
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n` +
+      urls.join('\n') + (urls.length ? '\n' : '') + `</urlset>\n`
     res.setHeader('Content-Type', 'application/xml; charset=utf-8')
     res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=600, stale-while-revalidate=86400')
     res.status(200).send(xml)

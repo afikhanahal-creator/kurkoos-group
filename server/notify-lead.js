@@ -54,6 +54,10 @@ function htmlEsc(s) {
 }
 
 export default async function handler(req, res) {
+  /* מוגדר מחוץ ל-try כדי שגם תשובת שגיאה תישא את תוצאת ההצלה. הדפדפן מנסה
+     שוב כשהוא לא מקבל rescued, ובלי זה תקלה מאוחרת יותר בפונקציה הייתה
+     גוררת ניסיון נוסף והכנסה כפולה של אותה פנייה. */
+  let rescued = null
   try {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
     if (typeof fetch !== 'function') { res.status(500).json({ error: 'הסביבה לא תומכת ב-fetch (גרסת Node ישנה מדי ב-Vercel — הגדירו Node 18+)' }); return }
@@ -67,7 +71,6 @@ export default async function handler(req, res) {
     const FROM = process.env.NOTIFY_FROM || 'Kurkoos Leads <onboarding@resend.dev>'
 
     if (!SUPABASE_URL || !SERVICE_KEY) { res.status(500).json({ error: 'חסר SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY בהגדרות Vercel (ודאו גם שעשיתם Redeploy)' }); return }
-    if (!RESEND_API_KEY) { res.status(500).json({ error: 'חסר RESEND_API_KEY בהגדרות Vercel (ודאו גם שעשיתם Redeploy)' }); return }
 
     // body — עשוי להגיע כאובייקט (Vercel פירסר) או כמחרוזת JSON
     const body = (req.body && typeof req.body === 'object')
@@ -103,20 +106,34 @@ export default async function handler(req, res) {
        Vercel, ולכן היא מצליחה כמעט בכל תרחיש כשל. כך הליד בכל זאת מגיע
        ללוח הלידים כליד חדש, ולא רק למייל. רץ לפני בדיקות ההתראה, כדי
        שכיבוי ההתראות או היעדר נמענים לא ימנע את ההצלה. */
-    let rescued = null
     if (lead.saveFailed && !isTest && (lead.name || lead.phone || lead.email)) {
       try {
-        const r = await fetch(`${SB}/rest/v1/leads`, {
-          method: 'POST',
-          headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify(leadRowForInsert(lead)),
-        })
-        if (!r.ok) throw new Error(`Supabase ${r.status}: ${(await r.text()).slice(0, 180)}`)
-        rescued = true
+        /* ניסיון חוזר של הדפדפן, או לחיצה כפולה על "שליחה", לא יכולים ליצור
+           שני לידים זהים: קודם בודקים אם אותה פנייה כבר נכנסה בדקות האחרונות. */
+        const since = new Date(Date.now() - 10 * 60_000).toISOString()
+        const ident = lead.phone ? `phone=eq.${encodeURIComponent(lead.phone)}`
+          : lead.email ? `email=eq.${encodeURIComponent(lead.email)}`
+          : `name=eq.${encodeURIComponent(lead.name)}`
+        const dup = await sbGet(`leads?${ident}&created_at=gte.${since}&select=id&limit=1`).catch(() => [])
+        if (Array.isArray(dup) && dup.length) {
+          rescued = true
+        } else {
+          const r = await fetch(`${SB}/rest/v1/leads`, {
+            method: 'POST',
+            headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify(leadRowForInsert(lead)),
+          })
+          if (!r.ok) throw new Error(`Supabase ${r.status}: ${(await r.text()).slice(0, 180)}`)
+          rescued = true
+        }
       } catch {
         rescued = false
       }
     }
+
+    /* בדיקת מפתח המייל באה רק *אחרי* ההצלה. מפתח Resend שפג או נמחק הוא
+       תקלת התראות, והוא לא יכול למנוע מפנייה של אדם אמיתי להגיע למערכת. */
+    if (!RESEND_API_KEY) { res.status(500).json({ error: 'חסר RESEND_API_KEY בהגדרות Vercel (ודאו גם שעשיתם Redeploy)', rescued }); return }
 
     const [settingsRows, recipients] = await Promise.all([
       sbGet('lead_notify_settings?id=eq.1&select=*'),
@@ -243,6 +260,6 @@ export default async function handler(req, res) {
     }
     res.status(200).json({ ok: true, sent: to.length, id: out.id, rescued })
   } catch (e) {
-    res.status(500).json({ error: 'שגיאת שרת: ' + (e && e.message ? e.message : String(e)) })
+    res.status(500).json({ error: 'שגיאת שרת: ' + (e && e.message ? e.message : String(e)), rescued })
   }
 }

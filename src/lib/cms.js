@@ -387,8 +387,18 @@ const _sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 // יצירת ליד — נקראת גם מטפסי האתר (אנונימי, RLS מתיר insert לכולם)
 export async function createLead(row, { read = true } = {}) {
-  if (!supabase) return
   row = sanitizeLead(row)
+  /* אין בכלל חיבור למסד מהדפדפן (משתני הסביבה של Supabase חסרים בבנייה).
+     קודם זה החזיר undefined בשקט, והטופס הציג "תודה, הפנייה התקבלה" בלי
+     שנשמר דבר בשום מקום. עכשיו הפנייה נשלחת לשרת, ששומר אותה במפתח משלו,
+     ואם גם זה נכשל נזרקת שגיאה כדי שהמבקר יידע ויתקשר. */
+  if (!supabase) {
+    if (read || row.source === 'manual') throw new Error('אין חיבור למסד הנתונים')
+    const saved = { ...row, created_at: new Date().toISOString() }
+    const rescued = await notifyNewLead({ ...saved, saveFailed: true }, { wait: true, retries: 2 })
+    if (!rescued) throw new Error('אין חיבור למסד הנתונים והשמירה בשרת נכשלה')
+    return saved
+  }
   let lead
   try {
     if (read) {
@@ -421,9 +431,14 @@ export async function createLead(row, { read = true } = {}) {
     /* רשת ביטחון אחרונה: כל הניסיונות מהדפדפן נכשלו (RLS, רשת, מסד למטה).
        שולחים את הפרטים ל-/api/notify-lead מסומנים saveFailed. שם, עם מפתח
        service role ומהשרת של Vercel, מנסים להכניס את הליד למסד בשם המבקר,
-       וגם שולחים מייל. כך הפנייה מגיעה ללוח הלידים גם כשהדפדפן נכשל. */
+       וגם שולחים מייל. כאן ממתינים לתשובה ומנסים שוב, כי זה הערוץ האחרון
+       שנותר: אם גם הוא ייפול בשקט הפנייה תיעלם. */
     if (row.source !== 'manual') {
-      notifyNewLead({ ...row, created_at: new Date().toISOString(), saveFailed: true })
+      const saved = { ...row, created_at: new Date().toISOString() }
+      const rescued = await notifyNewLead({ ...saved, saveFailed: true }, { wait: true, retries: 2 })
+      // השרת אכן הכניס את הליד למערכת — מבחינת המבקר הפנייה נשלחה בהצלחה,
+      // ואין טעם להציג לו שגיאה שתגרום לו לשלוח שוב וליצור כפילות
+      if (rescued) return saved
     }
     throw err
   }
@@ -432,17 +447,35 @@ export async function createLead(row, { read = true } = {}) {
   return lead
 }
 
-/* שולח את הליד לפונקציית /api/notify-lead (Vercel) שמפיצה מייל לנמענים.
-   Fire-and-forget — לא חוסם את חוויית המשתמש, ובולע שגיאות (למשל בפיתוח מקומי). */
-function notifyNewLead(lead) {
-  try {
-    fetch('/api/notify-lead', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lead }),
-      keepalive: true,
-    }).catch(() => {})
-  } catch { /* אין רשת / אין endpoint — מתעלמים */ }
+/* שולח את הליד לפונקציית /api/notify-lead (Vercel) שמפיצה מייל לנמענים,
+   ובמסלול הכשל גם מכניסה אותו למסד עם מפתח service role.
+
+   ברירת מחדל: fire-and-forget — לא חוסם את חוויית המשתמש ובולע שגיאות
+   (למשל בפיתוח מקומי). עם wait: ממתינים לתשובה ומנסים שוב, ומחזירים אם
+   השרת באמת שמר את הליד (rescued). במסלול הכשל זה הערוץ האחרון שנותר,
+   ולכן שם הוא חייב להיות מנוסה ונבדק ולא נשלח ונשכח. */
+async function notifyNewLead(lead, { wait = false, retries = 0 } = {}) {
+  const send = () => fetch('/api/notify-lead', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lead }),
+    keepalive: true,
+  })
+  if (!wait) {
+    try { send().catch(() => {}) } catch { /* אין רשת / אין endpoint — מתעלמים */ }
+    return false
+  }
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt) await _sleep(600 * attempt)
+    try {
+      const res = await send()
+      const out = await res.json().catch(() => ({}))
+      if (out.rescued === true) return true
+      // 4xx מהשרת (הגדרה חסרה, חסימת קצב) לא ישתנה בניסיון נוסף
+      if (res.status >= 400 && res.status < 500) return false
+    } catch { /* תקלת רשת — מנסים שוב */ }
+  }
+  return false
 }
 
 // ---------- Lead notifications (settings) ----------

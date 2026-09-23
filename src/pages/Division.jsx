@@ -117,7 +117,14 @@ export default function Division() {
 
   return (
     <article className={`division division--${slug}`}>
-      <Seo title={L(division.menuTitle)} description={L(division.intro)} image={division.hero?.image} jsonLd={seoJsonLd} />
+      {/* הכותרת בתפריט קצרה ("ביצוע"), וזו לא כותרת שמסבירה למנוע חיפוש מה
+          החטיבה עושה. לחיפוש משתמשים בכותרת המלאה מתוך נתוני החטיבה. */}
+      <Seo
+        title={division.seoTitle || L(division.menuTitle)}
+        description={division.seoDescription || L(division.intro)}
+        image={division.hero?.image}
+        jsonLd={seoJsonLd}
+      />
       {/* באנר */}
       <header className="division-hero">
         <Parallax className="division-hero__bg">

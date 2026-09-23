@@ -37,6 +37,10 @@ export default [
     "lastmod": "2026-08-23"
   },
   {
+    "path": "/construction-supervision/likuei-chashmal-instalatzia-lifnei-sgira",
+    "lastmod": "2026-10-04"
+  },
+  {
     "path": "/construction-supervision/likuei-itum",
     "lastmod": "2026-06-14"
   },
@@ -49,8 +53,16 @@ export default [
     "lastmod": "2026-06-21"
   },
   {
+    "path": "/construction-supervision/yoman-avoda-atar",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/constructions/avoda-begova-pigum-t-",
     "lastmod": "2026-09-06"
+  },
+  {
+    "path": "/constructions/avodot-pituach-chatzer",
+    "lastmod": "2026-10-04"
   },
   {
     "path": "/constructions/betihut-atar-bniya",
@@ -83,6 +95,10 @@ export default [
   {
     "path": "/constructions/likuei-bniya-tkufat-bedek",
     "lastmod": "2026-06-14"
+  },
+  {
+    "path": "/constructions/mifrat-techni-mah-kovea",
+    "lastmod": "2026-09-27"
   },
   {
     "path": "/constructions/site-manager-duties-stop-work",
@@ -169,8 +185,16 @@ export default [
     "lastmod": "2026-06-07"
   },
   {
+    "path": "/real-estate-guide/kniya-mekablan-mul-yad-shniya",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/real-estate-guide/mas-rechisha-madregot",
     "lastmod": "2026-07-12"
+  },
+  {
+    "path": "/real-estate-guide/mas-shevach-mecirat-dira",
+    "lastmod": "2026-10-04"
   },
   {
     "path": "/real-estate-guide/real-return-real-estate-investment",
@@ -209,6 +233,10 @@ export default [
     "lastmod": "2026-08-30"
   },
   {
+    "path": "/yazamut-nadlan/karka-meusheret-lo-dirot",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/yazamut-nadlan/mamad-15-meter-tamhil",
     "lastmod": "2026-07-05"
   },
@@ -219,6 +247,10 @@ export default [
   {
     "path": "/yazamut-nadlan/maslul-mahir-arvuyot",
     "lastmod": "2026-06-07"
+  },
+  {
+    "path": "/yazamut-nadlan/mimun-chutz-bankai-nadlan",
+    "lastmod": "2026-10-04"
   },
   {
     "path": "/yazamut-nadlan/modular-construction-speed-promise-reality",

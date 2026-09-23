@@ -242,3 +242,18 @@
     font-size: 0.85rem;
   }
 }
+
+/* ---- כרטיס "איך מגיעים אלינו" ---- */
+/* רוחב זהה לשתי העמודות שמעליו, כדי שהקצוות יתיישרו בכל רוחב מסך.
+   אותם clamp בדיוק כמו ב-.contact__inner, ועוד ה-padding של ה-container
+   שנספר פעמיים מפני שהוא נמצא בתוך הרוחב (box-sizing: border-box). */
+.contact .contact__office {
+  position: relative;
+  z-index: 1;
+  max-width: calc(
+    clamp(360px, 34vw, 480px) + clamp(340px, 34vw, 480px) +
+    clamp(1.5rem, 3vw, 3rem) + var(--container-pad) * 2
+  );
+  margin-inline: auto;
+  margin-block-start: clamp(1.5rem, 3vw, 2.75rem);
+}

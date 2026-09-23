@@ -14,6 +14,10 @@ export const site = {
     phone: '055-981-1814',
     phoneDisplay: '055-981-1814',
     whatsapp: '972559811814',
+    /* מרכז המפה של המשרד. הערכים האלה משמשים רק כדי למרכז את המפה
+       המעוצבת בלי קריאת geocoding. כפתור הניווט עצמו נשען על טקסט
+       הכתובת שמתחת, כך שתיקון הכתובת מתקן גם את הניווט. */
+    office: { lat: 32.1306224, lng: 34.8950305 },
     email: 'kurkoosgroup.sales@gmail.com',
     address: { he: 'רחוב הנגר 24, הוד השרון, מגדלי Amy קומה 2', en: '24 HaNagar St., Hod HaSharon, Amy Towers, Floor 2' },
     hours: { he: "א'–ה' 9:00-18:00", en: 'Sun–Thu 9:00-18:00' },

@@ -34,6 +34,7 @@ const SupervisionArticle = lazy(() => import('./pages/SupervisionArticle.jsx'))
 const RealEstateGuide = lazy(() => import('./pages/RealEstateGuide.jsx'))
 const RealEstateGuideArticle = lazy(() => import('./pages/RealEstateGuideArticle.jsx'))
 const Careers = lazy(() => import('./pages/Careers.jsx'))
+const ContactPage = lazy(() => import('./pages/ContactPage.jsx'))
 const Legal = lazy(() => import('./pages/Legal.jsx'))
 const Mentorship = lazy(() => import('./pages/Mentorship.jsx'))
 const MentorGuide = lazy(() => import('./pages/MentorGuide.jsx'))
@@ -158,6 +159,8 @@ export default function App() {
               <Route path="/madrich-yazamim" element={<MentorGuide />} />
               <Route path="/madrich-yazamim/:slug" element={<MentorGuideArticle />} />
               <Route path="/careers" element={<Careers />} />
+              {/* קישור חיצוני ייעודי לטופס — נדבק בפרופיל העסק בגוגל, ברשתות ובחתימות */}
+              <Route path="/contact" element={<ContactPage />} />
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />
               <Route path="/terms" element={<Legal kind="terms" />} />

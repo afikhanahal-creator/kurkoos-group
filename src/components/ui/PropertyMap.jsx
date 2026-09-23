@@ -146,7 +146,10 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
 
   // נפילה-לאחור: אם ה-Maps JS API לא זמין/מאופשר — embed רגיל (לא ריק)
   if (failed) {
-    const src = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&output=embed`
+    // בלי קואורדינטות (למשל מפת המשרד, שמוגדרת לפי כתובת) חיפוש לפי
+    // lat,lng היה מייצר q=undefined,undefined ומפה ריקה. לכן נופלים לכתובת.
+    const q = lat != null && lng != null ? `${lat},${lng}` : encodeURIComponent(query || '')
+    const src = `https://www.google.com/maps?q=${q}&z=${zoom}&output=embed`
     return <iframe className="property-map" title={label} src={src} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
   }
   return <div ref={ref} className="property-map" role="img" aria-label={label} />

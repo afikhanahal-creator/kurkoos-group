@@ -68,6 +68,7 @@ export default function Footer() {
           <Link to="/real-estate-sharon">נדל"ן בשרון</Link>
           <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link>
           <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link>
+          <Link to="/contact">השארת פרטים</Link>
         </nav>
 
         <div className="footer__col footer__col--contact">
@@ -78,9 +79,18 @@ export default function Footer() {
           <a href={`mailto:${contact.email}`} className="footer__contact" onClick={() => track('email_click', { placement: 'footer' })}>
             <Icon name="mail" size={17} /> {contact.email}
           </a>
-          <span className="footer__contact">
+          {/* הכתובת הייתה טקסט בלבד, כך שמי שרצה להגיע למשרד היה צריך
+              להעתיק אותה ידנית. עכשיו היא פותחת ניווט במפות גוגל, ובמובייל
+              ישירות באפליקציה. המראה לא משתנה: אותה מחלקה כמו הטלפון והמייל. */}
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(L(contact.address))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer__contact"
+            onClick={() => track('directions_click', { placement: 'footer' })}
+          >
             <Icon name="location" size={17} /> {L(contact.address)}
-          </span>
+          </a>
           <span className="footer__contact footer__contact--muted">{L(contact.hours)}</span>
         </div>
       </div>

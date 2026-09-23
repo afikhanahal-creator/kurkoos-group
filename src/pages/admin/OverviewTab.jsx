@@ -23,7 +23,7 @@ const TIPS = {
   topPages: 'העמודים שקיבלו הכי הרבה צפיות בשבוע האחרון. עמוד חזק עם מעט פניות הוא הזדמנות לשיפור.',
   channels: 'מאיפה הגיעו הגולשים השבוע. חיפוש בגוגל הוא תנועה שהרווחנו, כניסה ישירה היא אנשים שכבר מכירים אותנו.',
   chart: 'מספר המבקרים בכל יום בשבוע האחרון. ריחוף על הגרף מציג את הפירוט המלא של אותו יום.',
-  live: 'גולשים שנמצאים באתר ברגע זה, ובאילו עמודים הם צופים. מתעדכן כל דקה.',
+  live: 'גולשים שביקרו באתר ב-30 הדקות האחרונות, ובאילו עמודים הם צפו. זה החלון ש-GA4 מחזיק בזמן אמת, ולכן זה לא מונה של הרגע הנוכחי. המספר מנוכה כפילויות, ולכן הוא לא בהכרח סכום השורות שמתחתיו: גולש שעבר בין שני עמודים נספר בשניהם ופעם אחת בסך הכול. מתעדכן כל דקה.',
 }
 
 const CHANNEL_HE = {
@@ -264,7 +264,7 @@ export default function OverviewTab({ onNavigate }) {
         </div>
         <div className="ovw__hero-side">
           {rtUsers != null && (
-            <span className="ovw__live" data-tip={TIPS.live}><i />{rtUsers === 1 ? 'גולש אחד באתר עכשיו' : `${rtUsers} גולשים באתר עכשיו`}</span>
+            <span className="ovw__live" data-tip={TIPS.live}><i />{rtUsers === 1 ? 'גולש אחד ב-30 הדקות האחרונות' : `${rtUsers} גולשים ב-30 הדקות האחרונות`}</span>
           )}
           <div className="ovw__hero-acts">
             <button type="button" onClick={nav('leads')}>מערכת הלידים</button>
@@ -341,9 +341,9 @@ export default function OverviewTab({ onNavigate }) {
 
         <section className="ovw__card ovw__card--live">
           <header className="ovw__card-head">
-            <h4 data-tip={TIPS.live} tabIndex={0}>עכשיו באתר</h4>
+            <h4 data-tip={TIPS.live} tabIndex={0}>פעילות עכשיו</h4>
           </header>
-          <div className="ovw__live-num"><b>{rtUsers == null ? '·' : rtUsers}</b><span>גולשים ברגע זה</span></div>
+          <div className="ovw__live-num"><b>{rtUsers == null ? '·' : rtUsers}</b><span>גולשים ב-30 הדקות האחרונות</span></div>
           {rtMinutes && (
             <div className="ovw__live-30">
               <div className="ovw__live-bars" title="פעילות ב-30 הדקות האחרונות">
@@ -360,7 +360,7 @@ export default function OverviewTab({ onNavigate }) {
                 <li key={r.d[0]}><span title={r.d[0]}>{r.d[0] || '(ללא כותרת)'}</span><b>{r.m[0]}</b></li>
               ))}
             </ul>
-          ) : <p className="ovw__empty">{rtUsers == null ? 'טוען…' : 'אף אחד לא נמצא באתר ברגע זה.'}</p>}
+          ) : <p className="ovw__empty">{rtUsers == null ? 'טוען…' : 'אף אחד לא ביקר באתר ב-30 הדקות האחרונות.'}</p>}
           <p className="ovw__note">מתעדכן כל דקה. גוגל מדווח בזמן אמת לפי כותרת העמוד.</p>
         </section>
       </div>

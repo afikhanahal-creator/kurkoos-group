@@ -186,9 +186,12 @@ export default async function handler(req, res) {
             orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
             limit: 10,
           }),
-          /* עקומת חצי השעה האחרונה. זה החלון המלא ש-GA4 מחזיק בזמן אמת. */
+          /* עקומת חצי השעה האחרונה. זה החלון המלא ש-GA4 מחזיק בזמן אמת.
+             המדד הוא צפיות ולא גולשים: הממשק מציג כאן "צפיות", וסכימת
+             גולשים פעילים לפי דקה סופרת את אותו אדם בכל דקה שבה היה באתר,
+             כך שהסכום לא היה מייצג שום דבר אמיתי. צפיות כן מסתכמות. */
           gaRealtime(prop, token, {
-            metrics: [{ name: 'activeUsers' }],
+            metrics: [{ name: 'screenPageViews' }],
             dimensions: [{ name: 'minutesAgo' }],
             limit: 31,
           }).catch(() => null),

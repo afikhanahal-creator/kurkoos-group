@@ -241,8 +241,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<p><a href="/#contact">דברו איתנו</a> · <a href="/projects">הפרויקטים שלנו</a></p>`
     done.push(renderPage({
       path,
-      title: d.menuTitle.he,
-      description: d.intro.he,
+      title: d.seoTitle || d.menuTitle.he,
+      description: d.seoDescription || d.intro.he,
       jsonLd: [
         { '@context': 'https://schema.org', '@type': 'Service', name: d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' }, url: SITE + path },
         ...(faqs.length ? [faqLd(faqs, (f) => [f.q.he, f.a.he])] : []),

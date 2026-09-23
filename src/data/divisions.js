@@ -11,6 +11,9 @@
 export const divisions = [
   {
     slug: 'residential',
+    // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
+    seoTitle: 'מגורים: פרויקטים למגורים של קורקוס גרופ',
+    seoDescription: 'הפרויקטים למגורים של קורקוס גרופ בהוד השרון ובאזור המרכז, מיזמות ותכנון דרך הביצוע והפיקוח ועד מסירת המפתח.',
     icon: 'house',
     category: 'residential',
     name: { he: 'לגור בקורקוס', en: 'Living with Kurkoos' },
@@ -83,6 +86,9 @@ export const divisions = [
   },
   {
     slug: 'execution',
+    // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
+    seoTitle: 'ביצוע ובנייה: קבלן מבצע בהוד השרון ובאזור המרכז',
+    seoDescription: 'ראיתה, זרוע הביצוע של קורקוס גרופ, היא קבלן מבצע לפרויקטים למגורים בהוד השרון ובאזור המרכז: שלד, מעטפת וגימור, בקרת איכות וניהול קבלני משנה, מהיסודות ועד מסירת המפתח.',
     icon: 'crane',
     category: null,
     name: { he: 'ראיתה. ביצוע מנצח.', en: 'Raita. Winning execution.' },
@@ -112,6 +118,14 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'האם קורקוס גרופ היא קבלן מבצע?', en: 'Is Kurkoos Group a general contractor?' },
+        a: {
+          he: 'כן. ראיתה היא זרוע הביצוע של קורקוס גרופ, והיא משמשת קבלן מבצע לפרויקטים למגורים בהוד השרון ובאזור המרכז: שלד, מעטפת וגימור, בקרת איכות וניהול קבלני משנה. הקבוצה מבצעת גם את הפרויקטים שהיא מייזמת בעצמה וגם פרויקטים עבור יזמים וגופים אחרים.',
+          en: 'Yes. Raita is the execution arm of Kurkoos Group and acts as the general contractor for residential projects in Hod HaSharon and central Israel: structure, envelope and finishing, quality control and subcontractor management, both for the group\u2019s own projects and for other developers.',
+        },
+      },
+
       {
             "q": {
                   "he": "מה כולל שלב הביצוע בפרויקט בנייה?",
@@ -156,6 +170,9 @@ export const divisions = [
   },
   {
     slug: 'development',
+    // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
+    seoTitle: 'יזמות נדל"ן בהוד השרון ובאזור המרכז',
+    seoDescription: 'קורקוס יזמות מייזמת פרויקטים למגורים מאיתור הקרקע ובדיקות ההיתכנות, דרך התכנון והרישוי, ועד השיווק והמסירה, בהוד השרון ובאזור המרכז.',
     icon: 'building',
     category: null,
     name: { he: 'קורקוס יזמות', en: 'Kurkoos Development' },
@@ -228,6 +245,9 @@ export const divisions = [
   },
   {
     slug: 'supervision',
+    // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
+    seoTitle: 'ניהול ופיקוח פרויקטים בהוד השרון ובאזור המרכז',
+    seoDescription: 'שכינתא, זרוע הפיקוח של קורקוס גרופ, מנהלת ומפקחת על פרויקטי בנייה מטעם המזמין: בקרת איכות, בקרת תקציב ולוחות זמנים, בדיקות קבלה ומסירה.',
     icon: 'shield',
     category: null,
     name: { he: 'שכינתא פיקוח', en: 'Shechinta Supervision' },
@@ -256,6 +276,14 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'האם קורקוס גרופ מבצעת ניהול ופיקוח על פרויקטים?', en: 'Does Kurkoos Group provide project management and supervision?' },
+        a: {
+          he: 'כן. שכינתא היא זרוע הניהול והפיקוח של קורקוס גרופ, והיא מנהלת ומפקחת על פרויקטי בנייה מטעם המזמין: בקרת איכות בשלבי הביצוע, בקרת תקציב ולוחות זמנים, בדיקות קבלה וליווי עד המסירה. השירות ניתן גם ללקוחות חיצוניים ולא רק לפרויקטים של הקבוצה.',
+          en: 'Yes. Shchinta is the project management and supervision arm of Kurkoos Group, supervising construction projects on behalf of the client: quality control during execution, budget and schedule control, acceptance testing and handover, for external clients as well as the group\u2019s own projects.',
+        },
+      },
+
       {
             "q": {
                   "he": "מה עושה מפקח בנייה?",
@@ -300,6 +328,9 @@ export const divisions = [
   },
   {
     slug: 'brokerage',
+    // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
+    seoTitle: 'תיווך ושיווק נכסים בהוד השרון ובאזור המרכז',
+    seoDescription: 'אפיק הנחל, זרוע התיווך של קורקוס גרופ, מלווה רוכשים ומוכרים ומשווקת פרויקטים בהוד השרון ובאזור המרכז, מהערכת השווי ועד החתימה.',
     icon: 'brokerage',
     category: null,
     name: { he: 'אפיק הנחל', en: 'Afik Hanachal' },

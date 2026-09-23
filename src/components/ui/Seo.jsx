@@ -41,7 +41,7 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
        בשם המותג. הנפילה לאחור היא עכשיו תיאורית, ובדיקת הבנייה מוודאת
        שאף עמוד לא מגיע לכאן מלכתחילה. */
     const fallbackTitle = lang === 'he'
-      ? 'יזמות, בנייה ופיקוח נדל"ן בהוד השרון והשרון'
+      ? 'יזמות, בנייה ופיקוח נדל"ן בהוד השרון ובאזור המרכז'
       : 'Real-estate development, construction and supervision in Hod HaSharon'
     const fullTitle = `${title || fallbackTitle} | ${brand}`
     const fallbackDesc = lang === 'he'

@@ -1,0 +1,42 @@
+name: כתבת יום ראשון — המדריך ליזמי נדל"ן צעירים
+
+on:
+  schedule:
+    # 05:40 UTC בכל יום ראשון. ארבעת הטורים האחרים רצים ב-05:00 עד 05:30,
+    # והמרווח נשמר כדי ששתי ריצות לא ידחפו ל-main באותה שנייה.
+    - cron: '40 5 * * 0'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: התקנת תלות
+        run: npm install @anthropic-ai/sdk
+
+      - name: ייצור כתבת השבוע
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node mentor_guide/scripts/generate-article.mjs
+
+      - name: פרסום אוטומטי — דחיפה ל-main
+        run: |
+          git config user.name "Kurkoos Content Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add src/content/mentorguide
+          if git diff --staged --quiet; then echo "אין כתבה חדשה — מדלג."; exit 0; fi
+          git commit -m 'המדריך ליזמי נדל"ן צעירים — כתבת השבוע (אוטומטי)'
+          for i in 1 2 3 4; do
+            git pull --rebase --autostash origin main && git push origin HEAD:main && break
+            echo "ניסיון $i נכשל, מנסה שוב בעוד $((i * 5)) שניות..."
+            sleep $((i * 5))
+          done

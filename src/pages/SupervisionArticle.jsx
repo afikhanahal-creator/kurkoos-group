@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useParams, Link, Navigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useI18n } from '../i18n/index.jsx'
 import { useSupervisionArticle, useSupervision } from '../lib/supervision.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
@@ -12,6 +12,7 @@ import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
+import NotFound from './NotFound.jsx'
 
 const SITE = 'https://www.kurkoos-group.co.il'
 
@@ -29,7 +30,7 @@ export default function SupervisionArticle() {
     // הכתבות נטענות עצלה: בזמן הטעינה לא מפנים, אחרת כניסה ישירה
     // לכתבה (מגוגל/קישור) הייתה קופצת לעמוד הרשימה לפני שהתוכן הגיע
     if (!allArticles.length) return null
-    return <Navigate to="/construction-supervision" replace />
+    return <NotFound />
   }
 
   const fmtDate = (iso) =>

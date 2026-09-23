@@ -1,4 +1,4 @@
-import { useParams, Link, Navigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
@@ -22,6 +22,7 @@ import useIsMobile from '../hooks/useIsMobile.js'
 import Text3DFlip from '../components/ui/Text3DFlip.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import './ProjectDetail.css'
+import NotFound from './NotFound.jsx'
 
 /* דקורציה — רשת נקודות עדינה עם כמה "+" צבעוניים, ברקע אזורי banner/contact */
 function DottedGrid({ className = '' }) {
@@ -266,7 +267,7 @@ export default function ProjectDetail() {
     if (!local && supabase && !cmsLoaded) {
       return <div className="pd-loading" role="status" aria-live="polite"><span className="pd-loading__spin" /> טוען פרויקט…</div>
     }
-    return <Navigate to="/projects" replace />
+    return <NotFound />
   }
 
   // פירורי לחם: בית / חטיבה (לפי קטגוריית הפרויקט) / שם הפרויקט

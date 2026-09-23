@@ -337,6 +337,82 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<ul><li><a href="/about">אודות הקבוצה</a></li><li><a href="/projects">הפרויקטים</a></li><li><a href="/livy-yazamim">ליווי יזמי נדל"ן</a></li></ul>`,
   }))
 
+  /* עמודי הפרויקטים. התוכן שלהם מנוהל ב-CMS, ולכן הם נמשכים מ-Supabase
+     בזמן ה-build (ב-Vercel יש רשת ומשתני סביבה). כך פרויקט חדש שנוצר
+     בניהול מקבל עמוד מרונדר מראש בדפלוי הבא, בלי שום עדכון ידני כאן.
+     בלי משתני סביבה, למשל בבנייה מקומית, פשוט מדלגים. אלה עמודי הכוונה
+     הגבוהה ביותר באתר: מי שמחפש "הנרייטה סאלד הוד השרון" נוחת בדיוק כאן,
+     ועד היום סורק בלי JavaScript ראה בהם מעטפת ריקה. */
+  const SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const SB_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  let cmsProjects = []
+  if (SB_URL && SB_KEY) {
+    try {
+      const r = await fetch(
+        `${SB_URL.replace(/\/$/, '')}/rest/v1/projects?is_published=eq.true&is_archived=eq.false` +
+        `&select=slug,name,location,subtitle,description,hero_image_url,status,address&order=sort_order.asc`,
+        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
+      )
+      if (r.ok) cmsProjects = await r.json()
+      else console.warn(`prerender: שליפת הפרויקטים מה-CMS החזירה ${r.status}, מדלגים על עמודי הפרויקטים`)
+    } catch (e) {
+      console.warn('prerender: אין גישה ל-CMS, מדלגים על עמודי הפרויקטים:', e.message)
+    }
+  } else {
+    console.warn('prerender: אין משתני סביבה של Supabase, מדלגים על עמודי הפרויקטים')
+  }
+
+  const txt = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
+  for (const p of cmsProjects) {
+    const slug = String(p.slug || '').trim()
+    const name = txt(p.name)
+    if (!slug || !name) continue
+    const city = txt(p.location)
+    const sub = txt(p.subtitle)
+    const desc = txt(p.description)
+    const heading = city ? `${name}, ${city}` : name
+    const lead = sub || desc || `פרויקט של קורקוס גרופ${city ? ` ב${city}` : ''}.`
+    done.push(renderPage({
+      path: `/projects/${slug}`,
+      title: heading,
+      description: `${lead.replace(/[.\s]+$/, '')}. ${name} הוא פרויקט של קורקוס גרופ: יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.`.slice(0, 300),
+      jsonLd: [breadcrumbLd([
+        { name: BRAND, path: '/' },
+        { name: 'הפרויקטים', path: '/projects' },
+        { name, path: `/projects/${slug}` },
+      ])],
+      bodyHtml:
+        `<h1>${esc(heading)}</h1>` +
+        (sub ? `<p>${esc(sub)}</p>` : '') +
+        (desc && desc !== sub ? `<p>${esc(desc)}</p>` : '') +
+        (txt(p.address) ? `<p>כתובת: ${esc(txt(p.address))}</p>` : '') +
+        `<ul><li><a href="/projects">כל הפרויקטים</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li></ul>`,
+    }))
+  }
+
+  /* שני עמודים שהיו ב-sitemap בלי HTML שסורק יכול לקרוא */
+  done.push(renderPage({
+    path: '/blog',
+    title: 'בלוג קורקוס',
+    description: 'תובנות, עדכונים וסיפורים מאחורי הקלעים של קורקוס גרופ: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים.',
+    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'בלוג קורקוס', path: '/blog' }])],
+    bodyHtml:
+      `<h1>בלוג קורקוס</h1><p>תובנות, עדכונים וסיפורים מאחורי הקלעים של קבוצת קורקוס.</p>` +
+      `<h2>הטורים והמדריכים של הקבוצה</h2>` +
+      `<ul><li><a href="/yazamut-nadlan">המדריך ליזמות נדל"ן</a></li><li><a href="/constructions">המדריך לתהליך הבנייה</a></li><li><a href="/construction-supervision">המדריך לפיקוח בנייה</a></li><li><a href="/real-estate-guide">המדריך לרוכש ולמוכר</a></li><li><a href="/madrich-yazamim">המדריך ליזמי נדל"ן צעירים</a></li></ul>`,
+  }))
+
+  done.push(renderPage({
+    path: '/careers',
+    title: 'דרושים',
+    description: 'קורקוס גרופ מחפשת אנשים מצוינים לתחומי היזמות, הביצוע, הפיקוח והתיווך. המשרדים בהנגר 24 בהוד השרון.',
+    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'דרושים', path: '/careers' }])],
+    bodyHtml:
+      `<h1>דרושים בקורקוס גרופ</h1>` +
+      `<p>אנחנו תמיד מחפשים אנשים מצוינים. הקבוצה פועלת ביזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים, מהמשרד ברחוב הנגר 24 בהוד השרון.</p>` +
+      `<ul><li><a href="/about">אודות הקבוצה</a></li><li><a href="/team">הצוות שמאחורי קורקוס</a></li><li><a href="/projects">הפרויקטים</a></li></ul>`,
+  }))
+
   const { faqs: mentorFaqs } = await import(pathToFileURL(join(root, 'src/data/mentorship.js')).href)
   done.push(renderPage({
     path: '/livy-yazamim',

@@ -31,6 +31,14 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/sitemap-pages.xml",
+      "destination": "/api/sitemap?part=pages"
+    },
+    {
+      "source": "/sitemap-articles.xml",
+      "destination": "/api/sitemap?part=articles"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/"
     }

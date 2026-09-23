@@ -61,6 +61,41 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 
+  /* שלוש הגשות ב-Search Console מאותה פונקציה:
+       /sitemap.xml           אינדקס שמפנה לשני הקבצים שמתחת
+       /sitemap-pages.xml     עמודי האתר והפרויקטים (המסחריים)
+       /sitemap-articles.xml  כתבות הטורים והמדריכים
+     הפיצול לא משנה דירוג. הוא נותן דוח כיסוי נפרד לכל חלק, כדי לראות אם
+     דווקא העמודים המסחריים נתקעים בלי שזה נבלע בתוך עשרות הכתבות.
+     כל כתובת מופיעה בדיוק בקובץ אחד, ולכן אין כאן כפילות. */
+  const part = String((req.query && req.query.part) || '').toLowerCase()
+
+  if (!part) {
+    const lastmod = new Date().toISOString().slice(0, 10)
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      ['/sitemap-pages.xml', '/sitemap-articles.xml']
+        .map((p) => `  <sitemap><loc>${SITE}${p}</loc><lastmod>${lastmod}</lastmod></sitemap>`)
+        .join('\n') +
+      `\n</sitemapindex>\n`
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=600, stale-while-revalidate=86400')
+    res.status(200).send(xml)
+    return
+  }
+
+  if (part === 'articles') {
+    const rows = ARTICLES.map((a) => urlTag({
+      loc: `${SITE}${a.path}`, lastmod: a.lastmod || undefined, changefreq: a.changefreq, priority: a.priority,
+    }))
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` + rows.join('\n') + `\n</urlset>\n`
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=600, stale-while-revalidate=86400')
+    res.status(200).send(xml)
+    return
+  }
+
   // עמודי פרויקטים מפורסמים מה-CMS (קריאה ציבורית תחת RLS)
   let projects = []
   if (SUPABASE_URL && ANON_KEY) {
@@ -73,10 +108,10 @@ export default async function handler(req, res) {
     } catch { /* אם ה-CMS לא זמין — נחזיר לפחות את העמודים הקבועים */ }
   }
 
+  // part === 'pages' — עמודי האתר והפרויקטים, בלי הכתבות
   const today = new Date().toISOString().slice(0, 10)
   const rows = [
     ...STATIC.map((s) => urlTag({ loc: `${SITE}${s.path}`, changefreq: s.changefreq, priority: s.priority })),
-    ...ARTICLES.map((a) => urlTag({ loc: `${SITE}${a.path}`, lastmod: a.lastmod || undefined, changefreq: a.changefreq, priority: a.priority })),
     ...projects
       .filter((p) => p && p.slug)
       .map((p) => urlTag({

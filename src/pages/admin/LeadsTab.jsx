@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { listLeads, updateLead, deleteLead, createLead, reorderRows, restoreLead } from '../../lib/cms.js'
+import { listLeads, updateLead, deleteLead, createLead, reorderRows, restoreLead, useSettings } from '../../lib/cms.js'
+import { reviewWaLink } from '../../lib/reviewRequest.js'
 
 /* ── SVG Icon components ── */
 const IcPhone    = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
@@ -231,6 +232,8 @@ function Toast({ toast, onClose }) {
    LeadsTab — ראשי
    ============================================================ */
 export default function LeadsTab() {
+  const siteSettings = useSettings()
+  const reviewUrl = siteSettings?.google_review_url || ''
   const [leads,       setLeads]       = useState([])
   const [loading,     setLoading]     = useState(true)
   const [err,         setErr]         = useState('')
@@ -523,7 +526,7 @@ export default function LeadsTab() {
       {/* ===== תצוגות ===== */}
       {!tableMissing && leads.length > 0 && (
         <>
-          {view==='board' && <BoardView byStage={byStage} moveTo={moveTo} toggleContacted={toggleContacted} remove={remove} setEditing={setEditing}/>}
+          {view==='board' && <BoardView byStage={byStage} moveTo={moveTo} toggleContacted={toggleContacted} remove={remove} setEditing={setEditing} reviewUrl={reviewUrl}/>}
           {view==='list'  && <ListView  {...{leads:filtered, dragId, setDragId, dragOver, setDragOver, reorder, moveTo, toggleContacted, remove, setEditing}}/>}
           {view==='table' && <TableView {...{leads:filtered, moveTo, toggleContacted, remove, setEditing, quickEdit}}/>}
         </>
@@ -656,7 +659,7 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
 }
 
 /* ============================ קארד ליד (board) ============================ */
-function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
+function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag, reviewUrl }) {
   const st     = stageOf(stageIdOf(lead))
   const proj   = extractProject(lead.project)
   const digits = String(lead.phone||'').replace(/\D/g,'')
@@ -701,6 +704,21 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
 
         {lead.message && <p className="adm-lead__msg">{lead.message}</p>}
 
+        {/* עסקה שנסגרה היא הרגע לבקש ביקורת, ולכן הכפתור מופיע בדיוק כאן
+            ורק בשלב הזה. ההודעה כבר מנוסחת לפי סוג הפנייה, עם הקישור. */}
+        {stageIdOf(lead) === 'won' && reviewUrl && reviewWaLink(lead, reviewUrl) && (
+          <a
+            href={reviewWaLink(lead, reviewUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            draggable="false"
+            className="adm-lead__review"
+            title="שליחת בקשת ביקורת בוואטסאפ"
+          >
+            <IcWA width={13} height={13}/> בקשת ביקורת
+          </a>
+        )}
+
         <div className="adm-lead__foot">
           <div className="adm-lead__foot-contacts">
             {lead.phone && <a href={`tel:${digits}`} draggable="false" className="adm-ic-btn" title={lead.phone}><IcPhone width={12} height={12}/></a>}
@@ -723,7 +741,7 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
 }
 
 /* ============================ תצוגת קוביות ============================ */
-function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
+function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing, reviewUrl }) {
   const [dragId,        setDragId]        = useState(null)
   const [dragOverStage, setDragOverStage] = useState(null)
 
@@ -760,7 +778,7 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing }) {
             <div className={`adm-stage__list${dragOverStage===stage.id?' adm-stage__list--over':''}`}>
               {items.map((lead) => (
                 <div key={lead.id} className={dragId===lead.id?'adm-card-ghost':''}>
-                  <LeadCard lead={lead}
+                  <LeadCard lead={lead} reviewUrl={reviewUrl}
                     onStage={moveTo} onContacted={toggleContacted} onRemove={remove} onEdit={setEditing}
                     cardDrag={{ start: (e) => handleDragStart(e, lead), end: handleDragEnd }}
                   />

@@ -2584,3 +2584,13 @@
   color: #16688c; font-size: 9px; font-weight: 800; font-style: normal;
   font-family: var(--font-heading); line-height: 1; vertical-align: 1px;
 }
+
+/* כפתור בקשת ביקורת — מופיע רק על ליד בשלב "נסגר בהצלחה" */
+.adm-lead__review {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  margin-top: 0.55rem; padding: 0.4rem 0.8rem; border-radius: 8px;
+  background: #25d366; color: #07293a;
+  font-size: 0.78rem; font-weight: 800; text-decoration: none;
+  transition: background .15s;
+}
+.adm-lead__review:hover { background: #1fb856; }

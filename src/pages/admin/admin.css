@@ -875,6 +875,21 @@
 .adm-leads__err-reload:hover { background: #991b1b; }
 .adm-leads__empty { padding: 3rem; text-align: center; color: var(--adm-muted); border: 1.5px dashed var(--adm-border-strong); border-radius: var(--adm-radius); font-size: 0.9rem; }
 
+/* הודעה כשסינון פעיל מסתיר לידים — צריכה לקפוץ לעין, אחרת נראה שליד נעלם */
+.adm-leads__hidden-note {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  background: #fffbeb; color: #92400e; padding: 0.7rem 1rem;
+  border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+  border: 1.5px solid #fcd34d; direction: rtl; text-align: right;
+}
+.adm-leads__hidden-clear {
+  flex-shrink: 0; padding: 0.3rem 0.8rem; border-radius: 6px;
+  background: #b45309; color: #fff; border: none; cursor: pointer;
+  font-size: 0.78rem; font-weight: 700; white-space: nowrap;
+  transition: background .15s;
+}
+.adm-leads__hidden-clear:hover { background: #92400e; }
+
 /* ── כרטיס כותרת: סרגל כלים + פילטרים יחד, דביק בגלילה ── */
 .adm-leads__head {
   position: sticky; top: 0; z-index: 30;
@@ -885,6 +900,7 @@
 .adm-leads__bar-row { display: flex; align-items: center; justify-content: space-between; gap: 0.9rem; flex-wrap: wrap; }
 .adm-leads__bar-group { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
 .adm-leads__count { font-family: var(--font-heading); font-weight: 600; font-size: 0.9rem; color: var(--adm-muted); padding-inline-end: 0.7rem; border-inline-end: 1.5px solid var(--adm-border); margin-inline-end: 0.3rem; white-space: nowrap; }
+.adm-leads__newest { font-size: 0.78rem; font-weight: 600; color: var(--adm-muted); padding-inline-end: 0.7rem; border-inline-end: 1.5px solid var(--adm-border); margin-inline-end: 0.3rem; white-space: nowrap; }
 .adm-leads__count b { font-weight: 900; font-size: 1.2rem; color: #0A2540; margin-inline-start: 0.25rem; font-variant-numeric: tabular-nums; }
 .adm-leads__search {
   height: 40px; padding: 0 0.95rem; border: 1px solid var(--adm-border-strong); border-radius: 10px;
@@ -1129,6 +1145,11 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25;
 }
 .adm-lead__name:hover { color: #0369a1; }
+.adm-lead__fresh {
+  display: inline-block; margin-inline-start: 0.4rem; vertical-align: middle;
+  padding: 0.08rem 0.4rem; border-radius: 999px;
+  background: #3a7bd5; color: #fff; font-size: 0.64rem; font-weight: 800; letter-spacing: 0.03em;
+}
 .adm-lead__project { font-size: 0.78rem; color: var(--adm-muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .adm-lead__sub {
   display: inline-flex; align-items: center; gap: 4px;

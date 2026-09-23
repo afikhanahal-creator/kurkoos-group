@@ -97,6 +97,10 @@ export default [
     "lastmod": "2026-06-21"
   },
   {
+    "path": "/madrich-yazamim/bdikat-hetkenut-karka",
+    "lastmod": "2026-09-23"
+  },
+  {
     "path": "/madrich-yazamim/birokratia-lo-negdechem",
     "lastmod": "2026-07-06"
   },
@@ -123,6 +127,10 @@ export default [
   {
     "path": "/madrich-yazamim/mesira-dna-haproyekt-haba",
     "lastmod": "2026-08-03"
+  },
+  {
+    "path": "/madrich-yazamim/nesach-tabu-mi-baal-hakarka",
+    "lastmod": "2026-10-04"
   },
   {
     "path": "/madrich-yazamim/orech-din-nadlan-neches",

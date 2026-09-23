@@ -55,7 +55,7 @@ export const team = [
     id: 'shlomi',
     name: { he: 'שלומי קורקוס', en: 'Shlomi Kurkoos' },
     role: { he: 'מנכ"ל ומייסד', en: 'CEO & Founder' },
-    photo: '/AD2EB011-F33E-40FC-9639-627E92C2A4D7.jpeg',
+    photo: '/team-shlomi.webp',
     imgPos: '55% 9%',    /* טיפ-טיפה שמאלה (מוקד אופקי ימינה) למרכז את הדמות; גובה ראש כמו יעקב ומוטי */
     imgZoom: 1.45,   /* זום קרוב יותר — הפנים ברורות וגדולות; transform-origin עליון שומר על גובה הראש */
     imgBright: 1.2,  /* +20% בהירות — אפקט תאורת פורטרייט */

@@ -76,8 +76,17 @@
 
 .office-map__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
+/* טאבלט: הכרטיס נערם, והמפה הופכת לרצועה רחבה מעל הפרטים */
 @media (max-width: 860px) {
   .office-map { grid-template-columns: minmax(0, 1fr); }
-  .office-map__map { aspect-ratio: 16 / 11; min-height: 220px; }
+  .office-map__map { aspect-ratio: 16 / 9; min-height: 240px; }
   .office-map__actions .btn { flex: 1 1 10rem; justify-content: center; }
+}
+
+/* טלפון: המפה היא העיקר. ריבוע גדול על כל רוחב המסך, כי במסך צר
+   רצועה נמוכה מראה בעיקר שדות ריקים מסביב ולא את הרחוב עצמו.
+   יחס הגובה קבוע ולא נמדד ב-vh בכוונה: בטלפון שורת הכתובת נעלמת
+   בגלילה, וגובה שתלוי ב-vh היה קופץ באמצע הקריאה. */
+@media (max-width: 600px) {
+  .office-map__map { aspect-ratio: 1 / 1; min-height: 300px; }
 }

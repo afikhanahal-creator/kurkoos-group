@@ -11,7 +11,7 @@ export const activities = [
     id: 'development',
     icon: 'building',
     to: '/divisions/development',
-    image: '/divisions/humash-22-24.png',
+    image: '/divisions/humash-22-24.webp',
     title: { he: 'יזמות נדל"ן', en: 'Real-estate development' },
     short: {
       he: 'איתור, תכנון והובלת פרויקטים משלב הרעיון',
@@ -59,7 +59,7 @@ export const activities = [
     // לוגו אפיק הנחל על רקע כהה: במובייל 'contain' כדי שהלוגו המלא ייראה (הרקע
     // הכהה של הכרטיס מתמזג), בדסקטופ 'cover' כרגיל.
     image: {
-      src: '/afik-hanahal-cover.png',
+      src: '/afik-hanahal-cover.webp',
       views: { mobile: { objectFit: 'contain' }, desktop: { objectFit: 'cover' } },
     },
     title: { he: 'תיווך ושיווק', en: 'Brokerage & marketing' },

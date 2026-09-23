@@ -22,6 +22,17 @@ const prefersReducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
+/* וידאו רקע כבד לא מנוגן מאליו בטלפון ובחיבור חסכוני. סרטון של חמישה
+   מגה בגלישה סלולרית הוא גם חשבון הגלישה של המבקר וגם מדד LCP כושל.
+   מוצג הפוסטר עם כפתור הפעלה, ומי שרוצה לראות מקיש ומקבל אותו. */
+const heavyVideoOnDemand = () => {
+  if (typeof window === 'undefined') return false
+  const c = navigator.connection || {}
+  if (c.saveData) return true
+  if (/^(slow-2g|2g|3g)$/.test(c.effectiveType || '')) return true
+  return window.matchMedia?.('(max-width: 900px)').matches === true
+}
+
 export default function BackgroundMedia({
   type = 'video',
   src,
@@ -39,6 +50,9 @@ export default function BackgroundMedia({
   // הווידאו לא נטען עד שהרכיב מתקרב למסך — חוסך מגה-בייטים לכל ביקור
   // בעמוד שבו הגולש לא גלל עד הסרטון (הפוסטר מוצג עד אז).
   const [near, setNear] = useState(false)
+  // המבקר ביקש במפורש לראות את הסרטון (הקשה על כפתור ההפעלה)
+  const [asked, setAsked] = useState(false)
+  const onDemand = type === 'video' && !asked && heavyVideoOnDemand()
   const wrapRef = useRef(null)
   const videoRef = useRef(null)
 
@@ -97,6 +111,7 @@ export default function BackgroundMedia({
 
   // הפעלה ידנית (מחווה של המשתמש) — תמיד מותרת ב-iOS גם כשה-autoplay חסום
   const manualPlay = () => {
+    if (onDemand) { setAsked(true); return }   // הטעינה מתחילה, ההפעלה בעקבות onCanPlay
     const v = videoRef.current
     if (!v) return
     v.muted = true
@@ -125,13 +140,16 @@ export default function BackgroundMedia({
           <video
             ref={videoRef}
             className="bg-media__el"
-            src={near ? src : undefined}
+            src={near && !onDemand ? src : undefined}
             poster={poster}
             autoPlay
             muted
             loop
             playsInline
-            preload="auto"
+            /* היה preload="auto", כלומר הדפדפן הוריד את כל הקובץ מראש.
+               בעמוד הביצוע זה 5 מגה על חיבור סלולרי, והוא גם רכיב ה-LCP.
+               metadata מוריד רק את מה שצריך כדי להתחיל, והשאר בזרימה. */
+            preload="metadata"
             onLoadedData={() => setLoaded(true)}
             onPlaying={() => { setLoaded(true); setPlaying(true) }}
             onPlay={() => setPlaying(true)}

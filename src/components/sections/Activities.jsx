@@ -26,7 +26,7 @@ export default function Activities() {
     // ברירת-מחדל לכרטיס התיווך: קובץ הלוגו המקומי שב-repo — אבל *רק* כשאין תמונה
     // ב-CMS. אם הועלתה/נערכה תמונה בניהול, היא גוברת (כך שמה שעורכים בעורך הוא
     // מה שמופיע באתר). כך גם אפיק הנחל תמיד יוצג כשעדיין לא הגדירו תמונה.
-    const FALLBACK_LOCAL = { brokerage: '/afik-hanahal-cover.png' }
+    const FALLBACK_LOCAL = { brokerage: '/afik-hanahal-cover.webp' }
     const pick = (a, bp) => {
       const v = valid ? pickResponsive(map[a.id], bp) : null
       if (v) return { ...a, image: v }

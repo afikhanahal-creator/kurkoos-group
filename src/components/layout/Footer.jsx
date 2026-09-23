@@ -94,7 +94,7 @@ export default function Footer() {
             <Link to="/terms">{t('footer.terms')}</Link>
           </div>
           <img
-            src="/aminot-badge.png"
+            src="/aminot-badge.webp"
             alt={L({ he: 'חותם אמינות Dun & Bradstreet', en: 'Dun & Bradstreet reliability seal' })}
             className="footer__badge"
             width="108"

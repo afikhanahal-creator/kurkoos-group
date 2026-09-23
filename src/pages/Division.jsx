@@ -35,10 +35,10 @@ const AFIK_SITE_URL = 'https://www.afikhanahal.co.il/'
 // לוגואים קבועים לעמודי הקאבר (נפילה-לאחור כש-CMS לא הגדיר לוגו).
 // חייב להישאר זהה למפה ב-CoverImagesTab כדי שהתצוגה במערכת תתאים לאתר.
 const DEFAULT_DIVISION_LOGOS = {
-  execution: '/divisions/raita-logo.png',
-  brokerage: '/afik-hanahal-logo.png',
+  execution: '/divisions/raita-logo.webp',
+  brokerage: '/afik-hanahal-logo.webp',
   development: '/divisions/development-logo.png',
-  supervision: '/divisions/shchinta-logo.png',
+  supervision: '/divisions/shchinta-logo.webp',
 }
 
 export default function Division() {
@@ -54,7 +54,7 @@ export default function Division() {
   let beforeAfter = settings.development_beforeafter
   if (typeof beforeAfter === 'string') { try { beforeAfter = JSON.parse(beforeAfter) } catch { beforeAfter = null } }
   const ba = beforeAfter && typeof beforeAfter === 'object' ? beforeAfter : {}
-  const baBefore = ba.before || '/divisions/humash-22-24-sketch.png'
+  const baBefore = ba.before || '/divisions/humash-22-24-sketch.webp'
   const baAfter = ba.after || '/divisions/humash-22-24-house.PNG'
 
   // תמונת באנר החטיבה — override מה-CMS (cover_divisions) עם נפילה-לאחור לתמונה הקבועה
@@ -242,12 +242,12 @@ export default function Division() {
                   {/* צילום מסך אמיתי של האתר; אם חסר (404) — נופל ללוגו על רקע המותג */}
                   <img
                     className="ah-site__shot"
-                    src="/afik-website.png"
+                    src="/afik-website.webp"
                     alt={'אתר אפיק הנחל'}
                     loading="lazy"
                     onError={(e) => { e.currentTarget.style.display = 'none' }}
                   />
-                  <img className="ah-site__logo" src="/afik-hanahal-logo.png" alt={'אפיק הנחל נדל"ן'} loading="lazy" />
+                  <img className="ah-site__logo" src="/afik-hanahal-logo.webp" alt={'אפיק הנחל נדל"ן'} loading="lazy" />
                 </span>
               </a>
               <a href={AFIK_SITE_URL} target="_blank" rel="noopener noreferrer" className="ah-site__btn">

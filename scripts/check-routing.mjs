@@ -132,4 +132,24 @@ for (const f of gsc) {
   }
 }
 
-console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם, כותרת ייחודית לכל עמוד, ניסוח האזור אחיד')
+/* 11. ה-hash של הסקריפט שמסיר את הבלוק הסטטי נמצא ב-CSP.
+   בלעדיו הדפדפן חוסם את הסקריפט, הבלוק נשאר על המסך עד ש-React נכנס,
+   וחוזרת קפיצת הפריסה שהפילה את מדד ה-CLS. הבדיקה מוודאת ששני הצדדים
+   מדברים על אותה מחרוזת בדיוק. */
+{
+  const { ssrStripHash } = await import('./prerender-static.mjs')
+  const want = ssrStripHash()
+  const csp = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8'))
+    .headers.flatMap((h) => h.headers)
+    .find((h) => h.key === 'Content-Security-Policy')?.value || ''
+  if (!csp.includes(`'${want}'`)) {
+    fail(`ה-CSP לא מכיל את ה-hash של סקריפט הסרת הבלוק הסטטי. הוסיפו ל-script-src ב-vercel.json: '${want}'`)
+  }
+  // ומוודאים שהסקריפט אכן הגיע לעמודים שיש בהם תוכן סטטי
+  const sample = join(root, 'dist', 'villas-sharon', 'index.html')
+  if (existsSync(sample) && !readFileSync(sample, 'utf8').includes('.ssr')) {
+    fail('הבלוק הסטטי נעלם מ-dist/villas-sharon/index.html')
+  }
+}
+
+console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם, כותרת ייחודית לכל עמוד, ניסוח האזור אחיד, CSP תואם')

@@ -13,6 +13,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { createHash } from 'node:crypto'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
@@ -60,6 +61,14 @@ const faqLd = (faqs, pick = (f) => [f.q, f.a]) => ({
   mainEntity: faqs.map((f) => { const [q, a] = pick(f); return { '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } } }),
 })
 
+/* מסיר את הבלוק הסטטי לפני הציור הראשון, כדי שלא תהיה קפיצת פריסה כש-React
+   נכנס. ה-CSP של האתר לא מתיר סקריפטים inline, ולכן vercel.json נושא את
+   ה-hash של המחרוזת הזו בדיוק. scripts/check-routing.mjs מוודא ששניהם
+   תואמים, כך שכל שינוי כאן בלי עדכון ה-hash יפיל את הבנייה במקום את האתר. */
+export const SSR_STRIP = "document.currentScript.parentNode.querySelector('.ssr').remove()"
+export const ssrStripHash = () =>
+  'sha256-' + createHash('sha256').update(SSR_STRIP, 'utf8').digest('base64')
+
 /* בניית עמוד: החלפת ה-head והזרקת תוכן סטטי ל-#root */
 /* קישורי הניווט של האתר, בתוך ה-HTML הסטטי.
    הפוטר האמיתי מרונדר ע"י React, ולכן סורק שלא מריץ JavaScript לא רואה
@@ -100,10 +109,20 @@ function renderPage({ path, title, description, ogType = 'website', jsonLd = [],
   html = html.replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(description)}$2`)
   if (jsonLd.length) html = html.replace('</head>', jsonLd.map(ldJson).join('\n') + '\n</head>')
   if (bodyHtml) {
-    /* תוכן סטטי קריא במקום מסך הפתיחה, React מחליף אותו בגרסה החיה */
+    /* תוכן סטטי קריא במקום מסך הפתיחה, React מחליף אותו בגרסה החיה.
+
+       הסקריפט הזעיר שאחריו מסיר את הבלוק עוד לפני הציור הראשון. בלעדיו
+       הדפדפן צייר את הטקסט הסטטי, ואז React החליף אותו בעמוד האמיתי,
+       וזו קפיצה של המון פיקסלים: CLS נמדד 0.9 בעמודים האלה מול סף של 0.1
+       אצל גוגל, כלומר כשל בליבת מדדי החוויה.
+
+       סורק שלא מריץ JavaScript לא מריץ גם את השורה הזו, ולכן הוא מקבל את
+       התוכן הסטטי במלואו, בדיוק כמו קודם. גוגל, שכן מריץ, רואה את העמוד
+       האמיתי של React, וגם זה כמו קודם. */
     const staticBlock =
       `<style>.ssr{max-width:760px;margin:0 auto;padding:24px 20px;font-family:system-ui,sans-serif;line-height:1.75;color:#16202e}.ssr h1{font-size:1.7rem;line-height:1.3}.ssr h2{font-size:1.25rem;margin-top:1.6em}.ssr h3{font-size:1.05rem}.ssr a{color:#16688c}</style>` +
-      `<div class="ssr" dir="rtl">${bodyHtml}${SITE_LINKS}</div>`
+      `<div class="ssr" dir="rtl">${bodyHtml}${SITE_LINKS}</div>` +
+      `<script>${SSR_STRIP}</script>`
     html = html.replace(/(<div id="root">)[\s\S]*?(<\/div>\s*<\/body>)/, `$1${staticBlock}$2`)
   }
   const dir = join(dist, ...path.split('/').filter(Boolean))

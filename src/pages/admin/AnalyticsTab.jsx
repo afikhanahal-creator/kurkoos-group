@@ -294,7 +294,7 @@ function buildInsights({ tot, prevTot, channels, pages, devices, anomalies }) {
 /* ============================================================
    פאנל זמן אמת. שלושה דברים, וכל אחד מסומן במפורש לאיזה חלון זמן
    הוא שייך, כדי שלא ייראה שהכל "עכשיו":
-   • כמה גולשים באתר ברגע זה, ועקומת חצי השעה האחרונה
+   • כמה גולשים ביקרו ב-30 הדקות האחרונות, ועקומת הצפיות באותו חלון
    • באילו עמודים הם צופים כרגע
    • מאיזה מקור הגיעו — נתון של היום, לא של הרגע, כי ל-API של זמן
      אמת של Google אין בכלל מימדי מקור תנועה
@@ -333,7 +333,7 @@ function LivePanel({ rt, users }) {
     <section className="an-live-panel">
       <div className="an-live-panel__head">
         <div>
-          <h3>מי באתר עכשיו</h3>
+          <h3>פעילות ב-30 הדקות האחרונות</h3>
           <span className="an-sub">מתעדכן כל דקה · Google Analytics מחזיק חלון של 30 דקות אחורה</span>
         </div>
         <SelfExclude />
@@ -342,14 +342,14 @@ function LivePanel({ rt, users }) {
       <div className="an-live-panel__grid">
         <div className="an-live-now">
           <span className="an-live-now__num">{users == null ? '· · ·' : users}</span>
-          <span className="an-live-now__lbl">גולשים באתר ברגע זה</span>
+          <span className="an-live-now__lbl">גולשים ב-30 הדקות האחרונות</span>
           <div className="an-live-spark" title="פעילות ב-30 הדקות האחרונות">
             {buckets.map((v, i) => (
               <i key={i} style={{ height: `${Math.max(3, (v / peak) * 100)}%` }} className={v ? '' : 'is-empty'} />
             ))}
           </div>
           <span className="an-live-now__foot">
-            {halfHour ? `${halfHour} צפיות פעילות בחצי השעה האחרונה` : 'אין פעילות בחצי השעה האחרונה'}
+            {halfHour ? `${halfHour} צפיות בחצי השעה האחרונה` : 'אין פעילות בחצי השעה האחרונה'}
           </span>
         </div>
 
@@ -361,7 +361,7 @@ function LivePanel({ rt, users }) {
                 <li key={r.d[0]}><span className="an-live-list__name" title={r.d[0]}>{r.d[0] || '(ללא כותרת)'}</span><b>{r.m[0]}</b></li>
               ))}
             </ul>
-          ) : <p className="an-empty an-empty--sm">אף אחד לא נמצא באתר ברגע זה</p>}
+          ) : <p className="an-empty an-empty--sm">אף אחד לא ביקר באתר ב-30 הדקות האחרונות</p>}
           <p className="an-live-note">
             Google מדווח בזמן אמת לפי כותרת העמוד ולא לפי הכתובת, ולכן מוצגות כאן הכותרות.
           </p>
@@ -544,7 +544,7 @@ export default function AnalyticsTab() {
           <span className="an-sub"> · השוואה לתקופה מקבילה קודמת · Google Analytics</span>
         </div>
         <div className="an-top__side">
-          <span className="an-live">{rtUsers == null ? '· · ·' : rtUsers} עכשיו באתר<i /></span>
+          <span className="an-live">{rtUsers == null ? '· · ·' : rtUsers} ב-30 הדקות האחרונות<i /></span>
           <div className="an-seg">
             {PRESETS.map((p) => <button key={p.id} type="button" className={preset === p.id ? 'is-on' : ''} onClick={() => setPreset(p.id)}>{p.label}</button>)}
           </div>
@@ -562,7 +562,7 @@ export default function AnalyticsTab() {
             24–48 שעות — מהרגע הזה הדשבורד יתמלא מעצמו, בלי שום פעולה נוספת.
           </p>
           <p className="an-await__rt">
-            בדיקה מיידית: פתחו את האתר בטלפון והביטו במונה <b>"עכשיו באתר"</b> למעלה —
+            בדיקה מיידית: פתחו את האתר בטלפון והביטו במונה <b>"ב-30 הדקות האחרונות"</b> למעלה —
             נתוני זמן-אמת מגיעים תוך שניות, עוד לפני הדוחות המלאים.
           </p>
         </section>

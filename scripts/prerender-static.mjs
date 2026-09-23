@@ -326,15 +326,38 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<ul><li><a href="/divisions/development">יזמות נדל"ן</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a></li><li><a href="/team">הצוות שמאחורי קורקוס</a></li><li><a href="/projects">הפרויקטים</a></li></ul>`,
   }))
 
+  /* עמוד הצוות. אנשים בעלי שם ותפקיד הם סימן אמון מרכזי בעיני מנוע חיפוש,
+     ובמקרה שלנו גם ראיה לזהות: שלושה מארבעת התפקידים הם ניהול עבודה וביצוע
+     בשטח. עד עכשיו הסורק ראה כאן פסקה כללית בלי שם אחד. */
+  const { team: teamMembers } = await import(pathToFileURL(join(root, 'src/data/team.js')).href)
+  const he = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
+  // סדר התצוגה במערך הוא שמאל לימין על המסך, וכאן רוצים את הבכיר ראשון
+  const teamOrdered = [...teamMembers].reverse()
   done.push(renderPage({
     path: '/team',
     title: 'הצוות שמאחורי קורקוס',
-    description: 'מהנדסים, אדריכלים ומנהלי פרויקטים עם עשרות שנות ניסיון משותף, שמלווים את פרויקטי קורקוס גרופ בהוד השרון ובאזור השרון מהתכנון ועד מסירת המפתח.',
-    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'אודות הקבוצה', path: '/about' }, { name: 'הצוות שמאחורי קורקוס', path: '/team' }])],
+    description: `הצוות של קורקוס גרופ: ${teamOrdered.map((m) => `${he(m.name)}, ${he(m.role)}`).join('. ')}. מלווים כל פרויקט בהוד השרון ובשרון מהתכנון ועד מסירת המפתח.`.slice(0, 300),
+    jsonLd: [
+      breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'אודות הקבוצה', path: '/about' }, { name: 'הצוות שמאחורי קורקוס', path: '/team' }]),
+      ...teamOrdered.map((m) => ({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: he(m.name),
+        jobTitle: he(m.role),
+        description: he(m.bio) || undefined,
+        image: m.photo && m.photo.startsWith('/') ? `${SITE}${m.photo}` : (m.photo || undefined),
+        worksFor: { '@type': 'Organization', name: BRAND, url: `${SITE}/` },
+        url: `${SITE}/team`,
+      })),
+    ],
     bodyHtml:
       `<h1>הצוות שמאחורי קורקוס</h1>` +
-      `<p>מהנדסים, אדריכלים ומנהלי פרויקטים עם עשרות שנות ניסיון משותף. הצוות מלווה כל פרויקט של הקבוצה משלב התכנון, דרך הביצוע והפיקוח, ועד מסירת המפתח לדייר.</p>` +
-      `<ul><li><a href="/about">אודות הקבוצה</a></li><li><a href="/projects">הפרויקטים</a></li><li><a href="/livy-yazamim">ליווי יזמי נדל"ן</a></li></ul>`,
+      `<p>הצוות מלווה כל פרויקט של הקבוצה משלב התכנון, דרך הביצוע והפיקוח, ועד מסירת המפתח לדייר.</p>` +
+      teamOrdered.map((m) =>
+        `<h2>${esc(he(m.name))}, ${esc(he(m.role))}</h2>` +
+        (he(m.bio) ? `<p>${esc(he(m.bio))}</p>` : '')
+      ).join('\n') +
+      `<ul><li><a href="/about">אודות הקבוצה</a></li><li><a href="/projects">הפרויקטים</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/livy-yazamim">ליווי יזמי נדל"ן</a></li></ul>`,
   }))
 
   /* עמודי הפרויקטים. התוכן שלהם מנוהל ב-CMS, ולכן הם נמשכים מ-Supabase

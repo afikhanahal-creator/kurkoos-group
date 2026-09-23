@@ -44,7 +44,8 @@ export default function TeamGrid({ members = [] }) {
               {/* צד קדמי */}
               <div className="flip-card-front">
                 <div className="flip-card-media">
-                  <img src={optimizeSrc(m.image, 520)} alt={m.name} className="flip-card-img" loading="lazy" style={{ ...(m.imgPos ? { objectPosition: m.imgPos } : {}), ...(m.imgZoom ? { '--img-zoom': m.imgZoom } : {}), ...(m.imgBright ? { '--img-bright': m.imgBright } : {}) }} />
+                  {/* הטקסט החלופי נושא גם את התפקיד: זה מה שמסביר לגוגל מי האדם בתמונה */}
+                  <img src={optimizeSrc(m.image, 520)} alt={m.role ? `${m.name}, ${m.role}, קורקוס גרופ` : m.name} className="flip-card-img" loading="lazy" style={{ ...(m.imgPos ? { objectPosition: m.imgPos } : {}), ...(m.imgZoom ? { '--img-zoom': m.imgZoom } : {}), ...(m.imgBright ? { '--img-bright': m.imgBright } : {}) }} />
                 </div>
                 <div className="flip-card-caption">
                   <h3 className="flip-card-name">{m.name}</h3>

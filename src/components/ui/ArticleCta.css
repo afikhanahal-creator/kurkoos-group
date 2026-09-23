@@ -95,3 +95,16 @@
   .art-cta__actions { flex-direction: column; }
   .art-cta__btn { width: 100%; justify-content: center; }
 }
+
+/* קישור אוטומטי בגוף הכתבה למילון ולמחשבונים. מסומן בקו תחתון עדין,
+   כדי שייקרא כקישור בלי לשבור את זרימת הקריאה. */
+.mdx__auto-link {
+  color: var(--color-primary-500);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(22, 104, 140, 0.35);
+  transition: border-color .15s, color .15s;
+}
+.mdx__auto-link:hover {
+  color: var(--color-primary-700);
+  border-bottom-color: currentColor;
+}

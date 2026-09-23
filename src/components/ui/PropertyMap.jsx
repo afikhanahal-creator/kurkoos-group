@@ -74,6 +74,7 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
     }
     if (!hasCoords && !query) { setFailed(true); return }
     let cancelled = false
+    let ro = null
     loadGoogleMaps(key)
       .then(async (maps) => {
         if (cancelled || !ref.current) return
@@ -134,6 +135,24 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
           onRemove() { if (this.el) { this.el.remove(); this.el = null } }
         }
         new CubeMarker().setMap(map)
+
+        /* גוגל מודד את גודל המיכל פעם אחת, כשהמפה נוצרת, ומצייר לפיו.
+           אם המיכל משתנה אחר כך, והוא משתנה: דפדפן בתוך אפליקציה שמשנה
+           את גובה החלון, סיבוב מכשיר, או שורת כתובת שנעלמת בגלילה,
+           נשאר ציור בגודל הישן ומופיע פס ריק בצד. הצופה הזה מודיע לגוגל
+           לצייר מחדש, ומחזיר את המרכז שלא יזוז תוך כדי. */
+        if (typeof ResizeObserver !== 'undefined' && ref.current) {
+          let raf = 0
+          ro = new ResizeObserver(() => {
+            cancelAnimationFrame(raf)
+            raf = requestAnimationFrame(() => {
+              if (cancelled) return
+              maps.event.trigger(map, 'resize')
+              map.setCenter(center)
+            })
+          })
+          ro.observe(ref.current)
+        }
       })
       .catch((e) => {
         if (!cancelled) {
@@ -141,7 +160,7 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
           setFailed(true)
         }
       })
-    return () => { cancelled = true }
+    return () => { cancelled = true; ro?.disconnect() }
   }, [lat, lng, query, zoom, label])
 
   // נפילה-לאחור: אם ה-Maps JS API לא זמין/מאופשר — embed רגיל (לא ריק)

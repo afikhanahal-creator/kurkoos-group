@@ -257,3 +257,18 @@
   margin-inline: auto;
   margin-block-start: clamp(1.5rem, 3vw, 2.75rem);
 }
+
+/* בטלפון הכרטיס יוצא מהשוליים של ה-container ונוגע בשני קצות המסך.
+   במסך צר כל שוליים באים על חשבון המפה עצמה, והיא מה שצריך להיות גדול
+   כאן. הפינות מתיישרות והמסגרות בצדדים יורדות, אחרת נשאר קו שצף באוויר
+   בקצה המסך. */
+@media (max-width: 600px) {
+  .contact .contact__office { max-width: none; padding-inline: 0; }
+  .contact .contact__office .office-map {
+    border-radius: 0;
+    border-inline-width: 0;
+  }
+  /* הכרטיס איבד את השוליים, ולכן הטקסט שבתוכו צריך לקבל אותם בעצמו,
+     באותו מרחק מהקצה כמו הטופס שמעליו. אחרת הכתובת מתחילה בקו אחר. */
+  .contact .contact__office .office-map__info { padding-inline: var(--container-pad); }
+}

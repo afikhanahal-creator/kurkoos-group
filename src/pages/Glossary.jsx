@@ -55,7 +55,11 @@ export default function Glossary() {
 
   return (
     <>
-      <Seo jsonLd={jsonLd} />
+      <Seo
+        title='מילון מונחי נדל"ן'
+        description='מה זה תב"ע? מה ההבדל בין מס רכישה למס שבח? מילון מונחי הנדל"ן של קורקוס גרופ: הגדרות ברורות לכל מונחי המפתח בתכנון, עסקאות, מימון ובנייה.'
+        jsonLd={jsonLd}
+      />
       <PageHeader
         eyebrow="מאגר ידע"
         title='מילון מונחי נדל"ן'

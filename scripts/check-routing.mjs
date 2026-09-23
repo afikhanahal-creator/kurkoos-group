@@ -86,4 +86,30 @@ for (const f of gsc) {
   if (!existsSync(join(root, 'dist', f))) fail(`קובץ האימות ${f} לא הועתק ל-dist.`)
 }
 
-console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם')
+/* 9. לכל עמוד סטטי כותרת משלו, ואף אחת מהן אינה כותרת מותג בלבד.
+   גוגל בונה את קישורי האתר בתוצאות החיפוש מהכותרות. כששני עמודים חולקים
+   כותרת, או שכותרת היא רק שם החברה, הקישור נושא את שם המותג ומוביל לעמוד
+   שגוי, בלי שום סימן באתר עצמו. */
+{
+  const titles = new Map()
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) { walk(full); continue }
+      if (entry.name !== 'index.html') continue
+      const route = full.slice(join(root, 'dist').length).replace(/\/index\.html$/, '') || '/'
+      const m = readFileSync(full, 'utf8').match(/<title>([\s\S]*?)<\/title>/)
+      if (!m) { fail(`לעמוד ${route} אין תגית title.`); continue }
+      const title = m[1].replace(/&quot;/g, '"').trim()
+      const bare = title.replace(/\s*\|\s*(קורקוס גרופ|Kurkoos Group)\s*$/g, '').trim()
+      if (!bare || /^(קורקוס גרופ|Kurkoos Group)$/i.test(bare)) {
+        fail(`לעמוד ${route} אין כותרת משלו, רק שם המותג: "${title}"`)
+      }
+      if (titles.has(title)) fail(`הכותרת "${title}" מופיעה גם ב-${titles.get(title)} וגם ב-${route}.`)
+      else titles.set(title, route)
+    }
+  }
+  walk(join(root, 'dist'))
+}
+
+console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם, כותרת ייחודית לכל עמוד')

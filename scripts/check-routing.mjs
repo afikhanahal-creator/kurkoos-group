@@ -112,4 +112,24 @@ for (const f of gsc) {
   walk(join(root, 'dist'))
 }
 
-console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם, כותרת ייחודית לכל עמוד')
+/* 10. ניסוח אחיד בטקסט שגוגל מציג. האתר תיאר את אותו אזור בשש צורות שונות,
+   וחלקן חזרו על "השרון" פעמיים באותו משפט. הצורה המוסכמת היא
+   "בהוד השרון ובאזור המרכז". כאן נופלים על חזרות ועל "נדלן" בלי גרשיים. */
+{
+  const BAD = [
+    [/בהוד השרון ו(ה|ב|באזור ה)שרון/, 'חזרה על "השרון" באותו ביטוי. הצורה הנכונה: בהוד השרון ובאזור המרכז'],
+    [/נדלן/, 'חסרים גרשיים: צריך נדל"ן'],
+  ]
+  const files = ['index.html', 'dist/index.html']
+  for (const rel of files) {
+    const full = join(root, rel)
+    if (!existsSync(full)) continue
+    const body = readFileSync(full, 'utf8')
+    for (const [re, why] of BAD) {
+      const m = body.match(re)
+      if (m) fail(`${rel}: ${why} (נמצא "${m[0]}")`)
+    }
+  }
+}
+
+console.log('✓ בדיקת ניתוב עברה: rewrite של ה-SPA תקין, cleanUrls עקבי, שער API יחיד, תוצרי build במקומם, כותרת ייחודית לכל עמוד, ניסוח האזור אחיד')

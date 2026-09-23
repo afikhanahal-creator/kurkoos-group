@@ -14,7 +14,7 @@ export default function Home() {
   const { t } = useI18n()
   return (
     <>
-      <Seo title='יזמות, בנייה ופיקוח נדל"ן בהוד השרון והשרון' description={t('hero.subtitle')} />
+      <Seo title='יזמות, בנייה ופיקוח נדל"ן בהוד השרון ובאזור המרכז' description='קורקוס גרופ מהוד השרון: ייזום פרויקטים למגורים, בנייה וביצוע, ניהול ופיקוח ותיווך, וכן בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז. מקרקע ועד מסירת מפתח.' />
       <div className="home">
         <Hero />
         <Activities />

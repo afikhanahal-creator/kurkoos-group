@@ -20,7 +20,7 @@ const GUIDE_LINKS = [
   { to: '/real-estate-guide', label: 'המדריך לרוכש ולמוכר' },
   { to: '/madrich-yazamim', label: 'המדריך ליזמי נדל"ן צעירים' },
   { to: '/real-estate-calculators', label: 'מחשבוני נדל"ן' },
-  { to: '/real-estate-sharon', label: 'נדל"ן בהוד השרון והשרון' },
+  { to: '/real-estate-sharon', label: 'נדל"ן בהוד השרון ובאזור המרכז' },
 ]
 
 export default function Glossary() {
@@ -61,6 +61,7 @@ export default function Glossary() {
         jsonLd={jsonLd}
       />
       <PageHeader
+        noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
         eyebrow="מאגר ידע"
         title='מילון מונחי נדל"ן'
         lead='הגדרות ברורות וענייניות לכל מונחי המפתח בעולם הנדל"ן, התכנון והבנייה בישראל — מתב"ע ועד טופס 4. נכתב מהניסיון המעשי של צוות קורקוס גרופ.'

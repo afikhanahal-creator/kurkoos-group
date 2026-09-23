@@ -23,7 +23,15 @@ export default function Team() {
 
   return (
     <>
-      <PageHeader eyebrow={t('pages.team.eyebrow')} title={t('pages.team.title')} lead={t('pages.team.lead')} crumbs={[{ label: t('nav.about'), to: '/about' }, { label: t('pages.team.title') }]} />
+      {/* תיאור החיפוש מונה את האנשים בשמם, זהה לעמוד המרונדר מראש.
+          הכותרת והליד שעל המסך לא משתנים. */}
+      <PageHeader
+        eyebrow={t('pages.team.eyebrow')}
+        title={t('pages.team.title')}
+        lead={t('pages.team.lead')}
+        seoDescription={`הצוות של קורקוס גרופ: ${[...members].reverse().map((m) => `${m.name}, ${m.role}`).join('. ')}. מלווים כל פרויקט בהוד השרון ובאזור המרכז מהתכנון ועד מסירת המפתח.`.slice(0, 300)}
+        crumbs={[{ label: t('nav.about'), to: '/about' }, { label: t('pages.team.title') }]}
+      />
 
       <section className="section team-page">
         <div className="container">

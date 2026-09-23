@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { createLinker } from './autoLink.jsx'
 
 /* ============================================================
    רנדרר Markdown מינימלי לגוף הכתבות (בלי תלות חיצונית).
@@ -6,18 +7,24 @@ import { Fragment } from 'react'
    מספיק לפורמט שהסוכן מייצר; שומר RTL ופשטות.
    ============================================================ */
 
-function renderInline(text, keyBase) {
+function renderInline(text, keyBase, linkify) {
   // **מודגש**
   const parts = text.split(/(\*\*[^*]+\*\*)/g)
   return parts.map((p, i) => {
     if (p.startsWith('**') && p.endsWith('**')) {
       return <strong key={`${keyBase}-b${i}`}>{p.slice(2, -2)}</strong>
     }
+    // קישור אוטומטי למילון/למחשבונים, רק בטקסט רגיל ורק אם יש התאמה
+    const linked = linkify ? linkify(p, `${keyBase}-t${i}`) : null
+    if (linked) return linked
     return <Fragment key={`${keyBase}-t${i}`}>{p}</Fragment>
   })
 }
 
-export default function MiniMarkdown({ source = '', className = '' }) {
+export default function MiniMarkdown({ source = '', className = '', autoLink = false }) {
+  /* מקשר מונחים למילון ולמחשבונים. פעיל רק כשמבקשים, כדי שטקסט קצר
+     במקומות אחרים באתר לא יקבל קישורים שלא במקומם. */
+  const linkify = autoLink ? createLinker() : null
   const lines = String(source).replace(/\r\n/g, '\n').split('\n')
   const blocks = []
   let para = []
@@ -56,8 +63,8 @@ export default function MiniMarkdown({ source = '', className = '' }) {
         if (b.type === 'h2') return <h2 key={i}>{renderInline(b.text, i)}</h2>
         if (b.type === 'h3') return <h3 key={i}>{renderInline(b.text, i)}</h3>
         if (b.type === 'quote') return <blockquote key={i}>{renderInline(b.text, i)}</blockquote>
-        if (b.type === 'ul') return <ul key={i}>{b.items.map((it, j) => <li key={j}>{renderInline(it, `${i}-${j}`)}</li>)}</ul>
-        return <p key={i}>{renderInline(b.text, i)}</p>
+        if (b.type === 'ul') return <ul key={i}>{b.items.map((it, j) => <li key={j}>{renderInline(it, `${i}-${j}`, linkify)}</li>)}</ul>
+        return <p key={i}>{renderInline(b.text, i, linkify)}</p>
       })}
     </div>
   )

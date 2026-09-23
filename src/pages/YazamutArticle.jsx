@@ -89,7 +89,7 @@ export default function YazamutArticle() {
       <section className="section">
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
-          <MiniMarkdown source={article.body} />
+          <MiniMarkdown source={article.body} autoLink />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (
             <div className="yz-tags">

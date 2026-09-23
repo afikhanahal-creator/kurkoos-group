@@ -402,8 +402,11 @@ export default function ProjectDetail() {
   // SEO — כותרת/תיאור/תמונה ייחודיים לעמוד הפרויקט + נתונים מובנים (schema.org)
   const seoName = L(project.name)
   const seoCity = L(project.city)
+  /* הכותרת כוללת גם את היישוב, כמו בעמוד המרונדר מראש: מי שמחפש פרויקט
+     מחפש אותו עם שם העיר, ושתי הגרסאות חייבות להיות זהות. */
+  const seoTitle = seoCity ? `${seoName}, ${seoCity}` : seoName
   const seoDesc = (L(project.short) || '').trim() ||
-    `${seoName}${seoCity ? ` · ${seoCity}` : ''} — פרויקט של קבוצת קורקוס. יזמות, בנייה ופיקוח ברמה הגבוהה ביותר.`
+    `${seoName}${seoCity ? ` · ${seoCity}` : ''}: פרויקט של קבוצת קורקוס. יזמות, בנייה ופיקוח ברמה הגבוהה ביותר.`
   const seoJsonLd = [
     {
       '@context': 'https://schema.org',
@@ -479,7 +482,7 @@ export default function ProjectDetail() {
 
   return (
     <article className="project-detail">
-      <Seo title={seoName} description={seoDesc} image={project.cover} jsonLd={seoJsonLd} />
+      <Seo title={seoTitle} description={seoDesc} image={project.cover} jsonLd={seoJsonLd} />
       {/* ===== סרגל פירורי לחם (רקע תכלת בהיר) ===== */}
       <div className="pd-crumbbar">
         <div className="container">

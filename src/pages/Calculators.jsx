@@ -154,7 +154,11 @@ export default function Calculators() {
 
   return (
     <>
-      <Seo jsonLd={jsonLd} />
+      <Seo
+        title='מחשבון משכנתא ומחשבון תשואה לנדל"ן'
+        description='מחשבון החזר חודשי למשכנתא לפי לוח שפיצר ומחשבון תשואת שכירות לנכס להשקעה, כלים חינמיים עם הסברים ברורים, מבית קורקוס גרופ.'
+        jsonLd={jsonLd}
+      />
       <PageHeader
         eyebrow="כלים שימושיים"
         title='מחשבוני נדל"ן'

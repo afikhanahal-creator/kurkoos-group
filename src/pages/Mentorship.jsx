@@ -59,7 +59,11 @@ export default function Mentorship() {
   return (
     <>
       {/* PageHeader מגדיר title+description; כאן רק הנתונים המובנים של ה-FAQ */}
-      <Seo jsonLd={faqJsonLd} />
+      <Seo
+        title='ליווי יזמי נדל"ן'
+        description='תוכנית מנטורינג ליזמי נדל"ן צעירים עם שלומי קורקוס וצוות קורקוס גרופ: ידע, כלים ופרקטיקה מהיום יום של התעשייה, על בסיס שלושים שנות ניסיון בשטח.'
+        jsonLd={faqJsonLd}
+      />
       <PageHeader
         eyebrow="מנטורינג"
         title='ליווי יזמי נדל"ן'

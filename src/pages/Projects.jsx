@@ -71,7 +71,11 @@ export default function Projects() {
 
   return (
     <>
-      <Seo title={allTitle} description={lead} />
+      {/* כותרת ה-SEO מתארת גם את האזור. הכותרת על המסך נשארת "כל הפרויקטים" */}
+      <Seo
+        title='פרויקטים בהוד השרון ובשרון'
+        description='הפרויקטים של קורקוס גרופ בהוד השרון ובאזור השרון: בנייה למגורים, וילות ובתים פרטיים, ופרויקטים בליווי ובפיקוח הקבוצה, מקרקע ועד מסירת מפתח.'
+      />
       <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
     </>
   )

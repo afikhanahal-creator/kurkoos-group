@@ -35,7 +35,15 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
 
   useEffect(() => {
     const brand = lang === 'he' ? 'קורקוס גרופ' : 'Kurkoos Group'
-    const fullTitle = title ? `${title} | ${brand}` : `${brand} | Kurkoos Group`
+    /* כל עמוד חייב כותרת משלו. ברירת המחדל הקודמת הייתה "קורקוס גרופ |
+       Kurkoos Group", וכל עמוד בלי כותרת קיבל בדיוק אותה מחרוזת. גוגל ראה
+       כמה עמודים שונים עם אותה כותרת, בחר אחד מהם לקישור אתר, וסימן אותו
+       בשם המותג. הנפילה לאחור היא עכשיו תיאורית, ובדיקת הבנייה מוודאת
+       שאף עמוד לא מגיע לכאן מלכתחילה. */
+    const fallbackTitle = lang === 'he'
+      ? 'יזמות, בנייה ופיקוח נדל"ן בהוד השרון והשרון'
+      : 'Real-estate development, construction and supervision in Hod HaSharon'
+    const fullTitle = `${title || fallbackTitle} | ${brand}`
     const fallbackDesc = lang === 'he'
       ? 'קורקוס גרופ — יזמות, בנייה, פיקוח ותיווך נדל"ן ברמה הגבוהה ביותר. מקרקע ועד מסירת מפתח.'
       : 'Kurkoos Group — premium real-estate development, construction, supervision and brokerage. From land to key.'

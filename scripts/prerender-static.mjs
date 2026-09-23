@@ -363,14 +363,24 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   }
 
   const txt = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
+  /* שמות הפרויקטים מגיעים מהניהול, ואין שום דבר שמונע שני פרויקטים באותו
+     שם ובאותה עיר. בדיקת הכותרות שנוספה ל-check-routing מפילה את הבנייה על
+     כותרת כפולה, ולכן מצב נתונים כזה בניהול היה מפיל את הדפלוי כולו. כאן
+     מבדילים אוטומטית לפי ה-slug, כך שתוכן בניהול לא יכול לשבור פריסה. */
+  const usedTitles = new Set()
   for (const p of cmsProjects) {
     const slug = String(p.slug || '').trim()
     const name = txt(p.name)
-    if (!slug || !name) continue
+    // slug נכנס לנתיב קובץ. מקבלים רק צורה בטוחה, בלי לוכסנים או נקודות
+    if (!slug || !name || !/^[A-Za-z0-9֐-׿_-]+$/.test(slug)) continue
     const city = txt(p.location)
     const sub = txt(p.subtitle)
     const desc = txt(p.description)
-    const heading = city ? `${name}, ${city}` : name
+    let heading = city ? `${name}, ${city}` : name
+    // מבדילים לפי הכתובת אם יש, ורק אם אין נופלים ל-slug
+    if (usedTitles.has(heading)) heading = `${heading} (${txt(p.address) || slug})`
+    if (usedTitles.has(heading)) continue   // גם זה תפוס: slug כפול, מדלגים
+    usedTitles.add(heading)
     const lead = sub || desc || `פרויקט של קורקוס גרופ${city ? ` ב${city}` : ''}.`
     done.push(renderPage({
       path: `/projects/${slug}`,

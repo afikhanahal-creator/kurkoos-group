@@ -30,6 +30,7 @@ const STATIC = [
   { path: '/livy-yazamim', changefreq: 'monthly', priority: '0.8' },
   { path: '/madrich-yazamim', changefreq: 'weekly', priority: '0.8' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },
+  { path: '/contact', changefreq: 'monthly', priority: '0.9' },
   { path: '/divisions/development', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/execution', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/supervision', changefreq: 'monthly', priority: '0.8' },

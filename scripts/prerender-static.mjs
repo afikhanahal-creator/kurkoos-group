@@ -465,6 +465,28 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<ul><li><a href="/about">אודות הקבוצה</a></li><li><a href="/team">הצוות שמאחורי קורקוס</a></li><li><a href="/projects">הפרויקטים</a></li></ul>`,
   }))
 
+  /* עמוד השארת הפרטים. זה הקישור שמודבק בפרופיל העסק בגוגל, ולכן
+     הוא חייב להחזיר HTML קריא גם לסורק שלא מריץ JavaScript. */
+  done.push(renderPage({
+    path: '/contact',
+    title: 'השארת פרטים ויצירת קשר',
+    description: 'השאירו פרטים ונחזור אליכם: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים. המשרד ברחוב הנגר 24 בהוד השרון.',
+    jsonLd: [
+      breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'השארת פרטים', path: '/contact' }]),
+      {
+        '@context': 'https://schema.org',
+        '@type': 'ContactPage',
+        name: `השארת פרטים · ${BRAND}`,
+        url: `${SITE}/contact`,
+      },
+    ],
+    bodyHtml:
+      `<h1>השאירו פרטים ונחזור אליכם</h1>` +
+      `<p>קורקוס גרופ פועלת ביזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים, מהמשרד ברחוב הנגר 24 בהוד השרון.</p>` +
+      `<p>טלפון: 055-981-1814. שעות פעילות: א׳ עד ה׳ בין 9:00 ל-18:00.</p>` +
+      `<ul><li><a href="/divisions/development">יזמות נדל"ן</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a></li></ul>`,
+  }))
+
   const { faqs: mentorFaqs } = await import(pathToFileURL(join(root, 'src/data/mentorship.js')).href)
   done.push(renderPage({
     path: '/livy-yazamim',

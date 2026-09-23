@@ -1,0 +1,83 @@
+/* ============================================================
+   כרטיס "איך מגיעים אלינו". שפה עיצובית זהה לשאר הכרטיסים באתר:
+   אותו רדיוס, אותה מסגרת, אותו צל. המפה בצד ההתחלה (ימין ב-RTL)
+   והפרטים לידה, ובמובייל הם נערמים.
+   ============================================================ */
+
+.office-map {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+  overflow: hidden;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, rgba(7, 41, 58, 0.12));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* aspect-ratio שומר את המקום מראש → הטעינה העצלה לא מזיזה את העמוד */
+.office-map__map {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  min-height: 260px;
+  background: #e9f1f5;
+}
+.office-map__map > * { position: absolute; inset: 0; }
+
+.office-map__skeleton {
+  display: block;
+  background:
+    radial-gradient(circle at 30% 35%, rgba(255, 255, 255, 0.6), transparent 60%),
+    linear-gradient(150deg, #eadfca, #e4ecf1);
+}
+
+.office-map__info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: clamp(1.25rem, 2.4vw, 2rem);
+}
+
+.office-map__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-500, #a90b0c);
+}
+
+.office-map__title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  line-height: 1.25;
+  margin: 0 0 0.2rem;
+  color: var(--color-primary-900, #07293a);
+}
+
+.office-map__facts {
+  list-style: none;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.office-map__facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--color-text-soft);
+}
+.office-map__facts svg { flex-shrink: 0; margin-top: 0.2em; color: var(--color-secondary); }
+
+.office-map__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+@media (max-width: 860px) {
+  .office-map { grid-template-columns: minmax(0, 1fr); }
+  .office-map__map { aspect-ratio: 16 / 11; min-height: 220px; }
+  .office-map__actions .btn { flex: 1 1 10rem; justify-content: center; }
+}

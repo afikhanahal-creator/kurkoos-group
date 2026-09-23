@@ -1,0 +1,95 @@
+/* ============================================================
+   עמוד השארת הפרטים העצמאי (/contact).
+   טופס על כרטיס לבן בצד ההתחלה, ודרכי קשר ישירות ומפת המשרד לידו.
+   ============================================================ */
+
+.cpage__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+}
+
+.cpage__form-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, rgba(7, 41, 58, 0.12));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: clamp(1.4rem, 2.6vw, 2.4rem);
+}
+
+.cpage__choose { margin: 0 0 0.8rem; color: var(--color-text-soft); font-size: 0.95rem; }
+
+.cpage__topics { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.1rem; }
+.cpage__topic {
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border, rgba(7, 41, 58, 0.14));
+  background: transparent;
+  color: var(--color-primary-700);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur-fast, .15s), background var(--dur-fast, .15s), color var(--dur-fast, .15s);
+}
+.cpage__topic:hover { border-color: var(--color-primary-500); }
+.cpage__topic.is-active {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: #fff;
+}
+
+.cpage__required { margin: 0 0 0.6rem; font-size: 0.85rem; color: var(--color-text-soft); }
+
+.cpage__form { display: flex; flex-direction: column; gap: 0.7rem; }
+.cpage__form .field input,
+.cpage__form .field textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: var(--color-bg-soft, #f5f7f8);
+  border: 1.5px solid var(--color-border, rgba(7, 41, 58, 0.12));
+  border-radius: var(--radius-md, 10px);
+  padding: 0.85rem 1rem;
+  transition: border-color var(--dur-fast, .15s), background var(--dur-fast, .15s);
+}
+.cpage__form .field textarea { resize: vertical; min-height: 110px; }
+.cpage__form .field input::placeholder,
+.cpage__form .field textarea::placeholder { color: #8a8a8a; }
+.cpage__form .field input:focus,
+.cpage__form .field textarea:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--color-secondary);
+}
+
+.cpage__error { margin: 0; color: #a90b0c; font-size: 0.9rem; font-weight: 600; }
+
+.cpage__success { display: grid; place-items: center; gap: 0.8rem; text-align: center; padding: 2rem 0; }
+.cpage__success-icon {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: var(--color-primary-100, #e7f0f4);
+  color: var(--color-secondary);
+}
+.cpage__success p { margin: 0; font-size: 1.1rem; font-weight: 600; }
+
+/* ---- עמודת הצד ---- */
+.cpage__side { display: flex; flex-direction: column; gap: 1rem; }
+.cpage__side-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+  margin: 0;
+  color: var(--color-primary-900, #07293a);
+}
+.cpage__direct { display: flex; flex-direction: column; gap: 0.5rem; }
+.cpage__direct .btn { justify-content: center; }
+
+@media (max-width: 900px) {
+  .cpage__inner { grid-template-columns: minmax(0, 1fr); }
+}

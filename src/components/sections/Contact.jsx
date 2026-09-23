@@ -6,6 +6,7 @@ import { createLead } from '../../lib/cms.js'
 import { track } from '../../lib/track.js'
 import { getLastProject, trailSummary } from '../../lib/visitTrail.js'
 import Reveal from '../ui/Reveal.jsx'
+import OfficeMap from '../ui/OfficeMap.jsx'
 import BookingCalendar from '../ui/BookingCalendar.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -133,6 +134,15 @@ export default function Contact() {
               </form>
             </>
           )}
+        </Reveal>
+      </div>
+
+      {/* מי שמגיע עד לכאן כבר מתעניין, וחלק מהפונים רוצים פשוט להגיע
+          למשרד. הכרטיס יושב מתחת לטופס ולא לידו, כדי לא לגעת בפריסה
+          של שתי העמודות שמעליו. */}
+      <div className="container contact__office">
+        <Reveal variant="up" delay={0.1}>
+          <OfficeMap />
         </Reveal>
       </div>
     </section>

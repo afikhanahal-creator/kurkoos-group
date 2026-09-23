@@ -25,6 +25,15 @@ const STAGES = [
   { id: 'lost',        label: 'לא רלוונטי',     color: '#d64545' },
 ]
 const stageOf    = (id) => STAGES.find((s) => s.id === id) || STAGES[0]
+/* השלב שאליו הליד משויך בתצוגה. סטטוס ריק, או כזה שאינו אחד מששת השלבים
+   (למשל אחרי עריכה ידנית במסד או אוטומציה חיצונית), נחשב "ליד חדש" במקום
+   ליפול בין העמודות ולא להופיע בלוח בכלל. */
+const stageIdOf  = (lead) => {
+  const id = lead?.status || 'new'
+  return STAGES.some((s) => s.id === id) ? id : 'new'
+}
+// פנייה שהתקבלה ביממה האחרונה
+const isFresh = (l) => { try { return l?.created_at && Date.now() - new Date(l.created_at).getTime() < 86400000 } catch { return false } }
 const FUNNEL     = ['new', 'contacted', 'meeting', 'negotiation', 'won']
 const SOURCE_LABEL = { project: 'עמוד פרויקט', home: 'דף הבית', contact: 'צור קשר', manual: 'ידני' }
 const SOURCE_COLOR = { project: '#105572', home: '#2e9e6b', contact: '#8c6d1f', manual: '#666' }
@@ -99,7 +108,7 @@ function exportCsv(leads) {
 
 /* ליד שדורש טיפול: עדיין בשלב "חדש" ועברו מעל 3 ימים מאז שנכנס */
 const ATTN_DAYS = 3
-const needsAttention = (l) => (l.status || 'new') === 'new' && l.created_at && (Date.now() - new Date(l.created_at).getTime()) > ATTN_DAYS * 86400000
+const needsAttention = (l) => stageIdOf(l) === 'new' && l.created_at && (Date.now() - new Date(l.created_at).getTime()) > ATTN_DAYS * 86400000
 const waitingDays = (l) => Math.floor((Date.now() - new Date(l.created_at).getTime()) / 86400000)
 
 const blankLead = () => ({ name:'', phone:'', email:'', project:'', message:'', notes:'', status:'new', source:'manual', contacted:false })
@@ -292,7 +301,7 @@ export default function LeadsTab() {
 
   const filtered = useMemo(() => {
     let list = leads
-    if (stageFilter !== 'all')   list = list.filter((l) => (l.status || 'new') === stageFilter)
+    if (stageFilter !== 'all')   list = list.filter((l) => stageIdOf(l) === stageFilter)
     if (sourceFilter !== 'all')  list = list.filter((l) => (l.source || '') === sourceFilter)
     const q = query.trim().toLowerCase()
     if (q) list = list.filter((l) => [l.name, l.phone, l.email, extractProject(l.project), l.message, l.notes]
@@ -300,7 +309,21 @@ export default function LeadsTab() {
     return list
   }, [leads, query, stageFilter, sourceFilter])
 
-  const byStage    = (sid) => filtered.filter((l) => (l.status || 'new') === sid)
+  /* כמה לידים מוסתרים כרגע בגלל סינון או חיפוש. פילטר ששכחו עליו הוא הסיבה
+     הנפוצה ל"ליד נכנס ואני לא רואה אותו", ולכן הוא מוצג במפורש עם כפתור ניקוי. */
+  const hiddenCount = leads.length - filtered.length
+  const clearFilters = () => { setStageFilter('all'); setSourceFilter('all'); setQuery('') }
+
+  // הפנייה האחרונה שנשמרה — מוצגת בכותרת, בלי קשר לסינון הפעיל
+  const newestAt = useMemo(() => leads.reduce(
+    (max, l) => (l.created_at && (!max || new Date(l.created_at) > new Date(max)) ? l.created_at : max), ''), [leads])
+
+  /* עמודות הלוח — החדש ביותר תמיד ראשון, בלי תלות ב-sort_order שנקבע
+     בגרירה קודמת. פנייה חדשה לא יכולה להיקבר באמצע העמודה. */
+  const byStage = (sid) => filtered
+    .filter((l) => stageIdOf(l) === sid)
+    .slice()
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
   const patchLocal = (id, patch) => setLeads((ls) => ls.map((l) => (String(l.id) === String(id) ? {...l,...patch} : l)))
 
   /* ── actions ── */
@@ -397,6 +420,8 @@ export default function LeadsTab() {
         <div className="adm-leads__bar-row">
           <div className="adm-leads__bar-group">
             <span className="adm-leads__count"><b>{filtered.length}</b> לידים</span>
+            {/* מועד הפנייה האחרונה שיש במערכת — עונה מיד על "נכנסה פנייה, האם היא כאן?" */}
+            {newestAt && <span className="adm-leads__newest" title="מועד הפנייה האחרונה שנשמרה במערכת">אחרונה: {fmtDate(newestAt)} {fmtTime(newestAt)}</span>}
             <div className="adm-leads__views" role="tablist">
               {VIEWS.map((v) => { const I = VIEW_ICONS[v.id]; return (
                 <button key={v.id} type="button" role="tab" aria-selected={view===v.id}
@@ -423,7 +448,7 @@ export default function LeadsTab() {
             <span className="adm-leads__filter-lbl">שלב</span>
             <button type="button" className={`adm-filter-pill ${stageFilter==='all'?'is-active':''}`} onClick={() => setStageFilter('all')}>הכל ({leads.length})</button>
             {STAGES.map((s) => {
-              const n = leads.filter((l) => (l.status||'new') === s.id).length
+              const n = leads.filter((l) => stageIdOf(l) === s.id).length
               return (
                 <button key={s.id} type="button"
                   className={`adm-filter-pill ${stageFilter===s.id?'is-active':''}`}
@@ -471,6 +496,17 @@ export default function LeadsTab() {
         <div className="adm-leads__empty">אין עדיין לידים. פניות מטפסי האתר יופיעו כאן אוטומטית, או הוסיפו ליד ידנית.</div>
       )}
 
+      {/* סינון פעיל שמסתיר לידים — הסיבה הנפוצה ל"נכנסה פנייה ואני לא רואה אותה" */}
+      {hiddenCount > 0 && (
+        <div className="adm-leads__hidden-note" role="status">
+          <span>
+            מוצגים <b>{filtered.length}</b> מתוך <b>{leads.length}</b> לידים.
+            <b> {hiddenCount}</b> {hiddenCount === 1 ? 'ליד מוסתר' : 'לידים מוסתרים'} כרגע בגלל סינון או חיפוש.
+          </span>
+          <button type="button" className="adm-leads__hidden-clear" onClick={clearFilters}>הצגת כל הלידים</button>
+        </div>
+      )}
+
       {/* ===== תצוגות ===== */}
       {!tableMissing && leads.length > 0 && (
         <>
@@ -495,7 +531,7 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
     const in30 = leads.filter((l) => isAfter(l.created_at, now30)).length
     const inPrev = leads.filter((l) => isAfter(l.created_at, prev60) && !isAfter(l.created_at, now30)).length
     const total = leads.length
-    const byStage = Object.fromEntries(STAGES.map((st) => [st.id, leads.filter((l) => (l.status || 'new') === st.id).length]))
+    const byStage = Object.fromEntries(STAGES.map((st) => [st.id, leads.filter((l) => stageIdOf(l) === st.id).length]))
     const inWork = byStage.contacted + byStage.meeting + byStage.negotiation
     const attention = leads.filter(needsAttention).length
     const won = byStage.won
@@ -608,7 +644,7 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
 
 /* ============================ קארד ליד (board) ============================ */
 function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
-  const st     = stageOf(lead.status)
+  const st     = stageOf(stageIdOf(lead))
   const proj   = extractProject(lead.project)
   const digits = String(lead.phone||'').replace(/\D/g,'')
   const wa     = waLink(lead.phone)
@@ -633,6 +669,8 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag }) {
           <div className="adm-lead__meta">
             <button draggable="false" type="button" className="adm-lead__name" onClick={() => onEdit(lead)}>
               {lead.name || 'ללא שם'}
+              {/* פנייה מהיממה האחרונה — כדי שלא תתערבב בין הישנות */}
+              {isFresh(lead) && <span className="adm-lead__fresh">חדש</span>}
             </button>
             {sourceTxt && (
               <span className="adm-lead__sub">
@@ -729,7 +767,7 @@ function ListView({ leads, dragId, setDragId, dragOver, setDragOver, reorder, mo
   return (
     <div className="adm-list">
       {leads.map((lead) => {
-        const st = stageOf(lead.status)
+        const st = stageOf(stageIdOf(lead))
         const proj = extractProject(lead.project)
         const wa   = waLink(lead.phone)
         return (
@@ -799,7 +837,7 @@ function TableView({ leads, moveTo, toggleContacted, remove, setEditing, quickEd
         </thead>
         <tbody>
           {leads.map((lead) => {
-            const st   = stageOf(lead.status)
+            const st   = stageOf(stageIdOf(lead))
             const proj = extractProject(lead.project)
             const wa   = waLink(lead.phone)
             return (

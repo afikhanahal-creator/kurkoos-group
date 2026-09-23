@@ -32,6 +32,17 @@ const stageIdOf  = (lead) => {
   const id = lead?.status || 'new'
   return STAGES.some((s) => s.id === id) ? id : 'new'
 }
+/* לוח לידים לא מציג את אותה פנייה פעמיים. מגן גם מפני מרוץ בין הוספה
+   אופטימית לרענון שרץ ברקע, וגם מפני שורות כפולות שהגיעו מהמסד. */
+const dedupeById = (rows) => {
+  const seen = new Set()
+  return (rows || []).filter((r) => {
+    const k = String(r?.id ?? '')
+    if (!k || seen.has(k)) return !k
+    seen.add(k)
+    return true
+  })
+}
 // פנייה שהתקבלה ביממה האחרונה
 const isFresh = (l) => { try { return l?.created_at && Date.now() - new Date(l.created_at).getTime() < 86400000 } catch { return false } }
 const FUNNEL     = ['new', 'contacted', 'meeting', 'negotiation', 'won']
@@ -273,7 +284,7 @@ export default function LeadsTab() {
     setLoading(true)
     if (clearErr) setErr('')
     listLeads()
-      .then((d) => setLeads(d))
+      .then((d) => setLeads(dedupeById(d)))
       .catch((e) => {
         const m = e.message || 'שגיאה בטעינת לידים'
         setErr(/schema cache|find the table|does not exist|relation .* does not/i.test(m) ? 'TABLE_MISSING' : m)
@@ -292,7 +303,7 @@ export default function LeadsTab() {
   useEffect(() => {
     const refresh = () => {
       if (busyRef.current || document.hidden) return
-      listLeads().then((d) => setLeads(d)).catch(() => { /* רענון שקט — שגיאה לא מפריעה לעבודה */ })
+      listLeads().then((d) => setLeads(dedupeById(d))).catch(() => { /* רענון שקט — שגיאה לא מפריעה לעבודה */ })
     }
     const timer = setInterval(refresh, 60_000)
     document.addEventListener('visibilitychange', refresh)
@@ -393,7 +404,9 @@ export default function LeadsTab() {
 
   const createNow = async (data) => {
     const c = await createLead({...data, source: data.source || 'manual'})
-    setLeads((ls) => [c, ...ls])
+    /* הוספה אופטימית לרשימה, אבל רק אם רענון שרץ ברקע לא הקדים והביא את
+       השורה כבר. בלי הבדיקה הזו אותו ליד מופיע פעמיים בלוח. */
+    setLeads((ls) => (ls.some((l) => String(l.id) === String(c.id)) ? ls : [c, ...ls]))
     return c
   }
 

@@ -21,15 +21,17 @@
   position: relative;
   aspect-ratio: 16 / 10;
   min-height: 260px;
-  background: #e9f1f5;
+  background: #f2f4f6;   /* אותו גוון כמו יבשת המפה, כך שהמעבר מהשלד למפה לא מהבהב */
 }
 .office-map__map > * { position: absolute; inset: 0; }
 
+/* השלד עד שהמפה נטענת: רשת רחובות מרומזת בגוני המפה עצמה */
 .office-map__skeleton {
   display: block;
   background:
-    radial-gradient(circle at 30% 35%, rgba(255, 255, 255, 0.6), transparent 60%),
-    linear-gradient(150deg, #eadfca, #e4ecf1);
+    linear-gradient(90deg, transparent 48.5%, #ffffff 48.5%, #ffffff 51.5%, transparent 51.5%),
+    linear-gradient(0deg, transparent 58%, #ffffff 58%, #ffffff 61%, transparent 61%),
+    #f2f4f6;
 }
 
 .office-map__info {

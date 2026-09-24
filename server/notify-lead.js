@@ -174,78 +174,159 @@ export default async function handler(req, res) {
       .replace(/{{\s*project\s*}}/g, safeProject)
       + (isTest ? ' (בדיקה)' : '')
 
-    const font = "'Heebo','Assistant','Segoe UI',Arial,sans-serif"
+    /* טיפוגרפיה זהה לאתר: Heebo לכותרות, Assistant לטקסט.
+       לקוחות שמרשים גופן אינטרנט (Apple Mail, Mail ב-iOS, סמסונג) טוענים
+       אותם דרך ה-@import שלמטה. Gmail מוחק את ה-head ומתעלם, ולכן שרשרת
+       הנפילה חייבת להסתיים בגופן סאנס עם עברית מלאה. בלי שרשרת כזאת חלק
+       מהלקוחות נופלים ל"דויד", גופן סריפי שאין לו שום קשר למותג.
+       לכל אלמנט טקסט כאן יש font-family משלו מאותה סיבה: ערך שיורש מה-body
+       נמחק בחלק מהלקוחות, והטקסט חוזר לברירת המחדל שלהם. */
+    const FONT_H = "'Heebo','Assistant','Noto Sans Hebrew','Segoe UI','Arial Hebrew',Arial,Helvetica,sans-serif"
+    const FONT_B = "'Assistant','Heebo','Noto Sans Hebrew','Segoe UI','Arial Hebrew',Arial,Helvetica,sans-serif"
+    const FONTS_CSS = "https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;700;800;900&display=swap"
+
+    const C = {
+      ink: '#07293a', inkSoft: '#3d5462', teal: '#105572', red: '#a90b0c',
+      line: '#e6edf1', label: '#8494a1', page: '#eef2f5', tint: '#f5f9fb',
+    }
+
     // ערך תא — כל ערכי המשתמש עוברים htmlEsc למניעת HTML injection במייל לאדמין
     const cell = (k) => {
       const v = val(k)
-      if (v === '—') return `<span style="font-family:${font};color:#9aa6b2">—</span>`
+      if (v === '—') return `<span style="font-family:${FONT_B};color:#b3bfc9;font-weight:600">—</span>`
       const safe = htmlEsc(v)
-      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${safe}</a>`
-      if (k === 'email') return `<a href="mailto:${htmlEsc(lead.email)}" style="font-family:${font};color:#07293a;text-decoration:none;font-weight:800">${safe}</a>`
+      // ספרות בתוך משפט עברי מתהפכות; כיוון LTR על המספר עצמו שומר עליו קריא
+      if (k === 'phone') return `<a href="tel:${String(lead.phone || '').replace(/[^\d+]/g, '')}" style="font-family:${FONT_B};color:${C.ink};text-decoration:none;font-weight:700;direction:ltr;unicode-bidi:embed;display:inline-block">${safe}</a>`
+      if (k === 'email') return `<a href="mailto:${htmlEsc(lead.email)}" style="font-family:${FONT_B};color:${C.teal};text-decoration:none;font-weight:700;direction:ltr;unicode-bidi:embed;display:inline-block;word-break:break-all">${safe}</a>`
+      // "24.9.2026, 10:43" הוא מחרוזת לטינית לגמרי. בלי כיוון LTR הפסיק
+      // שבין התאריך לשעה קופץ לצד השני ונראה כמו שגיאה.
+      if (k === 'created_at') return `<span style="direction:ltr;unicode-bidi:embed;display:inline-block">${safe}</span>`
       return safe
     }
-    const rows = fields.map((k, i) =>
-      `<tr>
-        <td style="padding:14px 18px;vertical-align:middle;width:34%;background:${i % 2 ? '#ffffff' : '#eef3f6'};border-bottom:1px solid #dfe7ec"><span style="font-family:${font};font-size:13px;font-weight:700;color:#105572">${FIELD_LABELS[k] || k}</span></td>
-        <td style="padding:14px 18px;vertical-align:middle;background:${i % 2 ? '#ffffff' : '#eef3f6'};border-bottom:1px solid #dfe7ec"><span style="font-family:${font};font-size:16px;font-weight:700;color:#07293a;line-height:1.5">${cell(k)}</span></td>
+    const rows = fields.map((k, i) => {
+      const last = i === fields.length - 1
+      const edge = last ? 'none' : `1px solid ${C.line}`
+      return `<tr>
+        <td width="104" style="padding:14px 0 14px 16px;vertical-align:top;border-bottom:${edge};font-family:${FONT_B};font-size:12px;font-weight:700;letter-spacing:0.05em;color:${C.label};white-space:nowrap">${FIELD_LABELS[k] || k}</td>
+        <td style="padding:14px 0;vertical-align:top;border-bottom:${edge};font-family:${FONT_B};font-size:16px;font-weight:700;color:${C.ink};line-height:1.55">${cell(k)}</td>
       </tr>`
-    ).join('')
+    }).join('')
 
-    // כפתורי פעולה מהירה (התקשרות / וואטסאפ / מייל)
     const digits = String(lead.phone || '').replace(/\D/g, '')
     const wa = digits ? (digits.startsWith('972') ? digits : '972' + digits.replace(/^0/, '')) : ''
-    // אייקון לפני הטקסט (אימוג'י נתמך בכל לקוחות המייל המודרניים, כולל מובייל)
-    const actionBtn = (href, icon, label, bg) =>
-      `<a href="${href}" style="font-family:${font};display:inline-block;margin:5px 4px;padding:11px 22px;background:${bg || '#105572'};color:#ffffff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:700"><span style="font-size:15px;vertical-align:middle">${icon}</span>&nbsp;${label}</a>`
-    const quickActions = (lead.phone || lead.email) ? `
-          <tr><td align="center" style="padding:6px 36px 10px">
-            ${lead.phone ? actionBtn(`tel:${digits}`, '📞', 'התקשרות') : ''}
-            ${wa ? actionBtn(`https://wa.me/${wa}`, '💬', 'וואטסאפ', '#25D366') : ''}
-            ${lead.email ? actionBtn(`mailto:${lead.email}`, '📩', 'מייל ללקוח') : ''}
-          </td></tr>` : ''
 
-    const html = `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8">
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    </head><body style="margin:0;padding:0;background:#eef2f5">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f5">
-      <tr><td align="center" style="padding:32px 14px">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" dir="rtl" style="width:100%;max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 16px 46px rgba(7,41,58,0.16)">
-          ${rescued === true ? `<tr><td style="background:#0f7b3f;padding:18px 40px;text-align:center">
-            <div style="font-family:${font};font-size:15px;font-weight:800;color:#ffffff;line-height:1.6">↻ הפנייה נשמרה דרך גיבוי השרת<br><span style="font-weight:600">השמירה מהדפדפן של המבקר נכשלה, והשרת הכניס את הליד ללוח הלידים. הליד נמצא במערכת, אין צורך להזין אותו ידנית.</span></div>
-          </td></tr>` : ''}
-          ${rescued === false ? `<tr><td style="background:#b42318;padding:18px 40px;text-align:center">
-            <div style="font-family:${font};font-size:15px;font-weight:800;color:#ffffff;line-height:1.6">⚠ הליד הזה לא נשמר במערכת הניהול<br><span style="font-weight:600">גם השמירה מהדפדפן וגם גיבוי השרת נכשלו. הפרטים כאן הם העותק היחיד: חזרו ללקוח והזינו אותו ידנית בלוח הלידים.</span></div>
-          </td></tr>` : ''}
-          <!-- באנר כותרת כהה (פלטת המותג) -->
-          <tr><td style="background:#07293a;padding:34px 40px;text-align:center">
-            <div style="font-family:${font};font-size:12px;font-weight:700;letter-spacing:0.22em;color:#8fb6c8">התראת מערכת</div>
-            <h1 style="font-family:${font};font-weight:900;font-size:30px;color:#ffffff;margin:10px 0 0">ליד חדש מהאתר</h1>
-            ${projectName ? `<div style="font-family:${font};font-size:16px;font-weight:700;color:#f0c040;margin:10px 0 0">📌 פרויקט: ${htmlEsc(projectName)}</div>` : ''}
-            <div style="width:54px;height:4px;background:#a90b0c;border-radius:2px;margin:16px auto 0"></div>
-          </td></tr>
-          <!-- אינטרו -->
-          <tr><td style="padding:24px 40px 4px;text-align:center">
-            <p style="font-family:${font};font-size:15px;font-weight:600;color:#58606e;margin:0">התקבלה פנייה חדשה דרך האתר · להלן הפרטים</p>
-          </td></tr>
-          <!-- פרטים -->
-          <tr><td style="padding:16px 40px 0">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #dfe7ec;border-radius:10px;overflow:hidden">${rows}</table>
-          </td></tr>
-          <!-- כפתורים ראשיים -->
-          <tr><td align="center" style="padding:30px 40px 6px">
-            <a href="${ADMIN_URL}" style="font-family:${font};display:inline-block;background:#a90b0c;color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;padding:15px 46px;border-radius:10px;box-shadow:0 8px 20px rgba(169,11,12,0.30)">צפייה בליד במערכת</a>
-            ${PROJECT_URL ? `&nbsp;&nbsp;<a href="${PROJECT_URL}" style="font-family:${font};display:inline-block;background:#105572;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:15px 28px;border-radius:10px">🏢 עמוד הפרויקט</a>` : ''}
-          </td></tr>
-          ${quickActions}
-          <!-- פוטר עם לוגו -->
-          <tr><td style="padding:32px 40px 38px;text-align:center;border-top:1px solid #e7edf1;background:#ffffff">
-            <img src="${LOGO}" alt="Kurkoos Group" width="132" style="display:inline-block;width:132px;max-width:58%;height:auto" />
-            <p style="font-family:${font};font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8a97a3;margin:16px 0 0">נכסים · בנייה · יזמות · פיקוח · תיווך</p>
-            <p style="font-family:${font};font-size:11px;color:#aeb8c0;margin:7px 0 0">הודעה אוטומטית ממערכת הניהול של קבוצת קורקוס</p>
-          </td></tr>
-        </table>
+    /* כפתור בנוי טבלה ולא <a> עם padding: אאוטלוק מתעלם מ-padding על קישור
+       ומצייר כפתור בגובה שורת טקסט. bgcolor על התא נותן לו רקע גם שם. */
+    const btn = (href, label, bg, opts = {}) => {
+      const { fg = '#ffffff', size = 14, pad = '13px 26px', border = '' } = opts
+      return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="display:inline-table;margin:5px 4px"><tr>
+        <td align="center" bgcolor="${bg}" style="border-radius:10px;mso-padding-alt:${pad}${border ? `;border:1.5px solid ${border}` : ''}">
+          <a href="${href}" style="display:inline-block;padding:${pad};font-family:${FONT_H};font-size:${size}px;font-weight:800;line-height:1;color:${fg};text-decoration:none;border-radius:10px">${label}</a>
+        </td></tr></table>`
+    }
+
+    /* פס החיוג. מי שמקבל ליד רוצה קודם כל להתקשר, ולכן המספר הוא האלמנט
+       הגדול בגוף המייל ולא שורה בטבלה. */
+    const callStrip = lead.phone ? `
+          <tr><td style="padding:22px 36px 0">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.tint};border:1px solid ${C.line};border-radius:14px">
+              <tr><td align="center" style="padding:20px 20px 18px">
+                <div style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.2em;color:${C.label}">חייגו עכשיו</div>
+                <a href="tel:${digits}" style="font-family:${FONT_H};font-size:27px;font-weight:900;color:${C.ink};text-decoration:none;direction:ltr;unicode-bidi:embed;display:inline-block;margin:8px 0 0;letter-spacing:0.01em">${htmlEsc(String(lead.phone))}</a>
+                <div style="margin:12px 0 0">
+                  ${btn(`tel:${digits}`, 'התקשרות', C.teal, { size: 13, pad: '11px 22px' })}
+                  ${wa ? btn(`https://wa.me/${wa}`, 'וואטסאפ', '#25D366', { size: 13, pad: '11px 22px' }) : ''}
+                  ${lead.email ? btn(`mailto:${lead.email}`, 'מייל ללקוח', C.ink, { size: 13, pad: '11px 22px' }) : ''}
+                </div>
+              </td></tr>
+            </table>
+          </td></tr>` : (lead.email ? `
+          <tr><td align="center" style="padding:22px 36px 0">${btn(`mailto:${lead.email}`, 'מייל ללקוח', C.ink, { size: 13, pad: '11px 22px' })}</td></tr>` : '')
+
+    const banner = (bg, title, body) => `<tr><td style="background:${bg};padding:18px 36px;text-align:center">
+            <div style="font-family:${FONT_H};font-size:15px;font-weight:800;color:#ffffff;line-height:1.5">${title}</div>
+            <div style="font-family:${FONT_B};font-size:13px;font-weight:600;color:#ffffff;opacity:0.92;line-height:1.6;margin:5px 0 0">${body}</div>
+          </td></tr>`
+
+    /* שורת התצוגה המקדימה בתיבת הדואר, לפני שפותחים. מוסתרת בגוף המייל
+       עצמו. כך רואים מי פנה ועל מה עוד ברשימת ההודעות. */
+    const preheader = [safeName, String(lead.phone || ''), projectName].filter(Boolean).join(' · ')
+
+    const html = `<!doctype html>
+<html dir="rtl" lang="he" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>${htmlEsc(subject)}</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<!--[if mso]><style>* { font-family: Arial, 'Segoe UI', sans-serif !important; }</style><![endif]-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="${FONTS_CSS}" rel="stylesheet">
+<style>
+  @import url('${FONTS_CSS}');
+  body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  a { text-decoration: none; }
+  /* רשת ביטחון לכל אלמנט שאיבד את ה-font-family שלו בדרך */
+  body, table, td, div, p, a, h1, span { font-family: 'Heebo','Assistant','Segoe UI',Arial,sans-serif; }
+  @media only screen and (max-width: 620px) {
+    .kg-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .kg-h1 { font-size: 26px !important; }
+    .kg-phone { font-size: 24px !important; }
+    /* הכפתורים הראשיים נפרסים לרוחב מלא בטלפון, כך שהם יוצאים באותו
+       רוחב זה מתחת לזה ולא בשתי מדרגות. גם התא הפנימי חייב 100%, אחרת
+       הטבלה מתרחבת והכפתור עצמו נשאר ברוחב הטקסט. */
+    .kg-btn { display: block !important; width: 100% !important; }
+    .kg-btn table { display: table !important; width: 100% !important; margin: 6px 0 !important; }
+    .kg-btn td { width: 100% !important; }
+    .kg-btn a { display: block !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:${C.page};font-family:${FONT_B}">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all">${htmlEsc(preheader)}</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all">&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.page}">
+  <tr><td align="center" style="padding:34px 14px">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 18px 48px rgba(7,41,58,0.14)">
+      ${rescued === true ? banner('#0f7b3f', 'הפנייה נשמרה דרך גיבוי השרת', 'השמירה מהדפדפן של המבקר נכשלה, והשרת הכניס את הליד ללוח הלידים. אין צורך להזין אותו ידנית.') : ''}
+      ${rescued === false ? banner('#b42318', 'הליד הזה לא נשמר במערכת הניהול', 'גם השמירה מהדפדפן וגם גיבוי השרת נכשלו. הפרטים כאן הם העותק היחיד: חזרו ללקוח והזינו אותו ידנית בלוח הלידים.') : ''}
+
+      <!-- כותרת: מי פנה, ומאיזה פרויקט -->
+      <tr><td class="kg-pad" style="background:${C.ink};padding:36px 40px 32px;text-align:center">
+        <div style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.24em;color:#7ea9be">ליד חדש מהאתר</div>
+        <h1 class="kg-h1" style="font-family:${FONT_H};font-weight:900;font-size:32px;line-height:1.2;color:#ffffff;margin:12px 0 0">${htmlEsc(safeName)}</h1>
+        ${projectName ? `<div style="margin:14px 0 0"><span style="display:inline-block;padding:7px 17px;background:#103d54;border-radius:999px;font-family:${FONT_B};font-size:13px;font-weight:700;color:#ffd47a">${htmlEsc(projectName)}</span></div>` : ''}
+        <div style="width:52px;height:4px;background:${C.red};border-radius:2px;margin:20px auto 0"></div>
       </td></tr>
-    </table></body></html>`
+
+      ${callStrip}
+
+      <!-- פרטי הפנייה -->
+      <tr><td class="kg-pad" style="padding:26px 36px 0">
+        <div style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.2em;color:${C.label};padding:0 0 6px">פרטי הפנייה</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">${rows}</table>
+      </td></tr>
+
+      <!-- פעולה ראשית -->
+      <tr><td class="kg-pad" align="center" style="padding:28px 36px 4px">
+        <span class="kg-btn">${btn(ADMIN_URL, 'צפייה בליד במערכת', C.red, { size: 16, pad: '15px 42px' })}</span>
+        ${PROJECT_URL ? `<span class="kg-btn">${btn(PROJECT_URL, 'עמוד הפרויקט', '#ffffff', { fg: C.teal, size: 14, pad: '14px 28px', border: '#cfdde5' })}</span>` : ''}
+      </td></tr>
+
+      <!-- פוטר -->
+      <tr><td class="kg-pad" style="padding:34px 40px 36px;text-align:center;border-top:1px solid ${C.line}">
+        <img src="${LOGO}" alt="Kurkoos Group" width="126" style="display:inline-block;width:126px;max-width:56%;height:auto;border:0" />
+        <p style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.16em;color:#9aa7b1;margin:16px 0 0">נכסים · בנייה · יזמות · פיקוח · תיווך</p>
+        <p style="font-family:${FONT_B};font-size:11px;font-weight:600;color:#b6c0c8;margin:8px 0 0;line-height:1.6">הודעה אוטומטית ממערכת הניהול של קבוצת קורקוס</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
 
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',

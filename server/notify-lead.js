@@ -142,7 +142,26 @@ export default async function handler(req, res) {
     const settings = (Array.isArray(settingsRows) && settingsRows[0]) || { enabled: true, subject: 'ליד חדש מהאתר: {{name}}', include_fields: DEFAULT_FIELDS }
     if (!settings.enabled) { res.status(200).json({ ok: true, skipped: 'disabled', rescued }); return }
 
-    const to = (Array.isArray(recipients) ? recipients : []).map((r) => r.email).filter(Boolean)
+    /* נמענים קבועים, בנוסף לרשימה שבאדמין. קיימים כדי שבעלי העסק יקבלו
+       כל ליד גם אם הרשימה במסך ההגדרות התרוקנה או נערכה בטעות: ליד שלא
+       מגיע לאף אחד הוא ליד אבוד. ניתן לשנות בלי פריסה מחדש דרך משתנה
+       הסביבה NOTIFY_ALWAYS_TO ב-Vercel (כתובות מופרדות בפסיק), ולבטל
+       לגמרי על ידי הגדרתו למחרוזת ריקה. */
+    const ALWAYS_TO = (process.env.NOTIFY_ALWAYS_TO ?? 'skurkoos@gmail.com')
+      .split(',').map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
+
+    /* איחוד בלי כפילויות. השוואה באותיות קטנות, אחרת כתובת שנכתבה
+       באדמין באות גדולה הייתה מקבלת עותק שני של אותו מייל. */
+    const seen = new Set()
+    const to = []
+    for (const addr of [...(Array.isArray(recipients) ? recipients : []).map((r) => r.email), ...ALWAYS_TO]) {
+      const e = String(addr || '').trim()
+      if (!e) continue
+      const key = e.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      to.push(e)
+    }
     if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients', rescued }); return }
 
     const fields = Array.isArray(settings.include_fields) && settings.include_fields.length ? settings.include_fields : DEFAULT_FIELDS

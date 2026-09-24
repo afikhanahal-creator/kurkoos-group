@@ -61,7 +61,41 @@ const MAP_STYLE = [
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
 ]
 
-export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) {
+/* סגנון מפת המשרד. מפה של "איך מגיעים" צריכה קודם כל להיות קריאה:
+   שמות של כל הרחובות, גם הקטנים, כי הרחוב הקטן הוא בדיוק זה שמחפשים.
+   הפלטה היא של האתר: אפור בהיר מאוד ליבשה, לבן לכבישים, נייבי לכיתוב,
+   כחול רך למים, והסמן האדום הוא נקודת הצבע היחידה. בלי חול ובלי טורקיז
+   של סגנון הפרויקטים, שנראים זרים על עמוד לבן. */
+const OFFICE_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#f2f4f6' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#3d5462' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }, { weight: 3 }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
+  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.neighborhood', elementType: 'labels.text.fill', stylers: [{ color: '#6b7885' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#e1eae4' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#eceff2' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#e0e5ea' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#f2f4f6' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#d9dfe4' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#3d5462' }] },
+  { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#e6ebef' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#cfd7de' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#07293a' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9dbe6' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#105572' }] },
+]
+
+/* variant: 'project' (ברירת המחדל, עמודי הפרויקטים, ללא שינוי) או 'office',
+   מפת המשרד: סגנון בהיר, סיכה במקום קוביה, ושלט קבוע עם השם והכתובת.
+   השלט קבוע ולא בריחוף כי בטלפון אין ריחוף, ושם השלט הוא כל התועלת. */
+export default function PropertyMap({ lat, lng, query, label = '', sublabel = '', zoom = 15, variant = 'project' }) {
   const ref = useRef(null)
   const [failed, setFailed] = useState(false)
 
@@ -75,6 +109,7 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
     if (!hasCoords && !query) { setFailed(true); return }
     let cancelled = false
     let ro = null
+    let timers = []
     loadGoogleMaps(key)
       .then(async (maps) => {
         if (cancelled || !ref.current) return
@@ -92,20 +127,50 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
         }
         if (cancelled) return
         if (!center) { setFailed(true); return }
+        const office = variant === 'office'
         const map = new maps.Map(ref.current, {
           center,
           zoom,
-          styles: MAP_STYLE,
+          styles: office ? OFFICE_STYLE : MAP_STYLE,
           disableDefaultUI: true,
           zoomControl: true,
           gestureHandling: 'cooperative',
           clickableIcons: false,
-          backgroundColor: '#e9f1f5',
+          backgroundColor: office ? '#f2f4f6' : '#e9f1f5',
         })
-        // סמן הנכס — קוביה תלת-ממדית + שלט מותג קבוע מעליה (שם + לוגו).
-        // מומש כ-OverlayView כדי שיהיה אלמנט DOM אמיתי (CSS 3D), לא תמונה.
         const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
         const latLng = new maps.LatLng(center.lat, center.lng)
+
+        // סיכת המשרד: ראש אדום, גבעול, צל, ושלט לבן קבוע עם השם והכתובת.
+        // קצה הגבעול יושב בדיוק על הקואורדינטה.
+        class PinMarker extends maps.OverlayView {
+          onAdd() {
+            const el = document.createElement('div')
+            el.className = 'pm-pin'
+            el.setAttribute('title', label)
+            el.innerHTML =
+              '<div class="pm-pin__label" dir="rtl">' +
+              '<span class="pm-pin__name">' + esc(label) + '</span>' +
+              (sublabel ? '<span class="pm-pin__sub">' + esc(sublabel) + '</span>' : '') +
+              '</div>' +
+              '<div class="pm-pin__head"></div>' +
+              '<div class="pm-pin__stem"></div>' +
+              '<div class="pm-pin__shadow"></div>'
+            this.el = el
+            this.getPanes().overlayMouseTarget.appendChild(el)
+          }
+          draw() {
+            const proj = this.getProjection()
+            if (!proj || !this.el) return
+            const p = proj.fromLatLngToDivPixel(latLng)
+            this.el.style.left = Math.round(p.x) + 'px'
+            this.el.style.top = Math.round(p.y) + 'px'
+          }
+          onRemove() { if (this.el) { this.el.remove(); this.el = null } }
+        }
+
+        // סמן הנכס בעמודי הפרויקטים — קוביה תלת-ממדית + שלט מותג בריחוף.
+        // מומש כ-OverlayView כדי שיהיה אלמנט DOM אמיתי (CSS 3D), לא תמונה.
         class CubeMarker extends maps.OverlayView {
           onAdd() {
             const el = document.createElement('div')
@@ -134,7 +199,14 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
           }
           onRemove() { if (this.el) { this.el.remove(); this.el = null } }
         }
-        new CubeMarker().setMap(map)
+        new (office ? PinMarker : CubeMarker)().setMap(map)
+
+        /* ציור חוזר בכמה נקודות זמן אחרי היצירה. דפדפן בתוך אפליקציה
+           (אינסטגרם, פייסבוק, וואטסאפ) פותח את העמוד בחלון שמשנה את גובהו
+           ורוחבו בשניות הראשונות, אחרי שגוגל כבר מדד. הצופה שלמטה תופס
+           את רוב המקרים; אלה תופסים את מה שקורה לפני שהוא נרשם. */
+        const settle = () => { if (cancelled) return; maps.event.trigger(map, 'resize'); map.setCenter(center) }
+        timers = [0, 400, 1500].map((ms) => setTimeout(settle, ms))
 
         /* גוגל מודד את גודל המיכל פעם אחת, כשהמפה נוצרת, ומצייר לפיו.
            אם המיכל משתנה אחר כך, והוא משתנה: דפדפן בתוך אפליקציה שמשנה
@@ -160,8 +232,8 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
           setFailed(true)
         }
       })
-    return () => { cancelled = true; ro?.disconnect() }
-  }, [lat, lng, query, zoom, label])
+    return () => { cancelled = true; ro?.disconnect(); timers.forEach(clearTimeout) }
+  }, [lat, lng, query, zoom, label, sublabel, variant])
 
   // נפילה-לאחור: אם ה-Maps JS API לא זמין/מאופשר — embed רגיל (לא ריק)
   if (failed) {
@@ -171,5 +243,8 @@ export default function PropertyMap({ lat, lng, query, label = '', zoom = 15 }) 
     const src = `https://www.google.com/maps?q=${q}&z=${zoom}&output=embed`
     return <iframe className="property-map" title={label} src={src} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
   }
-  return <div ref={ref} className="property-map" role="img" aria-label={label} />
+  /* dir="ltr" על מיכל המפה: גוגל ממקם אריחים ופקדים לפי left/top, ומיכל
+     בכיוון ימין-לשמאל הוא המקור הקלאסי למפה שנחתכת בצד או זזה. השלטים
+     שבתוך הסמנים מצהירים rtl בעצמם, כך שהעברית בהם לא נפגעת. */
+  return <div ref={ref} className="property-map" role="img" aria-label={label} dir="ltr" />
 }

@@ -158,3 +158,103 @@
   .pm-info__sep { height: 17px; }
   .pm-info__logo { height: 22px; }
 }
+
+/* ============================================================
+   סיכת המשרד (variant="office"): ראש אדום עם נקודה לבנה, גבעול קצר,
+   צל רך על הקרקע, ושלט לבן קבוע מעליה עם השם והכתובת. קצה הגבעול
+   הוא נקודת העיגון, ולכן כל האלמנט מוזז למעלה בגובהו המלא.
+   ============================================================ */
+.pm-pin {
+  position: absolute;
+  width: 0;
+  height: 0;
+  cursor: default;
+  z-index: 3;
+}
+.pm-pin__shadow {
+  position: absolute;
+  left: 0;
+  top: -3px;
+  width: 26px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(7, 41, 58, 0.34), transparent 70%);
+  pointer-events: none;
+}
+.pm-pin__stem {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  height: 14px;
+  transform: translateX(-50%);
+  background: #a90b0c;
+  border-radius: 2px;
+}
+.pm-pin__head {
+  position: absolute;
+  left: 0;
+  bottom: 12px;
+  width: 24px;
+  height: 24px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #a90b0c;
+  border: 3px solid #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 6px 14px -4px rgba(7, 41, 58, 0.45), 0 0 0 1px rgba(7, 41, 58, 0.08);
+}
+.pm-pin__head::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #ffffff;
+}
+.pm-pin__label {
+  position: absolute;
+  left: 0;
+  bottom: 44px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 13px 8px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px -8px rgba(7, 41, 58, 0.35), 0 0 0 1px rgba(7, 41, 58, 0.06);
+  white-space: nowrap;
+  font-family: var(--font-heading, sans-serif);
+  pointer-events: none;
+}
+.pm-pin__label::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #ffffff;
+}
+.pm-pin__name {
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.15;
+  color: #07293a;
+  letter-spacing: -0.01em;
+}
+.pm-pin__sub {
+  font-family: var(--font-body, sans-serif);
+  font-weight: 600;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: #6b7885;
+}
+/* פקדי הזום במפת המשרד — רכים יותר, על הפלטה של האתר */
+.property-map[dir="ltr"] .gm-style .gm-bundled-control .gmnoprint > div { border-radius: 10px !important; box-shadow: 0 6px 16px -6px rgba(7,41,58,0.3) !important; }

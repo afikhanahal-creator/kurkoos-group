@@ -57,7 +57,15 @@ export default function OfficeMap() {
     <div className="office-map">
       <div className="office-map__map" ref={holderRef}>
         {visible
-          ? <PropertyMap lat={office.lat} lng={office.lng} query={addressText} label={L(site.name)} zoom={16} />
+          ? <PropertyMap
+              variant="office"
+              lat={office.lat}
+              lng={office.lng}
+              query={addressText}
+              label={L(site.name)}
+              sublabel={L({ he: 'הנגר 24, הוד השרון', en: '24 HaNagar St., Hod HaSharon' })}
+              zoom={16}
+            />
           : <span className="office-map__skeleton" aria-hidden="true" />}
       </div>
 

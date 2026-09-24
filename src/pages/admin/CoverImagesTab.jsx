@@ -215,12 +215,14 @@ export default function CoverImagesTab() {
                 <h2 className="cov__content-title">קאבר — {current.label}</h2>
                 <span className="cov__content-path">/projects/{current.slug}</span>
               </div>
+              {/* קאבר הפרויקט הוא התמונה הראשית בעמוד הפרויקט, ולכן נעול לפינות חדות */}
               <ResponsiveImageField
                 value={projValue}
                 folder="covers"
                 surfaceLabel={`קאבר ${current.label}`}
                 desktopAspect="4 / 3"
                 mobileAspect="4 / 5"
+                sharpCorners
                 onChange={(v) => saveProj(current.slug, v)}
               />
               {!srcOfResponsive(projMap[current.slug]) && (

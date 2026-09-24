@@ -260,6 +260,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
           mobileAspect={f.aspectMobile || '4 / 5'}
           breakpoints={f.breakpoints || ['desktop', 'mobile']}
           allowOrientation={!!f.allowOrientation}
+          sharpCorners={!!f.sharpCorners}
           onChange={(val) => setField(f.key, val ? JSON.stringify(val) : null)}
         />
       )
@@ -561,6 +562,9 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
   const gallerySection = (
     <fieldset className="ed__section" key={GALLERY_STEP}>
       <legend>מדיה (תמונות)</legend>
+      {/* התמונה הראשונה כאן היא התמונה הראשית של עמוד הפרויקט (coverField),
+          ולכן העורך של תמונות הגלריה לא מציע לצרוב עיגול פינות בקובץ.
+          העיגול בגלריית "מבט מקרוב" עצמה נעשה ב-CSS לפי הבחירה שלמעלה. */}
       <ImageManager
         value={form.gallery || []}
         onChange={setGallery}
@@ -568,6 +572,7 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
         max={20}
         corners={galleryCorners}
         onCornersChange={gallerySlug ? saveGalleryCorners : null}
+        allowRoundCorners={false}
       />
     </fieldset>
   )

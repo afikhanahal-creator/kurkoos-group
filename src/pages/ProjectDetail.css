@@ -274,7 +274,10 @@
   max-height: min(70vh, 620px);
   object-fit: contain;
   object-position: center;
-  border-radius: 0;
+  /* !important כדי שגם עיגול פינות ששמור ב-CMS לתמונה הזאת (--ri-rad-d/m,
+     שמוחל דרך .ri-img) לא יעגל את התמונה הראשית. הכלל הזה חייב לנצח בכל
+     עמוד פרויקט ובכל מכשיר, בלי תלות בערך שנשמר לתמונה. */
+  border-radius: 0 !important;
 }
 .pd-banner__play {
   position: absolute;

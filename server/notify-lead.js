@@ -8,6 +8,8 @@
 // נקרא מ-cms.js בכל createLead (fire-and-forget), וגם לשליחת מייל בדיקה.
 // ============================================================
 
+import { sendLeadWhatsApp } from './_whatsapp.js'
+
 // Rate limiter פשוט בזיכרון — מגן מפני SPAM/flood בכל instance של Vercel
 const _rl = new Map()
 function rateLimit(ip, max = 15, windowMs = 60_000) {
@@ -131,16 +133,23 @@ export default async function handler(req, res) {
       }
     }
 
-    /* בדיקת מפתח המייל באה רק *אחרי* ההצלה. מפתח Resend שפג או נמחק הוא
-       תקלת התראות, והוא לא יכול למנוע מפנייה של אדם אמיתי להגיע למערכת. */
-    if (!RESEND_API_KEY) { res.status(500).json({ error: 'חסר RESEND_API_KEY בהגדרות Vercel (ודאו גם שעשיתם Redeploy)', rescued }); return }
-
     const [settingsRows, recipients] = await Promise.all([
       sbGet('lead_notify_settings?id=eq.1&select=*'),
       sbGet('lead_notify_recipients?active=eq.true&select=*'),
     ])
     const settings = (Array.isArray(settingsRows) && settingsRows[0]) || { enabled: true, subject: 'ליד חדש מהאתר: {{name}}', include_fields: DEFAULT_FIELDS }
     if (!settings.enabled) { res.status(200).json({ ok: true, skipped: 'disabled', rescued }); return }
+
+    /* וואטסאפ נשלח לפני המייל ובלי תלות בו. מפתח Resend שפג, רשימת
+       נמענים ריקה או תקלה בשליחת המייל לא יכולים לבטל את ההתראה
+       המיידית, שהיא זו שבאמת מגיעה לטלפון בתוך שניות. הפונקציה לא
+       זורקת לעולם, ולכן אין כאן try/catch. */
+    const whatsapp = await sendLeadWhatsApp(lead, { isTest, rescued })
+
+    /* בדיקת מפתח המייל באה רק *אחרי* ההצלה ואחרי הוואטסאפ. מפתח Resend
+       שפג או נמחק הוא תקלת התראות, והוא לא יכול למנוע מפנייה של אדם
+       אמיתי להגיע למערכת. */
+    if (!RESEND_API_KEY) { res.status(500).json({ error: 'חסר RESEND_API_KEY בהגדרות Vercel (ודאו גם שעשיתם Redeploy)', rescued, whatsapp }); return }
 
     /* נמענים קבועים, בנוסף לרשימה שבאדמין. קיימים כדי שבעלי העסק יקבלו
        כל ליד גם אם הרשימה במסך ההגדרות התרוקנה או נערכה בטעות: ליד שלא
@@ -162,7 +171,7 @@ export default async function handler(req, res) {
       seen.add(key)
       to.push(e)
     }
-    if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients', rescued }); return }
+    if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients', rescued, whatsapp }); return }
 
     const fields = Array.isArray(settings.include_fields) && settings.include_fields.length ? settings.include_fields : DEFAULT_FIELDS
     const val = (k) => {
@@ -355,10 +364,10 @@ export default async function handler(req, res) {
     const outTxt = await r.text()
     let out = {}; try { out = JSON.parse(outTxt) } catch { /* non-JSON */ }
     if (!r.ok) {
-      res.status(502).json({ error: `Resend ${r.status}: ${out.message || out.error?.message || outTxt.slice(0, 200) || 'שגיאת שליחה'}`, detail: out, rescued })
+      res.status(502).json({ error: `Resend ${r.status}: ${out.message || out.error?.message || outTxt.slice(0, 200) || 'שגיאת שליחה'}`, detail: out, rescued, whatsapp })
       return
     }
-    res.status(200).json({ ok: true, sent: to.length, id: out.id, rescued })
+    res.status(200).json({ ok: true, sent: to.length, id: out.id, rescued, whatsapp })
   } catch (e) {
     res.status(500).json({ error: 'שגיאת שרת: ' + (e && e.message ? e.message : String(e)), rescued })
   }

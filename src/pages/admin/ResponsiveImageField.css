@@ -182,3 +182,11 @@
   .rif__savebar-actions { justify-content: space-between; }
   .rif__save { flex: 1; }
 }
+
+/* שדה שנעול לפינות חדות: במקום הבקרה מופיעה שורת הסבר שקטה */
+.rif__locked {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--adm-text-soft, #778);
+  padding: 0.35rem 0;
+}

@@ -75,7 +75,10 @@ function Slider({ label, min, max, step = 1, value, onChange, display }) {
   )
 }
 
-export default function ImageEditor({ src, onApply, onClose, busy = false, aspect = null }) {
+/* allowRoundCorners=false: אין אפשרות לעגל פינות, והרדיוס נעול על אפס.
+   משמש לתמונה הראשית של פרויקט: עיגול כאן נצרב בקובץ עצמו ולא ניתן
+   לביטול מה-CSS של האתר, וההחלטה היא שהתמונה הראשית תמיד חדה. */
+export default function ImageEditor({ src, onApply, onClose, busy = false, aspect = null, allowRoundCorners = true }) {
   const canvasRef = useRef(null)
   const stageRef = useRef(null)
   const imgRef = useRef(null)
@@ -173,7 +176,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
       ctx.fillRect(0, 0, w, h)
       ctx.restore()
     }
-    if (!neutral && radius > 0) {
+    if (!neutral && allowRoundCorners && radius > 0) {
       const r = radius * Math.min(w, h)
       ctx.save()
       ctx.globalCompositeOperation = 'destination-in'
@@ -182,7 +185,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
       ctx.fill()
       ctx.restore()
     }
-  }, [filterStr, t, bg, tint, radius, FRAME_W, FRAME_H])
+  }, [filterStr, t, bg, tint, radius, allowRoundCorners, FRAME_W, FRAME_H])
 
   useEffect(() => { if (ready) draw(canvasRef.current, 1, { neutral: compare }) }, [draw, ready, ver, compare])
 
@@ -361,18 +364,25 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
                     <Slider label="סיבוב עדין" min={-45} max={45} value={t.rot > 180 ? t.rot - 360 : t.rot} display={`${t.rot}°`} onChange={(e) => setT((p) => ({ ...p, rot: Number(e.target.value) }))} />
                   </section>
 
-                  <section className="imed__group">
-                    <h4>פינות</h4>
-                    <div className="imed__seg">
-                      <button type="button" className={radius === 0 ? 'is-active' : ''} onClick={() => setRadius(0)}>רגילות</button>
-                      <button type="button" className={radius > 0 && radius < 0.5 ? 'is-active' : ''} onClick={() => setRadius((r) => (r > 0 && r < 0.5 ? r : 0.12))}>מעוגלות</button>
-                      <button type="button" className={radius >= 0.5 ? 'is-active' : ''} onClick={() => setRadius(0.5)}>עיגול מלא</button>
-                    </div>
-                    {radius > 0 && radius < 0.5 && (
-                      <Slider label="עוצמת עיגול" min={0.02} max={0.4} step={0.01} value={radius} display={`${Math.round(radius * 100)}%`} onChange={(e) => setRadius(Number(e.target.value))} />
-                    )}
-                    <p className="imed__note imed__note--soft">שימו לב: האתר מעגל פינות אוטומטית בכרטיסים ובגלריות — עיגול כאן נצרב בקובץ עצמו.</p>
-                  </section>
+                  {allowRoundCorners ? (
+                    <section className="imed__group">
+                      <h4>פינות</h4>
+                      <div className="imed__seg">
+                        <button type="button" className={radius === 0 ? 'is-active' : ''} onClick={() => setRadius(0)}>רגילות</button>
+                        <button type="button" className={radius > 0 && radius < 0.5 ? 'is-active' : ''} onClick={() => setRadius((r) => (r > 0 && r < 0.5 ? r : 0.12))}>מעוגלות</button>
+                        <button type="button" className={radius >= 0.5 ? 'is-active' : ''} onClick={() => setRadius(0.5)}>עיגול מלא</button>
+                      </div>
+                      {radius > 0 && radius < 0.5 && (
+                        <Slider label="עוצמת עיגול" min={0.02} max={0.4} step={0.01} value={radius} display={`${Math.round(radius * 100)}%`} onChange={(e) => setRadius(Number(e.target.value))} />
+                      )}
+                      <p className="imed__note imed__note--soft">שימו לב: האתר מעגל פינות אוטומטית בכרטיסים ובגלריות — עיגול כאן נצרב בקובץ עצמו.</p>
+                    </section>
+                  ) : (
+                    <section className="imed__group">
+                      <h4>פינות</h4>
+                      <p className="imed__note imed__note--soft">התמונה הראשית של פרויקט נשמרת תמיד עם פינות חדות. עיגול היה נצרב בקובץ עצמו ולא ניתן היה לבטל אותו באתר.</p>
+                    </section>
+                  )}
                 </>
               )}
 

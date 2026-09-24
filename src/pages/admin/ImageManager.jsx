@@ -67,7 +67,11 @@ export const GALLERY_CORNERS = [
   { v: 30, t: 'מעוגלות מאוד' },
 ]
 
-export default function ImageManager({ value = [], onChange, folder = 'general', max = 20, corners = null, onCornersChange = null }) {
+/* allowRoundCorners=false: העורך המתקדם של כל תמונה בגלריה לא מציע לצרוב
+   עיגול פינות בקובץ. נדרש בגלריית הפרויקט, כי התמונה הראשונה בה היא
+   התמונה הראשית של עמוד הפרויקט, וכל תמונה יכולה להפוך לראשונה בלחיצה
+   על "קבע ככריכה". עיגול שנצרב בקובץ לא ניתן לביטול מה-CSS של האתר. */
+export default function ImageManager({ value = [], onChange, folder = 'general', max = 20, corners = null, onCornersChange = null, allowRoundCorners = true }) {
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState(null)  // { done, total } בזמן העלאה מרובה
@@ -218,7 +222,7 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
         </SortableContext>
       </DndContext>
       {over && <div className="im__overlay" aria-hidden="true"><span>שחררו כדי להעלות</span></div>}
-      {editing && <ImageEditor src={editing} busy={busy} onApply={applyEdit} onClose={() => setEditing(null)} />}
+      {editing && <ImageEditor src={editing} busy={busy} allowRoundCorners={allowRoundCorners} onApply={applyEdit} onClose={() => setEditing(null)} />}
       {preview && <ImgPreview url={preview} onClose={() => setPreview(null)} />}
     </div>
   )

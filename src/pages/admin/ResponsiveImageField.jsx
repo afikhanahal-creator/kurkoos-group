@@ -25,6 +25,20 @@ const ORIENTS = [
   { id: '16 / 9', label: 'רחב' },
 ]
 
+/* מאפס את רדיוס הפינות בשתי התצוגות. מוחל על כל ערך שנכנס לשדה ועל כל
+   ערך שיוצא ממנו כשהשדה נעול לפינות חדות, כך שגם רשומה ישנה שנשמרה
+   מעוגלת מוצגת ונשמרת חדה. */
+function forceSharp(ri) {
+  if (!ri) return ri
+  return {
+    ...ri,
+    views: {
+      mobile: { ...(ri.views?.mobile || DEFAULT_VIEW), radius: 0 },
+      desktop: { ...(ri.views?.desktop || DEFAULT_VIEW), radius: 0 },
+    },
+  }
+}
+
 export default function ResponsiveImageField({
   value,
   onChange,
@@ -37,8 +51,12 @@ export default function ResponsiveImageField({
   chrome = 'card',
   chromeLabel = '',
   allowOrientation = false,
+  /* sharpCorners: התמונה הזאת מוצגת באתר תמיד עם פינות חדות (התמונה הראשית
+     של פרויקט). בקרת העיגול מוסתרת, הרדיוס נכפה לאפס בשתי התצוגות גם אם
+     ערך ישן נשמר מעוגל, והעורך המתקדם לא מציע לצרוב עיגול בקובץ. */
+  sharpCorners = false,
 }) {
-  const base = normalizeResponsiveImage(value)
+  const base = sharpCorners ? forceSharp(normalizeResponsiveImage(value)) : normalizeResponsiveImage(value)
   const inputRef = useRef(null)
   const frameRef = useRef(null)
   const [bp, setBp] = useState(breakpoints[0] || 'desktop')
@@ -49,7 +67,7 @@ export default function ResponsiveImageField({
 
   // סנכרון ה-draft כשמקור התמונה משתנה (העלאה/חיתוך/הסרה התחייבו מיד)
   const baseSrc = base ? base.src : ''
-  useEffect(() => { setDraft(normalizeResponsiveImage(value)) }, [baseSrc])
+  useEffect(() => { setDraft(sharpCorners ? forceSharp(normalizeResponsiveImage(value)) : normalizeResponsiveImage(value)) }, [baseSrc])
 
   const view = draft ? draft.views[bp] : DEFAULT_VIEW
   const aspect = view.aspectRatio || (bp === 'mobile' ? mobileAspect : desktopAspect)
@@ -62,11 +80,13 @@ export default function ResponsiveImageField({
       if (!d) return d
       const v = { ...d.views[bp], ...patch }
       if (patch.focalPoint) v.objectPosition = posFromFocal({ ...d.views[bp].focalPoint, ...patch.focalPoint })
+      if (sharpCorners) v.radius = 0
       return { ...d, views: { ...d.views, [bp]: v } }
     })
   }
 
-  const commit = (next) => { onChange(next); setDraft(next) }
+  // כל מה שיוצא מהשדה עובר דרך כאן, ולכן נעילת הפינות נאכפת פעם אחת
+  const commit = (raw) => { const next = sharpCorners ? forceSharp(raw) : raw; onChange(next); setDraft(next) }
 
   const handleUpload = async (file) => {
     if (!file) return
@@ -135,7 +155,8 @@ export default function ResponsiveImageField({
 
   const saveBp = () => {
     if (!draft) return
-    onChange(draft) // האובייקט כולל את שני ה-breakpoints; שונה רק ה-bp הפעיל → עצמאי
+    // האובייקט כולל את שני ה-breakpoints; שונה רק ה-bp הפעיל → עצמאי
+    onChange(sharpCorners ? forceSharp(draft) : draft)
     toast.success(bp === 'mobile' ? 'תצוגת המובייל נשמרה' : 'תצוגת הדסקטופ נשמרה')
   }
   const copyToOther = () => {
@@ -285,17 +306,24 @@ export default function ResponsiveImageField({
                 <span className="rif__val">{Math.round((view.zoom || 1) * 100)}%</span>
               </div>
             </div>
-            <div className="rif__row">
-              <span className="rif__row-lbl">פינות</span>
-              <div className="rif__seg">
-                <button type="button" className={`rif__segbtn ${(!view.radius) ? 'is-active' : ''}`} onClick={() => setView({ radius: 0 })}>חדות</button>
-                <button type="button" className={`rif__segbtn ${view.radius > 0 ? 'is-active' : ''}`} onClick={() => setView({ radius: view.radius > 0 ? view.radius : 16 })}>מעוגלות</button>
+            {sharpCorners ? (
+              <div className="rif__row">
+                <span className="rif__row-lbl">פינות</span>
+                <span className="rif__locked">חדות תמיד. התמונה הראשית של פרויקט לא מתעגלת באתר.</span>
               </div>
-              <div className="rif__slider rif__slider--inline">
-                <input type="range" min="0" max="48" step="1" value={view.radius || 0} onChange={(e) => setView({ radius: Number(e.target.value) })} aria-label="עוצמת עיגול" />
-                <span className="rif__val">{view.radius || 0}px</span>
+            ) : (
+              <div className="rif__row">
+                <span className="rif__row-lbl">פינות</span>
+                <div className="rif__seg">
+                  <button type="button" className={`rif__segbtn ${(!view.radius) ? 'is-active' : ''}`} onClick={() => setView({ radius: 0 })}>חדות</button>
+                  <button type="button" className={`rif__segbtn ${view.radius > 0 ? 'is-active' : ''}`} onClick={() => setView({ radius: view.radius > 0 ? view.radius : 16 })}>מעוגלות</button>
+                </div>
+                <div className="rif__slider rif__slider--inline">
+                  <input type="range" min="0" max="48" step="1" value={view.radius || 0} onChange={(e) => setView({ radius: Number(e.target.value) })} aria-label="עוצמת עיגול" />
+                  <span className="rif__val">{view.radius || 0}px</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* סרגל שמירה בולט */}
@@ -321,7 +349,7 @@ export default function ResponsiveImageField({
       )}
 
       {editing && draft && (
-        <ImageEditor src={draft.src} busy={busy} aspect={aspect} onApply={applyCrop} onClose={() => setEditing(false)} />
+        <ImageEditor src={draft.src} busy={busy} aspect={aspect} allowRoundCorners={!sharpCorners} onApply={applyCrop} onClose={() => setEditing(false)} />
       )}
     </div>
   )

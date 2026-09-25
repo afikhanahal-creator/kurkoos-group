@@ -7,9 +7,27 @@ import Icon from '../components/ui/Icon.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import Contact from '../components/sections/Contact.jsx'
-import { listProjectCards } from '../lib/cms.js'
+import SmartImage from '../components/ui/SmartImage.jsx'
+import { listProjectCards, cmsRowToCard, getProjectBySlug } from '../lib/cms.js'
+import { srcOfResponsive } from '../lib/responsiveImage.js'
 import './SharonHub.css'
 import './VillasSharon.css'
+
+/* התאמה בין הפרויקטים שבעמוד לפרויקטים במערכת הניהול. קודם לפי slug זהה,
+   ואם ה-slug במערכת שונה, לפי השם. כך התמונות מגיעות תמיד מהאדמין,
+   וגם שינוי slug שם לא מעלים אותן מכאן. */
+const NAME_KEYS = {
+  'yordei-hayam': ['יורדי הים'],
+  'henrietta-szold': ['הנרייטה', 'סאלד'],
+  'hankin-41': ['חנקין'],
+}
+const nameOf = (v) => (v && typeof v === 'object') ? String(v.he || v.en || '') : String(v || '')
+function matchCard(cards, slug) {
+  const bySlug = cards.find((c) => String(c.slug) === slug)
+  if (bySlug) return bySlug
+  const keys = NAME_KEYS[slug] || []
+  return cards.find((c) => keys.some((k) => nameOf(c.name).includes(k))) || null
+}
 
 /* ============================================================
    בניית וילות ובתים פרטיים בשרון, עמוד מוקד.
@@ -122,12 +140,34 @@ const FAQS = [
 
 export default function VillasSharon() {
   const [open, setOpen] = useState(PROJECTS[0].slug)
-  const [gallery, setGallery] = useState([])
+  const [gallery, setGallery] = useState([])   // כרטיסים בצורה שהגלריה מבינה (cover, name, slug)
+  const [media, setMedia] = useState({})       // slug בעמוד → { card, images }
 
-  /* תמונות אמיתיות מהפרויקטים, מתוך מערכת הניהול */
+  /* תמונות אמיתיות מהפרויקטים, מתוך מערכת הניהול.
+     השורות הגולמיות מהמסד לא מכילות שדה cover, ולכן הן חייבות לעבור דרך
+     cmsRowToCard לפני שהן מגיעות לגלריה. בלי זה הכרטיסים נוצרו בלי תמונה. */
   useEffect(() => {
     let on = true
-    listProjectCards().then((d) => on && setGallery(d || [])).catch(() => {})
+    listProjectCards()
+      .then(async (rows) => {
+        if (!on) return
+        const cards = (rows || []).map(cmsRowToCard)
+        setGallery(cards)
+        // לכל פרויקט בעמוד: הכריכה מהכרטיס, ועד ארבע תמונות נוספות מהגלריה שלו
+        const found = {}
+        await Promise.all(PROJECTS.map(async (p) => {
+          const card = matchCard(cards, p.slug)
+          if (!card) return
+          let images = []
+          try {
+            const row = await getProjectBySlug(card.slug)
+            images = (Array.isArray(row?.gallery) ? row.gallery : []).map(srcOfResponsive).filter(Boolean)
+          } catch { /* אין גלריה, נשארים עם הכריכה */ }
+          found[p.slug] = { card, images }
+        }))
+        if (on) setMedia(found)
+      })
+      .catch(() => {})
     return () => { on = false }
   }, [])
 
@@ -225,8 +265,31 @@ export default function VillasSharon() {
             ))}
           </div>
 
-          {PROJECTS.filter((p) => p.slug === open).map((p) => (
+          {PROJECTS.filter((p) => p.slug === open).map((p) => {
+            const m = media[p.slug]
+            const cover = m?.card?.cover || ''
+            // הכריכה לא חוזרת פעמיים: אם היא גם הראשונה בגלריה, מדלגים עליה
+            const thumbs = (m?.images || []).filter((u) => u !== cover).slice(0, 4)
+            const projectUrl = m?.card?.slug ? `/projects/${m.card.slug}` : null
+            return (
             <Reveal key={p.slug} className="vsh-panel">
+              {cover && (
+                <div className="vsh-media">
+                  <Link to={projectUrl || '/projects'} className="vsh-media__hero" aria-label={`${p.name}: לעמוד הפרויקט`}>
+                    <SmartImage src={cover} alt={`${p.name}, ${p.kind}`} label={p.name} className="vsh-media__img" w={1400} sizes="(max-width: 860px) 100vw, 900px" />
+                    <span className="vsh-media__cta">לעמוד הפרויקט</span>
+                  </Link>
+                  {thumbs.length > 0 && (
+                    <div className="vsh-media__thumbs">
+                      {thumbs.map((u, i) => (
+                        <Link key={u} to={projectUrl || '/projects'} className="vsh-media__thumb" aria-label={`${p.name}, תמונה ${i + 2}`}>
+                          <SmartImage src={u} alt={`${p.name}, תמונה ${i + 2}`} label={p.name} w={600} sizes="(max-width: 860px) 45vw, 220px" quality="auto:eco" />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="vsh-panel__head">
                 <div>
                   <h3>{p.name}</h3>
@@ -256,7 +319,8 @@ export default function VillasSharon() {
                 </div>
               </div>
             </Reveal>
-          ))}
+            )
+          })}
         </div>
       </section>
 

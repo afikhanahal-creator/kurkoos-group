@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
 import { supabase } from '../../lib/supabase.js'
 import { trackingDisabled, setTrackingDisabled } from '../../lib/track.js'
-import { fetchDashboard, fetchRealtime, fetchPageDetail, testConnection, rows, totalsOf } from '../../lib/analyticsApi.js'
+import { fetchDashboard, fetchRealtime, fetchPageDetail, testConnection, rows, totalsOf, jerusalemBounds } from '../../lib/analyticsApi.js'
 import './AnalyticsTab.css'
 
 /* ============================================================
@@ -440,9 +440,11 @@ export default function AnalyticsTab() {
     if (!supabase) return
     let on = true
     const count = async ({ start, end }) => {
+      // אותם ימים בדיוק כמו בדוחות של גוגל: גבולות היום בשעון ישראל
+      const { from, to } = jerusalemBounds(start, end)
       const { data, error } = await supabase
         .from('leads').select('id, source')
-        .gte('created_at', `${start}T00:00:00Z`).lte('created_at', `${end}T23:59:59.999Z`)
+        .gte('created_at', from).lte('created_at', to)
       if (error) throw error
       return (data || []).filter((l) => l.source !== 'manual').length
     }

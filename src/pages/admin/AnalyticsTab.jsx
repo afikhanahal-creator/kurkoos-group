@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
+import { supabase } from '../../lib/supabase.js'
 import { trackingDisabled, setTrackingDisabled } from '../../lib/track.js'
 import { fetchDashboard, fetchRealtime, fetchPageDetail, testConnection, rows, totalsOf } from '../../lib/analyticsApi.js'
 import './AnalyticsTab.css'
@@ -100,8 +101,26 @@ const METRICS = [
   { i: 0, id: 'users', label: 'משתמשים' },
   { i: 1, id: 'sessions', label: 'ביקורים' },
   { i: 2, id: 'views', label: 'צפיות' },
-  { i: 3, id: 'conv', label: 'המרות' },
+  { i: 3, id: 'conv', label: 'פניות' },
 ]
+
+/* ארבע פעולות הפנייה, באותו סדר ובאותם שמות כמו CONVERSION_EVENTS בשרת.
+   השמות בעברית הם מה שבעל העסק רואה; שמות האירועים הם מה שגוגל סופר. */
+const CONV_TYPES = [
+  { ev: 'generate_lead', label: 'טופס ליד', hint: 'שליחת טופס באתר: דף הבית, עמוד פרויקט, עמוד השארת פרטים' },
+  { ev: 'phone_click', label: 'טלפון', hint: 'לחיצה על מספר הטלפון. גוגל לא יודע אם השיחה יצאה בפועל' },
+  { ev: 'whatsapp_click', label: 'וואטסאפ', hint: 'לחיצה על כפתור וואטסאפ, כולל הכפתור הצף' },
+  { ev: 'email_click', label: 'מייל', hint: 'לחיצה על כתובת מייל' },
+]
+
+/* טווח קודם באותו אורך, זהה לחישוב בשרת, לספירת הלידים מהמערכת */
+function prevRangeOf(start, end) {
+  const s = new Date(start + 'T00:00:00Z'), e = new Date(end + 'T00:00:00Z')
+  const days = Math.round((e - s) / 86400000) + 1
+  const ps = new Date(s); ps.setUTCDate(ps.getUTCDate() - days)
+  const pe = new Date(s); pe.setUTCDate(pe.getUTCDate() - 1)
+  return { start: iso(ps), end: iso(pe) }
+}
 function HeroChart({ series, prevSeries }) {
   const [metric, setMetric] = useState(0)
   const [gran, setGran] = useState('day')
@@ -412,6 +431,26 @@ export default function AnalyticsTab() {
   }, [range.start, range.end])
   useEffect(load, [load])
   useEffect(() => { fetchSettings().then((s) => setPropId(String(s.ga4_property_id || ''))).catch(() => {}) }, [])
+
+  /* לידים שנשמרו בפועל בלוח הלידים, לאותו טווח ולטווח הקודם. זה המספר
+     הקובע: גוגל סופר רק דפדפנים שמאפשרים מדידה, והמערכת סופרת כל טופס
+     שנשלח. לידים שהוזנו ידנית לא נספרים, כי הם לא הגיעו מהאתר. */
+  const [leadCounts, setLeadCounts] = useState({ cur: null, prev: null })
+  useEffect(() => {
+    if (!supabase) return
+    let on = true
+    const count = async ({ start, end }) => {
+      const { data, error } = await supabase
+        .from('leads').select('id, source')
+        .gte('created_at', `${start}T00:00:00Z`).lte('created_at', `${end}T23:59:59.999Z`)
+      if (error) throw error
+      return (data || []).filter((l) => l.source !== 'manual').length
+    }
+    Promise.all([count(range), count(prevRangeOf(range.start, range.end))])
+      .then(([cur, prev]) => on && setLeadCounts({ cur, prev }))
+      .catch(() => on && setLeadCounts({ cur: null, prev: null }))
+    return () => { on = false }
+  }, [range.start, range.end])
   useEffect(() => {
     if (state.phase !== 'ready') return
     let on = true
@@ -464,18 +503,40 @@ export default function AnalyticsTab() {
   const R = state.data.reports
   const tot = totalsOf(R.totals)
   const prevTot = totalsOf(R.totalsPrev)
-  const series = rows(R.timeseries)
-  const prevSeries = rows(R.timeseriesPrev || null)
-  const channels = rows(R.channels)
-  const sources = rows(R.sources)
-  const pages = rows(R.pages)
-  const devices = rows(R.devices)
-  const countries = rows(R.countries)
+
+  /* ---- פניות ----
+     כל מספרי הפניות מגיעים מדוחות מסוננים לארבעת אירועי הפנייה (ראו
+     CONVERSION_EVENTS בשרת), ולא ממדד keyEvents של גוגל, שסופר רק מה
+     שסומן ידנית בהגדרות הנכס. כל דוח מסונן מחזיר שלושה מדדים:
+     [0] פעולות, [1] אנשים, [2] ביקורים שבהם הייתה פנייה.
+     לכל טבלה נבחר המדד שהגיוני בה: לשיעור פנייה לפי ערוץ/מקור/מכשיר
+     סופרים ביקורים עם פנייה, כך שהאחוז לעולם לא עובר 100. לעמודים
+     סופרים פעולות שנעשו מתוך העמוד. לגרף היומי סופרים אנשים ליום. */
+  const convByKey = (rep, keyOf, mi) => { const m = new Map(); rows(rep).forEach((r) => m.set(keyOf(r), r.m[mi] || 0)); return m }
+  const withConv = (list, rep, idx, mi, keyOf = (r) => r.d.join('|')) => {
+    const m = convByKey(rep, keyOf, mi)
+    return list.map((r) => { const mm = [...r.m]; mm[idx] = m.get(keyOf(r)) || 0; return { ...r, m: mm } })
+  }
+  const byType = (rep) => Object.fromEntries(rows(rep).map((r) => [r.d[0], { count: r.m[0], users: r.m[1], sessions: r.m[2] }]))
+  const convTot = totalsOf(R.convTotals), convTotPrev = totalsOf(R.convTotalsPrev)
+  const cv = { actions: convTot[0] || 0, users: convTot[1] || 0, sessions: convTot[2] || 0, by: byType(R.conv) }
+  const cvPrev = { actions: convTotPrev[0] || 0, users: convTotPrev[1] || 0, sessions: convTotPrev[2] || 0, by: byType(R.convPrev) }
+
+  const series = withConv(rows(R.timeseries), R.convTimeseries, 3, 1)
+  const prevSeries = withConv(rows(R.timeseriesPrev || null), R.convTimeseriesPrev, 3, 1)
+  const channels = withConv(rows(R.channels), R.convChannels, 4, 2)
+  const sources = withConv(rows(R.sources), R.convSources, 3, 2)
+  const pages = withConv(rows(R.pages), R.convPages, 3, 0, (r) => r.d[0])
+  const devices = withConv(rows(R.devices), R.convDevices, 3, 2)
+  const countries = withConv(rows(R.countries), R.convCountries, 2, 2)
   const cities = rows(R.cities).filter((c) => c.d[0] !== '(not set)')
   const events = rows(R.events)
   const anomalies = findAnomalies(series, 0)
-  const insights = buildInsights({ tot, prevTot, channels, pages, devices, anomalies })
-  const overallCR = tot[2] ? tot[8] / tot[2] : 0
+  const overallCR = tot[2] ? cv.sessions / tot[2] : 0
+  const prevCR = prevTot[2] ? cvPrev.sessions / prevTot[2] : null
+  // התובנות קוראות את ההמרות מאינדקס 8 של הסיכומים; מזינים לשם את הפניות שלנו
+  const totIns = [...tot]; totIns[8] = cv.sessions
+  const insights = buildInsights({ tot: totIns, prevTot, channels, pages, devices, anomalies })
   /* הסך המדויק מגיע מ-metricAggregations של GA4, שמנכה משתמש שנמצא
      בכמה עמודים. סכימת השורות (הגיבוי) הייתה סופרת אותו פעמיים. */
   const rtNow = rt?.now || null
@@ -507,14 +568,14 @@ export default function AnalyticsTab() {
     'ביקורים': 'כמה כניסות היו לאתר בסך הכול. אדם שנכנס פעמיים נספר כשני ביקורים.',
     'צפיות עמוד': 'כמה עמודים נצפו בסך הכול. מספר גבוה ביחס לביקורים אומר שגולשים ממשיכים לדפדף באתר.',
     'שיעור מעורבות': 'אחוז הביקורים שבהם הגולש באמת התעניין: שהה באתר, צפה בכמה עמודים או ביצע פעולה. גבוה יותר = תוכן שעובד.',
-    'המרות': 'הפעולות החשובות לעסק שנמדדות: שליחת טופס ליד, לחיצה על וואטסאפ או טלפון. זה המספר שמייצר לקוחות.',
+    'פניות': 'כמה אנשים שונים פנו אלינו בתקופה: שלחו טופס, לחצו על טלפון, על וואטסאפ או על מייל. אדם שעשה כמה פעולות נספר פעם אחת. פירוט לפי סוג בכרטיס "פניות" שמתחת.',
     'משתמשים חדשים': 'כמה מהמבקרים הגיעו לאתר בפעם הראשונה. מדד לחשיפה לקהלים חדשים.',
     'ביקורים מעורבים': 'ביקורים שבהם הגולש באמת התעניין ולא יצא מיד.',
     'צפיות לביקור': 'כמה עמודים רואה גולש ממוצע בכל ביקור. גבוה יותר = האתר מוביל את הגולש הלאה.',
     'משך ביקור ממוצע': 'כמה זמן שוהה גולש ממוצע באתר בביקור אחד.',
     'שיעור נטישה': 'אחוז הביקורים שהסתיימו בלי שום התעניינות (יציאה מיידית). נמוך = טוב.',
-    'אירועים': 'סך כל הפעולות שנמדדו: לחיצות, גלילות, צפיות ופעולות המרה.',
-    'שיעור המרה': 'אחוז הביקורים שהסתיימו בפנייה (טופס, וואטסאפ, טלפון). המספר החשוב ביותר לשיפור.',
+    'אירועים': 'סך כל הפעולות שנמדדו: לחיצות, גלילות, צפיות ופעולות פנייה.',
+    'שיעור פנייה': 'מתוך כל הביקורים, כמה אחוז כללו פנייה (טופס, טלפון, וואטסאפ או מייל). ביקור עם שתי פעולות נספר פעם אחת. זה המספר החשוב ביותר לשיפור.',
   }
 
   const primary = [
@@ -522,7 +583,7 @@ export default function AnalyticsTab() {
     { label: 'ביקורים', v: tot[2], p: prevTot[2], sp: series.map((r) => r.m[1]) },
     { label: 'צפיות עמוד', v: tot[4], p: prevTot[4], sp: series.map((r) => r.m[2]) },
     { label: 'שיעור מעורבות', v: tot[5], p: prevTot[5], fmt: fmtPct },
-    { label: 'המרות', v: tot[8], p: prevTot[8], sp: series.map((r) => r.m[3]) },
+    { label: 'פניות', v: cv.users, p: cvPrev.users, sp: series.map((r) => r.m[3]) },
   ]
   const secondary = [
     ['משתמשים חדשים', fmtNum(tot[1]), <Delta key="d" cur={tot[1]} prev={prevTot[1]} dim />],
@@ -531,7 +592,7 @@ export default function AnalyticsTab() {
     ['משך ביקור ממוצע', fmtDur(tot[9]), null],
     ['שיעור נטישה', fmtPct(tot[6]), <Delta key="d" cur={tot[6]} prev={prevTot[6]} invert dim />],
     ['אירועים', fmtNum(tot[7]), null],
-    ['שיעור המרה', fmtPct(overallCR, 2), <Delta key="d" cur={overallCR} prev={prevTot[2] ? prevTot[8] / prevTot[2] : null} dim />],
+    ['שיעור פנייה', fmtPct(overallCR, 2), <Delta key="d" cur={overallCR} prev={prevCR} dim />],
   ]
 
   return (
@@ -586,6 +647,53 @@ export default function AnalyticsTab() {
         {secondary.map(([l, v, d]) => <span key={l} className="an-secondary__item" data-tip={TIPS[l] || undefined} tabIndex={0}><i>{l}</i><b>{v}</b>{d}</span>)}
       </section>
 
+      {/* ===== פניות: מה נספר, כמה, ומה זה אומר ===== */}
+      <section className="an-section an-conv">
+        <div className="an-sect-head">
+          <h4 className="an-h5" data-tip="פנייה = אחת מארבע פעולות: שליחת טופס, לחיצה על טלפון, על וואטסאפ או על מייל. ההגדרה קבועה בקוד של האתר ולא תלויה בשום הגדרה ב-Google Analytics." tabIndex={0}>פניות</h4>
+          <span className="an-sub">מה שהתנועה באמת מייצרת</span>
+        </div>
+
+        <div className="an-conv__head">
+          <div className="an-conv__big">
+            <span className="an-conv__big-label">אנשים שפנו אלינו בתקופה</span>
+            <span className="an-conv__big-value">{fmtNum(cv.users)} <Delta cur={cv.users} prev={cvPrev.users} /></span>
+            <span className="an-conv__big-sub">
+              מתוך <b>{fmtNum(tot[0])}</b> משתמשים · <b>{fmtPct(overallCR, 1)}</b> מהביקורים כללו פנייה · <b>{fmtNum(cv.actions)}</b> פעולות פנייה בסך הכול
+            </span>
+          </div>
+          <p className="an-conv__explain">
+            <b>מה נספר:</b> שליחת טופס, לחיצה על מספר הטלפון, על כפתור וואטסאפ או על כתובת מייל.
+            <b> מה לא נספר:</b> אם השיחה יצאה בפועל או מה נאמר בה, את זה גוגל לא יודע.
+            אדם שלחץ פעמיים נספר פעם אחת ב"אנשים" ופעמיים ב"פעולות".
+          </p>
+        </div>
+
+        <div className="an-conv__tiles">
+          {CONV_TYPES.map((t) => {
+            const c = cv.by[t.ev] || { count: 0, users: 0 }
+            const pc = cvPrev.by[t.ev] || { count: 0, users: 0 }
+            return (
+              <div key={t.ev} className="an-conv__tile" data-tip={t.hint} tabIndex={0}>
+                <span className="an-conv__tile-label"><i />{t.label}</span>
+                <span className="an-conv__tile-value">{fmtNum(c.count)} <Delta cur={c.count} prev={pc.count} dim /></span>
+                <span className="an-conv__tile-sub">{fmtNum(c.users)} אנשים</span>
+              </div>
+            )
+          })}
+          <div className="an-conv__tile an-conv__tile--truth" data-tip="נספר מלוח הלידים באדמין ולא מגוגל: כל טופס שנשלח מהאתר בתקופה, בלי לידים שהוזנו ידנית. גוגל סופר רק דפדפנים שמאפשרים מדידה, ולכן זה המספר הקובע." tabIndex={0}>
+            <span className="an-conv__tile-label"><i />לידים שנשמרו במערכת</span>
+            <span className="an-conv__tile-value">{leadCounts.cur == null ? '—' : fmtNum(leadCounts.cur)} <Delta cur={leadCounts.cur} prev={leadCounts.prev} /></span>
+            <span className="an-conv__tile-sub">מלוח הלידים, לא מגוגל</span>
+          </div>
+        </div>
+
+        <p className="an-conv__note">
+          הפרש בין "טופס ליד" ל"לידים שנשמרו במערכת" הוא תקין: חוסמי פרסומות ומי שביטל מדידה לא נספרים בגוגל, אבל הטופס שלהם כן נשמר.
+          אם המערכת מראה <b>פחות</b> מגוגל, זה סימן לבדוק את הטופס.
+        </p>
+      </section>
+
       {/* ===== הגרף המרכזי ===== */}
       <section className="an-section">
         <HeroChart series={series} prevSeries={prevSeries} />
@@ -603,10 +711,10 @@ export default function AnalyticsTab() {
       {channels.length > 0 && <section className="an-section">
         <div className="an-sect-head">
           <h4 className="an-h5" data-tip="מאיפה הגולשים מגיעים: חיפוש בגוגל (Organic), כניסה ישירה, רשתות חברתיות, קישורים מאתרים אחרים. כאן רואים מה מביא תנועה ומה שווה לחזק." tabIndex={0}>מקורות תנועה</h4>
-          <button type="button" className="an-csv" onClick={() => exportCsv('channels', ['ערוץ', 'משתמשים', 'ביקורים', 'נתח', 'מעורבות', 'המרות', 'שיעור המרה'], channels.map((c) => [CHANNEL_HE[c.d[0]] || c.d[0], c.m[0], c.m[2], fmtPct(chTotal ? c.m[2] / chTotal : 0), fmtPct(c.m[3]), c.m[4], fmtPct(c.m[2] ? c.m[4] / c.m[2] : 0, 2)]))}>CSV</button>
+          <button type="button" className="an-csv" onClick={() => exportCsv('channels', ['ערוץ', 'משתמשים', 'ביקורים', 'נתח', 'מעורבות', 'פניות', 'שיעור פנייה'], channels.map((c) => [CHANNEL_HE[c.d[0]] || c.d[0], c.m[0], c.m[2], fmtPct(chTotal ? c.m[2] / chTotal : 0), fmtPct(c.m[3]), c.m[4], fmtPct(c.m[2] ? c.m[4] / c.m[2] : 0, 2)]))}>CSV</button>
         </div>
         <table className="an-table">
-          <thead><tr><th>ערוץ</th><th className="is-num">משתמשים</th><th className="is-num">ביקורים</th><th className="is-num">נתח</th><th className="is-num">מעורבות</th><th className="is-num">המרות</th><th className="is-num">שיעור המרה</th></tr></thead>
+          <thead><tr><th>ערוץ</th><th className="is-num">משתמשים</th><th className="is-num">ביקורים</th><th className="is-num">נתח</th><th className="is-num">מעורבות</th><th className="is-num">פניות</th><th className="is-num">שיעור פנייה</th></tr></thead>
           <tbody>
             {channels.map((c) => {
               const cr = c.m[2] ? c.m[4] / c.m[2] : 0
@@ -628,7 +736,7 @@ export default function AnalyticsTab() {
             })}
           </tbody>
         </table>
-        <p className="an-footnote">★ = שיעור המרה גבוה משמעותית מהממוצע ({fmtPct(overallCR, 2)}) — תנועה איכותית</p>
+        <p className="an-footnote">פניות = ביקורים שבהם הייתה פנייה (טופס, טלפון, וואטסאפ או מייל). ★ = שיעור פנייה גבוה משמעותית מהממוצע ({fmtPct(overallCR, 2)}), תנועה איכותית</p>
       </section>}
 
       {/* ===== מקורות מפורטים ===== */}
@@ -637,7 +745,7 @@ export default function AnalyticsTab() {
           <h4 className="an-h5" data-tip="פירוט מדויק יותר של מקורות התנועה, למשל google / organic (חיפוש בגוגל) או facebook / social." tabIndex={0}>מקור / מדיום</h4>
           <div className="an-sect-tools">
             <input className="an-search" placeholder="חיפוש מקור…" value={srcQ} onChange={(e) => setSrcQ(e.target.value)} />
-            <button type="button" className="an-csv" onClick={() => exportCsv('sources', ['מקור', 'מדיום', 'משתמשים', 'ביקורים', 'מעורבות', 'המרות'], sources.map((s) => [s.d[0], s.d[1], s.m[0], s.m[1], fmtPct(s.m[2]), s.m[3]]))}>CSV</button>
+            <button type="button" className="an-csv" onClick={() => exportCsv('sources', ['מקור', 'מדיום', 'משתמשים', 'ביקורים', 'מעורבות', 'פניות'], sources.map((s) => [s.d[0], s.d[1], s.m[0], s.m[1], fmtPct(s.m[2]), s.m[3]]))}>CSV</button>
           </div>
         </div>
         <table className="an-table">
@@ -646,7 +754,8 @@ export default function AnalyticsTab() {
             <Th label="משתמשים" k={0} sort={sSort} onSort={sToggle} />
             <Th label="ביקורים" k={1} sort={sSort} onSort={sToggle} />
             <Th label="מעורבות" k={2} sort={sSort} onSort={sToggle} />
-            <Th label="שיעור המרה" k="cr" sort={sSort} onSort={sToggle} />
+            <Th label="פניות" k={3} sort={sSort} onSort={sToggle} />
+            <Th label="שיעור פנייה" k="cr" sort={sSort} onSort={sToggle} />
           </tr></thead>
           <tbody>
             {sourcesView.map((s, i) => {
@@ -657,6 +766,7 @@ export default function AnalyticsTab() {
                   <td className="is-num">{fmtNum(s.m[0])}</td>
                   <td className="is-num">{fmtNum(s.m[1])}</td>
                   <td className="is-num">{fmtPct(s.m[2], 0)}</td>
+                  <td className="is-num">{s.m[3] || 0}</td>
                   <td className={`is-num ${cr > overallCR * 1.4 && s.m[3] > 1 ? 'an-quality' : ''}`}>{fmtPct(cr, 2)}</td>
                 </tr>
               )
@@ -668,10 +778,10 @@ export default function AnalyticsTab() {
       {/* ===== עמודים + Drill-down ===== */}
       {pages.length > 0 && <section className="an-section">
         <div className="an-sect-head">
-          <h4 className="an-h5" data-tip="העמודים הנצפים ביותר באתר. לחיצה על עמוד פותחת פירוט. עמוד עם הרבה צפיות ומעט המרות = הזדמנות לשיפור." tabIndex={0}>עמודים</h4>
+          <h4 className="an-h5" data-tip="העמודים הנצפים ביותר באתר. לחיצה על עמוד פותחת פירוט. 'פניות' = כמה פעולות פנייה (טופס, טלפון, וואטסאפ, מייל) נעשו מתוך העמוד הזה. עמוד עם הרבה צפיות ומעט פניות = הזדמנות לשיפור." tabIndex={0}>עמודים</h4>
           <div className="an-sect-tools">
             <input className="an-search" placeholder="חיפוש עמוד…" value={pageQ} onChange={(e) => setPageQ(e.target.value)} />
-            <button type="button" className="an-csv" onClick={() => exportCsv('pages', ['עמוד', 'נתיב', 'צפיות', 'משתמשים', 'זמן ממוצע', 'המרות'], pages.map((p) => [p.d[1], p.d[0], p.m[0], p.m[1], fmtDur(p.m[1] ? p.m[2] / p.m[1] : 0), p.m[3]]))}>CSV</button>
+            <button type="button" className="an-csv" onClick={() => exportCsv('pages', ['עמוד', 'נתיב', 'צפיות', 'משתמשים', 'זמן ממוצע', 'פניות'], pages.map((p) => [p.d[1], p.d[0], p.m[0], p.m[1], fmtDur(p.m[1] ? p.m[2] / p.m[1] : 0), p.m[3]]))}>CSV</button>
           </div>
         </div>
         <table className="an-table an-table--click">
@@ -680,7 +790,7 @@ export default function AnalyticsTab() {
             <Th label="צפיות" k={0} sort={pSort} onSort={pToggle} />
             <Th label="משתמשים" k={1} sort={pSort} onSort={pToggle} />
             <Th label="זמן ממוצע" k="time" sort={pSort} onSort={pToggle} />
-            <Th label="המרות" k={3} sort={pSort} onSort={pToggle} />
+            <Th label="פניות" k={3} sort={pSort} onSort={pToggle} />
           </tr></thead>
           <tbody>
             {pagesView.map((p) => (
@@ -696,7 +806,7 @@ export default function AnalyticsTab() {
         <section className="an-section">
           <h4 className="an-h5" data-tip="מאיזה מכשיר גולשים: נייד, מחשב או טאבלט. רוב התנועה בנדל״ן מגיעה מהנייד." tabIndex={0}>מכשירים</h4>
           <table className="an-table">
-            <thead><tr><th>מכשיר</th><th className="is-num">נתח</th><th className="is-num">משתמשים</th><th className="is-num">שיעור המרה</th></tr></thead>
+            <thead><tr><th>מכשיר</th><th className="is-num">נתח</th><th className="is-num">משתמשים</th><th className="is-num">שיעור פנייה</th></tr></thead>
             <tbody>
               {devices.map((d) => (
                 <tr key={d.d[0]}>
@@ -713,7 +823,7 @@ export default function AnalyticsTab() {
           <h4 className="an-h5" data-tip="מאיפה גיאוגרפית מגיעים הגולשים. ריכוז בערי השרון = קהל היעד הנכון." tabIndex={0}>מדינות וערים</h4>
           <div className="an-geo">
             <div>
-              {countries.slice(0, 7).map((c) => <div key={c.d[0]} className="an-row"><span>{c.d[0]}</span><span className="an-dim">{c.m[2] ? `${c.m[2]} המרות · ` : ''}</span><b>{fmtNum(c.m[0])}</b></div>)}
+              {countries.slice(0, 7).map((c) => <div key={c.d[0]} className="an-row"><span>{c.d[0]}</span><span className="an-dim">{c.m[2] ? `${c.m[2]} פניות · ` : ''}</span><b>{fmtNum(c.m[0])}</b></div>)}
             </div>
             <div>
               {cities.slice(0, 7).map((c) => <div key={c.d[0]} className="an-row"><span>{c.d[0]}</span><b>{fmtNum(c.m[0])}</b></div>)}
@@ -725,7 +835,7 @@ export default function AnalyticsTab() {
       {/* ===== אירועים ===== */}
       {events.length > 0 && <section className="an-section">
         <div className="an-sect-head">
-          <h4 className="an-h5" data-tip="כל הפעולות שנמדדו באתר, כולל פעולות ההמרה: generate_lead (טופס ליד), whatsapp_click, phone_click." tabIndex={0}>אירועים</h4>
+          <h4 className="an-h5" data-tip="כל הפעולות שנמדדו באתר, טכני. הפניות שבכרטיס למעלה הן ארבעה מהאירועים כאן: generate_lead (טופס), phone_click (טלפון), whatsapp_click (וואטסאפ), email_click (מייל). שאר האירועים הם מדידה של גלילה, צפייה ולחיצות אחרות." tabIndex={0}>אירועים</h4>
           <button type="button" className="an-csv" onClick={() => exportCsv('events', ['אירוע', 'כמות', 'משתמשים', 'לכל משתמש'], events.map((e) => [e.d[0], e.m[0], e.m[1], e.m[1] ? (e.m[0] / e.m[1]).toFixed(1) : '']))}>CSV</button>
         </div>
         <table className="an-table">

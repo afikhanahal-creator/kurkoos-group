@@ -432,6 +432,7 @@ export default function VillasSharon() {
             ))}
           </div>
           <Reveal className="lhub-links">
+            <p>מדריכים לפני שבונים: <Link to="/constructions/kama-ole-livnot-bayit-prati">כמה עולה לבנות בית פרטי</Link> · <Link to="/constructions/kablan-mafteach-o-nihul-atzmi">קבלן מפתח או ניהול עצמי</Link> · <Link to="/constructions/livchor-chevrat-bniya-bayit-prati">איך בוחרים חברת בנייה</Link> · <Link to="/construction-supervision/mefakeach-bniya-bayit-prati">מפקח בנייה לבית פרטי</Link></p>
             <p>להעמיק עוד: <Link to="/projects">כל הפרויקטים</Link> · <Link to="/divisions/execution">זרוע הביצוע</Link> · <Link to="/divisions/supervision">ניהול ופיקוח</Link> · <Link to="/real-estate-sharon">נדל"ן בשרון</Link></p>
           </Reveal>
         </div>

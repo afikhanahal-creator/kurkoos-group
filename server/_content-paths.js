@@ -45,6 +45,10 @@ export default [
     "lastmod": "2026-06-14"
   },
   {
+    "path": "/construction-supervision/mefakeach-bniya-bayit-prati",
+    "lastmod": "2026-09-25"
+  },
+  {
     "path": "/construction-supervision/mefakeach-mul-kablan",
     "lastmod": "2026-06-07"
   },
@@ -93,8 +97,20 @@ export default [
     "lastmod": "2026-09-13"
   },
   {
+    "path": "/constructions/kablan-mafteach-o-nihul-atzmi",
+    "lastmod": "2026-09-25"
+  },
+  {
+    "path": "/constructions/kama-ole-livnot-bayit-prati",
+    "lastmod": "2026-09-25"
+  },
+  {
     "path": "/constructions/likuei-bniya-tkufat-bedek",
     "lastmod": "2026-06-14"
+  },
+  {
+    "path": "/constructions/livchor-chevrat-bniya-bayit-prati",
+    "lastmod": "2026-09-25"
   },
   {
     "path": "/constructions/mifrat-techni-mah-kovea",

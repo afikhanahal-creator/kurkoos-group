@@ -9,9 +9,20 @@ import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import Contact from '../components/sections/Contact.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { listProjectCards, cmsRowToCard, getProjectBySlug } from '../lib/cms.js'
-import { srcOfResponsive } from '../lib/responsiveImage.js'
+import { srcOfResponsive, optimizeSrc } from '../lib/responsiveImage.js'
+import site from '../data/site.js'
+import { track } from '../lib/track.js'
 import './SharonHub.css'
 import './VillasSharon.css'
+
+/* העובדות שחוזרות בכל הפרויקטים בעמוד, מוצגות פעם אחת למעלה.
+   כולן לקוחות מהמפרטים שלמטה, לא מספרים חדשים. */
+const FACTS = [
+  { v: 'כ-300', u: 'מ"ר בנוי' },
+  { v: '3', u: 'מפלסים' },
+  { v: 'בריכה', u: 'פרטית לכל בית' },
+  { v: 'טאבו', u: 'מגרש בבעלות פרטית' },
+]
 
 /* התאמה בין הפרויקטים שבעמוד לפרויקטים במערכת הניהול. קודם לפי slug זהה,
    ואם ה-slug במערכת שונה, לפי השם. כך התמונות מגיעות תמיד מהאדמין,
@@ -171,6 +182,12 @@ export default function VillasSharon() {
     return () => { on = false }
   }, [])
 
+  /* תמונת הקאבר של העמוד: הכריכה של הפרויקט הראשון שיש לו תמונה באדמין.
+     כך גם הקאבר מתעדכן משם, ולא מתמונה קבועה בקוד. */
+  const heroCover = PROJECTS.map((p) => media[p.slug]?.card?.cover).find(Boolean) || ''
+  const heroImage = heroCover ? optimizeSrc(heroCover, 1920) : undefined
+  const phoneDigits = String(site.contact.phone).replace(/[^+\d]/g, '')
+
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -223,13 +240,18 @@ export default function VillasSharon() {
         crumbs={[{ label: 'בניית וילות בשרון' }]}
         seoTitle="בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז"
         seoDescription="קורקוס גרופ בונה וילות ובתים פרטיים בהוד השרון: יורדי הים 3 בגרינברג, שתי וילות על חצי דונם עם בריכה, והנרייטה סאלד 22-24 במערב העיר, ארבע יחידות דו משפחתיות עם בריכה ומגרש בטאבו."
+        image={heroImage}
+        imageAlt="בית פרטי של קורקוס גרופ בהוד השרון"
       />
 
-      {/* פסקת ישות, ברורה וניתנת לציטוט ע"י מנועי AI */}
-      <section className="section lhub-intro">
-        <div className="container">
-          <Reveal>
-            <p className="lhub-intro__text">
+      {/* פתיחה: פסקת ישות (ברורה וניתנת לציטוט ע"י מנועי AI), העובדות
+          שחוזרות בכל הפרויקטים, ואיור הווילה בשפת המותג לצד הטקסט */}
+      <section className="section vsh-intro">
+        <div className="container vsh-intro__grid">
+          <Reveal className="vsh-intro__text">
+            <span className="eyebrow">מי בונה לכם את הבית</span>
+            <h2 className="section-title vsh-intro__title">בית פרטי, מהקרקע ועד המפתח, בידיים של קבוצה אחת</h2>
+            <p className="lhub-intro__text vsh-intro__p">
               קורקוס גרופ היא קבוצת נדל"ן מהוד השרון הבונה וילות ובתים פרטיים באזור השרון.
               הקבוצה מקימה כיום את <b>יורדי הים 3</b> בשכונת גרינברג, שתי וילות פרטיות על מגרשים
               של למעלה מחצי דונם עם בריכת שחייה 4x9 מטר, ואת <b>הנרייטה סאלד 22-24</b> במערב
@@ -237,6 +259,14 @@ export default function VillasSharon() {
               בטאבו ועם בריכה פרטית. במקביל מוקם <b>חנקין 41</b> במגדיאל, בניין בוטיק של שש דירות.
               הביצוע נעשה על ידי ראיתה, זרוע הביצוע של הקבוצה, והפיקוח על ידי שכינתא.
             </p>
+            <ul className="vsh-facts" aria-label="נתונים משותפים לפרויקטים">
+              {FACTS.map((f) => (
+                <li key={f.u}><b>{f.v}</b><span>{f.u}</span></li>
+              ))}
+            </ul>
+          </Reveal>
+          <Reveal className="vsh-intro__art" variant="left" delay={0.1}>
+            <img src="/villa-illustration.webp" alt="" width="1200" height="671" loading="lazy" decoding="async" />
           </Reveal>
         </div>
       </section>
@@ -260,7 +290,10 @@ export default function VillasSharon() {
                 onClick={() => setOpen(p.slug)}
               >
                 <b>{p.name}</b>
-                <span>{p.kind}</span>
+                <span>
+                  <i className={`vsh-tab__dot${p.status === 'בבנייה' ? ' is-building' : ''}`} aria-hidden="true" />
+                  {p.status} · {p.kind}
+                </span>
               </button>
             ))}
           </div>
@@ -350,6 +383,34 @@ export default function VillasSharon() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* קריאה לפעולה: סיור בפרויקט. מי שהגיע עד לכאן קרא את המפרט וראה
+          את התמונות, וזה הרגע לתת לו דרך קצרה להמשיך, לפני השאלות הנפוצות */}
+      <section className="section vsh-cta">
+        <div className="container">
+          <Reveal className="vsh-cta__box">
+            <div className="vsh-cta__text">
+              <span className="eyebrow vsh-cta__eyebrow">סיור בפרויקטים</span>
+              <h2 className="vsh-cta__title">רוצים לראות בית כזה מקרוב?</h2>
+              <p>נתאם סיור באחד הפרויקטים, נעבור יחד על המפרט והתוכניות, ונענה על כל שאלה. בלי התחייבות.</p>
+            </div>
+            <div className="vsh-cta__actions">
+              <a href="#contact" className="btn btn--primary btn--lg" onClick={() => track('cta_click', { placement: 'villas_tour' })}>לתיאום סיור</a>
+              <a
+                href={`https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent('שלום, אשמח לתאם סיור בפרויקט בתים פרטיים בהוד השרון')}`}
+                target="_blank" rel="noopener noreferrer"
+                className="btn vsh-cta__ghost btn--lg"
+                onClick={() => track('whatsapp_click', { placement: 'villas_cta' })}
+              >
+                <Icon name="whatsapp" size={18} /> וואטסאפ
+              </a>
+              <a href={`tel:${phoneDigits}`} className="btn vsh-cta__ghost btn--lg" onClick={() => track('phone_click', { placement: 'villas_cta' })}>
+                <Icon name="phone" size={18} /> {site.contact.phoneDisplay}
+              </a>
+            </div>
+          </Reveal>
         </div>
       </section>
 

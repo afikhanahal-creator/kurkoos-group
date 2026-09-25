@@ -357,3 +357,35 @@
 
 .an-selfex { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; font-weight: 600; color: var(--an-muted); cursor: pointer; white-space: nowrap; }
 .an-selfex input { accent-color: var(--an-accent); width: 15px; height: 15px; cursor: pointer; }
+
+/* ---------- המרות: מה זה אומר, במספרים שקל להבין ---------- */
+.an-conv { gap: 0.9rem; }
+.an-conv__head { display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 1.2rem 2rem; }
+.an-conv__big { display: flex; flex-direction: column; gap: 0.15rem; }
+.an-conv__big-label { font-size: 0.82rem; font-weight: 700; color: var(--an-muted); font-family: var(--font-heading, inherit); }
+.an-conv__big-value { font-size: 2.6rem; font-weight: 900; line-height: 1; letter-spacing: -0.02em; color: var(--adm-ink, #0a2540); font-family: var(--font-heading, inherit); display: flex; align-items: baseline; gap: 0.6rem; }
+.an-conv__big-value .an-delta { font-size: 0.9rem; }
+.an-conv__big-sub { font-size: 0.86rem; color: var(--an-muted); }
+.an-conv__big-sub b { color: var(--adm-ink, #16202e); font-weight: 800; }
+.an-conv__explain { margin: 0; font-size: 0.88rem; line-height: 1.6; color: var(--an-muted); max-width: 62ch; }
+.an-conv__explain b { color: var(--adm-ink, #16202e); font-weight: 700; }
+
+.an-conv__tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.6rem; }
+.an-conv__tile {
+  display: flex; flex-direction: column; gap: 0.15rem; padding: 0.8rem 0.95rem;
+  border: 1px solid var(--an-line); border-radius: 11px; background: var(--adm-surface-2, #f7f9fc);
+}
+.an-conv__tile--truth { background: color-mix(in srgb, var(--an-good) 7%, transparent); border-color: color-mix(in srgb, var(--an-good) 28%, transparent); }
+.an-conv__tile-label { font-size: 0.8rem; font-weight: 700; color: var(--an-muted); display: flex; align-items: center; gap: 0.4rem; }
+.an-conv__tile-label i { width: 8px; height: 8px; border-radius: 50%; background: var(--an-accent); flex: none; }
+.an-conv__tile--truth .an-conv__tile-label i { background: var(--an-good); }
+.an-conv__tile-value { font-size: 1.6rem; font-weight: 800; line-height: 1.1; color: var(--adm-ink, #0a2540); font-family: var(--font-heading, inherit); display: flex; align-items: baseline; gap: 0.5rem; }
+.an-conv__tile-value .an-delta { font-size: 0.78rem; }
+.an-conv__tile-sub { font-size: 0.78rem; color: var(--an-muted); }
+.an-conv__note { margin: 0; font-size: 0.8rem; color: var(--an-muted); line-height: 1.55; }
+
+@media (max-width: 900px) {
+  .an-conv__head { grid-template-columns: 1fr; }
+  .an-conv__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .an-conv__tile--truth { grid-column: 1 / -1; }
+}

@@ -81,12 +81,45 @@ async function isAdmin(req) {
   return !!(res && res.ok)
 }
 
+/* ---------- מה נחשב פנייה ----------
+   ההמרות מוגדרות כאן, בקוד שלנו, ולא דרך סימון "אירוע מפתח" ב-GA4.
+   המדד keyEvents של גוגל סופר רק אירועים שמישהו סימן ידנית בהגדרות
+   הנכס, ובלי הסימון הזה הדשבורד הראה "המרות: 0" לצד טבלת אירועים עם
+   עשרות פניות אמיתיות. כאן הרשימה מפורשת: ארבע הפעולות שבהן גולש
+   פונה אלינו. כל דוח המרות מסונן לפי הרשימה הזאת, ולכן המספרים באדמין
+   לא תלויים בשום הגדרה בגוגל. */
+export const CONVERSION_EVENTS = ['generate_lead', 'phone_click', 'whatsapp_click', 'email_click']
+const CONV_FILTER = { filter: { fieldName: 'eventName', inListFilter: { values: CONVERSION_EVENTS } } }
+
 /* ---------- הגדרות הדוחות (השרת קובע — הלקוח רק בוחר שם) ---------- */
 function reportSpecs(range, prevRange) {
   const M = (...names) => names.map((name) => ({ name }))
   const D = (...names) => names.map((name) => ({ name }))
   const cur = [{ startDate: range.start, endDate: range.end }]
+  const prev = [{ startDate: prevRange.start, endDate: prevRange.end }]
+  /* דוח המרות: אותו מבנה כמו הדוח הרגיל, מסונן לאירועי הפנייה.
+     sessions כאן פירושו "ביקורים שבהם הייתה פנייה", ו-totalUsers "אנשים
+     שפנו", כי הסינון על האירוע חל לפני הספירה. */
+  const conv = (dims, extra = {}) => ({
+    dateRanges: cur,
+    ...(dims.length ? { dimensions: D(...dims) } : {}),
+    metrics: M('eventCount', 'totalUsers', 'sessions'),
+    dimensionFilter: CONV_FILTER,
+    ...extra,
+  })
   return {
+    /* המרות לפי סוג פעולה, ובסך הכול (בלי מימד → ניכוי כפילויות בין הסוגים) */
+    conv: conv(['eventName'], { orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }], limit: 10 }),
+    convPrev: { ...conv(['eventName'], { limit: 10 }), dateRanges: prev },
+    convTotals: conv([]),
+    convTotalsPrev: { ...conv([]), dateRanges: prev },
+    convTimeseries: conv(['date'], { orderBys: [{ dimension: { dimensionName: 'date' } }], limit: 400 }),
+    convTimeseriesPrev: { ...conv(['date'], { orderBys: [{ dimension: { dimensionName: 'date' } }], limit: 400 }), dateRanges: prev },
+    convChannels: conv(['sessionDefaultChannelGroup'], { limit: 12 }),
+    convSources: conv(['sessionSource', 'sessionMedium'], { limit: 40 }),
+    convPages: conv(['pagePath'], { limit: 60 }),
+    convDevices: conv(['deviceCategory'], { limit: 5 }),
+    convCountries: conv(['country'], { limit: 20 }),
     totals: { dateRanges: cur, metrics: M('totalUsers', 'newUsers', 'sessions', 'engagedSessions', 'screenPageViews', 'engagementRate', 'bounceRate', 'eventCount', 'keyEvents', 'averageSessionDuration') },
     totalsPrev: { dateRanges: [{ startDate: prevRange.start, endDate: prevRange.end }], metrics: M('totalUsers', 'newUsers', 'sessions', 'engagedSessions', 'screenPageViews', 'engagementRate', 'bounceRate', 'eventCount', 'keyEvents', 'averageSessionDuration') },
     timeseries: { dateRanges: cur, dimensions: D('date'), metrics: M('totalUsers', 'sessions', 'screenPageViews', 'keyEvents'), orderBys: [{ dimension: { dimensionName: 'date' } }], limit: 400 },

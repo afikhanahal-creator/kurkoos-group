@@ -94,3 +94,86 @@
   .vsh-media__hero { aspect-ratio: 4 / 3; border-radius: 10px; }
   .vsh-media__thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ============================================================
+   נראות העמוד: פתיחה בשתי עמודות, טאבים ברורים, ופס קריאה לפעולה.
+   ============================================================ */
+
+/* ---- פתיחה: טקסט + עובדות מימין, איור הווילה משמאל ---- */
+.vsh-intro__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+}
+.vsh-intro__title { text-align: start; margin-bottom: 0.9rem; }
+.vsh-intro .lhub-intro__text.vsh-intro__p { max-width: none; margin: 0; text-align: start; font-size: 1.05rem; }
+.vsh-intro__art img {
+  display: block; width: 100%; height: auto;
+  border-radius: 18px;
+  box-shadow: 0 24px 50px -30px rgba(7, 41, 58, 0.35);
+}
+
+/* עובדות: ארבע יחידות מספר+תווית, מופרדות בקווים דקים */
+.vsh-facts {
+  list-style: none; margin: 1.5rem 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block: 1px solid var(--color-border, #e3e7ee);
+}
+.vsh-facts li {
+  padding: 0.9rem 0.6rem; text-align: center;
+  border-inline-start: 1px solid var(--color-border, #e3e7ee);
+}
+.vsh-facts li:first-child { border-inline-start: 0; }
+.vsh-facts b {
+  display: block; font-family: var(--font-heading); font-weight: 900;
+  font-size: clamp(1.25rem, 2vw, 1.6rem); line-height: 1.1; color: var(--color-primary-900, #07293a);
+}
+.vsh-facts span { display: block; margin-top: 0.25rem; font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted, #5a6a7a); }
+
+/* ---- טאבים: נקודת סטטוס ומצב פעיל ברור ---- */
+.vsh-tab span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.vsh-tab__dot { width: 7px; height: 7px; border-radius: 50%; background: #16688c; flex: none; }
+.vsh-tab__dot.is-building { background: #15803d; }
+.vsh-tab.is-on { background: var(--color-primary-900, #07293a); border-color: var(--color-primary-900, #07293a); box-shadow: 0 10px 24px -14px rgba(7, 41, 58, 0.6); }
+.vsh-tab.is-on b { color: #fff; }
+.vsh-tab.is-on span { color: rgba(255, 255, 255, 0.78); }
+.vsh-panel { box-shadow: 0 18px 40px -30px rgba(7, 41, 58, 0.35); }
+
+/* ---- פס קריאה לפעולה ---- */
+.vsh-cta { padding-block: 0 clamp(2rem, 4vw, 3.5rem); }
+.vsh-cta__box {
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: center; gap: clamp(1.25rem, 3vw, 2.5rem);
+  padding: clamp(1.6rem, 3.2vw, 2.8rem);
+  border-radius: 20px; color: #fff;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(16, 85, 114, 0.55), transparent 55%),
+    var(--color-bg-dark, #07293a);
+  box-shadow: 0 24px 60px -30px rgba(7, 41, 58, 0.6);
+}
+.vsh-cta__eyebrow { color: #8fb6c8; }
+.vsh-cta__title {
+  font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.01em;
+  font-size: clamp(1.5rem, 2.8vw, 2.1rem); line-height: 1.15; margin: 0.5rem 0 0.6rem; color: #fff;
+}
+.vsh-cta__text p { margin: 0; color: rgba(255, 255, 255, 0.78); font-size: 1.02rem; line-height: 1.65; max-width: 48ch; }
+.vsh-cta__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; }
+.vsh-cta__ghost {
+  background: transparent; color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+}
+.vsh-cta__ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: #fff; color: #fff; }
+
+@media (max-width: 960px) {
+  .vsh-intro__grid { grid-template-columns: 1fr; }
+  .vsh-intro__art { order: -1; max-width: 560px; margin-inline: auto; }
+  .vsh-cta__box { grid-template-columns: 1fr; }
+  .vsh-cta__actions { justify-content: flex-start; }
+}
+@media (max-width: 600px) {
+  .vsh-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vsh-facts li:nth-child(3) { border-inline-start: 0; }
+  .vsh-facts li:nth-child(n+3) { border-top: 1px solid var(--color-border, #e3e7ee); }
+  .vsh-cta__actions .btn { flex: 1 1 100%; justify-content: center; }
+}

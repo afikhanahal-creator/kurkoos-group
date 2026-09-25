@@ -12,14 +12,14 @@ export const divisions = [
   {
     slug: 'residential',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
-    seoTitle: 'מגורים: פרויקטים למגורים של קורקוס גרופ',
-    seoDescription: 'הפרויקטים למגורים של קורקוס גרופ בהוד השרון ובאזור המרכז, מיזמות ותכנון דרך הביצוע והפיקוח ועד מסירת המפתח.',
+    seoTitle: 'פרויקטים למגורים בהוד השרון ובאזור המרכז',
+    seoDescription: 'דירות, וילות ובתים פרטיים של קורקוס גרופ בהוד השרון ובאזור המרכז: פרויקטים בבנייה ובתכנון, מיזמות ותכנון דרך הביצוע והפיקוח ועד מסירת המפתח. המשרד ברחוב הנגר 24, הוד השרון.',
     icon: 'house',
     category: 'residential',
-    name: { he: 'לגור בקורקוס', en: 'Living with Kurkoos' },
+    name: { he: 'פרויקטים למגורים', en: 'Residential projects' },
     menuTitle: { he: 'מגורים', en: 'Residential' },
     hero: {
-      title: { he: 'לגור בקורקוס', en: 'Living with Kurkoos' },
+      title: { he: 'פרויקטים למגורים בהוד השרון ובאזור המרכז', en: 'Residential projects in Hod HaSharon and central Israel' },
       subtitle: {
         he: 'בתים שנבנים סביב האנשים שגרים בהם, מאיכות הבנייה ועד תחושת הקהילה.',
         en: 'Homes built around the people who live in them, from build quality to a sense of community.',

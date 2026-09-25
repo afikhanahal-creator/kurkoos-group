@@ -61,3 +61,36 @@
   .vsh-panel__head h3 { font-size: 1.3rem; }
   .vsh-tab { flex: 1 1 100%; }
 }
+
+/* ---- תמונות הפרויקט בתוך הפאנל ----
+   כריכה רחבה למעלה, ומתחתיה רצועה של עד ארבע תמונות מהגלריה. כולן מגיעות
+   ממערכת הניהול של הפרויקט, ולכן עדכון שם מתעדכן כאן. הגובה של הכריכה
+   קבוע ביחס, כך שהמקום שמור לפני שהתמונה נטענת והעמוד לא קופץ. */
+.vsh-media { margin: 0 0 1.3rem; }
+.vsh-media__hero {
+  position: relative; display: block; overflow: hidden;
+  aspect-ratio: 16 / 9; border-radius: 12px; background: var(--color-bg-soft, #f4f6f9);
+}
+.vsh-media__hero .vsh-media__img,
+.vsh-media__hero .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--ease-out, ease); }
+.vsh-media__hero:hover .vsh-media__img { transform: scale(1.03); }
+.vsh-media__cta {
+  position: absolute; inset-inline-start: 1rem; inset-block-end: 1rem;
+  padding: 0.45rem 0.95rem; border-radius: 999px;
+  background: rgba(7, 41, 58, 0.82); color: #fff; font-size: 0.82rem; font-weight: 700;
+  font-family: var(--font-heading); backdrop-filter: blur(4px);
+}
+.vsh-media__thumbs {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.55rem; margin-top: 0.55rem;
+}
+.vsh-media__thumb {
+  display: block; overflow: hidden; aspect-ratio: 4 / 3; border-radius: 10px;
+  background: var(--color-bg-soft, #f4f6f9); border: 1px solid var(--color-border, #e3e7ee);
+}
+.vsh-media__thumb img, .vsh-media__thumb .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s var(--ease-out, ease); }
+.vsh-media__thumb:hover img { transform: scale(1.05); }
+
+@media (max-width: 860px) {
+  .vsh-media__hero { aspect-ratio: 4 / 3; border-radius: 10px; }
+  .vsh-media__thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

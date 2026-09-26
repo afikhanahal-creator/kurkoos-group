@@ -389,3 +389,9 @@
   .an-conv__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .an-conv__tile--truth { grid-column: 1 / -1; }
 }
+.an-conv__note--warn {
+  padding: 0.65rem 0.85rem; border-radius: 10px;
+  background: color-mix(in srgb, var(--an-warn) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--an-warn) 28%, transparent);
+  color: var(--adm-ink, #16202e);
+}

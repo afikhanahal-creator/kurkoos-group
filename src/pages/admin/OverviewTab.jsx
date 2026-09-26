@@ -17,7 +17,7 @@ const TIPS = {
   leads7: 'כמה פניות (לידים) נכנסו מהאתר בשבוע האחרון: טפסים, פניות מפרויקטים ומדף הבית. לחיצה פותחת את מערכת הלידים.',
   attention: 'לידים חדשים שאף אחד עוד לא טיפל בהם מעל 3 ימים. ליד שחוזרים אליו מהר נסגר בסיכוי גבוה יותר.',
   users7: 'כמה אנשים שונים ביקרו באתר בשבוע האחרון, לפי גוגל אנליטיקס. הקו הקטן מציג את המגמה יום אחרי יום.',
-  conversions7: 'פעולות שוות זהב שנמדדו השבוע: שליחת טופס, לחיצה על וואטסאפ או על טלפון. זה החיבור בין תנועה לעסקים.',
+  conversions7: 'כמה פעמים לחצו השבוע על מספר הטלפון, על וואטסאפ או על המייל, לפי גוגל. לחיצה היא לא שיחה. נמדד בצורה אמינה החל מ-26.9.2026; לפני כן גוגל רשם לחיצות שלא קרו.',
   subs: 'סך כל הנרשמים לרשימת התפוצה של האתר, קהל שאפשר לחזור אליו בדיוור.',
   recentLeads: 'הפניות האחרונות שנכנסו מהאתר, מהחדשה לישנה. תגית הצבע מציינת מאיפה הגיעה הפנייה.',
   topPages: 'העמודים שקיבלו הכי הרבה צפיות בשבוע האחרון. עמוד חזק עם מעט פניות הוא הזדמנות לשיפור.',
@@ -147,6 +147,11 @@ function MeterRow({ label, sub, value, share, tone = 'blue' }) {
   )
 }
 
+/* ראו CLEAN_SINCE ב-AnalyticsTab.jsx: מאז התאריך הזה הלחיצות נמדדות
+   באירועי kc_* בלבד, ואין נתון אמין לפניו */
+const CLEAN_SINCE = '2026-09-26'
+const CLEAN_SINCE_LABEL = '26.9.2026'
+
 export default function OverviewTab({ onNavigate }) {
   const [leads, setLeads] = useState(null)          // null = טוען, [] = אין
   const [subs, setSubs] = useState(null)
@@ -173,9 +178,17 @@ export default function OverviewTab({ onNavigate }) {
         const ch = rows(R.channels)
         const chTotal = ch.reduce((a, c) => a + c.m[2], 0) || 1
         const channels = ch.slice(0, 5).map((c) => ({ name: CHANNEL_HE[c.d[0]] || c.d[0], sessions: c.m[2], share: c.m[2] / chTotal }))
+        /* לחיצות טלפון, וואטסאפ ומייל, רק באירועי kc_* שהאתר שולח מלחיצה
+           אמיתית (ראו src/lib/track.js). קודם הוצג כאן keyEvents של גוגל,
+           שספר גם אירועים שהנכס יצר מצפיות בעמוד: 1,476 "המרות" בשבוע של
+           שני לידים. */
+        const clicksOf = (rep) => rows(rep)
+          .filter((r) => ['kc_phone', 'kc_whatsapp', 'kc_email'].includes(r.d[0]))
+          .reduce((a, r) => a + r.m[0], 0)
         setGa({
           users: tot[0], prevUsers: prev[0], sessions: tot[2], views: tot[4],
-          engagement: tot[5], conversions: tot[8], prevConversions: prev[8],
+          engagement: tot[5], clicks: clicksOf(R.conv), prevClicks: clicksOf(R.convPrev),
+          cleanRange: start >= CLEAN_SINCE,
           days, topPages, channels, topChannel: channels[0] || null,
         })
       })
@@ -216,10 +229,11 @@ export default function OverviewTab({ onNavigate }) {
       out.push({ tone: 'good', tab: 'leads', title: 'לידים השבוע', text: `${leadStats.in7 === 1 ? 'ליד אחד נכנס' : leadStats.in7 + ' לידים נכנסו'} מהאתר בשבוע האחרון.` })
     }
     if (ga && ga !== 'none') {
-      if (ga.sessions > 0 && ga.conversions > 0) {
-        out.push({ tone: 'good', tab: 'analytics', title: 'שיעור המרה', text: `${fmtPct(ga.conversions / ga.sessions)} מהביקורים השבוע הסתיימו בפנייה.` })
-      } else if (ga.sessions >= 5 && !ga.conversions) {
-        out.push({ tone: 'warn', tab: 'analytics', title: 'תנועה בלי המרות', text: 'יש תנועה אבל עדיין אין המרות השבוע, שווה לבדוק שהטפסים בולטים מספיק.' })
+      /* שיעור מבוסס על לידים שנשמרו, לא על אירועי גוגל: זה המספר האמין */
+      if (ga.sessions > 0 && leadStats && leadStats.in7 > 0) {
+        out.push({ tone: 'good', tab: 'analytics', title: 'שיעור פנייה', text: `${leadStats.in7 === 1 ? 'ליד אחד' : leadStats.in7 + ' לידים'} מתוך ${fmtNum(ga.sessions)} ביקורים השבוע (${fmtPct(leadStats.in7 / ga.sessions)}).` })
+      } else if (ga.sessions >= 20 && leadStats && leadStats.in7 === 0) {
+        out.push({ tone: 'warn', tab: 'analytics', title: 'תנועה בלי לידים', text: `${fmtNum(ga.sessions)} ביקורים השבוע ואף טופס. שווה לבדוק שהטפסים בולטים מספיק.` })
       }
       if (ga.topChannel) out.push({ tone: 'info', tab: 'analytics', title: 'מקור מוביל', text: `${ga.topChannel.name} הביא ${Math.round(ga.topChannel.share * 100)}% מהביקורים השבוע.` })
       if (ga.topPages?.[0]) out.push({ tone: 'info', tab: 'analytics', title: 'העמוד החזק', text: `${ga.topPages[0].title || ga.topPages[0].path} עם ${fmtNum(ga.topPages[0].views)} צפיות.` })
@@ -252,7 +266,7 @@ export default function OverviewTab({ onNavigate }) {
     return { dir: d > 0 ? 'up' : 'down', txt: `${d > 0 ? '↑' : '↓'} ${Math.abs(d * 100).toFixed(0)}% מול השבוע הקודם` }
   }
   const dUsers = gaReady ? delta(ga.users, ga.prevUsers) : null
-  const dConv = gaReady ? delta(ga.conversions, ga.prevConversions) : null
+  const dConv = gaReady && ga.cleanRange ? delta(ga.clicks, ga.prevClicks) : null
 
   return (
     <div className="ovw" dir="rtl">
@@ -296,9 +310,11 @@ export default function OverviewTab({ onNavigate }) {
             : <span className="ovw__hint">{ga === 'none' ? 'אין עדיין נתוני תנועה' : 'טוען…'}</span>}
         </button>
         <button type="button" className="ovw__kpi ovw__kpi--conv" data-tip={TIPS.conversions7} onClick={nav('analytics')}>
-          <i>המרות · 7 ימים</i>
-          <b>{gaReady ? fmtNum(ga.conversions) : '—'}</b>
-          {gaReady && dConv ? <span className={`ovw__trend is-${dConv.dir}`}>{dConv.txt}</span> : <span className="ovw__hint">טפסים, וואטסאפ וטלפון</span>}
+          <i>לחיצות חיוג ווואטסאפ · 7 ימים</i>
+          <b>{gaReady ? fmtNum(ga.clicks) : '—'}</b>
+          {gaReady && dConv
+            ? <span className={`ovw__trend is-${dConv.dir}`}>{dConv.txt}</span>
+            : <span className="ovw__hint">{gaReady && !ga.cleanRange ? `נמדד מ-${CLEAN_SINCE_LABEL}` : 'טלפון, וואטסאפ ומייל'}</span>}
         </button>
         <button type="button" className="ovw__kpi ovw__kpi--subs" data-tip={TIPS.subs} onClick={nav('newsletter')}>
           <i>רשומים לניוזלטר</i>

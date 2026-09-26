@@ -88,7 +88,10 @@ async function isAdmin(req) {
    עשרות פניות אמיתיות. כאן הרשימה מפורשת: ארבע הפעולות שבהן גולש
    פונה אלינו. כל דוח המרות מסונן לפי הרשימה הזאת, ולכן המספרים באדמין
    לא תלויים בשום הגדרה בגוגל. */
-export const CONVERSION_EVENTS = ['generate_lead', 'phone_click', 'whatsapp_click', 'email_click']
+/* השמות kc_* נשלחים רק מ-track() באתר, ורק מלחיצה אמיתית (ראו
+   src/lib/track.js). השמות הגנריים phone_click ו-email_click זוהמו בנכס
+   בכלל שיוצר אותם מצפיות בעמוד, ולכן הם לא נספרים יותר. */
+export const CONVERSION_EVENTS = ['kc_lead', 'kc_phone', 'kc_whatsapp', 'kc_email']
 const CONV_FILTER = { filter: { fieldName: 'eventName', inListFilter: { values: CONVERSION_EVENTS } } }
 
 /* ---------- הגדרות הדוחות (השרת קובע — הלקוח רק בוחר שם) ---------- */

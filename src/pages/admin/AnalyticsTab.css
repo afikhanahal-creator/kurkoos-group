@@ -395,3 +395,4 @@
   border: 1px solid color-mix(in srgb, var(--an-warn) 28%, transparent);
   color: var(--adm-ink, #16202e);
 }
+.an-ev-hint { display: block; font-size: 0.76rem; font-weight: 500; margin-top: 0.1rem; }

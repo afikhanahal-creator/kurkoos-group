@@ -43,7 +43,10 @@ export function track(name, params = {}) {
     if (trackingDisabled()) return
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       window.gtag('event', name, params)
-      if (KC_EVENTS[name]) window.gtag('event', KC_EVENTS[name], params)
+      /* כל אירוע של האתר מקבל תאום kc_: גם newsletter_signup זוהם באותו
+         כלל בגוגל (539 "הרשמות" מול 3 נרשמים אמיתיים). ארבעת אירועי
+         הפנייה מקבלים שם קצר מוכר, והשאר kc_ + השם המקורי. */
+      window.gtag('event', KC_EVENTS[name] || `kc_${name}`, params)
     }
   } catch { /* מדידה לעולם לא מפילה את האתר */ }
 }

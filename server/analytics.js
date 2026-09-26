@@ -92,6 +92,10 @@ async function isAdmin(req) {
    src/lib/track.js). השמות הגנריים phone_click ו-email_click זוהמו בנכס
    בכלל שיוצר אותם מצפיות בעמוד, ולכן הם לא נספרים יותר. */
 export const CONVERSION_EVENTS = ['kc_lead', 'kc_phone', 'kc_whatsapp', 'kc_email']
+export const USEFUL_EVENTS = [
+  'kc_lead', 'kc_phone', 'kc_whatsapp', 'kc_email', 'kc_newsletter_signup',
+  'kc_directions_click', 'kc_calculator_use', 'kc_article_cta', 'kc_cta_click', 'form_start',
+]
 const CONV_FILTER = { filter: { fieldName: 'eventName', inListFilter: { values: CONVERSION_EVENTS } } }
 
 /* ---------- הגדרות הדוחות (השרת קובע — הלקוח רק בוחר שם) ---------- */
@@ -141,7 +145,14 @@ function reportSpecs(range, prevRange) {
     devices: { dateRanges: cur, dimensions: D('deviceCategory'), metrics: M('totalUsers', 'sessions', 'engagementRate', 'keyEvents'), orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 5 },
     countries: { dateRanges: cur, dimensions: D('country'), metrics: M('totalUsers', 'sessions', 'keyEvents'), orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 10 },
     cities: { dateRanges: cur, dimensions: D('city'), metrics: M('totalUsers', 'sessions'), orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 10 },
-    events: { dateRanges: cur, dimensions: D('eventName'), metrics: M('eventCount', 'totalUsers'), orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }], limit: 20 },
+    /* רק האירועים שיש להם משמעות עסקית, בשמות kc_ שהאתר עצמו שולח
+       (ראו src/lib/track.js), ועוד form_start של גוגל שנמדד בדפדפן
+       ולא זוהם. צפיות, סשנים וגלילה מוצגים ממילא בשאר הדשבורד. */
+    events: {
+      dateRanges: cur, dimensions: D('eventName'), metrics: M('eventCount', 'totalUsers'),
+      dimensionFilter: { filter: { fieldName: 'eventName', inListFilter: { values: USEFUL_EVENTS } } },
+      orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }], limit: 20,
+    },
   }
 }
 

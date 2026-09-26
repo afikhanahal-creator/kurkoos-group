@@ -534,7 +534,14 @@ export default function AnalyticsTab() {
   const prevSeries = withConv(rows(R.timeseriesPrev || null), R.convTimeseriesPrev, 3, 1)
   const channels = withConv(rows(R.channels), R.convChannels, 4, 2)
   const sources = withConv(rows(R.sources), R.convSources, 3, 2)
+  /* כותרת אחת לכל כתובת: הנצפית ביותר בימים האחרונים, ואם אין, בכל הטווח */
+  const titleOf = (() => {
+    const pick = (rep) => { const m = new Map(); rows(rep).forEach((r) => { if (!m.has(r.d[0]) && r.d[1] && r.d[1] !== '(not set)') m.set(r.d[0], r.d[1]) }); return m }
+    const recent = pick(R.pageTitles), all = pick(R.pageTitlesAll)
+    return (path) => recent.get(path) || all.get(path) || ''
+  })()
   const pages = withConv(rows(R.pages), R.convPages, 3, 0, (r) => r.d[0])
+    .map((r) => ({ ...r, d: [r.d[0], titleOf(r.d[0])] }))
   const devices = withConv(rows(R.devices), R.convDevices, 3, 2)
   const countries = withConv(rows(R.countries), R.convCountries, 2, 2)
   const cities = rows(R.cities).filter((c) => c.d[0] !== '(not set)')

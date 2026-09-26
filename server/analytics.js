@@ -129,12 +129,27 @@ function reportSpecs(range, prevRange) {
     timeseriesPrev: { dateRanges: [{ startDate: prevRange.start, endDate: prevRange.end }], dimensions: D('date'), metrics: M('totalUsers', 'sessions', 'screenPageViews', 'keyEvents'), orderBys: [{ dimension: { dimensionName: 'date' } }], limit: 400 },
     channels: { dateRanges: cur, dimensions: D('sessionDefaultChannelGroup'), metrics: M('totalUsers', 'newUsers', 'sessions', 'engagementRate', 'keyEvents'), orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 12 },
     sources: { dateRanges: cur, dimensions: D('sessionSource', 'sessionMedium'), metrics: M('totalUsers', 'sessions', 'engagementRate', 'keyEvents'), orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 12 },
-    pages: { dateRanges: cur, dimensions: D('pagePath', 'pageTitle'), metrics: M('screenPageViews', 'totalUsers', 'userEngagementDuration', 'keyEvents'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 15 },
+    /* עמודים מקובצים לפי כתובת בלבד. קודם הקיבוץ היה לפי כתובת וכותרת
+       יחד, וכל עמוד שהכותרת שלו השתנתה (שינויי שם, או כותרת זמנית לפני
+       שעמוד פרויקט נטען) הופיע כמה פעמים בטבלה עם מספרים מפוצלים. */
+    pages: { dateRanges: cur, dimensions: D('pagePath'), metrics: M('screenPageViews', 'totalUsers', 'userEngagementDuration', 'keyEvents'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 15 },
+    /* הכותרת להצגה ליד כל כתובת: מהימים האחרונים של הטווח, כדי שתוצג
+       הכותרת הנוכחית ולא שם ישן של העמוד. הלקוח בוחר לכל כתובת את
+       הכותרת עם הכי הרבה צפיות בחלון הזה, ונופל לטווח המלא אם אין. */
+    pageTitles: { dateRanges: [{ startDate: recentStart(range), endDate: range.end }], dimensions: D('pagePath', 'pageTitle'), metrics: M('screenPageViews'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 200 },
+    pageTitlesAll: { dateRanges: cur, dimensions: D('pagePath', 'pageTitle'), metrics: M('screenPageViews'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 200 },
     devices: { dateRanges: cur, dimensions: D('deviceCategory'), metrics: M('totalUsers', 'sessions', 'engagementRate', 'keyEvents'), orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 5 },
     countries: { dateRanges: cur, dimensions: D('country'), metrics: M('totalUsers', 'sessions', 'keyEvents'), orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 10 },
     cities: { dateRanges: cur, dimensions: D('city'), metrics: M('totalUsers', 'sessions'), orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 10 },
     events: { dateRanges: cur, dimensions: D('eventName'), metrics: M('eventCount', 'totalUsers'), orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }], limit: 20 },
   }
+}
+
+/* שלושת הימים האחרונים של הטווח (או כולו, אם הוא קצר יותר) */
+function recentStart(range) {
+  const e = new Date(range.end + 'T00:00:00Z'); e.setUTCDate(e.getUTCDate() - 2)
+  const r = e.toISOString().slice(0, 10)
+  return r < range.start ? range.start : r
 }
 
 /* טווח קודם באותו אורך — להשוואה */

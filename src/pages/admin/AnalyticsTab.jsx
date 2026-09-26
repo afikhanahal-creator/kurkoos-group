@@ -107,11 +107,17 @@ const METRICS = [
 /* ארבע פעולות הפנייה, באותו סדר ובאותם שמות כמו CONVERSION_EVENTS בשרת.
    השמות בעברית הם מה שבעל העסק רואה; שמות האירועים הם מה שגוגל סופר. */
 const CONV_TYPES = [
-  { ev: 'generate_lead', label: 'טופס ליד', hint: 'שליחת טופס באתר: דף הבית, עמוד פרויקט, עמוד השארת פרטים' },
-  { ev: 'phone_click', label: 'טלפון', hint: 'לחיצה על מספר הטלפון. גוגל לא יודע אם השיחה יצאה בפועל' },
-  { ev: 'whatsapp_click', label: 'וואטסאפ', hint: 'לחיצה על כפתור וואטסאפ, כולל הכפתור הצף' },
-  { ev: 'email_click', label: 'מייל', hint: 'לחיצה על כתובת מייל' },
+  { ev: 'kc_lead', label: 'טפסים שנשלחו', hint: 'שליחת טופס באתר, כפי שגוגל מדד. נמוך מעט ממספר הלידים שנשמרו, כי חוסמי פרסומות לא נספרים' },
+  { ev: 'kc_phone', label: 'לחיצות טלפון', hint: 'לחיצה על מספר הטלפון. גוגל לא יודע אם השיחה יצאה בפועל' },
+  { ev: 'kc_whatsapp', label: 'לחיצות וואטסאפ', hint: 'לחיצה על כפתור וואטסאפ, כולל הכפתור הצף' },
+  { ev: 'kc_email', label: 'לחיצות מייל', hint: 'לחיצה על כתובת מייל' },
 ]
+
+/* מהיום הזה הלחיצות נמדדות בשמות kc_* (ראו src/lib/track.js). לפני כן
+   הנכס ב-Google Analytics רשם phone_click ו-email_click על צפיות בעמוד,
+   ולכן אין נתון אמין לאחור. טווח שמתחיל לפני התאריך מסומן בממשק. */
+const CLEAN_SINCE = '2026-09-26'
+const CLEAN_SINCE_LABEL = '26.9.2026'
 
 /* טווח קודם באותו אורך, זהה לחישוב בשרת, לספירת הלידים מהמערכת */
 function prevRangeOf(start, end) {
@@ -534,6 +540,7 @@ export default function AnalyticsTab() {
   const cities = rows(R.cities).filter((c) => c.d[0] !== '(not set)')
   const events = rows(R.events)
   const anomalies = findAnomalies(series, 0)
+  const rangeBeforeClean = range.start < CLEAN_SINCE
   const overallCR = tot[2] ? cv.sessions / tot[2] : 0
   const prevCR = prevTot[2] ? cvPrev.sessions / prevTot[2] : null
   // התובנות קוראות את ההמרות מאינדקס 8 של הסיכומים; מזינים לשם את הפניות שלנו
@@ -570,14 +577,14 @@ export default function AnalyticsTab() {
     'ביקורים': 'כמה כניסות היו לאתר בסך הכול. אדם שנכנס פעמיים נספר כשני ביקורים.',
     'צפיות עמוד': 'כמה עמודים נצפו בסך הכול. מספר גבוה ביחס לביקורים אומר שגולשים ממשיכים לדפדף באתר.',
     'שיעור מעורבות': 'אחוז הביקורים שבהם הגולש באמת התעניין: שהה באתר, צפה בכמה עמודים או ביצע פעולה. גבוה יותר = תוכן שעובד.',
-    'פניות': 'כמה אנשים שונים פנו אלינו בתקופה: שלחו טופס, לחצו על טלפון, על וואטסאפ או על מייל. אדם שעשה כמה פעולות נספר פעם אחת. פירוט לפי סוג בכרטיס "פניות" שמתחת.',
+    'לידים': 'כמה לידים נשמרו בלוח הלידים מטפסים באתר בתקופה. נספר מהמערכת שלנו ולא מגוגל, ולכן זה המספר הקובע. פירוט הלחיצות בכרטיס "פניות" שמתחת.',
     'משתמשים חדשים': 'כמה מהמבקרים הגיעו לאתר בפעם הראשונה. מדד לחשיפה לקהלים חדשים.',
     'ביקורים מעורבים': 'ביקורים שבהם הגולש באמת התעניין ולא יצא מיד.',
     'צפיות לביקור': 'כמה עמודים רואה גולש ממוצע בכל ביקור. גבוה יותר = האתר מוביל את הגולש הלאה.',
     'משך ביקור ממוצע': 'כמה זמן שוהה גולש ממוצע באתר בביקור אחד.',
     'שיעור נטישה': 'אחוז הביקורים שהסתיימו בלי שום התעניינות (יציאה מיידית). נמוך = טוב.',
     'אירועים': 'סך כל הפעולות שנמדדו: לחיצות, גלילות, צפיות ופעולות פנייה.',
-    'שיעור פנייה': 'מתוך כל הביקורים, כמה אחוז כללו פנייה (טופס, טלפון, וואטסאפ או מייל). ביקור עם שתי פעולות נספר פעם אחת. זה המספר החשוב ביותר לשיפור.',
+    'שיעור פנייה': 'מתוך כל הביקורים, כמה אחוז כללו טופס או לחיצה על טלפון, וואטסאפ או מייל. ביקור עם שתי פעולות נספר פעם אחת. נמדד החל מ-26.9.2026.',
   }
 
   const primary = [
@@ -585,7 +592,7 @@ export default function AnalyticsTab() {
     { label: 'ביקורים', v: tot[2], p: prevTot[2], sp: series.map((r) => r.m[1]) },
     { label: 'צפיות עמוד', v: tot[4], p: prevTot[4], sp: series.map((r) => r.m[2]) },
     { label: 'שיעור מעורבות', v: tot[5], p: prevTot[5], fmt: fmtPct },
-    { label: 'פניות', v: cv.users, p: cvPrev.users, sp: series.map((r) => r.m[3]) },
+    { label: 'לידים', v: leadCounts.cur, p: leadCounts.prev },
   ]
   const secondary = [
     ['משתמשים חדשים', fmtNum(tot[1]), <Delta key="d" cur={tot[1]} prev={prevTot[1]} dim />],
@@ -594,7 +601,7 @@ export default function AnalyticsTab() {
     ['משך ביקור ממוצע', fmtDur(tot[9]), null],
     ['שיעור נטישה', fmtPct(tot[6]), <Delta key="d" cur={tot[6]} prev={prevTot[6]} invert dim />],
     ['אירועים', fmtNum(tot[7]), null],
-    ['שיעור פנייה', fmtPct(overallCR, 2), <Delta key="d" cur={overallCR} prev={prevCR} dim />],
+    ['שיעור פנייה', rangeBeforeClean ? `נמדד מ-${CLEAN_SINCE_LABEL}` : fmtPct(overallCR, 2), rangeBeforeClean ? null : <Delta key="d" cur={overallCR} prev={prevCR} dim />],
   ]
 
   return (
@@ -649,25 +656,25 @@ export default function AnalyticsTab() {
         {secondary.map(([l, v, d]) => <span key={l} className="an-secondary__item" data-tip={TIPS[l] || undefined} tabIndex={0}><i>{l}</i><b>{v}</b>{d}</span>)}
       </section>
 
-      {/* ===== פניות: מה נספר, כמה, ומה זה אומר ===== */}
+      {/* ===== פניות ===== */}
       <section className="an-section an-conv">
         <div className="an-sect-head">
-          <h4 className="an-h5" data-tip="פנייה = אחת מארבע פעולות: שליחת טופס, לחיצה על טלפון, על וואטסאפ או על מייל. ההגדרה קבועה בקוד של האתר ולא תלויה בשום הגדרה ב-Google Analytics." tabIndex={0}>פניות</h4>
+          <h4 className="an-h5" data-tip="המספר הראשי נספר מלוח הלידים באדמין, לא מגוגל. הלחיצות מתחתיו נספרות בגוגל, רק לחיצות אמיתיות שהאתר עצמו מדווח." tabIndex={0}>פניות</h4>
           <span className="an-sub">מה שהתנועה באמת מייצרת</span>
         </div>
 
         <div className="an-conv__head">
           <div className="an-conv__big">
-            <span className="an-conv__big-label">אנשים שפנו אלינו בתקופה</span>
-            <span className="an-conv__big-value">{fmtNum(cv.users)} <Delta cur={cv.users} prev={cvPrev.users} /></span>
+            <span className="an-conv__big-label">לידים שנשמרו במערכת בתקופה</span>
+            <span className="an-conv__big-value">{leadCounts.cur == null ? '—' : fmtNum(leadCounts.cur)} <Delta cur={leadCounts.cur} prev={leadCounts.prev} /></span>
             <span className="an-conv__big-sub">
-              מתוך <b>{fmtNum(tot[0])}</b> משתמשים · <b>{fmtPct(overallCR, 1)}</b> מהביקורים כללו פנייה · <b>{fmtNum(cv.actions)}</b> פעולות פנייה בסך הכול
+              כל טופס שנשלח מהאתר ונשמר בלוח הלידים. לידים שהוזנו ידנית לא נספרים. <b>זה המספר הקובע.</b>
             </span>
           </div>
           <p className="an-conv__explain">
-            <b>מה נספר:</b> שליחת טופס, לחיצה על מספר הטלפון, על כפתור וואטסאפ או על כתובת מייל.
-            <b> מה לא נספר:</b> אם השיחה יצאה בפועל או מה נאמר בה, את זה גוגל לא יודע.
-            אדם שלחץ פעמיים נספר פעם אחת ב"אנשים" ופעמיים ב"פעולות".
+            <b>מתחת:</b> לחיצות על טלפון, וואטסאפ ומייל, כפי שגוגל מדד אותן.
+            לחיצה היא לא שיחה: גוגל לא יודע אם השיחה יצאה או מה נאמר בה.
+            אדם שלחץ פעמיים נספר פעמיים ב"לחיצות" ופעם אחת ב"אנשים".
           </p>
         </div>
 
@@ -678,22 +685,24 @@ export default function AnalyticsTab() {
             return (
               <div key={t.ev} className="an-conv__tile" data-tip={t.hint} tabIndex={0}>
                 <span className="an-conv__tile-label"><i />{t.label}</span>
-                <span className="an-conv__tile-value">{fmtNum(c.count)} <Delta cur={c.count} prev={pc.count} dim /></span>
-                <span className="an-conv__tile-sub">{fmtNum(c.users)} אנשים</span>
+                <span className="an-conv__tile-value">{fmtNum(c.count)} {!rangeBeforeClean && <Delta cur={c.count} prev={pc.count} dim />}</span>
+                <span className="an-conv__tile-sub">{fmtNum(c.users)} {c.users === 1 ? 'אדם' : 'אנשים'}</span>
               </div>
             )
           })}
-          <div className="an-conv__tile an-conv__tile--truth" data-tip="נספר מלוח הלידים באדמין ולא מגוגל: כל טופס שנשלח מהאתר בתקופה, בלי לידים שהוזנו ידנית. גוגל סופר רק דפדפנים שמאפשרים מדידה, ולכן זה המספר הקובע." tabIndex={0}>
-            <span className="an-conv__tile-label"><i />לידים שנשמרו במערכת</span>
-            <span className="an-conv__tile-value">{leadCounts.cur == null ? '—' : fmtNum(leadCounts.cur)} <Delta cur={leadCounts.cur} prev={leadCounts.prev} /></span>
-            <span className="an-conv__tile-sub">מלוח הלידים, לא מגוגל</span>
-          </div>
         </div>
 
-        <p className="an-conv__note">
-          הפרש בין "טופס ליד" ל"לידים שנשמרו במערכת" הוא תקין: חוסמי פרסומות ומי שביטל מדידה לא נספרים בגוגל, אבל הטופס שלהם כן נשמר.
-          אם המערכת מראה <b>פחות</b> מגוגל, זה סימן לבדוק את הטופס.
-        </p>
+        {rangeBeforeClean ? (
+          <p className="an-conv__note an-conv__note--warn">
+            הלחיצות נמדדות בצורה אמינה החל מ-{CLEAN_SINCE_LABEL}. לפני כן Google Analytics רשם "לחיצות טלפון" ו"לחיצות מייל" על
+            כמעט כל צפייה בעמוד, גם בלי לחיצה, ולכן הנתונים מלפני התאריך הזה לא נספרים כאן. הטווח שבחרת מתחיל לפני כן,
+            ולכן המספרים כאן מכסים רק את הימים שמ-{CLEAN_SINCE_LABEL}, וההשוואה לתקופה קודמת מוסתרת.
+          </p>
+        ) : (
+          <p className="an-conv__note">
+            אם מספר הטפסים כאן גבוה ממספר הלידים שנשמרו, זה סימן לבדוק את הטופס. הפרש בכיוון ההפוך תקין: חוסמי פרסומות לא נספרים בגוגל, אבל הטופס שלהם נשמר.
+          </p>
+        )}
       </section>
 
       {/* ===== הגרף המרכזי ===== */}

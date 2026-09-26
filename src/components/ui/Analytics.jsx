@@ -69,7 +69,10 @@ export default function Analytics() {
       : null
     if (obs) obs.observe(titleEl, { childList: true, characterData: true, subtree: true })
     else queueMicrotask(send)          // הכותרת כבר שונה מהקודמת, אין למה לחכות
-    const t = setTimeout(send, 1200)   // רשת ביטחון לעמודים שלא קובעים כותרת
+    /* רשת ביטחון לעמודים שלא קובעים כותרת. עמוד פרויקט נטען מהמסד ורק
+       אז קובע כותרת, ובחיבור איטי זה לוקח יותר משנייה. עם 1.2 שניות
+       הצפייה נשלחה עם הכותרת של העמוד הקודם, והעמוד הופיע בדוח פעמיים. */
+    const t = setTimeout(send, 4000)
     return () => { obs?.disconnect(); clearTimeout(t); send() }
   }, [valid, off, location.pathname, location.search])
 

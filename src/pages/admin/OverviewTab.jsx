@@ -174,7 +174,10 @@ export default function OverviewTab({ onNavigate }) {
         const days = rows(R.timeseries).map((r) => ({
           date: r.d[0], ...parseGaDate(r.d[0]), users: r.m[0], sessions: r.m[1], views: r.m[2],
         }))
-        const topPages = rows(R.pages).slice(0, 5).map((r) => ({ path: r.d[0], title: r.d[1], views: r.m[0] }))
+        // עמודים מקובצים לפי כתובת בלבד (ראו server/analytics.js); הכותרת מדוח נפרד
+        const titles = new Map()
+        for (const rep of [R.pageTitles, R.pageTitlesAll]) rows(rep).forEach((r) => { if (!titles.has(r.d[0]) && r.d[1] && r.d[1] !== '(not set)') titles.set(r.d[0], r.d[1]) })
+        const topPages = rows(R.pages).slice(0, 5).map((r) => ({ path: r.d[0], title: titles.get(r.d[0]) || '', views: r.m[0] }))
         const ch = rows(R.channels)
         const chTotal = ch.reduce((a, c) => a + c.m[2], 0) || 1
         const channels = ch.slice(0, 5).map((c) => ({ name: CHANNEL_HE[c.d[0]] || c.d[0], sessions: c.m[2], share: c.m[2] / chTotal }))

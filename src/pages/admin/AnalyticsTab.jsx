@@ -116,6 +116,20 @@ const CONV_TYPES = [
 /* מהיום הזה הלחיצות נמדדות בשמות kc_* (ראו src/lib/track.js). לפני כן
    הנכס ב-Google Analytics רשם phone_click ו-email_click על צפיות בעמוד,
    ולכן אין נתון אמין לאחור. טווח שמתחיל לפני התאריך מסומן בממשק. */
+/* טבלת הפעולות: שם בעברית והסבר קצר לכל אירוע שיש לו ערך */
+const EVENT_LABELS = [
+  { ev: 'kc_lead', label: 'טופס נשלח', hint: 'שליחת טופס פנייה באתר' },
+  { ev: 'form_start', label: 'התחילו למלא טופס', hint: 'התחילו להקליד בטופס, גם אם לא שלחו' },
+  { ev: 'kc_phone', label: 'לחיצה על טלפון', hint: 'לחיצה על מספר הטלפון' },
+  { ev: 'kc_whatsapp', label: 'לחיצה על וואטסאפ', hint: 'כולל הכפתור הצף' },
+  { ev: 'kc_email', label: 'לחיצה על מייל', hint: 'לחיצה על כתובת המייל' },
+  { ev: 'kc_directions_click', label: 'ניווט למשרד', hint: 'לחיצה על "נווטו אלינו" או על הכתובת' },
+  { ev: 'kc_cta_click', label: 'לחיצה על "לתיאום סיור"', hint: 'כפתורי קריאה לפעולה בעמודים' },
+  { ev: 'kc_article_cta', label: 'פנייה מתוך מאמר', hint: 'כפתורי הפנייה בסוף מאמרים' },
+  { ev: 'kc_calculator_use', label: 'שימוש במחשבון', hint: 'מחשבוני הנדל"ן באתר' },
+  { ev: 'kc_newsletter_signup', label: 'הרשמה לניוזלטר', hint: 'הרשמה בטופס הניוזלטר' },
+]
+
 const CLEAN_SINCE = '2026-09-26'
 const CLEAN_SINCE_LABEL = '26.9.2026'
 
@@ -545,7 +559,7 @@ export default function AnalyticsTab() {
   const devices = withConv(rows(R.devices), R.convDevices, 3, 2)
   const countries = withConv(rows(R.countries), R.convCountries, 2, 2)
   const cities = rows(R.cities).filter((c) => c.d[0] !== '(not set)')
-  const events = rows(R.events)
+  const eventsBy = new Map(rows(R.events).map((e) => [e.d[0], e]))
   const anomalies = findAnomalies(series, 0)
   const rangeBeforeClean = range.start < CLEAN_SINCE
   const overallCR = tot[2] ? cv.sessions / tot[2] : 0
@@ -850,26 +864,29 @@ export default function AnalyticsTab() {
         </section>
       </div>}
 
-      {/* ===== אירועים ===== */}
-      {events.length > 0 && <section className="an-section">
+      {/* ===== פעולות באתר ===== */}
+      <section className="an-section">
         <div className="an-sect-head">
-          <h4 className="an-h5" data-tip="כל הפעולות שנמדדו באתר, טכני. הפניות שבכרטיס למעלה הן ארבעה מהאירועים כאן: generate_lead (טופס), phone_click (טלפון), whatsapp_click (וואטסאפ), email_click (מייל). שאר האירועים הם מדידה של גלילה, צפייה ולחיצות אחרות." tabIndex={0}>אירועים</h4>
-          <button type="button" className="an-csv" onClick={() => exportCsv('events', ['אירוע', 'כמות', 'משתמשים', 'לכל משתמש'], events.map((e) => [e.d[0], e.m[0], e.m[1], e.m[1] ? (e.m[0] / e.m[1]).toFixed(1) : '']))}>CSV</button>
+          <h4 className="an-h5" data-tip="רק פעולות שיש להן משמעות לעסק, כפי שהאתר עצמו מדווח. צפיות, ביקורים וגלילה מופיעים בשאר הדשבורד ולא כאן." tabIndex={0}>פעולות באתר</h4>
+          <button type="button" className="an-csv" onClick={() => exportCsv('actions', ['פעולה', 'כמות', 'אנשים'], EVENT_LABELS.map((x) => { const e = eventsBy.get(x.ev); return [x.label, e ? e.m[0] : 0, e ? e.m[1] : 0] }))}>CSV</button>
         </div>
         <table className="an-table">
-          <thead><tr><th>אירוע</th><th className="is-num">כמות</th><th className="is-num">משתמשים</th><th className="is-num">לכל משתמש</th></tr></thead>
+          <thead><tr><th>פעולה</th><th className="is-num">כמות</th><th className="is-num">אנשים</th></tr></thead>
           <tbody>
-            {events.map((e) => (
-              <tr key={e.d[0]}>
-                <td className="an-td-main" dir="ltr">{e.d[0]}</td>
-                <td className="is-num">{fmtNum(e.m[0])}</td>
-                <td className="is-num">{fmtNum(e.m[1])}</td>
-                <td className="is-num an-dim">{e.m[1] ? (e.m[0] / e.m[1]).toFixed(1) : '—'}</td>
-              </tr>
-            ))}
+            {EVENT_LABELS.map((x) => {
+              const e = eventsBy.get(x.ev)
+              return (
+                <tr key={x.ev} title={x.hint}>
+                  <td className="an-td-main">{x.label}<span className="an-dim an-ev-hint">{x.hint}</span></td>
+                  <td className="is-num">{fmtNum(e ? e.m[0] : 0)}</td>
+                  <td className="is-num">{fmtNum(e ? e.m[1] : 0)}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
-      </section>}
+        {rangeBeforeClean && <p className="an-footnote">נמדד בצורה אמינה החל מ-{CLEAN_SINCE_LABEL}. לפני כן Google Analytics רשם חלק מהפעולות האלה גם בלי שקרו, ולכן הן לא נספרות כאן.</p>}
+      </section>
 
       {/* ===== זמן אמת ===== */}
       {rt?.rows?.length > 0 && (

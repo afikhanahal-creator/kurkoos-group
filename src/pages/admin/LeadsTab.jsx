@@ -994,7 +994,7 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
             <div className="adm-panel__quick">
               {f.phone && <a href={`tel:${digits}`} className="adm-quick-btn adm-quick-btn--call"><IcPhone width={14} height={14}/> {f.phone}</a>}
               {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="adm-quick-btn adm-quick-btn--wa"><IcWA width={15} height={15}/> וואטסאפ</a>}
-              {f.email && <a href={`mailto:${f.email}`} className="adm-quick-btn adm-quick-btn--mail"><IcMail width={14} height={14}/> {f.email}</a>}
+              {f.email && <a href={`mailto:${f.email}`} className="adm-quick-btn adm-quick-btn--mail" title={f.email}><IcMail width={14} height={14}/> <span className="adm-quick-btn__t" dir="ltr">{f.email}</span></a>}
               {pUrl && <a href={pUrl} target="_blank" rel="noopener noreferrer" className="adm-quick-btn adm-quick-btn--proj"><IcBuilding width={14} height={14}/> עמוד הפרויקט</a>}
             </div>
           )}

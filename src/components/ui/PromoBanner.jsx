@@ -20,7 +20,6 @@ import './PromoBanner.css'
 const PROMO = {
   id: 'ben-gurion-17-last-units',
   expires: '2026-10-15T23:59:59+03:00',
-  badge: '2 יחידות אחרונות',
   title: 'נותרו 2 יחידות אחרונות לשיווק',
   project: 'בן גוריון 17, יהוד-מונוסון',
   text: 'דירות בפרויקט בוטיק, בליווי מלא של הקבוצה מהחתימה ועד המפתח.',
@@ -122,7 +121,6 @@ export default function PromoBanner() {
         )}
 
         <div className="promo__body">
-          <span className="promo__badge"><i aria-hidden="true" />{PROMO.badge}</span>
           <strong className="promo__title">{PROMO.title}</strong>
           <span className="promo__project">{PROMO.project}</span>
           <span className="promo__text">{PROMO.text}</span>
@@ -130,7 +128,7 @@ export default function PromoBanner() {
 
         <Link
           to={to}
-          className="btn btn--dark promo__cta"
+          className="btn promo__cta"
           onClick={() => { track('promo_click', { promo: PROMO.id, how: 'button' }); close('cta') }}
         >
           {PROMO.cta} <Icon name="arrowLeft" size={18} />

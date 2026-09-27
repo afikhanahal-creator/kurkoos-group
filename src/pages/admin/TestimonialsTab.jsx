@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchSettings, setSetting } from '../../lib/cms.js'
-import defaultTestimonials from '../../data/testimonials.js'
+import defaultTestimonials, { isDemoTestimonial } from '../../data/testimonials.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
 import ImageManager from './ImageManager.jsx'
 import { toast } from '../../lib/toast.js'
@@ -11,7 +11,7 @@ import './TestimonialsTab.css'
    לכל המלצה: שם, פרויקט, ציטוט (עברית + אנגלית) ותמונת לקוח שניתן
    להחליף/לערוך (חיתוך, מיקוד, זום). אפשר להוסיף, למחוק ולשנות סדר.
    הנתונים נשמרים בהגדרה אחת (testimonials) כמערך JSON; ללא נתונים —
-   האתר נופל-לאחור להמלצות ברירת המחדל מהקוד.
+   בלי המלצות כאן, הסקשן בעמוד הבית לא מוצג: אין המלצות ברירת מחדל מומצאות.
    ============================================================ */
 
 function parseList(raw) {
@@ -55,12 +55,13 @@ export default function TestimonialsTab() {
     fetchSettings()
       .then((s) => {
         const stored = parseList(s.testimonials)
-        const init = stored || defaultTestimonials.map(fromDefault)
+        // המלצות הדוגמה המומצאות מסוננות גם אם נשמרו בעבר, והשמירה הבאה מסירה אותן מהמסד
+        const init = (stored || []).filter((t) => !isDemoTestimonial(t))
         listRef.current = init
         setList(init)
       })
       .catch(() => {
-        const init = defaultTestimonials.map(fromDefault)
+        const init = []
         listRef.current = init
         setList(init)
       })
@@ -144,7 +145,7 @@ export default function TestimonialsTab() {
   }
 
   const resetToDefaults = async () => {
-    if (!window.confirm('לשחזר את המלצות ברירת המחדל? פעולה זו תחליף את הרשימה הנוכחית.')) return
+    if (!window.confirm('לרוקן את רשימת ההמלצות? אין המלצות ברירת מחדל: ההמלצות באתר הן רק מה שתזינו כאן.')) return
     const next = defaultTestimonials.map(fromDefault)
     setList(next)
     await persist(next)
@@ -168,7 +169,7 @@ export default function TestimonialsTab() {
         </p>
         <div className="tst-tab__actions">
           <button type="button" className="tst-tab__reset" onClick={resetToDefaults} disabled={saving}>
-            שחזור ברירת מחדל
+            ריקון הרשימה
           </button>
           <button type="button" className="btn btn--primary tst-tab__add" onClick={addItem} disabled={saving}>
             ＋ הוספת המלצה

@@ -60,7 +60,10 @@ try { tags = JSON.parse(fm.tags) }
 catch { tags = String(fm.tags || '').replace(/[[\]"]/g, '').split(',').map((s) => s.trim()).filter(Boolean) }
 
 const slug = (fm.slug || today).trim().replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').slice(0, 80)
-const date = (fm.date || today).trim().replace(/[^0-9-]/g, '').slice(0, 10)
+/* תאריך הפרסום הוא היום שבו הסוכן רץ, תמיד. תאריך שהמודל כותב בעצמו
+   יכול להיות עתידי, והאתר מסתיר כתבה עד התאריך שלה: כך כתבות נכתבו
+   ונשארו מוסתרות שבוע, וקישורים אליהן הובילו לעמוד 404. */
+const date = today
 const obj = {
   slug,
   title: fm.title || '',

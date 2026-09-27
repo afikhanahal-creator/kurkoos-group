@@ -6,7 +6,8 @@
   position: fixed;
   inset-inline: 0;
   inset-block-end: calc(1.1rem + var(--promo-lift, 0px));
-  z-index: var(--z-modal, 1000);
+  /* מעל כל שכבה אחרת באתר: כפתורים צפים, נגישות, עוגיות */
+  z-index: 2147483000;
   display: flex;
   justify-content: center;
   padding-inline: 1rem;
@@ -23,10 +24,10 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   grid-template-areas: 'media body cta close';
   align-items: center;
-  gap: 0.9rem;
-  width: min(100%, 760px);
-  padding: 0.7rem 0.8rem 0.7rem 0.9rem;
-  border-radius: 16px;
+  gap: 1.1rem;
+  width: min(100%, 920px);
+  padding: 0.95rem 1.1rem 0.95rem 1.1rem;
+  border-radius: 18px;
   /* כהה על רקע האתר הבהיר, כדי שיהיה ניגוד ברור. בלי גרדיאנטים ובלי הילות */
   color: #fff;
   background: var(--color-primary-900, #07293a);
@@ -39,7 +40,7 @@
 .promo__close {
   grid-area: close;
   position: static;
-  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
   border: 0; background: transparent; color: rgba(255, 255, 255, 0.7); cursor: pointer;
   transition: background .15s, color .15s;
 }
@@ -47,19 +48,19 @@
 
 .promo__media {
   grid-area: media;
-  display: block; width: 64px; height: 64px; border-radius: 12px; overflow: hidden;
+  display: block; width: 84px; height: 84px; border-radius: 14px; overflow: hidden;
   background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .promo__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .promo__body { grid-area: body; display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.promo__title { font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem; line-height: 1.25; color: #fff; }
-.promo__project { font-weight: 600; font-size: 0.88rem; color: #9cc4d8; }
+.promo__title { font-family: var(--font-heading); font-weight: 800; font-size: 1.3rem; line-height: 1.2; color: #fff; }
+.promo__project { font-weight: 600; font-size: 1rem; color: #9cc4d8; }
 .promo__text { display: none; }
 
 .promo .promo__cta {
   grid-area: cta; justify-self: end; white-space: nowrap; gap: 0.4rem;
-  min-height: 42px; padding-inline: 1.1rem; font-size: 0.92rem;
+  min-height: 50px; padding-inline: 1.5rem; font-size: 1rem;
   background: #fff; border-color: #fff; color: var(--color-primary-900, #07293a); box-shadow: none;
 }
 .promo .promo__cta:hover { background: #e8f1f6; border-color: #e8f1f6; color: var(--color-primary-900, #07293a); }
@@ -78,8 +79,8 @@
 @keyframes promo-timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 @media (max-width: 720px) {
-  /* במובייל הבאנר יושב מעל כפתורי הוואטסאפ והנגישות הצפים, לא עליהם */
-  .promo { padding-inline: 0.75rem; inset-block-end: calc(5.4rem + var(--promo-lift, 0px)); }
+  /* במובייל צמוד לתחתית, ומעל הכפתורים הצפים בסדר השכבות */
+  .promo { padding-inline: 0.6rem; inset-block-end: calc(0.6rem + var(--promo-lift, 0px)); }
   .promo__card {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: 'media body close' 'cta cta cta';
@@ -87,7 +88,9 @@
     padding: 0.75rem 0.8rem 0.85rem;
   }
   .promo__card:not(:has(.promo__media)) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'body close' 'cta cta'; }
-  .promo__media { width: 56px; height: 56px; }
+  .promo__media { width: 60px; height: 60px; }
+  .promo__title { font-size: 1.08rem; }
+  .promo__project { font-size: 0.9rem; }
   .promo__close { align-self: start; }
   .promo .promo__cta { justify-self: stretch; width: 100%; justify-content: center; }
 }

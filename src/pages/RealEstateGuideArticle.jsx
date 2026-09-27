@@ -12,6 +12,7 @@ import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
+import ArticleLeadCard, { contactHrefFor } from '../components/ui/ArticleLeadCard.jsx'
 import NotFound from './NotFound.jsx'
 
 const SITE = 'https://www.kurkoos-group.co.il'
@@ -95,7 +96,7 @@ export default function RealEstateGuideArticle() {
       <section className="section">
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
-          <MiniMarkdown source={article.body} autoLink />
+          <MiniMarkdown source={article.body} autoLink contactHref={contactHrefFor('brokerage')} />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (
             <div className="yz-tags">
@@ -103,15 +104,14 @@ export default function RealEstateGuideArticle() {
             </div>
           )}
 
-          <div className="yz-author-card">
-            <div className="yz-author-card__txt">
-              <strong>לפני מכירה, רכישה או השקעה?</strong>
-              <span>צוות התיווך של קבוצת קורקוס מלווה עסקאות בשקיפות מלאה, מהתמחור ועד החתימה.</span>
-            </div>
-            <Link to="/divisions/brokerage" className="btn btn--dark">
-              לשירותי התיווך <Icon name="arrowLeft" size={18} />
-            </Link>
-          </div>
+          <ArticleLeadCard
+            column="brokerage"
+            topic="brokerage"
+            title="לפני מכירה, רכישה או השקעה?"
+            text="השאירו פרטים ונחזור אליכם לשיחה על העסקה שלכם, בלי התחייבות."
+            serviceTo="/divisions/brokerage"
+            serviceLabel="לשירותי התיווך"
+          />
         </Reveal>
       </section>
 

@@ -35,7 +35,9 @@ function mdToHtml(md) {
   const out = []
   let list = null
   const flushList = () => { if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null } }
-  const inline = (s) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  const inline = (s) => esc(s)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, '<a href="$2">$1</a>')
   for (const rawBlock of String(md || '').split(/\n{2,}/)) {
     for (const line of rawBlock.split('\n')) {
       const l = line.trim()

@@ -91,7 +91,7 @@ export default function MentorGuideArticle() {
       <section className="section">
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
-          <MiniMarkdown source={article.body} autoLink />
+          <MiniMarkdown source={article.body} autoLink contactHref="/contact?topic=mentorship&src=article" />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (
             <div className="yz-tags">

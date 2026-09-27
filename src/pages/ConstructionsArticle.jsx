@@ -12,6 +12,7 @@ import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
+import ArticleLeadCard, { contactHrefFor } from '../components/ui/ArticleLeadCard.jsx'
 import NotFound from './NotFound.jsx'
 
 const SITE = 'https://www.kurkoos-group.co.il'
@@ -95,7 +96,7 @@ export default function ConstructionsArticle() {
       <section className="section">
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
-          <MiniMarkdown source={article.body} autoLink />
+          <MiniMarkdown source={article.body} autoLink contactHref={contactHrefFor('construction')} />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (
             <div className="yz-tags">
@@ -103,15 +104,14 @@ export default function ConstructionsArticle() {
             </div>
           )}
 
-          <div className="yz-author-card">
-            <div className="yz-author-card__txt">
-              <strong>צריכים ליווי ביצוע מקצועי?</strong>
-              <span>צוות הביצוע של קבוצת קורקוס מלווה פרויקטים מהיסודות ועד המסירה.</span>
-            </div>
-            <Link to="/divisions/execution" className="btn btn--dark">
-              לשירותי הביצוע <Icon name="arrowLeft" size={18} />
-            </Link>
-          </div>
+          <ArticleLeadCard
+            column="constructions"
+            topic="construction"
+            title="מתכננים לבנות בית?"
+            text="השאירו פרטים ונחזור אליכם לשיחה על הפרויקט שלכם, בלי התחייבות."
+            serviceTo="/divisions/execution"
+            serviceLabel="לשירותי הביצוע"
+          />
         </Reveal>
       </section>
 

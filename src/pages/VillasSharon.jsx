@@ -5,6 +5,7 @@ import Reveal from '../components/ui/Reveal.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
+import FaqCta from '../components/ui/FaqCta.jsx'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import Contact from '../components/sections/Contact.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -189,7 +190,7 @@ export default function VillasSharon() {
   /* תמונת הקאבר של העמוד: הכריכה של הפרויקט הראשון שיש לו תמונה באדמין.
      כך גם הקאבר מתעדכן משם, ולא מתמונה קבועה בקוד. */
   const heroCover = PROJECTS.map((p) => media[p.slug]?.card?.cover).find(Boolean) || ''
-  const heroImage = heroCover ? optimizeSrc(heroCover, 1920) : undefined
+  const heroImage = heroCover ? optimizeSrc(heroCover, 2200, 'auto:best') : undefined
   const phoneDigits = String(site.contact.phone).replace(/[^+\d]/g, '')
 
   const jsonLd = [
@@ -246,6 +247,7 @@ export default function VillasSharon() {
         seoDescription="קורקוס גרופ בונה וילות ובתים פרטיים בהוד השרון: יורדי הים 3 בגרינברג, שתי וילות על חצי דונם עם בריכה, והנרייטה סאלד 22-24 במערב העיר, ארבע יחידות דו משפחתיות עם בריכה ומגרש בטאבו."
         image={heroImage}
         imageAlt="בית פרטי של קורקוס גרופ בהוד השרון"
+        imagePos="center 68%"
       />
 
       {/* פתיחה: פסקת ישות (ברורה וניתנת לציטוט ע"י מנועי AI), העובדות
@@ -313,14 +315,15 @@ export default function VillasSharon() {
               {cover && (
                 <div className="vsh-media">
                   <Link to={projectUrl || '/projects'} className="vsh-media__hero" aria-label={`${p.name}: לעמוד הפרויקט`}>
-                    <SmartImage src={cover} alt={`${p.name}, ${p.kind}`} label={p.name} className="vsh-media__img" w={1400} sizes="(max-width: 860px) 100vw, 900px" />
+                    <SmartImage src={cover} alt="" aria-hidden="true" className="vsh-media__blur" w={1800} quality="auto:best" />
+                    <SmartImage src={cover} alt={`${p.name}, ${p.kind}`} label={p.name} className="vsh-media__img" w={1800} quality="auto:best" sizes="(max-width: 860px) 100vw, 1100px" />
                     <span className="vsh-media__cta">לעמוד הפרויקט</span>
                   </Link>
                   {thumbs.length > 0 && (
                     <div className="vsh-media__thumbs">
                       {thumbs.map((u, i) => (
                         <Link key={u} to={projectUrl || '/projects'} className="vsh-media__thumb" aria-label={`${p.name}, תמונה ${i + 2}`}>
-                          <SmartImage src={u} alt={`${p.name}, תמונה ${i + 2}`} label={p.name} w={600} sizes="(max-width: 860px) 45vw, 220px" quality="auto:eco" />
+                          <SmartImage src={u} alt={`${p.name}, תמונה ${i + 2}`} label={p.name} w={800} sizes="(max-width: 860px) 45vw, 260px" quality="auto:good" />
                         </Link>
                       ))}
                     </div>
@@ -435,9 +438,8 @@ export default function VillasSharon() {
               </Reveal>
             ))}
           </div>
-          <Reveal className="lhub-links">
-            <p>מדריכים לפני שבונים: <Link to="/constructions/kama-ole-livnot-bayit-prati">כמה עולה לבנות בית פרטי</Link> · <Link to="/constructions/kablan-mafteach-o-nihul-atzmi">קבלן מפתח או ניהול עצמי</Link> · <Link to="/constructions/livchor-chevrat-bniya-bayit-prati">איך בוחרים חברת בנייה</Link> · <Link to="/construction-supervision/mefakeach-bniya-bayit-prati">מפקח בנייה לבית פרטי</Link></p>
-            <p>להעמיק עוד: <Link to="/projects">כל הפרויקטים</Link> · <Link to="/divisions/execution">זרוע הביצוע</Link> · <Link to="/divisions/supervision">ניהול ופיקוח</Link> · <Link to="/real-estate-sharon">נדל"ן בשרון</Link></p>
+          <Reveal>
+            <FaqCta to="#contact" placement="villas_faq" />
           </Reveal>
         </div>
       </section>

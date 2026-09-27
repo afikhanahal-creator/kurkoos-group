@@ -37,6 +37,10 @@ export default [
     "lastmod": "2026-08-23"
   },
   {
+    "path": "/construction-supervision/likuei-aluminium-trisim-bayit-hadash",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/construction-supervision/likuei-chashmal-instalatzia-lifnei-sgira",
     "lastmod": "2026-10-04"
   },

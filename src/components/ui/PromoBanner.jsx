@@ -1,0 +1,143 @@
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { listProjectCards, cmsRowToCard } from '../../lib/cms.js'
+import { optimizeSrc } from '../../lib/responsiveImage.js'
+import { track } from '../../lib/track.js'
+import Icon from './Icon.jsx'
+import './PromoBanner.css'
+
+/* ============================================================
+   באנר שיווקי בתחתית המסך, בכניסה לאתר.
+   - מוצג פעם אחת לביקור (sessionStorage), נסגר לבד אחרי עשר שניות,
+     ב-X או ב-Escape. מעבר עכבר על הבאנר עוצר את הספירה.
+   - פג תוקף לבד בתאריך שלמטה. אחריו הקומפוננטה לא מציגה כלום.
+   - הקישור מוביל לעמוד הפרויקט במערכת. ה-slug נמצא לפי שם הפרויקט,
+     כך שגם אם ה-slug ישתנה באדמין הבאנר ימשיך לעבוד. התמונה הקטנה היא
+     תמונת השער של הפרויקט מהמערכת.
+   - אם באנר העוגיות עדיין פתוח, הבאנר הזה יושב מעליו ולא מכסה אותו.
+   ============================================================ */
+
+const PROMO = {
+  id: 'ben-gurion-17-last-units',
+  expires: '2026-10-15T23:59:59+03:00',
+  badge: '2 יחידות אחרונות',
+  title: 'נותרו 2 יחידות אחרונות לשיווק',
+  project: 'בן גוריון 17, יהוד-מונוסון',
+  text: 'דירות בפרויקט בוטיק, בליווי מלא של הקבוצה מהחתימה ועד המפתח.',
+  cta: 'לתיאום פגישה',
+  nameKeys: ['בן גוריון'],
+  fallbackTo: '/projects',
+}
+const AUTO_CLOSE_MS = 10000
+const SEEN_KEY = `kc_promo_${PROMO.id}_seen`
+const nameOf = (v) => (v && typeof v === 'object') ? String(v.he || v.en || '') : String(v || '')
+
+export default function PromoBanner() {
+  const [open, setOpen] = useState(() => {
+    if (Date.now() >= new Date(PROMO.expires).getTime()) return false
+    try { if (sessionStorage.getItem(SEEN_KEY)) return false } catch { /* noop */ }
+    return true
+  })
+  const [leaving, setLeaving] = useState(false)
+  const [paused, setPaused] = useState(false)
+  const [card, setCard] = useState(null)      // הפרויקט מהמערכת: slug ותמונה
+  const [lift, setLift] = useState(0)         // גובה באנר העוגיות, אם פתוח
+  const remaining = useRef(AUTO_CLOSE_MS)
+  const startedAt = useRef(0)
+
+  const close = useCallback((how = 'auto') => {
+    try { sessionStorage.setItem(SEEN_KEY, '1') } catch { /* noop */ }
+    if (how !== 'auto') track('promo_close', { promo: PROMO.id, how })
+    setLeaving(true)
+    setTimeout(() => setOpen(false), 320)
+  }, [])
+
+  // הפרויקט מהמערכת, לפי שם
+  useEffect(() => {
+    if (!open) return undefined
+    let on = true
+    listProjectCards()
+      .then((rows) => {
+        if (!on) return
+        const cards = (rows || []).map(cmsRowToCard)
+        const hit = cards.find((c) => PROMO.nameKeys.some((k) => nameOf(c.name).includes(k)))
+        if (hit) setCard(hit)
+      })
+      .catch(() => {})
+    return () => { on = false }
+  }, [open])
+
+  // ספירה לאחור עם עצירה במעבר עכבר
+  useEffect(() => {
+    if (!open || paused) return undefined
+    startedAt.current = Date.now()
+    const t = setTimeout(() => close('auto'), remaining.current)
+    return () => {
+      clearTimeout(t)
+      remaining.current = Math.max(0, remaining.current - (Date.now() - startedAt.current))
+    }
+  }, [open, paused, close])
+
+  useEffect(() => {
+    if (!open) return undefined
+    track('promo_view', { promo: PROMO.id })
+    const onKey = (e) => { if (e.key === 'Escape' && e.isTrusted) close('escape') }
+    window.addEventListener('keydown', onKey)
+    // לא מכסים את באנר העוגיות: מודדים אותו כל עוד הבאנר שלנו פתוח
+    const measure = () => {
+      const el = document.querySelector('.cookie-banner')
+      setLift(el ? el.getBoundingClientRect().height : 0)
+    }
+    measure()
+    const iv = setInterval(measure, 500)
+    window.addEventListener('resize', measure)
+    return () => { window.removeEventListener('keydown', onKey); clearInterval(iv); window.removeEventListener('resize', measure) }
+  }, [open, close])
+
+  if (!open) return null
+
+  const to = card?.slug ? `/projects/${card.slug}#contact` : PROMO.fallbackTo
+  const cover = card?.cover ? optimizeSrc(card.cover, 320) : ''
+
+  return (
+    <aside
+      className={`promo${leaving ? ' is-leaving' : ''}${paused ? ' is-paused' : ''}`}
+      role="complementary"
+      aria-label={`${PROMO.title}, ${PROMO.project}`}
+      style={lift ? { '--promo-lift': `${lift + 12}px` } : undefined}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <div className="promo__card">
+        <button type="button" className="promo__close" onClick={() => close('x')} aria-label="סגירת ההודעה">
+          <Icon name="close" size={16} />
+        </button>
+
+        {cover && (
+          <Link to={to} className="promo__media" aria-hidden="true" tabIndex={-1} onClick={() => track('promo_click', { promo: PROMO.id, how: 'image' })}>
+            <img src={cover} alt="" loading="eager" decoding="async" />
+          </Link>
+        )}
+
+        <div className="promo__body">
+          <span className="promo__badge"><i aria-hidden="true" />{PROMO.badge}</span>
+          <strong className="promo__title">{PROMO.title}</strong>
+          <span className="promo__project">{PROMO.project}</span>
+          <span className="promo__text">{PROMO.text}</span>
+        </div>
+
+        <Link
+          to={to}
+          className="btn btn--primary promo__cta"
+          onClick={() => { track('promo_click', { promo: PROMO.id, how: 'button' }); close('cta') }}
+        >
+          {PROMO.cta} <Icon name="arrowLeft" size={18} />
+        </Link>
+
+        <span className="promo__timer" aria-hidden="true" style={{ animationDuration: `${AUTO_CLOSE_MS}ms` }} />
+      </div>
+    </aside>
+  )
+}

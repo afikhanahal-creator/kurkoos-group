@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from './i18n/index.jsx'
 import Header from './components/layout/Header.jsx'
 import HolidayBanner from './components/ui/HolidayBanner.jsx'
+import PromoBanner from './components/ui/PromoBanner.jsx'
 import { notePage } from './lib/visitTrail.js'
 import Analytics from './components/ui/Analytics.jsx'
 import Footer from './components/layout/Footer.jsx'
@@ -130,6 +131,7 @@ export default function App() {
       <ScrollManager />
       <Analytics />
       <HolidayBanner />
+      <PromoBanner />
       <Header />
       <main id="top" tabIndex={-1}>
         <AnimatePresence mode="wait">

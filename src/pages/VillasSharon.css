@@ -261,3 +261,66 @@
   .vsh-media__hero { aspect-ratio: 4 / 3; }
   .vsh-intro::before { display: none; }
 }
+
+/* ============================================================
+   ליטוש: הדמיה עם כיתוב על גרדיאנט, מפרט באריחים, כותרת פרויקט עם
+   שורת פתיחה. השראה מעמודי פרויקט של נדל"ן יוקרה: הרבה אוויר, קו כחול דק.
+   ============================================================ */
+.vsh-projects .section-title { position: relative; padding-bottom: 0.9rem; }
+.vsh-projects .section-title::after {
+  content: ''; position: absolute; inset-inline-start: 50%; bottom: 0; width: 48px; height: 3px;
+  border-radius: 2px; transform: translateX(50%); background: linear-gradient(90deg, #16688c, #7fb2c9);
+}
+.vsh-media__hero::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, transparent 55%, rgba(7, 41, 58, 0.72) 100%);
+}
+.vsh-media__caption {
+  position: absolute; z-index: 2; inset-inline-end: 1.25rem; inset-block-end: 1.1rem;
+  display: flex; flex-direction: column; gap: 0.15rem; text-align: end; color: #fff; pointer-events: none;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+.vsh-media__caption b { font-family: var(--font-heading); font-weight: 800; font-size: clamp(1.15rem, 2.2vw, 1.55rem); line-height: 1.15; }
+.vsh-media__caption span { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+.vsh-media__cta { inset-block-end: 1.25rem; box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.5); }
+.vsh-media__hero:hover .vsh-media__cta { background: #fff; color: #0f4c6e; }
+
+.vsh-panel { padding: 1.7rem 1.9rem 2rem; }
+.vsh-panel__kicker {
+  display: inline-block; margin-bottom: 0.35rem; font-family: var(--font-heading);
+  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.16em; color: var(--color-secondary, #16688c);
+}
+.vsh-panel__head h3 { font-size: clamp(1.5rem, 2.6vw, 1.9rem); letter-spacing: -0.01em; }
+.vsh-panel__tag { font-size: 1.05rem; line-height: 1.6; max-width: 56ch; }
+
+.vsh-specs {
+  border-block: 0; padding: 0; gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+.vsh-specs > div {
+  padding: 0.85rem 1rem; border-radius: 12px;
+  background: linear-gradient(180deg, #f6f9fb, #eef4f8);
+  border: 1px solid rgba(22, 104, 140, 0.12);
+}
+.vsh-specs dt { font-size: 0.72rem; margin-bottom: 0.3rem; }
+.vsh-specs dd { font-size: 0.98rem; }
+
+.vsh-panel__cols { padding-top: 1.5rem; border-top: 1px solid rgba(22, 104, 140, 0.12); }
+.vsh-chips li { font-weight: 700; }
+
+/* מאפייני הבנייה: כרטיסים עם קו כחול בריחוף */
+.lhub-services .feature-card, .lhub-services__grid > * > * { transition: transform .25s var(--ease-out, ease), box-shadow .25s; }
+.lhub-services__grid > *:hover > * { transform: translateY(-4px); box-shadow: 0 20px 40px -24px rgba(22, 104, 140, 0.45); }
+
+@media (max-width: 860px) {
+  .vsh-panel { padding: 1.2rem 1.1rem 1.4rem; }
+  .vsh-media__caption { inset-inline-end: 0.9rem; inset-block-end: 3.4rem; }
+  .vsh-media__caption b { font-size: 1.1rem; }
+  .vsh-media__cta { inset-inline-start: 0.9rem; inset-block-end: 0.9rem; }
+}
+@media (max-width: 600px) {
+  /* במובייל אריחי המפרט בשתי עמודות, אחרת הרשימה מתארכת מדי */
+  .vsh-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .vsh-specs > div { padding: 0.7rem 0.8rem; }
+  .vsh-specs dd { font-size: 0.92rem; }
+}

@@ -1,0 +1,40 @@
+/* טאב עמוד הווילות. נשען על המבנה של CoverImagesTab (cov__*) ומוסיף
+   סדר, הסתרה וקישור לפרויקט. */
+.vpt__bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.vpt__bar .cov__intro { margin-bottom: 0.9rem; }
+.vpt__open {
+  flex: 0 0 auto; font-size: 0.85rem; font-weight: 700; text-decoration: none;
+  color: var(--color-secondary, #15617f); padding: 0.45rem 0.8rem; border-radius: 9px;
+  border: 1.5px solid color-mix(in srgb, var(--color-secondary, #15617f) 35%, transparent);
+}
+.vpt__open:hover { background: color-mix(in srgb, var(--color-secondary, #15617f) 8%, #fff); }
+
+.vpt__proj { display: flex; align-items: center; gap: 0.3rem; }
+.vpt__proj .cov__tab { flex: 1 1 auto; min-width: 0; }
+.vpt__proj.is-hidden .cov__tab-label { color: var(--adm-muted, #889); text-decoration: line-through; }
+.vpt__num {
+  flex: 0 0 auto; width: 20px; height: 20px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--color-secondary, #15617f); color: #fff;
+  font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem;
+}
+.vpt__hidden-tag { font-size: 0.68rem; font-weight: 800; color: var(--adm-muted, #889); }
+.vpt__ord { display: inline-flex; flex-direction: column; gap: 2px; }
+.vpt__ord button {
+  width: 22px; height: 18px; line-height: 1; border-radius: 5px; font-size: 0.7rem; cursor: pointer;
+  border: 1px solid var(--adm-border, #d8dee3); background: var(--adm-card, #fff); color: var(--adm-ink, #07293a);
+}
+.vpt__ord button:disabled { opacity: 0.35; cursor: not-allowed; }
+.vpt__ord button:hover:not(:disabled) { border-color: var(--color-secondary, #15617f); }
+
+.vpt__toggle {
+  margin-inline-start: auto; display: inline-flex; align-items: center; gap: 0.45rem;
+  font-size: 0.85rem; font-weight: 700; cursor: pointer; color: var(--adm-ink, #07293a);
+}
+.vpt__toggle input { width: 18px; height: 18px; accent-color: var(--color-secondary, #15617f); }
+
+.vpt__link { display: flex; flex-direction: column; gap: 0.4rem; }
+.vpt__link .adm-set__field { max-width: 420px; }
+.vpt__h { font-family: var(--font-heading); font-weight: 800; font-size: 1rem; margin: 0.6rem 0 0; }
+.vpt__h small { font-weight: 600; color: var(--adm-muted, #889); font-size: 0.78rem; margin-inline-start: 0.4rem; }
+.vpt__auto { display: inline-flex; align-items: center; gap: 0.4rem; }
+.vpt__auto img { width: 40px; height: 28px; object-fit: cover; border-radius: 5px; vertical-align: middle; }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
@@ -9,9 +9,10 @@ import FaqCta from '../components/ui/FaqCta.jsx'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
 import Contact from '../components/sections/Contact.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
-import { listProjectCards, cmsRowToCard, getProjectBySlug } from '../lib/cms.js'
+import { listProjectCards, cmsRowToCard, getProjectBySlug, useSettings } from '../lib/cms.js'
 import { srcOfResponsive, optimizeSrc } from '../lib/responsiveImage.js'
 import { BUYER_FAQS } from '../data/buyerFaqs.js'
+import { VILLAS_PROJECTS, parseVillasSettings, orderedVillasProjects } from '../data/villasPage.js'
 import site from '../data/site.js'
 import { track } from '../lib/track.js'
 import './SharonHub.css'
@@ -35,7 +36,9 @@ const NAME_KEYS = {
   'hankin-41': ['חנקין'],
 }
 const nameOf = (v) => (v && typeof v === 'object') ? String(v.he || v.en || '') : String(v || '')
-function matchCard(cards, slug) {
+function matchCard(cards, slug, cmsSlug = '') {
+  // באדמין אפשר לקשר ידנית לפרויקט אחר במערכת. הקישור הידני קודם לכל התאמה אוטומטית
+  if (cmsSlug) { const manual = cards.find((c) => String(c.slug) === cmsSlug); if (manual) return manual }
   const bySlug = cards.find((c) => String(c.slug) === slug)
   if (bySlug) return bySlug
   const keys = NAME_KEYS[slug] || []
@@ -48,70 +51,8 @@ function matchCard(cards, slug) {
    "מי בונה וילות ובתים פרטיים באזור השרון".
    כל הנתונים כאן הם מפרטי הפרויקטים האמיתיים של הקבוצה.
    מזין FAQPage, BreadcrumbList ו-ItemList של הפרויקטים.
+   הפרויקטים והמפרט שלהם ב-data/villasPage.js, משותף לאדמין.
    ============================================================ */
-
-const PROJECTS = [
-  {
-    slug: 'yordei-hayam',
-    name: 'יורדי הים 3',
-    tagline: 'חוויית וילה פרטית על חצי דונם בלב שכונת גרינברג',
-    kind: 'שתי וילות פרטיות',
-    status: 'בתכנון',
-    architect: 'רמי שחר',
-    specs: [
-      ['יחידות', 'שתי וילות'],
-      ['מגרש', 'למעלה מחצי דונם לכל יחידה'],
-      ['שטח בנוי', 'כ-300 מ"ר'],
-      ['מפלסים', 'שלושה'],
-      ['בריכה', 'בריכת שחייה מאושרת 4x9 מטר'],
-    ],
-    about:
-      'פרויקט בוטיק יוקרתי הכולל שתי יחידות מגורים ייחודיות, המתוכננות בקפידה על מגרשים רחבי ידיים של למעלה מחצי דונם לכל יחידה. כל בית משתרע על פני כ-300 מ"ר בנוי בשלושה מפלסים, ומציע תכנון אדריכלי מוקפד המשלב מרחבי אירוח מרווחים, קומת מרתף הכוללת שתי סוויטות פרטיות וחדר גג מפנק. המפרט כולל גינה פרטית רחבה עם בריכת שחייה מאושרת בגודל 4x9 מטר, לצד סטנדרט בנייה גבוה וחומרי גמר איכותיים.',
-    area:
-      'שכונת גרינברג מתאפיינת באווירת מגורים שקטה, עם רחובות פנימיים רגועים ותנועה מקומית בלבד. האזור משלב בנייה נמוכה ובתים פרטיים לצד מרקם עירוני מתפתח, עם מרחבים פתוחים ושבילים ירוקים, וקרבה למוקדי חינוך, שירותים ופארקים מרכזיים בהוד השרון.',
-    highlights: ['גינה פרטית', 'בריכת שחייה', 'קומת מרתף'],
-  },
-  {
-    slug: 'henrietta-szold',
-    name: 'הנרייטה סאלד 22-24',
-    tagline: 'מיני שכונה פרטית עם בריכות במערב הוד השרון',
-    kind: 'ארבע יחידות דו משפחתיות',
-    status: 'בבנייה',
-    architect: 'בני נדלסטיצ\'ר',
-    specs: [
-      ['יחידות', 'ארבע יחידות דו משפחתיות, שמונה משפחות'],
-      ['מגרש', '380 מ"ר לכל יחידה, בטאבו כבעלות פרטית'],
-      ['שטח בנוי', 'כ-300 מ"ר'],
-      ['מפלסים', 'שלושה: מרתף, קרקע וקומה ראשונה'],
-      ['חדרים', '7 חדרים, 4 חדרי רחצה, 2 מרפסות'],
-      ['בריכה', 'בריכת שחייה 3x6 מטר'],
-    ],
-    about:
-      'מתחם אינטימי של ארבע יחידות דו משפחתיות עם כניסה פרטית ומאובטחת לדיירי המתחם בלבד. לכל יחידה מגרש בשטח 380 מ"ר הרשום בטאבו כבעלות פרטית. המבנה משתרע על פני כ-300 מ"ר בנוי בשלושה מפלסים, הכוללים 7 חדרים, 4 חדרי רחצה ו-2 מרפסות. התכנון כולל כניסה נפרדת למפלס המרתף, המאפשרת יצירת יחידה עצמאית, לצד חצר פרטית המשלבת בריכת שחייה בגודל 3x6 מטר. הפרויקט מבוצע תחת היתרי בנייה מאושרים.',
-    area:
-      'האזור משלב נוף כפרי פתוח ושדות ירוקים עם שקט אופייני. מדובר במיני שכונה אינטימית של ארבע יחידות דו משפחתיות, המתוכננות להעניק פרטיות מקסימלית במרחב המאופיין בבנייה צמודת קרקע נמוכה, עם נגישות נוחה בלב השרון.',
-    highlights: ['2 מרפסות', 'גינה פרטית', 'בריכת שחייה'],
-  },
-  {
-    slug: 'hankin-41',
-    name: 'חנקין 41',
-    tagline: 'שש דירות יוקרה בתכנון אדריכלי מוקפד בלב הירוק של מגדיאל',
-    kind: 'בניין בוטיק, שש דירות',
-    status: 'בבנייה',
-    architect: 'בני נדלסטיצ\'ר',
-    specs: [
-      ['יחידות', 'שש דירות, בניין אחד'],
-      ['גינה', 'גינה פרטית בשטח כ-150 מ"ר'],
-      ['חניה', 'שתי חניות נפרדות בחניון תת קרקעי לכל דירה'],
-      ['מפרט', 'מרפסות מרווחות, מפרט איכותי'],
-    ],
-    about:
-      'בלב שכונת מגדיאל המבוקשת בהוד השרון, בסביבה ירוקה ושקטה עם נגישות מצוינת לכל מוקדי החיים בעיר, מוקם פרויקט בוטיק אקסקלוסיבי עם שישה דיירים בלבד. הפרויקט כולל תכנון אדריכלי מוקפד, מפרט איכותי, מרפסות מרווחות, שתי חניות נפרדות בחניון תת קרקעי לכל דירה וגינה פרטית מרשימה בשטח של כ-150 מ"ר.',
-    area:
-      'מגדיאל היא הלב הפועם של הוד השרון, שכונה ותיקה ומבוקשת המשלבת אווירה קהילתית ושקטה עם נגישות עירונית. רחובות ירוקים, פארקים מטופחים, מוסדות חינוך מובילים ומרכזי מסחר במרחק דקות ספורות. התושבים נהנים מגישה מהירה לכבישים 531 ו-40, לרכבת ולמרכזי התעסוקה של גוש דן והשרון.',
-    highlights: ['גינה פרטית', '2 חניות נפרדות'],
-  },
-]
 
 const TRAITS = [
   { icon: 'building', title: 'בתים בשלושה מפלסים', desc: 'הווילות מתוכננות על שלושה מפלסים, כ-300 מ"ר בנוי, עם קומת מרתף שמאפשרת סוויטות פרטיות או יחידה עצמאית.' },
@@ -155,9 +96,21 @@ const BASE_FAQS = [
 const FAQS = [...BASE_FAQS, ...BUYER_FAQS]
 
 export default function VillasSharon() {
-  const [open, setOpen] = useState(PROJECTS[0].slug)
+  /* ההגדרות מהאדמין (טאב "בתים פרטיים ווילות"): תמונת כותרת, סדר והסתרה,
+     ולכל פרויקט הדמיה, תמונות קטנות ופרויקט מקושר במערכת. בלי הגדרה,
+     הכול נמשך אוטומטית מעמודי הפרויקטים. */
+  const settings = useSettings()
+  const villas = useMemo(() => parseVillasSettings(settings.villas_page), [settings.villas_page])
+  const PROJECTS = useMemo(() => orderedVillasProjects(settings.villas_page), [settings.villas_page])
+  const [open, setOpen] = useState(VILLAS_PROJECTS[0].slug)
   const [gallery, setGallery] = useState([])   // כרטיסים בצורה שהגלריה מבינה (cover, name, slug)
   const [media, setMedia] = useState({})       // slug בעמוד → { card, images }
+  // אם הפרויקט הפתוח הוסתר באדמין, עוברים לראשון שמוצג
+  useEffect(() => { if (PROJECTS.length && !PROJECTS.some((p) => p.slug === open)) setOpen(PROJECTS[0].slug) }, [PROJECTS, open])
+
+  // הקישורים הידניים לפרויקטים במערכת, מהאדמין. הטעינה חוזרת אם הם משתנים
+  const cmsLinks = Object.fromEntries(VILLAS_PROJECTS.map((p) => [p.slug, villas.projects[p.slug]?.cms || '']))
+  const cmsKey = JSON.stringify(cmsLinks)
 
   /* תמונות אמיתיות מהפרויקטים, מתוך מערכת הניהול.
      השורות הגולמיות מהמסד לא מכילות שדה cover, ולכן הן חייבות לעבור דרך
@@ -171,8 +124,8 @@ export default function VillasSharon() {
         setGallery(cards)
         // לכל פרויקט בעמוד: הכריכה מהכרטיס, ועד ארבע תמונות נוספות מהגלריה שלו
         const found = {}
-        await Promise.all(PROJECTS.map(async (p) => {
-          const card = matchCard(cards, p.slug)
+        await Promise.all(VILLAS_PROJECTS.map(async (p) => {
+          const card = matchCard(cards, p.slug, cmsLinks[p.slug])
           if (!card) return
           let images = []
           try {
@@ -185,11 +138,13 @@ export default function VillasSharon() {
       })
       .catch(() => {})
     return () => { on = false }
-  }, [])
+  }, [cmsKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* תמונת הקאבר של העמוד: הכריכה של הפרויקט הראשון שיש לו תמונה באדמין.
      כך גם הקאבר מתעדכן משם, ולא מתמונה קבועה בקוד. */
-  const heroCover = PROJECTS.map((p) => media[p.slug]?.card?.cover).find(Boolean) || ''
+  const heroCover = srcOfResponsive(villas.header)
+    || PROJECTS.map((p) => srcOfResponsive(villas.projects[p.slug]?.hero) || media[p.slug]?.card?.cover).find(Boolean)
+    || ''
   const heroImage = heroCover ? optimizeSrc(heroCover, 2200, 'auto:best') : undefined
   const phoneDigits = String(site.contact.phone).replace(/[^+\d]/g, '')
 
@@ -306,9 +261,12 @@ export default function VillasSharon() {
 
           {PROJECTS.filter((p) => p.slug === open).map((p) => {
             const m = media[p.slug]
-            const cover = m?.card?.cover || ''
+            const ov = villas.projects[p.slug] || {}
+            // ההדמיה והתמונות הקטנות: קודם מה שנבחר באדמין לעמוד הזה, אחרת מעמוד הפרויקט
+            const cover = srcOfResponsive(ov.hero) || m?.card?.cover || ''
+            const ownThumbs = (Array.isArray(ov.thumbs) ? ov.thumbs : []).map(srcOfResponsive).filter(Boolean)
             // הכריכה לא חוזרת פעמיים: אם היא גם הראשונה בגלריה, מדלגים עליה
-            const thumbs = (m?.images || []).filter((u) => u !== cover).slice(0, 4)
+            const thumbs = (ownThumbs.length ? ownThumbs : (m?.images || [])).filter((u) => u !== cover).slice(0, 4)
             const projectUrl = m?.card?.slug ? `/projects/${m.card.slug}` : null
             return (
             <Reveal key={p.slug} className="vsh-panel">
@@ -317,6 +275,10 @@ export default function VillasSharon() {
                   <Link to={projectUrl || '/projects'} className="vsh-media__hero" aria-label={`${p.name}: לעמוד הפרויקט`}>
                     <SmartImage src={cover} alt="" aria-hidden="true" className="vsh-media__blur" w={1800} quality="auto:best" />
                     <SmartImage src={cover} alt={`${p.name}, ${p.kind}`} label={p.name} className="vsh-media__img" w={1800} quality="auto:best" sizes="(max-width: 860px) 100vw, 1100px" />
+                    <span className="vsh-media__caption" aria-hidden="true">
+                      <b>{p.name}</b>
+                      <span>{p.kind} · {p.architect ? `אדריכל ${p.architect}` : ''}</span>
+                    </span>
                     <span className="vsh-media__cta">לעמוד הפרויקט</span>
                   </Link>
                   {thumbs.length > 0 && (
@@ -332,6 +294,7 @@ export default function VillasSharon() {
               )}
               <div className="vsh-panel__head">
                 <div>
+                  <span className="vsh-panel__kicker">{p.kind}</span>
                   <h3>{p.name}</h3>
                   <p className="vsh-panel__tag">{p.tagline}</p>
                 </div>

@@ -79,8 +79,10 @@
 @keyframes promo-timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 @media (max-width: 720px) {
-  /* במובייל צמוד לתחתית, ומעל הכפתורים הצפים בסדר השכבות */
-  .promo { padding-inline: 0.6rem; inset-block-end: calc(0.6rem + var(--promo-lift, 0px)); }
+  /* במובייל צמוד לתחתית ולא זז. באנר העוגיות מחכה עד שהבאנר הזה נסגר,
+     כדי שלא יופיעו שני באנרים יחד על מסך קטן */
+  .promo { padding-inline: 0.6rem; inset-block-end: 0.6rem; }
+  html.promo-open .cookie-banner { display: none; }
   .promo__card {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: 'media body close' 'cta cta cta';

@@ -77,6 +77,13 @@ export default function PromoBanner() {
     }
   }, [open, paused, close])
 
+  // כל עוד הבאנר פתוח, html מקבל class: במובייל באנר העוגיות מחכה לו ולא מופיע לידו
+  useEffect(() => {
+    if (!open) return undefined
+    document.documentElement.classList.add('promo-open')
+    return () => document.documentElement.classList.remove('promo-open')
+  }, [open])
+
   useEffect(() => {
     if (!open) return undefined
     track('promo_view', { promo: PROMO.id })

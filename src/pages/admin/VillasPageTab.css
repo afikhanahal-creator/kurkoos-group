@@ -38,3 +38,25 @@
 .vpt__h small { font-weight: 600; color: var(--adm-muted, #889); font-size: 0.78rem; margin-inline-start: 0.4rem; }
 .vpt__auto { display: inline-flex; align-items: center; gap: 0.4rem; }
 .vpt__auto img { width: 40px; height: 28px; object-fit: cover; border-radius: 5px; vertical-align: middle; }
+
+/* תצוגה מקדימה: אותו סידור כמו בעמוד */
+.vpt__preview { background: var(--adm-card-soft, #f5f7f9); border: 1px solid var(--adm-border, #e6e9ee); border-radius: 12px; padding: 0.9rem 1rem 1rem; }
+.vpt__preview-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+.vpt__preview-head .vpt__h { margin: 0; }
+.vpt__preview-src { font-size: 0.8rem; color: var(--adm-muted, #889); font-weight: 600; }
+.vpt__mock { max-width: 640px; }
+.vpt__mock-hero { aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #07293a; display: grid; place-items: center; }
+.vpt__mock-hero img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.vpt__mock-empty { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 700; }
+.vpt__mock-thumbs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem; margin-top: 0.4rem; }
+.vpt__mock-thumb { aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; background: #fff; border: 1px solid var(--adm-border, #e6e9ee); display: grid; place-items: center; }
+.vpt__mock-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vpt__mock-thumb.is-empty { border-style: dashed; color: var(--adm-muted, #889); font-size: 0.8rem; font-weight: 700; }
+
+.vpt__thumbs-head { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; }
+.vpt__thumbs-head .vpt__h { margin: 0.6rem 0 0; }
+.vpt__reset {
+  font-size: 0.8rem; font-weight: 700; cursor: pointer; padding: 0.4rem 0.7rem; border-radius: 8px;
+  border: 1px solid var(--adm-border, #d8dee3); background: var(--adm-card, #fff); color: var(--adm-ink, #07293a);
+}
+.vpt__reset:hover:not(:disabled) { border-color: var(--color-secondary, #15617f); }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchSettings, setSetting, listProjectCards, cmsRowToCard } from '../../lib/cms.js'
+import { fetchSettings, setSetting, listProjectCards, cmsRowToCard, getProjectBySlug } from '../../lib/cms.js'
 import { srcOfResponsive, optimizeSrc } from '../../lib/responsiveImage.js'
 import { VILLAS_PROJECTS, parseVillasSettings } from '../../data/villasPage.js'
 import ResponsiveImageField from './ResponsiveImageField.jsx'
@@ -165,9 +165,34 @@ export default function VillasPageTab() {
   )
 }
 
+/* אותו חישוב כמו בעמוד: ההדמיה קודם מהבחירה כאן, אחרת מהפרויקט המקושר;
+   התמונות הקטנות קודם מהבחירה כאן, אחרת מגלריית הפרויקט, בלי ההדמיה, עד ארבע. */
+function effectiveMedia(ov, linked, gallery) {
+  const hero = srcOfResponsive(ov.hero) || linked?.cover || ''
+  const own = (Array.isArray(ov.thumbs) ? ov.thumbs : []).map(srcOfResponsive).filter(Boolean)
+  const auto = (gallery || []).map(srcOfResponsive).filter(Boolean)
+  const thumbs = (own.length ? own : auto).filter((u) => u !== hero).slice(0, MAX_THUMBS)
+  return { hero, thumbs, isOwn: own.length > 0, auto: auto.filter((u) => u !== hero).slice(0, MAX_THUMBS) }
+}
+
 function ProjectEditor({ project, ov, cards, linked, auto, saving, onPatch }) {
+  const [gallery, setGallery] = useState(null)   // null = טוען, [] = אין גלריה
+  const linkedSlug = linked?.slug || ''
+
+  // גלריית הפרויקט המקושר, כדי להראות בדיוק מה העמוד מציג כשלא נבחר כאן כלום
+  useEffect(() => {
+    let on = true
+    if (!linkedSlug) { setGallery([]); return undefined }
+    setGallery(null)
+    getProjectBySlug(linkedSlug)
+      .then((row) => { if (on) setGallery(Array.isArray(row?.gallery) ? row.gallery : []) })
+      .catch(() => { if (on) setGallery([]) })
+    return () => { on = false }
+  }, [linkedSlug])
+
+  const eff = effectiveMedia(ov, linked, gallery || [])
   const heroDefault = linked?.cover || ''
-  const thumbs = Array.isArray(ov.thumbs) ? ov.thumbs : []
+
   return (
     <>
       <div className="cov__content-head">
@@ -182,6 +207,33 @@ function ProjectEditor({ project, ov, cards, linked, auto, saving, onPatch }) {
           />
           <span>מוצג בעמוד</span>
         </label>
+      </div>
+
+      {/* מה שהעמוד מציג עכשיו, בדיוק באותו סידור: הדמיה ומתחתיה עד ארבע תמונות */}
+      <div className="vpt__preview">
+        <div className="vpt__preview-head">
+          <h3 className="vpt__h">כך זה מוצג בעמוד עכשיו</h3>
+          <span className="vpt__preview-src">
+            {eff.hero ? (srcOfResponsive(ov.hero) ? 'הדמיה שנבחרה כאן' : 'הדמיה מעמוד הפרויקט') : 'אין הדמיה'}
+            {' · '}
+            {gallery === null ? 'טוען תמונות…' : `${eff.thumbs.length} תמונות קטנות ${eff.isOwn ? 'שנבחרו כאן' : 'מגלריית הפרויקט'}`}
+          </span>
+        </div>
+        <div className="vpt__mock">
+          <div className="vpt__mock-hero">
+            {eff.hero ? <img src={optimizeSrc(eff.hero, 900)} alt="" /> : <span className="vpt__mock-empty">אין הדמיה</span>}
+          </div>
+          <div className="vpt__mock-thumbs">
+            {Array.from({ length: MAX_THUMBS }).map((_, i) => {
+              const u = eff.thumbs[i]
+              return (
+                <div key={i} className={`vpt__mock-thumb ${u ? '' : 'is-empty'}`}>
+                  {u ? <img src={optimizeSrc(u, 400)} alt="" /> : <span>{i + 1}</span>}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="vpt__link">
@@ -217,22 +269,32 @@ function ProjectEditor({ project, ov, cards, linked, auto, saving, onPatch }) {
         </p>
       )}
 
-      <h3 className="vpt__h">תמונות קטנות מתחת להדמיה <small>עד {MAX_THUMBS}</small></h3>
-      <ImageManager
-        value={thumbs}
-        onChange={(arr) => onPatch({ thumbs: arr }, 'התמונות הקטנות נשמרו')}
-        folder="villas"
-        max={MAX_THUMBS}
-        allowRoundCorners={false}
-      />
-      {thumbs.length === 0 && (
-        <p className="cov__fallback">
-          בלי בחירה כאן מוצגות עד {MAX_THUMBS} התמונות הראשונות מגלריית הפרויקט המקושר.
-          {linked?.cover && (
-            <span className="vpt__auto"> תצוגה מקדימה של המקור: <img src={optimizeSrc(linked.cover, 120)} alt="" /></span>
-          )}
-        </p>
+      <div className="vpt__thumbs-head">
+        <h3 className="vpt__h">התמונות הקטנות מתחת להדמיה <small>עד {MAX_THUMBS}</small></h3>
+        {eff.isOwn && (
+          <button type="button" className="vpt__reset" disabled={saving} onClick={() => onPatch({ thumbs: [] }, 'חזרה לתמונות מגלריית הפרויקט')}>
+            חזרה לאוטומטי (מגלריית הפרויקט)
+          </button>
+        )}
+      </div>
+      {gallery === null ? (
+        <div className="adm-msg adm-msg--loading"><span className="adm-spin" />טוען את תמונות הפרויקט…</div>
+      ) : (
+        <ImageManager
+          value={eff.isOwn ? (Array.isArray(ov.thumbs) ? ov.thumbs : []) : eff.auto}
+          onChange={(arr) => onPatch({ thumbs: arr }, 'התמונות הקטנות נשמרו')}
+          folder="villas"
+          max={MAX_THUMBS}
+          allowRoundCorners={false}
+        />
       )}
+      <p className="cov__fallback">
+        {eff.isOwn
+          ? 'אלה התמונות שנבחרו לעמוד הזה. גררו לסידור, הסירו או הוסיפו.'
+          : (eff.auto.length
+            ? 'אלה התמונות שהעמוד מציג עכשיו, מגלריית הפרויקט המקושר. כל שינוי כאן (סידור, הסרה, הוספה) נשמר כבחירה לעמוד הזה בלבד, בלי לגעת בפרויקט עצמו.'
+            : 'לפרויקט המקושר אין תמונות בגלריה, ולכן העמוד לא מציג תמונות קטנות. הוסיפו כאן תמונות כדי שיופיעו.')}
+      </p>
     </>
   )
 }

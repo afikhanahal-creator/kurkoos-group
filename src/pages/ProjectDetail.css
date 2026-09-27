@@ -274,10 +274,14 @@
   max-height: min(70vh, 620px);
   object-fit: contain;
   object-position: center;
-  /* !important כדי שגם עיגול פינות ששמור ב-CMS לתמונה הזאת (--ri-rad-d/m,
-     שמוחל דרך .ri-img) לא יעגל את התמונה הראשית. הכלל הזה חייב לנצח בכל
-     עמוד פרויקט ובכל מכשיר, בלי תלות בערך שנשמר לתמונה. */
-  border-radius: 0 !important;
+  /* הפינות לפי הבחירה באדמין: הגדרת הפרויקט (--pd-hero-radius) קודמת,
+     אחריה העיגול ששמור לתמונה עצמה (--ri-rad-d/m דרך .ri-img), ובלי
+     בחירה: חדות. !important כדי לנצח את .ri-img בכל מכשיר. */
+  border-radius: var(--pd-hero-radius, var(--ri-rad-d, 0)) !important;
+}
+@media (max-width: 768px) {
+  .pd-banner__media-img .smart-image,
+  .pd-banner__media-img .smart-image-placeholder { border-radius: var(--pd-hero-radius, var(--ri-rad-m, 0)) !important; }
 }
 .pd-banner__play {
   position: absolute;

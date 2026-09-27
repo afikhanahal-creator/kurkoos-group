@@ -1,120 +1,106 @@
 /* ============================================================
-   באנר שיווקי בתחתית המסך. כרטיס כהה בצבעי המותג, תג אדום עם נקודה
-   פועמת, תמונת הפרויקט מימין, כפתור אדום משמאל ופס זמן דק בתחתית.
+   באנר שיווקי בתחתית המסך. עדין: רצועה לבנה נמוכה, מסגרת דקה, צל רך,
+   תמונה קטנה, תג אדום בהיר, כפתור כהה אחד ופס זמן דק ואפור.
    ============================================================ */
 .promo {
   position: fixed;
   inset-inline: 0;
-  inset-block-end: calc(1.2rem + var(--promo-lift, 0px));
+  inset-block-end: calc(1.1rem + var(--promo-lift, 0px));
   z-index: var(--z-modal, 1000);
   display: flex;
   justify-content: center;
   padding-inline: 1rem;
   pointer-events: none;
-  animation: promo-in .45s cubic-bezier(.2, .9, .3, 1.1) both;
+  animation: promo-in .5s cubic-bezier(.2, .8, .2, 1) both;
   transition: inset-block-end .25s ease;
 }
-.promo.is-leaving { animation: promo-out .3s ease-in both; }
+.promo.is-leaving { animation: promo-out .25s ease-in both; }
 
 .promo__card {
   pointer-events: auto;
   position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: 'media body cta';
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'media body cta close';
   align-items: center;
-  gap: 1.1rem;
-  width: min(100%, 860px);
-  padding: 1.1rem 1.2rem 1.15rem 1.3rem;
-  border-radius: 18px;
+  gap: 0.9rem;
+  width: min(100%, 760px);
+  padding: 0.7rem 0.8rem 0.7rem 0.9rem;
+  border-radius: 16px;
   color: var(--color-primary-900, #07293a);
-  /* כרטיס לבן, כדי שיבלוט גם על המקטעים הכהים של האתר וגם על הבהירים */
-  background: #fff;
-  border: 1px solid rgba(169, 11, 12, 0.22);
-  border-top: 5px solid var(--color-accent-500, #a90b0c);
-  box-shadow:
-    0 0 0 6px rgba(255, 255, 255, 0.55),
-    0 32px 70px -24px rgba(0, 0, 0, 0.65),
-    0 12px 28px -12px rgba(169, 11, 12, 0.35);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(7, 41, 58, 0.1);
+  box-shadow: 0 18px 44px -18px rgba(7, 41, 58, 0.35), 0 2px 6px rgba(7, 41, 58, 0.06);
   overflow: hidden;
 }
-/* הצללה רכה מאחורי הבאנר, כדי שייפרד מהתוכן שמתחתיו */
-.promo::before {
-  content: ''; position: absolute; inset-inline: 0; inset-block-end: -1.2rem; height: 220px;
-  background: linear-gradient(180deg, transparent, rgba(7, 41, 58, 0.45));
-  pointer-events: none; z-index: -1;
-}
+.promo__card:not(:has(.promo__media)) { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'body cta close'; }
 
 .promo__close {
-  position: absolute; inset-block-start: 0.7rem; inset-inline-start: 0.7rem;
-  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-  border: 1px solid rgba(7, 41, 58, 0.14); background: #f3f6f8; color: var(--color-primary-900, #07293a); cursor: pointer;
-  transition: background .15s, border-color .15s;
+  grid-area: close;
+  position: static;
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  border: 0; background: transparent; color: var(--color-text-muted, #5a6a7a); cursor: pointer;
+  transition: background .15s, color .15s;
 }
-.promo__close:hover { background: #e6edf2; border-color: rgba(7, 41, 58, 0.3); }
+.promo__close:hover { background: rgba(7, 41, 58, 0.06); color: var(--color-primary-900, #07293a); }
 
 .promo__media {
   grid-area: media;
-  display: block; width: 116px; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden;
-  background: #eef2f5; box-shadow: 0 10px 22px -10px rgba(7, 41, 58, 0.45); border: 1px solid rgba(7, 41, 58, 0.08);
+  display: block; width: 64px; height: 64px; border-radius: 12px; overflow: hidden;
+  background: #eef2f5;
 }
-.promo__media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
-.promo__card:hover .promo__media img { transform: scale(1.05); }
+.promo__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.promo__body { grid-area: body; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.promo__body { grid-area: body; display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .promo__badge {
-  display: inline-flex; align-items: center; gap: 0.4rem; width: fit-content;
-  margin-bottom: 0.3rem; padding: 0.25rem 0.7rem; border-radius: 999px;
-  background: var(--color-accent-500, #a90b0c); color: #fff;
-  font-family: var(--font-heading); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.04em;
+  display: inline-flex; align-items: center; gap: 0.35rem; width: fit-content;
+  margin-bottom: 0.2rem; padding: 0.15rem 0.55rem; border-radius: 999px;
+  background: rgba(169, 11, 12, 0.08); color: var(--color-accent-500, #a90b0c);
+  font-family: var(--font-heading); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.03em;
 }
-.promo__badge i {
-  width: 7px; height: 7px; border-radius: 50%; background: #fff;
-  animation: promo-pulse 1.4s ease-in-out infinite;
+.promo__badge i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: promo-pulse 1.6s ease-in-out infinite; }
+.promo__title { font-family: var(--font-heading); font-weight: 800; font-size: 1.02rem; line-height: 1.25; color: var(--color-primary-900, #07293a); }
+.promo__project { font-weight: 600; font-size: 0.88rem; color: var(--color-text-muted, #5a6a7a); }
+.promo__text { display: none; }
+
+.promo__cta {
+  grid-area: cta; justify-self: end; white-space: nowrap; gap: 0.4rem;
+  min-height: 42px; padding-inline: 1.1rem; font-size: 0.92rem;
+  background: var(--color-primary-900, #07293a); border-color: var(--color-primary-900, #07293a); color: #fff; box-shadow: none;
 }
-.promo__title { font-family: var(--font-heading); font-weight: 900; font-size: clamp(1.15rem, 2vw, 1.45rem); line-height: 1.15; color: var(--color-primary-900, #07293a); }
-.promo__project { font-weight: 800; font-size: 1rem; color: var(--color-secondary, #16688c); }
-.promo__text { font-size: 0.86rem; color: var(--color-text-muted, #5a6a7a); line-height: 1.45; }
+.promo__cta:hover { background: #0f4c6e; border-color: #0f4c6e; color: #fff; }
 
-.promo__cta { grid-area: cta; justify-self: end; white-space: nowrap; gap: 0.45rem; min-height: 48px; padding-inline: 1.4rem; box-shadow: 0 12px 26px -10px rgba(169, 11, 12, 0.7); font-size: 1.02rem; animation: promo-nudge 2.4s ease-in-out 1.2s 2; }
-
-/* בלי תמונה (לפני שנטענה, או כשאין) עמודת התמונה נעלמת */
-.promo__card:not(:has(.promo__media)) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'body cta'; }
-
-/* פס הזמן: מתרוקן מימין לשמאל, נעצר במעבר עכבר */
+/* פס הזמן: אפור בהיר, מתרוקן מימין לשמאל, נעצר במעבר עכבר */
 .promo__timer {
-  position: absolute; inset-block-end: 0; inset-inline-start: 0; height: 3px; width: 100%;
-  background: linear-gradient(90deg, #e04a4b, var(--color-accent-500, #a90b0c));
+  position: absolute; inset-block-end: 0; inset-inline-start: 0; height: 2px; width: 100%;
+  background: rgba(7, 41, 58, 0.18);
   transform-origin: right center;
   animation: promo-timer linear forwards;
 }
 .promo.is-paused .promo__timer { animation-play-state: paused; }
 
-@keyframes promo-in { from { transform: translateY(120%); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes promo-out { to { transform: translateY(120%); opacity: 0; } }
+@keyframes promo-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes promo-out { to { transform: translateY(24px); opacity: 0; } }
 @keyframes promo-timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-@keyframes promo-nudge { 0%, 100% { transform: none; } 50% { transform: translateY(-3px) scale(1.03); } }
-@keyframes promo-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
+@keyframes promo-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 @media (max-width: 720px) {
   /* במובייל הבאנר יושב מעל כפתורי הוואטסאפ והנגישות הצפים, לא עליהם */
   .promo { padding-inline: 0.75rem; inset-block-end: calc(5.4rem + var(--promo-lift, 0px)); }
   .promo__card {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: 'media body' 'cta cta';
-    gap: 0.8rem 0.9rem;
-    padding: 0.9rem 0.9rem 0.95rem;
-    border-radius: 16px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'media body close' 'cta cta cta';
+    gap: 0.6rem 0.75rem;
+    padding: 0.75rem 0.8rem 0.85rem;
   }
-  .promo__media { width: 84px; }
-  .promo__card:not(:has(.promo__media)) { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'body' 'cta'; }
-  .promo__body { padding-inline-start: 1.6rem; }
-  .promo__cta { width: 100%; justify-self: stretch; justify-content: center; }
-  .promo__text { display: none; }
-  .promo__close { inset-block-start: 0.5rem; inset-inline-start: 0.5rem; }
+  .promo__card:not(:has(.promo__media)) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'body close' 'cta cta'; }
+  .promo__media { width: 56px; height: 56px; }
+  .promo__close { align-self: start; }
+  .promo__cta { justify-self: stretch; width: 100%; justify-content: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .promo, .promo.is-leaving { animation: none; }
-  .promo__badge i, .promo__cta { animation: none; }
+  .promo__badge i { animation: none; }
 }

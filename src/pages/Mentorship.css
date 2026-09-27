@@ -92,6 +92,10 @@
 
 .mentor-intro__stat { text-align: center; }
 
+/* כפתור קביעת פגישה מתחת למספרים */
+.mentor-intro__cta { margin-top: 1.8rem; display: flex; }
+.mentor-intro__btn { gap: 0.5rem; white-space: nowrap; }
+
 .mentor-intro__stat-num {
   display: block;
   font-family: var(--font-heading);
@@ -187,6 +191,8 @@
   .mentor-intro__stat:not(:last-child) {
     border-inline-end: 1px solid var(--color-border);
   }
+  .mentor-intro__cta { justify-content: center; }
+  .mentor-intro__btn { width: 100%; max-width: 420px; justify-content: center; }
 }
 
 /* ================================================================

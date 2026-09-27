@@ -71,7 +71,7 @@ export const GALLERY_CORNERS = [
    עיגול פינות בקובץ. נדרש בגלריית הפרויקט, כי התמונה הראשונה בה היא
    התמונה הראשית של עמוד הפרויקט, וכל תמונה יכולה להפוך לראשונה בלחיצה
    על "קבע ככריכה". עיגול שנצרב בקובץ לא ניתן לביטול מה-CSS של האתר. */
-export default function ImageManager({ value = [], onChange, folder = 'general', max = 20, corners = null, onCornersChange = null, allowRoundCorners = true }) {
+export default function ImageManager({ value = [], onChange, folder = 'general', max = 20, corners = null, onCornersChange = null, heroCorners = null, onHeroCornersChange = null, allowRoundCorners = true }) {
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState(null)  // { done, total } בזמן העלאה מרובה
@@ -180,6 +180,13 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
             ))}
           </div>
         )}
+        {onHeroCornersChange && (
+          <div className="im__corners" role="group" aria-label="פינות התמונה הראשית">
+            <span className="im__corners-lbl">תמונה ראשית:</span>
+            <button type="button" className={`im__corner ${!(Number(heroCorners) > 0) ? 'is-active' : ''}`} onClick={() => onHeroCornersChange(0)}>חדות</button>
+            <button type="button" className={`im__corner ${Number(heroCorners) > 0 ? 'is-active' : ''}`} onClick={() => onHeroCornersChange(Number(heroCorners) > 0 ? Number(heroCorners) : 18)}>מעוגלות</button>
+          </div>
+        )}
         <button type="button" className="btn btn--primary im__add" disabled={busy || value.length >= max} onClick={() => inputRef.current?.click()}>
           {busy ? (progress ? `מעלה ${progress.done}/${progress.total}…` : 'מעלה…') : '+ הוסף תמונות'}
         </button>
@@ -222,7 +229,23 @@ export default function ImageManager({ value = [], onChange, folder = 'general',
         </SortableContext>
       </DndContext>
       {over && <div className="im__overlay" aria-hidden="true"><span>שחררו כדי להעלות</span></div>}
-      {editing && <ImageEditor src={editing} busy={busy} allowRoundCorners={allowRoundCorners} onApply={applyEdit} onClose={() => setEditing(null)} />}
+      {editing && (
+        <ImageEditor
+          src={editing}
+          busy={busy}
+          allowRoundCorners={allowRoundCorners}
+          /* גלריית פרויקט: הפינות נבחרות כאן ומוחלות באתר, לא נצרבות בקובץ */
+          siteCorners={!allowRoundCorners && onCornersChange ? {
+            isHero: value[0] === editing,
+            hero: Number(heroCorners ?? 0),
+            gallery: corners ?? 18,
+            onHero: onHeroCornersChange,
+            onGallery: onCornersChange,
+          } : null}
+          onApply={applyEdit}
+          onClose={() => setEditing(null)}
+        />
+      )}
       {preview && <ImgPreview url={preview} onClose={() => setPreview(null)} />}
     </div>
   )

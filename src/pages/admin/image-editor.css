@@ -66,16 +66,41 @@
   position: relative; flex: 1; min-height: 0; width: 100%;
   display: grid; place-items: center;
 }
-.imed__canvas {
-  width: 100%; height: auto; max-height: 100%; object-fit: contain;
-  cursor: grab; touch-action: none; border-radius: 8px;
+/* המסגרת עוטפת את הקנבס: היא שמקבלת את עיגול הפינות לתצוגה (לא נצרב)
+   ואת רשת השלישים */
+.imed__frame {
+  position: relative; width: 100%; max-height: 100%; overflow: hidden; border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   /* שתי-וערב — כך רואים בדיוק אילו אזורים שקופים */
   background:
     conic-gradient(#252e3a 0 25%, #2e3947 0 50%, #252e3a 0 75%, #2e3947 0) 0 0 / 18px 18px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  transition: border-radius .15s;
 }
+.imed__canvas {
+  width: 100%; height: 100%; display: block; object-fit: contain;
+  cursor: grab; touch-action: none;
+}
+.imed__grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to right, transparent calc(33.33% - 0.5px), rgba(255,255,255,0.45) calc(33.33% - 0.5px), rgba(255,255,255,0.45) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px)),
+    linear-gradient(to right, transparent calc(66.66% - 0.5px), rgba(255,255,255,0.45) calc(66.66% - 0.5px), rgba(255,255,255,0.45) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(33.33% - 0.5px), rgba(255,255,255,0.45) calc(33.33% - 0.5px), rgba(255,255,255,0.45) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(66.66% - 0.5px), rgba(255,255,255,0.45) calc(66.66% - 0.5px), rgba(255,255,255,0.45) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px));
+}
+.imed__stagebtns { display: inline-flex; gap: 0.3rem; }
+.imed__stagebtns button {
+  height: 28px; padding: 0 0.6rem; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.07); color: #e2e8f0;
+  font: inherit; font-size: 0.74rem; font-weight: 700; transition: background 0.15s;
+}
+.imed__stagebtns button:hover { background: rgba(255, 255, 255, 0.16); }
+.imed__stagebtns button.is-active { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+.imed__sub { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.7rem 0.75rem; border: 1px solid #e3e7ee; border-radius: 10px; background: #f8fafc; }
+.imed__sub-lbl { font-size: 0.78rem; font-weight: 800; color: #0a2540; }
+.imed__seg.imed__seg--2 { grid-template-columns: repeat(2, 1fr); }
 .imed__canvas:active { cursor: grabbing; }
-.imed__canvas.is-compare { outline: 2px dashed #0ea5e9; outline-offset: 3px; }
+.imed__frame:has(.is-compare) { outline: 2px dashed #0ea5e9; outline-offset: 3px; }
 .imed__loading {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
   color: #94a3b8; font-size: 0.88rem;
@@ -97,7 +122,7 @@
 }
 .imed__step:hover { background: rgba(255, 255, 255, 0.16); }
 .imed__zoom-val { font-size: 0.8rem; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
-.imed__hint { font-size: 0.7rem; color: #7d8b9d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.imed__hint { font-size: 0.7rem; color: #7d8b9d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
 /* ---- פאנל ---- */
 .imed__panel { display: flex; flex-direction: column; min-height: 0; background: #fff; border-inline-start: 1px solid #e3e7ee; }

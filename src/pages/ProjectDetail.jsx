@@ -289,6 +289,11 @@ export default function ProjectDetail() {
   if (typeof galleryCornersMap === 'string') { try { galleryCornersMap = JSON.parse(galleryCornersMap) } catch { galleryCornersMap = null } }
   const galleryRadius = (galleryCornersMap && typeof galleryCornersMap === 'object' && galleryCornersMap[slug] != null)
     ? Number(galleryCornersMap[slug]) : 18
+  // פינות התמונה הראשית, נבחרות באדמין (גלריית הפרויקט או העורך). null = לפי התמונה עצמה
+  let heroCornersMap = settings.project_hero_corners
+  if (typeof heroCornersMap === 'string') { try { heroCornersMap = JSON.parse(heroCornersMap) } catch { heroCornersMap = null } }
+  const heroRadius = (heroCornersMap && typeof heroCornersMap === 'object' && heroCornersMap[slug] != null)
+    ? Number(heroCornersMap[slug]) : null
   const flatGallery = projCover
     ? [projCover, ...(project.gallery?.length ? project.gallery : [])]
     : (project.gallery?.length ? project.gallery : [project.cover])
@@ -600,7 +605,7 @@ export default function ProjectDetail() {
               <div className="pd-banner__media">
                 {/* בלי Parallax: אפקט התזוזה דורש תמונה חתוכה עם שוליים נסתרים,
                     וכאן התמונה הראשית מוצגת במלואה, בלי חיתוך */}
-                <div className="pd-banner__media-img">
+                <div className="pd-banner__media-img" style={heroRadius != null ? { '--pd-hero-radius': `${heroRadius}px` } : undefined}>
                   <SmartImage
                     key={bannerSlide}
                     src={flatGallery[Math.min(bannerSlide, flatGallery.length - 1)]}

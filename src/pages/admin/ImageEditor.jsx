@@ -75,10 +75,19 @@ function Slider({ label, min, max, step = 1, value, onChange, display }) {
   )
 }
 
-/* allowRoundCorners=false: אין אפשרות לעגל פינות, והרדיוס נעול על אפס.
-   משמש לתמונה הראשית של פרויקט: עיגול כאן נצרב בקובץ עצמו ולא ניתן
-   לביטול מה-CSS של האתר, וההחלטה היא שהתמונה הראשית תמיד חדה. */
-export default function ImageEditor({ src, onApply, onClose, busy = false, aspect = null, allowRoundCorners = true }) {
+/* מצבי פינות:
+   burn    — העיגול נצרב בקובץ (ברירת המחדל, ללוגואים ותמונות חופשיות).
+   display — הבחירה נשמרת עם התמונה ומוחלת באתר ב-CSS, לא בקובץ. הפיקסלים
+             חוזרים דרך onApply(blob, { displayRadius }). אפשר לשנות בכל רגע.
+   site    — לתמונות גלריית פרויקט: הפינות של התמונה הראשית ושל שאר הגלריה
+             נשמרות כהגדרת פרויקט ומוחלות באתר. נשמרות מיד, בלי "החל ושמור".
+   none    — בלי בקרת פינות.
+   allowRoundCorners=false (ישן) ממופה ל-site כשיש siteCorners, אחרת ל-none. */
+export default function ImageEditor({
+  src, onApply, onClose, busy = false, aspect = null, allowRoundCorners = true,
+  cornersMode: cornersModeProp = null, displayRadius: displayRadiusProp = 0, siteCorners = null,
+}) {
+  const cornersMode = cornersModeProp || (allowRoundCorners ? 'burn' : (siteCorners ? 'site' : 'none'))
   const canvasRef = useRef(null)
   const stageRef = useRef(null)
   const imgRef = useRef(null)
@@ -109,12 +118,24 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
   const [f, setF] = useState(NEUTRAL_F)
   const [tint, setTint] = useState({ color: '#105572', alpha: 0, blend: 'multiply' })
   const [bg, setBg] = useState({ remove: false, threshold: 238 })
-  const [radius, setRadius] = useState(0)
+  const [radius, setRadius] = useState(0)                         // צריבה בקובץ (מצב burn)
+  const [displayRadius, setDisplayRadius] = useState(Number(displayRadiusProp) || 0)  // מצב display
+  const [grid, setGrid] = useState(false)                          // רשת שלישים על הבמה
   const activePreset = useMemo(() => PRESETS.find((p) => sameF(p.f, f))?.id || 'custom', [f])
 
-  /* Esc לסגירה + נעילת גלילת הרקע (עם פיצוי סקרולבר נגד "קפיצה") */
+  /* Esc לסגירה, חצים להזזה עדינה (Shift = צעד גדול), ונעילת גלילת הרקע
+     (עם פיצוי סקרולבר נגד "קפיצה") */
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
+    const onKey = (e) => {
+      if (e.key === 'Escape') { onClose?.(); return }
+      const tag = (e.target?.tagName || '').toLowerCase()
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return
+      const step = e.shiftKey ? 10 : 1
+      const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key]
+      if (!d) return
+      e.preventDefault()
+      setT((p) => ({ ...p, x: p.x + d[0], y: p.y + d[1] }))
+    }
     window.addEventListener('keydown', onKey)
     const sbw = window.innerWidth - document.documentElement.clientWidth
     const prevOverflow = document.body.style.overflow
@@ -176,7 +197,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
       ctx.fillRect(0, 0, w, h)
       ctx.restore()
     }
-    if (!neutral && allowRoundCorners && radius > 0) {
+    if (!neutral && cornersMode === 'burn' && radius > 0) {
       const r = radius * Math.min(w, h)
       ctx.save()
       ctx.globalCompositeOperation = 'destination-in'
@@ -185,7 +206,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
       ctx.fill()
       ctx.restore()
     }
-  }, [filterStr, t, bg, tint, radius, allowRoundCorners, FRAME_W, FRAME_H])
+  }, [filterStr, t, bg, tint, radius, cornersMode, FRAME_W, FRAME_H])
 
   useEffect(() => { if (ready) draw(canvasRef.current, 1, { neutral: compare }) }, [draw, ready, ver, compare])
 
@@ -241,6 +262,7 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
     setTint({ color: '#105572', alpha: 0, blend: 'multiply' })
     setBg({ remove: false, threshold: 238 })
     setRadius(0)
+    setDisplayRadius(Number(displayRadiusProp) || 0)
   }
 
   /* ייצוא: הצד הארוך = רזולוציית המקור (תקרה 4096, רצפה 1280) */
@@ -270,10 +292,30 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
     } catch { return c }
   }
 
+  /* "התאמה": כל התמונה בתוך המסגרת (שוליים שקופים נחתכים בשמירה).
+     "מילוי": חזרה למילוי מלא של המסגרת. שניהם ממרכזים. */
+  const fitWhole = () => {
+    const img = imgRef.current
+    if (!img) return
+    const ar = img.width / img.height
+    const coverW = ar >= FRAME_W / FRAME_H ? FRAME_H * ar : FRAME_W
+    const coverH = ar >= FRAME_W / FRAME_H ? FRAME_H : FRAME_W / ar
+    const k = Math.min(FRAME_W / coverW, FRAME_H / coverH)
+    setT((p) => ({ ...p, scale: Math.round(k * 100) / 100, x: 0, y: 0 }))
+  }
+  const fillFrame = () => setT((p) => ({ ...p, scale: 1, x: 0, y: 0 }))
+
+  // הרדיוס שמוצג על הבמה (לא נצרב): לפי מצב הפינות
+  const previewRadius = cornersMode === 'display'
+    ? displayRadius
+    : cornersMode === 'site'
+      ? (siteCorners?.isHero ? (siteCorners.hero || 0) : (siteCorners.gallery ?? 18))
+      : 0
+
   const apply = () => {
     try {
       const c = trimTransparentEdges((() => { const cv = document.createElement('canvas'); draw(cv, exportK); return cv })())
-      c.toBlob((blob) => { if (blob) onApply(blob); else setErr('הייצוא נכשל') }, 'image/webp', 0.95)
+      c.toBlob((blob) => { if (blob) onApply(blob, { displayRadius }); else setErr('הייצוא נכשל') }, 'image/webp', 0.95)
     } catch { setErr('הייצוא נכשל (ייתכן שמקור התמונה חוסם עריכה)') }
   }
 
@@ -319,13 +361,15 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
               {err
                 ? <div className="imed__err">{err}</div>
                 : (
-                  <canvas
-                    ref={canvasRef}
-                    className={`imed__canvas ${compare ? 'is-compare' : ''}`}
-                    style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}`, maxWidth: FRAME_W }}
-                    onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
-                    onDoubleClick={() => setT((p) => ({ ...p, x: 0, y: 0 }))}
-                  />
+                  <div className="imed__frame" style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}`, maxWidth: FRAME_W, borderRadius: previewRadius ? `${previewRadius}px` : undefined }}>
+                    <canvas
+                      ref={canvasRef}
+                      className={`imed__canvas ${compare ? 'is-compare' : ''}`}
+                      onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+                      onDoubleClick={() => setT((p) => ({ ...p, x: 0, y: 0 }))}
+                    />
+                    {grid && <div className="imed__grid" aria-hidden="true" />}
+                  </div>
                 )}
               {!ready && !err && <div className="imed__loading"><span className="imed__spin" />טוען תמונה…</div>}
             </div>
@@ -335,8 +379,13 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
               <input type="range" min="0.2" max="5" step="0.01" value={t.scale} onChange={(e) => setT((p) => ({ ...p, scale: Number(e.target.value) }))} aria-label="זום" />
               <button type="button" className="imed__step" onClick={() => bumpScale(0.1)} aria-label="הגדלה">+</button>
               <b className="imed__zoom-val">{Math.round(t.scale * 100)}%</b>
-              <span className="imed__hint">גרירה להזזה · גלגלת לזום · לחיצה כפולה למרכוז</span>
+              <div className="imed__stagebtns">
+                <button type="button" onClick={fitWhole} title="כל התמונה בתוך המסגרת">התאמה</button>
+                <button type="button" onClick={fillFrame} title="מילוי המסגרת">מילוי</button>
+                <button type="button" className={grid ? 'is-active' : ''} onClick={() => setGrid((g) => !g)} title="רשת שלישים לקומפוזיציה">רשת</button>
+              </div>
             </div>
+            <span className="imed__hint">גרירה או חצים להזזה · גלגלת לזום · לחיצה כפולה למרכוז · החזקת "לפני / אחרי" מציגה את המקור</span>
           </div>
 
           {/* ==== פאנל ==== */}
@@ -364,23 +413,60 @@ export default function ImageEditor({ src, onApply, onClose, busy = false, aspec
                     <Slider label="סיבוב עדין" min={-45} max={45} value={t.rot > 180 ? t.rot - 360 : t.rot} display={`${t.rot}°`} onChange={(e) => setT((p) => ({ ...p, rot: Number(e.target.value) }))} />
                   </section>
 
-                  {allowRoundCorners ? (
+                  {cornersMode === 'burn' && (
                     <section className="imed__group">
                       <h4>פינות</h4>
                       <div className="imed__seg">
-                        <button type="button" className={radius === 0 ? 'is-active' : ''} onClick={() => setRadius(0)}>רגילות</button>
+                        <button type="button" className={radius === 0 ? 'is-active' : ''} onClick={() => setRadius(0)}>חדות</button>
                         <button type="button" className={radius > 0 && radius < 0.5 ? 'is-active' : ''} onClick={() => setRadius((r) => (r > 0 && r < 0.5 ? r : 0.12))}>מעוגלות</button>
                         <button type="button" className={radius >= 0.5 ? 'is-active' : ''} onClick={() => setRadius(0.5)}>עיגול מלא</button>
                       </div>
                       {radius > 0 && radius < 0.5 && (
                         <Slider label="עוצמת עיגול" min={0.02} max={0.4} step={0.01} value={radius} display={`${Math.round(radius * 100)}%`} onChange={(e) => setRadius(Number(e.target.value))} />
                       )}
-                      <p className="imed__note imed__note--soft">שימו לב: האתר מעגל פינות אוטומטית בכרטיסים ובגלריות — עיגול כאן נצרב בקובץ עצמו.</p>
+                      <p className="imed__note imed__note--soft">העיגול כאן נצרב בקובץ עצמו. האתר מעגל פינות אוטומטית בכרטיסים ובגלריות.</p>
                     </section>
-                  ) : (
+                  )}
+
+                  {cornersMode === 'display' && (
                     <section className="imed__group">
                       <h4>פינות</h4>
-                      <p className="imed__note imed__note--soft">התמונה הראשית של פרויקט נשמרת תמיד עם פינות חדות. עיגול היה נצרב בקובץ עצמו ולא ניתן היה לבטל אותו באתר.</p>
+                      <div className="imed__seg imed__seg--2">
+                        <button type="button" className={displayRadius === 0 ? 'is-active' : ''} onClick={() => setDisplayRadius(0)}>חדות</button>
+                        <button type="button" className={displayRadius > 0 ? 'is-active' : ''} onClick={() => setDisplayRadius((r) => (r > 0 ? r : 16))}>מעוגלות</button>
+                      </div>
+                      {displayRadius > 0 && (
+                        <Slider label="עוצמת עיגול" min={2} max={48} step={1} value={displayRadius} display={`${displayRadius}px`} onChange={(e) => setDisplayRadius(Number(e.target.value))} />
+                      )}
+                      <p className="imed__note imed__note--soft">העיגול מוחל באתר ולא נצרב בקובץ, ולכן אפשר לשנות אותו בכל רגע בלי להעלות תמונה מחדש.</p>
+                    </section>
+                  )}
+
+                  {cornersMode === 'site' && siteCorners && (
+                    <section className="imed__group">
+                      <h4>פינות</h4>
+                      <p className="imed__note">
+                        {siteCorners.isHero ? 'זו התמונה הראשית של עמוד הפרויקט.' : 'התמונה הזאת מוצגת בגלריה "מבט מקרוב".'}
+                        {' '}הבחירה נשמרת מיד ומוחלת באתר, לא נצרבת בקובץ.
+                      </p>
+                      <div className="imed__sub">
+                        <span className="imed__sub-lbl">התמונה הראשית</span>
+                        <div className="imed__seg imed__seg--2">
+                          <button type="button" className={!(siteCorners.hero > 0) ? 'is-active' : ''} onClick={() => siteCorners.onHero?.(0)}>חדות</button>
+                          <button type="button" className={siteCorners.hero > 0 ? 'is-active' : ''} onClick={() => siteCorners.onHero?.(siteCorners.hero > 0 ? siteCorners.hero : 18)}>מעוגלות</button>
+                        </div>
+                        {siteCorners.hero > 0 && (
+                          <Slider label="עוצמת עיגול" min={2} max={48} step={1} value={siteCorners.hero} display={`${siteCorners.hero}px`} onChange={(e) => siteCorners.onHero?.(Number(e.target.value))} />
+                        )}
+                      </div>
+                      <div className="imed__sub">
+                        <span className="imed__sub-lbl">שאר תמונות הגלריה</span>
+                        <div className="imed__seg">
+                          {[[0, 'חדות'], [18, 'מעוגלות'], [30, 'מעוגלות מאוד']].map(([v, t2]) => (
+                            <button key={v} type="button" className={Number(siteCorners.gallery ?? 18) === v ? 'is-active' : ''} onClick={() => siteCorners.onGallery?.(v)}>{t2}</button>
+                          ))}
+                        </div>
+                      </div>
                     </section>
                   )}
                 </>

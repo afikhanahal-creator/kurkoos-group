@@ -171,6 +171,35 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
     return () => { on = false }
   }, [gallerySlug])
 
+  // פינות התמונה הראשית של עמוד הפרויקט, הגדרה לכל פרויקט (project_hero_corners).
+  // נבחרת בגלריה או בעורך, ומוחלת באתר ב-CSS, לא נצרבת בקובץ.
+  const [heroCorners, setHeroCorners] = useState(null)
+  useEffect(() => {
+    if (!gallerySlug) { setHeroCorners(null); return }
+    let on = true
+    fetchSettings()
+      .then((s) => {
+        if (!on) return
+        let map = {}
+        try { map = s.project_hero_corners ? (typeof s.project_hero_corners === 'string' ? JSON.parse(s.project_hero_corners) : s.project_hero_corners) : {} } catch { map = {} }
+        setHeroCorners(map[gallerySlug] ?? null)
+      })
+      .catch(() => {})
+    return () => { on = false }
+  }, [gallerySlug])
+  const saveHeroCorners = (v) => {
+    setHeroCorners(v)
+    if (!gallerySlug) return
+    fetchSettings().then((s) => {
+      let map = {}
+      try { map = s.project_hero_corners ? (typeof s.project_hero_corners === 'string' ? JSON.parse(s.project_hero_corners) : s.project_hero_corners) : {} } catch { map = {} }
+      map[gallerySlug] = v
+      setSetting('project_hero_corners', JSON.stringify(map))
+        .then(() => toast.success(v > 0 ? 'התמונה הראשית תוצג עם פינות מעוגלות' : 'התמונה הראשית תוצג עם פינות חדות'))
+        .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
+    })
+  }
+
   const saveGalleryCorners = (v) => {
     setGalleryCorners(v)
     if (!gallerySlug) return
@@ -572,6 +601,8 @@ export default function Editor({ schema, record, onSave, folder = 'general', cov
         max={20}
         corners={galleryCorners}
         onCornersChange={gallerySlug ? saveGalleryCorners : null}
+        heroCorners={heroCorners}
+        onHeroCornersChange={gallerySlug ? saveHeroCorners : null}
         allowRoundCorners={false}
       />
     </fieldset>

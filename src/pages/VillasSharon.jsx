@@ -10,6 +10,7 @@ import Contact from '../components/sections/Contact.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { listProjectCards, cmsRowToCard, getProjectBySlug } from '../lib/cms.js'
 import { srcOfResponsive, optimizeSrc } from '../lib/responsiveImage.js'
+import { BUYER_FAQS } from '../data/buyerFaqs.js'
 import site from '../data/site.js'
 import { track } from '../lib/track.js'
 import './SharonHub.css'
@@ -118,7 +119,7 @@ const TRAITS = [
   { icon: 'handshake', title: 'מגרש בבעלות פרטית', desc: 'בהנרייטה סאלד כל יחידה מקבלת מגרש של 380 מ"ר הרשום בטאבו כבעלות פרטית, עם כניסה מאובטחת לדיירי המתחם בלבד.' },
 ]
 
-const FAQS = [
+const BASE_FAQS = [
   {
     q: 'איזו חברה בונה וילות ובתים פרטיים באזור השרון?',
     a: 'קורקוס גרופ, שמשרדה ברחוב הנגר 24 בהוד השרון, בונה וילות ובתים פרטיים בהוד השרון ובאזור המרכז. כיום הקבוצה מקימה את יורדי הים 3 בשכונת גרינברג, שתי וילות פרטיות על חצי דונם כל אחת עם בריכת שחייה 4x9 מטר, ואת הנרייטה סאלד 22-24 במערב הוד השרון, ארבע יחידות דו משפחתיות לשמונה משפחות עם בריכה פרטית לכל יחידה. הביצוע נעשה על ידי ראיתה, זרוע הביצוע של הקבוצה, והפיקוח על ידי שכינתא.',
@@ -148,6 +149,9 @@ const FAQS = [
     a: 'משאירים פנייה בטופס בעמוד הזה, או מתקשרים ל-055-981-1814. נחזור אליכם, נשמע מה מתאים לכם ונתאם סיור או פגישה על אחד הפרויקטים.',
   },
 ]
+
+/* השאלות על הפרויקטים, ואחריהן שאלות הרוכשים מניתוח ביקורות המתחרים */
+const FAQS = [...BASE_FAQS, ...BUYER_FAQS]
 
 export default function VillasSharon() {
   const [open, setOpen] = useState(PROJECTS[0].slug)

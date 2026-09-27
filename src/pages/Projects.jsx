@@ -24,6 +24,7 @@ function mapRows(rows) {
     card_layout: p.card_layout,
   }))
 }
+import BuyerFaq from '../components/ui/BuyerFaq.jsx'
 
 export default function Projects() {
   const { t } = useI18n()
@@ -77,6 +78,7 @@ export default function Projects() {
         description='הפרויקטים של קורקוס גרופ בהוד השרון ובאזור המרכז: בנייה למגורים, וילות ובתים פרטיים, ופרויקטים בליווי ובפיקוח הקבוצה, מקרקע ועד מסירת מפתח.'
       />
       <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
+      <BuyerFaq />
     </>
   )
 }

@@ -14,6 +14,7 @@ import VideoModal from '../components/ui/VideoModal.jsx'
 import PlanAccordion from '../components/ui/PlanAccordion.jsx'
 import Lightbox from '../components/ui/Lightbox.jsx'
 import PropertyMap from '../components/ui/PropertyMap.jsx'
+import BuyerFaq from '../components/ui/BuyerFaq.jsx'
 import BookingCalendar from '../components/ui/BookingCalendar.jsx'
 import StatCube from '../components/ui/StatCube.jsx'
 import Seo from '../components/ui/Seo.jsx'
@@ -970,6 +971,9 @@ export default function ProjectDetail() {
           </div>
         </section>
       )}
+
+      {/* ===== שאלות רוכשים, מיד לפני טופס הפגישה: עונות על החששות ברגע ההתלבטות ===== */}
+      <BuyerFaq soft={false} />
 
       {/* ===== לתיאום פגישה — פאנל דו-טורי עם טופס ===== */}
       {show('contact') && (

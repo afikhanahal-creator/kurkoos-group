@@ -2594,3 +2594,76 @@
   transition: background .15s;
 }
 .adm-lead__review:hover { background: #1fb856; }
+
+/* ============================================================
+   חלון עריכת ליד: באמצע המסך ולא כמגירה בצד.
+   מגירה צרה בצד השמאלי דחסה את השלבים לנקודות וטקסט זעיר, וכל
+   החלון היה רחוק מהעין. עכשיו זה חלון ממורכז ורחב, השלבים הם
+   כפתורים של ממש עם תווית קריאה, ופעולות הקשר הן כפתורים גדולים
+   באותו גודל, בשורה אחת.
+   ============================================================ */
+.adm-leads__modal { justify-items: center; align-items: center; padding: clamp(0.75rem, 3vw, 2rem); }
+.adm-leads__panel {
+  max-width: 46rem; height: auto; max-height: min(92vh, 900px);
+  border-radius: 18px; box-shadow: 0 30px 80px -20px rgba(7,41,58,0.45);
+  animation: adm-modal-in .2s cubic-bezier(.2,0,0,1);
+}
+@keyframes adm-modal-in { from { transform: translateY(10px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.adm-leads__panel-head { padding: 1.05rem 1.4rem; }
+.adm-leads__panel-close { width: 38px; height: 38px; font-size: 1rem; border-radius: 10px; }
+
+/* שלבים: כפתורים ברורים, גלויים תמיד, שלב פעיל מלא בצבע שלו */
+.adm-leads__panel .adm-pipeline {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.45rem;
+  padding: 0.9rem 1.4rem; overflow: visible;
+}
+.adm-leads__panel .adm-pipeline__step {
+  flex-direction: row; justify-content: center; gap: 0.45rem;
+  max-width: none; min-width: 0; min-height: 44px; padding: 0.55rem 0.7rem;
+  opacity: 1; border: 1.5px solid var(--adm-border-strong); border-radius: 11px;
+  background: var(--adm-surface);
+}
+.adm-leads__panel .adm-pipeline__lbl { font-size: 0.88rem; font-weight: 700; color: var(--adm-ink); }
+.adm-leads__panel .adm-pipeline__dot { width: 10px; height: 10px; background: var(--c, #16688c); opacity: 0.55; }
+.adm-leads__panel .adm-pipeline__step:hover { border-color: var(--c); background: color-mix(in srgb, var(--c) 6%, var(--adm-surface)); opacity: 1; }
+.adm-leads__panel .adm-pipeline__step.is-active { background: var(--c); border-color: var(--c); box-shadow: 0 6px 16px -8px var(--c); }
+.adm-leads__panel .adm-pipeline__step.is-active .adm-pipeline__lbl { color: #fff; font-weight: 800; }
+.adm-leads__panel .adm-pipeline__step.is-active .adm-pipeline__dot { background: #fff; opacity: 1; transform: none; }
+
+/* פעולות קשר: כפתורים גדולים ואחידים, שורה אחת */
+.adm-leads__panel .adm-panel__quick {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.55rem; margin-bottom: 0.4rem;
+}
+.adm-leads__panel .adm-panel__quick .adm-quick-btn {
+  justify-content: center; gap: 0.5rem; min-height: 48px; padding: 0.6rem 0.9rem;
+  border-radius: 12px; font-size: 0.95rem; font-weight: 800; border-width: 1.5px;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.adm-leads__panel .adm-panel__quick .adm-quick-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.adm-leads__panel-body { padding: 1.25rem 1.4rem 1.5rem; gap: 1rem; }
+.adm-leads__panel input, .adm-leads__panel select { min-height: 46px; font-size: 1rem; }
+.adm-leads__chk { min-height: 46px; }
+.adm-leads__panel-foot { padding: 0.9rem 1.4rem; }
+.adm-leads__panel-foot .adm-leads__btn--primary { min-height: 46px; min-width: 140px; font-size: 1rem; border-radius: 12px; }
+
+@media (max-width: 640px) {
+  .adm-leads__modal { padding: 0; align-items: end; }
+  .adm-leads__panel { max-width: none; max-height: 94vh; border-radius: 18px 18px 0 0; }
+  .adm-leads__panel .adm-pipeline { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0.8rem 1rem; }
+  .adm-leads__panel .adm-panel__quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .adm-leads__panel-body { padding: 1rem; }
+}
+/* כתובת מייל ארוכה נחתכת בסופה עם שלוש נקודות, ולא בתחילתה */
+.adm-leads__panel .adm-quick-btn__t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-leads__panel .adm-pipeline { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
+.adm-leads__panel .adm-pipeline__lbl { white-space: nowrap; }
+.adm-leads__panel-foot .adm-leads__btn--primary { justify-content: center; text-align: center; }
+/* שישה שלבים בשורה אחת במחשב, שלוש על שתיים בטלפון */
+.adm-leads__panel .adm-pipeline { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.4rem; }
+.adm-leads__panel .adm-pipeline__step { padding: 0.55rem 0.35rem; gap: 0.35rem; }
+.adm-leads__panel .adm-pipeline__lbl { font-size: 0.84rem; }
+@media (max-width: 640px) {
+  .adm-leads__panel .adm-pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .adm-leads__panel .adm-pipeline__lbl { font-size: 0.9rem; }
+}

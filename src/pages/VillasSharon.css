@@ -190,7 +190,7 @@
   pointer-events: none;
 }
 .vsh-intro .container { position: relative; }
-.vsh-intro .eyebrow, .vsh-projects .eyebrow, .vsh-cta .eyebrow, .lhub-faq .eyebrow { color: var(--color-secondary, #16688c); }
+.vsh-intro .eyebrow, .vsh-projects .eyebrow, .lhub-faq .eyebrow { color: var(--color-secondary, #16688c); }
 .vsh-intro__p b { color: var(--color-secondary, #16688c); font-weight: 700; }
 .vsh-intro__art { position: relative; }
 .vsh-intro__art::after {
@@ -323,4 +323,42 @@
   .vsh-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
   .vsh-specs > div { padding: 0.7rem 0.8rem; }
   .vsh-specs dd { font-size: 0.92rem; }
+}
+
+/* ============================================================
+   פס הקריאה לפעולה: כפתור ראשי אחד, ומתחתיו וואטסאפ וטלפון באותו רוחב.
+   רצועת "בקצרה" מתחת לכותרת, למי שמגיע מחיפוש.
+   ============================================================ */
+.vsh-cta__box { grid-template-columns: minmax(0, 1.3fr) minmax(280px, 380px); justify-content: space-between; }
+.vsh-cta .vsh-cta__eyebrow { color: #9cc4d8; }
+.vsh-cta__actions { flex-direction: column; align-items: stretch; gap: 0.7rem; justify-content: center; }
+.vsh-cta__main { width: 100%; justify-content: center; gap: 0.5rem; }
+.vsh-cta__row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.vsh-cta__row .btn { width: 100%; justify-content: center; gap: 0.45rem; min-height: 48px; white-space: nowrap; }
+.vsh-cta__ghost { border-color: rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.06); }
+.vsh-cta__note { text-align: center; font-size: 0.82rem; color: rgba(255, 255, 255, 0.62); }
+
+.vsh-brief {
+  background: #fff;
+  border-bottom: 1px solid rgba(22, 104, 140, 0.12);
+  box-shadow: 0 12px 30px -24px rgba(7, 41, 58, 0.35);
+  position: relative; z-index: 2;
+}
+.vsh-brief__inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; padding-block: 0.9rem; }
+.vsh-brief__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; }
+.vsh-brief__list li { display: flex; align-items: center; gap: 0.55rem; color: var(--color-text-muted, #5a6a7a); font-size: 0.86rem; line-height: 1.35; }
+.vsh-brief__list li svg { color: var(--color-secondary, #16688c); flex: none; }
+.vsh-brief__list b { display: block; color: var(--color-primary-900, #07293a); font-family: var(--font-heading); font-weight: 800; font-size: 0.92rem; }
+.vsh-brief__btn { flex: none; gap: 0.4rem; white-space: nowrap; }
+
+@media (max-width: 960px) {
+  .vsh-cta__box { grid-template-columns: 1fr; }
+  .vsh-brief__inner { flex-direction: column; align-items: stretch; }
+  .vsh-brief__list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem 1rem; }
+  .vsh-brief__btn { justify-content: center; }
+}
+@media (max-width: 600px) {
+  .vsh-cta__row { grid-template-columns: 1fr; }
+  .vsh-cta__actions .btn { flex: none; }
+  .vsh-brief__list { grid-template-columns: 1fr; }
 }

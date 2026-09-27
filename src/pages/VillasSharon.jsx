@@ -54,6 +54,14 @@ function matchCard(cards, slug, cmsSlug = '') {
    הפרויקטים והמפרט שלהם ב-data/villasPage.js, משותף לאדמין.
    ============================================================ */
 
+/* רצועת "בקצרה" מתחת לכותרת. רק עובדות שמופיעות גם במפרטים למטה. */
+const BRIEF = [
+  { icon: 'location', t: 'הוד השרון', d: 'גרינברג, מערב העיר ומגדיאל' },
+  { icon: 'crane', t: 'ביצוע ופיקוח בבית', d: 'ראיתה בונה, שכינתא מפקחת' },
+  { icon: 'house', t: 'כ-300 מ"ר, 3 מפלסים', d: 'בריכה פרטית ומגרש בטאבו' },
+  { icon: 'handshake', t: 'כתובת אחת', d: 'מהמגרש ועד המפתח, ואחרי' },
+]
+
 const TRAITS = [
   { icon: 'building', title: 'בתים בשלושה מפלסים', desc: 'הווילות מתוכננות על שלושה מפלסים, כ-300 מ"ר בנוי, עם קומת מרתף שמאפשרת סוויטות פרטיות או יחידה עצמאית.' },
   { icon: 'crane', title: 'ביצוע בידיים שלנו', desc: 'הבנייה מתבצעת על ידי ראיתה, זרוע הביצוע של הקבוצה, ולא מועברת לקבלן חיצוני. שלד, מעטפת וגימור תחת אותה אחריות.' },
@@ -85,6 +93,18 @@ const BASE_FAQS = [
   {
     q: 'מה הסטטוס של הפרויקטים היום?',
     a: 'הנרייטה סאלד 22-24 וחנקין 41 נמצאים בבנייה, והנרייטה סאלד מבוצע תחת היתרי בנייה מאושרים. יורדי הים 3 נמצא בשלב התכנון.',
+  },
+  {
+    q: 'מה כולל התהליך של בניית בית פרטי, מהמגרש ועד המפתח?',
+    a: 'תכנון אדריכלי והוצאת היתר בנייה, עבודות עפר ויסודות, שלד, מעטפת ואיטום, מערכות חשמל ואינסטלציה, גמר ופיתוח החצר, ולבסוף בדיקות קבלה ומסירה. בפרויקטים שלנו כל השלבים האלה נעשים בידי ראיתה, זרוע הביצוע של הקבוצה, ונבדקים על ידי שכינתא, זרוע הפיקוח, כך שיש גורם אחד שאחראי על התוצאה. פירטנו על השלבים במדריך "איך בוחרים חברת בנייה לבית פרטי".',
+  },
+  {
+    q: 'מה חשוב לבדוק לפני שבונים בית פרטי בשרון?',
+    a: 'שהמגרש רשום בטאבו ומה בדיוק רשום בו, מה מותר לבנות לפי תוכנית בניין העיר, האם יש היתר בנייה בתוקף, מי בונה בפועל ומי מפקח עליו, ומה קורה אם מתגלה ליקוי אחרי המסירה. בפרויקטים שלנו התשובות לשאלות האלה כתובות במפרט ובחוזה, ואנחנו עוברים עליהן יחד בפגישה הראשונה.',
+  },
+  {
+    q: 'למה לבנות בית פרטי דווקא בהוד השרון?',
+    a: 'הוד השרון משלבת שכונות של בנייה נמוכה ובתים פרטיים עם קרבה למרכז: כבישים 531 ו-40, רכבת, ומרכזי התעסוקה של השרון וגוש דן במרחק נסיעה קצר. השכונות שבהן אנחנו בונים, גרינברג, מערב העיר ומגדיאל, הן שכונות שקטות עם רחובות פנימיים, פארקים ומוסדות חינוך בהליכה. המשרד שלנו נמצא בעיר, ברחוב הנגר 24, כך שאנחנו קרובים לכל אתר.',
   },
   {
     q: 'איך מתאמים פגישה?',
@@ -204,6 +224,21 @@ export default function VillasSharon() {
         imageAlt="בית פרטי של קורקוס גרופ בהוד השרון"
         imagePos="center 68%"
       />
+
+      {/* רצועת "בקצרה": מי שמגיע מחיפוש בגוגל מקבל בשנייה את התשובה, ואת
+          הדרך לפנות, עוד לפני שהוא גולל */}
+      <section className="vsh-brief" aria-label="בקצרה">
+        <div className="container vsh-brief__inner">
+          <ul className="vsh-brief__list">
+            {BRIEF.map((b) => (
+              <li key={b.t}><Icon name={b.icon} size={18} /><span><b>{b.t}</b>{b.d}</span></li>
+            ))}
+          </ul>
+          <a href="#contact" className="btn btn--primary vsh-brief__btn" onClick={() => track('cta_click', { placement: 'villas_brief' })}>
+            לתיאום סיור <Icon name="arrowLeft" size={16} />
+          </a>
+        </div>
+      </section>
 
       {/* פתיחה: פסקת ישות (ברורה וניתנת לציטוט ע"י מנועי AI), העובדות
           שחוזרות בכל הפרויקטים, ואיור הווילה בשפת המותג לצד הטקסט */}
@@ -367,18 +402,23 @@ export default function VillasSharon() {
               <p>נתאם סיור באחד הפרויקטים, נעבור יחד על המפרט והתוכניות, ונענה על כל שאלה. בלי התחייבות.</p>
             </div>
             <div className="vsh-cta__actions">
-              <a href="#contact" className="btn btn--primary btn--lg" onClick={() => track('cta_click', { placement: 'villas_tour' })}>לתיאום סיור</a>
-              <a
-                href={`https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent('שלום, אשמח לתאם סיור בפרויקט בתים פרטיים בהוד השרון')}`}
-                target="_blank" rel="noopener noreferrer"
-                className="btn vsh-cta__ghost btn--lg"
-                onClick={() => track('whatsapp_click', { placement: 'villas_cta' })}
-              >
-                <Icon name="whatsapp" size={18} /> וואטסאפ
+              <a href="#contact" className="btn btn--primary btn--lg vsh-cta__main" onClick={() => track('cta_click', { placement: 'villas_tour' })}>
+                לתיאום סיור <Icon name="arrowLeft" size={18} />
               </a>
-              <a href={`tel:${phoneDigits}`} className="btn vsh-cta__ghost btn--lg" onClick={() => track('phone_click', { placement: 'villas_cta' })}>
-                <Icon name="phone" size={18} /> {site.contact.phoneDisplay}
-              </a>
+              <div className="vsh-cta__row">
+                <a
+                  href={`https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent('שלום, אשמח לתאם סיור בפרויקט בתים פרטיים בהוד השרון')}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="btn vsh-cta__ghost"
+                  onClick={() => track('whatsapp_click', { placement: 'villas_cta' })}
+                >
+                  <Icon name="whatsapp" size={18} /> וואטסאפ
+                </a>
+                <a href={`tel:${phoneDigits}`} className="btn vsh-cta__ghost" onClick={() => track('phone_click', { placement: 'villas_cta' })}>
+                  <Icon name="phone" size={18} /> {site.contact.phoneDisplay}
+                </a>
+              </div>
+              <span className="vsh-cta__note">בלי התחייבות. נחזור אליכם בהקדם</span>
             </div>
           </Reveal>
         </div>

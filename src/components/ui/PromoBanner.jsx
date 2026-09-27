@@ -83,9 +83,12 @@ export default function PromoBanner() {
     const onKey = (e) => { if (e.key === 'Escape' && e.isTrusted) close('escape') }
     window.addEventListener('keydown', onKey)
     // לא מכסים את באנר העוגיות: מודדים אותו כל עוד הבאנר שלנו פתוח
+    // המרחק מתחתית המסך עד הקצה העליון של באנר העוגיות (גובה + הרווח שלו מהתחתית)
     const measure = () => {
       const el = document.querySelector('.cookie-banner')
-      setLift(el ? el.getBoundingClientRect().height : 0)
+      if (!el) { setLift(0); return }
+      const r = el.getBoundingClientRect()
+      setLift(r.height > 0 ? Math.max(0, Math.round(window.innerHeight - r.top)) : 0)
     }
     measure()
     const iv = setInterval(measure, 500)
@@ -103,7 +106,7 @@ export default function PromoBanner() {
       className={`promo${leaving ? ' is-leaving' : ''}${paused ? ' is-paused' : ''}`}
       role="complementary"
       aria-label={`${PROMO.title}, ${PROMO.project}`}
-      style={lift ? { '--promo-lift': `${lift + 12}px` } : undefined}
+      style={lift ? { '--promo-lift': `${lift}px` } : undefined}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}

@@ -117,6 +117,10 @@ export default [
     "lastmod": "2026-09-27"
   },
   {
+    "path": "/constructions/sherut-achrei-mesira",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/constructions/site-manager-duties-stop-work",
     "lastmod": "2026-07-19"
   },

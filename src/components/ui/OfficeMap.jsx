@@ -62,7 +62,7 @@ export default function OfficeMap() {
               lat={office.lat}
               lng={office.lng}
               query={addressText}
-              label={L(site.name)}
+              label={L({ he: 'קבוצת קורקוס', en: 'Kurkoos Group' })}
               sublabel={L({ he: 'הנגר 24, הוד השרון', en: '24 HaNagar St., Hod HaSharon' })}
               zoom={16}
             />

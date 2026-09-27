@@ -108,7 +108,7 @@ export default function Mentorship() {
                 </div>
               </div>
               {/* קביעת פגישה: הטופס נפתח עם "ליווי יזמים" כבר מסומן */}
-              <div className="mentor-intro__cta">
+              <div className="mentor-intro__cta mentor-intro__cta--desktop">
                 <Link
                   to="/contact?topic=mentorship&src=mentorship"
                   className="btn btn--primary btn--lg mentor-intro__btn"
@@ -130,6 +130,16 @@ export default function Mentorship() {
                   "יזמות נדל"ן היא מקצוע. לא השקעה. לא הימור. מקצוע שלומדים עם מנטור שכבר עשה את הדרך."
                 </p>
                 <span className="mentor-intro__quote-sig">שלומי קורקוס</span>
+              </div>
+              {/* במובייל הכפתור יושב כאן, מתחת לציטוט, במקום מעל התמונה */}
+              <div className="mentor-intro__cta mentor-intro__cta--mobile">
+                <Link
+                  to="/contact?topic=mentorship&src=mentorship"
+                  className="btn btn--primary btn--lg mentor-intro__btn"
+                  onClick={() => track('cta_click', { placement: 'mentor_intro_mobile' })}
+                >
+                  לקביעת פגישה <Icon name="arrowLeft" size={18} />
+                </Link>
               </div>
             </aside>
           </Reveal>

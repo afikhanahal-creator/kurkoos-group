@@ -95,6 +95,11 @@
 /* כפתור קביעת פגישה מתחת למספרים */
 .mentor-intro__cta { margin-top: 1.8rem; display: flex; }
 .mentor-intro__btn { gap: 0.5rem; white-space: nowrap; }
+.mentor-intro__cta--mobile { display: none; }
+@media (max-width: 860px) {
+  .mentor-intro__cta--desktop { display: none; }
+  .mentor-intro__cta--mobile { display: flex; margin-top: 1.4rem; }
+}
 
 .mentor-intro__stat-num {
   display: block;

@@ -6,6 +6,7 @@ import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import KineticText from '../components/ui/KineticText.jsx'
 import { stages, pillars, faqs } from '../data/mentorship.js'
+import { track } from '../lib/track.js'
 import '../components/sections/Activities.css'   // card-effect: נוזל/ברק/זוהר/הטיה 3D
 import './Mentorship.css'
 
@@ -105,6 +106,16 @@ export default function Mentorship() {
                   <span className="mentor-intro__stat-num">1:1</span>
                   <span className="mentor-intro__stat-label">ליווי אישי</span>
                 </div>
+              </div>
+              {/* קביעת פגישה: הטופס נפתח עם "ליווי יזמים" כבר מסומן */}
+              <div className="mentor-intro__cta">
+                <Link
+                  to="/contact?topic=mentorship&src=mentorship"
+                  className="btn btn--primary btn--lg mentor-intro__btn"
+                  onClick={() => track('cta_click', { placement: 'mentor_intro' })}
+                >
+                  לקביעת פגישה <Icon name="arrowLeft" size={18} />
+                </Link>
               </div>
             </div>
             <aside className="mentor-intro__side">

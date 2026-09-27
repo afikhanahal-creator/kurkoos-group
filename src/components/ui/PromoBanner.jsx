@@ -130,7 +130,7 @@ export default function PromoBanner() {
 
         <Link
           to={to}
-          className="btn btn--primary promo__cta"
+          className="btn btn--dark promo__cta"
           onClick={() => { track('promo_click', { promo: PROMO.id, how: 'button' }); close('cta') }}
         >
           {PROMO.cta} <Icon name="arrowLeft" size={18} />

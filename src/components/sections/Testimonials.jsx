@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { useSettings } from '../../lib/cms.js'
 import { optimizeSrc, srcOfResponsive } from '../../lib/responsiveImage.js'
-import defaultTestimonials from '../../data/testimonials.js'
+import { isDemoTestimonial } from '../../data/testimonials.js'
 import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
 import KineticText from '../ui/KineticText.jsx'
@@ -37,8 +37,9 @@ export default function Testimonials() {
   const testimonials = useMemo(() => {
     let list = settings.testimonials
     if (typeof list === 'string') { try { list = JSON.parse(list) } catch { list = null } }
-    const arr = Array.isArray(list) && list.length ? list : defaultTestimonials
-    return arr.filter((t) => !t.archived)
+    // רק המלצות אמיתיות מהאדמין. בלי המלצות, הסקשן לא מוצג (ראו data/testimonials.js)
+    const arr = Array.isArray(list) ? list : []
+    return arr.filter((t) => !t.archived && !isDemoTestimonial(t))
   }, [settings.testimonials])
 
   const count = testimonials.length
@@ -51,7 +52,7 @@ export default function Testimonials() {
 
   // החלפה אוטומטית — נעצרת בריחוף, כשה-lightbox פתוח, כשהכרטיס מהופך, ומכבדת prefers-reduced-motion
   useEffect(() => {
-    if (paused || shot !== null || flipped) return
+    if (count < 2 || paused || shot !== null || flipped) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const id = setInterval(next, AUTO_MS)
     return () => clearInterval(id)

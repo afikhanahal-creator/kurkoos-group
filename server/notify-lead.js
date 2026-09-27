@@ -210,12 +210,14 @@ export default async function handler(req, res) {
        לכל אלמנט טקסט כאן יש font-family משלו מאותה סיבה: ערך שיורש מה-body
        נמחק בחלק מהלקוחות, והטקסט חוזר לברירת המחדל שלהם. */
     const FONT_H = "'Heebo','Assistant','Noto Sans Hebrew','Segoe UI','Arial Hebrew',Arial,Helvetica,sans-serif"
-    const FONT_B = "'Assistant','Heebo','Noto Sans Hebrew','Segoe UI','Arial Hebrew',Arial,Helvetica,sans-serif"
+    /* גופן אחד לכל המייל. שני גופנים שונים לכותרות ולטקסט נראו בלקוחות
+       מייל רבים כערבוב, כי כל לקוח נפל לגופן אחר מהשרשרת. */
+    const FONT_B = FONT_H
     const FONTS_CSS = "https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;700;800;900&display=swap"
 
     const C = {
       ink: '#07293a', inkSoft: '#3d5462', teal: '#105572', red: '#a90b0c',
-      line: '#e6edf1', label: '#8494a1', page: '#eef2f5', tint: '#f5f9fb',
+      line: '#e6edf1', label: '#5b6b78', page: '#eef2f5', tint: '#f5f9fb',
     }
 
     // ערך תא — כל ערכי המשתמש עוברים htmlEsc למניעת HTML injection במייל לאדמין
@@ -235,7 +237,7 @@ export default async function handler(req, res) {
       const last = i === fields.length - 1
       const edge = last ? 'none' : `1px solid ${C.line}`
       return `<tr>
-        <td width="104" style="padding:14px 0 14px 16px;vertical-align:top;border-bottom:${edge};font-family:${FONT_B};font-size:12px;font-weight:700;letter-spacing:0.05em;color:${C.label};white-space:nowrap">${FIELD_LABELS[k] || k}</td>
+        <td width="104" style="padding:14px 0 14px 16px;vertical-align:top;border-bottom:${edge};font-family:${FONT_B};font-size:13px;font-weight:700;color:${C.label};white-space:nowrap">${FIELD_LABELS[k] || k}</td>
         <td style="padding:14px 0;vertical-align:top;border-bottom:${edge};font-family:${FONT_B};font-size:16px;font-weight:700;color:${C.ink};line-height:1.55">${cell(k)}</td>
       </tr>`
     }).join('')
@@ -259,17 +261,17 @@ export default async function handler(req, res) {
           <tr><td style="padding:22px 36px 0">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.tint};border:1px solid ${C.line};border-radius:14px">
               <tr><td align="center" style="padding:20px 20px 18px">
-                <div style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.2em;color:${C.label}">חייגו עכשיו</div>
-                <a href="tel:${digits}" style="font-family:${FONT_H};font-size:27px;font-weight:900;color:${C.ink};text-decoration:none;direction:ltr;unicode-bidi:embed;display:inline-block;margin:8px 0 0;letter-spacing:0.01em">${htmlEsc(String(lead.phone))}</a>
+                <div style="font-family:${FONT_B};font-size:13px;font-weight:700;color:${C.label}">חייגו עכשיו</div>
+                <a href="tel:${digits}" style="font-family:${FONT_H};font-size:27px;font-weight:900;color:${C.ink};text-decoration:none;direction:ltr;unicode-bidi:embed;display:inline-block;margin:8px 0 0;">${htmlEsc(String(lead.phone))}</a>
                 <div style="margin:12px 0 0">
-                  ${btn(`tel:${digits}`, 'התקשרות', C.teal, { size: 13, pad: '11px 22px' })}
-                  ${wa ? btn(`https://wa.me/${wa}`, 'וואטסאפ', '#25D366', { size: 13, pad: '11px 22px' }) : ''}
-                  ${lead.email ? btn(`mailto:${lead.email}`, 'מייל ללקוח', C.ink, { size: 13, pad: '11px 22px' }) : ''}
+                  ${btn(`tel:${digits}`, 'התקשרות', C.teal, { size: 15, pad: '13px 26px' })}
+                  ${wa ? btn(`https://wa.me/${wa}`, 'וואטסאפ', '#25D366', { size: 15, pad: '13px 26px' }) : ''}
+                  ${lead.email ? btn(`mailto:${lead.email}`, 'מייל ללקוח', C.ink, { size: 15, pad: '13px 26px' }) : ''}
                 </div>
               </td></tr>
             </table>
           </td></tr>` : (lead.email ? `
-          <tr><td align="center" style="padding:22px 36px 0">${btn(`mailto:${lead.email}`, 'מייל ללקוח', C.ink, { size: 13, pad: '11px 22px' })}</td></tr>` : '')
+          <tr><td align="center" style="padding:22px 36px 0">${btn(`mailto:${lead.email}`, 'מייל ללקוח', C.ink, { size: 15, pad: '13px 26px' })}</td></tr>` : '')
 
     const banner = (bg, title, body) => `<tr><td style="background:${bg};padding:18px 36px;text-align:center">
             <div style="font-family:${FONT_H};font-size:15px;font-weight:800;color:#ffffff;line-height:1.5">${title}</div>
@@ -325,9 +327,11 @@ export default async function handler(req, res) {
 
       <!-- כותרת: מי פנה, ומאיזה פרויקט -->
       <tr><td class="kg-pad" style="background:${C.ink};padding:36px 40px 32px;text-align:center">
-        <div style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.24em;color:#7ea9be">ליד חדש מהאתר</div>
+        <div style="font-family:${FONT_B};font-size:13px;font-weight:700;color:#b9d3df">ליד חדש מהאתר</div>
         <h1 class="kg-h1" style="font-family:${FONT_H};font-weight:900;font-size:32px;line-height:1.2;color:#ffffff;margin:12px 0 0">${htmlEsc(safeName)}</h1>
-        ${projectName ? `<div style="margin:14px 0 0"><span style="display:inline-block;padding:7px 17px;background:#103d54;border-radius:999px;font-family:${FONT_B};font-size:13px;font-weight:700;color:#ffd47a">${htmlEsc(projectName)}</span></div>` : ''}
+        ${projectName ? `<div style="margin:14px 0 0">${PROJECT_URL
+          ? `<a href="${PROJECT_URL}" style="display:inline-block;padding:8px 20px;background:#123f57;border:1px solid #2b6a88;border-radius:999px;font-family:${FONT_B};font-size:15px;font-weight:800;color:#ffd47a;text-decoration:none">${htmlEsc(projectName)}</a>`
+          : `<span style="display:inline-block;padding:8px 20px;background:#123f57;border:1px solid #2b6a88;border-radius:999px;font-family:${FONT_B};font-size:15px;font-weight:800;color:#ffd47a">${htmlEsc(projectName).replace(/(\d)/, '&#8288;$1')}</span>`}</div>` : ''}
         <div style="width:52px;height:4px;background:${C.red};border-radius:2px;margin:20px auto 0"></div>
       </td></tr>
 
@@ -335,7 +339,7 @@ export default async function handler(req, res) {
 
       <!-- פרטי הפנייה -->
       <tr><td class="kg-pad" style="padding:26px 36px 0">
-        <div style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.2em;color:${C.label};padding:0 0 6px">פרטי הפנייה</div>
+        <div style="font-family:${FONT_B};font-size:13px;font-weight:800;color:${C.ink};padding:0 0 6px">פרטי הפנייה</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">${rows}</table>
       </td></tr>
 
@@ -348,8 +352,8 @@ export default async function handler(req, res) {
       <!-- פוטר -->
       <tr><td class="kg-pad" style="padding:34px 40px 36px;text-align:center;border-top:1px solid ${C.line}">
         <img src="${LOGO}" alt="Kurkoos Group" width="126" style="display:inline-block;width:126px;max-width:56%;height:auto;border:0" />
-        <p style="font-family:${FONT_B};font-size:11px;font-weight:700;letter-spacing:0.16em;color:#9aa7b1;margin:16px 0 0">נכסים · בנייה · יזמות · פיקוח · תיווך</p>
-        <p style="font-family:${FONT_B};font-size:11px;font-weight:600;color:#b6c0c8;margin:8px 0 0;line-height:1.6">הודעה אוטומטית ממערכת הניהול של קבוצת קורקוס</p>
+        <p style="font-family:${FONT_B};font-size:11px;font-weight:700;color:#6b7885;margin:16px 0 0">נכסים · בנייה · יזמות · פיקוח · תיווך</p>
+        <p style="font-family:${FONT_B};font-size:11px;font-weight:600;color:#8a96a0;margin:8px 0 0;line-height:1.6">הודעה אוטומטית ממערכת הניהול של קבוצת קורקוס</p>
       </td></tr>
     </table>
   </td></tr>

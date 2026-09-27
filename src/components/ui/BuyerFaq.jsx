@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom'
 import Reveal from './Reveal.jsx'
 import Icon from './Icon.jsx'
+import FaqCta from './FaqCta.jsx'
 import { BUYER_FAQS } from '../../data/buyerFaqs.js'
 import '../../pages/SharonHub.css'
 
 /* שאלות רוכשים, בעיצוב ה-FAQ של שאר העמודים. בלי Structured Data כאן:
    אותו FAQPage בכל עמוד פרויקט היה נראה לגוגל ככפילות. ה-FAQPage מוצהר
    פעם אחת, בעמוד הווילות. */
-export default function BuyerFaq({ title = 'שאלות שרוכשים שואלים לפני שמחליטים', soft = true }) {
+export default function BuyerFaq({ title = 'שאלות שרוכשים שואלים לפני שמחליטים', soft = true, ctaTo, placement = 'buyer_faq' }) {
   return (
     <section className={`section${soft ? ' section--soft' : ''} lhub-faq`}>
       <div className="container">
@@ -25,8 +25,8 @@ export default function BuyerFaq({ title = 'שאלות שרוכשים שואלי
             </Reveal>
           ))}
         </div>
-        <Reveal className="lhub-links">
-          <p>עוד על התהליך: <Link to="/constructions/livchor-chevrat-bniya-bayit-prati">איך בוחרים חברת בנייה</Link> · <Link to="/construction-supervision/mefakeach-bniya-bayit-prati">מה בודק מפקח בנייה</Link> · <Link to="/contact">השארת פרטים</Link></p>
+        <Reveal>
+          <FaqCta to={ctaTo} placement={placement} />
         </Reveal>
       </div>
     </section>

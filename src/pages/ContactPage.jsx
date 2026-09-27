@@ -41,6 +41,9 @@ const SOURCES = {
   email: { he: 'חתימת מייל', en: 'Email signature' },
   qr: { he: 'קוד QR', en: 'QR code' },
   ads: { he: 'קמפיין ממומן', en: 'Paid campaign' },
+  article: { he: 'כתבה באתר', en: 'Site article' },
+  faq: { he: 'שאלות נפוצות באתר', en: 'Site FAQ' },
+  villas: { he: 'עמוד הווילות', en: 'Villas page' },
 }
 
 /* ערוץ לא מוכר נשמר כפי שהוא, מנוקה מתווים חריגים ובאותו נוסח לשתי

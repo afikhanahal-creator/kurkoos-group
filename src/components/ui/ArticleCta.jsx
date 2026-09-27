@@ -15,6 +15,7 @@ import './ArticleCta.css'
 
 const COLUMNS = {
   yazamut: {
+    topic: 'development',
     eyebrow: 'יזמות נדל"ן',
     title: 'מתכננים פרויקט יזמי?',
     text: 'קורקוס גרופ מלווה יזמים מאיתור הקרקע ובדיקות ההיתכנות, דרך התכנון והרישוי, ועד השיווק והמסירה.',
@@ -22,6 +23,7 @@ const COLUMNS = {
     linkLabel: 'לחטיבת היזמות',
   },
   constructions: {
+    topic: 'construction',
     eyebrow: 'ביצוע ובנייה',
     title: 'מתכננים לבנות?',
     text: 'ראיתה, זרוע הביצוע של קורקוס גרופ, מבצעת פרויקטים למגורים משלב השלד ועד הגימור, עם בקרת איכות וניהול קבלני משנה.',
@@ -29,6 +31,7 @@ const COLUMNS = {
     linkLabel: 'לחטיבת הביצוע',
   },
   supervision: {
+    topic: 'supervision',
     eyebrow: 'ניהול ופיקוח',
     title: 'רוצים מפקח מטעמכם באתר?',
     text: 'שכינתא מלווה פרויקטים בפיקוח הנדסי מטעם המזמין: בקרת תקציב ולוחות זמנים, בדיקות איכות וקבלה.',
@@ -36,6 +39,7 @@ const COLUMNS = {
     linkLabel: 'לחטיבת הפיקוח',
   },
   brokerage: {
+    topic: 'brokerage',
     eyebrow: 'תיווך ושיווק',
     title: 'קונים או מוכרים נכס?',
     text: 'ליווי מלא לרוכשים ולמוכרים באזור השרון והמרכז, מהערכת השווי ועד החתימה.',
@@ -43,6 +47,7 @@ const COLUMNS = {
     linkLabel: 'לחטיבת התיווך',
   },
   mentorguide: {
+    topic: 'mentorship',
     eyebrow: 'ליווי יזמים',
     title: 'רוצים ליווי אישי בדרך?',
     text: 'תוכנית מנטורינג ליזמי נדל"ן צעירים עם שלומי קורקוס וצוות הקבוצה, על בסיס שלושים שנות ניסיון בשטח.',
@@ -82,7 +87,7 @@ export default function ArticleCta({ column = 'yazamut' }) {
               וואטסאפ
             </a>
           )}
-          <Link to="/#contact" className="btn art-cta__btn art-cta__btn--ghost" onClick={() => hit('form')}>
+          <Link to={`/contact?topic=${c.topic}&src=article`} className="btn art-cta__btn art-cta__btn--ghost" onClick={() => hit('form')}>
             השארת פרטים
           </Link>
         </div>

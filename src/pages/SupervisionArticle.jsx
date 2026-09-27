@@ -12,6 +12,7 @@ import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
+import ArticleLeadCard, { contactHrefFor } from '../components/ui/ArticleLeadCard.jsx'
 import NotFound from './NotFound.jsx'
 
 const SITE = 'https://www.kurkoos-group.co.il'
@@ -95,7 +96,7 @@ export default function SupervisionArticle() {
       <section className="section">
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
-          <MiniMarkdown source={article.body} autoLink />
+          <MiniMarkdown source={article.body} autoLink contactHref={contactHrefFor('supervision')} />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (
             <div className="yz-tags">
@@ -103,15 +104,14 @@ export default function SupervisionArticle() {
             </div>
           )}
 
-          <div className="yz-author-card">
-            <div className="yz-author-card__txt">
-              <strong>לפני בנייה או במהלך פרויקט?</strong>
-              <span>שכינתא, חברת ניהול ויזום הפרויקטים של קבוצת קורקוס, מלווה אתכם לאורך כל שלבי הביצוע.</span>
-            </div>
-            <Link to="/divisions/supervision" className="btn btn--dark">
-              לשירותי הפיקוח <Icon name="arrowLeft" size={18} />
-            </Link>
-          </div>
+          <ArticleLeadCard
+            column="supervision"
+            topic="supervision"
+            title="רוצים מפקח מטעמכם באתר?"
+            text="השאירו פרטים ונחזור אליכם לשיחה על הפרויקט שלכם, בלי התחייבות."
+            serviceTo="/divisions/supervision"
+            serviceLabel="לשירותי הפיקוח"
+          />
         </Reveal>
       </section>
 

@@ -973,7 +973,7 @@ export default function ProjectDetail() {
       )}
 
       {/* ===== שאלות רוכשים, מיד לפני טופס הפגישה: עונות על החששות ברגע ההתלבטות ===== */}
-      <BuyerFaq soft={false} />
+      <BuyerFaq soft={false} ctaTo={show('contact') ? '#contact' : undefined} placement="project_faq" />
 
       {/* ===== לתיאום פגישה — פאנל דו-טורי עם טופס ===== */}
       {show('contact') && (

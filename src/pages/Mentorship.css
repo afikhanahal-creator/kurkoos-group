@@ -98,7 +98,9 @@
 .mentor-intro__cta--mobile { display: none; }
 @media (max-width: 860px) {
   .mentor-intro__cta--desktop { display: none; }
-  .mentor-intro__cta--mobile { display: flex; margin-top: 1.4rem; }
+  .mentor-intro__cta--mobile { display: flex; justify-content: center; margin-top: 1.4rem; }
+  /* במובייל הכפתור ברוחב התוכן שלו, לא על כל רוחב המסך */
+  .mentor-intro__cta--mobile .mentor-intro__btn { width: auto; max-width: none; padding-inline: 2rem; }
 }
 
 .mentor-intro__stat-num {

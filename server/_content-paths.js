@@ -61,6 +61,10 @@ export default [
     "lastmod": "2026-06-21"
   },
   {
+    "path": "/construction-supervision/protokol-mesira-bayit-prati",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/construction-supervision/yoman-avoda-atar",
     "lastmod": "2026-09-27"
   },
@@ -115,6 +119,10 @@ export default [
   {
     "path": "/constructions/livchor-chevrat-bniya-bayit-prati",
     "lastmod": "2026-09-25"
+  },
+  {
+    "path": "/constructions/loach-zmanim-bniyat-bayit",
+    "lastmod": "2026-09-27"
   },
   {
     "path": "/constructions/mifrat-techni-mah-kovea",
@@ -185,6 +193,10 @@ export default [
     "lastmod": "2026-07-13"
   },
   {
+    "path": "/madrich-yazamim/zchuyot-bniya-ma-baamt-kniten",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/real-estate-guide/bdikot-lifney-rechishat-dira",
     "lastmod": "2026-09-20"
   },
@@ -237,6 +249,10 @@ export default [
     "lastmod": "2026-08-30"
   },
   {
+    "path": "/real-estate-guide/timchur-dira-lemchira-nachon",
+    "lastmod": "2026-09-27"
+  },
+  {
     "path": "/real-estate-guide/zichron-dvarim-real-estate",
     "lastmod": "2026-09-13"
   },
@@ -251,6 +267,10 @@ export default [
   {
     "path": "/yazamut-nadlan/deferred-demand-subsidized-lottery",
     "lastmod": "2026-09-13"
+  },
+  {
+    "path": "/yazamut-nadlan/highrise-towers-vs-low-city",
+    "lastmod": "2026-09-27"
   },
   {
     "path": "/yazamut-nadlan/holdout-tenants-after-67-percent-law",

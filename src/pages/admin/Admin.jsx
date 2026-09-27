@@ -14,6 +14,7 @@ import NewsletterTab from './NewsletterTab.jsx'
 import HeadingsTab from './HeadingsTab.jsx'
 import TestimonialsTab from './TestimonialsTab.jsx'
 import HomeFeaturedTab from './HomeFeaturedTab.jsx'
+import VillasPageTab from './VillasPageTab.jsx'
 import ContentTab from './ContentTab.jsx'
 import AnalyticsTab from './AnalyticsTab.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
@@ -83,6 +84,7 @@ const TABS = [
   { id: 'overview', label: 'סקירה כללית', sub: 'לידים, תנועה והמרות במבט אחד', icon: 'home', group: 'ראשי' },
   { id: 'projects', label: 'פרויקטים ונכסים', sub: 'נהלו פרויקטים, נכסים ועמודי תצוגה', icon: 'projects', group: 'תוכן' },
   { id: 'home_featured', label: 'פרויקטים נבחרים (דף הבית)', sub: 'בחירת עד 4 הפרויקטים שיופיעו בדף הבית', icon: 'home', group: 'תוכן' },
+  { id: 'villas', label: 'בתים פרטיים ווילות', sub: 'עמוד הווילות: תמונת הכותרת, ההדמיות והתמונות של כל פרויקט', icon: 'covers', group: 'תוכן' },
   { id: 'headings', label: 'כותרות וטקסטים', sub: 'עריכת כל הכותרות והטקסטים באתר — במקום אחד', icon: 'headings', group: 'תוכן' },
   { id: 'counters', label: 'מונים ומספרים', sub: 'הנתונים שמופיעים באתר', icon: 'counters', group: 'תוכן' },
   { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos', group: 'תוכן' },
@@ -203,6 +205,7 @@ export default function Admin() {
           {tab === 'overview' && <OverviewTab onNavigate={setTab} />}
           {tab === 'projects' && <ProjectsTab />}
           {tab === 'home_featured' && <HomeFeaturedTab />}
+          {tab === 'villas' && <VillasPageTab />}
           {tab === 'headings' && <HeadingsTab />}
           {tab === 'counters' && <CountersTab />}
           {tab === 'logos' && <LogosTab />}

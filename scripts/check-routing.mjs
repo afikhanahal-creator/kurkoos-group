@@ -24,16 +24,21 @@ if (!spa) fail('חסר ה-rewrite הכללי של ה-SPA — source: "/((?!api/)
 if (v.cleanUrls && (v.rewrites || []).some((r) => r.destination?.endsWith('.html'))) {
   fail('cleanUrls פעיל אבל יש rewrite שמצביע על קובץ ‎.html — תחת cleanUrls היעד חייב להיות "/" (זו בדיוק התקלה שהפילה את האדמין).')
 }
-if (spa.destination !== '/' && spa.destination !== '/index.html') {
-  fail(`יעד ה-rewrite של ה-SPA הוא "${spa.destination}" — צפוי "/" (עם cleanUrls) או "/index.html" (בלעדיו).`)
+/* היעד הוא מעטפת ה-SPA הנקייה (dist/app-shell.html). index.html הוא עמוד
+   הבית הסטטי, ואם ה-rewrite יפנה אליו, כל כתובת בלי קובץ תקבל את תוכן
+   עמוד הבית. */
+if (spa.destination !== '/app-shell') {
+  fail(`יעד ה-rewrite של ה-SPA הוא "${spa.destination}" — צפוי "/app-shell" (מעטפת ה-SPA שה-prerender שומר).`)
 }
-if (!v.cleanUrls && spa.destination === '/') {
-  /* בלי cleanUrls היעד "/" עלול שלא להיפתר לקובץ — מיישרים לקונפיגורציה מוכרת */
-  fail('cleanUrls כבוי אבל יעד ה-rewrite הוא "/" — או להפעיל cleanUrls או להחזיר את היעד ל-"/index.html".')
+if (!v.cleanUrls) {
+  /* בלי cleanUrls היעד "/app-shell" לא נפתר לקובץ app-shell.html */
+  fail('cleanUrls כבוי, ולכן "/app-shell" לא ימצא את dist/app-shell.html. הפעילו cleanUrls.')
 }
 
 /* 3. תוצרי ה-build הקריטיים קיימים */
 if (!existsSync(join(root, 'dist', 'index.html'))) fail('dist/index.html לא קיים — ה-build לא הפיק את עמוד הבסיס.')
+if (!existsSync(join(root, 'dist', 'app-shell.html'))) fail('dist/app-shell.html לא קיים — ה-prerender לא שמר את מעטפת ה-SPA, וכל כתובת בלי קובץ תחזיר 404.')
+else if (readFileSync(join(root, 'dist', 'app-shell.html'), 'utf8').includes('class="ssr"')) fail('dist/app-shell.html מכיל תוכן סטטי של עמוד. המעטפת חייבת להיות נקייה.')
 if (!existsSync(join(root, 'dist', 'robots.txt'))) fail('dist/robots.txt לא קיים.')
 if (!existsSync(join(root, 'api', '[fn].js'))) fail('api/[fn].js לא קיים — כל ה-API של האתר יחזיר 404.')
 

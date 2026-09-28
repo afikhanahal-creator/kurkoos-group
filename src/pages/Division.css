@@ -433,6 +433,18 @@
 /* ---- Intro ---- */
 .division-intro__text { max-width: 60rem; margin-inline: auto; text-align: center; }
 .division-intro__text p { font-size: 1.3rem; line-height: 1.85; color: var(--color-text-soft); }
+/* קישורים לעמודים קשורים מתחת לפסקת הפתיחה */
+.division-intro__related {
+  list-style: none; margin: 1.4rem 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
+}
+.division-intro__related a {
+  display: inline-block; padding: 0.45em 1em; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-secondary, #16688c) 28%, transparent);
+  color: var(--color-secondary, #16688c); font-size: 0.92rem; font-weight: 600; text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.division-intro__related a:hover { background: color-mix(in srgb, var(--color-secondary, #16688c) 8%, #fff); border-color: var(--color-secondary, #16688c); }
 /* מובייל — מגדילים את משפט האינטרו ב-2px */
 @media (max-width: 768px) {
   .division-intro__text p { font-size: calc(1.3rem - 1px); }   /* קטן ב-3px מהקודם */

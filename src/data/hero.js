@@ -26,7 +26,7 @@ export const heroSlides = [
   },
   {
     id: 4,
-    stat: { value: 25, suffix: '+', label: { he: 'שנות ניסיון', en: 'Years experience' }, sub: { he: 'בכל שרשרת הערך', en: 'across the value chain' } },
+    stat: { value: 30, suffix: '+', label: { he: 'שנות ניסיון', en: 'Years experience' }, sub: { he: 'בכל שרשרת הערך', en: 'across the value chain' } },
     lines: { he: ['יזמות, בנייה,', 'פיקוח ותיווך'], en: ['Develop, build,', 'supervise, broker'] },
     image: '/execution-gallery/6.jpg',
   },

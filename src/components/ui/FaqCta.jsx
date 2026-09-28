@@ -4,6 +4,8 @@ import { track } from '../../lib/track.js'
 import Icon from './Icon.jsx'
 import '../../pages/SharonHub.css'
 
+export { PRIVATE_HOUSE_GUIDES } from '../../data/villasPage.js'
+
 /* ============================================================
    סיום של מקטע שאלות נפוצות: מי שקרא עד כאן ועדיין מתלבט מקבל כפתור
    ברור לטופס, ומתחתיו המדריכים כתגיות לחיצות ולא כשורת קישורים.

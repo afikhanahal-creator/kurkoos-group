@@ -20,7 +20,17 @@ if (!existsSync(contentDir)) mkdirSync(contentDir, { recursive: true })
 
 // נושאים אחרונים (להימנע מחזרה)
 const existing = readdirSync(contentDir).filter((f) => f.endsWith('.js')).sort()
-const recent = existing.slice(-6).join(', ') || 'אין עדיין'
+/* כל הכתבות שכבר פורסמו בטור, עם הכותרת ומילת המפתח. בעבר הסוכן ראה רק
+   שש שמות קבצים, וכתב שש כתבות על אותו נושא שהתחרו זו בזו בגוגל. */
+const pick = (src, key) => (new RegExp(`["']?${key}["']?\\s*:\\s*["']([^"'\\n]+)["']`).exec(src) || [])[1] || ''
+const covered = existing.map((f) => {
+  const src = readFileSync(join(contentDir, f), 'utf8')
+  if (/["']?published["']?\s*:\s*false/.test(src)) return null
+  const title = pick(src, 'title')
+  const kw = pick(src, 'focusKeyword')
+  return title ? `- ${title}${kw ? ` (מילת מפתח: ${kw})` : ''}` : null
+}).filter(Boolean)
+const recent = covered.length ? '\n' + covered.join('\n') : 'אין עדיין'
 
 const today = new Date().toISOString().slice(0, 10)
 const calendar = readFileSync(join(__dir, '..', 'content-calendar.md'), 'utf8')
@@ -34,7 +44,7 @@ const msg = await client.messages.create({
     role: 'user',
     content:
       `כתוב את כתבת יום ראשון הקרוב. התאריך: ${today}.\n` +
-      `אל תחזור על נושאים מהקבצים האחרונים: ${recent}.\n` +
+      `הכתבות שכבר קיימות בטור הזה: ${recent}\nאסור לכתוב כתבה על נושא או מילת מפתח שכבר מופיעים ברשימה, גם לא בזווית אחרת או בכותרת דומה. שתי כתבות על אותה מילת מפתח מתחרות זו בזו בגוגל ומחלישות את שתיהן. בחר נושא שעוד לא כוסה.\n` +
       `לוח הנושאים לבחירה:\n${calendar}\n` +
       `אין כלים זמינים בריצה זו — כתוב מתוך הידע שלך, אל תנסה לחפש.\n` +
       `התחל את התשובה מיד בשורת "---" (ה-frontmatter), בלי שום טקסט לפני, בלי code fences, ובלי טקסט אחרי.`,

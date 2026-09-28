@@ -145,7 +145,9 @@ export default async function handler(req, res) {
   }
 
   if (part === 'articles') {
-    const rows = ARTICLES.map((a) => urlTag({
+    /* כתבה מתוזמנת נכנסת למפה רק ביום שלה, כמו באתר עצמו */
+    const todayIL = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
+    const rows = ARTICLES.filter((a) => !a.lastmod || String(a.lastmod).slice(0, 10) <= todayIL).map((a) => urlTag({
       loc: `${SITE}${a.path}`, lastmod: a.lastmod || undefined, changefreq: a.changefreq, priority: a.priority,
     }))
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +

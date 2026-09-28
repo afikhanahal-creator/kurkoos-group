@@ -98,7 +98,8 @@ export default function Division() {
     {
       '@context': 'https://schema.org',
       '@type': 'Service',
-      name: L(division.menuTitle),
+      name: division.serviceName || L(division.menuTitle),
+      serviceType: division.serviceName || L(division.menuTitle),
       description: L(division.intro),
       provider: { '@id': 'https://www.kurkoos-group.co.il/#organization' },
       areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' },
@@ -181,6 +182,15 @@ export default function Division() {
         <div className="container">
           <Reveal className="division-intro__text">
             <p>{L(division.intro)}</p>
+            {/* קישורים לעמודים הקשורים: מחברים את השירות למדריכים ולפרויקטים,
+                כדי שגם הקורא וגם גוגל יבינו איך הנושאים באתר מתחברים */}
+            {division.related?.length > 0 && (
+              <ul className="division-intro__related" aria-label="עוד בנושא">
+                {division.related.map((r) => (
+                  <li key={r.to}><Link to={r.to}>{r.label}</Link></li>
+                ))}
+              </ul>
+            )}
           </Reveal>
         </div>
       </section>

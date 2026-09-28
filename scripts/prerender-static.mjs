@@ -24,7 +24,19 @@ if (!existsSync(join(dist, 'index.html'))) {
   console.error('prerender: dist/index.html לא נמצא, הריצו vite build קודם')
   process.exit(1)
 }
-const baseHtml = readFileSync(join(dist, 'index.html'), 'utf8')
+/* dist/index.html משמש גם כעמוד הבית הסטטי. לכן את מעטפת ה-SPA הנקייה
+   שומרים לפני הכול ב-dist/app-shell.html, ואליה מפנה ה-rewrite ב-vercel.json.
+   בלי ההפרדה, כל כתובת שאין לה קובץ סטטי הייתה מקבלת את תוכן עמוד הבית.
+   בהרצה חוזרת (check-routing מייבא את הקובץ הזה) קוראים מהמעטפת, כי
+   index.html כבר מכיל את עמוד הבית. */
+const SHELL = join(dist, 'app-shell.html')
+if (!existsSync(SHELL)) writeFileSync(SHELL, readFileSync(join(dist, 'index.html'), 'utf8'))
+const baseHtml = readFileSync(SHELL, 'utf8')
+
+/* כתבות עם תאריך עתידי מוסתרות באתר עד התאריך שלהן. גם כאן: בלי עמוד
+   סטטי ובלי רשימה, אחרת הן נחשפות לסורקים בבנייה הראשונה. */
+const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
+const isLive = (a) => !a.date || String(a.date).slice(0, 10) <= TODAY
 
 /* ---------- עזרים ---------- */
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -153,7 +165,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     try {
       const mod = await import(pathToFileURL(join(colDir, f)).href)
       const a = mod.default
-      if (a?.slug && a.published !== false) articles.push(a)
+      if (a?.slug && a.published !== false && isLive(a)) articles.push(a)
     } catch { /* קובץ בעייתי, מדלגים */ }
   }
   articles.sort((a, b) => String(b.date).localeCompare(String(a.date)))
@@ -238,15 +250,16 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     const body =
       `<h1>${esc(d.hero?.title?.he || d.menuTitle.he)}</h1>` +
       `<p>${esc(d.intro.he)}</p>` +
+      (d.related?.length ? '<ul>' + d.related.map((r) => `<li><a href="${esc(r.to)}">${esc(r.label)}</a></li>`).join('') + '</ul>' : '') +
       (d.why?.length ? `<h2>למה ${esc(d.name.he)}</h2><ul>` + d.why.map((w) => `<li><strong>${esc(w.title.he)}</strong>: ${esc(w.desc.he)}</li>`).join('') + '</ul>' : '') +
       (faqs.length ? '<h2>שאלות נפוצות</h2>' + faqs.map((f) => `<h3>${esc(f.q.he)}</h3><p>${esc(f.a.he)}</p>`).join('\n') : '') +
-      `<p><a href="/#contact">דברו איתנו</a> · <a href="/projects">הפרויקטים שלנו</a></p>`
+      `<p><a href="/contact">השארת פרטים</a> · <a href="/projects">הפרויקטים שלנו</a></p>`
     done.push(renderPage({
       path,
       title: d.seoTitle || d.menuTitle.he,
       description: d.seoDescription || d.intro.he,
       jsonLd: [
-        { '@context': 'https://schema.org', '@type': 'Service', name: d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' }, url: SITE + path },
+        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' }, url: SITE + path },
         ...(faqs.length ? [faqLd(faqs, (f) => [f.q.he, f.a.he])] : []),
         breadcrumbLd([{ name: BRAND, path: '/' }, { name: d.menuTitle.he, path }]),
       ],
@@ -275,13 +288,10 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   }))
 
   const { BUYER_FAQS } = await import(pathToFileURL(join(root, 'src/data/buyerFaqs.js')).href)
+  const { PRIVATE_HOUSE_GUIDES } = await import(pathToFileURL(join(root, 'src/data/villasPage.js')).href)
+  const { VILLAS_FAQS } = await import(pathToFileURL(join(root, 'src/data/villasPage.js')).href)
   const villaFaqs = [
-    ['איזו חברה בונה וילות ובתים פרטיים באזור השרון?', 'קורקוס גרופ, שמשרדה ברחוב הנגר 24 בהוד השרון, בונה וילות ובתים פרטיים בהוד השרון ובאזור המרכז. כיום הקבוצה מקימה את יורדי הים 3 בשכונת גרינברג, שתי וילות פרטיות על מגרשים של למעלה מחצי דונם עם בריכת שחייה 4x9 מטר, ואת הנרייטה סאלד 22-24 במערב הוד השרון, ארבע יחידות דו משפחתיות לשמונה משפחות עם בריכה פרטית לכל יחידה. הביצוע נעשה על ידי ראיתה והפיקוח על ידי שכינתא.'],
-    ['כמה גדולים הבתים ומה הם כוללים?', 'הווילות נבנות על כ-300 מ"ר בנוי בשלושה מפלסים. בהנרייטה סאלד כל בית כולל 7 חדרים, 4 חדרי רחצה ושתי מרפסות, עם כניסה נפרדת למפלס המרתף שמאפשרת יחידה עצמאית, וחצר פרטית עם בריכה 3x6 מטר. ביורדי הים 3 כל בית כולל קומת מרתף עם שתי סוויטות פרטיות, חדר גג, וגינה רחבה עם בריכה 4x9 מטר.'],
-    ['האם המגרש נרשם על שמי בטאבו?', 'בפרויקט הנרייטה סאלד 22-24 כל יחידה מקבלת מגרש בשטח 380 מ"ר הרשום בטאבו כבעלות פרטית. ביורדי הים 3 מדובר במגרשים של למעלה מחצי דונם לכל יחידה.'],
-    ['באילו שכונות בהוד השרון אתם בונים?', 'גרינברג, שם מוקם יורדי הים 3. מערב הוד השרון, שם מוקם הנרייטה סאלד 22-24. ומגדיאל, שם מוקם פרויקט הבוטיק חנקין 41.'],
-    ['מי מתכנן ומי מבצע את הפרויקטים?', 'הנרייטה סאלד 22-24 וחנקין 41 מתוכננים על ידי האדריכל בני נדלסטיצ\'ר, ויורדי הים 3 על ידי האדריכל רמי שחר. הביצוע נעשה על ידי ראיתה, זרוע הביצוע של קורקוס גרופ, והפיקוח על ידי שכינתא.'],
-    ['מה הסטטוס של הפרויקטים היום?', 'הנרייטה סאלד 22-24 וחנקין 41 נמצאים בבנייה, והנרייטה סאלד מבוצע תחת היתרי בנייה מאושרים. יורדי הים 3 נמצא בשלב התכנון.'],
+    ...VILLAS_FAQS.map((f) => [f.q, f.a]),
     ...BUYER_FAQS.map((f) => [f.q, f.a]),
   ]
   done.push(renderPage({
@@ -334,6 +344,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<li><a href="/villas-sharon">חנקין 41, שכונת מגדיאל</a>: פרויקט בוטיק של שש דירות יוקרה בבניין אחד, שתי חניות תת קרקעיות לכל דירה. בבנייה.</li>` +
       `<li><a href="/villas-sharon">יורדי הים 3, שכונת גרינברג</a>: שתי וילות פרטיות על מגרשים של למעלה מחצי דונם, עם בריכת שחייה 4x9 מטר. בתכנון.</li>` +
       `</ul>` +
+      `<h2>מדריכים לבניית בית פרטי</h2><ul>` +
+      PRIVATE_HOUSE_GUIDES.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>` +
       `<h2>תחומי הפעילות</h2>` +
       `<ul><li><a href="/divisions/development">יזמות נדל"ן</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a></li></ul>`,
   }))
@@ -502,6 +514,54 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<p>תוכנית מנטורינג שמעניקה ליזמים צעירים ידע, כלים ופרקטיקה מהיום יום של התעשייה, עם שלומי קורקוס וצוות קורקוס גרופ, שלושים שנה של ניסיון בשטח.</p>` +
       '<h2>שאלות נפוצות</h2>' + mentorFaqs.map((f) => `<h3>${esc(f.q.he)}</h3><p>${esc(f.a.he)}</p>`).join('\n'),
   }))
+}
+
+/* ---------- 5. עמוד הבית ועמודי המדיניות ---------- */
+{
+  /* עמוד הבית היה העמוד היחיד שסורקי AI ראו ריק: מסך טעינה בלי טקסט ובלי
+     קישורים. כאן נכתב הטקסט שמתאר את הקבוצה, רק עובדות שמופיעות באתר. */
+  const { VILLAS_PROJECTS } = await import(pathToFileURL(join(root, 'src/data/villasPage.js')).href)
+  const projectsHtml = VILLAS_PROJECTS.map((p) =>
+    `<li><strong>${esc(p.name)}</strong>: ${esc(p.kind)}. ${esc(p.tagline)}. סטטוס: ${esc(p.status)}.</li>`).join('')
+  done.push(renderPage({
+    path: '/',
+    title: 'יזמות, בנייה ופיקוח נדל"ן בהוד השרון ובאזור המרכז',
+    description: 'קורקוס גרופ מהוד השרון: ייזום פרויקטים למגורים, בנייה וביצוע, ניהול ופיקוח ותיווך, וכן בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז. מקרקע ועד מסירת מפתח.',
+    bodyHtml:
+      `<h1>קבוצת קורקוס: יזמות, בנייה ופיקוח נדל"ן בהוד השרון ובאזור המרכז</h1>` +
+      `<p>קבוצת קורקוס (קורקוס גרופ) היא קבוצת נדל"ן מהוד השרון, שמשרדה ברחוב הנגר 24. הקבוצה עוסקת ביזמות נדל"ן, בביצוע ובנייה באמצעות ראיתה, בניהול ופיקוח פרויקטים באמצעות שכינתא, ובתיווך ושיווק נכסים באמצעות אפיק הנחל. את הקבוצה ייסד ומנהל שלומי קורקוס.</p>` +
+      `<p>ראיתה בונה את הפרויקטים של הקבוצה, וגם בתים פרטיים ווילות עבור אנשים פרטיים על המגרש שלהם, כחברת ביצוע. שכינתא מפקחת על הביצוע מטעם המזמין. כך לקוח מקבל ביצוע ופיקוח מאותה קבוצה, בשתי זרועות נפרדות.</p>` +
+      `<h2>הפרויקטים בהוד השרון</h2><ul>${projectsHtml}</ul>` +
+      `<p><a href="/villas-sharon">בניית וילות ובתים פרטיים בהוד השרון</a> · <a href="/projects">כל הפרויקטים</a></p>` +
+      `<h2>תחומי הפעילות</h2><ul>` +
+      `<li><a href="/divisions/development">יזמות נדל"ן</a>: איתור קרקע, בדיקות היתכנות, תכנון ורישוי.</li>` +
+      `<li><a href="/divisions/execution">ביצוע ובנייה</a>: ראיתה, קבלן מבצע לפרויקטי מגורים, וילות ובתים פרטיים.</li>` +
+      `<li><a href="/divisions/supervision">ניהול ופיקוח בנייה</a>: שכינתא, פיקוח הנדסי ובקרת איכות מטעם המזמין.</li>` +
+      `<li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a>: אפיק הנחל, משרד תיווך בהוד השרון.</li>` +
+      `<li><a href="/livy-yazamim">ליווי יזמי נדל"ן צעירים</a>: מנטורינג עם שלומי קורקוס.</li>` +
+      `</ul>` +
+      `<h2>מדריכים</h2><ul>` +
+      `<li><a href="/constructions">המדריך לתהליך הבנייה</a></li>` +
+      `<li><a href="/construction-supervision">המדריך לפיקוח בנייה</a></li>` +
+      `<li><a href="/yazamut-nadlan">המדריך ליזמות נדל"ן</a></li>` +
+      `<li><a href="/real-estate-guide">המדריך לרוכש ולמוכר</a></li>` +
+      `<li><a href="/madrich-yazamim">המדריך ליזמי נדל"ן צעירים</a></li>` +
+      `</ul>` +
+      `<h2>יצירת קשר</h2><p>רחוב הנגר 24, מגדלי Amy, הוד השרון. טלפון 055-981-1814. ימים א׳ עד ה׳, 9:00 עד 18:00. <a href="/contact">השארת פרטים</a></p>`,
+  }))
+
+  const LEGAL = [
+    ['/accessibility', 'הצהרת נגישות', 'הצהרת הנגישות של אתר קורקוס גרופ: התאמות הנגישות באתר לפי תקן ישראלי 5568 ברמה AA, תפריט נגישות, ודרכים לפנות אלינו בנושא נגישות.'],
+    ['/privacy', 'מדיניות פרטיות', 'מדיניות הפרטיות של קבוצת קורקוס: איזה מידע נאסף באתר, לאיזו מטרה, איך הוא נשמר, והזכויות שלכם לפי חוק הגנת הפרטיות.'],
+    ['/terms', 'תקנון ותנאי שימוש', 'תנאי השימוש באתר קורקוס גרופ: אופי המידע באתר, קניין רוחני, אחריות והגבלות השימוש.'],
+  ]
+  for (const [path, title, description] of LEGAL) {
+    done.push(renderPage({
+      path, title, description,
+      jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: title, path }])],
+      bodyHtml: `<h1>${esc(title)}</h1><p>${esc(description)}</p><p>לפניות: 055-981-1814, רחוב הנגר 24, הוד השרון.</p>`,
+    }))
+  }
 }
 
 console.log(`prerender: נוצרו ${done.length} עמודים סטטיים`)

@@ -17,6 +17,76 @@
       "source": "/m/:path*",
       "destination": "/:path*",
       "permanent": true
+    },
+    {
+      "source": "/construction-supervision/construction-supervision-likuei-sheled-beton",
+      "destination": "/construction-supervision/construction-supervision-likuei-sheled",
+      "permanent": true
+    },
+    {
+      "source": "/construction-supervision/construction-supervision-likuei-sheled-critical",
+      "destination": "/construction-supervision/construction-supervision-likuei-sheled",
+      "permanent": true
+    },
+    {
+      "source": "/construction-supervision/construction-supervision-likuei-sheled-yom-hayetzika",
+      "destination": "/construction-supervision/construction-supervision-likuei-sheled",
+      "permanent": true
+    },
+    {
+      "source": "/construction-supervision/construction-supervision-likuei-sheled-critical-beton",
+      "destination": "/construction-supervision/construction-supervision-likuei-sheled",
+      "permanent": true
+    },
+    {
+      "source": "/construction-supervision/construction-supervision-likuei-sheled-bitzua",
+      "destination": "/construction-supervision/construction-supervision-likuei-sheled",
+      "permanent": true
+    },
+    {
+      "source": "/construction-supervision/construction-supervision-bdek-dira",
+      "destination": "/construction-supervision/construction-supervision-bdek-dira-lifney-mesira",
+      "permanent": true
+    },
+    {
+      "source": "/real-estate-guide/timchur-dira-lemchira",
+      "destination": "/real-estate-guide/timchur-dira-lemchira-hamechir-harishon",
+      "permanent": true
+    },
+    {
+      "source": "/real-estate-guide/timchur-dira-lemchira-nachon",
+      "destination": "/real-estate-guide/timchur-dira-lemchira-hamechir-harishon",
+      "permanent": true
+    },
+    {
+      "source": "/real-estate-guide/rechishat-dira-yad-shniya-bdikot",
+      "destination": "/real-estate-guide/bdikot-lifney-rechishat-dira",
+      "permanent": true
+    },
+    {
+      "source": "/constructions/concrete-cube-test-failure",
+      "destination": "/constructions/concrete-cube-test-failure-beyetzika",
+      "permanent": true
+    },
+    {
+      "source": "/constructions/site-manager-duties-stop-work",
+      "destination": "/constructions/site-manager-stop-concrete-pour",
+      "permanent": true
+    },
+    {
+      "source": "/constructions/itum-retivut-bniya",
+      "destination": "/constructions/itum-retivut-chozeret-oto-makom",
+      "permanent": true
+    },
+    {
+      "source": "/yazamut-nadlan/mamad-15-meter-tamhil",
+      "destination": "/yazamut-nadlan/mamad-15-meter-yazamut",
+      "permanent": true
+    },
+    {
+      "source": "/yazamut-nadlan/rami-tender-floor-price-market-truth",
+      "destination": "/yazamut-nadlan/rami-tender-land-floor-price",
+      "permanent": true
     }
   ],
   "git": {
@@ -44,7 +114,7 @@
     },
     {
       "source": "/((?!api/).*)",
-      "destination": "/"
+      "destination": "/app-shell"
     }
   ],
   "headers": [
@@ -95,6 +165,19 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/app-shell(.html)?",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
         }
       ]
     },

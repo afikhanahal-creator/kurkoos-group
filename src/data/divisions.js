@@ -87,8 +87,15 @@ export const divisions = [
   {
     slug: 'execution',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
-    seoTitle: 'ביצוע ובנייה: קבלן מבצע בהוד השרון ובאזור המרכז',
-    seoDescription: 'ראיתה, זרוע הביצוע של קורקוס גרופ, היא קבלן מבצע לפרויקטים למגורים בהוד השרון ובאזור המרכז: שלד, מעטפת וגימור, בקרת איכות וניהול קבלני משנה, מהיסודות ועד מסירת המפתח.',
+    seoTitle: 'חברת בנייה לבתים פרטיים ווילות בהוד השרון ובאזור המרכז',
+    seoDescription: 'ראיתה, זרוע הביצוע של קורקוס גרופ, היא חברת בנייה וקבלן מבצע בהוד השרון ובאזור המרכז: בניית בתים פרטיים ווילות ללקוחות פרטיים על המגרש שלהם, ופרויקטים למגורים. שלד, מעטפת וגימור, בקרת איכות וניהול קבלני משנה.',
+    serviceName: 'ביצוע ובנייה: בניית בתים פרטיים, וילות ופרויקטים למגורים',
+    related: [
+      { to: '/villas-sharon', label: 'הווילות והבתים הפרטיים שאנחנו בונים בהוד השרון' },
+      { to: '/constructions/livchor-chevrat-bniya-bayit-prati', label: 'איך בוחרים חברת בנייה לבית פרטי' },
+      { to: '/constructions/kama-ole-livnot-bayit-prati', label: 'כמה עולה לבנות בית פרטי' },
+      { to: '/divisions/supervision', label: 'פיקוח בנייה עם שכינתא' },
+    ],
     icon: 'crane',
     category: null,
     name: { he: 'ראיתה. ביצוע מנצח.', en: 'Raita. Winning execution.' },
@@ -103,7 +110,7 @@ export const divisions = [
       image: '/divisions/execution-bg.jpg',
     },
     intro: {
-      he: 'זרוע הביצוע של קורקוס מתרגמת תכניות לבניינים. אנחנו מבצעים פרויקטים מורכבים בסטנדרט הגבוה ביותר, שלד, מעטפת וגימור, תוך בקרת איכות בכל שלב, ניהול קבלני משנה ועמידה קפדנית בלוחות זמנים ובתקציב. אנחנו בונים גם עבור הפרויקטים שלנו וגם כקבלן מבצע עבור יזמים וגופים מוסדיים.',
+      he: 'ראיתה, זרוע הביצוע של קורקוס, מתרגמת תכניות לבניינים ולבתים. אנחנו מבצעים פרויקטים בסטנדרט הגבוה ביותר, שלד, מעטפת וגימור, תוך בקרת איכות בכל שלב, ניהול קבלני משנה ועמידה קפדנית בלוחות זמנים ובתקציב. אנחנו בונים את הפרויקטים של הקבוצה, כמו הווילות והבתים הדו משפחתיים בהוד השרון, בונים בתים פרטיים ווילות עבור לקוחות פרטיים על המגרש שלהם, ומשמשים קבלן מבצע עבור יזמים וגופים מוסדיים. מי שבונה איתנו יכול לצרף גם פיקוח בנייה של שכינתא, זרוע נפרדת של אותה קבוצה.',
       en: 'The Kurkoos execution arm turns plans into buildings. We deliver complex projects to the highest standard, structure, envelope and finish, with quality control at every stage, subcontractor management and strict adherence to schedule and budget. We build both for our own projects and as a contractor for developers and institutional clients.',
     },
     why: [
@@ -121,11 +128,25 @@ export const divisions = [
       {
         q: { he: 'האם קורקוס גרופ היא קבלן מבצע?', en: 'Is Kurkoos Group a general contractor?' },
         a: {
-          he: 'כן. ראיתה היא זרוע הביצוע של קורקוס גרופ, והיא משמשת קבלן מבצע לפרויקטים למגורים בהוד השרון ובאזור המרכז: שלד, מעטפת וגימור, בקרת איכות וניהול קבלני משנה. הקבוצה מבצעת גם את הפרויקטים שהיא מייזמת בעצמה וגם פרויקטים עבור יזמים וגופים אחרים.',
+          he: 'כן. ראיתה היא זרוע הביצוע של קורקוס גרופ, והיא משמשת קבלן מבצע בהוד השרון ובאזור המרכז: שלד, מעטפת וגימור, בקרת איכות וניהול קבלני משנה. היא מבצעת את הפרויקטים שהקבוצה מייזמת, בונה בתים פרטיים ווילות עבור לקוחות פרטיים, ומבצעת פרויקטים עבור יזמים וגופים אחרים.',
           en: 'Yes. Raita is the execution arm of Kurkoos Group and acts as the general contractor for residential projects in Hod HaSharon and central Israel: structure, envelope and finishing, quality control and subcontractor management, both for the group\u2019s own projects and for other developers.',
         },
       },
 
+      {
+        q: { he: 'האם ראיתה בונה בית פרטי על מגרש של לקוח פרטי?', en: 'Does Raita build a private house on a private client\u2019s plot?' },
+        a: {
+          he: 'כן. ראיתה בונה בתים פרטיים ווילות עבור לקוחות פרטיים על המגרש שלהם, כחברת ביצוע. מי שבונה איתנו יכול לצרף גם פיקוח של שכינתא, זרוע הניהול והפיקוח של הקבוצה, כך שהביצוע והבקרה עליו נמצאים באותה קבוצה אבל בידיים נפרדות.',
+          en: 'Yes. Raita builds private houses and villas for private clients on their own plot, as a construction company. Clients can add supervision by Shechinta, the group\u2019s separate management and supervision arm.',
+        },
+      },
+      {
+        q: { he: 'מה צריך כדי להתחיל לבנות בית פרטי?', en: 'What do you need to start building a private house?' },
+        a: {
+          he: 'מגרש בבעלותכם, תוכניות של אדריכל והיתר בנייה בתוקף, או לפחות תוכניות בשלב מתקדם. בפגישה הראשונה עוברים יחד על התוכניות, המפרט הטכני, לוח הזמנים והיקף העבודה, ורק אחרי זה מגיעה הצעה. אם עוד אין היתר, כדאי לדבר איתנו כבר בשלב התכנון, כי החלטות תכנון משפיעות ישירות על עלות הביצוע.',
+          en: 'A plot you own, architect\u2019s plans and a valid building permit, or plans at an advanced stage. In the first meeting we go through the plans, specification, schedule and scope together, and only then send a quote.',
+        },
+      },
       {
             "q": {
                   "he": "מה כולל שלב הביצוע בפרויקט בנייה?",
@@ -172,7 +193,14 @@ export const divisions = [
     slug: 'development',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
     seoTitle: 'יזמות נדל"ן בהוד השרון ובאזור המרכז',
-    seoDescription: 'קורקוס יזמות מייזמת פרויקטים למגורים מאיתור הקרקע ובדיקות ההיתכנות, דרך התכנון והרישוי, ועד השיווק והמסירה, בהוד השרון ובאזור המרכז.',
+    seoDescription: 'קורקוס יזמות, יזם נדל"ן מהוד השרון, מייזמת פרויקטים למגורים, בתים פרטיים ובנייני בוטיק מאיתור הקרקע ובדיקות ההיתכנות, דרך התכנון והרישוי, ועד השיווק והמסירה, בהוד השרון ובאזור המרכז.',
+    serviceName: 'יזמות נדל"ן למגורים בהוד השרון',
+    related: [
+      { to: '/villas-sharon', label: 'הפרויקטים שלנו בהוד השרון' },
+      { to: '/madrich-yazamim/bdikat-hetkenut-karka', label: 'בדיקת היתכנות לפני רכישת קרקע' },
+      { to: '/madrich-yazamim/zchuyot-bniya-ma-baamt-kniten', label: 'זכויות בנייה: מה באמת קניתם' },
+      { to: '/livy-yazamim', label: 'ליווי אישי ליזמים בתחילת הדרך' },
+    ],
     icon: 'building',
     category: null,
     name: { he: 'קורקוס יזמות', en: 'Kurkoos Development' },
@@ -186,7 +214,7 @@ export const divisions = [
       image: '/divisions/humash-22-24.webp',
     },
     intro: {
-      he: 'זרוע הייזום של קורקוס היא המנוע שמניע כל פרויקט. אנחנו מאתרים קרקעות והזדמנויות, מובילים תכנון ורישוי מול הרשויות, בונים מבנה פיננסי איתן ומנהלים את הסיכון, ומלווים את הפרויקט מהרעיון הראשוני ועד שהדיירים מקבלים את המפתח. כל יזמה נמדדת בערך האמיתי שהיא מייצרת לכל הצדדים.',
+      he: 'זרוע הייזום של קורקוס היא המנוע שמניע כל פרויקט. אנחנו מאתרים קרקעות והזדמנויות, מובילים תכנון ורישוי מול הרשויות, בונים מבנה פיננסי איתן ומנהלים את הסיכון, ומלווים את הפרויקט מהרעיון הראשוני ועד שהדיירים מקבלים את המפתח. בין הפרויקטים של הקבוצה בהוד השרון: הנרייטה סאלד 22-24, ארבעה בתים דו משפחתיים במערב העיר, יורדי הים 3, שתי וילות בשכונת גרינברג, ובניין הבוטיק חנקין 41 במגדיאל. אנחנו עובדים גם עם בעלי קרקע ומגרשים בשרון שמחפשים יזם. כל יזמה נמדדת בערך האמיתי שהיא מייצרת לכל הצדדים.',
       en: 'The Kurkoos development arm is the engine behind every project. We identify land and opportunities, lead planning and permitting with the authorities, build a solid financial structure and manage risk, guiding each project from the initial idea until residents receive their keys. Every venture is measured by the real value it creates for all sides.',
     },
     why: [
@@ -246,14 +274,21 @@ export const divisions = [
   {
     slug: 'supervision',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
-    seoTitle: 'ניהול ופיקוח פרויקטים בהוד השרון ובאזור המרכז',
-    seoDescription: 'שכינתא, זרוע הפיקוח של קורקוס גרופ, מנהלת ומפקחת על פרויקטי בנייה מטעם המזמין: בקרת איכות, בקרת תקציב ולוחות זמנים, בדיקות קבלה ומסירה.',
+    seoTitle: 'ניהול ופיקוח בנייה בהוד השרון ובאזור המרכז',
+    seoDescription: 'שכינתא, זרוע הניהול והפיקוח של קורקוס גרופ: מפקח בנייה וניהול פרויקט בנייה מטעם המזמין, כולל פיקוח על בניית בית פרטי או וילה. בקרת איכות, תקציב ולוחות זמנים, אישור חשבונות קבלן ופרוטוקול מסירה.',
+    serviceName: 'ניהול ופיקוח בנייה: מפקח בנייה וניהול פרויקט מטעם המזמין',
+    related: [
+      { to: '/construction-supervision/mefakeach-bniya-bayit-prati', label: 'מפקח בנייה לבית פרטי: מה הוא בודק' },
+      { to: '/construction-supervision/protokol-mesira-bayit-prati', label: 'פרוטוקול מסירה לבית פרטי' },
+      { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },
+      { to: '/divisions/execution', label: 'ביצוע ובנייה עם ראיתה' },
+    ],
     icon: 'shield',
     category: null,
     name: { he: 'שכינתא פיקוח', en: 'Shechinta Supervision' },
     menuTitle: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
     hero: {
-      title: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
+      title: { he: 'ניהול ופיקוח בנייה', en: 'Construction management & supervision' },
       subtitle: {
         he: 'עיניים מקצועיות על כל פרט, פיקוח הנדסי צמוד שמבטיח איכות, בטיחות ועמידה בתקציב ובזמנים.',
         en: 'Professional eyes on every detail, close engineering supervision that ensures quality, safety, budget and schedule.',
@@ -261,7 +296,7 @@ export const divisions = [
       image: '/execution-gallery/4.jpg',
     },
     intro: {
-      he: 'זרוע הפיקוח של שכינתא שומרת שכל פרויקט מבוצע בדיוק כפי שתוכנן. צוות המפקחים שלנו מלווה את הבנייה מההיתר ועד המסירה, בודק איכות וחומרים, מאשר חשבונות קבלן, מנהל לוחות זמנים ותקציב ואוכף תקני בטיחות. אנחנו מספקים שירותי פיקוח גם לפרויקטים שלנו וגם ללקוחות חיצוניים: יזמים, גופים מוסדיים ובעלי נכסים.',
+      he: 'שכינתא, זרוע הניהול והפיקוח של קורקוס גרופ, שומרת שכל פרויקט מבוצע בדיוק כפי שתוכנן. צוות המפקחים שלנו מלווה את הבנייה מההיתר ועד המסירה, בודק איכות וחומרים, מאשר חשבונות קבלן לפי אבני הדרך, מנהל לוחות זמנים ותקציב ואוכף תקני בטיחות. אנחנו מספקים ניהול ופיקוח בנייה לפרויקטים של הקבוצה וללקוחות חיצוניים: יזמים, גופים מוסדיים, בעלי נכסים, ומשפחות שבונות בית פרטי או וילה ורוצות מפקח בנייה מטעמן.',
       en: 'The Shechinta supervision arm ensures every project is executed exactly as planned. Our supervisors accompany construction from permit to handover, checking quality and materials, approving contractor invoices, managing schedule and budget, and enforcing safety standards. We provide supervision for our own projects and for external clients alike: developers, institutional bodies and property owners.',
     },
     why: [
@@ -284,6 +319,20 @@ export const divisions = [
         },
       },
 
+      {
+        q: { he: 'האם אפשר לקבל פיקוח על בניית בית פרטי?', en: 'Can I get supervision for building a private house?' },
+        a: {
+          he: 'כן. שכינתא מפקחת גם על בניית בתים פרטיים ווילות מטעם בעל הבית: בדיקות בשלבים הקריטיים כמו יציקות ואיטום, בדיקת חשבונות הקבלן לפני תשלום, מעקב לוח זמנים, וליווי המסירה עם פרוטוקול מסירה. הפיקוח אפשרי גם כשקבלן אחר בונה את הבית.',
+          en: 'Yes. Shechinta also supervises private houses and villas on the owner\u2019s behalf, including when another contractor builds the house.',
+        },
+      },
+      {
+        q: { he: 'קבלן מפתח או מפקח בנייה: מה צריך לבית פרטי?', en: 'Turnkey contractor or supervisor for a private house?' },
+        a: {
+          he: 'הקבלן בונה, והמפקח בודק את הבנייה מטעמכם. אלה שני תפקידים שונים, ובבית פרטי כדאי שיהיו שניהם, כי המפקח הוא זה שמזהה ליקוי כשעוד זול לתקן אותו. בקורקוס גרופ שני התפקידים קיימים באותה קבוצה אבל בזרועות נפרדות: ראיתה בונה ושכינתא מפקחת.',
+          en: 'The contractor builds and the supervisor checks the work for you. A private house benefits from both. At Kurkoos Group both exist in separate arms: Raita builds and Shechinta supervises.',
+        },
+      },
       {
             "q": {
                   "he": "מה עושה מפקח בנייה?",
@@ -330,7 +379,14 @@ export const divisions = [
     slug: 'brokerage',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
     seoTitle: 'תיווך ושיווק נכסים בהוד השרון ובאזור המרכז',
-    seoDescription: 'אפיק הנחל, זרוע התיווך של קורקוס גרופ, מלווה רוכשים ומוכרים ומשווקת פרויקטים בהוד השרון ובאזור המרכז, מהערכת השווי ועד החתימה.',
+    seoDescription: 'אפיק הנחל, משרד התיווך של קורקוס גרופ בהוד השרון: מכירה וקנייה של בתים פרטיים, וילות ודירות, מגרשים וקרקעות, ושיווק פרויקטים בהוד השרון ובאזור המרכז, מהערכת השווי ועד החתימה.',
+    serviceName: 'תיווך נדל"ן ושיווק פרויקטים בהוד השרון',
+    related: [
+      { to: '/real-estate-guide/timchur-dira-lemchira-hamechir-harishon', label: 'תמחור דירה למכירה' },
+      { to: '/real-estate-guide/bdikot-lifney-rechishat-dira', label: 'הבדיקות לפני רכישת דירה' },
+      { to: '/real-estate-guide/mas-rechisha-madregot', label: 'מס רכישה: המדרגות והפטורים' },
+      { to: '/villas-sharon', label: 'הפרויקטים בשיווק בהוד השרון' },
+    ],
     icon: 'brokerage',
     category: null,
     name: { he: 'אפיק הנחל', en: 'Afik Hanachal' },
@@ -344,7 +400,7 @@ export const divisions = [
       image: '/afik-hanahal-cover.webp',
     },
     intro: {
-      he: 'זרוע התיווך והשיווק של קורקוס מחברת בין אנשים לבתים. אנחנו משווקים את הפרויקטים של הקבוצה ושל לקוחותינו, מלווים רוכשים ומוכרים לאורך כל העסקה, ומתאימים לכל לקוח את הנכס המדויק לצרכים, לתקציב ולחלום שלו. עם היכרות עמוקה של השוק, שקיפות מלאה ושירות אישי, אנחנו הופכים את אחת ההחלטות הגדולות בחיים לתהליך בטוח ונעים.',
+      he: 'אפיק הנחל, משרד התיווך והשיווק של קורקוס בהוד השרון, מחבר בין אנשים לבתים. אנחנו משווקים את הפרויקטים של הקבוצה ושל לקוחותינו, בתים פרטיים, וילות, דירות ומגרשים, מלווים רוכשים ומוכרים לאורך כל העסקה, ומתאימים לכל לקוח את הנכס המדויק לצרכים, לתקציב ולחלום שלו. עם היכרות עמוקה של השוק, שקיפות מלאה ושירות אישי, אנחנו הופכים את אחת ההחלטות הגדולות בחיים לתהליך בטוח ונעים.',
       en: 'The Kurkoos brokerage and marketing arm connects people with homes. We market the group’s projects and our clients’ properties, accompany buyers and sellers throughout the deal, and match each client with the exact property for their needs, budget and dream. With deep market knowledge, full transparency and personal service, we turn one of life’s biggest decisions into a safe, pleasant process.',
     },
     why: [

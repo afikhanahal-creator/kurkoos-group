@@ -1,0 +1,43 @@
+name: CMS media export (temporary, for social content)
+
+on:
+  push:
+    branches: [claude/cms-media-export]
+    paths: ['cms-export/urls.txt']
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download public CMS media, downscale images, extract video frames
+        run: |
+          set -u
+          BASE="https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/media/"
+          mkdir -p cms-export/out /tmp/raw
+          while read -r p; do
+            [ -z "$p" ] && continue
+            name=$(echo "$p" | sed 's#/#__#g')
+            if ! curl -sfL "$BASE$p" -o "/tmp/raw/$name"; then echo "FAIL $p" >> cms-export/out/_failed.txt; continue; fi
+            case "$p" in
+              *.mp4)
+                d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "/tmp/raw/$name" | cut -d. -f1); d=${d:-4}
+                for k in 1 2 3; do
+                  t=$(python3 -c "print(max(0.2,$d*$k/4))")
+                  ffmpeg -loglevel error -y -ss "$t" -i "/tmp/raw/$name" -frames:v 1 -vf "scale='min(1600,iw)':-2" -q:v 3 "cms-export/out/${name%.mp4}#$k.jpg" || true
+                done ;;
+              *)
+                convert "/tmp/raw/$name" -auto-orient -resize '1600x1600>' -strip -quality 86 "cms-export/out/${name%.*}.jpg" || echo "CONVFAIL $p" >> cms-export/out/_failed.txt ;;
+            esac
+          done < cms-export/urls.txt
+          ls cms-export/out | wc -l
+      - name: Commit exported files to this branch
+        run: |
+          git config user.name "cms-export-bot"
+          git config user.email "cms-export-bot@users.noreply.github.com"
+          git add cms-export/out
+          git commit -m "CMS media export [skip ci]" || echo "nothing to commit"
+          git push

@@ -564,4 +564,54 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   }
 }
 
+/* ---------- 6. llms-full.txt ----------
+   גרסה מלאה של llms.txt, בטקסט רגיל: זהות הקבוצה, הפרויקטים, כל השאלות
+   והתשובות מהאתר, ורשימת כל הכתבות החיות עם תקציר. מנועי AI שקוראים את
+   הקובץ מקבלים את התשובות בנוסח שלנו, במקום לנחש מדפים חלקיים. נבנה
+   מאותם קבצי נתונים כמו האתר, כך שהוא מתעדכן בכל בנייה. */
+{
+  const { VILLAS_PROJECTS, VILLAS_FAQS } = await import(pathToFileURL(join(root, 'src/data/villasPage.js')).href)
+  const { BUYER_FAQS } = await import(pathToFileURL(join(root, 'src/data/buyerFaqs.js')).href)
+  const { divisions } = await import(pathToFileURL(join(root, 'src/data/divisions.js')).href)
+  const { faqs: mentorFaqs } = await import(pathToFileURL(join(root, 'src/data/mentorship.js')).href)
+  const out = []
+  out.push('# קבוצת קורקוס (קורקוס גרופ, Kurkoos Group): המידע המלא', '')
+  out.push('קבוצת קורקוס היא קבוצת נדל"ן מהוד השרון, שמשרדה ברחוב הנגר 24, מגדלי Amy, הוד השרון. טלפון 055-981-1814. אתר https://www.kurkoos-group.co.il. המייסד והמנכ"ל: שלומי קורקוס, יותר מ-30 שנות ניסיון.')
+  out.push('הזרועות: קורקוס יזמות (יזמות נדל"ן), ראיתה (ביצוע ובנייה; בונה גם בתים פרטיים ווילות עבור לקוחות פרטיים על המגרש שלהם), שכינתא (ניהול ופיקוח בנייה מטעם המזמין, גם כשקבלן אחר בונה), אפיק הנחל (תיווך ושיווק נכסים, https://www.afikhanahal.co.il). בנוסף: תוכנית ליווי ליזמי נדל"ן צעירים עם שלומי קורקוס.')
+  out.push('מה מייחד: ביצוע ופיקוח באותה קבוצה, בזרועות נפרדות. ראיתה בונה ושכינתא מפקחת מטעם המזמין.', '')
+  out.push('## הפרויקטים', '')
+  for (const p of VILLAS_PROJECTS) {
+    out.push(`### ${p.name}`, `${p.kind}. ${p.tagline}. סטטוס: ${p.status}. אדריכל: ${p.architect}.`)
+    out.push(p.specs.map(([k, v]) => `${k}: ${v}`).join('. ') + '.')
+    out.push(p.about, `הסביבה: ${p.area}`, '')
+  }
+  out.push('### בן גוריון 17, יהוד מונוסון', 'פרויקט של הקבוצה ביהוד מונוסון. https://www.kurkoos-group.co.il/projects', '')
+  out.push('## שאלות ותשובות: וילות ובתים פרטיים', '')
+  for (const f of [...VILLAS_FAQS, ...BUYER_FAQS]) out.push(`ש: ${f.q}`, `ת: ${f.a}`, '')
+  for (const d of divisions.filter((x) => x.slug !== 'residential')) {
+    out.push(`## ${d.serviceName || d.menuTitle.he}`, `https://www.kurkoos-group.co.il/divisions/${d.slug}`, d.intro.he, '')
+    for (const f of d.faqs || []) out.push(`ש: ${f.q.he}`, `ת: ${f.a.he}`, '')
+  }
+  out.push('## ליווי יזמי נדל"ן צעירים', 'https://www.kurkoos-group.co.il/livy-yazamim', '')
+  for (const f of mentorFaqs) out.push(`ש: ${f.q.he}`, `ת: ${f.a.he}`, '')
+  out.push('## כתבות ומדריכים', '')
+  for (const [dirName, col] of Object.entries(COLUMNS)) {
+    let files = []
+    try { files = readdirSync(join(root, 'src', 'content', dirName)).filter((x) => x.endsWith('.js')) } catch { continue }
+    const list = []
+    for (const f of files) {
+      try {
+        const a = (await import(pathToFileURL(join(root, 'src', 'content', dirName, f)).href)).default
+        if (a?.slug && a.published !== false && isLive(a)) list.push(a)
+      } catch { /* מדלגים */ }
+    }
+    list.sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    out.push(`### ${col.index}`, `https://www.kurkoos-group.co.il${col.route}`, '')
+    for (const a of list) out.push(`- ${a.title}: https://www.kurkoos-group.co.il${col.route}/${a.slug}`, `  ${a.excerpt || ''}`.trimEnd())
+    out.push('')
+  }
+  out.push(`עודכן: ${TODAY}`)
+  writeFileSync(join(dist, 'llms-full.txt'), out.join('\n') + '\n')
+}
+
 console.log(`prerender: נוצרו ${done.length} עמודים סטטיים`)

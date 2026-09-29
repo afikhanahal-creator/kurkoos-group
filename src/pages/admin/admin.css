@@ -2667,3 +2667,7 @@
   .adm-leads__panel .adm-pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .adm-leads__panel .adm-pipeline__lbl { font-size: 0.9rem; }
 }
+
+/* קישור לחלון חיצוני בתפריט (מנוע התוכן) */
+.adm__nav-ext { margin-inline-start: auto; opacity: 0.55; flex: none; }
+.adm__nav-item:hover .adm__nav-ext { opacity: 0.9; }

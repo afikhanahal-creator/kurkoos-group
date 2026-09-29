@@ -1,0 +1,58 @@
+/* מנוע התוכן · נקודת הכניסה מתוך הניהול */
+.ce { display: grid; gap: 1.25rem; max-width: 1180px; }
+
+.ce-hero {
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2rem; align-items: center;
+  background: linear-gradient(200deg, #0d3a50 0%, #07293a 58%, #061d29 100%);
+  color: #f7f8fa; border-radius: var(--adm-radius); padding: clamp(1.5rem, 3vw, 2.6rem);
+  box-shadow: var(--adm-shadow); overflow: hidden; position: relative;
+}
+.ce-hero::after { content: ''; position: absolute; inset-inline-start: 0; bottom: 0; width: 64px; height: 4px; background: #a90b0c; }
+.ce-eyebrow { font-family: var(--font-heading); font-size: 0.78rem; letter-spacing: 0.04em; color: #8fb6c8; font-weight: 700; }
+.ce-hero h2 { font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.3rem); line-height: 1.15; margin: 0.4rem 0 0.7rem; color: #fff; }
+.ce-hero p { color: rgba(247, 248, 250, 0.82); line-height: 1.65; margin: 0; max-width: 56ch; }
+.ce-hero__acts { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin: 1.4rem 0 1rem; }
+.ce-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 12px; padding: 0.85rem 1.35rem;
+  font: 700 1rem/1 var(--font-heading); cursor: pointer; text-decoration: none; border: 0;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.ce-btn--pri { background: #a90b0c; color: #fff; box-shadow: 0 8px 22px rgba(169, 11, 12, 0.35); }
+.ce-btn--pri:hover { background: #bd1213; transform: translateY(-1px); }
+.ce-btn--ghost { color: #8fb6c8; padding-inline: 0.4rem; font-weight: 600; font-size: 0.92rem; }
+.ce-btn--ghost:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.ce-btn:focus-visible { outline: 3px solid #8fb6c8; outline-offset: 3px; }
+.ce-note { display: flex; gap: 0.45rem; align-items: flex-start; font-size: 0.82rem !important; color: rgba(247, 248, 250, 0.62) !important; }
+.ce-note svg { flex: none; margin-top: 2px; }
+
+.ce-hero__art { display: grid; place-items: center; }
+.ce-mock {
+  width: 100%; max-width: 380px; aspect-ratio: 7 / 4.2; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+  background: rgba(247, 248, 250, 0.06); border: 1px solid rgba(143, 182, 200, 0.22); border-radius: 14px; padding: 10px;
+}
+.ce-mock__col { background: rgba(247, 248, 250, 0.07); border-radius: 7px; display: flex; flex-direction: column; gap: 5px; padding: 5px; }
+.ce-mock__col i { height: 6px; border-radius: 3px; background: rgba(143, 182, 200, 0.35); }
+.ce-mock__col b { display: block; aspect-ratio: 4 / 5; border-radius: 5px; background: #105572; }
+.ce-mock__col b.r { background: #a90b0c; }
+.ce-mock__col b.t { background: #f7f8fa; }
+
+.ce-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.ce-card { background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); padding: 1.2rem; box-shadow: var(--adm-shadow-sm); }
+.ce-card__ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; background: rgba(143, 182, 200, 0.2); color: #105572; margin-bottom: 0.8rem; }
+.ce-card h3 { font-family: var(--font-heading); font-size: 1.02rem; margin: 0 0 0.35rem; color: var(--adm-ink); }
+.ce-card p { font-size: 0.88rem; line-height: 1.6; color: var(--adm-muted); margin: 0; }
+
+.ce-how { background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); padding: 1.2rem 1.4rem; }
+.ce-how h3 { font-family: var(--font-heading); font-size: 1rem; margin: 0 0 0.4rem; color: var(--adm-ink); }
+.ce-how p { font-size: 0.9rem; line-height: 1.7; color: var(--adm-muted); margin: 0; max-width: 90ch; }
+
+.adm[data-theme="dark"] .ce-card__ico { background: rgba(143, 182, 200, 0.14); color: #8fb6c8; }
+
+@media (max-width: 1100px) { .ce-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .ce-hero { grid-template-columns: 1fr; }
+  .ce-hero__art { display: none; }
+  .ce-grid { grid-template-columns: 1fr; }
+  .ce-btn--pri { width: 100%; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .ce-btn { transition: none; } }

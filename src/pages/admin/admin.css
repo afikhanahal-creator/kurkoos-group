@@ -2694,3 +2694,7 @@
   .adm-stage__rail { flex-direction: row; min-height: 0; justify-content: flex-start; padding: 0.75rem 0.9rem; }
   .adm-stage__rail-lbl { writing-mode: horizontal-tb; }
 }
+
+/* קישור לחלון חיצוני בתפריט (מנוע התוכן לרשתות) */
+.adm__nav-ext { margin-inline-start: auto; opacity: 0.55; flex: none; }
+.adm__nav-item:hover .adm__nav-ext { opacity: 0.9; }

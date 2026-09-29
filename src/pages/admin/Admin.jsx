@@ -15,6 +15,7 @@ import HeadingsTab from './HeadingsTab.jsx'
 import TestimonialsTab from './TestimonialsTab.jsx'
 import HomeFeaturedTab from './HomeFeaturedTab.jsx'
 import VillasPageTab from './VillasPageTab.jsx'
+import ContentEngineTab from './ContentEngineTab.jsx'
 import ContentTab from './ContentTab.jsx'
 import AnalyticsTab from './AnalyticsTab.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
@@ -90,6 +91,7 @@ const TABS = [
   { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos', group: 'תוכן' },
   { id: 'activities', label: 'תחומי הפעילות', sub: 'תמונות ארבעת התחומים — דסקטופ ומובייל בנפרד', icon: 'activities', group: 'תוכן' },
   { id: 'testimonials', label: 'המלצות לקוחות', sub: 'כרטיסיות סיפורי ההצלחה בעמוד הבית — טקסט ותמונה', icon: 'testimonials', group: 'תוכן' },
+  { id: 'engine', label: 'מנוע תוכן ותחרות', sub: 'סוכני הכתיבה, הנושאים הבאים, פוסטים לרשתות ו-Metricool, והמתחרים', icon: 'counters', group: 'תוכן' },
   { id: 'content', label: 'מאמרים ומדריכים', sub: 'כל הטורים במקום אחד: יזמות, ביצוע, פיקוח ותיווך — עריכה, תמונה, AI, ארכיון', icon: 'yazamut', group: 'תוכן' },
   { id: 'covers', label: 'תמונות קאבר', sub: 'באנרי החטיבות וגלריית הביצוע — החלפה/סידור/גרירה', icon: 'covers', group: 'תוכן' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads', group: 'לקוחות' },
@@ -212,6 +214,7 @@ export default function Admin() {
           {tab === 'activities' && <ActivitiesTab />}
           {tab === 'testimonials' && <TestimonialsTab />}
           {tab === 'content' && <ContentTab />}
+          {tab === 'engine' && <ContentEngineTab />}
           {tab === 'covers' && <CoverImagesTab />}
           {tab === 'leads' && <LeadsTab />}
           {tab === 'newsletter' && <NewsletterTab />}

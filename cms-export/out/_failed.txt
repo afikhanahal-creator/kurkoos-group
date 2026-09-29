@@ -1,9 +1,0 @@
-FAIL jects/ben-gurion-18/5a8406e9-f351-4412-950e-9cc1f10bd7f8.jpeg
-FAIL jects/henrietta-sald-22-24/videos/5dedd6a7-485b-4bd8-987f-8202ac3b8bec.mp4
-FAIL jects/henrietta-sald-24/1bb09708-401a-4c7a-af9f-478a8178867d.webp
-FAIL jects/project-hankin-41/videos/0fbcdc97-5d6d-4d74-a78b-1e0c4747d379.mp4
-FAIL jects/project-hankin-41/videos/47994393-234e-4754-8672-2fd1984325e5.mp4
-FAIL jects/project-hankin-41/videos/5780af6b-d89d-4d37-b507-10b6f829fbd0.mp4
-FAIL cts/project-hankin-41/videos/dbffed12-a1b3-4b43-83a5-8fa937395b28.mp4
-FAIL jects/project-hankin-41/videos/f74df387-f00a-40b1-a9f3-ed18a75d5135.mp4
-FAIL jects/project-zrubavel-15/463d2247-dfe9-4b02-8030-b19b1cd3ae18.webp

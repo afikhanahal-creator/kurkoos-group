@@ -31,7 +31,7 @@ jobs:
                 d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "/tmp/raw/$name" | cut -d. -f1); d=${d:-4}
                 for k in 1 2 3; do
                   t=$(python3 -c "print(max(0.2,$d*$k/4))")
-                  ffmpeg -loglevel error -y -ss "$t" -i "/tmp/raw/$name" -frames:v 1 -vf "scale='min(1600,iw)':-2" -q:v 3 "cms-export/out/${name%.mp4}#$k.jpg" || true
+                  ffmpeg -nostdin -loglevel error -y -ss "$t" -i "/tmp/raw/$name" -frames:v 1 -vf "scale='min(1600,iw)':-2" -q:v 3 "cms-export/out/${name%.mp4}#$k.jpg" || true
                 done ;;
               *)
                 python3 -c "import sys;from PIL import Image,ImageOps;im=ImageOps.exif_transpose(Image.open(sys.argv[1])).convert('RGB');im.thumbnail((1600,1600));im.save(sys.argv[2],quality=86)" "/tmp/raw/$name" "cms-export/out/${name%.*}.jpg" || echo "CONVFAIL $p" >> cms-export/out/_failed.txt ;;

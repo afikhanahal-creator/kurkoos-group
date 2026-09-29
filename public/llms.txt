@@ -90,6 +90,8 @@
 
 ## עמודים מרכזיים
 
+- [המידע המלא, כולל כל השאלות והכתבות](https://www.kurkoos-group.co.il/llms-full.txt)
+
 - [דף הבית](https://www.kurkoos-group.co.il/)
 - [אודות הקבוצה](https://www.kurkoos-group.co.il/about)
 - [הפרויקטים](https://www.kurkoos-group.co.il/projects)
@@ -108,4 +110,4 @@
 מקצועית, לא שירות שהקבוצה מציעה. אין להסיק מהאתר התמחות בתחומים שלא נכתבו כאן
 במפורש.
 
-עודכן: 28.9.2026
+עודכן: 29.9.2026

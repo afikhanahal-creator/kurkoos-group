@@ -11,6 +11,7 @@
 //   POST /api/analytics
 //   POST /api/generate-image
 //   GET  /api/sitemap        (וגם /sitemap.xml דרך rewrite)
+//   GET  /api/indexnow       (cron יומי, מודיע ל-Bing על עמודים חדשים)
 //
 // בונוס: כל המטפלים חולקים עכשיו instance אחד, כך שהמטמון בזיכרון
 // של האנליטיקס נשמר בין קריאות במקום להתפזר בין חמש פונקציות.
@@ -22,6 +23,7 @@ const ROUTES = {
   analytics: () => import('../server/analytics.js'),
   'generate-image': () => import('../server/generate-image.js'),
   sitemap: () => import('../server/sitemap.js'),
+  indexnow: () => import('../server/indexnow.js'),
 }
 
 /* שם המטפל מגיע מהסגמנט הדינמי של הנתיב. יש גיבוי לקריאה מתוך

@@ -13,7 +13,7 @@ import CONTENT_PATHS from './_content-paths.js'
 const SITE = 'https://www.kurkoos-group.co.il'
 
 // עמודים קבועים (תואם ל-Routes ב-App.jsx)
-const STATIC = [
+export const STATIC = [
   { path: '/', changefreq: 'weekly', priority: '1.0' },
   { path: '/about', changefreq: 'monthly', priority: '0.8' },
   { path: '/projects', changefreq: 'weekly', priority: '0.9' },
@@ -42,7 +42,7 @@ const STATIC = [
 ]
 
 /* כתבות הטורים — נוצר אוטומטית בזמן build מ-src/content (ראו scripts/generate-sitemap-paths.mjs) */
-const ARTICLES = CONTENT_PATHS.map((a) => ({
+export const ARTICLES = CONTENT_PATHS.map((a) => ({
   path: a.path, lastmod: a.lastmod, changefreq: 'monthly', priority: '0.7',
 }))
 

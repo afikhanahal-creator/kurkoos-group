@@ -1,0 +1,33 @@
+name: Topic images export (temporary, for social content)
+
+on:
+  push:
+    branches: [claude/topic-images-export]
+    paths: ['topic-export/urls.txt']
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exported images
+        run: |
+          set -u
+          mkdir -p topic-export/out
+          i=0
+          while IFS= read -r u; do
+            [ -z "$u" ] && continue
+            i=$((i+1)); n=$(printf 't%02d' "$i")
+            curl -sfL "$u" -o "topic-export/out/$n.jpg" || echo "FAIL $n" >> topic-export/out/_failed.txt
+          done < topic-export/urls.txt
+          ls -la topic-export/out
+      - name: Commit
+        run: |
+          git config user.name "topic-export-bot"
+          git config user.email "topic-export-bot@users.noreply.github.com"
+          git add topic-export/out
+          git commit -m "Topic images export [skip ci]" || echo "nothing to commit"
+          git push

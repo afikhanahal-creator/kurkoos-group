@@ -16,6 +16,7 @@ import TestimonialsTab from './TestimonialsTab.jsx'
 import HomeFeaturedTab from './HomeFeaturedTab.jsx'
 import VillasPageTab from './VillasPageTab.jsx'
 import ContentEngineTab from './ContentEngineTab.jsx'
+import SocialEngineTab, { openEngine } from './SocialEngineTab.jsx'
 import ContentTab from './ContentTab.jsx'
 import AnalyticsTab from './AnalyticsTab.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
@@ -39,6 +40,7 @@ const Ico = {
   testimonials: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 10h.01M12 10h.01M16 10h.01" /></svg>,
   home: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" /><path d="M9 7l1.5-1.5" /></svg>,
   sun: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>,
+  engine: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /><path d="M8 13h3v3H8z" /><path d="M14 13h2M14 16h2" /></svg>,
   moon: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>,
   yazamut: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 4h12a1 1 0 0 1 1 1v14a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z" /><path d="M17 8h2a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2" /><path d="M8 8h5M8 12h5M8 16h3" /></svg>,
 }
@@ -91,16 +93,17 @@ const TABS = [
   { id: 'logos', label: 'לוגואים', sub: 'קרוסלת השותפים והלקוחות', icon: 'logos', group: 'תוכן' },
   { id: 'activities', label: 'תחומי הפעילות', sub: 'תמונות ארבעת התחומים — דסקטופ ומובייל בנפרד', icon: 'activities', group: 'תוכן' },
   { id: 'testimonials', label: 'המלצות לקוחות', sub: 'כרטיסיות סיפורי ההצלחה בעמוד הבית — טקסט ותמונה', icon: 'testimonials', group: 'תוכן' },
-  { id: 'engine', label: 'מנוע תוכן ותחרות', sub: 'סוכני הכתיבה, הנושאים הבאים, פוסטים לרשתות ו-Metricool, והמתחרים', icon: 'counters', group: 'תוכן' },
   { id: 'content', label: 'מאמרים ומדריכים', sub: 'כל הטורים במקום אחד: יזמות, ביצוע, פיקוח ותיווך — עריכה, תמונה, AI, ארכיון', icon: 'yazamut', group: 'תוכן' },
   { id: 'covers', label: 'תמונות קאבר', sub: 'באנרי החטיבות וגלריית הביצוע — החלפה/סידור/גרירה', icon: 'covers', group: 'תוכן' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads', group: 'לקוחות' },
   { id: 'newsletter', label: 'ניוזלטר', sub: 'מאגר הנרשמים + חיבור ESP/וובהוק לאוטומציות', icon: 'newsletter', group: 'לקוחות' },
   { id: 'analytics', label: 'תנועה וסטטיסטיקות', sub: 'חיבור Google Analytics — כמה נכנסים לאתר ומה הם רואים', icon: 'counters', group: 'לקוחות' },
+  { id: 'social', label: 'מנוע התוכן לרשתות', sub: 'תזמון, עיצוב ופרסום לפייסבוק ואינסטגרם · נפתח במסך מלא', icon: 'engine', group: 'שיווק', ext: true },
+  { id: 'engine', label: 'תוכן האתר ותחרות', sub: 'סוכני הכתיבה, הנושאים הבאים, פוסטים מוכנים מהכתבות, והמתחרים', icon: 'counters', group: 'שיווק' },
   { id: 'fonts', label: 'פונטים וטיפוגרפיה', sub: 'פונטים, גדלים ומשקלים (H1–H5) של כל האתר', icon: 'fonts', group: 'עיצוב' },
   { id: 'settings', label: 'הגדרות', sub: 'התראות מייל, יומן פגישות והגדרות מערכת', icon: 'settings', group: 'מערכת' },
 ]
-const NAV_GROUPS = ['ראשי', 'תוכן', 'לקוחות', 'עיצוב', 'מערכת']
+const NAV_GROUPS = ['ראשי', 'תוכן', 'לקוחות', 'שיווק', 'עיצוב', 'מערכת']
 
 const THEME_KEY = 'kurkoos-adm-theme'
 
@@ -152,10 +155,12 @@ export default function Admin() {
                     key={t.id}
                     type="button"
                     className={`adm__nav-item ${tab === t.id ? 'adm__nav-item--active' : ''}`}
-                    onClick={() => { setTab(t.id); setNavOpen(false) }}
+                    onClick={() => { if (t.ext) openEngine(); setTab(t.id); setNavOpen(false) }}
+                    title={t.ext ? 'נפתח בחלון משלו, על כל המסך' : undefined}
                   >
                     <I width={20} height={20} />
                     <span>{t.label}</span>
+                    {t.ext && <Ico.external className="adm__nav-ext" width={14} height={14} aria-hidden="true" />}
                   </button>
                 )
               })}
@@ -214,11 +219,12 @@ export default function Admin() {
           {tab === 'activities' && <ActivitiesTab />}
           {tab === 'testimonials' && <TestimonialsTab />}
           {tab === 'content' && <ContentTab />}
-          {tab === 'engine' && <ContentEngineTab />}
           {tab === 'covers' && <CoverImagesTab />}
           {tab === 'leads' && <LeadsTab />}
           {tab === 'newsletter' && <NewsletterTab />}
           {tab === 'analytics' && <AnalyticsTab />}
+          {tab === 'social' && <SocialEngineTab />}
+          {tab === 'engine' && <ContentEngineTab />}
           {tab === 'fonts' && <FontsTab />}
           {tab === 'settings' && <SettingsTab />}
         </main>

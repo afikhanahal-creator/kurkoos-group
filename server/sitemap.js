@@ -12,6 +12,12 @@ import CONTENT_PATHS from './_content-paths.js'
 
 const SITE = 'https://www.kurkoos-group.co.il'
 
+/* פנייה ל-CMS מוגבלת בזמן. בלי מגבלה, Supabase איטי או ישן (בתוכנית החינמית
+   הוא נרדם אחרי חוסר פעילות) השאיר את הפונקציה תלויה עד ה-timeout של Vercel,
+   וגוגל קיבל שגיאה במקום מפה, והציג "שגיאה זמנית בעיבוד". עכשיו אחרי כמה
+   שניות המפה חוזרת בלי הפרויקטים, תקינה, והם נכנסים בקריאה הבאה. */
+const CMS_TIMEOUT_MS = 4000
+
 // עמודים קבועים (תואם ל-Routes ב-App.jsx)
 export const STATIC = [
   { path: '/', changefreq: 'weekly', priority: '1.0' },
@@ -120,7 +126,7 @@ export default async function handler(req, res) {
         const r = await fetch(
           `${SUPABASE_URL}/rest/v1/projects?is_published=eq.true&is_archived=eq.false` +
           `&select=slug,hero_image_url,about_image_url,gallery,gallery_groups,plan_groups,environment&order=sort_order.asc`,
-          { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } },
+          { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }, signal: AbortSignal.timeout(CMS_TIMEOUT_MS) },
         )
         if (r.ok) rows = await r.json()
       } catch { /* ה-CMS לא זמין — מחזירים סייטמאפ ריק ותקין */ }
@@ -164,7 +170,7 @@ export default async function handler(req, res) {
     try {
       const r = await fetch(
         `${SUPABASE_URL}/rest/v1/projects?is_published=eq.true&is_archived=eq.false&select=slug,updated_at&order=updated_at.desc`,
-        { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
+        { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }, signal: AbortSignal.timeout(CMS_TIMEOUT_MS) }
       )
       if (r.ok) projects = await r.json()
     } catch { /* אם ה-CMS לא זמין — נחזיר לפחות את העמודים הקבועים */ }

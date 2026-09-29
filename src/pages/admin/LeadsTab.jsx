@@ -761,10 +761,32 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing, revie
   function handleDragOver(e, stageId)  { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverStage(stageId) }
   function handleDragLeave(e)          { if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return; setDragOverStage(null) }
 
+  /* "לא רלוונטי" מקופלת כברירת מחדל: פס צר עם המונה, שעדיין מקבל גרירה.
+     לידים שנסגרו בלי עסקה לא צריכים עמודה מלאה כל יום, אבל חייבים מקום
+     לגרור אליו ודרך לחזור אליהם. לחיצה פותחת, והבחירה נזכרת בדפדפן. */
+  const [lostOpen, setLostOpen] = useState(() => { try { return localStorage.getItem('kc_leads_lost_open') === '1' } catch { return false } })
+  const toggleLost = () => setLostOpen((v) => { const n = !v; try { localStorage.setItem('kc_leads_lost_open', n ? '1' : '0') } catch { /* noop */ } return n })
+
   return (
     <div className="adm-leads__board">
       {STAGES.map((stage) => {
         const items = byStage(stage.id)
+        const collapsed = stage.id === 'lost' && !lostOpen
+        if (collapsed) {
+          return (
+            <section key={stage.id} className={`adm-stage adm-stage--collapsed${dragOverStage===stage.id?' adm-stage--over':''}`}
+              onDragOver={(e) => handleDragOver(e, stage.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, stage.id)}>
+              <button type="button" className="adm-stage__rail" style={{ '--stage': stage.color }} onClick={toggleLost}
+                aria-expanded="false" title={`פתיחת "${stage.label}" (${items.length})`}>
+                <span className="adm-stage__dot"/>
+                <span className="adm-stage__count">{items.length}</span>
+                <span className="adm-stage__rail-lbl">{stage.label}</span>
+              </button>
+            </section>
+          )
+        }
         return (
           <section key={stage.id} className={`adm-stage${dragOverStage===stage.id?' adm-stage--over':''}`}
             onDragOver={(e) => handleDragOver(e, stage.id)}
@@ -774,6 +796,9 @@ function BoardView({ byStage, moveTo, toggleContacted, remove, setEditing, revie
               <span className="adm-stage__dot"/>
               <h3>{stage.label}</h3>
               <span className="adm-stage__count">{items.length}</span>
+              {stage.id === 'lost' && (
+                <button type="button" className="adm-stage__fold" onClick={toggleLost} aria-expanded="true" title="קיפול העמודה">⟩</button>
+              )}
             </header>
             <div className={`adm-stage__list${dragOverStage===stage.id?' adm-stage__list--over':''}`}>
               {items.map((lead) => (

@@ -17,10 +17,10 @@ jobs:
         run: |
           set -u
           mkdir -p topic-export/out
-          i=0
+          i=0; OFF=$(cat topic-export/offset 2>/dev/null || echo 0)
           while IFS= read -r u; do
             [ -z "$u" ] && continue
-            i=$((i+1)); n=$(printf 't%02d' "$i")
+            i=$((i+1)); n=$(printf 't%02d' $((i+OFF)))
             curl -sfL "$u" -o "topic-export/out/$n.jpg" || echo "FAIL $n" >> topic-export/out/_failed.txt
           done < topic-export/urls.txt
           ls -la topic-export/out

@@ -13,6 +13,12 @@
       "skillPath": "competitive-ads-extractor/SKILL.md",
       "computedHash": "8367364ae0aefcf0554468308066e39dc81aeaccfcf9922f85de1b7f56ad61a8"
     },
+    "copy-editing": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "skillPath": "skills/copy-editing/SKILL.md",
+      "computedHash": "9b5a20be3dc5513c8f0b4f4c4960857e4d28ed83698a5b33c8dde9dc75a47bf6"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
@@ -24,6 +30,12 @@
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3"
+    },
+    "social": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "skillPath": "skills/social/SKILL.md",
+      "computedHash": "8cc93d9b361622cdb640e87969747b85603bed2d268e923179f8dfb4799ec8c7"
     },
     "systematic-debugging": {
       "source": "obra/superpowers",

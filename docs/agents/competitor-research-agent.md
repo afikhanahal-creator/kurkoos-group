@@ -29,7 +29,7 @@ The system dashboard (מחקר וניתוח › הסוכן הסמוי) reads the
 3. **Verify** each company in the slice (section 2).
 4. **Research** each company (sections 3–5). Write the company doc with `update`.
 5. **Write insights** for every strong content item found (section 6).
-6. **Content production, every run**: daily target is **20 new templates and 15 posts**, spread over the 4 runs (runs 1 to 3: 5 templates and 4 posts each; run 4: 5 templates and 3 posts). Count today's `tpl_specs` and `drafts` with `agent:true` first and only make what is missing for today. Production does not depend on new research: when the web is blocked, build from the existing `insights` library (it already holds 41 real competitor posts with Metricool metrics, `INSIGHT_000001`–`INSIGHT_000041`).
+6. **Content production, every run**: daily target is **24 new templates and 24 posts**, spread over the 4 runs (6 templates and 6 posts each). Count today's `tpl_specs` and `drafts` with `agent:true` first and only make what is missing for today. Production does not depend on new research: when the web is blocked, build from the existing `insights` library (it already holds 41 real competitor posts with Metricool metrics, `INSIGHT_000001`–`INSIGHT_000041`).
 7. **Learn and improve (section 12)**: update `agent_memory/lessons` and `agent_memory/state` before finishing.
 8. **Write the run doc** to `agent_runs`: `{at, slice:[ids], researched, verified, insights_added, templates_added, posts_added, posts_pass, produced, summary (one Hebrew sentence), problems:[...] }`.
 
@@ -77,19 +77,26 @@ Photo library keys (use in `fx.shot.k`): house (וילה גמורה בערב), r
 
 ## 8. Templates (`tpl_specs`) — design like an art director
 
-Each run adds **5 templates**, each born from a specific insight and visibly Kurkoos (palette, air, Almoni, the logo is added by the system). Never reproduce a competitor's layout, composition or colour system: take the principle (e.g. "first frame shows the finished result", "one number dominates", "question in the client's voice") and build a new composition.
+Each run adds **6 templates**, each born from a specific insight and visibly Kurkoos (palette, air, Almoni, the logo is added by the system). Never reproduce a competitor's layout, composition or colour system: take the principle (e.g. "first frame shows the finished result", "one number dominates", "question in the client's voice") and build a new composition.
 
-Doc: `{id:"x_t_ag_YYYYMMDD_NN", name (Hebrew, short), theme:"light|white|mist|dark|ink|red|teal", insight:"INSIGHT_…", ct:["project","data",…], st:["photo","bold",…], el:[elements]}`.
+**Art direction process (frontend-design discipline), for every template:**
+1. Ground it in the subject: villas and private homes being built. The most characteristic things in this world are the construction drawing (dimension lines, level markers ▼ for basement, ground and floor, the title block of a drawing sheet), concrete, rebar, formwork, the key at handover, the plot. Prefer these over generic marketing devices.
+2. Write a one-line design plan in the doc field `plan`: the single memorable element, the hierarchy (one big, one medium, the rest small), the alignment, and the one accent colour.
+3. Review the plan against the generic defaults and change it if it is one of them: a big number with a small label and a gradient (only when the number is the real story); identical rounded cards with the same soft shadow; an eyebrow label above every headline; numbered markers 01/02/03 when the content is not a real sequence; meta strings joined with middle dots; one word accented in a different colour; decoration that carries no information.
+4. Spend the boldness in one place and keep everything around it quiet. Before saving, remove one element.
+
+Doc: `{id:"x_t_ag_YYYYMMDD_NN", name (Hebrew, short), plan (one line), theme:"light|white|mist|dark|ink|red|teal", insight:"INSIGHT_…", ct:["project","data",…], st:["photo","bold",…], el:[elements]}`.
 Canvas 1080×1350. Side margin M=72. RTL. Elements (all coordinates in px):
 - `{t:"photo",x,y,w,h,s?(0..2),r?,dim?(0..1),fade?:[a0,a1],stroke?}` · `{t:"rect",x,y,w,h,col,r?,a?}` · `{t:"grad",x,y,w,h,from,to}` · `{t:"line",x1,y1,x2,y2,col,lw?,dash?}`
 - `{t:"text",f:"head|sub|label|word|location",x,y,size,max,w(300..900),col,align?("right"|"center"|"left"),maxW?,lh?}`; `kind:"small"` for one-line small text; `text:"…"` for fixed text.
-- `{t:"caption",f,y,size,max,bg,fg,hiAt?,r?}` subtitle boxes · `{t:"pill",f|text,x?,y,bg,fg,size?,align?}` · `{t:"stat",x,y,size,w,col,align?}` big number from the post · `{t:"ring",x,y,r,lw}` · `{t:"specs",x,w,y,n,size,col,lcol,rule?}` number+label row from the sub text · `{t:"list",y,rh,max,num?,check?,rule?,col?,ncol?}` rows from the sub text · `{t:"timeline",x,y,gap,n,at}` · `{t:"stamp",f|text,x,y,size,col,rot?}` · `{t:"otext",f:"word",x,y,size,col,lw}` outline word · `{t:"cphoto",x,y,r,stroke?}` circle photo · `{t:"tiles",items:[{x,y,w,h,col}],r?}` · `{t:"frame",x,y,w,h,col,lw?}` · `{t:"gridlines",cols,rows?,col}` · `{t:"swipe",x,y,col}` · `{t:"chrome",o:{…}}` footer (use `{t:"chrome",o:{noIndex:true}}` on light, `{t:"chrome",o:{noIndex:true,noRule:true,fcol:"#ffffff",fsub:"#8fb6c8"}}` on dark).
-Colours: "navy","teal","mist","mist1","paper","red","white","sub","fg" or hex. Keep text inside 72..1008 horizontally and above y=1230 (footer zone).
+- `{t:"caption",f,y,size,max,bg,fg,hiAt?,r?}` subtitle boxes · `{t:"pill",f|text,x?,y,bg,fg,size?,align?}` · `{t:"stat",x,y,size,w,col,align?}` big number from the post (draws nothing when the post has no number) · `{t:"ring",x,y,r,lw}` · `{t:"specs",x,w,y,n,size,col,lcol,rule?}` number+label row from the sub text · `{t:"list",y,rh,max,num?,check?,rule?,col?,ncol?}` rows from the sub text · `{t:"timeline",x,y,gap,n,at}` · `{t:"stamp",f|text,x,y,size,col,rot?}` · `{t:"otext",f:"word",x,y,size,col,lw}` outline word · `{t:"cphoto",x,y,r,stroke?}` circle photo · `{t:"tiles",items:[{x,y,w,h,col}],r?}` · `{t:"frame",x,y,w,h,col,lw?}` · `{t:"gridlines",cols,rows?,col}` · `{t:"swipe",x,y,col}` · `{t:"chrome",o:{…}}` footer (use `{t:"chrome",o:{noIndex:true}}` on light, `{t:"chrome",o:{noIndex:true,noRule:true,fcol:"#ffffff",fsub:"#8fb6c8"}}` on dark).
+- Drafting language: `{t:"dimline",x1,x2,y,size?,col?,vcol?}` dimension line that carries the post's real number and its unit, nothing without a number · `{t:"levels",x,y,w,gap,size,col,acc}` level markers ▼, one row per sentence of the sub (max 3) · `{t:"tblock",x,y,w,h,col,bg}` drawing title block with project and location.
+Colours: "navy","teal","mist","mist1","paper","red","white","slate","sub","fg" or hex. Keep text inside 72..1008 horizontally and above y=1230 (footer zone).
 Example (number on photo): `[{t:"photo",x:0,y:0,w:1080,h:1350,dim:.3,fade:[.1,.85]},{t:"pill",f:"label",y:142,bg:"red",fg:"white"},{t:"stat",x:1008,y:222,size:330,w:900,col:"white"},{t:"text",f:"head",x:1008,y:880,size:82,max:3,w:800,col:"white"},{t:"chrome",o:{noIndex:true,noRule:true,fcol:"#ffffff",fsub:"#8fb6c8"}}]`.
 
 ## 9. Posts (`drafts`)
 
-Posts per run as in section 1 (15 a day), spread over formats (reel, carousel, static, story) and pillars (projects, education, behind the scenes, numbers, Q&A, people). Each uses one of the day's new templates or an existing one (`x_t_cp01`–`x_t_cp50` are the competitor-pattern family).
+Posts per run as in section 1 (24 a day), spread over formats (reel, carousel, static, story) and pillars (projects, education, behind the scenes, numbers, Q&A, people). Each uses one of the day's new templates first, then the drafting family (`x_t_dr01`–`x_t_dr09`), then the competitor-pattern family (`x_t_cp01`–`x_t_cp50`).
 Doc:
 ```
 {post_id:"KURKOOS_POST_000123", agent:true, format:"static|carousel|reel|story", platform:"facebook|instagram|both",

@@ -17,7 +17,8 @@ dist-ssr
 !.vscode/extensions.json
 
 # claude code agent state / worktrees
-.claude/
+.claude/*
+!.claude/skills/
 
 # vercel
 .vercel

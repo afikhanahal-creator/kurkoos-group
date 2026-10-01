@@ -17,6 +17,8 @@ Collections:
 | `tpl_specs` | new Kurkoos templates the system turns into real designs on load | `x_t_ag_YYYYMMDD_NN` |
 | `drafts` | ready posts; the system imports them into the drafts board (series "הסוכן הסמוי") | `KURKOOS_POST_000001`… |
 | `agent_runs` | one doc per run: what was done, counts, problems | ISO timestamp |
+| `agent_memory` | the agent's long-term memory: doc `state` (counters, what was used) and doc `lessons` (what works, what to avoid) | `state`, `lessons` |
+| `workflow` | written by the system: the team's stage for each post (draft, approved, scheduled, published) | post key |
 
 The system dashboard (מחקר וניתוח › הסוכן הסמוי) reads these collections. Never delete or rename a competitor. Never drop a row. Source count must equal imported count (104); if it ever doesn't, stop and write that to `agent_runs`.
 
@@ -27,8 +29,8 @@ The system dashboard (מחקר וניתוח › הסוכן הסמוי) reads the
 3. **Verify** each company in the slice (section 2).
 4. **Research** each company (sections 3–5). Write the company doc with `update`.
 5. **Write insights** for every strong content item found (section 6).
-6. **Content production**: only on the first run of the Israeli day (no `agent_runs` doc today with `produced: true`): build **2 new templates** and **6 posts** (section 7–9). Otherwise skip to step 7.
-7. **Learn**: if Kurkoos's own Metricool data is available (brand `7115159`), compare last week's Kurkoos posts by format/hook/topic and note what to do more and less of in the run doc.
+6. **Content production, every run**: daily target is **20 new templates and 15 posts**, spread over the 4 runs (runs 1 to 3: 5 templates and 4 posts each; run 4: 5 templates and 3 posts). Count today's `tpl_specs` and `drafts` with `agent:true` first and only make what is missing for today. Production does not depend on new research: when the web is blocked, build from the existing `insights` library (it already holds 41 real competitor posts with Metricool metrics, `INSIGHT_000001`–`INSIGHT_000041`).
+7. **Learn and improve (section 12)**: update `agent_memory/lessons` and `agent_memory/state` before finishing.
 8. **Write the run doc** to `agent_runs`: `{at, slice:[ids], researched, verified, insights_added, templates_added, posts_added, posts_pass, produced, summary (one Hebrew sentence), problems:[...] }`.
 
 ## 2. Verify (never assume a URL is right)
@@ -75,7 +77,7 @@ Photo library keys (use in `fx.shot.k`): house (וילה גמורה בערב), r
 
 ## 8. Templates (`tpl_specs`) — design like an art director
 
-Each run that produces content adds **2 templates**, each born from a specific insight and visibly Kurkoos (palette, air, Almoni, the logo is added by the system). Never reproduce a competitor's layout, composition or colour system: take the principle (e.g. "first frame shows the finished result", "one number dominates", "question in the client's voice") and build a new composition.
+Each run adds **5 templates**, each born from a specific insight and visibly Kurkoos (palette, air, Almoni, the logo is added by the system). Never reproduce a competitor's layout, composition or colour system: take the principle (e.g. "first frame shows the finished result", "one number dominates", "question in the client's voice") and build a new composition.
 
 Doc: `{id:"x_t_ag_YYYYMMDD_NN", name (Hebrew, short), theme:"light|white|mist|dark|ink|red|teal", insight:"INSIGHT_…", ct:["project","data",…], st:["photo","bold",…], el:[elements]}`.
 Canvas 1080×1350. Side margin M=72. RTL. Elements (all coordinates in px):
@@ -87,7 +89,7 @@ Example (number on photo): `[{t:"photo",x:0,y:0,w:1080,h:1350,dim:.3,fade:[.1,.8
 
 ## 9. Posts (`drafts`)
 
-6 posts per production run, spread over formats (reel, carousel, static, story) and pillars (projects, education, behind the scenes, numbers, Q&A, people). Each uses one of the day's new templates or an existing one (`x_t_cp01`–`x_t_cp50` are the competitor-pattern family).
+Posts per run as in section 1 (15 a day), spread over formats (reel, carousel, static, story) and pillars (projects, education, behind the scenes, numbers, Q&A, people). Each uses one of the day's new templates or an existing one (`x_t_cp01`–`x_t_cp50` are the competitor-pattern family).
 Doc:
 ```
 {post_id:"KURKOOS_POST_000123", agent:true, format:"static|carousel|reel|story", platform:"facebook|instagram|both",
@@ -109,3 +111,20 @@ Research: insight exists and is evidence based. Originality: no competitor wordi
 
 Invent data, URLs, followers, views, likes, comments, revenue, rankings or company facts (use `DATA NOT AVAILABLE` / `NOT VERIFIED` / `PERFORMANCE DATA NOT AVAILABLE`). Copy a competitor's execution. Rank competitors. Publish or schedule anything (the team approves in the system). Contact competitors or use fake accounts. Scrape behind logins.
 Golden rule: copy the lesson, never the execution.
+
+## 12. Self improvement and no repetition (most important)
+
+Every run starts by reading `agent_memory/state` and `agent_memory/lessons` (create them if missing) and ends by updating them.
+
+`state`: `{post_seq, tpl_seq, used:{openings:[first 3 words of every body ever written], headlines:[...], hooks:[...], photos:{key:count_last_30_days}, layouts:{id:count_last_30_days}, compositions:[signature of every template], pillars:{name:count_this_week}, formats:{name:count_this_week}, insights:{id:count}}}`.
+Hard rules, checked before every write:
+- No body may start with first three words that are already in `used.openings`, and no headline may repeat one in `used.headlines`.
+- A template's composition signature (the ordered list of element types plus rounded x/y of the main text and photo) must not match any existing signature, including the `x_t_cp` family. Vary themes across the day: at most 2 templates per theme per day.
+- A photo key may appear at most twice in the posts of one day and at most 6 times in 30 days. Rotate across the library.
+- Rotate pillars and formats so each day has reels, carousels, static posts and stories, and no pillar takes more than 30% of the week.
+- Do not build on the same insight more than 3 times; prefer insights not used yet.
+
+`lessons`: `{updated, do_more:[...], do_less:[...], notes:[...], history:[{date, finding, evidence}]}`. Each run:
+1. Read `workflow` and `drafts`: posts the team approved, scheduled or published are positive signals; posts still in draft after 7 days, or deleted, are negative. Write what they have in common (template family, hook type, format, topic, length) as evidence based findings.
+2. If Metricool tools are available, read Kurkoos's own post performance (brand `7115159`) and compare by hook, format, topic and visual. Never invent numbers.
+3. Apply the lessons in the same run: more of what was approved and performed, less of what was ignored. Write in the run doc which lesson changed today's output.

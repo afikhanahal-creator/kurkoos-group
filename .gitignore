@@ -33,3 +33,5 @@ video/api-keys.txt
 video/out/
 video/in/
 *.mask.npz
+__pycache__/
+*.pyc

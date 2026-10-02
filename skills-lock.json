@@ -104,10 +104,10 @@
       "computedHash": "8ba6696c46e8176e5c6699b0125027ad184be20f7dac1c55b578c5a344ef3ecf"
     },
     "content-strategy": {
-      "source": "Owl-Listener/designer-skills",
+      "source": "OpenClaudia/openclaudia-skills",
       "sourceType": "github",
-      "skillPath": "ux-strategy/skills/content-strategy/SKILL.md",
-      "computedHash": "e7176e4b08160b8edb3d357c2a96148bd21bf0ab9d0cbabb349415f890534508"
+      "skillPath": "skills/content-strategy/SKILL.md",
+      "computedHash": "6b0cb26eae782eeb6f29efb5f51fd2a56589a7e5e36037c7f4cc3126c4c7cc61"
     },
     "conversational-ux": {
       "source": "Owl-Listener/designer-skills",
@@ -120,6 +120,12 @@
       "sourceType": "github",
       "skillPath": "skills/copy-editing/SKILL.md",
       "computedHash": "9b5a20be3dc5513c8f0b4f4c4960857e4d28ed83698a5b33c8dde9dc75a47bf6"
+    },
+    "copywriting": {
+      "source": "OpenClaudia/openclaudia-skills",
+      "sourceType": "github",
+      "skillPath": "skills/copywriting/SKILL.md",
+      "computedHash": "ea0ae5f8ea42eb08174105d347f7c3d7518230c87621b5feb72896c723fd593c"
     },
     "critique-affordance": {
       "source": "Owl-Listener/designer-skills",
@@ -607,6 +613,12 @@
       "skillPath": "skills/social/SKILL.md",
       "computedHash": "8cc93d9b361622cdb640e87969747b85603bed2d268e923179f8dfb4799ec8c7"
     },
+    "social-content": {
+      "source": "OpenClaudia/openclaudia-skills",
+      "sourceType": "github",
+      "skillPath": "skills/social-content/SKILL.md",
+      "computedHash": "4461323ac656e0a095d0071be4f3778dc1ac65c9215e33622f48a81ae463bd00"
+    },
     "spacing-system": {
       "source": "Owl-Listener/designer-skills",
       "sourceType": "github",
@@ -666,6 +678,12 @@
       "sourceType": "github",
       "skillPath": "design-systems/skills/theming-system/SKILL.md",
       "computedHash": "20d34b6e083002dde59b2f5e36d50d62588291f6c918ee8e52e8f1de1e4cae98"
+    },
+    "thread-writer": {
+      "source": "OpenClaudia/openclaudia-skills",
+      "sourceType": "github",
+      "skillPath": "skills/thread-writer/SKILL.md",
+      "computedHash": "18b81f23bef7e680f83fdb2c12a7291c386ea6e699d2e8da014e67356d1c6da8"
     },
     "typography-scale": {
       "source": "Owl-Listener/designer-skills",
@@ -732,6 +750,12 @@
       "sourceType": "github",
       "skillPath": "prototyping-testing/skills/wireframe-spec/SKILL.md",
       "computedHash": "24b80fc2bfd1afd461bb10498128bba4b15acfc8796da79fe357d90cbdaec0c6"
+    },
+    "write-blog": {
+      "source": "OpenClaudia/openclaudia-skills",
+      "sourceType": "github",
+      "skillPath": "skills/write-blog/SKILL.md",
+      "computedHash": "6bc8e462f41c1468abfe3ae1679a02b075975230cb23a2f35e6fdf3bd66f9a91"
     },
     "zeigarnik-effect": {
       "source": "Owl-Listener/designer-skills",

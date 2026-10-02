@@ -28,8 +28,8 @@ python3 video/engine/reel.py check video/out/clip                             # 
 `--words file.json` לייבוא תמלול שנעשה במחשב אחר (למשל עם הסטודיו של הסקיל על מק).
 
 ## מה יוצא בתיקיית הפרויקט
-`words.json`, `timemap.json`, `mask.npz`, `plan.json` (כל אפקט עם המילה שלו והשנייה הסופית), `reel.mp4` (1080x1920, 30fps,
-H.264 crf 17, AAC 48kHz, ‎-14 LUFS), `sheet_*.png` (גיליונות קונטקט), `peak_*.jpg`, `qa.md`.
+`words.json`, `timemap.json`, `mask.npz`, `plan.json` (כל אפקט עם המילה שלו והשנייה הסופית), `reel.mp4` (מאסטר 1080x1920, 30fps, H.264 crf 18, AAC 48kHz, ‎-14 LUFS), `reel_share.mp4` (עותק להעלאה,
+קצב מוגבל כך שדקה נשארת מתחת ל-20MB), `sheet_*.png` (גיליונות קונטקט), `peak_*.jpg`, `qa.md`.
 
 ## הכללים שהמנוע שומר בעצמו
 - כל אפקט ממוקם לפי המילה שלו במקור ועובר דרך מפת הזמן, הסאונד נחתך באותה מפה, כך שהכול נשאר מסונכרן.

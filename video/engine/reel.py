@@ -45,7 +45,7 @@ SITE = "kurkoos-group.co.il"
 STYLES = {
     "clean":     {"caption": "karaoke", "max_words": 3, "accent": RED, "bg": "navy", "punch": 1.04, "grain": 0.0},
     "punchy":    {"caption": "punch", "max_words": 2, "accent": RED, "bg": "blur", "punch": 1.08, "grain": 0.0},
-    "cinematic": {"caption": "karaoke", "max_words": 3, "accent": MIST, "bg": "blur", "punch": 1.06, "grain": 0.03},
+    "cinematic": {"caption": "karaoke", "max_words": 3, "accent": MIST, "bg": "blur", "punch": 1.06, "grain": 0.0},
 }
 
 
@@ -320,7 +320,7 @@ def _render_chunk(args):
     proj, i0, i1, part = args
     r = Renderer(proj)
     p = subprocess.Popen([ffmpeg_exe(), "-hide_banner", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}", "-r", str(FPS),
-                          "-i", "-", "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p", part], stdin=subprocess.PIPE)
+                          "-i", "-", "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", part], stdin=subprocess.PIPE)
     for i in range(i0, i1):
         p.stdin.write(r.frame(i / FPS).tobytes())
     p.stdin.close()
@@ -379,6 +379,14 @@ def render(proj: str, out_mp4: str, workers: int | None = None) -> str:
     return out_mp4
 
 
+def share(src: str, dst: str, maxrate: str = "2.5M") -> str:
+    """The upload copy: same picture, capped bitrate so a minute stays under 20 MB (the asset store cap and what the
+    networks re-encode to anyway). The master keeps full quality for archive."""
+    subprocess.run([ffmpeg_exe(), "-hide_banner", "-y", "-loglevel", "error", "-i", src, "-c:v", "libx264", "-preset", "slow", "-crf", "23",
+                    "-maxrate", maxrate, "-bufsize", "5M", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", dst], check=True)
+    return dst
+
+
 def master(src: str, dst: str, lufs: float = -14.0) -> None:
     """Two pass EBU R128 loudness to -14 LUFS, true peak -1.5, 48 kHz. Video copied untouched."""
     r = subprocess.run([ffmpeg_exe(), "-hide_banner", "-i", src, "-af", f"loudnorm=I={lufs}:TP=-1.5:LRA=11:print_format=json", "-f", "null", "-"], capture_output=True, text=True)
@@ -433,6 +441,7 @@ def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keyw
     # 5. render
     out_mp4 = os.path.join(proj, "reel.mp4")
     render(proj, out_mp4)
+    share(out_mp4, os.path.join(proj, "reel_share.mp4"))
     # 6. look
     check(proj)
     return plan
@@ -476,7 +485,9 @@ def check(proj: str) -> str:
         issues.append(f"אורך הקובץ {info['duration']:.2f} שונה מהתכנון {plan['duration']:.2f}")
     if plan.get("transcript_status") not in ("ok",):
         issues.append("אין תמלול: " + str(plan.get("transcript_status")))
-    md = ["# בדיקת עורך", "", f"קובץ: reel.mp4 · אורך {info['duration']:.2f} שניות · {info['width']}x{info['height']} · אודיו: {'כן' if info['has_audio'] else 'אין'}", "",
+    sp = os.path.join(proj, "reel_share.mp4")
+    sizes = f"מאסטר {os.path.getsize(mp4) / 1e6:.1f}MB" + (f" · להעלאה {os.path.getsize(sp) / 1e6:.1f}MB" if os.path.exists(sp) else "")
+    md = ["# בדיקת עורך", "", f"קובץ: reel.mp4 · אורך {info['duration']:.2f} שניות · {info['width']}x{info['height']} · אודיו: {'כן' if info['has_audio'] else 'אין'} · {sizes}", "",
           *rows, "", "## ממצאים", *([f"- {i}" for i in issues] or ["- אין ממצאים: כל אפקט נוחת על הפריים שתוכנן לו, הכתוביות מתחת לסנטר, אין טקסט חתוך."]), "",
           "## גיליונות קונטקט", *[f"- {os.path.basename(s)}" for s in sheets]]
     open(os.path.join(proj, "qa.md"), "w", encoding="utf-8").write("\n".join(md))

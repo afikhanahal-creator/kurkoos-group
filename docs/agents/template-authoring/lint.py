@@ -25,7 +25,7 @@ def check(spec):
     for e in el:
         if e.get('t') not in OK:errs.append('unknown element '+str(e.get('t')))
     if types.count('photo')+types.count('pphoto')+types.count('cphoto')>3:errs.append('more than 3 photos')
-    texts=[e for e in el if e.get('t')=='text']
+    texts=[e for e in el if e.get('t') in ('text','caption') and not e.get('shadow')]
     heads=[e for e in texts if e.get('f')=='head']
     if len(heads)!=1:errs.append('exactly one head text is required (found %d)'%len(heads))
     if not any(e.get('t')=='chrome' for e in el):warn.append('no chrome footer')
@@ -49,12 +49,19 @@ def check(spec):
         if y<30:errs.append(f'{f} too close to the top')
         if f in('head','sub','label') and e.get('t')=='text':boxes.append((f,x0,y,x1,y+h))
         c=hexof(e.get('col'))
+        if e.get('t')=='caption':c=hexof(e.get('fg')) or c
         # what is under the text
         under=pagebg;over_photo=False
         for r in el:
             if r is e:break
             if r.get('t')=='rect' and r.get('x',0)<=(x0+x1)/2<=r['x']+r.get('w',0) and r.get('y',0)<=y+10<=r['y']+r.get('h',0):under=hexof(r.get('col')) or under
-            if r.get('t') in('photo','pphoto','cphoto') and r.get('x',0)<x1 and r['x']+r.get('w',0)>x0 and r.get('y',0)<y+h and r['y']+r.get('h',0)>y:over_photo=True
+            if r.get('t')=='grad' and r.get('x',0)<=(x0+x1)/2<=r['x']+r.get('w',0) and r.get('y',0)<=y+10<=r['y']+r.get('h',0):under=hexof(r.get('to')) or hexof(r.get('from')) or under
+            if r.get('t')=='photo' and r.get('x',0)<x1 and r['x']+r.get('w',0)>x0 and r.get('y',0)<y+h and r['y']+r.get('h',0)>y:over_photo=True
+            if r.get('t')=='cphoto' and r['x']-r['r']<x1 and r['x']+r['r']>x0 and r['y']-r['r']<y+h and r['y']+r['r']>y:over_photo=True
+            if r.get('t')=='pphoto':
+                xs=[q[0] for q in r['pts']];ys=[q[1] for q in r['pts']]
+                if min(xs)<x1 and max(xs)>x0 and min(ys)<y+h and max(ys)>y:over_photo=True
+        if e.get('t')=='caption':under=hexof(e.get('bg')) or under;over_photo=False
         if c and not over_photo and cr(c,under)<4.5:errs.append(f'{f} contrast {cr(c,under):.1f} against {under}')
         if over_photo:
             has_scrim=any(r.get('t')=='grad' for r in el) or any(r.get('t')=='photo' and r.get('fade') for r in el) or any(r.get('t')=='photo' and r.get('dim') for r in el)

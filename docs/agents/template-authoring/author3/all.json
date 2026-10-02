@@ -1,0 +1,7809 @@
+{
+"afi": [
+{
+"id": "x_t_b3_afi_01",
+"name": "סדרה · יוצא לשיווק",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 16,
+"col": "#a90b0c"
+},
+{
+"t": "pill",
+"x": 1008,
+"y": 150,
+"bg": "#a90b0c",
+"fg": "#ffffff",
+"align": "right",
+"size": 24,
+"text": "יוצא לשיווק"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 230,
+"w": 936,
+"h": 560,
+"s": 0,
+"r": 0
+},
+{
+"t": "rect",
+"x": 72,
+"y": 790,
+"w": 936,
+"h": 10,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 850,
+"size": 80,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1060,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "פס אדום עליון, תג השקה, צילום רחב וכותרת מתחת. כמו פוסט השקה של סדרת פרויקטים.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_02",
+"name": "מסלול · חתימה, בנייה, מסירה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 84,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 380,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 72,
+"y": 540,
+"w": 936,
+"h": 520,
+"col": "#ffffff"
+},
+{
+"t": "rect",
+"x": 72,
+"y": 540,
+"w": 936,
+"h": 12,
+"col": "#a90b0c"
+},
+{
+"t": "steps",
+"x": 132,
+"x1": 948,
+"y": 700,
+"n": 4,
+"at": 2,
+"col": "#a90b0c",
+"line": "#dbe8ee",
+"labels": [
+"חתימה",
+"תכנון",
+"בנייה",
+"מסירה"
+],
+"bg": "#ffffff"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 968,
+"y": 900,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "photo",
+"x": 72,
+"y": 1090,
+"w": 936,
+"h": 150,
+"s": 0,
+"r": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מסלול הרכישה בארבעה שלבים מסומנים, בלי מספרים, בכרטיס לבן על רקע נייר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_03",
+"name": "פרויקטים בעיר · תג ורשימה",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 760,
+"s": 0,
+"fade": [
+0,
+0.6
+],
+"rgb": "7,41,58"
+},
+{
+"t": "rect",
+"x": 0,
+"y": 760,
+"w": 1080,
+"h": 590,
+"col": "#07293a"
+},
+{
+"t": "tag",
+"x": 1008,
+"y": 170,
+"col": "#ffffff",
+"align": "right",
+"size": 24
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 560,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "list",
+"x": 1008,
+"y": 820,
+"col": "#ffffff",
+"ncol": "#8fb6c8",
+"rh": 96,
+"max": 4,
+"size": 34,
+"w": 600,
+"num": false,
+"rule": "rgba(143,182,200,0.3)",
+"x1": 72,
+"x2": 1008
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "תג עיר על הצילום, כותרת על הדהייה ורשימת פרויקטים באזור על כחול.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_04",
+"name": "מאוכלסים · שלוש תמונות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 380,
+"w": 936,
+"h": 440,
+"s": 0
+},
+{
+"t": "photo",
+"x": 72,
+"y": 840,
+"w": 458,
+"h": 330,
+"s": 1
+},
+{
+"t": "photo",
+"x": 550,
+"y": 840,
+"w": 458,
+"h": 330,
+"s": 2
+},
+{
+"t": "rect",
+"x": 72,
+"y": 840,
+"w": 458,
+"h": 8,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1210,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "גלריית מאוכלסים: תמונה רחבה ושתי קטנות, פס אדום אחד.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_05",
+"name": "מורשת · מונו וכיתוב",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"mono": true,
+"fade": [
+0,
+0.55
+],
+"rgb": "11,31,42"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 620,
+"size": 26,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "caption",
+"f": "head",
+"x": 1008,
+"y": 680,
+"size": 66,
+"bg": "#ffffff",
+"fg": "#07293a",
+"align": "right",
+"max": 3,
+"lh": 1.22,
+"w": 800
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1070,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום שחור לבן, תווית קטנה, כותרת בקופסאות לבנות. פוסט ותק ומסורת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_06",
+"name": "צילום למעלה, בלוק אדום",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 720,
+"s": 0
+},
+{
+"t": "rect",
+"x": 0,
+"y": 720,
+"w": 1080,
+"h": 630,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 790,
+"size": 78,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1100,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "החלוקה הקלאסית של היזם הגדול: צילום מעל בלוק צבע כבד עם כותרת לבנה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_07",
+"name": "נתוני פרויקט על כחול",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 150,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 200,
+"size": 84,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "specs",
+"x": 72,
+"w": 936,
+"y": 700,
+"n": 3,
+"size": 96,
+"col": "#ffffff",
+"lcol": "#8fb6c8",
+"rule": "rgba(143,182,200,0.4)",
+"lsize": 22
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1040,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#8fb6c8",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת וכרטיסי מספרים. המספרים מגיעים מהפוסט בלבד.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_08",
+"name": "חיתוך אלכסוני",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "pphoto",
+"pts": [
+[
+0,
+0
+],
+[
+1080,
+0
+],
+[
+1080,
+620
+],
+[
+0,
+760
+]
+],
+"s": 0,
+"dim": 0.1
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 820,
+"size": 84,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 828,
+"y": 1050,
+"w": 180,
+"h": 10,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1090,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום שנחתך באלכסון מעל כותרת כחולה וקו אדום קצר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_09",
+"name": "כרטיס סדרה על צילום",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.3
+},
+{
+"t": "rect",
+"x": 72,
+"y": 640,
+"w": 936,
+"h": 540,
+"col": "#ffffff"
+},
+{
+"t": "rect",
+"x": 72,
+"y": 640,
+"w": 120,
+"h": 12,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 972,
+"y": 700,
+"size": 66,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 864
+},
+{
+"t": "text",
+"f": "sub",
+"x": 972,
+"y": 1000,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 864
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כרטיס לבן צף על הצילום עם פינה אדומה, בסגנון הכרטיסים של הסדרה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_afi_10",
+"name": "רצועת צילום ימנית",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "photo",
+"x": 720,
+"y": 0,
+"w": 360,
+"h": 1350,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 680,
+"y": 160,
+"size": 72,
+"max": 4,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 608
+},
+{
+"t": "text",
+"f": "sub",
+"x": 680,
+"y": 620,
+"size": 30,
+"max": 4,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 608
+},
+{
+"t": "pill",
+"x": 680,
+"y": 900,
+"bg": "#a90b0c",
+"fg": "#ffffff",
+"align": "right",
+"size": 22,
+"f": "label"
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רצועת צילום אנכית בצד ימין, טקסט בצד שמאל של הדף.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"isca": [
+{
+"id": "x_t_b3_isca_01",
+"name": "מגדל · מסגרת דקה",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.35,
+"fade": [
+0.1,
+0.7
+],
+"rgb": "11,31,42"
+},
+{
+"t": "frame",
+"x": 72,
+"y": 72,
+"w": 936,
+"h": 1186,
+"col": "#8fb6c8",
+"lw": 1.5
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 760,
+"size": 84,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 540,
+"y": 1080,
+"size": 24,
+"col": "#8fb6c8",
+"align": "center",
+"track": 3,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום מגדל כהה, מסגרת מיסט דקה, כותרת ממורכזת. יוקרה שקטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_02",
+"name": "נמסר · חותמת על פנטהאוז",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 900,
+"s": 0,
+"dim": 0.25
+},
+{
+"t": "rect",
+"x": 0,
+"y": 900,
+"w": 1080,
+"h": 450,
+"col": "#0b1f2a"
+},
+{
+"t": "stamp",
+"x": 420,
+"y": 520,
+"col": "#a90b0c",
+"text": "נמסר",
+"size": 120,
+"rot": -10,
+"lw": 9
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 960,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1150,
+"size": 28,
+"max": 1,
+"w": 500,
+"col": "#8fb6c8",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "חדשות עסקה: חותמת נמסר על הצילום, כותרת על שחור.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_03",
+"name": "רשימת מתקנים",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 78,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "line",
+"x1": 72,
+"y1": 400,
+"x2": 1008,
+"y2": 400,
+"col": "#8fb6c8",
+"lw": 1.5
+},
+{
+"t": "roster",
+"x": 1008,
+"y": 480,
+"gap": 110,
+"max": 5,
+"size": 34,
+"col": "#ffffff",
+"rule": "rgba(143,182,200,0.25)",
+"x1": 72,
+"acc": "#a90b0c",
+"icol": "#8fb6c8"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 1070,
+"w": 936,
+"h": 160,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת ורשימת לייף סטייל (בריכה, לובי, חדר כושר) מהטקסט של הפוסט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_04",
+"name": "שם הפרויקט אנכי",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.4
+},
+{
+"t": "vtext",
+"x": 60,
+"y": 675,
+"size": 36,
+"col": "#8fb6c8",
+"rot": -90,
+"track": 4
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 180,
+"size": 96,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 856
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1140,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "תווית אנכית בצד, כותרת ענקית למעלה. שפת מגדלי היוקרה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_05",
+"name": "קו ראשון · קו מידה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 120,
+"w": 936,
+"h": 600,
+"s": 0
+},
+{
+"t": "dimline",
+"x1": 72,
+"x2": 1008,
+"y": 790,
+"size": 64,
+"col": "#07293a",
+"vcol": "#a90b0c",
+"bg": "#ffffff",
+"ucol": "#35505e"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 900,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1120,
+"size": 28,
+"max": 1,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום ממוסגר וקו מידה שנושא מספר אמיתי מהפוסט (מרחק, קומות, מ\"ר).",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_06",
+"name": "כפול · צילום ומילה בקונטור",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#0b1f2a"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 150,
+"w": 936,
+"h": 620,
+"s": 0,
+"dim": 0.1
+},
+{
+"t": "otext",
+"x": 1008,
+"y": 800,
+"size": 200,
+"col": "#8fb6c8",
+"align": "right",
+"f": "word",
+"lw": 2
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 1010,
+"size": 64,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מילה אחת מהכותרת בקונטור מיסט, כמו שם פרויקט באנגלית.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_07",
+"name": "שלושה חלונות יוקרה",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 68,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 380,
+"w": 936,
+"h": 420,
+"s": 0
+},
+{
+"t": "photo",
+"x": 72,
+"y": 820,
+"w": 456,
+"h": 360,
+"s": 1
+},
+{
+"t": "photo",
+"x": 552,
+"y": 820,
+"w": 456,
+"h": 360,
+"s": 2
+},
+{
+"t": "frame",
+"x": 72,
+"y": 380,
+"w": 936,
+"h": 800,
+"col": "rgba(143,182,200,0.5)",
+"lw": 1
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שלוש תמונות בתוך מסגרת אחת דקה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_08",
+"name": "עמוד נייר · הצהרה ממורכזת",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "rect",
+"x": 510,
+"y": 300,
+"w": 60,
+"h": 6,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 340,
+"size": 84,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 680,
+"size": 30,
+"max": 3,
+"w": 500,
+"col": "#35505e",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 900,
+"w": 936,
+"h": 300,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת ממורכזת על נייר בהיר, קו אדום קצר, צילום צר למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_09",
+"name": "מיקום · סמן על צילום",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.3,
+"fade": [
+0,
+0.6
+]
+},
+{
+"t": "marker",
+"x": 540,
+"y": 520,
+"col": "#a90b0c",
+"rad": 16,
+"ring": 60
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 860,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1110,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "סמן מיקום על הצילום, כותרת מתחת. פוסט מיקום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_isca_10",
+"name": "ציר הזמן של הפרויקט",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#0b1f2a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "timeline",
+"x": 978,
+"y": 420,
+"gap": 150,
+"n": 5,
+"at": 2,
+"col": "#a90b0c",
+"line": "#35505e"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1150,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "ציר זמן אנכי בחמישה צעדים, שלב נוכחי באדום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+}
+],
+"tidhar": [
+{
+"id": "x_t_b3_tidhar_01",
+"name": "קומה · סרט מידה",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.35,
+"fade": [
+0.2,
+0.75
+]
+},
+{
+"t": "tape",
+"x1": -40,
+"y1": 470,
+"x2": 1120,
+"y2": 380,
+"h": 96,
+"size": 60,
+"bg": "#f4f6f8",
+"vbg": "#a90b0c",
+"at": 0.5
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 820,
+"size": 80,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "סרט מידה חוצה את הצילום עם המספר מהפוסט (קומה, מטר, שבוע).",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_02",
+"name": "לוח אתר",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 130,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "siteboard",
+"x": 72,
+"y": 370,
+"w": 936,
+"h": 620,
+"legs": 0
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1110,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שלט האתר עם פרטי הפרויקט מתוך הפוסט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_03",
+"name": "שרטוט · מספר גדול",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "gridlines",
+"cols": 8,
+"rows": 10,
+"col": "rgba(16,85,114,0.14)",
+"lw": 1,
+"y": 0,
+"y2": 1262
+},
+{
+"t": "stat",
+"x": 1008,
+"y": 160,
+"size": 260,
+"w": 900,
+"col": "#07293a",
+"align": "right",
+"maxW": 600
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 560,
+"size": 72,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 900,
+"size": 30,
+"max": 3,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רשת שרטוט, מספר ענק מהפוסט וכותרת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_04",
+"name": "כך בונים · שלבים",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 380,
+"w": 936,
+"h": 460,
+"s": 0
+},
+{
+"t": "steps",
+"x": 112,
+"x1": 968,
+"y": 980,
+"n": 5,
+"at": 3,
+"col": "#105572",
+"line": "#dbe8ee",
+"labels": [
+"היתר",
+"חפירה",
+"שלד",
+"גמר",
+"מסירה"
+],
+"bg": "#ffffff"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1150,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום ומסלול שלבים עם שמות, השלב הנוכחי מסומן.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_05",
+"name": "התקדמות · פס",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 150,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 200,
+"size": 84,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "progress",
+"x": 72,
+"y": 760,
+"w": 936,
+"h": 34,
+"col": "#a90b0c",
+"track": "rgba(143,182,200,0.25)",
+"size": 40,
+"lcol": "#ffffff"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 880,
+"w": 936,
+"h": 330,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "פס התקדמות עם אחוז מהפוסט, מעל צילום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_06",
+"name": "גמר · שני צילומים",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 560,
+"s": 0
+},
+{
+"t": "pill",
+"x": 1008,
+"y": 64,
+"bg": "#ffffff",
+"fg": "#07293a",
+"align": "right",
+"size": 22,
+"text": "שלד"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 580,
+"w": 1080,
+"h": 560,
+"s": 1
+},
+{
+"t": "pill",
+"x": 1008,
+"y": 620,
+"bg": "#a90b0c",
+"fg": "#ffffff",
+"align": "right",
+"size": 22,
+"text": "גמר"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 1165,
+"size": 64,
+"max": 1,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שלד מול גמר: שני צילומים ברוחב מלא עם תג לכל אחד.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_07",
+"name": "מפלסים",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 430,
+"h": 1350,
+"s": 0,
+"dim": 0.2
+},
+{
+"t": "rect",
+"x": 430,
+"y": 0,
+"w": 650,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 72,
+"max": 4,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 538
+},
+{
+"t": "levels",
+"x": 1008,
+"y": 700,
+"w": 538,
+"gap": 160,
+"max": 3,
+"col": "#ffffff",
+"acc": "#a90b0c",
+"size": 36
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום בצד ושלושה מפלסים מסומנים מהטקסט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_08",
+"name": "מספרי ביצוע",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 72,
+"y": 400,
+"w": 936,
+"h": 640,
+"col": "#ffffff"
+},
+{
+"t": "specs",
+"x": 102,
+"w": 876,
+"y": 460,
+"n": 3,
+"size": 110,
+"col": "#07293a",
+"lcol": "#35505e",
+"rule": "rgba(7,41,58,0.15)",
+"lsize": 22
+},
+{
+"t": "text",
+"f": "sub",
+"x": 978,
+"y": 840,
+"size": 28,
+"max": 3,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 876
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כרטיס לבן עם שלושה נתונים מהפוסט ומשפט הסבר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_09",
+"name": "מגדל · מלמטה",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"fade": [
+0,
+0.6
+],
+"rgb": "7,41,58"
+},
+{
+"t": "bars",
+"x": 72,
+"y": 170,
+"col": "#ffffff",
+"size": 30
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 900,
+"size": 76,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1160,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום מהרגליים למעלה, פסי תפריט, כותרת בתחתית.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_tidhar_10",
+"name": "יומן הנדסי",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "frame",
+"x": 72,
+"y": 72,
+"w": 936,
+"h": 1186,
+"col": "#07293a",
+"lw": 2
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 978,
+"y": 150,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 978,
+"y": 200,
+"size": 66,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 876
+},
+{
+"t": "line",
+"x1": 102,
+"y1": 520,
+"x2": 978,
+"y2": 520,
+"col": "#07293a",
+"lw": 1.5
+},
+{
+"t": "text",
+"f": "sub",
+"x": 978,
+"y": 560,
+"size": 30,
+"max": 4,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 876
+},
+{
+"t": "photo",
+"x": 102,
+"y": 860,
+"w": 876,
+"h": 320,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מסגרת כחולה, קו מפריד, צילום בתחתית. דף מתוך יומן העבודה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"dimri": [
+{
+"id": "x_t_b3_dimri_01",
+"name": "פרזנטור · דיוקן וסלוגן",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "cphoto",
+"x": 540,
+"y": 470,
+"r": 300,
+"s": 0,
+"stroke": "#07293a",
+"sw": 10
+},
+{
+"t": "caption",
+"f": "head",
+"x": 540,
+"y": 820,
+"size": 70,
+"bg": "#07293a",
+"fg": "#ffffff",
+"align": "center",
+"max": 2,
+"lh": 1.28,
+"w": 800
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 1060,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "דיוקן עגול גדול וכיתוב בקופסה כחולה, כמו קמפיין עם פרזנטור.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_02",
+"name": "יוצא לשיווק · פס אדום",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 120,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"text": "יוצא לשיווק",
+"kind": "small",
+"x": 1008,
+"y": 78,
+"size": 28,
+"col": "#ffffff",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "photo",
+"x": 72,
+"y": 160,
+"w": 936,
+"h": 620,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 830,
+"size": 80,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1060,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "פס השקה אדום עליון, צילום וכותרת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_03",
+"name": "חותמת גיליון · פרויקט ומיקום",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.3,
+"fade": [
+0.05,
+0.8
+]
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 540,
+"size": 80,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "tblock",
+"x": 72,
+"y": 960,
+"w": 936,
+"h": 180,
+"col": "#07293a",
+"bg": "#f4f6f8"
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת על הצילום וחותמת שמות: פרויקט ומיקום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_04",
+"name": "פרויקטים בכל הארץ",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "roster",
+"x": 1008,
+"y": 440,
+"gap": 104,
+"max": 5,
+"size": 34,
+"col": "#07293a",
+"rule": "#dbe8ee",
+"x1": 72,
+"acc": "#a90b0c",
+"icol": "#105572"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1130,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רשימת ערים ופרויקטים עם סמן, הראשון באדום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_05",
+"name": "קולנועי · נגן וכיתוב",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.4
+},
+{
+"t": "play",
+"x": 540,
+"y": 520,
+"r": 90,
+"col": "#ffffff",
+"bg": "rgba(255,255,255,.18)"
+},
+{
+"t": "caption",
+"f": "head",
+"x": 1008,
+"y": 820,
+"size": 64,
+"bg": "#ffffff",
+"fg": "#07293a",
+"align": "right",
+"max": 3,
+"lh": 1.24,
+"w": 800
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום כהה עם כפתור נגינה וכיתוב בקופסאות. שפת הסרטון.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_06",
+"name": "הודעה · סימון אדום",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 760,
+"s": 0
+},
+{
+"t": "redmark",
+"x": 600,
+"y": 400,
+"r": 130,
+"col": "#a90b0c",
+"lw": 8,
+"arrow": true
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 820,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1060,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "סימון אדום על הצילום, כמו הדגשה של עדכון חשוב.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_07",
+"name": "עמוד כחול · ציטוט",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 150,
+"size": 26,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 200,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "dropcap",
+"x": 1008,
+"y": 470,
+"size": 170,
+"col": "#a90b0c",
+"bsize": 44,
+"max": 7,
+"bcol": "#ffffff",
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "אות פתיחה אדומה ענקית וגוף טקסט לבן.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_08",
+"name": "שני צילומים ותג",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 130,
+"w": 936,
+"h": 520,
+"s": 0
+},
+{
+"t": "photo",
+"x": 72,
+"y": 670,
+"w": 936,
+"h": 320,
+"s": 1
+},
+{
+"t": "tag",
+"x": 1008,
+"y": 1020,
+"col": "#a90b0c",
+"align": "right",
+"size": 24
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 1080,
+"size": 64,
+"max": 1,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "זוג צילומים, תג וכותרת קצרה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_09",
+"name": "מודעה · מסגרת כחולה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "rect",
+"x": 48,
+"y": 48,
+"w": 984,
+"h": 1214,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 96,
+"y": 96,
+"w": 888,
+"h": 560,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 984,
+"y": 720,
+"size": 70,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 888
+},
+{
+"t": "cta",
+"text": "לתיאום פגישה",
+"x": 96,
+"y": 1100,
+"align": "left",
+"size": 28,
+"bg": "#a90b0c",
+"icon": "arrow",
+"fg": "#ffffff",
+"w": 300
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מסגרת כחולה סביב דף לבן, צילום וכפתור. שפת המודעה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_dimri_10",
+"name": "מספרים בשורות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "ledger",
+"x": 1008,
+"y": 400,
+"max": 3,
+"nsize": 100,
+"size": 32,
+"ncol": "#a90b0c",
+"col": "#07293a",
+"rule": "#dbe8ee"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 960,
+"w": 936,
+"h": 250,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שורות מספרים מהפוסט, המספר באדום והטקסט לצידו, צילום צר למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"shb": [
+{
+"id": "x_t_b3_shb_01",
+"name": "מורשת · מילה ענקית",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "otext",
+"x": 540,
+"y": 220,
+"size": 300,
+"col": "#ffffff",
+"align": "center",
+"f": "word",
+"lw": 3
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 640,
+"size": 66,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 940,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#8fb6c8",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מילה מהכותרת בקונטור ענק, כותרת ממורכזת. פוסט ותק.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_02",
+"name": "שני פרזנטורים",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "cphoto",
+"x": 310,
+"y": 420,
+"r": 210,
+"s": 0,
+"stroke": "#ffffff",
+"sw": 10
+},
+{
+"t": "cphoto",
+"x": 770,
+"y": 420,
+"r": 210,
+"s": 1,
+"stroke": "#ffffff",
+"sw": 10
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 720,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 960,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שני דיוקנאות עגולים זה לצד זה וכותרת ממורכזת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_03",
+"name": "מסלול · לוח כתיבה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#dbe8ee"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 100,
+"size": 64,
+"max": 1,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 600
+},
+{
+"t": "clipboard",
+"x": 120,
+"y": 260,
+"w": 840,
+"h": 900,
+"size": 54
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "לוח כתיבה עם הכותרת ושורות הסבר. פוסט מסלול רכישה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_04",
+"name": "ירוק עירוני · טורקיז",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#105572"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 84,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 560,
+"w": 936,
+"h": 520,
+"s": 0,
+"r": 0
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1130,
+"size": 24,
+"col": "#ffffff",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "דף טורקיז מלא, צילום ממורכז, תווית למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_05",
+"name": "מונו · כיתוב לבן",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"mono": true,
+"dim": 0.25,
+"fade": [
+0,
+0.5
+]
+},
+{
+"t": "caption",
+"f": "head",
+"x": 1008,
+"y": 760,
+"size": 72,
+"bg": "#ffffff",
+"fg": "#0b1f2a",
+"align": "right",
+"max": 3,
+"lh": 1.22,
+"w": 800
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1130,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום שחור לבן היסטורי וכיתוב בקופסאות לבנות.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_06",
+"name": "רשימת יתרונות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 72,
+"y": 400,
+"w": 936,
+"h": 760,
+"col": "#f4f6f8"
+},
+{
+"t": "list",
+"x": 978,
+"y": 440,
+"col": "#07293a",
+"ncol": "#105572",
+"rh": 120,
+"max": 5,
+"size": 34,
+"w": 600,
+"num": false,
+"check": true,
+"rule": "#dbe8ee",
+"x1": 102,
+"x2": 978
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רשימת וי על כרטיס נייר. יתרונות הפרויקט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_07",
+"name": "אבן דרך · תאריך",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 700,
+"s": 0
+},
+{
+"t": "rect",
+"x": 0,
+"y": 700,
+"w": 1080,
+"h": 650,
+"col": "#105572"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 760,
+"size": 26,
+"col": "#ffffff",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 810,
+"size": 74,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1100,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום מעל בלוק טורקיז, תווית ותאריך ואז כותרת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_08",
+"name": "שלוש תמונות אנכיות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 130,
+"size": 66,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 360,
+"w": 298,
+"h": 800,
+"s": 0
+},
+{
+"t": "photo",
+"x": 390,
+"y": 360,
+"w": 298,
+"h": 800,
+"s": 1
+},
+{
+"t": "photo",
+"x": 708,
+"y": 360,
+"w": 298,
+"h": 800,
+"s": 2
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שלוש רצועות צילום אנכיות.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_09",
+"name": "קרדיטים · שותפים",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#0b1f2a"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 540,
+"y": 150,
+"size": 24,
+"col": "#8fb6c8",
+"align": "center",
+"track": 4,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 200,
+"size": 64,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "credits",
+"x": 540,
+"y": 480,
+"size": 44,
+"col": "#ffffff",
+"lcol": "#8fb6c8",
+"gap": 46,
+"lsize": 24
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת ממורכזת וקרדיטים לשותפים כמו בסוף סרט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_shb_10",
+"name": "בלוק טורקיז על צילום",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.15
+},
+{
+"t": "rect",
+"x": 0,
+"y": 720,
+"w": 1080,
+"h": 630,
+"col": "#105572"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 790,
+"size": 78,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1100,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#8fb6c8",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום ובלוק טורקיז בחצי התחתון.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"electra": [
+{
+"id": "x_t_b3_electra_01",
+"name": "לייף סטייל · שלושה אריחים",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 380,
+"w": 936,
+"h": 380,
+"s": 0
+},
+{
+"t": "photo",
+"x": 72,
+"y": 780,
+"w": 458,
+"h": 380,
+"s": 1
+},
+{
+"t": "photo",
+"x": 550,
+"y": 780,
+"w": 458,
+"h": 380,
+"s": 2
+},
+{
+"t": "pill",
+"x": 988,
+"y": 400,
+"bg": "#07293a",
+"fg": "#ffffff",
+"align": "right",
+"size": 22,
+"f": "label"
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שלושה צילומי מתקנים (לובי, בריכה, חדר כושר) ותווית.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_02",
+"name": "הרבה יותר מ · קונטור",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "otext",
+"x": 1008,
+"y": 160,
+"size": 220,
+"col": "#8fb6c8",
+"align": "right",
+"f": "word",
+"lw": 2
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 420,
+"size": 80,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "roster",
+"x": 1008,
+"y": 820,
+"gap": 96,
+"max": 4,
+"size": 32,
+"col": "#ffffff",
+"rule": "rgba(143,182,200,0.25)",
+"x1": 72,
+"acc": "#a90b0c",
+"icol": "#8fb6c8"
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מילה בקונטור, כותרת ורשימת מתקנים.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_03",
+"name": "ציטוט · אות פתיחה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 150,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 200,
+"size": 66,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "dropcap",
+"x": 1008,
+"y": 440,
+"size": 170,
+"col": "#a90b0c",
+"bsize": 44,
+"max": 6,
+"bcol": "#07293a",
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 1000,
+"w": 936,
+"h": 200,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "ציטוט עם אות פתיחה אדומה וצילום צר למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_04",
+"name": "כרטיס פרויקט · מפרט",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 120,
+"w": 936,
+"h": 560,
+"s": 0
+},
+{
+"t": "rect",
+"x": 72,
+"y": 680,
+"w": 936,
+"h": 480,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 978,
+"y": 720,
+"size": 64,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 876
+},
+{
+"t": "specs",
+"x": 102,
+"w": 876,
+"y": 900,
+"n": 3,
+"size": 80,
+"col": "#07293a",
+"lcol": "#35505e",
+"rule": "rgba(7,41,58,0.15)",
+"lsize": 22
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום, כותרת ושלושה נתונים מהפוסט על כרטיס נייר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_05",
+"name": "קיץ · צילום רגשי",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"fade": [
+0.3,
+0.8
+],
+"rgb": "169,11,12"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 860,
+"size": 84,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1140,
+"size": 24,
+"col": "#ffffff",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "דהייה אדומה חמה בתחתית הצילום וכותרת לבנה. קמפיין רגשי.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_06",
+"name": "לובי · פנורמה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 120,
+"w": 1080,
+"h": 460,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 640,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 880,
+"size": 30,
+"max": 3,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 72,
+"y": 1130,
+"w": 120,
+"h": 8,
+"col": "#a90b0c"
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום פנורמי ברוחב מלא, כותרת ותת כותרת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_07",
+"name": "אריחי צבע וצילום",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "tiles",
+"r": 0,
+"items": [
+{
+"x": 72,
+"y": 400,
+"w": 456,
+"h": 360,
+"col": "#07293a"
+},
+{
+"x": 552,
+"y": 400,
+"w": 456,
+"h": 360,
+"col": "#ffffff"
+},
+{
+"x": 72,
+"y": 784,
+"w": 456,
+"h": 360,
+"col": "#ffffff"
+},
+{
+"x": 552,
+"y": 784,
+"w": 456,
+"h": 360,
+"col": "#105572"
+}
+]
+},
+{
+"t": "photo",
+"x": 552,
+"y": 400,
+"w": 456,
+"h": 360,
+"s": 0
+},
+{
+"t": "photo",
+"x": 72,
+"y": 784,
+"w": 456,
+"h": 360,
+"s": 1
+},
+{
+"t": "text",
+"text": "מגורים",
+"kind": "small",
+"x": 978,
+"y": 470,
+"size": 30,
+"col": "#ffffff",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"text": "קהילה",
+"kind": "small",
+"x": 978,
+"y": 854,
+"size": 30,
+"col": "#ffffff",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "ארבעה אריחים: שניים צבע, שניים צילום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_08",
+"name": "מגדל · מסגרת אדומה",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.3
+},
+{
+"t": "frame",
+"x": 72,
+"y": 72,
+"w": 936,
+"h": 1186,
+"col": "#a90b0c",
+"lw": 3
+},
+{
+"t": "text",
+"f": "head",
+"x": 968,
+"y": 180,
+"size": 86,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 856
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 968,
+"y": 1120,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מסגרת אדומה דקה סביב צילום מגדל.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_09",
+"name": "שאלה ותשובה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "caption",
+"f": "head",
+"x": 1008,
+"y": 160,
+"size": 64,
+"bg": "#ffffff",
+"fg": "#07293a",
+"align": "right",
+"max": 3,
+"lh": 1.26,
+"w": 800
+},
+{
+"t": "caption",
+"f": "sub",
+"x": 92,
+"y": 640,
+"size": 40,
+"bg": "#07293a",
+"fg": "#ffffff",
+"align": "left",
+"max": 6,
+"lh": 1.28,
+"w": 800,
+"maxW": 856
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "בועת שאלה לבנה ובועת תשובה כחולה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_electra_10",
+"name": "קומת גג · חלון בית",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "housewin",
+"x": 140,
+"y": 100,
+"w": 800,
+"h": 720,
+"roof": 260,
+"s": 0,
+"lw": 10,
+"stroke": "#07293a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 900,
+"size": 66,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 1120,
+"size": 28,
+"max": 1,
+"w": 500,
+"col": "#35505e",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום בתוך צורת בית, כותרת ממורכזת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"gabay": [
+{
+"id": "x_t_b3_gabay_01",
+"name": "לפני ואחרי · מונו וצבע",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 600,
+"s": 0,
+"mono": true
+},
+{
+"t": "pill",
+"x": 1008,
+"y": 64,
+"bg": "#07293a",
+"fg": "#ffffff",
+"align": "right",
+"size": 22,
+"text": "לפני"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 620,
+"w": 1080,
+"h": 560,
+"s": 1
+},
+{
+"t": "pill",
+"x": 1008,
+"y": 660,
+"bg": "#a90b0c",
+"fg": "#ffffff",
+"align": "right",
+"size": 22,
+"text": "אחרי"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 1195,
+"size": 64,
+"max": 1,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום ישן בשחור לבן מעל צילום חדש בצבע, תג לכל אחד. הכותרת בכיתוב הפוסט. ",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_02",
+"name": "מישן ועד חדש · חץ",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 72,
+"y": 420,
+"w": 428,
+"h": 520,
+"col": "#dbe8ee"
+},
+{
+"t": "rect",
+"x": 580,
+"y": 420,
+"w": 428,
+"h": 520,
+"col": "#07293a"
+},
+{
+"t": "arrow",
+"x": 540,
+"y": 680,
+"col": "#a90b0c",
+"len": 80,
+"lw": 6
+},
+{
+"t": "stat",
+"x": 470,
+"y": 520,
+"size": 150,
+"w": 900,
+"col": "#07293a",
+"align": "right",
+"maxW": 368
+},
+{
+"t": "text",
+"text": "היום",
+"kind": "small",
+"x": 470,
+"y": 860,
+"size": 28,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"text": "מחר",
+"kind": "small",
+"x": 978,
+"y": 860,
+"size": 28,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1010,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שני כרטיסים: היום ומחר, חץ אדום ביניהם, המספר מהפוסט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_03",
+"name": "מסלול הדיירים",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "steps",
+"x": 112,
+"x1": 968,
+"y": 560,
+"n": 5,
+"at": 2,
+"col": "#a90b0c",
+"line": "#dbe8ee",
+"labels": [
+"חתימה",
+"תכנון",
+"היתר",
+"ביצוע",
+"מסירה"
+],
+"bg": "#ffffff"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 740,
+"w": 936,
+"h": 440,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "חמישה שלבים עם שמות ואז צילום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_04",
+"name": "כללי המשחק · רשימה",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#0b1f2a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 78,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "list",
+"x": 1008,
+"y": 470,
+"col": "#ffffff",
+"ncol": "#a90b0c",
+"rh": 130,
+"max": 5,
+"size": 36,
+"w": 600,
+"num": true,
+"rule": "rgba(255,255,255,0.15)",
+"x1": 72,
+"x2": 1008
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מניפסט ממוספר על שחור, מספרים באדום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_05",
+"name": "שחור לבן · תג אדום",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 150,
+"w": 936,
+"h": 700,
+"s": 0,
+"mono": true
+},
+{
+"t": "pill",
+"x": 1008,
+"y": 890,
+"bg": "#a90b0c",
+"fg": "#ffffff",
+"align": "right",
+"size": 22,
+"f": "label"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 960,
+"size": 68,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום מונוכרום, תג אדום וכותרת כהה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_06",
+"name": "סימון בדיקה על שלד",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 900,
+"s": 0,
+"mono": true,
+"dim": 0.2
+},
+{
+"t": "redmark",
+"x": 540,
+"y": 430,
+"r": 140,
+"col": "#a90b0c",
+"lw": 9,
+"arrow": true
+},
+{
+"t": "rect",
+"x": 0,
+"y": 900,
+"w": 1080,
+"h": 450,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 960,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1170,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "סימון אדום על צילום מונו, כותרת על כחול.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_07",
+"name": "מגדלים · פסים",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "tiles",
+"r": 0,
+"items": [
+{
+"x": 72,
+"y": 300,
+"w": 150,
+"h": 900,
+"col": "#105572"
+},
+{
+"x": 272,
+"y": 420,
+"w": 150,
+"h": 780,
+"col": "#8fb6c8"
+},
+{
+"x": 472,
+"y": 200,
+"w": 150,
+"h": 1000,
+"col": "#105572"
+},
+{
+"x": 672,
+"y": 520,
+"w": 150,
+"h": 680,
+"col": "#8fb6c8"
+},
+{
+"x": 872,
+"y": 360,
+"w": 136,
+"h": 840,
+"col": "#105572"
+}
+]
+},
+{
+"t": "rect",
+"x": 0,
+"y": 760,
+"w": 1080,
+"h": 590,
+"col": "#07293a",
+"a": 0.85
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 820,
+"size": 80,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1140,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "קו רקיע של מגדלים ברצועות, כותרת על חצי כהה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_08",
+"name": "עמוד אדום · הצהרה",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 180,
+"size": 100,
+"max": 4,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 820,
+"size": 30,
+"max": 3,
+"w": 500,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 1020,
+"w": 936,
+"h": 200,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "עמוד אדום מלא עם כותרת ענקית.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_09",
+"name": "חלון צילום בבלוק",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "rect",
+"x": 72,
+"y": 150,
+"w": 936,
+"h": 640,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 96,
+"y": 174,
+"w": 888,
+"h": 592,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 860,
+"size": 74,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1150,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "חלון צילום לבן בתוך דף כחול.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_gabay_10",
+"name": "קרדיטים לדיירים ולצוות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 66,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 72,
+"y": 380,
+"w": 936,
+"h": 560,
+"col": "#ffffff"
+},
+{
+"t": "credits",
+"x": 540,
+"y": 430,
+"size": 40,
+"col": "#07293a",
+"lcol": "#35505e",
+"gap": 36,
+"lsize": 22
+},
+{
+"t": "photo",
+"x": 72,
+"y": 980,
+"w": 936,
+"h": 230,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כרטיס לבן עם שורות קרדיט: תפקיד ושם מהפוסט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"prash": [
+{
+"id": "x_t_b3_prash_01",
+"name": "עסקה · נמסר על נייר",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 130,
+"w": 936,
+"h": 640,
+"s": 0
+},
+{
+"t": "stamp",
+"x": 232,
+"y": 560,
+"col": "#a90b0c",
+"text": "נמסר",
+"size": 100,
+"rot": -12,
+"lw": 8
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 830,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1050,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום ממוסגר על נייר, חותמת נמסר, כותרת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_02",
+"name": "מכרז · סרט מידה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 80,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "tape",
+"x1": -40,
+"y1": 560,
+"x2": 1120,
+"y2": 620,
+"h": 90,
+"size": 60,
+"bg": "#f4f6f8",
+"vbg": "#a90b0c",
+"at": 0.5
+},
+{
+"t": "photo",
+"x": 72,
+"y": 760,
+"w": 936,
+"h": 420,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "סרט מידה עם מספר מהפוסט (שעות, דירות, ימים) בין כותרת לצילום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_03",
+"name": "מועד אכלוס · תווית",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 680,
+"s": 0
+},
+{
+"t": "rect",
+"x": 72,
+"y": 620,
+"w": 936,
+"h": 120,
+"col": "#07293a"
+},
+{
+"t": "text",
+"text": "מועד אכלוס צפוי",
+"kind": "small",
+"x": 978,
+"y": 665,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 978,
+"y": 705,
+"size": 26,
+"col": "#ffffff",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 820,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1050,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רצועה כחולה על קצה הצילום עם מועד אכלוס (מהפוסט) וכותרת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_04",
+"name": "קו ראשון לפארק · בית בקו",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "linehouse",
+"x": 540,
+"y": 470,
+"s": 1.1,
+"col": "#07293a",
+"lw": 7,
+"acc": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 860,
+"size": 68,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 1080,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "איור בית בקו אחד, כותרת ממורכזת. דף שקט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_05",
+"name": "בוטיק · צילום קטן ממורכז",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "photo",
+"x": 240,
+"y": 150,
+"w": 600,
+"h": 520,
+"s": 0
+},
+{
+"t": "rect",
+"x": 500,
+"y": 710,
+"w": 80,
+"h": 4,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 760,
+"size": 64,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 540,
+"y": 1060,
+"size": 24,
+"col": "#35505e",
+"align": "center",
+"track": 3,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום קטן ממורכז עם הרבה אוויר, קו אדום קצר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_06",
+"name": "שני צילומים לא סימטריים",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 120,
+"w": 560,
+"h": 700,
+"s": 0
+},
+{
+"t": "photo",
+"x": 672,
+"y": 320,
+"w": 336,
+"h": 500,
+"s": 1
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 880,
+"size": 66,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1100,
+"size": 28,
+"max": 1,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "זוג צילומים בגבהים שונים, כותרת למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_07",
+"name": "לילה · כהה ומסגרת",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#0b1f2a"
+},
+{
+"t": "frame",
+"x": 72,
+"y": 72,
+"w": 936,
+"h": 1186,
+"col": "rgba(143,182,200,0.5)",
+"lw": 1
+},
+{
+"t": "photo",
+"x": 112,
+"y": 112,
+"w": 856,
+"h": 620,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 968,
+"y": 800,
+"size": 64,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 856
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 968,
+"y": 1110,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "דף כהה, מסגרת דקה, צילום ממוסגר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_08",
+"name": "פנטהאוז · פנורמה וכיתוב",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.25,
+"fade": [
+0.2,
+0.7
+]
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 760,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "caption",
+"f": "head",
+"x": 1008,
+"y": 810,
+"size": 64,
+"bg": "#ffffff",
+"fg": "#07293a",
+"align": "right",
+"max": 3,
+"lh": 1.24,
+"w": 800
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כיתוב בקופסאות על צילום נוף מהגג.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_09",
+"name": "קו מידה · מרחק",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 380,
+"w": 936,
+"h": 520,
+"s": 0
+},
+{
+"t": "dimline",
+"x1": 72,
+"x2": 1008,
+"y": 980,
+"size": 60,
+"col": "#07293a",
+"vcol": "#a90b0c",
+"bg": "#ffffff",
+"ucol": "#35505e"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1140,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת, צילום וקו מידה עם המספר מהפוסט.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_prash_10",
+"name": "עמוד כחול · מלבן לבן",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "rect",
+"x": 72,
+"y": 150,
+"w": 936,
+"h": 540,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 972,
+"y": 200,
+"size": 64,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 864
+},
+{
+"t": "text",
+"f": "sub",
+"x": 972,
+"y": 500,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 864
+},
+{
+"t": "photo",
+"x": 72,
+"y": 720,
+"w": 936,
+"h": 460,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת על מלבן לבן, צילום מתחת, דף כחול.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"altn": [
+{
+"id": "x_t_b3_altn_01",
+"name": "עיר · תג וצילום",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.3,
+"fade": [
+0,
+0.65
+]
+},
+{
+"t": "pill",
+"x": 1008,
+"y": 170,
+"bg": "#ffffff",
+"fg": "#07293a",
+"align": "right",
+"size": 24,
+"f": "label"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 860,
+"size": 80,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1150,
+"size": 24,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "תג העיר למעלה, כותרת למטה. עמוד פרויקטים בעיר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_02",
+"name": "בלוק דיו וחלון",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#0b1f2a"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 150,
+"w": 936,
+"h": 560,
+"s": 0
+},
+{
+"t": "rect",
+"x": 72,
+"y": 710,
+"w": 936,
+"h": 8,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 770,
+"size": 76,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1080,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#8fb6c8",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום בחלון, קו אדום, כותרת לבנה על דיו.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_03",
+"name": "לפני ואחרי · חצי חצי",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 540,
+"h": 980,
+"s": 0,
+"mono": true
+},
+{
+"t": "photo",
+"x": 540,
+"y": 0,
+"w": 540,
+"h": 980,
+"s": 1
+},
+{
+"t": "rect",
+"x": 537,
+"y": 0,
+"w": 6,
+"h": 980,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 1030,
+"size": 64,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 620
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 72,
+"y": 1040,
+"size": 24,
+"col": "#35505e",
+"align": "left",
+"track": 1,
+"w": 700,
+"maxW": 300
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שני צילומים זה לצד זה, הישן בשחור לבן.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_04",
+"name": "קו רקיע · רצועות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "tiles",
+"r": 0,
+"items": [
+{
+"x": 72,
+"y": 540,
+"w": 120,
+"h": 660,
+"col": "#07293a"
+},
+{
+"x": 222,
+"y": 640,
+"w": 120,
+"h": 560,
+"col": "#105572"
+},
+{
+"x": 372,
+"y": 460,
+"w": 120,
+"h": 740,
+"col": "#07293a"
+},
+{
+"x": 522,
+"y": 700,
+"w": 120,
+"h": 500,
+"col": "#8fb6c8"
+},
+{
+"x": 672,
+"y": 560,
+"w": 120,
+"h": 640,
+"col": "#105572"
+},
+{
+"x": 822,
+"y": 620,
+"w": 186,
+"h": 580,
+"col": "#07293a"
+}
+]
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 400,
+"size": 28,
+"max": 1,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רצועות בגובה משתנה כמו קו רקיע עירוני.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_05",
+"name": "מחדשים · אדום",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 607,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 88,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 647,
+"w": 936,
+"h": 520,
+"s": 0
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1200,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "חצי עליון אדום עם כותרת, צילום על לבן למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_06",
+"name": "שלוש ערים · רשימה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "roster",
+"x": 1008,
+"y": 430,
+"gap": 104,
+"max": 5,
+"size": 34,
+"col": "#07293a",
+"rule": "#dbe8ee",
+"x1": 72,
+"acc": "#a90b0c",
+"icol": "#07293a"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 960,
+"w": 936,
+"h": 240,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רשימת ערים ושכונות מהפוסט, צילום צר למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_07",
+"name": "מסלול התחדשות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 72,
+"y": 400,
+"w": 936,
+"h": 420,
+"col": "#ffffff"
+},
+{
+"t": "steps",
+"x": 132,
+"x1": 948,
+"y": 560,
+"n": 6,
+"at": 1,
+"col": "#a90b0c",
+"line": "#dbe8ee",
+"labels": [
+"חתימות",
+"תכנון",
+"היתר",
+"פינוי",
+"בנייה",
+"מסירה"
+],
+"bg": "#ffffff"
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 880,
+"size": 28,
+"max": 3,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שישה שלבים של פינוי בינוי על כרטיס לבן.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_08",
+"name": "שאלה · ש ות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"text": "ש",
+"kind": "small",
+"x": 1008,
+"y": 120,
+"size": 220,
+"col": "#a90b0c",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 808,
+"y": 170,
+"size": 64,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 736
+},
+{
+"t": "line",
+"x1": 72,
+"y1": 520,
+"x2": 1008,
+"y2": 520,
+"col": "#dbe8ee",
+"lw": 2
+},
+{
+"t": "text",
+"text": "ת",
+"kind": "small",
+"x": 1008,
+"y": 560,
+"size": 220,
+"col": "#07293a",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "sub",
+"x": 808,
+"y": 610,
+"size": 34,
+"max": 7,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.4,
+"maxW": 736
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שאלה ותשובה עם אותיות ענקיות.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_09",
+"name": "מבט מהרחוב",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"fade": [
+0,
+0.7
+],
+"rgb": "11,31,42"
+},
+{
+"t": "vtext",
+"x": 60,
+"y": 675,
+"size": 34,
+"col": "#8fb6c8",
+"rot": -90,
+"track": 4
+},
+{
+"t": "caption",
+"f": "head",
+"x": 1008,
+"y": 900,
+"size": 64,
+"bg": "#a90b0c",
+"fg": "#ffffff",
+"align": "right",
+"max": 2,
+"lh": 1.24,
+"w": 800
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כיתוב אדום על צילום רחוב, תווית אנכית.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_altn_10",
+"name": "עמוד נייר · שני טורים",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 66,
+"max": 3,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "line",
+"x1": 540,
+"y1": 420,
+"x2": 540,
+"y2": 1150,
+"col": "#dbe8ee",
+"lw": 2
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 440,
+"size": 30,
+"max": 8,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.45,
+"maxW": 428
+},
+{
+"t": "photo",
+"x": 72,
+"y": 440,
+"w": 428,
+"h": 700,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "טקסט בטור ימין וצילום בטור שמאל.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+}
+],
+"aura": [
+{
+"id": "x_t_b3_aura_01",
+"name": "מנגנון · שתי קופסאות",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 140,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "poll",
+"x": 72,
+"y": 420,
+"w": 936,
+"h": 130,
+"bg1": "#105572",
+"bg2": "#ffffff",
+"stroke": "#105572",
+"size": 34,
+"max": 2
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 760,
+"size": 30,
+"max": 3,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 960,
+"w": 936,
+"h": 240,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שני משפטים מהפוסט בשתי קופסאות (למשל בחתימה ובמסירה).",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_02",
+"name": "דירות אחרונות · מדבקה",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 130,
+"w": 936,
+"h": 700,
+"s": 0
+},
+{
+"t": "sticker",
+"x": 220,
+"y": 760,
+"bg": "#a90b0c",
+"fg": "#ffffff",
+"text": "אחרונות",
+"rot": -8,
+"size": 34
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 880,
+"size": 70,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 1100,
+"size": 28,
+"max": 1,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "מדבקה אדומה מסובבת על פינת הצילום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_03",
+"name": "מספרי מכירות",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 150,
+"size": 72,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "ledger",
+"x": 1008,
+"y": 400,
+"max": 3,
+"nsize": 100,
+"size": 32,
+"ncol": "#a90b0c",
+"col": "#ffffff",
+"rule": "rgba(143,182,200,0.25)"
+},
+{
+"t": "photo",
+"x": 72,
+"y": 960,
+"w": 936,
+"h": 250,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שורות מספרים מהפוסט על כחול, צילום צר למטה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_04",
+"name": "הרשמה · כפתור",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 640,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 700,
+"size": 76,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 930,
+"size": 28,
+"max": 2,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "cta",
+"text": "לתיאום פגישה",
+"x": 72,
+"y": 1110,
+"align": "left",
+"size": 28,
+"bg": "#a90b0c",
+"icon": "arrow",
+"fg": "#ffffff",
+"w": 300
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "צילום, כותרת וכפתור פעולה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_05",
+"name": "הצהרה לאומית",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 180,
+"size": 110,
+"max": 4,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.0,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 808,
+"y": 780,
+"w": 200,
+"h": 10,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 830,
+"size": 30,
+"max": 3,
+"w": 500,
+"col": "#35505e",
+"align": "right",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 1008,
+"y": 1180,
+"size": 24,
+"col": "#35505e",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "כותרת ענקית בלבד, קו אדום, שורת הסבר.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_06",
+"name": "עמוד מחולק · טורקיז",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#ffffff"
+},
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 540,
+"h": 1350,
+"col": "#105572"
+},
+{
+"t": "photo",
+"x": 576,
+"y": 72,
+"w": 432,
+"h": 1166,
+"s": 0
+},
+{
+"t": "text",
+"f": "head",
+"x": 468,
+"y": 180,
+"size": 66,
+"max": 4,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 396
+},
+{
+"t": "text",
+"f": "sub",
+"x": 468,
+"y": 640,
+"size": 28,
+"max": 4,
+"w": 500,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.3,
+"maxW": 396
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "חצי טורקיז עם טקסט לבן, חצי צילום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_07",
+"name": "טבעת · אחוז",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#0b1f2a"
+},
+{
+"t": "ring",
+"x": 540,
+"y": 480,
+"r": 300,
+"lw": 30,
+"col": "#a90b0c",
+"track": "rgba(255,255,255,0.15)",
+"ncol": "#ffffff",
+"size": 150
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 860,
+"size": 66,
+"max": 2,
+"w": 800,
+"col": "#ffffff",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 1080,
+"size": 28,
+"max": 1,
+"w": 500,
+"col": "#8fb6c8",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "טבעת עם אחוז מהפוסט, כותרת ממורכזת.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_08",
+"name": "מרכז · ממורכז על צילום",
+"theme": "dark",
+"el": [
+{
+"t": "photo",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"s": 0,
+"dim": 0.45
+},
+{
+"t": "text",
+"f": "head",
+"x": 540,
+"y": 520,
+"size": 84,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "center",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "rect",
+"x": 500,
+"y": 840,
+"w": 80,
+"h": 6,
+"col": "#a90b0c"
+},
+{
+"t": "text",
+"f": "sub",
+"x": 540,
+"y": 880,
+"size": 30,
+"max": 2,
+"w": 500,
+"col": "#ffffff",
+"align": "center",
+"lh": 1.3,
+"maxW": 936
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "הכל ממורכז על צילום מוכהה.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_09",
+"name": "אירוע · תווית ותאריך",
+"theme": "light",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#f4f6f8"
+},
+{
+"t": "rect",
+"x": 72,
+"y": 140,
+"w": 936,
+"h": 220,
+"col": "#07293a"
+},
+{
+"t": "text",
+"f": "label",
+"kind": "small",
+"x": 978,
+"y": 200,
+"size": 26,
+"col": "#8fb6c8",
+"align": "right",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"text": "אירוע",
+"kind": "small",
+"x": 102,
+"y": 200,
+"size": 26,
+"col": "#8fb6c8",
+"align": "left",
+"track": 1,
+"w": 700
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 420,
+"size": 74,
+"max": 2,
+"w": 800,
+"col": "#07293a",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "photo",
+"x": 72,
+"y": 680,
+"w": 936,
+"h": 500,
+"s": 0
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "רצועת כותרת כחולה עם תווית, כותרת וצילום.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"photo",
+"bold"
+]
+},
+{
+"id": "x_t_b3_aura_10",
+"name": "ספירה · 1 מתוך",
+"theme": "dark",
+"el": [
+{
+"t": "rect",
+"x": 0,
+"y": 0,
+"w": 1080,
+"h": 1350,
+"col": "#07293a"
+},
+{
+"t": "counter",
+"x": 72,
+"y": 1200,
+"text": "1/5",
+"col": "#8fb6c8",
+"size": 24,
+"align": "left"
+},
+{
+"t": "text",
+"f": "head",
+"x": 1008,
+"y": 180,
+"size": 88,
+"max": 3,
+"w": 800,
+"col": "#ffffff",
+"align": "right",
+"lh": 1.05,
+"maxW": 936
+},
+{
+"t": "text",
+"f": "sub",
+"x": 1008,
+"y": 600,
+"size": 32,
+"max": 4,
+"w": 500,
+"col": "#8fb6c8",
+"align": "right",
+"lh": 1.4,
+"maxW": 936
+},
+{
+"t": "swipe",
+"x": 72,
+"y": 1130,
+"col": "#ffffff",
+"text": "החליקו"
+},
+{
+"t": "chrome",
+"o": {
+"noIndex": true
+}
+}
+],
+"desc": "שקף ראשון בקרוסלה: מונה, כותרת, החליקו.",
+"ct": [
+"project",
+"construction",
+"news",
+"tip",
+"data",
+"quote",
+"faq"
+],
+"st": [
+"clean",
+"bold"
+]
+}
+]
+}

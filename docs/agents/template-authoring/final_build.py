@@ -43,6 +43,21 @@ for b,info in B.items():
         seen.add(sg);s=dict(s);s['fam']='b2_'+b;s['famName']=info['he'];s['famNote']=('שפה ויזואלית של המותג: ' if info.get('verified') else 'פרשנות של השפה הוויזואלית: ')+info['look'].split('.')[0]+'. התמונות, הטקסטים והלוגו הם של קורקוס';s['src']='brand';out.append(s);n+=1
     cnt2[b]=n
 print('brand round',sum(cnt2.values()),cnt2)
-out=[x for x in out if x['src']=='brand']+[x for x in out if x['src']!='brand']
+# 4. round 3: the big Israeli developers, post genres from press coverage, Kurkoos palette
+B3=json.load(open('canva/brands3.json'))
+cnt3={}
+for b,info in B3.items():
+    try:specs=json.load(open(f'canva/author3/{b}.json'))
+    except Exception as e:continue
+    n=0
+    for s in specs:
+        er,wa=check(s)
+        if er:continue
+        sg='b3'+b+':'+sig(s)
+        if sg in seen:continue
+        seen.add(sg);s=dict(s);s['fam']='b3_'+b;s['famName']=info['he'];s['famNote']=info['note']+'. מקורות: '+'; '.join(info['sources'])+'.';s['insight']=(s.get('desc') or '')+' הקומפוזיציה בנויה לפי סוג פוסט שהחברה הזו מפרסמת, בצבעים ובפונט של קורקוס.';s['src']='brand';out.append(s);n+=1
+    cnt3[b]=n
+print('round 3',sum(cnt3.values()),cnt3)
+out=[x for x in out if x['fam'].startswith('b3_')]+[x for x in out if x['src']=='brand' and not x['fam'].startswith('b3_')]+[x for x in out if x['src']!='brand']
 json.dump(out,open('new_templates.json','w'),ensure_ascii=False,separators=(',',':'))
 print('dropped for placeholder numbers:',len(globals().get('dropped',[])));print(len(out),'templates; canva',nc,'authored',len(out)-nc,cnt)

@@ -1,0 +1,45 @@
+{
+ "source": "/tmp/claude-0/-home-user-kurkoos-group/b616de33-7a66-539b-90c4-315bd9ec44de/scratchpad/video/in/kurkoos-v3.mp4",
+ "style": "cinematic",
+ "fps": 30,
+ "size": [
+  1080,
+  1920
+ ],
+ "duration": 11.7,
+ "face": {
+  "top": 0.23372781065088757,
+  "chin": 0.296094674556213
+ },
+ "brand": "none",
+ "captions": {
+  "style": "karaoke",
+  "y": 0.6,
+  "size": 76,
+  "max_words": 3,
+  "keywords": [],
+  "pages": []
+ },
+ "overlays": [
+  {
+   "type": "outro",
+   "at": 10.299999999999999,
+   "dur": 1.4,
+   "sfx": "success-soft"
+  }
+ ],
+ "sfx": [
+  {
+   "name": "success-soft",
+   "at": 10.299999999999999,
+   "gain": 0.6,
+   "word": null
+  }
+ ],
+ "transcript_status": "no_audio",
+ "cut": {
+  "source_duration": 11.7,
+  "final_duration": 11.7,
+  "segments": 1
+ }
+}

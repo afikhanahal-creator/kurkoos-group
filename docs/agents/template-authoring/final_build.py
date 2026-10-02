@@ -59,5 +59,14 @@ for b,info in B3.items():
     cnt3[b]=n
 print('round 3',sum(cnt3.values()),cnt3)
 out=[x for x in out if x['fam'].startswith('b3_')]+[x for x in out if x['src']=='brand' and not x['fam'].startswith('b3_')]+[x for x in out if x['src']!='brand']
+# every template leaves here in the Kurkoos palette, whatever palette it was authored in
+from recolor import recolor
+out2=[]
+for s in out:
+    s=recolor(s)
+    er,wa=check(s)
+    if er:print('dropped after recolor',s['id'],er[:1]);continue
+    out2.append(s)
+out=out2
 json.dump(out,open('new_templates.json','w'),ensure_ascii=False,separators=(',',':'))
 print('dropped for placeholder numbers:',len(globals().get('dropped',[])));print(len(out),'templates; canva',nc,'authored',len(out)-nc,cnt)

@@ -91,6 +91,16 @@ posts per new photo and V104 diversifies repeated photos. Runs once automaticall
 has the asset store, and from "ייבוא מהאתר" in the gallery, the videos room and the agent. Test: `v110t.cjs`
 (mocked network and store).
 
+V110b: a dump of the `photos` collection showed the browser pass had never run on the user's device, and a
+query of `storage.objects` in the `media` bucket found 100 more images (40 KB and up, logos excluded) that no
+project page links: activities, testimonials, before and after, covers, extra project and environment files.
+They are listed in `site_media.json` under `extra` (path, project key, kind, name, tags; `base2` is the public
+storage root) and `imageList()` appends them. Older CMS docs store a relative `src` (`projects/...`), so
+deduplication now also compares the path after `/media/`. The auto-run flag moved to `ag_v110_done_v2`, and a
+bar under the toolbar in the gallery and the agent (`#v110bar`, `k110css.txt`) shows how many website images
+are still missing with an "ייבוא עכשיו" button, or explains that the import needs claude.ai with edit rights.
+Test result: 137 images, 137 imported, 268 posts, nothing re-imported on the second run.
+
 ## V111 · speed and cache (measured on the phone profile, local server)
 
 Measured first: boot transferred 13.6 MB (3.5 MB page, 2.5 MB template and copy JSON, about 8 MB of library

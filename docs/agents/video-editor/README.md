@@ -90,3 +90,19 @@ Deduplication by source URL, so re-running imports only what is new. After the i
 posts per new photo and V104 diversifies repeated photos. Runs once automatically per version when the page
 has the asset store, and from "ייבוא מהאתר" in the gallery, the videos room and the agent. Test: `v110t.cjs`
 (mocked network and store).
+
+## V111 · speed and cache (measured on the phone profile, local server)
+
+Measured first: boot transferred 13.6 MB (3.5 MB page, 2.5 MB template and copy JSON, about 8 MB of library
+photos preloaded for every post by `preloadPosts(AG.posts)` after the uploads load), 1.1 s of long tasks,
+2.6 MB of localStorage (posts and workflow versions), thumbnails 10 ms each cold and cached in memory only.
+`v111.js`:
+- `preloadPosts` is capped to the first 12 posts; thumbnails already load their photos lazily through the
+  IntersectionObserver and `ensureImgs`, which now also fills `PHOTOS[p.id]` for legacy photoKey posts.
+- `fetch` is fronted by the Cache API (`kc-cache-v1`) for same-origin photos, `/_blob/` assets, fonts and
+  JSON (JSON is stale while revalidate, media is immutable). Second visit: 0.1 to 0.9 MB instead of 9 MB.
+- Rendered thumbnails persist in IndexedDB (`kurkoos_thumbs`, key = `sigOf(post, slide)`, JPEG 0.82), so the
+  gallery, queue and calendar paint from the store without fetching the full photos; an edit changes the
+  signature, entries older than 45 days are pruned.
+First boot now transfers 9.0 MB (page plus data plus the first screen's photos). Scripts: `perf1.cjs`,
+`perf2.cjs`, `perf3.cjs`.

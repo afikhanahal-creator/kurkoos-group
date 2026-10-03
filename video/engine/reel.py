@@ -17,6 +17,7 @@ import argparse
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -33,6 +34,8 @@ from media import contact_sheet, envelope_db, extract_wav, ffmpeg_exe, load_wav,
 from person import Masks, compute as compute_masks  # noqa: E402
 from timemap import TimeMap, silence_cuts  # noqa: E402
 from transcribe import transcribe, words_table  # noqa: E402
+import effects as FX  # noqa: E402
+from effects import PRESETS, CATALOG  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 SFX = os.path.join(ROOT, "sfx")
@@ -42,11 +45,14 @@ W, H, FPS = 1080, 1920, 30
 NAVY, RED, TEAL, MIST, PALE, PAPER, WHITE, INK = (58, 41, 7), (12, 11, 169), (114, 85, 16), (200, 182, 143), (238, 232, 219), (248, 246, 244), (255, 255, 255), (42, 31, 11)
 BRAND_LINE = "קבוצת קורקוס · מקרקע ועד מסירת מפתח"
 SITE = "kurkoos-group.co.il"
-STYLES = {
+STYLES_OLD = {
     "clean":     {"caption": "karaoke", "max_words": 3, "accent": RED, "bg": "navy", "punch": 1.04, "grain": 0.0},
     "punchy":    {"caption": "punch", "max_words": 2, "accent": RED, "bg": "blur", "punch": 1.08, "grain": 0.0},
     "cinematic": {"caption": "karaoke", "max_words": 3, "accent": MIST, "bg": "blur", "punch": 1.06, "grain": 0.0},
 }
+
+
+STYLES = PRESETS
 
 
 # ---------------------------------------------------------------- easing and small helpers
@@ -76,10 +82,11 @@ def rounded_box(frame, x0, y0, x1, y1, color, r=18, alpha=1.0):
 
 
 # ---------------------------------------------------------------- the plan
-def make_plan(proj: str, src: str, style: str, hook: str | None, cta: str | None, keywords: list[str], words: list[dict], tm: TimeMap, masks: Masks | None, brand: str = "full") -> dict:
+def make_plan(proj: str, src: str, style: str, hook: str | None, cta: str | None, keywords: list[str], words: list[dict], tm: TimeMap, masks: Masks | None, brand: str = "full", effects: list[str] | None = None, emojis: dict | None = None, extra: list[dict] | None = None) -> dict:
     """What the editor decided. Every time is in FINAL seconds and every text effect carries the word it sits on."""
     fw = tm.word_times(words)
-    st = STYLES[style]
+    st = STYLES.get(style) or STYLES["clean"]
+    fx = set(effects if effects is not None else st["effects"])
     # caption pages: up to max_words words, a new page after a pause of 0.26 s or punctuation
     pages, cur = [], []
     for w in fw:
@@ -105,26 +112,131 @@ def make_plan(proj: str, src: str, style: str, hook: str | None, cta: str | None
                      "pages": [{"start": p[0]["start"], "end": max(p[-1]["end"], p[0]["start"] + 0.5), "words": [{"text": w["text"], "start": w["start"], "end": w["end"]} for w in p]} for p in pages]},
         "overlays": [],
         "sfx": [],
+        "effects": sorted(fx),
+        "transitions": [],
+        "segments_zoom": [],
     }
     # brand intro and outro: the only text that does not come from the transcript is the brand's own standing line
     if brand == "full":
         plan["overlays"].append({"type": "intro", "at": 0.0, "dur": 1.1, "sfx": "whoosh-quick"})
+    if "hook" in fx and not hook and fw:
+        first = []
+        for w in fw:
+            first.append(w["text"])
+            if w["text"].endswith((".", "?", "!")) or len(first) >= 7:
+                break
+        if 2 <= len(first) <= 7:
+            hook = " ".join(first)
     if hook:
         plan["overlays"].append({"type": "hook", "at": 0.35, "dur": min(3.5, max(2.0, dur * 0.3)), "text": hook, "sfx": "pop"})
     for p in pages:
         plan["sfx"].append({"name": "tick", "at": p[0]["start"], "gain": 0.25, "word": p[0]["text"]})
-    for kw in keywords:
+    for kw in (keywords if "keyword" in fx else []):
         for w in fw:
             if w["text"].strip(".,?!") == kw or w["text"].strip(".,?!").endswith(kw):
                 plan["overlays"].append({"type": "keyword", "at": w["start"], "dur": max(0.6, w["end"] - w["start"] + 0.4), "text": kw, "word": w["text"], "sfx": "pop"})
                 break
     if cta:
         plan["overlays"].append({"type": "cta", "at": max(0.0, dur - 2.2), "dur": 2.2, "text": cta, "sfx": "ding"})
+    auto_effects(plan, fx, fw, tm, emojis or {}, st)
+    for o in (extra or []):
+        plan["overlays"].append(o)
     plan["overlays"].append({"type": "outro", "at": max(0.0, dur - 1.4), "dur": 1.4, "sfx": "success-soft"})
     for o in plan["overlays"]:
         if o.get("sfx"):
             plan["sfx"].append({"name": o["sfx"], "at": o["at"], "gain": 0.6, "word": o.get("word")})
     return plan
+
+def _num(tok: str):
+    m = re.match(r"^[₪$]?(\d[\d,]*(?:\.\d+)?)(%|x|X)?$", tok.strip(".,!?"))
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(",", "")), ("%" if m.group(2) == "%" else ("x" if m.group(2) else "")), ("₪" if tok.startswith("₪") else "")
+    except Exception:
+        return None
+
+
+def _free(ov: list[dict], at: float, dur: float) -> bool:
+    """True when no scene already covers [at, at+dur]: two full screen scenes never overlap."""
+    return not any(o["type"] == "scene" and o["at"] < at + dur and o["at"] + o["dur"] > at for o in ov)
+
+
+def auto_effects(plan: dict, fx: set, fw: list[dict], tm: TimeMap, emojis: dict, st: dict) -> None:
+    """Places the preset's effects on the words they belong to. Numbers get counters or number scenes, emoji keys pop on
+    their words, long sentences become kinetic scenes, cuts get transitions, the bar runs across. Nothing is invented:
+    every text comes from the transcript."""
+    dur = plan["duration"]
+    ov = plan["overlays"]
+    if "progress" in fx:
+        ov.append({"type": "progress", "at": 0.0, "dur": dur + 1, "position": "top"})
+    if "vignette" in fx:
+        ov.append({"type": "vignette", "at": 0.0, "dur": dur + 1, "strength": 0.7})
+    # list scenes: "ראשית/שנית/שלישית" or "1 2 3" sequences in the words
+    if "scene_list" in fx or "scene_steps" in fx:
+        markers = [w for w in fw if w["text"].strip(".,:") in ("ראשית", "שנית", "שלישית", "ראשון", "שני", "שלישי", "1.", "2.", "3.", "אחד,", "שתיים,", "שלוש,")]
+        if len(markers) >= 2:
+            items = []
+            for i, m in enumerate(markers[:4]):
+                nxt = markers[i + 1]["start"] if i + 1 < len(markers) else m["start"] + 3
+                txt = " ".join(x["text"] for x in fw if m["start"] <= x["start"] < nxt)[:60]
+                items.append({"text": txt, "rel": m["start"] - markers[0]["start"]})
+            kind = "steps" if "scene_steps" in fx and "scene_list" not in fx else "list"
+            dur_l = min(6.0, items[-1]["rel"] + 2.5)
+            ov[:] = [o for o in ov if not (o["type"] == "scene" and o["at"] < markers[0]["start"] + dur_l and o["at"] + o["dur"] > markers[0]["start"])]
+            ov.append({"type": "scene", "kind": kind, "at": markers[0]["start"], "dur": min(8, items[-1]["rel"] + 3), "items": items, "word": markers[0]["text"], "sfx": "click", "bg": "grid"})
+            ov[-1]["dur"] = dur_l
+    # numbers in the transcript
+    used_num = 0
+    for w in fw:
+        n = _num(w["text"])
+        if not n:
+            continue
+        v, suf, pre = n
+        if "scene_number" in fx and used_num < 2 and w["end"] - w["start"] > 0.15 and _free(ov, w["start"], 2.4):
+            ov.append({"type": "scene", "kind": "number", "at": w["start"], "dur": min(2.4, max(1.6, dur - w["start"] - 0.2)), "value": v, "from": 0, "suffix": suf, "prefix": pre, "label": "", "word": w["text"], "sfx": "cash" if pre else "ding"})
+            used_num += 1
+        elif "counter" in fx and used_num < 4:
+            ov.append({"type": "counter", "at": w["start"], "dur": 1.8, "from": 0, "to": v, "suffix": suf, "prefix": pre, "word": w["text"], "sfx": "ding", "decimals": 1 if v != int(v) else 0})
+            used_num += 1
+    # emoji on their words
+    if "emoji" in fx:
+        for key, emo in emojis.items():
+            for w in fw:
+                if w["text"].strip(".,?!").endswith(key):
+                    ov.append({"type": "emoji", "at": w["start"], "dur": 1.4, "emoji": emo, "word": w["text"], "sfx": "pop", "x": 0.82, "y": 0.3})
+                    break
+    # kinetic scenes on long sentences, at most one every 8 s, never in the first 2.5 s (the hook lives there)
+    if "scene_kinetic" in fx and fw:
+        sent, last_scene = [], -99
+        for w in fw:
+            sent.append(w)
+            if w["text"].endswith((".", "?", "!")) or len(sent) >= 9:
+                if len(sent) >= 6 and sent[0]["start"] - last_scene > 8 and sent[0]["start"] > 2.5:
+                    d = min(4.0, sent[-1]["end"] - sent[0]["start"] + 0.2)
+                    if d >= 1.5 and _free(ov, sent[0]["start"], d):
+                        ov.append({"type": "scene", "kind": "kinetic", "at": sent[0]["start"], "dur": d, "bg": "spotlight", "word": sent[0]["text"], "sfx": "whoosh-quick"})
+                        last_scene = sent[0]["start"]
+                sent = []
+    # transitions on the cut seams, cycling the preset list, at most one per 4 s
+    trs = [e for e in st.get("transitions", []) if e in fx]
+    if trs:
+        last = -99
+        for i, s in enumerate(tm.segs[1:], 1):
+            if s["kind"] != "keep" or s["dst"] - last < 4:
+                continue
+            tr = trs[(i - 1) % len(trs)]
+            plan["transitions"].append({"type": tr, "at": s["dst"], "dur": 0.42 if tr in FX.OVERLAP_TR else 0.3})
+            last = s["dst"]
+            sfx = FX.TR_SFX.get(tr)
+            if sfx:
+                plan["sfx"].append({"name": sfx, "at": max(0, s["dst"] - 0.12), "gain": 0.55})
+    # punch-ins: alternate zoom per segment
+    if "punchin" in fx:
+        plan["segments_zoom"] = [1.0 if i % 2 == 0 else 1.14 for i in range(len(tm.segs))]
+    for o in ov:
+        if o.get("sfx") and not any(x.get("at") == o["at"] and x.get("name") == o["sfx"] for x in plan["sfx"]):
+            plan["sfx"].append({"name": o["sfx"], "at": o["at"], "gain": 0.55, "word": o.get("word")})
 
 
 # ---------------------------------------------------------------- the frame function
@@ -144,6 +256,21 @@ class Renderer:
         self.logo_w = logo(True, 150)
         self.logo_b = logo(False, 150)
         self.logo_big = logo(True, 260)
+        self.accent = tuple(self.st["accent"])
+        self._cache = {}
+        self.seg_zoom = self.plan.get("segments_zoom") or []
+
+    def cache_get(self, k):
+        return self._cache.get(k)
+
+    def cache_set(self, k, v):
+        self._cache[k] = v
+
+    def seg_index(self, t):
+        for i, s in enumerate(self.tm.segs):
+            if s["dst"] <= t < s["dst"] + s["dur"]:
+                return i
+        return len(self.tm.segs) - 1
 
     def source_frame(self, src_t: float) -> np.ndarray:
         if self.cap is None:
@@ -165,6 +292,10 @@ class Renderer:
         darkened copy behind it. A slow punch-in (<= style punch) keeps it alive. Returns canvas and the source box."""
         h, w = fr.shape[:2]
         punch = 1 + (self.st["punch"] - 1) * ease_in_out(t / max(1e-6, self.plan["duration"]))
+        if self.seg_zoom:
+            i = self.seg_index(t)
+            z = self.seg_zoom[i] if i < len(self.seg_zoom) else 1.0
+            punch *= z
         if abs(w / h - W / H) < 0.02:
             box = cv2.resize(fr, (W, H), interpolation=cv2.INTER_AREA)
             if punch > 1.001:
@@ -279,6 +410,8 @@ class Renderer:
                 bx, by = W // 2 - im.width // 2, int(0.86 * H) - im.height
                 rounded_box(frame, bx, by, bx + im.width, by + im.height, WHITE, r=22, alpha=p)
                 T.paste(frame, im, bx, by, alpha=p)
+            elif k in FX.OVERLAYS:
+                FX.OVERLAYS[k](frame, o, a, self)
             elif k == "outro":
                 p = ease_in_out(a / 0.5)
                 ov = frame.copy()
@@ -300,14 +433,54 @@ class Renderer:
         cv2.line(frame, (72, y - 18), (W - 72, y - 18), (120, 110, 80), 1)
 
     def frame(self, t: float) -> np.ndarray:
+        scene = next((o for o in self.plan["overlays"] if o["type"] == "scene" and o["at"] <= t < o["at"] + o["dur"]), None)
+        if scene:
+            canvas = FX.scene_frame(scene, t - scene["at"], t, self)
+            box = (0, 0, W, H)
+            if scene.get("speaker") == "pip":
+                src = self.source_frame(self.tm.src_time(t))
+                h, w = src.shape[:2]
+                r = int(W * 0.3) // 2
+                cx, cy = W - r - 60, H - r - 220
+                face = self.plan.get("face")
+                fy = int(((face["top"] + face["chin"]) / 2) * h) if face else h // 2
+                side = min(w, h, int(h * 0.5))
+                crop = src[max(0, fy - side // 2):max(0, fy - side // 2) + side, max(0, w // 2 - side // 2):max(0, w // 2 - side // 2) + side]
+                crop = cv2.resize(crop, (2 * r, 2 * r))
+                mask = np.zeros((2 * r, 2 * r), np.uint8)
+                cv2.circle(mask, (r, r), r - 4, 255, -1)
+                roi = canvas[cy - r:cy + r, cx - r:cx + r]
+                roi[mask > 0] = crop[mask > 0]
+                cv2.circle(canvas, (cx, cy), r - 2, WHITE, 6)
+            keep = {"progress", "emoji", "flash", "burst", "outro"}
+            saved = self.plan["overlays"]
+            self.plan["overlays"] = [o for o in saved if o["type"] in keep]
+            try:
+                self.overlays(canvas, t, box)
+            finally:
+                self.plan["overlays"] = saved
+            for tr in self.plan.get("transitions", []):
+                canvas = FX.apply_transition(canvas, tr, t, self, lambda: None)
+            return canvas
         src = self.source_frame(self.tm.src_time(t))
         canvas, box = self.canvas(src, t)
-        if self.st["grain"]:
+        if self.st.get("grain"):
             n = np.random.default_rng(int(t * 1000)).normal(0, 255 * self.st["grain"], canvas.shape[:2]).astype(np.float32)
             canvas = np.clip(canvas.astype(np.float32) + n[..., None], 0, 255).astype(np.uint8)
         self.footer(canvas, t)
         self.captions(canvas, t, box)
         self.overlays(canvas, t, box)
+        for tr in self.plan.get("transitions", []):
+            if abs(t - tr["at"]) <= tr.get("dur", 0.4):
+                def other(tr=tr, t=t):
+                    try:
+                        side = tr["at"] + 0.02 if t < tr["at"] else tr["at"] - 0.02
+                        f2 = self.source_frame(self.tm.src_time(side))
+                        c2, _ = self.canvas(f2, side)
+                        return c2
+                    except Exception:
+                        return None
+                canvas = FX.apply_transition(canvas, tr, t, self, other)
         # fade in and out
         d = self.plan["duration"]
         f = min(1.0, t / 0.4, (d - t) / 0.4)
@@ -402,7 +575,7 @@ def master(src: str, dst: str, lufs: float = -14.0) -> None:
 
 
 # ---------------------------------------------------------------- the pipeline
-def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keywords: list[str], engine: str, words_file: str | None, with_mask: bool = True, brand: str = "auto") -> dict:
+def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keywords: list[str], engine: str, words_file: str | None, with_mask: bool = True, brand: str = "auto", effects: list[str] | None = None, emojis: dict | None = None, extra: list[dict] | None = None) -> dict:
     # brand chrome (logo intro + standing footer line): full for raw footage; none for videos the system rendered itself (they carry it already)
     if brand == "auto":
         brand = "none" if os.path.basename(src).startswith(("kurkoos-", "reel-", "post-")) else "full"
@@ -434,7 +607,13 @@ def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keyw
             compute_masks(src, mp, scale=0.25, every=2)
         masks = Masks(mp)
     # 4. plan
-    plan = make_plan(proj, src, style, hook, cta, keywords, words, tm, masks, brand)
+    plan = make_plan(proj, src, style, hook, cta, keywords, words, tm, masks, brand, effects, emojis, extra)
+    if "freeze" in (effects if effects is not None else STYLES.get(style, STYLES["clean"])["effects"]):
+        kw = next((o for o in plan["overlays"] if o["type"] == "keyword"), None)
+        if kw:
+            tm.insert_freeze(tm.src_time(kw["at"]), 0.5)
+            open(os.path.join(proj, "timemap.json"), "w").write(tm.to_json())
+            plan["duration"] = tm.duration
     plan["transcript_status"] = tr["status"]
     plan["cut"] = {"source_duration": info["duration"], "final_duration": tm.duration, "segments": len(tm.segs)}
     json.dump(plan, open(os.path.join(proj, "plan.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
@@ -500,7 +679,7 @@ if __name__ == "__main__":
     e = sub.add_parser("edit")
     e.add_argument("src")
     e.add_argument("--out", required=True)
-    e.add_argument("--style", default="clean", choices=list(STYLES))
+    e.add_argument("--style", default="clean", choices=list(PRESETS))
     e.add_argument("--hook")
     e.add_argument("--cta")
     e.add_argument("--keywords", default="")
@@ -508,6 +687,10 @@ if __name__ == "__main__":
     e.add_argument("--words")
     e.add_argument("--no-mask", action="store_true")
     e.add_argument("--brand", default="auto", choices=["auto", "full", "none"])
+    e.add_argument("--effects", help="comma list of effect ids from the catalog; default = the preset's own set")
+    e.add_argument("--emojis", help='JSON {"word": "🔥"}')
+    e.add_argument("--extra", help="JSON list of extra overlays (hand written plan items)")
+    cat = sub.add_parser("catalog")
     c = sub.add_parser("check")
     c.add_argument("proj")
     w = sub.add_parser("words")
@@ -515,8 +698,10 @@ if __name__ == "__main__":
     w.add_argument("--engine", default="auto")
     a = ap.parse_args()
     if a.cmd == "edit":
-        plan = edit(a.src, a.out, a.style, a.hook, a.cta, [k for k in a.keywords.split(",") if k], a.engine, a.words, not a.no_mask, a.brand)
+        plan = edit(a.src, a.out, a.style, a.hook, a.cta, [k for k in a.keywords.split(",") if k], a.engine, a.words, not a.no_mask, a.brand, [x for x in a.effects.split(",") if x] if a.effects is not None else None, json.loads(a.emojis) if a.emojis else None, json.loads(a.extra) if a.extra else None)
         print(json.dumps({"out": os.path.join(a.out, "reel.mp4"), "duration": plan["duration"], "cut": plan["cut"], "transcript": plan["transcript_status"], "pages": len(plan["captions"]["pages"])}, ensure_ascii=False))
+    elif a.cmd == "catalog":
+        print(json.dumps({"presets": {k: {"he": v["he"], "effects": v["effects"]} for k, v in PRESETS.items()}, "effects": [{"id": i, "he": h, "group": g, "desc": d} for i, h, g, d in CATALOG]}, ensure_ascii=False, indent=1))
     elif a.cmd == "check":
         print(check(a.proj))
     elif a.cmd == "words":

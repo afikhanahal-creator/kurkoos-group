@@ -106,3 +106,11 @@ photos preloaded for every post by `preloadPosts(AG.posts)` after the uploads lo
   signature, entries older than 45 days are pruned.
 First boot now transfers 9.0 MB (page plus data plus the first screen's photos). Scripts: `perf1.cjs`,
 `perf2.cjs`, `perf3.cjs`.
+
+## V112 · imported batches become posts
+
+Photos written straight into the shared `photos` collection (Google Drive import done from the session, the
+website import, anything with a `batch` field) are turned into posts by the page itself: once per unseen batch
+it builds two posts per new photo (V107) and swaps repeated photos (V104), then marks the batch in
+localStorage. `drive_prep.py` turns the Drive inventory into an import plan (project from folder names, kind
+render/site/ad, duplicates by title and size dropped, guide icons and logos skipped).

@@ -131,3 +131,14 @@ every candidate) and two parallel downscale workers. Fixes in `v113.js` and `bui
 - the import runs one file at a time, breathes 120 ms between files, pauses while the tab is hidden, reads
   image sizes from the file header and only downscales files over 1.5 MB or 2600 px; videos import
   automatically on desktops only (phones use the button).
+
+## V115 · the photo library inside the editor
+
+The image tab's "החלפת תמונה" section is now a browser over the whole library (built in set, website,
+Google Drive, uploads): search, a source segmented control with counts, project chips with counts, kind chips
+(only kinds that exist), and the photos grouped by project in collapsible sections (the post's project, or the
+current photo's project, opens first; collapsed sections do not load their images). "הספרייה במסך מלא" opens
+`#v115lib`: the same filters in a sticky header, a wide grid with captions (6 columns at 1366 px), one click
+replaces the selected photo and closes. "העלאת תמונות" (multiple) uploads to the asset store, writes `photos`
+docs filed under the post's project, registers them and picks the first. Back gesture and Escape close only the
+library (V101 knows `#v115lib`). Test: `v115t.cjs` (phone and desktop, mocked store).

@@ -1,0 +1,51 @@
+<style id="k115css">
+/* V115 · the photo library in the editor */
+.v115bar{display:flex;flex-direction:column;gap:8px;margin:6px 0 8px}
+.v115q{min-height:44px;border:1px solid #cfd8de;border-radius:12px;padding:0 12px;font:inherit;font-size:15px;background:#fff;width:100%;box-sizing:border-box}
+.v115seg{display:flex;flex-wrap:wrap;gap:4px;background:#eef2f5;border-radius:12px;padding:3px}
+.v115seg button{flex:1 1 auto;min-height:36px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:#35505e;font:700 13px Almoni,Heebo,Arial,sans-serif;cursor:pointer;white-space:nowrap}
+.v115seg button small{font-weight:400;color:#5b6472}
+.v115seg button[aria-pressed="true"]{background:#fff;color:#07293a;box-shadow:0 1px 2px rgba(7,41,58,.12)}
+.v115chips{margin:0 0 6px}.v115chips button small{font-weight:400;opacity:.8}
+.v115g{border:1px solid #e3e8ec;border-radius:12px;margin:0 0 8px;background:#fff}
+.v115g>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:0 12px;cursor:pointer;list-style:none;color:#07293a}
+.v115g>summary::-webkit-details-marker{display:none}
+.v115g>summary::after{content:'';width:9px;height:9px;border:solid #07293a;border-width:0 0 2px 2px;transform:rotate(-45deg);margin-inline-start:auto;transition:transform .15s}
+.v115g[open]>summary::after{transform:rotate(135deg)}
+.v115g>summary b{font-size:14px}.v115g>summary span{font-size:12.5px;color:#5b6472}
+.v115g .v115grid{padding:0 10px 10px;margin-top:0}
+.v115t .v115s{position:absolute;top:5px;inset-inline-end:5px;font-style:normal;font-size:11px;font-weight:700;background:rgba(255,255,255,.92);color:#105572;padding:0 6px;border-radius:999px;pointer-events:none}
+.v115t[aria-pressed="true"]{border-color:#a90b0c}
+.v115t b.new{background:#fff;color:#105572;border:1px solid #8fb6c8;font-weight:700}
+.v115grid.big{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.v115grid.big .v115t img{aspect-ratio:4/3}
+.v115t .v115c{display:block;font-size:12px;color:#35505e;padding:5px 6px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff}
+/* the full screen library */
+#v115lib{position:fixed;inset:0;z-index:124}
+.v115sh{position:absolute;inset:0;display:flex;flex-direction:column;background:#f3f6f8;direction:rtl;color:#07293a;font-family:Almoni,Heebo,Arial,sans-serif}
+.v115top{display:flex;align-items:center;gap:12px;padding:calc(8px + env(safe-area-inset-top,0px)) 16px 8px;background:#07293a;color:#fff;flex:none}
+.v115x{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0;flex:none}
+.v115ttl{flex:1;min-width:0;display:flex;flex-direction:column}
+.v115ttl b{font-size:17px}.v115ttl span{font-size:12.5px;color:#a9c3d1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v115up{flex:none}
+.v115filters{padding:10px 16px 0;background:#fff;border-bottom:1px solid #e3e8ec;flex:none}
+.v115filters .v115bar{flex-direction:row;align-items:center}
+.v115filters .v115q{max-width:360px}
+.v115filters .v115chips{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:4px}
+.v115filters .v115chips::-webkit-scrollbar{display:none}
+.v115filters .v115chips button{flex:0 0 auto;white-space:nowrap}
+.v115body.big{flex:1;min-height:0;overflow-y:auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.v115body.big .v115g{max-width:1400px;margin-inline:auto;margin-bottom:12px}
+body.v115-on #v99nav,body.v115-on #v101x,body.v115-on #v106x{display:none!important}
+@media (max-width:860px){
+ .v115filters{padding:8px 12px 0}
+ .v115filters .v115bar{flex-direction:column;align-items:stretch}
+ .v115filters .v115q{max-width:none}
+ .v115grid.big{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ .v115t .v115c{font-size:11px;padding:4px 4px 5px}
+ .v115top{padding-inline:12px}
+ .v115ttl span{white-space:normal;font-size:12px}
+ .v115up span{display:none}
+}
+@media (min-width:1100px){.v115grid.big{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
+</style>

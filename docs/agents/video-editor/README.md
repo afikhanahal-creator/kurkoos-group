@@ -49,3 +49,15 @@
 - **פוסטים מתמונות חדשות** (`v107.js`): כל תמונה חדשה בספרייה עם פחות משני פוסטים מקבלת פוסטים על תבניות חזקות
   (משפחות היזמים, "מהמתחרים", מגזין), עם טקסט שמועתק מפוסט מאושר מאותו סוג (אין טקסט מומצא). פעם אחת אוטומטית אחרי טעינת
   הספרייה, וכפתור "פוסטים מתמונות חדשות" בגלריה, בסוכן וברעיונות.
+
+## V108 · the editor on phones: no flash, a true full preview
+
+Root cause of the "flash" on every tap: `peRender()` rebuilds the whole `#pe-root` and the `.pe` shell carries
+`animation:pxIn` (opacity 0 to 1), so every tap replayed the entrance fade; the preview canvas was also blank
+until `peDraw()` finished loading images. `v108.js` wraps `peRender`: the entrance animation runs only on open
+(`#pe-root.v108live .pe{animation:none}`), every canvas (main preview, lighting tiles, layout thumbnails) is
+copied into its replacement synchronously, and scroll positions (body, tool strip, tabs) are restored.
+A full-screen preview (`#v108pv`) opens from the expand button on the canvas and from "מסך גדול": post view or
+feed view (brand name + caption from the post itself), 4:5 / 1:1 / 9:16, slides, download, X, back gesture
+and Escape close only the preview. Phone layout: save button shows when there is something to save,
+preset tiles in two columns on narrow phones, quieter tool strip. Tests: `v108t.cjs` (phone), `v108d.cjs`.

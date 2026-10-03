@@ -160,3 +160,30 @@ scheduled or published post that uses the photo ("מתוזמן 12.10", "פורס
 the full list with post titles in the tooltip, and a switch "להסתיר תמונות שכבר בלוח" that hides them while
 choosing. Source: `APP.sched.items` with a date, resolved through `itemPost` and `imgKeysOf`; items with
 status sent or published count as published. Test: `v116t.cjs`.
+
+## V117 · steady with 1,500 posts (speed, round two)
+
+Measured with a library the size of the user's (380 Drive photos, 1,121 to 1,501 posts) and 4x CPU throttling.
+Root causes: the V73 clarity gate drew a full 1080x1350 slide for every unchecked post in the background, about
+55 slides a second, for minutes after each photo batch, also while the editor was open (a keystroke took 1.3 s);
+`composerSave` re-rendered the hidden legacy agent list (1,500 cards) on every save (813 ms); `calPost(k)` scanned
+all posts per call inside `check()`; the shape tab re-drew 46 full slides for its layout tiles on every render; and
+the composer crashed on a post whose article has no title (`p.article.t`), so "שמור שינויים" did nothing.
+`v117.js` and the source patches in `build117.py`:
+- clarity check: queue from `__v117q` (nothing while the editor or composer is open; scheduled posts, then
+  hand-made, then auto-built template posts; 40 per pass), 160 ms between slices, half-size canvas, a 10 s timer
+  resumes idle passes; `window.__v117nocache` marks those draws
+- `calPost` through a key index; the legacy `#agent` section is skipped while hidden and rendered once if shown
+- `composerSave` wrapped: a thrown error is shown as a toast instead of a silent no-op
+- `peLayThumbs` draws layout tiles from a 432x540 cache keyed by the clone's content (46 draws to 2)
+- V31 cloud sync yields to the page every 120 posts; new photo batches build one post per photo (was two)
+Test `v117t.cjs`: save 44 ms (was 813), zero background draws while editing, shape tab second open 2 draws.
+
+## V118 · the editor on a desk
+
+Desktop only (phones keep V108), `k118css.txt` and `v118.js`: paper background with the brand 60 px drawing
+grid on the stage, the canvas uses the height, one white stage bar in two rows (expand, format, safe areas,
+before/after, logo, animation; zoom, add text/image, reel), side panel 400 px on paper with white cards, Heebo
+section headings with a red tick, the Claude rewrite card in night blue placed after the headline block, the
+score header on paper instead of yellow, issue rows as cards. Test `v118t.cjs`: no page overflow, 7 tab columns,
+rewrite card after the headline, no errors on 1440 and 1280 wide.

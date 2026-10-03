@@ -1,0 +1,14 @@
+const {chromium}=require('playwright-core');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});
+const ctx=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1')});await p.goto('http://localhost:8765/t15.html');await p.waitForTimeout(9000);
+const E=s=>p.evaluate(s=>window.__E(s),s);
+const tap=async sel=>{const r=await p.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return null;el.scrollIntoView({block:'center'});const b=el.getBoundingClientRect();return [b.x+b.width/2,b.y+b.height/2]},sel);if(!r)throw new Error('no '+sel);await p.waitForTimeout(120);await p.touchscreen.tap(r[0],r[1])};
+await tap('#v99nav [data-v99nav="queue"]');await p.waitForTimeout(500);
+const out=[];for(const v of ['gallery','ideas','cloner','videos','settings','feed','create']){await tap('.tbar [data-app="menu"]');await p.waitForTimeout(250);await tap(`#side [data-view="${v}"]`);await p.waitForTimeout(700);out.push(v+':'+await p.evaluate(()=>Math.round(document.querySelector('.tbar').getBoundingClientRect().height))+(await p.evaluate(()=>!!document.getElementById('v102back'))?'(back)':''))}
+console.log('tbar heights with back arrow',out.join(' '));
+await E("__undoBar('בדיקה',()=>{})");await p.waitForTimeout(400);console.log('undo bar above nav',await p.evaluate(()=>{const u=document.getElementById('v82undo'),n=document.getElementById('v99nav');return u&&n?u.getBoundingClientRect().bottom<=n.getBoundingClientRect().top+1:'n/a'}),'nav tappable',await p.evaluate(()=>{const n=document.querySelector('#v99nav [data-v99nav="today"]');const r=n.getBoundingClientRect();const e=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !!(e&&n.contains(e))}));
+await E(`APP.view='gallery';render();GA.lb={ids:[AG.posts[0].id],i:0};gaLbRender()`);await p.waitForTimeout(700);console.log('lightbox: pinned hidden',await p.evaluate(()=>{const b=document.getElementById('v101x');return !b||getComputedStyle(b).display==='none'}),'own X visible',await p.evaluate(()=>{const x=document.querySelector('#ga-lb .ga-x');const r=x&&x.getBoundingClientRect();return !!(r&&r.top>=0&&r.top<80&&r.width>0)}));
+await E('GA.lb=null;gaLbRender()');await E(`APP.view='videos';render()`);await p.waitForTimeout(700);await tap('#appviews [data-v100="editknown"]');await p.waitForTimeout(600);console.log('sheet: pinned hidden',await p.evaluate(()=>{const b=document.getElementById('v101x');return !b||getComputedStyle(b).display==='none'}));await p.goBack();await p.waitForTimeout(500);
+await E(`APP.view='today';render()`);await p.waitForTimeout(800);await p.screenshot({path:'fix105_today.png',fullPage:true});
+console.log('errors',errs.slice(0,2));await b.close()})();

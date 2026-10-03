@@ -1,0 +1,299 @@
+{
+ "presets": {
+  "clean": {
+   "he": "נקי ומינימליסטי",
+   "effects": [
+    "keyword",
+    "progress",
+    "tr_fade"
+   ]
+  },
+  "punchy": {
+   "he": "אנרגטי",
+   "effects": [
+    "hook",
+    "keyword",
+    "emoji",
+    "counter",
+    "progress",
+    "cta",
+    "punchin",
+    "tr_whip",
+    "tr_flash",
+    "tr_zoom"
+   ]
+  },
+  "cinematic": {
+   "he": "קולנועי",
+   "effects": [
+    "vignette",
+    "lightleak",
+    "keyword",
+    "tr_fade",
+    "tr_lightleak"
+   ]
+  },
+  "produced": {
+   "he": "מופק מלא (סצנות)",
+   "effects": [
+    "hook",
+    "keyword",
+    "counter",
+    "scene_kinetic",
+    "scene_number",
+    "scene_list",
+    "progress",
+    "cta",
+    "punchin",
+    "tr_flash",
+    "tr_zoom",
+    "tr_whip"
+   ]
+  },
+  "educational": {
+   "he": "חינוכי (רשימות ושלבים)",
+   "effects": [
+    "lowerthird",
+    "keyword",
+    "scene_list",
+    "scene_steps",
+    "callout",
+    "progress",
+    "tr_fade",
+    "tr_slide"
+   ]
+  },
+  "ad": {
+   "he": "פרסומת",
+   "effects": [
+    "hook",
+    "keyword",
+    "scene_number",
+    "scene_compare",
+    "counter",
+    "burst",
+    "cta",
+    "progress",
+    "punchin",
+    "tr_flash",
+    "tr_push"
+   ]
+  },
+  "minimal": {
+   "he": "חיתוך וכתוביות בלבד",
+   "effects": []
+  }
+ },
+ "effects": [
+  {
+   "id": "hook",
+   "he": "הוק פתיחה",
+   "group": "text",
+   "desc": "משפט פתיחה בקופסאות אדומות ב-3 השניות הראשונות"
+  },
+  {
+   "id": "title",
+   "he": "כותרת ענקית",
+   "group": "text",
+   "desc": "מילים שעולות אחת אחת, כרטיס פרק"
+  },
+  {
+   "id": "callout",
+   "he": "תווית",
+   "group": "text",
+   "desc": "תווית קטנה: מחיר, שם, מקום"
+  },
+  {
+   "id": "lowerthird",
+   "he": "שם ותפקיד",
+   "group": "text",
+   "desc": "פס תחתון עם מי מדבר"
+  },
+  {
+   "id": "cta",
+   "he": "קריאה לפעולה",
+   "group": "text",
+   "desc": "עקבו / כתבו בתגובות, בסוף"
+  },
+  {
+   "id": "list",
+   "he": "רשימה נבנית",
+   "group": "text",
+   "desc": "3 טיפים שנבנים פריט אחרי פריט"
+  },
+  {
+   "id": "keyword",
+   "he": "מילת מפתח קופצת",
+   "group": "text",
+   "desc": "המילה החשובה קופצת באדום על המילה המדוברת"
+  },
+  {
+   "id": "emoji",
+   "he": "אימוג'י",
+   "group": "graphics",
+   "desc": "ריאקציה שקופצת ליד הראש"
+  },
+  {
+   "id": "counter",
+   "he": "מונה מספרים",
+   "group": "graphics",
+   "desc": "מספר שרץ: 10x, 97%, ₪"
+  },
+  {
+   "id": "arrow",
+   "he": "חץ מצויר",
+   "group": "graphics",
+   "desc": "חץ שמצביע על משהו"
+  },
+  {
+   "id": "circle",
+   "he": "עיגול סימון",
+   "group": "graphics",
+   "desc": "עיגול סביב דבר"
+  },
+  {
+   "id": "progress",
+   "he": "פס התקדמות",
+   "group": "graphics",
+   "desc": "פס דק לאורך כל הסרטון"
+  },
+  {
+   "id": "flash",
+   "he": "הבזק",
+   "group": "frame",
+   "desc": "הבזק לבן לרגע גילוי"
+  },
+  {
+   "id": "vignette",
+   "he": "וינייטה",
+   "group": "frame",
+   "desc": "החשכה בקצוות למיקוד"
+  },
+  {
+   "id": "wash",
+   "he": "שטיפה אדומה",
+   "group": "frame",
+   "desc": "רגע הבעיה"
+  },
+  {
+   "id": "lightleak",
+   "he": "דליפת אור",
+   "group": "frame",
+   "desc": "אור חם אורגני"
+  },
+  {
+   "id": "glitch",
+   "he": "גליץ'",
+   "group": "frame",
+   "desc": "פסים דיגיטליים לרגע"
+  },
+  {
+   "id": "burst",
+   "he": "פיצוץ קונפטי",
+   "group": "energy",
+   "desc": "קונפטי או ניצוצות לרגע חגיגה"
+  },
+  {
+   "id": "scene_kinetic",
+   "he": "סצנה: טיפוגרפיה קינטית",
+   "group": "scene",
+   "desc": "המילים המדוברות הופכות לתמונה"
+  },
+  {
+   "id": "scene_statement",
+   "he": "סצנה: הצהרה",
+   "group": "scene",
+   "desc": "משפט מרכזי על מסך מלא"
+  },
+  {
+   "id": "scene_number",
+   "he": "סצנה: מספר",
+   "group": "scene",
+   "desc": "מספר גדול עם תווית"
+  },
+  {
+   "id": "scene_list",
+   "he": "סצנה: רשימה",
+   "group": "scene",
+   "desc": "מה מקבלים, פריט אחרי פריט"
+  },
+  {
+   "id": "scene_steps",
+   "he": "סצנה: שלבים",
+   "group": "scene",
+   "desc": "1 → 2 → 3"
+  },
+  {
+   "id": "scene_compare",
+   "he": "סצנה: לפני ואחרי",
+   "group": "scene",
+   "desc": "שתי עמודות"
+  },
+  {
+   "id": "tr_flash",
+   "he": "מעבר הבזק",
+   "group": "transition",
+   "desc": "על החיתוך"
+  },
+  {
+   "id": "tr_whip",
+   "he": "מעבר ויפ",
+   "group": "transition",
+   "desc": "טשטוש תנועה מהיר"
+  },
+  {
+   "id": "tr_zoom",
+   "he": "מעבר זום",
+   "group": "transition",
+   "desc": "זום פנימה על החיתוך"
+  },
+  {
+   "id": "tr_glitch",
+   "he": "מעבר גליץ'",
+   "group": "transition",
+   "desc": "פסים דיגיטליים"
+  },
+  {
+   "id": "tr_shake",
+   "he": "מעבר רעידה",
+   "group": "transition",
+   "desc": "רעידה קצרה"
+  },
+  {
+   "id": "tr_fade",
+   "he": "מעבר פייד",
+   "group": "transition",
+   "desc": "דעיכה לשחור"
+  },
+  {
+   "id": "tr_slide",
+   "he": "מעבר החלקה",
+   "group": "transition",
+   "desc": "הקטע הבא נכנס מהצד"
+  },
+  {
+   "id": "tr_wipe",
+   "he": "מעבר ניגוב",
+   "group": "transition",
+   "desc": "קו שחושף את הבא"
+  },
+  {
+   "id": "tr_push",
+   "he": "מעבר דחיפה",
+   "group": "transition",
+   "desc": "הקטע הבא דוחף את הקודם"
+  },
+  {
+   "id": "punchin",
+   "he": "פאנץ' אין",
+   "group": "motion",
+   "desc": "זום קל בין משפטים"
+  },
+  {
+   "id": "freeze",
+   "he": "פריים קפוא",
+   "group": "motion",
+   "desc": "רגע של עצירה לפני הגילוי"
+  }
+ ]
+}

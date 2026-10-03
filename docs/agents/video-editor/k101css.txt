@@ -1,0 +1,8 @@
+<style id="k101css">
+#v101x{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));inset-inline-end:12px;min-height:44px;padding:0 14px 0 10px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(7,41,58,.92);color:#fff;display:inline-flex;align-items:center;gap:6px;font:700 15px Almoni,Arial,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35);cursor:pointer}
+#v101x.mini{inset-inline-end:auto;inset-inline-start:12px;padding:0;width:44px;justify-content:center}#v101x.mini.right{inset-inline-start:auto;inset-inline-end:12px}
+#v101x.mini span{display:none}
+#v101x:active{background:#a90b0c}
+@media (max-width:860px){#ga-lb .ga-x,#ga-lb .ga-r{position:fixed!important;top:calc(10px + env(safe-area-inset-top,0px))!important;z-index:5!important}
+ #ga-lb .ga-x{width:44px!important;height:44px!important;background:rgba(7,41,58,.9)!important;border:1px solid rgba(255,255,255,.35)!important;color:#fff!important}}
+</style>

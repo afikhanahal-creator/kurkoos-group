@@ -142,3 +142,11 @@ current photo's project, opens first; collapsed sections do not load their image
 replaces the selected photo and closes. "העלאת תמונות" (multiple) uploads to the asset store, writes `photos`
 docs filed under the post's project, registers them and picks the first. Back gesture and Escape close only the
 library (V101 knows `#v115lib`). Test: `v115t.cjs` (phone and desktop, mocked store).
+
+## V116 · the date a photo was already used
+
+Every library tile in the editor (inline picker and full screen library) carries a badge with the earliest
+scheduled or published post that uses the photo ("מתוזמן 12.10", "פורסם 24.9", "+2" when there are more),
+the full list with post titles in the tooltip, and a switch "להסתיר תמונות שכבר בלוח" that hides them while
+choosing. Source: `APP.sched.items` with a date, resolved through `itemPost` and `imgKeysOf`; items with
+status sent or published count as published. Test: `v116t.cjs`.

@@ -61,3 +61,19 @@ A full-screen preview (`#v108pv`) opens from the expand button on the canvas and
 feed view (brand name + caption from the post itself), 4:5 / 1:1 / 9:16, slides, download, X, back gesture
 and Escape close only the preview. Phone layout: save button shows when there is something to save,
 preset tiles in two columns on narrow phones, quieter tool strip. Tests: `v108t.cjs` (phone), `v108d.cjs`.
+
+## V109 · second QA pass on phones (agent report, all fixed)
+
+- Back gesture double pop: V101 closed the window and V102 then also left the view. V101 now records the
+  time it handled a popstate and V102 ignores a popstate within 900 ms of it (`build109.py`).
+- Gallery: the selection strip (`.ga-selbar`) covered the bottom nav with "0 נבחרו". Hidden until a card is
+  selected, and it sits above the nav when shown.
+- Effects sheet: closing without sending left "ערוך כרילס" disabled forever (the promise never settled).
+  The sheet now has an onCancel path that resolves it with null.
+- Toolbar actions (בחר הכל, גיוון תמונות, פוסטים מתמונות חדשות) were 40 px icon boxes with overflowing labels;
+  on phones they are labelled pills in their own toolbar row.
+- The floating "חזרה" pill covered the "+" button; it now sits bottom left above the nav and hides while
+  the selection strip is open.
+- Agent status dot contrast, week/month segments 40 px tall, score caption 11 px, footer colour,
+  checkbox/favourite buttons moved off the card's red rule, template shelf header stacks on phones.
+- Known and left as is: chip rows (today KPIs, queue stats, gallery tabs) scroll sideways with a peeking item.

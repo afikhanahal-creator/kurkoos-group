@@ -1,0 +1,22 @@
+<style id="k109css">
+/* V109 · QA pass on phones: the toolbar actions read as labelled pills in their own row, the gallery selection strip stays
+   out of the way until something is selected, the back pill no longer covers the "new post" button, small targets and text */
+@media (max-width:860px){
+ .tbar{flex-wrap:wrap!important;row-gap:4px;padding-bottom:4px}
+ .tbar #vact:not(:empty){flex:1 0 100%;order:20;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 0 2px;margin-top:-2px}
+ .tbar #vact::-webkit-scrollbar{display:none}
+ .tbar #vact .ibtn{width:auto!important;min-width:0!important;height:34px!important;padding:0 12px!important;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;flex:0 0 auto;gap:6px;background:#f1f5f7;border:1px solid #dbe4ea;color:#07293a}
+ .tbar #vact .ibtn svg{width:15px;height:15px}
+ .ga-selbar:not(.on){visibility:hidden;pointer-events:none}
+ #v106x{top:auto!important;bottom:calc(96px + env(safe-area-inset-bottom,0px))!important;left:12px}
+ body:has(.ga-selbar.on) #v106x{display:none!important}
+ .v51dot{background:#105572!important;width:10px;height:10px}
+ .v51dot.on{background:#a90b0c!important}
+ .seg [data-app="cm"]{min-height:40px!important;min-width:56px;padding:0 12px}
+ #appmain .pr-score span{font-size:11px!important;color:#4d5866!important}
+ #appmain footer[data-td]{font-size:13px;color:#4d5866}
+ .ga-card .ga-chk,.tv-card .tv-fav{top:16px!important}
+ .tv-shelf>header{flex-direction:column!important;align-items:flex-start!important;gap:8px!important}
+ .tv-shelf>header>button{align-self:flex-start;margin-top:2px}
+}
+</style>

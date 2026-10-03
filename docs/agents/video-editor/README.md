@@ -114,3 +114,20 @@ website import, anything with a `batch` field) are turned into posts by the page
 it builds two posts per new photo (V107) and swaps repeated photos (V104), then marks the batch in
 localStorage. `drive_prep.py` turns the Drive inventory into an import plan (project from folder names, kind
 render/site/ad, duplicates by title and size dropped, guide icons and logos skipped).
+
+## V113 · the freezes (measured under 4x CPU throttling, the phone profile)
+
+Profile of boot: 3.3 s inside `overflowOf` (the V73 clarity gate redraws every template post at 1080x1350 on
+every load to check text overflow, in 9 ms slices every 40 ms, so a phone stutters for minutes), 1.4 s in
+`stats` (logo auto placement reads four full corner regions with getImageData per draw). The website import
+then ran `__v107.build` (3.7 s in one task) and `__v104.diversify` (4.3 s, `usage()` rescans every post for
+every candidate) and two parallel downscale workers. Fixes in `v113.js` and `build113.py`:
+- clarity verdicts persist in localStorage (`v73_ok_v1`, key = the gate's own signature) and are seeded into
+  `p._ovk` before the pass, so a reload checks only posts that changed;
+- `stats` samples a 24x24 downscale of each corner instead of the full region;
+- `usage()` is memoised for 250 ms (diversify 4.3 s to 0.5 s);
+- V107 `build` takes `keys` and `quiet`; `__v113.buildChunked` builds five photos per chunk with a 60 ms gap and
+  renders once (worst task 3.7 s to 0.3 s); V110 and V112 use it;
+- the import runs one file at a time, breathes 120 ms between files, pauses while the tab is hidden, reads
+  image sizes from the file header and only downscales files over 1.5 MB or 2600 px; videos import
+  automatically on desktops only (phones use the button).

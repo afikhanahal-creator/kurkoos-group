@@ -77,3 +77,16 @@ preset tiles in two columns on narrow phones, quieter tool strip. Tests: `v108t.
 - Agent status dot contrast, week/month segments 40 px tall, score caption 11 px, footer colour,
   checkbox/favourite buttons moved off the card's red rule, template shelf header stacks on phones.
 - Known and left as is: chip rows (today KPIs, queue stats, gallery tabs) scroll sideways with a peeking item.
+
+## V110 · the website's project media, in the library
+
+The live site is blocked from the container, but its media lives in the Supabase project `kurkoos-cms`
+(table `projects`: hero_image_url, about_image_url, environment.image, gallery[], videos[] of type file). The
+inventory is in `site_media.json` (9 projects, 90 unique images, 15 mp4). `v110.js` inlines it and the user's
+browser fetches each file (public storage, CORS open), downscales images to 2400 px, uploads to the artifact
+asset store, writes `photos` docs (name, project key, kind render/site, tags website,<slug>,<status>, src) and
+`videos` docs (source website, origin, status queued, brand auto; files over 20 MB are skipped and listed).
+Deduplication by source URL, so re-running imports only what is new. After the images land, V107 builds two
+posts per new photo and V104 diversifies repeated photos. Runs once automatically per version when the page
+has the asset store, and from "ייבוא מהאתר" in the gallery, the videos room and the agent. Test: `v110t.cjs`
+(mocked network and store).

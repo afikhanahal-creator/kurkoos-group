@@ -20,3 +20,18 @@ How the Drive media reached the content engine's library, so it can be repeated 
 
 Result: 141 photos (general 47, henrietta 28, bengurion 15, hankin 14, ramhal 12, zrubavel 8, shikmim 6,
 yordei 5, mohaliver 4, humash 2) and 10 videos. In the test the batch produced 282 new posts.
+
+## Second pass (batch `drive2`): everything the first plan left out
+
+`drive_prep2.py` takes every image from the inventory that the first plan skipped: files over 2.6 MB,
+campaign and ad creatives, presentations, "ישנים" folders, HEIC photos (decoded with pillow-heif), and the
+16 small files whose first download came back inline. It still drops SVG icons, logo folders, screenshots,
+signatures, and folders named "לא לפרסום" or "לא רלוונטי" (the user's own labels), and dedupes by title and
+size against the first plan. Kinds: render, ad (campaign, presentation, cover, sponsored), plan, site.
+`drive_dec2.py` decodes persisted results and prints the next ids; `drive_pack2.py` packs to `drive_up2/`.
+
+Limits found: the Drive connector cannot return a file above about 6 MB (the message is rejected and the
+connection drops), and files under about 90 KB come back inline, so both were left out: 31 images between
+6 and 10 MB, 13 above 10 MB, 18 tiny ones. Result: 120 photos uploaded (`drive_assets2.txt`), one document
+`batches/drive2` (`manifests/manifest_drive2.json`): general 71, zrubavel 31, henrietta 18; site 83, ad 34,
+render 3. V114 registers them on the next load and V112 builds posts from the batch.

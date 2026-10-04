@@ -223,3 +223,23 @@ applied, the post keeps its saved state), and show a bar "סגרת בלי לשמ
 since `peOpen` is asynchronous). Explicit save ("שמירה", "אישור") is unchanged. Test `v120t.cjs` on desktop and
 phone: the post is unchanged after X, the bar restores the draft, save then applies, a second dirty close is
 discarded; `v108t`/`v109t` still pass.
+
+## V121 · the chosen time always wins in the composer
+
+Report: picking a date in the composer did not move the post to it. With real clicks the main path worked
+(schedule panel, date picker, "תזמן"), so the fix closes the paths around it: "הוסף לתור" used the next free
+slot even when a time had been picked in the open schedule panel, and the date picker updated the composer only
+through the input's events. Now `cqueue` saves to the picked time when there is one (`__v121.pickedAt()`), the
+picker writes `APP.cmp.at` directly and turns the schedule on, a `change` on the time input does the same, and a
+composer render that throws shows a toast instead of a stale footer. Test `bug5.cjs`: pick 23.10 18:30, save
+through the queue path, the item lands on 2026-10-23T18:30.
+
+## V122 · big previews when choosing a template or a shape
+
+The full screen template picker (V66) and shapes library (V68) get a size control (קטן, בינוני, גדול; large by
+default on desks, medium on phones, remembered in `v122_size`). Template tiles are drawn at 300, 440 or 640 px
+wide to stay sharp. "תצוגה גדולה" (or a double click on a tile) opens a lightbox with the current choice at the
+full screen height, with previous and next, arrow keys, Enter to apply and Esc to close only the lightbox (the
+key handler is on `window` so it runs before the libraries' own Escape). Phone rules use `!important` to beat
+an older two-column rule. Test `v122t.cjs`: desktop large 2 columns of 465 px, small 4; phone 1, 2 or 3
+columns; lightbox 742 px tall on desktop; next and apply change the layout; Esc keeps the library open.

@@ -243,3 +243,14 @@ full screen height, with previous and next, arrow keys, Enter to apply and Esc t
 key handler is on `window` so it runs before the libraries' own Escape). Phone rules use `!important` to beat
 an older two-column rule. Test `v122t.cjs`: desktop large 2 columns of 465 px, small 4; phone 1, 2 or 3
 columns; lightbox 742 px tall on desktop; next and apply change the layout; Esc keeps the library open.
+
+## V123 · the date picker on desks is a centred dialog
+
+Report: the calendar did not open properly. Measured at 1576x923: the V44 picker opened as a 380x900 panel
+pinned to the top of the screen beside the field, covering half of the composer. Now on screens wider than
+700 px it is a centred 820 px dialog over a dimmed page (`box-shadow` backdrop, outside click still closes):
+the month and quick chips on one side, hour, minutes and fine tuning on the other, the footer across.
+`v123.js` re-wraps the picker's children after every redraw (a MutationObserver, since V44 rebuilds it with
+innerHTML) and clears the inline position V44 sets; `k123css.txt` holds the layout. Phones keep the bottom
+sheet. Test `pk.cjs`: desk 820x496 centred, phone sheet unchanged, picking 21.10 at 17:30 sets the composer to
+2026-10-21T17:30 and closes the picker.

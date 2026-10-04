@@ -1,0 +1,12 @@
+const {chromium}=require('playwright-core');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});
+for(const vp of [{width:1576,height:923},{width:390,height:844,m:1}]){const ctx=await b.newContext(vp.m?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:vp});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1');localStorage.setItem('ag_v107_done_v1','1');localStorage.setItem('ag_v110_done_v2','1')});
+await p.goto('http://localhost:8765/t15.html');await p.waitForTimeout(7000);const E=s=>p.evaluate(s=>window.__E(s),s);
+await E(`(()=>{const q=AG.posts.find(x=>/^(ed|x)_/.test(x.layout)&&!x.article&&!itemOf(x));openComposer({p:q,at:'2026-10-12T18:30',sched:true})})()`);await p.waitForTimeout(900);
+const inp=p.locator('#cmp-root [data-app="cat"]');await inp.scrollIntoViewIfNeeded();
+const r0=await inp.boundingBox();if(vp.m)await inp.tap();else await inp.click();await p.waitForTimeout(800);
+await p.screenshot({path:'pk_'+vp.width+'.png'});const r=await p.evaluate(()=>{const h=document.querySelector('.v44host');if(!h)return 'no picker';const b=h.getBoundingClientRect();const cs=getComputedStyle(h);const top=document.elementFromPoint(b.left+b.width/2,b.top+20);return {box:[Math.round(b.left),Math.round(b.top),Math.round(b.width),Math.round(b.height)],z:cs.zIndex,pos:cs.position,vh:innerHeight,topEl:top&&(top.closest('.v44host')?'picker':top.className||top.tagName),sheet:h.classList.contains('sheet'),scrollH:h.scrollHeight,overflow:cs.overflow}});
+const flow=await p.evaluate(async()=>{const h=document.querySelector('.v44host');if(!h)return null;const days=[...h.querySelectorAll('.v44d:not(.out)')];days[20].click();await new Promise(r=>setTimeout(r,200));const hh=document.querySelector('.v44host [data-pk="h"][data-h="17"]');hh&&hh.click();await new Promise(r=>setTimeout(r,200));const two=!!document.querySelector('.v44host .v123b');document.querySelector('.v44host [data-pk="ok"]').click();await new Promise(r=>setTimeout(r,400));return {two,at:window.__E('APP.cmp&&APP.cmp.at'),closed:!document.querySelector('.v44host')}});
+console.log(JSON.stringify({vp:vp.width,input:r0&&[Math.round(r0.x),Math.round(r0.y)],r,flow,errs}));await ctx.close()}
+await b.close()})();

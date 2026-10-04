@@ -254,3 +254,18 @@ the month and quick chips on one side, hour, minutes and fine tuning on the othe
 innerHTML) and clears the inline position V44 sets; `k123css.txt` holds the layout. Phones keep the bottom
 sheet. Test `pk.cjs`: desk 820x496 centred, phone sheet unchanged, picking 21.10 at 17:30 sets the composer to
 2026-10-21T17:30 and closes the picker.
+
+## V124 · design and function pass over every page
+
+Inventory: 18 pages screenshotted on desk and phone (`ux_shots.cjs`), and `sweep.cjs` clicks every button
+on every page except destructive or outward ones (518 clicks): no script errors. Fixed:
+- page actions wrapped into two or three rows inside the header and pushed above the screen, shrinking
+  "פוסט חדש" to 67 px; on desks they now sit on their own quiet row under the title (`.tbar.v124acts`)
+- the gallery's 51 topic chips fold to two lines with "כל הנושאים (N)"; the selected chip stays visible
+- video cards show a frame of the video instead of a black box (`#t=0.6`, preload metadata)
+- settings: picking a time adds the slot at once; "+" with no time opens the picker; the Google AI card
+  spans the column
+- agent: an empty command focuses the field and explains what to write; the uploads "צור סדרה" says when
+  there are no new materials instead of claiming drafts were made
+- the fonts table scrolls inside its card on phones; the website import notice uses the calm teal style
+Regressions `v108t`, `v118t`, `v120t`, `v122t` pass.

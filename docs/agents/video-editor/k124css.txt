@@ -1,0 +1,28 @@
+<style id="k124">
+/* V124 · page-level design pass (brand tokens unchanged) */
+@media (min-width:901px){
+.tbar.v124acts{flex-wrap:wrap!important;row-gap:0;padding-bottom:0}
+.tbar.v124acts #vact{order:20;flex:1 0 100%!important;display:flex;flex-wrap:nowrap!important;gap:6px;overflow-x:auto;scrollbar-width:none;justify-content:flex-start;padding:8px 0 10px;margin:0;border-top:1px solid #eef2f5;height:auto!important;max-height:none!important}
+.tbar.v124acts #vact::-webkit-scrollbar{display:none}
+.tbar.v124acts #vact .ibtn{background:#fff;border-color:#cbd1da;color:#243b4c;height:32px!important}
+.tbar.v124acts #vact .ibtn:hover{background:#eef3f6;border-color:#8fb6c8}
+}
+/* gallery topic cloud */
+.ga-fam.v124fold{max-height:100px;overflow:hidden;position:relative}
+.ga-fam.v124fold.v124open{max-height:none}
+.v124more{all:unset;cursor:pointer;display:inline-flex;width:max-content;align-self:flex-start;justify-self:start;align-items:center;gap:6px;margin:8px 0 2px;padding:0 14px;height:34px;border-radius:999px;border:1px dashed #8fb6c8;color:#105572;font-weight:700;font-size:13px;background:#f7fafb}
+.v124more:hover{background:#eef3f6}
+.v124more:focus-visible{outline:2px solid #105572;outline-offset:2px}
+@media (max-width:900px){.ga-fam.v124fold{max-height:none;overflow:visible}.v124more{display:none}}
+/* the two notices above the gallery read as one calm stack */
+.v110bar{background:#f7fafb;border-color:#d7e3ea;border-inline-start:4px solid #105572;color:#243b4c}
+.v110bar b{color:#07293a}
+/* settings: the slot cards and the Google AI card */
+.v52set{max-width:none!important;width:auto!important;margin-inline:0!important}
+[data-slotin]{min-height:36px;border-radius:10px!important;border-color:#cbd1da!important;background:#fff;color:#07293a}
+[data-slotin]:focus{outline:none;border-color:#105572!important;box-shadow:0 0 0 3px rgba(16,85,114,.14)}
+/* fonts table scrolls inside its card on phones */
+@media (max-width:900px){.v43tbl{display:block;overflow-x:auto;max-width:100%}}
+/* video cards */
+#appviews video{background:#07293a;object-fit:cover}
+</style>

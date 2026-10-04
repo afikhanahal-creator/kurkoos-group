@@ -37,3 +37,4 @@ __pycache__/
 *.pyc
 video/.mpvenv
 video/engine/models/*.tflite
+video/sfx/sig/

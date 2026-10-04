@@ -35,6 +35,7 @@ from person import Masks, compute as compute_masks  # noqa: E402
 from timemap import TimeMap, silence_cuts  # noqa: E402
 from transcribe import transcribe, words_table  # noqa: E402
 import effects as FX  # noqa: E402
+import signature as SIG  # noqa: E402
 from effects import PRESETS, CATALOG  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
@@ -259,6 +260,7 @@ class Renderer:
         self.accent = tuple(self.st["accent"])
         self._cache = {}
         self.seg_zoom = self.plan.get("segments_zoom") or []
+        self.sigx = SIG.Sig(self) if self.plan.get("signature") else None
 
     def cache_get(self, k):
         return self._cache.get(k)
@@ -433,6 +435,13 @@ class Renderer:
         cv2.line(frame, (72, y - 18), (W - 72, y - 18), (120, 110, 80), 1)
 
     def frame(self, t: float) -> np.ndarray:
+        """One finished frame at final time t. With signature effects the compositor in signature.py builds it from
+        layers (base picture, person, captions, overlays, whole-frame moves, post)."""
+        if self.sigx is not None:
+            return self.sigx.frame(t)
+        return self.base_frame(t)
+
+    def base_frame(self, t: float, captions: bool = True, fades: bool = True) -> np.ndarray:
         scene = next((o for o in self.plan["overlays"] if o["type"] == "scene" and o["at"] <= t < o["at"] + o["dur"]), None)
         if scene:
             canvas = FX.scene_frame(scene, t - scene["at"], t, self)
@@ -468,7 +477,8 @@ class Renderer:
             n = np.random.default_rng(int(t * 1000)).normal(0, 255 * self.st["grain"], canvas.shape[:2]).astype(np.float32)
             canvas = np.clip(canvas.astype(np.float32) + n[..., None], 0, 255).astype(np.uint8)
         self.footer(canvas, t)
-        self.captions(canvas, t, box)
+        if captions:
+            self.captions(canvas, t, box)
         self.overlays(canvas, t, box)
         for tr in self.plan.get("transitions", []):
             if abs(t - tr["at"]) <= tr.get("dur", 0.4):
@@ -482,9 +492,9 @@ class Renderer:
                         return None
                 canvas = FX.apply_transition(canvas, tr, t, self, other)
         # fade in and out
-        d = self.plan["duration"]
+        d = self.plan.get("duration_main", self.plan["duration"])
         f = min(1.0, t / 0.4, (d - t) / 0.4)
-        if f < 1:
+        if f < 1 and fades:
             canvas = (canvas.astype(np.float32) * max(0.0, f)).astype(np.uint8)
         return canvas
 
@@ -525,6 +535,16 @@ def render(proj: str, out_mp4: str, workers: int | None = None) -> str:
         inputs.append(src)
         fc.append(tm.audio_filter().replace("[0:a]", "[1:a]").replace("[aout]", "[voice]"))
         labels.append("[voice]")
+    mus = plan.get("music")
+    if mus and os.path.exists(mus.get("path", "")):
+        inputs.append(mus["path"])
+        idx = len(inputs) - 1
+        g = float(mus.get("gain", 0.12))
+        mutes = "+".join(f"between(t,{a:.3f},{b:.3f})" for a, b in mus.get("mutes", [])) or "0"
+        D = plan["duration"]
+        fc.append(f"[{idx}:a]aformat=sample_rates=48000:channel_layouts=mono,aloop=loop=-1:size=2e9,atrim=duration={D:.3f},"
+                  f"volume='{g:.3f}*(1-min(1,{mutes}))':eval=frame,afade=t=in:st=0:d=0.6,afade=t=out:st={max(0, D - 1.2):.3f}:d=1.2[mus]")
+        labels.append("[mus]")
     for k, s in enumerate(plan["sfx"]):
         p = os.path.join(SFX, s["name"] + ".wav")
         if not os.path.exists(p):
@@ -537,7 +557,7 @@ def render(proj: str, out_mp4: str, workers: int | None = None) -> str:
     for i in inputs:
         cmd += ["-i", i]
     if labels:
-        fc.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0:duration=first,apad,atrim=duration={plan['duration']:.3f}[mix]")
+        fc.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0:duration=longest,apad,atrim=duration={plan['duration']:.3f}[mix]")
         cmd += ["-filter_complex", ";".join(fc), "-map", "0:v", "-map", "[mix]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest"]
     else:
         cmd += ["-map", "0:v", "-c:v", "copy", "-an"]
@@ -575,7 +595,7 @@ def master(src: str, dst: str, lufs: float = -14.0) -> None:
 
 
 # ---------------------------------------------------------------- the pipeline
-def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keywords: list[str], engine: str, words_file: str | None, with_mask: bool = True, brand: str = "auto", effects: list[str] | None = None, emojis: dict | None = None, extra: list[dict] | None = None) -> dict:
+def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keywords: list[str], engine: str, words_file: str | None, with_mask: bool = True, brand: str = "auto", effects: list[str] | None = None, emojis: dict | None = None, extra: list[dict] | None = None, sig: list[dict] | None = None, music: str | None = None, music_gain: float = 0.12, plan_only: bool = False) -> dict:
     # brand chrome (logo intro + standing footer line): full for raw footage; none for videos the system rendered itself (they carry it already)
     if brand == "auto":
         brand = "none" if os.path.basename(src).startswith(("kurkoos-", "reel-", "post-")) else "full"
@@ -598,6 +618,12 @@ def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keyw
         tm = silence_cuts(env, 0.01, info["duration"], info["fps"], words)
     else:
         tm = TimeMap.identity(info["duration"], info["fps"])
+    sig_items, sig_skipped = ([], [])
+    if sig:
+        sig_items, sig_skipped = SIG.plan_signature(sig, words, tm)
+        SIG.plan_peeks(sig_items)
+        if any(i["kind"] == "opening" for i in sig_items) and brand == "full":
+            brand = "none"   # the grey opening is the brand moment; no logo intro on top of it
     open(os.path.join(proj, "timemap.json"), "w").write(tm.to_json())
     # 3. person mask, once
     mp = os.path.join(proj, "mask.npz")
@@ -614,9 +640,22 @@ def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keyw
             tm.insert_freeze(tm.src_time(kw["at"]), 0.5)
             open(os.path.join(proj, "timemap.json"), "w").write(tm.to_json())
             plan["duration"] = tm.duration
+    if sig is not None:
+        plan["signature"] = sig_items
+        plan["sig_skipped"] = sig_skipped
+        plan["duration_main"] = tm.duration
+        if any(i["kind"] == "rewind" for i in sig_items):
+            plan["duration"] = tm.duration + 1.3
+            plan["overlays"] = [o for o in plan["overlays"] if o["type"] != "outro"]
+        plan["sfx"] = [x for x in plan["sfx"] if x.get("name") != "tick"] + SIG.sfx_for(sig_items, tm.duration)
+    if music:
+        plan["music"] = {"path": os.path.abspath(music), "gain": music_gain, "mutes": SIG.music_mutes(plan.get("signature", []))}
     plan["transcript_status"] = tr["status"]
     plan["cut"] = {"source_duration": info["duration"], "final_duration": tm.duration, "segments": len(tm.segs)}
     json.dump(plan, open(os.path.join(proj, "plan.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    if plan_only:
+        preview(proj)
+        return plan
     # 5. render
     out_mp4 = os.path.join(proj, "reel.mp4")
     render(proj, out_mp4)
@@ -624,6 +663,47 @@ def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keyw
     # 6. look
     check(proj)
     return plan
+
+
+PEAK = {"opening": 0.12, "title3d": 0.3, "shatter": 0.2, "popout": 0.45, "flip": 0.6, "worlds": 0.4, "freeze": 0.35, "giant": 0.8, "pixel": 0.6, "zoom": 0.5, "cube": 0.6, "money": 0.3, "comment": 1.2, "hologram": 0.8, "goal": 1.45, "gold": 0.3, "follow": 1.2, "rewind": 0.6}
+
+
+def preview(proj: str) -> dict:
+    """The plan for approval, before any render: the word table, every effect with its word and time, and one frame
+    from the strongest moment of every effect (drawn by the same frame function the render will use)."""
+    plan = json.load(open(os.path.join(proj, "plan.json"), encoding="utf-8"))
+    r = Renderer(proj)
+    shots = []
+    names = {c[0]: c[1] for c in SIG.CATALOG}
+    for i, it in enumerate(plan.get("signature", [])):
+        a0 = it.get("at", plan.get("duration_main", plan["duration"]))
+        t = min(plan["duration"] - 1 / FPS, a0 + PEAK.get(it["kind"], 0.3))
+        fr = r.frame(t)
+        p = os.path.join(proj, f"plan_sig{i:02d}_{it['kind']}.jpg")
+        cv2.imwrite(p, cv2.resize(fr, (W // 2, H // 2), interpolation=cv2.INTER_AREA), [cv2.IMWRITE_JPEG_QUALITY, 86])
+        shots.append((p, f"{names.get(it['kind'], it['kind'])} · {it.get('word_text') or 'סוף'} · {a0:.2f}s"))
+    if shots:
+        from PIL import Image, ImageDraw
+        tw, th = 270, 480
+        cols = min(6, len(shots))
+        rows_n = (len(shots) + cols - 1) // cols
+        sheet = Image.new("RGB", (cols * tw, rows_n * (th + 44)), (30, 30, 30))
+        d = ImageDraw.Draw(sheet)
+        for k, (p, lab) in enumerate(shots):
+            im = Image.open(p).resize((tw, th))
+            x, y = (k % cols) * tw, (k // cols) * (th + 44)
+            sheet.paste(im, (x, y))
+            d.text((x + tw - 8, y + th + 8), lab, font=T.font(700, 20), fill=(255, 255, 255), direction="rtl", anchor="ra")
+        sheet.save(os.path.join(proj, "plan_preview.png"))
+    words = json.load(open(os.path.join(proj, "words.json"), encoding="utf-8"))["words"]
+    md = ["# תוכנית עריכה לאישור", "", "## המילים", words_table(words), "", "## האפקטים", "| אפקט | על המילה | בשנייה (סופי) | משך |", "|---|---|---|---|"]
+    for it in plan.get("signature", []):
+        md.append(f"| {names.get(it['kind'], it['kind'])} | {it.get('word_text') or 'סוף הריל'} | {it.get('at', plan.get('duration_main', 0)):.2f} | {it.get('dur', 1.3):.2f} |")
+    for sk in plan.get("sig_skipped", []):
+        md.append(f"| {names.get(sk.get('kind'), sk.get('kind'))} | {sk.get('word') or ''} | {'אזהרה' if sk.get('warn') else 'דולג'}: {sk.get('why')} | |")
+    md += ["", f"אורך אחרי חיתוך: {plan.get('duration_main', plan['duration']):.2f} שניות (מקור {plan['cut']['source_duration']:.2f}). הצלילים: {len(plan['sfx'])}. מוזיקה: {'כן' if plan.get('music') else 'לא'}."]
+    open(os.path.join(proj, "plan.md"), "w", encoding="utf-8").write("\n".join(md))
+    return {"plan": os.path.join(proj, "plan.md"), "preview": os.path.join(proj, "plan_preview.png")}
 
 
 def check(proj: str) -> str:
@@ -636,6 +716,10 @@ def check(proj: str) -> str:
     sections = [(o["type"], o["at"], min(plan["duration"], o["at"] + o["dur"])) for o in plan["overlays"]]
     if plan["captions"]["pages"]:
         sections.append(("captions", plan["captions"]["pages"][0]["start"], min(plan["duration"], plan["captions"]["pages"][0]["start"] + 4)))
+    for i, it in enumerate(plan.get("signature", [])):
+        a0 = it.get("at", plan.get("duration_main", plan["duration"]))
+        d0 = it.get("dur", 1.3)
+        sections.append((f"sig{i:02d}_{it['kind']}", max(0, a0 - 0.5), min(plan["duration"], a0 + min(d0, 3.0) + 0.3)))
     sections.insert(0, ("all", 0, plan["duration"]))
     for name, a, b in sections:
         p = os.path.join(proj, f"sheet_{name}.png")
@@ -650,11 +734,30 @@ def check(proj: str) -> str:
         if ok:
             cv2.imwrite(os.path.join(proj, f"peak_{o['type']}.jpg"), fr, [cv2.IMWRITE_JPEG_QUALITY, 88])
     cap.release()
-    rows = ["| אפקט | על המילה | נוחת בשנייה | פריים | צליל |", "|---|---|---|---|---|"]
+    peak = PEAK
+    cap = cv2.VideoCapture(mp4)
+    for i, it in enumerate(plan.get("signature", [])):
+        t = it.get("at", plan.get("duration_main", plan["duration"])) + peak.get(it["kind"], 0.3)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(t * FPS))
+        ok, fr = cap.read()
+        if ok:
+            cv2.imwrite(os.path.join(proj, f"peak_sig{i:02d}_{it['kind']}.jpg"), fr, [cv2.IMWRITE_JPEG_QUALITY, 88])
+    cap.release()
+    rows = ["| אפקט | על המילה | נוחת בשנייה | פריים | צליל | צליל באותו פריים |", "|---|---|---|---|---|---|"]
+    names = {c[0]: c[1] for c in SIG.CATALOG}
+    for it in plan.get("signature", []):
+        a0 = it.get("at", plan.get("duration_main", 0))
+        fx = [x for x in plan["sfx"] if x.get("kind") == it["kind"]]
+        first = min(fx, key=lambda x: abs(x["at"] - a0)) if fx else None
+        same = first is not None and int(round(first["at"] * FPS)) == int(round(a0 * FPS))
+        pre = it["kind"] in ("shatter", "title3d", "worlds") and first is not None and first["at"] < a0
+        rows.append(f"| {names.get(it['kind'], it['kind'])} | {it.get('word_text') or 'סוף הריל'} | {a0:.2f} | {int(round(a0 * FPS))} | {(first or {}).get('name', 'ללא').split('/')[-1]} | {'כן' if same else ('מקדים בכוונה' if pre else 'לא')} |")
+    for sk in plan.get("sig_skipped", []):
+        rows.append(f"| {names.get(sk.get('kind'), sk.get('kind'))} | {sk.get('word') or ''} | {'אזהרה' if sk.get('warn') else 'דולג'} | | | {sk.get('why')} |")
     for o in plan["overlays"]:
-        rows.append(f"| {o['type']}{(' · ' + o.get('text', ''))[:40] if o.get('text') else ''} | {o.get('word') or 'אבן דרך (לא על מילה)'} | {o['at']:.2f} | {int(round(o['at'] * FPS))} | {o.get('sfx') or 'ללא'} |")
+        rows.append(f"| {o['type']}{(' · ' + o.get('text', ''))[:40] if o.get('text') else ''} | {o.get('word') or 'אבן דרך (לא על מילה)'} | {o['at']:.2f} | {int(round(o['at'] * FPS))} | {o.get('sfx') or 'ללא'} | |")
     for p in plan["captions"]["pages"]:
-        rows.append(f"| כתובית | {' '.join(w['text'] for w in p['words'])} | {p['start']:.2f} | {int(round(p['start'] * FPS))} | tick |")
+        rows.append(f"| כתובית | {' '.join(w['text'] for w in p['words'])} | {p['start']:.2f} | {int(round(p['start'] * FPS))} | | |")
     issues = []
     face = plan.get("face")
     if face and plan["captions"]["pages"]:
@@ -690,6 +793,10 @@ if __name__ == "__main__":
     e.add_argument("--effects", help="comma list of effect ids from the catalog; default = the preset's own set")
     e.add_argument("--emojis", help='JSON {"word": "🔥"}')
     e.add_argument("--extra", help="JSON list of extra overlays (hand written plan items)")
+    e.add_argument("--sig", help="signature effects: a JSON file (or JSON text) with a list of {kind, word, ...}; see signature.py catalog")
+    e.add_argument("--music", help="music bed under the speech (silent in the blackout and the time freeze)")
+    e.add_argument("--music-gain", type=float, default=0.12)
+    e.add_argument("--plan-only", action="store_true", help="stop after the plan: word table, effect list and one frame per effect, for approval")
     cat = sub.add_parser("catalog")
     c = sub.add_parser("check")
     c.add_argument("proj")
@@ -698,7 +805,14 @@ if __name__ == "__main__":
     w.add_argument("--engine", default="auto")
     a = ap.parse_args()
     if a.cmd == "edit":
-        plan = edit(a.src, a.out, a.style, a.hook, a.cta, [k for k in a.keywords.split(",") if k], a.engine, a.words, not a.no_mask, a.brand, [x for x in a.effects.split(",") if x] if a.effects is not None else None, json.loads(a.emojis) if a.emojis else None, json.loads(a.extra) if a.extra else None)
+        sig = None
+        if a.sig:
+            sig = json.load(open(a.sig, encoding="utf-8")) if os.path.exists(a.sig) else json.loads(a.sig)
+        eff = [x for x in a.effects.split(",") if x] if a.effects is not None else ([] if sig else None)
+        plan = edit(a.src, a.out, a.style, a.hook, a.cta, [k for k in a.keywords.split(",") if k], a.engine, a.words, not a.no_mask, a.brand, eff, json.loads(a.emojis) if a.emojis else None, json.loads(a.extra) if a.extra else None, sig, a.music, a.music_gain, a.plan_only)
+        if a.plan_only:
+            print(json.dumps({"plan": os.path.join(a.out, "plan.md"), "preview": os.path.join(a.out, "plan_preview.png"), "effects": len(plan.get("signature", [])), "skipped": plan.get("sig_skipped", [])}, ensure_ascii=False))
+            sys.exit(0)
         print(json.dumps({"out": os.path.join(a.out, "reel.mp4"), "duration": plan["duration"], "cut": plan["cut"], "transcript": plan["transcript_status"], "pages": len(plan["captions"]["pages"])}, ensure_ascii=False))
     elif a.cmd == "catalog":
         print(json.dumps({"presets": {k: {"he": v["he"], "effects": v["effects"]} for k, v in PRESETS.items()}, "effects": [{"id": i, "he": h, "group": g, "desc": d} for i, h, g, d in CATALOG]}, ensure_ascii=False, indent=1))

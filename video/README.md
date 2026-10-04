@@ -86,3 +86,18 @@ node engine/anim_render.cjs studio/kinetic/index.html --preview -o a.mp4  # סב
 node engine/anim_render.cjs studio/kinetic/index.html -o a.mp4 [--config input.json] [--audio song.wav]
 ```
 תבניות בנויות: `studio/kinetic` (כותרות ענק על צבעים מתחלפים) ו-`studio/particles` (מילה שמתפרקת לחלקיקים, כדור, גלקסיה וחזרה).
+
+## אפקטי חתימה על המילים (`engine/signature.py`)
+18 אפקטים מהמדריך, כל אחד על המילה שלו עם צליל משלו באותו פריים: פתיחה אפורה וסלאם, כותרת תלת־ממדית, התנפצות וורונוי,
+יציאה מהמסגרת, היפוך תלת־ממדי, עולמות (חלל, מתחת למים, עיר עתידנית, מצוירים בקוד או מתמונות), עצירת זמן עם פלייט נקי
+ופרלקסה, ענק מעל עיר מיניאטורית, פירוק לפיקסלים, זום אינסופי לטלפון, קובייה עם ארבעה כרטיסים, חותמות ומונה שצונח לאפס,
+תגובה והודעה פרטית, הולוגרמה, מונה עוקבים, חותמת זהב, כפתור עקוב, והרצה לאחור בסגנון קלטת שסוגרת לולאה.
+```
+python3 engine/signature.py sfx                       # הצלילים, מסונתזים בקוד (בלי זכויות של אחרים)
+python3 engine/reel.py edit clip.mp4 --out out/x --sig sig.json --music bed.wav --plan-only   # תוכנית לאישור
+python3 engine/reel.py edit clip.mp4 --out out/x --sig sig.json --music bed.wav               # רינדור אחרי אישור
+python3 engine/reel.py check out/x                    # גיליון לכל אפקט, פריים שיא, טבלת אפקט, מילה, פריים וצליל
+python3 tools/fx_previews.py --clip c.mp4 --words w.json --mask m.npz --out fx   # תצוגות לגלריה במערכת
+python3 tools/make_bundle.py video_engine_bundle.json # החבילה שהעורך בענן פורס
+```
+המוזיקה שותקת בהשחרה שלפני העולמות ובעצירת הזמן; המיקס מנורמל ל-14- LUFS.

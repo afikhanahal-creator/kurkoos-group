@@ -35,4 +35,5 @@
 .v130acts{display:flex;flex-wrap:wrap;gap:8px}.v130acts .px-btn{min-height:46px;font-size:15px;padding:0 16px}
 .v130acts .px-btn.pri{background:#a90b0c;border-color:#a90b0c;color:#fff}
 @media (max-width:700px){.v130ebar{bottom:calc(70px + env(safe-area-inset-bottom,0px));padding:8px;gap:0}.v130ebar p,.v130steps{display:none}.v130acts{flex-wrap:nowrap;gap:6px}.v130acts .px-btn{flex:1 1 0;min-height:44px;font-size:12px;line-height:1.2;padding:4px 6px;white-space:normal}}
+.v129sm{border-color:#105572;background:#eef6f9}.v129sm .v129seg{max-width:100%}
 </style>

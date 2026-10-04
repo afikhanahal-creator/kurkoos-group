@@ -8,7 +8,7 @@ import base64, json, os, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 INCLUDE = ["video/engine", "video/fonts", "video/assets", "video/sfx", "video/README.md",
-           ".claude/skills/video-studio", ".claude/skills/kurkoos-video-pro"]
+           ".claude/skills/video-studio", ".claude/skills/kurkoos-video-pro", ".claude/skills/style-maker"]
 SKIP_DIRS = {"__pycache__", "models", "sig", "node_modules"}
 SKIP_EXT = {".cjs", ".tflite", ".pyc"}
 

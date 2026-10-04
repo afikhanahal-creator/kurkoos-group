@@ -27,8 +27,8 @@ function studioBar(){const pg=document.getElementById('v100page'),s=document.get
 function editorBar(){const ed=document.getElementById('v129');if(!ed||!window.__v129)return;const E=__v129.E,p=E.p;if(!p)return;let bar=ed.querySelector('.v130ebar');
  if(!bar){ed.insertAdjacentHTML('beforeend',`<div class="v130ebar" role="region" aria-label="מה עכשיו"><ol class="v130steps"><li>סגנון</li><li>אפקטים, כתוביות וסאונד</li><li>סיום</li></ol><p></p>
   <div class="v130acts"><button type="button" class="px-btn" data-v130="watch">צפייה מההתחלה</button><button type="button" class="px-btn" data-v130="export">ייצוא הסרטון המוגמר והורדה</button><button type="button" class="px-btn" data-v130="pro"></button></div></div>`);bar=ed.querySelector('.v130ebar')}
- const fx=(p.fx||[]).length,lay=p.layers.length+(p.sfx||[]).length,steps=Object.values(p.pro||{}).filter(v=>v===false).length;
- const proN=5-steps;setText(bar.querySelector('[data-v130="pro"]'),fx?`התחלת עריכה מקצועית · ${fx} ${fx===1?'אפקט':'אפקטים'}`:'התחלת עריכה מקצועית');
+ const fx=(p.fx||[]).length+(p.smOn?1:0),lay=p.layers.length+(p.sfx||[]).length,steps=Object.values(p.pro||{}).filter(v=>v===false).length;
+ const proN=5-steps;setText(bar.querySelector('[data-v130="pro"]'),fx?`התחלת עריכה מקצועית · ${fx} ${fx===1?'בחירה':'בחירות'}`:'התחלת עריכה מקצועית');
  bar.querySelector('[data-v130="pro"]').classList.toggle('pri',!!fx);bar.querySelector('[data-v130="export"]').classList.toggle('pri',!fx);
  setText(bar.querySelector('p'),fx?`בחרת ${fx} אפקטים קולנועיים ו-${proN} שלבים מקצועיים. "התחלת עריכה מקצועית" שולחת את הסרטון הזה לעורך: קודם תוכנית לאישור שלך, ואז הסרטון המוגמר בכרטיס שלו.`
   :lay?`בנית ${lay} שכבות (טקסט, אלמנטים, אפקטים וצלילים). "ייצוא הסרטון המוגמר" בונה אותו עכשיו בדפדפן כמו בתצוגה, ומוריד קובץ.`
@@ -41,7 +41,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   const go=s&&s.querySelector('[data-v128="plan"]');if(!s.querySelector('.v128tgt select option')){document.getElementById('v127')&&document.getElementById('v127').scrollIntoView({behavior:'smooth'});try{toast('קודם מעלים סרטון למגש')}catch(x){}return}if(go)go.click()}
  else if(a==='watch'){__v129.E.t=0;__v129.play(true)}
  else if(a==='export')__v129.doExport();
- else if(a==='pro'){if(!(__v129.E.p.fx||[]).length){__v129.E.tab='fx';__v129.refresh();try{toast('בחרו אפקטים או שלבים בלשונית "העורך המקצועי", ולחצו שוב')}catch(x){}return}__v129.sendPro()}});
+ else if(a==='pro'){if(!(__v129.E.p.fx||[]).length&&!__v129.E.p.smOn){__v129.E.tab='fx';__v129.refresh();try{toast('בחרו אפקטים או שלבים בלשונית "העורך המקצועי", ולחצו שוב')}catch(x){}return}__v129.sendPro()}});
 let raf=0;new MutationObserver(()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;try{tiles();studioBar();editorBar()}catch(e){}})}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-invalid','aria-pressed']});
 document.addEventListener('input',()=>{try{studioBar();editorBar()}catch(e){}});
 window.__v130={tiles,studioBar,editorBar};

@@ -22,6 +22,11 @@ const BFX=[['zoom','זום פאנץ\'',1.6,'whoosh-quick'],['shake','רעידת 
 const LOOKS=[['none','מקורי'],['brand','מותג קורקוס'],['vivid','חי ותוסס'],['cinematic','קולנועי'],['warm','חמים'],['cool','קריר'],['bw','שחור לבן']];
 const LOOKF={brand:'saturate(1.08) contrast(1.06) hue-rotate(-4deg)',vivid:'saturate(1.38) contrast(1.08) brightness(1.03)',cinematic:'contrast(1.16) saturate(.82) brightness(.95)',warm:'sepia(.22) saturate(1.18) brightness(1.03)',cool:'saturate(.95) hue-rotate(8deg) brightness(1.02)',bw:'grayscale(1) contrast(1.22)'};
 const RECIPES=[['clean','נקי ומינימליסטי','צבע מקורי, כתוביות בגלולה לבנה, פתיח וסיום עם לוגו, בלי רעשים'],['energy','אנרגטי','צבעים חיים, כתוביות קריוקי, זום פאנץ\' כל כמה שניות, הבזקים, פס התקדמות וקונפטי בסוף'],['cinematic','קולנועי','גוון קולנועי, פוקוס נכנס, דליפת אור, וינייטה וכתוביות לבנות מודגשות'],['brand','מותג קורקוס','גוון מותג, פס מותג תחתון, כותרת תחתונה עם השם, כתוביות בצבע המותג וסיום עם קריאה לפעולה']];
+const SMQ=[['q2','איך אתה מדבר',[['a','רגוע ומעמיק'],['b','חם ואישי'],['c','חד ועסקי'],['d','אנרגטי וסוער']]],
+ ['q4','איך אתה מופיע ביחס לאנימציה',[['a','שכבה מעל, רצועה מתחת לסנטר'],['b','מסך מפוצל'],['c','איריס: הפריים נסגר לעיגול לרגע'],['d','חלון עם רקע צבעוני']]],
+ ['q5','סגנון ויזואלי',[['a','כרטיסים'],['b','קווים'],['c','כתב יד'],['d','טיפוגרפיה']]],
+ ['q6','כתוביות',[['a','מילה אחת גדולה'],['b','2 עד 3 מילים עבות'],['c','קטנות בתחתית'],['d','בלי כתוביות חדשות']]],
+ ['q7','כמה סאונד',[['a','כמעט כלום'],['b','צליל לכל רגע חשוב'],['c','הרבה'],['d','מוזיקה רכה']]]];
 const PRO=[['cut','חיתוך שתיקות ו"אה"'],['reframe','9:16 עם הפנים בפריים'],['grade','צבע מותג עם הגנה על העור'],['captions','כתוביות מדויקות על כל מילה'],['loudness','עוצמה אחידה -14 LUFS']];
 const FXS=[['opening','פתיחה אפורה וסלאם'],['title3d','כותרת תלת־ממדית'],['shatter','התנפצות'],['popout','יציאה מהמסגרת'],['flip','היפוך'],['worlds','עולמות'],['freeze','עצירת זמן'],['giant','ענק'],['pixel','פיקסלים'],['zoom','זום אינסופי'],['cube','קובייה'],['money','חותמות וכסף'],['comment','תגובה והודעה'],['hologram','הולוגרמה'],['goal','מונה עוקבים'],['gold','חותמת זהב'],['follow','כפתור עקוב'],['rewind','הרצה לאחור']];
 
@@ -172,16 +177,17 @@ async function saveToLibrary(o){const V=window.__vid,VD=V&&V.VD;if(!VD||!VD.asse
  try{const f=new File([o.blob],o.file,{type:o.type});const r=await VD.assets.upload(f);await V.queueDoc({id:uid('v'),name:E.p.name+' · גרסה '+(o.ver||E.p.versions.length||1),srcId:r.id,srcUrl:r.url,out:r.url,status:'done',source:'editor',editOf:E.p.src.docId||null});toastSafe('נשמר בספרייה')}catch(e){toastSafe('השמירה נכשלה: '+(e&&e.message||e))}}
 // only this video goes to the professional editor (plan first, approval in its card)
 async function sendPro(){const V=window.__vid,VD=V&&V.VD;if(!VD||!VD.db||!VD.assets){toastSafe('השליחה לעורך זמינה כשהדף פתוח ב-claude.ai עם הרשאת עריכה');return}
- const p=E.p,miss=p.fx.filter(f=>f.id!=='rewind'&&!(f.word||'').trim());if(miss.length){toastSafe('חסרה מילה לאפקט: '+miss.map(f=>FXS.find(x=>x[0]===f.id)[1]).join(', '));return}
+ const p=E.p;if(!p.fx.length&&!p.smOn&&!(p.studio&&p.studio!=='none')&&PRO.every(x=>(p.pro||{})[x[0]]===false)){toastSafe('בחרו לפחות שלב, אפקט או סגנון אישי');return}const miss=p.fx.filter(f=>f.id!=='rewind'&&!(f.word||'').trim());if(miss.length){toastSafe('חסרה מילה לאפקט: '+miss.map(f=>FXS.find(x=>x[0]===f.id)[1]).join(', '));return}
  const sig=p.fx.map(f=>{const o={kind:f.id};if(f.word)o.word=f.word.trim();if(f.text)o[f.id==='title3d'||f.id==='gold'?'text':'title']=f.text.trim();return o});
  const steps=PRO.map(x=>x[0]).filter(id=>(p.pro||{})[id]!==false);const pro={steps,cut:steps.includes('cut'),reframe:steps.includes('reframe'),grade:steps.includes('grade')?'mid':'off',captions:steps.includes('captions')?(p.capStyle==='karaoke'?'kinetic':'pill'):'off',loudness:steps.includes('loudness'),review:true};
  if(p.studio&&p.studio!=='none'&&(p.studioText||'').trim())sig.unshift({kind:'studio_'+p.studio,text:p.studioText.trim()});
+ const stylemaker=p.smOn?{name:String((p.sm||{}).name||'kurkoos').toLowerCase().replace(/[^a-z0-9-]/g,'')||'kurkoos',answers:Object.assign({q3:'brand'},p.sm||{}),brand:{bg:'#07293a',ink:'#ffffff',main:'#105572',accent:'#a90b0c',soft:'#8fb6c8'}}:null;
  const edit={look:p.look||'none',progress:!!p.progress,layers:p.layers,sfx:allSfx(p),capStyle:p.capStyle,trim:{in:p.in,out:p.out},mute:p.mute,music:p.music?{name:p.music.name,vol:p.music.vol,duck:p.music.duck}:null};
  E.busy={p:0,label:'שולח את הסרטון הזה לעורך',cancel:false};refresh();
  try{let d;if(p.src.kind==='tray'){const it=__v127.T.items.find(x=>x.id===p.src.trayId);const f=window.__v128?await __v128.shrink(it.file):it.file;const r=await VD.assets.upload(f);
-   d=await V.queueDoc({id:uid('v'),name:p.name,srcId:r.id,srcUrl:r.url,source:'editor',status:'plan_requested',phase:'plan',sig,kit:p.kit,edit,pro,trim:{in:p.in,out:p.out},mute:p.mute});p.src={kind:'doc',docId:d.id,name:p.name};persist()}
-  else if(!VD.docs.find(x=>x.id===p.src.docId)){d=await V.queueDoc({id:uid('v'),name:p.name,path:p.src.path||null,srcUrl:p.src.url||null,srcId:(String(p.src.url||'').match(/_blob\/([0-9a-f]{32})/)||[])[1]||null,source:'editor',status:'plan_requested',phase:'plan',sig,kit:p.kit,edit,pro,trim:{in:p.in,out:p.out},mute:p.mute})}
-  else{const src=VD.docs.find(x=>x.id===p.src.docId);const upd={status:'plan_requested',phase:'plan',sig,kit:p.kit,edit,pro,trim:{in:p.in,out:p.out},mute:p.mute,requested:new Date().toISOString()};await VD.db.collection('videos').doc(src.id).update(upd);d=Object.assign({},src,upd)}
+   d=await V.queueDoc({id:uid('v'),name:p.name,srcId:r.id,srcUrl:r.url,source:'editor',status:'plan_requested',phase:'plan',sig,stylemaker,kit:p.kit,edit,pro,trim:{in:p.in,out:p.out},mute:p.mute});p.src={kind:'doc',docId:d.id,name:p.name};persist()}
+  else if(!VD.docs.find(x=>x.id===p.src.docId)){d=await V.queueDoc({id:uid('v'),name:p.name,path:p.src.path||null,srcUrl:p.src.url||null,srcId:(String(p.src.url||'').match(/_blob\/([0-9a-f]{32})/)||[])[1]||null,source:'editor',status:'plan_requested',phase:'plan',sig,stylemaker,kit:p.kit,edit,pro,trim:{in:p.in,out:p.out},mute:p.mute})}
+  else{const src=VD.docs.find(x=>x.id===p.src.docId);const upd={status:'plan_requested',phase:'plan',sig,stylemaker,kit:p.kit,edit,pro,trim:{in:p.in,out:p.out},mute:p.mute,requested:new Date().toISOString()};await VD.db.collection('videos').doc(src.id).update(upd);d=Object.assign({},src,upd)}
   await V.editVideo(Object.assign({__direct:1},d));toastSafe('רק הסרטון הזה נשלח לעורך. התוכנית תחכה לאישור שלך')}catch(e){toastSafe('השליחה נכשלה: '+(e&&e.message||e))}E.busy=null;refresh()}
 
 // ---------- one-click edit by style
@@ -254,6 +260,12 @@ function tabHtml(){const p=E.p,k=p.kit;
   ${p.sfx.length?`<ul class="v129sl">${p.sfx.slice().sort((a,b)=>a.at-b.at).map(x=>`<li><b>${esc((SFX.find(s=>s[0]===x.name)||[0,x.name])[1])}</b><span>${fmtT(x.at)}</span><input type="range" min="0.1" max="1" step="0.05" value="${x.vol}" data-v129sv="${x.id}" aria-label="עוצמה"><button type="button" data-v129="sfxdel" data-id="${x.id}" aria-label="מחיקה">✕</button></li>`).join('')}</ul>`:''}</div>`;
  if(E.tab==='fx')return `<div class="v129card"><h5>שלבי העורך המקצועי</h5><small class="v129hint">הסקילים שהותקנו רצים אצל העורך בענן, על הסרטון הזה בלבד. קודם תוכנית לאישור שלך, ואז רינדור.</small>
   ${PRO.map(([id,n])=>`<label class="v129tog"><input type="checkbox" data-v129pro="${id}" ${(p.pro||{})[id]!==false?'checked':''}> ${n}</label>`).join('')}</div>
+  <div class="v129card v129sm"><h5>סגנון אישי לרילס (style-maker)</h5><label class="v129tog"><input type="checkbox" data-v129pc="smOn" ${p.smOn?'checked':''}> להלביש על הסרטון את הסגנון האישי שלי</label>
+  ${p.smOn?`<small class="v129hint">הסקיל בונה סגנון אנימציה משלך לסרטון שבו אתה מדבר למצלמה, שומר אותו לפעם הבאה, ומלביש אותו עם אנימציה וסאונד. העורך מראה טבלת סיפור לאישור לפני הרינדור.</small>
+   <label class="v129f"><span>על מה הסרטון, למי הוא מדבר, ומה הצופה צריך לעשות בסוף</span><textarea rows="2" data-v129sm="q1" placeholder="למשל: וילות בהוד השרון, למשפחות, שישלחו הודעה">${esc((p.sm||{}).q1||'')}</textarea></label>
+   ${SMQ.map(([k,l,o])=>`<div class="v129f"><span>${l}</span>${seg(k,o.concat([['x','לא יודע']]),(p.sm||{})[k]||'x','data-v129smk')}</div>`).join('')}
+   <div class="v129f"><span>צבעים</span>${seg('q3',[['brand','צבעי קורקוס והלוגו'],['x','תציע לי שלוש פלטות']],(p.sm||{}).q3||'brand','data-v129smk')}</div>
+   <label class="v129f"><span>שם לסגנון (באנגלית, מילה אחת)</span><input data-v129sm="name" value="${esc((p.sm||{}).name||'kurkoos')}" placeholder="kurkoos"></label>`:''}</div>
   <div class="v129card"><h5>פתיח מסטודיו האנימציה</h5>${seg('studio',[['none','בלי'],['kinetic','כותרות ענק'],['particles','שם שמתפרק לחלקיקים']],p.studio||'none','data-v129p')}${p.studio&&p.studio!=='none'?`<input class="v129in" data-v129pt="studioText" value="${esc(p.studioText||'')}" placeholder="${p.studio==='kinetic'?'3 עד 6 מילים':'מילה אחת או שם'}">`:''}</div>
   <div class="v129card"><h5>אפקטים קולנועיים על המילים</h5><small class="v129hint">18 אפקטי החתימה. בוחרים, וכותבים על איזו מילה כל אחד נוחת.</small>
   <div class="v129sigs">${FXS.map(([id,n])=>`<button type="button" data-v129="fxadd" data-id="${id}" aria-pressed="${p.fx.some(f=>f.id===id)}">${fxPrev(id)}<span>${n}</span></button>`).join('')}</div>
@@ -325,6 +337,7 @@ document.addEventListener('click',async e=>{
  if(!e.target.closest||!e.target.closest('#v129,.v129none'))return;
  const tb=e.target.closest('[data-v129tab]');if(tb){E.tab=tb.dataset.v129tab;refreshPanel();return}
  const kb=e.target.closest('[data-v129kit]');if(kb){change(p=>{p.kit[kb.dataset.v129kit]=kb.dataset.val});return}
+ const sk=e.target.closest('[data-v129smk]');if(sk){change(q=>{q.sm=Object.assign({},q.sm);q.sm[sk.dataset.v129smk]=sk.dataset.val},true);sk.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===sk));return}
  const pb=e.target.closest('[data-v129p]');if(pb){change(p=>{p[pb.dataset.v129p]=pb.dataset.val});return}
  const lc=e.target.closest('[data-v129c]');if(lc&&selL()){change(()=>{selL().color=lc.dataset.v129c});return}
  const la=e.target.closest('[data-v129la]');if(la&&selL()){change(()=>{selL()[la.dataset.v129la]=la.dataset.val});return}
@@ -361,6 +374,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!t.closest||!t.closest
  if(t.dataset.v129l&&selL()){const L=selL(),k=t.dataset.v129l;L[k]=['start','end','scale','rot','amt'].includes(k)?parseFloat(t.value)||0:t.value.slice(0,100);persist();draw();if(['start','end','text'].includes(k))timeline();return}
  if(t.dataset.v129mv){p.music.vol=+t.value;persist();if(E.musicGain)E.musicGain.gain.value=+t.value;return}
  if(t.dataset.v129sv){const x=p.sfx.find(s=>s.id===t.dataset.v129sv);if(x){x.vol=+t.value;persist()}return}
+ if(t.dataset.v129sm){p.sm=Object.assign({},p.sm);p.sm[t.dataset.v129sm]=t.value.slice(0,t.dataset.v129sm==='name'?24:200);persist();return}
  if(t.dataset.v129pt){p[t.dataset.v129pt]=t.value.slice(0,60);persist();return}
  if(t.dataset.v129fx!=null){p.fx[+t.dataset.v129fx][t.dataset.k]=t.value.slice(0,60);persist()}});
 document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#v129'))return;const p=E.p;
@@ -368,7 +382,7 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closes
  else if(t.hasAttribute('data-v129md'))change(q=>{q.music.duck=t.checked},true);
  else if(t.hasAttribute('data-v129mute'))change(q=>{q.mute=t.checked},true);
  else if(t.dataset.v129kc)change(q=>{q.kit[t.dataset.v129kc]=t.checked})
- else if(t.dataset.v129pc)change(q=>{q[t.dataset.v129pc]=t.checked},true)
+ else if(t.dataset.v129pc){change(q=>{q[t.dataset.v129pc]=t.checked},true);if(t.dataset.v129pc==='smOn')refreshPanel()}
  else if(t.dataset.v129pro)change(q=>{q.pro=Object.assign({},q.pro);q.pro[t.dataset.v129pro]=t.checked},true)
  else if(t.dataset.v129ls&&selL())change(()=>{selL().snd=t.value},true)},true);
 document.addEventListener('keydown',e=>{if(APP.view!=='veditor'||!E.p)return;const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='textarea')return;

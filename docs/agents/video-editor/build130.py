@@ -18,6 +18,7 @@ rep("if(file.size>20*1024*1024){toastSafe('הסרטון גדול מ-20MB. קצר
     "if(file.size>19.5*1024*1024){toastSafe('הסרטון גדול מ-20MB. דוחס אותו בדפדפן לפני ההעלאה, זה לוקח כאורך הסרטון');try{file=await window.__v128.shrink(file)}catch(e){toastSafe('הדחיסה נכשלה: '+(e&&e.message||e));return null}}")
 rep("if(o.size>20*1024*1024){toastSafe('הקובץ גדול מ-20MB. בחרו \"מהיר\" בפורמט וייצאו שוב');return}",
     "if(o.size>19.5*1024*1024){toastSafe('הקובץ גדול מ-20MB. דוחס לפני השמירה…');try{const f2=await __v128.shrink(new File([o.blob],o.file,{type:o.type}));o=Object.assign({},o,{blob:f2,type:f2.type,file:f2.name,size:f2.size})}catch(e){toastSafe('הדחיסה נכשלה: '+(e&&e.message||e));return}}")
+rep("sig:d.sig||null,phase:d.phase||null","sig:d.sig||null,stylemaker:d.stylemaker||null,phase:d.phase||null")
 # clear words on the buttons
 rep('data-v128="plan" ${n&&opts.length&&!busy?\'\':\'disabled\'}>שליחה לתוכנית<','data-v128="plan" ${n&&opts.length&&!busy?\'\':\'disabled\'}>התחלת עריכה<')
 rep("<button type=\"button\" class=\"v129go\" data-v129=\"open\" data-tray=\"${id}\">עריכה</button>","<button type=\"button\" class=\"v129go\" data-v129=\"open\" data-tray=\"${id}\">התחלת עריכה</button>")

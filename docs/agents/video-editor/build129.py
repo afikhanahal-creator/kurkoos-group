@@ -15,6 +15,7 @@ rep(">ייצוא ממותג להורדה</button>",">${KIT.mode==='sel'||n<2?'י
 rep(">שליחה לעורך המקצועי</button>",">${KIT.mode==='sel'||n<2?'שליחת הסרטון הנבחר לעורך':'שליחה לעורך המקצועי'}</button>")
 rep("${n>1?seg('mode',[['each','כל סרטון בנפרד'],['merge','חיבור לסרטון אחד']]):''}","${n>1?seg('mode',[['sel','רק הסרטון הנבחר'],['each','כל הסרטונים, כל אחד בנפרד'],['merge','חיבור לסרטון אחד']]):''}")
 rep("window.__v127={T,KIT:()=>KIT,addFiles,drawFrame,seqOf,exportSeq,dims};","window.__v127={T,KIT:()=>KIT,addFiles,drawFrame,seqOf,exportSeq,dims,withKit:(k,fn)=>{const o=KIT;KIT=k;try{return fn()}finally{KIT=o}}};")
+rep("V.queueDoc=function(doc){const p=get();return q.call(this,Object.assign({},doc,{pro:Object.assign({steps:steps(p)},p)}))};","V.queueDoc=function(doc){const p=get();return q.call(this,doc&&doc.pro?doc:Object.assign({},doc,{pro:Object.assign({steps:steps(p)},p)}))};")
 # automatic editing of every video that enters: off unless switched on
 rep("auto:(function(){try{return localStorage.getItem('vid_auto')!=='0'}catch(e){return true}})()","auto:(function(){try{return localStorage.getItem('vid_auto')==='1'}catch(e){return false}})()")
 s=s.replace(M,open('v129.js',encoding='utf8').read()+'\n'+M).replace('</head>',open('k129css.txt',encoding='utf8').read()+'</head>')

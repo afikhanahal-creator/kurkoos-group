@@ -1,0 +1,6 @@
+const FAKE=`(()=>{const K='fakedb';const load=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')}catch(e){return {}}};const save=s=>localStorage.setItem(K,JSON.stringify(s));
+ const subs=[];const snap=(col)=>{const s=load()[col]||{};const docs=Object.entries(s).map(([id,v])=>({id,exists:true,data:()=>v}));return {docs,size:docs.length,empty:!docs.length,forEach:f=>docs.forEach(f),docChanges:()=>[],metadata:{}}};
+ const db={collection:col=>({get:async()=>snap(col),onSnapshot:(cb)=>{subs.push([col,cb]);setTimeout(()=>cb(snap(col)),50);return ()=>{}},doc:id=>({get:async()=>{const v=(load()[col]||{})[id];return {id,exists:!!v,data:()=>v}},
+   set:async d=>{if(window.__failWrites)throw {code:'invalid_argument',message:'x'};const s=load();s[col]=s[col]||{};s[col][id]=JSON.parse(JSON.stringify(d));save(s);subs.filter(x=>x[0]===col).forEach(x=>setTimeout(()=>x[1](snap(col)),20))},
+   update:async d=>{const s=load();s[col]=s[col]||{};s[col][id]=Object.assign(s[col][id]||{},d);save(s)}})}),doc:p=>db.collection(p.split('/')[0]).doc(p.split('/')[1])};
+ window.claude={use:async n=>n==='db'?db:null}})()`;

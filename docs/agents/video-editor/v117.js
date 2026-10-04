@@ -27,7 +27,7 @@ setInterval(()=>{try{if(ST.pending>0&&!busy()&&Date.now()-ST.lastRun>30000&&wind
 if(typeof peLayThumbs==='function'&&typeof peCanvas==='function'){const C=new Map();const MAX=120;
  const ready=p=>{try{return imgKeysOf(p).every(k=>LIBREADY[k])}catch(e){return false}};
  const sig=(p,i)=>{try{return p.id+'|'+p.layout+'|'+(i||0)+'|'+(p.format||'')+'|'+JSON.stringify(p.visual||null)+'|'+JSON.stringify(p.fx||null)}catch(e){return null}};
- const tile=(q,i)=>{const k=sig(q,i);const hit=k&&C.get(k);if(hit){ST.hits++;C.delete(k);C.set(k,hit);return hit}const big=peCanvas(q,i||0);ST.miss++;if(k&&ready(q)){try{const c=document.createElement('canvas');c.width=432;c.height=540;c.getContext('2d').drawImage(big,0,0,432,540);C.set(k,c);if(C.size>MAX)C.delete(C.keys().next().value);return c}catch(e){}}return big};
+ const tile=(q,i)=>{const k=sig(q,i);const hit=k&&C.get(k);if(hit){ST.hits++;C.delete(k);C.set(k,hit);return hit}const c=document.createElement('canvas');c.width=432;c.height=540;try{drawSlide(c,q,i||0)}catch(e){return peCanvas(q,i||0)}ST.miss++;if(k&&ready(q)){C.set(k,c);if(C.size>MAX)C.delete(C.keys().next().value)}return c};
  peLayThumbs=function(){document.querySelectorAll('canvas[data-pe-lay]').forEach(cv=>{const L=cv.dataset.peLay;const q=peConvert(JSON.parse(JSON.stringify(PE.p)),L);ensureImgs(q).then(()=>{const b=tile(q,0);cv.getContext('2d').drawImage(b,0,0,cv.width,cv.height)})})};
  ST.cacheClear=()=>C.clear();window.__v117tile=tile}
 window.__v117={ST};

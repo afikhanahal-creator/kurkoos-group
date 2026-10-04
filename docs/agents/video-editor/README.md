@@ -187,3 +187,27 @@ before/after, logo, animation; zoom, add text/image, reel), side panel 400 px on
 section headings with a red tick, the Claude rewrite card in night blue placed after the headline block, the
 score header on paper instead of yellow, issue rows as cards. Test `v118t.cjs`: no page overflow, 7 tab columns,
 rewrite card after the headline, no errors on 1440 and 1280 wide.
+
+## V119 · speed, round three (phone profile, 4x CPU, 1,500 posts)
+
+Measured with `boot.cjs` (boot: long tasks in the first 14 s) and `inter.cjs` (one number per interaction) after
+seeding the storage like the user's. Root causes found this round and what changed (`v119.js`, patches in
+`build119.py`):
+- the two big storage keys (`ag_posts` 2.6 MB, `pro_wf` 1.4 MB, plus `app_sched`) were serialised and written
+  inside every action; now they are flushed on idle time 3 s after the last change and on pagehide
+- the V99 pencil decorated every thumbnail with a forced layout per card (2.4 to 3.9 s on the agent and ideas
+  views); now an IntersectionObserver decorates cards as they scroll in
+- film grain drew thousands of 1.5 px rectangles per slide (four renderers); now a 256 px noise tile per
+  (alpha, seed, density) is drawn as a repeating pattern
+- the quality score cache was cleared on every render by design; now its epoch changes only when posts or
+  schedule items are added or removed, a photo is registered, or every 10 minutes, and an idle warmer fills it
+  after boot so the first gallery open is warm
+- the clarity gate's first pass waits 20 s after boot and later slices run on idle callbacks
+- the V101 pinned close button computed overlays on desktops where it never shows; V117's hidden check and
+  V118's desk check no longer force layout
+- layout tiles in the shape tab are drawn at tile size (432x540) through a frame budgeted queue
+- the editor photo library renders tiles only for open project sections; a closed section renders on open
+Before and after (ms, sync part of the action): agent view 826 to 375, ideas 800 to 407, editor close 689 to
+298, image tab 657 to 259, composer save 813 to 408, shape tab first open one 3.3 s task to 24 tasks under
+350 ms; boot long tasks 4.6 s to 3.2 s (the remaining 2 s is parsing 3.2 MB of script, which only a smaller
+page would change).

@@ -7,7 +7,7 @@ const pend=new Set((()=>{try{return JSON.parse(localStorage.getItem(PKEY)||'[]')
 const keep=()=>{try{localStorage.setItem(PKEY,JSON.stringify([...pend]))}catch(e){}};
 const dev=(()=>{let d='';try{d=localStorage.getItem('dev_id')||''}catch(e){}if(!d){d=Math.random().toString(36).slice(2,10);try{localStorage.setItem('dev_id',d)}catch(e){}}return d})();
 const lsOk=(()=>{try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true}catch(e){return false}})();
-const D={dev,ua:navigator.userAgent.slice(0,180),ls:lsOk,db:null,boot:Date.now(),writes:[],last:null};
+const D={dev,ua:navigator.userAgent.slice(0,180),ls:lsOk,db:null,boot:Date.now(),writes:[],last:null,ev:[]};
 let diagT=0;function diag(){if(!APP.db)return;clearTimeout(diagT);diagT=setTimeout(()=>{try{APP.db.collection('diag').doc('sched-'+dev).set(JSON.parse(JSON.stringify(Object.assign({},D,{ts:Date.now(),pending:[...pend],items:APP.sched.items.length})))).catch(()=>{})}catch(e){}},1500)}
 function body(it){const o={};Object.keys(it).forEach(k=>{if(!k.startsWith('_')&&it[k]!==undefined)o[k]=it[k]});return JSON.parse(JSON.stringify(o))}
 const timers={},busy={};
@@ -49,5 +49,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 function banner(){const v=document.querySelector('#appviews');if(!v||typeof APP==='undefined')return;const on=D.db===false&&['calendar','queue'].includes(APP.view);let b=document.getElementById('v136nodb');
  if(!on){if(b)b.remove();return}if(b&&v.contains(b))return;if(!b){b=document.createElement('div');b.id='v136nodb';b.setAttribute('role','status');b.innerHTML='<b>התצוגה הזו לא מחוברת לענן.</b> שינויים בלוח נשמרים רק במכשיר הזה. כדי שהזזות יישמרו לכל המכשירים, פתחו את המנוע ב-claude.ai בדפדפן.'}v.prepend(b)}
 let bt=0;new MutationObserver(()=>{if(bt)return;bt=requestAnimationFrame(()=>{bt=0;banner()})}).observe(document.body,{childList:true,subtree:true});
-window.__v136={put,retry,pending:()=>[...pend],D};
+// what the person did (opened the sheet, dragged, dropped), so a failure on a real phone can be traced
+function ev(n,x){D.ev.unshift({n,x:x==null?'':String(x).slice(0,80),t:Date.now()});D.ev=D.ev.slice(0,30);diag()}
+window.__v136={put,retry,pending:()=>[...pend],D,ev};
 })();

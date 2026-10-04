@@ -35,3 +35,5 @@ video/in/
 *.mask.npz
 __pycache__/
 *.pyc
+video/.mpvenv
+video/engine/models/*.tflite

@@ -287,3 +287,11 @@ the full screen shapes library (V68, V122 sizes) and are draggable like any deco
 The kit's colour looks (`looks.ts`) join the lighting presets, mapped onto the editor's adjustment scale:
 טבעי חד, פאנצ'י, קולנועי, וינטג', ניאון, שחור לבן דרמטי. Test `v125t.cjs`: every family draws, the
 "קולנועי" look applies {c:12,s:-14,w:8,b:-4,v:40}, the library lists 269 tiles; `v108t`, `v120t`, `v122t` pass.
+
+## V126 · professional edit steps in the video room
+
+A panel under the auto editor ("שלבי עריכה מקצועית"): cut silences and repeated takes, 9:16 face tracking, brand
+colour (off, soft, mid, strong), captions (off, white pill, kinetic) with an accent colour, loudness at -14 LUFS, and
+"show me before rendering". Saved in `vid_pro`; `__vid.queueDoc` is wrapped so every queued video carries
+`pro: {steps, ...}`, which `video/engine/pro.py` runs in order (cut, reframe, grade, captions, loudness). The guide's
+prompts live in `.claude/skills/kurkoos-video-pro/references/`. Test `v126t.cjs` on desk and phone.

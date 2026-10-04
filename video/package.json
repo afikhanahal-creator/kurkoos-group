@@ -1,0 +1,13 @@
+{
+  "name": "kurkoos-video",
+  "private": true,
+  "description": "Kurkoos video engine: HyperFrames compositions for captions and motion, Python engine for cut, reframe, grade, loudness",
+  "scripts": {
+    "hf": "hyperframes"
+  },
+  "dependencies": {
+    "@fontsource/rubik": "^5.1.0",
+    "gsap": "^3.14.2",
+    "hyperframes": "0.8.121"
+  }
+}

@@ -137,7 +137,7 @@ function rerender(){if(S.open)return;if(document.getElementById('cmp-root'))retu
 window.addEventListener('storage',e=>{if(e.key!=='app_sched'||!e.newValue)return;try{const v=JSON.parse(e.newValue);if(v&&v.items){APP.sched=v;rerender()}}catch(x){}});
 function sameItem(a,b){return a.at===b.at&&a.status===b.status&&JSON.stringify(a.nets)===JSON.stringify(b.nets)&&!!a.sent===!!b.sent}
 function listen(){if(!APP.db||listen.on)return;try{listen.on=true;APP.db.collection('schedule').onSnapshot(snap=>{let ch=false;const rows=[];(snap.forEach?(f=>snap.forEach(f)):(f=>(snap.docs||[]).forEach(f)))(d=>rows.push(Object.assign({id:d.id},d.data?d.data():d)));
-  rows.forEach(r=>{const i=APP.sched.items.findIndex(x=>x.id===r.id);if(r.removed){if(i>=0){APP.sched.items.splice(i,1);ch=true}return}if(i<0){APP.sched.items.push(r);ch=true}else if(!sameItem(APP.sched.items[i],r)){Object.assign(APP.sched.items[i],r);ch=true}});
+  rows.forEach(r=>{const i=APP.sched.items.findIndex(x=>x.id===r.id);if(r.removed){if(i>=0){APP.sched.items.splice(i,1);ch=true}return}if(i<0){APP.sched.items.push(r);ch=true}else if(!sameItem(APP.sched.items[i],r)&&(!window.__schedNewer||__schedNewer(APP.sched.items[i],r))){Object.assign(APP.sched.items[i],r);ch=true}});
   if(ch){try{lsSet('app_sched',APP.sched)}catch(e){}rerender()}})}catch(e){listen.on=false}}
 setInterval(listen,3000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')rerender()});

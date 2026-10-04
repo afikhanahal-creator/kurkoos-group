@@ -66,3 +66,23 @@ python3 video/engine/reel.py check video/out/clip                             # 
 (בלינוקס גם `apt-get install libgles2 libegl1`). המודלים של MediaPipe יורדים לבד ל-`engine/models/` בהרצה הראשונה.
 תמלול: `npx hyperframes transcribe` צריך את whisper.cpp ואת המודל מ-Hugging Face, שחסומים בסביבת הענן; שם עובדים עם
 `engine/transcribe.py` ומפתח ענן, או עם קובץ מילים מהמחשב של המשתמש.
+
+### אנימציה שקופה מעל הסרטון (`engine/overlay.py`)
+כרטיסים קטנים עם מילה ואייקון שנכנסים בדיוק כשהמילה נאמרת, לפי קובץ המילים. משטחים אטומים ב-88%, טקסט אטום, קפיץ ואז עצירה,
+ובפורמט לאורך לא מעל y 300. יוצאים `.mov` שקוף (ProRes 4444, `yuva444p12le`), בדיקה מעל ירוק מלא, ו-MP4 על גוון כהה של המותג.
+```
+python3 engine/overlay.py --words clip.words.json --card "פרומפט:chat" --card "סקילים:layers" --size 1080x1920 --side left --snap
+python3 engine/overlay.py --words clip.words.json --card "פרומפט:chat" --card "סקילים:layers" --size 1080x1920 --side left --render
+```
+
+## סטודיו אנימציה (הסקיל animation-studio)
+אנימציות מלאות מאפס עם טקסט בעברית, 8 סגנונות (הפרומפטים המקוריים ב-`.claude/skills/animation-studio/references`).
+כל אנימציה היא דף ב-`studio/<סגנון>/index.html` שמחשב את הכל מ-`seek(t)` (`studio/lib/studio.js`, פונטים מקומיים ב-`studio/lib/fonts.css`).
+המנוע המשותף `engine/anim_render.cjs` מצלם את הדף ב-240 צילומים לשנייה ישר ל-ffmpeg, ממזג כל 4 (`tmix`) ומוציא MP4 ב-60fps:
+```
+node engine/anim_render.cjs studio/kinetic/index.html --stills            # פריים לכל שלב + גיליון, לאישור
+node engine/anim_render.cjs studio/kinetic/index.html --check             # אף מילה לא נוגעת ולא יוצאת מהאזור הבטוח
+node engine/anim_render.cjs studio/kinetic/index.html --preview -o a.mp4  # סבב בדיקה זול: חצי גודל, 30fps
+node engine/anim_render.cjs studio/kinetic/index.html -o a.mp4 [--config input.json] [--audio song.wav]
+```
+תבניות בנויות: `studio/kinetic` (כותרות ענק על צבעים מתחלפים) ו-`studio/particles` (מילה שמתפרקת לחלקיקים, כדור, גלקסיה וחזרה).

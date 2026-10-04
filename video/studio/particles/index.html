@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Particle word</title>
+<!-- Style 3 of the animation studio: a word breaks into thousands of particles sampled from its own pixels, becomes a
+     sphere, a spiral galaxy, dives at light speed and is drawn back into the same sharp word.
+     Inputs (?c= JSON): word, colors [white, red, blue], bg, duration 6..12, w/h, count 4000..8000. -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>canvas{display:block}</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../lib/studio.js"></script>
+<script>
+const {clamp, lerp, smooth, step, hash, rng} = Studio;
+const C = Studio.config({word: 'קורקוס', colors: ['#ffffff', '#e3262d', '#2f4bff'], bg: '#05070b', duration: 9, w: 1080, h: 1920, count: 6000, seed: 7});
+const W = C.w, H = C.h, D = C.duration, K = D / 9;           // every time below is written for 9 seconds
+const T = {slam: 0, hold: 1.5 * K, ball: 2.5 * K, gal: 4 * K, accel: 6 * K, dive: 7 * K, out: 7.5 * K, done: 8.5 * K};
+const CX = W / 2, CY = H * 0.46, F = 1300;                    // perspective focal length
+const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const rgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, n >> 8 & 255, n & 255]; };
+const COL = C.colors.map(rgb);
+let P = [], FONT = '', TEXT = {x: CX, y: CY};
+
+// ---------- build: sample the word from a hidden canvas, give every particle its homes ----------
+function build() {
+  const r = rng(C.seed), off = document.createElement('canvas'); off.width = W; off.height = H;
+  const o = off.getContext('2d'); o.direction = 'rtl'; o.textAlign = 'center'; o.textBaseline = 'middle';
+  let size = 400; o.font = `900 ${size}px "Noto Sans Hebrew Var"`;
+  size = Math.min(size * (W * 0.8) / o.measureText(C.word).width, H * 0.22);
+  FONT = `900 ${size}px "Noto Sans Hebrew Var"`; o.font = FONT; o.fillStyle = '#fff'; o.fillText(C.word, TEXT.x, TEXT.y);
+  const px = o.getImageData(0, 0, W, H).data, cand = [];
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (px[(y * W + x) * 4 + 3] > 140) cand.push(x, y);
+  const n = Math.min(C.count, cand.length / 2);
+  let x0 = W, x1 = 0, y0 = H, y1 = 0; for (let i = 0; i < cand.length; i += 2) { x0 = Math.min(x0, cand[i]); x1 = Math.max(x1, cand[i]); y0 = Math.min(y0, cand[i + 1]); y1 = Math.max(y1, cand[i + 1]); }
+  const R = Math.min(W, H) * 0.33;
+  for (let i = 0; i < n; i++) {
+    const k = Math.floor(r() * cand.length / 2) * 2, wx = cand[k] + r() * 2 - 1, wy = cand[k + 1] + r() * 2 - 1;
+    const xn = (wx - x0) / (x1 - x0) * 2 - 1, yn = (wy - y0) / (y1 - y0) * 2 - 1;
+    // word to sphere by place on screen: x is longitude, y is latitude
+    const lon = xn * Math.PI + (r() - 0.5) * 0.25, lat = Math.asin(clamp(yn * 0.92 + (r() - 0.5) * 0.12, -1, 1));
+    // sphere to galaxy by angle: the arm whose winding passes nearest to this longitude
+    let best = null;
+    for (let arm = 0; arm < 2; arm++) { const base = arm * Math.PI; let rr = (((base - lon) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / 2.9;
+      if (!best || Math.abs(rr - 0.55) < Math.abs(best.rr - 0.55)) best = {arm, rr}; }
+    const gr = clamp(best.rr, 0.06, 1) * (0.9 + r() * 0.2), core = r() < 0.16;
+    P.push({wx, wy, xn, lon, lat, rad: R * (0.97 + r() * 0.06), arm: best.arm, gr: core ? r() * 0.18 : gr, core,
+      gj: (r() - 0.5) * (core ? 3 : 1.1) + (r() - 0.5) * 0.5, gy: (r() - 0.5) * 0.05, d: r(), z0: F * (0.15 + r() * 2.2), sz: 1.1 + r() * 1.4, sw: r()});
+  }
+}
+
+// ---------- positions: pure functions of time ----------
+const rotY = (p, a) => [p[0] * Math.cos(a) + p[2] * Math.sin(a), p[1], -p[0] * Math.sin(a) + p[2] * Math.cos(a)];
+const rotX = (p, a) => [p[0], p[1] * Math.cos(a) - p[2] * Math.sin(a), p[1] * Math.sin(a) + p[2] * Math.cos(a)];
+function sphere(q, t) {
+  const v = [q.rad * Math.cos(q.lat) * Math.sin(q.lon), q.rad * Math.sin(q.lat), q.rad * Math.cos(q.lat) * Math.cos(q.lon) * -1];
+  return rotX(rotY(v, 1.4 * (t - T.ball)), 0.32);
+}
+// rotation of the galaxy: the inner part turns faster; it accelerates before the dive
+const spin = (q, t) => { const u = Math.max(0, t - T.gal), a = Math.max(0, t - T.accel); return (0.9 / (0.25 + q.gr)) * (u + 1.6 * a * a); };
+function galaxy(q, t) {
+  const Rg = Math.min(W, H) * 0.46, phi = q.arm * Math.PI - 2.9 * q.gr + q.gj / (1 + 4 * q.gr) + spin(q, t);
+  const rr = Rg * q.gr * (1 + q.gj * 0.18);
+  const v = [rr * Math.cos(phi), Rg * q.gy, rr * Math.sin(phi)];
+  return rotX(v, 1.08);
+}
+const project = v => { const k = F / (F + v[2]); return [CX + v[0] * k, CY + v[1] * k, k]; };
+const word = q => [q.wx - CX, q.wy - CY, 0];
+const L3 = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+
+function pos(q, t) {                          // returns [x, y, depthScale] or null when the particle is not drawn
+  if (t < T.dive) {
+    // release starts at the right edge, in reading direction
+    const rel = T.hold + 0.25 * K + (1 - (q.xn + 1) / 2) * 0.6 * K + q.d * 0.1 * K;
+    if (t < rel) return null;
+    const kb = step(t - rel, {f: 0.9 / K, z: 0.9}), kg = step(t - T.gal - q.d * 0.35 * K, {f: 0.55 / K, z: 0.95});
+    let v = L3(word(q), sphere(q, t), kb);
+    if (kg > 0) v = L3(v, galaxy(q, t), kg);
+    return project(v);
+  }
+  if (t < T.out + 0.2 * K) {
+    // the dive: keep the screen position at the moment of the dive, take a random depth, fly forward
+    const s = project(L3(sphere(q, T.dive), galaxy(q, T.dive), 1)), u = t - T.dive;
+    const z = q.z0 - F * 2.6 * (u / (0.5 * K)) ** 2 * (0.6 + q.d * 0.8);
+    if (z + F < 40) return null;
+    const bx = (s[0] - CX) / s[2] * (F + q.z0) / F, by = (s[1] - CY) / s[2] * (F + q.z0) / F;
+    return project([bx, by, z]);
+  }
+  // drawn back: a spiral that ends on the particle's own point of the word, everyone turning the same way
+  const t0 = T.out + 0.15 * K + q.d * 0.25 * K, u = clamp((t - t0) / (0.78 * K));
+  if (t < t0) return null;
+  const e = 1 - (1 - u) ** 3, hx = q.wx - CX, hy = q.wy - CY, r1 = Math.hypot(hx, hy), a1 = Math.atan2(hy, hx);
+  const rr = lerp(Math.max(W, H) * 0.75, r1, e), a = a1 - (1 - e) * 3.4;
+  return [CX + rr * Math.cos(a), CY + rr * Math.sin(a), lerp(0.6, 1, e)];
+}
+
+// ---------- draw ----------
+function background() {
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(CX, CY, Math.min(W, H) * 0.2, CX, CY, Math.max(W, H) * 0.75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.55)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function colour(q, t) {
+  const kg = smooth((t - T.gal - q.d * 0.3 * K) / (0.8 * K)) * (1 - smooth((t - T.out) / (0.6 * K)));
+  const arm = q.core ? COL[0] : COL[1 + q.arm], w = COL[0];
+  return [lerp(w[0], arm[0], kg), lerp(w[1], arm[1], kg), lerp(w[2], arm[2], kg)];
+}
+function text(t, alpha) {
+  if (alpha <= 0) return;
+  const s = t < T.hold ? lerp(1.15, 1, step(t - T.slam, {f: 2.3, z: 0.55})) : 1;
+  // tremble from the shown frame number, the same across the four sub-frames
+  const fr = Math.round(t * 60), tr = t > T.hold && t < T.dive ? 4 * smooth((t - T.hold) / (0.25 * K)) : 0;
+  const jx = (hash(fr * 2) - 0.5) * 2 * tr, jy = (hash(fr * 2 + 1) - 0.5) * 2 * tr;
+  ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = alpha;
+  // what has already left the word is clipped away; the front moves right to left
+  if (t > T.hold && t < T.dive) { const front = lerp(W, 0, clamp((t - T.hold - 0.25 * K) / (0.62 * K))); ctx.beginPath(); ctx.rect(0, 0, front - 6, H); ctx.clip(); }
+  ctx.translate(TEXT.x + jx, TEXT.y + jy); ctx.scale(s, s);
+  ctx.font = FONT; ctx.direction = 'rtl'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.colors[0];
+  ctx.fillText(C.word, 0, 0); ctx.restore();
+}
+function seek(t) {
+  t = clamp(t, 0, D); background();
+  const landed = smooth((t - (T.done - 0.12 * K)) / (0.2 * K));
+  // the word is real text at the start and at the end
+  if (t < T.ball + 0.4 * K) text(t, clamp(t / 0.08));
+  ctx.globalCompositeOperation = 'lighter';
+  const pa = (t < T.hold + 0.2 * K ? 0 : 1) * (1 - landed);
+  if (pa > 0) for (let i = 0; i < P.length; i++) {
+    const q = P[i], p = pos(q, t); if (!p) continue;
+    const b = pos(q, t - 1 / 240), [r, g, bl] = colour(q, t);
+    const k = p[2], size = q.sz * clamp(k, 0.35, 3.2), a = pa * clamp(0.25 + 0.75 * k * k, 0.12, 1) * (0.7 + 0.3 * q.sw);
+    ctx.globalAlpha = a; ctx.fillStyle = ctx.strokeStyle = `rgb(${r | 0},${g | 0},${bl | 0})`;
+    if (b && Math.hypot(p[0] - b[0], p[1] - b[1]) > 1.6) {      // fast: a short streak from a moment ago
+      ctx.lineWidth = size; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(p[0], p[1]); ctx.stroke();
+    } else { ctx.beginPath(); ctx.arc(p[0], p[1], size / 2, 0, 6.2832); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+  if (landed > 0) text(D, landed);
+}
+const stages = [[0.9, 'המילה נחבטת ומחזיקה'], [2.05, 'רעד והתפרקות מהקצה הימני'], [3.3, 'כדור מסתובב'], [5.1, 'גלקסיה ספירלית'], [6.75, 'האצה'], [7.25, 'מהירות אור'], [8.05, 'נשאב חזרה'], [8.85, 'המילה חדה, החזקה']].map(([t, label]) => ({t: t * K, label}));
+Studio.define({w: W, h: H, duration: D, stages, fonts: ['900 100px "Noto Sans Hebrew Var"'], build, seek});
+</script>
+</body>
+</html>

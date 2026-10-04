@@ -269,3 +269,21 @@ on every page except destructive or outward ones (518 clicks): no script errors.
   there are no new materials instead of claiming drafts were made
 - the fonts table scrolls inside its card on phones; the website import notice uses the calm teal style
 Regressions `v108t`, `v118t`, `v120t`, `v122t` pass.
+
+## V125 · the video studio kit's elements in every post image
+
+Source: the video-studio skill's animation kit (`.claude/skills/video-studio/assets/remotion-kit/src/kit`),
+whose overlays and looks only existed for video. `v125.js` redraws the still-image ones on canvas, in brand
+colours, as a new shapes-library category "אלמנטים מהסטודיו" (269 elements), so they appear in the shape tab,
+the full screen shapes library (V68, V122 sizes) and are draggable like any decoration:
+- marker arrow (kit `Arrow`): curved marker stroke with an open head, from each corner toward the centre
+- hand-drawn circle (kit `Circle`): ellipse overshooting its start by 15%, around the middle, top, under the
+  headline or the bottom
+- step progress bar (kit `ProgressBar`, frozen): five segments filled right to left, step 1 to 5, top or bottom
+- sparkles and brand-colour confetti (kit `Burst`, frozen mid-flight) from a corner
+- light leak (kit `LightLeak`): warm, gold or mist glow screened over a corner
+- colour wash (kit `Wash`, multiply) in night blue, Kurkoos red or teal; vignette (kit `Vignette`)
+- label stickers (kit `Callout` as a sticker): חדש, לפני, אחרי, בבנייה, נמסר, למכירה, טיפ, שאלה, in Heebo 900
+The kit's colour looks (`looks.ts`) join the lighting presets, mapped onto the editor's adjustment scale:
+טבעי חד, פאנצ'י, קולנועי, וינטג', ניאון, שחור לבן דרמטי. Test `v125t.cjs`: every family draws, the
+"קולנועי" look applies {c:12,s:-14,w:8,b:-4,v:40}, the library lists 269 tiles; `v108t`, `v120t`, `v122t` pass.

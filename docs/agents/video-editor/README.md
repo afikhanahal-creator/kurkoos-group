@@ -211,3 +211,15 @@ Before and after (ms, sync part of the action): agent view 826 to 375, ideas 800
 298, image tab 657 to 259, composer save 813 to 408, shape tab first open one 3.3 s task to 24 tasks under
 350 ms; boot long tasks 4.6 s to 3.2 s (the remaining 2 s is parsing 3.2 MB of script, which only a smaller
 page would change).
+
+## V120 · closing the editor without saving changes nothing
+
+Reported as a critical bug: edits made in the editor and not saved still changed the post. Cause: V82 (which
+wraps every later module, since new modules are inserted before the V83 marker) saved on close with an undo
+bar ("השינויים נשמרו בפוסט"). Now the V82 branch is off when V120 is present, and V120's outermost `peClose`
+wrapper does this on a dirty close: keep the working copy as an in-memory draft, close with force (nothing is
+applied, the post keeps its saved state), and show a bar "סגרת בלי לשמור. הפוסט נשאר כפי שהיה" with
+"חזרה לעריכה", which reopens the editor on the same post and puts the draft back (waiting for the editor
+since `peOpen` is asynchronous). Explicit save ("שמירה", "אישור") is unchanged. Test `v120t.cjs` on desktop and
+phone: the post is unchanged after X, the bar restores the draft, save then applies, a second dirty close is
+discarded; `v108t`/`v109t` still pass.

@@ -177,12 +177,13 @@ async function saveToLibrary(o){const V=window.__vid,VD=V&&V.VD;if(!VD||!VD.asse
  try{const f=new File([o.blob],o.file,{type:o.type});const r=await VD.assets.upload(f);await V.queueDoc({id:uid('v'),name:E.p.name+' · גרסה '+(o.ver||E.p.versions.length||1),srcId:r.id,srcUrl:r.url,out:r.url,status:'done',source:'editor',editOf:E.p.src.docId||null});toastSafe('נשמר בספרייה')}catch(e){toastSafe('השמירה נכשלה: '+(e&&e.message||e))}}
 // only this video goes to the professional editor (plan first, approval in its card)
 async function sendPro(){const V=window.__vid,VD=V&&V.VD;if(!VD||!VD.db||!VD.assets){toastSafe('השליחה לעורך זמינה כשהדף פתוח ב-claude.ai עם הרשאת עריכה');return}
- const p=E.p;if(!p.fx.length&&!p.smOn&&!(p.studio&&p.studio!=='none')&&PRO.every(x=>(p.pro||{})[x[0]]===false)){toastSafe('בחרו לפחות שלב, אפקט או סגנון אישי');return}const miss=p.fx.filter(f=>f.id!=='rewind'&&!(f.word||'').trim());if(miss.length){toastSafe('חסרה מילה לאפקט: '+miss.map(f=>FXS.find(x=>x[0]===f.id)[1]).join(', '));return}
- const sig=p.fx.map(f=>{const o={kind:f.id};if(f.word)o.word=f.word.trim();if(f.text)o[f.id==='title3d'||f.id==='gold'?'text':'title']=f.text.trim();return o});
+ const p=E.p;if(!p.fx.length&&!p.smOn&&!(p.studio&&p.studio!=='none')&&PRO.every(x=>(p.pro||{})[x[0]]===false)){toastSafe('בחרו לפחות שלב, אפקט או סגנון אישי');return}const miss=p.fx.filter(f=>f.id!=='rewind'&&!(f.word||'').trim()&&(f.at==null||f.at===''));if(miss.length){toastSafe('חסרה מילה לאפקט: '+miss.map(f=>FXS.find(x=>x[0]===f.id)[1]).join(', '));return}
+ const sig=p.fx.map(f=>{const o={kind:f.id};if(f.word)o.word=f.word.trim();if(f.at!=null&&f.at!==''&&!isNaN(+f.at))o.at=+f.at;if(f.text)o[f.id==='title3d'||f.id==='gold'?'text':'title']=f.text.trim();return o});
  const steps=PRO.map(x=>x[0]).filter(id=>(p.pro||{})[id]!==false);const pro={steps,cut:steps.includes('cut'),reframe:steps.includes('reframe'),grade:steps.includes('grade')?'mid':'off',captions:steps.includes('captions')?(p.capStyle==='karaoke'?'kinetic':'pill'):'off',loudness:steps.includes('loudness'),review:true};
  if(p.studio&&p.studio!=='none'&&(p.studioText||'').trim())sig.unshift({kind:'studio_'+p.studio,text:p.studioText.trim()});
  const stylemaker=p.smOn?{name:String((p.sm||{}).name||'kurkoos').toLowerCase().replace(/[^a-z0-9-]/g,'')||'kurkoos',answers:Object.assign({q3:'brand'},p.sm||{}),brand:{bg:'#07293a',ink:'#ffffff',main:'#105572',accent:'#a90b0c',soft:'#8fb6c8'}}:null;
- const edit={look:p.look||'none',progress:!!p.progress,layers:p.layers,sfx:allSfx(p),capStyle:p.capStyle,trim:{in:p.in,out:p.out},mute:p.mute,music:p.music?{name:p.music.name,vol:p.music.vol,duck:p.music.duck}:null};
+ const s0=seq(),caps=p.layers.filter(l=>l.type==='cap').map(l=>({text:l.text,start:+((p.in||0)+Math.max(0,l.start-s0.intro)).toFixed(2),end:+((p.in||0)+Math.max(0,l.end-s0.intro)).toFixed(2)}));
+ const edit={caps,look:p.look||'none',progress:!!p.progress,layers:p.layers,sfx:allSfx(p),capStyle:p.capStyle,trim:{in:p.in,out:p.out},mute:p.mute,music:p.music?{name:p.music.name,vol:p.music.vol,duck:p.music.duck}:null};
  E.busy={p:0,label:'שולח את הסרטון הזה לעורך',cancel:false};refresh();
  try{let d;if(p.src.kind==='tray'){const it=__v127.T.items.find(x=>x.id===p.src.trayId);const f=window.__v128?await __v128.shrink(it.file):it.file;const r=await VD.assets.upload(f);
    d=await V.queueDoc({id:uid('v'),name:p.name,srcId:r.id,srcUrl:r.url,source:'editor',status:'plan_requested',phase:'plan',sig,stylemaker,kit:p.kit,edit,pro,trim:{in:p.in,out:p.out},mute:p.mute});p.src={kind:'doc',docId:d.id,name:p.name};persist()}
@@ -269,7 +270,7 @@ function tabHtml(){const p=E.p,k=p.kit;
   <div class="v129card"><h5>פתיח מסטודיו האנימציה</h5>${seg('studio',[['none','בלי'],['kinetic','כותרות ענק'],['particles','שם שמתפרק לחלקיקים']],p.studio||'none','data-v129p')}${p.studio&&p.studio!=='none'?`<input class="v129in" data-v129pt="studioText" value="${esc(p.studioText||'')}" placeholder="${p.studio==='kinetic'?'3 עד 6 מילים':'מילה אחת או שם'}">`:''}</div>
   <div class="v129card"><h5>אפקטים קולנועיים על המילים</h5><small class="v129hint">18 אפקטי החתימה. בוחרים, וכותבים על איזו מילה כל אחד נוחת.</small>
   <div class="v129sigs">${FXS.map(([id,n])=>`<button type="button" data-v129="fxadd" data-id="${id}" aria-pressed="${p.fx.some(f=>f.id===id)}">${fxPrev(id)}<span>${n}</span></button>`).join('')}</div>
-  ${p.fx.map((f,i)=>`<div class="v129fxr"><b>${FXS.find(x=>x[0]===f.id)[1]}</b>${f.id==='rewind'?'<small>בסוף הסרטון</small>':`<input class="v129in" data-v129fx="${i}" data-k="word" value="${esc(f.word||'')}" placeholder="על המילה">`}${['title3d','gold','opening'].includes(f.id)?`<input class="v129in" data-v129fx="${i}" data-k="text" value="${esc(f.text||'')}" placeholder="הטקסט">`:''}<button type="button" class="v129x" data-v129="fxdel" data-i="${i}" aria-label="להסיר">✕</button></div>`).join('')}
+  ${p.fx.map((f,i)=>`<div class="v129fxr"><b>${FXS.find(x=>x[0]===f.id)[1]}</b>${f.id==='rewind'?'<small>בסוף הסרטון</small>':`<input class="v129in" data-v129fx="${i}" data-k="word" value="${esc(f.word||'')}" placeholder="על המילה (לא חובה)"><label class="v129f v129at"><span>או בשנייה</span><input type="number" step="0.1" min="0" data-v129fx="${i}" data-k="at" value="${f.at!=null?f.at:''}"></label>`}${['title3d','gold','opening'].includes(f.id)?`<input class="v129in" data-v129fx="${i}" data-k="text" value="${esc(f.text||'')}" placeholder="הטקסט">`:''}<button type="button" class="v129x" data-v129="fxdel" data-i="${i}" aria-label="להסיר">✕</button></div>`).join('')}
   <button type="button" class="px-btn pri" data-v129="pro" ${E.busy?'disabled':''}>שליחת הסרטון הזה לתוכנית</button></div>`;
  return `<div class="v129card"><h5>גרסאות</h5><button type="button" class="px-btn sm pri" data-v129="ver">שמירת גרסה עכשיו</button>
   ${p.versions.length?`<ul class="v129vl">${p.versions.slice().reverse().map(v=>`<li><b>גרסה ${v.n}</b><span>${new Date(v.at).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}</span><span>${v.data.layers.length} שכבות · ${v.data.sfx.length} צלילים</span><button type="button" class="px-btn sm" data-v129="restore" data-n="${v.n}">חזרה לגרסה</button></li>`).join('')}</ul>`:'<small class="v129hint">עוד לא נשמרו גרסאות. כל שינוי נשמר כטיוטה באופן אוטומטי, וגרסה היא נקודה שאפשר לחזור אליה.</small>'}</div>
@@ -366,7 +367,7 @@ document.addEventListener('click',async e=>{
  else if(a==='recipe'){change(q=>{q.recipe=b.dataset.id},true);refreshPanel()}
  else if(a==='auto'){if(!p.recipe){toastSafe('בחרו קודם סגנון');return}buildRecipe(p.recipe)}
  else if(a==='addfx'){const f=BFX.find(x=>x[0]===b.dataset.fx);addLayer({id:uid('f'),type:'fx',fx:f[0],start:t,end:Math.min(seq().total,t+f[2]),amt:1});toastSafe(f[1]+' נוסף ב-'+fmtT(t))}
- else if(a==='fxadd'){change(q=>{const i=q.fx.findIndex(f=>f.id===b.dataset.id);if(i>=0)q.fx.splice(i,1);else q.fx.push({id:b.dataset.id,word:''})})}
+ else if(a==='fxadd'){change(q=>{const i=q.fx.findIndex(f=>f.id===b.dataset.id);if(i>=0)q.fx.splice(i,1);else{const s0=seq();q.fx.push({id:b.dataset.id,word:'',at:+((q.in||0)+Math.max(0,E.t-s0.intro)).toFixed(1)})}})}
  else if(a==='fxdel')change(q=>{q.fx.splice(+b.dataset.i,1)})},true);
 document.addEventListener('input',e=>{const t=e.target;if(!t.closest||!t.closest('#v129'))return;const p=E.p;
  if(t.dataset.v129==='name'){p.name=t.value.slice(0,60);persist();return}
@@ -376,7 +377,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!t.closest||!t.closest
  if(t.dataset.v129sv){const x=p.sfx.find(s=>s.id===t.dataset.v129sv);if(x){x.vol=+t.value;persist()}return}
  if(t.dataset.v129sm){p.sm=Object.assign({},p.sm);p.sm[t.dataset.v129sm]=t.value.slice(0,t.dataset.v129sm==='name'?24:200);persist();return}
  if(t.dataset.v129pt){p[t.dataset.v129pt]=t.value.slice(0,60);persist();return}
- if(t.dataset.v129fx!=null){p.fx[+t.dataset.v129fx][t.dataset.k]=t.value.slice(0,60);persist()}});
+ if(t.dataset.v129fx!=null){p.fx[+t.dataset.v129fx][t.dataset.k]=t.dataset.k==='at'?(t.value===''?null:+t.value):t.value.slice(0,60);persist()}});
 document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#v129'))return;const p=E.p;
  if(t.hasAttribute('data-v129m')){const f=t.files&&t.files[0];if(f){E.musicFile=f;E.musicBuf=null;change(q=>{q.music={name:f.name,vol:q.music?q.music.vol:0.22,duck:true}})}}
  else if(t.hasAttribute('data-v129md'))change(q=>{q.music.duck=t.checked},true);

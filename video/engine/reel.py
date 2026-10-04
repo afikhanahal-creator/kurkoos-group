@@ -595,7 +595,7 @@ def master(src: str, dst: str, lufs: float = -14.0) -> None:
 
 
 # ---------------------------------------------------------------- the pipeline
-def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keywords: list[str], engine: str, words_file: str | None, with_mask: bool = True, brand: str = "auto", effects: list[str] | None = None, emojis: dict | None = None, extra: list[dict] | None = None, sig: list[dict] | None = None, music: str | None = None, music_gain: float = 0.12, plan_only: bool = False) -> dict:
+def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keywords: list[str], engine: str, words_file: str | None, with_mask: bool = True, brand: str = "auto", effects: list[str] | None = None, emojis: dict | None = None, extra: list[dict] | None = None, sig: list[dict] | None = None, music: str | None = None, music_gain: float = 0.12, plan_only: bool = False, caps: list[dict] | None = None) -> dict:
     # brand chrome (logo intro + standing footer line): full for raw footage; none for videos the system rendered itself (they carry it already)
     if brand == "auto":
         brand = "none" if os.path.basename(src).startswith(("kurkoos-", "reel-", "post-")) else "full"
@@ -620,7 +620,7 @@ def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keyw
         tm = TimeMap.identity(info["duration"], info["fps"])
     sig_items, sig_skipped = ([], [])
     if sig:
-        sig_items, sig_skipped = SIG.plan_signature(sig, words, tm)
+        sig_items, sig_skipped = SIG.plan_signature(sig, words, tm, info["duration"])
         SIG.plan_peeks(sig_items)
         if any(i["kind"] == "opening" for i in sig_items) and brand == "full":
             brand = "none"   # the grey opening is the brand moment; no logo intro on top of it
@@ -640,6 +640,18 @@ def edit(src: str, out: str, style: str, hook: str | None, cta: str | None, keyw
             tm.insert_freeze(tm.src_time(kw["at"]), 0.5)
             open(os.path.join(proj, "timemap.json"), "w").write(tm.to_json())
             plan["duration"] = tm.duration
+    # captions written in the editor (source seconds), used when there is no transcript to time them from
+    if caps and not plan["captions"]["pages"]:
+        pages = []
+        for c in caps:
+            ws = str(c.get("text", "")).split()
+            if not ws:
+                continue
+            a, b = SIG._near(tm, float(c.get("start", 0))), SIG._near(tm, float(c.get("end", 0)))
+            b = max(b, a + 0.4)
+            step = (b - a) / len(ws)
+            pages.append({"start": a, "end": b, "words": [{"text": w, "start": a + i * step, "end": a + (i + 1) * step} for i, w in enumerate(ws)]})
+        plan["captions"]["pages"] = pages
     if sig is not None:
         plan["signature"] = sig_items
         plan["sig_skipped"] = sig_skipped
@@ -796,6 +808,7 @@ if __name__ == "__main__":
     e.add_argument("--sig", help="signature effects: a JSON file (or JSON text) with a list of {kind, word, ...}; see signature.py catalog")
     e.add_argument("--music", help="music bed under the speech (silent in the blackout and the time freeze)")
     e.add_argument("--music-gain", type=float, default=0.12)
+    e.add_argument("--caps", help="captions written by hand: JSON file or text, a list of {text, start, end} in source seconds")
     e.add_argument("--plan-only", action="store_true", help="stop after the plan: word table, effect list and one frame per effect, for approval")
     cat = sub.add_parser("catalog")
     c = sub.add_parser("check")
@@ -809,7 +822,7 @@ if __name__ == "__main__":
         if a.sig:
             sig = json.load(open(a.sig, encoding="utf-8")) if os.path.exists(a.sig) else json.loads(a.sig)
         eff = [x for x in a.effects.split(",") if x] if a.effects is not None else ([] if sig else None)
-        plan = edit(a.src, a.out, a.style, a.hook, a.cta, [k for k in a.keywords.split(",") if k], a.engine, a.words, not a.no_mask, a.brand, eff, json.loads(a.emojis) if a.emojis else None, json.loads(a.extra) if a.extra else None, sig, a.music, a.music_gain, a.plan_only)
+        plan = edit(a.src, a.out, a.style, a.hook, a.cta, [k for k in a.keywords.split(",") if k], a.engine, a.words, not a.no_mask, a.brand, eff, json.loads(a.emojis) if a.emojis else None, json.loads(a.extra) if a.extra else None, sig, a.music, a.music_gain, a.plan_only, (json.load(open(a.caps, encoding='utf-8')) if a.caps and os.path.exists(a.caps) else (json.loads(a.caps) if a.caps else None)))
         if a.plan_only:
             print(json.dumps({"plan": os.path.join(a.out, "plan.md"), "preview": os.path.join(a.out, "plan_preview.png"), "effects": len(plan.get("signature", [])), "skipped": plan.get("sig_skipped", [])}, ensure_ascii=False))
             sys.exit(0)

@@ -20,7 +20,12 @@ def files():
             yield inc
             continue
         for d, ds, fs in os.walk(p):
-            ds[:] = [x for x in ds if x not in SKIP_DIRS]
+            ds[:] = [x for x in ds if x not in SKIP_DIRS or (x == "models" and d.endswith("engine"))]
+            if d.endswith(os.path.join("engine", "models")):
+                fs = [f for f in fs if f == "selfie_segmenter.tflite"]
+                for f in fs:
+                    yield os.path.relpath(os.path.join(d, f), ROOT)
+                continue
             for f in fs:
                 if os.path.splitext(f)[1] in SKIP_EXT:
                     continue

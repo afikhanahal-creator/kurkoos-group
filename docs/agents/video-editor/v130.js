@@ -26,13 +26,11 @@ function studioBar(){const pg=document.getElementById('v100page'),s=document.get
 // ---------- the editor: an action bar that is always there
 function editorBar(){const ed=document.getElementById('v129');if(!ed||!window.__v129)return;const E=__v129.E,p=E.p;if(!p)return;let bar=ed.querySelector('.v130ebar');
  if(!bar){ed.insertAdjacentHTML('beforeend',`<div class="v130ebar" role="region" aria-label="מה עכשיו"><ol class="v130steps"><li>סגנון</li><li>אפקטים, כתוביות וסאונד</li><li>סיום</li></ol><p></p>
-  <div class="v130acts"><button type="button" class="px-btn" data-v130="watch">צפייה מההתחלה</button><button type="button" class="px-btn" data-v130="export">ייצוא הסרטון המוגמר והורדה</button><button type="button" class="px-btn" data-v130="pro"></button></div></div>`);bar=ed.querySelector('.v130ebar')}
+  <div class="v130acts"><button type="button" class="px-btn" data-v130="watch">צפייה מההתחלה</button><button type="button" class="px-btn" data-v130="export">יצירת הסרטון המוגמר</button><button type="button" class="px-btn" data-v130="pro"></button></div></div>`);bar=ed.querySelector('.v130ebar')}
  const fx=(p.fx||[]).length+(p.smOn?1:0),lay=p.layers.length+(p.sfx||[]).length,steps=Object.values(p.pro||{}).filter(v=>v===false).length;
- const proN=5-steps;setText(bar.querySelector('[data-v130="pro"]'),fx?`התחלת עריכה מקצועית · ${fx} ${fx===1?'בחירה':'בחירות'}`:'התחלת עריכה מקצועית');
- bar.querySelector('[data-v130="pro"]').classList.toggle('pri',!!fx);bar.querySelector('[data-v130="export"]').classList.toggle('pri',!fx);
- setText(bar.querySelector('p'),fx?`בחרת ${fx} אפקטים קולנועיים ו-${proN} שלבים מקצועיים. "התחלת עריכה מקצועית" שולחת את הסרטון הזה לעורך: קודם תוכנית לאישור שלך, ואז הסרטון המוגמר בכרטיס שלו.`
-  :lay?`בנית ${lay} שכבות (טקסט, אלמנטים, אפקטים וצלילים). "ייצוא הסרטון המוגמר" בונה אותו עכשיו בדפדפן כמו בתצוגה, ומוריד קובץ.`
-  :'התחילו בלשונית "סגנון ועריכה אוטומטית": בוחרים סגנון ולוחצים לבנות גרסה. אחר כך מייצאים, או שולחים לעורך המקצועי.');
+ const proN=5-steps;setText(bar.querySelector('[data-v130="pro"]'),fx?`גרסה קולנועית בענן · ${fx} ${fx===1?'בחירה':'בחירות'}`:'גרסה קולנועית בענן');
+ bar.querySelector('[data-v130="export"]').classList.add('pri');
+ setText(bar.querySelector('p'),`"יצירת הסרטון המוגמר" בונה עכשיו את הסרטון כמו בתצוגה${lay?` (${lay} שכבות)`:''}, שומר אותו בספרייה ומאפשר להוריד או לתזמן כריל.${fx?` אחר כך, "גרסה קולנועית בענן" מוסיפה את ${fx} האפקטים הקולנועיים, אחרי תוכנית לאישור שלך.`:''}`);
  const done=[!!p.recipe||p.look&&p.look!=='none',lay>0||fx>0,!!(E.outs&&E.outs.length)];bar.querySelectorAll('.v130steps li').forEach((li,i)=>li.classList.toggle('on',done[i]))}
 // ---------- events
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-v130t]');if(t){const sel=document.querySelector('#v128 .v128tgt select');if(sel){sel.value=t.dataset.v130t;sel.dispatchEvent(new Event('change',{bubbles:true}));const g=t.parentElement;g.querySelectorAll('[data-v130t]').forEach(b=>b.setAttribute('aria-checked',b===t));g.dataset.k=''}return}

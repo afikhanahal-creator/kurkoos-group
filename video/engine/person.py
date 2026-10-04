@@ -9,7 +9,62 @@ import sys
 import numpy as np
 
 
+SEG_SMALL = (os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "selfie_segmenter.tflite"),
+             "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite")
+
+
 def compute(clip: str, out: str | None = None, scale: float = 0.25, every: int = 1) -> str:
+    """rembg (u2net_human_seg) first; when its model cannot be downloaded (a closed network), MediaPipe's selfie
+    segmenter (a small model from storage.googleapis.com, shipped with the engine); when neither works, an empty mask
+    file, so effects that need the person simply draw without the cut-out instead of stopping the edit."""
+    try:
+        return _compute_rembg(clip, out, scale, every)
+    except Exception as e:
+        print("rembg unavailable:", str(e)[:160], file=sys.stderr)
+    try:
+        return _compute_mediapipe(clip, out, scale, every)
+    except Exception as e:
+        print("mediapipe unavailable:", str(e)[:160], file=sys.stderr)
+    out = out or os.path.splitext(clip)[0] + ".mask.npz"
+    np.savez_compressed(out, masks=np.zeros((0, 1, 1), np.uint8), fps=30.0, every=every, scale=scale)
+    return out
+
+
+def _compute_mediapipe(clip, out, scale, every):
+    import cv2
+    import mediapipe as mp
+    from mediapipe.tasks.python import vision, BaseOptions
+    path, url = SEG_SMALL
+    if not os.path.exists(path):
+        import urllib.request
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        urllib.request.urlretrieve(url, path)
+    seg = vision.ImageSegmenter.create_from_options(vision.ImageSegmenterOptions(base_options=BaseOptions(model_asset_path=path), output_confidence_masks=True))
+    cap = cv2.VideoCapture(clip)
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30
+    masks, idx = [], 0
+    while True:
+        ok, fr = cap.read()
+        if not ok:
+            break
+        if idx % every == 0:
+            small = cv2.resize(fr, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+            img = mp.Image(image_format=mp.ImageFormat.SRGB, data=cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
+            r = seg.segment(img)
+            cm = r.confidence_masks[-1].numpy_view()
+            masks.append((np.clip(cm, 0, 1) * 255).astype(np.uint8).reshape(small.shape[:2]))
+        idx += 1
+    cap.release()
+    try:
+        seg.close()
+    except Exception:
+        pass
+    out = out or os.path.splitext(clip)[0] + ".mask.npz"
+    np.savez_compressed(out, masks=np.stack(masks) if masks else np.zeros((0, 1, 1), np.uint8), fps=fps, every=every, scale=scale)
+    return out
+
+
+def _compute_rembg(clip, out, scale, every):
     import cv2
     from rembg import new_session, remove
     from PIL import Image

@@ -79,20 +79,48 @@ def find_word(words: list[dict], token: str, n: int = 1, after: float = -1.0):
 
 
 # ---------------------------------------------------------------- planning
-def plan_signature(reqs: list[dict], words: list[dict], tm) -> tuple[list[dict], list[dict]]:
+def _near(tm, src):
+    """Final time of a source moment; when that moment was cut out, the start of the next kept piece."""
+    t = tm.dst_time(src)
+    if t is not None:
+        return t
+    after = [s for s in tm.segs if s["kind"] == "keep" and s["src"] >= src]
+    return after[0]["dst"] if after else max(0.0, tm.duration - 0.5)
+
+
+def anchor(r: dict, words: list[dict], idx: int, n: int, src_dur: float):
+    """Where a request lands in the source: its word when the transcript has it, else its own "at" (seconds in the
+    source, from the editor's playhead), else, with no transcript at all, spread evenly across the clip."""
+    w = find_word(words, r.get("word", ""), r.get("n", 1)) if words else None
+    if w:
+        return w["start"], w, "word"
+    if r.get("at") is not None:
+        try:
+            return max(0.0, min(src_dur - 0.3, float(r["at"]))), None, "time"
+        except Exception:
+            pass
+    if not words:
+        return src_dur * (idx + 1) / (n + 1), None, "even"
+    return None, None, None
+
+
+def plan_signature(reqs: list[dict], words: list[dict], tm, src_dur: float | None = None) -> tuple[list[dict], list[dict]]:
     """Resolve requests to final times. Freezes go into the time map first (they shift everything after them).
+    Without a transcript every effect still lands: on its time from the editor, or spread across the clip.
     Returns (items, skipped)."""
     skipped, items = [], []
+    src_dur = src_dur or sum(s["dur"] for s in tm.segs if s["kind"] == "keep") or tm.duration
+    nreq = len([r for r in reqs if r.get("kind") != "rewind"])
     # 1. freezes in the time map
     for r in reqs:
         if r.get("kind") == "freeze":
-            w = find_word(words, r.get("word", ""), r.get("n", 1))
-            if not w:
+            src, w, how = anchor(r, words, reqs.index(r), nreq, src_dur)
+            if src is None:
                 skipped.append({"kind": "freeze", "word": r.get("word"), "why": "המילה לא נמצאה בתמלול"})
                 r["_skip"] = True
                 continue
-            tm.insert_freeze(w["start"], float(r.get("hold", 0.7)))
-            r["_src"] = w["start"]
+            tm.insert_freeze(src, float(r.get("hold", 0.7)))
+            r["_src"] = src
     # 2. everything in final time
     for r in reqs:
         k = r.get("kind")
@@ -108,18 +136,19 @@ def plan_signature(reqs: list[dict], words: list[dict], tm) -> tuple[list[dict],
             # the frozen stretch starts at the dst time of the source word (the first frame of the hold)
             for s in tm.segs:
                 if s["kind"] == "freeze" and abs(s["src"] - r["_src"]) < 1e-6:
-                    it.update(at=s["dst"], dur=s["dur"], word_text=r.get("word"))
+                    it.update(at=s["dst"], dur=s["dur"], word_text=r.get("word") or f"שנייה {r['_src']:.1f}")
             items.append(it)
             continue
-        w = find_word(words, r.get("word", ""), r.get("n", 1))
-        at = tm.dst_time(w["start"]) if w else None
-        if at is None:
-            skipped.append({"kind": k, "word": r.get("word"), "why": "המילה לא נמצאה בתמלול" if not w else "המילה נחתכה"})
+        src, w, how = anchor(r, words, reqs.index(r), nreq, src_dur)
+        if src is None:
+            skipped.append({"kind": k, "word": r.get("word"), "why": "המילה לא נמצאה בתמלול. אפשר לתת לאפקט שנייה בעורך"})
             continue
-        it["at"], it["word_text"] = at, w["text"]
-        it["end_word"] = tm.dst_time(w["end"] - 0.01) or at + 0.3
+        at = _near(tm, src)
+        it["at"], it["word_text"] = at, (w["text"] if w else (f"שנייה {src:.1f}" if how == "time" else "לפי זמן"))
+        it["placed_by"] = how
+        it["end_word"] = (tm.dst_time(w["end"] - 0.01) if w else None) or at + 0.3
         seq = []
-        last = w["start"]
+        last = src
         for tok in r.get("words", []) or []:
             ww = find_word(words, tok, 1, last - 1e-3)
             if ww:
@@ -127,6 +156,8 @@ def plan_signature(reqs: list[dict], words: list[dict], tm) -> tuple[list[dict],
                 if t2 is not None:
                     seq.append({"text": ww["text"], "at": t2})
                     last = ww["start"]
+        if not seq and r.get("words") and not w:
+            seq = [{"text": "", "at": at + 0.9 * (i + 1)} for i in range(len(r.get("words") or []))]
         it["beats"] = seq
         for key in ("strike_word", "tags_word", "until_word"):
             if r.get(key):

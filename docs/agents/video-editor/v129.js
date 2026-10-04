@@ -42,8 +42,9 @@ function newProject(src){const id='p'+(src.kind==='doc'?src.docId:src.trayId);
  PROJ[id]=p;persist();return p}
 const snap=p=>JSON.parse(JSON.stringify(Object.assign({},p,{versions:undefined})));
 function change(fn,quiet){const p=E.p;if(!p)return;E.hist.push(snap(p));if(E.hist.length>60)E.hist.shift();E.fut=[];fn(p);p.touched=Date.now();p.dirty=true;persist();if(!quiet)refresh();else{draw();timeline()}}
-function undo(){if(!E.hist.length)return;E.fut.push(snap(E.p));const s=E.hist.pop();Object.assign(E.p,s,{versions:E.p.versions});persist();refresh()}
-function redo(){if(!E.fut.length)return;E.hist.push(snap(E.p));const s=E.fut.pop();Object.assign(E.p,s,{versions:E.p.versions});persist();refresh()}
+function restoreTo(s){Object.keys(E.p).forEach(k=>{if(!(k in s)&&k!=='versions'&&k!=='id'&&k!=='chat'&&k!=='brief')delete E.p[k]});Object.assign(E.p,s,{versions:E.p.versions})}
+function undo(){if(!E.hist.length)return;E.fut.push(snap(E.p));const s=E.hist.pop();restoreTo(s);persist();refresh()}
+function redo(){if(!E.fut.length)return;E.hist.push(snap(E.p));const s=E.fut.pop();restoreTo(s);persist();refresh()}
 
 // ---------- the source video
 async function srcUrl(p){if(E.urls[p.id])return E.urls[p.id];let u=null;

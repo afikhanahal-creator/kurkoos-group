@@ -69,6 +69,25 @@ export const VILLAS_PROJECTS = [
 ]
 
 
+/* התאמה בין הפרויקטים שבעמוד לפרויקטים במערכת הניהול. קודם לפי slug זהה,
+   ואם ה-slug במערכת שונה, לפי השם. כך התמונות מגיעות תמיד מהאדמין,
+   וגם שינוי slug שם לא מעלים אותן מכאן. משותף לעמוד הווילות ולעמודי
+   הנחיתה של בניית בית פרטי (HouseLanding). */
+const NAME_KEYS = {
+  'yordei-hayam': ['יורדי הים'],
+  'henrietta-szold': ['הנרייטה', 'סאלד'],
+  'hankin-41': ['חנקין'],
+}
+const nameOf = (v) => (v && typeof v === 'object') ? String(v.he || v.en || '') : String(v || '')
+export function matchVillaCard(cards, slug, cmsSlug = '') {
+  // באדמין אפשר לקשר ידנית לפרויקט אחר במערכת. הקישור הידני קודם לכל התאמה אוטומטית
+  if (cmsSlug) { const manual = cards.find((c) => String(c.slug) === cmsSlug); if (manual) return manual }
+  const bySlug = cards.find((c) => String(c.slug) === slug)
+  if (bySlug) return bySlug
+  const keys = NAME_KEYS[slug] || []
+  return cards.find((c) => keys.some((k) => nameOf(c.name).includes(k))) || null
+}
+
 /* ההגדרות של העמוד, כפי שנשמרות ב-site_settings תחת villas_page:
    { header, order: [slug], projects: { [slug]: { hidden, cms, hero, thumbs } } }
    header/hero: ערך תמונה (מחרוזת או אובייקט רספונסיבי). cms: slug של

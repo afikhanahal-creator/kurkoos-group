@@ -1,0 +1,552 @@
+/* ============================================================
+   עמודי הנחיתה לבניית בית פרטי (HouseLanding.jsx).
+   בתוך שפת המותג הקיימת: נייבי #07293a, טורקיז #105572, ערפל #8fb6c8,
+   נייר #f7f8fa, אדום #a90b0c ל-CTA בלבד. הרגע הבולט בעמוד הוא ציר
+   חמשת השלבים. כל השאר שקט: קווים דקים, הרבה אוויר, שורות קצרות.
+   ============================================================ */
+
+.hl {
+  --hl-navy: var(--color-primary-900);
+  --hl-teal: var(--color-primary-700);
+  --hl-mist: var(--color-primary-300);
+  --hl-paper: var(--color-bg);
+  --hl-rule: rgba(7, 41, 58, 0.12);
+  --hl-gap: clamp(3.25rem, 7vw, 6rem);
+  background: #fff;
+}
+
+.hl-section { padding-block: var(--hl-gap); }
+.hl-section + .hl-section { border-top: 1px solid var(--hl-rule); }
+
+.hl-h2 {
+  font-size: clamp(1.6rem, 1.15rem + 1.9vw, 2.35rem);
+  line-height: 1.18;
+  color: var(--hl-navy);
+  max-width: 24ch;
+  margin-bottom: 1rem;
+}
+.hl-head { margin-bottom: clamp(2rem, 4vw, 3rem); }
+.hl-head__lead { color: var(--color-text-muted); font-size: 1.1rem; max-width: 60ch; }
+
+.hl a:focus-visible,
+.hl button:focus-visible,
+.hl summary:focus-visible {
+  outline: 3px solid var(--color-primary-500);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ---------- כותרת ---------- */
+.hl-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background: var(--hl-navy);
+  min-height: clamp(540px, 74vh, 700px);
+  display: flex;
+}
+.hl-hero__img {
+  position: absolute; inset: 0; z-index: -2;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 55%;
+}
+.hl-hero__shade {
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(270deg, rgba(7, 41, 58, 0.94) 0%, rgba(7, 41, 58, 0.82) 38%, rgba(7, 41, 58, 0.35) 78%, rgba(7, 41, 58, 0.25) 100%),
+    linear-gradient(0deg, rgba(7, 41, 58, 0.75) 0%, rgba(7, 41, 58, 0) 40%);
+}
+.hl-hero__inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-block: 1.25rem clamp(5.5rem, 10vw, 7.5rem);
+}
+.hl-hero .breadcrumbs {
+  --bc-muted: rgba(255, 255, 255, 0.75);
+  --bc-current: #fff;
+  --bc-back: #fff;
+  --bc-back-bg: rgba(255, 255, 255, 0.14);
+  --bc-back-border: rgba(255, 255, 255, 0.45);
+  --bc-back-fg-hover: var(--hl-navy);
+  --bc-sep: rgba(255, 255, 255, 0.4);
+  padding-block: 0;
+}
+.hl-hero .breadcrumbs__link--back:hover { background: #fff; }
+.hl-hero__copy { max-width: 40rem; }
+.hl-hero__title {
+  color: #fff;
+  font-size: clamp(2.35rem, 1.3rem + 4.4vw, 4.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.25rem;
+  animation: hl-rise 0.7s var(--ease-out) both;
+}
+.hl-hero__title::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 3px;
+  margin-top: 1.25rem;
+  background: var(--color-accent-500);
+}
+.hl-hero__lead {
+  font-size: clamp(1.05rem, 0.98rem + 0.4vw, 1.25rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 52ch;
+  margin-bottom: 2rem;
+}
+.hl-hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+@keyframes hl-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hl-hero__title { animation: none; }
+}
+
+.hl-btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.hl-btn-ghost:hover { background: #fff; color: var(--hl-navy); border-color: #fff; }
+
+/* ---------- רצועת ההוכחות, יושבת על קצה הכותרת ---------- */
+.hl-proof-wrap { position: relative; z-index: 2; margin-top: clamp(-4rem, -6vw, -3rem); }
+.hl-proof {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 40px -18px rgba(7, 41, 58, 0.35);
+  overflow: hidden;
+}
+.hl-proof li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.35rem 1.5rem;
+}
+.hl-proof li + li { border-inline-start: 1px solid var(--hl-rule); }
+.hl-proof b {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.25rem;
+  color: var(--hl-navy);
+  line-height: 1.2;
+}
+.hl-proof span { font-size: 0.92rem; color: var(--color-text-muted); line-height: 1.45; }
+
+/* ---------- תשובה ישירה + זרועות ---------- */
+.hl-intro { border-top: 0 !important; }
+.hl-intro__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+.hl-intro__answer {
+  font-size: 1.12rem;
+  line-height: 1.75;
+  color: var(--color-text);
+  max-width: 62ch;
+  margin-bottom: 1.5rem;
+}
+.hl-textlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--hl-teal);
+  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 2px;
+}
+.hl-textlink:hover { color: var(--color-accent-500); }
+
+.hl-arms { display: flex; flex-direction: column; gap: 0.85rem; }
+.hl-arm {
+  display: flex;
+  gap: 1.1rem;
+  align-items: flex-start;
+  padding: 1.25rem;
+  background: var(--hl-paper);
+  border: 1px solid var(--hl-rule);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  transition: border-color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+}
+.hl-arm:hover { border-color: var(--hl-mist); background: #fff; }
+.hl-arm__logo {
+  flex: none;
+  width: 72px; height: 72px;
+  object-fit: contain;
+  background: var(--hl-navy);
+  border-radius: 12px;
+  padding: 8px;
+}
+.hl-arm__body { display: flex; flex-direction: column; gap: 0.3rem; }
+.hl-arm__body b { font-family: var(--font-heading); font-size: 1.15rem; color: var(--hl-navy); }
+.hl-arm__body span { font-size: 0.97rem; line-height: 1.6; color: var(--color-text-muted); }
+.hl-arms__note { font-size: 0.95rem; color: var(--hl-teal); padding-inline: 0.25rem; }
+
+/* ---------- ציר השלבים ---------- */
+.hl-steps { background: var(--hl-paper); }
+.hl-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.25rem;
+  position: relative;
+}
+/* הקו שמחבר את חמשת המספרים */
+.hl-timeline::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 28px;
+  inset-inline-end: calc((100% - 5rem) / 5 - 28px);
+  top: 27px;
+  height: 2px;
+  background: linear-gradient(270deg, var(--hl-mist), var(--hl-teal));
+}
+.hl-stage { position: relative; display: flex; flex-direction: column; gap: 1.1rem; }
+.hl-stage__num {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--hl-navy);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.4rem;
+  box-shadow: 0 0 0 6px var(--hl-paper);
+}
+.hl-stage:last-child .hl-stage__num { background: var(--color-accent-500); }
+.hl-stage__title { font-size: 1.3rem; color: var(--hl-navy); margin-bottom: 0.2rem; }
+.hl-stage__who {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--hl-teal);
+  margin-bottom: 0.6rem;
+}
+.hl-stage__body p { font-size: 0.97rem; line-height: 1.65; color: var(--color-text-muted); }
+
+/* ---------- רצועת CTA ---------- */
+.hl-band-wrap { padding-block: var(--hl-gap) 0; }
+.hl-band {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(1.75rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3.5rem);
+  border-radius: var(--radius-lg);
+  background: var(--hl-navy);
+  color: #fff;
+}
+/* רשת שרטוט עדינה, שפת השרטוט של המותג */
+.hl-band::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(143, 182, 200, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 182, 200, 0.09) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+.hl-band > * { position: relative; }
+.hl-band h2 { color: #fff; font-size: clamp(1.45rem, 1.1rem + 1.4vw, 2rem); margin-bottom: 0.5rem; }
+.hl-band p { color: rgba(255, 255, 255, 0.82); max-width: 48ch; }
+.hl-band__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; flex: none; }
+
+/* ---------- פרויקטים ---------- */
+.hl-projects { border-top: 0 !important; }
+.hl-projects__grid {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+.hl-project { display: flex; flex-direction: column; gap: 1rem; color: var(--color-text); }
+.hl-project__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--hl-navy);
+}
+.hl-project__media img,
+.hl-project__media .smart-image-placeholder {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease-out);
+}
+.hl-project:hover .hl-project__media img { transform: scale(1.03); }
+.hl-project__media.is-plan {
+  background-color: var(--hl-navy);
+  background-image:
+    linear-gradient(rgba(143, 182, 200, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 182, 200, 0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.hl-project__plan {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+.hl-project__status {
+  position: absolute;
+  top: 0.85rem;
+  inset-inline-start: 0.85rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: #fff;
+  color: var(--hl-teal);
+}
+.hl-project__status.is-building { background: var(--color-accent-500); color: #fff; }
+.hl-project__cap { display: flex; flex-direction: column; gap: 0.25rem; }
+.hl-project__name { font-family: var(--font-heading); font-size: 1.3rem; color: var(--hl-navy); }
+.hl-project:hover .hl-project__name { color: var(--color-accent-500); }
+.hl-project__place { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--hl-teal); font-weight: 600; font-size: 0.95rem; }
+.hl-project__kind { color: var(--color-text-muted); font-size: 0.95rem; }
+
+/* ---------- רשימת בדיקות ---------- */
+.hl-check { background: var(--hl-paper); }
+.hl-check__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+.hl-check__head { position: sticky; top: 110px; }
+.hl-check__head p { color: var(--color-text-muted); font-size: 1.05rem; max-width: 44ch; }
+.hl-check__list { list-style: none; padding: 0; display: flex; flex-direction: column; }
+.hl-check__list li {
+  display: flex;
+  gap: 0.9rem;
+  padding-block: 1.05rem;
+  border-bottom: 1px solid var(--hl-rule);
+  line-height: 1.65;
+  color: var(--color-text-muted);
+  max-width: 68ch;
+}
+.hl-check__list li:first-child { padding-top: 0; }
+.hl-check__list b { color: var(--hl-navy); font-family: var(--font-heading); margin-inline-end: 0.25rem; }
+.hl-check__ic {
+  flex: none;
+  display: grid; place-items: center;
+  width: 26px; height: 26px;
+  margin-top: 0.1rem;
+  border-radius: 50%;
+  background: var(--color-primary-100);
+  color: var(--hl-teal);
+}
+
+/* ---------- שאלות נפוצות ---------- */
+.hl-faq__inner { max-width: 880px; }
+.hl-faq__list { border-top: 1px solid var(--hl-rule); margin-top: 1.5rem; }
+.hl-faq__item { border-bottom: 1px solid var(--hl-rule); }
+.hl-faq__item summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.3rem;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(1.05rem, 1rem + 0.3vw, 1.2rem);
+  color: var(--hl-navy);
+}
+.hl-faq__item summary::-webkit-details-marker { display: none; }
+.hl-faq__item summary:hover { color: var(--hl-teal); }
+.hl-faq__sign {
+  position: relative;
+  flex: none;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--hl-mist);
+}
+.hl-faq__sign::before,
+.hl-faq__sign::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 12px; height: 2px;
+  background: var(--hl-teal);
+  transform: translate(-50%, -50%);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.hl-faq__sign::after { transform: translate(-50%, -50%) rotate(90deg); }
+.hl-faq__item[open] .hl-faq__sign { background: var(--hl-navy); border-color: var(--hl-navy); }
+.hl-faq__item[open] .hl-faq__sign::before,
+.hl-faq__item[open] .hl-faq__sign::after { background: #fff; }
+.hl-faq__item[open] .hl-faq__sign::after { transform: translate(-50%, -50%) rotate(0deg); }
+.hl-faq__item p {
+  padding-bottom: 1.4rem;
+  max-width: 68ch;
+  line-height: 1.75;
+  color: var(--color-text-muted);
+}
+
+/* ---------- קישורים פנימיים ---------- */
+.hl-links { background: var(--hl-paper); }
+.hl-links__grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 5rem); }
+.hl-links__title { font-size: 1.2rem; color: var(--hl-navy); margin-bottom: 0.75rem; }
+.hl-links ul { list-style: none; padding: 0; }
+.hl-links li a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.8rem;
+  border-bottom: 1px solid var(--hl-rule);
+  color: var(--hl-teal);
+  font-weight: 600;
+}
+.hl-links li a:hover { color: var(--color-accent-500); }
+
+/* ---------- טופס + עמודת אמון ---------- */
+.hl-lead { border-top: 0 !important; }
+.hl-lead__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 24px 60px -30px rgba(7, 41, 58, 0.45);
+  padding-inline: 0;
+  max-width: min(1180px, calc(100% - 2 * var(--container-pad)));
+}
+.hl-trust { position: relative; display: flex; flex-direction: column; background: var(--hl-paper); }
+.hl-trust__photo { flex: 1 1 0; width: 100%; min-height: 280px; object-fit: cover; object-position: center 15%; }
+.hl-trust__body { display: flex; flex-direction: column; gap: 0.35rem; padding: clamp(1.4rem, 3vw, 2.25rem); }
+.hl-trust__name { font-family: var(--font-heading); font-size: 1.45rem; color: var(--hl-navy); }
+.hl-trust__role { color: var(--hl-teal); font-weight: 600; }
+.hl-trust__body p { color: var(--color-text-muted); line-height: 1.6; margin-block: 0.5rem 0.75rem; max-width: 42ch; }
+.hl-trust__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.9rem; }
+.hl-trust__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--hl-rule);
+  background: #fff;
+  color: var(--hl-navy);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+.hl-trust__link:hover { border-color: var(--hl-teal); color: var(--hl-teal); }
+.hl-trust__addr { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.92rem; color: var(--color-text-muted); }
+
+.hl-form {
+  background: var(--hl-navy);
+  color: #fff;
+  padding: clamp(1.6rem, 4vw, 3rem);
+}
+.hl-form__title { color: #fff; font-size: clamp(1.5rem, 1.15rem + 1.3vw, 2.1rem); margin-bottom: 0.5rem; }
+.hl-form__lead { color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem; max-width: 46ch; }
+.hl-form__fields { display: flex; flex-direction: column; gap: 0.85rem; }
+.hl-form__fields .field input,
+.hl-form__fields .field textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: #fff;
+  color: var(--color-text);
+  direction: rtl;
+  text-align: right;
+}
+.hl-form__fields .field input:focus,
+.hl-form__fields .field textarea:focus { outline: 3px solid var(--hl-mist); outline-offset: 1px; }
+.hl-form__fields textarea { resize: vertical; }
+.hl-form__submit { align-self: flex-start; margin-top: 0.4rem; }
+
+/* ---------- טאבלט ---------- */
+@media (max-width: 1080px) {
+  .hl-timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 2.25rem; }
+  .hl-timeline::before { display: none; }
+  .hl-proof { grid-template-columns: repeat(2, 1fr); }
+  .hl-proof li:nth-child(3) { border-inline-start: 0; }
+  .hl-proof li:nth-child(n + 3) { border-top: 1px solid var(--hl-rule); }
+}
+@media (max-width: 900px) {
+  .hl-intro__grid,
+  .hl-check__grid,
+  .hl-lead__grid { grid-template-columns: 1fr; }
+  .hl-check__head { position: static; }
+  .hl-projects__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hl-band { flex-direction: column; align-items: flex-start; }
+  .hl-form { order: -1; }
+  .hl-trust { display: grid; grid-template-columns: 180px 1fr; }
+  .hl-trust__photo { height: 100%; min-height: 0; }
+}
+
+/* ---------- מובייל ---------- */
+@media (max-width: 640px) {
+  .hl { --hl-gap: 3rem; }
+  .hl-hero { min-height: auto; }
+  .hl-hero__inner { padding-block: 1rem 5rem; gap: 1.75rem; }
+  .hl-hero__shade {
+    background: linear-gradient(180deg, rgba(7, 41, 58, 0.78) 0%, rgba(7, 41, 58, 0.88) 55%, rgba(7, 41, 58, 0.96) 100%);
+  }
+  .hl-hero__actions { flex-direction: column; align-items: stretch; }
+  .hl-hero__actions .btn { width: 100%; white-space: normal; }
+  .hl-proof-wrap { margin-top: -3rem; }
+  .hl-proof li { padding: 1rem; }
+  .hl-proof b { font-size: 1.08rem; }
+  .hl-proof span { font-size: 0.85rem; }
+
+  /* ציר אנכי במובייל: קטע קו בין כל מספר לבא אחריו */
+  .hl-timeline { grid-template-columns: 1fr; row-gap: 0; }
+  .hl-timeline::before { display: none; }
+  .hl-stage:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 23px;
+    top: 48px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--hl-teal), var(--hl-mist));
+  }
+  .hl-stage { flex-direction: row; gap: 1rem; padding-bottom: 1.75rem; }
+  .hl-stage:last-child { padding-bottom: 0; }
+  .hl-stage__num { flex: none; width: 48px; height: 48px; font-size: 1.2rem; }
+  .hl-stage__body { padding-top: 0.55rem; }
+
+  .hl-band__actions { width: 100%; flex-direction: column; }
+  .hl-band__actions .btn { width: 100%; }
+  .hl-projects__grid { grid-template-columns: 1fr; }
+  .hl-project__media { aspect-ratio: 16 / 10; }
+  .hl-links__grid { grid-template-columns: 1fr; }
+  .hl-lead__grid { max-width: 100%; border-radius: 0; box-shadow: none; }
+  .hl-trust { grid-template-columns: 112px 1fr; }
+  .hl-trust__body { padding: 1.1rem; }
+  .hl-trust__name { font-size: 1.2rem; }
+  .hl-form__submit { align-self: stretch; }
+}

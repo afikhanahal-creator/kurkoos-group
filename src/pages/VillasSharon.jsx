@@ -12,7 +12,8 @@ import SmartImage from '../components/ui/SmartImage.jsx'
 import { listProjectCards, cmsRowToCard, getProjectBySlug, useSettings } from '../lib/cms.js'
 import { srcOfResponsive, optimizeSrc } from '../lib/responsiveImage.js'
 import { BUYER_FAQS } from '../data/buyerFaqs.js'
-import { VILLAS_PROJECTS, VILLAS_FAQS as BASE_FAQS, parseVillasSettings, orderedVillasProjects } from '../data/villasPage.js'
+import { VILLAS_PROJECTS, VILLAS_FAQS as BASE_FAQS, parseVillasSettings, orderedVillasProjects, matchVillaCard as matchCard } from '../data/villasPage.js'
+import { HOUSE_PAGES } from '../data/houseLanding.js'
 import site from '../data/site.js'
 import { track } from '../lib/track.js'
 import './SharonHub.css'
@@ -26,24 +27,6 @@ const FACTS = [
   { v: 'בריכה', u: 'פרטית לכל בית' },
   { v: 'טאבו', u: 'מגרש בבעלות פרטית' },
 ]
-
-/* התאמה בין הפרויקטים שבעמוד לפרויקטים במערכת הניהול. קודם לפי slug זהה,
-   ואם ה-slug במערכת שונה, לפי השם. כך התמונות מגיעות תמיד מהאדמין,
-   וגם שינוי slug שם לא מעלים אותן מכאן. */
-const NAME_KEYS = {
-  'yordei-hayam': ['יורדי הים'],
-  'henrietta-szold': ['הנרייטה', 'סאלד'],
-  'hankin-41': ['חנקין'],
-}
-const nameOf = (v) => (v && typeof v === 'object') ? String(v.he || v.en || '') : String(v || '')
-function matchCard(cards, slug, cmsSlug = '') {
-  // באדמין אפשר לקשר ידנית לפרויקט אחר במערכת. הקישור הידני קודם לכל התאמה אוטומטית
-  if (cmsSlug) { const manual = cards.find((c) => String(c.slug) === cmsSlug); if (manual) return manual }
-  const bySlug = cards.find((c) => String(c.slug) === slug)
-  if (bySlug) return bySlug
-  const keys = NAME_KEYS[slug] || []
-  return cards.find((c) => keys.some((k) => nameOf(c.name).includes(k))) || null
-}
 
 /* ============================================================
    בניית וילות ובתים פרטיים בשרון, עמוד מוקד.
@@ -402,6 +385,15 @@ export default function VillasSharon() {
           <Reveal>
             <FaqCta to="#contact" placement="villas_faq" guides={PRIVATE_HOUSE_GUIDES} />
           </Reveal>
+          {/* בונים על המגרש שלכם: עמודי הנחיתה לפי שירות ולפי עיר */}
+          <nav className="faq-cta__guides" style={{ marginTop: '1.75rem' }} aria-label="בניית בית פרטי על המגרש שלכם">
+            <span className="faq-cta__guides-title">בונים בית פרטי על המגרש שלכם</span>
+            <div className="faq-cta__chips">
+              {HOUSE_PAGES.map((p) => (
+                <Link key={p.path} to={p.path} className="faq-cta__chip">{p.navLabel}</Link>
+              ))}
+            </div>
+          </nav>
         </div>
       </section>
 

@@ -27,6 +27,7 @@ const Yazamut = lazy(() => import('./pages/Yazamut.jsx'))
 const Glossary = lazy(() => import('./pages/Glossary.jsx'))
 const SharonHub = lazy(() => import('./pages/SharonHub.jsx'))
 const VillasSharon = lazy(() => import('./pages/VillasSharon.jsx'))
+const HouseLanding = lazy(() => import('./pages/HouseLanding.jsx'))
 const Calculators = lazy(() => import('./pages/Calculators.jsx'))
 const YazamutArticle = lazy(() => import('./pages/YazamutArticle.jsx'))
 const Constructions = lazy(() => import('./pages/Constructions.jsx'))
@@ -156,6 +157,10 @@ export default function App() {
               <Route path="/real-estate-glossary" element={<Glossary />} />
               <Route path="/real-estate-sharon" element={<SharonHub />} />
               <Route path="/villas-sharon" element={<VillasSharon />} />
+              {/* עמודי נחיתה לבניית בית פרטי. התוכן ב-data/houseLanding.js */}
+              <Route path="/kablan-bniya-bayit-prati" element={<HouseLanding />} />
+              <Route path="/bniyat-vila-sharon" element={<HouseLanding />} />
+              <Route path="/bniyat-bayit-prati/:city" element={<HouseLanding />} />
               <Route path="/real-estate-calculators" element={<Calculators />} />
               <Route path="/real-estate-guide/:slug" element={<RealEstateGuideArticle />} />
               <Route path="/livy-yazamim" element={<Mentorship />} />

@@ -13,6 +13,10 @@ export default [
     "lastmod": "2026-06-28"
   },
   {
+    "path": "/construction-supervision/divuach-pikuach-bniya-lebait-prati",
+    "lastmod": "2026-10-04"
+  },
+  {
     "path": "/construction-supervision/likuei-aluminium-trisim-bayit-hadash",
     "lastmod": "2026-09-27"
   },
@@ -63,6 +67,10 @@ export default [
   {
     "path": "/constructions/hibur-hashmal-mayim-lifney-ikhlus",
     "lastmod": "2026-08-30"
+  },
+  {
+    "path": "/constructions/home-construction-contract",
+    "lastmod": "2026-10-04"
   },
   {
     "path": "/constructions/industrialized-construction-schedule",
@@ -125,6 +133,10 @@ export default [
     "lastmod": "2026-06-29"
   },
   {
+    "path": "/madrich-yazamim/iskat-kombinatsia",
+    "lastmod": "2026-10-04"
+  },
+  {
     "path": "/madrich-yazamim/itur-hizdamnut-lifnei-hashuk",
     "lastmod": "2026-06-01"
   },
@@ -171,6 +183,10 @@ export default [
   {
     "path": "/real-estate-guide/dmei-tivuch-zchuyot",
     "lastmod": "2026-06-14"
+  },
+  {
+    "path": "/real-estate-guide/evicting-tenant-israel",
+    "lastmod": "2026-10-04"
   },
   {
     "path": "/real-estate-guide/heskem-bladiyut",
@@ -263,5 +279,9 @@ export default [
   {
     "path": "/yazamut-nadlan/tama38-pkiaa-hok-67",
     "lastmod": "2026-06-21"
+  },
+  {
+    "path": "/yazamut-nadlan/third-apartment-tax-developer-angle",
+    "lastmod": "2026-10-04"
   }
 ]

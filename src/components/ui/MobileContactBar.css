@@ -65,3 +65,8 @@
 @media (prefers-reduced-motion: reduce) {
   .cbar { transition: none; }
 }
+
+/* באנר העוגיות פתוח (מעל הבר): כפתור הנגישות עולה מעליו כדי לא לכסות את "אישור" */
+@media (max-width: 768px) {
+  body.has-contactbar:has(.cookie-banner) .a11y-fab { inset-block-end: calc(var(--cbar-h) + var(--cbar-safe) + 190px); }
+}

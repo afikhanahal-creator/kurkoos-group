@@ -99,7 +99,9 @@ export default function Division() {
      הנושא של החטיבה הזו, וה-src מסמן בלידים שהפנייה הגיעה מעמוד שירות */
   const topic = DIVISION_TOPIC[slug] || 'other'
   const consultTo = `/contact?topic=${topic}&src=division`
-  const consultLabel = L({ he: 'לשיחת ייעוץ עם מהנדס', en: 'Talk to an engineer' })
+  const consultLabel = slug === 'brokerage'
+    ? L({ he: 'לשיחת ייעוץ', en: 'Talk to us' })
+    : L({ he: 'לשיחת ייעוץ עם מהנדס', en: 'Talk to an engineer' })
   const guideTo = slug === 'development' ? '/yazamut-nadlan' : slug === 'execution' ? '/constructions' : slug === 'supervision' ? '/construction-supervision' : slug === 'brokerage' ? '/real-estate-guide' : '/blog'
 
   /* נתונים מובנים: Service (הישות של השירות) + FAQ אמיתי מהעמוד */

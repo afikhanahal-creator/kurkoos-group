@@ -17,6 +17,20 @@
   window.__ENGINE_HOST = 'site'
   window.__BLOB = STORE + 'blob/'
 
+  // ---------- גרסת נתונים: כשהנתונים באתר הוחלפו (העברה מהמערכת הקודמת), דפדפן שפתח את המערכת לפני כן
+  // מחזיק עותק ישן בזיכרון שלו. פעם אחת מנקים אותו, כדי שלא ייכתב בחזרה מעל הנתונים האמיתיים.
+  const DATA_EPOCH = '2026-10-05-import'
+  try {
+    if (localStorage.getItem('engine_epoch') !== DATA_EPOCH) {
+      const keep = new Set([AUTH_KEY])
+      // ההגדרות של האתר עצמו (עוגיות, שפה, נגישות, אדמין) נשארות
+      const SITE = /^(sb-|kurkoos-|kc_|a11y|accessibility|engine_epoch$)/
+      Object.keys(localStorage).forEach((k) => { if (!keep.has(k) && !SITE.test(k)) localStorage.removeItem(k) })
+      try { indexedDB.deleteDatabase('kurkoos-engine') } catch (e) {}
+      localStorage.setItem('engine_epoch', DATA_EPOCH)
+    }
+  } catch (e) {}
+
   // ---------- עדכונים חד פעמיים: ב-claude.ai כל אחד מהם רץ פעם אחת וסימן את עצמו בזיכרון הדפדפן.
   // באתר זה דפדפן חדש, ובלי הסימון הם רצו שוב על כל הנתונים (החליפו תמונות, כתבו מחדש טקסטים).
   // הנתונים מגיעים לכאן אחרי שכל העדכונים האלה כבר עברו עליהם, אז באתר הם נחשבים כבוצעו.

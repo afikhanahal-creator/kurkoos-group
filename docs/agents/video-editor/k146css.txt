@@ -1,0 +1,4 @@
+<style id="k146">
+/* V146 · the source chip on gallery cards sits in the left corner, clear of the delete button */
+.ga-card .v63chip,[data-gaid] .v63chip{inset-inline-start:auto!important;inset-inline-end:10px!important;bottom:12px!important}
+</style>

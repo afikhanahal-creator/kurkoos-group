@@ -131,20 +131,22 @@ function draw2D(ctx, w, h, dpr, t, mouse) {
         const infl = (prev[2] + cur[2]) / 2
         const pa = toPx(prev), pb = toPx(cur)
         const base = (1 - infl * 0.25) * vign(cur)
-        const thick = (0.0022 + infl * 0.0012) * 2 * m
+        const thick = (0.0017 + infl * 0.001) * 2 * m
         const blur = (0.0001 + infl * 0.05) * m
         if (blur > 2) {
           // הילה רכה: כמה שכבות רחבות ושקופות שמדמות את הטשטוש של השיידר
           ctx.strokeStyle = 'rgb(150, 205, 232)'
-          for (const [k, al] of [[2, 0.16], [1.3, 0.2], [0.7, 0.28]]) {
+          ctx.lineCap = 'butt'
+          for (const [k, al] of [[0.9, 0.06], [0.5, 0.09], [0.22, 0.14]]) {
             ctx.globalAlpha = base * al * infl
             ctx.lineWidth = thick + blur * k
             ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke()
           }
+          ctx.lineCap = 'round'
         }
         // ליד הסמן הקו עצמו מתבהר לתכלת, כמו בגרסת ה־WebGL
         ctx.strokeStyle = `rgb(${16 + 120 * infl | 0}, ${85 + 110 * infl | 0}, ${114 + 110 * infl | 0})`
-        ctx.globalAlpha = base * (1 - infl * 0.4)
+        ctx.globalAlpha = base * (1 - infl * 0.3)
         ctx.lineWidth = Math.max(1, thick)
         ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke()
       }

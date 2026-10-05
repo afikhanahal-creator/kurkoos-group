@@ -1,0 +1,72 @@
+/* ============================================================
+   בר פנייה תחתון במובייל: שלושה כפתורים שווים.
+   --cbar-h הוא גובה הבר בלי האזור הבטוח של האייפון. באנר העוגיות,
+   הבאנר השיווקי וכפתור הנגישות נשענים עליו כדי לשבת מעליו.
+   ============================================================ */
+:root { --cbar-h: 64px; --cbar-safe: env(safe-area-inset-bottom, 0px); }
+
+.cbar { display: none; }
+
+@media (max-width: 768px) {
+  .cbar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    /* מעל התוכן וההדר, מתחת לחלונות (מודאל, נגישות) */
+    z-index: var(--z-overlay);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    height: calc(var(--cbar-h) + var(--cbar-safe));
+    padding: 0.45rem 0.6rem calc(0.45rem + var(--cbar-safe));
+    background: #fff;
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -8px 24px -12px rgba(7, 41, 58, 0.28);
+    transition: transform 0.25s ease;
+  }
+  /* בזמן הקלדה בשדה, ובזמן שתפריט המובייל פתוח, הבר יורד מהמסך */
+  .cbar.is-typing,
+  html.menu-open .cbar { transform: translateY(110%); }
+
+  .cbar__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    min-width: 0;
+    border-radius: 12px;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+  .cbar__btn span { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .cbar__btn:active { transform: scale(0.97); filter: brightness(0.92); }
+  .cbar__btn:focus-visible { outline: 3px solid var(--color-primary-300); outline-offset: 2px; }
+
+  .cbar__btn--call { background: var(--color-primary-700, #105572); }
+  .cbar__btn--wa { background: #1f9e4e; }
+  .cbar__btn--form { background: var(--color-accent-500, #a90b0c); }
+
+  /* העמוד מקבל ריווח בגובה הבר, כך שהפוטר והתוכן האחרון לא מוסתרים */
+  body.has-contactbar { padding-bottom: calc(var(--cbar-h) + var(--cbar-safe)); }
+  /* תפריט המובייל נגלל עד הסוף בלי להיחתך */
+  body.has-contactbar .header__mobile-inner { padding-block-end: calc(var(--cbar-h) + 1.5rem); }
+  /* כפתור הנגישות הצף יושב מעל הבר */
+  body.has-contactbar .a11y-fab { inset-block-end: calc(var(--cbar-h) + var(--cbar-safe) + 0.8rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cbar { transition: none; }
+}
+
+/* באנר העוגיות פתוח (מעל הבר): כפתור הנגישות עולה מעליו כדי לא לכסות את "אישור" */
+@media (max-width: 768px) {
+  body.has-contactbar:has(.cookie-banner) .a11y-fab { inset-block-end: calc(var(--cbar-h) + var(--cbar-safe) + 190px); }
+}

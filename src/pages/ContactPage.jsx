@@ -4,12 +4,15 @@ import { useI18n, useLocalized } from '../i18n/index.jsx'
 import heDict from '../i18n/he.js'
 import enDict from '../i18n/en.js'
 import site from '../data/site.js'
-import { createLead, useSettings } from '../lib/cms.js'
+import { useSettings } from '../lib/cms.js'
+import { LEAD_TOPICS as TOPICS } from '../lib/contact.js'
+import { useLeadForm } from '../lib/leadForm.js'
 import { track } from '../lib/track.js'
 import { getLastProject, trailSummary } from '../lib/visitTrail.js'
 import Seo from '../components/ui/Seo.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Icon from '../components/ui/Icon.jsx'
+import { LeadFields, LeadSubmit, LeadSuccess, LeadFailure } from '../components/ui/LeadForm.jsx'
 import OfficeMap from '../components/ui/OfficeMap.jsx'
 import './ContactPage.css'
 
@@ -27,8 +30,6 @@ import './ContactPage.css'
    הפנייה. בלי הפרמטר הליד עדיין נשמר, פשוט בלי ייחוס.
    ============================================================ */
 
-const TOPICS = ['development', 'construction', 'supervision', 'brokerage', 'mentorship', 'other']
-
 /* ערוצים מוכרים מקבלים שם קריא בעברית. ערך אחר נשמר כפי שהוא,
    מנוקה מתווים חריגים, כדי שנוכל לייצר קישורים חדשים בלי לגעת בקוד. */
 const SOURCES = {
@@ -44,6 +45,7 @@ const SOURCES = {
   article: { he: 'כתבה באתר', en: 'Site article' },
   faq: { he: 'שאלות נפוצות באתר', en: 'Site FAQ' },
   villas: { he: 'עמוד הווילות', en: 'Villas page' },
+  division: { he: 'עמוד שירות באתר', en: 'Service page' },
 }
 
 /* ערוץ לא מוכר נשמר כפי שהוא, מנוקה מתווים חריגים ובאותו נוסח לשתי
@@ -62,9 +64,7 @@ export default function ContactPage() {
   const s = useSettings()
   const [params] = useSearchParams()
 
-  const [sent, setSent] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const lf = useLeadForm({ form: 'contact_page', idPrefix: 'cpf' })
   const [topic, setTopic] = useState(TOPICS.includes(params.get('topic')) ? params.get('topic') : 'development')
 
   const origin = originLabel(params.get('src'))
@@ -72,11 +72,8 @@ export default function ContactPage() {
   const phoneDisplay = s.contact_phone || site.contact.phoneDisplay
   const waLink = `https://wa.me/${site.contact.whatsapp}`
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-    if (busy) return
-    setBusy(true); setError('')
-    const fd = new FormData(e.currentTarget)
     const interest = getLastProject()
     // הערוץ נכתב ראשון בתיוג, כדי שבלוח הלידים רואים מיד מאיפה הגיעה
     // הפנייה בלי לפתוח את הכרטיס.
@@ -88,11 +85,8 @@ export default function ContactPage() {
       if (interest) v += ` · ${he ? 'התעניין ב' : 'Interested in'}: ${interest.name}`
       return v
     }
-    const lead = {
-      name: String(fd.get('name') || '').trim(),
-      phone: String(fd.get('phone') || '').trim(),
-      email: String(fd.get('email') || '').trim(),
-      message: String(fd.get('message') || '').trim(),
+    lf.submit((v) => ({
+      ...v,
       project: interest
         ? { he: tag(heDict), en: tag(enDict), slug: interest.slug || '' }
         : { he: tag(heDict), en: tag(enDict) },
@@ -103,21 +97,8 @@ export default function ContactPage() {
       // הפונה נשמר בתיוג שלמעלה, כך שאין שום מידע שאובד כאן.
       source: 'contact',
       status: 'new',
-    }
-    try {
-      await createLead(lead, { read: false })
-      // ב-GA שומרים את המפתח הגולמי (google / facebook), לא את התווית בעברית
-      track('generate_lead', { form: 'contact_page', topic, src: params.get('src') || 'direct' })
-      setSent(true)
-    } catch (err) {
-      setError(L({
-        he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות.',
-        en: 'Something went wrong. Please try again or call us directly.',
-      }))
-      if (typeof console !== 'undefined') console.error('createLead failed:', err?.message || err)
-    } finally {
-      setBusy(false)
-    }
+    // ב-GA שומרים את המפתח הגולמי (google / facebook), לא את התווית בעברית
+    }), { topic, src: params.get('src') || 'direct' })
   }
 
   return (
@@ -142,11 +123,8 @@ export default function ContactPage() {
       <section className="section cpage">
         <div className="container cpage__inner">
           <div className="cpage__form-card">
-            {sent ? (
-              <div className="cpage__success">
-                <span className="cpage__success-icon"><Icon name="check" size={40} /></span>
-                <p>{t('contact.sent')}</p>
-              </div>
+            {lf.sent ? (
+              <LeadSuccess form="contact_page" />
             ) : (
               <>
                 <p className="cpage__choose">{t('contactExtra.choose')}</p>
@@ -157,30 +135,18 @@ export default function ContactPage() {
                       type="button"
                       className={`cpage__topic ${topic === tp ? 'is-active' : ''}`}
                       onClick={() => setTopic(tp)}
+                      aria-pressed={topic === tp}
                     >
                       {t(`contactExtra.topics.${tp}`)}
                     </button>
                   ))}
                 </div>
 
-                <form className="cpage__form" onSubmit={handleSubmit}>
+                <form className="cpage__form" onSubmit={handleSubmit} onInput={lf.onStart} noValidate>
                   <p className="cpage__required">{t('contactExtra.required')}</p>
-                  <div className="field">
-                    <input name="name" type="text" required placeholder={`${t('contact.name')}*`} autoComplete="name" />
-                  </div>
-                  <div className="field">
-                    <input name="phone" type="tel" required placeholder={`${t('contact.phone')}*`} autoComplete="tel" />
-                  </div>
-                  <div className="field">
-                    <input name="email" type="email" required placeholder={`${t('contact.email')}*`} autoComplete="email" />
-                  </div>
-                  <div className="field">
-                    <textarea name="message" rows={4} placeholder={t('contact.message')} />
-                  </div>
-                  {error && <p className="cpage__error" role="alert">{error}</p>}
-                  <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
-                    {busy ? L({ he: 'שולח…', en: 'Sending…' }) : t('contact.submit')}
-                  </button>
+                  <LeadFields lf={lf} messageRows={4} />
+                  <LeadFailure lf={lf} topicLabel={heDict.contactExtra.topics[topic]} />
+                  <LeadSubmit lf={lf} className="btn btn--primary btn--block btn--lg" />
                 </form>
               </>
             )}

@@ -21,7 +21,8 @@
 .fab--phone { background: var(--color-secondary); }
 .fab--top { background: var(--color-primary); }
 
-/* הסרת הכפתורים הצפים (וואטסאפ / טלפון / חזרה למעלה) במובייל — לפי בקשה */
+/* במובייל הכפתורים הצפים מוסתרים: את מקומם תופס בר הפנייה התחתון
+   (MobileContactBar) עם חיוג, וואטסאפ והשארת פרטים */
 @media (max-width: 768px) {
   .floating-actions { display: none; }
 }

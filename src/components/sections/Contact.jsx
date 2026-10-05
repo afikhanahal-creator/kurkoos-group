@@ -2,36 +2,28 @@ import { useState } from 'react'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import heDict from '../../i18n/he.js'
 import enDict from '../../i18n/en.js'
-import { createLead } from '../../lib/cms.js'
-import { track } from '../../lib/track.js'
+import { LEAD_TOPICS as TOPICS } from '../../lib/contact.js'
+import { useLeadForm } from '../../lib/leadForm.js'
 import { getLastProject, trailSummary } from '../../lib/visitTrail.js'
 import Reveal from '../ui/Reveal.jsx'
 import OfficeMap from '../ui/OfficeMap.jsx'
 import BookingCalendar from '../ui/BookingCalendar.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
-import Icon from '../ui/Icon.jsx'
+import { LeadFields, LeadSubmit, LeadSuccess, LeadFailure } from '../ui/LeadForm.jsx'
 import './Contact.css'
 
-const TOPICS = ['development', 'construction', 'supervision', 'brokerage', 'mentorship', 'other']
-
-export default function Contact() {
+/* topic: הנושא שמסומן בכניסה. עמודי החטיבות מעבירים את הנושא שלהם,
+   כדי שמי שמגיע לטופס מעמוד הביצוע לא יפתח על "יזמות". */
+export default function Contact({ topic: initialTopic = 'development' }) {
   const { t } = useI18n()
   const L = useLocalized()
-  const [sent, setSent] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const [topic, setTopic] = useState('development')
+  const [topic, setTopic] = useState(TOPICS.includes(initialTopic) ? initialTopic : 'development')
+  const lf = useLeadForm({ form: 'contact_section', idPrefix: 'cf' })
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-    if (busy) return
-    setBusy(true); setError('')
-    const fd = new FormData(e.currentTarget)
-    const lead = {
-      name: String(fd.get('name') || '').trim(),
-      phone: String(fd.get('phone') || '').trim(),
-      email: String(fd.get('email') || '').trim(),
-      message: String(fd.get('message') || '').trim(),
+    lf.submit((v) => ({
+      ...v,
       // עמודת project היא jsonb → שולחים אובייקט {he,en} (נושא הפנייה) ולא מחרוזת.
       // הערכים נלקחים ישירות משני המילונים כדי שב-CRM יישמר תמיד תיוג מדויק בשתי השפות.
       // אם הגולש צפה בפרויקט בביקור הזה — מצרפים אותו לתיוג, כדי שבמערכת
@@ -46,21 +38,7 @@ export default function Contact() {
       notes: trailSummary() ? `מסע באתר: ${trailSummary()}` : undefined,
       source: 'contact',                             // לא 'manual' → מפעיל התראת מייל
       status: 'new',
-    }
-    try {
-      await createLead(lead, { read: false })   // שמירה ל-Supabase + התראת מייל אוטומטית (אנונימי — בלי קריאה חוזרת)
-      track('generate_lead', { form: 'contact_section', topic })
-      setSent(true)
-    } catch (err) {
-      setError(L({
-        he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות.',
-        en: 'Something went wrong. Please try again or call us directly.',
-      }))
-      // למקרה שגיאה — נשאיר את הפרטים בלוג כדי לאבחן (RLS / רשת)
-      if (typeof console !== 'undefined') console.error('createLead failed:', err?.message || err)
-    } finally {
-      setBusy(false)
-    }
+    }), { topic })
   }
 
   return (
@@ -75,8 +53,7 @@ export default function Contact() {
             onPickDate={(label, time) => {
               // בחירת שעה ממלאת את שדה ההודעה בטופס שמימין — לקיצור תהליך השליחה
               const when = time ? `${label} ${L({ he: 'בשעה', en: 'at' })} ${time}` : label
-              const el = document.getElementById('cf-message')
-              if (el) el.value = L({ he: `אשמח לתאם פגישה ל-${when}`, en: `I'd like to book a meeting for ${when}` })
+              lf.setValues((v) => ({ ...v, message: L({ he: `אשמח לתאם פגישה ל${when}`, en: `I'd like to book a meeting for ${when}` }) }))
             }}
           />
           {/* בחירת שעה ביומן ממלאת את שדה ההודעה בטופס; "מלאו פרטים" מדלג לשדה השם */}
@@ -89,11 +66,8 @@ export default function Contact() {
           <h2 className="contact__title">{t('contact.title')}</h2>
           <p className="contact__choose">{t('contactExtra.choose')}</p>
 
-          {sent ? (
-            <div className="contact__success">
-              <span className="contact__success-icon"><Icon name="check" size={40} /></span>
-              <p>{t('contact.sent')}</p>
-            </div>
+          {lf.sent ? (
+            <LeadSuccess form="contact_section" tone="dark" />
           ) : (
             <>
               <div className="contact__topics">
@@ -103,34 +77,18 @@ export default function Contact() {
                     type="button"
                     className={`contact__topic ${topic === tp ? 'is-active' : ''}`}
                     onClick={() => setTopic(tp)}
+                    aria-pressed={topic === tp}
                   >
                     {t(`contactExtra.topics.${tp}`)}
                   </button>
                 ))}
               </div>
 
-              <form className="contact__form" onSubmit={handleSubmit}>
+              <form className="contact__form lf-dark" onSubmit={handleSubmit} onInput={lf.onStart} noValidate>
                 <p className="contact__required">{t('contactExtra.required')}</p>
-                <div className="field">
-                  <input id="cf-name" name="name" type="text" required placeholder={`${t('contact.name')}*`} autoComplete="name" />
-                </div>
-                <div className="field">
-                  <input id="cf-phone" name="phone" type="tel" required placeholder={`${t('contact.phone')}*`} autoComplete="tel" />
-                </div>
-                <div className="field">
-                  <input id="cf-email" name="email" type="email" required placeholder={`${t('contact.email')}*`} autoComplete="email" />
-                </div>
-                <div className="field">
-                  <textarea id="cf-message" name="message" rows={3} placeholder={t('contact.message')} />
-                </div>
-                {error && (
-                  <p className="contact__error" role="alert" style={{ color: '#ffc4c4', margin: '0.2rem 0 0', fontSize: '0.9rem', fontWeight: 600 }}>
-                    {error}
-                  </p>
-                )}
-                <button type="submit" className="btn btn--primary contact__submit" disabled={busy}>
-                  {busy ? L({ he: 'שולח…', en: 'Sending…' }) : t('contact.submit')}
-                </button>
+                <LeadFields lf={lf} />
+                <LeadFailure lf={lf} topicLabel={heDict.contactExtra.topics[topic]} tone="dark" />
+                <LeadSubmit lf={lf} className="btn btn--primary contact__submit" />
               </form>
             </>
           )}

@@ -333,10 +333,14 @@ export default function Mentorship() {
                 אין כאן טופס שמציב אתכם בתור. אנחנו מדברים עם יזמים ברצינות, מבינים את הרקע שלכם, ומחליטים ביחד אם הליווי מתאים. שיחת ההיכרות ללא עלות וללא מחויבות.
               </p>
               <div className="mentor-cta__actions">
-                <a href="/#contact" className="btn btn--primary btn--lg">
+                <Link
+                  to="/contact?topic=mentorship&src=mentorship"
+                  className="btn btn--primary btn--lg"
+                  onClick={() => track('cta_click', { placement: 'mentor_bottom' })}
+                >
                   השאירו פרטים לשיחת היכרות
                   <Icon name="arrow" size={18} className="mentor-cta__arrow" />
-                </a>
+                </Link>
               </div>
             </div>
           </Reveal>

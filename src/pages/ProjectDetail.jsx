@@ -3,8 +3,7 @@ import { useState, useEffect, useRef, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
 import divisions from '../data/divisions.js'
-import { getProjectBySlug, createLead, useSettings, listProjectCards, cmsRowToCard } from '../lib/cms.js'
-import { track } from '../lib/track.js'
+import { getProjectBySlug, useSettings, listProjectCards, cmsRowToCard } from '../lib/cms.js'
 import { supabase } from '../lib/supabase.js'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { srcOfResponsive, normalizeResponsiveImage } from '../lib/responsiveImage.js'
@@ -22,6 +21,8 @@ import { noteProject, trailSummary } from '../lib/visitTrail.js'
 import useIsMobile from '../hooks/useIsMobile.js'
 import Text3DFlip from '../components/ui/Text3DFlip.jsx'
 import Icon from '../components/ui/Icon.jsx'
+import { useLeadForm } from '../lib/leadForm.js'
+import { LeadFields, LeadSubmit, LeadSuccess, LeadFailure } from '../components/ui/LeadForm.jsx'
 import './ProjectDetail.css'
 import NotFound from './NotFound.jsx'
 
@@ -175,11 +176,8 @@ export default function ProjectDetail() {
   const galSwiped = useRef(false)  // האם בוצעה החלקה — כדי לא לפתוח לייטבוקס בטעות
   const [activeSection, setActiveSection] = useState('project')
   const [lightbox, setLightbox] = useState(null) // { images, index }
-  const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', consent: false })
-  const [errors, setErrors] = useState({})
+  const lf = useLeadForm({ form: 'project_page', idPrefix: 'pd' })
   const [booking, setBooking] = useState('')   // מועד שנבחר ביומן (צד שמאל) — מצורף לליד בשליחה
-  const [sent, setSent] = useState(false)
-  const [sendError, setSendError] = useState('')
   const settings = useSettings()   // הגדרות אתר — בין השאר override לתמונות קאבר של פרויקטים
 
   // כל כרטיסי הפרויקטים מה-CMS (אמיתיים) — ל"פרויקטים נוספים" (במקום דמו מקומי)
@@ -448,33 +446,17 @@ export default function ProjectDetail() {
 
   const openLightbox = (images, index) => setLightbox({ images, index })
 
-  const setField = (key) => (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
-    setForm((f) => ({ ...f, [key]: value }))
-    if (errors[key]) setErrors((er) => ({ ...er, [key]: undefined }))
-  }
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-    const next = {}
-    if (!form.name.trim()) next.name = true
-    if (!/^[\d\s\-+()]{9,}$/.test(form.phone.trim())) next.phone = true
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) next.email = true
-    if (Object.keys(next).length) { setErrors(next); return }
-    setSendError('')
     // שמירת הפנייה כליד במערכת הניהול — רק אם היא הצליחה מציגים "נשלח"
     // מצרפים את המועד שנבחר ביומן להודעת הליד (בלי לשנות את הטופס בזמן הבחירה)
-    const msg = form.message.trim()
-    const bookingNote = booking && !msg.includes(booking)
-      ? L({ he: `מועד מבוקש: ${booking}`, en: `Requested slot: ${booking}` })
-      : ''
-    const fullMessage = [msg, bookingNote].filter(Boolean).join(' · ')
-    try {
-      await createLead({
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim(),
-        message: fullMessage,
+    lf.submit((v) => {
+      const bookingNote = booking && !v.message.includes(booking)
+        ? L({ he: `מועד מבוקש: ${booking}`, en: `Requested slot: ${booking}` })
+        : ''
+      return {
+        ...v,
+        message: [v.message, bookingNote].filter(Boolean).join(' · '),
         // project שומר שם + slug לבניית קישור ישיר בהתראת המייל
         project: project?.name
           ? { ...(typeof project.name === 'object' ? project.name : { he: String(project.name), en: String(project.name) }), slug: project.slug || '' }
@@ -483,19 +465,8 @@ export default function ProjectDetail() {
         notes: trailSummary() ? `מסע באתר: ${trailSummary()}` : undefined,
         source: 'project',
         status: 'new',
-      }, { read: false })
-      track('generate_lead', { form: 'project_page', project: project?.slug || '' })
-      setSent(true)
-    } catch (err) {
-      /* עד היום הטופס הציג "נשלח" עוד לפני השמירה ובלע את השגיאה, כך שפנייה
-         שנכשלה נעלמה בלי שאיש ידע. עכשיו המבקר רואה שהשליחה נכשלה ומקבל
-         מספר לחייג אליו, והשגיאה נרשמת בקונסול לאבחון. */
-      setSendError(L({
-        he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות ל-055-981-1814.',
-        en: 'Something went wrong. Please try again or call us directly at +972-55-981-1814.',
-      }))
-      if (typeof console !== 'undefined') console.error('createLead failed:', err?.message || err)
-    }
+      }
+    }, { project: project?.slug || '' })
   }
 
   return (
@@ -996,53 +967,18 @@ export default function ProjectDetail() {
                 })}
               </p>
 
-              {sent ? (
-                <div className="pd-contact__success" role="status">
-                  <span className="pd-contact__success-icon"><Icon name="check" size={36} /></span>
-                  <p>{L({ he: 'תודה! הפנייה התקבלה ונחזור אליכם בקרוב.', en: 'Thanks! Your request was received — we’ll be in touch soon.' })}</p>
-                </div>
+              {lf.sent ? (
+                <LeadSuccess form="project_page" tone="dark" />
               ) : (
-                <form className="pd-contact__form" onSubmit={handleSubmit} noValidate>
+                <form className="pd-contact__form lf-dark" onSubmit={handleSubmit} onInput={lf.onStart} noValidate>
                   <p className="pd-contact__required">{L({ he: '* שדות חובה', en: '* Required fields' })}</p>
-                  {sendError && <p className="pd-contact__error" role="alert">{sendError}</p>}
-                  <div className="pd-field">
-                    <input
-                      id="pd-name" name="name" type="text" autoComplete="name"
-                      value={form.name} onChange={setField('name')}
-                      placeholder={`${L({ he: 'שם מלא', en: 'Full name' })}*`}
-                      aria-invalid={!!errors.name} aria-label={L({ he: 'שם מלא', en: 'Full name' })}
-                      className={errors.name ? 'has-error' : ''}
-                    />
-                  </div>
-                  <div className="pd-field">
-                    <input
-                      id="pd-phone" name="phone" type="tel" autoComplete="tel"
-                      value={form.phone} onChange={setField('phone')}
-                      placeholder={`${L({ he: 'טלפון', en: 'Phone' })}*`}
-                      aria-invalid={!!errors.phone} aria-label={L({ he: 'טלפון', en: 'Phone' })}
-                      className={errors.phone ? 'has-error' : ''}
-                    />
-                  </div>
-                  <div className="pd-field">
-                    <input
-                      id="pd-email" name="email" type="email" autoComplete="email"
-                      value={form.email} onChange={setField('email')}
-                      placeholder={`${L({ he: 'אימייל', en: 'Email' })}*`}
-                      aria-invalid={!!errors.email} aria-label={L({ he: 'אימייל', en: 'Email' })}
-                      className={errors.email ? 'has-error' : ''}
-                    />
-                  </div>
-                  <div className="pd-field">
-                    <textarea
-                      id="pd-message" name="message" rows={3}
-                      value={form.message} onChange={setField('message')}
-                      placeholder={L({ he: 'הודעה (אופציונלי)', en: 'Message (optional)' })}
-                      aria-label={L({ he: 'הודעה', en: 'Message' })}
-                    />
-                  </div>
-                  <button type="submit" className="btn btn--primary pd-contact__submit">
-                    {L({ he: 'שליחה', en: 'Send' })}
-                  </button>
+                  <LeadFields
+                    lf={lf}
+                    fieldClass="pd-field"
+                    messagePlaceholder={L({ he: 'למשל: מתי נוח לכם שנחזור אליכם', en: 'e.g. when is a good time to call you back' })}
+                  />
+                  <LeadFailure lf={lf} topicLabel={L(project.name)} tone="dark" />
+                  <LeadSubmit lf={lf} className="btn btn--primary pd-contact__submit" />
                 </form>
               )}
             </div>
@@ -1055,7 +991,7 @@ export default function ProjectDetail() {
                     const when = time ? `${label} ${L({ he: 'בשעה', en: 'at' })} ${time}` : label
                     // בחירת שעה ממלאת את שדה ההודעה בטופס שמימין — לקיצור תהליך השליחה
                     setBooking(when)
-                    setForm((f) => ({ ...f, message: L({ he: `אשמח לתאם פגישה ל-${when}`, en: `I'd like to book a meeting for ${when}` }) }))
+                    lf.setValues((f) => ({ ...f, message: L({ he: `אשמח לתאם פגישה ל${when}`, en: `I'd like to book a meeting for ${when}` }) }))
                   }}
                 />
               </div>

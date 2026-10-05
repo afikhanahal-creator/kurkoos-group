@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { listProjectCards, cmsRowToCard } from '../../lib/cms.js'
 import { optimizeSrc } from '../../lib/responsiveImage.js'
 import { track } from '../../lib/track.js'
@@ -15,6 +15,11 @@ import './PromoBanner.css'
      כך שגם אם ה-slug ישתנה באדמין הבאנר ימשיך לעבוד. התמונה הקטנה היא
      תמונת השער של הפרויקט מהמערכת.
    - אם באנר העוגיות עדיין פתוח, הבאנר הזה יושב מעליו ולא מכסה אותו.
+   - מוצג רק בעמודים שב-PAGES (בית, פרויקטים, תיווך). לא בעמוד צור קשר,
+     לא בעמודי פרויקט, לא בכתבות ולא בשום עמוד אחר: שם הגולש באמצע משימה.
+   - לא קופץ בכניסה: מחכה 30 שניות באתר או גלילה של חצי עמוד באחד
+     מהעמודים המותרים, המוקדם מביניהם.
+   - שכבה (z-index) מתחת לחלון צור קשר ולכל מודאל, מעל בר הפנייה במובייל.
    ============================================================ */
 
 const PROMO = {
@@ -28,6 +33,9 @@ const PROMO = {
   fallbackTo: '/projects',
 }
 const AUTO_CLOSE_MS = 10000
+const PAGES = ['/', '/projects', '/divisions/brokerage']
+const DELAY_MS = 30000          // זמן באתר עד שהבאנר מותר להופיע
+const SCROLL_RATIO = 0.5        // או גלילה של חצי עמוד, המוקדם מביניהם
 const SEEN_KEY = `kc_promo_${PROMO.id}_seen`
 const nameOf = (v) => (v && typeof v === 'object') ? String(v.he || v.en || '') : String(v || '')
 
@@ -43,6 +51,29 @@ export default function PromoBanner() {
   const [lift, setLift] = useState(0)         // גובה באנר העוגיות, אם פתוח
   const remaining = useRef(AUTO_CLOSE_MS)
   const startedAt = useRef(0)
+  const [armed, setArmed] = useState(false)   // עברו 30 שניות או חצי גלילה
+  const { pathname } = useLocation()
+  const onPage = PAGES.includes(pathname.replace(/\/+$/, '') || '/')
+  // מוצג בפועל רק כשכל התנאים מתקיימים. מעבר לעמוד אחר מסתיר בלי לסמן "נראה"
+  const visible = open && armed && onPage
+
+  // טריגר: 30 שניות מהכניסה לאתר
+  useEffect(() => {
+    if (!open || armed) return undefined
+    const t = setTimeout(() => setArmed(true), DELAY_MS)
+    return () => clearTimeout(t)
+  }, [open, armed])
+
+  // טריגר: גלילה של חצי עמוד, רק בעמוד שבו הבאנר מותר
+  useEffect(() => {
+    if (!open || armed || !onPage) return undefined
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      if (max > 0 && window.scrollY / max >= SCROLL_RATIO) setArmed(true)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [open, armed, onPage])
 
   const close = useCallback((how = 'auto') => {
     try { sessionStorage.setItem(SEEN_KEY, '1') } catch { /* noop */ }
@@ -53,7 +84,7 @@ export default function PromoBanner() {
 
   // הפרויקט מהמערכת, לפי שם
   useEffect(() => {
-    if (!open) return undefined
+    if (!visible || card) return undefined
     let on = true
     listProjectCards()
       .then((rows) => {
@@ -64,28 +95,42 @@ export default function PromoBanner() {
       })
       .catch(() => {})
     return () => { on = false }
-  }, [open])
+  }, [visible, card])
 
   // ספירה לאחור עם עצירה במעבר עכבר
   useEffect(() => {
-    if (!open || paused) return undefined
+    if (!visible || paused) return undefined
     startedAt.current = Date.now()
     const t = setTimeout(() => close('auto'), remaining.current)
     return () => {
       clearTimeout(t)
       remaining.current = Math.max(0, remaining.current - (Date.now() - startedAt.current))
     }
-  }, [open, paused, close])
+  }, [visible, paused, close])
 
   // כל עוד הבאנר פתוח, html מקבל class: במובייל באנר העוגיות מחכה לו ולא מופיע לידו
+  // והגובה שלו נשמר במשתנה --promo-h, כדי שכפתור הנגישות במובייל יעלה מעליו
   useEffect(() => {
-    if (!open) return undefined
-    document.documentElement.classList.add('promo-open')
-    return () => document.documentElement.classList.remove('promo-open')
-  }, [open])
+    if (!visible) return undefined
+    const root = document.documentElement
+    root.classList.add('promo-open')
+    const setH = () => {
+      const el = document.querySelector('.promo__card')
+      if (el) root.style.setProperty('--promo-h', `${Math.round(el.getBoundingClientRect().height)}px`)
+    }
+    setH()
+    const raf = requestAnimationFrame(setH)
+    window.addEventListener('resize', setH)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', setH)
+      root.classList.remove('promo-open')
+      root.style.removeProperty('--promo-h')
+    }
+  }, [visible, card])
 
   useEffect(() => {
-    if (!open) return undefined
+    if (!visible) return undefined
     track('promo_view', { promo: PROMO.id })
     const onKey = (e) => { if (e.key === 'Escape' && e.isTrusted) close('escape') }
     window.addEventListener('keydown', onKey)
@@ -101,9 +146,9 @@ export default function PromoBanner() {
     const iv = setInterval(measure, 500)
     window.addEventListener('resize', measure)
     return () => { window.removeEventListener('keydown', onKey); clearInterval(iv); window.removeEventListener('resize', measure) }
-  }, [open, close])
+  }, [visible, close])
 
-  if (!open) return null
+  if (!visible) return null
 
   const to = card?.slug ? `/projects/${card.slug}#contact` : PROMO.fallbackTo
   const cover = card?.cover ? optimizeSrc(card.cover, 320) : ''

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../../i18n/index.jsx'
-import site from '../../data/site.js'
+import { waHref } from '../../lib/contact.js'
 import Icon from './Icon.jsx'
 import { track } from '../../lib/track.js'
 import './FloatingActions.css'
@@ -19,7 +19,7 @@ export default function FloatingActions() {
   return (
     <div className="floating-actions">
       <a
-        href={`https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent(t('contact.waOpener'))}`}
+        href={waHref(t('contact.waOpener'))}
         target="_blank"
         rel="noopener noreferrer"
         className="fab fab--wa"

@@ -25,6 +25,8 @@ import StackGallery from '../components/ui/StackGallery.jsx'
 import ImageComparison from '../components/ui/ImageComparison.jsx'
 import executionGallery from '../data/executionGallery.js'
 import Icon from '../components/ui/Icon.jsx'
+import { DIVISION_TOPIC } from '../lib/contact.js'
+import { track } from '../lib/track.js'
 import KineticText from '../components/ui/KineticText.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
 import './Division.css'
@@ -93,6 +95,15 @@ export default function Division() {
 
   if (!division) return <Navigate to="/" replace />
 
+  /* פנייה מעמוד החטיבה: הטופס ב-/contact וגם הטופס בתחתית נפתחים על
+     הנושא של החטיבה הזו, וה-src מסמן בלידים שהפנייה הגיעה מעמוד שירות */
+  const topic = DIVISION_TOPIC[slug] || 'other'
+  const consultTo = `/contact?topic=${topic}&src=division`
+  const consultLabel = slug === 'brokerage'
+    ? L({ he: 'לשיחת ייעוץ', en: 'Talk to us' })
+    : L({ he: 'לשיחת ייעוץ עם מהנדס', en: 'Talk to an engineer' })
+  const guideTo = slug === 'development' ? '/yazamut-nadlan' : slug === 'execution' ? '/constructions' : slug === 'supervision' ? '/construction-supervision' : slug === 'brokerage' ? '/real-estate-guide' : '/blog'
+
   /* נתונים מובנים: Service (הישות של השירות) + FAQ אמיתי מהעמוד */
   const seoJsonLd = [
     {
@@ -129,7 +140,8 @@ export default function Division() {
       {/* באנר */}
       <header className="division-hero">
         <Parallax className="division-hero__bg">
-          <SmartImage src={heroImage} alt={L(division.hero.title)} label={L(division.name)} />
+          {/* תמונת ה-LCP של העמוד: טעינה מיידית בעדיפות גבוהה, כמו בשאר הבאנרים */}
+          <SmartImage src={heroImage} alt={L(division.hero.title)} label={L(division.name)} sizes="100vw" priority />
         </Parallax>
         <div className="division-hero__overlay" />
         <InfiniteGrid
@@ -163,6 +175,17 @@ export default function Division() {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }}>
             {L(division.hero.subtitle)}
           </motion.p>
+          <motion.div className="division-hero__actions"
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.35 }}>
+            <Link
+              to={consultTo}
+              className="btn btn--primary btn--lg"
+              onClick={() => track('cta_click', { placement: `division_hero_${slug}` })}
+            >
+              {consultLabel}
+              <Icon name="arrow" size={20} className="division-guide__arrow" />
+            </Link>
+          </motion.div>
         </div>
       </header>
 
@@ -322,10 +345,20 @@ export default function Division() {
               <KineticText as="h2" className="division-guide__title" text={L(division.guide.title)} />
               <p className="division-guide__desc">{L(division.guide.desc)}</p>
             </div>
-            <Link to={slug === 'development' ? '/yazamut-nadlan' : slug === 'execution' ? '/constructions' : slug === 'supervision' ? '/construction-supervision' : slug === 'brokerage' ? '/real-estate-guide' : '/blog'} className="btn btn--primary btn--lg">
-              {t('common.readMore')}
-              <Icon name="arrow" size={20} className="division-guide__arrow" />
-            </Link>
+            {/* הפעולה הראשית כאן היא פנייה. המדריך נשאר כקישור משני */}
+            <div className="division-guide__actions">
+              <Link
+                to={consultTo}
+                className="btn btn--primary btn--lg"
+                onClick={() => track('cta_click', { placement: `division_guide_${slug}` })}
+              >
+                {consultLabel}
+                <Icon name="arrow" size={20} className="division-guide__arrow" />
+              </Link>
+              <Link to={guideTo} className="btn btn--ghost division-guide__read">
+                {t('common.readMore')}
+              </Link>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -355,7 +388,7 @@ export default function Division() {
         </section>
       )}
 
-      <Contact />
+      <Contact key={slug} topic={topic} />
     </article>
   )
 }

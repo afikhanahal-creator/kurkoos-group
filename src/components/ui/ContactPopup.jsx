@@ -1,34 +1,30 @@
-import { useState } from 'react'
-import { useI18n, useLocalized } from '../../i18n/index.jsx'
+import { useState, useEffect } from 'react'
+import { useI18n } from '../../i18n/index.jsx'
 import heDict from '../../i18n/he.js'
 import enDict from '../../i18n/en.js'
-import { createLead } from '../../lib/cms.js'
-import { track } from '../../lib/track.js'
+import { LEAD_TOPICS as TOPICS } from '../../lib/contact.js'
+import { useLeadForm } from '../../lib/leadForm.js'
 import { getLastProject, trailSummary } from '../../lib/visitTrail.js'
 import Modal from './Modal.jsx'
-import Icon from './Icon.jsx'
+import { LeadFields, LeadSubmit, LeadSuccess, LeadFailure } from './LeadForm.jsx'
 import './ContactPopup.css'
 
-const TOPICS = ['development', 'construction', 'supervision', 'brokerage', 'mentorship', 'other']
-
-export default function ContactPopup({ open, onClose }) {
+/* initialTopic: הנושא שמסומן בפתיחה. כפתור שפותח את החלון עם הקשר
+   (למשל "הערכת עלות" ב-Hero) מעביר אותו דרך openContactPopup(topic). */
+export default function ContactPopup({ open, onClose, initialTopic }) {
   const { t } = useI18n()
-  const L = useLocalized()
-  const [sent, setSent] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
   const [topic, setTopic] = useState('development')
+  const lf = useLeadForm({ form: 'contact_popup', idPrefix: 'cp' })
 
-  const submit = async (e) => {
+  // בכל פתיחה: הנושא שהתבקש, ואם לא התבקש נושא נשארים על הקודם
+  useEffect(() => {
+    if (open && initialTopic && TOPICS.includes(initialTopic)) setTopic(initialTopic)
+  }, [open, initialTopic])
+
+  const submit = (e) => {
     e.preventDefault()
-    if (busy) return
-    setBusy(true); setError('')
-    const fd = new FormData(e.currentTarget)
-    const lead = {
-      name: String(fd.get('name') || '').trim(),
-      phone: String(fd.get('phone') || '').trim(),
-      email: String(fd.get('email') || '').trim(),
-      message: String(fd.get('message') || '').trim(),
+    lf.submit((v) => ({
+      ...v,
       // תיוג מדויק בשתי השפות ל-CRM + הפרויקט שבו התעניין הגולש בביקור הזה
       project: (() => {
         const interest = getLastProject()
@@ -39,17 +35,7 @@ export default function ContactPopup({ open, onClose }) {
       notes: trailSummary() ? `מסע באתר: ${trailSummary()}` : undefined,
       source: 'contact',
       status: 'new',
-    }
-    try {
-      await createLead(lead, { read: false })   // אנונימי — בלי קריאה חוזרת (RLS)
-      track('generate_lead', { form: 'contact_popup', topic })
-      setSent(true)
-    } catch (err) {
-      setError(L({ he: 'אירעה שגיאה בשליחה. נסו שוב, או חייגו אלינו ישירות.', en: 'Something went wrong. Please try again or call us directly.' }))
-      if (typeof console !== 'undefined') console.error('createLead failed:', err?.message || err)
-    } finally {
-      setBusy(false)
-    }
+    }), { topic })
   }
 
   return (
@@ -58,11 +44,8 @@ export default function ContactPopup({ open, onClose }) {
         <span className="eyebrow">{t('contact.eyebrow')}</span>
         <h2 className="contact-popup__title">{t('contact.title')}</h2>
 
-        {sent ? (
-          <div className="contact-popup__success">
-            <span className="contact-popup__success-icon"><Icon name="check" size={36} /></span>
-            <p>{t('contact.sent')}</p>
-          </div>
+        {lf.sent ? (
+          <LeadSuccess form="contact_popup" />
         ) : (
           <>
             <p className="contact-popup__choose">{t('contactExtra.choose')}</p>
@@ -73,20 +56,16 @@ export default function ContactPopup({ open, onClose }) {
                   type="button"
                   className={`contact-popup__topic ${topic === tp ? 'is-active' : ''}`}
                   onClick={() => setTopic(tp)}
+                  aria-pressed={topic === tp}
                 >
                   {t(`contactExtra.topics.${tp}`)}
                 </button>
               ))}
             </div>
-            <form className="contact-popup__form" onSubmit={submit}>
-              <input name="name" type="text" required placeholder={`${t('contact.name')}*`} autoComplete="name" />
-              <input name="phone" type="tel" required placeholder={`${t('contact.phone')}*`} autoComplete="tel" />
-              <input name="email" type="email" required placeholder={`${t('contact.email')}*`} autoComplete="email" />
-              <textarea name="message" rows={3} placeholder={t('contact.message')} />
-              {error && <p role="alert" style={{ color: '#c0392b', margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>{error}</p>}
-              <button type="submit" className="btn btn--primary btn--lg" disabled={busy}>
-                {busy ? L({ he: 'שולח…', en: 'Sending…' }) : t('contact.submit')}
-              </button>
+            <form className="contact-popup__form" onSubmit={submit} onInput={lf.onStart} noValidate>
+              <LeadFields lf={lf} />
+              <LeadFailure lf={lf} topicLabel={heDict.contactExtra.topics[topic]} />
+              <LeadSubmit lf={lf} />
             </form>
           </>
         )}

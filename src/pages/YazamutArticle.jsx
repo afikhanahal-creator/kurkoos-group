@@ -42,8 +42,8 @@ export default function YazamutArticle() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: article.title,
-    description: article.excerpt,
+    headline: article.metaTitle || article.title,
+    description: article.metaDescription || article.excerpt,
     image: coverUrl ? [coverUrl] : undefined,
     datePublished: article.date,
     dateModified: article.date,
@@ -60,7 +60,7 @@ export default function YazamutArticle() {
 
   return (
     <article className="yz-article">
-      <Seo title={`${article.title} · טור יזמות נדל״ן`} description={article.excerpt} image={coverUrl} jsonLd={jsonLd} />
+      <Seo title={article.metaTitle || `${article.title} · טור יזמות נדל״ן`} description={article.metaDescription || article.excerpt} image={coverUrl} jsonLd={jsonLd} />
 
       <header className="yz-hero">
         <div className="yz-hero__bg">

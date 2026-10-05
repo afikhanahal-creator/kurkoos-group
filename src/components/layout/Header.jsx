@@ -10,6 +10,7 @@ import MenuCards from './MenuCards.jsx'
 import ContactPopup from '../ui/ContactPopup.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
 import Icon from '../ui/Icon.jsx'
+import { CONTACT_POPUP_EVENT } from '../../lib/contact.js'
 import './Header.css'
 
 // תווית פריט ניווט: label דו-לשוני גובר על מפתח תרגום
@@ -30,14 +31,24 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
+  const [contactTopic, setContactTopic] = useState(null)   // נושא שמסומן מראש בחלון צור קשר
   const [openSub, setOpenSub] = useState(null) // mobile submenu toggle
   const location = useLocation()
 
-  // הבר התחתון במובייל מוצג רק בעמודי הפרויקטים (רשימה + עמוד פרויקט בודד),
-  // וגם בכל עמוד כשתפריט המובייל פתוח (כי הכפתור המרכזי הוא טוגל התפריט/סגירה).
-  const onProjectsPage =
-    location.pathname === '/projects' || location.pathname.startsWith('/projects/')
-  const showBottomBar = onProjectsPage || menuOpen
+  /* הבר התחתון במובייל היה כאן (חיפוש · תפריט · צור קשר) ורק בעמודי הפרויקטים.
+     הוא אוחד לבר הפנייה שבכל העמודים (MobileContactBar): חיוג, וואטסאפ,
+     השארת פרטים. החיפוש עבר לראש תפריט המובייל. */
+
+  // פתיחת חלון צור קשר מכל מקום באתר (הבר התחתון, ה-Hero), עם נושא מסומן מראש
+  useEffect(() => {
+    const onOpen = (e) => {
+      setContactTopic(e?.detail?.topic || null)
+      setMenuOpen(false)
+      setContactOpen(true)
+    }
+    window.addEventListener(CONTACT_POPUP_EVENT, onOpen)
+    return () => window.removeEventListener(CONTACT_POPUP_EVENT, onOpen)
+  }, [])
 
   // גלילה: מסמן "נגלל" (>24px), ובעמוד פרויקט בודד מסתיר את הבר העליון בגלילה
   // למטה ומחזיר אותו בגלילה למעלה — כך נשאר רק סרגל העוגנים הדק בראש המסך.
@@ -86,15 +97,13 @@ export default function Header() {
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    // דגל גלובלי: בר הפנייה התחתון מתחבא כשתפריט המובייל פתוח
+    document.documentElement.classList.toggle('menu-open', menuOpen)
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.classList.remove('menu-open')
+    }
   }, [menuOpen])
-
-  // ריווח תחתון לגוף הדף רק כשהבר התחתון מוצג — כדי שלא ייווצר שטח מת
-  // בעמודים שבהם הבר מוסתר, ושתוכן/תמונות לא ייחתכו מאחורי הבר כשהוא כן מוצג.
-  useEffect(() => {
-    document.body.classList.toggle('has-bottombar', showBottomBar)
-    return () => document.body.classList.remove('has-bottombar')
-  }, [showBottomBar])
 
   return (
     <header className={`header ${scrolled ? 'header--scrolled' : ''} ${hidden ? 'header--hidden' : ''}`}>
@@ -148,7 +157,7 @@ export default function Header() {
             >
               <Icon name="search" size={22} />
             </button>
-            <button type="button" className="btn btn--primary header__cta-btn" onClick={() => setContactOpen(true)}>
+            <button type="button" className="btn btn--primary header__cta-btn" onClick={() => { setContactTopic(null); setContactOpen(true) }}>
               {t('nav.contact')}
             </button>
           </div>
@@ -190,6 +199,15 @@ export default function Header() {
               {/* החלפת שפה — קטן, בראש התפריט (לא נחתך בתחתית) */}
               <motion.div className="header__mobile-top" variants={mItem}>
                 <LanguageSwitcher className="header__mobile-lang" />
+                <button
+                  type="button"
+                  className="header__mobile-search"
+                  onClick={() => { setMenuOpen(false); setSearchOpen(true) }}
+                  aria-label={t('search.label')}
+                >
+                  <Icon name="search" size={20} />
+                  <span>{t('search.label')}</span>
+                </button>
               </motion.div>
 
               <motion.div variants={mItem}>
@@ -268,34 +286,8 @@ export default function Header() {
         )}
       </AnimatePresence>
 
-      {/* בר תחתון קבוע במובייל (בסגנון תדהר): חיפוש · תפריט · צור קשר.
-          מוצג רק בעמודי הפרויקטים ובכל עמוד כשהתפריט פתוח. */}
-      {showBottomBar && (
-        <nav className="header__bottombar" aria-label="Mobile quick actions">
-          <button type="button" className="header__bb-item" onClick={() => setSearchOpen(true)}>
-            <Icon name="search" size={22} />
-            <span>{t('search.label')}</span>
-          </button>
-          <button
-            type="button"
-            className={`header__bb-item header__bb-menu ${menuOpen ? 'is-open' : ''}`}
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-expanded={menuOpen}
-          >
-            <span className="header__bb-menu-circle">
-              <Icon name="menu" size={24} />
-            </span>
-            <span>{t('common.menu')}</span>
-          </button>
-          <button type="button" className="header__bb-item" onClick={() => setContactOpen(true)}>
-            <Icon name="mail" size={22} />
-            <span>{t('nav.contact')}</span>
-          </button>
-        </nav>
-      )}
-
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <ContactPopup open={contactOpen} onClose={() => setContactOpen(false)} />
+      <ContactPopup open={contactOpen} onClose={() => setContactOpen(false)} initialTopic={contactTopic} />
     </header>
   )
 }

@@ -5,6 +5,8 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { heroSlides, companyFilm } from '../../data/hero.js'
 import { supabase } from '../../lib/supabase.js'
 import { listCounters, cachedSnapshot } from '../../lib/cms.js'
+import { openContactPopup } from '../../lib/contact.js'
+import { track } from '../../lib/track.js'
 import VideoModal from '../ui/VideoModal.jsx'
 import GeometricBlurMesh from '../ui/GeometricBlurMesh.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
@@ -171,14 +173,23 @@ export default function Hero() {
           <p className="hero__subtitle">{t('hero.subtitle')}</p>
 
           <div className="hero__actions">
-            <Link to="/projects" className="btn btn--primary btn--lg">
-              {t('hero.ctaPrimary')}
+            {/* הפעולה הראשית: פנייה. פותחת את חלון צור קשר עם נושא "ביצוע" מסומן,
+                כי הערכת עלות לבית היא שאלה של ביצוע ובנייה */}
+            <button
+              type="button"
+              className="btn btn--primary btn--lg"
+              onClick={() => { track('cta_click', { placement: 'home_hero_estimate' }); openContactPopup('construction') }}
+            >
+              {L({ he: 'קבלו הערכת עלות לבית שלכם', en: 'Get a cost estimate for your home' })}
               <Icon name="arrow" size={20} className="hero__cta-arrow" />
+            </button>
+            <Link to="/projects" className="btn btn--ghost btn--lg hero__ghost">
+              {t('hero.ctaPrimary')}
             </Link>
             {/* זמני: עד שסרטון החברה מוכן, "קצת עלינו" מפנה לעמוד אודות הקבוצה.
                 כשהסרטון יהיה מוכן — מחזירים ל-<button onClick={() => setFilmOpen(true)}>. */}
-            <Link to="/about" className="btn btn--ghost btn--lg hero__ghost">
-              <Icon name="play" size={16} className="hero__play-ic" />
+            <Link to="/about" className="hero__about-link">
+              <Icon name="play" size={14} className="hero__play-ic" />
               {t('hero.watchFilm')}
             </Link>
           </div>

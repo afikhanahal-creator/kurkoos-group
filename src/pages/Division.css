@@ -562,6 +562,15 @@
 .division-guide__title { font-size: var(--fs-h3); margin: 0.4rem 0 0.6rem; }
 .division-guide__desc { color: var(--color-text-soft); max-width: 50ch; }
 [dir='rtl'] .division-guide__arrow { transform: scaleX(-1); }
+/* פעולות ברצועת המדריך: פנייה ראשית, והמדריך כקישור משני מתחתיה */
+.division-guide__actions { display: flex; flex-direction: column; align-items: stretch; gap: 0.6rem; }
+.division-guide__read { justify-content: center; }
+
+/* כפתור הפנייה בבאנר החטיבה */
+.division-hero__actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.4rem; }
+@media (max-width: 980px) {
+  .division-hero__actions { justify-content: center; margin-top: 1.1rem; }
+}
 
 @media (max-width: 1024px) {
   .division-why__grid { grid-template-columns: repeat(2, 1fr); }

@@ -26,10 +26,11 @@
       // ההגדרות של האתר עצמו (עוגיות, שפה, נגישות, אדמין) נשארות
       const SITE = /^(sb-|kurkoos-|kc_|a11y|accessibility|engine_epoch$)/
       Object.keys(localStorage).forEach((k) => { if (!keep.has(k) && !SITE.test(k)) localStorage.removeItem(k) })
-      try { indexedDB.deleteDatabase('kurkoos-engine') } catch (e) {}
       localStorage.setItem('engine_epoch', DATA_EPOCH)
     }
   } catch (e) {}
+
+  try { const d = indexedDB.deleteDatabase('kurkoos-engine'); d.onblocked = () => {} } catch (e) {}
 
   // ---------- עדכונים חד פעמיים: ב-claude.ai כל אחד מהם רץ פעם אחת וסימן את עצמו בזיכרון הדפדפן.
   // באתר זה דפדפן חדש, ובלי הסימון הם רצו שוב על כל הנתונים (החליפו תמונות, כתבו מחדש טקסטים).
@@ -83,7 +84,7 @@
     return { docs, size: docs.length, empty: !docs.length, forEach: (f) => docs.forEach(f), docChanges: () => changes || docs.map((d, i) => ({ type: 'added', doc: d, oldIndex: -1, newIndex: i })), metadata: { fromCache: false, hasPendingWrites: false } }
   }
   // מטמון בדפדפן (IndexedDB): בפתיחה הראשונה נטען הכול, ובכל פתיחה אחרי זה רק מה שהשתנה
-  const IDB = (() => { let p = null; return () => p || (p = new Promise((ok) => { try { const r = indexedDB.open('kurkoos-engine', 1); r.onupgradeneeded = () => r.result.createObjectStore('cols'); r.onsuccess = () => ok(r.result); r.onerror = () => ok(null) } catch (e) { ok(null) } })) })()
+  const IDB = (() => { let p = null; return () => p || (p = new Promise((ok) => { try { const r = indexedDB.open('kurkoos-engine-' + DATA_EPOCH, 1); const t = setTimeout(() => ok(null), 3000); r.onupgradeneeded = () => r.result.createObjectStore('cols'); r.onsuccess = () => { clearTimeout(t); ok(r.result) }; r.onerror = () => { clearTimeout(t); ok(null) }; r.onblocked = () => { clearTimeout(t); ok(null) } } catch (e) { ok(null) } })) })()
   async function cacheGet(col) { const d = await IDB(); if (!d) return null; return new Promise((ok) => { try { const q = d.transaction('cols').objectStore('cols').get(col); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null) } catch (e) { ok(null) } }) }
   async function cachePut(col, v) { const d = await IDB(); if (!d) return; try { d.transaction('cols', 'readwrite').objectStore('cols').put(v, col) } catch (e) {} }
   async function pages(q) { const out = []; let off = 0; for (;;) { const r = await call(`${q}&limit=1000&offset=${off}`, { method: 'GET' }); const rows = await r.json(); out.push(...rows); if (rows.length < 1000) break; off += 1000 } return out }

@@ -8,7 +8,7 @@ await E(`APP.view='videos';render()`);await p.waitForTimeout(1500);
 o.order=await p.evaluate(()=>[...document.querySelectorAll('#v100page > section')].slice(0,5).map(s=>s.id||s.className));
 o.cards=await p.evaluate(()=>document.querySelectorAll('#v128 .v128c').length);
 await p.setInputFiles('#v127 input[data-v127f]',[TV+'a.webm']);await p.waitForTimeout(1500);
-for(const id of ['opening','shatter','worlds']){await p.click(`#v128 [data-v128="add"][data-id="${id}"]`);await p.waitForTimeout(250)}
+for(const id of ['opening','shatter','worlds']){await p.evaluate(()=>{const f=document.querySelector('[data-v142fold="v128"]');const sec=document.getElementById('v128');if(f&&sec&&sec.classList.contains('v142shut'))f.click()});await p.waitForTimeout(300);await p.click(`#v128 [data-v128="add"][data-id="${id}"]`);await p.waitForTimeout(250)}
 await p.fill('#v128 .v128row:nth-child(1) input[data-k="word"]','קורקוס');await p.fill('#v128 .v128row:nth-child(1) input[data-k="title"]','קבוצת קורקוס');
 await p.fill('#v128 .v128row:nth-child(2) input[data-k="word"]','וילות');
 await p.fill('#v128 .v128row:nth-child(3) input[data-k="word"]','אנחנו');await p.fill('#v128 .v128row:nth-child(3) input[data-k="words"]','בונים, וילות');

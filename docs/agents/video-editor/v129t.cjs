@@ -7,7 +7,7 @@ await E(`APP.view='videos';render()`);await p.waitForTimeout(1200);
 o.auto=await E(`window.__vid.VD.auto`);
 await p.setInputFiles('#v127 input[data-v127f]',[TV+'a.webm',TV+'b.webm']);await p.waitForTimeout(2500);
 o.footer=await p.evaluate(()=>[...document.querySelectorAll('#v127 .v127foot .px-btn')].map(x=>x.textContent));
-if(!mob){await p.click('#v127 [data-v127k="quality"][data-val="fast"]');await p.click('#v127 .v127it:nth-child(2) [data-v127="pick"]');await p.waitForTimeout(400);
+if(!mob){await p.evaluate(()=>{const c=[...document.querySelectorAll('#v127 .v142c')].find(c=>c.querySelector('[data-v127k="quality"]'));if(c&&!c.classList.contains('open'))c.querySelector('h4').click()});await p.waitForTimeout(200);await p.click('#v127 [data-v127k="quality"][data-val="fast"]');await p.click('#v127 .v127it:nth-child(2) [data-v127="pick"]');await p.waitForTimeout(400);
  await p.click('#v127 [data-v127="export"]');await p.waitForFunction(()=>document.querySelectorAll('#v127 .v127out').length>0,null,{timeout:60000});
  o.trayExport=await p.evaluate(()=>[...document.querySelectorAll('#v127 .v127out b')].map(x=>x.textContent))}
 // open the first in the editor

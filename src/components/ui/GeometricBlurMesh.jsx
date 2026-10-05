@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import './GeometricBlurMesh.css'
 
 /* ============================================================
@@ -84,6 +84,41 @@ varying vec2 v_texcoord;
 void main(){gl_Position=vec4(a_position,1.0);v_texcoord=a_uv;}
 `
 
+/* גיבוי כשאין WebGL בדפדפן (האצת גרפיקה כבויה, דרייבר חסום, הקשר שאבד):
+   אותה קובייה, אותו סיבוב, אותו צבע טורקיז — מצוירת ב־Canvas 2D רגיל. */
+const CUBE = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]]
+const EDGES = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]
+// אותו סדר כמו ב־GLSL (מטריצות לפי עמודות)
+const rx = (a, [x, y, z]) => { const s = Math.sin(a), c = Math.cos(a); return [x, c * y + s * z, -s * y + c * z] }
+const ry = (a, [x, y, z]) => { const s = Math.sin(a), c = Math.cos(a); return [c * x - s * z, y, s * x + c * z] }
+const rz = (a, [x, y, z]) => { const s = Math.sin(a), c = Math.cos(a); return [c * x + s * y, -s * x + c * y, z] }
+
+function draw2D(ctx, w, h, dpr, t, mouse) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.clearRect(0, 0, w, h)
+  const m = Math.min(w, h)
+  // מיקום העכבר ביחידות של השיידר (מרכז = 0)
+  const mx = (mouse.x * dpr - w / 2) / m, my = -(mouse.y * dpr - h / 2) / m
+  const dist = Math.hypot(mx, my)
+  const k = Math.min(1, Math.max(0, dist / 0.5))
+  const infl = 1 - k * k * (3 - 2 * k)
+  const time = t * 0.2
+  const ay = time + (mx - 0.5) * infl, ax = time * 0.7 + (my - 0.5) * infl, az = time * 0.1
+  const s = 0.7 * 0.4
+  const pts = CUBE.map((v) => {
+    const p = ry(ay, rx(ax, rz(az, [v[0] * s, v[1] * s, v[2] * s])))
+    const f = 2 / (2 - p[2])
+    return [w / 2 + p[0] * f * m, h / 2 - p[1] * f * m]
+  })
+  ctx.strokeStyle = 'rgb(16, 85, 114)'
+  ctx.globalAlpha = 1 - infl * 0.25
+  ctx.lineWidth = Math.max(1, (0.0044 + infl * 0.0024) * m)
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  for (const [a, b] of EDGES) { ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]) }
+  ctx.stroke()
+}
+
 export default function GeometricBlurMesh() {
   const containerRef = useRef(null)
   const canvasRef = useRef(null)
@@ -94,13 +129,18 @@ export default function GeometricBlurMesh() {
   const programRef = useRef(null)
   const uniformsRef = useRef({})
   const startTimeRef = useRef(Date.now())
+  const fallbackRef = useRef(null)
+  const [fallback, setFallback] = useState(false)
 
   // אתחול WebGL
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const gl = canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: false })
-    if (!gl) { console.warn('WebGL not supported'); return }
+    if (!gl) { setFallback(true); return }
+    // הקשר WebGL שאבד באמצע (חזרה מטאב, קריסת GPU) → עוברים לציור 2D
+    const onLost = (e) => { e.preventDefault(); glRef.current = null; setFallback(true) }
+    canvas.addEventListener('webglcontextlost', onLost)
     glRef.current = gl
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -119,7 +159,7 @@ export default function GeometricBlurMesh() {
 
     const vShader = createShader(gl.VERTEX_SHADER, vertexShader)
     const fShader = createShader(gl.FRAGMENT_SHADER, fragmentShader)
-    if (!vShader || !fShader) return
+    if (!vShader || !fShader) { setFallback(true); return }
 
     const program = gl.createProgram()
     if (!program) return
@@ -127,7 +167,7 @@ export default function GeometricBlurMesh() {
     gl.attachShader(program, fShader)
     gl.linkProgram(program)
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error('Program link error:', gl.getProgramInfoLog(program)); return
+      console.error('Program link error:', gl.getProgramInfoLog(program)); setFallback(true); return
     }
     programRef.current = program
     gl.useProgram(program)
@@ -158,6 +198,7 @@ export default function GeometricBlurMesh() {
     gl.vertexAttribPointer(uvLocation, 2, gl.FLOAT, false, 0, 0)
 
     return () => {
+      canvas.removeEventListener('webglcontextlost', onLost)
       gl.deleteProgram(program); gl.deleteShader(vShader); gl.deleteShader(fShader)
     }
   }, [])
@@ -177,18 +218,20 @@ export default function GeometricBlurMesh() {
       canvas.style.height = `${height}px`
       const gl = glRef.current
       if (gl) gl.viewport(0, 0, canvas.width, canvas.height)
+      const fb = fallbackRef.current
+      if (fb) { fb.width = width * dpr; fb.height = height * dpr }
     }
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [fallback])
 
   // תנועת עכבר (אפקט blur)
   useEffect(() => {
     const handleMouseMove = (e) => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const rect = canvas.getBoundingClientRect()
+      const box = containerRef.current
+      if (!box) return
+      const rect = box.getBoundingClientRect()
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
       const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
       mouseRef.current = { x: clientX - rect.left, y: clientY - rect.top }
@@ -210,6 +253,15 @@ export default function GeometricBlurMesh() {
       const canvas = canvasRef.current
       const gl = glRef.current
       const program = programRef.current
+      const fb = fallbackRef.current
+      if (fb && (!gl || !program)) {
+        mouseDampRef.current.x += (mouseRef.current.x - mouseDampRef.current.x) * 8 * deltaTime
+        mouseDampRef.current.y += (mouseRef.current.y - mouseDampRef.current.y) * 8 * deltaTime
+        const ctx = fb.getContext('2d')
+        if (ctx && fb.width) draw2D(ctx, fb.width, fb.height, Math.min(window.devicePixelRatio, 2), (Date.now() - startTimeRef.current) / 1000, mouseDampRef.current)
+        animationFrameRef.current = requestAnimationFrame(animate)
+        return
+      }
       if (!canvas || !gl || !program) { animationFrameRef.current = requestAnimationFrame(animate); return }
       const dampingFactor = 8
       mouseDampRef.current.x += (mouseRef.current.x - mouseDampRef.current.x) * dampingFactor * deltaTime
@@ -233,7 +285,8 @@ export default function GeometricBlurMesh() {
 
   return (
     <div ref={containerRef} className="gbm">
-      <canvas ref={canvasRef} className="gbm__canvas" />
+      <canvas ref={canvasRef} className="gbm__canvas" style={fallback ? { display: 'none' } : undefined} />
+      {fallback && <canvas ref={fallbackRef} className="gbm__canvas" aria-hidden="true" />}
     </div>
   )
 }

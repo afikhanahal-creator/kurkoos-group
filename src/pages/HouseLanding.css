@@ -216,7 +216,22 @@
   inset-inline-end: calc((100% - 5rem) / 5 - 28px);
   top: 27px;
   height: 2px;
-  background: linear-gradient(270deg, var(--hl-mist), var(--hl-teal));
+  background: linear-gradient(270deg, var(--hl-navy), var(--hl-teal) 55%, var(--hl-mist) 88%, var(--color-accent-500));
+  transform-origin: right center;
+}
+[dir='ltr'] .hl-timeline::before { transform-origin: left center; background: linear-gradient(90deg, var(--hl-navy), var(--hl-teal) 55%, var(--hl-mist) 88%, var(--color-accent-500)); }
+/* נקודת אור שרצה לאורך הקו, בשקט, אחרי שהציר נחשף */
+.hl-timeline::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  inset-inline-start: 28px;
+  width: 64px;
+  height: 8px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, rgba(143, 182, 200, 0.95), rgba(143, 182, 200, 0));
+  opacity: 0;
+  pointer-events: none;
 }
 .hl-stage { position: relative; display: flex; flex-direction: column; gap: 1.1rem; }
 .hl-stage__num {
@@ -233,6 +248,58 @@
   box-shadow: 0 0 0 6px var(--hl-paper);
 }
 .hl-stage:last-child .hl-stage__num { background: var(--color-accent-500); }
+.hl-stage__num {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s, box-shadow 0.35s;
+}
+/* טבעת טורקיז שמתרחבת מסביב למספר */
+.hl-stage__num::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--hl-teal);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.3s, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hl-stage:last-child .hl-stage__num::after { border-color: var(--color-accent-500); }
+.hl-stage__title { transition: color 0.25s; }
+@media (hover: hover) {
+  .hl-stage:hover .hl-stage__num {
+    transform: translateY(-4px) scale(1.06);
+    background: var(--hl-teal);
+    box-shadow: 0 0 0 6px var(--hl-paper), 0 14px 26px -10px rgba(7, 41, 58, 0.55);
+  }
+  .hl-stage:last-child:hover .hl-stage__num { background: #c4191a; }
+  .hl-stage:hover .hl-stage__num::after { opacity: 1; transform: scale(1.12); }
+  .hl-stage:hover .hl-stage__title { color: var(--hl-teal); }
+}
+
+/* חשיפה בגלילה: מופעל רק כש־JS קיים ואין העדפת תנועה מופחתת */
+.hl-timeline--anim::before { transform: scaleX(0); transition: transform 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.15s; }
+.hl-timeline--anim.is-in::before { transform: scaleX(1); }
+.hl-timeline--anim:not(.is-in) .hl-stage__num { opacity: 0; transform: scale(0.6); }
+.hl-timeline--anim .hl-stage__body { opacity: 0; transform: translateY(12px); transition: opacity 0.6s, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+.hl-timeline--anim.is-in .hl-stage__num {
+  animation: hl-num-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards, hl-num-ping 1.1s ease-out backwards;
+  animation-delay: calc(0.25s + var(--i) * 0.26s), calc(0.45s + var(--i) * 0.26s);
+}
+.hl-timeline--anim.is-in .hl-stage__body { opacity: 1; transform: none; transition-delay: calc(0.4s + var(--i) * 0.26s); }
+.hl-timeline--anim.is-in::after { animation: hl-glint 5.5s ease-in-out 2s infinite; }
+@keyframes hl-num-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes hl-num-ping {
+  0% { box-shadow: 0 0 0 6px var(--hl-paper), 0 0 0 6px rgba(16, 85, 114, 0.45); }
+  100% { box-shadow: 0 0 0 6px var(--hl-paper), 0 0 0 22px rgba(16, 85, 114, 0); }
+}
+@keyframes hl-glint {
+  0% { opacity: 0; inset-inline-start: 28px; }
+  10% { opacity: 1; }
+  55% { opacity: 1; inset-inline-start: calc(80% - 60px); }
+  65%, 100% { opacity: 0; inset-inline-start: calc(80% - 60px); }
+}
 .hl-stage__title { font-size: 1.3rem; color: var(--hl-navy); margin-bottom: 0.2rem; }
 .hl-stage__who {
   display: inline-block;
@@ -439,7 +506,7 @@
   max-width: min(1180px, calc(100% - 2 * var(--container-pad)));
 }
 .hl-trust { position: relative; display: flex; flex-direction: column; background: var(--hl-paper); }
-.hl-trust__photo { flex: 1 1 0; width: 100%; min-height: 280px; object-fit: cover; object-position: center 15%; }
+.hl-trust__photo { flex: 1 1 0; width: 100%; min-height: 280px; object-fit: cover; object-position: 50% 0%; }
 .hl-trust__body { display: flex; flex-direction: column; gap: 0.35rem; padding: clamp(1.4rem, 3vw, 2.25rem); }
 .hl-trust__name { font-family: var(--font-heading); font-size: 1.45rem; color: var(--hl-navy); }
 .hl-trust__role { color: var(--hl-teal); font-weight: 600; }
@@ -458,7 +525,51 @@
   font-family: var(--font-heading);
   font-weight: 700;
 }
-.hl-trust__link:hover { border-color: var(--hl-teal); color: var(--hl-teal); }
+/* כפתורי טלפון ווואטסאפ: מילוי נייבי לטורקיז שמחליק פנימה, קפיצה קלה והבזק אור */
+.hl-trust__link {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: color 0.3s, border-color 0.3s, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s;
+}
+.hl-trust__link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(120deg, var(--hl-navy), var(--hl-teal));
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hl-trust__link::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  inset-inline-start: -50%;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(143, 182, 200, 0.55), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+}
+.hl-trust__link .icon, .hl-trust__link svg { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.hl-trust__link:hover, .hl-trust__link:focus-visible {
+  color: #fff;
+  border-color: var(--hl-teal);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -10px rgba(7, 41, 58, 0.6);
+}
+.hl-trust__link:hover::before, .hl-trust__link:focus-visible::before { transform: scaleX(1); }
+.hl-trust__link:hover::after { animation: hl-shine 0.8s ease-out 0.12s; }
+.hl-trust__link:hover svg { transform: rotate(-12deg) scale(1.12); }
+.hl-trust__link:active { transform: translateY(0) scale(0.98); }
+.hl-trust__link:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 3px; }
+@keyframes hl-shine {
+  from { inset-inline-start: -50%; }
+  to { inset-inline-start: 120%; }
+}
 .hl-trust__addr { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.92rem; color: var(--color-text-muted); }
 
 .hl-form {
@@ -532,8 +643,12 @@
     top: 48px;
     bottom: 0;
     width: 2px;
-    background: linear-gradient(180deg, var(--hl-teal), var(--hl-mist));
+    background: linear-gradient(180deg, var(--hl-navy), var(--hl-teal) 60%, var(--hl-mist));
+    transform-origin: center top;
   }
+  .hl-timeline--anim .hl-stage:not(:last-child)::before { transform: scaleY(0); transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1); }
+  .hl-timeline--anim.is-in .hl-stage:not(:last-child)::before { transform: scaleY(1); transition-delay: calc(0.5s + var(--i) * 0.26s); }
+  .hl-timeline::after { display: none; }
   .hl-stage { flex-direction: row; gap: 1rem; padding-bottom: 1.75rem; }
   .hl-stage:last-child { padding-bottom: 0; }
   .hl-stage__num { flex: none; width: 48px; height: 48px; font-size: 1.2rem; }
@@ -549,4 +664,10 @@
   .hl-trust__body { padding: 1.1rem; }
   .hl-trust__name { font-size: 1.2rem; }
   .hl-form__submit { align-self: stretch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hl-stage__num, .hl-stage__num::after, .hl-trust__link, .hl-trust__link::before, .hl-trust__link svg { transition: none; }
+  .hl-trust__link:hover::after { animation: none; }
+  .hl-stage:hover .hl-stage__num, .hl-trust__link:hover { transform: none; }
 }

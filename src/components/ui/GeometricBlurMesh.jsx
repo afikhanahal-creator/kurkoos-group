@@ -93,30 +93,65 @@ const rx = (a, [x, y, z]) => { const s = Math.sin(a), c = Math.cos(a); return [x
 const ry = (a, [x, y, z]) => { const s = Math.sin(a), c = Math.cos(a); return [c * x - s * z, y, s * x + c * z] }
 const rz = (a, [x, y, z]) => { const s = Math.sin(a), c = Math.cos(a); return [c * x + s * y, -s * x + c * y, z] }
 
+const smooth = (e0, e1, x) => { const k = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return k * k * (3 - 2 * k) }
+const SEG = 28
+
+/* כמו בשיידר: ההשפעה של העכבר מחושבת לכל נקודה על הקו בנפרד, ולכן הקובייה
+   מתעקמת ומיטשטשת רק ליד הסמן (קו שמתעבה ונמרח בהילה רכה). */
 function draw2D(ctx, w, h, dpr, t, mouse) {
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.clearRect(0, 0, w, h)
   const m = Math.min(w, h)
-  // מיקום העכבר ביחידות של השיידר (מרכז = 0)
   const mx = (mouse.x * dpr - w / 2) / m, my = -(mouse.y * dpr - h / 2) / m
-  const dist = Math.hypot(mx, my)
-  const k = Math.min(1, Math.max(0, dist / 0.5))
-  const infl = 1 - k * k * (3 - 2 * k)
   const time = t * 0.2
-  const ay = time + (mx - 0.5) * infl, ax = time * 0.7 + (my - 0.5) * infl, az = time * 0.1
   const s = 0.7 * 0.4
-  const pts = CUBE.map((v) => {
-    const p = ry(ay, rx(ax, rz(az, [v[0] * s, v[1] * s, v[2] * s])))
-    const f = 2 / (2 - p[2])
-    return [w / 2 + p[0] * f * m, h / 2 - p[1] * f * m]
-  })
-  ctx.strokeStyle = 'rgb(16, 85, 114)'
-  ctx.globalAlpha = 1 - infl * 0.25
-  ctx.lineWidth = Math.max(1, (0.0044 + infl * 0.0024) * m)
+  const inflAt = (x, y) => 1 - smooth(0, 0.5, Math.hypot(x - mx, y - my))
+  // נקודה תלת־ממדית → נקודה במסך, עם סיבוב שתלוי בהשפעה במקום שבו היא נוחתת
+  const place = (v) => {
+    let infl = 0, q
+    for (let it = 0; it < 3; it++) {
+      const p = ry(time + (mx - 0.5) * infl, rx(time * 0.7 + (my - 0.5) * infl, rz(time * 0.1, v)))
+      const f = 2 / (2 - p[2])
+      q = [p[0] * f, p[1] * f]
+      infl = inflAt(q[0], q[1])
+    }
+    return [q[0], q[1], infl]
+  }
+  const toPx = (q) => [w / 2 + q[0] * m, h / 2 - q[1] * m]
+  const vign = (q) => 1 - Math.hypot(q[0], q[1]) * 0.2
   ctx.lineCap = 'round'
-  ctx.beginPath()
-  for (const [a, b] of EDGES) { ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]) }
-  ctx.stroke()
+  ctx.strokeStyle = 'rgb(16, 85, 114)'
+  for (const [ia, ib] of EDGES) {
+    const A = CUBE[ia], B = CUBE[ib]
+    let prev = null
+    for (let i = 0; i <= SEG; i++) {
+      const u = i / SEG
+      const cur = place([(A[0] + (B[0] - A[0]) * u) * s, (A[1] + (B[1] - A[1]) * u) * s, (A[2] + (B[2] - A[2]) * u) * s])
+      if (prev) {
+        const infl = (prev[2] + cur[2]) / 2
+        const pa = toPx(prev), pb = toPx(cur)
+        const base = (1 - infl * 0.25) * vign(cur)
+        const thick = (0.0022 + infl * 0.0012) * 2 * m
+        const blur = (0.0001 + infl * 0.05) * m
+        if (blur > 2) {
+          // הילה רכה: כמה שכבות רחבות ושקופות שמדמות את הטשטוש של השיידר
+          ctx.strokeStyle = 'rgb(150, 205, 232)'
+          for (const [k, al] of [[2, 0.16], [1.3, 0.2], [0.7, 0.28]]) {
+            ctx.globalAlpha = base * al * infl
+            ctx.lineWidth = thick + blur * k
+            ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke()
+          }
+        }
+        // ליד הסמן הקו עצמו מתבהר לתכלת, כמו בגרסת ה־WebGL
+        ctx.strokeStyle = `rgb(${16 + 120 * infl | 0}, ${85 + 110 * infl | 0}, ${114 + 110 * infl | 0})`
+        ctx.globalAlpha = base * (1 - infl * 0.4)
+        ctx.lineWidth = Math.max(1, thick)
+        ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke()
+      }
+      prev = cur
+    }
+  }
+  ctx.globalAlpha = 1
 }
 
 export default function GeometricBlurMesh() {

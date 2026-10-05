@@ -8,16 +8,20 @@ const has=w=>{try{return [...document.fonts].some(f=>f.family.replace(/"/g,'')==
 function hash(s){let h=0;s=String(s||'');for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
 function styleOf(p){const t=p&&p.typo;if(t&&t!=='auto'&&STY[t])return t;const n=hash((p&&(p.id||p.key))||'')%100;const s=n<28?'classic':n<52?'contrast':n<74?'narrow':n<88?'light':'narrowlight';if((s==='narrow'||s==='narrowlight')&&!tzar())return 'contrast';return s}
 const RE=/^\s*(?:(italic|normal|oblique)\s+)?(?:(\d{3}|bold|normal)\s+)?([\d.]+)px\s+(.+)$/;
-function remap(v,st){if(st==='classic')return v;const m=String(v).match(RE);if(!m)return v;const fam=m[4];if(!/^"?Almoni"?\s*(,|$)/.test(fam))return v;
- let w=m[2]==='bold'?700:m[2]&&m[2]!=='normal'?+m[2]:400;const s=+m[3];const disp=w>=700&&s>=34,text=w<=500&&s>=18&&s<34;let F=fam;
- if(st==='contrast'){if(disp)w=900;else if(text&&has(300))w=300}
- else if(st==='narrow'){if(disp){F='"Almoni Tzar", '+fam;w=800}}
- else if(st==='light'){if(w>=700&&s>=70)w=has(500)?500:400;else if(disp)w=700;else if(text&&has(300))w=300}
- else if(st==='narrowlight'){if(disp){F='"Almoni Tzar", '+fam;w=800}else if(text&&has(300))w=300}
+// sc = the drawing scale, so a headline drawn small and scaled up is still judged as a headline.
+// One order in every voice: the biggest text is the heaviest at its size, nothing mid-size outweighs it, and no line is under 24px.
+function remap(v,st,sc){const m=String(v).match(RE);if(!m)return v;const fam=m[4];if(!/^"?Almoni"?\s*(,|$)/.test(fam))return v;sc=Math.abs(sc)||1;
+ let w=m[2]==='bold'?700:m[2]&&m[2]!=='normal'?+m[2]:400;let s=+m[3];const e=s*sc;if(e>=15&&e<24)s=+(24/sc).toFixed(2);
+ const head=e>=56,disp=head||(w>=700&&e>=34),text=!disp&&w<=500&&e>=15&&e<34,label=!disp&&w>=600&&e<34;let F=fam;
+ if(st==='classic'){if(w===800&&has(900))w=900;if(head&&w<500)w=500}
+ else if(st==='contrast'){if(disp)w=900;else if(text&&has(300))w=300}
+ else if(st==='narrow'){if(disp){F='"Almoni Tzar", '+fam;w=800}else if(w===800&&has(900))w=900}
+ else if(st==='light'){if(e>=70)w=has(500)?500:400;else if(disp||(w>=600&&e>=34))w=has(500)?500:400;else if(label)w=has(500)?500:400;else if(text&&has(300))w=300}
+ else if(st==='narrowlight'){if(disp){F='"Almoni Tzar", '+fam;w=e>=56?800:700}else if(label)w=600;else if(text&&has(300))w=300}
  return `${m[1]?m[1]+' ':''}${w} ${s}px ${F}`}
 let CUR=null;
 try{const P=CanvasRenderingContext2D.prototype;const d=Object.getOwnPropertyDescriptor(P,'font');
- Object.defineProperty(P,'font',{configurable:true,get(){return d.get.call(this)},set(v){if(CUR&&this.canvas&&this.canvas.__v151!==false){try{v=remap(v,CUR)}catch(e){}}d.set.call(this,v)}})}catch(e){}
+ Object.defineProperty(P,'font',{configurable:true,get(){return d.get.call(this)},set(v){if(CUR&&this.canvas&&this.canvas.__v151!==false){try{v=remap(v,CUR,this.getTransform().a)}catch(e){}}d.set.call(this,v)}})}catch(e){}
 try{drawSlide=(f=>function(cv,p){const prev=CUR;CUR=p?styleOf(p):null;try{return f.apply(this,arguments)}finally{CUR=prev}})(drawSlide)}catch(e){}
 // thumbnails are cached per post look; the voice is part of that look
 try{sigOf=(f=>function(p){return f.apply(this,arguments)+'|ty:'+styleOf(p)+(tzar()?'t':'')})(sigOf)}catch(e){}

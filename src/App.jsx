@@ -10,6 +10,7 @@ import Analytics from './components/ui/Analytics.jsx'
 import Footer from './components/layout/Footer.jsx'
 import CookieBanner from './components/ui/CookieBanner.jsx'
 import FloatingActions from './components/ui/FloatingActions.jsx'
+import MobileContactBar from './components/ui/MobileContactBar.jsx'
 import AccessibilityButton from './components/ui/AccessibilityButton.jsx'
 import IntroVideo from './components/sections/IntroVideo.jsx'
 import FontLoader from './components/ui/FontLoader.jsx'
@@ -175,6 +176,8 @@ export default function App() {
       </main>
       <Footer />
       <FloatingActions />
+      {/* מובייל: בר חיוג · וואטסאפ · השארת פרטים בכל העמודים הציבוריים */}
+      <MobileContactBar />
       <AccessibilityButton />
       <CookieBanner />
     </>

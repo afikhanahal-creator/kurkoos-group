@@ -6,8 +6,9 @@
   position: fixed;
   inset-inline: 0;
   inset-block-end: calc(1.1rem + var(--promo-lift, 0px));
-  /* מעל כל שכבה אחרת באתר: כפתורים צפים, נגישות, עוגיות */
-  z-index: 2147483000;
+  /* מעל בר הפנייה במובייל (z-overlay), ומתחת לחלון צור קשר ולכל מודאל
+     (z-modal). קודם הוא ישב מעל הכול, כולל החלון שנפתח מהכפתור שבו. */
+  z-index: calc(var(--z-overlay) + 5);
   display: flex;
   justify-content: center;
   padding-inline: 1rem;
@@ -95,6 +96,15 @@
   .promo__project { font-size: 0.9rem; }
   .promo__close { align-self: start; }
   .promo .promo__cta { justify-self: stretch; width: 100%; justify-content: center; }
+}
+
+/* בר הפנייה התחתון במובייל: הבאנר יושב מעליו, וכפתור הנגישות עולה מעל
+   הבאנר כל עוד הוא פתוח, כדי שאף אחד מהם לא יכסה את השני */
+@media (max-width: 768px) {
+  body.has-contactbar .promo { inset-block-end: calc(var(--cbar-h) + var(--cbar-safe) + 0.5rem + var(--promo-lift, 0px)); }
+  html.promo-open body.has-contactbar .a11y-fab {
+    inset-block-end: calc(var(--cbar-h) + var(--cbar-safe) + var(--promo-h, 150px) + 1.2rem);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

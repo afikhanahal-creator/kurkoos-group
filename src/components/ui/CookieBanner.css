@@ -21,3 +21,8 @@
 @media (max-width: 520px) {
   .cookie-banner { flex-direction: column; align-items: stretch; text-align: center; }
 }
+
+/* מובייל: מעל בר הפנייה התחתון ולא עליו */
+@media (max-width: 768px) {
+  body.has-contactbar .cookie-banner { inset-block-end: calc(var(--cbar-h) + var(--cbar-safe) + 0.6rem); }
+}

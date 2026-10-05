@@ -29,6 +29,9 @@ function upsertLink(rel, href) {
   el.setAttribute('href', href)
 }
 
+// הכתובת שממנה נטען הדף בפועל, כלומר זו שה-prerender כתב לה את ה-head
+const FIRST_PATH = typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') || '/' : '/'
+
 export default function Seo({ title, description, image, noindex = false, jsonLd = null }) {
   const { lang } = useI18n()
   const { pathname } = useLocation()
@@ -68,6 +71,14 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
     upsertMeta('name', 'twitter:title', fullTitle)
     upsertMeta('name', 'twitter:description', desc)
     upsertMeta('name', 'twitter:image', ogImg.startsWith('http') ? ogImg : origin + ogImg)
+
+    /* נתונים מובנים שנכתבו ב-prerender (data-prerender) שייכים לכתובת שממנה
+       נטען הדף. כשהעמוד מזריק בלוק משלו, או אחרי ניווט לכתובת אחרת, מוחקים
+       אותם: אחרת גוגל רואה את אותו Article / FAQPage פעמיים, או בלוק של עמוד
+       קודם. בלוק הארגון הקבוע שב-index.html לא מסומן ולכן לא נוגעים בו. */
+    if (jsonLd || (pathname.replace(/\/$/, '') || '/') !== FIRST_PATH) {
+      document.head.querySelectorAll('script[type="application/ld+json"][data-prerender]').forEach((el) => el.remove())
+    }
 
     // נתונים מובנים per-page (schema.org) — נוסף ומוסר בעת ניווט
     let ld = null

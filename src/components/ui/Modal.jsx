@@ -1,10 +1,14 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../../i18n/index.jsx'
 import Icon from './Icon.jsx'
 import './Modal.css'
 
-/* מודאל לשימוש חוזר: overlay, סגירה ב-Escape/קליק בחוץ, נעילת גלילה. */
+/* מודאל לשימוש חוזר: overlay, סגירה ב-Escape/קליק בחוץ, נעילת גלילה.
+   מרונדר ישירות תחת body (portal): חלון צור קשר יושב בתוך ה-Header, ול-Header
+   יש שכבת z-index משלו, כך שבלי ה-portal הבר התחתון, באנר העוגיות והבאנר
+   השיווקי היו מצליחים לעלות מעל החלון. */
 export default function Modal({ open, onClose, children, className = '', label = '' }) {
   const { t } = useI18n()
 
@@ -19,7 +23,8 @@ export default function Modal({ open, onClose, children, className = '', label =
     }
   }, [open, onClose])
 
-  return (
+  if (typeof document === 'undefined') return null
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -48,6 +53,7 @@ export default function Modal({ open, onClose, children, className = '', label =
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }

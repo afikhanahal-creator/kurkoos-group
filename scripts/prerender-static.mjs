@@ -40,7 +40,9 @@ const isLive = (a) => !a.date || String(a.date).slice(0, 10) <= TODAY
 
 /* ---------- עזרים ---------- */
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-const ldJson = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`
+/* data-prerender מסמן את הבלוקים שנכתבו כאן. Seo.jsx מוחק אותם כשהוא מזריק
+   את הנתונים המובנים של העמוד בזמן ריצה, כדי שגוגל לא יראה כל בלוק פעמיים. */
+const ldJson = (obj) => `<script type="application/ld+json" data-prerender>${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`
 
 /* המרת markdown מינימלית (##, ###, רשימות, מודגש) ל-HTML קריא */
 function mdToHtml(md) {

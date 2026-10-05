@@ -8,7 +8,7 @@
 const {A,TH,shot,txt,small,chrome,M}=G.FX4H;const W=1080,H=1350;
 const NAVY='#07293a',NAVY2='#0b1f2a',TEAL='#105572',MIST='#8fb6c8',MIST1='#e7eef1',PAPER='#f7f8fa',RED='#a90b0c',SLATE='#4a5866',LINE='#cbd2db',WHITE='#ffffff';
 const LS=(c,v)=>{try{c.letterSpacing=v}catch(e){}};
-const ISO=t=>String(t??'').replace(/(\d+(?:[.,]\d+)?)\s*[×x]\s*(\d+(?:[.,]\d+)?)/g,'⁦$1×$2⁩').replace(/(\d[\d,.]*(?:[-/]\d[\d,.]*)*[+%]?)/g,'⁦$1⁩');
+const ISO=t=>String(t??'').replace(/(\d+(?:[.,]\d+)?)\s*[×x]\s*(\d+(?:[.,]\d+)?)/g,'⁦$1×$2⁩').replace(/(\d[\d,.]*(?:[-/:]\d[\d,.]*)*[+%]?)/g,'⁦$1⁩');
 const hair=(c,x1,y1,x2,y2,col,w=1.5)=>{c.save();c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.restore()};
 function rnd(seed){let s=(seed>>>0)||7;return()=>(s=(s*16807)%2147483647)/2147483647}
 function T(c,t,x,y,o){t=ISO(t);c.save();c.font=A(o.w||400,o.size);LS(c,((o.track??0)*o.size).toFixed(1)+'px');c.direction=o.ltr?'ltr':'rtl';c.textAlign=o.align||'right';c.fillStyle=o.color||NAVY;c.fillText(t,x,y);const w=c.measureText(t).width;c.restore();LS(c,'0px');return w}
@@ -103,7 +103,7 @@ L.x_mag_torn=(c,p,I)=>{c.fillStyle=NAVY;c.fillRect(0,0,W,H);const s2=p.shot2||(p
 
 // 6 COST · one figure big enough to read in the feed, then what it is made of, one bar each, the biggest in red
 L.x_mag_cost=(c,p,I)=>{const t=TH[p.theme]||TH.light;c.fillStyle=t.bg;c.fillRect(0,0,W,H);masthead(c,p,t.fg,t.sub);
-  const its=items(p);const lead=its[0]||{v:'',l:''};const rest=its.slice(1,6);
+  const its=items(p);const lead=its[0]||{v:'',l:''};const unit=x=>/%/.test(String(x.v))?'%':/₪|ש"ח/.test(String(x.v)+x.l)?'nis':'n';const rest=its.slice(1).filter(x=>unit(x)===unit(lead)).slice(0,5);
   const F=fitHead(c,p.head||'',W-2*M,{max:72,min:48,lines:2,w:800});const b=drawHead(c,F,W-M,140,t.fg,{w:800});
   const nv=String(lead.v||'');let ns=Math.min(300,Math.floor((W-2*M)/Math.max(1,nv.length*0.62)));T(c,nv,W-M,b+ns*.92+20,{w:900,size:ns,color:t.fg===WHITE?WHITE:NAVY,track:-.04});T(c,lead.l||'',W-M,b+ns*.92+80,{w:600,size:32,color:RED});
   let y=b+ns+170;const vals=rest.map(x=>parseFloat(String(x.v).replace(/[^\d.]/g,''))||0);const mx=Math.max(...vals,1);const top=vals.indexOf(Math.max(...vals));

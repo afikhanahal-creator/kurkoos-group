@@ -1,0 +1,8 @@
+<style id="k150">
+/* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
+.v150auto{opacity:.75}
+.v150auto.v150busy{pointer-events:none;opacity:.55}
+.v150auto.v150busy::after{content:"";display:inline-block;width:12px;height:12px;margin-inline-start:8px;border:2px solid currentColor;border-inline-end-color:transparent;border-radius:50%;vertical-align:-2px;animation:v150spin .7s linear infinite}
+@keyframes v150spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.v150auto.v150busy::after{animation:none}}
+</style>

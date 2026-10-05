@@ -79,3 +79,27 @@
  .v144upl{flex:1 1 40%;justify-content:center}
 }
 </style>
+<style id="k148">
+/* V148 · gallery management */
+.v148sel{cursor:pointer}
+.v148sel .v144im{outline:3px solid transparent;outline-offset:-3px}
+.v148sel.on .v144im{outline-color:#105572}
+.v148box{position:absolute;top:8px;inset-inline-start:8px;z-index:2;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.95);border:2px solid #105572;color:#fff;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:15px}
+.v148sel.on .v148box{background:#105572}
+.v148bad .v144im{background:#f4e3e3}
+.v148bad .v144im::after{content:"התמונה לא נטענת";position:absolute;inset:0;display:grid;place-items:center;font-size:12px;color:#a90b0c;font-weight:700}
+.v148bad .v144im img{display:none}
+.v148bar{position:fixed;inset-inline:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:1100;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 14px;border-radius:14px;background:#07293a;color:#fff;box-shadow:0 10px 30px rgba(7,41,58,.35);max-width:900px;margin-inline:auto}
+.v148bar b{font-size:15px;margin-inline-end:auto}
+.v148bar select{height:36px;border-radius:9px;border:0;padding:0 8px;font:inherit;font-size:14px}
+.v148bar .px-btn{min-height:36px}
+.v148bar .ghost{color:#fff!important;border-color:rgba(255,255,255,.5)!important;background:transparent!important}
+.v148bar .v144del{background:#a90b0c!important;color:#fff!important;border-color:#a90b0c!important}
+.v148selon{padding-bottom:110px}
+.v115t{position:relative}
+.v148x{position:absolute;top:4px;inset-inline-start:4px;z-index:3;width:26px;height:26px;border-radius:999px;background:rgba(7,41,58,.82);color:#fff;display:grid;place-items:center;font-size:17px;line-height:1;cursor:pointer;opacity:0;transition:opacity .15s}
+.v115t:hover .v148x,.v115t:focus-within .v148x,.v148x:focus-visible{opacity:1}
+@media (hover:none){.v148x{opacity:1}}
+.v148g{border:1px solid #105572;background:#fff;color:#105572;border-radius:999px;height:32px;padding:0 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+@media (max-width:760px){.v148bar{inset-inline:8px;bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
+</style>

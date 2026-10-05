@@ -1,4 +1,4 @@
-// ================= V144 · photo bank: one page with every photo the system has (site, CMS, uploads, AI, built-in), grouped by project,
+// ================= V144 + V148 · photo gallery: remove any photo (and bring it back), select many, edit name and project, find broken ones. Photo bank: one page with every photo the system has (site, CMS, uploads, AI, built-in), grouped by project,
 //                   plus the photos that are on the website but not in the system yet, with one tap import =================
 (function(){
 const CAT=/*CAT*/[];
@@ -10,7 +10,29 @@ const e=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','
 const tst=m=>{try{toast(m)}catch(x){}};
 const SRC={site:'מהאתר',up:'העליתם',ai:'נוצרו ב-AI',topic:'תמונות נושא',builtin:'צילומי שטח ורחפן',missing:'חסרות במערכת'};
 const SRC_HINT={site:'תמונות שהגיעו מהאתר ומהמערכת של הפרויקטים',up:'תמונות שהעליתם בעצמכם',ai:'תמונות שנוצרו בסטודיו התמונות',topic:'תמונות כלליות לפי נושא',builtin:'צילומים מהשטח ומהרחפן שמובנים במערכת',missing:'תמונות שיש באתר ועוד לא נכנסו למערכת'};
-const S={src:'all',q:'',group:'proj',lb:null,busy:'',live:null,liveAt:0,use:null,useAt:0};
+const S={src:'all',q:'',group:'proj',lb:null,busy:'',live:null,liveAt:0,use:null,useAt:0,sel:new Set(),selMode:false};
+// ---------- removed photos: kept in the database (settings/photo_hidden), out of every list and picker, still drawn in posts that use them
+const HID=new Set();const SHADOW={};const BROKEN=new Set();
+try{JSON.parse(localStorage.getItem('v148_hid')||'[]').forEach(k=>HID.add(k))}catch(x){}
+function applyHidden(){try{HID.forEach(k=>{if(PHOTO_LIB[k]){SHADOW[k]=PHOTO_LIB[k];delete PHOTO_LIB[k]}})}catch(x){}}
+function dbo(){try{return (typeof KC!=='undefined'&&KC.db)||APP.db||null}catch(x){return null}}
+let hidLoaded=false;
+async function loadHidden(){const db=dbo();if(!db){setTimeout(loadHidden,1500);return}
+ try{const d=await db.doc('settings/photo_hidden').get();if(d&&d.exists){const v=d.data()||{};(v.keys||[]).forEach(k=>HID.add(k))}}catch(x){}
+ hidLoaded=true;applyHidden();try{localStorage.setItem('v148_hid',JSON.stringify([...HID]))}catch(x){}if(APP.view==='photos')render()}
+setTimeout(loadHidden,1200);
+async function saveHidden(){try{localStorage.setItem('v148_hid',JSON.stringify([...HID]))}catch(x){}
+ const db=dbo();if(!db)return false;try{await db.collection('settings').doc('photo_hidden').set({keys:[...HID],at:new Date().toISOString()});return true}catch(x){return false}}
+async function hide(keys){const ks=keys.filter(Boolean);if(!ks.length)return;ks.forEach(k=>HID.add(k));applyHidden();const ok=await saveHidden();S.sel.clear();S.useAt=0;
+ try{if(typeof TC!=='undefined')TC.clear()}catch(x){}
+ if(APP.view==='photos')render();try{if(typeof peRender==='function'&&typeof PE!=='undefined'&&PE.p)peRender()}catch(x){}
+ const msg=(ks.length>1?ks.length+' תמונות הוסרו מהגלריה':'התמונה הוסרה מהגלריה')+(ok?'':' (נשמר רק בדפדפן הזה)');
+ try{if(window.__undoBar){__undoBar(msg,()=>unhide(ks));return}}catch(x){}tst(msg)}
+async function unhide(keys){keys.forEach(k=>{HID.delete(k);if(SHADOW[k]&&!PHOTO_LIB[k])PHOTO_LIB[k]=SHADOW[k];delete SHADOW[k]});await saveHidden();S.sel.clear();if(APP.view==='photos')render();try{if(typeof PE!=='undefined'&&PE.p)peRender()}catch(x){}tst(keys.length>1?keys.length+' תמונות חזרו לגלריה':'התמונה חזרה לגלריה')}
+// a removed photo that a post already uses still loads for that post
+try{libImg=(f=>function(k){if(!PHOTO_LIB[k]&&SHADOW[k]){PHOTO_LIB[k]=SHADOW[k];try{return f.apply(this,arguments)}finally{delete PHOTO_LIB[k]}}return f.apply(this,arguments)})(libImg)}catch(x){}
+try{regUpload=(f=>function(id){const r=f.apply(this,arguments);if(HID.has('u_'+id))applyHidden();return r})(regUpload)}catch(x){}
+window.__v148={hide,unhide,HID,SHADOW};
 try{const v=JSON.parse(localStorage.getItem('v144_f')||'{}');if(v.src)S.src=v.src;if(v.group)S.group=v.group}catch(x){}
 const save=()=>{try{localStorage.setItem('v144_f',JSON.stringify({src:S.src,group:S.group}))}catch(x){}};
 
@@ -52,8 +74,8 @@ async function refreshLive(){if(window.__ENGINE_HOST!=='site'||Date.now()-S.live
 
 // ---------- page ----------
 const SECN={proj:'פרויקטים',logo:'לוגואים',page:'עמודי האתר',file:'קבצים באתר'};
-function tile(it,use){const n=use.get(it.k)||0;
- return `<button type="button" class="v144t" data-v144="open" data-k="${e(it.k)}" aria-label="${e(it.name)}"><span class="v144im"><img src="${e(it.url)}" alt="" loading="lazy" decoding="async"></span><span class="v144nm">${e(it.name)}</span><span class="v144meta"><i class="v144b v144b-${it.src}">${SRC[it.src]}</i>${n?`<i class="v144u">${n} פוסטים</i>`:'<i class="v144u v144u0">לא בשימוש</i>'}</span></button>`}
+function tile(it,use){const n=use.get(it.k)||0;const sel=S.sel.has(it.k);
+ return `<button type="button" class="v144t${S.selMode?' v148sel':''}${sel?' on':''}${BROKEN.has(it.k)?' v148bad':''}" data-v144="${S.selMode?'pick':'open'}" data-k="${e(it.k)}" aria-label="${e(it.name)}"${S.selMode?` aria-pressed="${sel}"`:''}><span class="v144im">${S.selMode?`<i class="v148box" aria-hidden="true">${sel?'✓':''}</i>`:''}<img src="${e(it.url)}" alt="" loading="lazy" decoding="async" data-v148k="${e(it.k)}"></span><span class="v144nm">${e(it.name)}</span><span class="v144meta"><i class="v144b v144b-${it.src}">${SRC[it.src]}</i>${n?`<i class="v144u">${n} פוסטים</i>`:'<i class="v144u v144u0">לא בשימוש</i>'}</span></button>`}
 function mtile(c){return `<div class="v144t v144m"><span class="v144im"><img src="${e(catUrl(c))}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.classList.add('v144noimg')"></span><span class="v144nm">${e(c.g)}${c.e?' · סביבה':''}</span><span class="v144meta">${c.l?'<i class="v144b v144b-missing">מופיעה באתר</i>':'<i class="v144b">באחסון בלבד</i>'}<button type="button" class="px-btn sm" data-v144="imp" data-p="${e(c.p)}">ייבוא</button></span></div>`}
 function groupBy(list,f){const m=new Map();for(const x of list){const g=f(x);if(!m.has(g))m.set(g,[]);m.get(g).push(x)}return [...m.entries()]}
 function vPhotos(){
@@ -67,9 +89,10 @@ function vPhotos(){
   <button type="button" data-v144="src" data-k="up" class="${S.src==='up'?'on':''}"><b>${cnt.up}</b><span>העליתם בעצמכם</span></button>
   <button type="button" data-v144="src" data-k="unused" class="${S.src==='unused'?'on':''}"><b>${unused}</b><span>עוד לא בשום פוסט</span></button>
  </div>
- <div class="v144bar"><div class="v144chips" role="tablist" aria-label="מקור">${[['all','הכול'],...Object.entries(SRC)].map(([k,t])=>`<button type="button" role="tab" data-v144="src" data-k="${k}" aria-selected="${S.src===k}">${t}<span class="cnt">${k==='all'?cnt.all:cnt[k]}</span></button>`).join('')}${S.src==='unused'?`<button type="button" role="tab" data-v144="src" data-k="unused" aria-selected="true">לא בשימוש<span class="cnt">${unused}</span></button>`:''}</div>
+ <div class="v144bar"><div class="v144chips" role="tablist" aria-label="מקור">${[['all','הכול'],...Object.entries(SRC)].map(([k,t])=>`<button type="button" role="tab" data-v144="src" data-k="${k}" aria-selected="${S.src===k}">${t}<span class="cnt">${k==='all'?cnt.all:cnt[k]}</span></button>`).join('')}${S.src==='unused'?`<button type="button" role="tab" data-v144="src" data-k="unused" aria-selected="true">לא בשימוש<span class="cnt">${unused}</span></button>`:''}<button type="button" role="tab" data-v144="src" data-k="broken" aria-selected="${S.src==='broken'}" ${BROKEN.size||S.src==='broken'?'':'hidden'} id="v148brk">לא נטענות<span class="cnt">${BROKEN.size}</span></button><button type="button" role="tab" data-v144="src" data-k="hidden" aria-selected="${S.src==='hidden'}">הוסרו<span class="cnt">${HID.size}</span></button></div>
   <div class="v144tools"><label class="v144q">${ico('search',15)}<input type="search" data-v144q placeholder="חיפוש לפי שם או פרויקט" value="${e(S.q)}" aria-label="חיפוש תמונה"></label>
   ${S.src==='missing'?'':`<select data-v144="group" aria-label="סידור"><option value="proj"${S.group==='proj'?' selected':''}>לפי פרויקט</option><option value="src"${S.group==='src'?' selected':''}>לפי מקור</option><option value="new"${S.group==='new'?' selected':''}>החדשות קודם</option></select>`}
+  ${S.src==='missing'||S.src==='hidden'?'':`<button type="button" class="px-btn sm${S.selMode?' pri':''}" data-v144="selmode" aria-pressed="${S.selMode}">${S.selMode?'סיום בחירה':'בחירת כמה תמונות'}</button>`}
   <label class="px-btn sm pri v144upl">${ico('plus',15)} העלאת תמונות<input type="file" accept="image/*" multiple data-v144up hidden></label></div></div>
  ${S.busy?`<div class="v144busy" role="status">${e(S.busy)}</div>`:''}`;
  let body='';
@@ -79,8 +102,12 @@ function vPhotos(){
    ${onSite.length?`<div class="v144act"><button type="button" class="px-btn pri" data-v144="impall" ${S.busy?'disabled':''}>ייבוא כל ${onSite.length} התמונות שמופיעות באתר</button></div>`:''}
    ${[['מופיעות באתר',onSite],['באחסון של האתר בלבד',store]].filter(x=>x[1].length).map(([t,l])=>`<h3 class="v144h2">${t}</h3>`+groupBy(l,c=>SECN[c.s]+' · '+c.g).map(([g,xs])=>`<section class="v144g"><header><h4>${e(g)}<span>${xs.length}</span></h4>${xs.length>1?`<button type="button" class="px-btn sm ghost" data-v144="impgrp" data-ps="${e(xs.map(c=>c.p).join('|'))}">ייבוא הקבוצה</button>`:''}</header><div class="v144grid">${xs.map(mtile).join('')}</div></section>`).join('')).join('')}`
    :`<div class="v144empty"><b>אין תמונות חסרות</b><span>כל התמונות שבאתר כבר נמצאות במערכת.</span></div>`}
+ else if(S.src==='hidden'){
+  const hl=[...HID].map(k=>{const url=SHADOW[k]||'';let m={};try{m=metaOf(k)||{}}catch(x){}const u=k.startsWith('u_')?(KC.up||{})[k.slice(2)]:null;return {k,url,name:(u&&u.name)||m.n||k,n:use.get(k)||0}}).filter(x=>x.url);
+  body=hl.length?`<p class="v144lead">תמונות שהוסרו מהגלריה. הן לא מופיעות בבחירת תמונות ולא נבחרות אוטומטית לפוסטים. פוסטים שכבר משתמשים בהן ממשיכים להציג אותן.</p><div class="v144act"><button type="button" class="px-btn sm" data-v144="unhideall">החזרת כולן לגלריה</button></div><div class="v144grid">${hl.map(x=>`<div class="v144t v144m"><span class="v144im"><img src="${e(x.url)}" alt="" loading="lazy" decoding="async"></span><span class="v144nm">${e(x.name)}</span><span class="v144meta">${x.n?`<i class="v144u">${x.n} פוסטים</i>`:''}<button type="button" class="px-btn sm" data-v144="unhide" data-k="${e(x.k)}">החזרה לגלריה</button></span></div>`).join('')}</div>`
+   :`<div class="v144empty"><b>לא הוסרו תמונות</b><span>פותחים תמונה ולוחצים "הסרה מהגלריה", או בוחרים כמה תמונות יחד.</span></div>`}
  else{
-  let list=inv;if(S.src==='unused')list=inv.filter(i=>!use.get(i.k));else if(S.src!=='all')list=inv.filter(i=>i.src===S.src);
+  let list=inv;if(S.src==='broken')list=inv.filter(i=>BROKEN.has(i.k));else if(S.src==='unused')list=inv.filter(i=>!use.get(i.k));else if(S.src!=='all')list=inv.filter(i=>i.src===S.src);
   if(q)list=list.filter(i=>norm(i.name+' '+projName(i.proj)+' '+i.from).includes(q));
   let groups;
   if(S.group==='src')groups=groupBy(list,i=>SRC[i.src]);
@@ -88,7 +115,8 @@ function vPhotos(){
   else{groups=groupBy(list,i=>i.proj?projName(i.proj):(i.src==='builtin'?'צילומי שטח ורחפן':'בלי פרויקט'));groups.sort((a,b)=>(a[0]==='בלי פרויקט')-(b[0]==='בלי פרויקט')||b[1].length-a[1].length)}
   body=list.length?(S.src!=='all'&&S.src!=='unused'?`<p class="v144lead">${SRC_HINT[S.src]}.</p>`:S.src==='all'&&noProj?`<p class="v144lead">${noProj} תמונות עוד בלי שיוך לפרויקט. פותחים תמונה ובוחרים לה פרויקט.</p>`:'')+groups.map(([g,xs])=>`<section class="v144g"><header><h4>${e(g)}<span>${xs.length}</span></h4></header><div class="v144grid">${xs.map(i=>tile(i,use)).join('')}</div></section>`).join('')
    :`<div class="v144empty"><b>${S.q?'לא נמצאו תמונות':'אין כאן תמונות עדיין'}</b><span>${S.q?'נסו מילה אחרת':S.src==='up'?'מעלים מהמחשב או מהטלפון עם "העלאת תמונות"':'בוחרים מקור אחר למעלה'}</span></div>`}
- return `<div class="v144">${head}${body}</div>${lbHtml(inv,use)}`}
+ const selBar=S.selMode?`<div class="v148bar" role="region" aria-label="פעולות על הבחירה"><b>${S.sel.size} נבחרו</b><button type="button" class="px-btn sm" data-v144="selall">בחירת כל המוצגות</button><select data-v144="selproj" aria-label="שיוך לפרויקט" ${S.sel.size?'':'disabled'}><option value="">שיוך לפרויקט…</option>${(()=>{try{return Object.entries(PROJ_HE).map(([k,v])=>`<option value="${k}">${e(v)}</option>`).join('')}catch(x){return ''}})()}</select><button type="button" class="px-btn sm v144del" data-v144="hidesel" ${S.sel.size?'':'disabled'}>הסרה מהגלריה</button><button type="button" class="px-btn sm ghost" data-v144="selmode">ביטול</button></div>`:'';
+ return `<div class="v144${S.selMode?' v148selon':''}">${head}${body}</div>${selBar}${lbHtml(inv,use)}`}
 
 function lbHtml(inv,use){if(!S.lb)return '';const it=inv.find(i=>i.k===S.lb);if(!it)return '';const n=use.get(it.k)||0;
  let projs=[];try{projs=Object.entries(PROJ_HE)}catch(x){}
@@ -100,8 +128,10 @@ function lbHtml(inv,use){if(!S.lb)return '';const it=inv.find(i=>i.k===S.lb);if(
    ${it.w?`<dt>גודל</dt><dd>${it.w}×${it.h}${Math.max(it.w,it.h)<900?' · <b class="v144low">רזולוציה נמוכה לפוסט</b>':''}</dd>`:''}
    <dt>בשימוש</dt><dd>${n?n+' פוסטים':'עוד לא בשום פוסט'}</dd>
    ${it.at?`<dt>נוספה</dt><dd>${e(String(it.at).slice(0,10).split('-').reverse().join('.'))}</dd>`:''}</dl>
-   ${it.u?`<label class="v144f"><span>פרויקט</span><select data-v144="proj" data-id="${e(it.id)}"><option value="">בלי פרויקט</option>${projs.map(([k,v])=>`<option value="${k}"${it.proj===k?' selected':''}>${e(v)}</option>`).join('')}</select></label>`:`<p class="v144note">${it.proj?'פרויקט: '+e(projName(it.proj))+'. ':''}תמונה מובנית במערכת, אי אפשר לשנות או למחוק אותה כאן.</p>`}
-   <div class="v144lbact"><a class="px-btn sm" href="${e(it.url)}" target="_blank" rel="noopener">פתיחה בגודל מלא</a>${it.u?`<button type="button" class="px-btn sm ghost v144del" data-v144="del" data-id="${e(it.id)}">מחיקה מהמערכת</button>`:''}</div>
+   ${it.u?`<label class="v144f"><span>שם</span><input type="text" data-v144="name" data-id="${e(it.id)}" value="${e(it.name)}" maxlength="60"></label>`:''}
+   ${it.u?`<label class="v144f"><span>פרויקט</span><select data-v144="proj" data-id="${e(it.id)}"><option value="">בלי פרויקט</option>${projs.map(([k,v])=>`<option value="${k}"${it.proj===k?' selected':''}>${e(v)}</option>`).join('')}</select></label>`:`<p class="v144note">${it.proj?'פרויקט: '+e(projName(it.proj))+'. ':''}תמונה מובנית במערכת. אפשר להסיר אותה מהגלריה, ולהחזיר בכל רגע.</p>`}
+   <div class="v144lbact"><a class="px-btn sm" href="${e(it.url)}" target="_blank" rel="noopener">פתיחה בגודל מלא</a><button type="button" class="px-btn sm v144del" data-v144="hide1" data-k="${e(it.k)}">הסרה מהגלריה</button>${it.u&&!n?`<button type="button" class="px-btn sm ghost v144del" data-v144="del" data-id="${e(it.id)}">מחיקה לצמיתות</button>`:''}</div>
+   ${n?`<p class="v144note">התמונה בשימוש ב-${n} פוסטים. אחרי ההסרה הם ממשיכים להציג אותה, והיא לא תיבחר יותר לפוסטים חדשים.</p>`:''}
   </div></div></div>`}
 
 // ---------- actions ----------
@@ -132,6 +162,8 @@ async function uploadMine(files){
  S.busy='';S.src='up';S.group='new';save();render();if(ok)tst(`${ok} תמונות נוספו. אפשר לפתוח כל אחת ולשייך לפרויקט`)}
 async function setProj(id,proj){const m=(KC.up||{})[id];if(!m)return;m.project=proj;try{if(KC.db)await KC.db.collection('photos').doc(id).update({project:proj})}catch(x){try{await KC.db.collection('photos').doc(id).set(m)}catch(y){tst('השמירה נכשלה');return}}
  S.useAt=0;render();tst(proj?'שויך ל'+projName(proj):'השיוך הוסר')}
+async function setName(id,name){const m=(KC.up||{})[id];if(!m)return;const v=String(name||'').trim().slice(0,60);if(!v||v===m.name)return;m.name=v;try{LIB_NAMES['u_'+id]=v}catch(x){}
+ try{if(KC.db)await KC.db.collection('photos').doc(id).update({name:v})}catch(x){try{await KC.db.collection('photos').doc(id).set(m)}catch(y){tst('השמירה נכשלה');return}}tst('השם נשמר')}
 async function del(id){const key='u_'+id;if(!confirmDel(key))return;try{if(KC.db)await KC.db.collection('photos').doc(id).delete();if(KC.assets)await KC.assets.delete(id)}catch(x){}
  delete KC.up[id];delete PHOTO_LIB[key];S.lb=null;render();tst('התמונה נמחקה מהמערכת')}
 
@@ -141,6 +173,13 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
  else if(a==='open'){S.lb=b.dataset.k;render()}
  else if(a==='close'){S.lb=null;render()}
  else if(a==='del')del(b.dataset.id);
+ else if(a==='hide1'){const k=b.dataset.k;S.lb=null;hide([k])}
+ else if(a==='unhide')unhide([b.dataset.k]);
+ else if(a==='unhideall')unhide([...HID]);
+ else if(a==='selmode'){S.selMode=!S.selMode;S.sel.clear();S.lb=null;render()}
+ else if(a==='pick'){const k=b.dataset.k;if(S.sel.has(k))S.sel.delete(k);else S.sel.add(k);const on=S.sel.has(k);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);const bx=b.querySelector('.v148box');if(bx)bx.textContent=on?'✓':'';const bar=document.querySelector('.v148bar b');if(bar)bar.textContent=S.sel.size+' נבחרו';document.querySelectorAll('.v148bar [data-v144="hidesel"],.v148bar select').forEach(x=>x.disabled=!S.sel.size)}
+ else if(a==='selall'){document.querySelectorAll('.v144grid [data-v144="pick"]').forEach(x=>S.sel.add(x.dataset.k));render()}
+ else if(a==='hidesel'){hide([...S.sel]);S.selMode=false}
  else if(a==='imp'){const c=catalog().find(x=>x.p===b.dataset.p);if(c)importMany([c])}
  else if(a==='impgrp'){const ps=new Set(b.dataset.ps.split('|'));importMany(catalog().filter(c=>ps.has(c.p)))}
  else if(a==='impall'){importMany(missing(inventory()).filter(c=>c.l))}});
@@ -148,13 +187,17 @@ document.addEventListener('click',ev=>{if(APP.view==='photos'&&S.lb&&ev.target.c
 document.addEventListener('change',ev=>{const t=ev.target;if(APP.view!=='photos')return;
  if(t.matches&&t.matches('[data-v144up]')){uploadMine(t.files);t.value=''}
  else if(t.dataset&&t.dataset.v144==='group'){S.group=t.value;save();render()}
- else if(t.dataset&&t.dataset.v144==='proj')setProj(t.dataset.id,t.value)});
+ else if(t.dataset&&t.dataset.v144==='proj')setProj(t.dataset.id,t.value);
+ else if(t.dataset&&t.dataset.v144==='name')setName(t.dataset.id,t.value);
+ else if(t.dataset&&t.dataset.v144==='selproj'&&t.value){const pk=t.value;const ids=[...S.sel].filter(k=>k.startsWith('u_')).map(k=>k.slice(2));const skip=S.sel.size-ids.length;(async()=>{for(const id of ids){const m=(KC.up||{})[id];if(!m)continue;m.project=pk;try{await KC.db.collection('photos').doc(id).update({project:pk})}catch(x){try{await KC.db.collection('photos').doc(id).set(m)}catch(y){}}}S.sel.clear();S.useAt=0;render();tst(`${ids.length} תמונות שויכו ל${projName(pk)}${skip?`. ${skip} מובנות במערכת נשארו כמו שהן`:''}`)})()}});
+// photos that do not load get counted, so they are easy to find and remove
+document.addEventListener('error',ev=>{const t=ev.target;if(!t||t.tagName!=='IMG'||!t.dataset||!t.dataset.v148k)return;const k=t.dataset.v148k;if(BROKEN.has(k))return;BROKEN.add(k);const tl=t.closest('.v144t');if(tl)tl.classList.add('v148bad');const c=document.getElementById('v148brk');if(c){c.hidden=false;const n=c.querySelector('.cnt');if(n)n.textContent=BROKEN.size}},true);
 let qt=0;document.addEventListener('input',ev=>{const t=ev.target;if(!t.matches||!t.matches('[data-v144q]'))return;clearTimeout(qt);qt=setTimeout(()=>{S.q=t.value;const pos=t.selectionStart;render();const n=document.querySelector('[data-v144q]');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},220)});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&APP.view==='photos'&&S.lb){ev.stopImmediatePropagation();S.lb=null;render()}},true);
 
 // ---------- register the view ----------
-VIEWS[1][1].splice(1,0,['photos','מאגר התמונות','img']);
-VTITLE.photos=['מאגר התמונות','כל התמונות במקום אחד: מהאתר, מה שהעליתם, ומה שעוד חסר'];
+VIEWS[1][1].splice(1,0,['photos','גלריית התמונות','img']);
+VTITLE.photos=['גלריית התמונות','כל התמונות שלנו במקום אחד: מוסיפים, עורכים, מסירים ומחזירים'];
 render=(f=>function(){if(APP.view!=='photos')return f.apply(this,arguments);renderNav();const [t,s]=VTITLE.photos;document.getElementById('vt').textContent=t;document.getElementById('vs').textContent=s;
  document.querySelectorAll('.wrap > section').forEach(sec=>sec.classList.add('view-hidden'));const act=document.getElementById('vact');if(act)act.innerHTML='';
  const box=document.getElementById('appviews');box.innerHTML=vPhotos();refreshLive()})(render);

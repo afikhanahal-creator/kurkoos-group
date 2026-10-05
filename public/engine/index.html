@@ -1027,6 +1027,20 @@ body:has(#v131.on) #v142job,body:has(#v132res) #v142job,body:has(#v140.on) #v142
 .ga-card .v63chip,[data-gaid] .v63chip{inset-inline-start:auto!important;inset-inline-end:10px!important;bottom:12px!important}
 </style>
 
+<style id="k152">
+/* V152 · created date, agent from photos, bulk upload */
+.v152c{display:block;font-size:11.5px;line-height:1.3;color:#6b8594;font-weight:500;margin-top:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.v28-dc .v152c{margin:1px 0 2px}
+.v152gen{background:#105572!important;border-color:#105572!important;color:#fff!important}
+.v152gen:disabled{opacity:.5}
+.v152busy{position:fixed;z-index:1150;top:calc(14px + env(safe-area-inset-top,0px));inset-inline:16px;max-width:560px;margin-inline:auto;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:#07293a;color:#fff;box-shadow:0 10px 30px rgba(7,41,58,.35)}
+.v152busy b{flex:1;font-size:14px;font-weight:600}
+.v152busy .px-btn{color:#fff!important;border-color:rgba(255,255,255,.5)!important;background:transparent!important}
+.v152sp{width:16px;height:16px;border-radius:50%;border:2px solid rgba(143,182,200,.35);border-top-color:#8fb6c8;animation:v152r .8s linear infinite;flex:none}
+@keyframes v152r{to{transform:rotate(1turn)}}
+body.v152drag .v144::before{content:"שחררו כאן כדי להעלות את כל התמונות";position:fixed;inset:12px;z-index:1180;display:grid;place-items:center;border:3px dashed #105572;border-radius:18px;background:rgba(247,248,250,.92);color:#07293a;font-size:20px;font-weight:700;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.v152sp{animation:none}}
+</style>
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -11816,7 +11830,7 @@ function pxList(){const q=PRO.q.trim();let l=AG.posts.filter(p=>/^(ed|x)_/.test(
 function pxCardHtml(p){const q=pxQuality(p),w=pxWf(p);const st=PX_ST.find(s=>s[0]===w.stage)||PX_ST[0];const sel=PRO.sel.has(p.id);
   return `<article class="px-pc ${PRO.cur===p.id?'on':''} ${sel?'sel':''}" data-px="open" data-id="${p.id}" tabindex="0" aria-label="${esc(pxHead(p))}"><div class="px-th"><canvas data-tp="${p.id}" width="216" height="270" aria-hidden="true"></canvas>
     <label class="px-ck" data-px="noop"><input type="checkbox" data-px="sel" data-id="${p.id}" ${sel?'checked':''} aria-label="סמן"><i></i></label><span class="px-qb q-${q.v}" title="${PX_V[q.v][0]}">${q.avg.toFixed(1)}</span><button class="px-edit" type="button" data-pe="${p.id}" aria-label="עריכה בסטודיו">${ico('sun',13)} ערוך</button>${q.fat.length?`<span class="px-fat" title="${esc(q.fat.map(f=>f[1]).join(' · '))}">חזרתיות</span>`:''}</div>
-    <div class="px-pb"><div class="px-pm"><span class="px-stg s-${w.stage}">${st[1]}</span>${p.series?`<span>${esc(p.series)}</span>`:''}</div><h3>${esc(pxHead(p))}</h3><div class="px-ps">${esc(ED_NAMES[p.layout]||p.layout)}${w.comments.length?` · ${ico('msg',12)} ${w.comments.length}`:''}</div></div></article>`}
+    <div class="px-pb"><div class="px-pm"><span class="px-stg s-${w.stage}">${st[1]}</span>${p.series?`<span>${esc(p.series)}</span>`:''}</div><h3>${esc(pxHead(p))}</h3><div class="px-ps">${esc(ED_NAMES[p.layout]||p.layout)}${w.comments.length?` · ${ico('msg',12)} ${w.comments.length}`:''}</div>${window.__v152c?__v152c(p):''}</div></article>`}
 function vAgent(){pxIndex();const all=AG.posts.filter(p=>/^(ed|x)_/.test(p.layout));const list=pxList();const cnt=k=>k==='all'?all.length:k==='review'?all.filter(p=>['ai','design','copy'].includes(pxWf(p).stage)).length:all.filter(p=>pxWf(p).stage===k).length;
   const sers=[...new Set(all.map(p=>p.series||'ללא סדרה'))];const shown=list.slice(0,PRO.limit);
   const segs=[['all','הכל'],['draft','טיוטות'],['review','בבדיקה'],['approved','מאושרים'],['scheduled','מתוזמנים'],['published','פורסמו']];
@@ -12494,7 +12508,7 @@ function v28Drafts(){const inS=new Set(APP.sched.items.filter(i=>i.at).map(i=>i.
   const F={all:()=>1,art:p=>!!p.article,proj:p=>pxCat(p)==='proj',edu:p=>pxCat(p)==='edu',ok:p=>{try{return pxQuality(p).v==='ok'}catch(e){return true}}};l=l.filter(F[DD.V.tf]||F.all);
   if(q)l=l.filter(p=>(pxHead(p)+' '+(p.series||'')+' '+(p.fb||'')).includes(q));const n=l.length;
   l.sort((a,b)=>(b.article?1:0)-(a.article?1:0));return{l:l.slice(0,36),n}}
-function v28DraftCard(p){const r=imgKeysOf(p).some(isRenderKey);return `<div class="v28-dc" data-dragp="${p.id}" tabindex="0" role="button" aria-label="גררו ללוח: ${esc(pxHead(p).slice(0,60))}"><canvas data-tp="${p.id}" width="108" height="135" aria-hidden="true"></canvas><div><b>${esc(pxHead(p).slice(0,58))}</b><span>${p.article?'<em class="a">כתבה</em>':''}${r?'<em class="r">הדמיה</em>':''}${esc((p.series||ED_NAMES[p.layout]||'').slice(0,22))}</span></div><button class="v28-dcs" type="button" data-v28="sched" data-pid="${p.id}" aria-label="תזמן למשבצת הבאה">${ico('clock',14)}</button></div>`}
+function v28DraftCard(p){const r=imgKeysOf(p).some(isRenderKey);return `<div class="v28-dc" data-dragp="${p.id}" tabindex="0" role="button" aria-label="גררו ללוח: ${esc(pxHead(p).slice(0,60))}"><canvas data-tp="${p.id}" width="108" height="135" aria-hidden="true"></canvas><div><b>${esc(pxHead(p).slice(0,58))}</b>${window.__v152c?__v152c(p):''}<span>${p.article?'<em class="a">כתבה</em>':''}${r?'<em class="r">הדמיה</em>':''}${esc((p.series||ED_NAMES[p.layout]||'').slice(0,22))}</span></div><button class="v28-dcs" type="button" data-v28="sched" data-pid="${p.id}" aria-label="תזמן למשבצת הבאה">${ico('clock',14)}</button></div>`}
 function v28TrayList(){const {l,n}=v28Drafts();DD.V.cnt=`${n} טיוטות${n>l.length?` · מוצגות ${l.length}`:''}`;return l.map(v28DraftCard).join('')||'<div class="px-empty sm"><span>אין טיוטות בסינון הזה.</span></div>'}
 function v28Tray(){return `<aside class="v28-tray" data-ddtray aria-label="מגירת טיוטות"><header><b>מגירת טיוטות</b><small>גררו ליום בלוח. גררו פוסט מהלוח לכאן כדי להחזיר לטיוטות.</small></header>
   <input type="search" class="v28-q" placeholder="חיפוש טיוטה" value="${esc(DD.V.tq)}" data-v28q aria-label="חיפוש טיוטה">
@@ -12544,13 +12558,13 @@ function gaList(){const f=GA.f;const inS=new Map();APP.sched.items.forEach(i=>{i
   if(f.st==='ready')l=l.filter(x=>!x.it&&x.q.v!=='block'&&x.w!=='published');else if(f.st==='sched')l=l.filter(x=>!!x.it);else if(f.st==='fix')l=l.filter(x=>!x.it&&x.q.v!=='ok');
   if(f.ser)l=l.filter(x=>x.p.series===f.ser);if(f.fam)l=l.filter(x=>x.fam===f.fam);if(f.proj)l=l.filter(x=>x.proj===f.proj);
   if(f.q){const q=f.q.trim();l=l.filter(x=>(pxHead(x.p)+' '+(x.p.series||'')+' '+(x.p.fb||'')+' '+(ED_NAMES[x.p.layout]||'')).includes(q))}
-  const S={score:(a,b)=>b.q.avg-a.q.avg,new:(a,b)=>(AG.posts.indexOf(a.p))-(AG.posts.indexOf(b.p)),series:(a,b)=>String(a.p.series||'').localeCompare(String(b.p.series||''),'he')||b.q.avg-a.q.avg,date:(a,b)=>String(a.it?a.it.at:'9').localeCompare(String(b.it?b.it.at:'9'))};
+  const S={score:(a,b)=>b.q.avg-a.q.avg,new:(a,b)=>((window.__v152?__v152.createdOf(b.p)-__v152.createdOf(a.p):0)||(AG.posts.indexOf(a.p)-AG.posts.indexOf(b.p))),series:(a,b)=>String(a.p.series||'').localeCompare(String(b.p.series||''),'he')||b.q.avg-a.q.avg,date:(a,b)=>String(a.it?a.it.at:'9').localeCompare(String(b.it?b.it.at:'9'))};
   return l.sort(S[f.sort]||S.score)}
 function gaCard(x){const {p,it,q}=x;const sel=GA.sel.has(p.id);const r=imgKeysOf(p).some(isRenderKey);const pv=PX_V[q.v]||PX_V.ok;
   return `<figure class="ga-card${sel?' sel':''}${it?' sched':''}" data-gaid="${p.id}"><button type="button" class="ga-chk" data-ga="sel" data-id="${p.id}" aria-pressed="${sel}" aria-label="בחר">${ico('check',15)}</button>
    <button type="button" class="ga-open" data-ga="open" data-id="${p.id}" aria-label="פתח במסך גדול"><canvas data-tp="${p.id}" width="216" height="270"></canvas></button>
    <div class="ga-top">${it?`<span class="ga-date">${ico('cal',12)} ${esc(fmtDate(it.at))}</span>`:`<span class="ga-q q-${pv[1]}">${esc(pv[0])} · ${q.avg}</span>`}${r?'<span class="ga-r">הדמיה</span>':''}</div>
-   <figcaption><b>${esc(pxHead(p).slice(0,64))}</b><span>${esc(p.series||GA_FAM[x.fam])} · ${esc(ED_NAMES[p.layout]||p.layout)}</span></figcaption>
+   <figcaption><b>${esc(pxHead(p).slice(0,64))}</b><span>${esc(p.series||GA_FAM[x.fam])} · ${esc(ED_NAMES[p.layout]||p.layout)}</span>${window.__v152c?__v152c(p):''}</figcaption>
    <div class="ga-acts"><button type="button" class="px-btn sm pri" data-ga="sched1" data-id="${p.id}">${ico('clock',13)} ${it?'שנה מועד':'תזמן'}</button><button type="button" class="px-btn sm" data-pe="${p.id}">${ico('edit',13)} ערוך</button></div></figure>`}
 function vGallery(){const l=gaList();const f=GA.f;const all=AG.posts.filter(p=>/^(ed|x)_/.test(p.layout));const SER=[...new Set(all.map(p=>p.series).filter(s=>s&&/[\u0590-\u05ff]|Built/.test(s)))].sort((a,b)=>a.localeCompare(b,'he'));
   const projs=[...new Set(all.map(gaProj).filter(Boolean))];const n=l.length,show=l.slice(0,GA.lim);const cnt={ready:0,sched:0,fix:0};
@@ -12559,7 +12573,7 @@ function vGallery(){const l=gaList();const f=GA.f;const all=AG.posts.filter(p=>/
   return `<div class="ga">
   <div class="ga-bar"><div class="qtabs ga-tabs" role="tablist">${[['ready','מוכנים לתזמון',cnt.ready],['sched','מתוזמנים',cnt.sched],['fix','דורשים תיקון',cnt.fix],['all','הכל',all.length]].map(([k,t,c])=>`<button type="button" role="tab" data-ga="st" data-k="${k}" aria-selected="${f.st===k}">${t}<span class="cnt">${c}</span></button>`).join('')}</div>
    <div class="ga-tools"><label class="ga-search">${ico('search',15)}<input type="search" placeholder="חיפוש בכותרת, בסדרה או בטקסט" value="${esc(f.q)}" data-ga-q aria-label="חיפוש"></label>
-    <select data-ga="sort" aria-label="מיון"><option value="score"${f.sort==='score'?' selected':''}>לפי ציון איכות</option><option value="new"${f.sort==='new'?' selected':''}>החדשים קודם</option><option value="series"${f.sort==='series'?' selected':''}>לפי סדרה</option><option value="date"${f.sort==='date'?' selected':''}>לפי תאריך</option></select>
+    <select data-ga="sort" aria-label="מיון"><option value="score"${f.sort==='score'?' selected':''}>לפי ציון איכות</option><option value="new"${f.sort==='new'?' selected':''}>לפי תאריך יצירה, החדשים קודם</option><option value="series"${f.sort==='series'?' selected':''}>לפי סדרה</option><option value="date"${f.sort==='date'?' selected':''}>לפי תאריך</option></select>
     <select data-ga="proj" aria-label="פרויקט"><option value="">כל הפרויקטים</option>${projs.map(k=>`<option value="${k}"${f.proj===k?' selected':''}>${esc(PROJ_HE[k]||k)}</option>`).join('')}</select>
     <div class="seg ga-size" role="group" aria-label="גודל"><button type="button" data-ga="size" data-k="s" aria-pressed="${f.size==='s'}">S</button><button type="button" data-ga="size" data-k="m" aria-pressed="${f.size==='m'}">M</button><button type="button" data-ga="size" data-k="l" aria-pressed="${f.size==='l'}">L</button></div></div>
    <div class="kc-chips ga-fam">${[['','הכל'],['tpl','תבניות'],['auth','מובילי דעה'],['sig','חתימת קורקוס'],['bench','בנצ\'מארק'],['art','מהכתבות'],['ed','מגזין']].map(([k,t])=>`<button type="button" data-ga="fam" data-k="${k}" aria-pressed="${f.fam===k}">${t}</button>`).join('')}<span class="ga-sep"></span>${SER.slice(0,40).map(s=>`<button type="button" data-ga="ser" data-k="${esc(s)}" aria-pressed="${f.ser===s}">${esc(s)}</button>`).join('')}</div></div>
@@ -13343,10 +13357,10 @@ async function del(w){const d=await idb();return new Promise((res,rej)=>{const t
 function weightFromName(n){n=(n||'').toLowerCase();if(/black|heavy|ultra/.test(n))return '900';if(/extrabold|xbold|extra-bold/.test(n))return '800';if(/semibold|demibold|semi-bold|demi/.test(n))return '600';if(/bold/.test(n))return '700';if(/medium/.test(n))return '500';if(/light|thin/.test(n))return '300';if(/regular|book|normal/.test(n))return '400';const m=n.match(/\b([3-9]00)\b/);return m?m[1]:''}
 function weightFromSfnt(buf){try{const dv=new DataView(buf);const tag=dv.getUint32(0);if(tag!==0x00010000&&tag!==0x4F54544F&&tag!==0x74727565)return '';const n=dv.getUint16(4);for(let i=0;i<n;i++){const o=12+i*16;const t=String.fromCharCode(dv.getUint8(o),dv.getUint8(o+1),dv.getUint8(o+2),dv.getUint8(o+3));if(t==='OS/2'){const off=dv.getUint32(o+8);const wc=dv.getUint16(off+4);return String(Math.max(100,Math.min(900,Math.round(wc/100)*100)))}}}catch(e){}return ''}
 // ---- register ----
-async function register(rec){try{const ff=new FontFace('Almoni',rec.buf,{weight:rec.w,style:'normal',display:'swap'});await ff.load();document.fonts.add(ff);rec._ok=true;return true}catch(e){console.error('font',e);rec._err=String(e&&e.message||e);return false}}
+async function register(rec){try{const fam=/tzar|narrow|condensed|צר/i.test(rec.name||'')?'Almoni Tzar':'Almoni';const ff=new FontFace(fam,rec.buf,{weight:rec.w,style:'normal',display:'swap'});rec.fam=fam;await ff.load();document.fonts.add(ff);rec._ok=true;return true}catch(e){console.error('font',e);rec._err=String(e&&e.message||e);return false}}
 async function boot(){F.list=await all();for(const r of F.list)await register(r);F.ready=true;if(F.list.length){try{TC&&TC.clear&&TC.clear()}catch(e){}try{if(document.querySelector('.app'))render()}catch(e){}}
   // cloud copy (optional): fetch weights that exist in the shared settings but not locally
-  try{if(window.APP&&APP.db){const d=await APP.db.doc('settings/fonts').get();const v=d&&d.data&&d.data();const list=(v&&v.list)||[];for(const it of list){if(F.list.some(r=>r.w===it.w))continue;try{const buf=await (await fetch(it.url)).arrayBuffer();const rec={w:it.w,name:it.name,buf,src:'cloud'};if(await register(rec)){await put(rec);F.list.push(rec)}}catch(e){}}}}catch(e){}}
+  try{if(typeof APP!=='undefined'&&APP.db){const d=await APP.db.doc('settings/fonts').get();const v=d&&d.data&&d.data();const list=(v&&v.list)||[];for(const it of list){if(F.list.some(r=>r.w===it.w))continue;try{const buf=await (await fetch(it.url)).arrayBuffer();const rec={w:it.w,name:it.name,buf,src:'cloud'};if(await register(rec)){await put(rec);F.list.push(rec)}}catch(e){}}}}catch(e){}}
 window.__fontsBoot=boot;
 async function cloudSave(rec,file){try{if(!window.claude||!claude.use)return;const assets=await claude.use('assets');if(!assets)return;const up=await assets.upload(new Blob([rec.buf],{type:file.type||'font/woff2'}));if(!APP.db)return;const d=await APP.db.doc('settings/fonts').get();const v=(d&&d.data&&d.data())||{};const list=(v.list||[]).filter(x=>x.w!==rec.w);list.push({w:rec.w,name:rec.name,id:up.id,url:up.url});await APP.db.doc('settings/fonts').set({list,upd:new Date().toISOString()})}catch(e){}}
 // ---- status ----
@@ -20151,7 +20165,7 @@ async function unhide(keys){keys.forEach(k=>{HID.delete(k);if(SHADOW[k]&&!PHOTO_
 // a removed photo that a post already uses still loads for that post
 try{libImg=(f=>function(k){if(!PHOTO_LIB[k]&&SHADOW[k]){PHOTO_LIB[k]=SHADOW[k];try{return f.apply(this,arguments)}finally{delete PHOTO_LIB[k]}}return f.apply(this,arguments)})(libImg)}catch(x){}
 try{regUpload=(f=>function(id){const r=f.apply(this,arguments);if(HID.has('u_'+id))applyHidden();return r})(regUpload)}catch(x){}
-window.__v148={hide,unhide,HID,SHADOW};
+window.__v148={hide,unhide,HID,SHADOW,get S(){return S},up:f=>uploadMine(f),render:()=>render()};
 try{const v=JSON.parse(localStorage.getItem('v144_f')||'{}');if(v.src)S.src=v.src;if(v.group)S.group=v.group}catch(x){}
 const save=()=>{try{localStorage.setItem('v144_f',JSON.stringify({src:S.src,group:S.group}))}catch(x){}};
 
@@ -20212,7 +20226,7 @@ function vPhotos(){
   <div class="v144tools"><label class="v144q">${ico('search',15)}<input type="search" data-v144q placeholder="חיפוש לפי שם או פרויקט" value="${e(S.q)}" aria-label="חיפוש תמונה"></label>
   ${S.src==='missing'?'':`<select data-v144="group" aria-label="סידור"><option value="proj"${S.group==='proj'?' selected':''}>לפי פרויקט</option><option value="src"${S.group==='src'?' selected':''}>לפי מקור</option><option value="new"${S.group==='new'?' selected':''}>החדשות קודם</option></select>`}
   ${S.src==='missing'||S.src==='hidden'?'':`<button type="button" class="px-btn sm${S.selMode?' pri':''}" data-v144="selmode" aria-pressed="${S.selMode}">${S.selMode?'סיום בחירה':'בחירת כמה תמונות'}</button>`}
-  <label class="px-btn sm pri v144upl">${ico('plus',15)} העלאת תמונות<input type="file" accept="image/*" multiple data-v144up hidden></label></div></div>
+  <label class="px-btn sm pri v144upl">${ico('plus',15)} העלאת תמונות (אפשר הרבה)<input type="file" accept="image/*" multiple data-v144up hidden></label></div></div>
  ${S.busy?`<div class="v144busy" role="status">${e(S.busy)}</div>`:''}`;
  let body='';
  if(S.src==='missing'){
@@ -20234,7 +20248,7 @@ function vPhotos(){
   else{groups=groupBy(list,i=>i.proj?projName(i.proj):(i.src==='builtin'?'צילומי שטח ורחפן':'בלי פרויקט'));groups.sort((a,b)=>(a[0]==='בלי פרויקט')-(b[0]==='בלי פרויקט')||b[1].length-a[1].length)}
   body=list.length?(S.src!=='all'&&S.src!=='unused'?`<p class="v144lead">${SRC_HINT[S.src]}.</p>`:S.src==='all'&&noProj?`<p class="v144lead">${noProj} תמונות עוד בלי שיוך לפרויקט. פותחים תמונה ובוחרים לה פרויקט.</p>`:'')+groups.map(([g,xs])=>`<section class="v144g"><header><h4>${e(g)}<span>${xs.length}</span></h4></header><div class="v144grid">${xs.map(i=>tile(i,use)).join('')}</div></section>`).join('')
    :`<div class="v144empty"><b>${S.q?'לא נמצאו תמונות':'אין כאן תמונות עדיין'}</b><span>${S.q?'נסו מילה אחרת':S.src==='up'?'מעלים מהמחשב או מהטלפון עם "העלאת תמונות"':'בוחרים מקור אחר למעלה'}</span></div>`}
- const selBar=S.selMode?`<div class="v148bar" role="region" aria-label="פעולות על הבחירה"><b>${S.sel.size} נבחרו</b><button type="button" class="px-btn sm" data-v144="selall">בחירת כל המוצגות</button><select data-v144="selproj" aria-label="שיוך לפרויקט" ${S.sel.size?'':'disabled'}><option value="">שיוך לפרויקט…</option>${(()=>{try{return Object.entries(PROJ_HE).map(([k,v])=>`<option value="${k}">${e(v)}</option>`).join('')}catch(x){return ''}})()}</select><button type="button" class="px-btn sm v144del" data-v144="hidesel" ${S.sel.size?'':'disabled'}>הסרה מהגלריה</button><button type="button" class="px-btn sm ghost" data-v144="selmode">ביטול</button></div>`:'';
+ const selBar=S.selMode?`<div class="v148bar" role="region" aria-label="פעולות על הבחירה"><b>${S.sel.size} נבחרו</b><button type="button" class="px-btn sm" data-v144="selall">בחירת כל המוצגות</button><select data-v144="selproj" aria-label="שיוך לפרויקט" ${S.sel.size?'':'disabled'}><option value="">שיוך לפרויקט…</option>${(()=>{try{return Object.entries(PROJ_HE).map(([k,v])=>`<option value="${k}">${e(v)}</option>`).join('')}catch(x){return ''}})()}</select><select data-v152="n" aria-label="כמה פוסטים לכל תמונה"><option value="1">פוסט 1 לתמונה</option><option value="2" selected>2 פוסטים לתמונה</option><option value="3">3 פוסטים לתמונה</option><option value="4">4 פוסטים לתמונה</option></select><button type="button" class="px-btn sm pri v152gen" data-v152="gen" ${S.sel.size?'':'disabled'}>יצירת פוסטים עם הסוכן</button><button type="button" class="px-btn sm v144del" data-v144="hidesel" ${S.sel.size?'':'disabled'}>הסרה מהגלריה</button><button type="button" class="px-btn sm ghost" data-v144="selmode">ביטול</button></div>`:'';
  return `<div class="v144${S.selMode?' v148selon':''}">${head}${body}</div>${selBar}${lbHtml(inv,use)}`}
 
 function lbHtml(inv,use){if(!S.lb)return '';const it=inv.find(i=>i.k===S.lb);if(!it)return '';const n=use.get(it.k)||0;
@@ -20273,12 +20287,15 @@ async function importMany(list){
  else tst(ok?`${ok} תמונות נכנסו למערכת${bad?`, ${bad} לא נכנסו`:''}`:'לא יובאו תמונות')}
 async function uploadMine(files){
  if(!KC.assets){tst('העלאה זמינה רק עם הרשאת עריכה');return}
- const list=[...files].filter(f=>/^image\//.test(f.type)).slice(0,40);if(!list.length)return;let ok=0;
- for(const f of list){S.busy=`מעלה ${ok+1} מתוך ${list.length}…`;render();
+ const list=[...files].filter(f=>/^image\//.test(f.type)).slice(0,300);if(!list.length)return;let ok=0,bad=0,stop=false,ix=0;
+ const one=async f=>{
   try{const {blob,w,h}=await downscale(f);const r=await KC.assets.upload(blob);const meta={name:f.name.replace(/\.[^.]+$/,'').slice(0,60),project:'',kind:'site',tags:'',w,h,addedAt:new Date().toISOString(),url:r.url};
    if(KC.db)await KC.db.collection('photos').doc(r.id).set(meta);regUpload(r.id,meta);ok++}
-  catch(x){const c=x&&x.code;tst(c==='too_large'?'קובץ גדול מדי':c==='quota_or_state'?'נגמר המקום בספרייה':'ההעלאה נכשלה');break}}
- S.busy='';S.src='up';S.group='new';save();render();if(ok)tst(`${ok} תמונות נוספו. אפשר לפתוח כל אחת ולשייך לפרויקט`)}
+  catch(x){const c=x&&x.code;bad++;if(c==='quota_or_state'){stop=true;tst('נגמר המקום בספרייה')}}
+  S.busy=`מעלה תמונות: ${ok+bad} מתוך ${list.length}${bad?` · ${bad} נכשלו`:''}`;const b=document.querySelector('.v144busy');if(b)b.textContent=S.busy;else render()};
+ S.busy=`מעלה ${list.length} תמונות…`;render();
+ await Promise.all([0,1,2].map(async()=>{while(!stop&&ix<list.length){await one(list[ix++])}}));
+ S.busy='';S.src='up';S.group='new';save();render();tst(ok?`${ok} תמונות נוספו${bad?`, ${bad} לא עלו (קובץ פגום או גדול מדי)`:''}. אפשר לסמן אותן וליצור מהן פוסטים`:'אף תמונה לא עלתה. נסו JPG או PNG')}
 async function setProj(id,proj){const m=(KC.up||{})[id];if(!m)return;m.project=proj;try{if(KC.db)await KC.db.collection('photos').doc(id).update({project:proj})}catch(x){try{await KC.db.collection('photos').doc(id).set(m)}catch(y){tst('השמירה נכשלה');return}}
  S.useAt=0;render();tst(proj?'שויך ל'+projName(proj):'השיוך הוסר')}
 async function setName(id,name){const m=(KC.up||{})[id];if(!m)return;const v=String(name||'').trim().slice(0,60);if(!v||v===m.name)return;m.name=v;try{LIB_NAMES['u_'+id]=v}catch(x){}
@@ -20296,7 +20313,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
  else if(a==='unhide')unhide([b.dataset.k]);
  else if(a==='unhideall')unhide([...HID]);
  else if(a==='selmode'){S.selMode=!S.selMode;S.sel.clear();S.lb=null;render()}
- else if(a==='pick'){const k=b.dataset.k;if(S.sel.has(k))S.sel.delete(k);else S.sel.add(k);const on=S.sel.has(k);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);const bx=b.querySelector('.v148box');if(bx)bx.textContent=on?'✓':'';const bar=document.querySelector('.v148bar b');if(bar)bar.textContent=S.sel.size+' נבחרו';document.querySelectorAll('.v148bar [data-v144="hidesel"],.v148bar select').forEach(x=>x.disabled=!S.sel.size)}
+ else if(a==='pick'){const k=b.dataset.k;if(S.sel.has(k))S.sel.delete(k);else S.sel.add(k);const on=S.sel.has(k);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);const bx=b.querySelector('.v148box');if(bx)bx.textContent=on?'✓':'';const bar=document.querySelector('.v148bar b');if(bar)bar.textContent=S.sel.size+' נבחרו';document.querySelectorAll('.v148bar [data-v144="hidesel"],.v148bar [data-v152="gen"],.v148bar select').forEach(x=>x.disabled=!S.sel.size)}
  else if(a==='selall'){document.querySelectorAll('.v144grid [data-v144="pick"]').forEach(x=>S.sel.add(x.dataset.k));render()}
  else if(a==='hidesel'){hide([...S.sel]);S.selMode=false}
  else if(a==='imp'){const c=catalog().find(x=>x.p===b.dataset.p);if(c)importMany([c])}
@@ -20360,6 +20377,98 @@ function watch(){document.querySelectorAll('button').forEach(b=>{if(watched.has(
  const root=scroller(b);const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)pull(b,root)}),{root,rootMargin:'0px 0px 700px 0px'});io.observe(b)})}
 let t=0;new MutationObserver(()=>{if(!t)t=requestAnimationFrame(()=>{t=0;watch()})}).observe(document.body,{childList:true,subtree:true});
 setTimeout(watch,500);
+})();
+
+// ================= V151 · type variety: every post gets one of five typographic voices built from the uploaded Almoni weights
+//                   (classic, contrast 900 over 300, narrow Almoni Tzar headlines, light display, narrow with light text).
+//                   Chosen per post (stable), changeable in the editor, applied at draw time so it covers existing and future posts =================
+(function(){
+const STY={auto:'אוטומטי',classic:'קלאסי',contrast:'ניגוד חזק',narrow:'צר ודחוס',light:'עדין',narrowlight:'צר ועדין'};
+const tzar=()=>{try{return document.fonts.check('800 40px "Almoni Tzar"')&&[...document.fonts].some(f=>f.family.replace(/"/g,'')==='Almoni Tzar'&&f.status==='loaded')}catch(e){return false}};
+const has=w=>{try{return [...document.fonts].some(f=>f.family.replace(/"/g,'')==='Almoni'&&f.status==='loaded'&&String(f.weight).split(' ').includes(String(w)))}catch(e){return false}};
+function hash(s){let h=0;s=String(s||'');for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
+function styleOf(p){const t=p&&p.typo;if(t&&t!=='auto'&&STY[t])return t;const n=hash((p&&(p.id||p.key))||'')%100;const s=n<28?'classic':n<52?'contrast':n<74?'narrow':n<88?'light':'narrowlight';if((s==='narrow'||s==='narrowlight')&&!tzar())return 'contrast';return s}
+const RE=/^\s*(?:(italic|normal|oblique)\s+)?(?:(\d{3}|bold|normal)\s+)?([\d.]+)px\s+(.+)$/;
+function remap(v,st){if(st==='classic')return v;const m=String(v).match(RE);if(!m)return v;const fam=m[4];if(!/^"?Almoni"?\s*(,|$)/.test(fam))return v;
+ let w=m[2]==='bold'?700:m[2]&&m[2]!=='normal'?+m[2]:400;const s=+m[3];const disp=w>=700&&s>=34,text=w<=500&&s>=18&&s<34;let F=fam;
+ if(st==='contrast'){if(disp)w=900;else if(text&&has(300))w=300}
+ else if(st==='narrow'){if(disp){F='"Almoni Tzar", '+fam;w=800}}
+ else if(st==='light'){if(w>=700&&s>=70)w=has(500)?500:400;else if(disp)w=700;else if(text&&has(300))w=300}
+ else if(st==='narrowlight'){if(disp){F='"Almoni Tzar", '+fam;w=800}else if(text&&has(300))w=300}
+ return `${m[1]?m[1]+' ':''}${w} ${s}px ${F}`}
+let CUR=null;
+try{const P=CanvasRenderingContext2D.prototype;const d=Object.getOwnPropertyDescriptor(P,'font');
+ Object.defineProperty(P,'font',{configurable:true,get(){return d.get.call(this)},set(v){if(CUR&&this.canvas&&this.canvas.__v151!==false){try{v=remap(v,CUR)}catch(e){}}d.set.call(this,v)}})}catch(e){}
+try{drawSlide=(f=>function(cv,p){const prev=CUR;CUR=p?styleOf(p):null;try{return f.apply(this,arguments)}finally{CUR=prev}})(drawSlide)}catch(e){}
+// thumbnails are cached per post look; the voice is part of that look
+try{sigOf=(f=>function(p){return f.apply(this,arguments)+'|ty:'+styleOf(p)+(tzar()?'t':'')})(sigOf)}catch(e){}
+// when the fonts finish loading, cached drawings are redrawn with them
+try{document.fonts.addEventListener('loadingdone',()=>{try{TC.clear()}catch(e){}clearTimeout(window.__v151r);window.__v151r=setTimeout(()=>{try{if(typeof PE!=='undefined'&&PE.p)peRender();else render()}catch(e){}},300)})}catch(e){}
+// editor: choose the voice of this post
+try{peText=(f=>function(){const h=f.apply(this,arguments);const p=PE.p;if(!p)return h;const cur=p.typo||'auto';const eff=styleOf(p);
+ return h+`<div class="pe-sec v151"><div class="pe-l">סגנון טיפוגרפיה <small>כל המשקלים של Almoni${tzar()?' ו-Almoni צר':''}. עכשיו: ${STY[eff]}</small></div><div class="pe-chips">${Object.entries(STY).map(([k,l])=>`<button type="button" data-v151="${k}" aria-pressed="${cur===k}">${l}</button>`).join('')}</div></div>`})(peText)}catch(e){}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-v151]');if(!b||typeof PE==='undefined'||!PE.p)return;ev.preventDefault();try{pePush()}catch(e){}const k=b.dataset.v151;if(k==='auto')delete PE.p.typo;else PE.p.typo=k;try{TC.clear()}catch(e){}peRender()},true);
+window.__v151={styleOf,remap,STY,tzar};
+})();
+
+// ================= V152 · gallery → posts with the agent, bulk upload, created date on every post
+(function(){
+const esc2=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const say=m=>{try{toast(m)}catch(e){console.log(m)}};
+// ---------- 1. created date ----------
+// ids from uid() start with Date.now() in base 36, so the creation time of every post made in the engine is known.
+const T0=Date.UTC(2024,0,1),T1=()=>Date.now()+864e5;
+function fromId(id){const m=String(id||'').match(/^[a-z]?([0-9a-z]{8})/);if(!m)return 0;const t=parseInt(m[1],36);return t>T0&&t<T1()?t:0}
+function createdOf(p){if(!p)return 0;if(p.created){const t=Date.parse(p.created);if(t)return t}return fromId(p.id)}
+const pad=n=>String(n).padStart(2,'0');
+function fmtC(t){const d=new Date(t);return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)} · ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function createdHtml(p){const t=createdOf(p);return t?`<span class="v152c" title="נוצר במערכת ${esc2(new Date(t).toLocaleString('he-IL'))}">נוצר ${fmtC(t)}</span>`:''}
+window.__v152c=createdHtml;
+// posts that appear after load get a stamp (ids that do not carry a time, like imported ones)
+const KNOWN=new Set();let booted=false;
+function stamp(){try{if(!booted){(AG.posts||[]).forEach(p=>KNOWN.add(p.id));booted=true;return}
+  const now=new Date().toISOString();(AG.posts||[]).forEach(p=>{if(!p||KNOWN.has(p.id))return;KNOWN.add(p.id);if(!p.created)p.created=fromId(p.id)?new Date(fromId(p.id)).toISOString():now})}catch(e){}}
+setTimeout(stamp,0);
+const _save=saveAgent;saveAgent=function(){stamp();return _save.apply(this,arguments)};
+
+// ---------- 2. photos → posts with the agent ----------
+const G={busy:false,stop:false};
+async function blobOf(k){const u=PHOTO_LIB[k];if(!u)return null;try{const r=await fetch(u,{mode:'cors'});if(!r.ok)return null;const b=await r.blob();if(!/^image\//.test(b.type))return null;try{const d=await downscale(b);return d.blob}catch(e){return b}}catch(e){return null}}
+async function genFromPhotos(keys,n){const v=window.__v48;if(!v||!v.genFor){say('יצירת פוסטים לא זמינה כרגע. רעננו את הדף');return}
+  if(G.busy){say('כבר יוצר פוסטים. חכו שזה יסתיים');return}
+  G.busy=true;G.stop=false;const ib=v.IB,keepN=ib.n,T=v.TYPES,orig=T.slice();let made=0,done=0;const day=new Date().toISOString().slice(0,10);
+  try{ib.n=n;
+   for(const k of keys){if(G.stop)break;done++;bar(`יוצר פוסטים מתמונה ${done} מתוך ${keys.length}…`);
+    // every photo starts from another post type, so a batch does not repeat itself
+    const sh=(done-1)%T.length;T.splice(0,T.length,...orig.slice(sh),...orig.slice(0,sh));
+    const name=(typeof LIB_NAMES!=='undefined'&&LIB_NAMES[k])||'תמונה מהגלריה';
+    const it={id:'ib'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),kind:'image',name:String(name).slice(0,60),added:new Date().toISOString(),day,ctx:'',posts:[],status:'new',k,thumb:PHOTO_LIB[k],cloud:true,from:'gallery'};
+    it._file=await blobOf(k);ib.items.unshift(it);
+    try{made+=await v.genFor(it)||0}catch(e){console.error('v152 gen',e)}}
+  }finally{T.splice(0,T.length,...orig);ib.n=keepN;G.busy=false;bar('')}
+  stamp();try{saveAgent()}catch(e){}
+  say(made?`נוצרו ${made} פוסטים מ־${done} תמונות. הם מחכים בגלריית הפוסטים, החדשים ראשונים. שום דבר לא פורסם`:'לא נוצרו פוסטים. נסו שוב');
+  if(made){try{if(typeof GA!=='undefined'&&GA.f){GA.f.sort='new';GA.f.st='';GA.f.ser='';GA.f.q='';GA.f.proj='';GA.f.fam=''}}catch(e){}
+    const S=window.__v148&&__v148.S;if(S){S.sel.clear();S.selMode=false}
+    try{go('gallery')}catch(e){}}}
+function bar(t){let el=document.getElementById('v152busy');if(!t){if(el)el.remove();return}
+  if(!el){el=document.createElement('div');el.id='v152busy';el.className='v152busy';el.setAttribute('role','status');el.innerHTML='<span class="v152sp" aria-hidden="true"></span><b></b><button type="button" class="px-btn sm ghost" data-v152="stop">עצירה</button>';document.body.appendChild(el)}
+  el.querySelector('b').textContent=t}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-v152]');if(!b)return;const a=b.dataset.v152;
+  if(a==='gen'){const S=window.__v148&&__v148.S;if(!S||!S.sel.size){say('סמנו קודם תמונות');return}
+    const keys=[...S.sel].filter(k=>PHOTO_LIB[k]);const sel=document.querySelector('[data-v152="n"]');const n=Math.max(1,Math.min(6,+(sel&&sel.value)||2));
+    if(keys.length*n>60&&!confirm(`ייווצרו כ־${keys.length*n} פוסטים מ־${keys.length} תמונות. זה ייקח כמה דקות. להמשיך?`))return;
+    genFromPhotos(keys,n)}
+  else if(a==='stop'){G.stop=true;bar('עוצר אחרי התמונה הנוכחית…')}});
+
+// ---------- 3. many photos at once: drop anywhere on the gallery ----------
+let dragN=0;const onPhotos=()=>typeof APP!=='undefined'&&APP.view==='photos';
+const hasFiles=ev=>ev.dataTransfer&&[...(ev.dataTransfer.types||[])].includes('Files');
+document.addEventListener('dragenter',ev=>{if(!onPhotos()||!hasFiles(ev))return;dragN++;document.body.classList.add('v152drag')});
+document.addEventListener('dragleave',ev=>{if(!onPhotos())return;dragN=Math.max(0,dragN-1);if(!dragN)document.body.classList.remove('v152drag')});
+document.addEventListener('dragover',ev=>{if(onPhotos()&&hasFiles(ev))ev.preventDefault()});
+document.addEventListener('drop',ev=>{if(!onPhotos()||!hasFiles(ev))return;ev.preventDefault();dragN=0;document.body.classList.remove('v152drag');const v=window.__v148;if(v&&v.up)v.up(ev.dataTransfer.files)});
+window.__v152={createdOf,fromId,genFromPhotos,G};
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

@@ -11441,7 +11441,7 @@ ${RULES}
   const arr=(res&&res.posts)||[];const made=[];for(const x of arr.slice(0,3)){const L=ED_NAMES[x.layout]?x.layout:'ed_quote';const proj=PROJECTS[x.project]?x.project:'general';
     const p=mkPost({layout:(L==='ed_listing'&&proj==='general')?'ed_data':L,project:proj,label:x.label,head:x.headline,sub:x.sub,items:x.items,cta:x.cta,fb:x.fb,why:'בהשראת '+c.name+'. '+(x.angle||'')});if(p){p.src='comp';p.compId=c.id;p.compName=c.name;p.angle=x.angle||'';made.push(p)}}
   if(made.length){await addPosts(made);toast(`${made.length} פוסטים בהשראת ${c.name} נוספו לטיוטות`);render()}}
-function importDraft(id,d){if(!d||!d.post||AG.posts.some(p=>p.draftId===id))return null;const p=normalize(d.post,{src:'comp'});if(!p)return null;p.src='comp';p.draftId=id;p.compId=d.from;p.compName=d.fromName||'';p.angle=d.angle||'';p.bestTime=d.bestTime||'';if(d.post.visual&&/^(ed|x)_/.test(d.post.visual.layout)){p.layout=d.post.visual.layout;p.fx=d.post.fx||p.fx}return p}
+function importDraft(id,d){if(APP.db&&!window.__v31loaded){(window.__v145q=window.__v145q||[]).push([id,d]);return null}if(!d||!d.post||AG.posts.some(p=>p.draftId===id))return null;const p=normalize(d.post,{src:'comp'});if(!p)return null;p.src='comp';p.draftId=id;p.compId=d.from;p.compName=d.fromName||'';p.angle=d.angle||'';p.bestTime=d.bestTime||'';if(d.post.visual&&/^(ed|x)_/.test(d.post.visual.layout)){p.layout=d.post.visual.layout;p.fx=d.post.fx||p.fx}return p}
 
 // ---------- ARTICLES → content engine ----------
 const DOMS=[['all','הכל'],['בנייה וביצוע','בנייה וביצוע'],['פיקוח','פיקוח'],['יזמות','יזמות'],['תיווך ושיווק','תיווך ושיווק'],['מדריך ליזמים','מדריך ליזמים']];
@@ -12784,7 +12784,7 @@ async function v31LoadWf(){const db=APP.db;if(!db)return;try{const s=await db.co
 function v31Approve(){if(lsGet('ag_v31_approve',false))return 0;let n=0;const todo=[];AG.posts.forEach(p=>{let q;try{q=pxQuality(p)}catch(e){return}if(q.v!=='ok')return;const w=pxWf(p);if(w.stage==='draft'){w.stage='approved';n++;todo.push(p)}});lsSet('pro_wf',PRO.wf);lsSet('ag_v31_approve',true);
   if(APP.db&&todo.length){let i=0;const tick=()=>{const batch=todo.slice(i,i+25);i+=25;batch.forEach(p=>{try{const k=pxKey(p);APP.db.collection('workflow').doc(k).set(JSON.parse(JSON.stringify(PRO.wf[k]))).catch(()=>{})}catch(e){}});if(i<todo.length)setTimeout(tick,600)};setTimeout(tick,2500)}return n}
 
-appInit=(f=>async function(){const r=await f.apply(this,arguments);try{const n=await v31Load();await v31LoadWf();const a=v31Approve();if(n||a){try{render()}catch(e){}}if(a)setTimeout(()=>{try{toast(`${a} פוסטים שעברו את בדיקת האיכות סומנו כמאושרים`)}catch(e){}},1200);v31SyncSoon()}catch(e){console.warn('v31 init',e)}return r})(appInit);
+appInit=(f=>async function(){const r=await f.apply(this,arguments);try{const n=await v31Load();window.__v31loaded=1;try{window.__v145drafts()}catch(e){}await v31LoadWf();const a=v31Approve();if(n||a){try{render()}catch(e){}}if(a)setTimeout(()=>{try{toast(`${a} פוסטים שעברו את בדיקת האיכות סומנו כמאושרים`)}catch(e){}},1200);v31SyncSoon()}catch(e){console.warn('v31 init',e)}return r})(appInit);
 
 // ---------- D. template catalogue in the studio ----------
 (function(){const TPL=window.TPL;if(!TPL)return;Object.assign(ED_NAMES,TPL.names);Object.assign(DEF_THEME,TPL.themes);
@@ -17771,7 +17771,7 @@ const mo=new MutationObserver(()=>{const act=document.getElementById('vact');if(
  const b=document.createElement('button');b.type='button';b.className='ibtn';b.dataset.v104='run';b.title='מחליף תמונות שחוזרות על עצמן בתמונות אחרות מהספרייה';b.innerHTML=(typeof ico==='function'?ico('shuffle',16):'')+' גיוון תמונות';act.appendChild(b)});
 mo.observe(document.body,{childList:true,subtree:true});
 // one automatic pass per version, after the library (uploads from the database) has loaded
-setTimeout(()=>{try{if(localStorage.getItem(FLAG))return;const r=diversify({cap:3});localStorage.setItem(FLAG,'1');if(r&&r.changed){toast(`גיוון אוטומטי: ${r.changed} פוסטים קיבלו תמונה אחרת. אפשר לבטל בכפתור "גיוון תמונות" ← ביטול`);window.__v104last=r.before;try{if(window.__undoBar)__undoBar('התמונות הוחלפו ב-'+r.changed+' פוסטים',()=>undo(r.before))}catch(e){}}}catch(e){}},9000);
+setTimeout(()=>{try{if(localStorage.getItem(FLAG)||true)return;const r=diversify({cap:3});localStorage.setItem(FLAG,'1');if(r&&r.changed){toast(`גיוון אוטומטי: ${r.changed} פוסטים קיבלו תמונה אחרת. אפשר לבטל בכפתור "גיוון תמונות" ← ביטול`);window.__v104last=r.before;try{if(window.__undoBar)__undoBar('התמונות הוחלפו ב-'+r.changed+' פוסטים',()=>undo(r.before))}catch(e){}}}catch(e){}},9000);
 })();
 
 // ================= V106 · the page owns its scrolling on phones (the body never grows past the screen, so the header, the
@@ -20242,6 +20242,11 @@ render=(f=>function(){if(APP.view!=='photos')return f.apply(this,arguments);rend
 counts=(f=>function(){const c=f.apply(this,arguments);try{const n=missing(inventory()).filter(x=>x.l).length;if(n)c.photos=n}catch(x){}return c})(counts);
 window.__v144={inventory,missing,catalog,S,importMany};
 })();
+
+// ================= V145 · competitor drafts are matched against the saved posts only after those posts load (no duplicates on a new device);
+//                   the automatic photo variety pass no longer runs by itself =================
+window.__v145drafts=async function(){const q=window.__v145q||[];window.__v145q=[];const made=[];for(const [id,d] of q){const p=importDraft(id,d);if(p)made.push(p)}
+ if(!made.length)return;for(const p of made){AG.posts.unshift(p);try{await ensureImgs(p)}catch(e){}}saveAgent();try{renderAgent()}catch(e){}toast(`${made.length} פוסטים חדשים בהשראת מתחרים נוספו לטיוטות`);render()};
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

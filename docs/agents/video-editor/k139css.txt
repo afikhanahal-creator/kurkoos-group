@@ -1,0 +1,4 @@
+<style id="k139">
+/* the editor's action bar sits in the flow on a computer, so it never covers the preview or the style cards */
+@media (min-width:861px){.v130ebar{position:static!important;box-shadow:none!important;margin-top:12px}}
+</style>

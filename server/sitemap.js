@@ -34,7 +34,7 @@ export const STATIC = [
   { path: '/villas-sharon', changefreq: 'monthly', priority: '0.9' },
   { path: '/kablan-bniya-bayit-prati', changefreq: 'monthly', priority: '0.9' },
   { path: '/bniyat-vila-sharon', changefreq: 'monthly', priority: '0.9' },
-  { path: '/bniyat-bayit-prati/kfar-saba', changefreq: 'monthly', priority: '0.8' },
+  { path: '/bniyat-bayit-prati/hod-hasharon', changefreq: 'monthly', priority: '0.8' },
   { path: '/bniyat-bayit-prati/raanana', changefreq: 'monthly', priority: '0.8' },
   { path: '/bniyat-bayit-prati/herzliya', changefreq: 'monthly', priority: '0.8' },
   { path: '/real-estate-calculators', changefreq: 'monthly', priority: '0.8' },

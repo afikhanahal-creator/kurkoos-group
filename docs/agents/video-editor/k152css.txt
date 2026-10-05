@@ -1,0 +1,14 @@
+<style id="k152">
+/* V152 · created date, agent from photos, bulk upload */
+.v152c{display:block;font-size:11.5px;line-height:1.3;color:#6b8594;font-weight:500;margin-top:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.v28-dc .v152c{margin:1px 0 2px}
+.v152gen{background:#105572!important;border-color:#105572!important;color:#fff!important}
+.v152gen:disabled{opacity:.5}
+.v152busy{position:fixed;z-index:1150;top:calc(14px + env(safe-area-inset-top,0px));inset-inline:16px;max-width:560px;margin-inline:auto;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:#07293a;color:#fff;box-shadow:0 10px 30px rgba(7,41,58,.35)}
+.v152busy b{flex:1;font-size:14px;font-weight:600}
+.v152busy .px-btn{color:#fff!important;border-color:rgba(255,255,255,.5)!important;background:transparent!important}
+.v152sp{width:16px;height:16px;border-radius:50%;border:2px solid rgba(143,182,200,.35);border-top-color:#8fb6c8;animation:v152r .8s linear infinite;flex:none}
+@keyframes v152r{to{transform:rotate(1turn)}}
+body.v152drag .v144::before{content:"שחררו כאן כדי להעלות את כל התמונות";position:fixed;inset:12px;z-index:1180;display:grid;place-items:center;border:3px dashed #105572;border-radius:18px;background:rgba(247,248,250,.92);color:#07293a;font-size:20px;font-weight:700;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.v152sp{animation:none}}
+</style>

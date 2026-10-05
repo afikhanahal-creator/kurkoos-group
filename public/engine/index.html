@@ -1041,6 +1041,41 @@ body:has(#v131.on) #v142job,body:has(#v132res) #v142job,body:has(#v140.on) #v142
 body.v152drag .v144::before{content:"שחררו כאן כדי להעלות את כל התמונות";position:fixed;inset:12px;z-index:1180;display:grid;place-items:center;border:3px dashed #105572;border-radius:18px;background:rgba(247,248,250,.92);color:#07293a;font-size:20px;font-weight:700;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.v152sp{animation:none}}
 </style>
+<style id="k153">
+/* V153 · feed simulator */
+.px-feedv.v153{grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.v153 .v153side{position:sticky;top:calc(var(--v141top,0px) + 16px);max-height:calc(100vh - 120px);overflow:auto}
+.v153 .v153main{padding:22px 24px}
+.px-card2 header.v153h,.v153h{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"av id cols" "st st st";align-items:center;gap:14px 16px;padding-bottom:18px;margin-bottom:16px;border-bottom:1px solid #e3ebf0}
+.v153av{grid-area:av;width:64px;height:64px;border-radius:50%;background:#07293a;display:grid;place-items:center;box-shadow:0 0 0 3px #fff,0 0 0 5px #a90b0c}
+.v153av svg{width:38px;height:38px}
+.v153id{grid-area:id;display:flex;flex-direction:column;gap:3px;min-width:0}
+.v153id b{font-size:20px;color:#07293a;font-weight:800}
+.v153id span{font-size:14px;color:#4a6575}
+.v153 .v153st{grid-area:st;display:flex;gap:10px;margin:0;flex-wrap:wrap}
+.v153st>div{display:flex;flex-direction:column;gap:1px;padding:10px 16px;border-radius:12px;background:#f2f7fa;min-width:110px}
+.v153st dd{margin:0;font-size:20px;font-weight:800;color:#07293a;font-variant-numeric:tabular-nums}
+.v153st dt{font-size:13px;color:#4a6575}
+.v153st .bad dd{color:#a90b0c}
+.v153cols{grid-area:cols;display:flex;gap:4px;padding:4px;border-radius:999px;background:#eef3f6}
+.v153cols button{white-space:nowrap;height:34px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:#07293a;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.v153cols button[aria-pressed="true"]{background:#07293a;color:#fff}
+.v153cols button:focus-visible,.v153e:focus-visible{outline:2px solid #105572;outline-offset:2px}
+.px-feedv.v153 .px-feed{max-width:none;gap:6px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.px-feedv.v153.c4 .px-feed{grid-template-columns:repeat(4,minmax(0,1fr))}
+.v153 .px-feed figure{overflow:hidden;border-radius:4px;background:#e3ebf0}
+.v153 .px-feed canvas{transition:transform .35s cubic-bezier(.22,1,.36,1),filter .25s}
+.v153 .px-feed figcaption{position:absolute;inset-inline:0;bottom:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:28px 10px 9px;background:linear-gradient(transparent,rgba(7,41,58,.78));color:#fff;font-size:13px;pointer-events:none}
+.v153 .px-feed figcaption .v153d{font-weight:700;font-variant-numeric:tabular-nums}
+.v153 .px-feed figcaption b{background:#a90b0c;color:#fff;padding:2px 8px;border-radius:999px;font-size:12px}
+.v153e{position:absolute;top:8px;inset-inline-start:8px;height:32px;padding:0 12px;border:0;border-radius:999px;background:rgba(255,255,255,.95);color:#07293a;font:inherit;font-size:13px;font-weight:700;cursor:pointer;opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .2s;box-shadow:0 2px 8px rgba(7,41,58,.25)}
+.v153 .px-feed figure:hover .v153e,.v153 .px-feed figure:focus-within .v153e{opacity:1;transform:none}
+.v153 .px-feed figure:hover canvas{transform:scale(1.03)}
+@media (hover:none){.v153e{opacity:1;transform:none}}
+@media (max-width:1300px){.px-feedv.v153{grid-template-columns:1fr}.v153 .v153side{position:static;max-height:none}}
+@media (max-width:760px){.v153 .v153main{padding:14px 12px}.px-card2 header.v153h,.v153h{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"av id" "st st";gap:10px 12px}.v153av{width:52px;height:52px}.v153id b{font-size:17px}.v153id span{font-size:13px}.v153 .v153st{display:grid;grid-template-columns:1fr 1fr;gap:6px}.v153st>div{min-width:0;padding:7px 10px}.v153st dd{font-size:15px}.v153st dt{font-size:11.5px}.v153cols{display:none}.px-feedv.v153 .px-feed,.px-feedv.v153.c4 .px-feed{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}.v153 .px-feed figcaption{font-size:11px;padding:18px 5px 5px;padding-inline-end:40px;justify-content:flex-start}.v153 .px-feed figcaption b{display:none}.v153e{height:28px;padding:0 9px;font-size:12px;top:5px;inset-inline-start:5px}}
+@media (prefers-reduced-motion:reduce){.v153 .px-feed canvas,.v153e{transition:none}}
+</style>
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -11812,10 +11847,10 @@ function pxFeedWarn(list){const w=[];for(let i=1;i<list.length;i++){const a=list
   return{w,g}}
 function pxFeedHtml(n){const list=pxFeedList(n);if(!list.length)return `<div class="px-empty"><b>אין עדיין פוסטים מתוזמנים.</b><span>תזמנו פוסטים מהטיוטות, והסימולטור יראה איך הפרופיל ייראה בעוד חודש.</span><div><button class="px-btn" type="button" data-view="agent">לטיוטות</button></div></div>`;
   const {w,g}=pxFeedWarn(list);const bad=new Map(w.map(x=>[x[0],x[1]]));const view=[...list].reverse();
-  return `${g.length?`<div class="px-warns">${g.map(x=>`<span>${ico('warn',14)} ${esc(x)}</span>`).join('')}</div>`:''}<div class="px-feed">${view.map((x,vi)=>{const i=list.length-1-vi;return `<figure class="${bad.has(i)?'w':''}" title="${esc(bad.get(i)||'')}"><canvas data-tp="${x.p.id}" width="216" height="270" aria-hidden="true"></canvas><figcaption>${fmtD(x.it.at)} · ${hm(x.it.at)}${bad.has(i)?` <b>${esc(bad.get(i))}</b>`:''}</figcaption></figure>`}).join('')}</div>`}
+  return `${g.length?`<div class="px-warns">${g.map(x=>`<span>${ico('warn',14)} ${esc(x)}</span>`).join('')}</div>`:''}<div class="px-feed">${view.map((x,vi)=>{const i=list.length-1-vi;return `<figure class="${bad.has(i)?'w':''}" title="${esc(bad.get(i)||'')}"><canvas data-tp="${x.p.id}" width="432" height="540" aria-hidden="true"></canvas><figcaption><span class="v153d">${fmtD(x.it.at)} · ${hm(x.it.at)}</span>${bad.has(i)?` <b>${esc(bad.get(i))}</b>`:''}</figcaption></figure>`}).join('')}</div>`}
 function vFeed(){const n=30;const list=pxFeedList(n);const {w,g}=pxFeedWarn(list);
-  return `<div class="px-feedv"><div class="px-card2"><header><h3>איך ייראה הפרופיל בעוד 30 יום</h3><span class="muted">${list.length} פוסטים מתוזמנים · החדש ביותר למעלה, כמו באינסטגרם</span></header>${pxFeedHtml(n)}</div>
-  <aside class="px-card2"><header><h3>בדיקת קצב</h3></header>${w.length||g.length?[...g.map(x=>`<div class="px-nrow lv-md"><i></i><span>${esc(x)}</span></div>`),...w.map(([i,t])=>`<div class="px-nrow lv-lo"><i></i><span>${esc(t)}: ${fmtD(list[i].it.at)}</span></div>`)].join(''):'<div class="px-empty sm"><b>הקצב מאוזן.</b><span>אין רצפים חוזרים של עיצוב, צבע או תמונה.</span></div>'}
+  return `<div class="px-feedv v153 c${window.__v153c?__v153c():3}"><div class="px-card2 v153main">${window.__v153h?__v153h(list,w.length+g.length):''}${pxFeedHtml(n)}</div>
+  <aside class="px-card2 v153side"><header><h3>בדיקת קצב</h3></header>${w.length||g.length?[...g.map(x=>`<div class="px-nrow lv-md"><i></i><span>${esc(x)}</span></div>`),...w.map(([i,t])=>`<div class="px-nrow lv-lo"><i></i><span>${esc(t)}: ${fmtD(list[i].it.at)}</span></div>`)].join(''):'<div class="px-empty sm"><b>הקצב מאוזן.</b><span>אין רצפים חוזרים של עיצוב, צבע או תמונה.</span></div>'}
   <h4 class="px-sub">תמהיל התוכן</h4>${pxMixHtml()}</aside></div>`}
 
 // ---------- AGENT workspace ----------
@@ -20473,6 +20508,19 @@ document.addEventListener('dragleave',ev=>{if(!onPhotos())return;dragN=Math.max(
 document.addEventListener('dragover',ev=>{if(onPhotos()&&hasFiles(ev))ev.preventDefault()});
 document.addEventListener('drop',ev=>{if(!onPhotos()||!hasFiles(ev))return;ev.preventDefault();dragN=0;document.body.classList.remove('v152drag');const v=window.__v148;if(v&&v.up)v.up(ev.dataTransfer.files)});
 window.__v152={createdOf,fromId,genFromPhotos,G};
+})();
+
+// ================= V153 · feed simulator header and column choice
+(function(){
+const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}};
+window.__v153c=()=>+ls('v153cols','3')===4?4:3;
+window.__v153h=function(list,warn){const n=list.length;const first=n?list[0].it.at:'',last=n?list[n-1].it.at:'';const c=__v153c();
+ return `<header class="v153h"><div class="v153av" aria-hidden="true"><svg viewBox="0 0 40 40" width="40" height="40"><rect x="11" y="13" width="3" height="17" fill="#fff"/><rect x="16" y="6" width="4.5" height="24" fill="#fff"/><rect x="22.5" y="10" width="3.5" height="20" fill="#fff"/><rect x="28" y="18" width="2.5" height="12" fill="#fff"/></svg></div>
+ <div class="v153id"><b>קבוצת קורקוס</b><span>כך ייראה הפרופיל ב־30 הימים הקרובים. החדש ביותר למעלה, כמו באינסטגרם</span></div>
+ <dl class="v153st"><div><dd>${n}</dd><dt>מתוזמנים</dt></div>${n?`<div><dd>${esc(fmtD(first))}</dd><dt>הראשון</dt></div><div><dd>${esc(fmtD(last))}</dd><dt>האחרון</dt></div>`:''}<div class="${warn?'bad':''}"><dd>${warn}</dd><dt>הערות קצב</dt></div></dl>
+ <div class="v153cols" role="group" aria-label="מספר עמודות"><button type="button" data-v153="3" aria-pressed="${c===3}">3 עמודות</button><button type="button" data-v153="4" aria-pressed="${c===4}">4 עמודות</button></div></header>`};
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-v153]');if(!b)return;try{localStorage.setItem('v153cols',b.dataset.v153)}catch(e){}
+ const v=document.querySelector('.px-feedv.v153');if(v){v.classList.remove('c3','c4');v.classList.add('c'+b.dataset.v153)}document.querySelectorAll('[data-v153]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

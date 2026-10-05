@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Seo from '../components/ui/Seo.jsx'
 import Icon from '../components/ui/Icon.jsx'
@@ -43,6 +43,19 @@ export default function HouseLanding() {
 }
 
 function HouseLandingPage({ page }) {
+  // ציר השלבים: הקו נמתח והמספרים נדלקים אחד אחרי השני כשהציר נכנס למסך
+  const timelineRef = useRef(null)
+  useEffect(() => {
+    const el = timelineRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    el.classList.add('hl-timeline--anim')
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { el.classList.add('is-in'); io.disconnect() }
+    }, { threshold: 0.25 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
   const jsonLd = useMemo(() => houseJsonLd(page), [page])
   const placement = `house_${page.key}`
   const estimate = (where) => () => {
@@ -130,9 +143,9 @@ function HouseLandingPage({ page }) {
             <h2 className="hl-h2" id="hl-steps-title">{page.stepsTitle}</h2>
             <p className="hl-head__lead">חמישה שלבים, וכתובת אחת לאורך כולם.</p>
           </div>
-          <ol className="hl-timeline">
+          <ol className="hl-timeline" ref={timelineRef}>
             {HOUSE_STEPS.map((s, i) => (
-              <li key={s.t} className="hl-stage">
+              <li key={s.t} className="hl-stage" style={{ '--i': i }}>
                 <span className="hl-stage__num" aria-hidden="true">{i + 1}</span>
                 <div className="hl-stage__body">
                   <h3 className="hl-stage__title">{s.t}</h3>

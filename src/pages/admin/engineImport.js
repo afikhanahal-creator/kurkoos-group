@@ -6,8 +6,8 @@ import { supabase } from '../../lib/supabase.js'
      'KCE1' | אורך הכותרת (4 בתים) | כותרת JSON | חלקים בינאריים
    החלקים: data (כל אוספי המסד, דחוס gzip), blob (קבצים שהועלו),
    static (תמונות וסרטונים מובנים).
-   הכול נכתב עם ההתחברות של המנהל. הייבוא בטוח להרצה חוזרת:
-   כל רשומה וכל קובץ נכתבים מעל עצמם.
+   הכול נכתב עם ההתחברות של המנהל. הייבוא מחליף את הנתונים שבאתר
+   בנתונים שבקובץ, ובטוח להרצה חוזרת.
    ============================================================ */
 
 const BUCKET = 'engine-media'
@@ -45,6 +45,15 @@ export async function importEngineFile(file, onProgress) {
   const files = entries.filter((e) => e.kind === 'blob' || e.kind === 'static')
   const total = rows.length + files.length
   let done = 0
+
+  // הקובץ הוא המקור: מה שנוצר באתר לפני הייבוא (תוכן התחלתי) נמחק, ואז נכתבות הרשומות מהקובץ
+  for (const collection of Object.keys(data || {})) {
+    say('מנקה את ' + collection + '…', 0)
+    const { error } = await supabase.from('engine_docs').delete().eq('collection', collection)
+    if (error) throw new Error('ניקוי הנתונים הקודמים נכשל: ' + error.message)
+  }
+  // גם העותק המקומי של המערכת בדפדפן הזה מתחיל מחדש
+  try { indexedDB.deleteDatabase('kurkoos-engine') } catch (e) { /* לא קריטי */ }
 
   // רשומות, בקבוצות של 400
   for (let i = 0; i < rows.length; i += 400) {

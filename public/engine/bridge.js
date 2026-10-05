@@ -17,6 +17,18 @@
   window.__ENGINE_HOST = 'site'
   window.__BLOB = STORE + 'blob/'
 
+  // ---------- עדכונים חד פעמיים: ב-claude.ai כל אחד מהם רץ פעם אחת וסימן את עצמו בזיכרון הדפדפן.
+  // באתר זה דפדפן חדש, ובלי הסימון הם רצו שוב על כל הנתונים (החליפו תמונות, כתבו מחדש טקסטים).
+  // הנתונים מגיעים לכאן אחרי שכל העדכונים האלה כבר עברו עליהם, אז באתר הם נחשבים כבוצעו.
+  const ONCE = /^(ag_seed_|ag_v\d|ag_weekly_|ag_art_auto|cp_patch|soc_import|v129_mig$|pro_seen$)/
+  try {
+    const get = Storage.prototype.getItem
+    Storage.prototype.getItem = function (k) {
+      const v = get.call(this, k)
+      return v === null && this === window.localStorage && ONCE.test(String(k)) ? 'true' : v
+    }
+  } catch (e) {}
+
   // ---------- ההתחברות של האדמין (Supabase שומר אותה ב-localStorage של האתר)
   let refreshing = null
   function readSession() { try { return JSON.parse(localStorage.getItem(AUTH_KEY) || 'null') } catch (e) { return null } }

@@ -18383,7 +18383,7 @@ Object.entries({tr:[W,0],tl:[0,0],br:[W,H],bl:[0,H]}).forEach(([k,[x,y]])=>[['wa
 [['s',.35,'עדין'],['l',.6,'חזק']].forEach(([k,a,n])=>add(`v125_vig_${k}`,`וינייט ${n}`,(c)=>{c.save();const g=c.createRadialGradient(W/2,H/2,H*.28,W/2,H/2,H*.75);g.addColorStop(0,'rgba(7,41,58,0)');g.addColorStop(1,`rgba(7,41,58,${a})`);c.fillStyle=g;c.fillRect(0,0,W,H);c.restore()},['all',W],'auto','all','vig'));
 // 7. label stickers (kit Callout as a sticker): one word, brand type, a slight tilt
 const WORDS=['חדש','לפני','אחרי','בבנייה','נמסר','למכירה','טיפ','שאלה'];
-function sticker(c,C,word,x,y,tilt){c.save();c.translate(x,y);c.rotate(tilt);c.font='900 54px Heebo, Almoni, sans-serif';c.direction='rtl';const w=c.measureText(word).width+60,h=88;const dark=C==='#ffffff'||C==='#fff'||/mist|8fb6c8/i.test(C);
+function sticker(c,C,word,x,y,tilt){c.save();c.translate(x,y);c.rotate(tilt);c.font='900 54px Almoni, Heebo, sans-serif';c.direction='rtl';const w=c.measureText(word).width+60,h=88;const dark=C==='#ffffff'||C==='#fff'||/mist|8fb6c8/i.test(C);
  c.fillStyle=C;c.beginPath();c.roundRect?c.roundRect(-w/2,-h/2,w,h,22):c.rect(-w/2,-h/2,w,h);c.fill();c.lineWidth=5;c.strokeStyle=dark?'#a90b0c':'#ffffff';c.stroke();
  c.fillStyle=dark?'#07293a':'#ffffff';c.textAlign='center';c.textBaseline='middle';c.fillText(word,0,4);c.restore()}
 WORDS.forEach((wd,wi)=>Object.entries({tr:[W-M-120,M+150,-.07],tl:[M+120,M+150,.07],br:[W-M-120,H-M-170,.06],bl:[M+120,H-M-170,-.06]}).forEach(([k,[x,y,t]])=>Object.keys(COLS).forEach(cl=>add(`v125_tag_${wi}_${k}_${cl}`,`מדבקה "${wd}" ${PN[k]}`,(c,C)=>sticker(c,C,wd,x,y,t),[k,300],cl,k,'tag'))));
@@ -20535,7 +20535,7 @@ if(!lsGet('ag_seed_kg10',false)){const s10=SEED10.map(r=>normalize(r,{src:'seed'
   if(WEEKLY.length&&!lsGet('ag_weekly_'+WEEKLY_ID,false)){const sw=WEEKLY.map(r=>normalize(r,{src:'seed'})).filter(Boolean);AG.posts=[...sw,...AG.posts.filter(p=>!(p.key&&WEEKLY.some(x=>x.key===p.key)))].slice(0,800);lsSet('ag_weekly_'+WEEKLY_ID,true);saveAgent()}
   /*V30ART*/try{v30MaybeRegen()}catch(e){console.warn('v30art',e)}
   buildControls();buildKit();
-  if(!AG.posts.length)localGenerate(6,true);else renderAgent();
+  if(!AG.posts.length){const t0=Date.now();const g=()=>{if(window.__v31loaded||Date.now()-t0>20000){if(!AG.posts.length)localGenerate(6,true);else renderAgent()}else setTimeout(g,400)};g()}else renderAgent();
   try{await Promise.race([Promise.all([...['400','700','800','900'].map(w=>document.fonts.load(`${w} 60px Heebo`)),document.fonts.load('300 40px Almoni'),document.fonts.load('400 40px Almoni'),document.fonts.load('700 40px Almoni'),loadLogo('white',{fg:'#ffffff',o1:'#8fb6c8',o2:'#dbe8ee'}),loadLogo('navy',{fg:'#07293a',o1:'#a90b0c',o2:'#105572'})]),new Promise(r=>setTimeout(r,1200))])}catch(e){}
   await Promise.race([preloadPosts(AG.posts.slice(0,8)),new Promise(r=>setTimeout(r,1500))]);
   renderAgent();

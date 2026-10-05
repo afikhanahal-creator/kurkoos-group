@@ -120,9 +120,11 @@ export default function Mentorship() {
             </div>
             <aside className="mentor-intro__side">
               <img
-                src="/team-shlomi.webp"
-                alt="שלומי קורקוס, מייסד קורקוס גרופ"
+                src="/shlomi-office.webp"
+                alt="שלומי קורקוס, מייסד קורקוס גרופ, במשרד"
                 className="mentor-intro__photo"
+                width="800"
+                height="1200"
                 loading="lazy"
               />
               <div className="mentor-intro__quote-card">

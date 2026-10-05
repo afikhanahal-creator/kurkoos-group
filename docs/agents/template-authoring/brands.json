@@ -1,0 +1,452 @@
+{
+ "monday": {
+  "he": "בסגנון מאנדיי",
+  "verified": true,
+  "palette": {
+   "purple": "#6161ff",
+   "green": "#00ca72",
+   "yellow": "#ffcc00",
+   "coral": "#fb275d",
+   "ink": "#323338",
+   "body": "#676879",
+   "bg": "#ffffff",
+   "soft": "#f6f7fb",
+   "lilac": "#ecefff"
+  },
+  "look": "monday.com marketing: white or very light background, modular rounded cards (radius 16 to 24), status chips in the four status colours (green done, yellow working on it, coral stuck, purple), board rows with colour cells, playful big headline in dark ink #323338, thin grey body copy. Colour is used in blocks and chips, never as a flat full page. Photos sit inside rounded cards with a soft shadow feel.",
+  "motifs": [
+   "status chips row (3 pills: green, yellow, coral) with short Hebrew labels",
+   "board row cards: a stack of 3 to 5 white rows with a coloured status cell at the end",
+   "kanban of 3 columns with colour headers",
+   "progress strip of segments in the four colours",
+   "big rounded photo card with a purple pill label",
+   "timeline dots in alternating colours",
+   "giant number on a purple rounded block with white text",
+   "checklist with green check circles",
+   "a coral 'stuck' card vs a green 'done' card comparison",
+   "floating notification card over a photo"
+  ],
+  "avoid": [
+   "dark full-page backgrounds",
+   "the Kurkoos navy and red as main colours",
+   "thin serif type"
+  ]
+ },
+ "canva": {
+  "he": "בסגנון קאנבה",
+  "verified": true,
+  "palette": {
+   "teal": "#07b9ce",
+   "blue": "#3969e7",
+   "purple": "#7d2ae7",
+   "ink": "#0e1318",
+   "grey": "#5e6b74",
+   "bg": "#ffffff",
+   "soft": "#f2f3f5",
+   "mint": "#e6f8fa"
+  },
+  "look": "Canva brand: friendly, bright, teal to purple gradients, big rounded corners, white cards, generous white space, playful stickers and rotated labels, bold confident headline, lots of templates-in-a-template feel (cards, frames, tags). Gradients from teal #07b9ce through blue #3969e7 to purple #7d2ae7 are the signature.",
+  "motifs": [
+   "vertical gradient page teal to purple with white rounded card holding photo and headline",
+   "white page with a gradient band at the top",
+   "photo in a rounded frame with a rotated gradient tag",
+   "three stacked rounded cards each with a different brand colour edge",
+   "big gradient circle behind a headline",
+   "pill buttons row in teal, blue and purple",
+   "polaroid style photo with tape and caption",
+   "a gradient stroke frame around the whole page",
+   "quote card with a huge teal quotation mark",
+   "grid of four rounded tiles with one gradient tile"
+  ],
+  "avoid": [
+   "flat navy",
+   "corporate seriousness",
+   "hairline rules only"
+  ]
+ },
+ "tiktok": {
+  "he": "בסגנון טיקטוק",
+  "verified": true,
+  "palette": {
+   "black": "#000000",
+   "ink": "#121212",
+   "pink": "#fe2c55",
+   "cyan": "#25f4ee",
+   "white": "#ffffff",
+   "grey": "#8a8b91"
+  },
+  "look": "TikTok visual language: black background, full-bleed photo with heavy dark gradient, huge white caption text in boxes, the chromatic glitch offset (cyan and pink shadows behind white text, the engine has a chroma text treatment), stickers, pink and cyan accents, vertical video feel, bold stacked words, countdown or 'part 1' tags.",
+  "motifs": [
+   "full bleed photo, dark gradient, caption boxes stacked bottom right",
+   "headline with chromatic pink and cyan offset on black",
+   "a white caption box with pink underline word highlight",
+   "'part 1 of 3' sticker in pink",
+   "black page, cyan hairline frame, giant stacked words",
+   "photo with a cyan tilt frame and pink label",
+   "before/after split with a pink divider",
+   "comment-bubble style card over the photo",
+   "play button mark and a progress bar strip",
+   "text only post: black, one giant word in white, pink second line"
+  ],
+  "avoid": [
+   "white pages",
+   "corporate blue",
+   "small text"
+  ]
+ },
+ "apple": {
+  "he": "בסגנון אפל",
+  "verified": true,
+  "palette": {
+   "white": "#ffffff",
+   "offwhite": "#f5f5f7",
+   "black": "#000000",
+   "ink": "#1d1d1f",
+   "grey": "#86868b",
+   "blue": "#0071e3"
+  },
+  "look": "Apple marketing: extreme restraint. One object (the photo) centred with vast space, a single huge headline in near black #1d1d1f, a short grey #86868b line, pages either white/#f5f5f7 or pure black with white type. No decoration, no chips, no rules. Hierarchy by scale only. Occasionally one blue #0071e3 link-like line.",
+  "motifs": [
+   "white page, headline at top centre, product-like photo centred below with air around it",
+   "black page, white giant headline, photo as a small centred object",
+   "headline top, photo bottom bleeding off the page edge",
+   "two words headline at 150px over #f5f5f7, photo in a soft rounded rectangle",
+   "text only: one sentence, huge, black on white",
+   "photo full bleed with the headline centred in white and nothing else",
+   "headline, a hairline rule, one line of grey body",
+   "portrait photo on the left half, white space with headline on the right"
+  ],
+  "avoid": [
+   "more than two colours",
+   "boxes and chips",
+   "busy backgrounds"
+  ]
+ },
+ "tidhar": {
+  "he": "בסגנון תדהר",
+  "verified": false,
+  "palette": {
+   "charcoal": "#1f2a30",
+   "stone": "#e9e5df",
+   "white": "#ffffff",
+   "sand": "#c8b79a",
+   "ink": "#141a1e",
+   "grey": "#6b7378"
+  },
+  "look": "Large upscale developer: calm, airy and photographic. Full bleed architecture photo, thin headline sitting low with a hairline rule, muted stone and sand tones, charcoal type, generous margins, sophisticated and quiet. (Palette is an interpretation of the visual language, not the brand's official colours.)",
+  "motifs": [
+   "full bleed photo, headline low left with hairline above",
+   "stone page, photo with wide margins, caption in grey",
+   "charcoal page with a sand accent line and white headline",
+   "photo top two thirds, stone band below with headline",
+   "two photos side by side with a thin divider",
+   "headline in a narrow column beside a tall photo",
+   "white page, photo with a sand frame",
+   "big quiet number in sand with a small label"
+  ],
+  "avoid": [
+   "bright colours",
+   "stickers",
+   "heavy blocks"
+  ]
+ },
+ "gabay": {
+  "he": "בסגנון קבוצת גבאי",
+  "verified": false,
+  "palette": {
+   "black": "#0a0a0a",
+   "white": "#ffffff",
+   "red": "#d7262d",
+   "grey": "#9a9a9a",
+   "ink": "#1a1a1a"
+  },
+  "look": "Corporate builder with a strong black and white photographic language: monochrome photos (the photo element supports mono:true), big white headlines, one red mark or dot, hard edges, confident. (Interpretation of the visual language.)",
+  "motifs": [
+   "mono full bleed photo, white headline, red dot",
+   "black page, white headline, red underline bar",
+   "mono photo with a red corner block",
+   "white page, mono photo, red label pill",
+   "split: black left, mono photo right",
+   "headline on a red band over mono photo",
+   "giant red number over black",
+   "grid of two mono photos with a red divider"
+  ],
+  "avoid": [
+   "colour photos",
+   "pastels",
+   "rounded playful shapes"
+  ]
+ },
+ "electra": {
+  "he": "בסגנון אלקטרה",
+  "verified": false,
+  "palette": {
+   "blue": "#0b3d91",
+   "sky": "#2f80ed",
+   "orange": "#ff7a00",
+   "white": "#ffffff",
+   "ink": "#0f1b2d",
+   "light": "#eef3fb"
+  },
+  "look": "Infrastructure and construction group: engineered, structured, diagonal cuts, blue with an orange accent, data strips and big figures, strong grid, industrial photography. (Interpretation of the visual language.)",
+  "motifs": [
+   "blue title band, white body, orange hairline",
+   "diagonal cut photo with blue triangle",
+   "data strip of 3 tiles in light blue",
+   "giant orange number over blue",
+   "photo with an orange corner tag",
+   "hazard-like orange and blue stripes as a thin footer band",
+   "blue page with white headline and a sky rule",
+   "timeline of 4 steps in blue with orange marker"
+  ],
+  "avoid": [
+   "soft pastels",
+   "serif type"
+  ]
+ },
+ "prashkovsky": {
+  "he": "בסגנון פרשקובסקי",
+  "verified": false,
+  "palette": {
+   "cream": "#f3efe8",
+   "bronze": "#9c7b4f",
+   "ink": "#1b1b1b",
+   "white": "#ffffff",
+   "grey": "#7a7a7a",
+   "night": "#1f1d1a"
+  },
+  "look": "Boutique luxury developer: cream pages, bronze accents, elegant asymmetric layouts, framed photos, small refined captions, lots of air, a quiet premium feel. (Interpretation of the visual language.)",
+  "motifs": [
+   "cream page, photo framed in bronze hairline, headline below",
+   "night page, bronze headline, small white caption",
+   "photo offset to the left with headline overlapping its edge",
+   "cream page with a bronze vertical rule and tall photo",
+   "circle photo with bronze ring",
+   "two photos staggered with bronze captions",
+   "headline in bronze over cream, photo small bottom right",
+   "full bleed photo with a cream caption card"
+  ],
+  "avoid": [
+   "bright colours",
+   "chips and stickers"
+  ]
+ },
+ "altneuland": {
+  "he": "בסגנון אלטנוילנד",
+  "verified": false,
+  "palette": {
+   "ink": "#10151c",
+   "white": "#ffffff",
+   "ochre": "#d9a441",
+   "slate": "#3a4652",
+   "paper": "#f1ede6",
+   "grey": "#6e7a86"
+  },
+  "look": "Urban renewal developer: city and street motifs, before and after thinking, bold ink blocks with photo windows, ochre accent, magazine-like headlines, skyline bars. (Interpretation of the visual language.)",
+  "motifs": [
+   "ink page with a photo window and an ochre label",
+   "before/after stacked photos with an ochre divider",
+   "paper page, skyline bar silhouette, headline",
+   "photo with an ink block overlapping its bottom corner",
+   "ochre vertical band on the right with headline",
+   "two column: ink text column and photo column",
+   "big ochre number, photo strip below",
+   "street-sign style label over photo"
+  ],
+  "avoid": [
+   "pastels",
+   "playful chips"
+  ]
+ },
+ "dimri": {
+  "he": "בסגנון י.ח. דמרי",
+  "verified": false,
+  "palette": {
+   "blue": "#0a4d8c",
+   "teal": "#19a0b5",
+   "white": "#ffffff",
+   "ink": "#0c1a2b",
+   "light": "#e8f1f8",
+   "orange": "#f29a2e"
+  },
+  "look": "Large national developer: blue frame around the photo, title band in teal, clear project cards, orange accent for calls to action, friendly corporate. (Interpretation of the visual language.)",
+  "motifs": [
+   "blue page frame around photo, white caption area",
+   "teal title band over photo",
+   "project card: photo top, white details strip",
+   "orange pill label over blue",
+   "light page with blue headline and teal rule",
+   "photo with blue bottom block and white headline",
+   "three spec tiles in light blue",
+   "blue page, big white headline, orange accent line"
+  ],
+  "avoid": [
+   "black pages",
+   "serif"
+  ]
+ },
+ "africa": {
+  "he": "בסגנון אפריקה ישראל מגורים",
+  "verified": false,
+  "palette": {
+   "red": "#c8102e",
+   "navy": "#0d1b3e",
+   "white": "#ffffff",
+   "ink": "#121212",
+   "grey": "#5f6670",
+   "light": "#f3f4f6"
+  },
+  "look": "Big developer with heavy blocks: red and navy slabs, fat headlines, diagonals, strong contrast, photo plus block compositions. (Interpretation of the visual language.)",
+  "motifs": [
+   "photo top, red block bottom with white fat headline",
+   "navy block with a red vertical bar and headline",
+   "diagonal red slab across photo",
+   "white page, red headline, navy rule",
+   "photo in a navy frame with red corner",
+   "red page, white giant headline, small photo",
+   "half red half photo split",
+   "navy page with red number"
+  ],
+  "avoid": [
+   "pastels",
+   "thin type"
+  ]
+ },
+ "israelcanada": {
+  "he": "בסגנון ישראל קנדה",
+  "verified": false,
+  "palette": {
+   "black": "#0b0b0b",
+   "gold": "#c9a961",
+   "white": "#ffffff",
+   "ink": "#111111",
+   "grey": "#8c8c8c",
+   "cream": "#f5f1ea"
+  },
+  "look": "Luxury skyline developer: black pages, thin gold hairline frames, centred headlines, quiet luxury, elegant small caps-like labels (no all caps though), gold accents, dark photography. (Interpretation of the visual language.)",
+  "motifs": [
+   "black page, thin gold inner frame, centred headline",
+   "photo full bleed dim, gold hairline, centred white headline",
+   "cream page, gold rule, black headline",
+   "black page with a gold circle and headline",
+   "photo in a gold hairline frame with a black caption band",
+   "gold giant number on black",
+   "two gold rules framing a headline over a photo",
+   "black page, small gold label top, headline centre, photo bottom"
+  ],
+  "avoid": [
+   "bright colours",
+   "rounded playful shapes"
+  ]
+ },
+ "shikunbinui": {
+  "he": "בסגנון שיכון ובינוי",
+  "verified": false,
+  "palette": {
+   "green": "#0f8a5f",
+   "blue": "#1b4f9c",
+   "white": "#ffffff",
+   "ink": "#13202b",
+   "light": "#eef5f1",
+   "yellow": "#f4c531"
+  },
+  "look": "National builder with a sustainability tone: green and blue, clean modern marketing, bold headline over photo, project facts, rounded corners, a yellow accent. (Interpretation of the visual language.)",
+  "motifs": [
+   "green band top, photo below, white headline",
+   "photo with a green rounded card overlay",
+   "blue page with green rule and white headline",
+   "light page, green headline, photo with rounded corners",
+   "facts row of three green tiles",
+   "yellow pill label over blue",
+   "diagonal green slab",
+   "photo bottom, white top with blue headline"
+  ],
+  "avoid": [
+   "black pages",
+   "gold"
+  ]
+ },
+ "archmag": {
+  "he": "מגזין אדריכלות בינלאומי",
+  "verified": true,
+  "palette": {
+   "white": "#ffffff",
+   "black": "#000000",
+   "ink": "#111111",
+   "grey": "#777777",
+   "paper": "#f4f2ee",
+   "red": "#d0021b"
+  },
+  "look": "International architecture and design magazines (Dezeen, Wallpaper, Dwell style): white pages, huge black headlines, hairline rules, tiny captions, photos with wide margins, one red accent, numbered issues, strict grid.",
+  "motifs": [
+   "white page, photo with wide margins, caption in grey, headline below",
+   "black masthead-like band on top with white headline",
+   "two photos with a hairline between and a caption column",
+   "headline huge at top, photo bottom bleeding",
+   "paper page with a red issue number",
+   "photo full bleed with a white caption card",
+   "grid of three small photos and a headline",
+   "headline on the left column, photo tall on the right"
+  ],
+  "avoid": [
+   "gradients",
+   "chips",
+   "rounded corners"
+  ]
+ },
+ "igre": {
+  "he": "סוכני נדל\"ן ויראליים",
+  "verified": true,
+  "palette": {
+   "white": "#ffffff",
+   "black": "#000000",
+   "ink": "#141414",
+   "lime": "#c6ff3d",
+   "grey": "#6b6b6b",
+   "cream": "#f7f4ee",
+   "navy": "#101c2c"
+  },
+  "look": "Viral real estate creators on Instagram and TikTok (US and Israel): hooks as giant text over photos, 'just listed' and 'sold' labels, price-tag-like pills (but never invent numbers: the pill shows the post's own number or a word), arrows, highlighter marker behind words, lime or neon accent, comment-bait questions, swipe arrows.",
+  "motifs": [
+   "photo full bleed, giant white hook, lime highlighter behind one word",
+   "white page, black headline, lime pill label",
+   "photo with a black caption card and lime arrow",
+   "'swipe' arrow with a headline at the top",
+   "black page, lime headline, photo small",
+   "photo with a lime tilted sticker",
+   "split photo and cream text block",
+   "question headline with a large question mark glyph"
+  ],
+  "avoid": [
+   "corporate blues",
+   "small type"
+  ]
+ },
+ "kinfolk": {
+  "he": "מגזין חיים שקטים",
+  "verified": true,
+  "palette": {
+   "paper": "#f3f0ea",
+   "ink": "#1a1a1a",
+   "grey": "#8a8580",
+   "white": "#ffffff",
+   "clay": "#b58a6a"
+  },
+  "look": "Quiet lifestyle magazines (Kinfolk, Cereal style): warm paper, tiny centred captions, generous white space, photos small and centred or paired, a single clay accent, understated elegance, light type weight for sub lines, headline modest.",
+  "motifs": [
+   "paper page, small centred photo, headline centred below",
+   "two small photos side by side with a hairline",
+   "headline centred top, photo centred bottom with air",
+   "photo left, narrow text column right",
+   "paper page, clay rule, headline, caption",
+   "full bleed photo with a tiny centred white caption",
+   "white page with a photo in a very wide margin",
+   "clay small label, headline, two photos"
+  ],
+  "avoid": [
+   "bold blocks",
+   "bright colours",
+   "big stickers"
+  ]
+ }
+}

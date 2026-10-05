@@ -1,0 +1,7 @@
+const {chromium}=require('playwright-core');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});const ctx=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1');localStorage.setItem('ag_v107_done_v1','1');localStorage.setItem('ag_v110_done_v2','1')});
+await p.goto('http://localhost:8765/t15.html');await p.waitForTimeout(7000);const E=s=>p.evaluate(s=>window.__E(s),s);
+const cdp=await ctx.newCDPSession(p);await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+const r=await E(`(async()=>{const d=AG.posts.find(x=>/^(ed|x)_/.test(x.layout)&&!x.tpl&&peSlots(x).length);peOpen(d);await new Promise(r=>setTimeout(r,1500));const L=[];const po=new PerformanceObserver(l=>l.getEntries().forEach(e=>L.push(Math.round(e.duration))));po.observe({entryTypes:['longtask']});const t0=performance.now();PE.tab='shape';peRender();const t1=performance.now();await new Promise(r=>setTimeout(r,2500));po.disconnect();const drawn=[...document.querySelectorAll('canvas[data-pe-lay]')].filter(c=>{const x=c.getContext('2d').getImageData(c.width>>1,c.height>>1,1,1).data;return x[3]>0}).length;peClose(true);return {sync:Math.round(t1-t0),longTasks:L,tiles:document.querySelectorAll('canvas[data-pe-lay]').length,drawn}})()`);
+console.log(JSON.stringify(r),errs.slice(0,2));await b.close()})();

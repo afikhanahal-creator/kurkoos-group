@@ -1,0 +1,14 @@
+const {chromium}=require('playwright-core');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});const ctx=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1');localStorage.setItem('ag_v107_done_v1','1');localStorage.setItem('ag_v110_done_v2','1')});
+await p.goto('http://localhost:8765/t15.html');await p.waitForTimeout(7000);const E=s=>p.evaluate(s=>window.__E(s),s);const o={};
+const st=()=>p.evaluate(()=>{const b=document.getElementById('v135x');if(!b||!b.classList.contains('on'))return null;const r=b.getBoundingClientRect();const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {x:Math.round(r.left),y:Math.round(r.top),w:Math.round(r.width),onTop:hit===b||b.contains(hit),old:!!(document.getElementById('v101x')&&getComputedStyle(document.getElementById('v101x')).display!=='none')}});
+o.home=await st();
+await E(`APP.view='queue';render()`);await p.waitForTimeout(700);
+await E(`openComposer({it:APP.sched.items.find(i=>i.at)})`);await p.waitForTimeout(800);o.cmp=await st();
+await p.evaluate(()=>{const r=document.getElementById('cmp-root');const sc=[r,...r.querySelectorAll('*')].find(x=>x.scrollHeight>x.clientHeight+50&&/auto|scroll/.test(getComputedStyle(x).overflowY));(sc||document.scrollingElement).scrollTop=600});await p.waitForTimeout(300);
+o.cmpScrolled=await st();await p.screenshot({path:'ux/v135_cmp.png'});
+await p.click('#v135x');await p.waitForTimeout(600);o.cmpClosed=await p.evaluate(()=>!document.getElementById('cmp-root'));o.after=await st();
+await E(`(()=>{const it=APP.sched.items.find(i=>i.at&&itemPost(i)&&!i.reel);peOpen(itemPost(it))})()`);await p.waitForTimeout(1200);o.pe=await st();await p.click('#v135x');await p.waitForTimeout(800);o.peClosed=await p.evaluate(()=>!document.getElementById('pe-root'));
+await E(`__v131.open({it:APP.sched.items.find(i=>i.at)})`);await p.waitForTimeout(400);o.sheet=await st();await p.screenshot({path:'ux/v135_sheet.png'});await p.click('#v135x');await p.waitForTimeout(400);o.sheetClosed=await p.evaluate(()=>!document.getElementById('v131'));
+o.errors=errs.slice(0,3);console.log(JSON.stringify(o,null,1));await b.close()})().catch(e=>{console.error('FATAL',e);process.exit(1)});

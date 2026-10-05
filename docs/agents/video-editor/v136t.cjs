@@ -1,0 +1,20 @@
+const {chromium}=require('playwright-core');const fs=require('fs');
+const FAKE=fs.readFileSync(__dirname+'/fakedb.part','utf8').replace(/^const FAKE=`/,'').replace(/`;\s*$/,'');
+const REAL=fs.readFileSync(__dirname+'/realdb.json','utf8');
+async function run(mode){const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});const ctx=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+ if(mode!=='nodb')await p.addInitScript(FAKE);
+ await p.addInitScript(([r,mode])=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1');localStorage.setItem('ag_v107_done_v1','1');localStorage.setItem('ag_v110_done_v2','1');if(!localStorage.getItem('fakedb'))localStorage.setItem('fakedb',r);
+  if(mode==='refuse')window.__failWrites=true;
+  if(mode==='silent'){const iv=setInterval(()=>{if(window.claude&&window.claude.use&&!window.__wr){window.__wr=1;const u=window.claude.use;window.claude.use=async n=>{const d=await u(n);if(n!=='db'||!d)return d;return {collection:c=>{const col=d.collection(c);return Object.assign({},col,{onSnapshot:col.onSnapshot,get:col.get,doc:id=>{const r=col.doc(id);return Object.assign({},r,{get:r.get,set:async x=>{if(c==='schedule')return;return r.set(x)}})}})},doc:d.doc}}}},1)}},[REAL,mode]);
+ const E=s=>p.evaluate(s=>window.__E(s),s);const o={mode};const ID='smumoreyr0';
+ await p.goto('http://localhost:8765/t15.html');await p.waitForTimeout(mode==='nodb'?14000:8000);
+ await E(`APP.view='calendar';render()`);await p.waitForTimeout(800);
+ o.banner=await p.evaluate(()=>!!document.getElementById('v136nodb'));
+ const id2=mode==='nodb'?await p.evaluate(()=>{const x=document.querySelector('#appviews [data-app="edit"][data-id]');return x&&x.dataset.id}):ID;o.id=id2;await p.locator(`#appviews [data-app="edit"][data-id="${id2}"]`).first().tap();await p.waitForTimeout(600);
+ await p.tap('#v131 [data-v131day="2026-10-13"]');await p.waitForTimeout(300);await p.tap('#v131 .v131save');await p.waitForTimeout(mode==='ok'?2500:9000);
+ o.snack=await p.evaluate(()=>{const s=document.getElementById('v131snack');return s&&s.textContent});
+ o.fail=await p.evaluate(()=>{const f=document.getElementById('v136fail');return f&&f.classList.contains('on')?f.textContent.slice(0,140):null});
+ o.diag=await p.evaluate(()=>{try{const d=JSON.parse(localStorage.getItem('fakedb')).diag;return d?Object.values(d).map(x=>({db:x.db,last:x.last&&(x.last.ok+':'+x.last.code)})):null}catch(e){return 'x'}});
+ if(mode==='ok')await p.screenshot({path:'ux/v136_ok.png'});if(mode==='silent')await p.screenshot({path:'ux/v136_fail.png'});if(mode==='nodb')await p.screenshot({path:'ux/v136_nodb.png'});
+ o.errors=errs.slice(0,3);await b.close();return o}
+(async()=>{for(const m of (process.argv[2]||'ok,refuse,silent,nodb').split(','))console.log(JSON.stringify(await run(m)))})().catch(e=>{console.error('FATAL',e);process.exit(1)});

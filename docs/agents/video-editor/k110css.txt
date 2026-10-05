@@ -1,0 +1,5 @@
+<style id="k110css">
+.v110bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 16px 0;padding:10px 14px;border-radius:12px;background:#fff6f6;border:1px solid #f0c9c9;color:#07293a;font-size:14px}
+.v110bar b{font-weight:700}
+@media (max-width:860px){.v110bar{margin:8px 12px 0;font-size:13px}}
+</style>

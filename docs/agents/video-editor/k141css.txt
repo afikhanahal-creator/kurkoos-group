@@ -1,0 +1,25 @@
+<style id="k141">
+#appviews .ga-bar{gap:8px!important;padding:10px 12px!important;border-radius:16px!important}
+@media (min-width:861px){
+ #appviews .ga-bar{position:sticky!important;top:var(--v141top,120px)!important}
+ #appviews .ga-bar .ga-tools{display:flex!important;flex-wrap:nowrap!important;align-items:center;gap:8px!important;min-height:0!important}
+ #appviews .ga-bar .ga-search{flex:1 1 auto;min-width:200px;height:40px!important}
+ #appviews .ga-bar .ga-search input{height:38px!important}
+ #appviews .ga-bar .ga-tools select{height:40px!important;min-height:40px!important;flex:0 0 auto;max-width:200px}
+ #appviews .ga-bar .seg.ga-size{height:40px!important;padding:2px!important;border-radius:12px!important;flex:0 0 auto;display:inline-flex!important}
+ #appviews .ga-bar .seg.ga-size>button{min-height:34px!important;height:34px!important;padding:0 12px!important;font-size:13px!important}
+ #appviews .ga-bar>.v124more{display:none!important}
+ #appviews .ga-bar .v141topics{flex:0 0 auto;height:40px;padding:0 14px;border-radius:12px;border:1px solid #8fb6c8;background:#f7fafb;color:#105572;font:inherit;font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer}
+ #appviews .ga-bar .v141topics:hover{background:#eef3f6}
+ #appviews .ga-bar .v141topics:focus-visible{outline:2px solid #105572;outline-offset:2px}
+ /* topics: one scrolling row of small chips */
+ #appviews .ga-bar .ga-fam,#appviews .ga-bar .ga-fam.v124fold{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;max-height:none!important;gap:6px!important;padding:2px 2px 4px!important;scrollbar-width:thin;-webkit-mask-image:linear-gradient(to left,#000 92%,transparent);mask-image:linear-gradient(to left,#000 92%,transparent)}
+ #appviews .ga-bar .ga-fam>button{flex:0 0 auto!important;min-height:32px!important;height:32px!important;padding:0 12px!important;font-size:13px!important;border-radius:999px!important;white-space:nowrap!important}
+ #appviews .ga-bar .ga-fam.v124open{flex-wrap:wrap!important;max-height:180px!important;overflow-y:auto!important;-webkit-mask-image:none;mask-image:none}
+ #appviews .ga-bar .ga-fam .ga-sep{flex:0 0 1px;align-self:stretch;background:#dbe3e8;margin:4px 4px}
+ #appviews .ga-bar .ga-tabs{margin:0!important}
+ /* scrolled: only the tools row stays */
+ #appviews .ga-bar.v141stuck{padding:8px 12px!important;box-shadow:0 8px 24px rgba(7,41,58,.12)!important}
+ #appviews .ga-bar.v141stuck .ga-tabs,#appviews .ga-bar.v141stuck .ga-fam:not(.v124open){display:none!important}
+}
+</style>

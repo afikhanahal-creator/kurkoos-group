@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /style-guide
 Disallow: /admin
+Disallow: /engine
 
 Sitemap: https://www.kurkoos-group.co.il/sitemap.xml
 
@@ -9,19 +10,24 @@ Sitemap: https://www.kurkoos-group.co.il/sitemap.xml
 User-agent: GPTBot
 Allow: /
 Disallow: /admin
+Disallow: /engine
 
 User-agent: ClaudeBot
 Allow: /
 Disallow: /admin
+Disallow: /engine
 
 User-agent: PerplexityBot
 Allow: /
 Disallow: /admin
+Disallow: /engine
 
 User-agent: Google-Extended
 Allow: /
 Disallow: /admin
+Disallow: /engine
 
 User-agent: CCBot
 Allow: /
 Disallow: /admin
+Disallow: /engine

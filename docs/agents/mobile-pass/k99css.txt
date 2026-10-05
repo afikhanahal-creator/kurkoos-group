@@ -1,0 +1,28 @@
+<style id="k99css">
+.v99edit{position:absolute;inset-inline-start:6px;bottom:6px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(7,41,58,.18);background:rgba(255,255,255,.94);color:#07293a;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(7,41,58,.18);cursor:pointer;z-index:3;padding:0}
+.v99edit:hover,.v99edit:focus-visible{background:#07293a;color:#fff;outline:none}
+canvas[data-tp],canvas[data-ti]{cursor:pointer}
+#v99nav{display:none}
+@media (max-width:860px){
+ .tbar{gap:6px;padding:0 10px}
+ .tbar>div{min-width:0;flex:1 1 auto}
+ .tbar h1{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+ .tbar .sp{flex:0 0 2px}
+ .tbar .ibtn.pri{order:5}
+ .tbar>.kc-row{order:10;flex:1 0 100%!important;flex-wrap:nowrap!important;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:2px 0 8px;margin-top:-2px}
+ .tbar>.kc-row::-webkit-scrollbar{display:none}
+ .tbar>.kc-row>*{flex:0 0 auto}
+ #v99nav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;inset-inline:0;bottom:0;z-index:34;background:var(--surface,#fff);border-top:1px solid var(--line,#dbe8ee);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 16px rgba(7,41,58,.06)}
+ #v99nav button{appearance:none;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;border-radius:12px;color:var(--ink-3,#5b6472);font:700 11.5px/1 Almoni,'Heebo',Arial,sans-serif;padding:4px 0}
+ #v99nav button .ic{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center}
+ #v99nav button[aria-current="page"]{color:#07293a;background:#dbe8ee}
+ #v99nav button:active{background:#dbe8ee}
+ .appbody{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
+ body.pe-open #v99nav,body:has(#v52m) #v99nav,body:has(#v68sp) #v99nav,body:has(.side.open) #v99nav{display:none}
+ .side{z-index:36}
+ .px-note.v99fold{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+ .px-note.v99fold.open{display:block;-webkit-line-clamp:unset}
+ .v99more{appearance:none;border:0;background:none;color:#105572;font:700 14px Almoni,Arial,sans-serif;padding:4px 0 8px;cursor:pointer}
+}
+@media (min-width:861px){.v99more{display:none}}
+</style>

@@ -1,0 +1,14 @@
+<style id="k106css">
+#v106x{display:none}
+@media (max-width:860px){
+ html,body{height:100%;height:100dvh;overflow:hidden!important;max-width:100vw}
+ .app{display:flex!important;flex-direction:column;height:100dvh;min-height:0;grid-template-columns:none}
+ .mainc{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;min-width:0}
+ .tbar{position:static!important;flex:0 0 auto}
+ .appbody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:28px!important}
+ #v99nav{position:static!important;flex:0 0 auto;box-shadow:0 -4px 16px rgba(7,41,58,.06)}
+ .ga-selbar{bottom:86px!important}
+ #v106x{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;min-height:44px;padding:0 14px 0 10px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(7,41,58,.92);color:#fff;display:none;align-items:center;gap:6px;font:700 15px Almoni,Arial,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:60;cursor:pointer}
+ #v106x.on{display:inline-flex}
+}
+</style>

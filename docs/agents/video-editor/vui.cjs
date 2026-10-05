@@ -1,0 +1,10 @@
+const {chromium}=require('playwright-core');const TV=__dirname+'/tv/';(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});const tag=process.argv[3]||'d';
+const ctx=await b.newContext(tag==='p'?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:{width:1500,height:900}});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1');localStorage.setItem('ag_v107_done_v1','1');localStorage.setItem('ag_v110_done_v2','1');localStorage.removeItem('v129_projects')});
+await p.goto('http://localhost:8765/'+(process.argv[2]||'t15.html'));await p.waitForTimeout(7000);const E=s=>p.evaluate(s=>window.__E(s),s);
+await E(`(()=>{const V=window.__vid;window.__docs=[];V.VD.assets={upload:async f=>({id:'b'+Date.now(),url:'/_blob/b'+Date.now(),sizeBytes:f.size})};V.VD.db={collection:()=>({doc:()=>({set:async d=>{__docs.push(d)},update:async u=>{__docs.push(u)}})})};V.editVideo=async d=>{window.__fired=(window.__fired||0)+1;return true}})()`);
+await E(`APP.view='videos';render()`);await p.waitForTimeout(900);await p.setInputFiles('#v127 input[data-v127f]',[TV+'a.webm']);await p.waitForTimeout(2500);
+await p.screenshot({path:`ux/vui_${tag}_page.png`,fullPage:true});
+console.log(await p.evaluate(()=>{const pg=document.getElementById('v100page');return [...pg.children].map(c=>c.tagName+'#'+c.id+'.'+String(c.className).slice(0,40)+' h='+Math.round(c.getBoundingClientRect().height)).join('\n')}));
+console.log(await p.evaluate(()=>{const k=document.querySelector('#v127');return [...k.querySelectorAll('section,.v127card,fieldset,[class*=kit] > *')].slice(0,30).map(c=>c.tagName+'.'+String(c.className).slice(0,40)+' ['+(c.querySelector('h3,h4,h5,b,legend')||{textContent:''}).textContent.trim().slice(0,20)+'] h='+Math.round(c.getBoundingClientRect().height)).join('\n')}));
+await b.close()})();

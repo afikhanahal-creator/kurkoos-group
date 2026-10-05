@@ -1,0 +1,15 @@
+<style id="k116css">
+/* V116 · the date a photo was already used */
+.v115t .v116d{position:absolute;bottom:5px;inset-inline-start:5px;font-style:normal;font-size:11px;font-weight:700;background:#a90b0c;color:#fff;padding:1px 7px;border-radius:999px;pointer-events:none;max-width:calc(100% - 10px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.v115t .v116d.done{background:#07293a}
+.v115grid.big .v115t .v116d{bottom:34px;font-size:12px}
+.v115t.v116used img{filter:saturate(.75)}
+.v116sw{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 10px;border:1px solid #cfd8de;border-radius:999px;background:#fff;color:#07293a;font:700 13px Almoni,Heebo,Arial,sans-serif;cursor:pointer;align-self:flex-start}
+.v116sw small{font-weight:400;color:#5b6472}
+.v116sw span{width:30px;height:18px;border-radius:999px;background:#cfd8de;position:relative;flex:none;transition:background .15s}
+.v116sw span::after{content:'';position:absolute;top:2px;inset-inline-start:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s}
+.v116sw[aria-pressed="true"] span{background:#a90b0c}
+.v116sw[aria-pressed="true"] span::after{transform:translateX(-12px)}
+body.v116-unused .v115t.v116used{display:none}
+.v115filters .v115bar .v116sw{align-self:center}
+</style>

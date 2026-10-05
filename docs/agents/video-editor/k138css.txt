@@ -1,0 +1,6 @@
+<style id="k138">
+#appviews [data-drag],#appviews [data-drag] *,#appviews [data-dragp],#appviews [data-dragp] *{-webkit-user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.v28-cit .v138when{width:auto!important;padding:0 12px!important;gap:6px;display:inline-flex;align-items:center;font:inherit;font-size:13px;font-weight:700}
+.v28-cit .v138grip{width:auto!important;padding:0 12px!important;gap:6px;display:inline-flex;align-items:center;font:inherit;font-size:13px;font-weight:700;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.v28-cit .v138grip:active{cursor:grabbing}
+</style>

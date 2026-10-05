@@ -1,0 +1,7 @@
+<style id="k135">
+#v135x{display:none;position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;left:auto;width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.75);background:rgba(7,41,58,.94);color:#fff;place-items:center;padding:0;cursor:pointer;box-shadow:0 6px 18px rgba(4,20,29,.35);-webkit-tap-highlight-color:transparent}
+#v135x.on{display:grid}#v135x:active{background:#a90b0c}#v135x:focus-visible{outline:3px solid #8fb6c8;outline-offset:2px}
+#v135x.pg{top:calc(64px + env(safe-area-inset-top,0px))}
+@media (max-width:860px){#v101x{display:none!important}.v135pad{padding-right:68px!important}}
+@media (min-width:861px){#v135x{display:none!important}}
+</style>

@@ -1,0 +1,18 @@
+<style id="k103css">
+.v103bd{position:fixed;inset:0;background:rgba(7,41,58,.5);z-index:10080}
+.v103sh{position:fixed;inset-inline:0;bottom:0;max-height:92vh;background:#fff;border-radius:18px 18px 0 0;z-index:10081;display:flex;flex-direction:column;direction:rtl;box-shadow:0 -8px 30px rgba(7,41,58,.3)}
+@media (min-width:861px){.v103sh{inset-inline:auto;left:50%;transform:translateX(-50%);width:720px;bottom:4vh;border-radius:18px;max-height:90vh}}
+.v103sh header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #dbe8ee}.v103sh header h3{margin:0;font-size:18px}
+.v103sh .px-ib{width:44px;height:44px;border-radius:12px;border:1px solid #dbe8ee;background:#fff;font-size:18px}
+.v103body{overflow:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.v103l{display:flex;flex-direction:column;gap:6px;font-weight:700}.v103l select{min-height:44px;border:1px solid #dbe8ee;border-radius:10px;padding:0 10px;font:inherit;font-size:16px}
+.v103note{margin:0;font-size:13px;color:#5b6472;line-height:1.5}
+.v103grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.v103grid label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#35505e}.v103grid input{min-height:44px;border:1px solid #dbe8ee;border-radius:10px;padding:0 10px;font:inherit;font-size:16px}
+@media (max-width:600px){.v103grid{grid-template-columns:1fr}}
+.v103g b{display:block;font-size:14px;margin:6px 0 6px;color:#07293a}
+.v103chips{display:flex;flex-wrap:wrap;gap:8px}
+.v103chip{min-height:40px;padding:0 12px;border-radius:999px;border:1px solid #8fb6c8;background:#fff;color:#07293a;font:700 14px Almoni,Arial,sans-serif;cursor:pointer}
+.v103chip[aria-pressed="true"]{background:#07293a;color:#fff;border-color:#07293a}
+.v103sh footer{display:flex;flex-wrap:wrap;gap:10px;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #dbe8ee}.v103sh footer .px-btn{min-height:46px}
+body.v103-on #v99nav{display:none!important}
+</style>

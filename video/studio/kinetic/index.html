@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Kinetic headline</title>
+<!-- Style 2 of the animation studio: huge headlines on hard-cut colour, a cut on every half-second grid.
+     Inputs (?c= JSON from anim_render.cjs --config): words, duration 8..15, w/h, palette, ink, cream. -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  #stage{position:relative;overflow:hidden}
+  #cam{position:absolute;inset:0;transform-origin:50% 50%}
+  .w{position:absolute;left:0;top:0;transform-origin:0 0;white-space:nowrap;font-family:"Noto Sans Hebrew Var";font-weight:900;font-size:200px;line-height:1;direction:rtl}
+  #sel{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+  #sel .box{position:absolute;inset:0;border:3px solid currentColor}
+  #sel i{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;background:#fff;border:3px solid currentColor;box-sizing:border-box}
+  #sel .tag{position:absolute;font:500 22px/1 "JetBrains Mono";padding:6px 9px;background:currentColor;white-space:nowrap}
+  #sel .tag b{font-weight:500;color:#fff}
+  #dot,#rule,#sliver{position:absolute;left:0;top:0;transform-origin:0 0}
+  #dot{border-radius:50%}
+</style>
+</head>
+<body>
+<div id="stage"><div id="cam"></div><div id="sliver"></div></div>
+<svg width="0" height="0" style="position:absolute"><filter id="mb" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur id="mbg" stdDeviation="0 0"/></filter></svg>
+<script src="../lib/studio.js"></script>
+<script>
+const {clamp, lerp, step, hash} = Studio;
+const C = Studio.config({
+  words: ['כל', 'פרויקט', 'מתחיל', 'בשרטוט'], duration: 8, w: 1080, h: 1920,
+  palette: ['#e3262d', '#2f4bff', '#ffd23f', '#f3ead8'], ink: '#0b0b0b', cream: '#f3ead8', dot: '#e3262d'
+});
+const W = C.w, H = C.h, G = 0.5, BASE = 200, D = C.duration, VERT = H > W;
+// Reels safe area: 250 top, 350 bottom, 80 each side, 140 on the right in the lower half (Instagram buttons)
+const SAFE = VERT ? {top: 250, bottom: H - 350, left: 80, right: W - 80, rightLow: W - 140, mid: H / 2} : {top: 80, bottom: H - 80, left: 80, right: W - 80, rightLow: W - 80, mid: H / 2};
+const CX = W / 2, CY = VERT ? 760 : H / 2;
+const FIT = {slam: Math.min(680, W - 380), expand: Math.min(840, W - 240), slide: Math.min(800, W - 280), select: Math.min(740, W - 340), cond: Math.min(800, W - 280)};
+const MAXS = 1.9;                       // font size cap: 380px
+const METHODS = ['slam', 'expand', 'slide', 'select'];
+const lum = h => { const n = parseInt(h.slice(1), 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; };
+const textOn = bg => lum(bg) > 0.55 ? C.ink : C.cream;
+const STATES = {normal: [100, -0.01], wide: [100, 0.12], cond: [62.5, -0.03]};   // wdth axis, letter-spacing in em
+
+// ---------- the grid ----------
+const N = Math.max(Math.round(D / G), C.words.length + 6);
+const wordsN = C.words.length, free = N - 1 - 2 - 3, per = clamp(Math.floor(free / wordsN), 1, 2);
+const grid = [];                                   // {kind, word, method, bg}
+grid.push({kind: 'intro'});
+let ci = 0; const nextBg = () => C.palette[ci++ % C.palette.length];
+C.words.forEach((w, i) => {
+  grid.push({kind: 'word', word: i, method: METHODS[i % METHODS.length], bg: nextBg()});
+  if (per > 1) grid.push({kind: 'cond', word: i, bg: nextBg()});
+});
+grid.push({kind: 'join', bg: C.ink}, {kind: 'join2', bg: C.ink});
+while (grid.length < N) grid.push({kind: 'end', bg: C.cream});
+grid.forEach((g, i) => g.t = i * G);
+const T_END = grid.find(g => g.kind === 'end').t, T_JOIN = grid.find(g => g.kind === 'join').t;
+if (grid[1].bg === undefined) grid[1].bg = C.palette[0];
+
+// ---------- build: elements and measurements ----------
+const stage = document.getElementById('stage'), cam = document.getElementById('cam');
+stage.style.width = W + 'px'; stage.style.height = H + 'px';
+const els = C.words.map(w => { const e = document.createElement('div'); e.className = 'w'; e.textContent = w; cam.appendChild(e); return e; });
+const sel = document.createElement('div'); sel.id = 'sel';
+sel.innerHTML = '<div class="box"></div>' + '<i></i>'.repeat(8) + '<span class="tag dims"><b></b></span><span class="tag lock"><b>LOCKED</b></span>';
+cam.appendChild(sel);
+const rule = document.createElement('div'); rule.id = 'rule'; cam.appendChild(rule);
+const dot = document.createElement('div'); dot.id = 'dot'; cam.appendChild(dot);
+const sliver = document.getElementById('sliver');
+const M = [];                                      // per word: advance width per state at BASE, ink dy, ink height
+function measure() {
+  const cv = document.createElement('canvas').getContext('2d');
+  cv.font = `900 ${BASE}px "Noto Sans Hebrew Var"`; cv.direction = 'rtl';
+  els.forEach((e, i) => {
+    const m = {}, tm = cv.measureText(C.words[i]);
+    for (const k in STATES) { setState(e, STATES[k][0], STATES[k][1]); e.style.transform = 'none'; m[k] = e.getBoundingClientRect().width - STATES[k][1] * BASE; }
+    const half = (BASE - (tm.fontBoundingBoxAscent + tm.fontBoundingBoxDescent)) / 2, base = half + tm.fontBoundingBoxAscent;
+    m.dy = (base - tm.actualBoundingBoxAscent + base + tm.actualBoundingBoxDescent) / 2 - BASE / 2;
+    m.ink = tm.actualBoundingBoxAscent + tm.actualBoundingBoxDescent;
+    M.push(m);
+  });
+  // join line: one size for every word; end stack: two balanced lines, one size
+  const gap = 0.3 * BASE, dotW = 0.32 * BASE;
+  const lineW = M.reduce((a, m) => a + m.normal, 0) + gap * (wordsN - 1) + dotW;
+  LAY.line = layoutLine(Math.min(FIT.expand / lineW, MAXS), [...Array(wordsN).keys()], CY, gap);
+  // end stack: every contiguous split into lines, all lines one size; keep the split that gives the biggest type
+  const splits = n => n === 1 ? [[wordsN]] : [];
+  const parts = []; (function rec(start, acc) { if (start === wordsN) return parts.push(acc); for (let e = start + 1; e <= wordsN; e++) rec(e, acc.concat([[...Array(e - start).keys()].map(x => x + start)])); })(0, []);
+  const inkMax = Math.max(...M.map(m => m.ink)), availH = (SAFE.bottom - 120) - (SAFE.top + 120);
+  let best = null;
+  parts.filter(ls => ls.length <= 4).forEach(lines => {
+    const wmax = Math.max(...lines.map((ln, li) => ln.reduce((a, i) => a + M[i].normal, 0) + gap * (ln.length - 1) + (li === lines.length - 1 ? dotW : 0)));
+    const s = Math.min((FIT.select + 20) / wmax, availH / (inkMax * (1.32 * (lines.length - 1) + 1)), MAXS * 0.85);
+    if (!best || s > best.s + 1e-6) best = {lines, s};
+  });
+  const lines = best.lines, sStack = best.s;
+  const inkH = inkMax * sStack, lead = inkH * 1.32, midY = Math.max(CY + 60, SAFE.top + 120 + (lines.length - 1) * lead / 2 + inkH / 2);
+  LAY.stack = []; lines.forEach((ln, li) => LAY.stack.push(...layoutLine(sStack, ln, midY + (li - (lines.length - 1) / 2) * lead, gap)));
+  LAY.stackS = sStack;
+}
+const LAY = {};
+// right-to-left line: first word on the right
+function layoutLine(s, idx, y, gap) {
+  const widths = idx.map(i => M[i].normal * s), total = widths.reduce((a, b) => a + b, 0) + gap * s * (idx.length - 1);
+  let x = CX + total / 2; const out = [];
+  idx.forEach((i, k) => { out.push({i, cx: x - widths[k] / 2, cy: y, s}); x -= widths[k] + gap * s; });
+  out.lastLeft = x + gap * s; return out;
+}
+function setState(e, wdth, ls) { e.style.fontVariationSettings = `"wght" 900, "wdth" ${wdth}`; e.style.letterSpacing = ls + 'em'; }
+// ink centre placed at (cx, cy); the trailing letter-spacing sits on the left end of an RTL run
+function place(e, m, cx, cy, s, rot, ls, op) {
+  e.style.transform = `translate(${cx}px,${cy}px) rotate(${rot}deg) scale(${s}) translate(-50%,-50%) translate(${-ls * BASE / 2}px,${-m.dy}px)`;
+  e.style.opacity = op; e.style.visibility = op > 0.001 ? 'visible' : 'hidden';
+}
+const fitS = (i, k, target) => Math.min(target / M[i][k], MAXS);
+
+// ---------- camera: never still. Slow push, a degree of roll, a short shake on every hit ----------
+const HITS = grid.filter(g => g.kind !== 'intro' && g.kind !== 'join2').map(g => g.t);
+function camera(t) {
+  let sx = 0, sy = 0, kick = 0;
+  HITS.forEach((h, k) => { const d = t - h; if (d < 0 || d > 0.35) return; const a = Math.exp(-d / 0.07), ang = hash(k + 7) * Math.PI * 2;
+    sx += Math.cos(ang) * 12 * a * Math.sin(d * 2 * Math.PI * 14); sy += Math.sin(ang) * 12 * a * Math.sin(d * 2 * Math.PI * 14); kick += 0.014 * Math.exp(-d / 0.12); });
+  const push = 1 + 0.004 * t + kick + 0.025 * step(t - T_END, {f: 0.5, z: 1});
+  const rot = 0.9 * Math.sin(t * 0.85 + 0.4) + 0.5 * Math.sin(t * 2.1);
+  return {s: push, r: rot, x: sx, y: sy};
+}
+
+// ---------- seek ----------
+let geo = [];
+function seek(t) {
+  t = clamp(t, 0, D);
+  const gi = Math.min(grid.length - 1, Math.floor(t / G + 1e-9)), g = grid[gi], u = t - g.t;
+  const cm = camera(t);
+  cam.style.transform = `translate(${cm.x}px,${cm.y}px) rotate(${cm.r}deg) scale(${cm.s})`;
+  stage.style.background = g.kind === 'intro' ? C.ink : g.bg;
+  const fg = textOn(g.kind === 'intro' ? C.ink : g.bg);
+  els.forEach(e => { e.style.visibility = 'hidden'; e.style.filter = 'none'; e.style.color = fg; });
+  sel.style.display = 'none'; dot.style.display = 'none'; rule.style.display = 'none'; sliver.style.display = 'none';
+  geo = [];
+
+  if (g.kind === 'intro') {
+    // a thin line of light crosses the black right to left, then opens into the first colour
+    const run = step(u - 0.03, {f: 3.2, z: 1}), open = step(u - 0.3, {f: 4.5, z: 1});
+    const hh = lerp(5, H, open), ww = lerp(0, W, run);
+    sliver.style.display = 'block'; sliver.style.background = open > 0.02 ? grid[1].bg : C.cream;
+    sliver.style.width = ww + 'px'; sliver.style.height = hh + 'px'; sliver.style.transform = `translate(${W - ww}px,${H / 2 - hh / 2}px)`;
+  }
+  if (g.kind === 'word') {
+    const i = g.word, e = els[i], m = M[i], fade = clamp(u / 0.07);
+    if (g.method === 'slam') {
+      // from 1.25 down, the spring passes a little under 1 and returns
+      const s = fitS(i, 'normal', FIT.slam), k = lerp(1.25, 1, step(u, {f: 2.6, z: 0.42}));
+      setState(e, ...STATES.normal); place(e, m, CX, CY - 26 * (1 - step(u, {f: 3, z: 0.8})), s * k, 0, STATES.normal[1], fade);
+      geo.push({i, cx: CX, cy: CY, s: s * k, st: 'normal'});
+    } else if (g.method === 'expand') {
+      const s = fitS(i, 'wide', FIT.expand), k = step(u - 0.02, {f: 1.9, z: 0.9});
+      const wd = lerp(62.5, 100, k), ls = lerp(-0.03, 0.12, k);
+      setState(e, wd, ls); place(e, m, CX, CY - 22 * (1 - step(u, {f: 3, z: 0.8})), s, 0, ls, fade);
+      geo.push({i, cx: CX, cy: CY, s, wd, ls});
+    } else if (g.method === 'slide') {
+      // enters from the right, reading direction; a horizontal blur that follows the speed
+      const s = fitS(i, 'normal', FIT.slide), o = {f: 2.4, z: 0.85}, x0 = W * 0.85;
+      const x = CX + x0 * (1 - step(u, o)), xp = CX + x0 * (1 - step(u - 1 / 240, o));
+      const v = Math.abs(x - xp);                       // px per sub-frame
+      document.getElementById('mbg').setAttribute('stdDeviation', `${Math.min(v * 0.9, 40).toFixed(2)} 0`);
+      setState(e, ...STATES.normal); place(e, m, x, CY, s, 0, STATES.normal[1], clamp(u / 0.05));
+      if (v > 0.3) e.style.filter = 'url(#mb)';
+      geo.push({i, cx: x, cy: CY, s, st: 'normal', exempt: step(u, o) < 0.97});
+    } else {
+      // appears inside a design-tool selection frame: 8 handles, a size tag; the frame turns a few degrees, returns to 0, locks
+      const s = fitS(i, 'normal', FIT.select), rot = -6 * (step(u - 0.04, {f: 2.2, z: 0.6}) - step(u - 0.2, {f: 2.2, z: 0.7}));
+      setState(e, ...STATES.normal); place(e, m, CX, CY - 20 * (1 - step(u, {f: 3, z: 0.8})), s, rot, STATES.normal[1], fade);
+      const bw = M[i].normal * s + 36, bh = M[i].ink * s + 36, snap = lerp(1.12, 1, step(u, {f: 3, z: 0.75}));
+      const acc = g.bg.toLowerCase() === C.palette[1].toLowerCase() ? C.palette[2] : C.palette[1];
+      sel.style.display = 'block'; sel.style.color = acc; sel.style.width = bw + 'px'; sel.style.height = bh + 'px';
+      sel.style.opacity = clamp((u - 0.03) / 0.06);
+      sel.style.transform = `translate(${CX}px,${CY}px) rotate(${rot}deg) scale(${snap}) translate(${-bw / 2}px,${-bh / 2}px)`;
+      [[0, 0], [.5, 0], [1, 0], [1, .5], [1, 1], [.5, 1], [0, 1], [0, .5]].forEach(([a, b], k) => { const h = sel.children[1 + k]; h.style.left = a * bw + 'px'; h.style.top = b * bh + 'px'; });
+      const dims = sel.querySelector('.dims'), lock = sel.querySelector('.lock');
+      dims.firstChild.textContent = `${Math.round(bw)} × ${Math.round(bh)}`; dims.style.left = '0px'; dims.style.top = bh + 14 + 'px';
+      lock.style.right = '0px'; lock.style.top = '-48px'; lock.style.opacity = clamp((u - 0.3) / 0.05);
+      lock.style.transform = `scale(${lerp(1.3, 1, step(u - 0.3, {f: 4, z: 0.7}))})`;
+      geo.push({i, cx: CX, cy: CY, s, st: 'normal', rot});
+    }
+  }
+  if (g.kind === 'cond') {
+    // hard cut to the next colour and the condensed version of the same word
+    const i = g.word, e = els[i], m = M[i], s = fitS(i, 'cond', FIT.cond), k = lerp(1.05, 1, step(u, {f: 2.8, z: 0.75}));
+    setState(e, ...STATES.cond); place(e, m, CX, CY, s * k, 0, STATES.cond[1], 1);
+    geo.push({i, cx: CX, cy: CY, s: s * k, st: 'cond'});
+  }
+  if (g.kind === 'join' || g.kind === 'join2' || g.kind === 'end') {
+    const tj = t - T_JOIN, tEnd = t - T_END;
+    const mv = step(tEnd, {f: 2.2, z: 0.85});
+    LAY.line.forEach((p, k) => {
+      const q = LAY.stack.find(x => x.i === p.i), e = els[p.i], a = step(tj - k * 0.05, {f: 3, z: 0.8});
+      const ms = step(tEnd - 0.12, {f: 1.5, z: 0.9});   // lines separate first, then the type grows
+      const cx = lerp(p.cx, q.cx, ms), cy = lerp(p.cy, q.cy, mv) - 30 * (1 - a), s = lerp(p.s, q.s, ms);
+      setState(e, ...STATES.normal); place(e, M[p.i], cx, cy, s, 0, STATES.normal[1], clamp((tj - k * 0.05) / 0.08));
+      geo.push({i: p.i, cx, cy, s, st: 'normal'});
+    });
+    // the red dot closes the line; on the end frame it beats on every grid
+    const last = LAY.line[LAY.line.length - 1], lq = LAY.stack.find(x => x.i === last.i);
+    const sDot = lerp(last.s, lq.s, mv), d = 0.2 * BASE * sDot;
+    const lineLeft = LAY.line.lastLeft, stackLeft = lq.cx - M[lq.i].normal * lq.s / 2;
+    const dx = lerp(lineLeft - 0.06 * BASE * last.s, stackLeft - 0.06 * BASE * lq.s, step(tEnd - 0.12, {f: 1.5, z: 0.9})) - d / 2;
+    const dy = lerp(last.cy, lq.cy, mv) + M[last.i].ink * sDot / 2 - d / 2;
+    let pulse = 0; grid.forEach(gg => { if (gg.kind === 'end' && gg.t > T_END && t >= gg.t) pulse += 0.35 * (step(t - gg.t, {f: 3, z: 0.35}) - step(t - gg.t - 0.12, {f: 3, z: 0.6})); });
+    const ds = step(t - (T_JOIN + G), {f: 3.2, z: 0.5}) * (1 + pulse);
+    if (ds > 0.001) { dot.style.display = 'block'; dot.style.background = C.dot; dot.style.width = dot.style.height = d + 'px';
+      dot.style.transform = `translate(${dx}px,${dy}px) translate(${d / 2}px,${d / 2}px) scale(${ds}) translate(${-d / 2}px,${-d / 2}px)`; }
+    // a thin rule draws under the stack and closes, right to left
+    if (g.kind === 'end' && grid.indexOf(g) > grid.indexOf(grid.find(x => x.kind === 'end'))) {
+      const t2 = T_END + G, k = step(t - t2, {f: 1.6, z: 1}), ys = Math.max(...LAY.stack.map(p => p.cy)) + M[0].ink * LAY.stackS * 0.5 + 34;
+      const xs = Math.min(...LAY.stack.map(p => p.cx - M[p.i].normal * p.s / 2)), xe = Math.max(...LAY.stack.map(p => p.cx + M[p.i].normal * p.s / 2));
+      const ww = (xe - xs) * k; rule.style.display = 'block'; rule.style.background = C.ink; rule.style.height = '6px'; rule.style.width = ww + 'px';
+      rule.style.transform = `translate(${xe - ww}px,${ys}px)`;
+    }
+  }
+}
+
+// ---------- check: no word touches its neighbour, every word inside the safe area ----------
+function check(t) {
+  const cm = camera(clamp(t, 0, D)), out = [];
+  const R = cm.r * Math.PI / 180, cos = Math.cos(R), sin = Math.sin(R);
+  const toScreen = (x, y) => { const ux = (x - W / 2) * cm.s, uy = (y - H / 2) * cm.s; return [W / 2 + ux * cos - uy * sin + cm.x, H / 2 + ux * sin + uy * cos + cm.y]; };
+  const boxes = geo.map(gm => {
+    const e = els[gm.i], ls = parseFloat(e.style.letterSpacing) || 0;
+    const w = (e.getBoundingClientRect && (() => { const keep = e.style.transform; e.style.transform = 'none'; const bw = e.getBoundingClientRect().width; e.style.transform = keep; return bw; })()) - ls * BASE;
+    const hw = w * gm.s / 2, hh = M[gm.i].ink * gm.s / 2, rr = (gm.rot || 0) * Math.PI / 180;
+    const pts = [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].map(([x, y]) => toScreen(gm.cx + x * Math.cos(rr) - y * Math.sin(rr), gm.cy + x * Math.sin(rr) + y * Math.cos(rr)));
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    return {i: gm.i, exempt: gm.exempt, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys)};
+  });
+  boxes.forEach(b => {
+    if (b.exempt || parseFloat(els[b.i].style.opacity) < 0.05) return;
+    if (b.y0 < SAFE.top || b.y1 > SAFE.bottom || b.x0 < SAFE.left || b.x1 > (b.y1 > SAFE.mid ? SAFE.rightLow : SAFE.right)) out.push('outside safe area: ' + C.words[b.i]);
+  });
+  for (let a = 0; a < boxes.length; a++) for (let b = a + 1; b < boxes.length; b++) {
+    const p = boxes[a], q = boxes[b];
+    if (p.x0 < q.x1 + 4 && q.x0 < p.x1 + 4 && p.y0 < q.y1 + 4 && q.y0 < p.y1 + 4) out.push(`touch: ${C.words[p.i]} / ${C.words[q.i]}`);
+  }
+  return out;
+}
+
+const stages = grid.map((g, i) => ({t: g.t + (g.kind === 'intro' ? 0.36 : 0.3), label: `${g.t.toFixed(1)}s ${g.kind}${g.word != null ? ' ' + C.words[g.word] : ''}${g.method ? ' ' + g.method : ''}`}));
+window.GRID = grid.map(g => ({t: g.t, kind: g.kind, word: g.word != null ? C.words[g.word] : '', method: g.method || (g.kind === 'cond' ? 'condensed' : ''), bg: g.bg || C.ink}));
+Studio.define({w: W, h: H, duration: grid.length * G, stages, fonts: ['900 100px "Noto Sans Hebrew Var"', '500 20px "JetBrains Mono"'], build: measure, seek, check});
+</script>
+</body>
+</html>

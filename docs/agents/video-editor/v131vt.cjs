@@ -1,0 +1,13 @@
+const {chromium}=require('playwright-core');const TV=__dirname+'/tv/';
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});const ctx=await b.newContext({viewport:{width:1440,height:900}});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1');localStorage.setItem('ag_v107_done_v1','1');localStorage.setItem('ag_v110_done_v2','1');localStorage.removeItem('v129_projects')});
+await p.goto('http://localhost:8765/t15.html');await p.waitForTimeout(7000);const E=s=>p.evaluate(s=>window.__E(s),s);const o={};
+await E(`APP.view='videos';render()`);await p.waitForTimeout(800);await p.setInputFiles('#v127 input[data-v127f]',[TV+'a.webm']);await p.waitForTimeout(1500);
+await p.click('#v127 .v129go');await p.waitForTimeout(1500);
+o.btns=await p.evaluate(()=>[...document.querySelectorAll('[data-v131open="veditor"]')].map(x=>x.textContent));
+await E(`__v129.E.p.kit.quality='fast'`);await p.click('#v129 [data-v129="export"]');await p.waitForFunction(()=>__v129.E.outs.length>0,null,{timeout:90000});
+await E(`(()=>{const V=window.__vid;V.VD.assets={upload:async f=>({id:'a9',url:'/_blob/a9',sizeBytes:f.size})}})()`);
+await p.click('.v129top [data-v131open="veditor"]');await p.waitForTimeout(400);o.sheet=await p.evaluate(()=>document.querySelector('#v131 header small').textContent);
+await p.click('#v131 .v131quick button:first-child');await p.click('#v131 [data-v131="save"]');await p.waitForTimeout(800);
+o.item=await E(`(()=>{const it=APP.sched.items.find(i=>i.reel&&i.reel.file==='/_blob/a9');return it&&{at:it.at,label:it.label,status:it.status}})()`);
+o.errors=errs;console.log(JSON.stringify(o,null,1));await b.close()})().catch(e=>{console.error('FATAL',e);process.exit(1)});

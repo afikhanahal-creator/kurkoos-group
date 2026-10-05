@@ -1,0 +1,24 @@
+// where the phone freezes: the website import pipeline under 4x CPU throttling
+const {chromium}=require('playwright-core');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});
+const ctx=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{localStorage.setItem('pro_seen','true');localStorage.setItem('ag_v104_done_v1','1');localStorage.setItem('ag_v107_done_v1','1');localStorage.setItem('ag_v110_done_v1','1');window.__lt=[];try{new PerformanceObserver(l=>{l.getEntries().forEach(e=>window.__lt.push([Math.round(e.startTime),Math.round(e.duration)]))}).observe({entryTypes:['longtask']})}catch(e){}});
+const cdp=await ctx.newCDPSession(p);await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+await p.goto('http://localhost:8765/t15.html');await p.waitForTimeout(12000);const E=s=>p.evaluate(s=>window.__E(s),s);
+const lt=async()=>p.evaluate(()=>{const l=window.__lt;const r={n:l.length,ms:l.reduce((s,x)=>s+x[1],0),worst:l.map(x=>x[1]).sort((a,b)=>b-a).slice(0,5)};window.__lt.length=0;return r});
+const out={boot:await lt()};
+await E(`(function(){const real=window.fetch;window.__up=[];window.__docs={};
+ window.fetch=async function(u,o){u=String(u);if(!/supabase\\.co\\/storage/.test(u))return real.apply(this,arguments);
+  if(o&&o.method==='HEAD')return new Response(null,{status:200,headers:{'content-length':/videos\\//.test(u)?'900000':'120000'}});
+  if(/\\.mp4$/.test(u))return new Response(new Blob([new Uint8Array(900000)],{type:'video/mp4'}),{status:200});
+  const cv=document.createElement('canvas');cv.width=1600;cv.height=1000;const c=cv.getContext('2d');c.fillStyle='#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');c.fillRect(0,0,1600,1000);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.8));return new Response(blob,{status:200})};
+ const store={upload:async blob=>{const id='t'+(window.__up.length+1);window.__up.push(blob.size);await new Promise(r=>setTimeout(r,30));return {id,url:URL.createObjectURL(blob),sizeBytes:blob.size}}};
+ const col=name=>({doc:id=>({set:async d=>{(window.__docs[name]=window.__docs[name]||{})[id]=d},update:async d=>{Object.assign(window.__docs[name][id],d)}}),get:async()=>({docs:Object.entries(window.__docs[name]||{}).map(([id,d])=>({id,data:()=>d}))})});
+ const db={collection:col};KC.assets=store;KC.db=db;__vid.VD.assets=store;__vid.VD.db=db})()`);
+let t=Date.now();await E(`__v110.importImages()`);out.images={ms:Date.now()-t,lt:await lt()};
+t=Date.now();await E(`__v113.buildChunked({per:2,diversify:false})`);out.build={ms:Date.now()-t,lt:await lt()};
+t=Date.now();await E(`__v104.diversify({cap:3})`);out.diversify={ms:Date.now()-t,lt:await lt()};
+t=Date.now();await E(`render()`);await p.waitForTimeout(1500);out.render={ms:Date.now()-t,lt:await lt()};
+t=Date.now();await E(`__v110.importVideos()`);out.videos={ms:Date.now()-t,lt:await lt()};
+out.posts=await E('AG.posts.length');out.errors=errs.slice(0,2);console.log(JSON.stringify(out));await b.close()})().catch(e=>{console.error('FATAL',e);process.exit(1)});

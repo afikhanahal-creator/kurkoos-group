@@ -11448,7 +11448,7 @@ function vComps(){const cl=compList();const posts=AG.posts.filter(p=>p.src==='co
     return `<article class="cc"><div class="ch"><i>${esc(c.name.slice(0,1))}</i><div style="flex:1;min-width:0"><b>${esc(c.name)}</b><small>${esc(c.focus||[c.site,c.fb,c.ig].filter(Boolean).map(x=>x.replace(/^https?:\/\/(www\.)?/,'').slice(0,28)).join(' · ')||'')}</small></div><span class="cstat ${sc}">${sl}</span></div>
       ${c.followers?`<div class="kp"><div>עוקבים<b>${esc(c.followers)}</b></div><div>פוסטים ב-90 יום<b>${esc(c.posts||'—')}</b></div><div>מעורבות ל-1K<b>${esc(c.eng||'—')}</b></div></div>`:''}
       ${c.trait?`<div class="tags"><span class="pill acc">${esc(c.trait)}</span></div>`:''}
-      ${r.summary?`<div class="rs">${esc(r.summary)}${(r.formats||[]).length?`<div class="tags" style="margin-top:6px">${r.formats.map(f=>`<span class="pill grey">${esc(f)}</span>`).join('')}</div>`:''}${(r.gaps||[]).length?`<b style="display:block;margin-top:6px;font-size:13px">הזדמנויות לקורקוס</b><ul>${r.gaps.map(g=>`<li>${esc(g)}</li>`).join('')}</ul>`:''}${(r.bestTimes||[]).length?`<div class="muted" style="font-size:12px">זמנים: ${esc(r.bestTimes.join(', '))}</div>`:''}</div>`:c.status==='error'?`<div class="rs" style="color:var(--bad)">${esc(c.error||'המחקר נכשל')}</div>`:''}
+      ${r.summary?`<div class="rs">${esc(r.summary)}${(Array.isArray(r.formats)?r.formats:[]).length?`<div class="tags" style="margin-top:6px">${(Array.isArray(r.formats)?r.formats:[]).map(f=>`<span class="pill grey">${esc(f)}</span>`).join('')}</div>`:''}${(Array.isArray(r.gaps)?r.gaps:[]).length?`<b style="display:block;margin-top:6px;font-size:13px">הזדמנויות לקורקוס</b><ul>${(Array.isArray(r.gaps)?r.gaps:[]).map(g=>`<li>${esc(g)}</li>`).join('')}</ul>`:''}${(Array.isArray(r.bestTimes)?r.bestTimes:[]).length?`<div class="muted" style="font-size:12px">זמנים: ${esc((Array.isArray(r.bestTimes)?r.bestTimes:[]).join(', '))}</div>`:''}</div>`:c.status==='error'?`<div class="rs" style="color:var(--bad)">${esc(c.error||'המחקר נכשל')}</div>`:''}
       ${ps.length?`<div><b style="font-size:13px">פוסטים בהשראתו (${ps.length})</b><div class="minis">${ps.slice(0,8).map(p=>`<canvas data-tp="${p.id}" width="112" height="140" data-app="sched" data-pid="${p.id}" role="button" tabindex="0" aria-label="תזמון ${esc(stripStars(p.visual.headline||'').slice(0,40))}"></canvas>`).join('')}</div></div>`:''}
       <div class="ca"><button class="ibtn sm pri" type="button" data-app="inspire" data-cid="${esc(c.id)}">${ico('wand',15)} צור פוסטים בהשראתו</button><button class="ibtn sm" type="button" data-app="research" data-cid="${esc(c.id)}">${c.status==='done'?'חקור מחדש':'חקור עכשיו'}</button>${c.src!=='metricool'?`<button class="ibtn sm red" type="button" data-app="delcomp" data-cid="${esc(c.id)}" aria-label="הסר מתחרה">${ico('trash',15)}</button>`:''}</div></article>`}).join('')}</div>`}
 async function addComp(f){const d=Object.fromEntries(new FormData(f).entries());if(!d.name.trim())return;const id='c'+Date.now().toString(36);const c={id,name:d.name.trim().slice(0,60),site:(d.site||'').trim(),fb:(d.fb||'').trim(),ig:(d.ig||'').trim(),notes:(d.notes||'').trim().slice(0,400),status:'pending',addedAt:new Date().toISOString(),src:'user'};
@@ -11461,7 +11461,7 @@ async function research(c){if(!APP.comps[c.id]){APP.comps[c.id]=Object.assign({}
 async function inspire(c){if(!KC.sample){toast('יצירה מיידית זמינה כשהדף פתוח ב-claude.ai. המחקר ייצור 4 פוסטים בסיומו');return}
   const r=c.research||{};const top=compPosts().filter(p=>p.name===c.name).slice(0,3);
   const res=await askJSON(`אתה הקריאייטיב דיירקטור של קבוצת קורקוס. המתחרה: ${c.name}. ${c.focus||''} ${c.trait||''} ${c.notes||''}
-${r.summary?'מחקר: '+r.summary+' פורמטים: '+(r.formats||[]).join(', ')+' הוקים: '+(r.hooks||[]).join(' | '):''}
+${r.summary?'מחקר: '+r.summary+' פורמטים: '+(Array.isArray(r.formats)?r.formats:[]).join(', ')+' הוקים: '+(r.hooks||[]).join(' | '):''}
 ${top.length?'הפוסטים החזקים שלהם: '+top.map(p=>p.title+' ('+p.date+' '+p.time+')').join(' | '):''}
 קח את המנגנון שמייצר להם חשיפה (פורמט, זווית, סוג hook) ובנה 3 פוסטים של קורקוס, בלי להעתיק טקסט או רעיון ספציפי.
 עובדות מותרות: ${Object.values(PROJECTS).slice(0,4).map(p=>p.name+': '+p.facts.slice(0,220)).join(' | ')}
@@ -20335,6 +20335,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 document.addEventListener('keydown',ev=>{if((ev.key==='Enter'||ev.key===' ')&&ev.target.classList&&ev.target.classList.contains('v148x'))act(ev)},true);
 })();
 
+// ================= V149 · competitor research fields are read only when they are lists =================
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){
 const orig=window.open.bind(window);

@@ -506,7 +506,7 @@
   max-width: min(1180px, calc(100% - 2 * var(--container-pad)));
 }
 .hl-trust { position: relative; display: flex; flex-direction: column; background: var(--hl-paper); }
-.hl-trust__photo { flex: 1 1 0; width: 100%; min-height: 280px; object-fit: cover; object-position: center 15%; }
+.hl-trust__photo { flex: 1 1 0; width: 100%; min-height: 280px; object-fit: cover; object-position: 50% 0%; }
 .hl-trust__body { display: flex; flex-direction: column; gap: 0.35rem; padding: clamp(1.4rem, 3vw, 2.25rem); }
 .hl-trust__name { font-family: var(--font-heading); font-size: 1.45rem; color: var(--hl-navy); }
 .hl-trust__role { color: var(--hl-teal); font-weight: 600; }

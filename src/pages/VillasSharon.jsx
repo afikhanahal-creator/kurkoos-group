@@ -13,6 +13,7 @@ import { listProjectCards, cmsRowToCard, getProjectBySlug, useSettings } from '.
 import { srcOfResponsive, optimizeSrc } from '../lib/responsiveImage.js'
 import { BUYER_FAQS } from '../data/buyerFaqs.js'
 import { VILLAS_PROJECTS, VILLAS_FAQS as BASE_FAQS, parseVillasSettings, orderedVillasProjects, matchVillaCard as matchCard } from '../data/villasPage.js'
+import { HOUSE_PAGES } from '../data/houseLanding.js'
 import site from '../data/site.js'
 import { track } from '../lib/track.js'
 import './SharonHub.css'
@@ -384,6 +385,15 @@ export default function VillasSharon() {
           <Reveal>
             <FaqCta to="#contact" placement="villas_faq" guides={PRIVATE_HOUSE_GUIDES} />
           </Reveal>
+          {/* בונים על המגרש שלכם: עמודי הנחיתה לפי שירות ולפי עיר */}
+          <nav className="faq-cta__guides" style={{ marginTop: '1.75rem' }} aria-label="בניית בית פרטי על המגרש שלכם">
+            <span className="faq-cta__guides-title">בונים בית פרטי על המגרש שלכם</span>
+            <div className="faq-cta__chips">
+              {HOUSE_PAGES.map((p) => (
+                <Link key={p.path} to={p.path} className="faq-cta__chip">{p.navLabel}</Link>
+              ))}
+            </div>
+          </nav>
         </div>
       </section>
 

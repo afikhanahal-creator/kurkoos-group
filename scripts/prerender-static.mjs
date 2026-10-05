@@ -97,6 +97,8 @@ const SITE_LINKS =
     ['/', 'דף הבית'],
     ['/projects', 'הפרויקטים'],
     ['/villas-sharon', 'בניית וילות ובתים פרטיים'],
+    ['/kablan-bniya-bayit-prati', 'קבלן בנייה לבית פרטי'],
+    ['/bniyat-vila-sharon', 'בניית וילה בשרון'],
     ['/real-estate-sharon', 'נדל"ן בהוד השרון ובאזור המרכז'],
     ['/divisions/development', 'יזמות נדל"ן'],
     ['/divisions/execution', 'ביצוע ובנייה'],
@@ -328,6 +330,47 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<h1>מחשבוני נדל"ן</h1><p>מחשבון החזר חודשי למשכנתא לפי לוח שפיצר ומחשבון תשואת שכירות. החישוב מתבצע בדפדפן, להערכה ראשונית בלבד ואינו ייעוץ פיננסי.</p>` +
       calcFaqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n'),
   }))
+
+  /* עמודי הנחיתה לבניית בית פרטי: עמוד הקבלן, הווילות בשרון ושלוש ערים.
+     הכותרת, התיאור, ה-H1, השאלות והנתונים המובנים נמשכים מ-data/houseLanding.js,
+     אותו מקור שהעמוד החי מרנדר, כך שאין שתי גרסאות. */
+  {
+    const { HOUSE_PAGES, HOUSE_STEPS, HOUSE_GUIDES, houseJsonLd } = await import(pathToFileURL(join(root, 'src/data/houseLanding.js')).href)
+    for (const pg of HOUSE_PAGES) {
+      /* עמודי נחיתה נמדדים על אורך הכותרת והתיאור שגוגל מציג */
+      const fullLen = `${pg.title} | ${BRAND}`.length
+      if (fullLen > 60) throw new Error(`prerender: הכותרת של ${pg.path} ארוכה מ-60 תווים (${fullLen})`)
+      if (!pg.description || pg.description.length < 150 || pg.description.length > 160) {
+        throw new Error(`prerender: התיאור של ${pg.path} חייב להיות 150 עד 160 תווים (${pg.description?.length || 0})`)
+      }
+      const siblings = HOUSE_PAGES.filter((x) => x.path !== pg.path)
+      done.push(renderPage({
+        path: pg.path,
+        title: pg.title,
+        description: pg.description,
+        jsonLd: houseJsonLd(pg),
+        bodyHtml:
+          `<h1>${esc(pg.h1)}</h1>` +
+          `<p>${esc(pg.lead)}</p>` +
+          `<h2>${esc(pg.intro.q)}</h2><p>${esc(pg.intro.a)}</p>` +
+          `<h2>${esc(pg.stepsTitle)}</h2><ol>` +
+          HOUSE_STEPS.map((st) => `<li><strong>${esc(st.t)}</strong> (${esc(st.who)}): ${esc(st.d)}</li>`).join('') + `</ol>` +
+          `<h2>${esc(pg.projectsTitle)}</h2><ul>` +
+          `<li><a href="/villas-sharon">יורדי הים 3, שכונת גרינברג, הוד השרון</a>: שתי וילות פרטיות. בתכנון.</li>` +
+          `<li><a href="/villas-sharon">הנרייטה סאלד 22-24, מערב הוד השרון</a>: ארבע יחידות דו משפחתיות. בבנייה.</li>` +
+          `<li><a href="/villas-sharon">חנקין 41, שכונת מגדיאל, הוד השרון</a>: בניין בוטיק, שש דירות. בבנייה.</li></ul>` +
+          `<h2>${esc(pg.check.title)}</h2><p>${esc(pg.check.lead)}</p><ul>` +
+          pg.check.items.map(([t, d]) => `<li><strong>${esc(t)}</strong>: ${esc(d)}</li>`).join('') + `</ul>` +
+          `<h2>${esc(pg.faqTitle)}</h2>` +
+          pg.faqs.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('\n') +
+          `<h2>מדריכים שכדאי לקרוא לפני שמחליטים</h2><ul>` +
+          HOUSE_GUIDES.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>` +
+          `<h2>בונים בית פרטי באזור</h2><ul>` +
+          siblings.map((x) => `<li><a href="${esc(x.path)}">${esc(x.navLabel)}</a></li>`).join('') + `</ul>` +
+          `<p>טלפון 055-981-1814. רחוב הנגר 24, הוד השרון. <a href="/contact?topic=construction">השארת פרטים</a></p>`,
+      }))
+    }
+  }
 
   /* שלושת העמודים המסחריים המרכזיים לא היו מרונדרים מראש, ולכן סורק שלא
      מריץ JavaScript ראה בהם מעטפת ריקה בלי כותרת, בלי תיאור ובלי קישורים.

@@ -92,6 +92,8 @@ export const divisions = [
     serviceName: 'ביצוע ובנייה: בניית בתים פרטיים, וילות ופרויקטים למגורים',
     related: [
       { to: '/villas-sharon', label: 'הווילות והבתים הפרטיים שאנחנו בונים בהוד השרון' },
+      { to: '/kablan-bniya-bayit-prati', label: 'קבלן בנייה לבית פרטי' },
+      { to: '/bniyat-vila-sharon', label: 'בניית וילה בשרון' },
       { to: '/constructions/livchor-chevrat-bniya-bayit-prati', label: 'איך בוחרים חברת בנייה לבית פרטי' },
       { to: '/constructions/kama-ole-livnot-bayit-prati', label: 'כמה עולה לבנות בית פרטי' },
       { to: '/divisions/supervision', label: 'פיקוח בנייה עם שכינתא' },

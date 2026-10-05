@@ -4,6 +4,21 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/engine/photos/:path*",
+      "destination": "https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/engine-media/static/photos/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/engine/:file(reel-\\d+\\.(?:mp4|jpg)|kurkoos-v\\d+\\.(?:mp4|jpg))",
+      "destination": "https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/engine-media/static/:file",
+      "permanent": false
+    },
+    {
+      "source": "/_blob/:id",
+      "destination": "https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/engine-media/blob/:id",
+      "permanent": false
+    },
+    {
       "source": "/s-projects-basic",
       "destination": "/projects",
       "permanent": true
@@ -119,7 +134,7 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!engine(?:/|$)).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -156,6 +171,40 @@
         {
           "key": "X-DNS-Prefetch-Control",
           "value": "on"
+        }
+      ]
+    },
+    {
+      "source": "/engine(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' data: blob: https: wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/engine/(fx|sfx)/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, immutable"
         }
       ]
     },

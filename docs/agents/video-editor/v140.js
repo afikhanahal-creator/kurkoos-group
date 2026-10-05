@@ -6,7 +6,8 @@
 (function(){
 const API='https://api.openai.com/v1';
 const LS={key:'v140_oa_key',model:'v140_oa_model',hist:'v140_hist'};
-const get=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
+const SITE=window.__ENGINE_HOST==='site';
+const get=k=>{if(SITE&&k==='v140_oa_key')return 'site';try{return localStorage.getItem(k)||''}catch(e){return ''}};
 const put=(k,v)=>{try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tst=m=>{try{toast(m)}catch(e){}};
@@ -38,7 +39,7 @@ function fullPrompt(){const st=STYLES.filter(s=>S.styles.has(s[0])).map(s=>s[2])
  return [base,st,S.brand?BRAND:''].filter(Boolean).join('. ')}
 
 // ---------- the sheet
-function keyHtml(){const k=get(LS.key);return `<section class="v140key ${S.keyOpen||!k?'open':''}">
+function keyHtml(){if(SITE)return `<section class="v140key"><div class="v140kh"><b>מחובר לחשבון OpenAI דרך האתר</b><span class="v140ok">המפתח שמור ב-Vercel</span></div></section>`;const k=get(LS.key);return `<section class="v140key ${S.keyOpen||!k?'open':''}">
  <div class="v140kh"><b>${k?'מחובר לחשבון OpenAI':'חיבור לחשבון OpenAI'}</b>${k?`<span class="v140ok">מפתח שמור במכשיר הזה · ${esc(k.slice(0,7))}…${esc(k.slice(-4))}</span><button type="button" class="px-btn sm ghost" data-v140="keytoggle">${S.keyOpen?'סגירה':'הגדרות'}</button>`:''}</div>
  ${S.keyOpen||!k?`<ol class="v140steps"><li>נכנסים ל-platform.openai.com עם החשבון של ChatGPT ומוסיפים אמצעי תשלום (החיוב לפי שימוש, בנפרד מהמנוי).</li><li>ב-API keys יוצרים מפתח חדש ומעתיקים אותו.</li><li>מדביקים כאן. המפתח נשמר רק בדפדפן הזה, לא בקוד ולא בענן.</li></ol>
  <div class="v140krow"><input type="password" autocomplete="off" spellcheck="false" placeholder="sk-..." data-v140="key" value="" aria-label="מפתח OpenAI"><button type="button" class="px-btn sm pri" data-v140="keysave">שמירה ובדיקה</button>${k?'<button type="button" class="px-btn sm ghost" data-v140="keydel">מחיקת המפתח</button>':''}</div>
@@ -86,16 +87,20 @@ function why(st,j,raw){const m=(j&&j.error&&j.error.message)||raw||'';
  if(st===429)return /quota|billing/i.test(m)?'נגמרה היתרה בחשבון OpenAI או שאין אמצעי תשלום. מוסיפים ב-Billing ומנסים שוב.':'יותר מדי בקשות ברגע אחד. מחכים דקה ומנסים שוב.';
  if(st===400&&/safety|moderation|policy/i.test(m))return 'OpenAI סירב לבקשה לפי כללי התוכן שלו. נסחו אחרת.';
  if(st===400)return 'הבקשה נדחתה: '+m;return 'שגיאה מ-OpenAI ('+st+'): '+m}
-function netWhy(e){if(e&&e.name==='AbortError')return 'נעצר';return 'הדף לא הצליח להגיע ל-OpenAI. אם זה חוזר, ייתכן ש-claude.ai חוסם פנייה ישירה מהדף, ואז נחבר את היצירה דרך העורך בענן.'}
+function netWhy(e){if(e&&e.name==='AbortError')return 'נעצר';return SITE?'אין חיבור לשרת של האתר כרגע. נסו שוב בעוד רגע.':'claude.ai חוסם מהדף פנייה ישירה ל-OpenAI, ולכן כאן התמונה לא נוצרת. יצירת התמונות עובדת בגרסה של המערכת שבאתר (עמוד הניהול > מנוע התוכן), דרך השרת של האתר.'}
 async function call(path,init){const k=get(LS.key);const r=await fetch(API+path,Object.assign({},init,{headers:Object.assign({Authorization:'Bearer '+k},init.headers||{})}));let j=null,raw='';try{raw=await r.text();j=JSON.parse(raw)}catch(e){}
  if(!r.ok)throw {st:r.status,msg:why(r.status,j,raw.slice(0,200))};return j}
 async function testKey(){try{await call('/models?limit=1',{method:'GET'});return ''}catch(e){return e.st?e.msg:netWhy(e)}}
-const b64Blob=b=>{const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Blob([u],{type:'image/png'})};
+const b64Blob=b=>{const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Blob([u],{type:b.startsWith('/9j/')?'image/jpeg':'image/png'})};
 async function imgToPng(src){const im=await new Promise((ok,no)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>ok(i);i.onerror=no;i.src=src});const c=document.createElement('canvas');const m=1536,s=Math.min(1,m/Math.max(im.naturalWidth,im.naturalHeight));c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/png'))}
+async function viaSite(prompt,size,src,ac){let img=null;if(src){let b;try{b=await imgToPng(src)}catch(e){throw {st:0,msg:'אי אפשר לקרוא את התמונה הנוכחית לשינוי. נסו "תמונה חדשה".'}}img=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.readAsDataURL(b)})}
+ const tok=await window.__engineBridge.token();const r=await fetch('/api/engine-image',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({prompt,size,quality:S.q,n:S.n,model:get(LS.model)||undefined,image:img})});
+ let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw {st:r.status,msg:r.status===503?'מפתח OpenAI עוד לא הוגדר ב-Vercel':j.status?why(j.status,{error:{message:j.error}},''):(j.error||'השרת לא הצליח ליצור תמונה')};
+ return {data:(j.images||[]).map(b=>({b64_json:b}))}}
 async function generate(fromUrl){if(S.busy)return;const prompt=fullPrompt();if(!S.prompt.trim()&&!S.en){S.err='כתבו קודם מה רוצים לראות';paint();return}
  const model=get(LS.model)||'gpt-image-1',size=S.size||shapeOfPost(),ac=new AbortController(),t0=Date.now();S.err='';S.busy={ac,sec:0};paint();const tick=setInterval(()=>{if(!S.busy)return clearInterval(tick);S.busy.sec=Math.round((Date.now()-t0)/1000);const g=document.querySelector('#v140 .v140go');if(g)g.textContent=`עוצרים (${S.busy.sec} שניות)`},1000);
  try{let j;const src=fromUrl||(S.mode==='edit'?(PHOTO_LIB[curKey()]||''):'');
-  if(src){let png;try{png=await imgToPng(src)}catch(e){throw {st:0,msg:'אי אפשר לקרוא את התמונה הנוכחית לשינוי. נסו "תמונה חדשה".'}}
+  if(SITE)j=await viaSite(prompt,size,src,ac);else if(src){let png;try{png=await imgToPng(src)}catch(e){throw {st:0,msg:'אי אפשר לקרוא את התמונה הנוכחית לשינוי. נסו "תמונה חדשה".'}}
    const fd=new FormData();fd.append('model',model);fd.append('prompt',prompt);fd.append('size',size);fd.append('quality',S.q);fd.append('n',String(S.n));fd.append('image',png,'current.png');
    j=await call('/images/edits',{method:'POST',body:fd,signal:ac.signal})}
   else j=await call('/images/generations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,prompt,size,quality:S.q,n:S.n}),signal:ac.signal});

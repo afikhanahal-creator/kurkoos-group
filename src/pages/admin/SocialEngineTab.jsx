@@ -1,14 +1,17 @@
 import './SocialEngineTab.css'
+import { useState } from 'react'
+import { importEngineFile } from './engineImport.js'
 
 /* ============================================================
    ContentEngineTab: מנוע התוכן לרשתות החברתיות.
-   המערכת עצמה רצה בתוך Claude (שם יש לה את החיבורים ל-Metricool,
-   ל-AI ולמסד הנתונים שלה), ולכן היא נפתחת בחלון משלה על כל המסך.
-   claude.ai לא מאפשר הטמעה בתוך iframe, אז הטאב הזה הוא נקודת הכניסה.
+   המערכת רצה עכשיו באתר עצמו, בכתובת ‎/engine, עם ההתחברות של האדמין.
+   הנתונים יושבים בטבלה engine_docs והקבצים ב-engine-media (Supabase),
+   ו-Claude ותמונות ChatGPT עוברים דרך השרת של האתר (המפתחות ב-Vercel).
+   הגרסה הקודמת ב-claude.ai נשארת זמינה עד שהמעבר נבדק.
    ============================================================ */
 
-export const ENGINE_URL =
-  import.meta.env.VITE_CONTENT_ENGINE_URL || 'https://claude.ai/artifact/FGRUkHgHBjpBLHXFjbztz4'
+export const ENGINE_URL = import.meta.env.VITE_CONTENT_ENGINE_URL || '/engine/'
+export const OLD_ENGINE_URL = 'https://claude.ai/artifact/FGRUkHgHBjpBLHXFjbztz4'
 const WIN_NAME = 'kurkoos-content-engine'
 
 /** פותח (או מחזיר לפוקוס) את החלון של מנוע התוכן. חייב לרוץ מתוך לחיצה. */
@@ -37,8 +40,52 @@ const FEATURES = [
   { i: 'shuffle', t: 'בלי חזרתיות', d: 'אותה תמונה לא חוזרת בתוך 30 יום, והדמיה של אותו פרויקט לכל היותר פעמיים בחודש.' },
 ]
 
+function ImportCard() {
+  const [state, setState] = useState({ busy: false, msg: '', p: 0, done: null, err: '' })
+  async function onFile(e) {
+    const f = e.target.files && e.target.files[0]
+    e.target.value = ''
+    if (!f) return
+    setState({ busy: true, msg: 'מתחיל…', p: 0, done: null, err: '' })
+    try {
+      const r = await importEngineFile(f, (msg, p) => setState((s) => ({ ...s, msg, p })))
+      setState({ busy: false, msg: '', p: 1, done: r, err: '' })
+    } catch (x) {
+      setState({ busy: false, msg: '', p: 0, done: null, err: String((x && x.message) || x) })
+    }
+  }
+  return (
+    <section className="ce-import" aria-labelledby="ce-import-h">
+      <h3 id="ce-import-h">ייבוא מהמערכת הקודמת</h3>
+      <ol>
+        <li>פותחים את המערכת הקודמת ב‑claude.ai ולוחצים בעמוד הבית על &quot;הורדת קובץ ההעברה&quot;.</li>
+        <li>בוחרים כאן את הקובץ שירד (מסתיים ב‑‎.kce). זה לוקח כמה דקות, ואפשר להריץ שוב בלי חשש.</li>
+      </ol>
+      <div className="ce-import__row">
+        <label className={`ce-btn ce-btn--pri${state.busy ? ' is-busy' : ''}`}>
+          {state.busy ? 'מייבא…' : 'בחירת קובץ ההעברה'}
+          <input type="file" accept=".kce" onChange={onFile} disabled={state.busy} hidden />
+        </label>
+        <a className="ce-btn ce-btn--ghost" href={OLD_ENGINE_URL} target="_blank" rel="noopener">פתיחת המערכת הקודמת</a>
+      </div>
+      {state.busy && (
+        <div className="ce-import__prog" role="status" aria-live="polite">
+          <span style={{ width: `${Math.round(state.p * 100)}%` }} />
+          <small>{state.msg}</small>
+        </div>
+      )}
+      {state.done && (
+        <p className="ce-import__ok" role="status">
+          הייבוא הסתיים: {state.done.records.toLocaleString('he-IL')} רשומות ו‑{state.done.files} קבצים
+          {state.done.failed ? `, ${state.done.failed} קבצים לא עלו (אפשר להריץ שוב)` : ''}. אפשר לפתוח את המערכת.
+        </p>
+      )}
+      {state.err && <p className="ce-import__err" role="alert">{state.err}</p>}
+    </section>
+  )
+}
+
 export default function SocialEngineTab() {
-  const host = (() => { try { return new URL(ENGINE_URL).host } catch { return 'claude.ai' } })()
   return (
     <div className="se">
       <section className="ce-hero">
@@ -46,19 +93,19 @@ export default function SocialEngineTab() {
           <span className="ce-eyebrow">פייסבוק · אינסטגרם · Metricool</span>
           <h2>מנוע התוכן של קבוצת קורקוס</h2>
           <p>
-            תכנון, עיצוב ותזמון של כל הפוסטים לרשתות, במקום אחד. המערכת נפתחת בחלון משלה על כל המסך,
-            ושום דבר לא מתפרסם בלי האישור שלכם ב‑Metricool.
+            תכנון, עיצוב ותזמון של כל הפוסטים לרשתות, עורך הווידאו וסטודיו התמונות, במקום אחד ובכתובת של האתר.
+            שום דבר לא מתפרסם בלי האישור שלכם.
           </p>
           <div className="ce-hero__acts">
             <button type="button" className="ce-btn ce-btn--pri" onClick={openEngine}>
-              <Svg d={I.open} s={20} /> פתיחה במסך מלא
+              <Svg d={I.open} s={20} /> פתיחת המערכת
             </button>
             <a className="ce-btn ce-btn--ghost" href={ENGINE_URL} target={WIN_NAME} rel="noopener">
               או פתיחה בלשונית חדשה
             </a>
           </div>
           <p className="ce-note">
-            <Svg d={I.shield} s={16} /> נפתח ב‑{host}. צריך להיות מחוברים לחשבון Claude שבו נבנתה המערכת. זה חשבון פרטי, ורק מי שקיבל שיתוף יכול לפתוח.
+            <Svg d={I.shield} s={16} /> נפתח באתר, עם אותה התחברות של עמוד הניהול. בטלפון אפשר להוסיף אותו למסך הבית כאפליקציה.
           </p>
         </div>
         <div className="ce-hero__art" aria-hidden="true">
@@ -82,12 +129,14 @@ export default function SocialEngineTab() {
         ))}
       </section>
 
+      <ImportCard />
+
       <section className="ce-how">
-        <h3>למה חלון נפרד ולא בתוך הניהול</h3>
+        <h3>מה עובד כאן ומה עדיין ב‑claude.ai</h3>
         <p>
-          המערכת משתמשת בחיבורים של Claude: Metricool לתזמון, AI לכתיבה ולעיצוב, ומסד נתונים משותף לתמונות וללוח.
-          החיבורים האלה עובדים רק בתוך claude.ai, ו‑claude.ai לא מאפשר להטמיע את עצמו בתוך אתר אחר.
-          לכן הכפתור פותח את המערכת בחלון משלה, ולחיצה חוזרת מחזירה לאותו חלון במקום לפתוח עוד אחד.
+          באתר: הלוח והתזמונים, הגלריה ועורך הפוסטים, עורך הווידאו, סטודיו התמונות עם ChatGPT ו&quot;בקשה לעורך&quot; עם Claude.
+          המפתחות של OpenAI ו‑Claude שמורים רק ב‑Vercel ולא עוברים בדפדפן.
+          עדיין ב‑claude.ai: שליחה ל‑Metricool, Canva, והעורך הקולנועי בענן. אותם נעביר בשלב הבא.
         </p>
       </section>
     </div>

@@ -10,6 +10,8 @@
 //   POST /api/newsletter-subscribe
 //   POST /api/analytics
 //   POST /api/generate-image
+//   POST /api/claude         (מנוע התוכן: Claude)
+//   POST /api/engine-image   (מנוע התוכן: סטודיו התמונות)
 //   GET  /api/sitemap        (וגם /sitemap.xml דרך rewrite)
 //   GET  /api/indexnow       (cron יומי, מודיע ל-Bing על עמודים חדשים)
 //
@@ -22,6 +24,8 @@ const ROUTES = {
   'newsletter-subscribe': () => import('../server/newsletter-subscribe.js'),
   analytics: () => import('../server/analytics.js'),
   'generate-image': () => import('../server/generate-image.js'),
+  claude: () => import('../server/claude.js'),
+  'engine-image': () => import('../server/engine-image.js'),
   sitemap: () => import('../server/sitemap.js'),
   indexnow: () => import('../server/indexnow.js'),
 }

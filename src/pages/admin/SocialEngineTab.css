@@ -56,3 +56,16 @@
   .ce-btn--pri { width: 100%; justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .ce-btn { transition: none; } }
+
+/* ---- ייבוא מהמערכת הקודמת ---- */
+.ce-import { margin-top: 1.5rem; padding: 1.25rem 1.5rem; border-radius: 16px; background: #fff; border: 1px solid #e1e8ed; display: grid; gap: .75rem; }
+.ce-import h3 { margin: 0; font-size: 1.1rem; color: #07293a; }
+.ce-import ol { margin: 0; padding-inline-start: 1.25rem; color: #243b4c; line-height: 1.7; font-size: .95rem; }
+.ce-import__row { display: flex; gap: .6rem; flex-wrap: wrap; }
+.ce-import__row label { cursor: pointer; }
+.ce-import__row .is-busy { opacity: .6; cursor: progress; }
+.ce-import__prog { position: relative; height: 34px; border-radius: 10px; background: #eef2f5; overflow: hidden; }
+.ce-import__prog span { position: absolute; inset-block: 0; inset-inline-start: 0; background: #105572; transition: width .3s; }
+.ce-import__prog small { position: relative; display: block; line-height: 34px; padding-inline: .75rem; font-weight: 700; color: #07293a; mix-blend-mode: normal; }
+.ce-import__ok { margin: 0; color: #1d6b43; font-weight: 700; }
+.ce-import__err { margin: 0; color: #a90b0c; font-weight: 700; }

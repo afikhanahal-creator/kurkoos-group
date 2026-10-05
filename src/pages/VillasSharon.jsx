@@ -12,7 +12,7 @@ import SmartImage from '../components/ui/SmartImage.jsx'
 import { listProjectCards, cmsRowToCard, getProjectBySlug, useSettings } from '../lib/cms.js'
 import { srcOfResponsive, optimizeSrc } from '../lib/responsiveImage.js'
 import { BUYER_FAQS } from '../data/buyerFaqs.js'
-import { VILLAS_PROJECTS, VILLAS_FAQS as BASE_FAQS, parseVillasSettings, orderedVillasProjects } from '../data/villasPage.js'
+import { VILLAS_PROJECTS, VILLAS_FAQS as BASE_FAQS, parseVillasSettings, orderedVillasProjects, matchVillaCard as matchCard } from '../data/villasPage.js'
 import site from '../data/site.js'
 import { track } from '../lib/track.js'
 import './SharonHub.css'
@@ -26,24 +26,6 @@ const FACTS = [
   { v: 'בריכה', u: 'פרטית לכל בית' },
   { v: 'טאבו', u: 'מגרש בבעלות פרטית' },
 ]
-
-/* התאמה בין הפרויקטים שבעמוד לפרויקטים במערכת הניהול. קודם לפי slug זהה,
-   ואם ה-slug במערכת שונה, לפי השם. כך התמונות מגיעות תמיד מהאדמין,
-   וגם שינוי slug שם לא מעלים אותן מכאן. */
-const NAME_KEYS = {
-  'yordei-hayam': ['יורדי הים'],
-  'henrietta-szold': ['הנרייטה', 'סאלד'],
-  'hankin-41': ['חנקין'],
-}
-const nameOf = (v) => (v && typeof v === 'object') ? String(v.he || v.en || '') : String(v || '')
-function matchCard(cards, slug, cmsSlug = '') {
-  // באדמין אפשר לקשר ידנית לפרויקט אחר במערכת. הקישור הידני קודם לכל התאמה אוטומטית
-  if (cmsSlug) { const manual = cards.find((c) => String(c.slug) === cmsSlug); if (manual) return manual }
-  const bySlug = cards.find((c) => String(c.slug) === slug)
-  if (bySlug) return bySlug
-  const keys = NAME_KEYS[slug] || []
-  return cards.find((c) => keys.some((k) => nameOf(c.name).includes(k))) || null
-}
 
 /* ============================================================
    בניית וילות ובתים פרטיים בשרון, עמוד מוקד.

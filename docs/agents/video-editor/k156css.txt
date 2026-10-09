@@ -1,0 +1,14 @@
+<style id="k156">
+/* V156 · QA: one X per window, touch targets, overlaps */
+body.ga-lb-on #v135x,body.pe-open #v135x,body:has(#cmp-root) #v135x{display:none!important}
+@media (max-width:860px){
+ .ga-lb button,.ga-lbh button{min-height:44px;min-width:44px}
+ .kc-tabs button,.st-tabs button,[role="tablist"] button{min-height:44px}
+ a.v28-adm{min-height:44px;padding:8px 0}
+ .px-ck{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+ input[type="checkbox"]{min-width:22px;min-height:22px}
+ #v110bar{position:static!important}
+}
+.tv-fav{z-index:3}
+.v156dmore{display:block;margin:10px auto 4px}
+</style>

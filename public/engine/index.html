@@ -11752,7 +11752,7 @@ function renderComposer(){let r=document.getElementById('cmp-root');if(!r){r=doc
   const recs=nextRecs(kindOf(p),5,C.at&&C.at.slice(0,10));
   r.innerHTML=`<div class="cmpb" data-app="cmpback"><div class="cmp" role="dialog" aria-modal="true" aria-labelledby="cmp-t">
    <header><h2 id="cmp-t">${it?'עריכת פוסט':'פוסט חדש'}${C.at?` · ${fmtD(C.at)} ${hm(C.at)}`:''}</h2><button class="ibtn" type="button" data-app="cmpclose" aria-label="סגור">${ico('x',16)}</button></header>
-   <div class="cmpnets" role="group" aria-label="ערוצים">${['fb','ig'].map(k=>`<button class="av" type="button" data-app="cnet" data-k="${k}" aria-pressed="${C.nets[k]}" aria-label="${NETS[k].n}">${MARK(18)}${netb(k)}</button>`).join('')}<span class="muted" style="font-size:13px">קבוצת קורקוס · afik.hanahal</span></div>
+   <div class="cmpnets" role="group" aria-label="ערוצים">${['fb','ig'].map(k=>`<button class="av" type="button" data-app="cnet" data-k="${k}" aria-pressed="${C.nets[k]}" aria-label="${NETS[k].n}">${MARK(18)}${netb(k)}</button>`).join('')}<span class="muted" style="font-size:13px">קבוצת קורקוס · Kurkoos Group / kurkoos_group</span></div>
    <div class="cmpbody"><div class="cmped">
     ${!p&&!isReel?`<span class="kc-lab">על מה הפוסט?</span><textarea data-app="draft" placeholder="כתבו משפט או שניים. למשל: יצקנו היום את התקרה בהנרייטה סאלד">${esc(C.draftTxt)}</textarea><span class="kc-lab">בחרו עיצוב</span><div class="kc-chips">${['ed_cover','ed_photo','ed_quote','ed_article','ed_contact','ed_data','ed_listing','ed_car'].map(L=>`<button type="button" data-app="cmpmk" data-l="${L}">${ED_NAMES[L]}</button>`).join('')}</div>${drafts.length?`<span class="kc-lab">או בחרו טיוטה קיימת</span><div class="pickgrid">${drafts.map(d=>`<button type="button" data-app="cmppick" data-pid="${d.id}" aria-label="${esc(stripStars(d.visual.headline||'').slice(0,50))}"><canvas data-tp="${d.id}" width="220" height="275"></canvas></button>`).join('')}</div>`:''}`:
     `<div class="ctabs" role="tablist">${isReel?'<button type="button" aria-selected="true">כיתוב לרילס</button>':['fb','ig'].map(k=>`<button type="button" role="tab" data-app="ctab" data-k="${k}" aria-selected="${C.net===k}">${NETS[k].n}</button>`).join('')}</div>
@@ -11771,7 +11771,7 @@ function renderComposer(){let r=document.getElementById('cmp-root');if(!r){r=doc
 function pvHtml(){const C=APP.cmp,p=C.p,it=C.it;const isReel=it&&it.reel;const t=isReel?(it.reel.caption||''):p?((C.pv==='ig'?p.ig:p.fb)||''):C.draftTxt;const short=t.length>220?esc(t.slice(0,220))+'… <span class="more">עוד</span>':esc(t);
   const media=isReel?`<img src="${esc(it.reel.poster)}" alt="" style="width:100%;display:block">`:p?`<canvas data-tp="${p.id}" width="1080" height="1350"></canvas>`:'<div style="aspect-ratio:4/5;background:#f0f2f5;display:grid;place-items:center;color:#65676b">העיצוב יופיע כאן</div>';
   return C.pv==='fb'?`<div class="pv"><div class="ph"><i>${MARK(18)}</i><div><b>קבוצת קורקוס</b><small>${C.at?fmtD(C.at)+' '+hm(C.at):'עכשיו'} · ציבורי</small></div></div><div class="ptx">${short}</div>${media}<div class="pa"><span>אהבתי</span><span>תגובה</span><span>שיתוף</span></div></div>`:
-  `<div class="pv ig"><div class="ph"><i>${MARK(18)}</i><div><b>afik.hanahal</b></div></div>${media}<div class="pa"><span>♡</span><span>💬</span><span>➤</span></div><div class="ptx"><b>afik.hanahal</b> ${short}</div></div>`}
+  `<div class="pv ig"><div class="ph"><i>${MARK(18)}</i><div><b>kurkoos_group</b></div></div>${media}<div class="pa"><span>♡</span><span>💬</span><span>➤</span></div><div class="ptx"><b>kurkoos_group</b> ${short}</div></div>`}
 function exportFmt(p,f){const b=bigOf(p,p.slide||0);if(f==='45')return b;if(f==='916')return storyCanvas(p);const th=(p.fx&&TH_SW[p.fx.theme||DEF_THEME[p.layout]])||['#07293a'];const c=document.createElement('canvas');
   if(f==='11'){c.width=1080;c.height=1080;const x=c.getContext('2d');x.fillStyle=th[0];x.fillRect(0,0,1080,1080);x.drawImage(b,(1080-864)/2,0,864,1080)}
   else{c.width=1920;c.height=1080;const x=c.getContext('2d');x.fillStyle=th[0];x.fillRect(0,0,1920,1080);x.drawImage(b,1920-864-96,0,864,1080);x.fillStyle=th[1];x.fillRect(96,480,16,16)}return c}
@@ -20667,6 +20667,19 @@ try{Object.assign(ED_NAMES,{x_mag_cover:'שער מגזין',x_mag_break:'כות�
 try{Object.assign(DEF_THEME,{x_mag_cover:'dark',x_mag_break:'dark',x_mag_numeral:'light',x_mag_myth:'light',x_mag_torn:'dark',x_mag_cost:'light',x_mag_spec:'white',x_mag_quote:'light'})}catch(e){}
 try{Object.assign(DEST,{x_mag_cover:[1080,1350],x_mag_break:[1080,520],x_mag_numeral:[1080,1350],x_mag_torn:[1080,560],x_mag_spec:[1080,560]})}catch(e){}
 window.__v154=['x_mag_cover','x_mag_break','x_mag_numeral','x_mag_myth','x_mag_torn','x_mag_cost','x_mag_spec','x_mag_quote'];
+})();
+
+// ================= V155 · one signature block in every post: the brand line, the phone, the link and the hashtags, each on its own line with a blank line between
+(function(){
+const SIG='קבוצת קורקוס. מקרקע ועד מסירת מפתח.',TAGS='#קבוצתקורקוס #בנייתוילות #הודהשרון';
+const RX=/^([\s\S]*?)קבוצת קורקוס(?:\.|\s·)\s*מקרקע ועד מסירת מפתח\.?[ \t]*(?:\n[ \t]*055-981-1814[ \t]*(?:·[ \t]*(\S+))?)?[ \t]*(?:\n[ \t]*(kurkoos-group\.co\.il\S*))?\s*((?:#[^\n]*\s*)*)$/;
+function fixSig(fb){if(typeof fb!=='string')return fb;const m=fb.match(RX);if(!m)return fb;
+  let body=m[1].replace(/[ \t\n]+$/,'').replace(/\n\n[^\n]{0,40}055-981-1814\.?$/,'').replace(/[ \t\n]+$/,'');
+  let link=m[2]||m[3]||'kurkoos-group.co.il';if(!/^https?:\/\//.test(link))link='https://www.'+link.replace(/^www\./,'');
+  let tags=(m[4]||'').replace(/\s+/g,' ').trim()||TAGS;
+  return `${body}\n\n${SIG}\n\n055-981-1814\n\n${link}\n\n${tags}`}
+window.__v155={fixSig};
+try{saveAgent=(f=>function(){try{(AG.posts||[]).forEach(p=>{if(p&&typeof p.fb==='string'){const n=fixSig(p.fb);if(n!==p.fb)p.fb=n}})}catch(e){}return f.apply(this,arguments)})(saveAgent)}catch(e){}
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

@@ -24,8 +24,8 @@ L.x_mag_timeline=(c,p,I)=>{c.fillStyle=PAPER;c.fillRect(0,0,W,H);masthead(c,p,NA
   const st=items(p).slice(0,6);const n=Math.max(1,st.length);const top=Math.max(b+150,430),bot=H-170,step=(bot-top)/Math.max(1,n-1||1);const x=W-M-38;
   hair(c,x,top,x,top+step*(n-1),NAVY,4);const cur=+(p.cur??-1);
   st.forEach((it,i)=>{const y=top+step*i;const on=i===cur;c.save();c.beginPath();c.arc(x,y,on?26:20,0,7);c.fillStyle=on?RED:(i<cur?TEAL:WHITE);c.fill();c.lineWidth=4;c.strokeStyle=on?RED:NAVY;c.stroke();c.restore();
-    T(c,String(it.v||String(i+1).padStart(2,'0')),x-58,y+12,{w:800,size:30,color:on?RED:TEAL});T(c,it.l||'',x-130,y+16,{w:on?800:700,size:on?46:40,color:NAVY});
-    if(on)pill(c,'אנחנו כאן',x-130,y+68,RED,WHITE,22)});
+    const vw=T(c,String(it.v||String(i+1).padStart(2,'0')),x-58,y+12,{w:800,size:30,color:on?RED:TEAL});const lx=Math.min(x-130,x-58-vw-28);T(c,it.l||'',lx,y+16,{w:on?800:700,size:on?46:40,color:NAVY});
+    if(on)pill(c,'אנחנו כאן',lx,y+68,RED,WHITE,22)});
   folio(c,NAVY,SLATE,LINE)};
 
 // 2 VERSUS · A or B, two halves and a question in the seam; the reply is one letter
@@ -57,7 +57,7 @@ L.x_mag_news=(c,p,I)=>{c.fillStyle=WHITE;c.fillRect(0,0,W,H);
   c.fillStyle=NAVY;c.fillRect(0,0,W,120);T(c,'מהענף',W-M,82,{w:900,size:44,color:WHITE});T(c,p.issue||'חדשות הבנייה והנדל"ן, בשפה פשוטה',M,78,{w:500,size:22,color:MIST,align:'left'});
   c.fillStyle=RED;c.fillRect(W-M-120,120,120,10);
   const its=items(p);const big=its.find(x=>/\d/.test(String(x.v)));let y=200;
-  if(big){const s=Math.min(240,Math.floor((W-2*M)/Math.max(1,String(big.v).length*.6)));T(c,String(big.v),W-M,y+s*.85,{w:900,size:s,color:NAVY,track:-.04});T(c,big.l||'',W-M,y+s*.85+56,{w:700,size:32,color:RED});y+=s+110}
+  if(big){const s=Math.min(240,Math.floor((W-2*M)/Math.max(1,String(big.v).length*.6)));T(c,String(big.v),W-M,y+s*.85,{w:900,size:s,color:NAVY,track:-.04,ltr:/^[\d.,%₪+\sKMk]+$/.test(String(big.v))});T(c,big.l||'',W-M,y+s*.85+56,{w:700,size:32,color:RED});y+=s+110}
   const F=fitHead(c,p.head||'',W-2*M,{max:big?68:96,min:48,lines:3,w:800});const b=drawHead(c,F,W-M,y,NAVY,{w:800});
   if(p.sub)para(c,p.sub,W-M,b+50,{size:32,maxW:W-2*M,color:SLATE,lines:3});
   const rest=its.filter(x=>x!==big).slice(0,3);let ry=Math.max(b+190,H-200-rest.length*70);rest.forEach(it=>{hair(c,M,ry-40,W-M,ry-40,LINE,1.5);T(c,String(it.v),W-M,ry+6,{w:800,size:34,color:TEAL});T(c,it.l||'',W-M-190,ry+6,{w:600,size:32,color:NAVY});ry+=70});

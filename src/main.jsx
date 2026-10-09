@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { I18nProvider } from './i18n/index.jsx'
 import App from './App.jsx'
+import ErrorBoundary, { reloadOnce } from './components/ErrorBoundary.jsx'
 import { initRipples } from './lib/ripple.js'
 import './styles/global.css'
 
@@ -24,17 +25,23 @@ for (const href of [import.meta.env.VITE_SUPABASE_URL, 'https://res.cloudinary.c
 const rootEl = document.getElementById('root')
 const ssr = rootEl.querySelector('.ssr')
 if (ssr) {
+  window.__kgPrerendered = ssr.innerHTML
   rootEl.querySelectorAll('style').forEach((st) => document.head.appendChild(st))
   ssr.remove()
 }
 
+/* קובץ קוד שלא נטען (בדרך כלל: עמוד ישן אחרי פריסה חדשה) → טעינה מחדש אחת */
+window.addEventListener('vite:preloadError', () => { reloadOnce('preload') })
+
 createRoot(rootEl).render(
   <StrictMode>
-    <BrowserRouter>
-      <I18nProvider>
-        <App />
-      </I18nProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <I18nProvider>
+          <App />
+        </I18nProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>
 )
 

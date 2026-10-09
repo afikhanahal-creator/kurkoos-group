@@ -7293,9 +7293,9 @@ L.x_b_annotate=(c,p,I)=>{c.fillStyle=NAVY;c.fillRect(0,0,W,H);const ph=840;photo
   tag(c,p.label||'מה רואים כאן',RED,WHITE,96);const its=items(p).slice(0,4);const r=rnd((p.seed||7)*31);
   const spots=[[.28,.40],[.70,.55],[.42,.74],[.78,.30]];its.forEach((it,i)=>{const [fx,fy]=spots[i];const x=fx*W+(r()-.5)*90,y=fy*ph+(r()-.5)*60;
     c.save();c.strokeStyle=WHITE;c.lineWidth=6;c.beginPath();c.ellipse(x,y,78,64,-.3,0.2,6.6);c.stroke();c.strokeStyle=RED;c.lineWidth=5;c.beginPath();c.ellipse(x+3,y-2,84,70,-.25,0.4,6.5);c.stroke();
-    c.fillStyle=RED;c.beginPath();c.arc(x,y,36,0,7);c.fill();c.restore();T(c,it.v||String(i+1),x,y+15,{w:900,size:42,color:WHITE,align:'center'})});
+    c.fillStyle=RED;c.beginPath();c.arc(x,y,36,0,7);c.fill();c.restore();T(c,String(i+1),x,y+15,{w:900,size:42,color:WHITE,align:'center'})});
   const F=fit(c,p.head,W-2*M,{max:78,min:72,lines:2});let y=head(c,F,W-M,ph+30,WHITE);y+=56;
-  const colW=(W-2*M)/2;its.forEach((it,i)=>{const x=W-M-(i%2)*colW,yy=y+Math.floor(i/2)*62;c.fillStyle=RED;c.beginPath();c.arc(x-20,yy-12,20,0,7);c.fill();T(c,it.v||String(i+1),x-20,yy-1,{w:900,size:26,color:WHITE,align:'center'});T(c,it.l,x-54,yy,{w:600,size:34,color:WHITE})});
+  const colW=(W-2*M)/2;its.forEach((it,i)=>{const x=W-M-(i%2)*colW,yy=y+Math.floor(i/2)*62;c.fillStyle=RED;c.beginPath();c.arc(x-20,yy-12,20,0,7);c.fill();T(c,String(i+1),x-20,yy-1,{w:900,size:26,color:WHITE,align:'center'});T(c,(/^0\d$/.test(it.v)||!it.v||it.v===String(i+1)?'':it.v+' ')+it.l,x-54,yy,{w:600,size:34,color:WHITE})});
   foot(c,true)};
 
 // 6 HOT TAKE · one opinion, very large, with the red quote marks

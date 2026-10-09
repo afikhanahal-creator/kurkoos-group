@@ -5,18 +5,13 @@ const say=m=>{try{toast(m)}catch(e){console.log(m)}};
 // ---------- 1. created date ----------
 // ids from uid() start with Date.now() in base 36, so the creation time of every post made in the engine is known.
 const T0=Date.UTC(2024,0,1),T1=()=>Date.now()+864e5;
-function fromId(id){const m=String(id||'').match(/^[a-z]?([0-9a-z]{8})/);if(!m)return 0;const t=parseInt(m[1],36);return t>T0&&t<T1()?t:0}
-function createdOf(p){if(!p)return 0;if(p.created){const t=Date.parse(p.created);if(t)return t}return fromId(p.id)}
+function fromId(id){const s=String(id||'');for(const k of [0,1]){const c=s.slice(k,k+8);if(!/^[0-9a-z]{8}$/.test(c))continue;const t=parseInt(c,36);if(t>T0&&t<T1())return t}return 0}
+function createdOf(p){if(!p)return 0;const t=fromId(p.id);if(t)return t;if(p.created){const c=Date.parse(p.created);if(c)return c}return 0}
 const pad=n=>String(n).padStart(2,'0');
 function fmtC(t){const d=new Date(t);return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)} · ${pad(d.getHours())}:${pad(d.getMinutes())}`}
 function createdHtml(p){const t=createdOf(p);return t?`<span class="v152c" title="נוצר במערכת ${esc2(new Date(t).toLocaleString('he-IL'))}">נוצר ${fmtC(t)}</span>`:''}
 window.__v152c=createdHtml;
-// posts that appear after load get a stamp (ids that do not carry a time, like imported ones)
-const KNOWN=new Set();let booted=false;
-function stamp(){try{if(!booted){(AG.posts||[]).forEach(p=>KNOWN.add(p.id));booted=true;return}
-  const now=new Date().toISOString();(AG.posts||[]).forEach(p=>{if(!p||KNOWN.has(p.id))return;KNOWN.add(p.id);if(!p.created)p.created=fromId(p.id)?new Date(fromId(p.id)).toISOString():now})}catch(e){}}
-setTimeout(stamp,0);
-const _save=saveAgent;saveAgent=function(){stamp();return _save.apply(this,arguments)};
+// (no stamping at load: the id carries the creation time of every post made in the engine)
 
 // ---------- 2. photos → posts with the agent ----------
 const G={busy:false,stop:false};
@@ -33,7 +28,7 @@ async function genFromPhotos(keys,n){const v=window.__v48;if(!v||!v.genFor){say(
     it._file=await blobOf(k);ib.items.unshift(it);
     try{made+=await v.genFor(it)||0}catch(e){console.error('v152 gen',e)}}
   }finally{T.splice(0,T.length,...orig);ib.n=keepN;G.busy=false;bar('')}
-  stamp();try{saveAgent()}catch(e){}
+  try{saveAgent()}catch(e){}
   say(made?`נוצרו ${made} פוסטים מ־${done} תמונות. הם מחכים בגלריית הפוסטים, החדשים ראשונים. שום דבר לא פורסם`:'לא נוצרו פוסטים. נסו שוב');
   if(made){try{if(typeof GA!=='undefined'&&GA.f){GA.f.sort='new';GA.f.st='';GA.f.ser='';GA.f.q='';GA.f.proj='';GA.f.fam=''}}catch(e){}
     const S=window.__v148&&__v148.S;if(S){S.sel.clear();S.selMode=false}

@@ -1076,6 +1076,20 @@ body.v152drag .v144::before{content:"שחררו כאן כדי להעלות את 
 @media (max-width:760px){.v153 .v153main{padding:14px 12px}.px-card2 header.v153h,.v153h{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"av id" "st st";gap:10px 12px}.v153av{width:52px;height:52px}.v153id b{font-size:17px}.v153id span{font-size:13px}.v153 .v153st{display:grid;grid-template-columns:1fr 1fr;gap:6px}.v153st>div{min-width:0;padding:7px 10px}.v153st dd{font-size:15px}.v153st dt{font-size:11.5px}.v153cols{display:none}.px-feedv.v153 .px-feed,.px-feedv.v153.c4 .px-feed{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}.v153 .px-feed figcaption{font-size:11px;padding:18px 5px 5px;padding-inline-end:40px;justify-content:flex-start}.v153 .px-feed figcaption b{display:none}.v153e{height:28px;padding:0 9px;font-size:12px;top:5px;inset-inline-start:5px}}
 @media (prefers-reduced-motion:reduce){.v153 .px-feed canvas,.v153e{transition:none}}
 </style>
+<style id="k156">
+/* V156 · QA: one X per window, touch targets, overlaps */
+body.ga-lb-on #v135x,body.pe-open #v135x,body:has(#cmp-root) #v135x{display:none!important}
+@media (max-width:860px){
+ .ga-lb button,.ga-lbh button{min-height:44px;min-width:44px}
+ .kc-tabs button,.st-tabs button,[role="tablist"] button{min-height:44px}
+ a.v28-adm{min-height:44px;padding:8px 0}
+ .px-ck{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+ input[type="checkbox"]{min-width:22px;min-height:22px}
+ #v110bar{position:static!important}
+}
+.tv-fav{z-index:3}
+.v156dmore{display:block;margin:10px auto 4px}
+</style>
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -11629,7 +11643,7 @@ function vIdeas(){const inS=new Set(APP.sched.items.map(i=>i.key||i.pid));let dr
   const card=p=>`<div class="bc"><canvas data-tp="${p.id}" width="128" height="160" aria-hidden="true"></canvas><div><b>${esc(stripStars(p.visual.headline||p.hook).replace(/\n/g,' ').slice(0,70))}</b><p>${esc(ED_NAMES[p.layout]||'')}${p.compName?' · בהשראת '+esc(p.compName):''}${p.article?' · מכתבה':''}</p></div><div class="ba"><button class="ibtn sm pri" type="button" data-app="sched" data-pid="${p.id}">${ico('clock',15)} תזמון</button><button class="ibtn sm" type="button" data-app="studio" data-pid="${p.id}">${ico('edit',15)} עיצוב</button><button class="ibtn sm" type="button" data-app="copyp" data-pid="${p.id}" aria-label="העתק טקסט">${ico('copy',15)}</button><button class="ibtn sm red" type="button" data-app="delp" data-pid="${p.id}" aria-label="מחק טיוטה">${ico('trash',15)}</button></div></div>`;
   return `<div class="kc-chips" style="margin-bottom:8px">${[['all','הכל'],['comp','בהשראת מתחרים'],['article','מכתבות'],['studio','מהסטודיו'],['agent','מהסוכן']].map(([k,l])=>`<button type="button" data-app="bf" data-k="${k}" aria-pressed="${APP.bf===k}">${l}</button>`).join('')}</div>${SER.length?`<div class="kc-row" style="margin-bottom:12px"><span class="muted" style="font-size:13px">סדרות:</span><div class="kc-chips">${SER.map(x=>`<button type="button" data-app="bf" data-k="ser:${esc(x)}" aria-pressed="${APP.bf==='ser:'+x}">${esc(x)} (${AG.posts.filter(p=>p.series===x&&!inS.has(p.key||p.id)).length})</button>`).join('')}</div>${APP.bf.startsWith('ser:')?`<button class="ibtn sm pri" type="button" data-app="schedser">${ico('clock',15)} תזמן את כל הסדרה</button>`:''}</div>`:''}
   <div class="board"><section class="bcol" aria-label="רעיונות"><header>רעיונות<span>${ideas.length}</span></header>${ideas.map((x,i)=>`<div class="bc idea"><div><b>${esc(x.t)}</b><p>${esc(x.why||'')}</p></div><div class="ba"><button class="ibtn sm pri" type="button" data-app="idea" data-i="${i}">${ico('wand',15)} צור</button></div></div>`).join('')}<button class="qslot" type="button" data-app="new">${ico('plus',16)} רעיון חדש</button></section>
-  <section class="bcol" aria-label="טיוטות"><header>טיוטות<span>${drafts.length}</span></header>${drafts.slice(0,40).map(card).join('')||'<div class="empty">אין טיוטות בסינון הזה.</div>'}</section>
+  <section class="bcol" aria-label="טיוטות"><header>טיוטות<span>${drafts.length}</span></header>${drafts.slice(0,window.__v156dl||40).map(card).join('')||'<div class="empty">אין טיוטות בסינון הזה.</div>'}${drafts.length>(window.__v156dl||40)?'<button type="button" class="px-btn sm v156dmore" data-v156="dmore">טען עוד טיוטות</button>':''}</section>
   <section class="bcol" aria-label="מוכן לפרסום"><header>מוכן לפרסום<span>${ready.length}</span></header>${ready.map(i=>`<div class="bc"><canvas data-ti="${i.id}" width="128" height="160" aria-hidden="true"></canvas><div><b>${esc((i.label||itemText(i,'fb')).replace(/\n/g,' ').slice(0,64))}</b><p>${fmtD(i.at)} ${hm(i.at)} · ${stOf(i.status)[1]}</p></div><div class="ba"><button class="ibtn sm" type="button" data-app="edit" data-id="${i.id}">${ico('edit',15)} עריכה</button></div></div>`).join('')||'<div class="empty">סמנו פוסטים כ"מוכן" או "מאושר".</div>'}</section></div>`}
 
 // ---------- COMPETITORS ----------
@@ -20595,18 +20609,13 @@ const say=m=>{try{toast(m)}catch(e){console.log(m)}};
 // ---------- 1. created date ----------
 // ids from uid() start with Date.now() in base 36, so the creation time of every post made in the engine is known.
 const T0=Date.UTC(2024,0,1),T1=()=>Date.now()+864e5;
-function fromId(id){const m=String(id||'').match(/^[a-z]?([0-9a-z]{8})/);if(!m)return 0;const t=parseInt(m[1],36);return t>T0&&t<T1()?t:0}
-function createdOf(p){if(!p)return 0;if(p.created){const t=Date.parse(p.created);if(t)return t}return fromId(p.id)}
+function fromId(id){const s=String(id||'');for(const k of [0,1]){const c=s.slice(k,k+8);if(!/^[0-9a-z]{8}$/.test(c))continue;const t=parseInt(c,36);if(t>T0&&t<T1())return t}return 0}
+function createdOf(p){if(!p)return 0;const t=fromId(p.id);if(t)return t;if(p.created){const c=Date.parse(p.created);if(c)return c}return 0}
 const pad=n=>String(n).padStart(2,'0');
 function fmtC(t){const d=new Date(t);return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)} · ${pad(d.getHours())}:${pad(d.getMinutes())}`}
 function createdHtml(p){const t=createdOf(p);return t?`<span class="v152c" title="נוצר במערכת ${esc2(new Date(t).toLocaleString('he-IL'))}">נוצר ${fmtC(t)}</span>`:''}
 window.__v152c=createdHtml;
-// posts that appear after load get a stamp (ids that do not carry a time, like imported ones)
-const KNOWN=new Set();let booted=false;
-function stamp(){try{if(!booted){(AG.posts||[]).forEach(p=>KNOWN.add(p.id));booted=true;return}
-  const now=new Date().toISOString();(AG.posts||[]).forEach(p=>{if(!p||KNOWN.has(p.id))return;KNOWN.add(p.id);if(!p.created)p.created=fromId(p.id)?new Date(fromId(p.id)).toISOString():now})}catch(e){}}
-setTimeout(stamp,0);
-const _save=saveAgent;saveAgent=function(){stamp();return _save.apply(this,arguments)};
+// (no stamping at load: the id carries the creation time of every post made in the engine)
 
 // ---------- 2. photos → posts with the agent ----------
 const G={busy:false,stop:false};
@@ -20623,7 +20632,7 @@ async function genFromPhotos(keys,n){const v=window.__v48;if(!v||!v.genFor){say(
     it._file=await blobOf(k);ib.items.unshift(it);
     try{made+=await v.genFor(it)||0}catch(e){console.error('v152 gen',e)}}
   }finally{T.splice(0,T.length,...orig);ib.n=keepN;G.busy=false;bar('')}
-  stamp();try{saveAgent()}catch(e){}
+  try{saveAgent()}catch(e){}
   say(made?`נוצרו ${made} פוסטים מ־${done} תמונות. הם מחכים בגלריית הפוסטים, החדשים ראשונים. שום דבר לא פורסם`:'לא נוצרו פוסטים. נסו שוב');
   if(made){try{if(typeof GA!=='undefined'&&GA.f){GA.f.sort='new';GA.f.st='';GA.f.ser='';GA.f.q='';GA.f.proj='';GA.f.fam=''}}catch(e){}
     const S=window.__v148&&__v148.S;if(S){S.sel.clear();S.selMode=false}
@@ -20673,13 +20682,32 @@ window.__v154=['x_mag_cover','x_mag_break','x_mag_numeral','x_mag_myth','x_mag_t
 (function(){
 const SIG='קבוצת קורקוס. מקרקע ועד מסירת מפתח.',TAGS='#קבוצתקורקוס #בנייתוילות #הודהשרון';
 const RX=/^([\s\S]*?)קבוצת קורקוס(?:\.|\s·)\s*מקרקע ועד מסירת מפתח\.?[ \t]*(?:\n[ \t]*055-981-1814[ \t]*(?:·[ \t]*(\S+))?)?[ \t]*(?:\n[ \t]*(kurkoos-group\.co\.il\S*))?\s*((?:#[^\n]*\s*)*)$/;
-function fixSig(fb){if(typeof fb!=='string')return fb;const m=fb.match(RX);if(!m)return fb;
+const RX0=/^([\s\S]*?)(?:\n[ \t]*(https?:\/\/\S+|kurkoos-group\.co\.il\S*)[ \t]*)?\s*((?:#[^\n]*\s*)*)$/;
+const DONE=/קבוצת קורקוס\. מקרקע ועד מסירת מפתח\.\n\n055-981-1814\n\nhttps?:\/\/\S+\n\n#[^\n]*$/;
+function fixSig(fb){if(typeof fb!=='string'||fb.trim().length<20||DONE.test(fb))return fb;let m=fb.match(RX);if(!m){if(/מקרקע ועד מסירת מפתח/.test(fb))return fb;const z=fb.match(RX0);if(!z)return fb;m=[fb,z[1],z[2],null,z[3]]}
   let body=m[1].replace(/[ \t\n]+$/,'').replace(/\n\n[^\n]{0,40}055-981-1814\.?$/,'').replace(/[ \t\n]+$/,'');
   let link=m[2]||m[3]||'kurkoos-group.co.il';if(!/^https?:\/\//.test(link))link='https://www.'+link.replace(/^www\./,'');
   let tags=(m[4]||'').replace(/\s+/g,' ').trim()||TAGS;
   return `${body}\n\n${SIG}\n\n055-981-1814\n\n${link}\n\n${tags}`}
 window.__v155={fixSig};
 try{saveAgent=(f=>function(){try{(AG.posts||[]).forEach(p=>{if(p&&typeof p.fb==='string'){const n=fixSig(p.fb);if(n!==p.fb)p.fb=n}})}catch(e){}return f.apply(this,arguments)})(saveAgent)}catch(e){}
+})();
+
+// ================= V156 · QA round: the editor closes in one tap and keeps every edit, the lightbox gives way to the editor,
+//                   the bottom bar follows the view, no false "storage full" message, the drafts column loads more =================
+(function(){
+// 1. opening the editor from the big preview closes the preview: one window, one X
+try{peOpen=(f=>function(){try{if(typeof GA!=='undefined'&&GA.lb){GA.lb=null;gaLbRender()}}catch(e){}return f.apply(this,arguments)})(peOpen)}catch(e){}
+// 2. closing the editor with changes saves them (one tap, nothing lost); the toast says so
+try{peClose=(f=>function(force){try{if(!force&&typeof PE!=='undefined'&&PE.p&&PE.orig&&typeof peDirty==='function'&&peDirty()){peSave('עריכה בסטודיו');const r=f.call(this,true);try{toast('השינויים נשמרו')}catch(e){}return r}}catch(e){console.error('v156 close',e)}return f.apply(this,arguments)})(peClose)}catch(e){}
+// 3. the bottom bar marks the open view, or nothing when the view has no tab of its own
+function navSync(){const v=(typeof APP!=='undefined'&&APP.view)||'';document.querySelectorAll('#v99nav [data-v99nav]').forEach(b=>{if(b.dataset.v99nav===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})}
+try{go=(f=>function(){const r=f.apply(this,arguments);try{navSync()}catch(e){}return r})(go)}catch(e){}
+try{render=(f=>function(){const r=f.apply(this,arguments);try{navSync()}catch(e){}return r})(render)}catch(e){}
+// 4. the posts live in the cloud; a full browser storage is handled quietly instead of a message after every save
+try{v31StorageWarn=function(){try{console.warn('local storage full, cloud copy is the source of truth')}catch(e){}}}catch(e){}
+// 5. drafts column in "רעיונות וטיוטות": more cards on demand (and by the endless scroll)
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-v156="dmore"]');if(!b)return;window.__v156dl=(window.__v156dl||40)+40;try{render()}catch(e){}});
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

@@ -38,9 +38,9 @@ L.x_mag_versus=(c,p,I)=>{const its=items(p);const a=its[0]||{v:'א',l:''},b2=its
   const fa=fitHead(c,a.l||'',W-2*M-80,{max:72,min:44,lines:2,w:800});drawHead(c,fa,W-M,H/2-90-fa.lh*fa.ls.length,WHITE,{w:800});
   const fb=fitHead(c,b2.l||'',W-2*M-80,{max:72,min:44,lines:2,w:800});drawHead(c,fb,W-M,H/2+120,NAVY,{w:800});
   // the seam: the question
-  const q=p.head||'';c.save();c.font=A(800,40);const qw=Math.min(W-2*M,c.measureText(ISO(q)).width+80);c.restore();
-  c.save();c.fillStyle=RED;c.beginPath();c.roundRect?c.roundRect(W/2-qw/2,H/2-46,qw,92,46):c.rect(W/2-qw/2,H/2-46,qw,92);c.fill();c.restore();
-  const F=fitHead(c,q,qw-60,{max:40,min:28,lines:1,w:800});c.save();c.font=A(800,F.size);c.fillStyle=WHITE;c.direction='rtl';c.textAlign='center';c.fillText(F.ls[0]||'',W/2,H/2+F.size*.35);c.restore();
+  const q=p.head||'';c.save();c.font=A(800,50);const qw=Math.min(W-2*M,c.measureText(ISO(q)).width+96);c.restore();
+  c.save();c.fillStyle=RED;c.beginPath();c.roundRect?c.roundRect(W/2-qw/2,H/2-56,qw,112,56):c.rect(W/2-qw/2,H/2-56,qw,112);c.fill();c.restore();
+  const F=fitHead(c,q,qw-70,{max:50,min:30,lines:1,w:800});c.save();c.font=A(800,F.size);c.fillStyle=WHITE;c.direction='rtl';c.textAlign='center';c.fillText(F.ls[0]||'',W/2,H/2+F.size*.35);c.restore();
   if(p.cta)pill(c,p.cta,W-M,H-150,TEAL,WHITE,26);folio(c,NAVY,SLATE,LINE)};
 
 // 3 QUESTION · one open question, very large, a quiet "?" behind it and the reply prompt

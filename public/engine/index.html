@@ -20886,6 +20886,13 @@ try{Object.assign(DEST,{x_mag_versus:[1080,675]})}catch(e){}
 try{window.__v154=(window.__v154||[]).concat(['x_mag_timeline','x_mag_versus','x_mag_question','x_mag_news'])}catch(e){}
 })();
 
+// ================= V159 · the side menu counts templates the way the page shows them (twins are hidden on the page)
+(function(){
+function fix(){try{const n=TPL.specs.filter(s=>!s.twin).length;document.querySelectorAll('button.nav[data-view="templates"] .cnt,[data-view="templates"] .cnt').forEach(c=>{if(c.textContent!==String(n))c.textContent=n})}catch(e){}}
+if(typeof render==='function')render=(f=>function(){const r=f.apply(this,arguments);fix();return r})(render);
+setTimeout(fix,0);
+})();
+
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){
 const orig=window.open.bind(window);

@@ -34,6 +34,11 @@ export default defineConfig({
           /* מודולים משותפים לאתר ולאדמין (מילוני i18n, lib) מקובעים לצ'אנק 'shared' —
              אחרת Rollup עלול לשבץ אותם בתוך צ'אנק האדמין ולגרור אותו לכל ביקור. */
           if (id.includes('/src/lib/') || id.includes('/src/i18n/')) return 'shared'
+          /* נתוני האתר, hooks ורכיבי UI שגם האדמין משתמש בהם. בלי השורות האלה
+             Rollup שיבץ אותם בצ'אנק האדמין, וכל גולש באתר הוריד את כל קוד ה-CSS
+             וה-JS של האדמין לפני שראה את העמוד (כ-250KB, כ-15 שניות ברשת איטית). */
+          if (/\/src\/data\/(activities|testimonials|logos|projects|divisions|executionGallery|villasPage)\.js$/.test(id)) return 'site-data'
+          if (id.includes('/src/components/ui/Toaster')) return 'shared'
           if (id.includes('/src/pages/admin/') || id.includes('/src/components/admin/')) return 'admin'
         },
       },

@@ -1,0 +1,40 @@
+<style id="k157">
+/* V157 · save and schedule sheet (ui-ux-pro-max: progress indicator, 44px targets, visible focus, one primary action) */
+#v157{position:fixed;inset:0;z-index:10200;display:grid;place-items:center}
+.v157bg{position:absolute;inset:0;background:rgba(7,41,58,.55)}
+.v157{position:relative;width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;background:#fff;color:#07293a;border-radius:20px;box-shadow:0 24px 60px rgba(7,41,58,.35);padding:20px 20px 0;display:flex;flex-direction:column;gap:14px;font-family:Almoni,Arial,sans-serif}
+.v157h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.v157h b{font-size:20px;font-weight:800}
+.v157x{width:44px;height:44px;border-radius:12px;border:1px solid #dbe8ee;background:#fff;color:#07293a;font-size:18px;cursor:pointer}
+.v157steps{list-style:none;margin:0;padding:0;display:flex;gap:6px}
+.v157steps li{border:0!important;box-shadow:none!important;flex:1;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:#f2f7fa;color:#4a6575;font-size:14px;font-weight:700}
+.v157steps li i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#dbe8ee;color:#07293a;font-style:normal;font-size:13px}
+.v157steps li.ok i{background:#105572;color:#fff}.v157steps li.on{background:#07293a;color:#fff}.v157steps li.on i{background:#a90b0c;color:#fff}
+.v157post{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:14px;border:1px solid #e3ebf0;background:#f7f8fa}
+.v157hd{font-size:16px;font-weight:700;line-height:1.35}
+.v157dirty{font-size:13px;color:#105572;font-weight:700}
+.v157set{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.v157set legend{font-size:14px;font-weight:700;color:#4a6575;margin-bottom:6px}
+.v157chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.v157chip,.v157net{min-height:48px;padding:0 12px;border-radius:12px;border:1.5px solid #d7e3ea;background:#fff;color:#07293a;font:700 15px Almoni,Arial,sans-serif;cursor:pointer;text-align:center}
+.v157chip[aria-pressed="true"],.v157net[aria-pressed="true"]{background:#07293a;border-color:#07293a;color:#fff}
+.v157net[aria-pressed="true"]::before{content:"✓ "}
+.v157nets{display:flex;gap:8px}.v157net{flex:1}
+.v157none{grid-column:1/-1;font-size:14px;color:#4a6575}
+.v157exact{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700;color:#4a6575}
+.v157exact input{min-height:48px;border-radius:12px;border:1.5px solid #d7e3ea;padding:0 12px;font:600 16px Almoni,Arial,sans-serif;color:#07293a;background:#fff}
+.v157f{position:sticky;bottom:0;display:flex;flex-direction:column;gap:8px;padding:12px 0 calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(255,255,255,0),#fff 18%)}
+.v157f .px-btn{min-height:52px;font-size:16px;border-radius:14px;justify-content:center}
+.v157go:disabled{opacity:.5;cursor:not-allowed}
+.v157ok{display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:16px;background:#eef6f9;border:1px solid #cfe3ec}
+.v157ok b{font-size:22px;font-weight:800;color:#105572}.v157ok span{font-size:17px;font-weight:700}.v157ok small{font-size:14px;color:#4a6575}
+#v157 button:focus-visible,#v157 input:focus-visible{outline:3px solid #a90b0c;outline-offset:2px}
+@media (max-width:640px){#v157{place-items:end center}.v157{width:100vw;max-height:92dvh;border-radius:22px 22px 0 0;padding:16px 16px 0}.v157steps li{padding:8px 6px;font-size:13px}}
+@media (prefers-reduced-motion:no-preference){.v157{animation:v157in .22s cubic-bezier(.22,1,.36,1)}@keyframes v157in{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}}
+body.v157on #v135x{display:none!important}
+/* phone: scheduling is one tap away in the editor's top bar (it was hidden in the overflow menu) */
+@media (max-width:860px){#pe-root .pe-acts [data-pe-a="sched"]{display:inline-flex!important;align-items:center;gap:4px;background:#a90b0c!important;border-color:#a90b0c!important;color:#fff!important;min-height:40px}}
+/* QA leftovers */
+.v124more{min-height:40px!important;padding:0 16px!important;border:1.5px solid #105572!important;border-radius:999px!important;color:#105572!important;font-weight:700!important;background:#fff!important}
+.tv-fav{top:8px!important;inset-inline-end:8px!important}
+</style>

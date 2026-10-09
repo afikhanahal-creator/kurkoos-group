@@ -1090,6 +1090,46 @@ body.ga-lb-on #v135x,body.pe-open #v135x,body:has(#cmp-root) #v135x{display:none
 .tv-fav{z-index:3}
 .v156dmore{display:block;margin:10px auto 4px}
 </style>
+<style id="k157">
+/* V157 · save and schedule sheet (ui-ux-pro-max: progress indicator, 44px targets, visible focus, one primary action) */
+#v157{position:fixed;inset:0;z-index:10200;display:grid;place-items:center}
+.v157bg{position:absolute;inset:0;background:rgba(7,41,58,.55)}
+.v157{position:relative;width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;background:#fff;color:#07293a;border-radius:20px;box-shadow:0 24px 60px rgba(7,41,58,.35);padding:20px 20px 0;display:flex;flex-direction:column;gap:14px;font-family:Almoni,Arial,sans-serif}
+.v157h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.v157h b{font-size:20px;font-weight:800}
+.v157x{width:44px;height:44px;border-radius:12px;border:1px solid #dbe8ee;background:#fff;color:#07293a;font-size:18px;cursor:pointer}
+.v157steps{list-style:none;margin:0;padding:0;display:flex;gap:6px}
+.v157steps li{border:0!important;box-shadow:none!important;flex:1;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:#f2f7fa;color:#4a6575;font-size:14px;font-weight:700}
+.v157steps li i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#dbe8ee;color:#07293a;font-style:normal;font-size:13px}
+.v157steps li.ok i{background:#105572;color:#fff}.v157steps li.on{background:#07293a;color:#fff}.v157steps li.on i{background:#a90b0c;color:#fff}
+.v157post{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:14px;border:1px solid #e3ebf0;background:#f7f8fa}
+.v157hd{font-size:16px;font-weight:700;line-height:1.35}
+.v157dirty{font-size:13px;color:#105572;font-weight:700}
+.v157set{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.v157set legend{font-size:14px;font-weight:700;color:#4a6575;margin-bottom:6px}
+.v157chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.v157chip,.v157net{min-height:48px;padding:0 12px;border-radius:12px;border:1.5px solid #d7e3ea;background:#fff;color:#07293a;font:700 15px Almoni,Arial,sans-serif;cursor:pointer;text-align:center}
+.v157chip[aria-pressed="true"],.v157net[aria-pressed="true"]{background:#07293a;border-color:#07293a;color:#fff}
+.v157net[aria-pressed="true"]::before{content:"✓ "}
+.v157nets{display:flex;gap:8px}.v157net{flex:1}
+.v157none{grid-column:1/-1;font-size:14px;color:#4a6575}
+.v157exact{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700;color:#4a6575}
+.v157exact input{min-height:48px;border-radius:12px;border:1.5px solid #d7e3ea;padding:0 12px;font:600 16px Almoni,Arial,sans-serif;color:#07293a;background:#fff}
+.v157f{position:sticky;bottom:0;display:flex;flex-direction:column;gap:8px;padding:12px 0 calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(255,255,255,0),#fff 18%)}
+.v157f .px-btn{min-height:52px;font-size:16px;border-radius:14px;justify-content:center}
+.v157go:disabled{opacity:.5;cursor:not-allowed}
+.v157ok{display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:16px;background:#eef6f9;border:1px solid #cfe3ec}
+.v157ok b{font-size:22px;font-weight:800;color:#105572}.v157ok span{font-size:17px;font-weight:700}.v157ok small{font-size:14px;color:#4a6575}
+#v157 button:focus-visible,#v157 input:focus-visible{outline:3px solid #a90b0c;outline-offset:2px}
+@media (max-width:640px){#v157{place-items:end center}.v157{width:100vw;max-height:92dvh;border-radius:22px 22px 0 0;padding:16px 16px 0}.v157steps li{padding:8px 6px;font-size:13px}}
+@media (prefers-reduced-motion:no-preference){.v157{animation:v157in .22s cubic-bezier(.22,1,.36,1)}@keyframes v157in{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}}
+body.v157on #v135x{display:none!important}
+/* phone: scheduling is one tap away in the editor's top bar (it was hidden in the overflow menu) */
+@media (max-width:860px){#pe-root .pe-acts [data-pe-a="sched"]{display:inline-flex!important;align-items:center;gap:4px;background:#a90b0c!important;border-color:#a90b0c!important;color:#fff!important;min-height:40px}}
+/* QA leftovers */
+.v124more{min-height:40px!important;padding:0 16px!important;border:1.5px solid #105572!important;border-radius:999px!important;color:#105572!important;font-weight:700!important;background:#fff!important}
+.tv-fav{top:8px!important;inset-inline-end:8px!important}
+</style>
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -7104,6 +7144,76 @@ Object.keys(L).forEach(k=>{const f=L[k];L[k]=(c,p,I)=>{f(c,p,I);if(p.tag)pill(c,
 G.FX.L=G.FX.L||{};Object.assign(G.FX.L,L);G.FX9=L;
 })(window);
 /*FX9:END*/
+/*FX10:START*/
+// ---------- Kurkoos "MAGAZINE 2" · four more editorial layouts: a stage line, A or B, the open question, industry news with its source ----------
+(function(G){
+const {A,TH,shot,M}=G.FX4H;const W=1080,H=1350;
+const NAVY='#07293a',NAVY2='#0b1f2a',TEAL='#105572',MIST='#8fb6c8',MIST1='#e7eef1',PAPER='#f7f8fa',RED='#a90b0c',SLATE='#4a5866',LINE='#cbd2db',WHITE='#ffffff';
+const LS=(c,v)=>{try{c.letterSpacing=v}catch(e){}};
+const ISO=t=>String(t??'').replace(/(\d+(?:[.,]\d+)?)\s*[×x]\s*(\d+(?:[.,]\d+)?)/g,'⁦$1×$2⁩').replace(/(\d[\d,.]*(?:[-/:]\d[\d,.]*)*[+%]?)/g,'⁦$1⁩');
+const hair=(c,x1,y1,x2,y2,col,w=1.5)=>{c.save();c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.restore()};
+function T(c,t,x,y,o){t=ISO(t);c.save();c.font=A(o.w||400,o.size);LS(c,((o.track??0)*o.size).toFixed(1)+'px');c.direction=o.ltr?'ltr':'rtl';c.textAlign=o.align||'right';c.fillStyle=o.color||NAVY;c.fillText(t,x,y);const w=c.measureText(t).width;c.restore();LS(c,'0px');return w}
+function wrapW(c,t,maxW){const out=[];String(t||'').split('\n').forEach(par=>{let cur='';par.split(/\s+/).filter(Boolean).forEach(w=>{const n=cur?cur+' '+w:w;if(c.measureText(n).width>maxW&&cur){out.push(cur);cur=w}else cur=n});if(cur)out.push(cur)});return out}
+function para(c,t,x,y,o){const sz=o.size;c.save();c.font=A(o.w||400,sz);const ls=wrapW(c,t,o.maxW).slice(0,o.lines||3);const lh=sz*(o.lh||1.32);c.direction='rtl';c.textAlign=o.align||'right';c.fillStyle=o.color||NAVY;ls.forEach((l,i)=>c.fillText(ISO(l),x,y+i*lh));c.restore();return y+(ls.length-1)*lh}
+function fitHead(c,t,maxW,o){let size=o.max||150;const min=o.min||54;let ls;for(;;){c.font=A(o.w||900,size);LS(c,((o.track??-.02)*size).toFixed(1)+'px');ls=wrapW(c,ISO(t),maxW);LS(c,'0px');if(ls.length<=(o.lines||3)||size<=min)break;size-=4}return{size,ls,lh:size*(o.lh||1.0)}}
+function drawHead(c,F,x,y,col,o={}){c.save();c.font=A(o.w||900,F.size);LS(c,((o.track??-.02)*F.size).toFixed(1)+'px');c.direction='rtl';c.textAlign=o.align||'right';c.fillStyle=col;F.ls.forEach((l,i)=>c.fillText(l,x,y+F.size*.82+i*F.lh));c.restore();LS(c,'0px');return y+F.size*.82+(F.ls.length-1)*F.lh+F.size*.2}
+function pill(c,t,xr,y,bg,fg,size=24){c.save();c.font=A(700,size);const tw=c.measureText(ISO(t)).width,ph=size*1.7,pw=tw+size*1.3;c.fillStyle=bg;c.beginPath();c.roundRect?c.roundRect(xr-pw,y-ph*.72,pw,ph,ph/2):c.rect(xr-pw,y-ph*.72,pw,ph);c.fill();c.fillStyle=fg;c.direction='rtl';c.textAlign='center';c.fillText(ISO(t),xr-pw/2,y);c.restore();return pw}
+function items(p){return (p.items||[]).map(it=>Array.isArray(it)?{v:it[0],l:it[1]}:{v:it.v??it.big??'',l:it.l??it.label??''}).filter(x=>x.v!==''||x.l)}
+function folio(c,fg,sub,line){hair(c,M,H-98,W-M,H-98,line,1);const w=T(c,'קבוצת קורקוס',W-M,H-58,{w:700,size:22,color:fg});T(c,'מקרקע ועד מסירת מפתח',W-M-w-18,H-58,{w:500,size:22,color:sub});T(c,'kurkoos-group.co.il',M,H-58,{size:21,color:sub,align:'left',ltr:true})}
+function masthead(c,p,fg,sub,def){c.save();c.fillStyle=RED;c.fillRect(W-M-16,63,16,16);c.restore();T(c,p.label||def||'מגזין קורקוס',W-M-30,78,{w:700,size:24,color:fg,track:.04});T(c,p.issue||'מגזין הבנייה של קבוצת קורקוס',M,78,{w:500,size:22,color:sub,align:'left'})}
+const L={};
+
+// 1 TIMELINE · the stages down a measured line; a highlighted station when the post says where we are
+L.x_mag_timeline=(c,p,I)=>{c.fillStyle=PAPER;c.fillRect(0,0,W,H);masthead(c,p,NAVY,SLATE,'שלב אחר שלב');
+  const F=fitHead(c,p.head||'',W-2*M,{max:86,min:52,lines:2,w:900});const b=drawHead(c,F,W-M,130,NAVY);
+  if(p.sub)para(c,p.sub,W-M,b+46,{size:30,maxW:W-2*M,color:SLATE,lines:2});
+  const st=items(p).slice(0,6);const n=Math.max(1,st.length);const top=Math.max(b+150,430),bot=H-170,step=(bot-top)/Math.max(1,n-1||1);const x=W-M-38;
+  hair(c,x,top,x,top+step*(n-1),NAVY,4);const cur=+(p.cur??-1);
+  st.forEach((it,i)=>{const y=top+step*i;const on=i===cur;c.save();c.beginPath();c.arc(x,y,on?26:20,0,7);c.fillStyle=on?RED:(i<cur?TEAL:WHITE);c.fill();c.lineWidth=4;c.strokeStyle=on?RED:NAVY;c.stroke();c.restore();
+    T(c,String(it.v||String(i+1).padStart(2,'0')),x-58,y+12,{w:800,size:30,color:on?RED:TEAL});T(c,it.l||'',x-130,y+16,{w:on?800:700,size:on?46:40,color:NAVY});
+    if(on)pill(c,'אנחנו כאן',x-130,y+68,RED,WHITE,22)});
+  folio(c,NAVY,SLATE,LINE)};
+
+// 2 VERSUS · A or B, two halves and a question in the seam; the reply is one letter
+L.x_mag_versus=(c,p,I)=>{const its=items(p);const a=its[0]||{v:'א',l:''},b2=its[1]||{v:'ב',l:''};
+  c.fillStyle=NAVY;c.fillRect(0,0,W,H/2);c.fillStyle=PAPER;c.fillRect(0,H/2,W,H/2);
+  if(p.shot){c.save();c.globalAlpha=.28;shot(c,I,p.shot,0,0,W,H/2);c.restore()}
+  masthead(c,p,WHITE,'rgba(255,255,255,.8)','מה הייתם בוחרים');
+  // the letters
+  T(c,a.v||'א',M+20,H/2-60,{w:900,size:300,color:'rgba(255,255,255,.14)',align:'left'});T(c,b2.v||'ב',M+20,H-150,{w:900,size:300,color:'rgba(7,41,58,.08)',align:'left'});
+  const fa=fitHead(c,a.l||'',W-2*M-80,{max:72,min:44,lines:2,w:800});drawHead(c,fa,W-M,H/2-90-fa.lh*fa.ls.length,WHITE,{w:800});
+  const fb=fitHead(c,b2.l||'',W-2*M-80,{max:72,min:44,lines:2,w:800});drawHead(c,fb,W-M,H/2+120,NAVY,{w:800});
+  // the seam: the question
+  const q=p.head||'';c.save();c.font=A(800,40);const qw=Math.min(W-2*M,c.measureText(ISO(q)).width+80);c.restore();
+  c.save();c.fillStyle=RED;c.beginPath();c.roundRect?c.roundRect(W/2-qw/2,H/2-46,qw,92,46):c.rect(W/2-qw/2,H/2-46,qw,92);c.fill();c.restore();
+  const F=fitHead(c,q,qw-60,{max:40,min:28,lines:1,w:800});c.save();c.font=A(800,F.size);c.fillStyle=WHITE;c.direction='rtl';c.textAlign='center';c.fillText(F.ls[0]||'',W/2,H/2+F.size*.35);c.restore();
+  if(p.cta)pill(c,p.cta,W-M,H-150,TEAL,WHITE,26);folio(c,NAVY,SLATE,LINE)};
+
+// 3 QUESTION · one open question, very large, a quiet "?" behind it and the reply prompt
+L.x_mag_question=(c,p,I)=>{c.fillStyle=TEAL;c.fillRect(0,0,W,H);
+  c.save();c.font=A(900,1100);c.fillStyle='rgba(255,255,255,.07)';c.textAlign='left';c.direction='ltr';c.fillText('?',-40,H-80);c.restore();
+  masthead(c,p,WHITE,'rgba(255,255,255,.82)','שאלה פתוחה');
+  const F=fitHead(c,p.head||'',W-2*M,{max:120,min:60,lines:4,w:900});const top=Math.max(260,(H-F.lh*F.ls.length)/2-120);const b=drawHead(c,F,W-M,top,WHITE);
+  if(p.sub)para(c,p.sub,W-M,b+60,{size:34,maxW:W-2*M,color:'rgba(255,255,255,.9)',lines:3});
+  pill(c,p.cta||'ענו בתגובות',W-M,H-170,RED,WHITE,30);
+  hair(c,M,H-98,W-M,H-98,'rgba(255,255,255,.3)',1);T(c,'קבוצת קורקוס',W-M,H-58,{w:700,size:22,color:WHITE});T(c,'kurkoos-group.co.il',M,H-58,{size:21,color:'rgba(255,255,255,.8)',align:'left',ltr:true})};
+
+// 4 NEWS · the industry page: department, a big figure or the headline, what it means, and the source line
+L.x_mag_news=(c,p,I)=>{c.fillStyle=WHITE;c.fillRect(0,0,W,H);
+  c.fillStyle=NAVY;c.fillRect(0,0,W,120);T(c,'מהענף',W-M,82,{w:900,size:44,color:WHITE});T(c,p.issue||'חדשות הבנייה והנדל"ן, בשפה פשוטה',M,78,{w:500,size:22,color:MIST,align:'left'});
+  c.fillStyle=RED;c.fillRect(W-M-120,120,120,10);
+  const its=items(p);const big=its.find(x=>/\d/.test(String(x.v)));let y=200;
+  if(big){const s=Math.min(240,Math.floor((W-2*M)/Math.max(1,String(big.v).length*.6)));T(c,String(big.v),W-M,y+s*.85,{w:900,size:s,color:NAVY,track:-.04});T(c,big.l||'',W-M,y+s*.85+56,{w:700,size:32,color:RED});y+=s+110}
+  const F=fitHead(c,p.head||'',W-2*M,{max:big?68:96,min:48,lines:3,w:800});const b=drawHead(c,F,W-M,y,NAVY,{w:800});
+  if(p.sub)para(c,p.sub,W-M,b+50,{size:32,maxW:W-2*M,color:SLATE,lines:3});
+  const rest=its.filter(x=>x!==big).slice(0,3);let ry=Math.max(b+190,H-200-rest.length*70);rest.forEach(it=>{hair(c,M,ry-40,W-M,ry-40,LINE,1.5);T(c,String(it.v),W-M,ry+6,{w:800,size:34,color:TEAL});T(c,it.l||'',W-M-190,ry+6,{w:600,size:32,color:NAVY});ry+=70});
+  if(p.source){T(c,'מקור: '+p.source,W-M,H-130,{w:500,size:22,color:SLATE})}
+  hair(c,M,H-98,W-M,H-98,LINE,1);T(c,'קבוצת קורקוס',W-M,H-58,{w:700,size:22,color:NAVY});T(c,'kurkoos-group.co.il',M,H-58,{size:21,color:SLATE,align:'left',ltr:true})};
+
+G.FX.L=G.FX.L||{};Object.assign(G.FX.L,L);G.FX10=L;
+})(window);
+/*FX10:END*/
+
 
 /*TPL:START*/
 // ================= TEMPLATE ENGINE · hundreds of data-driven layouts, each a composition studied from a reference brand, rendered only in the Kurkoos palette and Almoni =================
@@ -20708,6 +20818,72 @@ try{render=(f=>function(){const r=f.apply(this,arguments);try{navSync()}catch(e)
 try{v31StorageWarn=function(){try{console.warn('local storage full, cloud copy is the source of truth')}catch(e){}}}catch(e){}
 // 5. drafts column in "רעיונות וטיוטות": more cards on demand (and by the endless scroll)
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-v156="dmore"]');if(!b)return;window.__v156dl=(window.__v156dl||40)+40;try{render()}catch(e){}});
+})();
+
+// ================= V157 · edit → schedule in one place: "שמירה ותזמון" sheet with the next free slots as chips, an exact date
+//                   and time, the networks, one primary button that saves the edits and puts the post in the queue, and a
+//                   clear confirmation. Opens from the editor's "תזמון" and from the gallery card's "תזמן" =================
+(function(){
+const DAYS=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];const pad=n=>String(n).padStart(2,'0');
+const esc2=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function lbl(at){const d=new Date(at);if(isNaN(d))return at;const t=new Date();const tm=new Date(t);tm.setDate(t.getDate()+1);
+  const same=(a,b)=>a.toDateString()===b.toDateString();const day=same(d,t)?'היום':same(d,tm)?'מחר':`יום ${DAYS[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)}`;return `${day} · ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function slots(n){let out=[];try{out=pxFreeSlots(28).map(k=>{const [d,h]=k.split('T');const t=((APP.slots||{})[new Date(d+'T12:00').getDay()]||[]).find(x=>String(x).slice(0,2)===h)||h+':00';return d+'T'+t})}catch(e){}
+  return [...new Set(out)].sort().slice(0,n)}
+const S={p:null,at:'',nets:{fb:true,ig:true},fromEditor:false,done:false};
+function itemFor(p){try{return APP.sched.items.find(i=>(p.key&&i.key===p.key)||i.pid===p.id)}catch(e){return null}}
+function open(p,fromEditor){if(!p)return;const it=itemFor(p);const sl=slots(6);S.p=p;S.fromEditor=!!fromEditor;S.done=false;
+  S.at=(it&&it.at)||sl[0]||'';S.nets=it&&it.nets?Object.assign({fb:true,ig:true},it.nets):{fb:true,ig:true};draw();
+  setTimeout(()=>{const f=document.querySelector('#v157 .v157chip[aria-pressed="true"],#v157 .v157chip,#v157 input');f&&f.focus()},30)}
+function close(){const el=document.getElementById('v157');if(el)el.remove();document.body.classList.remove('v157on')}
+function head(p){const h=((p.visual&&p.visual.headline)||p.hook||'').replace(/\*/g,'').replace(/\n/g,' ');return h.slice(0,80)}
+function draw(){let el=document.getElementById('v157');if(!el){el=document.createElement('div');el.id='v157';document.body.appendChild(el);document.body.classList.add('v157on')}
+  const p=S.p;const it=itemFor(p);const sl=slots(6);if(S.at&&!sl.includes(S.at))sl.unshift(S.at);
+  const step=(n,t,st)=>`<li class="${st}"><i>${st==='ok'?'✓':n}</i><span>${t}</span></li>`;
+  if(S.done){el.innerHTML=`<div class="v157bg" data-v157="x"></div><section class="v157" role="dialog" aria-modal="true" aria-labelledby="v157t">
+    <ol class="v157steps" aria-label="שלבים">${step(1,'עריכה','ok')}${step(2,'מועד','ok')}${step(3,'בתור','ok')}</ol>
+    <div class="v157ok"><b id="v157t">הפוסט בתור</b><span>${esc2(lbl(S.at))} · ${[S.nets.fb&&'פייסבוק',S.nets.ig&&'אינסטגרם'].filter(Boolean).join(' ו')}</span><small>נשמר כטיוטה מתוזמנת. שום דבר לא מתפרסם בלי אישור.</small></div>
+    <footer class="v157f"><button type="button" class="px-btn pri" data-v157="cal">פתיחה בלוח</button><button type="button" class="px-btn" data-v157="x">${S.fromEditor?'חזרה לעריכה':'סגירה'}</button></footer></section>`;return}
+  const dirty=S.fromEditor&&typeof peDirty==='function'&&peDirty();
+  el.innerHTML=`<div class="v157bg" data-v157="x"></div><section class="v157" role="dialog" aria-modal="true" aria-labelledby="v157t">
+   <header class="v157h"><b id="v157t">${it&&it.at?'שינוי מועד':'שמירה ותזמון'}</b><button type="button" class="v157x" data-v157="x" aria-label="סגירה">✕</button></header>
+   <ol class="v157steps" aria-label="שלבים">${step(1,'עריכה','ok')}${step(2,'מועד','on')}${step(3,'בתור','')}</ol>
+   <div class="v157post"><span class="v157hd">${esc2(head(S.fromEditor&&typeof PE!=='undefined'&&PE.p?PE.p:p))}</span>${dirty?'<small class="v157dirty">השינויים שלא נשמרו יישמרו עכשיו</small>':''}</div>
+   <fieldset class="v157set"><legend>המשבצות הפנויות הקרובות</legend><div class="v157chips">${sl.length?sl.map(at=>`<button type="button" class="v157chip" data-v157="at" data-at="${at}" aria-pressed="${at===S.at}">${esc2(lbl(at))}</button>`).join(''):'<span class="v157none">אין משבצות פנויות בלוח הזמנים. בחרו מועד מדויק למטה.</span>'}</div></fieldset>
+   <label class="v157exact"><span>או מועד מדויק</span><input type="datetime-local" data-v157="exact" value="${esc2((S.at||'').slice(0,16))}"></label>
+   <fieldset class="v157set"><legend>איפה</legend><div class="v157nets">
+    <button type="button" class="v157net" data-v157="net" data-n="fb" aria-pressed="${!!S.nets.fb}">פייסבוק</button>
+    <button type="button" class="v157net" data-v157="net" data-n="ig" aria-pressed="${!!S.nets.ig}">אינסטגרם</button></div></fieldset>
+   <footer class="v157f"><button type="button" class="px-btn red v157go" data-v157="go" ${S.at&&(S.nets.fb||S.nets.ig)?'':'disabled'}>${S.at?`${dirty?'שמירה ותזמון':'תזמון'} ל${esc2(lbl(S.at))}`:'בחרו מועד'}</button><button type="button" class="px-btn" data-v157="x">ביטול</button></footer>
+  </section>`}
+function doSched(){const p=S.p;if(!p||!S.at)return;
+  try{if(S.fromEditor&&typeof peDirty==='function'&&peDirty())peSave('עריכה בסטודיו')}catch(e){console.error('v157 save',e)}
+  const label=String((p.visual&&p.visual.headline)||p.hook||'').replace(/\*/g,'').replace(/\n/g,' ').slice(0,60);
+  let it=itemFor(p);if(it){it.at=S.at;it.nets=Object.assign({},S.nets)}else{it={id:'s'+uid(),pid:p.id,key:p.key||null,at:S.at,nets:Object.assign({},S.nets),status:'draft',label};APP.sched.items.push(it)}
+  try{saveSched(it)}catch(e){console.error('v157 sched',e)}try{saveAgent()}catch(e){}
+  S.done=true;draw();try{if(!S.fromEditor)render()}catch(e){}}
+window.addEventListener('click',ev=>{
+  const ed=ev.target.closest&&ev.target.closest('#pe-root [data-pe-a="sched"]');
+  if(ed&&typeof PE!=='undefined'&&PE.orig){ev.preventDefault();ev.stopImmediatePropagation();open(PE.orig,true);return}
+  const gs=ev.target.closest&&ev.target.closest('[data-ga="sched1"]');
+  if(gs){const p=AG.posts.find(x=>x.id===gs.dataset.id);if(p){ev.preventDefault();ev.stopImmediatePropagation();open(p,false)}return}
+  const b=ev.target.closest&&ev.target.closest('[data-v157]');if(!b)return;const a=b.dataset.v157;
+  if(a==='x'){close();try{if(!S.fromEditor)render()}catch(e){}return}
+  if(a==='at'){S.at=b.dataset.at;draw();return}
+  if(a==='net'){S.nets[b.dataset.n]=!S.nets[b.dataset.n];draw();return}
+  if(a==='go'){doSched();return}
+  if(a==='cal'){close();try{if(S.fromEditor&&typeof peClose==='function')peClose(true)}catch(e){}try{APP.calMode='week';go('calendar')}catch(e){}return}},true);
+document.addEventListener('change',ev=>{const t=ev.target;if(!t.matches||!t.matches('[data-v157="exact"]'))return;if(t.value){S.at=t.value.length===16?t.value:t.value.slice(0,16);draw()}},true);
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&document.getElementById('v157')){ev.stopImmediatePropagation();close()}},true);
+window.__v157={open,close,S,slots,lbl};
+})();
+
+// ================= V158 · magazine 2 registration: names in the editor, default themes, photo sizes
+(function(){
+try{Object.assign(ED_NAMES,{x_mag_timeline:'ציר שלבים',x_mag_versus:'א או ב',x_mag_question:'שאלה פתוחה',x_mag_news:'מהענף'})}catch(e){}
+try{Object.assign(DEF_THEME,{x_mag_timeline:'light',x_mag_versus:'dark',x_mag_question:'teal',x_mag_news:'white'})}catch(e){}
+try{Object.assign(DEST,{x_mag_versus:[1080,675]})}catch(e){}
+try{window.__v154=(window.__v154||[]).concat(['x_mag_timeline','x_mag_versus','x_mag_question','x_mag_news'])}catch(e){}
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

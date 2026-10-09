@@ -21,12 +21,16 @@ export default function Reveal({
   ...rest
 }) {
   const MotionTag = motion[as] || motion.div
+  /* amount הוא החלק מהאלמנט שצריך להיות על המסך כדי שיופיע. בבלוק ארוך
+     (גוף כתבה בטלפון גבוה פי כמה מהמסך) אחוז קבוע לעולם לא מתמלא, והטקסט
+     נשאר שקוף לתמיד. לכן מספיק שקצה האלמנט ייכנס למסך. */
+  const inView = typeof amount === 'number' ? Math.min(amount, 0.05) : amount
   return (
     <MotionTag
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, amount }}
+      viewport={{ once: true, amount: inView }}
       variants={variants[variant]}
       transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}
       {...rest}

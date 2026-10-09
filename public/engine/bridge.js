@@ -87,23 +87,60 @@
   const IDB = (() => { let p = null; return () => p || (p = new Promise((ok) => { try { const r = indexedDB.open('kurkoos-engine-' + DATA_EPOCH, 1); const t = setTimeout(() => ok(null), 3000); r.onupgradeneeded = () => r.result.createObjectStore('cols'); r.onsuccess = () => { clearTimeout(t); ok(r.result) }; r.onerror = () => { clearTimeout(t); ok(null) }; r.onblocked = () => { clearTimeout(t); ok(null) } } catch (e) { ok(null) } })) })()
   async function cacheGet(col) { const d = await IDB(); if (!d) return null; return new Promise((ok) => { try { const q = d.transaction('cols').objectStore('cols').get(col); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null) } catch (e) { ok(null) } }) }
   async function cachePut(col, v) { const d = await IDB(); if (!d) return; try { d.transaction('cols', 'readwrite').objectStore('cols').put(v, col) } catch (e) {} }
-  async function pages(q) { const out = []; let off = 0; for (;;) { const r = await call(`${q}&limit=1000&offset=${off}`, { method: 'GET' }); const rows = await r.json(); out.push(...rows); if (rows.length < 1000) break; off += 1000 } return out }
+  // דפים של 1000 שורות. הדף הראשון מחזיר גם את המספר הכולל, ושאר הדפים נטענים במקביל (בטלפון זה הבדל של שניות ארוכות)
+  async function pages(q, onProgress) {
+    const P = 1000
+    const r0 = await call(`${q}&limit=${P}&offset=0`, { method: 'GET', headers: { Prefer: 'count=exact' } })
+    const first = await r0.json()
+    const m = /\/(\d+)$/.exec(r0.headers.get('content-range') || '')
+    const total = m ? +m[1] : null
+    if (onProgress) onProgress(first.length, total)
+    if (first.length < P) return first
+    if (total == null) { const out = first.slice(); let off = P; for (;;) { const r = await call(`${q}&limit=${P}&offset=${off}`, { method: 'GET' }); const rows = await r.json(); out.push(...rows); if (onProgress) onProgress(out.length, null); if (rows.length < P) break; off += P } return out }
+    let got = first.length
+    const offs = []; for (let off = P; off < total; off += P) offs.push(off)
+    const rest = new Array(offs.length)
+    let next = 0
+    const worker = async () => { while (next < offs.length) { const i = next++; const r = await call(`${q}&limit=${P}&offset=${offs[i]}`, { method: 'GET' }); rest[i] = await r.json(); got += rest[i].length; if (onProgress) onProgress(got, total) } }
+    await Promise.all([worker(), worker(), worker(), worker()])
+    return first.concat(...rest)
+  }
+  // ---------- פס טעינה: עד שהפוסטים מגיעים מהשרת המערכת לא נראית ריקה
+  const LOAD = { el: null }
+  function loadBar(text) {
+    try {
+      if (text == null) { if (LOAD.el) { LOAD.el.remove(); LOAD.el = null } return }
+      if (!LOAD.el) {
+        const el = document.createElement('div'); el.id = 'engine-loading'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite')
+        el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483646;background:#07293a;color:#fff;font:600 15px/1.4 Almoni,Heebo,Arial,sans-serif;direction:rtl;text-align:center;padding:10px 16px calc(10px + 3px);box-shadow:0 2px 8px rgba(0,0,0,.2)'
+        el.innerHTML = '<span></span><i style="position:absolute;right:0;bottom:0;height:3px;background:#a90b0c;width:0;transition:width .3s"></i>'
+        ;(document.body || document.documentElement).appendChild(el); LOAD.el = el
+      }
+      LOAD.el.querySelector('span').textContent = text.t
+      LOAD.el.querySelector('i').style.width = Math.round((text.f || 0) * 100) + '%'
+    } catch (e) {}
+  }
   const maxTs = (rows, start) => rows.reduce((m, x) => (x.updated_at > m ? x.updated_at : m), start || '')
   async function readAll(col) {
     const c = await cacheGet(col)
     if (c && c.rows && c.last) {
-      const fresh = await pages(`${T}?collection=eq.${enc(col)}&updated_at=gte.${enc(c.last)}&select=id,data,updated_at&order=updated_at`)
+      const prog = col === 'posts' ? (n, t) => { if (t > 200) loadBar({ t: `מעדכן פוסטים ששונו… ${Math.min(n, t).toLocaleString('he-IL')} מתוך ${t.toLocaleString('he-IL')}`, f: n / t }) } : null
+      const fresh = await pages(`${T}?collection=eq.${enc(col)}&updated_at=gte.${enc(c.last)}&select=id,data,updated_at&order=updated_at`, prog)
       const ids = new Set((await pages(`${T}?collection=eq.${enc(col)}&select=id&order=id`)).map((x) => x.id))
       const map = new Map(c.rows.filter(([id]) => ids.has(id)))
       fresh.forEach((x) => map.set(x.id, x.data))
       const last = maxTs(fresh, c.last)
       if (fresh.length || map.size !== c.rows.length) cachePut(col, { rows: [...map.entries()], last })
+      if (col === 'posts') loadBar(null)
       return { map, last }
     }
-    const rows = await pages(`${T}?collection=eq.${enc(col)}&select=id,data,updated_at&order=id`)
+    const prog = col === 'posts' ? (n, t) => loadBar({ t: t ? `טוען את הפוסטים מהשרת… ${Math.min(n, t).toLocaleString('he-IL')} מתוך ${t.toLocaleString('he-IL')}` : 'טוען את הפוסטים מהשרת…', f: t ? n / t : 0.1 }) : null
+    if (prog) prog(0, null)
+    const rows = await pages(`${T}?collection=eq.${enc(col)}&select=id,data,updated_at&order=id`, prog)
     const map = new Map(rows.map((x) => [x.id, x.data]))
     const last = maxTs(rows, '1970-01-01T00:00:00Z')
     cachePut(col, { rows: [...map.entries()], last })
+    if (col === 'posts') loadBar(null)
     return { map, last }
   }
   async function readOne(col, id) {
@@ -166,7 +203,10 @@
           rows.forEach((x) => { const was = map.get(x.id); if (JSON.stringify(was) !== JSON.stringify(x.data)) { changes.push({ type: was === undefined ? 'added' : 'modified', doc: docSnap(x.id, x.data, true) }); map.set(x.id, x.data) } })
           if (changes.length) cb(qSnap(map, changes))
         }
-      } catch (e) { if (onErr && e && e.code !== 'unavailable') { try { onErr(e) } catch (x) {} } }
+      } catch (e) {
+        if (col === 'posts' && !map) loadBar({ t: e && e.code === 'not_signed_in' ? 'ההתחברות פגה. התחברו שוב בעמוד הניהול ורעננו' : 'אין חיבור לשרת כרגע. מנסה שוב…', f: 0 })
+        if (onErr && e && e.code !== 'unavailable') { try { onErr(e) } catch (x) {} }
+      }
       busy = false
       if (!stop) { clearTimeout(timer); timer = setTimeout(tick, document.visibilityState === 'hidden' ? 20000 : 4000) }
     }

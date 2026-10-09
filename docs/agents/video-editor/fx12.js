@@ -26,7 +26,7 @@ function photo(c,p,I,x,y,w,h,fallback){if(p.shot&&shot(c,I,p.shot,x,y,w,h))retur
 function grid(c,col,a,x=0,y=0,w=W,h=H,step=60){c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.globalAlpha=a;c.strokeStyle=col;c.lineWidth=1;for(let gx=x;gx<=x+w;gx+=step){c.beginPath();c.moveTo(gx,y);c.lineTo(gx,y+h);c.stroke()}for(let gy=y;gy<=y+h;gy+=step){c.beginPath();c.moveTo(x,gy);c.lineTo(x+w,gy);c.stroke()}c.restore()}
 function shade(c,y0,y1,a0,a1){const g=c.createLinearGradient(0,y0,0,y1);g.addColorStop(0,`rgba(7,41,58,${a0})`);g.addColorStop(1,`rgba(7,41,58,${a1})`);c.fillStyle=g;c.fillRect(0,y0,W,y1-y0)}
 function num(v){const m=String(v).replace(/,/g,'').match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):NaN}
-function srcLine(c,p,y,dark){if(p.source)T(c,'מקור: '+p.source,W-M,y,{w:300,size:26,color:dark?'rgba(255,255,255,.7)':SLATE})}
+function srcLine(c,p,y,dark){if(!p.source)return;c.font=HE(300,26);let t='מקור: '+p.source;while(c.measureText(t).width>W-2*M&&t.length>12)t=t.slice(0,-2);if(t!=='מקור: '+p.source)t=t.trim()+'…';T(c,t,W-M,y,{w:300,size:26,color:dark?'rgba(255,255,255,.7)':SLATE})}
 const L={};
 
 // 1 EDITORIAL · a magazine opener: serif headline, lead paragraph, a photo strip
@@ -62,12 +62,12 @@ L.x_c_bars=(c,p,I)=>{c.fillStyle=PAPER;c.fillRect(0,0,W,H);index(c,p.label||'ב�
 // 5 BLUEPRINT · a section drawing with dimension lines and callouts
 L.x_c_blueprint=(c,p,I)=>{c.fillStyle=TEAL;c.fillRect(0,0,W,H);grid(c,WHITE,.08,0,0,W,H,30);grid(c,WHITE,.16,0,0,W,H,150);index(c,p.label||'פרט ביצוע',true);
   const F=fit(c,p.head,W-2*M,{w:200,max:104,min:76,lines:2,track:-.02});let y=head(c,F,W-M,140,WHITE);
-  const bx=M+40,by=y+90,bw=560,bh=560;c.save();c.strokeStyle=WHITE;c.lineWidth=4;c.strokeRect(bx,by,bw,bh);c.lineWidth=2;c.setLineDash([14,10]);c.strokeRect(bx+60,by+60,bw-120,bh-200);c.setLineDash([]);
+  const bx=M+10,by=y+90,bw=440,bh=520;c.save();c.strokeStyle=WHITE;c.lineWidth=4;c.strokeRect(bx,by,bw,bh);c.lineWidth=2;c.setLineDash([14,10]);c.strokeRect(bx+60,by+60,bw-120,bh-200);c.setLineDash([]);
   c.beginPath();c.moveTo(bx,by+bh-100);c.lineTo(bx+bw,by+bh-100);c.stroke();for(let x=bx+20;x<bx+bw;x+=40){c.beginPath();c.moveTo(x,by+bh-100);c.lineTo(x-20,by+bh-80);c.stroke()}
   c.beginPath();c.moveTo(bx,by-30);c.lineTo(bx+bw,by-30);c.moveTo(bx,by-44);c.lineTo(bx,by-16);c.moveTo(bx+bw,by-44);c.lineTo(bx+bw,by-16);c.stroke();c.restore();
   const its=items(p).slice(0,4);const pts=[[bx+bw-60,by+90],[bx+bw-120,by+bh-100],[bx+60,by+bh-40],[bx+bw/2,by+60]];
-  its.forEach((it,i)=>{const [px,py]=pts[i];const ly=by+40+i*140;c.save();c.strokeStyle=MIST;c.lineWidth=2;c.beginPath();c.moveTo(px,py);c.lineTo(W-M-300,ly);c.lineTo(W-M,ly);c.stroke();c.fillStyle=RED;c.beginPath();c.arc(px,py,10,0,7);c.fill();c.restore();
-    T(c,it.v,W-M,ly-14,{w:900,size:42,color:WHITE});T(c,it.l,W-M,ly+40,{w:400,size:32,color:MIST1})});
+  its.forEach((it,i)=>{const [px,py]=pts[i];const ly=by+40+i*140;c.save();c.strokeStyle=MIST;c.lineWidth=2;c.beginPath();c.moveTo(px,py);c.lineTo(W-M-340,ly);c.lineTo(W-M,ly);c.stroke();c.fillStyle=RED;c.beginPath();c.arc(px,py,10,0,7);c.fill();c.restore();
+    T(c,it.v,W-M,ly-14,{w:900,size:42,color:WHITE});para(c,it.l,W-M,ly+40,{w:400,size:30,maxW:340,lines:2,color:MIST1,f:HE,lh:1.2})});
   if(p.sub)para(c,p.sub,W-M,by+bh+90,{w:300,size:34,maxW:W-2*M,color:WHITE,lines:2});foot(c,true)};
 
 // 6 SCENARIO · a case from the field in three acts
@@ -141,10 +141,10 @@ L.x_c_questions=(c,p,I)=>{c.fillStyle=MIST1;c.fillRect(0,0,W,H);index(c,p.label|
   its.forEach(it=>{T(c,'?',W-M,y+rowH*.62,{w:900,size:110,color:RED,ltr:true});para(c,it.l,W-M-90,y+rowH*.5,{w:600,size:42,maxW:W-2*M-100,lines:2,color:NAVY,f:HE});c.fillStyle=LINE;c.fillRect(M,y+rowH-4,W-2*M,2);y+=rowH});foot(c,false)};
 
 // 16 THOUGHT · a professional text post, the way a network feed shows it
-L.x_c_thought=(c,p,I)=>{c.fillStyle=MIST1;c.fillRect(0,0,W,H);c.save();c.shadowColor='rgba(7,41,58,.14)';c.shadowBlur=30;c.shadowOffsetY=10;c.fillStyle=WHITE;rr(c,M-20,110,W-2*M+40,H-300,26);c.fill();c.restore();
+L.x_c_thought=(c,p,I)=>{c.fillStyle=MIST1;c.fillRect(0,0,W,H);c.save();c.shadowColor='rgba(7,41,58,.14)';c.shadowBlur=30;c.shadowOffsetY=10;c.fillStyle=WHITE;c.font=HE(400,44);const sl=Math.min(8,wrapW(c,p.sub||'',W-2*M-40).length);const chh=Math.min(H-300,560+sl*64);rr(c,M-20,110,W-2*M+40,chh,26);c.fill();c.restore();
   c.fillStyle=NAVY;c.beginPath();c.arc(W-M-50,190,48,0,7);c.fill();mark(c,W-M-66,162,.9,WHITE);T(c,'קבוצת קורקוס',W-M-120,180,{w:800,size:34});T(c,'יזמות · בנייה · ניהול ופיקוח',W-M-120,222,{w:300,size:28,color:SLATE});
   const F=fit(c,p.head,W-2*M-40,{w:800,max:84,min:72,lines:3});let y=head(c,F,W-M-20,290,NAVY);if(p.sub)y=para(c,p.sub,W-M-20,y+90,{w:400,size:44,maxW:W-2*M-40,lines:8,color:SLATE,f:HE,lh:1.45});
-  const by=H-260;c.fillStyle=LINE;c.fillRect(M,by-40,W-2*M,2);T(c,p.cta||'מסכימים? כתבו בתגובות',W-M-20,by+10,{w:700,size:32,color:TEAL});foot(c,false)};
+  const by=110+chh-70;c.fillStyle=LINE;c.fillRect(M,by-40,W-2*M,2);T(c,p.cta||'מסכימים? כתבו בתגובות',W-M-20,by+10,{w:700,size:32,color:TEAL});foot(c,false)};
 
 // 17 GRID 4 · four tips, four tiles
 L.x_c_grid4=(c,p,I)=>{c.fillStyle=PAPER;c.fillRect(0,0,W,H);index(c,p.label,false);const F=fit(c,p.head,W-2*M,{w:900,max:92,min:72,lines:2});let y=head(c,F,W-M,140,NAVY)+60;

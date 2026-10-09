@@ -61,7 +61,7 @@ L.x_mag_news=(c,p,I)=>{c.fillStyle=WHITE;c.fillRect(0,0,W,H);
   const F=fitHead(c,p.head||'',W-2*M,{max:big?68:96,min:48,lines:3,w:800});const b=drawHead(c,F,W-M,y,NAVY,{w:800});
   if(p.sub)para(c,p.sub,W-M,b+50,{size:32,maxW:W-2*M,color:SLATE,lines:3});
   const rest=its.filter(x=>x!==big).slice(0,3);let ry=Math.max(b+190,H-200-rest.length*70);rest.forEach(it=>{hair(c,M,ry-40,W-M,ry-40,LINE,1.5);T(c,String(it.v),W-M,ry+6,{w:800,size:34,color:TEAL});T(c,it.l||'',W-M-190,ry+6,{w:600,size:32,color:NAVY});ry+=70});
-  if(p.source){T(c,'מקור: '+p.source,W-M,H-130,{w:500,size:22,color:SLATE})}
+  if(p.source){c.font=A(500,26);let t='מקור: '+p.source;while(c.measureText(t).width>W-2*M&&t.length>12)t=t.slice(0,-2);if(t!=='מקור: '+p.source)t=t.trim()+'…';T(c,t,W-M,H-130,{w:500,size:26,color:SLATE})}
   hair(c,M,H-98,W-M,H-98,LINE,1);T(c,'קבוצת קורקוס',W-M,H-58,{w:700,size:22,color:NAVY});T(c,'kurkoos-group.co.il',M,H-58,{size:21,color:SLATE,align:'left',ltr:true})};
 
 G.FX.L=G.FX.L||{};Object.assign(G.FX.L,L);G.FX10=L;

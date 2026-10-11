@@ -4,7 +4,7 @@ import { useI18n } from '../i18n/index.jsx'
 import { useConstruction, useConstructions } from '../lib/constructions.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
-import { COLUMNS, articleLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
+import { COLUMNS, articleLd, videoLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
 import { relatedArticles } from '../lib/related.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
@@ -14,6 +14,7 @@ import Icon from '../components/ui/Icon.jsx'
 import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
+import ArticleVideo from '../components/ui/ArticleVideo.jsx'
 import ArticleLeadCard, { contactHrefFor } from '../components/ui/ArticleLeadCard.jsx'
 import NotFound from './NotFound.jsx'
 
@@ -42,7 +43,9 @@ export default function ConstructionsArticle() {
 
   const coverUrl = srcOfResponsive(article.cover)
   const col = COLUMNS.constructions
-  const jsonLd = articleLd(article, `${col.route}/${article.slug}`, coverUrl)
+  const aLd = articleLd(article, `${col.route}/${article.slug}`, coverUrl)
+  const vLd = videoLd(article)
+  const jsonLd = vLd ? [aLd, vLd] : aLd
 
   return (
     <article className="yz-article">
@@ -82,6 +85,7 @@ export default function ConstructionsArticle() {
       <section className="section">
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
+          {article.video && <ArticleVideo video={article.video} fallbackTitle={article.title} />}
           <MiniMarkdown source={article.body} autoLink contactHref={contactHrefFor('construction')} />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (

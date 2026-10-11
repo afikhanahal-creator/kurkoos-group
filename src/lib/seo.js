@@ -123,6 +123,24 @@ export function articleLd(article, path, image) {
   }
 }
 
+/* סרטון שמוטמע בכתבה (שדה video בקובץ הכתבה) */
+export function videoLd(article) {
+  const v = article && article.video
+  if (!v || !v.src) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: v.title || article.title,
+    description: v.description || article.excerpt || article.title,
+    thumbnailUrl: v.poster ? [v.poster] : undefined,
+    uploadDate: v.uploadDate || article.date,
+    duration: v.duration || undefined,
+    contentUrl: v.src,
+    inLanguage: 'he',
+    publisher: { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: BRAND },
+  }
+}
+
 /* ---------- כותרות ותיאורים של העמודים הקבועים ----------
    Seo.jsx מעדיף את הערכים כאן על פני מה שהעמוד מעביר, וה-prerender כותב
    בדיוק אותם ערכים ל-HTML הסטטי. תיאור: 120 עד 160 תווים. */

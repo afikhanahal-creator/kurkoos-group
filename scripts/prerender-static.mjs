@@ -21,7 +21,7 @@ const dist = join(root, 'dist')
    ש-Seo.jsx משתמש בו בזמן ריצה. כך ה-HTML הסטטי והעמוד החי זהים. */
 const {
   SITE_URL: SITE, BRAND, HOME_CRUMB, COLUMNS, PAGE_META, PAGE_CRUMBS,
-  composeTitle, clampDescription, breadcrumbLd, articleCrumbs, articleLd,
+  composeTitle, clampDescription, breadcrumbLd, articleCrumbs, articleLd, videoLd,
   articleSeoTitle, articleSeoDescription, faqHubLd,
 } = await import(pathToFileURL(join(root, 'src/lib/seo.js')).href)
 const { ABOUT_VISION } = await import(pathToFileURL(join(root, 'src/data/aboutVision.js')).href)
@@ -204,6 +204,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<h1>${esc(a.title)}</h1>` +
       `<p><em>${esc(col.label)}${a.date ? ` · ${esc(a.date)}` : ''}${a.readingTime ? ` · ${esc(a.readingTime)}` : ''}</em></p>` +
       (a.excerpt ? `<p><strong>${esc(a.excerpt)}</strong></p>` : '') +
+      (a.video && a.video.src ? `<video src="${esc(a.video.src)}" poster="${esc(a.video.poster || '')}" controls preload="none" playsinline width="360" height="640" aria-label="${esc(a.video.title || a.title)}"></video>` : '') +
       mdToHtml(a.body) +
       `<p><a href="${col.route}">לכל הכתבות ב${esc(col.index)}</a> · <a href="/">${BRAND}</a></p>`
     done.push(renderPage({
@@ -214,7 +215,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       jsonLd: [
         articleLd(a, path, srcOfResponsive(a.cover) || undefined),
         breadcrumbLd(articleCrumbs(col, a)),
-      ],
+        videoLd(a),
+      ].filter(Boolean),
       bodyHtml: body,
     }))
   }

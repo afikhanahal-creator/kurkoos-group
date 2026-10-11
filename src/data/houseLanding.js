@@ -222,6 +222,8 @@ function cityPage({ slug, city, inCity, heroImage, faqs, intro2, home = false, c
     h1: `בניית בית פרטי ${inCity}`,
     lead: `${home ? 'קורקוס גרופ יושבת בהוד השרון, ברחוב הנגר 24.' : `קורקוס גרופ פועלת ${inCity} ובאזור השרון.`} ראיתה בונה בתים פרטיים ווילות על המגרש שלכם, ושכינתא מפקחת על הבנייה מטעמכם.`,
     area: { '@type': 'City', name: city },
+    city,
+    committee,
     serviceName: `בניית בית פרטי ${inCity}`,
     heroImage,
     heroAlt: 'אתר בנייה של קורקוס גרופ בשלב השלד',
@@ -351,7 +353,7 @@ export const HOUSE_PAGES = [
     slug: 'yehud-monosson',
     city: 'יהוד-מונוסון',
     inCity: 'ביהוד-מונוסון',
-    heroImage: '/execution-gallery/4.jpg',
+    heroImage: '/divisions/execution-bg.jpg',
     committee: 'הוועדה המקומית לתכנון ובנייה יהוד-מונוסון',
     cityLine: 'יהוד-מונוסון נמצאת באזור השירות של הקבוצה, ובעיר נמצא גם בן גוריון 17, פרויקט של הקבוצה.',
     intro2: 'בעיר נמצא גם בן גוריון 17, פרויקט דירות הבוטיק של הקבוצה.',
@@ -401,6 +403,17 @@ export const HOUSE_PAGES = [
     faqs: [F.turnkey, F.cost, F.form4],
   }),
 ]
+
+/* מידות התמונות, כדי שהמסגרת בכותרת תשמור על הצורה האמיתית ולא תחתוך */
+export const HERO_SIZE = {
+  '/execution-gallery/1.jpg': [1600, 900],
+  '/execution-gallery/2.jpg': [1600, 900],
+  '/execution-gallery/3.jpg': [1600, 2528],
+  '/execution-gallery/4.jpg': [1600, 2496],
+  '/execution-gallery/5.jpg': [1600, 900],
+  '/execution-gallery/6.jpg': [1600, 900],
+  '/divisions/execution-bg.jpg': [1600, 900],
+}
 
 export const getHousePage = (path) =>
   HOUSE_PAGES.find((p) => p.path === String(path || '').replace(/\/$/, ''))

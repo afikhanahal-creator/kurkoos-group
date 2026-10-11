@@ -14,7 +14,7 @@ import { listProjectCards, cmsRowToCard, useSettings } from '../lib/cms.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import { orderedVillasProjects, parseVillasSettings, matchVillaCard } from '../data/villasPage.js'
 import {
-  HOUSE_PAGES, HOUSE_STEPS, HOUSE_PROOF, HOUSE_ARMS, HOUSE_GUIDES, getHousePage, houseJsonLd,
+  HOUSE_PAGES, HOUSE_STEPS, HOUSE_PROOF, HOUSE_ARMS, HOUSE_GUIDES, HERO_SIZE, getHousePage, houseJsonLd,
 } from '../data/houseLanding.js'
 import { track } from '../lib/track.js'
 import NotFound from './NotFound.jsx'
@@ -65,6 +65,8 @@ function HouseLandingPage({ page }) {
   const call = (where) => () => track('phone_click', { placement: `${placement}_${where}` })
 
   const siblings = HOUSE_PAGES.filter((p) => p.path !== page.path)
+  const [heroW, heroH] = HERO_SIZE[page.heroImage] || [1600, 900]
+  const portrait = heroH > heroW
 
   return (
     <article className="hl">
@@ -72,31 +74,35 @@ function HouseLandingPage({ page }) {
 
       {/* ---------- כותרת ---------- */}
       <header className="hl-hero">
-        <img
-          className="hl-hero__img"
-          src={page.heroImage}
-          alt={page.heroAlt}
-          width="1600"
-          height="900"
-          fetchpriority="high"
-          decoding="async"
-        />
-        <div className="hl-hero__shade" aria-hidden="true" />
         <div className="container hl-hero__inner">
           <Breadcrumbs items={page.crumbs} />
-          <div className="hl-hero__copy">
-            <h1 className="hl-hero__title">{page.h1}</h1>
-            <p className="hl-hero__lead">{page.lead}</p>
-            <div className="hl-hero__actions">
-              <button type="button" className="btn btn--primary btn--lg" onClick={estimate('hero')}>
-                קבלו הערכת עלות לבית שלכם
-                <Icon name="arrowLeft" size={20} />
-              </button>
-              <a href={telHref()} className="btn btn--lg hl-btn-ghost" onClick={call('hero')}>
-                <Icon name="phone" size={18} />
-                <span dir="ltr">{CONTACT_PHONE_DISPLAY}</span>
-              </a>
+          <div className="hl-hero__grid">
+            <div className="hl-hero__copy">
+              <h1 className="hl-hero__title">{page.h1}</h1>
+              <p className="hl-hero__lead">{page.lead}</p>
+              <div className="hl-hero__actions">
+                <button type="button" className="btn btn--primary btn--lg" onClick={estimate('hero')}>
+                  קבלו הערכת עלות לבית שלכם
+                  <Icon name="arrowLeft" size={20} />
+                </button>
+                <a href={telHref()} className="btn btn--lg hl-btn-ghost" onClick={call('hero')}>
+                  <Icon name="phone" size={18} />
+                  <span dir="ltr">{CONTACT_PHONE_DISPLAY}</span>
+                </a>
+              </div>
+              <SiteSign page={page} onCall={call('sign')} />
             </div>
+            <figure className={`hl-hero__media${portrait ? ' is-portrait' : ''}`} style={{ '--hl-ar': `${heroW} / ${heroH}` }}>
+              <img
+                className="hl-hero__img"
+                src={page.heroImage}
+                alt={page.heroAlt}
+                width={heroW}
+                height={heroH}
+                fetchpriority="high"
+                decoding="async"
+              />
+            </figure>
           </div>
         </div>
       </header>
@@ -110,11 +116,23 @@ function HouseLandingPage({ page }) {
         </ul>
       </div>
 
+      {/* ---------- בעמוד הזה: קפיצה ישר לתשובה ---------- */}
+      <nav className="container hl-jump" aria-label="בעמוד הזה">
+        <span className="hl-jump__label">בעמוד הזה</span>
+        <ul>
+          <li><a href="#hl-intro-title">{page.intro.q}</a></li>
+          <li><a href="#hl-steps-title">השלבים, מהמגרש ועד המפתח</a></li>
+          <li><a href="#hl-check-title">מה בודקים לפני שבונים</a></li>
+          <li><a href="#hl-faq-title">שאלות נפוצות</a></li>
+          <li><a href="#contact">הערכת עלות</a></li>
+        </ul>
+      </nav>
+
       {/* ---------- תשובה ישירה + שתי הזרועות ---------- */}
       <section className="hl-section hl-intro">
         <div className="container hl-intro__grid">
           <div className="hl-intro__text">
-            <h2 className="hl-h2">{page.intro.q}</h2>
+            <h2 className="hl-h2" id="hl-intro-title">{page.intro.q}</h2>
             <p className="hl-intro__answer">{page.intro.a}</p>
             <Link to="/villas-sharon" className="hl-textlink">
               הווילות והבתים הפרטיים שאנחנו מקימים בהוד השרון
@@ -249,6 +267,35 @@ function HouseLandingPage({ page }) {
       {/* ---------- טופס ---------- */}
       <HouseLead placement={placement} />
     </article>
+  )
+}
+
+/* ---------- שלט האתר ----------
+   כמו השלט שכל אתר בנייה בישראל מציב בכניסה: מה בונים, איפה, מי נותן
+   את ההיתר, מי בונה ומי מפקח. מי שהגיע מגוגל או מתשובה של מנוע AI
+   מקבל את העובדות בבת אחת, לפני שהוא גולל. */
+function SiteSign({ page, onCall }) {
+  const committee = page.committee ? page.committee.replace('הוועדה המקומית לתכנון ובנייה ', 'הוועדה המקומית ') : ''
+  const rows = [
+    ['העבודה', page.city ? 'בניית בית פרטי על המגרש שלכם' : 'בתים פרטיים ווילות על המגרש שלכם'],
+    page.city && ['המקום', page.city],
+    committee && ['ההיתר', committee],
+    ['ביצוע', 'ראיתה, זרוע הביצוע'],
+    ['פיקוח מטעמכם', 'שכינתא, זרוע הפיקוח'],
+  ].filter(Boolean)
+  return (
+    <aside className="hl-sign" aria-label="בקצרה">
+      <span className="hl-sign__band">קבוצת קורקוס</span>
+      <dl className="hl-sign__rows">
+        {rows.map(([k, v]) => (
+          <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+        ))}
+        <div>
+          <dt>טלפון</dt>
+          <dd><a href={telHref()} onClick={onCall} dir="ltr">{CONTACT_PHONE_DISPLAY}</a></dd>
+        </div>
+      </dl>
+    </aside>
   )
 }
 

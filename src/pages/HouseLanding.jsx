@@ -4,6 +4,7 @@ import Seo from '../components/ui/Seo.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
+import InfiniteGrid from '../components/ui/InfiniteGrid.jsx'
 import { LeadFields, LeadSubmit, LeadSuccess, LeadFailure } from '../components/ui/LeadForm.jsx'
 import heDict from '../i18n/he.js'
 import enDict from '../i18n/en.js'
@@ -74,6 +75,8 @@ function HouseLandingPage({ page }) {
 
       {/* ---------- כותרת ---------- */}
       <header className="hl-hero">
+        <InfiniteGrid color="rgba(143,182,200,1)" baseOpacity={0.14} revealOpacity={0.42} size={48} speed={0.25} />
+        <div className="hl-hero__glow" aria-hidden="true" />
         <div className="container hl-hero__inner">
           <Breadcrumbs items={page.crumbs} />
           <div className="hl-hero__grid">

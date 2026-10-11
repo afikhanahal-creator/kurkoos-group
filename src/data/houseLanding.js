@@ -286,7 +286,7 @@ export const HOUSE_PAGES = [
     lead: 'אנחנו מקימים בהוד השרון וילות בשלושה מפלסים, כ-300 מ"ר בנוי עם בריכה פרטית. אותה קבוצה בונה גם על המגרש שלכם.',
     area: { '@type': 'Place', name: 'השרון' },
     serviceName: 'בניית וילות ובתים פרטיים בשרון',
-    heroImage: '/execution-gallery/5.jpg',
+    heroImage: '/execution-gallery/6.jpg',
     heroAlt: 'עבודות יסודות ושלד של קורקוס גרופ',
     intro: {
       q: 'מי בונה וילות בשרון?',
@@ -369,7 +369,7 @@ export const HOUSE_PAGES = [
     slug: 'tel-aviv',
     city: 'תל אביב',
     inCity: 'בתל אביב',
-    heroImage: '/execution-gallery/5.jpg',
+    heroImage: '/execution-gallery/2.jpg',
     committee: 'הוועדה המקומית לתכנון ובנייה תל אביב-יפו',
     intro2: 'במגרש עירוני, התיאום מראש של עבודות העפר, הגישה לאתר והעבודה ליד בתי השכנים חשוב כמעט כמו התוכנית עצמה.',
     localChecks: [

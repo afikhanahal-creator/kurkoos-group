@@ -56,7 +56,7 @@
 }
 .hl-hero__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
   gap: clamp(2rem, 5vw, 4.5rem);
   align-items: center;
 }
@@ -66,9 +66,9 @@
   margin: 0;
   justify-self: end;
   width: 100%;
-  max-width: 600px;
+  max-width: 760px;
 }
-.hl-hero__media.is-portrait { max-width: 360px; }
+.hl-hero__media.is-portrait { max-width: 400px; }
 .hl-hero__img {
   display: block;
   width: 100%;
@@ -76,11 +76,30 @@
   aspect-ratio: var(--hl-ar, 16 / 9);
   object-fit: cover;
   border-radius: 14px;
-  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.6);
-  outline: 1px solid rgba(255, 255, 255, 0.14);
-  outline-offset: 8px;
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.7);
 }
-.hl-hero__media.is-portrait .hl-hero__img { max-height: 560px; width: auto; margin-inline: auto; }
+.hl-hero__media.is-portrait .hl-hero__img { max-height: 620px; width: auto; margin-inline: auto; }
+.hl-hero__inner { position: relative; z-index: 1; }
+/* הילה טורקיז מאחורי התמונה, ופס אור עדין בתחתית: שובר את הנייבי השטוח */
+.hl-hero__glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 60% at 22% 52%, rgba(16, 85, 114, 0.75), rgba(16, 85, 114, 0) 70%),
+    radial-gradient(30% 40% at 90% 10%, rgba(143, 182, 200, 0.12), rgba(143, 182, 200, 0) 70%),
+    linear-gradient(0deg, rgba(4, 26, 38, 0.55), rgba(4, 26, 38, 0) 35%);
+}
+.hl-hero__media::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border: 1px solid rgba(143, 182, 200, 0.28);
+  border-radius: 20px;
+  transform: translate(-18px, 18px);
+  pointer-events: none;
+}
 
 /* שלט האתר */
 .hl-sign {
@@ -679,6 +698,8 @@
 /* ---------- טאבלט ---------- */
 @media (max-width: 900px) {
   .hl-hero__grid, .hl-hero__grid:has(.is-portrait) { grid-template-columns: 1fr; }
+  .hl-hero__media::before { display: none; }
+  .hl-hero__glow { background: radial-gradient(80% 40% at 50% 78%, rgba(16, 85, 114, 0.7), rgba(16, 85, 114, 0) 70%), linear-gradient(0deg, rgba(4, 26, 38, 0.5), rgba(4, 26, 38, 0) 35%); }
   .hl-hero__media, .hl-hero__media.is-portrait { justify-self: stretch; max-width: none; }
   .hl-hero__media.is-portrait .hl-hero__img { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-position: 50% 35%; }
 }

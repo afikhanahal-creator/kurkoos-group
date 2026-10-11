@@ -67,7 +67,11 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
     document.title = fullTitle
     upsertMeta('name', 'description', desc)
     upsertMeta('name', 'robots', noindex ? 'noindex,follow' : 'index,follow')
-    upsertLink('canonical', url)
+    /* עמוד noindex (בעיקר 404) לא מצהיר על כתובת קנונית: canonical לכתובת
+       שלא קיימת, או לעמוד הבית, הוא אות סותר ל-noindex. בניווט חזרה לעמוד
+       רגיל upsertLink יוצר את התג מחדש. */
+    if (noindex) document.head.querySelectorAll('link[rel="canonical"]').forEach((el) => el.remove())
+    else upsertLink('canonical', url)
 
     upsertMeta('property', 'og:title', fullTitle)
     upsertMeta('property', 'og:description', desc)

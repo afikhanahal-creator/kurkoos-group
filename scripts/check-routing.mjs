@@ -39,6 +39,9 @@ if (!v.cleanUrls) {
 if (!existsSync(join(root, 'dist', 'index.html'))) fail('dist/index.html לא קיים — ה-build לא הפיק את עמוד הבסיס.')
 if (!existsSync(join(root, 'dist', 'app-shell.html'))) fail('dist/app-shell.html לא קיים — ה-prerender לא שמר את מעטפת ה-SPA, וכל כתובת בלי קובץ תחזיר 404.')
 else if (readFileSync(join(root, 'dist', 'app-shell.html'), 'utf8').includes('class="ssr"')) fail('dist/app-shell.html מכיל תוכן סטטי של עמוד. המעטפת חייבת להיות נקייה.')
+/* המעטפת מוגשת גם לכתובות שלא קיימות. canonical בתוכה היה מצביע על עמוד
+   הבית מכל כתובת שגויה (soft 404 שמתחזה לעמוד הבית). */
+else if (/rel="canonical"|property="og:url"/.test(readFileSync(join(root, 'dist', 'app-shell.html'), 'utf8'))) fail('dist/app-shell.html מכיל canonical או og:url. המעטפת מוגשת גם לכתובות שלא קיימות ואסור לה להצביע על עמוד הבית.')
 if (!existsSync(join(root, 'dist', 'robots.txt'))) fail('dist/robots.txt לא קיים.')
 if (!existsSync(join(root, 'api', '[fn].js'))) fail('api/[fn].js לא קיים — כל ה-API של האתר יחזיר 404.')
 

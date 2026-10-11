@@ -44,8 +44,27 @@ if (!existsSync(join(dist, 'index.html'))) {
    בהרצה חוזרת (check-routing מייבא את הקובץ הזה) קוראים מהמעטפת, כי
    index.html כבר מכיל את עמוד הבית. */
 const SHELL = join(dist, 'app-shell.html')
-if (!existsSync(SHELL)) writeFileSync(SHELL, readFileSync(join(dist, 'index.html'), 'utf8'))
+/* המעטפת מוגשת לכל כתובת שאין לה קובץ סטטי, כולל כתובות שלא קיימות. אם
+   היא נושאת את ה-canonical וה-og:url של עמוד הבית, כל כתובת שגויה אומרת
+   לסורק "אני עותק של עמוד הבית" לפני שה-JavaScript רץ. לכן במעטפת שני
+   התגים מוחלפים בסימון ריק. Seo.jsx כותב canonical נכון בזמן ריצה לכל עמוד
+   אמיתי, ועמוד 404 נשאר בלי canonical. renderPage מחזיר את התגים לכל עמוד
+   סטטי, כך שהעמודים המרונדרים לא משתנים. */
+const CANON_SLOT = '<!--seo:canonical-->'
+const OGURL_SLOT = '<!--seo:og-url-->'
+const CANON_RE = /<link rel="canonical" href="[^"]*" \/>/
+const OGURL_RE = /<meta property="og:url" content="[^"]*" \/>/
+if (!existsSync(SHELL)) {
+  const shell = readFileSync(join(dist, 'index.html'), 'utf8')
+  if (!CANON_RE.test(shell) || !OGURL_RE.test(shell)) {
+    console.error('prerender: לא נמצאו תגי canonical / og:url ב-index.html, המעטפת לא תנוקה')
+    process.exit(1)
+  }
+  writeFileSync(SHELL, shell.replace(CANON_RE, CANON_SLOT).replace(OGURL_RE, OGURL_SLOT))
+}
 const baseHtml = readFileSync(SHELL, 'utf8')
+  .replace(CANON_SLOT, '<link rel="canonical" href="" />')
+  .replace(OGURL_SLOT, '<meta property="og:url" content="" />')
 
 /* כתבות עם תאריך עתידי מוסתרות באתר עד התאריך שלהן. גם כאן: בלי עמוד
    סטטי ובלי רשימה, אחרת הן נחשפות לסורקים בבנייה הראשונה. */

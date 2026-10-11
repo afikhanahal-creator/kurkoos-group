@@ -54,7 +54,7 @@ export default function SharonHub() {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'קורקוס גרופ', item: 'https://www.kurkoos-group.co.il/' },
+        { '@type': 'ListItem', position: 1, name: 'קבוצת קורקוס', item: 'https://www.kurkoos-group.co.il/' },
         { '@type': 'ListItem', position: 2, name: 'נדל"ן בהוד השרון ובאזור המרכז', item: 'https://www.kurkoos-group.co.il/real-estate-sharon' },
       ],
     },

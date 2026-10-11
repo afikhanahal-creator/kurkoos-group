@@ -365,7 +365,7 @@ export default function Calculators() {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'קורקוס גרופ', item: 'https://www.kurkoos-group.co.il/' },
+        { '@type': 'ListItem', position: 1, name: 'קבוצת קורקוס', item: 'https://www.kurkoos-group.co.il/' },
         { '@type': 'ListItem', position: 2, name: 'מחשבוני נדל"ן', item: 'https://www.kurkoos-group.co.il/real-estate-calculators' },
       ],
     },

@@ -17,8 +17,22 @@ import { createHash } from 'node:crypto'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
-const SITE = 'https://www.kurkoos-group.co.il'
-const BRAND = 'קורקוס גרופ'
+/* כותרות, תיאורים, פירורי לחם ו-Article נלקחים מ-src/lib/seo.js, אותו מקור
+   ש-Seo.jsx משתמש בו בזמן ריצה. כך ה-HTML הסטטי והעמוד החי זהים. */
+const {
+  SITE_URL: SITE, BRAND, HOME_CRUMB, COLUMNS, PAGE_META, PAGE_CRUMBS,
+  composeTitle, clampDescription, breadcrumbLd, articleCrumbs, articleLd,
+  articleSeoTitle, articleSeoDescription,
+} = await import(pathToFileURL(join(root, 'src/lib/seo.js')).href)
+const { ABOUT_VISION } = await import(pathToFileURL(join(root, 'src/data/aboutVision.js')).href)
+const { srcOfResponsive } = await import(pathToFileURL(join(root, 'src/lib/responsiveImage.js')).href)
+/* כותרת ותיאור של עמוד קבוע, מהמקור המשותף */
+const meta = (path) => {
+  const m = PAGE_META[path]
+  if (!m) throw new Error(`prerender: חסרים כותרת ותיאור ל-${path} ב-src/lib/seo.js`)
+  return m
+}
+const crumbsFor = (path, name) => PAGE_CRUMBS[path] || [HOME_CRUMB, { name, path }]
 
 if (!existsSync(join(dist, 'index.html'))) {
   console.error('prerender: dist/index.html לא נמצא, הריצו vite build קודם')
@@ -66,11 +80,6 @@ function mdToHtml(md) {
   return out.join('\n')
 }
 
-const breadcrumbLd = (items) => ({
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: `${SITE}${it.path}` })),
-})
 const faqLd = (faqs, pick = (f) => [f.q, f.a]) => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -113,7 +122,8 @@ const SITE_LINKS =
   `</ul></nav>`
 
 function renderPage({ path, title, description, ogType = 'website', jsonLd = [], bodyHtml = '' }) {
-  const fullTitle = `${title} | ${BRAND}`
+  const fullTitle = composeTitle(title)
+  description = clampDescription(description)
   const url = SITE + path
   let html = baseHtml
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(fullTitle)}</title>`)
@@ -152,13 +162,6 @@ function renderPage({ path, title, description, ogType = 'website', jsonLd = [],
 const done = []
 
 /* ---------- 1. כתבות הטורים ---------- */
-const COLUMNS = {
-  yazamut: { route: '/yazamut-nadlan', label: 'טור יזמות נדל״ן', index: 'המדריך ליזמות נדל"ן' },
-  constructions: { route: '/constructions', label: 'המדריך לתהליך הבנייה', index: 'המדריך לתהליך הבנייה' },
-  supervision: { route: '/construction-supervision', label: 'המדריך לפיקוח בנייה', index: 'המדריך לפיקוח בנייה' },
-  brokerage: { route: '/real-estate-guide', label: 'המדריך לרוכש ולמוכר', index: 'המדריך לרוכש ולמוכר' },
-  mentorguide: { route: '/madrich-yazamim', label: 'המדריך ליזמי נדל"ן צעירים', index: 'המדריך ליזמי נדל"ן צעירים' },
-}
 
 for (const [dirName, col] of Object.entries(COLUMNS)) {
   const colDir = join(root, 'src', 'content', dirName)
@@ -184,20 +187,12 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<p><a href="${col.route}">לכל הכתבות ב${esc(col.index)}</a> · <a href="/">${BRAND}</a></p>`
     done.push(renderPage({
       path,
-      title: a.metaTitle || `${a.title} · ${col.label}`,
-      description: a.metaDescription || a.excerpt || a.title,
+      title: articleSeoTitle(a, col.label),
+      description: articleSeoDescription(a),
       ogType: 'article',
       jsonLd: [
-        {
-          '@context': 'https://schema.org', '@type': 'Article',
-          headline: a.title, description: a.excerpt || undefined,
-          datePublished: a.date, dateModified: a.date,
-          author: { '@type': 'Organization', name: BRAND },
-          publisher: { '@type': 'Organization', name: BRAND, logo: { '@type': 'ImageObject', url: `${SITE}/kurkoos-logo.svg` } },
-          mainEntityOfPage: { '@type': 'WebPage', '@id': SITE + path },
-          inLanguage: 'he',
-        },
-        breadcrumbLd([{ name: BRAND, path: '/' }, { name: col.index, path: col.route }, { name: a.title, path }]),
+        articleLd(a, path, srcOfResponsive(a.cover) || undefined),
+        breadcrumbLd(articleCrumbs(col, a)),
       ],
       bodyHtml: body,
     }))
@@ -212,9 +207,9 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     ).join('\n')
   done.push(renderPage({
     path: col.route,
-    title: col.index,
-    description: `${col.index} מבית ${BRAND}: ${articles.slice(0, 3).map((a) => a.title).join(' · ')}`,
-    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: col.index, path: col.route }])],
+    title: meta(col.route).title,
+    description: meta(col.route).description,
+    jsonLd: [breadcrumbLd([HOME_CRUMB, col.parent, { name: col.index, path: col.route }])],
     bodyHtml: listHtml,
   }))
 }
@@ -231,15 +226,14 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     ).join('\n')
   done.push(renderPage({
     path: '/real-estate-glossary',
-    title: 'מילון מונחי נדל"ן',
-    description: 'מה זה תב"ע? מה ההבדל בין מס רכישה למס שבח? מילון מונחי הנדל"ן של קורקוס גרופ: הגדרות ברורות לכל מונחי המפתח בתכנון, עסקאות, מימון ובנייה.',
+    ...meta('/real-estate-glossary'),
     jsonLd: [
       {
         '@context': 'https://schema.org', '@type': 'DefinedTermSet',
         name: 'מילון מונחי נדל"ן', url: `${SITE}/real-estate-glossary`,
         hasDefinedTerm: terms.map((t) => ({ '@type': 'DefinedTerm', name: t.term, description: t.def, url: `${SITE}/real-estate-glossary#${t.id}` })),
       },
-      breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'מילון מונחי נדל"ן', path: '/real-estate-glossary' }]),
+      breadcrumbLd([HOME_CRUMB, { name: 'מילון מונחי נדל"ן', path: '/real-estate-glossary' }]),
     ],
     bodyHtml: body,
   }))
@@ -265,7 +259,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       jsonLd: [
         { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' }, url: SITE + path },
         ...(faqs.length ? [faqLd(faqs, (f) => [f.q.he, f.a.he])] : []),
-        breadcrumbLd([{ name: BRAND, path: '/' }, { name: d.menuTitle.he, path }]),
+        breadcrumbLd([HOME_CRUMB, { name: d.menuTitle.he, path }]),
       ],
       bodyHtml: body,
     }))
@@ -281,9 +275,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   ]
   done.push(renderPage({
     path: '/real-estate-sharon',
-    title: 'נדל"ן בהוד השרון ובאזור המרכז: יזמות, ביצוע, פיקוח ותיווך',
-    description: 'מחפשים חברת נדל"ן באזור השרון? קורקוס גרופ, שמשרדה בהוד השרון, מלווה פרויקטים ועסקאות באזור השרון והמרכז: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, תיווך ושיווק נכסים.',
-    jsonLd: [faqLd(sharonFaqs, (f) => f), breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'נדל"ן בהוד השרון ובאזור המרכז', path: '/real-estate-sharon' }])],
+    ...meta('/real-estate-sharon'),
+    jsonLd: [faqLd(sharonFaqs, (f) => f), breadcrumbLd([HOME_CRUMB, { name: 'נדל"ן בהוד השרון ובאזור המרכז', path: '/real-estate-sharon' }])],
     bodyHtml:
       `<h1>נדל"ן בהוד השרון ובאזור המרכז</h1>` +
       `<p>קורקוס גרופ היא קבוצת נדל"ן שמשרדה ברחוב הנגר 24 בהוד השרון. הקבוצה פועלת בארבעה תחומים משלימים: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, ותיווך ושיווק נכסים, עם פעילות באזור השרון והמרכז ופרויקטים נבחרים ברחבי הארץ.</p>` +
@@ -300,9 +293,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   ]
   done.push(renderPage({
     path: '/villas-sharon',
-    title: 'בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז',
-    description: 'קורקוס גרופ בונה וילות ובתים פרטיים בהוד השרון: יורדי הים 3 בגרינברג, שתי וילות על חצי דונם עם בריכה, והנרייטה סאלד 22-24 במערב העיר, ארבע יחידות דו משפחתיות עם בריכה ומגרש בטאבו.',
-    jsonLd: [faqLd(villaFaqs, (f) => f), breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'בניית וילות ובתים פרטיים', path: '/villas-sharon' }])],
+    ...meta('/villas-sharon'),
+    jsonLd: [faqLd(villaFaqs, (f) => f), breadcrumbLd([HOME_CRUMB, { name: 'בניית וילות ובתים פרטיים', path: '/villas-sharon' }])],
     bodyHtml:
       `<h1>בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז</h1>` +
       `<p>קורקוס גרופ היא קבוצת נדל"ן מהוד השרון הבונה וילות ובתים פרטיים באזור השרון. הקבוצה מקימה כיום את יורדי הים 3 בשכונת גרינברג, את הנרייטה סאלד 22-24 במערב הוד השרון ואת חנקין 41 במגדיאל. הביצוע נעשה על ידי ראיתה, זרוע הביצוע של הקבוצה, והפיקוח על ידי שכינתא.</p>` +
@@ -323,9 +315,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   ]
   done.push(renderPage({
     path: '/real-estate-calculators',
-    title: 'מחשבון משכנתא ומחשבון תשואה לנדל"ן',
-    description: 'מחשבון החזר חודשי למשכנתא לפי לוח שפיצר ומחשבון תשואת שכירות לנכס להשקעה, כלים חינמיים עם הסברים ברורים, מבית קורקוס גרופ.',
-    jsonLd: [faqLd(calcFaqs, (f) => f), breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'מחשבוני נדל"ן', path: '/real-estate-calculators' }])],
+    ...meta('/real-estate-calculators'),
+    jsonLd: [faqLd(calcFaqs, (f) => f), breadcrumbLd([HOME_CRUMB, { name: 'מחשבוני נדל"ן', path: '/real-estate-calculators' }])],
     bodyHtml:
       `<h1>מחשבון משכנתא ומחשבון תשואה לנדל"ן</h1><p>כמה תחזירו כל חודש, וכמה הנכס באמת מכניס. מחשבון החזר חודשי למשכנתא לפי לוח שפיצר ומחשבון תשואת שכירות ברוטו ונטו. החישוב מתבצע בדפדפן, להערכה ראשונית בלבד ואינו ייעוץ פיננסי.</p>` +
       `<h2>מחשבון החזר חודשי למשכנתא</h2><h2>מחשבון תשואת שכירות</h2>` +
@@ -378,9 +369,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
      עמוד כזה כמעט לא נבחר כקישור אתר בתוצאות החיפוש. */
   done.push(renderPage({
     path: '/projects',
-    title: 'פרויקטים בהוד השרון ובאזור המרכז',
-    description: 'הפרויקטים של קורקוס גרופ בהוד השרון ובאזור המרכז: בנייה למגורים, וילות ובתים פרטיים, ופרויקטים בליווי ובפיקוח הקבוצה, מקרקע ועד מסירת מפתח.',
-    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'הפרויקטים', path: '/projects' }])],
+    ...meta('/projects'),
+    jsonLd: [breadcrumbLd([HOME_CRUMB, { name: 'הפרויקטים', path: '/projects' }])],
     bodyHtml:
       `<h1>הפרויקטים של קורקוס גרופ</h1>` +
       `<p>קורקוס גרופ מתכננת, בונה ומלווה פרויקטים בהוד השרון ובאזור המרכז. הביצוע נעשה על ידי ראיתה, זרוע הביצוע של הקבוצה, והפיקוח על ידי שכינתא.</p>` +
@@ -398,13 +388,16 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
 
   done.push(renderPage({
     path: '/about',
-    title: 'אודות הקבוצה',
-    description: 'קורקוס גרופ היא קבוצת נדל"ן הפועלת ביזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים: מקרקע ועד מסירת מפתח, עם פעילות באזור השרון והמרכז.',
-    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'אודות הקבוצה', path: '/about' }])],
+    ...meta('/about'),
+    jsonLd: [breadcrumbLd([HOME_CRUMB, { name: 'אודות הקבוצה', path: '/about' }])],
     bodyHtml:
       `<h1>אודות קורקוס גרופ</h1>` +
       `<p>קורקוס גרופ היא קבוצת נדל"ן שמשרדה ברחוב הנגר 24 בהוד השרון. הקבוצה מאגדת ארבע זרועות פעילות שמלוות פרויקט מקרקע ועד מסירת מפתח: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, ותיווך ושיווק נכסים.</p>` +
-      `<ul><li><a href="/divisions/development">יזמות נדל"ן</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a></li><li><a href="/team">הצוות שמאחורי קורקוס</a></li><li><a href="/projects">הפרויקטים</a></li></ul>`,
+      `<ul><li><a href="/divisions/development">יזמות נדל"ן</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a></li><li><a href="/team">הצוות שמאחורי קורקוס</a></li><li><a href="/projects">הפרויקטים</a></li></ul>` +
+      /* טקסט החזון, אותו טקסט שמוצג בעמוד החי (src/data/aboutVision.js) */
+      `<h2>${esc(ABOUT_VISION.he.heading)}</h2>` +
+      ABOUT_VISION.he.paragraphs.map((p) => `<p>${esc(p)}</p>`).join('') +
+      `<p>${esc(ABOUT_VISION.he.tagline)}</p>`,
   }))
 
   /* עמוד הצוות. אנשים בעלי שם ותפקיד הם סימן אמון מרכזי בעיני מנוע חיפוש,
@@ -416,10 +409,9 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   const teamOrdered = [...teamMembers].reverse()
   done.push(renderPage({
     path: '/team',
-    title: 'הצוות שמאחורי קורקוס',
-    description: `הצוות של קורקוס גרופ: ${teamOrdered.map((m) => `${he(m.name)}, ${he(m.role)}`).join('. ')}. מלווים כל פרויקט בהוד השרון ובאזור המרכז מהתכנון ועד מסירת המפתח.`.slice(0, 300),
+    ...meta('/team'),
     jsonLd: [
-      breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'אודות הקבוצה', path: '/about' }, { name: 'הצוות שמאחורי קורקוס', path: '/team' }]),
+      breadcrumbLd(PAGE_CRUMBS['/team']),
       ...teamOrdered.map((m) => ({
         '@context': 'https://schema.org',
         '@type': 'Person',
@@ -489,9 +481,9 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     done.push(renderPage({
       path: `/projects/${slug}`,
       title: heading,
-      description: `${lead.replace(/[.\s]+$/, '')}. ${name} הוא פרויקט של קורקוס גרופ: יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.`.slice(0, 300),
+      description: `${lead.replace(/[.\s]+$/, '')}. ${name} הוא פרויקט של ${BRAND}: יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.`,
       jsonLd: [breadcrumbLd([
-        { name: BRAND, path: '/' },
+        HOME_CRUMB,
         { name: 'הפרויקטים', path: '/projects' },
         { name, path: `/projects/${slug}` },
       ])],
@@ -507,9 +499,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   /* שני עמודים שהיו ב-sitemap בלי HTML שסורק יכול לקרוא */
   done.push(renderPage({
     path: '/blog',
-    title: 'בלוג קורקוס',
-    description: 'תובנות, עדכונים וסיפורים מאחורי הקלעים של קורקוס גרופ: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים.',
-    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'בלוג קורקוס', path: '/blog' }])],
+    ...meta('/blog'),
+    jsonLd: [breadcrumbLd([HOME_CRUMB, { name: 'בלוג קורקוס', path: '/blog' }])],
     bodyHtml:
       `<h1>בלוג קורקוס</h1><p>תובנות, עדכונים וסיפורים מאחורי הקלעים של קבוצת קורקוס.</p>` +
       `<h2>הטורים והמדריכים של הקבוצה</h2>` +
@@ -518,9 +509,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
 
   done.push(renderPage({
     path: '/careers',
-    title: 'דרושים',
-    description: 'קורקוס גרופ מחפשת אנשים מצוינים לתחומי היזמות, הביצוע, הפיקוח והתיווך. המשרדים בהנגר 24 בהוד השרון.',
-    jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'דרושים', path: '/careers' }])],
+    ...meta('/careers'),
+    jsonLd: [breadcrumbLd(PAGE_CRUMBS['/careers'])],
     bodyHtml:
       `<h1>דרושים בקורקוס גרופ</h1>` +
       `<p>אנחנו תמיד מחפשים אנשים מצוינים. הקבוצה פועלת ביזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים, מהמשרד ברחוב הנגר 24 בהוד השרון.</p>` +
@@ -531,10 +521,9 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
      הוא חייב להחזיר HTML קריא גם לסורק שלא מריץ JavaScript. */
   done.push(renderPage({
     path: '/contact',
-    title: 'השארת פרטים ויצירת קשר',
-    description: 'השאירו פרטים ונחזור אליכם: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך ושיווק נכסים. המשרד ברחוב הנגר 24 בהוד השרון.',
+    ...meta('/contact'),
     jsonLd: [
-      breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'השארת פרטים', path: '/contact' }]),
+      breadcrumbLd([HOME_CRUMB, { name: 'השארת פרטים', path: '/contact' }]),
       {
         '@context': 'https://schema.org',
         '@type': 'ContactPage',
@@ -552,9 +541,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   const { faqs: mentorFaqs } = await import(pathToFileURL(join(root, 'src/data/mentorship.js')).href)
   done.push(renderPage({
     path: '/livy-yazamim',
-    title: 'ליווי יזמי נדל"ן',
-    description: 'תוכנית מנטורינג ליזמי נדל"ן צעירים עם שלומי קורקוס וצוות קורקוס גרופ: ידע, כלים ופרקטיקה מהיום יום של התעשייה, על בסיס שלושים שנות ניסיון בשטח.',
-    jsonLd: [faqLd(mentorFaqs, (f) => [f.q.he, f.a.he]), breadcrumbLd([{ name: BRAND, path: '/' }, { name: 'ליווי יזמי נדל"ן', path: '/livy-yazamim' }])],
+    ...meta('/livy-yazamim'),
+    jsonLd: [faqLd(mentorFaqs, (f) => [f.q.he, f.a.he]), breadcrumbLd([HOME_CRUMB, { name: 'ליווי יזמי נדל"ן', path: '/livy-yazamim' }])],
     bodyHtml:
       `<h1>ליווי יזמי נדל"ן צעירים</h1>` +
       `<p>תוכנית מנטורינג שמעניקה ליזמים צעירים ידע, כלים ופרקטיקה מהיום יום של התעשייה, עם שלומי קורקוס וצוות קורקוס גרופ, שלושים שנה של ניסיון בשטח.</p>` +
@@ -571,8 +559,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     `<li><strong>${esc(p.name)}</strong>: ${esc(p.kind)}. ${esc(p.tagline)}. סטטוס: ${esc(p.status)}.</li>`).join('')
   done.push(renderPage({
     path: '/',
-    title: 'בניית וילות ובתים פרטיים, יזמות ופיקוח בנייה בהוד השרון',
-    description: 'קבוצת קורקוס (קורקוס גרופ) מהוד השרון בונה וילות ובתים פרטיים, גם ללקוחות פרטיים על המגרש שלהם, ומפקחת על בנייה מטעם המזמין. יזמות, ביצוע, פיקוח ותיווך נדל"ן בהוד השרון ובאזור המרכז, מהקרקע ועד המפתח.',
+    ...meta('/'),
+    jsonLd: [breadcrumbLd(PAGE_CRUMBS['/'])],
     bodyHtml:
       `<h1>קבוצת קורקוס: בניית וילות ובתים פרטיים, יזמות ופיקוח בנייה בהוד השרון</h1>` +
       `<p>קבוצת קורקוס (קורקוס גרופ) היא חברת בנייה ונדל"ן מהוד השרון, שמשרדה ברחוב הנגר 24, ובונה וילות ובתים פרטיים בהוד השרון. הקבוצה עוסקת ביזמות נדל"ן, בביצוע ובנייה באמצעות ראיתה, בניהול ופיקוח פרויקטים באמצעות שכינתא, ובתיווך ושיווק נכסים באמצעות אפיק הנחל. את הקבוצה ייסד ומנהל שלומי קורקוס.</p>` +
@@ -596,15 +584,11 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<h2>יצירת קשר</h2><p>רחוב הנגר 24, מגדלי Amy, הוד השרון. טלפון 055-981-1814. ימים א׳ עד ה׳, 9:00 עד 18:00. <a href="/contact">השארת פרטים</a></p>`,
   }))
 
-  const LEGAL = [
-    ['/accessibility', 'הצהרת נגישות', 'הצהרת הנגישות של אתר קורקוס גרופ: התאמות הנגישות באתר לפי תקן ישראלי 5568 ברמה AA, תפריט נגישות, ודרכים לפנות אלינו בנושא נגישות.'],
-    ['/privacy', 'מדיניות פרטיות', 'מדיניות הפרטיות של קבוצת קורקוס: איזה מידע נאסף באתר, לאיזו מטרה, איך הוא נשמר, והזכויות שלכם לפי חוק הגנת הפרטיות.'],
-    ['/terms', 'תקנון ותנאי שימוש', 'תנאי השימוש באתר קורקוס גרופ: אופי המידע באתר, קניין רוחני, אחריות והגבלות השימוש.'],
-  ]
+  const LEGAL = ['/accessibility', '/privacy', '/terms'].map((path) => [path, meta(path).title, meta(path).description])
   for (const [path, title, description] of LEGAL) {
     done.push(renderPage({
       path, title, description,
-      jsonLd: [breadcrumbLd([{ name: BRAND, path: '/' }, { name: title, path }])],
+      jsonLd: [breadcrumbLd([HOME_CRUMB, { name: title, path }])],
       bodyHtml: `<h1>${esc(title)}</h1><p>${esc(description)}</p><p>לפניות: 055-981-1814, רחוב הנגר 24, הוד השרון.</p>`,
     }))
   }
@@ -632,6 +616,18 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     out.push(p.about, `הסביבה: ${p.area}`, '')
   }
   out.push('### בן גוריון 17, יהוד מונוסון', 'פרויקט של הקבוצה ביהוד מונוסון. https://www.kurkoos-group.co.il/projects', '')
+  /* אזורי הפעילות, עמודי בניית הבית הפרטי והצוות, מאותם קבצי נתונים שהאתר מרנדר */
+  const { HOUSE_PAGES } = await import(pathToFileURL(join(root, 'src/data/houseLanding.js')).href)
+  const { team } = await import(pathToFileURL(join(root, 'src/data/team.js')).href)
+  const heTxt = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
+  out.push('## אזורי פעילות', '')
+  out.push('המשרד ופרויקטי הווילות והבתים הפרטיים של הקבוצה נמצאים בהוד השרון. בניית בתים פרטיים באזור השרון, עם עמודים ייעודיים להוד השרון, רעננה והרצליה, ופעילות באזור השרון והמרכז.', '')
+  out.push('## בניית בית פרטי', '')
+  for (const pg of HOUSE_PAGES) out.push(`- ${pg.navLabel}: https://www.kurkoos-group.co.il${pg.path}`, `  ${pg.description}`)
+  out.push('')
+  out.push('## הצוות', 'https://www.kurkoos-group.co.il/team', '')
+  for (const m of [...team].reverse()) out.push(`- ${heTxt(m.name)}, ${heTxt(m.role)}`)
+  out.push('')
   out.push('## שאלות ותשובות: וילות ובתים פרטיים', '')
   for (const f of [...VILLAS_FAQS, ...BUYER_FAQS]) out.push(`ש: ${f.q}`, `ת: ${f.a}`, '')
   for (const d of divisions.filter((x) => x.slug !== 'residential')) {

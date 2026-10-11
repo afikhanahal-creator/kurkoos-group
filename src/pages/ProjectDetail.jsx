@@ -422,7 +422,7 @@ export default function ProjectDetail() {
      מחפש אותו עם שם העיר, ושתי הגרסאות חייבות להיות זהות. */
   const seoTitle = seoCity ? `${seoName}, ${seoCity}` : seoName
   const seoDesc = (L(project.short) || '').trim() ||
-    `${seoName}${seoCity ? ` · ${seoCity}` : ''}: פרויקט של קבוצת קורקוס. יזמות, בנייה ופיקוח ברמה הגבוהה ביותר.`
+    `${seoName}${seoCity ? ` · ${seoCity}` : ''}: פרויקט של קבוצת קורקוס. יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.`
   const seoJsonLd = [
     {
       '@context': 'https://schema.org',
@@ -437,8 +437,8 @@ export default function ProjectDetail() {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'קורקוס גרופ', item: 'https://www.kurkoos-group.co.il/' },
-        { '@type': 'ListItem', position: 2, name: 'פרויקטים', item: 'https://www.kurkoos-group.co.il/projects' },
+        { '@type': 'ListItem', position: 1, name: 'קבוצת קורקוס', item: 'https://www.kurkoos-group.co.il/' },
+        { '@type': 'ListItem', position: 2, name: 'הפרויקטים', item: 'https://www.kurkoos-group.co.il/projects' },
         { '@type': 'ListItem', position: 3, name: seoName, item: `https://www.kurkoos-group.co.il/projects/${project.slug}` },
       ],
     },

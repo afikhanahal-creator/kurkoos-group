@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useI18n } from '../../i18n/index.jsx'
 import site from '../../data/site.js'
+import { BRAND, composeTitle, clampDescription, metaForPath } from '../../lib/seo.js'
 
 /* ============================================================
    ניהול תגיות <head> per-page (SEO) ל-SPA ללא SSR:
@@ -32,12 +33,21 @@ function upsertLink(rel, href) {
 // הכתובת שממנה נטען הדף בפועל, כלומר זו שה-prerender כתב לה את ה-head
 const FIRST_PATH = typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') || '/' : '/'
 
-export default function Seo({ title, description, image, noindex = false, jsonLd = null }) {
+/* האם אחד הבלוקים שהעמוד מזריק הוא כבר BreadcrumbList */
+const hasType = (ld, type) =>
+  [].concat(ld || []).some((x) => x && [].concat(x['@type'] || []).includes(type))
+
+export default function Seo({ title, description, image, noindex = false, jsonLd = null, ogType = 'website' }) {
   const { lang } = useI18n()
   const { pathname } = useLocation()
 
   useEffect(() => {
-    const brand = lang === 'he' ? 'קורקוס גרופ' : 'Kurkoos Group'
+    const brand = lang === 'he' ? BRAND : 'Kurkoos Group'
+    /* לעמודים הקבועים יש כותרת ותיאור מוגדרים ב-lib/seo.js, אותו מקור שה-
+       prerender כותב ל-HTML הסטטי. כך גוגל רואה אותה כותרת לפני ואחרי
+       הרצת ה-JavaScript. */
+    const path = pathname.replace(/(.)\/$/, '$1')
+    const fixed = lang === 'he' ? metaForPath(path) : null
     /* כל עמוד חייב כותרת משלו. ברירת המחדל הקודמת הייתה "קורקוס גרופ |
        Kurkoos Group", וכל עמוד בלי כותרת קיבל בדיוק אותה מחרוזת. גוגל ראה
        כמה עמודים שונים עם אותה כותרת, בחר אחד מהם לקישור אתר, וסימן אותו
@@ -46,13 +56,13 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
     const fallbackTitle = lang === 'he'
       ? 'יזמות, בנייה ופיקוח נדל"ן בהוד השרון ובאזור המרכז'
       : 'Real-estate development, construction and supervision in Hod HaSharon'
-    const fullTitle = `${title || fallbackTitle} | ${brand}`
+    const fullTitle = composeTitle(fixed?.title || title || fallbackTitle, brand)
     const fallbackDesc = lang === 'he'
-      ? 'קורקוס גרופ — יזמות, בנייה, פיקוח ותיווך נדל"ן ברמה הגבוהה ביותר. מקרקע ועד מסירת מפתח.'
-      : 'Kurkoos Group — premium real-estate development, construction, supervision and brokerage. From land to key.'
-    const desc = description || fallbackDesc
+      ? 'קבוצת קורקוס: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים ותיווך נכסים בהוד השרון ובאזור המרכז, מקרקע ועד מסירת מפתח.'
+      : 'Kurkoos Group: real-estate development, construction, project supervision and brokerage in Hod HaSharon. From land to key.'
+    const desc = clampDescription(fixed?.description || description || fallbackDesc)
     const origin = (site.url || '').replace(/\/$/, '')
-    const url = origin + pathname
+    const url = origin + path
 
     document.title = fullTitle
     upsertMeta('name', 'description', desc)
@@ -62,7 +72,7 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
     upsertMeta('property', 'og:title', fullTitle)
     upsertMeta('property', 'og:description', desc)
     upsertMeta('property', 'og:url', url)
-    upsertMeta('property', 'og:type', 'website')
+    upsertMeta('property', 'og:type', ogType)
     // תמונת ברירת מחדל לשיתוף (וואטסאפ/רשתות) — לוגו על רקע לבן
     const ogImg = image || '/og-image.jpg'
     upsertMeta('property', 'og:image', ogImg.startsWith('http') ? ogImg : origin + ogImg)
@@ -76,8 +86,17 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
        נטען הדף. כשהעמוד מזריק בלוק משלו, או אחרי ניווט לכתובת אחרת, מוחקים
        אותם: אחרת גוגל רואה את אותו Article / FAQPage פעמיים, או בלוק של עמוד
        קודם. בלוק הארגון הקבוע שב-index.html לא מסומן ולכן לא נוגעים בו. */
-    if (jsonLd || (pathname.replace(/\/$/, '') || '/') !== FIRST_PATH) {
-      document.head.querySelectorAll('script[type="application/ld+json"][data-prerender]').forEach((el) => el.remove())
+    /* חריג אחד: פירורי הלחם (BreadcrumbList) מה-prerender נשארים כשהעמוד
+       נטען ישירות מהכתובת הזו והעמוד עצמו לא מזריק פירורים משלו. בלי
+       החריג, כל עמוד שמזריק Article או FAQPage מחק גם את הפירורים, וגוגל,
+       שמריץ JavaScript, לא ראה BreadcrumbList באף כתבה. */
+    const samePath = (pathname.replace(/\/$/, '') || '/') === FIRST_PATH
+    if (jsonLd || !samePath) {
+      const keepCrumbs = samePath && !hasType(jsonLd, 'BreadcrumbList')
+      document.head.querySelectorAll('script[type="application/ld+json"][data-prerender]').forEach((el) => {
+        if (keepCrumbs && el.textContent.includes('"BreadcrumbList"')) return
+        el.remove()
+      })
     }
 
     // נתונים מובנים per-page (schema.org) — נוסף ומוסר בעת ניווט
@@ -90,7 +109,7 @@ export default function Seo({ title, description, image, noindex = false, jsonLd
       document.head.appendChild(ld)
     }
     return () => { if (ld) ld.remove() }
-  }, [title, description, image, noindex, lang, pathname, jsonLd])
+  }, [title, description, image, noindex, lang, pathname, jsonLd, ogType])
 
   return null
 }

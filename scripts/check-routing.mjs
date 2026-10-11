@@ -106,8 +106,8 @@ for (const f of gsc) {
       const m = readFileSync(full, 'utf8').match(/<title>([\s\S]*?)<\/title>/)
       if (!m) { fail(`לעמוד ${route} אין תגית title.`); continue }
       const title = m[1].replace(/&quot;/g, '"').trim()
-      const bare = title.replace(/\s*\|\s*(קורקוס גרופ|Kurkoos Group)\s*$/g, '').trim()
-      if (!bare || /^(קורקוס גרופ|Kurkoos Group)$/i.test(bare)) {
+      const bare = title.replace(/\s*\|\s*(קבוצת קורקוס|קורקוס גרופ|Kurkoos Group)\s*$/g, '').trim()
+      if (!bare || /^(קבוצת קורקוס|קורקוס גרופ|Kurkoos Group)$/i.test(bare)) {
         fail(`לעמוד ${route} אין כותרת משלו, רק שם המותג: "${title}"`)
       }
       if (titles.has(title)) fail(`הכותרת "${title}" מופיעה גם ב-${titles.get(title)} וגם ב-${route}.`)

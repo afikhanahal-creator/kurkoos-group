@@ -103,7 +103,7 @@ export const divisions = [
     name: { he: 'ראיתה. ביצוע מנצח.', en: 'Raita. Winning execution.' },
     menuTitle: { he: 'ביצוע', en: 'Execution' },
     hero: {
-      title: { he: 'ביצוע ובנייה', en: 'Execution & Construction' },
+      title: { he: 'ביצוע ובנייה לבתים פרטיים ווילות', en: 'Execution & Construction' },
       subtitle: {
         he: 'מהיסודות ועד מסירת המפתח, בנייה איכותית, בזמן ובתקציב, עם צוותי שטח מהמנוסים בארץ.',
         en: 'From foundations to handover, quality construction, on time and on budget, with some of Israel’s most experienced field teams.',
@@ -208,7 +208,7 @@ export const divisions = [
     name: { he: 'קורקוס יזמות', en: 'Kurkoos Development' },
     menuTitle: { he: 'יזמות', en: 'Development' },
     hero: {
-      title: { he: 'ייזום נדל"ן', en: 'Real-estate development' },
+      title: { he: 'יזמות נדל"ן', en: 'Real-estate development' },
       subtitle: {
         he: 'מאיתור הקרקע ועד מסירת המפתח, יוזמים פרויקטים שמייצרים ערך לרוכשים, לשותפים ולסביבה.',
         en: 'From land acquisition to key handover, initiating projects that create value for buyers, partners and the surroundings.',
@@ -290,7 +290,7 @@ export const divisions = [
     name: { he: 'שכינתא פיקוח', en: 'Shechinta Supervision' },
     menuTitle: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
     hero: {
-      title: { he: 'ניהול ופיקוח בנייה', en: 'Construction management & supervision' },
+      title: { he: 'פיקוח בנייה וניהול פרויקטים', en: 'Construction management & supervision' },
       subtitle: {
         he: 'עיניים מקצועיות על כל פרט, פיקוח הנדסי צמוד שמבטיח איכות, בטיחות ועמידה בתקציב ובזמנים.',
         en: 'Professional eyes on every detail, close engineering supervision that ensures quality, safety, budget and schedule.',
@@ -394,7 +394,7 @@ export const divisions = [
     name: { he: 'אפיק הנחל', en: 'Afik Hanachal' },
     menuTitle: { he: 'תיווך', en: 'Brokerage' },
     hero: {
-      title: { he: 'תיווך ושיווק', en: 'Brokerage & Marketing' },
+      title: { he: 'תיווך נדל"ן ושיווק נכסים', en: 'Brokerage & Marketing' },
       subtitle: {
         he: 'מומחים בשיווק בתי יוקרה ואיתור מגרשים וקרקעות בשרון ובמרכז, המלווים אתכם בתהליך הרכישה והמכירה עד למציאת הנכס המדויק עבורכם',
         en: 'Experts in luxury home marketing and sourcing plots and land across the Sharon and central regions, guiding you through buying and selling until we find the exact property for you.',

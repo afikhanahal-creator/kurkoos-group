@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import { getDivision } from '../data/divisions.js'
+import { SERVICE_AREA_LD } from '../data/site.js'
 import projects from '../data/projects.js'
 import { supabase } from '../lib/supabase.js'
 import { listProjectsByPage, cmsRowToCard, useSettings } from '../lib/cms.js'
@@ -113,7 +114,7 @@ export default function Division() {
       serviceType: division.serviceName || L(division.menuTitle),
       description: L(division.intro),
       provider: { '@id': 'https://www.kurkoos-group.co.il/#organization' },
-      areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' },
+      areaServed: SERVICE_AREA_LD,
       url: `https://www.kurkoos-group.co.il/divisions/${slug}`,
     },
     ...(division.faqs?.length ? [{

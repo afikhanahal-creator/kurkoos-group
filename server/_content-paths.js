@@ -17,6 +17,10 @@ export default [
     "lastmod": "2026-10-04"
   },
   {
+    "path": "/construction-supervision/eich-livchor-mefakeach-bniya",
+    "lastmod": "2026-10-11"
+  },
+  {
     "path": "/construction-supervision/likuei-aluminium-trisim-bayit-hadash",
     "lastmod": "2026-09-27"
   },
@@ -27,6 +31,10 @@ export default [
   {
     "path": "/construction-supervision/likuei-itum",
     "lastmod": "2026-06-14"
+  },
+  {
+    "path": "/construction-supervision/mechir-pikuach-bniya",
+    "lastmod": "2026-10-11"
   },
   {
     "path": "/construction-supervision/mefakeach-bniya-bayit-prati",
@@ -109,8 +117,20 @@ export default [
     "lastmod": "2026-09-27"
   },
   {
+    "path": "/constructions/shlavei-bniyat-bayit-prati",
+    "lastmod": "2026-10-11"
+  },
+  {
     "path": "/constructions/site-manager-stop-concrete-pour",
     "lastmod": "2026-08-23"
+  },
+  {
+    "path": "/constructions/taoyot-bniyat-bayit-prati",
+    "lastmod": "2026-10-11"
+  },
+  {
+    "path": "/constructions/tichnun-bayit-prati",
+    "lastmod": "2026-10-11"
   },
   {
     "path": "/constructions/tofes-4-ichlus",
@@ -275,6 +295,10 @@ export default [
   {
     "path": "/yazamut-nadlan/rental-yield-vs-interest-rate-investor",
     "lastmod": "2026-09-06"
+  },
+  {
+    "path": "/yazamut-nadlan/sikunim-beyazamut-nadlan",
+    "lastmod": "2026-10-11"
   },
   {
     "path": "/yazamut-nadlan/tama38-pkiaa-hok-67",

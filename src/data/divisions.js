@@ -96,14 +96,16 @@ export const divisions = [
       { to: '/bniyat-vila-sharon', label: 'בניית וילה בשרון' },
       { to: '/constructions/livchor-chevrat-bniya-bayit-prati', label: 'איך בוחרים חברת בנייה לבית פרטי' },
       { to: '/constructions/kama-ole-livnot-bayit-prati', label: 'כמה עולה לבנות בית פרטי' },
+      { to: '/constructions/shlavei-bniyat-bayit-prati', label: 'שלבי בניית בית פרטי' },
       { to: '/divisions/supervision', label: 'פיקוח בנייה עם שכינתא' },
+      { to: '/shelot-ve-tshuvot', label: 'שאלות ותשובות על בנייה ופיקוח' },
     ],
     icon: 'crane',
     category: null,
     name: { he: 'ראיתה. ביצוע מנצח.', en: 'Raita. Winning execution.' },
     menuTitle: { he: 'ביצוע', en: 'Execution' },
     hero: {
-      title: { he: 'ביצוע ובנייה', en: 'Execution & Construction' },
+      title: { he: 'ביצוע ובנייה לבתים פרטיים ווילות', en: 'Execution & Construction' },
       subtitle: {
         he: 'מהיסודות ועד מסירת המפתח, בנייה איכותית, בזמן ובתקציב, עם צוותי שטח מהמנוסים בארץ.',
         en: 'From foundations to handover, quality construction, on time and on budget, with some of Israel’s most experienced field teams.',
@@ -201,6 +203,7 @@ export const divisions = [
       { to: '/villas-sharon', label: 'הפרויקטים שלנו בהוד השרון' },
       { to: '/madrich-yazamim/bdikat-hetkenut-karka', label: 'בדיקת היתכנות לפני רכישת קרקע' },
       { to: '/madrich-yazamim/zchuyot-bniya-ma-baamt-kniten', label: 'זכויות בנייה: מה באמת קניתם' },
+      { to: '/yazamut-nadlan/sikunim-beyazamut-nadlan', label: 'סיכונים ביזמות נדל"ן' },
       { to: '/livy-yazamim', label: 'ליווי אישי ליזמים בתחילת הדרך' },
     ],
     icon: 'building',
@@ -208,7 +211,7 @@ export const divisions = [
     name: { he: 'קורקוס יזמות', en: 'Kurkoos Development' },
     menuTitle: { he: 'יזמות', en: 'Development' },
     hero: {
-      title: { he: 'ייזום נדל"ן', en: 'Real-estate development' },
+      title: { he: 'יזמות נדל"ן', en: 'Real-estate development' },
       subtitle: {
         he: 'מאיתור הקרקע ועד מסירת המפתח, יוזמים פרויקטים שמייצרים ערך לרוכשים, לשותפים ולסביבה.',
         en: 'From land acquisition to key handover, initiating projects that create value for buyers, partners and the surroundings.',
@@ -282,15 +285,18 @@ export const divisions = [
     related: [
       { to: '/construction-supervision/mefakeach-bniya-bayit-prati', label: 'מפקח בנייה לבית פרטי: מה הוא בודק' },
       { to: '/construction-supervision/protokol-mesira-bayit-prati', label: 'פרוטוקול מסירה לבית פרטי' },
+      { to: '/construction-supervision/mechir-pikuach-bniya', label: 'כמה עולה פיקוח בנייה' },
+      { to: '/construction-supervision/eich-livchor-mefakeach-bniya', label: 'איך בוחרים מפקח בנייה' },
       { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },
       { to: '/divisions/execution', label: 'ביצוע ובנייה עם ראיתה' },
+      { to: '/shelot-ve-tshuvot', label: 'שאלות ותשובות על פיקוח ובדיקות' },
     ],
     icon: 'shield',
     category: null,
     name: { he: 'שכינתא פיקוח', en: 'Shechinta Supervision' },
     menuTitle: { he: 'פיקוח פרויקטים', en: 'Project supervision' },
     hero: {
-      title: { he: 'ניהול ופיקוח בנייה', en: 'Construction management & supervision' },
+      title: { he: 'פיקוח בנייה וניהול פרויקטים', en: 'Construction management & supervision' },
       subtitle: {
         he: 'עיניים מקצועיות על כל פרט, פיקוח הנדסי צמוד שמבטיח איכות, בטיחות ועמידה בתקציב ובזמנים.',
         en: 'Professional eyes on every detail, close engineering supervision that ensures quality, safety, budget and schedule.',
@@ -394,7 +400,7 @@ export const divisions = [
     name: { he: 'אפיק הנחל', en: 'Afik Hanachal' },
     menuTitle: { he: 'תיווך', en: 'Brokerage' },
     hero: {
-      title: { he: 'תיווך ושיווק', en: 'Brokerage & Marketing' },
+      title: { he: 'תיווך נדל"ן ושיווק נכסים', en: 'Brokerage & Marketing' },
       subtitle: {
         he: 'מומחים בשיווק בתי יוקרה ואיתור מגרשים וקרקעות בשרון ובמרכז, המלווים אתכם בתהליך הרכישה והמכירה עד למציאת הנכס המדויק עבורכם',
         en: 'Experts in luxury home marketing and sourcing plots and land across the Sharon and central regions, guiding you through buying and selling until we find the exact property for you.',

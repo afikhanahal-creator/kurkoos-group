@@ -195,6 +195,10 @@ export const PAGE_META = {
     title: 'המדריך ליזמי נדל"ן צעירים',
     description: 'המדריך ליזמי נדל"ן צעירים: כתבות מניסיון ישיר בשטח לפי עשרת שלבי תוכנית הליווי, מאיתור העסקה הראשונה ועד מסירת המפתח ובניית מוניטין.',
   },
+  '/shelot-ve-tshuvot': {
+    title: 'שאלות ותשובות על בנייה, פיקוח ויזמות נדל"ן',
+    description: 'תשובות קצרות על בניית בית פרטי, פיקוח בנייה, בדיקת בטון, תקופת בדק, יזמות נדל"ן ועסקאות, עם קישור לתשובה המלאה בכל שאלה. מבית קבוצת קורקוס, הוד השרון.',
+  },
   '/accessibility': {
     title: 'הצהרת נגישות',
     description: 'הצהרת הנגישות של אתר קבוצת קורקוס: התאמות הנגישות באתר לפי תקן ישראלי 5568 ברמה AA, תפריט נגישות, ודרכים לפנות אלינו בנושא נגישות.',
@@ -217,4 +221,22 @@ export const PAGE_CRUMBS = {
   '/livy-yazamim': [HOME_CRUMB, { name: 'ליווי יזמי נדל"ן', path: '/livy-yazamim' }],
 }
 
-export const metaForPath = (path) => PAGE_META[String(path || '').replace(/(.)\/$/, '$1')] || null
+/* מרכז שאלות ותשובות: FAQPage רק מהשאלות שמוצגות בעמוד, ופירורי לחם.
+   משמש גם את העמוד החי (FaqHub.jsx) וגם את ה-prerender. */
+export function faqHubLd(groups, path = '/shelot-ve-tshuvot') {
+  const items = groups.flatMap((g) => g.items)
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: items.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    breadcrumbLd([HOME_CRUMB, { name: 'שאלות ותשובות', path }]),
+  ]
+}
+
+export const metaForPath =(path) => PAGE_META[String(path || '').replace(/(.)\/$/, '$1')] || null

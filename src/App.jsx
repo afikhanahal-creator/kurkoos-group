@@ -29,6 +29,7 @@ const SharonHub = lazy(() => import('./pages/SharonHub.jsx'))
 const VillasSharon = lazy(() => import('./pages/VillasSharon.jsx'))
 const HouseLanding = lazy(() => import('./pages/HouseLanding.jsx'))
 const Calculators = lazy(() => import('./pages/Calculators.jsx'))
+const FaqHub = lazy(() => import('./pages/FaqHub.jsx'))
 const YazamutArticle = lazy(() => import('./pages/YazamutArticle.jsx'))
 const Constructions = lazy(() => import('./pages/Constructions.jsx'))
 const ConstructionsArticle = lazy(() => import('./pages/ConstructionsArticle.jsx'))
@@ -162,6 +163,7 @@ export default function App() {
               <Route path="/bniyat-vila-sharon" element={<HouseLanding />} />
               <Route path="/bniyat-bayit-prati/:city" element={<HouseLanding />} />
               <Route path="/real-estate-calculators" element={<Calculators />} />
+              <Route path="/shelot-ve-tshuvot" element={<FaqHub />} />
               <Route path="/real-estate-guide/:slug" element={<RealEstateGuideArticle />} />
               <Route path="/livy-yazamim" element={<Mentorship />} />
               <Route path="/madrich-yazamim" element={<MentorGuide />} />

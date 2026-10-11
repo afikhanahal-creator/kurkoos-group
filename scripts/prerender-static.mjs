@@ -22,7 +22,7 @@ const dist = join(root, 'dist')
 const {
   SITE_URL: SITE, BRAND, HOME_CRUMB, COLUMNS, PAGE_META, PAGE_CRUMBS,
   composeTitle, clampDescription, breadcrumbLd, articleCrumbs, articleLd,
-  articleSeoTitle, articleSeoDescription,
+  articleSeoTitle, articleSeoDescription, faqHubLd,
 } = await import(pathToFileURL(join(root, 'src/lib/seo.js')).href)
 const { ABOUT_VISION } = await import(pathToFileURL(join(root, 'src/data/aboutVision.js')).href)
 const { srcOfResponsive } = await import(pathToFileURL(join(root, 'src/lib/responsiveImage.js')).href)
@@ -85,6 +85,8 @@ function mdToHtml(md) {
   const inline = (s) => esc(s)
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, '<a href="$2">$1</a>')
+    /* קישור למקור חיצוני (gov.il, בנק ישראל): נפתח בלשונית חדשה, כמו בעמוד החי */
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
   for (const rawBlock of String(md || '').split(/\n{2,}/)) {
     for (const line of rawBlock.split('\n')) {
       const l = line.trim()
@@ -261,6 +263,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
 /* ---------- 3. עמודי הדיוויזיות (שירותים) ---------- */
 {
   const { divisions } = await import(pathToFileURL(join(root, 'src/data/divisions.js')).href)
+  const { SERVICE_AREA_LD } = await import(pathToFileURL(join(root, 'src/data/site.js')).href)
   for (const d of divisions) {
     const path = `/divisions/${d.slug}`
     const faqs = d.faqs || []
@@ -276,7 +279,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       title: d.seoTitle || d.menuTitle.he,
       description: d.seoDescription || d.intro.he,
       jsonLd: [
-        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' }, url: SITE + path },
+        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: SERVICE_AREA_LD, url: SITE + path },
         ...(faqs.length ? [faqLd(faqs, (f) => [f.q.he, f.a.he])] : []),
         breadcrumbLd([HOME_CRUMB, { name: d.menuTitle.he, path }]),
       ],
@@ -341,6 +344,25 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<h2>מחשבון החזר חודשי למשכנתא</h2><h2>מחשבון תשואת שכירות</h2>` +
       calcFaqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n'),
   }))
+
+  /* מרכז שאלות ותשובות. השאלות, התשובות וה-FAQPage מ-src/data/faqHub.js,
+     אותו מקור שהעמוד החי מרנדר. כל שאלה ב-FAQPage מוצגת בעמוד עם תשובה. */
+  {
+    const { FAQ_HUB_PATH, FAQ_HUB_TITLE, FAQ_HUB_INTRO, FAQ_HUB_GROUPS } = await import(pathToFileURL(join(root, 'src/data/faqHub.js')).href)
+    done.push(renderPage({
+      path: FAQ_HUB_PATH,
+      ...meta(FAQ_HUB_PATH),
+      jsonLd: faqHubLd(FAQ_HUB_GROUPS, FAQ_HUB_PATH),
+      bodyHtml:
+        `<h1>${esc(FAQ_HUB_TITLE)}</h1>` +
+        `<p>${esc(FAQ_HUB_INTRO)}</p>` +
+        FAQ_HUB_GROUPS.map((g) =>
+          `<h2 id="${esc(g.id)}">${esc(g.title)}</h2>` +
+          g.items.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)} <a href="${esc(f.to)}">לתשובה המלאה: ${esc(f.more)}</a></p>`).join('\n')
+        ).join('\n') +
+        `<p>טלפון 055-981-1814. <a href="/contact">השארת פרטים</a></p>`,
+    }))
+  }
 
   /* עמודי הנחיתה לבניית בית פרטי: עמוד הקבלן, הווילות בשרון ושלוש ערים.
      הכותרת, התיאור, ה-H1, השאלות והנתונים המובנים נמשכים מ-data/houseLanding.js,
@@ -640,7 +662,10 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   const { team } = await import(pathToFileURL(join(root, 'src/data/team.js')).href)
   const heTxt = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
   out.push('## אזורי פעילות', '')
-  out.push('המשרד ופרויקטי הווילות והבתים הפרטיים של הקבוצה נמצאים בהוד השרון. בניית בתים פרטיים באזור השרון, עם עמודים ייעודיים להוד השרון, רעננה והרצליה, ופעילות באזור השרון והמרכז.', '')
+  {
+    const { SERVICE_AREA } = await import(pathToFileURL(join(root, 'src/data/site.js')).href)
+    out.push(`המשרד ופרויקטי הווילות והבתים הפרטיים של הקבוצה נמצאים בהוד השרון. אזור השירות: ${SERVICE_AREA.join(', ')}. לכל אחת מהערים יש עמוד ייעודי לבניית בית פרטי (ברשימה למטה). פרויקט נוסף של הקבוצה: בן גוריון 17, יהוד-מונוסון.`, '')
+  }
   out.push('## בניית בית פרטי', '')
   for (const pg of HOUSE_PAGES) out.push(`- ${pg.navLabel}: https://www.kurkoos-group.co.il${pg.path}`, `  ${pg.description}`)
   out.push('')

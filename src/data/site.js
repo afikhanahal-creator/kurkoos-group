@@ -3,6 +3,12 @@
    ערוך כאן את פרטי הקבוצה.
    ============================================================ */
 
+/* אזור השירות של הקבוצה. מקור אחד ל-areaServed בנתונים המובנים
+   (עמודי השירות, ה-prerender ועמודי בניית הבית), כדי שהרשימה תהיה זהה
+   בכל מקום. הרשימה ב-index.html וב-public/llms.txt מעודכנת ידנית לאותן ערים. */
+export const SERVICE_AREA = ['הוד השרון', 'רעננה', 'כפר סבא', 'יהוד-מונוסון', 'תל אביב', 'הרצליה', 'רמת השרון', 'קרית אונו']
+export const SERVICE_AREA_LD = SERVICE_AREA.map((name) => ({ '@type': 'City', name }))
+
 export const site = {
   name: { he: 'קורקוס גרופ', en: 'Kurkoos Group' },
   logoText: { he: 'קורקוס', en: 'KURKOOS' },

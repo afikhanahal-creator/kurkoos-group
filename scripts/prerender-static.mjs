@@ -261,6 +261,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
 /* ---------- 3. עמודי הדיוויזיות (שירותים) ---------- */
 {
   const { divisions } = await import(pathToFileURL(join(root, 'src/data/divisions.js')).href)
+  const { SERVICE_AREA_LD } = await import(pathToFileURL(join(root, 'src/data/site.js')).href)
   for (const d of divisions) {
     const path = `/divisions/${d.slug}`
     const faqs = d.faqs || []
@@ -276,7 +277,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       title: d.seoTitle || d.menuTitle.he,
       description: d.seoDescription || d.intro.he,
       jsonLd: [
-        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: { '@type': 'Place', name: 'אזור השרון והמרכז' }, url: SITE + path },
+        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: SERVICE_AREA_LD, url: SITE + path },
         ...(faqs.length ? [faqLd(faqs, (f) => [f.q.he, f.a.he])] : []),
         breadcrumbLd([HOME_CRUMB, { name: d.menuTitle.he, path }]),
       ],
@@ -640,7 +641,10 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   const { team } = await import(pathToFileURL(join(root, 'src/data/team.js')).href)
   const heTxt = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
   out.push('## אזורי פעילות', '')
-  out.push('המשרד ופרויקטי הווילות והבתים הפרטיים של הקבוצה נמצאים בהוד השרון. בניית בתים פרטיים באזור השרון, עם עמודים ייעודיים להוד השרון, רעננה והרצליה, ופעילות באזור השרון והמרכז.', '')
+  {
+    const { SERVICE_AREA } = await import(pathToFileURL(join(root, 'src/data/site.js')).href)
+    out.push(`המשרד ופרויקטי הווילות והבתים הפרטיים של הקבוצה נמצאים בהוד השרון. אזור השירות: ${SERVICE_AREA.join(', ')}. לכל אחת מהערים יש עמוד ייעודי לבניית בית פרטי (ברשימה למטה). פרויקט נוסף של הקבוצה: בן גוריון 17, יהוד-מונוסון.`, '')
+  }
   out.push('## בניית בית פרטי', '')
   for (const pg of HOUSE_PAGES) out.push(`- ${pg.navLabel}: https://www.kurkoos-group.co.il${pg.path}`, `  ${pg.description}`)
   out.push('')

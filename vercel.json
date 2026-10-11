@@ -4,6 +4,11 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/real-estate-guide/rental-contract-landlord-protection",
+      "destination": "/real-estate-guide/choze-schirut-baal-bayit",
+      "permanent": true
+    },
+    {
       "source": "/engine/photos/:path*",
       "destination": "https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/engine-media/static/photos/:path*",
       "permanent": false

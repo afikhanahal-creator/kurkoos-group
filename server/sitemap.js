@@ -43,6 +43,7 @@ export const STATIC = [
   { path: '/bniyat-bayit-prati/ramat-hasharon', changefreq: 'monthly', priority: '0.8' },
   { path: '/bniyat-bayit-prati/kiryat-ono', changefreq: 'monthly', priority: '0.8' },
   { path: '/real-estate-calculators', changefreq: 'monthly', priority: '0.8' },
+  { path: '/shelot-ve-tshuvot', changefreq: 'monthly', priority: '0.7' },
   { path: '/livy-yazamim', changefreq: 'monthly', priority: '0.8' },
   { path: '/madrich-yazamim', changefreq: 'weekly', priority: '0.8' },
   { path: '/careers', changefreq: 'weekly', priority: '0.6' },

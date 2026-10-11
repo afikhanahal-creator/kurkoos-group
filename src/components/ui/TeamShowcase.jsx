@@ -16,7 +16,7 @@ function PhotoCard({ member, col, hoveredId, onHover }) {
       onMouseEnter={() => onHover(member.id)}
       onMouseLeave={() => onHover(null)}
     >
-      <img src={optimizeSrc(member.image, 640)} alt={member.name} />
+      <img src={optimizeSrc(member.image, 640)} alt={member.name} loading="lazy" decoding="async" />
     </div>
   )
 }

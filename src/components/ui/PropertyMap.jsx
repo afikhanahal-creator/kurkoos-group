@@ -181,7 +181,7 @@ export default function PropertyMap({ lat, lng, query, label = '', sublabel = ''
               '<div class="pm-cube-label" dir="rtl">' +
               '<span class="pm-info__name">' + esc(label) + '</span>' +
               '<span class="pm-info__sep"></span>' +
-              '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="Kurkoos Group" />' +
+              '<img class="pm-info__logo" src="/kurkoos-logo-h.svg" alt="קבוצת קורקוס" />' +
               '</div>' +
               '<div class="pm-cube">' +
               '<div></div><div></div><div></div><div></div><div></div><div></div>' +

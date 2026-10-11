@@ -77,7 +77,7 @@ export default function FocusRail({ images = [] }) {
               transition={{ default: BASE_SPRING, scale: TAP_SPRING }}
               onClick={() => { if (offset !== 0) setActive((p) => p + offset) }}
             >
-              <img src={optimizeSrc(src, 480)} alt={`רגע מהביצוע ${idx + 1}`} draggable={false} onError={() => onErr(src)} />
+              <img src={optimizeSrc(src, 480)} alt={`רגע מהביצוע באתר הבנייה ${idx + 1}`} loading="lazy" decoding="async" draggable={false} onError={() => onErr(src)} />
               <span className="frail__sheen" aria-hidden="true" />
             </motion.div>
           )

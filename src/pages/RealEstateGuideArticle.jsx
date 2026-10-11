@@ -5,6 +5,7 @@ import { useBrokerageArticle, useBrokerage } from '../lib/brokerage.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
 import { COLUMNS, articleLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
+import { relatedArticles } from '../lib/related.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -23,8 +24,8 @@ export default function RealEstateGuideArticle() {
   const article = useBrokerageArticle(slug)
   const allArticles = useBrokerage()
   const related = useMemo(
-    () => allArticles.filter((a) => a.slug !== slug).slice(0, 3),
-    [allArticles, slug]
+    () => relatedArticles(article, allArticles, 3),
+    [allArticles, article]
   )
 
   if (!article) {

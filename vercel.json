@@ -4,6 +4,26 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/execution",
+      "destination": "/divisions/execution",
+      "permanent": true
+    },
+    {
+      "source": "/management",
+      "destination": "/divisions/supervision",
+      "permanent": true
+    },
+    {
+      "source": "/villas",
+      "destination": "/villas-sharon",
+      "permanent": true
+    },
+    {
+      "source": "/constructions/loach-zmanim-bniyat-bayit-prati",
+      "destination": "/constructions/loach-zmanim-bniyat-bayit",
+      "permanent": true
+    },
+    {
       "source": "/real-estate-guide/rental-contract-landlord-protection",
       "destination": "/real-estate-guide/choze-schirut-baal-bayit",
       "permanent": true

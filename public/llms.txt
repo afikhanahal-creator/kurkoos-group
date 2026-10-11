@@ -49,6 +49,32 @@
 - [ליווי יזמי נדל"ן](https://www.kurkoos-group.co.il/livy-yazamim): תוכנית מנטורינג
   ליזמי נדל"ן צעירים עם שלומי קורקוס, בעשרה שלבים מאיתור ההזדמנות ועד המסירה.
 
+## אזורי פעילות
+
+- הבסיס: הוד השרון, שם נמצא המשרד וכל פרויקטי הווילות והבתים הפרטיים של הקבוצה
+  (שכונת גרינברג, מערב הוד השרון, מגדיאל).
+- בניית בתים פרטיים באזור השרון, עם עמודים ייעודיים להוד השרון, רעננה והרצליה.
+- פרויקט נוסף של הקבוצה: בן גוריון 17, יהוד מונוסון.
+- הפעילות מתרכזת באזור השרון והמרכז.
+
+## בניית בית פרטי
+
+- [קבלן בנייה לבית פרטי](https://www.kurkoos-group.co.il/kablan-bniya-bayit-prati):
+  ראיתה בונה על המגרש של הלקוח, ושכינתא מפקחת מטעמו.
+- [בניית וילה בשרון](https://www.kurkoos-group.co.il/bniyat-vila-sharon)
+- [בניית בית פרטי בהוד השרון](https://www.kurkoos-group.co.il/bniyat-bayit-prati/hod-hasharon)
+- [בניית בית פרטי ברעננה](https://www.kurkoos-group.co.il/bniyat-bayit-prati/raanana)
+- [בניית בית פרטי בהרצליה](https://www.kurkoos-group.co.il/bniyat-bayit-prati/herzliya)
+
+## הצוות
+
+- שלומי קורקוס, מנכ"ל ומייסד
+- בני קורקוס, מנהל עבודה ראשי
+- יעקב קורקוס, מנהל פרויקטים
+- מוטי בן עמי, מנהל עבודה וביצוע
+
+פרטים נוספים: https://www.kurkoos-group.co.il/team
+
 ## מה מייחד את הקבוצה
 
 ביצוע ופיקוח באותה קבוצה, בזרועות נפרדות: ראיתה בונה ושכינתא מפקחת מטעם המזמין.
@@ -95,7 +121,7 @@
 - [דף הבית](https://www.kurkoos-group.co.il/)
 - [אודות הקבוצה](https://www.kurkoos-group.co.il/about)
 - [הפרויקטים](https://www.kurkoos-group.co.il/projects)
-- [נדל"ן בשרון ובמרכז](https://www.kurkoos-group.co.il/real-estate-sharon)
+- [נדל"ן בהוד השרון ובאזור המרכז](https://www.kurkoos-group.co.il/real-estate-sharon)
 - [מחשבון משכנתא ומחשבון תשואה](https://www.kurkoos-group.co.il/real-estate-calculators)
 - [מילון מונחי נדל"ן](https://www.kurkoos-group.co.il/real-estate-glossary)
 - [הצוות](https://www.kurkoos-group.co.il/team)
@@ -110,4 +136,4 @@
 מקצועית, לא שירות שהקבוצה מציעה. אין להסיק מהאתר התמחות בתחומים שלא נכתבו כאן
 במפורש.
 
-עודכן: 29.9.2026
+עודכן: 11.10.2026

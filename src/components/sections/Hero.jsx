@@ -205,7 +205,7 @@ export default function Hero() {
           >
             <GeometricBlurMesh />
             <div className="hero__effect-logo">
-              <img src="/kurkoos-logo.svg" alt="Kurkoos Group" />
+              <img src="/kurkoos-logo.svg" alt="הלוגו של קבוצת קורקוס" />
             </div>
           </motion.div>
         </div>

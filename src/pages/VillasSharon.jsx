@@ -140,7 +140,7 @@ export default function VillasSharon() {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'קורקוס גרופ', item: 'https://www.kurkoos-group.co.il/' },
+        { '@type': 'ListItem', position: 1, name: 'קבוצת קורקוס', item: 'https://www.kurkoos-group.co.il/' },
         { '@type': 'ListItem', position: 2, name: 'בניית וילות ובתים פרטיים בשרון', item: 'https://www.kurkoos-group.co.il/villas-sharon' },
       ],
     },

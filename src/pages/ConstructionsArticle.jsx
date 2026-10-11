@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/index.jsx'
 import { useConstruction, useConstructions } from '../lib/constructions.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
+import { COLUMNS, articleLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -15,7 +16,6 @@ import ArticleCta from '../components/ui/ArticleCta.jsx'
 import ArticleLeadCard, { contactHrefFor } from '../components/ui/ArticleLeadCard.jsx'
 import NotFound from './NotFound.jsx'
 
-const SITE = 'https://www.kurkoos-group.co.il'
 
 export default function ConstructionsArticle() {
   const { slug } = useParams()
@@ -40,32 +40,17 @@ export default function ConstructionsArticle() {
     })
 
   const coverUrl = srcOfResponsive(article.cover)
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: article.metaTitle || article.title,
-    description: article.metaDescription || article.excerpt,
-    image: coverUrl ? [coverUrl] : undefined,
-    datePublished: article.date,
-    dateModified: article.date,
-    author: { '@type': 'Organization', name: 'קבוצת קורקוס' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'קבוצת קורקוס',
-      logo: { '@type': 'ImageObject', url: `${SITE}/logo.png` },
-    },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE}/constructions/${article.slug}` },
-    articleSection: article.category,
-    keywords: [article.focusKeyword, ...(Array.isArray(article.tags) ? article.tags : [])].filter(Boolean).join(', '),
-  }
+  const col = COLUMNS.constructions
+  const jsonLd = articleLd(article, `${col.route}/${article.slug}`, coverUrl)
 
   return (
     <article className="yz-article">
       <Seo
-        title={article.metaTitle || `${article.title} · המדריך לתהליך הבנייה`}
-        description={article.metaDescription || article.excerpt}
+        title={articleSeoTitle(article, col.label)}
+        description={articleSeoDescription(article)}
         image={coverUrl}
         jsonLd={jsonLd}
+        ogType="article"
       />
 
       <header className="yz-hero">

@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/index.jsx'
 import { useMentorGuideArticle, useMentorGuideArticles } from '../lib/mentorguide.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
+import { COLUMNS, articleLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
@@ -14,7 +15,6 @@ import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
 import NotFound from './NotFound.jsx'
 
-const SITE = 'https://www.kurkoos-group.co.il'
 
 /* עמוד כתבה — המדריך ליזמי נדל"ן צעירים */
 export default function MentorGuideArticle() {
@@ -40,28 +40,12 @@ export default function MentorGuideArticle() {
     })
 
   const coverUrl = srcOfResponsive(article.cover)
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: article.metaTitle || article.title,
-    description: article.metaDescription || article.excerpt,
-    image: coverUrl ? [coverUrl] : undefined,
-    datePublished: article.date,
-    dateModified: article.date,
-    author: { '@type': 'Organization', name: 'קבוצת קורקוס' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'קבוצת קורקוס',
-      logo: { '@type': 'ImageObject', url: `${SITE}/logo.png` },
-    },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE}/madrich-yazamim/${article.slug}` },
-    articleSection: article.category,
-    keywords: Array.isArray(article.tags) ? article.tags.join(', ') : undefined,
-  }
+  const col = COLUMNS.mentorguide
+  const jsonLd = articleLd(article, `${col.route}/${article.slug}`, coverUrl)
 
   return (
     <article className="yz-article">
-      <Seo title={article.metaTitle || `${article.title} · המדריך ליזמי נדל"ן צעירים`} description={article.metaDescription || article.excerpt} image={coverUrl} jsonLd={jsonLd} />
+      <Seo title={articleSeoTitle(article, col.label)} description={articleSeoDescription(article)} image={coverUrl} jsonLd={jsonLd} ogType="article" />
 
       <header className="yz-hero">
         <div className="yz-hero__bg">

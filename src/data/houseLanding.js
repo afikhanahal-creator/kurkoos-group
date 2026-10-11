@@ -311,7 +311,7 @@ export const getHousePage = (path) =>
 /* ---------- נתונים מובנים: Service, FAQPage, BreadcrumbList ---------- */
 export function houseJsonLd(page) {
   const url = SITE + page.path
-  const crumbs = [{ name: 'קורקוס גרופ', item: `${SITE}/` }]
+  const crumbs = [{ name: 'קבוצת קורקוס', item: `${SITE}/` }]
   for (const c of page.crumbs) crumbs.push({ name: c.label, item: c.to ? SITE + c.to : url })
   return [
     {

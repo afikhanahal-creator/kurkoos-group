@@ -1,6 +1,6 @@
 # מפת קישורים פנימיים: Pillar → Cluster → Supporting → Project → Service
 
-**159 זוגות קישור.** כל ה-URL בטבלה נבדקו מול רשימת 101 העמודים המרונדרים (audit.json). אין קישור לעמוד שלא קיים, ואין קישור לעמוד שהוצע ב-CREATE ועוד לא נבנה.
+**172 זוגות קישור.** כל ה-URL בטבלה נבדקו מול רשימת 101 העמודים המרונדרים (audit.json) ומול 3 עמודי פרויקט שמופיעים ב-GSC. אין קישור לעמוד שלא קיים, ואין קישור לעמוד שהוצע ב-CREATE ועוד לא נבנה.
 
 ## למה זה הצעד החשוב ביותר באתר
 
@@ -18,7 +18,7 @@
 - **עוגנים:** בעברית טבעית, משתנים בין עמודים. לא חוזרים על אותו עוגן מדויק יותר מ-3 פעמים לאותו יעד.
 - **כמות:** 3 עד 6 קישורים חדשים בגוף כל כתבה, לא יותר.
 - **בעיה שכדאי לתקן (REVIEW):** לשנות את "עוד מהמדריך" כך שיציג כתבות מאותו אשכול (לפי תגית או מילון ידני). זה שינוי לוגיקה בלי שינוי עיצוב.
-- **עמודי פרויקט:** כשתהיה רשימת ה-slug מ-`/sitemap-pages.xml`, מוסיפים לכל עמוד פרויקט קישור ל-/divisions/execution ול-/divisions/supervision (כבר קיים בגרסה הסטטית), ל-/villas-sharon או /divisions/residential לפי סוג, ולעמוד העיר. מכל עמוד שכונה או עיר מקשרים חזרה לפרויקט. הזוגות האלה לא נכללו כאן כי ה-URL לא אומתו.
+- **עמודי פרויקט:** שלושה URL אומתו ב-GSC (`/projects/ben-gurion-17`, `/projects/project-hankin-41`, `/projects/hahumash-22-24`) ונכללים בשכבות D4-D5. טקסט בעמודי פרויקט נערך ב-CMS (תיאור הפרויקט), לא בקוד. שאר הפרויקטים: לפי `/sitemap-pages.xml`, באותה תבנית.
 
 ## היררכיה
 ```
@@ -161,53 +161,66 @@
 | 125 | D3 Local | `/divisions/residential` | תקופת בדק | `/constructions/likuei-bniya-tkufat-bedek` | בתשובת FAQ 'מה קורה אחרי מסירת המפתח?' |
 | 126 | D3 Local | `/divisions/brokerage` | וילות בהוד השרון | `/villas-sharon` | ברשימת related (קיים, מעדכנים עוגן מ'הפרויקטים בשיווק') |
 | 127 | D3 Local | `/divisions/brokerage` | זיהוי קונה רציני | `/real-estate-guide/iskaot-noflot` | ברשימת related, פריט חדש |
-| 128 | E1 Hub→Cluster | `/real-estate-guide` | בדיקות לפני רכישת דירה | `/real-estate-guide/bdikot-lifney-rechishat-dira` | בפרק המבוא החדש לרוכש |
-| 129 | E1 Hub→Cluster | `/real-estate-guide` | הון עצמי לרכישת דירה | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | בפרק לרוכש, בנושא מימון |
-| 130 | E1 Hub→Cluster | `/real-estate-guide` | מס רכישה | `/real-estate-guide/mas-rechisha-madregot` | בפרק לרוכש, בנושא עלויות נלוות |
-| 131 | E1 Hub→Cluster | `/real-estate-guide` | תמחור דירה למכירה | `/real-estate-guide/timchur-dira-lemchira-hamechir-harishon` | בפרק המבוא החדש למוכר |
-| 132 | E1 Hub→Cluster | `/real-estate-guide` | איך מזהים קונה רציני | `/real-estate-guide/iskaot-noflot` | בפרק למוכר, בנושא קונים |
-| 133 | E1 Hub→Cluster | `/real-estate-guide` | מס שבח במכירת דירה | `/real-estate-guide/mas-shevach-mecirat-dira` | בפרק למוכר, בנושא מסמכים ומיסוי |
-| 134 | E2 Supporting chain | `/real-estate-guide/real-return-real-estate-investment` | מחשבון תשואה | `/real-estate-calculators` | בסעיף 'איך לחשב נכון לפני שקונים' |
-| 135 | E2 Supporting chain | `/real-estate-guide/real-return-real-estate-investment` | מס רכישה | `/real-estate-guide/mas-rechisha-madregot` | בסעיף 'מה שאוכל את התשואה, שורה אחר שורה' |
-| 136 | E2 Supporting chain | `/real-estate-guide/real-return-real-estate-investment` | תשואה מול ריבית | `/yazamut-nadlan/rental-yield-vs-interest-rate-investor` | בסעיף 'תשואה שוטפת מול עליית ערך' |
-| 137 | E2 Supporting chain | `/yazamut-nadlan/rental-yield-vs-interest-rate-investor` | איך מחשבים תשואה | `/real-estate-guide/real-return-real-estate-investment` | בסעיף 'כשהחשבון הבסיסי מתהפך' |
-| 138 | E2 Supporting chain | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | מחשבון משכנתא | `/real-estate-calculators` | בתת-סעיף 'תעשו את החישוב לאחור' |
-| 139 | E2 Supporting chain | `/real-estate-guide/iskaot-noflot` | הון עצמי ואישור עקרוני | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | בסעיף 'הסיבה הראשונה, מימון שלא נסגר' |
-| 140 | E2 Supporting chain | `/real-estate-guide/iskaot-noflot` | זכרון דברים | `/real-estate-guide/zichron-dvarim-real-estate` | בסעיף 'הסיבה השנייה, בעיה משפטית שצפה מאוחר' |
-| 141 | E2 Supporting chain | `/real-estate-guide/iskaot-noflot` | תיווך ושיווק נכסים בהוד השרון | `/divisions/brokerage` | בסעיף 'רוצים ללוות עסקה נכון' |
-| 142 | E2 Supporting chain | `/real-estate-guide/timchur-dira-lemchira-hamechir-harishon` | קונה רציני | `/real-estate-guide/iskaot-noflot` | בסעיף 'מתי המחיר תקוע ומה עושים' (קיים קישור, מעדכנים עוגן) |
-| 143 | E2 Supporting chain | `/real-estate-guide/kniya-mekablan-mul-yad-shniya` | דירות חדשות בהוד השרון | `/divisions/residential` | בסעיף 'מה בעצם קונים' |
-| 144 | E2 Supporting chain | `/real-estate-guide/kniya-mekablan-mul-yad-shniya` | מפרט טכני | `/constructions/mifrat-techni-mah-kovea` | בסעיף 'מי נושא בסיכון' |
-| 145 | E3 Glossary | `/real-estate-glossary` | פיקוח בנייה (מונח) | `/divisions/supervision` | בהגדרת המונח 'פיקוח בנייה' |
-| 146 | E3 Glossary | `/real-estate-glossary` | שנת בדק ותקופת אחריות | `/constructions/likuei-bniya-tkufat-bedek` | בהגדרת המונח 'שנת בדק ותקופת אחריות' |
-| 147 | E3 Glossary | `/real-estate-glossary` | דוח אפס | `/madrich-yazamim/doch-efes-kli-haavoda` | בהגדרת המונח 'דוח אפס' |
-| 148 | E3 Glossary | `/real-estate-glossary` | נסח טאבו | `/madrich-yazamim/nesach-tabu-mi-baal-hakarka` | בהגדרת המונח 'נסח טאבו' |
-| 149 | E3 Glossary | `/real-estate-glossary` | היטל השבחה | `/yazamut-nadlan/betterment-levy-silent-brake` | בהגדרת המונח 'היטל השבחה' |
-| 150 | E3 Glossary | `/real-estate-glossary` | מפרט טכני | `/constructions/mifrat-techni-mah-kovea` | בהגדרת המונח 'מפרט טכני (מפרט מכר)' |
-| 151 | E3 Glossary | `/real-estate-glossary` | טופס 4 | `/constructions/tofes-4-ichlus` | בהגדרת המונח 'טופס 4' |
-| 152 | E3 Glossary | `/real-estate-glossary` | פרוטוקול מסירה | `/construction-supervision/protokol-mesira-bayit-prati` | בהגדרת המונח 'פרוטוקול מסירה' |
-| 153 | E3 Glossary | `/real-estate-glossary` | עסקת קומבינציה | `/madrich-yazamim/iskat-kombinatsia` | בהגדרת המונח 'עסקת קומבינציה' |
-| 154 | E3 Glossary | `/real-estate-glossary` | מס רכישה | `/real-estate-guide/mas-rechisha-madregot` | בהגדרת המונח 'מס רכישה' |
-| 155 | E4 Calculators | `/real-estate-calculators` | איך מחשבים תשואה | `/real-estate-guide/real-return-real-estate-investment` | מתחת למחשבון התשואה, במשפט ההסבר |
-| 156 | E4 Calculators | `/real-estate-calculators` | כמה הון עצמי צריך | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | מתחת למחשבון המשכנתא, בתשובת ה-FAQ על הון עצמי |
-| 157 | F Trust | `/team` | הפרויקטים שהצוות מוביל | `/projects` | בביוגרפיה של יעקב קורקוס (מנהל פרויקטים) |
-| 158 | F Trust | `/team` | פיקוח בנייה וניהול פרויקטים | `/divisions/supervision` | בביוגרפיה של מנהל הפרויקטים |
-| 159 | F Trust | `/about` | הצוות שמאחורי קורקוס | `/team` | בפסקה הראשונה (קיים) |
+| 128 | D4 Project | `/projects` | בן גוריון 17, יהוד-מונוסון | `/projects/ben-gurion-17` | ברשימת הפרויקטים, כרטיס הפרויקט |
+| 129 | D4 Project | `/projects` | חנקין 41, מגדיאל | `/projects/project-hankin-41` | ברשימת הפרויקטים, כרטיס הפרויקט |
+| 130 | D4 Project | `/projects` | פרויקט החומש 22-24 | `/projects/hahumash-22-24` | ברשימת הפרויקטים, בסעיף פרויקטים שהושלמו |
+| 131 | D4 Project | `/divisions/residential` | חנקין 41: שש דירות חדשות במגדיאל | `/projects/project-hankin-41` | בפסקת intro, במשפט על הפרויקטים בשיווק |
+| 132 | D4 Project | `/divisions/residential` | בן גוריון 17 ביהוד | `/projects/ben-gurion-17` | באותה פסקה |
+| 133 | D4 Project | `/villas-sharon` | חנקין 41 | `/projects/project-hankin-41` | בסעיף של חנקין 41, בסוף התיאור |
+| 134 | D4 Project | `/divisions/brokerage` | דירות בשיווק בבן גוריון 17 | `/projects/ben-gurion-17` | ברשימת related |
+| 135 | D5 Project→Service | `/projects/ben-gurion-17` | ביצוע ובנייה | `/divisions/execution` | בבלוק הקישורים בסוף העמוד (קיים בגרסה הסטטית, מוודאים בגרסה החיה) |
+| 136 | D5 Project→Service | `/projects/ben-gurion-17` | פיקוח בנייה וניהול פרויקטים | `/divisions/supervision` | באותו בלוק (קיים בסטטי) |
+| 137 | D5 Project→Service | `/projects/ben-gurion-17` | דירות חדשות מהקבלן: מה לבדוק | `/real-estate-guide/kniya-mekablan-mul-yad-shniya` | בסעיף התיאור, בסוף (CMS) |
+| 138 | D5 Project→Service | `/projects/project-hankin-41` | דירות חדשות בהוד השרון | `/divisions/residential` | בסעיף התיאור (CMS) |
+| 139 | D5 Project→Service | `/projects/project-hankin-41` | פרויקטים חדשים בהוד השרון | `/projects` | בסעיף 'פרויקטים נוספים' |
+| 140 | D5 Project→Service | `/projects/hahumash-22-24` | ביצוע ובנייה | `/divisions/execution` | בסעיף התיאור (CMS) |
+| 141 | E1 Hub→Cluster | `/real-estate-guide` | בדיקות לפני רכישת דירה | `/real-estate-guide/bdikot-lifney-rechishat-dira` | בפרק המבוא החדש לרוכש |
+| 142 | E1 Hub→Cluster | `/real-estate-guide` | הון עצמי לרכישת דירה | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | בפרק לרוכש, בנושא מימון |
+| 143 | E1 Hub→Cluster | `/real-estate-guide` | מס רכישה | `/real-estate-guide/mas-rechisha-madregot` | בפרק לרוכש, בנושא עלויות נלוות |
+| 144 | E1 Hub→Cluster | `/real-estate-guide` | תמחור דירה למכירה | `/real-estate-guide/timchur-dira-lemchira-hamechir-harishon` | בפרק המבוא החדש למוכר |
+| 145 | E1 Hub→Cluster | `/real-estate-guide` | איך מזהים קונה רציני | `/real-estate-guide/iskaot-noflot` | בפרק למוכר, בנושא קונים |
+| 146 | E1 Hub→Cluster | `/real-estate-guide` | מס שבח במכירת דירה | `/real-estate-guide/mas-shevach-mecirat-dira` | בפרק למוכר, בנושא מסמכים ומיסוי |
+| 147 | E2 Supporting chain | `/real-estate-guide/real-return-real-estate-investment` | מחשבון תשואה | `/real-estate-calculators` | בסעיף 'איך לחשב נכון לפני שקונים' |
+| 148 | E2 Supporting chain | `/real-estate-guide/real-return-real-estate-investment` | מס רכישה | `/real-estate-guide/mas-rechisha-madregot` | בסעיף 'מה שאוכל את התשואה, שורה אחר שורה' |
+| 149 | E2 Supporting chain | `/real-estate-guide/real-return-real-estate-investment` | תשואה מול ריבית | `/yazamut-nadlan/rental-yield-vs-interest-rate-investor` | בסעיף 'תשואה שוטפת מול עליית ערך' |
+| 150 | E2 Supporting chain | `/yazamut-nadlan/rental-yield-vs-interest-rate-investor` | איך מחשבים תשואה | `/real-estate-guide/real-return-real-estate-investment` | בסעיף 'כשהחשבון הבסיסי מתהפך' |
+| 151 | E2 Supporting chain | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | מחשבון משכנתא | `/real-estate-calculators` | בתת-סעיף 'תעשו את החישוב לאחור' |
+| 152 | E2 Supporting chain | `/real-estate-guide/iskaot-noflot` | הון עצמי ואישור עקרוני | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | בסעיף 'הסיבה הראשונה, מימון שלא נסגר' |
+| 153 | E2 Supporting chain | `/real-estate-guide/iskaot-noflot` | זכרון דברים | `/real-estate-guide/zichron-dvarim-real-estate` | בסעיף 'הסיבה השנייה, בעיה משפטית שצפה מאוחר' |
+| 154 | E2 Supporting chain | `/real-estate-guide/iskaot-noflot` | תיווך ושיווק נכסים בהוד השרון | `/divisions/brokerage` | בסעיף 'רוצים ללוות עסקה נכון' |
+| 155 | E2 Supporting chain | `/real-estate-guide/timchur-dira-lemchira-hamechir-harishon` | קונה רציני | `/real-estate-guide/iskaot-noflot` | בסעיף 'מתי המחיר תקוע ומה עושים' (קיים קישור, מעדכנים עוגן) |
+| 156 | E2 Supporting chain | `/real-estate-guide/kniya-mekablan-mul-yad-shniya` | דירות חדשות בהוד השרון | `/divisions/residential` | בסעיף 'מה בעצם קונים' |
+| 157 | E2 Supporting chain | `/real-estate-guide/kniya-mekablan-mul-yad-shniya` | מפרט טכני | `/constructions/mifrat-techni-mah-kovea` | בסעיף 'מי נושא בסיכון' |
+| 158 | E3 Glossary | `/real-estate-glossary` | פיקוח בנייה (מונח) | `/divisions/supervision` | בהגדרת המונח 'פיקוח בנייה' |
+| 159 | E3 Glossary | `/real-estate-glossary` | שנת בדק ותקופת אחריות | `/constructions/likuei-bniya-tkufat-bedek` | בהגדרת המונח 'שנת בדק ותקופת אחריות' |
+| 160 | E3 Glossary | `/real-estate-glossary` | דוח אפס | `/madrich-yazamim/doch-efes-kli-haavoda` | בהגדרת המונח 'דוח אפס' |
+| 161 | E3 Glossary | `/real-estate-glossary` | נסח טאבו | `/madrich-yazamim/nesach-tabu-mi-baal-hakarka` | בהגדרת המונח 'נסח טאבו' |
+| 162 | E3 Glossary | `/real-estate-glossary` | היטל השבחה | `/yazamut-nadlan/betterment-levy-silent-brake` | בהגדרת המונח 'היטל השבחה' |
+| 163 | E3 Glossary | `/real-estate-glossary` | מפרט טכני | `/constructions/mifrat-techni-mah-kovea` | בהגדרת המונח 'מפרט טכני (מפרט מכר)' |
+| 164 | E3 Glossary | `/real-estate-glossary` | טופס 4 | `/constructions/tofes-4-ichlus` | בהגדרת המונח 'טופס 4' |
+| 165 | E3 Glossary | `/real-estate-glossary` | פרוטוקול מסירה | `/construction-supervision/protokol-mesira-bayit-prati` | בהגדרת המונח 'פרוטוקול מסירה' |
+| 166 | E3 Glossary | `/real-estate-glossary` | עסקת קומבינציה | `/madrich-yazamim/iskat-kombinatsia` | בהגדרת המונח 'עסקת קומבינציה' |
+| 167 | E3 Glossary | `/real-estate-glossary` | מס רכישה | `/real-estate-guide/mas-rechisha-madregot` | בהגדרת המונח 'מס רכישה' |
+| 168 | E4 Calculators | `/real-estate-calculators` | איך מחשבים תשואה | `/real-estate-guide/real-return-real-estate-investment` | מתחת למחשבון התשואה, במשפט ההסבר |
+| 169 | E4 Calculators | `/real-estate-calculators` | כמה הון עצמי צריך | `/real-estate-guide/hon-atzmi-mashkanta-rechisha` | מתחת למחשבון המשכנתא, בתשובת ה-FAQ על הון עצמי |
+| 170 | F Trust | `/team` | הפרויקטים שהצוות מוביל | `/projects` | בביוגרפיה של יעקב קורקוס (מנהל פרויקטים) |
+| 171 | F Trust | `/team` | פיקוח בנייה וניהול פרויקטים | `/divisions/supervision` | בביוגרפיה של מנהל הפרויקטים |
+| 172 | F Trust | `/about` | הצוות שמאחורי קורקוס | `/team` | בפסקה הראשונה (קיים) |
 
 ## קישורים נכנסים חדשים לפי יעד (10 היעדים המובילים)
 
 | יעד | קישורים נכנסים חדשים |
 |---|---|
-| `/divisions/supervision` | 12 |
+| `/divisions/supervision` | 13 |
 | `/constructions/likuei-bniya-tkufat-bedek` | 8 |
 | `/bniyat-vila-sharon` | 7 |
 | `/divisions/development` | 6 |
+| `/projects` | 6 |
 | `/construction-supervision/mefakeach-bniya-bayit-prati` | 5 |
 | `/construction-supervision/protokol-mesira-bayit-prati` | 5 |
-| `/projects` | 5 |
 | `/constructions/mifrat-techni-mah-kovea` | 4 |
+| `/divisions/execution` | 4 |
 | `/constructions/concrete-cube-test-failure-beyetzika` | 4 |
-| `/kablan-bniya-bayit-prati` | 3 |
 
 ## אחרי שעמודי ה-CREATE ייבנו
 

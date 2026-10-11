@@ -81,6 +81,8 @@ export const HOUSE_ARMS = [
 /* ---------- מדריכים ועמודי שירות לקישור ---------- */
 export const HOUSE_GUIDES = [
   { to: '/constructions/kama-ole-livnot-bayit-prati', label: 'כמה עולה לבנות בית פרטי בשרון' },
+  { to: '/constructions/shlavei-bniyat-bayit-prati', label: 'שלבי בניית בית פרטי, מהקרקע ועד המסירה' },
+  { to: '/constructions/tichnun-bayit-prati', label: 'תכנון בית פרטי: ההחלטות שקובעות את התקציב' },
   { to: '/constructions/livchor-chevrat-bniya-bayit-prati', label: 'איך בוחרים חברת בנייה לבית פרטי' },
   { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },
   { to: '/construction-supervision/mefakeach-bniya-bayit-prati', label: 'מה בודק מפקח בנייה בבית פרטי' },

@@ -118,6 +118,8 @@ export const PRIVATE_HOUSE_GUIDES = [
   { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },
   { to: '/constructions/livchor-chevrat-bniya-bayit-prati', label: 'איך בוחרים חברת בנייה' },
   { to: '/constructions/loach-zmanim-bniyat-bayit', label: 'לוח זמנים לבניית בית' },
+  { to: '/constructions/shlavei-bniyat-bayit-prati', label: 'שלבי בניית בית פרטי' },
+  { to: '/constructions/taoyot-bniyat-bayit-prati', label: 'טעויות נפוצות בבניית בית פרטי' },
   { to: '/construction-supervision/mefakeach-bniya-bayit-prati', label: 'מה בודק מפקח בנייה' },
   { to: '/construction-supervision/protokol-mesira-bayit-prati', label: 'פרוטוקול מסירה לבית פרטי' },
   { to: '/constructions/sherut-achrei-mesira', label: 'שירות אחרי מסירה' },

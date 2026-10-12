@@ -1226,6 +1226,281 @@ body.v164on #pe-root .v69split{display:none!important}
 body.v164on #pe-cv{cursor:text}
 @media (max-width:760px){#pe-root .v164items li{grid-template-columns:72px 1fr;}#pe-root .v164ctl{grid-column:1/-1;justify-content:flex-end}}
 </style>
+<style id="k170">/* V170 · find anything in seconds: side menu groups, posts toolbar, quick views, filter sheet, photo views */
+:root{--v170-navy:#07293a;--v170-teal:#105572;--v170-mist:#8fb6c8;--v170-paper:#f7f8fa;--v170-red:#a90b0c;--v170-line:#dde4ea;--v170-mute:#55636f;--v170-soft:rgba(143,182,200,.2)}
+/* ---------- side menu ---------- */
+.side .v170adv{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin-top:10px;padding:8px 10px;border-radius:12px;border-top:1px solid #eef1f4;font-size:13px;font-weight:700;color:#5f6b78;position:relative}
+.side .v170adv:hover{background:#f3f6f9;color:var(--v170-navy)}
+.side .v170adv:focus-visible{outline:2px solid var(--v170-teal);outline-offset:-2px}
+.side .v170adv span{flex:1}
+.side .v170adv .v170advn{font-style:normal;font-size:12px;font-weight:700;background:#eef2f5;color:#4b5563;border-radius:999px;padding:1px 7px}
+.side .v170adv svg{transition:transform .2s ease}
+.side .v170adv[aria-expanded="true"] svg{transform:rotate(180deg)}
+.side .v170adv.v170alert::after{content:"";position:absolute;inset-inline-start:2px;top:12px;width:7px;height:7px;border-radius:50%;background:var(--v170-red)}
+.side .v170advl{display:grid;gap:2px;padding-bottom:6px}
+.side .v170advl[hidden]{display:none}
+/* ---------- shared controls ---------- */
+.v170{--v170top:0px}
+#appviews>.ga.v170,#appviews>.v170p{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0;max-width:100%}
+#appviews>.ga.v170>*,#appviews>.v170p>*{min-width:0}
+.v170bar{display:flex;align-items:center;gap:8px;position:sticky;top:var(--v170top,0px);z-index:31;padding:10px 0 8px;margin:-4px 0 0;background:rgba(247,248,250,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.v170q{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;height:44px;padding:0 14px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:#5f6b78;box-sizing:border-box}
+.v170q:focus-within{border-color:var(--v170-teal);box-shadow:0 0 0 3px rgba(16,85,114,.18)}
+.v170q input{all:unset;flex:1;min-width:0;height:100%;font:500 15.5px Almoni,Heebo,Arial,sans-serif;color:var(--v170-navy)}
+.v170q input::placeholder{color:#7a8794}
+.v170q input[type="search"]{border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;padding:0!important;margin:0!important;height:100%!important;min-height:0!important;border-radius:0!important;width:auto!important;max-width:none!important}
+.v170q input::-webkit-search-cancel-button{cursor:pointer}
+.v170fbtn{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:44px;padding:0 16px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:var(--v170-navy);font:700 15px Almoni,Heebo,Arial,sans-serif;white-space:nowrap;flex:0 0 auto}
+.v170fbtn:hover{border-color:#9fb4c2;background:#fbfcfd}
+.v170fbtn.on,.v170fbtn[aria-pressed="true"]{background:var(--v170-navy);border-color:var(--v170-navy);color:#fff}
+.v170fbtn b{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#fff;color:var(--v170-navy);font-size:12.5px;font-weight:800}
+.v170fbtn:focus-visible,.v170qv button:focus-visible,.v170pj button:focus-visible,.v170pill:focus-visible,.v170link:focus-visible,.v170chips button:focus-visible,.v170btn:focus-visible,.v170x:focus-visible,.v170t:focus-visible,.v170pp:focus-visible,.v170nx:focus-visible,.v170upl:focus-within{outline:3px solid var(--v170-teal);outline-offset:2px}
+.v170sel{flex:0 0 auto;position:relative}
+.v170sel select{height:44px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:var(--v170-navy);font:600 14.5px Almoni,Heebo,Arial,sans-serif;padding:0 12px 0 30px;cursor:pointer;max-width:220px}
+.v170sel select:focus-visible{outline:3px solid var(--v170-teal);outline-offset:2px}
+.v170sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* quick views: one segmented row */
+.v170qv{display:flex;gap:4px;padding:4px;margin:4px 0 0;border-radius:14px;background:#e9eef2;overflow-x:auto;scrollbar-width:none;width:max-content;max-width:100%;box-sizing:border-box}
+.v170qv::-webkit-scrollbar{display:none}
+.v170qv button{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 14px;border-radius:10px;font:600 14.5px Almoni,Heebo,Arial,sans-serif;color:#3d4b58;white-space:nowrap;transition:background .15s,color .15s}
+.v170qv button:hover{color:var(--v170-navy);background:rgba(255,255,255,.55)}
+.v170qv button i{font-style:normal;font-size:12.5px;font-weight:700;color:#6b7884;font-variant-numeric:tabular-nums}
+.v170qv button[aria-selected="true"]{background:#fff;color:var(--v170-navy);font-weight:800;box-shadow:0 1px 2px rgba(7,41,58,.1),0 2px 8px -2px rgba(7,41,58,.12)}
+.v170qv button[aria-selected="true"] i{color:var(--v170-teal)}
+/* project chips */
+.v170pj{display:flex;gap:6px;margin:10px 0 0;overflow-x:auto;scrollbar-width:none;padding:2px}
+.v170pj::-webkit-scrollbar{display:none}
+.v170pj button,.v170chips button{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 13px;border:1px solid #d3dde4;border-radius:999px;background:#fff;color:#2b3a47;font:600 14px Almoni,Heebo,Arial,sans-serif;white-space:nowrap;position:relative}
+.v170pj button::before,.v170chips button::before{content:"";position:absolute;inset:-3px 0}
+.v170pj button i,.v170chips button i{font-style:normal;font-size:12px;font-weight:700;color:#6b7884}
+.v170pj button:hover,.v170chips button:hover{border-color:#9fb4c2}
+.v170pj button[aria-pressed="true"],.v170chips button[aria-pressed="true"]{background:var(--v170-teal);border-color:var(--v170-teal);color:#fff}
+.v170pj button[aria-pressed="true"] i,.v170chips button[aria-pressed="true"] i{color:rgba(255,255,255,.82)}
+.v170pj button.v170z:not([aria-pressed="true"]){color:#8a96a1;border-style:dashed}
+.v170chips button.v170z{color:#8a96a1;border-style:dashed}
+/* result line: count, removable pills */
+.v170res{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin:14px 0 4px;min-height:32px}
+.v170cnt{font-size:19px;font-weight:800;color:var(--v170-navy);letter-spacing:-.01em;margin-inline-end:6px;font-variant-numeric:tabular-nums}
+.v170hint{font-size:13.5px;color:var(--v170-mute)}
+.v170sp{flex:1}
+.v170pill{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 10px 0 12px;border-radius:999px;background:var(--v170-soft);color:var(--v170-navy);font:600 13.5px Almoni,Heebo,Arial,sans-serif;max-width:260px;position:relative}
+.v170pill::before{content:"";position:absolute;inset:-5px 0}
+.v170pill:hover{background:rgba(143,182,200,.34)}
+.v170pill svg{flex:0 0 auto;opacity:.75}
+.v170link{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;min-height:34px;padding:0 6px;border-radius:8px;color:var(--v170-teal);font:700 14px Almoni,Heebo,Arial,sans-serif;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;position:relative}
+.v170link::before{content:"";position:absolute;inset:-5px 0}
+.v170link:hover{color:var(--v170-navy)}
+/* one slim notice line */
+.v170note{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin:4px 0 6px;padding:4px 8px 4px 4px;border-radius:10px;background:#fff;border:1px solid #e6ebef;font-size:13.5px;color:#3d4b58;width:max-content;max-width:100%;box-sizing:border-box}
+.v170note[hidden]{display:none}
+.v170note .v170nd{width:7px;height:7px;border-radius:50%;background:var(--v170-red);margin-inline-start:6px}
+.v170note .v170dot{width:3px;height:3px;border-radius:50%;background:#9aa6b1}
+.v170note .v170link{font-size:13.5px;min-height:30px}
+.v170nx{all:unset;cursor:pointer;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;color:#5f6b78;margin-inline-start:2px}
+.v170nx:hover{background:#f1f4f7;color:var(--v170-navy)}
+/* group headers inside the grid */
+.v170gh{grid-column:1/-1;display:flex;align-items:baseline;gap:8px;margin:10px 0 -14px;padding-top:12px;border-top:1px solid #e3e8ed;font-size:15px;font-weight:800;color:var(--v170-navy)}
+.v170gh:first-child{border-top:0;padding-top:0;margin-top:4px}
+.v170gh i{font-style:normal;font-size:13px;font-weight:600;color:var(--v170-mute)}
+.v170empty{grid-column:1/-1;display:grid;justify-items:start;gap:6px;padding:36px 4px;color:var(--v170-mute);font-size:14.5px}
+.v170empty b{font-size:17px;color:var(--v170-navy)}
+.v170btn{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid #cfd9e0;background:#fff;color:var(--v170-navy);font:700 15px Almoni,Heebo,Arial,sans-serif;text-decoration:none;white-space:nowrap}
+.v170btn:hover{border-color:#9fb4c2}
+.v170btn.pri{background:var(--v170-navy);border-color:var(--v170-navy);color:#fff}
+.v170btn.pri:hover{background:#0a3a52}
+.v170btn.ghost{border-color:transparent;background:transparent;color:var(--v170-teal)}
+.v170btn.ghost:hover{background:#f1f5f8}
+.v170btn.v170danger{color:var(--v170-red);border-color:rgba(169,11,12,.35)}
+.v170btn.ghost.v170danger{border-color:transparent}
+/* ---------- posts screen: quiet cards ---------- */
+body.v170g .v63bar,body.v170g #v110bar,body.v170ph #v110bar{display:none!important}
+body.v170g .v170 .ga-card figcaption,body.v170g .v170 .ga-card .ga-acts,body.v170g .v170 .ga-card .ga-q,body.v170g .v170 .ga-card .ga-r,body.v170g .v170 .ga-card .v63chip,body.v170g .v170 .ga-card .v152c,body.v170g .v170 .ga-card .ga-flag,body.v170g .v170 .ga-card .ga-fixv{display:none!important}
+body.v170g .v170[data-qv="check"] .ga-card .ga-q{display:inline-flex!important}
+body.v170g .v170 .ga-grid{padding-top:6px;gap:34px 22px!important}
+body.v170g .v170 .ga-card .ga-chk{width:36px!important;height:36px!important}
+body.v170g .v170 .ga-card .ga-chk::after{content:"";position:absolute;inset:-5px}
+body.v170g .v170 .ga-card .ga-date{background:rgba(7,41,58,.9)!important;color:#fff!important;font-size:12px!important;font-weight:700;padding:4px 9px!important;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.v170meta{display:flex;align-items:center;gap:6px;min-width:0;padding:10px 2px 0;font-size:13px;line-height:1.3;color:var(--v170-mute)}
+.v170meta .v170tag{flex:0 0 auto;padding:2px 7px;border-radius:6px;background:var(--v170-soft);color:var(--v170-teal);font-weight:700;font-size:12px}
+.v170meta .v170ser{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* ---------- filter sheet ---------- */
+body.v170sh-on{overflow:hidden}
+#v170sheet,.v170ps{position:fixed;inset:0;z-index:10060;direction:rtl}
+.v170sh-back{position:absolute;inset:0;background:rgba(7,41,58,.4);animation:v170fade .18s ease-out}
+.v170sh{position:absolute;top:0;bottom:0;left:0;width:min(420px,100%);display:flex;flex-direction:column;background:#fff;box-shadow:0 0 0 1px rgba(7,41,58,.06),24px 0 60px -20px rgba(7,41,58,.35);animation:v170in .22s cubic-bezier(.2,.7,.2,1);font-family:Almoni,Heebo,Arial,sans-serif}
+.v170sh>header{display:flex;align-items:center;gap:10px;padding:14px 16px 12px 12px;border-bottom:1px solid #eef1f4}
+.v170sh>header h2:focus{outline:0}
+.v170sh>header h2{flex:1;margin:0;font-size:19px;font-weight:800;color:var(--v170-navy);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v170x{all:unset;cursor:pointer;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;color:#3d4b58}
+.v170x:hover{background:#f1f4f7}
+.v170x svg{width:18px;height:18px}
+.v170shb{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:6px 16px 18px}
+.v170shb section{padding:14px 0;border-bottom:1px solid #f0f3f6}
+.v170shb section:last-child{border-bottom:0}
+.v170shb h3{margin:0 0 10px;font-size:15px;font-weight:800;color:var(--v170-navy)}
+.v170shb h3 small{font-size:12.5px;font-weight:600;color:var(--v170-mute);margin-inline-start:6px}
+.v170chips{display:flex;flex-wrap:wrap;gap:8px}
+.v170q-s{height:42px;margin-bottom:8px}
+.v170list{display:grid;gap:2px}
+.v170chk{display:flex;align-items:center;gap:10px;min-height:42px;padding:0 8px;border-radius:10px;cursor:pointer;font-size:14.5px;color:#2b3a47}
+.v170chk:hover{background:#f5f7f9}
+.v170chk input{width:20px;height:20px;accent-color:var(--v170-teal);flex:0 0 auto;margin:0}
+.v170chk input:focus-visible{outline:3px solid var(--v170-teal);outline-offset:2px}
+.v170chk span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v170chk i{font-style:normal;font-size:12.5px;font-weight:700;color:#6b7884}
+.v170none{margin:6px 8px;color:var(--v170-mute);font-size:14px}
+.v170sh>footer{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #eef1f4;background:#fff}
+.v170sh>footer .v170btn.pri{flex:1}
+@keyframes v170in{from{transform:translateX(-24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes v170up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes v170fade{from{opacity:0}to{opacity:1}}
+/* ---------- photos ---------- */
+body.v170ph #appviews.v170legacy .v144sum{display:none}
+.v170p .v144grid.v170grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(178px,1fr))!important;gap:22px 14px!important;margin:12px 0 6px}
+.v170p .v170gh{margin:14px 0 0}
+.v170t{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-width:0;border-radius:10px}
+.v170im{position:relative;display:block;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:#e7eef1;box-shadow:0 1px 2px rgba(7,41,58,.06)}
+.v170im img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+@media (hover:hover){.v170t:hover .v170im img{transform:scale(1.03)}}
+.v170new{position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:999px;background:var(--v170-red);color:#fff;font:800 12px/1.3 Almoni,Heebo,Arial,sans-serif;font-style:normal;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.v170pm{margin-top:6px;font-size:13.5px;font-weight:700;color:#2b3a47;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v170pu{font-size:12.5px;color:var(--v170-mute)}
+.v170pu.z{color:#8a6a00}
+.v170pu.hi{color:var(--v170-teal);font-weight:700}
+.v170t.v170bad .v170im{background:#f6e3e3}
+.v170t.v170bad .v170im::after{content:"התמונה לא נטענת";position:absolute;inset:0;display:grid;place-items:center;color:var(--v170-red);font-size:13px;font-weight:700}
+.v170t.v170pick .v148box{position:absolute;top:8px;left:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.95);border:2px solid #9fb4c2;display:grid;place-items:center;font-style:normal;font-weight:800;color:#fff;box-sizing:border-box}
+.v170t.v170pick.on .v148box{background:var(--v170-teal);border-color:var(--v170-teal)}
+.v170t.v170pick.on .v170im{outline:3px solid var(--v170-teal);outline-offset:2px}
+.v170upl{gap:6px}
+.v170upl input{display:none}
+.v170psh{width:min(560px,100%)}
+.v170pbig{position:relative;margin:4px 0 0;border-radius:10px;overflow:hidden;background:#0d2a38;min-height:200px;display:grid;place-items:center}
+.v170pbig img{display:block;width:100%;max-height:46vh;object-fit:contain;background:#0d2a38}
+.v170pinfo{margin:10px 0 0;font-size:14px;color:var(--v170-mute)}
+.v170posts{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.v170pp{all:unset;cursor:pointer;display:block;border-radius:6px;overflow:hidden;background:#e7eef1;box-shadow:0 1px 2px rgba(7,41,58,.08)}
+.v170pp canvas{display:block;width:100%;height:auto;aspect-ratio:4/5}
+.v170more{align-self:center;font-size:13px;color:var(--v170-mute)}
+.v170f{display:grid;gap:4px;margin:0 0 10px}
+.v170f span{font-size:13px;font-weight:700;color:#3d4b58}
+.v170f input,.v170f select{height:44px;border:1px solid #cfd9e0;border-radius:10px;padding:0 12px;font:500 15px Almoni,Heebo,Arial,sans-serif;color:var(--v170-navy);background:#fff}
+.v170f input:focus-visible,.v170f select:focus-visible{outline:3px solid var(--v170-teal);outline-offset:1px}
+.v170psh>footer{flex-wrap:wrap;justify-content:flex-start}
+.v170psh>footer .v170btn{flex:0 0 auto}
+.v170psh>footer .v170danger:last-child{margin-inline-start:auto}
+/* ---------- desktop: actions row of the header stays compact ---------- */
+@media (min-width:761px){
+ body.v170g .v170 .v170bar{padding-top:6px}
+}
+/* ---------- phones ---------- */
+@media (max-width:760px){
+ .v170bar{gap:6px;padding:8px 0 6px}
+ .v170q{padding:0 12px}
+ .v170fbtn{padding:0 12px}
+ .v170bar .v170sel select{max-width:none;width:122px;padding:0 8px 0 24px;font-size:14px}
+ .v170bar .v170fbtn{padding:0 11px;gap:5px}
+ .v170note .v170dot{display:none}
+ .v170note{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;white-space:nowrap;width:100%;gap:6px;padding:2px 6px 2px 2px}
+ .v170note::-webkit-scrollbar{display:none}
+ .v170note>*{flex:0 0 auto}
+ .v170note .v170nx{position:sticky;left:0;background:#fff}
+ .v170pbar{flex-wrap:wrap}
+ .v170pbar .v170q{flex:1 1 100%}
+ .v170pbar .v170sel{flex:1 1 30%}
+ .v170pbar .v170sel select{max-width:none;width:100%}
+ .v170pbar .v170fbtn{flex:0 0 auto}
+ .v170pbar .v170upl span{display:none}
+ .v170qv{margin-inline:-2px;border-radius:12px}
+ .v170qv button{padding:0 12px;font-size:14px}
+ .v170res{margin:10px 0 2px}
+ .v170cnt{font-size:17px}
+ .v170note{font-size:13px}
+ body.v170g .v170 .ga-grid{gap:20px 10px!important}
+ .v170meta{font-size:12px;padding-top:7px}
+ body.v170g .v170 .ga-card .ga-chk{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;top:6px!important;left:6px!important;background:rgba(7,41,58,.32)!important;border:1.5px solid rgba(255,255,255,.9)!important;box-shadow:none!important;color:transparent!important;opacity:1!important}
+ body.v170g .v170 .ga-card .ga-chk[aria-pressed="true"]{background:var(--v170-teal)!important;border-color:#fff!important;color:#fff!important}
+ body.v170g .v170 .ga-card .ga-chk::after{inset:-8px}
+ .v170meta .v170tag{font-size:11.5px;padding:1px 6px}
+ .v170gh{margin:6px 0 -8px}
+ .v170p .v144grid.v170grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px 10px!important}
+ .v170pm{font-size:13px}
+ .v170sh,.v170psh{top:auto;left:0;right:0;width:100%;max-height:88vh;border-radius:18px 18px 0 0;animation:v170up .24s cubic-bezier(.2,.7,.2,1)}
+ .v170sh>header{padding-top:16px;position:relative}
+ .v170sh>header::before{content:"";position:absolute;top:6px;left:50%;width:40px;height:4px;margin-left:-20px;border-radius:4px;background:#d5dde3}
+}
+@media (prefers-reduced-motion:reduce){.v170sh,.v170sh-back{animation:none!important}.v170im img,.side .v170adv svg,.v170qv button{transition:none!important}}
+#v170sht:focus,#v170pst:focus,#v170sht:focus-visible,#v170pst:focus-visible{outline:none!important;box-shadow:none!important}
+</style>
+<style id="k171">
+/* V171 · the editor action bar (phones) and the labelled undo/redo (desktop), the undo snackbar and chip */
+#pe-root .pe-acts [data-pe-a="undo"],#pe-root .pe-acts [data-pe-a="redo"]{width:auto!important;min-width:44px;padding:0 12px;gap:6px;display:inline-flex;align-items:center;border-radius:12px}
+#pe-root .pe-acts [data-pe-a="undo"] .v171l,#pe-root .pe-acts [data-pe-a="redo"] .v171l{font:600 14px Almoni,Heebo,sans-serif}
+#pe-root .pe-acts [data-pe-a="undo"]:disabled,#pe-root .pe-acts [data-pe-a="redo"]:disabled{opacity:.38}
+#v171bar{display:none}
+@media (max-width:860px){
+ #pe-root .pe-acts [data-pe-a="undo"],#pe-root .pe-acts [data-pe-a="redo"],#pe-root .pe-acts [data-pe-a="save"],#pe-root .pe-acts [data-pe-a="dl"]{display:none!important}
+ #v171bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;position:fixed;inset-inline:0;bottom:0;z-index:2147483000;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:rgba(247,248,250,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(7,41,58,.12);box-shadow:0 -8px 24px -12px rgba(7,41,58,.35)}
+ #v171bar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;border:1px solid rgba(7,41,58,.14);border-radius:14px;background:#fff;color:#07293a;font:700 13px Almoni,Heebo,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .15s}
+ #v171bar button:active{transform:scale(.96);background:#e7eef1}
+ #v171bar button:disabled{opacity:.4}
+ #v171bar button.pri{background:#07293a;color:#fff;border-color:#07293a}
+ #v171bar button.pri:disabled{background:#e7eef1;color:#105572;border-color:transparent;opacity:1}
+ #v171bar button.pri.dirty{background:#a90b0c;border-color:#a90b0c;box-shadow:0 6px 16px -6px rgba(169,11,12,.6)}
+ #v171bar button:focus-visible{outline:3px solid #8fb6c8;outline-offset:2px}
+ #pe-root .pe-side,#pe-root .pe-body,#pe-root .pe-scroll{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important}
+}
+#v171snack{position:fixed;inset-inline:16px;bottom:calc(84px + env(safe-area-inset-bottom));margin-inline:auto;max-width:460px;z-index:2147482000;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 10px 10px 16px;padding-inline-start:16px;border-radius:14px;background:#07293a;color:#fff;font:600 15px Almoni,Heebo,sans-serif;box-shadow:0 14px 36px -12px rgba(7,41,58,.6);transform:translateY(20px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#v171snack.show{opacity:1;transform:none;pointer-events:auto}
+#v171snack button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:0;background:#fff;color:#07293a;font:700 14px Almoni,Heebo,sans-serif;cursor:pointer}
+#v171snack button svg{width:17px;height:17px}
+@media (min-width:861px){#v171snack{bottom:24px}}
+#v171chip{position:fixed;inset-inline-start:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:2147481000;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid rgba(7,41,58,.16);background:#fff;color:#07293a;font:700 14px Almoni,Heebo,sans-serif;box-shadow:0 8px 22px -12px rgba(7,41,58,.5);cursor:pointer}
+#v171chip[hidden]{display:none}
+#v171chip svg{width:18px;height:18px}
+@media (min-width:861px){#v171chip{bottom:24px}}
+body.pe-open #v171chip,body.pe-open #v171snack{display:none}
+@media (prefers-reduced-motion:reduce){#v171snack,#v171bar button{transition:none}}
+</style>
+
+<style id="k172">
+/* V172 · one "פעולות" button for the header row on phones, and the quick actions sheet */
+#v172act{display:none}
+body.v172inner .v170bar{top:calc(-1 * var(--v172pt,12px))!important;padding-top:calc(var(--v172pt,12px) + 6px)!important;margin-top:calc(-1 * var(--v172pt,12px))!important}
+@media (max-width:860px){
+ .tbar.v172fold #vact{display:none!important}
+ .tbar.v172fold{flex-wrap:nowrap!important;padding-bottom:inherit}
+ .tbar.v172fold #v172act:not([hidden]){display:inline-flex;align-items:center;gap:6px;width:auto!important;min-width:44px;height:44px!important;padding:0 14px!important;border-radius:999px;background:#fff;border:1px solid #cbd1da;color:#07293a;font:700 15px Almoni,Heebo,sans-serif;white-space:nowrap;flex:0 0 auto;touch-action:manipulation}
+ .tbar.v172fold #v172act svg{width:18px;height:18px}
+ @media (max-width:420px){.tbar.v172fold #v172act:not([hidden]){width:44px!important;padding:0!important;justify-content:center}.tbar.v172fold #v172act span{display:none}}
+ .ga-card{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+}
+.ga-card.v172press{transform:scale(.97);box-shadow:0 0 0 3px #105572;transition:transform .15s}
+#v172sheet{position:fixed;inset:0;z-index:2147483100;direction:rtl;font-family:Almoni,Heebo,sans-serif}
+#v172sheet .v172bg{position:absolute;inset:0;background:rgba(7,41,58,.45);opacity:0;transition:opacity .2s}
+#v172sheet .v172pan{position:absolute;inset-inline:0;bottom:0;margin:0 auto;max-width:520px;background:#f7f8fa;border-radius:22px 22px 0 0;padding:8px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -18px 40px -16px rgba(7,41,58,.55);transform:translateY(100%);transition:transform .24s cubic-bezier(.2,.8,.2,1);max-height:82vh;overflow:auto}
+#v172sheet.in .v172bg{opacity:1}
+#v172sheet.in .v172pan{transform:none}
+#v172sheet .v172grip{width:44px;height:5px;border-radius:9px;background:#cbd1da;margin:4px auto 8px}
+#v172sheet .v172h{display:flex;align-items:flex-start;gap:10px;padding:2px 4px 10px;border-bottom:1px solid rgba(7,41,58,.1);margin-bottom:8px}
+#v172sheet .v172h>div{flex:1;min-width:0}
+#v172sheet .v172h b{display:block;font-size:18px;font-weight:700;color:#07293a;line-height:1.3}
+#v172sheet .v172h span{display:block;font-size:14px;color:#105572;margin-top:2px}
+#v172sheet .v172x{flex:0 0 44px;width:44px;height:44px;border-radius:12px;border:0;background:transparent;color:#07293a;display:grid;place-items:center}
+#v172sheet .v172l{display:grid;gap:6px}
+#v172sheet .v172i{display:flex;align-items:center;gap:12px;min-height:54px;padding:0 14px;border-radius:14px;border:1px solid rgba(7,41,58,.1);background:#fff;color:#07293a;font:600 17px Almoni,Heebo,sans-serif;text-align:start;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#v172sheet .v172i:active{background:#e9f1f5}
+#v172sheet .v172i:disabled{opacity:.4}
+#v172sheet .v172i:focus-visible,#v172sheet .v172x:focus-visible{outline:3px solid #105572;outline-offset:2px}
+#v172sheet .v172ic{width:22px;height:22px;display:grid;place-items:center;color:#105572}
+#v172sheet .v172ic svg{width:20px;height:20px}
+#v172sheet .v172i.danger{color:#a90b0c}
+#v172sheet .v172i.danger .v172ic{color:#a90b0c}
+#v172sheet .v172i.danger.arm{background:#a90b0c;color:#fff;border-color:#a90b0c}
+#v172sheet .v172i.danger.arm .v172ic{color:#fff}
+@media (prefers-reduced-motion:reduce){#v172sheet .v172pan,#v172sheet .v172bg,.ga-card.v172press{transition:none}}
+</style>
+
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -23881,6 +24156,485 @@ try{Object.assign(ED_NAMES,N)}catch(e){}
 try{Object.assign(DEF_THEME,{x_r_stack:'dark',x_r_bands:'dark',x_r_panel:'dark',x_r_labels:'dark',x_r_badge:'dark',x_r_burst:'teal',x_r_list:'dark',x_r_sunset:'light',
  x_t_speech:'light',x_t_thin:'light',x_t_number:'light',x_t_wordmark:'dark',x_t_grid:'dark',x_t_stars:'dark',x_t_wave:'light',x_t_card:'teal'})}catch(e){}
 try{window.__v154=(window.__v154||[]).concat(Object.keys(N))}catch(e){}
+})();
+
+// ================= V170 · find anything in seconds: a calm side menu in three groups (work, materials, advanced tools folded away),
+//                   "פוסטים" as the one place for every post (search, quick views with counts, a filter sheet, removable filter pills,
+//                   date groups), and "תמונות" that says at a glance what is new, what is used and where (quick views, "חדש" marks,
+//                   a sheet per photo with the posts that use it) =================
+(function(){
+const H=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lsG=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+const lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const DAY=864e5;
+const IC={
+ filter:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
+ search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+ x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+ cal:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>',
+ chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+ up:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>',
+ img:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/></svg>',
+ grid:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>'};
+const PJ=()=>{try{return PROJ_HE}catch(e){return {}}};
+const PJ_ORDER=['henrietta','hankin','yordei','bengurion','general'];
+const projLabel=k=>k==='general'||!k?'כללי':(PJ()[k]||k);
+function startOfToday(){const d=new Date();d.setHours(0,0,0,0);return d.getTime()}
+
+// ============ 1. side menu: three groups, advanced tools folded ============
+const G_WORK=['today','gallery','calendar'],G_MAT=['photos','templates','articles','videos'];
+const ADV_ORDER=['queue','ideas','feed','create','agent','dupes','cloner','veditor','competitors','analyze','times','settings','fonts'];
+const GN={work:'עבודה',mat:'חומרים',adv:'כלים מתקדמים'};
+function regroup(){try{const all=[];VIEWS.forEach(g=>g[1].forEach(v=>{if(!all.some(x=>x[0]===v[0]))all.push(v)}));
+  all.forEach(v=>{if(v[0]==='gallery')v[1]='פוסטים';if(v[0]==='photos')v[1]='תמונות'});
+  const pick=ids=>ids.map(id=>all.find(v=>v[0]===id)).filter(Boolean);
+  const used=new Set([...G_WORK,...G_MAT]);
+  const adv=all.filter(v=>!used.has(v[0])).sort((a,b)=>{const ia=ADV_ORDER.indexOf(a[0]),ib=ADV_ORDER.indexOf(b[0]);return (ia<0?99:ia)-(ib<0?99:ib)});
+  const next=[[GN.work,pick(G_WORK)],[GN.mat,pick(G_MAT)],[GN.adv,adv]];
+  if(VIEWS.length===3&&VIEWS.every((g,i)=>g[0]===next[i][0]&&g[1].length===next[i][1].length&&g[1].every((v,j)=>v===next[i][1][j])))return;
+  VIEWS.splice(0,VIEWS.length,...next)}catch(e){console.warn('v170 nav',e)}}
+function advOpen(){if(lsG('v170_adv',false))return true;try{return VIEWS[2][1].some(v=>v[0]===APP.view)}catch(e){return false}}
+try{VTITLE.gallery=['פוסטים','כל הפוסטים במקום אחד: מחפשים, מסננים, פותחים ומתזמנים'];VTITLE.photos=['תמונות','מה חדש, מה בשימוש, ואיפה כל תמונה מופיעה']}catch(e){}
+renderNav=(f=>function(){regroup();const r=f.apply(this,arguments);try{
+  const c=counts();const nav=document.getElementById('sidenav');if(!nav)return r;const open=advOpen();
+  const btn=([k,l,i])=>`<button class="nav" type="button" data-view="${k}" ${APP.view===k?'aria-current="page"':''}>${ico(i)}<span>${l}</span>${c[k]!=null?`<span class="cnt">${c[k]}</span>`:''}</button>`;
+  nav.innerHTML=VIEWS.map(([g,items],gi)=>gi<2?`<div class="grp">${g}</div>`+items.map(btn).join('')
+   :`<button type="button" class="v170adv" data-v170nav="adv" aria-expanded="${open}" aria-controls="v170advl"><span>${g}</span><i class="v170advn">${items.length}</i>${IC.chev}</button><div id="v170advl" class="v170advl"${open?'':' hidden'}>${items.map(btn).join('')}</div>`).join('')}catch(e){console.warn('v170 nav',e)}return r})(renderNav);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v170nav="adv"]');if(!b)return;e.preventDefault();const open=b.getAttribute('aria-expanded')!=='true';lsS('v170_adv',open);b.setAttribute('aria-expanded',open);const l=document.getElementById('v170advl');if(l)l.hidden=!open;advDot()});
+function advDot(){try{const b=document.querySelector('[data-v170nav="adv"]');const l=document.getElementById('v170advl');if(!b||!l)return;const n=l.querySelectorAll('.dg-badge').length;b.classList.toggle('v170alert',!!n&&l.hidden)}catch(e){}}
+
+// phone bottom bar: היום, תמונות, לוח, פוסטים
+const NAVMAP={queue:['photos','תמונות',IC.img],gallery:['gallery','פוסטים',IC.grid]};
+function patchBottom(){const n=document.getElementById('v99nav');if(!n)return;n.querySelectorAll('button[data-v99nav]').forEach(b=>{const k=b.dataset.v99nav;const m=NAVMAP[k];if(!m||b.dataset.v170)return;b.dataset.v170='1';b.dataset.v99nav=m[0];const ic=b.querySelector('.ic');if(ic)ic.innerHTML=m[2];const sp=b.querySelectorAll('span');if(sp[1])sp[1].textContent=m[1]});
+ const cur=(typeof APP!=='undefined'&&APP.view)||'';n.querySelectorAll('button[data-v99nav]').forEach(b=>{if(b.dataset.v99nav===cur)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})}
+let bt=0;new MutationObserver(()=>{if(bt)return;bt=requestAnimationFrame(()=>{bt=0;try{patchBottom()}catch(e){}})}).observe(document.body,{childList:true,subtree:false});
+setTimeout(()=>{const n=document.getElementById('v99nav');if(n)new MutationObserver(()=>{try{patchBottom()}catch(e){}}).observe(n,{childList:true})},0);
+
+// ============ 2. posts ============
+const QV=[['all','הכל'],['week','חדשים השבוע'],['ads','מודעות פרויקטים'],['ready','מוכנים לתזמון'],['sched','מתוזמנים'],['check','דורשים בדיקה']];
+const SORTS=[['new','חדשים קודם'],['plan','מועד פרסום'],['score','ציון'],['series','סדרה']];
+const FAMN={ads:'מודעות פרויקטים',tools:'כלי עבודה',social:'רשתות',mag:'מגזין',bold:'נועז',studio:'סטודיו',sig:'חתימה',world:'עולם',ed:'עריכה',tpl:'מתבניות',other:'אחר'};
+const IMGN={ill:'איור',render:'הדמיה',photo:'צילום שטח',none:'בלי תמונה'};
+const WHENN=[['today','היום'],['7','7 ימים'],['30','30 ימים'],['','הכל']];
+const F0={qv:'all',proj:[],ser:[],fam:[],dom:[],img:[],when:'',sort:'new',q:''};
+const F=Object.assign({},F0,lsG('v170_f',{}));['proj','ser','fam','dom','img'].forEach(k=>{if(!Array.isArray(F[k]))F[k]=[]});
+let FIRST=(()=>{try{return localStorage.getItem('v170_f')==null}catch(e){return true}})();
+const saveF=()=>lsS('v170_f',F);
+const ST_OF={all:'all',week:'all',ads:'all',ready:'ready',sched:'sched',check:'fix'};
+function famOf(p){const l=p.layout||'';
+ if(/^x_[pqr]_/.test(l)||(/^x_t_/.test(l)&&/^מודעה/.test((typeof ED_NAMES!=='undefined'&&ED_NAMES[l])||'')))return 'ads';
+ if(/^x_n_/.test(l))return 'tools';if(/^x_v_/.test(l))return 'social';if(/^x_mag_/.test(l))return 'mag';if(/^x_b_/.test(l))return 'bold';if(/^x_c_/.test(l))return 'studio';if(/^x_s_/.test(l))return 'sig';if(/^x_w_/.test(l))return 'world';if(/^ed_/.test(l))return 'ed';if(/^x_t_/.test(l))return 'tpl';return 'other'}
+const MC=new WeakMap();
+function metaP(x){const p=x.p;const st=(p.upd||'')+'|'+p.layout+'|'+(p.photoKey||'')+'|'+(p.series||'');let m=MC.get(p);if(m&&m.st===st)return m;
+ let img='none';try{const ks=imgKeysOf(p);const k=(p.fx&&p.fx.shot&&p.fx.shot.k)||ks[0];if(k){const mm=metaOf(k)||{};img=(mm.k==='drawing'||/^illustration/.test(mm.t||''))?'ill':isRenderKey(k)?'render':'photo'}}catch(e){}
+ let c=0;try{c=window.__v152?__v152.createdOf(p):0}catch(e){}
+ const ser=String(p.series||'');
+ m={st,fam:famOf(p),img,c,ser,ads:/^מודעות פרויקטים/.test(ser),dom:String(p.domain||p.cat||(p.article&&p.article.dom)||'')};
+ m.hay=[ser,p.fb,p.ig,(typeof ED_NAMES!=='undefined'&&ED_NAMES[p.layout])||'',FAMN[m.fam],m.dom].join(' ');
+ MC.set(p,m);return m}
+const projKey=x=>x.proj||'general';
+let BASE=null,FAST=false,SELBAR=null,LOWN='';
+function base(orig){const now=Date.now();let sl=0;try{sl=APP.sched.items.length}catch(e){}const key=AG.posts.length+'|'+sl;
+ if(BASE&&BASE.key===key&&(now-BASE.t<(FAST?60000:1500)))return BASE.l;
+ const keep=Object.assign({},GA.f);let l;try{Object.assign(GA.f,{st:'all',ser:'',fam:'',proj:'',q:'',sort:'new'});l=orig()}finally{Object.assign(GA.f,keep)}
+ l.forEach(x=>{x.m=metaP(x);x.pk=projKey(x)});BASE={key,t:now,l};return l}
+function headOf(p){try{return pxHead(p)}catch(e){return ''}}
+function qMatch(x,q){if(!q)return true;const h=(headOf(x.p)+' '+x.m.hay+' '+projLabel(x.pk)).toLowerCase();return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>h.includes(w))}
+function whenOk(c,w){if(!w)return true;if(!c)return false;if(w==='today')return c>=startOfToday();return c>=Date.now()-(+w)*DAY}
+const isReady=x=>!x.it&&x.q.v!=='block'&&x.w!=='published';
+const isCheck=x=>x.w==='review'||(!x.it&&x.q.v!=='ok');
+function qvOk(x,qv){if(qv==='week')return x.m.c>=Date.now()-7*DAY;if(qv==='ads')return x.m.ads||x.m.fam==='ads';if(qv==='ready')return isReady(x);if(qv==='sched')return !!x.it;if(qv==='check')return isCheck(x);return true}
+// facet filter: everything except the facet named in skip
+function facets(l,skip){return l.filter(x=>(skip==='proj'||!F.proj.length||F.proj.includes(x.pk))&&(skip==='ser'||!F.ser.length||F.ser.includes(x.m.ser))&&(skip==='fam'||!F.fam.length||F.fam.includes(x.m.fam))&&(skip==='dom'||!F.dom.length||F.dom.includes(x.m.dom))&&(skip==='img'||!F.img.length||F.img.includes(x.m.img))&&(skip==='when'||whenOk(x.m.c,F.when))&&(skip==='q'||qMatch(x,F.q)))}
+const IDX=new Map();function idxOf(p){return IDX.get(p)}
+function sortL(l){IDX.clear();AG.posts.forEach((p,i)=>IDX.set(p,i));const byNew=(a,b)=>(b.m.c-a.m.c)||(idxOf(a.p)-idxOf(b.p));
+ const S={new:byNew,plan:(a,b)=>String(a.it?a.it.at:'9').localeCompare(String(b.it?b.it.at:'9'))||byNew(a,b),score:(a,b)=>(b.q.avg-a.q.avg)||byNew(a,b),series:(a,b)=>a.m.ser.localeCompare(b.m.ser,'he')||byNew(a,b)};
+ return l.sort(S[F.sort]||byNew)}
+function mirror(){GA.f.st=ST_OF[F.qv]||'all';GA.f._v170=GA.f.st;try{gaSaveF()}catch(e){}}
+// someone else asked the gallery for a view (the "new posts" button on Today, posts made from photos): adopt it
+function adopt(){const st=GA.f.st;if(FIRST){FIRST=false;saveF();return}if(GA.f._v170===st)return;const m={ready:'ready',sched:'sched',fix:'check',all:'all'}[st];
+ if(st===''||st==='all'||!m){Object.assign(F,{qv:'all',proj:[],ser:[],fam:[],dom:[],img:[],when:'',q:''});if(GA.f.sort==='new')F.sort='new'}else F.qv=m;
+ if(GA.f.proj){F.proj=[GA.f.proj]}if(GA.f.ser){F.ser=[GA.f.ser]}if(GA.f.q){F.q=GA.f.q}GA.f.proj='';GA.f.ser='';GA.f.q='';GA.f.fam='';saveF();mirror()}
+let LAST=null;
+gaList=(f=>function(){const orig=()=>f.apply(this,arguments);const b=base(orig);const l=sortL(facets(b,'').filter(x=>qvOk(x,F.qv)));LAST=l;return l})(gaList);
+
+// cards: the post, one muted line (project tag and series), the planned date when it has one
+gaCard=(f=>function(x){let h=f.apply(this,arguments);try{const m=x.m||metaP(x);const pk=x.pk||projKey(x);const head=headOf(x.p);
+  h=h.replace('aria-label="פתח במסך גדול"',`aria-label="${H('פתיחה במסך גדול: '+head.slice(0,80))}"`);
+  const line=`<div class="v170meta">${pk!=='general'?`<span class="v170tag">${H(projLabel(pk))}</span>`:''}<span class="v170ser">${H(m.ser||FAMN[m.fam])}</span></div>`;
+  h=h.replace(/<\/figure>\s*$/,line+'</figure>')}catch(e){}return h})(gaCard);
+
+function bucket(c,t0){if(!c)return 3;if(c>=t0)return 0;const n=Date.now();if(c>=n-7*DAY)return 1;if(c>=n-30*DAY)return 2;return 3}
+const BUCK=['היום','השבוע','החודש','קודם'];
+function pills(){const P=[];F.proj.forEach(k=>P.push(['proj',k,projLabel(k)]));F.ser.forEach(k=>P.push(['ser',k,k||'בלי סדרה']));F.fam.forEach(k=>P.push(['fam',k,FAMN[k]||k]));F.dom.forEach(k=>P.push(['dom',k,k]));F.img.forEach(k=>P.push(['img',k,IMGN[k]||k]));if(F.when)P.push(['when',F.when,'נוצרו: '+WHENN.find(w=>w[0]===F.when)[1]]);if(F.q)P.push(['q',F.q,'"'+F.q+'"']);return P}
+const nActive=()=>F.proj.length+F.ser.length+F.fam.length+F.dom.length+F.img.length+(F.when?1:0);
+vGallery=(f=>function(){adopt();mirror();
+ let selbar=null;if(FAST&&SELBAR!=null){gaList();selbar=SELBAR?{outerHTML:SELBAR}:null}else{const keepLim=GA.lim;let orig='';try{GA.lim=0;orig=f.apply(this,arguments)}finally{GA.lim=keepLim}
+ const t=document.createElement('template');t.innerHTML=orig;selbar=t.content.querySelector('.ga-selbar');SELBAR=selbar?selbar.outerHTML:''}
+ const b=BASE?BASE.l:[];const pre=facets(b,'');const l=LAST||[];const n=l.length;
+ const cnt={};QV.forEach(([k])=>cnt[k]=k==='all'?pre.length:pre.filter(x=>qvOk(x,k)).length);
+ // project chips: counts inside the current quick view and the other filters
+ const pAll=facets(b,'proj');const pc={},pe={};pAll.forEach(x=>{pe[x.pk]=1;if(qvOk(x,F.qv))pc[x.pk]=(pc[x.pk]||0)+1});
+ const pkeys=Object.keys(pe).sort((a,b2)=>{const ia=PJ_ORDER.indexOf(a),ib=PJ_ORDER.indexOf(b2);if(ia>=0||ib>=0)return (ia<0?99:ia)-(ib<0?99:ib);return pc[b2]-pc[a]});
+ F.proj.forEach(k=>{if(!pkeys.includes(k))pkeys.push(k)});
+ const show=l.slice(0,GA.lim);let grid='';
+ if(F.sort==='new'&&n){const t0=startOfToday();const bc=[0,0,0,0];l.forEach(x=>bc[bucket(x.m.c,t0)]++);let cur=-1;
+  show.forEach(x=>{const bk=bucket(x.m.c,t0);if(bk!==cur){cur=bk;grid+=`<h3 class="v170gh"><span>${BUCK[bk]}</span><i>${bc[bk]}</i></h3>`}grid+=gaCard(x)})}
+ else grid=show.map(gaCard).join('');
+ const P=pills();const na=nActive();
+ const empty=`<div class="v170empty"><b>אין פוסטים שמתאימים לסינון.</b><span>${P.length?'אפשר להסיר מסנן אחד או לנקות הכל.':'נסו תצוגה אחרת למעלה.'}</span>${P.length?'<button type="button" class="v170btn" data-v170="clear">ניקוי כל המסננים</button>':''}</div>`;
+ return `<div class="ga v170" data-qv="${F.qv}">
+ <div class="v170bar"><label class="v170q">${IC.search}<input type="search" data-v170q value="${H(F.q)}" placeholder="חיפוש פוסט, פרויקט או סדרה" aria-label="חיפוש פוסטים" autocomplete="off"></label>
+  <button type="button" class="v170fbtn${na?' on':''}" data-v170="panel" aria-haspopup="dialog" aria-expanded="false">${IC.filter}<span>סינון</span>${na?`<b>${na}</b>`:''}</button>
+  <label class="v170sel"><span class="v170sr">מיון</span><select data-v170s aria-label="מיון">${SORTS.map(([k,t2])=>`<option value="${k}"${F.sort===k?' selected':''}>${t2}</option>`).join('')}</select></label></div>
+ <div class="v170qv" role="tablist" aria-label="תצוגות מהירות">${QV.map(([k,t2])=>`<button type="button" role="tab" data-v170="qv" data-k="${k}" aria-selected="${F.qv===k}">${t2}<i>${cnt[k]}</i></button>`).join('')}</div>
+ ${pkeys.length>1||F.proj.length?`<div class="v170pj" role="group" aria-label="פרויקט">${pkeys.map(k=>`<button type="button" data-v170="pj" data-k="${H(k)}" aria-pressed="${F.proj.includes(k)}"${pc[k]?'':' class="v170z"'}>${H(projLabel(k))}<i>${pc[k]||0}</i></button>`).join('')}</div>`:''}
+ <div class="v170res"><b class="v170cnt" aria-live="polite">${n.toLocaleString('he-IL')} פוסטים</b>${P.map(([g,k,lab])=>`<button type="button" class="v170pill" data-v170="rm" data-g="${g}" data-k="${H(k)}" aria-label="${H('הסרת המסנן '+lab)}">${H(lab)}${IC.x}</button>`).join('')}${P.length>1?'<button type="button" class="v170link" data-v170="clear">נקה הכל</button>':''}</div>
+ <div id="v170note" class="v170note" hidden></div>
+ <div class="ga-grid sz-${GA.f.size||'m'}">${grid||empty}</div>
+ ${n>GA.lim?`<div class="ga-more"><button type="button" class="px-btn" data-ga="more">הצג עוד ${Math.min(60,n-GA.lim)} מתוך ${n-GA.lim}</button></div>`:''}
+ ${selbar?selbar.outerHTML:''}</div>`})(vGallery);
+
+// ---- quick repaint for filter taps: same data, no full page render ----
+function fastPaint(){if(APP.view!=='gallery'||!BASE){render();return}const box=document.getElementById('appviews');if(!box){render();return}
+ const keep=box.querySelector('.v63bar');let h;FAST=true;try{h=vGallery()}catch(e){FAST=false;console.warn('v170 fast',e);render();return}finally{FAST=false}
+ box.innerHTML=h;if(keep)box.insertAdjacentElement('afterbegin',keep);try{paint(box)}catch(e){}note();const top=hdrBottom();box.querySelectorAll('.v170bar').forEach(b=>b.style.setProperty('--v170top',top+'px'))}
+// ---- filter sheet ----
+const PS={open:false,serQ:'',serAll:false};
+function facetCounts(skip,fn){const c=new Map();facets(BASE?BASE.l:[],skip).filter(x=>qvOk(x,F.qv)).forEach(x=>{const k=fn(x);c.set(k,(c.get(k)||0)+1)});return c}
+function chipRow(g,items,c,multi=true){return `<div class="v170chips" role="group">${items.map(([k,t2])=>{const on=g==='when'?F.when===k:F[g].includes(k);const n=c?c.get(k)||0:null;return `<button type="button" data-v170="fx" data-g="${g}" data-k="${H(k)}" aria-pressed="${on}"${n===0&&!on?' class="v170z"':''}>${H(t2)}${n!=null?`<i>${n}</i>`:''}</button>`}).join('')}</div>`}
+function sheetHtml(){const b=BASE?BASE.l:[];
+ const cp=facetCounts('proj',x=>x.pk);const projs=[...new Set([...PJ_ORDER,...Object.keys(PJ()),...cp.keys()])].filter(k=>cp.get(k)||F.proj.includes(k)).map(k=>[k,projLabel(k)]);
+ const cs=facetCounts('ser',x=>x.m.ser);const newest=new Map();b.forEach(x=>{const s=x.m.ser;if(!s)return;newest.set(s,Math.max(newest.get(s)||0,x.m.c||0))});
+ let sers=[...cs.keys()].filter(s=>s).sort((a,b2)=>(newest.get(b2)||0)-(newest.get(a)||0)||(cs.get(b2)-cs.get(a)));F.ser.forEach(s=>{if(!sers.includes(s))sers.unshift(s)});
+ const sq=PS.serQ.trim();if(sq)sers=sers.filter(s=>s.includes(sq));const total=sers.length;const shown=PS.serAll||sq?sers.slice(0,300):sers.slice(0,10);
+ const cf=facetCounts('fam',x=>x.m.fam);const fams=Object.keys(FAMN).filter(k=>cf.get(k)||F.fam.includes(k)).map(k=>[k,FAMN[k]]);
+ const cd=facetCounts('dom',x=>x.m.dom);const doms=[...cd.keys()].filter(Boolean).sort((a,b2)=>cd.get(b2)-cd.get(a)).map(k=>[k,k]);
+ const ci=facetCounts('img',x=>x.m.img);const imgs=Object.keys(IMGN).map(k=>[k,IMGN[k]]);
+ const n=(LAST||[]).length;
+ return `<div class="v170sh-back" data-v170="close"></div><div class="v170sh" role="dialog" aria-modal="true" aria-labelledby="v170sht">
+ <header><h2 id="v170sht" tabindex="-1">סינון פוסטים</h2><button type="button" class="v170x" data-v170="close" aria-label="סגירה">${IC.x}</button></header>
+ <div class="v170shb">
+  <section><h3>פרויקט</h3>${chipRow('proj',projs,cp)}</section>
+  <section><h3>סבב / סדרה <small>החדשים למעלה</small></h3><label class="v170q v170q-s">${IC.search}<input type="search" data-v170serq value="${H(PS.serQ)}" placeholder="חיפוש סדרה" aria-label="חיפוש סדרה"></label>
+   <div class="v170list">${shown.map(s=>`<label class="v170chk"><input type="checkbox" data-v170="ser" value="${H(s)}"${F.ser.includes(s)?' checked':''}><span>${H(s)}</span><i>${cs.get(s)||0}</i></label>`).join('')||'<p class="v170none">אין סדרה בשם הזה</p>'}</div>
+   ${!PS.serAll&&!sq&&total>10?`<button type="button" class="v170link" data-v170="serall">הצגת כל ${total} הסדרות</button>`:''}</section>
+  <section><h3>משפחת תבנית</h3>${chipRow('fam',fams,cf)}</section>
+  ${doms.length?`<section><h3>נושא / תחום</h3>${chipRow('dom',doms,cd)}</section>`:''}
+  <section><h3>סוג תמונה</h3>${chipRow('img',imgs,ci)}</section>
+  <section><h3>תאריך יצירה</h3>${chipRow('when',WHENN,null)}</section>
+  <section><h3>גודל תצוגה</h3><div class="v170chips" role="group">${[['s','קטן'],['m','בינוני'],['l','גדול']].map(([k,t2])=>`<button type="button" data-v170="size" data-k="${k}" aria-pressed="${(GA.f.size||'m')===k}">${t2}</button>`).join('')}</div></section>
+ </div>
+ <footer><button type="button" class="v170btn ghost" data-v170="clearp">ניקוי</button><button type="button" class="v170btn pri" data-v170="close">הצגת ${n.toLocaleString('he-IL')} פוסטים</button></footer></div>`}
+let lastFocus=null;
+function sheetPaint(){let r=document.getElementById('v170sheet');if(!PS.open){if(r){r.remove();document.body.classList.remove('v170sh-on');try{lastFocus&&lastFocus.focus()}catch(e){}}return}
+ const fresh=!r;if(!r){r=document.createElement('div');r.id='v170sheet';document.body.appendChild(r);document.body.classList.add('v170sh-on')}
+ const bd=r.querySelector('.v170shb');const st=bd?bd.scrollTop:0;const a=document.activeElement;const aq=a&&a.dataset&&('v170serq' in a.dataset);const pos=aq?a.selectionStart:0;
+ r.innerHTML=sheetHtml();const nb=r.querySelector('.v170shb');if(nb)nb.scrollTop=st;
+ if(aq){const i=r.querySelector('[data-v170serq]');if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(e){}}}else if(fresh){const x=r.querySelector('#v170sht');x&&x.focus({preventScroll:true})}}
+let rt=0;function rerender(now){clearTimeout(rt);const go2=()=>{if(APP.view==='gallery'){GA.lim=60;fastPaint()}if(PS.open)sheetPaint()};if(now)go2();else rt=setTimeout(go2,120)}
+function setF(g,k){if(g==='when'){F.when=F.when===k?'':k}else{const a=F[g];const i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k)}saveF()}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v170]');if(!b)return;const a=b.dataset.v170;if(b.tagName==='INPUT')return;
+ if(a==='qv'){F.qv=b.dataset.k;saveF();mirror();GA.lim=60;fastPaint();const m=document.getElementById('appmain');try{const g=document.querySelector('.v170');if(g&&g.getBoundingClientRect().top<0)g.scrollIntoView({block:'start'})}catch(x){}}
+ else if(a==='pj'){setF('proj',b.dataset.k);rerender(true)}
+ else if(a==='rm'){const g=b.dataset.g,k=b.dataset.k;if(g==='q')F.q='';else if(g==='when')F.when='';else F[g]=F[g].filter(v=>v!==k);saveF();rerender(true);setTimeout(()=>{const nx=document.querySelector('.v170pill')||document.querySelector('[data-v170q]');nx&&nx.focus()},0)}
+ else if(a==='clear'){Object.assign(F,{proj:[],ser:[],fam:[],dom:[],img:[],when:'',q:''});saveF();rerender(true)}
+ else if(a==='clearp'){Object.assign(F,{proj:[],ser:[],fam:[],dom:[],img:[],when:''});saveF();rerender(true)}
+ else if(a==='panel'){lastFocus=b;PS.open=true;PS.serQ='';PS.serAll=false;sheetPaint()}
+ else if(a==='close'){PS.open=false;sheetPaint()}
+ else if(a==='fx'){setF(b.dataset.g,b.dataset.k);rerender(true)}
+ else if(a==='serall'){PS.serAll=true;sheetPaint()}
+ else if(a==='size'){GA.f.size=b.dataset.k;try{gaSaveF()}catch(x){}rerender(true)}
+ else if(a==='notex'){lsS('v170_notex',Date.now());const n=document.getElementById('v170note');if(n)n.hidden=true}});
+document.addEventListener('change',e=>{const t=e.target;if(!t.matches)return;
+ if(t.matches('[data-v170s]')){e.stopPropagation();F.sort=t.value;saveF();GA.lim=60;fastPaint();setTimeout(()=>{const s=document.querySelector('[data-v170s]');s&&s.focus()},0)}
+ else if(t.matches('input[data-v170="ser"]')){setF('ser',t.value);rerender(true)}},true);
+let qt=0;document.addEventListener('input',e=>{const t=e.target;if(!t.matches)return;
+ if(t.matches('[data-v170q]')){clearTimeout(qt);qt=setTimeout(()=>{F.q=t.value.trim();saveF();const pos=t.selectionStart;GA.lim=60;fastPaint();const n=document.querySelector('[data-v170q]');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},220)}
+ else if(t.matches('[data-v170serq]')){PS.serQ=t.value;sheetPaint()}},true);
+window.addEventListener('keydown',e=>{if(!PS.open)return;if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();PS.open=false;sheetPaint();return}
+ if(e.key==='Tab'){const r=document.querySelector('#v170sheet .v170sh');if(!r)return;const f=[...r.querySelectorAll('button,input,select,[tabindex="0"]')].filter(x=>!x.disabled&&x.offsetParent);if(!f.length)return;const first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}},true);
+
+// ---- the notices become one slim line under the filters ----
+function note(){const el=document.getElementById('v170note');if(!el)return;const x=lsG('v170_notex',0);if(x&&Date.now()-x<3*DAY){el.hidden=true;return}
+ const parts=[];try{const v=document.querySelector('#appviews .v63bar b');const m=v&&v.textContent.match(/\d[\d,]*/);if(v)LOWN=m?m[0]:'';if(LOWN)parts.push(`<span>${LOWN} פוסטים עם ציון נמוך</span><button type="button" class="v170link" data-v63="batch">שיפור כולם</button>`)}catch(e){}
+ try{const pn=window.__v110&&__v110.pendingImages();if(pn&&!(__v110.ST&&__v110.ST.busy))parts.push(`<span>${pn} תמונות מהאתר עוד לא בספרייה</span><button type="button" class="v170link" data-v110="run">ייבוא</button>`)}catch(e){}
+ if(!parts.length){el.hidden=true;return}el.innerHTML=`<span class="v170nd" aria-hidden="true"></span>${parts.join('<i class="v170dot" aria-hidden="true"></i>')}<button type="button" class="v170nx" data-v170="notex" aria-label="הסתרת ההודעה">${IC.x}</button>`;el.hidden=false}
+
+// ---- sticky tools under the page header ----
+function hdrBottom(){let el=document.elementFromPoint(Math.round(innerWidth/2),12),b=0;while(el&&el!==document.body){const cs=getComputedStyle(el);if(cs.position==='sticky'||cs.position==='fixed'){b=Math.max(b,el.getBoundingClientRect().bottom)}el=el.parentElement}return Math.max(0,Math.round(b))}
+
+// ============ 3. photos ============
+const PV=[['new','חדשות'],['ill','איורים'],['render','הדמיות'],['field','שטח ורחפן'],['up','העלאות שלי'],['unused','לא בשימוש'],['heavy','בשימוש רב'],['all','הכל']];
+const PSORT=[['new','חדשות קודם'],['use','הכי בשימוש'],['name','לפי שם']];
+const KINDN={site:'צילום שטח',aerial:'רחפן',render:'הדמיה',interior:'פנים',finish:'גמר',drawing:'שרטוט',env:'סביבה',people:'אנשים',brand:'מותג',atmo:'אווירה',exterior:'חוץ',detail:'פרט',ad:'מודעה'};
+const PF=Object.assign({v:'new',proj:'',sort:'new',q:''},lsG('v170_pf',{}));const saveP=()=>lsS('v170_pf',PF);
+const NEWD=14;
+const atOf=it=>{const t=Date.parse(it.at||'');return isNaN(t)?0:t};
+const isNewP=it=>{const t=atOf(it);return t&&t>=Date.now()-NEWD*DAY};
+const isIll=it=>it.kind==='drawing'||/^illustration/i.test(String((it.u&&it.u.tags)||''));
+const kindLabel=it=>isIll(it)&&/^illustration/i.test(String((it.u&&it.u.tags)||''))?'איור':(KINDN[it.kind]||(it.src==='builtin'?'צילום שטח':'תמונה'));
+let USE={t:0,m:null,n:0};
+function useMap(){if(USE.m&&Date.now()-USE.t<20000&&USE.n===AG.posts.length)return USE.m;const m=new Map();for(const p of AG.posts){let ks=[];try{ks=imgKeysOf(p)}catch(x){}for(const k of new Set(ks)){let a=m.get(k);if(!a){a=[];m.set(k,a)}a.push(p.id)}}USE={t:Date.now(),m,n:AG.posts.length};return m}
+function pvOk(it,v,n){if(v==='new')return isNewP(it);if(v==='ill')return isIll(it);if(v==='render')return it.kind==='render'||(()=>{try{return isRenderKey(it.k)}catch(e){return false}})();if(v==='field')return it.kind==='site'||it.kind==='aerial'||it.src==='builtin';if(v==='up')return it.src==='up';if(v==='unused')return !n;if(v==='heavy')return n>=10;return true}
+const norm2=s=>String(s||'').replace(/["'״׳]/g,'').toLowerCase();
+function ptile(it,um,S){const ids=um.get(it.k)||[];const n=ids.length;const sel=S.sel.has(it.k);const nw=isNewP(it);const pj=it.proj?projLabel(it.proj):'';
+ return `<button type="button" class="v170t${sel?' on':''}${S.selMode?' v170pick':''}" data-v144="${S.selMode?'pick':'open'}" data-k="${H(it.k)}" aria-label="${H(it.name+(nw?', חדשה':'')+(n?`, בשימוש ב-${n} פוסטים`:', לא בשימוש'))}"${S.selMode?` aria-pressed="${sel}"`:''}>
+ <span class="v170im"><img src="${H(it.url)}" alt="" loading="lazy" decoding="async" data-v148k="${H(it.k)}">${nw?'<em class="v170new">חדש</em>':''}${S.selMode?`<i class="v148box" aria-hidden="true">${sel?'✓':''}</i>`:''}</span>
+ <span class="v170pm">${H(kindLabel(it))}${pj?` · ${H(pj)}`:''}</span><span class="v170pu${n?'':' z'}${n>=10?' hi':''}">${n?`בשימוש ב-${n} פוסטים`:'לא בשימוש'}</span></button>`}
+function vPhotos170(S,keep){const inv=__v144.inventory();const um=useMap();const q=norm2(PF.q);
+ const all=inv.map(it=>({it,n:(um.get(it.k)||[]).length}));
+ const pre=all.filter(({it})=>(!PF.proj||(PF.proj==='none'?!it.proj:it.proj===PF.proj))&&(!q||norm2(it.name+' '+projLabel(it.proj)+' '+(KINDN[it.kind]||'')+' '+it.from+' '+((it.u&&it.u.tags)||'')).includes(q)));
+ const cnt={};PV.forEach(([k])=>cnt[k]=pre.filter(x=>pvOk(x.it,k,x.n)).length);
+ let l=pre.filter(x=>pvOk(x.it,PF.v,x.n));
+ const byName=(a,b)=>String(a.it.name).localeCompare(String(b.it.name),'he');
+ if(PF.sort==='use')l.sort((a,b)=>b.n-a.n||atOf(b.it)-atOf(a.it));else if(PF.sort==='name')l.sort(byName);else l.sort((a,b)=>atOf(b.it)-atOf(a.it)||b.n-a.n);
+ const pc={};inv.forEach(it=>{const k=it.proj||'none';pc[k]=(pc[k]||0)+1});
+ const projs=Object.keys(PJ()).filter(k=>pc[k]);
+ let body='';const LIM=S._lim||120;const show=l.slice(0,LIM);
+ if(PF.sort==='new'){const now=Date.now();const bk=x=>{const t=atOf(x.it);return !t?2:t>=now-7*DAY?0:t>=now-30*DAY?1:2};const B=['השבוע','החודש','קודם'];const bc=[0,0,0];l.forEach(x=>bc[bk(x)]++);let cur=-1,open=false;
+  show.forEach(x=>{const b=bk(x);if(b!==cur){if(open)body+='</div>';cur=b;body+=`<h3 class="v170gh"><span>${B[b]}</span><i>${bc[b]}</i></h3><div class="v144grid v170grid">`;open=true}body+=ptile(x.it,um,S)});if(open)body+='</div>'}
+ else body=`<div class="v144grid v170grid">${show.map(x=>ptile(x.it,um,S)).join('')}</div>`;
+ if(!l.length)body=`<div class="v170empty"><b>${PF.q?'לא נמצאו תמונות':'אין כאן תמונות'}</b><span>${PF.v==='new'?`לא נוספו תמונות ב-${NEWD} הימים האחרונים.`:'נסו תצוגה אחרת או פרויקט אחר.'}</span>${PF.v!=='all'||PF.proj||PF.q?'<button type="button" class="v170btn" data-v170p="reset">לכל התמונות</button>':''}</div>`;
+ const brk=(()=>{try{return document.querySelectorAll('.v170t.v170bad').length}catch(e){return 0}})();
+ const miss=(()=>{try{return __v144.missing(inv).filter(c=>c.l).length}catch(e){return 0}})();const hid=(()=>{try{return __v148.HID.size}catch(e){return 0}})();
+ return `<div class="v170p${S.selMode?' v148selon':''}">
+ <div class="v170bar v170pbar"><label class="v170q">${IC.search}<input type="search" data-v170pq value="${H(PF.q)}" placeholder="חיפוש תמונה: שם, פרויקט, סוג" aria-label="חיפוש תמונות" autocomplete="off"></label>
+  <label class="v170sel"><span class="v170sr">פרויקט</span><select data-v170pp aria-label="פרויקט"><option value="">כל הפרויקטים</option>${projs.map(k=>`<option value="${k}"${PF.proj===k?' selected':''}>${H(projLabel(k))} (${pc[k]})</option>`).join('')}${pc.none?`<option value="none"${PF.proj==='none'?' selected':''}>בלי פרויקט (${pc.none})</option>`:''}</select></label>
+  <label class="v170sel"><span class="v170sr">מיון</span><select data-v170ps aria-label="מיון">${PSORT.map(([k,t2])=>`<option value="${k}"${PF.sort===k?' selected':''}>${t2}</option>`).join('')}</select></label>
+  <label class="v170fbtn v170upl" title="העלאת תמונות, אפשר הרבה בבת אחת">${IC.up}<span>העלאה</span><input type="file" accept="image/*" multiple data-v144up hidden></label></div>
+ <div class="v170qv" role="tablist" aria-label="תצוגות מהירות">${PV.map(([k,t2])=>`<button type="button" role="tab" data-v170p="v" data-k="${k}" aria-selected="${PF.v===k}">${t2}<i>${cnt[k]}</i></button>`).join('')}</div>
+ <div class="v170res"><b class="v170cnt" aria-live="polite">${l.length} תמונות</b>${PF.v==='new'?`<span class="v170hint">נוספו ב-${NEWD} הימים האחרונים</span>`:''}<button type="button" class="v170link" data-v144="selmode" aria-pressed="${S.selMode}">${S.selMode?'סיום בחירה':'בחירת כמה תמונות'}</button><span class="v170sp"></span>${miss?`<button type="button" class="v170link" data-v144="src" data-k="missing">${miss} באתר ועוד לא כאן</button>`:''}${brk?`<button type="button" class="v170link" data-v144="src" data-k="broken">${brk} לא נטענות</button>`:''}<button type="button" class="v170link" data-v144="src" data-k="hidden">הוסרו (${hid})</button></div>
+ ${S.busy?`<div class="v144busy" role="status">${H(S.busy)}</div>`:''}
+ ${body}
+ ${l.length>LIM?`<div class="ga-more"><button type="button" class="px-btn" data-v170p="more">הצג עוד ${Math.min(120,l.length-LIM)} מתוך ${l.length-LIM}</button></div>`:''}</div>${keep||''}`}
+function psheet(S){if(!S.lb)return '';const inv=__v144.inventory();const it=inv.find(i=>i.k===S.lb);if(!it)return '';const ids=(useMap().get(it.k)||[]);const n=ids.length;const nw=isNewP(it);
+ const projs=Object.entries(PJ());const posts=ids.map(id=>AG.posts.find(p=>p.id===id)).filter(Boolean);const lim=24;
+ const added=it.at?String(it.at).slice(0,10).split('-').reverse().join('.'):'';
+ return `<div class="v170ps" id="v170ps"><div class="v170sh-back" data-v170p="close"></div><div class="v170sh v170psh" role="dialog" aria-modal="true" aria-labelledby="v170pst">
+ <header><h2 id="v170pst" tabindex="-1">${H(it.name)}</h2><button type="button" class="v170x" data-v144="close" aria-label="סגירה">${IC.x}</button></header>
+ <div class="v170shb"><div class="v170pbig"><img src="${H(it.url)}" alt="${H(it.name)}">${nw?'<em class="v170new">חדש</em>':''}</div>
+  <p class="v170pinfo">${H(kindLabel(it))}${it.proj?' · '+H(projLabel(it.proj)):''}${added?` · נוספה ${added}`:''}${it.w?` · ${it.w}×${it.h}${Math.max(it.w,it.h)<900?' <b class="v144low">רזולוציה נמוכה לפוסט</b>':''}`:''}</p>
+  <section><h3>${n?`בשימוש ב-${n} פוסטים`:'עוד לא בשום פוסט'}</h3>${n?`<div class="v170posts">${posts.slice(0,lim).map(p=>`<button type="button" class="v170pp" data-pe="${H(p.id)}" aria-label="${H('עריכת הפוסט: '+headOf(p).slice(0,60))}"><canvas data-tp="${H(p.id)}" width="108" height="135"></canvas></button>`).join('')}${posts.length>lim?`<span class="v170more">ועוד ${posts.length-lim}</span>`:''}</div><p class="v170hint">לחיצה על פוסט פותחת אותו בעורך.</p>`:'<p class="v170hint">אפשר לסמן אותה במצב "בחירה" וליצור ממנה פוסטים עם הסוכן.</p>'}</section>
+  ${it.u?`<section><h3>פרטים</h3><label class="v170f"><span>שם</span><input type="text" data-v144="name" data-id="${H(it.id)}" value="${H(it.name)}" maxlength="60"></label><label class="v170f"><span>פרויקט</span><select data-v144="proj" data-id="${H(it.id)}"><option value="">בלי פרויקט</option>${projs.map(([k,v])=>`<option value="${k}"${it.proj===k?' selected':''}>${H(v)}</option>`).join('')}</select></label></section>`:'<p class="v170hint">תמונה מובנית במערכת. אפשר להסיר אותה מהגלריה ולהחזיר בכל רגע.</p>'}
+  ${n?`<p class="v170hint">אחרי הסרה, הפוסטים שכבר משתמשים בה ממשיכים להציג אותה.</p>`:''}
+ </div>
+ <footer><a class="v170btn ghost" href="${H(it.url)}" target="_blank" rel="noopener">פתיחה בגודל מלא</a>${it.u&&!n?`<button type="button" class="v170btn ghost v170danger" data-v144="del" data-id="${H(it.id)}">מחיקה לצמיתות</button>`:''}<button type="button" class="v170btn v170danger" data-v144="hide1" data-k="${H(it.k)}">הסרה מהגלריה</button></footer></div></div>`}
+const SPECIAL=['missing','hidden','broken'];
+function photosPaint(){const S=window.__v144&&__v144.S;const box=document.getElementById('appviews');if(!S||!box)return;
+ if(S.src==='up'&&S.group==='new'){PF.v='up';PF.sort='new';S.group='proj';saveP()}else if(S.src==='unused'){PF.v='unused';saveP()}
+ if(SPECIAL.includes(S.src)){box.classList.add('v170legacy');if(!box.querySelector('.v170back'))box.insertAdjacentHTML('afterbegin',`<div class="v170res"><button type="button" class="v170btn" data-v144="src" data-k="all">חזרה לכל התמונות</button></div>`);return}
+ if(S.src!=='all'){S.src='all';try{localStorage.setItem('v144_f',JSON.stringify({src:'all',group:S.group}))}catch(e){}}
+ box.classList.remove('v170legacy');const bar=box.querySelector('.v148bar');const keep=bar?bar.outerHTML:'';
+ const am=document.getElementById('appmain');const sc=am?am.scrollTop:0;box.innerHTML=vPhotos170(S,keep)+psheet(S);if(am&&am.scrollTop!==sc)am.scrollTop=sc;
+ const sh=document.getElementById('v170ps');document.body.classList.toggle('v170sh-on',!!sh);if(sh){try{paint(sh)}catch(e){}const x=sh.querySelector('#v170pst');if(x&&!sh.contains(document.activeElement))x.focus({preventScroll:true})}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v170p]');if(!b||APP.view!=='photos')return;const a=b.dataset.v170p;const S=__v144.S;
+ if(a==='v'){PF.v=b.dataset.k;if(PF.v==='new')PF.sort='new';S._lim=120;saveP();render()}
+ else if(a==='more'){S._lim=(S._lim||120)+120;render()}
+ else if(a==='reset'){Object.assign(PF,{v:'all',proj:'',q:''});saveP();render()}
+ else if(a==='close'){S.lb=null;render()}});
+document.addEventListener('change',e=>{const t=e.target;if(!t.matches||APP.view!=='photos')return;
+ if(t.matches('[data-v170pp]')){PF.proj=t.value;saveP();render()}else if(t.matches('[data-v170ps]')){PF.sort=t.value;saveP();render()}},true);
+let pqt=0;document.addEventListener('input',e=>{const t=e.target;if(!t.matches||!t.matches('[data-v170pq]'))return;clearTimeout(pqt);pqt=setTimeout(()=>{PF.q=t.value.trim();saveP();const pos=t.selectionStart;render();const n=document.querySelector('[data-v170pq]');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},220)},true);
+document.addEventListener('error',ev=>{const t=ev.target;if(!t||t.tagName!=='IMG'||!t.dataset||!t.dataset.v148k)return;const tl=t.closest('.v170t');if(tl)tl.classList.add('v170bad')},true);
+// keyboard: Tab stays inside the photo sheet
+window.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const r=document.querySelector('#v170ps .v170sh');if(!r)return;const f=[...r.querySelectorAll('button,input,select,a[href]')].filter(x=>!x.disabled&&x.offsetParent);if(!f.length)return;const first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}},true);
+
+// ============ 4. after every render ============
+render=(f=>function(){const r=f.apply(this,arguments);try{const v=APP.view;document.body.classList.toggle('v170g',v==='gallery');document.body.classList.toggle('v170ph',v==='photos');
+  if(v!=='gallery'&&PS.open){PS.open=false;sheetPaint()}
+  if(v!=='photos')document.body.classList.toggle('v170sh-on',!!document.getElementById('v170sheet'));
+  if(v==='gallery'){note();const top=hdrBottom();document.querySelectorAll('.v170bar').forEach(b=>b.style.setProperty('--v170top',top+'px'));if(PS.open)sheetPaint()}
+  if(v==='photos'){photosPaint();const top=hdrBottom();document.querySelectorAll('.v170bar').forEach(b=>b.style.setProperty('--v170top',top+'px'))}
+  patchBottom();advDot()}catch(e){console.error('v170',e)}return r})(render);
+setInterval(()=>{try{if(APP.view==='gallery')note()}catch(e){}},5000);
+window.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.v170 [data-ga="more"]');if(!b||APP.view!=='gallery'||!BASE)return;e.preventDefault();e.stopImmediatePropagation();GA.lim+=60;fastPaint()},true);
+// Escape closes the topmost layer: the schedule sheet opened from the big viewer closes before the viewer under it
+window.addEventListener('keydown',e=>{if(e.key!=='Escape'||!document.getElementById('v157')||typeof GA==='undefined'||!GA.lb)return;const lb=GA.lb;GA.lb=null;setTimeout(()=>{if(!GA.lb&&document.getElementById('ga-lb'))GA.lb=lb},0)},true);
+window.__v170={F,PF,famOf,metaP,regroup,photosPaint};
+try{if(document.getElementById('sidenav'))renderNav()}catch(e){}
+})();
+
+// ================= V171 · save, undo and download always within reach in the editor (a labelled bar on phones, labelled
+//                   buttons on desktop, native share sheet for saving the image on phones), and undo for every action on the
+//                   main pages: deleting, adding, editing posts, scheduling, moving and removing from the schedule =================
+(function(){
+if(window.__v171)return;window.__v171=1;
+const PH=()=>matchMedia('(max-width:860px)').matches;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ICO={undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',redo:'<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
+ save:'<path d="M5 3h11l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v5h7V3"/><path d="M8 21v-7h8v7"/>',dl:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>'};
+const svg=k=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg>`;
+
+/* ---------------- 1. the editor: one bar with the four actions ---------------- */
+function edState(){try{return{open:typeof PE!=='undefined'&&!!PE.p&&!!document.getElementById('pe-root')&&document.body.classList.contains('pe-open'),u:PE.hist.length>0,r:PE.fut.length>0,d:!!(typeof peDirty==='function'&&peDirty())}}catch(e){return{open:false}}}
+function bar(){let b=document.getElementById('v171bar');const root=document.getElementById('pe-root');if(!root)return null;
+ if(!b||b.parentNode!==root){b=document.createElement('div');b.id='v171bar';b.setAttribute('role','toolbar');b.setAttribute('aria-label','פעולות עריכה');
+  b.innerHTML=`<button type="button" data-v171="undo">${svg('undo')}<span>ביטול</span></button><button type="button" data-v171="redo">${svg('redo')}<span>חזרה</span></button><button type="button" data-v171="dl">${svg('dl')}<span>הורדה</span></button><button type="button" data-v171="save" class="pri">${svg('save')}<span>שמירה</span></button>`;
+  root.appendChild(b)}return b}
+function sync(){const s=edState();if(!s.open)return;const b=bar();if(!b)return;
+ const set=(k,on)=>{const x=b.querySelector(`[data-v171="${k}"]`);if(x){x.disabled=!on;x.setAttribute('aria-disabled',String(!on))}};
+ set('undo',s.u);set('redo',s.r);set('dl',true);
+ const sv=b.querySelector('[data-v171="save"]');if(sv){sv.disabled=!s.d;sv.classList.toggle('dirty',s.d);sv.querySelector('span').textContent=s.d?'שמירה':'נשמר'}
+ // desktop: the icon buttons get words, so nobody has to guess
+ document.querySelectorAll('#pe-root .pe-acts [data-pe-a="undo"],#pe-root .pe-acts [data-pe-a="redo"]').forEach(x=>{if(!x.querySelector('.v171l')){const sp=document.createElement('span');sp.className='v171l';sp.textContent=x.dataset.peA==='undo'?'ביטול':'חזרה';x.appendChild(sp)}})}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#v171bar [data-v171]');if(!b||b.disabled)return;e.preventDefault();e.stopPropagation();
+ const a=b.dataset.v171;const t=document.querySelector(`#pe-root .pe-acts [data-pe-a="${a}"]`)||document.querySelector(`#pe-root [data-pe-a="${a}"]`);
+ if(a==='save'){try{const ae=document.activeElement;if(ae&&ae.blur)ae.blur()}catch(x){}try{peSave()}catch(x){if(t)t.click()}setTimeout(sync,60);return}
+ if(t){t.disabled=false;t.click()}setTimeout(sync,60)},true);
+['peRender','peSoft','peTopDirty','peSave','peOpen'].forEach(n=>{try{const f=window[n];if(typeof f!=='function')return;const w=function(){const r=f.apply(this,arguments);setTimeout(sync,0);return r};window[n]=w;try{eval(n+'=w')}catch(e){}}catch(e){}});
+setInterval(sync,500);
+
+/* saving the image on a phone: the share sheet (Save Image on iPhone, Save to device on Android), else the old way */
+try{if(typeof saveCanvas==='function'){const sc0=saveCanvas;saveCanvas=async function(cv,name){
+ try{if(PH()&&navigator.canShare){const blob=await new Promise(r=>cv.toBlob(r,'image/png'));const f=new File([blob],name||'kurkoos.png',{type:'image/png'});
+  if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'קבוצת קורקוס'});toast('התמונה מוכנה לשמירה');return}catch(e){if(e&&e.name==='AbortError')return}}}}catch(e){}
+ return sc0.apply(this,arguments)}}}catch(e){}
+
+/* ---------------- 2. undo on the main pages ---------------- */
+const U={stack:[],max:40,replay:false,posts:null,sched:null,act:0};
+// only what the person did is offered for undo: a change that arrives from the cloud sync with no tap or key just before it is taken as the new base
+['pointerdown','keydown'].forEach(t=>document.addEventListener(t,()=>{U.act=Date.now()},true));
+const byUser=()=>Date.now()-U.act<2500;
+const strip=p=>{try{const {editing,_t,...r}=p;return JSON.stringify(r)}catch(e){return ''}};
+function snapPosts(){const m=new Map();(AG.posts||[]).forEach((p,i)=>{if(p&&p.id)m.set(p.id,{s:strip(p),i,ref:p})});return m}
+function snapSched(){const m=new Map();((APP.sched&&APP.sched.items)||[]).forEach(it=>{if(it&&it.id)m.set(it.id,JSON.stringify(it))});return m}
+function push(entry){const last=U.stack[U.stack.length-1];entry.parts.forEach(x=>x.k=entry.kind);
+ const inGroup=U.grp&&last&&last.t>=U.grp;
+ if(last&&(inGroup||(entry.kind===last.kind&&Date.now()-last.t<900))){last.parts=last.parts.concat(entry.parts);last.t=Date.now();if(entry.kind===last.kind||entry.kind==='posts'){last.label=entry.label;last.kind=entry.kind}}
+ else{entry.t=Date.now();U.stack.push(entry);if(U.stack.length>U.max)U.stack.shift()}
+ chip();snack(U.stack[U.stack.length-1])}
+function postLabel(rem,add,chg){if(rem)return rem>1?`נמחקו ${rem} פוסטים`:'הפוסט נמחק';if(add)return add>1?`נוספו ${add} פוסטים`:'נוסף פוסט';return chg>1?`${chg} פוסטים עודכנו`:'הפוסט עודכן'}
+function recordPosts(){if(U.replay||!AG||!AG.posts)return;const now=snapPosts();const old=U.posts;U.posts=now;if(!old||!byUser())return;
+ const rem=[],add=[],chg=[];
+ old.forEach((v,id)=>{const n=now.get(id);if(!n)rem.push({id,s:v.s,i:v.i});else if(n.s!==v.s)chg.push({id,s:v.s})});
+ now.forEach((v,id)=>{if(!old.has(id))add.push(id)});
+ if(!rem.length&&!add.length&&!chg.length)return;
+ if(chg.length&&!rem.length&&!add.length&&chg.every(c=>{const a=JSON.parse(c.s),b=now.get(c.id);if(!b)return false;const B=JSON.parse(b.s);delete a.upd;delete B.upd;delete a.born;delete B.born;return JSON.stringify(a)===JSON.stringify(B)}))return;
+ push({kind:'posts',label:postLabel(rem.length,add.length,chg.length),parts:[{rem,add,chg}]})}
+function recordSched(label){if(U.replay||!APP||!APP.sched)return;const now=snapSched();const old=U.sched;U.sched=now;if(!old||!byUser())return;
+ const gone=[],added=[],chg=[];old.forEach((s,id)=>{const n=now.get(id);if(!n)gone.push({id,s});else if(n!==s){const a=JSON.parse(s),b=JSON.parse(n);delete a.upd;delete b.upd;if(JSON.stringify(a)!==JSON.stringify(b))chg.push({id,s})}});now.forEach((s,id)=>{if(!old.has(id))added.push(id)});
+ if(!gone.length&&!added.length&&!chg.length)return;
+ const lb=label||(gone.length?'הוסר מהתור':added.length?'נוסף ללוח':chg.some(c=>JSON.parse(c.s).at!==((APP.sched.items.find(i=>i.id===c.id)||{}).at))?'המועד שונה':'התזמון עודכן');
+ push({kind:'sched',label:lb,parts:[{gone,added,chg}]})}
+try{saveAgent=(f=>function(){const r=f.apply(this,arguments);try{recordPosts()}catch(e){}return r})(saveAgent)}catch(e){}
+try{saveSched=(f=>function(){const r=f.apply(this,arguments);try{recordSched()}catch(e){}return r})(saveSched)}catch(e){}
+try{removeItem=(f=>function(){const r=f.apply(this,arguments);try{recordSched('הוסר מהתור')}catch(e){}return r})(removeItem)}catch(e){}
+
+function refreshViews(){try{if(typeof TC!=='undefined'&&TC.clear)TC.clear()}catch(e){}try{if(typeof GA!=='undefined'&&GA.lb)gaLbRender()}catch(e){}try{render()}catch(e){}}
+function undo(){const e=U.stack.pop();if(!e){toast('אין פעולה לבטל');chip();return}U.replay=true;
+ try{for(const part of e.parts.slice().reverse()){
+  const k=part.k||e.kind;
+  if(k==='ls'){try{lsSet(part.key,part.v)}catch(x){}}
+  else if(k==='posts'){
+   part.add.forEach(id=>{const i=AG.posts.findIndex(p=>p.id===id);if(i>=0)AG.posts.splice(i,1)});
+   part.chg.forEach(c=>{const p=AG.posts.find(x=>x.id===c.id);if(!p)return;const o=JSON.parse(c.s);Object.keys(p).forEach(k=>{if(!(k in o)&&k!=='editing'&&k!=='_t')delete p[k]});Object.assign(p,o);p.upd=new Date().toISOString()});
+   part.rem.slice().sort((a,b)=>a.i-b.i).forEach(r=>{if(AG.posts.some(p=>p.id===r.id))return;const o=JSON.parse(r.s);o.upd=new Date().toISOString();AG.posts.splice(Math.min(r.i,AG.posts.length),0,o)});
+   try{saveAgent()}catch(x){}
+  }else if(k==='sched'){
+   part.added.forEach(id=>{const it=APP.sched.items.find(i=>i.id===id);if(it)try{removeItem(it)}catch(x){}});
+   part.chg.forEach(c=>{const it=APP.sched.items.find(i=>i.id===c.id);if(!it)return;const o=JSON.parse(c.s);Object.keys(it).forEach(k=>{if(!(k in o))delete it[k]});Object.assign(it,o);try{saveSched(it)}catch(x){}});
+   part.gone.forEach(g=>{if(APP.sched.items.some(i=>i.id===g.id))return;const it=JSON.parse(g.s);delete it.removed;APP.sched.items.push(it);APP.sched.removed=(APP.sched.removed||[]).filter(x=>x!==it.id);try{saveSched(it)}catch(x){}});
+  }}}
+ finally{U.posts=snapPosts();U.sched=snapSched();U.replay=false}
+ refreshViews();chip();toast('בוטל: '+e.label)}
+// one person action that touches posts, the schedule and hidden photos together (deleting a post) is one undo step
+function group(fn,args,self){try{U.posts=snapPosts();U.sched=snapSched()}catch(x){}U.grp=Date.now()-1;const g0=JSON.stringify(lsGet('v37_gone',[])||[]);let r;
+ try{r=fn.apply(self,args)}finally{try{recordSched()}catch(x){}
+  try{const g1=JSON.stringify(lsGet('v37_gone',[])||[]);if(g1!==g0&&byUser()&&U.stack.length&&U.stack[U.stack.length-1].t>=U.grp)U.stack[U.stack.length-1].parts.push({k:'ls',key:'v37_gone',v:JSON.parse(g0)})}catch(x){}
+  U.grp=0}return r}
+try{if(typeof v36Delete==='function'){const f=v36Delete;window.v36Delete=function(){return group(f,arguments,this)};try{v36Delete=window.v36Delete}catch(x){}}}catch(e){}
+window.__v171={undo,stack:U.stack,group};
+
+/* the snackbar after every action, and a lasting undo button in the header */
+function snack(e){if(!e)return;let s=document.getElementById('v171snack');if(!s){s=document.createElement('div');s.id='v171snack';s.setAttribute('role','status');s.setAttribute('aria-live','polite');document.body.appendChild(s)}
+ if(edState().open){s.classList.remove('show');return}
+ s.innerHTML=`<span>${esc(e.label)}</span><button type="button" data-v171u="1">${svg('undo')}ביטול</button>`;s.classList.add('show');clearTimeout(s._h);s._h=setTimeout(()=>s.classList.remove('show'),6500)}
+function chip(){const top=document.querySelector('.topbar,.app-top,#apptop,header.top')||null;let c=document.getElementById('v171chip');
+ if(!c){c=document.createElement('button');c.type='button';c.id='v171chip';c.dataset.v171u='1';c.innerHTML=svg('undo')+'<span>ביטול</span>';document.body.appendChild(c)}
+ const last=U.stack[U.stack.length-1];c.hidden=!last;if(last){c.title='ביטול: '+last.label;c.setAttribute('aria-label','ביטול: '+last.label)}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v171u]');if(!b)return;e.preventDefault();e.stopPropagation();const s=document.getElementById('v171snack');if(s)s.classList.remove('show');undo()},true);
+document.addEventListener('keydown',e=>{if(edState().open)return;const k=(e.key||'').toLowerCase();if(!(e.metaKey||e.ctrlKey)||e.shiftKey||e.altKey||k!=='z')return;
+ const t=e.target;if(t&&(t.isContentEditable||/INPUT|TEXTAREA|SELECT/.test(t.tagName)))return;e.preventDefault();e.stopImmediatePropagation();window.__v36undo=null;undo()},true);
+
+function init(){try{U.posts=snapPosts();U.sched=snapSched();chip()}catch(e){setTimeout(init,1500)}}
+setTimeout(init,2500);
+// after the cloud loads posts or the schedule, take a fresh base so loading is never offered as "undo"
+try{if(typeof appInit==='function')appInit=(f=>async function(){const r=await f.apply(this,arguments);setTimeout(()=>{U.posts=snapPosts();U.sched=snapSched()},400);return r})(appInit)}catch(e){}
+})();
+
+// ================= V172 · phones: the header buttons fold into one "פעולות" sheet; a long press (or right click) on a post opens its quick actions
+(()=>{
+if(window.__v172)return;window.__v172=1;
+const mq=matchMedia('(max-width:860px)');
+const I=n=>{try{return ico(n,18)}catch(e){return ''}};
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* one bottom sheet used by both features */
+let back=null;
+function close(){const w=document.getElementById('v172sheet');if(!w)return;w.remove();document.querySelectorAll('.v172press').forEach(c=>c.classList.remove('v172press'));if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null}
+function sheet(title,sub,items){close();back=document.activeElement;
+ const w=document.createElement('div');w.id='v172sheet';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label',title);
+ w.innerHTML=`<div class="v172bg" data-v172x="1"></div><div class="v172pan"><div class="v172grip" aria-hidden="true"></div><div class="v172h"><div><b>${E(title)}</b>${sub?`<span>${E(sub)}</span>`:''}</div><button type="button" class="v172x" data-v172x="1" aria-label="סגירת התפריט">${I('x')}</button></div><div class="v172l"></div></div>`;
+ const l=w.querySelector('.v172l');
+ items.forEach(it=>{const b=document.createElement('button');b.type='button';b.className='v172i'+(it.danger?' danger':'');b.disabled=!!it.disabled;
+  b.innerHTML=`<span class="v172ic" aria-hidden="true">${it.icon||''}</span><span class="v172t">${E(it.label)}</span>`;
+  b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
+   if(it.confirm&&b.dataset.ok!=='1'){b.dataset.ok='1';b.classList.add('arm');b.querySelector('.v172t').textContent=it.confirm;return}
+   close();setTimeout(()=>{try{it.run()}catch(x){console.error('v172',x)}},0)});
+  l.appendChild(b)});
+ document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add('in'));
+ setTimeout(()=>{const f=l.querySelector('button:not(:disabled)');f&&f.focus({preventScroll:true})},60)}
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-v172x]')){e.preventDefault();e.stopPropagation();close()}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('v172sheet')){e.preventDefault();e.stopImmediatePropagation();close()}},true);
+
+/* 1 · the header row of buttons (בחר הכל, גיוון תמונות, ייבוא...) pushed the posts down on a phone: it folds into one button */
+function actItems(act){return [...act.children].filter(b=>b.tagName==='BUTTON').map(b=>{const s=b.querySelector('svg');const label=(b.textContent||b.getAttribute('aria-label')||'').replace(/\s+/g,' ').trim();
+ return {icon:s?s.outerHTML:'',label,disabled:b.disabled,run:()=>b.click()}}).filter(x=>x.label)}
+function openActs(){const act=document.getElementById('vact');if(!act)return;const t=(document.getElementById('vt')||{}).textContent||'';sheet('פעולות',t,actItems(act))}
+function sync(){const act=document.getElementById('vact');if(!act)return;const bar=act.closest('.tbar');if(!bar)return;
+ const kids=[...act.children];const fold=mq.matches&&kids.length>1&&kids.every(b=>b.tagName==='BUTTON');
+ bar.classList.toggle('v172fold',fold);
+ let btn=document.getElementById('v172act');
+ if(!btn){btn=document.createElement('button');btn.type='button';btn.id='v172act';btn.className='ibtn';btn.setAttribute('aria-haspopup','dialog');btn.setAttribute('aria-label','פעולות');btn.title='פעולות';btn.innerHTML=`${I('sliders')}<span>פעולות</span>`;btn.addEventListener('click',e=>{e.preventDefault();openActs()})}
+ if(btn.parentElement!==bar){const nw=bar.querySelector('[data-app="new"]');nw?bar.insertBefore(btn,nw):bar.appendChild(btn)}
+ btn.hidden=!fold;
+ if(act.__v172!==1){act.__v172=1;new MutationObserver(()=>sync()).observe(act,{childList:true})}}
+/* the search and filter bar of posts and photos sticks to the top of the scrolling area; on phones that area is the page body, not the window, so its offset is 0 */
+function inner(){const m=document.getElementById('appmain');if(!m)return;const o=getComputedStyle(m).overflowY;const on=(o==='auto'||o==='scroll')&&m.scrollHeight>m.clientHeight+1;document.body.classList.toggle('v172inner',on);if(on)document.body.style.setProperty('--v172pt',(parseFloat(getComputedStyle(m).paddingTop)||0)+'px')}
+try{render=(f=>function(){const r=f.apply(this,arguments);try{sync();inner()}catch(e){}return r})(render)}catch(e){}
+addEventListener('resize',()=>{try{inner()}catch(e){}},{passive:true});
+try{mq.addEventListener('change',sync)}catch(e){}
+setTimeout(()=>{sync();inner()},0);
+
+/* 2 · long press on a post card: edit, schedule, download, select, fix, delete (delete can be undone from the snackbar) */
+function dl(p){const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;drawSlide(cv,p,0);saveCanvas(cv,(p.key||p.id)+'.png')}
+function openPost(card){const id=card.dataset.gaid;const p=(AG.posts||[]).find(x=>x.id===id);if(!p)return;
+ const it=((APP.sched&&APP.sched.items)||[]).find(i=>i.pid===id&&!i.removed);
+ const head=(typeof pxHead==='function'?pxHead(p):'').replace(/\s+/g,' ').slice(0,60);
+ const sub=it?'מתוזמן ל '+(typeof fmtDate==='function'?fmtDate(it.at):it.at):(p.series||'');
+ const q=s=>card.querySelector(s);const sel=(typeof GA!=='undefined'&&GA.sel&&GA.sel.has(id));
+ card.classList.add('v172press');
+ sheet(head||'פוסט',sub,[
+  {icon:I('edit'),label:'עריכה',run:()=>peOpen(p)},
+  {icon:I('clock'),label:it?'שינוי מועד':'תזמון',disabled:!q('[data-ga="sched1"]'),run:()=>{const b=q('[data-ga="sched1"]');b&&b.click()}},
+  {icon:I('dl'),label:'הורדת התמונה',run:()=>dl(p)},
+  {icon:I('check'),label:sel?'הסרה מהבחירה':'בחירה',disabled:!q('[data-ga="sel"]'),run:()=>{const b=q('[data-ga="sel"]');b&&b.click()}},
+  ...(typeof v36Sheet==='function'?[{icon:I('wand'),label:'תיקון וגרסאות חדשות',run:()=>v36Sheet([id])}]:[]),
+  ...(typeof v36Delete==='function'?[{icon:I('trash'),label:'מחיקת הפוסט',danger:true,confirm:'לחצו שוב כדי למחוק',run:()=>v36Delete([id])}]:[])
+ ])}
+let lp=null,eat=0;
+const CARD='.ga-card[data-gaid]';
+document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||e.button>0)return;const c=e.target.closest&&e.target.closest(CARD);if(!c||e.target.closest('.ga-acts,.ga-chk'))return;
+ if(lp)clearTimeout(lp.t);lp={c,x:e.clientX,y:e.clientY,t:setTimeout(()=>{lp&&(lp.fired=1);eat=Date.now()+700;try{navigator.vibrate&&navigator.vibrate(10)}catch(x){}openPost(c)},480)}},{passive:true,capture:true});
+document.addEventListener('pointermove',e=>{if(lp&&!lp.fired&&Math.hypot(e.clientX-lp.x,e.clientY-lp.y)>10){clearTimeout(lp.t);lp=null}},{passive:true,capture:true});
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>{if(lp){clearTimeout(lp.t);if(lp.fired)eat=Date.now()+500;lp=null}},{passive:true,capture:true}));
+// the lift that ends a long press must not also open the lightbox, or land on the sheet that just opened under the finger
+document.addEventListener('click',e=>{if(Date.now()<eat){e.preventDefault();e.stopPropagation();eat=0}},true);
+document.addEventListener('contextmenu',e=>{const c=e.target.closest&&e.target.closest(CARD);if(!c)return;e.preventDefault();if(document.getElementById('v172sheet'))return;if(lp){clearTimeout(lp.t);lp=null;eat=Date.now()+700}openPost(c)},true);
+
+window.__v172={sync,openActs,openPost,close};
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

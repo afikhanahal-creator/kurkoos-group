@@ -1,5 +1,6 @@
 export default {
   slug: 'masa-umatan-lo-mathil-bapgisha',
+  focusKeyword: "משא ומתן בעסקת נדל\"ן",
   title: 'המשא ומתן לא מתחיל בפגישה',
   date: '2026-06-15',
   author: 'המערכת · ליווי יזמי נדל"ן',

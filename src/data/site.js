@@ -29,12 +29,14 @@ export const site = {
     hours: { he: "א'–ה' 9:00-18:00", en: 'Sun–Thu 9:00-18:00' },
   },
 
-  /* עמודי הרשתות של אפיק הנחל, זרוע התיווך והשיווק של הקבוצה.
+  /* עמודי הרשתות: פייסבוק ואינסטגרם של אפיק הנחל (זרוע התיווך והשיווק), וטיקטוק ויוטיוב של קבוצת קורקוס.
      מחוברים גם ב-sameAs בסכמה שב-index.html, כדי שגוגל יקשר בין
      האתר לפרופילים ויזהה אותם כאותה ישות. */
   social: [
     { name: 'אפיק הנחל בפייסבוק', url: 'https://www.facebook.com/profile.php?id=61573376818745', icon: 'facebook' },
     { name: 'אפיק הנחל באינסטגרם', url: 'https://www.instagram.com/afik.hanahal/', icon: 'instagram' },
+    { name: 'קבוצת קורקוס בטיקטוק', url: 'https://www.tiktok.com/@kurkoos_group', icon: 'tiktok' },
+    { name: 'קבוצת קורקוס ביוטיוב', url: 'https://www.youtube.com/channel/UCz9rcqOLpEcei551pYby7qg', icon: 'youtube' },
   ],
 
   /* ניווט ראשי — מבוסס תחומים (דיוויזיות), במבנה של תדהר.

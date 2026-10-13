@@ -238,8 +238,10 @@
 
   // ---------- assets: קבצים בתיקייה engine-media
   const assets = {
-    upload: async (blob) => {
-      const id = rid(); const type = blob.type || 'application/octet-stream'
+    upload: async (blob, opts) => {
+      // opts.ext gives the file a real extension (Instagram fetches the published image by its URL)
+      const ext = opts && /^[a-z0-9]{2,5}$/.test(String(opts.ext || '')) ? '.' + opts.ext : ''
+      const id = rid() + ext; const type = blob.type || 'application/octet-stream'
       await call('/storage/v1/object/engine-media/blob/' + id, { method: 'POST', headers: { 'Content-Type': type, 'x-upsert': 'true', 'cache-control': '31536000' }, body: blob })
       return { id, url: STORE + 'blob/' + id, sizeBytes: blob.size, contentType: type }
     },

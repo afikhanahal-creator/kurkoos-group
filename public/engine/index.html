@@ -1531,6 +1531,366 @@ body.v172inner .v170bar{top:calc(-1 * var(--v172pt,12px))!important;padding-top:
 .v157ytn{display:block;width:100%;font-size:14px;color:#5b7280;margin-top:6px}
 </style>
 
+<style id="k174">
+/* V174 · posts that are easy to choose: informative cards, status / score / publish date filters, a calm phone header, selection mode */
+/* ---------- cards: headline and one status chip ---------- */
+.v174t{display:grid;gap:7px;padding:10px 2px 0;min-width:0}
+.v174h{font:600 15px/1.35 Almoni,Heebo,sans-serif;color:#07293a;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.v174c{justify-self:start;max-width:100%;box-sizing:border-box;display:inline-block;padding:4px 10px;border-radius:999px;font:700 14px/1.25 Almoni,Heebo,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v174c-sched{background:#07293a;color:#fff}
+.v174c-check{background:#fbecec;color:#a90b0c}
+.v174c-ready{background:rgba(143,182,200,.28);color:#105572}
+.v174c-pub{background:#e9eef2;color:#3d4b58}
+body.v170g .v170 .ga-card .ga-top{display:none!important}
+body.v170g .v170 .v170meta{padding-top:6px;font-size:14px}
+body.v170g .v170 .v170meta .v170tag{font-size:14px;padding:1px 7px}
+/* desktop: תזמן and ערוך on hover or keyboard focus, over the bottom of the image */
+@media (hover:hover){
+ body.v170g .v170 .ga-card .ga-acts{display:flex!important;position:absolute;top:0;left:0;right:0;aspect-ratio:4/5;margin:0!important;padding:12px!important;box-sizing:border-box;align-items:flex-end;justify-content:center;gap:8px;flex-wrap:nowrap;opacity:0;transform:none!important;pointer-events:none;background:linear-gradient(to top,rgba(7,41,58,.62),rgba(7,41,58,0) 42%);border-radius:6px;transition:opacity .2s;z-index:2}
+ body.v170g .v170 .ga-card:hover .ga-acts,body.v170g .v170 .ga-card:focus-within .ga-acts{opacity:1}
+ body.v170g .v170 .ga-card:hover .ga-acts{transform:translateY(-4px)!important}
+ body.v170g .v170 .ga-card .ga-acts>*{pointer-events:auto}
+ body.v170g .v170 .ga-card .ga-acts>:not([data-ga="sched1"]):not([data-pe]){display:none!important}
+ body.v170g .v170 .ga-card .ga-acts .px-btn{min-height:44px;padding:0 16px!important;font:700 15px Almoni,Heebo,sans-serif!important;border-radius:12px;background:#fff!important;color:#07293a!important;border:0!important;box-shadow:0 2px 8px rgba(7,41,58,.25)}
+ body.v170g .v170 .ga-card .ga-acts .px-btn.pri{background:#07293a!important;color:#fff!important}
+ body.v170g .v170 .ga-card .ga-acts .px-btn:focus-visible{outline:3px solid #8fb6c8;outline-offset:2px}
+}
+body.v170g .v170.v174selon .ga-card .ga-acts{display:none!important}
+/* ---------- selection mode: 44px check circles with a clear outline ---------- */
+@media (hover:none){body.v170g .v170:not(.v174selon) .ga-card .ga-chk{display:none!important}}
+body.v170g .v170.v174selon .ga-card .ga-chk{display:grid!important;place-items:center;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;top:8px!important;left:8px!important;right:auto!important;border-radius:50%!important;background:rgba(255,255,255,.96)!important;border:2.5px solid #07293a!important;color:transparent!important;opacity:1!important;box-shadow:0 1px 6px rgba(0,0,0,.28)!important}
+body.v170g .v170.v174selon .ga-card .ga-chk svg{width:22px;height:22px;stroke-width:2.6}
+body.v170g .v170.v174selon .ga-card .ga-chk[aria-pressed="true"]{background:#07293a!important;border-color:#fff!important;color:#fff!important;box-shadow:0 0 0 2px #07293a,0 1px 6px rgba(0,0,0,.28)!important}
+body.v170g .v170.v174selon .ga-card .ga-open{cursor:pointer}
+body.v170g .v170.v174selon .ga-card.sel .ga-open{outline:3px solid #07293a;outline-offset:3px}
+body.v170g .v170.v174selon{padding-bottom:120px}
+/* the old bar stays in the page only as the source of its actions: never seen, never in the way */
+body.v170g .v170 .ga-selbar{display:none!important}
+/* ---------- the selection bar ---------- */
+#v174bar{position:fixed;z-index:2147481500;left:50%;transform:translateX(-50%);bottom:18px;width:min(720px,calc(100vw - 32px));direction:rtl;font-family:Almoni,Heebo,sans-serif;animation:v174up .22s cubic-bezier(.2,.8,.2,1)}
+#v174bar[hidden]{display:none!important}
+#v174bar .v174row{display:flex;align-items:center;gap:8px;height:64px;padding:0 10px;box-sizing:border-box;background:#07293a;color:#fff;border-radius:18px;box-shadow:0 18px 40px -16px rgba(7,41,58,.65),0 2px 6px rgba(7,41,58,.2)}
+#v174bar .v174n{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#v174bar button{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;height:44px;border-radius:12px;font:700 16px Almoni,Heebo,sans-serif;-webkit-tap-highlight-color:transparent;touch-action:manipulation;flex:0 0 auto}
+#v174bar .v174x{color:#fff}
+#v174bar .v174x:hover,#v174bar .v174more:hover{background:rgba(255,255,255,.12)}
+#v174bar .v174pri{padding:0 20px;background:#a90b0c;color:#fff}
+#v174bar .v174pri:hover{background:#8f0a0b}
+#v174bar .v174pri:disabled{background:rgba(255,255,255,.14);color:rgba(255,255,255,.6);cursor:default}
+#v174bar .v174more{background:rgba(255,255,255,.1);color:#fff}
+#v174bar button:focus-visible{outline:3px solid #8fb6c8;outline-offset:2px}
+#v174bar .v174hint{display:flex;align-items:center;gap:4px;margin-top:6px;padding:0 4px 0 12px;min-height:44px;background:#fff;color:#07293a;border:1px solid #dde4ea;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 6px 18px -10px rgba(7,41,58,.45)}
+#v174bar .v174hint[hidden]{display:none}
+#v174bar .v174hint span{flex:1}
+#v174bar .v174hx{color:#55636f}
+@keyframes v174up{from{transform:translate(-50%,24px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+@media (max-width:860px){#v174bar{width:calc(100vw - 24px)}#v174bar .v174pri{padding:0 16px}}
+/* ---------- header: search row, count and sort, one row of pills ---------- */
+.v174qvp{display:none}
+.v174selb.on{background:#07293a!important;border-color:#07293a!important;color:#fff!important}
+.v174cntr{display:flex;align-items:center;gap:8px;margin:12px 0 2px;min-height:44px}
+.v174cntr .v170cnt{margin:0}
+.v170 .v174cntr .v174sort select{height:44px;border-radius:999px;font-size:15px;padding:0 14px 0 32px;max-width:200px}
+.v170 .v174cntr .v170note{margin:0 8px 0 0;flex:0 1 auto;min-width:0;width:auto}
+.v174pills{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 2px 6px;margin:0 0 2px}
+.v174pills::-webkit-scrollbar{display:none}
+.v174pills .v170pill,.v174pills .v170link{flex:0 0 auto;font-size:14px}
+.v174pills .v170pill{min-height:36px}
+.v170 .v174ov{-webkit-mask-image:linear-gradient(to left,transparent 0,#000 var(--v174fs,0px),#000 calc(100% - var(--v174fe,0px)),transparent 100%);mask-image:linear-gradient(to left,transparent 0,#000 var(--v174fs,0px),#000 calc(100% - var(--v174fe,0px)),transparent 100%)}
+.v170 .v170qv button i,.v170 .v170pj button i{font-size:14px}
+/* the notice line: one compact line, cut with an ellipsis, can be closed */
+.v170 .v170note{flex-wrap:nowrap!important;white-space:nowrap;overflow:hidden;max-width:100%;min-height:44px;font-size:14px}
+.v170 .v170note>span:not(.v170nd){overflow:hidden;text-overflow:ellipsis;min-width:0}
+.v170 .v170note .v170nx{width:44px;height:44px;flex:0 0 auto}
+.v170 .v170note .v170link{flex:0 0 auto}
+@media (max-width:700px){
+ .v170 .v170qv,.v170 .v170pj,.v170 .v170note{display:none!important}
+ .v170 .v170bar{gap:6px}
+ .v174qvp{position:relative;display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 12px 0 8px;box-sizing:border-box;border:1px solid #cfd9e0;border-radius:999px;background:#fff;color:#07293a;font:700 15px Almoni,Heebo,sans-serif;flex:0 0 auto;max-width:118px;cursor:pointer}
+ .v174qvp.on{background:#105572;border-color:#105572;color:#fff}
+ .v174qvp:focus-within{outline:3px solid #105572;outline-offset:2px}
+ .v174qvp select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;cursor:pointer;border:0}
+ .v174qvl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .v174qvp svg{flex:0 0 auto}
+ .v170 .v170bar .v170fbtn{width:44px;padding:0;position:relative}
+ .v170 .v170bar .v170fbtn span{display:none}
+ .v170 .v170bar .v170fbtn b{position:absolute;top:-7px;left:-7px;min-width:20px;height:20px;padding:0 5px;font-size:12px;box-shadow:0 0 0 2px #f7f8fa;background:#a90b0c;color:#fff}
+ .v174cntr{margin:6px 0 0}
+ .v170 .v170cnt{font-size:17px}
+ .v170 .v174cntr .v174sort select{max-width:170px}
+ .v170 .ga-grid{padding-top:8px}
+ .v170 .v174pills{margin-top:0}
+}
+/* ---------- filter sheet: folded sections, 14px counts ---------- */
+.v170shb section{padding:2px 0}
+.v170shb details>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:50px;cursor:pointer;border-radius:10px}
+.v170shb details>summary::-webkit-details-marker{display:none}
+.v170shb details>summary:focus-visible{outline:3px solid #105572;outline-offset:2px}
+.v170shb details>summary h3{margin:0!important;flex:1}
+.v170shb details[open]{padding-bottom:14px}
+.v174sn{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#105572;color:#fff;font-size:12px;font-weight:800}
+.v174sc{display:grid;place-items:center;width:28px;height:28px;color:#55636f}
+.v174sc svg{transition:transform .2s}
+.v170shb details[open] .v174sc svg{transform:rotate(180deg)}
+.v170shb .v170chips button i,.v170shb .v170chk i{font-size:14px}
+@media (prefers-reduced-motion:reduce){#v174bar{animation:none}.v174sc svg{transition:none}body.v170g .v170 .ga-card .ga-acts{transition:none}}
+</style>
+
+<style id="k175">
+/* V175 · photos: new since the last visit, dates on tiles, combined filters, one row selection bar; the editor's picker first */
+.v175p .v175ph{display:none}
+.v175f{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 0}
+.v175qvw{position:relative;min-width:0;max-width:100%}
+.v175qvw .v170qv{margin:0}
+.v175qvw.me .v170qv{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 44px);mask-image:linear-gradient(to right,transparent 0,#000 44px)}
+.v175qvw.ms .v170qv{-webkit-mask-image:linear-gradient(to left,transparent 0,#000 44px);mask-image:linear-gradient(to left,transparent 0,#000 44px)}
+.v175qvw.ms.me .v170qv{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 44px,#000 calc(100% - 44px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 44px,#000 calc(100% - 44px),transparent 100%)}
+.v175dr{display:flex;align-items:center;gap:8px;min-width:0}
+.v175seg{display:flex;gap:3px;padding:3px;border-radius:12px;background:#e9eef2;box-sizing:border-box}
+.v175seg button{all:unset;box-sizing:border-box;cursor:pointer;position:relative;flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:0 12px;border-radius:9px;font:600 14.5px Almoni,Heebo,Arial,sans-serif;color:#3d4b58;white-space:nowrap;text-align:center}
+.v175seg button::before{content:"";position:absolute;inset:-3px 0}
+.v175seg button:hover{color:#07293a;background:rgba(255,255,255,.55)}
+.v175seg button[aria-pressed="true"]{background:#fff;color:#07293a;font-weight:800;box-shadow:0 1px 2px rgba(7,41,58,.1),0 2px 8px -2px rgba(7,41,58,.12)}
+.v175seg button:disabled{color:#9aa6b0;cursor:default;background:none}
+.v175seg button i{font-style:normal;font-size:12px;font-weight:700;color:#6b7884;font-variant-numeric:tabular-nums}
+.v175seg button:focus-visible,.v175tg:focus-visible,.v175fb:focus-visible,.v175ib2:focus-within,.v175ib:focus-visible,.v175i:focus-visible,.v175more:focus-visible,.v175lk:focus-visible,.v175x:focus-visible,.v175sbp:focus-visible{outline:3px solid #105572;outline-offset:2px}
+.v175tg{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 12px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:#07293a;font:700 14.5px Almoni,Heebo,Arial,sans-serif;white-space:nowrap}
+.v175tg .v175ck{width:20px;height:20px;border-radius:6px;border:2px solid #9fb4c2;display:grid;place-items:center;box-sizing:border-box;color:#fff}
+.v175tg .v175ck svg{width:14px;height:14px;stroke-width:3}
+.v175tg[aria-pressed="true"]{border-color:#105572;background:#eef5f8}
+.v175tg[aria-pressed="true"] .v175ck{background:#105572;border-color:#105572}
+.v175p .v170res{margin-top:10px}
+.v175p .v170res .v175so{margin-inline-start:4px}
+.v175p .v170res .v175so select{height:40px;font-size:14px;max-width:170px}
+/* tiles: date first, badge on the opposite corner from the selection circle */
+.v175pt .v175d{margin-top:7px;font-size:14px;font-weight:800;color:#07293a;line-height:1.3}
+.v175pt .v175d.z{color:#7a8794;font-weight:600}
+.v175pt .v170pm{margin-top:0;font-size:14px;font-weight:600;color:#3d4b58}
+.v175pt .v170pu{font-size:14px}
+.v175new{position:absolute;top:8px;left:8px;padding:2px 9px;border-radius:999px;background:#a90b0c;color:#fff;font:800 14px/1.35 Almoni,Heebo,Arial,sans-serif;font-style:normal;box-shadow:0 1px 3px rgba(0,0,0,.25);z-index:2}
+.v175p .v170t.v170pick .v148box{left:auto;right:8px;top:8px;z-index:2}
+/* selection bar: one row */
+.v148bar.v175sb{flex-wrap:nowrap;gap:8px;padding:10px 10px 10px 16px;min-height:64px;box-sizing:border-box;max-width:620px}
+.v175sb b{font-size:16px;font-weight:800;white-space:nowrap;margin-inline-end:auto}
+.v175sbp{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:11px;background:#fff;color:#07293a;font:800 15px Almoni,Heebo,Arial,sans-serif;white-space:nowrap}
+.v175sbp:disabled{opacity:.5;cursor:default}
+.v175ib{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;width:44px;height:44px;border-radius:11px;border:1px solid rgba(255,255,255,.35);color:#fff;display:grid;place-items:center}
+.v175ib:hover{background:rgba(255,255,255,.1)}
+/* sheet */
+#v175sh{position:fixed;inset:0;z-index:2147482500;direction:rtl;font-family:Almoni,Heebo,Arial,sans-serif}
+#v175sh .v175bg{position:absolute;inset:0;background:rgba(7,41,58,.42);opacity:0;transition:opacity .18s}
+#v175sh .v175pan{position:absolute;left:50%;top:50%;width:min(420px,calc(100% - 32px));max-height:86vh;overflow:auto;transform:translate(-50%,-46%);opacity:0;transition:transform .2s cubic-bezier(.2,.7,.2,1),opacity .2s;background:#fff;border-radius:16px;box-shadow:0 20px 60px -10px rgba(7,41,58,.4);padding:6px 16px 16px;box-sizing:border-box}
+#v175sh.in .v175bg{opacity:1}
+#v175sh.in .v175pan{opacity:1;transform:translate(-50%,-50%)}
+#v175sh .v175grip{display:none}
+#v175sh .v175h{display:flex;align-items:center;gap:10px;padding:10px 0 8px}
+#v175sh .v175h>div{flex:1;min-width:0;display:grid}
+#v175sh .v175h b{font-size:18px;font-weight:800;color:#07293a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#v175sh .v175h span{font-size:14px;color:#55636f}
+.v175x{all:unset;box-sizing:border-box;cursor:pointer;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#55636f}
+.v175x:hover{background:#f1f4f7;color:#07293a}
+#v175sh .v175l{display:grid;gap:8px}
+.v175i{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:12px;background:#f3f6f8;color:#07293a;font:700 16px Almoni,Heebo,Arial,sans-serif}
+.v175i:hover{background:#e9eff3}
+.v175i:disabled{opacity:.5;cursor:default}
+.v175i .v175ic{display:grid;place-items:center;color:#105572}
+.v175i.danger{color:#a90b0c;background:#fbf1f1}
+.v175i.danger .v175ic{color:#a90b0c}
+.v175i.danger.arm{background:#a90b0c;color:#fff}
+.v175i.danger.arm .v175ic{color:#fff}
+.v175grp{display:grid;gap:6px;padding:4px 0}
+.v175gl{font-size:14px;font-weight:700;color:#3d4b58}
+.v175grp select{height:44px;border:1px solid #cfd9e0;border-radius:10px;padding:0 12px;font:500 15px Almoni,Heebo,Arial,sans-serif;color:#07293a;background:#fff}
+.v175hint{margin:2px 0 0;font-size:14px;color:#55636f;line-height:1.45}
+/* photo sheet footer: the post first */
+.v170psh>footer.v175pf{display:grid;gap:8px;justify-content:stretch}
+.v175pf .v170btn{width:100%}
+.v175pf .v170btn svg{flex:0 0 auto}
+.v175pf2{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.v175pf2 .v170btn{width:auto;padding:0 10px}
+.v175pf2 .v170danger:last-child{margin-inline-start:auto}
+.v175pf2 .v170danger.arm{background:#a90b0c;color:#fff}
+/* ---------- editor picker ---------- */
+.v175pk .v175pt{display:flex;align-items:center;gap:8px}
+.v175q{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:#5f6b78;box-sizing:border-box}
+.v175q:focus-within{border-color:#105572;box-shadow:0 0 0 3px rgba(16,85,114,.18)}
+.v175q input,.v175q input[type="search"]{all:unset;flex:1;min-width:0;height:100%;font:500 15px Almoni,Heebo,Arial,sans-serif;color:#07293a;border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin:0!important;width:auto!important}
+.v175q input::placeholder{color:#7a8794}
+.v175fb{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 12px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:#07293a;font:700 14.5px Almoni,Heebo,Arial,sans-serif}
+.v175fb b{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#a90b0c;color:#fff;font-size:12px;font-weight:800}
+.v175fb[aria-expanded="true"]{background:#07293a;border-color:#07293a;color:#fff}
+.v175ib2{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;width:44px;height:44px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:#07293a;display:grid;place-items:center}
+.v175ib2:hover,.v175fb:hover{border-color:#9fb4c2}
+.v175ib2 input{display:none}
+.v175m{display:grid!important;grid-template-columns:auto 1fr auto;margin-top:8px}
+.v175m button{padding:0 10px}
+.v175fp{margin-top:8px;padding:10px;border-radius:12px;background:#f3f6f8;display:grid;gap:8px}
+.v175fp[hidden]{display:none!important}
+.v175fp .v115bar,.v175fp .v115chips{margin:0!important}
+.v175fp .pe-uprow{margin:0}
+.v175sl{display:grid;gap:6px;margin:0 0 8px}
+.v175sl .pe-slots{display:flex!important;gap:8px;overflow-x:auto;scrollbar-width:none}
+.v175sl .pe-slot{flex:0 0 64px;width:64px}
+.v175sl .pe-slot span{display:none}
+.v175g.v175g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px;margin-top:10px;padding:0}
+.v175g.big.big{grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:16px 12px}
+.v175g .v175t.v175t{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;border-radius:10px;background:none;border:0;overflow:visible;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.v175g .v175t .v175im{position:relative;display:block;border-radius:10px;overflow:hidden;background:#e7eef1;border:2px solid transparent;box-sizing:border-box}
+.v175g .v175t img{display:block;width:100%;aspect-ratio:1;object-fit:cover;transition:transform .2s}
+.v175g.big .v175t img{aspect-ratio:4/3}
+@media (hover:hover){.v175g .v175t:hover img{transform:scale(1.04)}}
+.v175g .v175t[aria-pressed="true"] .v175im{border-color:#a90b0c}
+.v175g .v175t:focus-visible{outline:3px solid #105572;outline-offset:2px}
+.v175c{display:block;font-size:13.5px;line-height:20px;height:20px;color:#35505e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-inline:2px}
+.v175b{position:absolute;top:5px;inset-inline-start:5px;font-style:normal;font:700 13px/1.5 Almoni,Heebo,Arial,sans-serif;padding:0 7px;border-radius:999px;pointer-events:none;white-space:nowrap}
+.v175b.nw{background:#a90b0c;color:#fff}
+.v175b.z{background:rgba(255,255,255,.94);color:#55636f;font-weight:600}
+.v175g .v148x,.v175g .v115s{display:none!important}
+.v175g .v175t .v116d{bottom:30px;inset-inline-start:6px}
+.v175g.big .v175t .v116d{bottom:30px}
+.v175more,.v175lk{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:10px;border:1px solid #cfd9e0;border-radius:12px;background:#fff;color:#105572;font:700 14.5px Almoni,Heebo,Arial,sans-serif}
+.v175lk{width:auto;padding:0 16px;margin:0}
+.v175empty{display:grid;justify-items:start;gap:10px;padding:18px 2px;color:#55636f;font-size:14.5px}
+.v175empty b{color:#07293a;font-size:16px}
+details.v175crop>summary{cursor:pointer;display:flex;align-items:baseline;gap:8px;min-height:44px;align-items:center;list-style:none;font-size:15px;color:#07293a}
+details.v175crop>summary::-webkit-details-marker{display:none}
+details.v175crop>summary::after{content:"";margin-inline-start:auto;width:9px;height:9px;border-inline-end:2px solid #55636f;border-bottom:2px solid #55636f;transform:rotate(45deg);transition:transform .15s}
+details.v175crop[open]>summary::after{transform:rotate(-135deg)}
+details.v175crop>summary span{font-size:14px;color:#55636f;font-weight:500}
+details.v175crop .pe-crop>.pe-l:first-child{display:none!important}
+.v175cb{display:grid;gap:12px;padding-top:8px}
+.v175cb .pe-slots{max-width:140px}
+/* full screen library */
+.v175lf{display:grid;gap:0}
+#v115lib .v175lf .v175pt{display:flex;align-items:center;gap:8px}
+#v115lib .v175lf .v175m{max-width:560px}
+@media (max-width:760px){
+ .v175p .v175dk{display:none!important}
+ .v175p .v175ph{display:block}
+ .v175p .v170pbar{flex-wrap:nowrap}
+ .v175p .v170pbar .v170q{flex:1 1 auto}
+ .v175f{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+ .v175f .v170sel select{width:100%;max-width:none}
+ .v175f .v175dr{grid-column:1/-1}
+ .v175dr .v175seg{flex:1 1 auto;min-width:0}
+ .v175dr .v175seg button{padding:0 6px;font-size:14px}
+ .v175tg{padding:0 10px}
+ .v175p .v170res{margin:8px 0 0;flex-wrap:nowrap}
+ .v175p .v170res .v170hint{display:none}
+ .v175p .v170res .v175so select{width:128px}
+ .v175p .v170gh{margin-top:8px}
+ .v148bar.v175sb{inset-inline:8px}
+ #v175sh .v175pan{left:0;right:0;top:auto;bottom:0;width:100%;max-height:88vh;border-radius:18px 18px 0 0;transform:translateY(24px);padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+ #v175sh.in .v175pan{transform:none}
+ #v175sh .v175grip{display:block;width:40px;height:4px;border-radius:4px;background:#d5dde3;margin:6px auto 0}
+ .v175g.big.big{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px}
+ .v175g.big .v175t img{aspect-ratio:1}
+ .v175m button{font-size:14px;padding:0 8px}
+}
+@media (prefers-reduced-motion:reduce){#v175sh .v175bg,#v175sh .v175pan,.v175g .v175t img{transition:none!important}}
+</style>
+
+<style id="k176">
+/* V176 · shell: undo pill, phone drawer, header targets, schedule sheet slots, calendar on touch, links to Posts, text and target minimums */
+
+/* 1 · the undo pill never covers a sheet, a bar, the drawer or the editor, and fades 30 seconds after the last action */
+#v171chip.v176old,
+body.pe-open #v171chip,body.v157on #v171chip,body:has(#v157) #v171chip,body.v170sh-on #v171chip,body:has(#v170sheet) #v171chip,body:has(#v170ps) #v171chip,
+body:has(#v172sheet) #v171chip,body:has(.ga-selbar.on) #v171chip,body:has(.v148bar) #v171chip,body:has(.side.open) #v171chip,body.v102-ov #v171chip,
+body:has(#ga-lb) #v171chip,body:has(#v131) #v171chip,body:has(.px-cmdb) #v171chip,body:has(#v115lib) #v171chip{display:none!important}
+#v171chip span{font-size:15px}
+/* a snackbar that arrives while a sheet is open goes to the top, away from the sheet's buttons */
+body:has(#v157) #v171snack,body:has(#v172sheet) #v171snack,body.v170sh-on #v171snack,body:has(.ga-selbar.on) #v171snack,body:has(.v148bar) #v171snack{bottom:auto!important;top:calc(12px + env(safe-area-inset-top,0px));transform:translateY(-20px)}
+body:has(#v157) #v171snack.show,body:has(#v172sheet) #v171snack.show,body.v170sh-on #v171snack.show,body:has(.ga-selbar.on) #v171snack.show,body:has(.v148bar) #v171snack.show{transform:none}
+
+/* 2 · phone navigation */
+#v176bd{display:none}
+.v176nx{display:none}
+@media (max-width:860px){
+ /* one menu: the bottom bar has "תפריט", so the header button goes */
+ body:has(#v99nav) .tbar [data-app="menu"]{display:none!important}
+ #v176bd{display:block;position:fixed;inset:0;z-index:35;background:rgba(7,41,58,.42);opacity:0;pointer-events:none;transition:opacity .2s}
+ body:has(.side.open) #v176bd{opacity:1;pointer-events:auto}
+ .side .brandrow{position:relative;padding-inline-end:52px}
+ .v176nx{display:grid;place-items:center;position:absolute;inset-inline-end:0;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:12px;border:1px solid #dbe8ee;background:#fff;color:#07293a;cursor:pointer}
+ .v176nx:focus-visible{outline:3px solid #105572;outline-offset:2px}
+ .side{width:min(300px,86vw)!important;overscroll-behavior:contain}
+ /* header icons: 44 by 44 */
+ body .tbar .ibtn,body .tbar .px-sbtn,body #v102back{width:44px!important;height:44px!important;min-width:44px!important}
+ body .tbar.v172fold #v172act:not([hidden]){height:44px!important}
+ /* bottom bar labels */
+ #v99nav button{font-size:13px!important;line-height:1.1!important;min-height:56px}
+}
+@media (prefers-reduced-motion:reduce){#v176bd{transition:none}}
+/* drawer and header text (all sizes) */
+.side .grp{font-size:14px!important}
+.side .brandrow small{font-size:14px!important}
+.side .foot,.side .foot div,.side .conn2 span,.side .foot a{font-size:14px!important}
+.v170adv span{font-size:15px!important}
+.tbar .v29-date span{font-size:14px!important}
+.tbar .ibtn.pri{font-size:15px}
+
+/* 3 · schedule sheet: free slots with the distance from today */
+/* the sheet scrolls instead of squeezing its footer */
+#v157 .v157>*{flex-shrink:0}
+/* the Today page folds every footer to one line (body:has(.td) footer:not(.open)); sheets and dialogs keep theirs whole */
+body:has(.td) :is(#v157,#v170sheet,#v170ps,#v172sheet,#v131,[role="dialog"]) footer{max-height:none!important;overflow:visible!important;cursor:auto;max-width:none;margin-inline:0;font-size:inherit;color:inherit;line-height:inherit}
+body:has(.td) :is(#v157,#v170sheet,#v170ps,#v172sheet,#v131,[role="dialog"]) footer::after{content:none!important;display:none!important}
+body #v157 .v157f{align-self:stretch;width:auto;max-width:none;margin-inline:0;padding:12px 0 calc(16px + env(safe-area-inset-bottom,0px))}
+#v157 .v176chip{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:56px;padding:6px 14px;text-align:start;line-height:1.2}
+#v157 .v176chip b{font-weight:700;font-size:15px}
+#v157 .v176chip small{font-size:14px;font-weight:500;opacity:.85}
+
+/* 4 · calendar on touch: only "מועד" and "⋯" on each card; the drag handle goes */
+.v176more,#appviews .v28-cit>.v176more{display:none}
+@media (pointer:coarse){
+ #appviews .v28-cit>button:not(.v138when):not(.v176more){display:none!important}
+ #appviews .v28-cit .v176more{display:inline-grid;place-items:center;min-width:44px;min-height:44px;border-radius:12px;border:1px solid rgba(7,41,58,.16);background:#fff;color:#07293a;cursor:pointer;padding:0 10px}
+ #appviews .v28-cit .v138when{min-height:44px;font-size:15px!important;background:#07293a;color:#fff}
+ #appviews .v28-cit .v138when span{font-size:15px!important}
+ #appviews .v28-cit{gap:8px!important}
+ .v28-tray header small{display:none!important}
+}
+.v176more:focus-visible{outline:3px solid #105572;outline-offset:2px}
+#v172sheet.v176sh .v172t{font-size:17px}
+
+/* 5 · links to the Posts page from Ideas, Agent and the drafts drawer */
+.v176lnk{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 14px;margin:0 0 14px;border:1px solid #dbe8ee;border-radius:14px;background:#f7f8fa;color:#07293a;font:500 15px/1.4 Almoni,Heebo,sans-serif}
+.v28-tray .v176lnk{margin:2px 0 4px;padding:8px 10px;font-size:14px}
+.v176lnk span{flex:1 1 200px;min-width:0}
+.v176go{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;border:0;background:#07293a;color:#fff;font:700 15px Almoni,Heebo,sans-serif;cursor:pointer;white-space:nowrap}
+.v176go svg{width:18px;height:18px}
+.v176go:focus-visible{outline:3px solid #8fb6c8;outline-offset:2px}
+@media (max-width:860px){
+ /* the drafts drawer on phones: one compact strip */
+ .v28-tray{padding:10px!important;gap:6px!important}
+ .v28-tray .v28-q{height:44px}
+ .v28-tray .v28-dc{min-width:250px!important;max-width:270px}
+ .v28-tray .v176lnk{padding:0;border:0;background:none;margin:0}
+ .v28-tray .v176lnk span{display:none}
+ .v28-tray .v176go{min-height:44px;padding:0 14px;font-size:14px}
+ /* the fonts table scrolls inside its card instead of being cut */
+ #appviews .v43tbl{display:block;max-width:100%;overflow-x:auto}
+ .v28-tray .v28-tf{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+ .v28-tray .v28-tf::-webkit-scrollbar{display:none}
+}
+
+/* 6 · text and target minimums on every page except Posts and Photos (their content belongs to V174 and V175) */
+body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(.kc-chips>button,.ibtn.sm,.px-btn.sm,.btn.sm,a.ibtn.sm,.px-link,.seg>button,.qtabs>button){font-size:14px!important}
+body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(.pill,.stp,.cstat,.v152c,.v56st,.v62t,.v100tag,.v100st,.dg-lvl,.v51s,.v51q,.v51st2,.v51fm,.v63chip,.rs-k,.kc-lab,.how,.check,.tchip,.v153d,.td-flabel,.px-eyebrow,.cs-leg>span,.v44dh small,.cs-k>span,.v40leg>span,.v40m,.v40card>span,.v40card>small,.pr-d,.pr-m,.v142sum,.v128md p,.v62tip,.v62lg>span,.v62lg>b,.cl-note,.cl-demo,.v43m,.kc-note,.kc-note>span,.rs-lift,.rs-ex>span,.rs-us>span,.v28-n,.v28-hint,.rs-note){font-size:14px!important}
+/* everything else below 14px is raised by the font floor in v176.js (class v176f), numbers excepted */
+html body #appmain .v176f,html body .wrap .v176f,html body #appmain .pr-score span{font-size:14px!important}
+#v110bar b,#v110bar .px-btn,.tbar #vact .ibtn,.tbar .seg>button{font-size:14px!important}
+body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(h1,h2,h3,h4,h5,h6) small{font-size:14px!important}
+/* the side cards (pr-panel) and footers outside #appviews */
+.wrap>footer,.pr-panel .pr-txt span,.pr-panel .pr-tags em,.pr-score span{font-size:14px!important}
+.v28-dc span,.v28-dc .v152c{font-size:14px!important}
+@media (pointer:coarse){
+ body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(.kc-chips>button,.ibtn,.px-btn,.seg>button,.qtabs>button,.v176go,a.ibtn){min-height:44px}
+ body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews .ibtn{min-width:44px}
+}
+</style>
+
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -24275,7 +24635,7 @@ const isReady=x=>!x.it&&x.q.v!=='block'&&x.w!=='published';
 const isCheck=x=>x.w==='review'||(!x.it&&x.q.v!=='ok');
 function qvOk(x,qv){if(qv==='week')return x.m.c>=Date.now()-7*DAY;if(qv==='ads')return x.m.ads||x.m.fam==='ads';if(qv==='ready')return isReady(x);if(qv==='sched')return !!x.it;if(qv==='check')return isCheck(x);return true}
 // facet filter: everything except the facet named in skip
-function facets(l,skip){return l.filter(x=>(skip==='proj'||!F.proj.length||F.proj.includes(x.pk))&&(skip==='ser'||!F.ser.length||F.ser.includes(x.m.ser))&&(skip==='fam'||!F.fam.length||F.fam.includes(x.m.fam))&&(skip==='dom'||!F.dom.length||F.dom.includes(x.m.dom))&&(skip==='img'||!F.img.length||F.img.includes(x.m.img))&&(skip==='when'||whenOk(x.m.c,F.when))&&(skip==='q'||qMatch(x,F.q)))}
+function facets(l,skip){return l.filter(x=>(skip==='proj'||!F.proj.length||F.proj.includes(x.pk))&&(skip==='ser'||!F.ser.length||F.ser.includes(x.m.ser))&&(skip==='fam'||!F.fam.length||F.fam.includes(x.m.fam))&&(skip==='dom'||!F.dom.length||F.dom.includes(x.m.dom))&&(skip==='img'||!F.img.length||F.img.includes(x.m.img))&&(skip==='when'||whenOk(x.m.c,F.when))&&(skip==='q'||qMatch(x,F.q))&&(!window.__v174f||window.__v174f(x,skip)))}
 const IDX=new Map();function idxOf(p){return IDX.get(p)}
 function sortL(l){IDX.clear();AG.posts.forEach((p,i)=>IDX.set(p,i));const byNew=(a,b)=>(b.m.c-a.m.c)||(idxOf(a.p)-idxOf(b.p));
  const S={new:byNew,plan:(a,b)=>String(a.it?a.it.at:'9').localeCompare(String(b.it?b.it.at:'9'))||byNew(a,b),score:(a,b)=>(b.q.avg-a.q.avg)||byNew(a,b),series:(a,b)=>a.m.ser.localeCompare(b.m.ser,'he')||byNew(a,b)};
@@ -24283,7 +24643,7 @@ function sortL(l){IDX.clear();AG.posts.forEach((p,i)=>IDX.set(p,i));const byNew=
 function mirror(){GA.f.st=ST_OF[F.qv]||'all';GA.f._v170=GA.f.st;try{gaSaveF()}catch(e){}}
 // someone else asked the gallery for a view (the "new posts" button on Today, posts made from photos): adopt it
 function adopt(){const st=GA.f.st;if(FIRST){FIRST=false;saveF();return}if(GA.f._v170===st)return;const m={ready:'ready',sched:'sched',fix:'check',all:'all'}[st];
- if(st===''||st==='all'||!m){Object.assign(F,{qv:'all',proj:[],ser:[],fam:[],dom:[],img:[],when:'',q:''});if(GA.f.sort==='new')F.sort='new'}else F.qv=m;
+ if(st===''||st==='all'||!m){Object.assign(F,{qv:'all',st:[],sc:[],pub:[],proj:[],ser:[],fam:[],dom:[],img:[],when:'',q:''});if(GA.f.sort==='new')F.sort='new'}else F.qv=m;
  if(GA.f.proj){F.proj=[GA.f.proj]}if(GA.f.ser){F.ser=[GA.f.ser]}if(GA.f.q){F.q=GA.f.q}GA.f.proj='';GA.f.ser='';GA.f.q='';GA.f.fam='';saveF();mirror()}
 let LAST=null;
 gaList=(f=>function(){const orig=()=>f.apply(this,arguments);const b=base(orig);const l=sortL(facets(b,'').filter(x=>qvOk(x,F.qv)));LAST=l;return l})(gaList);
@@ -24296,8 +24656,8 @@ gaCard=(f=>function(x){let h=f.apply(this,arguments);try{const m=x.m||metaP(x);c
 
 function bucket(c,t0){if(!c)return 3;if(c>=t0)return 0;const n=Date.now();if(c>=n-7*DAY)return 1;if(c>=n-30*DAY)return 2;return 3}
 const BUCK=['היום','השבוע','החודש','קודם'];
-function pills(){const P=[];F.proj.forEach(k=>P.push(['proj',k,projLabel(k)]));F.ser.forEach(k=>P.push(['ser',k,k||'בלי סדרה']));F.fam.forEach(k=>P.push(['fam',k,FAMN[k]||k]));F.dom.forEach(k=>P.push(['dom',k,k]));F.img.forEach(k=>P.push(['img',k,IMGN[k]||k]));if(F.when)P.push(['when',F.when,'נוצרו: '+WHENN.find(w=>w[0]===F.when)[1]]);if(F.q)P.push(['q',F.q,'"'+F.q+'"']);return P}
-const nActive=()=>F.proj.length+F.ser.length+F.fam.length+F.dom.length+F.img.length+(F.when?1:0);
+function pills(){const P=[];F.proj.forEach(k=>P.push(['proj',k,projLabel(k)]));F.ser.forEach(k=>P.push(['ser',k,k||'בלי סדרה']));F.fam.forEach(k=>P.push(['fam',k,FAMN[k]||k]));F.dom.forEach(k=>P.push(['dom',k,k]));F.img.forEach(k=>P.push(['img',k,IMGN[k]||k]));if(F.when)P.push(['when',F.when,'נוצרו: '+WHENN.find(w=>w[0]===F.when)[1]]);if(window.__v174p)__v174p(P);if(F.q)P.push(['q',F.q,'"'+F.q+'"']);return P}
+const nActive=()=>F.proj.length+F.ser.length+F.fam.length+F.dom.length+F.img.length+(F.when?1:0)+(window.__v174n?__v174n():0);
 vGallery=(f=>function(){adopt();mirror();
  let selbar=null;if(FAST&&SELBAR!=null){gaList();selbar=SELBAR?{outerHTML:SELBAR}:null}else{const keepLim=GA.lim;let orig='';try{GA.lim=0;orig=f.apply(this,arguments)}finally{GA.lim=keepLim}
  const t=document.createElement('template');t.innerHTML=orig;selbar=t.content.querySelector('.ga-selbar');SELBAR=selbar?selbar.outerHTML:''}
@@ -24360,7 +24720,7 @@ let lastFocus=null;
 function sheetPaint(){let r=document.getElementById('v170sheet');if(!PS.open){if(r){r.remove();document.body.classList.remove('v170sh-on');try{lastFocus&&lastFocus.focus()}catch(e){}}return}
  const fresh=!r;if(!r){r=document.createElement('div');r.id='v170sheet';document.body.appendChild(r);document.body.classList.add('v170sh-on')}
  const bd=r.querySelector('.v170shb');const st=bd?bd.scrollTop:0;const a=document.activeElement;const aq=a&&a.dataset&&('v170serq' in a.dataset);const pos=aq?a.selectionStart:0;
- r.innerHTML=sheetHtml();const nb=r.querySelector('.v170shb');if(nb)nb.scrollTop=st;
+  r.innerHTML=window.__v174sh?__v174sh(sheetHtml()):sheetHtml();const nb=r.querySelector('.v170shb');if(nb)nb.scrollTop=st;
  if(aq){const i=r.querySelector('[data-v170serq]');if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(e){}}}else if(fresh){const x=r.querySelector('#v170sht');x&&x.focus({preventScroll:true})}}
 let rt=0;function rerender(now){clearTimeout(rt);const go2=()=>{if(APP.view==='gallery'){GA.lim=60;fastPaint()}if(PS.open)sheetPaint()};if(now)go2();else rt=setTimeout(go2,120)}
 function setF(g,k){if(g==='when'){F.when=F.when===k?'':k}else{const a=F[g];const i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k)}saveF()}
@@ -24399,9 +24759,9 @@ const PV=[['new','חדשות'],['ill','איורים'],['render','הדמיות'],
 const PSORT=[['new','חדשות קודם'],['use','הכי בשימוש'],['name','לפי שם']];
 const KINDN={site:'צילום שטח',aerial:'רחפן',render:'הדמיה',interior:'פנים',finish:'גמר',drawing:'שרטוט',env:'סביבה',people:'אנשים',brand:'מותג',atmo:'אווירה',exterior:'חוץ',detail:'פרט',ad:'מודעה'};
 const PF=Object.assign({v:'new',proj:'',sort:'new',q:''},lsG('v170_pf',{}));const saveP=()=>lsS('v170_pf',PF);
-const NEWD=14;
+const NEWD=14;window.__v170x=()=>({useMap,kindLabel,projLabel,PSORT,saveP,norm2,IC,H,KINDN,isIll,pvOk,psheet,atOf});
 const atOf=it=>{const t=Date.parse(it.at||'');return isNaN(t)?0:t};
-const isNewP=it=>{const t=atOf(it);return t&&t>=Date.now()-NEWD*DAY};
+const isNewP=it=>{if(window.__v175new)return window.__v175new(it);const t=atOf(it);return t&&t>=Date.now()-NEWD*DAY};
 const isIll=it=>it.kind==='drawing'||/^illustration/i.test(String((it.u&&it.u.tags)||''));
 const kindLabel=it=>isIll(it)&&/^illustration/i.test(String((it.u&&it.u.tags)||''))?'איור':(KINDN[it.kind]||(it.src==='builtin'?'צילום שטח':'תמונה'));
 let USE={t:0,m:null,n:0};
@@ -24456,7 +24816,7 @@ function photosPaint(){const S=window.__v144&&__v144.S;const box=document.getEle
  if(SPECIAL.includes(S.src)){box.classList.add('v170legacy');if(!box.querySelector('.v170back'))box.insertAdjacentHTML('afterbegin',`<div class="v170res"><button type="button" class="v170btn" data-v144="src" data-k="all">חזרה לכל התמונות</button></div>`);return}
  if(S.src!=='all'){S.src='all';try{localStorage.setItem('v144_f',JSON.stringify({src:'all',group:S.group}))}catch(e){}}
  box.classList.remove('v170legacy');const bar=box.querySelector('.v148bar');const keep=bar?bar.outerHTML:'';
- const am=document.getElementById('appmain');const sc=am?am.scrollTop:0;box.innerHTML=vPhotos170(S,keep)+psheet(S);if(am&&am.scrollTop!==sc)am.scrollTop=sc;
+ const am=document.getElementById('appmain');const sc=am?am.scrollTop:0;box.innerHTML=(window.__v175ph?window.__v175ph.view(S,keep):vPhotos170(S,keep))+(window.__v175ph?window.__v175ph.sheet(S):psheet(S));if(am&&am.scrollTop!==sc)am.scrollTop=sc;
  const sh=document.getElementById('v170ps');document.body.classList.toggle('v170sh-on',!!sh);if(sh){try{paint(sh)}catch(e){}const x=sh.querySelector('#v170pst');if(x&&!sh.contains(document.activeElement))x.focus({preventScroll:true})}}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v170p]');if(!b||APP.view!=='photos')return;const a=b.dataset.v170p;const S=__v144.S;
  if(a==='v'){PF.v=b.dataset.k;if(PF.v==='new')PF.sort='new';S._lim=120;saveP();render()}
@@ -24481,7 +24841,7 @@ setInterval(()=>{try{if(APP.view==='gallery')note()}catch(e){}},5000);
 window.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.v170 [data-ga="more"]');if(!b||APP.view!=='gallery'||!BASE)return;e.preventDefault();e.stopImmediatePropagation();GA.lim+=60;fastPaint()},true);
 // Escape closes the topmost layer: the schedule sheet opened from the big viewer closes before the viewer under it
 window.addEventListener('keydown',e=>{if(e.key!=='Escape'||!document.getElementById('v157')||typeof GA==='undefined'||!GA.lb)return;const lb=GA.lb;GA.lb=null;setTimeout(()=>{if(!GA.lb&&document.getElementById('ga-lb'))GA.lb=lb},0)},true);
-window.__v170={F,PF,famOf,metaP,regroup,photosPaint};
+window.__v170={F,PF,famOf,metaP,regroup,photosPaint,facets,qvOk,isReady,isCheck,fastPaint,rerender,saveF,mirror,pills,nActive,base:()=>BASE,last:()=>LAST};
 try{if(document.getElementById('sidenav'))renderNav()}catch(e){}
 })();
 
@@ -24532,7 +24892,10 @@ function snapPosts(){const m=new Map();(AG.posts||[]).forEach((p,i)=>{if(p&&p.id
 function snapSched(){const m=new Map();((APP.sched&&APP.sched.items)||[]).forEach(it=>{if(it&&it.id)m.set(it.id,JSON.stringify(it))});return m}
 function push(entry){const last=U.stack[U.stack.length-1];entry.parts.forEach(x=>x.k=entry.kind);
  const inGroup=U.grp&&last&&last.t>=U.grp;
- if(last&&(inGroup||(entry.kind===last.kind&&Date.now()-last.t<900))){last.parts=last.parts.concat(entry.parts);last.t=Date.now();if(entry.kind===last.kind||entry.kind==='posts'){last.label=entry.label;last.kind=entry.kind}}
+ if(last&&(inGroup||(entry.kind===last.kind&&Date.now()-last.t<900))){last.parts=last.parts.concat(entry.parts);last.t=Date.now();if(entry.kind===last.kind||entry.kind==='posts'){last.label=entry.label;last.kind=entry.kind}
+  if(last.kind==='posts'){const t=k=>last.parts.filter(x=>x.k==='posts').reduce((n,x)=>n+((x[k]||[]).length),0);last.label=postLabel(t('rem'),t('add'),t('chg'));
+   // small background saves that keep arriving add up to a wide content-only change: that is the clarity pass, not the person
+   if(!t('rem')&&!t('add')&&t('chg')>30){U.quiet=Date.now();U.stack.pop();chip();const sn=document.getElementById('v171snack');if(sn)sn.classList.remove('show');return}}}
  else{entry.t=Date.now();U.stack.push(entry);if(U.stack.length>U.max)U.stack.shift()}
  chip();snack(U.stack[U.stack.length-1])}
 function postLabel(rem,add,chg){if(rem)return rem>1?`נמחקו ${rem} פוסטים`:'הפוסט נמחק';if(add)return add>1?`נוספו ${add} פוסטים`:'נוסף פוסט';return chg>1?`${chg} פוסטים עודכנו`:'הפוסט עודכן'}
@@ -24541,6 +24904,8 @@ function recordPosts(){if(U.replay||!AG||!AG.posts)return;const now=snapPosts();
  old.forEach((v,id)=>{const n=now.get(id);if(!n)rem.push({id,s:v.s,i:v.i});else if(n.s!==v.s)chg.push({id,s:v.s})});
  now.forEach((v,id)=>{if(!old.has(id))add.push(id)});
  if(!rem.length&&!add.length&&!chg.length)return;
+ // a wide content-only change right after a tap is the background clarity pass saving, not the person
+ if(!rem.length&&!add.length&&(chg.length>30||Date.now()-(U.quiet||0)<3000)){if(chg.length)U.quiet=Date.now();return}
  if(chg.length&&!rem.length&&!add.length&&chg.every(c=>{const a=JSON.parse(c.s),b=now.get(c.id);if(!b)return false;const B=JSON.parse(b.s);delete a.upd;delete B.upd;delete a.born;delete B.born;return JSON.stringify(a)===JSON.stringify(B)}))return;
  push({kind:'posts',label:postLabel(rem.length,add.length,chg.length),parts:[{rem,add,chg}]})}
 function recordSched(label){if(U.replay||!APP||!APP.sched)return;const now=snapSched();const old=U.sched;U.sched=now;if(!old||!byUser())return;
@@ -24739,6 +25104,595 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 setTimeout(()=>{try{if(window.__ENGINE_HOST==='site')load()}catch(e){}},2500);
 
 window.__v173={defNets,load,ST,netsFrom};
+})();
+
+// ================= V174 · posts that are easy to choose: each card says what it is (headline and one status chip), filters for
+//                   status, score and publish date, a calm phone header (one quick view pill, one row of pills), an explicit
+//                   selection mode with a one row bar, week groups that only appear when they help =================
+(()=>{
+if(window.__v174)return;window.__v174=1;
+const V=window.__v170;if(!V||!V.F){console.warn('v174: v170 missing');return}
+const F=V.F;['st','sc','pub'].forEach(k=>{if(!Array.isArray(F[k]))F[k]=[]});
+const H=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DAY=864e5;
+const PH=()=>matchMedia('(max-width:700px)').matches;
+const lsG=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsS=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const svg=(d,w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const IC={sel:svg('<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.5 3 3 5-6"/>'),x:svg('<path d="M6 6l12 12M18 6 6 18"/>',16),
+ clock:svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),more:svg('<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>',20),
+ chev:svg('<path d="m6 9 6 6 6-6"/>',16),cal:svg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>'),slots:svg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 14h2M12 14h2M16 14h2M8 17.5h2"/>'),
+ all:svg('<path d="M5 12.5l4.5 4.5L19 7"/>'),wand:svg('<path d="M4 20L15 9"/><path d="M14 4v3M12.5 5.5h3M19 9v3M17.5 10.5h3"/>'),trash:svg('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>')};
+
+/* ---------------- status, score, publish date ---------------- */
+const STN=[['ready','מוכן'],['sched','מתוזמן'],['check','דורש בדיקה'],['pub','פורסם']];
+const SCN=[['hi','8 ומעלה'],['mid','6 עד 7.9'],['lo','מתחת ל 6']];
+const PUBN=[['tw','השבוע'],['nw','שבוע הבא'],['none','לא מתוזמן']];
+const LAB={st:Object.fromEntries(STN),sc:Object.fromEntries(SCN),pub:Object.fromEntries(PUBN)};
+const isPub=x=>x.w==='published';
+function stOk(x,k){if(k==='ready')return V.isReady(x);if(k==='sched')return !!x.it;if(k==='check')return V.isCheck(x);if(k==='pub')return isPub(x);return false}
+function scOf(x){const a=+(x.q&&x.q.avg);if(!isFinite(a))return '';return a>=8?'hi':a>=6?'mid':'lo'}
+function weekStart(off){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()+7*off);return d.getTime()}
+function pubOf(x){if(!x.it||!x.it.at)return 'none';const t=Date.parse(x.it.at);if(isNaN(t))return '';const a=weekStart(0),b=weekStart(1),c=weekStart(2);return t>=a&&t<b?'tw':t>=b&&t<c?'nw':''}
+// the facet hook inside v170: every list, count and chip goes through it
+window.__v174f=(x,skip)=>{const st=F.st||[],sc=F.sc||[],pb=F.pub||[];
+ if(skip!=='st'&&st.length&&!st.some(k=>stOk(x,k)))return false;
+ if(skip!=='sc'&&sc.length&&!sc.includes(scOf(x)))return false;
+ if(skip!=='pub'&&pb.length&&!pb.includes(pubOf(x)))return false;return true};
+window.__v174p=P=>{(F.st||[]).forEach(k=>P.push(['st',k,LAB.st[k]||k]));(F.sc||[]).forEach(k=>P.push(['sc',k,'ציון '+(LAB.sc[k]||k)]));(F.pub||[]).forEach(k=>P.push(['pub',k,k==='none'?'לא מתוזמן':'פרסום '+(LAB.pub[k]||k)]))};
+window.__v174n=()=>(F.st||[]).length+(F.sc||[]).length+(F.pub||[]).length;
+
+/* ---------------- quick views are presets of these filters ---------------- */
+const QV=[['all','הכל','הכל'],['week','חדשים השבוע','חדשים'],['ads','מודעות פרויקטים','מודעות'],['ready','מוכנים לתזמון','מוכנים'],['sched','מתוזמנים','מתוזמנים'],['check','דורשים בדיקה','לבדיקה']];
+const PRE={all:{},week:{when:'7'},ads:{ads:1},ready:{st:['ready']},sched:{st:['sched']},check:{st:['check']}};
+function applyPre(k,T=F){const p=PRE[k]||{};T.st=p.st?p.st.slice():[];T.when=p.when||'';T.fam=(T.fam||[]).filter(f=>f!=='ads');if(p.ads)T.fam.push('ads')}
+function curPre(){const ads=F.fam.includes('ads');const st=(F.st||[]).slice().sort().join(',');
+ for(const [k] of QV){const p=PRE[k];if((p.st?p.st.join(','):'')===st&&(p.when||'')===F.when&&!!p.ads===ads)return k}return ''}
+function preCounts(){const B=V.base();const b=B?B.l:[];const keep={st:F.st,when:F.when,fam:F.fam};const c={};
+ try{QV.forEach(([k])=>{applyPre(k);c[k]=V.facets(b,'').length})}finally{Object.assign(F,keep)}return c}
+function setPre(k){applyPre(k);F.qv='all';V.saveF();V.mirror();GA.lim=60;V.fastPaint()}
+// a view asked for from another screen (Today, photos) arrives as F.qv: turn it into the same preset
+function adoptQv(){if(!F.qv||F.qv==='all')return false;const k=F.qv;applyPre(k);F.qv='all';V.saveF();V.mirror();return true}
+
+/* ---------------- cards: headline and one status chip ---------------- */
+function chipOf(x){try{
+ if(x.it&&x.it.at){const a=String(x.it.at);const d=a.slice(8,10)+'.'+a.slice(5,7)+(a.length>15?' · '+a.slice(11,16):'');let full='';try{full=fmtDate(a)}catch(e){}return ['sched','מתוזמן · '+d,full]}
+ if(isPub(x))return ['pub','פורסם'];
+ if(V.isCheck(x))return ['check','דורש בדיקה · '+(Math.round((+x.q.avg||0)*10)/10)];
+ if(V.isReady(x))return ['ready','מוכן'];}catch(e){}return null}
+gaCard=(f=>function(x){let h=f.apply(this,arguments);try{if(typeof APP==='undefined'||APP.view!=='gallery'||!x||!x.p)return h;
+ let head='';try{head=pxHead(x.p)}catch(e){}head=String(head||'').replace(/\s+/g,' ').trim();
+ const c=chipOf(x);
+ const blk=`<div class="v174t">${head?`<b class="v174h">${H(head)}</b>`:''}${c?`<span class="v174c v174c-${c[0]}"${c[2]?` title="${H(c[2])}"`:''}>${H(c[1])}</span>`:''}</div>`;
+ if(h.includes('<div class="v170meta">'))h=h.replace('<div class="v170meta">',blk+'<div class="v170meta">');else h=h.replace(/<\/figure>\s*$/,blk+'</figure>');
+ // the series repeats the only series filter: leave only the project
+ const m=x.m;if(m&&F.ser.length===1&&m.ser===F.ser[0])h=h.replace(/<span class="v170ser">[^<]*<\/span>/,'');
+ }catch(e){console.warn('v174 card',e)}return h})(gaCard);
+
+/* ---------------- week groups ---------------- */
+const GB=['השבוע','שבוע שעבר','לפני 2 עד 4 שבועות','קודם'];
+function gOf(c){if(!c)return 3;const a=weekStart(0);if(c>=a)return 0;if(c>=a-7*DAY)return 1;if(c>=a-28*DAY)return 2;return 3}
+
+/* ---------------- selection mode ---------------- */
+const SEL={on:false};
+const selIds=()=>{try{return [...GA.sel].filter(id=>AG.posts.some(p=>p.id===id))}catch(e){return []}};
+
+/* ---------------- the posts header, rebuilt around v170's markup ---------------- */
+function post(h){const t=document.createElement('template');t.innerHTML=h;const root=t.content.querySelector('.v170');if(!root)return h;
+ const bar=root.querySelector('.v170bar');const pre=curPre();const pc=preCounts();const fmt=n=>(+n||0).toLocaleString('he-IL');
+ if(bar){const q=bar.querySelector('.v170q');const fb=bar.querySelector('.v170fbtn');const srt=bar.querySelector('.v170sel');
+  if(q&&PH()){const i=q.querySelector('input');if(i)i.setAttribute('placeholder','חיפוש פוסט')}
+  // phones: the quick views are one pill next to search
+  const lab=pre?QV.find(v=>v[0]===pre)[2]:'מותאם';
+  const pill=document.createElement('label');pill.className='v174qvp'+(pre&&pre!=='all'?' on':'');
+  pill.innerHTML=`<span class="v174qvl">${H(lab)}</span>${IC.chev}<select data-v174qv aria-label="תצוגה מהירה">${pre?'':'<option value="" selected disabled>סינון מותאם</option>'}${QV.map(([k,l])=>`<option value="${k}"${pre===k?' selected':''}>${H(l)} (${fmt(pc[k])})</option>`).join('')}</select>`;
+  if(q)q.after(pill);
+  if(fb){fb.setAttribute('aria-label','סינון'+(V.nActive()?`, ${V.nActive()} פעילים`:''));
+   const sb=document.createElement('button');sb.type='button';sb.className='v170fbtn v174selb'+(SEL.on?' on':'');sb.dataset.v174='selmode';sb.setAttribute('aria-pressed',String(SEL.on));sb.setAttribute('aria-label','בחירת פוסטים');sb.title='בחירת כמה פוסטים';
+   sb.innerHTML=`${IC.sel}<span>בחירה</span>`;fb.after(sb)}
+  // sort, with the view size folded into the same menu
+  if(srt){const s=srt.querySelector('select');if(s){const og=document.createElement('optgroup');og.label='מיון';[...s.querySelectorAll('option')].forEach(o=>og.appendChild(o));s.appendChild(og);
+    const sz=GA.f.size||'m';const og2=document.createElement('optgroup');og2.label='גודל תצוגה';og2.innerHTML=[['s','קטן'],['m','בינוני'],['l','גדול']].map(([k,l])=>`<option value="size:${k}">${sz===k?'✓ ':''}גודל ${l}</option>`).join('');s.appendChild(og2)}
+   srt.remove();srt.classList.add('v174sort')}
+  // quick view tabs (desktop): presets with counts
+  const tabs=root.querySelector('.v170qv');if(tabs)tabs.innerHTML=QV.map(([k,l])=>`<button type="button" role="tab" data-v174="pre" data-k="${k}" aria-selected="${pre===k}">${H(l)}<i>${fmt(pc[k])}</i></button>`).join('');
+  // the count line: count and sort; the pills: one scrolling row
+  const res=root.querySelector('.v170res');if(res){const cnt=res.querySelector('.v170cnt');const pills=[...res.querySelectorAll('.v170pill,.v170link')];
+   const row=document.createElement('div');row.className='v174cntr';if(cnt)row.appendChild(cnt);const sp=document.createElement('span');sp.className='v170sp';row.appendChild(sp);if(srt)row.appendChild(srt);
+   const pr=document.createElement('div');pr.className='v174pills';pr.setAttribute('role','group');pr.setAttribute('aria-label','מסננים פעילים');pills.forEach(p=>pr.appendChild(p));
+   const nt=root.querySelector('#v170note');if(nt)sp.before(nt);
+   res.replaceWith(row);if(pills.length)row.after(pr)}}
+ // week groups, only when they split the list in a useful way
+ root.querySelectorAll('.v170gh').forEach(g=>g.remove());
+ const L=V.last()||[];
+ if(F.sort==='new'&&L.length){const bc=[0,0,0,0];const by=new Map();L.forEach(x=>{const g=gOf(x.m&&x.m.c);bc[g]++;by.set(x.p.id,g)});
+  if(Math.max(...bc)<=L.length*.8){let cur=-1;root.querySelectorAll('.ga-grid>.ga-card[data-gaid]').forEach(c=>{const g=by.get(c.dataset.gaid);if(g==null||g===cur)return;cur=g;
+   const hd=document.createElement('h3');hd.className='v170gh';hd.innerHTML=`<span>${GB[g]}</span><i>${fmt(bc[g])}</i>`;c.before(hd)})}}
+ if(SEL.on)root.classList.add('v174selon');
+ return t.innerHTML}
+vGallery=(f=>function(){let h=f.apply(this,arguments);try{if(adoptQv())h=f.apply(this,arguments);h=post(h)}catch(e){console.warn('v174 gallery',e)}return h})(vGallery);
+
+/* ---------------- the filter sheet: three new sections, folded sections, no view size ---------------- */
+const OPEN=new Map([['פרויקט',true],['מצב',true]]);
+function chips(g,items,cnt){return `<div class="v170chips" role="group">${items.map(([k,l])=>{const on=(F[g]||[]).includes(k);const n=cnt.get(k)||0;return `<button type="button" data-v170="fx" data-g="${g}" data-k="${k}" aria-pressed="${on}"${n===0&&!on?' class="v170z"':''}>${H(l)}<i>${n.toLocaleString('he-IL')}</i></button>`}).join('')}</div>`}
+function counts(skip,fn){const B=V.base();const c=new Map();V.facets(B?B.l:[],skip).forEach(x=>{const ks=fn(x);(Array.isArray(ks)?ks:[ks]).forEach(k=>c.set(k,(c.get(k)||0)+1))});return c}
+window.__v174sh=html=>{try{const t=document.createElement('template');t.innerHTML=html;const body=t.content.querySelector('.v170shb');if(!body)return html;
+ const cst=counts('st',x=>STN.map(s=>s[0]).filter(k=>stOk(x,k)));const csc=counts('sc',scOf);const cpb=counts('pub',pubOf);
+ const sts=STN.filter(([k])=>k!=='pub'||cst.get('pub')||F.st.includes('pub'));
+ const mk=(title,inner)=>{const s=document.createElement('section');s.innerHTML=`<h3>${title}</h3>${inner}`;return s};
+ const secs=[...body.querySelectorAll(':scope>section')];
+ secs.forEach(s=>{const h=s.querySelector('h3');if(h&&/גודל תצוגה/.test(h.textContent))s.remove()});
+ const proj=secs.find(s=>{const h=s.querySelector('h3');return h&&h.textContent.trim()==='פרויקט'});
+ const add=[mk('מצב',chips('st',sts,cst)),mk('ציון',chips('sc',SCN,csc)),mk('מועד פרסום',chips('pub',PUBN,cpb))];
+ if(proj)proj.after(...add);else body.prepend(...add);
+ const act={'פרויקט':F.proj.length,'מצב':F.st.length,'ציון':F.sc.length,'מועד פרסום':F.pub.length,'משפחת תבנית':F.fam.length,'נושא / תחום':F.dom.length,'סוג תמונה':F.img.length,'תאריך יצירה':F.when?1:0};
+ body.querySelectorAll(':scope>section').forEach(s=>{const h=s.querySelector(':scope>h3');if(!h)return;const key=(h.firstChild&&h.firstChild.textContent||h.textContent).trim();
+  const n=/סדרה/.test(key)?F.ser.length:(act[key]||0);const open=OPEN.has(key)?OPEN.get(key):n>0;
+  const d=document.createElement('details');d.dataset.v174k=key;if(open)d.open=true;const sm=document.createElement('summary');sm.appendChild(h);
+  if(n){const b=document.createElement('b');b.className='v174sn';b.textContent=n;b.setAttribute('aria-label',n+' נבחרו');sm.appendChild(b)}
+  sm.insertAdjacentHTML('beforeend',`<span class="v174sc" aria-hidden="true">${IC.chev}</span>`);
+  d.appendChild(sm);[...s.childNodes].forEach(n2=>d.appendChild(n2));s.appendChild(d)});
+ return t.innerHTML}catch(e){console.warn('v174 sheet',e);return html}};
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.v174k)OPEN.set(d.dataset.v174k,d.open)},true);
+
+/* ---------------- one bottom sheet, same look as v172 ---------------- */
+function sheet(title,sub,items){const old=document.getElementById('v172sheet');if(old)old.remove();const back=document.activeElement;
+ const w=document.createElement('div');w.id='v172sheet';w.className='v174sheet';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label',title);
+ w.innerHTML=`<div class="v172bg" data-v172x="1"></div><div class="v172pan"><div class="v172grip" aria-hidden="true"></div><div class="v172h"><div><b>${H(title)}</b>${sub?`<span>${H(sub)}</span>`:''}</div><button type="button" class="v172x" data-v172x="1" aria-label="סגירה">${IC.x}</button></div><div class="v172l"></div></div>`;
+ const l=w.querySelector('.v172l');
+ items.forEach(it=>{const b=document.createElement('button');b.type='button';b.className='v172i'+(it.danger?' danger':'');b.disabled=!!it.disabled;
+  b.innerHTML=`<span class="v172ic" aria-hidden="true">${it.icon||''}</span><span class="v172t">${H(it.label)}</span>`;
+  b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
+   if(it.confirm&&b.dataset.ok!=='1'){b.dataset.ok='1';b.classList.add('arm');b.querySelector('.v172t').textContent=it.confirm;return}
+   w.remove();try{back&&back.isConnected&&back.focus({preventScroll:true})}catch(x){}setTimeout(()=>{try{it.run()}catch(x){console.error('v174',x)}},0)});
+  l.appendChild(b)});
+ document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add('in'));setTimeout(()=>{const f=l.querySelector('button:not(:disabled)');f&&f.focus({preventScroll:true})},60)}
+
+/* ---------------- the selection bar ---------------- */
+const hidden=a=>document.querySelector(`.v170 .ga-selbar [data-ga="${a}"]`);
+function clickHidden(a){const b=hidden(a);if(!b){toast&&toast('הפעולה לא זמינה כרגע');return false}b.click();return true}
+function after(){setTimeout(()=>{if(!selIds().length)setMode(false);else sync()},80)}
+function openSched(){const n=selIds().length;if(!n)return;
+ sheet('תזמון',n===1?'פוסט אחד נבחר':`${n} פוסטים נבחרו`,[
+  {icon:IC.slots,label:'במשבצות הפנויות הקרובות',run:()=>{clickHidden('schedsel');after()}},
+  {icon:IC.cal,label:'ליום שאבחר',run:()=>{clickHidden('cal');after()}}])}
+function openMore(){const n=selIds().length;const shown=Math.min((V.last()||[]).length,GA.lim||60);
+ sheet('עוד פעולות',n?`${n} נבחרו`:'',[
+  {icon:IC.all,label:`בחר הכל (${shown.toLocaleString('he-IL')} המוצגים)`,run:()=>{(V.last()||[]).slice(0,GA.lim||60).forEach(x=>GA.sel.add(x.p.id));markCards();sync()}},
+  {icon:IC.wand,label:'תיקון לנבחרים',disabled:!n,run:()=>{clickHidden('fixsel')}},
+  {icon:IC.trash,label:n>1?`מחיקת ${n} פוסטים`:'מחיקת הפוסט',danger:true,disabled:!n,confirm:'לחצו שוב כדי למחוק',run:()=>{const b=hidden('delsel');if(!b)return;b.dataset.ok='1';b.click();after()}}])}
+function bar(){let b=document.getElementById('v174bar');if(b)return b;b=document.createElement('div');b.id='v174bar';b.setAttribute('role','region');b.setAttribute('aria-label','פוסטים שנבחרו');
+ b.innerHTML=`<div class="v174row"><button type="button" class="v174x" data-v174="selx" aria-label="יציאה ממצב בחירה">${IC.x}</button><b class="v174n" aria-live="polite"></b><span class="v170sp"></span>
+ <button type="button" class="v174pri" data-v174="sched">${IC.clock}<span>תזמון</span></button><button type="button" class="v174more" data-v174="more" aria-label="עוד פעולות" aria-haspopup="dialog">${IC.more}</button></div>
+ <div class="v174hint" hidden><span>לחיצה ארוכה על פוסט פותחת פעולות מהירות</span><button type="button" class="v174hx" data-v174="hintx" aria-label="הסתרת הטיפ">${IC.x}</button></div>`;
+ document.body.appendChild(b);return b}
+function markCards(){const s=GA.sel;document.querySelectorAll('.v170 .ga-card[data-gaid]').forEach(c=>{const on=s.has(c.dataset.gaid);c.classList.toggle('sel',on);const k=c.querySelector('.ga-chk');if(k){k.setAttribute('aria-pressed',String(on));k.setAttribute('aria-label',on?'הסרה מהבחירה':'בחירה')}})}
+function sync(){const g=typeof APP!=='undefined'&&APP.view==='gallery';const n=g?selIds().length:0;if(g&&n&&!SEL.on)SEL.on=true;
+ const on=g&&SEL.on;document.body.classList.toggle('v174sel',on);
+ document.querySelectorAll('.v170').forEach(r=>r.classList.toggle('v174selon',on));
+ document.querySelectorAll('[data-v174="selmode"]').forEach(b=>{b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+ const b=on?bar():document.getElementById('v174bar');if(!b)return;b.classList.toggle('on',on);b.hidden=!on;if(!on)return;
+ const nav=document.getElementById('v99nav');let bot=18;if(nav){const r=nav.getBoundingClientRect();if(r.height&&getComputedStyle(nav).display!=='none'&&r.top<innerHeight)bot=Math.round(innerHeight-r.top)+10}const sn=document.getElementById('v171snack');if(sn){const r=sn.getBoundingClientRect();const cs=getComputedStyle(sn);if(r.height&&cs.display!=='none'&&cs.visibility!=='hidden'&&+cs.opacity>0&&r.top<innerHeight)bot=Math.max(bot,Math.round(innerHeight-r.top)+8)}b.style.bottom=bot+'px';
+ b.querySelector('.v174n').textContent=n?(n===1?'פוסט אחד נבחר':`${n.toLocaleString('he-IL')} נבחרו`):'בחרו פוסטים';
+ const pri=b.querySelector('[data-v174="sched"]');pri.disabled=!n;
+ const hint=b.querySelector('.v174hint');hint.hidden=!(PH()&&lsG('v174_hint')!=='1')}
+function setMode(on){SEL.on=!!on;if(!on){try{GA.sel.clear()}catch(e){}markCards()}sync()}
+
+/* ---------------- clicks ---------------- */
+// a long press opens the v172 sheet while the finger is still down; the lift that follows must not land on the sheet's backdrop and close it
+let downAt=0,sheetAt=0;
+['pointerdown','keydown'].forEach(t=>window.addEventListener(t,()=>{downAt=Date.now()},true));
+new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.id==='v172sheet')sheetAt=Date.now()}).observe(document.body,{childList:true});
+window.addEventListener('click',e=>{const t=e.target;if(sheetAt>downAt&&e.detail>0&&e.pointerType!=='mouse'&&t&&t.closest&&t.closest('#v172sheet')&&document.getElementById('v172sheet')){e.preventDefault();e.stopPropagation();downAt=Date.now()}},true);
+window.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;
+ const b=t.closest('[data-v174]');
+ if(b){const a=b.dataset.v174;e.preventDefault();e.stopPropagation();
+  if(a==='selmode')setMode(!SEL.on);
+  else if(a==='selx')setMode(false);
+  else if(a==='sched')openSched();
+  else if(a==='more')openMore();
+  else if(a==='hintx'){lsS('v174_hint','1');sync()}
+  else if(a==='pre')setPre(b.dataset.k);
+  return}
+ // in selection mode a tap on a post selects it instead of opening the big viewer
+ if(SEL.on&&typeof APP!=='undefined'&&APP.view==='gallery'&&!document.getElementById('v172sheet')){const c=t.closest('.v170 .ga-card[data-gaid]');
+  if(c&&!t.closest('.ga-acts,.ga-chk,[data-pe],[data-pe-img]')){e.preventDefault();e.stopPropagation();const id=c.dataset.gaid;if(GA.sel.has(id))GA.sel.delete(id);else GA.sel.add(id);markCards();sync();return}}
+ // clearing the filters also clears status, score and publish date
+ const v=t.closest('[data-v170="clear"],[data-v170="clearp"]');if(v){F.st=[];F.sc=[];F.pub=[]}
+},true);
+window.addEventListener('click',()=>{setTimeout(sync,0)});
+window.addEventListener('change',e=>{const t=e.target;if(!t||!t.matches)return;
+ if(t.matches('[data-v174qv]')){e.stopPropagation();setPre(t.value);setTimeout(()=>{const n=document.querySelector('[data-v174qv]');n&&n.focus()},0);return}
+ if(t.matches('[data-v170s]')&&/^size:/.test(t.value)){e.stopImmediatePropagation();e.stopPropagation();GA.f.size=t.value.slice(5);try{gaSaveF()}catch(x){}t.value=F.sort;GA.lim=60;V.fastPaint();setTimeout(()=>{const s=document.querySelector('[data-v170s]');s&&s.focus()},0)}},true);
+window.addEventListener('keydown',e=>{if(e.key!=='Escape'||!SEL.on)return;if(document.querySelector('#v172sheet,#v170sheet,#ga-lb,#v157,#px-sheet,.v170ps')||document.body.classList.contains('pe-open'))return;
+ const a=document.activeElement;if(a&&a.matches&&a.matches('input,textarea,select'))return;e.preventDefault();setMode(false)},true);
+
+/* ---------------- fade masks on rows that scroll sideways ---------------- */
+function fades(){document.querySelectorAll('.v170 .v170qv,.v170 .v170pj,.v170 .v174pills').forEach(r=>{const ov=r.scrollWidth>r.clientWidth+1;const sl=Math.abs(r.scrollLeft);
+ r.classList.toggle('v174ov',ov);r.style.setProperty('--v174fs',ov&&sl>2?'28px':'0px');r.style.setProperty('--v174fe',ov&&sl+r.clientWidth<r.scrollWidth-2?'36px':'0px')})}
+document.addEventListener('scroll',e=>{const t=e.target;if(t&&t.classList&&(t.classList.contains('v170qv')||t.classList.contains('v170pj')||t.classList.contains('v174pills')))fades()},true);
+addEventListener('resize',()=>{try{fades();sync()}catch(e){}},{passive:true});
+
+/* ---------------- phones: the notice line moves into the "פעולות" sheet ---------------- */
+function noteToActs(){const act=document.getElementById('vact');if(!act)return;const want=PH()&&APP.view==='gallery';
+ const n=document.getElementById('v170note');const items=[];
+ if(want&&n&&!n.hidden)n.querySelectorAll('button[data-v63],button[data-v110]').forEach(b=>{const s=b.previousElementSibling;items.push([b.dataset.v63?'v63':'v110',b.dataset.v63||b.dataset.v110,(s&&s.tagName==='SPAN'?s.textContent.trim()+' · ':'')+b.textContent.trim()])});
+ const key=items.map(i=>i[2]).join('|');if(act.dataset.v174n===key&&act.querySelectorAll('.v174nb').length===items.length)return;act.dataset.v174n=key;
+ act.querySelectorAll('.v174nb').forEach(b=>b.remove());
+ items.forEach(([d,v,l])=>{const b=document.createElement('button');b.type='button';b.className='ibtn v174nb';b.dataset[d]=v;b.innerHTML=(d==='v63'?IC.wand:svg('<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>'))+H(l);act.appendChild(b)})}
+
+render=(f=>function(){const r=f.apply(this,arguments);try{if(APP.view!=='gallery'){if(SEL.on){SEL.on=false}}sync();fades();noteToActs()}catch(e){console.warn('v174',e)}return r})(render);
+setInterval(()=>{try{if(APP.view==='gallery'){noteToActs();fades()}}catch(e){}},3000);
+// the undo snackbar can appear under the bar at any moment: keep the bar above it
+setInterval(()=>{try{if(SEL.on)sync()}catch(e){}},700);
+new MutationObserver(()=>{try{if(APP.view==='gallery'){fades();if(SEL.on)document.querySelectorAll('.v170').forEach(r=>r.classList.add('v174selon'))}}catch(e){}}).observe(document.getElementById('appviews')||document.body,{childList:true});
+window.__v174={selMode:setMode,sync,SEL,preCounts,curPre,setPre,stOk,scOf,pubOf,gOf};
+})();
+
+// ================= V175 · photos you can tell apart and choose fast: "חדש" means added in the last 7 days or since your last visit,
+//                   a date on every photo, date and "העלאות שלי" filters that combine with the views, weeks as groups, a one row
+//                   selection bar, "פוסט חדש מהתמונה" in the photo sheet; the editor's image tab opens on the photo grid
+//                   (search, "אחרונות · הפרויקט של הפוסט · הכל", newest first), filters behind "סינון", crop folded away =================
+(()=>{
+if(window.__v175)return;window.__v175={};
+const DAY=864e5,WEEK=7*DAY;
+const H=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lsG=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+const lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const say=m=>{try{toast(m)}catch(e){}};
+const SV=(d,w)=>`<svg width="${w||18}" height="${w||18}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const IC={search:SV('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),filter:SV('<path d="M4 6h16M7 12h10M10 18h4"/>'),
+ expand:SV('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),plus:SV('<path d="M12 5v14M5 12h14"/>'),x:SV('<path d="M6 6l12 12M18 6 6 18"/>',16),
+ dots:SV('<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',20),post:SV('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>'),
+ swap:SV('<path d="M4 7h13l-3-3M20 17H7l3 3"/>'),trash:SV('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),check:SV('<path d="m5 12 5 5 9-10"/>'),proj:SV('<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>')};
+
+// ---------- 1. what "new" means: added in the last 7 days or since the last visit to Photos, whichever is more recent ----------
+let SEEN=+lsG('v175_seen',0)||0;
+function markSeen(){SEEN=Date.now();lsS('v175_seen',SEEN)}
+const cutoff=()=>Math.max(Date.now()-WEEK,SEEN);
+const isNewT=t=>!!t&&t>cutoff();
+const atIt=it=>{const t=Date.parse((it&&it.at)||'');return isNaN(t)?0:t};
+function atK(k){if(!k||!String(k).startsWith('u_'))return 0;let m=null;try{m=(KC.up||{})[k.slice(2)]}catch(e){}const t=Date.parse((m&&m.addedAt)||'');return isNaN(t)?0:t}
+window.__v175new=it=>isNewT(atIt(it));
+const pad=n=>String(n).padStart(2,'0');
+function sod(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()}
+function dm(t){const d=new Date(t);return pad(d.getDate())+'.'+pad(d.getMonth()+1)+(d.getFullYear()!==new Date().getFullYear()?'.'+String(d.getFullYear()).slice(2):'')}
+function rel(t){if(!t)return '';const n=Math.round((sod(Date.now())-sod(t))/DAY);if(n<=0)return 'היום';if(n===1)return 'אתמול';if(n===2)return 'לפני יומיים';if(n<7)return `לפני ${n} ימים`;return dm(t)}
+function wk(t){const d=new Date(sod(t));d.setDate(d.getDate()-d.getDay());return d.getTime()}
+function wkLabel(w){const n=Math.round((wk(Date.now())-w)/WEEK);return n<=0?'השבוע':n===1?'שבוע שעבר':'השבוע של '+dm(w)}
+// leaving Photos counts as a visit (and so does closing the page while on it)
+let PREV=null;
+render=(f=>function(){let v='';try{v=APP.view}catch(e){}if(PREV==='photos'&&v!=='photos')markSeen();PREV=v;const r=f.apply(this,arguments);try{if(v==='photos')afterPhotos()}catch(e){console.error('v175',e)}return r})(render);
+addEventListener('pagehide',()=>{try{if(APP.view==='photos')markSeen()}catch(e){}});
+
+// ---------- small bottom sheet (phones) / dialog (desktop) ----------
+let back=null;
+function closeSheet(){const w=document.getElementById('v175sh');if(!w)return;w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null}
+function sheet(title,sub,body){closeSheet();back=document.activeElement;const w=document.createElement('div');w.id='v175sh';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label',title);
+ w.innerHTML=`<div class="v175bg" data-v175x="1"></div><div class="v175pan"><div class="v175grip" aria-hidden="true"></div><div class="v175h"><div><b>${H(title)}</b>${sub?`<span>${H(sub)}</span>`:''}</div><button type="button" class="v175x" data-v175x="1" aria-label="סגירה">${IC.x}</button></div><div class="v175l">${body}</div></div>`;
+ document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add('in'));setTimeout(()=>{const f=w.querySelector('.v175l button:not(:disabled),.v175l select');f&&f.focus({preventScroll:true})},60);return w}
+function arm(b,label){if(b.dataset.arm==='1')return true;b.dataset.arm='1';b.classList.add('arm');const t=b.querySelector('.v175tt')||b;b._t0=t.textContent;t.textContent=label;clearTimeout(b._at);b._at=setTimeout(()=>{if(!b.isConnected)return;b.dataset.arm='';b.classList.remove('arm');t.textContent=b._t0},4000);return false}
+addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-v175x]')){e.preventDefault();e.stopPropagation();closeSheet()}},true);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('v175sh')){e.preventDefault();e.stopImmediatePropagation();closeSheet()}},true);
+
+// ---------- 2. the Photos screen ----------
+const PV2=[['new','חדשות'],['ill','איורים'],['render','הדמיות'],['field','שטח ורחפן'],['unused','לא בשימוש'],['heavy','בשימוש רב'],['all','הכל']];
+const DV=[['today','היום'],['7','7 ימים'],['30','30 ימים'],['all','הכל']];
+const dOk=(t,d)=>!d||d==='all'?true:!t?false:d==='today'?t>=sod(Date.now()):t>=Date.now()-(+d)*DAY;
+let PPN=Math.max(1,Math.min(4,+lsG('v175_ppn',2)||2));
+function ptile(x,S,X){const it=x.it,n=x.n,t=x.t;const sel=S.sel.has(it.k);const nw=isNewT(t);const pj=it.proj?X.projLabel(it.proj):'';
+ return `<button type="button" class="v170t v175pt${sel?' on':''}${S.selMode?' v170pick':''}" data-v144="${S.selMode?'pick':'open'}" data-k="${H(it.k)}" aria-label="${H(it.name+(nw?', חדשה':'')+(t?', נוספה '+rel(t):'')+(n?`, בשימוש ב-${n} פוסטים`:', לא בשימוש'))}"${S.selMode?` aria-pressed="${sel}"`:''}>
+ <span class="v170im"><img src="${H(it.url)}" alt="" loading="lazy" decoding="async" data-v148k="${H(it.k)}">${nw?'<em class="v175new">חדש</em>':''}${S.selMode?`<i class="v148box" aria-hidden="true">${sel?'✓':''}</i>`:''}</span>
+ <span class="v175d${t?'':' z'}">${t?rel(t):'בלי תאריך'}</span><span class="v170pm">${H(X.kindLabel(it))}${pj?` · ${H(pj)}`:''}</span><span class="v170pu${n?'':' z'}${n>=10?' hi':''}">${n?`בשימוש ב-${n} פוסטים`:'לא בשימוש'}</span></button>`}
+function selBar(S){const n=S.sel.size;
+ return `<div class="v148bar v175sb" role="region" aria-label="פעולות על הבחירה"><b aria-live="polite">${n} נבחרו</b>
+  <select data-v152="n" hidden aria-hidden="true" tabindex="-1">${[1,2,3,4].map(i=>`<option value="${i}"${i===PPN?' selected':''}>${i}</option>`).join('')}</select>
+  <button type="button" class="v175sbp v152gen" data-v152="gen" ${n?'':'disabled'}>יצירת פוסטים</button>
+  <button type="button" class="v175ib" data-v175p="selmore" aria-label="עוד פעולות על הבחירה" title="עוד פעולות">${IC.dots}</button>
+  <button type="button" class="v175ib" data-v144="selmode" aria-label="סיום בחירה" title="סיום בחירה">${IC.x}</button></div>`}
+function view(S,keep){const X=window.__v170x(),PF=__v170.PF;
+ if(PF.v==='up'){PF.v='new';PF.mine=true;PF.d='all';X.saveP()}
+ if(!PV2.some(v=>v[0]===PF.v))PF.v='all';if(!DV.some(v=>v[0]===PF.d))PF.d='all';
+ const inv=__v144.inventory(),um=X.useMap(),q=X.norm2(PF.q);
+ const all=inv.map(it=>({it,n:(um.get(it.k)||[]).length,t:atIt(it)}));
+ const pre=all.filter(({it,t})=>(!PF.proj||(PF.proj==='none'?!it.proj:it.proj===PF.proj))&&(!PF.mine||it.src==='up')&&dOk(t,PF.d)&&(!q||X.norm2(it.name+' '+X.projLabel(it.proj)+' '+(X.KINDN[it.kind]||'')+' '+it.from+' '+((it.u&&it.u.tags)||'')).includes(q)));
+ const ok=(x,v)=>v==='new'?isNewT(x.t):X.pvOk(x.it,v,x.n);
+ const cnt={};PV2.forEach(([k])=>cnt[k]=pre.filter(x=>ok(x,k)).length);
+ const l=pre.filter(x=>ok(x,PF.v));
+ if(PF.sort==='use')l.sort((a,b)=>b.n-a.n||b.t-a.t);else if(PF.sort==='name')l.sort((a,b)=>String(a.it.name).localeCompare(String(b.it.name),'he'));else l.sort((a,b)=>b.t-a.t||b.n-a.n);
+ const pc={};inv.forEach(it=>{const k=it.proj||'none';pc[k]=(pc[k]||0)+1});
+ let PJ={};try{PJ=PROJ_HE}catch(e){}const projs=Object.keys(PJ).filter(k=>pc[k]);
+ const LIM=S._lim||120;const show=l.slice(0,LIM);let body='';
+ if(PF.sort==='new'&&l.length){const key=x=>x.t?wk(x.t):0;const gc=new Map();l.forEach(x=>{const g=key(x);gc.set(g,(gc.get(g)||0)+1)});let cur=null,open=false;
+  show.forEach(x=>{const g=key(x);if(g!==cur){if(open)body+='</div>';cur=g;body+=`<h3 class="v170gh"><span>${g?wkLabel(g):'בלי תאריך'}</span><i>${gc.get(g)}</i></h3><div class="v144grid v170grid">`;open=true}body+=ptile(x,S,X)});if(open)body+='</div>'}
+ else if(l.length)body=`<div class="v144grid v170grid">${show.map(x=>ptile(x,S,X)).join('')}</div>`;
+ const filtered=PF.v!=='all'||PF.proj||PF.q||PF.d!=='all'||PF.mine;
+ if(!l.length)body=`<div class="v170empty"><b>${PF.q?'לא נמצאו תמונות':PF.v==='new'?'אין תמונות חדשות':'אין כאן תמונות'}</b><span>${PF.v==='new'?(SEEN>Date.now()-WEEK?'לא נוספו תמונות מאז הביקור הקודם.':'לא נוספו תמונות ב-7 הימים האחרונים.'):'נסו תצוגה אחרת, תאריך אחר או פרויקט אחר.'}</span>${filtered?'<button type="button" class="v170btn" data-v175p="reset">לכל התמונות</button>':''}</div>`;
+ let brk=0,miss=0,hid=0;try{brk=document.querySelectorAll('.v170t.v170bad').length}catch(e){}try{miss=__v144.missing(inv).filter(c=>c.l).length}catch(e){}try{hid=__v148.HID.size}catch(e){}
+ const specials=[miss?['missing',`${miss} באתר ועוד לא כאן`]:null,brk?['broken',`${brk} לא נטענות`]:null,['hidden',`הוסרו (${hid})`]].filter(Boolean);
+ const projSel=cls=>`<label class="v170sel ${cls}"><span class="v170sr">פרויקט</span><select data-v170pp aria-label="פרויקט"><option value="">כל הפרויקטים</option>${projs.map(k=>`<option value="${k}"${PF.proj===k?' selected':''}>${H(X.projLabel(k))} (${pc[k]})</option>`).join('')}${pc.none?`<option value="none"${PF.proj==='none'?' selected':''}>בלי פרויקט (${pc.none})</option>`:''}</select></label>`;
+ const hint=PF.v==='new'?(SEEN>Date.now()-WEEK?'נוספו מאז הביקור הקודם':'נוספו ב-7 הימים האחרונים'):'';
+ return `<div class="v170p v175p${S.selMode?' v148selon':''}">
+ <div class="v170bar v170pbar"><label class="v170q">${X.IC.search}<input type="search" data-v170pq value="${H(PF.q)}" placeholder="חיפוש תמונה: שם, פרויקט, סוג" aria-label="חיפוש תמונות" autocomplete="off"></label>
+  ${projSel('v175dk')}
+  <label class="v170fbtn v170upl" title="העלאת תמונות, אפשר הרבה בבת אחת">${X.IC.up}<span>העלאה</span><input type="file" accept="image/*" multiple data-v144up hidden></label></div>
+ <div class="v175f">
+  <div class="v175qvw v175dk"><div class="v170qv" role="tablist" aria-label="תצוגות">${PV2.map(([k,t2])=>`<button type="button" role="tab" data-v170p="v" data-k="${k}" aria-selected="${PF.v===k}">${t2}<i>${cnt[k]}</i></button>`).join('')}</div></div>
+  <label class="v170sel v175ph v175vs"><span class="v170sr">תצוגה</span><select class="v175vsel" aria-label="תצוגה">${PV2.map(([k,t2])=>`<option value="${k}"${PF.v===k?' selected':''}>${t2} (${cnt[k]})</option>`).join('')}<optgroup label="עוד">${specials.map(([k,t2])=>`<option value="src:${k}">${H(t2)}</option>`).join('')}</optgroup></select></label>
+  ${projSel('v175ph')}
+  <div class="v175dr"><div class="v175seg" role="group" aria-label="מתי נוספו">${DV.map(([k,t2])=>`<button type="button" data-v175p="d" data-k="${k}" aria-pressed="${PF.d===k}">${t2}</button>`).join('')}</div>
+   <button type="button" class="v175tg" data-v175p="mine" aria-pressed="${!!PF.mine}"><span class="v175ck" aria-hidden="true">${PF.mine?IC.check:''}</span>העלאות שלי</button></div>
+ </div>
+ <div class="v170res"><b class="v170cnt" aria-live="polite">${l.length} תמונות</b>${hint?`<span class="v170hint">${hint}</span>`:''}<button type="button" class="v170link" data-v144="selmode" aria-pressed="${S.selMode}">${S.selMode?'סיום בחירה':'בחירת כמה תמונות'}</button><span class="v170sp"></span>${specials.map(([k,t2])=>`<button type="button" class="v170link v175dk" data-v144="src" data-k="${k}">${H(t2)}</button>`).join('')}
+  <label class="v170sel v175so"><span class="v170sr">מיון</span><select data-v170ps aria-label="מיון">${X.PSORT.map(([k,t2])=>`<option value="${k}"${PF.sort===k?' selected':''}>${t2}</option>`).join('')}</select></label></div>
+ ${S.busy?`<div class="v144busy" role="status">${H(S.busy)}</div>`:''}
+ ${body}
+ ${l.length>LIM?`<div class="ga-more"><button type="button" class="px-btn" data-v170p="more">הצג עוד ${Math.min(120,l.length-LIM)} מתוך ${l.length-LIM}</button></div>`:''}</div>${S.selMode?selBar(S):''}`}
+// the photo sheet: the first action makes a post from this photo
+let RET=null;// the post that was open when "ניהול הגלריה" took you here
+function retPost(){if(!RET)return null;try{return AG.posts.find(p=>p.id===RET.id)||null}catch(e){return null}}
+function canSwap(){try{if(typeof PE!=='undefined'&&PE.p)return true}catch(e){}return !!retPost()}
+function psheet(S){const X=window.__v170x();let h=X.psheet(S);if(!h)return h;const k=S.lb;const it=__v144.inventory().find(i=>i.k===k);if(!it)return h;const n=(X.useMap().get(k)||[]).length;
+ const t=atIt(it);if(t)h=h.replace(/ · נוספה [0-9.]+/,` · נוספה ${H(rel(t))}${/^\d/.test(rel(t))?'':' ('+dm(t)+')'}`);
+ h=h.replace('אפשר לסמן אותה במצב "בחירה" וליצור ממנה פוסטים עם הסוכן.','אפשר ליצור ממנה פוסט חדש עם הכפתור למטה.');
+ const a=h.indexOf('<footer>'),b=h.lastIndexOf('</footer>');if(a<0||b<0)return h;
+ const foot=`<footer class="v175pf"><button type="button" class="v170btn pri" data-v175p="gen1" data-k="${H(k)}">${IC.post}<span>פוסט חדש מהתמונה</span></button>${canSwap()?`<button type="button" class="v170btn" data-v175p="swap" data-k="${H(k)}">${IC.swap}<span>החלפה בפוסט הפתוח</span></button>`:''}
+  <div class="v175pf2"><a class="v170btn ghost" href="${H(it.url)}" target="_blank" rel="noopener">פתיחה בגודל מלא</a>${it.u&&!n?`<button type="button" class="v170btn ghost v170danger" data-v144="del" data-id="${H(it.id)}">מחיקה לצמיתות</button>`:''}<button type="button" class="v170btn ghost v170danger" data-v175p="hide1" data-k="${H(k)}"><span class="v175tt">הסרה מהגלריה</span></button></div></footer>`;
+ return h.slice(0,a)+foot+h.slice(b+9)}
+window.__v175ph={view,sheet:psheet};
+addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-v148g]')){try{if(typeof PE!=='undefined'&&PE.p)RET={id:PE.p.id,slot:PE.slot||0}}catch(x){}}},true);
+async function swapInto(k){try{if(PE.p){pePick(k);say('התמונה הוחלפה בפוסט הפתוח');return}const p=retPost();if(!p)return;const slot=RET.slot;RET=null;PE.tab='image';peOpen(p);PE.slot=slot;pePick(k);try{peRender()}catch(e){}say('התמונה הוחלפה. בדקו ושמרו את הפוסט')}catch(e){console.error('v175 swap',e)}}
+function selMore(){const S=__v144.S;let PJ={};try{PJ=PROJ_HE}catch(e){}const n=S.sel.size;
+ sheet(n+' תמונות נבחרו','',`<button type="button" class="v175i" data-v144="selall"><span class="v175ic">${IC.check}</span><span class="v175tt">בחירת כל המוצגות</span></button>
+  <div class="v175grp"><span class="v175gl" id="v175ppl">פוסטים לכל תמונה</span><div class="v175seg" role="group" aria-labelledby="v175ppl">${[1,2,3,4].map(i=>`<button type="button" data-v175p="ppn" data-k="${i}" aria-pressed="${i===PPN}">${i}</button>`).join('')}</div></div>
+  <label class="v175grp"><span class="v175gl">שיוך לפרויקט</span><select data-v144="selproj" ${n?'':'disabled'}><option value="">בחירת פרויקט</option>${Object.entries(PJ).map(([k,v])=>`<option value="${k}">${H(v)}</option>`).join('')}</select></label>
+  <button type="button" class="v175i danger" data-v175p="hidesel" ${n?'':'disabled'}><span class="v175ic">${IC.trash}</span><span class="v175tt">הסרת ${n} מהגלריה</span></button>`)}
+addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v175p]');if(!b)return;let S,PF,X;try{S=__v144.S;PF=__v170.PF;X=__v170x()}catch(x){return}const a=b.dataset.v175p,k=b.dataset.k;
+ if(a==='d'){PF.d=k;S._lim=120;X.saveP();render();top0()}
+ else if(a==='mine'){PF.mine=!PF.mine;S._lim=120;X.saveP();render();top0()}
+ else if(a==='reset'){Object.assign(PF,{v:'all',proj:'',q:'',d:'all',mine:false});X.saveP();render();top0()}
+ else if(a==='selmore')selMore();
+ else if(a==='ppn'){PPN=+k;lsS('v175_ppn',PPN);document.querySelectorAll('.v175sb [data-v152="n"]').forEach(s=>s.value=String(PPN));b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))}
+ else if(a==='hidesel'){if(!arm(b,'לחצו שוב להסרה'))return;const ks=[...S.sel];closeSheet();S.selMode=false;try{__v148.hide(ks)}catch(x){}}
+ else if(a==='gen1'){S.lb=null;render();try{__v152.genFromPhotos([k],1)}catch(x){say('יצירת פוסט לא זמינה כרגע')}}
+ else if(a==='swap'){S.lb=null;render();swapInto(k)}
+ else if(a==='hide1'){if(!arm(b,'לחצו שוב להסרה'))return;S.lb=null;try{__v148.hide([k])}catch(x){}}
+ else return;e.preventDefault()});
+// "בחירת כל המוצגות" and the project choice in the sheet go through the gallery's own handlers, then the sheet closes
+addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#v175sh [data-v144="selall"]'))setTimeout(closeSheet,0)});
+addEventListener('change',e=>{const t=e.target;if(!t||!t.matches)return;
+ if(t.matches('#v175sh [data-v144="selproj"]')&&t.value)setTimeout(closeSheet,0);
+ else if(t.matches('.v175vsel')){const S=__v144.S,PF=__v170.PF;const v=t.value;if(v.startsWith('src:')){S.src=v.slice(4);S.lb=null;render();return}PF.v=v;if(v==='new')PF.sort='new';S._lim=120;__v170x().saveP();render();top0()}});
+function top0(){const am=document.getElementById('appmain');if(am&&am.scrollTop>0)am.scrollTop=0}
+function afterPhotos(){const p=document.querySelector('.v175p');if(!p)return;
+ // a short list (an empty view) never leaves the page scrolled past its own tools
+ const am=document.getElementById('appmain');if(am&&am.scrollTop>0&&!p.querySelector('.v170t'))am.scrollTop=0;
+ const w=p.querySelector('.v175qvw');if(!w)return;const q=w.firstElementChild;if(!q)return;
+ const upd=()=>{const over=q.scrollWidth>q.clientWidth+2;const x=Math.abs(q.scrollLeft);w.classList.toggle('ms',over&&x>2);w.classList.toggle('me',over&&x+q.clientWidth<q.scrollWidth-2)};upd();
+ if(!q._v175){q._v175=1;q.addEventListener('scroll',upd,{passive:true})}
+ const on=q.querySelector('[aria-selected="true"]');if(on&&q.scrollWidth>q.clientWidth){const r=on.getBoundingClientRect(),rq=q.getBoundingClientRect();if(r.left<rq.left||r.right>rq.right)on.scrollIntoView({block:'nearest',inline:'nearest'})}}
+
+// ---------- 3. the photo picker in the editor (image tab) and in the full screen library ----------
+const KIND={site:'צילום אתר',render:'הדמיה',interior:'פנים',exterior:'חוץ',aerial:'רחפן',drawing:'תוכנית',people:'אנשים',brand:'לוגו',atmo:'אווירה',detail:'פרט',finish:'בנוי',post:'פוסט',ad:'מודעה',topic:'תמונת נושא',env:'סביבה'};
+const PRJ=()=>{try{return PROJ_HE}catch(e){return {}}};
+function LS(){const L=__v115.state();if(!L.v175m)L.v175m=lsG('v175_pk','recent');if(!L.v175s)L.v175s='new';if(!L.v175n)L.v175n=24;return L}
+// the post's project as the posts screen sees it (its photos, then its series and headline), from the saved version so a pick does not move it
+function postProj(){try{const p=PE.p;if(p&&p.project&&p.project!=='general')return p.project;if(typeof gaProj==='function'){const g=gaProj(PE.orig||p);if(g&&g!=='general')return g}const sl=peSlots(p);const c=sl[PE.slot];const m=c&&metaOf(c.o.k);return (m&&m.p&&m.p!=='general')?m.p:''}catch(e){return ''}}
+function curKey(){try{const sl=peSlots(PE.p);const c=sl[PE.slot];return c&&c.o&&c.o.k}catch(e){return ''}}
+function useU(){try{return usage().u||{}}catch(e){return {}}}
+function keysFor(L,mode){const u=useU();let ks=__v115.filtered(L);const pj=postProj();
+ if(mode==='proj')ks=pj?ks.filter(k=>(metaOf(k).p||'general')===pj):[];
+ const T=new Map(ks.map(k=>[k,atK(k)]));
+ if(mode==='recent')return ks.filter(k=>T.get(k)).sort((a,b)=>T.get(b)-T.get(a)).slice(0,60);
+ if(L.v175s==='least')ks.sort((a,b)=>(u[a]||0)-(u[b]||0)||T.get(b)-T.get(a));else ks.sort((a,b)=>T.get(b)-T.get(a)||(u[a]||0)-(u[b]||0));return ks}
+function nFilt(L){return (L.src!=='all')+(L.kind!=='all')+(L.proj!=='all')+(L.v175s!=='new')+(document.body.classList.contains('v116-unused')?1:0)}
+function etile(k,u,cur){let m={};try{m=metaOf(k)||{}}catch(e){}const t=atK(k);const nw=isNewT(t);const used=u[k]||0;const nm=(typeof LIB_NAMES!=='undefined'&&LIB_NAMES[k])||k;
+ const pj=m.p&&m.p!=='general'?(PRJ()[m.p]||''):'';const cap=[t?rel(t):'',pj||KIND[m.k]||''].filter(Boolean).join(' · ');
+ return `<button type="button" class="pe-li v115t v175t" data-pe-a="pick" data-k="${H(k)}" title="${H(nm)}" aria-label="${H('החלפה ל'+nm+(nw?', חדשה':'')+(used?'':', לא בשימוש'))}"${cur===k?' aria-pressed="true"':''}><span class="v175im"><img loading="lazy" decoding="async" alt="" src="${H(PHOTO_LIB[k])}">${nw?'<em class="v175b nw">חדש</em>':used?'':'<em class="v175b z">לא בשימוש</em>'}</span><span class="v175c">${H(cap)}</span></button>`}
+function gridHtml(L,big){const mode=L.v175m;const ks=keysFor(L,mode);const u=useU();const cur=curKey();const lim=big?Math.max(60,L.v175n):L.v175n;const show=ks.slice(0,lim);
+ if(!ks.length)return `<div class="v175empty"><b>${mode==='proj'&&!postProj()?'לפוסט הזה אין פרויקט':'אין תמונות שמתאימות'}</b><button type="button" class="v175lk" data-v175e="reset">לכל התמונות</button></div>`;
+ return `<div class="pe-lib v115grid v175g${big?' big':''}">${show.map(k=>etile(k,u,cur)).join('')}</div>${ks.length>lim?`<button type="button" class="v175more" data-v175e="more">הצגת עוד ${Math.min(big?60:24,ks.length-lim)} מתוך ${ks.length-lim}</button>`:''}`}
+function headHtml(L,big){const pj=postProj();const n=nFilt(L);let cProj=0,cAll=0;try{const base=__v115.filtered(L);cAll=base.length;cProj=pj?base.filter(k=>(metaOf(k).p||'general')===pj).length:0}catch(e){}
+ return `<div class="v175pt"><label class="v175q">${IC.search}<input type="search" data-v115="q" value="${H(L.q||'')}" placeholder="חיפוש תמונה" aria-label="חיפוש תמונה" autocomplete="off"></label>
+  <button type="button" class="v175fb" data-v175e="filt" aria-expanded="${!!L.v175f}">${IC.filter}<span>סינון</span>${n?`<b>${n}</b>`:''}</button>
+  ${big?'':`<button type="button" class="v175ib2" data-v115="open" aria-label="הספרייה במסך מלא" title="הספרייה במסך מלא">${IC.expand}</button>`}
+  ${big?'':`<label class="v175ib2" title="העלאה לספרייה" aria-label="העלאה לספרייה">${IC.plus}<input type="file" accept="image/*" multiple data-v115up hidden></label>`}</div>
+ <div class="v175seg v175m" role="group" aria-label="אילו תמונות">${[['recent','אחרונות',''],['proj','הפרויקט של הפוסט',pj?cProj:''],['all','הכל',cAll]].map(([k,t,c])=>`<button type="button" data-v175e="mode" data-k="${k}" aria-pressed="${L.v175m===k}"${k==='proj'&&!pj?' disabled title="לפוסט הזה אין פרויקט"':''}${k==='proj'&&pj?` title="${H(PRJ()[pj]||pj)}"`:''}>${t}${c!==''?`<i>${c}</i>`:''}</button>`).join('')}</div>`}
+function sortHtml(L){return `<div class="v175grp"><span class="v175gl">סדר</span><div class="v175seg" role="group" aria-label="סדר">${[['new','החדשות קודם'],['least','הכי פחות בשימוש']].map(([k,t])=>`<button type="button" data-v175e="sort" data-k="${k}" aria-pressed="${L.v175s===k}">${t}</button>`).join('')}</div></div><p class="v175hint">לחיצה ארוכה על תמונה (או לחיצה ימנית) פותחת הסרה מהגלריה.</p>`}
+function hasCrop(){try{const sl=peSlots(PE.p);const c=sl[PE.slot];const r=c&&c.o&&c.o.r;return !!(r&&(Math.abs((r[2]??1)-1)>.01||Math.abs((r[3]??1)-1)>.01||Math.abs((r[4]??.5)-.5)>.01||Math.abs((r[5]??.5)-.5)>.01))}catch(e){return false}}
+function edTransform(){let root=null;try{if(!PE.p||PE.tab!=='image')return;root=document.getElementById('pe-root')}catch(e){return}if(!root)return;const body=root.querySelector('.pe-body');if(!body)return;
+ const sec=body.querySelector('.pe-sec.v115');if(!sec||sec.dataset.v175)return;const L=LS();
+ const slots=body.querySelector('.pe-slots');const slotSec=slots&&slots.closest('.pe-sec');const crop=slotSec&&slotSec.querySelector('.pe-crop');const tools=body.querySelector('.pe-sec.v45tools');
+ let nSlots=0;try{nSlots=peSlots(PE.p).length}catch(e){}
+ const pk=document.createElement('div');pk.className='pe-sec v175pk';pk.dataset.v175='1';
+ pk.innerHTML=`${nSlots>1?'<div class="v175sl"><span class="v175gl">איזו תמונה להחליף</span></div>':''}${headHtml(L,false)}<div class="v175fp"${L.v175f?'':' hidden'}></div><div class="v175gw">${gridHtml(L,false)}</div>`;
+ if(nSlots>1&&slots)pk.querySelector('.v175sl').appendChild(slots);
+ const fp=pk.querySelector('.v175fp');
+ const bar=sec.querySelector('.v115bar');if(bar){const q=bar.querySelector('[data-v115="q"]');if(q)q.remove();fp.appendChild(bar)}
+ sec.querySelectorAll('.v115chips').forEach(c=>fp.appendChild(c));
+ const up=sec.querySelector('.pe-uprow');if(up){up.querySelectorAll('[data-v115="open"]').forEach(x=>x.remove());up.querySelectorAll('input[data-v115up]').forEach(x=>{const l=x.closest('label');if(l)l.remove()});if(up.children.length)fp.appendChild(up)}
+ fp.insertAdjacentHTML('beforeend',sortHtml(L));
+ const cs=PE.lib.v175c&&PE.lib.v175c.id===PE.p.id?PE.lib.v175c.open:hasCrop();
+ let det=null;
+ if(crop||tools||(slotSec&&nSlots===1)){det=document.createElement('details');det.className='pe-sec v175crop';det.open=!!cs;det.innerHTML='<summary><b>מיקום וחיתוך</b><span>זום, מיקוד, היפוך והתאמה</span></summary><div class="v175cb"></div>';const cb=det.querySelector('.v175cb');
+  if(slotSec&&nSlots===1){const lab=slotSec.querySelector(':scope > .pe-l');if(lab)cb.appendChild(lab);if(slots)cb.appendChild(slots)}
+  if(crop)cb.appendChild(crop);if(tools){[...tools.childNodes].forEach(n=>cb.appendChild(n));tools.remove()}}
+ if(slotSec&&!slotSec.querySelector('.pe-slots,.pe-crop')&&!slotSec.classList.contains('v115'))slotSec.remove();
+ body.insertBefore(pk,body.firstChild);if(det)pk.after(det);sec.remove()}
+peRender=(f=>function(){const r=f.apply(this,arguments);try{edTransform()}catch(e){console.error('v175 editor',e)}return r})(peRender);
+addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details.v175crop')){try{PE.lib.v175c={id:PE.p.id,open:d.open}}catch(x){}}},true);
+// the full screen library: same head, filters folded, newest first with captions
+function libTransform(){const el=document.getElementById('v115lib');if(!el)return;const sh=el.querySelector('.v115sh');if(!sh||sh.dataset.v175)return;const f=sh.querySelector('.v115filters'),bd=sh.querySelector('.v115body');if(!f||!bd)return;sh.dataset.v175='1';const L=LS();
+ const wrap=document.createElement('div');wrap.className='v175fp';if(!L.v175f)wrap.hidden=true;[...f.childNodes].forEach(n=>wrap.appendChild(n));const q=wrap.querySelector('.v115bar [data-v115="q"]');if(q)q.remove();
+ f.classList.add('v175lf');f.innerHTML=headHtml(L,true);f.appendChild(wrap);wrap.insertAdjacentHTML('beforeend',sortHtml(L));bd.innerHTML=gridHtml(L,true)}
+new MutationObserver(()=>{const el=document.getElementById('v115lib');if(el)try{libTransform()}catch(e){console.error('v175 lib',e)}}).observe(document.body,{childList:true,subtree:true});
+function refreshPicker(){if(document.getElementById('v115lib')){try{__v115.renderLib()}catch(e){}}else{try{peRender()}catch(e){}}}
+addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v175e]');if(!b)return;e.preventDefault();e.stopPropagation();const L=LS();const a=b.dataset.v175e;
+ if(a==='mode'){L.v175m=b.dataset.k;L.v175n=24;lsS('v175_pk',L.v175m);refreshPicker()}
+ else if(a==='filt'){L.v175f=!L.v175f;const sc=b.closest('#v115lib,#pe-root');(sc||document).querySelectorAll('.v175fp').forEach(p=>p.hidden=!L.v175f);(sc||document).querySelectorAll('[data-v175e="filt"]').forEach(x=>x.setAttribute('aria-expanded',!!L.v175f))}
+ else if(a==='sort'){L.v175s=b.dataset.k;L.v175n=24;refreshPicker()}
+ else if(a==='more'){L.v175n=(b.closest('#v115lib')?Math.max(60,L.v175n):L.v175n)+(b.closest('#v115lib')?60:24);refreshPicker()}
+ else if(a==='reset'){L.src='all';L.kind='all';L.proj='all';L.q='';L.v175m='all';L.v175n=24;refreshPicker()}},true);
+// the filter chips of the library keep the panel open and start the grid from the top
+addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.v175fp [data-v115]');if(b)try{LS().v175n=24}catch(x){}},true);
+
+// long press (or right click) on a picker photo: remove it from the gallery, with a confirm
+let lpT=0,lpXY=null,lpFired=0;
+function tileSheet(k){const nm=(typeof LIB_NAMES!=='undefined'&&LIB_NAMES[k])||'תמונה';const t=atK(k);
+ sheet(nm,t?'נוספה '+rel(t):'',`<button type="button" class="v175i" data-v175t="pick" data-k="${H(k)}"><span class="v175ic">${IC.swap}</span><span class="v175tt">בחירה לפוסט</span></button><button type="button" class="v175i danger" data-v175t="hide" data-k="${H(k)}"><span class="v175ic">${IC.trash}</span><span class="v175tt">הסרה מהגלריה</span></button><p class="v175hint">התמונה תצא מהבחירה ומהגלריה. פוסטים שכבר משתמשים בה ממשיכים להציג אותה.</p>`)}
+addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('.v175g .v175t');if(!t||e.button>0)return;lpFired=0;lpXY=[e.clientX,e.clientY];clearTimeout(lpT);lpT=setTimeout(()=>{lpFired=Date.now();tileSheet(t.dataset.k)},550)},true);
+addEventListener('pointermove',e=>{if(lpXY&&Math.hypot(e.clientX-lpXY[0],e.clientY-lpXY[1])>10){clearTimeout(lpT);lpXY=null}},true);
+['pointerup','pointercancel','scroll'].forEach(n=>addEventListener(n,()=>{clearTimeout(lpT);lpXY=null},true));
+addEventListener('contextmenu',e=>{const t=e.target.closest&&e.target.closest('.v175g .v175t');if(!t)return;e.preventDefault();if(!document.getElementById('v175sh')){clearTimeout(lpT);lpFired=Date.now();tileSheet(t.dataset.k)}},true);
+addEventListener('click',e=>{if(lpFired&&Date.now()-lpFired<1500&&e.target.closest&&e.target.closest('.v175g .v175t')){e.preventDefault();e.stopImmediatePropagation();lpFired=0}},true);
+addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v175t]');if(!b)return;e.preventDefault();e.stopPropagation();const k=b.dataset.k;
+ if(b.dataset.v175t==='pick'){closeSheet();try{pePick(k)}catch(x){}const lb=document.getElementById('v115lib');if(lb)setTimeout(()=>{try{__v115.closeLib()}catch(x){}},60)}
+ else if(b.dataset.v175t==='hide'){if(!arm(b,'לחצו שוב להסרה'))return;closeSheet();try{__v148.hide([k])}catch(x){}}},true);
+
+Object.assign(window.__v175,{markSeen,isNewT,rel,atK,cutoff,get SEEN(){return SEEN},set SEEN(v){SEEN=+v||0},view,edTransform,libTransform});
+try{if(APP.view==='photos')render()}catch(e){}
+})();
+
+// ================= V176 · the shell, calmer and consistent: the undo pill never covers a sheet or a bar and fades 30 seconds
+//                   after the last action; the phone drawer gets a backdrop and a close button, one menu entry, nav counts
+//                   that match the pages, and the header search goes to the page search on Posts and Photos; the schedule
+//                   sheet lists real free slots as far ahead as the scheduler looks; calendar cards on touch show "מועד" and
+//                   "⋯" only; Ideas, Agent and the calendar drafts drawer point to the Posts page =================
+(()=>{
+if(window.__v176)return;window.__v176=1;
+const PH=matchMedia('(max-width:860px)');
+const COARSE=matchMedia('(pointer:coarse)');
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const view=()=>{try{return APP.view||''}catch(e){return ''}};
+const pad=n=>String(n).padStart(2,'0');
+const SVG=p=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const X=SVG('<path d="M18 6 6 18M6 6l12 12"/>');
+const DOTS='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+const ARROW=SVG('<path d="M15 6l-6 6 6 6"/>');
+
+/* ---------- 1 · the undo pill (V171 #v171chip) ----------
+   V171 builds the pill once and only toggles hidden / title, so it is wrapped from outside: the label is set once,
+   CSS (k176) hides it under every sheet, bar, drawer and the editor, and a 30 second timer marks it old after the last
+   action. The snackbar stays the main way to undo. */
+const OLD_MS=30000;let sig='',lastAct=0;
+function chipSig(){try{const s=window.__v171&&__v171.stack;if(!s)return '';const l=s[s.length-1];return s.length+'|'+(l?l.t+'|'+l.label:'')}catch(e){return ''}}
+function chipTick(){const c=document.getElementById('v171chip');if(!c)return;
+ const sp=c.querySelector('span');if(sp&&sp.textContent!=='בטל פעולה')sp.textContent='בטל פעולה';
+ const s=chipSig();if(s!==sig){sig=s;lastAct=Date.now()}
+ const old=Date.now()-lastAct>OLD_MS;if(c.classList.contains('v176old')!==old)c.classList.toggle('v176old',old)}
+setInterval(chipTick,1000);
+new MutationObserver(()=>chipTick()).observe(document.body,{childList:true});
+setTimeout(()=>{const s=document.getElementById('v171snack');if(s)new MutationObserver(()=>chipTick()).observe(s,{childList:true})},3000);
+
+/* ---------- 2 · phone navigation ---------- */
+// the drawer: a backdrop that closes it, a close button inside, Escape closes (V99 already listens), focus goes in and comes back
+let navBack=null;
+function side(){return document.getElementById('side')}
+function ensureDrawer(){const s=side();if(!s)return;
+ if(!document.getElementById('v176bd')){const bd=document.createElement('div');bd.id='v176bd';bd.setAttribute('aria-hidden','true');bd.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeDrawer()});s.parentElement.insertBefore(bd,s)}
+ if(!s.querySelector('#v176nx')){const b=document.createElement('button');b.type='button';b.id='v176nx';b.className='v176nx';b.setAttribute('aria-label','סגירת התפריט');b.innerHTML=X;
+  b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeDrawer()});const br=s.querySelector('.brandrow');br?br.appendChild(b):s.prepend(b)}}
+function closeDrawer(){const s=side();if(s&&s.classList.contains('open'))s.classList.remove('open')}
+let wasOpen=false;
+function drawerState(){const s=side();if(!s)return;const open=s.classList.contains('open');if(open===wasOpen)return;wasOpen=open;
+ document.body.classList.toggle('v176nav',open&&PH.matches);
+ if(open&&PH.matches){ensureDrawer();navBack=document.activeElement;s.setAttribute('role','dialog');s.setAttribute('aria-modal','true');setTimeout(()=>{const x=document.getElementById('v176nx');x&&x.focus({preventScroll:true})},60)}
+ else{s.removeAttribute('role');s.removeAttribute('aria-modal');if(navBack&&navBack.isConnected&&!document.querySelector('#appviews :focus'))try{navBack.focus({preventScroll:true})}catch(e){}navBack=null}}
+function armSide(){const s=side();if(!s||s.__v176)return;s.__v176=1;ensureDrawer();new MutationObserver(drawerState).observe(s,{attributes:true,attributeFilter:['class']})}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('v176nav')){closeDrawer()}},true);
+// keep Tab inside the open drawer
+document.addEventListener('keydown',e=>{if(e.key!=='Tab'||!document.body.classList.contains('v176nav'))return;const s=side();if(!s)return;
+ const f=[...s.querySelectorAll('button,a[href],input,select,[tabindex="0"]')].filter(x=>!x.disabled&&x.offsetParent);if(!f.length)return;const a=f[0],z=f[f.length-1];
+ if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}else if(!s.contains(document.activeElement)){e.preventDefault();a.focus()}},true);
+
+// counts: "פוסטים" in the nav is the number the Posts page shows under "הכל"
+let pc={key:'',n:null};
+function postsTotal(){try{const key=AG.posts.length+'|'+((APP.sched&&APP.sched.items.length)||0);if(pc.key===key&&pc.n!=null)return pc.n;
+ const F=window.__v170&&__v170.F;if(!F||typeof gaList!=='function')return null;
+ const keep=JSON.stringify(F);let n=null;
+ // every filter off, the quick view on "הכל"; the sort order does not change the count
+ try{Object.keys(F).forEach(k=>{if(k==='sort')return;if(k==='qv'){F.qv='all';return}if(Array.isArray(F[k]))F[k]=[];else if(typeof F[k]==='string'&&k!=='size')F[k]=''});n=gaList().length}
+ finally{const o=JSON.parse(keep);Object.keys(F).forEach(k=>{if(!(k in o))delete F[k]});Object.assign(F,o)}
+ pc={key,n};return n}catch(e){return null}}
+try{counts=(f=>function(){const c=f.apply(this,arguments);try{const n=postsTotal();if(n!=null)c.gallery=n}catch(e){}return c})(counts)}catch(e){}
+
+// the header search on Posts and Photos goes to the search field of the page instead of opening a second search
+function pageSearch(){const v=view();if(v!=='gallery'&&v!=='photos')return null;const r=document.getElementById('appviews');if(!r)return null;
+ return r.querySelector(v==='gallery'?'input[data-v170q]':'input[data-v170pq]')||r.querySelector('input[type="search"]')}
+window.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.tbar [data-px="cmd"]');if(!b)return;const inp=pageSearch();if(!inp)return;
+ e.preventDefault();e.stopImmediatePropagation();try{inp.scrollIntoView({block:'nearest'})}catch(x){}inp.focus();try{inp.select()}catch(x){}},true);
+function searchLabel(){const b=document.querySelector('.tbar [data-px="cmd"]');if(!b)return;const on=!!pageSearch();const t=on?(view()==='gallery'?'חיפוש פוסטים':'חיפוש תמונות'):'חיפוש ופקודות';
+ if(b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t);const sp=b.querySelector('span');if(sp&&sp.textContent!==t){if(!b.dataset.v176t)b.dataset.v176t=sp.textContent;sp.textContent=on?t:(b.dataset.v176t||t)}}
+
+/* ---------- 3 · schedule sheet (V157): real free slots, as far ahead as gaSchedule() looks (84 days) ---------- */
+const DAYS=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+function freeSlots(n){let out=[];try{out=pxFreeSlots(84).map(k=>{const [d,h]=k.split('T');const t=((APP.slots||{})[new Date(d+'T12:00').getDay()]||[]).find(x=>String(x).slice(0,2)===h)||h+':00';return d+'T'+t})}catch(e){}
+ return [...new Set(out)].sort().slice(0,n)}
+function rel(at){const d=new Date(at);if(isNaN(d))return '';const t=new Date();const a=new Date(t.getFullYear(),t.getMonth(),t.getDate()),b=new Date(d.getFullYear(),d.getMonth(),d.getDate());const days=Math.round((b-a)/864e5);
+ if(days<=0)return 'היום';if(days===1)return 'מחר';if(days<7)return `בעוד ${days} ימים`;const w=Math.round(days/7);return w<=1?'בעוד שבוע':w===2?'בעוד שבועיים':`בעוד ${w} שבועות`}
+function slotLbl(at){const d=new Date(at);if(isNaN(d))return at;return `יום ${DAYS[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)} · ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+let v157p=null;
+function fixSheet(el){const box=el.querySelector('.v157chips');if(!box||box.dataset.v176)return;box.dataset.v176='1';
+ const S=window.__v157&&__v157.S;if(!S)return;const sl=freeSlots(4);const cur=S.at;
+ const list=sl.slice();if(cur&&!list.includes(cur))list.unshift(cur);
+ if(!list.length)return;
+ box.innerHTML=list.map(at=>`<button type="button" class="v157chip v176chip" data-v157="at" data-at="${E(at)}" aria-pressed="${at===cur}"><b>${E(slotLbl(at))}</b><small>${E(at===cur&&!sl.includes(at)?'המועד הנוכחי':rel(at))}</small></button>`).join('');
+ const lg=el.querySelector('.v157set legend');if(lg&&sl.length)lg.textContent='המשבצות הפנויות הבאות';
+ // a new sheet with no time picked yet: take the first free slot, like the sheet does when the coming weeks have room
+ if(!cur&&sl.length&&v157p!==S.p){v157p=S.p;const f=box.querySelector('.v176chip');if(f)setTimeout(()=>f.click(),0)}
+ if(S.p!==v157p&&cur)v157p=S.p}
+function arm157(){const el=document.getElementById('v157');if(!el||el.__v176)return;el.__v176=1;fixSheet(el);new MutationObserver(()=>fixSheet(el)).observe(el,{childList:true})}
+
+/* ---------- 4 · calendar on touch: "מועד" and "⋯"; the other actions in a sheet ---------- */
+function sheet(title,sub,items){const old=document.getElementById('v172sheet');if(old)old.remove();const back=document.activeElement;
+ const w=document.createElement('div');w.id='v172sheet';w.className='v176sh';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label',title);
+ w.innerHTML=`<div class="v172bg" data-v172x="1"></div><div class="v172pan"><div class="v172grip" aria-hidden="true"></div><div class="v172h"><div><b>${E(title)}</b>${sub?`<span>${E(sub)}</span>`:''}</div><button type="button" class="v172x" data-v172x="1" aria-label="סגירה">${X}</button></div><div class="v172l"></div></div>`;
+ const l=w.querySelector('.v172l');
+ items.forEach(it=>{const b=document.createElement('button');b.type='button';b.className='v172i';b.innerHTML=`<span class="v172ic" aria-hidden="true">${it.icon||''}</span><span class="v172t">${E(it.label)}</span>`;
+  b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();w.remove();try{back&&back.isConnected&&back.focus({preventScroll:true})}catch(x){}setTimeout(()=>{try{it.run()}catch(x){console.error('v176',x)}},0)});l.appendChild(b)});
+ document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add('in'));setTimeout(()=>{const f=l.querySelector('button');f&&f.focus({preventScroll:true})},60)}
+function calMore(g){const it=(()=>{try{const id=(g.querySelector('[data-id]')||{}).dataset;return id&&APP.sched.items.find(i=>i.id===id.id)}catch(e){return null}})();
+ const acts=[...g.querySelectorAll('button')].filter(b=>!b.classList.contains('v138when')&&!b.classList.contains('v138grip')&&!b.classList.contains('v176more'));
+ const items=acts.map(b=>{const s=b.querySelector('svg');return {icon:s?s.outerHTML:'',label:(b.getAttribute('title')||b.getAttribute('aria-label')||b.textContent||'').trim(),run:()=>b.click()}}).filter(x=>x.label);
+ const ci=g.parentElement&&g.parentElement.querySelector('.ci .ct');const head=ci?(ci.childNodes[1]&&ci.childNodes[1].textContent||ci.textContent||'').trim().slice(0,60):'';
+ let sub='';try{if(it&&it.at)sub='מתוזמן ל '+(typeof fmtDate==='function'?fmtDate(it.at):it.at.replace('T',' · '))}catch(e){}
+ sheet(head||'פוסט בלוח',sub,items)}
+function calFix(){if(view()!=='calendar')return;document.querySelectorAll('#appviews .v28-cit').forEach(g=>{if(g.querySelector('.v176more'))return;
+ const b=document.createElement('button');b.type='button';b.className='v176more';b.setAttribute('aria-label','עוד פעולות');b.setAttribute('aria-haspopup','dialog');b.title='עוד פעולות';b.innerHTML=DOTS;
+ b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();calMore(g)});g.appendChild(b)})}
+function calTitle(){try{if(!VTITLE.calendar)return;if(!VTITLE.__v176cal)VTITLE.__v176cal=VTITLE.calendar[1];VTITLE.calendar[1]=COARSE.matches?'לחיצה על פוסט לשינוי מועד':VTITLE.__v176cal}catch(e){}}
+calTitle();try{COARSE.addEventListener('change',()=>{calTitle();try{render()}catch(e){}})}catch(e){}
+
+/* ---------- 5 · Ideas, Agent and the calendar drafts drawer point to the Posts page ---------- */
+function toPosts(){try{go('gallery')}catch(e){}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v176="posts"]');if(!b)return;e.preventDefault();toPosts()});
+function linkRow(where){return `<div class="v176lnk" data-v176w="${where}"><span>${where==='tray'?'כל הטיוטות, עם חיפוש וסינון מלא, נמצאות בעמוד הפוסטים':'כל הפוסטים, עם חיפוש וסינון, נמצאים בעמוד אחד'}</span><button type="button" class="v176go" data-v176="posts">לכל הפוסטים${ARROW}</button></div>`}
+function links(){const v=view();const r=document.getElementById('appviews');if(!r)return;
+ if((v==='ideas'||v==='agent')&&!r.querySelector('.v176lnk[data-v176w="top"]')){r.insertAdjacentHTML('afterbegin',linkRow('top'))}
+ if(v==='calendar'){const t=r.querySelector('.v28-tray');if(t&&!t.querySelector('.v176lnk')){const h=t.querySelector('header');h?h.insertAdjacentHTML('afterend',linkRow('tray')):t.insertAdjacentHTML('afterbegin',linkRow('tray'))}}}
+
+/* ---------- 6 · font floor: text under 14px on the pages (not Posts and Photos, which V174 and V175 own) goes to 14px.
+   Numbers alone (badges, counts, times, scores) keep their size. Computed once per element. ---------- */
+let SEEN=new WeakSet();
+const NUM=/^[\d\s.,:%+\-–·/▲▼★#()×]*$/;const SKIP=new Set(['CANVAS','SVG','svg','PATH','path','KBD','SCRIPT','STYLE','OPTION','INPUT','TEXTAREA','SELECT','IMG','VIDEO','PRE','CODE']);
+function floor(){const v=view();if(v==='gallery'||v==='photos')return;const root=document.getElementById('appmain');if(!root)return;
+ const all=root.getElementsByTagName('*');const hit=[];
+ for(let i=0;i<all.length;i++){const e=all[i];if(SEEN.has(e))continue;SEEN.add(e);if(SKIP.has(e.tagName))continue;
+  let t='';for(let n=e.firstChild;n;n=n.nextSibling)if(n.nodeType===3)t+=n.textContent;t=t.trim();if(!t||NUM.test(t))continue;
+  if(e.closest('#pe-root,.ga,.v170,[data-v176keep]'))continue;
+  const fs=parseFloat(getComputedStyle(e).fontSize);if(fs&&fs<14)hit.push(e)}
+ hit.forEach(e=>e.classList.add('v176f'))}
+addEventListener('resize',()=>{clearTimeout(window.__v176rs);window.__v176rs=setTimeout(()=>{SEEN=new WeakSet();floorSoon()},250)},{passive:true});
+let ft=0;function floorSoon(){clearTimeout(ft);ft=setTimeout(()=>{try{floor()}catch(e){}},120)}
+
+/* ---------- glue ---------- */
+function after(){try{document.body.dataset.v176v=view()}catch(e){}
+ try{armSide()}catch(e){}try{searchLabel()}catch(e){}try{calFix()}catch(e){}try{links()}catch(e){}floorSoon()}
+try{render=(f=>function(){const r=f.apply(this,arguments);try{after()}catch(e){}return r})(render)}catch(e){}
+let rq=0;new MutationObserver(()=>{if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{arm157()}catch(e){}try{calFix()}catch(e){}try{links()}catch(e){}floorSoon()})}).observe(document.body,{childList:true,subtree:true});
+setTimeout(after,0);setTimeout(after,1500);
+try{PH.addEventListener('change',()=>{wasOpen=!wasOpen;drawerState()})}catch(e){}
+window.__v176={chipTick,postsTotal,freeSlots,rel,calMore,closeDrawer,pageSearch};
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

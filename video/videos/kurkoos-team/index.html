@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>קבוצת קורקוס · מה בוחרים קודם</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Almoni"; src: url("assets/fonts/Almoni-300.ttf"); font-weight: 300; }
+      @font-face { font-family: "Almoni"; src: url("assets/fonts/Almoni-400.ttf"); font-weight: 400; }
+      @font-face { font-family: "Almoni"; src: url("assets/fonts/Almoni-700.ttf"); font-weight: 700; }
+      :root { --navy: #07293a; --teal: #105572; --mist: #8fb6c8; --paper: #f7f8fa; --red: #a90b0c; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+      #root { direction: rtl; position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--navy); font-family: "Almoni", sans-serif; color: #fff; }
+      .clip, .layer { position: absolute; inset: 0; overflow: hidden; }
+      .cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .grid { position: absolute; inset: 0;
+        background-image: linear-gradient(rgba(143,182,200,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(143,182,200,.10) 1px, transparent 1px);
+        background-size: 60px 60px; }
+      .shade-b { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,41,58,.15) 0%, rgba(7,41,58,0) 30%, rgba(7,41,58,.55) 62%, rgba(7,41,58,.96) 100%); }
+      .shade-t { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,41,58,.96) 0%, rgba(7,41,58,.86) 30%, rgba(7,41,58,.35) 52%, rgba(7,41,58,0) 66%); }
+      .h { font-weight: 700; line-height: .98; letter-spacing: -1px; }
+      .line { display: block; overflow: hidden; padding: 0 0 12px; }
+      .line > span { display: inline-block; }
+      .w { display: inline-block; }
+      .red { color: var(--red); }
+      .mist { color: var(--mist); }
+      .rule { height: 14px; background: var(--red); width: 240px; transform-origin: 100% 50%; }
+      .chip { display: inline-block; background: var(--red); color: #fff; font-weight: 700; font-size: 44px; padding: 10px 30px 14px; border-radius: 40px; }
+      .logo-s { position: absolute; top: 70px; left: 64px; width: 300px; height: 75px; }
+      .marks { position: absolute; inset: 40px; }
+      .marks i { position: absolute; width: 50px; height: 50px; border-color: rgba(143,182,200,.7); border-style: solid; border-width: 0; }
+      .marks i:nth-child(1) { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; }
+      .marks i:nth-child(2) { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; }
+      .marks i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; }
+      .marks i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; }
+      /* glitch: three copies of one word, offset in red and mist, snapping back */
+      .gl { position: relative; display: inline-block; }
+      .gl .c { position: absolute; inset: 0; mix-blend-mode: screen; }
+      .gl .c.r { color: #ff2a2a; }
+      .gl .c.b { color: #52d6ff; }
+      .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+      .redwipe { position: absolute; top: 0; bottom: 0; width: 1300px; right: 0; background: var(--red); }
+      /* scene 2 */
+      #s2-pics { position: absolute; left: 0; right: 0; top: 0; height: 1120px; overflow: hidden; }
+      #s2-pics img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .roller { position: relative; height: 230px; overflow: hidden; }
+      .roller > div { position: absolute; right: 0; top: 0; white-space: nowrap; }
+      /* team panels */
+      .panel { position: absolute; left: 0; right: 0; height: 960px; overflow: hidden; }
+      .panel .tint { position: absolute; inset: 0; background: linear-gradient(270deg, rgba(7,41,58,.97) 0%, rgba(7,41,58,.88) 50%, rgba(7,41,58,.35) 100%); }
+      .ptext { position: absolute; right: 80px; top: 50%; text-align: right; }
+      .plogo { position: absolute; left: 80px; top: 50%; width: 300px; height: 300px; object-fit: contain; }
+      .steps-bar { position: absolute; top: 190px; right: 80px; left: 80px; height: 10px; display: flex; gap: 14px; }
+      .steps-bar b { flex: 1; background: rgba(143,182,200,.25); position: relative; overflow: hidden; }
+      .steps-bar b i { position: absolute; inset: 0; background: var(--red); transform-origin: 100% 50%; }
+      .frame { position: absolute; left: 60px; right: 60px; top: 1020px; height: 700px; overflow: hidden; border-radius: 26px; }
+      .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .num { position: absolute; right: 70px; top: 230px; font-weight: 700; font-size: 520px; line-height: .8; color: var(--paper); }
+      .stitle { position: absolute; right: 80px; top: 690px; text-align: right; }
+      .phone { display: inline-block; background: var(--red); color: #fff; font-weight: 700; font-size: 104px; padding: 18px 64px 30px; border-radius: 90px; direction: ltr; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="31">
+      <div class="layer grid" id="bg-grid"></div>
+
+      <!-- ===== S1 · hook: site photo pushing in, "מה בוחרים קודם?" ===== -->
+      <section id="s1" class="clip" data-start="0" data-duration="3.25" data-track-index="1">
+        <div class="layer" id="s1-pic"><img class="cover" src="assets/site3.jpg" alt="" /></div>
+        <div class="shade-t"></div>
+        <div class="layer grid" id="s1-grid"></div>
+        <div class="marks"><i></i><i></i><i></i><i></i></div>
+        <img class="logo-s" src="assets/logo-h.svg" alt="קבוצת קורקוס" />
+        <div style="position:absolute; right:80px; top:200px; text-align:right">
+          <div id="s1-chip" class="chip">לבעלי מגרש</div>
+        </div>
+        <div style="position:absolute; right:80px; top:330px; text-align:right">
+          <div class="h" style="font-size:190px"><span class="w" id="s1-w1">מה</span> <span class="w" id="s1-w2">בוחרים</span></div>
+          <div class="h" style="font-size:230px; margin-top:6px">
+            <span class="gl" id="s1-gl" data-layout-allow-overlap><span class="c r">קודם?</span><span class="c b">קודם?</span><span class="m mist">קודם?</span></span>
+          </div>
+          <div class="rule" id="s1-rule" style="margin:34px 0 0 auto"></div>
+        </div>
+        <div class="flash" id="s1-flash"></div>
+      </section>
+
+      <!-- ===== S2 · "לפני" stays, the word under it rolls ===== -->
+      <div id="s2-media" class="layer" style="height:1120px">
+        <video id="s2-vid" class="clip" src="assets/showcase.mp4" muted playsinline data-start="5.3" data-duration="1.65" data-media-start="2.6" data-track-index="2" style="object-fit:cover; width:100%; height:1120px"></video>
+      </div>
+      <section id="s2" class="clip" data-start="3" data-duration="3.95" data-track-index="3">
+        <div id="s2-pics">
+          <img id="s2-a" src="assets/sketch.webp" alt="" style="background:#fff; object-fit:contain" />
+          <img id="s2-b" src="assets/pour.jpg" alt="" />
+        </div>
+        <div class="layer grid" style="top:1120px"></div>
+        <div style="position:absolute; left:0; right:0; top:1118px; height:6px; background:var(--red)" id="s2-seam"></div>
+        <div style="position:absolute; right:80px; top:1210px; text-align:right; width:920px">
+          <div class="h mist" style="font-size:150px" id="s2-before">לפני</div>
+          <div class="roller h" style="font-size:190px" data-layout-allow-overlap>
+            <div id="s2-r1" data-layout-allow-overlap>תוכנית.</div>
+            <div id="s2-r2" data-layout-allow-overlap>יציקה.</div>
+            <div id="s2-r3" data-layout-allow-overlap style="font-size:170px">הזמנת חומרים.</div>
+          </div>
+        </div>
+        <div style="position:absolute; left:80px; top:1240px; font-size:46px; font-weight:700; direction:ltr" class="mist" id="s2-count">01 / 03</div>
+        <div class="redwipe" id="s2-wipe"></div>
+      </section>
+
+      <!-- ===== S3 · whip into the drone shot: "בוחרים מי יחזיק את הפרויקט." ===== -->
+      <div id="s3-media" class="layer">
+        <video id="s3-vid" class="clip" src="assets/showcase.mp4" muted playsinline data-start="6.5" data-duration="3.2" data-media-start="7.0" data-track-index="4" style="object-fit:cover; width:100%; height:100%"></video>
+      </div>
+      <section id="s3" class="clip" data-start="6.5" data-duration="3.2" data-track-index="5">
+        <div class="shade-b"></div>
+        <div class="marks"><i></i><i></i><i></i><i></i></div>
+        <img class="logo-s" src="assets/logo-h.svg" alt="" />
+        <div style="position:absolute; right:80px; bottom:330px; text-align:right">
+          <div class="h" style="font-size:150px"><span class="line"><span id="s3-l1">בוחרים מי</span></span></div>
+          <div class="h" style="font-size:150px"><span class="line"><span id="s3-l2">יחזיק את</span></span></div>
+          <div class="h mist" style="font-size:150px"><span class="line"><span id="s3-l3">הפרויקט.</span></span></div>
+          <div class="rule" id="s3-rule" style="margin:24px 0 0 auto"></div>
+        </div>
+      </section>
+
+      <!-- ===== S4 · the team: two panels from opposite sides ===== -->
+      <div id="s4-top" class="panel" style="top:0">
+        <video id="s4-vid" class="clip" src="assets/showcase.mp4" muted playsinline data-start="9.5" data-duration="4.9" data-media-start="8.2" data-track-index="6" style="object-fit:cover; width:100%; height:960px"></video>
+      </div>
+      <section id="s4" class="clip" data-start="9.5" data-duration="4.9" data-track-index="7">
+        <div id="s4-topov" class="panel" style="top:0">
+          <div class="tint"></div>
+          <img class="plogo" id="s4-l1" src="assets/raita.webp" alt="ראיתה" style="margin-top:-150px" />
+          <div class="ptext" style="margin-top:-170px">
+            <div class="h" style="font-size:180px" id="s4-n1">ראיתה</div>
+            <div class="h red" style="font-size:150px" id="s4-v1">בונה.</div>
+          </div>
+        </div>
+        <div id="s4-bot" class="panel" style="top:960px">
+          <img class="cover" id="s4-pic" src="assets/site6.jpg" alt="" />
+          <div class="tint"></div>
+          <img class="plogo" id="s4-l2" src="assets/shchinta.webp" alt="שכינתא" style="margin-top:-150px" />
+          <div class="ptext" style="margin-top:-170px">
+            <div class="h" style="font-size:180px" id="s4-n2">שכינתא</div>
+            <div class="h red" style="font-size:150px" id="s4-v2">מפקחת.</div>
+          </div>
+        </div>
+        <div id="s4-seam" style="position:absolute; left:0; right:0; top:954px; height:12px; background:var(--red); transform-origin:50% 50%"></div>
+        <div style="position:absolute; left:80px; top:1880px"></div><div style="position:absolute; right:80px; top:60px" data-layout-allow-overlap><div id="s4-chip" class="chip">אצלנו</div></div>
+      </section>
+
+      <!-- ===== S5 · one team: the panels open onto the site ===== -->
+      <div id="s5-media" class="layer">
+        <video id="s5-vid1" class="clip" src="assets/showcase.mp4" muted playsinline data-start="14" data-duration="1.6" data-media-start="3.6" data-track-index="8" style="object-fit:cover; width:100%; height:100%"></video>
+        <video id="s5-vid2" class="clip" src="assets/showcase.mp4" muted playsinline data-start="15.6" data-duration="1.6" data-media-start="0.1" data-track-index="8" style="object-fit:cover; width:100%; height:100%"></video>
+      </div>
+      <section id="s5" class="clip" data-start="14" data-duration="3.2" data-track-index="9">
+        <div class="layer" style="background:rgba(7,41,58,.55)"></div>
+        <div class="marks"><i></i><i></i><i></i><i></i></div>
+        <div style="position:absolute; right:80px; left:80px; top:700px; text-align:right">
+          <div class="h" style="font-size:230px"><span class="line"><span id="s5-l1">צוות אחד.</span></span></div>
+          <div style="display:flex; align-items:center; gap:28px; margin-top:40px; direction:rtl">
+            <div class="h mist" style="font-size:84px; white-space:nowrap" id="s5-from">מהקרקע</div>
+            <div style="flex:1; height:10px; background:rgba(255,255,255,.18); position:relative">
+              <div id="s5-path" style="position:absolute; inset:0; background:var(--red); transform-origin:100% 50%"></div>
+              <div id="s5-dot" style="position:absolute; right:-14px; top:-14px; width:38px; height:38px; border-radius:50%; background:var(--red)"></div>
+            </div>
+            <div class="h" style="font-size:84px; white-space:nowrap" id="s5-to">ועד המפתח.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== S6 · how it works: three steps ===== -->
+      <div id="s6-media" class="frame">
+        <video id="s6-vid2" class="clip" src="assets/showcase.mp4" muted playsinline data-start="20" data-duration="3" data-media-start="9.0" data-track-index="10" style="object-fit:cover; width:100%; height:100%"></video>
+      </div>
+      <section id="s6a" class="clip" data-start="17" data-duration="3" data-track-index="11">
+        <div class="frame" id="s6a-frame"><img id="s6a-pic" src="assets/site1.jpg" alt="" /></div>
+        <div class="num"><span class="gl" id="s6a-num" data-layout-allow-overlap><span class="c r">1</span><span class="c b">1</span><span class="m">1</span></span></div>
+        <div class="stitle"><div class="h" style="font-size:120px" id="s6a-t1">בדיקה ראשונית</div><div class="h mist" style="font-size:120px" id="s6a-t2">של המגרש.</div></div>
+      </section>
+      <section id="s6b" class="clip" data-start="20" data-duration="3" data-track-index="11">
+        <div class="num"><span class="gl" id="s6b-num" data-layout-allow-overlap><span class="c r">2</span><span class="c b">2</span><span class="m">2</span></span></div>
+        <div class="stitle"><div class="h" style="font-size:120px" id="s6b-t1">ביצוע הבנייה</div><div class="h mist" style="font-size:120px" id="s6b-t2">עם ראיתה.</div></div>
+      </section>
+      <section id="s6c" class="clip" data-start="23" data-duration="3" data-track-index="11">
+        <div class="frame" id="s6c-frame"><img id="s6c-pic" src="assets/form.jpg" alt="" /></div>
+        <div class="num"><span class="gl" id="s6c-num" data-layout-allow-overlap><span class="c r">3</span><span class="c b">3</span><span class="m">3</span></span></div>
+        <div class="stitle"><div class="h" style="font-size:112px" id="s6c-t1">פיקוח של שכינתא</div><div class="h mist" style="font-size:112px" id="s6c-t2">עד המסירה.</div></div>
+      </section>
+      <section id="s6ui" class="clip" data-start="17" data-duration="9" data-track-index="12">
+        <img class="logo-s" src="assets/logo-h.svg" alt="" />
+        <div style="position:absolute; right:80px; top:66px"><div class="chip">איך זה עובד</div></div>
+        <div class="steps-bar"><b><i id="sb1"></i></b><b><i id="sb2"></i></b><b><i id="sb3"></i></b></div>
+        <div class="flash" id="s6-flash"></div>
+      </section>
+
+      <!-- ===== S7 · end: the sheet draws itself, the logo and the phone ===== -->
+      <section id="s7" class="clip" data-start="26" data-duration="5" data-track-index="13">
+        <div class="layer" style="background:var(--navy)"></div>
+        <div class="layer grid" id="s7-grid"></div>
+        <div class="marks" id="s7-marks"><i></i><i></i><i></i><i></i></div>
+        <div style="position:absolute; left:0; right:0; top:420px; display:flex; justify-content:center">
+          <div id="s7-logo-wrap" style="width:520px; height:488px; overflow:hidden"><img id="s7-logo" src="assets/logo.svg" alt="קבוצת קורקוס" style="width:520px; height:488px; object-fit:contain" /></div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:1010px; text-align:center">
+          <div class="h" style="font-size:84px" id="s7-tag"><span class="w">מקרקע</span> <span class="w">ועד</span> <span class="w">מסירת</span> <span class="w">מפתח.</span></div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:1170px; text-align:center"><div class="phone" id="s7-phone">055-981-1814</div></div>
+        <div style="position:absolute; left:0; right:0; top:1380px; text-align:center; font-size:58px; direction:ltr" class="mist" id="s7-site">kurkoos-group.co.il</div>
+      </section>
+
+      <audio id="music" src="assets/music.wav" data-start="0" data-duration="31" data-track-index="20"></audio>
+
+      <svg width="0" height="0" style="position:absolute">
+        <filter id="whipblur" x="-20%" y="0" width="140%" height="100%"><feGaussianBlur id="whipdev" stdDeviation="0 0" /></filter>
+      </svg>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+      const E4 = "power4.out", BACK = "back.out(1.8)";
+
+      // glitch: the colour copies jump on a fixed pattern, then lock onto the word
+      function glitch(sel, at, len = 0.45) {
+        const r = sel + " .c.r", b = sel + " .c.b";
+        const steps = [[14, -6], [-18, 4], [9, 7], [-7, -9], [16, 3], [-4, 2], [0, 0]];
+        steps.forEach((s, i) => {
+          const t = at + (len / steps.length) * i;
+          tl.set(r, { x: s[0], y: s[1], opacity: i === steps.length - 1 ? 0 : 1 }, t);
+          tl.set(b, { x: -s[0], y: -s[1], opacity: i === steps.length - 1 ? 0 : 1 }, t);
+        });
+      }
+      // words slam in: big and blurred to sharp
+      function slam(sel, at) { tl.fromTo(sel, { scale: 1.7, opacity: 0, filter: "blur(18px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.32, ease: E4 }, at); }
+      // a line rises out of its mask
+      function rise(sel, at, d = 0.5) { tl.fromTo(sel, { yPercent: 110 }, { yPercent: 0, duration: d, ease: E4 }, at); }
+      function rule(sel, at) { tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, at); }
+
+      // ---- S1 (0 to 3.25)
+      tl.fromTo("#s1-pic", { scale: 1.22 }, { scale: 1.0, duration: 3.25, ease: "none" }, 0);
+      tl.fromTo("#s1-grid", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.1);
+      tl.fromTo("#s1-chip", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: BACK }, 0.2);
+      slam("#s1-w1", 0.35); slam("#s1-w2", 0.6);
+      tl.fromTo("#s1-gl", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.25, ease: E4 }, 1.0);
+      glitch("#s1-gl", 1.0, 0.5);
+      rule("#s1-rule", 1.35);
+      glitch("#s1-gl", 2.55, 0.35);
+      tl.fromTo("#s1-flash", { opacity: 0 }, { opacity: 0.85, duration: 0.06, ease: "none" }, 2.95).to("#s1-flash", { opacity: 0, duration: 0.25 }, 3.02);
+
+      // ---- S2 (3 to 6.95): a red wipe opens it, "לפני" holds, the word rolls
+      tl.fromTo("#s2-wipe", { xPercent: 0 }, { xPercent: -110, duration: 0.45, ease: "power3.inOut" }, 3.0);
+      tl.fromTo("#s2-pics", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.55, ease: E4 }, 3.05);
+      tl.fromTo("#s2-a", { scale: 1.12 }, { scale: 1.0, duration: 1.3, ease: "none" }, 3.0);
+      tl.fromTo("#s2-before", { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: E4 }, 3.2);
+      tl.fromTo("#s2-r1", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 3.35);
+      // second word: picture wipes in from the right, the word rolls up
+      tl.fromTo("#s2-b", { clipPath: "inset(0 0 0 100%)" }, { clipPath: "inset(0 0 0 0%)", duration: 0.4, ease: "power3.inOut" }, 4.15);
+      tl.fromTo("#s2-b", { scale: 1.15 }, { scale: 1.0, duration: 1.4, ease: "none", immediateRender: false }, 4.15);
+      tl.to("#s2-r1", { yPercent: -120, duration: 0.35, ease: "power3.in" }, 4.1);
+      tl.fromTo("#s2-r2", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 4.3);
+      tl.set("#s2-count", { textContent: "02 / 03" }, 4.2);
+      // third word: the footage cuts in behind (s2 pictures clip away), the word rolls up
+      tl.to("#s2-pics", { clipPath: "inset(0 100% 0 0)", duration: 0.4, ease: "power3.inOut" }, 5.3);
+      tl.to("#s2-r2", { yPercent: -120, duration: 0.35, ease: "power3.in" }, 5.25);
+      tl.fromTo("#s2-r3", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 5.45);
+      tl.set("#s2-count", { textContent: "03 / 03" }, 5.35);
+      tl.fromTo("#s2-seam", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "expo.out", transformOrigin: "100% 50%" }, 3.25);
+      tl.fromTo("#s2-vid", { scale: 1.12 }, { scale: 1.0, duration: 1.65, ease: "none" }, 5.3);
+
+      // ---- whip from S2 into S3 at 6.5: the old scene flies left, the new arrives from the right with motion blur
+      const whip = { b: 0 };
+      tl.to(["#s2", "#s2-media"], { xPercent: -100, duration: 0.45, ease: "power3.in" }, 6.5);
+      tl.fromTo("#s3-media", { xPercent: 100 }, { xPercent: 0, duration: 0.5, ease: "power3.out" }, 6.55);
+      tl.fromTo("#s3", { xPercent: 100 }, { xPercent: 0, duration: 0.5, ease: "power3.out" }, 6.55);
+      tl.fromTo(whip, { b: 0 }, { b: 60, duration: 0.25, ease: "power2.in", onUpdate: () => document.getElementById("whipdev").setAttribute("stdDeviation", whip.b + " 0") }, 6.45)
+        .to(whip, { b: 0, duration: 0.35, ease: "power2.out", onUpdate: () => document.getElementById("whipdev").setAttribute("stdDeviation", whip.b + " 0") }, 6.7);
+      tl.set(["#s3-media", "#s3", "#s2", "#s2-media"], { filter: "url(#whipblur)" }, 6.45).set(["#s3-media", "#s3"], { filter: "none" }, 7.06);
+      tl.fromTo("#s3-vid", { scale: 1.25 }, { scale: 1.05, duration: 3.2, ease: "power1.out" }, 6.5);
+      rise("#s3-l1", 7.0); rise("#s3-l2", 7.15); rise("#s3-l3", 7.3); rule("#s3-rule", 7.55);
+      tl.to(["#s3-l1", "#s3-l2", "#s3-l3"], { yPercent: -110, duration: 0.3, ease: "power3.in", stagger: 0.05 }, 9.25);
+
+      // ---- S4 (9.5 to 14.4): two panels from opposite sides, logos pop, the seam splits them
+      tl.fromTo(["#s4-top", "#s4-topov"], { xPercent: 100 }, { xPercent: 0, duration: 0.55, ease: E4 }, 9.5);
+      tl.fromTo("#s4-bot", { xPercent: -100 }, { xPercent: 0, duration: 0.55, ease: E4 }, 9.62);
+      tl.fromTo("#s4-seam", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "expo.out" }, 9.9);
+      tl.fromTo("#s4-chip", { scale: 0 }, { scale: 1, duration: 0.4, ease: BACK }, 9.8);
+      tl.fromTo("#s4-l1", { scale: 0, rotation: -12 }, { scale: 1, rotation: 0, duration: 0.5, ease: BACK }, 10.0);
+      slam("#s4-n1", 10.1); tl.fromTo("#s4-v1", { x: 160, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: E4 }, 10.4);
+      tl.fromTo("#s4-l2", { scale: 0, rotation: 12 }, { scale: 1, rotation: 0, duration: 0.5, ease: BACK }, 11.4);
+      slam("#s4-n2", 11.5); tl.fromTo("#s4-v2", { x: 160, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: E4 }, 11.8);
+      tl.fromTo("#s4-pic", { scale: 1.2 }, { scale: 1.02, duration: 4.9, ease: "none" }, 9.5);
+      tl.fromTo("#s4-vid", { scale: 1.15 }, { scale: 1.0, duration: 4.9, ease: "none" }, 9.5);
+      // the split: top panel up, bottom panel down, onto the site
+      tl.to(["#s4-top", "#s4-topov"], { yPercent: -100, duration: 0.5, ease: "power4.in" }, 13.85);
+      tl.to("#s4-bot", { yPercent: 100, duration: 0.5, ease: "power4.in" }, 13.85);
+      tl.to("#s4-seam", { scaleX: 0, opacity: 0, duration: 0.3 }, 13.85);
+
+      // ---- S5 (14 to 17.2): "צוות אחד." the path from ground to key draws
+      tl.fromTo("#s5-media", { scale: 1.3 }, { scale: 1.0, duration: 3.2, ease: "power2.out" }, 14.0);
+      rise("#s5-l1", 14.3, 0.55);
+      tl.fromTo("#s5-from", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.4 }, 14.9);
+      tl.fromTo("#s5-path", { scaleX: 0 }, { scaleX: 1, duration: 1.0, ease: "power2.inOut" }, 15.1);
+      tl.fromTo("#s5-to", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.45, ease: BACK }, 16.0);
+      tl.fromTo("#s5-dot", { scale: 0 }, { scale: 1, duration: 0.3, ease: BACK }, 15.05);
+
+      // ---- S6 (17 to 26): numbers drop with blur, glitch on every step change, the progress fills
+      [["a", 17], ["b", 20], ["c", 23]].forEach(([k, t], i) => {
+        tl.fromTo("#s6" + k + "-num", { y: 120, opacity: 0, filter: "blur(30px)", scale: 1.3 }, { y: 0, opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.5, ease: E4 }, t + 0.05);
+        glitch("#s6" + k + "-num", t + 0.05, 0.42);
+        tl.fromTo("#s6" + k + "-t1", { x: 200, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: E4 }, t + 0.3);
+        tl.fromTo("#s6" + k + "-t2", { x: 200, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: E4 }, t + 0.42);
+        tl.fromTo("#sb" + (i + 1), { scaleX: 0 }, { scaleX: 1, duration: 2.8, ease: "none" }, t);
+        tl.fromTo("#s6-flash", { opacity: 0 }, { opacity: 0.7, duration: 0.05, ease: "none", immediateRender: i === 0 }, t).to("#s6-flash", { opacity: 0, duration: 0.2 }, t + 0.05);
+      });
+      tl.fromTo("#s6a-frame", { clipPath: "inset(100% 0 0 0 round 26px)" }, { clipPath: "inset(0% 0 0 0 round 26px)", duration: 0.6, ease: E4 }, 17.2);
+      tl.fromTo("#s6a-pic", { scale: 1.25 }, { scale: 1.0, duration: 2.8, ease: "power1.out" }, 17.2);
+      tl.fromTo("#s6-media", { clipPath: "inset(0 0 0 100% round 26px)" }, { clipPath: "inset(0 0 0 0% round 26px)", duration: 0.55, ease: "power3.inOut" }, 20.1);
+      tl.fromTo("#s6-vid2", { scale: 1.2 }, { scale: 1.0, duration: 3, ease: "none" }, 20);
+      tl.fromTo("#s6c-frame", { clipPath: "inset(0 100% 0 0 round 26px)" }, { clipPath: "inset(0 0% 0 0 round 26px)", duration: 0.55, ease: "power3.inOut" }, 23.1);
+      tl.fromTo("#s6c-pic", { scale: 1.25 }, { scale: 1.0, duration: 2.9, ease: "power1.out" }, 23.1);
+      tl.to(["#s6c-num", "#s6c-t1", "#s6c-t2", "#s6c-frame"], { opacity: 0, y: -60, duration: 0.3, ease: "power3.in", stagger: 0.04 }, 25.65);
+
+      // ---- S7 (26 to 31): the sheet draws itself, the logo is revealed, the phone pops
+      tl.fromTo("#s7-grid", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.9, ease: "power2.inOut" }, 26.0);
+      tl.fromTo("#s7-marks", { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.6 }, 26.2);
+      tl.fromTo("#s7-logo-wrap", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.9, ease: "power3.inOut" }, 26.4);
+      tl.fromTo("#s7-logo", { scale: 1.15 }, { scale: 1, duration: 1.4, ease: "power2.out" }, 26.4);
+      tl.fromTo("#s7-tag .w", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: E4, stagger: 0.12 }, 27.2);
+      tl.fromTo("#s7-phone", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: BACK }, 28.0);
+      tl.fromTo("#s7-site", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, 28.4);
+      tl.to("#s7-phone", { scale: 1.06, duration: 0.25, ease: "power2.out", yoyo: true, repeat: 1 }, 29.4);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

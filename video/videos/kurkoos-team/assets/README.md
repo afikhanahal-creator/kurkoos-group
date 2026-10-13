@@ -1,0 +1,1 @@
+Footage and photos are copied from the site (public/divisions/kurkoos-showcase.mp4, public/execution-gallery/1,3,6.jpg, public/divisions/execution-bg.jpg, humash-22-24-sketch.webp, raita-logo.webp, shchinta-logo.webp); pour.jpg is the pour photo from the post, cropped without its type. music.wav is generated (120 BPM, whooshes on the cuts).

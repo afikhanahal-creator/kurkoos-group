@@ -1,0 +1,22 @@
+<style id="k178">
+/* V178 · the Afik HaNahal tab */
+.v178brand{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;padding:10px 14px;border-radius:14px;background:#09090F;color:#E8E4D8;font:15px Almoni,Heebo,sans-serif}
+.v178brand b{color:#E8E4D8}
+.v178sw{width:18px;height:18px;border-radius:50%;border:1px solid rgba(232,228,216,.4);flex:0 0 18px}
+.v178bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.v178q{flex:1;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid #cbd1da;border-radius:14px;background:#fff}
+.v178q input{flex:1;border:0;outline:0;font:16px Almoni,Heebo,sans-serif;background:transparent;min-width:0}
+.v178n{font-size:15px;color:#105572;white-space:nowrap}
+.v178grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+@media (max-width:560px){.v178grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+.v178c{margin:0;display:flex;flex-direction:column;gap:6px}
+.v178open{display:block;padding:0;border:0;background:#09090F;border-radius:12px;overflow:hidden;cursor:pointer;aspect-ratio:4/5}
+.v178open canvas{width:100%;height:100%;display:block}
+.v178c figcaption b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:600 15px/1.3 Almoni,Heebo,sans-serif;color:#07293a}
+.v178a{display:flex;flex-wrap:wrap;gap:6px}
+.v178a .px-btn{min-height:40px}
+.v178a .v178del{color:#a90b0c}
+.v178empty{padding:28px 20px;border:1px dashed #cbd1da;border-radius:18px;text-align:center;background:#fff}
+.v178empty b{display:block;font-size:18px;color:#07293a;margin-bottom:6px}
+.v178empty p{font-size:15px;color:#105572;margin:0 auto 14px;max-width:460px;line-height:1.6}
+</style>

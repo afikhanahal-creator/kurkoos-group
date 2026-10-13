@@ -1501,6 +1501,36 @@ body.v172inner .v170bar{top:calc(-1 * var(--v172pt,12px))!important;padding-top:
 @media (prefers-reduced-motion:reduce){#v172sheet .v172pan,#v172sheet .v172bg,.ga-card.v172press{transition:none}}
 </style>
 
+<style id="k173">
+/* V173 · channels card in settings, four channel buttons in the schedule sheet */
+.v173card{background:#fff;border:1px solid rgba(7,41,58,.12);border-radius:18px;padding:16px 18px;margin:0 0 22px;direction:rtl;font-family:Almoni,Heebo,sans-serif}
+.v173top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.v173top .px-btn{margin-inline-start:auto}
+.v173st{font-size:14px;font-weight:700;padding:4px 10px;border-radius:999px;background:#eef3f6;color:#105572}
+.v173st.on{background:#e3f1ea;color:#0f5a36}
+.v173st.warn{background:#fbeaea;color:#a90b0c}
+.v173p{font-size:15px;margin:8px 0 12px}
+.v173list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.v173row{display:grid;grid-template-columns:36px 1fr auto auto;align-items:center;gap:12px;min-height:56px;padding:8px 12px;border:1px solid rgba(7,41,58,.1);border-radius:14px;background:#f7f8fa}
+.v173b{width:36px;height:36px;border-radius:10px;color:#fff;display:grid;place-items:center;font:700 13px Almoni,Heebo,sans-serif}
+.v173n{display:flex;flex-direction:column;min-width:0}
+.v173n b{font-size:17px;color:#07293a}
+.v173n span{font-size:14px;color:#105572;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v173row .v173c{font-size:14px;font-weight:700;border:0!important;box-shadow:none!important;padding:4px 10px!important;border-radius:999px!important;min-height:0!important;height:auto!important;background:transparent}
+.v173row .v173c.ok{color:#0f5a36;background:#e3f1ea}
+.v173row .v173c.no{color:#a90b0c;background:#fbeaea}
+.v173row .v173c:empty{display:none}
+.v173sw{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#07293a;min-height:44px;cursor:pointer}
+.v173sw input{width:20px;height:20px;accent-color:#105572}
+.v173sw.muted{color:#5b7280;cursor:default}
+.v173help{margin-top:12px;font-size:15px;color:#07293a;background:#f7f8fa;border-radius:12px;padding:12px 14px}
+.v173help ol{margin:6px 0;padding-inline-start:20px}
+.v173help code{font-size:14px;background:#fff;border:1px solid #dbe4ea;border-radius:6px;padding:1px 6px;direction:ltr;display:inline-block}
+@media (max-width:560px){.v173row{grid-template-columns:36px 1fr auto;row-gap:2px}.v173sw{grid-column:2/4;min-height:36px}}
+.v157nets{flex-wrap:wrap}
+.v157ytn{display:block;width:100%;font-size:14px;color:#5b7280;margin-top:6px}
+</style>
+
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -14906,7 +14936,7 @@ function renderComposer(){let r=document.getElementById('cmp-root');if(!r){r=doc
   const recs=nextRecs(kindOf(p),5,C.at&&C.at.slice(0,10));
   r.innerHTML=`<div class="cmpb" data-app="cmpback"><div class="cmp" role="dialog" aria-modal="true" aria-labelledby="cmp-t">
    <header><h2 id="cmp-t">${it?'עריכת פוסט':'פוסט חדש'}${C.at?` · ${fmtD(C.at)} ${hm(C.at)}`:''}</h2><button class="ibtn" type="button" data-app="cmpclose" aria-label="סגור">${ico('x',16)}</button></header>
-   <div class="cmpnets" role="group" aria-label="ערוצים">${['fb','ig'].map(k=>`<button class="av" type="button" data-app="cnet" data-k="${k}" aria-pressed="${C.nets[k]}" aria-label="${NETS[k].n}">${MARK(18)}${netb(k)}</button>`).join('')}<span class="muted" style="font-size:13px">קבוצת קורקוס · Kurkoos Group / kurkoos_group</span></div>
+   <div class="cmpnets" role="group" aria-label="ערוצים">${['fb','ig','tt','yt'].map(k=>`<button class="av" type="button" data-app="cnet" data-k="${k}" aria-pressed="${!!C.nets[k]}" aria-label="${NETS[k].n}">${MARK(18)}${netb(k)}</button>`).join('')}<span class="muted" style="font-size:13px">קבוצת קורקוס · Kurkoos Group / kurkoos_group</span></div>
    <div class="cmpbody"><div class="cmped">
     ${!p&&!isReel?`<span class="kc-lab">על מה הפוסט?</span><textarea data-app="draft" placeholder="כתבו משפט או שניים. למשל: יצקנו היום את התקרה בהנרייטה סאלד">${esc(C.draftTxt)}</textarea><span class="kc-lab">בחרו עיצוב</span><div class="kc-chips">${['ed_cover','ed_photo','ed_quote','ed_article','ed_contact','ed_data','ed_listing','ed_car'].map(L=>`<button type="button" data-app="cmpmk" data-l="${L}">${ED_NAMES[L]}</button>`).join('')}</div>${drafts.length?`<span class="kc-lab">או בחרו טיוטה קיימת</span><div class="pickgrid">${drafts.map(d=>`<button type="button" data-app="cmppick" data-pid="${d.id}" aria-label="${esc(stripStars(d.visual.headline||'').slice(0,50))}"><canvas data-tp="${d.id}" width="220" height="275"></canvas></button>`).join('')}</div>`:''}`:
     `<div class="ctabs" role="tablist">${isReel?'<button type="button" aria-selected="true">כיתוב לרילס</button>':['fb','ig'].map(k=>`<button type="button" role="tab" data-app="ctab" data-k="${k}" aria-selected="${C.net===k}">${NETS[k].n}</button>`).join('')}</div>
@@ -14989,7 +15019,7 @@ async function onAppClick(e){const b=e.target.closest('[data-app],[data-view]');
   if(!C)return;const p=C.p;
   switch(a){
    case 'cmpclose':closeComposer();return;
-   case 'cnet':C.nets[b.dataset.k]=!C.nets[b.dataset.k];if(!C.nets.fb&&!C.nets.ig)C.nets[b.dataset.k]=true;renderComposer();return;
+   case 'cnet':C.nets[b.dataset.k]=!C.nets[b.dataset.k];if(!C.nets.fb&&!C.nets.ig&&!C.nets.tt&&!C.nets.yt)C.nets[b.dataset.k]=true;renderComposer();return;
    case 'ctab':C.net=b.dataset.k;C.pv=b.dataset.k;renderComposer();return;case 'pvt':C.pv=b.dataset.k;renderComposer();return;
    case 'cmpmk':{const t=C.draftTxt.trim();if(!t)return toast('כתבו קודם משפט אחד');const sp=splitText(t);const q=mkPost({layout:b.dataset.l,project:KC.project,label:'',head:sp.head,sub:sp.sub,items:sp.items.length>=3?sp.items:[sp.head],fb:t,cta:''});if(!q)return;q.fb=t+`\n\n${KIT.signoff}\n${KIT.hashtags}`;q.ig=q.fb;C.p=q;await ensureImgs(q);renderComposer();return}
    case 'cmppick':C.p=AG.posts.find(x=>x.id===b.dataset.pid);renderComposer();return;
@@ -23863,7 +23893,7 @@ function slots(n){let out=[];try{out=pxFreeSlots(28).map(k=>{const [d,h]=k.split
 const S={p:null,at:'',nets:{fb:true,ig:true},fromEditor:false,done:false};
 function itemFor(p){try{return APP.sched.items.find(i=>(p.key&&i.key===p.key)||i.pid===p.id)}catch(e){return null}}
 function open(p,fromEditor){if(!p)return;const it=itemFor(p);const sl=slots(6);S.p=p;S.fromEditor=!!fromEditor;S.done=false;
-  S.at=(it&&it.at)||sl[0]||'';S.nets=it&&it.nets?Object.assign({fb:true,ig:true},it.nets):{fb:true,ig:true};draw();
+  S.at=(it&&it.at)||sl[0]||'';S.nets=it&&it.nets?Object.assign({fb:true,ig:true},it.nets):(window.__v173?__v173.defNets():{fb:true,ig:true});draw();
   setTimeout(()=>{const f=document.querySelector('#v157 .v157chip[aria-pressed="true"],#v157 .v157chip,#v157 input');f&&f.focus()},30)}
 function close(){const el=document.getElementById('v157');if(el)el.remove();document.body.classList.remove('v157on')}
 function head(p){const h=((p.visual&&p.visual.headline)||p.hook||'').replace(/\*/g,'').replace(/\n/g,' ');return h.slice(0,80)}
@@ -23883,8 +23913,8 @@ function draw(){let el=document.getElementById('v157');if(!el){el=document.creat
    <label class="v157exact"><span>או מועד מדויק</span><input type="datetime-local" data-v157="exact" value="${esc2((S.at||'').slice(0,16))}"></label>
    <fieldset class="v157set"><legend>איפה</legend><div class="v157nets">
     <button type="button" class="v157net" data-v157="net" data-n="fb" aria-pressed="${!!S.nets.fb}">פייסבוק</button>
-    <button type="button" class="v157net" data-v157="net" data-n="ig" aria-pressed="${!!S.nets.ig}">אינסטגרם</button></div></fieldset>
-   <footer class="v157f"><button type="button" class="px-btn red v157go" data-v157="go" ${S.at&&(S.nets.fb||S.nets.ig)?'':'disabled'}>${S.at?`${dirty?'שמירה ותזמון':'תזמון'} ל${esc2(lbl(S.at))}`:'בחרו מועד'}</button><button type="button" class="px-btn" data-v157="x">ביטול</button></footer>
+    <button type="button" class="v157net" data-v157="net" data-n="ig" aria-pressed="${!!S.nets.ig}">אינסטגרם</button>     <button type="button" class="v157net" data-v157="net" data-n="tt" aria-pressed="${!!S.nets.tt}">טיקטוק</button>     <button type="button" class="v157net" data-v157="net" data-n="yt" aria-pressed="${!!S.nets.yt}">יוטיוב</button>${S.nets.yt?'<span class="v157ytn">יוטיוב מקבל רק סרטונים. פוסט תמונה יישלח לשאר הערוצים</span>':''}</div></fieldset>
+   <footer class="v157f"><button type="button" class="px-btn red v157go" data-v157="go" ${S.at&&(S.nets.fb||S.nets.ig||S.nets.tt||S.nets.yt)?'':'disabled'}>${S.at?`${dirty?'שמירה ותזמון':'תזמון'} ל${esc2(lbl(S.at))}`:'בחרו מועד'}</button><button type="button" class="px-btn" data-v157="x">ביטול</button></footer>
   </section>`}
 function doSched(){const p=S.p;if(!p||!S.at)return;
   try{if(S.fromEditor&&typeof peDirty==='function'&&peDirty())peSave('עריכה בסטודיו')}catch(e){console.error('v157 save',e)}
@@ -24635,6 +24665,80 @@ document.addEventListener('click',e=>{if(Date.now()<eat){e.preventDefault();e.st
 document.addEventListener('contextmenu',e=>{const c=e.target.closest&&e.target.closest(CARD);if(!c)return;e.preventDefault();if(document.getElementById('v172sheet'))return;if(lp){clearTimeout(lp.t);lp=null;eat=Date.now()+700}openPost(c)},true);
 
 window.__v172={sync,openActs,openPost,close};
+})();
+
+// ================= V173 · channels: TikTok and YouTube next to Facebook and Instagram, Metricool from the site, a "ערוצים" card in settings
+(()=>{
+if(window.__v173)return;window.__v173=1;
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// the four channels the engine schedules to. Platform colours only on the small channel badges.
+try{NETS.tt={n:'טיקטוק',c:'#111111',l:'TT',max:2200};NETS.yt={n:'יוטיוב',c:'#CC0000',l:'YT',max:5000}}catch(e){}
+const KEYS=[['fb','facebook'],['ig','instagram'],['tt','tiktok'],['yt','youtube']];
+const DEF_KEY='v173_nets';
+function defNets(){let d=null;try{d=lsGet(DEF_KEY,null)}catch(e){}const o={fb:true,ig:true,tt:false,yt:false};if(d&&typeof d==='object')KEYS.forEach(([k])=>{if(k in d)o[k]=!!d[k]});if(!KEYS.some(([k])=>o[k]))o.fb=true;return o}
+function setDef(k,v){const o=defNets();o[k]=v;if(!KEYS.some(([x])=>o[x]))o[k]=true;try{lsSet(DEF_KEY,o)}catch(e){}}
+
+/* Metricool payload: the extra providers */
+try{buildInfo=(f=>function(q){const info=f.apply(this,arguments);try{
+ if(q.nets.tiktok&&!info.providers.some(p=>p.network==='tiktok'))info.providers.push({network:'tiktok'});
+ if(q.nets.youtube&&!info.providers.some(p=>p.network==='youtube'))info.providers.push({network:'youtube'});
+ info.draft=true}catch(e){}return info})(buildInfo)}catch(e){}
+
+/* the rendered post goes with the draft (site only: the file sits in public storage that Metricool can read) */
+async function mediaFor(p){if(window.__ENGINE_HOST!=='site'||!p)return '';
+ try{const assets=await window.claude.use('assets');if(!assets)return '';const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;drawSlide(cv,p,p.slide||0);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));if(!blob)return '';const up=await assets.upload(blob);return up&&up.url||''}catch(e){console.warn('v173 media',e);return ''}}
+const TOAST={needs_reauth:'צריך לחבר מחדש את Metricool',server_not_connected:'Metricool עוד לא מחובר לאתר. ההוראות בהגדרות > ערוצים',not_in_manifest:'הדף לא קיבל הרשאה ל-Metricool. רעננו ואשרו'};
+try{sendMC=async function(it){const p=itemPost(it);
+ if(!mcpNS)return toast('Metricool לא מחובר. ההוראות בהגדרות > ערוצים');
+ if(!it.at||new Date(it.at)<new Date())return toast('בחרו זמן עתידי לפני שליחה');
+ const n=it.nets||{};const video=!!it.reel;
+ const nets={facebook:!!n.fb,instagram:!!n.ig,tiktok:!!n.tt,youtube:!!n.yt&&video};
+ if(n.yt&&!video)toast('יוטיוב מקבל רק סרטונים, הפוסט נשלח לשאר הערוצים');
+ if(!nets.facebook&&!nets.instagram&&!nets.tiktok&&!nets.youtube)return toast('בחרו לפחות ערוץ אחד');
+ const main=n.fb?'fb':'ig';
+ const media=video?'':await mediaFor(p);
+ const q={nets,text:itemText(it,main),media,draft:true,date:it.at,fbType:video?'REEL':'POST',igType:video?'REEL':'POST'};
+ try{const res=await mcpNS.callTool(SERVER,'createScheduledPost',{blogId:BRAND,date:it.at+':00'+(window.__ilOffset?__ilOffset(it.at):'+03:00'),info:JSON.stringify(buildInfo(q))},{cache:false});
+  let pl=res.payload;if(typeof pl==='string'){try{pl=JSON.parse(pl)}catch(e){}}
+  it.sent={at:new Date().toISOString(),url:findKey(pl,'plannerUrl')||'',media:!!media};it.status='scheduled';saveSched(it);
+  toast(media?'נשלח ל-Metricool כטיוטה עם התמונה. אשרו שם כדי שיתפרסם':'נשלח ל-Metricool כטיוטה. הוסיפו שם את המדיה ואשרו');
+  try{await mcpNS.invalidate(SERVER,'getScheduledPosts')}catch(e){}}
+ catch(err){const c=err&&err.code;toast(TOAST[c]||(c==='tool_error'?'Metricool דחה: '+String(err.message||'').slice(0,120):'השליחה נכשלה, נסו שוב'))}}}catch(e){console.error('v173 sendMC',e)}
+
+/* settings: which channels are connected, defaults for new posts */
+const ST={state:'idle',configured:null,nets:null,err:''};
+function netsFrom(data){const rows=Array.isArray(data)?data:(data&&Array.isArray(data.data)?data.data:[]);const b=rows.find(r=>String(r.id||r.blogId)==='7115159')||rows[0];if(!b)return null;
+ const src=Object.assign({},b,b.networksData||{});const has=re=>Object.keys(src).some(k=>re.test(k)&&src[k]&&String(src[k]).length>1&&!/^(false|null|0)$/i.test(String(src[k])));
+ return {fb:has(/^facebook(Data|PageId|_page)?$/i),ig:has(/^instagram(Data|Connect)?$/i),tt:has(/^tiktok(Data|Account)?$/i),yt:has(/^youtube(Data|Channel)?$/i),gb:has(/^(gbp|gmb)(Data)?$/i),label:b.label||''}}
+async function load(){ST.state='busy';paintCard();
+ try{const mcp=await (window.claude&&window.claude.use?window.claude.use('mcp'):null);
+  if(!mcp){ST.state='off';ST.err='';paintCard();return}
+  if(window.__ENGINE_HOST==='site'&&mcp.status){const s=await mcp.status();ST.configured=!!(s&&s.configured);if(!ST.configured){try{mcpNS=null}catch(e){}ST.state='nokey';paintCard();return}}
+  const r=await mcp.callTool('metricool','getBrandSettings',{});let pl=r&&r.payload;if(typeof pl==='string'){try{pl=JSON.parse(pl)}catch(e){}}
+  ST.nets=netsFrom(pl&&pl.data!==undefined?pl.data:pl);ST.state='ok'}
+ catch(e){ST.state='err';ST.err=String(e&&e.message||'').slice(0,160)}
+ paintCard()}
+const ROWS=[['fb','פייסבוק','קבוצת קורקוס'],['ig','אינסטגרם','kurkoos_group'],['tt','טיקטוק','kurkoos_group'],['yt','יוטיוב','קבוצת קורקוס'],['gb','גוגל לעסק','פרופיל העסק']];
+function cardHtml(){const d=defNets();const n=ST.nets||{};
+ const head=ST.state==='ok'?`<span class="v173st on">Metricool מחובר</span>`:ST.state==='busy'?`<span class="v173st">בודק חיבור…</span>`:ST.state==='nokey'?`<span class="v173st warn">צריך מפתח Metricool באתר</span>`:ST.state==='off'?`<span class="v173st warn">לא זמין בדף הזה</span>`:ST.state==='err'?`<span class="v173st warn">החיבור נכשל</span>`:'';
+ const rows=ROWS.map(([k,name,acc])=>{const known=ST.state==='ok';const on=known&&n[k];const def=k in d;
+  return `<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{c:'#4285F4'}).c}" aria-hidden="true">${(NETS[k]||{l:'G'}).l}</span><span class="v173n"><b>${name}</b><span>${E(acc)}</span></span>
+   <span class="v173c ${known?(on?'ok':'no'):''}">${known?(on?'מחובר':'לא מחובר'):''}</span>
+   ${def?`<label class="v173sw"><input type="checkbox" data-v173def="${k}" ${d[k]?'checked':''}><span>ברירת מחדל</span></label>`:'<span class="v173sw muted">רק בתוך Metricool</span>'}</li>`}).join('');
+ const help=ST.state==='nokey'?`<div class="v173help"><b>איך מחברים (פעם אחת):</b><ol><li>ב-Metricool: הגדרות החשבון ואז API, מעתיקים את הטוקן.</li><li>ב-Vercel: Settings ואז Environment Variables, מוסיפים <code>METRICOOL_USER_TOKEN</code> עם הטוקן.</li><li>Redeploy לאתר, ורעננו את הדף.</li></ol><p>הגישה ל-API קיימת בחבילות Advanced ומעלה של Metricool.</p></div>`
+  :ST.state==='err'?`<p class="v173help">${E(ST.err)}</p>`:ST.state==='off'?`<p class="v173help">היכנסו דרך עמוד הניהול של האתר כדי לתזמן לערוצים.</p>`:'';
+ return `<section class="v173card" id="v173card" aria-labelledby="v173h"><div class="v173top"><h2 class="vh" id="v173h" style="margin:0">ערוצים</h2>${head}<button type="button" class="px-btn sm" data-v173="re">בדיקה מחדש</button></div>
+  <p class="muted v173p">פוסטים נשלחים ל-Metricool תמיד כטיוטה, והפרסום עצמו מאושר שם. יוטיוב מקבל רק סרטונים.</p>
+  <ul class="v173list">${rows}</ul>${help}</section>`}
+function paintCard(){const el=document.getElementById('v173card');if(el)el.outerHTML=cardHtml()}
+try{vSettings=(f=>function(){return cardHtml()+f.apply(this,arguments)})(vSettings)}catch(e){}
+try{render=(f=>function(){const r=f.apply(this,arguments);try{if(APP.view==='settings'&&ST.state==='idle')load()}catch(e){}return r})(render)}catch(e){}
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.v173def){setDef(t.dataset.v173def,t.checked);paintCard()}});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v173="re"]');if(b){e.preventDefault();load()}});
+setTimeout(()=>{try{if(window.__ENGINE_HOST==='site')load()}catch(e){}},2500);
+
+window.__v173={defNets,load,ST,netsFrom};
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

@@ -12,6 +12,7 @@
 //   POST /api/generate-image
 //   POST /api/claude         (מנוע התוכן: Claude)
 //   POST /api/engine-image   (מנוע התוכן: סטודיו התמונות)
+//   POST /api/metricool      (מנוע התוכן: תזמון לערוצים דרך Metricool, תמיד כטיוטה)
 //   GET  /api/sitemap        (וגם /sitemap.xml דרך rewrite)
 //   GET  /api/indexnow       (cron יומי, מודיע ל-Bing על עמודים חדשים)
 //
@@ -26,6 +27,7 @@ const ROUTES = {
   'generate-image': () => import('../server/generate-image.js'),
   claude: () => import('../server/claude.js'),
   'engine-image': () => import('../server/engine-image.js'),
+  metricool: () => import('../server/metricool.js'),
   sitemap: () => import('../server/sitemap.js'),
   indexnow: () => import('../server/indexnow.js'),
 }

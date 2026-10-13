@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>אפיק הנחל · משרדים להשכרה, מבוא קדם 5</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-400.ttf"); font-weight: 400; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-500.ttf"); font-weight: 500; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-700.ttf"); font-weight: 700; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-800.ttf"); font-weight: 800; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-900.ttf"); font-weight: 900; }
+      :root { --night: #09090f; --deep: #0e0e1c; --cream: #e8e4d8; --peri: #8490d8; --green: #82f67f; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
+      #root { direction: rtl; position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--night); font-family: "Rubik", sans-serif; color: var(--cream); }
+      .clip, .layer { position: absolute; inset: 0; overflow: hidden; }
+      .vid { object-fit: cover; width: 100%; height: 100%; }
+      .h { font-weight: 800; line-height: 1.02; letter-spacing: -1px; }
+      .line { display: block; overflow: hidden; padding-bottom: 10px; }
+      .line > span { display: inline-block; }
+      .peri { color: var(--peri); }
+      .green { color: var(--green); }
+      .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(9,9,15,.55) 0%, rgba(9,9,15,0) 22%, rgba(9,9,15,0) 40%, rgba(9,9,15,.82) 70%, rgba(9,9,15,.97) 100%); }
+      .dim { position: absolute; inset: 0; background: rgba(9,9,15,.5); }
+      .chip { display: inline-flex; align-items: center; gap: 14px; background: var(--green); color: var(--night); font-weight: 800; font-size: 46px; padding: 10px 30px 14px; border-radius: 40px; }
+      .logo { position: absolute; top: 70px; left: 64px; width: 150px; height: 143px; }
+      .bar { height: 10px; width: 200px; background: var(--green); transform-origin: 100% 50%; }
+      /* photo cards laid over the footage */
+      .card { position: absolute; left: 150px; top: 330px; width: 780px; height: 1040px; border-radius: 26px; overflow: hidden; background: var(--cream); padding: 12px; box-shadow: 0 40px 90px rgba(0,0,0,.55); }
+      .card .ph { position: relative; width: 100%; height: 100%; border-radius: 16px; overflow: hidden; }
+      .card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .cap { position: absolute; right: 80px; left: 80px; top: 1450px; text-align: right; }
+      .cap .t { display: inline-block; background: var(--night); color: var(--cream); font-weight: 700; font-size: 64px; padding: 14px 34px 22px; border-radius: 22px; border-right: 10px solid var(--green); }
+      .count { position: absolute; left: 80px; top: 1460px; width: 130px; height: 96px; text-align: center; line-height: 90px; border-radius: 20px; background: var(--night); font-weight: 800; font-size: 54px; color: var(--peri); direction: ltr; }
+      .feat { display: flex; flex-wrap: wrap; gap: 20px; justify-content: flex-start; }
+      .feat span { background: rgba(232,228,216,.1); border: 2px solid rgba(132,144,216,.6); color: var(--cream); font-weight: 700; font-size: 56px; padding: 16px 32px 22px; border-radius: 60px; }
+      .road { width: 230px; height: 230px; border-radius: 34px; background: var(--peri); color: var(--night); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 110px; direction: ltr; border: 8px solid var(--cream); }
+      .term { display: flex; justify-content: space-between; align-items: baseline; padding: 30px 0 34px; border-bottom: 2px solid rgba(132,144,216,.35); }
+      .term b { font-weight: 800; font-size: 74px; }
+      .term i { font-style: normal; font-weight: 500; font-size: 44px; color: var(--peri); }
+      .phone { display: inline-block; background: var(--green); color: var(--night); font-weight: 900; font-size: 100px; padding: 16px 60px 26px; border-radius: 90px; direction: ltr; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="34.6">
+
+      <!-- footage: the garden, the entrance, the lobby -->
+      <div id="vid-a" class="layer"><video id="garden-a" class="clip vid" src="assets/garden.mp4" muted playsinline data-start="0" data-duration="5.6" data-media-start="0" data-track-index="0"></video></div>
+      <div id="vid-b" class="layer"><video id="lobby-a" class="clip vid" src="assets/lobby.mp4" muted playsinline data-start="5.6" data-duration="3.6" data-media-start="0" data-track-index="0"></video></div>
+      <div id="vid-c" class="layer">
+        <video id="lobby-b" class="clip vid" src="assets/lobby.mp4" muted playsinline data-start="9.2" data-duration="3.4" data-media-start="3.4" data-track-index="0"></video>
+        <video id="garden-b" class="clip vid" src="assets/garden.mp4" muted playsinline data-start="12.6" data-duration="3.8" data-media-start="5.6" data-track-index="0"></video>
+        <video id="lobby-c" class="clip vid" src="assets/lobby.mp4" muted playsinline data-start="16.4" data-duration="3.2" data-media-start="0.2" data-track-index="0"></video>
+      </div>
+      <div id="vid-d" class="layer"><video id="garden-c" class="clip vid" src="assets/garden.mp4" muted playsinline data-start="19.6" data-duration="4" data-media-start="1.0" data-track-index="0"></video></div>
+
+      <!-- 1 · for rent, the address -->
+      <section id="s1" class="clip" data-start="0" data-duration="2.9" data-track-index="1">
+        <div class="shade"></div>
+        <img class="logo" src="assets/ah.svg" alt="אפיק הנחל" />
+        <div style="position:absolute; right:80px; left:80px; bottom:250px; text-align:right">
+          <div id="s1-chip" class="chip">להשכרה</div>
+          <div class="h" style="font-size:190px; margin-top:34px"><span class="line"><span id="s1-a">משרדים</span></span></div>
+          <div class="h" style="font-size:104px"><span class="line"><span id="s1-b">במבוא קדם 5,</span></span></div>
+          <div class="h peri" style="font-size:104px"><span class="line"><span id="s1-c">הוד השרון</span></span></div>
+        </div>
+      </section>
+
+      <!-- 2 · 520 square metres, divisible -->
+      <section id="s2" class="clip" data-start="2.8" data-duration="2.9" data-track-index="1">
+        <div class="shade"></div>
+        <img class="logo" src="assets/ah.svg" alt="" />
+        <div style="position:absolute; right:80px; left:80px; bottom:240px; text-align:right">
+          <div class="bar" id="s2-bar"></div>
+          <div class="h" style="font-size:300px; margin-top:20px; text-align:right"><span id="s2-num" style="display:inline-block; direction:ltr; min-width:560px; text-align:right">520</span><span style="font-size:110px"> מ״ר</span></div>
+          <div class="h peri" style="font-size:74px; margin-top:8px" id="s2-a">בקומה הראשונה</div>
+          <div class="h" style="font-size:60px; margin-top:22px; font-weight:500" id="s2-b">אפשר לחלק ולהשכיר כ־250 מ״ר בלבד</div>
+        </div>
+      </section>
+
+      <!-- 3 · the building -->
+      <section id="s3" class="clip" data-start="5.6" data-duration="3.7" data-track-index="1">
+        <div class="shade"></div>
+        <img class="logo" src="assets/ah.svg" alt="" />
+        <div style="position:absolute; right:80px; left:80px; bottom:260px; text-align:right">
+          <div class="h peri" style="font-size:64px"><span class="line"><span id="s3-a">בבניין</span></span></div>
+          <div class="h" style="font-size:150px"><span class="line"><span id="s3-b">מעלית ומקלט.</span></span></div>
+          <div class="h" style="font-size:66px; font-weight:500"><span class="line"><span id="s3-c">וחדר כושר בבניין.</span></span></div>
+        </div>
+      </section>
+
+      <!-- 4 · the office itself: photos laid over the footage, one on another -->
+      <section id="s4" class="clip" data-start="9.2" data-duration="10.5" data-track-index="2">
+        <div class="dim"></div>
+        <img class="logo" src="assets/ah.svg" alt="" />
+        <div style="position:absolute; right:80px; top:90px; text-align:right"><div class="h" style="font-size:58px" id="s4-title">בתוך המשרד</div></div>
+        <div id="c1" class="card"><div class="ph"><img src="assets/photos/openspace.jpg" alt="" /></div></div>
+        <div id="c2" class="card"><div class="ph"><img src="assets/photos/corridor.jpg" alt="" /></div></div>
+        <div id="c3" class="card"><div class="ph"><img src="assets/photos/room5.jpg" alt="" /></div></div>
+        <div id="c4" class="card"><div class="ph"><img src="assets/photos/room2.jpg" alt="" /></div></div>
+        <div id="c5" class="card"><div class="ph"><img src="assets/photos/room3.jpg" alt="" /></div></div>
+        <div id="c6" class="card"><div class="ph"><img src="assets/photos/kitchen.jpg" alt="" /></div></div>
+        <div id="c7" class="card"><div class="ph"><img src="assets/photos/hall.jpg" alt="" /></div></div>
+        <div id="c8" class="card"><div class="ph"><img src="assets/photos/exitway.jpg" alt="" /></div></div>
+        <div class="cap" data-layout-allow-overlap>
+          <div style="position:relative; height:120px" data-layout-allow-overlap>
+            <div class="t" id="k1" style="position:absolute; right:0">חלל עבודה פתוח</div>
+            <div class="t" id="k2" style="position:absolute; right:0">לפחות 20 חדרים מחולקים</div>
+            <div class="t" id="k3" style="position:absolute; right:0">פרקטים חדשים</div>
+            <div class="t" id="k6" style="position:absolute; right:0">מטבחון</div>
+            <div class="t" id="k7" style="position:absolute; right:0">חלל לאחסון או לייצור</div>
+            <div class="t" id="k8" style="position:absolute; right:0">כיבוי אש ואזעקה</div>
+          </div>
+        </div>
+        <div class="count" id="s4-count" data-layout-allow-overlap><span id="n1">01</span><span id="n2" style="position:absolute; left:0; right:0; top:0">02</span><span id="n3" style="position:absolute; left:0; right:0; top:0">03</span><span id="n4" style="position:absolute; left:0; right:0; top:0">04</span><span id="n5" style="position:absolute; left:0; right:0; top:0">05</span><span id="n6" style="position:absolute; left:0; right:0; top:0">06</span><span id="n7" style="position:absolute; left:0; right:0; top:0">07</span><span id="n8" style="position:absolute; left:0; right:0; top:0">08</span></div>
+      </section>
+
+      <!-- 5 · what else -->
+      <section id="s5" class="clip" data-start="19.6" data-duration="4" data-track-index="2">
+        <div class="layer" style="background:rgba(9,9,15,.78)"></div>
+        <img class="logo" src="assets/ah.svg" alt="" />
+        <div style="position:absolute; right:80px; left:80px; top:380px; text-align:right">
+          <div class="h green" style="font-size:60px" id="s5-t">בנכס ובבניין</div>
+          <div class="bar" id="s5-bar" style="margin:24px 0 46px auto"></div>
+          <div class="feat" id="s5-list">
+            <span>3 תאי שירותים</span><span>מעלית</span><span>מקלט</span><span>מערכות תקשורת</span><span>כיבוי אש ואזעקה</span><span>חדר כושר בבניין</span><span>חניה צמודה מקורה</span><span>חניון ציבורי מול הבניין</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 · location -->
+      <section id="s6" class="clip" data-start="23.6" data-duration="3" data-track-index="2">
+        <div class="layer" style="background:var(--night)"></div>
+        <img class="logo" src="assets/ah.svg" alt="" />
+        <div style="position:absolute; right:80px; left:80px; top:470px; text-align:right">
+          <div class="h peri" style="font-size:64px" id="s6-a">מיקום נוח</div>
+          <div class="h" style="font-size:120px; margin-top:12px" id="s6-b">גישה מהירה ל:</div>
+        </div>
+        <div style="position:absolute; left:80px; right:80px; top:860px; display:flex; justify-content:space-between; direction:ltr">
+          <div class="road" id="r1">5</div><div class="road" id="r2" style="font-size:86px">531</div><div class="road" id="r3">6</div>
+        </div>
+        <div id="s6-line" style="position:absolute; left:80px; right:80px; top:1150px; height:8px; background:var(--green); transform-origin:0 50%"></div>
+        <div style="position:absolute; left:80px; right:80px; top:1190px; display:flex; justify-content:space-between; direction:ltr" class="peri">
+          <div style="width:230px; text-align:center; font-size:44px; font-weight:700">כביש 5</div><div style="width:230px; text-align:center; font-size:44px; font-weight:700">כביש 531</div><div style="width:230px; text-align:center; font-size:44px; font-weight:700">כביש 6</div>
+        </div>
+      </section>
+
+      <!-- 7 · terms -->
+      <section id="s7" class="clip" data-start="26.6" data-duration="4" data-track-index="2">
+        <div class="layer" style="background:var(--deep)"></div>
+        <img class="logo" src="assets/ah.svg" alt="" />
+        <div style="position:absolute; right:80px; left:80px; top:340px; text-align:right">
+          <div class="h green" style="font-size:60px" id="s7-t">תנאי שכירות</div>
+          <div class="bar" id="s7-bar" style="margin:24px 0 20px auto"></div>
+          <div class="term" id="t1"><b>ועד בית 1,500 ₪</b><i>לחודש, ל־520 מ״ר</i></div>
+          <div class="term" id="t2"><b>אין דמי ניהול</b><i></i></div>
+          <div class="term" id="t3"><b>חודשיים גרייס</b><i>לשיפוץ והתאמה</i></div>
+          <div style="margin-top:46px; font-size:46px; font-weight:500; line-height:1.4; color:var(--cream)" id="t4">הנכס דורש שיפוץ והתאמה לפני הכניסה, עם גמישות בחלוקת השטח לפי צורכי העסק.</div>
+        </div>
+      </section>
+
+      <!-- 8 · end -->
+      <section id="s8" class="clip" data-start="30.6" data-duration="4" data-track-index="2">
+        <div class="layer" style="background:var(--night)"></div>
+        <div style="position:absolute; left:0; right:0; top:330px; display:flex; justify-content:center">
+          <div id="s8-logo-wrap" style="width:440px; height:421px; overflow:hidden"><img id="s8-logo" src="assets/ah.svg" alt="אפיק הנחל" style="width:440px; height:421px" /></div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:820px; text-align:center">
+          <div class="h" style="font-size:80px" id="s8-a">אפיק הנחל</div>
+          <div class="peri" style="font-size:50px; font-weight:500; margin-top:10px" id="s8-b">ייזום, שיווק ותיווך</div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:1080px; text-align:center"><div class="peri" style="font-size:52px; font-weight:500; margin-bottom:26px" id="s8-c">לפרטים ולתיאום סיור</div><div class="phone" id="s8-phone">055-981-1814</div></div>
+        <div style="position:absolute; left:0; right:0; top:1420px; text-align:center; font-size:56px; font-weight:500; direction:ltr" id="s8-site">afikhanahal.co.il</div>
+      </section>
+
+      <div class="layer" style="pointer-events:none; background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 58%, rgba(0,0,0,.4) 100%); z-index:50"></div>
+      <div id="cutbar" style="position:absolute; left:0; right:0; top:0; height:10px; background:var(--green); z-index:51; transform-origin:100% 50%"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+      const E4 = "power4.out", BACK = "back.out(1.7)";
+      const rise = (sel, at, d = 0.5) => tl.fromTo(sel, { yPercent: 110 }, { yPercent: 0, duration: d, ease: E4 }, at);
+      const bar = (sel, at) => tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, at);
+
+      // footage: a slow push on every shot keeps the frame alive
+      tl.fromTo("#vid-a", { scale: 1.12 }, { scale: 1.0, duration: 5.6, ease: "none" }, 0);
+      tl.fromTo("#vid-b", { scale: 1.15 }, { scale: 1.02, duration: 3.6, ease: "none" }, 5.6);
+      tl.fromTo("#vid-c", { scale: 1.08, filter: "blur(0px)" }, { scale: 1.0, filter: "blur(3px)", duration: 10.4, ease: "none" }, 9.2);
+      tl.fromTo("#vid-d", { scale: 1.1, filter: "blur(4px)" }, { scale: 1.0, filter: "blur(6px)", duration: 4, ease: "none" }, 19.6);
+      // the entrance arrives with a wipe
+      tl.fromTo("#vid-b", { clipPath: "inset(0 0 0 100%)" }, { clipPath: "inset(0 0 0 0%)", duration: 0.5, ease: "power3.inOut", immediateRender: false }, 5.6);
+
+      // 1
+      tl.fromTo("#s1-chip", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: BACK }, 0.15);
+      rise("#s1-a", 0.35, 0.55); rise("#s1-b", 0.65); rise("#s1-c", 0.85);
+      tl.to(["#s1-a", "#s1-b", "#s1-c"], { yPercent: -110, duration: 0.3, ease: "power3.in", stagger: 0.05 }, 2.5);
+      tl.to("#s1-chip", { opacity: 0, duration: 0.25 }, 2.55);
+
+      // 2: the number counts up
+      bar("#s2-bar", 2.9);
+      const cnt = { v: 0 };
+      tl.fromTo(cnt, { v: 0 }, { v: 520, duration: 1.1, ease: "power2.out", onUpdate: () => { document.getElementById("s2-num").textContent = Math.round(cnt.v); } }, 2.95);
+      tl.fromTo("#s2-num", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.45, ease: E4 }, 2.9);
+      tl.fromTo("#s2-a", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.45 }, 3.4);
+      tl.fromTo("#s2-b", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.45 }, 3.8);
+
+      // 3
+      rise("#s3-a", 6.0); rise("#s3-b", 6.2, 0.55); rise("#s3-c", 6.6);
+      tl.to(["#s3-a", "#s3-b", "#s3-c"], { yPercent: -110, duration: 0.3, ease: "power3.in", stagger: 0.05 }, 8.9);
+
+      // 4: cards fly in over the footage, each one lands on the last; the caption and the count follow
+      tl.fromTo("#s4-title", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4 }, 9.3);
+      const caps = { 1: "#k1", 2: "#k2", 3: "#k3", 4: "#k3", 5: null, 6: "#k6", 7: "#k7", 8: "#k8" };
+      const allCaps = ["#k1", "#k2", "#k3", "#k6", "#k7", "#k8"];
+      tl.set(allCaps, { opacity: 0 }, 0);
+      tl.set(["#n2", "#n3", "#n4", "#n5", "#n6", "#n7", "#n8"], { opacity: 0 }, 0);
+      for (let i = 1; i <= 8; i++) {
+        const t = 9.35 + (i - 1) * 1.28;
+        const rot = [-4, 3.5, -2.5, 4, -3.5, 2.5, -2, 3][i - 1];
+        const fromX = i % 2 ? 900 : -900;
+        tl.fromTo("#c" + i, { x: fromX, y: 140, rotation: rot * 4, scale: 0.85, opacity: 0 }, { x: 0, y: 0, rotation: rot, scale: 1, opacity: 1, duration: 0.55, ease: E4 }, t);
+        tl.fromTo("#c" + i + " img", { scale: 1.18 }, { scale: 1.0, duration: 1.9, ease: "none" }, t);
+        if (i > 1) tl.to("#c" + (i - 1), { scale: 0.9, opacity: 0.35, duration: 0.45, ease: "power2.out" }, t + 0.05);
+        if (i > 2) tl.to("#c" + (i - 2), { opacity: 0, duration: 0.3 }, t + 0.05);
+        // caption swap
+        const c = caps[i], prev = caps[i - 1];
+        if (prev && prev !== c) tl.to(prev, { opacity: 0, y: -20, duration: 0.2 }, t);
+        if (c && c !== prev) tl.fromTo(c, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35, ease: E4, immediateRender: false }, t + 0.25);
+        if (i > 1) tl.set("#n" + (i - 1), { opacity: 0 }, t + 0.1).set("#n" + i, { opacity: 1 }, t + 0.1);
+      }
+      tl.to(["#c8", "#k8"], { opacity: 0, y: -40, duration: 0.3, ease: "power3.in" }, 19.3);
+
+      // 5: the list pops in, one by one
+      tl.fromTo("#s5-t", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, 19.7);
+      bar("#s5-bar", 19.85);
+      tl.fromTo("#s5-list span", { opacity: 0, scale: 0.6, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: BACK, stagger: 0.16 }, 20.0);
+
+      // 6: three road signs and the line that joins them
+      tl.fromTo("#s6-a", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.4 }, 23.7);
+      tl.fromTo("#s6-b", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.45 }, 23.85);
+      ["#r1", "#r2", "#r3"].forEach((r, i) => tl.fromTo(r, { scale: 0, rotation: -14 }, { scale: 1, rotation: 0, duration: 0.45, ease: BACK }, 24.2 + i * 0.22));
+      tl.fromTo("#s6-line", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power2.inOut" }, 24.5);
+
+      // 7: the terms land one line at a time
+      tl.fromTo("#s7-t", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, 26.7);
+      bar("#s7-bar", 26.85);
+      ["#t1", "#t2", "#t3"].forEach((t, i) => tl.fromTo(t, { opacity: 0, x: 160 }, { opacity: 1, x: 0, duration: 0.45, ease: E4 }, 27.0 + i * 0.35));
+      tl.fromTo("#t4", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 28.3);
+
+      // 8: the logo is revealed, then the name, the phone and the site
+      tl.fromTo("#s8-logo-wrap", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.9, ease: "power3.inOut" }, 30.7);
+      tl.fromTo("#s8-logo", { scale: 1.15 }, { scale: 1, duration: 1.4, ease: "power2.out" }, 30.7);
+      tl.fromTo("#s8-a", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45 }, 31.3);
+      tl.fromTo("#s8-b", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45 }, 31.5);
+      tl.fromTo("#s8-c", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 31.9);
+      tl.fromTo("#s8-phone", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: BACK }, 32.0);
+      tl.fromTo("#s8-site", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45 }, 32.4);
+
+      // a green line sweeps the top on every cut, so the pace reads without sound
+      tl.set("#cutbar", { scaleX: 0 }, 0);
+      [2.8, 5.6, 9.2, 19.6, 23.6, 26.6, 30.6].forEach((t) => {
+        tl.fromTo("#cutbar", { scaleX: 0, opacity: 1 }, { scaleX: 1, duration: 0.35, ease: "expo.out", immediateRender: false }, t);
+        tl.to("#cutbar", { opacity: 0, duration: 0.3, ease: "power2.in" }, t + 0.45);
+      });
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

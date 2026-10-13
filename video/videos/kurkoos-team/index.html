@@ -66,47 +66,30 @@
     <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="31">
       <div class="layer grid" id="bg-grid"></div>
 
-      <!-- ===== S1 · hook: site photo pushing in, "מה בוחרים קודם?" ===== -->
-      <section id="s1" class="clip" data-start="0" data-duration="3.25" data-track-index="1">
-        <div class="layer" id="s1-pic"><img class="cover" src="assets/site3.jpg" alt="" /></div>
-        <div class="shade-t"></div>
-        <div class="layer grid" id="s1-grid"></div>
-        <div class="marks"><i></i><i></i><i></i><i></i></div>
-        <img class="logo-s" src="assets/logo-h.svg" alt="קבוצת קורקוס" />
-        <div style="position:absolute; right:80px; top:200px; text-align:right">
-          <div id="s1-chip" class="chip">לבעלי מגרש</div>
-        </div>
-        <div style="position:absolute; right:80px; top:330px; text-align:right">
-          <div class="h" style="font-size:190px"><span class="w" id="s1-w1">מה</span> <span class="w" id="s1-w2">בוחרים</span></div>
-          <div class="h" style="font-size:230px; margin-top:6px">
-            <span class="gl" id="s1-gl" data-layout-allow-overlap><span class="c r">קודם?</span><span class="c b">קודם?</span><span class="m mist">קודם?</span></span>
-          </div>
-          <div class="rule" id="s1-rule" style="margin:34px 0 0 auto"></div>
-        </div>
-        <div class="flash" id="s1-flash"></div>
-      </section>
-
-      <!-- ===== S2 · "לפני" stays, the word under it rolls ===== -->
-      <div id="s2-media" class="layer" style="height:1120px">
-        <video id="s2-vid" class="clip" src="assets/showcase.mp4" muted playsinline data-start="5.3" data-duration="1.65" data-media-start="2.6" data-track-index="2" style="object-fit:cover; width:100%; height:1120px"></video>
-      </div>
-      <section id="s2" class="clip" data-start="3" data-duration="3.95" data-track-index="3">
+      <!-- ===== S2 · the opening says the message itself, each line on its own picture:
+                  "לפני תוכנית," the drawing · "לפני יציקה," the pour · "ולפני הזמנת חומרים," blocks and sand bags ===== -->
+      <section id="s2" class="clip" data-start="0" data-duration="6.95" data-track-index="3">
         <div id="s2-pics">
           <img id="s2-a" src="assets/sketch.webp" alt="" style="background:#fff; object-fit:contain" />
           <img id="s2-b" src="assets/pour.jpg" alt="" />
+          <img id="s2-c" src="assets/site3.jpg" alt="" style="object-position:50% 78%" />
         </div>
+        <div style="position:absolute; top:44px; left:44px; padding:18px 26px; background:rgba(7,41,58,.92); border-radius:18px"><img src="assets/logo-h.svg" alt="קבוצת קורקוס" style="display:block; width:300px; height:75px" /></div>
         <div class="layer grid" style="top:1120px"></div>
-        <div style="position:absolute; left:0; right:0; top:1118px; height:6px; background:var(--red)" id="s2-seam"></div>
-        <div style="position:absolute; right:80px; top:1210px; text-align:right; width:920px">
-          <div class="h mist" style="font-size:150px" id="s2-before">לפני</div>
-          <div class="roller h" style="font-size:190px" data-layout-allow-overlap>
-            <div id="s2-r1" data-layout-allow-overlap>תוכנית.</div>
-            <div id="s2-r2" data-layout-allow-overlap>יציקה.</div>
-            <div id="s2-r3" data-layout-allow-overlap style="font-size:170px">הזמנת חומרים.</div>
+        <div style="position:absolute; left:0; right:0; top:1118px; height:8px; background:var(--red)" id="s2-seam"></div>
+        <div style="position:absolute; right:80px; top:1200px; text-align:right; width:920px">
+          <div class="roller h mist" style="font-size:150px; height:170px" data-layout-allow-overlap>
+            <div id="s2-b1" data-layout-allow-overlap>לפני</div>
+            <div id="s2-b2" data-layout-allow-overlap>ולפני</div>
           </div>
+          <div class="roller h" style="font-size:190px" data-layout-allow-overlap>
+            <div id="s2-r1" data-layout-allow-overlap>תוכנית,</div>
+            <div id="s2-r2" data-layout-allow-overlap>יציקה,</div>
+            <div id="s2-r3" data-layout-allow-overlap style="font-size:170px">הזמנת חומרים,</div>
+          </div>
+          <div class="rule" id="s2-rule" style="margin:26px 0 0 auto"></div>
         </div>
-        <div style="position:absolute; left:80px; top:1240px; font-size:46px; font-weight:700; direction:ltr" class="mist" id="s2-count">01 / 03</div>
-        <div class="redwipe" id="s2-wipe"></div>
+        <div style="position:absolute; left:80px; top:1236px; font-size:46px; font-weight:700; direction:ltr" class="mist" id="s2-count">01 / 03</div>
       </section>
 
       <!-- ===== S3 · whip into the drone shot: "בוחרים מי יחזיק את הפרויקט." ===== -->
@@ -209,7 +192,7 @@
           <div class="h" style="font-size:84px" id="s7-tag"><span class="w">מקרקע</span> <span class="w">ועד</span> <span class="w">מסירת</span> <span class="w">מפתח.</span></div>
         </div>
         <div style="position:absolute; left:0; right:0; top:1170px; text-align:center"><div class="phone" id="s7-phone">055-981-1814</div></div>
-        <div style="position:absolute; left:0; right:0; top:1380px; text-align:center; font-size:58px; direction:ltr" class="mist" id="s7-site">kurkoos-group.co.il</div>
+        <div style="position:absolute; left:0; right:0; top:1370px; text-align:center; direction:ltr" id="s7-site"><div style="font-size:60px; font-weight:700; color:#fff">kurkoos-group.co.il</div><div class="mist" style="font-size:40px; margin-top:12px">/kablan-bniya-bayit-prati</div></div>
       </section>
 
       <audio id="music" src="assets/music.wav" data-start="0" data-duration="31" data-track-index="20"></audio>
@@ -239,45 +222,36 @@
       function rise(sel, at, d = 0.5) { tl.fromTo(sel, { yPercent: 110 }, { yPercent: 0, duration: d, ease: E4 }, at); }
       function rule(sel, at) { tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, at); }
 
-      // ---- S1 (0 to 3.25)
-      tl.fromTo("#s1-pic", { scale: 1.22 }, { scale: 1.0, duration: 3.25, ease: "none" }, 0);
-      tl.fromTo("#s1-grid", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.1);
-      tl.fromTo("#s1-chip", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: BACK }, 0.2);
-      slam("#s1-w1", 0.35); slam("#s1-w2", 0.6);
-      tl.fromTo("#s1-gl", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.25, ease: E4 }, 1.0);
-      glitch("#s1-gl", 1.0, 0.5);
-      rule("#s1-rule", 1.35);
-      glitch("#s1-gl", 2.55, 0.35);
-      tl.fromTo("#s1-flash", { opacity: 0 }, { opacity: 0.85, duration: 0.06, ease: "none" }, 2.95).to("#s1-flash", { opacity: 0, duration: 0.25 }, 3.02);
-
-      // ---- S2 (3 to 6.95): a red wipe opens it, "לפני" holds, the word rolls
-      tl.fromTo("#s2-wipe", { xPercent: 0 }, { xPercent: -110, duration: 0.45, ease: "power3.inOut" }, 3.0);
-      tl.fromTo("#s2-pics", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.55, ease: E4 }, 3.05);
-      tl.fromTo("#s2-a", { scale: 1.12 }, { scale: 1.0, duration: 1.3, ease: "none" }, 3.0);
-      tl.fromTo("#s2-before", { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: E4 }, 3.2);
-      tl.fromTo("#s2-r1", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 3.35);
-      // second word: picture wipes in from the right, the word rolls up
-      tl.fromTo("#s2-b", { clipPath: "inset(0 0 0 100%)" }, { clipPath: "inset(0 0 0 0%)", duration: 0.4, ease: "power3.inOut" }, 4.15);
-      tl.fromTo("#s2-b", { scale: 1.15 }, { scale: 1.0, duration: 1.4, ease: "none", immediateRender: false }, 4.15);
-      tl.to("#s2-r1", { yPercent: -120, duration: 0.35, ease: "power3.in" }, 4.1);
-      tl.fromTo("#s2-r2", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 4.3);
-      tl.set("#s2-count", { textContent: "02 / 03" }, 4.2);
-      // third word: the footage cuts in behind (s2 pictures clip away), the word rolls up
-      tl.to("#s2-pics", { clipPath: "inset(0 100% 0 0)", duration: 0.4, ease: "power3.inOut" }, 5.3);
-      tl.to("#s2-r2", { yPercent: -120, duration: 0.35, ease: "power3.in" }, 5.25);
-      tl.fromTo("#s2-r3", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 5.45);
-      tl.set("#s2-count", { textContent: "03 / 03" }, 5.35);
-      tl.fromTo("#s2-seam", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "expo.out", transformOrigin: "100% 50%" }, 3.25);
-      tl.fromTo("#s2-vid", { scale: 1.12 }, { scale: 1.0, duration: 1.65, ease: "none" }, 5.3);
+      // ---- S2 (0 to 6.95): the message in the order it is said, each line on the picture it names
+      tl.fromTo("#s2-pics", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.5, ease: E4 }, 0.0);
+      tl.fromTo("#s2-seam", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "expo.out", transformOrigin: "100% 50%" }, 0.15);
+      tl.fromTo("#s2-a", { scale: 1.12 }, { scale: 1.0, duration: 2.3, ease: "none" }, 0.0);
+      tl.fromTo("#s2-b1", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 0.2);
+      tl.fromTo("#s2-r1", { yPercent: 120 }, { yPercent: 0, duration: 0.45, ease: E4 }, 0.35);
+      rule("#s2-rule", 0.6);
+      // 2: the pour wipes in from the right, the word rolls
+      tl.fromTo("#s2-b", { clipPath: "inset(0 0 0 100%)" }, { clipPath: "inset(0 0 0 0%)", duration: 0.45, ease: "power3.inOut" }, 2.15);
+      tl.fromTo("#s2-b", { scale: 1.15 }, { scale: 1.0, duration: 2.2, ease: "none", immediateRender: false }, 2.15);
+      tl.to("#s2-r1", { yPercent: -120, duration: 0.35, ease: "power3.in" }, 2.1);
+      tl.fromTo("#s2-r2", { yPercent: 120 }, { yPercent: 0, duration: 0.45, ease: E4 }, 2.3);
+      tl.set("#s2-count", { textContent: "02 / 03" }, 2.2);
+      // 3: blocks and sand bags wipe in from the left, "לפני" becomes "ולפני"
+      tl.fromTo("#s2-c", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.inOut" }, 4.3);
+      tl.fromTo("#s2-c", { scale: 1.15 }, { scale: 1.0, duration: 2.6, ease: "none", immediateRender: false }, 4.3);
+      tl.to("#s2-b1", { yPercent: -120, duration: 0.3, ease: "power3.in" }, 4.25);
+      tl.fromTo("#s2-b2", { yPercent: 120 }, { yPercent: 0, duration: 0.4, ease: E4 }, 4.4);
+      tl.to("#s2-r2", { yPercent: -120, duration: 0.35, ease: "power3.in" }, 4.25);
+      tl.fromTo("#s2-r3", { yPercent: 120 }, { yPercent: 0, duration: 0.45, ease: E4 }, 4.5);
+      tl.set("#s2-count", { textContent: "03 / 03" }, 4.35);
 
       // ---- whip from S2 into S3 at 6.5: the old scene flies left, the new arrives from the right with motion blur
       const whip = { b: 0 };
-      tl.to(["#s2", "#s2-media"], { xPercent: -100, duration: 0.45, ease: "power3.in" }, 6.5);
+      tl.to("#s2", { xPercent: -100, duration: 0.45, ease: "power3.in" }, 6.5);
       tl.fromTo("#s3-media", { xPercent: 100 }, { xPercent: 0, duration: 0.5, ease: "power3.out" }, 6.55);
       tl.fromTo("#s3", { xPercent: 100 }, { xPercent: 0, duration: 0.5, ease: "power3.out" }, 6.55);
       tl.fromTo(whip, { b: 0 }, { b: 60, duration: 0.25, ease: "power2.in", onUpdate: () => document.getElementById("whipdev").setAttribute("stdDeviation", whip.b + " 0") }, 6.45)
         .to(whip, { b: 0, duration: 0.35, ease: "power2.out", onUpdate: () => document.getElementById("whipdev").setAttribute("stdDeviation", whip.b + " 0") }, 6.7);
-      tl.set(["#s3-media", "#s3", "#s2", "#s2-media"], { filter: "url(#whipblur)" }, 6.45).set(["#s3-media", "#s3"], { filter: "none" }, 7.06);
+      tl.set(["#s3-media", "#s3", "#s2"], { filter: "url(#whipblur)" }, 6.45).set(["#s3-media", "#s3"], { filter: "none" }, 7.06);
       tl.fromTo("#s3-vid", { scale: 1.25 }, { scale: 1.05, duration: 3.2, ease: "power1.out" }, 6.5);
       rise("#s3-l1", 7.0); rise("#s3-l2", 7.15); rise("#s3-l3", 7.3); rule("#s3-rule", 7.55);
       tl.to(["#s3-l1", "#s3-l2", "#s3-l3"], { yPercent: -110, duration: 0.3, ease: "power3.in", stagger: 0.05 }, 9.25);

@@ -45,7 +45,10 @@ function snapPosts(){const m=new Map();(AG.posts||[]).forEach((p,i)=>{if(p&&p.id
 function snapSched(){const m=new Map();((APP.sched&&APP.sched.items)||[]).forEach(it=>{if(it&&it.id)m.set(it.id,JSON.stringify(it))});return m}
 function push(entry){const last=U.stack[U.stack.length-1];entry.parts.forEach(x=>x.k=entry.kind);
  const inGroup=U.grp&&last&&last.t>=U.grp;
- if(last&&(inGroup||(entry.kind===last.kind&&Date.now()-last.t<900))){last.parts=last.parts.concat(entry.parts);last.t=Date.now();if(entry.kind===last.kind||entry.kind==='posts'){last.label=entry.label;last.kind=entry.kind}}
+ if(last&&(inGroup||(entry.kind===last.kind&&Date.now()-last.t<900))){last.parts=last.parts.concat(entry.parts);last.t=Date.now();if(entry.kind===last.kind||entry.kind==='posts'){last.label=entry.label;last.kind=entry.kind}
+  if(last.kind==='posts'){const t=k=>last.parts.filter(x=>x.k==='posts').reduce((n,x)=>n+((x[k]||[]).length),0);last.label=postLabel(t('rem'),t('add'),t('chg'));
+   // small background saves that keep arriving add up to a wide content-only change: that is the clarity pass, not the person
+   if(!t('rem')&&!t('add')&&t('chg')>30){U.quiet=Date.now();U.stack.pop();chip();const sn=document.getElementById('v171snack');if(sn)sn.classList.remove('show');return}}}
  else{entry.t=Date.now();U.stack.push(entry);if(U.stack.length>U.max)U.stack.shift()}
  chip();snack(U.stack[U.stack.length-1])}
 function postLabel(rem,add,chg){if(rem)return rem>1?`נמחקו ${rem} פוסטים`:'הפוסט נמחק';if(add)return add>1?`נוספו ${add} פוסטים`:'נוסף פוסט';return chg>1?`${chg} פוסטים עודכנו`:'הפוסט עודכן'}
@@ -54,6 +57,8 @@ function recordPosts(){if(U.replay||!AG||!AG.posts)return;const now=snapPosts();
  old.forEach((v,id)=>{const n=now.get(id);if(!n)rem.push({id,s:v.s,i:v.i});else if(n.s!==v.s)chg.push({id,s:v.s})});
  now.forEach((v,id)=>{if(!old.has(id))add.push(id)});
  if(!rem.length&&!add.length&&!chg.length)return;
+ // a wide content-only change right after a tap is the background clarity pass saving, not the person
+ if(!rem.length&&!add.length&&(chg.length>30||Date.now()-(U.quiet||0)<3000)){if(chg.length)U.quiet=Date.now();return}
  if(chg.length&&!rem.length&&!add.length&&chg.every(c=>{const a=JSON.parse(c.s),b=now.get(c.id);if(!b)return false;const B=JSON.parse(b.s);delete a.upd;delete B.upd;delete a.born;delete B.born;return JSON.stringify(a)===JSON.stringify(B)}))return;
  push({kind:'posts',label:postLabel(rem.length,add.length,chg.length),parts:[{rem,add,chg}]})}
 function recordSched(label){if(U.replay||!APP||!APP.sched)return;const now=snapSched();const old=U.sched;U.sched=now;if(!old||!byUser())return;

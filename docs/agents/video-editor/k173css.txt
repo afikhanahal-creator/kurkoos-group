@@ -1,0 +1,29 @@
+<style id="k173">
+/* V173 · channels card in settings, four channel buttons in the schedule sheet */
+.v173card{background:#fff;border:1px solid rgba(7,41,58,.12);border-radius:18px;padding:16px 18px;margin:0 0 22px;direction:rtl;font-family:Almoni,Heebo,sans-serif}
+.v173top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.v173top .px-btn{margin-inline-start:auto}
+.v173st{font-size:14px;font-weight:700;padding:4px 10px;border-radius:999px;background:#eef3f6;color:#105572}
+.v173st.on{background:#e3f1ea;color:#0f5a36}
+.v173st.warn{background:#fbeaea;color:#a90b0c}
+.v173p{font-size:15px;margin:8px 0 12px}
+.v173list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.v173row{display:grid;grid-template-columns:36px 1fr auto auto;align-items:center;gap:12px;min-height:56px;padding:8px 12px;border:1px solid rgba(7,41,58,.1);border-radius:14px;background:#f7f8fa}
+.v173b{width:36px;height:36px;border-radius:10px;color:#fff;display:grid;place-items:center;font:700 13px Almoni,Heebo,sans-serif}
+.v173n{display:flex;flex-direction:column;min-width:0}
+.v173n b{font-size:17px;color:#07293a}
+.v173n span{font-size:14px;color:#105572;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v173row .v173c{font-size:14px;font-weight:700;border:0!important;box-shadow:none!important;padding:4px 10px!important;border-radius:999px!important;min-height:0!important;height:auto!important;background:transparent}
+.v173row .v173c.ok{color:#0f5a36;background:#e3f1ea}
+.v173row .v173c.no{color:#a90b0c;background:#fbeaea}
+.v173row .v173c:empty{display:none}
+.v173sw{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#07293a;min-height:44px;cursor:pointer}
+.v173sw input{width:20px;height:20px;accent-color:#105572}
+.v173sw.muted{color:#5b7280;cursor:default}
+.v173help{margin-top:12px;font-size:15px;color:#07293a;background:#f7f8fa;border-radius:12px;padding:12px 14px}
+.v173help ol{margin:6px 0;padding-inline-start:20px}
+.v173help code{font-size:14px;background:#fff;border:1px solid #dbe4ea;border-radius:6px;padding:1px 6px;direction:ltr;display:inline-block}
+@media (max-width:560px){.v173row{grid-template-columns:36px 1fr auto;row-gap:2px}.v173sw{grid-column:2/4;min-height:36px}}
+.v157nets{flex-wrap:wrap}
+.v157ytn{display:block;width:100%;font-size:14px;color:#5b7280;margin-top:6px}
+</style>

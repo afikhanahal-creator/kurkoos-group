@@ -1,0 +1,100 @@
+<style id="k176">
+/* V176 · shell: undo pill, phone drawer, header targets, schedule sheet slots, calendar on touch, links to Posts, text and target minimums */
+
+/* 1 · the undo pill never covers a sheet, a bar, the drawer or the editor, and fades 30 seconds after the last action */
+#v171chip.v176old,
+body.pe-open #v171chip,body.v157on #v171chip,body:has(#v157) #v171chip,body.v170sh-on #v171chip,body:has(#v170sheet) #v171chip,body:has(#v170ps) #v171chip,
+body:has(#v172sheet) #v171chip,body:has(.ga-selbar.on) #v171chip,body:has(.v148bar) #v171chip,body:has(.side.open) #v171chip,body.v102-ov #v171chip,
+body:has(#ga-lb) #v171chip,body:has(#v131) #v171chip,body:has(.px-cmdb) #v171chip,body:has(#v115lib) #v171chip{display:none!important}
+#v171chip span{font-size:15px}
+/* a snackbar that arrives while a sheet is open goes to the top, away from the sheet's buttons */
+body:has(#v157) #v171snack,body:has(#v172sheet) #v171snack,body.v170sh-on #v171snack,body:has(.ga-selbar.on) #v171snack,body:has(.v148bar) #v171snack{bottom:auto!important;top:calc(12px + env(safe-area-inset-top,0px));transform:translateY(-20px)}
+body:has(#v157) #v171snack.show,body:has(#v172sheet) #v171snack.show,body.v170sh-on #v171snack.show,body:has(.ga-selbar.on) #v171snack.show,body:has(.v148bar) #v171snack.show{transform:none}
+
+/* 2 · phone navigation */
+#v176bd{display:none}
+.v176nx{display:none}
+@media (max-width:860px){
+ /* one menu: the bottom bar has "תפריט", so the header button goes */
+ body:has(#v99nav) .tbar [data-app="menu"]{display:none!important}
+ #v176bd{display:block;position:fixed;inset:0;z-index:35;background:rgba(7,41,58,.42);opacity:0;pointer-events:none;transition:opacity .2s}
+ body:has(.side.open) #v176bd{opacity:1;pointer-events:auto}
+ .side .brandrow{position:relative;padding-inline-end:52px}
+ .v176nx{display:grid;place-items:center;position:absolute;inset-inline-end:0;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:12px;border:1px solid #dbe8ee;background:#fff;color:#07293a;cursor:pointer}
+ .v176nx:focus-visible{outline:3px solid #105572;outline-offset:2px}
+ .side{width:min(300px,86vw)!important;overscroll-behavior:contain}
+ /* header icons: 44 by 44 */
+ body .tbar .ibtn,body .tbar .px-sbtn,body #v102back{width:44px!important;height:44px!important;min-width:44px!important}
+ body .tbar.v172fold #v172act:not([hidden]){height:44px!important}
+ /* bottom bar labels */
+ #v99nav button{font-size:13px!important;line-height:1.1!important;min-height:56px}
+}
+@media (prefers-reduced-motion:reduce){#v176bd{transition:none}}
+/* drawer and header text (all sizes) */
+.side .grp{font-size:14px!important}
+.side .brandrow small{font-size:14px!important}
+.side .foot,.side .foot div,.side .conn2 span,.side .foot a{font-size:14px!important}
+.v170adv span{font-size:15px!important}
+.tbar .v29-date span{font-size:14px!important}
+.tbar .ibtn.pri{font-size:15px}
+
+/* 3 · schedule sheet: free slots with the distance from today */
+/* the sheet scrolls instead of squeezing its footer */
+#v157 .v157>*{flex-shrink:0}
+/* the Today page folds every footer to one line (body:has(.td) footer:not(.open)); sheets and dialogs keep theirs whole */
+body:has(.td) :is(#v157,#v170sheet,#v170ps,#v172sheet,#v131,[role="dialog"]) footer{max-height:none!important;overflow:visible!important;cursor:auto;max-width:none;margin-inline:0;font-size:inherit;color:inherit;line-height:inherit}
+body:has(.td) :is(#v157,#v170sheet,#v170ps,#v172sheet,#v131,[role="dialog"]) footer::after{content:none!important;display:none!important}
+body #v157 .v157f{align-self:stretch;width:auto;max-width:none;margin-inline:0;padding:12px 0 calc(16px + env(safe-area-inset-bottom,0px))}
+#v157 .v176chip{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:56px;padding:6px 14px;text-align:start;line-height:1.2}
+#v157 .v176chip b{font-weight:700;font-size:15px}
+#v157 .v176chip small{font-size:14px;font-weight:500;opacity:.85}
+
+/* 4 · calendar on touch: only "מועד" and "⋯" on each card; the drag handle goes */
+.v176more,#appviews .v28-cit>.v176more{display:none}
+@media (pointer:coarse){
+ #appviews .v28-cit>button:not(.v138when):not(.v176more){display:none!important}
+ #appviews .v28-cit .v176more{display:inline-grid;place-items:center;min-width:44px;min-height:44px;border-radius:12px;border:1px solid rgba(7,41,58,.16);background:#fff;color:#07293a;cursor:pointer;padding:0 10px}
+ #appviews .v28-cit .v138when{min-height:44px;font-size:15px!important;background:#07293a;color:#fff}
+ #appviews .v28-cit .v138when span{font-size:15px!important}
+ #appviews .v28-cit{gap:8px!important}
+ .v28-tray header small{display:none!important}
+}
+.v176more:focus-visible{outline:3px solid #105572;outline-offset:2px}
+#v172sheet.v176sh .v172t{font-size:17px}
+
+/* 5 · links to the Posts page from Ideas, Agent and the drafts drawer */
+.v176lnk{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 14px;margin:0 0 14px;border:1px solid #dbe8ee;border-radius:14px;background:#f7f8fa;color:#07293a;font:500 15px/1.4 Almoni,Heebo,sans-serif}
+.v28-tray .v176lnk{margin:2px 0 4px;padding:8px 10px;font-size:14px}
+.v176lnk span{flex:1 1 200px;min-width:0}
+.v176go{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;border:0;background:#07293a;color:#fff;font:700 15px Almoni,Heebo,sans-serif;cursor:pointer;white-space:nowrap}
+.v176go svg{width:18px;height:18px}
+.v176go:focus-visible{outline:3px solid #8fb6c8;outline-offset:2px}
+@media (max-width:860px){
+ /* the drafts drawer on phones: one compact strip */
+ .v28-tray{padding:10px!important;gap:6px!important}
+ .v28-tray .v28-q{height:44px}
+ .v28-tray .v28-dc{min-width:250px!important;max-width:270px}
+ .v28-tray .v176lnk{padding:0;border:0;background:none;margin:0}
+ .v28-tray .v176lnk span{display:none}
+ .v28-tray .v176go{min-height:44px;padding:0 14px;font-size:14px}
+ /* the fonts table scrolls inside its card instead of being cut */
+ #appviews .v43tbl{display:block;max-width:100%;overflow-x:auto}
+ .v28-tray .v28-tf{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+ .v28-tray .v28-tf::-webkit-scrollbar{display:none}
+}
+
+/* 6 · text and target minimums on every page except Posts and Photos (their content belongs to V174 and V175) */
+body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(.kc-chips>button,.ibtn.sm,.px-btn.sm,.btn.sm,a.ibtn.sm,.px-link,.seg>button,.qtabs>button){font-size:14px!important}
+body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(.pill,.stp,.cstat,.v152c,.v56st,.v62t,.v100tag,.v100st,.dg-lvl,.v51s,.v51q,.v51st2,.v51fm,.v63chip,.rs-k,.kc-lab,.how,.check,.tchip,.v153d,.td-flabel,.px-eyebrow,.cs-leg>span,.v44dh small,.cs-k>span,.v40leg>span,.v40m,.v40card>span,.v40card>small,.pr-d,.pr-m,.v142sum,.v128md p,.v62tip,.v62lg>span,.v62lg>b,.cl-note,.cl-demo,.v43m,.kc-note,.kc-note>span,.rs-lift,.rs-ex>span,.rs-us>span,.v28-n,.v28-hint,.rs-note){font-size:14px!important}
+/* everything else below 14px is raised by the font floor in v176.js (class v176f), numbers excepted */
+html body #appmain .v176f,html body .wrap .v176f,html body #appmain .pr-score span{font-size:14px!important}
+#v110bar b,#v110bar .px-btn,.tbar #vact .ibtn,.tbar .seg>button{font-size:14px!important}
+body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(h1,h2,h3,h4,h5,h6) small{font-size:14px!important}
+/* the side cards (pr-panel) and footers outside #appviews */
+.wrap>footer,.pr-panel .pr-txt span,.pr-panel .pr-tags em,.pr-score span{font-size:14px!important}
+.v28-dc span,.v28-dc .v152c{font-size:14px!important}
+@media (pointer:coarse){
+ body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews :is(.kc-chips>button,.ibtn,.px-btn,.seg>button,.qtabs>button,.v176go,a.ibtn){min-height:44px}
+ body:not([data-v176v="gallery"]):not([data-v176v="photos"]) #appviews .ibtn{min-width:44px}
+}
+</style>

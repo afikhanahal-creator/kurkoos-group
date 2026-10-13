@@ -6,7 +6,7 @@
      assets    קבצים: תיקיית engine-media ב-Supabase Storage
      sample    Claude: דרך /api/claude (המפתח יושב רק ב-Vercel)
      downloads הורדת קובץ רגילה מהדפדפן
-     mcp       לא זמין כאן עדיין (Metricool, Canva, העורך בענן נשארים ב-claude.ai)
+     mcp       Metricool דרך /api/metricool (המפתח ב-Vercel). Canva והעורך בענן נשארים ב-claude.ai
    ההתחברות היא ההתחברות של עמוד האדמין, מאותו דפדפן.
    ============================================================ */
 (function () {
@@ -279,7 +279,39 @@
     },
   }
 
-  const SERVICES = { db, assets, sample, downloads }
+  // ---------- mcp: Metricool דרך השרת של האתר (/api/metricool). רק כלים של Metricool, ופוסט חדש נשלח תמיד כטיוטה
+  async function mcCall(tool, args) {
+    let r
+    try {
+      r = await fetch('/api/metricool', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await token()) }, body: JSON.stringify({ tool, args: args || {} }) })
+    } catch (e) { if (e && e.code) throw e; throw err('unavailable', 'אין חיבור') }
+    let d = {}; try { d = await r.json() } catch (e) {}
+    if (!r.ok) throw err(d.code || (r.status === 401 ? 'not_granted' : 'tool_error'), d.error || ('HTTP ' + r.status))
+    return d
+  }
+  const watches = []
+  const mcp = {
+    callTool: async (server, tool, args) => {
+      if (server !== 'metricool') throw err('server_not_connected', 'החיבור הזה זמין רק ב-claude.ai')
+      return { payload: await mcCall(tool, args) }
+    },
+    watchTool: (server, tool, input, handler) => {
+      let stop = false
+      const run = async () => {
+        if (stop) return
+        try { handler({ type: 'data', result: { payload: await mcCall(tool, input) }, cache: { storedAt: Date.now() } }) }
+        catch (e) { try { handler({ type: 'error', error: e }) } catch (x) {} }
+      }
+      const w = { server, tool, run }
+      watches.push(w); setTimeout(run, 0)
+      const t = setInterval(run, 5 * 60 * 1000)
+      return () => { stop = true; clearInterval(t); const i = watches.indexOf(w); if (i >= 0) watches.splice(i, 1) }
+    },
+    invalidate: async (server, tool) => { watches.filter((w) => w.server === server && (!tool || w.tool === tool)).forEach((w) => w.run()) },
+    status: () => mcCall('status'),
+  }
+
+  const SERVICES = { db, assets, sample, downloads, mcp }
   window.claude = { use: async (name) => (readSession() ? SERVICES[name] || null : null) }
 
   // ---------- בלי התחברות: מסך קצר שמפנה לאדמין

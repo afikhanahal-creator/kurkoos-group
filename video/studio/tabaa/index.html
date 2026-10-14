@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>How to read a zoning plan</title>
+<!-- Kurkoos reel: how to read a תב"ע. Kinetic headlines over a pencil blueprint that turns into a projected 3D plot.
+     Everything is a pure function of t (seek), rendered by engine/anim_render.cjs. Silent. -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  @font-face{font-family:Almoni;font-weight:300;font-display:block;src:url(../../fonts/Almoni-300.ttf)}
+  @font-face{font-family:Almoni;font-weight:400;font-display:block;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;font-display:block;src:url(../../fonts/Almoni-700.ttf)}
+  body{background:#07293a}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#07293a;direction:rtl}
+  #grid{position:absolute;inset:-80px;background-image:linear-gradient(rgba(143,182,200,.07) 2px,transparent 2px),linear-gradient(90deg,rgba(143,182,200,.07) 2px,transparent 2px),linear-gradient(rgba(143,182,200,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(143,182,200,.035) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px}
+  #cam{position:absolute;inset:0;transform-origin:50% 45%}
+  #geo{position:absolute;left:0;top:0}
+  .t{position:absolute;font-family:Almoni;font-weight:700;color:#f7f8fa;line-height:1.08;white-space:nowrap}
+  .t.c{left:70px;right:70px;text-align:center;white-space:normal}
+  .w{display:inline-block;transform-origin:50% 60%}
+  .q{color:#a90b0c}
+  .sub{color:#8fb6c8;font-weight:400;font-size:54px;right:80px;width:920px;white-space:normal;top:452px}
+  .panel{position:absolute;left:80px;right:80px;top:1436px;background:#041c28;border-right:10px solid #a90b0c;padding:22px 34px 26px;font-family:Almoni;font-weight:400;font-size:50px;line-height:1.2;color:#f7f8fa;box-sizing:border-box}
+  .panel b{color:#8fb6c8;font-weight:700}
+  .tag{position:absolute;left:0;top:0;font-family:Almoni;font-weight:700;font-size:42px;line-height:1;padding:10px 18px 12px;border-radius:10px;background:#f7f8fa;color:#07293a;white-space:nowrap;transform-origin:50% 100%}
+  .tag.r{background:#a90b0c;color:#f7f8fa}
+  .tag.n{background:#07293a;color:#f7f8fa;border:3px solid #8fb6c8}
+  .sheet{position:absolute;left:0;top:0;width:400px;height:520px;border-radius:8px;background:#f7f8fa;box-shadow:0 30px 60px rgba(0,0,0,.35);
+    background-image:linear-gradient(#07293a,#07293a),repeating-linear-gradient(180deg,transparent 0 30px,rgba(7,41,58,.22) 30px 38px),linear-gradient(rgba(16,85,114,.25),rgba(16,85,114,.25));
+    background-size:220px 22px,300px 300px,300px 110px;background-position:right 50px top 46px,right 50px top 92px,right 50px top 380px;background-repeat:no-repeat}
+  #num{position:absolute;left:0;top:0;width:150px;height:150px;background:#a90b0c;color:#f7f8fa;font-family:Almoni;font-weight:700;font-size:124px;line-height:158px;text-align:center;border-radius:12px;transform-origin:50% 50%}
+  #ring{position:absolute;left:0;top:0;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;border:8px solid #a90b0c}
+  #wipe{position:absolute;top:0;left:0;width:1080px;height:1920px}
+  #prog{position:absolute;right:80px;top:150px;display:flex;gap:12px}
+  #prog i{display:block;width:64px;height:9px;border-radius:5px;background:rgba(143,182,200,.25);overflow:hidden}
+  #prog i b{display:block;height:100%;background:#a90b0c;transform-origin:100% 50%}
+  #moment{position:absolute;right:80px;top:132px;font-family:Almoni;font-weight:700;font-size:44px;color:#f7f8fa;display:flex;align-items:center;gap:16px}
+  #moment i{display:block;width:26px;height:26px;background:#a90b0c}
+  #logo{position:absolute;left:70px;top:96px;width:128px}
+  #pov{position:absolute;left:50%;top:330px;width:330px;margin-left:-165px;height:150px;background:#a90b0c;border-radius:16px;color:#f7f8fa;font-family:Almoni;font-weight:700;font-size:132px;line-height:160px;text-align:center;direction:ltr}
+  .tbl{position:absolute;right:80px;width:920px;height:118px;left:auto}
+  .tbl .ln{position:absolute;left:0;right:0;top:0;height:3px;background:#8fb6c8;transform-origin:100% 50%}
+  .tbl .mk{position:absolute;right:-14px;top:22px;height:76px;width:420px;background:#a90b0c;transform-origin:100% 50%;border-radius:6px}
+  .tbl .lb{position:absolute;right:0;top:30px;font-family:Almoni;font-weight:700;font-size:62px;color:#f7f8fa;white-space:nowrap}
+  .tbl .ex{position:absolute;left:0;top:42px;font-family:Almoni;font-weight:400;font-size:46px;color:#8fb6c8;white-space:nowrap}
+  #phone{position:absolute;left:50%;top:1290px;transform:translateX(-50%);background:#a90b0c;color:#f7f8fa;font-family:Almoni;font-weight:700;font-size:84px;line-height:1;padding:24px 56px 30px;border-radius:999px;direction:ltr;white-space:nowrap}
+  #endlogo{position:absolute;left:50%;top:430px;width:420px;margin-left:-210px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+  <div id="cam">
+    <svg id="geo" width="1080" height="1920" viewBox="0 0 1080 1920">
+      <defs>
+        <pattern id="hatchR" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="22" height="22" fill="#a90b0c" fill-opacity=".22"/><rect width="7" height="22" fill="#a90b0c"/></pattern>
+        <pattern id="hatchP" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+          <rect width="20" height="20" fill="#f7f8fa" fill-opacity=".10"/><rect width="5" height="20" fill="#f7f8fa" fill-opacity=".8"/></pattern>
+      </defs>
+      <g id="dyn"></g>
+    </svg>
+    <div id="layer"></div>
+  </div>
+  <div id="wipe"></div>
+</div>
+<script src="../lib/studio.js"></script>
+<script>
+const {clamp, lerp, smooth, step, track, hash, rng} = Studio;
+const W = 1080, H = 1920, DUR = 54.5;
+const NAVY = '#07293a', TEAL = '#105572', MIST = '#8fb6c8', PAPER = '#f7f8fa', RED = '#a90b0c';
+const stage = document.getElementById('stage'), cam = document.getElementById('cam'), layer = document.getElementById('layer');
+const dyn = document.getElementById('dyn'), grid = document.getElementById('grid'), wipe = document.getElementById('wipe');
+const E = {};
+const win = (t, a, b) => t >= a && t < b;
+const vis = (el, on) => { el.style.display = on ? '' : 'none'; return on; };
+
+// ---------- text helpers: every word enters whole, rises a little, opacity 0 to 1 ----------
+function T(id, text, css, cls) {
+  const el = document.createElement('div'); el.className = 't' + (cls ? ' ' + cls : ''); el.id = id;
+  el.innerHTML = text.split('|').map(line => line.split(' ').map(w => `<span class="w">${w.replace('?', '<span class="q">?</span>')}</span>`).join(' ')).join('<br>');
+  Object.assign(el.style, css || {}); layer.appendChild(el); E[id] = el;
+  el._w = [...el.querySelectorAll('.w')].filter(x => x.parentElement === el);
+  return el;
+}
+function reveal(el, t, t0, t1, o) {
+  o = o || {};
+  if (!vis(el, t >= t0 - 0.02 && t < t1 + 0.32)) return;
+  const g = o.gap != null ? o.gap : 0.09, dy = o.dy != null ? o.dy : 56, out = smooth((t - t1) / 0.28);
+  el._w.forEach((w, i) => {
+    const lt = t - t0 - i * g, k = step(lt, {f: o.f || 2.8, z: o.z || 0.72});
+    w.style.opacity = (clamp(lt / 0.14) * (1 - out)).toFixed(3);
+    const sc = o.scale ? lerp(o.scale, 1, k) : 1;
+    w.style.transform = `translateY(${((1 - k) * dy - out * 34).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+  });
+}
+function div(id, cls, html, css) {
+  const el = document.createElement('div'); if (id) el.id = id; if (cls) el.className = cls; if (html) el.innerHTML = html;
+  Object.assign(el.style, css || {}); layer.appendChild(el); if (id) E[id] = el; return el;
+}
+function tag(id, text, cls) { const el = div(id, 'tag' + (cls ? ' ' + cls : ''), text); return el; }
+// Pin a tag above a projected point, spring in and fade out.
+function pin(el, p, t, t0, t1, lift) {
+  if (!vis(el, p && t >= t0 && t < t1 + 0.3)) return;
+  const k = step(t - t0, {f: 3, z: 0.62}), out = smooth((t - t1) / 0.25);
+  const w = el._w || (el._w = el.offsetWidth), h = el._h || (el._h = el.offsetHeight);
+  el.style.opacity = (clamp((t - t0) / 0.12) * (1 - out)).toFixed(3);
+  el.style.transform = `translate(${(p[0] - w / 2).toFixed(1)}px, ${(p[1] - h - (lift || 18)).toFixed(1)}px) scale(${lerp(0.4, 1, k).toFixed(3)})`;
+}
+function panel(el, t, t0, t1) {
+  if (!vis(el, t >= t0 && t < t1 + 0.3)) return;
+  const k = step(t - t0, {f: 2.6, z: 0.8}), out = smooth((t - t1) / 0.25);
+  el.style.opacity = (clamp((t - t0) / 0.15) * (1 - out)).toFixed(3);
+  el.style.transform = `translateX(${((1 - k) * -60).toFixed(1)}px)`;
+}
+
+// ---------- projection: hand rolled 3D, yaw about the vertical axis, fixed pitch ----------
+let CM = {yaw: -38, pitch: 33, s: 54, cx: 540, cy: 1080};
+const D2R = Math.PI / 180;
+function P(x, y, z) {
+  const c = Math.cos(CM.yaw * D2R), s = Math.sin(CM.yaw * D2R), xr = x * c - y * s, yr = x * s + y * c;
+  return [CM.cx + xr * CM.s, CM.cy + yr * CM.s * Math.sin(CM.pitch * D2R) - z * CM.s * Math.cos(CM.pitch * D2R), yr];
+}
+const pts = a => a.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+const poly = (ps, fill, stroke, sw, op, ex) => `<polygon points="${pts(ps)}" fill="${fill}" stroke="${stroke || 'none'}" stroke-width="${sw || 0}" stroke-linejoin="round" opacity="${op == null ? 1 : op}" ${ex || ''}/>`;
+const pl = (ps, stroke, sw, op, ex) => `<polyline points="${pts(ps)}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" opacity="${op == null ? 1 : op}" ${ex || ''}/>`;
+const rect3 = (x0, x1, y0, y1, z) => [P(x0, y0, z), P(x1, y0, z), P(x1, y1, z), P(x0, y1, z)];
+// Part of a 3D polyline, as screen points, up to fraction k of its length; returns the points and the pencil tip.
+function part(list, k) {
+  const s = list.map(q => P(q[0], q[1], q[2] || 0)); let L = 0; const seg = [];
+  for (let i = 1; i < s.length; i++) { const d = Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]); seg.push(d); L += d; }
+  let left = clamp(k) * L; const out = [s[0]];
+  for (let i = 1; i < s.length; i++) {
+    if (left >= seg[i - 1]) { out.push(s[i]); left -= seg[i - 1]; continue; }
+    const f = seg[i - 1] ? left / seg[i - 1] : 0; out.push([lerp(s[i - 1][0], s[i][0], f), lerp(s[i - 1][1], s[i][1], f)]); break;
+  }
+  return {pts: out, tip: out[out.length - 1]};
+}
+function pencil(p) { // the pencil: a short body along the drawing direction with a red tip
+  return `<g transform="translate(${p[0].toFixed(1)},${p[1].toFixed(1)}) rotate(-35)"><rect x="-6" y="-92" width="12" height="74" rx="2" fill="${PAPER}"/><polygon points="-6,-18 6,-18 0,0" fill="${RED}"/><circle r="9" fill="${RED}" opacity=".35"/></g>`;
+}
+// A box with culled back faces, toon shading, window bands per floor and an ink outline.
+function box(x0, x1, y0, y1, z0, z1, o) {
+  o = o || {}; if (z1 - z0 < 0.01) return '';
+  const c = Math.cos(CM.yaw * D2R), s = Math.sin(CM.yaw * D2R); let out = '';
+  const sides = [[[x1, y0], [x1, y1], 1, 0], [[x0, y1], [x0, y0], -1, 0], [[x1, y1], [x0, y1], 0, 1], [[x0, y0], [x1, y0], 0, -1]];
+  const ink = o.ink || NAVY, op = o.op == null ? 1 : o.op;
+  for (const [a, b, nx, ny] of sides) {
+    const nxr = nx * c - ny * s, nyr = nx * s + ny * c; if (nyr <= 0.001) continue;
+    const fill = nxr > 0 ? (o.light || '#c7d9e2') : (o.dark || MIST);
+    out += poly([P(a[0], a[1], z0), P(b[0], b[1], z0), P(b[0], b[1], z1), P(a[0], a[1], z1)], fill, ink, 2.5, op);
+    if (o.floors) {
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(len / 1.35));
+      for (let f = 0; f < o.floors.length; f++) {
+        const zf = o.floors[f], top = zf + 1.0; if (top > z1) continue;
+        for (let i = 0; i < n; i++) {
+          const u0 = (i + 0.22) / n, u1 = (i + 0.78) / n, Q = (u, z) => P(lerp(a[0], b[0], u), lerp(a[1], b[1], u), z);
+          out += poly([Q(u0, zf + 0.42), Q(u1, zf + 0.42), Q(u1, top), Q(u0, top)], TEAL, 'none', 0, op * 0.9);
+        }
+        if (zf > z0 + 0.01) out += pl([P(a[0], a[1], zf), P(b[0], b[1], zf)], ink, 2, op * 0.6);
+      }
+    }
+  }
+  out += poly(rect3(x0, x1, y0, y1, z1), o.top || '#eef3f6', ink, 2.5, op);
+  return out;
+}
+
+// ---------- timeline ----------
+const S = {pov: 0, chaos: 4.2, break: 9.0, use: 11.0, table: 18.0, lines: 26.0, special: 33.0, tip: 40.0, verdict: 45.0, end: 50.0};
+const SECT = [[S.use, S.table, '1'], [S.table, S.lines, '2'], [S.lines, S.special, '3'], [S.special, S.tip, '4']];
+
+async function build() {
+  // brand chrome
+  E.logo = div('logo', '', '', {}); E.logo.outerHTML = '';
+  const lg = document.createElement('img'); lg.id = 'logo'; lg.src = 'logo.png'; layer.appendChild(lg); E.logo = lg;
+  await lg.decode();
+  div('moment', '', '<i></i><span>רגע אמיתי</span>');
+  div('prog', '', '<i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i>');
+  E.progB = [...E.prog.querySelectorAll('b')];
+
+  // 1. POV and the pile of pages
+  const r = rng(7); E.sheets = [];
+  for (let i = 0; i < 8; i++) {
+    const el = div(null, 'sheet', '', {}); E.sheets.push(el);
+    el._x = 540 + (r() - 0.5) * 260; el._y = 1420 + (r() - 0.5) * 120 - i * 6; el._r = (r() - 0.5) * 26; el._t = 0.55 + i * 0.2;
+  }
+  div('pov', '', 'POV');
+  T('h1', 'קוראים תב״ע|בפעם הראשונה|ולא מבינים', {top: '540px', fontSize: '140px'}, 'c');
+
+  // 2. the words that block you
+  E.terms = [
+    T('k1', 'עשרות עמודים', {top: '500px', right: '110px', fontSize: '128px'}),
+    T('k2', 'טבלה עם קיצורים?', {top: '720px', right: '140px', fontSize: '104px'}),
+    T('k3', 'תכסית?', {top: '930px', right: '100px', fontSize: '210px', color: MIST}),
+    T('k4', 'קו בניין קדמי?', {top: '1190px', right: '190px', fontSize: '128px'})
+  ];
+  E.terms.forEach((el, i) => { el._r = [-4, 3, -2, 4][i]; el._t = 4.45 + i * 0.75; });
+  E.p2 = div('p2', 'panel', 'קורה לכל מי שפותח תב״ע בפעם הראשונה.');
+
+  // 3. the turn
+  T('h3', 'ככה מפרקים|את זה.', {top: '700px', fontSize: '190px'}, 'c');
+
+  // section headers
+  div('ring'); div('num', '', '1');
+  T('t1', 'הייעוד', {top: '290px', right: '262px', fontSize: '124px'});
+  T('s1', 'מגורים, מסחר או משהו אחר', {}, 'sub');
+  T('t2', 'טבלת הזכויות', {top: '290px', right: '262px', fontSize: '124px'});
+  T('t3', 'קווי בניין', {top: '290px', right: '262px', fontSize: '124px'});
+  T('s3', 'המרחק המותר מכל גבול', {}, 'sub');
+  T('t4', 'הוראות מיוחדות', {top: '290px', right: '262px', fontSize: '124px'});
+  T('s4', 'גובה, חניה, עצים ומה שחריג', {}, 'sub');
+  E.s1._g = [[0, 14.0], [1, 15.4], [2, 16.6], [3, 16.6], [4, 16.6]];
+  E.s4._g = [[0, 36.4], [1, 37.1], [2, 37.7], [3, 38.5], [4, 38.5]];
+
+  // the rights table
+  const rows = [['שטחים עיקריים', 'השטח למגורים עצמם'], ['שטחי שירות', 'ממ״ד, מדרגות, מחסן'], ['מספר יחידות', 'כמה דירות מותר לבנות']];
+  E.rows = rows.map((rw, i) => {
+    const el = div(null, 'tbl', `<div class="ln"></div><div class="mk"></div><div class="lb">${rw[0]}</div><div class="ex">${rw[1]}</div>`, {top: (548 + i * 118) + 'px'});
+    el._t = 18.9 + i * 2.1; return el;
+  });
+  E.tblEnd = div(null, 'tbl', '<div class="ln"></div>', {top: (548 + 3 * 118) + 'px', height: '4px'});
+
+  // 3D tags
+  tag('gStreet', 'רחוב', 'n'); tag('gU1', 'יחידה'); tag('gU2', 'יחידה');
+  tag('gFront', 'קו בניין קדמי', 'r'); tag('gOk', 'כאן מותר לבנות');
+  tag('gCov', 'תכסית', 'r'); tag('gH', 'גובה'); tag('gP', 'חניה', 'n'); tag('gTree', 'עץ', 'n'); tag('gX', 'חריג', 'r');
+  tag('gL1', 'תב״ע'); tag('gL2', 'תוכנית נוספת', 'n'); tag('gL3', 'תוכנית נוספת', 'r'); tag('gSame', 'אותו מגרש', 'r');
+  E.d3 = div('d3', 'panel', '<b>קו בניין קדמי:</b> כמה רחוק מהרחוב מותר לבנות.');
+  E.d4 = div('d4', 'panel', '<b>תכסית:</b> כמה מהמגרש הבניין מכסה.');
+
+  // tip
+  div('tipchip', 'tag r', 'טיפ אחד', {fontSize: '56px', right: '80px', left: 'auto', top: '290px'});
+  T('t5', 'לבדוק אם יש תוכניות נוספות|שחלות על אותו מגרש', {top: '400px', right: '80px', fontSize: '84px'});
+
+  // verdict
+  T('v1', 'אין בושה|לא להבין תב״ע.', {top: '720px', fontSize: '140px', color: NAVY}, 'c');
+  T('v2', 'יש בעיה|לקנות בלי להבין.', {top: '720px', fontSize: '140px'}, 'c');
+
+  // end card
+  const el2 = document.createElement('img'); el2.id = 'endlogo'; el2.src = 'logo.png'; layer.appendChild(el2); E.endlogo = el2; await el2.decode();
+  T('e1', 'קבוצת קורקוס', {top: '930px', fontSize: '120px'}, 'c');
+  T('e2', 'מקרקע ועד מסירת מפתח', {top: '1080px', fontSize: '66px', color: MIST, fontWeight: 400}, 'c');
+  div('phone', '', '055-981-1814');
+  T('e3', 'kurkoos-group.co.il', {top: '1470px', fontSize: '52px', color: MIST, fontWeight: 400, direction: 'ltr'}, 'c');
+}
+
+function seek(t) {
+  // background and global camera
+  let bg = NAVY;
+  if (win(t, S.verdict, 47.4)) bg = PAPER; else if (win(t, 47.4, S.end)) bg = RED;
+  stage.style.background = bg;
+  grid.style.opacity = t < S.verdict || t >= S.end ? 1 : 0;
+  grid.style.transform = `translate(${(-(t * 14) % 120).toFixed(1)}px, ${(-(t * 22) % 120).toFixed(1)}px)`;
+  let shake = 0; if (win(t, 7.9, 9.0)) shake = smooth((t - 7.9) / 0.9) * 14;
+  const fr = Math.round(t * 60), jx = shake ? (hash(fr) - 0.5) * 2 * shake : 0, jy = shake ? (hash(fr + 999) - 0.5) * 2 * shake : 0;
+  let punch = 0; for (const tp of [45.05, 46.2, 47.45, 48.55]) if (t >= tp) punch += 0.045 * Math.exp(-(t - tp) * 7);
+  cam.style.transform = `translate(${jx.toFixed(1)}px, ${jy.toFixed(1)}px) scale(${(1 + punch).toFixed(4)})`;
+
+  // chrome
+  vis(E.logo, t < S.verdict); E.logo.style.opacity = clamp(t / 0.3);
+  vis(E.moment, t < S.use); E.moment.style.opacity = clamp((t - 0.1) / 0.3) * (1 - smooth((t - 10.6) / 0.3));
+  vis(E.prog, win(t, S.use, S.tip));
+  E.progB.forEach((b, i) => { const [a, z] = SECT[i]; b.style.transform = `scaleX(${clamp((t - a) / (z - a)).toFixed(3)})`; });
+
+  // ---- 1. POV ----
+  E.sheets.forEach((el, i) => {
+    if (!vis(el, t >= el._t && t < S.break + 0.3)) return;
+    const k = step(t - el._t, {f: 2.3, z: 0.62}), y = lerp(-560, el._y, k), rr = lerp(el._r + (i % 2 ? 50 : -50), el._r, k);
+    el.style.transform = `translate(${(el._x - 200).toFixed(1)}px, ${(y - 260).toFixed(1)}px) rotate(${rr.toFixed(2)}deg)`;
+    el.style.opacity = t < S.chaos + 0.2 ? 1 : lerp(1, 0.28, smooth((t - S.chaos - 0.2) / 0.5));
+  });
+  if (vis(E.pov, t < S.chaos + 0.3)) {
+    const k = step(t - 0.12, {f: 3.2, z: 0.5}), out = smooth((t - S.chaos) / 0.25);
+    E.pov.style.opacity = clamp((t - 0.12) / 0.06) * (1 - out);
+    E.pov.style.transform = `scale(${lerp(2.6, 1, k).toFixed(3)}) rotate(${lerp(-12, -3, k).toFixed(2)}deg)`;
+  }
+  reveal(E.h1, t, 0.55, S.chaos - 0.05, {gap: 0.16, scale: 1.25});
+
+  // ---- 2. the words that block you ----
+  E.terms.forEach((el, i) => {
+    if (!vis(el, t >= el._t && t < S.break)) return;
+    const k = step(t - el._t, {f: 3, z: 0.58}), next = E.terms[i + 1];
+    const dim = next ? smooth((t - next._t) / 0.3) : 0;
+    const gl = win(t, 8.35, 9.0) ? 6 + hash(Math.floor(t * 30) + i * 17) * 14 : 0;
+    el.style.opacity = (clamp((t - el._t) / 0.08) * lerp(1, 0.32, dim)).toFixed(3);
+    el.style.transform = `scale(${lerp(1.45, 1, k).toFixed(3)}) rotate(${el._r}deg) translateX(${(gl ? (hash(Math.floor(t * 30) + i) - 0.5) * 30 : 0).toFixed(1)}px)`;
+    el.style.textShadow = gl ? `${gl.toFixed(1)}px 0 ${RED}, ${(-gl).toFixed(1)}px 0 ${MIST}` : 'none';
+    el._w.forEach(w => { w.style.opacity = 1; w.style.transform = 'none'; });
+  });
+  panel(E.p2, t, 7.25, S.break - 0.05);
+
+  // ---- 3. the turn: two wipes ----
+  let wx = null, wc = RED;
+  if (win(t, 9.0, 9.62)) wx = t < 9.3 ? lerp(1080, 0, smooth((t - 9.0) / 0.3)) : lerp(0, -1080, smooth((t - 9.3) / 0.32));
+  if (win(t, 10.62, 11.24)) { wc = TEAL; wx = t < 10.92 ? lerp(1080, 0, smooth((t - 10.62) / 0.3)) : lerp(0, -1080, smooth((t - 10.92) / 0.32)); }
+  if (vis(wipe, wx !== null)) { wipe.style.background = wc; wipe.style.transform = `translateX(${wx.toFixed(1)}px)`; }
+  reveal(E.h3, t, 9.42, 10.9, {gap: 0.14, scale: 1.35, dy: 30});
+  if (t >= 10.92 && t < 11.0) vis(E.h3, false);
+
+  // ---- section headers: number slams in the middle, then takes its seat ----
+  const sec = SECT.find(s => t >= s[0] && t < s[1]);
+  if (vis(E.num, !!sec) && sec) {
+    const lt = t - sec[0], k1 = step(lt, {f: 3.4, z: 0.5}), k2 = step(lt - 0.55, {f: 2.3, z: 0.86});
+    const out = smooth((t - (sec[1] - 0.22)) / 0.2);
+    E.num.textContent = sec[2];
+    const x = lerp(540 - 75, 850, k2), y = lerp(880 - 75, 285, k2), sc = lerp(lerp(5, 3.1, k1), 1, k2) * (1 - out);
+    E.num.style.opacity = clamp(lt / 0.06);
+    E.num.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+  }
+  if (vis(E.ring, !!sec && t - sec[0] < 0.6) && sec) {
+    const lt = t - sec[0], k = smooth(lt / 0.55);
+    E.ring.style.transform = `translate(540px, 880px) scale(${lerp(1, 4.2, k).toFixed(3)})`; E.ring.style.opacity = (1 - k).toFixed(3);
+  }
+  reveal(E.t1, t, S.use + 0.75, S.table - 0.25); reveal(E.s1, t, S.use + 1.0, S.table - 0.25, {gap: 0.06, dy: 30});
+  reveal(E.t2, t, S.table + 0.75, S.lines - 0.25);
+  reveal(E.t3, t, S.lines + 0.75, S.special - 0.25); reveal(E.s3, t, S.lines + 1.0, S.special - 0.25, {gap: 0.06, dy: 30});
+  reveal(E.t4, t, S.special + 0.75, S.tip - 0.25, {gap: 0.12}); reveal(E.s4, t, S.special + 1.0, S.tip - 0.25, {gap: 0.06, dy: 30});
+  for (const s of [E.s1, E.s4]) {        // the subtitle words light up with what the drawing shows
+    s._w.forEach((w, i) => {
+      const ti = s._g[i][1], on = t >= ti, cur = on && !s._w.some((_, j) => s._g[j][1] > ti && t >= s._g[j][1]);
+      w.style.color = cur ? PAPER : on ? MIST : 'rgba(143,182,200,.45)';
+      w.style.boxShadow = cur ? `inset 0 -${Math.round(10 * smooth((t - ti) / 0.2))}px 0 ${RED}` : 'none';
+    });
+  }
+
+  // ---- the rights table ----
+  E.rows.forEach((el, i) => {
+    if (!vis(el, win(t, el._t, S.lines + 0.3))) return;
+    const lt = t - el._t, out = smooth((t - S.lines + 0.25) / 0.25), nx = E.rows[i + 1];
+    el.style.opacity = 1 - out;
+    el.children[0].style.transform = `scaleX(${smooth(lt / 0.35).toFixed(3)})`;
+    const mkOn = smooth((lt - 0.25) / 0.3) * (1 - (nx ? smooth((t - nx._t) / 0.3) : smooth((t - 25.3) / 0.3)));
+    el.children[1].style.transform = `scaleX(${mkOn.toFixed(3)})`;
+    const kl = step(lt - 0.15, {f: 2.8, z: 0.75}), ke = step(lt - 0.55, {f: 2.8, z: 0.8});
+    el.children[2].style.opacity = clamp((lt - 0.15) / 0.14); el.children[2].style.transform = `translateY(${((1 - kl) * 40).toFixed(1)}px)`;
+    el.children[3].style.opacity = clamp((lt - 0.55) / 0.14); el.children[3].style.transform = `translateX(${((1 - ke) * -50).toFixed(1)}px)`;
+  });
+  if (vis(E.tblEnd, win(t, 25.0, S.lines + 0.3))) {
+    E.tblEnd.children[0].style.transform = `scaleX(${smooth((t - 25.0) / 0.35).toFixed(3)})`; E.tblEnd.style.opacity = 1 - smooth((t - S.lines + 0.25) / 0.25);
+  }
+
+  geo(t);
+
+  // ---- tip ----
+  if (vis(E.tipchip, win(t, S.tip + 0.2, S.verdict))) {
+    const k = step(t - S.tip - 0.2, {f: 3, z: 0.6}); E.tipchip.style.opacity = clamp((t - S.tip - 0.2) / 0.1) * (1 - smooth((t - S.verdict + 0.25) / 0.2));
+    E.tipchip.style.transform = `scale(${lerp(0.4, 1, k).toFixed(3)})`; E.tipchip.style.transformOrigin = '100% 50%';
+  }
+  reveal(E.t5, t, S.tip + 0.45, S.verdict - 0.25, {gap: 0.08});
+
+  // ---- verdict ----
+  reveal(E.v1, t, S.verdict + 0.05, 47.4 - 0.02, {gap: 0.38, scale: 1.5, dy: 20, f: 3.4, z: 0.6});
+  if (t >= 47.38 && t < 47.4 + 0.33) vis(E.v1, false);
+  reveal(E.v2, t, 47.45, S.end - 0.02, {gap: 0.36, scale: 1.5, dy: 20, f: 3.4, z: 0.6});
+  if (t >= S.end - 0.02) vis(E.v2, false);
+
+  // ---- end card ----
+  if (vis(E.endlogo, t >= S.end)) {
+    const k = smooth((t - S.end - 0.1) / 0.7);
+    E.endlogo.style.clipPath = `inset(${((1 - k) * 100).toFixed(1)}% 0 0 0)`;
+    E.endlogo.style.transform = `translateY(${((1 - step(t - S.end - 0.1, {f: 2, z: 0.8})) * 40).toFixed(1)}px)`;
+  }
+  reveal(E.e1, t, S.end + 0.7, 99, {gap: 0.12}); reveal(E.e2, t, S.end + 1.0, 99, {gap: 0.07, dy: 30});
+  if (vis(E.phone, t >= S.end + 1.4)) {
+    const k = step(t - S.end - 1.4, {f: 2.6, z: 0.6});
+    E.phone.style.opacity = clamp((t - S.end - 1.4) / 0.12); E.phone.style.transform = `translateX(-50%) scale(${lerp(0.5, 1, k).toFixed(3)})`;
+  }
+  reveal(E.e3, t, S.end + 1.8, 99, {gap: 0.1, dy: 24});
+}
+
+// ---------- the drawing ----------
+const PLOT = {x0: -5, x1: 5, y0: -6, y1: 6};
+const ALLOW = {x0: -3.7, x1: 3.7, y0: -4.5, y1: 4.0};
+const FOOT = {x0: -3.2, x1: 3.2, y0: -3.8, y1: 3.4};
+const FLOOR_H = 1.5, TOPZ = 3.0;
+function geo(t) {
+  const hide = ['gStreet', 'gU1', 'gU2', 'gFront', 'gOk', 'gCov', 'gH', 'gP', 'gTree', 'gX', 'gL1', 'gL2', 'gL3', 'gSame'];
+  if (t < S.use || t >= S.verdict) { dyn.innerHTML = ''; hide.forEach(k => vis(E[k], false)); vis(E.d3, false); vis(E.d4, false); return; }
+  const sp = {f: 1.1, z: 0.92};
+  CM = {
+    yaw: -38 + 0.6 * Math.sin(t * 0.4) - 26 * smooth((t - 34) / 6) + 14 * smooth((t - 40) / 1.4),
+    pitch: track(t, [[0, 33], [S.tip + 0.3, 44]], sp),
+    s: track(t, [[0, 54], [S.table, 44], [S.lines, 56], [S.special, 54], [S.tip, 46]], sp),
+    cx: 540,
+    cy: track(t, [[0, 1090], [S.table, 1330], [S.lines, 1080], [S.special, 1120], [S.tip, 1250]], sp)
+  };
+  let g = '';
+  const k = (a, d) => smooth((t - a) / d);
+
+  // street
+  const st = k(12.45, 0.6);
+  if (st > 0) {
+    if (t >= 13.05) g += poly(rect3(-7, 7, 6.35, 8.9, 0), '#052130', 'none', 0, k(13.05, 0.3));
+    g += pl(part([[-7, 6.35], [7, 6.35]], st).pts, MIST, 3); g += pl(part([[7, 8.9], [-7, 8.9]], st).pts, MIST, 3);
+    if (t >= 13.05) g += pl([P(-6.6, 7.62, 0), P(6.6, 7.62, 0)], PAPER, 3, 0.7 * k(13.05, 0.3), 'stroke-dasharray="22 18"');
+  }
+  // plot fill: residential, commercial, other; then neutral teal for the rest
+  const plate = (fill, kk) => poly(rect3(PLOT.x0 * kk, PLOT.x1 * kk, PLOT.y0 * kk, PLOT.y1 * kk, 0), fill, 'none');
+  const fills = [[13.95, MIST], [15.35, PAPER], [16.55, 'url(#hatchR)'], [S.table, TEAL]];
+  let base = null;
+  for (let i = 0; i < fills.length; i++) {
+    const [ft, col] = fills[i]; if (t < ft) break;
+    const kk = smooth((t - ft) / 0.5);
+    if (base) g += plate(base, 1);
+    g += plate(col, kk);
+    if (kk >= 1) base = col;
+    if (kk < 1 && i > 0) { /* previous drawn under */ }
+    if (kk >= 1 && i === fills.length - 1) base = col;
+  }
+  // plot outline drawn by the pencil
+  const ko = k(11.1, 1.35);
+  const outline = part([[PLOT.x0, PLOT.y0], [PLOT.x1, PLOT.y0], [PLOT.x1, PLOT.y1], [PLOT.x0, PLOT.y1], [PLOT.x0, PLOT.y0]], ko);
+  g += pl(outline.pts, PAPER, 4);
+  // dimension lines, no numbers: the plot has edges, that is all we claim
+  const kd = k(12.95, 0.8), dimOp = 1 - k(17.4, 0.5);
+  if (kd > 0 && dimOp > 0) {
+    g += pl(part([[PLOT.x0, -6.9], [PLOT.x1, -6.9]], kd).pts, MIST, 2.5, dimOp);
+    g += pl(part([[-5.9, PLOT.y0], [-5.9, PLOT.y1]], kd).pts, MIST, 2.5, dimOp);
+    for (const [a, b] of [[[PLOT.x0, -6.6], [PLOT.x0, -7.2]], [[PLOT.x1, -6.6], [PLOT.x1, -7.2]], [[-5.6, PLOT.y0], [-6.2, PLOT.y0]], [[-5.6, PLOT.y1], [-6.2, PLOT.y1]]])
+      g += pl([P(a[0], a[1], 0), P(b[0], b[1], 0)], MIST, 2.5, dimOp * kd);
+  }
+  if (ko > 0 && ko < 1) g += pencil(outline.tip);
+  if (st > 0 && st < 1) g += pencil(part([[-7, 6.35], [7, 6.35]], st).tip);
+  pin(E.gStreet, P(2.2, 7.6, 0), t, 13.2, S.table - 0.3, 6);
+
+  // building lines
+  const sbIn = [k(26.9, 0.7), k(27.25, 0.7), k(27.6, 0.7), k(27.95, 0.7)];
+  const sbOp = t < S.special ? 1 : 1 - 0.6 * k(S.special, 0.5);
+  if (t >= 26.9 && t < S.verdict) {
+    const yF = lerp(PLOT.y1, ALLOW.y1, sbIn[0]), yB = lerp(PLOT.y0, ALLOW.y0, sbIn[1]), xR = lerp(PLOT.x1, ALLOW.x1, sbIn[2]), xL = lerp(PLOT.x0, ALLOW.x0, sbIn[3]);
+    const da = 'stroke-dasharray="18 12"';
+    if (t >= 28.5) g += poly(rect3(ALLOW.x0, ALLOW.x1, ALLOW.y0, ALLOW.y1, 0), RED, RED, 4, sbOp * (0.16 + 0.1 * Math.sin((t - 28.5) * 6) * (1 - k(30, 1))) * k(28.5, 0.3));
+    g += pl([P(-6.2, yF, 0), P(6.2, yF, 0)], RED, 5, sbOp, da);
+    if (sbIn[1] > 0) g += pl([P(-6.2, yB, 0), P(6.2, yB, 0)], PAPER, 3.5, sbOp * sbIn[1], da);
+    if (sbIn[2] > 0) g += pl([P(xR, -7, 0), P(xR, 7, 0)], PAPER, 3.5, sbOp * sbIn[2], da);
+    if (sbIn[3] > 0) g += pl([P(xL, -7, 0), P(xL, 7, 0)], PAPER, 3.5, sbOp * sbIn[3], da);
+    if (t >= 27.3 && t < S.special) {       // the front distance, street edge to the line
+      const ka = k(27.3, 0.4); g += pl([P(4.4, PLOT.y1, 0), P(4.4, lerp(PLOT.y1, ALLOW.y1, ka), 0)], RED, 4, sbOp);
+      for (const yy of [PLOT.y1, ALLOW.y1]) g += pl([P(4.1, yy, 0), P(4.7, yy, 0)], RED, 4, sbOp * ka);
+    }
+  }
+  pin(E.gFront, P(1.2, (PLOT.y1 + ALLOW.y1) / 2, 0), t, 27.4, S.special - 0.25, 4);
+  pin(E.gOk, P(0, 0, 0), t, 28.7, S.special - 0.25, 0);
+  panel(E.d3, t, 29.5, S.special - 0.2);
+
+  // coverage: the footprint inside the allowed area
+  const cov = t >= 33.3 ? k(33.3, 0.4) * (1 - k(35.1, 0.4)) : 0;
+  if (cov > 0) g += poly(rect3(FOOT.x0, FOOT.x1, FOOT.y0, FOOT.y1, 0), 'url(#hatchP)', PAPER, 4, cov);
+  pin(E.gCov, P(0, 0, 0), t, 33.35, 35.1, 0);
+  panel(E.d4, t, 33.6, 35.6);
+  // the footprint stays as a ghost while the building is down
+  if (t >= 26.5 && t < 35.1 && cov < 1) g += poly(rect3(FOOT.x0, FOOT.x1, FOOT.y0, FOOT.y1, 0), 'none', MIST, 2.5, 0.5 * k(26.5, 0.3) * (1 - cov), 'stroke-dasharray="10 10"');
+
+  // tree behind the building
+  const tr = t >= 37.7 ? step(t - 37.7, {f: 2.6, z: 0.6}) : 0;
+  const treeAt = (op) => {
+    const b0 = P(-4.25, -5.2, 0), b1 = P(-4.25, -5.2, 1.3 * tr), cr = P(-4.25, -5.2, 2.1 * tr);
+    return `<line x1="${b0[0]}" y1="${b0[1]}" x2="${b1[0]}" y2="${b1[1]}" stroke="${PAPER}" stroke-width="7" opacity="${op}"/>` +
+      `<circle cx="${cr[0].toFixed(1)}" cy="${cr[1].toFixed(1)}" r="${(0.95 * CM.s * tr).toFixed(1)}" fill="${MIST}" stroke="${NAVY}" stroke-width="3" opacity="${op}"/>` +
+      `<circle cx="${(cr[0] + 0.25 * CM.s * tr).toFixed(1)}" cy="${(cr[1] - 0.3 * CM.s * tr).toFixed(1)}" r="${(0.35 * CM.s * tr).toFixed(1)}" fill="${PAPER}" opacity="${0.5 * op}"/>`;
+  };
+  const ghost = t >= S.tip ? 1 - 0.65 * k(43.4, 0.5) : 1;
+  if (tr > 0) g += treeAt(ghost);
+
+  // the building: rises with the table, sinks for the lines, rises again for the special rules
+  let hA = 0, hB = 0;
+  if (t >= 19.1 && t < 26.6) hA = TOPZ * step(t - 19.1, {f: 1.6, z: 0.85}) * (1 - k(26.0, 0.6));
+  if (t >= 35.0) hA = TOPZ * step(t - 35.0, {f: 1.4, z: 0.9});
+  if (t >= 21.2 && t < 26.6) hB = 1.0 * step(t - 21.2, {f: 2, z: 0.8}) * (1 - k(25.95, 0.5));
+  if (t >= 35.6) hB = 1.0 * step(t - 35.6, {f: 2, z: 0.8});
+  if (hA > 0.01) {
+    g += box(FOOT.x0, FOOT.x1, FOOT.y0, FOOT.y1, 0, hA, {floors: [0, FLOOR_H], op: ghost});
+    if (hB > 0.01) {
+      const pulse = win(t, 21.2, 23.0) ? 0.5 + 0.5 * Math.sin((t - 21.2) * 9) : 0;
+      g += box(1.7, 3.0, -3.6, -2.0, hA, hA + hB, {top: pulse ? '#d6e6ee' : '#d6e6ee', light: MIST, dark: TEAL, ink: pulse ? RED : NAVY, op: ghost});
+    }
+    // units: the split line runs over the roof and down the front
+    if (t >= 23.3 && t < 26.3) {
+      const ku = k(23.3, 0.6), op = 1 - k(25.9, 0.3);
+      g += pl(part([[0, FOOT.y0, hA], [0, FOOT.y1, hA], [0, FOOT.y1, 0]], ku).pts, RED, 6, op, 'stroke-dasharray="16 10"');
+    }
+  }
+  pin(E.gU1, P(-1.6, -0.2, hA), t, 23.85, 25.9, 6); pin(E.gU2, P(1.6, 0.9, hA), t, 24.0, 25.9, 6);
+
+  // parking in front, height line, the exception
+  const kp = t >= 37.1 ? step(t - 37.1, {f: 2.6, z: 0.6}) : 0;
+  if (kp > 0) {
+    const cx = 4.35, cy = 5.0, hw = 0.55 * kp, hd = 0.85 * kp;
+    g += poly(rect3(cx - hw, cx + hw, cy - hd, cy + hd, 0), PAPER, NAVY, 3, ghost);
+    const c = P(cx, cy, 0); g += `<text x="${c[0].toFixed(1)}" y="${(c[1] + 14).toFixed(1)}" font-family="Almoni" font-weight="700" font-size="${(44 * kp).toFixed(1)}" text-anchor="middle" fill="${TEAL}" opacity="${ghost}">P</text>`;
+  }
+  pin(E.gP, P(4.35, 5.0, 0), t, 37.25, S.tip - 0.2, 26);
+  const kh = t >= 36.4 ? k(36.4, 0.5) : 0;
+  if (kh > 0 && t < S.tip + 0.3) {
+    const op = 1 - k(S.tip, 0.3), hx = -3.95, hy = FOOT.y1;
+    g += pl(part([[hx, hy, 0], [hx, hy, TOPZ]], kh).pts, RED, 4, op);
+    for (const zz of [0, TOPZ]) g += pl([P(hx - 0.3, hy, zz), P(hx + 0.3, hy, zz)], RED, 4, op * kh);
+  }
+  pin(E.gH, P(-3.95, FOOT.y1, TOPZ / 2), t, 36.6, S.tip - 0.2, -20);
+  pin(E.gTree, P(-4.25, -5.2, 2.1 * tr + 1.0), t, 37.85, S.tip - 0.2, 6);
+  if (t >= 38.5 && t < S.tip + 0.3) {
+    const c = P(FOOT.x1, FOOT.y0, TOPZ), kr = ((t - 38.5) % 0.9) / 0.9;
+    g += `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="${(10 + kr * 70).toFixed(1)}" fill="none" stroke="${RED}" stroke-width="5" opacity="${((1 - kr) * (1 - k(S.tip, 0.3))).toFixed(3)}"/>`;
+  }
+  pin(E.gX, P(FOOT.x1, FOOT.y0, TOPZ), t, 38.5, S.tip - 0.2, 22);
+
+  // the tip: plans stacked on the same plot
+  const plates = [[40.8, MIST, 'gL1'], [41.35, PAPER, 'gL2'], [41.9, RED, 'gL3']];
+  plates.forEach(([pt, col, id], i) => {
+    if (t < pt) { vis(E[id], false); return; }
+    const kz = step(t - pt, {f: 1.8, z: 0.8}), kd2 = t >= 43.4 ? step(t - 43.4, {f: 1.6, z: 0.9}) : 0;
+    const z = lerp(lerp(11, 4.1 + i * 0.75, kz), 0.04 + i * 0.03, kd2);
+    g += poly(rect3(-5.25, 5.25, -6.25, 6.25, z), col, col, 4, 0.2 + 0.1 * (1 - kd2), `fill-opacity="${col === PAPER ? 0.18 : 0.26}"`);
+    g += poly(rect3(-5.25, 5.25, -6.25, 6.25, z), 'none', col, 4, 0.95);
+    const corner = [[5.25, -6.25], [-1.5, -6.25], [-5.25, 6.25]][i];
+    pin(E[id], P(corner[0], corner[1], z), t, pt + 0.15, 43.3, 8);
+  });
+  pin(E.gSame, P(0, 0, 0), t, 43.9, S.verdict - 0.2, 0);
+
+  dyn.innerHTML = g;
+}
+
+function check(t) {
+  const out = [];
+  document.querySelectorAll('#layer > .t, #layer > .tag, #layer > .panel, #phone').forEach(el => {
+    if (el.style.display === 'none') return;
+    const ws = el.classList.contains('t') ? [...el.querySelectorAll('.w')].filter(w => +w.style.opacity > 0.6) : (+el.style.opacity > 0.6 || el.style.opacity === '' ? [el] : []);
+    ws.forEach(w => {
+      const r = w.getBoundingClientRect();
+      if (r.left < 40 || r.right > 1040 || r.top < 80 || r.bottom > 1640) out.push(`${el.id || el.className} out of safe area (${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)})`);
+    });
+  });
+  return out;
+}
+
+Studio.define({
+  w: W, h: H, duration: DUR,
+  stages: [
+    {t: 1.6, label: 'POV'}, {t: 3.6, label: 'headline'}, {t: 7.6, label: 'terms'}, {t: 8.7, label: 'glitch'}, {t: 10.2, label: 'turn'},
+    {t: 11.9, label: 'pencil'}, {t: 14.6, label: 'residential'}, {t: 17.2, label: 'other'},
+    {t: 20.2, label: 'main area'}, {t: 22.4, label: 'service'}, {t: 24.6, label: 'units'},
+    {t: 28.2, label: 'lines'}, {t: 30.5, label: 'front'}, {t: 34.2, label: 'coverage'}, {t: 37.4, label: 'height parking'}, {t: 39.3, label: 'exception'},
+    {t: 42.4, label: 'plans'}, {t: 44.5, label: 'same plot'}, {t: 46.6, label: 'verdict 1'}, {t: 49.3, label: 'verdict 2'}, {t: 53.5, label: 'end'}
+  ],
+  fonts: ['700 100px Almoni', '400 100px Almoni'],
+  build, seek, check
+});
+</script>
+</body>
+</html>

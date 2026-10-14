@@ -8,11 +8,11 @@ T = 0.4  # transition length
 
 PLAN = [
     ('work', None, 0, 'intro'),
-    ('table', 'zoom', 0, 'size'),
+    ('shelf', 'zoom', 0, 'size'),
     ('open', 'whip', 0, 'open'),
     ('meet', 'flash', 1, 'rooms'),
     ('room', 'cut', 1, None),
-    ('shelf', 'whip', 2, 'desks'),
+    ('table', 'whip', 2, 'desks'),
     ('kitchen', 'zoom', 3, 'kitchen'),
     ('window', 'whip', 4, 'windows'),
     ('view', 'cut', 4, 'air'),
@@ -54,8 +54,8 @@ blocks = f'''
       <section id="b-intro" class="clip" data-start="0" data-duration="{at('size') - 0.05}" data-track-index="2">
         <div class="tx">
           <div id="i-chip" class="chip">מתפנה בהוד השרון</div>
-          <div class="h big" style="font-size:158px"><span class="line"><span id="i-a">משרד שהוא</span></span></div>
-          <div class="h big" style="font-size:158px; margin-top:0"><span class="line"><span id="i-b">פשוט הצגה.</span></span></div>
+          <div class="h peri" style="font-size:112px; margin-top:26px; white-space:nowrap"><span class="line"><span id="i-a">משרד שהוא</span></span></div>
+          <div class="h" style="font-size:150px; white-space:nowrap"><span class="line"><span id="i-b">פשוט הצגה.</span></span></div>
         </div>
       </section>
       <section id="b-size" class="clip" data-start="{at('size', 0.25)}" data-duration="{span('size')}" data-track-index="2">

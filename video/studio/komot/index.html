@@ -276,14 +276,14 @@ async function build() {
   }
   div('burst');
   T('a1', 'זה כתוב|^בתב״ע|^ובתיק ^המידע.', {top: '470px', fontSize: '132px'}, 'c');
-  T('a2', 'לא בבית של ~השכנים.', {top: '1010px', fontSize: '100px'}, 'c');
+  T('a2', 'לא לפי הבית של ~השכנים.', {top: '1010px', fontSize: '100px'}, 'c');
 
   // ---- street ----
   T('q1', 'כמה קומות|מותר לבנות?', {top: '290px', fontSize: '112px'}, 'c');
-  T('q2', 'זו אחת השאלות הנפוצות שאנחנו מקבלים,', {top: '545px', fontSize: '56px', color: MIST, fontWeight: 400}, 'c');
+  T('q2', 'זו אחת השאלות שהכי הרבה שואלים אותנו.', {top: '545px', fontSize: '56px', color: MIST, fontWeight: 400}, 'c');
   T('q3', 'והתשובה כמעט אף פעם לא', {top: '290px', fontSize: '82px', color: MIST}, 'c');
   T('q4', '"כמו ~אצל ~השכנים"', {top: '390px', fontSize: '118px'}, 'c');
-  T('q5', 'איפה מחפשים|את התשובה:', {top: '290px', fontSize: '112px'}, 'c');
+  T('q5', 'איפה בודקים|את התשובה?', {top: '290px', fontSize: '112px'}, 'c');
   tag('gN', 'הבית של השכנים', 'n'); tag('gMine', 'המגרש שלכם', 'r');
   div('qst', '', '?', null, pins);
   const ri = rng(5); E.inks = [];
@@ -296,9 +296,9 @@ async function build() {
   T('t2', 'תיק המידע', {top: '290px', right: '262px', fontSize: '124px'});
   T('s2', 'מה הוועדה מציינת עבור המגרש הספציפי.', {}, 'sub');
   T('t3', 'מרתף', {top: '290px', right: '262px', fontSize: '124px'});
-  T('s3', 'האם מותר, ובאיזה שימוש.', {}, 'sub');
+  T('s3', 'האם מותר לבנות מרתף ולאיזה שימוש.', {}, 'sub');
   T('t4', 'גובה מרבי', {top: '290px', right: '262px', fontSize: '124px'});
-  T('s4', 'לפעמים הוא מגביל יותר ממספר הקומות.', {}, 'sub');
+  T('s4', 'לפעמים הגובה מגביל יותר ממספר הקומות.', {}, 'sub');
   tag('gPlan', 'התב״ע'); tag('gMine1', 'המגרש שלכם', 'r');
   tag('gBase', 'מרתף'); tag('gAllow', 'האם מותר?', 'n'); tag('gUse', 'באיזה שימוש?', 'r');
   tag('gFloors', 'מספר הקומות', 'n'); tag('gMax', 'גובה מרבי', 'r');
@@ -314,13 +314,13 @@ async function build() {
   div('split');
   tag('gHN', 'השכנים', 'n'); tag('gHM', 'המגרש שלכם', 'r');
   tag('gHak', 'הקלה', 'r'); tag('gOther', 'תוכנית אחרת', 'r'); tag('gTaba', 'התב״ע');
-  T('c1', 'ייתכן שלבית של השכן|ניתנה ~הקלה,', {top: '290px', fontSize: '94px'}, 'c');
-  T('c2', 'או שהוא נבנה|לפי ~תוכנית ~אחרת.', {top: '290px', fontSize: '94px'}, 'c');
-  E.dH = div('dH', 'panel', '<b>הקלה:</b> אישור חריג מהוועדה');
+  T('c1', 'אולי השכן קיבל|~הקלה ~מהוועדה', {top: '290px', fontSize: '94px'}, 'c');
+  T('c2', 'או שהבית שלו נבנה|לפי ~תוכנית ~אחרת.', {top: '290px', fontSize: '94px'}, 'c');
+  E.dH = div('dH', 'panel', '<b>הקלה:</b> אישור חריג שהוועדה נותנת לבית מסוים');
 
   // moral
   T('m1', 'בודקים את', {top: '520px', fontSize: '150px', color: NAVY}, 'c');
-  T('m2', '~=המגרש ~=שלכם,', {top: '720px', fontSize: '176px'}, 'c');
+  T('m2', '~=המגרש ~=שלכם', {top: '720px', fontSize: '176px'}, 'c');
   T('m3', 'לא את|_הרחוב.', {top: '600px', fontSize: '200px'}, 'c');
 
   // end card

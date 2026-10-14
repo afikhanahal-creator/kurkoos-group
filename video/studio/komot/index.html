@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>How many floors</title>
-<!-- Kurkoos reel: "כמה קומות מותר לבנות במגרש שלי?" Silent with narration subtitles (karaoke line at the bottom, cues in SUBS), 9:16, 54s. Pure function of t (seek), rendered by engine/anim_render.cjs.
+<!-- Kurkoos reel: "כמה קומות מותר לבנות במגרש שלי?" Silent, one white subtitle line where the screen text does not already say it (SUBS), 9:16, 54s. Pure function of t (seek), rendered by engine/anim_render.cjs.
   STAGES
   0.0  - 3.3   hook: red chip "שאלו אותנו על היתר", search card, placeholder, the question types itself word by word, send
   3.15 - 4.1   the card shatters into 3D shards
@@ -81,12 +81,9 @@
   #stamp{position:absolute;left:50%;top:330px;transform-origin:50% 50%;border:9px solid #a90b0c;border-radius:14px;padding:6px 26px 12px;font-family:Almoni;font-weight:700;font-size:70px;line-height:1.05;color:#a90b0c;white-space:nowrap;background:rgba(169,11,12,.06)}
   #split{position:absolute;left:537px;top:560px;width:6px;height:880px;background:#a90b0c;transform-origin:50% 0}
   #phone{position:absolute;left:50%;top:1290px;transform:translateX(-50%);background:#a90b0c;color:#f7f8fa;font-family:Almoni;font-weight:700;font-size:84px;line-height:1;padding:24px 56px 30px;border-radius:999px;direction:ltr;white-space:nowrap}
-  /* narration subtitles: one line at a time, bottom of the pill at y 1500 */
-  #subs{position:absolute;left:0;right:0;bottom:420px;text-align:center;pointer-events:none}
-  #subpill{display:inline-block;background:rgba(7,41,58,.85);border-radius:999px;box-shadow:inset 0 0 0 2px rgba(143,182,200,.28);padding:12px 40px 18px;font-family:Almoni;font-weight:700;font-size:54px;line-height:1.15;white-space:nowrap;direction:rtl;transform-origin:50% 100%}
-  #subpill span{display:inline-block;color:rgba(247,248,250,.38)}
-  #subpill span.sp{color:#8fb6c8}
-  #subpill span.cu{color:#f7f8fa}
+  /* subtitle: plain white line, bottom at y 1560 */
+  #subs{position:absolute;left:0;right:0;bottom:360px;text-align:center;pointer-events:none}
+  #subpill{display:inline-block;color:#f7f8fa;text-shadow:0 3px 14px rgba(0,0,0,.55);font-family:Almoni;font-weight:700;font-size:54px;line-height:1.15;white-space:nowrap;direction:rtl;transform-origin:50% 100%}
   #endlogo{position:absolute;left:50%;top:430px;width:420px;margin-left:-210px}
 </style>
 </head>
@@ -179,35 +176,21 @@ function panel(el, t, t0, t1) {
   el.style.transform = `translateY(${((1 - k) * 50).toFixed(1)}px)`;
 }
 
-// ---------- narration subtitles: [start, end, text]. Words light up at a reading pace across the cue ----------
+// ---------- subtitles: [start, end, text] ----------
 const SUBS = [
-  [0.35, 3.2, 'כמה קומות מותר לבנות במגרש שלי?'],
-  [3.5, 5.4, 'זו אחת השאלות'], [5.4, 7.4, 'שהכי הרבה שואלים אותנו.'],
-  [7.6, 9.6, 'והתשובה כמעט אף פעם לא'], [9.6, 11.8, '"כמו אצל השכנים".'],
-  [12.5, 14.45, 'אז איפה בודקים?'],
-  [15.4, 17.8, 'אחת: בתב״ע,'], [17.8, 20.85, 'התוכנית שחלה על המגרש.'],
-  [21.3, 23.0, 'שתיים: בתיק המידע,'], [23.0, 24.6, 'שם הוועדה מציינת'], [24.6, 26.9, 'מה מותר במגרש הספציפי שלכם.'],
-  [27.3, 28.9, 'שלוש: מרתף.'], [28.9, 31.0, 'האם מותר לבנות אותו,'], [31.0, 32.9, 'ולאיזה שימוש.'],
-  [33.3, 35.2, 'ארבע: גובה מרבי.'], [35.2, 37.4, 'לפעמים הוא מגביל יותר'], [37.4, 39.3, 'ממספר הקומות.'],
-  [39.5, 40.6, 'ואם אצל השכן'], [40.6, 41.7, 'בנו גבוה יותר?'], [41.7, 43.2, 'אולי הוא קיבל הקלה מהוועדה,'],
-  [43.2, 44.3, 'או שהבית שלו נבנה'], [44.3, 45.35, 'לפי תוכנית אחרת.'],
-  [45.6, 47.4, 'לכן בודקים את המגרש שלכם,'], [47.4, 49.7, 'לא את הרחוב.']
+  // only the line the animation does not already show on screen
+  [39.5, 41.8, 'ואם אצל השכן בנו גבוה יותר?']
 ];
 const subs = document.getElementById('subs'), subpill = document.getElementById('subpill');
-SUBS.forEach(c => {
-  const ws = c[2].split(' '), L = ws.reduce((a, w) => a + w.length + 2, 0), span = Math.min(c[1] - c[0] - 0.35, 0.36 * ws.length + 0.2);
-  let acc = 0; c.w = ws; c.at = ws.map(w => { const a = c[0] + 0.12 + span * acc / L; acc += w.length + 2; return a; });
-});
+SUBS.forEach(c => { c.w = c[2].split(' '); });
 function subtitles(t) {
   const c = SUBS.find(c => t >= c[0] && t < c[1]);
   if (!vis(subs, !!c)) { subs._c = null; return; }
   if (subs._c !== c) { subpill.innerHTML = c.w.map(w => `<span>${w}</span>`).join(' '); subs._c = c; }
-  const cur = c.at.reduce((k, a, i) => t >= a ? i : k, -1);
-  [...subpill.children].forEach((el, i) => { el.className = i < cur ? 'sp' : i === cur ? 'cu' : ''; });
   const a = clamp((t - c[0]) / 0.12), b = clamp((c[1] - t) / 0.1);
   subpill.style.opacity = Math.min(a, b).toFixed(3);
   // lift above the הקלה definition panel while it is up
-  subs.style.bottom = (420 + 120 * smooth(clamp((t - 40.75) / 0.2)) * (1 - smooth(clamp((t - 42.45) / 0.2)))).toFixed(1) + 'px';
+  subs.style.bottom = (360 + 150 * smooth(clamp((t - 40.75) / 0.2)) * (1 - smooth(clamp((t - 42.45) / 0.2)))).toFixed(1) + 'px';
   subpill.style.transform = `translateY(${((1 - smooth(a)) * 14).toFixed(1)}px)`;
 }
 

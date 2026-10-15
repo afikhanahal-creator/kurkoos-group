@@ -433,6 +433,9 @@
 /* ---- Intro ---- */
 .division-intro__text { max-width: 60rem; margin-inline: auto; text-align: center; }
 .division-intro__text p { font-size: 1.3rem; line-height: 1.85; color: var(--color-text-soft); }
+.division-intro__answer { margin-bottom: 1rem; }
+.division-intro__answer strong { font-weight: 600; color: var(--color-primary-900, #07293a); }
+.division-intro__answer a { color: var(--color-secondary, #16688c); text-decoration: underline; text-underline-offset: 3px; }
 /* קישורים לעמודים קשורים מתחת לפסקת הפתיחה */
 .division-intro__related {
   list-style: none; margin: 1.4rem 0 0; padding: 0;

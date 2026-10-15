@@ -28,6 +28,7 @@ const Glossary = lazy(() => import('./pages/Glossary.jsx'))
 const SharonHub = lazy(() => import('./pages/SharonHub.jsx'))
 const VillasSharon = lazy(() => import('./pages/VillasSharon.jsx'))
 const HouseLanding = lazy(() => import('./pages/HouseLanding.jsx'))
+const HodHasharonAnswer = lazy(() => import('./pages/HodHasharonAnswer.jsx'))
 const Calculators = lazy(() => import('./pages/Calculators.jsx'))
 const FaqHub = lazy(() => import('./pages/FaqHub.jsx'))
 const YazamutArticle = lazy(() => import('./pages/YazamutArticle.jsx'))
@@ -162,6 +163,8 @@ export default function App() {
               <Route path="/kablan-bniya-bayit-prati" element={<HouseLanding />} />
               <Route path="/bniyat-vila-sharon" element={<HouseLanding />} />
               <Route path="/bniyat-bayit-prati/:city" element={<HouseLanding />} />
+              {/* עמוד התשובה: חברת בנייה ופיקוח בהוד השרון. התוכן ב-data/hodHasharonAnswer.js */}
+              <Route path="/hod-hasharon/bniya-vepikuach" element={<HodHasharonAnswer />} />
               <Route path="/real-estate-calculators" element={<Calculators />} />
               <Route path="/shelot-ve-tshuvot" element={<FaqHub />} />
               <Route path="/real-estate-guide/:slug" element={<RealEstateGuideArticle />} />

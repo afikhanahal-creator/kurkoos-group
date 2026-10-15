@@ -14,7 +14,7 @@ import { STATIC, ARTICLES } from './sitemap.js'
 const SITE = 'https://www.kurkoos-group.co.il'
 const HOST = 'www.kurkoos-group.co.il'
 const KEY = 'ab01ef227b7a3181c48a24f935dc95c9'
-const CORE = ['/', '/villas-sharon', '/divisions/execution', '/divisions/supervision', '/divisions/development', '/divisions/brokerage', '/about', '/projects', '/livy-yazamim', '/real-estate-sharon', '/contact', '/llms.txt', '/llms-full.txt']
+const CORE = ['/', '/hod-hasharon/bniya-vepikuach', '/villas-sharon', '/divisions/execution', '/divisions/supervision', '/divisions/development', '/divisions/brokerage', '/about', '/projects', '/livy-yazamim', '/real-estate-sharon', '/contact', '/llms.txt', '/llms-full.txt']
 
 export function pickUrls(now = new Date(), all = false) {
   const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })

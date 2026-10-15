@@ -129,6 +129,7 @@ const SITE_LINKS =
     ['/villas-sharon', 'בניית וילות ובתים פרטיים'],
     ['/kablan-bniya-bayit-prati', 'קבלן בנייה לבית פרטי'],
     ['/bniyat-vila-sharon', 'בניית וילה בשרון'],
+    ['/hod-hasharon/bniya-vepikuach', 'חברת בנייה ופיקוח בהוד השרון'],
     ['/real-estate-sharon', 'נדל"ן בהוד השרון ובאזור המרכז'],
     ['/divisions/development', 'יזמות נדל"ן'],
     ['/divisions/execution', 'ביצוע ובנייה'],
@@ -271,6 +272,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     const faqs = d.faqs || []
     const body =
       `<h1>${esc(d.hero?.title?.he || d.menuTitle.he)}</h1>` +
+      (d.answer ? `<p><strong>${esc(d.answer.he)}</strong> <a href="${esc(d.answer.link.to)}">${esc(d.answer.link.label)}</a></p>` : '') +
       `<p>${esc(d.intro.he)}</p>` +
       (d.related?.length ? '<ul>' + d.related.map((r) => `<li><a href="${esc(r.to)}">${esc(r.label)}</a></li>`).join('') + '</ul>' : '') +
       (d.why?.length ? `<h2>למה ${esc(d.name.he)}</h2><ul>` + d.why.map((w) => `<li><strong>${esc(w.title.he)}</strong>: ${esc(w.desc.he)}</li>`).join('') + '</ul>' : '') +
@@ -304,6 +306,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     bodyHtml:
       `<h1>נדל"ן בהוד השרון ובאזור המרכז</h1>` +
       `<p>קורקוס גרופ היא קבוצת נדל"ן שמשרדה ברחוב הנגר 24 בהוד השרון. הקבוצה פועלת בארבעה תחומים משלימים: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, ותיווך ושיווק נכסים, עם פעילות באזור השרון והמרכז ופרויקטים נבחרים ברחבי הארץ.</p>` +
+      `<p>מחפשים חברת בנייה ופיקוח בהוד השרון? ראיתה בונה ושכינתא מפקחת מטעם בעל הבית, בשתי זרועות נפרדות. <a href="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון: כל הפרטים</a></p>` +
       `<ul><li><a href="/divisions/development">יזמות נדל"ן</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a></li></ul>` +
       sharonFaqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n'),
   }))
@@ -405,6 +408,46 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
           `<p>טלפון 055-981-1814. רחוב הנגר 24, הוד השרון. <a href="/contact?topic=construction">השארת פרטים</a></p>`,
       }))
     }
+  }
+
+  /* עמוד התשובה: חברת בנייה ופיקוח בהוד השרון. כל הטקסט והנתונים המובנים
+     מ-data/hodHasharonAnswer.js, אותו מקור שהעמוד החי מרנדר. */
+  {
+    const H = await import(pathToFileURL(join(root, 'src/data/hodHasharonAnswer.js')).href)
+    const m = meta(H.HH_PATH)
+    if (m.title !== H.HH_TITLE || m.description !== H.HH_DESCRIPTION) {
+      throw new Error(`prerender: הכותרת או התיאור של ${H.HH_PATH} ב-seo.js שונים מ-data/hodHasharonAnswer.js`)
+    }
+    const words = H.HH_ANSWER.trim().split(/\s+/).length
+    if (words < 40 || words > 60) throw new Error(`prerender: התשובה הפותחת של ${H.HH_PATH} צריכה 40 עד 60 מילים (${words})`)
+    const jsonLd = H.hhJsonLd()
+    JSON.parse(JSON.stringify(jsonLd))
+    done.push(renderPage({
+      path: H.HH_PATH,
+      ...m,
+      jsonLd,
+      bodyHtml:
+        `<h1>${esc(H.HH_H1)}</h1>` +
+        `<p><strong>${esc(H.HH_ANSWER)}</strong></p>` +
+        `<p>עודכן לאחרונה: <time datetime="${H.HH_UPDATED}">${H.HH_UPDATED_HE}</time></p>` +
+        `<h2>מה אנחנו עושים בהוד השרון</h2>` +
+        H.HH_SERVICES.map((sv) => `<h3>${esc(sv.title)}</h3><p>${esc(sv.text)} <a href="${esc(sv.to)}">${esc(sv.link)}</a></p>`).join('') +
+        `<h2>פרויקטים בהוד השרון ובסביבה</h2><ul>` +
+        H.HH_PROJECTS.map((p) => `<li><a href="${esc(p.to)}">${esc(p.name)}, ${esc(p.place)}</a>: ${esc(p.text)}${p.status ? ` ${esc(p.status)}.` : ''}</li>`).join('') + `</ul>` +
+        `<h2>איך בוחרים חברת בנייה ומפקח בהוד השרון</h2><ol>` +
+        H.HH_CHECKLIST.map(([t, d]) => `<li><strong>${esc(t)}.</strong> ${esc(d)}</li>`).join('') + `</ol>` +
+        `<h2>קבלן מבצע מול מפקח מטעם המזמין</h2><table><thead><tr><td></td>` +
+        H.HH_TABLE.cols.slice(1).map((c) => `<th scope="col">${esc(c)}</th>`).join('') + `</tr></thead><tbody>` +
+        H.HH_TABLE.rows.map(([h, a, b]) => `<tr><th scope="row">${esc(h)}</th><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('') + `</tbody></table>` +
+        `<h2>שאלות על בנייה ופיקוח בהוד השרון</h2>` +
+        H.HH_FAQS.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('\n') +
+        `<h2>פרטי קשר</h2><p>${esc(H.HH_LEGAL_NAME)}<br>${esc(H.HH_CONTACT.address)}<br>` +
+        `טלפון: <a href="tel:${H.HH_CONTACT.phoneIntl}">${esc(H.HH_CONTACT.phone)}</a><br>` +
+        `אימייל: <a href="mailto:${esc(H.HH_CONTACT.email)}">${esc(H.HH_CONTACT.email)}</a><br>` +
+        `שעות פעילות: ${esc(H.HH_CONTACT.hours)}<br>` +
+        `<a href="${esc(H.HH_CONTACT.gbp)}">הפרופיל העסקי בגוגל</a></p>` +
+        `<p><a href="/bniyat-bayit-prati/hod-hasharon">בניית בית פרטי בהוד השרון</a> · <a href="/villas-sharon">הווילות שאנחנו מקימים בהוד השרון</a> · <a href="/contact">השארת פרטים</a></p>`,
+    }))
   }
 
   /* שלושת העמודים המסחריים המרכזיים לא היו מרונדרים מראש, ולכן סורק שלא
@@ -652,6 +695,12 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   out.push('קבוצת קורקוס היא קבוצת נדל"ן מהוד השרון, שמשרדה ברחוב הנגר 24, מגדלי Amy, הוד השרון. טלפון 055-981-1814. אתר https://www.kurkoos-group.co.il. המייסד והמנכ"ל: שלומי קורקוס, יותר מ-30 שנות ניסיון.')
   out.push('הזרועות: קורקוס יזמות (יזמות נדל"ן), ראיתה (ביצוע ובנייה; בונה גם בתים פרטיים ווילות עבור לקוחות פרטיים על המגרש שלהם), שכינתא (ניהול ופיקוח בנייה מטעם המזמין, גם כשקבלן אחר בונה), אפיק הנחל (תיווך ושיווק נכסים, https://www.afikhanahal.co.il). בנוסף: תוכנית ליווי ליזמי נדל"ן צעירים עם שלומי קורקוס.')
   out.push('מה מייחד: ביצוע ופיקוח באותה קבוצה, בזרועות נפרדות. ראיתה בונה ושכינתא מפקחת מטעם המזמין.', '')
+  {
+    const H = await import(pathToFileURL(join(root, 'src/data/hodHasharonAnswer.js')).href)
+    out.push(`שם וזהות: השם המשפטי ${H.HH_LEGAL_NAME}. שמות נוספים: ${H.HH_ALT_NAMES.join(', ')}. המשרד היחיד: רחוב הנגר 24, מגדלי Amy קומה 2, הוד השרון.`, '')
+    out.push('## חברת בנייה ופיקוח בהוד השרון', `https://www.kurkoos-group.co.il${H.HH_PATH}`, H.HH_ANSWER, '')
+    for (const f of H.HH_FAQS) out.push(`ש: ${f.q}`, `ת: ${f.a}`, '')
+  }
   out.push('## הפרויקטים', '')
   for (const p of VILLAS_PROJECTS) {
     out.push(`### ${p.name}`, `${p.kind}. ${p.tagline}. סטטוס: ${p.status}. אדריכל: ${p.architect}.`)

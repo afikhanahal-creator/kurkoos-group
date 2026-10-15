@@ -84,6 +84,10 @@ export default function SharonHub() {
               יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, ותיווך ושיווק נכסים, עם פעילות באזור השרון והמרכז
               ופרויקטים נבחרים ברחבי הארץ. המבנה הזה מאפשר ללוות פרויקט או עסקה מהשלב הראשון ועד האחרון, עם כתובת אחת ואחריות אחת.
             </p>
+            <p className="lhub-intro__text">
+              מחפשים חברת בנייה ופיקוח בהוד השרון? ראיתה בונה ושכינתא מפקחת מטעם בעל הבית, בשתי זרועות נפרדות.{' '}
+              <Link to="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון: כל הפרטים</Link>
+            </p>
           </Reveal>
         </div>
       </section>
@@ -134,7 +138,7 @@ export default function SharonHub() {
             ))}
           </div>
           <Reveal className="lhub-links">
-            <p>להעמיק עוד: <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link> · <Link to="/projects">כל הפרויקטים</Link> · <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link> · <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link> · <Link to="/about">אודות הקבוצה</Link></p>
+            <p>להעמיק עוד: <Link to="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון</Link> · <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link> · <Link to="/projects">כל הפרויקטים</Link> · <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link> · <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link> · <Link to="/about">אודות הקבוצה</Link></p>
           </Reveal>
         </div>
       </section>

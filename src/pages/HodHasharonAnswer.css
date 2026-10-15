@@ -1,0 +1,160 @@
+/* ============================================================
+   חברת בנייה ופיקוח בהוד השרון. נשען על HouseLanding.css (מחלקות hl),
+   וכאן רק מה שחסר שם: כרטיסי הזרועות, רשימת הפרויקטים, הצעדים
+   הממוספרים, הטבלה ופרטי הקשר.
+   ============================================================ */
+
+/* בכותרת אין תמונה: השלט בצד, עם מעט יותר אוויר בתחתית */
+.hh-hero .hl-hero__inner { padding-block-end: clamp(3.5rem, 7vw, 5.5rem); }
+.hh-hero__grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: end; }
+.hh-sign { margin-top: 0; max-width: none; }
+.hh-sign .hl-sign__rows { grid-template-columns: 1fr; }
+.hh-sign .hl-sign__rows > div:nth-last-child(-n + 2) { border-bottom: 1px solid var(--hl-rule); }
+.hh-sign .hl-sign__rows > div:last-child { border-bottom: 0; }
+.hh-answer { max-width: 62ch; }
+.hh-updated { margin-top: 0.75rem; font-size: 0.92rem; color: rgba(255, 255, 255, 0.72); }
+.hh-updated--dark { color: var(--color-text-muted); margin-top: 1.25rem; }
+.hh-jump { margin-top: clamp(1.5rem, 3vw, 2.25rem); }
+
+/* ---------- ארבע הזרועות ---------- */
+.hh-services {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+.hh-service {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  background: var(--hl-paper);
+  border: 1px solid var(--hl-rule);
+  border-radius: var(--radius-md);
+}
+.hh-service__title { font-family: var(--font-heading); font-size: 1.2rem; color: var(--hl-navy); margin: 0; }
+.hh-service p { color: var(--color-text-muted); line-height: 1.7; margin: 0; flex: 1; }
+
+/* ---------- פרויקטים ---------- */
+.hh-projects {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+.hh-project {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  height: 100%;
+  padding: 1.1rem 1.25rem;
+  background: #fff;
+  border: 1px solid var(--hl-rule);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+.hh-project:hover { border-color: var(--hl-mist); }
+.hh-project:hover .hl-project__name { color: var(--color-accent-500); }
+.hh-project__top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.hh-project__status {
+  flex: none;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: var(--color-primary-100);
+  color: var(--hl-teal);
+}
+.hh-project__status.is-building { background: var(--color-accent-500); color: #fff; }
+
+/* ---------- צעדי הבחירה ---------- */
+.hh-steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.hh-steps li {
+  display: flex;
+  gap: 0.9rem;
+  padding-block: 1.05rem;
+  border-bottom: 1px solid var(--hl-rule);
+  line-height: 1.7;
+  color: var(--color-text-muted);
+  max-width: 68ch;
+}
+.hh-steps li:first-child { padding-top: 0; }
+.hh-steps b { color: var(--hl-navy); font-family: var(--font-heading); }
+.hh-steps__num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--hl-navy);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* ---------- הטבלה ---------- */
+.hh-table-wrap { overflow-x: auto; border: 1px solid var(--hl-rule); border-radius: var(--radius-md); background: #fff; }
+.hh-table-wrap:focus-visible { outline: 3px solid var(--color-primary-500); outline-offset: 2px; }
+.hh-table { width: 100%; border-collapse: collapse; text-align: start; line-height: 1.6; }
+.hh-table th,
+.hh-table td { padding: 1rem 1.15rem; vertical-align: top; text-align: start; border-bottom: 1px solid var(--hl-rule); }
+.hh-table tbody tr:last-child th,
+.hh-table tbody tr:last-child td { border-bottom: 0; }
+.hh-table thead th { background: var(--hl-navy); color: #fff; font-family: var(--font-heading); font-size: 1.05rem; }
+.hh-table thead td { background: var(--hl-navy); }
+.hh-table tbody th { width: 9rem; color: var(--hl-navy); font-family: var(--font-heading); background: var(--hl-paper); }
+.hh-table tbody td { color: var(--color-text-muted); }
+.hh-table tbody tr:last-child td { color: var(--hl-navy); font-weight: 700; }
+
+/* ---------- פרטי קשר ---------- */
+.hh-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+}
+.hh-contact__legal { color: var(--color-text-muted); margin: 0.25rem 0 1rem; }
+.hh-contact__rows { margin: 0; display: flex; flex-direction: column; }
+.hh-contact__rows > div {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 1rem;
+  padding-block: 0.7rem;
+  border-bottom: 1px solid var(--hl-rule);
+}
+.hh-contact__rows dt { color: var(--color-text-muted); }
+.hh-contact__rows dd { margin: 0; font-weight: 700; color: var(--hl-navy); overflow-wrap: anywhere; }
+.hh-contact__rows a { color: var(--hl-navy); text-decoration: underline; text-underline-offset: 3px; }
+.hh-contact__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-content: start; }
+.hh-contact__links { list-style: none; padding: 0; margin: 1rem 0 0; width: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
+.hh-contact__links a { color: var(--hl-teal); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.hh-contact__links a:hover { color: var(--color-accent-500); }
+
+@media (max-width: 900px) {
+  .hh-hero__grid { grid-template-columns: 1fr; }
+  .hh-services, .hh-projects, .hh-contact { grid-template-columns: 1fr; }
+}
+
+/* במובייל הטבלה הופכת לכרטיסים: שורה לכל נושא, והתווית של כל תא מעליו */
+@media (max-width: 640px) {
+  .hh-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .hh-table, .hh-table tbody, .hh-table tr, .hh-table th, .hh-table td { display: block; width: 100%; }
+  .hh-table tbody tr { border-bottom: 1px solid var(--hl-rule); }
+  .hh-table tbody tr:last-child { border-bottom: 0; }
+  .hh-table tbody th { width: auto; border-bottom: 0; padding-bottom: 0.4rem; }
+  .hh-table tbody td { border-bottom: 0; padding-block: 0.35rem; }
+  .hh-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--hl-teal);
+  }
+  .hh-table tbody tr td:last-child { padding-bottom: 1rem; }
+  .hh-contact__rows > div { grid-template-columns: 1fr; gap: 0.15rem; }
+}

@@ -31,3 +31,34 @@ User-agent: CCBot
 Allow: /
 Disallow: /admin
 Disallow: /engine
+
+# סורקי חיפוש ושליפה של מנועי תשובות (ChatGPT, Claude, Perplexity, Bing)
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /engine
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+Disallow: /engine
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /engine
+
+User-agent: Claude-User
+Allow: /
+Disallow: /admin
+Disallow: /engine
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /admin
+Disallow: /engine
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /engine

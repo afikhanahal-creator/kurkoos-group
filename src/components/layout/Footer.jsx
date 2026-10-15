@@ -66,6 +66,7 @@ export default function Footer() {
           <Link to="/divisions/brokerage">{t('footer.linkBrokerage')}</Link>
           <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link>
           <Link to="/real-estate-sharon">נדל"ן בשרון</Link>
+          <Link to="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון</Link>
           <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link>
           <Link to="/kablan-bniya-bayit-prati">קבלן בנייה לבית פרטי</Link>
           <Link to="/bniyat-vila-sharon">בניית וילה בשרון</Link>

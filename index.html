@@ -41,8 +41,9 @@
         "@id": "https://www.kurkoos-group.co.il/#organization",
         "name": "קורקוס גרופ",
         "alternateName": [
-          "Kurkoos Group",
           "קבוצת קורקוס",
+          "קורקוס גרופ",
+          "Kurkoos Group",
           "Kurkoos",
           "קורקוס",
           "Corcos Group",
@@ -53,6 +54,7 @@
         "logo": "https://www.kurkoos-group.co.il/kurkoos-logo.svg",
         "image": "https://www.kurkoos-group.co.il/og-image.jpg",
         "description": "קורקוס גרופ (Kurkoos Group, קבוצת קורקוס) היא חברת בנייה ונדל\"ן מהוד השרון, שבונה וילות ובתים פרטיים בהוד השרון ובאזור המרכז. הקבוצה היא גם יזם וגם קבלן מבצע: היא מייזמת פרויקטים למגורים, מבצעת אותם בעצמה באמצעות ראיתה, שבונה גם בתים פרטיים ווילות עבור לקוחות פרטיים על המגרש שלהם, ומנהלת ומפקחת על בנייה באמצעות שכינתא, לצד תיווך ושיווק נכסים באמצעות אפיק הנחל. הפעילות באזור השרון והמרכז, מקרקע ועד מסירת מפתח.",
+        "disambiguatingDescription": "קבוצת קורקוס נכסים חברה לבניין ויזמות בע״מ: חברת בנייה, פיקוח, יזמות ותיווך שמשרדה היחיד ברחוב הנגר 24, מגדלי Amy, הוד השרון. מייסד ומנכ\"ל: שלומי קורקוס. טלפון 055-981-1814.",
         "slogan": "מקרקע ועד מסירת מפתח",
         "address": {
           "@type": "PostalAddress",
@@ -382,6 +384,7 @@
         "department": [
           {
             "@type": "Organization",
+            "@id": "https://www.kurkoos-group.co.il/divisions/development#kurkoos-yazamut",
             "name": "קורקוס יזמות",
             "description": "זרוע הייזום של קורקוס גרופ: ייזום פרויקטים למגורים, מאיתור קרקע ותכנון ועד שיווק ומסירה.",
             "url": "https://www.kurkoos-group.co.il/divisions/development",
@@ -390,18 +393,22 @@
             }
           },
           {
-            "@type": "Organization",
+            "@type": "GeneralContractor",
+            "@id": "https://www.kurkoos-group.co.il/divisions/execution#raita",
             "name": "ראיתה",
-            "description": "זרוע הביצוע והבנייה של קורקוס גרופ: ביצוע פרויקטים למגורים.",
+            "alternateName": "Raita",
+            "description": "זרוע הביצוע והבנייה של קורקוס גרופ: חברת בנייה וקבלן מבצע, כולל בתים פרטיים ווילות על המגרש של הלקוח.",
             "url": "https://www.kurkoos-group.co.il/divisions/execution",
             "parentOrganization": {
               "@id": "https://www.kurkoos-group.co.il/#organization"
             }
           },
           {
-            "@type": "Organization",
-            "name": "שכינתא ניהול ויזום פרויקטים",
-            "description": "זרוע הניהול והפיקוח של קורקוס גרופ: ניהול ופיקוח על פרויקטי בנייה.",
+            "@type": "ProfessionalService",
+            "@id": "https://www.kurkoos-group.co.il/divisions/supervision#shechinta",
+            "name": "שכינתא",
+            "alternateName": ["Shechinta", "שכינתא ניהול ויזום פרויקטים"],
+            "description": "זרוע הניהול והפיקוח של קורקוס גרופ: ניהול ופיקוח בנייה מטעם המזמין, גם על בית פרטי שקבלן אחר בונה.",
             "url": "https://www.kurkoos-group.co.il/divisions/supervision",
             "parentOrganization": {
               "@id": "https://www.kurkoos-group.co.il/#organization"
@@ -409,7 +416,9 @@
           },
           {
             "@type": "RealEstateAgent",
+            "@id": "https://www.kurkoos-group.co.il/divisions/brokerage#afik-hanahal",
             "name": "אפיק הנחל",
+            "alternateName": "Afik Hanahal",
             "sameAs": [
               "https://www.facebook.com/profile.php?id=61573376818745",
               "https://www.instagram.com/afik.hanahal/"

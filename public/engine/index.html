@@ -2110,6 +2110,53 @@ body.v179lock{overflow:hidden}
 }
 </style>
 
+<style id="k180">
+/* V180 · phones: the menu is back where it was (V174) and the bottom bar is always on screen. No new look.
+   1. The base rule .app{min-height:100vh} came later than the phone rule .app{height:100dvh;min-height:0} and won. On iPhone (Safari and
+      Chrome) 100vh is the height with the browser toolbars hidden, so the shell was taller than the visible area and the bottom bar
+      (תפריט, היום, תמונות, לוח, פוסטים) sat under the browser toolbar.
+   2. V176 hid the header menu button whenever the bottom bar existed, so with the bar out of sight there was no way into the menu.
+   3. V172 shows the "פעולות" label above 420px, so on a Plus / Pro Max iPhone (430 to 440px) the header changed. */
+@media (max-width:860px){
+ /* 1 · the shell is exactly the visible area; the safe areas belong to the header and the bottom bar, not to empty bands */
+ html{padding-top:0!important;padding-bottom:0!important}
+ html,body{height:100%;height:var(--v180vh,100dvh)}
+ body .app{min-height:0!important;height:100%;height:100dvh;height:var(--v180vh,100dvh);box-sizing:border-box;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+ body .tbar{padding-top:env(safe-area-inset-top,0px)!important}
+ body #v99nav{position:static!important;flex:0 0 auto;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))!important}
+
+ /* 2 · the header as it was: ≡ menu, ‹ back, title, search, bell, the actions icon, + */
+ html body:has(#v99nav) .tbar [data-app="menu"],html body .tbar [data-app="menu"]{display:inline-flex!important}
+ body .tbar.v172fold #v172act:not([hidden]){width:44px!important;padding:0!important;justify-content:center}
+ body .tbar.v172fold #v172act span{display:none}
+ /* the 44px icon buttons stay icons (in landscape their labels spilled out of the 44px box) */
+ body .tbar .ibtn.pri,body .tbar .px-sbtn{font-size:0!important;gap:0!important;padding:0!important;justify-content:center}
+ body .tbar .ibtn.pri>:not(svg),body .tbar .px-sbtn>:not(svg){font-size:0!important}
+
+ /* the drawer: the visible height with its own scroll, below the status bar, last items reachable */
+ body .side{top:0!important;bottom:auto!important;height:100%!important;height:100dvh!important;height:var(--v180vh,100dvh)!important;
+  overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  padding-top:calc(18px + env(safe-area-inset-top,0px))!important;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))!important}
+
+ /* every sheet and window fits the visible area (they were sized in vh, so their buttons went under the browser toolbar) */
+ body .v103sh{max-height:calc(var(--v180vh,100dvh) * .92)!important}
+ body .v128sh{max-height:calc(var(--v180vh,100dvh) * .86)!important}
+ body .v131box{max-height:calc(var(--v180vh,100dvh) * .92)!important}
+ body .v132box,body .v52box{max-height:calc(var(--v180vh,100dvh) - 28px)!important}
+ body .v170sh,body .v170psh{max-height:calc(var(--v180vh,100dvh) * .88)!important}
+ body #v172sheet .v172pan{max-height:calc(var(--v180vh,100dvh) * .82)!important}
+ body #v175sh .v175pan{max-height:calc(var(--v180vh,100dvh) * .88)!important}
+ body .ov .box{max-height:calc(var(--v180vh,100dvh) * .9)!important}
+ body .px-insp{max-height:calc(var(--v180vh,100dvh) * .92)!important}
+ body .px-popc{max-height:calc(var(--v180vh,100dvh) * .7)!important}
+ body .v62ovb,body .v63box{max-height:calc(var(--v180vh,100dvh) - 48px)!important}
+ body .v65cb{max-height:calc(var(--v180vh,100dvh) - 40px)!important}
+ body .v44host.v123{max-height:calc(var(--v180vh,100dvh) - 32px)!important}
+ body #pe-root .pe-canvas canvas{max-height:calc(var(--v180vh,100dvh) - 236px)!important}
+}
+</style>
+
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -21596,7 +21643,7 @@ function page(){const docs=VD.docs;const known=KNOWN.filter(([p])=>!docs.some(d=
 function card(d){const [sl,sc]=STATUS[d.status]||[d.status,'q'];const src=d.out||d.srcUrl||(d.path?d.path:'');
  return `<article class="v100c" data-vid="${esc(d.id)}"><div class="v100v">${src?`<video controls playsinline preload="metadata" src="${esc(src)}"></video>`:'<div class="v100ph"></div>'}${d.out?'<span class="v100tag">רילס ערוך</span>':''}</div>
   <div class="v100m"><b>${esc(d.name||d.id)}</b><span class="v100st ${sc}">${sl}${d.status==='failed'&&d.error?' · '+esc(d.error):''}</span>
-  ${d.qa?`<details class="v100qa"><summary>בדיקת העורך</summary><pre>${esc(d.qa)}</pre></details>`:''}
+  ${d.qa?`<details class="v100qa"><summary>בדיקת העורך</summary><pre>${esc(typeof d.qa==="string"?d.qa:Array.isArray(d.qa)?d.qa.map(x=>x&&typeof x==="object"?Object.values(x).join(" · "):String(x)).join("\n"):JSON.stringify(d.qa))}</pre></details>`:''}
   ${d.transcript&&d.transcript!=='ok'?`<small class="v100note">תמלול: ${esc(d.transcript==='no_audio'?'אין אודיו בסרטון':d.transcript)}</small>`:''}
   <div class="v100b">${d.out?`<a class="px-btn sm" href="${esc(d.out)}" download>הורדה</a>`:''}<button type="button" class="px-btn sm ${d.out?'ghost':'pri'}" data-v100="edit" data-id="${esc(d.id)}">${d.out?'ערוך שוב':d.status==='editing'?'שלח שוב לעורך':'ערוך כרילס'}</button>${d.srcUrl?`<a class="px-btn sm ghost" href="${esc(d.srcUrl)}" target="_blank" rel="noopener">המקור</a>`:''}</div></div></article>`}
 render=(f=>function(){const v=typeof APP!=='undefined'?APP.view:'';if(v!=='videos')return f.apply(this,arguments);renderNav();const [t,s]=VTITLE[v];document.getElementById('vt').textContent=t;document.getElementById('vs').textContent=s;document.querySelectorAll('.wrap > section').forEach(sec=>sec.classList.add('view-hidden'));
@@ -26518,6 +26565,49 @@ document.addEventListener('toggle',e=>{const d=e.target;if(!d||!d.matches||!d.ma
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const g=document.getElementById('v179g'),d=document.getElementById('v179d');if(g){close('v179g');e.stopPropagation()}else if(d){close('v179d');e.stopPropagation()}},true);
 
 window.__v179={M,daysOf,bucket,isStar,isNew,isGone,order,groupOf,libList,openDetail,openGen,runGen,prompt,makePost,applyTo,secHtml,vLib,vScans,reindex};
+})();
+
+// ================= V180 · phones: the menu is back where it was and the bottom bar is always on screen.
+// On iPhone (Safari and Chrome, both WebKit) 100vh is the height with the browser toolbars hidden. The base rule .app{min-height:100vh}
+// overrode the phone rule, so the shell was taller than the visible area and the bottom bar sat under the browser toolbar, while V176
+// had hidden the header menu button because the bottom bar "existed". The CSS (k180) restores the V174 header and sizes the shell with
+// 100dvh; this script measures the visible height for older WebKit (--v180vh) and makes the phone's back gesture close an open drawer
+// instead of also stepping a page back, or leaving the engine from the first page.
+(()=>{
+if(window.__v180)return;window.__v180=1;
+const PH=matchMedia('(max-width:860px)');
+const side=()=>document.getElementById('side');
+const isOpen=()=>{const s=side();return !!s&&s.classList.contains('open')};
+
+/* ---------- 1 · the shell is the visible area ---------- */
+// documentElement.clientHeight is the visible layout height: it leaves out the browser toolbars and does not change with the keyboard or a pinch zoom
+function vh(){const de=document.documentElement;if(!PH.matches){de.style.removeProperty('--v180vh');return}
+ const vv=window.visualViewport;if(vv&&Math.abs((vv.scale||1)-1)>0.01)return;
+ const h=Math.round(de.clientHeight||innerHeight||0);if(h>=200&&de.style.getPropertyValue('--v180vh')!==h+'px')de.style.setProperty('--v180vh',h+'px')}
+vh();addEventListener('resize',vh);addEventListener('pageshow',vh);addEventListener('orientationchange',()=>{vh();setTimeout(vh,300)});
+try{window.visualViewport&&visualViewport.addEventListener('resize',vh)}catch(e){}
+try{PH.addEventListener('change',vh)}catch(e){}
+
+/* ---------- 2 · the back gesture closes the drawer, it does not leave the page ---------- */
+// popstate listeners on window run in the order they were added: V101 (closes the drawer) and V102 (steps one page back) come first.
+// The drawer's class change reaches our observer between those two listeners, so we raise V102's own guard (__v101pop) there.
+let skip=0,pending=null,pushed=false;
+const ours=()=>!!(history.state&&history.state.v180m);
+const hush=()=>{window.__v101pop=Date.now()};
+function opened(){if(!PH.matches)return;if(!ours()){try{history.pushState({v180m:1},'');pushed=true}catch(e){}}}
+function closed(){if(ours()){pushed=false;skip++;hush();try{history.back()}catch(e){skip--}}   // closed by the X, the backdrop or Escape: take our entry away
+ else if(pushed){pushed=false;hush()}}                                                      // closed by the back gesture: our entry is already gone, V102 must not step back too
+addEventListener('popstate',()=>{if(skip>0){skip--;if(pending){const p=pending;pending=null;setTimeout(p,0)}}},true);
+// a choice inside the drawer: first take our history entry away, then let the choice run, so the next back returns to the previous page
+addEventListener('click',e=>{if(!PH.matches||!isOpen()||!ours()||!e.isTrusted)return;
+ const b=e.target.closest&&e.target.closest('#side [data-view],#side [data-app]');if(!b||b.matches('[data-app="menu"]'))return;
+ e.preventDefault();e.stopImmediatePropagation();pending=()=>b.click();pushed=false;skip++;hush();try{history.back()}catch(x){}
+ setTimeout(()=>{if(pending){const p=pending;pending=null;skip=Math.max(0,skip-1);p()}},600)},true);
+let was=false;
+function watch(){const s=side();if(!s||s.__v180)return;s.__v180=1;new MutationObserver(()=>{const o=s.classList.contains('open');if(o===was)return;was=o;o?opened():closed()}).observe(s,{attributes:true,attributeFilter:['class']})}
+watch();const iv=setInterval(()=>{watch();if(side()&&side().__v180)clearInterval(iv)},500);setTimeout(()=>clearInterval(iv),60000);
+
+window.__v180={vh,ours};
 })();
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================

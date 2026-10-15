@@ -8,6 +8,22 @@
 .ce__tabs { display: flex; gap: 0.3rem; border-bottom: 1px solid var(--adm-border, #e3e8ee); flex-wrap: wrap; }
 .ce__tab { border: 0; background: none; padding: 0.55rem 0.9rem; font: inherit; font-weight: 700; font-size: 0.9rem; color: var(--adm-muted, #6b7f8c); cursor: pointer; border-bottom: 3px solid transparent; }
 .ce__tab.is-on { color: var(--adm-ink, #07293a); border-bottom-color: var(--color-secondary, #16688c); }
+.ce__tab:focus-visible { outline: 2px solid var(--color-secondary, #16688c); outline-offset: -2px; border-radius: 6px; }
+.ce__where { margin: 0; font-size: 0.9rem; line-height: 1.6; }
+.ce__where a { color: var(--color-secondary, #16688c); font-weight: 700; }
+
+/* בטלפון: הלשוניות בשורה אחת שנגללת לצדדים, עם רמז דהייה בקצה, אף פעם לא נחתכות או נשברות לשתי שורות */
+@media (max-width: 820px) {
+  .ce__tabs {
+    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+    padding-inline-end: 28px; scroll-margin-top: 80px;
+  }
+  .ce__tabs::-webkit-scrollbar { display: none; }
+  .ce__tab { flex: 0 0 auto; min-height: 44px; white-space: nowrap; font-size: 0.95rem; }
+  .ce__btn { min-height: 44px; }
+}
 
 .ce__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.9rem; }
 .ce__card { background: var(--adm-surface, #fff); border: 1px solid var(--adm-border, #e3e8ee); border-radius: 14px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }

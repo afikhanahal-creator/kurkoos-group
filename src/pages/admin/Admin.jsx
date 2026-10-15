@@ -117,6 +117,25 @@ export default function Admin() {
   })
   useEffect(() => { try { localStorage.setItem(THEME_KEY, theme) } catch { /* noop */ } }, [theme])
 
+  /* מגירת הניווט במובייל: Escape סוגר, המיקוד נכנס למגירה וחוזר לכפתור ההמבורגר */
+  useEffect(() => {
+    if (!navOpen) return undefined
+    const back = document.activeElement
+    const first = document.querySelector('.adm__sidebar .adm__nav-item--active, .adm__sidebar .adm__nav-item')
+    if (first) first.focus({ preventScroll: true })
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setNavOpen(false); return }
+      if (e.key !== 'Tab') return
+      const f = [...document.querySelectorAll('.adm__sidebar button, .adm__sidebar a[href]')].filter((x) => x.offsetParent)
+      if (!f.length) return
+      const a = f[0], z = f[f.length - 1]
+      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus() }
+      else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus() }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('keydown', onKey); if (back && back.focus) back.focus({ preventScroll: true }) }
+  }, [navOpen])
+
   /* מערכת הניהול לא מיועדת לאינדוקס במנועי חיפוש */
   useEffect(() => {
     document.title = 'ניהול תוכן | קורקוס גרופ'
@@ -138,7 +157,7 @@ export default function Admin() {
   return (
     <div className={`adm${navOpen ? ' adm--nav-open' : ''}`} dir="rtl" data-theme={theme}>
       {navOpen && <button type="button" className="adm__nav-backdrop" aria-label="סגירת התפריט" onClick={() => setNavOpen(false)} />}
-      <aside className="adm__sidebar">
+      <aside className="adm__sidebar" id="adm-sidebar" {...(navOpen ? { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'תפריט הניהול' } : {})}>
         <div className="adm__logo">
           <img className="adm__logo-img" src="/kurkoos-logo-white.svg" alt="Kurkoos Group" />
           <span className="adm__logo-caption">ניהול תוכן <em className="adm__ver">2.0</em></span>
@@ -189,6 +208,8 @@ export default function Admin() {
             className="adm__burger"
             onClick={() => setNavOpen(true)}
             aria-label="פתיחת תפריט הניהול"
+            aria-expanded={navOpen}
+            aria-controls="adm-sidebar"
           >
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
           </button>

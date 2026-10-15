@@ -1,0 +1,46 @@
+<style id="k180">
+/* V180 · phones: the menu is back where it was (V174) and the bottom bar is always on screen. No new look.
+   1. The base rule .app{min-height:100vh} came later than the phone rule .app{height:100dvh;min-height:0} and won. On iPhone (Safari and
+      Chrome) 100vh is the height with the browser toolbars hidden, so the shell was taller than the visible area and the bottom bar
+      (תפריט, היום, תמונות, לוח, פוסטים) sat under the browser toolbar.
+   2. V176 hid the header menu button whenever the bottom bar existed, so with the bar out of sight there was no way into the menu.
+   3. V172 shows the "פעולות" label above 420px, so on a Plus / Pro Max iPhone (430 to 440px) the header changed. */
+@media (max-width:860px){
+ /* 1 · the shell is exactly the visible area; the safe areas belong to the header and the bottom bar, not to empty bands */
+ html{padding-top:0!important;padding-bottom:0!important}
+ html,body{height:100%;height:var(--v180vh,100dvh)}
+ body .app{min-height:0!important;height:100%;height:100dvh;height:var(--v180vh,100dvh);box-sizing:border-box;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+ body .tbar{padding-top:env(safe-area-inset-top,0px)!important}
+ body #v99nav{position:static!important;flex:0 0 auto;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))!important}
+
+ /* 2 · the header as it was: ≡ menu, ‹ back, title, search, bell, the actions icon, + */
+ html body:has(#v99nav) .tbar [data-app="menu"],html body .tbar [data-app="menu"]{display:inline-flex!important}
+ body .tbar.v172fold #v172act:not([hidden]){width:44px!important;padding:0!important;justify-content:center}
+ body .tbar.v172fold #v172act span{display:none}
+ /* the 44px icon buttons stay icons (in landscape their labels spilled out of the 44px box) */
+ body .tbar .ibtn.pri,body .tbar .px-sbtn{font-size:0!important;gap:0!important;padding:0!important;justify-content:center}
+ body .tbar .ibtn.pri>:not(svg),body .tbar .px-sbtn>:not(svg){font-size:0!important}
+
+ /* the drawer: the visible height with its own scroll, below the status bar, last items reachable */
+ body .side{top:0!important;bottom:auto!important;height:100%!important;height:100dvh!important;height:var(--v180vh,100dvh)!important;
+  overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  padding-top:calc(18px + env(safe-area-inset-top,0px))!important;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))!important}
+
+ /* every sheet and window fits the visible area (they were sized in vh, so their buttons went under the browser toolbar) */
+ body .v103sh{max-height:calc(var(--v180vh,100dvh) * .92)!important}
+ body .v128sh{max-height:calc(var(--v180vh,100dvh) * .86)!important}
+ body .v131box{max-height:calc(var(--v180vh,100dvh) * .92)!important}
+ body .v132box,body .v52box{max-height:calc(var(--v180vh,100dvh) - 28px)!important}
+ body .v170sh,body .v170psh{max-height:calc(var(--v180vh,100dvh) * .88)!important}
+ body #v172sheet .v172pan{max-height:calc(var(--v180vh,100dvh) * .82)!important}
+ body #v175sh .v175pan{max-height:calc(var(--v180vh,100dvh) * .88)!important}
+ body .ov .box{max-height:calc(var(--v180vh,100dvh) * .9)!important}
+ body .px-insp{max-height:calc(var(--v180vh,100dvh) * .92)!important}
+ body .px-popc{max-height:calc(var(--v180vh,100dvh) * .7)!important}
+ body .v62ovb,body .v63box{max-height:calc(var(--v180vh,100dvh) - 48px)!important}
+ body .v65cb{max-height:calc(var(--v180vh,100dvh) - 40px)!important}
+ body .v44host.v123{max-height:calc(var(--v180vh,100dvh) - 32px)!important}
+ body #pe-root .pe-canvas canvas{max-height:calc(var(--v180vh,100dvh) - 236px)!important}
+}
+</style>

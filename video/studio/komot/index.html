@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>How many floors</title>
+<!-- Kurkoos reel: "כמה קומות מותר לבנות במגרש שלי?" Silent, one white subtitle line where the screen text does not already say it (SUBS), 9:16, 54s. Pure function of t (seek), rendered by engine/anim_render.cjs.
+  STAGES
+  0.0  - 3.3   hook: red chip "שאלו אותנו על היתר", search card, placeholder, the question types itself word by word, send
+  3.15 - 4.1   the card shatters into 3D shards
+  3.4  - 6.2   answer: "זה כתוב בתב״ע ובתיק המידע." / "לא בבית של השכנים."
+  6.3  - 10.9  street of iso houses rises; "כמה קומות מותר לבנות?" + "זו אחת השאלות..."; dolly to the tall neighbour,
+               "והתשובה כמעט אף פעם לא" / "כמו אצל השכנים"; red "?" stamp slams on the neighbour (10.0)
+  10.9 - 14.5  camera pans to YOUR empty plot, marching ants outline, spotlight dims the street; "איפה מחפשים את התשובה:"
+  14.5 - 15.25 iris closes on your plot and opens on section 1
+  15.0 - 21.0  1 התב״ע: a plan sheet falls spinning from the sky with its shadow and maps onto the plot
+  21.0 - 27.0  2 תיק המידע: a folder opens in 3D, the page slides out, red stamp "המגרש הספציפי"
+  27.0 - 33.0  3 מרתף: the ground is cut, the front half slides away (cutaway with strata), a basement extrudes down, "?"
+  33.0 - 39.4  4 גובה מרבי: dashed floor scaffold, floors drop in, a red ceiling plane descends and slices off the floor that tries to rise
+  39.4 - 45.4  split screen: the neighbour (הקלה, תוכנית אחרת) vs your plot (התב״ע)
+  45.4 - 49.8  moral on hard cuts: paper "בודקים את המגרש שלכם," then red "לא את הרחוב." with a strike
+  49.8 - 54.0  end card: logo, קבוצת קורקוס, מקרקע ועד מסירת מפתח, phone pill, site
+-->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  @font-face{font-family:Almoni;font-weight:300;font-display:block;src:url(../../fonts/Almoni-300.ttf)}
+  @font-face{font-family:Almoni;font-weight:400;font-display:block;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;font-display:block;src:url(../../fonts/Almoni-700.ttf)}
+  body{background:#07293a;margin:0}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#07293a;direction:rtl}
+  #grid{position:absolute;inset:-80px;background-image:linear-gradient(rgba(143,182,200,.07) 2px,transparent 2px),linear-gradient(90deg,rgba(143,182,200,.07) 2px,transparent 2px),linear-gradient(rgba(143,182,200,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(143,182,200,.035) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px}
+  #cam{position:absolute;inset:0;transform-origin:50% 50%}
+  #layer,#pins{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:50% 50%}
+  #geo{position:absolute;left:0;top:0}
+  #spot{position:absolute;inset:0;pointer-events:none}
+  .t{position:absolute;font-family:Almoni;font-weight:700;color:#f7f8fa;line-height:1.08;white-space:nowrap}
+  .t.c{left:80px;right:80px;text-align:center;white-space:normal}
+  .w{display:inline-block;transform-origin:50% 60%;position:relative}
+  .q,.rd{color:#a90b0c}
+  .mi{color:#8fb6c8}
+  .sk{position:absolute;left:-3%;width:106%;height:18px;top:50%;margin-top:-6px;background:#07293a;transform-origin:100% 50%;transform:scaleX(0);border-radius:3px}
+  .ul .sk{top:auto;bottom:-6px;margin-top:0;height:16px}
+  .sub{color:#8fb6c8;font-weight:400;font-size:54px;right:80px;width:920px;white-space:normal;top:452px;line-height:1.15}
+  .panel{position:absolute;left:80px;right:80px;top:1436px;background:#041c28;border-right:10px solid #a90b0c;padding:22px 34px 26px;font-family:Almoni;font-weight:400;font-size:50px;line-height:1.2;color:#f7f8fa;box-sizing:border-box}
+  .panel b{color:#8fb6c8;font-weight:700}
+  .tag{position:absolute;left:0;top:0;font-family:Almoni;font-weight:700;font-size:42px;line-height:1;padding:10px 18px 12px;border-radius:10px;background:#f7f8fa;color:#07293a;white-space:nowrap;transform-origin:50% 100%}
+  .tag.r{background:#a90b0c;color:#f7f8fa}
+  .tag.n{background:#07293a;color:#f7f8fa;border:3px solid #8fb6c8}
+  #num{position:absolute;left:0;top:0;width:150px;height:150px;background:#a90b0c;color:#f7f8fa;font-family:Almoni;font-weight:700;font-size:124px;line-height:158px;text-align:center;border-radius:12px;transform-origin:50% 50%}
+  #ring{position:absolute;left:0;top:0;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;border:8px solid #a90b0c}
+  #prog{position:absolute;right:80px;top:150px;display:flex;gap:12px}
+  #prog i{display:block;width:64px;height:9px;border-radius:5px;background:rgba(143,182,200,.25);overflow:hidden}
+  #prog i b{display:block;height:100%;background:#a90b0c;transform-origin:100% 50%}
+  #ask{position:absolute;right:80px;top:120px;font-family:Almoni;font-weight:700;font-size:46px;line-height:1;color:#f7f8fa;background:#a90b0c;border-radius:999px;padding:16px 30px 20px;transform-origin:100% 50%}
+  #logo{position:absolute;left:70px;top:96px;width:128px}
+  /* the search card */
+  .card{position:absolute;left:80px;top:610px;width:920px;box-sizing:border-box;background:#f7f8fa;border-radius:34px;padding:40px 40px 36px;box-shadow:0 40px 90px rgba(0,0,0,.4);transform-origin:50% 50%}
+  .card .lbl{font-family:Almoni;font-weight:700;font-size:40px;color:#105572;margin:0 6px 22px}
+  .card .inp{position:relative;border:4px solid #8fb6c8;border-radius:24px;min-height:300px;padding:26px 34px;box-sizing:border-box;font-family:Almoni;font-weight:700;font-size:96px;line-height:1.1;color:#07293a}
+  .card .ph{position:absolute;right:34px;top:34px;font-weight:400;font-size:64px;color:#8fb6c8}
+  .card .tw{display:inline-block}
+  .card .tw.qm{color:#a90b0c}
+  .card .caret{display:inline-block;width:8px;height:88px;background:#a90b0c;vertical-align:-12px;margin-right:8px}
+  .card .row{display:flex;justify-content:flex-start;margin-top:26px;direction:ltr}
+  .card .send{width:116px;height:116px;border-radius:50%;background:#a90b0c;display:flex;align-items:center;justify-content:center}
+  #shards{position:absolute;inset:0;perspective:1400px}
+  #shards .card{box-shadow:none}
+  #burst{position:absolute;left:0;top:0;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;border:6px solid #a90b0c}
+  /* the neighbour stamp */
+  #qst{position:absolute;left:0;top:0;width:190px;height:190px;margin:-95px 0 0 -95px;border:12px solid #a90b0c;border-radius:26px;box-sizing:border-box;background:rgba(169,11,12,.16);color:#a90b0c;font-family:Almoni;font-weight:700;font-size:170px;line-height:186px;text-align:center}
+  .ink{position:absolute;left:0;top:0;border-radius:50%;background:#a90b0c}
+  #iris{position:absolute;left:0;top:0;border-radius:50%;box-shadow:0 0 0 3200px #07293a;border:10px solid #a90b0c;box-sizing:border-box}
+  /* the folder */
+  #folder{position:absolute;left:200px;top:800px;width:680px;height:560px;perspective:1700px}
+  #folder .fb{position:absolute;inset:0;background:#105572;border-radius:18px}
+  #folder .tab{position:absolute;right:0;top:-54px;width:300px;height:70px;background:#105572;border-radius:18px 18px 0 0}
+  #folder .pp{position:absolute;left:40px;top:40px;width:600px;height:500px;background:#f7f8fa;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.3);overflow:hidden}
+  #folder .pp i{position:absolute;right:44px;height:18px;border-radius:9px;background:#07293a;opacity:.85}
+  #folder .pp svg{position:absolute;left:150px;top:160px}
+  #folder .fr{position:absolute;left:0;right:0;bottom:0;height:420px;background:#8fb6c8;border-radius:14px 14px 18px 18px;transform-origin:50% 100%;display:flex;align-items:center;justify-content:center;font-family:Almoni;font-weight:700;font-size:92px;color:#07293a;box-shadow:0 -6px 24px rgba(0,0,0,.25)}
+  #stamp{position:absolute;left:50%;top:330px;transform-origin:50% 50%;border:9px solid #a90b0c;border-radius:14px;padding:6px 26px 12px;font-family:Almoni;font-weight:700;font-size:70px;line-height:1.05;color:#a90b0c;white-space:nowrap;background:rgba(169,11,12,.06)}
+  #split{position:absolute;left:537px;top:560px;width:6px;height:880px;background:#a90b0c;transform-origin:50% 0}
+  #phone{position:absolute;left:50%;top:1290px;transform:translateX(-50%);background:#a90b0c;color:#f7f8fa;font-family:Almoni;font-weight:700;font-size:84px;line-height:1;padding:24px 56px 30px;border-radius:999px;direction:ltr;white-space:nowrap}
+  /* subtitle: plain white line, bottom at y 1560 */
+  #subs{position:absolute;left:0;right:0;bottom:360px;text-align:center;pointer-events:none}
+  #subpill{display:inline-block;color:#f7f8fa;text-shadow:0 3px 14px rgba(0,0,0,.55);font-family:Almoni;font-weight:700;font-size:54px;line-height:1.15;white-space:nowrap;direction:rtl;transform-origin:50% 100%}
+  #endlogo{position:absolute;left:50%;top:430px;width:420px;margin-left:-210px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+  <div id="cam">
+    <svg id="geo" width="1080" height="1920" viewBox="0 0 1080 1920">
+      <defs>
+        <pattern id="hatchR" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="22" height="22" fill="#a90b0c" fill-opacity=".22"/><rect width="7" height="22" fill="#a90b0c"/></pattern>
+        <pattern id="hatchM" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+          <rect width="18" height="18" fill="#8fb6c8" fill-opacity=".25"/><rect width="5" height="18" fill="#8fb6c8"/></pattern>
+        <pattern id="earth" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+          <rect width="26" height="26" fill="#105572"/><rect width="3" height="26" fill="#07293a" fill-opacity=".45"/></pattern>
+        <clipPath id="cR"><rect x="540" y="0" width="540" height="1920"/></clipPath>
+        <clipPath id="cL"><rect x="0" y="0" width="540" height="1920"/></clipPath>
+      </defs>
+      <g id="dyn"></g>
+    </svg>
+    <div id="spot"></div>
+    <div id="pins"></div>
+  </div>
+  <div id="layer"></div>
+  <div id="subs"><div id="subpill"></div></div>
+  <div id="iris"></div>
+</div>
+<script src="../lib/studio.js"></script>
+<script>
+const {clamp, lerp, smooth, step, track, hash, rng} = Studio;
+const W = 1080, H = 1920, DUR = 54.0;
+const NAVY = '#07293a', TEAL = '#105572', MIST = '#8fb6c8', PAPER = '#f7f8fa', RED = '#a90b0c';
+const stage = document.getElementById('stage'), cam = document.getElementById('cam'), layer = document.getElementById('layer'), pins = document.getElementById('pins');
+const dyn = document.getElementById('dyn'), grid = document.getElementById('grid'), spot = document.getElementById('spot'), iris = document.getElementById('iris');
+const E = {};
+const win = (t, a, b) => t >= a && t < b;
+const vis = (el, on) => { el.style.display = on ? '' : 'none'; return on; };
+
+// ---------- timeline ----------
+const S = {hook: 0, shatter: 3.15, street: 6.3, pan: 10.9, iris: 14.5, s1: 15.0, s2: 21.0, s3: 27.0, s4: 33.0, cmp: 39.4, moral: 45.4, cut2: 47.4, end: 49.8};
+const SECT = [[S.s1, S.s2, '1'], [S.s2, S.s3, '2'], [S.s3, S.s4, '3'], [S.s4, S.cmp, '4']];
+
+// ---------- text: every word enters whole. Prefixes: ~ red, ^ mist, _ strike bar, = underline bar ----------
+function T(id, text, css, cls) {
+  const el = document.createElement('div'); el.className = 't' + (cls ? ' ' + cls : ''); el.id = id;
+  el.innerHTML = text.split('|').map(line => line.split(' ').map(w => {
+    let c = '', bar = '';
+    while ('~^_='.includes(w[0])) { const f = w[0]; w = w.slice(1); if (f === '~') c += ' rd'; if (f === '^') c += ' mi'; if (f === '_') bar = '<i class="sk"></i>'; if (f === '=') { c += ' ul'; bar = '<i class="sk"></i>'; } }
+    return `<span class="w${c}">${w.replace('?', '<span class="q">?</span>')}${bar}</span>`;
+  }).join(' ')).join('<br>');
+  Object.assign(el.style, css || {}); layer.appendChild(el); E[id] = el;
+  el._w = [...el.querySelectorAll('.w')];
+  return el;
+}
+function reveal(el, t, t0, t1, o) {
+  o = o || {};
+  if (!vis(el, t >= t0 - 0.02 && t < t1 + 0.32)) return;
+  const g = o.gap != null ? o.gap : 0.09, dy = o.dy != null ? o.dy : 56, out = smooth((t - t1) / 0.28);
+  el._w.forEach((w, i) => {
+    const lt = t - t0 - i * g, k = step(lt, {f: o.f || 2.8, z: o.z || 0.72});
+    w.style.opacity = (clamp(lt / 0.14) * (1 - out)).toFixed(3);
+    const sc = o.scale ? lerp(o.scale, 1, k) : 1;
+    w.style.transform = `translateY(${((1 - k) * dy - out * 34).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+  });
+}
+// light up chosen words of a subtitle at time ti
+function glow(el, t, idx, ti) {
+  el._w.forEach((w, i) => {
+    const on = idx.includes(i) && t >= ti;
+    w.style.color = on ? PAPER : '';
+    w.style.boxShadow = on ? `inset 0 -${Math.round(10 * smooth((t - ti) / 0.2))}px 0 ${RED}` : 'none';
+  });
+}
+function div(id, cls, html, css, parent) {
+  const el = document.createElement('div'); if (id) el.id = id; if (cls) el.className = cls; if (html) el.innerHTML = html;
+  Object.assign(el.style, css || {}); (parent || layer).appendChild(el); if (id) E[id] = el; return el;
+}
+function tag(id, text, cls) { return div(id, 'tag' + (cls ? ' ' + cls : ''), text, null, pins); }
+function pin(el, p, t, t0, t1, lift) {
+  if (!vis(el, p && t >= t0 && t < t1 + 0.3)) return;
+  const k = step(t - t0, {f: 3, z: 0.62}), out = smooth((t - t1) / 0.25);
+  const w = el._pw || (el._pw = el.offsetWidth), h = el._ph || (el._ph = el.offsetHeight);
+  el.style.opacity = (clamp((t - t0) / 0.12) * (1 - out)).toFixed(3);
+  el.style.transform = `translate(${(p[0] - w / 2).toFixed(1)}px, ${(p[1] - h - (lift || 18)).toFixed(1)}px) scale(${lerp(0.4, 1, k).toFixed(3)})`;
+}
+function panel(el, t, t0, t1) {
+  if (!vis(el, t >= t0 && t < t1 + 0.3)) return;
+  const k = step(t - t0, {f: 2.6, z: 0.8}), out = smooth((t - t1) / 0.25);
+  el.style.opacity = (clamp((t - t0) / 0.15) * (1 - out)).toFixed(3);
+  el.style.transform = `translateY(${((1 - k) * 50).toFixed(1)}px)`;
+}
+
+// ---------- subtitles: [start, end, text] ----------
+const SUBS = [
+  // only the line the animation does not already show on screen
+  [39.5, 41.8, 'ואם אצל השכן בנו גבוה יותר?']
+];
+const subs = document.getElementById('subs'), subpill = document.getElementById('subpill');
+SUBS.forEach(c => { c.w = c[2].split(' '); });
+function subtitles(t) {
+  const c = SUBS.find(c => t >= c[0] && t < c[1]);
+  if (!vis(subs, !!c)) { subs._c = null; return; }
+  if (subs._c !== c) { subpill.innerHTML = c.w.map(w => `<span>${w}</span>`).join(' '); subs._c = c; }
+  const a = clamp((t - c[0]) / 0.12), b = clamp((c[1] - t) / 0.1);
+  subpill.style.opacity = Math.min(a, b).toFixed(3);
+  // lift above the הקלה definition panel while it is up
+  subs.style.bottom = (360 + 150 * smooth(clamp((t - 40.75) / 0.2)) * (1 - smooth(clamp((t - 42.45) / 0.2)))).toFixed(1) + 'px';
+  subpill.style.transform = `translateY(${((1 - smooth(a)) * 14).toFixed(1)}px)`;
+}
+
+// ---------- projection: hand rolled 3D around a look-at target ----------
+let CM = {yaw: -30, pitch: 33, s: 54, cx: 540, cy: 1080, tx: 0, ty: 0, tz: 0};
+const D2R = Math.PI / 180;
+function P(x, y, z) {
+  x -= CM.tx; y -= CM.ty; z -= CM.tz;
+  const c = Math.cos(CM.yaw * D2R), s = Math.sin(CM.yaw * D2R), xr = x * c - y * s, yr = x * s + y * c;
+  return [CM.cx + xr * CM.s, CM.cy + yr * CM.s * Math.sin(CM.pitch * D2R) - z * CM.s * Math.cos(CM.pitch * D2R), yr];
+}
+const pts = a => a.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+const poly = (ps, fill, stroke, sw, op, ex) => `<polygon points="${pts(ps)}" fill="${fill}" stroke="${stroke || 'none'}" stroke-width="${sw || 0}" stroke-linejoin="round" opacity="${op == null ? 1 : (+op).toFixed(3)}" ${ex || ''}/>`;
+const pl = (ps, stroke, sw, op, ex) => `<polyline points="${pts(ps)}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" opacity="${op == null ? 1 : (+op).toFixed(3)}" ${ex || ''}/>`;
+const rect3 = (x0, x1, y0, y1, z) => [P(x0, y0, z), P(x1, y0, z), P(x1, y1, z), P(x0, y1, z)];
+const loop3 = (x0, x1, y0, y1, z) => [[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z], [x0, y0, z]];
+function part(list, k) {
+  const s = list.map(q => P(q[0], q[1], q[2] || 0)); let L = 0; const seg = [];
+  for (let i = 1; i < s.length; i++) { const d = Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]); seg.push(d); L += d; }
+  let left = clamp(k) * L; const out = [s[0]];
+  for (let i = 1; i < s.length; i++) {
+    if (left >= seg[i - 1]) { out.push(s[i]); left -= seg[i - 1]; continue; }
+    const f = seg[i - 1] ? left / seg[i - 1] : 0; out.push([lerp(s[i - 1][0], s[i][0], f), lerp(s[i - 1][1], s[i][1], f)]); break;
+  }
+  return {pts: out, tip: out[out.length - 1]};
+}
+function pencil(p) {
+  return `<g transform="translate(${p[0].toFixed(1)},${p[1].toFixed(1)}) rotate(-35)"><rect x="-6" y="-92" width="12" height="74" rx="2" fill="${PAPER}"/><polygon points="-6,-18 6,-18 0,0" fill="${RED}"/><circle r="9" fill="${RED}" opacity=".35"/></g>`;
+}
+function box(x0, x1, y0, y1, z0, z1, o) {
+  o = o || {}; if (z1 - z0 < 0.01) return '';
+  const c = Math.cos(CM.yaw * D2R), s = Math.sin(CM.yaw * D2R); let out = '';
+  const sides = [[[x1, y0], [x1, y1], 1, 0], [[x0, y1], [x0, y0], -1, 0], [[x1, y1], [x0, y1], 0, 1], [[x0, y0], [x1, y0], 0, -1]];
+  const ink = o.ink || NAVY, op = o.op == null ? 1 : o.op;
+  for (const [a, b, nx, ny] of sides) {
+    const nxr = nx * c - ny * s, nyr = nx * s + ny * c; if (nyr <= 0.001) continue;
+    const fill = nxr > 0 ? (o.light || '#c7d9e2') : (o.dark || MIST);
+    out += poly([P(a[0], a[1], z0), P(b[0], b[1], z0), P(b[0], b[1], z1), P(a[0], a[1], z1)], fill, ink, 2.5, op);
+    if (o.floors) {
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(len / 1.15));
+      for (let f = 0; f < o.floors.length; f++) {
+        const zf = o.floors[f], top = zf + 0.85; if (top > z1 + 0.001) continue;
+        for (let i = 0; i < n; i++) {
+          const u0 = (i + 0.22) / n, u1 = (i + 0.78) / n, Q = (u, z) => P(lerp(a[0], b[0], u), lerp(a[1], b[1], u), z);
+          out += poly([Q(u0, zf + 0.36), Q(u1, zf + 0.36), Q(u1, top), Q(u0, top)], o.win || TEAL, 'none', 0, op * 0.9);
+        }
+        if (zf > z0 + 0.01) out += pl([P(a[0], a[1], zf), P(b[0], b[1], zf)], ink, 2, op * 0.6);
+      }
+    }
+  }
+  out += poly(rect3(x0, x1, y0, y1, z1), o.top || '#eef3f6', ink, 2.5, op);
+  return out;
+}
+// iso camera, all keys at once
+function camAt(t) {
+  const sp = {f: 1.0, z: 0.9}, cut = {f: 9, z: 1};
+  return {
+    tx: track(t, [[0, -2], [8.4, -6], [S.pan, 0]], sp),
+    ty: 0,
+    tz: track(t, [[0, 0], [S.s3, -1.3, cut], [S.s4, 1.9, cut]], sp),
+    s: track(t, [[0, 30], [8.4, 50], [S.pan, 66], [12.3, 60], [S.iris + 0.35, 50, cut], [S.s3, 98, cut], [S.s4, 92, cut]], sp),
+    cy: track(t, [[0, 1100], [8.4, 1230], [S.pan, 1090], [S.iris + 0.35, 1160, cut], [S.s3, 960, cut], [S.s4, 1120, cut]], sp),
+    cx: 540,
+    yaw: track(t, [[0, -22], [8.4, -30], [S.pan, -36], [S.iris + 0.35, -26, cut], [S.s3, -28, cut], [S.s4, -38, cut]], sp) + 1.5 * Math.sin(t * 0.37),
+    pitch: track(t, [[0, 34], [S.iris + 0.35, 38, cut], [S.s3, 24, cut], [S.s4, 30, cut]], sp)
+  };
+}
+
+async function build() {
+  const lg = document.createElement('img'); lg.id = 'logo'; lg.src = 'logo.png'; layer.appendChild(lg); E.logo = lg; await lg.decode();
+  div('ask', '', 'שאלו אותנו על היתר');
+  div('prog', '', '<i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i>');
+  E.progB = [...E.prog.querySelectorAll('b')];
+
+  // ---- hook: the search card ----
+  const Q = ['כמה', 'קומות', 'מותר', 'לבנות', 'במגרש', 'שלי?'];
+  const arrow = `<svg width="56" height="56" viewBox="0 0 56 56"><path d="M44 28H12M26 13L11 28l15 15" fill="none" stroke="#f7f8fa" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const cardHTML = `<div class="inp"><span class="ph">הקלידו את השאלה שלכם</span>${Q.map(w => `<span class="tw">${w.replace('?', '<span class="q" style="color:#a90b0c">?</span>')}</span>`).join(' ')}<span class="caret"></span></div><div class="row"><div class="send">${arrow}</div></div>`;
+  const card = div('card', 'card', cardHTML);
+  E.tw = [...card.querySelectorAll('.tw')]; E.caret = card.querySelector('.caret'); E.ph = card.querySelector('.ph'); E.send = card.querySelector('.send');
+  // shards: clones of the full card, each clipped to one triangle
+  E.ph.style.display = 'none'; E.caret.style.display = 'none';
+  const cw = card.offsetWidth, ch = card.offsetHeight; E.cardH = ch;
+  E.ph.style.display = ''; E.caret.style.display = '';
+  const shards = div('shards', '', ''); const r = rng(11); E.sh = [];
+  const C = 6, R = 4, G = [];
+  for (let j = 0; j <= R; j++) { G.push([]); for (let i = 0; i <= C; i++) {
+    const inner = i > 0 && i < C && j > 0 && j < R;
+    G[j].push([cw * (i + (inner ? (r() - 0.5) * 0.6 : 0)) / C, ch * (j + (inner ? (r() - 0.5) * 0.6 : 0)) / R]);
+  } }
+  for (let j = 0; j < R; j++) for (let i = 0; i < C; i++) {
+    const a = G[j][i], b = G[j][i + 1], c = G[j + 1][i + 1], d = G[j + 1][i];
+    const tris = r() < 0.5 ? [[a, b, c], [a, c, d]] : [[a, b, d], [b, c, d]];
+    for (const tri of tris) {
+      const el = card.cloneNode(true); el.removeAttribute('id');
+      el.querySelector('.ph').style.display = 'none'; el.querySelector('.caret').style.display = 'none';
+      el.style.clipPath = `polygon(${tri.map(p => p[0].toFixed(1) + 'px ' + p[1].toFixed(1) + 'px').join(',')})`;
+      const gx = (tri[0][0] + tri[1][0] + tri[2][0]) / 3, gy = (tri[0][1] + tri[1][1] + tri[2][1]) / 3;
+      el.style.transformOrigin = `${gx.toFixed(1)}px ${gy.toFixed(1)}px`;
+      const dx = gx - cw / 2, dy = gy - ch / 2, L = Math.hypot(dx, dy) || 1, sp = 700 + r() * 1100;
+      el._v = [dx / L * sp, dy / L * sp - 300 * r(), 300 + r() * 900]; el._rot = [(r() - 0.5) * 540, (r() - 0.5) * 540, (r() - 0.5) * 220];
+      el._d = r() * 0.08;
+      shards.appendChild(el); E.sh.push(el);
+    }
+  }
+  div('burst');
+  T('a1', 'זה כתוב|^בתב״ע|^ובתיק ^המידע.', {top: '470px', fontSize: '132px'}, 'c');
+  T('a2', 'לא לפי הבית של ~השכנים.', {top: '1010px', fontSize: '100px'}, 'c');
+
+  // ---- street ----
+  T('q1', 'כמה קומות|מותר לבנות?', {top: '290px', fontSize: '112px'}, 'c');
+  T('q2', 'זו אחת השאלות שהכי הרבה שואלים אותנו.', {top: '545px', fontSize: '56px', color: MIST, fontWeight: 400}, 'c');
+  T('q3', 'והתשובה כמעט אף פעם לא', {top: '290px', fontSize: '82px', color: MIST}, 'c');
+  T('q4', '"כמו ~אצל ~השכנים"', {top: '390px', fontSize: '118px'}, 'c');
+  T('q5', 'איפה בודקים|את התשובה?', {top: '290px', fontSize: '112px'}, 'c');
+  tag('gN', 'הבית של השכנים', 'n'); tag('gMine', 'המגרש שלכם', 'r');
+  div('qst', '', '?', null, pins);
+  const ri = rng(5); E.inks = [];
+  for (let i = 0; i < 14; i++) { const a = ri() * Math.PI * 2, d = 120 + ri() * 110, s = 8 + ri() * 22; const el = div(null, 'ink', '', {width: s + 'px', height: s + 'px', marginLeft: -s / 2 + 'px', marginTop: -s / 2 + 'px'}, pins); el._a = a; el._d = d; E.inks.push(el); }
+
+  // ---- section headers ----
+  div('ring'); div('num', '', '1');
+  T('t1', 'התב״ע', {top: '290px', right: '262px', fontSize: '124px'});
+  T('s1', 'התוכנית שחלה על המגרש.', {}, 'sub');
+  T('t2', 'תיק המידע', {top: '290px', right: '262px', fontSize: '124px'});
+  T('s2', 'מה הוועדה מציינת עבור המגרש הספציפי.', {}, 'sub');
+  T('t3', 'מרתף', {top: '290px', right: '262px', fontSize: '124px'});
+  T('s3', 'האם מותר לבנות מרתף ולאיזה שימוש.', {}, 'sub');
+  T('t4', 'גובה מרבי', {top: '290px', right: '262px', fontSize: '124px'});
+  T('s4', 'לפעמים הגובה מגביל יותר ממספר הקומות.', {}, 'sub');
+  tag('gPlan', 'התב״ע'); tag('gMine1', 'המגרש שלכם', 'r');
+  tag('gBase', 'מרתף'); tag('gAllow', 'האם מותר?', 'n'); tag('gUse', 'באיזה שימוש?', 'r');
+  tag('gFloors', 'מספר הקומות', 'n'); tag('gMax', 'גובה מרבי', 'r');
+
+  // folder
+  const f = div('folder', '', `<div class="tab" style="display:flex;align-items:center;justify-content:center;font-family:Almoni;font-weight:700;font-size:40px;color:#f7f8fa">תיק המידע</div><div class="fb"></div><div class="pp"><i style="top:44px;width:330px"></i><i style="top:82px;width:220px;opacity:.4"></i><i style="top:120px;width:270px;opacity:.4"></i>
+    <svg width="300" height="150" viewBox="0 0 300 150"><g fill="none" stroke="#8fb6c8" stroke-width="4"><rect x="4" y="10" width="88" height="110"/><rect x="208" y="10" width="88" height="110"/></g>
+    <rect x="106" y="10" width="88" height="110" fill="#105572" stroke="#07293a" stroke-width="4"/><line x1="0" y1="138" x2="300" y2="138" stroke="#8fb6c8" stroke-width="4" stroke-dasharray="14 10"/></svg>
+    <div id="stamp">המגרש הספציפי</div></div><div class="fr">תיק המידע</div>`, null, pins);
+  E.fpp = f.querySelector('.pp'); E.ffr = f.querySelector('.fr'); E.stamp = f.querySelector('#stamp');
+
+  // compare
+  div('split');
+  tag('gHN', 'השכנים', 'n'); tag('gHM', 'המגרש שלכם', 'r');
+  tag('gHak', 'הקלה', 'r'); tag('gOther', 'תוכנית אחרת', 'r'); tag('gTaba', 'התב״ע');
+  T('c1', 'אולי השכן קיבל|~הקלה ~מהוועדה', {top: '290px', fontSize: '94px'}, 'c');
+  T('c2', 'או שהבית שלו נבנה|לפי ~תוכנית ~אחרת.', {top: '290px', fontSize: '94px'}, 'c');
+  E.dH = div('dH', 'panel', '<b>הקלה:</b> אישור חריג שהוועדה נותנת לבית מסוים');
+
+  // moral
+  T('m1', 'בודקים את', {top: '520px', fontSize: '150px', color: NAVY}, 'c');
+  T('m2', '~=המגרש ~=שלכם', {top: '720px', fontSize: '176px'}, 'c');
+  T('m3', 'לא את|_הרחוב.', {top: '600px', fontSize: '200px'}, 'c');
+
+  // end card
+  const el2 = document.createElement('img'); el2.id = 'endlogo'; el2.src = 'logo.png'; layer.appendChild(el2); E.endlogo = el2; await el2.decode();
+  T('e1', 'קבוצת קורקוס', {top: '930px', fontSize: '120px'}, 'c');
+  T('e2', 'מקרקע ועד מסירת מפתח', {top: '1080px', fontSize: '66px', color: MIST, fontWeight: 400}, 'c');
+  div('phone', '', '055-981-1814');
+  T('e3', 'kurkoos-group.co.il', {top: '1470px', fontSize: '52px', color: MIST, fontWeight: 400, direction: 'ltr'}, 'c');
+}
+
+function seek(t) {
+  // background: navy, then the moral's hard cuts (paper, red), then navy for the end card
+  let bg = NAVY;
+  if (win(t, S.moral, S.cut2)) bg = PAPER; else if (win(t, S.cut2, S.end)) bg = RED;
+  stage.style.background = bg;
+  grid.style.opacity = t < S.moral || t >= S.end ? 1 : 0;
+  grid.style.transform = `translate(${(-(t * 14) % 120).toFixed(1)}px, ${(-(t * 22) % 120).toFixed(1)}px)`;
+  subtitles(t);
+
+  const fr = Math.round(t * 60);
+  let shake = 0;
+  for (const [a, d, m] of [[10.0, 0.35, 16], [24.25, 0.3, 10], [37.3, 0.35, 14], [S.shatter, 0.3, 12]]) if (win(t, a, a + d)) shake = Math.max(shake, m * (1 - (t - a) / d));
+  const jx = shake ? (hash(fr) - 0.5) * 2 * shake : 0, jy = shake ? (hash(fr + 999) - 0.5) * 2 * shake : 0;
+  let punch = 0; for (const tp of [10.0, 16.95, 24.25, 37.3, S.moral, S.cut2, 48.45]) if (t >= tp) punch += 0.05 * Math.exp(-(t - tp) * 7);
+  cam.style.transform = `translate(${jx.toFixed(1)}px, ${jy.toFixed(1)}px) scale(${(1 + punch).toFixed(4)})`;
+  layer.style.transform = t >= S.moral && t < S.end ? `scale(${(1 + punch).toFixed(4)})` : 'none';
+
+  // chrome
+  vis(E.logo, t < S.moral); E.logo.style.opacity = clamp(t / 0.3);
+  if (vis(E.ask, t < S.street)) {
+    const k = step(t - 0.1, {f: 3, z: 0.6}); E.ask.style.opacity = clamp((t - 0.1) / 0.1) * (1 - smooth((t - S.street + 0.35) / 0.3));
+    E.ask.style.transform = `scale(${lerp(0.3, 1, k).toFixed(3)})`;
+  }
+  vis(E.prog, win(t, S.s1, S.cmp));
+  E.progB.forEach((b, i) => { const [a, z] = SECT[i]; b.style.transform = `scaleX(${clamp((t - a) / (z - a)).toFixed(3)})`; });
+
+  hook(t);
+  street(t);
+  sections(t);
+  folder(t);
+  geo(t);
+  compareText(t);
+  moral(t);
+  endCard(t);
+}
+
+// ---------- hook ----------
+function hook(t) {
+  const card = E.card;
+  if (vis(card, win(t, 0.25, S.shatter))) {
+    const k = step(t - 0.25, {f: 2.2, z: 0.75});
+    card.style.opacity = clamp((t - 0.25) / 0.15);
+    const press = win(t, 2.85, 3.15) ? Math.sin((t - 2.85) / 0.3 * Math.PI) : 0;
+    card.style.transform = `perspective(1400px) translateY(${((1 - k) * 120).toFixed(1)}px) rotateX(${((1 - k) * 28).toFixed(2)}deg) scale(${(1 - press * 0.025).toFixed(4)})`;
+    vis(E.ph, t < 0.95); E.ph.style.opacity = 1 - smooth((t - 0.75) / 0.2);
+    let last = -1;
+    E.tw.forEach((w, i) => {
+      const ti = 1.0 + i * 0.27; if (!vis(w, t >= ti)) return; last = i;
+      const kk = step(t - ti, {f: 4, z: 0.6});
+      w.style.opacity = clamp((t - ti) / 0.07); w.style.transform = `translateY(${((1 - kk) * 22).toFixed(1)}px)`;
+    });
+    const typing = t >= 0.95 && t < 1.0 + 6 * 0.27;
+    E.caret.style.opacity = typing || Math.floor(t * 3.2) % 2 === 0 ? 1 : 0;
+    E.send.style.transform = `scale(${(1 - press * 0.16).toFixed(3)})`;
+    E.send.style.boxShadow = t >= 2.6 ? `0 0 0 ${(8 + 8 * Math.sin(t * 9)).toFixed(1)}px rgba(169,11,12,.25)` : 'none';
+  }
+  // shatter
+  const sh = t >= S.shatter && t < S.shatter + 1.0;
+  vis(E.shards, sh);
+  if (sh) {
+    const cy = 610 + E.cardH / 2;
+    E.sh.forEach(el => {
+      const lt = Math.max(0, t - S.shatter - el._d), e = 1 - Math.exp(-lt * 3.2);
+      const x = el._v[0] * e * 0.55, y = el._v[1] * e * 0.55 + 900 * lt * lt, z = el._v[2] * e * 0.7;
+      el.style.opacity = (1 - smooth((t - S.shatter - 0.25) / 0.55)).toFixed(3);
+      el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(1)}px) rotateX(${(el._rot[0] * e).toFixed(1)}deg) rotateY(${(el._rot[1] * e).toFixed(1)}deg) rotateZ(${(el._rot[2] * e).toFixed(1)}deg)`;
+    });
+    E.shards.style.transformOrigin = `540px ${cy}px`;
+  }
+  if (vis(E.burst, win(t, S.shatter, S.shatter + 0.6))) {
+    const k = smooth((t - S.shatter) / 0.55);
+    E.burst.style.transform = `translate(540px, ${(610 + E.cardH / 2).toFixed(0)}px) scale(${lerp(0.6, 7, k).toFixed(3)})`; E.burst.style.opacity = (1 - k).toFixed(3);
+    E.burst.style.borderWidth = lerp(14, 2, k).toFixed(1) + 'px';
+  }
+  reveal(E.a1, t, 3.4, 6.1, {gap: 0.13, scale: 1.3});
+  reveal(E.a2, t, 4.75, 6.1, {gap: 0.12, scale: 1.3});
+}
+
+// ---------- street text, stamp, spotlight, iris ----------
+function street(t) {
+  reveal(E.q1, t, 6.55, 8.3, {gap: 0.1});
+  reveal(E.q2, t, 7.0, 8.3, {gap: 0.06, dy: 30});
+  reveal(E.q3, t, 8.55, 10.75, {gap: 0.07, dy: 30});
+  reveal(E.q4, t, 9.0, 10.75, {gap: 0.16, scale: 1.4});
+  reveal(E.q5, t, 12.3, S.iris - 0.05, {gap: 0.12});
+
+  // the red "?" stamp on the neighbour's house
+  const on = win(t, 10.0, 10.95);
+  vis(E.qst, on);
+  if (on) {
+    const save = CM; CM = camAt(t); const p = P(-6, 1.8, 2.6); CM = save;
+    const k = step(t - 10.0, {f: 4, z: 0.55}), out = smooth((t - 10.7) / 0.25);
+    E.qst.style.opacity = (clamp((t - 10.0) / 0.05) * (1 - out)).toFixed(3);
+    E.qst.style.transform = `translate(${p[0].toFixed(1)}px, ${p[1].toFixed(1)}px) rotate(${lerp(-30, -12, k).toFixed(2)}deg) scale(${lerp(3.2, 1, k).toFixed(3)})`;
+    E.inks.forEach(el => {
+      vis(el, true); const ke = 1 - Math.exp(-(t - 10.03) * 10);
+      el.style.opacity = (t < 10.03 ? 0 : 1 - out).toFixed(3);
+      el.style.transform = `translate(${(p[0] + Math.cos(el._a) * el._d * ke).toFixed(1)}px, ${(p[1] + Math.sin(el._a) * el._d * ke).toFixed(1)}px)`;
+    });
+  } else E.inks.forEach(el => vis(el, false));
+
+  // spotlight on your plot
+  const sOn = win(t, 11.2, S.iris + 0.4);
+  if (vis(spot, sOn)) {
+    const save = CM; CM = camAt(t); const p = P(0, 0, 0); CM = save;
+    const k = smooth((t - 11.2) / 0.7), r = lerp(1400, 330, k);
+    spot.style.background = `radial-gradient(ellipse ${r.toFixed(0)}px ${(r * 0.78).toFixed(0)}px at ${p[0].toFixed(0)}px ${p[1].toFixed(0)}px, rgba(7,41,58,0) 55%, rgba(7,41,58,${(0.88 * k).toFixed(3)}) 100%)`;
+  }
+  // iris: closes on your plot, opens on section 1
+  const ion = win(t, S.iris, S.iris + 0.75);
+  if (vis(iris, ion)) {
+    const mid = S.iris + 0.35, closing = t < mid;
+    const save = CM; CM = camAt(closing ? t : mid - 0.001); let p = P(0, 0, 0); CM = save;
+    if (!closing) p = [540, 1000];
+    const R = closing ? lerp(1300, 0, smooth((t - S.iris) / 0.35)) : lerp(0, 1300, smooth((t - mid) / 0.4));
+    iris.style.width = iris.style.height = (2 * R).toFixed(1) + 'px';
+    iris.style.transform = `translate(${(p[0] - R).toFixed(1)}px, ${(p[1] - R).toFixed(1)}px)`;
+    iris.style.borderWidth = R < 12 ? '0px' : '10px';
+  }
+}
+
+// ---------- section headers ----------
+function sections(t) {
+  const sec = SECT.find(s => t >= s[0] && t < s[1]);
+  if (vis(E.num, !!sec) && sec) {
+    const lt = t - sec[0], k1 = step(lt, {f: 3.4, z: 0.5}), k2 = step(lt - 0.55, {f: 2.3, z: 0.86});
+    const out = smooth((t - (sec[1] - 0.22)) / 0.2);
+    E.num.textContent = sec[2];
+    const x = lerp(540 - 75, 850, k2), y = lerp(880 - 75, 285, k2), sc = lerp(lerp(5, 3.1, k1), 1, k2) * (1 - out);
+    E.num.style.opacity = clamp(lt / 0.06);
+    E.num.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${((1 - k2) * -8).toFixed(2)}deg)`;
+  }
+  if (vis(E.ring, !!sec && t - sec[0] < 0.6) && sec) {
+    const lt = t - sec[0], k = smooth(lt / 0.55);
+    E.ring.style.transform = `translate(540px, 880px) scale(${lerp(1, 4.2, k).toFixed(3)})`; E.ring.style.opacity = (1 - k).toFixed(3);
+  }
+  reveal(E.t1, t, S.s1 + 0.75, S.s2 - 0.25); reveal(E.s1, t, S.s1 + 1.0, S.s2 - 0.25, {gap: 0.06, dy: 30});
+  reveal(E.t2, t, S.s2 + 0.75, S.s3 - 0.25, {gap: 0.12}); reveal(E.s2, t, S.s2 + 1.0, S.s3 - 0.25, {gap: 0.06, dy: 30});
+  reveal(E.t3, t, S.s3 + 0.75, S.s4 - 0.25); reveal(E.s3, t, S.s3 + 1.0, S.s4 - 0.25, {gap: 0.06, dy: 30});
+  reveal(E.t4, t, S.s4 + 0.75, S.cmp - 0.25, {gap: 0.12}); reveal(E.s4, t, S.s4 + 1.0, S.cmp - 0.25, {gap: 0.06, dy: 30});
+  glow(E.s1, t, [3], 17.6);
+  glow(E.s2, t, [4, 5], 24.25);
+  glow(E.s4, t, [2, 3], 37.3);
+}
+
+// ---------- 2. the folder ----------
+function folder(t) {
+  const on = win(t, S.s2 + 0.3, S.s3);
+  if (!vis(E.folder, on)) return;
+  const k = step(t - S.s2 - 0.3, {f: 2.2, z: 0.75}), out = smooth((t - S.s3 + 0.35) / 0.3);
+  E.folder.style.opacity = (clamp((t - S.s2 - 0.3) / 0.15) * (1 - out)).toFixed(3);
+  E.folder.style.transform = `translateY(${((1 - k) * 260 + out * 80).toFixed(1)}px) rotate(${((1 - k) * -6).toFixed(2)}deg)`;
+  // the cover swings open toward the viewer
+  const ko = step(t - 22.4, {f: 1.6, z: 0.62}), ang = -112 * ko;
+  E.ffr.style.transform = `rotateX(${ang.toFixed(2)}deg)`;
+  const back = ang < -90;
+  E.ffr.style.background = back ? TEAL : MIST; E.ffr.style.color = back ? 'transparent' : NAVY;
+  // the page slides out
+  const kp = step(t - 23.1, {f: 2, z: 0.75});
+  E.fpp.style.transform = `translateY(${(-170 * kp).toFixed(1)}px)`;
+  E.fpp.style.zIndex = 1;
+  // the stamp
+  const st = E.stamp;
+  if (vis(st, t >= 24.15)) {
+    const ks = step(t - 24.15, {f: 4.2, z: 0.55});
+    st.style.opacity = clamp((t - 24.15) / 0.05);
+    st.style.transform = `translateX(-50%) rotate(${lerp(-24, -8, ks).toFixed(2)}deg) scale(${lerp(2.8, 1, ks).toFixed(3)})`;
+    st.style.boxShadow = t < 24.6 ? `0 0 0 ${(30 * smooth((t - 24.15) / 0.4)).toFixed(1)}px rgba(169,11,12,${(0.3 * (1 - smooth((t - 24.15) / 0.45))).toFixed(3)})` : 'none';
+  }
+}
+
+// ---------- compare text ----------
+function compareText(t) {
+  reveal(E.c1, t, S.cmp + 0.2, 42.3, {gap: 0.1});
+  reveal(E.c2, t, 42.55, S.moral - 0.3, {gap: 0.1});
+  panel(E.dH, t, 40.9, 42.3);
+  if (vis(E.split, win(t, S.cmp, S.moral))) {
+    E.split.style.transform = `scaleY(${smooth((t - S.cmp - 0.05) / 0.45).toFixed(3)})`;
+    E.split.style.opacity = 1 - smooth((t - S.moral + 0.3) / 0.25);
+  }
+}
+
+// ---------- moral ----------
+function moral(t) {
+  reveal(E.m1, t, S.moral + 0.02, S.cut2 - 0.02, {gap: 0.22, scale: 1.5, dy: 20, f: 3.4, z: 0.6});
+  reveal(E.m2, t, S.moral + 0.45, S.cut2 - 0.02, {gap: 0.2, scale: 1.8, dy: 20, f: 3.2, z: 0.55});
+  if (t >= S.cut2 - 0.02 && t < S.cut2 + 0.35) { vis(E.m1, false); vis(E.m2, false); }
+  E.m2.querySelectorAll('.sk').forEach((b, i) => { b.style.background = NAVY; b.style.transform = `scaleX(${smooth((t - 46.3 - i * 0.12) / 0.3).toFixed(3)})`; });
+  reveal(E.m3, t, S.cut2 + 0.05, S.end - 0.02, {gap: 0.3, scale: 1.6, dy: 20, f: 3.4, z: 0.6});
+  if (t >= S.end - 0.02) vis(E.m3, false);
+  E.m3.querySelectorAll('.sk').forEach(b => b.style.transform = `scaleX(${smooth((t - 48.45) / 0.25).toFixed(3)})`);
+  const strk = E.m3._w[2]; if (strk) strk.style.color = t >= 48.6 ? `rgba(247,248,250,${lerp(1, 0.55, smooth((t - 48.6) / 0.3)).toFixed(3)})` : '';
+}
+
+// ---------- end card ----------
+function endCard(t) {
+  if (vis(E.endlogo, t >= S.end)) {
+    const k = smooth((t - S.end - 0.1) / 0.7);
+    E.endlogo.style.clipPath = `inset(${((1 - k) * 100).toFixed(1)}% 0 0 0)`;
+    E.endlogo.style.transform = `translateY(${((1 - step(t - S.end - 0.1, {f: 2, z: 0.8})) * 40).toFixed(1)}px)`;
+  }
+  reveal(E.e1, t, S.end + 0.7, 99, {gap: 0.12}); reveal(E.e2, t, S.end + 1.0, 99, {gap: 0.07, dy: 30});
+  if (vis(E.phone, t >= S.end + 1.4)) {
+    const k = step(t - S.end - 1.4, {f: 2.6, z: 0.6});
+    E.phone.style.opacity = clamp((t - S.end - 1.4) / 0.12); E.phone.style.transform = `translateX(-50%) scale(${lerp(0.5, 1, k).toFixed(3)})`;
+  }
+  reveal(E.e3, t, S.end + 1.8, 99, {gap: 0.1, dy: 24});
+}
+
+// ---------- the 3D world ----------
+const PX = 2.5, PY0 = -3, PY1 = 3;                       // plot half width, depth
+const HOUSES = [
+  {x: -18, h: 2.6, fl: [0, 1.3], t: 6.45}, {x: -12, h: 2.6, fl: [0, 1.3], t: 6.6}, {x: -6, h: 5.2, fl: [0, 1.3, 2.6, 3.9], t: 7.05, tall: 1},
+  {x: 6, h: 2.6, fl: [0, 1.3], t: 6.75}, {x: 12, h: 1.3, fl: [0], t: 6.9}, {x: 18, h: 2.6, fl: [0, 1.3], t: 7.0}
+];
+const foot = x => [x - 1.7, x + 1.7, -2.2, 1.8];
+function house(hs, h, o) { const [a, b, c, d] = foot(hs.x); return box(a, b, c, d, 0, h, Object.assign({floors: hs.fl}, o || {})); }
+function plate(x, fill, op, stroke, sw, ex) { return poly(rect3(x - PX, x + PX, PY0, PY1, 0), fill, stroke, sw || 0, op, ex); }
+
+function geo(t) {
+  const hide = ['gN', 'gMine', 'gPlan', 'gMine1', 'gBase', 'gAllow', 'gUse', 'gFloors', 'gMax', 'gHN', 'gHM', 'gHak', 'gOther', 'gTaba'];
+  hide.forEach(k => { if (E[k]._keep !== fr60(t)) vis(E[k], false); });
+  let g = '';
+  const k = (a, d) => smooth((t - a) / d);
+  if (t >= S.street - 0.1 && t < S.iris + 0.36) g = streetGeo(t, k);
+  else if (win(t, S.iris + 0.35, S.s2 + 0.4)) g = planGeo(t, k);
+  else if (win(t, S.s3, S.s4)) g = basementGeo(t, k);
+  else if (win(t, S.s4, S.cmp)) g = heightGeo(t, k);
+  else if (win(t, S.cmp, S.moral)) g = compareGeo(t, k);
+  dyn.innerHTML = g;
+}
+const fr60 = t => Math.round(t * 60);
+function show(id, p, t, t0, t1, lift) { pin(E[id], p, t, t0, t1, lift); if (E[id].style.display !== 'none') E[id]._keep = fr60(t); }
+
+function streetGeo(t, k) {
+  CM = camAt(t);
+  let g = '';
+  const st = k(S.street, 0.6);
+  g += poly([P(-26, 3.6, 0), P(26, 3.6, 0), P(26, 6.4, 0), P(-26, 6.4, 0)], TEAL, 'none', 0, 0.45 * st);
+  g += pl([P(-26, 3.6, 0), P(26, 3.6, 0)], MIST, 3, st); g += pl([P(-26, 6.4, 0), P(26, 6.4, 0)], MIST, 3, st);
+  g += pl([P(-26, 5.0, 0), P(26, 5.0, 0)], PAPER, 3, 0.6 * st, `stroke-dasharray="22 18" stroke-dashoffset="${(-t * 40).toFixed(1)}"`);
+  for (const x of [-18, -12, -6, 0, 6, 12, 18]) {
+    const kp = k(S.street + 0.05 + Math.abs(x) * 0.012, 0.4);
+    if (x === 0) {
+      g += plate(0, NAVY, 0.9 * kp, MIST, 2.5);
+    } else g += plate(x, TEAL, 0.55 * kp, MIST, 2.5);
+  }
+  // your plot: marching ants after the pan
+  if (t >= S.pan + 0.3) {
+    const ka = k(S.pan + 0.3, 0.9);
+    const o = part([[-PX, PY0], [PX, PY0], [PX, PY1], [-PX, PY1], [-PX, PY0]], ka);
+    g += pl(o.pts, RED, 6, 1, `stroke-dasharray="20 12" stroke-dashoffset="${(-t * 60).toFixed(1)}"`);
+    if (ka < 1) g += pencil(o.tip);
+    const pr = ((t - S.pan - 1.2) % 1.1 + 1.1) % 1.1 / 1.1;
+    if (t > S.pan + 1.2) g += poly(rect3(-PX * (1 + pr * 0.25), PX * (1 + pr * 0.25), PY0 * (1 + pr * 0.25), PY1 * (1 + pr * 0.25), 0), 'none', RED, 4, 1 - pr);
+  }
+  // houses, back to front
+  const hs = HOUSES.map(h => ({h, d: P(h.x, 0, 0)[2]})).sort((a, b) => a.d - b.d);
+  for (const {h} of hs) {
+    const kr = step(t - h.t, {f: h.tall ? 1.3 : 1.9, z: h.tall ? 0.6 : 0.72});
+    if (kr <= 0) continue;
+    const hh = h.h * kr;
+    const o = h.tall ? {light: PAPER, dark: '#c7d9e2', top: PAPER, ink: NAVY} : {};
+    g += house(h, hh, o);
+  }
+  show('gN', P(-6, -0.2, 5.2), t, 9.2, 9.95, 14);
+  show('gMine', P(0, 0, 0), t, 11.7, S.iris - 0.1, 10);
+  return g;
+}
+
+// 1. the plan sheet falls and maps onto the plot
+function planGeo(t, k) {
+  CM = camAt(t);
+  let g = '';
+  const out = 1 - k(S.s2 + 0.05, 0.3);
+  for (const x of [-6, 0, 6]) g += plate(x, x ? TEAL : NAVY, (x ? 0.5 : 0.9) * out, MIST, 2.5);
+  g += poly([P(-12, 3.6, 0), P(12, 3.6, 0), P(12, 6.4, 0), P(-12, 6.4, 0)], TEAL, 'none', 0, 0.35 * out);
+  const t0 = 15.9, kf = step(t - t0, {f: 1.15, z: 0.82}), z = lerp(7.5, 0.04, clamp(kf, 0, 1.05));
+  const ang = (1 - kf) * 70 * D2R, sc = lerp(0.55, 1, kf);
+  if (t >= t0 - 0.05) {
+    const SP = (u, v, zz) => { const c = Math.cos(ang), s = Math.sin(ang); u *= sc; v *= sc; return P(u * c - v * s, u * s + v * c, zz == null ? z : zz); };
+    const R = (u0, u1, v0, v1, zz) => [SP(u0, v0, zz), SP(u1, v0, zz), SP(u1, v1, zz), SP(u0, v1, zz)];
+    const landed = k(16.8, 0.6);
+    // shadow on the ground, darker as the sheet gets closer
+    g += poly(R(-9, 9, -3.8, 6.8, 0), NAVY, 'none', 0, 0.55 * kf * out);
+    const op = out * clamp((t - t0 + 0.05) / 0.15);
+    g += poly(R(-9, 9, -3.8, 6.8), PAPER, MIST, 3, op * lerp(0.96, 0.22, landed));
+    g += poly(R(-9, 9, 3.6, 6.4), TEAL, 'none', 0, op * lerp(0.5, 0.25, landed));
+    g += pl([SP(-9, 5.0), SP(9, 5.0)], NAVY, 2.5, op * 0.5, 'stroke-dasharray="14 12"');
+    for (const x of [-6, 6]) g += poly(R(x - PX, x + PX, PY0, PY1), 'url(#hatchM)', NAVY, 3, op * lerp(0.9, 0.5, landed));
+    g += poly(R(-PX, PX, PY0, PY1), MIST, RED, 5, op);
+    // a thin title strip at the far edge
+    g += poly(R(5.6, 8.6, -3.6, -3.2), NAVY, 'none', 0, op * 0.8 * (1 - landed));
+    g += pl([SP(-9, -3.8), SP(9, -3.8), SP(9, 6.8), SP(-9, 6.8), SP(-9, -3.8)], NAVY, 3, op * (1 - landed) * 0.9);
+  }
+  // landing ring
+  if (win(t, 16.95, 17.7)) {
+    const kr = smooth((t - 16.95) / 0.7), r = lerp(3, 11, kr), ps = [];
+    for (let i = 0; i <= 48; i++) { const a = i / 48 * Math.PI * 2; ps.push(P(Math.cos(a) * r, Math.sin(a) * r * 0.9, 0)); }
+    g += pl(ps, RED, 6 * (1 - kr) + 1, 1 - kr);
+  }
+  // your parcel glows after landing
+  if (t >= 17.5) {
+    const pr = ((t - 17.5) % 1.2) / 1.2;
+    g += poly(rect3(-PX, PX, PY0, PY1, 0.05), RED, RED, 5, 0.25 * (1 - pr) * out);
+    g += pl([P(-PX, PY0, 0.05), P(PX, PY0, 0.05), P(PX, PY1, 0.05), P(-PX, PY1, 0.05), P(-PX, PY0, 0.05)], RED, 6, out, `stroke-dasharray="20 12" stroke-dashoffset="${(-t * 60).toFixed(1)}"`);
+  }
+  show('gPlan', P(7.2, -3.6, 0), t, 17.05, S.s2 - 0.25, 6);
+  show('gMine1', P(0, 0.4, 0), t, 17.7, S.s2 - 0.25, 8);
+  return g;
+}
+
+// 3. cutaway: the ground opens and a basement extrudes down
+function basementGeo(t, k) {
+  CM = camAt(t);
+  let g = '';
+  const X0 = -3.8, X1 = 3.8, Y0 = -3.8, Y1 = 3.8, ZB = -3.2, YC = 0.9, BX = 2.1, BY = -2.6;
+  const kin = step(t - 27.4, {f: 1.6, z: 0.85}), out = 1 - k(S.s4 - 0.35, 0.3), op0 = out * clamp((t - 27.4) / 0.2);
+  const earth = {light: 'url(#earth)', dark: 'url(#earth)', top: TEAL, ink: MIST};
+  const lift = (1 - kin) * -4;
+  const ksl = step(t - 29.3, {f: 1.4, z: 0.8});
+  // back half (stays)
+  g += box(X0, X1, Y0, YC, ZB + lift, lift, Object.assign({op: op0}, earth));
+  g += pl([P(-PX, PY0, lift), P(PX, PY0, lift), P(PX, YC, lift), P(-PX, YC, lift), P(-PX, PY0, lift)], RED, 4, op0, 'stroke-dasharray="20 12"');
+  if (ksl > 0.05) for (const zz of [-0.8, -1.7, -2.5]) g += pl([P(X0, YC, zz), P(X1, YC, zz)], MIST, 2.5, 0.45 * out * clamp(ksl), 'stroke-dasharray="16 12"');
+  // the basement: a cavity seen through the cut face, growing downward
+  const kb = step(t - 30.0, {f: 1.5, z: 0.75}), zb = -2.3 * kb;
+  if (kb > 0.01) {
+    const hole = [P(-BX, YC, 0), P(BX, YC, 0), P(BX, YC, zb), P(-BX, YC, zb)];
+    g += `<clipPath id="hole"><polygon points="${pts(hole)}"/></clipPath><g clip-path="url(#hole)" opacity="${out.toFixed(3)}">`;
+    g += poly(hole, NAVY, 'none', 0, 1);
+    g += poly([P(-BX, BY, zb), P(BX, BY, zb), P(BX, BY, 0), P(-BX, BY, 0)], TEAL, MIST, 2, 0.55);
+    g += poly([P(BX, BY, zb), P(BX, YC, zb), P(BX, YC, 0), P(BX, BY, 0)], TEAL, MIST, 2, 0.85);
+    g += poly(rect3(-BX, BX, BY, YC, zb), MIST, MIST, 2, 0.5);
+    g += '</g>';
+    g += poly(hole, 'none', RED, 6, out);
+    g += pl([P(-BX, BY, 0), P(BX, BY, 0), P(BX, YC, 0)], MIST, 3, out * 0.8, 'stroke-dasharray="12 10"');
+    g += pl([P(-BX, BY, 0), P(-BX, YC, 0)], MIST, 3, out * 0.8, 'stroke-dasharray="12 10"');
+    const c = P(0, YC, zb / 2), kq = step(t - 30.6, {f: 3, z: 0.55}), pulse = 1 + 0.06 * Math.sin((t - 30.6) * 8);
+    if (kq > 0) g += `<text x="${c[0].toFixed(1)}" y="${(c[1] + 60 * kq).toFixed(1)}" font-family="Almoni" font-weight="700" font-size="${(170 * kq * pulse).toFixed(1)}" text-anchor="middle" fill="${RED}" opacity="${out}">?</text>`;
+  }
+  // the cut line
+  const kc = k(28.4, 0.8);
+  if (kc > 0 && t < 30.0) {
+    const c = part([[X1, YC, 0], [X0, YC, 0], [X0, YC, ZB]], kc);
+    g += pl(c.pts, RED, 6, 1 - k(29.6, 0.3)); if (kc < 1) g += pencil(c.tip);
+  }
+  // front half slides toward the viewer and sinks, becomes a ghost
+  const fo = op0 * lerp(1, 0.16, ksl);
+  g += box(X0, X1, YC + 3.2 * ksl, Y1 + 3.2 * ksl, ZB + lift - 1.6 * ksl, lift - 1.6 * ksl, Object.assign({op: fo}, earth));
+  // the house that will sit on top, a ghost
+  const kh = k(31.4, 0.5);
+  if (kh > 0) g += box(-1.7, 1.7, -2.2, 0.9, 0, 2.4 * kh, {op: 0.3 * out, light: MIST, dark: TEAL, top: '#c7d9e2', ink: PAPER});
+  show('gBase', P(-BX, YC, zb), t, 30.4, S.s4 - 0.3, -70);
+  show('gAllow', P(-1.7, 0.9, 2.4), t, 31.0, S.s4 - 0.3, 20);
+  show('gUse', P(BX, YC, zb), t, 31.5, S.s4 - 0.3, -70);
+  return g;
+}
+
+// 4. a red ceiling plane limits the height
+function heightGeo(t, k) {
+  CM = camAt(t);
+  let g = '';
+  const F = 1.25, ZC = 3 * F, [x0, x1, y0, y1] = [-1.8, 1.8, -2.2, 2.2], out = 1 - k(S.cmp - 0.35, 0.3);
+  g += plate(0, NAVY, 0.9 * out, MIST, 2.5);
+  g += pl([P(-PX, PY0, 0), P(PX, PY0, 0), P(PX, PY1, 0), P(-PX, PY1, 0), P(-PX, PY0, 0)], RED, 4, out, 'stroke-dasharray="20 12"');
+  // the floor scaffold: what a count of floors alone would suggest
+  const ks = k(33.75, 0.7), clip = k(37.3, 0.5);
+  const top = 4 * F * ks;
+  if (ks > 0) {
+    const da = 'stroke-dasharray="12 10"';
+    for (let i = 0; i <= 4; i++) {
+      const zz = i * F; if (zz > top + 0.001) continue;
+      const above = zz > ZC + 0.01, col = above ? (clip > 0 ? RED : MIST) : MIST, op = (above ? 1 - clip : 1) * out * 0.85;
+      if (op > 0.01) g += pl(loop3(x0 - 0.25, x1 + 0.25, y0 - 0.25, y1 + 0.25, zz).map(q => P(...q)), col, 3, op, da);
+    }
+    for (const [cx, cy] of [[x0 - 0.25, y0 - 0.25], [x1 + 0.25, y0 - 0.25], [x1 + 0.25, y1 + 0.25], [x0 - 0.25, y1 + 0.25]]) {
+      g += pl([P(cx, cy, 0), P(cx, cy, Math.min(top, ZC))], MIST, 3, out * 0.85, da);
+      if (top > ZC) g += pl([P(cx, cy, ZC), P(cx, cy, top)], clip > 0 ? RED : MIST, 3, out * 0.85 * (1 - clip), da);
+    }
+  }
+  // floors drop in
+  for (let i = 0; i < 3; i++) {
+    const ti = 34.55 + i * 0.4, kf = step(t - ti, {f: 2.3, z: 0.6});
+    if (kf <= 0) continue;
+    const dz = (1 - kf) * 4;
+    g += box(x0, x1, y0, y1, i * F + dz, (i + 1) * F + dz, {floors: [i * F + dz], op: out * clamp((t - ti) / 0.1)});
+  }
+  // the ceiling plane
+  const kc = step(t - 35.6, {f: 1.3, z: 0.7}), zc = lerp(9, ZC + 0.02, kc);
+  const flash = t >= 37.3 ? Math.exp(-(t - 37.3) * 5) : 0;
+  const fl = t >= 36.5 ? step(t - 36.5, {f: 1.4, z: 0.75}) : 0;
+  const rise = ZC + 1.15 * fl;
+  const breakk = k(37.3, 0.55);
+  const drawPlane = () => {
+    if (kc <= 0) return '';
+    const o = out * clamp((t - 35.6) / 0.15);
+    return poly(rect3(-3.6, 3.6, -4.2, 4.2, zc), 'url(#hatchR)', 'none', 0, o * (0.16 + 0.4 * flash)) + poly(rect3(-3.6, 3.6, -4.2, 4.2, zc), RED, RED, 6, o * 0.14) + pl(loop3(-3.6, 3.6, -4.2, 4.2, zc).map(q => P(...q)), RED, 6, o);
+  };
+  // the floor that tries to rise: the part under the plane would be nothing; it is all above, so it is cut away
+  const tryBox = () => {
+    if (fl <= 0.01 || breakk >= 1) return '';
+    const jit = t >= 36.9 && t < 37.3 ? (hash(fr60(t)) - 0.5) * 0.12 : 0, up = breakk * 1.8;
+    return box(x0 + jit, x1 + jit, y0, y1, ZC + up, rise + up, {light: 'url(#hatchR)', dark: 'url(#hatchR)', top: 'url(#hatchR)', ink: RED, op: out * (1 - breakk)});
+  };
+  // order: plane above everything once it is down; the try box sits above the plane
+  g += drawPlane() + tryBox();
+  // slice line on the plane edge when it cuts
+  if (flash > 0.02) g += pl(loop3(x0, x1, y0, y1, ZC).map(q => P(...q)), PAPER, 6, flash * out);
+  show('gFloors', P(x0 - 0.25, y1 + 0.25, 4 * F), t, 34.1, 37.25, 16);
+  show('gMax', P(3.6, -4.2, zc), t, 36.1, S.cmp - 0.3, 10);
+  return g;
+}
+
+// split screen: the neighbour vs your plot
+function compareGeo(t, k) {
+  const out = 1 - k(S.moral - 0.35, 0.3), kin = step(t - S.cmp - 0.1, {f: 1.6, z: 0.8});
+  const base = {yaw: -32 + 1.5 * Math.sin(t * 0.4), pitch: 32, s: 56 * lerp(0.7, 1, kin), cy: 1200, tx: 0, ty: 0, tz: 0};
+  let gR = '', gL = '';
+  // right: the neighbour
+  CM = Object.assign({}, base, {cx: 800, tx: -6});
+  const kp2 = t >= 42.75 ? step(t - 42.75, {f: 1.6, z: 0.8}) : 0;
+  gR += plate(-6, TEAL, 0.6 * out, MIST, 2.5);
+  if (kp2 > 0) { const z = lerp(6, 0.04, kp2); gR += poly(rect3(-6 - 2.9, -6 + 2.9, -3.4, 3.4, z), 'url(#hatchR)', RED, 4, out * 0.8); }
+  const [a, b, c, d] = foot(-6);
+  const hk = t >= 40.3 ? smooth((t - 40.3) / 0.3) : 0;
+  gR += box(a, b, c, d, 0, 3.9 * kin, {floors: [0, 1.3, 2.6], light: PAPER, dark: '#c7d9e2', top: PAPER, op: out});
+  gR += box(a, b, c, d, 3.9 * kin, 5.2 * kin, {floors: [3.9], light: hk ? 'url(#hatchR)' : PAPER, dark: hk ? 'url(#hatchR)' : '#c7d9e2', top: hk ? RED : PAPER, ink: hk ? RED : NAVY, op: out});
+  const pR = P(-6, 0, 5.2), pRp = P(-6 - 2.9, 3.4, 0);
+  const dim = k(44.3, 0.4);
+  if (dim > 0) gR += `<rect x="540" y="500" width="540" height="1000" fill="${NAVY}" opacity="${(0.55 * dim * out).toFixed(3)}"/>`;
+  show('gHN', [810, 640], t, S.cmp + 0.3, S.moral - 0.3, 0);
+  show('gHak', pR, t, 40.4, S.moral - 0.3, 14);
+  show('gOther', pRp, t, 43.0, S.moral - 0.3, -60);
+  // left: your plot, its own plan
+  CM = Object.assign({}, base, {cx: 285, tx: 0});
+  gL += plate(0, NAVY, 0.9 * out, MIST, 2.5);
+  if (kp2 > 0) { const z = lerp(6, 0.04, step(t - 42.95, {f: 1.6, z: 0.8})); gL += poly(rect3(-2.9, 2.9, -3.4, 3.4, z), 'url(#hatchM)', MIST, 4, out * 0.9); }
+  gL += pl([P(-PX, PY0, 0.06), P(PX, PY0, 0.06), P(PX, PY1, 0.06), P(-PX, PY1, 0.06), P(-PX, PY0, 0.06)], RED, 6, out, `stroke-dasharray="20 12" stroke-dashoffset="${(-t * 60).toFixed(1)}"`);
+  if (dim > 0) { const pr = ((t - 44.3) % 1.0) / 1.0; gL += poly(rect3(-PX * (1 + pr * 0.3), PX * (1 + pr * 0.3), PY0 * (1 + pr * 0.3), PY1 * (1 + pr * 0.3), 0), 'none', RED, 4, (1 - pr) * out); }
+  const pLp = P(-2.9, 3.4, 0);
+  show('gHM', [270, 640], t, S.cmp + 0.45, S.moral - 0.3, 0);
+  show('gTaba', pLp, t, 43.2, S.moral - 0.3, -60);
+  return `<g clip-path="url(#cR)">${gR}</g><g clip-path="url(#cL)">${gL}</g>`;
+}
+
+function check(t) {
+  const out = [];
+  document.querySelectorAll('#layer > .t, #pins > .tag, #layer > .panel, #phone, #stamp, #subpill').forEach(el => {
+    if (el.style.display === 'none' || (el.offsetParent === null && el.id !== 'phone')) return;
+    const ws = el.classList.contains('t') ? el._w.filter(w => +w.style.opacity > 0.6) : (+el.style.opacity > 0.6 || el.style.opacity === '' ? [el] : []);
+    ws.forEach(w => {
+      const r = w.getBoundingClientRect();
+      if (r.width === 0) return;
+      if (r.left < 79 || r.right > 1001 || r.top < 249 || r.bottom > 1571) out.push(`${el.id || el.className} out of safe area (${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)})`);
+    });
+  });
+  return out;
+}
+
+Studio.define({
+  w: W, h: H, duration: DUR,
+  stages: [
+    {t: 0.7, label: 'card'}, {t: 2.4, label: 'typing'}, {t: 3.4, label: 'shatter'}, {t: 5.6, label: 'answer'},
+    {t: 7.8, label: 'street'}, {t: 9.7, label: 'neighbour'}, {t: 10.3, label: 'stamp'}, {t: 12.0, label: 'your plot'}, {t: 13.8, label: 'where'}, {t: 14.7, label: 'iris'},
+    {t: 16.2, label: 'sheet falls'}, {t: 18.5, label: 'plan landed'},
+    {t: 22.7, label: 'folder'}, {t: 24.4, label: 'stamp'}, {t: 26.2, label: 'folder hold'},
+    {t: 28.9, label: 'cut'}, {t: 30.0, label: 'slide'}, {t: 32.0, label: 'basement'},
+    {t: 34.9, label: 'floors'}, {t: 36.9, label: 'ceiling'}, {t: 37.45, label: 'clip'}, {t: 38.8, label: 'height hold'},
+    {t: 41.5, label: 'hakala'}, {t: 44.0, label: 'other plan'}, {t: 44.9, label: 'your plot'},
+    {t: 46.2, label: 'moral 1'}, {t: 47.1, label: 'moral 1b'}, {t: 48.9, label: 'moral 2'}, {t: 52.5, label: 'end'}
+  ],
+  fonts: ['700 100px Almoni', '400 100px Almoni'],
+  build, seek, check
+});
+</script>
+</body>
+</html>

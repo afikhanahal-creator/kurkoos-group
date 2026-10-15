@@ -1,0 +1,6 @@
+renders/
+snapshots/
+assets/showcase.mp4
+assets/*.jpg
+assets/*.webp
+assets/music.wav

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>אפיק הנחל · משרד בהנגר 24, הוד השרון</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-400.ttf"); font-weight: 400; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-500.ttf"); font-weight: 500; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-700.ttf"); font-weight: 700; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-800.ttf"); font-weight: 800; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-900.ttf"); font-weight: 900; }
+      :root { --night: #09090f; --deep: #0e0e1c; --cream: #e8e4d8; --peri: #8490d8; --green: #82f67f; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
+      #root { direction: rtl; position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--night); font-family: "Rubik", sans-serif; color: var(--cream); }
+      .clip, .layer { position: absolute; inset: 0; overflow: hidden; }
+      .vid { object-fit: cover; width: 100%; height: 100%; }
+      .shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(9,9,15,.75) 0%, rgba(9,9,15,0) 18%, rgba(9,9,15,0) 48%, rgba(9,9,15,.8) 74%, rgba(9,9,15,.96) 100%); z-index: 20; }
+      section[id^="b-"] { z-index: 25; }
+      .tx { position: absolute; right: 80px; left: 80px; bottom: 210px; text-align: right; }
+      .h { font-weight: 800; line-height: 1.04; letter-spacing: -1px; }
+      .big { font-size: 190px; margin-top: 26px; } .mid { font-size: 110px; } .small { font-size: 62px; } .huge { font-size: 260px; line-height: 1.2; margin: 6px 0; }
+      .unit { font-size: 100px; } .num { display: inline-block; direction: ltr; }
+      .note { font-size: 54px; font-weight: 500; margin-top: 18px; }
+      .line { display: block; overflow: hidden; padding-bottom: 10px; } .line > span { display: inline-block; }
+      .peri { color: var(--peri); } .green { color: var(--green); }
+      .chip { display: inline-flex; background: var(--green); color: var(--night); font-weight: 800; font-size: 46px; padding: 10px 30px 14px; border-radius: 40px; }
+      .pill { display: inline-block; background: var(--night); color: var(--cream); font-weight: 800; font-size: 72px; padding: 16px 40px 26px; border-radius: 26px; border-right: 12px solid var(--green); }
+      .roads { display: flex; gap: 40px; margin-top: 30px; direction: rtl; justify-content: flex-start; }
+      .road { width: 210px; height: 210px; border-radius: 32px; background: var(--peri); color: var(--night); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 104px; border: 8px solid var(--cream); }
+      .terms { position: absolute; right: 80px; left: 80px; top: 470px; text-align: right; }
+      .term { display: flex; justify-content: space-between; align-items: baseline; padding: 30px 0 34px; border-bottom: 2px solid rgba(132,144,216,.35); }
+      .term b { font-weight: 800; font-size: 74px; } .term i { font-style: normal; font-weight: 500; font-size: 44px; color: var(--peri); }
+      .fine { margin-top: 46px; font-size: 46px; font-weight: 500; line-height: 1.4; }
+      .phone { display: inline-block; background: var(--green); color: var(--night); font-weight: 900; font-size: 100px; padding: 16px 60px 26px; border-radius: 90px; direction: ltr; }
+      .logo { position: absolute; top: 64px; left: 60px; width: 132px; height: 126px; z-index: 30; }
+      /* the tour map: where we are in the property, all the time */
+      #map { position: absolute; right: 60px; top: 70px; z-index: 30; text-align: right; }
+      #map .cur { display: inline-block; background: var(--night); border: 2px solid rgba(132,144,216,.6); border-radius: 40px; padding: 10px 28px 14px; font-weight: 700; font-size: 44px; color: var(--cream); }
+      #map .dots { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; direction: rtl; }
+      #map .st { width: 52px; height: 8px; border-radius: 4px; background: rgba(232,228,216,.3); position: relative; overflow: hidden; }
+      #map .st i { position: absolute; inset: 0; background: var(--green); transform-origin: 100% 50%; }
+      #map .st span { display: none; }
+      .curlabel { position: absolute; right: 0; top: 0; white-space: nowrap; }
+      .card { position: absolute; width: 330px; height: 587px; background: var(--cream); padding: 12px; border-radius: 18px; box-shadow: 0 30px 60px rgba(0,0,0,.55); z-index: 26; }
+      .card img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
+      .tag { display: table; margin-top: 18px; background: var(--peri); color: var(--night); font-weight: 800; font-size: 60px; padding: 12px 34px 18px; border-radius: 40px; }
+      .pill.sm { display: table; font-size: 54px; margin-top: 18px; padding: 12px 32px 20px; }
+      #flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 40; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="26.8">
+      <div id="w0" class="layer vw"><video id="v0" class="clip vid" src="assets/seg/work.mp4" muted playsinline data-start="0.0" data-duration="2.4" data-media-start="0.4" data-track-index="0"></video></div>
+      <div id="w1" class="layer vw"><video id="v1" class="clip vid" src="assets/seg/shelf.mp4" muted playsinline data-start="2.0" data-duration="2.8" data-media-start="0.1" data-track-index="0"></video></div>
+      <div id="w2" class="layer vw"><video id="v2" class="clip vid" src="assets/seg/open.mp4" muted playsinline data-start="4.4" data-duration="2.2" data-media-start="0.4" data-track-index="0"></video></div>
+      <div id="w3" class="layer vw"><video id="v3" class="clip vid" src="assets/seg/meet.mp4" muted playsinline data-start="6.2" data-duration="2.8" data-media-start="0.1" data-track-index="0"></video></div>
+      <div id="w4" class="layer vw"><video id="v4" class="clip vid" src="assets/seg/room.mp4" muted playsinline data-start="8.6" data-duration="2.0" data-media-start="0.4" data-track-index="0"></video></div>
+      <div id="w5" class="layer vw"><video id="v5" class="clip vid" src="assets/seg/table.mp4" muted playsinline data-start="10.2" data-duration="2.8" data-media-start="0.2" data-track-index="0"></video></div>
+      <div id="w6" class="layer vw"><video id="v6" class="clip vid" src="assets/seg/kitchen.mp4" muted playsinline data-start="12.6" data-duration="2.8" data-media-start="0.1" data-track-index="0"></video></div>
+      <div id="w7" class="layer vw"><video id="v7" class="clip vid" src="assets/seg/window.mp4" muted playsinline data-start="15.0" data-duration="2.2" data-media-start="0.4" data-track-index="0"></video></div>
+      <div id="w8" class="layer vw"><video id="v8" class="clip vid" src="assets/seg/view.mp4" muted playsinline data-start="16.8" data-duration="2.0" data-media-start="0.4" data-track-index="0"></video></div>
+      <div id="w9" class="layer vw"><video id="v9" class="clip vid" src="assets/seg/lounge.mp4" muted playsinline data-start="18.4" data-duration="2.0" data-media-start="0.4" data-track-index="0"></video></div>
+      <div id="w10" class="layer vw"><video id="v10" class="clip vid" src="assets/seg/glass.mp4" muted playsinline data-start="20.0" data-duration="2.6" data-media-start="0.4" data-track-index="0"></video></div>
+      <svg width="0" height="0" style="position:absolute"><filter id="whipblur" x="-20%" y="0" width="140%" height="100%"><feGaussianBlur id="whipdev" stdDeviation="0 0" /></filter></svg>
+      <div class="shade"></div>
+      <img class="logo" src="assets/ah.svg" alt="אפיק הנחל" />
+      <div id="map" data-layout-allow-overlap>
+        <div class="cur" style="position:relative; min-width:340px; height:74px" data-layout-allow-overlap><span class="curlabel" id="al0" style="padding:10px 28px 14px">החלל</span><span class="curlabel" id="al1" style="padding:10px 28px 14px">חדרים</span><span class="curlabel" id="al2" style="padding:10px 28px 14px">עמדות עבודה</span><span class="curlabel" id="al3" style="padding:10px 28px 14px">מטבח</span><span class="curlabel" id="al4" style="padding:10px 28px 14px">אור ואוויר</span><span class="curlabel" id="al5" style="padding:10px 28px 14px">למי זה מתאים</span><span class="curlabel" id="al6" style="padding:10px 28px 14px">המיקום</span></div>
+        <div class="dots"><div class="st" id="m0"><i></i><span>החלל</span></div><div class="st" id="m1"><i></i><span>חדרים</span></div><div class="st" id="m2"><i></i><span>עמדות עבודה</span></div><div class="st" id="m3"><i></i><span>מטבח</span></div><div class="st" id="m4"><i></i><span>אור ואוויר</span></div><div class="st" id="m5"><i></i><span>למי זה מתאים</span></div><div class="st" id="m6"><i></i><span>המיקום</span></div></div>
+      </div>
+
+      <section id="b-intro" class="clip" data-start="0" data-duration="1.95" data-track-index="2">
+        <div class="tx">
+          <div id="i-chip" class="chip">מתפנה בהוד השרון</div>
+          <div class="h peri" style="font-size:112px; margin-top:26px; white-space:nowrap"><span class="line"><span id="i-a">משרד שהוא</span></span></div>
+          <div class="h" style="font-size:150px; white-space:nowrap"><span class="line"><span id="i-b">פשוט הצגה.</span></span></div>
+        </div>
+      </section>
+      <section id="b-size" class="clip" data-start="2.25" data-duration="2.1" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri" id="sz-a">המשרד משתרע על פני</div>
+          <div class="h huge"><span id="sz-n" class="num">165</span><span class="unit"> מ״ר</span></div>
+        </div>
+      </section>
+      <section id="b-open" class="clip" data-start="4.65" data-duration="1.5" data-track-index="2">
+        <div class="tx">
+          <div class="h mid"><span class="line"><span id="op-a">אופן ספייס</span></span></div>
+          <div class="h mid peri"><span class="line"><span id="op-b">מרווח.</span></span></div>
+        </div>
+      </section>
+      <section id="b-rooms" class="clip" data-start="6.4" data-duration="3.7" data-track-index="2" data-layout-allow-overlap>
+        <div class="card" id="cd0" style="left:70px; top:380px"><img src="assets/photos/p0.jpg" alt="" /></div><div class="card" id="cd1" style="left:260px; top:450px"><img src="assets/photos/p1.jpg" alt="" /></div><div class="card" id="cd2" style="left:450px; top:380px"><img src="assets/photos/p2.jpg" alt="" /></div><div class="card" id="cd3" style="left:640px; top:450px"><img src="assets/photos/p3.jpg" alt="" /></div>
+        <div class="tx">
+          <div class="h huge"><span id="rm-n" class="num">4</span><span class="unit"> חדרים</span></div>
+          <div class="h small peri" id="rm-b">סגורים</div>
+        </div>
+      </section>
+      <section id="b-desks" class="clip" data-start="10.45" data-duration="2.1" data-track-index="2">
+        <div class="tx"><div class="pill" id="dk">עמדות עבודה<br>מותאמות לצוות</div></div>
+      </section>
+      <section id="b-kitchen" class="clip" data-start="12.9" data-duration="2.05" data-track-index="2">
+        <div class="tx"><div class="pill" id="kt">מטבח מאובזר</div></div>
+      </section>
+      <section id="b-windows" class="clip" data-start="15.25" data-duration="1.5" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri" id="wn-a">חלונות גדולים</div>
+          <div class="h mid"><span class="line"><span id="wn-b">שנפתחים</span></span></div>
+          <div class="h mid"><span class="line"><span id="wn-c">לחלוטין.</span></span></div>
+        </div>
+      </section>
+      <section id="b-air" class="clip" data-start="16.95" data-duration="1.4" data-track-index="2">
+        <div class="tx">
+          <div class="h mid"><span class="line"><span id="ar-a">המון אוויר צלול</span></span></div>
+          <div class="h mid green"><span class="line"><span id="ar-b">ואור טבעי.</span></span></div>
+        </div>
+      </section>
+      <section id="b-fit" class="clip" data-start="18.6" data-duration="1.35" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri" id="ft-a">מתאים בול ל:</div>
+          <div class="tag" id="ft1">חברות הייטק</div>
+          <div class="tag" id="ft2">סטארטאפים</div>
+          <div class="tag" id="ft3" style="font-size:50px; white-space:nowrap">עסקים שרוצים סביבת עבודה מעולה</div>
+        </div>
+      </section>
+      <section id="b-place" class="clip" data-start="20.25" data-duration="2.3" data-track-index="2">
+        <div class="tx">
+          <div class="h mid"><span class="line"><span id="pl-a">רחוב הנגר 24,</span></span></div>
+          <div class="h small peri" id="pl-b">הוד השרון</div>
+          <div class="pill sm" id="pl1">מעל הסטופ מרקט</div>
+          <div class="pill sm" id="pl2">במרחק נגיעה מהפארק האקולוגי</div>
+        </div>
+      </section>
+      <section id="b-end" class="clip" data-start="22.6" data-duration="4.2" data-track-index="3">
+        <div class="layer" style="background:var(--night)"></div>
+        <div style="position:absolute; left:0; right:0; top:300px; display:flex; justify-content:center">
+          <div id="e-wrap" style="width:400px; height:383px; overflow:hidden"><img id="e-logo" src="assets/ah.svg" alt="אפיק הנחל" style="width:400px; height:383px" /></div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:760px; text-align:center">
+          <div class="h" style="font-size:80px" id="e-a">אפיק הנחל</div>
+          <div class="peri" style="font-size:50px; font-weight:500; margin-top:10px" id="e-b">ייזום, שיווק ותיווך</div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:1020px; text-align:center"><div style="font-size:58px; font-weight:700; margin-bottom:10px" id="e-c">מוזמנים לדבר איתנו</div><div class="peri" style="font-size:48px; font-weight:500; margin-bottom:30px" id="e-d">לפרטים ולתיאום סיור במקום</div><div class="phone" id="e-phone">055-981-1814</div></div>
+        <div style="position:absolute; left:0; right:0; top:1440px; text-align:center; font-size:56px; font-weight:500; direction:ltr" id="e-site">afikhanahal.co.il</div>
+      </section>
+      <div id="flash"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+      const E4 = "power4.out", BACK = "back.out(1.7)";
+      const rise = (sel, at, d = 0.5) => tl.fromTo(sel, { yPercent: 110 }, { yPercent: 0, duration: d, ease: E4 }, at);
+      const pill = (sel, at) => tl.fromTo(sel, { opacity: 0, x: 200, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, duration: 0.45, ease: E4 }, at);
+      function count(sel, to, at, d) { const o = { v: 0 }; const el = document.querySelector(sel); tl.fromTo(o, { v: 0 }, { v: to, duration: d, ease: "power2.out", onUpdate: () => { el.textContent = Math.round(o.v); } }, at); }
+      const blur = { b: 0 }; const dev = document.getElementById("whipdev");
+      const setBlur = () => dev.setAttribute("stdDeviation", blur.b + " 0");
+      // whip pan: the old shot flies out left with motion blur, the new one arrives from the right
+      function whip(a, b, t) {
+        tl.set(["#w" + a, "#w" + b], { filter: "url(#whipblur)" }, t - 0.02);
+        tl.fromTo("#w" + a, { xPercent: 0 }, { xPercent: -100, duration: 0.4, ease: "power3.in", immediateRender: false }, t);
+        tl.fromTo("#w" + b, { xPercent: 100 }, { xPercent: 0, duration: 0.4, ease: "power3.out", immediateRender: false }, t + 0.05);
+        tl.fromTo(blur, { b: 0 }, { b: 55, duration: 0.2, ease: "power2.in", onUpdate: setBlur, immediateRender: false }, t)
+          .to(blur, { b: 0, duration: 0.2, ease: "power2.out", onUpdate: setBlur }, t + 0.2);
+        tl.set(["#w" + a, "#w" + b], { filter: "none" }, t + 0.4 + 0.06);
+      }
+      // zoom through: the old shot pushes in and fades, the new one settles from slightly small
+      function zoomThrough(a, b, t) {
+        tl.fromTo("#w" + a, { opacity: 1 }, { scale: 1.45, opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, t);
+        tl.fromTo("#w" + b, { opacity: 0, scale: 0.82 }, { opacity: 1, scale: 1, duration: 0.55, ease: "power3.out", immediateRender: false }, t + 0.08);
+      }
+      function flash(t) { tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.9, duration: 0.06, ease: "none", immediateRender: false }, t - 0.03).to("#flash", { opacity: 0, duration: 0.3 }, t + 0.05); }
+      // the map: the current area label swaps, its segment fills
+      const AREAS_N = 7;
+      for (let i = 0; i < AREAS_N; i++) { tl.set("#al" + i, { opacity: 0 }, 0); tl.set("#m" + i + " i", { scaleX: 0 }, 0); }
+      function area(i, t) {
+        if (i > 0) tl.to("#al" + (i - 1), { opacity: 0, y: -20, duration: 0.2 }, t);
+        tl.fromTo("#al" + i, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: E4, immediateRender: false }, t + 0.12);
+        tl.fromTo("#m" + i + " i", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "expo.out", immediateRender: false }, t + 0.1);
+      }
+            tl.fromTo("#w0", { scale: 1.06 }, { scale: 1.0, duration: 2.4, ease: "none", immediateRender: false }, 0.0);
+      area(0, 0.0);
+      tl.fromTo("#w1", { scale: 1.06 }, { scale: 1.0, duration: 2.8, ease: "none", immediateRender: false }, 2.0);
+      zoomThrough(0, 1, 2.0);
+      tl.fromTo("#w2", { scale: 1.06 }, { scale: 1.0, duration: 2.2, ease: "none", immediateRender: false }, 4.4);
+      whip(1, 2, 4.4);
+      tl.fromTo("#w3", { scale: 1.06 }, { scale: 1.0, duration: 2.8, ease: "none", immediateRender: false }, 6.2);
+      flash(6.2);
+      area(1, 6.2);
+      tl.fromTo("#w4", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 8.6);
+      tl.fromTo("#w5", { scale: 1.06 }, { scale: 1.0, duration: 2.8, ease: "none", immediateRender: false }, 10.2);
+      whip(4, 5, 10.2);
+      area(2, 10.2);
+      tl.fromTo("#w6", { scale: 1.06 }, { scale: 1.0, duration: 2.8, ease: "none", immediateRender: false }, 12.6);
+      zoomThrough(5, 6, 12.6);
+      area(3, 12.6);
+      tl.fromTo("#w7", { scale: 1.06 }, { scale: 1.0, duration: 2.2, ease: "none", immediateRender: false }, 15.0);
+      whip(6, 7, 15.0);
+      area(4, 15.0);
+      tl.fromTo("#w8", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 16.8);
+      tl.fromTo("#w9", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 18.4);
+      flash(18.4);
+      area(5, 18.4);
+      tl.fromTo("#w10", { scale: 1.06 }, { scale: 1.0, duration: 2.6, ease: "none", immediateRender: false }, 20.0);
+      zoomThrough(9, 10, 20.0);
+      area(6, 20.0);
+
+      tl.fromTo("#i-chip", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: BACK }, 0.12);
+      rise("#i-a", 0.3, 0.45); rise("#i-b", 0.55, 0.45);
+      tl.to(["#i-a", "#i-b", "#i-chip"], { yPercent: -110, opacity: 0, duration: 0.25, ease: "power3.in", stagger: 0.03 }, 1.7);
+      tl.fromTo("#sz-a", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.35 }, 2.25);
+      count("#sz-n", 165, 2.3, 1.0);
+      tl.fromTo("#sz-n", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.35, ease: E4 }, 2.3);
+      rise("#op-a", 4.7, 0.4); rise("#op-b", 4.85, 0.4);
+      [0, 1, 2, 3].forEach(n => {
+        tl.fromTo("#cd" + n, { opacity: 0, y: 260, rotation: (n - 1.5) * 22, scale: 0.6 }, { opacity: 1, y: 0, rotation: (n - 1.5) * 5, scale: 1, duration: 0.5, ease: BACK }, 6.55 + n * 0.14);
+        tl.to("#cd" + n, { y: -40, duration: 1.4, ease: "none" }, 7.05 + n * 0.14);
+        tl.to("#cd" + n, { opacity: 0, x: -700, rotation: -25, duration: 0.35, ease: "power3.in" }, 9.65 + n * 0.04);
+      });
+      tl.fromTo("#rm-n", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: E4 }, 6.5);
+      tl.fromTo("#rm-b", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3 }, 6.8);
+      pill("#dk", 10.5); pill("#kt", 12.95);
+      tl.fromTo("#wn-a", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3 }, 15.25);
+      rise("#wn-b", 15.4, 0.4); rise("#wn-c", 15.55, 0.4);
+      rise("#ar-a", 17.0, 0.4); rise("#ar-b", 17.18, 0.4);
+      tl.fromTo("#ft-a", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3 }, 18.6);
+      ["#ft1", "#ft2", "#ft3"].forEach((x, i) => tl.fromTo(x, { opacity: 0, scale: 0.4, x: 120 }, { opacity: 1, scale: 1, x: 0, duration: 0.35, ease: BACK }, 18.75 + i * 0.22));
+      rise("#pl-a", 20.3, 0.45);
+      tl.fromTo("#pl-b", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3 }, 20.5);
+      pill("#pl1", 20.8); pill("#pl2", 21.15);
+      tl.fromTo("#e-wrap", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power3.inOut" }, 22.700000000000003);
+      tl.fromTo("#e-logo", { scale: 1.15 }, { scale: 1, duration: 1.3, ease: "power2.out" }, 22.700000000000003);
+      tl.fromTo("#e-a", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.4 }, 23.200000000000003);
+      tl.fromTo("#e-b", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.4 }, 23.400000000000002);
+      tl.fromTo("#e-c", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, 23.700000000000003);
+      tl.fromTo("#e-d", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 23.900000000000002);
+      tl.fromTo("#e-phone", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: BACK }, 24.1);
+      tl.fromTo("#e-site", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 }, 24.5);
+      tl.fromTo("#map", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, 22.6);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

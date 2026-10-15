@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>אפיק הנחל · סיור במשרדים להשכרה, מבוא קדם 5</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-400.ttf"); font-weight: 400; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-500.ttf"); font-weight: 500; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-700.ttf"); font-weight: 700; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-800.ttf"); font-weight: 800; }
+      @font-face { font-family: "Rubik"; src: url("assets/fonts/Rubik-900.ttf"); font-weight: 900; }
+      :root { --night: #09090f; --deep: #0e0e1c; --cream: #e8e4d8; --peri: #8490d8; --green: #82f67f; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
+      #root { direction: rtl; position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--night); font-family: "Rubik", sans-serif; color: var(--cream); }
+      .clip, .layer { position: absolute; inset: 0; overflow: hidden; }
+      .vid { object-fit: cover; width: 100%; height: 100%; }
+      .shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(9,9,15,.75) 0%, rgba(9,9,15,0) 18%, rgba(9,9,15,0) 48%, rgba(9,9,15,.8) 74%, rgba(9,9,15,.96) 100%); z-index: 20; }
+      section[id^="b-"] { z-index: 25; }
+      .tx { position: absolute; right: 80px; left: 80px; bottom: 210px; text-align: right; }
+      .h { font-weight: 800; line-height: 1.04; letter-spacing: -1px; }
+      .big { font-size: 190px; margin-top: 26px; } .mid { font-size: 110px; } .small { font-size: 62px; } .huge { font-size: 260px; line-height: 1.2; margin: 6px 0; }
+      .unit { font-size: 100px; } .num { display: inline-block; direction: ltr; }
+      .note { font-size: 54px; font-weight: 500; margin-top: 18px; }
+      .line { display: block; overflow: hidden; padding-bottom: 10px; } .line > span { display: inline-block; }
+      .peri { color: var(--peri); } .green { color: var(--green); }
+      .chip { display: inline-flex; background: var(--green); color: var(--night); font-weight: 800; font-size: 46px; padding: 10px 30px 14px; border-radius: 40px; }
+      .pill { display: inline-block; background: var(--night); color: var(--cream); font-weight: 800; font-size: 72px; padding: 16px 40px 26px; border-radius: 26px; border-right: 12px solid var(--green); }
+      .roads { display: flex; gap: 40px; margin-top: 30px; direction: rtl; justify-content: flex-start; }
+      .road { width: 210px; height: 210px; border-radius: 32px; background: var(--peri); color: var(--night); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 104px; border: 8px solid var(--cream); }
+      .terms { position: absolute; right: 80px; left: 80px; top: 470px; text-align: right; }
+      .term { display: flex; justify-content: space-between; align-items: baseline; padding: 30px 0 34px; border-bottom: 2px solid rgba(132,144,216,.35); }
+      .term b { font-weight: 800; font-size: 74px; } .term i { font-style: normal; font-weight: 500; font-size: 44px; color: var(--peri); }
+      .fine { margin-top: 46px; font-size: 46px; font-weight: 500; line-height: 1.4; }
+      .phone { display: inline-block; background: var(--green); color: var(--night); font-weight: 900; font-size: 100px; padding: 16px 60px 26px; border-radius: 90px; direction: ltr; }
+      .logo { position: absolute; top: 64px; left: 60px; width: 132px; height: 126px; z-index: 30; }
+      /* the tour map: where we are in the property, all the time */
+      #map { position: absolute; right: 60px; top: 70px; z-index: 30; text-align: right; }
+      #map .cur { display: inline-block; background: var(--night); border: 2px solid rgba(132,144,216,.6); border-radius: 40px; padding: 10px 28px 14px; font-weight: 700; font-size: 44px; color: var(--cream); }
+      #map .dots { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; direction: rtl; }
+      #map .st { width: 52px; height: 8px; border-radius: 4px; background: rgba(232,228,216,.3); position: relative; overflow: hidden; }
+      #map .st i { position: absolute; inset: 0; background: var(--green); transform-origin: 100% 50%; }
+      #map .st span { display: none; }
+      .curlabel { position: absolute; right: 0; top: 0; white-space: nowrap; }
+      #flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 40; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="43.8">
+      <div id="w0" class="layer vw"><video id="v0" class="clip vid" src="assets/seg/door.mp4" muted playsinline data-start="0.0" data-duration="3.7" data-media-start="0.0" data-track-index="0"></video></div>
+      <div id="w1" class="layer vw"><video id="v1" class="clip vid" src="assets/seg/lobby.mp4" muted playsinline data-start="3.3" data-duration="3.9" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w2" class="layer vw"><video id="v2" class="clip vid" src="assets/seg/enter.mp4" muted playsinline data-start="6.8" data-duration="2.0" data-media-start="0.0" data-track-index="0"></video></div>
+      <div id="w3" class="layer vw"><video id="v3" class="clip vid" src="assets/seg/open.mp4" muted playsinline data-start="8.4" data-duration="3.4" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w4" class="layer vw"><video id="v4" class="clip vid" src="assets/seg/room1.mp4" muted playsinline data-start="11.4" data-duration="2.0" data-media-start="0.0" data-track-index="0"></video></div>
+      <div id="w5" class="layer vw"><video id="v5" class="clip vid" src="assets/seg/room2.mp4" muted playsinline data-start="13.0" data-duration="1.6" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w6" class="layer vw"><video id="v6" class="clip vid" src="assets/seg/corner.mp4" muted playsinline data-start="14.2" data-duration="3.4" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w7" class="layer vw"><video id="v7" class="clip vid" src="assets/seg/hall2.mp4" muted playsinline data-start="17.2" data-duration="1.4" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w8" class="layer vw"><video id="v8" class="clip vid" src="assets/seg/wc.mp4" muted playsinline data-start="18.2" data-duration="1.4" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w9" class="layer vw"><video id="v9" class="clip vid" src="assets/seg/kitch.mp4" muted playsinline data-start="19.2" data-duration="2.0" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w10" class="layer vw"><video id="v10" class="clip vid" src="assets/seg/wing1.mp4" muted playsinline data-start="20.8" data-duration="2.0" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w11" class="layer vw"><video id="v11" class="clip vid" src="assets/seg/wing2.mp4" muted playsinline data-start="22.4" data-duration="3.0" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w12" class="layer vw"><video id="v12" class="clip vid" src="assets/seg/wing3.mp4" muted playsinline data-start="25.0" data-duration="2.0" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w13" class="layer vw"><video id="v13" class="clip vid" src="assets/seg/store1.mp4" muted playsinline data-start="26.6" data-duration="2.0" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w14" class="layer vw"><video id="v14" class="clip vid" src="assets/seg/store2.mp4" muted playsinline data-start="28.2" data-duration="2.4" data-media-start="0.5" data-track-index="0"></video></div>
+      <div id="w15" class="layer vw"><video id="v15" class="clip vid" src="assets/seg/garden.mp4" muted playsinline data-start="30.2" data-duration="9.4" data-media-start="0.0" data-track-index="0"></video></div>
+      <svg width="0" height="0" style="position:absolute"><filter id="whipblur" x="-20%" y="0" width="140%" height="100%"><feGaussianBlur id="whipdev" stdDeviation="0 0" /></filter></svg>
+      <div class="shade"></div>
+      <img class="logo" src="assets/ah.svg" alt="אפיק הנחל" />
+      <div id="map" data-layout-allow-overlap>
+        <div class="cur" style="position:relative; min-width:340px; height:74px" data-layout-allow-overlap><span class="curlabel" id="al0" style="padding:10px 28px 14px">כניסה לבניין</span><span class="curlabel" id="al1" style="padding:10px 28px 14px">הקומה הראשונה</span><span class="curlabel" id="al2" style="padding:10px 28px 14px">חדרים</span><span class="curlabel" id="al3" style="padding:10px 28px 14px">שירותים ומטבחון</span><span class="curlabel" id="al4" style="padding:10px 28px 14px">אגף נוסף</span><span class="curlabel" id="al5" style="padding:10px 28px 14px">חלל נוסף</span><span class="curlabel" id="al6" style="padding:10px 28px 14px">החצר והגינה</span></div>
+        <div class="dots"><div class="st" id="m0"><i></i><span>כניסה לבניין</span></div><div class="st" id="m1"><i></i><span>הקומה הראשונה</span></div><div class="st" id="m2"><i></i><span>חדרים</span></div><div class="st" id="m3"><i></i><span>שירותים ומטבחון</span></div><div class="st" id="m4"><i></i><span>אגף נוסף</span></div><div class="st" id="m5"><i></i><span>חלל נוסף</span></div><div class="st" id="m6"><i></i><span>החצר והגינה</span></div></div>
+      </div>
+
+      <section id="b-intro" class="clip" data-start="0" data-duration="3.25" data-track-index="2">
+        <div class="tx">
+          <div id="i-chip" class="chip">להשכרה</div>
+          <div class="h big"><span class="line"><span id="i-a">משרדים</span></span></div>
+          <div class="h mid"><span class="line"><span id="i-b">במבוא קדם 5,</span></span></div>
+          <div class="h mid peri"><span class="line"><span id="i-c">הוד השרון</span></span></div>
+        </div>
+      </section>
+      <section id="b-building" class="clip" data-start="3.6" data-duration="3.15" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri"><span class="line"><span id="bd-a">בבניין</span></span></div>
+          <div class="h mid"><span class="line"><span id="bd-b">מעלית ומקלט,</span></span></div>
+          <div class="h mid"><span class="line"><span id="bd-c">וחדר כושר.</span></span></div>
+        </div>
+      </section>
+      <section id="b-size" class="clip" data-start="7.05" data-duration="4.3" data-track-index="2">
+        <div class="tx">
+          <div class="h huge"><span id="sz-n" class="num">520</span><span class="unit"> מ״ר</span></div>
+          <div class="h small peri" id="sz-a">בקומה הראשונה</div>
+          <div class="h note" id="sz-b">אפשר לחלק ולהשכיר כ־250 מ״ר בלבד</div>
+        </div>
+      </section>
+      <section id="b-rooms" class="clip" data-start="11.65" data-duration="2.5" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri" id="rm-a">לפחות</div>
+          <div class="h huge"><span id="rm-n" class="num">20</span><span class="unit"> חדרים</span></div>
+          <div class="h small" id="rm-b">מחולקים</div>
+        </div>
+      </section>
+      <section id="b-parquet" class="clip" data-start="14.5" data-duration="3.65" data-track-index="2">
+        <div class="tx"><div class="pill" id="pq">פרקטים חדשים</div></div>
+      </section>
+      <section id="b-wc" class="clip" data-start="18.4" data-duration="2.35" data-track-index="2">
+        <div class="tx"><div class="pill" id="wc">שלושה תאי שירותים</div></div>
+      </section>
+      <section id="b-systems" class="clip" data-start="21.05" data-duration="5.5" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri" id="sy-a">מערכות</div>
+          <div class="h mid"><span class="line"><span id="sy-b">תקשורת,</span></span></div>
+          <div class="h mid"><span class="line"><span id="sy-c">כיבוי אש ואזעקה.</span></span></div>
+        </div>
+      </section>
+      <section id="b-storage" class="clip" data-start="26.8" data-duration="3.35" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri" id="st-a">חלל נוסף</div>
+          <div class="h mid"><span class="line"><span id="st-b">לאחסון</span></span></div>
+          <div class="h mid"><span class="line"><span id="st-c">או לייצור.</span></span></div>
+        </div>
+      </section>
+      <section id="b-park" class="clip" data-start="30.6" data-duration="2.9" data-track-index="2">
+        <div class="tx">
+          <div class="pill" id="pk1">חניה צמודה מקורה</div>
+          <div class="pill" id="pk2" style="margin-top:22px">חניון ציבורי מול הבניין</div>
+        </div>
+      </section>
+      <section id="b-roads" class="clip" data-start="33.6" data-duration="2.5" data-track-index="2">
+        <div class="tx">
+          <div class="h small peri" id="rd-a">גישה מהירה לכבישים</div>
+          <div class="roads"><div class="road" id="r1">5</div><div class="road" id="r2" style="font-size:80px">531</div><div class="road" id="r3">6</div></div>
+        </div>
+      </section>
+      <section id="b-terms" class="clip" data-start="36.2" data-duration="3.4" data-track-index="2">
+        <div class="layer" id="tm-bg" style="background:rgba(9,9,15,.82)"></div>
+        <div class="terms">
+          <div class="h small green" id="tm-t">תנאי שכירות</div>
+          <div class="term" id="t1"><b>ועד בית 1,500 ₪</b><i>לחודש, ל־520 מ״ר</i></div>
+          <div class="term" id="t2"><b>אין דמי ניהול</b><i></i></div>
+          <div class="term" id="t3"><b>חודשיים גרייס</b><i>לשיפוץ והתאמה</i></div>
+          <div class="fine" id="t4">הנכס דורש שיפוץ והתאמה לפני הכניסה, עם גמישות בחלוקת השטח לפי צורכי העסק.</div>
+        </div>
+      </section>
+      <section id="b-end" class="clip" data-start="39.6" data-duration="4.2" data-track-index="3">
+        <div class="layer" style="background:var(--night)"></div>
+        <div style="position:absolute; left:0; right:0; top:330px; display:flex; justify-content:center">
+          <div id="e-wrap" style="width:440px; height:421px; overflow:hidden"><img id="e-logo" src="assets/ah.svg" alt="אפיק הנחל" style="width:440px; height:421px" /></div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:820px; text-align:center">
+          <div class="h" style="font-size:80px" id="e-a">אפיק הנחל</div>
+          <div class="peri" style="font-size:50px; font-weight:500; margin-top:10px" id="e-b">ייזום, שיווק ותיווך</div>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:1080px; text-align:center"><div class="peri" style="font-size:52px; font-weight:500; margin-bottom:26px" id="e-c">לפרטים ולתיאום סיור</div><div class="phone" id="e-phone">055-981-1814</div></div>
+        <div style="position:absolute; left:0; right:0; top:1420px; text-align:center; font-size:56px; font-weight:500; direction:ltr" id="e-site">afikhanahal.co.il</div>
+      </section>
+      <div id="flash"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+      const E4 = "power4.out", BACK = "back.out(1.7)";
+      const rise = (sel, at, d = 0.5) => tl.fromTo(sel, { yPercent: 110 }, { yPercent: 0, duration: d, ease: E4 }, at);
+      const pill = (sel, at) => tl.fromTo(sel, { opacity: 0, x: 200, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, duration: 0.45, ease: E4 }, at);
+      function count(sel, to, at, d) { const o = { v: 0 }; const el = document.querySelector(sel); tl.fromTo(o, { v: 0 }, { v: to, duration: d, ease: "power2.out", onUpdate: () => { el.textContent = Math.round(o.v); } }, at); }
+      const blur = { b: 0 }; const dev = document.getElementById("whipdev");
+      const setBlur = () => dev.setAttribute("stdDeviation", blur.b + " 0");
+      // whip pan: the old shot flies out left with motion blur, the new one arrives from the right
+      function whip(a, b, t) {
+        tl.set(["#w" + a, "#w" + b], { filter: "url(#whipblur)" }, t - 0.02);
+        tl.fromTo("#w" + a, { xPercent: 0 }, { xPercent: -100, duration: 0.4, ease: "power3.in", immediateRender: false }, t);
+        tl.fromTo("#w" + b, { xPercent: 100 }, { xPercent: 0, duration: 0.4, ease: "power3.out", immediateRender: false }, t + 0.05);
+        tl.fromTo(blur, { b: 0 }, { b: 55, duration: 0.2, ease: "power2.in", onUpdate: setBlur, immediateRender: false }, t)
+          .to(blur, { b: 0, duration: 0.2, ease: "power2.out", onUpdate: setBlur }, t + 0.2);
+        tl.set(["#w" + a, "#w" + b], { filter: "none" }, t + 0.4 + 0.06);
+      }
+      // zoom through: the old shot pushes in and fades, the new one settles from slightly small
+      function zoomThrough(a, b, t) {
+        tl.fromTo("#w" + a, { opacity: 1 }, { scale: 1.45, opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, t);
+        tl.fromTo("#w" + b, { opacity: 0, scale: 0.82 }, { opacity: 1, scale: 1, duration: 0.55, ease: "power3.out", immediateRender: false }, t + 0.08);
+      }
+      function flash(t) { tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.9, duration: 0.06, ease: "none", immediateRender: false }, t - 0.03).to("#flash", { opacity: 0, duration: 0.3 }, t + 0.05); }
+      // the map: the current area label swaps, its segment fills
+      const AREAS_N = 7;
+      for (let i = 0; i < AREAS_N; i++) { tl.set("#al" + i, { opacity: 0 }, 0); tl.set("#m" + i + " i", { scaleX: 0 }, 0); }
+      function area(i, t) {
+        if (i > 0) tl.to("#al" + (i - 1), { opacity: 0, y: -20, duration: 0.2 }, t);
+        tl.fromTo("#al" + i, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: E4, immediateRender: false }, t + 0.12);
+        tl.fromTo("#m" + i + " i", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "expo.out", immediateRender: false }, t + 0.1);
+      }
+            tl.fromTo("#w0", { scale: 1.06 }, { scale: 1.0, duration: 3.7, ease: "none", immediateRender: false }, 0.0);
+      area(0, 0.0);
+      tl.fromTo("#w1", { scale: 1.06 }, { scale: 1.0, duration: 3.9, ease: "none", immediateRender: false }, 3.3);
+      zoomThrough(0, 1, 3.3);
+      tl.fromTo("#w2", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 6.8);
+      whip(1, 2, 6.8);
+      area(1, 6.8);
+      tl.fromTo("#w3", { scale: 1.06 }, { scale: 1.0, duration: 3.4, ease: "none", immediateRender: false }, 8.4);
+      tl.fromTo("#w4", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 11.4);
+      whip(3, 4, 11.4);
+      area(2, 11.4);
+      tl.fromTo("#w5", { scale: 1.06 }, { scale: 1.0, duration: 1.6, ease: "none", immediateRender: false }, 13.0);
+      tl.fromTo("#w6", { scale: 1.06 }, { scale: 1.0, duration: 3.4, ease: "none", immediateRender: false }, 14.2);
+      zoomThrough(5, 6, 14.2);
+      tl.fromTo("#w7", { scale: 1.06 }, { scale: 1.0, duration: 1.4, ease: "none", immediateRender: false }, 17.2);
+      tl.fromTo("#w8", { scale: 1.06 }, { scale: 1.0, duration: 1.4, ease: "none", immediateRender: false }, 18.2);
+      whip(7, 8, 18.2);
+      area(3, 18.2);
+      tl.fromTo("#w9", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 19.2);
+      tl.fromTo("#w10", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 20.8);
+      whip(9, 10, 20.8);
+      area(4, 20.8);
+      tl.fromTo("#w11", { scale: 1.06 }, { scale: 1.0, duration: 3.0, ease: "none", immediateRender: false }, 22.4);
+      tl.fromTo("#w12", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 25.0);
+      tl.fromTo("#w13", { scale: 1.06 }, { scale: 1.0, duration: 2.0, ease: "none", immediateRender: false }, 26.6);
+      flash(26.6);
+      area(5, 26.6);
+      tl.fromTo("#w14", { scale: 1.06 }, { scale: 1.0, duration: 2.4, ease: "none", immediateRender: false }, 28.2);
+      tl.fromTo("#w15", { scale: 1.06 }, { scale: 1.0, duration: 9.4, ease: "none", immediateRender: false }, 30.2);
+      zoomThrough(14, 15, 30.2);
+      area(6, 30.2);
+
+      // intro
+      tl.fromTo("#i-chip", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: BACK }, 0.15);
+      rise("#i-a", 0.35, 0.55); rise("#i-b", 0.7); rise("#i-c", 0.9);
+      tl.to(["#i-a", "#i-b", "#i-c", "#i-chip"], { yPercent: -110, opacity: 0, duration: 0.3, ease: "power3.in", stagger: 0.04 }, 2.9);
+      // building
+      rise("#bd-a", 3.65); rise("#bd-b", 3.8); rise("#bd-c", 4.0);
+      // 520 counts up
+      count("#sz-n", 520, 7.1, 1.2);
+      tl.fromTo("#sz-n", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.4, ease: E4 }, 7.05);
+      tl.fromTo("#sz-a", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.45 }, 7.5);
+      tl.fromTo("#sz-b", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.45 }, 8.1);
+      // rooms
+      tl.fromTo("#rm-a", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 11.7);
+      count("#rm-n", 20, 11.75, 0.8);
+      tl.fromTo("#rm-n", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.4, ease: E4 }, 11.75);
+      tl.fromTo("#rm-b", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 12.1);
+      pill("#pq", 14.6); pill("#wc", 18.45);
+      tl.fromTo("#sy-a", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 21.1);
+      rise("#sy-b", 21.25); rise("#sy-c", 21.45);
+      tl.fromTo("#st-a", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 26.85);
+      rise("#st-b", 27.0); rise("#st-c", 27.2);
+      pill("#pk1", 30.7); pill("#pk2", 31.0);
+      tl.fromTo("#rd-a", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 33.65);
+      ["#r1", "#r2", "#r3"].forEach((r, i) => tl.fromTo(r, { scale: 0, rotation: -14 }, { scale: 1, rotation: 0, duration: 0.45, ease: BACK }, 33.8 + i * 0.2));
+      tl.fromTo("#tm-bg", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 36.2);
+      tl.fromTo("#tm-t", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 36.35);
+      ["#t1", "#t2", "#t3"].forEach((x, i) => tl.fromTo(x, { opacity: 0, x: 160 }, { opacity: 1, x: 0, duration: 0.4, ease: E4 }, 36.5 + i * 0.3));
+      tl.fromTo("#t4", { opacity: 0 }, { opacity: 1, duration: 0.45 }, 37.6);
+      // end
+      tl.fromTo("#e-wrap", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.9, ease: "power3.inOut" }, 39.7);
+      tl.fromTo("#e-logo", { scale: 1.15 }, { scale: 1, duration: 1.4, ease: "power2.out" }, 39.7);
+      tl.fromTo("#e-a", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45 }, 40.300000000000004);
+      tl.fromTo("#e-b", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45 }, 40.5);
+      tl.fromTo("#e-c", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 40.9);
+      tl.fromTo("#e-phone", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: BACK }, 41.0);
+      tl.fromTo("#e-site", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45 }, 41.4);
+      tl.fromTo("#map", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, 39.6);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

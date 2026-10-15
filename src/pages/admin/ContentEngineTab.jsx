@@ -5,6 +5,7 @@ import { loadSeed as loadBrokerage } from '../../lib/brokerage.js'
 import { loadSeed as loadYazamut } from '../../lib/yazamut.js'
 import { loadSeed as loadMentor } from '../../lib/mentorguide.js'
 import { COMPETITORS } from '../../data/competitors.js'
+import { ENGINE_URL } from './SocialEngineTab.jsx'
 import calConstructions from '../../../constructions/content-calendar.md?raw'
 import calSupervision from '../../../construction_supervision/content-calendar.md?raw'
 import calBrokerage from '../../../brokerage/content-calendar.md?raw'
@@ -196,6 +197,12 @@ export default function ContentEngineTab() {
         </div>
       )}
 
+      {tab === 'competitors' && (
+        <p className="ce__note ce__where">
+          המודעות שהמתחרים מריצים בספריית Meta והמעקב היומי אחריהן נמצאים במנוע התוכן: תפריט, כלים מתקדמים, ואז <b>מתחרים</b> או <b>ספריית מודעות</b>.{' '}
+          <a href={ENGINE_URL} target="kurkoos-content-engine" rel="noopener">פתיחת מנוע התוכן</a>
+        </p>
+      )}
       {tab === 'competitors' && (
         <div className="ce__table-wrap">
           <table className="ce__table">

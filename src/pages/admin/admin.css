@@ -790,9 +790,14 @@
   }
 
   /* כפתור המבורגר בסרגל העליון */
+  /* יעדי מגע של 44 פיקסלים לפחות בתפריט */
+  .adm__nav-item { min-height: 44px; }
+  .adm__logout { width: 44px; height: 44px; }
+  .adm__theme-toggle { min-width: 44px; min-height: 44px; }
+
   .adm__burger {
     display: grid; place-items: center;
-    width: 42px; height: 42px; flex-shrink: 0;
+    width: 44px; height: 44px; flex-shrink: 0;
     border-radius: 10px;
     border: 1px solid var(--adm-border);
     background: var(--adm-surface);

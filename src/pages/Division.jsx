@@ -46,7 +46,7 @@ const DEFAULT_DIVISION_LOGOS = {
 
 export default function Division() {
   const { slug } = useParams()
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const L = useLocalized()
   const division = getDivision(slug)
   const isMobile = useIsMobile()
@@ -205,6 +205,13 @@ export default function Division() {
       <section className="section division-intro">
         <div className="container">
           <Reveal className="division-intro__text">
+            {/* משפט תשובה ישיר: מי, איפה ומה, עם קישור לעמוד הבנייה והפיקוח בהוד השרון */}
+            {division.answer && lang === 'he' && (
+              <p className="division-intro__answer">
+                <strong>{division.answer.he}</strong>{' '}
+                <Link to={division.answer.link.to}>{division.answer.link.label}</Link>
+              </p>
+            )}
             <p>{L(division.intro)}</p>
             {/* קישורים לעמודים הקשורים: מחברים את השירות למדריכים ולפרויקטים,
                 כדי שגם הקורא וגם גוגל יבינו איך הנושאים באתר מתחברים */}

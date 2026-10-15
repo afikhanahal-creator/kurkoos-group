@@ -31,6 +31,7 @@ export const STATIC = [
   { path: '/real-estate-guide', changefreq: 'weekly', priority: '0.8' },
   { path: '/real-estate-glossary', changefreq: 'monthly', priority: '0.8' },
   { path: '/real-estate-sharon', changefreq: 'monthly', priority: '0.9' },
+  { path: '/hod-hasharon/bniya-vepikuach', changefreq: 'monthly', priority: '0.9' },
   { path: '/villas-sharon', changefreq: 'monthly', priority: '0.9' },
   { path: '/kablan-bniya-bayit-prati', changefreq: 'monthly', priority: '0.9' },
   { path: '/bniyat-vila-sharon', changefreq: 'monthly', priority: '0.9' },

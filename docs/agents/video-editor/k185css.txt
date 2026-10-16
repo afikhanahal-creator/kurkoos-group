@@ -1,0 +1,11 @@
+<style id="k185">
+/* V185 · Meta Ad Library links on every competitor card */
+.v185{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 4px;font-family:Almoni,Heebo,Arial,sans-serif;direction:rtl}
+.v185k{font-size:13.5px;font-weight:700;color:#5f6b78}
+.v185a{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;background:#eef4f7;color:#105572;font-size:14px;font-weight:700;text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v185a:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){.v185a:hover{background:#dce9ef}}
+.v185a:focus-visible{outline:3px solid #105572;outline-offset:2px}
+.v185m{font-size:13px;color:#5f6b78}
+@media (max-width:700px){.v185a{min-height:44px}}
+</style>

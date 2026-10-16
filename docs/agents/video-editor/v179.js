@@ -318,5 +318,5 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.matches&&t.matche
 document.addEventListener('toggle',e=>{const d=e.target;if(!d||!d.matches||!d.matches('details[data-v179sec]'))return;const cid=d.dataset.v179sec;if(d.open){M.open.add(cid);if(!d.querySelector('.v179body'))refreshSec(cid)}else M.open.delete(cid)},true);
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const g=document.getElementById('v179g'),d=document.getElementById('v179d');if(g){close('v179g');e.stopPropagation()}else if(d){close('v179d');e.stopPropagation()}},true);
 
-window.__v179={M,daysOf,bucket,isStar,isNew,isGone,order,groupOf,libList,openDetail,openGen,runGen,prompt,makePost,applyTo,secHtml,vLib,vScans,reindex};
+window.__v179={brandOf,GOALS,PROJ,cleanTxt,ask,M,daysOf,bucket,isStar,isNew,isGone,order,groupOf,libList,openDetail,openGen,runGen,prompt,makePost,applyTo,secHtml,vLib,vScans,reindex};
 })();

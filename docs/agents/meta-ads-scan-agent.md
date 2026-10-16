@@ -77,3 +77,14 @@ Days on air are **computed**, never stored: `floor((now_jerusalem - start) / 864
 - A page whose results are partial is shown as partial; the UI never says "כל המודעות" for it.
 - Days on air are computed from `start` in Asia/Jerusalem; a one day difference from the Meta page is possible.
 - No scraping of facebook.com, no CAPTCHA or login workarounds, no second account. If the connector refuses, the run is `failed` and the dashboard says so.
+
+## 5. Competitor galleries (comp_posts), same run
+
+After the Meta Ads part, refresh the organic posts the competitors publish, for the "הגלריה שלהם" block and the "גלריות המתחרים" view (V181).
+
+1. Metricool connector `getAnalyticsDataByMetrics`, brand `7115159`, from 30 days ago to now (Jerusalem time), metrics `FBCP01,FBCP02,FBCP03,FBCP04,FBCP05,FBCP06,FBCP07,FBCP08,FBCP09`. Save the raw JSON result to a file (it can be large; the tool may save it for you).
+2. `select id, data->>'name' as name from engine_docs where collection='competitors'` saved as `[{id,name}]` JSON.
+3. `python3 scripts/comp_posts_sql.py out.sql competitors.json result.json` writes `out_0.sql`, `out_1.sql`… Run each file as is with `execute_sql`. Never write the SQL by hand.
+4. Report how many posts were refreshed and the names the script printed as `unmatched` (a Metricool page with no competitor in the system).
+
+Facts: one doc per Facebook post id. Fields `{id, comp_name, comp_ids, comp_id, network, text, image, img_exp, published, reactions, comments, shares, eng, link, source:"metricool", fetched, first_seen}`. The picture is Metricool's preview size (about 130 px) and its link expires after a few days (`img_exp`), so it is refreshed every morning. When the owner opens the gallery, the browser keeps a small copy (`thumb`) when Facebook allows it; the upsert never overwrites `thumb` or `first_seen`. Only competitors tracked in Metricool appear; Instagram competitor posts (`IGCP…`) return nothing for this brand today. Never scrape facebook.com.

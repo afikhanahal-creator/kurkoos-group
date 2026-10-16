@@ -5,7 +5,7 @@ Create this Routine in claude.ai (Routines → New), with these settings. The pr
 - Name: `Meta Ads: סריקת מודעות מתחרים יומית`
 - Schedule: every day at 06:00, Asia/Jerusalem
 - Session: new session each run, environment of kurkoos-group, repository `afikhanahal-creator/kurkoos-group`, branch `claude/mobile-execution-typography-g35r64`
-- Connectors: **Meta Ads** and **Supabase** (both must be ticked; without them the run writes nothing)
+- Connectors: **Meta Ads**, **Supabase** and **metricool** (both must be ticked; without them the run writes nothing)
 - Notifications: push on completion
 
 ## Prompt
@@ -23,5 +23,6 @@ Procedure (one run):
 5. Gone ads: for scanned pages that did not error, every `meta_ads` row of that page with `status="active"` whose `last_scan` is neither this run nor the previous run gets `status:"inactive"`, `gone_at:<ISO>`, history appended.
 6. Per competitor, update `meta_summary` on the competitor doc, computed with SQL from the database: `{active, stars (active and days>=60 where days=floor((now-start)/86400) in Asia/Jerusalem), new7 (first_seen within 7 days), gone (inactive count), groups (distinct non empty group_key among active), est_total (sum of estimates), partial (any page partial), last_scan, last_scan_status}` via `data = data || jsonb_build_object('meta_summary', …)`.
 7. Finish the run doc: `finished`, `status` ("ok" when no page errored or partial; "partial" when some did; "failed" when the connector could not be used), `comps:[{comp_id, comp_name, pages:[{page_id, found, est_total, partial, slices, error}], active, new, gone, stars}]`, `totals:{comps, pages, ads_seen, new, gone, stars, partial_pages, errors}`, `notes:[Hebrew sentences: new ads found today, ads that crossed 60 days today, pages blocked or partial]`.
-8. Final reply (Hebrew, 5 lines max): how many competitors and pages were scanned, ads seen, new, gone, stars, how many pages were partial or failed. No numbers that are not in the database.
+7b. Competitor galleries: follow section 5 of `docs/agents/meta-ads-scan-agent.md` (Metricool connector, `scripts/comp_posts_sql.py`, collection `comp_posts`). If Metricool is unavailable, skip it and say so.
+8. Final reply (Hebrew, 5 lines max): how many competitors and pages were scanned, ads seen, new, gone, stars, how many pages were partial or failed, and how many competitor posts were refreshed. No numbers that are not in the database.
 ```

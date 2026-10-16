@@ -41,7 +41,7 @@ def synth_gemini(key, ssml, voice):
     body = {'contents': [{'parts': [{'text': prompt}]}],
             'generationConfig': {'responseModalities': ['AUDIO'], 'speechConfig': {'voiceConfig': {'prebuiltVoiceConfig': {'voiceName': voice}}}}}
     req = urllib.request.Request('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
-                                 data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', 'x-goog-api-key': key})
+                                 data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', **({'x-goog-api-key': key} if key else {})})
     with urllib.request.urlopen(req, timeout=120) as r:
         part = json.load(r)['candidates'][0]['content']['parts'][0]['inlineData']
     return base64.b64decode(part['data'])  # PCM s16le, 24 kHz, mono
@@ -58,9 +58,12 @@ def main():
     ap.add_argument('--rate', type=float, default=1.05)
     a = ap.parse_args()
     env = 'GEMINI_API_KEY' if a.engine == 'gemini' else 'GOOGLE_TTS_API_KEY'
-    key = os.environ.get(env)
-    if not key:
+    # the key may live in the environment's network secrets instead: the proxy then adds the x-goog-api-key header itself
+    key = os.environ.get(env, '')
+    if not key and a.engine == 'google':
         sys.exit(env + ' is not set in this environment')
+    if not key:
+        print('no ' + env + ' variable: relying on the network secret for generativelanguage.googleapis.com')
     voice = a.voice or ('Charon' if a.engine == 'gemini' else 'he-IL-Wavenet-D')
     os.makedirs(OUT, exist_ok=True)
     placed = []

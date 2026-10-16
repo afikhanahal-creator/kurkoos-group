@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>28 days of concrete</title>
+<!-- Kurkoos reel: "28 ימים שאי אפשר לקצר". Flat explainer illustration on paper, navy line work, red only for emphasis.
+  9:16, 43.6s (story timeline 53.9 s at 1.25x), captions at the bottom (same text as narration.md, so a Google TTS voice can be laid on top). Pure function of t.
+  STAGES
+  0.0  - 3.0   the owner's cover image, slow push in
+  3.0  - 6.5   the 28 squares lift off the cover into a calendar of empty days; "28 ימים"
+  6.5  - 10.5  cutaway of a slab: concrete poured into the formwork, then darkening slowly as it hardens
+  10.5 - 13.5  a fast forward button is pressed, nothing moves, red X
+  13.5 - 19.0  days 1 to 7 fill; a cube goes into the press, the strength dial climbs, chip "בדיקת חוזק ראשונה"
+  19.0 - 24.0  days 8 to 28 fill, the dial reaches the design mark, day 28 turns red, tick
+  24.0 - 28.0  the site manager's helmet flips into the developer's folder
+  28.0 - 33.5  schedule: the curing bar is squeezed and springs back, lock
+  33.5 - 39.0  cash flow: the timeline draws, payments drop at the milestones into "תשלום לקבלן" and "שחרור ליווי"
+  39.0 - 44.5  forecast vs site: the straight forecast line breaks against the site's stepped line
+  44.5 - 48.5  pour day: pump boom draws in, concrete flows, a developer with a folder on site
+  48.5 - 52.0  end card on navy: logo, קבוצת קורקוס, מקרקע ועד מסירת מפתח, phone, site
+-->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  @font-face{font-family:Almoni;font-weight:400;font-display:block;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;font-display:block;src:url(../../fonts/Almoni-700.ttf)}
+  body{background:#f7f8fa;margin:0}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#f7f8fa;direction:rtl;font-family:Almoni}
+  #grain{position:absolute;inset:0;opacity:.05;pointer-events:none;z-index:50}
+  .abs{position:absolute;left:0;top:0}
+  .sc{position:absolute;inset:0}
+  #cover{position:absolute;left:0;top:285px;width:1080px;height:1350px;transform-origin:50% 50%}
+  .sq{position:absolute;left:0;top:0;width:64px;height:64px;border-radius:9px;box-sizing:border-box}
+  .big{position:absolute;left:0;right:0;text-align:center;font-weight:700;color:#07293a;line-height:.9}
+  .lbl{position:absolute;font-weight:700;color:#07293a;white-space:nowrap}
+  .chip{position:absolute;font-weight:700;font-size:44px;line-height:1;padding:14px 26px 18px;border-radius:999px;white-space:nowrap;background:#07293a;color:#f7f8fa}
+  .chip.r{background:#a90b0c}
+  .chip.l{background:#f7f8fa;color:#07293a;border:4px solid #07293a}
+  .head{position:absolute;right:80px;top:250px;display:flex;align-items:center;gap:22px}
+  .head b{display:inline-block;width:92px;height:92px;border-radius:18px;background:#a90b0c;color:#f7f8fa;font-size:74px;line-height:100px;text-align:center}
+  .head span{font-weight:700;font-size:84px;color:#07293a;line-height:1}
+  #cap{position:absolute;left:70px;right:70px;bottom:130px;align-items:flex-end;display:flex;justify-content:center}
+  #capb{background:#07293a;color:#f7f8fa;border-radius:26px;padding:24px 40px 30px;font-weight:700;font-size:58px;line-height:1.18;text-align:center;max-width:940px;box-sizing:border-box}
+  #capb .w{display:inline-block}
+  #capb .rd{color:#ff8f87}
+  #end{position:absolute;inset:0;background:#07293a}
+  svg{overflow:visible}
+  svg text{font-family:Almoni;font-weight:700}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="sc" id="world"></div>
+  <img id="cover" src="cover.png" alt="">
+  <div class="sc" id="cal"></div>
+  <div id="cap"><div id="capb"></div></div>
+  <div id="end"></div>
+  <canvas id="grain" width="540" height="960"></canvas>
+</div>
+<script src="../lib/studio.js"></script>
+<script>
+// SPEED: the whole story (written on a 53.9 s timeline) plays 1.25x faster; the last frame holds a moment at the end.
+const W = 1080, H = 1920, STORY = 53.9, SPEED = 1.25, DUR = +(STORY / SPEED + .5).toFixed(2);
+const NAVY = '#07293a', TEAL = '#105572', MIST = '#8fb6c8', PAPER = '#f7f8fa', RED = '#a90b0c', CON = '#c9ced3', COND = '#7d858c';
+const {clamp, lerp, smooth, step, hash} = Studio;
+const $ = id => document.getElementById(id);
+const world = $('world'), calEl = $('cal'), cover = $('cover'), capb = $('capb'), endEl = $('end');
+const k = (t, a, b) => smooth((t - a) / (b - a));                 // eased 0..1 between a and b
+const win = (t, a, b) => t >= a && t < b;
+const vis = (el, on) => { el.style.display = on ? '' : 'none'; return on; };
+// an element that enters (rise + fade) at a, leaves at b
+function inout(el, t, a, b, dy) { dy = dy == null ? 40 : dy; const i = k(t, a, a + .45), o = 1 - k(t, b - .35, b); el.style.opacity = Math.min(i, o); el.style.transform = `translateY(${(1 - i) * dy}px)`; return i * o > 0; }
+const S = {cover: 0, lift: 3.0, slab: 6.5, ff: 10.5, d7: 13.5, d28: 19.0, who: 24.0, gantt: 28.0, cash: 33.5, fc: 39.0, pour: 44.5, end: 49.9};
+
+// ---------- captions (same lines as narration.md; ~ marks a red word) ----------
+const CAPS = [
+  [3.2, 6.3, '~28 ימים.'],
+  [6.6, 10.4, 'זה פרק הזמן שבו בטון מגיע לחוזק שהמהנדס תכנן.'],
+  [10.6, 13.4, 'אין כפתור ~להאיץ את זה.'],
+  [13.6, 18.9, '~יום ~7: בדיקת חוזק ראשונה מראה אם הבטון בכיוון הנכון.'],
+  [19.1, 23.9, '~יום ~28: החוזק לפי התכנון.'],
+  [24.1, 27.9, 'למה זה מעניין ~יזם, ולא רק את מנהל העבודה?'],
+  [28.1, 33.4, '~לוח ~זמנים: שלבים שתלויים בבטון לא יכולים להתקצר.'],
+  [33.6, 38.9, '~תזרים: תשלומים לקבלן ושחרורי ליווי נשענים על הקצב הזה.'],
+  [39.05, 44.8, 'יזם שבונה תחזית בלי להבין את הקצב של האתר מתכנן מספרים ~שהשטח ~לא ~יעמוד ~בהם.'],
+  [44.9, 49.8, 'אנחנו חושבים שכל יזם צריך לבקר באתר ~ביום ~יציקה לפחות פעם אחת.'],
+];
+CAPS.forEach(c => { c.html = c[2].split(' ').map(w => w[0] === '~' ? `<span class="w rd">${w.slice(1)}</span>` : `<span class="w">${w}</span>`).join(' '); });
+let capCur = -1;
+function caption(t) {
+  const i = CAPS.findIndex(c => t >= c[0] && t < c[1]);
+  const box = $('cap');
+  if (i < 0) { box.style.opacity = 0; capCur = -1; return; }
+  const c = CAPS[i];
+  if (capCur !== i) { capb.innerHTML = c.html; capCur = i; }
+  const o = Math.min(k(t, c[0], c[0] + .25), 1 - k(t, c[1] - .2, c[1]));
+  box.style.opacity = o; box.style.transform = `translateY(${(1 - k(t, c[0], c[0] + .3)) * 26}px)`;
+  const ws = capb.children, n = ws.length, span = Math.min(1.1, (c[1] - c[0]) * .35);
+  for (let j = 0; j < n; j++) { const a = c[0] + .1 + span * j / n; const p = k(t, a, a + .22); ws[j].style.opacity = .15 + .85 * p; ws[j].style.transform = `translateY(${(1 - p) * 10}px)`; }
+}
+
+// ---------- the 28 squares: cover position -> calendar position ----------
+const SQ = [];
+const CAL = {x0: 156, y0: 470, s: 96, g: 16};
+for (let n = 1; n <= 28; n++) {
+  const r = Math.floor((n - 1) / 7), c = 6 - ((n - 1) % 7);
+  const el = document.createElement('div'); el.className = 'sq'; calEl.appendChild(el);
+  SQ.push({n, r, c, el, cx: 286 + 74 * c, cy: 285 + 554 + 74 * r, tx: CAL.x0 + (CAL.s + CAL.g) * c, ty: CAL.y0 + (CAL.s + CAL.g) * r, last: n === 28});
+}
+function days(t) {  // how many days are filled
+  if (t < S.d7) return 0;
+  if (t < S.d28) return Math.min(7, Math.floor(lerp(0, 7.999, k(t, S.d7 + .4, S.d7 + 4.2))));
+  return Math.min(28, 7 + Math.floor(lerp(0, 21.999, k(t, S.d28 + .3, S.d28 + 3.4))));
+}
+function calendar(t, mode) {
+  // mode: lift progress 0..1, scale of the whole calendar, visible
+  const lift = mode.lift, sc = mode.scale, ox = mode.ox || 0, oy = mode.oy || 0, d = days(t);
+  SQ.forEach((q, i) => {
+    const li = smooth(clamp(lift * 1.4 - (q.r * 7 + (6 - q.c)) * .012));
+    const size = lerp(64, CAL.s, li);
+    let x = lerp(q.cx, q.tx, li), y = lerp(q.cy, q.ty, li);
+    x = 540 + (x + size / 2 - 540) * sc + ox - size * sc / 2; y = 711 + (y + size / 2 - 711) * sc + oy - size * sc / 2;
+    const filled = q.n <= d, born = filled ? clamp((t - (q.n <= 7 ? lerp(S.d7 + .4, S.d7 + 4.2, (q.n - 1) / 7.999) : lerp(S.d28 + .3, S.d28 + 3.4, (q.n - 8) / 21.999))) / .25) : 0;
+    const el = q.el; el.style.width = el.style.height = size * sc + 'px'; el.style.borderRadius = 9 + li * 7 + 'px';
+    el.style.transform = `translate(${x}px,${y}px) scale(${1 + (filled ? .14 * Math.sin(Math.PI * clamp(born)) : 0)})`;
+    const emptyMix = li;  // 0 = solid navy (cover), 1 = empty day
+    if (q.last && (d >= 28 || li < .5)) { el.style.background = RED; el.style.border = 'none'; }
+    else if (filled) { el.style.background = q.last ? RED : NAVY; el.style.border = 'none'; }
+    else if (emptyMix > .5) { el.style.background = PAPER; el.style.border = `${4 * sc}px solid ${q.last ? RED : MIST}`; }
+    else { el.style.background = NAVY; el.style.border = 'none'; }
+  });
+}
+
+// ---------- scenes ----------
+const svgNS = 'http://www.w3.org/2000/svg';
+function scene(id, html) { const d = document.createElement('div'); d.className = 'sc'; d.id = id; d.innerHTML = html; world.appendChild(d); return d; }
+const bigNum = scene('s28', `<div class="big" id="n28" style="top:250px;font-size:200px">28 <span style="font-size:110px">ימים</span></div>`);
+const counter = scene('scnt', `<div class="big" style="top:250px;font-size:120px"><span style="font-size:90px">יום</span> <span id="cn">0</span></div>`);
+// slab cutaway: formwork walls, concrete rising, aggregate, rebar dots
+const AGG = (() => { const r = Studio.rng(28), a = []; for (let i = 0; i < 70; i++) a.push([160 + r() * 760, 1130 + r() * 260, 5 + r() * 9]); return a; })();
+const slab = scene('slab', `<svg width="1080" height="1920" class="abs">
+  <rect x="140" y="1100" width="800" height="320" rx="18" fill="none" stroke="${NAVY}" stroke-width="8"/>
+  <clipPath id="slc"><rect x="148" y="1108" width="784" height="304" rx="12"/></clipPath>
+  <g clip-path="url(#slc)"><rect id="conc" x="140" y="1100" width="800" height="320" fill="${CON}"/>
+   <g id="agg">${AGG.map(([x, y, r]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${MIST}" opacity=".7"/>`).join('')}</g>
+   <g id="rebar">${Array.from({length: 9}, (_, i) => `<circle cx="${210 + i * 82}" cy="1350" r="11" fill="none" stroke="${NAVY}" stroke-width="6"/>`).join('')}</g></g>
+  <path id="pourline" d="M540 980 C 540 1040, 560 1070, 540 1110" fill="none" stroke="${COND}" stroke-width="40" stroke-linecap="round"/>
+  <text x="540" y="1480" text-anchor="middle" font-size="44" fill="${TEAL}" direction="rtl">חתך בתקרה</text></svg>`);
+// fast forward button + X
+const ffb = scene('ff', `<svg width="1080" height="1920" class="abs">
+  <g id="ffg" transform="translate(540 1230)"><rect x="-200" y="-120" width="400" height="240" rx="48" fill="${NAVY}"/>
+   <path d="M-90 -60 L0 0 L-90 60 Z M0 -60 L90 0 L0 60 Z" fill="${PAPER}" transform="scale(-1 1)"/></g>
+  <g id="ffx" stroke="${RED}" stroke-width="30" stroke-linecap="round"><path id="x1" d="M380 1060 L700 1400" pathLength="1" stroke-dasharray="1" /><path id="x2" d="M700 1060 L380 1400" pathLength="1" stroke-dasharray="1"/></g>
+  <circle id="finger" cx="640" cy="1300" r="46" fill="${MIST}" stroke="${NAVY}" stroke-width="6"/></svg>`);
+// strength dial with a cube
+const dial = scene('dial', `<svg width="1080" height="1920" class="abs">
+  <g transform="translate(540 1430)">
+   <path d="M-300 0 A300 300 0 0 1 300 0" fill="none" stroke="${MIST}" stroke-width="40" stroke-linecap="round" opacity=".45"/>
+   <path id="darc" d="M-300 0 A300 300 0 0 1 300 0" fill="none" stroke="${NAVY}" stroke-width="40" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>
+   <line id="dmark" x1="0" y1="-350" x2="0" y2="-250" stroke="${RED}" stroke-width="12" stroke-linecap="round"/>
+   <g id="needle"><line x1="0" y1="0" x2="0" y2="-240" stroke="${RED}" stroke-width="14" stroke-linecap="round"/><circle r="26" fill="${NAVY}"/></g>
+   <g id="cube" transform="translate(0 -120)"><path d="M-60 -20 L0 -50 L60 -20 L0 10 Z" fill="${CON}" stroke="${NAVY}" stroke-width="6"/><path d="M-60 -20 L0 10 L0 80 L-60 50 Z" fill="${COND}" stroke="${NAVY}" stroke-width="6"/><path d="M60 -20 L0 10 L0 80 L60 50 Z" fill="#a8afb5" stroke="${NAVY}" stroke-width="6"/></g>
+   <path id="tick" d="M-50 -170 L-15 -135 L55 -205" fill="none" stroke="${RED}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
+  </g></svg>
+  <div class="chip" id="c7" style="right:110px;top:1050px">בדיקת חוזק ראשונה</div>
+  <div class="chip r" id="c28" style="left:110px;top:1050px">החוזק לפי התכנון</div>`);
+// helmet -> folder
+const who = scene('who', `<svg width="1080" height="1920" class="abs"><g id="flip" transform="translate(540 980)">
+  <g id="helmet"><path d="M-200 60 A200 190 0 0 1 200 60 Z" fill="${MIST}" stroke="${NAVY}" stroke-width="10"/><rect x="-240" y="50" width="480" height="44" rx="22" fill="${NAVY}"/><path d="M-30 -125 L30 -125 L22 52 L-22 52 Z" fill="${NAVY}" opacity=".85"/></g>
+  <g id="folder"><path d="M-220 -120 L-60 -120 L-30 -80 L220 -80 L220 150 L-220 150 Z" fill="${NAVY}"/><rect x="-190" y="-50" width="380" height="170" rx="10" fill="${PAPER}"/><path d="M-150 0 H150 M-150 45 H90" stroke="${MIST}" stroke-width="14" stroke-linecap="round"/></g>
+  </g></svg><div class="big" id="whoL" style="top:1240px;font-size:84px"></div>`);
+// gantt
+const gantt = scene('gantt', `<div class="head" id="gh"><b>1</b><span>לוח זמנים</span></div>
+  <div class="lbl" style="right:90px;top:560px;font-size:48px">יציקה</div><div class="lbl" style="right:90px;top:760px;font-size:48px">28 ימים</div><div class="lbl" style="right:90px;top:960px;font-size:48px">השלב הבא</div>
+  <svg width="1080" height="1920" class="abs"><line x1="80" y1="520" x2="80" y2="1120" stroke="${MIST}" stroke-width="4"/>
+   <rect id="gb1" x="660" y="550" width="120" height="80" rx="16" fill="${NAVY}"/>
+   <rect id="gb2" x="300" y="750" width="360" height="80" rx="16" fill="${PAPER}" stroke="${RED}" stroke-width="8"/>
+   <rect id="gb3" x="80" y="950" width="220" height="80" rx="16" fill="${TEAL}"/>
+   <g id="arrows" stroke="${NAVY}" stroke-width="12" stroke-linecap="round" fill="none"><path id="ar1" d="M740 790 L690 790 M710 765 L690 790 L710 815"/><path id="ar2" d="M220 790 L270 790 M250 765 L270 790 L250 815"/></g>
+   <g id="lock" transform="translate(480 700)"><rect x="-40" y="-10" width="80" height="64" rx="10" fill="${RED}"/><path d="M-24 -10 V-34 A24 24 0 0 1 24 -34 V-10" fill="none" stroke="${RED}" stroke-width="12"/></g></svg>`);
+// cash flow
+const cash = scene('cash', `<div class="head"><b>2</b><span>תזרים</span></div>
+  <svg width="1080" height="1920" class="abs"><path id="tl" d="M980 820 L100 820" stroke="${NAVY}" stroke-width="10" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>
+   <g id="m7" transform="translate(760 820)"><circle r="26" fill="${NAVY}"/></g><g id="m28" transform="translate(300 820)"><circle r="34" fill="${RED}"/></g>
+   <g id="coins">${[0, 1, 2, 3, 4, 5].map(i => `<g class="coin"><ellipse rx="44" ry="16" fill="${TEAL}" stroke="${NAVY}" stroke-width="5"/></g>`).join('')}</g>
+   <rect x="160" y="1150" width="300" height="220" rx="22" fill="none" stroke="${NAVY}" stroke-width="8"/><rect x="620" y="1150" width="300" height="220" rx="22" fill="none" stroke="${NAVY}" stroke-width="8"/></svg>
+  <div class="lbl" style="right:700px;top:740px;font-size:44px;color:${NAVY}">יום 28</div><div class="lbl" style="right:250px;top:740px;font-size:44px;color:${NAVY}">יום 7</div>
+  <div class="lbl" style="right:620px;top:1400px;font-size:46px;width:300px;text-align:center">שחרור ליווי</div><div class="lbl" style="right:160px;top:1400px;font-size:46px;width:300px;text-align:center">תשלום לקבלן</div>`);
+// forecast vs site
+const fc = scene('fc', `<svg width="1080" height="1920" class="abs">
+  <rect x="80" y="420" width="920" height="900" rx="30" fill="#eef2f5"/>
+  <path d="M120 1260 H960 M120 1260 V460" stroke="${MIST}" stroke-width="6"/>
+  <path id="site" d="M960 1240 H860 V1150 H720 V1060 H580 V970 H440 V880 H300 V790 H160" fill="none" stroke="${NAVY}" stroke-width="12" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
+  <path id="fcst" d="M960 1240 L560 560" fill="none" stroke="${RED}" stroke-width="10" stroke-dasharray="26 18"/>
+  <g id="crack" stroke="${RED}" stroke-width="10" stroke-linecap="round"><path d="M700 830 L740 860 L690 890 L735 920"/></g></svg>
+  <div class="chip l" style="right:110px;top:470px">התחזית</div><div class="chip" style="left:110px;top:1180px">השטח</div>`);
+// pour day
+const pour = scene('pour', `<svg width="1080" height="1920" class="abs">
+  <path d="M60 1360 H1020" stroke="${NAVY}" stroke-width="8"/>
+  <g transform="translate(700 1250)"><rect x="-150" y="-70" width="300" height="110" rx="18" fill="${NAVY}"/><rect x="100" y="-130" width="110" height="170" rx="14" fill="${TEAL}"/><circle cx="-90" cy="60" r="38" fill="${PAPER}" stroke="${NAVY}" stroke-width="10"/><circle cx="130" cy="60" r="38" fill="${PAPER}" stroke="${NAVY}" stroke-width="10"/></g>
+  <path id="boom" d="M640 1180 L560 760 L250 700 L250 1000" fill="none" stroke="${RED}" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
+  <rect x="140" y="1180" width="260" height="70" rx="10" fill="none" stroke="${NAVY}" stroke-width="8"/><rect id="pfill" x="148" y="1188" width="244" height="54" fill="${CON}"/>
+  <path id="flow" d="M250 1000 L250 1188" stroke="${COND}" stroke-width="30" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>
+  <g id="dev" transform="translate(420 1280)"><circle cy="-150" r="40" fill="${MIST}" stroke="${NAVY}" stroke-width="8"/><path d="M-46 -170 A46 40 0 0 1 46 -170 Z" fill="${RED}"/><path d="M-50 -100 H50 L40 60 H-40 Z" fill="${NAVY}"/><rect x="34" y="-60" width="60" height="78" rx="6" fill="${TEAL}"/></g></svg>
+  <div class="chip r" style="right:110px;top:520px">יום יציקה</div>`);
+endEl.innerHTML = `<img src="logo.png" alt="" style="position:absolute;left:390px;top:560px;width:300px">
+  <div class="big" id="e1" style="top:1000px;font-size:110px;color:${PAPER}">קבוצת קורקוס</div>
+  <div class="big" id="e2" style="top:1140px;font-size:62px;color:${MIST};font-weight:400">מקרקע ועד מסירת מפתח</div>
+  <div class="big" id="e3" style="top:1290px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:66px;padding:18px 44px 24px;border-radius:999px" dir="ltr">055-981-1814</span></div>
+  <div class="big" id="e4" style="top:1450px;font-size:52px;color:${PAPER};font-weight:400" dir="ltr">kurkoos-group.co.il</div>`;
+
+// ---------- grain (static) ----------
+(() => { const c = $('grain'), x = c.getContext('2d'), d = x.createImageData(540, 960), r = Studio.rng(7); for (let i = 0; i < d.data.length; i += 4) { const v = r() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); c.style.width = '1080px'; c.style.height = '1920px'; })();
+
+function seekStory(t) {
+  // 1 cover
+  vis(cover, t < S.lift + 1.2);
+  cover.style.transform = `scale(${1 + .035 * k(t, 0, S.lift)})`;
+  cover.style.opacity = 1 - k(t, S.lift + .2, S.lift + 1.0);
+  // squares: on the cover they sit exactly on the image, then lift into the calendar
+  const calOn = t >= S.lift && t < S.who + .8;
+  vis(calEl, calOn || t < S.lift);
+  if (t < S.lift) calEl.style.opacity = 0;
+  else {
+    const lift = k(t, S.lift + .3, S.lift + 1.9);
+    // scenes C and D push the calendar up and shrink it a bit; E and F bring it back; G sends it away
+    const sc = 1 - .18 * k(t, S.slab, S.slab + .6) + .18 * k(t, S.d7 - .5, S.d7) - .12 * k(t, S.d7 + .1, S.d7 + .7) - .5 * k(t, S.who, S.who + .7);
+    const oy = -110 * k(t, S.slab, S.slab + .6) + 110 * k(t, S.d7 - .5, S.d7) - 90 * k(t, S.d7 + .1, S.d7 + .7) - 600 * k(t, S.who, S.who + .7);
+    calEl.style.opacity = 1 - k(t, S.who + .2, S.who + .7);
+    calendar(t, {lift, scale: sc, oy});
+  }
+  // "28 ימים" header (B to D)
+  vis(bigNum, t >= S.lift + .8 && t < S.d7); inout($('n28'), t, S.lift + 1.2, S.d7, 30);
+  // day counter (E, F)
+  vis(counter, win(t, S.d7, S.who)); inout(counter, t, S.d7 + .1, S.who, 30); $('cn').textContent = days(t);
+  // C slab
+  if (vis(slab, win(t, S.slab, S.ff + .3))) {
+    inout(slab, t, S.slab, S.ff + .3, 60);
+    const fill = k(t, S.slab + .5, S.slab + 2.3), hard = k(t, S.slab + 2.3, S.ff);
+    const conc = $('conc'); conc.setAttribute('y', 1420 - 320 * fill); conc.setAttribute('height', 320 * fill);
+    const mix = (a, b, p) => '#' + [1, 3, 5].map(i => Math.round(lerp(parseInt(a.substr(i, 2), 16), parseInt(b.substr(i, 2), 16), p)).toString(16).padStart(2, '0')).join('');
+    conc.setAttribute('fill', mix(CON, COND, hard));
+    $('agg').style.opacity = fill; $('pourline').style.opacity = fill < 1 ? 1 : 1 - k(t, S.slab + 2.3, S.slab + 2.6);
+    $('rebar').style.opacity = .4 + .6 * (1 - fill);
+  }
+  // D fast forward
+  if (vis(ffb, win(t, S.ff, S.d7 + .2))) {
+    inout(ffb, t, S.ff, S.d7 + .2, 60);
+    const press = Math.sin(Math.PI * clamp((t - (S.ff + .9)) / .5)), press2 = Math.sin(Math.PI * clamp((t - (S.ff + 1.6)) / .4));
+    $('ffg').setAttribute('transform', `translate(540 1230) scale(${1 - .08 * Math.max(press, press2)})`);
+    $('finger').setAttribute('transform', `translate(${-30 * Math.max(press, press2)} ${-40 * (1 - Math.max(press, press2))})`);
+    $('finger').style.opacity = k(t, S.ff + .5, S.ff + .8) * (1 - k(t, S.ff + 2.1, S.ff + 2.3));
+    $('x1').style.strokeDashoffset = 1 - k(t, S.ff + 2.2, S.ff + 2.45); $('x2').style.strokeDashoffset = 1 - k(t, S.ff + 2.4, S.ff + 2.65);
+  }
+  // E, F dial
+  if (vis(dial, win(t, S.d7, S.who + .3))) {
+    inout(dial, t, S.d7 + .3, S.who + .3, 60);
+    const v = .55 * k(t, S.d7 + 1.0, S.d7 + 4.4) + .45 * k(t, S.d28 + .3, S.d28 + 3.5);   // 0..1 of the dial, 1 = design mark
+    const a = lerp(-90, 0, v) ;  // degrees from left to top
+    $('needle').setAttribute('transform', `rotate(${a})`);
+    $('darc').style.strokeDashoffset = 1 - v * .5;
+    $('dmark').style.opacity = k(t, S.d7 + .6, S.d7 + 1.0);
+    $('cube').setAttribute('transform', `translate(0 ${-120 - 420 * (1 - k(t, S.d7 + .4, S.d7 + 1.1))})`);
+    inout($('c7'), t, S.d7 + 4.0, S.d28 + .4, 24);
+    inout($('c28'), t, S.d28 + 3.4, S.who + .3, 24);
+    $('tick').style.strokeDashoffset = 1 - k(t, S.d28 + 3.5, S.d28 + 3.9);
+  }
+  // G helmet -> folder
+  if (vis(who, win(t, S.who, S.gantt + .3))) {
+    inout(who, t, S.who + .3, S.gantt + .3, 60);
+    const f = k(t, S.who + 1.6, S.who + 2.2), sx = Math.cos(Math.PI * f);
+    $('flip').setAttribute('transform', `translate(540 980) scale(${Math.abs(sx) * 1.1 + .02} 1.1)`);
+    $('helmet').style.display = f < .5 ? '' : 'none'; $('folder').style.display = f < .5 ? 'none' : '';
+    $('whoL').textContent = f < .5 ? 'מנהל עבודה' : 'יזם'; $('whoL').style.color = f < .5 ? NAVY : RED;
+  }
+  // H gantt
+  if (vis(gantt, win(t, S.gantt, S.cash + .3))) {
+    inout(gantt, t, S.gantt + .2, S.cash + .3, 60);
+    const sq = k(t, S.gantt + 1.4, S.gantt + 2.0) * (1 - step(t - (S.gantt + 2.5), {f: 2.4, z: .35}));
+    const w2 = 360 * (1 - .45 * sq);
+    $('gb2').setAttribute('width', w2); $('gb2').setAttribute('x', 660 - w2);
+    $('gb3').setAttribute('x', 80 + (360 - w2) * 0); $('gb3').setAttribute('transform', `translate(${(360 - w2)} 0)`);
+    $('arrows').style.opacity = k(t, S.gantt + 1.0, S.gantt + 1.3) * (1 - k(t, S.gantt + 2.4, S.gantt + 2.6));
+    $('ar1').setAttribute('transform', `translate(${-90 * sq} 0)`); $('ar2').setAttribute('transform', `translate(${90 * sq} 0)`);
+    const lk = step(t - (S.gantt + 2.9), {f: 2.6, z: .5});
+    $('lock').setAttribute('transform', `translate(480 ${700 - 40 * (1 - Math.min(1, lk))}) scale(${Math.max(0, lk)})`);
+  }
+  // I cash flow
+  if (vis(cash, win(t, S.cash, S.fc + .3))) {
+    inout(cash, t, S.cash + .2, S.fc + .3, 60);
+    $('tl').style.strokeDashoffset = 1 - k(t, S.cash + .5, S.cash + 1.6);
+    $('m7').setAttribute('transform', `translate(760 820) scale(${Math.max(0, step(t - (S.cash + 1.0)))})`);
+    $('m28').setAttribute('transform', `translate(300 820) scale(${Math.max(0, step(t - (S.cash + 1.5)))})`);
+    [...document.querySelectorAll('#coins .coin')].forEach((g, i) => {
+      const to = i % 2 ? [310, 1330 - Math.floor(i / 2) * 36] : [770, 1330 - Math.floor(i / 2) * 36];
+      const from = i % 2 ? [300, 820] : [760, 820];
+      const a = S.cash + 2.0 + i * .45, p = clamp((t - a) / .6), e = p * p;
+      g.setAttribute('transform', `translate(${lerp(from[0], to[0], p)} ${lerp(from[1], to[1], e)})`); g.style.opacity = p > 0 ? 1 : 0;
+    });
+  }
+  // J forecast vs site
+  if (vis(fc, win(t, S.fc, S.pour + .3))) {
+    inout(fc, t, S.fc + .2, S.pour + .3, 60);
+    $('site').style.strokeDashoffset = 1 - k(t, S.fc + .6, S.fc + 3.0);
+    const fp = k(t, S.fc + .6, S.fc + 1.6); $('fcst').style.clipPath = `inset(${(1 - fp) * 100}% 0 0 ${0}%)`;
+    const br = k(t, S.fc + 3.0, S.fc + 3.3); $('crack').style.opacity = br;
+    $('fcst').setAttribute('transform', `translate(${br * 14} ${br * 24}) rotate(${br * 4} 760 900)`); $('fcst').style.opacity = 1 - .5 * k(t, S.fc + 3.3, S.fc + 4.2);
+  }
+  // K pour day
+  if (vis(pour, win(t, S.pour, S.end + .4))) {
+    inout(pour, t, S.pour + .2, S.end + .4, 60);
+    $('boom').style.strokeDashoffset = 1 - k(t, S.pour + .4, S.pour + 1.4);
+    $('flow').style.strokeDashoffset = 1 - k(t, S.pour + 1.4, S.pour + 1.9);
+    const pf = k(t, S.pour + 1.8, S.pour + 3.6); $('pfill').setAttribute('width', 244 * pf); $('pfill').setAttribute('x', 148 + 244 * (1 - pf));
+    $('dev').setAttribute('transform', `translate(${420 + 140 * (1 - k(t, S.pour + .8, S.pour + 1.8))} 1280)`);
+  }
+  // L end card
+  const e = k(t, S.end, S.end + .5);
+  vis(endEl, t >= S.end); endEl.style.clipPath = `circle(${e * 140}% at 50% 90%)`;
+  ['e1', 'e2', 'e3', 'e4'].forEach((id, i) => inout($(id), t, S.end + .4 + i * .25, STORY + 1, 30));
+  caption(t);
+  // a slow push in on every scene, so no frame stands still (cover and end card keep their own framing)
+  const sc = [S.lift, S.slab, S.ff, S.d7, S.d28, S.who, S.gantt, S.cash, S.fc, S.pour].filter(x => x <= t).pop();
+  const nx = [S.slab, S.ff, S.d7, S.d28, S.who, S.gantt, S.cash, S.fc, S.pour, S.end].find(x => x > t) || S.end;
+  const z = sc != null && t < S.end ? 1 + .035 * smooth((t - sc) / (nx - sc)) : 1;
+  [world, calEl].forEach(el => { el.style.transformOrigin = '50% 46%'; el.style.transform = `scale(${z})`; });
+}
+function seek(t) { return seekStory(Math.min(STORY, t * SPEED)); }
+
+function check(t) {
+  const out = [], cap = $('cap').getBoundingClientRect();
+  if ($('cap').style.opacity > .5 && (cap.top < 0 || cap.bottom > 1840)) out.push('caption outside safe area');
+  if (capb.getBoundingClientRect().height > 260) out.push('caption taller than 3 lines');
+  return out;
+}
+
+Studio.define({
+  w: W, h: H, duration: DUR,
+  stages: [{t: 1.2, label: 'cover'}, {t: 4.16, label: 'calendar'}, {t: 7.68, label: 'slab hardens'}, {t: 10.56, label: 'fast forward X'},
+    {t: 14.4, label: 'day 7'}, {t: 18.8, label: 'day 28'}, {t: 21.6, label: 'developer'}, {t: 24.96, label: 'squeeze bounce'}, {t: 26.4, label: 'locked'},
+    {t: 30.4, label: 'cash flow'}, {t: 34.8, label: 'forecast breaks'}, {t: 39.04, label: 'pour day'}, {t: 42.08, label: 'end card'}],
+  fonts: ['700 60px Almoni', '400 60px Almoni'],
+  seek, check,
+});
+</script>
+</body>
+</html>

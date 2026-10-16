@@ -1,0 +1,85 @@
+/* ============================================================
+   POLISH LAYER, Apple design principles + Emil Kowalski's design engineering
+   ------------------------------------------------------------
+   Loaded after global.css. Changes feel, not identity: brand colours, fonts and layout stay.
+   1. Typography: tracking and leading by size (tight on big headings, natural on body); Hebrew is never letter spaced.
+   2. Response: every pressable thing answers on press with a small scale, under 160 ms; no colour flash on press.
+   3. Restraint: hover effects only where a real pointer hovers; no Material ripple.
+   4. Material: the header is a translucent layer that content scrolls under, with a hairline edge instead of a heavy shadow.
+   5. Accessibility: reduced motion, reduced transparency and more contrast each get their own fallback.
+   ============================================================ */
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);          /* strong ease out for UI (Emil) */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --press-scale: 0.97;
+  --press-dur: 120ms;
+}
+
+/* ---------- 1. Typography ---------- */
+html { scroll-padding-top: 96px; -webkit-text-size-adjust: 100%; }
+h1, .text-h1 { letter-spacing: -0.022em; line-height: 1.06; }
+h2, .section-title, .text-h2 { letter-spacing: -0.018em; line-height: 1.12; }
+h3, .text-h3 { letter-spacing: -0.01em; line-height: 1.25; }
+h4, h5, h6 { letter-spacing: 0; line-height: 1.3; }
+p, li { line-height: 1.65; }
+/* eyebrow labels: Hebrew letters must not be spread apart; uppercase does nothing in Hebrew */
+.eyebrow { letter-spacing: 0.01em; text-transform: none; font-weight: 700; }
+:lang(en) .eyebrow { letter-spacing: 0.12em; text-transform: uppercase; }
+/* numbers line up in counters, prices and tables */
+.stat, .stats, [class*="counter"], [class*="price"], table { font-variant-numeric: tabular-nums; }
+::selection { background: rgba(143, 182, 200, 0.55); color: #07293a; }
+
+/* ---------- 2. Response on press ---------- */
+a, button, [role="button"], summary, label { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.btn {
+  transition: transform var(--press-dur) var(--ease-out),
+    background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+  will-change: auto;
+}
+/* press feedback lives in global.css (.btn:active scale 0.97, darker fill on touch, no white flash) */
+/* cards and tiles that are links answer on press too */
+a[class*="card"]:active, a[class*="tile"]:active, a[class*="Card"]:active {
+  transform: scale(0.985);
+  transition: transform var(--press-dur) var(--ease-out);
+}
+
+/* ---------- 3. Restraint: hover only with a real pointer ---------- */
+@media (hover: none) {
+  /* on touch screens a tap must not leave a "hovered" lift or flip behind */
+  .a11y-fab:hover { transform: none; background: #fff; color: #105572; }
+}
+.ripple { display: none !important; }
+
+/* ---------- 4. Material: translucent header ---------- */
+.header__main {
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(7, 41, 58, 0.08);
+}
+.header--scrolled .header__main {
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
+  /* a scroll edge, not a drop shadow: content passes under a quiet hairline */
+  box-shadow: 0 1px 0 rgba(7, 41, 58, 0.08), 0 8px 24px -16px rgba(7, 41, 58, 0.18);
+  border-bottom-color: transparent;
+}
+/* the open mobile menu needs a solid surface behind its links */
+.header--open .header__main, .header__main:has(+ .header__mobile) { background: #fff; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header__main, .header--scrolled .header__main { background: #fff; }
+}
+
+/* ---------- 5. Accessibility ---------- */
+@media (prefers-reduced-transparency: reduce) {
+  .header__main, .header--scrolled .header__main { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .header__main { background: #fff; border-bottom: 1px solid #07293a; }
+  .btn { border-width: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn:active, button:active, a:active { transform: none !important; }
+}

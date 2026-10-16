@@ -673,7 +673,7 @@ html.header-top-hidden .pd-anchors { top: 0; }
   font-family: var(--font-heading);
   font-weight: 600;
   color: var(--color-text-soft);
-  transition: all var(--dur-fast);
+  transition: transform var(--dur-fast), opacity var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast);
 }
 .pd-gtab:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
 .pd-gtab.is-active { background: var(--color-secondary); border-color: var(--color-secondary); color: #fff; }

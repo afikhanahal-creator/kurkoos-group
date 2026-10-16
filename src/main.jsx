@@ -4,10 +4,14 @@ import { BrowserRouter } from 'react-router-dom'
 import { I18nProvider } from './i18n/index.jsx'
 import App from './App.jsx'
 import ErrorBoundary, { reloadOnce } from './components/ErrorBoundary.jsx'
-import { initRipples } from './lib/ripple.js'
-import './styles/global.css'
 
-initRipples()
+import './styles/global.css'
+import './styles/polish.css'
+
+// iOS Safari applies :active (the press feedback) only when the page listens to touchstart
+if (typeof document !== 'undefined') document.addEventListener('touchstart', () => {}, { passive: true })
+// Material ripple retired: press feedback is a small scale on :active (Apple design pass, polish.css)
+// initRipples()
 
 // חיבור-מוקדם (preconnect) למקורות הנתונים — DNS+TLS נפתחים במקביל לטעינת
 // הקוד, כך שהבקשה הראשונה ל-Supabase/Cloudinary יוצאת בלי המתנה.

@@ -49,8 +49,12 @@
   display: block;
   transition: transform 0.6s var(--ease-out), filter 0.5s var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover { box-shadow: var(--shadow-4); transform: translateY(-4px); z-index: 5; }
+}
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover img { transform: scale(1.08); filter: brightness(0.9); }
+}
 
 /* תווית שם תמידית (לפני ריחוף) */
 .hc-card__name {
@@ -65,7 +69,9 @@
   font-size: 1.05rem;
   transition: opacity var(--dur-base) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover .hc-card__name { opacity: 0; }
+}
 
 /* ---- התריס שעולה בריחוף ---- */
 .hc-card__shutter {
@@ -83,7 +89,9 @@
   transform: translateY(101%);
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover .hc-card__shutter { transform: translateY(0); }
+}
 
 .hc-card__shutter-bar {
   width: 44px;
@@ -140,10 +148,18 @@
   transform: translateY(10px);
   transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover .hc-card__shutter-bar { opacity: 1; transform: none; transition-delay: 0.18s; }
+}
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover .hc-card__shutter-title { opacity: 1; transform: none; transition-delay: 0.24s; }
+}
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover .hc-card__shutter-desc { opacity: 1; transform: none; transition-delay: 0.3s; }
+}
+@media (hover: hover) and (pointer: fine) {
 .hc-card:hover .hc-card__shutter-cta { opacity: 1; transform: none; transition-delay: 0.36s; }
+}
 
 /* ---- Stats ---- */
 .hero-collage__stats {

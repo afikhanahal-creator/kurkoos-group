@@ -86,4 +86,5 @@
   color: #fff;
   white-space: normal;
 }
-.btn.lf-wa:hover { background: #18843f; border-color: #18843f; color: #fff; }
+@media (hover: hover) and (pointer: fine) {
+.btn.lf-wa:hover { background: #18843f; border-color: #18843f; color: #fff; } }

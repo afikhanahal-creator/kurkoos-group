@@ -43,7 +43,9 @@ body { accent-color: var(--color-secondary); }
   border-radius: var(--radius-pill);
   border: 2px solid var(--color-bg);
 }
+@media (hover: hover) and (pointer: fine){
 ::-webkit-scrollbar-thumb:hover { background: var(--color-primary-300); }
+}
 
 /* רוחב מדויק במובייל — מניעת חריגה אופקית בלי לשבור position:fixed.
    overflow-x: clip חוסם גלילה אופקית אך (בניגוד ל-hidden) לא יוצר
@@ -426,10 +428,12 @@ form button[type='submit'] {
   border-color: var(--color-accent-500);
   color: #fff;
 }
+@media (hover: hover) and (pointer: fine){
 form button[type='submit']:hover {
   background: var(--color-accent-600);
   border-color: var(--color-accent-600);
   color: #fff;
+}
 }
 form button[type='submit']:active {
   background: #fff !important;

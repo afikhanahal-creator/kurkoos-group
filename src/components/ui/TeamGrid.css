@@ -89,9 +89,11 @@
   transition: filter 0.5s var(--ease-out), transform 0.6s var(--ease-out);
 }
 /* ב-hover (דסקטופ) או במגע במובייל — התמונה הופכת לשחור-לבן (הבהירות נשמרת) */
+@media (hover: hover) and (pointer: fine) {
 .flip-card:hover .flip-card-img {
   filter: grayscale(1) brightness(var(--img-bright, 1));
   transform: scale(calc(var(--img-zoom, 1) * 1.04));
+}
 }
 /* בלחיצה הכרטיס מסתובב לצד האחורי — והתמונה נשארת שחור-לבן בזמן הסיבוב */
 .flip-card.is-active .flip-card-img { filter: grayscale(1) brightness(var(--img-bright, 1)); }
@@ -174,7 +176,9 @@
   color: #ff6b5e;
   align-self: center;
 }
+@media (hover: hover) and (pointer: fine) {
 .flip-card-link:hover { text-decoration: underline; }
+}
 
 /* ---------- רספונסיביות ---------- */
 @media (max-width: 900px) {

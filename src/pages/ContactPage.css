@@ -33,7 +33,9 @@
   cursor: pointer;
   transition: border-color var(--dur-fast, .15s), background var(--dur-fast, .15s), color var(--dur-fast, .15s);
 }
+@media (hover: hover) and (pointer: fine) {
 .cpage__topic:hover { border-color: var(--color-primary-500); }
+}
 .cpage__topic.is-active {
   background: var(--color-secondary);
   border-color: var(--color-secondary);

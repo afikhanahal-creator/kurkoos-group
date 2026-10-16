@@ -28,10 +28,12 @@
     box-shadow var(--dur-base, .25s) var(--ease-out, ease),
     border-color var(--dur-base, .25s) var(--ease-out, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .nf__card:hover {
   transform: translateY(-3px);
   border-color: var(--color-secondary);
   box-shadow: var(--shadow-lg);
+}
 }
 
 .nf__card-title {
@@ -63,10 +65,12 @@
     background var(--dur-base, .25s) var(--ease-out, ease),
     color var(--dur-base, .25s) var(--ease-out, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .nf__card:hover .nf__card-go {
   background: var(--color-secondary);
   color: #fff;
   transform: translateX(3px);
+}
 }
 
 /* Reveal עוטף כל כרטיס, ולכן הוא צריך להימתח לגובה התא כדי שכל
@@ -77,8 +81,12 @@
 .nf__cta { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
 
 @media (prefers-reduced-motion: reduce) {
+  @media (hover: hover) and (pointer: fine) {
   .nf__card:hover { transform: none; }
+  }
+  @media (hover: hover) and (pointer: fine) {
   .nf__card:hover .nf__card-go { transform: none; }
+  }
 }
 
 @media (max-width: 520px) {

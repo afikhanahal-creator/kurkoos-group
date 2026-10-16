@@ -16,7 +16,9 @@
   box-shadow: var(--shadow-md);
   transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .fab:hover { transform: translateY(-4px) scale(1.05); }
+}
 .fab--wa { background: #25d366; }
 .fab--phone { background: var(--color-secondary); }
 .fab--top { background: var(--color-primary); }

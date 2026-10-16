@@ -40,7 +40,9 @@
   color: var(--bc-muted);
   transition: color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .breadcrumbs__link:hover { color: var(--color-accent); }
+}
 
 /* קישור הבית — affordance ברור של "חזרה": גלולה-כפתור עם חץ וגבול */
 .breadcrumbs__link--back {
@@ -58,6 +60,7 @@
     box-shadow var(--dur-base) var(--ease-out),
     transform var(--dur-fast) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .breadcrumbs__link--back:hover {
   background: var(--bc-back);
   color: var(--bc-back-fg-hover);
@@ -65,11 +68,16 @@
   box-shadow: var(--shadow-3);
   transform: translateY(-1px);
 }
+}
 .breadcrumbs__link--back:active { transform: translateY(0) scale(0.97); }
 .breadcrumbs__back-ic { flex-shrink: 0; transition: transform var(--dur-base) var(--ease-out); }
 /* בריחוף — החץ "נדחף" לכיוון אחורה (ימינה ב-RTL, שמאלה ב-LTR) */
+@media (hover: hover) and (pointer: fine) {
 .breadcrumbs__link--back:hover .breadcrumbs__back-ic { transform: translateX(-3px); }
+}
+@media (hover: hover) and (pointer: fine) {
 [dir='rtl'] .breadcrumbs__link--back:hover .breadcrumbs__back-ic { transform: translateX(3px); }
+}
 
 /* העמוד הנוכחי */
 .breadcrumbs__current { color: var(--bc-current); font-weight: 700; }

@@ -46,7 +46,9 @@ a[class*="card"]:active, a[class*="tile"]:active, a[class*="Card"]:active {
 
 /* ---------- 3. Restraint: hover only with a real pointer ---------- */
 @media (hover: none) {
-  /* on touch screens a tap must not leave a "hovered" lift or flip behind */
+  /* on touch screens there is no hover: what hover revealed on a desktop is simply shown */
+  .pg-card__reveal, .xgal__zoom, .plan-acc__preview-zoom { opacity: 1; transform: none; }
+  /* a tap must not leave a "hovered" lift or flip behind */
   .a11y-fab:hover { transform: none; background: #fff; color: #105572; }
 }
 .ripple { display: none !important; }
@@ -70,6 +72,11 @@ a[class*="card"]:active, a[class*="tile"]:active, a[class*="Card"]:active {
 .header--open .header__main, .header__main:has(+ .header__mobile) { background: #fff; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .header__main, .header--scrolled .header__main { background: #fff; }
+}
+
+/* ---------- iPhone: a field under 16px makes Safari zoom the whole page on focus ---------- */
+@media (max-width: 768px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea { font-size: max(16px, 1rem) !important; }
 }
 
 /* ---------- 5. Accessibility ---------- */

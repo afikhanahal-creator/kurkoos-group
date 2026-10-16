@@ -95,7 +95,9 @@
   color: var(--color-text);
   transition: color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .vc-item__head:hover .vc-item__title { color: var(--color-secondary); }
+}
 .vc-item__chevron {
   color: var(--color-text-soft);
   transition: transform var(--dur-base) var(--ease-out), color var(--dur-base);

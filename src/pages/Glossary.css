@@ -17,7 +17,8 @@
   font-family: var(--font-heading); font-weight: 700; font-size: 0.88rem;
   color: var(--color-text-muted, #5a6a7a); text-decoration: none; transition: transform .15s, opacity .15s, background-color .15s, border-color .15s, color .15s, box-shadow .15s, filter .15s;
 }
-.glossary__nav-link:hover { border-color: var(--color-secondary, #16688c); color: var(--color-secondary, #16688c); background: rgba(22, 104, 140, 0.05); }
+@media (hover: hover) and (pointer: fine) {
+.glossary__nav-link:hover { border-color: var(--color-secondary, #16688c); color: var(--color-secondary, #16688c); background: rgba(22, 104, 140, 0.05); } }
 
 .glossary__empty { text-align: center; color: var(--color-text-muted, #5a6a7a); padding: 2.5rem 0; }
 
@@ -41,13 +42,15 @@
   color: var(--color-text, #16202e); margin: 0 0 0.45rem; display: flex; align-items: baseline; gap: 0.45rem;
 }
 .glossary__anchor { color: var(--color-border, #cbd5e1); text-decoration: none; font-size: 0.95rem; transition: color .15s; }
-.glossary__term:hover .glossary__anchor { color: var(--color-secondary, #16688c); }
+@media (hover: hover) and (pointer: fine) {
+.glossary__term:hover .glossary__anchor { color: var(--color-secondary, #16688c); } }
 .glossary__term-def { margin: 0; color: var(--color-text-muted, #4a5a6a); font-size: 1rem; line-height: 1.75; max-width: 80ch; }
 
 .glossary__related { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem; margin: 0.7rem 0 0; font-size: 0.85rem; }
 .glossary__related span { color: var(--color-text-muted, #5a6a7a); font-weight: 600; }
 .glossary__related a { color: var(--color-secondary, #16688c); text-decoration: none; font-weight: 600; }
-.glossary__related a:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+.glossary__related a:hover { text-decoration: underline; } }
 
 .glossary__more { margin-top: 1.4rem; padding-top: 1.8rem; border-top: 1px solid var(--color-border, #e3e7ee); }
 .glossary__more-lead { color: var(--color-text-muted, #5a6a7a); margin: 0.5rem 0 1rem; }
@@ -58,7 +61,8 @@
   font-family: var(--font-heading); font-weight: 700; font-size: 0.92rem;
   color: var(--color-text, #16202e); text-decoration: none; transition: transform .15s, opacity .15s, background-color .15s, border-color .15s, color .15s, box-shadow .15s, filter .15s;
 }
-.glossary__more-link:hover { border-color: var(--color-secondary, #16688c); color: var(--color-secondary, #16688c); background: rgba(22, 104, 140, 0.05); }
+@media (hover: hover) and (pointer: fine) {
+.glossary__more-link:hover { border-color: var(--color-secondary, #16688c); color: var(--color-secondary, #16688c); background: rgba(22, 104, 140, 0.05); } }
 .glossary__more-link svg { transform: scaleX(-1); }
 
 @media (max-width: 720px) {

@@ -159,7 +159,9 @@
   text-decoration: none;
   transition: background 0.2s, border-color 0.2s;
 }
+@media (hover: hover) and (pointer: fine) {
 .hl-jump a:hover { background: var(--hl-paper); border-color: var(--hl-mist); }
+}
 .hl [id] { scroll-margin-top: 96px; }
 
 .hl-hero .breadcrumbs {
@@ -172,7 +174,9 @@
   --bc-sep: rgba(255, 255, 255, 0.4);
   padding-block: 0;
 }
+@media (hover: hover) and (pointer: fine) {
 .hl-hero .breadcrumbs__link--back:hover { background: #fff; }
+}
 .hl-hero__copy { max-width: 40rem; }
 .hl-hero__title {
   color: #fff;
@@ -211,7 +215,9 @@
   color: #fff;
   border-color: rgba(255, 255, 255, 0.55);
 }
+@media (hover: hover) and (pointer: fine) {
 .hl-btn-ghost:hover { background: #fff; color: var(--hl-navy); border-color: #fff; }
+}
 
 /* ---------- רצועת ההוכחות, יושבת על קצה הכותרת ---------- */
 .hl-proof-wrap { position: relative; z-index: 2; margin-top: clamp(-4rem, -6vw, -3rem); }
@@ -266,7 +272,9 @@
   border-bottom: 1.5px solid currentColor;
   padding-bottom: 2px;
 }
+@media (hover: hover) and (pointer: fine) {
 .hl-textlink:hover { color: var(--color-accent-500); }
+}
 
 .hl-arms { display: flex; flex-direction: column; gap: 0.85rem; }
 .hl-arm {
@@ -280,7 +288,9 @@
   color: var(--color-text);
   transition: border-color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .hl-arm:hover { border-color: var(--hl-mist); background: #fff; }
+}
 .hl-arm__logo {
   flex: none;
   width: 72px; height: 72px;
@@ -460,7 +470,9 @@
   object-fit: cover;
   transition: transform 0.6s var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .hl-project:hover .hl-project__media img { transform: scale(1.03); }
+}
 .hl-project__media.is-plan {
   background-color: var(--hl-navy);
   background-image:
@@ -490,7 +502,9 @@
 .hl-project__status.is-building { background: var(--color-accent-500); color: #fff; }
 .hl-project__cap { display: flex; flex-direction: column; gap: 0.25rem; }
 .hl-project__name { font-family: var(--font-heading); font-size: 1.3rem; color: var(--hl-navy); }
+@media (hover: hover) and (pointer: fine) {
 .hl-project:hover .hl-project__name { color: var(--color-accent-500); }
+}
 .hl-project__place { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--hl-teal); font-weight: 600; font-size: 0.95rem; }
 .hl-project__kind { color: var(--color-text-muted); font-size: 0.95rem; }
 
@@ -544,7 +558,9 @@
   color: var(--hl-navy);
 }
 .hl-faq__item summary::-webkit-details-marker { display: none; }
+@media (hover: hover) and (pointer: fine) {
 .hl-faq__item summary:hover { color: var(--hl-teal); }
+}
 .hl-faq__sign {
   position: relative;
   flex: none;
@@ -589,7 +605,9 @@
   color: var(--hl-teal);
   font-weight: 600;
 }
+@media (hover: hover) and (pointer: fine) {
 .hl-links li a:hover { color: var(--color-accent-500); }
+}
 
 /* ---------- טופס + עמודת אמון ---------- */
 .hl-lead { border-top: 0 !important; }
@@ -652,15 +670,30 @@
   pointer-events: none;
 }
 .hl-trust__link .icon, .hl-trust__link svg { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.hl-trust__link:hover, .hl-trust__link:focus-visible {
+.hl-trust__link:focus-visible {
   color: #fff;
   border-color: var(--hl-teal);
   transform: translateY(-2px);
   box-shadow: 0 10px 22px -10px rgba(7, 41, 58, 0.6);
 }
-.hl-trust__link:hover::before, .hl-trust__link:focus-visible::before { transform: scaleX(1); }
+@media (hover: hover) and (pointer: fine) {
+.hl-trust__link:hover {
+  color: #fff;
+  border-color: var(--hl-teal);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -10px rgba(7, 41, 58, 0.6);
+}
+}
+.hl-trust__link:focus-visible::before { transform: scaleX(1); }
+@media (hover: hover) and (pointer: fine) {
+.hl-trust__link:hover::before { transform: scaleX(1); }
+}
+@media (hover: hover) and (pointer: fine) {
 .hl-trust__link:hover::after { animation: hl-shine 0.8s ease-out 0.12s; }
+}
+@media (hover: hover) and (pointer: fine) {
 .hl-trust__link:hover svg { transform: rotate(-12deg) scale(1.12); }
+}
 .hl-trust__link:active { transform: translateY(0) scale(0.98); }
 .hl-trust__link:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 3px; }
 @keyframes hl-shine {
@@ -771,8 +804,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hl-stage__num, .hl-stage__num::after, .hl-trust__link, .hl-trust__link::before, .hl-trust__link svg { transition: none; }
+  @media (hover: hover) and (pointer: fine) {
   .hl-trust__link:hover::after { animation: none; }
+  }
+  @media (hover: hover) and (pointer: fine) {
   .hl-stage:hover .hl-stage__num, .hl-trust__link:hover { transform: none; }
+  }
 }
 
 /* ---------- כרטיס שלומי ----------
@@ -806,7 +843,10 @@
 .hl-trust__role { color: var(--hl-mist); }
 .hl-trust__body p { color: rgba(255, 255, 255, 0.86); }
 .hl-trust__link { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: rgba(255, 255, 255, 0.45); }
-.hl-trust__link:hover, .hl-trust__link:focus-visible { color: #fff; border-color: transparent; }
+.hl-trust__link:focus-visible { color: #fff; border-color: transparent; }
+@media (hover: hover) and (pointer: fine) {
+.hl-trust__link:hover { color: #fff; border-color: transparent; }
+}
 .hl-trust__addr { color: rgba(255, 255, 255, 0.78); }
 @media (max-width: 900px) {
   .hl-trust { display: flex; min-height: 540px; }

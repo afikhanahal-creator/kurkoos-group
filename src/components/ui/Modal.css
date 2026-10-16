@@ -37,4 +37,6 @@
   box-shadow: var(--shadow-sm);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .modal__close:hover { background: var(--color-accent); color: #fff; }
+}

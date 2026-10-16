@@ -32,11 +32,13 @@
   box-shadow: 0 8px 22px rgba(7, 41, 58, 0.28);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-fab:hover {
   transform: scale(1.08);
   background: var(--a11y-blue);     /* בריחוף מתהפך לכחול מלא */
   color: #fff;
   box-shadow: 0 12px 28px rgba(7, 41, 58, 0.4);
+}
 }
 .a11y-fab:focus-visible { outline: 3px solid var(--a11y-red); outline-offset: 3px; }
 
@@ -87,8 +89,10 @@
   transition: background 0.18s ease;
   flex-shrink: 0;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-panel__close:hover,
 .a11y-panel__quick:hover { background: rgba(255, 255, 255, 0.25); }
+}
 .a11y-panel__brandtag {
   flex: 1;
   text-align: center;
@@ -146,7 +150,9 @@
   text-align: center;
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(7, 34, 48, 0.12); border-color: var(--a11y-blue); }
+}
 .a11y-tile:focus-visible { outline: 3px solid var(--a11y-red); outline-offset: 2px; }
 .a11y-tile__ic { color: var(--a11y-blue); display: grid; place-items: center; }
 .a11y-tile__label {
@@ -213,7 +219,9 @@
   font-size: 0.85rem;
   transition: transform 0.16s ease, opacity 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-tab:hover { border-color: var(--a11y-blue); }
+}
 .a11y-tab.is-on { background: var(--a11y-blue); border-color: var(--a11y-blue); color: #fff; }
 
 /* פס גוון (התאמת צבעים) */
@@ -255,7 +263,9 @@
   font-weight: 700;
   transition: transform 0.16s ease, opacity 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-chip:hover { border-color: var(--a11y-blue); }
+}
 .a11y-chip.is-on { background: var(--a11y-navy); color: #fff; border-color: var(--a11y-navy); }
 
 /* stepper גופן */
@@ -271,7 +281,9 @@
   flex-shrink: 0;
   transition: background 0.16s ease, transform 0.12s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-stepper > button:hover { background: var(--a11y-blue); transform: scale(1.06); }
+}
 .a11y-stepper__track {
   flex: 1;
   height: 8px;
@@ -293,7 +305,9 @@
   font-weight: 700;
   font-size: 0.88rem;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-link-btn:hover { color: var(--a11y-red); text-decoration: underline; }
+}
 
 /* ---------- סיכום עמוד ---------- */
 .a11y-summary { display: flex; flex-direction: column; gap: 0.7rem; }
@@ -307,7 +321,9 @@
   color: var(--a11y-ink);
   transition: background 0.15s ease, color 0.15s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-summary li a:hover { background: #eef2f5; color: var(--a11y-blue); }
+}
 .a11y-summary__l2 { padding-inline-start: 0.8rem; }
 .a11y-summary__l3 { padding-inline-start: 1.6rem; font-size: 0.9rem; }
 .a11y-summary__l3 a { color: #6b7280; }
@@ -326,7 +342,9 @@
   font-weight: 700;
   font-size: 0.95rem;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-disable:hover { filter: brightness(1.08); }
+}
 .a11y-brandline {
   display: block;
   text-align: center;
@@ -374,7 +392,9 @@
   font-size: clamp(0.85rem, 2.4vw, 1.05rem);
   font-weight: 600;
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-vk__key:hover { background: #dbe7ee; }
+}
 .a11y-vk__key:active { background: var(--a11y-blue); color: #fff; }
 .a11y-vk__key--wide { min-width: clamp(44px, 10vw, 64px); font-size: 1.2rem; }
 .a11y-vk__key--space { flex: 1; max-width: 320px; }

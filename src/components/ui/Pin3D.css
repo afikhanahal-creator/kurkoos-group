@@ -32,7 +32,9 @@
   box-shadow: var(--shadow-4);
   overflow: hidden;
 }
+@media (hover: hover) and (pointer: fine) {
 .pin3d:hover .pin3d__card { border-color: rgba(255, 255, 255, 0.25); }
+}
 .pin3d__content { position: relative; z-index: 2; }
 
 /* הילה */
@@ -48,7 +50,9 @@
   pointer-events: none;
   z-index: 1;
 }
+@media (hover: hover) and (pointer: fine) {
 .pin3d:hover .pin3d__halo { opacity: 1; }
+}
 
 /* תווית צפה */
 .pin3d__title-row {

@@ -56,11 +56,12 @@
   font-weight: 600;
   transform: none;
 }
+@media (hover: hover) and (pointer: fine) {
 .pd-crumbbar .breadcrumbs__link--back:hover {
   background: none;
   color: var(--color-accent);
   transform: none;
-}
+} }
 .pd-crumbbar .breadcrumbs__back-ic { display: none; }
 /* הפריט הנוכחי (האחרון) — מודגש כהה */
 .pd-crumbbar .breadcrumbs__current {
@@ -295,7 +296,8 @@
   box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.25);
   transition: transform var(--dur-base) var(--ease-out), background var(--dur-fast);
 }
-.pd-banner__play:hover { transform: scale(1.08); background: var(--color-secondary); }
+@media (hover: hover) and (pointer: fine) {
+.pd-banner__play:hover { transform: scale(1.08); background: var(--color-secondary); } }
 .pd-banner__play svg { margin-inline-start: 4px; }
 
 /* עמודת המדיה — תמונה ומתחתיה חצי ניווט בצד שמאל (בסגנון תדהר) */
@@ -316,11 +318,12 @@
     background var(--dur-fast) var(--ease-out),
     transform var(--dur-fast) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .pd-banner__arrow:hover {
   border-color: var(--color-primary-900);
   background: var(--color-primary-900);
   color: #fff;
-}
+} }
 .pd-banner__arrow:active { transform: scale(0.94); }
 
 /* ---------- Sticky anchors ---------- */
@@ -398,7 +401,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   white-space: nowrap;
   transition: color var(--dur-fast), opacity var(--dur-fast);
 }
-.pd-anchors__item:hover { color: var(--color-secondary); }
+@media (hover: hover) and (pointer: fine) {
+.pd-anchors__item:hover { color: var(--color-secondary); } }
 /* מצב פעיל — שם המקטע הנוכחי הופך לבולד, כהה ומלא */
 .pd-anchors__item.is-active { color: var(--color-primary-900); font-weight: 800; }
 
@@ -539,7 +543,6 @@ html.header-top-hidden .pd-anchors { top: 0; }
 }
 .pd-map__pin svg { color: var(--color-accent); transition: color var(--dur-fast); }
 /* ריחוף/מגע — זוהר אדום עדין לפי פלטת המותג */
-.pd-map__pin:hover,
 .pd-map__pin:focus-visible,
 .pd-map__pin:active {
   transform: translateY(-2px) scale(1.03);
@@ -547,9 +550,17 @@ html.header-top-hidden .pd-anchors { top: 0; }
   box-shadow: 0 0 0 3px rgba(169, 11, 12, 0.18),
     0 10px 24px -6px rgba(169, 11, 12, 0.45);
 }
-.pd-map__pin:hover svg,
+@media (hover: hover) and (pointer: fine) {
+.pd-map__pin:hover {
+  transform: translateY(-2px) scale(1.03);
+  color: var(--color-accent-500);
+  box-shadow: 0 0 0 3px rgba(169, 11, 12, 0.18),
+    0 10px 24px -6px rgba(169, 11, 12, 0.45);
+} }
 .pd-map__pin:focus-visible svg,
 .pd-map__pin:active svg { color: var(--color-accent-600); }
+@media (hover: hover) and (pointer: fine) {
+.pd-map__pin:hover svg { color: var(--color-accent-600); } }
 
 /* ---------- Plans accordion ---------- */
 .plan-acc {
@@ -592,7 +603,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   transform: translateY(8px);
   transition: opacity var(--dur-base), transform var(--dur-base);
 }
-.plan-acc__preview-btn:hover .plan-acc__preview-zoom { opacity: 1; transform: translateY(0); }
+@media (hover: hover) and (pointer: fine) {
+.plan-acc__preview-btn:hover .plan-acc__preview-zoom { opacity: 1; transform: translateY(0); } }
 
 /* רשימה נקייה ללא מסגרת חיצונית — שורות פתוחות עם קו מפריד דק (כמו תדהר) */
 .plan-acc__list {
@@ -615,7 +627,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   background: transparent;
   transition: color var(--dur-fast);
 }
-.plan-acc__trigger:hover { color: var(--color-secondary); }
+@media (hover: hover) and (pointer: fine) {
+.plan-acc__trigger:hover { color: var(--color-secondary); } }
 .plan-acc__title { text-align: start; }
 .plan-acc__icon {
   flex-shrink: 0;
@@ -654,7 +667,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   border-radius: var(--radius-md);
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast);
 }
-.plan-acc__type:hover { color: var(--color-primary-900); }
+@media (hover: hover) and (pointer: fine) {
+.plan-acc__type:hover { color: var(--color-primary-900); } }
 .plan-acc__type.is-active {
   background: var(--color-bg-soft);
   color: var(--color-primary-900);
@@ -675,7 +689,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   color: var(--color-text-soft);
   transition: transform var(--dur-fast), opacity var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast);
 }
-.pd-gtab:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
+@media (hover: hover) and (pointer: fine) {
+.pd-gtab:hover { border-color: var(--color-secondary); color: var(--color-secondary); } }
 .pd-gtab.is-active { background: var(--color-secondary); border-color: var(--color-secondary); color: #fff; }
 
 /* ---------- גלריה — קרוסלה (תמונה גדולה + חיצים + נקודות), בסגנון תדהר ---------- */
@@ -698,7 +713,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
 }
 .pd-carousel__main img,
 .pd-carousel__main .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--pd-g-radius, 18px) !important; transition: transform var(--dur-slow) var(--ease-out); }
-.pd-carousel__main:hover img { transform: scale(1.04); }
+@media (hover: hover) and (pointer: fine) {
+.pd-carousel__main:hover img { transform: scale(1.04); } }
 /* שורת בקרה מתחת לגלריה: נקודות + חצים מיושרים לצד ימין (RTL) */
 .pd-carousel__controls {
   display: flex;
@@ -721,7 +737,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   color: var(--color-primary-300);
   transition: color var(--dur-fast), transform var(--dur-fast);
 }
-.pd-carousel__arrow:hover { color: var(--color-secondary); }
+@media (hover: hover) and (pointer: fine) {
+.pd-carousel__arrow:hover { color: var(--color-secondary); } }
 .pd-carousel__arrow--prev svg { transform: rotate(90deg); }
 .pd-carousel__arrow--next svg { transform: rotate(-90deg); }
 .pd-carousel__dots { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
@@ -734,7 +751,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   background: var(--color-primary-300);
   transition: background var(--dur-fast), transform var(--dur-fast);
 }
-.pd-carousel__dot:hover { transform: scale(1.2); }
+@media (hover: hover) and (pointer: fine) {
+.pd-carousel__dot:hover { transform: scale(1.2); } }
 .pd-carousel__dot.is-active { background: var(--color-secondary); transform: scale(1.2); }
 @media (max-width: 600px) {
   .pd-carousel__main { aspect-ratio: 4 / 3; }
@@ -769,7 +787,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   border-radius: var(--pd-g-radius, 18px) !important;
   transition: transform var(--dur-slow) var(--ease-out);
 }
-.pd-gallery__item:hover img { transform: scale(1.04); }
+@media (hover: hover) and (pointer: fine) {
+.pd-gallery__item:hover img { transform: scale(1.04); } }
 
 /* ---------- Contact panel (Tidhar-style two-column) ---------- */
 /* ===== לתיאום פגישה — בעיצוב זהה לטופס הקבוע (Contact) ===== */
@@ -907,7 +926,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   font-family: var(--font-heading); font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
 }
-.pd-contact__call a:hover { color: #fff; text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+.pd-contact__call a:hover { color: #fff; text-decoration: underline; } }
 
 .pd-contact__success { text-align: center; padding: 2.5rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .pd-contact__success-icon {
@@ -990,7 +1010,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
 .pd-video-tile img,
 .pd-video-tile__vid { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out), filter var(--dur-base); filter: brightness(0.82); }
 .pd-video-tile__vid { display: block; pointer-events: none; }
-.pd-video-tile:hover img { transform: scale(1.05); filter: brightness(0.7); }
+@media (hover: hover) and (pointer: fine) {
+.pd-video-tile:hover img { transform: scale(1.05); filter: brightness(0.7); } }
 .pd-video-tile__file { position: absolute; inset: 0; background: linear-gradient(160deg, var(--color-primary-700), var(--color-primary-900)); }
 .pd-video-tile__play {
   position: absolute; inset: 0; margin: auto;
@@ -1002,7 +1023,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.18);
   transition: transform var(--dur-base) var(--ease-out);
 }
-.pd-video-tile:hover .pd-video-tile__play { transform: scale(1.1); }
+@media (hover: hover) and (pointer: fine) {
+.pd-video-tile:hover .pd-video-tile__play { transform: scale(1.1); } }
 .pd-video-tile__play svg { margin-inline-start: 3px; }
 .pd-video-tile__title {
   position: absolute; inset-inline: 0; inset-block-end: 0;
@@ -1035,7 +1057,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   backdrop-filter: blur(2px);
 }
 .pd-lightbox__close svg { width: 20px; height: 20px; }
-.pd-lightbox__close:hover { background: rgba(0, 0, 0, 0.6); }
+@media (hover: hover) and (pointer: fine) {
+.pd-lightbox__close:hover { background: rgba(0, 0, 0, 0.6); } }
 .pd-lightbox__nav {
   position: absolute;
   z-index: 2;
@@ -1049,7 +1072,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   transition: background var(--dur-fast) var(--ease-out);
 }
-.pd-lightbox__nav:hover { background: rgba(0, 0, 0, 0.72); }
+@media (hover: hover) and (pointer: fine) {
+.pd-lightbox__nav:hover { background: rgba(0, 0, 0, 0.72); } }
 .pd-lightbox__nav--prev { inset-inline-start: 1.2rem; }
 .pd-lightbox__nav--next { inset-inline-end: 1.2rem; }
 
@@ -1095,8 +1119,10 @@ html.header-top-hidden .pd-anchors { top: 0; }
 }
 .pd-more__img img,
 .pd-more__img .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
-.pd-more__card:hover .pd-more__img { box-shadow: 0 22px 50px -24px rgba(7, 41, 58, 0.46); transform: translateY(-4px); }
-.pd-more__card:hover .pd-more__img img { transform: scale(1.05); }
+@media (hover: hover) and (pointer: fine) {
+.pd-more__card:hover .pd-more__img { box-shadow: 0 22px 50px -24px rgba(7, 41, 58, 0.46); transform: translateY(-4px); } }
+@media (hover: hover) and (pointer: fine) {
+.pd-more__card:hover .pd-more__img img { transform: scale(1.05); } }
 .pd-more__title {
   text-align: center;
   margin-top: 0.85rem;
@@ -1106,7 +1132,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
   color: var(--color-primary-900);
   transition: color var(--dur-fast);
 }
-.pd-more__card:hover .pd-more__title { color: var(--color-accent); }
+@media (hover: hover) and (pointer: fine) {
+.pd-more__card:hover .pd-more__title { color: var(--color-accent); } }
 
 @media (max-width: 760px) {
   /* פרויקטים נוספים — מצמצמים טיפה את רוחב התמונות במובייל (ממורכז) */
@@ -1284,7 +1311,8 @@ html.header-top-hidden .pd-anchors { top: 0; }
 .pd-units { margin-top: 2.5rem; }
 .pd-units__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem; margin-top: 1.2rem; }
 .pd-unit { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: #fff; box-shadow: var(--shadow-1); display: flex; flex-direction: column; transition: box-shadow var(--dur-base), transform var(--dur-base); }
-.pd-unit:hover { box-shadow: var(--shadow-3); transform: translateY(-3px); }
+@media (hover: hover) and (pointer: fine) {
+.pd-unit:hover { box-shadow: var(--shadow-3); transform: translateY(-3px); } }
 .pd-unit__img { aspect-ratio: 4/3; overflow: hidden; }
 .pd-unit__img :is(img, .smart-image) { width: 100%; height: 100%; object-fit: cover; }
 .pd-unit__body { padding: 1rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }

@@ -35,11 +35,14 @@
   z-index: -1;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .border-glow-card:not(:hover):not(.sweep-active)::before,
 .border-glow-card:not(:hover):not(.sweep-active)::after,
 .border-glow-card:not(:hover):not(.sweep-active) > .edge-light {
   opacity: 0;
   transition: opacity 0.75s ease-in-out;
+}
 }
 
 /* colored mesh-gradient border */

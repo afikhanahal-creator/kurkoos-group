@@ -10,7 +10,9 @@
   border-radius: var(--radius-lg);
   transition: transform var(--dur-base), box-shadow var(--dur-base);
 }
+@media (hover: hover) and (pointer: fine) {
 .info-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+}
 .info-card__icon {
   display: grid; place-items: center;
   width: 64px; height: 64px;

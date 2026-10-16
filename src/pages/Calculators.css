@@ -85,7 +85,9 @@
   --bc-sep: rgba(255, 255, 255, 0.4);
   padding-block: 0;
 }
+@media (hover: hover) and (pointer: fine) {
 .cx-hero .breadcrumbs__link--back:hover { background: #fff; }
+}
 .cx-hero__copy { max-width: 46rem; padding-top: clamp(0.5rem, 3vw, 2.5rem); }
 .cx-hero__title {
   color: #fff;
@@ -136,7 +138,9 @@
   box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.6);
   transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .cx-jump__item:hover { transform: translateY(-2px); box-shadow: 0 22px 44px -20px rgba(0, 0, 0, 0.65); }
+}
 .cx-jump__ic {
   flex: none;
   display: grid; place-items: center;
@@ -401,7 +405,9 @@
   font-weight: 700;
   color: var(--cx-teal);
 }
+@media (hover: hover) and (pointer: fine) {
 .calc-cta__wa:hover { color: var(--color-accent-500); }
+}
 .calc-cta__wa svg { color: #1fa855; }
 
 /* ---------- שאלות נפוצות ---------- */
@@ -423,7 +429,9 @@
   color: var(--cx-navy);
 }
 .cx-faq__item summary::-webkit-details-marker { display: none; }
+@media (hover: hover) and (pointer: fine) {
 .cx-faq__item summary:hover { color: var(--cx-teal); }
+}
 .cx-faq__sign {
   position: relative;
   flex: none;
@@ -464,7 +472,9 @@
   line-height: 1.45;
 }
 .cx-links li a svg { flex: none; }
+@media (hover: hover) and (pointer: fine) {
 .cx-links li a:hover { color: var(--color-accent-500); }
+}
 
 /* ---------- טופס + עמודת אמון ---------- */
 .cx-lead { padding-top: 0; }
@@ -497,7 +507,9 @@
   font-family: var(--font-heading);
   font-weight: 700;
 }
+@media (hover: hover) and (pointer: fine) {
 .cx-trust__link:hover { border-color: var(--cx-teal); color: var(--cx-teal); }
+}
 .cx-trust__addr { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.92rem; color: var(--color-text-muted); }
 
 .cx-form { background: var(--cx-navy); color: #fff; padding: clamp(1.6rem, 4vw, 3rem); }

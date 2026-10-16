@@ -224,10 +224,12 @@
 .mentor-pillar .card__title { font-size: 1.15em; }
 
 /* red glow variation on hover */
+@media (hover: hover) and (pointer: fine) {
 .mentor-pillar.card-effect:hover .card__glow {
   background: radial-gradient(circle at 50% 0%,
     color-mix(in srgb, var(--color-accent-500) 35%, transparent) 0%,
     transparent 65%);
+}
 }
 
 @media (max-width: 980px) {
@@ -673,7 +675,10 @@
   transition: color var(--dur-fast) var(--ease-out);
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .mfaq__q:hover { color: var(--color-primary-500); }
+}
 .mfaq__item.is-open .mfaq__q { color: var(--color-accent-500); }
 
 .mfaq__chevron {
@@ -876,7 +881,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  @media (hover: hover) and (pointer: fine) {
   .division-guide__band:hover::after { animation: none; }
+  }
 }
 
 .division-guide__title { font-size: var(--fs-h3); margin: 0.4rem 0 0.6rem; }

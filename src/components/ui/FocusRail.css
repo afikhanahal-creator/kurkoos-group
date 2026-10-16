@@ -84,7 +84,9 @@
   cursor: pointer;
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .frail__nav:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+}
 .frail__nav--prev svg { transform: rotate(90deg); }
 .frail__nav--next svg { transform: rotate(-90deg); }
 .frail__counter {

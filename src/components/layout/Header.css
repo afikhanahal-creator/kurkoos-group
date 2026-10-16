@@ -90,8 +90,12 @@
   transform-origin: center;
   transition: transform var(--dur-base) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .header__nav-link:hover { color: var(--color-secondary); background: var(--color-primary-100); }
+}
+@media (hover: hover) and (pointer: fine) {
 .header__nav-link:hover::after { transform: scaleX(0.55); }
+}
 .header__nav-caret { transition: transform var(--dur-fast); opacity: 0.7; }
 .header__nav-item:hover .header__nav-caret { transform: rotate(180deg); }
 
@@ -135,11 +139,17 @@
   color: var(--color-text);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .header__dropdown-link:hover { background: var(--color-bg-soft); color: var(--color-secondary); }
+}
 .header__dropdown-arrow { opacity: 0; transform: translateX(-6px); transition: transform var(--dur-fast), opacity var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast); }
 [dir='rtl'] .header__dropdown-arrow { transform: scaleX(-1) translateX(-6px); }
+@media (hover: hover) and (pointer: fine) {
 .header__dropdown-link:hover .header__dropdown-arrow { opacity: 1; transform: translateX(0); }
+}
+@media (hover: hover) and (pointer: fine) {
 [dir='rtl'] .header__dropdown-link:hover .header__dropdown-arrow { transform: scaleX(-1) translateX(0); }
+}
 
 .header__actions { display: flex; align-items: center; gap: 0.6rem; }
 .header__lang { color: var(--color-primary); }
@@ -152,7 +162,9 @@
   color: var(--color-primary);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .header__icon-btn:hover { background: var(--color-bg-soft); color: var(--color-secondary); }
+}
 .header__cta-btn { padding: 0.6em 1.5em; font-size: 0.76rem; min-height: 34px; box-shadow: 0 6px 16px -4px rgba(169, 11, 12, 0.35); }
 /* דסקטופ — "צור קשר" ו-EN בגודל נעים ותואמי גובה */
 @media (min-width: 981px) {
@@ -183,7 +195,9 @@
   cursor: pointer;
   transition: transform 0.5s var(--ease-out), background var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .header__burger:hover { background: var(--color-bg-soft); }
+}
 
 .header__burger-bar {
   width: 30px;
@@ -303,13 +317,20 @@
   transform-origin: center;
   transition: transform var(--dur-base) var(--ease-out);
 }
-.header__mobile-link:hover,
 .header__mobile-link:focus-visible {
   background: rgba(255, 255, 255, 0.07);
   padding-inline-start: 1.4rem;
 }
-.header__mobile-link:hover::before,
+@media (hover: hover) and (pointer: fine) {
+.header__mobile-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  padding-inline-start: 1.4rem;
+}
+}
 .header__mobile-link:focus-visible::before { transform: scaleY(1); }
+@media (hover: hover) and (pointer: fine) {
+.header__mobile-link:hover::before { transform: scaleY(1); }
+}
 
 /* שם הפריט כפתור (פותח/סוגר תת-תפריט) — מיושר כמו הקישור */
 .header__mobile-link--toggle {
@@ -364,7 +385,9 @@
 .header__mobile-row { display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; }
 .header__mobile-group .header__mobile-link { flex: 1; }
 .header__mobile-toggle { padding: 0.5rem; color: rgba(255, 255, 255, 0.65); transition: color var(--dur-fast); }
+@media (hover: hover) and (pointer: fine) {
 .header__mobile-toggle:hover { color: #fff; }
+}
 .header__mobile-toggle svg { transition: transform var(--dur-base); }
 .header__mobile-sub { overflow: hidden; padding-inline-start: 1.2rem; }
 .header__mobile-sublink {
@@ -378,9 +401,15 @@
 }
 .header__mobile-sublink-ic { opacity: 0; transition: opacity var(--dur-fast); }
 [dir='rtl'] .header__mobile-sublink-ic { transform: scaleX(-1); }
+@media (hover: hover) and (pointer: fine) {
 .header__mobile-sublink:hover { color: #fff; transform: translateX(-4px); }
+}
+@media (hover: hover) and (pointer: fine) {
 [dir='rtl'] .header__mobile-sublink:hover { transform: translateX(4px); }
+}
+@media (hover: hover) and (pointer: fine) {
 .header__mobile-sublink:hover .header__mobile-sublink-ic { opacity: 1; }
+}
 /* קישור עמוד האב — מודגש מעט */
 .header__mobile-sublink--parent { font-weight: 700; color: #fff; }
 .header__mobile-sublink--parent .header__mobile-sublink-ic { opacity: 0.85; }
@@ -397,10 +426,12 @@
   letter-spacing: 0.16em;
   transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .header__mobile .lang-switch--block:hover {
   background: var(--color-accent);
   border-color: var(--color-accent);
   transform: translateY(-1px);
+}
 }
 
 /* ---- Language switch ---- */
@@ -415,7 +446,9 @@
   color: inherit;
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .lang-switch:hover { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+}
 .lang-switch--block { padding: 0.6rem 1.1rem; color: var(--color-primary); }
 
 /* ---- Responsive ---- */
@@ -461,7 +494,9 @@
     color: #fff;
     box-shadow: 0 5px 16px -4px rgba(169, 11, 12, 0.5);
   }
+  @media (hover: hover) and (pointer: fine) {
   .header__actions .header__cta-btn:hover { background: var(--color-accent-600); }
+  }
   .header__actions .header__cta-btn:active { transform: scale(0.96); }
 }
 @media (max-width: 600px) {

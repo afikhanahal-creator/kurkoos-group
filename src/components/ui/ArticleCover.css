@@ -31,7 +31,9 @@
   to   { background-position: 64px 38px, 64px 38px; }
 }
 /* בריחוף על כרטיס — הריבועים זזים מהר יותר */
+@media (hover: hover) and (pointer: fine) {
 .yz-card:hover .acover__grid { animation-duration: 7s; }
+}
 @media (prefers-reduced-motion: reduce) {
   .acover__grid { animation: none; }
 }

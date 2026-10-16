@@ -78,12 +78,14 @@
   box-shadow: none;
   transition: transform var(--dur-base) var(--ease-out);
 }
-.pg-card:hover .pg-card__glow.border-glow-card,
 .pg-card:focus-visible .pg-card__glow.border-glow-card { transform: translateY(-4px); }
+@media (hover: hover) and (pointer: fine) {
+.pg-card:hover .pg-card__glow.border-glow-card { transform: translateY(-4px); } }
 .pg-card__glow .border-glow-inner { overflow: visible; }
 /* ההרמה עוברת לעטיפת הזוהר — שהטבעת והכרטיס יזוזו יחד */
-.pg-card:hover .pg-card__glow .pg-card__media,
 .pg-card:focus-visible .pg-card__glow .pg-card__media { transform: none; }
+@media (hover: hover) and (pointer: fine) {
+.pg-card:hover .pg-card__glow .pg-card__media { transform: none; } }
 
 .pg-card__media {
   position: relative;
@@ -131,11 +133,15 @@
   background: transparent;
   border-radius: inherit;
 }
-.pg-card:hover .pg-card__media,
 .pg-card:focus-visible .pg-card__media {
   box-shadow: var(--shadow-4);
   transform: translateY(-4px);
 }
+@media (hover: hover) and (pointer: fine) {
+.pg-card:hover .pg-card__media {
+  box-shadow: var(--shadow-4);
+  transform: translateY(-4px);
+} }
 
 .pg-card__img {
   width: 100%;
@@ -144,8 +150,9 @@
   display: block;
   transition: transform var(--dur-slow) var(--ease-out);
 }
-.pg-card:hover .pg-card__img,
 .pg-card:focus-visible .pg-card__img { transform: scale(1.06); }
+@media (hover: hover) and (pointer: fine) {
+.pg-card:hover .pg-card__img { transform: scale(1.06); } }
 
 /* תגית סטטוס */
 .pg-card__badge {
@@ -185,8 +192,9 @@
   transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
-.pg-card:hover .pg-card__panel,
 .pg-card:focus-visible .pg-card__panel { transform: translateY(0); }
+@media (hover: hover) and (pointer: fine) {
+.pg-card:hover .pg-card__panel { transform: translateY(0); } }
 
 .pg-card__title {
   margin: 0;
@@ -205,8 +213,9 @@
   transform: translateY(6px);
   transition: opacity 0.4s var(--ease-out) 0.08s,
               transform 0.4s var(--ease-out) 0.08s;}
-.pg-card:hover .pg-card__reveal,
 .pg-card:focus-visible .pg-card__reveal { opacity: 1; transform: translateY(0); }
+@media (hover: hover) and (pointer: fine) {
+.pg-card:hover .pg-card__reveal { opacity: 1; transform: translateY(0); } }
 
 .pg-card__desc {
   margin: 0.5rem 0 0;
@@ -278,7 +287,8 @@
   color: #fff;
   transition: background var(--dur-fast);
 }
-.pg-lightbox__close:hover { background: var(--color-accent-500); }
+@media (hover: hover) and (pointer: fine) {
+.pg-lightbox__close:hover { background: var(--color-accent-500); } }
 [dir='rtl'] .pg-lightbox__bar .btn svg { transform: scaleX(-1); }
 
 @media (prefers-reduced-motion: reduce) {

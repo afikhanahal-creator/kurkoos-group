@@ -24,16 +24,20 @@
 }
 
 /* האות שמתחת לסמן — קו מתאר מודגש + ריווח (בלי שינוי משקל → נשאר זהה לכותרות) */
+@media (hover: hover) and (pointer: fine) {
 .kinetic__char:hover {
   padding-inline: var(--hover-padding);
   -webkit-text-stroke-color: currentcolor;
   -webkit-text-stroke-width: calc(var(--text-stroke-width) * 2);
 }
+}
 
 /* שכנים — ריווח עדין שיוצר "גל" בלי לשנות משקל */
+@media (hover: hover) and (pointer: fine) {
 .kinetic__char:has(+ .kinetic__char:hover),
 .kinetic__char:hover + .kinetic__char {
   padding-inline: var(--hover-padding);
+}
 }
 
 /* טקסט לקוראי מסך — האותיות עצמן aria-hidden */

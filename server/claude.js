@@ -1,6 +1,6 @@
 // ============================================================
 // Vercel serverless: Claude למנוע התוכן ("בקשה לעורך", שיפור פרומפט לתמונה).
-// מקבל POST { input, tier, json } ממנהל מחובר, מחזיר { text }.
+// מקבל POST { input, tier, json, images } ממנהל מחובר, מחזיר { text }. images: כתובות של קבצים מהאחסון שלנו בלבד.
 // input הוא מחרוזת או רשימת תורות [{ role, content }] שמסתיימת ב-user.
 //
 // דורש משתנה סביבה ב-Vercel: ANTHROPIC_API_KEY (Settings > Environment Variables).
@@ -53,6 +53,14 @@ export default async function handler(req, res) {
   if (typeof body.input === 'string') messages = [{ role: 'user', content: body.input.slice(0, 120_000) }]
   else if (Array.isArray(body.input)) messages = body.input.filter((m) => m && (m.role === 'user' || m.role === 'assistant')).map((m) => ({ role: m.role, content: String(m.content || '').slice(0, 60_000) })).slice(-30)
   if (!messages || !messages.length || messages[messages.length - 1].role !== 'user') { res.status(400).json({ error: 'missing input' }); return }
+
+  // pictures for Claude to look at: only files from our own storage (engine-media), at most 4
+  const BASE = `${String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/storage/v1/object/public/engine-media/`
+  const images = Array.isArray(body.images) ? body.images.filter((u) => typeof u === 'string' && BASE.length > 45 && u.startsWith(BASE) && !u.includes('..')).slice(0, 4) : []
+  if (images.length) {
+    const last = messages[messages.length - 1]
+    last.content = [...images.map((url) => ({ type: 'image', source: { type: 'url', url } })), { type: 'text', text: String(last.content) }]
+  }
 
   const model = MODELS[body.tier] || MODELS.default
   const system = body.json ? 'Answer with one valid JSON value only. No prose before or after it, no code fences.' : undefined

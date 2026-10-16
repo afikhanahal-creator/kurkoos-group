@@ -254,7 +254,7 @@
     opts = opts || {}
     let r
     try {
-      r = await fetch('/api/claude', { method: 'POST', signal: opts.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await token()) }, body: JSON.stringify({ input, tier: opts.modelTier || 'default', json: !!json }) })
+      r = await fetch('/api/claude', { method: 'POST', signal: opts.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await token()) }, body: JSON.stringify({ input, tier: opts.modelTier || 'default', json: !!json, images: Array.isArray(opts.images) ? opts.images.filter((u) => typeof u === 'string').slice(0, 4) : undefined }) })
     } catch (e) { if (e && e.name === 'AbortError') throw err('cancelled', 'בוטל'); if (e && e.code) throw e; throw err('unavailable', 'אין חיבור') }
     let d = {}; try { d = await r.json() } catch (e) {}
     if (!r.ok) throw err(r.status === 503 ? 'not_granted' : r.status === 429 ? 'rate_limited' : r.status === 401 ? 'not_granted' : 'unavailable', d.error || ('HTTP ' + r.status))
@@ -268,7 +268,7 @@
       const m = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
       try { return JSON.parse(m ? m[0] : text) } catch (e) { throw err('invalid_output', 'התשובה לא הייתה JSON תקין') }
     },
-    limits: async () => ({ images: false }),
+    limits: async () => ({ images: true }),
   })
 
   // ---------- downloads

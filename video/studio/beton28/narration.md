@@ -35,3 +35,14 @@
 <speak>אנחנו חושבים שכל יזם צריך לבקר באתר ביום יציקה, <break time="120ms"/> לפחות פעם אחת.</speak>
 <speak>קבוצת קורקוס. <break time="200ms"/> מקרקע ועד מסירת מפתח.</speak>
 ```
+
+## הפקה (אחרי שהמפתח נמצא בהגדרות הסביבה)
+
+```bash
+python3 video/studio/beton28/tts.py --engine gemini            # GEMINI_API_KEY, חינם. בודקים קודם את voice/v01.wav
+python3 video/studio/beton28/tts.py --engine google            # או GOOGLE_TTS_API_KEY
+# מיקס: הקול מעל, המוזיקה יורדת מתחתיו (sidechain), ונורמליזציה לרשתות
+ffmpeg -y -i out/b28_all.mp4 -i video/studio/beton28/music.wav -i video/studio/beton28/voice/voice.wav -filter_complex \
+ "[1:a]volume=0.55[m];[2:a]asplit[v1][v2];[m][v1]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=400[md];[md][v2]amix=inputs=2:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11[a]" \
+ -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest -movflags +faststart kurkoos-beton28-voice.mp4
+```

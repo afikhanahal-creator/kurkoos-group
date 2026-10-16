@@ -10,7 +10,7 @@ Hebrew is not on Gemini's official TTS language list, so listen to v01 first; if
 The key is read from the environment only (never from a file in the repo). Lines that come out longer than their slot are
 re-synthesized faster, up to rate 1.2, so no line runs into the next one.
 """
-import argparse, base64, json, os, re, subprocess, sys, urllib.request
+import argparse, base64, json, os, re, subprocess, sys, time, urllib.error, urllib.request
 
 H = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(H, 'voice')
@@ -44,7 +44,7 @@ def synth_gemini(key, ssml, voice, model='gemini-3.8-flash-tts'):
             'generationConfig': {'responseModalities': ['AUDIO'], 'speechConfig': {'voiceConfig': {'prebuiltVoiceConfig': {'voiceName': voice}}}}}
     req = urllib.request.Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
                                  data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', **({'x-goog-api-key': key} if key else {})})
-    import time, urllib.error
+
     for attempt in range(10):  # the free tier allows only a few requests a minute: wait and retry on 429
         try:
             with urllib.request.urlopen(req, timeout=120) as r:

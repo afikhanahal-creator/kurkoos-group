@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>28 days of concrete</title>
 <!-- Kurkoos reel: "28 ימים שאי אפשר לקצר". Flat explainer illustration on paper, navy line work, red only for emphasis.
-  9:16, 52s, captions at the bottom (same text as narration.md, so a Google TTS voice can be laid on top). Pure function of t.
+  9:16, 53.9s, captions at the bottom (same text as narration.md, so a Google TTS voice can be laid on top). Pure function of t.
   STAGES
   0.0  - 3.0   the owner's cover image, slow push in
   3.0  - 6.5   the 28 squares lift off the cover into a calendar of empty days; "28 ימים"
@@ -59,7 +59,7 @@
 </div>
 <script src="../lib/studio.js"></script>
 <script>
-const W = 1080, H = 1920, DUR = 52.0;
+const W = 1080, H = 1920, DUR = 53.9;
 const NAVY = '#07293a', TEAL = '#105572', MIST = '#8fb6c8', PAPER = '#f7f8fa', RED = '#a90b0c', CON = '#c9ced3', COND = '#7d858c';
 const {clamp, lerp, smooth, step, hash} = Studio;
 const $ = id => document.getElementById(id);
@@ -69,7 +69,7 @@ const win = (t, a, b) => t >= a && t < b;
 const vis = (el, on) => { el.style.display = on ? '' : 'none'; return on; };
 // an element that enters (rise + fade) at a, leaves at b
 function inout(el, t, a, b, dy) { dy = dy == null ? 40 : dy; const i = k(t, a, a + .45), o = 1 - k(t, b - .35, b); el.style.opacity = Math.min(i, o); el.style.transform = `translateY(${(1 - i) * dy}px)`; return i * o > 0; }
-const S = {cover: 0, lift: 3.0, slab: 6.5, ff: 10.5, d7: 13.5, d28: 19.0, who: 24.0, gantt: 28.0, cash: 33.5, fc: 39.0, pour: 44.5, end: 48.5};
+const S = {cover: 0, lift: 3.0, slab: 6.5, ff: 10.5, d7: 13.5, d28: 19.0, who: 24.0, gantt: 28.0, cash: 33.5, fc: 39.0, pour: 44.5, end: 49.9};
 
 // ---------- captions (same lines as narration.md; ~ marks a red word) ----------
 const CAPS = [
@@ -81,8 +81,8 @@ const CAPS = [
   [24.1, 27.9, 'למה זה מעניין ~יזם, ולא רק את מנהל העבודה?'],
   [28.1, 33.4, '~לוח ~זמנים: שלבים שתלויים בבטון לא יכולים להתקצר.'],
   [33.6, 38.9, '~תזרים: תשלומים לקבלן ושחרורי ליווי נשענים על הקצב הזה.'],
-  [39.1, 44.4, 'יזם שבונה תחזית בלי להבין את הקצב של האתר מתכנן מספרים ~שהשטח ~לא ~יעמוד ~בהם.'],
-  [44.6, 48.4, 'אנחנו חושבים שכל יזם צריך לבקר באתר ~ביום ~יציקה לפחות פעם אחת.'],
+  [39.05, 44.8, 'יזם שבונה תחזית בלי להבין את הקצב של האתר מתכנן מספרים ~שהשטח ~לא ~יעמוד ~בהם.'],
+  [44.9, 49.8, 'אנחנו חושבים שכל יזם צריך לבקר באתר ~ביום ~יציקה לפחות פעם אחת.'],
 ];
 CAPS.forEach(c => { c.html = c[2].split(' ').map(w => w[0] === '~' ? `<span class="w rd">${w.slice(1)}</span>` : `<span class="w">${w}</span>`).join(' '); });
 let capCur = -1;
@@ -331,7 +331,7 @@ Studio.define({
   w: W, h: H, duration: DUR,
   stages: [{t: 1.5, label: 'cover'}, {t: 5.2, label: 'calendar'}, {t: 9.6, label: 'slab hardens'}, {t: 13.2, label: 'fast forward X'},
     {t: 18.0, label: 'day 7'}, {t: 23.5, label: 'day 28'}, {t: 27.0, label: 'developer'}, {t: 31.2, label: 'squeeze bounce'}, {t: 33.0, label: 'locked'},
-    {t: 38.0, label: 'cash flow'}, {t: 43.5, label: 'forecast breaks'}, {t: 47.8, label: 'pour day'}, {t: 51.0, label: 'end card'}],
+    {t: 38.0, label: 'cash flow'}, {t: 43.5, label: 'forecast breaks'}, {t: 48.8, label: 'pour day'}, {t: 52.6, label: 'end card'}],
   fonts: ['700 60px Almoni', '400 60px Almoni'],
   seek, check,
 });

@@ -79,6 +79,7 @@ def main():
     voice = a.voice or ('Charon' if a.engine == 'gemini' else 'he-IL-Wavenet-D')
     os.makedirs(OUT, exist_ok=True)
     placed = []
+    total = max(e for _, _, e, _ in lines())
     for name, start, end, ssml in lines():
         p, slot = os.path.join(OUT, name + '.wav'), end - start
         if a.engine == 'gemini' and os.path.exists(p) and not a.fresh:
@@ -111,7 +112,7 @@ def main():
     for i, (p, s) in enumerate(placed):
         inputs += ['-i', p]
         filt.append(f'[{i}:a]adelay={int(s * 1000)}|{int(s * 1000)}[a{i}]')
-    filt.append(''.join(f'[a{i}]' for i in range(len(placed))) + f'amix=inputs={len(placed)}:normalize=0,apad,atrim=0:52[v]')
+    filt.append(''.join(f'[a{i}]' for i in range(len(placed))) + f'amix=inputs={len(placed)}:normalize=0,apad,atrim=0:{total}[v]')
     subprocess.check_call(['ffmpeg', '-v', 'error', '-y', *inputs, '-filter_complex', ';'.join(filt), '-map', '[v]', '-ar', '48000', os.path.join(OUT, 'voice.wav')])
     print('voice track:', os.path.join(OUT, 'voice.wav'))
 

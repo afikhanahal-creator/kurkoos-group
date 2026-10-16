@@ -2,20 +2,20 @@
 a warm pad, a soft kick, a clock tick that speeds up while the calendar fills (days 1 to 7, then 8 to 28), a low hit at every
 scene change, a muted stop at the fast forward X, and an open chord on the end card. Leaves the mid range free for a voice.
 
-    python3 video/studio/beton28/music.py  ->  video/studio/beton28/music.wav (52 s, 48 kHz stereo)
+    python3 video/studio/beton28/music.py  ->  video/studio/beton28/music.wav (53.9 s, 48 kHz stereo)
 """
 import os, wave
 import numpy as np
 
 H = os.path.dirname(os.path.abspath(__file__))
-SR, DUR, BPM = 48000, 52.0, 96
+SR, DUR, BPM = 48000, 53.9, 96
 B = 60 / BPM
 n = int(SR * DUR)
 L, R = np.zeros(n), np.zeros(n)
 rng = np.random.default_rng(28)
 T = lambda d: np.arange(int(SR * d)) / SR
 f = lambda m: 440 * 2 ** ((m - 69) / 12)
-SC = [0, 3.0, 6.5, 10.5, 13.5, 19.0, 24.0, 28.0, 33.5, 39.0, 44.5, 48.5]  # scene starts (index.html S)
+SC = [0, 3.0, 6.5, 10.5, 13.5, 19.0, 24.0, 28.0, 33.5, 39.0, 44.5, 49.9]  # scene starts (index.html S)
 
 
 def env(d, a=.005, r=.3):
@@ -66,13 +66,13 @@ def bell(m, d=2.5):
 CH = [[50, 57, 62, 65], [46, 53, 58, 62], [41, 53, 57, 60], [48, 55, 60, 64]]
 t = 0.0
 i = 0
-while t < 48.5:
+while t < 49.9:
     add(pad(CH[i % 4], 4 * B * 2 + 1.2), t, .16)
     t += 4 * B * 2
     i += 1
-add(pad([41, 53, 57, 60, 65], 4.0), 48.5, .2)
+add(pad([41, 53, 57, 60, 65], 4.0), 49.9, .2)
 # bass on the beat from the first scene change, kick on 1 and 3 from the calendar on
-for b in range(int(48.5 / B)):
+for b in range(int(49.9 / B)):
     at = b * B
     if at < 3.0:
         continue
@@ -93,8 +93,8 @@ add(bell(77), 22.4, .26)          # day 28 tick
 for at in SC[1:]:
     add(boom(), at - .02, .35)
 add(boom(1.2), 12.7, .5)
-add(bell(62, 3.5), 48.7, .3)
-add(bell(69, 3.0), 48.95, .22, .3)
+add(bell(62, 3.5), 50.1, .3)
+add(bell(69, 3.0), 50.35, .22, .3)
 
 mix = np.stack([L, R], 1)
 fade = np.minimum(1, (DUR - np.arange(n) / SR) / 1.2)[:, None]

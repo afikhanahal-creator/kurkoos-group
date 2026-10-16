@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>28 days of concrete</title>
 <!-- Kurkoos reel: "28 ימים שאי אפשר לקצר". Flat explainer illustration on paper, navy line work, red only for emphasis.
-  9:16, 53.9s, captions at the bottom (same text as narration.md, so a Google TTS voice can be laid on top). Pure function of t.
+  9:16, 43.6s (story timeline 53.9 s at 1.25x), captions at the bottom (same text as narration.md, so a Google TTS voice can be laid on top). Pure function of t.
   STAGES
   0.0  - 3.0   the owner's cover image, slow push in
   3.0  - 6.5   the 28 squares lift off the cover into a calendar of empty days; "28 ימים"
@@ -59,7 +59,8 @@
 </div>
 <script src="../lib/studio.js"></script>
 <script>
-const W = 1080, H = 1920, DUR = 53.9;
+// SPEED: the whole story (written on a 53.9 s timeline) plays 1.25x faster; the last frame holds a moment at the end.
+const W = 1080, H = 1920, STORY = 53.9, SPEED = 1.25, DUR = +(STORY / SPEED + .5).toFixed(2);
 const NAVY = '#07293a', TEAL = '#105572', MIST = '#8fb6c8', PAPER = '#f7f8fa', RED = '#a90b0c', CON = '#c9ced3', COND = '#7d858c';
 const {clamp, lerp, smooth, step, hash} = Studio;
 const $ = id => document.getElementById(id);
@@ -211,7 +212,7 @@ endEl.innerHTML = `<img src="logo.png" alt="" style="position:absolute;left:390p
 // ---------- grain (static) ----------
 (() => { const c = $('grain'), x = c.getContext('2d'), d = x.createImageData(540, 960), r = Studio.rng(7); for (let i = 0; i < d.data.length; i += 4) { const v = r() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); c.style.width = '1080px'; c.style.height = '1920px'; })();
 
-function seek(t) {
+function seekStory(t) {
   // 1 cover
   vis(cover, t < S.lift + 1.2);
   cover.style.transform = `scale(${1 + .035 * k(t, 0, S.lift)})`;
@@ -316,9 +317,15 @@ function seek(t) {
   // L end card
   const e = k(t, S.end, S.end + .5);
   vis(endEl, t >= S.end); endEl.style.clipPath = `circle(${e * 140}% at 50% 90%)`;
-  ['e1', 'e2', 'e3', 'e4'].forEach((id, i) => inout($(id), t, S.end + .4 + i * .25, DUR + 1, 30));
+  ['e1', 'e2', 'e3', 'e4'].forEach((id, i) => inout($(id), t, S.end + .4 + i * .25, STORY + 1, 30));
   caption(t);
+  // a slow push in on every scene, so no frame stands still (cover and end card keep their own framing)
+  const sc = [S.lift, S.slab, S.ff, S.d7, S.d28, S.who, S.gantt, S.cash, S.fc, S.pour].filter(x => x <= t).pop();
+  const nx = [S.slab, S.ff, S.d7, S.d28, S.who, S.gantt, S.cash, S.fc, S.pour, S.end].find(x => x > t) || S.end;
+  const z = sc != null && t < S.end ? 1 + .035 * smooth((t - sc) / (nx - sc)) : 1;
+  [world, calEl].forEach(el => { el.style.transformOrigin = '50% 46%'; el.style.transform = `scale(${z})`; });
 }
+function seek(t) { return seekStory(Math.min(STORY, t * SPEED)); }
 
 function check(t) {
   const out = [], cap = $('cap').getBoundingClientRect();
@@ -329,9 +336,9 @@ function check(t) {
 
 Studio.define({
   w: W, h: H, duration: DUR,
-  stages: [{t: 1.5, label: 'cover'}, {t: 5.2, label: 'calendar'}, {t: 9.6, label: 'slab hardens'}, {t: 13.2, label: 'fast forward X'},
-    {t: 18.0, label: 'day 7'}, {t: 23.5, label: 'day 28'}, {t: 27.0, label: 'developer'}, {t: 31.2, label: 'squeeze bounce'}, {t: 33.0, label: 'locked'},
-    {t: 38.0, label: 'cash flow'}, {t: 43.5, label: 'forecast breaks'}, {t: 48.8, label: 'pour day'}, {t: 52.6, label: 'end card'}],
+  stages: [{t: 1.2, label: 'cover'}, {t: 4.16, label: 'calendar'}, {t: 7.68, label: 'slab hardens'}, {t: 10.56, label: 'fast forward X'},
+    {t: 14.4, label: 'day 7'}, {t: 18.8, label: 'day 28'}, {t: 21.6, label: 'developer'}, {t: 24.96, label: 'squeeze bounce'}, {t: 26.4, label: 'locked'},
+    {t: 30.4, label: 'cash flow'}, {t: 34.8, label: 'forecast breaks'}, {t: 39.04, label: 'pour day'}, {t: 42.08, label: 'end card'}],
   fonts: ['700 60px Almoni', '400 60px Almoni'],
   seek, check,
 });

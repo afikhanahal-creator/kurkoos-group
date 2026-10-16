@@ -103,7 +103,8 @@
 .priv-contact p { margin: 0.35rem 0; color: var(--color-text-soft); font-size: 1.02rem; }
 .priv-contact b { color: var(--color-text); }
 .priv-contact a { color: var(--color-primary-700); text-decoration: underline; }
-.priv-contact a:hover { color: var(--color-primary-900); }
+@media (hover: hover) and (pointer: fine) {
+.priv-contact a:hover { color: var(--color-primary-900); } }
 
 /* ---- הצהרת נגישות: כרטיסי דגש ---- */
 .a11y-feats {
@@ -119,11 +120,12 @@
   padding: 1.3rem 1.4rem;
   transition: transform var(--dur-base), box-shadow var(--dur-base), border-color var(--dur-base);
 }
+@media (hover: hover) and (pointer: fine) {
 .a11y-feat:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
   border-color: color-mix(in srgb, var(--color-primary-700) 35%, transparent);
-}
+} }
 .a11y-feat__ic {
   display: grid;
   place-items: center;

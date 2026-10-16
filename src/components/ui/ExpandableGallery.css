@@ -28,7 +28,8 @@
   display: block;
   transition: transform var(--dur-slow) var(--ease-out);
 }
-.xgal__item:hover .xgal__img { transform: scale(1.02); }
+@media (hover: hover) and (pointer: fine) {
+.xgal__item:hover .xgal__img { transform: scale(1.02); } }
 .xgal__shade {
   position: absolute;
   inset: 0;
@@ -51,7 +52,8 @@
   transform: translateY(8px);
   transition: opacity var(--dur-base), transform var(--dur-base);
 }
-.xgal__item:hover .xgal__zoom { opacity: 1; transform: translateY(0); }
+@media (hover: hover) and (pointer: fine) {
+.xgal__item:hover .xgal__zoom { opacity: 1; transform: translateY(0); } }
 
 /* ===== מובייל — רצועת גלילה אופקית עם snap (אין hover) ===== */
 @media (max-width: 880px) {
@@ -106,11 +108,13 @@
   cursor: pointer;
   transition: background var(--dur-fast), transform var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .xgal__close:hover,
-.xgal__nav:hover { background: var(--color-accent); transform: scale(1.06); }
+.xgal__nav:hover { background: var(--color-accent); transform: scale(1.06); } }
 .xgal__close { top: 1.1rem; inset-inline-end: 1.1rem; }
 .xgal__nav { top: 50%; transform: translateY(-50%); }
-.xgal__nav:hover { transform: translateY(-50%) scale(1.06); }
+@media (hover: hover) and (pointer: fine) {
+.xgal__nav:hover { transform: translateY(-50%) scale(1.06); } }
 .xgal__nav--prev { inset-inline-start: 1.1rem; }
 .xgal__nav--next { inset-inline-end: 1.1rem; }
 /* חצים — סיבוב ה-chevron לכיוון הנכון (RTL) */

@@ -10,7 +10,9 @@
   border: 1px solid var(--color-border);
   transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .team-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+}
 
 .team-card__photo {
   position: relative;
@@ -22,7 +24,9 @@
   width: 100%; height: 100%; object-fit: cover;
   transition: transform var(--dur-slow) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .team-card:hover .team-card__photo img { transform: scale(1.05); }
+}
 .team-card__linkedin {
   position: absolute;
   inset-block-end: 0.9rem;
@@ -36,7 +40,9 @@
   box-shadow: var(--shadow-sm);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .team-card__linkedin:hover { background: var(--color-secondary); color: #fff; }
+}
 
 .team-card__body { padding: 1.4rem 1.5rem 1.7rem; }
 .team-card__name { font-size: 1.3rem; }

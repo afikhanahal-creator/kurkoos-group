@@ -47,7 +47,9 @@
   color: #fff;
   transition: background var(--dur-fast), transform var(--dur-fast), box-shadow var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .footer__social-link:hover { background: var(--color-accent); transform: translateY(-3px); }
+}
 /* אפקט זוהר אדום בלחיצה */
 .footer__social-link:active,
 .footer__social-link:focus-visible {
@@ -69,9 +71,11 @@
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06), 0 12px 30px rgba(0, 0, 0, 0.4);
   transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .footer__badge:hover {
   transform: translateY(-50%) scale(1.06) rotate(-4deg);
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14), 0 16px 38px rgba(0, 0, 0, 0.55);
+}
 }
 
 .footer__heading {
@@ -88,7 +92,9 @@
   color: rgba(255, 255, 255, 0.72);
   transition: color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .footer__col a:hover, .footer__contact:hover { color: #fff; }
+}
 .footer__contact--muted { color: rgba(255,255,255,0.45); }
 .footer__contact svg { color: var(--color-secondary); flex-shrink: 0; }
 
@@ -126,7 +132,9 @@
 }
 .footer__legal { display: flex; justify-content: center; gap: 1.5rem; }
 .footer__legal a { color: rgba(255,255,255,0.6); }
+@media (hover: hover) and (pointer: fine) {
 .footer__legal a:hover { color: #fff; }
+}
 
 @media (max-width: 860px) {
   .footer__grid { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
@@ -197,6 +205,8 @@
     height: 58px;
     margin-inline-start: 0;
   }
+  @media (hover: hover) and (pointer: fine) {
   .footer__badge:hover { transform: scale(1.06) rotate(-4deg); }
+  }
   .footer__legal { justify-content: center; flex-wrap: wrap; gap: 1rem; }
 }

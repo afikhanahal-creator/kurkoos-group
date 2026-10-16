@@ -17,7 +17,8 @@
   cursor: pointer;
   transition: transform var(--dur-fast), opacity var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast);
 }
-.yz-chip:hover { border-color: var(--color-primary-700); color: var(--color-primary-700); }
+@media (hover: hover) and (pointer: fine) {
+.yz-chip:hover { border-color: var(--color-primary-700); color: var(--color-primary-700); } }
 .yz-chip.is-on { background: var(--color-primary-900); border-color: var(--color-primary-900); color: #fff; }
 
 .yz-empty { color: var(--color-text-muted); padding: 2rem 0; text-align: center; }
@@ -70,8 +71,9 @@
 .yz-card__media .acover { width: 100%; height: 100%; transition: transform 0.6s var(--ease-out); }
 .yz-card__media .smart-image,
 .yz-card__media .ri-img { object-fit: cover; }
+@media (hover: hover) and (pointer: fine) {
 .yz-card:hover .yz-card__media .ri-img,
-.yz-card:hover .yz-card__media .acover { transform: scale(1.05); }
+.yz-card:hover .yz-card__media .acover { transform: scale(1.05); } }
 .yz-card__cat {
   position: absolute;
   inset-block-start: 0.9rem;
@@ -116,9 +118,12 @@
 }
 .yz-card__read svg { transition: transform var(--dur-base) var(--ease-out); }
 [dir='rtl'] .yz-card__read svg { transform: scaleX(-1); }
-.yz-card:hover .yz-card__read svg { transform: translateX(4px); }
-[dir='rtl'] .yz-card:hover .yz-card__read svg { transform: scaleX(-1) translateX(4px); }
-.yz-card:hover .yz-card__title { color: var(--color-primary-700); }
+@media (hover: hover) and (pointer: fine) {
+.yz-card:hover .yz-card__read svg { transform: translateX(4px); } }
+@media (hover: hover) and (pointer: fine) {
+[dir='rtl'] .yz-card:hover .yz-card__read svg { transform: scaleX(-1) translateX(4px); } }
+@media (hover: hover) and (pointer: fine) {
+.yz-card:hover .yz-card__title { color: var(--color-primary-700); } }
 
 /* ============================================================
    עמוד כתבה

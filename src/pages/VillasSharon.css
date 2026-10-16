@@ -12,7 +12,8 @@
 }
 .vsh-tab b { font-family: var(--font-heading); font-weight: 700; font-size: 1rem; color: var(--color-text, #16202e); }
 .vsh-tab span { font-size: 0.8rem; color: var(--color-text-muted, #5a6a7a); }
-.vsh-tab:hover { border-color: #cbd5e1; transform: translateY(-2px); }
+@media (hover: hover) and (pointer: fine) {
+.vsh-tab:hover { border-color: #cbd5e1; transform: translateY(-2px); } }
 .vsh-tab.is-on {
   border-color: var(--color-secondary, #16688c);
   box-shadow: 0 0 0 1px var(--color-secondary, #16688c) inset, 0 6px 20px rgba(10, 37, 64, 0.09);
@@ -73,7 +74,8 @@
 }
 .vsh-media__hero .vsh-media__img,
 .vsh-media__hero .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--ease-out, ease); }
-.vsh-media__hero:hover .vsh-media__img { transform: scale(1.03); }
+@media (hover: hover) and (pointer: fine) {
+.vsh-media__hero:hover .vsh-media__img { transform: scale(1.03); } }
 .vsh-media__cta {
   position: absolute; inset-inline-start: 1rem; inset-block-end: 1rem;
   padding: 0.45rem 0.95rem; border-radius: 999px;
@@ -88,7 +90,8 @@
   background: var(--color-bg-soft, #f4f6f9); border: 1px solid var(--color-border, #e3e7ee);
 }
 .vsh-media__thumb img, .vsh-media__thumb .smart-image-placeholder { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s var(--ease-out, ease); }
-.vsh-media__thumb:hover img { transform: scale(1.05); }
+@media (hover: hover) and (pointer: fine) {
+.vsh-media__thumb:hover img { transform: scale(1.05); } }
 
 @media (max-width: 860px) {
   .vsh-media__hero { aspect-ratio: 4 / 3; border-radius: 10px; }
@@ -163,7 +166,8 @@
   background: transparent; color: #fff;
   border: 1.5px solid rgba(255, 255, 255, 0.45);
 }
-.vsh-cta__ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: #fff; color: #fff; }
+@media (hover: hover) and (pointer: fine) {
+.vsh-cta__ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: #fff; color: #fff; } }
 
 @media (max-width: 960px) {
   .vsh-intro__grid { grid-template-columns: 1fr; }
@@ -218,7 +222,8 @@
   box-shadow: 0 6px 18px -14px rgba(7, 41, 58, 0.4);
 }
 .vsh-tab span { justify-content: center; }
-.vsh-tab:hover { border-color: var(--color-secondary, #16688c); box-shadow: 0 10px 24px -14px rgba(22, 104, 140, 0.55); }
+@media (hover: hover) and (pointer: fine) {
+.vsh-tab:hover { border-color: var(--color-secondary, #16688c); box-shadow: 0 10px 24px -14px rgba(22, 104, 140, 0.55); } }
 .vsh-tab.is-on {
   background: linear-gradient(135deg, #0f4c6e 0%, #16688c 100%);
   border-color: #16688c;
@@ -244,7 +249,8 @@
   position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover;
   filter: blur(22px) saturate(1.15); opacity: 0.75; z-index: 0;
 }
-.vsh-media__hero:hover .vsh-media__img { transform: scale(1.015); }
+@media (hover: hover) and (pointer: fine) {
+.vsh-media__hero:hover .vsh-media__img { transform: scale(1.015); } }
 .vsh-media__cta { z-index: 2; background: rgba(22, 104, 140, 0.9); }
 .vsh-media__thumb { border-radius: 12px; border-color: rgba(22, 104, 140, 0.16); }
 
@@ -283,7 +289,8 @@
 .vsh-media__caption b { font-family: var(--font-heading); font-weight: 800; font-size: clamp(1.15rem, 2.2vw, 1.55rem); line-height: 1.15; }
 .vsh-media__caption span { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
 .vsh-media__cta { inset-block-end: 1.25rem; box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.5); }
-.vsh-media__hero:hover .vsh-media__cta { background: #fff; color: #0f4c6e; }
+@media (hover: hover) and (pointer: fine) {
+.vsh-media__hero:hover .vsh-media__cta { background: #fff; color: #0f4c6e; } }
 
 .vsh-panel { padding: 1.7rem 1.9rem 2rem; }
 .vsh-panel__kicker {
@@ -310,7 +317,8 @@
 
 /* מאפייני הבנייה: כרטיסים עם קו כחול בריחוף */
 .lhub-services .feature-card, .lhub-services__grid > * > * { transition: transform .25s var(--ease-out, ease), box-shadow .25s; }
-.lhub-services__grid > *:hover > * { transform: translateY(-4px); box-shadow: 0 20px 40px -24px rgba(22, 104, 140, 0.45); }
+@media (hover: hover) and (pointer: fine) {
+.lhub-services__grid > *:hover > * { transform: translateY(-4px); box-shadow: 0 20px 40px -24px rgba(22, 104, 140, 0.45); } }
 
 @media (max-width: 860px) {
   .vsh-panel { padding: 1.2rem 1.1rem 1.4rem; }

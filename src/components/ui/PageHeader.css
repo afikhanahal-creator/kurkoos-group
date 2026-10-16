@@ -153,7 +153,9 @@
     box-shadow: none;
     font-weight: 600;
   }
+  @media (hover: hover) and (pointer: fine) {
   .page-header .breadcrumbs__link--back:hover { background: #fff; color: var(--color-primary-900); }
+  }
   .page-header .breadcrumbs__back-ic { width: 13px; height: 13px; }
   .page-header .breadcrumbs__current,
   .page-header .breadcrumbs__link { font-size: 0.74rem; font-weight: 500; }

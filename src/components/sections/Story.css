@@ -32,4 +32,5 @@
 .story__toggle-line { width: 60px; height: 1.5px; background: var(--color-secondary); opacity: 0.5; }
 .story__toggle-chevron { transition: transform var(--dur-base) var(--ease-out); }
 .story__toggle.is-open .story__toggle-chevron { transform: rotate(180deg); }
-.story__toggle:hover .story__toggle-text { color: var(--color-accent); }
+@media (hover: hover) and (pointer: fine) {
+.story__toggle:hover .story__toggle-text { color: var(--color-accent); } }

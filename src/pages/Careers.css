@@ -11,7 +11,8 @@
   border-radius: var(--radius-lg);
   transition: border-color var(--dur-base), box-shadow var(--dur-base);
 }
-.job-card:hover { border-color: var(--color-secondary); box-shadow: var(--shadow-md); }
+@media (hover: hover) and (pointer: fine) {
+.job-card:hover { border-color: var(--color-secondary); box-shadow: var(--shadow-md); } }
 .job-card__title { font-size: 1.3rem; }
 .job-card__meta { display: flex; gap: 1.5rem; margin-top: 0.5rem; color: var(--color-text-soft); flex-wrap: wrap; }
 .job-card__meta span { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; }

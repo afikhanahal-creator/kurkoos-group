@@ -85,5 +85,7 @@
   transition: transform 0.2s var(--ease-out, ease), background 0.2s ease;
 }
 .bg-media__play svg { margin-inline-start: 4px; }  /* איזון אופטי של המשולש */
+@media (hover: hover) and (pointer: fine) {
 .bg-media__play:hover { transform: scale(1.06); background: var(--color-accent, #a90b0c); }
+}
 .bg-media__play:active { transform: scale(0.96); }

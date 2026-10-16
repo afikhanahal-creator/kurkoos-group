@@ -25,7 +25,9 @@
   transition: opacity var(--dur-base) var(--ease-out);
   pointer-events: none;
 }
+@media (hover: hover) and (pointer: fine) {
 .bcal:hover::after { opacity: 1; }
+}
 .bcal > * { position: relative; z-index: 1; }
 
 /* כותרת */
@@ -67,7 +69,9 @@
     background var(--dur-base) var(--ease-out),
     box-shadow var(--dur-base) var(--ease-out);
 }
+@media (hover: hover) and (pointer: fine) {
 .bcal__cta:hover { background: var(--color-accent); transform: translateY(-2px); box-shadow: var(--shadow-3); }
+}
 .bcal__cta:active { transform: translateY(0) scale(0.97); }
 
 /* פאנל היומן — מסגרת כפולה + צל פנימי (כמו ברפרנס) */
@@ -152,11 +156,15 @@
 
 /* יום פנוי (לחיץ) */
 .bcal__cell.is-available { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) {
 .bcal__cell.is-available:hover:not(.is-selected):not(.is-slot) { background: var(--color-secondary-soft); }
+}
 
 /* מועד פנוי מודגש — עיגול טורקיז מלא */
 .bcal__cell.is-slot { background: var(--color-secondary); color: #fff; box-shadow: 0 4px 10px -3px rgba(16, 85, 114, 0.5); }
+@media (hover: hover) and (pointer: fine) {
 .bcal__cell.is-slot:hover:not(.is-selected) { background: var(--color-primary-500); }
+}
 
 /* היום — טבעת אדומה */
 .bcal__cell.is-today:not(.is-selected) {
@@ -192,7 +200,9 @@
 .bcal__fab svg { transition: transform 0.2s var(--ease-out); }
 /* פתוח: צ'evron כלפי מטה (סגירה); סגור: כלפי מעלה (פתיחה) */
 .bcal__fab--closed svg { transform: rotate(180deg); }
+@media (hover: hover) and (pointer: fine) {
 .bcal__fab:hover { transform: translateY(-4px); background: var(--color-secondary); color: #fff; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .bcal__cell,
@@ -213,7 +223,9 @@
   font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; color: var(--color-primary-900);
   transition: border-color var(--dur-fast), background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .bcal__time:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
+}
 .bcal__time:active { transform: scale(0.95); }
 .bcal__time.is-selected { background: var(--color-accent-500); border-color: var(--color-accent-500); color: #fff; }
 @media (max-width: 600px) { .bcal__times-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -236,7 +248,9 @@
   color: var(--color-primary-900);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .bcal__month-btn:hover { background: var(--color-secondary-soft); color: var(--color-secondary); }
+}
 .bcal__month-chev { transition: transform 0.2s ease; opacity: 0.65; }
 .bcal__month-chev.is-open { transform: rotate(180deg); }
 
@@ -271,11 +285,15 @@
   color: var(--color-primary-900);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
+@media (hover: hover) and (pointer: fine) {
 .bcal__month-opt:hover { background: var(--color-secondary-soft); color: var(--color-secondary); }
+}
 /* החודש הנבחר — מלא בצבע המותג, כמו עיגולי התאריכים */
 .bcal__month-opt.is-sel {
   background: var(--color-secondary);
   color: #fff;
   box-shadow: 0 4px 10px -3px rgba(16, 85, 114, 0.5);
 }
+@media (hover: hover) and (pointer: fine) {
 .bcal__month-opt.is-sel:hover { background: var(--color-primary-500); color: #fff; }
+}

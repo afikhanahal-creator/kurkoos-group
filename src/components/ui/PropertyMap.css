@@ -62,10 +62,12 @@
     visibility var(--dur-base, 0.25s);
 }
 /* בריחוף על הקוביה — השלט מופיע (יחד עם סיבוב הקוביה) */
+@media (hover: hover) and (pointer: fine) {
 .pm-cube-marker:hover .pm-cube-label {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
 }
 /* זנב משולש קטן שמצביע אל הקוביה */
 .pm-cube-label::after {
@@ -124,8 +126,10 @@
   --clr-alpha: rgba(169, 11, 12, 0.14); /* מילוי שקוף אדום — רואים דרכו את שאר הפאות */
 }
 /* מסתובבת לאט — רק כשהעכבר מעל הקוביה */
+@media (hover: hover) and (pointer: fine) {
 .pm-cube-marker:hover .pm-cube {
   animation: pm-cube-spin 6s infinite linear;
+}
 }
 /* 6 פאות הקוביה — כל אחת 37px, חצי = 18.5px. מילוי שקוף + מסגרת אדומה = מקצועות נראים */
 .pm-cube > div {
@@ -148,7 +152,9 @@
   to   { transform: rotateX(-26deg) rotateY(322deg); }
 }
 @media (prefers-reduced-motion: reduce) {
+  @media (hover: hover) and (pointer: fine) {
   .pm-cube-marker:hover .pm-cube { animation: none; }
+  }
 }
 
 /* ---- השלט במובייל — מעט קטן יותר כדי שייכנס במלואו ---- */

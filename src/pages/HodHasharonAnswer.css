@@ -56,8 +56,10 @@
   color: var(--color-text);
   transition: border-color var(--dur-base) var(--ease-out);
 }
-.hh-project:hover { border-color: var(--hl-mist); }
-.hh-project:hover .hl-project__name { color: var(--color-accent-500); }
+@media (hover: hover) and (pointer: fine) {
+.hh-project:hover { border-color: var(--hl-mist); } }
+@media (hover: hover) and (pointer: fine) {
+.hh-project:hover .hl-project__name { color: var(--color-accent-500); } }
 .hh-project__top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .hh-project__status {
   flex: none;
@@ -133,7 +135,8 @@
 .hh-contact__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-content: start; }
 .hh-contact__links { list-style: none; padding: 0; margin: 1rem 0 0; width: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
 .hh-contact__links a { color: var(--hl-teal); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-.hh-contact__links a:hover { color: var(--color-accent-500); }
+@media (hover: hover) and (pointer: fine) {
+.hh-contact__links a:hover { color: var(--color-accent-500); } }
 
 @media (max-width: 900px) {
   .hh-hero__grid { grid-template-columns: 1fr; }

@@ -3,6 +3,7 @@
 // Two places: a "הגלריה שלהם" block inside every competitor card, and a central view of all galleries. Every post has
 // "שכפל למותג שלנו": Claude reads why the post works and writes an original post for Kurkoos or Afik HaNahal, which opens in
 // the editor with the competitor's post beside it. Our version uses our own photos; the competitor's picture is only a reference.
+// V183: every screenshot is made clearer on upload (upscale of small pictures, local contrast, sharpening), the original kept.
 // V182: screenshots. Every competitor has a folder; the team uploads screenshots or saved pictures of the competitor's ads
 // (collection comp_shots, files in storage at full resolution, untouched), optionally tied to one Meta ad. They live in the
 // same gallery, and "שכפל למותג שלנו" sends the picture itself to Claude so the analysis covers the design, not only the words.
@@ -20,7 +21,7 @@ const SV={ext:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" strok
  search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>'};
 
 /* ---------- state ---------- */
-const G={posts:new Map(),shots:new Map(),sloaded:false,up:{},drop:null,loaded:false,open:new Set(),cf:{},lib:{q:'',comp:'',cid:'',kind:'',sort:'new',n:48},gen:null,srcOpen:null,tried:new Set(),queue:[],busy:0};
+const G={orig:new Set(),posts:new Map(),shots:new Map(),sloaded:false,up:{},drop:null,loaded:false,open:new Set(),cf:{},lib:{q:'',comp:'',cid:'',kind:'',sort:'new',n:48},gen:null,srcOpen:null,tried:new Set(),queue:[],busy:0};
 const TZ='Asia/Jerusalem';const fD=new Intl.DateTimeFormat('he-IL',{timeZone:TZ,day:'numeric',month:'numeric',year:'2-digit'});
 const fmtD=v=>{const n=Date.parse(v||'');return isNaN(n)?'':fD.format(new Date(n))};
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
@@ -59,9 +60,10 @@ function pump(){while(G.busy<2&&G.queue.length){const id=G.queue.shift();const p
 /* ---------- pieces ---------- */
 const num=n=>(+n||0).toLocaleString('he-IL');
 function engHtml(p){return `<span class="v181eng"><span title="תגובות רגשיות (לייקים)">${SV.like}<b>${num(p.reactions)}</b><i class="v181sr">לייקים</i></span><span title="תגובות">${SV.cmt}<b>${num(p.comments)}</b><i class="v181sr">תגובות</i></span><span title="שיתופים">${SV.shr}<b>${num(p.shares)}</b><i class="v181sr">שיתופים</i></span></span>`}
-function picHtml(p,big){const s=big&&isShot(p)?safeUrl(p.url):srcOf(p);if(s)return `<img src="${E(s)}" alt="${isShot(p)?'צילום מסך של מודעה של':'התמונה מהפוסט של'} ${E(shortName(p))}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-v181img="${E(p.id)}">`;
+const fullOf=p=>safeUrl((G.orig&&G.orig.has(p.sid))?p.url:(p.enh||p.url));
+function picHtml(p,big){const s=big&&isShot(p)?fullOf(p):srcOf(p);if(s)return `<img src="${E(s)}" alt="${isShot(p)?'צילום מסך של מודעה של':'התמונה מהפוסט של'} ${E(shortName(p))}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-v181img="${E(p.id)}">`;
  return `<span class="v181ph">${SV.pic}<small>${!p.image?'פוסט בלי תמונה':expired(p)?'התמונה תתעדכן בסנכרון של מחר בבוקר':'התמונה לא נטענה'}</small></span>`}
-const resHtml=p=>p.w&&p.h?`<span class="v181res${Math.max(p.w,p.h)<1000?' low':''}" dir="ltr">${p.w}×${p.h}</span>`:'';
+const resHtml=p=>p.w&&p.h?`<span class="v181res${Math.max(p.w,p.h)<1000&&!p.enh?' low':''}${p.enh?' enh':''}" dir="ltr" title="${p.enh?'שופר מ־'+p.w+'×'+p.h:'המקור'}">${p.enh?p.ew+'×'+p.eh:p.w+'×'+p.h}</span>${p.enh?'<span class="v181enh">שופר</span>':''}`:'';
 function tile(p,o={}){const t=excerpt(p.text,140);const sh=isShot(p);
  return `<article class="v181t" data-v181id="${E(p.id)}">
   <button type="button" class="v181pic" data-v181="view" data-id="${E(p.id)}" aria-label="${sh?'צילום המסך':'הפוסט המלא'} של ${E(shortName(p))} מ־${E(fmtD(p.published))}">${picHtml(p)}${sh?`<span class="v181kind">צילום מסך</span>`:''}</button>
@@ -120,7 +122,8 @@ function vGal(){const L=G.lib;if(!APP.db)return `<div class="v181p0"><div class=
   <label class="v179sel"><span>תיקייה של מתחרה</span><select data-v181="open"><option value="">בחירה…</option>${comps.map(([id,n])=>`<option value="${E(id)}"${f&&f.name===n?' selected':''}>${E(n)}</option>`).join('')}</select></label></div>`;
  const grid=page.length?`<div class="v181grid">${page.map(p=>tile(p,{showComp:!f})).join('')}</div>`:`<div class="v179empty"><b>${f&&!f.posts&&!f.shots?'התיקייה עדיין ריקה':'אין תמונות בסינון הזה'}</b><p>${f&&!f.posts&&!f.shots?'מעלים צילומי מסך של המודעות שלהם בכפתור למעלה.':'נסו מילה אחרת או סוג אחר.'}</p></div>`;
  const more=list.length>L.n?`<button type="button" class="v179b more" data-v181="lmore">הצג עוד (${list.length-L.n} נוספות)</button>`:'';
- if(f)return `<div class="v181p0">${bar}<div class="v181fh"><button type="button" class="v179b" data-v181="folder" data-k="">${I('right',16)} כל התיקיות</button><h3>${E(f.name)}</h3><span>${cntTxt(f.posts,f.shots)}</span></div>${f.cid?upZone(f.cid):''}<p class="v179cnt" aria-live="polite">${list.length} תמונות בתיקייה</p>${grid}${more}</div>`;
+ const raw=f?list.filter(p=>isShot(p)&&!p.enh):[];
+ if(f)return `<div class="v181p0">${bar}<div class="v181fh"><button type="button" class="v179b" data-v181="folder" data-k="">${I('right',16)} כל התיקיות</button><h3>${E(f.name)}</h3><span>${cntTxt(f.posts,f.shots)}</span>${raw.length?`<button type="button" class="v179b pri" data-v181="senhall" data-ids="${E(raw.map(p=>p.sid).join(','))}">${I('wand',15)} שיפור כל צילומי המסך (${raw.length})</button>`:''}</div>${f.cid?upZone(f.cid):''}<p class="v179cnt" aria-live="polite">${list.length} תמונות בתיקייה</p>${grid}${more}</div>`;
  if(!F.length)return `<div class="v181p0">${bar}<div class="v179empty big"><b>עדיין אין תמונות של מתחרים</b><p>בוחרים תיקייה של מתחרה למעלה ומעלים צילומי מסך של המודעות שלו. ${HOWTO}</p></div></div>`;
  return `<div class="v181p0">${bar}<div class="v181h2"><b>תיקיות</b><span>${F.length} מתחרים</span></div><div class="v181folds">${F.map(x=>`<button type="button" class="v181fold" data-v181="folder" data-k="${E(x.name)}" data-cid="${E(x.cid)}"><span class="v181fc">${x.cover?`<img src="${E(x.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:SV.pic}</span><b>${E(x.name)}</b><small>${cntTxt(x.posts,x.shots)}</small></button>`).join('')}</div>
   <div class="v181h2"><b>כל התמונות</b></div><p class="v179cnt" aria-live="polite">${list.length} תמונות של ${new Set(list.map(shortName)).size} מתחרים${lastFetch()?` · פוסטים עודכנו ${E(fmtD(lastFetch()))}`:''}. פוסטים מגיעים רק ממתחרים שבמעקב ב-Metricool. צילומי מסך אפשר להעלות לכל מתחרה.</p>${grid}${more}</div>`}
@@ -141,12 +144,16 @@ function detailHtml(p){return `<header class="v179mh"><h2>${E(shortName(p))} · 
  <div class="v179fa">${p.text?`<button type="button" class="v179b" data-v181="copy" data-id="${E(p.id)}">${I('copy',15)} העתקת הטקסט</button>`:''}${safeUrl(p.link)?`<a class="v179b" href="${E(safeUrl(p.link))}" target="_blank" rel="noopener">לפוסט בפייסבוק ${SV.ext}</a>`:''}</div>
  <p class="v179help">מקור: Metricool, נכון ל־${E(fmtD(p.fetched))}. המספרים הם מה ש-Metricool מדד, לא הערכה.</p></div>
  <footer class="v179mf"><button type="button" class="v179b pri big" data-v181="clone" data-id="${E(p.id)}">${I('wand',16)} שכפל למותג שלנו</button></footer>`}
-function shotDetail(p){const ad=p.ad_id&&window.__v179&&__v179.M.ads.get(String(p.ad_id));const full=safeUrl(p.url);const snap=ad&&safeUrl(ad.snapshot_url);
+function shotDetail(p){const ad=p.ad_id&&window.__v179&&__v179.M.ads.get(String(p.ad_id));const full=fullOf(p);const isO=!p.enh||G.orig.has(p.sid);
+ const dimL=(w,h)=>`<bdi dir="ltr">${w}×${h}</bdi>`;
+ const qual=p.enh?`<div class="v179seg v181vs" role="group" aria-label="איזו גרסה להציג"><button type="button" data-v181="sver" data-sid="${E(p.sid)}" data-k="enh" aria-pressed="${!isO}"><span>משופר</span></button><button type="button" data-v181="sver" data-sid="${E(p.sid)}" data-k="orig" aria-pressed="${isO}"><span>המקור</span></button></div>`
+  :`<button type="button" class="v179b" data-v181="senh" data-sid="${E(p.sid)}">${I('wand',15)} שיפור איכות</button>`;const snap=ad&&safeUrl(ad.snapshot_url);
  return `<header class="v179mh"><h2>${E(shortName(p))} · צילום מסך</h2>${xBtn('v181d')}</header>
  <div class="v179mb"><a class="v181big" href="${E(full)}" target="_blank" rel="noopener" aria-label="פתיחה בגודל מלא"><img src="${E(full)}" alt="צילום מסך של מודעה של ${E(shortName(p))}" decoding="async"></a>
- <dl class="v179dl two"><div><dt>גודל</dt><dd>${p.w&&p.h?`<bdi dir="ltr">${p.w}×${p.h}</bdi> פיקסלים`:'לא ידוע'}${p.w&&Math.max(p.w,p.h)<1000?' <span class="v179p warn">רזולוציה נמוכה</span>':''}</dd></div><div><dt>קובץ</dt><dd>${E(mb(p.bytes))}${p.type?' · '+E(String(p.type).replace('image/','').toUpperCase()):''}</dd></div><div><dt>הועלה</dt><dd>${E(fmtD(p.added))}</dd></div>${p.ad_title||ad?`<div><dt>המודעה</dt><dd>${E(p.ad_title||String((ad&&ad.title)||'')||'ללא כותרת')}</dd></div>`:''}</dl>
+ <div class="v181qrow">${qual}<span class="v179muted">${p.enh?`הגרסה המשופרת ${dimL(p.ew,p.eh)}: ${(p.eops||[]).includes('upscale')?'הוגדלה, ':''}${(p.eops||[]).includes('levels')?'ניגודיות מאוזנת, ':''}חדות משופרת. המקור נשמר כמו שהוא.`:'אפשר לשפר את החדות של צילום המסך. המקור נשמר כמו שהוא.'}</span></div>
+ <dl class="v179dl two"><div><dt>גודל המקור</dt><dd>${p.w&&p.h?`${dimL(p.w,p.h)} פיקסלים`:'לא ידוע'}${p.w&&Math.max(p.w,p.h)<1000?' <span class="v179p warn">רזולוציה נמוכה</span>':''}</dd></div><div><dt>קובץ המקור</dt><dd>${E(mb(p.bytes))}${p.type?' · '+E(String(p.type).replace('image/','').toUpperCase()):''}</dd></div><div><dt>הועלה</dt><dd>${E(fmtD(p.added))}</dd></div>${p.ad_title||ad?`<div><dt>המודעה</dt><dd>${E(p.ad_title||String((ad&&ad.title)||'')||'ללא כותרת')}</dd></div>`:''}</dl>
  <label class="v179ta"><span>הערה (לא חובה)</span><textarea rows="2" data-v181note="${E(p.sid)}" placeholder="למשל: מודעה של פרויקט ברעננה, רצה 90 יום">${E(p.note||'')}</textarea></label>
- <div class="v179fa"><a class="v179b" href="${E(full)}" target="_blank" rel="noopener">פתיחה בגודל מלא ${SV.ext}</a>${snap?`<a class="v179b" href="${E(snap)}" target="_blank" rel="noopener">המודעה ב-Meta ${SV.ext}</a>`:''}<button type="button" class="v179b" data-v181="sdel" data-sid="${E(p.sid)}">${I('trash',15)} מחיקה</button></div></div>
+ <div class="v179fa"><a class="v179b" href="${E(full)}" target="_blank" rel="noopener">פתיחה בגודל מלא${p.enh?(isO?' (המקור)':' (משופר)'):''} ${SV.ext}</a>${snap?`<a class="v179b" href="${E(snap)}" target="_blank" rel="noopener">המודעה ב-Meta ${SV.ext}</a>`:''}<button type="button" class="v179b" data-v181="sdel" data-sid="${E(p.sid)}">${I('trash',15)} מחיקה</button></div></div>
  <footer class="v179mf"><button type="button" class="v179b pri big" data-v181="clone" data-id="${E(p.id)}">${I('wand',16)} שכפל למותג שלנו</button></footer>`}
 function openDetail(id){const p=getItem(id);if(!p)return;modal('v181d',isShot(p)?shotDetail(p):detailHtml(p),isShot(p)?'צילום מסך של מודעה של מתחרה':'הפוסט של המתחרה')}
 
@@ -184,7 +191,7 @@ ${B.rules}
 async function askAI(p,images){let s=null;try{s=window.claude&&window.claude.use?await window.claude.use('sample'):null}catch(e){}if(!s&&typeof KC!=='undefined'&&KC.sample)s=KC.sample;if(!s){const e=new Error('no');e.code='not_granted';throw e}
  const opts={cache:false,modelTier:'default'};if(images&&images.length)opts.images=images;const r=await s.json(p,opts);if(!r||typeof r!=='object'||!r.post)throw new Error('bad');return r}
 const asAd=post=>({id:post.id,comp_id:post.comp_id,comp_name:shortName(post),page_name:'',title:excerpt(post.text,90),start:null,snapshot_url:''});
-function srcFields(post){if(isShot(post))return {id:String(post.id),kind:'shot',comp_name:shortName(post),published:post.added||null,text:String(post.note||post.ad_title||'').slice(0,600),reactions:0,comments:0,shares:0,link:safeUrl(post.url),img:safeUrl(post.url),w:post.w||0,h:post.h||0,ad_id:post.ad_id||''};
+function srcFields(post){if(isShot(post))return {id:String(post.id),kind:'shot',comp_name:shortName(post),published:post.added||null,text:String(post.note||post.ad_title||'').slice(0,600),reactions:0,comments:0,shares:0,link:safeUrl(post.enh||post.url),img:safeUrl(post.enh||post.url),w:post.ew||post.w||0,h:post.eh||post.h||0,ad_id:post.ad_id||''};
  return {id:String(post.id),comp_name:shortName(post),published:post.published||null,text:String(post.text||'').slice(0,600),reactions:+post.reactions||0,comments:+post.comments||0,shares:+post.shares||0,link:safeUrl(post.link),img:post.thumb||safeUrl(post.image)}}
 function finish(p,post,res,o){V().applyTo(p,res,asAd(post),o);delete p.metaSource;p.src='comppost';p.compPostId=String(post.id);p.compSource=srcFields(post);const vis=res&&res.analysis&&res.analysis.visual;if(vis)p.metaAnalysis=Object.assign({},p.metaAnalysis||{},{visual:(V().cleanTxt||String)(vis)});return p}
 function makePost(post,res,o){const ct=V().cleanTxt||(x=>String(x||'').trim());const P=res.post||{};const items=Array.isArray(P.items)?P.items.filter(Boolean):[];const L=items.length>=3?'ed_article':'ed_quote';const proj=o.goal==='project'&&o.project?o.project:'general';
@@ -233,7 +240,25 @@ const extOf=f=>({'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image
 // two light copies next to the untouched original: a preview for the gallery and a 1568px copy for Claude (its own reading size)
 async function scaled(bm,max,q){const k=Math.min(1,max/Math.max(bm.width,bm.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(bm.width*k));c.height=Math.max(1,Math.round(bm.height*k));
  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);return await new Promise(z=>c.toBlob(z,'image/jpeg',q))}
-function upStatus(cid){const st=G.up[String(cid)];document.querySelectorAll(`[data-v181drop="${CSS.escape(String(cid))}"] .v181upst`).forEach(el=>{el.textContent=st?`מעלה ${Math.min(st.n,st.done+st.err+1)} מתוך ${st.n}…`:''})}
+// clarity: small pictures are enlarged in one high quality step (measured sharper than doubling steps), levels are stretched
+// gently and the detail is sharpened with an unsharp mask sized to the enlargement. Nothing is invented: what was not in the
+// picture does not appear.
+function mkC(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';return [c,x]}
+function upscale(src,W,H){const [c,x]=mkC(W,H);x.fillStyle='#fff';x.fillRect(0,0,W,H);x.drawImage(src,0,0,W,H);return [c,x]}
+function levels(a){const hist=new Uint32Array(256);const n=a.length/4;const st=Math.max(1,Math.floor(n/200000));let m=0;for(let i=0;i<n;i+=st){const j=i*4;hist[(a[j]*77+a[j+1]*150+a[j+2]*29)>>8]++;m++}
+ let lo=0,hi=255,acc=0;for(;lo<255;lo++){acc+=hist[lo];if(acc>m*.003)break}acc=0;for(;hi>0;hi--){acc+=hist[hi];if(acc>m*.003)break}
+ if(hi-lo<40||(lo<=6&&hi>=249))return false;const k=255/(hi-lo);const lut=new Uint8ClampedArray(256);for(let v=0;v<256;v++)lut[v]=Math.round(v*.4+((v-lo)*k)*.6);
+ for(let i=0;i<a.length;i+=4){a[i]=lut[a[i]];a[i+1]=lut[a[i+1]];a[i+2]=lut[a[i+2]]}return true}
+function blur(a,w,h,r){const t=new Uint8ClampedArray(a.length),o=new Uint8ClampedArray(a.length),d=2*r+1;
+ for(let y=0;y<h;y++){const row=y*w*4;for(let c=0;c<3;c++){let s=0;for(let k=-r;k<=r;k++)s+=a[row+Math.min(w-1,Math.max(0,k))*4+c];for(let x=0;x<w;x++){t[row+x*4+c]=s/d;s+=a[row+Math.min(w-1,x+r+1)*4+c]-a[row+Math.max(0,x-r)*4+c]}}}
+ for(let x=0;x<w;x++){for(let c=0;c<3;c++){let s=0;for(let k=-r;k<=r;k++)s+=t[(Math.min(h-1,Math.max(0,k))*w+x)*4+c];for(let y=0;y<h;y++){o[(y*w+x)*4+c]=s/d;s+=t[(Math.min(h-1,y+r+1)*w+x)*4+c]-t[(Math.max(0,y-r)*w+x)*4+c]}}}return o}
+function sharpen(a,b,amt){for(let i=0;i<a.length;i+=4)for(let c=0;c<3;c++){const v=a[i+c],dv=v-b[i+c];if(dv>3||dv<-3)a[i+c]=v+amt*dv}}
+const toBlob=(c,t,q)=>new Promise(z=>c.toBlob(z,t,q));
+async function enhance(bm){const L=Math.max(bm.width,bm.height);let k=L<1600?Math.min(3,2160/L):1;if(bm.width*k*bm.height*k>9e6)k=Math.sqrt(9e6/(bm.width*bm.height));k=Math.max(1,k);
+ const W=Math.round(bm.width*k),H=Math.round(bm.height*k);const [c,x]=upscale(bm,W,H);const id=x.getImageData(0,0,W,H);const a=id.data;const ops=[];if(k>1.05)ops.push('upscale');
+ if(levels(a))ops.push('levels');const r=k>1.6?2:1;sharpen(a,blur(a,W,H,r),k>1.6?1.2:k>1.05?.95:.7);ops.push('sharpen');x.putImageData(id,0,0);
+ let out=await toBlob(c,'image/png');if(!out||out.size>15*1048576)out=await toBlob(c,'image/jpeg',.95);return {blob:out,w:W,h:H,c,ops}}
+function upStatus(cid){const st=G.up[String(cid)];document.querySelectorAll(`[data-v181drop="${CSS.escape(String(cid))}"] .v181upst`).forEach(el=>{el.textContent=st?`${st.phase||'מעלה'} ${Math.min(st.n,st.done+st.err+1)} מתוך ${st.n}…`:''})}
 async function uploadShots(cid,files,adId){cid=String(cid||'');const c=compDoc(cid);if(!c){toast('לא נמצא המתחרה');return}
  files=[...(files||[])].filter(f=>f&&(/^image\//.test(f.type||'')||/\.(png|jpe?g|webp|heic|heif|gif|avif)$/i.test(f.name||'')));
  if(!files.length){toast('אפשר להעלות רק תמונות');return}
@@ -243,18 +268,29 @@ async function uploadShots(cid,files,adId){cid=String(cid||'');const c=compDoc(c
  for(const f of files){try{
    if(f.size>30*1048576){st.err++;toast('הקובץ '+f.name+' גדול מ-30MB ולא נשמר');upStatus(cid);continue}
    let bm=null;try{bm=await createImageBitmap(f)}catch(e){}
-   const up=await A.upload(f,{ext:extOf(f)});let prev=null,ai=null;
-   if(bm){try{const b=await scaled(bm,720,.86);if(b)prev=await A.upload(b,{ext:'jpg'})}catch(e){}try{const b=await scaled(bm,1568,.92);if(b)ai=await A.upload(b,{ext:'jpg'})}catch(e){}}
+   const up=await A.upload(f,{ext:extOf(f)});let prev=null,ai=null,en=null,enh=null;
+   if(bm){try{G.up[cid].phase='משפר את האיכות';upStatus(cid);en=await enhance(bm);enh=await A.upload(en.blob,{ext:en.blob.type==='image/png'?'png':'jpg'})}catch(e){console.warn('v181 enhance',e);en=null}
+    const base=en?en.c:bm;try{const b=await scaled(base,720,.88);if(b)prev=await A.upload(b,{ext:'jpg'})}catch(e){}try{const b=await scaled(base,1568,.92);if(b)ai=await A.upload(b,{ext:'jpg'})}catch(e){}G.up[cid].phase=''}
    const id='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
    const doc={id,comp_id:cid,comp_name:String(c.name||''),ad_id:adId?String(adId):'',ad_title:ad?String(ad.title||'').trim():'',note:'',url:up.url,blob:up.id,prev:prev?prev.url:'',prev_blob:prev?prev.id:'',ai:ai?ai.url:'',ai_blob:ai?ai.id:'',
-    w:bm?bm.width:0,h:bm?bm.height:0,bytes:f.size||0,type:f.type||'',name:String(f.name||'').slice(0,120),added:new Date().toISOString(),source:'upload'};
+    w:bm?bm.width:0,h:bm?bm.height:0,bytes:f.size||0,type:f.type||'',name:String(f.name||'').slice(0,120),added:new Date().toISOString(),source:'upload',
+    enh:enh?enh.url:'',enh_blob:enh?enh.id:'',ew:en?en.w:0,eh:en?en.h:0,ebytes:en?en.blob.size:0,eops:en?en.ops:[]};
    await APP.db.collection('comp_shots').doc(id).set(doc);G.shots.set('shot:'+id,shotItem(id,doc));
    if(bm&&Math.max(bm.width,bm.height)<1000)low++;try{bm&&bm.close&&bm.close()}catch(e){}st.done++}
   catch(e){st.err++;console.warn('v181 upload',e)}upStatus(cid)}
  G.up[cid]=null;G.open.add(cid);rerender();decorate();
  toast(st.done?`${st.done} ${st.done===1?'צילום מסך נשמר':'צילומי מסך נשמרו'} בתיקייה של ${c.name}${st.err?`, ${st.err} לא נשמרו`:''}${low?'. '+low+' ברזולוציה נמוכה, עדיף לשמור את התמונה המקורית מהמודעה':''}`:'ההעלאה לא הצליחה. נסו שוב')}
+async function enhanceShot(sid){const it=G.shots.get('shot:'+sid);if(!it||it.enh)return false;const A=await assetsNS();if(!A||!APP.db)return false;
+ const rs=await fetch(it.url);if(!rs.ok)throw new Error('fetch');const bm=await createImageBitmap(await rs.blob());const en=await enhance(bm);const enh=await A.upload(en.blob,{ext:en.blob.type==='image/png'?'png':'jpg'});
+ let prev=null,ai=null;try{const b=await scaled(en.c,720,.88);if(b)prev=await A.upload(b,{ext:'jpg'})}catch(e){}try{const b=await scaled(en.c,1568,.92);if(b)ai=await A.upload(b,{ext:'jpg'})}catch(e){}
+ const patch={enh:enh.url,enh_blob:enh.id,ew:en.w,eh:en.h,ebytes:en.blob.size,eops:en.ops};if(!it.w){patch.w=bm.width;patch.h=bm.height}
+ if(prev){patch.prev=prev.url;patch.prev_blob=prev.id}if(ai){patch.ai=ai.url;patch.ai_blob=ai.id}
+ const old=[prev&&it.prev_blob,ai&&it.ai_blob].filter(Boolean);await APP.db.collection('comp_shots').doc(sid).update(patch);Object.assign(it,patch);
+ old.forEach(b=>{try{A.delete&&A.delete(b).catch(()=>{})}catch(e){}});return true}
+async function enhanceMany(ids,btn){let n=0,bad=0;for(const sid of ids){if(btn)btn.textContent=`משפר ${n+bad+1} מתוך ${ids.length}…`;try{if(await enhanceShot(sid))n++}catch(e){bad++;console.warn('v181 enhance',e)}}
+ rerender();toast(n?`${n===1?'צילום מסך אחד שופר':n+' צילומי מסך שופרו'}${bad?`, ${bad} לא שופרו`:''}`:'השיפור לא הצליח. נסו שוב')}
 async function delShot(sid){const it=G.shots.get('shot:'+sid);if(!it)return;try{await APP.db.collection('comp_shots').doc(sid).delete()}catch(e){toast('המחיקה לא הצליחה. נסו שוב');return}
- const A=await assetsNS();[it.blob,it.prev_blob,it.ai_blob].filter(Boolean).forEach(b=>{try{A&&A.delete&&A.delete(b).catch(()=>{})}catch(e){}});
+ const A=await assetsNS();[it.blob,it.prev_blob,it.ai_blob,it.enh_blob].filter(Boolean).forEach(b=>{try{A&&A.delete&&A.delete(b).catch(()=>{})}catch(e){}});
  G.shots.delete('shot:'+sid);closeM('v181d');rerender();decorate();toast('צילום המסך נמחק')}
 // inside the Meta ad details (V179): the screenshots of that ad and an upload tied to it; on ad cards, the screenshot itself
 const shotsOfAd=id=>[...G.shots.values()].filter(p=>p.ad_id&&String(p.ad_id)===String(id));
@@ -290,6 +326,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
  if(a==='copy'){const p=getItem(b.dataset.id);if(!p)return;try{await navigator.clipboard.writeText(String(p.text||''));toast('הטקסט הועתק')}catch(x){toast('ההעתקה לא הצליחה')}return}
  if(a==='ckind'){cfOf(b.dataset.cid).kind=b.dataset.k;cfOf(b.dataset.cid).n=12;refreshSec(b.dataset.cid);return}
  if(a==='folder'){G.lib.comp=b.dataset.k||'';G.lib.cid=b.dataset.cid||'';G.lib.n=48;render();try{document.getElementById('appviews').scrollIntoView({block:'start'})}catch(x){}return}
+ if(a==='sver'){if(b.dataset.k==='orig')G.orig.add(b.dataset.sid);else G.orig.delete(b.dataset.sid);openDetail('shot:'+b.dataset.sid);return}
+ if(a==='senh'){b.disabled=true;b.textContent='משפר את האיכות…';try{if(await enhanceShot(b.dataset.sid)){toast('צילום המסך שופר');openDetail('shot:'+b.dataset.sid);rerender()}else{b.disabled=false}}catch(x){toast('השיפור לא הצליח. נסו שוב');b.disabled=false;b.innerHTML=`${I('wand',15)} שיפור איכות`}return}
+ if(a==='senhall'){b.disabled=true;await enhanceMany(String(b.dataset.ids||'').split(',').filter(Boolean),b);return}
  if(a==='sdel'){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='למחוק? לחיצה נוספת';setTimeout(()=>{if(b.isConnected){b.dataset.ok='';b.innerHTML=`${I('trash',15)} מחיקה`}},3000);return}delShot(b.dataset.sid);return}
  if(a==='csort'){cfOf(b.dataset.cid).sort=b.dataset.k;refreshSec(b.dataset.cid);return}
  if(a==='cmore'){cfOf(b.dataset.cid).n+=24;refreshSec(b.dataset.cid);return}
@@ -318,5 +357,5 @@ document.addEventListener('error',e=>{const t=e.target;if(!t||t.tagName!=='IMG'|
  const s=document.createElement('span');s.className='v181ph';s.innerHTML=`${SV.pic}<small>התמונה תתעדכן בסנכרון של מחר בבוקר</small>`;t.replaceWith(s)},true);
 document.addEventListener('load',e=>{const t=e.target;if(t&&t.tagName==='IMG'&&t.dataset&&t.dataset.v181img)keep(t.dataset.v181img)},true);
 
-window.__v181={G,postsOf,secHtml,vGal,openDetail,openGen,runGen,prompt,makePost,srcPanel,uploadShots,delShot,decorate,folders};
+window.__v181={enhance,enhanceShot,G,postsOf,secHtml,vGal,openDetail,openGen,runGen,prompt,makePost,srcPanel,uploadShots,delShot,decorate,folders};
 })();

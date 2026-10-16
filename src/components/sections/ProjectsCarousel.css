@@ -17,7 +17,7 @@
   border: 1.5px solid var(--color-border-strong);
   background: #fff;
   color: var(--color-primary);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
 }
 .carousel__arrow:hover:not(:disabled) {
   background: var(--color-primary);

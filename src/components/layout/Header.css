@@ -136,7 +136,7 @@
   transition: background var(--dur-fast), color var(--dur-fast);
 }
 .header__dropdown-link:hover { background: var(--color-bg-soft); color: var(--color-secondary); }
-.header__dropdown-arrow { opacity: 0; transform: translateX(-6px); transition: all var(--dur-fast); }
+.header__dropdown-arrow { opacity: 0; transform: translateX(-6px); transition: transform var(--dur-fast), opacity var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast); }
 [dir='rtl'] .header__dropdown-arrow { transform: scaleX(-1) translateX(-6px); }
 .header__dropdown-link:hover .header__dropdown-arrow { opacity: 1; transform: translateX(0); }
 [dir='rtl'] .header__dropdown-link:hover .header__dropdown-arrow { transform: scaleX(-1) translateX(0); }

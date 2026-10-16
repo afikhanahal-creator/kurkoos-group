@@ -16,7 +16,7 @@
 }
 
 .holiday-banner.is-leaving {
-  animation: hb-fade-out 0.28s ease-in forwards;
+  animation: hb-fade-out 0.2s var(--ease-out) forwards;
 }
 
 .holiday-banner__card {

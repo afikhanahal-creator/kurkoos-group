@@ -16,7 +16,7 @@
   animation: promo-in .5s cubic-bezier(.2, .8, .2, 1) both;
   transition: inset-block-end .25s ease;
 }
-.promo.is-leaving { animation: promo-out .25s ease-in both; }
+.promo.is-leaving { animation: promo-out .2s var(--ease-out) both; }
 
 .promo__card {
   pointer-events: auto;

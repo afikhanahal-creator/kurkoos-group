@@ -15,7 +15,7 @@
   background: #fff;
   color: var(--color-text-soft);
   cursor: pointer;
-  transition: all var(--dur-fast);
+  transition: transform var(--dur-fast), opacity var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast);
 }
 .yz-chip:hover { border-color: var(--color-primary-700); color: var(--color-primary-700); }
 .yz-chip.is-on { background: var(--color-primary-900); border-color: var(--color-primary-900); color: #fff; }

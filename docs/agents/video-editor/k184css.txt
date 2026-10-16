@@ -1,0 +1,24 @@
+<style id="k184">
+/* V184 · one clear way to replace the picture of a post. Navy #07293a, teal #105572, mist #8fb6c8. */
+#pe-root .v184rep{margin:0 0 12px}
+#pe-root .v184btn{position:relative;display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 16px;border-radius:14px;background:#07293a;color:#fff;cursor:pointer;font-family:Almoni,Heebo,Arial,sans-serif;box-shadow:0 6px 18px rgba(7,41,58,.18)}
+#pe-root .v184btn:hover{background:#0d3449}
+#pe-root .v184btn:focus-within{outline:3px solid #105572;outline-offset:3px}
+#pe-root .v184btn svg{flex:none;width:26px;height:26px}
+#pe-root .v184btn span{display:flex;flex-direction:column;gap:2px;min-width:0}
+#pe-root .v184btn b{font-size:16.5px;font-weight:700;line-height:1.25}
+#pe-root .v184btn small{font-size:13px;line-height:1.4;color:#c9dbe4}
+#pe-root .v184btn.busy,#pe-root .v184cv.busy{opacity:.75;pointer-events:none}
+#pe-root .v184or{margin:8px 2px 0;font-size:13px;line-height:1.45;color:#5f6b78}
+#pe-root .v184none{margin:0;padding:12px 14px;border-radius:12px;background:#f7f8fa;border:1px solid #e3e9ee;font-size:14px;color:#4b5563}
+#pe-root .v184sr{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+#pe-root .v184cv{position:absolute;z-index:6;display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 14px;border-radius:999px;background:rgba(7,41,58,.9);color:#fff;font:700 14.5px Almoni,Heebo,Arial,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#pe-root .v184cv:hover{background:#07293a}
+#pe-root .v184cv:focus-within{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 6px #105572}
+#pe-root .pe-canvas.v184over canvas{outline:4px dashed #105572;outline-offset:4px}
+#pe-root .pe-canvas.v184busy canvas{filter:saturate(.6) brightness(.9);transition:filter .2s}
+/* the small "+" next to the search did the same thing with less clarity */
+#pe-root .v175pk .v175pt label.v175ib2{display:none}
+@media (max-width:700px){#pe-root .v184btn{min-height:56px;padding:10px 14px}#pe-root .v184btn b{font-size:15.5px}#pe-root .v184cv{font-size:13.5px;padding:0 12px}}
+@media (prefers-reduced-motion:reduce){#pe-root .pe-canvas.v184busy canvas{transition:none}}
+</style>

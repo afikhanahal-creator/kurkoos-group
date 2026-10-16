@@ -35,15 +35,25 @@ def synth(key, ssml, voice, rate):
         return base64.b64decode(json.load(r)['audioContent'])
 
 
-def synth_gemini(key, ssml, voice):
+def synth_gemini(key, ssml, voice, model='gemini-3.8-flash-tts'):
     text = re.sub(r'<break[^>]*/>', ' ', re.sub(r'</?speak>', '', ssml)).strip()
-    prompt = 'קרא בעברית תקנית וברורה, בקול גברי רגוע ובטוח, כמו מנהל פרויקטים מנוסה שמסביר ללקוח, בקצב מעט מהיר: ' + text
+    # tested: style instructions in front of the line are partly read aloud and slow the pace; the bare line is the
+    # fastest and Gemini's own transcript of it comes back word for word in standard Hebrew
+    prompt = text
     body = {'contents': [{'parts': [{'text': prompt}]}],
             'generationConfig': {'responseModalities': ['AUDIO'], 'speechConfig': {'voiceConfig': {'prebuiltVoiceConfig': {'voiceName': voice}}}}}
-    req = urllib.request.Request('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
+    req = urllib.request.Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
                                  data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', **({'x-goog-api-key': key} if key else {})})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        part = json.load(r)['candidates'][0]['content']['parts'][0]['inlineData']
+    import time, urllib.error
+    for attempt in range(10):  # the free tier allows only a few requests a minute: wait and retry on 429
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                part = json.load(r)['candidates'][0]['content']['parts'][0]['inlineData']
+            break
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or attempt == 9:
+                raise
+            print('  quota: waiting 40 s'); time.sleep(40)
     return base64.b64decode(part['data'])  # PCM s16le, 24 kHz, mono
 
 
@@ -55,6 +65,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--engine', choices=['gemini', 'google'], default='gemini')
     ap.add_argument('--voice', default=None)
+    ap.add_argument('--model', default='gemini-3.8-flash-tts')
+    ap.add_argument('--fresh', action='store_true')
     ap.add_argument('--rate', type=float, default=1.05)
     a = ap.parse_args()
     env = 'GEMINI_API_KEY' if a.engine == 'gemini' else 'GOOGLE_TTS_API_KEY'
@@ -69,9 +81,11 @@ def main():
     placed = []
     for name, start, end, ssml in lines():
         p, slot = os.path.join(OUT, name + '.wav'), end - start
-        if a.engine == 'gemini':
+        if a.engine == 'gemini' and os.path.exists(p) and not a.fresh:
+            d, rate = dur(p), 1.0  # kept from an earlier run (use --fresh to remake)
+        elif a.engine == 'gemini':
             raw = os.path.join(OUT, name + '.pcm')
-            open(raw, 'wb').write(synth_gemini(key, ssml, voice))
+            open(raw, 'wb').write(synth_gemini(key, ssml, voice, a.model))
             subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-f', 's16le', '-ar', '24000', '-ac', '1', '-i', raw,
                                    '-af', 'silenceremove=start_periods=1:start_threshold=-45dB:stop_periods=-1:stop_threshold=-45dB:stop_duration=0.25', '-ar', '48000', p])
             os.remove(raw)

@@ -90,3 +90,20 @@ After the Meta Ads part, refresh the organic posts the competitors publish, for 
 Facts: one doc per Facebook post id. Fields `{id, comp_name, comp_ids, comp_id, network, text, image, img_exp, published, reactions, comments, shares, eng, link, source:"metricool", fetched, first_seen}`. The picture is Metricool's preview size (about 130 px) and its link expires after a few days (`img_exp`), so it is refreshed every morning. When the owner opens the gallery, the browser keeps a small copy (`thumb`) when Facebook allows it; the upsert never overwrites `thumb` or `first_seen`. Only competitors tracked in Metricool appear; Instagram competitor posts (`IGCP…`) return nothing for this brand today. Never scrape facebook.com.
 
 `comp_shots` (V182) holds the screenshots the team uploads into each competitor folder: `{id, comp_id, comp_name, ad_id, ad_title, note, url, blob, prev, prev_blob, ai, ai_blob, w, h, bytes, type, name, added, source:"upload"}`. The original file sits untouched in storage (`engine-media/blob/`). V183 adds a clearer copy (`enh`, `ew`, `eh`, `eops`: one step enlargement of pictures under 1600px up to 3x, gentle levels, unsharp mask), and the 720px preview and the 1568px copy for Claude are made from it. The scan agent never writes or deletes there.
+
+## 6. Ad pictures from the Library (comp_shots, source "meta"), same run
+
+The Library connector returns no pictures (section 2). The pictures come from the public ad pages, captured with
+`scripts/meta_capture/` (README there): the creative Meta serves (600px picture, or one frame of the video) and a 4K
+screenshot of the ad card, one `comp_shots` row per unique creative (`id: meta_<newest ad id>`, `ad_ids` lists the copies,
+`source: "meta"`, `url` the 4K card as webp, `prev` a 1080px preview, `creative` the picture itself, `note` the ad text,
+`cta`, `landing`, `start`, `media`, `copies`). Files live under `blob/meta/` in `engine-media`.
+
+Each run: only ads whose `first_seen` is today (new ads), newest first, never the whole library again. Steps:
+1. Run `scripts/meta_capture/policies_on.sql` with the Supabase connector (`execute_sql`): temporary anon write policies, limited to `blob/meta/` and `comp_shots` ids `meta_`.
+2. `node scripts/meta_capture/crawl.cjs --status active --new-days 1` then `node scripts/meta_capture/up.cjs --budget-mb <what is left under the plan>`.
+3. Run `scripts/meta_capture/policies_off.sql`. Never leave the write policies on.
+4. Report captured creatives and the storage used. A login wall or CAPTCHA from Meta means stop and say so; never work around it.
+
+Storage: the project is on the free Supabase plan (1 GB). A creative costs about 0.5 MB. When the bucket passes 900 MB,
+say so in the report instead of uploading.

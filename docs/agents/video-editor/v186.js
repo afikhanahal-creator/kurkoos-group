@@ -1,4 +1,4 @@
-// ================= V186 · the competitor gallery, one tap from the header: a "גלריה" button opens every competitor picture
+// ================= V186 · the competitor gallery, one tap from the header (v187: ads captured from the Meta Ads Library): a "גלריה" button opens every competitor picture
 // (Facebook posts and uploaded ad screenshots) full screen. Tapping a picture opens the viewer: the picture as large as the
 // screen allows, and beside it everything about the competitor (who they are, their ad library summary, the Meta links) and
 // the post itself (date, full text, engagement, link), with "שכפל למותג שלנו". Arrows, swipe and keys move between pictures.
@@ -12,13 +12,14 @@ const IC={gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx
  wand:SVG('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1zM4 20l9-9M11 9l4 4"/>',16),star:SVG('<path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1L3.2 9.7l6.1-.9z"/>',14),
  zoom:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',18)};
 const S={open:false,list:[],i:-1,comp:'',kind:'',sort:'new',zoom:false,sheet:false};
-const onTop=()=>!!(document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{style:{}}).style.visibility==='hidden';
+const onTop=()=>!!(document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
 const num=n=>(+n||0).toLocaleString('he-IL');
 const fmtD=v=>{try{return V().fmtD(v)}catch(e){return ''}};
 const compOf=p=>{const v=V();if(!v)return null;return v.compDoc(v.isShot(p)?p.comp_id:(Array.isArray(p.comp_ids)&&p.comp_ids[0])||p.comp_id)};
 const nameOf=p=>{try{return V().shortName(p)}catch(e){return String(p.comp_name||'')}};
-const bestSrc=p=>{const v=V();if(v.isShot(p))return v.fullOf(p);return p.thumb||v.srcOf(p)};
+// tiles and the stage: uploaded screenshots show their improved copy; ads captured from Meta show the 1080px preview, the 4K file waits for the zoom
+const bestSrc=p=>{const v=V();if(v.isShot(p))return (v.isMeta&&v.isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
 const isAd=p=>!!(p.ad_id);
 
 /* ---------- the button in the header ---------- */
@@ -63,6 +64,7 @@ function compInfo(p){const c=compOf(p);const name=nameOf(p);if(!c)return `<div c
  ${(s||ads.length)?`<div class="v186sec"><h4>המודעות שלהם בספריית Meta</h4><div class="v186kpis"><span><b>${num(s?s.active:active)}</b>פעילות</span><span><b>${num(s?s.stars:stars)}</b>${IC.star} 60 יום ומעלה</span>${s&&s.new7!=null?`<span><b>${num(s.new7)}</b>חדשות ב־7 ימים</span>`:''}${s&&s.groups!=null?`<span><b>${num(s.groups)}</b>קבוצות מסרים</span>`:''}</div>${s&&s.last_scan?`<small class="v186muted">סריקה אחרונה ${E(String(s.last_scan).replace(/^scan_(\d{4})(\d{2})(\d{2})T.*$/,'$3.$2.$1'))}${s.partial?' · תוצאות חלקיות':''}</small>`:''}</div>`:''}
  ${links.length||site.length?`<div class="v186links">${links.map(x=>`<a class="v186lnk" href="${E(safeUrl(x.url))}" target="_blank" rel="noopener">${E(/חיפוש/.test(x.label)?'חיפוש בספריית Meta':'ספריית Meta: '+x.label)} ${IC.ext}</a>`).join('')}${site.slice(0,2).map(u=>`<a class="v186lnk" href="${E(u)}" target="_blank" rel="noopener">${E(u.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'').slice(0,32))} ${IC.ext}</a>`).join('')}</div>`:''}`}
 function postInfo(p){const v=V();const sh=v.isShot(p);
+ if(sh&&p.source==='meta'){const land=safeUrl(p.landing);return `<div class="v186sec"><h4>המודעה מספריית Meta, צילום 4K</h4><div class="v186chips"><span class="v186chip ok" dir="ltr">${p.w}×${p.h}</span><span class="v186chip">${p.media==='video'?'סרטון':'תמונה'}</span>${+p.copies>1?`<span class="v186chip">${p.copies} גרסאות של המודעה</span>`:''}${p.start?`<span class="v186chip">מאז ${E(p.start)}</span>`:''}<span class="v186chip">נלכד ${E(fmtD(p.added))}</span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:''}${p.cta||land?`<p class="v186fine v186muted">${p.cta?'כפתור: '+E(p.cta):''}${p.cta&&land?' · ':''}${land?'נחיתה: <bdi dir="ltr">'+E(land.replace(/^https?:\/\//,'').slice(0,60))+'</bdi>':''}</p>`:''}<div class="v186links">${safeUrl(p.creative)?`<a class="v186lnk" href="${E(safeUrl(p.creative))}" target="_blank" rel="noopener">התמונה של המודעה בלבד${p.cw?` <bdi dir="ltr">${p.cw}×${p.ch}</bdi>`:''} ${IC.ext}</a>`:''}${land?`<a class="v186lnk" href="${E(land)}" target="_blank" rel="noopener">דף הנחיתה ${IC.ext}</a>`:''}</div></div>${adInfo(p)}`}
  if(sh)return `<div class="v186sec"><h4>צילום המסך</h4><div class="v186chips"><span class="v186chip">הועלה ${E(fmtD(p.added||p.published))}</span>${p.ew&&p.eh?`<span class="v186chip ok" dir="ltr">${p.ew}×${p.eh}</span>`:p.w&&p.h?`<span class="v186chip" dir="ltr">${p.w}×${p.h}</span>`:''}${p.enh?'<span class="v186chip ok">שופר</span>':''}</div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:''}</div>${adInfo(p)}`;
  return `<div class="v186sec"><h4>הפוסט</h4><div class="v186chips"><span class="v186chip">${E(fmtD(p.published))}</span><span class="v186chip">פייסבוק</span></div>${v.engHtml(p)}<p class="v186txt">${p.text?E(p.text):'<span class="v186muted">פוסט בלי טקסט</span>'}</p>${safeUrl(p.link)?`<a class="v186lnk" href="${E(safeUrl(p.link))}" target="_blank" rel="noopener">לפוסט בפייסבוק ${IC.ext}</a>`:''}</div>`}
 function viewHtml(){const p=S.list[S.i];const v=V();const src=bestSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;
@@ -92,8 +94,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
  if(a==='prev'){step(-1);return}if(a==='next'){step(1);return}
  if(a==='zoom'){S.zoom=!S.zoom;const st=document.querySelector('#v186v .v186stage');if(st)st.classList.toggle('zoom',S.zoom);b.setAttribute('aria-pressed',S.zoom);return}
  if(a==='sheet'){S.sheet=!S.sheet;const i=b.closest('.v186info');i&&i.classList.toggle('up',S.sheet);b.setAttribute('aria-expanded',S.sheet);return}
- if(a==='clone'){const id=b.dataset.id;closeView(true);const g=document.getElementById('v186');if(g)g.style.visibility='hidden';try{V().openGen(id)}catch(x){}syncOv();
-  const poll=setInterval(()=>{const g2=document.getElementById('v186');if(!g2){clearInterval(poll);return}if(!document.getElementById('v181g')&&!document.body.classList.contains('pe-open')){g2.style.visibility='';clearInterval(poll)}},300);return}
+ if(a==='clone'){const id=b.dataset.id;closeView(true);const g=document.getElementById('v186');if(g)g.classList.add('v186park');try{V().openGen(id)}catch(x){}syncOv();
+  const poll=setInterval(()=>{const g2=document.getElementById('v186');if(!g2){clearInterval(poll);return}if(!document.getElementById('v181g')&&!document.body.classList.contains('pe-open')){g2.classList.remove('v186park');clearInterval(poll)}},300);return}
  if(a==='details'){try{V().openDetail(b.dataset.id)}catch(x){}syncOv();return}
 },true);
 // a tap on the picture itself toggles the zoom, like a photo app
@@ -112,6 +114,6 @@ document.addEventListener('pointerup',e=>{if(!pt)return;const dx=e.clientX-px,dy
 // one. So the gallery and the viewer carry the class only while nothing sits on top of them; behind the brand form, a details
 // window or the editor they step out of that list, and come back when it closes.
 function syncOv(){const on=!onTop();['v186','v186v'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('ov',on)})}
-try{new MutationObserver(()=>{const g=document.getElementById('v186');if(g&&g.style.visibility==='hidden'&&!document.getElementById('v179g')&&!document.getElementById('v181g')&&!document.body.classList.contains('pe-open'))g.style.visibility='';syncOv()}).observe(document.body,{childList:true,attributes:true,attributeFilter:['class']})}catch(e){}
+try{new MutationObserver(()=>{const g=document.getElementById('v186');if(g&&g.classList.contains('v186park')&&!document.getElementById('v179g')&&!document.getElementById('v181g')&&!document.body.classList.contains('pe-open'))g.classList.remove('v186park');syncOv()}).observe(document.body,{childList:true,attributes:true,attributeFilter:['class']})}catch(e){}
 window.__v186={S,openGal,openView,closeAll,items};
 })();

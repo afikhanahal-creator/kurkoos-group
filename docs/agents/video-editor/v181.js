@@ -68,11 +68,11 @@ function engHtml(p){return `<span class="v181eng"><span title="תגובות רג
 const fullOf=p=>safeUrl((G.orig&&G.orig.has(p.sid))?p.url:(p.enh||p.url));
 function picHtml(p,big){const s=big&&isShot(p)?fullOf(p):srcOf(p);if(s)return `<img src="${E(s)}" alt="${isShot(p)?'צילום מסך של מודעה של':'התמונה מהפוסט של'} ${E(shortName(p))}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-v181img="${E(p.id)}">`;
  return `<span class="v181ph">${SV.pic}<small>${!p.image?'פוסט בלי תמונה':expired(p)?'התמונה תתעדכן בסנכרון של מחר בבוקר':'התמונה לא נטענה'}</small></span>`}
-const resHtml=p=>p.w&&p.h?`<span class="v181res${Math.max(p.w,p.h)<1000&&!p.enh?' low':''}${p.enh?' enh':''}" dir="ltr" title="${p.enh?'שופר מ־'+p.w+'×'+p.h:'המקור'}">${p.enh?p.ew+'×'+p.eh:p.w+'×'+p.h}</span>${p.enh?'<span class="v181enh">שופר</span>':''}`:'';
+const resHtml=p=>isMeta(p)?`<span class="v181res enh" dir="ltr" title="צילום מסך ${p.w}×${p.h} מספריית Meta${p.cw?', התמונה של המודעה '+p.cw+'×'+p.ch:''}">4K</span>${p.media==='video'?'<span class="v181enh">סרטון</span>':''}`:p.w&&p.h?`<span class="v181res${Math.max(p.w,p.h)<1000&&!p.enh?' low':''}${p.enh?' enh':''}" dir="ltr" title="${p.enh?'שופר מ־'+p.w+'×'+p.h:'המקור'}">${p.enh?p.ew+'×'+p.eh:p.w+'×'+p.h}</span>${p.enh?'<span class="v181enh">שופר</span>':''}`:'';
 function tile(p,o={}){const t=excerpt(p.text,140);const sh=isShot(p);
  return `<article class="v181t" data-v181id="${E(p.id)}">
-  <button type="button" class="v181pic" data-v181="view" data-id="${E(p.id)}" aria-label="${sh?'צילום המסך':'הפוסט המלא'} של ${E(shortName(p))} מ־${E(fmtD(p.published))}">${picHtml(p)}${sh?`<span class="v181kind">צילום מסך</span>`:''}</button>
-  <div class="v181tb"><div class="v181tm">${o.showComp?`<b>${E(shortName(p))}</b>`:''}<span>${sh?'הועלה ':''}${E(fmtD(p.published))}</span>${sh?resHtml(p):''}</div>
+  <button type="button" class="v181pic" data-v181="view" data-id="${E(p.id)}" aria-label="${sh?'צילום המסך':'הפוסט המלא'} של ${E(shortName(p))} מ־${E(fmtD(p.published))}">${picHtml(p)}${sh?`<span class="v181kind">${isMeta(p)?'מודעה מ-Meta':'צילום מסך'}</span>`:''}</button>
+  <div class="v181tb"><div class="v181tm">${o.showComp?`<b>${E(shortName(p))}</b>`:''}<span>${sh?(isMeta(p)?'נלכד ':'הועלה '):''}${E(fmtD(p.published))}</span>${sh?resHtml(p):''}</div>
    <p class="v181tx${t?'':' none'}">${t?E(t):sh?'בלי הערה':'פוסט בלי טקסט'}</p>${sh?'':engHtml(p)}
    <div class="v181ta"><button type="button" class="v179b pri" data-v181="clone" data-id="${E(p.id)}">${I('wand',15)} שכפל למותג שלנו</button><button type="button" class="v179b" data-v181="view" data-id="${E(p.id)}">פרטים</button></div></div></article>`}
 const TIP=`<details class="v181tip"><summary>איך מקבלים את האיכות הכי גבוהה</summary><ol><li>פותחים את המודעה בספריית Meta, בכפתור "לצפייה במודעה ב-Meta" שבכרטיס המודעה.</li><li>במחשב: לחיצה ימנית על התמונה של המודעה ואז "שמירת התמונה בשם". זה הקובץ שהמתחרה העלה, באיכות הכי גבוהה שיש.</li><li>בטלפון: לחיצה ארוכה על התמונה ואז "שמירה בתמונות". אם אין אפשרות כזו, צילום מסך כשהמודעה פתוחה על כל המסך.</li><li>מעלים כאן, אפשר כמה תמונות ביחד. המערכת שומרת את הקובץ כמו שהוא, בלי דחיסה ובלי הקטנה.</li></ol></details>`;
@@ -164,7 +164,8 @@ function openDetail(id){const p=getItem(id);if(!p)return;modal('v181d',isShot(p)
 
 /* ---------- C. "שכפל למותג שלנו" ---------- */
 const canSee=()=>window.__ENGINE_HOST==='site';
-const imgsFor=p=>isShot(p)&&canSee()?[safeUrl(p.ai||p.url)].filter(Boolean):[];
+const isMeta=p=>!!p&&isShot(p)&&p.source==='meta';
+const imgsFor=p=>isShot(p)&&canSee()?(isMeta(p)?[safeUrl(p.creative),safeUrl(p.prev)]:[safeUrl(p.ai||p.url)]).filter(Boolean):[];
 function prompt(post,o){if(isShot(post))return promptShot(post,o);const B=V().brandOf(o.brand);const PROJ=V().PROJ||[];const goal=o.goal==='leads'?'לידים: פנייה של לקוח פוטנציאלי':o.goal==='brand'?'מודעות למותג: שיזכרו את השם ומה אנחנו עושים':'פרויקט ספציפי'+(o.project?': '+(PROJ.find(p=>p[0]===o.project)||[])[1]:'');
  return `אתה הקריאייטיב דיירקטור של "${B.name}". לפניך פוסט אורגני אמיתי שמתחרה פרסם בפייסבוק, עם המעורבות שקיבל בפועל. המשימה בשני חלקים.
 חלק 1, ניתוח: למה הפוסט הזה עובד או לא עובד. מסר מרכזי, הצעת הערך, ההוק (הפתיחה), המבנה, הקריאה לפעולה, והעיקרון שאפשר ללמוד ממנו (עיקרון, לא ניסוח).
@@ -364,5 +365,5 @@ document.addEventListener('error',e=>{const t=e.target;if(!t||t.tagName!=='IMG'|
  const s=document.createElement('span');s.className='v181ph';s.innerHTML=`${SV.pic}<small>התמונה תתעדכן בסנכרון של מחר בבוקר</small>`;t.replaceWith(s)},true);
 document.addEventListener('load',e=>{const t=e.target;if(t&&t.tagName==='IMG'&&t.dataset&&t.dataset.v181img)keep(t.dataset.v181img)},true);
 
-window.__v181={enhance,enhanceShot,keep,compDoc,getItem,isShot,srcOf,fullOf,shortName,engHtml,fmtD,excerpt,allItems,G,postsOf,secHtml,vGal,openDetail,openGen,runGen,prompt,makePost,srcPanel,uploadShots,delShot,decorate,folders};
+window.__v181={enhance,enhanceShot,keep,compDoc,getItem,isShot,isMeta,srcOf,fullOf,shortName,engHtml,fmtD,excerpt,allItems,G,postsOf,secHtml,vGal,openDetail,openGen,runGen,prompt,makePost,srcPanel,uploadShots,delShot,decorate,folders};
 })();

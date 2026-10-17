@@ -4,6 +4,8 @@
 .tbar .v186btn svg{width:18px;height:18px}
 @media (max-width:700px){.tbar .v186btn span{display:none}.tbar .v186btn{padding:0 10px!important}}
 body.v186lock{overflow:hidden}
+/* parked behind the clone form: out of sight but still a window for the history coordinator */
+#v186.v186park{opacity:0;pointer-events:none}
 /* .ov gives the window a back entry (V101) but also centers its children and pads them: undo that here */
 #v186{position:fixed;inset:0;z-index:1200;background:#f7f8fa;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;place-items:initial;direction:rtl;font-family:Almoni,Heebo,Arial,sans-serif;color:#07293a;padding:env(safe-area-inset-top,0) 0 0}
 #v186v{padding:0;place-items:initial;display:block}
@@ -16,8 +18,9 @@ body.v186lock{overflow:hidden}
 .v186bar label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#5f6b78;min-width:140px;flex:1 1 140px}
 .v186bar select{min-height:44px;border:1px solid #cbd1da;border-radius:12px;padding:0 10px;font:600 14.5px Almoni,Heebo,Arial,sans-serif;color:#07293a;background:#fff}
 .v186grid{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 14px calc(24px + env(safe-area-inset-bottom,0));display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;align-content:start}
-.v186t{all:unset;box-sizing:border-box;cursor:zoom-in;position:relative;display:block;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#eef2f5}
-.v186t img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s cubic-bezier(.23,1,.32,1)}
+/* a square tile sized by padding, not aspect-ratio: in a grid the ratio collapsed the rows on phones and the tiles overlapped */
+.v186t{all:unset;box-sizing:border-box;cursor:zoom-in;position:relative;display:block;height:0;padding-bottom:100%;border-radius:14px;overflow:hidden;background:#eef2f5}
+.v186t img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s cubic-bezier(.23,1,.32,1)}
 @media (hover:hover) and (pointer:fine){.v186t:hover img{transform:scale(1.04)}}
 .v186t:active img{transform:scale(.985)}
 .v186tc{position:absolute;inset-inline:0;bottom:0;padding:26px 10px 9px;background:linear-gradient(to top,rgba(7,41,58,.78),rgba(7,41,58,0));color:#fff;display:flex;flex-direction:column;gap:2px;font-size:13.5px;line-height:1.2}

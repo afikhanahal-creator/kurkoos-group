@@ -3,6 +3,9 @@
 // Two places: a "הגלריה שלהם" block inside every competitor card, and a central view of all galleries. Every post has
 // "שכפל למותג שלנו": Claude reads why the post works and writes an original post for Kurkoos or Afik HaNahal, which opens in
 // the editor with the competitor's post beside it. Our version uses our own photos; the competitor's picture is only a reference.
+// V186: clarity pass 2. Small pictures are enlarged up to 4x (long edge up to 2560), sharpened in two passes (fine detail
+// and edges), previews are 1080px, and the Facebook post pictures (130px from Metricool) are enlarged and sharpened the same
+// way when the browser may read them, then kept in storage. The original of every upload still stays untouched.
 // V183: every screenshot is made clearer on upload (upscale of small pictures, local contrast, sharpening), the original kept.
 // V182: screenshots. Every competitor has a folder; the team uploads screenshots or saved pictures of the competitor's ads
 // (collection comp_shots, files in storage at full resolution, untouched), optionally tied to one Meta ad. They live in the
@@ -50,12 +53,14 @@ function subscribe(db){db.collection('comp_posts').onSnapshot(s=>{G.posts.clear(
 let tries=0;const poll=setInterval(()=>{if(typeof APP==='undefined')return;if(APP.db){clearInterval(poll);try{subscribe(APP.db)}catch(e){console.warn('v181 db',e)}}else if(++tries>240)clearInterval(poll)},500);
 // Facebook picture links expire after a few days. When the browser is allowed to read a picture, a small copy is kept
 // with the post so the gallery keeps it; when it is not allowed, the picture is shown while its link is valid.
-function keep(id){const p=G.posts.get(id);if(!p||isShot(p)||p.thumb||G.tried.has(id)||!APP.db||!safeUrl(p.image))return;G.tried.add(id);G.queue.push(id);pump()}
-function pump(){while(G.busy<2&&G.queue.length){const id=G.queue.shift();const p=G.posts.get(id);if(!p)continue;G.busy++;
- const im=new Image();im.crossOrigin='anonymous';im.referrerPolicy='no-referrer';const done=()=>{G.busy--;pump()};
- im.onload=()=>{try{const k=Math.min(1,320/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.naturalWidth*k));c.height=Math.max(1,Math.round(im.naturalHeight*k));
-  c.getContext('2d').drawImage(im,0,0,c.width,c.height);const url=c.toDataURL('image/jpeg',.84);if(url.length<90000)APP.db.collection('comp_posts').doc(id).update({thumb:url}).catch(()=>{})}catch(e){}done()};
- im.onerror=done;im.src=safeUrl(p.image)}}
+function keep(id){const p=G.posts.get(id);if(!p||isShot(p)||p.thumb_enh||G.tried.has(id)||!APP.db||!(p.thumb||safeUrl(p.image)))return;G.tried.add(id);G.queue.push(id);pump()}
+function pump(){while(G.busy<1&&G.queue.length){const id=G.queue.shift();const p=G.posts.get(id);if(!p)continue;G.busy++;
+ const im=new Image();if(!p.thumb){im.crossOrigin='anonymous';im.referrerPolicy='no-referrer'}const done=()=>{G.busy--;pump()};
+ im.onload=async()=>{try{const en=await enhance(im,{maxLong:1200,jpeg:true,q:.9});let patch=null;
+   const A=await assetsNS().catch(()=>null);if(A&&A.upload){const up=await A.upload(en.blob,{ext:'jpg'});patch={thumb:up.url,thumb_blob:up.id}}
+   else{const url=en.c.toDataURL('image/jpeg',.86);if(url.length<180000)patch={thumb:url}}
+   if(patch){Object.assign(patch,{thumb_enh:true,tw:en.w,th:en.h});await APP.db.collection('comp_posts').doc(id).update(patch);Object.assign(p,patch);document.querySelectorAll(`img[data-v181img="${CSS.escape(id)}"]`).forEach(el=>{el.src=patch.thumb})}}catch(e){console.warn('v181 keep',e)}done()};
+ im.onerror=done;im.src=p.thumb||safeUrl(p.image)}}
 
 /* ---------- pieces ---------- */
 const num=n=>(+n||0).toLocaleString('he-IL');
@@ -254,10 +259,12 @@ function blur(a,w,h,r){const t=new Uint8ClampedArray(a.length),o=new Uint8Clampe
  for(let x=0;x<w;x++){for(let c=0;c<3;c++){let s=0;for(let k=-r;k<=r;k++)s+=t[(Math.min(h-1,Math.max(0,k))*w+x)*4+c];for(let y=0;y<h;y++){o[(y*w+x)*4+c]=s/d;s+=t[(Math.min(h-1,y+r+1)*w+x)*4+c]-t[(Math.max(0,y-r)*w+x)*4+c]}}}return o}
 function sharpen(a,b,amt){for(let i=0;i<a.length;i+=4)for(let c=0;c<3;c++){const v=a[i+c],dv=v-b[i+c];if(dv>3||dv<-3)a[i+c]=v+amt*dv}}
 const toBlob=(c,t,q)=>new Promise(z=>c.toBlob(z,t,q));
-async function enhance(bm){const L=Math.max(bm.width,bm.height);let k=L<1600?Math.min(3,2160/L):1;if(bm.width*k*bm.height*k>9e6)k=Math.sqrt(9e6/(bm.width*bm.height));k=Math.max(1,k);
+async function enhance(bm,opt={}){const L=Math.max(bm.width,bm.height);const maxL=opt.maxLong||2560;let k=L<1800?Math.min(4,maxL/L):1;if(bm.width*k*bm.height*k>12e6)k=Math.sqrt(12e6/(bm.width*bm.height));k=Math.max(1,k);
  const W=Math.round(bm.width*k),H=Math.round(bm.height*k);const [c,x]=upscale(bm,W,H);const id=x.getImageData(0,0,W,H);const a=id.data;const ops=[];if(k>1.05)ops.push('upscale');
- if(levels(a))ops.push('levels');const r=k>1.6?2:1;sharpen(a,blur(a,W,H,r),k>1.6?1.2:k>1.05?.95:.7);ops.push('sharpen');x.putImageData(id,0,0);
- let out=await toBlob(c,'image/png');if(!out||out.size>15*1048576)out=await toBlob(c,'image/jpeg',.95);return {blob:out,w:W,h:H,c,ops}}
+ if(levels(a))ops.push('levels');
+ // two passes: a wide mask restores the edges the enlargement softened, a narrow one brings back fine detail
+ if(k>1.6){sharpen(a,blur(a,W,H,Math.min(4,Math.round(k))),.9);sharpen(a,blur(a,W,H,1),.6)}else{sharpen(a,blur(a,W,H,1),k>1.05?.95:.7)}ops.push('sharpen');x.putImageData(id,0,0);
+ let out=opt.jpeg?null:await toBlob(c,'image/png');if(!out||out.size>15*1048576)out=await toBlob(c,'image/jpeg',opt.q||.95);return {blob:out,w:W,h:H,c,ops}}
 function upStatus(cid){const st=G.up[String(cid)];document.querySelectorAll(`[data-v181drop="${CSS.escape(String(cid))}"] .v181upst`).forEach(el=>{el.textContent=st?`${st.phase||'מעלה'} ${Math.min(st.n,st.done+st.err+1)} מתוך ${st.n}…`:''})}
 async function uploadShots(cid,files,adId){cid=String(cid||'');const c=compDoc(cid);if(!c){toast('לא נמצא המתחרה');return}
  files=[...(files||[])].filter(f=>f&&(/^image\//.test(f.type||'')||/\.(png|jpe?g|webp|heic|heif|gif|avif)$/i.test(f.name||'')));
@@ -270,7 +277,7 @@ async function uploadShots(cid,files,adId){cid=String(cid||'');const c=compDoc(c
    let bm=null;try{bm=await createImageBitmap(f)}catch(e){}
    const up=await A.upload(f,{ext:extOf(f)});let prev=null,ai=null,en=null,enh=null;
    if(bm){try{G.up[cid].phase='משפר את האיכות';upStatus(cid);en=await enhance(bm);enh=await A.upload(en.blob,{ext:en.blob.type==='image/png'?'png':'jpg'})}catch(e){console.warn('v181 enhance',e);en=null}
-    const base=en?en.c:bm;try{const b=await scaled(base,720,.88);if(b)prev=await A.upload(b,{ext:'jpg'})}catch(e){}try{const b=await scaled(base,1568,.92);if(b)ai=await A.upload(b,{ext:'jpg'})}catch(e){}G.up[cid].phase=''}
+    const base=en?en.c:bm;try{const b=await scaled(base,1080,.9);if(b)prev=await A.upload(b,{ext:'jpg'})}catch(e){}try{const b=await scaled(base,1568,.92);if(b)ai=await A.upload(b,{ext:'jpg'})}catch(e){}G.up[cid].phase=''}
    const id='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
    const doc={id,comp_id:cid,comp_name:String(c.name||''),ad_id:adId?String(adId):'',ad_title:ad?String(ad.title||'').trim():'',note:'',url:up.url,blob:up.id,prev:prev?prev.url:'',prev_blob:prev?prev.id:'',ai:ai?ai.url:'',ai_blob:ai?ai.id:'',
     w:bm?bm.width:0,h:bm?bm.height:0,bytes:f.size||0,type:f.type||'',name:String(f.name||'').slice(0,120),added:new Date().toISOString(),source:'upload',
@@ -282,7 +289,7 @@ async function uploadShots(cid,files,adId){cid=String(cid||'');const c=compDoc(c
  toast(st.done?`${st.done} ${st.done===1?'צילום מסך נשמר':'צילומי מסך נשמרו'} בתיקייה של ${c.name}${st.err?`, ${st.err} לא נשמרו`:''}${low?'. '+low+' ברזולוציה נמוכה, עדיף לשמור את התמונה המקורית מהמודעה':''}`:'ההעלאה לא הצליחה. נסו שוב')}
 async function enhanceShot(sid){const it=G.shots.get('shot:'+sid);if(!it||it.enh)return false;const A=await assetsNS();if(!A||!APP.db)return false;
  const rs=await fetch(it.url);if(!rs.ok)throw new Error('fetch');const bm=await createImageBitmap(await rs.blob());const en=await enhance(bm);const enh=await A.upload(en.blob,{ext:en.blob.type==='image/png'?'png':'jpg'});
- let prev=null,ai=null;try{const b=await scaled(en.c,720,.88);if(b)prev=await A.upload(b,{ext:'jpg'})}catch(e){}try{const b=await scaled(en.c,1568,.92);if(b)ai=await A.upload(b,{ext:'jpg'})}catch(e){}
+ let prev=null,ai=null;try{const b=await scaled(en.c,1080,.9);if(b)prev=await A.upload(b,{ext:'jpg'})}catch(e){}try{const b=await scaled(en.c,1568,.92);if(b)ai=await A.upload(b,{ext:'jpg'})}catch(e){}
  const patch={enh:enh.url,enh_blob:enh.id,ew:en.w,eh:en.h,ebytes:en.blob.size,eops:en.ops};if(!it.w){patch.w=bm.width;patch.h=bm.height}
  if(prev){patch.prev=prev.url;patch.prev_blob=prev.id}if(ai){patch.ai=ai.url;patch.ai_blob=ai.id}
  const old=[prev&&it.prev_blob,ai&&it.ai_blob].filter(Boolean);await APP.db.collection('comp_shots').doc(sid).update(patch);Object.assign(it,patch);
@@ -357,5 +364,5 @@ document.addEventListener('error',e=>{const t=e.target;if(!t||t.tagName!=='IMG'|
  const s=document.createElement('span');s.className='v181ph';s.innerHTML=`${SV.pic}<small>התמונה תתעדכן בסנכרון של מחר בבוקר</small>`;t.replaceWith(s)},true);
 document.addEventListener('load',e=>{const t=e.target;if(t&&t.tagName==='IMG'&&t.dataset&&t.dataset.v181img)keep(t.dataset.v181img)},true);
 
-window.__v181={enhance,enhanceShot,G,postsOf,secHtml,vGal,openDetail,openGen,runGen,prompt,makePost,srcPanel,uploadShots,delShot,decorate,folders};
+window.__v181={enhance,enhanceShot,keep,compDoc,getItem,isShot,srcOf,fullOf,shortName,engHtml,fmtD,excerpt,allItems,G,postsOf,secHtml,vGal,openDetail,openGen,runGen,prompt,makePost,srcPanel,uploadShots,delShot,decorate,folders};
 })();

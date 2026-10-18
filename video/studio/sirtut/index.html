@@ -106,7 +106,7 @@ function scene(html) { const d = document.createElement('div'); d.className = 's
 // a dimension line: ticks at both ends, the text above the middle
 const dim = (id, x1, x2, y, txt, col, fs) => `<g id="${id}"><path d="M${x1} ${y} H${x2}" stroke="${col || NAVY}" stroke-width="6" pathLength="1" stroke-dasharray="1" class="dl"/>
   <path d="M${x1 - 14} ${y + 14} L${x1 + 14} ${y - 14} M${x2 - 14} ${y + 14} L${x2 + 14} ${y - 14} M${x1} ${y - 30} V${y + 30} M${x2} ${y - 30} V${y + 30}" stroke="${col || NAVY}" stroke-width="6" class="dt"/>
-  <text x="${(x1 + x2) / 2}" y="${y - 28}" text-anchor="middle" font-size="${fs || 64}" fill="${col || NAVY}" class="dx" direction="rtl">${txt}</text></g>`;
+  <text x="${(x1 + x2) / 2}" y="${y - 50}" text-anchor="middle" font-size="${fs || 64}" fill="${col || NAVY}" class="dx" direction="rtl">${txt}</text></g>`;
 const svg = inner => `<svg width="1080" height="1920" class="abs">${inner}</svg>`;
 
 // 1 · 1 cm becomes 50 cm
@@ -114,13 +114,13 @@ scene(`<div class="lbl" style="right:110px;top:300px;font-size:52px;color:${TEAL
   ${svg(dim('s1a', 600, 480, 520, '1 ס"מ') + dim('s1b', 980, 100, 990, '50 ס"מ', RED, 84) + `<path id="s1ar" d="M540 600 V880" stroke="${MIST}" stroke-width="10" stroke-linecap="round" stroke-dasharray="4 22"/>`)}
   <div class="big" id="s1s" style="top:1140px"><span style="display:inline-block;border:10px solid ${RED};color:${RED};font-size:190px;padding:14px 50px 34px;border-radius:30px" dir="ltr">1:50</span></div>`);
 // 2 · the sheet unfolds in front of the owner
-scene(svg(`<g id="s2sh" transform="translate(540 820)"><rect x="-340" y="-420" width="680" height="840" rx="10" fill="#fff" stroke="${NAVY}" stroke-width="8"/>
+scene(svg(`<g id="s2sh" transform="translate(540 760)"><rect x="-340" y="-420" width="680" height="840" rx="10" fill="#fff" stroke="${NAVY}" stroke-width="8"/>
    <path d="M0 -420 V420" stroke="${MIST}" stroke-width="4" stroke-dasharray="14 12"/>
    <rect x="-280" y="-340" width="300" height="360" fill="none" stroke="${NAVY}" stroke-width="10"/><rect x="40" y="-340" width="240" height="220" fill="none" stroke="${NAVY}" stroke-width="10"/>
    <path d="M-280 -80 H20 M40 -60 H280 V20" fill="none" stroke="${NAVY}" stroke-width="10"/><path d="M-140 20 A90 90 0 0 1 -50 -70" fill="none" stroke="${TEAL}" stroke-width="5"/>
    <rect x="80" y="250" width="240" height="140" fill="none" stroke="${NAVY}" stroke-width="5"/><path d="M80 300 H320 M80 345 H320" stroke="${MIST}" stroke-width="4"/></g>
-  <g id="s2man" transform="translate(860 1500)"><circle cy="-170" r="58" fill="${MIST}" stroke="${NAVY}" stroke-width="8"/><path d="M-80 -90 H80 L66 120 H-66 Z" fill="${NAVY}"/></g>
-  <g id="s2q" transform="translate(700 1290)"><circle r="70" fill="${RED}"/><text y="30" text-anchor="middle" font-size="96" fill="${PAPER}">?</text></g>`) +
+  <g id="s2man" transform="translate(860 1440)"><circle cy="-170" r="58" fill="${MIST}" stroke="${NAVY}" stroke-width="8"/><path d="M-80 -90 H80 L66 120 H-66 Z" fill="${NAVY}"/></g>
+  <g id="s2q" transform="translate(700 1240)"><circle r="70" fill="${RED}"/><text y="30" text-anchor="middle" font-size="96" fill="${PAPER}">?</text></g>`) +
   `<div class="chip" id="s2c" style="right:110px;top:250px">פעם ראשונה מול שרטוט</div>`);
 // 3 · three rules
 scene(`<div class="big" id="s3n" style="top:430px;font-size:640px;color:${RED}">3</div><div class="big" id="s3t" style="top:1020px;font-size:120px">כללים</div>
@@ -214,8 +214,8 @@ function seek(t) {
   $('world').style.transform = `scale(${1.06 - .06 * k(u, 0, .28) + .03 * smooth(u / len)})`; $('world').style.transformOrigin = '50% 45%';
   $('sheet').style.transform = `scale(${1 + .015 * smooth(u / len)}) translateY(${-14 * smooth(u / len)}px)`;
   if (n === 0) { setDim('s1a', k(u, .1, .5)); setDim('s1b', k(u, .9, 1.9)); $('s1ar').style.opacity = k(u, .6, .9); const s = pop(u, 2.6); $('s1s').style.transform = `scale(${s}) rotate(${-6 * s}deg)`; $('s1s').style.opacity = clamp(s * 3); }
-  if (n === 1) { const f = k(u, 0, .6); $('s2sh').setAttribute('transform', `translate(540 820) scale(${.15 + .85 * f} ${.6 + .4 * f})`); $('s2man').setAttribute('transform', `translate(${860 + 200 * (1 - k(u, .2, .7))} 1500)`);
-    const s = pop(u, 1.0); $('s2q').setAttribute('transform', `translate(700 1290) scale(${s})`); inout($('s2c'), u, 1.5); }
+  if (n === 1) { const f = k(u, 0, .6); $('s2sh').setAttribute('transform', `translate(540 760) scale(${.15 + .85 * f} ${.6 + .4 * f})`); $('s2man').setAttribute('transform', `translate(${860 + 200 * (1 - k(u, .2, .7))} 1440)`);
+    const s = pop(u, 1.0); $('s2q').setAttribute('transform', `translate(700 1240) scale(${s})`); inout($('s2c'), u, 1.5); }
   if (n === 2) { const s = pop(u, 0); $('s3n').style.transform = `scale(${s})`; inout($('s3t'), u, .25); q('.s3b').forEach((b, i) => { const p = k(u, .4 + i * .15, .6 + i * .15); b.setAttribute('width', 200 * p); }); }
   if (n === 3) { inout($('s4h'), u, 0, 30); inout($('s4tb'), u, .1, 50); draw($('s4ring'), k(u, 1.0, 1.7)); inout($('s4c'), u, 1.9); }
   if (n === 4) { inout($('s5h'), u, 0, 30); $('s5a').setAttribute('width', 220 * k(u, .3, .9)); $('s5a').setAttribute('x', 540 - 220 * k(u, .3, .9)); $('s5at').style.opacity = k(u, .8, 1.1);
@@ -238,7 +238,15 @@ function check(t) {
   const out = [], cap = $('cap').getBoundingClientRect();
   if (+$('cap').style.opacity > .5 && (cap.top < 0 || cap.bottom > 1840)) out.push('caption outside safe area');
   if ($('capb').getBoundingClientRect().height > 260) out.push('caption taller than 3 lines');
-  return out;
+  // no two labels on top of each other, no label under the caption, no dimension label on its own ticks
+  const vis = e => { let o = 1; for (let x = e; x && x !== document.body; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.display === 'none') return false; o *= +cs.opacity; } return o > .5; };
+  const els = [...document.querySelectorAll('#world .sc text, #world .sc .lbl, #world .sc .chip, #world .sc .big, #world .sc .head')].filter(vis);
+  const R = els.map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width > 0);
+  const hit = (a, b, m) => a.left < b.right - m && b.left < a.right - m && a.top < b.bottom - m && b.top < a.bottom - m;
+  for (let i = 0; i < R.length; i++) for (let j = i + 1; j < R.length; j++) { const [a, ra] = R[i], [b, rb] = R[j]; if (a.contains(b) || b.contains(a)) continue; if (hit(ra, rb, 4)) out.push('overlap: ' + (a.textContent || '').trim().slice(0, 16) + ' / ' + (b.textContent || '').trim().slice(0, 16)); }
+  if (+$('cap').style.opacity > .5) { const rc = $('capb').getBoundingClientRect(); R.forEach(([e, r]) => { if (hit(r, rc, 4)) out.push('under caption: ' + (e.textContent || '').trim().slice(0, 16)); }); }
+  document.querySelectorAll('#world .sc g').forEach(g => { const dx = g.querySelector(':scope > .dx'), dt = g.querySelector(':scope > .dt'); if (!dx || !dt || !vis(dx) || +dx.style.opacity < .5) return; const a = dx.getBoundingClientRect(), b = dt.getBoundingClientRect(); if (a.bottom > b.top + 2) out.push('dimension label on its ticks: ' + dx.textContent); });
+  return [...new Set(out)];
 }
 
 Studio.define({

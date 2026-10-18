@@ -2235,6 +2235,15 @@ body.v179lock{overflow:hidden}
 @media (max-width:700px){.v181folds{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v181up .v179b{width:100%}#appviews .v181up label.v179b{min-height:44px}.v181big img{max-height:52vh}}
 .v181qrow{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin:0 0 12px}.v181qrow .v179muted{flex:1 1 220px;font-size:13.5px}
 .v181res.enh{color:#0b5b3a;background:#e5f4ec}.v181enh{font-size:12.5px;font-weight:700;color:#0b5b3a}
+/* V189: a competitor's section is one sideways row, ending in a tile that opens the unified gallery */
+/* the row scrolls inside its card: nothing above it may grow to the row's full width */
+article.cc,.v181sec,.v181body{min-width:0;max-width:100%}
+.v181grid.v181rail{position:relative;contain:paint;min-width:0;max-width:100%;width:100%;box-sizing:border-box;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,230px);grid-template-columns:none;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding-bottom:8px;overscroll-behavior-x:contain}
+.v181grid.v181rail>*{scroll-snap-align:start}
+.v181all{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:16px;border:2px dashed #b9c6d0;background:#fff;color:#105572;text-align:center;padding:16px;min-height:260px}
+.v181all b{font-size:30px;color:#07293a}.v181all span{font-size:14.5px;font-weight:700}
+.v181all:focus-visible{outline:3px solid #105572;outline-offset:2px}
+@media (max-width:700px){.v181grid.v181rail{grid-auto-columns:minmax(160px,46%)}}
 </style>
 
 <style id="k184">
@@ -2422,6 +2431,13 @@ body.v186lock{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.v186info,.v186t img,.v186stage img,.v186chip,.v186det summary svg{transition:none}}
 </style>
 
+<style id="k190">
+/* V190 · direct publishing: which brand each connected page publishes for */
+.v177acc .v177as{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#5f6b78;margin-inline-start:auto}
+.v177acc .v177as select{min-height:40px;border:1px solid #cbd1da;border-radius:10px;padding:0 8px;font:600 14px Almoni,Heebo,Arial,sans-serif;color:#07293a;background:#fff}
+.v177acc.off .v173n b{color:#8a96a3}
+.v177acc .v177as select:focus-visible{outline:3px solid #105572;outline-offset:2px}
+</style>
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -26226,7 +26242,7 @@ try{PH.addEventListener('change',()=>{wasOpen=!wasOpen;drawerState()})}catch(e){
 window.__v176={chipTick,postsTotal,freeSlots,rel,calMore,closeDrawer,pageSearch};
 })();
 
-// ================= V177 · publishing straight from the engine to our own Facebook page and Instagram account
+// ================= V177 · publishing straight from the engine to our own Facebook page and Instagram account (v190: one page per brand)
 // No outside scheduler: the engine renders the post, uploads the image, and queues it in our server
 // (Supabase function "social"); the server publishes it on time. Only posts the person turned on
 // "פרסום אוטומטי" for are ever published.
@@ -26244,12 +26260,19 @@ const ON_SITE=()=>window.__ENGINE_HOST==='site';
 
 /* ---------- state ---------- */
 const ST={state:'idle',st:null,err:'',q:new Map(),busy:false,form:false};
-function connected(net){return !!(ST.st&&ST.st.accounts||[]).find?.(a=>a.network===net)}
-function anyConn(){return !!(ST.st&&(ST.st.accounts||[]).length)}
+const BRAND_HE={kurkoos:'קבוצת קורקוס',afik:'אפיק הנחל'};
+function accFor(net,brand){return ((ST.st&&ST.st.accounts)||[]).find(a=>a.network===net&&a.brand===brand)||null}
+function connected(net,brand){return brand?!!accFor(net,brand):!!((ST.st&&ST.st.accounts)||[]).find(a=>a.network===net&&a.brand)}
+function anyConn(){return !!((ST.st&&ST.st.accounts)||[]).find(a=>a.brand)}
+// the brand of a scheduled post: the Afik HaNahal tab marks its posts brand 'afik', everything else is Kurkoos
+function brandOf(it){const p=itemPost(it);return (it&&it.brand==='afik')||(p&&p.brand==='afik')?'afik':'kurkoos'}
+let loading=null;
 async function load(){if(!ON_SITE()){ST.state='off';paint();return}
- ST.state='busy';paint();
+ if(loading)return loading;
+ loading=(async()=>{ST.state='busy';paint();
  try{ST.st=await call('status');ST.state='ok';await syncQueue(true)}catch(e){ST.state='err';ST.err=e.message}
- paint()}
+ paint();try{mountSwitch()}catch(e){}})();
+ try{await loading}finally{loading=null}}
 async function syncQueue(quiet){if(!ON_SITE())return;try{const d=await call('list');ST.q=new Map((d.items||[]).map(x=>[x.item_id,x]));
  // the engine's schedule item remembers what happened to its automatic post
  let ch=false;((APP.sched&&APP.sched.items)||[]).forEach(it=>{const q=ST.q.get(it.id);if(!q)return;const s=q.status;if(it.pub&&it.pub.state!==s){it.pub.state=s;it.pub.err=q.last_error||'';ch=true}if(s==='done'&&it.status!=='published'){it.status='published';ch=true}});
@@ -26263,15 +26286,16 @@ async function renderJpeg(p){try{await ensureImgs(p)}catch(e){}try{await documen
  const up=await assets.upload(blob,{ext:'jpg'});if(!up||!up.url)throw new Error('העלאת התמונה נכשלה');return up.url}
 
 const pending=new Map();
-function want(it){return it&&it.pub&&it.pub.on&&!it.reel&&!((itemPost(it)||{}).brand)}
-async function enqueue(it,force){if(!ON_SITE()||!want(it)||!it.at)return;
- const p=itemPost(it);if(!p)return;const nets=['fb','ig'].filter(n=>it.nets&&it.nets[n]&&connected(n==='fb'?'facebook':'instagram'));
- if(!nets.length){it.pub.state='nochannel';return}
+function want(it){return it&&it.pub&&it.pub.on&&!it.reel}
+async function enqueue(it,force,atNow){if(!ON_SITE()||!want(it)||!it.at)return;
+ if(!ST.st)await load();
+ const p=itemPost(it);if(!p)return;const brand=brandOf(it);const nets=['fb','ig'].filter(n=>it.nets&&it.nets[n]&&connected(n==='fb'?'facebook':'instagram',brand));
+ if(!nets.length){it.pub.state='nochannel';it.pub.err='אין עמוד מחובר של '+BRAND_HE[brand];toast('לא יתפרסם: אין עמוד פייסבוק מחובר של '+BRAND_HE[brand]+'. בוחרים עמוד בהגדרות, בפרסום ישיר');try{saveSched(it)}catch(e){}return}
  const upd=String(p.upd||'')+'|'+(p.slide||0);
  try{
   if(force||!it.pub.media||it.pub.mupd!==upd){it.pub.media=await renderJpeg(p);it.pub.mupd=upd}
-  const at=new Date(it.at.length===16?it.at+':00':it.at);
-  const d=await call('enqueue',{items:[{item_id:it.id,post_id:p.id,label:(it.label||'').slice(0,120),at:at.toISOString(),nets,text_fb:itemText(it,'fb'),text_ig:itemText(it,'ig'),media_url:it.pub.media}]});
+  const at=atNow?new Date():new Date(it.at.length===16?it.at+':00':it.at);
+  const d=await call('enqueue',{items:[{item_id:it.id,post_id:p.id,brand,label:(it.label||'').slice(0,120),at:at.toISOString(),nets,text_fb:itemText(it,'fb'),text_ig:itemText(it,'ig'),media_url:it.pub.media}]});
   it.pub.state=(d.queued||[]).includes(it.id)?'queued':(d.skipped||[]).includes(it.id)?'done':it.pub.state;it.pub.err='';
   if((d.queued||[]).includes(it.id))ST.q.set(it.id,Object.assign({},ST.q.get(it.id)||{},{item_id:it.id,post_id:p.id,label:(it.label||'').slice(0,120),at:at.toISOString(),nets,status:'queued',last_error:null}));
  }catch(e){it.pub.state='local_error';it.pub.err=e.message;toast('התזמון לפרסום נכשל: '+String(e.message).slice(0,90))}
@@ -26284,16 +26308,18 @@ function autoDefault(){try{return lsGet(LS_AUTO,true)!==false}catch(e){return tr
 let armed=0,armedOn=false,lastAuto=0;
 document.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;
  const sw=t.closest('[data-v177="auto"]');if(sw){const on=sw.getAttribute('aria-pressed')!=='true';sw.setAttribute('aria-pressed',String(on));try{lsSet(LS_AUTO,on)}catch(x){}return}
- if(t.closest('#v157 [data-v157="go"]')){const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=!!(sw2&&sw2.getAttribute('aria-pressed')==='true')}},true);
+ if(t.closest('#v157 [data-v157="go"]')){const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=sw2?sw2.getAttribute('aria-pressed')==='true':autoDefault()}},true);
 // another handler may stop the click on the sheet's main button, so arm on the press too
-function arm(e){const t=e.target;if(!t||!t.closest||!t.closest('#v157 [data-v157="go"]'))return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=!!(sw2&&sw2.getAttribute('aria-pressed')==='true')}
+function arm(e){const t=e.target;if(!t||!t.closest||!t.closest('#v157 [data-v157="go"]'))return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=sw2?sw2.getAttribute('aria-pressed')==='true':autoDefault()}
 ['pointerdown','keydown'].forEach(k=>window.addEventListener(k,arm,true));
 // put the switch into the sheet each time it draws
 new MutationObserver(()=>{const sh0=document.getElementById('v157');if(sh0&&lastAuto&&Date.now()-lastAuto<60000){sh0.querySelectorAll('small,p,span').forEach(el=>{if(el.children.length===0&&/שום דבר לא מתפרסם בלי אישור/.test(el.textContent))el.textContent='יתפרסם אוטומטית בפייסבוק ובאינסטגרם במועד. אפשר לבטל בהגדרות, בפרסום ישיר.'})}}).observe(document.body,{childList:true,subtree:true});
-new MutationObserver(()=>{const sh=document.getElementById('v157');if(!sh||sh.querySelector('[data-v177="auto"]'))return;const f=sh.querySelector('.v157set');if(!f||!ON_SITE()||!anyConn())return;
+// drawn when the sheet opens, and again when the status arrives after it opened
+function mountSwitch(){const sh=document.getElementById('v157');if(!sh||sh.querySelector('[data-v177="auto"]'))return;const f=sh.querySelector('.v157set');if(!f||!ON_SITE()||(ST.state==='ok'&&!anyConn()))return;
  const on=autoDefault();const d=document.createElement('div');d.className='v177sw';
  d.innerHTML=`<button type="button" class="v177tg" data-v177="auto" aria-pressed="${on}"><span class="v177knob" aria-hidden="true"></span><span><b>פרסום אוטומטי במועד</b><small>פייסבוק ואינסטגרם יפורסמו מהמערכת בשעה שנבחרה</small></span></button>`;
- f.insertAdjacentElement('afterend',d)}).observe(document.body,{childList:true,subtree:true});
+ f.insertAdjacentElement('afterend',d)}
+new MutationObserver(()=>{try{mountSwitch()}catch(e){}}).observe(document.body,{childList:true,subtree:true});
 
 try{saveSched=(f=>function(it){const r=f.apply(this,arguments);try{
  if(it&&Date.now()-armed<4000&&ON_SITE()){armed=0;it.pub=Object.assign({},it.pub||{},{on:armedOn});lastAuto=armedOn?Date.now():0;if(armedOn)later(it,true);else if(ST.q.has(it.id))cancel([it.id])}
@@ -26314,9 +26340,12 @@ function guide(){const r=ST.st&&ST.st.redirect||'https://filnzlnvujnlazwcxbuq.su
   <li>לוחצים "התחברות עם פייסבוק", בוחרים את עמוד קבוצת קורקוס ואת חשבון האינסטגרם, ומאשרים. האפליקציה יכולה להישאר במצב פיתוח, כי רק אתם משתמשים בה.</li></ol>
   <p class="muted">אינסטגרם צריך להיות חשבון עסקי או חשבון יוצר שמקושר לעמוד הפייסבוק.</p></details>`}
 function formHtml(){return `<form class="v177form" data-v177="cfg"><label>App ID<input name="app_id" inputmode="numeric" autocomplete="off" required></label><label>App Secret<input name="app_secret" type="password" autocomplete="off" required></label><label>Configuration ID<input name="config_id" inputmode="numeric" autocomplete="off" placeholder="מומלץ"></label><button type="submit" class="px-btn red">שמירה</button></form>`}
-function rowsHtml(){const accs=ST.st&&ST.st.accounts||[];const fb=accs.find(a=>a.network==='facebook'),ig=accs.find(a=>a.network==='instagram');
- const row=(k,name,a,note)=>`<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||''}</span><span class="v173n"><b>${name}</b><span>${a?E(a.username?'@'+a.username:a.name||''):E(note||'')}</span></span><span class="v173c ${a?'ok':'no'}">${a?'מחובר':'לא מחובר'}</span><span></span></li>`;
- return row('fb','פייסבוק',fb,'עמוד קבוצת קורקוס')+row('ig','אינסטגרם',ig,'חשבון עסקי שמקושר לעמוד')+
+function rowsHtml(){const accs=ST.st&&ST.st.accounts||[];
+ const sel=a=>`<label class="v177as"><span>מפרסם עבור</span><select data-v177sel="${E(a.id)}" aria-label="עבור איזה מותג ${E(a.name||'')}"><option value="kurkoos"${a.brand==='kurkoos'?' selected':''}>קבוצת קורקוס</option><option value="afik"${a.brand==='afik'?' selected':''}>אפיק הנחל</option><option value=""${!a.brand?' selected':''}>לא בשימוש</option></select></label>`;
+ const row=(k,a)=>`<li class="v173row v177acc${a.brand?'':' off'}"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||''}</span><span class="v173n"><b>${E(a.username?'@'+a.username:a.name||'')}</b><span>${k==='fb'?'עמוד פייסבוק':'חשבון אינסטגרם'}${a.brand?'':' · לא יקבל פוסטים'}</span></span>${sel(a)}<span></span></li>`;
+ const none=(k,name,note)=>`<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||''}</span><span class="v173n"><b>${name}</b><span>${E(note)}</span></span><span class="v173c no">לא מחובר</span><span></span></li>`;
+ const fb=accs.filter(a=>a.network==='facebook'),ig=accs.filter(a=>a.network==='instagram');
+ return (fb.length?fb.map(a=>row('fb',a)).join(''):none('fb','פייסבוק','עמוד קבוצת קורקוס'))+(ig.length?ig.map(a=>row('ig',a)).join(''):none('ig','אינסטגרם','חשבון עסקי או יוצר שמקושר לעמוד הפייסבוק'))+
   `<li class="v173row v177soon"><span class="v173b" style="background:${NETS.tt?NETS.tt.c:'#111'}" aria-hidden="true">TT</span><span class="v173n"><b>טיקטוק</b><span>חיבור ישיר דורש אישור אפליקציה מטיקטוק, ומקבל רק סרטונים</span></span><span class="v173c">בשלב הבא</span><span></span></li>`+
   `<li class="v173row v177soon"><span class="v173b" style="background:${NETS.yt?NETS.yt.c:'#c00'}" aria-hidden="true">YT</span><span class="v173n"><b>יוטיוב</b><span>חיבור ישיר דורש אימות פרויקט בגוגל, ומקבל רק סרטונים</span></span><span class="v173c">בשלב הבא</span><span></span></li>`}
 function queueHtml(){const items=[...ST.q.values()].filter(x=>x.status!=='cancelled').sort((a,b)=>String(a.at).localeCompare(String(b.at)));
@@ -26336,10 +26365,13 @@ function cardHtml(){const s=ST.st;let head='',body='';
     ${on?`<button type="button" class="px-btn" data-v177="off">ניתוק</button>`:''}
     <button type="button" class="px-btn" data-v177="form">${s.app?'פרטי האפליקציה':'הגדרת האפליקציה'}</button></div>
    ${!s.app||ST.form?guide()+formHtml():''}
-   ${on?queueHtml():''}
+   ${on?lateHtml()+queueHtml():''}
    ${on?bulkHtml():''}`}
  return `<section class="v173card v177card" id="v177card" aria-labelledby="v177h"><div class="v173top"><h2 class="vh" id="v177h" style="margin:0">פרסום ישיר לעמודים שלנו</h2>${head}<button type="button" class="px-btn sm" data-v177="re">רענון</button></div>
-  <p class="muted v173p">המערכת מפרסמת בעצמה לעמוד הפייסבוק ולאינסטגרם של קבוצת קורקוס, בדיוק במועד שנקבע. רק פוסטים שסימנתם "פרסום אוטומטי" יוצאים.</p>${body}</section>`}
+  <p class="muted v173p">המערכת מפרסמת בעצמה, בדיוק במועד שנקבע, כל פוסט לעמוד של המותג שלו: קבוצת קורקוס או אפיק הנחל. עמוד שמסומן "לא בשימוש" לא מקבל כלום. רק פוסטים שסימנתם "פרסום אוטומטי" יוצאים.</p>${body}</section>`}
+function lateList(){const now=Date.now();return ((APP.sched&&APP.sched.items)||[]).filter(it=>!it.reel&&it.at&&it.status==='ready'&&it.nets&&(it.nets.fb||it.nets.ig)&&!(ST.q.get(it.id)&&['done','publishing','queued'].includes(ST.q.get(it.id).status))&&(()=>{const t=new Date(it.at.length===16?it.at+':00':it.at).getTime();return t<now&&now-t<7*864e5})())}
+function lateHtml(){const l=lateList();if(!l.length)return '';
+ return `<h3 class="v177h3">המועד עבר והפוסט לא יצא</h3><ul class="v177ql">${l.map(it=>`<li class="v177q s-error"><span class="v177qt"><b>${E(it.label||'פוסט')}</b><span>${fmt(new Date(it.at.length===16?it.at+':00':it.at).toISOString())} · ${BRAND_HE[brandOf(it)]}</span><span class="v177err">${it.pub&&it.pub.on?E(it.pub.err||'לא נשלח לתור'):'נשמר בלי פרסום אוטומטי'}</span></span><span class="v177qa"><button type="button" class="px-btn sm red" data-v177="late" data-id="${E(it.id)}">פרסום עכשיו</button></span></li>`).join('')}</ul>`}
 function bulkHtml(){const n=((APP.sched&&APP.sched.items)||[]).filter(it=>!it.reel&&it.at&&new Date(it.at)>new Date()&&!(it.pub&&it.pub.on)&&(it.nets&&(it.nets.fb||it.nets.ig))).length;
  return n?`<div class="v177bulk"><span>${n} פוסטים מתוזמנים בלוח עדיין בלי פרסום אוטומטי</span><button type="button" class="px-btn sm" data-v177="bulk">להפעיל לכולם</button></div>`:''}
 function paint(){const el=document.getElementById('v177card');if(el)el.outerHTML=cardHtml()}
@@ -26355,11 +26387,16 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
   if(a==='off'){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='לנתק? לחצו שוב';return}await call('disconnect');toast('העמודים נותקו');load();return}
   if(a==='cancel'){await call('cancel',{item_ids:[b.dataset.id]});const it=(APP.sched.items||[]).find(i=>i.id===b.dataset.id);if(it&&it.pub){it.pub.on=false;it.pub.state='cancelled';saveSched(it)}toast('הפרסום האוטומטי בוטל');await syncQueue();return}
   if(a==='now'){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='לפרסם עכשיו? לחצו שוב';return}b.disabled=true;b.textContent='מפרסם…';const d=await call('run',{only:b.dataset.id});const r=(d.ran||[])[0];toast(r?(r.status==='done'?'פורסם':'הפרסום נכשל: '+(r.errors||[]).join(' · ').slice(0,120)):'לא נמצא פוסט לפרסום');await syncQueue();return}
+  if(a==='late'){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='לפרסם עכשיו? לחצו שוב';return}const it=(APP.sched.items||[]).find(i=>i.id===b.dataset.id);if(!it)return;b.disabled=true;b.textContent='מפרסם…';
+   it.pub=Object.assign({},it.pub||{},{on:true});await enqueue(it,true,true);if(it.pub.state!=='queued'){paint();return}
+   const d=await call('run',{only:it.id});const r=(d.ran||[])[0];toast(r?(r.status==='done'?'פורסם':'הפרסום נכשל: '+(r.errors||[]).join(' · ').slice(0,120)):'הפוסט בתור ויתפרסם בדקות הקרובות');await syncQueue();return}
   if(a==='bulk'){const list=((APP.sched&&APP.sched.items)||[]).filter(it=>!it.reel&&it.at&&new Date(it.at)>new Date()&&!(it.pub&&it.pub.on)&&(it.nets&&(it.nets.fb||it.nets.ig)));
    if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent=`לפרסם אוטומטית ${list.length} פוסטים? לחצו שוב`;return}
    b.disabled=true;let n=0;for(const it of list){it.pub=Object.assign({},it.pub||{},{on:true});b.textContent=`מכין ${++n} מתוך ${list.length}…`;await enqueue(it,true)}
    toast(`${list.length} פוסטים יתפרסמו אוטומטית במועד`);await syncQueue();return}
  }catch(x){toast(String(x.message||'הפעולה נכשלה').slice(0,120));paint()}});
+document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.v177sel)return;t.disabled=true;
+ try{await call('assign',{id:t.dataset.v177sel,brand:t.value});toast(t.value?'העמוד יפרסם עבור '+BRAND_HE[t.value]:'העמוד לא יקבל פוסטים');await load()}catch(x){toast(String(x.message).slice(0,120));t.disabled=false}});
 document.addEventListener('submit',async e=>{const f=e.target;if(!f||f.dataset.v177!=='cfg')return;e.preventDefault();const d=Object.fromEntries(new FormData(f).entries());
  try{await call('config',d);toast('נשמר. עכשיו התחברות עם פייסבוק');ST.form=false;load()}catch(x){toast(String(x.message).slice(0,140))}});
 
@@ -26919,7 +26956,7 @@ const shortName0=p=>String(p.comp_name||'').replace(/\s+(Kedar Mivnim|בע"מ)$/
 // the folder of an item is the competitor in the system (one name even when Metricool spells the page differently)
 const shortName=p=>{const c=compDoc(isShot(p)?p.comp_id:idsOf(p)[0]);return String((c&&c.name)||shortName0(p)).trim()};
 const expired=p=>!isShot(p)&&!p.thumb&&!!p.img_exp&&Date.parse(p.img_exp)<Date.now();
-const srcOf=p=>isShot(p)?safeUrl(p.prev||p.url):p.thumb||(expired(p)?'':safeUrl(p.image));
+const srcOf=p=>isShot(p)?(p.source==='meta'&&safeUrl(p.creative)?safeUrl(p.creative):safeUrl(p.prev||p.url)):p.thumb||(expired(p)?'':safeUrl(p.image));
 const lastFetch=()=>{let m='';G.posts.forEach(p=>{if(String(p.fetched||'')>m)m=String(p.fetched)});return m};
 const excerpt=(t,n)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t.length>n?t.slice(0,n).replace(/\s+\S*$/,'')+'…':t};
 
@@ -26972,7 +27009,7 @@ function secHtml(c){const all=postsOf(c.id);const cf=cfOf(c.id);const open=G.ope
    const kchips=nS&&nP?`<div class="v179chips" role="group" aria-label="סוג">${[['','הכל',all.length],['post','פוסטים מפייסבוק',nP],['shot','צילומי מסך',nS]].map(([k,l,n])=>`<button type="button" class="v179chip" data-v181="ckind" data-cid="${E(c.id)}" data-k="${k}" aria-pressed="${cf.kind===k}">${l}<b>${n}</b></button>`).join('')}</div>`:'';
    body=`<div class="v181body">${upZone(c.id,{slim:true})}${kchips}<div class="v181bar"><div class="v179seg" role="group" aria-label="סדר הפוסטים"><button type="button" data-v181="csort" data-cid="${E(c.id)}" data-k="new" aria-pressed="${cf.sort==='new'}"><span>חדשים קודם</span></button><button type="button" data-v181="csort" data-cid="${E(c.id)}" data-k="eng" aria-pressed="${cf.sort==='eng'}"><span>הכי הרבה מעורבות</span></button></div>
     ${fbPost&&safeUrl(fbPost.link)?`<a class="v179ext" href="${E(safeUrl(String(fbPost.link).replace(/_[^/]*$/,'')))}" target="_blank" rel="noopener">לעמוד שלהם בפייסבוק ${SV.ext}</a>`:''}</div>
-    <div class="v181grid in">${page.map(p=>tile(p)).join('')}</div>${list.length>cf.n?`<button type="button" class="v179b more" data-v181="cmore" data-cid="${E(c.id)}">הצג עוד (${list.length-cf.n} נוספים)</button>`:''}
+    <div class="v181grid in v181rail">${page.map((p,i)=>{const h=tile(p);return i<6?h.replace('loading="lazy"','loading="eager"'):h}).join('')}${list.length?`<button type="button" class="v181all" data-v186="open" data-comp="${E(String(c.name||'').trim())}"><b>${list.length>page.length?'עוד '+(list.length-page.length):'הכל'}</b><span>${list.length>page.length?'כל ה-'+list.length+' בגלריה':'פתיחה בגלריה'}</span></button>`:''}</div>
     <p class="v179help">${nP?'פוסטים: מעקב המתחרים של Metricool, מתעדכן כל בוקר, בגודל התצוגה המקדימה ש-Metricool מחזיר. ':''}${nS?'צילומי מסך: הקבצים שהעליתם, ברזולוציה המלאה.':''}</p></div>`}}
  return `<details class="v181sec" data-v181sec="${E(c.id)}"${open?' open':''}><summary><span class="v179st"><b>הגלריה שלהם · פוסטים ומודעות</b><small>${sub}</small></span>${strip}<i class="v179chev" aria-hidden="true">${SV.chev}</i></summary>${body}</details>`}
 function refreshSec(cid){const el=document.querySelector(`details[data-v181sec="${CSS.escape(String(cid))}"]`);if(!el)return;const c=(APP.comps&&APP.comps[cid])||(typeof compList==='function'?compList().find(x=>String(x.id)===String(cid)):null);if(!c)return;
@@ -27287,7 +27324,9 @@ const dateOf=p=>isMeta(p)?(adStart(p)||String(p.added||'')):String(p.published||
 const textOf=p=>String(isShot(p)?(p.note||p.ad_title||''):(p.text||''));
 const initial=n=>String(n||'?').trim().replace(/^["'„]+/,'').slice(0,1)||'?';
 // tiles and the stage: uploaded screenshots show their improved copy; ads captured from Meta show the 1080px preview, the 4K file waits for the zoom
-const bestSrc=p=>{const v=V();if(v.isShot(p))return (isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
+const bestSrc=p=>{const v=V();if(v.isShot(p))return (isMeta(p)&&safeUrl(p.creative))?safeUrl(p.creative):(isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
+// the viewer shows the whole ad card (picture, text, button) for ads captured from Meta; the zoom loads the 4K file
+const stageSrc=p=>isMeta(p)?(safeUrl(p.prev)||bestSrc(p)):bestSrc(p);
 const days=p=>{const t=Date.parse(dateOf(p));return t?Math.floor((Date.now()-t)/864e5):null};
 const seenAt=()=>{try{return +localStorage.getItem('v188_seen')||0}catch(e){return 0}};
 const isNew=p=>{const t=Date.parse(String(p.added||p.first_seen||p.published||''));return !!t&&S.seen>0&&t>S.seen};
@@ -27298,6 +27337,10 @@ function mountBtn(){const tb=document.querySelector('.tbar');if(!tb||tb.querySel
  const anchor=tb.querySelector('#v102back')||tb.querySelector('[data-app="menu"]');if(anchor)anchor.insertAdjacentElement('afterend',b);else tb.prepend(b)}
 try{new MutationObserver(()=>{try{mountBtn()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 try{mountBtn()}catch(e){}
+// the competitors page: one button for the unified gallery, beside "הוסף מתחרה"
+function mountPage(){if(!window.APP||APP.view!=='competitors')return;const act=document.getElementById('vact');if(!act||act.querySelector('[data-v188="uni"]'))return;
+ const n=(()=>{try{return all().length}catch(e){return 0}})();const b=document.createElement('button');b.type='button';b.className='ibtn pri v188uni';b.dataset.v186='open';b.dataset.v188='uni';b.innerHTML=IC.gal+`<span>גלריה מאוחדת${n?' · '+num(n):''}</span>`;b.title='כל המודעות והפוסטים של כל המתחרים בגלריה אחת';act.prepend(b)}
+try{new MutationObserver(()=>{try{mountPage()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 
 /* ---------- the list ---------- */
 function all(){const v=V();return v?v.allItems().filter(p=>bestSrc(p)):[]}
@@ -27332,7 +27375,7 @@ function galHtml(){const list=S.list=items();const stats=compStats();const total
     <div class="v186grid">${show.map(([p,i])=>card(p,i)).join('')}</div>${!open&&l.length>PEEK?`<button type="button" class="v186more" data-v186="more" data-comp="${E(n)}">עוד ${l.length-PEEK} של ${E(n)}</button>`:''}</section>`}).join('')}
  else{const n=Math.min(list.length,S.page*PAGE);body=`<div class="v186grid flat">${list.slice(0,n).map((p,i)=>card(p,i)).join('')}</div>${n<list.length?`<button type="button" class="v186more" data-v186="page">עוד ${Math.min(PAGE,list.length-n)} מתוך ${list.length-n}</button>`:''}`}
  return `<div class="v186top" tabindex="-1"><button type="button" class="v186x" data-v186="close" aria-label="סגירה" title="סגירת הגלריה">${IC.x}</button><div class="v186tt"><h2>גלריית המתחרים</h2><span class="v186n">${S.comp?`${list.length} של ${E(S.comp)}`:`${num(total)} פריטים · ${stats.length} מתחרים`}</span></div></div>${rail}${tools}<div class="v186body">${body}</div>`}
-function openGal(){if(!V()){toast('הגלריה נטענת, נסו שוב בעוד רגע');return}let g=document.getElementById('v186');if(!g){g=document.createElement('div');g.id='v186';g.className='ov';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-label','גלריית המתחרים');document.body.appendChild(g)}
+function openGal(o){if(!V()){toast('הגלריה נטענת, נסו שוב בעוד רגע');return}o=o||{};if(o.comp!=null){S.comp=String(o.comp);S.q='';S.kind='';S.period=''}let g=document.getElementById('v186');if(!g){g=document.createElement('div');g.id='v186';g.className='ov';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-label','גלריית המתחרים');document.body.appendChild(g)}
  S.seen=seenAt();S.page=1;g.innerHTML=galHtml();document.body.classList.add('v186lock');S.open=true;
  try{localStorage.setItem('v188_seen',String(Date.now()))}catch(e){}
  requestAnimationFrame(()=>{const f=g.querySelector(window.matchMedia('(max-width:860px)').matches?'.v186top':'.v186x');f&&f.focus()})}
@@ -27357,7 +27400,7 @@ function postInfo(p){const v=V();const k=kindOf(p);const d=fmtD(dateOf(p));
  if(isMeta(p)){const land=safeUrl(p.landing);return `<div class="v186sec"><div class="v186when"><time>${E(adStart(p)?'באוויר מאז '+fmtD(adStart(p)):p.start?'באוויר מאז '+p.start:d)}</time><span class="v186chips"><span class="v186chip2">${p.media==='video'?'סרטון':'תמונה'}</span>${+p.copies>1?`<span class="v186chip2">${p.copies} גרסאות</span>`:''}<span class="v186chip2 ok" dir="ltr">4K</span></span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">מודעה בלי טקסט</p>'}${p.cta||land?`<p class="v186fine v186muted">${p.cta?'כפתור: '+E(p.cta):''}${p.cta&&land?' · ':''}${land?'נחיתה: <bdi dir="ltr">'+E(land.replace(/^https?:\/\//,'').slice(0,60))+'</bdi>':''}</p>`:''}<div class="v186links">${safeUrl(p.creative)?`<a class="v186lnk" href="${E(safeUrl(p.creative))}" target="_blank" rel="noopener">התמונה של המודעה בלבד${p.cw?` <bdi dir="ltr">${p.cw}×${p.ch}</bdi>`:''} ${IC.ext}</a>`:''}${land?`<a class="v186lnk" href="${E(land)}" target="_blank" rel="noopener">דף הנחיתה ${IC.ext}</a>`:''}</div></div>${adInfo(p)}`}
  if(k!=='post')return `<div class="v186sec"><div class="v186when"><time>הועלה ${E(d)}</time><span class="v186chips">${p.ew&&p.eh?`<span class="v186chip2 ok" dir="ltr">${p.ew}×${p.eh}</span>`:p.w&&p.h?`<span class="v186chip2" dir="ltr">${p.w}×${p.h}</span>`:''}${p.enh?'<span class="v186chip2 ok">שופר</span>':''}</span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">צילום מסך בלי הערה</p>'}</div>${adInfo(p)}`;
  return `<div class="v186sec"><div class="v186when"><time>${E(d)}</time><span class="v186chips"><span class="v186chip2">פייסבוק</span></span></div>${v.engHtml(p)}<p class="v186txt">${p.text?E(p.text):'<span class="v186muted">פוסט בלי טקסט</span>'}</p>${safeUrl(p.link)?`<a class="v186lnk" href="${E(safeUrl(p.link))}" target="_blank" rel="noopener">לפוסט בפייסבוק ${IC.ext}</a>`:''}</div>`}
-function viewHtml(){const p=S.list[S.i];const v=V();const src=bestSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;const name=nameOf(p);const ex=textOf(p).replace(/\s+/g,' ').slice(0,140);
+function viewHtml(){const p=S.list[S.i];const v=V();const src=stageSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;const name=nameOf(p);const ex=textOf(p).replace(/\s+/g,' ').slice(0,140);
  return `<div class="v186vbg" data-v186="vclose"></div>
  <div class="v186vtop"><button type="button" class="v186x" data-v186="vclose" aria-label="סגירה" title="חזרה לגלריה">${IC.x}</button><div class="v186vwho"><i class="v186av" aria-hidden="true">${E(initial(name))}</i><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></div><span class="v186vn">${S.i+1} מתוך ${n}</span><button type="button" class="v186ib" data-v186="zoom" aria-pressed="${S.zoom}" aria-label="הגדלה">${IC.zoom}</button></div>
  <div class="v186stage${S.zoom?' zoom':''}" data-v186="stage"><img src="${E(src)}" alt="${E(name)}" decoding="async" referrerpolicy="no-referrer" draggable="false" data-v186img></div>
@@ -27371,7 +27414,7 @@ function viewHtml(){const p=S.list[S.i];const v=V();const src=bestSrc(p);const f
 function openView(i){if(!S.list.length)return;S.i=(i+S.list.length)%S.list.length;S.zoom=false;let m=document.getElementById('v186v');if(!m){m=document.createElement('div');m.id='v186v';m.className='ov';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','תמונה של מתחרה');document.body.appendChild(m)}
  m.innerHTML=viewHtml();m.querySelector('.v186vtop').setAttribute('tabindex','-1');S.sheet=S.sheet&&window.matchMedia('(max-width:860px)').matches?S.sheet:false;
  // preload the neighbours so arrows feel instant
- [S.i+1,S.i-1].forEach(j=>{const q=S.list[(j+S.list.length)%S.list.length];if(q){const pre=new Image();pre.referrerPolicy='no-referrer';pre.src=bestSrc(q)}});
+ [S.i+1,S.i-1].forEach(j=>{const q=S.list[(j+S.list.length)%S.list.length];if(q){const pre=new Image();pre.referrerPolicy='no-referrer';pre.src=stageSrc(q)}});
  try{if(V().keep&&!V().isShot(S.list[S.i]))V().keep(S.list[S.i].id)}catch(e){}
  requestAnimationFrame(()=>{const f=m.querySelector(window.matchMedia('(max-width:860px)').matches?'.v186vtop':'.v186x');f&&f.focus()})}
 function closeView(silent){const m=document.getElementById('v186v');if(m)m.remove();S.i=-1;if(!silent){const g=document.getElementById('v186');const b=g&&g.querySelector('.v186x');b&&b.focus()}}
@@ -27379,7 +27422,7 @@ function step(d){if(S.i<0)return;openView(S.i+d)}
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v186]');if(!b)return;const a=b.dataset.v186;if(a==='sort'||a==='q'||a==='stage')return;e.preventDefault();e.stopPropagation();
- if(a==='open'){openGal();return}
+ if(a==='open'){openGal(b.dataset.comp!=null?{comp:b.dataset.comp}:{});return}
  if(a==='close'){closeAll();return}
  if(a==='view'){openView(+b.dataset.i);return}
  if(a==='vclose'){closeView();return}

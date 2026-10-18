@@ -59,7 +59,7 @@ const READ=(id)=>{
   try{
    const url='https://www.facebook.com/ads/library/?id='+id;
    vidUrls=[];await p.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
-   let info=null,seen=0;for(let k=0;k<40;k++){await sleep(1000);try{info=await p.evaluate(READ,id)}catch(e){info={err:'ctx'};continue}if(info.ok){seen++;if(info.media||info.videoErr||seen>=10)break}if(/login|checkpoint/.test(p.url())){r.err='login-wall';break}}
+   let info=null,seen=0;for(let k=0;k<40;k++){await sleep(1000);try{info=await p.evaluate(READ,id)}catch(e){info={err:'ctx'};continue}if(info.ok){seen++;if(info.media||info.videoErr||seen>=10)break}else if(k>=14&&/אין מודעות שמתאימות|הסרה/.test(info.text||''))break;if(/login|checkpoint/.test(p.url())){r.err='login-wall';break}}
    if(!info||!info.ok){r.err=r.err||(info&&info.err)||'no-card';r.text=info&&info.text;results.push(r);console.log(JSON.stringify(r));continue}
    await sleep(1500);info=await p.evaluate(READ,id);// let images settle
    Object.assign(r,{page_name:info.page_name,body:info.body,start:info.start,status:info.status,plats:info.plats,buttons:info.buttons,links:info.links,media:info.media,videoErr:info.videoErr,card:info.card});

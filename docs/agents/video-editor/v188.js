@@ -14,7 +14,8 @@ const IC={gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx
  l:SVG('<path d="m15 6-6 6 6 6"/>',26),r:SVG('<path d="m9 6 6 6-6 6"/>',26),ext:SVG('<path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',14),
  wand:SVG('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1zM4 20l9-9M11 9l4 4"/>',16),star:SVG('<path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1L3.2 9.7l6.1-.9z"/>',14),
  zoom:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',18),search:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',16),
- play:SVG('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',14),chev:SVG('<path d="m9 6 6 6-6 6"/>',16)};
+ play:SVG('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',14),chev:SVG('<path d="m9 6 6 6-6 6"/>',16),
+ dl:SVG('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',17),zin:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',17),zout:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6"/>',17)};
 const S={open:false,list:[],i:-1,comp:'',kind:'',period:'',q:'',sort:'new',zoom:false,sheet:false,more:{},page:1,seen:0,card:false};
 const PAGE=60,PEEK=8;
 const onTop=()=>!!(document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
@@ -117,6 +118,7 @@ function viewHtml(){const p=S.list[S.i];const v=V();const src=stageSrc(p);const 
  return `<div class="v186vbg" data-v186="vclose"></div>
  <div class="v186vtop"><button type="button" class="v186x" data-v186="vclose" aria-label="סגירה" title="חזרה לגלריה">${IC.x}</button><div class="v186vwho"><i class="v186av" aria-hidden="true">${E(initial(name))}</i><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></div><span class="v186vn">${S.i+1} מתוך ${n}</span><button type="button" class="v186ib" data-v186="zoom" aria-pressed="${S.zoom}" aria-label="הגדלה">${IC.zoom}</button></div>
  <div class="v186stage${S.zoom?' zoom':''}${isMeta(p)?(S.card&&cardSrc(p)?' card':' pic'):''}" data-v186="stage"><img src="${E(src)}" alt="${E(name)}" decoding="async" referrerpolicy="no-referrer" draggable="false" data-v186img></div>
+ <div class="v186tools" role="toolbar" aria-label="פעולות על המודעה"><button type="button" data-v186="zoom" aria-pressed="${S.zoom}">${S.zoom?IC.zout+'<span>הקטנה</span>':IC.zin+'<span>הגדלה</span>'}</button><button type="button" data-v186="dl" data-id="${E(p.id)}">${IC.dl}<span>הורדה</span></button><button type="button" class="pri" data-v186="clone" data-id="${E(p.id)}">${IC.wand}<span>שכפל למותג שלנו</span></button></div>
  ${isMeta(p)&&cardSrc(p)&&safeUrl(p.creative)?`<div class="v186mode" role="group" aria-label="תצוגה"><button type="button" data-v186="mode" data-v="pic" class="${S.card?'':'on'}" aria-pressed="${!S.card}">התמונה</button><button type="button" data-v186="mode" data-v="card" class="${S.card?'on':''}" aria-pressed="${S.card}">המודעה המלאה</button></div>`:''}
  ${n>1?`<button type="button" class="v186nav prev" data-v186="prev" aria-label="התמונה הקודמת">${IC.r}</button><button type="button" class="v186nav next" data-v186="next" aria-label="התמונה הבאה">${IC.l}</button>`:''}
  <aside class="v186info${S.sheet?' up':''}" aria-label="פרטי המתחרה והפוסט"><button type="button" class="v186grip" data-v186="sheet" aria-expanded="${S.sheet}"><i></i><span class="v186gw"><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></span><span class="v186gx">${ex?E(ex):'<span class="v186muted">בלי טקסט</span>'}</span></button>
@@ -134,6 +136,28 @@ function openView(i){if(!S.list.length)return;S.i=(i+S.list.length)%S.list.lengt
 function closeView(silent){const m=document.getElementById('v186v');if(m)m.remove();S.i=-1;if(!silent){const g=document.getElementById('v186');const b=g&&g.querySelector('.v186x');b&&b.focus()}}
 function step(d){if(S.i<0)return;openView(S.i+d)}
 
+// zoom for Meta ads: the picture at twice its own size (the original is 600px), the whole ad at a size where its text reads
+// like print; the stage scrolls, a drag pans, and the point that was tapped stays under the finger
+function setZoom(on,ev){const st=document.querySelector('#v186v .v186stage');const im=st&&st.querySelector('[data-v186img]');if(!im)return;
+ const r=im.getBoundingClientRect();const fx=ev&&r.width?(ev.clientX-r.left)/r.width:.5,fy=ev&&r.height?(ev.clientY-r.top)/r.height:.35;
+ S.zoom=on;st.classList.toggle('zoom',on);
+ if(on){const nat=im.naturalWidth||600;const w=st.classList.contains('card')?Math.min(nat,Math.max(1100,st.clientWidth*1.4)):Math.max(nat*2,st.clientWidth*.9);im.style.width=Math.round(w)+'px'}else im.style.width='';
+ requestAnimationFrame(()=>{if(!on){st.scrollTop=0;st.scrollLeft=0;return}const q=im.getBoundingClientRect(),s=st.getBoundingClientRect();st.scrollLeft+=q.left+q.width*fx-(s.left+s.width/2);st.scrollTop+=q.top+q.height*fy-(s.top+s.height/2)})}
+// download what is on screen: the ad picture, or the whole ad. Files from our storage come as a blob so the name is ours;
+// a phone gets the share sheet (save to photos) when it has one
+async function download(id,btn){const p=S.list.find(x=>x.id===id)||S.list[S.i];if(!p)return;const meta=isMeta(p);const url=meta?(S.card?cardSrc(p):safeUrl(p.creative))||cardSrc(p):(V().isShot(p)?V().fullOf(p):(p.thumb||safeUrl(p.image)));if(!url)return;
+ const ext=(url.split('?')[0].match(/\.(jpe?g|png|webp|gif)$/i)||[,'jpg'])[1].toLowerCase();const name=(nameOf(p)+' '+(p.ad_id||p.id)+(meta&&S.card?' מודעה מלאה':'')).replace(/[\\/:*?"<>|]+/g,'').trim()+'.'+ext;
+ if(btn){btn.disabled=true}
+ try{const r=await fetch(url,{mode:'cors'});if(!r.ok)throw new Error(r.status);const blob=await r.blob();const file=new File([blob],name,{type:blob.type||'image/'+ext});
+  if(window.matchMedia('(max-width:860px)').matches&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name})}catch(x){}return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);try{toast('ההורדה התחילה')}catch(x){}}
+ catch(e){window.open(url,'_blank','noopener')}
+ finally{if(btn)btn.disabled=false}}
+// a drag pans the zoomed stage with a mouse
+let pan=null;document.addEventListener('pointerdown',e=>{const st=e.target.closest&&e.target.closest('#v186v .v186stage.zoom');if(!st||e.pointerType!=='mouse')return;pan={st,x:e.clientX,y:e.clientY,l:st.scrollLeft,t:st.scrollTop,m:false}},true);
+document.addEventListener('pointermove',e=>{if(!pan)return;const dx=e.clientX-pan.x,dy=e.clientY-pan.y;if(Math.abs(dx)+Math.abs(dy)>4)pan.m=true;pan.st.scrollLeft=pan.l-dx;pan.st.scrollTop=pan.t-dy},true);
+document.addEventListener('pointerup',()=>{if(pan&&pan.m){S.dragged=true;setTimeout(()=>{S.dragged=false},60)}pan=null},true);
+
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v186]');if(!b)return;const a=b.dataset.v186;if(a==='sort'||a==='q'||a==='stage')return;e.preventDefault();e.stopPropagation();
  if(a==='open'){openGal(b.dataset.comp!=null?{comp:b.dataset.comp}:{});return}
@@ -148,6 +172,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
  if(a==='page'){S.page++;renderGal(true);return}
  if(a==='clear'){S.comp='';S.kind='';S.period='';S.q='';S.page=1;renderGal(false);return}
  if(a==='mode'){S.card=b.dataset.v==='card';S.zoom=false;openView(S.i);return}
+ if(a==='zoom'&&document.querySelector('#v186v .v186stage.pic,#v186v .v186stage.card')){setZoom(!S.zoom);document.querySelectorAll('#v186v [data-v186="zoom"]').forEach(z=>{z.setAttribute('aria-pressed',S.zoom);if(z.closest('.v186tools'))z.innerHTML=S.zoom?IC.zout+'<span>הקטנה</span>':IC.zin+'<span>הגדלה</span>'});return}
+ if(a==='dl'){download(b.dataset.id,b);return}
  if(a==='zoom'){S.zoom=!S.zoom;const st=document.querySelector('#v186v .v186stage');if(st)st.classList.toggle('zoom',S.zoom);b.setAttribute('aria-pressed',S.zoom);return}
  if(a==='sheet'){S.sheet=!S.sheet;const i=b.closest('.v186info');i&&i.classList.toggle('up',S.sheet);b.setAttribute('aria-expanded',S.sheet);return}
  if(a==='clone'){const id=b.dataset.id;closeView(true);const g=document.getElementById('v186');if(g)g.classList.add('v186park');try{V().openGen(id)}catch(x){}syncOv();
@@ -156,8 +182,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 },true);
 // a tap on the picture itself toggles the zoom, like a photo app
 document.addEventListener('click',e=>{const im=e.target.closest&&e.target.closest('#v186v [data-v186img]');if(!im||S.dragged)return;const st=im.closest('.v186stage');
- // a Meta ad: the tap switches between the picture and the whole ad, it never blows the card up to the screen width
- if(st.classList.contains('pic')||st.classList.contains('card')){const p=S.list[S.i];if(p&&cardSrc(p)&&safeUrl(p.creative)){S.card=!S.card;S.zoom=false;openView(S.i)}return}S.zoom=!S.zoom;st.classList.toggle('zoom',S.zoom);const z=document.querySelector('#v186v [data-v186="zoom"]');z&&z.setAttribute('aria-pressed',S.zoom)});
+ // a Meta ad: the tap zooms in on the point that was tapped (and out again); the picture or whole ad toggle sits above
+ if(st.classList.contains('pic')||st.classList.contains('card')){setZoom(!S.zoom,e);return}S.zoom=!S.zoom;st.classList.toggle('zoom',S.zoom);const z=document.querySelector('#v186v [data-v186="zoom"]');z&&z.setAttribute('aria-pressed',S.zoom)});
 document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v186!=='sort')return;S.sort=t.value;renderGal(true)});
 let qt=0;document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v186!=='q')return;clearTimeout(qt);const v=t.value;qt=setTimeout(()=>{S.q=v.trim();S.page=1;renderGal(false)},220)});
 // Escape and the arrow keys. Registered on window in the capture phase, so this runs before every other key handler and can

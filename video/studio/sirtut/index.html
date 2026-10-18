@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Reading a drawing</title>
+<!-- Kurkoos reel: "קריאת שרטוט". A drawing sheet (paper, faint mist grid, navy line work, red only for what matters).
+  9:16, timed by the voice (voice/timings.js, written by tts.py): one scene per line of narration, a hard cut behind a
+  red wipe at every line, a punch-in on every scene. Captions at the bottom are the same words as the voice. Pure function of t.
+  SCENES (line: picture)
+  1  1 ס"מ on the sheet stretches into 50 ס"מ on site, then the 1:50 stamp
+  2  a drawing sheet unfolds in front of a plot owner, "?" bubble
+  3  big 3, three bars: the three rules
+  4  rule 1: the title block, a red ring draws around "קנה מידה 1:50"
+  5  1:50 against 1:100: the same centimetre, half a metre or a whole metre
+  6  rule 2: the eye gets a red X, a scale ruler slides onto the line
+  7  a room on the plan: "6 ס"מ" on its dimension line turns into "3.00 מ'"
+  8  rule 3: a dimension chain, one segment has no number, a red "?" then the number
+  9  "280" with "ס"מ" turns into "2.80 מ'"
+  10 a house section: the ±0.00 level marker in red, the floors above it
+  11 our checklist: scale, levels, plot dimensions tick, and only then design
+  12 change clouds pop on a timeline and are swept away, a tick for good questions
+  13 save: the bookmark fills red
+  14 end card on navy: logo, קבוצת קורקוס, מקרקע ועד מסירת מפתח, phone, guide link
+-->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  @font-face{font-family:Almoni;font-weight:400;font-display:block;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;font-display:block;src:url(../../fonts/Almoni-700.ttf)}
+  body{background:#f7f8fa;margin:0}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#f7f8fa;direction:rtl;font-family:Almoni}
+  #sheet{position:absolute;inset:0}
+  #grain{position:absolute;inset:0;opacity:.05;pointer-events:none;z-index:50}
+  .abs{position:absolute;left:0;top:0}
+  .sc{position:absolute;inset:0;display:none}
+  .big{position:absolute;left:0;right:0;text-align:center;font-weight:700;color:#07293a;line-height:.9}
+  .lbl{position:absolute;font-weight:700;color:#07293a;white-space:nowrap}
+  .chip{position:absolute;font-weight:700;font-size:46px;line-height:1;padding:14px 28px 18px;border-radius:999px;white-space:nowrap;background:#07293a;color:#f7f8fa}
+  .chip.r{background:#a90b0c}
+  .chip.l{background:#f7f8fa;color:#07293a;border:4px solid #07293a}
+  .head{position:absolute;right:80px;top:230px;display:flex;align-items:center;gap:22px}
+  .head b{display:inline-block;width:104px;height:104px;border-radius:20px;background:#a90b0c;color:#f7f8fa;font-size:84px;line-height:112px;text-align:center}
+  .head span{font-weight:700;font-size:92px;color:#07293a;line-height:1}
+  .head small{display:block;font-size:40px;color:#105572;font-weight:700;margin-bottom:6px}
+  #world{display:block}
+  #wipe{position:absolute;top:0;bottom:0;width:1080px;background:#a90b0c;z-index:40;display:none}
+  #cap{position:absolute;left:70px;right:70px;bottom:150px;display:flex;justify-content:center;z-index:30}
+  #capb{background:#07293a;color:#f7f8fa;border-radius:26px;padding:24px 40px 30px;font-weight:700;font-size:60px;line-height:1.18;text-align:center;max-width:940px;box-sizing:border-box}
+  #capb .w{display:inline-block}
+  #capb .rd{color:#ff8f87}
+  #end{position:absolute;inset:0;background:#07293a;display:none;z-index:35}
+  svg{overflow:visible}
+  svg text{font-family:Almoni;font-weight:700}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="sheet" width="1080" height="1920"></svg>
+  <div class="sc" id="world"></div>
+  <div id="cap"><div id="capb"></div></div>
+  <div id="end"></div>
+  <div id="wipe"></div>
+  <canvas id="grain" width="540" height="960"></canvas>
+</div>
+<script src="voice/timings.js"></script>
+<script src="../lib/studio.js"></script>
+<script>
+const W = 1080, H = 1920;
+const NAVY = '#07293a', TEAL = '#105572', MIST = '#8fb6c8', PAPER = '#f7f8fa', RED = '#a90b0c', LINE = '#c9d6de';
+const {clamp, lerp, smooth, step} = Studio;
+const $ = id => document.getElementById(id);
+const k = (t, a, b) => smooth((t - a) / (b - a));
+const L = window.VT.lines;                       // [{i, a, b, cap}] voice seconds
+const CUT = L.map(x => Math.max(0, x.a - .18));  // every scene cuts in just before its line
+CUT[0] = 0;
+const END = CUT[13], DUR = +(window.VT.voice + 1.6).toFixed(2);
+const vis = (el, on) => { el.style.display = on ? 'block' : 'none'; return on; };
+function inout(el, u, a, d) { const i = k(u, a, a + .3); el.style.opacity = i; el.style.transform = `translateY(${(1 - i) * (d == null ? 36 : d)}px)`; return i; }
+const pop = (u, a) => Math.max(0, step(u - a, {f: 3.2, z: .45}));   // springy 0 -> 1 from a
+const draw = (el, p) => { el.style.strokeDashoffset = 1 - clamp(p); };
+
+// ---------- the drawing sheet: a faint grid and a frame, like a real sheet ----------
+$('sheet').innerHTML = (() => { let s = ''; for (let x = 60; x <= 1020; x += 60) s += `<line x1="${x}" y1="60" x2="${x}" y2="1860" stroke="${LINE}" stroke-width="${x % 300 === 0 ? 2 : 1}" opacity=".55"/>`;
+  for (let y = 60; y <= 1860; y += 60) s += `<line x1="60" y1="${y}" x2="1020" y2="${y}" stroke="${LINE}" stroke-width="${y % 300 === 0 ? 2 : 1}" opacity=".55"/>`;
+  return s + `<rect x="40" y="40" width="1000" height="1840" fill="none" stroke="${MIST}" stroke-width="4"/>`; })();
+
+// ---------- captions (from timings.js; ~ marks a red word, | splits a line into parts) ----------
+const CAPS = [];
+L.forEach(x => { if (!x.cap) return; const parts = x.cap.split('|'), tot = parts.reduce((n, p) => n + p.length, 0); let a = x.a;
+  parts.forEach(p => { const b = a + (x.b - x.a) * p.length / tot; CAPS.push([a - .05, b + (p === parts[parts.length - 1] ? .25 : 0), p]); a = b; }); });
+CAPS.forEach(c => { c.html = c[2].split(' ').map(w => w[0] === '~' ? `<span class="w rd">${w.slice(1)}</span>` : `<span class="w">${w}</span>`).join(' '); });
+let capCur = -1;
+function caption(t) {
+  const i = CAPS.findIndex(c => t >= c[0] && t < c[1]), box = $('cap');
+  if (i < 0 || t >= END) { box.style.opacity = 0; capCur = -1; return; }
+  const c = CAPS[i]; if (capCur !== i) { $('capb').innerHTML = c.html; capCur = i; }
+  box.style.opacity = Math.min(k(t, c[0], c[0] + .15), 1 - k(t, c[1] - .12, c[1]));
+  box.style.transform = `translateY(${(1 - k(t, c[0], c[0] + .2)) * 22}px) scale(${1 + .04 * (1 - k(t, c[0], c[0] + .2))})`;
+  const ws = $('capb').children, n = ws.length, span = Math.min(.9, (c[1] - c[0]) * .45);
+  for (let j = 0; j < n; j++) { const a = c[0] + .05 + span * j / n, p = k(t, a, a + .16); ws[j].style.opacity = .2 + .8 * p; ws[j].style.transform = `translateY(${(1 - p) * 10}px)`; }
+}
+
+// ---------- scenes ----------
+const SC = [];
+function scene(html) { const d = document.createElement('div'); d.className = 'sc'; d.innerHTML = html; $('world').appendChild(d); SC.push(d); return d; }
+// a dimension line: ticks at both ends, the text above the middle
+const dim = (id, x1, x2, y, txt, col, fs) => `<g id="${id}"><path d="M${x1} ${y} H${x2}" stroke="${col || NAVY}" stroke-width="6" pathLength="1" stroke-dasharray="1" class="dl"/>
+  <path d="M${x1 - 14} ${y + 14} L${x1 + 14} ${y - 14} M${x2 - 14} ${y + 14} L${x2 + 14} ${y - 14} M${x1} ${y - 30} V${y + 30} M${x2} ${y - 30} V${y + 30}" stroke="${col || NAVY}" stroke-width="6" class="dt"/>
+  <text x="${(x1 + x2) / 2}" y="${y - 28}" text-anchor="middle" font-size="${fs || 64}" fill="${col || NAVY}" class="dx" direction="rtl">${txt}</text></g>`;
+const svg = inner => `<svg width="1080" height="1920" class="abs">${inner}</svg>`;
+
+// 1 · 1 cm becomes 50 cm
+scene(`<div class="lbl" style="right:110px;top:300px;font-size:52px;color:${TEAL}">בשרטוט</div><div class="lbl" style="right:110px;top:760px;font-size:52px;color:${TEAL}">בשטח</div>
+  ${svg(dim('s1a', 600, 480, 520, '1 ס"מ') + dim('s1b', 980, 100, 990, '50 ס"מ', RED, 84) + `<path id="s1ar" d="M540 600 V880" stroke="${MIST}" stroke-width="10" stroke-linecap="round" stroke-dasharray="4 22"/>`)}
+  <div class="big" id="s1s" style="top:1140px"><span style="display:inline-block;border:10px solid ${RED};color:${RED};font-size:190px;padding:14px 50px 34px;border-radius:30px" dir="ltr">1:50</span></div>`);
+// 2 · the sheet unfolds in front of the owner
+scene(svg(`<g id="s2sh" transform="translate(540 820)"><rect x="-340" y="-420" width="680" height="840" rx="10" fill="#fff" stroke="${NAVY}" stroke-width="8"/>
+   <path d="M0 -420 V420" stroke="${MIST}" stroke-width="4" stroke-dasharray="14 12"/>
+   <rect x="-280" y="-340" width="300" height="360" fill="none" stroke="${NAVY}" stroke-width="10"/><rect x="40" y="-340" width="240" height="220" fill="none" stroke="${NAVY}" stroke-width="10"/>
+   <path d="M-280 -80 H20 M40 -60 H280 V20" fill="none" stroke="${NAVY}" stroke-width="10"/><path d="M-140 20 A90 90 0 0 1 -50 -70" fill="none" stroke="${TEAL}" stroke-width="5"/>
+   <rect x="80" y="250" width="240" height="140" fill="none" stroke="${NAVY}" stroke-width="5"/><path d="M80 300 H320 M80 345 H320" stroke="${MIST}" stroke-width="4"/></g>
+  <g id="s2man" transform="translate(860 1500)"><circle cy="-170" r="58" fill="${MIST}" stroke="${NAVY}" stroke-width="8"/><path d="M-80 -90 H80 L66 120 H-66 Z" fill="${NAVY}"/></g>
+  <g id="s2q" transform="translate(700 1290)"><circle r="70" fill="${RED}"/><text y="30" text-anchor="middle" font-size="96" fill="${PAPER}">?</text></g>`) +
+  `<div class="chip" id="s2c" style="right:110px;top:250px">פעם ראשונה מול שרטוט</div>`);
+// 3 · three rules
+scene(`<div class="big" id="s3n" style="top:430px;font-size:640px;color:${RED}">3</div><div class="big" id="s3t" style="top:1020px;font-size:120px">כללים</div>
+  ${svg([0, 1, 2].map(i => `<rect class="s3b" x="${180 + i * 250}" y="1230" width="200" height="34" rx="17" fill="${NAVY}"/>`).join(''))}`);
+// 4 · rule 1: the title block
+scene(`<div class="head" id="s4h"><b>1</b><div><small>כלל ראשון</small><span>קנה מידה</span></div></div>
+  ${svg(`<g id="s4tb"><rect x="140" y="560" width="800" height="560" rx="8" fill="#fff" stroke="${NAVY}" stroke-width="8"/>
+   <path d="M140 700 H940 M140 840 H940 M140 980 H940 M520 560 V1120" stroke="${NAVY}" stroke-width="5"/>
+   <text x="900" y="650" font-size="46" fill="${NAVY}">פרויקט</text><text x="480" y="650" font-size="40" fill="${TEAL}">בית פרטי</text>
+   <text x="900" y="790" font-size="46" fill="${NAVY}">גיליון</text><text x="480" y="790" font-size="40" fill="${TEAL}">קומת קרקע</text>
+   <text x="900" y="930" font-size="46" fill="${NAVY}">קנה מידה</text><text x="480" y="935" font-size="60" fill="${RED}" direction="ltr" text-anchor="end">1:50</text>
+   <text x="900" y="1070" font-size="46" fill="${NAVY}">תאריך</text><text x="480" y="1070" font-size="40" fill="${TEAL}">גרסה אחרונה</text></g>
+   <ellipse id="s4ring" cx="540" cy="910" rx="450" ry="100" fill="none" stroke="${RED}" stroke-width="12" pathLength="1" stroke-dasharray="1" transform="rotate(-2 540 910)"/>`)}
+  <div class="chip r" id="s4c" style="left:110px;top:1210px">לפני כל דבר אחר</div>`);
+// 5 · 1:50 against 1:100
+scene(`<div class="head" id="s5h"><b dir="ltr" style="width:auto;padding:0 18px;font-size:60px">1:100</b><div><small>תוכנית הגשה</small><span>סנטימטר = מטר</span></div></div>
+  <div class="lbl" style="right:110px;top:600px;font-size:68px" dir="ltr">1:50</div><div class="lbl" style="right:110px;top:960px;font-size:68px;color:${RED}" dir="ltr">1:100</div>
+  ${svg(`<rect x="660" y="620" width="60" height="60" fill="${NAVY}"/><rect x="660" y="980" width="60" height="60" fill="${RED}"/>
+   <path d="M630 650 H560 M630 1010 H560" stroke="${MIST}" stroke-width="8" stroke-linecap="round"/>
+   <rect id="s5a" x="100" y="625" width="440" height="50" rx="10" fill="${NAVY}"/><rect id="s5b" x="100" y="985" width="440" height="50" rx="10" fill="${RED}"/>`)}
+  <div class="lbl" id="s5at" style="left:110px;top:700px;font-size:60px">חצי מטר</div><div class="lbl" id="s5bt" style="left:110px;top:1060px;font-size:60px;color:${RED}">מטר שלם</div>`);
+// 6 · rule 2: measure, not by eye
+scene(`<div class="head" id="s6h"><b>2</b><div><small>כלל שני</small><span>מודדים</span></div></div>
+  ${svg(`<g id="s6eye" transform="translate(300 760)"><path d="M-170 0 Q0 -140 170 0 Q0 140 -170 0 Z" fill="#fff" stroke="${NAVY}" stroke-width="10"/><circle r="52" fill="${NAVY}"/>
+    <path id="s6x" d="M-150 -130 L150 130 M150 -130 L-150 130" stroke="${RED}" stroke-width="22" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/></g>
+   <path d="M120 1180 H960" stroke="${NAVY}" stroke-width="10"/>
+   <g id="s6r" transform="translate(540 1100)"><rect x="-420" y="-40" width="840" height="80" rx="8" fill="${MIST}" stroke="${NAVY}" stroke-width="6"/>
+    ${Array.from({length: 29}, (_, i) => `<path d="M${-400 + i * 28.6} -40 V${i % 5 ? -14 : 4}" stroke="${NAVY}" stroke-width="4"/>`).join('')}</g>`)}
+  <div class="chip" id="s6c" style="left:110px;top:1260px">סרגל, לא עין</div>`);
+// 7 · 6 cm on paper = a 3 m room
+scene(svg(`<g id="s7room"><rect x="240" y="640" width="600" height="600" fill="#fff" stroke="${NAVY}" stroke-width="18"/><path d="M760 1240 V1120 A120 120 0 0 0 640 1240" fill="none" stroke="${TEAL}" stroke-width="5"/></g>
+  ${dim('s7d', 840, 240, 560, '6 ס"מ', NAVY, 76)}`) + `<div class="big" id="s7m" style="top:830px;font-size:150px;color:${RED}" dir="ltr">3.00 מ'</div><div class="chip l" id="s7c" style="right:110px;top:1330px">חדר של 3 על 3</div>`);
+// 8 · rule 3: every dimension written beside its line
+scene(`<div class="head" id="s8h"><b>3</b><div><small>כלל שלישי</small><span>מידה ליד הקו</span></div></div>
+  ${svg(`<path d="M100 980 H980" stroke="${NAVY}" stroke-width="6"/>${[980, 700, 420, 100].map(x => `<path d="M${x} 940 V1020" stroke="${NAVY}" stroke-width="6"/>`).join('')}
+   <text class="s8n" x="840" y="950" text-anchor="middle" font-size="64" fill="${NAVY}">420</text><text class="s8n" x="560" y="950" text-anchor="middle" font-size="64" fill="${NAVY}">420</text>
+   <g id="s8q"><circle cx="260" cy="925" r="46" fill="${RED}"/><text x="260" y="947" text-anchor="middle" font-size="64" fill="${PAPER}">?</text></g>
+   <text id="s8m" x="260" y="950" text-anchor="middle" font-size="64" fill="${RED}">480</text>`)}
+  <div class="chip r" id="s8c" style="right:110px;top:1120px">אין מידה? שואלים</div>`);
+// 9 · the numbers are in centimetres
+scene(`<div class="big" id="s9a" style="top:470px;font-size:300px">280</div><div class="big" id="s9u" style="top:780px;font-size:70px;color:${TEAL}">ס"מ, כמו שכתוב בשרטוט</div>
+  ${svg(`<path id="s9ar" d="M540 900 V1030 M500 990 L540 1030 L580 990" fill="none" stroke="${RED}" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>`)}
+  <div class="big" id="s9b" style="top:1080px;font-size:220px;color:${RED}" dir="ltr">2.80 מ'</div>`);
+// 10 · the section and level zero
+scene(svg(`<path d="M80 1300 H1000" stroke="${NAVY}" stroke-width="10"/><path d="M80 1300 H1000 V1400 H80 Z" fill="${MIST}" opacity=".35"/>
+  <g id="s10h"><path d="M260 1300 V700 H820 V1300" fill="none" stroke="${NAVY}" stroke-width="14"/><path d="M260 1000 H820" stroke="${NAVY}" stroke-width="14"/><path d="M220 700 L540 520 L860 700" fill="none" stroke="${NAVY}" stroke-width="14" stroke-linejoin="round"/>
+   <rect x="380" y="1110" width="110" height="190" fill="none" stroke="${TEAL}" stroke-width="6"/><rect x="600" y="790" width="140" height="120" fill="none" stroke="${TEAL}" stroke-width="6"/></g>
+  <g id="s10z" transform="translate(925 1300)"><path d="M-26 -50 L26 -50 L0 -6 Z" fill="${RED}"/><text y="-72" text-anchor="middle" font-size="56" fill="${RED}" direction="ltr">±0.00</text></g>
+  <g id="s10u" transform="translate(925 1000)"><path d="M-22 -44 L22 -44 L0 -6 Z" fill="${NAVY}"/><text y="-64" text-anchor="middle" font-size="50" fill="${NAVY}" direction="ltr">+3.00</text></g>`) +
+  `<div class="chip r" id="s10c" style="right:110px;top:300px">מפלס 0.00 = הרצפה</div>`);
+// 11 · our checklist, and only then design
+scene(`<div class="lbl" id="s11t" style="right:110px;top:300px;font-size:80px">אצלנו, לפני העיצוב:</div>
+  ${svg(['קנה המידה', 'מפלסי הבית', 'מידות המגרש'].map((x, i) => `<g class="s11i" transform="translate(0 ${520 + i * 190})"><rect x="140" y="0" width="800" height="150" rx="26" fill="#fff" stroke="${NAVY}" stroke-width="6"/>
+     <circle cx="860" cy="75" r="44" fill="${NAVY}"/><path class="s11k" d="M838 76 L855 93 L884 60" fill="none" stroke="${PAPER}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
+     <text x="780" y="98" font-size="62" fill="${NAVY}">${x}</text></g>`).join(''))}
+  <div class="chip r" id="s11d" style="right:140px;top:1130px">ורק אז: עיצוב</div>`);
+// 12 · fewer changes halfway
+scene(svg(`<path d="M120 900 H960" stroke="${NAVY}" stroke-width="10" stroke-linecap="round"/><circle cx="960" cy="900" r="22" fill="${NAVY}"/><circle cx="120" cy="900" r="22" fill="${NAVY}"/>
+  ${[800, 640, 480, 320].map((x, i) => `<g class="s12c" transform="translate(${x} 780)"><path d="M-70 20 Q-80 -30 -40 -40 Q-30 -80 10 -66 Q50 -90 70 -44 Q100 -20 76 20 Z" fill="${RED}"/><text y="4" text-anchor="middle" font-size="40" fill="${PAPER}">שינוי</text></g>`).join('')}
+  <path id="s12k" d="M380 1150 L490 1260 L720 1010" fill="none" stroke="${TEAL}" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>`) +
+  `<div class="lbl" style="right:110px;top:960px;font-size:46px;color:${TEAL}">תחילת העבודה</div><div class="lbl" style="left:110px;top:960px;font-size:46px;color:${TEAL}">מפתח</div>
+   <div class="chip" id="s12q" style="right:110px;top:440px">שאלות טובות יותר</div>`);
+// 13 · save it
+scene(svg(`<g id="s13b" transform="translate(540 900)"><path d="M-170 -260 H170 V260 L0 140 L-170 260 Z" fill="#fff" stroke="${NAVY}" stroke-width="14" stroke-linejoin="round"/>
+  <clipPath id="s13cl"><path d="M-163 -253 H163 V246 L0 131 L-163 246 Z"/></clipPath><rect id="s13f" x="-170" y="-260" width="340" height="520" fill="${RED}" clip-path="url(#s13cl)"/></g>`) +
+  `<div class="big" id="s13t" style="top:1240px;font-size:84px;line-height:1.1;padding:0 110px">לפעם הבאה<br>שתקבלו שרטוט</div>`);
+// 14 · end card
+$('end').innerHTML = `<img src="logo.png" alt="" style="position:absolute;left:390px;top:500px;width:300px">
+  <div class="big" id="e1" style="top:930px;font-size:112px;color:${PAPER}">קבוצת קורקוס</div>
+  <div class="big" id="e2" style="top:1070px;font-size:64px;color:${MIST};font-weight:400">מקרקע ועד מסירת מפתח</div>
+  <div class="big" id="e3" style="top:1220px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:68px;padding:18px 46px 24px;border-radius:999px" dir="ltr">055-981-1814</span></div>
+  <div class="big" id="e4" style="top:1390px;font-size:46px;color:${MIST};font-weight:400">המדריך המלא לבעלי מגרשים</div>
+  <div class="big" id="e5" style="top:1460px;font-size:50px;color:${PAPER};font-weight:400" dir="ltr">kurkoos-group.co.il/real-estate-guide</div>`;
+
+// ---------- grain (static) ----------
+(() => { const c = $('grain'), x = c.getContext('2d'), d = x.createImageData(540, 960), r = Studio.rng(5); for (let i = 0; i < d.data.length; i += 4) { const v = r() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); c.style.width = '1080px'; c.style.height = '1920px'; })();
+
+const q = s => [...document.querySelectorAll(s)];
+function setDim(id, p, txtP) { const g = $(id); draw(g.querySelector('.dl'), p); g.querySelector('.dt').style.opacity = k(p, .7, 1); g.querySelector('.dx').style.opacity = txtP == null ? k(p, .6, 1) : txtP; }
+
+function seek(t) {
+  const n = CUT.filter(c => c <= t).length - 1;        // current scene 0..13
+  const u = t - CUT[n];                                 // seconds into it
+  const len = (CUT[n + 1] || DUR) - CUT[n];
+  SC.forEach((s, i) => vis(s, i === n && n < 13));
+  // a hard cut behind a red wipe: the bar crosses right to left in .22 s around every cut after the first
+  const wp = n > 0 ? clamp((t - CUT[n] + .11) / .22) : 1, wn = n < 13 ? clamp((t - CUT[n + 1] + .11) / .22) : 0;
+  const w = wn > 0 ? wn : (wp < 1 ? wp : 0);
+  vis($('wipe'), w > 0 && w < 1); $('wipe').style.left = lerp(1080, -1080, w) + 'px';
+  // a punch in at the start of every scene, then a slow push
+  $('world').style.transform = `scale(${1.06 - .06 * k(u, 0, .28) + .03 * smooth(u / len)})`; $('world').style.transformOrigin = '50% 45%';
+  $('sheet').style.transform = `scale(${1 + .015 * smooth(u / len)}) translateY(${-14 * smooth(u / len)}px)`;
+  if (n === 0) { setDim('s1a', k(u, .1, .5)); setDim('s1b', k(u, .9, 1.9)); $('s1ar').style.opacity = k(u, .6, .9); const s = pop(u, 2.6); $('s1s').style.transform = `scale(${s}) rotate(${-6 * s}deg)`; $('s1s').style.opacity = clamp(s * 3); }
+  if (n === 1) { const f = k(u, 0, .6); $('s2sh').setAttribute('transform', `translate(540 820) scale(${.15 + .85 * f} ${.6 + .4 * f})`); $('s2man').setAttribute('transform', `translate(${860 + 200 * (1 - k(u, .2, .7))} 1500)`);
+    const s = pop(u, 1.0); $('s2q').setAttribute('transform', `translate(700 1290) scale(${s})`); inout($('s2c'), u, 1.5); }
+  if (n === 2) { const s = pop(u, 0); $('s3n').style.transform = `scale(${s})`; inout($('s3t'), u, .25); q('.s3b').forEach((b, i) => { const p = k(u, .4 + i * .15, .6 + i * .15); b.setAttribute('width', 200 * p); }); }
+  if (n === 3) { inout($('s4h'), u, 0, 30); inout($('s4tb'), u, .1, 50); draw($('s4ring'), k(u, 1.0, 1.7)); inout($('s4c'), u, 1.9); }
+  if (n === 4) { inout($('s5h'), u, 0, 30); $('s5a').setAttribute('width', 220 * k(u, .3, .9)); $('s5a').setAttribute('x', 540 - 220 * k(u, .3, .9)); $('s5at').style.opacity = k(u, .8, 1.1);
+    $('s5b').setAttribute('width', 440 * k(u, 1.4, 2.2)); $('s5b').setAttribute('x', 540 - 440 * k(u, 1.4, 2.2)); $('s5bt').style.opacity = k(u, 2.0, 2.3); }
+  if (n === 5) { inout($('s6h'), u, 0, 30); draw($('s6x'), k(u, .5, .9)); $('s6r').setAttribute('transform', `translate(${540 + 700 * (1 - k(u, 1.1, 1.7))} 1100)`); inout($('s6c'), u, 1.8); }
+  if (n === 6) { const r = k(u, 0, .35); $('s7room').style.opacity = r; setDim('s7d', k(u, .2, .8)); const sw = k(u, 1.3, 1.6); $('s7d').querySelector('.dx').style.opacity = 1 - sw; const s = pop(u, 1.4); $('s7m').style.transform = `scale(${s})`; $('s7m').style.opacity = clamp(s * 3); inout($('s7c'), u, 2.0); }
+  if (n === 7) { inout($('s8h'), u, 0, 30); q('.s8n').forEach((e, i) => e.style.opacity = k(u, .3 + i * .2, .5 + i * .2)); const qs = pop(u, 1.0) * (1 - k(u, 2.1, 2.3)); $('s8q').setAttribute('transform', `translate(260 925) scale(${qs}) translate(-260 -925)`); $('s8m').style.opacity = k(u, 2.2, 2.45); inout($('s8c'), u, 1.3); }
+  if (n === 8) { const s = pop(u, 0); $('s9a').style.transform = `scale(${s})`; inout($('s9u'), u, .3); $('s9ar').style.opacity = k(u, 1.4, 1.6); const b = pop(u, 1.7); $('s9b').style.transform = `scale(${b})`; $('s9b').style.opacity = clamp(b * 3); }
+  if (n === 9) { $('s10h').style.opacity = k(u, 0, .3); const z = pop(u, .7); $('s10z').setAttribute('transform', `translate(925 1300) scale(${z * (1 + .08 * Math.sin(u * 7) * k(u, 1.4, 1.6))})`); $('s10u').setAttribute('transform', `translate(925 1000) scale(${pop(u, 2.4)})`); inout($('s10c'), u, 1.2); }
+  if (n === 10) { inout($('s11t'), u, 0, 30); q('.s11i').forEach((g, i) => { const p = k(u, .3 + i * .55, .6 + i * .55); g.style.opacity = p; draw(g.querySelector('.s11k'), k(u, .7 + i * .55, 1.0 + i * .55)); }); const d = pop(u, 2.6); $('s11d').style.transform = `scale(${d})`; $('s11d').style.opacity = clamp(d * 3); }
+  if (n === 11) { q('.s12c').forEach((g, i) => { const p = pop(u, .2 + i * .25), out = k(u, 2.0, 2.4); g.setAttribute('transform', `translate(${[800, 640, 480, 320][i] - 600 * out} ${780 - 200 * out}) scale(${p * (1 - out)})`); }); draw($('s12k'), k(u, 2.4, 2.9)); inout($('s12q'), u, 2.7); }
+  if (n === 12) { const s = pop(u, 0); $('s13b').setAttribute('transform', `translate(540 900) scale(${s})`); const f = k(u, .6, 1.3); $('s13f').setAttribute('y', 260 - 520 * f); inout($('s13t'), u, .5); }
+  // the end card opens from the bottom as a circle
+  const e = k(t, END, END + .45); vis($('end'), t >= END); $('end').style.clipPath = `circle(${e * 140}% at 50% 92%)`;
+  ['e1', 'e2', 'e3', 'e4', 'e5'].forEach((id, i) => inout($(id), t - END, .3 + i * .18, 30));
+  caption(t);
+}
+
+function check(t) {
+  const out = [], cap = $('cap').getBoundingClientRect();
+  if (+$('cap').style.opacity > .5 && (cap.top < 0 || cap.bottom > 1840)) out.push('caption outside safe area');
+  if ($('capb').getBoundingClientRect().height > 260) out.push('caption taller than 3 lines');
+  return out;
+}
+
+Studio.define({
+  w: W, h: H, duration: DUR,
+  stages: L.map((x, i) => ({t: +(Math.min(x.b - .2, CUT[i] + 1.9)).toFixed(2), label: 'line ' + x.i})).concat([{t: +(DUR - .4).toFixed(2), label: 'end'}]),
+  fonts: ['700 60px Almoni', '400 60px Almoni'],
+  seek, check,
+});
+</script>
+</body>
+</html>

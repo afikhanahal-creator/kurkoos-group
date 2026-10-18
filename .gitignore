@@ -38,3 +38,4 @@ __pycache__/
 video/.mpvenv
 video/engine/models/*.tflite
 video/sfx/sig/
+video/studio/*-out-stills/

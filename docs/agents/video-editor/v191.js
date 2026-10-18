@@ -85,7 +85,7 @@ function month(box){const mo=box.querySelector('.mo');if(!mo||mo.dataset.v191)re
   const d=new Date(ds+'T12:00');const mis=[...c.querySelectorAll('.mi')];const all=items().filter(i=>i.at.slice(0,10)===ds);
   c.setAttribute('aria-label',`${DN[d.getDay()]} ${d.getDate()} ב${MON[d.getMonth()]}${ds===today?', היום':''}${all.length?`, ${all.length} פוסטים`:''}`);
   mis.forEach(mi=>{if(mi.dataset.v191)return;mi.dataset.v191=1;const it=APP.sched.items.find(i=>i.id===mi.dataset.id);if(!it)return;const st=stC(it.status);const b=mi.querySelector('b');const t=b?b.textContent:'';
-   const txt=mi.textContent.replace(t,'').trim();mi.innerHTML=`<i class="v191dot" style="--c:${st[2]}" aria-hidden="true"></i><b>${esc(t)}</b><span class="v191mt">${esc(txt)}</span>${wide?`<canvas data-ti="${esc(it.id)}" width="40" height="50" aria-hidden="true"></canvas>`:''}`;mi.setAttribute('aria-label',`${t} · ${st[1]} · ${txt}`);if(wide)any=true;
+   const txt=mi.textContent.replace(t,'').trim();mi.innerHTML=`<i class="v191dot" style="--c:${st[2]}" aria-hidden="true"></i><b>${esc(t)}</b><span class="v191mt">${esc(txt)}</span>${wide?`<canvas data-ti="${esc(it.id)}" width="40" height="50" aria-hidden="true"></canvas>`:''}`;mi.setAttribute('aria-label',`${t} · ${st[1]} · ${txt}`);mi.style.setProperty('--c',st[2]);if(wide)any=true;
    if(new Date(it.at)<new Date())mi.classList.add('v191past')});
   if(!c.querySelector('.v191dots')&&all.length)c.insertAdjacentHTML('beforeend',`<span class="v191dots" aria-hidden="true">${all.slice(0,3).map(i=>`<u style="--c:${stC(i.status)[2]}"></u>`).join('')}</span>`);
   if(PHONE()){c.tabIndex=0;c.setAttribute('role','button')}});

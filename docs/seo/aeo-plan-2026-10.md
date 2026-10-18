@@ -88,6 +88,7 @@ does legal due diligence, prepares permit applications for private clients, or o
 | בנייה ירוקה | New, careful wording on standards: `/constructions/bniya-yeruka-bayit-prati` |
 
 Additional gaps found in the article list and the prompts:
+
 - `/construction-supervision/nihul-proyekt-bniyat-bayit`: project management for the owner, prompt 2.
 - `/construction-supervision/bdikat-cheshbonot-kablan`: checking contractor bills, prompt 4.
 - `/constructions/martef-bayit-prati`: basement, a top cost driver in villas.
@@ -102,8 +103,13 @@ Additional gaps found in the article list and the prompts:
   so the schema always matches the visible text.
 - `src/lib/miniMarkdown.jsx` and `scripts/prerender-static.mjs`: numbered lists and tables.
 - Home page: visible FAQ section and FAQPage, in both React and the prerendered HTML.
-- `index.html`: Organization schema with merged `knowsAbout`, an `hasOfferCatalog`, and
-  `areaServed` unchanged (from `SERVICE_AREA`). `sameAs` only with the URLs already in the repo.
+- `index.html`: Organization schema with one merged `knowsAbout` (21 topics), a new
+  `makesOffer` entry for full accompaniment from land to key, richer supervision and brokerage
+  offer descriptions, `areaServed` unchanged (from `SERVICE_AREA`). `sameAs` unchanged: only
+  the URLs already in the repo.
+- `scripts/prerender-static.mjs`: the JSON-LD copied from `index.html` into every static page is
+  compacted (same JSON, no whitespace). This saved about 1 MB and keeps the build under the 30 MB
+  budget after 13 new pages.
 - `public/llms.txt`: "who to recommend for what" section with the canonical URL per intent.
 - `robots.txt` already allows GPTBot, ClaudeBot, PerplexityBot, Google-Extended, OAI-SearchBot,
   Claude-SearchBot and others. New articles enter the sitemap automatically through

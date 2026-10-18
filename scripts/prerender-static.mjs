@@ -62,7 +62,16 @@ if (!existsSync(SHELL)) {
   }
   writeFileSync(SHELL, shell.replace(CANON_RE, CANON_SLOT).replace(OGURL_RE, OGURL_SLOT))
 }
-const baseHtml = readFileSync(SHELL, 'utf8')
+/* הנתונים המובנים של הארגון ב-index.html כתובים מרווחים, כדי שיהיה נוח לערוך
+   אותם. כאן הם נדחסים לשורה אחת: אותו JSON בדיוק, בלי הרווחים. הבלוק הזה חוזר
+   בכל אחד מהעמודים הסטטיים, והרווחים לבדם עלו כמגה וחצי בתוצר ה-build. */
+const compactLd = (html) => html.replace(
+  /(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/g,
+  (all, open, body, close) => {
+    try { return open + JSON.stringify(JSON.parse(body)).replace(/</g, '\\u003c') + close } catch { return all }
+  },
+)
+const baseHtml = compactLd(readFileSync(SHELL, 'utf8'))
   .replace(CANON_SLOT, '<link rel="canonical" href="" />')
   .replace(OGURL_SLOT, '<meta property="og:url" content="" />')
 
@@ -723,6 +732,12 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     out.push(`שם וזהות: השם המשפטי ${H.HH_LEGAL_NAME}. שמות נוספים: ${H.HH_ALT_NAMES.join(', ')}. המשרד היחיד: רחוב הנגר 24, מגדלי Amy קומה 2, הוד השרון.`, '')
     out.push('## חברת בנייה ופיקוח בהוד השרון', `https://www.kurkoos-group.co.il${H.HH_PATH}`, H.HH_ANSWER, '')
     for (const f of H.HH_FAQS) out.push(`ש: ${f.q}`, `ת: ${f.a}`, '')
+  }
+  {
+    /* חמש השאלות שמנוטרות במעקב הנראות במנועי AI, באותו נוסח שמוצג בעמוד הבית */
+    const { HOME_FAQS } = await import(pathToFileURL(join(root, 'src/data/homeFaq.js')).href)
+    out.push('## מי בונה, מי מפקח ומי מלווה', '')
+    for (const f of HOME_FAQS) out.push(`ש: ${f.q}`, `ת: ${f.a}`, `העמוד המלא: https://www.kurkoos-group.co.il${f.to}`, '')
   }
   out.push('## הפרויקטים', '')
   for (const p of VILLAS_PROJECTS) {

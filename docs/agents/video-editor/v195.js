@@ -139,8 +139,8 @@ function openMore(){const old=document.getElementById('v172sheet');if(old)old.re
  const w=document.createElement('div');w.id='v172sheet';w.className='v195sh';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label','עוד');
  w.innerHTML=`<div class="v172bg" data-v172x="1"></div><div class="v172pan"><div class="v172grip" aria-hidden="true"></div><div class="v172h"><div><b>עוד</b>${t?`<span>${E(t)}</span>`:''}</div><button type="button" class="v172x" data-v172x="1" aria-label="סגירה">${IC.x}</button></div><div class="v172l"></div></div>`;
  const l=w.querySelector('.v172l');let sep=false;
- list.forEach(it=>{if(!it.page&&!sep&&l.children.length){const s=document.createElement('div');s.className='v195sep';s.setAttribute('role','separator');l.appendChild(s);sep=true}
-  const b=document.createElement('button');b.type='button';b.className='v172i';b.disabled=!!it.disabled;b.innerHTML=`<span class="v172ic" aria-hidden="true">${it.icon||''}</span><span class="v172t">${E(it.label)}</span>`;
+ list.forEach((it,i)=>{if(!it.page&&!sep&&l.children.length){const s=document.createElement('div');s.className='v195sep';s.setAttribute('role','separator');l.appendChild(s);sep=true}
+  const b=document.createElement('button');b.type='button';b.className='v172i';b.dataset.v195i=String(i);b.disabled=!!it.disabled;b.innerHTML=`<span class="v172ic" aria-hidden="true">${it.icon||''}</span><span class="v172t">${E(it.label)}</span>`;
   b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMore(()=>{try{it.run()}catch(x){console.error('v195',x)}})});l.appendChild(b)});
  document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add('in'));
  if(PH.matches&&!ours()){try{history.pushState({v195m:1},'');pushed=true}catch(e){}}

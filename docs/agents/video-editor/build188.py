@@ -2,7 +2,7 @@ import os,sys
 H=os.path.dirname(os.path.abspath(__file__))
 P=sys.argv[1] if len(sys.argv)>1 else 'ce15.html'
 s=open(P,encoding='utf8').read()
-if 'v188: redesigned' in s: raise SystemExit('already built')
+# runs on any build: the swap replaces the V181..V186 blocks and their styles whatever version is in place
 def swap(a,b,new):
     global s
     i=s.index(a);j=s.index(b,i);assert s.count(a)==1;s=s[:i]+new+s[j:]

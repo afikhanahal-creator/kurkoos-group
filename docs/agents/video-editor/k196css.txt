@@ -1,0 +1,10 @@
+<style id="k196">
+/* V196 · speed */
+.v170cnt.v196wait{color:#5F6B78;font-weight:600}
+/* the page a tap asked for, while it is drawn for the first time */
+.v196sk{display:grid;gap:14px;padding:16px 0}
+.v196sk i{display:block;height:64px;border-radius:14px;background:linear-gradient(90deg,#eef2f5 0%,#f6f8fa 40%,#eef2f5 80%);background-size:200% 100%;animation:v196sh 1.2s linear infinite}
+.v196sk i:first-child{height:28px;width:55%}
+@keyframes v196sh{from{background-position:100% 0}to{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){.v196sk i{animation:none}}
+</style>

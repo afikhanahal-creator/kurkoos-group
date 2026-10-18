@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Who checks the contractor</title>
+<!-- Kurkoos reel B, 30 s: "מי עומד מאחורי הפיקוח". Trust and retargeting: the group behind the supervision.
+  SCENES (voice/b-timings.js line: picture, real asset)
+  0  cover (cover-b.png) for 0.5 s
+  1  the new hook, "המפקח שלכם צריך להבין בנייה. לא רק לבדוק אותה.": real footage of a Kurkoos site (media/f-hook from
+     public/divisions/kurkoos-showcase.mp4) with a red viewfinder over it, "הקבלן בונה" and "המפקח בודק"
+  2  Shlomi Kurkoos, CEO and founder: his known standing portrait (shlomi-standing.jpg), tall, a slow push
+  3  4 divisions: tiles with the section drawing (humash-22-24-sketch), the site (execution-gallery/2.jpg), Shechinta's badge,
+     Afik Hanachal's logo; the roof draws over them; a zoom through the boxes into
+  4  the four arms by name with their logos (Kurkoos, Reita, Shechinta, Afik Hanachal); a red bracket links Reita and Shechinta
+  5  the route from קרקע to מפתח with real stations (the drawing, the cages, the structure, the building from the air), each
+     verified with a red check
+  6  the contract, the pen stops short: "דברו איתנו"
+  7  end card on navy
+-->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  @font-face{font-family:Almoni;font-weight:400;font-display:block;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;font-display:block;src:url(../../fonts/Almoni-700.ttf)}
+  body{background:#f7f8fa;margin:0}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#f7f8fa;direction:rtl;font-family:Almoni}
+  #sheet{position:absolute;inset:0}
+  #grain{position:absolute;inset:0;opacity:.05;pointer-events:none;z-index:50}
+  .abs{position:absolute;left:0;top:0}
+  .sc{position:absolute;inset:0;display:none}
+  .cam{position:absolute;inset:0}
+  .big{position:absolute;left:0;right:0;text-align:center;font-weight:700;color:#07293a;line-height:.95}
+  .lbl{position:absolute;font-weight:700;color:#07293a;white-space:nowrap;line-height:1}
+  .chip{position:absolute;font-weight:700;font-size:48px;line-height:1;padding:16px 30px 20px;border-radius:999px;white-space:nowrap;background:#07293a;color:#f7f8fa}
+  .chip.r{background:#a90b0c}
+  .chip.d{background:#f7f8fa;color:#a90b0c;border:4px dashed #a90b0c}
+  .hdr{position:absolute;right:90px;top:200px;display:flex;align-items:center;gap:26px}
+  .mk{position:relative;width:118px;height:118px;border:6px solid #07293a;border-radius:50%;background:#f7f8fa;flex:none}
+  .mk:after{content:"";position:absolute;left:0;right:0;top:56px;height:6px;background:#07293a}
+  .mk b{position:absolute;left:0;right:0;top:12px;text-align:center;font-size:44px;line-height:1;color:#a90b0c}
+  .mk i{position:absolute;left:0;right:0;top:72px;text-align:center;font-size:28px;line-height:1;color:#105572;font-style:normal;font-weight:700}
+  .hdr .tt span{display:block;font-weight:700;font-size:84px;color:#07293a;line-height:1}
+  .hdr .tt small{display:block;font-size:40px;color:#105572;font-weight:700;margin-bottom:8px;line-height:1}
+  .foot{position:absolute;border-radius:24px;overflow:hidden;box-shadow:0 14px 34px #07293a33}
+  .foot canvas{display:block;filter:saturate(.92) contrast(1.04)}
+  /* paper cards with depth: a soft shadow, paper grain, a slight tilt */
+  .card{position:absolute;border-radius:18px;background:#fff;box-shadow:0 26px 50px #07293a30,0 4px 10px #07293a22;transform-style:preserve-3d;
+    background-image:radial-gradient(#07293a08 1px,transparent 1.2px);background-size:7px 7px}
+  #world{display:block}
+  #cta{position:absolute;left:66px;top:52px;z-index:31;display:none;background:#a90b0c;color:#f7f8fa;font-weight:700;font-size:36px;line-height:1;padding:12px 26px 16px;border-radius:999px;white-space:nowrap}
+  #cta b{direction:ltr;unicode-bidi:isolate;margin-right:12px}
+  #legend{position:absolute;right:70px;top:52px;z-index:31;display:flex;gap:12px}
+  #legend span{font-weight:700;font-size:34px;line-height:1;padding:11px 24px 15px;border-radius:999px;border:4px solid #8fb6c8;color:#8fb6c8;background:#f7f8fa;white-space:nowrap}
+  #legend .b.on{background:#07293a;border-color:#07293a;color:#f7f8fa}
+  #legend .p.on{background:#a90b0c;border-color:#a90b0c;color:#f7f8fa}
+  #wipe{position:absolute;left:0;right:0;height:300px;z-index:40;display:none}
+  #cap{position:absolute;left:70px;right:70px;bottom:150px;display:flex;justify-content:center;z-index:30}
+  #capb{color:#07293a;padding:10px 20px 14px;font-weight:700;font-size:70px;line-height:1.14;text-align:center;max-width:940px;box-sizing:border-box;
+    text-shadow:0 0 6px #f7f8fa,0 0 12px #f7f8fa,0 0 18px #f7f8fa}
+  #capb .w{display:inline-block}
+  #capb .rd{color:#a90b0c}
+  #end{position:absolute;inset:0;background:#07293a;display:none;z-index:35}
+  #cover{position:absolute;left:0;top:0;width:1080px;height:1920px;z-index:38;display:none}
+  svg{overflow:visible}
+  svg text{font-family:Almoni;font-weight:700}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="sheet" width="1080" height="1920"></svg>
+  <div id="legend"><span class="b">בנייה</span><span class="p">פיקוח</span></div>
+  <div class="sc" id="world"></div>
+  <div id="cap"><div id="capb"></div></div>
+  <div id="cta">דברו איתנו<b>055-981-1814</b></div>
+  <div id="end"></div>
+  <img id="cover" src="cover-b.png" alt="">
+  <svg id="wipe" width="1080" height="300"></svg>
+  <canvas id="grain" width="540" height="960"></canvas>
+</div>
+<script src="voice/b-timings.js"></script>
+<script src="../lib/studio.js"></script>
+<script src="reel.js"></script>
+<script>
+const {NAVY, TEAL, MIST, PAPER, RED, LINE, CONC, $, P, E, B, expo, back, quadIn, rise, draw, panelDraw, land, landEl, drop, DL, svg, hdr, tick, ring, lens, pin, pinAnim, photo, kb, footage, frameAt, card, tiltCard} = Reel;
+const {clamp, lerp, smooth} = Studio;
+// a tile: a real image (or a logo on its own colour) under a navy label band
+const tile = (cls, x, y, w, h, img, label, bg, fit) => `<g class="${cls}"><clipPath id="${cls}${x}${y}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="16"/></clipPath>
+  <rect x="${x}" y="${y + 10}" width="${w}" height="${h}" rx="16" fill="${NAVY}" opacity=".16" filter="url(#bl)"/>
+  <g clip-path="url(#${cls}${x}${y})"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${bg || '#fff'}"/>${img}
+   <rect x="${x}" y="${y + h - 74}" width="${w}" height="74" fill="${bg === RED ? '#7d0809' : NAVY}" opacity=".94"/></g>
+  <text x="${x + w / 2}" y="${y + h - 22}" text-anchor="middle" font-size="50" fill="${PAPER}">${label}</text>
+  <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="16" fill="none" stroke="${bg === RED ? RED : NAVY}" stroke-width="5"/></g>`;
+const scenes = [
+// 1 · your inspector has to understand building, not only check it (real footage, a viewfinder on top of it)
+{ html: svg(`<image class="ln" id="b1g" href="kurkoos-logo-h.svg" x="388" y="190" width="304" height="76"/>`) + footage('b1f', 'media/f-hook', 144, 60, 330, 960, 720) + svg(`
+    <g id="b1h">${[[90, 360, 1, 1], [990, 360, -1, 1], [90, 1020, 1, -1], [990, 1020, -1, -1]].map(([x, y, a, b]) => `<path class="b1c" d="M${x} ${y + b * 90} V${y} H${x + a * 90}" fill="none" stroke="${RED}" stroke-width="9" stroke-linecap="round" ${DL}/>`).join('')}
+     <g id="b1x"><circle r="64" fill="none" stroke="${RED}" stroke-width="6"/><path d="M-90 0 H-30 M30 0 H90 M0 -90 V-30 M0 30 V90" stroke="${RED}" stroke-width="5"/></g>
+     <g id="b1s"><path d="M70 0 H1010" stroke="${RED}" stroke-width="4" opacity=".85"/></g></g>`) +
+    `<div class="chip" id="b1a" style="right:110px;top:1110px">הקבלן בונה</div><div class="chip r" id="b1b" style="left:110px;top:1110px">המפקח בודק</div>`,
+  anim(u, len) { $('b1g').style.opacity = E(u, 0, .4); const fp = E(u, 0, .5); $('b1f_w').style.opacity = fp; $('b1f_w').style.transform = `scale(${1.04 - .04 * fp})`; frameAt('b1f', u);
+    document.querySelectorAll('.b1c').forEach((e, i) => draw(e, E(u, .3 + i * .08, .45)));
+    const xp = smooth(P(u, .6, 2.6)); $('b1x').setAttribute('transform', `translate(${lerp(820, 260, xp)} ${690 + 120 * Math.sin(xp * Math.PI * 1.5)})`); $('b1x').style.opacity = E(u, .6, .3);
+    $('b1s').setAttribute('transform', `translate(0 ${lerp(360, 1020, (u * .45) % 1)})`); $('b1s').style.opacity = E(u, .5, .3) * .8;
+    rise($('b1a'), u, 1.2, .45, 24); rise($('b1b'), u, 2.3, .45, 24); } },
+// 2 · a whole group, led by Shlomi Kurkoos, CEO and founder (his known portrait, tall)
+{ html: svg(`<defs><linearGradient id="b2g" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="${NAVY}" stop-opacity="0"/><stop offset="1" stop-color="${NAVY}" stop-opacity=".92"/></linearGradient>
+     <clipPath id="b2c"><rect x="107" y="150" width="866" height="1300" rx="18"/></clipPath></defs>
+    <g class="ln" id="b2f"><g clip-path="url(#b2c)" id="b2p"><image id="b2i" href="shlomi-standing.jpg" x="107" y="150" width="866" height="1300"/><rect x="107" y="150" width="866" height="1300" fill="url(#b2g)"/></g>
+     <path id="b2o" d="M125 150 H955 Q973 150 973 168 V1432 Q973 1450 955 1450 H125 Q107 1450 107 1432 V168 Q107 150 125 150 Z" fill="none" stroke="${NAVY}" stroke-width="8" ${DL}/>
+     <text id="b2a" x="540" y="1118" text-anchor="middle" font-size="50" fill="${MIST}">קבוצה שלמה, בראשות</text>
+     <text id="b2n" x="540" y="1270" text-anchor="middle" font-size="128" fill="${PAPER}">שלומי קורקוס</text>
+     <g id="b2r"><rect x="355" y="1318" width="370" height="96" rx="48" fill="${RED}"/><text x="540" y="1386" text-anchor="middle" font-size="60" fill="${PAPER}">מנכ"ל ומייסד</text></g></g>`),
+  anim(u, len) { const f = E(u, 0, .5); $('b2p').style.opacity = f; const z = 1.1 - .1 * f + .06 * smooth(u / 5.5);
+    $('b2i').setAttribute('transform', `translate(540 800) scale(${z}) translate(-540 -800)`); draw($('b2o'), E(u, .1, 1.1));
+    rise($('b2a'), u, .6, .5, 20); rise($('b2n'), u, 1.5, .6, 30); land($('b2r'), B(u, 2.3, .45)); } },
+// 3 · four divisions under one roof (real tiles: the drawing, the site, Shechinta's badge, Afik Hanachal's logo)
+{ html: `<div class="big" id="b3t" style="top:240px;font-size:150px"><span style="color:${RED}">4</span> חטיבות</div>` + svg(`
+    <path class="ln" id="b3r" d="M130 720 L540 450 L950 720" fill="none" stroke="${NAVY}" stroke-width="18" stroke-linejoin="round" stroke-linecap="round" ${DL}/>
+    ${tile('b3b', 560, 760, 360, 250, `<image href="media/t-plan.jpg" x="560" y="760" width="360" height="250" preserveAspectRatio="xMidYMid slice"/>`, 'יזמות')}
+    ${tile('b3b', 160, 760, 360, 250, `<image href="media/t-build.jpg" x="160" y="760" width="360" height="250" preserveAspectRatio="xMidYMid slice"/>`, 'ביצוע', NAVY)}
+    ${tile('b3b', 560, 1050, 360, 250, `<image href="shchinta.png" x="672" y="1060" width="136" height="140"/>`, 'פיקוח', RED)}
+    ${tile('b3b', 160, 1050, 360, 250, `<image href="media/afik.png" x="270" y="1062" width="140" height="138" preserveAspectRatio="xMidYMid meet"/>`, 'תיווך', '#000')}`) +
+    `<div class="big" id="b3u" style="top:1360px;font-size:64px;color:${TEAL}">תחת קורת גג אחת</div>`,
+  anim(u, len, $$) { rise($('b3t'), u, 0, .5, 40); $$('.b3b').forEach((g, i) => { const p = P(u, .1 + i * .12, .5); g.style.opacity = clamp(p * 4); g.style.transform = `translateY(${(1 - back(p)) * 160}px)`; });
+    draw($('b3r'), E(u, .65, .55)); rise($('b3u'), u, .85, .45, 20); } },
+// 4 · the four arms by name, with their logos; Reita builds and Shechinta supervises (linked)
+{ html: svg([['קורקוס יזמות', 'יזמות נדל"ן', 'kurkoos-logo.svg', '#fff'], ['ראיתה', 'ביצוע ובנייה', 'raita.png', NAVY], ['שכינתא', 'ניהול ופיקוח', 'shchinta.png', RED], ['אפיק הנחל', 'תיווך ושיווק', 'media/afik.png', '#fff']].map(([n, r, lg, bg], i) => {
+      const y = 260 + i * 270, dark = bg !== '#fff', lw = lg.includes('kurkoos') ? 196 : lg.includes('raita') ? 250 : 185;
+      return `<g class="b4r"><rect x="160" y="${y + 10}" width="820" height="230" rx="22" fill="${NAVY}" opacity=".14" filter="url(#bl)"/><rect x="160" y="${y}" width="820" height="230" rx="22" fill="${bg}" stroke="${bg === RED ? RED : NAVY}" stroke-width="6"/>
+       <rect x="214" y="${y + 18}" width="212" height="194" rx="16" fill="${lg.includes('afik') ? '#000' : '#fff'}"/>
+       <g class="ln"><image href="${lg}" x="${320 - lw / 2 + (lg.includes('raita') ? 0 : 0)}" y="${y + 24}" width="${lg.includes('raita') ? 196 : lw * .92}" height="${182}" preserveAspectRatio="xMidYMid meet"/></g>
+       <text x="930" y="${y + 112}" font-size="84" fill="${dark ? PAPER : NAVY}">${n}</text><text x="930" y="${y + 182}" font-size="46" fill="${bg === RED ? '#ffd6d2' : dark ? MIST : TEAL}">${r}</text></g>`; }).join('') +
+    `<g class="ln"><path id="b4k" d="M156 645 H112 V915 H156" fill="none" stroke="${RED}" stroke-width="8" stroke-linejoin="round" ${DL}/><circle id="b4n" cx="112" cy="780" r="20" fill="${RED}"/>${tick(112, 782, .55, PAPER, 'b4t')}</g>`),
+  anim(u, len, $$) { const at = [0, .95, 1.8, 2.75]; $$('.b4r').forEach((g, i) => { const p = E(u, at[i], .55); g.style.opacity = clamp(p * 2); g.style.transform = `translateX(${(1 - p) * 110}px)`; });
+    draw($('b4k'), E(u, 2.2, .5)); land($('b4n'), B(u, 2.6, .4)); draw(document.querySelector('.b4t'), E(u, 2.75, .25)); } },
+// 5 · complex projects, from land to key: real stations along the route, each verified with a red check
+{ html: `<div class="big" id="b5t" style="top:230px;font-size:110px;line-height:1.05">פרויקטים<br><span style="color:${RED}">מורכבים</span></div>` + svg(`
+    <path class="ln" id="b5q" d="M900 1240 C900 760 650 710 650 990 S 420 1220 420 960 S 180 760 180 1240" fill="none" stroke="${LINE}" stroke-width="16" stroke-linecap="round"/>
+    <path class="ln" id="b5p" d="M900 1240 C900 760 650 710 650 990 S 420 1220 420 960 S 180 760 180 1240" fill="none" stroke="${NAVY}" stroke-width="16" stroke-linecap="round" ${DL}/>
+    <g id="b5n"></g>`) +
+    `<div class="lbl" style="left:800px;width:200px;text-align:center;top:1290px;font-size:62px">קרקע</div>
+     <div class="lbl" id="b5e" style="left:80px;width:200px;text-align:center;top:1290px;font-size:62px;color:${RED}">מפתח</div>`,
+  anim(u, len, $$) { rise($('b5t'), u, 0, .5, 20); const p = E(u, .2, 2.4); draw($('b5p'), p);
+    window.R5.forEach((r, i) => { const at = .2 + 2.4 * r.f * .62; land($$('.b5d')[i], B(u, at, .35)); land($$('.b5i')[i], B(u, at + .08, .45)); land($$('.b5c')[i], B(u, at + .4, .35)); draw($$('.b5k')[i], E(u, at + .5, .25)); });
+    $('b5e').style.opacity = .35 + .65 * E(u, 2.2, .3); } },
+// 6 · talk to us, before you sign with the contractor
+{ html: `<div class="big" id="b6t" style="top:220px;font-size:132px">בונים בית?</div>` + card('b6d', 250, 420, 600, 720, `
+      <text x="300" y="96" text-anchor="middle" font-size="58" fill="${NAVY}">חוזה עם קבלן</text>
+      ${[0, 1, 2, 3, 4].map(i => `<rect class="b6r" x="${60 + (i % 2) * 60}" y="${150 + i * 64}" width="${480 - (i % 2) * 60}" height="20" rx="10" fill="${LINE}"/>`).join('')}
+      <path d="M70 620 H530" stroke="${NAVY}" stroke-width="4" stroke-dasharray="14 10"/><text x="530" y="598" font-size="36" fill="${TEAL}">חתימה</text>`, 1) + svg(`
+    <g id="b6pen" class="ln"><path d="M0 0 L36 -36 L250 -250 L214 -286 L0 -72 Z" fill="${NAVY}"/><path d="M0 0 L0 -72 L-24 24 Z" fill="${RED}"/></g>`) +
+    `<div class="big" id="b6c" style="top:1240px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:84px;padding:18px 54px 26px;border-radius:999px">דברו איתנו</span></div>`,
+  anim(u) { rise($('b6t'), u, 0, .5, 40); tiltCard($('b6d'), E(u, .05, .6), -7, 4, 2);
+    document.querySelectorAll('.b6r').forEach((e, i) => { const p = E(u, .25 + i * .07, .4); e.style.opacity = clamp(p * 2); e.style.transform = `translateX(${(1 - p) * 30}px)`; });
+    const pe = E(u, .3, .85), bk = quadIn(P(u, 1.35, .3)); $('b6pen').setAttribute('transform', `translate(${lerp(-200, 300, pe) - 60 * bk} ${lerp(1320, 1050, pe) + 40 * bk})`);
+    landEl($('b6c'), B(u, 1.0, .45)); } },
+// 7 · end card
+{ html: '', anim() {} },
+];
+Reel.run({ scenes, tail: 1.3, ctaFrom: 2, zoom: {3: [540, 1030]}, sides: ['bp', '', 'bp', 'bp', 'bp', 'p'], endLine: 'קבוצת קורקוס, פיקוח בנייה מטעמכם',
+  build() { const p = $('b5p'), len = p.getTotalLength(), TH = ['media/r1.jpg', 'media/r2.jpg', 'media/r3.jpg', 'media/r4.jpg'];
+    window.R5 = [.2, .42, .62, .82].map(f => { const q = p.getPointAtLength(f * len); return {f, x: q.x, y: q.y}; });
+    $('b5n').innerHTML = window.R5.map((q, i) => `<g class="ln"><circle class="b5d" cx="${q.x}" cy="${q.y}" r="22" fill="${PAPER}" stroke="${NAVY}" stroke-width="8"/>
+      <g class="b5i"><clipPath id="b5c${i}"><rect x="${q.x - 70}" y="${q.y - 210}" width="140" height="140" rx="14"/></clipPath><rect x="${q.x - 70}" y="${q.y - 202}" width="140" height="140" rx="14" fill="${NAVY}" opacity=".2" filter="url(#bl)"/>
+       <image href="${TH[i]}" x="${q.x - 70}" y="${q.y - 210}" width="140" height="140" clip-path="url(#b5c${i})"/><rect x="${q.x - 70}" y="${q.y - 210}" width="140" height="140" rx="14" fill="none" stroke="#fff" stroke-width="5"/>
+       <path d="M${q.x} ${q.y - 70} V${q.y - 24}" stroke="${NAVY}" stroke-width="5"/></g>
+      <circle class="b5c" cx="${q.x + 62}" cy="${q.y - 202}" r="24" fill="${RED}"/>${tick(q.x + 62, q.y - 201, .62, PAPER, 'b5k')}</g>`).join(''); } });
+</script>
+</body>
+</html>

@@ -26,24 +26,50 @@ const view=()=>{try{return APP.view||''}catch(e){return ''}};
 // for every post. It resets when the library wide fatigue index is rebuilt (as before) and also whenever data arrives
 // from the cloud or a font finishes loading, because the score reads photo details, template specs and text widths.
 // The approvals and the schedule are not read by the score (the schedule size is already part of the reset key), so their loads keep the cache.
-let dv=0;const bump=()=>{dv++};const KEEP=new Set(['workflow','schedule']);
+// V196: neither are the competitor and Meta collections, the videos, the batches, the performance numbers, the status of
+// posts, the inbox, the agent's notes and runs, the drafts list (a draft that becomes a post changes the post count, which
+// is part of the reset key) and three settings (slots, fonts and saved templates); a full rescore of the library costs
+// about two seconds on a phone, and those arrive and refresh while the person works. A collection that arrives again
+// exactly as it was (the photos come once from a read and again from the live listener) keeps the cache too. Template
+// specs that the agent adds change the size of the template list, which is now part of the reset key.
+let dv=0;const bump=()=>{dv++};
+const KEEP=new Set(['workflow','schedule','comp_shots','comp_posts','meta_ads','meta_scans','meta_favorites','competitors','videos','batches','perf','status','inbox','insights','agent_runs','drafts','tpl_specs','settings/slots','settings/fonts','settings/templates']);
+const kept=k=>KEEP.has(k)||KEEP.has(String(k).split('/')[0]);
+// the last text of each collection or document that was read, for the small ones (the posts are always a change)
+const FP=new Map();
+function fpOf(r){try{if(r&&Array.isArray(r.docs)){if(r.docs.length>3000)return null;return r.docs.length+'|'+JSON.stringify(r.docs.map(d=>[d.id,d.data()]))}
+ if(r&&typeof r.data==='function')return '1|'+JSON.stringify([r.id,r.exists,r.data()])}catch(e){}return null}
+function bumpIf(key,r){const f=key==='posts'?null:fpOf(r);if(f!=null&&FP.get(key)===f)return;if(f!=null)FP.set(key,f);bump()}
 function patchDb(db){if(!db||db.__v195)return db;db.__v195=1;
- const wrapRef=(o,col)=>{if(!o||o.__v195||KEEP.has(col))return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
-  if(typeof g==='function')o.get=async function(){const r=await g.apply(this,arguments);bump();return r};
-  if(typeof s==='function')o.onSnapshot=function(cb,er){return s.call(this,function(){bump();return cb.apply(this,arguments)},er)};return o};
+ const wrapRef=(o,key)=>{if(!o||o.__v195||kept(key))return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
+  if(typeof g==='function')o.get=async function(){const r=await g.apply(this,arguments);bumpIf(key,r);return r};
+  if(typeof s==='function')o.onSnapshot=function(cb,er){return s.call(this,function(r){bumpIf(key,r);return cb.apply(this,arguments)},er)};return o};
  const c0=db.collection,d0=db.doc;
- if(typeof c0==='function')db.collection=function(col){const o=wrapRef(c0.apply(this,arguments),col);if(o&&typeof o.doc==='function'&&!o.__v195d&&!KEEP.has(col)){o.__v195d=1;const od=o.doc;o.doc=function(){return wrapRef(od.apply(this,arguments),col)}}return o};
- if(typeof d0==='function')db.doc=function(path){return wrapRef(d0.apply(this,arguments),String(path||'').split('/')[0])};return db}
+ if(typeof c0==='function')db.collection=function(col){const o=wrapRef(c0.apply(this,arguments),col);if(o&&typeof o.doc==='function'&&!o.__v195d&&!KEEP.has(col)){o.__v195d=1;const od=o.doc;o.doc=function(id){return wrapRef(od.apply(this,arguments),col+'/'+id)}}return o};
+ if(typeof d0==='function')db.doc=function(path){return wrapRef(d0.apply(this,arguments),String(path||''))};return db}
 try{const cl=window.claude;if(cl&&typeof cl.use==='function'){const u0=cl.use;cl.use=async function(n){const r=await u0.apply(this,arguments);if(n==='db')try{patchDb(r)}catch(e){}return r};
  cl.use('db').catch(()=>null)}}catch(e){}
 try{document.fonts&&document.fonts.addEventListener('loadingdone',bump)}catch(e){}
 (function(){if(typeof pxQuality!=='function')return;const C=new Map();let fc=null,fdv=-1;
+ // V196: every render asks for the score of every post several times; building the string key each time cost more than the
+ // score itself once it is cached. A per post entry remembers the exact fields of the key, so a repeat call with nothing
+ // changed returns at once; any change in those fields, or a cache reset, goes through the key as before.
+ let gen=0,miss=0;const W=new WeakMap();const sj=x=>x?JSON.stringify(x):'';
  const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};
  const f0=pxQuality;const inner=window.__pxqClear;
- pxQuality=function(p){try{const ep=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);if(ep!==fc||dv!==fdv){C.clear();if(dv!==fdv)try{inner&&inner()}catch(e){}fc=ep;fdv=dv}const v=p.visual||{},x=p.fx||{};
+ pxQuality=function(p){try{const e0=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);const ep=typeof e0==='string'?e0+'|'+((window.TPL&&TPL.specs&&TPL.specs.length)||0):e0;if(ep!==fc||dv!==fdv){C.clear();gen++;if(dv!==fdv)try{inner&&inner()}catch(e){}fc=ep;fdv=dv}const v=p.visual||{},x=p.fx||{};
+   const w=p&&typeof p==='object'?W.get(p):null;
+   if(w&&w.g===gen&&w.id===p.id&&w.l===p.layout&&w.u===p.upd&&w.hd===v.headline&&w.sb===v.sub&&w.fb===p.fb&&w.ig===p.ig&&w.n===x.num&&w.a===!!p.article&&w.hk===p.hook&&w.f===p.format&&w.s===sj(x.shot)&&C.get(w.k)===w.r)return w.r;
    const k=(p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'');
-   let r=C.get(k);if(!r){r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}return r}catch(e){return f0.apply(this,arguments)}};
- window.__pxqClear=()=>{C.clear();try{inner&&inner()}catch(e){}}})();
+   let r=C.get(k);if(!r){miss++;r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}
+   if(p&&typeof p==='object')W.set(p,{g:gen,k,r,id:p.id,l:p.layout,u:p.upd,hd:v.headline,sb:v.sub,fb:p.fb,ig:p.ig,n:x.num,a:!!p.article,hk:p.hook,f:p.format,s:sj(x.shot)});return r}catch(e){return f0.apply(this,arguments)}};
+ window.__pxqClear=()=>{C.clear();gen++;try{inner&&inner()}catch(e){}};
+ // V196: the scores of the whole library are taken in short slices while the skeleton cards show, so the page keeps
+ // answering instead of freezing for seconds; the first render after the posts arrive then finds every score ready
+ window.__v195gen=()=>gen;window.__v195miss=()=>miss;
+ window.__v196prescore=function(){return new Promise(done=>{let tries=0;const run=()=>{const g0=gen;const list=AG.posts.slice();let i=0;
+   const step=()=>{const t0=performance.now();while(i<list.length&&performance.now()-t0<40){try{pxQuality(list[i])}catch(e){}i++}
+    if(i<list.length)setTimeout(step,0);else if(gen!==g0&&++tries<2)run();else done()};step()};try{run()}catch(e){done()}})}})();
 
 // 1b · the cloud posts (V31) with an index: the same rules, without scanning the whole library once per post.
 // V37 wrapped the load to drop deleted posts (tombstones) afterwards; that step is kept here.
@@ -59,21 +85,30 @@ if(typeof v31Load==='function'&&typeof SYNC!=='undefined'&&typeof v31Id==='funct
  function match(q){if(dirty)build();const a=q.key?((K.get(q.key)||[])[0]):null;const b=(I.get(q.id)||[])[0];
   if(a&&b&&a!==b)return AG.posts.indexOf(a)<AG.posts.indexOf(b)?a:b;return a||b||null}
  async function core(){const db=APP.db;if(!db)return 0;let snap;try{snap=await db.collection('posts').get()}catch(e){console.warn('posts load',e);return 0}
-  let changed=0;const killed=new Set(lsGet('v28_kill',[])||[]);dirty=true;
+  let changed=0;const killed=new Set(lsGet('v28_kill',[])||[]);dirty=true;const pend=[];
   snap.docs.forEach(d=>{const v=d.data();if(!v)return;const id=d.id;
    if(v.removed||!v.p){if(dirty)build();const o=(S.get(id)||[])[0];if(o){const i=AG.posts.indexOf(o);if(i>=0){AG.posts.splice(i,1);changed++;if(o.key)del(K,o.key,o);del(I,o.id,o);del(S,id,o)}}SYNC.h[id]='x';return}
    const q=v.p;if(!q||!q.visual||!q.hook)return;if(q.key&&killed.has(q.key))return;
    const loc=match(q);
-   if(!loc){AG.posts.unshift(q);if(!dirty){if(q.key)add(K,q.key,q,1);add(I,q.id,q,1);add(S,v31Id(q),q,1)}SYNC.h[id]=v31Hash(JSON.stringify(v31Strip(q)));changed++;return}
+   if(!loc){AG.posts.unshift(q);if(!dirty){if(q.key)add(K,q.key,q,1);add(I,q.id,q,1);add(S,v31Id(q),q,1)}pend.push([id,JSON.stringify(v31Strip(q))]);SYNC.h[id]='~';changed++;return}
    const lh=v31Hash(JSON.stringify(v31Strip(loc)));const rh=v31Hash(JSON.stringify(v31Strip(q)));
    if(lh===rh){SYNC.h[id]=lh;return}
    const locEdited=SYNC.h[id]&&SYNC.h[id]!==lh;
    if(!locEdited||(v.upd||'')>(loc.upd||'')){const k0=loc.key,s0=v31Id(loc);const keep=loc.id;Object.keys(loc).forEach(k=>{if(k!=='id')delete loc[k]});Object.assign(loc,q);loc.id=keep;
     if(loc.key!==k0||v31Id(loc)!==s0)dirty=true;SYNC.h[id]=v31Hash(JSON.stringify(v31Strip(loc)));changed++}});
-  lsSet('ps_h',SYNC.h);SYNC.ready=true;if(changed){saveAgent();try{TC.clear()}catch(e){}}return changed}
+  // V196: the sync fingerprint of a post that came from the cloud is the hash of the post as it arrived (its text is taken
+  // here, the hashing itself runs after the first paint, a few posts at a time). The sync to the cloud waits until every
+  // fingerprint is in, then runs as before, so an edit made meanwhile still counts as an edit.
+  // A post deleted meanwhile keeps its deleted mark ('~' stands for a fingerprint still on the way).
+  const done=()=>{lsSet('ps_h',SYNC.h);SYNC.ready=true};
+  if(pend.length){SYNC.ready=false;let i=0;const step=dl=>{const t0=performance.now();while(i<pend.length&&(dl&&dl.timeRemaining?dl.timeRemaining()>3:performance.now()-t0<10)){const e=pend[i++];if(SYNC.h[e[0]]==='~')SYNC.h[e[0]]=v31Hash(e[1]);e[1]=null}
+    if(i<pend.length){window.requestIdleCallback?requestIdleCallback(step,{timeout:1500}):setTimeout(step,30)}else{done();try{v31SyncSoon()}catch(e){}}};
+   setTimeout(()=>step(null),600)}else done();
+  if(changed){saveAgent();try{TC.clear()}catch(e){}}return changed}
  v31Load=async function(){const r=await core();purge();
   // the first posts paint now; the approvals (workflow) keep loading behind them and V31 renders again when they are in
-  if(r)setTimeout(()=>{try{render()}catch(e){}},0);
+  // (V196: after the scores are taken in slices; the approvals start loading meanwhile)
+  if(r){const go=()=>setTimeout(()=>{try{render()}catch(e){}},0);try{window.__v196prescore?window.__v196prescore().then(go,go):go()}catch(e){go()}}
   return r};
 }
 

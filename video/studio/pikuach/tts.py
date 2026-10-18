@@ -9,8 +9,8 @@ from lines import LINES
 BREAK_FIX = {13: 54.455}
 # line -> (file, spelling): a separate take of one line in the same voice, used instead of its cut from full.wav.
 # Line 11: in the continuous read "ראיתה" came out as "RA-it"; this take, spelled רָאִיטָה, transcribes back as "ra-ee-TA".
-# lines left out of the reel to keep it about 45 s (still read in full.wav, so the alignment keeps every line)
-SKIP = {6}
+# lines left out of the reel (still read in full.wav, so the alignment keeps every line); none since the reel went back to about 53 s
+SKIP = set()
 TAKES = {11: ('voice/take11.wav', 'קורקוס יזמות, רָאִיטָה לְבִיצּוּעַ, שְׁכִינְתָּא לְפִיקּוּחַ, ואפיק הנחל לתיווך.')}
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
 FIX = [('מקרקע', 'מִקַּרְקַע'), ('שכינתא', 'שְׁכִינְתָּא'), ('ראיתה', 'רָאִיתָה'), ('מנכ"ל', 'מַנְכָּ"ל'), ('שנשכח', 'שֶׁנִּשְׁכַּח'),
@@ -77,9 +77,10 @@ def main():
     ends = [gaps[j][0] for j in ch] + [T]
     tm = [{'i': i + 1, 'a': round(a, 3), 'b': round(b, 3)} for i, (a, b) in enumerate(zip(starts, ends))]
     for x, (s, c) in zip(tm, LINES): print(x['i'], x['a'], x['b'], round(x['b'] - x['a'], 2), s[:40])
+    json.dump(tm, open(os.path.join(OUT, 'align.json'), 'w'))   # where every line sits in full.wav (voice30.py cuts the 30 s reels from it)
     # the reel's voice track: every line whole, the pauses between lines cut to GAP, the voice TEMPO faster (pitch kept)
     COVER = 0.5   # the cover frame opens the reel; the voice starts right after it (index.html and music.py read it from timings.js)
-    LEAD, GAP, TEMPO = COVER + 0.12, 0.18, 1.27
+    LEAD, GAP, TEMPO = COVER + 0.15, 0.25, 1.14
     parts, t, out = [], LEAD, []
     for x in tm:
         if x['i'] in SKIP: continue

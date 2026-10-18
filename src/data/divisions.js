@@ -103,6 +103,8 @@ export const divisions = [
       { to: '/constructions/livchor-chevrat-bniya-bayit-prati', label: 'איך בוחרים חברת בנייה לבית פרטי' },
       { to: '/constructions/kama-ole-livnot-bayit-prati', label: 'כמה עולה לבנות בית פרטי' },
       { to: '/constructions/shlavei-bniyat-bayit-prati', label: 'שלבי בניית בית פרטי' },
+      { to: '/constructions/bniyat-vila-mah-kolel', label: 'בניית וילה: מה זה כולל' },
+      { to: '/constructions/heter-bniya-bayit-prati', label: 'היתר בנייה לבית פרטי' },
       { to: '/divisions/supervision', label: 'פיקוח בנייה עם שכינתא' },
       { to: '/shelot-ve-tshuvot', label: 'שאלות ותשובות על בנייה ופיקוח' },
     ],
@@ -135,6 +137,13 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'איזו חברה בונה וילה פרטית מהיסודות ועד המסירה?', en: 'Which company builds a private villa from foundations to handover?' },
+        a: {
+          he: 'ראיתה, חברת הבנייה של קבוצת קורקוס, בונה וילות ובתים פרטיים כקבלן מפתח, גם על המגרש של הלקוח: עבודות עפר ויסודות, שלד, מעטפת ואיטום, מערכות, גמר ופיתוח החצר. הקבוצה מקימה בעצמה וילות בהוד השרון, בשלושה מפלסים וכ-300 מ"ר בנוי, ולכל בנייה אפשר לצרף פיקוח נפרד של שכינתא מטעם בעל הבית.',
+          en: 'Raita, the construction company of Kurkoos Group, builds villas and private houses as a turnkey contractor, including on the client\u2019s own plot. Supervision by Shechinta can be added on the owner\u2019s behalf.',
+        },
+      },
       {
         q: { he: 'האם קורקוס גרופ היא קבלן מבצע?', en: 'Is Kurkoos Group a general contractor?' },
         a: {
@@ -210,6 +219,7 @@ export const divisions = [
       { to: '/madrich-yazamim/bdikat-hetkenut-karka', label: 'בדיקת היתכנות לפני רכישת קרקע' },
       { to: '/madrich-yazamim/zchuyot-bniya-ma-baamt-kniten', label: 'זכויות בנייה: מה באמת קניתם' },
       { to: '/yazamut-nadlan/sikunim-beyazamut-nadlan', label: 'סיכונים ביזמות נדל"ן' },
+      { to: '/real-estate-guide/yesh-li-migrash', label: 'יש לכם מגרש? לבנות, למכור או לעבוד עם יזם' },
       { to: '/livy-yazamim', label: 'ליווי אישי ליזמים בתחילת הדרך' },
     ],
     icon: 'building',
@@ -240,6 +250,13 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'יש לי מגרש, או שאני מחפש מגרש. אפשר לקבל אצלכם גם את הקרקע וגם את הבנייה?', en: 'Can you help with both the land and the building?' },
+        a: {
+          he: 'כן, בזרועות שונות של אותה קבוצה. קורקוס יזמות עובדת עם בעלי קרקע ומגרשים בשרון שמחפשים יזם, אפיק הנחל, זרוע התיווך, עוסקת במגרשים וקרקעות ומלווה רוכשים, וראיתה בונה בתים פרטיים ווילות על המגרש של הלקוח. כך אפשר לעבור מהקרקע לבנייה בלי להחליף כתובת, מקרקע ועד מסירת מפתח.',
+          en: 'Yes, through different arms of the same group: Kurkoos Initiation works with landowners looking for a developer, Afik HaNahal deals in plots and land, and Raita builds private houses on the client\u2019s plot.',
+        },
+      },
       {
             "q": {
                   "he": "מה עושה חברת יזמות נדל״ן?",
@@ -298,6 +315,8 @@ export const divisions = [
       { to: '/construction-supervision/protokol-mesira-bayit-prati', label: 'פרוטוקול מסירה לבית פרטי' },
       { to: '/construction-supervision/mechir-pikuach-bniya', label: 'כמה עולה פיקוח בנייה' },
       { to: '/construction-supervision/eich-livchor-mefakeach-bniya', label: 'איך בוחרים מפקח בנייה' },
+      { to: '/construction-supervision/bdikat-cheshbonot-kablan', label: 'בדיקת חשבונות קבלן לפני תשלום' },
+      { to: '/construction-supervision/nihul-proyekt-bniyat-bayit', label: 'ניהול פרויקט בניית בית פרטי' },
       { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },
       { to: '/divisions/execution', label: 'ביצוע ובנייה עם ראיתה' },
       { to: '/shelot-ve-tshuvot', label: 'שאלות ותשובות על פיקוח ובדיקות' },
@@ -330,6 +349,13 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'מי מבצע פיקוח הנדסי וניהול תקציב על בניית בית פרטי?', en: 'Who provides engineering supervision and budget control for a private house build?' },
+        a: {
+          he: 'שכינתא, זרוע הניהול והפיקוח של קבוצת קורקוס, מפקחת על בניית בתים פרטיים ווילות מטעם בעל הבית. הפיקוח כולל בדיקות בשלבים שאחר כך מתכסים, כמו ברזל לפני יציקה ואיטום לפני כיסוי, בדיקה של כל חשבון קבלן מול מה שבוצע לפני שהוא משולם, ומעקב שוטף אחרי התקציב ולוח הזמנים עד פרוטוקול המסירה. שכינתא עובדת גם כשקבלן אחר בונה, בהוד השרון ובערי השרון והמרכז.',
+          en: 'Shechinta, the management and supervision arm of Kurkoos Group, supervises private houses and villas on the owner\u2019s behalf: critical-stage inspections, checking every contractor bill before payment, and budget and schedule control through handover, also when another contractor builds.',
+        },
+      },
       {
         q: { he: 'האם קורקוס גרופ מבצעת ניהול ופיקוח על פרויקטים?', en: 'Does Kurkoos Group provide project management and supervision?' },
         a: {
@@ -404,6 +430,8 @@ export const divisions = [
       { to: '/real-estate-guide/timchur-dira-lemchira-hamechir-harishon', label: 'תמחור דירה למכירה' },
       { to: '/real-estate-guide/bdikot-lifney-rechishat-dira', label: 'הבדיקות לפני רכישת דירה' },
       { to: '/real-estate-guide/mas-rechisha-madregot', label: 'מס רכישה: המדרגות והפטורים' },
+      { to: '/real-estate-guide/bdikot-lifnei-kniyat-migrash', label: 'מה בודקים לפני שקונים מגרש לבית' },
+      { to: '/real-estate-guide/yesh-li-migrash', label: 'יש לכם מגרש? לבנות, למכור או לעבוד עם יזם' },
       { to: '/villas-sharon', label: 'הפרויקטים בשיווק בהוד השרון' },
     ],
     icon: 'brokerage',
@@ -434,6 +462,13 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'אתם עוזרים גם לקנות מגרש לבניית בית פרטי?', en: 'Do you help buy a plot for building a private house?' },
+        a: {
+          he: 'אפיק הנחל, משרד התיווך של קבוצת קורקוס בהוד השרון, עוסקת גם במגרשים וקרקעות ומלווה רוכשים לאורך העסקה. היתרון הוא שהקבוצה גם בונה: אחרי הרכישה ראיתה יכולה לבנות את הבית על המגרש ושכינתא לפקח על הבנייה. לפני שחותמים על מגרש בודקים טאבו, תוכנית ודוח קרקע, עם עורך דין ואדריכל.',
+          en: 'Afik HaNahal, the group\u2019s brokerage office in Hod HaSharon, also deals in plots and land and accompanies buyers. After the purchase, Raita can build the house and Shechinta can supervise.',
+        },
+      },
       {
             "q": {
                   "he": "מה ההבדל בין תיווך נדל״ן לשיווק פרויקטים?",

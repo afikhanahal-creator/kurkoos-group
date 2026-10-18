@@ -6,10 +6,13 @@ Leaves the mid range free for the voice.
 import json, os, re, wave
 import numpy as np
 H = os.path.dirname(os.path.abspath(__file__))
-VT = json.loads(re.search(r'window\.VT=(.*);', open(os.path.join(H, 'voice/timings.js'), encoding='utf8').read()).group(1))
+import sys
+# python3 music.py [timings.js] [out.wav] [tail seconds]   (defaults: the 54 s reel)
+TJ, OUT, TAIL = (sys.argv[1:] + [None, None, None])[:3]
+VT = json.loads(re.search(r'window\.VT=(.*);', open(os.path.join(H, TJ or 'voice/timings.js'), encoding='utf8').read()).group(1))
 COVER = VT.get('cover', 0)
 CUT = [COVER] + [max(0, x['a'] - .18) for x in VT['lines'][1:]]
-END = CUT[-1]; DUR = round(VT['voice'] + 1.1, 2)
+END = CUT[-1]; DUR = round(VT['voice'] + (float(TAIL) if TAIL else 1.1), 2)
 SR, BPM = 48000, 118; B = 60 / BPM; n = int(SR * DUR)
 L, R = np.zeros(n), np.zeros(n); rng = np.random.default_rng(71)
 T = lambda d: np.arange(int(SR * d)) / SR
@@ -48,6 +51,6 @@ for i, c in enumerate(CUT[:-1]):
 add(bell(74, 3.0), END + .05, .3); add(bell(81, 2.6), END + .3, .22, .3)
 mix = np.stack([L, R], 1); mix *= np.minimum(1, (DUR - np.arange(n) / SR) / 1.0)[:, None]
 mix /= max(1e-9, np.abs(mix).max()) / .8
-with wave.open(os.path.join(H, 'music.wav'), 'wb') as w:
+with wave.open(os.path.join(H, OUT or 'music.wav'), 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes((mix * 32767).astype('<i2').tobytes())
-print('music.wav', DUR, 's')
+print(OUT or 'music.wav', DUR, 's')

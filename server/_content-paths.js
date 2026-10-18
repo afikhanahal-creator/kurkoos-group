@@ -1,6 +1,10 @@
 /* קובץ שנוצר אוטומטית ע"י scripts/generate-sitemap-paths.mjs — אל תערכו ידנית */
 export default [
   {
+    "path": "/construction-supervision/bdikat-cheshbonot-kablan",
+    "lastmod": "2026-10-18"
+  },
+  {
     "path": "/construction-supervision/construction-supervision-bdek-dira-lifney-mesira",
     "lastmod": "2026-09-20"
   },
@@ -45,6 +49,10 @@ export default [
     "lastmod": "2026-06-07"
   },
   {
+    "path": "/construction-supervision/nihul-proyekt-bniyat-bayit",
+    "lastmod": "2026-10-18"
+  },
+  {
     "path": "/construction-supervision/pikuach-yetzikat-beton",
     "lastmod": "2026-06-21"
   },
@@ -65,12 +73,36 @@ export default [
     "lastmod": "2026-10-04"
   },
   {
+    "path": "/constructions/bayit-du-mishpachti",
+    "lastmod": "2026-10-18"
+  },
+  {
     "path": "/constructions/betihut-atar-bniya",
     "lastmod": "2026-06-07"
   },
   {
+    "path": "/constructions/bniya-yeruka-bayit-prati",
+    "lastmod": "2026-10-18"
+  },
+  {
+    "path": "/constructions/bniyat-vila-mah-kolel",
+    "lastmod": "2026-10-18"
+  },
+  {
     "path": "/constructions/concrete-cube-test-failure-beyetzika",
     "lastmod": "2026-09-20"
+  },
+  {
+    "path": "/constructions/doch-karka-bayit-prati",
+    "lastmod": "2026-10-18"
+  },
+  {
+    "path": "/constructions/harisa-uvniya-mechadash",
+    "lastmod": "2026-10-18"
+  },
+  {
+    "path": "/constructions/heter-bniya-bayit-prati",
+    "lastmod": "2026-10-18"
   },
   {
     "path": "/constructions/hibur-hashmal-mayim-lifney-ikhlus",
@@ -109,6 +141,14 @@ export default [
     "lastmod": "2026-09-27"
   },
   {
+    "path": "/constructions/mamad-bayit-prati",
+    "lastmod": "2026-10-18"
+  },
+  {
+    "path": "/constructions/martef-bayit-prati",
+    "lastmod": "2026-10-18"
+  },
+  {
     "path": "/constructions/mifrat-techni-mah-kovea",
     "lastmod": "2026-09-27"
   },
@@ -135,6 +175,10 @@ export default [
   {
     "path": "/constructions/tofes-4-ichlus",
     "lastmod": "2026-06-21"
+  },
+  {
+    "path": "/constructions/tosefet-bniya-bayit-prati",
+    "lastmod": "2026-10-18"
   },
   {
     "path": "/madrich-yazamim/bdikat-hetkenut-karka",
@@ -193,6 +237,10 @@ export default [
     "lastmod": "2026-09-27"
   },
   {
+    "path": "/real-estate-guide/bdikot-lifnei-kniyat-migrash",
+    "lastmod": "2026-10-18"
+  },
+  {
     "path": "/real-estate-guide/bdikot-lifney-rechishat-dira",
     "lastmod": "2026-09-20"
   },
@@ -239,6 +287,10 @@ export default [
   {
     "path": "/real-estate-guide/timchur-dira-lemchira-hamechir-harishon",
     "lastmod": "2026-08-30"
+  },
+  {
+    "path": "/real-estate-guide/yesh-li-migrash",
+    "lastmod": "2026-10-18"
   },
   {
     "path": "/real-estate-guide/zichron-dvarim-real-estate",

@@ -2443,6 +2443,15 @@ body.v186lock{overflow:hidden}
 .v192mc p{margin:0;font-size:14px;line-height:1.55}
 .v192f{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}.v192f label{flex:1 1 240px}
 .v192g{margin-top:10px}.v192g h4{margin:14px 0 6px;font-size:15px;color:#07293a}.v192g ol{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.55}
+/* V193 · "להעלות עכשיו": channels without automatic publishing, one tap to the app */
+.v173c.mid{background:#fff4dc;color:#8a5a00}
+.v193{margin:14px 0;padding:14px 16px;border-radius:16px;background:#fdf7ec;border:1px solid #f1dfb8}
+.v193 .v177h3{margin:0 0 4px}.v193p{margin:0 0 10px;font-size:13.5px}
+.v193i{flex-wrap:wrap;gap:10px}.v193i.late .v177qt span{color:#a90b0c;font-weight:700}
+.v193n{display:flex;flex-direction:column;gap:8px;width:100%}
+.v193c{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.v193c b{min-width:72px;font-size:14px;color:#07293a}
+.v192mc summary{list-style:none;cursor:pointer}.v192mc summary::-webkit-details-marker{display:none}
+#appviews>.v193{margin:0 0 16px}
 </style>
 <style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
@@ -26292,9 +26301,10 @@ async function syncQueue(quiet){if(!ON_SITE())return;try{const d=await call('lis
  if(ch){try{saveSched()}catch(e){}}if(!quiet)paint()}catch(e){}}
 
 /* ---------- the image that goes out: the rendered post as JPEG (Instagram takes JPEG only) ---------- */
-async function renderJpeg(p){try{await ensureImgs(p)}catch(e){}try{await document.fonts.ready}catch(e){}
+async function renderBlob(p){try{await ensureImgs(p)}catch(e){}try{await document.fonts.ready}catch(e){}
  const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;drawSlide(cv,p,p.slide||0);
- const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.92));if(!blob)throw new Error('לא הצלחתי ליצור את התמונה');
+ const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.92));if(!blob)throw new Error('לא הצלחתי ליצור את התמונה');return blob}
+async function renderJpeg(p){const blob=await renderBlob(p);
  const assets=await window.claude.use('assets');if(!assets)throw new Error('אין גישה לאחסון');
  const up=await assets.upload(blob,{ext:'jpg'});if(!up||!up.url)throw new Error('העלאת התמונה נכשלה');return up.url}
 
@@ -26304,7 +26314,9 @@ async function enqueue(it,force,atNow){if(!ON_SITE()||!want(it)||!it.at)return;
  if(!ST.st)await load();
  const video=!!it.reel;const p=video?null:itemPost(it);if(!video&&!p)return;const brand=it.reel?(it.brand==='afik'?'afik':'kurkoos'):brandOf(it);
  const asked=['fb','ig','tt','yt','gmb'].filter(n=>it.nets&&it.nets[n]);const nets=asked.filter(n=>routeOk(n,brand)&&!(n==='yt'&&!video));const off=asked.filter(n=>!nets.includes(n));
- if(off.length)toast((nets.length?'יתפרסם רק ב'+nets.map(n=>NET_HE[n]).join(', ')+'. ':'לא יתפרסם. ')+off.map(n=>NET_HE[n]+(n==='yt'&&!video?' מקבל רק סרטון':' לא מחובר')).join(', ')+'. החיבורים בהגדרות, בפרסום ישיר');
+ const man=off.filter(n=>n!=='fb'&&!(n==='yt'&&!video)),bad=off.filter(n=>!man.includes(n));
+ if(off.length)toast((nets.length?'אוטומטית: '+nets.map(n=>NET_HE[n]).join(', ')+'. ':'')+(man.length?man.map(n=>NET_HE[n]).join(', ')+': יופיע במועד ב"להעלות עכשיו", העלאה בלחיצה. ':'')+(bad.length?bad.map(n=>NET_HE[n]+(n==='yt'?' מקבל רק סרטון':' לא מחובר')).join(', '):''));
+ if(!nets.length&&man.length){it.pub.state='manual';it.pub.err='';try{saveSched(it)}catch(e){}return}
  if(!nets.length){it.pub.state='nochannel';it.pub.err='אין ערוץ מחובר של '+BRAND_HE[brand];try{saveSched(it)}catch(e){}return}
  const upd=video?'reel:'+reelUrl(it):String(p.upd||'')+'|'+(p.slide||0);
  try{
@@ -26361,20 +26373,21 @@ function rowsHtml(){const accs=ST.st&&ST.st.accounts||[];
  const none=(k,name,note)=>`<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||''}</span><span class="v173n"><b>${name}</b><span>${E(note)}</span></span><span class="v173c no">לא מחובר</span><span></span></li>`;
  const fb=accs.filter(a=>a.network==='facebook'),ig=accs.filter(a=>a.network==='instagram');
  const mc=(ST.st&&ST.st.mc)||{};const N=mc.networks||{};
- const viaMc=(k,name,net,note)=>`<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||k.toUpperCase()}</span><span class="v173n"><b>${name}</b><span>${N[net]?E(String(N[net]).slice(0,40))+' · דרך Metricool':E(note)}</span></span><span class="v173c ${N[net]?'ok':'no'}">${N[net]?'מחובר':'לא מחובר'}</span><span></span></li>`;
- return (fb.length?fb.map(a=>row('fb',a)).join(''):none('fb','פייסבוק','עמוד קבוצת קורקוס'))+(ig.length?ig.map(a=>row('ig',a)).join(''):viaMc('ig','אינסטגרם','instagram','מחברים ב-Metricool, או מקשרים את החשבון לעמוד הפייסבוק'))
-  +viaMc('tt','טיקטוק','tiktok','מחברים ב-Metricool')+viaMc('yt','יוטיוב','youtube','מחברים ב-Metricool. מקבל רק סרטונים')+viaMc('gmb','גוגל עסקים','gmb','מחברים ב-Metricool')}
+ const viaMc=(k,name,net,note)=>`<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||k.toUpperCase()}</span><span class="v173n"><b>${name}</b><span>${N[net]?E(String(N[net]).slice(0,40))+' · דרך Metricool, אוטומטי':E(note)}</span></span><span class="v173c ${N[net]?'ok':'mid'}">${N[net]?'מחובר':'ידני מהיר'}</span><span></span></li>`;
+ return (fb.length?fb.map(a=>row('fb',a)).join(''):none('fb','פייסבוק','עמוד קבוצת קורקוס'))+(ig.length?ig.map(a=>row('ig',a)).join(''):viaMc('ig','אינסטגרם','instagram','לא מחובר ישירות. עד החיבור: העלאה בלחיצה מ"להעלות עכשיו". איך מחברים: במדריך למטה'))
+  +viaMc('tt','טיקטוק','tiktok','במועד הפוסט מופיע ב"להעלות עכשיו": שיתוף לאפליקציה בלחיצה')+viaMc('yt','יוטיוב','youtube','סרטונים בלבד. במועד מופיע ב"להעלות עכשיו"')+viaMc('gmb','גוגל עסקים','gmb','במועד מופיע ב"להעלות עכשיו"')}
 function mcHtml(){const mc=(ST.st&&ST.st.mc)||{};const n=Object.keys(mc.networks||{}).length;
- return `<div class="v192mc"><div class="v192mch"><b>Metricool</b><span class="v173c ${mc.set&&!mc.error?'ok':'no'}">${!mc.set?'לא מחובר':mc.error?'יש תקלה':n+' ערוצים'}</span></div>
+ return `<details class="v192mc"${mc.set?' open':''}><summary class="v192mch"><b>Metricool עם API (לא חובה)</b><span class="v173c ${mc.set&&!mc.error?'ok':'no'}">${!mc.set?'לא בשימוש':mc.error?'יש תקלה':n+' ערוצים'}</span></summary><p class="muted">רק בתוכנית של Metricool שיש בה API. בלי זה הכל עובד: פייסבוק ישירות, ושאר הערוצים בהעלאה מהירה.</p>
   <p class="muted">אינסטגרם, טיקטוק, יוטיוב וגוגל עסקים יוצאים דרך Metricool. כ 20 דקות לפני המועד המערכת מעבירה את הפוסט ל-Metricool, מתוזמן לשעה המדויקת עם פרסום אוטומטי. עד אז אפשר להזיז או לבטל בלוח שלנו.</p>
   ${mc.error?`<p class="v177err">${E(mc.error)}</p>`:''}
-  <form class="v177form v192f" data-v192="mc"><label>מפתח ה-API של Metricool<input name="token" type="password" autocomplete="off" placeholder="${mc.set?'שמור. מדביקים מפתח חדש רק כדי להחליף':'מדביקים כאן'}" required></label><button type="submit" class="px-btn red">${mc.set?'החלפת מפתח':'חיבור'}</button></form></div>`}
-function guideAll(){return `<details class="v177g v192g"><summary>איך מחברים כל ערוץ, שלב אחרי שלב</summary>
- <h4>פייסבוק (עמוד קבוצת קורקוס, ועמוד אפיק הנחל)</h4><ol><li>בהגדרות האפליקציה למטה, אם עוד לא, ממלאים App ID ו App Secret לפי ההדרכה של פייסבוק.</li><li>לוחצים "חיבור מחדש" ומסמנים בחלון של פייסבוק את העמודים שרוצים.</li><li>ליד כל עמוד בוחרים "מפרסם עבור": קבוצת קורקוס, אפיק הנחל, או "לא בשימוש" לעמוד שלא שלנו.</li></ol>
- <h4>אינסטגרם</h4><ol><li>הדרך הקלה: מחברים את @kurkoos_group ב-Metricool (שלב "Metricool" למטה). הוא יופיע כאן כ"מחובר, דרך Metricool".</li><li>הדרך הישירה: באפליקציית אינסטגרם, הגדרות, סוג חשבון, עוברים לחשבון עסקי ומקשרים לעמוד הפייסבוק של קבוצת קורקוס. אחרי זה "חיבור מחדש" כאן.</li></ol>
- <h4>טיקטוק, יוטיוב וגוגל עסקים</h4><ol><li>נכנסים ל-app.metricool.com, בוחרים את המותג "קבוצת קורקוס", ובתפריט Connections (חיבורים) מחברים את TikTok, YouTube ו Google Business Profile.</li><li>יוטיוב וטיקטוק מקבלים סרטונים: מתזמנים מהלוח רילס (סרטון). פוסט תמונה יוצא לטיקטוק כפוסט תמונה, וליוטיוב לא יוצא.</li></ol>
- <h4>Metricool, פעם אחת</h4><ol><li>ב-Metricool: התמונה שלכם למעלה, Account settings, ואז API.</li><li>מעתיקים את ה-API token ומדביקים בשדה "מפתח ה-API של Metricool" כאן. המפתח נשמר רק בשרת ולא מוצג שוב.</li><li>לוחצים "רענון". כל ערוץ שמחובר ב-Metricool יופיע כ"מחובר".</li></ol>
- <p class="muted">שימו לב למכסה: בתוכנית החינמית של Metricool יש 20 פוסטים בחודש. פייסבוק יוצא ישירות ולא נספר במכסה.</p></details>`}
+  <form class="v177form v192f" data-v192="mc"><label>מפתח ה-API של Metricool<input name="token" type="password" autocomplete="off" placeholder="${mc.set?'שמור. מדביקים מפתח חדש רק כדי להחליף':'מדביקים כאן'}" required></label><button type="submit" class="px-btn red">${mc.set?'החלפת מפתח':'חיבור'}</button></form></details>`}
+function guideAll(){return `<details class="v177g v192g" open><summary>מה לעשות בכל ערוץ, שלב אחרי שלב</summary>
+ <h4>פייסבוק · ישיר, אוטומטי</h4><ol><li>אם עוד לא: ממלאים את פרטי האפליקציה של פייסבוק (הכפתור "פרטי האפליקציה").</li><li>"חיבור מחדש", ובחלון של פייסבוק מסמנים את העמודים.</li><li>ליד כל עמוד בוחרים "מפרסם עבור": קבוצת קורקוס, אפיק הנחל, או "לא בשימוש".</li></ol>
+ <h4>אינסטגרם · ישיר, אוטומטי, חינם</h4><ol><li>באפליקציית אינסטגרם של @kurkoos_group: הגדרות, "סוג חשבון וכלים", ועוברים לחשבון מקצועי מסוג עסק.</li><li>באותו מקום, או ב Meta Business Suite: מקשרים את החשבון לעמוד הפייסבוק "Kurkoos Group".</li><li>חוזרים לכאן, "חיבור מחדש", ובחלון של פייסבוק מסמנים גם את חשבון האינסטגרם.</li><li>השורה של אינסטגרם תהפוך ל"מחובר", ומאז כל פוסט יוצא לבד במועד.</li></ol>
+ <h4>טיקטוק · היום: העלאה מהירה</h4><ol><li>במועד הפוסט הוא מופיע ב"להעלות עכשיו" (בעמוד "היום" ובכרטיס הזה). בטלפון: "שיתוף לאפליקציה" פותח את טיקטוק עם הסרטון או התמונה, והטקסט מועתק. מדביקים ומפרסמים.</li><li>אחרי הפרסום: "סימנתי שהועלה".</li><li>פרסום אוטומטי ישיר בעתיד: אפליקציה ב developers.tiktok.com עם Content Posting API, ובדיקה של טיקטוק (בדרך כלל כמה שבועות). עד שהבדיקה עוברת, טיקטוק מפרסם רק כפרטי.</li></ol>
+ <h4>יוטיוב · היום: העלאה מהירה, סרטונים בלבד</h4><ol><li>במועד: "שיתוף לאפליקציה" או "פתיחה" ל YouTube Studio, מעלים את הסרטון שהורד, מדביקים כותרת וטקסט.</li><li>פרסום אוטומטי ישיר בעתיד: פרויקט ב Google Cloud עם YouTube Data API ובדיקה של גוגל. עד שהבדיקה עוברת, יוטיוב נועל כל העלאה כפרטית.</li></ol>
+ <h4>גוגל עסקים · היום: העלאה מהירה</h4><ol><li>במועד: "פתיחה" לפרופיל העסק, "הוספת עדכון", מדביקים את הטקסט ומעלים את התמונה שהורדה.</li><li>פרסום אוטומטי ישיר בעתיד: בקשת גישה ל Business Profile API מגוגל, ואחרי האישור מחברים כאן.</li></ol>
+ <p class="muted">Metricool בלי API: אפשר להמשיך לתזמן בו ידנית. הטקסט והתמונה מוכנים כאן בלחיצה.</p></details>`}
 function queueHtml(){const items=[...ST.q.values()].filter(x=>x.status!=='cancelled').sort((a,b)=>String(a.at).localeCompare(String(b.at)));
  const up=items.filter(x=>['queued','publishing','error','partial'].includes(x.status)).slice(0,12),done=items.filter(x=>x.status==='done').slice(-5).reverse();
  if(!up.length&&!done.length)return `<p class="muted v177empty">עוד אין פוסטים לפרסום אוטומטי. בחלון "שמירה ותזמון" מסמנים "פרסום אוטומטי במועד".</p>`;
@@ -26393,11 +26406,11 @@ function cardHtml(){const s=ST.st;let head='',body='';
     <button type="button" class="px-btn" data-v177="form">${s.app?'פרטי האפליקציה':'הגדרת האפליקציה'}</button></div>
    ${!s.app||ST.form?guide()+formHtml():''}
    ${mcHtml()}${guideAll()}
-   ${on?lateHtml()+queueHtml():''}
+   ${manHtml()}${on?lateHtml()+queueHtml():''}
    ${on?bulkHtml():''}`}
  return `<section class="v173card v177card" id="v177card" aria-labelledby="v177h"><div class="v173top"><h2 class="vh" id="v177h" style="margin:0">פרסום ותזמון לכל הערוצים</h2>${head}<button type="button" class="px-btn sm" data-v177="re">רענון</button></div>
   <p class="muted v173p">המערכת מפרסמת בעצמה, בדיוק במועד שנקבע, בכל הערוצים שסימנתם: פייסבוק ישירות לעמוד של המותג (קבוצת קורקוס או אפיק הנחל), ואינסטגרם, טיקטוק, יוטיוב וגוגל עסקים דרך Metricool. עמוד שמסומן "לא בשימוש" לא מקבל כלום. רק פוסטים שסימנתם "פרסום אוטומטי" יוצאים.</p>${body}</section>`}
-function lateList(){const now=Date.now();return ((APP.sched&&APP.sched.items)||[]).filter(it=>(!it.reel||reelUrl(it))&&it.at&&it.status==='ready'&&anyNet(it)&&!(ST.q.get(it.id)&&['done','publishing','queued'].includes(ST.q.get(it.id).status))&&(()=>{const t=new Date(it.at.length===16?it.at+':00':it.at).getTime();return t<now&&now-t<7*864e5})())}
+function lateList(){const now=Date.now();return ((APP.sched&&APP.sched.items)||[]).filter(it=>(!it.reel||reelUrl(it))&&it.at&&it.status==='ready'&&anyNet(it)&&['fb','ig','tt','yt','gmb'].some(n=>it.nets[n]&&routeOk(n,it.reel?'kurkoos':brandOf(it)))&&!(ST.q.get(it.id)&&['done','publishing','queued'].includes(ST.q.get(it.id).status))&&(()=>{const t=new Date(it.at.length===16?it.at+':00':it.at).getTime();return t<now&&now-t<7*864e5})())}
 function lateHtml(){const l=lateList();if(!l.length)return '';
  return `<h3 class="v177h3">המועד עבר והפוסט לא יצא</h3><ul class="v177ql">${l.map(it=>`<li class="v177q s-error"><span class="v177qt"><b>${E(it.label||'פוסט')}</b><span>${fmt(new Date(it.at.length===16?it.at+':00':it.at).toISOString())} · ${BRAND_HE[brandOf(it)]}</span><span class="v177err">${it.pub&&it.pub.on?E(it.pub.err||'לא נשלח לתור'):'נשמר בלי פרסום אוטומטי'}</span></span><span class="v177qa"><button type="button" class="px-btn sm red" data-v177="late" data-id="${E(it.id)}">פרסום עכשיו</button></span></li>`).join('')}</ul>`}
 function bulkHtml(){const n=((APP.sched&&APP.sched.items)||[]).filter(it=>(!it.reel||reelUrl(it))&&it.at&&new Date(it.at)>new Date()&&!(it.pub&&it.pub.on)&&anyNet(it)).length;
@@ -26438,7 +26451,31 @@ try{const u=new URL(location.href);const s=u.searchParams.get('social');if(s){co
 setTimeout(()=>{if(ON_SITE())load()},3000);
 setInterval(()=>{if(ON_SITE()&&document.visibilityState==='visible'&&anyConn())syncQueue(APP.view!=='settings')},90000);
 
-window.__v177={load,ST,enqueue,syncQueue,call};
+/* ---------- V193 · channels with no automatic route: at the post's time it waits in "להעלות עכשיו" ---------- */
+const MAN={ig:{open:'https://www.instagram.com/'},tt:{open:'https://www.tiktok.com/upload'},yt:{open:'https://studio.youtube.com/'},gmb:{open:'https://business.google.com/'}};
+function manNets(it){if(!it||!it.nets)return [];const brand=it.reel?(it.brand==='afik'?'afik':'kurkoos'):brandOf(it);return ['ig','tt','yt','gmb'].filter(n=>it.nets[n]&&!routeOk(n,brand)&&!(n==='yt'&&!it.reel)&&!(it.man&&it.man[n]))}
+const atMs=it=>new Date(it.at.length===16?it.at+':00':it.at).getTime();
+function manList(){const now=Date.now();return ((APP.sched&&APP.sched.items)||[]).filter(it=>it.at&&['ready','approved','published'].includes(it.status)&&(!it.reel||reelUrl(it))&&(()=>{const t=atMs(it);return t<now+3*3600e3&&now-t<4*864e5})()&&manNets(it).length).sort((a,b)=>atMs(a)-atMs(b))}
+function manHtml(){const l=manList();if(!l.length)return '';
+ return `<section class="v193" aria-labelledby="v193h"><h3 class="v177h3" id="v193h">להעלות עכשיו</h3><p class="muted v193p">ערוצים שעוד לא מחוברים לפרסום אוטומטי. "שיתוף" בטלפון פותח את האפליקציה עם התמונה או הסרטון, והטקסט מועתק.</p><ul class="v177ql">${l.map(it=>{const t=atMs(it),late=t<Date.now();return `<li class="v177q v193i${late?' late':''}"><span class="v177qt"><b>${E((it.label||itemText(it,'fb')||'פוסט').replace(/\n/g,' ').slice(0,70))}</b><span>${fmt(new Date(t).toISOString())}${late?' · הגיע הזמן':''}</span></span>
+  <span class="v193n">${manNets(it).map(n=>`<span class="v193c"><b>${NET_HE[n]}</b><button type="button" class="px-btn sm red" data-v193="share" data-id="${E(it.id)}" data-n="${n}">שיתוף</button><button type="button" class="px-btn sm" data-v193="open" data-n="${n}">פתיחה</button><button type="button" class="px-btn sm" data-v193="done" data-id="${E(it.id)}" data-n="${n}">סימנתי שהועלה</button></span>`).join('')}
+  <span class="v193c"><button type="button" class="px-btn sm" data-v193="copy" data-id="${E(it.id)}">העתקת הטקסט</button><button type="button" class="px-btn sm" data-v193="dl" data-id="${E(it.id)}">הורדת הקובץ</button></span></span></li>`}).join('')}</ul></section>`}
+async function manFile(it){if(it.reel){const u=reelUrl(it);const b=await (await fetch(u)).blob();return new File([b],'kurkoos.mp4',{type:b.type||'video/mp4'})}
+ const p=itemPost(it);if(!p)throw new Error('הפוסט לא נמצא');const b=await renderBlob(p);return new File([b],'kurkoos.jpg',{type:'image/jpeg'})}
+const manText=(it,n)=>itemText(it,n==='ig'?'ig':'fb')||it.label||'';
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-v193]');if(!b)return;e.preventDefault();const a=b.dataset.v193,n=b.dataset.n;const it=b.dataset.id&&((APP.sched&&APP.sched.items)||[]).find(i=>i.id===b.dataset.id);
+ try{
+  if(a==='open'){window.open(MAN[n].open,'_blank','noopener');return}
+  if(a==='copy'){await navigator.clipboard.writeText(manText(it,'fb'));toast('הטקסט הועתק');return}
+  if(a==='dl'){b.disabled=true;const f=await manFile(it);const u=URL.createObjectURL(f);const x=document.createElement('a');x.href=u;x.download=f.name;document.body.appendChild(x);x.click();x.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);b.disabled=false;return}
+  if(a==='share'){b.disabled=true;const txt=manText(it,n);try{await navigator.clipboard.writeText(txt)}catch(x){}const f=await manFile(it);
+   if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:txt})}catch(x){}}else{const u=URL.createObjectURL(f);const x=document.createElement('a');x.href=u;x.download=f.name;document.body.appendChild(x);x.click();x.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);window.open(MAN[n].open,'_blank','noopener');toast('הקובץ ירד והטקסט הועתק. מדביקים באפליקציה')}
+   b.disabled=false;return}
+  if(a==='done'){it.man=Object.assign({},it.man||{},{[n]:new Date().toISOString()});try{saveSched(it)}catch(x){}toast(NET_HE[n]+': סומן שהועלה');document.querySelectorAll('.v193').forEach(el=>{const h=manHtml();if(h)el.outerHTML=h;else el.remove()});return}
+ }catch(x){b.disabled=false;toast(String(x.message||'הפעולה לא הצליחה').slice(0,120))}});
+// on the "היום" page too, at the top
+try{render=(f=>function(){const r=f.apply(this,arguments);try{if(APP.view==='today'){const box=document.getElementById('appviews');if(box&&!box.querySelector('.v193')){const h=manHtml();if(h)box.insertAdjacentHTML('afterbegin',h)}}}catch(e){}return r})(render)}catch(e){}
+window.__v177={load,ST,enqueue,syncQueue,call,manList};
 })();
 
 // ================= V178 · "שכפול לאפיק הנחל": any post becomes a copy in the brand of Afik HaNahal, the group's

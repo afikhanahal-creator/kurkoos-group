@@ -77,6 +77,7 @@ def main():
     ends = [gaps[j][0] for j in ch] + [T]
     tm = [{'i': i + 1, 'a': round(a, 3), 'b': round(b, 3)} for i, (a, b) in enumerate(zip(starts, ends))]
     for x, (s, c) in zip(tm, LINES): print(x['i'], x['a'], x['b'], round(x['b'] - x['a'], 2), s[:40])
+    json.dump(tm, open(os.path.join(OUT, 'align.json'), 'w'))   # where every line sits in full.wav (voice30.py cuts the 30 s reels from it)
     # the reel's voice track: every line whole, the pauses between lines cut to GAP, the voice TEMPO faster (pitch kept)
     COVER = 0.5   # the cover frame opens the reel; the voice starts right after it (index.html and music.py read it from timings.js)
     LEAD, GAP, TEMPO = COVER + 0.15, 0.25, 1.14

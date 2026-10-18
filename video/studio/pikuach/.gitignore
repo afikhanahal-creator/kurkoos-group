@@ -4,3 +4,10 @@ voice/v*.wav
 music.wav
 __pycache__/
 voice/voice.wav
+media/
+voice/a??*.wav
+voice/b??*.wav
+voice/a.wav
+voice/b.wav
+music-a.wav
+music-b.wav

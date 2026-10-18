@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Who checks the contractor</title>
+<!-- Kurkoos reel A, 30 s: "מי בודק את הקבלן?". Problem, then the answer, then the call. Real Kurkoos site photos and footage
+  are the construction side (navy legend); the supervision side (red legend) is drawn on top of them, pinned to real features.
+  The overlays show what an inspector checks; none of them says that the photo shows a defect.
+  SCENES (voice/a-timings.js line: picture, real asset)
+  0  cover (cover-a.png) for 0.5 s
+  1  "בונים בית פרטי?": the column cages in the formwork (media/p6.jpg from public/execution-gallery/6.jpg), slow push;
+     red rings on the cages, then concrete rises over the lower part and they are gone: "תוך ימים"
+  2  check points: the cast column (media/p2.jpg from execution-gallery/2.jpg); a red scan line runs down it, a frame pins the
+     starter bars ("בדיקה: ברזל") and one pins the waterproofing at the base ("בדיקה: איטום")
+  3  the cost: open rebar (media/c6.jpg) next to cast concrete (media/c2.jpg), a short navy stack and a tall red one
+  4  split: real footage of the contractor building (media/f-split, from public/divisions/kurkoos-showcase.mp4) against an
+     empty dashed inspector column with a red "?"; a zoom through the empty column into
+  5  Shechinta's badge, its ring draws, a magnifier circles it
+  6  the pour: wall formwork with the rebar above it and the pump hose (media/pbg.jpg from public/divisions/execution-bg.jpg);
+     the scan line passes the rebar, "עצור" lands, the photo holds and greys while the check point is checked, then goes on
+  7  the contractor's bill and the handover protocol as paper cards with depth: ticks, a stamp, a hand drawn signature
+  8  the contract, the pen stops short of the signature line: "דברו איתנו"
+  9  end card on navy
+-->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  @font-face{font-family:Almoni;font-weight:400;font-display:block;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;font-display:block;src:url(../../fonts/Almoni-700.ttf)}
+  body{background:#f7f8fa;margin:0}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#f7f8fa;direction:rtl;font-family:Almoni}
+  #sheet{position:absolute;inset:0}
+  #grain{position:absolute;inset:0;opacity:.05;pointer-events:none;z-index:50}
+  .abs{position:absolute;left:0;top:0}
+  .sc{position:absolute;inset:0;display:none}
+  .cam{position:absolute;inset:0}
+  .big{position:absolute;left:0;right:0;text-align:center;font-weight:700;color:#07293a;line-height:.95}
+  .lbl{position:absolute;font-weight:700;color:#07293a;white-space:nowrap;line-height:1}
+  .chip{position:absolute;font-weight:700;font-size:48px;line-height:1;padding:16px 30px 20px;border-radius:999px;white-space:nowrap;background:#07293a;color:#f7f8fa}
+  .chip.r{background:#a90b0c}
+  .chip.d{background:#f7f8fa;color:#a90b0c;border:4px dashed #a90b0c}
+  .hdr{position:absolute;right:90px;top:200px;display:flex;align-items:center;gap:26px}
+  .mk{position:relative;width:118px;height:118px;border:6px solid #07293a;border-radius:50%;background:#f7f8fa;flex:none}
+  .mk:after{content:"";position:absolute;left:0;right:0;top:56px;height:6px;background:#07293a}
+  .mk b{position:absolute;left:0;right:0;top:12px;text-align:center;font-size:44px;line-height:1;color:#a90b0c}
+  .mk i{position:absolute;left:0;right:0;top:72px;text-align:center;font-size:28px;line-height:1;color:#105572;font-style:normal;font-weight:700}
+  .hdr .tt span{display:block;font-weight:700;font-size:84px;color:#07293a;line-height:1}
+  .hdr .tt small{display:block;font-size:40px;color:#105572;font-weight:700;margin-bottom:8px;line-height:1}
+  .foot{position:absolute;border-radius:24px;overflow:hidden;box-shadow:0 14px 34px #07293a33}
+  .foot canvas{display:block;filter:saturate(.92) contrast(1.04)}
+  /* paper cards with depth: a soft shadow, paper grain, a slight tilt */
+  .card{position:absolute;border-radius:18px;background:#fff;box-shadow:0 26px 50px #07293a30,0 4px 10px #07293a22;transform-style:preserve-3d;
+    background-image:radial-gradient(#07293a08 1px,transparent 1.2px);background-size:7px 7px}
+  #world{display:block}
+  #cta{position:absolute;left:66px;top:52px;z-index:31;display:none;background:#a90b0c;color:#f7f8fa;font-weight:700;font-size:36px;line-height:1;padding:12px 26px 16px;border-radius:999px;white-space:nowrap}
+  #cta b{direction:ltr;unicode-bidi:isolate;margin-right:12px}
+  #legend{position:absolute;right:70px;top:52px;z-index:31;display:flex;gap:12px}
+  #legend span{font-weight:700;font-size:34px;line-height:1;padding:11px 24px 15px;border-radius:999px;border:4px solid #8fb6c8;color:#8fb6c8;background:#f7f8fa;white-space:nowrap}
+  #legend .b.on{background:#07293a;border-color:#07293a;color:#f7f8fa}
+  #legend .p.on{background:#a90b0c;border-color:#a90b0c;color:#f7f8fa}
+  #wipe{position:absolute;left:0;right:0;height:300px;z-index:40;display:none}
+  #cap{position:absolute;left:70px;right:70px;bottom:150px;display:flex;justify-content:center;z-index:30}
+  #capb{color:#07293a;padding:10px 20px 14px;font-weight:700;font-size:70px;line-height:1.14;text-align:center;max-width:940px;box-sizing:border-box;
+    text-shadow:0 0 6px #f7f8fa,0 0 12px #f7f8fa,0 0 18px #f7f8fa}
+  #capb .w{display:inline-block}
+  #capb .rd{color:#a90b0c}
+  #end{position:absolute;inset:0;background:#07293a;display:none;z-index:35}
+  #cover{position:absolute;left:0;top:0;width:1080px;height:1920px;z-index:38;display:none}
+  svg{overflow:visible}
+  svg text{font-family:Almoni;font-weight:700}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="sheet" width="1080" height="1920"></svg>
+  <div id="legend"><span class="b">בנייה</span><span class="p">פיקוח</span></div>
+  <div class="sc" id="world"></div>
+  <div id="cap"><div id="capb"></div></div>
+  <div id="cta">דברו איתנו<b>055-981-1814</b></div>
+  <div id="end"></div>
+  <img id="cover" src="cover-a.png" alt="">
+  <svg id="wipe" width="1080" height="300"></svg>
+  <canvas id="grain" width="540" height="960"></canvas>
+</div>
+<script src="voice/a-timings.js"></script>
+<script src="../lib/studio.js"></script>
+<script src="reel.js"></script>
+<script>
+const {NAVY, TEAL, MIST, PAPER, RED, LINE, CONC, $, P, E, B, expo, back, quadIn, rise, draw, panelDraw, land, landEl, drop, DL, svg, hdr, tick, ring, lens, pin, pinAnim, photo, kb, footage, frameAt, card, tiltCard} = Reel;
+const {clamp, lerp, smooth} = Studio;
+const BLK = 62;
+const scenes = [
+// 1 · build a private house? the costly mistakes vanish within days (real cages in the formwork; concrete rises over them)
+{ html: `<svg width="0" height="0" style="position:absolute"><defs><filter id="a1f"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .62  0 0 0 0 .68  0 0 0 0 .72  0 0 0 -1.6 1.25"/></filter><linearGradient id="a1n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9b8c0" stop-opacity=".88"/><stop offset=".12" stop-color="#9aaab3" stop-opacity=".96"/><stop offset="1" stop-color="#8d9ea8" stop-opacity=".98"/></linearGradient></defs></svg><div class="big" id="a1t" style="top:234px;font-size:96px">בונים בית פרטי?</div>` + svg(`
+    <image class="ln" id="a1g" href="kurkoos-logo-h.svg" x="388" y="126" width="304" height="76"/>
+    ${photo('a1p', 'media/p6.jpg', 60, 360, 960, 1080, `
+      ${[[270, 1180], [624, 1160], [272, 1080]].map(([x, y]) => `<g transform="translate(${x} ${y})"><g class="a1r"><circle r="36" fill="none" stroke="${RED}" stroke-width="7" stroke-dasharray="11 8"/><circle r="8" fill="${RED}"/></g></g>`).join('')}
+      <g id="a1c"><rect x="40" y="1440" width="1000" height="420" fill="url(#a1n)"/><path d="M40 1440 Q300 1426 540 1438 T1040 1432" stroke="#d3dde3" stroke-width="8" fill="none" opacity=".9"/></g>
+      <g id="a1k"><rect x="96" y="430" width="240" height="70" rx="35" fill="${RED}" filter="url(#sh)"/><text x="306" y="478" font-size="42" fill="${PAPER}">תוך ימים</text></g>`)}`),
+  anim(u, len, $$) { rise($('a1t'), u, 0, .5, 10); $('a1g').style.opacity = E(u, .05, .4); kb('a1p', u, len, 300, 760, 1.0, 1.1);
+    $$('.a1r').forEach((g, i) => land(g, B(u, .45 + i * .18, .45)));
+    const c = E(u, 1.5, 1.0); $('a1c').setAttribute('transform', `translate(0 ${-400 * c})`); land($('a1k'), B(u, 2.35, .45)); } },
+// 2 · rebar not to plan, waterproofing covered without a flood test (check points pinned to the real column)
+{ html: hdr('a2h', 2, 'נקודות בדיקה') + svg(photo('a2p', 'media/p2.jpg', 60, 360, 960, 1080, `
+      <g id="a2s"><rect x="40" y="-60" width="1000" height="60" fill="url(#a2g)"/><path d="M40 0 H1040" stroke="${RED}" stroke-width="5"/></g>
+      ${pin('a2b', 180, 372, 420, 168, 'בדיקה: ברזל', 640, 470, 300)}
+      ${pin('a2w', 470, 1330, 530, 100, 'בדיקה: איטום', 560, 1225, 320)}`) + `<defs><linearGradient id="a2g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${RED}" stop-opacity="0"/><stop offset="1" stop-color="${RED}" stop-opacity=".28"/></linearGradient></defs>`),
+  anim(u, len) { rise($('a2h'), u, 0, .45, 8); kb('a2p', u, len, 400, 800, 1.0, 1.07);
+    const sy = lerp(360, 1450, P(u, .1, 1.7)); $('a2s').setAttribute('transform', `translate(0 ${sy})`); $('a2s').style.opacity = P(u, .1, .1) * (1 - P(u, 1.75, .15));
+    pinAnim($('a2b'), u, .35); pinAnim($('a2w'), u, 1.45); } },
+// 3 · cheap to fix while visible, very expensive once it is in the concrete
+{ html: hdr('a3h', 3, 'מחיר התיקון') + svg(
+    photo('a3r', 'media/c6.jpg', 560, 360, 420, 740, Array.from({length: 2}, (_, i) => `<rect class="a3a" x="650" y="${1100 - (i + 1) * BLK + 6}" width="240" height="${BLK - 8}" rx="8" fill="${NAVY}" stroke="#fff" stroke-width="3"/>`).join('')) +
+    photo('a3l', 'media/c2.jpg', 100, 360, 420, 740, Array.from({length: 9}, (_, i) => `<rect class="a3b" x="190" y="${1100 - (i + 1) * BLK + 6}" width="240" height="${BLK - 8}" rx="8" fill="${RED}" stroke="#fff" stroke-width="3"/>`).join(''))) +
+    `<div class="lbl a3u" style="left:560px;width:420px;text-align:center;top:1132px;font-size:46px;color:${TEAL}">כשהיא גלויה</div>
+     <div class="lbl a3u" style="left:100px;width:420px;text-align:center;top:1132px;font-size:46px;color:${TEAL}">אחרי הבטון</div>
+     <div class="chip" id="a3at" style="left:712px;top:1200px">זול</div><div class="chip r" id="a3bt" style="left:196px;top:1200px">יקר מאוד</div>`,
+  anim(u, len, $$) { rise($('a3h'), u, 0, .45, 8); kb('a3r', u, len, 770, 900, 1.0, 1.06); kb('a3l', u, len, 310, 700, 1.0, 1.06);
+    $$('.a3u').forEach((e, i) => rise(e, u, .15 + i * .1, .4, 18));
+    $$('.a3a').forEach((e, i) => drop(e, u, .3 + i * .14, .4)); landEl($('a3at'), B(u, .65, .4));
+    $$('.a3b').forEach((e, i) => drop(e, u, 1.35 + i * .09, .38)); landEl($('a3bt'), B(u, 2.3, .45)); } },
+// 4 · split: the contractor builds (real footage), and no inspector of yours
+{ html: `<div class="chip" id="a4a" style="right:110px;top:250px">הקבלן בונה</div><div class="chip d" id="a4b" style="left:110px;top:250px">בלי מפקח</div>` +
+    footage('a4f', 'media/f-split', 132, 560, 380, 420, 900) + svg(`
+    <path class="ln" id="a4m" d="M540 380 V1280" stroke="${MIST}" stroke-width="6" stroke-dasharray="14 12" fill="none"/>
+    <g class="ln"><path id="a4e" d="M124 380 H496 Q520 380 520 404 V1256 Q520 1280 496 1280 H124 Q100 1280 100 1256 V404 Q100 380 124 380 Z" fill="none" stroke="${RED}" stroke-width="6" stroke-dasharray="18 14"/>
+     <g id="a4q"><circle cx="310" cy="830" r="96" fill="${RED}"/><text x="310" y="876" text-anchor="middle" font-size="140" fill="${PAPER}">?</text></g></g>`) +
+    `<div class="chip r" id="a4c" style="right:110px;top:1320px">הוא שקובע בשטח</div>`,
+  anim(u, len) { rise($('a4a'), u, 0, .45, 24); rise($('a4b'), u, .2, .45, 24); $('a4m').style.opacity = E(u, 0, .4);
+    const fp = E(u, 0, .5); $('a4f_w').style.opacity = fp; $('a4f_w').style.transform = `translateY(${(1 - fp) * 60}px)`; frameAt('a4f', u);
+    const ep = E(u, .3, .7); $('a4e').style.opacity = ep; $('a4e').style.strokeDashoffset = (1 - ep) * 400;
+    land($('a4q'), B(u, .9, .5), Math.sin(Math.max(0, u - .9) * 6) * 8 * (1 - E(u, 1.1, 1.2))); landEl($('a4c'), B(u, 1.6, .45)); } },
+// 5 · שכינתא, your professional eyes on site
+{ html: `<div class="big" id="a5n" style="top:250px;font-size:200px">שכינתא</div>
+    <div class="big" id="a5s" style="top:470px;font-size:58px;color:${TEAL}">זרוע הפיקוח של קבוצת קורקוס</div>` + svg(`
+    <g class="ln"><circle id="a5r" cx="540" cy="975" r="290" fill="none" stroke="${RED}" stroke-width="6" ${DL} transform="rotate(-90 540 975)"/>
+     <image id="a5b" href="shchinta.png" x="276" y="704" width="528" height="542"/><g id="a5o">${lens('a5l', 46, '')}</g></g>`) +
+    `<div class="chip" id="a5c" style="right:110px;top:1356px">העיניים שלכם באתר</div>`,
+  anim(u) { rise($('a5n'), u, 0, .55, 40); rise($('a5s'), u, .25, .5, 24);
+    const b = P(u, .3, .55); land($('a5b'), b <= 0 ? 0 : 1.18 - .18 * back(b), (1 - expo(b)) * -14);
+    draw($('a5r'), E(u, .6, .9)); const a = (-90 + 360 * E(u, .9, 2.3)) * Math.PI / 180;
+    $('a5o').setAttribute('transform', `translate(${540 + 290 * Math.cos(a)} ${975 + 290 * Math.sin(a)})`); $('a5o').style.opacity = E(u, .9, .3); rise($('a5c'), u, 1.8, .5, 24); } },
+// 6 · checks at the critical stages: the pour waits until the check point is checked (real formwork, rebar and pump hose)
+{ html: hdr('a6h', 6, 'לפני היציקה', 'בדיקה בשלב הקריטי') + svg(photo('a6p', 'media/pbg.jpg', 60, 360, 960, 1080, `
+      <g id="a6s"><path d="M0 640 V980" stroke="${RED}" stroke-width="7"/><rect x="-60" y="640" width="60" height="340" fill="url(#a6g)"/></g>
+      ${pin('a6b', 80, 700, 490, 220, 'בדיקה לפני יציקה', 600, 1000, 380)}
+      <g id="a6v"><circle cx="570" cy="700" r="30" fill="${RED}" filter="url(#sh)"/>${tick(570, 702, .8, PAPER, 'a6k')}</g>
+      <g id="a6t"><rect x="370" y="490" width="340" height="140" rx="24" fill="${PAPER}" stroke="${RED}" stroke-width="12" filter="url(#sh)"/><text x="540" y="590" text-anchor="middle" font-size="96" fill="${RED}">עצור</text></g>
+      <g class="a6c"><rect x="96" y="1330" width="190" height="70" rx="35" fill="${RED}" filter="url(#sh)"/><text x="262" y="1378" font-size="40" fill="${PAPER}">יציקות</text></g>
+      <g class="a6c"><rect x="304" y="1330" width="170" height="70" rx="35" fill="${RED}" filter="url(#sh)"/><text x="450" y="1378" font-size="40" fill="${PAPER}">איטום</text></g>`) +
+    `<defs><linearGradient id="a6g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${RED}" stop-opacity="0"/><stop offset="1" stop-color="${RED}" stop-opacity=".25"/></linearGradient></defs>`),
+  anim(u, len) { rise($('a6h'), u, 0, .45, 8);
+    // the photo holds still (and greys) from the stop until the check point is checked
+    const tt = u < .95 ? u : (u < 1.75 ? .95 : u - .8); kb('a6p', tt, len, 400, 800, 1.0, 1.08);
+    $('a6p_i').style.filter = `saturate(${.92 - .6 * E(u, .95, .25) * (1 - E(u, 1.75, .3))}) contrast(1.04)`;
+    const sx = lerp(1040, 60, P(u, .05, .9)); $('a6s').setAttribute('transform', `translate(${sx} 0)`); $('a6s').style.opacity = P(u, .05, .05) * (1 - P(u, .95, .1));
+    pinAnim($('a6b'), u, .4); land($('a6t'), B(u, .95, .4), -4); $('a6t').style.opacity = clamp(B(u, .95, .4) * 3) * (1 - P(u, 1.75, .15));
+    land($('a6v'), B(u, 1.55, .35)); draw(document.querySelector('.a6k'), E(u, 1.65, .3));
+    document.querySelectorAll('.a6c').forEach((e, i) => land(e, B(u, 1.85 + i * .15, .4))); } },
+// 7 · the bill checked before payment, and on to the handover protocol (paper cards with depth)
+{ html: card('a7i', 120, 300, 620, 520, `
+      <text x="560" y="86" font-size="58" fill="${NAVY}">חשבון קבלן</text><path d="M60 118 H560" stroke="${MIST}" stroke-width="4"/>
+      ${[0, 1, 2, 3].map(i => `<g class="a7r"><rect x="${300 - (i % 2) * 50}" y="${150 + i * 62}" width="${260 + (i % 2) * 50}" height="20" rx="10" fill="${LINE}"/><rect x="110" y="${150 + i * 62}" width="120" height="20" rx="10" fill="${MIST}"/></g>${tick(70, 160 + i * 62, .75, RED, 'a7k')}`).join('')}
+      <g id="a7s" transform="translate(320 440)"><g id="a7si"><rect x="-210" y="-48" width="420" height="96" rx="18" fill="none" stroke="${RED}" stroke-width="8"/><text x="0" y="16" text-anchor="middle" font-size="50" fill="${RED}">נבדק לפני תשלום</text></g></g>`, 1) +
+    card('a7p', 380, 860, 580, 520, `
+      <rect x="190" y="-26" width="200" height="54" rx="12" fill="${NAVY}"/>
+      <text x="290" y="92" text-anchor="middle" font-size="52" fill="${NAVY}">פרוטוקול מסירה</text>
+      ${[0, 1, 2].map(i => `<rect x="470" y="${140 + i * 90}" width="56" height="56" rx="8" fill="none" stroke="${NAVY}" stroke-width="5"/>${tick(498, 168 + i * 90, .8, RED, 'a7c')}<rect x="${120 + (i % 2) * 50}" y="${158 + i * 90}" width="${300 - (i % 2) * 50}" height="20" rx="10" fill="${LINE}"/>`).join('')}
+      <path id="a7g" d="M90 470 C120 420 150 500 180 452 S240 410 260 468 S330 430 350 456 C370 476 400 440 430 452" fill="none" stroke="${NAVY}" stroke-width="5" stroke-linecap="round" ${DL}/>
+      <path d="M70 486 H470" stroke="${MIST}" stroke-width="3" stroke-dasharray="10 8"/>`, 1),
+  anim(u) { tiltCard($('a7i'), E(u, 0, .6), 9, 3, -3); document.querySelectorAll('.a7r').forEach((e, i) => { const p = E(u, .2 + i * .1, .4); e.style.opacity = clamp(p * 2); e.style.transform = `translateX(${(1 - p) * -30}px)`; });
+    document.querySelectorAll('.a7k').forEach((e, i) => draw(e, E(u, .45 + i * .14, .25)));
+    const s = B(u, 1.05, .4); $('a7si').style.transformBox = 'fill-box'; $('a7si').style.transformOrigin = 'center'; $('a7si').style.transform = `rotate(${-5 * s}deg) scale(${2 - s})`; $('a7si').style.opacity = clamp(s * 3);
+    tiltCard($('a7p'), E(u, 1.35, .6), -9, 3, 2); document.querySelectorAll('.a7c').forEach((e, i) => draw(e, E(u, 1.75 + i * .16, .22))); draw($('a7g'), E(u, 2.3, .6)); } },
+// 8 · talk to us, before you sign with the contractor
+{ html: `<div class="big" id="a8t" style="top:220px;font-size:132px">בונים בית?</div>` + card('a8d', 250, 420, 600, 720, `
+      <text x="300" y="96" text-anchor="middle" font-size="58" fill="${NAVY}">חוזה עם קבלן</text>
+      ${[0, 1, 2, 3, 4].map(i => `<rect class="a8r" x="${60 + (i % 2) * 60}" y="${150 + i * 64}" width="${480 - (i % 2) * 60}" height="20" rx="10" fill="${LINE}"/>`).join('')}
+      <path d="M70 620 H530" stroke="${NAVY}" stroke-width="4" stroke-dasharray="14 10"/><text x="530" y="598" font-size="36" fill="${TEAL}">חתימה</text>`, 1) + svg(`
+    <g id="a8pen" class="ln"><path d="M0 0 L36 -36 L250 -250 L214 -286 L0 -72 Z" fill="${NAVY}"/><path d="M0 0 L0 -72 L-24 24 Z" fill="${RED}"/></g>`) +
+    `<div class="big" id="a8c" style="top:1240px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:84px;padding:18px 54px 26px;border-radius:999px">דברו איתנו</span></div>`,
+  anim(u) { rise($('a8t'), u, 0, .5, 40); tiltCard($('a8d'), E(u, .05, .6), -7, 4, 2);
+    document.querySelectorAll('.a8r').forEach((e, i) => { const p = E(u, .25 + i * .07, .4); e.style.opacity = clamp(p * 2); e.style.transform = `translateX(${(1 - p) * 30}px)`; });
+    const pe = E(u, .3, .85), bk = quadIn(P(u, 1.35, .3)); $('a8pen').setAttribute('transform', `translate(${lerp(-200, 300, pe) - 60 * bk} ${lerp(1320, 1050, pe) + 40 * bk})`);
+    landEl($('a8c'), B(u, 1.0, .45)); } },
+// 9 · end card (drawn by reel.js)
+{ html: '', anim() {} },
+];
+Reel.run({ scenes, tail: 1.6, ctaFrom: 1, zoom: {4: [310, 830]}, sides: ['b', 'p', 'p', 'b', 'p', 'bp', 'p', 'p'], endLine: 'קבוצת קורקוס, פיקוח בנייה מטעמכם' });
+</script>
+</body>
+</html>

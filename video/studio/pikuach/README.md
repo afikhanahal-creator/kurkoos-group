@@ -10,11 +10,14 @@ python3 video/studio/pikuach/tts.py        # קריאה אחת רציפה מ-Gem
 python3 video/studio/pikuach/music.py      # music.wav, מתוזמן לחיתוכים מתוך timings.js
 cd video
 node engine/anim_render.cjs studio/pikuach/index.html --check    # בדיקת גיאומטריה על כל פריים
-node engine/anim_render.cjs studio/pikuach/index.html -o ../out/pikuach_video.mp4
+node engine/anim_render.cjs studio/pikuach/index.html -o ../out/pikuach_video.mp4    # כשעה; אפשר לחלק ל-4 עם --from/--to ולחבר ב-concat
 cd ..
+# מיקס: מוזיקה מתחת לקול (sidechain), ואז דחיסה קלה, הגברה ולימיטר, כי loudnorm על הקובץ הזה נתן -14.6 LUFS
 ffmpeg -y -i out/pikuach_video.mp4 -i video/studio/pikuach/music.wav -i video/studio/pikuach/voice/voice.wav -filter_complex \
- "[1:a]volume=0.5[m];[2:a]asplit[v1][v2];[m][v1]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=350[md];[md][v2]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[a]" \
- -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest -movflags +faststart kurkoos-pikuach.mp4
+ "[1:a]volume=0.5[m];[2:a]apad,asplit[v1][v2];[m][v1]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=350[md];[md][v2]amix=inputs=2:normalize=0:duration=first[a]" \
+ -map "[a]" -t 53.78 -ar 48000 out/mix.wav
+ffmpeg -y -i out/pikuach_video.mp4 -i out/mix.wav -af "acompressor=threshold=-20dB:ratio=3:attack=5:release=150:makeup=1,volume=11.1dB,aresample=192000,alimiter=limit=0.7:attack=1:release=80:level=false,aresample=48000" \
+ -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -t 53.78 -movflags +faststart kurkoos-pikuach.mp4    # נמדד: -14.1 LUFS, שיא -2.6 dBFS
 # הכריכה: צילום של cover.html בגודל 1080x1920 -> kurkoos-pikuach-cover.png
 ```
 

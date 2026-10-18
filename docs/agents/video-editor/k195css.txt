@@ -75,6 +75,7 @@
  .v195skc b{margin-top:10px}
 
  /* ---------- touch targets that were under 44px ---------- */
+ html body.v195 button[data-v175p]{min-width:44px}
  html body.v195 [data-app="cm"],html body.v195 [data-v175p],html body.v195 .v170link,html body.v195 .v170btn,html body.v195 #v194 .v194tabs button,html body.v195 #v194 .v194clone,html body.v195 #appviews .v179tabs button,html body.v195 #appviews .v179seg button,html body.v195 #appviews .v179chips button{min-height:44px!important}
  html body.v195 #appviews input[type="search"],html body.v195 #appviews .v170q input{min-height:44px!important;font-size:16px}
 }

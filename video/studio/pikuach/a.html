@@ -95,7 +95,7 @@ const scenes = [
     <image class="ln" id="a1g" href="kurkoos-logo-h.svg" x="388" y="126" width="304" height="76"/>
     ${photo('a1p', 'media/p6.jpg', 60, 360, 960, 1080, `
       ${[[270, 1180], [624, 1160], [272, 1080]].map(([x, y]) => `<g transform="translate(${x} ${y})"><g class="a1r"><circle r="36" fill="none" stroke="${RED}" stroke-width="7" stroke-dasharray="11 8"/><circle r="8" fill="${RED}"/></g></g>`).join('')}
-      <g id="a1c"><rect x="40" y="1440" width="1000" height="420" fill="url(#a1n)"/><path d="M40 1440 Q300 1426 540 1438 T1040 1432" stroke="#d3dde3" stroke-width="8" fill="none" opacity=".9"/></g>
+      <g id="a1c"><rect x="40" y="1440" width="1000" height="420" fill="url(#a1n)"/><rect x="40" y="1440" width="1000" height="420" filter="url(#a1f)" opacity=".55"/><path d="M40 1440 Q300 1426 540 1438 T1040 1432" stroke="#d3dde3" stroke-width="8" fill="none" opacity=".9"/></g>
       <g id="a1k"><rect x="96" y="430" width="240" height="70" rx="35" fill="${RED}" filter="url(#sh)"/><text x="306" y="478" font-size="42" fill="${PAPER}">תוך ימים</text></g>`)}`),
   anim(u, len, $$) { rise($('a1t'), u, 0, .5, 10); $('a1g').style.opacity = E(u, .05, .4); kb('a1p', u, len, 300, 760, 1.0, 1.1);
     $$('.a1r').forEach((g, i) => land(g, B(u, .45 + i * .18, .45)));

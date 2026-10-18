@@ -38,6 +38,27 @@ ffmpeg -y -i out/pikuach_video.mp4 -i out/mix.wav -af "acompressor=threshold=-20
 - הסצנות שמחברות את השניים: פיצול "הקבלן בונה" מול עמודת מפקח ריקה; יציקה שנעצרת עד שהמוט מתוקן; בניין של קבלן אחר שעולה קומה קומה ובכל קומה וי בפרוטוקול; ראיתה ושכינתא מחוברות בסוגר; ובמסלול, בכל תחנה בלוק עולה ווי מאשר אותו.
 - תנועה: כניסות עם expo או back (מה שנוחת), יציאות מהירות יותר. שלושה מעברי זום דרך נקודה: מהיסודות לכרטיסי התקלות, מהעמודה הריקה לתג של שכינתא, ומארבע החטיבות לכרטיסי הזרועות. בשאר החיתוכים הסרגל.
 
+## שני ריילים של 30 שניות
+
+**A, "מי בודק את הקבלן?"** (`a.html`, `kurkoos-pikuach-30a.mp4`, כריכה `cover-a.html`): בעיה, פתרון, קריאה לפעולה.
+**B, "מי עומד מאחורי הפיקוח"** (`b.html`, `kurkoos-pikuach-30b.mp4`, כריכה `cover-b.html`): אמון ורימרקטינג, שלומי והחטיבות.
+
+```bash
+python3 video/studio/pikuach/tts.py          # פעם אחת: full.wav ו-voice/align.json (איפה כל שורה)
+python3 video/studio/pikuach/voice30.py      # voice/a.wav, voice/a-timings.js, voice/b.wav, voice/b-timings.js
+python3 video/studio/pikuach/media.py        # media/: חיתוכי התמונות והפריימים של הסרטון מ-public/
+python3 video/studio/pikuach/music.py voice/a-timings.js music-a.wav 1.6
+python3 video/studio/pikuach/music.py voice/b-timings.js music-b.wav 1.3
+cd video && node engine/anim_render.cjs studio/pikuach/a.html --check && node engine/anim_render.cjs studio/pikuach/a.html -o ../out/a.mp4
+# מיקס כמו בריל הארוך, עם music-a.wav ו-voice/a.wav, ‎-t 31.99 (B: ‎-t 28.66)
+```
+
+- `reel.js`: הקוד המשותף לשני הריילים (כתוביות, מעברים, מצלמה, מקרא, רצועת הטלפון, כרטיס סיום, check, ותיקון השקיפות 0).
+- הקול: אותה קריאה רציפה של הריל הארוך, חתוכה (`voice30.py`). שורה 2 בלי "שרוול שנשכח בתקרה" (חיתוך בתוך ההפסקות 6.12 עד 7.95 של full.wav). שורות 7 ו-8 מקוצרות ומחוברות: "בדיקת חשבונות הקבלן לפני תשלום, ועד פרוטוקול מסירה." בריל A השורה האחרונה מתחילה מהטלפון (בלי "קבוצת קורקוס."). כל חלק תומלל בחזרה ונבדק. A בקצב x1.22, B בקצב x1.14.
+- הוקלט מחדש: רק פתיח B, "המפקח שלכם צריך להבין בנייה. לא רק לבדוק אותה." (`voice/take-b0.wav`, אותו קול Charon, אותה עוצמה), שאושר על ידי הבעלים. שורה 11 היא ההקלטה הנפרדת שכבר הייתה (רָאִיטָה).
+- התמונות אמיתיות, מתוך public/: `execution-gallery/6.jpg` (כלובי עמודים בטפסנות), `execution-gallery/2.jpg` (עמוד יצוק עם ברזל קוצים, איטום בבסיס), `divisions/execution-bg.jpg` (טפסנות קיר, ברזל מעליה, צינור המשאבה), `divisions/kurkoos-showcase.mp4` (וידאו מהאתר), `divisions/humash-22-24-sketch.webp` (שרטוט חזית 1:100), `afik-hanahal-logo.webp`. `execution-gallery/4.jpg` ו-`5.jpg` (סלפי של אדם) לא בשימוש. אף אדם בתמונות האתר לא מזוהה בשם; שלומי מופיע רק בתמונה שלו (`shlomi-standing.jpg`).
+- שכבת הפיקוח מצוירת על התמונה בקואורדינטות של התמונה עצמה, ונעה איתה בדחיפה האיטית: מסגרת אדומה סביב פרט אמיתי, קו מוביל ותווית. התוויות אומרות מה בודקים ("בדיקה: ברזל", "בדיקה: איטום", "בדיקה לפני יציקה") ולא טוענות שבתמונה יש ליקוי.
+
 ## העובדות ומקורן
 
 | בסרטון | מקור |
@@ -52,6 +73,7 @@ ffmpeg -y -i out/pikuach_video.mp4 -i out/mix.wav -af "acompressor=threshold=-20
 | ארבעה תחומים תחת קורת גג אחת | public/llms.txt, שורת הפתיחה |
 | החטיבות: היזמות, הביצוע, הפיקוח, התיווך | src/components/ui/ArticleCta.jsx ("לחטיבת היזמות" וכו') |
 | קורקוס יזמות (יזמות נדל"ן), ראיתה (ביצוע ובנייה), שכינתא (ניהול ופיקוח), אפיק הנחל (תיווך ושיווק) | public/llms.txt ("זרועות"), src/data/divisions.js (name), index.html (Organization של כל זרוע) |
+| "המפקח שלכם צריך להבין בנייה. לא רק לבדוק אותה." (פתיח B) | נוסח שאושר על ידי הבעלים |
 | מקרקע ועד מסירת מפתח | index.html (slogan), public/llms.txt |
 | לבחור מפקח לפני החתימה עם הקבלן | src/content/supervision/2026-10-11-eich-livchor-mefakeach-bniya.js, שורה 74 |
 | 055-981-1814, https://www.kurkoos-group.co.il | src/data/site.js, public/llms.txt |

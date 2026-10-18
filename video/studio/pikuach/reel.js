@@ -109,16 +109,16 @@ function run(cfg) {
     const n = CUT.filter(c => c <= t).length - 1;
     SC.forEach(s => vis(s, false));
     let j = -1; for (let i = 0; i < NS; i++) if ((i > 0 || CUT[0] > 0) && Math.abs(t - CUT[i]) < (ZOOM[i] ? HZ : H2)) j = i;
-    let yb = -400;
+    let yb = -400, pw = 0;
     if (j >= 0 && ZOOM[j]) { const p = (t - CUT[j] + HZ) / (2 * HZ), f = ZOOM[j];
       show(j - 1, t, -1, 2000, {s: 1 + 1.4 * quadIn(p), o: 1 - smooth(p), f, out: true}); show(j, t, -1, 2000, {s: 1.35 - .35 * expo(p), o: smooth(p), f}); }
-    else if (j >= 0) { const p = (t - CUT[j] + H2) / (2 * H2); yb = lerp(-300, 1920, p); show(j, t, -1, yb); if (j > 0) show(j - 1, t, yb + 300, 2000); }
+    else if (j >= 0) { const p = (t - CUT[j] + H2) / (2 * H2); pw = p; yb = lerp(-300, 1920, p); show(j, t, -1, yb); if (j > 0) show(j - 1, t, yb + 300, 2000); }
     else if (n >= 0 && n < NS) show(n, t, -1, 2000);
     else if (n === NS && t < END + .9) show(NS - 1, t, -1, 2000);   // the last scene stays under the end card while it comes down
     vis($('wipe'), j >= 0 && !ZOOM[j]); $('wipe').style.top = yb + 'px';
     vis($('cover'), n < 0 || j === 0); $('cover').style.clipPath = j === 0 ? `inset(${yb + 300}px 0 0 0)` : 'none';
     const ctaAt = CUT[cfg.ctaFrom], ctaOn = t >= ctaAt && t < END; vis($('cta'), ctaOn); $('cta').style.transform = `translateY(${(1 - E(t, ctaAt, .5)) * -90}px)`;
-    const m = Math.max(0, Math.min(n, NS - 1)), side = (cfg.sides[j >= 0 ? j : m] || '');
+    const m = Math.max(0, Math.min(n, NS - 1)), side = j > 0 && !ZOOM[j] && (!cfg.sides[j] || !cfg.sides[j - 1]) ? '' : (cfg.sides[j >= 0 && (ZOOM[j] || pw > .5) ? j : (j >= 0 ? j - 1 : m)] || '');   // no legend while a scene without one is on screen
     $('legend').style.display = n >= 0 && t < END && side ? 'flex' : 'none';
     $('legend').querySelector('.b').classList.toggle('on', side.includes('b')); $('legend').querySelector('.p').classList.toggle('on', side.includes('p'));
     const u = t - CUT[m], len = (CUT[m + 1] || DUR) - CUT[m];

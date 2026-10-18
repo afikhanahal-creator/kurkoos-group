@@ -78,31 +78,55 @@
   // ---------- db: מסמכים בסגנון Firestore על טבלה אחת
   const T = '/rest/v1/engine_docs'
   const enc = encodeURIComponent
-  function docSnap(id, data, exists) { return { id, exists: !!exists, data: () => (exists ? clone(data) : undefined), metadata: { fromCache: false, hasPendingWrites: false } } }
-  function qSnap(map, changes) {
-    const docs = [...map.entries()].map(([id, v]) => docSnap(id, v, true))
+  // own: the rows belong to this snapshot only (a one-shot read), so data() hands them out without a deep copy
+  function docSnap(id, data, exists, own) { return { id, exists: !!exists, data: () => (exists ? (own ? data : clone(data)) : undefined), metadata: { fromCache: false, hasPendingWrites: false } } }
+  function qSnap(map, changes, own) {
+    const docs = [...map.entries()].map(([id, v]) => docSnap(id, v, true, own))
     return { docs, size: docs.length, empty: !docs.length, forEach: (f) => docs.forEach(f), docChanges: () => changes || docs.map((d, i) => ({ type: 'added', doc: d, oldIndex: -1, newIndex: i })), metadata: { fromCache: false, hasPendingWrites: false } }
   }
   // מטמון בדפדפן (IndexedDB): בפתיחה הראשונה נטען הכול, ובכל פתיחה אחרי זה רק מה שהשתנה
   const IDB = (() => { let p = null; return () => p || (p = new Promise((ok) => { try { const r = indexedDB.open('kurkoos-engine-' + DATA_EPOCH, 1); const t = setTimeout(() => ok(null), 3000); r.onupgradeneeded = () => r.result.createObjectStore('cols'); r.onsuccess = () => { clearTimeout(t); ok(r.result) }; r.onerror = () => { clearTimeout(t); ok(null) }; r.onblocked = () => { clearTimeout(t); ok(null) } } catch (e) { ok(null) } })) })()
   async function cacheGet(col) { const d = await IDB(); if (!d) return null; return new Promise((ok) => { try { const q = d.transaction('cols').objectStore('cols').get(col); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null) } catch (e) { ok(null) } }) }
-  async function cachePut(col, v) { const d = await IDB(); if (!d) return; try { d.transaction('cols', 'readwrite').objectStore('cols').put(v, col) } catch (e) {} }
+  async function cachePut(col, v) { const d = await IDB(); if (!d) return; try { const tx = d.transaction('cols', 'readwrite'); tx.objectStore('cols').put(v, col); tx.oncomplete = () => { try { localStorage.setItem(HINT + col, v.last); localStorage.setItem(HINT + 'n_' + col, String(v.rows.length)) } catch (e) {} } } catch (e) {} }
+  // V196: the put copies the whole collection on the main thread (posts: about 14 MB), so for a watched collection it runs
+  // when the page is idle (at most 4 s later, and right away when the page is hidden); a newer write for the same collection
+  // replaces an older one. A one-shot read hands its rows to the app without a copy, so its put stays immediate: the cache
+  // keeps what the server sent, not what the app did to it afterwards.
+  const later = new Map(); let laterT = 0
+  function flushLater() { laterT = 0; const all = [...later.entries()]; later.clear(); all.forEach(([c, v]) => cachePut(c, v)) }
+  function cachePutLater(col, v) { later.set(col, v); if (laterT) return; laterT = 1; const go = () => { if (laterT) flushLater() }; if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500) }
+  addEventListener('pagehide', () => { if (later.size) flushLater() })
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && later.size) flushLater() })
   // דפים של 1000 שורות. הדף הראשון מחזיר גם את המספר הכולל, ושאר הדפים נטענים במקביל (בטלפון זה הבדל של שניות ארוכות)
-  async function pages(q, onProgress) {
+  // V196: guess = how many pages are expected (from the last read of this collection); those are requested at once,
+  // with the first one, instead of after the first answer (on a phone that answer waits for the page script to finish)
+  // V196: after the page script has run and the first frame is painted (the shell and the skeleton cards); the reads that
+  // start while the page is still loading wait for it before they parse anything, so they do not hold up the first paint
+  const booted = new Promise((ok) => {
+    let done = false; const go = () => { if (!done) { done = true; setTimeout(ok, 0) } }
+    const frame = () => { try { requestAnimationFrame(go) } catch (e) { go() } }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', frame); else frame()
+    setTimeout(go, 4000)
+  })
+  async function pages(q, onProgress, guess, wait) {
     const P = 1000
+    const spec = new Map()
+    const json = (r) => (wait ? booted.then(() => r.json()) : r.json())
+    for (let k = 1; k < (guess || 0) && k < 40; k++) { const off = k * P; const p = call(`${q}&limit=${P}&offset=${off}`, { method: 'GET' }).then(json); p.catch(() => {}); spec.set(off, p) }
     const r0 = await call(`${q}&limit=${P}&offset=0`, { method: 'GET', headers: { Prefer: 'count=exact' } })
-    const first = await r0.json()
+    const first = await json(r0)
     const m = /\/(\d+)$/.exec(r0.headers.get('content-range') || '')
     const total = m ? +m[1] : null
     if (onProgress) onProgress(first.length, total)
     if (first.length < P) return first
-    if (total == null) { const out = first.slice(); let off = P; for (;;) { const r = await call(`${q}&limit=${P}&offset=${off}`, { method: 'GET' }); const rows = await r.json(); out.push(...rows); if (onProgress) onProgress(out.length, null); if (rows.length < P) break; off += P } return out }
+    if (total == null) { const out = first.slice(); let off = P; for (;;) { const rows = await (spec.get(off) || call(`${q}&limit=${P}&offset=${off}`, { method: 'GET' }).then((r) => r.json())); out.push(...rows); if (onProgress) onProgress(out.length, null); if (rows.length < P) break; off += P } return out }
     let got = first.length
     const offs = []; for (let off = P; off < total; off += P) offs.push(off)
     const rest = new Array(offs.length)
     let next = 0
-    const worker = async () => { while (next < offs.length) { const i = next++; const r = await call(`${q}&limit=${P}&offset=${offs[i]}`, { method: 'GET' }); rest[i] = await r.json(); got += rest[i].length; if (onProgress) onProgress(got, total) } }
-    await Promise.all([worker(), worker(), worker(), worker()])
+    const worker = async () => { while (next < offs.length) { const i = next++; const sp = spec.get(offs[i]); rest[i] = sp ? await sp : await (await call(`${q}&limit=${P}&offset=${offs[i]}`, { method: 'GET' })).json(); got += rest[i].length; if (onProgress) onProgress(got, total) } }
+    // V196: up to eight pages at once (the posts are nine pages; four at a time took three rounds on a phone)
+    await Promise.all([worker(), worker(), worker(), worker(), worker(), worker(), worker(), worker()])
     return first.concat(...rest)
   }
   // ---------- פס טעינה: עד שהפוסטים מגיעים מהשרת המערכת לא נראית ריקה
@@ -121,25 +145,41 @@
     } catch (e) {}
   }
   const maxTs = (rows, start) => rows.reduce((m, x) => (x.updated_at > m ? x.updated_at : m), start || '')
-  async function readAll(col) {
+  // V196: the cursor of each cached collection is also kept in localStorage, so a read that starts before IndexedDB has
+  // answered (the posts, while the page is still loading) can already ask the server for the right rows
+  const HINT = 'engine_cur_'
+  const freshQ = (col, last) => `${T}?collection=eq.${enc(col)}&updated_at=gte.${enc(last)}&select=id,data,updated_at&order=updated_at`
+  const idsQ = (col) => `${T}?collection=eq.${enc(col)}&select=id&order=id`
+  const fullQ = (col) => `${T}?collection=eq.${enc(col)}&select=id,data,updated_at&order=id`
+  const progOf = (col, cached) => col !== 'posts' ? null : cached
+    ? (n, t) => { if (t > 200) loadBar({ t: `מעדכן פוסטים ששונו… ${Math.min(n, t).toLocaleString('he-IL')} מתוך ${t.toLocaleString('he-IL')}`, f: n / t }) }
+    : (n, t) => loadBar({ t: t ? `טוען את הפוסטים מהשרת… ${Math.min(n, t).toLocaleString('he-IL')} מתוך ${t.toLocaleString('he-IL')}` : 'טוען את הפוסטים מהשרת…', f: t ? n / t : 0.1 })
+  async function readAll(col, own, early) {
+    const put = own ? cachePut : cachePutLater
+    if (early) await booted
     const c = await cacheGet(col)
     if (c && c.rows && c.last) {
-      const prog = col === 'posts' ? (n, t) => { if (t > 200) loadBar({ t: `מעדכן פוסטים ששונו… ${Math.min(n, t).toLocaleString('he-IL')} מתוך ${t.toLocaleString('he-IL')}`, f: n / t }) } : null
-      const fresh = await pages(`${T}?collection=eq.${enc(col)}&updated_at=gte.${enc(c.last)}&select=id,data,updated_at&order=updated_at`, prog)
-      const ids = new Set((await pages(`${T}?collection=eq.${enc(col)}&select=id&order=id`)).map((x) => x.id))
+      // the rows changed since the cursor and the list of ids are asked for together (they were one after the other)
+      const use = early && early.last === c.last && early.fresh
+      const freshP = use ? early.fresh : pages(freshQ(col, c.last), progOf(col, true))
+      const idsP = use ? early.ids : pages(idsQ(col))
+      const fresh = await freshP
+      const ids = new Set((await idsP).map((x) => x.id))
       const map = new Map(c.rows.filter(([id]) => ids.has(id)))
-      fresh.forEach((x) => map.set(x.id, x.data))
+      // updated_at=gte returns the newest rows again every time; only a row that really differs counts as a change
+      let changed = map.size !== c.rows.length
+      fresh.forEach((x) => { if (!changed) { const o = map.get(x.id); if (o === undefined || JSON.stringify(o) !== JSON.stringify(x.data)) changed = true } map.set(x.id, x.data) })
       const last = maxTs(fresh, c.last)
-      if (fresh.length || map.size !== c.rows.length) cachePut(col, { rows: [...map.entries()], last })
+      if (changed || last !== c.last) put(col, { rows: [...map.entries()], last })
       if (col === 'posts') loadBar(null)
       return { map, last }
     }
-    const prog = col === 'posts' ? (n, t) => loadBar({ t: t ? `טוען את הפוסטים מהשרת… ${Math.min(n, t).toLocaleString('he-IL')} מתוך ${t.toLocaleString('he-IL')}` : 'טוען את הפוסטים מהשרת…', f: t ? n / t : 0.1 }) : null
+    const prog = progOf(col, false)
     if (prog) prog(0, null)
-    const rows = await pages(`${T}?collection=eq.${enc(col)}&select=id,data,updated_at&order=id`, prog)
+    const rows = await (early && early.full ? early.full : pages(fullQ(col), prog))
     const map = new Map(rows.map((x) => [x.id, x.data]))
     const last = maxTs(rows, '1970-01-01T00:00:00Z')
-    cachePut(col, { rows: [...map.entries()], last })
+    put(col, { rows: [...map.entries()], last })
     if (col === 'posts') loadBar(null)
     return { map, last }
   }
@@ -187,7 +227,18 @@
       if (stop || busy) return
       busy = true
       try {
-        if (!map || Date.now() - full > 60000) {
+        if (map && Date.now() - full > 60000) {
+          // V196: the same answer as a full read (the cache plus the rows changed since its cursor, minus deleted ids), from
+          // the rows in memory: only the rows changed since the last read are fetched and compared
+          const rows = await pages(`${T}?collection=eq.${enc(col)}&updated_at=gte.${enc(last)}&select=id,data,updated_at&order=updated_at`)
+          const ids = new Set((await pages(`${T}?collection=eq.${enc(col)}&select=id&order=id`)).map((x) => x.id))
+          const changes = []
+          rows.forEach((x) => { if (!ids.has(x.id)) return; const was = map.get(x.id); if (was === undefined || JSON.stringify(was) !== JSON.stringify(x.data)) { changes.push({ type: was === undefined ? 'added' : 'modified', doc: docSnap(x.id, x.data, true) }); map.set(x.id, x.data) } })
+          map.forEach((v, id) => { if (!ids.has(id)) changes.push({ type: 'removed', doc: docSnap(id, v, true) }) })
+          changes.forEach((c) => { if (c.type === 'removed') map.delete(c.doc.id) })
+          last = maxTs(rows, last); full = Date.now()
+          if (changes.length) { cachePutLater(col, { rows: [...map.entries()], last }); cb(qSnap(map, changes)) }
+        } else if (!map) {
           const got = await readAll(col), next = got.map
           const changes = []
           if (map) {
@@ -228,12 +279,31 @@
     collection: (col) => ({
       id: col, path: col,
       doc: (id) => docRef(col, id),
-      get: async () => qSnap((await readAll(col)).map),
+      get: async () => { const pre = takePrefetch(col); let got = null; if (pre) { try { got = await pre } catch (e) { got = null } } if (!got) got = await readAll(col, true); return qSnap(got.map, null, true) },
       onSnapshot: (cb, onErr) => watchCol(col, cb, onErr),
       add: async (data) => { const id = rid(); await upsert(col, id, clone(data)); return docRef(col, id) },
     }),
     doc: (path) => { const [c, id] = splitPath(path); return docRef(c, id) },
   }
+  // ---------- V196: the posts start loading as soon as this file runs (about two seconds before the page script asks
+  // for them, while the browser is still reading the page). The first read of the posts takes this answer; it is used
+  // once, and only within a minute, otherwise the read goes to the server as before.
+  const PRE = {}
+  // With a cursor hint the changed rows and the ids are requested right now; on a browser that never opened the engine
+  // (no cursor, no sync record) the full read starts right now. Otherwise the read waits for IndexedDB, as before.
+  function prefetch(col) {
+    if (PRE[col]) return
+    let hint = null, never = false, n = 0
+    try { hint = localStorage.getItem(HINT + col); n = +(localStorage.getItem(HINT + 'n_' + col) || 0); never = !hint && localStorage.getItem('ps_h') == null } catch (e) {}
+    // pages expected: from the last read, or, on a browser that never opened the engine, the size of the library (about 8,200 posts)
+    const guess = Math.ceil((n || (never && col === 'posts' ? 8300 : 0)) / 1000)
+    let early = null
+    const quiet = (p) => { p.catch(() => {}); return p }
+    if (hint) early = { last: hint, fresh: quiet(pages(freshQ(col, hint), progOf(col, true), 0, true)), ids: quiet(pages(idsQ(col), null, guess, true)) }
+    else if (never) { const prog = progOf(col, false); if (prog) prog(0, null); early = { full: quiet(pages(fullQ(col), prog, guess, true)) } }
+    const p = readAll(col, true, early || { late: 1 }); p.catch(() => {}); PRE[col] = { p, t: Date.now() }
+  }
+  function takePrefetch(col) { const x = PRE[col]; if (!x) return null; delete PRE[col]; return Date.now() - x.t < 60000 ? x.p : null }
   function rid() { const a = new Uint8Array(16); crypto.getRandomValues(a); return [...a].map((b) => b.toString(16).padStart(2, '0')).join('') }
 
   // ---------- assets: קבצים בתיקייה engine-media
@@ -330,5 +400,6 @@
     document.body.appendChild(g)
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', gate); else gate()
+  try { if (readSession()) prefetch('posts') } catch (e) {}
   window.__engineBridge = { token, db, assets, readSession }
 })()

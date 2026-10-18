@@ -49,3 +49,4 @@ video/studio/*-out-stills/
 /scripts/meta_capture/ads.json
 /scripts/meta_capture/*.out
 /scripts/meta_capture/older.json
+/out/

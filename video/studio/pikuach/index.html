@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Kurkoos supervision</title>
+<!-- Kurkoos reel: "פיקוח". A drawing sheet (paper, faint mist grid, navy line work, red only for what matters).
+  9:16, timed by the voice (voice/timings.js, written by tts.py): one scene per line of narration, a hard cut behind a
+  scale ruler that sweeps down the sheet at every line, a punch-in on every scene. Each scene carries a drawing's detail
+  marker (a split circle with its number). Captions at the bottom are the same words as the voice. Pure function of t.
+  SCENES (line: picture)
+  1  "בונים בית פרטי?", a house elevation draws in, red defects in the foundation, concrete rises and hides them
+  2  three detail cards: rebar missing in a beam section, a sleeve missing in the slab, waterproofing without a flood test
+  3  the cost of the repair: a short navy bar while it is visible, a tall red bar after the concrete
+  4  a balance: the contractor's side goes down, yours goes up
+  5  שכינתא: a magnifier sweeps a site plan, "העיניים שלכם באתר"
+  6  the stage line: foundations, pours, waterproofing, finish; the critical two turn red and get "נבדק"
+  7  a contractor's bill gets the stamp "נבדק לפני תשלום", schedule and budget bars below
+  8  the handover protocol ticks itself off, "גם כשקבלן אחר בונה"
+  9  Shlomi Kurkoos, his photo framed like a detail, name and role as the site states them
+  10 4 divisions under one roof
+  11 the four arms by name: קורקוס יזמות, ראיתה, שכינתא, אפיק הנחל
+  12 a winding route from קרקע to מפתח, the four arms as stations on it
+  13 a contract with an empty signature line, "דברו איתנו" before the pen lands
+  14 end card on navy: logo, דברו איתנו, קבוצת קורקוס, phone, site
+-->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../lib/fonts.css">
+<style>
+  @font-face{font-family:Almoni;font-weight:400;font-display:block;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;font-display:block;src:url(../../fonts/Almoni-700.ttf)}
+  body{background:#f7f8fa;margin:0}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#f7f8fa;direction:rtl;font-family:Almoni}
+  #sheet{position:absolute;inset:0}
+  #grain{position:absolute;inset:0;opacity:.05;pointer-events:none;z-index:50}
+  .abs{position:absolute;left:0;top:0}
+  .sc{position:absolute;inset:0;display:none}
+  .big{position:absolute;left:0;right:0;text-align:center;font-weight:700;color:#07293a;line-height:.95}
+  .lbl{position:absolute;font-weight:700;color:#07293a;white-space:nowrap;line-height:1}
+  .chip{position:absolute;font-weight:700;font-size:48px;line-height:1;padding:16px 30px 20px;border-radius:999px;white-space:nowrap;background:#07293a;color:#f7f8fa}
+  .chip.r{background:#a90b0c}
+  .chip.l{background:#f7f8fa;color:#07293a;border:4px solid #07293a}
+  .hdr{position:absolute;right:90px;top:220px;display:flex;align-items:center;gap:26px}
+  .mk{position:relative;width:118px;height:118px;border:6px solid #07293a;border-radius:50%;background:#f7f8fa;flex:none}
+  .mk:after{content:"";position:absolute;left:0;right:0;top:56px;height:6px;background:#07293a}
+  .mk b{position:absolute;left:0;right:0;top:12px;text-align:center;font-size:44px;line-height:1;color:#a90b0c}
+  .mk i{position:absolute;left:0;right:0;top:72px;text-align:center;font-size:28px;line-height:1;color:#105572;font-style:normal;font-weight:700}
+  .hdr .tt span{display:block;font-weight:700;font-size:88px;color:#07293a;line-height:1}
+  .hdr .tt small{display:block;font-size:40px;color:#105572;font-weight:700;margin-bottom:8px;line-height:1}
+  #world{display:block}
+  #wipe{position:absolute;left:0;right:0;height:300px;z-index:40;display:none}
+  #cap{position:absolute;left:70px;right:70px;bottom:150px;display:flex;justify-content:center;z-index:30}
+  #capb{background:#07293a;color:#f7f8fa;border-radius:26px;padding:24px 40px 30px;font-weight:700;font-size:60px;line-height:1.18;text-align:center;max-width:940px;box-sizing:border-box}
+  #capb .w{display:inline-block}
+  #capb .rd{color:#ff8f87}
+  #end{position:absolute;inset:0;background:#07293a;display:none;z-index:35}
+  #sheetno{position:absolute;left:84px;top:78px;font-weight:700;font-size:30px;color:#8fb6c8;direction:rtl;z-index:2}
+  #sheettag{position:absolute;right:84px;top:78px;font-weight:700;font-size:30px;color:#8fb6c8;z-index:2}
+  svg{overflow:visible}
+  svg text{font-family:Almoni;font-weight:700}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="sheet" width="1080" height="1920"></svg>
+  <div id="sheettag">קבוצת קורקוס, פיקוח</div><div id="sheetno"></div>
+  <div class="sc" id="world"></div>
+  <div id="cap"><div id="capb"></div></div>
+  <div id="end"></div>
+  <svg id="wipe" width="1080" height="300"></svg>
+  <canvas id="grain" width="540" height="960"></canvas>
+</div>
+<script src="voice/timings.js"></script>
+<script src="../lib/studio.js"></script>
+<script>
+const W = 1080, H = 1920;
+const NAVY = '#07293a', TEAL = '#105572', MIST = '#8fb6c8', PAPER = '#f7f8fa', RED = '#a90b0c', LINE = '#c9d6de';
+const {clamp, lerp, smooth, step} = Studio;
+const $ = id => document.getElementById(id);
+const k = (t, a, b) => smooth((t - a) / (b - a));
+const L = window.VT.lines;                       // [{i, a, b, cap}] voice seconds
+const CUT = L.map(x => Math.max(0, x.a - .18));  // every scene cuts in just before its line
+CUT[0] = 0;
+const NS = L.length - 1;                          // scenes before the end card
+const END = CUT[NS], DUR = +(window.VT.voice + 1.6).toFixed(2);
+const vis = (el, on) => { el.style.display = on ? 'block' : 'none'; return on; };
+function inout(el, u, a, d) { const i = k(u, a, a + .3); el.style.opacity = i; el.style.transform = `translateY(${(1 - i) * (d == null ? 36 : d)}px)`; return i; }
+const pop = (u, a) => Math.max(0, step(u - a, {f: 3.2, z: .45}));   // springy 0 -> 1 from a
+const draw = (el, p) => { el.style.strokeDashoffset = 1 - clamp(p); };
+const popEl = (el, s, origin) => { el.style.transform = `scale(${s})`; el.style.opacity = clamp(s * 3); if (origin) el.style.transformOrigin = origin; };
+const svgPop = (el, s) => { el.style.transformBox = 'fill-box'; el.style.transformOrigin = 'center'; el.style.transform = `scale(${s})`; el.style.opacity = clamp(s * 3); };
+
+// ---------- the drawing sheet: a faint grid, a frame, registration corners ----------
+$('sheet').innerHTML = (() => { let s = ''; for (let x = 60; x <= 1020; x += 60) s += `<line x1="${x}" y1="60" x2="${x}" y2="1860" stroke="${LINE}" stroke-width="${x % 300 === 0 ? 2 : 1}" opacity=".55"/>`;
+  for (let y = 60; y <= 1860; y += 60) s += `<line x1="60" y1="${y}" x2="1020" y2="${y}" stroke="${LINE}" stroke-width="${y % 300 === 0 ? 2 : 1}" opacity=".55"/>`;
+  s += `<rect x="40" y="40" width="1000" height="1840" fill="none" stroke="${MIST}" stroke-width="4"/>`;
+  [[40, 40, 1, 1], [1040, 40, -1, 1], [40, 1880, 1, -1], [1040, 1880, -1, -1]].forEach(([x, y, a, b]) => s += `<path d="M${x} ${y + b * 80} V${y} H${x + a * 80}" fill="none" stroke="${NAVY}" stroke-width="8"/>`);
+  return s; })();
+// the wipe: a navy scale ruler with mist ticks, crossing the sheet top to bottom
+$('wipe').innerHTML = `<rect width="1080" height="300" fill="${NAVY}"/>` + Array.from({length: 55}, (_, i) => `<path d="M${20 + i * 19.6} 0 V${i % 10 === 0 ? 90 : i % 5 === 0 ? 60 : 34}" stroke="${MIST}" stroke-width="4"/>`).join('') +
+  `<rect y="292" width="1080" height="8" fill="${RED}"/>`;
+
+// ---------- captions (from timings.js; ~ marks a red word, | splits a line into parts) ----------
+const CAPS = [];
+L.forEach(x => { if (!x.cap) return; const parts = x.cap.split('|'), tot = parts.reduce((n, p) => n + p.length, 0); let a = x.a;
+  parts.forEach(p => { const b = a + (x.b - x.a) * p.length / tot; CAPS.push([a - .05, b + (p === parts[parts.length - 1] ? .25 : 0), p]); a = b; }); });
+CAPS.forEach(c => { c.html = c[2].split(' ').map(w => w[0] === '~' ? `<span class="w rd">${w.slice(1)}</span>` : `<span class="w">${w}</span>`).join(' '); });
+let capCur = -1;
+function caption(t) {
+  const i = CAPS.findIndex(c => t >= c[0] && t < c[1]), box = $('cap');
+  if (i < 0 || t >= END) { box.style.opacity = 0; capCur = -1; return; }
+  const c = CAPS[i]; if (capCur !== i) { $('capb').innerHTML = c.html; capCur = i; }
+  box.style.opacity = Math.min(k(t, c[0], c[0] + .15), 1 - k(t, c[1] - .12, c[1]));
+  box.style.transform = `translateY(${(1 - k(t, c[0], c[0] + .2)) * 22}px) scale(${1 + .04 * (1 - k(t, c[0], c[0] + .2))})`;
+  const ws = $('capb').children, n = ws.length, span = Math.min(.9, (c[1] - c[0]) * .45);
+  for (let j = 0; j < n; j++) { const a = c[0] + .05 + span * j / n, p = k(t, a, a + .16); ws[j].style.opacity = .2 + .8 * p; ws[j].style.transform = `translateY(${(1 - p) * 10}px)`; }
+}
+
+// ---------- scenes ----------
+const SC = [];
+function scene(html) { const d = document.createElement('div'); d.className = 'sc'; d.innerHTML = html; $('world').appendChild(d); SC.push(d); return d; }
+const svg = inner => `<svg width="1080" height="1920" class="abs">${inner}</svg>`;
+const hdr = (id, n, title, sub) => `<div class="hdr" id="${id}"><div class="mk"><b>${String(n).padStart(2, '0')}</b><i>פיקוח</i></div><div class="tt">${sub ? `<small>${sub}</small>` : ''}<span>${title}</span></div></div>`;
+const hatch = (id, col) => `<pattern id="${id}" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0 V22" stroke="${col}" stroke-width="5"/></pattern>`;
+const tick = (x, y, s, col, cls) => `<path class="${cls || ''}" d="M${x - 22 * s} ${y} L${x - 6 * s} ${y + 16 * s} L${x + 24 * s} ${y - 18 * s}" fill="none" stroke="${col}" stroke-width="${11 * s}" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>`;
+
+// 1 · build a private house? the mistakes vanish within days
+scene(`<div class="big" id="s1t" style="top:250px;font-size:124px">בונים בית פרטי?</div>
+  ${svg(`<defs>${hatch('h1', MIST)}</defs>
+   <g class="ln" id="s1h"><path class="dr" d="M140 1180 H940" stroke="${NAVY}" stroke-width="10" pathLength="1" stroke-dasharray="1"/>
+    <path class="dr" d="M300 1180 V800 M780 1180 V800 M260 820 L540 600 L820 820" fill="none" stroke="${NAVY}" stroke-width="14" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
+    <path class="dr" d="M300 990 H780" stroke="${NAVY}" stroke-width="10" pathLength="1" stroke-dasharray="1"/>
+    <rect x="380" y="1040" width="100" height="140" fill="none" stroke="${TEAL}" stroke-width="6" class="fd"/><rect x="590" y="860" width="120" height="90" fill="none" stroke="${TEAL}" stroke-width="6" class="fd"/>
+    <rect x="270" y="1180" width="540" height="130" fill="url(#h1)" stroke="${NAVY}" stroke-width="8" class="fd"/>
+    ${[350, 540, 730].map(x => `<g transform="translate(${x} 1245)"><g class="s1d"><circle r="30" fill="none" stroke="${RED}" stroke-width="8" stroke-dasharray="10 8"/><circle r="9" fill="${RED}"/></g></g>`).join('')}
+    <rect id="s1c" x="266" y="1176" width="548" height="138" fill="#9fb1bb"/></g>`)}
+  <div class="chip r" id="s1k" style="left:110px;top:1370px">תוך ימים</div>`);
+// 2 · three hidden mistakes, three detail cards
+const card = (i, y, title, sub, drawing) => `<g class="s2c" id="s2c${i}"><rect x="100" y="${y}" width="880" height="300" rx="22" fill="#fff" stroke="${NAVY}" stroke-width="6"/>
+   <g class="ln">${drawing}</g>
+   <text x="930" y="${y + 130}" font-size="70" fill="${RED}">${title}</text><text x="930" y="${y + 205}" font-size="46" fill="${NAVY}">${sub}</text></g>`;
+scene(svg(`<defs>${hatch('h2', MIST)}</defs>` +
+  card(0, 320, 'ברזל', 'שלא לפי התוכנית', `<rect x="170" y="370" width="290" height="200" fill="none" stroke="${NAVY}" stroke-width="8"/><rect x="196" y="396" width="238" height="148" rx="10" fill="none" stroke="${TEAL}" stroke-width="5"/>
+     ${[220, 410].map(x => `<circle cx="${x}" cy="420" r="13" fill="${NAVY}"/>`).join('')}${[220, 283, 410].map(x => `<circle cx="${x}" cy="520" r="15" fill="${NAVY}"/>`).join('')}
+     <circle cx="347" cy="520" r="24" fill="none" stroke="${RED}" stroke-width="6" stroke-dasharray="8 7"/>`) +
+  card(1, 660, 'שרוול', 'שנשכח בתקרה', `<rect x="150" y="770" width="330" height="80" fill="url(#h2)" stroke="${NAVY}" stroke-width="8"/>
+     <path d="M310 690 V760 M310 860 V930" stroke="${TEAL}" stroke-width="16" stroke-linecap="round"/>
+     <circle cx="310" cy="810" r="54" fill="none" stroke="${RED}" stroke-width="7" stroke-dasharray="12 9"/>`) +
+  card(2, 1000, 'איטום', 'בלי בדיקת הצפה', `<path d="M150 1200 H480" stroke="${NAVY}" stroke-width="10"/><path d="M150 1222 H480" stroke="${RED}" stroke-width="7" stroke-dasharray="16 10"/>
+     <path d="M160 1150 q25 -22 50 0 t50 0 t50 0 t50 0 t50 0 t50 0" fill="none" stroke="${TEAL}" stroke-width="7"/>
+     <path d="M300 1060 q-24 34 0 46 q24 -12 0 -46 Z" fill="${TEAL}"/><path d="M380 1080 q-18 26 0 34 q18 -8 0 -34 Z" fill="${TEAL}"/>`)));
+// 3 · cheap while visible, very expensive after the concrete
+scene(hdr('s3h', 3, 'מחיר התיקון') + svg(`<defs>${hatch('h3', '#ffffff55')}</defs>
+  <path class="ln" d="M120 1250 H960" stroke="${NAVY}" stroke-width="10" stroke-linecap="round"/>
+  <rect class="ln" id="s3a" x="640" y="1130" width="220" height="120" rx="8" fill="${NAVY}"/>
+  <g class="ln" id="s3b"><rect id="s3br" x="220" y="630" width="220" height="620" rx="8" fill="${RED}"/><rect id="s3bh" x="220" y="630" width="220" height="620" rx="8" fill="url(#h3)"/></g>`) +
+  `<div class="lbl" id="s3at" style="left:640px;width:220px;text-align:center;top:1000px;font-size:76px">זול</div>
+   <div class="lbl" id="s3bt" style="left:150px;width:360px;text-align:center;top:520px;font-size:76px;color:${RED}">יקר מאוד</div>
+   <div class="lbl" style="left:590px;width:320px;text-align:center;top:1290px;font-size:46px;color:${TEAL}">כשהיא גלויה</div>
+   <div class="lbl" style="left:150px;width:360px;text-align:center;top:1290px;font-size:46px;color:${TEAL}">אחרי הבטון</div>`);
+// 4 · without your own inspector, the contractor's interest decides
+const pan = (id, label, fill, col) => `<g id="${id}" class="ln"><path d="M-110 0 L0 -320 L110 0" fill="none" stroke="${NAVY}" stroke-width="5"/><path d="M-130 0 H130 Q120 50 0 50 Q-120 50 -130 0 Z" fill="${MIST}" stroke="${NAVY}" stroke-width="6"/>
+   <rect x="-112" y="-96" width="224" height="92" rx="14" fill="${fill}"/><text x="0" y="-34" text-anchor="middle" font-size="50" fill="${col}">${label}</text></g>`;
+scene(`<div class="chip" id="s4c" style="right:110px;top:250px">בלי מפקח מטעמכם</div>` + svg(`
+  <g class="ln"><path d="M540 700 V1250 M400 1250 H680" stroke="${NAVY}" stroke-width="14" stroke-linecap="round"/><path d="M500 1250 L540 1200 L580 1250 Z" fill="${NAVY}"/></g>
+  <g id="s4beam" class="ln"><path d="M240 700 H840" stroke="${NAVY}" stroke-width="14" stroke-linecap="round"/><circle cx="540" cy="700" r="20" fill="${RED}"/></g>
+  ${pan('s4l', 'הקבלן', NAVY, PAPER)}${pan('s4r', 'אתם', '#fff', NAVY)}`) +
+  `<div class="chip r" id="s4k" style="left:110px;top:1340px">הוא שקובע בשטח</div>`);
+// 5 · שכינתא, your professional eyes on site
+scene(`<div class="big" id="s5n" style="top:250px;font-size:200px;color:${NAVY}">שכינתא</div>
+  <div class="big" id="s5s" style="top:470px;font-size:58px;color:${TEAL}">זרוע הפיקוח של קבוצת קורקוס</div>` + svg(`
+  <g class="ln" id="s5p"><rect x="170" y="640" width="740" height="580" fill="#fff" stroke="${NAVY}" stroke-width="12"/>
+   <path d="M470 640 V900 M170 900 H700 M700 900 V1220 M470 1060 H700" stroke="${NAVY}" stroke-width="9" fill="none"/>
+   <path d="M470 840 A60 60 0 0 1 410 900 M700 1000 A60 60 0 0 0 640 940" fill="none" stroke="${TEAL}" stroke-width="5"/>
+   ${[[300, 760], [600, 760], [330, 1080], [800, 1080]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7" fill="${MIST}"/>`).join('')}
+   <g id="s5x"><circle cx="0" cy="0" r="22" fill="none" stroke="${RED}" stroke-width="7"/><path d="M-12 0 L-3 9 L13 -9" fill="none" stroke="${RED}" stroke-width="6"/></g></g>
+  <g id="s5l" class="ln"><circle r="120" fill="#ffffff22" stroke="${RED}" stroke-width="14"/><path d="M84 84 L180 180" stroke="${RED}" stroke-width="30" stroke-linecap="round"/></g>`) +
+  `<div class="chip" id="s5c" style="right:110px;top:1350px">העיניים שלכם באתר</div>`);
+// 6 · checks at the critical stages, like pours and waterproofing
+const ST = [['יסודות', 0], ['יציקות', 1], ['איטום', 1], ['גמר', 0]];
+scene(hdr('s6h', 6, 'השלבים הקריטיים', 'בדיקות בשטח') + svg(`<path class="ln" d="M860 500 V1290" stroke="${NAVY}" stroke-width="10"/>
+  ${ST.map(([n, c], i) => `<g class="ln s6n" id="s6n${i}"><circle cx="860" cy="${520 + i * 250}" r="36" fill="${PAPER}" stroke="${NAVY}" stroke-width="10"/>${c ? `<circle class="s6r" cx="860" cy="${520 + i * 250}" r="36" fill="${RED}"/>${tick(862, 520 + i * 250, 1, PAPER, 's6k')}` : ''}</g>`).join('')}`) +
+  ST.map(([n, c], i) => `<div class="lbl s6t" style="right:${1080 - 790}px;top:${520 + i * 250 - 38}px;font-size:${c ? 84 : 64}px;color:${c ? RED : NAVY}">${n}</div>`).join('') +
+  ST.map(([n, c], i) => c ? `<div class="chip l s6s" style="left:110px;top:${520 + i * 250 - 42}px">נבדק</div>` : '').join(''));
+// 7 · the contractor's bill checked before payment, schedule and budget
+scene(svg(`<g id="s7d"><rect x="200" y="280" width="680" height="700" rx="12" fill="#fff" stroke="${NAVY}" stroke-width="8"/>
+   <text x="820" y="380" font-size="64" fill="${NAVY}">חשבון קבלן</text><path d="M260 420 H820" stroke="${MIST}" stroke-width="5"/>
+   ${[0, 1, 2, 3].map(i => `<rect x="${560 - (i % 2) * 60}" y="${470 + i * 70}" width="${260 + (i % 2) * 60}" height="22" rx="11" fill="${LINE}"/><rect x="260" y="${470 + i * 70}" width="140" height="22" rx="11" fill="${MIST}"/>`).join('')}
+   <path d="M260 760 H820" stroke="${NAVY}" stroke-width="5"/></g>
+  <g id="s7s"><rect x="-230" y="-70" width="460" height="140" rx="20" fill="none" stroke="${RED}" stroke-width="10"/></g>
+  <path class="ln" d="M140 1130 H620 M140 1290 H620" stroke="${LINE}" stroke-width="36" stroke-linecap="round"/>
+  <path class="ln" id="s7g" d="M140 1130 H620" stroke="${NAVY}" stroke-width="36" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>
+  <path class="ln" id="s7b" d="M140 1290 H620" stroke="${TEAL}" stroke-width="36" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>
+  <path class="ln" d="M540 1250 V1330" stroke="${RED}" stroke-width="6" stroke-dasharray="10 8"/>`) +
+  `<div class="lbl" id="s7st" style="left:310px;width:460px;text-align:center;top:832px;font-size:56px;color:${RED};transform-origin:center">נבדק לפני תשלום</div>
+   <div class="lbl" style="right:110px;top:1104px;font-size:52px">לוח זמנים</div><div class="lbl" style="right:110px;top:1264px;font-size:52px">תקציב</div>`);
+// 8 · the handover protocol, even when another contractor builds
+scene(svg(`<g id="s8d"><rect x="210" y="300" width="660" height="820" rx="16" fill="#fff" stroke="${NAVY}" stroke-width="8"/>
+   <rect x="420" y="268" width="240" height="64" rx="14" fill="${NAVY}"/>
+   <text x="540" y="430" text-anchor="middle" font-size="62" fill="${NAVY}">פרוטוקול מסירה</text>
+   ${[0, 1, 2, 3].map(i => `<g><rect x="740" y="${510 + i * 140}" width="70" height="70" rx="10" fill="none" stroke="${NAVY}" stroke-width="6"/>${tick(776, 545 + i * 140, 1, i === 3 ? RED : TEAL, 's8k')}
+     <rect x="${310 + (i % 2) * 70}" y="${535 + i * 140}" width="${380 - (i % 2) * 70}" height="22" rx="11" fill="${LINE}"/></g>`).join('')}</g>`) +
+  `<div class="chip r" id="s8c" style="right:110px;top:1210px">גם כשקבלן אחר בונה</div>`);
+// 9 · a whole group, led by Shlomi Kurkoos, CEO and founder
+scene(svg(`<g class="ln" id="s9f"><image href="shlomi.png" x="270" y="270" width="540" height="558" preserveAspectRatio="xMidYMid slice"/>
+   <rect x="270" y="270" width="540" height="558" fill="none" stroke="${NAVY}" stroke-width="10"/>
+   ${[[240, 240, 1, 1], [840, 240, -1, 1], [240, 858, 1, -1], [840, 858, -1, -1]].map(([x, y, a, b]) => `<path d="M${x} ${y + b * 60} V${y} H${x + a * 60}" fill="none" stroke="${RED}" stroke-width="8"/>`).join('')}</g>`) +
+  `<div class="big" id="s9a" style="top:885px;font-size:50px;color:${TEAL}">קבוצה שלמה, בראשות</div>
+   <div class="big" id="s9n" style="top:990px;font-size:136px">שלומי קורקוס</div>
+   <div class="big" id="s9r" style="top:1155px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:62px;padding:16px 44px 22px;border-radius:999px">מנכ"ל ומייסד</span></div>`);
+// 10 · four divisions under one roof
+const DV = [['יזמות', 0], ['ביצוע', 0], ['פיקוח', 1], ['תיווך', 0]];
+scene(`<div class="big" id="s10t" style="top:240px;font-size:150px"><span style="color:${RED}">4</span> חטיבות</div>` + svg(`
+  <path class="ln" id="s10r" d="M130 720 L540 450 L950 720" fill="none" stroke="${NAVY}" stroke-width="18" stroke-linejoin="round" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>
+  ${DV.map(([n, c], i) => { const x = i % 2 ? 160 : 560, y = 760 + Math.floor(i / 2) * 290; return `<g class="s10b" id="s10b${i}"><rect x="${x}" y="${y}" width="360" height="250" rx="16" fill="${c ? RED : '#fff'}" stroke="${c ? RED : NAVY}" stroke-width="8"/>
+     <text x="${x + 180}" y="${y + 150}" text-anchor="middle" font-size="76" fill="${c ? PAPER : NAVY}">${n}</text></g>`; }).join('')}`) +
+  `<div class="big" id="s10u" style="top:1360px;font-size:64px;color:${TEAL}">תחת קורת גג אחת</div>`);
+// 11 · the four arms by name
+const AR = [['קורקוס יזמות', 'יזמות נדל"ן', 'plot'], ['ראיתה', 'ביצוע ובנייה', 'crane'], ['שכינתא', 'ניהול ופיקוח', 'lens'], ['אפיק הנחל', 'תיווך ושיווק', 'key']];
+const ICON = {
+  plot: (x, y) => `<path d="M${x - 70} ${y + 50} L${x - 40} ${y - 40} L${x + 70} ${y - 30} L${x + 60} ${y + 55} Z" fill="none" stroke="${NAVY}" stroke-width="7"/><path d="M${x} ${y + 20} V${y - 60} L${x + 40} ${y - 46} L${x} ${y - 32}" fill="${RED}" stroke="${RED}" stroke-width="6"/>`,
+  crane: (x, y) => `<path d="M${x - 30} ${y + 60} V${y - 60} M${x - 70} ${y - 50} H${x + 75} M${x + 55} ${y - 50} V${y - 5} M${x - 70} ${y + 60} H${x + 10}" fill="none" stroke="${NAVY}" stroke-width="8"/><rect x="${x + 40}" y="${y - 5}" width="30" height="26" fill="${RED}"/>`,
+  lens: (x, y) => `<circle cx="${x - 10}" cy="${y - 10}" r="42" fill="none" stroke="${PAPER}" stroke-width="10"/><path d="M${x + 22} ${y + 22} L${x + 62} ${y + 62}" stroke="${PAPER}" stroke-width="14" stroke-linecap="round"/>`,
+  key: (x, y) => `<circle cx="${x + 40}" cy="${y}" r="30" fill="none" stroke="${NAVY}" stroke-width="9"/><path d="M${x + 10} ${y} H${x - 70} M${x - 50} ${y} V${y + 26} M${x - 26} ${y} V${y + 20}" fill="none" stroke="${NAVY}" stroke-width="9"/>`,
+};
+scene(svg(AR.map(([n, r, ic], i) => { const y = 260 + i * 270, hi = i === 2; return `<g class="s11r" id="s11r${i}"><rect x="100" y="${y}" width="880" height="230" rx="22" fill="${hi ? RED : '#fff'}" stroke="${hi ? RED : NAVY}" stroke-width="6"/>
+   <g class="ln">${ICON[ic](220, y + 115)}</g>
+   <text x="930" y="${y + 112}" font-size="84" fill="${hi ? PAPER : NAVY}">${n}</text><text x="930" y="${y + 182}" font-size="46" fill="${hi ? '#ffd6d2' : TEAL}">${r}</text></g>`; }).join('')));
+// 12 · complex projects, from land to key
+const ROUTE = 'M900 1180 C900 700 650 650 650 930 S 420 1160 420 900 S 180 700 180 1180';
+scene(`<div class="big" id="s12t" style="top:250px;font-size:110px;line-height:1.05">פרויקטים<br><span style="color:${RED}">מורכבים</span></div>` + svg(`
+  <path class="ln" d="${ROUTE}" fill="none" stroke="${LINE}" stroke-width="16" stroke-linecap="round"/>
+  <path class="ln" id="s12p" d="${ROUTE}" fill="none" stroke="${NAVY}" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>
+  <g id="s12n"></g>`) +
+  `<div class="lbl" style="left:800px;width:200px;text-align:center;top:1240px;font-size:62px">קרקע</div>
+   <div class="lbl" id="s12e" style="left:80px;width:200px;text-align:center;top:1240px;font-size:62px;color:${RED}">מפתח</div>`);
+// 13 · talk to us, before you sign with the contractor
+scene(`<div class="big" id="s13t" style="top:250px;font-size:140px">בונים בית?</div>` + svg(`
+  <g id="s13d"><rect x="390" y="470" width="520" height="660" rx="12" fill="#fff" stroke="${NAVY}" stroke-width="8"/>
+   <text x="650" y="570" text-anchor="middle" font-size="60" fill="${NAVY}">חוזה עם קבלן</text>
+   ${[0, 1, 2, 3, 4].map(i => `<rect x="${450 + (i % 2) * 60}" y="${630 + i * 64}" width="${400 - (i % 2) * 60}" height="20" rx="10" fill="${LINE}"/>`).join('')}
+   <path d="M450 1060 H850" stroke="${NAVY}" stroke-width="5" stroke-dasharray="14 10"/><text x="850" y="1040" font-size="38" fill="${TEAL}">חתימה</text></g>
+  <g id="s13pen" class="ln"><path d="M0 0 L36 -36 L250 -250 L214 -286 L0 -72 Z" fill="${NAVY}"/><path d="M0 0 L0 -72 L-24 24 Z" fill="${RED}"/></g>`) +
+  `<div class="big" id="s13c" style="top:1250px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:84px;padding:18px 54px 26px;border-radius:999px">דברו איתנו</span></div>`);
+// 14 · end card
+$('end').innerHTML = `<img src="logo.png" alt="" style="position:absolute;left:418px;top:330px;width:244px">
+  <div class="big" id="e1" style="top:650px;font-size:150px;color:${PAPER}">דברו איתנו</div>
+  <div class="big" id="e2" style="top:830px;font-size:66px;color:${MIST};font-weight:400">קבוצת קורקוס, פיקוח בנייה מטעמכם</div>
+  <div class="big" id="e3" style="top:990px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:96px;padding:22px 60px 30px;border-radius:999px" dir="ltr">055-981-1814</span></div>
+  <div class="big" id="e4" style="top:1200px;font-size:58px;color:${PAPER};font-weight:400" dir="ltr">www.kurkoos-group.co.il</div>
+  <div class="big" id="e5" style="top:1310px;font-size:50px;color:${MIST};font-weight:400">מקרקע ועד מסירת מפתח</div>`;
+
+// route stations: the four arms along the route
+(() => { const p = $('s12p'), len = p.getTotalLength(); window.R12 = [.2, .42, .62, .82].map((f, i) => { const q = p.getPointAtLength(f * len); return {f, x: q.x, y: q.y}; });
+  $('s12n').innerHTML = R12.map((q, i) => `<circle class="s12d ln" cx="${q.x}" cy="${q.y}" r="${i === 2 ? 30 : 24}" fill="${i === 2 ? RED : PAPER}" stroke="${i === 2 ? RED : NAVY}" stroke-width="8"/>`).join(''); })();
+
+// ---------- grain (static) ----------
+(() => { const c = $('grain'), x = c.getContext('2d'), d = x.createImageData(540, 960), r = Studio.rng(9); for (let i = 0; i < d.data.length; i += 4) { const v = r() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); c.style.width = '1080px'; c.style.height = '1920px'; })();
+
+const q = s => [...document.querySelectorAll(s)];
+
+function seek(t) {
+  const n = CUT.filter(c => c <= t).length - 1;        // current scene 0..NS
+  const u = t - CUT[n];                                 // seconds into it
+  const len = (CUT[n + 1] || DUR) - CUT[n];
+  SC.forEach((s, i) => vis(s, i === n && n < NS));
+  $('sheetno').textContent = n < NS ? `גיליון ${String(n + 1).padStart(2, '0')}/${NS}` : '';
+  // a hard cut behind the ruler: it sweeps down in .24 s around every cut after the first
+  const wp = n > 0 ? clamp((t - CUT[n] + .12) / .24) : 1, wn = n < NS ? clamp((t - CUT[n + 1] + .12) / .24) : 0;
+  const w = wn > 0 ? wn : (wp < 1 ? wp : 0);
+  vis($('wipe'), w > 0 && w < 1); $('wipe').style.top = lerp(-320, 1940, w) + 'px';
+  // a punch in at the start of every scene, then a slow push
+  $('world').style.transform = `scale(${1.06 - .06 * k(u, 0, .28) + .025 * smooth(u / len)})`; $('world').style.transformOrigin = '50% 42%';
+  $('sheet').style.transform = `scale(${1 + .015 * smooth(u / len)}) translateY(${-14 * smooth(u / len)}px)`;
+  if (n === 0) { inout($('s1t'), u, 0, 40); q('#s1h .dr').forEach((e, i) => draw(e, k(u, .1 + i * .2, .6 + i * .2))); q('#s1h .fd').forEach(e => e.style.opacity = k(u, .6, .9));
+    q('.s1d').forEach((g, i) => svgPop(g, pop(u, 1.0 + i * .15))); const c = k(u, 2.0, 2.7); $('s1c').setAttribute('y', 1314 - 138 * c); $('s1c').setAttribute('height', 138 * c);
+    const s = pop(u, 2.6); popEl($('s1k'), s); }
+  if (n === 1) { const at = [0, 1.55, 2.95]; q('.s2c').forEach((g, i) => { const p = k(u, at[i], at[i] + .3); g.style.opacity = p; g.style.transform = `translateX(${(1 - p) * -80}px)`; }); }
+  if (n === 2) { inout($('s3h'), u, 0, 30); const a = k(u, .2, .6); $('s3a').setAttribute('height', 120 * a); $('s3a').setAttribute('y', 1250 - 120 * a); $('s3at').style.opacity = k(u, .5, .7);
+    const b = k(u, 1.6, 2.4); ['s3br', 's3bh'].forEach(id => { $(id).setAttribute('height', 620 * b); $(id).setAttribute('y', 1250 - 620 * b); }); $('s3bt').style.opacity = k(u, 2.3, 2.5); }
+  if (n === 3) { inout($('s4c'), u, 0, 30); const a = 15 * Studio.track(u, [[0, 0], [.5, 1]], {f: 1.6, z: .5}), r = a * Math.PI / 180;
+    $('s4beam').setAttribute('transform', `rotate(${-a} 540 700)`);
+    $('s4l').setAttribute('transform', `translate(${540 - 300 * Math.cos(r)} ${700 + 300 * Math.sin(r) + 320})`); $('s4r').setAttribute('transform', `translate(${540 + 300 * Math.cos(r)} ${700 - 300 * Math.sin(r) + 320})`);
+    popEl($('s4k'), pop(u, 1.5)); }
+  if (n === 4) { popEl($('s5n'), pop(u, 0), '50% 60%'); inout($('s5s'), u, .5, 24); $('s5p').style.opacity = k(u, .2, .5);
+    const lx = lerp(760, 320, k(u, .6, 2.6)), ly = 820 + 200 * Math.sin(k(u, .6, 2.6) * Math.PI); $('s5l').setAttribute('transform', `translate(${lx} ${ly})`); $('s5l').style.opacity = k(u, .5, .7);
+    $('s5x').setAttribute('transform', `translate(${lx} ${ly}) scale(${k(u, .8, 1)})`); inout($('s5c'), u, 2.0); }
+  if (n === 5) { inout($('s6h'), u, 0, 30); q('.s6n').forEach((g, i) => g.style.opacity = k(u, .15 + i * .12, .35 + i * .12)); q('.s6t').forEach((e, i) => inout(e, u, .2 + i * .12, 20));
+    q('.s6r').forEach((e, i) => svgPop(e, pop(u, 1.0 + i * .45))); q('.s6k').forEach((e, i) => draw(e, k(u, 1.15 + i * .45, 1.4 + i * .45))); q('.s6s').forEach((e, i) => popEl(e, pop(u, 1.2 + i * .45))); }
+  if (n === 6) { const d = k(u, 0, .35); $('s7d').style.opacity = d; $('s7d').style.transform = `translateY(${(1 - d) * 50}px)`;
+    const s = pop(u, .8); $('s7s').setAttribute('transform', `translate(540 870) rotate(${-4 * s}) scale(${2 - s})`); $('s7s').style.opacity = clamp(s * 3); $('s7st').style.transform = `rotate(${-4 * s}deg) scale(${2 - s})`; $('s7st').style.opacity = clamp(s * 3);
+    draw($('s7g'), k(u, 1.6, 2.4)); draw($('s7b'), k(u, 1.9, 2.6)); }
+  if (n === 7) { const d = k(u, 0, .35); $('s8d').style.opacity = d; $('s8d').style.transform = `translateY(${(1 - d) * 50}px)`; q('.s8k').forEach((e, i) => draw(e, k(u, .35 + i * .3, .55 + i * .3))); popEl($('s8c'), pop(u, 1.4)); }
+  if (n === 8) { const f = k(u, 0, .5); $('s9f').style.opacity = f; $('s9f').style.transform = `translateY(${(1 - f) * 40}px)`; inout($('s9a'), u, .6, 20);
+    popEl($('s9n'), pop(u, 2.0), '50% 50%'); inout($('s9r'), u, 2.8, 24); }
+  if (n === 9) { popEl($('s10t'), pop(u, 0), '50% 50%'); q('.s10b').forEach((g, i) => { const p = k(u, .15 + i * .1, .4 + i * .1); g.style.opacity = p; g.style.transform = `translateY(${(1 - p) * 40}px)`; });
+    draw($('s10r'), k(u, .7, 1.2)); inout($('s10u'), u, .8, 20); }
+  if (n === 10) { const at = [0, .95, 1.75, 2.55]; q('.s11r').forEach((g, i) => { const p = k(u, at[i], at[i] + .28); g.style.opacity = p; g.style.transform = `translateX(${(1 - p) * 90}px)`; }); }
+  if (n === 11) { inout($('s12t'), u, 0, 30); const p = k(u, .3, 2.4); draw($('s12p'), p); q('.s12d').forEach((e, i) => svgPop(e, p >= R12[i].f ? pop(u, .3 + 2.1 * R12[i].f + .05) : 0));
+    $('s12e').style.opacity = .35 + .65 * k(p, .9, 1); }
+  if (n === 12) { popEl($('s13t'), pop(u, 0), '50% 50%'); $('s13d').style.opacity = k(u, .1, .4);
+    const pe = k(u, .3, 1.0); $('s13pen').setAttribute('transform', `translate(${lerp(-200, 330, pe)} ${lerp(1300, 1080, pe)})`); popEl($('s13c'), pop(u, 1.0), '50% 50%'); }
+  // the end card drops in from the top like a sheet laid on the table
+  const e = k(t, END, END + .4); vis($('end'), t >= END); $('end').style.clipPath = `inset(0 0 ${(1 - e) * 100}% 0)`;
+  ['e1', 'e2', 'e3', 'e4', 'e5'].forEach((id, i) => inout($(id), t - END, .3 + i * .16, 30));
+  caption(t);
+}
+
+// geometry check on every frame: text on text, text on line work (with about 1 cm clearance), anything under the caption, anything cut off
+function check(t) {
+  const out = [], cap = $('cap').getBoundingClientRect();
+  if (+$('cap').style.opacity > .5 && (cap.top < 0 || cap.bottom > 1840)) out.push('caption outside safe area');
+  if ($('capb').getBoundingClientRect().height > 260) out.push('caption taller than 3 lines');
+  const shown = e => { let o = 1; for (let x = e; x && x !== document.body; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.display === 'none') return false; o *= +cs.opacity; } return o > .5; };
+  const tight = e => { if (e instanceof SVGElement) return e.getBoundingClientRect(); const pill = e.querySelector('span[style*="padding"]'); if (pill) return pill.getBoundingClientRect(); if (e.classList.contains('chip') || e.classList.contains('hdr')) return e.getBoundingClientRect(); const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect(); };
+  const T = [...document.querySelectorAll('#world .sc text, #world .sc .lbl, #world .sc .chip, #world .sc .big, #world .sc .hdr')].filter(shown).map(e => [e, tight(e)]).filter(([, r]) => r.width > 0);
+  // the box of line work is the union of its visible drawn parts (a part scaled to 0 would otherwise pull the box to the origin)
+  const leaf = e => { if (!(e instanceof SVGGElement)) { const r = e.getBoundingClientRect(); return (r.width > 0 || r.height > 0) && +getComputedStyle(e).opacity > .05 ? [r] : []; } return [...e.children].flatMap(leaf); };
+  const uni = rs => rs.length ? rs.reduce((a, b) => ({left: Math.min(a.left, b.left), top: Math.min(a.top, b.top), right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom)})) : null;
+  const Ln = [...document.querySelectorAll('#world .sc .ln')].filter(shown).map(e => [e, uni(leaf(e))]).filter(([, r]) => r && r.right > r.left);
+  const hit = (a, b, m) => a.left < b.right + m && b.left < a.right + m && a.top < b.bottom + m && b.top < a.bottom + m;
+  const nm = e => (e.textContent || e.id || e.tagName).trim().slice(0, 18);
+  for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) { const [a, ra] = T[i], [b, rb] = T[j]; if (a.contains(b) || b.contains(a)) continue; if (hit(ra, rb, 12)) out.push('text on text: ' + nm(a) + ' / ' + nm(b)); }
+  T.forEach(([a, ra]) => Ln.forEach(([b, rb]) => { if (a.contains(b) || b.contains(a)) return; if (hit(ra, rb, 24)) out.push('text on lines: ' + nm(a) + ' / ' + nm(b)); }));
+  T.forEach(([a, r]) => { if (r.left < 50 || r.right > 1030 || r.top < 150) out.push('cut off: ' + nm(a)); });
+  if (+$('cap').style.opacity > .5) { const rc = $('capb').getBoundingClientRect(); T.concat(Ln).forEach(([e, r]) => { if (hit(r, rc, 50)) out.push('under caption: ' + nm(e)); }); }
+  if (t >= END + .8) { const els = [...document.querySelectorAll('#end .big')].map(e => tight(e)); for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) if (hit(els[i], els[j], 12)) out.push('end card overlap'); }
+  return [...new Set(out)];
+}
+
+Studio.define({
+  w: W, h: H, duration: DUR,
+  stages: L.map((x, i) => ({t: +(Math.min(x.b - .15, CUT[i] + 2.6)).toFixed(2), label: 'line ' + x.i})).concat([{t: +(DUR - .4).toFixed(2), label: 'end'}]),
+  fonts: ['700 60px Almoni', '400 60px Almoni'],
+  seek, check,
+});
+</script>
+</body>
+</html>

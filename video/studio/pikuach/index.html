@@ -48,6 +48,9 @@
   .hdr .tt span{display:block;font-weight:700;font-size:88px;color:#07293a;line-height:1}
   .hdr .tt small{display:block;font-size:40px;color:#105572;font-weight:700;margin-bottom:8px;line-height:1}
   #world{display:block}
+  .cam{position:absolute;inset:0}
+  #cta{position:absolute;left:66px;top:52px;z-index:31;display:none;background:#a90b0c;color:#f7f8fa;font-weight:700;font-size:36px;line-height:1;padding:12px 26px 16px;border-radius:999px;white-space:nowrap}
+  #cta b{direction:ltr;unicode-bidi:isolate;margin-right:12px}
   #wipe{position:absolute;left:0;right:0;height:300px;z-index:40;display:none}
   #cap{position:absolute;left:70px;right:70px;bottom:150px;display:flex;justify-content:center;z-index:30}
   /* captions: bold navy text straight on the paper (no box), a paper halo keeps them clean over the grid; white on a dark scene */
@@ -71,6 +74,7 @@
   <div id="sheettag">קבוצת קורקוס, פיקוח</div><div id="sheetno"></div>
   <div class="sc" id="world"></div>
   <div id="cap"><div id="capb"></div></div>
+  <div id="cta">דברו איתנו<b>055-981-1814</b></div>
   <div id="end"></div>
   <img id="cover" src="cover.png" alt="">
   <svg id="wipe" width="1080" height="300"></svg>
@@ -88,7 +92,10 @@ const L = window.VT.lines;                       // [{i, a, b, cap}] voice secon
 const CUT = L.map(x => Math.max(0, x.a - .18));  // every scene cuts in just before its line
 CUT[0] = window.VT.cover || 0;                    // the cover frame (cover.png) holds until the first cut
 const NS = L.length - 1;                          // scenes before the end card
-const END = CUT[NS], DUR = +(window.VT.voice + 1.3).toFixed(2);
+const END = CUT[NS], DUR = +(window.VT.voice + 1.1).toFixed(2);
+const SID = L.map(x => x.i - 1);                  // the scene of each line (scenes are numbered by line; a line tts.py skips has no cut)
+const SPEED = 1.2;                                // the scenes' motion runs this much faster than their seconds
+const CTA_AT = CUT[L.findIndex(x => x.i === 10)];   // the phone strip stays on from the middle of the reel (right after Shlomi's full height photo)
 const vis = (el, on) => { el.style.display = on ? 'block' : 'none'; return on; };
 function inout(el, u, a, d) { const i = k(u, a, a + .3); el.style.opacity = i; el.style.transform = `translateY(${(1 - i) * (d == null ? 36 : d)}px)`; return i; }
 const pop = (u, a) => Math.max(0, step(u - a, {f: 3.2, z: .45}));   // springy 0 -> 1 from a
@@ -124,15 +131,16 @@ function caption(t) {
 
 // ---------- scenes ----------
 const SC = [];
-function scene(html) { const d = document.createElement('div'); d.className = 'sc'; d.innerHTML = html; $('world').appendChild(d); SC.push(d); return d; }
+function scene(html) { const d = document.createElement('div'); d.className = 'sc'; d.innerHTML = `<div class="cam">${html}</div>`; $('world').appendChild(d); SC.push(d); return d; }
 const svg = inner => `<svg width="1080" height="1920" class="abs">${inner}</svg>`;
 const hdr = (id, n, title, sub) => `<div class="hdr" id="${id}"><div class="mk"><b>${String(n).padStart(2, '0')}</b><i>פיקוח</i></div><div class="tt">${sub ? `<small>${sub}</small>` : ''}<span>${title}</span></div></div>`;
 const hatch = (id, col) => `<pattern id="${id}" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0 V22" stroke="${col}" stroke-width="5"/></pattern>`;
 const tick = (x, y, s, col, cls) => `<path class="${cls || ''}" d="M${x - 22 * s} ${y} L${x - 6 * s} ${y + 16 * s} L${x + 24 * s} ${y - 18 * s}" fill="none" stroke="${col}" stroke-width="${11 * s}" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>`;
 
 // 1 · build a private house? the mistakes vanish within days
-scene(`<div class="big" id="s1t" style="top:250px;font-size:124px">בונים בית פרטי?</div>
+scene(`<div class="big" id="s1t" style="top:300px;font-size:124px">בונים בית פרטי?</div>
   ${svg(`<defs>${hatch('h1', MIST)}</defs>
+   <image class="ln" id="s1g" href="kurkoos-logo-h.svg" x="360" y="150" width="360" height="90"/>
    <g class="ln" id="s1h"><path class="dr" d="M140 1180 H940" stroke="${NAVY}" stroke-width="10" pathLength="1" stroke-dasharray="1"/>
     <path class="dr" d="M300 1180 V800 M780 1180 V800 M260 820 L540 600 L820 820" fill="none" stroke="${NAVY}" stroke-width="14" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
     <path class="dr" d="M300 990 H780" stroke="${NAVY}" stroke-width="10" pathLength="1" stroke-dasharray="1"/>
@@ -175,13 +183,9 @@ scene(`<div class="chip" id="s4c" style="right:110px;top:250px">בלי מפקח 
 // 5 · שכינתא, your professional eyes on site
 scene(`<div class="big" id="s5n" style="top:250px;font-size:200px;color:${NAVY}">שכינתא</div>
   <div class="big" id="s5s" style="top:470px;font-size:58px;color:${TEAL}">זרוע הפיקוח של קבוצת קורקוס</div>` + svg(`
-  <g class="ln" id="s5p"><rect x="170" y="640" width="740" height="580" fill="#fff" stroke="${NAVY}" stroke-width="12"/>
-   <path d="M470 640 V900 M170 900 H700 M700 900 V1220 M470 1060 H700" stroke="${NAVY}" stroke-width="9" fill="none"/>
-   <path d="M470 840 A60 60 0 0 1 410 900 M700 1000 A60 60 0 0 0 640 940" fill="none" stroke="${TEAL}" stroke-width="5"/>
-   ${[[300, 760], [600, 760], [330, 1080], [800, 1080]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7" fill="${MIST}"/>`).join('')}
-   <g id="s5x"><circle cx="0" cy="0" r="22" fill="none" stroke="${RED}" stroke-width="7"/><path d="M-12 0 L-3 9 L13 -9" fill="none" stroke="${RED}" stroke-width="6"/></g></g>
-  <g id="s5l" class="ln"><circle r="120" fill="#ffffff22" stroke="${RED}" stroke-width="14"/><path d="M84 84 L180 180" stroke="${RED}" stroke-width="30" stroke-linecap="round"/></g>`) +
-  `<div class="chip" id="s5c" style="right:110px;top:1350px">העיניים שלכם באתר</div>`);
+  <g class="ln" id="s5b"><circle cx="540" cy="950" r="300" fill="none" stroke="${MIST}" stroke-width="4" stroke-dasharray="12 14"/>
+   <image href="shchinta.png" x="276" y="679" width="528" height="542"/></g>`) +
+  `<div class="chip" id="s5c" style="right:110px;top:1340px">העיניים שלכם באתר</div>`);
 // 6 · checks at the critical stages, like pours and waterproofing
 const ST = [['יסודות', 0], ['יציקות', 1], ['איטום', 1], ['גמר', 0]];
 scene(hdr('s6h', 6, 'השלבים הקריטיים', 'בדיקות בשטח') + svg(`<path class="ln" d="M860 500 V1290" stroke="${NAVY}" stroke-width="10"/>
@@ -208,12 +212,13 @@ scene(svg(`<g id="s8d"><rect x="210" y="300" width="660" height="820" rx="16" fi
      <rect x="${310 + (i % 2) * 70}" y="${535 + i * 140}" width="${380 - (i % 2) * 70}" height="22" rx="11" fill="${LINE}"/></g>`).join('')}</g>`) +
   `<div class="chip r" id="s8c" style="right:110px;top:1210px">גם כשקבלן אחר בונה</div>`);
 // 9 · a whole group, led by Shlomi Kurkoos, CEO and founder
-scene(svg(`<g class="ln" id="s9f"><image href="shlomi-standing.jpg" x="290" y="210" width="500" height="750" preserveAspectRatio="xMidYMid meet"/>
-   <rect x="290" y="210" width="500" height="750" fill="none" stroke="${NAVY}" stroke-width="10"/>
-   ${[[268, 188, 1, 1], [812, 188, -1, 1], [268, 982, 1, -1], [812, 982, -1, -1]].map(([x, y, a, b]) => `<path d="M${x} ${y + b * 60} V${y} H${x + a * 60}" fill="none" stroke="${RED}" stroke-width="8"/>`).join('')}</g>`) +
-  `<div class="big" id="s9a" style="top:1024px;font-size:50px;color:${TEAL}">קבוצה שלמה, בראשות</div>
-   <div class="big" id="s9n" style="top:1116px;font-size:136px">שלומי קורקוס</div>
-   <div class="big" id="s9r" style="top:1280px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:62px;padding:16px 44px 22px;border-radius:999px">מנכ"ל ומייסד</span></div>`);
+scene(svg(`<defs><linearGradient id="s9g" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="${NAVY}" stop-opacity="0"/><stop offset="1" stop-color="${NAVY}" stop-opacity=".92"/></linearGradient>
+   <clipPath id="s9c"><rect x="107" y="150" width="866" height="1300" rx="18"/></clipPath></defs>
+  <g class="ln" id="s9f"><g clip-path="url(#s9c)"><image id="s9i" href="shlomi-standing.jpg" x="107" y="150" width="866" height="1300"/><rect x="107" y="150" width="866" height="1300" fill="url(#s9g)"/></g>
+   <rect x="107" y="150" width="866" height="1300" rx="18" fill="none" stroke="${NAVY}" stroke-width="8"/>
+   <text id="s9a" x="540" y="1118" text-anchor="middle" font-size="50" fill="${MIST}">קבוצה שלמה, בראשות</text>
+   <text id="s9n" x="540" y="1270" text-anchor="middle" font-size="128" fill="${PAPER}">שלומי קורקוס</text>
+   <g id="s9r"><rect x="355" y="1318" width="370" height="96" rx="48" fill="${RED}"/><text x="540" y="1386" text-anchor="middle" font-size="60" fill="${PAPER}">מנכ"ל ומייסד</text></g></g>`));
 // 10 · four divisions under one roof
 const DV = [['יזמות', 0], ['ביצוע', 0], ['פיקוח', 1], ['תיווך', 0]];
 scene(`<div class="big" id="s10t" style="top:240px;font-size:150px"><span style="color:${RED}">4</span> חטיבות</div>` + svg(`
@@ -230,7 +235,7 @@ const ICON = {
   key: (x, y) => `<circle cx="${x + 40}" cy="${y}" r="30" fill="none" stroke="${NAVY}" stroke-width="9"/><path d="M${x + 10} ${y} H${x - 70} M${x - 50} ${y} V${y + 26} M${x - 26} ${y} V${y + 20}" fill="none" stroke="${NAVY}" stroke-width="9"/>`,
 };
 scene(svg(AR.map(([n, r, ic], i) => { const y = 260 + i * 270, hi = i === 2; return `<g class="s11r" id="s11r${i}"><rect x="100" y="${y}" width="880" height="230" rx="22" fill="${hi ? RED : '#fff'}" stroke="${hi ? RED : NAVY}" stroke-width="6"/>
-   <g class="ln">${ic === 'crane' ? `<image href="raita.png" x="118" y="${y + 22}" width="250" height="187"/>` : ICON[ic](220, y + 115)}</g>
+   <g class="ln">${ic === 'crane' ? `<image href="raita.png" x="118" y="${y + 22}" width="250" height="187"/>` : ic === 'lens' ? `<image href="shchinta.png" x="148" y="${y + 20}" width="185" height="190"/>` : ICON[ic](220, y + 115)}</g>
    <text x="930" y="${y + 112}" font-size="84" fill="${hi ? PAPER : NAVY}">${n}</text><text x="930" y="${y + 182}" font-size="46" fill="${hi ? '#ffd6d2' : TEAL}">${r}</text></g>`; }).join('')));
 // 12 · complex projects, from land to key
 const ROUTE = 'M900 1180 C900 700 650 650 650 930 S 420 1160 420 900 S 180 700 180 1180';
@@ -265,20 +270,43 @@ $('end').innerHTML = `<img src="logo.png" alt="" style="position:absolute;left:4
 
 const q = s => [...document.querySelectorAll(s)];
 
+// camera beats: a jump zoom at every caption part and inside long lines, so the picture moves on every 1.2 to 1.8 s
+const BEATS = L.map((x, m) => { const a = CUT[m], e = CUT[m + 1] || DUR, bs = CAPS.filter(c => c[0] > a + .4 && c[0] < e - .4).map(c => c[0] - a);
+  const all = [0, ...bs, e - a]; const out = []; for (let i = 0; i < all.length - 1; i++) { const g = all[i + 1] - all[i], n = Math.floor(g / 1.8); for (let j = 1; j <= n; j++) out.push(all[i] + g * j / (n + 1)); if (i < all.length - 2) out.push(all[i + 1]); }
+  return out.sort((p, q) => p - q); });
+function camera(m, u, len) {
+  const keys = [[0, 0]].concat(BEATS[m].map((b, i) => [b, i % 2 ? 0 : 1]));
+  const z = Studio.track(u, keys, {f: 4.2, z: .8});
+  const cam = SC[SID[m]].firstElementChild;
+  cam.style.transformOrigin = '50% 42%';
+  cam.style.transform = `scale(${1.04 - .04 * k(u, 0, .22) + .02 * smooth(u / len) + .025 * z})`;
+}
+const H2 = .17;                                     // half the length of a wipe
+function show(m, t, y0, y1) {                       // scene of line m, visible between y0 and y1 (stage pixels)
+  const d = SC[SID[m]], u = t - CUT[m], len = (CUT[m + 1] || DUR) - CUT[m];
+  vis(d, true); d.style.clipPath = `inset(${Math.max(0, y0)}px 0 ${Math.max(0, 1920 - y1)}px 0)`; d.dataset.y0 = y0; d.dataset.y1 = y1;
+  camera(m, u, len); anim(SID[m], u * SPEED);
+}
 function seek(t) {
-  const n = CUT.filter(c => c <= t).length - 1;        // current scene 0..NS, -1 on the cover
-  const u = n < 0 ? t : t - CUT[n];                     // seconds into it
-  const len = n < 0 ? CUT[0] : (CUT[n + 1] || DUR) - CUT[n];
-  vis($('cover'), n < 0);
-  SC.forEach((s, i) => vis(s, i === n && n < NS));
-  $('sheetno').textContent = n < NS ? `גיליון ${String(n + 1).padStart(2, '0')}/${NS}` : '';
-  // a hard cut behind the ruler: it sweeps down in .34 s around every cut after the first
-  const wp = n >= 0 && CUT[0] > 0 || n > 0 ? clamp((t - CUT[n] + .17) / .34) : 1, wn = n < NS ? clamp((t - CUT[n + 1] + .17) / .34) : 0;
-  const w = wn > 0 ? wn : (wp < 1 ? wp : 0);
-  vis($('wipe'), w > 0 && w < 1); $('wipe').style.top = lerp(-320, 1940, w) + 'px';
-  // a punch in at the start of every scene, then a slow push
-  $('world').style.transform = `scale(${1.06 - .06 * k(u, 0, .28) + .025 * smooth(u / len)})`; $('world').style.transformOrigin = '50% 42%';
+  const n = CUT.filter(c => c <= t).length - 1;        // current line 0..NS, -1 on the cover
+  SC.forEach(s => vis(s, false));
+  // the wipe: the ruler sweeps down; above it the new scene, below it the old one (both drawn, each clipped to its side)
+  let j = -1; for (let i = 0; i < NS; i++) if ((i > 0 || CUT[0] > 0) && Math.abs(t - CUT[i]) < H2) j = i;
+  const p = j < 0 ? 0 : (t - CUT[j] + H2) / (2 * H2), yb = lerp(-300, 1920, p);
+  vis($('wipe'), j >= 0); $('wipe').style.top = yb + 'px';
+  if (j >= 0) { show(j, t, -1, yb); if (j > 0) show(j - 1, t, yb + 300, 2000); }
+  else if (n >= 0 && n < NS) show(n, t, -1, 2000);
+  const coverOn = n < 0 || j === 0; vis($('cover'), coverOn); $('cover').style.clipPath = j === 0 ? `inset(${yb + 300}px 0 0 0)` : 'none';
+  const ctaOn = t >= CTA_AT && t < END; vis($('cta'), ctaOn); $('cta').style.transform = `translateY(${(1 - k(t, CTA_AT, CTA_AT + .3)) * -90}px)`;
+  $('sheetno').textContent = n >= 0 && n < NS && !ctaOn ? `גיליון ${String(n + 1).padStart(2, '0')}/${NS}` : '';
+  const m = Math.max(0, Math.min(n, NS - 1)), u = t - CUT[m], len = (CUT[m + 1] || DUR) - CUT[m];
   $('sheet').style.transform = `scale(${1 + .015 * smooth(u / len)}) translateY(${-14 * smooth(u / len)}px)`;
+  // the end card drops in from the top like a sheet laid on the table
+  const e = clamp((t - END) / .9); vis($('end'), t >= END); $('end').style.clipPath = `inset(0 0 ${(1 - e) * 100}% 0)`;
+  ['e1', 'e2', 'e3', 'e4', 'e5'].forEach((id, i) => inout($(id), t - END, .5 + i * .16, 30));
+  caption(t);
+}
+function anim(n, u) {
   if (n === 0) { inout($('s1t'), u, 0, 40); q('#s1h .dr').forEach((e, i) => draw(e, k(u, .1 + i * .2, .6 + i * .2))); q('#s1h .fd').forEach(e => e.style.opacity = k(u, .6, .9));
     q('.s1d').forEach((g, i) => svgPop(g, pop(u, 1.0 + i * .15))); const c = k(u, 2.0, 2.7); $('s1c').setAttribute('y', 1314 - 138 * c); $('s1c').setAttribute('height', 138 * c);
     const s = pop(u, 2.6); popEl($('s1k'), s); }
@@ -289,17 +317,17 @@ function seek(t) {
     $('s4beam').setAttribute('transform', `rotate(${-a} 540 700)`);
     $('s4l').setAttribute('transform', `translate(${540 - 300 * Math.cos(r)} ${700 + 300 * Math.sin(r) + 320})`); $('s4r').setAttribute('transform', `translate(${540 + 300 * Math.cos(r)} ${700 - 300 * Math.sin(r) + 320})`);
     popEl($('s4k'), pop(u, 1.5)); }
-  if (n === 4) { popEl($('s5n'), pop(u, 0), '50% 60%'); inout($('s5s'), u, .5, 24); $('s5p').style.opacity = k(u, .2, .5);
-    const lx = lerp(760, 320, k(u, .6, 2.6)), ly = 820 + 200 * Math.sin(k(u, .6, 2.6) * Math.PI); $('s5l').setAttribute('transform', `translate(${lx} ${ly})`); $('s5l').style.opacity = k(u, .5, .7);
-    $('s5x').setAttribute('transform', `translate(${lx} ${ly}) scale(${k(u, .8, 1)})`); inout($('s5c'), u, 2.0); }
+  if (n === 4) { popEl($('s5n'), pop(u, 0), '50% 60%'); inout($('s5s'), u, .4, 24); const b = pop(u, .5); svgPop($('s5b'), b);
+    $('s5b').style.transform += ` rotate(${(1 - clamp(b)) * -40}deg)`; inout($('s5c'), u, 2.0); }
   if (n === 5) { inout($('s6h'), u, 0, 30); q('.s6n').forEach((g, i) => g.style.opacity = k(u, .15 + i * .12, .35 + i * .12)); q('.s6t').forEach((e, i) => inout(e, u, .2 + i * .12, 20));
     q('.s6r').forEach((e, i) => svgPop(e, pop(u, 1.0 + i * .45))); q('.s6k').forEach((e, i) => draw(e, k(u, 1.15 + i * .45, 1.4 + i * .45))); q('.s6s').forEach((e, i) => popEl(e, pop(u, 1.2 + i * .45))); }
   if (n === 6) { const d = k(u, 0, .35); $('s7d').style.opacity = d; $('s7d').style.transform = `translateY(${(1 - d) * 50}px)`;
     const s = pop(u, .8); $('s7s').setAttribute('transform', `translate(540 870) rotate(${-4 * s}) scale(${2 - s})`); $('s7s').style.opacity = clamp(s * 3); $('s7st').style.transform = `rotate(${-4 * s}deg) scale(${2 - s})`; $('s7st').style.opacity = clamp(s * 3);
     draw($('s7g'), k(u, 1.6, 2.4)); draw($('s7b'), k(u, 1.9, 2.6)); }
   if (n === 7) { const d = k(u, 0, .35); $('s8d').style.opacity = d; $('s8d').style.transform = `translateY(${(1 - d) * 50}px)`; q('.s8k').forEach((e, i) => draw(e, k(u, .35 + i * .3, .55 + i * .3))); popEl($('s8c'), pop(u, 1.4)); }
-  if (n === 8) { const f = k(u, 0, .5); $('s9f').style.opacity = f; $('s9f').style.transform = `translateY(${(1 - f) * 40}px)`; inout($('s9a'), u, .6, 20);
-    popEl($('s9n'), pop(u, 2.0), '50% 50%'); inout($('s9r'), u, 2.8, 24); }
+  if (n === 8) { const f = k(u, 0, .4); $('s9f').style.opacity = f; const z = 1.12 - .12 * f + .07 * smooth(u / 5.5);
+    $('s9i').setAttribute('transform', `translate(540 800) scale(${z}) translate(-540 -800)`); inout($('s9a'), u, .5, 20);
+    svgPop($('s9n'), pop(u, 1.5)); svgPop($('s9r'), pop(u, 2.4)); }
   if (n === 9) { popEl($('s10t'), pop(u, 0), '50% 50%'); q('.s10b').forEach((g, i) => { const p = k(u, .15 + i * .1, .4 + i * .1); g.style.opacity = p; g.style.transform = `translateY(${(1 - p) * 40}px)`; });
     draw($('s10r'), k(u, .7, 1.2)); inout($('s10u'), u, .8, 20); }
   if (n === 10) { const at = [0, .95, 1.75, 2.55]; q('.s11r').forEach((g, i) => { const p = k(u, at[i], at[i] + .28); g.style.opacity = p; g.style.transform = `translateX(${(1 - p) * 90}px)`; }); }
@@ -307,10 +335,6 @@ function seek(t) {
     $('s12e').style.opacity = .35 + .65 * k(p, .9, 1); }
   if (n === 12) { popEl($('s13t'), pop(u, 0), '50% 50%'); $('s13d').style.opacity = k(u, .1, .4);
     const pe = k(u, .3, 1.0); $('s13pen').setAttribute('transform', `translate(${lerp(-200, 330, pe)} ${lerp(1300, 1080, pe)})`); popEl($('s13c'), pop(u, 1.0), '50% 50%'); }
-  // the end card drops in from the top like a sheet laid on the table
-  const e = clamp((t - END) / .9); vis($('end'), t >= END); $('end').style.clipPath = `inset(0 0 ${(1 - e) * 100}% 0)`;
-  ['e1', 'e2', 'e3', 'e4', 'e5'].forEach((id, i) => inout($(id), t - END, .5 + i * .16, 30));
-  caption(t);
 }
 
 // geometry check on every frame: text on text, text on line work (with about 1 cm clearance), anything under the caption, anything cut off
@@ -318,19 +342,22 @@ function check(t) {
   const out = [], cap = $('cap').getBoundingClientRect();
   if (+$('cap').style.opacity > .5 && (cap.top < 0 || cap.bottom > 1840)) out.push('caption outside safe area');
   if ($('capb').getBoundingClientRect().height > 260) out.push('caption taller than 3 lines');
-  if (+$('cap').style.opacity > .5 && $('cover').style.display !== 'none') out.push('caption over the cover');
+  if (+$('cap').style.opacity > .5 && $('cover').style.display !== 'none' && $('cover').style.clipPath === 'none') out.push('caption over the cover');
   const shown = e => { let o = 1; for (let x = e; x && x !== document.body; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.display === 'none') return false; o *= +cs.opacity; } return o > .5; };
   const tight = e => { if (e instanceof SVGElement) return e.getBoundingClientRect(); const pill = e.querySelector('span[style*="padding"]'); if (pill) return pill.getBoundingClientRect(); if (e.classList.contains('chip') || e.classList.contains('hdr')) return e.getBoundingClientRect(); const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect(); };
-  const T = [...document.querySelectorAll('#world .sc text, #world .sc .lbl, #world .sc .chip, #world .sc .big, #world .sc .hdr')].filter(shown).map(e => [e, tight(e)]).filter(([, r]) => r.width > 0);
+  const inView = ([e, r]) => { const d = e.closest('.sc'); return !d || (r.bottom > +d.dataset.y0 && r.top < +d.dataset.y1); };
+  const T = [...document.querySelectorAll('#world .sc text, #world .sc .lbl, #world .sc .chip, #world .sc .big, #world .sc .hdr')].filter(shown).map(e => [e, tight(e)]).filter(([, r]) => r.width > 0).filter(inView);
   // the box of line work is the union of its visible drawn parts (a part scaled to 0 would otherwise pull the box to the origin)
   const leaf = e => { if (!(e instanceof SVGGElement)) { const r = e.getBoundingClientRect(); return (r.width > 0 || r.height > 0) && +getComputedStyle(e).opacity > .05 ? [r] : []; } return [...e.children].flatMap(leaf); };
   const uni = rs => rs.length ? rs.reduce((a, b) => ({left: Math.min(a.left, b.left), top: Math.min(a.top, b.top), right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom)})) : null;
-  const Ln = [...document.querySelectorAll('#world .sc .ln')].filter(shown).map(e => [e, uni(leaf(e))]).filter(([, r]) => r && r.right > r.left);
+  const Ln = [...document.querySelectorAll('#world .sc .ln')].filter(shown).map(e => [e, uni(leaf(e))]).filter(([, r]) => r && r.right > r.left).filter(inView);
+  const same = (a, b) => a.closest('.sc') === b.closest('.sc');
   const hit = (a, b, m) => a.left < b.right + m && b.left < a.right + m && a.top < b.bottom + m && b.top < a.bottom + m;
   const nm = e => (e.textContent || e.id || e.tagName).trim().slice(0, 18);
-  for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) { const [a, ra] = T[i], [b, rb] = T[j]; if (a.contains(b) || b.contains(a)) continue; if (hit(ra, rb, 12)) out.push('text on text: ' + nm(a) + ' / ' + nm(b)); }
-  T.forEach(([a, ra]) => Ln.forEach(([b, rb]) => { if (a.contains(b) || b.contains(a)) return; if (hit(ra, rb, 24)) out.push('text on lines: ' + nm(a) + ' / ' + nm(b)); }));
+  for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) { const [a, ra] = T[i], [b, rb] = T[j]; if (a.contains(b) || b.contains(a) || !same(a, b)) continue; if (hit(ra, rb, 12)) out.push('text on text: ' + nm(a) + ' / ' + nm(b)); }
+  T.forEach(([a, ra]) => Ln.forEach(([b, rb]) => { if (a.contains(b) || b.contains(a) || !same(a, b)) return; if (hit(ra, rb, 24)) out.push('text on lines: ' + nm(a) + ' / ' + nm(b)); }));
   T.forEach(([a, r]) => { if (r.left < 50 || r.right > 1030 || r.top < 150) out.push('cut off: ' + nm(a)); });
+  if ($('cta').style.display !== 'none') { const rc = $('cta').getBoundingClientRect(); T.concat(Ln).forEach(([e, r]) => { if (hit(r, rc, 16)) out.push('under the phone strip: ' + nm(e)); }); }
   if (+$('cap').style.opacity > .5) { const rc = $('capb').getBoundingClientRect(); T.concat(Ln).forEach(([e, r]) => { if (hit(r, rc, 50)) out.push('under caption: ' + nm(e)); }); }
   if (t >= END + .8) { const els = [...document.querySelectorAll('#end .big')].map(e => tight(e)); for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) if (hit(els[i], els[j], 12)) out.push('end card overlap'); }
   return [...new Set(out)];

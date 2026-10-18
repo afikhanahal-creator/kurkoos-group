@@ -120,18 +120,31 @@ function items(){const out=[];const tb=document.querySelector('.tbar');const act
  const c=document.getElementById('v171chip');if(c&&!c.hidden){const l=(c.getAttribute('aria-label')||'ביטול הפעולה האחרונה').replace(/^ביטול:\s*/,'');out.push({icon:IC.undo,label:'ביטול: '+l,run:()=>c.click()})}
  return out}
 let back=null;
-function closeMore(){const w=document.getElementById('v172sheet');if(w&&w.classList.contains('v195sh'))w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null}
-function openMore(){const old=document.getElementById('v172sheet');if(old)old.remove();back=document.activeElement;const list=items();
+// the phone back gesture closes the sheet and stays on the page (V101 does not know this sheet, V102 would step a page back):
+// the sheet pushes one history entry; closing it any other way takes that entry away again, and a choice in the sheet
+// runs only after that, so the next back still returns to the previous page (the same pattern as the V180 drawer)
+let skip=0,pending=null,pushed=false;
+const ours=()=>!!(history.state&&history.state.v195m);
+const hush=()=>{window.__v101pop=Date.now()};
+const sheetOpen=()=>!!document.querySelector('#v172sheet.v195sh');
+function released(after){if(pushed&&ours()){pushed=false;skip++;hush();pending=after||null;try{history.back()}catch(e){skip--;pending=null;after&&setTimeout(after,0)}}
+ else{pushed=false;after&&setTimeout(after,0)}}
+addEventListener('popstate',()=>{if(skip>0){skip--;hush();if(pending){const p=pending;pending=null;setTimeout(p,0)}return}
+ if(sheetOpen()&&!ours()){pushed=false;hush();const w=document.getElementById('v172sheet');if(w)w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null}},true);
+// closed by V172's own handlers (the X, the backdrop, Escape)
+new MutationObserver(()=>{if(pushed&&!sheetOpen())released(null)}).observe(document.body,{childList:true});
+function closeMore(after){const w=document.getElementById('v172sheet');if(w&&w.classList.contains('v195sh'))w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null;released(after)}
+function openMore(){const old=document.getElementById('v172sheet');if(old)old.remove()back=document.activeElement;const list=items();
  const t=(document.getElementById('vt')||{}).textContent||'';
  const w=document.createElement('div');w.id='v172sheet';w.className='v195sh';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label','עוד');
  w.innerHTML=`<div class="v172bg" data-v172x="1"></div><div class="v172pan"><div class="v172grip" aria-hidden="true"></div><div class="v172h"><div><b>עוד</b>${t?`<span>${E(t)}</span>`:''}</div><button type="button" class="v172x" data-v172x="1" aria-label="סגירה">${IC.x}</button></div><div class="v172l"></div></div>`;
  const l=w.querySelector('.v172l');let sep=false;
  list.forEach(it=>{if(!it.page&&!sep&&l.children.length){const s=document.createElement('div');s.className='v195sep';s.setAttribute('role','separator');l.appendChild(s);sep=true}
   const b=document.createElement('button');b.type='button';b.className='v172i';b.disabled=!!it.disabled;b.innerHTML=`<span class="v172ic" aria-hidden="true">${it.icon||''}</span><span class="v172t">${E(it.label)}</span>`;
-  b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMore();setTimeout(()=>{try{it.run()}catch(x){console.error('v195',x)}},0)});l.appendChild(b)});
+  b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMore(()=>{try{it.run()}catch(x){console.error('v195',x)}})});l.appendChild(b)});
  document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add('in'));
+ if(PH.matches&&!ours()){try{history.pushState({v195m:1},'');pushed=true}catch(e){}}
  setTimeout(()=>{const f=l.querySelector('button:not(:disabled)');f&&f.focus({preventScroll:true})},60)}
-// the phone back gesture closes the sheet like the other windows (V101 knows #v172sheet)
 window.__v195more=openMore;
 
 /* ---------- 4 · the undo pill above the bottom bar, gone on its own ---------- */

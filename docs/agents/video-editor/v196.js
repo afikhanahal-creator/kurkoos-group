@@ -5,8 +5,9 @@
 // cache although nothing had changed; two quality caches sat on top of each other and built the same long key twice for
 // every post on every render; the undo history copied the whole library (about 14 MB of text) after every cloud load;
 // and the library, which no longer fits in the browser's local storage, was turned into text and refused again a few
-// seconds after every change. The fixes sit where the work is done (bridge.js, v195.js, build196.py); this block keeps
-// the local storage writes that cannot fit from running, and says "טוען פוסטים" instead of "0 פוסטים" while loading.
+// seconds after every change. The fixes sit where the work is done (bridge.js, v195.js, build196.py). This block:
+// 1 skips the local storage writes that cannot fit, 2 says "טוען פוסטים" instead of "0 פוסטים" while loading, 3 holds
+// data driven renders while the scores are taken in slices, 4 paints the page a person taps in the very next frame.
 (()=>{
 if(window.__v196)return;window.__v196=1;
 const view=()=>{try{return APP.view||''}catch(e){return ''}};
@@ -62,7 +63,7 @@ function instant(v){const b=box();if(!b)return false;stash();const f=CACHE.get(v
 function gate(){if(gate.done)return;gate.done=1;
  try{render=(f=>function(){const v=view();const nav=!!intent&&(!intent.v||intent.v===v)&&v!==shown&&!!shown;
    if(pre&&!inGo&&!nav){pending=true;return}
-   if(nav&&!(window.PE&&PE.p)&&instant(v)){intent=null;const self=this,args=arguments;const tok={v};defer=tok;window.__v196t={v,instant:performance.now()};
+   if(nav&&!(typeof PE!=='undefined'&&PE&&PE.p)&&instant(v)){intent=null;const self=this,args=arguments;const tok={v};defer=tok;window.__v196t={v,instant:performance.now()};
     requestAnimationFrame(()=>setTimeout(()=>{if(defer!==tok)return;defer=null;try{f.apply(self,args)}catch(e){console.warn('v196 render',e)}shown=view();try{const b=box();b&&b.querySelectorAll(':scope>.v196sk').forEach(x=>x.remove())}catch(e){}if(window.__v196t&&window.__v196t.v===v)window.__v196t.full=performance.now()},0));return}
    defer=null;const r=f.apply(this,arguments);shown=view();return r})(render)}catch(e){}
  try{go=(f=>function(){inGo++;try{return f.apply(this,arguments)}finally{inGo--}})(go)}catch(e){}}

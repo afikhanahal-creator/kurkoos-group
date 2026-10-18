@@ -141,6 +141,56 @@ export function videoLd(article) {
   }
 }
 
+/* ---------- שאלות ותשובות מתוך גוף הכתבה ----------
+   כמעט כל כתבה מסתיימת בסעיף "## שאלות ותשובות" שבו כל שאלה היא שורה
+   מודגשת (**שאלה?**) והתשובה בשורות שאחריה. השאלות האלה גלויות בעמוד,
+   ולכן מותר לסמן אותן כ-FAQPage. הפונקציה קוראת אותן מהטקסט עצמו, כך
+   שהנתונים המובנים תמיד זהים למה שהקורא רואה, בלי שדה נפרד לתחזוקה. */
+const FAQ_HEADING_RE = /^##\s+(שאלות ותשובות|שאלות נפוצות)\s*$/
+const plainMd = (s) => String(s || '')
+  .replace(/\[([^\]]+)\]\([^)\s]+\)/g, '$1')
+  .replace(/\*\*([^*]+)\*\*/g, '$1')
+  .replace(/\s+/g, ' ')
+  .trim()
+
+export function articleFaqs(article) {
+  const lines = String(article?.body || '').replace(/\r\n/g, '\n').split('\n')
+  const start = lines.findIndex((l) => FAQ_HEADING_RE.test(l.trim()))
+  if (start < 0) return []
+  const section = []
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^##\s/.test(lines[i].trim())) break
+    section.push(lines[i])
+  }
+  const paras = section.join('\n').split(/\n\s*\n/).map((p) => p.split('\n').map((l) => l.trim()).filter(Boolean)).filter((p) => p.length)
+  const out = []
+  let pending = null
+  for (const p of paras) {
+    const m = p[0].match(/^\*\*(.+?)\*\*$/)
+    if (m) {
+      pending = null
+      const q = plainMd(m[1])
+      const a = plainMd(p.slice(1).join(' '))
+      if (a) out.push({ q, a })
+      else pending = q
+    } else if (pending) {
+      out.push({ q: pending, a: plainMd(p.join(' ')) })
+      pending = null
+    }
+  }
+  return out.filter((f) => f.q && f.a)
+}
+
+export function articleFaqLd(article) {
+  const faqs = articleFaqs(article)
+  if (faqs.length < 2) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  }
+}
+
 /* ---------- כותרות ותיאורים של העמודים הקבועים ----------
    Seo.jsx מעדיף את הערכים כאן על פני מה שהעמוד מעביר, וה-prerender כותב
    בדיוק אותם ערכים ל-HTML הסטטי. תיאור: 120 עד 160 תווים. */

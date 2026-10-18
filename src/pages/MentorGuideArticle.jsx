@@ -4,7 +4,7 @@ import { useI18n } from '../i18n/index.jsx'
 import { useMentorGuideArticle, useMentorGuideArticles } from '../lib/mentorguide.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
-import { COLUMNS, articleLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
+import { COLUMNS, articleLd, articleFaqLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
 import { relatedArticles } from '../lib/related.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
@@ -42,7 +42,7 @@ export default function MentorGuideArticle() {
 
   const coverUrl = srcOfResponsive(article.cover)
   const col = COLUMNS.mentorguide
-  const jsonLd = articleLd(article, `${col.route}/${article.slug}`, coverUrl)
+  const jsonLd = [articleLd(article, `${col.route}/${article.slug}`, coverUrl), articleFaqLd(article)].filter(Boolean)
 
   return (
     <article className="yz-article">

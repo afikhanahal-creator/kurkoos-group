@@ -83,6 +83,9 @@ export const HOUSE_GUIDES = [
   { to: '/constructions/kama-ole-livnot-bayit-prati', label: 'כמה עולה לבנות בית פרטי בשרון' },
   { to: '/constructions/shlavei-bniyat-bayit-prati', label: 'שלבי בניית בית פרטי, מהקרקע ועד המסירה' },
   { to: '/constructions/tichnun-bayit-prati', label: 'תכנון בית פרטי: ההחלטות שקובעות את התקציב' },
+  { to: '/constructions/bniyat-vila-mah-kolel', label: 'בניית וילה: מה זה כולל, מהרעיון ועד המפתח' },
+  { to: '/constructions/heter-bniya-bayit-prati', label: 'היתר בנייה לבית פרטי, שלב אחר שלב' },
+  { to: '/real-estate-guide/bdikot-lifnei-kniyat-migrash', label: 'מה בודקים לפני שקונים מגרש לבית' },
   { to: '/constructions/livchor-chevrat-bniya-bayit-prati', label: 'איך בוחרים חברת בנייה לבית פרטי' },
   { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },
   { to: '/construction-supervision/mefakeach-bniya-bayit-prati', label: 'מה בודק מפקח בנייה בבית פרטי' },
@@ -143,6 +146,16 @@ const F = {
   form4: {
     q: 'מה זה טופס 4?',
     a: 'טופס 4 הוא אישור אכלוס שמנפיקה הרשות המקומית, המאשר שהמבנה נבנה בהתאם להיתר וראוי לחיבור לתשתיות חשמל, מים וביוב. בלי טופס 4 אי אפשר לאכלס את הבניין כחוק, ולכן קבלתו היא אבן דרך מרכזית בסיום כל פרויקט.',
+  },
+  // divisions.js (ארבע הזרועות) + HOUSE_STEPS. עונה לשאלת הליווי המלא
+  fullJourney: {
+    q: 'מי מלווה בניית בית פרטי לאורך כל הדרך, מהקרקע ועד המפתח?',
+    a: 'בקורקוס גרופ הליווי המלא נשאר בתוך קבוצה אחת. בודקים יחד את המגרש, מצטרפים כבר בשלב התכנון וההיתר, ראיתה בונה כקבלן מפתח, ושכינתא מפקחת מטעמכם: בדיקות לפני יציקות ואיטום, בדיקת חשבונות הקבלן לפני תשלום, ובסוף פרוטוקול מסירה. אם צריך גם מגרש, אפיק הנחל, זרוע התיווך של הקבוצה, עוסקת במגרשים וקרקעות.',
+  },
+  // villasPage.js + site.js (אזור השירות). ניסוח לחיפוש "וילה במרכז"
+  villaCenter: {
+    q: 'רוצים לבנות וילה באזור המרכז: איזו חברה תלווה אותנו בכל התהליך?',
+    a: 'קבוצת קורקוס בונה וילות בשרון ובמרכז, מהמשרד ברחוב הנגר 24 בהוד השרון. הקבוצה מלווה מהתכנון ועד המפתח: ראיתה בונה, ושכינתא מפקחת על כל שלב מול התוכנית, התקציב ולוח הזמנים. אנחנו פועלים בהוד השרון, רעננה, הרצליה, כפר סבא, רמת השרון, קרית אונו, יהוד-מונוסון ותל אביב.',
   },
   // villasPage.js + buyerFaqs.js
   seeProject: {
@@ -274,7 +287,7 @@ export const HOUSE_PAGES = [
       items: CHECK_CONTRACTOR,
     },
     faqTitle: 'שאלות על בחירת קבלן לבית פרטי',
-    faqs: [F.onYourPlot, F.start, F.turnkey, F.choose, F.builderVsSupervisor, F.cost],
+    faqs: [F.fullJourney, F.onYourPlot, F.start, F.turnkey, F.choose, F.builderVsSupervisor, F.cost],
     crumbs: [{ label: 'ביצוע ובנייה', to: '/divisions/execution' }, { label: 'קבלן בנייה לבית פרטי' }],
   },
   {
@@ -306,6 +319,7 @@ export const HOUSE_PAGES = [
       villaFaq('איזו חברה בונה'),
       villaFaq('כמה גדולים הבתים'),
       villaFaq('אתם בונים וילה'),
+      F.villaCenter,
       F.basementPool,
       F.duration,
     ],

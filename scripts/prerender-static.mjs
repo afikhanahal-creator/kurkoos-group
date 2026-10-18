@@ -22,7 +22,7 @@ const dist = join(root, 'dist')
 const {
   SITE_URL: SITE, BRAND, HOME_CRUMB, COLUMNS, PAGE_META, PAGE_CRUMBS,
   composeTitle, clampDescription, breadcrumbLd, articleCrumbs, articleLd, videoLd,
-  articleSeoTitle, articleSeoDescription, faqHubLd,
+  articleSeoTitle, articleSeoDescription, faqHubLd, articleFaqLd,
 } = await import(pathToFileURL(join(root, 'src/lib/seo.js')).href)
 const { ABOUT_VISION } = await import(pathToFileURL(join(root, 'src/data/aboutVision.js')).href)
 const { srcOfResponsive } = await import(pathToFileURL(join(root, 'src/lib/responsiveImage.js')).href)
@@ -77,23 +77,41 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
    את הנתונים המובנים של העמוד בזמן ריצה, כדי שגוגל לא יראה כל בלוק פעמיים. */
 const ldJson = (obj) => `<script type="application/ld+json" data-prerender>${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`
 
-/* המרת markdown מינימלית (##, ###, רשימות, מודגש) ל-HTML קריא */
+/* המרת markdown מינימלית (##, ###, רשימות, רשימה ממוספרת, טבלה, מודגש) ל-HTML קריא.
+   אותם כללים כמו src/lib/miniMarkdown.jsx, כדי שהסורק יקרא את מה שהקורא רואה. */
 function mdToHtml(md) {
   const out = []
   let list = null
-  const flushList = () => { if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null } }
+  let olist = null
+  let table = null
   const inline = (s) => esc(s)
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, '<a href="$2">$1</a>')
     /* קישור למקור חיצוני (gov.il, בנק ישראל): נפתח בלשונית חדשה, כמו בעמוד החי */
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+  const flushList = () => {
+    if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null }
+    if (olist) { out.push(`<ol>${olist.join('')}</ol>`); olist = null }
+    if (table) {
+      const rows = table.filter((r) => !r.every((c) => /^:?-{2,}:?$/.test(c)))
+      if (rows.length) {
+        out.push('<table><thead><tr>' + rows[0].map((c) => `<th scope="col">${inline(c)}</th>`).join('') + '</tr></thead><tbody>' +
+          rows.slice(1).map((r) => '<tr>' + r.map((c, k) => k === 0 ? `<th scope="row">${inline(c)}</th>` : `<td>${inline(c)}</td>`).join('') + '</tr>').join('') +
+          '</tbody></table>')
+      }
+      table = null
+    }
+  }
   for (const rawBlock of String(md || '').split(/\n{2,}/)) {
     for (const line of rawBlock.split('\n')) {
       const l = line.trim()
       if (!l) continue
+      const ol = l.match(/^\d+\.\s+(.*)$/)
       if (l.startsWith('### ')) { flushList(); out.push(`<h3>${inline(l.slice(4))}</h3>`) }
       else if (l.startsWith('## ')) { flushList(); out.push(`<h2>${inline(l.slice(3))}</h2>`) }
-      else if (l.startsWith('- ') || l.startsWith('* ')) { (list ||= []).push(`<li>${inline(l.slice(2))}</li>`) }
+      else if (l.startsWith('- ') || l.startsWith('* ')) { if (olist || table) flushList(); (list ||= []).push(`<li>${inline(l.slice(2))}</li>`) }
+      else if (ol) { if (list || table) flushList(); (olist ||= []).push(`<li>${inline(ol[1])}</li>`) }
+      else if (l.startsWith('|') && l.endsWith('|')) { if (list || olist) flushList(); (table ||= []).push(l.slice(1, -1).split('|').map((c) => c.trim())) }
       else { flushList(); out.push(`<p>${inline(l)}</p>`) }
     }
     flushList()
@@ -217,6 +235,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
         articleLd(a, path, srcOfResponsive(a.cover) || undefined),
         breadcrumbLd(articleCrumbs(col, a)),
         videoLd(a),
+        /* השאלות והתשובות שבסוף הכתבה, אותו טקסט שמופיע בגוף העמוד */
+        articleFaqLd(a),
       ].filter(Boolean),
       bodyHtml: body,
     }))
@@ -641,12 +661,13 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   /* עמוד הבית היה העמוד היחיד שסורקי AI ראו ריק: מסך טעינה בלי טקסט ובלי
      קישורים. כאן נכתב הטקסט שמתאר את הקבוצה, רק עובדות שמופיעות באתר. */
   const { VILLAS_PROJECTS } = await import(pathToFileURL(join(root, 'src/data/villasPage.js')).href)
+  const { HOME_FAQ_TITLE, HOME_FAQS } = await import(pathToFileURL(join(root, 'src/data/homeFaq.js')).href)
   const projectsHtml = VILLAS_PROJECTS.map((p) =>
     `<li><strong>${esc(p.name)}</strong>: ${esc(p.kind)}. ${esc(p.tagline)}. סטטוס: ${esc(p.status)}.</li>`).join('')
   done.push(renderPage({
     path: '/',
     ...meta('/'),
-    jsonLd: [breadcrumbLd(PAGE_CRUMBS['/'])],
+    jsonLd: [breadcrumbLd(PAGE_CRUMBS['/']), faqLd(HOME_FAQS)],
     bodyHtml:
       `<h1>קבוצת קורקוס: בניית וילות ובתים פרטיים, יזמות ופיקוח בנייה בהוד השרון</h1>` +
       `<p>קבוצת קורקוס (קורקוס גרופ) היא חברת בנייה ונדל"ן מהוד השרון, שמשרדה ברחוב הנגר 24, ובונה וילות ובתים פרטיים בהוד השרון. הקבוצה עוסקת ביזמות נדל"ן, בביצוע ובנייה באמצעות ראיתה, בניהול ופיקוח פרויקטים באמצעות שכינתא, ובתיווך ושיווק נכסים באמצעות אפיק הנחל. את הקבוצה ייסד ומנהל שלומי קורקוס.</p>` +
@@ -667,6 +688,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<li><a href="/real-estate-guide">המדריך לרוכש ולמוכר</a></li>` +
       `<li><a href="/madrich-yazamim">המדריך ליזמי נדל"ן צעירים</a></li>` +
       `</ul>` +
+      `<h2>${esc(HOME_FAQ_TITLE)}</h2>` +
+      HOME_FAQS.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)} <a href="${esc(f.to)}">${esc(f.more)}</a></p>`).join('\n') +
       `<h2>יצירת קשר</h2><p>רחוב הנגר 24, מגדלי Amy, הוד השרון. טלפון 055-981-1814. ימים א׳ עד ה׳, 9:00 עד 18:00. <a href="/contact">השארת פרטים</a></p>`,
   }))
 

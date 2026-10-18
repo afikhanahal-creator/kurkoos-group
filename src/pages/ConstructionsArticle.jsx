@@ -4,7 +4,7 @@ import { useI18n } from '../i18n/index.jsx'
 import { useConstruction, useConstructions } from '../lib/constructions.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import Seo from '../components/ui/Seo.jsx'
-import { COLUMNS, articleLd, videoLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
+import { COLUMNS, articleLd, articleFaqLd, videoLd, articleSeoTitle, articleSeoDescription } from '../lib/seo.js'
 import { relatedArticles } from '../lib/related.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
@@ -45,7 +45,8 @@ export default function ConstructionsArticle() {
   const col = COLUMNS.constructions
   const aLd = articleLd(article, `${col.route}/${article.slug}`, coverUrl)
   const vLd = videoLd(article)
-  const jsonLd = vLd ? [aLd, vLd] : aLd
+  const fLd = articleFaqLd(article)
+  const jsonLd = [aLd, vLd, fLd].filter(Boolean)
 
   return (
     <article className="yz-article">

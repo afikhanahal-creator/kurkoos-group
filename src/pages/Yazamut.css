@@ -268,3 +268,15 @@
 /* החץ "לכל הכתבות" — מצביע שמאלה (arrowLeft) ויושב משמאל לטקסט (RTL). בלי היפוך. */
 
 .yz-related__title { font-family: var(--font-heading); font-size: 1.6rem; color: var(--color-primary-900); margin: 0 0 0.4rem; }
+
+/* רשימה ממוספרת וטבלת השוואה בגוף הכתבה (MiniMarkdown) */
+.mdx ol { margin: 0 0 1.3rem; padding-inline-start: 1.6rem; }
+.mdx ol li { padding-inline-start: 0.3rem; }
+.mdx ol li::before { content: none; }
+.mdx ol li::marker { color: var(--color-primary-700); font-weight: 700; }
+.mdx__table-wrap { overflow-x: auto; margin: 0 0 1.6rem; border: 1px solid color-mix(in srgb, var(--color-primary-700) 16%, transparent); border-radius: var(--radius-md); }
+.mdx__table { width: 100%; border-collapse: collapse; font-size: 1rem; line-height: 1.6; min-width: 520px; }
+.mdx__table th, .mdx__table td { padding: 0.7rem 0.9rem; text-align: start; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--color-primary-700) 10%, transparent); color: var(--color-text-soft); }
+.mdx__table thead th { background: color-mix(in srgb, var(--color-primary-700) 7%, transparent); color: var(--color-primary-900); font-family: var(--font-heading); }
+.mdx__table tbody th { color: var(--color-primary-900); font-weight: 700; }
+.mdx__table tbody tr:last-child th, .mdx__table tbody tr:last-child td { border-bottom: 0; }

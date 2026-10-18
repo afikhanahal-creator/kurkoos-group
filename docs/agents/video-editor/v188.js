@@ -15,7 +15,7 @@ const IC={gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx
  wand:SVG('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1zM4 20l9-9M11 9l4 4"/>',16),star:SVG('<path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1L3.2 9.7l6.1-.9z"/>',14),
  zoom:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',18),search:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',16),
  play:SVG('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',14),chev:SVG('<path d="m9 6 6 6-6 6"/>',16)};
-const S={open:false,list:[],i:-1,comp:'',kind:'',period:'',q:'',sort:'new',zoom:false,sheet:false,more:{},page:1,seen:0};
+const S={open:false,list:[],i:-1,comp:'',kind:'',period:'',q:'',sort:'new',zoom:false,sheet:false,more:{},page:1,seen:0,card:false};
 const PAGE=60,PEEK=8;
 const onTop=()=>!!(document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
@@ -35,8 +35,11 @@ const textOf=p=>String(isShot(p)?(p.note||p.ad_title||''):(p.text||''));
 const initial=n=>String(n||'?').trim().replace(/^["'„]+/,'').slice(0,1)||'?';
 // tiles and the stage: uploaded screenshots show their improved copy; ads captured from Meta show the 1080px preview, the 4K file waits for the zoom
 const bestSrc=p=>{const v=V();if(v.isShot(p))return (isMeta(p)&&safeUrl(p.creative))?safeUrl(p.creative):(isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
-// the viewer shows the whole ad card (picture, text, button) for ads captured from Meta; the zoom loads the 4K file
-const stageSrc=p=>isMeta(p)?(safeUrl(p.prev)||bestSrc(p)):bestSrc(p);
+// v194: ads captured from Meta open on the ad picture itself, filling the stage; "המודעה המלאה" shows the whole card from the
+// library (picture, text, button) at a readable width. Before, the stage showed the card, and a tap stretched it to the full
+// screen width, so only Meta's header lines were in view.
+const cardSrc=p=>safeUrl(p.url)||safeUrl(p.prev)||'';
+const stageSrc=p=>isMeta(p)?((S.card&&cardSrc(p))||safeUrl(p.creative)||cardSrc(p)||bestSrc(p)):bestSrc(p);
 const days=p=>{const t=Date.parse(dateOf(p));return t?Math.floor((Date.now()-t)/864e5):null};
 const seenAt=()=>{try{return +localStorage.getItem('v188_seen')||0}catch(e){return 0}};
 const isNew=p=>{const t=Date.parse(String(p.added||p.first_seen||p.published||''));return !!t&&S.seen>0&&t>S.seen};
@@ -65,7 +68,7 @@ function compStats(){const m=new Map();all().forEach(p=>{const n=nameOf(p);const
 
 /* ---------- the gallery overlay ---------- */
 function card(p,i){const k=kindOf(p);const src=bestSrc(p);const name=nameOf(p);const d=days(p);const fresh=isNew(p);
- const foot=k==='post'?(p.eng?`<span class="v186m">${num(p.eng)} מעורבות</span>`:'<span class="v186m">פוסט</span>'):isMeta(p)?`<span class="v186m">${p.media==='video'?IC.play+' סרטון':'מודעה'}${+p.copies>1?' · '+p.copies+' גרסאות':''}</span><span class="v186k4">4K</span>`:`<span class="v186m">${KIND[k]}</span>`;
+ const foot=k==='post'?(p.eng?`<span class="v186m">${num(p.eng)} מעורבות</span>`:'<span class="v186m">פוסט</span>'):isMeta(p)?`<span class="v186m">${p.media==='video'?IC.play+' סרטון':'מודעה'}${+p.copies>1?' · '+p.copies+' גרסאות':''}</span>`:`<span class="v186m">${KIND[k]}</span>`;
  return `<article class="v186c${fresh?' new':''}"><button type="button" class="v186t" data-v186="view" data-i="${i}" aria-label="${E(name)}, ${KIND[k]} מ־${E(fmtD(dateOf(p)))}"><img src="${E(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-v181img="${E(p.id)}">${fresh?'<span class="v186nw">חדש</span>':''}</button>
   <div class="v186ch"><i class="v186av" aria-hidden="true">${E(initial(name))}</i><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}${d!=null&&(k==='ad'?d>=1:d<=30)?`<small class="v186rel"> · ${k==='ad'?d+' ימים באוויר':d===0?'היום':d===1?'אתמול':'לפני '+d+' ימים'}</small>`:''}</time></div>
   ${textOf(p)?`<p class="v186cx">${E(textOf(p).replace(/\s+/g,' ').slice(0,110))}</p>`:''}<div class="v186cf">${foot}</div></article>`}
@@ -107,13 +110,14 @@ function compInfo(p){const c=compOf(p);if(!c)return '';const s=c.meta_summary||n
  ${(s||ads.length)?`<div class="v186kpis"><span><b>${num(s?s.active:active)}</b>פעילות</span><span><b>${num(s?s.stars:stars)}</b>${IC.star} 60 יום ומעלה</span>${s&&s.new7!=null?`<span><b>${num(s.new7)}</b>חדשות ב־7 ימים</span>`:''}${s&&s.groups!=null?`<span><b>${num(s.groups)}</b>קבוצות מסרים</span>`:''}</div>${s&&s.last_scan?`<small class="v186muted">סריקה אחרונה ${E(String(s.last_scan).replace(/^scan_(\d{4})(\d{2})(\d{2})T.*$/,'$3.$2.$1'))}${s.partial?' · תוצאות חלקיות':''}</small>`:''}`:''}
  ${links.length||site.length?`<div class="v186links">${links.map(x=>`<a class="v186lnk" href="${E(safeUrl(x.url))}" target="_blank" rel="noopener">${E(/חיפוש/.test(x.label)?'חיפוש בספריית Meta':'ספריית Meta: '+x.label)} ${IC.ext}</a>`).join('')}${site.slice(0,2).map(u=>`<a class="v186lnk" href="${E(u)}" target="_blank" rel="noopener">${E(u.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'').slice(0,32))} ${IC.ext}</a>`).join('')}</div>`:''}</details>`}
 function postInfo(p){const v=V();const k=kindOf(p);const d=fmtD(dateOf(p));
- if(isMeta(p)){const land=safeUrl(p.landing);return `<div class="v186sec"><div class="v186when"><time>${E(adStart(p)?'באוויר מאז '+fmtD(adStart(p)):p.start?'באוויר מאז '+p.start:d)}</time><span class="v186chips"><span class="v186chip2">${p.media==='video'?'סרטון':'תמונה'}</span>${+p.copies>1?`<span class="v186chip2">${p.copies} גרסאות</span>`:''}<span class="v186chip2 ok" dir="ltr">4K</span></span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">מודעה בלי טקסט</p>'}${p.cta||land?`<p class="v186fine v186muted">${p.cta?'כפתור: '+E(p.cta):''}${p.cta&&land?' · ':''}${land?'נחיתה: <bdi dir="ltr">'+E(land.replace(/^https?:\/\//,'').slice(0,60))+'</bdi>':''}</p>`:''}<div class="v186links">${safeUrl(p.creative)?`<a class="v186lnk" href="${E(safeUrl(p.creative))}" target="_blank" rel="noopener">התמונה של המודעה בלבד${p.cw?` <bdi dir="ltr">${p.cw}×${p.ch}</bdi>`:''} ${IC.ext}</a>`:''}${land?`<a class="v186lnk" href="${E(land)}" target="_blank" rel="noopener">דף הנחיתה ${IC.ext}</a>`:''}</div></div>${adInfo(p)}`}
+ if(isMeta(p)){const land=safeUrl(p.landing);return `<div class="v186sec"><div class="v186when"><time>${E(adStart(p)?'באוויר מאז '+fmtD(adStart(p)):p.start?'באוויר מאז '+p.start:d)}</time><span class="v186chips"><span class="v186chip2">${p.media==='video'?'סרטון':'תמונה'}</span>${+p.copies>1?`<span class="v186chip2">${p.copies} גרסאות</span>`:''}</span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">מודעה בלי טקסט</p>'}${p.cta||land?`<p class="v186fine v186muted">${p.cta?'כפתור: '+E(p.cta):''}${p.cta&&land?' · ':''}${land?'נחיתה: <bdi dir="ltr">'+E(land.replace(/^https?:\/\//,'').slice(0,60))+'</bdi>':''}</p>`:''}<div class="v186links">${safeUrl(p.creative)?`<a class="v186lnk" href="${E(safeUrl(p.creative))}" target="_blank" rel="noopener">התמונה של המודעה בלבד${p.cw?` <bdi dir="ltr">${p.cw}×${p.ch}</bdi>`:''} ${IC.ext}</a>`:''}${land?`<a class="v186lnk" href="${E(land)}" target="_blank" rel="noopener">דף הנחיתה ${IC.ext}</a>`:''}</div></div>${adInfo(p)}`}
  if(k!=='post')return `<div class="v186sec"><div class="v186when"><time>הועלה ${E(d)}</time><span class="v186chips">${p.ew&&p.eh?`<span class="v186chip2 ok" dir="ltr">${p.ew}×${p.eh}</span>`:p.w&&p.h?`<span class="v186chip2" dir="ltr">${p.w}×${p.h}</span>`:''}${p.enh?'<span class="v186chip2 ok">שופר</span>':''}</span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">צילום מסך בלי הערה</p>'}</div>${adInfo(p)}`;
  return `<div class="v186sec"><div class="v186when"><time>${E(d)}</time><span class="v186chips"><span class="v186chip2">פייסבוק</span></span></div>${v.engHtml(p)}<p class="v186txt">${p.text?E(p.text):'<span class="v186muted">פוסט בלי טקסט</span>'}</p>${safeUrl(p.link)?`<a class="v186lnk" href="${E(safeUrl(p.link))}" target="_blank" rel="noopener">לפוסט בפייסבוק ${IC.ext}</a>`:''}</div>`}
 function viewHtml(){const p=S.list[S.i];const v=V();const src=stageSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;const name=nameOf(p);const ex=textOf(p).replace(/\s+/g,' ').slice(0,140);
  return `<div class="v186vbg" data-v186="vclose"></div>
  <div class="v186vtop"><button type="button" class="v186x" data-v186="vclose" aria-label="סגירה" title="חזרה לגלריה">${IC.x}</button><div class="v186vwho"><i class="v186av" aria-hidden="true">${E(initial(name))}</i><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></div><span class="v186vn">${S.i+1} מתוך ${n}</span><button type="button" class="v186ib" data-v186="zoom" aria-pressed="${S.zoom}" aria-label="הגדלה">${IC.zoom}</button></div>
- <div class="v186stage${S.zoom?' zoom':''}" data-v186="stage"><img src="${E(src)}" alt="${E(name)}" decoding="async" referrerpolicy="no-referrer" draggable="false" data-v186img></div>
+ <div class="v186stage${S.zoom?' zoom':''}${isMeta(p)?(S.card&&cardSrc(p)?' card':' pic'):''}" data-v186="stage"><img src="${E(src)}" alt="${E(name)}" decoding="async" referrerpolicy="no-referrer" draggable="false" data-v186img></div>
+ ${isMeta(p)&&cardSrc(p)&&safeUrl(p.creative)?`<div class="v186mode" role="group" aria-label="תצוגה"><button type="button" data-v186="mode" data-v="pic" class="${S.card?'':'on'}" aria-pressed="${!S.card}">התמונה</button><button type="button" data-v186="mode" data-v="card" class="${S.card?'on':''}" aria-pressed="${S.card}">המודעה המלאה</button></div>`:''}
  ${n>1?`<button type="button" class="v186nav prev" data-v186="prev" aria-label="התמונה הקודמת">${IC.r}</button><button type="button" class="v186nav next" data-v186="next" aria-label="התמונה הבאה">${IC.l}</button>`:''}
  <aside class="v186info${S.sheet?' up':''}" aria-label="פרטי המתחרה והפוסט"><button type="button" class="v186grip" data-v186="sheet" aria-expanded="${S.sheet}"><i></i><span class="v186gw"><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></span><span class="v186gx">${ex?E(ex):'<span class="v186muted">בלי טקסט</span>'}</span></button>
   <div class="v186peek"><button type="button" class="v179b pri big" data-v186="clone" data-id="${E(p.id)}">${IC.wand} שכפל למותג שלנו</button></div>
@@ -143,6 +147,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
  if(a==='more'){S.more[b.dataset.comp]=true;renderGal(true);return}
  if(a==='page'){S.page++;renderGal(true);return}
  if(a==='clear'){S.comp='';S.kind='';S.period='';S.q='';S.page=1;renderGal(false);return}
+ if(a==='mode'){S.card=b.dataset.v==='card';S.zoom=false;openView(S.i);return}
  if(a==='zoom'){S.zoom=!S.zoom;const st=document.querySelector('#v186v .v186stage');if(st)st.classList.toggle('zoom',S.zoom);b.setAttribute('aria-pressed',S.zoom);return}
  if(a==='sheet'){S.sheet=!S.sheet;const i=b.closest('.v186info');i&&i.classList.toggle('up',S.sheet);b.setAttribute('aria-expanded',S.sheet);return}
  if(a==='clone'){const id=b.dataset.id;closeView(true);const g=document.getElementById('v186');if(g)g.classList.add('v186park');try{V().openGen(id)}catch(x){}syncOv();
@@ -150,7 +155,9 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
  if(a==='details'){try{V().openDetail(b.dataset.id)}catch(x){}syncOv();return}
 },true);
 // a tap on the picture itself toggles the zoom, like a photo app
-document.addEventListener('click',e=>{const im=e.target.closest&&e.target.closest('#v186v [data-v186img]');if(!im||S.dragged)return;const st=im.closest('.v186stage');S.zoom=!S.zoom;st.classList.toggle('zoom',S.zoom);const z=document.querySelector('#v186v [data-v186="zoom"]');z&&z.setAttribute('aria-pressed',S.zoom)});
+document.addEventListener('click',e=>{const im=e.target.closest&&e.target.closest('#v186v [data-v186img]');if(!im||S.dragged)return;const st=im.closest('.v186stage');
+ // a Meta ad: the tap switches between the picture and the whole ad, it never blows the card up to the screen width
+ if(st.classList.contains('pic')||st.classList.contains('card')){const p=S.list[S.i];if(p&&cardSrc(p)&&safeUrl(p.creative)){S.card=!S.card;S.zoom=false;openView(S.i)}return}S.zoom=!S.zoom;st.classList.toggle('zoom',S.zoom);const z=document.querySelector('#v186v [data-v186="zoom"]');z&&z.setAttribute('aria-pressed',S.zoom)});
 document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v186!=='sort')return;S.sort=t.value;renderGal(true)});
 let qt=0;document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v186!=='q')return;clearTimeout(qt);const v=t.value;qt=setTimeout(()=>{S.q=v.trim();S.page=1;renderGal(false)},220)});
 // Escape and the arrow keys. Registered on window in the capture phase, so this runs before every other key handler and can

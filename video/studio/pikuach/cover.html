@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8">
+<!-- Cover for the "פיקוח" reel. 1080x1920; everything that matters sits inside the 4:5 grid crop (y 285 to 1635). -->
+<style>
+  @font-face{font-family:Almoni;font-weight:400;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;src:url(../../fonts/Almoni-700.ttf)}
+  html,body{margin:0;background:#f7f8fa}
+  #c{position:relative;width:1080px;height:1920px;overflow:hidden;font-family:Almoni;color:#07293a;
+     background:#f7f8fa;
+     background-image:linear-gradient(#8fb6c833 2px,transparent 2px),linear-gradient(90deg,#8fb6c833 2px,transparent 2px);
+     background-size:60px 60px;background-position:30px 30px}
+  .frame{position:absolute;inset:60px;border:4px solid #8fb6c8;border-radius:6px}
+  .logo{position:absolute;top:310px;left:100px;width:224px;height:210px}
+  .kick{position:absolute;top:330px;right:110px;font-weight:700;font-size:54px;background:#07293a;color:#f7f8fa;border-radius:999px;padding:14px 34px 20px}
+  h1{position:absolute;top:440px;right:104px;margin:0;font-weight:700;font-size:176px;line-height:.95;letter-spacing:-2px}
+  h1 span{display:block}
+  h1 .r{color:#a90b0c}
+  .draw{position:absolute;top:880px;left:110px;width:520px;height:330px}
+  .stamp{position:absolute;top:960px;right:110px;transform:rotate(-6deg);border:12px solid #a90b0c;color:#a90b0c;border-radius:30px;font-weight:700;font-size:118px;line-height:1;padding:18px 40px 34px}
+  .sub{position:absolute;top:1300px;right:110px;font-weight:700;font-size:64px;line-height:1.1}
+  .sub small{display:block;font-weight:400;font-size:44px;color:#105572;margin-top:14px}
+  .tel{position:absolute;top:1300px;left:110px;font-weight:700;font-size:52px;color:#a90b0c;direction:ltr}
+</style></head><body>
+<div id="c">
+  <div class="frame"></div>
+  <img class="logo" src="kurkoos-logo.svg" alt="">
+  <div class="kick">בונים בית פרטי?</div>
+  <h1><span>מי בודק</span><span class="r">את הקבלן?</span></h1>
+  <svg class="draw" viewBox="0 0 520 330">
+    <g fill="none" stroke="#07293a" stroke-width="8">
+      <rect x="40" y="40" width="300" height="200"/><rect x="66" y="66" width="248" height="148" rx="10" stroke="#105572" stroke-width="5"/>
+    </g>
+    <g fill="#07293a"><circle cx="92" cy="92" r="13"/><circle cx="288" cy="92" r="13"/><circle cx="92" cy="188" r="15"/><circle cx="156" cy="188" r="15"/><circle cx="288" cy="188" r="15"/></g>
+    <circle cx="222" cy="188" r="25" fill="none" stroke="#a90b0c" stroke-width="6" stroke-dasharray="8 7"/>
+    <circle cx="222" cy="188" r="70" fill="none" stroke="#a90b0c" stroke-width="12"/><path d="M272 238 L350 316" stroke="#a90b0c" stroke-width="26" stroke-linecap="round"/>
+  </svg>
+  <div class="stamp">פיקוח</div>
+  <div class="sub">שכינתא<small>זרוע הפיקוח של קבוצת קורקוס</small></div>
+  <div class="tel">055-981-1814</div>
+</div>
+</body></html>

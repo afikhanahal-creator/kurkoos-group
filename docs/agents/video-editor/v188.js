@@ -48,7 +48,7 @@ function mountBtn(){const tb=document.querySelector('.tbar');if(!tb||tb.querySel
 try{new MutationObserver(()=>{try{mountBtn()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 try{mountBtn()}catch(e){}
 // the competitors page: one button for the unified gallery, beside "הוסף מתחרה"
-function mountPage(){if(!window.APP||APP.view!=='competitors')return;const act=document.getElementById('vact');if(!act||act.querySelector('[data-v188="uni"]'))return;
+function mountPage(){if(typeof APP==='undefined'||APP.view!=='competitors')return;const act=document.getElementById('vact');if(!act||act.querySelector('[data-v188="uni"]'))return;
  const n=(()=>{try{return all().length}catch(e){return 0}})();const b=document.createElement('button');b.type='button';b.className='ibtn pri v188uni';b.dataset.v186='open';b.dataset.v188='uni';b.innerHTML=IC.gal+`<span>גלריה מאוחדת${n?' · '+num(n):''}</span>`;b.title='כל המודעות והפוסטים של כל המתחרים בגלריה אחת';act.prepend(b)}
 try{new MutationObserver(()=>{try{mountPage()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 

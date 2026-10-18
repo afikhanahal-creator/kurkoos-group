@@ -171,7 +171,8 @@ async function callback(url: URL) {
     if (!rows.length) return go('social=error&m=' + encodeURIComponent('לא נמצא עמוד פייסבוק. ודאו שבחרתם את עמוד קבוצת קורקוס בחלון ההרשאות'))
     const { data: old } = await db.from('social_accounts').select('id,brand')
     const kept = new Map((old || []).map((r) => [r.id, r.brand]))
-    rows.forEach((r) => { if (kept.has(r.id as string)) r.brand = kept.get(r.id as string) ?? null })
+    // a brand chosen in settings wins; an unset one falls back to the page name
+    rows.forEach((r) => { const k = kept.get(r.id as string); if (k) r.brand = k })
     await db.from('social_accounts').delete().in('network', ['facebook', 'instagram'])
     const { error } = await db.from('social_accounts').insert(rows)
     if (error) throw new Error(error.message)

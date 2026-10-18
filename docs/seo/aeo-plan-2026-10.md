@@ -127,3 +127,4 @@ if a supporting page is cited instead of the canonical one, strengthen the canon
   the same one-line description as `llms.txt`. AI engines look for consensus across sources.
 - Real project photos and a dated project log per villa (with owner approval) as first-hand proof.
 - Owner-approved case notes from real builds would strengthen the mistakes and cost articles.
+- 2026-10-18: AEO pass deployed (PR 290); redeploy after a Vercel failure.

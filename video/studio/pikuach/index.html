@@ -95,8 +95,8 @@ $('sheet').innerHTML = (() => { let s = ''; for (let x = 60; x <= 1020; x += 60)
   s += `<rect x="40" y="40" width="1000" height="1840" fill="none" stroke="${MIST}" stroke-width="4"/>`;
   [[40, 40, 1, 1], [1040, 40, -1, 1], [40, 1880, 1, -1], [1040, 1880, -1, -1]].forEach(([x, y, a, b]) => s += `<path d="M${x} ${y + b * 80} V${y} H${x + a * 80}" fill="none" stroke="${NAVY}" stroke-width="8"/>`);
   return s; })();
-// the wipe: a navy scale ruler with mist ticks, crossing the sheet top to bottom
-$('wipe').innerHTML = `<rect width="1080" height="300" fill="${NAVY}"/>` + Array.from({length: 55}, (_, i) => `<path d="M${20 + i * 19.6} 0 V${i % 10 === 0 ? 90 : i % 5 === 0 ? 60 : 34}" stroke="${MIST}" stroke-width="4"/>`).join('') +
+// the wipe: a mist scale ruler with teal ticks (mist, not navy, and linear, so the sweep stays under the flash limit), crossing the sheet top to bottom
+$('wipe').innerHTML = `<rect width="1080" height="300" fill="${MIST}"/>` + Array.from({length: 55}, (_, i) => `<path d="M${20 + i * 19.6} 0 V${i % 10 === 0 ? 90 : i % 5 === 0 ? 60 : 34}" stroke="${TEAL}" stroke-width="4"/>`).join('') +
   `<rect y="292" width="1080" height="8" fill="${RED}"/>`;
 
 // ---------- captions (from timings.js; ~ marks a red word, | splits a line into parts) ----------
@@ -264,8 +264,8 @@ function seek(t) {
   const len = (CUT[n + 1] || DUR) - CUT[n];
   SC.forEach((s, i) => vis(s, i === n && n < NS));
   $('sheetno').textContent = n < NS ? `גיליון ${String(n + 1).padStart(2, '0')}/${NS}` : '';
-  // a hard cut behind the ruler: it sweeps down in .24 s around every cut after the first
-  const wp = n > 0 ? clamp((t - CUT[n] + .12) / .24) : 1, wn = n < NS ? clamp((t - CUT[n + 1] + .12) / .24) : 0;
+  // a hard cut behind the ruler: it sweeps down in .34 s around every cut after the first
+  const wp = n > 0 ? clamp((t - CUT[n] + .17) / .34) : 1, wn = n < NS ? clamp((t - CUT[n + 1] + .17) / .34) : 0;
   const w = wn > 0 ? wn : (wp < 1 ? wp : 0);
   vis($('wipe'), w > 0 && w < 1); $('wipe').style.top = lerp(-320, 1940, w) + 'px';
   // a punch in at the start of every scene, then a slow push
@@ -300,8 +300,8 @@ function seek(t) {
   if (n === 12) { popEl($('s13t'), pop(u, 0), '50% 50%'); $('s13d').style.opacity = k(u, .1, .4);
     const pe = k(u, .3, 1.0); $('s13pen').setAttribute('transform', `translate(${lerp(-200, 330, pe)} ${lerp(1300, 1080, pe)})`); popEl($('s13c'), pop(u, 1.0), '50% 50%'); }
   // the end card drops in from the top like a sheet laid on the table
-  const e = k(t, END, END + .4); vis($('end'), t >= END); $('end').style.clipPath = `inset(0 0 ${(1 - e) * 100}% 0)`;
-  ['e1', 'e2', 'e3', 'e4', 'e5'].forEach((id, i) => inout($(id), t - END, .3 + i * .16, 30));
+  const e = clamp((t - END) / .9); vis($('end'), t >= END); $('end').style.clipPath = `inset(0 0 ${(1 - e) * 100}% 0)`;
+  ['e1', 'e2', 'e3', 'e4', 'e5'].forEach((id, i) => inout($(id), t - END, .5 + i * .16, 30));
   caption(t);
 }
 

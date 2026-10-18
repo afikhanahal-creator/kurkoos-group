@@ -2275,85 +2275,151 @@ body.v179lock{overflow:hidden}
 </style>
 
 <style id="k186">
-/* V186 · competitor gallery from the header, and the full screen viewer. Navy #07293a, teal #105572, mist #8fb6c8, paper #f7f8fa. */
+/* V186/V188 · the competitor gallery and the viewer. Navy #07293a (ink), teal #105572 (interactive), mist #8fb6c8, paper #f7f8fa, red #a90b0c (new only). */
 .tbar .v186btn{order:1}
 .tbar .v186btn svg{width:18px;height:18px}
 @media (max-width:700px){.tbar .v186btn span{display:none}.tbar .v186btn{padding:0 10px!important}}
 body.v186lock{overflow:hidden}
-/* parked behind the clone form: out of sight but still a window for the history coordinator */
-#v186.v186park{opacity:0;pointer-events:none}
 /* .ov gives the window a back entry (V101) but also centers its children and pads them: undo that here */
 #v186{position:fixed;inset:0;z-index:1200;background:#f7f8fa;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;place-items:initial;direction:rtl;font-family:Almoni,Heebo,Arial,sans-serif;color:#07293a;padding:env(safe-area-inset-top,0) 0 0}
 #v186v{padding:0;place-items:initial;display:block}
-.v186top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #e3e9ee;background:#fff}
-.v186top h2{margin:0;font-size:20px;font-weight:700}
-.v186n{font-size:13.5px;color:#5f6b78;margin-inline-start:auto}
-.v186x{all:unset;box-sizing:border-box;cursor:pointer;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:12px;color:#07293a;background:#f1f5f7}
-.v186x:focus-visible,.v186ib:focus-visible,.v186t:focus-visible,.v186nav:focus-visible,.v186grip:focus-visible,.v186bar select:focus-visible{outline:3px solid #105572;outline-offset:2px}
-.v186bar{display:flex;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#fff;border-bottom:1px solid #e3e9ee}
-.v186bar label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#5f6b78;min-width:140px;flex:1 1 140px}
-.v186bar select{min-height:44px;border:1px solid #cbd1da;border-radius:12px;padding:0 10px;font:600 14.5px Almoni,Heebo,Arial,sans-serif;color:#07293a;background:#fff}
-.v186grid{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 14px calc(24px + env(safe-area-inset-bottom,0));display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;align-content:start}
+/* parked behind the clone form: out of sight but still a window for the history coordinator */
+#v186.v186park{opacity:0;pointer-events:none}
+.v186top{display:flex;align-items:center;gap:12px;padding:10px 14px 8px;background:#fff}
+.v186tt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.v186top h2{margin:0;font-size:21px;font-weight:700;line-height:1.15;letter-spacing:-.01em}
+.v186n{font-size:13px;color:#5f6b78;font-variant-numeric:tabular-nums}
+.v186x{all:unset;box-sizing:border-box;cursor:pointer;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:12px;color:#07293a;background:#f1f5f7;flex:none}
+.v186x:focus-visible,.v186ib:focus-visible,.v186t:focus-visible,.v186nav:focus-visible,.v186grip:focus-visible,.v186chip:focus-visible,.v186seg button:focus-visible,.v186more:focus-visible,.v186sort select:focus-visible,.v186q input:focus-visible{outline:3px solid #105572;outline-offset:2px}
+/* the competitor rail: one chip per competitor, counts, a red dot when something is new this week */
+.v186av{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#07293a;color:#fff;font-style:normal;font-weight:700;font-size:14px;line-height:1}
+.v186av.big{width:44px;height:44px;border-radius:13px;font-size:21px}
+.v186rail{display:flex;gap:8px;padding:6px 14px 10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:#fff;border-bottom:1px solid #e3e9ee;scroll-padding-inline:14px}
+.v186rail::-webkit-scrollbar{display:none}
+.v186chip{all:unset;box-sizing:border-box;cursor:pointer;flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px 0 10px;border-radius:999px;background:#f1f5f7;color:#07293a;font-size:14.5px;font-weight:700;max-width:230px;scroll-snap-align:start;transition:background .15s ease,transform .12s ease}
+.v186chip b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v186chip small{position:relative;font-size:12.5px;font-weight:600;color:#5f6b78;font-variant-numeric:tabular-nums}
+.v186chip small u{position:absolute;top:-3px;inset-inline-end:-9px;width:7px;height:7px;border-radius:50%;background:#a90b0c}
+.v186chip.on{background:#07293a;color:#fff}.v186chip.on small{color:#c9dbe4}.v186chip.on .v186av{background:#fff;color:#07293a}
+.v186chip:active{transform:scale(.97)}
+/* tools: search, kind, period, order */
+.v186bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 14px;background:#f7f8fa;border-bottom:1px solid #e3e9ee}
+.v186q{position:relative;display:flex;flex:1 1 260px;min-width:0}
+.v186q input{all:unset;box-sizing:border-box;width:100%;min-height:44px;border:1px solid #cbd1da;border-radius:12px;padding:0 40px 0 12px;background:#fff;font:500 15px Almoni,Heebo,Arial,sans-serif;color:#07293a}
+.v186q input::placeholder{color:#8a96a3}
+.v186qi{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);color:#5f6b78;display:grid}
+.v186segs{display:contents}
+.v186seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:#e9eef2;flex:none}
+.v186seg button{all:unset;box-sizing:border-box;cursor:pointer;min-height:38px;padding:0 12px;border-radius:9px;font:700 13.5px Almoni,Heebo,Arial,sans-serif;color:#243b4c;transition:background .15s ease,color .15s ease}
+.v186seg button.on{background:#fff;color:#07293a;box-shadow:0 1px 2px rgba(7,41,58,.12)}
+.v186sort{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#5f6b78;margin-inline-start:auto}
+.v186sort select{min-height:38px;border:1px solid #cbd1da;border-radius:10px;padding:0 8px;font:600 13.5px Almoni,Heebo,Arial,sans-serif;color:#07293a;background:#fff}
+/* the body: competitor sections, each with a sticky name */
+.v186body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(24px + env(safe-area-inset-bottom,0));overscroll-behavior:contain}
+.v186sec2{padding:14px 0 6px}
+.v186sh{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:8px 0;margin-bottom:8px;background:rgba(247,248,250,.92);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.v186sh h3{margin:0;font-size:17px;font-weight:700;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v186shn{font-size:12.5px;color:#5f6b78;white-space:nowrap;font-variant-numeric:tabular-nums}
+.v186fresh{color:#a90b0c;font-weight:700}
+.v186sh .v186lnk.sm{margin-inline-start:auto;min-height:36px;padding:0 10px;font-size:13px;flex:none}
+.v186grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;align-content:start}
+.v186grid.flat{padding-top:12px}
+.v186more{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;min-height:44px;margin:10px 0 4px;border-radius:12px;border:1px dashed #b9c6d0;text-align:center;font:700 14px Almoni,Heebo,Arial,sans-serif;color:#105572;background:#fff}
+.v186more:active{transform:scale(.99)}
+/* the card: picture, then who and when, then a line of the text */
+.v186c{display:flex;flex-direction:column;gap:6px;background:#fff;border-radius:16px;padding:6px 6px 10px;box-shadow:0 1px 2px rgba(7,41,58,.06),0 0 0 1px rgba(7,41,58,.05)}
+.v186c.new{box-shadow:0 1px 2px rgba(7,41,58,.06),0 0 0 2px #a90b0c}
 /* a square tile sized by padding, not aspect-ratio: in a grid the ratio collapsed the rows on phones and the tiles overlapped */
-.v186t{all:unset;box-sizing:border-box;cursor:zoom-in;position:relative;display:block;height:0;padding-bottom:100%;border-radius:14px;overflow:hidden;background:#eef2f5}
+.v186t{all:unset;box-sizing:border-box;cursor:zoom-in;position:relative;display:block;height:0;padding-bottom:100%;border-radius:12px;overflow:hidden;background:#eef2f5}
 .v186t img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s cubic-bezier(.23,1,.32,1)}
 @media (hover:hover) and (pointer:fine){.v186t:hover img{transform:scale(1.04)}}
 .v186t:active img{transform:scale(.985)}
-.v186tc{position:absolute;inset-inline:0;bottom:0;padding:26px 10px 9px;background:linear-gradient(to top,rgba(7,41,58,.78),rgba(7,41,58,0));color:#fff;display:flex;flex-direction:column;gap:2px;font-size:13.5px;line-height:1.2}
-.v186tc b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.v186tc i{font-style:normal;color:#c9dbe4;font-size:12.5px}
-.v186empty{margin:40px auto;max-width:460px;text-align:center;padding:0 20px}.v186empty b{display:block;font-size:18px;margin-bottom:6px}.v186empty p{margin:0;color:#5f6b78;line-height:1.5}
+.v186nw{position:absolute;top:8px;inset-inline-start:8px;background:#a90b0c;color:#fff;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;letter-spacing:0}
+.v186ch{display:flex;align-items:center;gap:7px;padding:2px 4px 0;min-width:0}
+.v186ch b{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.v186ch time{font-size:12px;color:#5f6b78;white-space:nowrap;font-variant-numeric:tabular-nums}
+.v186cx{margin:0;padding:0 4px;font-size:13px;line-height:1.4;color:#334155;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.v186cf{display:flex;align-items:center;gap:6px;padding:0 4px;font-size:12px;color:#5f6b78;margin-top:auto}
+.v186m{display:inline-flex;align-items:center;gap:4px}
+.v186k4{margin-inline-start:auto;font-size:11px;font-weight:700;color:#0b5b3a;background:#e5f4ec;border-radius:6px;padding:1px 6px}
+.v186empty{margin:48px auto;max-width:460px;text-align:center;padding:0 20px;display:flex;flex-direction:column;gap:8px;align-items:center}.v186empty b{display:block;font-size:18px}.v186empty p{margin:0;color:#5f6b78;line-height:1.5}
 /* viewer */
 #v186v{position:fixed;inset:0;z-index:1300;direction:rtl;font-family:Almoni,Heebo,Arial,sans-serif;color:#f7f8fa}
 .v186vbg{position:absolute;inset:0;background:#07293a}
-.v186vtop{position:absolute;top:env(safe-area-inset-top,0);inset-inline:0;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 14px}
+.v186vtop{position:absolute;top:env(safe-area-inset-top,0);inset-inline-start:400px;inset-inline-end:0;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(to bottom,rgba(7,41,58,.9),rgba(7,41,58,0))}
 .v186vtop .v186x{background:rgba(255,255,255,.14);color:#fff}
-.v186vn{font-size:14px;color:#c9dbe4;font-variant-numeric:tabular-nums}
-.v186ib{all:unset;box-sizing:border-box;cursor:pointer;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:12px;color:#fff;background:rgba(255,255,255,.14);margin-inline-start:auto}
+.v186vwho{display:none;align-items:center;gap:8px;min-width:0;flex:1}
+.v186vtop .v186vn{margin-inline-start:auto}
+.v186vwho .v186av{background:#fff;color:#07293a}
+.v186vwho b{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.v186vwho time{font-size:13px;color:#c9dbe4;white-space:nowrap;font-variant-numeric:tabular-nums}
+.v186vn{font-size:13px;color:#c9dbe4;font-variant-numeric:tabular-nums;white-space:nowrap}
+.v186ib{all:unset;box-sizing:border-box;cursor:pointer;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:12px;color:#fff;background:rgba(255,255,255,.14);flex:none}
 .v186ib[aria-pressed="true"]{background:#f7f8fa;color:#07293a}
-.v186stage{position:absolute;top:0;bottom:0;inset-inline-start:380px;inset-inline-end:0;z-index:1;display:grid;place-items:center;padding:64px 16px 16px;overflow:hidden;cursor:zoom-in;touch-action:pan-y}
+.v186stage{position:absolute;top:0;bottom:0;inset-inline-start:400px;inset-inline-end:0;z-index:1;display:grid;place-items:center;padding:68px 16px 16px;overflow:hidden;cursor:zoom-in;touch-action:pan-y}
 .v186stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,.45);user-select:none;-webkit-user-select:none;transition:transform .2s cubic-bezier(.23,1,.32,1)}
 .v186stage.zoom{overflow:auto;display:block;cursor:zoom-out;touch-action:auto}
 .v186stage.zoom img{max-width:none;max-height:none;width:auto;height:auto;min-width:100%;border-radius:0;box-shadow:none;margin:0 auto}
 .v186nav{all:unset;box-sizing:border-box;cursor:pointer;position:absolute;top:50%;z-index:3;width:52px;height:52px;margin-top:-26px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.16);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.v186nav.prev{inset-inline-end:14px}.v186nav.next{inset-inline-start:394px}
+.v186nav.prev{inset-inline-end:14px}.v186nav.next{inset-inline-start:414px}
 @media (hover:hover) and (pointer:fine){.v186nav:hover{background:rgba(255,255,255,.3)}}
 .v186nav:active{transform:scale(.94)}
-.v186info{position:absolute;top:0;bottom:0;inset-inline-start:0;width:380px;z-index:2;background:#f7f8fa;color:#07293a;display:flex;flex-direction:column;box-shadow:12px 0 40px rgba(0,0,0,.25)}
-.v186grip{display:none}
+/* the side panel (desktop) / bottom sheet (phones): who, when, what it says, then the action */
+.v186info{position:absolute;top:0;bottom:0;inset-inline-start:0;width:400px;z-index:2;background:#f7f8fa;color:#07293a;display:flex;flex-direction:column;box-shadow:12px 0 40px rgba(0,0,0,.25)}
+.v186grip,.v186peek{display:none}
 .v186ib2{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0));display:flex;flex-direction:column;gap:16px}
-.v186who{display:flex;align-items:center;gap:12px}.v186who i{flex:none;width:48px;height:48px;border-radius:14px;background:#07293a;color:#fff;font-style:normal;font-weight:700;font-size:22px;display:grid;place-items:center}
+.v186who{display:flex;align-items:center;gap:12px}
 .v186who b{display:block;font-size:19px;line-height:1.2}.v186who small{display:block;font-size:13.5px;color:#5f6b78;margin-top:2px}
 .v186desc{margin:0;font-size:14px;line-height:1.5;color:#334155}
 .v186sec{border-top:1px solid #e3e9ee;padding-top:12px;display:flex;flex-direction:column;gap:8px}
 .v186sec h4{margin:0;font-size:13px;font-weight:700;color:#5f6b78;letter-spacing:0}
-.v186kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.v186when{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.v186when time{font-size:15px;font-weight:700;color:#07293a}
+.v186det summary{list-style:none;display:flex;align-items:center;gap:6px;cursor:pointer;min-height:36px}
+.v186det summary::-webkit-details-marker{display:none}
+.v186det summary svg{transition:transform .2s ease;color:#5f6b78}.v186det[open] summary svg{transform:rotate(90deg)}
+.v186kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .v186kpis span{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #e3e9ee;border-radius:12px;padding:8px 10px;font-size:12.5px;color:#5f6b78}
 .v186kpis b{font-size:20px;color:#07293a;font-variant-numeric:tabular-nums;line-height:1.1}
 .v186kpis svg{vertical-align:-2px;color:#a90b0c}
 .v186chips{display:flex;flex-wrap:wrap;gap:6px}
-.v186chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:#243b4c;background:#eef2f5;border-radius:999px;padding:4px 10px}
-.v186chip.star{background:#fdecec;color:#a90b0c}.v186chip.gone{background:#f3f4f6;color:#6b7280}.v186chip.ok{background:#e5f4ec;color:#0b5b3a}
+.v186chip2{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:#243b4c;background:#eef2f5;border-radius:999px;padding:4px 10px}
+.v186chip2.star{background:#fdecec;color:#a90b0c}.v186chip2.gone{background:#f3f4f6;color:#6b7280}.v186chip2.ok{background:#e5f4ec;color:#0b5b3a}
 .v186adt{margin:0;font-size:15px;font-weight:700;line-height:1.35}
-.v186txt{margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:#1f3442}
+.v186txt{margin:0;font-size:15.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:#1f3442}
 .v186links{display:flex;flex-wrap:wrap;gap:8px}
-.v186lnk{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border-radius:999px;background:#eef4f7;color:#105572;font-size:13.5px;font-weight:700;text-decoration:none;max-width:100%}
+.v186lnk{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border-radius:999px;background:#eef4f7;color:#105572;font-size:13.5px;font-weight:700;text-decoration:none;max-width:100%}
 .v186lnk:active{transform:scale(.97)}
 .v186muted{color:#5f6b78;font-size:13px}.v186fine{margin:0;line-height:1.45}
 .v186acts{display:flex;flex-direction:column;gap:8px}
 .v186acts .v179b{width:100%;box-sizing:border-box}
+.v186acts2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .v186info .v181eng{color:#4b5563;font-size:13.5px}
 @media (max-width:860px){
- .v186stage{inset-inline-start:0;padding:60px 8px 112px}
- .v186nav.next{inset-inline-start:10px}.v186nav.prev{inset-inline-end:10px}.v186nav{top:40%}
- .v186info{top:auto;bottom:0;width:auto;inset-inline:0;height:min(78vh,78dvh);transform:translateY(calc(100% - 92px - env(safe-area-inset-bottom,0)));transition:transform .32s cubic-bezier(.32,.72,0,1);border-radius:22px 22px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.3)}
+ .v186top{padding:8px 12px 6px}.v186top h2{font-size:19px}
+ /* phones: the engine's own close X sits top right (V135), so the gallery and the viewer hide theirs; filters sit in one scrolling row */
+ .v186top .v186x,.v186vtop .v186x{display:none}.v186top{padding-inline-start:64px}.v186vtop{padding-inline-start:64px}
+ .v186bar{gap:8px;padding:8px 12px;flex-wrap:nowrap;align-items:stretch}.v186q{flex:1 1 auto;order:1}.v186sort{order:2;margin-inline-start:0;flex:none}.v186sort span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.v186sort select{max-width:132px;min-height:44px}
+ .v186segs{order:3;display:flex;gap:8px;flex:1 1 100%;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.v186segs::-webkit-scrollbar{display:none}.v186bar{flex-wrap:wrap}.v186seg button{padding:0 10px;font-size:13px;white-space:nowrap}
+ .v186rel{display:none}
+ .v186body{padding:0 10px calc(24px + env(safe-area-inset-bottom,0))}
+ .v186grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .v186c{padding:4px 4px 8px;border-radius:14px}.v186ch b{font-size:13px}.v186cx{font-size:12.5px}
+ .v186stage{inset-inline-start:0;padding:62px 8px 172px}.v186vtop{inset-inline-start:64px}.v186vwho{display:flex}.v186vtop .v186vn{margin-inline-start:0}
+ .v186nav.next{inset-inline-start:10px}.v186nav.prev{inset-inline-end:10px}.v186nav{top:38%}
+ .v186vwho time{display:none}
+ /* the sheet: folded it still shows who, when, a line of the text and the action; a tap on the grip opens the rest */
+ .v186info{top:auto;bottom:0;width:auto;inset-inline:0;height:min(80vh,80dvh);transform:translateY(calc(100% - 164px - env(safe-area-inset-bottom,0)));transition:transform .32s cubic-bezier(.32,.72,0,1);border-radius:22px 22px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.3)}
  .v186info.up{transform:translateY(0)}
- .v186grip{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 16px 12px;min-height:56px;width:100%}
- .v186grip i{width:44px;height:5px;border-radius:3px;background:#cbd5df}.v186grip span{font-size:14.5px;font-weight:700;color:#07293a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+ .v186grip{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px 16px 6px;min-height:98px;width:100%;text-align:start}
+ .v186grip i{align-self:center;width:44px;height:5px;border-radius:3px;background:#cbd5df}
+ .v186gw{display:flex;align-items:baseline;gap:8px;min-width:0}.v186gw b{font-size:15.5px;font-weight:700;color:#07293a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.v186gw time{font-size:13px;color:#5f6b78;white-space:nowrap;font-variant-numeric:tabular-nums}
+ .v186gx{font-size:13.5px;line-height:1.4;color:#334155;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .v186peek{display:block;padding:0 16px 10px}.v186peek .v179b{width:100%;box-sizing:border-box}
+ .v186info.up .v186peek{display:none}
  .v186ib2{padding-top:4px}
- .v186grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px}
- .v186bar label{min-width:0;flex:1 1 30%}.v186bar{gap:8px;padding:8px 10px}
 }
-@media (prefers-reduced-motion:reduce){.v186info,.v186t img,.v186stage img{transition:none}}
+@media (prefers-reduced-motion:reduce){.v186info,.v186t img,.v186stage img,.v186chip,.v186det summary svg{transition:none}}
 </style>
 
 <style id="k150">
@@ -26992,7 +27058,8 @@ function prompt(post,o){if(isShot(post))return promptShot(post,o);const B=V().br
 ${B.facts}
 ${B.rules}
 מגבלות: headline עד 7 מילים (מותר \\n אחד), sub עד 12 מילים, items 3 עד 4 שורות קצרות, cta עד 4 מילים, fb 60 עד 150 מילים.
-החזר JSON בלבד: {"analysis":{"message":"","value_prop":"","hook":"","structure":"","cta":"","principle":""},"post":{"headline":"","sub":"","items":[""],"cta":"","fb":""}}`}
+design: סוג הלייאאוט שמתאים לגרסה שלנו, אחד מ: photo (תמונה גדולה וכותרת), statement (משפט אחד גדול), numbers (מספר או נתון במרכז), list (רשימת נקודות), quote (ציטוט), question (שאלה), split (לפני ואחרי או השוואה), carousel (כמה שקפים).
+החזר JSON בלבד: {"analysis":{"message":"","value_prop":"","hook":"","structure":"","cta":"","principle":""},"design":{"layout":"photo","mood":"bold|calm|luxury","note":"משפט אחד למעצב"},"post":{"headline":"","sub":"","items":[""],"cta":"","fb":""}}`}
 function promptShot(p,o){const B=V().brandOf(o.brand);const PROJ=V().PROJ||[];const seen=imgsFor(p).length>0;const goal=o.goal==='leads'?'לידים: פנייה של לקוח פוטנציאלי':o.goal==='brand'?'מודעות למותג: שיזכרו את השם ומה אנחנו עושים':'פרויקט ספציפי'+(o.project?': '+(PROJ.find(x=>x[0]===o.project)||[])[1]:'');
  return `אתה הקריאייטיב דיירקטור של "${B.name}". ${seen?'מצורפת תמונה: צילום מסך או התמונה המקורית של מודעה שמתחרה מפרסם.':'יש לנו צילום מסך של מודעה של מתחרה, אבל אינך רואה אותו. עבוד רק לפי הפרטים בכתב ואל תניח מה יש בתמונה.'} המשימה בשני חלקים.
 חלק 1, ניתוח: ${seen?'קרא מהתמונה את הטקסט שעל המודעה, הכותרת והקריאה לפעולה. ':''}מסר מרכזי, הצעת הערך, ההוק, המבנה, הקריאה לפעולה, העיקרון שאפשר ללמוד (עיקרון, לא ניסוח)${seen?', והעיצוב: סוג הלייאאוט, היררכיית הטקסט, מיקום הכותרת והקריאה לפעולה, מה רואים בתמונה, צבעים וטיפוגרפיה, בשפה שמעצב יכול לבנות ממנה':''}.
@@ -27004,18 +27071,23 @@ ${p.ad_title?'כותרת המודעה בספריית Meta: '+p.ad_title+'\n':''}
 ${B.facts}
 ${B.rules}
 מגבלות: headline עד 7 מילים (מותר \\n אחד), sub עד 12 מילים, items 3 עד 4 שורות קצרות, cta עד 4 מילים, fb 60 עד 150 מילים.
-החזר JSON בלבד: {"analysis":{"message":"","value_prop":"","hook":"","structure":"","cta":"","principle":"","visual":""},"post":{"headline":"","sub":"","items":[""],"cta":"","fb":""}}`}
+design: הלייאאוט של המודעה שלהם, מתורגם לאחד מהסוגים שלנו: photo (תמונה גדולה וכותרת), statement (משפט אחד גדול), numbers (מספר או נתון במרכז), list (רשימת נקודות), quote (ציטוט), question (שאלה), split (לפני ואחרי או השוואה), carousel (כמה שקפים). אותו מבנה, בצבעים ובפונט שלנו.
+החזר JSON בלבד: {"analysis":{"message":"","value_prop":"","hook":"","structure":"","cta":"","principle":"","visual":""},"design":{"layout":"photo","mood":"bold|calm|luxury","note":"משפט אחד למעצב"},"post":{"headline":"","sub":"","items":[""],"cta":"","fb":""}}`}
 async function askAI(p,images){let s=null;try{s=window.claude&&window.claude.use?await window.claude.use('sample'):null}catch(e){}if(!s&&typeof KC!=='undefined'&&KC.sample)s=KC.sample;if(!s){const e=new Error('no');e.code='not_granted';throw e}
  const opts={cache:false,modelTier:'default'};if(images&&images.length)opts.images=images;const r=await s.json(p,opts);if(!r||typeof r!=='object'||!r.post)throw new Error('bad');return r}
 const asAd=post=>({id:post.id,comp_id:post.comp_id,comp_name:shortName(post),page_name:'',title:excerpt(post.text,90),start:null,snapshot_url:''});
 function srcFields(post){if(isShot(post))return {id:String(post.id),kind:'shot',comp_name:shortName(post),published:post.added||null,text:String(post.note||post.ad_title||'').slice(0,600),reactions:0,comments:0,shares:0,link:safeUrl(post.enh||post.url),img:safeUrl(post.enh||post.url),w:post.ew||post.w||0,h:post.eh||post.h||0,ad_id:post.ad_id||''};
  return {id:String(post.id),comp_name:shortName(post),published:post.published||null,text:String(post.text||'').slice(0,600),reactions:+post.reactions||0,comments:+post.comments||0,shares:+post.shares||0,link:safeUrl(post.link),img:post.thumb||safeUrl(post.image)}}
 function finish(p,post,res,o){V().applyTo(p,res,asAd(post),o);delete p.metaSource;p.src='comppost';p.compPostId=String(post.id);p.compSource=srcFields(post);const vis=res&&res.analysis&&res.analysis.visual;if(vis)p.metaAnalysis=Object.assign({},p.metaAnalysis||{},{visual:(V().cleanTxt||String)(vis)});return p}
-function makePost(post,res,o){const ct=V().cleanTxt||(x=>String(x||'').trim());const P=res.post||{};const items=Array.isArray(P.items)?P.items.filter(Boolean):[];const L=items.length>=3?'ed_article':'ed_quote';const proj=o.goal==='project'&&o.project?o.project:'general';
+// the layout family Claude saw, mapped onto our own layouts (every one of them already carries our colours and font)
+const DESIGN={photo:'ed_photo',statement:'statement',numbers:'numbers',list:'tips',quote:'quote',question:'question',split:'split',carousel:'carousel'};
+const DESIGN_HE={photo:'תמונה גדולה וכותרת',statement:'משפט אחד גדול',numbers:'מספר במרכז',list:'רשימת נקודות',quote:'ציטוט',question:'שאלה',split:'לפני ואחרי',carousel:'קרוסלה'};
+function layoutFor(res,items){const d=res&&res.design||{};const k=String(d.layout||'').toLowerCase();if(DESIGN[k]&&(k!=='list'||items.length>=3))return DESIGN[k];return items.length>=3?'ed_article':'ed_quote'}
+function makePost(post,res,o){const ct=V().cleanTxt||(x=>String(x||'').trim());const P=res.post||{};const items=Array.isArray(P.items)?P.items.filter(Boolean):[];const L=layoutFor(res,items);const proj=o.goal==='project'&&o.project?o.project:'general';
  let p=mkPost({layout:L,project:proj,label:o.goal==='leads'?'לפרטים':o.goal==='brand'?'מי אנחנו':'',head:ct(P.headline)||'פוסט חדש',sub:ct(P.sub),items:items.map(ct),cta:ct(P.cta),fb:ct(P.fb)||undefined,why:'גרסה למותג שלנו, מתוך '+(isShot(post)?'מודעה':'פוסט')+' של '+shortName(post)});
  if(!p)throw new Error('mkPost');
  if(o.brand==='afik'){if(window.__v178&&__v178.cloneOne){const q=__v178.cloneOne(p);delete q.clonedFrom;p=q}else{p.brand='afik';p.series='אפיק הנחל'}}
- p.compId=post.comp_id;p.compName=shortName(post);return finish(p,post,res,o)}
+ p.compId=post.comp_id;p.compName=shortName(post);const d=res.design||{};if(d.layout)p.metaAnalysis=Object.assign({},p.metaAnalysis||{},{design:(DESIGN_HE[String(d.layout).toLowerCase()]||d.layout)+(d.mood?' · '+({bold:'נועז',calm:'רגוע',luxury:'יוקרתי'}[d.mood]||d.mood):'')+(d.note?' · '+ct(d.note):'')});return finish(p,post,res,o)}
 function genHtml(st){const g=G.gen,post=g.post;const GOALS=V().GOALS||[['leads','לידים'],['brand','מודעות למותג'],['project','פרויקט ספציפי']];const PROJ=V().PROJ||[];
  const hdr=`<header class="v179mh"><h2>שכפל למותג שלנו</h2>${xBtn('v181g')}</header>`;
  const sh=isShot(post);const src=`<div class="v181gsrc"><div class="v181gpic">${picHtml(post)}</div><div><span class="v179muted">${sh?'צילום מסך של':'הפוסט של'} ${E(shortName(post))} · ${E(fmtD(post.published))}</span><b>${E(excerpt(post.text,120)||(sh?'מודעה בלי הערה':'פוסט בלי טקסט'))}</b>${sh?(imgsFor(post).length?'<span class="v179muted">Claude יראה את התמונה עצמה וינתח גם את העיצוב</span>':'<span class="v179muted">כאן Claude עובד בלי לראות את התמונה</span>'):engHtml(post)}</div></div>`;
@@ -27028,7 +27100,7 @@ function genHtml(st){const g=G.gen,post=g.post;const GOALS=V().GOALS||[['leads',
  if(st==='busy')return `${hdr}<div class="v179mb">${src}<div class="v179busy" role="status" aria-live="polite"><i></i><b>Claude מנתח וכותב…</b><span>בדרך כלל 20 עד 60 שניות</span></div></div>`;
  if(st==='err')return `${hdr}<div class="v179mb">${src}<div class="v179empty"><b>${E(g.err||'הכתיבה לא הצליחה')}</b><p>${g.errCode==='not_granted'?'Claude זמין כשהמערכת מחוברת. אפשר לנסות שוב אחרי התחברות.':'אפשר לנסות שוב, או לכתוב את הגרסה ידנית בסטודיו.'}</p><div class="v179fa"><button type="button" class="v179b pri" data-v181="gretry">נסו שוב</button><button type="button" class="v179b" data-v181="close" data-m="v181g">סגירה</button></div></div></div>`;
  const p=g.draft,A=p.metaAnalysis||{};
- return `${hdr}<div class="v179mb">${src}<div class="v179res"><div class="v179h"><b>מה למדנו מה${isShot(post)?'מודעה':'פוסט'} שלהם</b></div><dl class="v179dl">${[['המסר',A.message],['הצעת הערך',A.value_prop],['ההוק',A.hook],['המבנה',A.structure],['קריאה לפעולה',A.cta],['העיצוב',A.visual],['העיקרון שלקחנו',A.principle]].filter(([,v])=>v).map(([l,v])=>`<div><dt>${l}</dt><dd>${E(v)}</dd></div>`).join('')}</dl>
+ return `${hdr}<div class="v179mb">${src}<div class="v179res"><div class="v179h"><b>מה למדנו מה${isShot(post)?'מודעה':'פוסט'} שלהם</b></div><dl class="v179dl">${[['המסר',A.message],['הצעת הערך',A.value_prop],['ההוק',A.hook],['המבנה',A.structure],['קריאה לפעולה',A.cta],['העיצוב שלהם',A.visual],['העיצוב שלנו',A.design],['העיקרון שלקחנו',A.principle]].filter(([,v])=>v).map(([l,v])=>`<div><dt>${l}</dt><dd>${E(v)}</dd></div>`).join('')}</dl>
   <div class="v179h"><b>הגרסה שלנו</b><span>${E(p.brand==='afik'?'אפיק הנחל':'קבוצת קורקוס')} · טיוטה</span></div><div class="v179post"><b>${E((p.visual.headline||'').replace(/\n/g,' '))}</b>${p.visual.sub?`<p>${E(p.visual.sub)}</p>`:''}${p.fx&&Array.isArray(p.fx.items)&&p.fx.items.length?`<ul>${p.fx.items.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`:''}${p.visual.cta?`<em>${E(p.visual.cta)}</em>`:''}<pre>${E(p.fb||'')}</pre></div></div></div>
   <footer class="v179mf"><button type="button" class="v179b" data-v181="gagain">${I('wand',15)} גרסה נוספת</button><button type="button" class="v179b pri big" data-v181="gopen">${I('edit',16)} פתח בעורך העיצוב</button></footer>`}
 function openGen(id){const post=getItem(id);if(!post)return;closeM('v181d');let b='kurkoos';try{b=JSON.parse(localStorage.getItem('v179_brand')||'"kurkoos"')}catch(e){}
@@ -27042,7 +27114,7 @@ async function runGen(){const g=G.gen;if(!g)return;g.st='busy';genRender();
 function srcPanel(p){const s=p.compSource||{},A=p.metaAnalysis||{};const open=G.srcOpen==null?!window.matchMedia('(max-width:700px)').matches:G.srcOpen;
  return `<section class="v179src v181src${open?' open':''}" aria-label="הפוסט שממנו יצאנו"><button type="button" class="v179srch" data-v181="srctoggle" aria-expanded="${open}"><span class="v179srck">המקור</span><span class="v179srct"><b>${E(excerpt(s.text,70)||(s.kind==='shot'?'מודעה של המתחרה':'פוסט בלי טקסט'))}</b><small>${E(s.comp_name||'')}${s.published?' · '+E(fmtD(s.published)):''} · ${s.kind==='shot'?'צילום מסך'+(s.w?` <bdi dir="ltr">${s.w}×${s.h}</bdi>`:''):`${+s.reactions||0} לייקים · ${+s.comments||0} תגובות`}</small></span><i class="v179chev" aria-hidden="true">${SV.chev}</i></button>
   <div class="v179srcb"${open?'':' hidden'}><div class="v181gsrc">${s.img?`<div class="v181gpic"><img src="${E(s.img)}" alt="התמונה מהפוסט של ${E(s.comp_name||'המתחרה')}" referrerpolicy="no-referrer" loading="lazy"></div>`:''}<p class="v181full sm">${E(s.text||'')}</p></div>
-  <dl class="v179dl">${[['המסר',A.message],['הצעת הערך',A.value_prop],['ההוק',A.hook],['המבנה',A.structure],['קריאה לפעולה',A.cta],['העיצוב',A.visual],['העיקרון שלקחנו',A.principle]].filter(([,v])=>v).map(([l,v])=>`<div><dt>${l}</dt><dd>${E(v)}</dd></div>`).join('')}</dl>
+  <dl class="v179dl">${[['המסר',A.message],['הצעת הערך',A.value_prop],['ההוק',A.hook],['המבנה',A.structure],['קריאה לפעולה',A.cta],['העיצוב שלהם',A.visual],['העיצוב שלנו',A.design],['העיקרון שלקחנו',A.principle]].filter(([,v])=>v).map(([l,v])=>`<div><dt>${l}</dt><dd>${E(v)}</dd></div>`).join('')}</dl>
   <div class="v179fa">${s.link?`<a class="v179b" href="${E(s.link)}" target="_blank" rel="noopener">${s.kind==='shot'?'צילום המסך בגודל מלא':'לפוסט שלהם בפייסבוק'} ${SV.ext}</a>`:''}<button type="button" class="v179b" data-v181="again">${I('wand',15)} גרסה נוספת</button></div><p class="v179help">התמונה שלהם כאן רק להשראה. בפוסט שלנו התמונות שלנו. שום דבר לא מתפרסם לבד.</p></div></section>`}
 try{peRender=(f=>function(){const r=f.apply(this,arguments);try{if(typeof PE!=='undefined'&&PE.p&&PE.p.src==='comppost'){const b=document.querySelector('#pe-root .pe-body');if(b&&!b.querySelector('.v181src'))b.insertAdjacentHTML('afterbegin',srcPanel(PE.p))}}catch(e){console.warn('v181 src',e)}return r})(peRender)}catch(e){console.error('v181 pe',e)}
 async function againInEditor(){const p=PE.p;if(!p||p.src!=='comppost')return;const s=p.compSource||{};const post=getItem(p.compPostId)||{id:p.compPostId,comp_id:p.compId,comp_name:s.comp_name||p.compName,text:s.text,published:s.published,reactions:s.reactions,comments:s.comments,shares:s.shares,link:s.link,image:s.img};
@@ -27179,10 +27251,13 @@ document.addEventListener('load',e=>{const t=e.target;if(t&&t.tagName==='IMG'&&t
 window.__v181={enhance,enhanceShot,keep,compDoc,getItem,isShot,isMeta,srcOf,fullOf,shortName,engHtml,fmtD,excerpt,allItems,G,postsOf,secHtml,vGal,openDetail,openGen,runGen,prompt,makePost,srcPanel,uploadShots,delShot,decorate,folders};
 })();
 
-// ================= V186 · the competitor gallery, one tap from the header (v187: ads captured from the Meta Ads Library): a "גלריה" button opens every competitor picture
-// (Facebook posts and uploaded ad screenshots) full screen. Tapping a picture opens the viewer: the picture as large as the
-// screen allows, and beside it everything about the competitor (who they are, their ad library summary, the Meta links) and
-// the post itself (date, full text, engagement, link), with "שכפל למותג שלנו". Arrows, swipe and keys move between pictures.
+// ================= V186 · the competitor gallery, one tap from the header (v187: ads captured from the Meta Ads Library; v188: redesigned
+// as one tidy archive). A "גלריה" button opens every competitor picture (Facebook posts, ads captured from the Meta Ads
+// Library, uploaded screenshots) full screen: a rail of competitors with counts, search in the text, kind and period filters,
+// and the pictures grouped by competitor under a sticky name. Tapping a picture opens the viewer: the picture as large as the
+// screen allows, and beside it who the competitor is, when it was published, what it says, and "שכפל למותג שלנו" (text and
+// design in our colours and font). Arrows, swipe and keys move between pictures. The id prefixes stay v186 for the styles,
+// tests and the history coordinator.
 (()=>{
 if(window.__v186)return;window.__v186=1;
 const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -27191,88 +27266,128 @@ const SVG=(d,w)=>`<svg width="${w||18}" height="${w||18}" viewBox="0 0 24 24" fi
 const IC={gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/>'),x:SVG('<path d="M6 6l12 12M18 6 6 18"/>',20),
  l:SVG('<path d="m15 6-6 6 6 6"/>',26),r:SVG('<path d="m9 6 6 6-6 6"/>',26),ext:SVG('<path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',14),
  wand:SVG('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1zM4 20l9-9M11 9l4 4"/>',16),star:SVG('<path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1L3.2 9.7l6.1-.9z"/>',14),
- zoom:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',18)};
-const S={open:false,list:[],i:-1,comp:'',kind:'',sort:'new',zoom:false,sheet:false};
+ zoom:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',18),search:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',16),
+ play:SVG('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',14),chev:SVG('<path d="m9 6 6 6-6 6"/>',16)};
+const S={open:false,list:[],i:-1,comp:'',kind:'',period:'',q:'',sort:'new',zoom:false,sheet:false,more:{},page:1,seen:0};
+const PAGE=60,PEEK=8;
 const onTop=()=>!!(document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
 const num=n=>(+n||0).toLocaleString('he-IL');
 const fmtD=v=>{try{return V().fmtD(v)}catch(e){return ''}};
 const compOf=p=>{const v=V();if(!v)return null;return v.compDoc(v.isShot(p)?p.comp_id:(Array.isArray(p.comp_ids)&&p.comp_ids[0])||p.comp_id)};
 const nameOf=p=>{try{return V().shortName(p)}catch(e){return String(p.comp_name||'')}};
-// tiles and the stage: uploaded screenshots show their improved copy; ads captured from Meta show the 1080px preview, the 4K file waits for the zoom
-const bestSrc=p=>{const v=V();if(v.isShot(p))return (v.isMeta&&v.isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
+const isShot=p=>{try{return V().isShot(p)}catch(e){return false}};
+const isMeta=p=>{try{return V().isMeta(p)}catch(e){return false}};
 const isAd=p=>!!(p.ad_id);
+const kindOf=p=>isMeta(p)?'ad':isShot(p)?(isAd(p)?'ad':'shot'):'post';
+const KIND={ad:'מודעה',shot:'צילום מסך',post:'פוסט'};
+const dateOf=p=>String(p.published||p.added||'');
+const textOf=p=>String(isShot(p)?(p.note||p.ad_title||''):(p.text||''));
+const initial=n=>String(n||'?').trim().replace(/^["'„]+/,'').slice(0,1)||'?';
+// tiles and the stage: uploaded screenshots show their improved copy; ads captured from Meta show the 1080px preview, the 4K file waits for the zoom
+const bestSrc=p=>{const v=V();if(v.isShot(p))return (isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
+const days=p=>{const t=Date.parse(dateOf(p));return t?Math.floor((Date.now()-t)/864e5):null};
+const seenAt=()=>{try{return +localStorage.getItem('v188_seen')||0}catch(e){return 0}};
+const isNew=p=>{const t=Date.parse(String(p.added||p.first_seen||p.published||''));return !!t&&S.seen>0&&t>S.seen};
 
 /* ---------- the button in the header ---------- */
 function mountBtn(){const tb=document.querySelector('.tbar');if(!tb||tb.querySelector('[data-v186="open"]'))return;
- const b=document.createElement('button');b.type='button';b.className='ibtn v186btn';b.dataset.v186='open';b.setAttribute('aria-label','גלריית המתחרים');b.title='גלריית המתחרים: כל התמונות והמודעות';b.innerHTML=IC.gal+'<span>גלריה</span>';
+ const b=document.createElement('button');b.type='button';b.className='ibtn v186btn';b.dataset.v186='open';b.setAttribute('aria-label','גלריית המתחרים');b.title='גלריית המתחרים: כל המודעות והפוסטים';b.innerHTML=IC.gal+'<span>גלריה</span>';
  const anchor=tb.querySelector('#v102back')||tb.querySelector('[data-app="menu"]');if(anchor)anchor.insertAdjacentElement('afterend',b);else tb.prepend(b)}
 try{new MutationObserver(()=>{try{mountBtn()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 try{mountBtn()}catch(e){}
 
 /* ---------- the list ---------- */
-function items(){const v=V();if(!v)return [];let l=v.allItems().filter(p=>bestSrc(p));
+function all(){const v=V();return v?v.allItems().filter(p=>bestSrc(p)):[]}
+function items(){let l=all();
  if(S.comp)l=l.filter(p=>nameOf(p)===S.comp);
- if(S.kind==='post')l=l.filter(p=>!v.isShot(p));else if(S.kind==='shot')l=l.filter(p=>v.isShot(p));else if(S.kind==='ad')l=l.filter(p=>v.isShot(p)&&isAd(p));
- l.sort(S.sort==='eng'?(a,b)=>(+b.eng||0)-(+a.eng||0)||String(b.published||'').localeCompare(String(a.published||'')):(a,b)=>String(b.published||'').localeCompare(String(a.published||'')));
+ if(S.kind)l=l.filter(p=>kindOf(p)===S.kind);
+ if(S.period){const lim=Date.now()-(+S.period)*864e5;l=l.filter(p=>{const t=Date.parse(dateOf(p));return t&&t>=lim})}
+ if(S.q){const q=S.q.toLowerCase();l=l.filter(p=>(textOf(p)+' '+nameOf(p)+' '+String(p.ad_title||'')).toLowerCase().includes(q))}
+ l.sort(S.sort==='eng'?(a,b)=>(+b.eng||0)-(+a.eng||0)||dateOf(b).localeCompare(dateOf(a)):S.sort==='old'?(a,b)=>dateOf(a).localeCompare(dateOf(b)):(a,b)=>dateOf(b).localeCompare(dateOf(a)));
  return l}
-function compNames(){const v=V();const m=new Map();v.allItems().forEach(p=>{if(bestSrc(p)){const n=nameOf(p);m.set(n,(m.get(n)||0)+1)}});return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'he'))}
+function compStats(){const m=new Map();all().forEach(p=>{const n=nameOf(p);const s=m.get(n)||{n,count:0,fresh:0,last:''};s.count++;if((days(p)||99)<=7)s.fresh++;if(dateOf(p)>s.last)s.last=dateOf(p);m.set(n,s)});return [...m.values()].sort((a,b)=>b.count-a.count||a.n.localeCompare(b.n,'he'))}
 
 /* ---------- the gallery overlay ---------- */
-function galHtml(){const v=V();const list=S.list=items();const names=compNames();
- const tile=(p,i)=>{const sh=v.isShot(p);const src=bestSrc(p);return `<button type="button" class="v186t" data-v186="view" data-i="${i}" aria-label="${E(nameOf(p))}, ${sh?'צילום מסך':'פוסט'} מ־${E(fmtD(p.published))}"><img src="${E(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-v181img="${E(p.id)}"><span class="v186tc"><b>${E(nameOf(p))}</b>${sh?`<i>${isAd(p)?'מודעה':'צילום מסך'}</i>`:p.eng?`<i>${num(p.eng)} מעורבות</i>`:''}</span></button>`};
- return `<div class="v186top"><button type="button" class="v186x" data-v186="close" aria-label="סגירה" title="סגירת הגלריה">${IC.x}</button><h2>גלריית המתחרים</h2><span class="v186n">${list.length} תמונות${S.comp?' של '+E(S.comp):' של '+names.length+' מתחרים'}</span></div>
- <div class="v186bar"><label><span>מתחרה</span><select data-v186="comp"><option value="">כל המתחרים</option>${names.map(([n,c])=>`<option value="${E(n)}"${S.comp===n?' selected':''}>${E(n)} (${c})</option>`).join('')}</select></label>
-  <label><span>סוג</span><select data-v186="kind"><option value="">הכל</option><option value="post"${S.kind==='post'?' selected':''}>פוסטים מפייסבוק</option><option value="shot"${S.kind==='shot'?' selected':''}>צילומי מסך</option><option value="ad"${S.kind==='ad'?' selected':''}>מודעות מספריית Meta</option></select></label>
-  <label><span>סדר</span><select data-v186="sort"><option value="new"${S.sort==='new'?' selected':''}>חדשים קודם</option><option value="eng"${S.sort==='eng'?' selected':''}>הכי הרבה מעורבות</option></select></label></div>
- ${list.length?`<div class="v186grid">${list.map(tile).join('')}</div>`:`<div class="v186empty"><b>אין עדיין תמונות${S.comp||S.kind?' בסינון הזה':''}</b><p>${S.comp||S.kind?'נסו סינון אחר.':'תמונות מגיעות מהפוסטים של מתחרים שבמעקב ב-Metricool ומצילומי מסך שמעלים בכרטיס המתחרה.'}</p></div>`}`}
+function card(p,i){const k=kindOf(p);const src=bestSrc(p);const name=nameOf(p);const d=days(p);const fresh=isNew(p);
+ const foot=k==='post'?(p.eng?`<span class="v186m">${num(p.eng)} מעורבות</span>`:'<span class="v186m">פוסט</span>'):isMeta(p)?`<span class="v186m">${p.media==='video'?IC.play+' סרטון':'מודעה'}${+p.copies>1?' · '+p.copies+' גרסאות':''}</span><span class="v186k4">4K</span>`:`<span class="v186m">${KIND[k]}</span>`;
+ return `<article class="v186c${fresh?' new':''}"><button type="button" class="v186t" data-v186="view" data-i="${i}" aria-label="${E(name)}, ${KIND[k]} מ־${E(fmtD(dateOf(p)))}"><img src="${E(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-v181img="${E(p.id)}">${fresh?'<span class="v186nw">חדש</span>':''}</button>
+  <div class="v186ch"><i class="v186av" aria-hidden="true">${E(initial(name))}</i><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}${d!=null&&d<=30?`<small class="v186rel"> · ${d===0?'היום':d===1?'אתמול':'לפני '+d+' ימים'}</small>`:''}</time></div>
+  ${textOf(p)?`<p class="v186cx">${E(textOf(p).replace(/\s+/g,' ').slice(0,110))}</p>`:''}<div class="v186cf">${foot}</div></article>`}
+function galHtml(){const list=S.list=items();const stats=compStats();const total=all().length;
+ const rail=`<div class="v186rail" role="tablist" aria-label="מתחרים"><button type="button" role="tab" class="v186chip${S.comp?'':' on'}" data-v186="comp" data-comp="" aria-selected="${!S.comp}"><b>הכל</b><small>${total}</small></button>${stats.map(s=>`<button type="button" role="tab" class="v186chip${S.comp===s.n?' on':''}" data-v186="comp" data-comp="${E(s.n)}" aria-selected="${S.comp===s.n}"><i class="v186av" aria-hidden="true">${E(initial(s.n))}</i><b>${E(s.n)}</b><small>${s.count}${s.fresh?'<u></u>':''}</small></button>`).join('')}</div>`;
+ const seg=(name,opts,cur)=>`<div class="v186seg" role="group" aria-label="${name}">${opts.map(([v,l])=>`<button type="button" class="${cur===v?'on':''}" data-v186="${name==='סוג'?'kind':'period'}" data-v="${v}" aria-pressed="${cur===v}">${l}</button>`).join('')}</div>`;
+ const tools=`<div class="v186bar"><label class="v186q"><span class="v186qi">${IC.search}</span><input type="search" data-v186="q" value="${E(S.q)}" placeholder="חיפוש בטקסט של המודעות והפוסטים" aria-label="חיפוש" autocomplete="off" enterkeyhint="search"></label>
+  <div class="v186segs">${seg('סוג',[['','הכל'],['ad','מודעות'],['post','פוסטים'],['shot','צילומי מסך']],S.kind)}${seg('תקופה',[['','כל הזמן'],['7','7 ימים'],['30','30 יום'],['90','90 יום']],S.period)}</div>
+  <label class="v186sort"><span>סדר</span><select data-v186="sort"><option value="new"${S.sort==='new'?' selected':''}>חדשים קודם</option><option value="old"${S.sort==='old'?' selected':''}>ישנים קודם</option><option value="eng"${S.sort==='eng'?' selected':''}>הכי הרבה מעורבות</option></select></label></div>`;
+ let body;
+ if(!list.length)body=`<div class="v186empty"><b>אין פריטים${S.q?' שמתאימים ל"'+E(S.q)+'"':S.comp||S.kind||S.period?' בסינון הזה':''}</b><p>${S.q||S.comp||S.kind||S.period?'נסו לנקות את הסינון או לחפש מילה אחרת.':'הפריטים מגיעים מהמודעות שנלכדות מספריית Meta, מהפוסטים של המתחרים ב-Metricool ומצילומי מסך שמעלים בכרטיס המתחרה.'}</p>${S.q||S.comp||S.kind||S.period?'<button type="button" class="v179b" data-v186="clear">ניקוי הסינון</button>':''}</div>`;
+ else if(!S.comp&&!S.q){// grouped by competitor, a few from each, the rest one tap away
+  const by=new Map();list.forEach((p,i)=>{const n=nameOf(p);if(!by.has(n))by.set(n,[]);by.get(n).push([p,i])});
+  const order=[...by.keys()].sort((a,b)=>by.get(b).length-by.get(a).length||a.localeCompare(b,'he'));
+  body=order.map(n=>{const l=by.get(n);const open=!!S.more[n];const show=open?l:l.slice(0,PEEK);const st=stats.find(s=>s.n===n)||{};
+   return `<section class="v186sec2" data-comp="${E(n)}"><header class="v186sh"><i class="v186av big" aria-hidden="true">${E(initial(n))}</i><h3>${E(n)}</h3><span class="v186shn">${l.length} ${l.length===1?'פריט':'פריטים'}${st.fresh?` · <b class="v186fresh">${st.fresh} חדשים השבוע</b>`:''}</span><button type="button" class="v186lnk sm" data-v186="comp" data-comp="${E(n)}">רק ${E(n)} ${IC.chev}</button></header>
+    <div class="v186grid">${show.map(([p,i])=>card(p,i)).join('')}</div>${!open&&l.length>PEEK?`<button type="button" class="v186more" data-v186="more" data-comp="${E(n)}">עוד ${l.length-PEEK} של ${E(n)}</button>`:''}</section>`}).join('')}
+ else{const n=Math.min(list.length,S.page*PAGE);body=`<div class="v186grid flat">${list.slice(0,n).map((p,i)=>card(p,i)).join('')}</div>${n<list.length?`<button type="button" class="v186more" data-v186="page">עוד ${Math.min(PAGE,list.length-n)} מתוך ${list.length-n}</button>`:''}`}
+ return `<div class="v186top" tabindex="-1"><button type="button" class="v186x" data-v186="close" aria-label="סגירה" title="סגירת הגלריה">${IC.x}</button><div class="v186tt"><h2>גלריית המתחרים</h2><span class="v186n">${S.comp?`${list.length} של ${E(S.comp)}`:`${num(total)} פריטים · ${stats.length} מתחרים`}</span></div></div>${rail}${tools}<div class="v186body">${body}</div>`}
 function openGal(){if(!V()){toast('הגלריה נטענת, נסו שוב בעוד רגע');return}let g=document.getElementById('v186');if(!g){g=document.createElement('div');g.id='v186';g.className='ov';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-label','גלריית המתחרים');document.body.appendChild(g)}
- g.innerHTML=galHtml();document.body.classList.add('v186lock');S.open=true;
- requestAnimationFrame(()=>{const f=g.querySelector('.v186x');f&&f.focus()})}
-function renderGal(){const g=document.getElementById('v186');if(!g)return;const sc=g.querySelector('.v186grid');const top=sc?sc.scrollTop:0;g.innerHTML=galHtml();const n=g.querySelector('.v186grid');if(n)n.scrollTop=top}
+ S.seen=seenAt();S.page=1;g.innerHTML=galHtml();document.body.classList.add('v186lock');S.open=true;
+ try{localStorage.setItem('v188_seen',String(Date.now()))}catch(e){}
+ requestAnimationFrame(()=>{const f=g.querySelector(window.matchMedia('(max-width:860px)').matches?'.v186top':'.v186x');f&&f.focus()})}
+function renderGal(keep){const g=document.getElementById('v186');if(!g)return;const sc=g.querySelector('.v186body');const top=keep&&sc?sc.scrollTop:0;const ae=document.activeElement;const wasQ=ae&&ae.dataset&&ae.dataset.v186==='q';const sel=wasQ?[ae.selectionStart,ae.selectionEnd]:null;
+ g.innerHTML=galHtml();const n=g.querySelector('.v186body');if(n)n.scrollTop=top;if(wasQ){const q=g.querySelector('[data-v186="q"]');if(q){q.focus();try{q.setSelectionRange(sel[0],sel[1])}catch(e){}}}}
 function closeAll(){closeView(true);const g=document.getElementById('v186');if(g)g.remove();document.body.classList.remove('v186lock');S.open=false;
  const b=document.querySelector('[data-v186="open"]');b&&b.focus()}
 
 /* ---------- the viewer ---------- */
 function adInfo(p){const v9=window.__v179;if(!v9||!p.ad_id)return '';const ad=v9.M.ads.get(String(p.ad_id));if(!ad)return p.ad_title?`<div class="v186sec"><h4>המודעה בספריית Meta</h4><p>${E(p.ad_title)}</p></div>`:'';
- const d=v9.daysOf(ad);return `<div class="v186sec"><h4>המודעה בספריית Meta</h4><p class="v186adt">${E(String(ad.title||'').trim()||'ללא כותרת')}</p><div class="v186chips">${d!=null?`<span class="v186chip${v9.isStar(ad)?' star':''}">${v9.isStar(ad)?IC.star:''} ${d} ימים באוויר</span>`:''}${ad.status==='inactive'?'<span class="v186chip gone">הפסיקה</span>':'<span class="v186chip">פעילה</span>'}${ad.start?`<span class="v186chip">מאז ${E(fmtD(ad.start))}</span>`:''}</div>${safeUrl(ad.snapshot_url)?`<a class="v186lnk" href="${E(safeUrl(ad.snapshot_url))}" target="_blank" rel="noopener">לצפייה במודעה ב-Meta ${IC.ext}</a>`:''}</div>`}
-function compInfo(p){const c=compOf(p);const name=nameOf(p);if(!c)return `<div class="v186who"><i>${E(name.slice(0,1))}</i><div><b>${E(name)}</b></div></div>`;
- const s=c.meta_summary||null;const v9=window.__v179;const ads=v9?(v9.M.byComp.get(String(c.id))||[]):[];const active=ads.filter(a=>!v9.isGone(a)).length,stars=ads.filter(a=>v9.isStar(a)).length;
+ const d=v9.daysOf(ad);return `<div class="v186sec"><h4>המודעה בספריית Meta</h4><p class="v186adt">${E(String(ad.title||'').trim()||'ללא כותרת')}</p><div class="v186chips">${d!=null?`<span class="v186chip2${v9.isStar(ad)?' star':''}">${v9.isStar(ad)?IC.star:''} ${d} ימים באוויר</span>`:''}${ad.status==='inactive'?'<span class="v186chip2 gone">הפסיקה</span>':'<span class="v186chip2">פעילה</span>'}${ad.start?`<span class="v186chip2">מאז ${E(fmtD(ad.start))}</span>`:''}</div>${safeUrl(ad.snapshot_url)?`<a class="v186lnk" href="${E(safeUrl(ad.snapshot_url))}" target="_blank" rel="noopener">לצפייה במודעה ב-Meta ${IC.ext}</a>`:''}</div>`}
+function who(p){const c=compOf(p);const name=nameOf(p);const v9=window.__v179;const ads=c&&v9?(v9.M.byComp.get(String(c.id))||[]):[];const s=c&&c.meta_summary||null;const active=s?+s.active:ads.filter(a=>!v9.isGone(a)).length;
+ const sub=[c&&(c.focus||c.cat||c.category),active?`${num(active)} מודעות פעילות`:''].filter(Boolean).join(' · ');
+ return `<div class="v186who"><i class="v186av big">${E(initial(name))}</i><div><b>${E((c&&c.name)||name)}</b>${sub?`<small>${E(sub)}</small>`:''}</div></div>`}
+function compInfo(p){const c=compOf(p);if(!c)return '';const s=c.meta_summary||null;const v9=window.__v179;const ads=v9?(v9.M.byComp.get(String(c.id))||[]):[];const active=ads.filter(a=>!v9.isGone(a)).length,stars=ads.filter(a=>v9.isStar(a)).length;
  const links=Array.isArray(c.meta_library_urls)?c.meta_library_urls.filter(x=>x&&safeUrl(x.url)).slice(0,3):[];
  const site=[c.site,c.fb,c.ig].filter(Boolean).map(u=>safeUrl(/^https?:/.test(u)?u:'https://'+u)).filter(Boolean);
- return `<div class="v186who"><i>${E(name.slice(0,1))}</i><div><b>${E(c.name||name)}</b><small>${E(c.focus||c.cat||c.category||'')}</small></div></div>
- ${c.desc||c.about||c.summary?`<p class="v186desc">${E(String(c.desc||c.about||c.summary).slice(0,320))}</p>`:''}
- ${(s||ads.length)?`<div class="v186sec"><h4>המודעות שלהם בספריית Meta</h4><div class="v186kpis"><span><b>${num(s?s.active:active)}</b>פעילות</span><span><b>${num(s?s.stars:stars)}</b>${IC.star} 60 יום ומעלה</span>${s&&s.new7!=null?`<span><b>${num(s.new7)}</b>חדשות ב־7 ימים</span>`:''}${s&&s.groups!=null?`<span><b>${num(s.groups)}</b>קבוצות מסרים</span>`:''}</div>${s&&s.last_scan?`<small class="v186muted">סריקה אחרונה ${E(String(s.last_scan).replace(/^scan_(\d{4})(\d{2})(\d{2})T.*$/,'$3.$2.$1'))}${s.partial?' · תוצאות חלקיות':''}</small>`:''}</div>`:''}
- ${links.length||site.length?`<div class="v186links">${links.map(x=>`<a class="v186lnk" href="${E(safeUrl(x.url))}" target="_blank" rel="noopener">${E(/חיפוש/.test(x.label)?'חיפוש בספריית Meta':'ספריית Meta: '+x.label)} ${IC.ext}</a>`).join('')}${site.slice(0,2).map(u=>`<a class="v186lnk" href="${E(u)}" target="_blank" rel="noopener">${E(u.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'').slice(0,32))} ${IC.ext}</a>`).join('')}</div>`:''}`}
-function postInfo(p){const v=V();const sh=v.isShot(p);
- if(sh&&p.source==='meta'){const land=safeUrl(p.landing);return `<div class="v186sec"><h4>המודעה מספריית Meta, צילום 4K</h4><div class="v186chips"><span class="v186chip ok" dir="ltr">${p.w}×${p.h}</span><span class="v186chip">${p.media==='video'?'סרטון':'תמונה'}</span>${+p.copies>1?`<span class="v186chip">${p.copies} גרסאות של המודעה</span>`:''}${p.start?`<span class="v186chip">מאז ${E(p.start)}</span>`:''}<span class="v186chip">נלכד ${E(fmtD(p.added))}</span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:''}${p.cta||land?`<p class="v186fine v186muted">${p.cta?'כפתור: '+E(p.cta):''}${p.cta&&land?' · ':''}${land?'נחיתה: <bdi dir="ltr">'+E(land.replace(/^https?:\/\//,'').slice(0,60))+'</bdi>':''}</p>`:''}<div class="v186links">${safeUrl(p.creative)?`<a class="v186lnk" href="${E(safeUrl(p.creative))}" target="_blank" rel="noopener">התמונה של המודעה בלבד${p.cw?` <bdi dir="ltr">${p.cw}×${p.ch}</bdi>`:''} ${IC.ext}</a>`:''}${land?`<a class="v186lnk" href="${E(land)}" target="_blank" rel="noopener">דף הנחיתה ${IC.ext}</a>`:''}</div></div>${adInfo(p)}`}
- if(sh)return `<div class="v186sec"><h4>צילום המסך</h4><div class="v186chips"><span class="v186chip">הועלה ${E(fmtD(p.added||p.published))}</span>${p.ew&&p.eh?`<span class="v186chip ok" dir="ltr">${p.ew}×${p.eh}</span>`:p.w&&p.h?`<span class="v186chip" dir="ltr">${p.w}×${p.h}</span>`:''}${p.enh?'<span class="v186chip ok">שופר</span>':''}</div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:''}</div>${adInfo(p)}`;
- return `<div class="v186sec"><h4>הפוסט</h4><div class="v186chips"><span class="v186chip">${E(fmtD(p.published))}</span><span class="v186chip">פייסבוק</span></div>${v.engHtml(p)}<p class="v186txt">${p.text?E(p.text):'<span class="v186muted">פוסט בלי טקסט</span>'}</p>${safeUrl(p.link)?`<a class="v186lnk" href="${E(safeUrl(p.link))}" target="_blank" rel="noopener">לפוסט בפייסבוק ${IC.ext}</a>`:''}</div>`}
-function viewHtml(){const p=S.list[S.i];const v=V();const src=bestSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;
+ return `<details class="v186sec v186det"><summary><h4>על המתחרה</h4>${IC.chev}</summary>${c.desc||c.about||c.summary?`<p class="v186desc">${E(String(c.desc||c.about||c.summary).slice(0,320))}</p>`:''}
+ ${(s||ads.length)?`<div class="v186kpis"><span><b>${num(s?s.active:active)}</b>פעילות</span><span><b>${num(s?s.stars:stars)}</b>${IC.star} 60 יום ומעלה</span>${s&&s.new7!=null?`<span><b>${num(s.new7)}</b>חדשות ב־7 ימים</span>`:''}${s&&s.groups!=null?`<span><b>${num(s.groups)}</b>קבוצות מסרים</span>`:''}</div>${s&&s.last_scan?`<small class="v186muted">סריקה אחרונה ${E(String(s.last_scan).replace(/^scan_(\d{4})(\d{2})(\d{2})T.*$/,'$3.$2.$1'))}${s.partial?' · תוצאות חלקיות':''}</small>`:''}`:''}
+ ${links.length||site.length?`<div class="v186links">${links.map(x=>`<a class="v186lnk" href="${E(safeUrl(x.url))}" target="_blank" rel="noopener">${E(/חיפוש/.test(x.label)?'חיפוש בספריית Meta':'ספריית Meta: '+x.label)} ${IC.ext}</a>`).join('')}${site.slice(0,2).map(u=>`<a class="v186lnk" href="${E(u)}" target="_blank" rel="noopener">${E(u.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'').slice(0,32))} ${IC.ext}</a>`).join('')}</div>`:''}</details>`}
+function postInfo(p){const v=V();const k=kindOf(p);const d=fmtD(dateOf(p));
+ if(isMeta(p)){const land=safeUrl(p.landing);return `<div class="v186sec"><div class="v186when"><time>${E(p.start?'באוויר מאז '+p.start:d)}</time><span class="v186chips"><span class="v186chip2">${p.media==='video'?'סרטון':'תמונה'}</span>${+p.copies>1?`<span class="v186chip2">${p.copies} גרסאות</span>`:''}<span class="v186chip2 ok" dir="ltr">4K</span></span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">מודעה בלי טקסט</p>'}${p.cta||land?`<p class="v186fine v186muted">${p.cta?'כפתור: '+E(p.cta):''}${p.cta&&land?' · ':''}${land?'נחיתה: <bdi dir="ltr">'+E(land.replace(/^https?:\/\//,'').slice(0,60))+'</bdi>':''}</p>`:''}<div class="v186links">${safeUrl(p.creative)?`<a class="v186lnk" href="${E(safeUrl(p.creative))}" target="_blank" rel="noopener">התמונה של המודעה בלבד${p.cw?` <bdi dir="ltr">${p.cw}×${p.ch}</bdi>`:''} ${IC.ext}</a>`:''}${land?`<a class="v186lnk" href="${E(land)}" target="_blank" rel="noopener">דף הנחיתה ${IC.ext}</a>`:''}</div></div>${adInfo(p)}`}
+ if(k!=='post')return `<div class="v186sec"><div class="v186when"><time>הועלה ${E(d)}</time><span class="v186chips">${p.ew&&p.eh?`<span class="v186chip2 ok" dir="ltr">${p.ew}×${p.eh}</span>`:p.w&&p.h?`<span class="v186chip2" dir="ltr">${p.w}×${p.h}</span>`:''}${p.enh?'<span class="v186chip2 ok">שופר</span>':''}</span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">צילום מסך בלי הערה</p>'}</div>${adInfo(p)}`;
+ return `<div class="v186sec"><div class="v186when"><time>${E(d)}</time><span class="v186chips"><span class="v186chip2">פייסבוק</span></span></div>${v.engHtml(p)}<p class="v186txt">${p.text?E(p.text):'<span class="v186muted">פוסט בלי טקסט</span>'}</p>${safeUrl(p.link)?`<a class="v186lnk" href="${E(safeUrl(p.link))}" target="_blank" rel="noopener">לפוסט בפייסבוק ${IC.ext}</a>`:''}</div>`}
+function viewHtml(){const p=S.list[S.i];const v=V();const src=bestSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;const name=nameOf(p);const ex=textOf(p).replace(/\s+/g,' ').slice(0,140);
  return `<div class="v186vbg" data-v186="vclose"></div>
- <div class="v186vtop"><button type="button" class="v186x" data-v186="vclose" aria-label="סגירה" title="חזרה לגלריה">${IC.x}</button><span class="v186vn">${S.i+1} מתוך ${n}</span><button type="button" class="v186ib" data-v186="zoom" aria-pressed="${S.zoom}" aria-label="הגדלה">${IC.zoom}</button></div>
- <div class="v186stage${S.zoom?' zoom':''}" data-v186="stage"><img src="${E(src)}" alt="${E(nameOf(p))}" decoding="async" referrerpolicy="no-referrer" draggable="false" data-v186img></div>
+ <div class="v186vtop"><button type="button" class="v186x" data-v186="vclose" aria-label="סגירה" title="חזרה לגלריה">${IC.x}</button><div class="v186vwho"><i class="v186av" aria-hidden="true">${E(initial(name))}</i><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></div><span class="v186vn">${S.i+1} מתוך ${n}</span><button type="button" class="v186ib" data-v186="zoom" aria-pressed="${S.zoom}" aria-label="הגדלה">${IC.zoom}</button></div>
+ <div class="v186stage${S.zoom?' zoom':''}" data-v186="stage"><img src="${E(src)}" alt="${E(name)}" decoding="async" referrerpolicy="no-referrer" draggable="false" data-v186img></div>
  ${n>1?`<button type="button" class="v186nav prev" data-v186="prev" aria-label="התמונה הקודמת">${IC.r}</button><button type="button" class="v186nav next" data-v186="next" aria-label="התמונה הבאה">${IC.l}</button>`:''}
- <aside class="v186info${S.sheet?' up':''}" aria-label="פרטי המתחרה והפוסט"><button type="button" class="v186grip" data-v186="sheet" aria-expanded="${S.sheet}"><i></i><span>${E(nameOf(p))} · ${E(fmtD(p.published))}</span></button>
-  <div class="v186ib2">${compInfo(p)}${postInfo(p)}
-  <div class="v186acts"><button type="button" class="v179b pri big" data-v186="clone" data-id="${E(p.id)}">${IC.wand} שכפל למותג שלנו</button>${full?`<a class="v179b" href="${E(full)}" target="_blank" rel="noopener">התמונה בגודל מלא ${IC.ext}</a>`:''}<button type="button" class="v179b" data-v186="details" data-id="${E(p.id)}">כל הפרטים</button></div>
-  <p class="v186muted v186fine">שום דבר לא מתפרסם לבד. התמונה שלהם רק להשראה, בפוסט שלנו התמונות שלנו.</p></div></aside>`}
+ <aside class="v186info${S.sheet?' up':''}" aria-label="פרטי המתחרה והפוסט"><button type="button" class="v186grip" data-v186="sheet" aria-expanded="${S.sheet}"><i></i><span class="v186gw"><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></span><span class="v186gx">${ex?E(ex):'<span class="v186muted">בלי טקסט</span>'}</span></button>
+  <div class="v186peek"><button type="button" class="v179b pri big" data-v186="clone" data-id="${E(p.id)}">${IC.wand} שכפל למותג שלנו</button></div>
+  <div class="v186ib2">${who(p)}
+  <div class="v186acts"><button type="button" class="v179b pri big" data-v186="clone" data-id="${E(p.id)}">${IC.wand} שכפל למותג שלנו</button><div class="v186acts2">${full?`<a class="v179b" href="${E(full)}" target="_blank" rel="noopener">בגודל מלא ${IC.ext}</a>`:''}<button type="button" class="v179b" data-v186="details" data-id="${E(p.id)}">כל הפרטים</button></div></div>
+  ${postInfo(p)}
+  <p class="v186muted v186fine">Claude כותב גרסה מקורית בטקסט, בצבעים ובפונט של המותג שלנו, עם התמונות שלנו. שום דבר לא מתפרסם לבד.</p>${compInfo(p)}</div></aside>`}
 function openView(i){if(!S.list.length)return;S.i=(i+S.list.length)%S.list.length;S.zoom=false;let m=document.getElementById('v186v');if(!m){m=document.createElement('div');m.id='v186v';m.className='ov';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','תמונה של מתחרה');document.body.appendChild(m)}
- m.innerHTML=viewHtml();S.sheet=S.sheet&&window.matchMedia('(max-width:860px)').matches?S.sheet:false;const im=m.querySelector('[data-v186img]');
+ m.innerHTML=viewHtml();m.querySelector('.v186vtop').setAttribute('tabindex','-1');S.sheet=S.sheet&&window.matchMedia('(max-width:860px)').matches?S.sheet:false;
  // preload the neighbours so arrows feel instant
  [S.i+1,S.i-1].forEach(j=>{const q=S.list[(j+S.list.length)%S.list.length];if(q){const pre=new Image();pre.referrerPolicy='no-referrer';pre.src=bestSrc(q)}});
  try{if(V().keep&&!V().isShot(S.list[S.i]))V().keep(S.list[S.i].id)}catch(e){}
- requestAnimationFrame(()=>{const f=m.querySelector('.v186x');f&&f.focus()})}
-function closeView(silent){const m=document.getElementById('v186v');if(m)m.remove();S.i=-1;if(!silent){const g=document.getElementById('v186');const t=g&&g.querySelector('.v186t[aria-pressed]');const b=g&&g.querySelector('.v186x');b&&b.focus()}}
+ requestAnimationFrame(()=>{const f=m.querySelector(window.matchMedia('(max-width:860px)').matches?'.v186vtop':'.v186x');f&&f.focus()})}
+function closeView(silent){const m=document.getElementById('v186v');if(m)m.remove();S.i=-1;if(!silent){const g=document.getElementById('v186');const b=g&&g.querySelector('.v186x');b&&b.focus()}}
 function step(d){if(S.i<0)return;openView(S.i+d)}
 
 /* ---------- events ---------- */
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v186]');if(!b)return;const a=b.dataset.v186;if(a==='comp'||a==='kind'||a==='sort'||a==='stage')return;e.preventDefault();e.stopPropagation();
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v186]');if(!b)return;const a=b.dataset.v186;if(a==='sort'||a==='q'||a==='stage')return;e.preventDefault();e.stopPropagation();
  if(a==='open'){openGal();return}
  if(a==='close'){closeAll();return}
  if(a==='view'){openView(+b.dataset.i);return}
  if(a==='vclose'){closeView();return}
  if(a==='prev'){step(-1);return}if(a==='next'){step(1);return}
+ if(a==='comp'){S.comp=b.dataset.comp||'';S.page=1;renderGal(false);return}
+ if(a==='kind'){S.kind=b.dataset.v||'';S.page=1;renderGal(true);return}
+ if(a==='period'){S.period=b.dataset.v||'';S.page=1;renderGal(true);return}
+ if(a==='more'){S.more[b.dataset.comp]=true;renderGal(true);return}
+ if(a==='page'){S.page++;renderGal(true);return}
+ if(a==='clear'){S.comp='';S.kind='';S.period='';S.q='';S.page=1;renderGal(false);return}
  if(a==='zoom'){S.zoom=!S.zoom;const st=document.querySelector('#v186v .v186stage');if(st)st.classList.toggle('zoom',S.zoom);b.setAttribute('aria-pressed',S.zoom);return}
  if(a==='sheet'){S.sheet=!S.sheet;const i=b.closest('.v186info');i&&i.classList.toggle('up',S.sheet);b.setAttribute('aria-expanded',S.sheet);return}
  if(a==='clone'){const id=b.dataset.id;closeView(true);const g=document.getElementById('v186');if(g)g.classList.add('v186park');try{V().openGen(id)}catch(x){}syncOv();
@@ -27281,7 +27396,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 },true);
 // a tap on the picture itself toggles the zoom, like a photo app
 document.addEventListener('click',e=>{const im=e.target.closest&&e.target.closest('#v186v [data-v186img]');if(!im||S.dragged)return;const st=im.closest('.v186stage');S.zoom=!S.zoom;st.classList.toggle('zoom',S.zoom);const z=document.querySelector('#v186v [data-v186="zoom"]');z&&z.setAttribute('aria-pressed',S.zoom)});
-document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.v186)return;const a=t.dataset.v186;if(a==='comp'){S.comp=t.value}else if(a==='kind'){S.kind=t.value}else if(a==='sort'){S.sort=t.value}else return;renderGal()});
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v186!=='sort')return;S.sort=t.value;renderGal(true)});
+let qt=0;document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v186!=='q')return;clearTimeout(qt);const v=t.value;qt=setTimeout(()=>{S.q=v.trim();S.page=1;renderGal(false)},220)});
 // Escape and the arrow keys. Registered on window in the capture phase, so this runs before every other key handler and can
 // decide once: when a window sits on top of the gallery (the brand form, a details window, the editor) it belongs to them.
 window.addEventListener('keydown',e=>{if(!S.open||onTop())return;

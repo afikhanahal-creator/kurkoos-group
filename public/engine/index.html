@@ -2945,11 +2945,11 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
  html body .app{height:var(--v195vh,var(--v180vh,100dvh))!important}
  html body .side{height:var(--v195vh,var(--v180vh,100dvh))!important}
 
- /* ---------- header: back, title, search (when the page has none), עוד, + ---------- */
+ /* ---------- header: back, title, the competitor gallery, עוד, + ---------- */
  html body.v195 .tbar{gap:6px!important;padding-inline:12px!important;min-height:56px}
  html body.v195.v195nav:has(#v99nav) .tbar [data-app="menu"]{display:none!important}
- html body.v195 .tbar .px-bell,html body.v195 .tbar .v186btn,html body.v195 .tbar #v172act{display:none!important}
- html body.v195 .tbar.v195ps .px-sbtn{display:none!important}
+ html body.v195 .tbar .px-bell,html body.v195 .tbar .px-sbtn,html body.v195 .tbar #v172act{display:none!important}
+ html body.v195 .tbar .v186btn{order:3;flex:0 0 auto}
  html body.v195 .tbar>div:not(#vact){flex:1 1 auto!important;min-width:0!important;order:0}
  html body.v195 .tbar h1{max-width:none!important;font:800 19px/1.2 Almoni,Heebo,sans-serif!important;letter-spacing:-.01em;color:var(--v195n);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  html body.v195 .tbar .sub{display:none!important}
@@ -2958,6 +2958,7 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
  html body.v195 .tbar .ibtn.pri{order:5;flex:0 0 auto}
  html body.v195 .tbar>#vact{order:20}
  html body.v195 .tbar>#vact>*{min-height:44px}
+ html body.v195 #px-pop.v195pop{left:12px!important;right:12px!important}
  /* the "עוד" sheet: a quiet separator between the page actions and the general ones */
  #v172sheet.v195sh .v195sep{height:1px;background:var(--v195ln);margin:6px 8px}
 
@@ -3002,6 +3003,7 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
  html body.v195 [data-app="cm"],html body.v195 [data-v175p],html body.v195 .v170link,html body.v195 .v170btn,html body.v195 #v194 .v194tabs button,html body.v195 #v194 .v194clone{min-height:44px!important}
  html body.v195 #appviews input[type="search"],html body.v195 #appviews .v170q input{min-height:44px!important;font-size:16px}
 }
+@media (max-width:380px){html body.v195 .tbar h1{font-size:17.5px!important}html body.v195 .tbar{gap:5px!important;padding-inline:10px!important}}
 @keyframes v195in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){html body #v99nav button .ic{transition:none}html body.v195nav #v171chip{animation:none}}
 </style><style id="k150">
@@ -28471,10 +28473,10 @@ window.__v194={S,campaigns,filtered,mount,keyOf,startOf};
 
 /*V195:START*/
 // ================= V195 · mobile 2.0: a calm header, a bottom bar that sits on the bottom, cards that read at a glance,
-// and a faster start. On a phone the header keeps four things at most: back (when there is a previous page), the page
-// title, search (only on pages that have no search of their own) and "עוד", plus the one primary action "+". Everything
-// that used to crowd the row (the menu, the bell, the competitor gallery, the page actions) is one tap away in the "עוד"
-// sheet, and the menu stays in the bottom bar. The shell takes its height from where Safari puts fixed bottom bars, so no
+// and a faster start. On a phone the header keeps four controls at most: back (when there is a previous page), the
+// competitor gallery (V186), "עוד" and the one primary action "+", next to a title that is no longer cut. What used to
+// crowd the row (the menu, the bell, search and the page actions) is one tap away in the "עוד" sheet, the menu stays in
+// the bottom bar, and the pages with their own search field (Posts, Photos) keep that one search. The shell takes its height from where Safari puts fixed bottom bars, so no
 // empty band is left under the bottom bar when the toolbar collapses. The undo pill sits above the bottom bar and leaves on
 // its own; the last action can still be undone from "עוד". Loading: the quality scores are cached for every post (the old
 // cache held 8000 entries and the library has more, so every render scored all posts again), the cloud posts are matched
@@ -28488,21 +28490,32 @@ const SVG=(d,w)=>`<svg width="${w||20}" height="${w||20}" viewBox="0 0 24 24" fi
 const IC={more:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>',
  bell:SVG('<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
  search:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
- gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/>'),
  undo:SVG('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
  menu:SVG('<path d="M4 7h16M4 12h16M4 17h16"/>'),x:SVG('<path d="M18 6 6 18M6 6l12 12"/>')};
 const view=()=>{try{return APP.view||''}catch(e){return ''}};
 
 /* ---------- 1 · speed ---------- */
-// 1a · quality scores: one entry per post version for the whole library. Same key and the same reset rule as the
-// cache below it (it resets when the library wide fatigue index is rebuilt), only big enough for every post.
-(function(){if(typeof pxQuality!=='function')return;const C=new Map();let fc=null;
+// 1a · quality scores: one entry per post version for the whole library. Same key as the cache below it, big enough
+// for every post. It resets when the library wide fatigue index is rebuilt (as before) and also whenever data arrives
+// from the cloud or a font finishes loading, because the score reads photo details, template specs and text widths.
+let dv=0;const bump=()=>{dv++};
+function patchDb(db){if(!db||db.__v195)return db;db.__v195=1;
+ const wrapRef=o=>{if(!o||o.__v195)return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
+  if(typeof g==='function')o.get=async function(){const r=await g.apply(this,arguments);bump();return r};
+  if(typeof s==='function')o.onSnapshot=function(cb,er){return s.call(this,function(){bump();return cb.apply(this,arguments)},er)};return o};
+ const c0=db.collection,d0=db.doc;
+ if(typeof c0==='function')db.collection=function(){const o=wrapRef(c0.apply(this,arguments));if(o&&typeof o.doc==='function'&&!o.__v195d){o.__v195d=1;const od=o.doc;o.doc=function(){return wrapRef(od.apply(this,arguments))}}return o};
+ if(typeof d0==='function')db.doc=function(){return wrapRef(d0.apply(this,arguments))};return db}
+try{const cl=window.claude;if(cl&&typeof cl.use==='function'){const u0=cl.use;cl.use=async function(n){const r=await u0.apply(this,arguments);if(n==='db')try{patchDb(r)}catch(e){}return r};
+ cl.use('db').catch(()=>null)}}catch(e){}
+try{document.fonts&&document.fonts.addEventListener('loadingdone',bump)}catch(e){}
+(function(){if(typeof pxQuality!=='function')return;const C=new Map();let fc=null,fdv=-1;
  const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};
- const f0=pxQuality;
- pxQuality=function(p){try{const ep=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);if(ep!==fc){C.clear();fc=ep}const v=p.visual||{},x=p.fx||{};
+ const f0=pxQuality;const inner=window.__pxqClear;
+ pxQuality=function(p){try{const ep=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);if(ep!==fc||dv!==fdv){C.clear();if(dv!==fdv)try{inner&&inner()}catch(e){}fc=ep;fdv=dv}const v=p.visual||{},x=p.fx||{};
    const k=(p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'');
    let r=C.get(k);if(!r){r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}return r}catch(e){return f0.apply(this,arguments)}};
- const clr=window.__pxqClear;window.__pxqClear=()=>{C.clear();try{clr&&clr()}catch(e){}}})();
+ window.__pxqClear=()=>{C.clear();try{inner&&inner()}catch(e){}}})();
 
 // 1b · the cloud posts (V31) with an index: the same rules, without scanning the whole library once per post.
 // V37 wrapped the load to drop deleted posts (tombstones) afterwards; that step is kept here.
@@ -28562,23 +28575,21 @@ function navVar(){const n=document.getElementById('v99nav');const de=document.do
  if(!navRO){try{navRO=new ResizeObserver(navVar);navRO.observe(n)}catch(e){navRO=1}}}
 
 /* ---------- 3 · the header ---------- */
-function pageSearch(){const box=document.getElementById('appviews');if(!box)return false;
- return [...box.querySelectorAll('input[type="search"],input[placeholder*="חיפוש"]')].some(i=>{const r=i.getBoundingClientRect();return r.width>0&&r.height>0})}
 function bellCount(){const b=document.querySelector('.tbar .px-bell');if(!b)return 0;const n=parseInt((b.textContent||'').replace(/\D+/g,''),10);return n>0?n:0}
 function header(){const tb=document.querySelector('.tbar');if(!tb)return;const on=PH.matches;document.body.classList.toggle('v195',on);
  if(!on)return;
- tb.classList.toggle('v195ps',pageSearch());
  let m=document.getElementById('v195more');
  if(!m){m=document.createElement('button');m.type='button';m.id='v195more';m.className='ibtn';m.setAttribute('aria-haspopup','dialog');m.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMore()})}
  if(m.parentElement!==tb){const nw=tb.querySelector('[data-app="new"]');nw?tb.insertBefore(m,nw):tb.appendChild(m)}
  const n=bellCount();const lab='עוד'+(n?`, ${n} התראות`:'');if(m.getAttribute('aria-label')!==lab){m.setAttribute('aria-label',lab);m.title='עוד';m.innerHTML=IC.more+(n?`<span class="v195badge" aria-hidden="true">${n>99?'99+':n}</span>`:'')}}
 
-// the "עוד" sheet: the page actions first, then notifications, search, the competitor gallery and undo
+// the "עוד" sheet: the page actions first, then notifications, search and undo
 function items(){const out=[];const tb=document.querySelector('.tbar');const act=document.getElementById('vact');
  if(tb&&act&&tb.classList.contains('v172fold'))[...act.children].filter(b=>b.tagName==='BUTTON').forEach(b=>{const s=b.querySelector('svg');const label=(b.textContent||b.getAttribute('aria-label')||'').replace(/\s+/g,' ').trim();if(label)out.push({icon:s?s.outerHTML:'',label,disabled:b.disabled,run:()=>b.click(),page:1})});
- const bell=tb&&tb.querySelector('.px-bell');if(bell){const n=bellCount();out.push({icon:IC.bell,label:n?`התראות (${n})`:'התראות',run:()=>bell.click()})}
- const sb=tb&&tb.querySelector('.px-sbtn');if(sb&&tb.classList.contains('v195ps'))out.push({icon:IC.search,label:'חיפוש ופקודות',run:()=>sb.click()});
- const g=tb&&tb.querySelector('[data-v186="open"]');if(g)out.push({icon:IC.gal,label:'גלריית המתחרים',run:()=>g.click()});
+ // the notifications popover is placed under the button that opened it; the bell is folded away, so it opens under "עוד"
+ const bell=tb&&tb.querySelector('.px-bell');if(bell){const n=bellCount();out.push({icon:IC.bell,label:n?`התראות (${n})`:'התראות',run:()=>{const m=document.getElementById('v195more');
+  if(m)bell.getBoundingClientRect=()=>m.getBoundingClientRect();try{bell.click()}finally{delete bell.getBoundingClientRect}const pp=document.getElementById('px-pop');if(pp)pp.classList.add('v195pop')}})}
+ const sb=tb&&tb.querySelector('.px-sbtn');if(sb)out.push({icon:IC.search,label:'חיפוש ופקודות',run:()=>sb.click()});
  const c=document.getElementById('v171chip');if(c&&!c.hidden){const l=(c.getAttribute('aria-label')||'ביטול הפעולה האחרונה').replace(/^ביטול:\s*/,'');out.push({icon:IC.undo,label:'ביטול: '+l,run:()=>c.click()})}
  return out}
 let back=null;

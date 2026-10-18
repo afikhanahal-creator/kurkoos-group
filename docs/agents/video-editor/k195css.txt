@@ -20,11 +20,11 @@
  html body .app{height:var(--v195vh,var(--v180vh,100dvh))!important}
  html body .side{height:var(--v195vh,var(--v180vh,100dvh))!important}
 
- /* ---------- header: back, title, search (when the page has none), עוד, + ---------- */
+ /* ---------- header: back, title, the competitor gallery, עוד, + ---------- */
  html body.v195 .tbar{gap:6px!important;padding-inline:12px!important;min-height:56px}
  html body.v195.v195nav:has(#v99nav) .tbar [data-app="menu"]{display:none!important}
- html body.v195 .tbar .px-bell,html body.v195 .tbar .v186btn,html body.v195 .tbar #v172act{display:none!important}
- html body.v195 .tbar.v195ps .px-sbtn{display:none!important}
+ html body.v195 .tbar .px-bell,html body.v195 .tbar .px-sbtn,html body.v195 .tbar #v172act{display:none!important}
+ html body.v195 .tbar .v186btn{order:3;flex:0 0 auto}
  html body.v195 .tbar>div:not(#vact){flex:1 1 auto!important;min-width:0!important;order:0}
  html body.v195 .tbar h1{max-width:none!important;font:800 19px/1.2 Almoni,Heebo,sans-serif!important;letter-spacing:-.01em;color:var(--v195n);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  html body.v195 .tbar .sub{display:none!important}
@@ -33,6 +33,7 @@
  html body.v195 .tbar .ibtn.pri{order:5;flex:0 0 auto}
  html body.v195 .tbar>#vact{order:20}
  html body.v195 .tbar>#vact>*{min-height:44px}
+ html body.v195 #px-pop.v195pop{left:12px!important;right:12px!important}
  /* the "עוד" sheet: a quiet separator between the page actions and the general ones */
  #v172sheet.v195sh .v195sep{height:1px;background:var(--v195ln);margin:6px 8px}
 
@@ -77,6 +78,7 @@
  html body.v195 [data-app="cm"],html body.v195 [data-v175p],html body.v195 .v170link,html body.v195 .v170btn,html body.v195 #v194 .v194tabs button,html body.v195 #v194 .v194clone{min-height:44px!important}
  html body.v195 #appviews input[type="search"],html body.v195 #appviews .v170q input{min-height:44px!important;font-size:16px}
 }
+@media (max-width:380px){html body.v195 .tbar h1{font-size:17.5px!important}html body.v195 .tbar{gap:5px!important;padding-inline:10px!important}}
 @keyframes v195in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){html body #v99nav button .ic{transition:none}html body.v195nav #v171chip{animation:none}}
 </style>

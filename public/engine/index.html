@@ -434,7 +434,7 @@ body.v122-open #v66tp,body.v122-open #v68sp{filter:blur(2px)}
 .v126f{margin:12px 0 0;font-size:13px;color:#243b4c;line-height:1.5}
 @media (max-width:700px){.v126{margin:12px}.v126row{flex-wrap:wrap}}
 </style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&display=swap" media="print" onload="this.media='all'">
 <style id="k127">
 .v127{margin:14px 16px 4px;background:#fff;border:1px solid #dde2e8;border-radius:16px;direction:rtl;color:#07293a;overflow:hidden}
 .v127head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 10px}
@@ -2923,6 +2923,87 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
  #v194 .v194clone{font-size:13px;min-height:40px;padding:0 6px}
 }
 @media (prefers-reduced-motion:reduce){#v194 .v194im img{transition:none}}
+</style><style id="k195">
+/* V195 · mobile 2.0: header, bottom bar, cards, loading. Phones only unless noted; the desktop layout is unchanged. */
+:root{--v195n:#07293a;--v195t:#105572;--v195m:#8fb6c8;--v195p:#f7f8fa;--v195r:#a90b0c;--v195ink2:#3d4b58;--v195mut:#5b6977;--v195ln:rgba(7,41,58,.09)}
+#v195vp{position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none;z-index:-1}
+#v195more{display:none}
+/* loading: the bridge's banner becomes a small capsule under the header instead of a bar over it (all widths) */
+#engine-loading{top:calc(env(safe-area-inset-top,0px) + 72px)!important;left:50%!important;right:auto!important;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;border-radius:999px!important;padding:8px 18px 11px!important;font:600 13.5px/1.3 Almoni,Heebo,Arial,sans-serif!important;box-shadow:0 10px 28px -12px rgba(7,41,58,.55)!important;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* skeleton cards and pictures that are still painting */
+.v195sk{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:28px 20px;padding:8px 0 24px}
+.v195skc i{display:block;aspect-ratio:4/5;border-radius:10px}
+.v195skc b,.v195skc u{display:block;height:10px;border-radius:5px;margin-top:12px;width:42%}
+.v195skc u{width:74%;margin-top:8px}
+.v195skc i,.v195skc b,.v195skc u,body.v163g .ga-card .ga-open canvas:not(.painted){background:linear-gradient(100deg,#e6edf1 20%,#f3f6f8 40%,#e6edf1 60%);background-size:300% 100%;animation:v195sh 1.4s ease-in-out infinite}
+@keyframes v195sh{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.v195skc i,.v195skc b,.v195skc u,body.v163g .ga-card .ga-open canvas:not(.painted){animation:none}}
+
+@media (max-width:860px){
+ /* ---------- the shell follows the fixed probe: no band under the bottom bar ---------- */
+ html,html body{height:var(--v195vh,var(--v180vh,100dvh))!important}
+ html body .app{height:var(--v195vh,var(--v180vh,100dvh))!important}
+ html body .side{height:var(--v195vh,var(--v180vh,100dvh))!important}
+
+ /* ---------- header: back, title, search (when the page has none), עוד, + ---------- */
+ html body.v195 .tbar{gap:6px!important;padding-inline:12px!important;min-height:56px}
+ html body.v195.v195nav:has(#v99nav) .tbar [data-app="menu"]{display:none!important}
+ html body.v195 .tbar .px-bell,html body.v195 .tbar .v186btn,html body.v195 .tbar #v172act{display:none!important}
+ html body.v195 .tbar.v195ps .px-sbtn{display:none!important}
+ html body.v195 .tbar>div:not(#vact){flex:1 1 auto!important;min-width:0!important;order:0}
+ html body.v195 .tbar h1{max-width:none!important;font:800 19px/1.2 Almoni,Heebo,sans-serif!important;letter-spacing:-.01em;color:var(--v195n);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ html body.v195 .tbar .sub{display:none!important}
+ html body.v195 #v195more{display:inline-flex;align-items:center;justify-content:center;position:relative;width:44px!important;height:44px!important;min-width:44px!important;padding:0!important;border-radius:12px;border:1px solid var(--line,#dbe8ee);background:#fff;color:var(--v195n);order:4;flex:0 0 auto}
+ html body.v195 #v195more .v195badge{position:absolute;top:-5px;inset-inline-end:-5px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--v195r);color:#fff;font:700 11px/18px Almoni,Heebo,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff}
+ html body.v195 .tbar .ibtn.pri{order:5;flex:0 0 auto}
+ html body.v195 .tbar>#vact{order:20}
+ html body.v195 .tbar>#vact>*{min-height:44px}
+ /* the "עוד" sheet: a quiet separator between the page actions and the general ones */
+ #v172sheet.v195sh .v195sep{height:1px;background:var(--v195ln);margin:6px 8px}
+
+ /* ---------- bottom bar: on the bottom, the home indicator space kept small, a clear current page ---------- */
+ html body #v99nav{padding:6px 6px max(6px,calc(env(safe-area-inset-bottom,0px) - 12px))!important;background:rgba(255,255,255,.96);-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);border-top:1px solid var(--v195ln);box-shadow:none!important;gap:2px}
+ html body #v99nav button{min-height:52px!important;gap:3px!important;padding:2px 0!important;border-radius:14px;background:none!important;color:#5b6472;font:600 12px/1.1 Almoni,Heebo,Arial,sans-serif!important;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+ html body #v99nav button .ic{width:52px!important;height:30px!important;border-radius:999px;transition:background-color .2s ease,transform .12s ease}
+ html body #v99nav button[aria-current="page"]{color:var(--v195n)!important;font-weight:800!important}
+ html body #v99nav button[aria-current="page"] .ic{background:#dbe8ee}
+ html body #v99nav button:active .ic{transform:scale(.94);background:#e8eff3}
+ html body #v99nav button:focus-visible{outline:2px solid var(--v195t);outline-offset:-2px}
+
+ /* ---------- the undo pill and the messages sit above the bottom bar ---------- */
+ html body.v195nav #v171chip{bottom:calc(var(--v195nav,64px) + 12px)!important;min-height:44px;padding:0 14px;box-shadow:0 6px 18px -10px rgba(7,41,58,.45);animation:v195in .22s ease-out}
+ html body #v171chip.v195gone{display:none!important}
+ html body.v195nav #v171snack:not([style*="top"]){bottom:calc(var(--v195nav,64px) + 12px)}
+ html body.v195nav #toast{bottom:calc(var(--v195nav,64px) + 12px)!important}
+ html body.v195nav #v82undo{bottom:calc(var(--v195nav,64px) + 12px)!important}
+ html body.v195nav .ga-selbar{bottom:calc(var(--v195nav,64px) + 10px)!important}
+
+ /* ---------- page rhythm: a 16px gutter on every page ---------- */
+ html body.v195 #appviews{padding-inline:4px!important}
+
+ /* ---------- post cards: picture, status, one muted line ---------- */
+ body.v170g .v170 .ga-grid{gap:20px 12px!important}
+ body.v163g .ga-card .ga-open{border-radius:10px!important}
+ body.v170g .v170 .ga-card .v174t{padding:9px 0 0!important;gap:0!important}
+ body.v170g .v170 .ga-card .v174h{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;margin:0;padding:0}
+ body.v170g .v170 .ga-card .v174c{display:inline-flex;align-items:center;gap:5px;padding:2px 8px!important;border-radius:6px!important;font:700 12px/1.35 Almoni,Heebo,sans-serif!important;letter-spacing:.005em}
+ body.v170g .v170 .ga-card .v174c::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+ body.v170g .v170 .ga-card .v174c-ready{background:#e7f0f4!important;color:var(--v195t)!important}
+ body.v170g .v170 .ga-card .v174c-sched{background:var(--v195n)!important;color:#fff!important}
+ body.v170g .v170 .ga-card .v174c-check{background:#fbeeee!important;color:var(--v195r)!important}
+ body.v170g .v170 .ga-card .v174c-pub{background:#eef1f4!important;color:var(--v195ink2)!important}
+ body.v170g .v170 .ga-card .v170meta{padding-top:5px!important;font-size:12.5px!important;line-height:1.4!important;color:var(--v195mut);align-items:flex-start}
+ body.v170g .v170 .ga-card .v170meta .v170ser{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+ body.v170g .v170 .ga-card .v170meta .v170tag{font-size:12px!important;padding:1px 6px!important}
+ .v195sk{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px;padding-top:6px}
+ .v195skc b{margin-top:10px}
+
+ /* ---------- touch targets that were under 44px ---------- */
+ html body.v195 [data-app="cm"],html body.v195 [data-v175p],html body.v195 .v170link,html body.v195 .v170btn,html body.v195 #v194 .v194tabs button,html body.v195 #v194 .v194clone{min-height:44px!important}
+ html body.v195 #appviews input[type="search"],html body.v195 #appviews .v170q input{min-height:44px!important;font-size:16px}
+}
+@keyframes v195in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html body #v99nav button .ic{transition:none}html body.v195nav #v171chip{animation:none}}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -5478,7 +5559,7 @@ button:focus-visible,[role=button]:focus-visible,a:focus-visible,summary:focus-v
 @container (max-width:92px){.app .v62ev .ci canvas{display:none}}
 .app .v62ev .ci .v62t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;word-break:break-word;font-weight:600;color:#1d3a4c}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 // ---------- active tab ----------
 (function(){
@@ -28387,6 +28468,151 @@ setInterval(()=>{try{keepAll()}catch(e){}},5000);
 window.__v194={S,campaigns,filtered,mount,keyOf,startOf};
 })();
 /*V194:END*/
+
+/*V195:START*/
+// ================= V195 · mobile 2.0: a calm header, a bottom bar that sits on the bottom, cards that read at a glance,
+// and a faster start. On a phone the header keeps four things at most: back (when there is a previous page), the page
+// title, search (only on pages that have no search of their own) and "עוד", plus the one primary action "+". Everything
+// that used to crowd the row (the menu, the bell, the competitor gallery, the page actions) is one tap away in the "עוד"
+// sheet, and the menu stays in the bottom bar. The shell takes its height from where Safari puts fixed bottom bars, so no
+// empty band is left under the bottom bar when the toolbar collapses. The undo pill sits above the bottom bar and leaves on
+// its own; the last action can still be undone from "עוד". Loading: the quality scores are cached for every post (the old
+// cache held 8000 entries and the library has more, so every render scored all posts again), the cloud posts are matched
+// through an index instead of a scan per post, the first posts paint before the approvals finish loading, and skeleton
+// cards stand in while the posts are on the way.
+(()=>{
+if(window.__v195)return;window.__v195=1;
+const PH=matchMedia('(max-width:860px)');
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SVG=(d,w)=>`<svg width="${w||20}" height="${w||20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const IC={more:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>',
+ bell:SVG('<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
+ search:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+ gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/>'),
+ undo:SVG('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
+ menu:SVG('<path d="M4 7h16M4 12h16M4 17h16"/>'),x:SVG('<path d="M18 6 6 18M6 6l12 12"/>')};
+const view=()=>{try{return APP.view||''}catch(e){return ''}};
+
+/* ---------- 1 · speed ---------- */
+// 1a · quality scores: one entry per post version for the whole library. Same key and the same reset rule as the
+// cache below it (it resets when the library wide fatigue index is rebuilt), only big enough for every post.
+(function(){if(typeof pxQuality!=='function')return;const C=new Map();let fc=null;
+ const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};
+ const f0=pxQuality;
+ pxQuality=function(p){try{const ep=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);if(ep!==fc){C.clear();fc=ep}const v=p.visual||{},x=p.fx||{};
+   const k=(p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'');
+   let r=C.get(k);if(!r){r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}return r}catch(e){return f0.apply(this,arguments)}};
+ const clr=window.__pxqClear;window.__pxqClear=()=>{C.clear();try{clr&&clr()}catch(e){}}})();
+
+// 1b · the cloud posts (V31) with an index: the same rules, without scanning the whole library once per post.
+// V37 wrapped the load to drop deleted posts (tombstones) afterwards; that step is kept here.
+if(typeof v31Load==='function'&&typeof SYNC!=='undefined'&&typeof v31Id==='function'){
+ const gone=()=>{try{return lsGet('v37_gone',[])||[]}catch(e){return []}};
+ const keysOf=p=>[p.id,p.key,p.draftId,v31Id(p)].filter(Boolean);
+ function purge(){const g=new Set(gone());if(!g.size)return 0;const before=AG.posts.length;AG.posts=AG.posts.filter(p=>!keysOf(p).some(k=>g.has(k)));return before-AG.posts.length}
+ // buckets keep the posts in library order, so the first one in a bucket is the one findIndex would return
+ let K,I,S,dirty=true;
+ const add=(m,k,p,front)=>{let a=m.get(k);if(!a){a=[];m.set(k,a)}front?a.unshift(p):a.push(p)};
+ const del=(m,k,p)=>{const a=m.get(k);if(!a)return;const i=a.indexOf(p);if(i>=0)a.splice(i,1);if(!a.length)m.delete(k)};
+ function build(){K=new Map();I=new Map();S=new Map();for(const p of AG.posts){if(!p)continue;if(p.key)add(K,p.key,p);add(I,p.id,p);add(S,v31Id(p),p)}dirty=false}
+ function match(q){if(dirty)build();const a=q.key?((K.get(q.key)||[])[0]):null;const b=(I.get(q.id)||[])[0];
+  if(a&&b&&a!==b)return AG.posts.indexOf(a)<AG.posts.indexOf(b)?a:b;return a||b||null}
+ async function core(){const db=APP.db;if(!db)return 0;let snap;try{snap=await db.collection('posts').get()}catch(e){console.warn('posts load',e);return 0}
+  let changed=0;const killed=new Set(lsGet('v28_kill',[])||[]);dirty=true;
+  snap.docs.forEach(d=>{const v=d.data();if(!v)return;const id=d.id;
+   if(v.removed||!v.p){if(dirty)build();const o=(S.get(id)||[])[0];if(o){const i=AG.posts.indexOf(o);if(i>=0){AG.posts.splice(i,1);changed++;if(o.key)del(K,o.key,o);del(I,o.id,o);del(S,id,o)}}SYNC.h[id]='x';return}
+   const q=v.p;if(!q||!q.visual||!q.hook)return;if(q.key&&killed.has(q.key))return;
+   const loc=match(q);
+   if(!loc){AG.posts.unshift(q);if(!dirty){if(q.key)add(K,q.key,q,1);add(I,q.id,q,1);add(S,v31Id(q),q,1)}SYNC.h[id]=v31Hash(JSON.stringify(v31Strip(q)));changed++;return}
+   const lh=v31Hash(JSON.stringify(v31Strip(loc)));const rh=v31Hash(JSON.stringify(v31Strip(q)));
+   if(lh===rh){SYNC.h[id]=lh;return}
+   const locEdited=SYNC.h[id]&&SYNC.h[id]!==lh;
+   if(!locEdited||(v.upd||'')>(loc.upd||'')){const k0=loc.key,s0=v31Id(loc);const keep=loc.id;Object.keys(loc).forEach(k=>{if(k!=='id')delete loc[k]});Object.assign(loc,q);loc.id=keep;
+    if(loc.key!==k0||v31Id(loc)!==s0)dirty=true;SYNC.h[id]=v31Hash(JSON.stringify(v31Strip(loc)));changed++}});
+  lsSet('ps_h',SYNC.h);SYNC.ready=true;if(changed){saveAgent();try{TC.clear()}catch(e){}}return changed}
+ v31Load=async function(){const r=await core();purge();
+  // the first posts paint now; the approvals (workflow) keep loading behind them and V31 renders again when they are in
+  if(r)setTimeout(()=>{try{render()}catch(e){}},0);
+  return r};
+}
+
+// 1c · skeleton cards while the posts are on the way (instead of "no posts match the filter")
+function skeleton(){if(view()!=='gallery'||window.__v31loaded)return;const box=document.getElementById('appviews');if(!box||box.querySelector('.ga-card'))return;
+ const em=box.querySelector('.v170empty');if(!em||em.dataset.v195)return;
+ const n=PH.matches?6:10;const sk=document.createElement('div');sk.className='v195sk';sk.setAttribute('role','status');sk.setAttribute('aria-label','טוען את הפוסטים');
+ sk.innerHTML=Array.from({length:n},()=>'<div class="v195skc" aria-hidden="true"><i></i><b></b><u></u></div>').join('');em.replaceWith(sk)}
+
+/* ---------- 2 · the shell is as tall as the area Safari gives fixed bars ---------- */
+// V180 sized the shell by documentElement.clientHeight. On iPhone that is the height with the toolbar shown and it does
+// not grow when the toolbar collapses (the default on newer Safari), so a white band was left under the bottom bar.
+// A fixed probe (top:0, bottom:0) always spans what Safari uses for fixed bottom bars; the shell follows it.
+let probe=null;
+function vh(){if(!probe)return;const de=document.documentElement;if(!PH.matches){de.style.removeProperty('--v195vh');return}
+ const vv=window.visualViewport;if(vv&&Math.abs((vv.scale||1)-1)>0.01)return;
+ const h=Math.round(probe.getBoundingClientRect().height);if(h>=200&&de.style.getPropertyValue('--v195vh')!==h+'px')de.style.setProperty('--v195vh',h+'px')}
+function ensureProbe(){if(probe&&probe.isConnected)return;probe=document.createElement('div');probe.id='v195vp';probe.setAttribute('aria-hidden','true');document.body.appendChild(probe);
+ try{new ResizeObserver(vh).observe(probe)}catch(e){}vh()}
+addEventListener('resize',()=>setTimeout(vh,0));addEventListener('pageshow',vh);addEventListener('orientationchange',()=>setTimeout(vh,350));
+try{visualViewport&&visualViewport.addEventListener('resize',()=>setTimeout(vh,0))}catch(e){}
+
+// the bottom bar height, for the undo pill, the snackbar and the toasts that sit above it
+let navRO=null;
+function navVar(){const n=document.getElementById('v99nav');const de=document.documentElement;if(!n)return;const r=n.getBoundingClientRect();const on=PH.matches&&r.height>0&&getComputedStyle(n).display!=='none';
+ document.body.classList.toggle('v195nav',on);if(on)de.style.setProperty('--v195nav',Math.round(r.height)+'px');
+ if(!navRO){try{navRO=new ResizeObserver(navVar);navRO.observe(n)}catch(e){navRO=1}}}
+
+/* ---------- 3 · the header ---------- */
+function pageSearch(){const box=document.getElementById('appviews');if(!box)return false;
+ return [...box.querySelectorAll('input[type="search"],input[placeholder*="חיפוש"]')].some(i=>{const r=i.getBoundingClientRect();return r.width>0&&r.height>0})}
+function bellCount(){const b=document.querySelector('.tbar .px-bell');if(!b)return 0;const n=parseInt((b.textContent||'').replace(/\D+/g,''),10);return n>0?n:0}
+function header(){const tb=document.querySelector('.tbar');if(!tb)return;const on=PH.matches;document.body.classList.toggle('v195',on);
+ if(!on)return;
+ tb.classList.toggle('v195ps',pageSearch());
+ let m=document.getElementById('v195more');
+ if(!m){m=document.createElement('button');m.type='button';m.id='v195more';m.className='ibtn';m.setAttribute('aria-haspopup','dialog');m.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMore()})}
+ if(m.parentElement!==tb){const nw=tb.querySelector('[data-app="new"]');nw?tb.insertBefore(m,nw):tb.appendChild(m)}
+ const n=bellCount();const lab='עוד'+(n?`, ${n} התראות`:'');if(m.getAttribute('aria-label')!==lab){m.setAttribute('aria-label',lab);m.title='עוד';m.innerHTML=IC.more+(n?`<span class="v195badge" aria-hidden="true">${n>99?'99+':n}</span>`:'')}}
+
+// the "עוד" sheet: the page actions first, then notifications, search, the competitor gallery and undo
+function items(){const out=[];const tb=document.querySelector('.tbar');const act=document.getElementById('vact');
+ if(tb&&act&&tb.classList.contains('v172fold'))[...act.children].filter(b=>b.tagName==='BUTTON').forEach(b=>{const s=b.querySelector('svg');const label=(b.textContent||b.getAttribute('aria-label')||'').replace(/\s+/g,' ').trim();if(label)out.push({icon:s?s.outerHTML:'',label,disabled:b.disabled,run:()=>b.click(),page:1})});
+ const bell=tb&&tb.querySelector('.px-bell');if(bell){const n=bellCount();out.push({icon:IC.bell,label:n?`התראות (${n})`:'התראות',run:()=>bell.click()})}
+ const sb=tb&&tb.querySelector('.px-sbtn');if(sb&&tb.classList.contains('v195ps'))out.push({icon:IC.search,label:'חיפוש ופקודות',run:()=>sb.click()});
+ const g=tb&&tb.querySelector('[data-v186="open"]');if(g)out.push({icon:IC.gal,label:'גלריית המתחרים',run:()=>g.click()});
+ const c=document.getElementById('v171chip');if(c&&!c.hidden){const l=(c.getAttribute('aria-label')||'ביטול הפעולה האחרונה').replace(/^ביטול:\s*/,'');out.push({icon:IC.undo,label:'ביטול: '+l,run:()=>c.click()})}
+ return out}
+let back=null;
+function closeMore(){const w=document.getElementById('v172sheet');if(w&&w.classList.contains('v195sh'))w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null}
+function openMore(){const old=document.getElementById('v172sheet');if(old)old.remove();back=document.activeElement;const list=items();
+ const t=(document.getElementById('vt')||{}).textContent||'';
+ const w=document.createElement('div');w.id='v172sheet';w.className='v195sh';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label','עוד');
+ w.innerHTML=`<div class="v172bg" data-v172x="1"></div><div class="v172pan"><div class="v172grip" aria-hidden="true"></div><div class="v172h"><div><b>עוד</b>${t?`<span>${E(t)}</span>`:''}</div><button type="button" class="v172x" data-v172x="1" aria-label="סגירה">${IC.x}</button></div><div class="v172l"></div></div>`;
+ const l=w.querySelector('.v172l');let sep=false;
+ list.forEach(it=>{if(!it.page&&!sep&&l.children.length){const s=document.createElement('div');s.className='v195sep';s.setAttribute('role','separator');l.appendChild(s);sep=true}
+  const b=document.createElement('button');b.type='button';b.className='v172i';b.disabled=!!it.disabled;b.innerHTML=`<span class="v172ic" aria-hidden="true">${it.icon||''}</span><span class="v172t">${E(it.label)}</span>`;
+  b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMore();setTimeout(()=>{try{it.run()}catch(x){console.error('v195',x)}},0)});l.appendChild(b)});
+ document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add('in'));
+ setTimeout(()=>{const f=l.querySelector('button:not(:disabled)');f&&f.focus({preventScroll:true})},60)}
+// the phone back gesture closes the sheet like the other windows (V101 knows #v172sheet)
+window.__v195more=openMore;
+
+/* ---------- 4 · the undo pill above the bottom bar, gone on its own ---------- */
+const PILL_MS=8000;let sig='',lastAct=0;
+function chipSig(){try{const s=window.__v171&&__v171.stack;if(!s)return '';const l=s[s.length-1];return s.length+'|'+(l?l.t+'|'+l.label:'')}catch(e){return ''}}
+function pill(){const c=document.getElementById('v171chip');if(!c)return;const s=chipSig();if(s!==sig){sig=s;lastAct=Date.now()}
+ const sn=document.getElementById('v171snack');const gone=Date.now()-lastAct>PILL_MS||!!(sn&&sn.classList.contains('show'));if(c.classList.contains('v195gone')!==gone)c.classList.toggle('v195gone',gone)}
+setInterval(pill,500);
+
+/* ---------- 5 · tie it to the page lifecycle ---------- */
+function after(){try{ensureProbe()}catch(e){}try{header()}catch(e){console.warn('v195',e)}try{navVar()}catch(e){}try{skeleton()}catch(e){}try{pill()}catch(e){}}
+try{render=(f=>function(){const r=f.apply(this,arguments);after();return r})(render)}catch(e){}
+try{PH.addEventListener('change',()=>{after();vh()})}catch(e){}
+// header buttons that arrive later (the bell count, the V186 gallery button, V172's fold) are picked up too
+let mo=null;function watch(){const tb=document.querySelector('.tbar');if(!tb||mo)return;mo=new MutationObserver(()=>{clearTimeout(mo._t);mo._t=setTimeout(()=>{try{header()}catch(e){}},60)});mo.observe(tb,{childList:true,subtree:true,characterData:true})}
+setTimeout(()=>{after();watch()},0);setTimeout(()=>{after();watch()},1500);
+window.__v195={header,items,openMore,vh,navVar,skeleton};
+})();
+/*V195:END*/
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

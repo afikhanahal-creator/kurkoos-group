@@ -1,0 +1,82 @@
+<style id="k195">
+/* V195 · mobile 2.0: header, bottom bar, cards, loading. Phones only unless noted; the desktop layout is unchanged. */
+:root{--v195n:#07293a;--v195t:#105572;--v195m:#8fb6c8;--v195p:#f7f8fa;--v195r:#a90b0c;--v195ink2:#3d4b58;--v195mut:#5b6977;--v195ln:rgba(7,41,58,.09)}
+#v195vp{position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none;z-index:-1}
+#v195more{display:none}
+/* loading: the bridge's banner becomes a small capsule under the header instead of a bar over it (all widths) */
+#engine-loading{top:calc(env(safe-area-inset-top,0px) + 72px)!important;left:50%!important;right:auto!important;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;border-radius:999px!important;padding:8px 18px 11px!important;font:600 13.5px/1.3 Almoni,Heebo,Arial,sans-serif!important;box-shadow:0 10px 28px -12px rgba(7,41,58,.55)!important;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* skeleton cards and pictures that are still painting */
+.v195sk{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:28px 20px;padding:8px 0 24px}
+.v195skc i{display:block;aspect-ratio:4/5;border-radius:10px}
+.v195skc b,.v195skc u{display:block;height:10px;border-radius:5px;margin-top:12px;width:42%}
+.v195skc u{width:74%;margin-top:8px}
+.v195skc i,.v195skc b,.v195skc u,body.v163g .ga-card .ga-open canvas:not(.painted){background:linear-gradient(100deg,#e6edf1 20%,#f3f6f8 40%,#e6edf1 60%);background-size:300% 100%;animation:v195sh 1.4s ease-in-out infinite}
+@keyframes v195sh{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.v195skc i,.v195skc b,.v195skc u,body.v163g .ga-card .ga-open canvas:not(.painted){animation:none}}
+
+@media (max-width:860px){
+ /* ---------- the shell follows the fixed probe: no band under the bottom bar ---------- */
+ html,html body{height:var(--v195vh,var(--v180vh,100dvh))!important}
+ html body .app{height:var(--v195vh,var(--v180vh,100dvh))!important}
+ html body .side{height:var(--v195vh,var(--v180vh,100dvh))!important}
+
+ /* ---------- header: back, title, search (when the page has none), עוד, + ---------- */
+ html body.v195 .tbar{gap:6px!important;padding-inline:12px!important;min-height:56px}
+ html body.v195.v195nav:has(#v99nav) .tbar [data-app="menu"]{display:none!important}
+ html body.v195 .tbar .px-bell,html body.v195 .tbar .v186btn,html body.v195 .tbar #v172act{display:none!important}
+ html body.v195 .tbar.v195ps .px-sbtn{display:none!important}
+ html body.v195 .tbar>div:not(#vact){flex:1 1 auto!important;min-width:0!important;order:0}
+ html body.v195 .tbar h1{max-width:none!important;font:800 19px/1.2 Almoni,Heebo,sans-serif!important;letter-spacing:-.01em;color:var(--v195n);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ html body.v195 .tbar .sub{display:none!important}
+ html body.v195 #v195more{display:inline-flex;align-items:center;justify-content:center;position:relative;width:44px!important;height:44px!important;min-width:44px!important;padding:0!important;border-radius:12px;border:1px solid var(--line,#dbe8ee);background:#fff;color:var(--v195n);order:4;flex:0 0 auto}
+ html body.v195 #v195more .v195badge{position:absolute;top:-5px;inset-inline-end:-5px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--v195r);color:#fff;font:700 11px/18px Almoni,Heebo,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff}
+ html body.v195 .tbar .ibtn.pri{order:5;flex:0 0 auto}
+ html body.v195 .tbar>#vact{order:20}
+ html body.v195 .tbar>#vact>*{min-height:44px}
+ /* the "עוד" sheet: a quiet separator between the page actions and the general ones */
+ #v172sheet.v195sh .v195sep{height:1px;background:var(--v195ln);margin:6px 8px}
+
+ /* ---------- bottom bar: on the bottom, the home indicator space kept small, a clear current page ---------- */
+ html body #v99nav{padding:6px 6px max(6px,calc(env(safe-area-inset-bottom,0px) - 12px))!important;background:rgba(255,255,255,.96);-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);border-top:1px solid var(--v195ln);box-shadow:none!important;gap:2px}
+ html body #v99nav button{min-height:52px!important;gap:3px!important;padding:2px 0!important;border-radius:14px;background:none!important;color:#5b6472;font:600 12px/1.1 Almoni,Heebo,Arial,sans-serif!important;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+ html body #v99nav button .ic{width:52px!important;height:30px!important;border-radius:999px;transition:background-color .2s ease,transform .12s ease}
+ html body #v99nav button[aria-current="page"]{color:var(--v195n)!important;font-weight:800!important}
+ html body #v99nav button[aria-current="page"] .ic{background:#dbe8ee}
+ html body #v99nav button:active .ic{transform:scale(.94);background:#e8eff3}
+ html body #v99nav button:focus-visible{outline:2px solid var(--v195t);outline-offset:-2px}
+
+ /* ---------- the undo pill and the messages sit above the bottom bar ---------- */
+ html body.v195nav #v171chip{bottom:calc(var(--v195nav,64px) + 12px)!important;min-height:44px;padding:0 14px;box-shadow:0 6px 18px -10px rgba(7,41,58,.45);animation:v195in .22s ease-out}
+ html body #v171chip.v195gone{display:none!important}
+ html body.v195nav #v171snack:not([style*="top"]){bottom:calc(var(--v195nav,64px) + 12px)}
+ html body.v195nav #toast{bottom:calc(var(--v195nav,64px) + 12px)!important}
+ html body.v195nav #v82undo{bottom:calc(var(--v195nav,64px) + 12px)!important}
+ html body.v195nav .ga-selbar{bottom:calc(var(--v195nav,64px) + 10px)!important}
+
+ /* ---------- page rhythm: a 16px gutter on every page ---------- */
+ html body.v195 #appviews{padding-inline:4px!important}
+
+ /* ---------- post cards: picture, status, one muted line ---------- */
+ body.v170g .v170 .ga-grid{gap:20px 12px!important}
+ body.v163g .ga-card .ga-open{border-radius:10px!important}
+ body.v170g .v170 .ga-card .v174t{padding:9px 0 0!important;gap:0!important}
+ body.v170g .v170 .ga-card .v174h{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;margin:0;padding:0}
+ body.v170g .v170 .ga-card .v174c{display:inline-flex;align-items:center;gap:5px;padding:2px 8px!important;border-radius:6px!important;font:700 12px/1.35 Almoni,Heebo,sans-serif!important;letter-spacing:.005em}
+ body.v170g .v170 .ga-card .v174c::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+ body.v170g .v170 .ga-card .v174c-ready{background:#e7f0f4!important;color:var(--v195t)!important}
+ body.v170g .v170 .ga-card .v174c-sched{background:var(--v195n)!important;color:#fff!important}
+ body.v170g .v170 .ga-card .v174c-check{background:#fbeeee!important;color:var(--v195r)!important}
+ body.v170g .v170 .ga-card .v174c-pub{background:#eef1f4!important;color:var(--v195ink2)!important}
+ body.v170g .v170 .ga-card .v170meta{padding-top:5px!important;font-size:12.5px!important;line-height:1.4!important;color:var(--v195mut);align-items:flex-start}
+ body.v170g .v170 .ga-card .v170meta .v170ser{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+ body.v170g .v170 .ga-card .v170meta .v170tag{font-size:12px!important;padding:1px 6px!important}
+ .v195sk{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px;padding-top:6px}
+ .v195skc b{margin-top:10px}
+
+ /* ---------- touch targets that were under 44px ---------- */
+ html body.v195 [data-app="cm"],html body.v195 [data-v175p],html body.v195 .v170link,html body.v195 .v170btn,html body.v195 #v194 .v194tabs button,html body.v195 #v194 .v194clone{min-height:44px!important}
+ html body.v195 #appviews input[type="search"],html body.v195 #appviews .v170q input{min-height:44px!important;font-size:16px}
+}
+@keyframes v195in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html body #v99nav button .ic{transition:none}html body.v195nav #v171chip{animation:none}}
+</style>

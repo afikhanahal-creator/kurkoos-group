@@ -3011,6 +3011,9 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
 </style><style id="k196">
 /* V196 · speed */
 .v170cnt.v196wait{color:#5F6B78;font-weight:600}
+/* long card lists (Posts: 60 cards at a time, Templates: about 450): cards away from the screen skip layout and paint;
+   the remembered size keeps the scroll length steady once a card has been seen */
+#appviews .ga-card{content-visibility:auto;contain-intrinsic-size:auto 320px}
 /* the page a tap asked for, while it is drawn for the first time */
 .v196sk{display:grid;gap:14px;padding:16px 0}
 .v196sk i{display:block;height:64px;border-radius:14px;background:linear-gradient(90deg,#eef2f5 0%,#f6f8fa 40%,#eef2f5 80%);background-size:200% 100%;animation:v196sh 1.2s linear infinite}
@@ -21303,7 +21306,7 @@ function run(){let fixed=0,left=0;AG.posts.forEach(p=>{let iss;try{iss=clarityOf
   // the canvas check (text that does not fit) runs in the background, a little at a time, once per post version
   const q=window.__v117q?window.__v117q(sigOf):AG.posts.filter(p=>specOf(p.layout)&&p._ovk!==sigOf(p));let qi=0,fx2=0;
   (function step(){const t0=performance.now();while(qi<q.length&&performance.now()-t0<9){const p=q[qi++];try{const k=sigOf(p);const bad=overflowOf(p).length>0;OVC.set(k,bad);if(!bad){p._ovk=k}else if(!manualOf(p)){const iss=clarityOf(p);if(iss.length&&fixOne(p,iss))fx2++;const k2=sigOf(p);OVC.delete(k2);if(!overflowOf(p).length)p._ovk=k2}}catch(e){}}
-    if(qi<q.length){if((window.PE&&PE.p)||(window.APP&&APP.cmp))setTimeout(step,900);else if(window.requestIdleCallback)requestIdleCallback(step,{timeout:2500});else setTimeout(step,160)}else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqClear&&window.__pxqClear()}catch(e){}if(fx2){try{toast(`בדיקת בהירות: עוד ${fx2} פוסטים תוקנו`);render()}catch(e){}}}})();
+    if(qi<q.length){if((window.PE&&PE.p)||(window.APP&&APP.cmp))setTimeout(step,900);else if(window.requestIdleCallback)requestIdleCallback(step,{timeout:2500});else setTimeout(step,160)}else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqDrop?window.__pxqDrop(q):window.__pxqClear&&window.__pxqClear()}catch(e){}/*V196o*/if(fx2){try{toast(`בדיקת בהירות: עוד ${fx2} פוסטים תוקנו`);render()}catch(e){}}}})();
   return{fixed,left,checking:q.length}}
 window.__v73run=run;
 // the quality score shows what is unclear, so it can never be published by mistake
@@ -28534,7 +28537,7 @@ const kept=k=>KEEP.has(k)||KEEP.has(String(k).split('/')[0]);
 const FP=new Map();
 function fpOf(r){try{if(r&&Array.isArray(r.docs)){if(r.docs.length>3000)return null;return r.docs.length+'|'+JSON.stringify(r.docs.map(d=>[d.id,d.data()]))}
  if(r&&typeof r.data==='function')return '1|'+JSON.stringify([r.id,r.exists,r.data()])}catch(e){}return null}
-function bumpIf(key,r){const f=key==='posts'?null:fpOf(r);if(f!=null&&FP.get(key)===f)return;if(f!=null)FP.set(key,f);bump()}
+function bumpIf(key,r){const f=key==='posts'?null:fpOf(r);if(f!=null&&FP.get(key)===f)return;if(f!=null)FP.set(key,f);bump();try{window.__v195log&&window.__v195log(key)}catch(e){}}
 function patchDb(db){if(!db||db.__v195)return db;db.__v195=1;
  const wrapRef=(o,key)=>{if(!o||o.__v195||kept(key))return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
   if(typeof g==='function')o.get=async function(){const r=await g.apply(this,arguments);bumpIf(key,r);return r};
@@ -28549,16 +28552,19 @@ try{document.fonts&&document.fonts.addEventListener('loadingdone',bump)}catch(e)
  // V196: every render asks for the score of every post several times; building the string key each time cost more than the
  // score itself once it is cached. A per post entry remembers the exact fields of the key, so a repeat call with nothing
  // changed returns at once; any change in those fields, or a cache reset, goes through the key as before.
- let gen=0,miss=0;const W=new WeakMap();const sj=x=>x?JSON.stringify(x):'';
+ let gen=0,miss=0;const W=new WeakMap();
+ const keyOf=p=>{const v=p.visual||{},x=p.fx||{};return (p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'')};const sj=x=>x?JSON.stringify(x):'';
  const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};
  const f0=pxQuality;const inner=window.__pxqClear;
  pxQuality=function(p){try{const e0=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);const ep=typeof e0==='string'?e0+'|'+((window.TPL&&TPL.specs&&TPL.specs.length)||0):e0;if(ep!==fc||dv!==fdv){C.clear();gen++;if(dv!==fdv)try{inner&&inner()}catch(e){}fc=ep;fdv=dv}const v=p.visual||{},x=p.fx||{};
    const w=p&&typeof p==='object'?W.get(p):null;
    if(w&&w.g===gen&&w.id===p.id&&w.l===p.layout&&w.u===p.upd&&w.hd===v.headline&&w.sb===v.sub&&w.fb===p.fb&&w.ig===p.ig&&w.n===x.num&&w.a===!!p.article&&w.hk===p.hook&&w.f===p.format&&w.s===sj(x.shot)&&C.get(w.k)===w.r)return w.r;
-   const k=(p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'');
+   const k=keyOf(p);
    let r=C.get(k);if(!r){miss++;r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}
    if(p&&typeof p==='object')W.set(p,{g:gen,k,r,id:p.id,l:p.layout,u:p.upd,hd:v.headline,sb:v.sub,fb:p.fb,ig:p.ig,n:x.num,a:!!p.article,hk:p.hook,f:p.format,s:sj(x.shot)});return r}catch(e){return f0.apply(this,arguments)}};
  window.__pxqClear=()=>{C.clear();gen++;try{inner&&inner()}catch(e){}};
+ // V196: forget the scores of a few posts only (the idle overflow check knows which posts it looked at)
+ window.__pxqDrop=list=>{try{(list||[]).forEach(p=>{if(!p||typeof p!=='object')return;const w=W.get(p);if(w)C.delete(w.k);W.delete(p);C.delete(keyOf(p))})}catch(e){window.__pxqClear()}};
  // V196: the scores of the whole library are taken in short slices while the skeleton cards show, so the page keeps
  // answering instead of freezing for seconds; the first render after the posts arrive then finds every score ready
  window.__v195gen=()=>gen;window.__v195miss=()=>miss;

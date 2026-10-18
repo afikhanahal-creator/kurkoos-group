@@ -7,12 +7,28 @@ H = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(H, 'voice'); 
 from lines import LINES
 # line -> the second where the pause after it ends, on full.wav (only when the alignment picked a wrong pause)
 BREAK_FIX = {13: 54.455}
+# line -> (file, spelling): a separate take of one line in the same voice, used instead of its cut from full.wav.
+# Line 11: in the continuous read "ראיתה" came out as "RA-it"; this take, spelled רָאִיטָה, transcribes back as "ra-ee-TA".
+TAKES = {11: ('voice/take11.wav', 'קורקוס יזמות, רָאִיטָה לְבִיצּוּעַ, שְׁכִינְתָּא לְפִיקּוּחַ, ואפיק הנחל לתיווך.')}
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
 FIX = [('מקרקע', 'מִקַּרְקַע'), ('שכינתא', 'שְׁכִינְתָּא'), ('ראיתה', 'רָאִיתָה'), ('מנכ"ל', 'מַנְכָּ"ל'), ('שנשכח', 'שֶׁנִּשְׁכַּח'),
        ('שכוסה', 'שֶׁכֻּסָּה'), ('שנסגרה', 'שֶׁנִּסְגְּרָה'), ('קורת גג', 'קוֹרַת גַּג'), ('מטעמכם', 'מִטַּעַמְכֶם'), ('ובראשות', 'וּבְרָאשׁוּת')]
 def fix(t):
     for a, b in FIX: t = t.replace(a, b)
     return t
+def take(src, seg, tempo):
+    # trim the take to its speech (40 ms before, 80 ms after), same tempo, level matched to the cut it replaces (active speech RMS)
+    o = subprocess.run(['ffmpeg', '-i', src, '-af', 'silencedetect=n=-38dB:d=0.05', '-f', 'null', '-'], capture_output=True, text=True).stderr
+    st = [float(v) for v in re.findall(r'silence_start: ([\d.]+)', o)]; en = [float(v) for v in re.findall(r'silence_end: ([\d.]+)', o)]
+    D = dur(src); a = en[0] if st and st[0] < 0.05 else 0.0; b = st[-1] if len(st) > len(en) else D
+    def rms(p):
+        x = subprocess.run(['ffmpeg', '-v', 'error', '-i', p, '-af', 'silenceremove=stop_periods=-1:stop_threshold=-38dB', '-f', 'f32le', '-ac', '1', '-'], capture_output=True).stdout
+        import array; v = array.array('f', x); return (sum(q * q for q in v) / max(1, len(v))) ** .5
+    tmp = seg + '.take.wav'
+    subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-ss', str(max(0, a - 0.04)), '-to', str(min(D, b + 0.08)), '-i', src, '-af', f'atempo={tempo}', '-ar', '48000', '-ac', '1', tmp])
+    g = rms(seg) / max(1e-6, rms(tmp))
+    subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-i', tmp, '-af', f'volume={g:.4f},afade=t=in:d=0.02,areverse,afade=t=in:d=0.04,areverse', seg]); os.remove(tmp)
+    print('take', os.path.basename(src), 'gain', round(g, 2))
 def main():
     os.makedirs(OUT, exist_ok=True)
     full = os.path.join(OUT, 'full.wav')
@@ -60,11 +76,13 @@ def main():
     tm = [{'i': i + 1, 'a': round(a, 3), 'b': round(b, 3)} for i, (a, b) in enumerate(zip(starts, ends))]
     for x, (s, c) in zip(tm, LINES): print(x['i'], x['a'], x['b'], round(x['b'] - x['a'], 2), s[:40])
     # the reel's voice track: every line whole, the pauses between lines cut to GAP, the voice TEMPO faster (pitch kept)
-    LEAD, GAP, TEMPO = 0.5, 0.28, 1.15
+    COVER = 0.8   # the cover frame opens the reel; the voice starts after it (index.html and music.py read it from timings.js)
+    LEAD, GAP, TEMPO = COVER + 0.5, 0.28, 1.15
     parts, t, out = [], LEAD, []
     for x in tm:
         seg = os.path.join(OUT, 'v%02d.wav' % x['i'])
         subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-ss', str(max(0, x['a'] - 0.04)), '-to', str(min(T, x['b'] + 0.08)), '-i', full, '-af', f'atempo={TEMPO}', '-ar', '48000', '-ac', '1', seg])
+        if x['i'] in TAKES: take(os.path.join(H, TAKES[x['i']][0]), seg, TEMPO)
         d = dur(seg); out.append({'i': x['i'], 'a': round(t, 3), 'b': round(t + d, 3), 'cap': LINES[x['i'] - 1][1]}); parts.append((seg, t)); t += d + GAP
     total = round(t - GAP + 0.1, 3)
     ins, flt = [], []
@@ -73,5 +91,5 @@ def main():
     flt.append(''.join(f'[a{i}]' for i in range(len(parts))) + f'amix=inputs={len(parts)}:normalize=0,apad,atrim=0:{total}[v]')
     subprocess.check_call(['ffmpeg', '-v', 'error', '-y', *ins, '-filter_complex', ';'.join(flt), '-map', '[v]', '-ar', '48000', os.path.join(OUT, 'voice.wav')])
     print('voice track', total, 's')
-    open(os.path.join(OUT, 'timings.js'), 'w', encoding='utf8').write('window.VT=' + json.dumps({'voice': total, 'lines': out}, ensure_ascii=False) + ';\n')
+    open(os.path.join(OUT, 'timings.js'), 'w', encoding='utf8').write('window.VT=' + json.dumps({'voice': total, 'cover': COVER, 'lines': out}, ensure_ascii=False) + ';\n')
 main()

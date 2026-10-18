@@ -7,8 +7,9 @@ import json, os, re, wave
 import numpy as np
 H = os.path.dirname(os.path.abspath(__file__))
 VT = json.loads(re.search(r'window\.VT=(.*);', open(os.path.join(H, 'voice/timings.js'), encoding='utf8').read()).group(1))
-CUT = [0] + [max(0, x['a'] - .18) for x in VT['lines'][1:]]
-END = CUT[13]; DUR = round(VT['voice'] + 1.6, 2)
+COVER = VT.get('cover', 0)
+CUT = [COVER] + [max(0, x['a'] - .18) for x in VT['lines'][1:]]
+END = CUT[13]; DUR = round(VT['voice'] + 1.3, 2)
 SR, BPM = 48000, 118; B = 60 / BPM; n = int(SR * DUR)
 L, R = np.zeros(n), np.zeros(n); rng = np.random.default_rng(71)
 T = lambda d: np.arange(int(SR * d)) / SR
@@ -40,6 +41,7 @@ for b in range(int(END / B)):
     if at >= CUT[1] - .01: add(kick(), at, .5)
     add(hat(), at + B / 2, .14, .3 if b % 2 else -.3)
 for c in CUT[1:]: add(boom(), c - .01, .32); add(riser(), c - .45, .45)
+if COVER: add(boom(), COVER - .01, .36); add(riser(), COVER - .45, .4)   # the hit out of the cover into the hook
 for i, c in enumerate(CUT[:13]):
     ch = CH[int(c / (8 * B)) % 4]
     for j in range(3): add(pluck(ch[(j + i) % 4] + 12), c + .2 + j * B / 2, .16, -.25 + .25 * j)

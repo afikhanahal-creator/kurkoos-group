@@ -16,9 +16,10 @@
   6  the stage line: foundations, pours, waterproofing, finish; the critical two turn red and get "נבדק"
   7  a contractor's bill gets the stamp "נבדק לפני תשלום", schedule and budget bars below
   8  the handover protocol ticks itself off, "גם כשקבלן אחר בונה"
-  9  Shlomi Kurkoos, his photo framed like a detail, name and role as the site states them
+  0  the cover frame (cover.png, a render of cover.html) for 0.8 s, then the ruler wipes into the hook
+  9  Shlomi Kurkoos, the standing portrait framed tall like a detail, name and role as the site states them
   10 4 divisions under one roof
-  11 the four arms by name: קורקוס יזמות, ראיתה, שכינתא, אפיק הנחל
+  11 the four arms by name: קורקוס יזמות, ראיתה (with Reita's own logo, raita.png), שכינתא, אפיק הנחל
   12 a winding route from קרקע to מפתח, the four arms as stations on it
   13 a contract with an empty signature line, "דברו איתנו" before the pen lands
   14 end card on navy: logo, דברו איתנו, קבוצת קורקוס, phone, site
@@ -49,10 +50,15 @@
   #world{display:block}
   #wipe{position:absolute;left:0;right:0;height:300px;z-index:40;display:none}
   #cap{position:absolute;left:70px;right:70px;bottom:150px;display:flex;justify-content:center;z-index:30}
-  #capb{background:#07293a;color:#f7f8fa;border-radius:26px;padding:24px 40px 30px;font-weight:700;font-size:60px;line-height:1.18;text-align:center;max-width:940px;box-sizing:border-box}
+  /* captions: bold navy text straight on the paper (no box), a paper halo keeps them clean over the grid; white on a dark scene */
+  #capb{color:#07293a;padding:10px 20px 14px;font-weight:700;font-size:70px;line-height:1.14;text-align:center;max-width:940px;box-sizing:border-box;
+    text-shadow:0 0 6px #f7f8fa,0 0 12px #f7f8fa,0 0 18px #f7f8fa}
+  #cap.dark #capb{color:#f7f8fa;text-shadow:none}
   #capb .w{display:inline-block}
-  #capb .rd{color:#ff8f87}
+  #capb .rd{color:#a90b0c}
+  #cap.dark #capb .rd{color:#ff8f87}
   #end{position:absolute;inset:0;background:#07293a;display:none;z-index:35}
+  #cover{position:absolute;left:0;top:0;width:1080px;height:1920px;z-index:38;display:none}
   #sheetno{position:absolute;left:84px;top:78px;font-weight:700;font-size:30px;color:#8fb6c8;direction:rtl;z-index:2}
   #sheettag{position:absolute;right:84px;top:78px;font-weight:700;font-size:30px;color:#8fb6c8;z-index:2}
   svg{overflow:visible}
@@ -66,6 +72,7 @@
   <div class="sc" id="world"></div>
   <div id="cap"><div id="capb"></div></div>
   <div id="end"></div>
+  <img id="cover" src="cover.png" alt="">
   <svg id="wipe" width="1080" height="300"></svg>
   <canvas id="grain" width="540" height="960"></canvas>
 </div>
@@ -79,9 +86,9 @@ const $ = id => document.getElementById(id);
 const k = (t, a, b) => smooth((t - a) / (b - a));
 const L = window.VT.lines;                       // [{i, a, b, cap}] voice seconds
 const CUT = L.map(x => Math.max(0, x.a - .18));  // every scene cuts in just before its line
-CUT[0] = 0;
+CUT[0] = window.VT.cover || 0;                    // the cover frame (cover.png) holds until the first cut
 const NS = L.length - 1;                          // scenes before the end card
-const END = CUT[NS], DUR = +(window.VT.voice + 1.6).toFixed(2);
+const END = CUT[NS], DUR = +(window.VT.voice + 1.3).toFixed(2);
 const vis = (el, on) => { el.style.display = on ? 'block' : 'none'; return on; };
 function inout(el, u, a, d) { const i = k(u, a, a + .3); el.style.opacity = i; el.style.transform = `translateY(${(1 - i) * (d == null ? 36 : d)}px)`; return i; }
 const pop = (u, a) => Math.max(0, step(u - a, {f: 3.2, z: .45}));   // springy 0 -> 1 from a
@@ -201,12 +208,12 @@ scene(svg(`<g id="s8d"><rect x="210" y="300" width="660" height="820" rx="16" fi
      <rect x="${310 + (i % 2) * 70}" y="${535 + i * 140}" width="${380 - (i % 2) * 70}" height="22" rx="11" fill="${LINE}"/></g>`).join('')}</g>`) +
   `<div class="chip r" id="s8c" style="right:110px;top:1210px">גם כשקבלן אחר בונה</div>`);
 // 9 · a whole group, led by Shlomi Kurkoos, CEO and founder
-scene(svg(`<g class="ln" id="s9f"><image href="shlomi.png" x="270" y="270" width="540" height="558" preserveAspectRatio="xMidYMid slice"/>
-   <rect x="270" y="270" width="540" height="558" fill="none" stroke="${NAVY}" stroke-width="10"/>
-   ${[[240, 240, 1, 1], [840, 240, -1, 1], [240, 858, 1, -1], [840, 858, -1, -1]].map(([x, y, a, b]) => `<path d="M${x} ${y + b * 60} V${y} H${x + a * 60}" fill="none" stroke="${RED}" stroke-width="8"/>`).join('')}</g>`) +
-  `<div class="big" id="s9a" style="top:885px;font-size:50px;color:${TEAL}">קבוצה שלמה, בראשות</div>
-   <div class="big" id="s9n" style="top:990px;font-size:136px">שלומי קורקוס</div>
-   <div class="big" id="s9r" style="top:1155px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:62px;padding:16px 44px 22px;border-radius:999px">מנכ"ל ומייסד</span></div>`);
+scene(svg(`<g class="ln" id="s9f"><image href="shlomi-standing.jpg" x="290" y="210" width="500" height="750" preserveAspectRatio="xMidYMid meet"/>
+   <rect x="290" y="210" width="500" height="750" fill="none" stroke="${NAVY}" stroke-width="10"/>
+   ${[[260, 180, 1, 1], [820, 180, -1, 1], [260, 990, 1, -1], [820, 990, -1, -1]].map(([x, y, a, b]) => `<path d="M${x} ${y + b * 60} V${y} H${x + a * 60}" fill="none" stroke="${RED}" stroke-width="8"/>`).join('')}</g>`) +
+  `<div class="big" id="s9a" style="top:1030px;font-size:50px;color:${TEAL}">קבוצה שלמה, בראשות</div>
+   <div class="big" id="s9n" style="top:1100px;font-size:136px">שלומי קורקוס</div>
+   <div class="big" id="s9r" style="top:1262px"><span style="display:inline-block;background:${RED};color:${PAPER};font-size:62px;padding:16px 44px 22px;border-radius:999px">מנכ"ל ומייסד</span></div>`);
 // 10 · four divisions under one roof
 const DV = [['יזמות', 0], ['ביצוע', 0], ['פיקוח', 1], ['תיווך', 0]];
 scene(`<div class="big" id="s10t" style="top:240px;font-size:150px"><span style="color:${RED}">4</span> חטיבות</div>` + svg(`
@@ -223,7 +230,7 @@ const ICON = {
   key: (x, y) => `<circle cx="${x + 40}" cy="${y}" r="30" fill="none" stroke="${NAVY}" stroke-width="9"/><path d="M${x + 10} ${y} H${x - 70} M${x - 50} ${y} V${y + 26} M${x - 26} ${y} V${y + 20}" fill="none" stroke="${NAVY}" stroke-width="9"/>`,
 };
 scene(svg(AR.map(([n, r, ic], i) => { const y = 260 + i * 270, hi = i === 2; return `<g class="s11r" id="s11r${i}"><rect x="100" y="${y}" width="880" height="230" rx="22" fill="${hi ? RED : '#fff'}" stroke="${hi ? RED : NAVY}" stroke-width="6"/>
-   <g class="ln">${ICON[ic](220, y + 115)}</g>
+   <g class="ln">${ic === 'crane' ? `<image href="raita.png" x="118" y="${y + 22}" width="250" height="187"/>` : ICON[ic](220, y + 115)}</g>
    <text x="930" y="${y + 112}" font-size="84" fill="${hi ? PAPER : NAVY}">${n}</text><text x="930" y="${y + 182}" font-size="46" fill="${hi ? '#ffd6d2' : TEAL}">${r}</text></g>`; }).join('')));
 // 12 · complex projects, from land to key
 const ROUTE = 'M900 1180 C900 700 650 650 650 930 S 420 1160 420 900 S 180 700 180 1180';
@@ -259,13 +266,14 @@ $('end').innerHTML = `<img src="logo.png" alt="" style="position:absolute;left:4
 const q = s => [...document.querySelectorAll(s)];
 
 function seek(t) {
-  const n = CUT.filter(c => c <= t).length - 1;        // current scene 0..NS
-  const u = t - CUT[n];                                 // seconds into it
-  const len = (CUT[n + 1] || DUR) - CUT[n];
+  const n = CUT.filter(c => c <= t).length - 1;        // current scene 0..NS, -1 on the cover
+  const u = n < 0 ? t : t - CUT[n];                     // seconds into it
+  const len = n < 0 ? CUT[0] : (CUT[n + 1] || DUR) - CUT[n];
+  vis($('cover'), n < 0);
   SC.forEach((s, i) => vis(s, i === n && n < NS));
   $('sheetno').textContent = n < NS ? `גיליון ${String(n + 1).padStart(2, '0')}/${NS}` : '';
   // a hard cut behind the ruler: it sweeps down in .34 s around every cut after the first
-  const wp = n > 0 ? clamp((t - CUT[n] + .17) / .34) : 1, wn = n < NS ? clamp((t - CUT[n + 1] + .17) / .34) : 0;
+  const wp = n >= 0 && CUT[0] > 0 || n > 0 ? clamp((t - CUT[n] + .17) / .34) : 1, wn = n < NS ? clamp((t - CUT[n + 1] + .17) / .34) : 0;
   const w = wn > 0 ? wn : (wp < 1 ? wp : 0);
   vis($('wipe'), w > 0 && w < 1); $('wipe').style.top = lerp(-320, 1940, w) + 'px';
   // a punch in at the start of every scene, then a slow push
@@ -310,6 +318,7 @@ function check(t) {
   const out = [], cap = $('cap').getBoundingClientRect();
   if (+$('cap').style.opacity > .5 && (cap.top < 0 || cap.bottom > 1840)) out.push('caption outside safe area');
   if ($('capb').getBoundingClientRect().height > 260) out.push('caption taller than 3 lines');
+  if (+$('cap').style.opacity > .5 && $('cover').style.display !== 'none') out.push('caption over the cover');
   const shown = e => { let o = 1; for (let x = e; x && x !== document.body; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.display === 'none') return false; o *= +cs.opacity; } return o > .5; };
   const tight = e => { if (e instanceof SVGElement) return e.getBoundingClientRect(); const pill = e.querySelector('span[style*="padding"]'); if (pill) return pill.getBoundingClientRect(); if (e.classList.contains('chip') || e.classList.contains('hdr')) return e.getBoundingClientRect(); const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect(); };
   const T = [...document.querySelectorAll('#world .sc text, #world .sc .lbl, #world .sc .chip, #world .sc .big, #world .sc .hdr')].filter(shown).map(e => [e, tight(e)]).filter(([, r]) => r.width > 0);

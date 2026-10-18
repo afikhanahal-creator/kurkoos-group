@@ -14,6 +14,12 @@
 //   POST /social {a:'cancel', item_ids:[...]}
 //   POST /social {a:'list'}    admin: queue rows for the engine to show
 //   POST /social {a:'run'}     cron (x-cron-secret) or admin {only:item_id}
+//   POST /social {a:'mc_config', token} admin: save the Metricool API token (kept server side, never sent back)
+//
+// Routing: Facebook goes straight to the brand's page. Instagram goes straight when the brand's page has an
+// Instagram account linked, otherwise through Metricool. TikTok, YouTube and Google Business Profile go through
+// Metricool: about 20 minutes before the time the post is handed to Metricool, scheduled for the exact time
+// with automatic publishing. Until then a post can be moved or cancelled freely in the engine.
 //
 // Only posts the person queued from the engine are ever published.
 // ============================================================
@@ -47,6 +53,55 @@ async function setCfg(key: string, value: string) {
 }
 async function app() {
   return { id: Deno.env.get('META_APP_ID') || (await cfg('meta_app_id')), secret: Deno.env.get('META_APP_SECRET') || (await cfg('meta_app_secret')), configId: await cfg('meta_config_id') }
+}
+
+// ---------- Metricool (Kurkoos brand only)
+const MC_API = 'https://app.metricool.com/api'
+const MC_NET: Record<string, string> = { ig: 'instagram', tt: 'tiktok', yt: 'youtube', gmb: 'gmb' }
+const HANDOFF_MS = 20 * 60 * 1000
+async function mcCfg() {
+  return { token: Deno.env.get('METRICOOL_USER_TOKEN') || (await cfg('metricool_token')), userId: (await cfg('metricool_user_id')) || '5500195', blogId: (await cfg('metricool_blog_id')) || '7115159' }
+}
+async function mcFetch(path: string, params: Record<string, string>, init?: RequestInit) {
+  const M = await mcCfg()
+  if (!M.token) throw new Error('Metricool לא מחובר: חסר מפתח API')
+  const q = new URLSearchParams({ userId: M.userId, blogId: M.blogId, ...params })
+  const r = await fetch(`${MC_API}${path}?${q}`, { ...(init || {}), headers: { 'X-Mc-Auth': M.token, 'Content-Type': 'application/json', Accept: 'application/json' } })
+  const t = await r.text(); let d: any = t; try { d = JSON.parse(t) } catch { /* text */ }
+  if (!r.ok) throw new Error(String((d && (d.message || d.error || d.detail)) || t || `Metricool HTTP ${r.status}`).slice(0, 300))
+  return d
+}
+// which networks Metricool has connected for the brand
+async function mcNetworks(): Promise<Record<string, string>> {
+  const d = await mcFetch('/admin/simpleProfiles', {})
+  const list = Array.isArray(d) ? d : (d && Array.isArray(d.data) ? d.data : [d])
+  const M = await mcCfg()
+  const b = list.find((x: any) => x && String(x.id || x.blogId) === M.blogId) || list[0] || {}
+  const nd = b.networksData || {}
+  const pick = (k: string, k2: string) => String(nd[k] || b[k2] || b[k2 + 'Account'] || '') || ''
+  const out: Record<string, string> = {}
+  const v: [string, string, string][] = [['instagram', 'instagramData', 'instagram'], ['tiktok', 'tiktokData', 'tiktok'], ['youtube', 'youtubeData', 'youtube'], ['gmb', 'gbpData', 'gmb'], ['facebook', 'facebookData', 'facebook']]
+  v.forEach(([n, a, c]) => { const x = pick(a, c); if (x && x !== 'null' && x !== 'undefined') out[n] = x })
+  return out
+}
+const jerusalem = (d: Date) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d).replace(' ', 'T')
+async function pubMetricool(nets: string[], q: Record<string, unknown>, when: Date) {
+  const video = q.media_kind === 'video'
+  const providers = nets.map((n) => ({ network: MC_NET[n] }))
+  const text = String(q.text_ig || q.text_fb || '')
+  const info: Record<string, unknown> = {
+    text: nets.length === 1 && nets[0] === 'gmb' ? text.slice(0, 1500) : text,
+    providers, publicationDate: { dateTime: jerusalem(when), timezone: 'Asia/Jerusalem' },
+    media: q.media_url ? [String(q.media_url)] : [], mediaAltText: [], autoPublish: true, draft: false, shortener: false,
+    smartLinkData: { ids: [] }, descendants: [], firstCommentText: '', hasNotReadNotes: false,
+  }
+  if (nets.includes('ig')) info.instagramData = { type: video ? 'REEL' : 'POST', showReelOnFeed: true, collaborators: [] }
+  if (nets.includes('tt')) info.tiktokData = { privacyOption: 'PUBLIC_TO_EVERYONE', title: String(q.title || '').slice(0, 90), disableComment: false, disableDuet: false, disableStitch: false, autoAddMusic: false }
+  if (nets.includes('yt')) info.youtubeData = { title: String(q.title || q.label || 'קבוצת קורקוס').slice(0, 100), type: 'short', privacy: 'public', madeForKids: false, tags: [] }
+  if (nets.includes('gmb')) info.gmbData = { type: 'publication' }
+  const d = await mcFetch('/v2/scheduler/posts', {}, { method: 'POST', body: JSON.stringify(info) })
+  const x = (d && (d.data || d)) || {}
+  return { id: String(x.id || x.uuid || ''), uuid: x.uuid ? String(x.uuid) : null }
 }
 
 async function admin(req: Request) {
@@ -128,12 +183,17 @@ async function callback(url: URL) {
 
 // ---------- publishing
 async function pubFacebook(acc: Record<string, string>, q: Record<string, unknown>) {
+  if (q.media_kind === 'video') {
+    const v = await graph(`/${acc.account_id}/videos`, { file_url: String(q.media_url), description: String(q.text_fb || ''), title: String(q.title || '').slice(0, 250), access_token: acc.token }, 'POST')
+    return { id: v.id }
+  }
   const d = await graph(`/${acc.account_id}/photos`, { url: String(q.media_url), caption: String(q.text_fb || ''), published: 'true', access_token: acc.token }, 'POST')
   return { id: d.post_id || d.id }
 }
 async function pubInstagram(acc: Record<string, string>, q: Record<string, unknown>) {
-  const c = await graph(`/${acc.account_id}/media`, { image_url: String(q.media_url), caption: String(q.text_ig || q.text_fb || ''), access_token: acc.token }, 'POST')
-  for (let i = 0; i < 6; i++) {
+  const video = q.media_kind === 'video'
+  const c = await graph(`/${acc.account_id}/media`, video ? { media_type: 'REELS', video_url: String(q.media_url), caption: String(q.text_ig || q.text_fb || ''), access_token: acc.token } : { image_url: String(q.media_url), caption: String(q.text_ig || q.text_fb || ''), access_token: acc.token }, 'POST')
+  for (let i = 0; i < (video ? 20 : 6); i++) {
     const s = await graph(`/${c.id}`, { fields: 'status_code', access_token: acc.token })
     if (s.status_code === 'FINISHED') break
     if (s.status_code === 'ERROR' || s.status_code === 'EXPIRED') throw new Error('אינסטגרם לא הצליח לעבד את התמונה')
@@ -144,40 +204,66 @@ async function pubInstagram(acc: Record<string, string>, q: Record<string, unkno
 }
 
 async function run(only?: string) {
-  const now = new Date().toISOString()
+  const now = Date.now()
   // a run that died midway leaves rows in 'publishing': after 10 minutes they become retryable
-  await db.from('social_queue').update({ status: 'error', last_error: 'הפרסום נקטע, ינסה שוב' }).eq('status', 'publishing').lt('updated_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
-  let sel = db.from('social_queue').select('*').in('status', ['queued', 'partial', 'error']).lt('attempts', 3).order('at').limit(5)
-  sel = only ? sel.eq('item_id', only) : sel.lte('at', now)
+  await db.from('social_queue').update({ status: 'error', last_error: 'הפרסום נקטע, ינסה שוב' }).eq('status', 'publishing').lt('updated_at', new Date(now - 10 * 60 * 1000).toISOString())
+  // due now, or due soon with a channel that goes through Metricool (handed over before its time)
+  let sel = db.from('social_queue').select('*').in('status', ['queued', 'partial', 'error']).lt('attempts', 3).order('at').limit(8)
+  sel = only ? sel.eq('item_id', only) : sel.lte('at', new Date(now + HANDOFF_MS).toISOString())
   const { data: due, error } = await sel
   if (error) throw new Error(error.message)
   const { data: accs } = await db.from('social_accounts').select('*')
   const by = (n: string, brand: string) => (accs || []).find((a) => a.network === n && a.brand === brand)
+  let mcNets: Record<string, string> | null = null
+  const mcHas = async (net: string) => { if (mcNets === null) { try { mcNets = await mcNetworks() } catch { mcNets = {} } } return !!mcNets[net] }
   const out = []
   for (const q of due || []) {
+    const at = only ? now : new Date(q.at).getTime()
+    const brand = String(q.brand || 'kurkoos')
+    const results = { ...(q.results || {}) } as Record<string, Record<string, unknown>>
+    const todo = (q.nets as string[]).filter((n) => !(results[n] && results[n].id))
+    // which way each channel goes
+    const direct: string[] = [], viaMc: string[] = [], errs: string[] = []
+    for (const n of todo) {
+      if (n === 'fb') { direct.push(n); continue }
+      if (n === 'ig' && by('instagram', brand)) { direct.push(n); continue }
+      if (MC_NET[n] && brand === 'kurkoos' && (await mcHas(MC_NET[n]))) { viaMc.push(n); continue }
+      const m = `${({ ig: 'אינסטגרם', tt: 'טיקטוק', yt: 'יוטיוב', gmb: 'גוגל עסקים' } as Record<string, string>)[n] || n}: לא מחובר ${brand === 'afik' ? 'לאפיק הנחל' : 'ב-Metricool'}`
+      errs.push(m); results[n] = { error: m }
+    }
+    const directDue = at <= now
+    const mcDue = viaMc.length && at - now <= HANDOFF_MS
+    if (!(directDue && direct.length) && !mcDue && !errs.length) continue
     // claim the row so two runs never publish twice
     const { data: claimed } = await db.from('social_queue').update({ status: 'publishing', updated_at: new Date().toISOString() }).eq('item_id', q.item_id).eq('status', q.status).select('item_id')
     if (!claimed || !claimed.length) continue
-    const results = { ...(q.results || {}) } as Record<string, Record<string, unknown>>
-    const errs: string[] = []
-    for (const n of q.nets as string[]) {
-      if (results[n] && results[n].id) continue
-      const net = n === 'fb' ? 'facebook' : n === 'ig' ? 'instagram' : n
-      const brand = String(q.brand || 'kurkoos')
+    if (directDue) for (const n of direct) {
+      const net = n === 'fb' ? 'facebook' : 'instagram'
       const acc = by(net, brand)
       if (!acc) { const m = `אין עמוד ${net === 'facebook' ? 'פייסבוק' : 'אינסטגרם'} של ${brand === 'afik' ? 'אפיק הנחל' : 'קבוצת קורקוס'}`; errs.push(m); results[n] = { error: m }; continue }
       if (!q.media_url) { errs.push(`${net}: חסרה תמונה`); results[n] = { error: 'חסרה תמונה' }; continue }
       try {
-        const r = net === 'facebook' ? await pubFacebook(acc, q) : net === 'instagram' ? await pubInstagram(acc, q) : (() => { throw new Error('ערוץ לא נתמך עדיין') })()
+        const r = net === 'facebook' ? await pubFacebook(acc, q) : await pubInstagram(acc, q)
         results[n] = { id: r.id, at: new Date().toISOString() }
-      } catch (e) {
-        const m = String((e as Error).message || e).slice(0, 240)
-        errs.push(`${net}: ${m}`); results[n] = { error: m }
+      } catch (e) { const m = String((e as Error).message || e).slice(0, 240); errs.push(`${net}: ${m}`); results[n] = { error: m } }
+    }
+    if (mcDue) {
+      const nets = viaMc.filter((n) => !(n === 'yt' && q.media_kind !== 'video'))
+      viaMc.filter((n) => !nets.includes(n)).forEach((n) => { const m = 'יוטיוב: מקבל רק סרטון'; errs.push(m); results[n] = { error: m } })
+      if (nets.length) {
+        if (!q.media_url && nets.some((n) => n !== 'gmb')) nets.forEach((n) => { const m = `${MC_NET[n]}: חסרה תמונה או סרטון`; errs.push(m); results[n] = { error: m } })
+        else try {
+          const when = new Date(Math.max(at, now + 5 * 60 * 1000))
+          const r = await pubMetricool(nets, q, when)
+          nets.forEach((n) => { results[n] = { id: r.id || 'metricool', uuid: r.uuid, via: 'metricool', at: when.toISOString() } })
+        } catch (e) { const m = 'Metricool: ' + String((e as Error).message || e).slice(0, 220); errs.push(m); nets.forEach((n) => { results[n] = { error: m } }) }
       }
     }
-    const okN = (q.nets as string[]).filter((n) => results[n] && results[n].id).length
-    const status = okN === q.nets.length ? 'done' : okN ? 'partial' : 'error'
-    await db.from('social_queue').update({ status, results, attempts: (q.attempts || 0) + 1, last_error: errs.join(' · ') || null, updated_at: new Date().toISOString() }).eq('item_id', q.item_id)
+    const nets = q.nets as string[]
+    const okN = nets.filter((n) => results[n] && results[n].id).length
+    const waiting = direct.length && !directDue
+    const status = okN === nets.length ? 'done' : waiting ? 'queued' : okN ? 'partial' : 'error'
+    await db.from('social_queue').update({ status, results, attempts: waiting && !errs.length ? (q.attempts || 0) : (q.attempts || 0) + 1, last_error: errs.join(' · ') || null, updated_at: new Date().toISOString() }).eq('item_id', q.item_id)
     out.push({ item_id: q.item_id, status, errors: errs })
   }
   return out
@@ -187,11 +273,11 @@ function clean(items: unknown[], uid: string) {
   const ok: Record<string, unknown>[] = []
   for (const x of (Array.isArray(items) ? items : []).slice(0, 50) as Record<string, unknown>[]) {
     const at = new Date(String(x.at || ''))
-    const nets = (Array.isArray(x.nets) ? x.nets : []).filter((n: unknown) => n === 'fb' || n === 'ig') as string[]
+    const nets = (Array.isArray(x.nets) ? x.nets : []).filter((n: unknown) => n === 'fb' || n === 'ig' || n === 'tt' || n === 'yt' || n === 'gmb') as string[]
     const media = String(x.media_url || '')
     if (!x.item_id || isNaN(at.getTime()) || !nets.length) continue
     if (media && !/^https:\/\/filnzlnvujnlazwcxbuq\.supabase\.co\/storage\/v1\/object\/public\//.test(media)) continue
-    ok.push({ item_id: String(x.item_id).slice(0, 80), post_id: x.post_id ? String(x.post_id).slice(0, 80) : null, label: String(x.label || '').slice(0, 140), at: at.toISOString(), nets, text_fb: String(x.text_fb || '').slice(0, 63000), text_ig: String(x.text_ig || '').slice(0, 2200), media_url: media || null, brand: x.brand === 'afik' ? 'afik' : 'kurkoos', status: 'queued', attempts: 0, last_error: null, results: {}, created_by: uid, updated_at: new Date().toISOString() })
+    ok.push({ item_id: String(x.item_id).slice(0, 80), post_id: x.post_id ? String(x.post_id).slice(0, 80) : null, label: String(x.label || '').slice(0, 140), at: at.toISOString(), nets, text_fb: String(x.text_fb || '').slice(0, 63000), text_ig: String(x.text_ig || '').slice(0, 2200), media_url: media || null, brand: x.brand === 'afik' ? 'afik' : 'kurkoos', media_kind: x.media_kind === 'video' ? 'video' : 'image', title: x.title ? String(x.title).slice(0, 120) : null, status: 'queued', attempts: 0, last_error: null, results: {}, created_by: uid, updated_at: new Date().toISOString() })
   }
   return ok
 }
@@ -226,7 +312,9 @@ Deno.serve(async (req) => {
       const { data: q } = await db.from('social_queue').select('status')
       const counts: Record<string, number> = {}
       ;(q || []).forEach((r) => { counts[r.status] = (counts[r.status] || 0) + 1 })
-      return json({ app: !!(A.id && A.secret), appId: A.id ? A.id.slice(0, 4) + '…' : '', redirect: REDIRECT, accounts: accs || [], queue: counts }, 200, origin)
+      const M = await mcCfg(); let mc: Record<string, unknown> = { set: !!M.token }
+      if (M.token) { try { mc = { set: true, networks: await mcNetworks() } } catch (e) { mc = { set: true, error: String((e as Error).message).slice(0, 200) } } }
+      return json({ app: !!(A.id && A.secret), appId: A.id ? A.id.slice(0, 4) + '…' : '', redirect: REDIRECT, accounts: accs || [], queue: counts, mc }, 200, origin)
     }
     if (a === 'config') {
       const id = String(body.app_id || '').trim(), sec = String(body.app_secret || '').trim(), conf = String(body.config_id || '').trim()
@@ -244,6 +332,12 @@ Deno.serve(async (req) => {
       const p = new URLSearchParams({ client_id: A.id, redirect_uri: REDIRECT, state: await stateFor(user.id, safeBack), response_type: 'code' })
       if (A.configId) p.set('config_id', A.configId); else p.set('scope', SCOPES.join(','))
       return json({ url: 'https://www.facebook.com/' + (Deno.env.get('META_GRAPH_VERSION') || 'v23.0') + '/dialog/oauth?' + p }, 200, origin)
+    }
+    if (a === 'mc_config') {
+      const t = String(body.token || '').trim()
+      if (!/^[A-Za-z0-9._-]{16,200}$/.test(t)) return json({ error: 'המפתח של Metricool לא נראה תקין' }, 400, origin)
+      await setCfg('metricool_token', t)
+      try { const n = await mcNetworks(); return json({ ok: true, networks: n }, 200, origin) } catch (e) { return json({ error: 'המפתח נשמר, אבל Metricool לא ענה: ' + String((e as Error).message).slice(0, 160) }, 400, origin) }
     }
     if (a === 'assign') {
       const id = String(body.id || ''), brand = body.brand === 'kurkoos' || body.brand === 'afik' ? body.brand : null
@@ -266,6 +360,10 @@ Deno.serve(async (req) => {
       const { data: done } = await db.from('social_queue').select('item_id').in('item_id', rows.map((r) => r.item_id as string)).in('status', ['done', 'publishing'])
       const skip = new Set((done || []).map((r) => r.item_id))
       const fresh = rows.filter((r) => !skip.has(r.item_id as string))
+      // a channel already handed to Metricool stays handed over: saving again never sends it twice
+      const { data: prev } = await db.from('social_queue').select('item_id,results').in('item_id', fresh.map((r) => r.item_id as string))
+      const handed = new Map((prev || []).map((r) => [r.item_id, Object.fromEntries(Object.entries((r.results || {}) as Record<string, Record<string, unknown>>).filter(([, v]) => v && v.via === 'metricool' && v.id))]))
+      fresh.forEach((r) => { const h = handed.get(r.item_id as string); if (h && Object.keys(h).length) r.results = h })
       if (fresh.length) { const { error } = await db.from('social_queue').upsert(fresh); if (error) throw new Error(error.message) }
       return json({ queued: fresh.map((r) => r.item_id), skipped: [...skip] }, 200, origin)
     }
@@ -275,7 +373,7 @@ Deno.serve(async (req) => {
       return json({ ok: true }, 200, origin)
     }
     if (a === 'list') {
-      const { data } = await db.from('social_queue').select('item_id,post_id,label,at,nets,status,results,attempts,last_error,updated_at,brand').order('at', { ascending: false }).limit(300)
+      const { data } = await db.from('social_queue').select('item_id,post_id,label,at,nets,status,results,attempts,last_error,updated_at,brand,media_kind').order('at', { ascending: false }).limit(300)
       return json({ items: data || [] }, 200, origin)
     }
     return json({ error: 'פעולה לא מוכרת' }, 400, origin)

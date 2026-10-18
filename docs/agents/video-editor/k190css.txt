@@ -4,4 +4,10 @@
 .v177acc .v177as select{min-height:40px;border:1px solid #cbd1da;border-radius:10px;padding:0 8px;font:600 14px Almoni,Heebo,Arial,sans-serif;color:#07293a;background:#fff}
 .v177acc.off .v173n b{color:#8a96a3}
 .v177acc .v177as select:focus-visible{outline:3px solid #105572;outline-offset:2px}
+/* V192 · every channel: the Metricool block and the step by step guide */
+.v192mc{margin:14px 0 4px;padding:14px 16px;border:1px solid #e3e9ee;border-radius:16px;background:#fff;display:flex;flex-direction:column;gap:8px}
+.v192mch{display:flex;align-items:center;justify-content:space-between;gap:10px}.v192mch b{font-size:16px;color:#07293a}
+.v192mc p{margin:0;font-size:14px;line-height:1.55}
+.v192f{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}.v192f label{flex:1 1 240px}
+.v192g{margin-top:10px}.v192g h4{margin:14px 0 6px;font-size:15px;color:#07293a}.v192g ol{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.55}
 </style>

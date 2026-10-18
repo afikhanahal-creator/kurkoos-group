@@ -25,14 +25,15 @@ const view=()=>{try{return APP.view||''}catch(e){return ''}};
 // 1a · quality scores: one entry per post version for the whole library. Same key as the cache below it, big enough
 // for every post. It resets when the library wide fatigue index is rebuilt (as before) and also whenever data arrives
 // from the cloud or a font finishes loading, because the score reads photo details, template specs and text widths.
-let dv=0;const bump=()=>{dv++};
+// The approvals and the schedule are not read by the score (the schedule size is already part of the reset key), so their loads keep the cache.
+let dv=0;const bump=()=>{dv++};const KEEP=new Set(['workflow','schedule']);
 function patchDb(db){if(!db||db.__v195)return db;db.__v195=1;
- const wrapRef=o=>{if(!o||o.__v195)return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
+ const wrapRef=(o,col)=>{if(!o||o.__v195||KEEP.has(col))return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
   if(typeof g==='function')o.get=async function(){const r=await g.apply(this,arguments);bump();return r};
   if(typeof s==='function')o.onSnapshot=function(cb,er){return s.call(this,function(){bump();return cb.apply(this,arguments)},er)};return o};
  const c0=db.collection,d0=db.doc;
- if(typeof c0==='function')db.collection=function(){const o=wrapRef(c0.apply(this,arguments));if(o&&typeof o.doc==='function'&&!o.__v195d){o.__v195d=1;const od=o.doc;o.doc=function(){return wrapRef(od.apply(this,arguments))}}return o};
- if(typeof d0==='function')db.doc=function(){return wrapRef(d0.apply(this,arguments))};return db}
+ if(typeof c0==='function')db.collection=function(col){const o=wrapRef(c0.apply(this,arguments),col);if(o&&typeof o.doc==='function'&&!o.__v195d&&!KEEP.has(col)){o.__v195d=1;const od=o.doc;o.doc=function(){return wrapRef(od.apply(this,arguments),col)}}return o};
+ if(typeof d0==='function')db.doc=function(path){return wrapRef(d0.apply(this,arguments),String(path||'').split('/')[0])};return db}
 try{const cl=window.claude;if(cl&&typeof cl.use==='function'){const u0=cl.use;cl.use=async function(n){const r=await u0.apply(this,arguments);if(n==='db')try{patchDb(r)}catch(e){}return r};
  cl.use('db').catch(()=>null)}}catch(e){}
 try{document.fonts&&document.fonts.addEventListener('loadingdone',bump)}catch(e){}

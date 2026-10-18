@@ -66,6 +66,11 @@ patch("function paintPairs(root){root.querySelectorAll('canvas[data-dgp]').forEa
 #     reached the V195 cache only once the two caches became one; a full rescore costs about two seconds on a phone)
 patch("else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqClear&&window.__pxqClear()}catch(e){}",
       "else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqDrop?window.__pxqDrop(q):window.__pxqClear&&window.__pxqClear()}catch(e){}/*V196o*/",'/*V196o*/')
+# 12. search on Posts: the lowercase text of each post (headline, text, series, project) is kept with the post's card
+#     data and made again only when one of them changes, instead of joining and lowercasing about 3 KB per post, for all
+#     8,000 posts, on every search
+patch("function qMatch(x,q){if(!q)return true;const h=(headOf(x.p)+' '+x.m.hay+' '+projLabel(x.pk)).toLowerCase();",
+      "function qMatch(x,q){if(!q)return true;const hd=headOf(x.p),pl=projLabel(x.pk);const z=x.m.lc;const h=(z&&z.hd===hd&&z.pl===pl&&z.hay===x.m.hay)?z.s:(x.m.lc={hd,pl,hay:x.m.hay,s:(hd+' '+x.m.hay+' '+pl).toLowerCase()}).s;/*V196s*/",'/*V196s*/')
 # 6. connections that every open needs are opened while the page is still parsing
 PC='<link rel="preconnect" href="https://filnzlnvujnlazwcxbuq.supabase.co" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">'
 patch('<head><base href="/engine/">','<head><base href="/engine/">'+PC,PC)

@@ -70,7 +70,9 @@ try{document.fonts&&document.fonts.addEventListener('loadingdone',bump)}catch(e)
  // V196: the scores of the whole library are taken in short slices while the skeleton cards show, so the page keeps
  // answering instead of freezing for seconds; the first render after the posts arrive then finds every score ready
  window.__v195gen=()=>gen;window.__v195miss=()=>miss;
- window.__v196prescore=function(){return new Promise(done=>{let tries=0;const run=()=>{const g0=gen;const list=AG.posts.slice();let i=0;
+ // the fatigue index (openings, scheduled pictures, mechanics) is built from the library as it is now, as the render
+ // that used to take these scores rebuilt it first; an index left from before the cloud posts arrived would give other scores
+ window.__v196prescore=function(){return new Promise(done=>{let tries=0;const run=()=>{try{pxIndex()}catch(e){}const g0=gen;const list=AG.posts.slice();let i=0;
    const step=()=>{const t0=performance.now();while(i<list.length&&performance.now()-t0<40){try{pxQuality(list[i])}catch(e){}i++}
     if(i<list.length)setTimeout(step,0);else if(gen!==g0&&++tries<2)run();else done()};step()};try{run()}catch(e){done()}})}})();
 

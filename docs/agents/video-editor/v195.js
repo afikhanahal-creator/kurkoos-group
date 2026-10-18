@@ -131,6 +131,10 @@ function released(after){if(pushed&&ours()){pushed=false;skip++;hush();pending=a
  else{pushed=false;after&&setTimeout(after,0)}}
 addEventListener('popstate',()=>{if(skip>0){skip--;hush();if(pending){const p=pending;pending=null;setTimeout(p,0)}return}
  if(sheetOpen()&&!ours()){pushed=false;hush();const w=document.getElementById('v172sheet');if(w)w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null}},true);
+// popstate listeners on window run in the order they were added, so V102 (a page back) runs before ours; V102 stands down while
+// V101 reports an open window, so the open sheet is reported there too (V101's own listener keeps its own list and leaves it alone)
+function v101(){const o=window.__v101;if(!o||o.__v195)return;const t0=o.top;if(typeof t0!=='function')return;o.__v195=1;o.top=function(){return t0.apply(this,arguments)||(sheetOpen()?document.getElementById('v172sheet'):null)}}
+v101();setTimeout(v101,0);
 // closed by V172's own handlers (the X, the backdrop, Escape)
 new MutationObserver(()=>{if(pushed&&!sheetOpen())released(null)}).observe(document.body,{childList:true});
 function closeMore(after){const w=document.getElementById('v172sheet');if(w&&w.classList.contains('v195sh'))w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null;released(after)}

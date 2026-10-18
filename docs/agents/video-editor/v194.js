@@ -89,6 +89,8 @@ function mount(force){if(typeof APP==='undefined'||APP.view!=='competitors'){ret
  m.innerHTML=html();if(fresh)b.prepend(m);b.classList.toggle('v194ads',S.tab==='ads');S.sig=sig();
  if(wasQ){const q=m.querySelector('[data-v194="q"]');if(q){q.focus();try{q.setSelectionRange(sel[0],sel[1])}catch(e){}}}watchMore()}
 const sig=()=>{try{return V().allItems().length+':'+(window.__v179?__v179.M.ads.size:0)}catch(e){return ''}};
+// leaving the page takes the "ads only" class off the shared view box, or the next page (Ad library, Analyze, Fonts...) stays blank
+try{render=(f=>function(){const r=f.apply(this,arguments);try{if(typeof APP!=='undefined'&&APP.view!=='competitors'){const b=box();if(b&&b.classList.contains('v194ads'))b.classList.remove('v194ads')}}catch(e){}return r})(render)}catch(e){}
 // the page re-renders on every snapshot; put the feed back each time, and refresh it when new ads arrive
 try{new MutationObserver(()=>{try{if(typeof APP!=='undefined'&&APP.view==='competitors'&&!document.getElementById('v194'))mount()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 setInterval(()=>{try{if(typeof APP!=='undefined'&&APP.view==='competitors'&&S.tab==='ads'&&document.getElementById('v194')&&sig()!==S.sig&&!document.querySelector('#v194 [data-v194="q"]:focus'))mount(true)}catch(e){}},2500);

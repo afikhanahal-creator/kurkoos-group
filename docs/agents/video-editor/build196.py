@@ -62,6 +62,15 @@ patch("function v196Ban(b){","function v196SerCount(inS,x){const m=v196SerCount;
 #     each one a full slide render), the same way the gallery and the queue already draw theirs
 patch("function paintPairs(root){root.querySelectorAll('canvas[data-dgp]').forEach(cv=>{const p=AG.posts.find(x=>x.id===cv.dataset.dgp);if(p&&!cv.dataset.done){cv.dataset.done=1;ensureImgs(p).then(()=>{try{thumb(cv,p,0)}catch(e){}})}})}",
       "function paintPairs(root){const one=cv=>{const p=AG.posts.find(x=>x.id===cv.dataset.dgp);if(p&&!cv.dataset.done){cv.dataset.done=1;ensureImgs(p).then(()=>{try{thumb(cv,p,0)}catch(e){}})}};const cs=root.querySelectorAll('canvas[data-dgp]');if(!('IntersectionObserver' in window)){cs.forEach(one);return}/*V196d*/\n const io=paintPairs.io||(paintPairs.io=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;paintPairs.io.unobserve(en.target);if(en.target.isConnected)one(en.target)}),{rootMargin:'500px 0px'}));cs.forEach(cv=>{if(!cv.dataset.done)io.observe(cv)})}",'/*V196d*/')
+# 11. the idle overflow check (V117) forgets the scores of the posts it looked at, not of the whole library (the clear
+#     reached the V195 cache only once the two caches became one; a full rescore costs about two seconds on a phone)
+patch("else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqClear&&window.__pxqClear()}catch(e){}",
+      "else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqDrop?window.__pxqDrop(q):window.__pxqClear&&window.__pxqClear()}catch(e){}/*V196o*/",'/*V196o*/')
+# 12. search on Posts: the lowercase text of each post (headline, text, series, project) is kept with the post's card
+#     data and made again only when one of them changes, instead of joining and lowercasing about 3 KB per post, for all
+#     8,000 posts, on every search
+patch("function qMatch(x,q){if(!q)return true;const h=(headOf(x.p)+' '+x.m.hay+' '+projLabel(x.pk)).toLowerCase();",
+      "function qMatch(x,q){if(!q)return true;const hd=headOf(x.p),pl=projLabel(x.pk);const z=x.m.lc;const h=(z&&z.hd===hd&&z.pl===pl&&z.hay===x.m.hay)?z.s:(x.m.lc={hd,pl,hay:x.m.hay,s:(hd+' '+x.m.hay+' '+pl).toLowerCase()}).s;/*V196s*/",'/*V196s*/')
 # 6. connections that every open needs are opened while the page is still parsing
 PC='<link rel="preconnect" href="https://filnzlnvujnlazwcxbuq.supabase.co" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">'
 patch('<head><base href="/engine/">','<head><base href="/engine/">'+PC,PC)

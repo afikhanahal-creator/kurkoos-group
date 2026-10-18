@@ -1,6 +1,9 @@
 <style id="k196">
 /* V196 · speed */
 .v170cnt.v196wait{color:#5F6B78;font-weight:600}
+/* long card lists (Posts: 60 cards at a time, Templates: about 450): cards away from the screen skip layout and paint;
+   the remembered size keeps the scroll length steady once a card has been seen */
+#appviews .ga-card{content-visibility:auto;contain-intrinsic-size:auto 320px}
 /* the page a tap asked for, while it is drawn for the first time */
 .v196sk{display:grid;gap:14px;padding:16px 0}
 .v196sk i{display:block;height:64px;border-radius:14px;background:linear-gradient(90deg,#eef2f5 0%,#f6f8fa 40%,#eef2f5 80%);background-size:200% 100%;animation:v196sh 1.2s linear infinite}

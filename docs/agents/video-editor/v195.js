@@ -54,20 +54,25 @@ try{document.fonts&&document.fonts.addEventListener('loadingdone',bump)}catch(e)
  // V196: every render asks for the score of every post several times; building the string key each time cost more than the
  // score itself once it is cached. A per post entry remembers the exact fields of the key, so a repeat call with nothing
  // changed returns at once; any change in those fields, or a cache reset, goes through the key as before.
- let gen=0,miss=0;const W=new WeakMap();const sj=x=>x?JSON.stringify(x):'';
+ let gen=0,miss=0;const W=new WeakMap();
+ const keyOf=p=>{const v=p.visual||{},x=p.fx||{};return (p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'')};const sj=x=>x?JSON.stringify(x):'';
  const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};
  const f0=pxQuality;const inner=window.__pxqClear;
  pxQuality=function(p){try{const e0=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);const ep=typeof e0==='string'?e0+'|'+((window.TPL&&TPL.specs&&TPL.specs.length)||0):e0;if(ep!==fc||dv!==fdv){C.clear();gen++;if(dv!==fdv)try{inner&&inner()}catch(e){}fc=ep;fdv=dv}const v=p.visual||{},x=p.fx||{};
    const w=p&&typeof p==='object'?W.get(p):null;
    if(w&&w.g===gen&&w.id===p.id&&w.l===p.layout&&w.u===p.upd&&w.hd===v.headline&&w.sb===v.sub&&w.fb===p.fb&&w.ig===p.ig&&w.n===x.num&&w.a===!!p.article&&w.hk===p.hook&&w.f===p.format&&w.s===sj(x.shot)&&C.get(w.k)===w.r)return w.r;
-   const k=(p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'');
+   const k=keyOf(p);
    let r=C.get(k);if(!r){miss++;r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}
    if(p&&typeof p==='object')W.set(p,{g:gen,k,r,id:p.id,l:p.layout,u:p.upd,hd:v.headline,sb:v.sub,fb:p.fb,ig:p.ig,n:x.num,a:!!p.article,hk:p.hook,f:p.format,s:sj(x.shot)});return r}catch(e){return f0.apply(this,arguments)}};
  window.__pxqClear=()=>{C.clear();gen++;try{inner&&inner()}catch(e){}};
+ // V196: forget the scores of a few posts only (the idle overflow check knows which posts it looked at)
+ window.__pxqDrop=list=>{try{(list||[]).forEach(p=>{if(!p||typeof p!=='object')return;const w=W.get(p);if(w)C.delete(w.k);W.delete(p);C.delete(keyOf(p))})}catch(e){window.__pxqClear()}};
  // V196: the scores of the whole library are taken in short slices while the skeleton cards show, so the page keeps
  // answering instead of freezing for seconds; the first render after the posts arrive then finds every score ready
  window.__v195gen=()=>gen;window.__v195miss=()=>miss;
- window.__v196prescore=function(){return new Promise(done=>{let tries=0;const run=()=>{const g0=gen;const list=AG.posts.slice();let i=0;
+ // the fatigue index (openings, scheduled pictures, mechanics) is built from the library as it is now, as the render
+ // that used to take these scores rebuilt it first; an index left from before the cloud posts arrived would give other scores
+ window.__v196prescore=function(){return new Promise(done=>{let tries=0;const run=()=>{try{pxIndex()}catch(e){}const g0=gen;const list=AG.posts.slice();let i=0;
    const step=()=>{const t0=performance.now();while(i<list.length&&performance.now()-t0<40){try{pxQuality(list[i])}catch(e){}i++}
     if(i<list.length)setTimeout(step,0);else if(gen!==g0&&++tries<2)run();else done()};step()};try{run()}catch(e){done()}})}})();
 

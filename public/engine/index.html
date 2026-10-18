@@ -1,4 +1,4 @@
-<!doctype html><html><head><base href="/engine/"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="/engine/manifest.webmanifest"><link rel="icon" href="/engine/icons/icon.svg" type="image/svg+xml"><link rel="icon" href="/engine/icons/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="/engine/icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="מנוע התוכן"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#07293a"><script src="bridge.js"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><style id="k99css">
+<!doctype html><html><head><base href="/engine/"><link rel="preconnect" href="https://filnzlnvujnlazwcxbuq.supabase.co" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="/engine/manifest.webmanifest"><link rel="icon" href="/engine/icons/icon.svg" type="image/svg+xml"><link rel="icon" href="/engine/icons/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="/engine/icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="מנוע התוכן"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#07293a"><script src="bridge.js"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><style id="k99css">
 .v99edit{position:absolute;width:30px;height:30px;border-radius:50%;border:1px solid rgba(7,41,58,.18);background:rgba(255,255,255,.94);color:#07293a;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(7,41,58,.18);cursor:pointer;z-index:3;padding:0}
 .v99edit:hover,.v99edit:focus-visible{background:#07293a;color:#fff;outline:none}
 canvas[data-tp],canvas[data-ti]{cursor:pointer}
@@ -3008,6 +3008,18 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
 @media (max-width:380px){html body.v195 .tbar h1{font-size:17.5px!important}html body.v195 .tbar{gap:5px!important;padding-inline:10px!important}}
 @keyframes v195in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){html body #v99nav button .ic{transition:none}html body.v195nav #v171chip{animation:none}}
+</style><style id="k196">
+/* V196 · speed */
+.v170cnt.v196wait{color:#5F6B78;font-weight:600}
+/* long card lists (Posts: 60 cards at a time, Templates: about 450): cards away from the screen skip layout and paint;
+   the remembered size keeps the scroll length steady once a card has been seen */
+#appviews .ga-card{content-visibility:auto;contain-intrinsic-size:auto 320px}
+/* the page a tap asked for, while it is drawn for the first time */
+.v196sk{display:grid;gap:14px;padding:16px 0}
+.v196sk i{display:block;height:64px;border-radius:14px;background:linear-gradient(90deg,#eef2f5 0%,#f6f8fa 40%,#eef2f5 80%);background-size:200% 100%;animation:v196sh 1.2s linear infinite}
+.v196sk i:first-child{height:28px;width:55%}
+@keyframes v196sh{from{background-position:100% 0}to{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){.v196sk i{animation:none}}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -15861,6 +15873,8 @@ ${RULES}
 // ---------- creative check ----------
 function srcScale(p){const L=p.layout,d=DEST[L];const s=p.fx&&(p.fx.shot||(p.fx.stages||[])[0]||(p.fx.frames||[])[0]||((p.fx.slides||[])[0]||{}).shot);if(!d||!s)return 0;const img=LIBREADY[s.k];if(!img)return 0;const r=s.r||[0,0,1,1];const sw=r[2]*img.naturalWidth,sh=r[3]*img.naturalHeight;const da=d[0]/d[1];const ew=sw/sh>da?sh*da:sw;return d[0]/ew}
 function neighbors(p){const i=CAL.findIndex(c=>c.key&&c.key===p.key);if(i<0)return[];return[CAL[i-1],CAL[i+1]].filter(Boolean).map(c=>calPost(c.key)).filter(Boolean)}
+function v196SerCount(inS,x){const m=v196SerCount;if(m.s!==inS||m.p!==AG.posts||m.n!==AG.posts.length){m.s=inS;m.p=AG.posts;m.n=AG.posts.length;m.c=new Map();AG.posts.forEach(p=>{if(!inS.has(p.key||p.id))m.c.set(p.series,(m.c.get(p.series)||0)+1)})}return m.c.get(x)||0}
+function v196Ban(b){b=String(b||'');const m=v196Ban;if(m.s!==b||!m.l){m.s=b;m.l=b.split(',').map(x=>x.trim()).filter(x=>x&&x.length>2&&!/מקפים/.test(x))}return m.l}
 function check(p){const v=p.visual||{},h=stripStars(v.headline||''),words=h.split(/\s+/).filter(Boolean).length,fix=[];const sc={};
   const ed=/^(ed|x)_/.test(p.layout);sc.brand=ed?9:5;if(!ed)fix.push('העיצוב בסגנון ישן. "שדרג לי" יעביר אותו למערכת העריכה');
   const usesRender=imgKeysOf(p).some(k=>metaOf(k).k==='render');if(usesRender&&!/הדמיה/.test(JSON.stringify(p.fx||{}))){sc.brand-=4;fix.push('יש הדמיה בלי התווית "הדמיה"')}
@@ -15871,7 +15885,7 @@ function check(p){const v=p.visual||{},h=stripStars(v.headline||''),words=h.spli
   sc.clarity=words<=7?10:words<=10?7:4;if(words>7)fix.push(`הכותרת ארוכה למובייל (${words} מילים). עד 7 מילים עובד הכי טוב`);
   sc.mobile=h.length<=38?10:h.length<=55?7:4;if((v.sub||'').split(/\s+/).length>14){sc.mobile-=2;fix.push('שורת המשנה ארוכה. קצרו לעד 12 מילים')}
   const t=(p.fb||'')+(v.cta||'');const sales=['leads','sales','property','launch'].includes(p.goal||KC.goal);const hasCta=/055|כתבו|שלחו|לתיאום|סיור|שמרו|תייגו|ספרו|שתפו|התקשרו|חייגו|נשמח לדבר|תגידו|בחרו|\?/.test(t);sc.engage=hasCta?9:6;if(sales&&!/055|כתבו|שלחו|לתיאום|שמרו|תייגו|ספרו|שתפו|התקשרו|חייגו|נשמח לדבר|בחרו|\?/.test(t)){sc.engage=4;fix.push('ה-CTA לא ברור. הוסיפו מספר או מילה לשלוח')}
-  const bad=[/[—–]/.test(t+h)&&'יש מקף כסימן פיסוק',/\[[^\]]+\]/.test(t+h)&&'נשארו סוגריים [ ] למילוי',...String(KIT.banned||'').split(',').map(x=>x.trim()).filter(x=>x&&x.length>2&&!/מקפים/.test(x)&&(t+h).includes(x)).map(x=>`ביטוי אסור: "${x}"`)].filter(Boolean);sc.quality=Math.max(3,10-bad.length*3);fix.push(...bad);
+  const bad=[/[—–]/.test(t+h)&&'יש מקף כסימן פיסוק',/\[[^\]]+\]/.test(t+h)&&'נשארו סוגריים [ ] למילוי',...v196Ban(KIT.banned).filter(x=>(t+h).includes(x)).map(x=>`ביטוי אסור: "${x}"`)].filter(Boolean);sc.quality=Math.max(3,10-bad.length*3);fix.push(...bad);
   sc.platform=p.layout==='ed_car'?9:10;
   const names=[['brand','התאמה למותג'],['visual','עוצמה חזותית'],['clarity','בהירות'],['engage','פוטנציאל מעורבות'],['quality','איכות תוכן'],['platform','התאמה לפלטפורמה'],['mobile','קריאות במובייל']];
   const avg=Math.round(names.reduce((a,[k])=>a+Math.max(0,Math.min(10,sc[k])),0)/names.length*10)/10;return{sc,names,fix,avg}}
@@ -16288,7 +16302,7 @@ function vIdeas(){const inS=new Set(APP.sched.items.map(i=>i.key||i.pid));let dr
   const F={all:()=>1,comp:p=>p.src==='comp',article:p=>!!p.article,studio:p=>p.src==='creative',agent:p=>!['comp','creative'].includes(p.src)&&!p.article&&!p.series};const SER=[...new Set(AG.posts.filter(p=>p.series&&!inS.has(p.key||p.id)).map(p=>p.series))];drafts=drafts.filter(APP.bf.startsWith('ser:')?(p=>p.series===APP.bf.slice(4)):F[APP.bf]||F.all);
   const ideas=(KC.ideas||ruleIdeas());const ready=APP.sched.items.filter(i=>['ready','approved'].includes(i.status)&&i.at&&new Date(i.at)>=new Date()).sort((a,b)=>a.at.localeCompare(b.at));
   const card=p=>`<div class="bc"><canvas data-tp="${p.id}" width="128" height="160" aria-hidden="true"></canvas><div><b>${esc(stripStars(p.visual.headline||p.hook).replace(/\n/g,' ').slice(0,70))}</b><p>${esc(ED_NAMES[p.layout]||'')}${p.compName?' · בהשראת '+esc(p.compName):''}${p.article?' · מכתבה':''}</p></div><div class="ba"><button class="ibtn sm pri" type="button" data-app="sched" data-pid="${p.id}">${ico('clock',15)} תזמון</button><button class="ibtn sm" type="button" data-app="studio" data-pid="${p.id}">${ico('edit',15)} עיצוב</button><button class="ibtn sm" type="button" data-app="copyp" data-pid="${p.id}" aria-label="העתק טקסט">${ico('copy',15)}</button><button class="ibtn sm red" type="button" data-app="delp" data-pid="${p.id}" aria-label="מחק טיוטה">${ico('trash',15)}</button></div></div>`;
-  return `<div class="kc-chips" style="margin-bottom:8px">${[['all','הכל'],['comp','בהשראת מתחרים'],['article','מכתבות'],['studio','מהסטודיו'],['agent','מהסוכן']].map(([k,l])=>`<button type="button" data-app="bf" data-k="${k}" aria-pressed="${APP.bf===k}">${l}</button>`).join('')}</div>${SER.length?`<div class="kc-row" style="margin-bottom:12px"><span class="muted" style="font-size:13px">סדרות:</span><div class="kc-chips">${SER.map(x=>`<button type="button" data-app="bf" data-k="ser:${esc(x)}" aria-pressed="${APP.bf==='ser:'+x}">${esc(x)} (${AG.posts.filter(p=>p.series===x&&!inS.has(p.key||p.id)).length})</button>`).join('')}</div>${APP.bf.startsWith('ser:')?`<button class="ibtn sm pri" type="button" data-app="schedser">${ico('clock',15)} תזמן את כל הסדרה</button>`:''}</div>`:''}
+  return `<div class="kc-chips" style="margin-bottom:8px">${[['all','הכל'],['comp','בהשראת מתחרים'],['article','מכתבות'],['studio','מהסטודיו'],['agent','מהסוכן']].map(([k,l])=>`<button type="button" data-app="bf" data-k="${k}" aria-pressed="${APP.bf===k}">${l}</button>`).join('')}</div>${SER.length?`<div class="kc-row" style="margin-bottom:12px"><span class="muted" style="font-size:13px">סדרות:</span><div class="kc-chips">${SER.map(x=>`<button type="button" data-app="bf" data-k="ser:${esc(x)}" aria-pressed="${APP.bf==='ser:'+x}">${esc(x)} (${v196SerCount(inS,x)})</button>`).join('')}</div>${APP.bf.startsWith('ser:')?`<button class="ibtn sm pri" type="button" data-app="schedser">${ico('clock',15)} תזמן את כל הסדרה</button>`:''}</div>`:''}
   <div class="board"><section class="bcol" aria-label="רעיונות"><header>רעיונות<span>${ideas.length}</span></header>${ideas.map((x,i)=>`<div class="bc idea"><div><b>${esc(x.t)}</b><p>${esc(x.why||'')}</p></div><div class="ba"><button class="ibtn sm pri" type="button" data-app="idea" data-i="${i}">${ico('wand',15)} צור</button></div></div>`).join('')}<button class="qslot" type="button" data-app="new">${ico('plus',16)} רעיון חדש</button></section>
   <section class="bcol" aria-label="טיוטות"><header>טיוטות<span>${drafts.length}</span></header>${drafts.slice(0,window.__v156dl||40).map(card).join('')||'<div class="empty">אין טיוטות בסינון הזה.</div>'}${drafts.length>(window.__v156dl||40)?'<button type="button" class="px-btn sm v156dmore" data-v156="dmore">טען עוד טיוטות</button>':''}</section>
   <section class="bcol" aria-label="מוכן לפרסום"><header>מוכן לפרסום<span>${ready.length}</span></header>${ready.map(i=>`<div class="bc"><canvas data-ti="${i.id}" width="128" height="160" aria-hidden="true"></canvas><div><b>${esc((i.label||itemText(i,'fb')).replace(/\n/g,' ').slice(0,64))}</b><p>${fmtD(i.at)} ${hm(i.at)} · ${stOf(i.status)[1]}</p></div><div class="ba"><button class="ibtn sm" type="button" data-app="edit" data-id="${i.id}">${ico('edit',15)} עריכה</button></div></div>`).join('')||'<div class="empty">סמנו פוסטים כ"מוכן" או "מאושר".</div>'}</section></div>`}
@@ -16542,7 +16556,8 @@ Object.assign(IC,{home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',gri
   layers:'<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',bolt:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>',filter:'<path d="M4 5h16l-6 8v5l-4 2v-7z"/>',sliders:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'});
 const pxClamp=v=>Math.max(0,Math.min(10,Math.round(v)));
 const pxKey=p=>p.key||p.id;
-const pxBody=p=>String(p.fb||'').split(/\n\nקבוצת קורקוס/)[0].replace(/\n\nלכתבה המלאה:.*$/s,'');
+const pxBody=p=>{const s=String(p.fb||'');const M=pxBody.m||(pxBody.m=new Map());let r=M.get(s);if(r===undefined){r=s.split(/\n\nקבוצת קורקוס/)[0].replace(/\n\nלכתבה המלאה:.*$/s,'');if(M.size>30000)M.clear();M.set(s,r)}return r};/*V196b*/
+const pxOpen3=b=>{const M=pxOpen3.m||(pxOpen3.m=new Map());let r=M.get(b);if(r===undefined){r=b.split(/\s+/).slice(0,3).join(' ');if(M.size>30000)M.clear();M.set(b,r)}return r};
 const pxHead=p=>stripStars((p.visual&&p.visual.headline)||p.hook||'').replace(/\n/g,' ');
 function pxStageFrom(p){const it=itemOf(p);if(it){if(it.status==='published')return 'published';if(it.status==='scheduled')return 'scheduled';if(['approved','ready'].includes(it.status))return 'approved'}const s=KC.status[p.key];return s==='published'?'published':s==='approved'?'approved':s==='scheduled'?'scheduled':'draft'}
 function pxWf(p){const k=pxKey(p);if(!PRO.wf[k])PRO.wf[k]={stage:pxStageFrom(p),owner:'',comments:[],versions:[]};return PRO.wf[k]}
@@ -16554,10 +16569,10 @@ const pxAgo=s=>{const m=Math.round((Date.now()-new Date(s))/6e4);return m<1?'ע�
 // ---------- fatigue index (built once per render) ----------
 function pxIndex(){const now=Date.now(),soon=now+30*864e5;const up=APP.sched.items.filter(i=>i.at&&new Date(i.at)>=now-864e5&&new Date(i.at)<=soon).sort((a,b)=>a.at<b.at?-1:1);
   const upP=up.map(i=>({it:i,p:itemPost(i)})).filter(x=>x.p);const open={},lay={},mech={},img={};
-  AG.posts.forEach(p=>{const bd=pxBody(p),o=bd.split(/\s+/).slice(0,3).join(' ');if(!o)return;const arr=(open[o]=open[o]||[]);if(!arr._b)Object.defineProperty(arr,'_b',{value:new Set(),enumerable:false});if(arr._b.has(bd))return;arr._b.add(bd);arr.push(p.id)});
+  AG.posts.forEach(p=>{const bd=pxBody(p),o=pxOpen3(bd);if(!o)return;const arr=(open[o]=open[o]||[]);if(!arr._b)Object.defineProperty(arr,'_b',{value:new Set(),enumerable:false});if(arr._b.has(bd))return;arr._b.add(bd);arr.push(p.id)});
   upP.forEach(({p})=>{lay[p.layout]=(lay[p.layout]||0)+1;if(p.mechanic)mech[p.mechanic]=(mech[p.mechanic]||0)+1;imgKeysOf(p).forEach(k=>img[k]=(img[k]||0)+1)});
   PRO._fc={open,lay,mech,img,up:upP,u:usage().u};return PRO._fc}
-function pxFatigue(p){const F=PRO._fc||pxIndex();const out=[];const o=pxBody(p).split(/\s+/).slice(0,3).join(' ');
+function pxFatigue(p){const F=PRO._fc||pxIndex();const out=[];const o=pxOpen3(pxBody(p));
   if(o&&(F.open[o]||[]).length>1)out.push(['opening',`פתיחה זהה ל-${F.open[o].length-1} פוסטים אחרים ("${o}…")`]);
   imgKeysOf(p).forEach(k=>{if((F.img[k]||0)>2)out.push(['img',`התמונה "${LIB_NAMES[k]||k}" מתוזמנת ${F.img[k]} פעמים בחודש הקרוב`]);else if((F.u[k]||0)>7)out.push(['img',`התמונה "${LIB_NAMES[k]||k}" כבר בשימוש ${F.u[k]} פעמים`])});
   if((F.lay[p.layout]||0)>3)out.push(['layout',`העיצוב "${ED_NAMES[p.layout]||p.layout}" מופיע ${F.lay[p.layout]} פעמים בחודש הקרוב`]);
@@ -20515,7 +20530,7 @@ function tplPost(box){const v=box.querySelector('.v42');if(!v||v.parentElement.c
   d.innerHTML=`<summary>סינון מתקדם והמלצות${(X.ct||X.st)?' · מסונן':''}</summary>`;v.before(d);d.appendChild(v);d.addEventListener('toggle',()=>{moreOpen=d.open})}
 // --- competitors: fold long research, big gallery link, bulk add ---
 const BULK={open:false};
-function compPost(box){box.querySelectorAll('.cc .rs').forEach(rs=>{if(rs.dataset.v62||rs.scrollHeight<190)return;rs.dataset.v62=1;rs.classList.add('v62clip');const b=document.createElement('button');b.type='button';b.className='v62rm';b.textContent='קרא עוד';b.onclick=()=>{const c=rs.classList.toggle('v62clip');b.textContent=c?'קרא עוד':'פחות'};rs.after(b)});
+function compPost(box){const RS=[...box.querySelectorAll('.cc .rs')].filter(rs=>!rs.dataset.v62);const RH=RS.map(rs=>rs.scrollHeight);/*V196c*/RS.forEach((rs,i)=>{if(rs.dataset.v62||RH[i]<190)return;rs.dataset.v62=1;rs.classList.add('v62clip');const b=document.createElement('button');b.type='button';b.className='v62rm';b.textContent='קרא עוד';b.onclick=()=>{const c=rs.classList.toggle('v62clip');b.textContent=c?'קרא עוד':'פחות'};rs.after(b)});
   box.querySelectorAll('.cc').forEach(cc=>{const m=cc.querySelector('.minis');if(!m||cc.querySelector('.v62gb'))return;const btn=cc.querySelector('[data-app="inspire"]');const cid=btn&&btn.dataset.cid;const t=m.previousElementSibling;if(t&&cid){const g=document.createElement('button');g.type='button';g.className='v62gb';g.dataset.v62='gal';g.dataset.cid=cid;g.textContent='לצפייה בכולם בגדול';t.appendChild(g)}});
   if(BULK.open&&!box.querySelector('.v62bulk')){const f=document.createElement('form');f.className='v62bulk';f.innerHTML=`<b>הוספת כמה מתחרים בבת אחת</b><small>שורה לכל מתחרה: שם, ואחריו פסיק וקישור (אתר, פייסבוק או אינסטגרם). אפשר גם רק שם.</small>
     <textarea name="lines" placeholder="אבני דרך יזמות, https://www.facebook.com/...\nדוגמה בנייה, https://www.instagram.com/...\nחברה שלישית"></textarea>
@@ -21268,7 +21283,7 @@ function cheapOf(p){const v=p.visual||{},s=specOf(p.layout),h=stripStars(v.headl
   if(s&&s.el.some(e=>e.t==='ring'||e.t==='stat')&&!(()=>{try{return numOf({head:(p.visual||{}).headline,sub:(p.visual||{}).sub,num:(p.fx||{}).num})}catch(e){return ''}})())out.push(['nonum','בעיצוב יש מקום למספר גדול, ולפוסט אין מספר']);
   if(s&&p.src!=='canva'&&!/^x_t_car/.test(p.layout)&&!s.el.some(e=>e.t==='clipboard'||e.t==='siteboard'||((e.t==='text'||e.t==='caption'||e.t==='otext')&&(e.f==='head'||(!e.f&&e.text==null)))))out.push(['nohead','בעיצוב הזה הכותרת לא מופיעה בכלל']);
   return out}
-function clarityOf(p,deep){const k=sigOf(p);let c=CH.get(k);if(!c){c=cheapOf(p);CH.set(k,c);if(CH.size>8000)CH.delete(CH.keys().next().value)}let ov=p._ovk===k?false:OVC.get(k);if(ov===undefined&&deep&&specOf(p.layout)){ov=overflowOf(p).length>0;OVC.set(k,ov);if(!ov)p._ovk=k}return ov?c.concat([['ovf','הטקסט לא נכנס במקום שלו בעיצוב']]):c}
+function clarityOf(p,deep){const k=sigOf(p);let c=CH.get(k);if(!c){c=cheapOf(p);CH.set(k,c);if(CH.size>100000/*V196*/)CH.delete(CH.keys().next().value)}let ov=p._ovk===k?false:OVC.get(k);if(ov===undefined&&deep&&specOf(p.layout)){ov=overflowOf(p).length>0;OVC.set(k,ov);if(!ov)p._ovk=k}return ov?c.concat([['ovf','הטקסט לא נכנס במקום שלו בעיצוב']]):c}
 window.__clarityOf=p=>clarityOf(p,true);
 function fixPost(p,iss){const v=Object.assign({},p.visual||{});const body=bodyOf(p);const S=sents(body);let changed=[];
   const pick=(lo,hi)=>S.find(x=>{const w=words(x);return w>=lo&&w<=hi&&HEB(x)>=2&&!/https?:|055-|#/.test(x)});
@@ -21291,7 +21306,7 @@ function run(){let fixed=0,left=0;AG.posts.forEach(p=>{let iss;try{iss=clarityOf
   // the canvas check (text that does not fit) runs in the background, a little at a time, once per post version
   const q=window.__v117q?window.__v117q(sigOf):AG.posts.filter(p=>specOf(p.layout)&&p._ovk!==sigOf(p));let qi=0,fx2=0;
   (function step(){const t0=performance.now();while(qi<q.length&&performance.now()-t0<9){const p=q[qi++];try{const k=sigOf(p);const bad=overflowOf(p).length>0;OVC.set(k,bad);if(!bad){p._ovk=k}else if(!manualOf(p)){const iss=clarityOf(p);if(iss.length&&fixOne(p,iss))fx2++;const k2=sigOf(p);OVC.delete(k2);if(!overflowOf(p).length)p._ovk=k2}}catch(e){}}
-    if(qi<q.length){if((window.PE&&PE.p)||(window.APP&&APP.cmp))setTimeout(step,900);else if(window.requestIdleCallback)requestIdleCallback(step,{timeout:2500});else setTimeout(step,160)}else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqClear&&window.__pxqClear()}catch(e){}if(fx2){try{toast(`בדיקת בהירות: עוד ${fx2} פוסטים תוקנו`);render()}catch(e){}}}})();
+    if(qi<q.length){if((window.PE&&PE.p)||(window.APP&&APP.cmp))setTimeout(step,900);else if(window.requestIdleCallback)requestIdleCallback(step,{timeout:2500});else setTimeout(step,160)}else if(q.length){try{PRO._fc=null;TC&&TC.clear&&TC.clear()}catch(e){}try{saveAgent()}catch(e){}try{window.__pxqDrop?window.__pxqDrop(q):window.__pxqClear&&window.__pxqClear()}catch(e){}/*V196o*/if(fx2){try{toast(`בדיקת בהירות: עוד ${fx2} פוסטים תוקנו`);render()}catch(e){}}}})();
   return{fixed,left,checking:q.length}}
 window.__v73run=run;
 // the quality score shows what is unclear, so it can never be published by mistake
@@ -21468,7 +21483,8 @@ function conflictsFor(it,list){const p=postOfItem(it);if(!p||!it.at)return[];con
 const fdate=s=>{try{return new Intl.DateTimeFormat('he-IL',{weekday:'short',day:'numeric',month:'numeric'}).format(day(s))+' · '+String(s).slice(11,16)}catch(e){return String(s)}};
 const ST_HE={draft:'טיוטה',approved:'מאושר',ready:'מוכן',scheduled:'מתוזמן',published:'פורסם',sent:'נשלח'};
 const head=p=>stripStars((p.visual&&p.visual.headline)||p.hook||'').replace(/\n/g,' ');
-function paintPairs(root){root.querySelectorAll('canvas[data-dgp]').forEach(cv=>{const p=AG.posts.find(x=>x.id===cv.dataset.dgp);if(p&&!cv.dataset.done){cv.dataset.done=1;ensureImgs(p).then(()=>{try{thumb(cv,p,0)}catch(e){}})}})}
+function paintPairs(root){const one=cv=>{const p=AG.posts.find(x=>x.id===cv.dataset.dgp);if(p&&!cv.dataset.done){cv.dataset.done=1;ensureImgs(p).then(()=>{try{thumb(cv,p,0)}catch(e){}})}};const cs=root.querySelectorAll('canvas[data-dgp]');if(!('IntersectionObserver' in window)){cs.forEach(one);return}/*V196d*/
+ const io=paintPairs.io||(paintPairs.io=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;paintPairs.io.unobserve(en.target);if(en.target.isConnected)one(en.target)}),{rootMargin:'500px 0px'}));cs.forEach(cv=>{if(!cv.dataset.done)io.observe(cv)})}
 function pairHTML(a,ai,b,bi){const card=(p,it)=>`<figure>${p&&AG.posts.includes(p)?`<canvas data-dgp="${peEsc(p.id)}" width="216" height="270" aria-hidden="true"></canvas>`:''}<b>${peEsc(head(p)||'בלי כותרת')}</b><small>${it&&it.at?fdate(it.at)+' · '+(ST_HE[it.status]||it.status||''):'בספרייה'}</small></figure>`;return `<div class="dg-pair">${card(a,ai)}${card(b,bi)}</div>`}
 // ---- the alert before scheduling ----
 let busy=false;
@@ -23103,7 +23119,7 @@ window.__grainFill=function(c,x,y,w,h,a,seed,den){const t=window.__grainTile(a,s
 //    schedule item is saved, or a photo is registered (the old rule cleared it on every render)
 let EP=0;window.__v119bump=()=>{EP++};
 window.__v119ep=function(){try{return EP+'|'+AG.posts.length+'|'+APP.sched.items.length}catch(e){return String(EP)}};
-if(typeof regUpload==='function')regUpload=(f=>function(){EP++;return f.apply(this,arguments)})(regUpload);
+if(typeof regUpload==='function')regUpload=(f=>function(id){const k='u_'+id;let o0=null;try{o0=JSON.stringify([KC.up[id],PHOTO_LIB[k],LIB_NAMES[k],PM[k]])}catch(e){}const r=f.apply(this,arguments);let o1=null;try{o1=JSON.stringify([KC.up[id],PHOTO_LIB[k],LIB_NAMES[k],PM[k]])}catch(e){}if(o0==null||o0!==o1)EP++;return r})(regUpload);/*V196r*/
 setInterval(()=>{EP++},600000);
 // 4. the quality cache is warmed in idle time after boot and after each epoch change, so the first gallery open is warm
 let warmed=null,warmBusy=false;
@@ -25746,7 +25762,7 @@ function base(orig){const now=Date.now();let sl=0;try{sl=APP.sched.items.length}
  const keep=Object.assign({},GA.f);let l;try{Object.assign(GA.f,{st:'all',ser:'',fam:'',proj:'',q:'',sort:'new'});l=orig().filter(x=>!(x.p&&x.p.brand))}finally{Object.assign(GA.f,keep)}
  l.forEach(x=>{x.m=metaP(x);x.pk=projKey(x)});BASE={key,t:now,l};return l}
 function headOf(p){try{return pxHead(p)}catch(e){return ''}}
-function qMatch(x,q){if(!q)return true;const h=(headOf(x.p)+' '+x.m.hay+' '+projLabel(x.pk)).toLowerCase();return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>h.includes(w))}
+function qMatch(x,q){if(!q)return true;const hd=headOf(x.p),pl=projLabel(x.pk);const z=x.m.lc;const h=(z&&z.hd===hd&&z.pl===pl&&z.hay===x.m.hay)?z.s:(x.m.lc={hd,pl,hay:x.m.hay,s:(hd+' '+x.m.hay+' '+pl).toLowerCase()}).s;/*V196s*/return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>h.includes(w))}
 function whenOk(c,w){if(!w)return true;if(!c)return false;if(w==='today')return c>=startOfToday();return c>=Date.now()-(+w)*DAY}
 const isReady=x=>!x.it&&x.q.v!=='block'&&x.w!=='published';
 const isCheck=x=>x.w==='review'||(!x.it&&x.q.v!=='ok');
@@ -26006,6 +26022,11 @@ const U={stack:[],max:40,replay:false,posts:null,sched:null,act:0};
 const byUser=()=>Date.now()-U.act<2500;
 const strip=p=>{try{const {editing,_t,...r}=p;return JSON.stringify(r)}catch(e){return ''}};
 function snapPosts(){const m=new Map();(AG.posts||[]).forEach((p,i)=>{if(p&&p.id)m.set(p.id,{s:strip(p),i,ref:p})});return m}
+let LZ=null;/*V196u*/
+function lzStep(z,dl){const t0=performance.now();while(z.i<z.l.length&&(dl&&dl.timeRemaining?dl.timeRemaining()>2:performance.now()-t0<8)){const p=z.l[z.i];if(p&&p.id)z.m.set(p.id,{s:strip(p),i:z.i,ref:p});z.i++}if(z.i>=z.l.length){if(LZ===z){U.posts=z.m;LZ=null}return true}return false}
+function lazyBase(){const z={m:new Map(),i:0,l:(AG&&AG.posts||[]).slice()};LZ=z;U.posts=null;const go=dl=>{if(LZ!==z)return;if(!lzStep(z,dl))(window.requestIdleCallback?requestIdleCallback(go,{timeout:1200}):setTimeout(go,40))};(window.requestIdleCallback?requestIdleCallback(go,{timeout:1200}):setTimeout(go,40))}
+function lzFinish(){const z=LZ;if(z)lzStep(z,{timeRemaining:()=>1e9})}
+['pointerdown','keydown'].forEach(t=>window.addEventListener(t,lzFinish,true));
 function snapSched(){const m=new Map();((APP.sched&&APP.sched.items)||[]).forEach(it=>{if(it&&it.id)m.set(it.id,JSON.stringify(it))});return m}
 function push(entry){const last=U.stack[U.stack.length-1];entry.parts.forEach(x=>x.k=entry.kind);
  const inGroup=U.grp&&last&&last.t>=U.grp;
@@ -26016,7 +26037,7 @@ function push(entry){const last=U.stack[U.stack.length-1];entry.parts.forEach(x=
  else{entry.t=Date.now();U.stack.push(entry);if(U.stack.length>U.max)U.stack.shift()}
  chip();snack(U.stack[U.stack.length-1])}
 function postLabel(rem,add,chg){if(rem)return rem>1?`נמחקו ${rem} פוסטים`:'הפוסט נמחק';if(add)return add>1?`נוספו ${add} פוסטים`:'נוסף פוסט';return chg>1?`${chg} פוסטים עודכנו`:'הפוסט עודכן'}
-function recordPosts(){if(U.replay||!AG||!AG.posts)return;const now=snapPosts();const old=U.posts;U.posts=now;if(!old||!byUser())return;
+function recordPosts(){if(U.replay||!AG||!AG.posts)return;if(!byUser()){lazyBase();return}lzFinish();const now=snapPosts();const old=U.posts;LZ=null;U.posts=now;if(!old)return;
  const rem=[],add=[],chg=[];
  old.forEach((v,id)=>{const n=now.get(id);if(!n)rem.push({id,s:v.s,i:v.i});else if(n.s!==v.s)chg.push({id,s:v.s})});
  now.forEach((v,id)=>{if(!old.has(id))add.push(id)});
@@ -26049,10 +26070,10 @@ function undo(){const e=U.stack.pop();if(!e){toast('אין פעולה לבטל')
    part.chg.forEach(c=>{const it=APP.sched.items.find(i=>i.id===c.id);if(!it)return;const o=JSON.parse(c.s);Object.keys(it).forEach(k=>{if(!(k in o))delete it[k]});Object.assign(it,o);try{saveSched(it)}catch(x){}});
    part.gone.forEach(g=>{if(APP.sched.items.some(i=>i.id===g.id))return;const it=JSON.parse(g.s);delete it.removed;APP.sched.items.push(it);APP.sched.removed=(APP.sched.removed||[]).filter(x=>x!==it.id);try{saveSched(it)}catch(x){}});
   }}}
- finally{U.posts=snapPosts();U.sched=snapSched();U.replay=false}
+ finally{LZ=null;U.posts=snapPosts();U.sched=snapSched();U.replay=false}
  refreshViews();chip();toast('בוטל: '+e.label)}
 // one person action that touches posts, the schedule and hidden photos together (deleting a post) is one undo step
-function group(fn,args,self){try{U.posts=snapPosts();U.sched=snapSched()}catch(x){}U.grp=Date.now()-1;const g0=JSON.stringify(lsGet('v37_gone',[])||[]);let r;
+function group(fn,args,self){try{LZ=null;U.posts=snapPosts();U.sched=snapSched()}catch(x){}U.grp=Date.now()-1;const g0=JSON.stringify(lsGet('v37_gone',[])||[]);let r;
  try{r=fn.apply(self,args)}finally{try{recordSched()}catch(x){}
   try{const g1=JSON.stringify(lsGet('v37_gone',[])||[]);if(g1!==g0&&byUser()&&U.stack.length&&U.stack[U.stack.length-1].t>=U.grp)U.stack[U.stack.length-1].parts.push({k:'ls',key:'v37_gone',v:JSON.parse(g0)})}catch(x){}
   U.grp=0}return r}
@@ -26070,10 +26091,10 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('keydown',e=>{if(edState().open)return;const k=(e.key||'').toLowerCase();if(!(e.metaKey||e.ctrlKey)||e.shiftKey||e.altKey||k!=='z')return;
  const t=e.target;if(t&&(t.isContentEditable||/INPUT|TEXTAREA|SELECT/.test(t.tagName)))return;e.preventDefault();e.stopImmediatePropagation();window.__v36undo=null;undo()},true);
 
-function init(){try{U.posts=snapPosts();U.sched=snapSched();chip()}catch(e){setTimeout(init,1500)}}
+function init(){try{lazyBase();U.sched=snapSched();chip()}catch(e){setTimeout(init,1500)}}
 setTimeout(init,2500);
 // after the cloud loads posts or the schedule, take a fresh base so loading is never offered as "undo"
-try{if(typeof appInit==='function')appInit=(f=>async function(){const r=await f.apply(this,arguments);setTimeout(()=>{U.posts=snapPosts();U.sched=snapSched()},400);return r})(appInit)}catch(e){}
+try{if(typeof appInit==='function')appInit=(f=>async function(){const r=await f.apply(this,arguments);setTimeout(()=>{lazyBase();U.sched=snapSched()},400);return r})(appInit)}catch(e){}
 })();
 
 // ================= V172 · phones: the header buttons fold into one "פעולות" sheet; a long press (or right click) on a post opens its quick actions
@@ -28503,24 +28524,55 @@ const view=()=>{try{return APP.view||''}catch(e){return ''}};
 // for every post. It resets when the library wide fatigue index is rebuilt (as before) and also whenever data arrives
 // from the cloud or a font finishes loading, because the score reads photo details, template specs and text widths.
 // The approvals and the schedule are not read by the score (the schedule size is already part of the reset key), so their loads keep the cache.
-let dv=0;const bump=()=>{dv++};const KEEP=new Set(['workflow','schedule']);
+// V196: neither are the competitor and Meta collections, the videos, the batches, the performance numbers, the status of
+// posts, the inbox, the agent's notes and runs, the drafts list (a draft that becomes a post changes the post count, which
+// is part of the reset key) and three settings (slots, fonts and saved templates); a full rescore of the library costs
+// about two seconds on a phone, and those arrive and refresh while the person works. A collection that arrives again
+// exactly as it was (the photos come once from a read and again from the live listener) keeps the cache too. Template
+// specs that the agent adds change the size of the template list, which is now part of the reset key.
+let dv=0;const bump=()=>{dv++};
+const KEEP=new Set(['workflow','schedule','comp_shots','comp_posts','meta_ads','meta_scans','meta_favorites','competitors','videos','batches','perf','status','inbox','insights','agent_runs','drafts','tpl_specs','settings/slots','settings/fonts','settings/templates']);
+const kept=k=>KEEP.has(k)||KEEP.has(String(k).split('/')[0]);
+// the last text of each collection or document that was read, for the small ones (the posts are always a change)
+const FP=new Map();
+function fpOf(r){try{if(r&&Array.isArray(r.docs)){if(r.docs.length>3000)return null;return r.docs.length+'|'+JSON.stringify(r.docs.map(d=>[d.id,d.data()]))}
+ if(r&&typeof r.data==='function')return '1|'+JSON.stringify([r.id,r.exists,r.data()])}catch(e){}return null}
+function bumpIf(key,r){const f=key==='posts'?null:fpOf(r);if(f!=null&&FP.get(key)===f)return;if(f!=null)FP.set(key,f);bump()}
 function patchDb(db){if(!db||db.__v195)return db;db.__v195=1;
- const wrapRef=(o,col)=>{if(!o||o.__v195||KEEP.has(col))return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
-  if(typeof g==='function')o.get=async function(){const r=await g.apply(this,arguments);bump();return r};
-  if(typeof s==='function')o.onSnapshot=function(cb,er){return s.call(this,function(){bump();return cb.apply(this,arguments)},er)};return o};
+ const wrapRef=(o,key)=>{if(!o||o.__v195||kept(key))return o;o.__v195=1;const g=o.get,s=o.onSnapshot;
+  if(typeof g==='function')o.get=async function(){const r=await g.apply(this,arguments);bumpIf(key,r);return r};
+  if(typeof s==='function')o.onSnapshot=function(cb,er){return s.call(this,function(r){bumpIf(key,r);return cb.apply(this,arguments)},er)};return o};
  const c0=db.collection,d0=db.doc;
- if(typeof c0==='function')db.collection=function(col){const o=wrapRef(c0.apply(this,arguments),col);if(o&&typeof o.doc==='function'&&!o.__v195d&&!KEEP.has(col)){o.__v195d=1;const od=o.doc;o.doc=function(){return wrapRef(od.apply(this,arguments),col)}}return o};
- if(typeof d0==='function')db.doc=function(path){return wrapRef(d0.apply(this,arguments),String(path||'').split('/')[0])};return db}
+ if(typeof c0==='function')db.collection=function(col){const o=wrapRef(c0.apply(this,arguments),col);if(o&&typeof o.doc==='function'&&!o.__v195d&&!KEEP.has(col)){o.__v195d=1;const od=o.doc;o.doc=function(id){return wrapRef(od.apply(this,arguments),col+'/'+id)}}return o};
+ if(typeof d0==='function')db.doc=function(path){return wrapRef(d0.apply(this,arguments),String(path||''))};return db}
 try{const cl=window.claude;if(cl&&typeof cl.use==='function'){const u0=cl.use;cl.use=async function(n){const r=await u0.apply(this,arguments);if(n==='db')try{patchDb(r)}catch(e){}return r};
  cl.use('db').catch(()=>null)}}catch(e){}
 try{document.fonts&&document.fonts.addEventListener('loadingdone',bump)}catch(e){}
 (function(){if(typeof pxQuality!=='function')return;const C=new Map();let fc=null,fdv=-1;
+ // V196: every render asks for the score of every post several times; building the string key each time cost more than the
+ // score itself once it is cached. A per post entry remembers the exact fields of the key, so a repeat call with nothing
+ // changed returns at once; any change in those fields, or a cache reset, goes through the key as before.
+ let gen=0,miss=0;const W=new WeakMap();
+ const keyOf=p=>{const v=p.visual||{},x=p.fx||{};return (p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'')};const sj=x=>x?JSON.stringify(x):'';
  const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};
  const f0=pxQuality;const inner=window.__pxqClear;
- pxQuality=function(p){try{const ep=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);if(ep!==fc||dv!==fdv){C.clear();if(dv!==fdv)try{inner&&inner()}catch(e){}fc=ep;fdv=dv}const v=p.visual||{},x=p.fx||{};
-   const k=(p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'');
-   let r=C.get(k);if(!r){r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}return r}catch(e){return f0.apply(this,arguments)}};
- window.__pxqClear=()=>{C.clear();try{inner&&inner()}catch(e){}}})();
+ pxQuality=function(p){try{const e0=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);const ep=typeof e0==='string'?e0+'|'+((window.TPL&&TPL.specs&&TPL.specs.length)||0):e0;if(ep!==fc||dv!==fdv){C.clear();gen++;if(dv!==fdv)try{inner&&inner()}catch(e){}fc=ep;fdv=dv}const v=p.visual||{},x=p.fx||{};
+   const w=p&&typeof p==='object'?W.get(p):null;
+   if(w&&w.g===gen&&w.id===p.id&&w.l===p.layout&&w.u===p.upd&&w.hd===v.headline&&w.sb===v.sub&&w.fb===p.fb&&w.ig===p.ig&&w.n===x.num&&w.a===!!p.article&&w.hk===p.hook&&w.f===p.format&&w.s===sj(x.shot)&&C.get(w.k)===w.r)return w.r;
+   const k=keyOf(p);
+   let r=C.get(k);if(!r){miss++;r=f0.apply(this,arguments);C.set(k,r);if(C.size>60000)C.delete(C.keys().next().value)}
+   if(p&&typeof p==='object')W.set(p,{g:gen,k,r,id:p.id,l:p.layout,u:p.upd,hd:v.headline,sb:v.sub,fb:p.fb,ig:p.ig,n:x.num,a:!!p.article,hk:p.hook,f:p.format,s:sj(x.shot)});return r}catch(e){return f0.apply(this,arguments)}};
+ window.__pxqClear=()=>{C.clear();gen++;try{inner&&inner()}catch(e){}};
+ // V196: forget the scores of a few posts only (the idle overflow check knows which posts it looked at)
+ window.__pxqDrop=list=>{try{(list||[]).forEach(p=>{if(!p||typeof p!=='object')return;const w=W.get(p);if(w)C.delete(w.k);W.delete(p);C.delete(keyOf(p))})}catch(e){window.__pxqClear()}};
+ // V196: the scores of the whole library are taken in short slices while the skeleton cards show, so the page keeps
+ // answering instead of freezing for seconds; the first render after the posts arrive then finds every score ready
+ window.__v195gen=()=>gen;window.__v195miss=()=>miss;
+ // the fatigue index (openings, scheduled pictures, mechanics) is built from the library as it is now, as the render
+ // that used to take these scores rebuilt it first; an index left from before the cloud posts arrived would give other scores
+ window.__v196prescore=function(){return new Promise(done=>{let tries=0;const run=()=>{try{pxIndex()}catch(e){}const g0=gen;const list=AG.posts.slice();let i=0;
+   const step=()=>{const t0=performance.now();while(i<list.length&&performance.now()-t0<40){try{pxQuality(list[i])}catch(e){}i++}
+    if(i<list.length)setTimeout(step,0);else if(gen!==g0&&++tries<2)run();else done()};step()};try{run()}catch(e){done()}})}})();
 
 // 1b · the cloud posts (V31) with an index: the same rules, without scanning the whole library once per post.
 // V37 wrapped the load to drop deleted posts (tombstones) afterwards; that step is kept here.
@@ -28536,21 +28588,30 @@ if(typeof v31Load==='function'&&typeof SYNC!=='undefined'&&typeof v31Id==='funct
  function match(q){if(dirty)build();const a=q.key?((K.get(q.key)||[])[0]):null;const b=(I.get(q.id)||[])[0];
   if(a&&b&&a!==b)return AG.posts.indexOf(a)<AG.posts.indexOf(b)?a:b;return a||b||null}
  async function core(){const db=APP.db;if(!db)return 0;let snap;try{snap=await db.collection('posts').get()}catch(e){console.warn('posts load',e);return 0}
-  let changed=0;const killed=new Set(lsGet('v28_kill',[])||[]);dirty=true;
+  let changed=0;const killed=new Set(lsGet('v28_kill',[])||[]);dirty=true;const pend=[];
   snap.docs.forEach(d=>{const v=d.data();if(!v)return;const id=d.id;
    if(v.removed||!v.p){if(dirty)build();const o=(S.get(id)||[])[0];if(o){const i=AG.posts.indexOf(o);if(i>=0){AG.posts.splice(i,1);changed++;if(o.key)del(K,o.key,o);del(I,o.id,o);del(S,id,o)}}SYNC.h[id]='x';return}
    const q=v.p;if(!q||!q.visual||!q.hook)return;if(q.key&&killed.has(q.key))return;
    const loc=match(q);
-   if(!loc){AG.posts.unshift(q);if(!dirty){if(q.key)add(K,q.key,q,1);add(I,q.id,q,1);add(S,v31Id(q),q,1)}SYNC.h[id]=v31Hash(JSON.stringify(v31Strip(q)));changed++;return}
+   if(!loc){AG.posts.unshift(q);if(!dirty){if(q.key)add(K,q.key,q,1);add(I,q.id,q,1);add(S,v31Id(q),q,1)}pend.push([id,JSON.stringify(v31Strip(q))]);SYNC.h[id]='~';changed++;return}
    const lh=v31Hash(JSON.stringify(v31Strip(loc)));const rh=v31Hash(JSON.stringify(v31Strip(q)));
    if(lh===rh){SYNC.h[id]=lh;return}
    const locEdited=SYNC.h[id]&&SYNC.h[id]!==lh;
    if(!locEdited||(v.upd||'')>(loc.upd||'')){const k0=loc.key,s0=v31Id(loc);const keep=loc.id;Object.keys(loc).forEach(k=>{if(k!=='id')delete loc[k]});Object.assign(loc,q);loc.id=keep;
     if(loc.key!==k0||v31Id(loc)!==s0)dirty=true;SYNC.h[id]=v31Hash(JSON.stringify(v31Strip(loc)));changed++}});
-  lsSet('ps_h',SYNC.h);SYNC.ready=true;if(changed){saveAgent();try{TC.clear()}catch(e){}}return changed}
+  // V196: the sync fingerprint of a post that came from the cloud is the hash of the post as it arrived (its text is taken
+  // here, the hashing itself runs after the first paint, a few posts at a time). The sync to the cloud waits until every
+  // fingerprint is in, then runs as before, so an edit made meanwhile still counts as an edit.
+  // A post deleted meanwhile keeps its deleted mark ('~' stands for a fingerprint still on the way).
+  const done=()=>{lsSet('ps_h',SYNC.h);SYNC.ready=true};
+  if(pend.length){SYNC.ready=false;let i=0;const step=dl=>{const t0=performance.now();while(i<pend.length&&(dl&&dl.timeRemaining?dl.timeRemaining()>3:performance.now()-t0<10)){const e=pend[i++];if(SYNC.h[e[0]]==='~')SYNC.h[e[0]]=v31Hash(e[1]);e[1]=null}
+    if(i<pend.length){window.requestIdleCallback?requestIdleCallback(step,{timeout:1500}):setTimeout(step,30)}else{done();try{v31SyncSoon()}catch(e){}}};
+   setTimeout(()=>step(null),600)}else done();
+  if(changed){saveAgent();try{TC.clear()}catch(e){}}return changed}
  v31Load=async function(){const r=await core();purge();
   // the first posts paint now; the approvals (workflow) keep loading behind them and V31 renders again when they are in
-  if(r)setTimeout(()=>{try{render()}catch(e){}},0);
+  // (V196: after the scores are taken in slices; the approvals start loading meanwhile)
+  if(r){const go=()=>setTimeout(()=>{try{render()}catch(e){}},0);try{window.__v196prescore?window.__v196prescore().then(go,go):go()}catch(e){go()}}
   return r};
 }
 
@@ -28647,6 +28708,85 @@ window.__v195={header,items,openMore,vh,navVar,skeleton};
 })();
 /*V195:END*/
 
+/*V196:START*/
+// ================= V196 · speed: the engine opens sooner and every page answers faster on a phone. Measured on an
+// emulated iPhone 13 with the CPU slowed twice and 120 ms per request. The big costs were work the app did again and
+// again with the same answer: the bridge copied every post it read and wrote the whole library back to the browser
+// cache although nothing had changed; two quality caches sat on top of each other and built the same long key twice for
+// every post on every render; the undo history copied the whole library (about 14 MB of text) after every cloud load;
+// and the library, which no longer fits in the browser's local storage, was turned into text and refused again a few
+// seconds after every change. The fixes sit where the work is done (bridge.js, v195.js, build196.py). This block:
+// 1 skips the local storage writes that cannot fit, 2 says "טוען פוסטים" instead of "0 פוסטים" while loading, 3 holds
+// data driven renders while the scores are taken in slices, 4 paints the page a person taps in the very next frame.
+(()=>{
+if(window.__v196)return;window.__v196=1;
+const view=()=>{try{return APP.view||''}catch(e){return ''}};
+
+/* ---------- 1 · local storage: a write that cannot fit is not attempted ---------- */
+// The posts (about 14 MB as text) and the approvals (about 9 MB) are far above what a browser keeps for one site
+// (Safari 5 MB, Chrome 5 million characters). Every flush turned them into text and the browser refused them, a long
+// pause each time, also when the page is hidden. Both live in the cloud and in the bridge's IndexedDB cache, so the
+// write is skipped when its size, estimated from a sample of the items, is clearly above the limit; the warning that
+// local storage is full still shows once, as before. Smaller libraries are written exactly as before.
+const BIG=['ag_posts','pro_wf'];const LIMIT=5.6e6;const skipped=new Set();
+function estimate(v){if(!v||typeof v!=='object')return null;const arr=Array.isArray(v);const keys=arr?null:Object.keys(v);const n=arr?v.length:keys.length;if(n<500)return null;
+ const step=Math.max(1,Math.floor(n/200));let sum=0,c=0;for(let i=0;i<n;i+=step){const x=arr?v[i]:v[keys[i]];let j;try{j=JSON.stringify(x)}catch(e){return null}sum+=(j?j.length:4)+(arr?1:keys[i].length+4);c++}
+ return c?sum/c*n:null}
+if(typeof __lsFlush==='function'&&typeof __LSP!=='undefined'){
+ __lsFlush=(f=>function(){try{for(const k of BIG){if(!__LSP.has(k))continue;const e=estimate(__LSP.get(k));if(e!=null&&e>LIMIT){__LSP.delete(k);if(!skipped.has(k)){skipped.add(k);console.info('v196: '+k+' is about '+Math.round(e/1e6)+'M characters, kept in the cloud and the IndexedDB cache, not in local storage')}try{v31StorageWarn()}catch(x){}}}}catch(e){}return f.apply(this,arguments)})(__lsFlush);
+}
+
+/* ---------- 2 · while the posts load, the count says so ---------- */
+function count(){if(view()!=='gallery'||window.__v31loaded)return;const box=document.getElementById('appviews');if(!box||!box.querySelector('.v195sk'))return;
+ const c=box.querySelector('.v170cnt');if(c&&c.textContent!=='טוען פוסטים'){c.textContent='טוען פוסטים';c.classList.add('v196wait')}}
+
+/* ---------- 3 · one render after the scores are in ---------- */
+// While V195 takes the scores of the whole library in slices (the skeleton cards show), a render asked for by data that
+// arrives meanwhile (the approvals, the photos) would score the rest in one long freeze. Those renders wait and run once
+// when the slices are done (at most 6 s). A render asked for by the person (go, the bottom bar, the menu) runs at once.
+let pre=false,pending=false,inGo=0,preT=0;
+// (when the slices finish, V195 renders anyway, so a waiting render is only run here when the 6 s limit ends the wait)
+function release(late){if(!pre)return;pre=false;clearTimeout(preT);const w=pending;pending=false;if(w&&late){try{render()}catch(e){console.warn('v196',e)}}}
+if(typeof window.__v196prescore==='function'){const p0=window.__v196prescore;window.__v196prescore=function(){pre=true;clearTimeout(preT);preT=setTimeout(()=>release(true),6000);
+ const r=p0.apply(this,arguments);Promise.resolve(r).then(()=>release(false),()=>release(true));return r}}
+/* ---------- 4 · a tap on the navigation answers in the next frame ---------- */
+// A page is drawn in one go by render(), which takes from a tenth of a second (Afik) to more than one second (Posts,
+// Templates, Competitors) on a phone. When a person taps the bottom bar, the menu or the back arrow, the page they asked
+// for shows in the very next frame: the title, the highlighted tab, and the page as it was when they left it (the same
+// elements, kept aside with their pictures, for the last three pages), or calm skeleton rows on a first visit. The full
+// render runs right after that frame and replaces it. Every other render (code, data, tests) stays synchronous.
+let intent=null,shown='',defer=null;const CACHE=new Map();const KEEPN=3;
+const NAVSEL='#v99nav [data-v99nav],#side [data-view]:not([data-app]),#v102back';
+addEventListener('popstate',()=>{intent={v:''};setTimeout(()=>{intent=null},0)},true);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest(NAVSEL);if(!b)return;const v=b.id==='v102back'?'':(b.dataset.v99nav||b.dataset.view||'');if(v==='__menu')return;
+ intent={v};setTimeout(()=>{intent=null},0)},true);
+const box=()=>document.getElementById('appviews');
+function stash(){const b=box();if(!b||!shown||defer||!b.firstChild)return;const f=document.createDocumentFragment();while(b.firstChild)f.appendChild(b.firstChild);CACHE.delete(shown);CACHE.set(shown,f);while(CACHE.size>KEEPN)CACHE.delete(CACHE.keys().next().value)}
+function skel(){const d=document.createElement('div');d.className='v196sk';d.setAttribute('role','status');d.setAttribute('aria-label','טוען');d.innerHTML='<i></i><i></i><i></i><i></i><i></i>';return d}
+function instant(v){const b=box();if(!b)return false;stash();const f=CACHE.get(v);CACHE.delete(v);b.textContent='';b.appendChild(f||skel());
+ try{const t=(typeof VTITLE!=='undefined'&&VTITLE[v])||['',''];const vt=document.getElementById('vt'),vs=document.getElementById('vs');if(vt)vt.textContent=t[0];if(vs)vs.textContent=t[1]}catch(e){}
+ const act=document.getElementById('vact');if(act)act.textContent='';
+ // the pages kept in the old sections (Create and the like) are hidden as every render does; the render shows its own
+ document.querySelectorAll('.wrap > section').forEach(x=>x.classList.add('view-hidden'));
+ document.querySelectorAll('#v99nav [data-v99nav],#sidenav [data-view]').forEach(x=>{if((x.dataset.v99nav||x.dataset.view)===v)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});
+ return true}
+function gate(){if(gate.done)return;gate.done=1;
+ try{render=(f=>function(){const v=view();const nav=!!intent&&(!intent.v||intent.v===v)&&v!==shown&&!!shown;
+   if(pre&&!inGo&&!nav){pending=true;return}
+   if(nav&&!(typeof PE!=='undefined'&&PE&&PE.p)&&instant(v)){intent=null;const self=this,args=arguments;const tok={v};defer=tok;window.__v196t={v,instant:performance.now()};
+    requestAnimationFrame(()=>setTimeout(()=>{if(defer!==tok)return;defer=null;try{f.apply(self,args)}catch(e){console.warn('v196 render',e)}shown=view();try{const b=box();b&&b.querySelectorAll(':scope>.v196sk').forEach(x=>x.remove())}catch(e){}if(window.__v196t&&window.__v196t.v===v)window.__v196t.full=performance.now()},0));return}
+   defer=null;const r=f.apply(this,arguments);shown=view();return r})(render)}catch(e){}
+ try{go=(f=>function(){inGo++;try{return f.apply(this,arguments)}finally{inGo--}})(go)}catch(e){}}
+// after every module has wrapped render, so the gate is the outermost layer
+setTimeout(gate,0);
+
+function after(){try{count()}catch(e){}}
+try{render=(f=>function(){const r=f.apply(this,arguments);after();return r})(render)}catch(e){}
+window.__v196={estimate,skipped,count,busy:()=>pre};
+})();
+/*V196:END*/
+
+window.__v196q=1;
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){
 const orig=window.open.bind(window);
@@ -28741,7 +28881,7 @@ function decorate(){document.querySelectorAll('#appviews .qa').forEach(qa=>{if(q
 if(typeof render==='function')render=(f=>function(){const r=f.apply(this,arguments);try{decorate()}catch(e){console.error('v80',e)}return r})(render);
 })();
 // quality scores are cached per post version; the cache resets whenever the library-wide fatigue index is rebuilt
-(function(){if(typeof pxQuality!=='function')return;const C=new Map();let fc=null;
+(function(){if(typeof pxQuality!=='function'||window.__v196q)return;/*V196q: the V195 cache is the one cache*/const C=new Map();let fc=null;
   const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};
   const f0=pxQuality;pxQuality=function(p){try{const ep=window.__v119ep?__v119ep():(typeof PRO!=='undefined'?PRO._fc:null);if(ep!==fc){C.clear();fc=ep}const v=p.visual||{},x=p.fx||{};const k=(p.id||'')+'|'+p.layout+'|'+(p.upd||'')+'|'+(v.headline||'')+'|'+(v.sub||'')+'|'+h(p.fb)+'|'+h(p.ig)+'|'+(x.num||'')+'|'+JSON.stringify(x.shot||'')+'|'+(p.article?1:0)+'|'+(p.hook||'')+'|'+(p.format||'');
     let r=C.get(k);if(!r){r=f0.apply(this,arguments);C.set(k,r);if(C.size>8000)C.delete(C.keys().next().value)}return r}catch(e){return f0.apply(this,arguments)}};

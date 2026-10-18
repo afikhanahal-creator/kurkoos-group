@@ -42,7 +42,7 @@ const shortName0=p=>String(p.comp_name||'').replace(/\s+(Kedar Mivnim|בע"מ)$/
 // the folder of an item is the competitor in the system (one name even when Metricool spells the page differently)
 const shortName=p=>{const c=compDoc(isShot(p)?p.comp_id:idsOf(p)[0]);return String((c&&c.name)||shortName0(p)).trim()};
 const expired=p=>!isShot(p)&&!p.thumb&&!!p.img_exp&&Date.parse(p.img_exp)<Date.now();
-const srcOf=p=>isShot(p)?safeUrl(p.prev||p.url):p.thumb||(expired(p)?'':safeUrl(p.image));
+const srcOf=p=>isShot(p)?(p.source==='meta'&&safeUrl(p.creative)?safeUrl(p.creative):safeUrl(p.prev||p.url)):p.thumb||(expired(p)?'':safeUrl(p.image));
 const lastFetch=()=>{let m='';G.posts.forEach(p=>{if(String(p.fetched||'')>m)m=String(p.fetched)});return m};
 const excerpt=(t,n)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t.length>n?t.slice(0,n).replace(/\s+\S*$/,'')+'…':t};
 
@@ -95,7 +95,7 @@ function secHtml(c){const all=postsOf(c.id);const cf=cfOf(c.id);const open=G.ope
    const kchips=nS&&nP?`<div class="v179chips" role="group" aria-label="סוג">${[['','הכל',all.length],['post','פוסטים מפייסבוק',nP],['shot','צילומי מסך',nS]].map(([k,l,n])=>`<button type="button" class="v179chip" data-v181="ckind" data-cid="${E(c.id)}" data-k="${k}" aria-pressed="${cf.kind===k}">${l}<b>${n}</b></button>`).join('')}</div>`:'';
    body=`<div class="v181body">${upZone(c.id,{slim:true})}${kchips}<div class="v181bar"><div class="v179seg" role="group" aria-label="סדר הפוסטים"><button type="button" data-v181="csort" data-cid="${E(c.id)}" data-k="new" aria-pressed="${cf.sort==='new'}"><span>חדשים קודם</span></button><button type="button" data-v181="csort" data-cid="${E(c.id)}" data-k="eng" aria-pressed="${cf.sort==='eng'}"><span>הכי הרבה מעורבות</span></button></div>
     ${fbPost&&safeUrl(fbPost.link)?`<a class="v179ext" href="${E(safeUrl(String(fbPost.link).replace(/_[^/]*$/,'')))}" target="_blank" rel="noopener">לעמוד שלהם בפייסבוק ${SV.ext}</a>`:''}</div>
-    <div class="v181grid in">${page.map(p=>tile(p)).join('')}</div>${list.length>cf.n?`<button type="button" class="v179b more" data-v181="cmore" data-cid="${E(c.id)}">הצג עוד (${list.length-cf.n} נוספים)</button>`:''}
+    <div class="v181grid in v181rail">${page.map((p,i)=>{const h=tile(p);return i<6?h.replace('loading="lazy"','loading="eager"'):h}).join('')}${list.length?`<button type="button" class="v181all" data-v186="open" data-comp="${E(String(c.name||'').trim())}"><b>${list.length>page.length?'עוד '+(list.length-page.length):'הכל'}</b><span>${list.length>page.length?'כל ה-'+list.length+' בגלריה':'פתיחה בגלריה'}</span></button>`:''}</div>
     <p class="v179help">${nP?'פוסטים: מעקב המתחרים של Metricool, מתעדכן כל בוקר, בגודל התצוגה המקדימה ש-Metricool מחזיר. ':''}${nS?'צילומי מסך: הקבצים שהעליתם, ברזולוציה המלאה.':''}</p></div>`}}
  return `<details class="v181sec" data-v181sec="${E(c.id)}"${open?' open':''}><summary><span class="v179st"><b>הגלריה שלהם · פוסטים ומודעות</b><small>${sub}</small></span>${strip}<i class="v179chev" aria-hidden="true">${SV.chev}</i></summary>${body}</details>`}
 function refreshSec(cid){const el=document.querySelector(`details[data-v181sec="${CSS.escape(String(cid))}"]`);if(!el)return;const c=(APP.comps&&APP.comps[cid])||(typeof compList==='function'?compList().find(x=>String(x.id)===String(cid)):null);if(!c)return;

@@ -1,0 +1,7 @@
+<style id="k190">
+/* V190 · direct publishing: which brand each connected page publishes for */
+.v177acc .v177as{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#5f6b78;margin-inline-start:auto}
+.v177acc .v177as select{min-height:40px;border:1px solid #cbd1da;border-radius:10px;padding:0 8px;font:600 14px Almoni,Heebo,Arial,sans-serif;color:#07293a;background:#fff}
+.v177acc.off .v173n b{color:#8a96a3}
+.v177acc .v177as select:focus-visible{outline:3px solid #105572;outline-offset:2px}
+</style>

@@ -76,4 +76,13 @@
 @media (max-width:700px){.v181folds{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v181up .v179b{width:100%}#appviews .v181up label.v179b{min-height:44px}.v181big img{max-height:52vh}}
 .v181qrow{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin:0 0 12px}.v181qrow .v179muted{flex:1 1 220px;font-size:13.5px}
 .v181res.enh{color:#0b5b3a;background:#e5f4ec}.v181enh{font-size:12.5px;font-weight:700;color:#0b5b3a}
+/* V189: a competitor's section is one sideways row, ending in a tile that opens the unified gallery */
+/* the row scrolls inside its card: nothing above it may grow to the row's full width */
+article.cc,.v181sec,.v181body{min-width:0;max-width:100%}
+.v181grid.v181rail{position:relative;contain:paint;min-width:0;max-width:100%;width:100%;box-sizing:border-box;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,230px);grid-template-columns:none;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding-bottom:8px;overscroll-behavior-x:contain}
+.v181grid.v181rail>*{scroll-snap-align:start}
+.v181all{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:16px;border:2px dashed #b9c6d0;background:#fff;color:#105572;text-align:center;padding:16px;min-height:260px}
+.v181all b{font-size:30px;color:#07293a}.v181all span{font-size:14.5px;font-weight:700}
+.v181all:focus-visible{outline:3px solid #105572;outline-offset:2px}
+@media (max-width:700px){.v181grid.v181rail{grid-auto-columns:minmax(160px,46%)}}
 </style>

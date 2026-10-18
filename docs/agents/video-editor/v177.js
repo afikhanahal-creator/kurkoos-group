@@ -1,4 +1,4 @@
-// ================= V177 · publishing straight from the engine to our own Facebook page and Instagram account
+// ================= V177 · publishing straight from the engine to our own Facebook page and Instagram account (v190: one page per brand)
 // No outside scheduler: the engine renders the post, uploads the image, and queues it in our server
 // (Supabase function "social"); the server publishes it on time. Only posts the person turned on
 // "פרסום אוטומטי" for are ever published.
@@ -16,12 +16,19 @@ const ON_SITE=()=>window.__ENGINE_HOST==='site';
 
 /* ---------- state ---------- */
 const ST={state:'idle',st:null,err:'',q:new Map(),busy:false,form:false};
-function connected(net){return !!(ST.st&&ST.st.accounts||[]).find?.(a=>a.network===net)}
-function anyConn(){return !!(ST.st&&(ST.st.accounts||[]).length)}
+const BRAND_HE={kurkoos:'קבוצת קורקוס',afik:'אפיק הנחל'};
+function accFor(net,brand){return ((ST.st&&ST.st.accounts)||[]).find(a=>a.network===net&&a.brand===brand)||null}
+function connected(net,brand){return brand?!!accFor(net,brand):!!((ST.st&&ST.st.accounts)||[]).find(a=>a.network===net&&a.brand)}
+function anyConn(){return !!((ST.st&&ST.st.accounts)||[]).find(a=>a.brand)}
+// the brand of a scheduled post: the Afik HaNahal tab marks its posts brand 'afik', everything else is Kurkoos
+function brandOf(it){const p=itemPost(it);return (it&&it.brand==='afik')||(p&&p.brand==='afik')?'afik':'kurkoos'}
+let loading=null;
 async function load(){if(!ON_SITE()){ST.state='off';paint();return}
- ST.state='busy';paint();
+ if(loading)return loading;
+ loading=(async()=>{ST.state='busy';paint();
  try{ST.st=await call('status');ST.state='ok';await syncQueue(true)}catch(e){ST.state='err';ST.err=e.message}
- paint()}
+ paint();try{mountSwitch()}catch(e){}})();
+ try{await loading}finally{loading=null}}
 async function syncQueue(quiet){if(!ON_SITE())return;try{const d=await call('list');ST.q=new Map((d.items||[]).map(x=>[x.item_id,x]));
  // the engine's schedule item remembers what happened to its automatic post
  let ch=false;((APP.sched&&APP.sched.items)||[]).forEach(it=>{const q=ST.q.get(it.id);if(!q)return;const s=q.status;if(it.pub&&it.pub.state!==s){it.pub.state=s;it.pub.err=q.last_error||'';ch=true}if(s==='done'&&it.status!=='published'){it.status='published';ch=true}});
@@ -36,14 +43,15 @@ async function renderJpeg(p){try{await ensureImgs(p)}catch(e){}try{await documen
 
 const pending=new Map();
 function want(it){return it&&it.pub&&it.pub.on&&!it.reel}
-async function enqueue(it,force){if(!ON_SITE()||!want(it)||!it.at)return;
- const p=itemPost(it);if(!p)return;const nets=['fb','ig'].filter(n=>it.nets&&it.nets[n]&&connected(n==='fb'?'facebook':'instagram'));
- if(!nets.length){it.pub.state='nochannel';return}
+async function enqueue(it,force,atNow){if(!ON_SITE()||!want(it)||!it.at)return;
+ if(!ST.st)await load();
+ const p=itemPost(it);if(!p)return;const brand=brandOf(it);const nets=['fb','ig'].filter(n=>it.nets&&it.nets[n]&&connected(n==='fb'?'facebook':'instagram',brand));
+ if(!nets.length){it.pub.state='nochannel';it.pub.err='אין עמוד מחובר של '+BRAND_HE[brand];toast('לא יתפרסם: אין עמוד פייסבוק מחובר של '+BRAND_HE[brand]+'. בוחרים עמוד בהגדרות, בפרסום ישיר');try{saveSched(it)}catch(e){}return}
  const upd=String(p.upd||'')+'|'+(p.slide||0);
  try{
   if(force||!it.pub.media||it.pub.mupd!==upd){it.pub.media=await renderJpeg(p);it.pub.mupd=upd}
-  const at=new Date(it.at.length===16?it.at+':00':it.at);
-  const d=await call('enqueue',{items:[{item_id:it.id,post_id:p.id,label:(it.label||'').slice(0,120),at:at.toISOString(),nets,text_fb:itemText(it,'fb'),text_ig:itemText(it,'ig'),media_url:it.pub.media}]});
+  const at=atNow?new Date():new Date(it.at.length===16?it.at+':00':it.at);
+  const d=await call('enqueue',{items:[{item_id:it.id,post_id:p.id,brand,label:(it.label||'').slice(0,120),at:at.toISOString(),nets,text_fb:itemText(it,'fb'),text_ig:itemText(it,'ig'),media_url:it.pub.media}]});
   it.pub.state=(d.queued||[]).includes(it.id)?'queued':(d.skipped||[]).includes(it.id)?'done':it.pub.state;it.pub.err='';
   if((d.queued||[]).includes(it.id))ST.q.set(it.id,Object.assign({},ST.q.get(it.id)||{},{item_id:it.id,post_id:p.id,label:(it.label||'').slice(0,120),at:at.toISOString(),nets,status:'queued',last_error:null}));
  }catch(e){it.pub.state='local_error';it.pub.err=e.message;toast('התזמון לפרסום נכשל: '+String(e.message).slice(0,90))}
@@ -56,16 +64,18 @@ function autoDefault(){try{return lsGet(LS_AUTO,true)!==false}catch(e){return tr
 let armed=0,armedOn=false,lastAuto=0;
 document.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;
  const sw=t.closest('[data-v177="auto"]');if(sw){const on=sw.getAttribute('aria-pressed')!=='true';sw.setAttribute('aria-pressed',String(on));try{lsSet(LS_AUTO,on)}catch(x){}return}
- if(t.closest('#v157 [data-v157="go"]')){const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=!!(sw2&&sw2.getAttribute('aria-pressed')==='true')}},true);
+ if(t.closest('#v157 [data-v157="go"]')){const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=sw2?sw2.getAttribute('aria-pressed')==='true':autoDefault()}},true);
 // another handler may stop the click on the sheet's main button, so arm on the press too
-function arm(e){const t=e.target;if(!t||!t.closest||!t.closest('#v157 [data-v157="go"]'))return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=!!(sw2&&sw2.getAttribute('aria-pressed')==='true')}
+function arm(e){const t=e.target;if(!t||!t.closest||!t.closest('#v157 [data-v157="go"]'))return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;const sw2=document.querySelector('#v157 [data-v177="auto"]');armed=Date.now();armedOn=sw2?sw2.getAttribute('aria-pressed')==='true':autoDefault()}
 ['pointerdown','keydown'].forEach(k=>window.addEventListener(k,arm,true));
 // put the switch into the sheet each time it draws
 new MutationObserver(()=>{const sh0=document.getElementById('v157');if(sh0&&lastAuto&&Date.now()-lastAuto<60000){sh0.querySelectorAll('small,p,span').forEach(el=>{if(el.children.length===0&&/שום דבר לא מתפרסם בלי אישור/.test(el.textContent))el.textContent='יתפרסם אוטומטית בפייסבוק ובאינסטגרם במועד. אפשר לבטל בהגדרות, בפרסום ישיר.'})}}).observe(document.body,{childList:true,subtree:true});
-new MutationObserver(()=>{const sh=document.getElementById('v157');if(!sh||sh.querySelector('[data-v177="auto"]'))return;const f=sh.querySelector('.v157set');if(!f||!ON_SITE()||!anyConn())return;
+// drawn when the sheet opens, and again when the status arrives after it opened
+function mountSwitch(){const sh=document.getElementById('v157');if(!sh||sh.querySelector('[data-v177="auto"]'))return;const f=sh.querySelector('.v157set');if(!f||!ON_SITE()||(ST.state==='ok'&&!anyConn()))return;
  const on=autoDefault();const d=document.createElement('div');d.className='v177sw';
  d.innerHTML=`<button type="button" class="v177tg" data-v177="auto" aria-pressed="${on}"><span class="v177knob" aria-hidden="true"></span><span><b>פרסום אוטומטי במועד</b><small>פייסבוק ואינסטגרם יפורסמו מהמערכת בשעה שנבחרה</small></span></button>`;
- f.insertAdjacentElement('afterend',d)}).observe(document.body,{childList:true,subtree:true});
+ f.insertAdjacentElement('afterend',d)}
+new MutationObserver(()=>{try{mountSwitch()}catch(e){}}).observe(document.body,{childList:true,subtree:true});
 
 try{saveSched=(f=>function(it){const r=f.apply(this,arguments);try{
  if(it&&Date.now()-armed<4000&&ON_SITE()){armed=0;it.pub=Object.assign({},it.pub||{},{on:armedOn});lastAuto=armedOn?Date.now():0;if(armedOn)later(it,true);else if(ST.q.has(it.id))cancel([it.id])}
@@ -86,9 +96,12 @@ function guide(){const r=ST.st&&ST.st.redirect||'https://filnzlnvujnlazwcxbuq.su
   <li>לוחצים "התחברות עם פייסבוק", בוחרים את עמוד קבוצת קורקוס ואת חשבון האינסטגרם, ומאשרים. האפליקציה יכולה להישאר במצב פיתוח, כי רק אתם משתמשים בה.</li></ol>
   <p class="muted">אינסטגרם צריך להיות חשבון עסקי או חשבון יוצר שמקושר לעמוד הפייסבוק.</p></details>`}
 function formHtml(){return `<form class="v177form" data-v177="cfg"><label>App ID<input name="app_id" inputmode="numeric" autocomplete="off" required></label><label>App Secret<input name="app_secret" type="password" autocomplete="off" required></label><label>Configuration ID<input name="config_id" inputmode="numeric" autocomplete="off" placeholder="מומלץ"></label><button type="submit" class="px-btn red">שמירה</button></form>`}
-function rowsHtml(){const accs=ST.st&&ST.st.accounts||[];const fb=accs.find(a=>a.network==='facebook'),ig=accs.find(a=>a.network==='instagram');
- const row=(k,name,a,note)=>`<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||''}</span><span class="v173n"><b>${name}</b><span>${a?E(a.username?'@'+a.username:a.name||''):E(note||'')}</span></span><span class="v173c ${a?'ok':'no'}">${a?'מחובר':'לא מחובר'}</span><span></span></li>`;
- return row('fb','פייסבוק',fb,'עמוד קבוצת קורקוס')+row('ig','אינסטגרם',ig,'חשבון עסקי שמקושר לעמוד')+
+function rowsHtml(){const accs=ST.st&&ST.st.accounts||[];
+ const sel=a=>`<label class="v177as"><span>מפרסם עבור</span><select data-v177sel="${E(a.id)}" aria-label="עבור איזה מותג ${E(a.name||'')}"><option value="kurkoos"${a.brand==='kurkoos'?' selected':''}>קבוצת קורקוס</option><option value="afik"${a.brand==='afik'?' selected':''}>אפיק הנחל</option><option value=""${!a.brand?' selected':''}>לא בשימוש</option></select></label>`;
+ const row=(k,a)=>`<li class="v173row v177acc${a.brand?'':' off'}"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||''}</span><span class="v173n"><b>${E(a.username?'@'+a.username:a.name||'')}</b><span>${k==='fb'?'עמוד פייסבוק':'חשבון אינסטגרם'}${a.brand?'':' · לא יקבל פוסטים'}</span></span>${sel(a)}<span></span></li>`;
+ const none=(k,name,note)=>`<li class="v173row"><span class="v173b" style="background:${(NETS[k]||{}).c||'#105572'}" aria-hidden="true">${(NETS[k]||{}).l||''}</span><span class="v173n"><b>${name}</b><span>${E(note)}</span></span><span class="v173c no">לא מחובר</span><span></span></li>`;
+ const fb=accs.filter(a=>a.network==='facebook'),ig=accs.filter(a=>a.network==='instagram');
+ return (fb.length?fb.map(a=>row('fb',a)).join(''):none('fb','פייסבוק','עמוד קבוצת קורקוס'))+(ig.length?ig.map(a=>row('ig',a)).join(''):none('ig','אינסטגרם','חשבון עסקי או יוצר שמקושר לעמוד הפייסבוק'))+
   `<li class="v173row v177soon"><span class="v173b" style="background:${NETS.tt?NETS.tt.c:'#111'}" aria-hidden="true">TT</span><span class="v173n"><b>טיקטוק</b><span>חיבור ישיר דורש אישור אפליקציה מטיקטוק, ומקבל רק סרטונים</span></span><span class="v173c">בשלב הבא</span><span></span></li>`+
   `<li class="v173row v177soon"><span class="v173b" style="background:${NETS.yt?NETS.yt.c:'#c00'}" aria-hidden="true">YT</span><span class="v173n"><b>יוטיוב</b><span>חיבור ישיר דורש אימות פרויקט בגוגל, ומקבל רק סרטונים</span></span><span class="v173c">בשלב הבא</span><span></span></li>`}
 function queueHtml(){const items=[...ST.q.values()].filter(x=>x.status!=='cancelled').sort((a,b)=>String(a.at).localeCompare(String(b.at)));
@@ -108,10 +121,13 @@ function cardHtml(){const s=ST.st;let head='',body='';
     ${on?`<button type="button" class="px-btn" data-v177="off">ניתוק</button>`:''}
     <button type="button" class="px-btn" data-v177="form">${s.app?'פרטי האפליקציה':'הגדרת האפליקציה'}</button></div>
    ${!s.app||ST.form?guide()+formHtml():''}
-   ${on?queueHtml():''}
+   ${on?lateHtml()+queueHtml():''}
    ${on?bulkHtml():''}`}
  return `<section class="v173card v177card" id="v177card" aria-labelledby="v177h"><div class="v173top"><h2 class="vh" id="v177h" style="margin:0">פרסום ישיר לעמודים שלנו</h2>${head}<button type="button" class="px-btn sm" data-v177="re">רענון</button></div>
-  <p class="muted v173p">המערכת מפרסמת בעצמה לעמוד הפייסבוק ולאינסטגרם של קבוצת קורקוס, בדיוק במועד שנקבע. רק פוסטים שסימנתם "פרסום אוטומטי" יוצאים.</p>${body}</section>`}
+  <p class="muted v173p">המערכת מפרסמת בעצמה, בדיוק במועד שנקבע, כל פוסט לעמוד של המותג שלו: קבוצת קורקוס או אפיק הנחל. עמוד שמסומן "לא בשימוש" לא מקבל כלום. רק פוסטים שסימנתם "פרסום אוטומטי" יוצאים.</p>${body}</section>`}
+function lateList(){const now=Date.now();return ((APP.sched&&APP.sched.items)||[]).filter(it=>!it.reel&&it.at&&it.status==='ready'&&it.nets&&(it.nets.fb||it.nets.ig)&&!(ST.q.get(it.id)&&['done','publishing','queued'].includes(ST.q.get(it.id).status))&&(()=>{const t=new Date(it.at.length===16?it.at+':00':it.at).getTime();return t<now&&now-t<7*864e5})())}
+function lateHtml(){const l=lateList();if(!l.length)return '';
+ return `<h3 class="v177h3">המועד עבר והפוסט לא יצא</h3><ul class="v177ql">${l.map(it=>`<li class="v177q s-error"><span class="v177qt"><b>${E(it.label||'פוסט')}</b><span>${fmt(new Date(it.at.length===16?it.at+':00':it.at).toISOString())} · ${BRAND_HE[brandOf(it)]}</span><span class="v177err">${it.pub&&it.pub.on?E(it.pub.err||'לא נשלח לתור'):'נשמר בלי פרסום אוטומטי'}</span></span><span class="v177qa"><button type="button" class="px-btn sm red" data-v177="late" data-id="${E(it.id)}">פרסום עכשיו</button></span></li>`).join('')}</ul>`}
 function bulkHtml(){const n=((APP.sched&&APP.sched.items)||[]).filter(it=>!it.reel&&it.at&&new Date(it.at)>new Date()&&!(it.pub&&it.pub.on)&&(it.nets&&(it.nets.fb||it.nets.ig))).length;
  return n?`<div class="v177bulk"><span>${n} פוסטים מתוזמנים בלוח עדיין בלי פרסום אוטומטי</span><button type="button" class="px-btn sm" data-v177="bulk">להפעיל לכולם</button></div>`:''}
 function paint(){const el=document.getElementById('v177card');if(el)el.outerHTML=cardHtml()}
@@ -127,11 +143,16 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
   if(a==='off'){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='לנתק? לחצו שוב';return}await call('disconnect');toast('העמודים נותקו');load();return}
   if(a==='cancel'){await call('cancel',{item_ids:[b.dataset.id]});const it=(APP.sched.items||[]).find(i=>i.id===b.dataset.id);if(it&&it.pub){it.pub.on=false;it.pub.state='cancelled';saveSched(it)}toast('הפרסום האוטומטי בוטל');await syncQueue();return}
   if(a==='now'){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='לפרסם עכשיו? לחצו שוב';return}b.disabled=true;b.textContent='מפרסם…';const d=await call('run',{only:b.dataset.id});const r=(d.ran||[])[0];toast(r?(r.status==='done'?'פורסם':'הפרסום נכשל: '+(r.errors||[]).join(' · ').slice(0,120)):'לא נמצא פוסט לפרסום');await syncQueue();return}
+  if(a==='late'){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='לפרסם עכשיו? לחצו שוב';return}const it=(APP.sched.items||[]).find(i=>i.id===b.dataset.id);if(!it)return;b.disabled=true;b.textContent='מפרסם…';
+   it.pub=Object.assign({},it.pub||{},{on:true});await enqueue(it,true,true);if(it.pub.state!=='queued'){paint();return}
+   const d=await call('run',{only:it.id});const r=(d.ran||[])[0];toast(r?(r.status==='done'?'פורסם':'הפרסום נכשל: '+(r.errors||[]).join(' · ').slice(0,120)):'הפוסט בתור ויתפרסם בדקות הקרובות');await syncQueue();return}
   if(a==='bulk'){const list=((APP.sched&&APP.sched.items)||[]).filter(it=>!it.reel&&it.at&&new Date(it.at)>new Date()&&!(it.pub&&it.pub.on)&&(it.nets&&(it.nets.fb||it.nets.ig)));
    if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent=`לפרסם אוטומטית ${list.length} פוסטים? לחצו שוב`;return}
    b.disabled=true;let n=0;for(const it of list){it.pub=Object.assign({},it.pub||{},{on:true});b.textContent=`מכין ${++n} מתוך ${list.length}…`;await enqueue(it,true)}
    toast(`${list.length} פוסטים יתפרסמו אוטומטית במועד`);await syncQueue();return}
  }catch(x){toast(String(x.message||'הפעולה נכשלה').slice(0,120));paint()}});
+document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.v177sel)return;t.disabled=true;
+ try{await call('assign',{id:t.dataset.v177sel,brand:t.value});toast(t.value?'העמוד יפרסם עבור '+BRAND_HE[t.value]:'העמוד לא יקבל פוסטים');await load()}catch(x){toast(String(x.message).slice(0,120));t.disabled=false}});
 document.addEventListener('submit',async e=>{const f=e.target;if(!f||f.dataset.v177!=='cfg')return;e.preventDefault();const d=Object.fromEntries(new FormData(f).entries());
  try{await call('config',d);toast('נשמר. עכשיו התחברות עם פייסבוק');ST.form=false;load()}catch(x){toast(String(x.message).slice(0,140))}});
 

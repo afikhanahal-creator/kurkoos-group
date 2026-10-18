@@ -1,0 +1,5 @@
+voice/full.pcm
+voice/full.wav
+voice/v*.wav
+music.wav
+__pycache__/

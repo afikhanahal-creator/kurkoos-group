@@ -34,7 +34,9 @@ const dateOf=p=>isMeta(p)?(adStart(p)||String(p.added||'')):String(p.published||
 const textOf=p=>String(isShot(p)?(p.note||p.ad_title||''):(p.text||''));
 const initial=n=>String(n||'?').trim().replace(/^["'„]+/,'').slice(0,1)||'?';
 // tiles and the stage: uploaded screenshots show their improved copy; ads captured from Meta show the 1080px preview, the 4K file waits for the zoom
-const bestSrc=p=>{const v=V();if(v.isShot(p))return (isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
+const bestSrc=p=>{const v=V();if(v.isShot(p))return (isMeta(p)&&safeUrl(p.creative))?safeUrl(p.creative):(isMeta(p)&&safeUrl(p.prev))?safeUrl(p.prev):v.fullOf(p);return p.thumb||v.srcOf(p)};
+// the viewer shows the whole ad card (picture, text, button) for ads captured from Meta; the zoom loads the 4K file
+const stageSrc=p=>isMeta(p)?(safeUrl(p.prev)||bestSrc(p)):bestSrc(p);
 const days=p=>{const t=Date.parse(dateOf(p));return t?Math.floor((Date.now()-t)/864e5):null};
 const seenAt=()=>{try{return +localStorage.getItem('v188_seen')||0}catch(e){return 0}};
 const isNew=p=>{const t=Date.parse(String(p.added||p.first_seen||p.published||''));return !!t&&S.seen>0&&t>S.seen};
@@ -45,6 +47,10 @@ function mountBtn(){const tb=document.querySelector('.tbar');if(!tb||tb.querySel
  const anchor=tb.querySelector('#v102back')||tb.querySelector('[data-app="menu"]');if(anchor)anchor.insertAdjacentElement('afterend',b);else tb.prepend(b)}
 try{new MutationObserver(()=>{try{mountBtn()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 try{mountBtn()}catch(e){}
+// the competitors page: one button for the unified gallery, beside "הוסף מתחרה"
+function mountPage(){if(!window.APP||APP.view!=='competitors')return;const act=document.getElementById('vact');if(!act||act.querySelector('[data-v188="uni"]'))return;
+ const n=(()=>{try{return all().length}catch(e){return 0}})();const b=document.createElement('button');b.type='button';b.className='ibtn pri v188uni';b.dataset.v186='open';b.dataset.v188='uni';b.innerHTML=IC.gal+`<span>גלריה מאוחדת${n?' · '+num(n):''}</span>`;b.title='כל המודעות והפוסטים של כל המתחרים בגלריה אחת';act.prepend(b)}
+try{new MutationObserver(()=>{try{mountPage()}catch(e){}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 
 /* ---------- the list ---------- */
 function all(){const v=V();return v?v.allItems().filter(p=>bestSrc(p)):[]}
@@ -79,7 +85,7 @@ function galHtml(){const list=S.list=items();const stats=compStats();const total
     <div class="v186grid">${show.map(([p,i])=>card(p,i)).join('')}</div>${!open&&l.length>PEEK?`<button type="button" class="v186more" data-v186="more" data-comp="${E(n)}">עוד ${l.length-PEEK} של ${E(n)}</button>`:''}</section>`}).join('')}
  else{const n=Math.min(list.length,S.page*PAGE);body=`<div class="v186grid flat">${list.slice(0,n).map((p,i)=>card(p,i)).join('')}</div>${n<list.length?`<button type="button" class="v186more" data-v186="page">עוד ${Math.min(PAGE,list.length-n)} מתוך ${list.length-n}</button>`:''}`}
  return `<div class="v186top" tabindex="-1"><button type="button" class="v186x" data-v186="close" aria-label="סגירה" title="סגירת הגלריה">${IC.x}</button><div class="v186tt"><h2>גלריית המתחרים</h2><span class="v186n">${S.comp?`${list.length} של ${E(S.comp)}`:`${num(total)} פריטים · ${stats.length} מתחרים`}</span></div></div>${rail}${tools}<div class="v186body">${body}</div>`}
-function openGal(){if(!V()){toast('הגלריה נטענת, נסו שוב בעוד רגע');return}let g=document.getElementById('v186');if(!g){g=document.createElement('div');g.id='v186';g.className='ov';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-label','גלריית המתחרים');document.body.appendChild(g)}
+function openGal(o){if(!V()){toast('הגלריה נטענת, נסו שוב בעוד רגע');return}o=o||{};if(o.comp!=null){S.comp=String(o.comp);S.q='';S.kind='';S.period=''}let g=document.getElementById('v186');if(!g){g=document.createElement('div');g.id='v186';g.className='ov';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-label','גלריית המתחרים');document.body.appendChild(g)}
  S.seen=seenAt();S.page=1;g.innerHTML=galHtml();document.body.classList.add('v186lock');S.open=true;
  try{localStorage.setItem('v188_seen',String(Date.now()))}catch(e){}
  requestAnimationFrame(()=>{const f=g.querySelector(window.matchMedia('(max-width:860px)').matches?'.v186top':'.v186x');f&&f.focus()})}
@@ -104,7 +110,7 @@ function postInfo(p){const v=V();const k=kindOf(p);const d=fmtD(dateOf(p));
  if(isMeta(p)){const land=safeUrl(p.landing);return `<div class="v186sec"><div class="v186when"><time>${E(adStart(p)?'באוויר מאז '+fmtD(adStart(p)):p.start?'באוויר מאז '+p.start:d)}</time><span class="v186chips"><span class="v186chip2">${p.media==='video'?'סרטון':'תמונה'}</span>${+p.copies>1?`<span class="v186chip2">${p.copies} גרסאות</span>`:''}<span class="v186chip2 ok" dir="ltr">4K</span></span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">מודעה בלי טקסט</p>'}${p.cta||land?`<p class="v186fine v186muted">${p.cta?'כפתור: '+E(p.cta):''}${p.cta&&land?' · ':''}${land?'נחיתה: <bdi dir="ltr">'+E(land.replace(/^https?:\/\//,'').slice(0,60))+'</bdi>':''}</p>`:''}<div class="v186links">${safeUrl(p.creative)?`<a class="v186lnk" href="${E(safeUrl(p.creative))}" target="_blank" rel="noopener">התמונה של המודעה בלבד${p.cw?` <bdi dir="ltr">${p.cw}×${p.ch}</bdi>`:''} ${IC.ext}</a>`:''}${land?`<a class="v186lnk" href="${E(land)}" target="_blank" rel="noopener">דף הנחיתה ${IC.ext}</a>`:''}</div></div>${adInfo(p)}`}
  if(k!=='post')return `<div class="v186sec"><div class="v186when"><time>הועלה ${E(d)}</time><span class="v186chips">${p.ew&&p.eh?`<span class="v186chip2 ok" dir="ltr">${p.ew}×${p.eh}</span>`:p.w&&p.h?`<span class="v186chip2" dir="ltr">${p.w}×${p.h}</span>`:''}${p.enh?'<span class="v186chip2 ok">שופר</span>':''}</span></div>${p.note?`<p class="v186txt">${E(p.note)}</p>`:'<p class="v186muted">צילום מסך בלי הערה</p>'}</div>${adInfo(p)}`;
  return `<div class="v186sec"><div class="v186when"><time>${E(d)}</time><span class="v186chips"><span class="v186chip2">פייסבוק</span></span></div>${v.engHtml(p)}<p class="v186txt">${p.text?E(p.text):'<span class="v186muted">פוסט בלי טקסט</span>'}</p>${safeUrl(p.link)?`<a class="v186lnk" href="${E(safeUrl(p.link))}" target="_blank" rel="noopener">לפוסט בפייסבוק ${IC.ext}</a>`:''}</div>`}
-function viewHtml(){const p=S.list[S.i];const v=V();const src=bestSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;const name=nameOf(p);const ex=textOf(p).replace(/\s+/g,' ').slice(0,140);
+function viewHtml(){const p=S.list[S.i];const v=V();const src=stageSrc(p);const full=v.isShot(p)?v.fullOf(p):(p.thumb||safeUrl(p.image));const n=S.list.length;const name=nameOf(p);const ex=textOf(p).replace(/\s+/g,' ').slice(0,140);
  return `<div class="v186vbg" data-v186="vclose"></div>
  <div class="v186vtop"><button type="button" class="v186x" data-v186="vclose" aria-label="סגירה" title="חזרה לגלריה">${IC.x}</button><div class="v186vwho"><i class="v186av" aria-hidden="true">${E(initial(name))}</i><b>${E(name)}</b><time>${E(fmtD(dateOf(p)))}</time></div><span class="v186vn">${S.i+1} מתוך ${n}</span><button type="button" class="v186ib" data-v186="zoom" aria-pressed="${S.zoom}" aria-label="הגדלה">${IC.zoom}</button></div>
  <div class="v186stage${S.zoom?' zoom':''}" data-v186="stage"><img src="${E(src)}" alt="${E(name)}" decoding="async" referrerpolicy="no-referrer" draggable="false" data-v186img></div>
@@ -118,7 +124,7 @@ function viewHtml(){const p=S.list[S.i];const v=V();const src=bestSrc(p);const f
 function openView(i){if(!S.list.length)return;S.i=(i+S.list.length)%S.list.length;S.zoom=false;let m=document.getElementById('v186v');if(!m){m=document.createElement('div');m.id='v186v';m.className='ov';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','תמונה של מתחרה');document.body.appendChild(m)}
  m.innerHTML=viewHtml();m.querySelector('.v186vtop').setAttribute('tabindex','-1');S.sheet=S.sheet&&window.matchMedia('(max-width:860px)').matches?S.sheet:false;
  // preload the neighbours so arrows feel instant
- [S.i+1,S.i-1].forEach(j=>{const q=S.list[(j+S.list.length)%S.list.length];if(q){const pre=new Image();pre.referrerPolicy='no-referrer';pre.src=bestSrc(q)}});
+ [S.i+1,S.i-1].forEach(j=>{const q=S.list[(j+S.list.length)%S.list.length];if(q){const pre=new Image();pre.referrerPolicy='no-referrer';pre.src=stageSrc(q)}});
  try{if(V().keep&&!V().isShot(S.list[S.i]))V().keep(S.list[S.i].id)}catch(e){}
  requestAnimationFrame(()=>{const f=m.querySelector(window.matchMedia('(max-width:860px)').matches?'.v186vtop':'.v186x');f&&f.focus()})}
 function closeView(silent){const m=document.getElementById('v186v');if(m)m.remove();S.i=-1;if(!silent){const g=document.getElementById('v186');const b=g&&g.querySelector('.v186x');b&&b.focus()}}
@@ -126,7 +132,7 @@ function step(d){if(S.i<0)return;openView(S.i+d)}
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v186]');if(!b)return;const a=b.dataset.v186;if(a==='sort'||a==='q'||a==='stage')return;e.preventDefault();e.stopPropagation();
- if(a==='open'){openGal();return}
+ if(a==='open'){openGal(b.dataset.comp!=null?{comp:b.dataset.comp}:{});return}
  if(a==='close'){closeAll();return}
  if(a==='view'){openView(+b.dataset.i);return}
  if(a==='vclose'){closeView();return}

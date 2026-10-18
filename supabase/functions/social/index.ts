@@ -5,7 +5,8 @@
 //
 // Routes (verify_jwt off; every route checks its own auth):
 //   GET  /social/callback      Facebook OAuth redirect (signed state)
-//   POST /social {a:'status'}  admin: is the Meta app set, connected pages, queue
+//   POST /social {a:'status'}  admin: is the Meta app set, connected pages (with their brand), queue
+//   POST /social {a:'assign',id,brand} admin: which brand a page publishes for (kurkoos, afik, or none)
 //   POST /social {a:'config'}  admin: save the Meta App ID / App Secret
 //   POST /social {a:'start'}   admin: the Facebook login URL
 //   POST /social {a:'disconnect'}
@@ -91,6 +92,9 @@ async function graph(path: string, params: Record<string, string>, method = 'GET
 }
 
 // ---------- OAuth callback: store each page and its Instagram account
+// a page belongs to one brand, or to none (never published to). Guessed from the name at connect time, changeable in settings.
+const brandOf = (name: string) => /kurkoos|קורקוס/i.test(name) ? 'kurkoos' : /afik|אפיק/i.test(name) ? 'afik' : null
+
 async function callback(url: URL) {
   const st = await readState(url.searchParams.get('state') || '')
   const back = (st && st.b) || HOME
@@ -105,11 +109,14 @@ async function callback(url: URL) {
     const pages = await graph('/me/accounts', { access_token: long.access_token, fields: 'id,name,access_token,picture{url},instagram_business_account{id,username,name,profile_picture_url}', limit: '50' })
     const rows: Record<string, unknown>[] = []
     for (const p of pages.data || []) {
-      rows.push({ id: 'fb:' + p.id, network: 'facebook', name: p.name, page_id: p.id, account_id: p.id, token: p.access_token, picture: p.picture?.data?.url || null, connected_by: st.u, connected_at: new Date().toISOString() })
+      rows.push({ id: 'fb:' + p.id, network: 'facebook', brand: brandOf(p.name || ''), name: p.name, page_id: p.id, account_id: p.id, token: p.access_token, picture: p.picture?.data?.url || null, connected_by: st.u, connected_at: new Date().toISOString() })
       const ig = p.instagram_business_account
-      if (ig && ig.id) rows.push({ id: 'ig:' + ig.id, network: 'instagram', name: ig.name || p.name, username: ig.username || null, page_id: p.id, account_id: ig.id, token: p.access_token, picture: ig.profile_picture_url || null, connected_by: st.u, connected_at: new Date().toISOString() })
+      if (ig && ig.id) rows.push({ id: 'ig:' + ig.id, network: 'instagram', brand: brandOf(p.name || ''), name: ig.name || p.name, username: ig.username || null, page_id: p.id, account_id: ig.id, token: p.access_token, picture: ig.profile_picture_url || null, connected_by: st.u, connected_at: new Date().toISOString() })
     }
     if (!rows.length) return go('social=error&m=' + encodeURIComponent('לא נמצא עמוד פייסבוק. ודאו שבחרתם את עמוד קבוצת קורקוס בחלון ההרשאות'))
+    const { data: old } = await db.from('social_accounts').select('id,brand')
+    const kept = new Map((old || []).map((r) => [r.id, r.brand]))
+    rows.forEach((r) => { if (kept.has(r.id as string)) r.brand = kept.get(r.id as string) ?? null })
     await db.from('social_accounts').delete().in('network', ['facebook', 'instagram'])
     const { error } = await db.from('social_accounts').insert(rows)
     if (error) throw new Error(error.message)
@@ -145,7 +152,7 @@ async function run(only?: string) {
   const { data: due, error } = await sel
   if (error) throw new Error(error.message)
   const { data: accs } = await db.from('social_accounts').select('*')
-  const by = (n: string) => (accs || []).find((a) => a.network === n)
+  const by = (n: string, brand: string) => (accs || []).find((a) => a.network === n && a.brand === brand)
   const out = []
   for (const q of due || []) {
     // claim the row so two runs never publish twice
@@ -156,8 +163,9 @@ async function run(only?: string) {
     for (const n of q.nets as string[]) {
       if (results[n] && results[n].id) continue
       const net = n === 'fb' ? 'facebook' : n === 'ig' ? 'instagram' : n
-      const acc = by(net)
-      if (!acc) { errs.push(`${net}: לא מחובר`); results[n] = { error: 'לא מחובר' }; continue }
+      const brand = String(q.brand || 'kurkoos')
+      const acc = by(net, brand)
+      if (!acc) { const m = `אין עמוד ${net === 'facebook' ? 'פייסבוק' : 'אינסטגרם'} של ${brand === 'afik' ? 'אפיק הנחל' : 'קבוצת קורקוס'}`; errs.push(m); results[n] = { error: m }; continue }
       if (!q.media_url) { errs.push(`${net}: חסרה תמונה`); results[n] = { error: 'חסרה תמונה' }; continue }
       try {
         const r = net === 'facebook' ? await pubFacebook(acc, q) : net === 'instagram' ? await pubInstagram(acc, q) : (() => { throw new Error('ערוץ לא נתמך עדיין') })()
@@ -183,7 +191,7 @@ function clean(items: unknown[], uid: string) {
     const media = String(x.media_url || '')
     if (!x.item_id || isNaN(at.getTime()) || !nets.length) continue
     if (media && !/^https:\/\/filnzlnvujnlazwcxbuq\.supabase\.co\/storage\/v1\/object\/public\//.test(media)) continue
-    ok.push({ item_id: String(x.item_id).slice(0, 80), post_id: x.post_id ? String(x.post_id).slice(0, 80) : null, label: String(x.label || '').slice(0, 140), at: at.toISOString(), nets, text_fb: String(x.text_fb || '').slice(0, 63000), text_ig: String(x.text_ig || '').slice(0, 2200), media_url: media || null, status: 'queued', attempts: 0, last_error: null, results: {}, created_by: uid, updated_at: new Date().toISOString() })
+    ok.push({ item_id: String(x.item_id).slice(0, 80), post_id: x.post_id ? String(x.post_id).slice(0, 80) : null, label: String(x.label || '').slice(0, 140), at: at.toISOString(), nets, text_fb: String(x.text_fb || '').slice(0, 63000), text_ig: String(x.text_ig || '').slice(0, 2200), media_url: media || null, brand: x.brand === 'afik' ? 'afik' : 'kurkoos', status: 'queued', attempts: 0, last_error: null, results: {}, created_by: uid, updated_at: new Date().toISOString() })
   }
   return ok
 }
@@ -214,7 +222,7 @@ Deno.serve(async (req) => {
   try {
     if (a === 'status') {
       const A = await app()
-      const { data: accs } = await db.from('social_accounts').select('id,network,name,username,picture,connected_at')
+      const { data: accs } = await db.from('social_accounts').select('id,network,name,username,picture,connected_at,brand')
       const { data: q } = await db.from('social_queue').select('status')
       const counts: Record<string, number> = {}
       ;(q || []).forEach((r) => { counts[r.status] = (counts[r.status] || 0) + 1 })
@@ -237,6 +245,16 @@ Deno.serve(async (req) => {
       if (A.configId) p.set('config_id', A.configId); else p.set('scope', SCOPES.join(','))
       return json({ url: 'https://www.facebook.com/' + (Deno.env.get('META_GRAPH_VERSION') || 'v23.0') + '/dialog/oauth?' + p }, 200, origin)
     }
+    if (a === 'assign') {
+      const id = String(body.id || ''), brand = body.brand === 'kurkoos' || body.brand === 'afik' ? body.brand : null
+      if (!id) return json({ error: 'חסר עמוד' }, 400, origin)
+      // one page per brand and network: giving a page a brand takes it from any other page of the same network
+      const { data: acc } = await db.from('social_accounts').select('network').eq('id', id).maybeSingle()
+      if (!acc) return json({ error: 'העמוד לא נמצא' }, 404, origin)
+      if (brand) await db.from('social_accounts').update({ brand: null }).eq('network', acc.network).eq('brand', brand)
+      await db.from('social_accounts').update({ brand }).eq('id', id)
+      return json({ ok: true }, 200, origin)
+    }
     if (a === 'disconnect') {
       await db.from('social_accounts').delete().in('network', ['facebook', 'instagram'])
       return json({ ok: true }, 200, origin)
@@ -257,7 +275,7 @@ Deno.serve(async (req) => {
       return json({ ok: true }, 200, origin)
     }
     if (a === 'list') {
-      const { data } = await db.from('social_queue').select('item_id,post_id,label,at,nets,status,results,attempts,last_error,updated_at').order('at', { ascending: false }).limit(300)
+      const { data } = await db.from('social_queue').select('item_id,post_id,label,at,nets,status,results,attempts,last_error,updated_at,brand').order('at', { ascending: false }).limit(300)
       return json({ items: data || [] }, 200, origin)
     }
     return json({ error: 'פעולה לא מוכרת' }, 400, origin)

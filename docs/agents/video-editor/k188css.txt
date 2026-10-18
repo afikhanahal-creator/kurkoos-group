@@ -144,4 +144,18 @@ body.v186lock{overflow:hidden}
  .v186ib2{padding-top:4px}
 }
 @media (prefers-reduced-motion:reduce){.v186info,.v186t img,.v186stage img,.v186chip,.v186det summary svg{transition:none}}
+
+/* v194: the viewer for Meta ads, the picture filling the stage, or the whole ad at a readable width */
+#v186v .v186stage.pic{display:block}
+#v186v .v186stage.pic,#v186v .v186stage.card{outline:none;border:0}#v186v .v186stage img{outline:none;border:0}
+#v186v .v186stage.pic img{position:absolute;top:120px;bottom:16px;inset-inline:16px;width:calc(100% - 32px);height:calc(100% - 136px);max-width:none;max-height:none;object-fit:contain;cursor:pointer;box-shadow:none;border-radius:0}
+#v186v .v186stage.card{display:block;overflow-y:auto;overflow-x:hidden;cursor:default;touch-action:pan-y;padding-top:118px;padding-bottom:28px}
+#v186v .v186stage.card img{display:block;width:min(100%,820px);height:auto;max-height:none;margin:0 auto;cursor:pointer}
+#v186v .v186stage.card.zoom img{width:min(100%,1400px);min-width:0}
+#v186v .v186stage.pic.zoom{overflow:auto}#v186v .v186stage.pic.zoom img{position:static;width:auto;height:auto;max-width:none;min-width:min(100%,1200px);margin:110px auto 0;display:block}
+#v186v .v186mode{position:absolute;top:70px;inset-inline-start:calc(400px + (100% - 400px)/2);transform:translateX(50%);z-index:4;display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:rgba(7,41,58,.86);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#v186v .v186mode button{min-height:38px;padding:0 16px;border:0;border-radius:9px;background:transparent;color:#cfe0e8;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+#v186v .v186mode button.on{background:#f7f8fa;color:#07293a}
+#v186v .v186stage.pic{padding-top:120px}
+@media (max-width:860px){#v186v .v186mode{top:62px;inset-inline-start:50%}#v186v .v186stage.pic img{top:110px;bottom:180px;inset-inline:8px;width:calc(100% - 16px);height:calc(100% - 290px)}#v186v .v186stage.card{padding-top:110px;padding-bottom:180px}}
 </style>

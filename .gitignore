@@ -41,3 +41,9 @@ video/sfx/sig/
 video/studio/*-out-stills/
 /kurkoos-*.mp4
 /kurkoos-*.png
+/scripts/meta_capture/out
+/scripts/meta_capture/up
+/scripts/meta_capture/shrink
+/scripts/meta_capture/*.log
+/scripts/meta_capture/*.done
+/scripts/meta_capture/ads.json

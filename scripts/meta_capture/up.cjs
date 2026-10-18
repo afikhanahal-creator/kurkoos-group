@@ -1,5 +1,6 @@
 // Upload captured Meta ads into the engine: one comp_shots row per unique creative (same page, picture and text),
-// with the 4K card screenshot (webp), a 1080px preview, and the creative itself (the 600px picture or the video frame).
+// with the card screenshot (webp, 2400px wide) and the creative itself (the 600px picture or the video frame).
+// The 1080px preview is no longer made: the viewer shows the creative, and the card when asked for the whole ad.
 // node up.cjs [--per-comp 6] [--dry] [--only C001] [--budget-mb 550]
 const fs=require('fs');const path=require('path');const cp=require('child_process');const crypto=require('crypto');
 const A=Object.fromEntries(process.argv.slice(2).map((a,i,v)=>a.startsWith('--')?[a.slice(2),(v[i+1]&&!v[i+1].startsWith('--'))?v[i+1]:true]:[]).filter(x=>x.length));
@@ -17,16 +18,16 @@ function upload(file,name,ct){if(A.dry)return {ok:true};const r=curl('POST',`${S
 function upsert(rows){if(A.dry)return;const f=path.join(UP,'_rows.json');fs.writeFileSync(f,JSON.stringify(rows));
  const r=curl('POST',`${SB}/rest/v1/engine_docs?on_conflict=collection,id`,{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},f);
  if(r.status>=300)throw new Error('upsert '+r.status+' '+r.body.slice(0,200))}
-// pictures: 4K card -> webp q85, preview 1080 webp, creative kept (jpg)
-function pics(id){const card=path.join(OUT,id+'_card.jpg');if(!fs.existsSync(card))return null;const big=path.join(UP,id+'_card.webp'),prev=path.join(UP,id+'_prev.webp');
- if(!fs.existsSync(big)||!fs.existsSync(prev)){sh(`python3 - "${card}" "${big}" "${prev}" <<'EOF'
+// pictures: card -> webp q80 at 2400px wide (enough for the text to stay sharp; the picture on it is a 600px original), creative kept (jpg)
+function pics(id){const card=path.join(OUT,id+'_card.jpg');if(!fs.existsSync(card))return null;const big=path.join(UP,id+'_card24.webp');
+ if(!fs.existsSync(big)){sh(`python3 - "${card}" "${big}" <<'EOF'
 import sys;from PIL import Image
-im=Image.open(sys.argv[1]).convert('RGB');im.save(sys.argv[2],'WEBP',quality=85,method=4)
-p=im.copy();p.thumbnail((1080,1080),Image.LANCZOS);p.save(sys.argv[3],'WEBP',quality=84,method=4)
-print(im.size)
+im=Image.open(sys.argv[1]).convert('RGB')
+if im.width>2400:im=im.resize((2400,round(im.height*2400/im.width)),Image.LANCZOS)
+im.save(sys.argv[2],'WEBP',quality=80,method=6)
 EOF`)}
  const [w,h]=sh(`python3 -c "from PIL import Image;im=Image.open('${big}');print(im.width,im.height)"`).trim().split(' ').map(Number);
- return {big,prev,w,h,bytes:fs.statSync(big).size+fs.statSync(prev).size}}
+ return {big,w,h,bytes:fs.statSync(big).size}}
 (async()=>{
  const rs=fs.readdirSync(OUT).filter(f=>/^\d+\.json$/.test(f)).map(f=>{try{return JSON.parse(fs.readFileSync(path.join(OUT,f),'utf8'))}catch(e){return null}}).filter(r=>r&&r.shot);
  // group by creative: page + media file name + text
@@ -43,12 +44,12 @@ EOF`)}
   const cre=r.frame||r.file||'';const creExt=cre?path.extname(cre).slice(1):'';const sz=p.bytes+(cre&&fs.existsSync(cre)?fs.statSync(cre).size:0);
   if(BUDGET&&total+sz>BUDGET){log('budget reached');break}
   try{
-   const bigN='blob/meta/'+r.id+'_card.webp',prevN='blob/meta/'+r.id+'_prev.webp',creN=cre?'blob/meta/'+r.id+'_creative.'+creExt:'';
-   upload(p.big,bigN,'image/webp');upload(p.prev,prevN,'image/webp');if(creN&&fs.existsSync(cre))upload(cre,creN,creExt==='png'?'image/png':'image/jpeg');
+   const bigN='blob/meta/'+r.id+'_card.webp',creN=cre?'blob/meta/'+r.id+'_creative.'+creExt:'';
+   upload(p.big,bigN,'image/webp');if(creN&&fs.existsSync(cre))upload(cre,creN,creExt==='png'?'image/png':'image/jpeg');
    const landing=(r.links||[]).map(u=>{const m=u.match(/[?&]u=([^&]+)/);try{return m?decodeURIComponent(m[1]):u}catch(e){return u}}).find(u=>!/facebook\.com/.test(u))||'';
    const cta=(r.buttons||[]).filter(b=>!/פרטי המודעה|תפריט/.test(b)).pop()||'';
    const doc={id:'meta_'+r.id,comp_id:r.comp_id,comp_name:r.comp_name||r.page_name||'',ad_id:r.id,ad_ids:l.map(x=>x.id),ad_title:r.title||'',note:String(r.body||'').slice(0,4000),
-    url:PUB+bigN,blob:bigN,prev:PUB+prevN,prev_blob:prevN,w:p.w,h:p.h,bytes:fs.statSync(p.big).size,type:'image/webp',name:r.id+'_card.webp',
+    url:PUB+bigN,blob:bigN,prev:'',prev_blob:'',w:p.w,h:p.h,bytes:fs.statSync(p.big).size,type:'image/webp',name:r.id+'_card.webp',
     creative:creN?PUB+creN:'',creative_blob:creN,cw:r.w||r.fw||0,ch:r.h||r.fh||0,media:(r.media||{}).type||'',page_name:r.page_name||'',start:r.start||'',status:r.status||'',cta,landing,
     added:new Date().toISOString(),source:'meta',captured:new Date().toISOString().slice(0,10),copies:l.length};
    rows.push({collection:'comp_shots',id:doc.id,data:doc});total+=sz;n++;

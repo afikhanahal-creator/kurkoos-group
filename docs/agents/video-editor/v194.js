@@ -112,6 +112,10 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
  if(a==='clear'){S.q='';S.comp='';S.fmt='';S.page=1;mount(true);return}
 },true);
 let qt=0;document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v194!=='q')return;clearTimeout(qt);const v=t.value;qt=setTimeout(()=>{S.q=v.trim();S.page=1;mount(true)},220)});
+// keep a copy of every competitor Facebook post picture in our storage: Facebook's link expires after a few days, our copy
+// stays. V181's keep() queues them one at a time and skips the ones already kept or already expired.
+let kept=false;function keepAll(){if(kept)return;const v=V();if(!v||!v.keep||typeof APP==='undefined'||!APP.db)return;const posts=v.allItems().filter(p=>!isShot(p));if(!posts.length)return;kept=true;posts.forEach(p=>{try{v.keep(p.id)}catch(e){}})}
+setInterval(()=>{try{keepAll()}catch(e){}},5000);
 window.__v194={S,campaigns,filtered,mount,keyOf,startOf};
 })();
 /*V194:END*/

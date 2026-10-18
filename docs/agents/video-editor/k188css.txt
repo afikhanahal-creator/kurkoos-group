@@ -158,4 +158,24 @@ body.v186lock{overflow:hidden}
 #v186v .v186mode button.on{background:#f7f8fa;color:#07293a}
 #v186v .v186stage.pic{padding-top:120px}
 @media (max-width:860px){#v186v .v186mode{top:62px;inset-inline-start:50%}#v186v .v186stage.pic img{top:110px;bottom:180px;inset-inline:8px;width:calc(100% - 16px);height:calc(100% - 290px)}#v186v .v186stage.card{padding-top:110px;padding-bottom:180px}}
+
+/* v194.2: actions on the ad, zoom that stays sharp */
+#v186v .v186tools{position:absolute;bottom:18px;inset-inline-start:calc(400px + (100% - 400px)/2);transform:translateX(50%);z-index:4;display:flex;gap:8px;padding:6px;border-radius:16px;background:rgba(7,41,58,.88);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#v186v .v186tools button{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 16px;border:0;border-radius:11px;background:rgba(255,255,255,.1);color:#f7f8fa;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+#v186v .v186tools button.pri{background:#f7f8fa;color:#07293a}
+#v186v .v186tools button:disabled{opacity:.6;cursor:progress}
+@media (hover:hover){#v186v .v186tools button:hover{background:rgba(255,255,255,.2)}#v186v .v186tools button.pri:hover{background:#fff}}
+#v186v .v186stage.pic img,#v186v .v186stage.card img{cursor:zoom-in}
+#v186v .v186stage.zoom{overflow:auto!important;cursor:grab}
+#v186v .v186stage.zoom img{cursor:zoom-out}
+#v186v .v186stage.pic.zoom img{position:static!important;display:block;height:auto!important;max-width:none!important;max-height:none!important;min-width:0!important;margin:120px auto 96px!important}
+#v186v .v186stage.card.zoom img{max-width:none!important;min-width:0!important;margin:0 auto 96px}
+#v186v .v186stage.pic img{bottom:92px!important;height:calc(100% - 212px)!important}
+#v186v .v186stage.card{padding-bottom:96px!important}
+@media (max-width:860px){
+ #v186v .v186tools{inset-inline-start:50%;bottom:auto;top:calc(100% - 238px);padding:4px;gap:4px}
+ #v186v .v186tools button{padding:0 14px;font-size:14px}#v186v .v186tools button.pri{display:none}
+ #v186v .v186stage.pic img{top:110px!important;bottom:248px!important;height:calc(100% - 358px)!important}
+ #v186v .v186stage.card{padding-bottom:250px!important}
+}
 </style>

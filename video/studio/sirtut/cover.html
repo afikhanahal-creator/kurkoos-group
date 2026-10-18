@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8">
+<!-- Cover for the "קריאת שרטוט" reel. 1080x1920; everything that matters sits inside the 4:5 grid crop (y 285 to 1635). -->
+<style>
+  @font-face{font-family:Almoni;font-weight:400;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:Almoni;font-weight:700;src:url(../../fonts/Almoni-700.ttf)}
+  html,body{margin:0;background:#f7f8fa}
+  #c{position:relative;width:1080px;height:1920px;overflow:hidden;font-family:Almoni;color:#07293a;
+     background:#f7f8fa;
+     background-image:linear-gradient(#8fb6c833 2px,transparent 2px),linear-gradient(90deg,#8fb6c833 2px,transparent 2px);
+     background-size:60px 60px;background-position:30px 30px}
+  .frame{position:absolute;inset:60px;border:4px solid #8fb6c8;border-radius:6px}
+  .kick{position:absolute;top:330px;right:110px;font-weight:700;font-size:54px;background:#07293a;color:#f7f8fa;border-radius:999px;padding:14px 34px 20px}
+  h1{position:absolute;top:430px;right:104px;margin:0;font-weight:700;font-size:200px;line-height:.92;letter-spacing:-2px}
+  h1 span{display:block}
+  .dim{position:absolute;top:900px;right:110px;width:860px;height:200px}
+  .stamp{position:absolute;top:1170px;left:120px;transform:rotate(-6deg);border:12px solid #a90b0c;color:#a90b0c;border-radius:30px;font-weight:700;font-size:200px;line-height:1;padding:20px 54px 44px}
+  .sub{position:absolute;top:1220px;right:110px;font-weight:700;font-size:70px;line-height:1.1}
+  .sub small{display:block;font-weight:400;font-size:46px;color:#105572;margin-top:14px}
+  .brand{position:absolute;top:1480px;right:110px;left:110px;height:150px;background:#07293a;border-radius:28px;display:flex;align-items:center;justify-content:space-between;padding:0 50px;box-sizing:border-box}
+  .brand img{height:92px}.brand b{color:#f7f8fa;font-size:56px;font-weight:700}
+</style></head><body>
+<div id="c">
+  <div class="frame"></div>
+  <div class="kick">פעם ראשונה מול שרטוט?</div>
+  <h1><span>איך קוראים</span><span>שרטוט</span></h1>
+  <svg class="dim" viewBox="0 0 860 200">
+    <g stroke="#07293a" stroke-width="6" fill="none">
+      <line x1="560" y1="70" x2="800" y2="70"/><line x1="560" y1="40" x2="560" y2="100"/><line x1="800" y1="40" x2="800" y2="100"/>
+      <line x1="680" y1="104" x2="680" y2="150" stroke-dasharray="8 10" stroke="#8fb6c8"/>
+    </g>
+    <text x="680" y="22" font-family="Almoni" font-weight="700" font-size="46" fill="#07293a" text-anchor="middle">1 ס"מ</text>
+    <g stroke="#a90b0c" stroke-width="6"><line x1="20" y1="176" x2="840" y2="176"/><line x1="20" y1="150" x2="20" y2="200"/><line x1="840" y1="150" x2="840" y2="200"/></g>
+  </svg>
+  <div class="sub">3 כללים<small>לפני שבונים</small></div>
+  <div class="stamp" dir="ltr">1:50</div>
+  <div class="brand"><img src="logo.png" alt="קבוצת קורקוס"><b dir="ltr">055-981-1814</b></div>
+</div>
+</body></html>

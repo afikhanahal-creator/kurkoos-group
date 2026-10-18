@@ -10,4 +10,13 @@
 .v192mc p{margin:0;font-size:14px;line-height:1.55}
 .v192f{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}.v192f label{flex:1 1 240px}
 .v192g{margin-top:10px}.v192g h4{margin:14px 0 6px;font-size:15px;color:#07293a}.v192g ol{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.55}
+/* V193 · "להעלות עכשיו": channels without automatic publishing, one tap to the app */
+.v173c.mid{background:#fff4dc;color:#8a5a00}
+.v193{margin:14px 0;padding:14px 16px;border-radius:16px;background:#fdf7ec;border:1px solid #f1dfb8}
+.v193 .v177h3{margin:0 0 4px}.v193p{margin:0 0 10px;font-size:13.5px}
+.v193i{flex-wrap:wrap;gap:10px}.v193i.late .v177qt span{color:#a90b0c;font-weight:700}
+.v193n{display:flex;flex-direction:column;gap:8px;width:100%}
+.v193c{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.v193c b{min-width:72px;font-size:14px;color:#07293a}
+.v192mc summary{list-style:none;cursor:pointer}.v192mc summary::-webkit-details-marker{display:none}
+#appviews>.v193{margin:0 0 16px}
 </style>

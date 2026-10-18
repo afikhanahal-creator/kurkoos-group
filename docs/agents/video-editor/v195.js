@@ -134,7 +134,7 @@ addEventListener('popstate',()=>{if(skip>0){skip--;hush();if(pending){const p=pe
 // closed by V172's own handlers (the X, the backdrop, Escape)
 new MutationObserver(()=>{if(pushed&&!sheetOpen())released(null)}).observe(document.body,{childList:true});
 function closeMore(after){const w=document.getElementById('v172sheet');if(w&&w.classList.contains('v195sh'))w.remove();if(back&&back.isConnected)try{back.focus({preventScroll:true})}catch(e){}back=null;released(after)}
-function openMore(){const old=document.getElementById('v172sheet');if(old)old.remove()back=document.activeElement;const list=items();
+function openMore(){const old=document.getElementById('v172sheet');if(old)old.remove();back=document.activeElement;const list=items();
  const t=(document.getElementById('vt')||{}).textContent||'';
  const w=document.createElement('div');w.id='v172sheet';w.className='v195sh';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label','עוד');
  w.innerHTML=`<div class="v172bg" data-v172x="1"></div><div class="v172pan"><div class="v172grip" aria-hidden="true"></div><div class="v172h"><div><b>עוד</b>${t?`<span>${E(t)}</span>`:''}</div><button type="button" class="v172x" data-v172x="1" aria-label="סגירה">${IC.x}</button></div><div class="v172l"></div></div>`;

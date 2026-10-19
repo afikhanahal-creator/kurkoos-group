@@ -13,7 +13,9 @@ const log=s=>{const l=new Date().toISOString().slice(11,19)+' '+s;console.log(l)
 const sh=(c)=>cp.execSync(c,{maxBuffer:64e6}).toString();
 function curl(method,url,headers,file){const hs=Object.entries(headers).map(([k,v])=>`-H '${k}: ${v}'`).join(' ');const data=file?`--data-binary @"${file}"`:'';
  const b=sh(`curl -s -m 180 -X ${method} -w '\\n%{http_code}' ${hs} ${data} "${url}"`);const k=b.lastIndexOf('\n');return {status:+b.slice(k+1),body:b.slice(0,k)}}
-function upload(file,name,ct){if(A.dry)return {ok:true};const r=curl('POST',`${SB}/storage/v1/object/engine-media/${name}`,{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':ct,'x-upsert':'true'},file);
+// uploads are free (ingress); a 402 means the project is restricted for going over its transfer quota: stop
+function upload(file,name,ct){if(A.dry)return {ok:true};const r=curl('POST',`${SB}/storage/v1/object/engine-media/${name}`,{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':ct,'x-upsert':'true','cache-control':'max-age=31536000'},file);
+ if(r.status===402){log('STOP: Supabase answered 402 (the monthly transfer quota is used up). Upload again after it resets.');process.exit(3)}
  if(r.status>=300)throw new Error('upload '+r.status+' '+r.body.slice(0,160));return {ok:true}}
 function upsert(rows){if(A.dry)return;const f=path.join(UP,'_rows.json');fs.writeFileSync(f,JSON.stringify(rows));
  const r=curl('POST',`${SB}/rest/v1/engine_docs?on_conflict=collection,id`,{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},f);

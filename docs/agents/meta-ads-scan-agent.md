@@ -104,9 +104,11 @@ screenshot of the ad card at 2400px wide (webp q80), one `comp_shots` row per un
 
 Each run: ads whose `first_seen` is within the last 2 days (new ads, a day of slack), newest first. Steps:
 1. Run `scripts/meta_capture/policies_on.sql` with the Supabase connector (`execute_sql`): temporary anon write policies, limited to `blob/meta/` and `comp_shots` ids `meta_`.
-2. `node scripts/meta_capture/crawl.cjs --refresh --new-days 2` (the refresh re-reads `meta_ads`, so today's ads are in the list) then `node scripts/meta_capture/up.cjs --budget-mb <MB left below 970>`.
+2. `node scripts/meta_capture/crawl.cjs --new-days 2 --max-mb 20` then `node scripts/meta_capture/up.cjs --budget-mb <MB left below 970>`. The crawl reads only the ads first seen in the last 2 days and only the fields it needs (a few KB, not the whole table), and stops itself past 20 MB read. Exit code 3 from either script means Supabase answered 402: the monthly transfer quota is used up. Then stop this step and say so in the report; nothing is lost, the ads wait for the next run.
 3. Run `scripts/meta_capture/policies_off.sql`. Never leave the write policies on.
 4. Report captured creatives and the storage used. A login wall or CAPTCHA from Meta means stop and say so; never work around it.
+
+Transfer (egress): the free plan allows 5 GB a month of data and files read out of Supabase, and going over it restricts the whole project, the content engine included. Uploads do not count. So this step never downloads pictures or whole tables, and the report says how much the crawl read ("read N recent ads (X KB from Supabase)" in `crawl.log`).
 
 Storage: the project is on the free Supabase plan (1 GB). A new creative costs about 0.17 MB (card 0.13 + picture 0.04).
 Check the bucket size first (`select sum((metadata->>'size')::bigint) from storage.objects`). Upload while it stays under

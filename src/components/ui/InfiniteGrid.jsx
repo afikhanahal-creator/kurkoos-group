@@ -1,6 +1,7 @@
 import { useRef, useEffect, useId } from 'react'
 import { motion, useMotionValue, useMotionTemplate, useAnimationFrame } from 'framer-motion'
 import './InfiniteGrid.css'
+import { motionStopped } from '../../lib/motion.js'
 
 /* ============================================================
    InfiniteGrid — רקע רשת נע אינסופי עם חשיפת "פנס" בעכבר.
@@ -58,7 +59,7 @@ export default function InfiniteGrid({
 
   useAnimationFrame(() => {
     // לא מצויר/לא על המסך → לא מעדכנים את ה-pattern (בלי re-paint מיותר)
-    if (reducedRef.current || !runningRef.current) return
+    if (reducedRef.current || !runningRef.current || motionStopped()) return
     offX.set((offX.get() + speed) % size)
     offY.set((offY.get() + speed) % size)
   })

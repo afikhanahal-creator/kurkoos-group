@@ -21,7 +21,7 @@ export default function ProjectCard({ project }) {
       <div className="project-card__media">
         <SmartImage
           src={project.cover}
-          alt={L(project.name)}
+          alt=""
           label={L(project.name)}
           className="project-card__img"
         />

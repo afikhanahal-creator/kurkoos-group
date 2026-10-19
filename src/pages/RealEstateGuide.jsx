@@ -31,10 +31,10 @@ const LOCAL = {
         ) : (
           <>
             {cats.length > 1 && (
-              <div className="yz-filters" role="tablist" aria-label="סינון לפי נושא">
-                <button type="button" className={`yz-chip ${cat === 'all' ? 'is-on' : ''}`} onClick={() => setCat('all')}>הכול</button>
+              <div className="yz-filters" role="group" aria-label="סינון לפי נושא">
+                <button type="button" className={`yz-chip ${cat === 'all' ? 'is-on' : ''}`} aria-pressed={cat === 'all'} onClick={() => setCat('all')}>הכול</button>
                 {cats.map((c) => (
-                  <button type="button" key={c} className={`yz-chip ${cat === c ? 'is-on' : ''}`} onClick={() => setCat(c)}>{c}</button>
+                  <button type="button" key={c} className={`yz-chip ${cat === c ? 'is-on' : ''}`} aria-pressed={cat === c} onClick={() => setCat(c)}>{c}</button>
                 ))}
               </div>
             )}
@@ -83,7 +83,7 @@ export default function RealEstateGuide() {
             <time>{fmtDate(a.date)}</time>
             {a.readingTime && <><span className="yz-dot">·</span><span>{a.readingTime}</span></>}
           </div>
-          <h3 className="yz-card__title">{a.title}</h3>
+          <h2 className="yz-card__title">{a.title}</h2>
           <p className="yz-card__excerpt">{a.excerpt}</p>
           <span className="yz-card__read">קראו את הכתבה <Icon name="arrow" size={16} /></span>
         </div>

@@ -29,12 +29,14 @@ export default function Newsletter() {
   return (
     <div className="newsletter">
       <div>
-        <h3 className="newsletter__title">{t('newsletter.title')}</h3>
+        <h2 className="newsletter__title">{t('newsletter.title')}</h2>
         <p className="newsletter__lead">{t('newsletter.lead')}</p>
       </div>
-      {done ? (
-        <p className="newsletter__done"><Icon name="check" size={20} /> {t('newsletter.done')}</p>
-      ) : (
+      {/* הודעת הצלחה מוקראת לקורא מסך (אזור חי שקיים מראש) */}
+      <div aria-live="polite" className="newsletter__live">
+        {done && <p className="newsletter__done"><Icon name="check" size={20} /> {t('newsletter.done')}</p>}
+      </div>
+      {done ? null : (
         <form className="newsletter__form" onSubmit={submit}>
           <input
             type="email"
@@ -43,11 +45,14 @@ export default function Newsletter() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t('newsletter.placeholder')}
             aria-label={t('newsletter.placeholder')}
+            autoComplete="email"
+            aria-invalid={err ? true : undefined}
+            aria-describedby={err ? 'newsletter-err' : undefined}
           />
           <button type="submit" className="btn btn--primary" disabled={busy}>
             {busy ? '…' : t('newsletter.submit')}
           </button>
-          {err && <p className="newsletter__err" role="alert">{err}</p>}
+          {err && <p className="newsletter__err" id="newsletter-err" role="alert">{err}</p>}
         </form>
       )}
     </div>

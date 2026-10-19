@@ -113,12 +113,14 @@
   z-index: var(--z-overlay);
 }
 [dir='rtl'] .header__dropdown { transform: translateX(50%) translateY(8px); }
-.header__nav-item:hover .header__dropdown {
+.header__nav-item:hover .header__dropdown,
+.header__nav-item:focus-within:not(.is-dismissed) .header__dropdown {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
-[dir='rtl'] .header__nav-item:hover .header__dropdown { transform: translateX(50%) translateY(0); }
+[dir='rtl'] .header__nav-item:hover .header__dropdown,
+[dir='rtl'] .header__nav-item:focus-within:not(.is-dismissed) .header__dropdown { transform: translateX(50%) translateY(0); }
 .header__dropdown-inner {
   background: #fff;
   border-radius: var(--radius-md);
@@ -371,10 +373,10 @@
   color: #fff;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 .header__mobile-lang {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   padding: 0.22rem 0.6rem;
   color: #fff;
   border-color: rgba(255, 255, 255, 0.55);
@@ -486,7 +488,7 @@
     justify-content: center;
     white-space: nowrap;
     padding: 0.6em 1.3em;       /* ב-em → מתכווץ יחד עם הפונט */
-    font-size: 0.57rem;          /* הוקטן ב-30% בדסקטופ (0.82 → 0.57) */
+    font-size: 0.75rem;          /* הוקטן ב-30% בדסקטופ (0.82 → 0.57) */
     font-weight: 700;
     min-height: 27px;            /* הוקטן ב-30% (38 → 27) */
     border-radius: var(--radius-pill);
@@ -517,7 +519,7 @@
   .header__main-inner { gap: 0.25rem; }
   .header__main-inner .logo__img { height: 58px; }
   .header__burger { width: 40px; height: 40px; }
-  .header__actions .header__cta-btn { font-size: 0.71rem; padding: 0.5em 0.95em; min-height: 34px; }
+  .header__actions .header__cta-btn { font-size: 0.75rem; padding: 0.5em 0.95em; min-height: 34px; }
 }
 
 /* ---- שדרוג Header בדסקטופ: לוגו בימין, ניווט במרכז, פעולות בשמאל (העיצוב המקורי) ---- */

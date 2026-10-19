@@ -1,0 +1,77 @@
+/* ============================================================
+   נגישות: כללים גלובליים (ת״י 5568 חלק 1, רמה AA / WCAG 2.0 AA)
+   נטען אחרון ב-main.jsx.
+   ============================================================ */
+
+:root {
+  /* צבע טבעת המיקוד: תערובת של טורקיז המותג (500) והגוון הבהיר שלו (300).
+     ניגודיות 3:1 לפחות גם על לבן ועל אוף-וייט וגם על הכחול הכהה של המותג,
+     כך שאותו צבע עובד ברוב הסקשנים. ברקעי טורקיז בינוני מחליפים ללבן. */
+  --focus-ring: #4083a1;
+  --focus-ring: color-mix(in srgb, var(--color-primary-500) 65%, var(--color-primary-300));
+  --focus-ring-dark: #ffffff;
+}
+
+/* ---------- טבעת מיקוד גלויה לכל אלמנט שמקבל מיקוד (WCAG 2.4.7) ----------
+   כלל אחד לכל האתר. !important רק על הקו עצמו, כדי שרכיב שכתב outline:none
+   לא יעלים את המיקוד. רכיבים יכולים לשנות את outline-offset ואת הצבע דרך
+   המשתנה --focus-ring. */
+:where(a[href], area[href], button, input, select, textarea, summary, iframe,
+  [tabindex]:not([tabindex="-1"]), [contenteditable="true"], [role="button"], [role="tab"]):focus-visible {
+  outline-style: solid !important;
+  outline-width: 3px !important;
+  outline-color: var(--focus-ring) !important;
+  outline-offset: 2px;
+}
+/* שדות טקסט: גם בלחיצת עכבר הדפדפן מסמן :focus-visible, וזה רצוי (רואים איפה מקלידים) */
+:where(input, select, textarea):focus-visible { outline-offset: 1px; }
+/* iframe (מפה, וידאו): הקו בתוך המסגרת, כדי שלא ייחתך על ידי overflow של ההורה */
+iframe:focus-visible { outline-offset: -3px; }
+/* כרום לא מסמן :focus-visible על iframe כשהמיקוד עובר לתוכו, ולכן גם :focus */
+iframe:focus { outline: 3px solid var(--focus-ring) !important; outline-offset: -3px; }
+/* main מקבל מיקוד מקישור הדילוג בלבד: בלי מסגרת סביב כל העמוד */
+main:focus, main:focus-visible { outline: none; }
+
+/* אזורים כהים: טבעת לבנה */
+.footer, .site-footer, .tc__card--back, .actmenu__panel, .hero--dark,
+.mentor-field, .yz-cta, .art-cta, .hl-cta, .cx-hero, .pd-lightbox, .tc-lb, .modal--dark,
+[data-surface="dark"] {
+  --focus-ring: var(--focus-ring-dark);
+}
+
+/* ---------- כפתור עצירה/המשך לתוכן שמתחלף אוטומטית (WCAG 2.2.2) ---------- */
+.motion-toggle {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  line-height: 0;
+}
+.motion-toggle--dark {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(7, 41, 58, 0.55);
+  color: #fff;
+  --focus-ring: var(--focus-ring-dark);
+}
+
+/* ---------- עצירת אנימציות מתפריט הנגישות (כמו prefers-reduced-motion) ---------- */
+html.a11y-no-motion { scroll-behavior: auto; }
+html.a11y-no-motion *,
+html.a11y-no-motion *::before,
+html.a11y-no-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------- טקסט נסתר שמופיע במיקוד (קישורי דילוג נוספים וכו') ---------- */
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}

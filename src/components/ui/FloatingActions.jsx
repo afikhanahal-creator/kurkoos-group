@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useI18n } from '../../i18n/index.jsx'
+import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { waHref } from '../../lib/contact.js'
 import Icon from './Icon.jsx'
 import { track } from '../../lib/track.js'
@@ -8,6 +8,7 @@ import './FloatingActions.css'
 
 export default function FloatingActions() {
   const { t } = useI18n()
+  const L = useLocalized()
   const [showTop, setShowTop] = useState(false)
 
   useEffect(() => {
@@ -17,13 +18,13 @@ export default function FloatingActions() {
   }, [])
 
   return (
-    <div className="floating-actions">
+    <aside className="floating-actions" aria-label={L({ he: 'פעולות מהירות', en: 'Quick actions' })}>
       <a
         href={waHref(t('contact.waOpener'))}
         target="_blank"
         rel="noopener noreferrer"
         className="fab fab--wa"
-        aria-label="WhatsApp"
+        aria-label={L({ he: 'שיחה בוואטסאפ (נפתח בחלון חדש)', en: 'Chat on WhatsApp (opens in a new window)' })}
         onClick={() => track('whatsapp_click', { placement: 'floating' })}
       >
         <Icon name="whatsapp" size={26} />
@@ -43,6 +44,6 @@ export default function FloatingActions() {
           </motion.button>
         )}
       </AnimatePresence>
-    </div>
+    </aside>
   )
 }

@@ -31,8 +31,8 @@ export default function CookieBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          role="dialog"
-          aria-live="polite"
+          role="region"
+          aria-label={t('cookie.label')}
         >
           <p className="cookie-banner__text">
             {t('cookie.text')}{' '}

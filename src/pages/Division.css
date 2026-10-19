@@ -63,7 +63,7 @@
   gap: 0.5rem;
   padding: 0.85rem 2rem;
   border-radius: var(--radius-pill);
-  background: #7680c1;
+  background: #6670b5;   /* סגול אפיק הנחל, כהה מעט: 4.6:1 מול לבן (היה 3.7) */
   color: #fff;
   font-family: var(--font-heading);
   font-weight: 700;
@@ -72,7 +72,7 @@
   transition: transform var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
-.ah-site__btn:hover { background: #5a64a8; transform: translateY(-2px); box-shadow: 0 18px 40px -12px rgba(118, 128, 193, 0.8); } }
+.ah-site__btn:hover { background: #4a5394; transform: translateY(-2px); box-shadow: 0 18px 40px -12px rgba(118, 128, 193, 0.8); } }
 .ah-site__btn svg { transform: scaleX(-1); }   /* חץ לכיוון RTL */
 
 /* "חלון" מרכזי — מסגרת עם הילה סגולה, הטיית 3D וברק בריחוף (סגנון ה-Ticket) */
@@ -374,7 +374,7 @@
     justify-content: center;
     gap: 0.3rem;
     padding: 0.16rem 0.34rem;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 500;
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -402,7 +402,7 @@
   .division-hero .breadcrumbs__back-ic { width: 13px; height: 13px; }
   /* טקסט הנתיב — ברור וקריא */
   .division-hero .breadcrumbs__current,
-  .division-hero .breadcrumbs__link { font-size: 0.74rem; font-weight: 500; }
+  .division-hero .breadcrumbs__link { font-size: 0.75rem; font-weight: 500; }
   .division-hero .breadcrumbs__current { font-weight: 600; }
   /* אייקון התחום / לוגו ראיתה — ממורכזים בכל עמודי התחומים */
   .division-hero__icon,

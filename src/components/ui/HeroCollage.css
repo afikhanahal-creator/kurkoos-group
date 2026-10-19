@@ -196,7 +196,7 @@
   .hc-card__name { padding: 0.8rem 0.6rem 0.55rem; font-size: 0.78rem; }
   .hc-card__shutter { padding: 0.8rem; gap: 0.35rem; }
   .hc-card__shutter-title { font-size: 0.92rem; }
-  .hc-card__shutter-desc { font-size: 0.72rem; }
+  .hc-card__shutter-desc { font-size: 0.75rem; }
   .hc-card__shutter-cta { font-size: 0.78rem; }
 }
 

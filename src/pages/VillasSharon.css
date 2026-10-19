@@ -295,7 +295,7 @@
 .vsh-panel { padding: 1.7rem 1.9rem 2rem; }
 .vsh-panel__kicker {
   display: inline-block; margin-bottom: 0.35rem; font-family: var(--font-heading);
-  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.16em; color: var(--color-secondary, #16688c);
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; color: var(--color-secondary, #16688c);
 }
 .vsh-panel__head h3 { font-size: clamp(1.5rem, 2.6vw, 1.9rem); letter-spacing: -0.01em; }
 .vsh-panel__tag { font-size: 1.05rem; line-height: 1.6; max-width: 56ch; }
@@ -309,7 +309,7 @@
   background: linear-gradient(180deg, #f6f9fb, #eef4f8);
   border: 1px solid rgba(22, 104, 140, 0.12);
 }
-.vsh-specs dt { font-size: 0.72rem; margin-bottom: 0.3rem; }
+.vsh-specs dt { font-size: 0.75rem; margin-bottom: 0.3rem; }
 .vsh-specs dd { font-size: 0.98rem; }
 
 .vsh-panel__cols { padding-top: 1.5rem; border-top: 1px solid rgba(22, 104, 140, 0.12); }

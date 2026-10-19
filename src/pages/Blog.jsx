@@ -25,11 +25,11 @@ const LOCAL = {
           {posts.map((p, i) => (
             <Reveal as="article" key={p.slug} className="blog-card" delay={(i % 3) * 0.08}>
               <div className="blog-card__media">
-                <SmartImage src={p.cover} alt={L(p.title)} label={L(p.title)} />
+                <SmartImage src={p.cover} alt="" label={L(p.title)} />
               </div>
               <div className="blog-card__body">
                 <time className="blog-card__date">{fmtDate(p.date)}</time>
-                <h3 className="blog-card__title">{L(p.title)}</h3>
+                <h2 className="blog-card__title">{L(p.title)}</h2>
                 <p className="blog-card__excerpt">{L(p.excerpt)}</p>
                 <span className="blog-card__read">
                   {t('pages.blog.read')} <Icon name="arrow" size={16} />

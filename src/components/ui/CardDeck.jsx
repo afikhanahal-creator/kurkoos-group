@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './CardDeck.css'
+import { motionStopped } from '../../lib/motion.js'
 
 /* ============================================================
    CardDeck — ערימת כרטיסים נלחצת (port ל-JSX של animata card-stack).
@@ -36,7 +37,7 @@ function throwImpulse() {
   }
 }
 
-export default function CardDeck({ items, renderCard, className = '', ariaLabel = 'Next card' }) {
+export default function CardDeck({ items, renderCard, className = '', nextLabel = 'הכרטיס הבא' }) {
   const [list, setList] = useState(items)
   const [busy, setBusy] = useState(false)
   const [pressed, setPressed] = useState(false)
@@ -44,6 +45,11 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
   const timerRef = useRef(null)
   const touchX = useRef(null)
   const rootRef = useRef(null)
+  // עצירת ההחלפה האוטומטית (WCAG 2.2.2): כפתור, ריחוף ומיקוד מקלדת
+  const [stopped, setStopped] = useState(false)
+  const holdRef = useRef(false)
+  const stoppedRef = useRef(false)
+  stoppedRef.current = stopped
 
   const reduce =
     typeof window !== 'undefined' &&
@@ -80,8 +86,8 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
       if (started) return
       started = true
       start = setTimeout(() => {
-        advanceRef.current()
-        interval = setInterval(() => advanceRef.current(), 4000)
+        if (!holdRef.current && !stoppedRef.current && !motionStopped()) advanceRef.current()
+        interval = setInterval(() => { if (!holdRef.current && !stoppedRef.current && !motionStopped()) advanceRef.current() }, 4000)
       }, 4000)
     }
     let io
@@ -109,11 +115,31 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
   const visible = list.slice(0, DEPTH)
 
   return (
-    <div ref={rootRef} className={`card-deck ${className}`}>
+    <div
+      ref={rootRef}
+      className={`card-deck ${className}`}
+      onMouseEnter={() => { holdRef.current = true }}
+      onMouseLeave={() => { holdRef.current = false }}
+      onFocus={() => { holdRef.current = true }}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) holdRef.current = false }}
+    >
+      {items.length > 1 && (
+        <button
+          type="button"
+          className="motion-toggle card-deck__pause"
+          onClick={() => setStopped((v) => !v)}
+          aria-pressed={stopped}
+          aria-label="עצירת ההחלפה האוטומטית"
+        >
+          <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false" fill="currentColor">
+            {stopped ? <path d="M7 4l13 8-13 8z" /> : <path d="M6 4h4v16H6zM14 4h4v16h-4z" />}
+          </svg>
+        </button>
+      )}
+      {/* שם הכפתור הוא תוכן הכרטיס העליון (הכותרת והתיאור), ובסופו "הכרטיס הבא" */}
       <button
         type="button"
         className="card-deck__trigger"
-        aria-label={ariaLabel}
         onClick={advance}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
@@ -162,6 +188,7 @@ export default function CardDeck({ items, renderCard, className = '', ariaLabel 
             })}
           </AnimatePresence>
         </div>
+        <span className="sr-only">{nextLabel}</span>
       </button>
     </div>
   )

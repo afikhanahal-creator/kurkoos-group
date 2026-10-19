@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { useState, useEffect, useRef, Fragment } from 'react'
+import { useState, useEffect, useRef, useId, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
 import divisions from '../data/divisions.js'
@@ -28,14 +28,16 @@ import NotFound from './NotFound.jsx'
 
 /* דקורציה — רשת נקודות עדינה עם כמה "+" צבעוניים, ברקע אזורי banner/contact */
 function DottedGrid({ className = '' }) {
+  // מזהה ייחודי לכל מופע: הרשת מופיעה פעמיים בעמוד, ו-id כפול אינו תקין
+  const pid = `pd-dot-${useId().replace(/:/g, '')}`
   return (
     <svg className={`pd-dots ${className}`} viewBox="0 0 240 160" aria-hidden="true" focusable="false">
       <defs>
-        <pattern id="pd-dot" width="20" height="20" patternUnits="userSpaceOnUse">
+        <pattern id={pid} width="20" height="20" patternUnits="userSpaceOnUse">
           <circle cx="2" cy="2" r="1.4" fill="currentColor" />
         </pattern>
       </defs>
-      <rect width="240" height="160" fill="url(#pd-dot)" />
+      <rect width="240" height="160" fill={`url(#${pid})`} />
       <g strokeWidth="2.4" strokeLinecap="round">
         <path d="M44 28h12M50 22v12" stroke="#e0a106" />
         <path d="M186 116h12M192 110v12" stroke="#a90b0c" />
@@ -777,13 +779,12 @@ export default function ProjectDetail() {
           </Reveal>
 
           {galleryGroups.length > 1 && (
-            <div className="pd-gtabs" role="tablist">
+            <div className="pd-gtabs" role="group" aria-label={L({ he: 'קבוצות תמונות', en: 'Image groups' })}>
               {galleryGroups.map((g, i) => (
                 <button
                   key={i}
                   type="button"
-                  role="tab"
-                  aria-selected={galleryTab === i}
+                  aria-pressed={galleryTab === i}
                   className={`pd-gtab ${galleryTab === i ? 'is-active' : ''}`}
                   onClick={() => { setGalleryTab(i); setGallerySlide(0) }}
                 >
@@ -840,16 +841,18 @@ export default function ProjectDetail() {
                     <span className="pd-gallery__zoom"><Icon name="search" size={20} /></span>
                   </button>
                 </div>
+                {/* הודעה לקורא מסך כשהתמונה מתחלפת */}
+                <p className="sr-only" aria-live="polite">{n > 1 ? `${L({ he: 'תמונה', en: 'Image' })} ${slide + 1} ${L({ he: 'מתוך', en: 'of' })} ${n}` : ''}</p>
                 {n > 1 && (
                   <div className="pd-carousel__controls">
-                    <div className="pd-carousel__dots" role="tablist" aria-label={L({ he: 'תמונות', en: 'Images' })}>
+                    <div className="pd-carousel__dots" role="group" aria-label={L({ he: 'בחירת תמונה', en: 'Choose image' })}>
                       {currentImages.map((_, i) => (
                         <button
                           key={i}
                           type="button"
                           className={`pd-carousel__dot ${i === slide ? 'is-active' : ''}`}
-                          aria-label={`${L({ he: 'תמונה', en: 'Image' })} ${i + 1}`}
-                          aria-current={i === slide}
+                          aria-label={`${L({ he: 'תמונה', en: 'Image' })} ${i + 1} ${L({ he: 'מתוך', en: 'of' })} ${n}`}
+                          aria-current={i === slide ? 'true' : undefined}
                           onClick={() => setGallerySlide(i)}
                         />
                       ))}
@@ -936,7 +939,7 @@ export default function ProjectDetail() {
                   <Reveal key={p.slug} delay={i * 0.08}>
                     <Link to={`/projects/${p.slug}`} className="pd-more__card">
                       <span className="pd-more__img">
-                        <SmartImage src={p.cover} alt={L(p.name)} label={L(p.name)} />
+                        <SmartImage src={p.cover} alt="" label={L(p.name)} />
                       </span>
                       <span className="pd-more__title">{L(p.name)}</span>
                     </Link>

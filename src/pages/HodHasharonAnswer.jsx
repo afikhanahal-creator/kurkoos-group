@@ -49,7 +49,7 @@ const LOCAL = {
               </a>
             </div>
           </div>
-          <aside className="hl-sign hh-sign" aria-label="בקצרה">
+          <div className="hl-sign hh-sign" role="note" aria-label="בקצרה">
             <span className="hl-sign__band">קבוצת קורקוס</span>
             <dl className="hl-sign__rows">
               <div><dt>בנייה</dt><dd>ראיתה, זרוע הביצוע</dd></div>
@@ -61,7 +61,7 @@ const LOCAL = {
                 <dd><a href={telHref()} onClick={call('sign')} dir="ltr">{CONTACT_PHONE_DISPLAY}</a></dd>
               </div>
             </dl>
-          </aside>
+          </div>
         </div>
       </div>
     </header>
@@ -155,7 +155,7 @@ const LOCAL = {
           <h2 className="hl-h2" id="hh-table">קבלן מבצע מול מפקח מטעם המזמין</h2>
           <p className="hl-head__lead">שני תפקידים, שני הסכמים, ואינטרס אחד שלכם: בית שנבנה לפי התוכנית.</p>
         </div>
-        <div className="hh-table-wrap" role="region" aria-labelledby="hh-table" tabIndex={0}>
+        <div className="hh-table-wrap" role="region" aria-label="טבלת ההשוואה, אפשר לגלול לצדדים" tabIndex={0}>
           <table className="hh-table">
             <thead>
               <tr>{HH_TABLE.cols.map((c, i) => (i === 0 ? <td key="corner" /> : <th key={c} scope="col">{c}</th>))}</tr>

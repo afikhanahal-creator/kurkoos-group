@@ -65,7 +65,7 @@
 .acover__cat {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
   padding: 0.32em 0.85em;
   border-radius: 999px;
@@ -87,7 +87,7 @@
 .acover__brand {
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   color: rgba(245, 242, 236, 0.62);
 }

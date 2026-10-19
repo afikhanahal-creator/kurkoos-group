@@ -123,6 +123,7 @@ export default {
     text: 'This site uses cookies to improve your browsing experience.',
     accept: 'Accept',
     more: 'Privacy policy',
+    label: 'Cookie notice',
   },
   search: {
     label: 'Search',

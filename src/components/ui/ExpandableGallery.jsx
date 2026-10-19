@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useIsMobile from '../../hooks/useIsMobile.js'
 import Icon from './Icon.jsx'
+import useFocusTrap from '../../hooks/useFocusTrap.js'
 import './ExpandableGallery.css'
 import { optimizeSrc } from '../../lib/responsiveImage.js'
 
@@ -17,6 +18,15 @@ export default function ExpandableGallery({ images = [] }) {
   const [selected, setSelected] = useState(null)
   const [failed, setFailed] = useState(() => new Set())
   const isMobile = useIsMobile()
+  // תצוגה מוגדלת: המיקוד בתוך החלון, Escape סוגר, והמיקוד חוזר לתמונה שנפתחה
+  const modalRef = useRef(null)
+  useFocusTrap(modalRef, selected !== null)
+  useEffect(() => {
+    if (selected === null) return undefined
+    const onKey = (e) => { if (e.key === 'Escape') setSelected(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selected])
 
   // מסננים תמונות שלא קיימות/נכשלו → אין "חורים" וניתן להגדיר 1..10 מראש
   const list = (images || []).filter((s) => s && !failed.has(s))
@@ -60,8 +70,10 @@ export default function ExpandableGallery({ images = [] }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={close}
+            ref={modalRef}
             role="dialog"
             aria-modal="true"
+            aria-label="גלריית ביצוע"
           >
             <button type="button" className="xgal__close" onClick={close} aria-label="סגירה">
               <Icon name="close" size={26} />

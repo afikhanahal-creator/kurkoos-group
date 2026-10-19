@@ -244,7 +244,7 @@
 /* גודל הקוביות — נשלט מה-CMS לכל פרויקט (קומפקטי / רגיל / גדול) */
 .pd-banner__stats--small .pd-stat { min-height: 64px; padding: 0.5rem 0.85rem; }
 .pd-banner__stats--small .pd-stat__value { font-size: 1.2rem; }
-.pd-banner__stats--small .pd-stat__value--sm { font-size: 0.74rem; }
+.pd-banner__stats--small .pd-stat__value--sm { font-size: 0.75rem; }
 .pd-banner__stats--large .pd-stat { min-height: 104px; padding: 1rem 1.55rem; }
 .pd-banner__stats--large .pd-stat__value { font-size: 2.05rem; }
 .pd-banner__stats--large .pd-stat__value--sm { font-size: 0.95rem; }
@@ -1318,7 +1318,7 @@ html.header-top-hidden .pd-anchors { top: 0; }
 .pd-unit__body { padding: 1rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .pd-unit__top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .pd-unit__title { font-family: var(--font-heading); font-weight: 800; color: var(--color-primary-900); }
-.pd-unit__status { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: var(--radius-pill); background: var(--color-primary-100); color: var(--color-secondary); white-space: nowrap; }
+.pd-unit__status { font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: var(--radius-pill); background: var(--color-primary-100); color: var(--color-secondary); white-space: nowrap; }
 .pd-unit__status--sold { background: #fbe3e3; color: var(--color-accent); }
 .pd-unit__status--reserved { background: #fbf2d6; color: #8a6d00; }
 .pd-unit__specs { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; color: var(--color-text-soft); font-size: 0.88rem; font-family: var(--font-heading); }

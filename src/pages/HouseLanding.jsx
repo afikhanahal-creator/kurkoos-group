@@ -306,7 +306,7 @@ function SiteSign({ page, onCall }) {
     ['פיקוח מטעמכם', 'שכינתא, זרוע הפיקוח'],
   ].filter(Boolean)
   return (
-    <aside className="hl-sign" aria-label="בקצרה">
+    <div className="hl-sign" role="note" aria-label="בקצרה">
       <span className="hl-sign__band">קבוצת קורקוס</span>
       <dl className="hl-sign__rows">
         {rows.map(([k, v]) => (
@@ -317,7 +317,7 @@ function SiteSign({ page, onCall }) {
           <dd><a href={telHref()} onClick={onCall} dir="ltr">{CONTACT_PHONE_DISPLAY}</a></dd>
         </div>
       </dl>
-    </aside>
+    </div>
   )
 }
 
@@ -402,7 +402,7 @@ function HouseLead({ placement }) {
   return (
     <section className="hl-section hl-lead" id="contact" aria-labelledby="hl-lead-title">
       <div className="container hl-lead__grid">
-        <aside className="hl-trust">
+        <div className="hl-trust">
           <img src="/shlomi-office.webp" alt="שלומי קורקוס" className="hl-trust__photo" width="800" height="1200" loading="lazy" />
           <div className="hl-trust__body">
             <b className="hl-trust__name">שלומי קורקוס</b>
@@ -424,7 +424,7 @@ function HouseLead({ placement }) {
             </div>
             <span className="hl-trust__addr"><Icon name="location" size={15} /> רחוב הנגר 24, מגדלי Amy, הוד השרון</span>
           </div>
-        </aside>
+        </div>
 
         <div className="hl-form">
           <h2 className="hl-form__title" id="hl-lead-title">קבלו הערכת עלות לבית שלכם</h2>

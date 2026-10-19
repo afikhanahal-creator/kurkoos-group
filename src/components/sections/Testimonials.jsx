@@ -220,7 +220,8 @@ export default function Testimonials() {
               </div>
             )}
 
-            <div className="testimonials__nav">
+            {/* חצים רק כשיש יותר מהמלצה אחת: עם אחת הם לא עושים כלום */}
+            {count > 1 && <div className="testimonials__nav">
               <button type="button" className="carousel__arrow" onClick={prev} aria-label={L({ he: 'ההמלצה הקודמת', en: 'Previous testimonial' })}>
                 <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
               </button>
@@ -238,7 +239,7 @@ export default function Testimonials() {
               <button type="button" className="carousel__arrow" onClick={next} aria-label={L({ he: 'ההמלצה הבאה', en: 'Next testimonial' })}>
                 <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={20} />
               </button>
-            </div>
+            </div>}
           </div>
         </div>
       </div>

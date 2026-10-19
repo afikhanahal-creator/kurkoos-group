@@ -23,7 +23,7 @@ export default function BgMediaDemo() {
           />
         </div>
       </div>
-      <p className="bg-media-demo__caption">פרוייקט הנרייטה סאלד - קבוצת ראיתה חברה לבנין 2026</p>
+      <p className="bg-media-demo__caption">פרויקט הנרייטה סאלד, ראיתה חברה לבניין, 2026</p>
     </div>
   )
 }

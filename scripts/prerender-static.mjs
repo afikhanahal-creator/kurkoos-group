@@ -561,7 +561,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     try {
       const r = await fetch(
         `${SB_URL.replace(/\/$/, '')}/rest/v1/projects?is_published=eq.true&is_archived=eq.false` +
-        `&select=slug,name,location,subtitle,description,hero_image_url,status,address&order=sort_order.asc`,
+        `&select=slug,name,location,subtitle,description,hero_image_url,status,address,seo_description&order=sort_order.asc`,
         { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
       )
       if (r.ok) cmsProjects = await r.json()
@@ -596,7 +596,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     done.push(renderPage({
       path: `/projects/${slug}`,
       title: heading,
-      description: `${lead.replace(/[.\s]+$/, '')}. ${name} הוא פרויקט של ${BRAND}: יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.`,
+      /* תיאור ה-SEO מהניהול כשהוא בעברית ובאורך משפט מלא, כמו בעמוד החי */
+      description: (() => { const s = txt(p.seo_description).replace(/\s+/g, ' ').trim(); return /[\u0590-\u05FF]/.test(s) && s.length >= 70 ? s : `${lead.replace(/[.\s]+$/, '')}. ${name} הוא פרויקט של ${BRAND}: יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.` })(),
       jsonLd: [breadcrumbLd([
         HOME_CRUMB,
         { name: 'הפרויקטים', path: '/projects' },

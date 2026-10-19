@@ -118,6 +118,7 @@ function buildProject(local, cms, routeSlug) {
       city: wrap(cms.location ?? cms.city),
       description: wrap(cms.description),
       short: wrap(cms.subtitle),
+      seoDescription: cms.seo_description || '',
       status: cms.status,
       cover: srcOfResponsive(cms.hero_image_url) || srcOfResponsive(cms.gallery && cms.gallery[0]),
       aboutImage: cms.about_image_url || undefined,
@@ -423,7 +424,10 @@ export default function ProjectDetail() {
   /* הכותרת כוללת גם את היישוב, כמו בעמוד המרונדר מראש: מי שמחפש פרויקט
      מחפש אותו עם שם העיר, ושתי הגרסאות חייבות להיות זהות. */
   const seoTitle = seoCity ? `${seoName}, ${seoCity}` : seoName
-  const seoDesc = (L(project.short) || '').trim() ||
+  /* תיאור ה-SEO מהניהול משמש רק כשהוא בעברית ובאורך של משפט מלא, אחרת כותרת המשנה */
+  const cmsSeo = String(project.seoDescription || '').replace(/\s+/g, ' ').trim()
+  const seoDesc = (/[\u0590-\u05FF]/.test(cmsSeo) && cmsSeo.length >= 70 ? cmsSeo : '') ||
+    (L(project.short) || '').trim() ||
     `${seoName}${seoCity ? ` · ${seoCity}` : ''}: פרויקט של קבוצת קורקוס. יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.`
   const seoJsonLd = [
     {

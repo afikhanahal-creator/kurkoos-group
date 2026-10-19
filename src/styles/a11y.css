@@ -75,3 +75,8 @@ html.a11y-no-motion *::after {
   padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+
+/* בטלפון: כל כפתור באתר בגובה 44 פיקסלים לפחות, גם כפתור קטן או כזה שעיצוב מקומי הקטין */
+@media (max-width: 599px) {
+  .btn { min-height: 44px !important; }
+}

@@ -135,7 +135,7 @@ export default {
     topics: {
       development: 'יזמות',
       construction: 'ביצוע',
-      supervision: 'פיקוח פרוייקטים',
+      supervision: 'פיקוח פרויקטים',
       brokerage: 'תיווך',
       mentorship: 'מנטורינג',
       other: 'אחר',
@@ -145,7 +145,6 @@ export default {
     openingsText: 'למשרות פתוחות',
     openingsLink: 'לחצו כאן',
     required: 'שדות עם * הם שדות חובה',
-    phones: 'מכירות ושירות 03-000-0000 | משרדים 03-000-0001',
   },
   category: {
     residential: 'מגורים',

@@ -39,7 +39,7 @@
 .bg-media-demo__caption {
   max-width: 1100px;
   margin: 0.75rem auto 0;
-  text-align: left;
+  text-align: start;
   font-size: 0.85rem;
   font-weight: 500;
   letter-spacing: 0.03em;

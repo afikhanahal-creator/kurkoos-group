@@ -70,22 +70,6 @@
 }
 .hero__stat-suffix { color: var(--color-secondary); margin-inline-start: 2px; }
 .hero__stat-labels { display: flex; flex-direction: column; }
-/* עצירת החלפת השקופיות (נגישות, WCAG 2.2.2) */
-.hero__pause {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin-inline-start: auto;
-  border-radius: 50%;
-  border: 1.5px solid var(--color-border-strong);
-  background: var(--color-surface);
-  color: var(--color-secondary);
-}
-@media (hover: hover) and (pointer: fine) {
-  .hero__pause:hover { border-color: var(--color-secondary); }
-}
 .hero__stat-label { font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem; color: var(--color-text); }
 .hero__stat-sub { color: var(--color-text-soft); font-size: 0.9rem; }
 

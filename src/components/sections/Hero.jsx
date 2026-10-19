@@ -60,7 +60,6 @@ export default function Hero() {
   const L = useLocalized()
   const [turn, setTurn] = useState(0)
   // עצירת החלפת השקופיות (WCAG 2.2.2): כפתור עצירה, ריחוף ומיקוד מקלדת בתוך ה-Hero
-  const [stopped, setStopped] = useState(false)
   const [hold, setHold] = useState(false)
   const [filmOpen, setFilmOpen] = useState(false)
   // ה-Hero מציג את המונים מהניהול ("מונים ומספרים") ישירות — לפי הסדר. כך
@@ -83,10 +82,10 @@ export default function Hero() {
   const slide = slides[active] || slides[0]
 
   useEffect(() => {
-    if (stopped || hold || motionStopped()) return
+    if (hold || motionStopped()) return
     const id = setInterval(() => { if (!motionStopped()) setTurn((t) => t + 1) }, 5000)
     return () => clearInterval(id)
-  }, [stopped, hold])
+  }, [hold])
 
   useEffect(() => {
     if (!supabase) return
@@ -157,17 +156,6 @@ export default function Hero() {
                 {slide.stat.sub && <span className="hero__stat-sub">{L(slide.stat.sub)}</span>}
               </motion.div>
             </AnimatePresence>
-            {slides.length > 1 && (
-              <button
-                type="button"
-                className="hero__pause"
-                onClick={() => setStopped((v) => !v)}
-                aria-pressed={stopped}
-                aria-label={L({ he: 'עצירת החלפת הכותרות', en: 'Pause rotating headlines' })}
-              >
-                <Icon name={stopped ? 'play' : 'pause'} size={14} />
-              </button>
-            )}
           </div>
 
           {/* כותרת שנחשפת שורה-שורה */}

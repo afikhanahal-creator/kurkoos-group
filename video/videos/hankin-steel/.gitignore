@@ -1,0 +1,4 @@
+renders/
+snapshots/
+assets/seg/
+assets/*.wav

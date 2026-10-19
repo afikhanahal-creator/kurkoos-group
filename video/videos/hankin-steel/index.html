@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>קבוצת קורקוס · חנקין 41, עבודות ברזל</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Almoni"; src: url("assets/fonts/Almoni-400.ttf"); font-weight: 400; }
+      @font-face { font-family: "Almoni"; src: url("assets/fonts/Almoni-700.ttf"); font-weight: 700; }
+      :root { --navy: #07293a; --teal: #105572; --mist: #8fb6c8; --paper: #f7f8fa; --red: #a90b0c; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+      #root { direction: rtl; position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--navy); font-family: "Almoni", sans-serif; color: var(--paper); }
+      .clip, .layer { position: absolute; inset: 0; overflow: hidden; }
+      .vid { object-fit: cover; width: 100%; height: 100%; }
+      .shade { position: absolute; inset: 0; pointer-events: none; z-index: 20; background: linear-gradient(180deg, rgba(7,41,58,.55) 0%, rgba(7,41,58,0) 16%, rgba(7,41,58,0) 55%, rgba(7,41,58,.7) 82%, rgba(7,41,58,.9) 100%); }
+      section[id^="b-"] { z-index: 25; }
+      .tx { position: absolute; right: 70px; left: 70px; bottom: 380px; text-align: right; }
+      .ln { display: block; margin-top: 14px; }
+      .pl { display: inline-block; font-weight: 700; line-height: 1; padding: 14px 30px 22px; border-radius: 10px; white-space: nowrap; }
+      .big .pl { font-size: 150px; } .mid .pl { font-size: 92px; } .small .pl { font-size: 92px; } .xs .pl { font-size: 78px; }
+      .navy { background: var(--navy); color: var(--paper); } .red { background: var(--red); color: var(--paper); } .mist { background: var(--mist); color: var(--navy); }
+      #logo { position: absolute; top: 70px; left: 60px; width: 140px; z-index: 30; }
+      #bar { position: absolute; right: 0; top: 0; width: 14px; height: 1920px; background: var(--red); z-index: 30; transform-origin: 50% 0; }
+      #flash { position: absolute; inset: 0; background: var(--paper); opacity: 0; z-index: 40; }
+      #render, #end { z-index: 50; background: #fff; color: var(--navy); }
+      #r-frame { position: absolute; left: 0; right: 0; top: 560px; height: 608px; overflow: hidden; }
+      #r-img { width: 1080px; height: 608px; object-fit: cover; display: block; transform-origin: 50% 60%; }
+      #r-bar { position: absolute; left: 0; top: 560px; width: 1080px; height: 16px; background: var(--red); transform-origin: 100% 50%; z-index: 2; }
+      #r-a { position: absolute; left: 0; right: 0; top: 330px; text-align: center; font-size: 150px; font-weight: 700; line-height: 1; }
+      #r-b { position: absolute; left: 0; right: 0; top: 1230px; text-align: center; font-size: 64px; color: var(--teal); }
+      #e-wrap { position: absolute; left: 110px; top: 690px; width: 860px; height: 390px; overflow: hidden; }
+      #e-logo { width: 860px; display: block; }
+      #e-b { position: absolute; left: 0; right: 0; top: 1240px; text-align: center; font-size: 50px; color: var(--navy); }
+      #e-site { position: absolute; left: 0; right: 0; top: 1330px; text-align: center; font-size: 46px; color: var(--teal); direction: ltr; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="21.5625">
+      <div id="w0" class="layer"><video id="v0" class="clip vid" src="assets/seg/s01.mp4" muted playsinline data-start="0.0" data-duration="1.925" data-track-index="0"></video></div>
+      <div id="w1" class="layer"><video id="v1" class="clip vid" src="assets/seg/s02.mp4" muted playsinline data-start="1.875" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w2" class="layer"><video id="v2" class="clip vid" src="assets/seg/s03.mp4" muted playsinline data-start="2.8125" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w3" class="layer"><video id="v3" class="clip vid" src="assets/seg/s04.mp4" muted playsinline data-start="3.75" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w4" class="layer"><video id="v4" class="clip vid" src="assets/seg/s05.mp4" muted playsinline data-start="4.6875" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w5" class="layer"><video id="v5" class="clip vid" src="assets/seg/s06.mp4" muted playsinline data-start="5.625" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w6" class="layer"><video id="v6" class="clip vid" src="assets/seg/s07.mp4" muted playsinline data-start="6.5625" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w7" class="layer"><video id="v7" class="clip vid" src="assets/seg/s08.mp4" muted playsinline data-start="7.5" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w8" class="layer"><video id="v8" class="clip vid" src="assets/seg/s09.mp4" muted playsinline data-start="8.4375" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w9" class="layer"><video id="v9" class="clip vid" src="assets/seg/s10.mp4" muted playsinline data-start="9.375" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w10" class="layer"><video id="v10" class="clip vid" src="assets/seg/s11.mp4" muted playsinline data-start="10.3125" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w11" class="layer"><video id="v11" class="clip vid" src="assets/seg/s12.mp4" muted playsinline data-start="11.25" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w12" class="layer"><video id="v12" class="clip vid" src="assets/seg/s13.mp4" muted playsinline data-start="12.1875" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w13" class="layer"><video id="v13" class="clip vid" src="assets/seg/s14.mp4" muted playsinline data-start="13.125" data-duration="0.9875" data-track-index="0"></video></div>
+      <div id="w14" class="layer"><video id="v14" class="clip vid" src="assets/seg/s15.mp4" muted playsinline data-start="14.0625" data-duration="1.875" data-track-index="0"></video></div>
+      <div class="shade"></div>
+      <img id="logo" src="assets/logo.png" alt="קבוצת קורקוס" />
+      <div id="bar"></div>
+      <section id="b-title" class="clip" data-start="0.0" data-duration="1.875" data-track-index="2">
+        <div class="tx"><div class="ln big"><span class="pl navy" id="title0">חנקין 41</span></div><div class="ln small"><span class="pl mist" id="title1">הוד השרון</span></div></div>
+      </section>
+      <section id="b-steel" class="clip" data-start="1.875" data-duration="4.6875" data-track-index="2">
+        <div class="tx"><div class="ln mid"><span class="pl navy" id="steel0">המשך עבודות ברזל</span></div><div class="ln xs"><span class="pl red" id="steel1">לקראת עבודות יציקה.</span></div></div>
+      </section>
+      <section id="b-floor" class="clip" data-start="6.5625" data-duration="7.5" data-track-index="2">
+        <div class="tx"><div class="ln big"><span class="pl navy" id="floor0">רצפה</span></div><div class="ln small"><span class="pl red" id="floor1">קומה 2.</span></div></div>
+      </section>
+      <section id="b-line" class="clip" data-start="14.0625" data-duration="1.875" data-track-index="2">
+        <div class="tx"><div class="ln big"><span class="pl navy" id="line0">מקרקע</span></div><div class="ln small"><span class="pl red" id="line1">ועד מסירת מפתח.</span></div></div>
+      </section>
+      <section id="render" class="clip" data-start="15.9375" data-duration="1.875" data-track-index="3">
+        <div id="r-a">חנקין 41</div>
+        <div id="r-bar"></div>
+        <div id="r-frame"><img id="r-img" src="assets/render.jpg" alt="הדמיה: חנקין 41" /></div>
+        <div id="r-b">הוד השרון</div>
+      </section>
+      <section id="end" class="clip" data-start="17.8125" data-duration="3.75" data-track-index="3">
+        <div id="e-wrap"><img id="e-logo" src="assets/hankin-logo.png" alt="חנקין 41" /></div>
+        <div id="e-b">קבוצת קורקוס · מקרקע ועד מסירת מפתח</div>
+        <div id="e-site">kurkoos-group.co.il</div>
+      </section>
+      <audio id="music" src="assets/music.wav" data-start="0" data-duration="21.5625" data-track-index="5"></audio>
+      <div id="flash"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+      // every cut lands with a short push in that settles, so the footage hits the beat
+      function punch(i, t, d) {
+        tl.fromTo("#w" + i, { scale: 1.14 }, { scale: 1.0, duration: 0.28, ease: "expo.out", immediateRender: false }, t);
+        tl.to("#w" + i, { scale: 1.04, duration: Math.max(0.1, d - 0.28), ease: "none" }, t + 0.28);
+      }
+      // a word block slams in: big, tilted, then locks
+      const slam = (sel, t) => tl.fromTo(sel, { opacity: 0, scale: 1.7, rotation: -5, x: -40 }, { opacity: 1, scale: 1, rotation: 0, x: 0, duration: 0.3, ease: "back.out(2.2)", immediateRender: false }, t);
+      const flash = t => tl.fromTo("#flash", { opacity: 0.85 }, { opacity: 0, duration: 0.2, ease: "power2.out", immediateRender: false }, t);
+      tl.set("#flash", { opacity: 0 }, 0);
+      // the red edge bar pulses on the downbeats
+      for (let k = 0; k * 0.46875 < 15.9375; k++) if (k % 4 === 0 && k * 0.46875 >= 1.875) tl.fromTo("#bar", { scaleY: 0 }, { scaleY: 1, duration: 0.9375, ease: "expo.out", immediateRender: false }, k * 0.46875);
+      tl.set("#bar", { scaleY: 0 }, 0);
+            punch(0, 0.0, 1.875);
+      punch(1, 1.875, 0.9375);
+      punch(2, 2.8125, 0.9375);
+      punch(3, 3.75, 0.9375);
+      punch(4, 4.6875, 0.9375);
+      punch(5, 5.625, 0.9375);
+      punch(6, 6.5625, 0.9375);
+      punch(7, 7.5, 0.9375);
+      punch(8, 8.4375, 0.9375);
+      punch(9, 9.375, 0.9375);
+      punch(10, 10.3125, 0.9375);
+      punch(11, 11.25, 0.9375);
+      punch(12, 12.1875, 0.9375);
+      punch(13, 13.125, 0.9375);
+      punch(14, 14.0625, 1.875);
+      slam("#title0", 0.15);
+      slam("#title1", 0.4688);
+      tl.to(["#title0", "#title1"], { opacity: 0, x: 140, duration: 0.14, ease: "power3.in", immediateRender: false }, 1.735);
+      slam("#steel0", 1.955);
+      slam("#steel1", 2.3438);
+      flash(1.875);
+      tl.to(["#steel0", "#steel1"], { opacity: 0, x: 140, duration: 0.14, ease: "power3.in", immediateRender: false }, 6.4225);
+      slam("#floor0", 6.6425);
+      slam("#floor1", 7.0312);
+      flash(6.5625);
+      tl.to(["#floor0", "#floor1"], { opacity: 0, x: 140, duration: 0.14, ease: "power3.in", immediateRender: false }, 13.9225);
+      slam("#line0", 14.1425);
+      slam("#line1", 14.5312);
+      flash(14.0625);
+      tl.to(["#line0", "#line1"], { opacity: 0, x: 140, duration: 0.14, ease: "power3.in", immediateRender: false }, 15.7975);
+      // render card: the picture wipes up under the red bar and pushes in slowly, the title slams
+      tl.fromTo("#r-frame", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.5, ease: "power3.inOut" }, 15.9375);
+      tl.fromTo("#r-bar", { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: "expo.out" }, 15.9375);
+      tl.fromTo("#r-img", { scale: 1.0 }, { scale: 1.09, duration: 1.875, ease: "none" }, 15.9375);
+      tl.fromTo("#r-a", { opacity: 0, scale: 1.6, rotation: -4 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.35, ease: "back.out(2)" }, 16.0375);
+      tl.fromTo("#r-b", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, 16.4062);
+      tl.to(["#r-a", "#r-b"], { opacity: 0, duration: 0.14, ease: "power3.in", immediateRender: false }, 17.6725);
+      tl.to("#r-frame", { clipPath: "inset(0 0 100% 0)", duration: 0.2, ease: "power3.in", immediateRender: false }, 17.6125);
+      // logo card: the logo draws in from the right, the brand line and the site settle under it
+      tl.fromTo("#e-wrap", { clipPath: "inset(0 0 0 100%)" }, { clipPath: "inset(0 0 0 0%)", duration: 0.8, ease: "power3.inOut" }, 17.8625);
+      tl.fromTo("#e-b", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, 18.7125);
+      tl.fromTo("#e-site", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 18.9625);
+      tl.fromTo("#logo", { opacity: 1 }, { opacity: 0, duration: 0.2, immediateRender: false }, 15.9375);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,507 @@
+/* ============================================================
+   Mobile native — the admin rollout of the approved pilot (V198, the
+   publishing queue of the content engine, docs/agents/video-editor/k198css.txt).
+   Phones only (max-width 599px). Desktop and tablet are untouched: every rule
+   in this file sits inside a max-width 599px media query.
+   This is an override layer, imported last by Admin.jsx. Nothing in the
+   existing stylesheets is removed; text, colours, icons and spacing values
+   are the existing ones.
+
+   The five approved rules:
+   1. Width: lists and grids of cards become one column at the full page width
+      minus the existing page gutter.
+   2. Sideways strips run edge to edge (negative margin = gutter, padding =
+      gutter), snap (x mandatory for card strips, x proximity for tab bars),
+      items snap to start, scroll-padding-inline = gutter, no scrollbar,
+      overscroll-behavior-x: contain.
+   3. Pinned while scrolling: a screen's tab bar sticks to the top of its
+      scroll container on the page background; section headers in long lists
+      stick right under it (or under the top of the scroll container).
+   4. Order: a side column that only labels a row moves above the row's card,
+      14px / 20px.
+   5. Touch: 44px targets, no tap highlight, a .97 press state on buttons and
+      tabs (not under reduced motion), contained overscroll on scroll containers.
+
+   Measured values (Chromium, 390px wide, root font 16px):
+   - the page gutter is the existing padding of .adm__content on phones:
+     0.9rem up to 820px and 0.7rem up to 480px (11.2px at 390px).
+   - on phones the document is the scroll container and the existing top bar
+     (.adm__topbar) is already sticky at the top of it. Its height is
+     0.7rem + 44px (burger) + 0.7rem + 1px border = 67.4px, so "the top of the
+     scroll container" for anything pinned is right under that bar.
+   ============================================================ */
+
+@media (max-width: 599px) {
+  .adm {
+    --mn-g: 0.9rem;                         /* existing .adm__content padding, 481px to 820px */
+    --mn-top: calc(1.4rem + 44px + 1px);    /* height of the existing sticky top bar */
+  }
+}
+@media (max-width: 480px) {
+  .adm { --mn-g: 0.7rem; }                  /* existing .adm__content padding up to 480px */
+}
+
+/* ------------------------------------------------------------
+   Rule 5 · touch, shared by every admin screen
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* no grey flash on tap */
+  .adm button, .adm a, .adm select, .adm input, .adm textarea, .adm label, .adm summary, .adm [role='tab'],
+  .pe button, .pe a, .pe select, .pe input, .pe textarea, .pe label, .pe summary, .pe-drawer-wrap button,
+  .adm-login button, .adm-login a, .adm-login input {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* a short press state on buttons and tabs (elements whose transform positions them are left out) */
+  .adm button:not(:disabled):not(.rif__focal):active,
+  .adm [role='tab']:active,
+  .pe button:not(:disabled):active,
+  .adm-login button:not(:disabled):active {
+    transform: scale(0.97);
+  }
+  /* scroll containers keep their scroll to themselves */
+  .adm__main, .adm__sidebar { overscroll-behavior-y: contain; }
+}
+@media (max-width: 599px) and (prefers-reduced-motion: reduce) {
+  .adm button:not(:disabled):not(.rif__focal):active,
+  .adm [role='tab']:active,
+  .pe button:not(:disabled):active,
+  .adm-login button:not(:disabled):active {
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   24 · login (כניסת מנהל)
+   Rule 5 only: the fields and the button are already 44px or taller and the
+   form is already one column at the full width.
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   25 · overview (סקירה כללית)
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 1: the insight cards are one column (auto-fill gives two above 480px).
+     The KPI tiles are summary tiles: they fit in two columns and do not
+     overflow, so they are left as they are (see the report). */
+  .adm .ovw__insights { grid-template-columns: minmax(0, 1fr); }
+  /* rule 5: the hero shortcuts and the "full report" links are tapped */
+  .adm .ovw__hero-acts > button,
+  .adm .ovw__hero-acts > a { min-height: 44px; display: inline-flex; align-items: center; }
+  .adm .ovw__more { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   26 · pages board (עמודים)
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 1: the page cards are one column at the full width (auto-fill would
+     give two columns between 500px and 599px) */
+  .adm .pe-cards { grid-template-columns: minmax(0, 1fr); }
+  /* rule 3: the group headers stay pinned under the top bar while their pages scroll by,
+     edge to edge on the page background like the day headers of the pilot */
+  .adm .pe-group__head {
+    position: sticky; top: var(--mn-top); z-index: 4;
+    justify-self: stretch;
+    margin-inline: calc(-1 * var(--mn-g));
+    padding: 8px var(--mn-g);
+    background: var(--adm-bg);
+  }
+  /* rule 5: touch targets */
+  .adm .pe-group__head,
+  .adm .pe-viewsw button,
+  .adm .pe-card .pe-btn { min-height: 44px; }
+  .adm .pe-card .pe-icon-btn { width: 44px; height: 44px; }
+  .adm .pe-url { line-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   27 · page editor (עורך העמודים) — marked exception (three areas).
+   Only the touch rule applies. The panel tabs (רכיבים / מבנה / הגדרות) already
+   sit outside the scrolling panel, so they are pinned by structure (rule 3).
+   No restructuring of the canvas, the panel or the tiles.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* the editor is rendered in a portal on <body>, outside .adm, so it is scoped by .pe */
+  /* height only: at 44px wide the five actions of the top bar would no longer fit in 390px */
+  .pe .pe-top .pe-icon-btn { height: 44px; }
+  .pe .pe-top .pe-btn,
+  .pe .pe-dev,
+  .pe .pe-search--full,
+  .pe .pe-row__main,
+  .pe .pe-seg button,
+  .pe .pe-chips button,
+  .pe .pe-switch,
+  .pe .pe-input,
+  .pe .pe-sgroup__head,
+  .pe .pe-settings__foot .pe-btn,
+  .pe .pe-item__acts .pe-btn,
+  .pe .pe-img__acts .pe-btn,
+  .pe .pe-item > summary { min-height: 44px; }
+  .pe .pe-search--full { height: 44px; }
+  .pe .pe-row__grip { height: 44px; }
+  .pe .pe-row__acts button { width: 44px; height: 44px; }
+  .pe .pe-thumb button { width: 44px; height: 44px; }
+  .pe-drawer-wrap .pe-icon-btn { width: 44px; height: 44px; }
+  /* scroll containers keep their scroll to themselves (the panel already does) */
+  .pe .pe-canvas, .pe-drawer-wrap .pe-drawer { overscroll-behavior: contain; }
+}
+
+/* ------------------------------------------------------------
+   28 · projects (פרויקטים ונכסים) and the project wizard
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 5 */
+  .adm .ptab__add,
+  .adm .ptab__props .btn,
+  .adm .srow__main,
+  .adm .srow__handle,
+  .adm .srow__del,
+  .adm .ptab__back,
+  .adm .ed__actions .btn,
+  .adm .ed__preview,
+  .adm .ed__archive,
+  .adm .ed__step-btn,
+  .adm .ed__dev-add,
+  .adm .ed__nav-btn,
+  .adm .cubed__add { min-height: 44px; }
+  .adm .ed__close { min-width: 44px; min-height: 44px; }
+  .adm .cubed__devtoggle button { min-height: 44px; }
+  /* the on/off switch keeps its drawn size; its label grows to a 44px hit area around it */
+  .adm .ed__switch { height: 44px; }
+  .adm .ed__switch span { inset-block: calc((44px - 25px) / 2); }
+  .adm .ed__archive { display: inline-flex; align-items: center; }
+
+  /* rules 2 and 3: the wizard steps are the tab bar of the project editor.
+     They run edge to edge of the editor card (its existing 2rem padding),
+     snap step by step, and stay pinned under the top bar on the page background. */
+  .adm .ed__steps {
+    position: sticky; top: var(--mn-top); z-index: 5;
+    margin-inline: -2rem;
+    padding-inline: 2rem;
+    border-inline: 0; border-radius: 0;
+    background: var(--adm-bg);
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 2rem;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .adm .ed__steps::-webkit-scrollbar { display: none; }
+  .adm .ed__step { scroll-snap-align: start; }
+}
+
+/* ------------------------------------------------------------
+   Shared · the image field (ResponsiveImageField), used by villas,
+   activities, testimonials, content and covers. Rule 5 only.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  .adm .rif__act,
+  .adm .rif__bptab,
+  .adm .rif__segbtn,
+  .adm .rif__rndbtn,
+  .adm .rif__copy,
+  .adm .rif__save { min-height: 44px; }
+  .adm .rif input[type='range'] { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   Shared · a side tab bar that wraps on phones (villas and covers use
+   .cov__tabs, headings uses .hdg__tabs). On one line it would overflow, so
+   on phones it becomes the screen's tab bar the way the pilot reads:
+   rule 2, one sideways strip, edge to edge, snapping to tabs (x proximity);
+   rule 3, pinned under the top bar on the page background.
+   Group labels stay in the strip, in reading order, before their tabs.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  .adm .cov__tabs,
+  .adm .hdg__tabs {
+    position: sticky; top: var(--mn-top); z-index: 5;
+    flex-direction: row; flex-wrap: nowrap; align-items: center;
+    max-height: none;
+    overflow-x: auto; overflow-y: hidden;
+    margin-inline: calc(-1 * var(--mn-g));
+    padding-inline: var(--mn-g);
+    background: var(--adm-bg);
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--mn-g);
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .adm .cov__tabs::-webkit-scrollbar,
+  .adm .hdg__tabs::-webkit-scrollbar { display: none; }
+  .adm .hdg__tabgroup { display: contents; }
+  .adm .cov__tab-group,
+  .adm .hdg__tabgroup-label { flex: 0 0 auto; width: auto; margin-block: 0; white-space: nowrap; scroll-snap-align: start; }
+  .adm .cov__tabs > .cov__tab,
+  .adm .cov__tab-wrap > .cov__tab,
+  .adm .cov__tab-wrap > .vpt__proj,
+  .adm .cov__tabs > .vpt__proj,
+  .adm .hdg__tab { flex: 0 0 auto; width: auto; white-space: nowrap; scroll-snap-align: start; }
+  .adm .cov__tab,
+  .adm .hdg__tab { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   29 · home_featured (פרויקטים נבחרים)
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 1: the project library is one column (auto-fill gives two or three above 400px) */
+  .adm .hf-grid { grid-template-columns: minmax(0, 1fr); }
+  /* rule 5 */
+  .adm .hf-chosen__ord button,
+  .adm .hf-chosen__rm { width: 44px; height: 44px; }
+  /* with the larger buttons the project name may take two lines instead of being cut off */
+  .adm .hf-chosen__name { white-space: normal; }
+}
+
+/* ------------------------------------------------------------
+   30 · villas (בתים פרטיים ווילות) — tab bar: see the shared strip above
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 5: the order arrows grow to 44px, side by side so a project tab
+     stays one row in the strip (stacked they would make it 92px tall) */
+  .adm .vpt__ord { flex-direction: row; }
+  .adm .vpt__ord button { width: 44px; height: 44px; }
+  .adm .vpt__open,
+  .adm .vpt__reset,
+  .adm .vpt__toggle { min-height: 44px; }
+  .adm .vpt__open { display: inline-flex; align-items: center; }
+}
+
+/* ------------------------------------------------------------
+   31 · headings (כותרות וטקסטים) — tab bar: see the shared strip above
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   32 · counters (מונים ומספרים)
+   The counter rows are already one card per row at the full width.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 5; the two order arrows sit side by side so the card does not grow by 92px */
+  .adm .ctab__order { flex-direction: row; }
+  .adm .ctab__order button,
+  .adm .ctab__del { width: 44px; height: 44px; }
+  .adm .ctab__head .btn,
+  .adm .ctab__cell,
+  .adm .ctab__toggle { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   33 · logos (לוגואים)
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 1: one logo card per row (auto-fill gives two above 400px) */
+  .adm .ltab__grid { grid-template-columns: minmax(0, 1fr); }
+  /* rule 5 */
+  .adm .ltab__shuffle,
+  .adm .ltab__head .btn,
+  .adm .lcard__name,
+  .adm .lcard__btn,
+  .adm .lcard__toggle,
+  .adm .lcard__del,
+  .adm .lcard__save-btn,
+  .adm .lcard__size-range { min-height: 44px; }
+  .adm .lcard__handle { display: grid; place-items: center; width: 44px; height: 44px; inset-block-start: 0; inset-inline-start: 0; }
+  .adm .lcard__recenter,
+  .adm .lcard__size-btn { width: 44px; height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   Shared · the image gallery manager (ImageManager), used by
+   testimonials, projects and covers. Rule 5 only.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  .adm .im__add,
+  .adm .im__url-add,
+  .adm .im__url-input { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   34 · activities (תחומי הפעילות)
+   The activity cards are already one column at the full width (their
+   auto-fill minimum of 300px gives one column up to 599px). Rule 5 comes from
+   the shared image field above.
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   35 · testimonials (המלצות לקוחות)
+   The testimonial cards are already one column at the full width.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 5 */
+  .adm .tst-card__order button { width: 44px; height: 44px; }
+  .adm .tst-card__archive,
+  .adm .tst-card__del { height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   36 · content (מאמרים ומדריכים)
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rules 2 and 3: the column switch (יזמות / ביצוע / פיקוח / תיווך) is the
+     screen's tab bar. It wraps to two rows; on phones it is one sideways strip,
+     edge to edge, snapping to tabs, pinned under the top bar on the page background. */
+  .adm .ctab__switch {
+    position: sticky; top: var(--mn-top); z-index: 5;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: calc(-1 * var(--mn-g));
+    padding-inline: var(--mn-g);
+    border-inline: 0; border-radius: 0;
+    background: var(--adm-bg);
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--mn-g);
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .adm .ctab__switch::-webkit-scrollbar { display: none; }
+  .adm .ctab__seg { flex: 0 0 auto; min-height: 44px; scroll-snap-align: start; }
+
+  /* rule 1: the article picker and the "new article" button fit inside the
+     page width (the picker kept a 220px minimum and pushed the button off the screen) */
+  .adm .yzt__actions { flex-shrink: 1; width: 100%; min-width: 0; }
+  .adm .yzt__picker { flex: 1 1 0; min-width: 0; max-width: none; }
+  /* rule 1: the article list reads as one column at the full width */
+  .adm .yzt__tab { width: 100%; max-width: none; }
+  /* rule 5 */
+  .adm .yzt__picker,
+  .adm .yzt__add,
+  .adm .yzt__tab,
+  .adm .yzt-btn,
+  .adm .yzt select,
+  .adm .yzt input:not([type='checkbox']):not([type='radio']) { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   37 · covers (תמונות קאבר) — tab bar: see the shared strip above;
+   rule 5 from the shared image field.
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   38 · leads (לידים) — marked exception (wide table).
+   Applied: rule 2 on the filter rows that already scroll sideways, rule 3 on
+   the stage headers of the board, rule 5 everywhere. The table and the list
+   rows are not restructured. The view tabs (קוביות / רשימה / טבלה) sit inside
+   the header card next to the counter, so they cannot be pinned on their own
+   without moving them out of the card (reported, not done).
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rule 2: the stage and source filter rows run edge to edge of the header
+     card (its existing 0.85rem padding) and snap pill by pill */
+  .adm .adm-leads__filter-row {
+    margin-inline: -0.85rem;
+    padding-inline: 0.85rem;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 0.85rem;
+    overscroll-behavior-x: contain;
+  }
+  .adm .adm-leads__filter-row > * { flex: 0 0 auto; scroll-snap-align: start; }
+
+  /* rule 3: each stage header stays pinned under the top bar while its leads
+     scroll by, on the stage's own background */
+  .adm .adm-stage__head {
+    position: sticky; top: var(--mn-top); z-index: 4;
+    background: inherit;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* rule 5 */
+  .adm .adm-leads__views { height: auto; }
+  .adm .adm-leads__view,
+  .adm .adm-leads__search,
+  .adm .adm-leads__btn { height: auto; min-height: 44px; }
+  .adm .adm-filter-pill,
+  .adm .ldov__src-toggle,
+  .adm .adm-lead__name,
+  .adm .adm-lead__contacted,
+  .adm .adm-stage-btn,
+  .adm .adm-lead__stage-sel,
+  .adm .adm-list__name,
+  .adm .adm-list__contacts a,
+  .adm .adm-table__name,
+  .adm .adm-table a { min-height: 44px; }
+  .adm .adm-filter-pill,
+  .adm .adm-list__contacts a,
+  .adm .adm-table a { display: inline-flex; align-items: center; }
+  .adm .adm-ic-btn,
+  .adm .adm-lead__act { width: 44px; height: 44px; }
+  /* the checkbox keeps its drawn size; its box grows to a 44px hit area */
+  .adm .adm-list__contacted input { height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   Shared · settings-style cards (.adm-set__*), used by newsletter and settings.
+   Rule 5 only.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  .adm .adm-set__field input,
+  .adm .adm-set__field select,
+  .adm .adm-set__rec input:not([type='checkbox']),
+  .adm .adm-set__rec-toggle,
+  .adm .adm-set__add,
+  .adm .adm-set__setup summary,
+  .adm .ed__chip { min-height: 44px; }
+  .adm .adm-set__rec-toggle { display: inline-flex; align-items: center; }
+  .adm .adm-set__rec-del { width: 44px; height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   39 · newsletter (ניוזלטר)
+   The subscriber list is already one row per subscriber at the full width.
+   Rule 5 from the shared settings cards above (remove buttons, webhook field,
+   the "what is sent" disclosure).
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   40 · analytics (תנועה וסטטיסטיקות) — marked exception (charts).
+   Applied: rule 5. Charts and the data tables (which already scroll
+   sideways inside their sections) are not restructured. The range tabs
+   (7 ימים / 30 יום / ...) sit inside the header card, so they cannot be pinned
+   without moving them out of it (reported, not done). Summary tiles keep
+   their two columns.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  .adm .an-seg button,
+  .adm .an-check,
+  .adm .an-selfex,
+  .adm .an-csv,
+  .adm .an-search,
+  .adm .an-settings summary,
+  .adm .an-inline input,
+  .adm .an-inline button { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   41 · engine (תוכן האתר ותחרות)
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  /* rules 2 and 3: the tab bar (already a sideways strip on phones) runs edge
+     to edge, snaps to tabs and stays pinned under the top bar on the page
+     background, exactly like the tab bar of the pilot */
+  .adm .ce__tabs {
+    position: sticky; top: var(--mn-top); z-index: 5;
+    margin-inline: calc(-1 * var(--mn-g));
+    padding-inline: var(--mn-g);
+    background: var(--adm-bg);
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--mn-g);
+  }
+  .adm .ce__tab { scroll-snap-align: start; }
+  /* rule 1: the writer, post and competitor cards are one column at the full width */
+  .adm .ce__grid,
+  .adm .ce__posts { grid-template-columns: minmax(0, 1fr); }
+  /* rule 5: the "to the guide" links stand alone and are tapped */
+  .adm .ce__link { display: inline-flex; align-items: center; min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   42 · fonts (פונטים וטיפוגרפיה)
+   Already one column; the size fields measure 43.x px, so they get the 44px floor.
+   ------------------------------------------------------------ */
+@media (max-width: 599px) {
+  .adm .tsc__field input,
+  .adm .tsc__field select { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------
+   43 · settings (הגדרות) — rule 5 from the shared settings cards above
+   ------------------------------------------------------------ */

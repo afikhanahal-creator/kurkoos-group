@@ -36,7 +36,7 @@ export function cachedSnapshot(key, maxAgeMs = Infinity) {
   return null
 }
 
-function cached(key, ttlMs, fetcher) {
+export function cached(key, ttlMs, fetcher) {
   const hit = _cache.get(key)
   if (hit && Date.now() - hit.t < ttlMs) return hit.p
   // תמונת-מצב מקומית טרייה (מרענון/ניווט קודם) — מגישים בלי בקשת רשת בכלל.
@@ -52,7 +52,7 @@ function cached(key, ttlMs, fetcher) {
   _cache.set(key, { t: Date.now(), p })
   return p
 }
-function invalidate(prefix) {
+export function invalidate(prefix) {
   for (const k of _cache.keys()) if (k.startsWith(prefix)) _cache.delete(k)
   // מנקים גם את ה-localStorage כדי שלא תוגש תמונת-מצב ישנה אחרי כתיבה מהאדמין
   try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(LS_PREFIX + prefix)) localStorage.removeItem(k) } } catch { /* noop */ }

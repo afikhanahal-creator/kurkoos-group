@@ -15,6 +15,10 @@ import AccessibilityButton from './components/ui/AccessibilityButton.jsx'
 import IntroVideo from './components/sections/IntroVideo.jsx'
 import FontLoader from './components/ui/FontLoader.jsx'
 import Home from './pages/Home.jsx'   // עמוד הבית נטען מיידית (נחיתה) — בלי השהיית chunk
+import { EDIT_MODE, PREVIEW_MODE } from './lib/pageBuilder/layout.js'
+
+/* בתוך עורך העמודים ובתצוגה המקדימה: בלי סרטון הפתיחה, בלי אנליטיקס ובלי באנר עוגיות */
+const BUILDER = EDIT_MODE || PREVIEW_MODE
 // קוד-ספליטינג: כל שאר העמודים נטענים לפי דרישה → חבילת התחלה קטנה וטעינה מהירה יותר.
 // (עמוד הבית נשאר eager כדי שהנחיתה תהיה מיידית; שאר העמודים נטענים בניווט ונשמרים במטמון.)
 const Projects = lazy(() => import('./pages/Projects.jsx'))
@@ -131,9 +135,9 @@ export default function App() {
     <>
       <FontLoader />
       <a href="#top" className="skip-link">{t('common.skipToContent')}</a>
-      <IntroVideo />
+      {!BUILDER ? <IntroVideo /> : null}
       <ScrollManager />
-      <Analytics />
+      {!BUILDER ? <Analytics /> : null}
       <HolidayBanner />
       <PromoBanner />
       <Header />
@@ -189,7 +193,7 @@ export default function App() {
       {/* מובייל: בר חיוג · וואטסאפ · השארת פרטים בכל העמודים הציבוריים */}
       <MobileContactBar />
       <AccessibilityButton />
-      <CookieBanner />
+      {!BUILDER ? <CookieBanner /> : null}
     </>
   )
 }

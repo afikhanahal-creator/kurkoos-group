@@ -2703,3 +2703,25 @@
 /* קישור לחלון חיצוני בתפריט (מנוע התוכן לרשתות) */
 .adm__nav-ext { margin-inline-start: auto; opacity: 0.55; flex: none; }
 .adm__nav-item:hover .adm__nav-ext { opacity: 0.9; }
+
+/* ============================================================
+   חיפוש מהיר (Ctrl+K)
+   ============================================================ */
+.adm-qs__btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 11px;
+  border: 1px solid var(--adm-border); background: var(--adm-surface); color: var(--adm-muted); font: inherit; font-size: 0.9rem; cursor: pointer;
+}
+.adm-qs__btn:hover { border-color: var(--adm-border-strong); color: var(--adm-ink); }
+.adm-qs__btn:focus-visible { outline: none; box-shadow: var(--adm-ring); }
+.adm-qs__btn kbd { font: 600 0.72rem/1 var(--font-body); padding: 4px 6px; border-radius: 6px; background: var(--adm-bg); color: var(--adm-muted); direction: ltr; }
+@media (max-width: 760px) { .adm-qs__btn span, .adm-qs__btn kbd { display: none; } .adm-qs__btn { width: 44px; height: 44px; justify-content: center; padding: 0; } }
+.adm-qs { position: fixed; inset: 0; z-index: 900; background: rgba(7, 41, 58, 0.38); display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 16px; }
+.adm-qs__box { width: min(600px, 100%); background: #fff; border-radius: 14px; box-shadow: 0 24px 60px rgba(7, 41, 58, 0.3); overflow: hidden; color: #16202e; }
+.adm-qs__input { width: 100%; border: 0; border-bottom: 1px solid #e3e7ee; padding: 18px 20px; font: inherit; font-size: 1.1rem; outline: none; }
+.adm-qs__list { list-style: none; margin: 0; padding: 6px; max-height: 50vh; overflow-y: auto; }
+.adm-qs__list li { display: grid; gap: 2px; padding: 10px 14px; border-radius: 9px; cursor: pointer; }
+.adm-qs__list li.is-on { background: #e7eef1; }
+.adm-qs__list li strong { font-weight: 700; }
+.adm-qs__list li span { font-size: 0.82rem; color: #5f6b80; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-qs__none { color: #5f6b80; cursor: default !important; }
+.adm-qs__foot { margin: 0; padding: 10px 16px; border-top: 1px solid #e3e7ee; font-size: 0.78rem; color: #5f6b80; background: #f7f8fa; }

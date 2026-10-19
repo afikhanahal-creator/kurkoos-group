@@ -20,6 +20,7 @@ import SocialEngineTab, { openEngine } from './SocialEngineTab.jsx'
 import ContentTab from './ContentTab.jsx'
 import AnalyticsTab from './AnalyticsTab.jsx'
 import PagesTab from './PagesTab.jsx'
+import QuickSearch from './QuickSearch.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
 import './admin.css'
 
@@ -221,6 +222,7 @@ export default function Admin() {
             <p className="adm__page-sub">{active.sub}</p>
           </div>
           <div className="adm__topbar-actions">
+            <QuickSearch tabs={TABS} onPick={(t) => { if (t.ext) openEngine(); setTab(t.id) }} />
             <button
               type="button"
               className="adm__theme-toggle"

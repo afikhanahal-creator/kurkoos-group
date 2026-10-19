@@ -42,6 +42,9 @@
  body[data-pxview="create"] .kc-tabs,body[data-pxview="agent"] .v51tabs,body[data-pxview="metaads"] .v179tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;flex-wrap:nowrap!important;overflow-x:auto;margin-inline:-16px;padding-inline:16px;scroll-padding-inline:16px;scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:none}
  body[data-pxview="create"] .kc-tabs>*,body[data-pxview="agent"] .v51tabs>*,body[data-pxview="metaads"] .v179tabs>*{flex:0 0 auto;scroll-snap-align:start;min-height:44px}
  #appmain .td-chips::-webkit-scrollbar,#appmain .td-strip::-webkit-scrollbar,#appmain .px-kpis::-webkit-scrollbar,#appmain .sumr::-webkit-scrollbar,#appmain .kc-chips::-webkit-scrollbar,#appmain .kc-recs::-webkit-scrollbar,#appmain .kc-tabs::-webkit-scrollbar,#appmain .v51tabs::-webkit-scrollbar,#appmain .v179tabs::-webkit-scrollbar{display:none}
+ /* the creative studio's page gutter is 12px, so its strips and tab bar line up with 12, and the chip row inside a card stays in the card */
+ body[data-pxview="create"] .kc-recs,body[data-pxview="create"] #kc-tabs{margin-inline:-12px!important;padding-inline:12px!important;scroll-padding-inline:12px}
+ body[data-pxview="create"] .kc-chips{margin-inline:0!important;padding-inline:0!important;scroll-padding-inline:0}
  /* rule 3 · the calendar's day headers stay pinned at the top of their day while it scrolls by */
  body[data-pxview="calendar"] .v191ag .wkc>header{position:sticky;top:0;z-index:3;background-color:inherit}
  /* rule 5 · 44px touch targets where the scan found smaller ones */

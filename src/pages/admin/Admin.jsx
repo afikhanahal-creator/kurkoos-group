@@ -23,6 +23,7 @@ import PagesTab from './PagesTab.jsx'
 import QuickSearch from './QuickSearch.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
 import './admin.css'
+import './mobileNative.css' // phones only (max-width 599px): the approved mobile native layer, kept last
 
 /* אייקונים מינימליים (inline — ללא תלות חיצונית) */
 const Ico = {

@@ -18,7 +18,7 @@ const IC={gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx
  dl:SVG('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',17),zin:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',17),zout:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6"/>',17)};
 const S={open:false,list:[],i:-1,comp:'',kind:'',period:'',q:'',sort:'new',zoom:false,sheet:false,more:{},page:1,seen:0,card:false};
 const PAGE=60,PEEK=8;
-const onTop=()=>!!(document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
+const onTop=()=>!!((document.getElementById('v199')&&!document.getElementById('v199').hidden)||document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
 const num=n=>(+n||0).toLocaleString('he-IL');
 const fmtD=v=>{try{return V().fmtD(v)}catch(e){return ''}};

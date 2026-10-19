@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "api/[fn].js": { "maxDuration": 60 }
+  },
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
@@ -42,6 +45,11 @@
       "source": "/_blob/:id",
       "destination": "https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/engine-media/blob/:id",
       "permanent": false
+    },
+    {
+      "source": "/projects/mohaliver-70",
+      "destination": "/projects/mohaliver-17",
+      "permanent": true
     },
     {
       "source": "/s-projects-basic",

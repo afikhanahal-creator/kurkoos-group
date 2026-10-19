@@ -9,6 +9,7 @@ import { mergeArticles as mergeMentor, loadSeed as loadMentor } from '../../lib/
 import ArticleCover from '../../components/ui/ArticleCover.jsx'
 import AiImageButton from './AiImageButton.jsx'
 import { toast } from '../../lib/toast.js'
+import { supabase } from '../../lib/supabase.js'
 import './ArticlesHub.css'
 
 /* ============================================================
@@ -58,6 +59,122 @@ async function patchArticle(col, slug, patch) {
   else list.push({ slug, ...patch })
   await setSetting(col.key, JSON.stringify(list))
   try { invalidate('settings') } catch { /* noop */ }
+}
+
+/* קריאה לסוכן התמונות בשרת (server/article-images.js) עם החיבור של המנהל */
+async function agentCall(payload) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('צריך להתחבר מחדש לניהול')
+  const r = await fetch('/api/article-images', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify(payload) })
+  const d = await r.json().catch(() => ({}))
+  if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`)
+  return d
+}
+async function downloadImage(url, name) {
+  try {
+    const b = await (await fetch(url)).blob()
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b)
+    a.download = `${name || 'image'}.${(b.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg')}`
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000)
+  } catch { window.open(url, '_blank', 'noopener') }
+}
+
+const MODES = [
+  ['off', 'כבוי', 'הסוכן לא מוסיף תמונות לבד. אפשר עדיין להריץ אותו ידנית.'],
+  ['library', 'תמונות אמיתיות שלנו', 'בוחר ממאגר התמונות של מנוע התוכן: צילומי אתר, הדמיות, מבנים גמורים ומבט מהאוויר, לפי נושא הכתבה והפרויקט שמוזכר בה.'],
+  ['ai', 'תמונת AI לכריכה', 'מייצר תמונת כריכה ב-AI לפי הכותרת. עד 2 כתבות בכל ריצה.'],
+  ['mix', 'שילוב', 'כריכה ב-AI, ובגוף הכתבה תמונות אמיתיות שלנו.'],
+]
+
+function ImageAgent({ onChanged }) {
+  const [cfg, setCfg] = useState(null)
+  const [log, setLog] = useState([])
+  const [busy, setBusy] = useState('')
+  const [preview, setPreview] = useState(null)
+  useEffect(() => {
+    Promise.all([fetchSettingKey('article_images_agent'), fetchSettingKey('article_images_log')]).then(([c, l]) => {
+      const pc = (() => { try { return typeof c === 'string' ? JSON.parse(c) : c } catch { return null } })()
+      setCfg({ mode: 'off', body: 1, scope: 'new', since: today(), ...(pc || {}) })
+      const pl = (() => { try { return typeof l === 'string' ? JSON.parse(l) : l } catch { return [] } })()
+      setLog(Array.isArray(pl) ? pl : [])
+    }).catch(() => setCfg({ mode: 'off', body: 1, scope: 'new', since: today() }))
+  }, [])
+  if (!cfg) return null
+  const save = async (patch) => {
+    const next = { ...cfg, ...patch }
+    if (patch.scope === 'new' && !cfg.since) next.since = today()
+    setCfg(next)
+    try { await setSetting('article_images_agent', JSON.stringify(next)); toast.success('ההגדרה נשמרה') } catch { toast.error('השמירה נכשלה') }
+  }
+  const run = async (action) => {
+    setBusy(action)
+    try {
+      const d = await agentCall({ action, cfg: { ...cfg, mode: cfg.mode === 'off' ? 'library' : cfg.mode } })
+      if (action === 'preview') { setPreview(d); if (!d.done.length) toast.success('אין כרגע כתבות שצריכות תמונה') }
+      else {
+        const ok = d.done.filter((x) => !x.error)
+        toast.success(ok.length ? `${ok.length} כתבות קיבלו תמונות` : 'אין כרגע כתבות שצריכות תמונה')
+        setPreview(null)
+        setLog((prev) => [...ok, ...prev])
+        onChanged && onChanged()
+      }
+    } catch (e) { toast.error('הסוכן: ' + e.message) } finally { setBusy('') }
+  }
+  const undo = async (e) => {
+    try { await agentCall({ action: 'undo', id: e.id }); setLog((prev) => prev.map((x) => (x.id === e.id ? { ...x, undone: true } : x))); toast.success('בוטל. הכתבה חזרה למצב הקודם'); onChanged && onChanged() }
+    catch (err) { toast.error('הביטול נכשל: ' + err.message) }
+  }
+  const mode = MODES.find((m) => m[0] === cfg.mode) || MODES[0]
+  const recent = log.slice(0, 8)
+  return (
+    <section className="aia" aria-label="סוכן התמונות">
+      <header className="aia__head">
+        <div>
+          <h3>סוכן התמונות</h3>
+          <p>{mode[2]}{cfg.mode !== 'off' ? ' הסוכן רץ לבד כל יום, ומוסיף תמונות לכתבות שעוד אין להן.' : ''}</p>
+        </div>
+        <span className={`aia__state${cfg.mode !== 'off' ? ' is-on' : ''}`}>{cfg.mode !== 'off' ? 'פעיל' : 'כבוי'}</span>
+      </header>
+      <div className="aia__row">
+        <div className="ahub__seg aia__modes" role="radiogroup" aria-label="מה הסוכן מוסיף">
+          {MODES.map(([k, l]) => <button key={k} type="button" role="radio" aria-checked={cfg.mode === k} className={cfg.mode === k ? 'is-on' : ''} onClick={() => save({ mode: k })}>{l}</button>)}
+        </div>
+        <label className="aia__field">תמונות בגוף הכתבה
+          <select value={cfg.body} onChange={(e) => save({ body: +e.target.value })}>{[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+        </label>
+        <label className="aia__field">על אילו כתבות
+          <select value={cfg.scope} onChange={(e) => save({ scope: e.target.value })}><option value="new">רק כתבות חדשות מהיום</option><option value="all">גם כתבות קיימות בלי תמונה</option></select>
+        </label>
+      </div>
+      <div className="aia__acts">
+        <button type="button" className="ahd__btn" disabled={!!busy} onClick={() => run('preview')}>{busy === 'preview' ? 'בודק…' : 'תצוגה מקדימה: מה הסוכן יבחר'}</button>
+        <button type="button" className="ahd__btn ahd__btn--pri" disabled={!!busy} onClick={() => run('run')}>{busy === 'run' ? 'הסוכן עובד…' : 'הרצה עכשיו'}</button>
+      </div>
+      {preview && (
+        <div className="aia__preview">
+          <b>הסוכן יוסיף תמונות ל-{preview.done.filter((x) => !x.error).length} כתבות{preview.remaining ? ` (ועוד ${preview.remaining} בריצות הבאות)` : ''}:</b>
+          <ul>{preview.done.map((d) => (
+            <li key={d.slug}>{d.error ? <span className="aia__err">{d.title}: {d.error}</span> : (<>
+              <span className="aia__thumbs">{[d.cover, ...(d.images || [])].filter(Boolean).map((im) => <img key={im.url} src={im.url} alt={im.alt || ''} loading="lazy" />)}</span>
+              <span>{d.title}</span></>)}
+            </li>))}
+          </ul>
+        </div>
+      )}
+      {recent.length > 0 && (
+        <details className="aia__log">
+          <summary>מה הסוכן עשה לאחרונה ({log.length})</summary>
+          <ul>{recent.map((e) => (
+            <li key={e.id} className={e.undone ? 'is-undone' : ''}>
+              {e.cover && <img src={e.cover.url} alt="" loading="lazy" />}
+              <span><b>{e.title}</b><small>{new Date(e.at).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })} · {e.by === 'cron' ? 'ריצה יומית' : 'הרצה ידנית'} · {1 + (e.images || []).length} תמונות</small></span>
+              {e.undone ? <em>בוטל</em> : <button type="button" className="ahd__btn" onClick={() => undo(e)}>ביטול</button>}
+            </li>))}
+          </ul>
+        </details>
+      )}
+    </section>
+  )
 }
 
 export default function ArticlesHub() {
@@ -131,6 +248,8 @@ export default function ArticlesHub() {
         <span><b>{liveAll.length - withImg}</b> עם כריכה מעוצבת אוטומטית</span>
         <button type="button" className={`ahub__chip ahub__chip--warn${noImg ? ' is-on' : ''}`} aria-pressed={noImg} onClick={() => setNoImg(!noImg)}>רק כתבות בלי תמונה</button>
       </div>
+
+      <ImageAgent onChanged={load} />
 
       <div className="ahub__cols" role="group" aria-label="נושא">
         <button type="button" className={`ahub__col${col === 'all' ? ' is-on' : ''}`} aria-pressed={col === 'all'} onClick={() => { setCol('all'); setCat('') }}>כל הנושאים <small>{liveAll.length}</small></button>
@@ -236,6 +355,21 @@ function ArticleDrawer({ a, onClose, onSaved }) {
   }
   const setImg = (i, patch) => save({ images: imgs.map((x, j) => (j === i ? { ...x, ...patch } : x)) }, 'נשמר')
   const moveImg = (i, d) => { const n = [...imgs]; const j = i + d; if (j < 0 || j >= n.length) return; [n[i], n[j]] = [n[j], n[i]]; save({ images: n }, 'הסדר נשמר') }
+  const [sugg, setSugg] = useState(null)
+  const findRelated = async () => {
+    setBusy('sugg')
+    try { const d = await agentCall({ action: 'suggest', key: c.key, slug: a.slug }); setSugg(d.suggestions || []) }
+    catch (e) { toast.error('לא הצלחתי למצוא תמונות: ' + e.message) } finally { setBusy('') }
+  }
+  const replaceRef = useRef(null)
+  const replaceAt = useRef(-1)
+  const replaceImg = async (file) => {
+    const i = replaceAt.current
+    if (!file || i < 0) return
+    setBusy('more')
+    try { const u = await uploadMedia(file, `articles/${c.id}`); await setImg(i, { url: u }) }
+    catch (e) { toast.error('ההחלפה נכשלה: ' + ((e && e.message) || e)) } finally { setBusy(''); replaceAt.current = -1 }
+  }
   const asCover = (i) => { const n = [...imgs]; const [it] = n.splice(i, 1); if (a.cover) n.unshift({ url: a.cover, alt: a.coverAlt || '' }); save({ cover: it.url, coverAlt: it.alt || a.title, images: n }, 'התמונה הוגדרה ככריכה') }
 
   return createPortal(
@@ -263,6 +397,7 @@ function ArticleDrawer({ a, onClose, onSaved }) {
             <div className="ahd__acts">
               <button type="button" className="ahd__btn ahd__btn--pri" disabled={busy === 'cover'} onClick={() => coverRef.current && coverRef.current.click()}>{busy === 'cover' ? 'מעלה…' : a.cover ? 'החלפת תמונה' : 'העלאת תמונה'}</button>
               <AiImageButton promptText={[a.coverAlt || a.title, a.category, c.ai].filter(Boolean).join('. ')} folder={`articles/${c.id}`} onImage={(u) => save({ cover: u, coverAlt: a.coverAlt || a.title }, 'תמונת ה-AI הוגדרה ככריכה')} />
+              {a.cover && <button type="button" className="ahd__btn" onClick={() => downloadImage(a.cover, a.slug)}>הורדה</button>}
               {a.cover && <button type="button" className="ahd__btn ahd__btn--danger" onClick={() => { if (window.confirm('להסיר את תמונת הכריכה? תוצג כריכה מעוצבת אוטומטית.')) save({ cover: '' }, 'התמונה הוסרה') }}>הסרה</button>}
               <input ref={coverRef} type="file" accept="image/*" hidden onChange={(e) => { uploadCover(e.target.files && e.target.files[0]); e.target.value = '' }} />
             </div>
@@ -274,12 +409,32 @@ function ArticleDrawer({ a, onClose, onSaved }) {
           </section>
 
           <section className="ahd__sec">
+            <h3>תמונות מתאימות מהמאגר שלנו</h3>
+            <p className="ahd__help">הסוכן מחפש במאגר התמונות של מנוע התוכן תמונות שקשורות לכתבה: לפי הנושא, סוג התמונה והפרויקט שמוזכר בה. בוחרים אחת לכריכה או מוסיפים לגוף הכתבה.</p>
+            <button type="button" className="ahd__btn" disabled={busy === 'sugg'} onClick={findRelated}>{busy === 'sugg' ? 'מחפש…' : sugg ? 'חיפוש מחדש' : 'מצא תמונות מתאימות'}</button>
+            {sugg && !sugg.length && <p className="ahd__help">לא נמצאו תמונות מתאימות במאגר. אפשר להעלות או ליצור ב-AI.</p>}
+            {sugg && sugg.length > 0 && (
+              <ul className="ahd__sugg">{sugg.map((g) => (
+                <li key={g.url}>
+                  <img src={g.url} alt={g.alt || ''} loading="lazy" />
+                  <span className="ahd__suggt">{g.alt}{g.used ? ' · כבר בשימוש בכתבה אחרת' : ''}</span>
+                  <span className="ahd__imgacts">
+                    <button type="button" onClick={() => save({ cover: g.url, coverAlt: g.alt || a.title, images: a.cover ? [{ url: a.cover, alt: a.coverAlt || '' }, ...imgs] : imgs }, 'הוגדרה ככריכה')}>לכריכה</button>
+                    <button type="button" onClick={() => save({ images: [...imgs, { url: g.url, alt: g.alt || '' }] }, 'נוספה לגוף הכתבה')}>לגוף הכתבה</button>
+                  </span>
+                </li>))}
+              </ul>
+            )}
+          </section>
+
+          <section className="ahd__sec">
             <h3>תמונות נוספות לכתבה <small>{imgs.length}</small></h3>
             <p className="ahd__help">תמונות שישולבו בגוף הכתבה. אפשר להעלות כמה בבת אחת, לסדר, להגדיר אחת ככריכה ולהסיר.</p>
             <div className="ahd__drop" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); uploadMore(e.dataTransfer.files) }}>
               <button type="button" className="ahd__btn" disabled={busy === 'more'} onClick={() => moreRef.current && moreRef.current.click()}>{busy === 'more' ? 'מעלה…' : 'הוספת תמונות'}</button>
               <span>או גררו לכאן כמה תמונות</span>
               <input ref={moreRef} type="file" accept="image/*" multiple hidden onChange={(e) => { uploadMore(e.target.files); e.target.value = '' }} />
+              <input ref={replaceRef} type="file" accept="image/*" hidden onChange={(e) => { replaceImg(e.target.files && e.target.files[0]); e.target.value = '' }} />
             </div>
             {imgs.length > 0 && (
               <ol className="ahd__imgs">
@@ -291,6 +446,8 @@ function ArticleDrawer({ a, onClose, onSaved }) {
                       <button type="button" onClick={() => moveImg(i, -1)} disabled={i === 0} aria-label="למעלה">↑</button>
                       <button type="button" onClick={() => moveImg(i, 1)} disabled={i === imgs.length - 1} aria-label="למטה">↓</button>
                       <button type="button" onClick={() => asCover(i)}>לכריכה</button>
+                      <button type="button" onClick={() => { replaceAt.current = i; replaceRef.current && replaceRef.current.click() }}>החלפה</button>
+                      <button type="button" onClick={() => downloadImage(im.url, `${a.slug}-${i + 1}`)} aria-label="הורדה">הורדה</button>
                       <button type="button" className="is-danger" onClick={() => { if (window.confirm('להסיר את התמונה מהכתבה?')) save({ images: imgs.filter((_, j) => j !== i) }, 'התמונה הוסרה') }} aria-label="הסרה">✕</button>
                     </span>
                   </li>

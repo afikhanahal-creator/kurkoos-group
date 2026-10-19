@@ -790,4 +790,24 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   writeFileSync(join(dist, 'llms-full.txt'), out.join('\n') + '\n')
 }
 
+/* ---------- רשימת הכתבות לסוכן התמונות (server/article-images.js) ----------
+   כל כתבה שמפורסמת או מתוזמנת: טור, מפתח העריכות בניהול, כותרת, קטגוריה, תגיות ותאריך.
+   כתבות שסומנו כלא מפורסמות לא נכנסות. */
+{
+  const KEYS = { yazamut: 'yazamut_articles', constructions: 'constructions_articles', supervision: 'supervision_articles', brokerage: 'brokerage_articles', mentorguide: 'mentorguide_articles' }
+  const items = []
+  for (const [dirName, col] of Object.entries(COLUMNS)) {
+    let files = []
+    try { files = readdirSync(join(root, 'src', 'content', dirName)).filter((x) => x.endsWith('.js')) } catch { continue }
+    for (const f of files) {
+      try {
+        const a = (await import(pathToFileURL(join(root, 'src', 'content', dirName, f)).href)).default
+        if (!a?.slug || a.published === false) continue
+        items.push({ col: dirName, key: KEYS[dirName], route: col.route, slug: a.slug, title: a.title || '', category: a.category || '', tags: Array.isArray(a.tags) ? a.tags.slice(0, 8) : [], keyword: a.focusKeyword || '', date: String(a.date || '').slice(0, 10), cover: a.cover || '' })
+      } catch { /* מדלגים */ }
+    }
+  }
+  writeFileSync(join(dist, 'articles-index.json'), JSON.stringify({ generated: TODAY, items }))
+}
+
 console.log(`prerender: נוצרו ${done.length} עמודים סטטיים`)

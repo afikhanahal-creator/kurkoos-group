@@ -913,8 +913,8 @@
   .division-guide__band .eyebrow { justify-content: center; }
   .division-guide__desc { margin-inline: auto; }
   .division-guide__band .btn--lg {
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     padding: 0.6em 1.45em;
-    min-height: 0;
+    min-height: 44px;
   }
 }

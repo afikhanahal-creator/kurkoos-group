@@ -145,7 +145,6 @@ export default {
     openingsText: 'For open positions',
     openingsLink: 'click here',
     required: 'Fields marked with * are required',
-    phones: 'Sales & service 03-000-0000 | Offices 03-000-0001',
   },
   category: {
     residential: 'Residential',

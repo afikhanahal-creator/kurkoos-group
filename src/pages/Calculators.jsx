@@ -517,7 +517,7 @@ function CalcLead({ summaries }) {
   return (
     <section className="cx-section cx-lead" id="contact" aria-labelledby="cx-lead-title">
       <div className="container cx-lead__grid">
-        <aside className="cx-trust">
+        <div className="cx-trust">
           <img src="/shlomi-office.webp" alt="שלומי קורקוס" className="cx-trust__photo" width="800" height="1200" loading="lazy" />
           <div className="cx-trust__body">
             <b className="cx-trust__name">שלומי קורקוס</b>
@@ -539,7 +539,7 @@ function CalcLead({ summaries }) {
             </div>
             <span className="cx-trust__addr"><Icon name="location" size={15} /> רחוב הנגר 24, מגדלי Amy, הוד השרון</span>
           </div>
-        </aside>
+        </div>
 
         <div className="cx-form">
           <h2 className="cx-form__title" id="cx-lead-title">נבדוק איתכם את המספרים</h2>

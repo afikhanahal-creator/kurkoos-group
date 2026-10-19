@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect, lazy, Suspense } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useState, lazy, Suspense } from 'react'
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion'
 import { useI18n } from './i18n/index.jsx'
 import Header from './components/layout/Header.jsx'
 import HolidayBanner from './components/ui/HolidayBanner.jsx'
@@ -92,9 +92,32 @@ const pageMotion = {
   transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
 }
 
+/* "עצירת אנימציות" בתפריט הנגישות מוסיף ל-html את a11y-no-motion.
+   framer-motion לא מושפע מ-CSS, ולכן מעבירים לו את ההעדפה דרך MotionConfig. */
+function useNoMotion() {
+  const read = () => typeof document !== 'undefined' && document.documentElement.classList.contains('a11y-no-motion')
+  const [on, setOn] = useState(read)
+  useEffect(() => {
+    const mo = new MutationObserver(() => setOn(read()))
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => mo.disconnect()
+  }, [])
+  return on
+}
+
+// קישור הדילוג: מעביר את המיקוד ל-main בפועל (לא רק גלילה), בלי להשאיר # בכתובת
+function skipToMain(e) {
+  const main = document.getElementById('top')
+  if (!main) return
+  e.preventDefault()
+  main.focus({ preventScroll: true })
+  main.scrollIntoView({ block: 'start' })
+}
+
 export default function App() {
   const location = useLocation()
   const { t } = useI18n()
+  const noMotion = useNoMotion()
 
   // עקבות ביקור — כדי שכל ליד/הרשמה יידעו מאיזה עמוד ופרויקט הגיע הפונה
   useEffect(() => { notePage(location.pathname) }, [location.pathname])
@@ -132,9 +155,9 @@ export default function App() {
   }
 
   return (
-    <>
+    <MotionConfig reducedMotion={noMotion ? 'always' : 'user'}>
       <FontLoader />
-      <a href="#top" className="skip-link">{t('common.skipToContent')}</a>
+      <a href="#top" className="skip-link" onClick={skipToMain}>{t('common.skipToContent')}</a>
       {!BUILDER ? <IntroVideo /> : null}
       <ScrollManager />
       {!BUILDER ? <Analytics /> : null}
@@ -194,6 +217,6 @@ export default function App() {
       {!THUMB_MODE ? <MobileContactBar /> : null}
       {!THUMB_MODE ? <AccessibilityButton /> : null}
       {!BUILDER ? <CookieBanner /> : null}
-    </>
+    </MotionConfig>
   )
 }

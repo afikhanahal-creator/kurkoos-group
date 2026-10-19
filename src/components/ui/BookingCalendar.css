@@ -34,7 +34,7 @@
 .bcal__eyebrow {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.14em;
   color: var(--color-accent);
 }
@@ -127,7 +127,7 @@
   text-align: center;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 

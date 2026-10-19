@@ -1,6 +1,7 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { optimizeSrc } from '../../lib/responsiveImage.js'
 import './LogoCarousel.css'
+import { motionStopped } from '../../lib/motion.js'
 
 /* ============================================================
    LogoCarousel — סרט לוגואים רץ ברצף בעזרת גלילה נטיבית (scrollLeft +
@@ -47,6 +48,10 @@ const fitLogo = (e) => {
 export default function LogoCarousel({ logos = [] }) {
   const list = (logos || []).filter((l) => srcOf(l) || l.name)
   const trackRef = useRef(null)
+  // עצירה על ידי המשתמש (WCAG 2.2.2): הסרט נע בלי הפסקה, ולכן יש כפתור עצירה
+  const [stopped, setStopped] = useState(false)
+  const stoppedRef = useRef(false)
+  stoppedRef.current = stopped
 
   useEffect(() => {
     const track = trackRef.current
@@ -63,7 +68,7 @@ export default function LogoCarousel({ logos = [] }) {
       const dt = Math.min(0.05, (now - last) / 1000) // שניות (מוגבל לקפיצות)
       last = now
       const copy = track.scrollWidth / 2 // רוחב עותק אחד (הרשימה משוכפלת)
-      if (!paused && copy) {
+      if (!paused && copy && !stoppedRef.current && !motionStopped()) {
         pos += speed * dt
         if (pos >= copy) pos -= copy // איפוס חלק בגבול → לולאה רציפה
         // טרנספורם ב-GPU (translate3d) — חלק, בלי ריצוד גלילה תת-פיקסל
@@ -99,6 +104,18 @@ export default function LogoCarousel({ logos = [] }) {
   const track = [...list, ...list]
 
   return (
+    <div className="logo-marquee-wrap">
+    <button
+      type="button"
+      className="motion-toggle logo-marquee__pause"
+      onClick={() => setStopped((v) => !v)}
+      aria-pressed={stopped}
+      aria-label="עצירת תנועת הלוגואים"
+    >
+      <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false" fill="currentColor">
+        {stopped ? <path d="M7 4l13 8-13 8z" /> : <path d="M6 4h4v16H6zM14 4h4v16h-4z" />}
+      </svg>
+    </button>
     <div className="logo-marquee" role="list" aria-label="שותפים ולקוחות">
       <div className="logo-marquee__track" ref={trackRef}>
         {track.map((logo, i) => {
@@ -127,6 +144,7 @@ export default function LogoCarousel({ logos = [] }) {
           )
         })}
       </div>
+    </div>
     </div>
   )
 }

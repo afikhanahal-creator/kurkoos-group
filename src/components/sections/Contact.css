@@ -76,7 +76,7 @@
    (אדום) — על הפאנל הכהה צריך גוון בהיר וברור. */
 .contact .contact__panel .contact__eyebrow {
   color: #fff;                       /* טקסט לבן — ברור על רקע אדום */
-  font-size: 0.72rem;                /* קטן יותר */
+  font-size: 0.75rem;                /* קטן יותר */
   font-weight: 800;
   letter-spacing: 0.1em;
   margin-bottom: 0.8rem;

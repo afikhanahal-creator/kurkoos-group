@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import './GeometricBlurMesh.css'
+import { motionStopped } from '../../lib/motion.js'
 
 /* ============================================================
    אפקט WebGL — קובייה תיל תלת-ממדית מסתובבת עם blur בריחוף.
@@ -284,9 +285,13 @@ export default function GeometricBlurMesh() {
   // לולאת אנימציה
   useEffect(() => {
     let lastTime = performance.now()
+    // זמן הסיבוב מתקדם רק כשאין בקשה לעצור תנועה (הפחתת תנועה במערכת או
+    // "עצירת אנימציות" בתפריט הנגישות). עצירה מקפיאה את הקובייה במקומה.
+    let tAcc = (Date.now() - startTimeRef.current) / 1000
     const animate = (time) => {
       const deltaTime = (time - lastTime) / 1000
       lastTime = time
+      if (!motionStopped()) tAcc += Math.min(deltaTime, 0.1)
       const canvas = canvasRef.current
       const gl = glRef.current
       const program = programRef.current
@@ -295,7 +300,7 @@ export default function GeometricBlurMesh() {
         mouseDampRef.current.x += (mouseRef.current.x - mouseDampRef.current.x) * 8 * deltaTime
         mouseDampRef.current.y += (mouseRef.current.y - mouseDampRef.current.y) * 8 * deltaTime
         const ctx = fb.getContext('2d')
-        if (ctx && fb.width) draw2D(ctx, fb.width, fb.height, Math.min(window.devicePixelRatio, 2), (Date.now() - startTimeRef.current) / 1000, mouseDampRef.current)
+        if (ctx && fb.width) draw2D(ctx, fb.width, fb.height, Math.min(window.devicePixelRatio, 2), tAcc, mouseDampRef.current)
         animationFrameRef.current = requestAnimationFrame(animate)
         return
       }
@@ -306,7 +311,7 @@ export default function GeometricBlurMesh() {
       gl.clearColor(0, 0, 0, 0)
       gl.clear(gl.COLOR_BUFFER_BIT)
       const dpr = Math.min(window.devicePixelRatio, 2)
-      const elapsedTime = (Date.now() - startTimeRef.current) / 1000
+      const elapsedTime = tAcc
       const u = uniformsRef.current
       if (u.u_mouse) gl.uniform2f(u.u_mouse, mouseDampRef.current.x, mouseDampRef.current.y)
       if (u.u_resolution) gl.uniform2f(u.u_resolution, canvas.width, canvas.height)

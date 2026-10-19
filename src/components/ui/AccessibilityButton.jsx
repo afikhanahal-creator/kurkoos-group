@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../../i18n/index.jsx'
 import Icon from './Icon.jsx'
+import useFocusTrap from '../../hooks/useFocusTrap.js'
 import './AccessibilityButton.css'
 
 const KEY = 'kurkoos-a11y'
@@ -11,7 +12,7 @@ const defaults = {
   // toggles
   dark: false, light: false, monochrome: false, contrast: false,
   readable: false, links: false, headings: false, highlightAll: false,
-  bigButtons: false, reading: false, kbd: false,
+  bigButtons: false, reading: false, kbd: false, stopMotion: false,
   imageAlt: false, muteMedia: false, readAloud: false, virtualKbd: false,
   // levels
   zoom: 0, enlarge: 0,
@@ -65,6 +66,7 @@ function apply(s) {
     'a11y-big-buttons': s.bigButtons,
     'a11y-reading': s.reading,
     'a11y-kbd': s.kbd,
+    'a11y-no-motion': s.stopMotion,
     'a11y-readaloud': s.readAloud,
     'a11y-enlarge-1': s.enlarge === 1,
     'a11y-enlarge-2': s.enlarge === 2,
@@ -112,6 +114,7 @@ const ICON = {
   expand: <Svg><path d="M9 4 4 4 4 9M15 4h5v5M15 20h5v-5M9 20H4v-5" /><path d="m4 4 6 6M20 4l-6 6M20 20l-6-6M4 20l6-6" /></Svg>,
   summary: <Svg><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h6M8 12h8M8 16h5" /></Svg>,
   mute: <Svg><path d="M4 9v6h4l5 4V5L8 9H4Z" /><path d="m16 9 5 6M21 9l-5 6" /></Svg>,
+  pause: <Svg><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7M14 8.5v7" /></Svg>,
 }
 
 /* ============================================================
@@ -156,13 +159,13 @@ function VirtualKeyboard({ lang, onClose }) {
   const press = (e, ch) => { e.preventDefault(); insert(ch) }
 
   return (
-    <div className="a11y-vk" role="group" aria-label="Virtual keyboard">
+    <div className="a11y-vk" role="group" aria-label={kb === 'he' ? 'מקלדת וירטואלית' : 'Virtual keyboard'}>
       <div className="a11y-vk__bar">
         <button type="button" className="a11y-vk__lang" onMouseDown={(e) => { e.preventDefault(); setKb((k) => (k === 'he' ? 'en' : 'he')) }}>
           {kb === 'he' ? 'EN' : 'עב'}
         </button>
         <span>{kb === 'he' ? 'מקלדת וירטואלית' : 'Virtual keyboard'}</span>
-        <button type="button" className="a11y-vk__close" onMouseDown={(e) => { e.preventDefault(); onClose() }} aria-label="Close keyboard">✕</button>
+        <button type="button" className="a11y-vk__close" onMouseDown={(e) => { e.preventDefault(); onClose() }} onClick={onClose} aria-label={kb === 'he' ? 'סגירת המקלדת' : 'Close keyboard'}>✕</button>
       </div>
       {rows.map((row, ri) => (
         <div className="a11y-vk__row" key={ri}>
@@ -189,6 +192,15 @@ export default function AccessibilityButton() {
   const [colorTab, setColorTab] = useState('bg')
   const [fontTab, setFontTab] = useState('size')
   const [headings, setHeadings] = useState([])
+  const panelRef = useRef(null)
+  // חלון הנגישות: המיקוד נכנס אליו, נשאר בו, Escape סוגר והמיקוד חוזר לכפתור
+  useFocusTrap(panelRef, open)
+  useEffect(() => {
+    if (!open) return undefined
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
 
   /* טעינת הגדרות שמורות */
   useEffect(() => {
@@ -285,10 +297,11 @@ export default function AccessibilityButton() {
     { key: 'highlightAll', icon: 'highlighter' }, { key: 'headings', icon: 'hHead' }, { key: 'links', icon: 'hLink' },
     { key: 'enlarge', icon: 'zoomDoc', cycle: true, max: 2 }, { key: 'reading', icon: 'reading' }, { key: 'bigButtons', icon: 'expand' },
     { key: 'virtualKbd', icon: 'keyboard' }, { key: 'pageSummary', icon: 'summary', action: 'summary' }, { key: 'muteMedia', icon: 'mute' },
+    { key: 'stopMotion', icon: 'pause' },
   ]
   const LABELS = he
-    ? { dark: 'ניגודיות כהה', readAloud: 'הקראת טקסט', kbd: 'ניווט מקלדת', monochrome: 'מונוכרום', contrast: 'מוד ניגודיות', light: 'ניגודיות בהירה', imageAlt: 'תיאור לתמונות', readable: 'גופן קריא', zoom: 'הגדלת תצוגה', highlightAll: 'הדגש אלמנטים', headings: 'הדגשת כותרות', links: 'הדגשת קישורים', enlarge: 'הגדלת תכנים', reading: 'תצוגה קריאה', bigButtons: 'הגדלת כפתורים', virtualKbd: 'מקלדת וירטואלית', pageSummary: 'סיכום עמוד', muteMedia: 'השתקת מדיה' }
-    : { dark: 'Dark contrast', readAloud: 'Read aloud', kbd: 'Keyboard nav', monochrome: 'Monochrome', contrast: 'Contrast mode', light: 'Light contrast', imageAlt: 'Image descriptions', readable: 'Readable font', zoom: 'Zoom display', highlightAll: 'Highlight elements', headings: 'Highlight headings', links: 'Highlight links', enlarge: 'Enlarge content', reading: 'Reading view', bigButtons: 'Enlarge buttons', virtualKbd: 'Virtual keyboard', pageSummary: 'Page summary', muteMedia: 'Mute media' }
+    ? { dark: 'ניגודיות כהה', readAloud: 'הקראת טקסט', kbd: 'ניווט מקלדת', monochrome: 'מונוכרום', contrast: 'מוד ניגודיות', light: 'ניגודיות בהירה', imageAlt: 'תיאור לתמונות', readable: 'גופן קריא', zoom: 'הגדלת תצוגה', highlightAll: 'הדגש אלמנטים', headings: 'הדגשת כותרות', links: 'הדגשת קישורים', enlarge: 'הגדלת תכנים', reading: 'תצוגה קריאה', bigButtons: 'הגדלת כפתורים', virtualKbd: 'מקלדת וירטואלית', pageSummary: 'סיכום עמוד', muteMedia: 'השתקת מדיה', stopMotion: 'עצירת אנימציות' }
+    : { dark: 'Dark contrast', readAloud: 'Read aloud', kbd: 'Keyboard nav', monochrome: 'Monochrome', contrast: 'Contrast mode', light: 'Light contrast', imageAlt: 'Image descriptions', readable: 'Readable font', zoom: 'Zoom display', highlightAll: 'Highlight elements', headings: 'Highlight headings', links: 'Highlight links', enlarge: 'Enlarge content', reading: 'Reading view', bigButtons: 'Enlarge buttons', virtualKbd: 'Virtual keyboard', pageSummary: 'Page summary', muteMedia: 'Mute media', stopMotion: 'Stop animations' }
 
   const isActive = (tile) => {
     if (tile.action === 'summary') return summary
@@ -332,8 +345,9 @@ export default function AccessibilityButton() {
             <motion.div className="a11y-overlay" onClick={() => setOpen(false)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
             <motion.aside
+              ref={panelRef}
               className="a11y-panel"
-              role="dialog" aria-label={T.title}
+              role="dialog" aria-modal="true" aria-label={T.title}
               initial={{ x: '-110%' }}
               animate={{ x: 0 }}
               exit={{ x: '-110%' }}
@@ -343,7 +357,7 @@ export default function AccessibilityButton() {
               <div className="a11y-panel__top">
                 <button type="button" className="a11y-panel__close" onClick={() => setOpen(false)} aria-label={he ? 'סגירה' : 'Close'}>✕</button>
                 <span className="a11y-panel__brandtag">{he ? 'עברית' : 'English'}</span>
-                <button type="button" className="a11y-panel__quick" onClick={() => update({ ...s, contrast: !s.contrast })} aria-label="Contrast">
+                <button type="button" className="a11y-panel__quick" onClick={() => update({ ...s, contrast: !s.contrast })} aria-pressed={!!s.contrast} aria-label={LABELS.contrast}>
                   <Icon name="accessibility" size={18} />
                 </button>
               </div>
@@ -354,7 +368,7 @@ export default function AccessibilityButton() {
                   /* ---- סיכום עמוד ---- */
                   <div className="a11y-summary">
                     <button type="button" className="a11y-summary__back" onClick={() => setSummary(false)}>← {T.back}</button>
-                    <h4>{T.summaryTitle}</h4>
+                    <h2 className="a11y-summary__title">{T.summaryTitle}</h2>
                     {headings.length === 0 ? (
                       <p className="a11y-summary__empty">{T.empty}</p>
                     ) : (
@@ -394,7 +408,7 @@ export default function AccessibilityButton() {
                       </header>
                       <div className="a11y-tabs">
                         {Object.entries(T.tabsColor).map(([k, lbl]) => (
-                          <button key={k} type="button" className={`a11y-tab ${colorTab === k ? 'is-on' : ''}`} onClick={() => setColorTab(k)}>{lbl}</button>
+                          <button key={k} type="button" className={`a11y-tab ${colorTab === k ? 'is-on' : ''}`} aria-pressed={colorTab === k} onClick={() => setColorTab(k)}>{lbl}</button>
                         ))}
                       </div>
                       <input
@@ -412,8 +426,8 @@ export default function AccessibilityButton() {
                         <div><strong>{T.cursor}</strong><span>{T.cursorSub}</span></div>
                       </header>
                       <div className="a11y-duo">
-                        <button type="button" className={`a11y-chip ${s.cursor === 'black' ? 'is-on' : ''}`} onClick={() => update({ ...s, cursor: s.cursor === 'black' ? null : 'black' })}>{T.black}</button>
-                        <button type="button" className={`a11y-chip ${s.cursor === 'white' ? 'is-on' : ''}`} onClick={() => update({ ...s, cursor: s.cursor === 'white' ? null : 'white' })}>{T.white}</button>
+                        <button type="button" className={`a11y-chip ${s.cursor === 'black' ? 'is-on' : ''}`} aria-pressed={s.cursor === 'black'} onClick={() => update({ ...s, cursor: s.cursor === 'black' ? null : 'black' })}>{T.black}</button>
+                        <button type="button" className={`a11y-chip ${s.cursor === 'white' ? 'is-on' : ''}`} aria-pressed={s.cursor === 'white'} onClick={() => update({ ...s, cursor: s.cursor === 'white' ? null : 'white' })}>{T.white}</button>
                       </div>
                     </section>
 
@@ -425,13 +439,13 @@ export default function AccessibilityButton() {
                       </header>
                       <div className="a11y-tabs a11y-tabs--wrap">
                         {Object.entries(T.tabsFont).map(([k, lbl]) => (
-                          <button key={k} type="button" className={`a11y-tab ${fontTab === k ? 'is-on' : ''}`} onClick={() => setFontTab(k)}>{lbl}</button>
+                          <button key={k} type="button" className={`a11y-tab ${fontTab === k ? 'is-on' : ''}`} aria-pressed={fontTab === k} onClick={() => setFontTab(k)}>{lbl}</button>
                         ))}
                       </div>
                       <div className="a11y-stepper">
-                        <button type="button" onClick={() => setFont(fontValue - 1)} aria-label="-">−</button>
+                        <button type="button" onClick={() => setFont(fontValue - 1)} aria-label={`${he ? 'הקטנה' : 'Decrease'}: ${T.tabsFont[fontTab]}`}>−</button>
                         <div className="a11y-stepper__track"><span style={{ width: `${fontPct}%` }} /></div>
-                        <button type="button" onClick={() => setFont(fontValue + 1)} aria-label="+">+</button>
+                        <button type="button" onClick={() => setFont(fontValue + 1)} aria-label={`${he ? 'הגדלה' : 'Increase'}: ${T.tabsFont[fontTab]}`}>+</button>
                       </div>
                       <button type="button" className="a11y-link-btn" onClick={() => update({ ...s, fontScale: 0, lineSpace: 0, wordSpace: 0, letterSpace: 0 })}>↺ {T.resetFont}</button>
                     </section>

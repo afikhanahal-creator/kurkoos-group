@@ -133,7 +133,7 @@
     justify-content: center;
     gap: 0.3rem;
     padding: 0.16rem 0.34rem;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 500;
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.09);
@@ -158,6 +158,6 @@
   }
   .page-header .breadcrumbs__back-ic { width: 13px; height: 13px; }
   .page-header .breadcrumbs__current,
-  .page-header .breadcrumbs__link { font-size: 0.74rem; font-weight: 500; }
+  .page-header .breadcrumbs__link { font-size: 0.75rem; font-weight: 500; }
   .page-header .breadcrumbs__current { font-weight: 600; }
 }

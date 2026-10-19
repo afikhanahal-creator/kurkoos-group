@@ -81,10 +81,10 @@
   gap: 0.5rem;
   min-height: 48px;
   padding-inline: 1.3rem;
-  background: #1f9e4e;
-  border-color: #1f9e4e;
+  background: #15803d;   /* 5.0:1 מול לבן (נגישות) */
+  border-color: #15803d;
   color: #fff;
   white-space: normal;
 }
 @media (hover: hover) and (pointer: fine) {
-.btn.lf-wa:hover { background: #18843f; border-color: #18843f; color: #fff; } }
+.btn.lf-wa:hover { background: #116b33; border-color: #116b33; color: #fff; } }

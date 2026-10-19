@@ -7,7 +7,8 @@
   padding-block: clamp(1.75rem, 4vw, 3rem);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-.newsletter__title { color: #fff; font-size: 1.5rem; }
+.newsletter__title { color: #fff; font-size: 1.5rem; line-height: 1.25; letter-spacing: -0.01em; }
+.newsletter__live:empty { display: none; }
 .newsletter__lead { color: rgba(255, 255, 255, 0.6); margin-top: 0.3rem; }
 .newsletter__form { display: flex; gap: 0.7rem; flex: 1; max-width: 460px; min-width: 280px; }
 .newsletter__form input {
@@ -21,7 +22,7 @@
   font-size: 1rem;
 }
 .newsletter__form input::placeholder { color: rgba(255, 255, 255, 0.5); }
-.newsletter__form input:focus { outline: none; border-color: var(--color-secondary); background: rgba(255,255,255,0.1); }
+.newsletter__form input:focus { border-color: var(--color-secondary); background: rgba(255,255,255,0.1); }
 .newsletter__done {
   display: inline-flex;
   align-items: center;
@@ -62,7 +63,7 @@
   }
   .newsletter__form button {
     padding: 0.58rem 1.12rem;
-    font-size: 0.74rem;
+    font-size: 0.75rem;
     white-space: nowrap;
   }
 }

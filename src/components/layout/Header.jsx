@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
@@ -11,6 +11,7 @@ import ContactPopup from '../ui/ContactPopup.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
 import Icon from '../ui/Icon.jsx'
 import { CONTACT_POPUP_EVENT } from '../../lib/contact.js'
+import useFocusTrap from '../../hooks/useFocusTrap.js'
 import './Header.css'
 
 // תווית פריט ניווט: label דו-לשוני גובר על מפתח תרגום
@@ -33,7 +34,18 @@ export default function Header() {
   const [contactOpen, setContactOpen] = useState(false)
   const [contactTopic, setContactTopic] = useState(null)   // נושא שמסומן מראש בחלון צור קשר
   const [openSub, setOpenSub] = useState(null) // mobile submenu toggle
+  const [dismissed, setDismissed] = useState(null) // תפריט נפתח בדסקטופ שנסגר ב-Escape
   const location = useLocation()
+  const headerRef = useRef(null)
+  // תפריט המובייל פתוח: המיקוד נשאר בתוך ההדר והתפריט (לא בורח לעמוד שמאחורי
+  // השכבה), Escape סוגר, והמיקוד חוזר לכפתור ההמבורגר
+  useFocusTrap(headerRef, menuOpen, { initialFocus: false })
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
 
   /* הבר התחתון במובייל היה כאן (חיפוש · תפריט · צור קשר) ורק בעמודי הפרויקטים.
      הוא אוחד לבר הפנייה שבכל העמודים (MobileContactBar): חיוג, וואטסאפ,
@@ -106,7 +118,7 @@ export default function Header() {
   }, [menuOpen])
 
   return (
-    <header className={`header ${scrolled ? 'header--scrolled' : ''} ${hidden ? 'header--hidden' : ''}`}>
+    <header ref={headerRef} className={`header ${scrolled ? 'header--scrolled' : ''} ${hidden ? 'header--hidden' : ''}`}>
       {/* ניווט ראשי */}
       <div className="header__main">
         <div className="container header__main-inner">
@@ -116,6 +128,7 @@ export default function Header() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? t('common.close') : t('common.menu')}
             aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
           >
             <span className="header__burger-bar header__burger-bar--1" />
             <span className="header__burger-bar header__burger-bar--2" />
@@ -124,18 +137,31 @@ export default function Header() {
 
           <Logo />
 
-          <nav className="header__nav" aria-label="Primary">
-            {site.nav.map((item) => (
-              <div key={item.key || item.to} className="header__nav-item">
-                <Link to={item.to} className="header__nav-link">
+          <nav className="header__nav" aria-label={L({ he: 'ניווט ראשי', en: 'Primary' })}>
+            {site.nav.map((item, i) => (
+              /* תפריט נפתח: נפתח גם במיקוד מקלדת (focus-within), לא רק בריחוף.
+                 Escape סוגר אותו ומחזיר את המיקוד לקישור הראשי. */
+              <div
+                key={item.key || item.to}
+                className={`header__nav-item${dismissed === i ? ' is-dismissed' : ''}`}
+                onMouseEnter={() => setDismissed(null)}
+                onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDismissed(null) }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape' && item.children) {
+                    setDismissed(i)
+                    e.currentTarget.querySelector('.header__nav-link')?.focus()
+                  }
+                }}
+              >
+                <Link to={item.to} className="header__nav-link" aria-describedby={item.children ? `nav-sub-hint` : undefined}>
                   {navLabel(item, t, L)}
                   {item.children && <Icon name="chevron" size={16} className="header__nav-caret" />}
                 </Link>
                 {item.children && (
-                  <div className="header__dropdown" role="menu">
+                  <div className="header__dropdown">
                     <div className="header__dropdown-inner">
                       {item.children.map((c) => (
-                        <Link key={c.to + L(c.label)} to={c.to} className="header__dropdown-link" role="menuitem">
+                        <Link key={c.to + L(c.label)} to={c.to} className="header__dropdown-link">
                           {L(c.label)}
                           <Icon name="arrow" size={15} className="header__dropdown-arrow" />
                         </Link>
@@ -146,6 +172,8 @@ export default function Header() {
               </div>
             ))}
           </nav>
+          {/* מחוץ ל-nav: ה-CSS מסתיר את הפריט האחרון בניווט */}
+          <span id="nav-sub-hint" className="sr-only">{L({ he: 'יש תת תפריט, המשיכו עם Tab', en: 'Has a submenu, continue with Tab' })}</span>
 
           <div className="header__actions">
             <LanguageSwitcher className="header__lang" />
@@ -181,6 +209,7 @@ export default function Header() {
         {menuOpen && (
           <motion.div
             key="menu"
+            id="mobile-menu"
             className="header__mobile"
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -214,7 +243,7 @@ export default function Header() {
                 <MenuCards onNavigate={() => setMenuOpen(false)} />
               </motion.div>
 
-              <nav className="header__mobile-nav" aria-label="Mobile">
+              <nav className="header__mobile-nav" aria-label={L({ he: 'תפריט האתר', en: 'Site menu' })}>
                 <motion.div variants={mItem}>
                   <Link to="/" className="header__mobile-link">{t('nav.home')}</Link>
                 </motion.div>
@@ -238,7 +267,7 @@ export default function Header() {
                           type="button"
                           className="header__mobile-toggle"
                           onClick={() => setOpenSub(openSub === i ? null : i)}
-                          aria-label="Toggle submenu"
+                          aria-label={`${L({ he: 'תת תפריט', en: 'Submenu' })}: ${navLabel(item, t, L)}`}
                           aria-expanded={openSub === i}
                         >
                           <Icon name="chevron" size={22} style={{ transform: openSub === i ? 'rotate(180deg)' : 'none' }} />

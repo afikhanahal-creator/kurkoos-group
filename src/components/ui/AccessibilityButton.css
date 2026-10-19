@@ -173,7 +173,7 @@
   border-radius: 50%;
   background: var(--a11y-red);
   color: #fff;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   display: grid; place-items: center;
 }
 .a11y-tile__lvl {
@@ -185,7 +185,7 @@
   border-radius: 9px;
   background: var(--a11y-red);
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   display: grid; place-items: center;
 }
@@ -312,7 +312,8 @@
 /* ---------- סיכום עמוד ---------- */
 .a11y-summary { display: flex; flex-direction: column; gap: 0.7rem; }
 .a11y-summary__back { align-self: flex-start; color: var(--a11y-blue); font-weight: 700; }
-.a11y-summary h4 { color: var(--a11y-navy); font-size: 1.1rem; }
+.a11y-summary h4,
+.a11y-summary .a11y-summary__title { color: var(--a11y-navy); font-size: 1.1rem; }
 .a11y-summary ul { display: flex; flex-direction: column; gap: 0.2rem; }
 .a11y-summary li a {
   display: block;

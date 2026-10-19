@@ -27,4 +27,36 @@
 @media (max-width:599px) and (prefers-reduced-motion:reduce){
  body[data-pxview="queue"] .qa>button:active,body[data-pxview="queue"] .qtabs>button:active{transform:none}
 }
+/* ===== V198 rollout · the same approved rules on the other engine screens (phones only). Nothing that was not in the pilot. ===== */
+@media (max-width:599px){
+ /* rule 2 · sideways strips run edge to edge, snap, line up with the 16px gutter */
+ body[data-pxview="today"] .td-chips,body[data-pxview="today"] .td-strip,body[data-pxview="today"] .px-kpis,
+ body[data-pxview="articles"] .sumr,body[data-pxview="articles"] .kc-chips,
+ body[data-pxview="ideas"] .kc-chips,
+ body[data-pxview="create"] .kc-recs,body[data-pxview="create"] .kc-chips{display:flex;flex-wrap:nowrap!important;overflow-x:auto!important;margin-inline:-16px!important;padding-inline:16px!important;scroll-padding-inline:16px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+ body[data-pxview="today"] .td-chips>*,body[data-pxview="today"] .td-strip>*,body[data-pxview="today"] .px-kpis>*,
+ body[data-pxview="articles"] .sumr>*,body[data-pxview="articles"] .kc-chips>*,body[data-pxview="ideas"] .kc-chips>*,
+ body[data-pxview="create"] .kc-recs>*,body[data-pxview="create"] .kc-chips>*{flex:0 0 auto;scroll-snap-align:start}
+ /* rule 2 + 3 · tab bars (the underlined kind, as in the pilot) scroll sideways edge to edge and stay pinned at the top.
+    Segmented pill controls (.v175seg .v194tabs .rs-tabs .px-seg .v179seg) are a different component and keep their look. */
+ body[data-pxview="create"] .kc-tabs,body[data-pxview="agent"] .v51tabs,body[data-pxview="metaads"] .v179tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;flex-wrap:nowrap!important;overflow-x:auto;margin-inline:-16px;padding-inline:16px;scroll-padding-inline:16px;scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:none}
+ body[data-pxview="create"] .kc-tabs>*,body[data-pxview="agent"] .v51tabs>*,body[data-pxview="metaads"] .v179tabs>*{flex:0 0 auto;scroll-snap-align:start;min-height:44px}
+ #appmain .td-chips::-webkit-scrollbar,#appmain .td-strip::-webkit-scrollbar,#appmain .px-kpis::-webkit-scrollbar,#appmain .sumr::-webkit-scrollbar,#appmain .kc-chips::-webkit-scrollbar,#appmain .kc-recs::-webkit-scrollbar,#appmain .kc-tabs::-webkit-scrollbar,#appmain .v51tabs::-webkit-scrollbar,#appmain .v179tabs::-webkit-scrollbar{display:none}
+ /* the creative studio's page gutter is 12px, so its strips and tab bar line up with 12, and the chip row inside a card stays in the card */
+ body[data-pxview="create"] .kc-recs,body[data-pxview="create"] #kc-tabs{margin-inline:-12px!important;padding-inline:12px!important;scroll-padding-inline:12px}
+ body[data-pxview="create"] .kc-chips{margin-inline:0!important;padding-inline:0!important;scroll-padding-inline:0}
+ /* rule 3 · the calendar's day headers stay pinned at the top of their day while it scrolls by */
+ body[data-pxview="calendar"] .v191ag .wkc>header{position:sticky;top:0;z-index:3;background-color:inherit}
+ /* rule 5 · 44px touch targets where the scan found smaller ones */
+ body[data-pxview="create"] .px-sbar-ch>button,body[data-pxview="create"] .btn.sm,
+ body[data-pxview="metaads"] .v179b,body[data-pxview="metaads"] .v179ext,
+ body[data-pxview="settings"] .tchip>button{min-height:44px!important;height:auto!important}
+ body[data-pxview="settings"] .tchip>button{min-width:44px!important}
+ /* rule 5 · touch feedback on every engine screen */
+ #appmain button,#appmain a,#appmain summary,#appmain select{-webkit-tap-highlight-color:transparent}
+ #appmain button:active{transform:scale(.97)}
+}
+@media (max-width:599px) and (prefers-reduced-motion:reduce){
+ #appmain button:active{transform:none}
+}
 </style>

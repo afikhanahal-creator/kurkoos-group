@@ -54,12 +54,17 @@ export default async function handler(req, res) {
   else if (Array.isArray(body.input)) messages = body.input.filter((m) => m && (m.role === 'user' || m.role === 'assistant')).map((m) => ({ role: m.role, content: String(m.content || '').slice(0, 60_000) })).slice(-30)
   if (!messages || !messages.length || messages[messages.length - 1].role !== 'user') { res.status(400).json({ error: 'missing input' }); return }
 
-  // pictures for Claude to look at: only files from our own storage (engine-media), at most 4
+  // pictures for Claude to look at: files from our own storage (engine-media) by url, or files uploaded just now as base64 (jpeg/png/webp/gif), at most 4
   const BASE = `${String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/storage/v1/object/public/engine-media/`
-  const images = Array.isArray(body.images) ? body.images.filter((u) => typeof u === 'string' && BASE.length > 45 && u.startsWith(BASE) && !u.includes('..')).slice(0, 4) : []
+  const TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+  const images = (Array.isArray(body.images) ? body.images : []).map((x) => {
+    if (typeof x === 'string') return BASE.length > 45 && x.startsWith(BASE) && !x.includes('..') ? { type: 'image', source: { type: 'url', url: x } } : null
+    if (x && typeof x === 'object' && typeof x.b64 === 'string' && TYPES.has(x.type) && x.b64.length > 0 && x.b64.length <= 3_000_000 && /^[A-Za-z0-9+/=]+$/.test(x.b64)) return { type: 'image', source: { type: 'base64', media_type: x.type, data: x.b64 } }
+    return null
+  }).filter(Boolean).slice(0, 4)
   if (images.length) {
     const last = messages[messages.length - 1]
-    last.content = [...images.map((url) => ({ type: 'image', source: { type: 'url', url } })), { type: 'text', text: String(last.content) }]
+    last.content = [...images, { type: 'text', text: String(last.content) }]
   }
 
   const model = MODELS[body.tier] || MODELS.default

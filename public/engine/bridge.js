@@ -320,11 +320,30 @@
   }
 
   // ---------- sample: Claude דרך השרת של האתר
+  // תמונה יכולה להיות כתובת מהאחסון שלנו, או קובץ (Blob) שהועלה עכשיו: קובץ מוקטן ל-1400 פיקסלים ונשלח כ-base64 (עד 4, עד 3.5MB יחד)
+  async function toImg(x) {
+    if (typeof x === 'string') return x
+    if (!(x instanceof Blob)) return null
+    const url = URL.createObjectURL(x)
+    try {
+      const im = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url })
+      const s = Math.min(1, 1400 / Math.max(1, im.naturalWidth, im.naturalHeight))
+      const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * s)); c.height = Math.max(1, Math.round(im.naturalHeight * s))
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height)
+      return { b64: c.toDataURL('image/jpeg', 0.85).split(',')[1], type: 'image/jpeg' }
+    } catch (e) { return null } finally { URL.revokeObjectURL(url) }
+  }
+  async function imgs(list) {
+    if (!Array.isArray(list) || !list.length) return undefined
+    const out = []; let total = 0
+    for (const x of list.slice(0, 4)) { const v = await toImg(x); if (!v) continue; const n = typeof v === 'string' ? 0 : v.b64.length; if (total + n > 3_500_000) continue; total += n; out.push(v) }
+    return out.length ? out : undefined
+  }
   async function ask(input, opts, json) {
     opts = opts || {}
     let r
     try {
-      r = await fetch('/api/claude', { method: 'POST', signal: opts.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await token()) }, body: JSON.stringify({ input, tier: opts.modelTier || 'default', json: !!json, images: Array.isArray(opts.images) ? opts.images.filter((u) => typeof u === 'string').slice(0, 4) : undefined }) })
+      r = await fetch('/api/claude', { method: 'POST', signal: opts.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await token()) }, body: JSON.stringify({ input, tier: opts.modelTier || 'default', json: !!json, images: await imgs(opts.images) }) })
     } catch (e) { if (e && e.name === 'AbortError') throw err('cancelled', 'בוטל'); if (e && e.code) throw e; throw err('unavailable', 'אין חיבור') }
     let d = {}; try { d = await r.json() } catch (e) {}
     if (!r.ok) throw err(r.status === 503 ? 'not_granted' : r.status === 429 ? 'rate_limited' : r.status === 401 ? 'not_granted' : 'unavailable', d.error || ('HTTP ' + r.status))
@@ -338,7 +357,7 @@
       const m = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
       try { return JSON.parse(m ? m[0] : text) } catch (e) { throw err('invalid_output', 'התשובה לא הייתה JSON תקין') }
     },
-    limits: async () => ({ images: true }),
+    limits: async () => ({ images: { maxCount: 4, mediaTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] } }),
   })
 
   // ---------- downloads

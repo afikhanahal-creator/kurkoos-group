@@ -3114,6 +3114,43 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
 .v199open{display:inline-flex;align-items:center;gap:6px}
 @media (prefers-reduced-motion:reduce){.v199spin{animation:none}}
 @media (max-width:599px){.v199ov{align-items:flex-end;padding:0}.v199box{border-radius:18px 18px 0 0;max-height:92dvh;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}}
+</style><style id="k200">
+/* ===== V200 · competitor cards: a calmer, clearer card; fold any card to one line ===== */
+.comps{gap:16px!important}
+.comps article.cc{padding:0 16px 0;gap:12px;border-radius:18px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(7,41,58,.05);overflow:hidden;transition:box-shadow .18s}
+@media (hover:hover){.comps article.cc:hover{box-shadow:0 14px 34px -18px rgba(7,41,58,.4)}}
+/* header band: avatar, name, focus, status and the fold button */
+.comps article.cc>.ch{margin:0 -16px;padding:14px 16px 12px;background:var(--surface-2,#f3f5f8);border-bottom:1px solid var(--line);gap:12px}
+.comps article.cc>.ch>i{background:#07293a;color:#fff;border-radius:12px;width:44px;height:44px;font-size:18px}
+.comps article.cc>.ch b{font-size:17px;font-weight:800;color:#07293a;display:block;line-height:1.25}
+.comps article.cc>.ch small{display:block;font-size:13px;color:var(--ink-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v200min{flex:0 0 auto;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:#07293a;display:grid;place-items:center;cursor:pointer;transition:transform .2s,background .15s}
+.v200min:hover{background:#e7eef1}
+.v200min:focus-visible{outline:3px solid #4083a1;outline-offset:2px}
+.v200min svg{transition:transform .2s}
+article.cc.v200-min .v200min svg{transform:rotate(90deg)}
+/* the numbers: three clear tiles */
+.comps article.cc>.kp{gap:8px}
+.comps article.cc>.kp>div{background:var(--surface-2,#f3f5f8);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--ink-2);display:grid;gap:2px}
+.comps article.cc>.kp>div b{font-size:19px;font-weight:800;color:#07293a;font-variant-numeric:tabular-nums}
+/* actions as a footer band */
+.comps article.cc>.ca{margin:auto -16px 0;padding:12px 16px;border-top:1px solid var(--line);background:var(--surface-2,#f3f5f8)}
+.comps article.cc>.ca .ibtn{min-height:44px}
+/* the research text reads as a quiet block */
+.comps article.cc>.rs{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;line-height:1.6}
+.comps article.cc>.rs ul{margin:6px 0 0;padding-inline-start:18px}
+/* folded: only the header, the numbers in one row, and the actions */
+article.cc.v200-min>:not(.ch):not(.kp):not(.ca){display:none!important}
+article.cc.v200-min>.kp>div{padding:6px 10px}
+article.cc.v200-min>.kp>div b{font-size:16px}
+article.cc.v200-min>.ch{border-bottom:0}
+/* the bar above the grid */
+.v200bar{display:flex;gap:8px;justify-content:flex-end;margin:4px 0 10px}
+.v200bar button{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font:inherit;font-weight:700;font-size:14px;color:#07293a;cursor:pointer}
+.v200bar button:hover{background:#e7eef1}
+.v200bar button:focus-visible{outline:3px solid #4083a1;outline-offset:2px}
+@media (max-width:599px){.v200bar{justify-content:stretch}.v200bar button{flex:1;min-height:44px}}
+@media (prefers-reduced-motion:reduce){.comps article.cc,.v200min,.v200min svg{transition:none}}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -28963,6 +29000,35 @@ new MutationObserver(()=>{try{decorate()}catch(e){}}).observe(document.body,{chi
 window.__v199={open,go,promptFor,fullText,R};
 })();
 /*V199:END*/
+
+/*V200:START*/
+// ================= V200 · competitor cards (כרטיסי המתחרים): a cleaner card, and every card can be folded to a
+// one line summary with a button. The folded cards are remembered on this device. "הקטנת הכל" / "הרחבת הכל" above
+// the grid. Pure decoration on top of the existing cards, so every module that adds sections keeps working.
+(()=>{
+if(window.__v200)return;window.__v200=1;
+const KEY='v200_min';
+const getMin=()=>{try{return new Set(JSON.parse(localStorage.getItem(KEY)||'[]'))}catch(e){return new Set()}};
+const setMin=s=>{try{localStorage.setItem(KEY,JSON.stringify([...s]))}catch(e){}};
+const CH='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const cidOf=a=>{const b=a.querySelector('[data-cid]');return b?b.dataset.cid:''};
+function paint(a,min){a.classList.toggle('v200-min',min);const b=a.querySelector('.v200min');if(b){b.setAttribute('aria-expanded',String(!min));b.setAttribute('aria-label',min?'הרחבת הכרטיס':'הקטנת הכרטיס');b.title=min?'הרחבה':'הקטנה'}}
+function decorate(){const box=document.querySelector('.comps');if(!box)return;const min=getMin();
+ // the bar above the grid: fold or open all
+ if(!box.previousElementSibling||!box.previousElementSibling.classList.contains('v200bar')){
+  const bar=document.createElement('div');bar.className='v200bar';bar.setAttribute('role','group');bar.setAttribute('aria-label','תצוגת הכרטיסים');
+  bar.innerHTML='<button type="button" data-v200="all-min">הקטנת הכל</button><button type="button" data-v200="all-max">הרחבת הכל</button>';
+  box.before(bar)}
+ box.querySelectorAll('article.cc').forEach(a=>{const cid=cidOf(a);if(!cid)return;
+  if(!a.dataset.v200){a.dataset.v200=cid;const ch=a.querySelector('.ch');if(ch&&!ch.querySelector('.v200min')){const b=document.createElement('button');b.type='button';b.className='v200min';b.dataset.v200='toggle';b.innerHTML=CH;ch.appendChild(b)}}
+  paint(a,min.has(cid))})}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-v200]');if(!b)return;const a=b.dataset.v200;const min=getMin();
+ if(a==='toggle'){const card=b.closest('article.cc');const cid=card&&card.dataset.v200;if(!cid)return;e.preventDefault();e.stopPropagation();if(min.has(cid))min.delete(cid);else min.add(cid);setMin(min);paint(card,min.has(cid));return}
+ if(a==='all-min'||a==='all-max'){document.querySelectorAll('.comps article.cc').forEach(c=>{const cid=c.dataset.v200||cidOf(c);if(!cid)return;if(a==='all-min')min.add(cid);else min.delete(cid);paint(c,a==='all-min')});setMin(min)}},true);
+let t=0;new MutationObserver(()=>{clearTimeout(t);t=setTimeout(()=>{try{decorate()}catch(e){}},60)}).observe(document.body,{childList:true,subtree:true});
+window.__v200={decorate};
+})();
+/*V200:END*/
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

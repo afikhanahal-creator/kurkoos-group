@@ -1,0 +1,38 @@
+<style id="k200">
+/* ===== V200 · competitor cards: a calmer, clearer card; fold any card to one line ===== */
+.comps{gap:16px!important}
+.comps article.cc{padding:0 16px 0;gap:12px;border-radius:18px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(7,41,58,.05);overflow:hidden;transition:box-shadow .18s}
+@media (hover:hover){.comps article.cc:hover{box-shadow:0 14px 34px -18px rgba(7,41,58,.4)}}
+/* header band: avatar, name, focus, status and the fold button */
+.comps article.cc>.ch{margin:0 -16px;padding:14px 16px 12px;background:var(--surface-2,#f3f5f8);border-bottom:1px solid var(--line);gap:12px}
+.comps article.cc>.ch>i{background:#07293a;color:#fff;border-radius:12px;width:44px;height:44px;font-size:18px}
+.comps article.cc>.ch b{font-size:17px;font-weight:800;color:#07293a;display:block;line-height:1.25}
+.comps article.cc>.ch small{display:block;font-size:13px;color:var(--ink-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v200min{flex:0 0 auto;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:#07293a;display:grid;place-items:center;cursor:pointer;transition:transform .2s,background .15s}
+.v200min:hover{background:#e7eef1}
+.v200min:focus-visible{outline:3px solid #4083a1;outline-offset:2px}
+.v200min svg{transition:transform .2s}
+article.cc.v200-min .v200min svg{transform:rotate(90deg)}
+/* the numbers: three clear tiles */
+.comps article.cc>.kp{gap:8px}
+.comps article.cc>.kp>div{background:var(--surface-2,#f3f5f8);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--ink-2);display:grid;gap:2px}
+.comps article.cc>.kp>div b{font-size:19px;font-weight:800;color:#07293a;font-variant-numeric:tabular-nums}
+/* actions as a footer band */
+.comps article.cc>.ca{margin:auto -16px 0;padding:12px 16px;border-top:1px solid var(--line);background:var(--surface-2,#f3f5f8)}
+.comps article.cc>.ca .ibtn{min-height:44px}
+/* the research text reads as a quiet block */
+.comps article.cc>.rs{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;line-height:1.6}
+.comps article.cc>.rs ul{margin:6px 0 0;padding-inline-start:18px}
+/* folded: only the header, the numbers in one row, and the actions */
+article.cc.v200-min>:not(.ch):not(.kp):not(.ca){display:none!important}
+article.cc.v200-min>.kp>div{padding:6px 10px}
+article.cc.v200-min>.kp>div b{font-size:16px}
+article.cc.v200-min>.ch{border-bottom:0}
+/* the bar above the grid */
+.v200bar{display:flex;gap:8px;justify-content:flex-end;margin:4px 0 10px}
+.v200bar button{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font:inherit;font-weight:700;font-size:14px;color:#07293a;cursor:pointer}
+.v200bar button:hover{background:#e7eef1}
+.v200bar button:focus-visible{outline:3px solid #4083a1;outline-offset:2px}
+@media (max-width:599px){.v200bar{justify-content:stretch}.v200bar button{flex:1;min-height:44px}}
+@media (prefers-reduced-motion:reduce){.comps article.cc,.v200min,.v200min svg{transition:none}}
+</style>

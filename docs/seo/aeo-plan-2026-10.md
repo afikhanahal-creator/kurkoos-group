@@ -128,3 +128,4 @@ if a supporting page is cited instead of the canonical one, strengthen the canon
 - Real project photos and a dated project log per villa (with owner approval) as first-hand proof.
 - Owner-approved case notes from real builds would strengthen the mistakes and cost articles.
 - 2026-10-18: AEO pass deployed (PR 290); redeploy after a Vercel failure.
+- 2026-10-19: FAQ hub group "מי בונה, מי מפקח ומי מלווה" reworded to the exact tracker prompts (plus a new item for engineering supervision and budget), matching Q&A lines in `public/llms.txt`, SEO fields of the five idea articles aligned with the search phrasing, and 13 Afik HaNahal mentions (site afikhanahal.co.il) in land, buying and selling articles.

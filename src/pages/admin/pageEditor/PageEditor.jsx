@@ -57,7 +57,8 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
   const h = useHistory(null)
   const { layout } = h
   const [selected, setSelected] = useState(null)
-  const [device, setDevice] = useState('d')
+  // בטלפון העורך נפתח על תצוגת הנייד, כמו שהגולשים יראו את העמוד
+  const [device, setDevice] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 600 ? 'm' : 'd'))
   const [panel, setPanel] = useState('add')
   const [save, setSave] = useState('idle') // idle | saving | saved | error
   const [publishing, setPublishing] = useState(false)
@@ -221,18 +222,26 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [h, flush, selected, act])
 
-  /* מידות הקנבס, לחישוב הקטנה של תצוגת המחשב */
+  /* מידות הקנבס, לחישוב הקטנה של תצוגת המחשב. הקנבס קיים רק אחרי שהעמוד נטען,
+     ולכן המדידה מתחילה כשיש layout (אחרת נשארה ברירת המחדל של 1000 והתצוגה גלשה לצד) */
+  const ready = !!layout
   useEffect(() => {
     const el = canvasRef.current
     if (!el) return undefined
-    const ro = new ResizeObserver(([e]) => setCanvas({ w: e.contentRect.width, h: e.contentRect.height }))
+    const measure = () => {
+      const cs = getComputedStyle(el)
+      const px = (v) => parseFloat(v) || 0
+      setCanvas({ w: el.clientWidth - px(cs.paddingLeft) - px(cs.paddingRight), h: el.clientHeight - px(cs.paddingTop) - px(cs.paddingBottom) - 40 })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [ready])
   const dev = deviceOf(device)
-  const pad = 32
-  const scale = Math.min(1, (canvas.w - pad) / dev.width)
-  const frameH = Math.max(400, (canvas.h - pad) / scale)
+  // canvas.w and canvas.h are the room inside the canvas padding (and above the hint line)
+  const scale = Math.max(0.1, Math.min(1, canvas.w / dev.width))
+  const frameH = Math.max(400, canvas.h / scale)
 
   /* ---------- פרסום ---------- */
   const publish = async () => {

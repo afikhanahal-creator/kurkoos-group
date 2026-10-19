@@ -642,6 +642,11 @@ export default function AnalyticsTab() {
         </div>
       </header>
 
+      {/* בטלפון: בחירת התקופה צמודה למעלה בזמן גלילה */}
+      <div className="an-seg an-seg--pin" role="group" aria-label="תקופה">
+        {PRESETS.map((p) => <button key={p.id} type="button" className={preset === p.id ? 'is-on' : ''} aria-pressed={preset === p.id} onClick={() => setPreset(p.id)}>{p.label}</button>)}
+      </div>
+
       <LivePanel rt={rt} users={rtUsers} />
 
       {!hasData && (

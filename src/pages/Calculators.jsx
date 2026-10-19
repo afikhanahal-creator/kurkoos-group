@@ -10,6 +10,8 @@ import { useLeadForm } from '../lib/leadForm.js'
 import { trailSummary } from '../lib/visitTrail.js'
 import { openContactPopup, telHref, waHref, CONTACT_PHONE_DISPLAY } from '../lib/contact.js'
 import { track } from '../lib/track.js'
+import DEF from '../lib/pageBuilder/defs/calculators.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './Calculators.css'
 
 /* ============================================================
@@ -349,6 +351,111 @@ function YieldCalc({ onSummary }) {
   )
 }
 
+/* הסקשנים של העמוד. הסדר הקבוע ב-defs/calculators.js */
+const LOCAL = {
+  /* ---------- כותרת ---------- */
+  hero: ({ ctx: { jump } }) => (
+    <header className="cx-hero">
+      <img className="cx-hero__drawing" src="/divisions/humash-22-24-sketch.webp" alt="" width="1400" height="693" decoding="async" aria-hidden="true" />
+      <div className="container cx-hero__inner">
+        <Breadcrumbs items={[{ label: 'מחשבוני נדל"ן' }]} />
+        <div className="cx-hero__copy">
+          <h1 className="cx-hero__title">מחשבון משכנתא ומחשבון תשואה לנדל"ן</h1>
+          <p className="cx-hero__lead">כמה תחזירו כל חודש, וכמה הנכס באמת מכניס. תשובה ראשונית בתוך דקה, בלי להשאיר פרטים.</p>
+        </div>
+        <nav className="cx-jump" aria-label="מעבר למחשבון">
+          <a href="#mortgage" className="cx-jump__item" onClick={jump('mortgage')}>
+            <span className="cx-jump__ic" aria-hidden="true"><Icon name="house" size={24} /></span>
+            <span className="cx-jump__body">
+              <b>מחשבון משכנתא</b>
+              <span>החזר חודשי, סך ההחזר והריבית</span>
+            </span>
+            <Icon name="chevron" size={20} className="cx-jump__chev" />
+          </a>
+          <a href="#yield" className="cx-jump__item" onClick={jump('yield')}>
+            <span className="cx-jump__ic" aria-hidden="true"><Icon name="building" size={24} /></span>
+            <span className="cx-jump__body">
+              <b>מחשבון תשואת שכירות</b>
+              <span>תשואה ברוטו ונטו לנכס להשקעה</span>
+            </span>
+            <Icon name="chevron" size={20} className="cx-jump__chev" />
+          </a>
+        </nav>
+        <p className="cx-hero__fine"><Icon name="shield" size={16} /> החישוב מתבצע אצלכם בדפדפן ואינו נשלח לשום מקום.</p>
+      </div>
+    </header>
+  ),
+  /* ---------- המחשבונים ---------- */
+  mortgage: ({ ctx: { onSummary } }) => (
+    <section className="cx-section cx-tool" id="mortgage" aria-labelledby="cx-mortgage-title">
+      <div className="container">
+        <div className="cx-head">
+          <h2 className="cx-h2" id="cx-mortgage-title">מחשבון החזר חודשי למשכנתא</h2>
+          <p className="cx-head__lead">הזיזו את הסליידרים או הקלידו מספר. ההחזר מתעדכן מיד.</p>
+        </div>
+        <MortgageCalc onSummary={onSummary} />
+      </div>
+    </section>
+  ),
+  yield: ({ ctx: { onSummary } }) => (
+    <section className="cx-section cx-tool cx-tool--alt" id="yield" aria-labelledby="cx-yield-title">
+      <div className="container">
+        <div className="cx-head">
+          <h2 className="cx-h2" id="cx-yield-title">מחשבון תשואת שכירות</h2>
+          <p className="cx-head__lead">מחיר הנכס ושכר הדירה מספיקים לתשואה ברוטו. הוסיפו הוצאות כדי לראות נטו.</p>
+        </div>
+        <YieldCalc onSummary={onSummary} />
+      </div>
+    </section>
+  ),
+  /* ---------- שאלות נפוצות ---------- */
+  faq: () => (
+    <section className="cx-section cx-faq" aria-labelledby="cx-faq-title">
+      <div className="container cx-faq__inner">
+        <h2 className="cx-h2" id="cx-faq-title">שאלות נפוצות</h2>
+        <div className="cx-faq__list">
+          {FAQS.map((f) => (
+            <details key={f.q} className="cx-faq__item">
+              <summary>
+                <span>{f.q}</span>
+                <span className="cx-faq__sign" aria-hidden="true" />
+              </summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---------- המשך קריאה ---------- */
+  links: () => (
+    <nav className="cx-section cx-links" aria-label="עוד בנושא">
+      <div className="container cx-links__grid">
+        <div>
+          <h2 className="cx-links__title">מדריכים שכדאי לקרוא לפני שמחליטים</h2>
+          <ul>
+            {GUIDES.map((g) => (
+              <li key={g.to}><Link to={g.to}>{g.label}<Icon name="arrowLeft" size={15} /></Link></li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2 className="cx-links__title">בונים בית במקום לקנות?</h2>
+          <ul>
+            {BUILD_LINKS.map((g) => (
+              <li key={g.to}><Link to={g.to}>{g.label}<Icon name="arrowLeft" size={15} /></Link></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </nav>
+  ),
+  /* ---------- טופס ---------- */
+  lead: ({ ctx: { summaries } }) => (
+    <CalcLead summaries={summaries} />
+  ),
+}
+
 export default function Calculators() {
   /* סיכום החישוב האחרון בכל מחשבון. נשמר ב-ref (לא state) כדי שהקלדה
      לא תרנדר את כל העמוד, ומצורף להערות הליד בטופס שבסוף העמוד. */
@@ -381,100 +488,7 @@ export default function Calculators() {
         jsonLd={jsonLd}
       />
 
-      {/* ---------- כותרת ---------- */}
-      <header className="cx-hero">
-        <img className="cx-hero__drawing" src="/divisions/humash-22-24-sketch.webp" alt="" width="1400" height="693" decoding="async" aria-hidden="true" />
-        <div className="container cx-hero__inner">
-          <Breadcrumbs items={[{ label: 'מחשבוני נדל"ן' }]} />
-          <div className="cx-hero__copy">
-            <h1 className="cx-hero__title">מחשבון משכנתא ומחשבון תשואה לנדל"ן</h1>
-            <p className="cx-hero__lead">כמה תחזירו כל חודש, וכמה הנכס באמת מכניס. תשובה ראשונית בתוך דקה, בלי להשאיר פרטים.</p>
-          </div>
-          <nav className="cx-jump" aria-label="מעבר למחשבון">
-            <a href="#mortgage" className="cx-jump__item" onClick={jump('mortgage')}>
-              <span className="cx-jump__ic" aria-hidden="true"><Icon name="house" size={24} /></span>
-              <span className="cx-jump__body">
-                <b>מחשבון משכנתא</b>
-                <span>החזר חודשי, סך ההחזר והריבית</span>
-              </span>
-              <Icon name="chevron" size={20} className="cx-jump__chev" />
-            </a>
-            <a href="#yield" className="cx-jump__item" onClick={jump('yield')}>
-              <span className="cx-jump__ic" aria-hidden="true"><Icon name="building" size={24} /></span>
-              <span className="cx-jump__body">
-                <b>מחשבון תשואת שכירות</b>
-                <span>תשואה ברוטו ונטו לנכס להשקעה</span>
-              </span>
-              <Icon name="chevron" size={20} className="cx-jump__chev" />
-            </a>
-          </nav>
-          <p className="cx-hero__fine"><Icon name="shield" size={16} /> החישוב מתבצע אצלכם בדפדפן ואינו נשלח לשום מקום.</p>
-        </div>
-      </header>
-
-      {/* ---------- המחשבונים ---------- */}
-      <section className="cx-section cx-tool" id="mortgage" aria-labelledby="cx-mortgage-title">
-        <div className="container">
-          <div className="cx-head">
-            <h2 className="cx-h2" id="cx-mortgage-title">מחשבון החזר חודשי למשכנתא</h2>
-            <p className="cx-head__lead">הזיזו את הסליידרים או הקלידו מספר. ההחזר מתעדכן מיד.</p>
-          </div>
-          <MortgageCalc onSummary={onSummary} />
-        </div>
-      </section>
-
-      <section className="cx-section cx-tool cx-tool--alt" id="yield" aria-labelledby="cx-yield-title">
-        <div className="container">
-          <div className="cx-head">
-            <h2 className="cx-h2" id="cx-yield-title">מחשבון תשואת שכירות</h2>
-            <p className="cx-head__lead">מחיר הנכס ושכר הדירה מספיקים לתשואה ברוטו. הוסיפו הוצאות כדי לראות נטו.</p>
-          </div>
-          <YieldCalc onSummary={onSummary} />
-        </div>
-      </section>
-
-      {/* ---------- שאלות נפוצות ---------- */}
-      <section className="cx-section cx-faq" aria-labelledby="cx-faq-title">
-        <div className="container cx-faq__inner">
-          <h2 className="cx-h2" id="cx-faq-title">שאלות נפוצות</h2>
-          <div className="cx-faq__list">
-            {FAQS.map((f) => (
-              <details key={f.q} className="cx-faq__item">
-                <summary>
-                  <span>{f.q}</span>
-                  <span className="cx-faq__sign" aria-hidden="true" />
-                </summary>
-                <p>{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- המשך קריאה ---------- */}
-      <nav className="cx-section cx-links" aria-label="עוד בנושא">
-        <div className="container cx-links__grid">
-          <div>
-            <h2 className="cx-links__title">מדריכים שכדאי לקרוא לפני שמחליטים</h2>
-            <ul>
-              {GUIDES.map((g) => (
-                <li key={g.to}><Link to={g.to}>{g.label}<Icon name="arrowLeft" size={15} /></Link></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="cx-links__title">בונים בית במקום לקנות?</h2>
-            <ul>
-              {BUILD_LINKS.map((g) => (
-                <li key={g.to}><Link to={g.to}>{g.label}<Icon name="arrowLeft" size={15} /></Link></li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </nav>
-
-      {/* ---------- טופס ---------- */}
-      <CalcLead summaries={summaries} />
+      <PageSections def={DEF} local={LOCAL} ctx={{ jump, onSummary, summaries }} />
     </article>
   )
 }

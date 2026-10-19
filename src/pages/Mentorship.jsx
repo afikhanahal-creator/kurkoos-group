@@ -7,6 +7,8 @@ import Icon from '../components/ui/Icon.jsx'
 import KineticText from '../components/ui/KineticText.jsx'
 import { stages, pillars, faqs } from '../data/mentorship.js'
 import { track } from '../lib/track.js'
+import DEF from '../lib/pageBuilder/defs/mentorship.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import '../components/sections/Activities.css'   // card-effect: נוזל/ברק/זוהר/הטיה 3D
 import './Mentorship.css'
 
@@ -39,6 +41,318 @@ function FaqItem({ item, isOpen, onToggle }) {
   )
 }
 
+/* הסקשנים של העמוד. הסדר הקבוע ב-defs/mentorship.js */
+const LOCAL = {
+  header: () => (
+    <PageHeader
+      noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
+      eyebrow="מנטורינג"
+      title='ליווי יזמי נדל"ן'
+      lead='תוכנית מנטורינג שמעניקה ליזמים צעירים ידע, כלים ופרקטיקה מהיום יום של התעשייה, עם שלומי קורקוס וצוות קורקוס גרופ, שלושים שנה של ניסיון בשטח.'
+      crumbs={[{ label: 'מנטורינג' }]}
+      image="/livy-yazamim-hero.webp"
+      imageAlt="ארגז כלים ותוכניות בנייה על שולחן עבודה, בית בבנייה ברקע"
+      imagePos="center 62%"
+      imageFlip
+    />
+  ),
+  /* ---- היכרות עם שלומי ---- */
+  intro: () => (
+    <section className="mentor-intro">
+      <div className="container">
+        <Reveal className="mentor-intro__inner">
+          <div className="mentor-intro__content">
+            <span className="eyebrow mentor-intro__eyebrow">שלומי קורקוס, מייסד קורקוס גרופ</span>
+            <h2 className="mentor-intro__heading">
+              <KineticText as="span" className="mentor-intro__heading-line" text="שלושים שנה בשטח." />
+              <KineticText as="span" className="mentor-intro__heading-line" text="בכל שלב של הדרך." />
+            </h2>
+            <p className="mentor-intro__para">
+              אני לא מלמד מה שקראתי בספר. אני מלמד מה שעשיתי, פרויקט אחר פרויקט, טעות אחר טעות, עסקה אחר עסקה. הקמתי ארבע חטיבות שמכסות את כל שלבי הפרויקט: ייזום, ביצוע, פיקוח ותיווך. יזם שעובד איתי לא צריך לרכז מידע ממספר גורמים. הכל נמצא תחת מטרייה אחת.
+            </p>
+            <p className="mentor-intro__para">
+              הניסיון הזה לא נמכר בקורס מקוון ולא נרכש באקדמיה. הוא נצבר בשטח, בישיבות עם בנקים, בוועדות תכנון, בפגישות עם לקוחות וביחס אישי לכל לקוח. מה שאני מציע הוא ליווי אישי וצמוד, כדי שהדרך שלכם תהיה קצרה ובטוחה יותר משלי.
+            </p>
+            <div className="mentor-intro__stats">
+              <div className="mentor-intro__stat">
+                <span className="mentor-intro__stat-num">+30</span>
+                <span className="mentor-intro__stat-label">שנות ניסיון</span>
+              </div>
+              <div className="mentor-intro__stat">
+                <span className="mentor-intro__stat-num">4</span>
+                <span className="mentor-intro__stat-label">חטיבות עסקיות</span>
+              </div>
+              <div className="mentor-intro__stat">
+                <span className="mentor-intro__stat-num">1:1</span>
+                <span className="mentor-intro__stat-label">ליווי אישי</span>
+              </div>
+            </div>
+            {/* קביעת פגישה: הטופס נפתח עם "ליווי יזמים" כבר מסומן */}
+            <div className="mentor-intro__cta mentor-intro__cta--desktop">
+              <Link
+                to="/contact?topic=mentorship&src=mentorship"
+                className="btn btn--primary btn--lg mentor-intro__btn"
+                onClick={() => track('cta_click', { placement: 'mentor_intro' })}
+              >
+                לקביעת פגישה <Icon name="arrowLeft" size={18} />
+              </Link>
+            </div>
+          </div>
+          <aside className="mentor-intro__side">
+            <img
+              src="/shlomi-office.webp"
+              alt="שלומי קורקוס, מייסד קורקוס גרופ, במשרד"
+              className="mentor-intro__photo"
+              width="800"
+              height="1200"
+              loading="lazy"
+            />
+            <div className="mentor-intro__quote-card">
+              <p className="mentor-intro__quote-text">
+                "יזמות נדל"ן היא מקצוע. לא השקעה. לא הימור. מקצוע שלומדים עם מנטור שכבר עשה את הדרך."
+              </p>
+              <span className="mentor-intro__quote-sig">שלומי קורקוס</span>
+            </div>
+            {/* במובייל הכפתור יושב כאן, מתחת לציטוט, במקום מעל התמונה */}
+            <div className="mentor-intro__cta mentor-intro__cta--mobile">
+              <Link
+                to="/contact?topic=mentorship&src=mentorship"
+                className="btn btn--primary btn--lg mentor-intro__btn"
+                onClick={() => track('cta_click', { placement: 'mentor_intro_mobile' })}
+              >
+                לקביעת פגישה <Icon name="arrowLeft" size={18} />
+              </Link>
+            </div>
+          </aside>
+        </Reveal>
+      </div>
+    </section>
+  ),
+  /* ---- יתרונות — card-effect ---- */
+  pillars: () => (
+    <section className="section">
+      <div className="container">
+        <Reveal className="mentor-section-head">
+          <span className="eyebrow">למה ליווי יזמי</span>
+          <KineticText as="h2" className="section-title" text="נכנסים לעסקה עם מי שכבר עשה את הדרך" />
+          <p className="mentor-section-lead">
+            ליווי יזמי הוא לא לימוד מהצד. הוא שותפות בשטח. ניסיון של שלושים שנה, רשת קשרים חיה ומסגרת מקצועית מלאה עומדים לצידכם בכל החלטה, מהאיתור הראשון ועד מסירת המפתח. זה ההבדל בין לדעת על נדל"ן לבין לעשות נדל"ן.
+          </p>
+        </Reveal>
+        <div className="mentor-pillars">
+          {pillars.map((p, i) => (
+            <Reveal key={i}>
+              <div className="mentor-pillar card-effect">
+                <div className="card-inner">
+                  <span className="card__liquid" aria-hidden="true" />
+                  <span className="card__shine" aria-hidden="true" />
+                  <span className="card__glow" aria-hidden="true" />
+                  <div className="card__content mentor-pillar__content">
+                    <div className="card__image mentor-pillar__icon">
+                      <Icon name={iconMap[p.icon] || 'check'} size={28} />
+                    </div>
+                    <div className="card__text">
+                      <h3 className="card__title">{p.title.he}</h3>
+                      <p className="card__description">{p.desc.he}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---- השוואה ---- */
+  compare: () => (
+    <section className="section section--alt">
+      <div className="container">
+        <Reveal className="mentor-section-head">
+          <span className="eyebrow">הדרך לעסקה הראשונה</span>
+          <KineticText as="h2" className="section-title" text='מה נדרש כדי לסגור עסקת נדל"ן' />
+        </Reveal>
+        <div className="mentor-compare">
+          <div className="mentor-compare__col">
+            <h3 className="mentor-compare__head">מה העסקה דורשת</h3>
+            <ul className="mentor-compare__list">
+              {[
+                'ניתוח שוק מעמיק ואיתור הזדמנות מוקדמת',
+                'בדיקת היתכנות ודוח 0 מבוסס מספרים',
+                'משא ומתן שמגן על הרווח',
+                'ליווי משפטי שמכיר את המלכודות',
+                'מימון בנקאי בתנאים שעובדים לפרויקט',
+                'ניהול היתרים ובירוקרטיה',
+                'פיקוח שטח שמגן על האיכות והתקציב',
+                'שיווק ומכירות שמממשים את הרווח',
+                'מסירה שבונה מוניטין לפרויקט הבא',
+                'רשת קשרים שפותחת דלתות',
+              ].map((item, i) => (
+                <li key={i} className="mentor-compare__item">
+                  <Icon name="check" size={14} className="mentor-compare__check" aria-hidden="true" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="mentor-compare__col mentor-compare__col--accent">
+            <h3 className="mentor-compare__head">מה הליווי מספק</h3>
+            <ul className="mentor-compare__list">
+              {[
+                'ניסיון של 30 שנה שמקצר עשור של טעויות',
+                'תבניות עבודה ודוחות מהשטח',
+                'ליווי אישי בכל שלב, לא ייעוץ כללי',
+                'גישה לרשת של עורכי דין, שמאים ובנקים',
+                'ארבע חטיבות עסקיות תחת מטרייה אחת',
+                'מנגנון בדיקת עסקה לפני שחותמים',
+                'זמינות שוטפת, שאלות ותשובות בזמן אמת',
+                'ליווי מסגירת העסקה ועד למסירת המפתח',
+                'הפקת לקחים משותפת בסיום כל שלב',
+                'שותפות שמבוססת על הצלחה',
+              ].map((item, i) => (
+                <li key={i} className="mentor-compare__item">
+                  <Icon name="check" size={14} className="mentor-compare__check mentor-compare__check--accent" aria-hidden="true" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---- 10 שלבים — click-expand ---- */
+  stages: ({ ctx: { openStage, setOpenStage } }) => (
+    <section className="section">
+      <div className="container">
+        <Reveal className="mentor-section-head">
+          <span className="eyebrow">מה אנחנו מציעים?</span>
+          <KineticText as="h2" className="section-title" text="עשרה שלבים. דרך אחת." />
+          <p className="mentor-section-lead">
+            כל שלב בנוי על הידע שנצבר בשלב שלפניו. לחצו על כל שלב לפרטים נוספים.
+          </p>
+        </Reveal>
+        <div className="mentor-stages">
+          {stages.map((s) => {
+            const isOpen = openStage === s.id
+            return (
+              <Reveal
+                key={s.id}
+                as="article"
+                className={`mentor-stage ${isOpen ? 'is-open' : ''}`}
+                onClick={() => setOpenStage(isOpen ? null : s.id)}
+                tabIndex={0}
+                aria-expanded={isOpen}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setOpenStage(isOpen ? null : s.id)
+                  }
+                }}
+              >
+                <div className="mentor-stage__header">
+                  <span className="mentor-stage__num">{s.num}</span>
+                  <Icon name="chevron" size={14} className="mentor-stage__chevron" />
+                </div>
+                <h3 className="mentor-stage__title">{s.title.he}</h3>
+                <p className="mentor-stage__desc">{s.desc.he}</p>
+                <div className="mentor-stage__expand">
+                  <p className="mentor-stage__detail">{s.detail.he}</p>
+                </div>
+              </Reveal>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---- מהשטח, לא מהכיתה — רקע כחול ---- */
+  field: () => (
+    <section className="mentor-field">
+      <div className="container">
+        <Reveal className="mentor-field__inner">
+          <KineticText
+            as="h2"
+            className="mentor-field__title"
+            text='ליווי יזמי נדל"ן צעירים מתחיל מהשטח, לא מהכיתה.'
+          />
+          <p className="mentor-field__para">
+            מהיום הראשון אתה בתוך העבודה עצמה: ישיבות עם אנשי מקצוע, ניתוח עסקאות אמיתיות עם דוח 0, תהליכי רישוי ומימון מבפנים, והיכרות עם האנשים שמניעים את השוק.
+          </p>
+          <p className="mentor-field__para">
+            לאורך הדרך אתה רוכש את המקצוע שלב אחר שלב: איך מאתרים עסקה, איך בודקים כדאיות, איך עובדים מול בנקים, עורכי דין וקבלנים, ואיך מנהלים פרויקט מהיתר ועד מסירה. בסוף הדרך יש לך ארגז כלים מקצועי, הבנה אמיתית של איך התעשייה עובדת, ורשת קשרים שנבנתה תוך כדי עבודה.
+          </p>
+        </Reveal>
+      </div>
+    </section>
+  ),
+  /* ---- שאלות נפוצות ---- */
+  faq: ({ ctx: { openFaq, setOpenFaq } }) => (
+    <section className="section">
+      <div className="container mentor-faq-wrap">
+        <Reveal className="mentor-section-head">
+          <span className="eyebrow">שאלות נפוצות</span>
+          <KineticText as="h2" className="section-title" text="שאלות שכדאי לשאול לפני שמתחילים" />
+        </Reveal>
+        <div className="mentor-faq">
+          {faqs.map((f, i) => (
+            <FaqItem
+              key={i}
+              item={f}
+              isOpen={openFaq === i}
+              onToggle={() => setOpenFaq(openFaq === i ? null : i)}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---- CTA — רקע לבן ---- */
+  cta: () => (
+    <section className="mentor-cta">
+      <div className="container">
+        <Reveal className="mentor-cta__inner">
+          <div className="mentor-cta__text">
+            <span className="mentor-cta__eyebrow">בואו נדבר</span>
+            <KineticText as="h2" className="mentor-cta__title" text="הצעד הראשון הוא שיחה" />
+            <p className="mentor-cta__desc">
+              אין כאן טופס שמציב אתכם בתור. אנחנו מדברים עם יזמים ברצינות, מבינים את הרקע שלכם, ומחליטים ביחד אם הליווי מתאים. שיחת ההיכרות ללא עלות וללא מחויבות.
+            </p>
+            <div className="mentor-cta__actions">
+              <Link
+                to="/contact?topic=mentorship&src=mentorship"
+                className="btn btn--primary btn--lg"
+                onClick={() => track('cta_click', { placement: 'mentor_bottom' })}
+              >
+                השאירו פרטים לשיחת היכרות
+                <Icon name="arrow" size={18} className="mentor-cta__arrow" />
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  ),
+  /* ---- המדריך ליזמי נדל"ן צעירים — בתחתית הדף ---- */
+  guide: () => (
+    <section className="section mentor-guide-section">
+      <div className="container">
+        <Reveal className="division-guide__band" variant="scale">
+          <div>
+            <span className="eyebrow">ידע מהשטח</span>
+            <KineticText as="h2" className="division-guide__title" text='המדריך ליזמי נדל"ן צעירים' />
+            <p className="division-guide__desc">כתבות מקצועיות שנכתבו מניסיון ישיר, לפי עשרת שלבי תוכנית הליווי: מאיתור העסקה ועד מסירת המפתח.</p>
+          </div>
+          <Link to="/madrich-yazamim" className="btn btn--primary btn--lg">
+            קראו את המדריך
+            <Icon name="arrow" size={20} className="division-guide__arrow" />
+          </Link>
+        </Reveal>
+      </div>
+    </section>
+  ),
+}
+
 /* ================================================================
    עמוד ראשי
    ================================================================ */
@@ -65,304 +379,7 @@ export default function Mentorship() {
         description='תוכנית מנטורינג ליזמי נדל"ן צעירים עם שלומי קורקוס וצוות קורקוס גרופ: ידע, כלים ופרקטיקה מהיום יום של התעשייה, על בסיס שלושים שנות ניסיון בשטח.'
         jsonLd={faqJsonLd}
       />
-      <PageHeader
-        noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
-        eyebrow="מנטורינג"
-        title='ליווי יזמי נדל"ן'
-        lead='תוכנית מנטורינג שמעניקה ליזמים צעירים ידע, כלים ופרקטיקה מהיום יום של התעשייה, עם שלומי קורקוס וצוות קורקוס גרופ, שלושים שנה של ניסיון בשטח.'
-        crumbs={[{ label: 'מנטורינג' }]}
-        image="/livy-yazamim-hero.webp"
-        imageAlt="ארגז כלים ותוכניות בנייה על שולחן עבודה, בית בבנייה ברקע"
-        imagePos="center 62%"
-        imageFlip
-      />
-
-      {/* ---- היכרות עם שלומי ---- */}
-      <section className="mentor-intro">
-        <div className="container">
-          <Reveal className="mentor-intro__inner">
-            <div className="mentor-intro__content">
-              <span className="eyebrow mentor-intro__eyebrow">שלומי קורקוס, מייסד קורקוס גרופ</span>
-              <h2 className="mentor-intro__heading">
-                <KineticText as="span" className="mentor-intro__heading-line" text="שלושים שנה בשטח." />
-                <KineticText as="span" className="mentor-intro__heading-line" text="בכל שלב של הדרך." />
-              </h2>
-              <p className="mentor-intro__para">
-                אני לא מלמד מה שקראתי בספר. אני מלמד מה שעשיתי, פרויקט אחר פרויקט, טעות אחר טעות, עסקה אחר עסקה. הקמתי ארבע חטיבות שמכסות את כל שלבי הפרויקט: ייזום, ביצוע, פיקוח ותיווך. יזם שעובד איתי לא צריך לרכז מידע ממספר גורמים. הכל נמצא תחת מטרייה אחת.
-              </p>
-              <p className="mentor-intro__para">
-                הניסיון הזה לא נמכר בקורס מקוון ולא נרכש באקדמיה. הוא נצבר בשטח, בישיבות עם בנקים, בוועדות תכנון, בפגישות עם לקוחות וביחס אישי לכל לקוח. מה שאני מציע הוא ליווי אישי וצמוד, כדי שהדרך שלכם תהיה קצרה ובטוחה יותר משלי.
-              </p>
-              <div className="mentor-intro__stats">
-                <div className="mentor-intro__stat">
-                  <span className="mentor-intro__stat-num">+30</span>
-                  <span className="mentor-intro__stat-label">שנות ניסיון</span>
-                </div>
-                <div className="mentor-intro__stat">
-                  <span className="mentor-intro__stat-num">4</span>
-                  <span className="mentor-intro__stat-label">חטיבות עסקיות</span>
-                </div>
-                <div className="mentor-intro__stat">
-                  <span className="mentor-intro__stat-num">1:1</span>
-                  <span className="mentor-intro__stat-label">ליווי אישי</span>
-                </div>
-              </div>
-              {/* קביעת פגישה: הטופס נפתח עם "ליווי יזמים" כבר מסומן */}
-              <div className="mentor-intro__cta mentor-intro__cta--desktop">
-                <Link
-                  to="/contact?topic=mentorship&src=mentorship"
-                  className="btn btn--primary btn--lg mentor-intro__btn"
-                  onClick={() => track('cta_click', { placement: 'mentor_intro' })}
-                >
-                  לקביעת פגישה <Icon name="arrowLeft" size={18} />
-                </Link>
-              </div>
-            </div>
-            <aside className="mentor-intro__side">
-              <img
-                src="/shlomi-office.webp"
-                alt="שלומי קורקוס, מייסד קורקוס גרופ, במשרד"
-                className="mentor-intro__photo"
-                width="800"
-                height="1200"
-                loading="lazy"
-              />
-              <div className="mentor-intro__quote-card">
-                <p className="mentor-intro__quote-text">
-                  "יזמות נדל"ן היא מקצוע. לא השקעה. לא הימור. מקצוע שלומדים עם מנטור שכבר עשה את הדרך."
-                </p>
-                <span className="mentor-intro__quote-sig">שלומי קורקוס</span>
-              </div>
-              {/* במובייל הכפתור יושב כאן, מתחת לציטוט, במקום מעל התמונה */}
-              <div className="mentor-intro__cta mentor-intro__cta--mobile">
-                <Link
-                  to="/contact?topic=mentorship&src=mentorship"
-                  className="btn btn--primary btn--lg mentor-intro__btn"
-                  onClick={() => track('cta_click', { placement: 'mentor_intro_mobile' })}
-                >
-                  לקביעת פגישה <Icon name="arrowLeft" size={18} />
-                </Link>
-              </div>
-            </aside>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---- יתרונות — card-effect ---- */}
-      <section className="section">
-        <div className="container">
-          <Reveal className="mentor-section-head">
-            <span className="eyebrow">למה ליווי יזמי</span>
-            <KineticText as="h2" className="section-title" text="נכנסים לעסקה עם מי שכבר עשה את הדרך" />
-            <p className="mentor-section-lead">
-              ליווי יזמי הוא לא לימוד מהצד. הוא שותפות בשטח. ניסיון של שלושים שנה, רשת קשרים חיה ומסגרת מקצועית מלאה עומדים לצידכם בכל החלטה, מהאיתור הראשון ועד מסירת המפתח. זה ההבדל בין לדעת על נדל"ן לבין לעשות נדל"ן.
-            </p>
-          </Reveal>
-          <div className="mentor-pillars">
-            {pillars.map((p, i) => (
-              <Reveal key={i}>
-                <div className="mentor-pillar card-effect">
-                  <div className="card-inner">
-                    <span className="card__liquid" aria-hidden="true" />
-                    <span className="card__shine" aria-hidden="true" />
-                    <span className="card__glow" aria-hidden="true" />
-                    <div className="card__content mentor-pillar__content">
-                      <div className="card__image mentor-pillar__icon">
-                        <Icon name={iconMap[p.icon] || 'check'} size={28} />
-                      </div>
-                      <div className="card__text">
-                        <h3 className="card__title">{p.title.he}</h3>
-                        <p className="card__description">{p.desc.he}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---- השוואה ---- */}
-      <section className="section section--alt">
-        <div className="container">
-          <Reveal className="mentor-section-head">
-            <span className="eyebrow">הדרך לעסקה הראשונה</span>
-            <KineticText as="h2" className="section-title" text='מה נדרש כדי לסגור עסקת נדל"ן' />
-          </Reveal>
-          <div className="mentor-compare">
-            <div className="mentor-compare__col">
-              <h3 className="mentor-compare__head">מה העסקה דורשת</h3>
-              <ul className="mentor-compare__list">
-                {[
-                  'ניתוח שוק מעמיק ואיתור הזדמנות מוקדמת',
-                  'בדיקת היתכנות ודוח 0 מבוסס מספרים',
-                  'משא ומתן שמגן על הרווח',
-                  'ליווי משפטי שמכיר את המלכודות',
-                  'מימון בנקאי בתנאים שעובדים לפרויקט',
-                  'ניהול היתרים ובירוקרטיה',
-                  'פיקוח שטח שמגן על האיכות והתקציב',
-                  'שיווק ומכירות שמממשים את הרווח',
-                  'מסירה שבונה מוניטין לפרויקט הבא',
-                  'רשת קשרים שפותחת דלתות',
-                ].map((item, i) => (
-                  <li key={i} className="mentor-compare__item">
-                    <Icon name="check" size={14} className="mentor-compare__check" aria-hidden="true" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="mentor-compare__col mentor-compare__col--accent">
-              <h3 className="mentor-compare__head">מה הליווי מספק</h3>
-              <ul className="mentor-compare__list">
-                {[
-                  'ניסיון של 30 שנה שמקצר עשור של טעויות',
-                  'תבניות עבודה ודוחות מהשטח',
-                  'ליווי אישי בכל שלב, לא ייעוץ כללי',
-                  'גישה לרשת של עורכי דין, שמאים ובנקים',
-                  'ארבע חטיבות עסקיות תחת מטרייה אחת',
-                  'מנגנון בדיקת עסקה לפני שחותמים',
-                  'זמינות שוטפת, שאלות ותשובות בזמן אמת',
-                  'ליווי מסגירת העסקה ועד למסירת המפתח',
-                  'הפקת לקחים משותפת בסיום כל שלב',
-                  'שותפות שמבוססת על הצלחה',
-                ].map((item, i) => (
-                  <li key={i} className="mentor-compare__item">
-                    <Icon name="check" size={14} className="mentor-compare__check mentor-compare__check--accent" aria-hidden="true" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---- 10 שלבים — click-expand ---- */}
-      <section className="section">
-        <div className="container">
-          <Reveal className="mentor-section-head">
-            <span className="eyebrow">מה אנחנו מציעים?</span>
-            <KineticText as="h2" className="section-title" text="עשרה שלבים. דרך אחת." />
-            <p className="mentor-section-lead">
-              כל שלב בנוי על הידע שנצבר בשלב שלפניו. לחצו על כל שלב לפרטים נוספים.
-            </p>
-          </Reveal>
-          <div className="mentor-stages">
-            {stages.map((s) => {
-              const isOpen = openStage === s.id
-              return (
-                <Reveal
-                  key={s.id}
-                  as="article"
-                  className={`mentor-stage ${isOpen ? 'is-open' : ''}`}
-                  onClick={() => setOpenStage(isOpen ? null : s.id)}
-                  tabIndex={0}
-                  aria-expanded={isOpen}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      setOpenStage(isOpen ? null : s.id)
-                    }
-                  }}
-                >
-                  <div className="mentor-stage__header">
-                    <span className="mentor-stage__num">{s.num}</span>
-                    <Icon name="chevron" size={14} className="mentor-stage__chevron" />
-                  </div>
-                  <h3 className="mentor-stage__title">{s.title.he}</h3>
-                  <p className="mentor-stage__desc">{s.desc.he}</p>
-                  <div className="mentor-stage__expand">
-                    <p className="mentor-stage__detail">{s.detail.he}</p>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ---- מהשטח, לא מהכיתה — רקע כחול ---- */}
-      <section className="mentor-field">
-        <div className="container">
-          <Reveal className="mentor-field__inner">
-            <KineticText
-              as="h2"
-              className="mentor-field__title"
-              text='ליווי יזמי נדל"ן צעירים מתחיל מהשטח, לא מהכיתה.'
-            />
-            <p className="mentor-field__para">
-              מהיום הראשון אתה בתוך העבודה עצמה: ישיבות עם אנשי מקצוע, ניתוח עסקאות אמיתיות עם דוח 0, תהליכי רישוי ומימון מבפנים, והיכרות עם האנשים שמניעים את השוק.
-            </p>
-            <p className="mentor-field__para">
-              לאורך הדרך אתה רוכש את המקצוע שלב אחר שלב: איך מאתרים עסקה, איך בודקים כדאיות, איך עובדים מול בנקים, עורכי דין וקבלנים, ואיך מנהלים פרויקט מהיתר ועד מסירה. בסוף הדרך יש לך ארגז כלים מקצועי, הבנה אמיתית של איך התעשייה עובדת, ורשת קשרים שנבנתה תוך כדי עבודה.
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---- שאלות נפוצות ---- */}
-      <section className="section">
-        <div className="container mentor-faq-wrap">
-          <Reveal className="mentor-section-head">
-            <span className="eyebrow">שאלות נפוצות</span>
-            <KineticText as="h2" className="section-title" text="שאלות שכדאי לשאול לפני שמתחילים" />
-          </Reveal>
-          <div className="mentor-faq">
-            {faqs.map((f, i) => (
-              <FaqItem
-                key={i}
-                item={f}
-                isOpen={openFaq === i}
-                onToggle={() => setOpenFaq(openFaq === i ? null : i)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---- CTA — רקע לבן ---- */}
-      <section className="mentor-cta">
-        <div className="container">
-          <Reveal className="mentor-cta__inner">
-            <div className="mentor-cta__text">
-              <span className="mentor-cta__eyebrow">בואו נדבר</span>
-              <KineticText as="h2" className="mentor-cta__title" text="הצעד הראשון הוא שיחה" />
-              <p className="mentor-cta__desc">
-                אין כאן טופס שמציב אתכם בתור. אנחנו מדברים עם יזמים ברצינות, מבינים את הרקע שלכם, ומחליטים ביחד אם הליווי מתאים. שיחת ההיכרות ללא עלות וללא מחויבות.
-              </p>
-              <div className="mentor-cta__actions">
-                <Link
-                  to="/contact?topic=mentorship&src=mentorship"
-                  className="btn btn--primary btn--lg"
-                  onClick={() => track('cta_click', { placement: 'mentor_bottom' })}
-                >
-                  השאירו פרטים לשיחת היכרות
-                  <Icon name="arrow" size={18} className="mentor-cta__arrow" />
-                </Link>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---- המדריך ליזמי נדל"ן צעירים — בתחתית הדף ---- */}
-      <section className="section mentor-guide-section">
-        <div className="container">
-          <Reveal className="division-guide__band" variant="scale">
-            <div>
-              <span className="eyebrow">ידע מהשטח</span>
-              <KineticText as="h2" className="division-guide__title" text='המדריך ליזמי נדל"ן צעירים' />
-              <p className="division-guide__desc">כתבות מקצועיות שנכתבו מניסיון ישיר, לפי עשרת שלבי תוכנית הליווי: מאיתור העסקה ועד מסירת המפתח.</p>
-            </div>
-            <Link to="/madrich-yazamim" className="btn btn--primary btn--lg">
-              קראו את המדריך
-              <Icon name="arrow" size={20} className="division-guide__arrow" />
-            </Link>
-          </Reveal>
-        </div>
-      </section>
+      <PageSections def={DEF} local={LOCAL} ctx={{ openStage, setOpenStage, openFaq, setOpenFaq }} />
     </>
   )
 }

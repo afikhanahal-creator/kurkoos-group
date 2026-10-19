@@ -52,6 +52,8 @@ export function defaultLayout(def) {
 const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
 export const EDIT_MODE = !!(params && params.get('kc-edit') === '1' && window.parent !== window)
 export const PREVIEW_MODE = !!(params && params.get('kc-preview') === '1')
+/* תמונה זעירה של העמוד בלוח העמודים: הגרסה המפורסמת, בלי סרטון פתיחה ואנליטיקס */
+export const THUMB_MODE = !!(params && params.get('kc-thumb') === '1' && window.parent !== window)
 
 const store = { layout: null, texts: {}, device: 'd', selected: null, listeners: new Set() }
 const emit = () => store.listeners.forEach((f) => f())

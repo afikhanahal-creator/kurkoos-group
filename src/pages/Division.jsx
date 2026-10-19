@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from 'react-router-dom'
+import { useParams, Navigate, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
@@ -30,6 +30,8 @@ import { DIVISION_TOPIC } from '../lib/contact.js'
 import { track } from '../lib/track.js'
 import KineticText from '../components/ui/KineticText.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
+import DIVISION_DEF from '../lib/pageBuilder/defs/division.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './Division.css'
 
 // כתובת האתר של אפיק הנחל
@@ -44,8 +46,295 @@ const DEFAULT_DIVISION_LOGOS = {
   supervision: '/divisions/shchinta-logo.webp',
 }
 
+/* הסקשנים של עמוד החטיבה, לפי הסדר בהגדרה (defs/division.js). כל אחד
+   מקבל ctx, הנתונים שהעמוד חישב פעם אחת. סקשן שמוצג רק בחלק מהחטיבות
+   שומר את התנאי שלו, ולא מציג כלום בחטיבות האחרות. */
+const LOCAL = {
+  /* באנר */
+  hero: ({ ctx: { L, slug, division, heroImage, logoSrc, consultTo, consultLabel } }) => (
+    <header className="division-hero">
+      <Parallax className="division-hero__bg">
+        {/* תמונת ה-LCP של העמוד: טעינה מיידית בעדיפות גבוהה, כמו בשאר הבאנרים */}
+        <SmartImage src={heroImage} alt={L(division.hero.title)} label={L(division.name)} sizes="100vw" priority />
+      </Parallax>
+      <div className="division-hero__overlay" />
+      <InfiniteGrid
+        color="rgba(255,255,255,0.5)"
+        baseOpacity={slug === 'brokerage' ? 0.16 : 0.08}
+        revealOpacity={slug === 'brokerage' ? 0.4 : 0.28}
+      />
+      <div className="container division-hero__content">
+        <Breadcrumbs
+          items={[
+            { label: L({ he: 'תחומי פעילות', en: 'What we do' }), to: '/#activities' },
+            { label: L(division.menuTitle) },
+          ]}
+        />
+        {logoSrc ? (
+          <motion.img className="division-hero__logo"
+            src={logoSrc}
+            alt={L(division.name)}
+            initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
+        ) : (
+          <motion.span className="division-hero__icon"
+            initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
+            <Icon name={division.icon} size={40} stroke={1.5} />
+          </motion.span>
+        )}
+        <motion.h1 className="division-hero__title"
+          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}>
+          {L(division.hero.title)}
+        </motion.h1>
+        <motion.p className="division-hero__subtitle"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }}>
+          {L(division.hero.subtitle)}
+        </motion.p>
+        <motion.div className="division-hero__actions"
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.35 }}>
+          <Link
+            to={consultTo}
+            className="btn btn--primary btn--lg"
+            onClick={() => track('cta_click', { placement: `division_hero_${slug}` })}
+          >
+            {consultLabel}
+            <Icon name="arrow" size={20} className="division-guide__arrow" />
+          </Link>
+        </motion.div>
+      </div>
+    </header>
+  ),
+
+  /* סרטון התקדמות הבנייה — רק בעמוד הביצוע (מעל הפסקה) */
+  showcase: ({ ctx: { slug } }) => (
+    slug === 'execution' && (
+      <section className="section section--soft division-showcase">
+        <div className="container">
+          <Reveal variant="scale">
+            <BgMediaDemo />
+          </Reveal>
+        </div>
+      </section>
+    )
+  ),
+
+  /* אינטרו (מתחת לסרטון) */
+  intro: ({ ctx: { L, lang, division } }) => (
+    <section className="section division-intro">
+      <div className="container">
+        <Reveal className="division-intro__text">
+          {/* משפט תשובה ישיר: מי, איפה ומה, עם קישור לעמוד הבנייה והפיקוח בהוד השרון */}
+          {division.answer && lang === 'he' && (
+            <p className="division-intro__answer">
+              <strong>{division.answer.he}</strong>{' '}
+              <Link to={division.answer.link.to}>{division.answer.link.label}</Link>
+            </p>
+          )}
+          <p>{L(division.intro)}</p>
+          {/* קישורים לעמודים הקשורים: מחברים את השירות למדריכים ולפרויקטים,
+              כדי שגם הקורא וגם גוגל יבינו איך הנושאים באתר מתחברים */}
+          {division.related?.length > 0 && (
+            <ul className="division-intro__related" aria-label="עוד בנושא">
+              {division.related.map((r) => (
+                <li key={r.to}><Link to={r.to}>{r.label}</Link></li>
+              ))}
+            </ul>
+          )}
+        </Reveal>
+      </div>
+    </section>
+  ),
+
+  /* למה אנחנו */
+  why: ({ ctx: { t, L, division, isMobile } }) => (
+    <section className="section section--soft division-why" id="why">
+      <div className="container">
+        <Reveal className="division-why__head">
+          <span className="eyebrow">{t('activities.eyebrow')}</span>
+          <KineticText as="h2" className="section-title" text={L(division.name)} />
+        </Reveal>
+        {isMobile ? (
+          <CardDeck
+            className="division-why__deck"
+            items={division.why.map((w, i) => ({ id: String(i), ...w }))}
+            renderCard={(w) => <FeatureCard icon={w.icon} title={L(w.title)} desc={L(w.desc)} />}
+          />
+        ) : (
+          <div className="division-why__grid">
+            {division.why.map((w, i) => (
+              <Reveal key={i} delay={i * 0.08}>
+                <FeatureCard icon={w.icon} title={L(w.title)} desc={L(w.desc)} />
+              </Reveal>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  ),
+
+  /* לפני/אחרי — רק בעמוד יזמות, מתחת לכרטיסיות (מהשרטוט אל הבית הגמור) */
+  beforeAfter: ({ ctx: { L, slug, baBefore, baAfter } }) => (
+    slug === 'development' && (
+      <section className="section section--soft division-beforeafter">
+        <div className="container">
+          <Reveal className="division-why__head division-beforeafter__head">
+            <span className="eyebrow">{L({ he: 'מהשרטוט אל הבית', en: 'From blueprint to home' })}</span>
+            <KineticText as="h2" className="section-title" text={L({ he: 'לפני ואחרי', en: 'Before & after' })} />
+          </Reveal>
+          <ImageComparison
+            beforeImage={baBefore}
+            afterImage={baAfter}
+            altBefore={L({ he: 'שרטוט', en: 'Blueprint' })}
+            altAfter={L({ he: 'הבית הגמור', en: 'Finished home' })}
+          />
+          <p className="imgcmp__caption">פרוייקט החומש 22-24 - קבוצת קורקוס 2021</p>
+        </div>
+      </section>
+    )
+  ),
+
+  /* תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה, רק בעמוד התיווך */
+  site: ({ ctx: { L, slug } }) => (
+    slug === 'brokerage' && (
+      <section className="section ah-site">
+        <div className="container">
+          <Reveal className="ah-site__head">
+            <span className="eyebrow">{L({ he: 'האתר שלנו', en: 'Our website' })}</span>
+          </Reveal>
+          <Reveal className="ah-site__wrap" variant="scale">
+            <a
+              href={AFIK_SITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ah-site__frame"
+              aria-label="כניסה לאתר אפיק הנחל"
+            >
+              <span className="ah-site__sheen" aria-hidden="true" />
+              <span className="ah-site__screen">
+                {/* צילום מסך אמיתי של האתר; אם חסר (404) — נופל ללוגו על רקע המותג */}
+                <img
+                  className="ah-site__shot"
+                  src="/afik-website.webp"
+                  alt={'אתר אפיק הנחל'}
+                  loading="lazy"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+                <img className="ah-site__logo" src="/afik-hanahal-logo.webp" alt={'אפיק הנחל נדל"ן'} loading="lazy" />
+              </span>
+            </a>
+            <a href={AFIK_SITE_URL} target="_blank" rel="noopener noreferrer" className="ah-site__btn">
+              {L({ he: 'כניסה לאתר', en: 'Visit the site' })}
+              <Icon name="arrow" size={18} />
+            </a>
+          </Reveal>
+        </div>
+      </section>
+    )
+  ),
+
+  /* גלריית ביצוע נפתחת — רק בעמוד הביצוע, מעל "פרויקטים נבחרים" */
+  gallery: ({ ctx: { L, slug, isMobile, exGallery } }) => (
+    slug === 'execution' && exGallery.length > 0 && (
+      <section className="section section--soft">
+        <div className="container">
+          <Reveal className="division-why__head">
+            <span className="eyebrow">{L({ he: 'תיעוד מהשטח', en: 'Field documentation' })}</span>
+            <KineticText as="h2" className="section-title" text={L({ he: 'הופכים תוכניות לביצוע', en: 'Turning plans into reality' })} />
+          </Reveal>
+          {/* מובייל — מניפת תמונות נפתחת לרשת + מסך מלא; דסקטופ — גלריית אקורדיון נפתחת */}
+          {isMobile ? (
+            <StackGallery images={exGallery} />
+          ) : (
+            <ExpandableGallery images={exGallery} />
+          )}
+        </div>
+      </section>
+    )
+  ),
+
+  /* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */
+  projects: ({ ctx: { L, slug, list } }) => (
+    <ProjectsGallery
+      items={list}
+      collage
+      masonry={['development', 'execution', 'supervision', 'brokerage'].includes(slug)}
+      showFooter={false}
+      title={slug === 'brokerage' ? L({ he: 'פרויקטים בשיווק', en: 'Projects in marketing' }) : undefined}
+      lead={
+        slug === 'brokerage'
+          ? L({ he: 'מבחר פרויקטים בשיווק, בתהליך מסירה וליווי ברחבי הארץ', en: 'A selection of projects in marketing, handover and guidance across the country.' })
+          : slug === 'development'
+            ? L({ he: 'מבחר פרויקטים בייזום והובלת החברה ברחבי הארץ', en: 'A selection of development projects led by the company, across the country.' })
+            : undefined
+      }
+    />
+  ),
+
+  /* בעמוד התיווך (אפיק הנחל) — בלי סקשן ההמלצות */
+  testimonials: ({ ctx: { slug } }) => (slug !== 'brokerage' && <Testimonials />),
+
+  /* מדריך */
+  guide: ({ ctx: { t, L, slug, division, consultTo, consultLabel, guideTo } }) => (
+    <section className="section division-guide">
+      <div className="container">
+        <Reveal className="division-guide__band" variant="scale">
+          <div>
+            <span className="eyebrow">{t('common.readMore')}</span>
+            <KineticText as="h2" className="division-guide__title" text={L(division.guide.title)} />
+            <p className="division-guide__desc">{L(division.guide.desc)}</p>
+          </div>
+          {/* הפעולה הראשית כאן היא פנייה. המדריך נשאר כקישור משני */}
+          <div className="division-guide__actions">
+            <Link
+              to={consultTo}
+              className="btn btn--primary btn--lg"
+              onClick={() => track('cta_click', { placement: `division_guide_${slug}` })}
+            >
+              {consultLabel}
+              <Icon name="arrow" size={20} className="division-guide__arrow" />
+            </Link>
+            <Link to={guideTo} className="btn btn--ghost division-guide__read">
+              {t('common.readMore')}
+            </Link>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  ),
+
+  /* שאלות נפוצות — תוכן אמיתי שעונה לכוונות חיפוש, מוזן גם ל-FAQPage schema */
+  faq: ({ ctx: { L, division } }) => (
+    division.faqs?.length > 0 && (
+      <section className="section section--soft division-faq">
+        <div className="container">
+          <Reveal className="division-why__head">
+            <span className="eyebrow">{L({ he: 'שאלות נפוצות', en: 'FAQ' })}</span>
+            <KineticText as="h2" className="section-title" text={L({ he: 'שאלות שאנחנו נשאלים', en: 'Questions we hear a lot' })} />
+          </Reveal>
+          <div className="division-faq__list">
+            {division.faqs.map((f, i) => (
+              <Reveal key={i} delay={i * 0.05}>
+                <details className="division-faq__item">
+                  <summary>
+                    <span>{L(f.q)}</span>
+                    <Icon name="chevron" size={18} className="division-faq__chev" />
+                  </summary>
+                  <p>{L(f.a)}</p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  ),
+
+  /* יצירת קשר: הטופס נפתח על הנושא של החטיבה */
+  contact: ({ ctx: { slug, topic } }) => <Contact key={slug} topic={topic} />,
+}
+
 export default function Division() {
   const { slug } = useParams()
+  const { pathname } = useLocation()
   const { t, lang } = useI18n()
   const L = useLocalized()
   const division = getDivision(slug)
@@ -128,6 +417,8 @@ export default function Division() {
     }] : []),
   ]
 
+  const ctx = { t, lang, L, slug, division, isMobile, heroImage, logoSrc, baBefore, baAfter, exGallery, list, topic, consultTo, consultLabel, guideTo }
+
   return (
     <article className={`division division--${slug}`}>
       {/* הכותרת בתפריט קצרה ("ביצוע"), וזו לא כותרת שמסבירה למנוע חיפוש מה
@@ -138,265 +429,9 @@ export default function Division() {
         image={division.hero?.image}
         jsonLd={seoJsonLd}
       />
-      {/* באנר */}
-      <header className="division-hero">
-        <Parallax className="division-hero__bg">
-          {/* תמונת ה-LCP של העמוד: טעינה מיידית בעדיפות גבוהה, כמו בשאר הבאנרים */}
-          <SmartImage src={heroImage} alt={L(division.hero.title)} label={L(division.name)} sizes="100vw" priority />
-        </Parallax>
-        <div className="division-hero__overlay" />
-        <InfiniteGrid
-          color="rgba(255,255,255,0.5)"
-          baseOpacity={slug === 'brokerage' ? 0.16 : 0.08}
-          revealOpacity={slug === 'brokerage' ? 0.4 : 0.28}
-        />
-        <div className="container division-hero__content">
-          <Breadcrumbs
-            items={[
-              { label: L({ he: 'תחומי פעילות', en: 'What we do' }), to: '/#activities' },
-              { label: L(division.menuTitle) },
-            ]}
-          />
-          {logoSrc ? (
-            <motion.img className="division-hero__logo"
-              src={logoSrc}
-              alt={L(division.name)}
-              initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} />
-          ) : (
-            <motion.span className="division-hero__icon"
-              initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
-              <Icon name={division.icon} size={40} stroke={1.5} />
-            </motion.span>
-          )}
-          <motion.h1 className="division-hero__title"
-            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}>
-            {L(division.hero.title)}
-          </motion.h1>
-          <motion.p className="division-hero__subtitle"
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }}>
-            {L(division.hero.subtitle)}
-          </motion.p>
-          <motion.div className="division-hero__actions"
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.35 }}>
-            <Link
-              to={consultTo}
-              className="btn btn--primary btn--lg"
-              onClick={() => track('cta_click', { placement: `division_hero_${slug}` })}
-            >
-              {consultLabel}
-              <Icon name="arrow" size={20} className="division-guide__arrow" />
-            </Link>
-          </motion.div>
-        </div>
-      </header>
-
-      {/* סרטון התקדמות הבנייה — רק בעמוד הביצוע (מעל הפסקה) */}
-      {slug === 'execution' && (
-        <section className="section section--soft division-showcase">
-          <div className="container">
-            <Reveal variant="scale">
-              <BgMediaDemo />
-            </Reveal>
-          </div>
-        </section>
-      )}
-
-      {/* אינטרו (מתחת לסרטון) */}
-      <section className="section division-intro">
-        <div className="container">
-          <Reveal className="division-intro__text">
-            {/* משפט תשובה ישיר: מי, איפה ומה, עם קישור לעמוד הבנייה והפיקוח בהוד השרון */}
-            {division.answer && lang === 'he' && (
-              <p className="division-intro__answer">
-                <strong>{division.answer.he}</strong>{' '}
-                <Link to={division.answer.link.to}>{division.answer.link.label}</Link>
-              </p>
-            )}
-            <p>{L(division.intro)}</p>
-            {/* קישורים לעמודים הקשורים: מחברים את השירות למדריכים ולפרויקטים,
-                כדי שגם הקורא וגם גוגל יבינו איך הנושאים באתר מתחברים */}
-            {division.related?.length > 0 && (
-              <ul className="division-intro__related" aria-label="עוד בנושא">
-                {division.related.map((r) => (
-                  <li key={r.to}><Link to={r.to}>{r.label}</Link></li>
-                ))}
-              </ul>
-            )}
-          </Reveal>
-        </div>
-      </section>
-
-      {/* למה אנחנו */}
-      <section className="section section--soft division-why" id="why">
-        <div className="container">
-          <Reveal className="division-why__head">
-            <span className="eyebrow">{t('activities.eyebrow')}</span>
-            <KineticText as="h2" className="section-title" text={L(division.name)} />
-          </Reveal>
-          {isMobile ? (
-            <CardDeck
-              className="division-why__deck"
-              items={division.why.map((w, i) => ({ id: String(i), ...w }))}
-              renderCard={(w) => <FeatureCard icon={w.icon} title={L(w.title)} desc={L(w.desc)} />}
-            />
-          ) : (
-            <div className="division-why__grid">
-              {division.why.map((w, i) => (
-                <Reveal key={i} delay={i * 0.08}>
-                  <FeatureCard icon={w.icon} title={L(w.title)} desc={L(w.desc)} />
-                </Reveal>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* לפני/אחרי — רק בעמוד יזמות, מתחת לכרטיסיות (מהשרטוט אל הבית הגמור) */}
-      {slug === 'development' && (
-        <section className="section section--soft division-beforeafter">
-          <div className="container">
-            <Reveal className="division-why__head division-beforeafter__head">
-              <span className="eyebrow">{L({ he: 'מהשרטוט אל הבית', en: 'From blueprint to home' })}</span>
-              <KineticText as="h2" className="section-title" text={L({ he: 'לפני ואחרי', en: 'Before & after' })} />
-            </Reveal>
-            <ImageComparison
-              beforeImage={baBefore}
-              afterImage={baAfter}
-              altBefore={L({ he: 'שרטוט', en: 'Blueprint' })}
-              altAfter={L({ he: 'הבית הגמור', en: 'Finished home' })}
-            />
-            <p className="imgcmp__caption">פרוייקט החומש 22-24 - קבוצת קורקוס 2021</p>
-          </div>
-        </section>
-      )}
-
-      {/* תצוגת אתר אפיק הנחל — חלון מרכזי גדול עם הילה סגולה, רק בעמוד התיווך */}
-      {slug === 'brokerage' && (
-        <section className="section ah-site">
-          <div className="container">
-            <Reveal className="ah-site__head">
-              <span className="eyebrow">{L({ he: 'האתר שלנו', en: 'Our website' })}</span>
-            </Reveal>
-            <Reveal className="ah-site__wrap" variant="scale">
-              <a
-                href={AFIK_SITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ah-site__frame"
-                aria-label="כניסה לאתר אפיק הנחל"
-              >
-                <span className="ah-site__sheen" aria-hidden="true" />
-                <span className="ah-site__screen">
-                  {/* צילום מסך אמיתי של האתר; אם חסר (404) — נופל ללוגו על רקע המותג */}
-                  <img
-                    className="ah-site__shot"
-                    src="/afik-website.webp"
-                    alt={'אתר אפיק הנחל'}
-                    loading="lazy"
-                    onError={(e) => { e.currentTarget.style.display = 'none' }}
-                  />
-                  <img className="ah-site__logo" src="/afik-hanahal-logo.webp" alt={'אפיק הנחל נדל"ן'} loading="lazy" />
-                </span>
-              </a>
-              <a href={AFIK_SITE_URL} target="_blank" rel="noopener noreferrer" className="ah-site__btn">
-                {L({ he: 'כניסה לאתר', en: 'Visit the site' })}
-                <Icon name="arrow" size={18} />
-              </a>
-            </Reveal>
-          </div>
-        </section>
-      )}
-
-      {/* גלריית ביצוע נפתחת — רק בעמוד הביצוע, מעל "פרויקטים נבחרים" */}
-      {slug === 'execution' && exGallery.length > 0 && (
-        <section className="section section--soft">
-          <div className="container">
-            <Reveal className="division-why__head">
-              <span className="eyebrow">{L({ he: 'תיעוד מהשטח', en: 'Field documentation' })}</span>
-              <KineticText as="h2" className="section-title" text={L({ he: 'הופכים תוכניות לביצוע', en: 'Turning plans into reality' })} />
-            </Reveal>
-            {/* מובייל — מניפת תמונות נפתחת לרשת + מסך מלא; דסקטופ — גלריית אקורדיון נפתחת */}
-            {isMobile ? (
-              <StackGallery images={exGallery} />
-            ) : (
-              <ExpandableGallery images={exGallery} />
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */}
-      <ProjectsGallery
-        items={list}
-        collage
-        masonry={['development', 'execution', 'supervision', 'brokerage'].includes(slug)}
-        showFooter={false}
-        title={slug === 'brokerage' ? L({ he: 'פרויקטים בשיווק', en: 'Projects in marketing' }) : undefined}
-        lead={
-          slug === 'brokerage'
-            ? L({ he: 'מבחר פרויקטים בשיווק, בתהליך מסירה וליווי ברחבי הארץ', en: 'A selection of projects in marketing, handover and guidance across the country.' })
-            : slug === 'development'
-              ? L({ he: 'מבחר פרויקטים בייזום והובלת החברה ברחבי הארץ', en: 'A selection of development projects led by the company, across the country.' })
-              : undefined
-        }
-      />
-
-      {/* בעמוד התיווך (אפיק הנחל) — בלי סקשן ההמלצות */}
-      {slug !== 'brokerage' && <Testimonials />}
-
-      {/* מדריך */}
-      <section className="section division-guide">
-        <div className="container">
-          <Reveal className="division-guide__band" variant="scale">
-            <div>
-              <span className="eyebrow">{t('common.readMore')}</span>
-              <KineticText as="h2" className="division-guide__title" text={L(division.guide.title)} />
-              <p className="division-guide__desc">{L(division.guide.desc)}</p>
-            </div>
-            {/* הפעולה הראשית כאן היא פנייה. המדריך נשאר כקישור משני */}
-            <div className="division-guide__actions">
-              <Link
-                to={consultTo}
-                className="btn btn--primary btn--lg"
-                onClick={() => track('cta_click', { placement: `division_guide_${slug}` })}
-              >
-                {consultLabel}
-                <Icon name="arrow" size={20} className="division-guide__arrow" />
-              </Link>
-              <Link to={guideTo} className="btn btn--ghost division-guide__read">
-                {t('common.readMore')}
-              </Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* שאלות נפוצות — תוכן אמיתי שעונה לכוונות חיפוש, מוזן גם ל-FAQPage schema */}
-      {division.faqs?.length > 0 && (
-        <section className="section section--soft division-faq">
-          <div className="container">
-            <Reveal className="division-why__head">
-              <span className="eyebrow">{L({ he: 'שאלות נפוצות', en: 'FAQ' })}</span>
-              <KineticText as="h2" className="section-title" text={L({ he: 'שאלות שאנחנו נשאלים', en: 'Questions we hear a lot' })} />
-            </Reveal>
-            <div className="division-faq__list">
-              {division.faqs.map((f, i) => (
-                <Reveal key={i} delay={i * 0.05}>
-                  <details className="division-faq__item">
-                    <summary>
-                      <span>{L(f.q)}</span>
-                      <Icon name="chevron" size={18} className="division-faq__chev" />
-                    </summary>
-                    <p>{L(f.a)}</p>
-                  </details>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <Contact key={slug} topic={topic} />
+      {/* מבנה העמוד מגיע מעורך העמודים, לכל חטיבה לפי הכתובת שלה. בלי גרסה
+          מפורסמת, הסדר הקבוע מהקוד (defs/division.js) */}
+      <PageSections def={DIVISION_DEF} slug={pathname} local={LOCAL} ctx={ctx} />
     </article>
   )
 }

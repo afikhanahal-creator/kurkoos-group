@@ -14,6 +14,8 @@ import PageHeader from '../components/ui/PageHeader.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import { LeadFields, LeadSubmit, LeadSuccess, LeadFailure } from '../components/ui/LeadForm.jsx'
 import OfficeMap from '../components/ui/OfficeMap.jsx'
+import DEF from '../lib/pageBuilder/defs/contact.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './ContactPage.css'
 
 /* ============================================================
@@ -56,6 +58,80 @@ function originLabel(raw) {
   if (SOURCES[key]) return SOURCES[key]
   const clean = String(raw).replace(/[^\w֐-׿ .-]/g, '').slice(0, 40)
   return clean ? { he: clean, en: clean } : null
+}
+
+/* הסקשנים של העמוד, הסדר הקבוע ב-defs/contact.js. מצב הטופס והנושא
+   נשאר בעמוד ומגיע בתוך ctx. */
+const LOCAL = {
+  header: ({ ctx: { L } }) => (
+    <PageHeader
+      eyebrow={L({ he: 'דברו איתנו', en: 'Talk to us' })}
+      title={L({ he: 'השאירו פרטים ונחזור אליכם', en: 'Leave your details' })}
+      lead={L({
+        he: 'מלאו את הטופס ונחזור אליכם בהקדם. אפשר גם להתקשר או לכתוב בוואטסאפ, מה שנוח לכם.',
+        en: 'Fill in the form and we will get back to you shortly. You can also call or send a WhatsApp message.',
+      })}
+      crumbs={[{ label: L({ he: 'השארת פרטים', en: 'Contact' }) }]}
+    />
+  ),
+  form: ({ ctx: { t, L, lf, topic, setTopic, handleSubmit, phone, phoneDisplay, waLink } }) => (
+    <section className="section cpage">
+      <div className="container cpage__inner">
+        <div className="cpage__form-card">
+          {lf.sent ? (
+            <LeadSuccess form="contact_page" />
+          ) : (
+            <>
+              <p className="cpage__choose">{t('contactExtra.choose')}</p>
+              <div className="cpage__topics">
+                {TOPICS.map((tp) => (
+                  <button
+                    key={tp}
+                    type="button"
+                    className={`cpage__topic ${topic === tp ? 'is-active' : ''}`}
+                    onClick={() => setTopic(tp)}
+                    aria-pressed={topic === tp}
+                  >
+                    {t(`contactExtra.topics.${tp}`)}
+                  </button>
+                ))}
+              </div>
+
+              <form className="cpage__form" onSubmit={handleSubmit} onInput={lf.onStart} noValidate>
+                <p className="cpage__required">{t('contactExtra.required')}</p>
+                <LeadFields lf={lf} messageRows={4} />
+                <LeadFailure lf={lf} topicLabel={heDict.contactExtra.topics[topic]} />
+                <LeadSubmit lf={lf} className="btn btn--primary btn--block btn--lg" />
+              </form>
+            </>
+          )}
+        </div>
+
+        <aside className="cpage__side">
+          <h2 className="cpage__side-title">{L({ he: 'או ישירות', en: 'Or reach us directly' })}</h2>
+          <div className="cpage__direct">
+            <a
+              className="btn btn--dark btn--block"
+              href={`tel:${String(phone).replace(/[^+\d]/g, '')}`}
+              onClick={() => track('phone_click', { placement: 'contact_page' })}
+            >
+              <Icon name="phone" size={18} /> {phoneDisplay}
+            </a>
+            <a
+              className="btn btn--ghost btn--block"
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track('whatsapp_click', { placement: 'contact_page' })}
+            >
+              <Icon name="whatsapp" size={18} /> {L({ he: 'וואטסאפ', en: 'WhatsApp' })}
+            </a>
+          </div>
+          <OfficeMap />
+        </aside>
+      </div>
+    </section>
+  ),
 }
 
 export default function ContactPage() {
@@ -110,72 +186,7 @@ export default function ContactPage() {
           en: 'Leave your details and we will get back to you: development, construction, project supervision and brokerage.',
         })}
       />
-      <PageHeader
-        eyebrow={L({ he: 'דברו איתנו', en: 'Talk to us' })}
-        title={L({ he: 'השאירו פרטים ונחזור אליכם', en: 'Leave your details' })}
-        lead={L({
-          he: 'מלאו את הטופס ונחזור אליכם בהקדם. אפשר גם להתקשר או לכתוב בוואטסאפ, מה שנוח לכם.',
-          en: 'Fill in the form and we will get back to you shortly. You can also call or send a WhatsApp message.',
-        })}
-        crumbs={[{ label: L({ he: 'השארת פרטים', en: 'Contact' }) }]}
-      />
-
-      <section className="section cpage">
-        <div className="container cpage__inner">
-          <div className="cpage__form-card">
-            {lf.sent ? (
-              <LeadSuccess form="contact_page" />
-            ) : (
-              <>
-                <p className="cpage__choose">{t('contactExtra.choose')}</p>
-                <div className="cpage__topics">
-                  {TOPICS.map((tp) => (
-                    <button
-                      key={tp}
-                      type="button"
-                      className={`cpage__topic ${topic === tp ? 'is-active' : ''}`}
-                      onClick={() => setTopic(tp)}
-                      aria-pressed={topic === tp}
-                    >
-                      {t(`contactExtra.topics.${tp}`)}
-                    </button>
-                  ))}
-                </div>
-
-                <form className="cpage__form" onSubmit={handleSubmit} onInput={lf.onStart} noValidate>
-                  <p className="cpage__required">{t('contactExtra.required')}</p>
-                  <LeadFields lf={lf} messageRows={4} />
-                  <LeadFailure lf={lf} topicLabel={heDict.contactExtra.topics[topic]} />
-                  <LeadSubmit lf={lf} className="btn btn--primary btn--block btn--lg" />
-                </form>
-              </>
-            )}
-          </div>
-
-          <aside className="cpage__side">
-            <h2 className="cpage__side-title">{L({ he: 'או ישירות', en: 'Or reach us directly' })}</h2>
-            <div className="cpage__direct">
-              <a
-                className="btn btn--dark btn--block"
-                href={`tel:${String(phone).replace(/[^+\d]/g, '')}`}
-                onClick={() => track('phone_click', { placement: 'contact_page' })}
-              >
-                <Icon name="phone" size={18} /> {phoneDisplay}
-              </a>
-              <a
-                className="btn btn--ghost btn--block"
-                href={waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => track('whatsapp_click', { placement: 'contact_page' })}
-              >
-                <Icon name="whatsapp" size={18} /> {L({ he: 'וואטסאפ', en: 'WhatsApp' })}
-              </a>
-            </div>
-            <OfficeMap />
-          </aside>
-        </div>
-      </section>
+      <PageSections def={DEF} local={LOCAL} ctx={{ t, L, lf, topic, setTopic, handleSubmit, phone, phoneDisplay, waLink }} />
     </>
   )
 }

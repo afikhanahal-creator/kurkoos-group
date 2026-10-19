@@ -6,10 +6,11 @@ import Seo from '../components/ui/Seo.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
-import Contact from '../components/sections/Contact.jsx'
 import projectsSeed from '../data/projects.js'
 import { supabase } from '../lib/supabase.js'
 import { listProjectCards, cmsRowToCard } from '../lib/cms.js'
+import DEF from '../lib/pageBuilder/defs/sharon.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './SharonHub.css'
 
 /* ============================================================
@@ -31,6 +32,92 @@ const FAQS = [
   { q: 'באילו אזורים אתם פועלים?', a: 'הבסיס שלנו בהוד השרון והפעילות מתרכזת באזור השרון והמרכז, לצד פרויקטים נבחרים בשיווק ובליווי ברחבי הארץ. את הפרויקטים העדכניים אפשר לראות בעמוד הפרויקטים שלנו.' },
   { q: 'מה היתרון בקבוצה שמאגדת יזמות, ביצוע ופיקוח יחד?', a: 'כשהייזום, הביצוע והבקרה יושבים באותה קבוצה, האחריות לא מתפזרת בין גורמים: מי שתכנן את הפרויקט הוא גם מי שאחראי שהוא ייבנה באיכות ובלוח הזמנים שהובטחו. בנוסף, הניסיון המצטבר מכל זרוע משרת את האחרות, הידע מהשטח משפר את התכנון, והידע התכנוני משפר את הביצוע.' },
 ]
+
+/* הסקשנים של העמוד, הסדר הקבוע ב-defs/sharon.js. אחריהם בא
+   רכיב יצירת הקשר המשותף. */
+const LOCAL = {
+  header: () => (
+    <PageHeader
+      noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
+      eyebrow="אזור הפעילות שלנו"
+      title='נדל"ן בהוד השרון ובאזור המרכז'
+      lead='קורקוס גרופ פועלת מהוד השרון ומלווה פרויקטים ועסקאות נדל"ן ברחבי השרון והמרכז: יזמות, ביצוע ובנייה, ניהול ופיקוח, תיווך ושיווק נכסים, מקרקע ועד מסירת מפתח.'
+      crumbs={[{ label: 'נדל"ן בשרון' }]}
+    />
+  ),
+  /* פסקת ישות, ברורה וניתנת לציטוט ע"י מנועי AI */
+  intro: () => (
+    <section className="section lhub-intro">
+      <div className="container">
+        <Reveal>
+          <p className="lhub-intro__text">
+            קורקוס גרופ היא קבוצת נדל"ן שמשרדה ברחוב הנגר 24 בהוד השרון. הקבוצה פועלת בארבעה תחומים משלימים:
+            יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, ותיווך ושיווק נכסים, עם פעילות באזור השרון והמרכז
+            ופרויקטים נבחרים ברחבי הארץ. המבנה הזה מאפשר ללוות פרויקט או עסקה מהשלב הראשון ועד האחרון, עם כתובת אחת ואחריות אחת.
+          </p>
+          <p className="lhub-intro__text">
+            מחפשים חברת בנייה ופיקוח בהוד השרון? ראיתה בונה ושכינתא מפקחת מטעם בעל הבית, בשתי זרועות נפרדות.{' '}
+            <Link to="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון: כל הפרטים</Link>
+          </p>
+        </Reveal>
+      </div>
+    </section>
+  ),
+  /* השירותים באזור */
+  services: () => (
+    <section className="section section--soft lhub-services">
+      <div className="container">
+        <Reveal className="lhub-head">
+          <span className="eyebrow">מה אנחנו עושים</span>
+          <h2 className="section-title">שירותי הנדל"ן שלנו בשרון והמרכז</h2>
+        </Reveal>
+        {/* FeatureCard, אותו כרטיס ואותו אפקט תלת ממד כמו בדף הבית ובעמודי הדיוויזיות */}
+        <div className="lhub-services__grid">
+          {SERVICES.map((s, i) => (
+            <Reveal key={s.to} delay={i * 0.07}>
+              <FeatureCard icon={s.icon} title={s.title} desc={s.desc} to={s.to} cta="לעמוד השירות" />
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  ),
+  /* פרויקטים אמיתיים מה-CMS */
+  projects: ({ ctx: { list } }) => (
+    <ProjectsGallery
+      items={list}
+      collage
+      masonry
+      showFooter={false}
+      title="פרויקטים נבחרים"
+      lead="מבחר מהפרויקטים שהקבוצה מובילה, מבצעת ומשווקת."
+    />
+  ),
+  /* שאלות נפוצות מקומיות */
+  faq: () => (
+    <section className="section section--soft lhub-faq">
+      <div className="container">
+        <Reveal className="lhub-head">
+          <span className="eyebrow">שאלות נפוצות</span>
+          <h2 className="section-title">שאלות שנשאלות אצלנו במשרד</h2>
+        </Reveal>
+        <div className="lhub-faq__list">
+          {FAQS.map((f, i) => (
+            <Reveal key={i} delay={i * 0.05}>
+              <details className="lhub-faq__item">
+                <summary><span>{f.q}</span><Icon name="chevron" size={18} className="lhub-faq__chev" /></summary>
+                <p>{f.a}</p>
+              </details>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal className="lhub-links">
+          <p>להעמיק עוד: <Link to="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון</Link> · <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link> · <Link to="/projects">כל הפרויקטים</Link> · <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link> · <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link> · <Link to="/about">אודות הקבוצה</Link></p>
+        </Reveal>
+      </div>
+    </section>
+  ),
+}
 
 export default function SharonHub() {
   const [list, setList] = useState(() => projectsSeed.slice(0, 6))
@@ -67,83 +154,7 @@ export default function SharonHub() {
         description='מחפשים חברת נדל"ן באזור השרון? קורקוס גרופ, שמשרדה בהוד השרון, מלווה פרויקטים ועסקאות באזור השרון והמרכז: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, תיווך ושיווק נכסים.'
         jsonLd={jsonLd}
       />
-      <PageHeader
-        noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
-        eyebrow="אזור הפעילות שלנו"
-        title='נדל"ן בהוד השרון ובאזור המרכז'
-        lead='קורקוס גרופ פועלת מהוד השרון ומלווה פרויקטים ועסקאות נדל"ן ברחבי השרון והמרכז: יזמות, ביצוע ובנייה, ניהול ופיקוח, תיווך ושיווק נכסים, מקרקע ועד מסירת מפתח.'
-        crumbs={[{ label: 'נדל"ן בשרון' }]}
-      />
-
-      {/* פסקת ישות, ברורה וניתנת לציטוט ע"י מנועי AI */}
-      <section className="section lhub-intro">
-        <div className="container">
-          <Reveal>
-            <p className="lhub-intro__text">
-              קורקוס גרופ היא קבוצת נדל"ן שמשרדה ברחוב הנגר 24 בהוד השרון. הקבוצה פועלת בארבעה תחומים משלימים:
-              יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, ותיווך ושיווק נכסים, עם פעילות באזור השרון והמרכז
-              ופרויקטים נבחרים ברחבי הארץ. המבנה הזה מאפשר ללוות פרויקט או עסקה מהשלב הראשון ועד האחרון, עם כתובת אחת ואחריות אחת.
-            </p>
-            <p className="lhub-intro__text">
-              מחפשים חברת בנייה ופיקוח בהוד השרון? ראיתה בונה ושכינתא מפקחת מטעם בעל הבית, בשתי זרועות נפרדות.{' '}
-              <Link to="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון: כל הפרטים</Link>
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* השירותים באזור */}
-      <section className="section section--soft lhub-services">
-        <div className="container">
-          <Reveal className="lhub-head">
-            <span className="eyebrow">מה אנחנו עושים</span>
-            <h2 className="section-title">שירותי הנדל"ן שלנו בשרון והמרכז</h2>
-          </Reveal>
-          {/* FeatureCard, אותו כרטיס ואותו אפקט תלת ממד כמו בדף הבית ובעמודי הדיוויזיות */}
-          <div className="lhub-services__grid">
-            {SERVICES.map((s, i) => (
-              <Reveal key={s.to} delay={i * 0.07}>
-                <FeatureCard icon={s.icon} title={s.title} desc={s.desc} to={s.to} cta="לעמוד השירות" />
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* פרויקטים אמיתיים מה-CMS */}
-      <ProjectsGallery
-        items={list}
-        collage
-        masonry
-        showFooter={false}
-        title="פרויקטים נבחרים"
-        lead="מבחר מהפרויקטים שהקבוצה מובילה, מבצעת ומשווקת."
-      />
-
-      {/* שאלות נפוצות מקומיות */}
-      <section className="section section--soft lhub-faq">
-        <div className="container">
-          <Reveal className="lhub-head">
-            <span className="eyebrow">שאלות נפוצות</span>
-            <h2 className="section-title">שאלות שנשאלות אצלנו במשרד</h2>
-          </Reveal>
-          <div className="lhub-faq__list">
-            {FAQS.map((f, i) => (
-              <Reveal key={i} delay={i * 0.05}>
-                <details className="lhub-faq__item">
-                  <summary><span>{f.q}</span><Icon name="chevron" size={18} className="lhub-faq__chev" /></summary>
-                  <p>{f.a}</p>
-                </details>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal className="lhub-links">
-            <p>להעמיק עוד: <Link to="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון</Link> · <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link> · <Link to="/projects">כל הפרויקטים</Link> · <Link to="/real-estate-glossary">מילון מונחי נדל"ן</Link> · <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link> · <Link to="/about">אודות הקבוצה</Link></p>
-          </Reveal>
-        </div>
-      </section>
-
-      <Contact />
+      <PageSections def={DEF} local={LOCAL} ctx={{ list }} />
     </>
   )
 }

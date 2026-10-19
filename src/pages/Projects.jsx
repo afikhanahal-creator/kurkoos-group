@@ -25,6 +25,16 @@ function mapRows(rows) {
   }))
 }
 import BuyerFaq from '../components/ui/BuyerFaq.jsx'
+import DEF from '../lib/pageBuilder/defs/projects.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
+
+/* הסקשנים של העמוד, הסדר הקבוע ב-defs/projects.js */
+const LOCAL = {
+  collage: ({ ctx: { allTitle, lead, statItems, collageItems } }) => (
+    <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
+  ),
+  buyerFaq: () => <BuyerFaq />,
+}
 
 export default function Projects() {
   const { t } = useI18n()
@@ -77,8 +87,7 @@ export default function Projects() {
         title='פרויקטים בהוד השרון ובאזור המרכז'
         description='הפרויקטים של קורקוס גרופ בהוד השרון ובאזור המרכז: בנייה למגורים, וילות ובתים פרטיים, ופרויקטים בליווי ובפיקוח הקבוצה, מקרקע ועד מסירת מפתח.'
       />
-      <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
-      <BuyerFaq />
+      <PageSections def={DEF} local={LOCAL} ctx={{ allTitle, lead, statItems, collageItems }} />
     </>
   )
 }

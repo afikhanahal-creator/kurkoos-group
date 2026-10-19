@@ -14,7 +14,9 @@ const SVG=(d,w)=>`<svg width="${w||16}" height="${w||16}" viewBox="0 0 24 24" fi
 const IC={play:SVG('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',14),search:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
  wand:SVG('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1zM4 20l9-9M11 9l4 4"/>',15),layers:SVG('<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',14),
  clock:SVG('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',14),x:SVG('<path d="M6 6l12 12M18 6 6 18"/>',14)};
-let tabSaved='ads';try{tabSaved=localStorage.getItem('v194_tab')||'ads'}catch(e){}
+// the page always opens on their ads (all the posts). The tab is not remembered between visits, so a device
+// where the cards tab was once chosen does not keep hiding the posts behind it.
+let tabSaved='ads';try{localStorage.removeItem('v194_tab')}catch(e){}
 const S={tab:tabSaved==='comps'?'comps':'ads',sort:'top',fmt:'',comp:'',q:'',page:1,sig:''};
 const PAGE=24;
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
@@ -105,7 +107,7 @@ try{new MutationObserver(()=>{const g=G6();if(g&&g.S.open&&!document.getElementB
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v194]');if(!b)return;const a=b.dataset.v194;if(a==='q')return;e.preventDefault();e.stopPropagation();
- if(a==='tab'){S.tab=b.dataset.v==='comps'?'comps':'ads';try{localStorage.setItem('v194_tab',S.tab)}catch(x){}mount(true);return}
+ if(a==='tab'){S.tab=b.dataset.v==='comps'?'comps':'ads';mount(true);return}
  if(a==='view'){openCampaign(b.dataset.k);return}
  if(a==='clone'){try{V().openGen(b.dataset.id)}catch(x){}return}
  if(a==='more'){S.page++;mount(true);return}

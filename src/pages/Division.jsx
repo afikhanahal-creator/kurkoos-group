@@ -58,7 +58,7 @@ export default function Division() {
   if (typeof beforeAfter === 'string') { try { beforeAfter = JSON.parse(beforeAfter) } catch { beforeAfter = null } }
   const ba = beforeAfter && typeof beforeAfter === 'object' ? beforeAfter : {}
   const baBefore = ba.before || '/divisions/humash-22-24-sketch.webp'
-  const baAfter = ba.after || '/divisions/humash-22-24-house.PNG'
+  const baAfter = ba.after || '/divisions/humash-22-24-house.jpg'
 
   // תמונת באנר החטיבה — override מה-CMS (cover_divisions) עם נפילה-לאחור לתמונה הקבועה
   let coverDiv = settings.cover_divisions

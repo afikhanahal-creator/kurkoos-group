@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import he from './he.js'
 import en from './en.js'
 import { loadHeadingOverrides } from '../lib/headings.js'
+import { useDraftStore, EDIT_MODE, PREVIEW_MODE } from '../lib/pageBuilder/layout.js'
 
 const dictionaries = { he, en }
 const I18nContext = createContext(null)
@@ -22,6 +23,10 @@ export function I18nProvider({ children }) {
     return () => { on = false }
   }, [])
 
+  /* בעורך העמודים ובתצוגה המקדימה: טקסטים מהטיוטה גוברים על הגרסה החיה */
+  const draft = useDraftStore()
+  const draftTexts = EDIT_MODE || PREVIEW_MODE ? draft.texts : null
+
   const dict = dictionaries[lang]
 
   useEffect(() => {
@@ -37,11 +42,12 @@ export function I18nProvider({ children }) {
   // t('hero.title') -> override (עברית) אם הוגדר, אחרת חיפוש מקונן במילון
   const t = useCallback(
     (path) => {
+      if (lang === 'he' && draftTexts && draftTexts[path] != null && draftTexts[path] !== '') return draftTexts[path]
       if (lang === 'he' && overrides[path] != null && overrides[path] !== '') return overrides[path]
       const value = path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), dict)
       return value ?? path
     },
-    [dict, overrides, lang]
+    [dict, overrides, lang, draftTexts]
   )
 
   return (

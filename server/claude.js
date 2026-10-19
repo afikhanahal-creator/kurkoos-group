@@ -64,13 +64,24 @@ export default async function handler(req, res) {
 
   const model = MODELS[body.tier] || MODELS.default
   const system = body.json ? 'Answer with one valid JSON value only. No prose before or after it, no code fences.' : undefined
+  // JSON answers in the engine are short; a smaller ceiling keeps the call well inside the function time limit
+  const maxTokens = body.json ? 4000 : 8000
+  const call = (msgs) => fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages: msgs, ...(system ? { system } : {}) }),
+  })
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model, max_tokens: 8000, messages, ...(system ? { system } : {}) }),
-    })
-    const data = await r.json().catch(() => ({}))
+    let r = await call(messages)
+    let data = await r.json().catch(() => ({}))
+    // a picture Claude could not fetch or read: answer from the text alone instead of failing the whole request
+    if (!r.ok && images.length && r.status === 400 && /image|url|media|fetch/i.test(String(data && data.error && data.error.message))) {
+      const last = messages[messages.length - 1]
+      const text = (Array.isArray(last.content) ? last.content.find((c) => c.type === 'text')?.text : String(last.content)) || ''
+      const plain = [...messages.slice(0, -1), { role: 'user', content: 'הערה: התמונה המצורפת לא נטענה, ולכן עבוד רק לפי הפרטים בכתב ואל תניח מה יש בה.\n\n' + text }]
+      r = await call(plain)
+      data = await r.json().catch(() => ({}))
+    }
     if (!r.ok) { res.status(r.status === 429 ? 429 : 502).json({ error: (data && data.error && data.error.message) || 'שגיאה מ-Claude' }); return }
     const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('')
     res.status(200).json({ text, truncated: data.stop_reason === 'max_tokens' })

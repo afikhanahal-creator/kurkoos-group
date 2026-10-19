@@ -3081,6 +3081,39 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
 @media (max-width:599px) and (prefers-reduced-motion:reduce){
  #appmain button:active{transform:none}
 }
+</style><style id="k199">
+/* ===== V199 · quick AI rewrite window and its button ===== */
+.v199ov{position:fixed;inset:0;z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:16px}
+.v199ov[hidden]{display:none}
+.v199bg{position:absolute;inset:0;background:rgba(7,41,58,.45)}
+.v199box{position:relative;width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:#fff;border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(7,41,58,.3);display:grid;gap:14px;font-family:Almoni,system-ui,sans-serif;color:#07293a}
+.v199h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.v199h b{font-size:18px;font-weight:800}
+.v199x{width:44px;height:44px;border-radius:12px;border:1px solid #dde4ea;background:#fff;font-size:18px;cursor:pointer;color:#07293a}
+.v199src{background:#f3f5f8;border-radius:12px;padding:12px 14px}
+.v199src span{display:block;font-size:13px;font-weight:700;color:#5f6b80;margin-bottom:4px}
+.v199src p{margin:0;font-size:15px;line-height:1.55;white-space:pre-line}
+.v199opts{display:grid;gap:8px}
+.v199seg{display:flex;gap:3px;padding:3px;border-radius:12px;background:#e9eef2}
+.v199seg button{flex:1;min-height:44px;border:0;border-radius:9px;background:transparent;font:inherit;font-weight:700;font-size:14px;color:#5f6b80;cursor:pointer}
+.v199seg button.on{background:#fff;color:#07293a;box-shadow:0 1px 3px rgba(7,41,58,.14)}
+.v199f{display:flex;flex-wrap:wrap;gap:8px}
+.v199b{min-height:44px;padding:0 18px;border-radius:12px;border:1px solid #cbd4dd;background:#fff;font:inherit;font-weight:800;font-size:15px;color:#07293a;cursor:pointer}
+.v199b.pri{background:#07293a;border-color:#07293a;color:#fff}
+.v199b.big{flex:1;min-height:52px;font-size:16px}
+.v199b:focus-visible,.v199x:focus-visible,.v199seg button:focus-visible,.v199out:focus-visible{outline:3px solid #4083a1;outline-offset:2px}
+.v199lbl{font-size:14px;font-weight:800}
+.v199out{width:100%;box-sizing:border-box;border:1px solid #cbd4dd;border-radius:12px;padding:12px;font:inherit;font-size:16px;line-height:1.6;color:#07293a;resize:vertical}
+.v199busy{display:flex;align-items:center;gap:10px;justify-content:center;min-height:120px;color:#105572;font-weight:700}
+.v199spin{width:22px;height:22px;border-radius:50%;border:3px solid #cfe0e8;border-top-color:#105572;animation:v199s .8s linear infinite}
+@keyframes v199s{to{transform:rotate(360deg)}}
+.v199err{display:grid;gap:4px;padding:12px 14px;border-radius:12px;background:#f7e5e5;color:#8c0809}
+.v199err small{color:#5f6b80;font-size:13px}
+.v199help{margin:0;font-size:13px;color:#5f6b80}
+.v199tool{display:inline-flex;align-items:center;gap:6px}
+.v199open{display:inline-flex;align-items:center;gap:6px}
+@media (prefers-reduced-motion:reduce){.v199spin{animation:none}}
+@media (max-width:599px){.v199ov{align-items:flex-end;padding:0}.v199box{border-radius:18px 18px 0 0;max-height:92dvh;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -27839,7 +27872,7 @@ function genHtml(st){const g=G.gen,post=g.post;const GOALS=V().GOALS||[['leads',
   <p class="v179help">Claude מנתח למה הפוסט שלהם עובד וכותב פוסט מקורי שלנו, עם התמונות שלנו, בלי להעתיק ניסוח או תמונה. כל חלק נפתח לעריכה בעורך: כותרת, טקסט, תמונה, צבעים ושכבות. שום דבר לא מתפרסם לבד.</p>
   <div class="v179fa end"><button type="button" class="v179b" data-v181="close" data-m="v181g">ביטול</button><button type="submit" class="v179b pri big">${I('wand',16)} צור גרסה</button></div></form></div>`;
  if(st==='busy')return `${hdr}<div class="v179mb">${src}<div class="v179busy" role="status" aria-live="polite"><i></i><b>Claude מנתח וכותב…</b><span>בדרך כלל 20 עד 60 שניות</span></div></div>`;
- if(st==='err')return `${hdr}<div class="v179mb">${src}<div class="v179empty"><b>${E(g.err||'הכתיבה לא הצליחה')}</b><p>${g.errCode==='not_granted'?'Claude זמין כשהמערכת מחוברת. אפשר לנסות שוב אחרי התחברות.':'אפשר לנסות שוב, או לכתוב את הגרסה ידנית בסטודיו.'}</p><div class="v179fa"><button type="button" class="v179b pri" data-v181="gretry">נסו שוב</button><button type="button" class="v179b" data-v181="close" data-m="v181g">סגירה</button></div></div></div>`;
+ if(st==='err')return `${hdr}<div class="v179mb">${src}<div class="v179empty"><b>${E(g.err||'הכתיבה לא הצליחה')}</b><p>${g.errCode==='not_granted'?'Claude זמין כשהמערכת מחוברת. אפשר לנסות שוב אחרי התחברות.':'אפשר לנסות שוב, או לכתוב את הגרסה ידנית בסטודיו.'}</p>${g.errDetail&&g.errCode!=='not_granted'?`<p class="v179help" dir="auto">הסיבה: ${E(g.errDetail)}</p>`:''}<div class="v179fa"><button type="button" class="v179b pri" data-v181="gretry">נסו שוב</button><button type="button" class="v179b" data-v181="close" data-m="v181g">סגירה</button></div></div></div>`;
  const p=g.draft,A=p.metaAnalysis||{};
  return `${hdr}<div class="v179mb">${src}<div class="v179res"><div class="v179h"><b>מה למדנו מה${isShot(post)?'מודעה':'פוסט'} שלהם</b></div><dl class="v179dl">${[['המסר',A.message],['הצעת הערך',A.value_prop],['ההוק',A.hook],['המבנה',A.structure],['קריאה לפעולה',A.cta],['העיצוב שלהם',A.visual],['העיצוב שלנו',A.design],['העיקרון שלקחנו',A.principle]].filter(([,v])=>v).map(([l,v])=>`<div><dt>${l}</dt><dd>${E(v)}</dd></div>`).join('')}</dl>
   <div class="v179h"><b>הגרסה שלנו</b><span>${E(p.brand==='afik'?'אפיק הנחל':'קבוצת קורקוס')} · טיוטה</span></div><div class="v179post"><b>${E((p.visual.headline||'').replace(/\n/g,' '))}</b>${p.visual.sub?`<p>${E(p.visual.sub)}</p>`:''}${p.fx&&Array.isArray(p.fx.items)&&p.fx.items.length?`<ul>${p.fx.items.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`:''}${p.visual.cta?`<em>${E(p.visual.cta)}</em>`:''}<pre>${E(p.fb||'')}</pre></div></div></div>
@@ -27849,7 +27882,7 @@ function openGen(id){const post=getItem(id);if(!post)return;closeM('v181d');let 
 function genRender(){const m=document.getElementById('v181g');if(!m||!G.gen)return;m.querySelector('.v179box').innerHTML=genHtml(G.gen.st);const f=m.querySelector('.v179box button.pri,.v179box button');f&&f.focus()}
 async function runGen(){const g=G.gen;if(!g)return;g.st='busy';genRender();
  try{const res=await askAI(prompt(g.post,g.o),imgsFor(g.post));if(g.draft)finish(g.draft,g.post,res,g.o);else{g.draft=makePost(g.post,res,g.o);AG.posts.unshift(g.draft)}try{saveAgent()}catch(e){}try{await ensureImgs(g.draft)}catch(e){}g.st='done';genRender();toast('הגרסה נוספה לטיוטות. אפשר לפתוח אותה בעורך')}
- catch(e){g.st='err';g.errCode=e&&e.code;g.err=e&&e.code==='rate_limited'?'יותר מדי בקשות, נסו בעוד דקה':e&&e.code==='not_granted'?'Claude לא זמין בתצוגה הזו':'הכתיבה לא הצליחה';genRender()}}
+ catch(e){g.st='err';g.errCode=e&&e.code;g.errDetail=String((e&&e.message)||'').slice(0,160);g.err=e&&e.code==='rate_limited'?'יותר מדי בקשות, נסו בעוד דקה':e&&e.code==='not_granted'?'Claude לא זמין בתצוגה הזו':/504|timeout|FUNCTION_INVOCATION/i.test(g.errDetail)?'Claude לקח יותר מדי זמן. נסו שוב':'הכתיבה לא הצליחה';genRender()}}
 
 /* ---------- the source panel inside the editor ---------- */
 function srcPanel(p){const s=p.compSource||{},A=p.metaAnalysis||{};const open=G.srcOpen==null?!window.matchMedia('(max-width:700px)').matches:G.srcOpen;
@@ -28012,7 +28045,7 @@ const IC={gal:SVG('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx
  dl:SVG('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',17),zin:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',17),zout:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6"/>',17)};
 const S={open:false,list:[],i:-1,comp:'',kind:'',period:'',q:'',sort:'new',zoom:false,sheet:false,more:{},page:1,seen:0,card:false};
 const PAGE=60,PEEK=8;
-const onTop=()=>!!(document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
+const onTop=()=>!!((document.getElementById('v199')&&!document.getElementById('v199').hidden)||document.getElementById('v181g')||document.getElementById('v181d')||document.getElementById('v179g')||document.getElementById('v179d')||document.body.classList.contains('pe-open'))||(document.getElementById('v186')||{classList:{contains:()=>false}}).classList.contains('v186park');
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
 const num=n=>(+n||0).toLocaleString('he-IL');
 const fmtD=v=>{try{return V().fmtD(v)}catch(e){return ''}};
@@ -28862,6 +28895,74 @@ try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hos
  if(document.readyState==='complete')setTimeout(go,1500);else addEventListener('load',()=>setTimeout(go,1500),{once:true})}}catch(e){}
 })();
 /*V197:END*/
+
+/*V199:START*/
+// ================= V199 · quick AI rewrite of a competitor's ad or post into our own words. One button in the ad viewer
+// ("שכתוב AI") opens a small window: Claude rewrites the text for our brand in a few seconds (text only, the fast model),
+// the result is editable, and it is copied with one tap or saved as a draft in the ideas list. The full design clone
+// ("שכפל למותג שלנו") stays as it is. Nothing is published.
+(()=>{
+if(window.__v199)return;window.__v199=1;
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const V=()=>window.__v181||null,W=()=>window.__v179||null;
+const toastSafe=m=>{try{toast(m)}catch(e){}};
+const R={id:null,brand:'kurkoos',goal:'leads',st:'form',out:null,err:'',detail:''};
+const brandName=b=>{try{return W().brandOf(b).name}catch(e){return b==='afik'?'אפיק הנחל':'קבוצת קורקוס'}};
+function srcText(p){const v=V();if(!p)return '';const shot=v&&v.isShot(p);return String(shot?[p.ad_title,p.note].filter(Boolean).join('\n'):(p.text||'')).trim()}
+async function sampleNS(){let s=null;try{s=window.claude&&window.claude.use?await window.claude.use('sample'):null}catch(e){}if(!s&&typeof KC!=='undefined'&&KC.sample)s=KC.sample;if(!s){const e=new Error('no');e.code='not_granted';throw e}return s}
+function promptFor(p){const B=(()=>{try{return W().brandOf(R.brand)}catch(e){return {name:brandName(R.brand),facts:'',rules:''}}})();
+ const txt=srcText(p);const v=V();const name=(()=>{try{return v.shortName(p)}catch(e){return ''}})();
+ const goal=R.goal==='leads'?'להביא פניות של לקוחות':R.goal==='brand'?'שיזכרו את השם שלנו ומה אנחנו עושים':'לקדם פרויקט שלנו';
+ return `אתה קופירייטר של "${B.name}". קיבלת טקסט של פוסט או מודעה של מתחרה (${name}). כתוב גרסה מקורית שלנו, באותו רעיון ובאותו מבנה, בעברית טבעית וקצרה.
+המטרה: ${goal}.
+אסור: להעתיק משפטים או ביטויים שלהם, להזכיר אותם, להמציא מספרים, מחירים, כתובות, שמות, פרויקטים או הבטחות. להשתמש במקפים או בקווים ארוכים כסימני פיסוק. רק עובדות מהרשימה.
+עובדות מותרות על המותג:
+${B.facts||''}
+${B.rules||''}
+הטקסט שלהם:
+${txt||'(אין טקסט, רק תמונה. כתוב פוסט כללי באותו נושא לפי העובדות שלנו)'}
+החזר JSON בלבד: {"headline":"כותרת עד 8 מילים","body":"גוף הפוסט, 40 עד 120 מילים, שורות קצרות","cta":"קריאה לפעולה עד 5 מילים","hashtags":["עד 4"]}`}
+const clean=x=>String(x||'').replace(/\s[—–-]\s/g,', ').replace(/[—–]/g,', ').trim();
+function fullText(o){if(!o)return '';const tags=(Array.isArray(o.hashtags)?o.hashtags:[]).map(t=>'#'+String(t).replace(/^#/,'').replace(/\s+/g,'_')).join(' ');return [clean(o.headline),clean(o.body),clean(o.cta),tags].filter(Boolean).join('\n\n')}
+function html(){const v=V();const p=v&&v.getItem(R.id);const txt=srcText(p);
+ const top=`<header class="v199h"><b>שכתוב AI למלל שלנו</b><button type="button" class="v199x" data-v199="close" aria-label="סגירה">✕</button></header>`;
+ const src=`<div class="v199src"><span>הטקסט שלהם</span><p dir="auto">${txt?E(txt.slice(0,400))+(txt.length>400?'…':''):'<i>אין טקסט במודעה. Claude יכתוב פוסט באותו נושא לפי העובדות שלנו.</i>'}</p></div>`;
+ const opts=`<div class="v199opts"><div class="v199seg" role="group" aria-label="מותג">${[['kurkoos','קבוצת קורקוס'],['afik','אפיק הנחל']].map(([k,l])=>`<button type="button" data-v199="brand" data-v="${k}" aria-pressed="${R.brand===k}" class="${R.brand===k?'on':''}">${l}</button>`).join('')}</div><div class="v199seg" role="group" aria-label="מטרה">${[['leads','לידים'],['brand','מודעות'],['project','פרויקט']].map(([k,l])=>`<button type="button" data-v199="goal" data-v="${k}" aria-pressed="${R.goal===k}" class="${R.goal===k?'on':''}">${l}</button>`).join('')}</div></div>`;
+ if(R.st==='busy')return top+src+`<div class="v199busy" role="status"><span class="v199spin" aria-hidden="true"></span>Claude כותב את הגרסה שלנו…</div>`;
+ if(R.st==='err')return top+src+opts+`<div class="v199err" role="alert"><b>${E(R.err)}</b>${R.detail?`<small dir="auto">הסיבה: ${E(R.detail)}</small>`:''}</div><footer class="v199f"><button type="button" class="v199b pri" data-v199="go">נסו שוב</button></footer>`;
+ if(R.st==='done')return top+src+`<label class="v199lbl" for="v199out">הגרסה שלנו (אפשר לערוך)</label><textarea id="v199out" class="v199out" dir="rtl" rows="10">${E(fullText(R.out))}</textarea>
+  <footer class="v199f"><button type="button" class="v199b pri" data-v199="copy">העתקה</button><button type="button" class="v199b" data-v199="save">שמירה כטיוטה</button><button type="button" class="v199b" data-v199="go">גרסה נוספת</button></footer><p class="v199help">שום דבר לא מתפרסם לבד. העיצוב המלא עם התמונות שלנו נמצא ב"שכפל למותג שלנו".</p>`;
+ return top+src+opts+`<footer class="v199f"><button type="button" class="v199b pri big" data-v199="go">שכתוב עם AI</button></footer>`}
+function render(){const m=document.getElementById('v199');if(!m)return;m.querySelector('.v199box').innerHTML=html();const f=m.querySelector('.v199out')||m.querySelector('.v199b.pri');f&&f.focus()}
+function open(id){R.id=id;R.st='form';R.out=null;R.err='';R.detail='';try{R.brand=JSON.parse(localStorage.getItem('v179_brand')||'"kurkoos"')}catch(e){}
+ let m=document.getElementById('v199');if(!m){m=document.createElement('div');m.id='v199';m.className='v199ov';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','שכתוב AI');m.innerHTML='<div class="v199bg" data-v199="close"></div><div class="v199box"></div>';document.body.appendChild(m)}
+ R.back=document.activeElement;m.hidden=false;render()}
+function close(){const m=document.getElementById('v199');if(m)m.hidden=true;try{R.back&&R.back.focus&&R.back.focus()}catch(e){}}
+async function go(){const v=V();const p=v&&v.getItem(R.id);if(!p)return;R.st='busy';render();
+ try{const s=await sampleNS();const o=await s.json(promptFor(p),{cache:false,modelTier:'quick'});if(!o||typeof o!=='object'||!(o.body||o.headline))throw new Error('התשובה הגיעה ריקה');R.out=o;R.st='done';render()}
+ catch(e){R.st='err';R.detail=String((e&&e.message)||'').slice(0,160);R.err=e&&e.code==='not_granted'?'Claude זמין כשמחוברים לניהול האתר':e&&e.code==='rate_limited'?'יותר מדי בקשות, נסו בעוד דקה':'השכתוב לא הצליח';render()}}
+async function copy(){const t=(document.getElementById('v199out')||{}).value||fullText(R.out);try{await navigator.clipboard.writeText(t);toastSafe('הטקסט הועתק')}catch(e){const a=document.getElementById('v199out');if(a){a.select();try{document.execCommand('copy');toastSafe('הטקסט הועתק')}catch(x){toastSafe('לא הצלחתי להעתיק. סמנו והעתיקו ידנית')}}}}
+function save(){const t=(document.getElementById('v199out')||{}).value||fullText(R.out);const v=V();const p=v&&v.getItem(R.id);
+ // a draft like the full clone makes, so it shows in "רעיונות וטיוטות" and opens in the design editor
+ try{const o=R.out||{};const parts=t.split(/\n\s*\n/);const res={analysis:{},design:{layout:'statement',mood:'calm',note:''},post:{headline:clean(parts[0]||o.headline),sub:'',items:[],cta:clean(o.cta||''),fb:parts.slice(1).join('\n\n')||clean(o.body)}};
+  const d=v.makePost(p,res,{brand:R.brand,goal:R.goal,project:'',note:''});if(typeof AG!=='undefined'&&Array.isArray(AG.posts)){AG.posts.unshift(d);if(typeof saveAgent==='function')saveAgent();toastSafe('נשמר כטיוטה ברעיונות וטיוטות');return}}catch(e){console.warn('v199 save',e)}
+ try{navigator.clipboard&&navigator.clipboard.writeText(t);toastSafe('לא הצלחתי לשמור כטיוטה, אבל הטקסט הועתק')}catch(e){toastSafe('לא הצלחתי לשמור')}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-v199]');if(!b)return;const a=b.dataset.v199;
+ if(a==='open'){e.preventDefault();e.stopPropagation();open(b.dataset.id);return}
+ if(a==='close'){close();return}if(a==='brand'){R.brand=b.dataset.v;render();return}if(a==='goal'){R.goal=b.dataset.v;render();return}
+ if(a==='go'){go();return}if(a==='copy'){copy();return}if(a==='save'){save();return}},true);
+document.addEventListener('keydown',e=>{const m=document.getElementById('v199');if(!m||m.hidden)return;if(e.key==='Escape'){e.stopPropagation();close()}
+ if(e.key==='Tab'){const f=[...m.querySelectorAll('button,textarea')].filter(x=>!x.disabled&&x.offsetParent);if(!f.length)return;const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}},true);
+// the button: next to "שכפל למותג שלנו" in the ad viewer toolbar and in the details panel
+const IC='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
+function decorate(){document.querySelectorAll('[data-v186="clone"][data-id]').forEach(c=>{const box=c.parentElement;if(!box||box.querySelector('[data-v199="open"]'))return;
+ const b=document.createElement('button');b.type='button';b.dataset.v199='open';b.dataset.id=c.dataset.id;
+ if(c.classList.contains('v179b')){b.className='v179b v199open';b.innerHTML=IC+' שכתוב AI למלל שלנו'}else{b.className='v199tool';b.innerHTML=IC+'<span>שכתוב AI</span>'}
+ c.insertAdjacentElement('afterend',b)})}
+new MutationObserver(()=>{try{decorate()}catch(e){}}).observe(document.body,{childList:true,subtree:true});
+window.__v199={open,go,promptFor,fullText,R};
+})();
+/*V199:END*/
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

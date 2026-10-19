@@ -98,7 +98,50 @@
 .ahd__imgacts button { min-height: 34px; min-width: 34px; padding: 0 8px; border: 1px solid #cbd4dd; border-radius: 8px; background: #fff; font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; color: #07293a; }
 .ahd__imgacts button:disabled { opacity: 0.35; }
 .ahd__imgacts .is-danger { color: #a90b0c; }
+/* ---------- סוכן התמונות ---------- */
+.aia { display: grid; gap: 14px; padding: 16px 18px; border: 1px solid var(--adm-border); border-radius: 16px; background: linear-gradient(180deg, #f3f8fb, var(--adm-surface)); }
+.aia__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.aia__head h3 { margin: 0 0 4px; font-size: 1.08rem; font-weight: 900; color: var(--adm-ink); }
+.aia__head p { margin: 0; max-width: 70ch; font-size: 0.88rem; line-height: 1.55; color: var(--adm-muted); }
+.aia__state { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; background: var(--adm-border); font-size: 0.8rem; font-weight: 800; color: var(--adm-muted); }
+.aia__state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.aia__state.is-on { background: #dff3e7; color: #1d6b3d; }
+.aia__row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; }
+.aia__modes { flex-wrap: wrap; }
+.aia__field { display: grid; gap: 4px; font-size: 0.8rem; font-weight: 700; color: var(--adm-muted); }
+.aia__field select { min-height: 42px; padding: 0 10px; border: 1px solid var(--adm-border-strong); border-radius: 10px; background: var(--adm-surface); font: inherit; font-size: 0.9rem; font-weight: 400; color: var(--adm-ink); }
+.aia__acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.aia__preview { padding: 12px 14px; border-radius: 12px; background: var(--adm-surface); border: 1px solid var(--adm-border); font-size: 0.9rem; color: var(--adm-ink); }
+.aia__preview ul, .aia__log ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.aia__preview li { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; }
+.aia__thumbs { flex: none; display: flex; gap: 4px; }
+.aia__thumbs img { width: 56px; height: 42px; object-fit: cover; border-radius: 6px; background: #e9eef3; }
+.aia__thumbs img:first-child { outline: 2px solid var(--color-secondary, #105572); outline-offset: 1px; }
+.aia__err { color: #a90b0c; }
+.aia__log summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 800; font-size: 0.9rem; color: var(--adm-ink); }
+.aia__log li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; background: var(--adm-surface); border: 1px solid var(--adm-border); }
+.aia__log li > img { flex: none; width: 56px; height: 42px; object-fit: cover; border-radius: 6px; }
+.aia__log li > span { flex: 1; min-width: 0; display: grid; font-size: 0.88rem; }
+.aia__log li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--adm-ink); }
+.aia__log li small { color: var(--adm-muted); font-size: 0.78rem; }
+.aia__log li em { font-style: normal; font-size: 0.8rem; font-weight: 700; color: var(--adm-muted); }
+.aia__log li.is-undone { opacity: 0.6; }
+
+.ahd__sugg { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.ahd__sugg li { display: grid; gap: 6px; padding: 6px; border: 1px solid #e3e7ee; border-radius: 12px; }
+.ahd__sugg img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; background: #e9eef3; }
+.ahd__suggt { font-size: 0.78rem; line-height: 1.4; color: #5f6b80; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ahd__sugg .ahd__imgacts button { flex: 1; }
+
 @media (max-width: 599px) {
+  .aia { padding: 14px; }
+  .aia__head { flex-direction: column-reverse; align-items: flex-start; }
+  .aia__modes { width: 100%; }
+  .aia__modes button { flex: 1 1 45%; min-height: 44px; }
+  .aia__field { flex: 1 1 100%; }
+  .aia__field select { min-height: 44px; }
+  .aia__acts .ahd__btn { flex: 1 1 100%; }
+  .ahd__sugg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ahub__bar select, .ahub__search { flex: 1 1 100%; min-height: 44px; }
   .ahub__grid { grid-template-columns: minmax(0, 1fr); }
   .ahd__panel { width: 100%; }

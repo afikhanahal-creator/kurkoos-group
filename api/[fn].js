@@ -30,6 +30,7 @@ const ROUTES = {
   metricool: () => import('../server/metricool.js'),
   sitemap: () => import('../server/sitemap.js'),
   indexnow: () => import('../server/indexnow.js'),
+  'article-images': () => import('../server/article-images.js'),
 }
 
 /* שם המטפל מגיע מהסגמנט הדינמי של הנתיב. יש גיבוי לקריאה מתוך

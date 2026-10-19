@@ -19,6 +19,8 @@ import {
 } from '../data/houseLanding.js'
 import { track } from '../lib/track.js'
 import NotFound from './NotFound.jsx'
+import DEF from '../lib/pageBuilder/defs/house.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './HouseLanding.css'
 
 /* ============================================================
@@ -35,6 +37,219 @@ const PROJECT_PLACE = {
 }
 
 const TOPIC = 'construction'
+
+/* הסקשנים של העמוד, לפי הסדר. הנתונים מחושבים פעם אחת בעמוד ומגיעים ב-ctx.
+   ה-ref של ציר השלבים נשאר בעמוד, כי האפקט שמפעיל אותו יושב שם */
+const LOCAL = {
+  /* ---------- כותרת ---------- */
+  hero: ({ ctx: { page, estimate, call, heroW, heroH, portrait } }) => (
+    <header className="hl-hero">
+      <InfiniteGrid color="rgba(143,182,200,1)" baseOpacity={0.14} revealOpacity={0.42} size={48} speed={0.25} />
+      <div className="hl-hero__glow" aria-hidden="true" />
+      <div className="container hl-hero__inner">
+        <Breadcrumbs items={page.crumbs} />
+        <div className="hl-hero__grid">
+          <div className="hl-hero__copy">
+            <h1 className="hl-hero__title">{page.h1}</h1>
+            <p className="hl-hero__lead">{page.lead}</p>
+            <div className="hl-hero__actions">
+              <button type="button" className="btn btn--primary btn--lg" onClick={estimate('hero')}>
+                קבלו הערכת עלות לבית שלכם
+                <Icon name="arrowLeft" size={20} />
+              </button>
+              <a href={telHref()} className="btn btn--lg hl-btn-ghost" onClick={call('hero')}>
+                <Icon name="phone" size={18} />
+                <span dir="ltr">{CONTACT_PHONE_DISPLAY}</span>
+              </a>
+            </div>
+            <SiteSign page={page} onCall={call('sign')} />
+          </div>
+          <figure className={`hl-hero__media${portrait ? ' is-portrait' : ''}`} style={{ '--hl-ar': `${heroW} / ${heroH}` }}>
+            <img
+              className="hl-hero__img"
+              src={page.heroImage}
+              alt={page.heroAlt}
+              width={heroW}
+              height={heroH}
+              fetchpriority="high"
+              decoding="async"
+            />
+          </figure>
+        </div>
+      </div>
+    </header>
+  ),
+  /* ---------- הוכחות ---------- */
+  proof: () => (
+    <div className="container hl-proof-wrap">
+      <ul className="hl-proof" aria-label="בקצרה">
+        {HOUSE_PROOF.map((f) => (
+          <li key={f.v}><b>{f.v}</b><span>{f.u}</span></li>
+        ))}
+      </ul>
+    </div>
+  ),
+  /* ---------- בעמוד הזה: קפיצה ישר לתשובה ---------- */
+  jump: ({ ctx: { page } }) => (
+    <nav className="container hl-jump" aria-label="בעמוד הזה">
+      <span className="hl-jump__label">בעמוד הזה</span>
+      <ul>
+        <li><a href="#hl-intro-title">{page.intro.q}</a></li>
+        <li><a href="#hl-steps-title">השלבים, מהמגרש ועד המפתח</a></li>
+        <li><a href="#hl-check-title">מה בודקים לפני שבונים</a></li>
+        <li><a href="#hl-faq-title">שאלות נפוצות</a></li>
+        <li><a href="#contact">הערכת עלות</a></li>
+      </ul>
+    </nav>
+  ),
+  /* ---------- תשובה ישירה + שתי הזרועות ---------- */
+  intro: ({ ctx: { page } }) => (
+    <section className="hl-section hl-intro">
+      <div className="container hl-intro__grid">
+        <div className="hl-intro__text">
+          <h2 className="hl-h2" id="hl-intro-title">{page.intro.q}</h2>
+          <p className="hl-intro__answer">{page.intro.a}</p>
+          <Link to="/villas-sharon" className="hl-textlink">
+            הווילות והבתים הפרטיים שאנחנו מקימים בהוד השרון
+            <Icon name="arrowLeft" size={16} />
+          </Link>
+        </div>
+        <div className="hl-arms">
+          {HOUSE_ARMS.map((a) => (
+            <Link key={a.name} to={a.to} className="hl-arm">
+              <img src={a.logo} alt="" className="hl-arm__logo" loading="lazy" width="72" height="72" />
+              <span className="hl-arm__body">
+                <b>{a.name}</b>
+                <span>{a.d}</span>
+              </span>
+            </Link>
+          ))}
+          <p className="hl-arms__note">מי שבודק אינו מי שבונה. שתי הזרועות באותה קבוצה, בידיים נפרדות.</p>
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---------- התהליך ---------- */
+  steps: ({ ctx: { page, timelineRef } }) => (
+    <section className="hl-section hl-steps" aria-labelledby="hl-steps-title">
+      <div className="container">
+        <div className="hl-head">
+          <h2 className="hl-h2" id="hl-steps-title">{page.stepsTitle}</h2>
+          <p className="hl-head__lead">חמישה שלבים, וכתובת אחת לאורך כולם.</p>
+        </div>
+        <ol className="hl-timeline" ref={timelineRef}>
+          {HOUSE_STEPS.map((s, i) => (
+            <li key={s.t} className="hl-stage" style={{ '--i': i }}>
+              <span className="hl-stage__num" aria-hidden="true">{i + 1}</span>
+              <div className="hl-stage__body">
+                <h3 className="hl-stage__title">{s.t}</h3>
+                <span className="hl-stage__who">{s.who}</span>
+                <p>{s.d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  ),
+  /* ---------- קריאה לפעולה באמצע העמוד ---------- */
+  band: ({ ctx: { page, estimate, placement } }) => (
+    <section className="hl-band-wrap" aria-labelledby="hl-band-title">
+      <div className="container">
+        <div className="hl-band">
+          <div className="hl-band__text">
+            <h2 id="hl-band-title">{page.ctaTitle}</h2>
+            <p>נעבור יחד על המגרש והתוכנית, ונראה ממה בנוי המחיר של הבית שלכם.</p>
+          </div>
+          <div className="hl-band__actions">
+            <button type="button" className="btn btn--primary btn--lg" onClick={estimate('band')}>
+              קבלו הערכת עלות לבית שלכם
+            </button>
+            <a
+              href={waHref('שלום, אשמח לקבל הערכת עלות לבניית בית פרטי')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn--lg hl-btn-ghost"
+              onClick={() => track('whatsapp_click', { placement: `${placement}_band` })}
+            >
+              <Icon name="whatsapp" size={18} /> וואטסאפ
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---------- פרויקטים ---------- */
+  projects: ({ ctx: { page } }) => (
+    <HouseProjects title={page.projectsTitle} lead={page.projectsLead} />
+  ),
+  /* ---------- רשימת בדיקות ---------- */
+  check: ({ ctx: { page } }) => (
+    <section className="hl-section hl-check" aria-labelledby="hl-check-title">
+      <div className="container hl-check__grid">
+        <div className="hl-check__head">
+          <h2 className="hl-h2" id="hl-check-title">{page.check.title}</h2>
+          <p>{page.check.lead}</p>
+        </div>
+        <ul className="hl-check__list">
+          {page.check.items.map(([t, d]) => (
+            <li key={t}>
+              <span className="hl-check__ic" aria-hidden="true"><Icon name="check" size={16} /></span>
+              <span><b>{t}</b> {d}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  ),
+  /* ---------- שאלות נפוצות ---------- */
+  faq: ({ ctx: { page } }) => (
+    <section className="hl-section hl-faq" aria-labelledby="hl-faq-title">
+      <div className="container hl-faq__inner">
+        <h2 className="hl-h2" id="hl-faq-title">{page.faqTitle}</h2>
+        <div className="hl-faq__list">
+          {page.faqs.map((f) => (
+            <details key={f.q} className="hl-faq__item">
+              <summary>
+                <span>{f.q}</span>
+                <span className="hl-faq__sign" aria-hidden="true" />
+              </summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  ),
+  /* ---------- קישורים פנימיים ---------- */
+  links: ({ ctx: { siblings } }) => (
+    <nav className="hl-section hl-links" aria-label="עוד בנושא">
+      <div className="container hl-links__grid">
+        <div>
+          <h2 className="hl-links__title">מדריכים שכדאי לקרוא לפני שמחליטים</h2>
+          <ul>
+            {HOUSE_GUIDES.map((g) => (
+              <li key={g.to}><Link to={g.to}>{g.label}<Icon name="arrowLeft" size={15} /></Link></li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2 className="hl-links__title">בונים בית פרטי באזור</h2>
+          <ul>
+            {siblings.map((p) => (
+              <li key={p.path}><Link to={p.path}>{p.navLabel}<Icon name="arrowLeft" size={15} /></Link></li>
+            ))}
+            <li><Link to="/villas-sharon">הווילות שאנחנו מקימים בהוד השרון<Icon name="arrowLeft" size={15} /></Link></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  ),
+  /* ---------- טופס ---------- */
+  lead: ({ ctx: { placement } }) => (
+    <HouseLead placement={placement} />
+  ),
+}
 
 export default function HouseLanding() {
   const { pathname } = useLocation()
@@ -72,203 +287,7 @@ function HouseLandingPage({ page }) {
   return (
     <article className="hl">
       <Seo title={page.title} description={page.description} image={page.heroImage} jsonLd={jsonLd} />
-
-      {/* ---------- כותרת ---------- */}
-      <header className="hl-hero">
-        <InfiniteGrid color="rgba(143,182,200,1)" baseOpacity={0.14} revealOpacity={0.42} size={48} speed={0.25} />
-        <div className="hl-hero__glow" aria-hidden="true" />
-        <div className="container hl-hero__inner">
-          <Breadcrumbs items={page.crumbs} />
-          <div className="hl-hero__grid">
-            <div className="hl-hero__copy">
-              <h1 className="hl-hero__title">{page.h1}</h1>
-              <p className="hl-hero__lead">{page.lead}</p>
-              <div className="hl-hero__actions">
-                <button type="button" className="btn btn--primary btn--lg" onClick={estimate('hero')}>
-                  קבלו הערכת עלות לבית שלכם
-                  <Icon name="arrowLeft" size={20} />
-                </button>
-                <a href={telHref()} className="btn btn--lg hl-btn-ghost" onClick={call('hero')}>
-                  <Icon name="phone" size={18} />
-                  <span dir="ltr">{CONTACT_PHONE_DISPLAY}</span>
-                </a>
-              </div>
-              <SiteSign page={page} onCall={call('sign')} />
-            </div>
-            <figure className={`hl-hero__media${portrait ? ' is-portrait' : ''}`} style={{ '--hl-ar': `${heroW} / ${heroH}` }}>
-              <img
-                className="hl-hero__img"
-                src={page.heroImage}
-                alt={page.heroAlt}
-                width={heroW}
-                height={heroH}
-                fetchpriority="high"
-                decoding="async"
-              />
-            </figure>
-          </div>
-        </div>
-      </header>
-
-      {/* ---------- הוכחות ---------- */}
-      <div className="container hl-proof-wrap">
-        <ul className="hl-proof" aria-label="בקצרה">
-          {HOUSE_PROOF.map((f) => (
-            <li key={f.v}><b>{f.v}</b><span>{f.u}</span></li>
-          ))}
-        </ul>
-      </div>
-
-      {/* ---------- בעמוד הזה: קפיצה ישר לתשובה ---------- */}
-      <nav className="container hl-jump" aria-label="בעמוד הזה">
-        <span className="hl-jump__label">בעמוד הזה</span>
-        <ul>
-          <li><a href="#hl-intro-title">{page.intro.q}</a></li>
-          <li><a href="#hl-steps-title">השלבים, מהמגרש ועד המפתח</a></li>
-          <li><a href="#hl-check-title">מה בודקים לפני שבונים</a></li>
-          <li><a href="#hl-faq-title">שאלות נפוצות</a></li>
-          <li><a href="#contact">הערכת עלות</a></li>
-        </ul>
-      </nav>
-
-      {/* ---------- תשובה ישירה + שתי הזרועות ---------- */}
-      <section className="hl-section hl-intro">
-        <div className="container hl-intro__grid">
-          <div className="hl-intro__text">
-            <h2 className="hl-h2" id="hl-intro-title">{page.intro.q}</h2>
-            <p className="hl-intro__answer">{page.intro.a}</p>
-            <Link to="/villas-sharon" className="hl-textlink">
-              הווילות והבתים הפרטיים שאנחנו מקימים בהוד השרון
-              <Icon name="arrowLeft" size={16} />
-            </Link>
-          </div>
-          <div className="hl-arms">
-            {HOUSE_ARMS.map((a) => (
-              <Link key={a.name} to={a.to} className="hl-arm">
-                <img src={a.logo} alt="" className="hl-arm__logo" loading="lazy" width="72" height="72" />
-                <span className="hl-arm__body">
-                  <b>{a.name}</b>
-                  <span>{a.d}</span>
-                </span>
-              </Link>
-            ))}
-            <p className="hl-arms__note">מי שבודק אינו מי שבונה. שתי הזרועות באותה קבוצה, בידיים נפרדות.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- התהליך ---------- */}
-      <section className="hl-section hl-steps" aria-labelledby="hl-steps-title">
-        <div className="container">
-          <div className="hl-head">
-            <h2 className="hl-h2" id="hl-steps-title">{page.stepsTitle}</h2>
-            <p className="hl-head__lead">חמישה שלבים, וכתובת אחת לאורך כולם.</p>
-          </div>
-          <ol className="hl-timeline" ref={timelineRef}>
-            {HOUSE_STEPS.map((s, i) => (
-              <li key={s.t} className="hl-stage" style={{ '--i': i }}>
-                <span className="hl-stage__num" aria-hidden="true">{i + 1}</span>
-                <div className="hl-stage__body">
-                  <h3 className="hl-stage__title">{s.t}</h3>
-                  <span className="hl-stage__who">{s.who}</span>
-                  <p>{s.d}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ---------- קריאה לפעולה באמצע העמוד ---------- */}
-      <section className="hl-band-wrap" aria-labelledby="hl-band-title">
-        <div className="container">
-          <div className="hl-band">
-            <div className="hl-band__text">
-              <h2 id="hl-band-title">{page.ctaTitle}</h2>
-              <p>נעבור יחד על המגרש והתוכנית, ונראה ממה בנוי המחיר של הבית שלכם.</p>
-            </div>
-            <div className="hl-band__actions">
-              <button type="button" className="btn btn--primary btn--lg" onClick={estimate('band')}>
-                קבלו הערכת עלות לבית שלכם
-              </button>
-              <a
-                href={waHref('שלום, אשמח לקבל הערכת עלות לבניית בית פרטי')}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn--lg hl-btn-ghost"
-                onClick={() => track('whatsapp_click', { placement: `${placement}_band` })}
-              >
-                <Icon name="whatsapp" size={18} /> וואטסאפ
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- פרויקטים ---------- */}
-      <HouseProjects title={page.projectsTitle} lead={page.projectsLead} />
-
-      {/* ---------- רשימת בדיקות ---------- */}
-      <section className="hl-section hl-check" aria-labelledby="hl-check-title">
-        <div className="container hl-check__grid">
-          <div className="hl-check__head">
-            <h2 className="hl-h2" id="hl-check-title">{page.check.title}</h2>
-            <p>{page.check.lead}</p>
-          </div>
-          <ul className="hl-check__list">
-            {page.check.items.map(([t, d]) => (
-              <li key={t}>
-                <span className="hl-check__ic" aria-hidden="true"><Icon name="check" size={16} /></span>
-                <span><b>{t}</b> {d}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ---------- שאלות נפוצות ---------- */}
-      <section className="hl-section hl-faq" aria-labelledby="hl-faq-title">
-        <div className="container hl-faq__inner">
-          <h2 className="hl-h2" id="hl-faq-title">{page.faqTitle}</h2>
-          <div className="hl-faq__list">
-            {page.faqs.map((f) => (
-              <details key={f.q} className="hl-faq__item">
-                <summary>
-                  <span>{f.q}</span>
-                  <span className="hl-faq__sign" aria-hidden="true" />
-                </summary>
-                <p>{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- קישורים פנימיים ---------- */}
-      <nav className="hl-section hl-links" aria-label="עוד בנושא">
-        <div className="container hl-links__grid">
-          <div>
-            <h2 className="hl-links__title">מדריכים שכדאי לקרוא לפני שמחליטים</h2>
-            <ul>
-              {HOUSE_GUIDES.map((g) => (
-                <li key={g.to}><Link to={g.to}>{g.label}<Icon name="arrowLeft" size={15} /></Link></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="hl-links__title">בונים בית פרטי באזור</h2>
-            <ul>
-              {siblings.map((p) => (
-                <li key={p.path}><Link to={p.path}>{p.navLabel}<Icon name="arrowLeft" size={15} /></Link></li>
-              ))}
-              <li><Link to="/villas-sharon">הווילות שאנחנו מקימים בהוד השרון<Icon name="arrowLeft" size={15} /></Link></li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-
-      {/* ---------- טופס ---------- */}
-      <HouseLead placement={placement} />
+      <PageSections def={DEF} slug={page.path} local={LOCAL} ctx={{ page, estimate, call, heroW, heroH, portrait, timelineRef, placement, siblings }} />
     </article>
   )
 }

@@ -505,3 +505,47 @@
 /* ------------------------------------------------------------
    43 · settings (הגדרות) — rule 5 from the shared settings cards above
    ------------------------------------------------------------ */
+
+/* ============================================================
+   Owner approved additions (19.10.2026)
+   ============================================================ */
+
+/* counters: each field has its own label. On wider screens the column headings above the rows
+   already say it, so the label is kept for screen readers only and the grid stays as it was. */
+.ctab__f { display: contents; }
+.ctab__fl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* the pinned copies of the view tabs exist only for phones */
+.adm-leads__views--pin, .an-seg--pin { display: none !important; }
+
+@media (max-width: 599px) {
+  /* 1 · KPI and summary tiles: one row that scrolls sideways, edge to edge, snapping tile by tile.
+     About two and a half tiles show, so it is clear there is more to the side. */
+  .adm .ovw__kpis, .adm .ldov__kpis, .adm .pe-kpis, .adm .an-metrics, .adm .an-conv__tiles {
+    display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; gap: 10px;
+    margin-inline: calc(-1 * var(--mn-g)); padding: 2px var(--mn-g) 6px;
+    scroll-padding-inline: var(--mn-g); scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain; scrollbar-width: none;
+  }
+  .adm .ovw__kpis::-webkit-scrollbar, .adm .ldov__kpis::-webkit-scrollbar, .adm .pe-kpis::-webkit-scrollbar,
+  .adm .an-metrics::-webkit-scrollbar, .adm .an-conv__tiles::-webkit-scrollbar { display: none; }
+  .adm .ovw__kpis > *, .adm .ldov__kpis > *, .adm .pe-kpis > *, .adm .an-metrics > *, .adm .an-conv__tiles > * {
+    flex: 0 0 40%; min-width: 136px; scroll-snap-align: start;
+  }
+
+  /* 2 · leads view tabs and the analytics period: pinned under the top bar while the page scrolls */
+  .adm .adm-leads__head .adm-leads__views, .adm .an-top .an-seg { display: none !important; }
+  .adm .adm-leads__views--pin, .adm .an-seg--pin {
+    display: flex !important; position: sticky; top: var(--mn-top); z-index: 6;
+    margin: 0 calc(-1 * var(--mn-g)) 0.6rem; padding: 6px var(--mn-g);
+    background: var(--adm-bg); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
+    border-bottom: 1px solid var(--adm-border);
+  }
+  .adm .adm-leads__views--pin > *, .adm .an-seg--pin > * { flex: 1 0 auto; min-height: 44px; scroll-snap-align: start; }
+
+  /* 3 · counters: the label shows above each field */
+  .adm .ctab__f { display: grid; gap: 4px; }
+  .adm .ctab__fl {
+    position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal;
+    font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem; color: var(--adm-muted);
+  }
+}

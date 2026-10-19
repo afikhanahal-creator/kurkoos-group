@@ -26,11 +26,11 @@ function CounterRow({ row, index, total, onMove, onDelete }) {
         <button type="button" onClick={() => onMove(form.id, -1)} disabled={index === 0} title="ימינה (מוקדם יותר)">↑</button>
         <button type="button" onClick={() => onMove(form.id, 1)} disabled={index === total - 1} title="שמאלה (מאוחר יותר)">↓</button>
       </div>
-      <input className="ctab__cell" value={form.label_he ?? ''} placeholder="תווית" onChange={(e) => set('label_he', e.target.value)} />
-      <input className="ctab__cell ctab__cell--num" value={form.value ?? ''} placeholder="ערך" onChange={(e) => set('value', e.target.value)} />
-      <input className="ctab__cell ctab__cell--sm" value={form.suffix ?? ''} placeholder="סיומת" onChange={(e) => set('suffix', e.target.value)} />
-      <input className="ctab__cell" value={form.location_hint ?? ''} placeholder="היכן מופיע" onChange={(e) => set('location_hint', e.target.value)} />
-      <input className="ctab__cell ctab__cell--key" value={form.key ?? ''} placeholder="key" onChange={(e) => set('key', e.target.value)} title="מזהה יציב (אנגלית)" />
+      <label className="ctab__f"><span className="ctab__fl">תווית</span><input className="ctab__cell" value={form.label_he ?? ''} placeholder="תווית" onChange={(e) => set('label_he', e.target.value)} /></label>
+      <label className="ctab__f"><span className="ctab__fl">ערך</span><input className="ctab__cell ctab__cell--num" value={form.value ?? ''} placeholder="ערך" onChange={(e) => set('value', e.target.value)} /></label>
+      <label className="ctab__f"><span className="ctab__fl">סיומת</span><input className="ctab__cell ctab__cell--sm" value={form.suffix ?? ''} placeholder="סיומת" onChange={(e) => set('suffix', e.target.value)} /></label>
+      <label className="ctab__f"><span className="ctab__fl">היכן מופיע</span><input className="ctab__cell" value={form.location_hint ?? ''} placeholder="היכן מופיע" onChange={(e) => set('location_hint', e.target.value)} /></label>
+      <label className="ctab__f"><span className="ctab__fl">מזהה (אנגלית)</span><input className="ctab__cell ctab__cell--key" value={form.key ?? ''} placeholder="key" onChange={(e) => set('key', e.target.value)} title="מזהה יציב (אנגלית)" /></label>
       <label className="ctab__toggle" title="פעיל"><input type="checkbox" checked={!!form.is_active} onChange={(e) => set('is_active', e.target.checked)} /><span /></label>
       <span className={`ctab__dot ctab__dot--${status}`} title={status} />
       <button type="button" className="ctab__del" onClick={() => onDelete(form.id)} title="מחק">✕</button>

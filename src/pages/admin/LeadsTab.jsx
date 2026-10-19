@@ -492,6 +492,15 @@ export default function LeadsTab() {
           )}
         </div>
       </div>
+      {/* בטלפון: לשוניות התצוגה מחוץ לכרטיס הכותרת, צמודות למעלה בזמן גלילה */}
+      <div className="adm-leads__views adm-leads__views--pin" role="tablist" aria-label="תצוגת הלידים">
+        {VIEWS.map((v) => { const I = VIEW_ICONS[v.id]; return (
+          <button key={v.id} type="button" role="tab" aria-selected={view===v.id}
+            className={`adm-leads__view ${view===v.id?'is-active':''}`} onClick={() => setView(v.id)}>
+            <I width={15} height={15}/><span>{v.label}</span>
+          </button>
+        )})}
+      </div>
 
       {/* ===== דשבורד ===== */}
       {!tableMissing && <LeadsOverview leads={leads} stageFilter={stageFilter} setStageFilter={setStageFilter}/>}

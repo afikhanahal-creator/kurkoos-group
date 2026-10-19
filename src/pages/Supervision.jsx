@@ -9,7 +9,44 @@ import ArticleCover from '../components/ui/ArticleCover.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
+import DEF from '../lib/pageBuilder/defs/guides.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './Yazamut.css'
+
+/* הסקשנים של העמוד. הסדר הקבוע ב-defs/guides.js, משותף לחמשת המדריכים */
+const LOCAL = {
+  header: () => (
+    <PageHeader
+      eyebrow="שכינתא · ניהול ויזום פרויקטים"
+      title="המדריך לפיקוח בנייה"
+      lead="מבית שכינתא, חברת ניהול ויזום הפרויקטים של קבוצת קורקוס. פרשנות מקצועית ועניינית מהשטח: בקרת איכות, פיקוח ביצוע, ליקויים ובדק וניהול תקציב וסיכונים. כל מה שחשוב לדעת כשמפקחים על פרויקט בנייה."
+      crumbs={[{ label: 'פיקוח פרויקטים', to: '/divisions/supervision' }, { label: 'הטור' }]}
+    />
+  ),
+  list: ({ ctx: { all, cats, cat, setCat, filtered, Card } }) => (
+    <section className="section yz-page">
+      <div className="container">
+        {all.length === 0 ? (
+          <p className="yz-empty">בקרוב, כתבות חדשות במדריך לפיקוח בנייה.</p>
+        ) : (
+          <>
+            {cats.length > 1 && (
+              <div className="yz-filters" role="tablist" aria-label="סינון לפי נושא">
+                <button type="button" className={`yz-chip ${cat === 'all' ? 'is-on' : ''}`} onClick={() => setCat('all')}>הכול</button>
+                {cats.map((c) => (
+                  <button type="button" key={c} className={`yz-chip ${cat === c ? 'is-on' : ''}`} onClick={() => setCat(c)}>{c}</button>
+                ))}
+              </div>
+            )}
+            <div className="yz-grid">
+              {filtered.map((a) => <Card key={a.slug} a={a} />)}
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  ),
+}
 
 /* פיקוח פרויקטים — עמוד רשימה. אותו עיצוב כמו טור היזמות/ביצוע. */
 export default function Supervision() {
@@ -54,36 +91,5 @@ export default function Supervision() {
     </Reveal>
   )
 
-  return (
-    <>
-      <PageHeader
-        eyebrow="שכינתא · ניהול ויזום פרויקטים"
-        title="המדריך לפיקוח בנייה"
-        lead="מבית שכינתא, חברת ניהול ויזום הפרויקטים של קבוצת קורקוס. פרשנות מקצועית ועניינית מהשטח: בקרת איכות, פיקוח ביצוע, ליקויים ובדק וניהול תקציב וסיכונים. כל מה שחשוב לדעת כשמפקחים על פרויקט בנייה."
-        crumbs={[{ label: 'פיקוח פרויקטים', to: '/divisions/supervision' }, { label: 'הטור' }]}
-      />
-
-      <section className="section yz-page">
-        <div className="container">
-          {all.length === 0 ? (
-            <p className="yz-empty">בקרוב, כתבות חדשות במדריך לפיקוח בנייה.</p>
-          ) : (
-            <>
-              {cats.length > 1 && (
-                <div className="yz-filters" role="tablist" aria-label="סינון לפי נושא">
-                  <button type="button" className={`yz-chip ${cat === 'all' ? 'is-on' : ''}`} onClick={() => setCat('all')}>הכול</button>
-                  {cats.map((c) => (
-                    <button type="button" key={c} className={`yz-chip ${cat === c ? 'is-on' : ''}`} onClick={() => setCat(c)}>{c}</button>
-                  ))}
-                </div>
-              )}
-              <div className="yz-grid">
-                {filtered.map((a) => <Card key={a.slug} a={a} />)}
-              </div>
-            </>
-          )}
-        </div>
-      </section>
-    </>
-  )
+  return <PageSections def={DEF} slug="/construction-supervision" local={LOCAL} ctx={{ all, cats, cat, setCat, filtered, Card }} />
 }

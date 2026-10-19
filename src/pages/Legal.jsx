@@ -3,6 +3,8 @@ import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import { track } from '../lib/track.js'
+import DEF from '../lib/pageBuilder/defs/legal.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './InfoPage.css'
 import './Legal.css'
 
@@ -303,20 +305,18 @@ function Section({ s }) {
   )
 }
 
-export default function Legal({ kind }) {
-  const { t, lang } = useI18n()
-  const title = t(`pages.legal.${kind}`)
-
-  // ---- מדיניות פרטיות: מסמך מלא ----
-  if (kind === 'privacy') {
-    const L = (o) => (typeof o === 'string' ? o : (o[lang] || o.he))
-    const isHe = lang !== 'en'
-    const doc = privacyDoc[lang] || privacyDoc.he
-    const contactTitle = isHe ? 'צור קשר' : 'Contact'
-    const updatedLbl = isHe ? 'תאריך עדכון אחרון' : 'Last updated'
-    return (
-      <>
-        <PageHeader title={title} crumbs={[{ label: title }]} />
+/* הסקשנים של העמוד. הסדר הקבוע ב-defs/legal.js, משותף לשלושת העמודים */
+const LOCAL = {
+  header: ({ ctx: { title } }) => <PageHeader title={title} crumbs={[{ label: title }]} />,
+  doc: ({ ctx: { kind, lang } }) => {
+    // ---- מדיניות פרטיות: מסמך מלא ----
+    if (kind === 'privacy') {
+      const L = (o) => (typeof o === 'string' ? o : (o[lang] || o.he))
+      const isHe = lang !== 'en'
+      const doc = privacyDoc[lang] || privacyDoc.he
+      const contactTitle = isHe ? 'צור קשר' : 'Contact'
+      const updatedLbl = isHe ? 'תאריך עדכון אחרון' : 'Last updated'
+      return (
         <section className="section">
           <div className="container priv-doc">
             <div className="priv-meta">
@@ -343,20 +343,17 @@ export default function Legal({ kind }) {
             </section>
           </div>
         </section>
-      </>
-    )
-  }
+      )
+    }
 
-  // ---- הצהרת נגישות: מסמך מפורט ----
-  if (kind === 'accessibility') {
-    const L = (o) => (typeof o === 'string' ? o : (o[lang] || o.he))
-    const isHe = lang !== 'en'
-    const d = a11yDoc[lang] || a11yDoc.he
-    const feats = a11yFeatures[lang] || a11yFeatures.he
-    const updatedLbl = isHe ? 'תאריך עדכון אחרון' : 'Last updated'
-    return (
-      <>
-        <PageHeader title={title} crumbs={[{ label: title }]} />
+    // ---- הצהרת נגישות: מסמך מפורט ----
+    if (kind === 'accessibility') {
+      const L = (o) => (typeof o === 'string' ? o : (o[lang] || o.he))
+      const isHe = lang !== 'en'
+      const d = a11yDoc[lang] || a11yDoc.he
+      const feats = a11yFeatures[lang] || a11yFeatures.he
+      const updatedLbl = isHe ? 'תאריך עדכון אחרון' : 'Last updated'
+      return (
         <section className="section">
           <div className="container priv-doc">
             <div className="priv-meta">
@@ -406,28 +403,32 @@ export default function Legal({ kind }) {
             </section>
           </div>
         </section>
-      </>
-    )
-  }
+      )
+    }
 
-  // ---- terms ----
-  const body = {
-    he: {
-      terms: 'השימוש באתר כפוף לתנאים אלה. התכנים באתר מוצגים למטרות מידע כללי בלבד ואינם מהווים התחייבות או הצעה מחייבת. קבוצת קורקוס שומרת על זכותה לעדכן את התכנים והתנאים בכל עת.',
-    },
-    en: {
-      terms: 'Use of this website is subject to these terms. Content is provided for general information only and does not constitute a binding commitment or offer. Kurkoos Group reserves the right to update content and terms at any time.',
-    },
-  }
+    // ---- terms ----
+    const body = {
+      he: {
+        terms: 'השימוש באתר כפוף לתנאים אלה. התכנים באתר מוצגים למטרות מידע כללי בלבד ואינם מהווים התחייבות או הצעה מחייבת. קבוצת קורקוס שומרת על זכותה לעדכן את התכנים והתנאים בכל עת.',
+      },
+      en: {
+        terms: 'Use of this website is subject to these terms. Content is provided for general information only and does not constitute a binding commitment or offer. Kurkoos Group reserves the right to update content and terms at any time.',
+      },
+    }
 
-  return (
-    <>
-      <PageHeader title={title} crumbs={[{ label: title }]} />
+    return (
       <section className="section">
         <Reveal className="container legal-prose">
           <p>{body[lang][kind]}</p>
         </Reveal>
       </section>
-    </>
-  )
+    )
+  },
+}
+
+export default function Legal({ kind }) {
+  const { t, lang } = useI18n()
+  const title = t(`pages.legal.${kind}`)
+
+  return <PageSections def={DEF} slug={`/${kind}`} local={LOCAL} ctx={{ kind, lang, title }} />
 }

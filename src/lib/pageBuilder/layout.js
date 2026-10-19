@@ -27,17 +27,24 @@ export const TYPE_SCALE = [
 let _n = 0
 export const newId = (type) => `${type}_${Date.now().toString(36)}${(_n++).toString(36)}`
 
-/* המבנה הקיים של עמוד הבית, אחד לאחד מול Home.jsx הישן */
-export const DEFAULT_LAYOUTS = {
-  '/': {
-    v: 1,
-    sections: ['hero', 'activities', 'story', 'projects', 'valueChain', 'stats', 'testimonials', 'partners', 'faq', 'contact']
-      .map((type) => ({ id: `${type}_home`, type, props: {}, rs: {} })),
-  },
-}
-
 const clone = (o) => JSON.parse(JSON.stringify(o))
-export const defaultLayout = (slug) => clone(DEFAULT_LAYOUTS[slug] || { v: 1, sections: [] })
+
+/* ============================================================
+   הגדרת עמוד (defs/<page>.js): הסדר הקבוע מהקוד, שממנו נבנה העמוד
+   כשאין לו גרסה מפורסמת בעורך.
+   sections: מחרוזת = רכיב משותף מהספרייה (widgets.jsx).
+             מערך [id, label, icon, texts] = סקשן של העמוד עצמו ('l:<id>').
+   ============================================================ */
+export const localId = (x) => (Array.isArray(x) ? `l:${x[0]}` : x)
+export function defaultLayout(def) {
+  return {
+    v: 1,
+    sections: (def?.sections || []).map((x) => {
+      const type = localId(x)
+      return { id: `${type.replace(':', '-')}_d`, type, props: {}, rs: {} }
+    }),
+  }
+}
 
 /* ---------- מצב עריכה בתוך ה-iframe ----------
    ?kc-edit=1    עמוד בתוך העורך, מקבל את הטיוטה מההורה ב-postMessage.
@@ -45,6 +52,8 @@ export const defaultLayout = (slug) => clone(DEFAULT_LAYOUTS[slug] || { v: 1, se
 const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
 export const EDIT_MODE = !!(params && params.get('kc-edit') === '1' && window.parent !== window)
 export const PREVIEW_MODE = !!(params && params.get('kc-preview') === '1')
+/* תמונה זעירה של העמוד בלוח העמודים: הגרסה המפורסמת, בלי סרטון פתיחה ואנליטיקס */
+export const THUMB_MODE = !!(params && params.get('kc-thumb') === '1' && window.parent !== window)
 
 const store = { layout: null, texts: {}, device: 'd', selected: null, listeners: new Set() }
 const emit = () => store.listeners.forEach((f) => f())
@@ -69,7 +78,7 @@ export async function fetchPublished(slug) {
 }
 
 /* מבנה העמוד לאתר הציבורי: מהמטמון המקומי מיד, ואז מהשרת. בלי שורה, ברירת המחדל מהקוד. */
-export function usePageLayout(slug) {
+export function usePageLayout(slug, def) {
   const draft = useDraftStore()
   const [row, setRow] = useState(() => (EDIT_MODE || PREVIEW_MODE ? null : cachedSnapshot(`page:${slug}`)))
   useEffect(() => {
@@ -83,7 +92,7 @@ export function usePageLayout(slug) {
   }, [slug])
   if ((EDIT_MODE || PREVIEW_MODE) && draft.layout) return { layout: draft.layout, seo: draft.layout.seo || {} }
   if (row && row.layout && Array.isArray(row.layout.sections)) return { layout: row.layout, seo: row.seo || {} }
-  return { layout: defaultLayout(slug), seo: {} }
+  return { layout: defaultLayout(def), seo: {} }
 }
 
 export async function fetchDraft(slug) {

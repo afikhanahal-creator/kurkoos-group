@@ -5,6 +5,8 @@ import Reveal from '../components/ui/Reveal.jsx'
 import Seo from '../components/ui/Seo.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import { glossaryGroups, allTerms } from '../data/glossary.js'
+import DEF from '../lib/pageBuilder/defs/glossary.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './Glossary.css'
 
 /* ============================================================
@@ -22,6 +24,92 @@ const GUIDE_LINKS = [
   { to: '/real-estate-calculators', label: 'מחשבוני נדל"ן' },
   { to: '/real-estate-sharon', label: 'נדל"ן בהוד השרון ובאזור המרכז' },
 ]
+
+/* הסקשנים של העמוד. הסדר הקבוע ב-defs/glossary.js */
+const LOCAL = {
+  header: () => (
+    <PageHeader
+      noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
+      eyebrow="מאגר ידע"
+      title='מילון מונחי נדל"ן'
+      lead='הגדרות ברורות וענייניות לכל מונחי המפתח בעולם הנדל"ן, התכנון והבנייה בישראל — מתב"ע ועד טופס 4. נכתב מהניסיון המעשי של צוות קורקוס גרופ.'
+      crumbs={[{ label: 'מילון מונחי נדל"ן' }]}
+      seoTitle='מילון מונחי נדל"ן'
+      seoDescription='מה זה תב"ע? מה ההבדל בין מס רכישה למס שבח? מה כוללת ערבות חוק המכר? מילון מונחי הנדל"ן של קורקוס גרופ — הגדרות ברורות לכל מונחי המפתח בתכנון, עסקאות, מימון ובנייה.'
+    />
+  ),
+  terms: ({ ctx: { query, setQuery, groups, total, termIndex } }) => (
+    <section className="section glossary">
+      <div className="container">
+        {/* חיפוש */}
+        <Reveal className="glossary__search-wrap">
+          <input
+            type="search"
+            className="glossary__search"
+            placeholder={`חיפוש מבין ${total} מונחים…`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="חיפוש מונח"
+          />
+        </Reveal>
+
+        {/* ניווט קטגוריות */}
+        {!query && (
+          <nav className="glossary__nav" aria-label="קטגוריות המילון">
+            {glossaryGroups.map((g) => (
+              <a key={g.id} href={`#cat-${g.id}`} className="glossary__nav-link">{g.title}</a>
+            ))}
+          </nav>
+        )}
+
+        {groups.length === 0 && (
+          <p className="glossary__empty">לא נמצאו מונחים התואמים את החיפוש.</p>
+        )}
+
+        {groups.map((g) => (
+          <div key={g.id} className="glossary__group" id={`cat-${g.id}`}>
+            <Reveal><h2 className="glossary__group-title">{g.title}</h2></Reveal>
+            <div className="glossary__list">
+              {g.terms.map((t) => (
+                <Reveal key={t.id}>
+                  <article className="glossary__term" id={t.id}>
+                    <h3 className="glossary__term-name">
+                      <a href={`#${t.id}`} className="glossary__anchor" aria-label={`קישור ישיר: ${t.term}`}>#</a>
+                      {t.term}
+                    </h3>
+                    <p className="glossary__term-def">{t.def}</p>
+                    {t.related?.length > 0 && (
+                      <p className="glossary__related">
+                        <span>מונחים קשורים:</span>
+                        {t.related.map((rid) => termIndex.get(rid)).filter(Boolean).map((rt) => (
+                          <a key={rt.id} href={`#${rt.id}`}>{rt.term}</a>
+                        ))}
+                      </p>
+                    )}
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* קישורים פנימיים — המשך קריאה במדריכים */}
+        <Reveal className="glossary__more">
+          <h2 className="glossary__group-title">להעמיק עוד</h2>
+          <p className="glossary__more-lead">המילון הוא נקודת פתיחה. במדריכים המקצועיים שלנו תמצאו כתבות מעמיקות על כל תחום:</p>
+          <div className="glossary__more-links">
+            {GUIDE_LINKS.map((l) => (
+              <Link key={l.to} to={l.to} className="glossary__more-link">
+                {l.label}
+                <Icon name="arrow" size={16} />
+              </Link>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  ),
+}
 
 export default function Glossary() {
   const [query, setQuery] = useState('')
@@ -60,85 +148,7 @@ export default function Glossary() {
         description='מה זה תב"ע? מה ההבדל בין מס רכישה למס שבח? מילון מונחי הנדל"ן של קורקוס גרופ: הגדרות ברורות לכל מונחי המפתח בתכנון, עסקאות, מימון ובנייה.'
         jsonLd={jsonLd}
       />
-      <PageHeader
-        noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
-        eyebrow="מאגר ידע"
-        title='מילון מונחי נדל"ן'
-        lead='הגדרות ברורות וענייניות לכל מונחי המפתח בעולם הנדל"ן, התכנון והבנייה בישראל — מתב"ע ועד טופס 4. נכתב מהניסיון המעשי של צוות קורקוס גרופ.'
-        crumbs={[{ label: 'מילון מונחי נדל"ן' }]}
-        seoTitle='מילון מונחי נדל"ן'
-        seoDescription='מה זה תב"ע? מה ההבדל בין מס רכישה למס שבח? מה כוללת ערבות חוק המכר? מילון מונחי הנדל"ן של קורקוס גרופ — הגדרות ברורות לכל מונחי המפתח בתכנון, עסקאות, מימון ובנייה.'
-      />
-
-      <section className="section glossary">
-        <div className="container">
-          {/* חיפוש */}
-          <Reveal className="glossary__search-wrap">
-            <input
-              type="search"
-              className="glossary__search"
-              placeholder={`חיפוש מבין ${total} מונחים…`}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="חיפוש מונח"
-            />
-          </Reveal>
-
-          {/* ניווט קטגוריות */}
-          {!query && (
-            <nav className="glossary__nav" aria-label="קטגוריות המילון">
-              {glossaryGroups.map((g) => (
-                <a key={g.id} href={`#cat-${g.id}`} className="glossary__nav-link">{g.title}</a>
-              ))}
-            </nav>
-          )}
-
-          {groups.length === 0 && (
-            <p className="glossary__empty">לא נמצאו מונחים התואמים את החיפוש.</p>
-          )}
-
-          {groups.map((g) => (
-            <div key={g.id} className="glossary__group" id={`cat-${g.id}`}>
-              <Reveal><h2 className="glossary__group-title">{g.title}</h2></Reveal>
-              <div className="glossary__list">
-                {g.terms.map((t) => (
-                  <Reveal key={t.id}>
-                    <article className="glossary__term" id={t.id}>
-                      <h3 className="glossary__term-name">
-                        <a href={`#${t.id}`} className="glossary__anchor" aria-label={`קישור ישיר: ${t.term}`}>#</a>
-                        {t.term}
-                      </h3>
-                      <p className="glossary__term-def">{t.def}</p>
-                      {t.related?.length > 0 && (
-                        <p className="glossary__related">
-                          <span>מונחים קשורים:</span>
-                          {t.related.map((rid) => termIndex.get(rid)).filter(Boolean).map((rt) => (
-                            <a key={rt.id} href={`#${rt.id}`}>{rt.term}</a>
-                          ))}
-                        </p>
-                      )}
-                    </article>
-                  </Reveal>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          {/* קישורים פנימיים — המשך קריאה במדריכים */}
-          <Reveal className="glossary__more">
-            <h2 className="glossary__group-title">להעמיק עוד</h2>
-            <p className="glossary__more-lead">המילון הוא נקודת פתיחה. במדריכים המקצועיים שלנו תמצאו כתבות מעמיקות על כל תחום:</p>
-            <div className="glossary__more-links">
-              {GUIDE_LINKS.map((l) => (
-                <Link key={l.to} to={l.to} className="glossary__more-link">
-                  {l.label}
-                  <Icon name="arrow" size={16} />
-                </Link>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <PageSections def={DEF} local={LOCAL} ctx={{ query, setQuery, groups, total, termIndex }} />
     </>
   )
 }

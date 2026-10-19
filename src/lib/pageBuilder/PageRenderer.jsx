@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { WIDGETS } from './widgets.jsx'
-import { sectionCss, EDIT_MODE, PREVIEW_MODE, useDraftStore, setDraftState } from './layout.js'
+import { sectionCss, EDIT_MODE, PREVIEW_MODE, useDraftStore, setDraftState, usePageLayout } from './layout.js'
 import { useI18n } from '../../i18n/index.jsx'
 
 /* ============================================================
@@ -8,27 +8,53 @@ import { useI18n } from '../../i18n/index.jsx'
    העורך ואת התצוגה המקדימה, כך שמה שרואים בעורך הוא מה שיעלה.
    ============================================================ */
 
-export default function PageRenderer({ layout }) {
+/* local: הסקשנים של העמוד עצמו, { id: Component }. כל אחד מקבל ctx,
+   הנתונים שהעמוד חישב פעם אחת (הגדרות, נתוני CMS, refs), כך שהפיצול
+   לסקשנים לא משנה שום דבר ממה שהעמוד מציג. */
+export default function PageRenderer({ layout, local = {}, ctx = {}, meta = {} }) {
   const sections = Array.isArray(layout.sections) ? layout.sections : []
   const css = sections.map((s) => sectionCss(s)).filter(Boolean).join('\n')
   return (
     <>
       {css ? <style data-pb-css="">{css}</style> : null}
       {sections.map((s) => {
-        const W = WIDGETS[s.type]
-        if (!W) return null
         if (s.hidden && !EDIT_MODE) return null
-        const C = W.C
+        let body = null
+        if (s.type.startsWith('l:')) {
+          const L = local[s.type.slice(2)]
+          if (!L) return null
+          body = <L ctx={ctx} />
+        } else {
+          const W = WIDGETS[s.type]
+          if (!W) return null
+          const C = W.C
+          body = W.basic ? <C id={s.id} props={{ ...(W.defaults || {}), ...(s.props || {}) }} /> : <C />
+        }
         return (
-          <div className={`pb-sec${s.hidden ? ' pb-hidden-preview' : ''}`} data-pb={s.id} key={s.id}>
-            {W.basic ? <C id={s.id} props={{ ...(W.defaults || {}), ...(s.props || {}) }} /> : <C />}
-          </div>
+          <div className={`pb-sec${s.hidden ? ' pb-hidden-preview' : ''}`} data-pb={s.id} key={s.id}>{body}</div>
         )
       })}
-      {EDIT_MODE ? <EditBridge sections={sections} /> : null}
+      {EDIT_MODE ? <EditBridge sections={sections} meta={meta} /> : null}
       {PREVIEW_MODE ? <div className="kc-preview-bar" role="status">תצוגה מקדימה של הטיוטה</div> : null}
     </>
   )
+}
+
+/* עמוד שלם מתוך ההגדרה שלו (defs/<page>.js) והגרסה המפורסמת בעורך */
+export function PageSections({ def, slug, local, ctx }) {
+  const { layout } = usePageLayout(slug || def.route, def)
+  return <PageRenderer layout={layout} local={local} ctx={ctx} meta={localMeta(def)} />
+}
+
+/* תוויות וטקסטים של הסקשנים המקומיים, לסרגל ולזיהוי הטקסטים בעורך */
+export function localMeta(def) {
+  const out = {}
+  for (const x of def?.sections || []) {
+    if (!Array.isArray(x)) continue
+    const [id, label, icon, texts] = x
+    out[`l:${id}`] = { label, icon, texts: (texts || []).map((t) => (typeof t === 'string' ? { key: t, label: t } : t)) }
+  }
+  return out
 }
 
 /* ---------- הגשר בתוך ה-iframe של העורך ---------- */
@@ -43,7 +69,10 @@ const ICONS = {
 }
 const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`
 
-function EditBridge({ sections }) {
+function EditBridge({ sections, meta }) {
+  const metaRef = useRef(meta)
+  metaRef.current = meta
+  const W_ = (type) => WIDGETS[type] || metaRef.current[type]
   const store = useDraftStore()
   const { t } = useI18n()
   const tagRef = useRef(null)
@@ -163,8 +192,8 @@ function EditBridge({ sections }) {
     const id = setTimeout(() => {
       const found = {}
       for (const s of secRef.current) {
-        const W = WIDGETS[s.type]
-        if (!W || !W.texts) continue
+        const W = W_(s.type)
+        if (!W || !W.texts || !W.texts.length) continue
         const root = document.querySelector(`[data-pb="${s.id}"]`)
         if (!root) continue
         const keys = []
@@ -208,7 +237,7 @@ function EditBridge({ sections }) {
       })
     }
     const s = secRef.current.find((x) => x.id === sel)
-    const label = (s && WIDGETS[s.type]?.label) || ''
+    const label = (s && W_(s.type)?.label) || ''
     tag.dataset.id = sel
     tag.innerHTML = `<span>${label.replace(/</g, '&lt;')}</span>` +
       [['up', 'למעלה'], ['down', 'למטה'], ['dup', 'שכפול'], ['hide', s && s.hidden ? 'הצגה' : 'הסתרה'], ['del', 'מחיקה']]

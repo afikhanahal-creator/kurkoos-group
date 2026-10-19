@@ -1,35 +1,23 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
 import { supabase } from '../../lib/supabase.js'
 import './pageEditor/pageEditor.css'
+import { allPages, GROUP_LABELS } from '../../lib/pageBuilder/defs/index.js'
 
 const PageEditor = lazy(() => import('./pageEditor/PageEditor.jsx'))
 
 /* ============================================================
    לשונית "עמודים": לוח של כל העמודים שנבנים בעורך, בקבוצות.
-   בשלב הפיילוט רק עמוד הבית פתוח לעריכה. שאר העמודים נפתחים
-   אחרי האישור שלך על הפיילוט, לפי ADMIN-SPEC.md.
+   הרשימה נבנית מ-defs/index.js, כך שכל עמוד שנוסף שם מופיע כאן.
    ============================================================ */
 
-const PILOT = new Set(['/'])
-
-const BOARD = [
-  { id: 'main', label: 'עמודים מרכזיים', color: 'var(--pe-g1)', pages: [
-    ['/', 'בית'], ['/about', 'אודות'], ['/contact', 'צור קשר'], ['/team', 'צוות'], ['/careers', 'קריירה'],
-    ['/projects', 'פרויקטים'], ['/real-estate-sharon', 'נדל"ן בשרון'],
-  ] },
-  { id: 'div', label: 'חטיבות', color: 'var(--pe-g2)', pages: [
-    ['/divisions/residential', 'מגורים'], ['/divisions/execution', 'ביצוע'], ['/divisions/development', 'יזמות'],
-    ['/divisions/supervision', 'פיקוח'], ['/divisions/brokerage', 'תיווך'],
-  ] },
-  { id: 'land', label: 'עמודי נחיתה', color: 'var(--pe-g3)', pages: [
-    ['/villas-sharon', 'וילות בשרון'], ['/bniyat-vila-sharon', 'בניית וילה בשרון'], ['/kablan-bniya-bayit-prati', 'קבלן לבית פרטי'],
-  ] },
-  { id: 'city', label: 'ערים', color: 'var(--pe-g4)', pages: [
-    ['/hod-hasharon/bniya-vepikuach', 'הוד השרון'], ['/bniyat-bayit-prati/raanana', 'רעננה'], ['/bniyat-bayit-prati/herzliya', 'הרצליה'],
-    ['/bniyat-bayit-prati/kfar-saba', 'כפר סבא'], ['/bniyat-bayit-prati/ramat-hasharon', 'רמת השרון'], ['/bniyat-bayit-prati/kiryat-ono', 'קריית אונו'],
-    ['/bniyat-bayit-prati/tel-aviv', 'תל אביב'], ['/bniyat-bayit-prati/yehud-monosson', 'יהוד מונוסון'],
-  ] },
-]
+const COLORS = { main: 'var(--pe-g1)', div: 'var(--pe-g2)', land: 'var(--pe-g3)', city: 'var(--pe-g4)', other: 'var(--pe-g2)' }
+function boardGroups() {
+  const pages = allPages()
+  return Object.keys(GROUP_LABELS)
+    .map((id) => ({ id, label: GROUP_LABELS[id], color: COLORS[id], pages: pages.filter((p) => p.group === id).map((p) => [p.path, p.label]) }))
+    .filter((g) => g.pages.length)
+}
+const BOARD = boardGroups()
 const TOTAL = BOARD.reduce((n, g) => n + g.pages.length, 0)
 
 const fmt = (iso) => {
@@ -39,7 +27,6 @@ const fmt = (iso) => {
 }
 
 function statusOf(slug, pub, drafts) {
-  if (!PILOT.has(slug)) return { id: 'later', label: 'בשלב הבא' }
   const p = pub[slug]
   const d = drafts[slug]
   const changed = d && (!p || JSON.stringify(d.layout) !== JSON.stringify(p.layout))
@@ -103,7 +90,7 @@ export default function PagesTab({ onNavigate }) {
                 </div>
                 {rows.map(([slug, label]) => {
                   const st = statusOf(slug, pub, drafts)
-                  const can = PILOT.has(slug)
+                  const can = true
                   return (
                     <div className="pe-tr" role="row" key={slug}>
                       <span role="cell" className="pe-td-name">

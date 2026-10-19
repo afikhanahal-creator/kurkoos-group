@@ -13,6 +13,11 @@ import { loadHeadingOverrides } from '../../../lib/headings.js'
 import { uploadMedia } from '../../../lib/cms.js'
 import { toast } from '../../../lib/toast.js'
 import { WIcon, UiIcon } from './icons.jsx'
+import { defFor } from '../../../lib/pageBuilder/defs/index.js'
+import { localMeta } from '../../../lib/pageBuilder/PageRenderer.jsx'
+
+/* רכיב משותף מהספרייה, או סקשן של העמוד עצמו (מוצג פעם אחת) */
+const metaFor = (lm) => (type) => WIDGETS[type] || (lm[type] ? { ...lm[type], group: 'local', once: true, local: true } : null)
 
 /* ============================================================
    עורך העמודים. במרכז: העמוד האמיתי בתוך iframe, ברוחב של המכשיר
@@ -46,6 +51,9 @@ function useHistory(initial) {
 }
 
 export default function PageEditor({ slug, title, onClose, onNavigate }) {
+  const def = useMemo(() => defFor(slug), [slug])
+  const lm = useMemo(() => localMeta(def), [def])
+  const W_ = useMemo(() => metaFor(lm), [lm])
   const h = useHistory(null)
   const { layout } = h
   const [selected, setSelected] = useState(null)
@@ -71,7 +79,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
         if (!on) return
         setLive(p)
         setOverrides(o || {})
-        const base = d?.layout || p?.layout || defaultLayout(slug)
+        const base = d?.layout || p?.layout || defaultLayout(def)
         const l = { v: 1, texts: {}, seo: {}, ...clone(base) }
         lastSaved.current = JSON.stringify(l)
         h.reset(l)
@@ -123,7 +131,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
     h.set((l) => ({ ...l, sections: l.sections.map((s) => (s.id === id ? fn(s) : s)) }), opts)
   }, [h])
   const insert = useCallback((type, index) => {
-    const W = WIDGETS[type]
+    const W = W_(type)
     if (!W) return
     if (W.once && sections.some((s) => s.type === type)) { toast.error(`${W.label} כבר מופיע בעמוד`); return }
     const s = { id: newId(type), type, props: W.basic ? clone(W.defaults || {}) : {}, rs: {} }
@@ -136,7 +144,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
     setSelected(s.id)
     setPanel('settings')
     setTimeout(() => send({ type: 'scrollTo', id: s.id }), 350)
-  }, [sections, h, send])
+  }, [sections, h, send, W_])
   const insertAfterSelected = (type) => {
     const i = sections.findIndex((s) => s.id === selected)
     insert(type, i >= 0 ? i + 1 : undefined)
@@ -147,7 +155,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
     if (action === 'up' && i > 0) h.set((l) => ({ ...l, sections: arrayMove(l.sections, i, i - 1) }))
     if (action === 'down' && i < sections.length - 1) h.set((l) => ({ ...l, sections: arrayMove(l.sections, i, i + 1) }))
     if (action === 'dup') {
-      const W = WIDGETS[sections[i].type]
+      const W = W_(sections[i].type)
       if (W?.once) { toast.error(`${W.label} מופיע פעם אחת בעמוד`); return }
       const c = { ...clone(sections[i]), id: newId(sections[i].type) }
       h.set((l) => { const arr = [...l.sections]; arr.splice(i + 1, 0, c); return { ...l, sections: arr } })
@@ -306,9 +314,10 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
             ))}
           </div>
           <div className="pe-panel">
-            {panel === 'add' && <AddPanel sections={sections} onAdd={insertAfterSelected} />}
+            {panel === 'add' && <AddPanel sections={sections} onAdd={insertAfterSelected} W_={W_} lm={lm} />}
             {panel === 'tree' && (
               <TreePanel
+                W_={W_}
                 sections={sections}
                 selected={selected}
                 onSelect={(id) => { setSelected(id); send({ type: 'scrollTo', id }) }}
@@ -320,6 +329,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
             {panel === 'settings' && (
               sel
                 ? <SettingsPanel
+                    W_={W_}
                     key={sel.id}
                     s={sel}
                     device={device}
@@ -332,7 +342,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
                     onAct={(a) => act(sel.id, a)}
                     onNavigate={async (tab) => { try { await flush() } catch { /* noop */ } onClose(); onNavigate && onNavigate(tab) }}
                   />
-                : <PageSettings layout={layout} onSeo={(seo) => h.set((l) => ({ ...l, seo: { ...(l.seo || {}), ...seo } }), { group: `seo:${Object.keys(seo)[0]}` })} />
+                : <PageSettings seoOn={!!def?.seo} layout={layout} onSeo={(seo) => h.set((l) => ({ ...l, seo: { ...(l.seo || {}), ...seo } }), { group: `seo:${Object.keys(seo)[0]}` })} />
             )}
           </div>
         </aside>
@@ -364,7 +374,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
 }
 
 /* ---------- ספריית הרכיבים ---------- */
-function AddPanel({ sections, onAdd }) {
+function AddPanel({ sections, onAdd, W_, lm }) {
   const [q, setQ] = useState('')
   const needle = q.trim()
   return (
@@ -374,8 +384,9 @@ function AddPanel({ sections, onAdd }) {
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="חיפוש רכיב" aria-label="חיפוש רכיב" />
       </label>
       <p className="pe-muted">גוררים אל העמוד, או לוחצים להוספה אחרי הסקשן שנבחר.</p>
-      {GROUPS.map((g) => {
-        const items = Object.entries(WIDGETS).filter(([, w]) => w.group === g.id && (!needle || w.label.includes(needle)))
+      {[{ id: 'local', label: 'סקשנים של העמוד הזה' }, ...GROUPS].map((g) => {
+        const pool = g.id === 'local' ? Object.keys(lm).map((k) => [k, W_(k)]) : Object.entries(WIDGETS)
+        const items = pool.filter(([, w]) => w.group === g.id && (!needle || w.label.includes(needle)))
         if (!items.length) return null
         return (
           <div key={g.id} className="pe-add__group">
@@ -408,9 +419,9 @@ function AddPanel({ sections, onAdd }) {
 }
 
 /* ---------- עץ הסקשנים ---------- */
-function TreeRow({ s, i, n, selected, onSelect, onAct, onEdit }) {
+function TreeRow({ s, i, n, selected, onSelect, onAct, onEdit, W_ }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
-  const W = WIDGETS[s.type] || { label: s.type, icon: 'text' }
+  const W = W_(s.type) || { label: s.type, icon: 'text' }
   const hiddenOn = ['d', 't', 'm'].filter((d) => s.rs?.[d]?.hide)
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`pe-row${selected ? ' is-sel' : ''}${isDragging ? ' is-drag' : ''}${s.hidden ? ' is-hidden' : ''}`}>
@@ -432,7 +443,7 @@ function TreeRow({ s, i, n, selected, onSelect, onAct, onEdit }) {
   )
 }
 
-function TreePanel({ sections, selected, onSelect, onMove, onAct, onEdit }) {
+function TreePanel({ sections, selected, onSelect, onMove, onAct, onEdit, W_ }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
   const onDragEnd = ({ active, over }) => {
     if (!over || active.id === over.id) return
@@ -447,7 +458,7 @@ function TreePanel({ sections, selected, onSelect, onMove, onAct, onEdit }) {
         <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
           <ol className="pe-rows">
             {sections.map((s, i) => (
-              <TreeRow key={s.id} s={s} i={i} n={sections.length} selected={s.id === selected} onSelect={onSelect} onAct={onAct} onEdit={onEdit} />
+              <TreeRow key={s.id} s={s} i={i} n={sections.length} selected={s.id === selected} onSelect={onSelect} onAct={onAct} onEdit={onEdit} W_={W_} />
             ))}
           </ol>
         </SortableContext>
@@ -559,8 +570,8 @@ function SpaceChips({ value, onChange, label, inherited }) {
   )
 }
 
-function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPatch, onText, onAct, onNavigate }) {
-  const W = WIDGETS[s.type] || {}
+function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPatch, onText, onAct, onNavigate, W_ }) {
+  const W = W_(s.type) || {}
   const p = { ...(W.defaults || {}), ...(s.props || {}) }
   const setProp = (k, v) => onPatch((x) => ({ ...x, props: { ...(x.props || {}), [k]: v } }), { group: `prop:${s.id}:${k}` })
   const rsOwn = (k) => s.rs?.[device]?.[k]
@@ -580,7 +591,7 @@ function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPa
         <WIcon name={W.icon} />
         <div>
           <strong>{W.label || s.type}</strong>
-          <span className="pe-muted">{W.basic ? 'רכיב בעורך' : 'סקשן קיים של האתר, באותו עיצוב'}</span>
+          <span className="pe-muted">{W.basic ? 'רכיב בעורך' : W.local ? 'סקשן של העמוד הזה, באותו עיצוב' : 'סקשן קיים של האתר, באותו עיצוב'}</span>
         </div>
       </div>
 
@@ -610,7 +621,7 @@ function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPa
             </label>
           )
         })}
-        {!W.basic && W.texts && <p className="pe-muted">אפשר גם לערוך בלחיצה כפולה על הטקסט בעמוד. הטקסט מתעדכן בכל מקום באתר שבו הוא מופיע.</p>}
+        {!W.basic && W.texts?.length > 0 && <p className="pe-muted">אפשר גם לערוך בלחיצה כפולה על הטקסט בעמוד. הטקסט מתעדכן בכל מקום באתר שבו הוא מופיע.</p>}
         {W.manage && (
           <button type="button" className="pe-btn pe-btn--soft pe-btn--block" onClick={() => onNavigate(W.manage.tab)}>
             ניהול התוכן בלשונית "{W.manage.label}"
@@ -659,8 +670,19 @@ function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPa
   )
 }
 
-function PageSettings({ layout, onSeo }) {
+function PageSettings({ layout, onSeo, seoOn }) {
   const seo = layout.seo || {}
+  if (!seoOn) {
+    return (
+      <div className="pe-settings">
+        <div className="pe-settings__head">
+          <WIcon name="page" />
+          <div><strong>הגדרות העמוד</strong><span className="pe-muted">בחרו סקשן בעמוד כדי לערוך אותו</span></div>
+        </div>
+        <p className="pe-muted">הכותרת והתיאור לגוגל של העמוד הזה נשארים כפי שהם בקוד, כדי לשמור על ה-SEO הקיים.</p>
+      </div>
+    )
+  }
   return (
     <div className="pe-settings">
       <div className="pe-settings__head">

@@ -17,6 +17,8 @@
 
 .hl-section { padding-block: var(--hl-gap); }
 .hl-section + .hl-section { border-top: 1px solid var(--hl-rule); }
+/* בעורך העמודים כל סקשן עטוף ב-.pb-sec (display: contents), ולכן אותו קו בין שני סקשנים צמודים */
+.pb-sec:has(> .hl-section) + .pb-sec > .hl-section { border-top: 1px solid var(--hl-rule); }
 
 .hl-h2 {
   font-size: clamp(1.6rem, 1.15rem + 1.9vw, 2.35rem);

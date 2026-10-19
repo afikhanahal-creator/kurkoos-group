@@ -7,7 +7,6 @@ import Icon from '../components/ui/Icon.jsx'
 import FeatureCard from '../components/ui/FeatureCard.jsx'
 import FaqCta, { PRIVATE_HOUSE_GUIDES } from '../components/ui/FaqCta.jsx'
 import ProjectsGallery from '../components/sections/ProjectsGallery.jsx'
-import Contact from '../components/sections/Contact.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
 import { listProjectCards, cmsRowToCard, getProjectBySlug, useSettings } from '../lib/cms.js'
 import { srcOfResponsive, optimizeSrc } from '../lib/responsiveImage.js'
@@ -15,6 +14,8 @@ import { BUYER_FAQS } from '../data/buyerFaqs.js'
 import { VILLAS_PROJECTS, VILLAS_FAQS as BASE_FAQS, parseVillasSettings, orderedVillasProjects, matchVillaCard as matchCard } from '../data/villasPage.js'
 import { HOUSE_PAGES } from '../data/houseLanding.js'
 import site from '../data/site.js'
+import DEF from '../lib/pageBuilder/defs/villas.js'
+import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import { track } from '../lib/track.js'
 import './SharonHub.css'
 import './VillasSharon.css'
@@ -55,6 +56,260 @@ const TRAITS = [
 
 /* השאלות על הפרויקטים, ואחריהן שאלות הרוכשים מניתוח ביקורות המתחרים */
 const FAQS = [...BASE_FAQS, ...BUYER_FAQS]
+
+/* הסקשנים של העמוד, לפי הסדר. הנתונים מחושבים פעם אחת בעמוד ומגיעים ב-ctx */
+const LOCAL = {
+  header: ({ ctx: { heroImage } }) => (
+    <PageHeader
+      noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
+      eyebrow="בתים פרטיים ווילות"
+      title="בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז"
+      lead="קורקוס גרופ מקימה וילות ובתים פרטיים בהוד השרון: בתים בשלושה מפלסים על כ-300 מ&quot;ר בנוי, עם בריכת שחייה פרטית ומגרש בבעלות פרטית, בביצוע ובפיקוח של זרועות הקבוצה עצמה."
+      crumbs={[{ label: 'בניית וילות בשרון' }]}
+      seoTitle="בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז"
+      seoDescription="קורקוס גרופ בונה וילות ובתים פרטיים בהוד השרון: יורדי הים 3 בגרינברג, שתי וילות על חצי דונם עם בריכה, והנרייטה סאלד 22-24 במערב העיר, ארבע יחידות דו משפחתיות עם בריכה ומגרש בטאבו."
+      image={heroImage}
+      imageAlt="בית פרטי של קורקוס גרופ בהוד השרון"
+      imagePos="center 68%"
+    />
+  ),
+  /* רצועת "בקצרה": מי שמגיע מחיפוש בגוגל מקבל בשנייה את התשובה, ואת
+     הדרך לפנות, עוד לפני שהוא גולל */
+  brief: () => (
+    <section className="vsh-brief" aria-label="בקצרה">
+      <div className="container vsh-brief__inner">
+        <ul className="vsh-brief__list">
+          {BRIEF.map((b) => (
+            <li key={b.t}><Icon name={b.icon} size={18} /><span><b>{b.t}</b>{b.d}</span></li>
+          ))}
+        </ul>
+        <a href="#contact" className="btn btn--primary vsh-brief__btn" onClick={() => track('cta_click', { placement: 'villas_brief' })}>
+          לתיאום סיור <Icon name="arrowLeft" size={16} />
+        </a>
+      </div>
+    </section>
+  ),
+  /* פתיחה: פסקת ישות (ברורה וניתנת לציטוט ע"י מנועי AI), העובדות
+     שחוזרות בכל הפרויקטים, ואיור הווילה בשפת המותג לצד הטקסט */
+  intro: () => (
+    <section className="section vsh-intro">
+      <div className="container vsh-intro__grid">
+        <Reveal className="vsh-intro__text">
+          <span className="eyebrow">מי בונה לכם את הבית</span>
+          <h2 className="section-title vsh-intro__title">בית פרטי, מהקרקע ועד המפתח, בידיים של קבוצה אחת</h2>
+          <p className="lhub-intro__text vsh-intro__p">
+            קורקוס גרופ היא קבוצת נדל"ן מהוד השרון הבונה וילות ובתים פרטיים באזור השרון.
+            הקבוצה מקימה כיום את <b>יורדי הים 3</b> בשכונת גרינברג, שתי וילות פרטיות על מגרשים
+            של למעלה מחצי דונם עם בריכת שחייה 4x9 מטר, ואת <b>הנרייטה סאלד 22-24</b> במערב
+            הוד השרון, מתחם של ארבע יחידות דו משפחתיות לשמונה משפחות, כל אחת על מגרש 380 מ"ר
+            בטאבו ועם בריכה פרטית. במקביל מוקם <b>חנקין 41</b> במגדיאל, בניין בוטיק של שש דירות.
+            הביצוע נעשה על ידי ראיתה, זרוע הביצוע של הקבוצה, והפיקוח על ידי שכינתא.
+          </p>
+          <ul className="vsh-facts" aria-label="נתונים משותפים לפרויקטים">
+            {FACTS.map((f) => (
+              <li key={f.u}><b>{f.v}</b><span>{f.u}</span></li>
+            ))}
+          </ul>
+        </Reveal>
+        <Reveal className="vsh-intro__art" variant="left" delay={0.1}>
+          <img src="/villa-illustration.webp" alt="" width="1200" height="671" loading="lazy" decoding="async" />
+        </Reveal>
+      </div>
+    </section>
+  ),
+  /* הפרויקטים, עם המפרט המלא */
+  projects: ({ ctx: { PROJECTS, open, setOpen, media, villas } }) => (
+    <section className="section section--soft vsh-projects">
+      <div className="container">
+        <Reveal className="lhub-head">
+          <span className="eyebrow">הפרויקטים שלנו</span>
+          <h2 className="section-title">מה אנחנו מקימים בהוד השרון</h2>
+        </Reveal>
+
+        <div className="vsh-tabs" role="tablist">
+          {PROJECTS.map((p) => (
+            <button
+              key={p.slug}
+              type="button"
+              role="tab"
+              aria-selected={open === p.slug}
+              className={`vsh-tab${open === p.slug ? ' is-on' : ''}`}
+              onClick={() => setOpen(p.slug)}
+            >
+              <b>{p.name}</b>
+              <span>
+                <i className={`vsh-tab__dot${p.status === 'בבנייה' ? ' is-building' : ''}`} aria-hidden="true" />
+                {p.status} · {p.kind}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {PROJECTS.filter((p) => p.slug === open).map((p) => {
+          const m = media[p.slug]
+          const ov = villas.projects[p.slug] || {}
+          // ההדמיה והתמונות הקטנות: קודם מה שנבחר באדמין לעמוד הזה, אחרת מעמוד הפרויקט
+          const cover = srcOfResponsive(ov.hero) || m?.card?.cover || ''
+          const ownThumbs = (Array.isArray(ov.thumbs) ? ov.thumbs : []).map(srcOfResponsive).filter(Boolean)
+          // הכריכה לא חוזרת פעמיים: אם היא גם הראשונה בגלריה, מדלגים עליה
+          const thumbs = (ownThumbs.length ? ownThumbs : (m?.images || [])).filter((u) => u !== cover).slice(0, 4)
+          const projectUrl = m?.card?.slug ? `/projects/${m.card.slug}` : null
+          return (
+          <Reveal key={p.slug} className="vsh-panel">
+            {cover && (
+              <div className="vsh-media">
+                <Link to={projectUrl || '/projects'} className="vsh-media__hero" aria-label={`${p.name}: לעמוד הפרויקט`}>
+                  <SmartImage src={cover} alt="" aria-hidden="true" className="vsh-media__blur" w={1800} quality="auto:best" />
+                  <SmartImage src={cover} alt={`${p.name}, ${p.kind}`} label={p.name} className="vsh-media__img" w={1800} quality="auto:best" sizes="(max-width: 860px) 100vw, 1100px" />
+                  <span className="vsh-media__caption" aria-hidden="true">
+                    <b>{p.name}</b>
+                    <span>{p.kind} · {p.architect ? `אדריכל ${p.architect}` : ''}</span>
+                  </span>
+                  <span className="vsh-media__cta">לעמוד הפרויקט</span>
+                </Link>
+                {thumbs.length > 0 && (
+                  <div className="vsh-media__thumbs">
+                    {thumbs.map((u, i) => (
+                      <Link key={u} to={projectUrl || '/projects'} className="vsh-media__thumb" aria-label={`${p.name}, תמונה ${i + 2}`}>
+                        <SmartImage src={u} alt={`${p.name}, תמונה ${i + 2}`} label={p.name} w={800} sizes="(max-width: 860px) 45vw, 260px" quality="auto:good" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="vsh-panel__head">
+              <div>
+                <span className="vsh-panel__kicker">{p.kind}</span>
+                <h3>{p.name}</h3>
+                <p className="vsh-panel__tag">{p.tagline}</p>
+              </div>
+              <span className={`vsh-status${p.status === 'בבנייה' ? ' is-building' : ''}`}>{p.status}</span>
+            </div>
+
+            <dl className="vsh-specs">
+              {p.specs.map(([k, v]) => (
+                <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+              ))}
+              <div><dt>אדריכל</dt><dd>{p.architect}</dd></div>
+            </dl>
+
+            <div className="vsh-panel__cols">
+              <div>
+                <h4>על הפרויקט</h4>
+                <p>{p.about}</p>
+                <ul className="vsh-chips">
+                  {p.highlights.map((h) => <li key={h}>{h}</li>)}
+                </ul>
+              </div>
+              <div>
+                <h4>על הסביבה</h4>
+                <p>{p.area}</p>
+              </div>
+            </div>
+          </Reveal>
+          )
+        })}
+      </div>
+    </section>
+  ),
+  /* תמונות מהפרויקטים */
+  gallery: ({ ctx: { gallery } }) => gallery.length > 0 && (
+    <ProjectsGallery
+      items={gallery}
+      collage
+      masonry
+      showFooter={false}
+      title="מהשטח"
+      lead="תמונות מהפרויקטים שהקבוצה מייזמת, מבצעת ומשווקת."
+    />
+  ),
+  /* מה מאפיין את הבנייה */
+  traits: () => (
+    <section className="section lhub-services">
+      <div className="container">
+        <Reveal className="lhub-head">
+          <span className="eyebrow">איך אנחנו בונים</span>
+          <h2 className="section-title">מה מאפיין בית פרטי של קורקוס גרופ</h2>
+        </Reveal>
+        <div className="lhub-services__grid">
+          {TRAITS.map((s, i) => (
+            <Reveal key={s.title} delay={i * 0.07}>
+              <FeatureCard icon={s.icon} title={s.title} desc={s.desc} />
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  ),
+  /* קריאה לפעולה: סיור בפרויקט. מי שהגיע עד לכאן קרא את המפרט וראה
+     את התמונות, וזה הרגע לתת לו דרך קצרה להמשיך, לפני השאלות הנפוצות */
+  cta: ({ ctx: { phoneDigits } }) => (
+    <section className="section vsh-cta">
+      <div className="container">
+        <Reveal className="vsh-cta__box">
+          <div className="vsh-cta__text">
+            <span className="eyebrow vsh-cta__eyebrow">סיור בפרויקטים</span>
+            <h2 className="vsh-cta__title">רוצים לראות בית כזה מקרוב?</h2>
+            <p>נתאם סיור באחד הפרויקטים, נעבור יחד על המפרט והתוכניות, ונענה על כל שאלה. בלי התחייבות.</p>
+          </div>
+          <div className="vsh-cta__actions">
+            <a href="#contact" className="btn btn--primary btn--lg vsh-cta__main" onClick={() => track('cta_click', { placement: 'villas_tour' })}>
+              לתיאום סיור <Icon name="arrowLeft" size={18} />
+            </a>
+            <div className="vsh-cta__row">
+              <a
+                href={`https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent('שלום, אשמח לתאם סיור בפרויקט בתים פרטיים בהוד השרון')}`}
+                target="_blank" rel="noopener noreferrer"
+                className="btn vsh-cta__ghost"
+                onClick={() => track('whatsapp_click', { placement: 'villas_cta' })}
+              >
+                <Icon name="whatsapp" size={18} /> וואטסאפ
+              </a>
+              <a href={`tel:${phoneDigits}`} className="btn vsh-cta__ghost" onClick={() => track('phone_click', { placement: 'villas_cta' })}>
+                <Icon name="phone" size={18} /> {site.contact.phoneDisplay}
+              </a>
+            </div>
+            <span className="vsh-cta__note">בלי התחייבות. נחזור אליכם בהקדם</span>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  ),
+  /* שאלות נפוצות */
+  faq: () => (
+    <section className="section section--soft lhub-faq">
+      <div className="container">
+        <Reveal className="lhub-head">
+          <span className="eyebrow">שאלות נפוצות</span>
+          <h2 className="section-title">שאלות על בניית בית פרטי בשרון</h2>
+        </Reveal>
+        <div className="lhub-faq__list">
+          {FAQS.map((f, i) => (
+            <Reveal key={i} delay={i * 0.05}>
+              <details className="lhub-faq__item">
+                <summary><span>{f.q}</span><Icon name="chevron" size={18} className="lhub-faq__chev" /></summary>
+                <p>{f.a}</p>
+              </details>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal>
+          <FaqCta to="#contact" placement="villas_faq" guides={PRIVATE_HOUSE_GUIDES} />
+        </Reveal>
+        {/* בונים על המגרש שלכם: עמודי הנחיתה לפי שירות ולפי עיר */}
+        <nav className="faq-cta__guides" style={{ marginTop: '1.75rem' }} aria-label="בניית בית פרטי על המגרש שלכם">
+          <span className="faq-cta__guides-title">בונים בית פרטי על המגרש שלכם</span>
+          <div className="faq-cta__chips">
+            {HOUSE_PAGES.map((p) => (
+              <Link key={p.path} to={p.path} className="faq-cta__chip">{p.navLabel}</Link>
+            ))}
+          </div>
+        </nav>
+      </div>
+    </section>
+  ),
+}
 
 export default function VillasSharon() {
   /* ההגדרות מהאדמין (טאב "בתים פרטיים ווילות"): תמונת כותרת, סדר והסתרה,
@@ -153,251 +408,7 @@ export default function VillasSharon() {
         description='קורקוס גרופ בונה וילות ובתים פרטיים בהוד השרון: יורדי הים 3 בגרינברג, שתי וילות על חצי דונם עם בריכה, והנרייטה סאלד 22-24 במערב העיר, ארבע יחידות דו משפחתיות עם בריכה ומגרש בטאבו.'
         jsonLd={jsonLd}
       />
-      <PageHeader
-        noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */
-        eyebrow="בתים פרטיים ווילות"
-        title="בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז"
-        lead="קורקוס גרופ מקימה וילות ובתים פרטיים בהוד השרון: בתים בשלושה מפלסים על כ-300 מ&quot;ר בנוי, עם בריכת שחייה פרטית ומגרש בבעלות פרטית, בביצוע ובפיקוח של זרועות הקבוצה עצמה."
-        crumbs={[{ label: 'בניית וילות בשרון' }]}
-        seoTitle="בניית וילות ובתים פרטיים בהוד השרון ובאזור המרכז"
-        seoDescription="קורקוס גרופ בונה וילות ובתים פרטיים בהוד השרון: יורדי הים 3 בגרינברג, שתי וילות על חצי דונם עם בריכה, והנרייטה סאלד 22-24 במערב העיר, ארבע יחידות דו משפחתיות עם בריכה ומגרש בטאבו."
-        image={heroImage}
-        imageAlt="בית פרטי של קורקוס גרופ בהוד השרון"
-        imagePos="center 68%"
-      />
-
-      {/* רצועת "בקצרה": מי שמגיע מחיפוש בגוגל מקבל בשנייה את התשובה, ואת
-          הדרך לפנות, עוד לפני שהוא גולל */}
-      <section className="vsh-brief" aria-label="בקצרה">
-        <div className="container vsh-brief__inner">
-          <ul className="vsh-brief__list">
-            {BRIEF.map((b) => (
-              <li key={b.t}><Icon name={b.icon} size={18} /><span><b>{b.t}</b>{b.d}</span></li>
-            ))}
-          </ul>
-          <a href="#contact" className="btn btn--primary vsh-brief__btn" onClick={() => track('cta_click', { placement: 'villas_brief' })}>
-            לתיאום סיור <Icon name="arrowLeft" size={16} />
-          </a>
-        </div>
-      </section>
-
-      {/* פתיחה: פסקת ישות (ברורה וניתנת לציטוט ע"י מנועי AI), העובדות
-          שחוזרות בכל הפרויקטים, ואיור הווילה בשפת המותג לצד הטקסט */}
-      <section className="section vsh-intro">
-        <div className="container vsh-intro__grid">
-          <Reveal className="vsh-intro__text">
-            <span className="eyebrow">מי בונה לכם את הבית</span>
-            <h2 className="section-title vsh-intro__title">בית פרטי, מהקרקע ועד המפתח, בידיים של קבוצה אחת</h2>
-            <p className="lhub-intro__text vsh-intro__p">
-              קורקוס גרופ היא קבוצת נדל"ן מהוד השרון הבונה וילות ובתים פרטיים באזור השרון.
-              הקבוצה מקימה כיום את <b>יורדי הים 3</b> בשכונת גרינברג, שתי וילות פרטיות על מגרשים
-              של למעלה מחצי דונם עם בריכת שחייה 4x9 מטר, ואת <b>הנרייטה סאלד 22-24</b> במערב
-              הוד השרון, מתחם של ארבע יחידות דו משפחתיות לשמונה משפחות, כל אחת על מגרש 380 מ"ר
-              בטאבו ועם בריכה פרטית. במקביל מוקם <b>חנקין 41</b> במגדיאל, בניין בוטיק של שש דירות.
-              הביצוע נעשה על ידי ראיתה, זרוע הביצוע של הקבוצה, והפיקוח על ידי שכינתא.
-            </p>
-            <ul className="vsh-facts" aria-label="נתונים משותפים לפרויקטים">
-              {FACTS.map((f) => (
-                <li key={f.u}><b>{f.v}</b><span>{f.u}</span></li>
-              ))}
-            </ul>
-          </Reveal>
-          <Reveal className="vsh-intro__art" variant="left" delay={0.1}>
-            <img src="/villa-illustration.webp" alt="" width="1200" height="671" loading="lazy" decoding="async" />
-          </Reveal>
-        </div>
-      </section>
-
-      {/* הפרויקטים, עם המפרט המלא */}
-      <section className="section section--soft vsh-projects">
-        <div className="container">
-          <Reveal className="lhub-head">
-            <span className="eyebrow">הפרויקטים שלנו</span>
-            <h2 className="section-title">מה אנחנו מקימים בהוד השרון</h2>
-          </Reveal>
-
-          <div className="vsh-tabs" role="tablist">
-            {PROJECTS.map((p) => (
-              <button
-                key={p.slug}
-                type="button"
-                role="tab"
-                aria-selected={open === p.slug}
-                className={`vsh-tab${open === p.slug ? ' is-on' : ''}`}
-                onClick={() => setOpen(p.slug)}
-              >
-                <b>{p.name}</b>
-                <span>
-                  <i className={`vsh-tab__dot${p.status === 'בבנייה' ? ' is-building' : ''}`} aria-hidden="true" />
-                  {p.status} · {p.kind}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {PROJECTS.filter((p) => p.slug === open).map((p) => {
-            const m = media[p.slug]
-            const ov = villas.projects[p.slug] || {}
-            // ההדמיה והתמונות הקטנות: קודם מה שנבחר באדמין לעמוד הזה, אחרת מעמוד הפרויקט
-            const cover = srcOfResponsive(ov.hero) || m?.card?.cover || ''
-            const ownThumbs = (Array.isArray(ov.thumbs) ? ov.thumbs : []).map(srcOfResponsive).filter(Boolean)
-            // הכריכה לא חוזרת פעמיים: אם היא גם הראשונה בגלריה, מדלגים עליה
-            const thumbs = (ownThumbs.length ? ownThumbs : (m?.images || [])).filter((u) => u !== cover).slice(0, 4)
-            const projectUrl = m?.card?.slug ? `/projects/${m.card.slug}` : null
-            return (
-            <Reveal key={p.slug} className="vsh-panel">
-              {cover && (
-                <div className="vsh-media">
-                  <Link to={projectUrl || '/projects'} className="vsh-media__hero" aria-label={`${p.name}: לעמוד הפרויקט`}>
-                    <SmartImage src={cover} alt="" aria-hidden="true" className="vsh-media__blur" w={1800} quality="auto:best" />
-                    <SmartImage src={cover} alt={`${p.name}, ${p.kind}`} label={p.name} className="vsh-media__img" w={1800} quality="auto:best" sizes="(max-width: 860px) 100vw, 1100px" />
-                    <span className="vsh-media__caption" aria-hidden="true">
-                      <b>{p.name}</b>
-                      <span>{p.kind} · {p.architect ? `אדריכל ${p.architect}` : ''}</span>
-                    </span>
-                    <span className="vsh-media__cta">לעמוד הפרויקט</span>
-                  </Link>
-                  {thumbs.length > 0 && (
-                    <div className="vsh-media__thumbs">
-                      {thumbs.map((u, i) => (
-                        <Link key={u} to={projectUrl || '/projects'} className="vsh-media__thumb" aria-label={`${p.name}, תמונה ${i + 2}`}>
-                          <SmartImage src={u} alt={`${p.name}, תמונה ${i + 2}`} label={p.name} w={800} sizes="(max-width: 860px) 45vw, 260px" quality="auto:good" />
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              <div className="vsh-panel__head">
-                <div>
-                  <span className="vsh-panel__kicker">{p.kind}</span>
-                  <h3>{p.name}</h3>
-                  <p className="vsh-panel__tag">{p.tagline}</p>
-                </div>
-                <span className={`vsh-status${p.status === 'בבנייה' ? ' is-building' : ''}`}>{p.status}</span>
-              </div>
-
-              <dl className="vsh-specs">
-                {p.specs.map(([k, v]) => (
-                  <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
-                ))}
-                <div><dt>אדריכל</dt><dd>{p.architect}</dd></div>
-              </dl>
-
-              <div className="vsh-panel__cols">
-                <div>
-                  <h4>על הפרויקט</h4>
-                  <p>{p.about}</p>
-                  <ul className="vsh-chips">
-                    {p.highlights.map((h) => <li key={h}>{h}</li>)}
-                  </ul>
-                </div>
-                <div>
-                  <h4>על הסביבה</h4>
-                  <p>{p.area}</p>
-                </div>
-              </div>
-            </Reveal>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* תמונות מהפרויקטים */}
-      {gallery.length > 0 && (
-        <ProjectsGallery
-          items={gallery}
-          collage
-          masonry
-          showFooter={false}
-          title="מהשטח"
-          lead="תמונות מהפרויקטים שהקבוצה מייזמת, מבצעת ומשווקת."
-        />
-      )}
-
-      {/* מה מאפיין את הבנייה */}
-      <section className="section lhub-services">
-        <div className="container">
-          <Reveal className="lhub-head">
-            <span className="eyebrow">איך אנחנו בונים</span>
-            <h2 className="section-title">מה מאפיין בית פרטי של קורקוס גרופ</h2>
-          </Reveal>
-          <div className="lhub-services__grid">
-            {TRAITS.map((s, i) => (
-              <Reveal key={s.title} delay={i * 0.07}>
-                <FeatureCard icon={s.icon} title={s.title} desc={s.desc} />
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* קריאה לפעולה: סיור בפרויקט. מי שהגיע עד לכאן קרא את המפרט וראה
-          את התמונות, וזה הרגע לתת לו דרך קצרה להמשיך, לפני השאלות הנפוצות */}
-      <section className="section vsh-cta">
-        <div className="container">
-          <Reveal className="vsh-cta__box">
-            <div className="vsh-cta__text">
-              <span className="eyebrow vsh-cta__eyebrow">סיור בפרויקטים</span>
-              <h2 className="vsh-cta__title">רוצים לראות בית כזה מקרוב?</h2>
-              <p>נתאם סיור באחד הפרויקטים, נעבור יחד על המפרט והתוכניות, ונענה על כל שאלה. בלי התחייבות.</p>
-            </div>
-            <div className="vsh-cta__actions">
-              <a href="#contact" className="btn btn--primary btn--lg vsh-cta__main" onClick={() => track('cta_click', { placement: 'villas_tour' })}>
-                לתיאום סיור <Icon name="arrowLeft" size={18} />
-              </a>
-              <div className="vsh-cta__row">
-                <a
-                  href={`https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent('שלום, אשמח לתאם סיור בפרויקט בתים פרטיים בהוד השרון')}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="btn vsh-cta__ghost"
-                  onClick={() => track('whatsapp_click', { placement: 'villas_cta' })}
-                >
-                  <Icon name="whatsapp" size={18} /> וואטסאפ
-                </a>
-                <a href={`tel:${phoneDigits}`} className="btn vsh-cta__ghost" onClick={() => track('phone_click', { placement: 'villas_cta' })}>
-                  <Icon name="phone" size={18} /> {site.contact.phoneDisplay}
-                </a>
-              </div>
-              <span className="vsh-cta__note">בלי התחייבות. נחזור אליכם בהקדם</span>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* שאלות נפוצות */}
-      <section className="section section--soft lhub-faq">
-        <div className="container">
-          <Reveal className="lhub-head">
-            <span className="eyebrow">שאלות נפוצות</span>
-            <h2 className="section-title">שאלות על בניית בית פרטי בשרון</h2>
-          </Reveal>
-          <div className="lhub-faq__list">
-            {FAQS.map((f, i) => (
-              <Reveal key={i} delay={i * 0.05}>
-                <details className="lhub-faq__item">
-                  <summary><span>{f.q}</span><Icon name="chevron" size={18} className="lhub-faq__chev" /></summary>
-                  <p>{f.a}</p>
-                </details>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal>
-            <FaqCta to="#contact" placement="villas_faq" guides={PRIVATE_HOUSE_GUIDES} />
-          </Reveal>
-          {/* בונים על המגרש שלכם: עמודי הנחיתה לפי שירות ולפי עיר */}
-          <nav className="faq-cta__guides" style={{ marginTop: '1.75rem' }} aria-label="בניית בית פרטי על המגרש שלכם">
-            <span className="faq-cta__guides-title">בונים בית פרטי על המגרש שלכם</span>
-            <div className="faq-cta__chips">
-              {HOUSE_PAGES.map((p) => (
-                <Link key={p.path} to={p.path} className="faq-cta__chip">{p.navLabel}</Link>
-              ))}
-            </div>
-          </nav>
-        </div>
-      </section>
-
-      <Contact />
+      <PageSections def={DEF} local={LOCAL} ctx={{ heroImage, PROJECTS, open, setOpen, media, villas, gallery, phoneDigits }} />
     </>
   )
 }

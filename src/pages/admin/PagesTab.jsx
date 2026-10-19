@@ -10,7 +10,7 @@ const PageEditor = lazy(() => import('./pageEditor/PageEditor.jsx'))
    הרשימה נבנית מ-defs/index.js, כך שכל עמוד שנוסף שם מופיע כאן.
    ============================================================ */
 
-const COLORS = { main: 'var(--pe-g1)', div: 'var(--pe-g2)', land: 'var(--pe-g3)', city: 'var(--pe-g4)', other: 'var(--pe-g2)' }
+const COLORS = { main: 'var(--pe-g1)', div: 'var(--pe-g2)', land: 'var(--pe-g3)', city: 'var(--pe-g4)', guides: '#3d7a62', legal: '#6b7686', other: 'var(--pe-g2)' }
 function boardGroups() {
   const pages = allPages()
   return Object.keys(GROUP_LABELS)

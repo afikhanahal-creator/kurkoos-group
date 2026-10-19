@@ -9,40 +9,34 @@ import division from './division.js'
 import villas from './villas.js'
 import house from './house.js'
 import hodAnswer from './hodAnswer.js'
+import mentorship from './mentorship.js'
+import faqHub from './faqHub.js'
+import glossary from './glossary.js'
+import calculators from './calculators.js'
+import blog from './blog.js'
+import guides from './guides.js'
+import legal from './legal.js'
 
 /* ============================================================
    כל העמודים שנבנים בעורך. עמוד חדש באתר חייב להופיע כאן (הגדרה
    ב-defs/<page>.js עם route זהה ל-App.jsx), או ב-EXCLUDED עם סיבה.
    scripts/check-pages.mjs מכשיל את ה-build אם עמוד לא נוסף.
    ============================================================ */
-export const DEFS = [home, about, contact, team, careers, projects, sharon, division, villas, house, hodAnswer].filter(Boolean)
+export const DEFS = [home, about, contact, team, careers, projects, sharon, division, villas, house, hodAnswer, mentorship, faqHub, glossary, calculators, blog, guides, legal].filter(Boolean)
 
 /* עמודים שלא נבנים בעורך, ולמה. מנוהלים במקום אחר */
 export const EXCLUDED = {
   '/projects/:slug': 'עמודי פרויקט, מנוהלים בלשונית "פרויקטים ונכסים"',
-  '/blog': 'רשימת כתבות, נבנית אוטומטית מהכתבות',
-  '/yazamut-nadlan': 'אינדקס מדריך, נבנה אוטומטית מהכתבות',
   '/yazamut-nadlan/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
-  '/constructions': 'אינדקס מדריך, נבנה אוטומטית מהכתבות',
   '/constructions/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
-  '/construction-supervision': 'אינדקס מדריך, נבנה אוטומטית מהכתבות',
   '/construction-supervision/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
-  '/real-estate-guide': 'אינדקס מדריך, נבנה אוטומטית מהכתבות',
   '/real-estate-guide/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
-  '/madrich-yazamim': 'אינדקס מדריך, נבנה אוטומטית מהכתבות',
   '/madrich-yazamim/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
-  '/real-estate-glossary': 'מילון מונחים, נבנה מקובץ הנתונים',
-  '/real-estate-calculators': 'מחשבונים, כלי אינטראקטיבי',
-  '/shelot-ve-tshuvot': 'מרכז השאלות, נבנה מקובץ הנתונים ומייצר נתונים מובנים לגוגל',
-  '/livy-yazamim': 'עמוד תוכנית הליווי, נבנה מקובץ הנתונים',
-  '/accessibility': 'עמוד משפטי',
-  '/privacy': 'עמוד משפטי',
-  '/terms': 'עמוד משפטי',
   '/style-guide': 'עמוד פנימי למעצבים',
   '*': 'עמוד 404',
 }
 
-export const GROUP_LABELS = { main: 'עמודים מרכזיים', div: 'חטיבות', land: 'עמודי נחיתה', city: 'ערים', other: 'עמודים נוספים' }
+export const GROUP_LABELS = { main: 'עמודים מרכזיים', div: 'חטיבות', land: 'עמודי נחיתה', city: 'ערים', guides: 'מדריכים, מידע וכלים', legal: 'עמודים משפטיים', other: 'עמודים נוספים' }
 
 /* כל העמודים לעריכה: [{ path, label, group, def }] */
 export function allPages() {

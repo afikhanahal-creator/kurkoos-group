@@ -1,5 +1,6 @@
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import jobs from '../data/jobs.js'
+import site from '../data/site.js'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
@@ -32,7 +33,7 @@ const LOCAL = {
                   <span><Icon name="briefcase" size={16} /> {L(j.type)}</span>
                 </div>
               </div>
-              <a href="mailto:jobs@kurkoos-group.co.il" className="btn btn--dark job-card__apply" onClick={() => track('email_click', { placement: 'careers' })}>
+              <a href={`mailto:${site.contact.email}`} className="btn btn--dark job-card__apply" onClick={() => track('email_click', { placement: 'careers' })}>
                 {t('pages.careers.apply')}
                 <Icon name="arrow" size={18} />
               </a>

@@ -415,6 +415,10 @@ const LOCAL = {
             <section className="priv-sec">
               <h2>{d.contactTitle}</h2>
               <p>{d.contactIntro}</p>
+              {/* הסדרי נגישות פיזיים: לפי בעלי האתר, המשרד מקבל קהל בימים ובשעות מסוימים */}
+              <p>{isHe
+                ? 'המשרד מקבל קהל בימים ובשעות מסוימים. כדי שנוכל להיערך מראש להתאמות נגישות, מומלץ לתאם את ההגעה בטלפון או בדוא"ל שמופיעים כאן.'
+                : 'The office receives visitors on set days and hours. To let us prepare accessibility arrangements in advance, please book your visit by phone or email below.'}</p>
               <div className="priv-contact">
                 <strong className="priv-contact__name">{d.coordinator}: {L(COMPANY.shortName)}</strong>
                 <p><b>{isHe ? 'כתובת' : 'Address'}:</b> {L(COMPANY.addr)}</p>

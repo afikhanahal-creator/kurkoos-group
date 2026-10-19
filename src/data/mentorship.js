@@ -148,7 +148,7 @@ export const stages = [
     icon: 'shield',
     color: '#16688c',
     desc: {
-      he: 'הפיקוח הוא עיניים בשטח כשהכסף שלכם עובד. נלמד לבחור מפקח, מה לדרוש ממנו, כיצד לקרוא דו"חות פיקוח, ואיך להיות המנכ"ל ולא הצלחפת של הפרויקט שלכם.',
+      he: 'הפיקוח הוא עיניים בשטח כשהכסף שלכם עובד. נלמד לבחור מפקח, מה לדרוש ממנו, כיצד לקרוא דו"חות פיקוח, ואיך להיות המנכ"ל של הפרויקט שלכם ולהוביל אותו להצלחה.',
       en: 'Supervision is eyes on the ground when your money is working. We learn to choose a supervisor, what to demand from them, how to read supervision reports, and how to be the CEO — not the firefighter — of your project.',
     },
     detail: {

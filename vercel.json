@@ -44,6 +44,11 @@
       "permanent": false
     },
     {
+      "source": "/projects/mohaliver-70",
+      "destination": "/projects/mohaliver-17",
+      "permanent": true
+    },
+    {
       "source": "/s-projects-basic",
       "destination": "/projects",
       "permanent": true

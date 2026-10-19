@@ -1,0 +1,7 @@
+/* תמונות בתוך גוף הכתבה, בסגנון מגזין */
+.artb__fig { margin: 2rem 0; }
+.artb__fig img { display: block; width: 100%; height: auto; border-radius: var(--radius-lg); }
+.artb__fig--wide { margin-inline: calc(-1 * clamp(0px, 6vw, 80px)); }
+.artb__fig--wide img { border-radius: var(--radius-md); }
+.artb__fig figcaption { margin-top: 0.6rem; font-size: var(--fs-small); color: var(--color-text-muted); border-inline-start: 3px solid var(--color-primary-300); padding-inline-start: 0.6rem; }
+@media (max-width: 760px) { .artb__fig--wide { margin-inline: calc(-1 * var(--container-pad)); } .artb__fig--wide img { border-radius: 0; } }

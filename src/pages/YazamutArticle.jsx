@@ -9,9 +9,9 @@ import { relatedArticles } from '../lib/related.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
+import ArticleBody from '../components/ui/ArticleBody.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
-import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
 import NotFound from './NotFound.jsx'
@@ -75,7 +75,7 @@ export default function YazamutArticle() {
       <section className="section">
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
-          <MiniMarkdown source={article.body} autoLink contactHref="/contact?topic=development&src=article" />
+          <ArticleBody article={article} contactHref="/contact?topic=development&src=article" />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (
             <div className="yz-tags">

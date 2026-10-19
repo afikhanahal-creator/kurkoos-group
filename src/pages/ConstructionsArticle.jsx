@@ -9,9 +9,9 @@ import { relatedArticles } from '../lib/related.js'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ArticleCover from '../components/ui/ArticleCover.jsx'
 import SmartImage from '../components/ui/SmartImage.jsx'
+import ArticleBody from '../components/ui/ArticleBody.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
 import Icon from '../components/ui/Icon.jsx'
-import MiniMarkdown from '../lib/miniMarkdown.jsx'
 import './Yazamut.css'
 import ArticleCta from '../components/ui/ArticleCta.jsx'
 import ArticleVideo from '../components/ui/ArticleVideo.jsx'
@@ -87,7 +87,7 @@ export default function ConstructionsArticle() {
         <Reveal className="container yz-body">
           <p className="yz-lead">{article.excerpt}</p>
           {article.video && <ArticleVideo video={article.video} fallbackTitle={article.title} />}
-          <MiniMarkdown source={article.body} autoLink contactHref={contactHrefFor('construction')} />
+          <ArticleBody article={article} contactHref={contactHrefFor('construction')} />
 
           {Array.isArray(article.tags) && article.tags.length > 0 && (
             <div className="yz-tags">

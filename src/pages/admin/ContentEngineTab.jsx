@@ -12,6 +12,7 @@ import calBrokerage from '../../../brokerage/content-calendar.md?raw'
 import calYazamut from '../../../yazamut_nadlan/content-calendar.md?raw'
 import calMentor from '../../../mentor_guide/content-calendar.md?raw'
 import { toast } from '../../lib/toast.js'
+import ArticlesHub from './ArticlesHub.jsx'
 import './ContentEngineTab.css'
 
 /* ============================================================
@@ -32,6 +33,7 @@ const COLUMNS = [
   { id: 'mentor', label: 'יזמים צעירים', route: '/madrich-yazamim', load: loadMentor, cal: calMentor, runAt: '08:40' },
 ]
 const TABS = [
+  { id: 'articles', label: 'כל הכתבות' },
   { id: 'agents', label: 'סוכני הכתיבה' },
   { id: 'social', label: 'פוסטים לרשתות' },
   { id: 'competitors', label: 'מתחרים' },
@@ -98,7 +100,7 @@ async function copy(text) {
 }
 
 export default function ContentEngineTab() {
-  const [tab, setTab] = useState('agents')
+  const [tab, setTab] = useState('articles')
   const [data, setData] = useState(null) // { [colId]: articles[] }
 
   useEffect(() => {
@@ -145,6 +147,8 @@ export default function ContentEngineTab() {
             className={`ce__tab${tab === t.id ? ' is-on' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </div>
+
+      {tab === 'articles' && <ArticlesHub />}
 
       {tab === 'agents' && (
         <div className="ce__grid">

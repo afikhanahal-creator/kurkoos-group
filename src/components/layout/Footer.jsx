@@ -57,8 +57,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <nav className="footer__col" aria-label="Footer navigation">
-          <h4 className="footer__heading">{t('footer.quickLinks')}</h4>
+        <nav className="footer__col" aria-label={L({ he: 'ניווט בתחתית העמוד', en: 'Footer navigation' })}>
+          <h2 className="footer__heading">{t('footer.quickLinks')}</h2>
           <Link to="/about">{t('nav.about')}</Link>
           <Link to="/projects">{t('nav.projects')}</Link>
           <Link to="/team">{t('nav.team')}</Link>
@@ -75,7 +75,7 @@ export default function Footer() {
         </nav>
 
         <div className="footer__col footer__col--contact">
-          <h4 className="footer__heading">{t('footer.contact')}</h4>
+          <h2 className="footer__heading">{t('footer.contact')}</h2>
           <a href={`tel:${String(contact.phone).replace(/[^+\d]/g, "")}`} className="footer__contact" onClick={() => track('phone_click', { placement: 'footer' })}>
             <Icon name="phone" size={17} /> {contact.phoneDisplay}
           </a>

@@ -5,6 +5,7 @@ import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { listProjectCards, cmsRowToCard, cachedSnapshot } from '../../lib/cms.js'
 import Icon from '../ui/Icon.jsx'
+import useFocusTrap from '../../hooks/useFocusTrap.js'
 import './SearchOverlay.css'
 
 export default function SearchOverlay({ open, onClose }) {
@@ -14,6 +15,9 @@ export default function SearchOverlay({ open, onClose }) {
   // החיפוש על פרויקטים אמיתיים מה-CMS (לא דמו) — זריעה מיידית מתמונת-מצב שמורה
   const [projects, setProjects] = useState(() => (cachedSnapshot('projects:cards') || []).map(cmsRowToCard))
   const inputRef = useRef(null)
+  const boxRef = useRef(null)
+  // חלון החיפוש: המיקוד נשאר בתוכו וחוזר לכפתור החיפוש בסגירה
+  useFocusTrap(boxRef, open, { initialFocus: false })
   const navigate = useNavigate()
 
   // טעינת רשימת הפרויקטים לחיפוש כשנפתח החלון (מטמון משותף → מהיר)
@@ -55,7 +59,11 @@ export default function SearchOverlay({ open, onClose }) {
     <AnimatePresence>
       {open && (
         <motion.div
+          ref={boxRef}
           className="search-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('search.label')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -85,10 +93,14 @@ export default function SearchOverlay({ open, onClose }) {
               </button>
             </div>
 
+            {/* מספר התוצאות מוקרא לקורא מסך בזמן ההקלדה */}
+            <p className="sr-only" aria-live="polite">
+              {term ? (results.length ? L({ he: `נמצאו ${results.length} תוצאות`, en: `${results.length} results` }) : t('search.noResults')) : ''}
+            </p>
             {term && (
               <ul className="search-overlay__results">
                 {results.length === 0 ? (
-                  <li className="search-overlay__empty">{t('search.noResults')}</li>
+                  <li className="search-overlay__empty" aria-hidden="true">{t('search.noResults')}</li>
                 ) : (
                   results.map((p) => (
                     <li key={p.slug}>

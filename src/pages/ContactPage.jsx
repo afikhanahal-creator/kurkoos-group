@@ -107,7 +107,7 @@ const LOCAL = {
           )}
         </div>
 
-        <aside className="cpage__side">
+        <div className="cpage__side">
           <h2 className="cpage__side-title">{L({ he: 'או ישירות', en: 'Or reach us directly' })}</h2>
           <div className="cpage__direct">
             <a
@@ -128,7 +128,7 @@ const LOCAL = {
             </a>
           </div>
           <OfficeMap />
-        </aside>
+        </div>
       </div>
     </section>
   ),

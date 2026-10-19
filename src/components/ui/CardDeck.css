@@ -4,9 +4,19 @@
    (מוגדר ב-Activities.css ופעיל גלובלית על .card-inner).
    ============================================================ */
 .card-deck {
+  position: relative;
   width: 100%;
   max-width: 24rem;
   margin-inline: auto;
+}
+/* עצירת ההחלפה האוטומטית (נגישות) */
+.card-deck__pause {
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline-end: 0;
+  z-index: 40;
+  width: 28px;
+  height: 28px;
 }
 
 .card-deck__trigger {

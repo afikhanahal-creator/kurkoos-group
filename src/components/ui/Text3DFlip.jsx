@@ -35,17 +35,19 @@ export default function Text3DFlip({ text = '', className = '', stagger = 0.045 
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.5 }}
-      aria-label={text}
     >
+      {/* הטקסט המלא לקורא מסך (האותיות המונפשות מוסתרות ממנו). aria-label על span
+          בלי role אינו נקרא בכל קוראי המסך */}
+      <span className="sr-only">{text}</span>
       {words.map((word, wi) => {
         // טוקן רווח — שבירת שורה מותרת כאן (רווח רגיל)
-        if (/^\s+$/.test(word)) return <span key={wi} className="t3df__space"> </span>
+        if (/^\s+$/.test(word)) return <span key={wi} className="t3df__space" aria-hidden="true"> </span>
         // רצף מספרים — כולל טווח/מפריד פנימי (22-24, 6-8, 3.5, 12/3) — נשאר טוקן
         // אחד LTR, כדי שלא יתהפך ב-RTL (כמה תיבות inline-block נפרדות מסתדרות
         // מימין-לשמאל והופכות את הטווח, למשל "22-24"→"24-22"). שאר התווים — אות-אות.
         const tokens = word.match(/\d+(?:[-–—/.,:]\d+)*|[^\d]/g) || []
         return (
-          <span key={wi} className="t3df__word">
+          <span key={wi} className="t3df__word" aria-hidden="true">
             {tokens.map((c, ci) => {
               const i = idx++
               return (

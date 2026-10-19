@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import Icon from './Icon.jsx'
+import useFocusTrap from '../../hooks/useFocusTrap.js'
 
 /* ============================================================
    Lightbox — תצוגת מדיה במסך מלא: תמונות וסרטונים מעורבבים.
@@ -19,6 +20,8 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
   const isRtl = document.documentElement.dir === 'rtl'
   const touchX = useRef(null)
   const swiped = useRef(false)   // החלקה התרחשה → לא לקדם גם בלחיצה
+  const box = useRef(null)
+  useFocusTrap(box, index != null && total > 0)
 
   const go = useCallback(
     (dir) => {
@@ -65,6 +68,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
 
   return createPortal(
     <div
+      ref={box}
       className="pd-lightbox"
       role="dialog"
       aria-modal="true"

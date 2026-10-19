@@ -54,3 +54,14 @@
   .logo-marquee__item { height: 84px; margin-inline-end: clamp(3.4rem, 17vw, 5rem); }
   .logo-marquee__img { height: 48px; max-width: none; }
 }
+
+/* כפתור עצירת התנועה (נגישות, WCAG 2.2.2): קטן, בפינה, לא משנה את פריסת הסרט */
+.logo-marquee-wrap { position: relative; }
+.logo-marquee__pause {
+  position: absolute;
+  inset-block-start: -36px;
+  inset-inline-end: 0;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+}

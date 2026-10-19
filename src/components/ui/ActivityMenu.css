@@ -180,3 +180,13 @@
   .actmenu__chip-label { font-size: 0.82rem; }
   .actmenu__caption { font-size: 0.8rem; padding: 2.3rem 0.85rem 0.9rem; }
 }
+
+/* עצירת הרוטציה (נגישות, WCAG 2.2.2) */
+.actmenu__pause {
+  position: absolute;
+  inset-block-end: 8px;
+  inset-inline-end: 8px;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+}

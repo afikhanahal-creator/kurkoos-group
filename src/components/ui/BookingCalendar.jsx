@@ -137,25 +137,33 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
       <div className="bcal__panel">
         <div className="bcal__panel-inner">
           <div className="bcal__row">
-            <div className="bcal__month-wrap" ref={monthRef}>
+            <div
+              className="bcal__month-wrap"
+              ref={monthRef}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' && monthOpen) {
+                  setMonthOpen(false)
+                  monthRef.current?.querySelector('.bcal__month-btn')?.focus()
+                }
+              }}
+            >
               <button
                 type="button"
                 className="bcal__month-btn"
                 onClick={() => setMonthOpen((o) => !o)}
                 aria-expanded={monthOpen}
-                aria-haspopup="listbox"
+                aria-controls="bcal-month-pop"
               >
                 {monthName} {year}
                 <svg className={`bcal__month-chev ${monthOpen ? 'is-open' : ''}`} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {monthOpen && (
-                <div className="bcal__month-pop" role="listbox" aria-label={L({ he: 'בחירת חודש', en: 'Select month' })}>
+                <div className="bcal__month-pop" id="bcal-month-pop" role="group" aria-label={L({ he: 'בחירת חודש', en: 'Select month' })}>
                   {monthOptions.map((o) => (
                     <button
                       key={`${o.y}-${o.m}`}
                       type="button"
-                      role="option"
-                      aria-selected={o.y === year && o.m === month}
+                      aria-pressed={o.y === year && o.m === month}
                       className={`bcal__month-opt ${o.y === year && o.m === month ? 'is-sel' : ''}`}
                       onClick={() => pickMonth(o)}
                     >
@@ -207,6 +215,11 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
             })}
           </div>
 
+          {/* הבחירה מוקראת לקורא מסך */}
+          <p className="sr-only" aria-live="polite">
+            {selected != null ? `${L({ he: 'נבחר', en: 'Selected' })}: ${selected} ${monthName}${time ? `, ${time}` : ''}` : ''}
+          </p>
+
           {/* בורר שעות — נפתח לאחר בחירת תאריך, ניתן לקיפול בחץ */}
           {selected != null && timesOpen && (
             <div className="bcal__times">
@@ -223,6 +236,7 @@ export default function BookingCalendar({ title, onPickDate, ctaTargetId = 'pd-n
                       key={tm}
                       type="button"
                       className={`bcal__time ${time === tm ? 'is-selected' : ''}`}
+                      aria-pressed={time === tm}
                       onClick={() => pickTime(tm)}
                     >
                       {tm}

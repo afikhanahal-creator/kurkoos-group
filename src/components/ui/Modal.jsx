@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../../i18n/index.jsx'
 import Icon from './Icon.jsx'
+import useFocusTrap from '../../hooks/useFocusTrap.js'
 import './Modal.css'
 
 /* מודאל לשימוש חוזר: overlay, סגירה ב-Escape/קליק בחוץ, נעילת גלילה.
@@ -11,6 +12,9 @@ import './Modal.css'
    השיווקי היו מצליחים לעלות מעל החלון. */
 export default function Modal({ open, onClose, children, className = '', label = '' }) {
   const { t } = useI18n()
+  const ref = useRef(null)
+  // המיקוד נכנס לחלון, נשאר בו, וחוזר בסגירה לכפתור שפתח אותו
+  useFocusTrap(ref, open)
 
   useEffect(() => {
     if (!open) return
@@ -28,6 +32,7 @@ export default function Modal({ open, onClose, children, className = '', label =
     <AnimatePresence>
       {open && (
         <motion.div
+          ref={ref}
           className="modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

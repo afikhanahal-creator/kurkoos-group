@@ -366,6 +366,15 @@
   gap: 1.25rem;
 }
 
+/* כפתור הכותרת בשלב: נראה כמו הכותרת שהייתה שם */
+.mentor-stage__btn {
+  all: unset;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+.mentor-stage:has(.mentor-stage__btn:focus-visible) { outline: 3px solid var(--color-primary-500); outline-offset: 3px; }
 .mentor-stage {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -512,6 +521,8 @@
 }
 
 .mentor-stage.is-open .mentor-stage__expand { max-height: 480px; }
+/* סגור: מוסתר גם מקורא המסך (אחרי שהאנימציה נגמרת) */
+.mentor-stage:not(.is-open) .mentor-stage__expand { visibility: hidden; transition: max-height 0.4s var(--ease-out), visibility 0s linear 0.4s; }
 
 /* פסקת ידע רציפה במקום רשימת בולטים — מדגימה בקיאות, לא מוכרת */
 .mentor-stage__detail {
@@ -700,6 +711,8 @@
   overflow: hidden;
   transition: max-height 0.3s var(--ease-out);
 }
+/* תשובה סגורה מוסתרת גם מקורא המסך, אחרי סיום האנימציה */
+.mfaq__item:not(.is-open) .mfaq__body { visibility: hidden; transition: max-height 0.3s var(--ease-out), visibility 0s linear 0.3s; }
 
 .mfaq__a {
   padding-bottom: 1.25rem;

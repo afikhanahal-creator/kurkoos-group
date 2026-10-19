@@ -32,8 +32,10 @@ export default function SmartImage({ src, alt = '', label, className = '', style
       <div
         className={`smart-image-placeholder ${className}`}
         style={style}
-        role="img"
-        aria-label={alt || label}
+        /* alt ריק = תמונה דקורטיבית: גם שומר המקום מוסתר מקורא המסך */
+        role={alt ? 'img' : undefined}
+        aria-label={alt || undefined}
+        aria-hidden={alt ? undefined : true}
       >
         <span>{label || alt || 'Kurkoos Group'}</span>
       </div>

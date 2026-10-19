@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
 import Seo from '../components/ui/Seo.jsx'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader.jsx'
@@ -24,17 +24,18 @@ const iconMap = {
 /* ---- FAQ Accordion ---- */
 function FaqItem({ item, isOpen, onToggle }) {
   const bodyRef = useRef(null)
+  const bodyId = `mfaq-${useId().replace(/:/g, '')}`
   const [maxH, setMaxH] = useState(0)
   useEffect(() => {
     if (bodyRef.current) setMaxH(isOpen ? bodyRef.current.scrollHeight : 0)
   }, [isOpen])
   return (
     <div className={`mfaq__item ${isOpen ? 'is-open' : ''}`}>
-      <button className="mfaq__q" onClick={onToggle} aria-expanded={isOpen}>
+      <button type="button" className="mfaq__q" onClick={onToggle} aria-expanded={isOpen} aria-controls={bodyId}>
         <span>{item.q.he}</span>
         <Icon name="chevron" size={20} className="mfaq__chevron" />
       </button>
-      <div className="mfaq__body" style={{ maxHeight: maxH }}>
+      <div className="mfaq__body" id={bodyId} style={{ maxHeight: maxH }}>
         <p className="mfaq__a" ref={bodyRef}>{item.a.he}</p>
       </div>
     </div>
@@ -98,7 +99,7 @@ const LOCAL = {
               </Link>
             </div>
           </div>
-          <aside className="mentor-intro__side">
+          <div className="mentor-intro__side">
             <img
               src="/shlomi-office.webp"
               alt="שלומי קורקוס, מייסד קורקוס גרופ, במשרד"
@@ -123,7 +124,7 @@ const LOCAL = {
                 לקביעת פגישה <Icon name="arrowLeft" size={18} />
               </Link>
             </div>
-          </aside>
+          </div>
         </Reveal>
       </div>
     </section>
@@ -241,22 +242,20 @@ const LOCAL = {
                 as="article"
                 className={`mentor-stage ${isOpen ? 'is-open' : ''}`}
                 onClick={() => setOpenStage(isOpen ? null : s.id)}
-                tabIndex={0}
-                aria-expanded={isOpen}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    setOpenStage(isOpen ? null : s.id)
-                  }
-                }}
               >
+                {/* הכרטיס כולו לחיץ בעכבר; במקלדת ובקורא מסך הפעולה היא כפתור
+                    בתוך הכותרת, עם aria-expanded וקישור לפירוט (accordion) */}
                 <div className="mentor-stage__header">
                   <span className="mentor-stage__num">{s.num}</span>
                   <Icon name="chevron" size={14} className="mentor-stage__chevron" />
                 </div>
-                <h3 className="mentor-stage__title">{s.title.he}</h3>
+                <h3 className="mentor-stage__title">
+                  <button type="button" className="mentor-stage__btn" aria-expanded={isOpen} aria-controls={`stage-${s.id}`}>
+                    {s.title.he}
+                  </button>
+                </h3>
                 <p className="mentor-stage__desc">{s.desc.he}</p>
-                <div className="mentor-stage__expand">
+                <div className="mentor-stage__expand" id={`stage-${s.id}`}>
                   <p className="mentor-stage__detail">{s.detail.he}</p>
                 </div>
               </Reveal>

@@ -184,107 +184,128 @@ const privacyDoc = {
    ============================================================ */
 const a11yFeatures = {
   he: [
-    { icon: 'accessibility', t: 'תפריט נגישות מתקדם', d: 'סרגל כלים ייעודי הנפתח מכל עמוד באתר ומאפשר התאמה אישית של חוויית הגלישה.' },
-    { icon: 'contrast', t: 'ניגודיות והתאמת צבעים', d: 'מצבי ניגודיות כהה, בהיר ומונוכרום, לצד התאמה חופשית של צבעי הרקע, הכותרות והתכנים.' },
-    { icon: 'textSize', t: 'התאמות גופן וריווח', d: 'הגדלת הטקסט, גופן קריא וכוונון הריווח בין שורות, מילים ואותיות.' },
-    { icon: 'shield', t: 'עמידה בתקן הישראלי', d: 'האתר הונגש בהתאם לתקנות הנגישות והתקן הישראלי ת״י 5568 ברמת AA.' },
+    { icon: 'accessibility', t: 'תפריט נגישות', d: 'סרגל כלים שנפתח מכל עמוד באתר, ומאפשר התאמה אישית של התצוגה, כולל עצירת אנימציות.' },
+    { icon: 'contrast', t: 'ניגודיות וצבעים', d: 'צבעי הטקסט והכפתורים נבדקו ביחס ניגודיות של 4.5:1 לפחות, ובתפריט יש מצבי ניגודיות נוספים.' },
+    { icon: 'textSize', t: 'מקלדת וקורא מסך', d: 'כל הפעולות באתר זמינות במקלדת, עם סימון מיקוד גלוי, ומבנה כותרות ואזורים תקין לקוראי מסך.' },
+    { icon: 'shield', t: 'ת״י 5568 ברמה AA', d: 'האתר נבדק והותאם לפי התקן הישראלי ת״י 5568 חלק 1, ברמה AA.' },
   ],
   en: [
-    { icon: 'accessibility', t: 'Advanced accessibility menu', d: 'A dedicated toolbar, available on every page, for personalising the browsing experience.' },
-    { icon: 'contrast', t: 'Contrast & colour control', d: 'Dark, light and monochrome contrast modes, plus free adjustment of background, heading and text colours.' },
-    { icon: 'textSize', t: 'Font & spacing controls', d: 'Larger text, a readable font and tuning of line, word and letter spacing.' },
-    { icon: 'shield', t: 'Standards compliance', d: 'Built per the Israeli accessibility regulations and standard SI 5568, level AA.' },
+    { icon: 'accessibility', t: 'Accessibility menu', d: 'A toolbar available on every page for personalising the display, including stopping animations.' },
+    { icon: 'contrast', t: 'Contrast and colour', d: 'Text and button colours were checked for a contrast ratio of at least 4.5:1, and the menu adds further contrast modes.' },
+    { icon: 'textSize', t: 'Keyboard and screen readers', d: 'Every action on the site works with a keyboard, with a visible focus indicator and a proper heading and landmark structure.' },
+    { icon: 'shield', t: 'SI 5568, level AA', d: 'The site was reviewed and adapted to the Israeli standard SI 5568 part 1, level AA.' },
   ],
 }
+
+/* תאריך עדכון הצהרת הנגישות (נפרד ממדיניות הפרטיות) */
+const A11Y_UPDATED = '19/10/2026'
 
 const a11yDoc = {
   he: {
     commitTitle: 'מחויבות החברה לנגישות',
     commit: [
-      'קבוצת קורקוס נכסים חברה לבניין ויזמות בע״מ רואה בהנגשת שירותיה ערך עליון, ופועלת מתוך תפיסה כי לכל אדם — לרבות אנשים עם מוגבלות — שמורה הזכות לגלוש באתר באופן עצמאי, נוח ושוויוני.',
-      'השקענו משאבים רבים בהנגשת האתר ובהתאמתו לקהל רחב ככל הניתן, מתוך אמונה כי נגישות אינה דרישה טכנית בלבד אלא ביטוי מוחשי לכבוד האדם ולשוויון ההזדמנויות.',
+      'קבוצת קורקוס רואה בהנגשת האתר והשירות חלק מהשירות עצמו. אנחנו פועלים כדי שכל אדם, כולל אנשים עם מוגבלות, יוכל לגלוש באתר, לקבל מידע וליצור קשר באופן עצמאי ושוויוני.',
     ],
-    standardTitle: 'כפיפות לתקן ולהנחיות',
+    standardTitle: 'התקן ורמת ההנגשה',
     standard: [
-      'האתר נבנה והונגש בהתאם להוראות תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע״ג–2013, ובכפוף להמלצות התקן הישראלי ת״י 5568 לנגישות תכנים באינטרנט, המבוסס על הנחיות הנגישות הבין-לאומיות WCAG 2.1 ברמת AA.',
-      'תהליך ההנגשה נבחן ומתוחזק באופן שוטף, ואנו ממשיכים לשפר את נגישות האתר מעת לעת בהתאם להתפתחות התקנים והטכנולוגיה.',
+      'האתר הונגש לפי תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע״ג 2013, ולפי התקן הישראלי ת״י 5568 חלק 1 לנגישות תכנים באינטרנט, ברמה AA. התקן מבוסס על הנחיות WCAG 2.0 של ארגון W3C.',
     ],
-    toolsTitle: 'אמצעי הנגישות הזמינים באתר',
-    toolsIntro: 'באתר מוטמע תפריט נגישות הנפתח באמצעות הסמל הקבוע בפינת המסך, ומציע, בין היתר, את ההתאמות הבאות:',
+    madeTitle: 'התאמות שבוצעו באתר',
+    made: [
+      'מבנה עמודים סמנטי: כותרת ראשית אחת בכל עמוד, היררכיית כותרות לפי התוכן, ואזורים מסומנים (כותרת עליונה, ניווט, תוכן ראשי, תחתית).',
+      'קישור "דלג לתוכן" בראש כל עמוד, שמעביר את המיקוד ישירות לתוכן הראשי.',
+      'תפעול מלא במקלדת: תפריט ראשי ותפריטים נפתחים, תפריט המובייל, חלונות קופצים, שאלות נפוצות, גלריות, יומן קביעת פגישה, מחשבונים וסינון כתבות.',
+      'סימון מיקוד גלוי ואחיד לכל רכיב שאפשר להגיע אליו במקלדת, בצבעי המותג.',
+      'חלונות קופצים (יצירת קשר, גלריה, חיפוש ותפריט הנגישות): המיקוד נכנס לחלון ונשאר בו, מקש Escape סוגר, והמיקוד חוזר לכפתור שפתח את החלון.',
+      'טפסים: תווית גלויה לכל שדה, סימון שדות חובה, הודעות שגיאה כתובות שמקושרות לשדה ומוקראות לקורא מסך, והודעת הצלחה מוקראת.',
+      'ניגודיות: צבעי טקסט וכפתורים עודכנו כך שיחס הניגודיות יהיה 4.5:1 לפחות, וגודל טקסט מינימלי של 12 פיקסלים.',
+      'תוכן שמתחלף לבד (כותרות בעמוד הבית, המלצות, תחומי פעילות): כפתור עצירה, עצירה אוטומטית בריחוף ובמיקוד, וכיבוד הגדרת "הפחתת תנועה" של מערכת ההפעלה.',
+      'תמונות: טקסט חלופי לתמונות שמעבירות מידע, ותמונות קישוטיות מוסתרות מקורא המסך.',
+      'שפה וכיוון: העמודים מוגדרים בעברית ובכיוון מימין לשמאל, ולכל עמוד כותרת ייחודית.',
+      'האתר מותאם לנייד ולהגדלת תצוגה עד 200% בלי אובדן תוכן.',
+    ],
+    testedTitle: 'איך נבדק האתר',
+    tested: [
+      'בדיקה אוטומטית עם axe-core בכל סוגי העמודים, במחשב ובנייד.',
+      'בדיקות ידניות: מעבר מלא במקלדת בלבד, בדיקת סדר מיקוד ומלכודות מיקוד, טפסים ריקים ושגויים, הגדלת תצוגה ל-200% ותצוגה ברוחב 320 פיקסלים.',
+      'בדיקת עץ הנגישות של הדפדפן (שמות, תפקידים ומצבים של רכיבים).',
+      'הדפדפן שנבדק: Google Chrome (מנוע Chromium) במחשב ובתצוגת נייד. האתר אמור לעבוד גם בגרסאות עדכניות של Edge, Firefox ו-Safari.',
+    ],
+    toolsTitle: 'תפריט הנגישות באתר',
+    toolsIntro: 'בפינת המסך יש כפתור קבוע שפותח תפריט נגישות. התפריט הוא כלי עזר נוסף, והאתר עצמו הונגש גם בלעדיו. בתפריט:',
     tools: [
-      'מצבי ניגודיות — כהה, בהיר, ניגודיות מוגברת ותצוגת מונוכרום בגווני אפור.',
-      'התאמת צבעים אישית לרקעים, לכותרות ולתכני האתר.',
-      'הגדלת הגופן וכוונון הריווח בין שורות, בין מילים ובין אותיות.',
-      'גופן קריא וברור להקלה על הקריאה.',
-      'הגדלת התצוגה, הגדלת התכנים והגדלת לחצנים ואזורי לחיצה.',
-      'הדגשת קישורים, כותרות ואלמנטים אינטראקטיביים בעמוד.',
-      'ניווט מלא באמצעות מקלדת, לצד מקלדת וירטואלית להזנת טקסט.',
-      'הקראת טקסט בלחיצה (Text-to-Speech) בעברית ובאנגלית.',
-      'הצגת תיאורים חלופיים לתמונות (טקסט חלופי).',
-      'תצוגת קריאה ממוקדת וסיכום עמוד לניווט מהיר לפי כותרות.',
-      'הגדלת סמן העכבר ושינוי צבעו, והשתקת מדיה אוטומטית.',
-      'שמירת ההעדפות בין הביקורים באתר, לצד אפשרות לאיפוס מלא של ההתאמות.',
+      'מצבי ניגודיות: כהה, בהיר, ניגודיות מוגברת ומונוכרום.',
+      'התאמת צבעים לרקעים, לכותרות ולתכנים.',
+      'הגדלת גופן וכוונון הריווח בין שורות, מילים ואותיות, וגופן קריא.',
+      'הגדלת תצוגה, הגדלת תכנים והגדלת כפתורים.',
+      'הדגשת קישורים, כותרות ורכיבים אינטראקטיביים.',
+      'עצירת אנימציות ותוכן מתחלף, והשתקת מדיה.',
+      'הקראת טקסט בלחיצה, מקלדת וירטואלית, וסיכום עמוד לפי כותרות.',
+      'שמירת ההעדפות בין ביקורים, ואיפוס מלא של ההתאמות.',
     ],
-    extraTitle: 'התאמות נגישות נוספות שיושמו',
-    extra: [
-      'בניית האתר על בסיס מבנה (HTML) סמנטי ותקין, עם היררכיית כותרות ברורה.',
-      'תיוג ARIA ותמיכה בקוראי מסך נפוצים.',
-      'שמירה על ניגודיות צבעים מספקת בין הטקסט לרקע.',
-      'אזורי לחיצה מרווחים ונוחים לתפעול.',
-      'אתר רספונסיבי המותאם למגוון מסכים, ותמיכה בהגדלת תצוגת הדפדפן.',
-    ],
-    limitsTitle: 'הסתייגויות ומגבלות ידועות',
+    limitsTitle: 'מגבלות ידועות ותכנים של צד שלישי',
     limits: [
-      'אנו עושים כל מאמץ להנגיש את מלוא התכנים באתר. עם זאת, ייתכן כי חלקים מסוימים — ובכלל זה תכנים של צד שלישי, קבצים מצורפים או רכיבים שטרם הותאמו במלואם — לא יהיו נגישים באופן מיטבי.',
-      'אנו רואים בנגישות תהליך מתמשך, ופועלים לתיקון ולשיפור באופן שוטף. אם נתקלתם ברכיב שאינו נגיש — נשמח שתעדכנו אותנו ונפעל לתיקונו בהקדם.',
+      'מפות Google ונגן הווידאו של YouTube מוטמעים באתר ומגיעים מצד שלישי. הנגישות שלהם באחריות הספקים. כתובת המשרד מופיעה גם כטקסט, וכל מידע חיוני בסרטונים מופיע גם בטקסט בעמוד.',
+      'מעבר לוואטסאפ פותח את שירות WhatsApp, שהנגישות שלו באחריות הספק. אפשר תמיד ליצור קשר גם בטלפון, במייל או בטופס באתר.',
+      'האתר טרם נבדק עם קורא מסך חיצוני (למשל NVDA או VoiceOver). הבדיקה מתוכננת, ועד אז נשמח לשמוע על כל קושי.',
+      'אנחנו ממשיכים לבדוק ולשפר את האתר. אם נתקלתם ברכיב שאינו נגיש, נשמח שתעדכנו אותנו ונטפל בכך.',
     ],
-    contactTitle: 'פנייה בנושאי נגישות',
-    contactIntro: 'נתקלתם בקושי בגלישה, או שיש לכם הצעה לשיפור הנגישות? נשמח לסייע. ניתן לפנות לרכז הנגישות של קבוצת קורקוס באמצעות פרטי הקשר הבאים, ואנו מתחייבים לטפל בפנייתכם במהירות ובמקצועיות:',
-    coordinator: 'רכז נגישות',
+    contactTitle: 'פנייה בנושא נגישות',
+    contactIntro: 'נתקלתם בקושי בגלישה, או שיש לכם הצעה לשיפור? אפשר לפנות אלינו בפרטים הבאים. כדי שנוכל לטפל במהירות, ציינו את העמוד, תיאור הקושי, והדפדפן או הטכנולוגיה המסייעת שבה השתמשתם.',
+    coordinator: 'פניות נגישות',
   },
   en: {
     commitTitle: 'Our commitment to accessibility',
     commit: [
-      'Kurkoos Group Assets — Construction & Development Ltd. regards the accessibility of its services as a core value, and acts on the belief that every person — including people with disabilities — is entitled to browse the site independently, comfortably and equally.',
-      'We have invested significant resources in making the site accessible to the widest possible audience, in the belief that accessibility is not merely a technical requirement but a tangible expression of human dignity and equal opportunity.',
+      'Kurkoos Group sees the accessibility of its site and service as part of the service itself. We work so that every person, including people with disabilities, can browse the site, get information and contact us independently and equally.',
     ],
-    standardTitle: 'Standards and guidelines',
+    standardTitle: 'Standard and level',
     standard: [
-      'The site was built and made accessible in accordance with the Equal Rights for Persons with Disabilities Regulations (Service Accessibility Adjustments), 2013, and the Israeli standard SI 5568 for web content accessibility, based on the international WCAG 2.1 guidelines at level AA.',
-      'The accessibility of the site is reviewed and maintained on an ongoing basis, and we continue to improve it as standards and technology evolve.',
+      'The site was made accessible in line with the Equal Rights for Persons with Disabilities Regulations (Service Accessibility Adjustments), 2013, and the Israeli standard SI 5568 part 1 for web content accessibility, at level AA. The standard is based on the W3C WCAG 2.0 guidelines.',
     ],
-    toolsTitle: 'Accessibility features available on the site',
-    toolsIntro: 'The site includes an accessibility menu, opened via the fixed icon in the corner of the screen, offering among others the following adjustments:',
+    madeTitle: 'Adjustments made on the site',
+    made: [
+      'Semantic page structure: one main heading per page, a heading hierarchy that follows the content, and marked regions (header, navigation, main content, footer).',
+      'A "skip to content" link at the top of every page that moves focus to the main content.',
+      'Full keyboard operation: main menu and dropdowns, mobile menu, dialogs, FAQs, galleries, the booking calendar, calculators and article filters.',
+      'A visible, consistent focus indicator on every element reachable by keyboard.',
+      'Dialogs (contact, gallery, search and the accessibility menu): focus moves into the dialog and stays there, Escape closes it, and focus returns to the button that opened it.',
+      'Forms: a visible label for every field, required fields marked, written error messages linked to the field and announced to screen readers, and an announced success message.',
+      'Contrast: text and button colours updated to a contrast ratio of at least 4.5:1, and a minimum text size of 12 pixels.',
+      'Content that changes on its own (home page headlines, testimonials, service areas): a pause button, pausing on hover and focus, and respect for the operating system reduced motion setting.',
+      'Images: alternative text for informative images, and decorative images hidden from screen readers.',
+      'Language and direction: pages are set to Hebrew, right to left, and every page has a unique title.',
+      'The site adapts to mobile and to browser zoom up to 200% without loss of content.',
+    ],
+    testedTitle: 'How the site was tested',
+    tested: [
+      'Automated testing with axe-core on every page type, on desktop and mobile.',
+      'Manual testing: a full keyboard-only pass, focus order and focus traps, empty and invalid forms, 200% zoom and a 320 pixel wide view.',
+      'Review of the browser accessibility tree (names, roles and states of components).',
+      'Browser tested: Google Chrome (Chromium) on desktop and in a mobile view. The site should also work in current versions of Edge, Firefox and Safari.',
+    ],
+    toolsTitle: 'The accessibility menu',
+    toolsIntro: 'A fixed button in the corner of the screen opens an accessibility menu. The menu is an extra aid; the site itself is accessible without it. It includes:',
     tools: [
-      'Contrast modes — dark, light, high-contrast and monochrome (greyscale).',
-      'Custom colour adjustment for backgrounds, headings and content.',
-      'Larger font and tuning of line, word and letter spacing.',
-      'A clear, readable font for easier reading.',
-      'Display zoom, content enlargement and larger buttons and click areas.',
+      'Contrast modes: dark, light, high contrast and monochrome.',
+      'Colour adjustment for backgrounds, headings and content.',
+      'Larger text and line, word and letter spacing, and a readable font.',
+      'Display zoom, content enlargement and larger buttons.',
       'Highlighting of links, headings and interactive elements.',
-      'Full keyboard navigation, alongside a virtual keyboard for text input.',
-      'Click-to-read text-to-speech in Hebrew and English.',
-      'Alternative text descriptions for images.',
-      'A focused reading view and a page summary for quick heading navigation.',
-      'Enlarged cursor with colour change, and automatic media muting.',
-      'Saving preferences between visits, with an option to fully reset all adjustments.',
+      'Stopping animations and rotating content, and muting media.',
+      'Click to read aloud, a virtual keyboard, and a page summary by headings.',
+      'Saving preferences between visits, and a full reset.',
     ],
-    extraTitle: 'Additional accessibility measures',
-    extra: [
-      'Built on valid, semantic HTML with a clear heading hierarchy.',
-      'ARIA labelling and support for common screen readers.',
-      'Sufficient colour contrast between text and background.',
-      'Spacious, comfortable click areas.',
-      'A responsive site adapted to a range of screens, with browser-zoom support.',
-    ],
-    limitsTitle: 'Known limitations',
+    limitsTitle: 'Known limitations and third-party content',
     limits: [
-      'We make every effort to make all content accessible. Nevertheless, certain parts — including third-party content, attached files or components not yet fully adapted — may not be optimally accessible.',
-      'We see accessibility as an ongoing process and work continuously to fix and improve it. If you encounter an inaccessible element, please let us know and we will act to correct it promptly.',
+      'Google Maps and the YouTube player are embedded from third parties, and their accessibility is the responsibility of those providers. The office address also appears as text, and essential information in videos also appears as text on the page.',
+      'WhatsApp links open the WhatsApp service, whose accessibility is the responsibility of the provider. You can always contact us by phone, email or the form on the site.',
+      'The site has not yet been tested with an external screen reader (such as NVDA or VoiceOver). This is planned; until then we would be glad to hear about any difficulty.',
+      'We keep testing and improving the site. If you find an element that is not accessible, please let us know and we will fix it.',
     ],
     contactTitle: 'Accessibility contact',
-    contactIntro: 'Encountered a difficulty browsing, or have a suggestion to improve accessibility? We are happy to help. You can reach the accessibility coordinator at Kurkoos Group using the details below, and we are committed to handling your request quickly and professionally:',
-    coordinator: 'Accessibility coordinator',
+    contactIntro: 'Had difficulty using the site, or have a suggestion? Contact us using the details below. To help us respond quickly, please mention the page, the difficulty, and the browser or assistive technology you used.',
+    coordinator: 'Accessibility requests',
   },
 }
 
@@ -358,7 +379,7 @@ const LOCAL = {
           <div className="container priv-doc">
             <div className="priv-meta">
               <span className="priv-meta__eyebrow">{isHe ? 'הצהרת נגישות' : 'Accessibility statement'}</span>
-              <span className="priv-meta__date">{updatedLbl}: {COMPANY.updated}</span>
+              <span className="priv-meta__date">{updatedLbl}: {A11Y_UPDATED}</span>
             </div>
 
             {/* כרטיסי דגש */}
@@ -374,6 +395,8 @@ const LOCAL = {
 
             <Section s={{ h: d.commitTitle, p: d.commit }} />
             <Section s={{ h: d.standardTitle, p: d.standard }} />
+            <Section s={{ h: d.madeTitle, ul: d.made }} />
+            <Section s={{ h: d.testedTitle, ul: d.tested }} />
 
             {/* רשימת כלים עם סימוני וי */}
             <section className="priv-sec">
@@ -386,15 +409,14 @@ const LOCAL = {
               </ul>
             </section>
 
-            <Section s={{ h: d.extraTitle, ul: d.extra }} />
-            <Section s={{ h: d.limitsTitle, p: d.limits }} />
+            <Section s={{ h: d.limitsTitle, ul: d.limits }} />
 
             {/* פנייה / רכז נגישות */}
             <section className="priv-sec">
               <h2>{d.contactTitle}</h2>
               <p>{d.contactIntro}</p>
               <div className="priv-contact">
-                <strong className="priv-contact__name">{d.coordinator} — {L(COMPANY.name)}</strong>
+                <strong className="priv-contact__name">{d.coordinator}: {L(COMPANY.shortName)}</strong>
                 <p><b>{isHe ? 'כתובת' : 'Address'}:</b> {L(COMPANY.addr)}</p>
                 <p><b>{isHe ? 'טלפון' : 'Phone'}:</b> <a href={`tel:${COMPANY.phoneHref}`} onClick={() => track('phone_click', { placement: 'legal' })}>{COMPANY.phone}</a></p>
                 <p><b>{isHe ? 'דוא"ל' : 'Email'}:</b> <a href={`mailto:${COMPANY.email}`} onClick={() => track('email_click', { placement: 'legal' })}>{COMPANY.email}</a></p>

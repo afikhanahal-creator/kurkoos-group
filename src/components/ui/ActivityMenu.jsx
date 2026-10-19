@@ -5,6 +5,7 @@ import { useLocalized } from '../../i18n/index.jsx'
 import { normalizeResponsiveImage, srcOfResponsive, optimizeSrc } from '../../lib/responsiveImage.js'
 import Icon from './Icon.jsx'
 import InfiniteGrid from './InfiniteGrid.jsx'
+import { motionStopped } from '../../lib/motion.js'
 import './ActivityMenu.css'
 
 /* ============================================================
@@ -27,6 +28,8 @@ export default function ActivityMenu({ items = [] }) {
   const len = items.length
   const [step, setStep] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [hold, setHold] = useState(false)       // מיקוד מקלדת בתוך הרכיב
+  const [stopped, setStopped] = useState(false) // עצירה על ידי המשתמש (WCAG 2.2.2)
   const [inView, setInView] = useState(false)
   const rootRef = useRef(null)
 
@@ -53,10 +56,10 @@ export default function ActivityMenu({ items = [] }) {
   }, [])
 
   useEffect(() => {
-    if (!inView || paused || len < 2) return
-    const id = setInterval(next, AUTO_PLAY)
+    if (!inView || paused || hold || stopped || len < 2 || motionStopped()) return
+    const id = setInterval(() => { if (!motionStopped()) next() }, AUTO_PLAY)
     return () => clearInterval(id)
-  }, [next, paused, len, inView])
+  }, [next, paused, hold, stopped, len, inView])
 
   if (!len) return null
   const current = items[idx] || items[0]
@@ -68,6 +71,8 @@ export default function ActivityMenu({ items = [] }) {
       onPointerDown={() => setPaused(true)}
       onPointerUp={() => setPaused(false)}
       onPointerLeave={() => setPaused(false)}
+      onFocus={() => setHold(true)}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setHold(false) }}
     >
       {/* פאנל ימין — רקע כהה + רשת ריבועים + צ'יפים אדומים */}
       <div className="actmenu__panel">
@@ -110,9 +115,20 @@ export default function ActivityMenu({ items = [] }) {
           <span
             key={idx}
             className="actmenu__progress"
-            style={{ animationDuration: `${AUTO_PLAY}ms`, animationPlayState: paused ? 'paused' : 'running' }}
+            style={{ animationDuration: `${AUTO_PLAY}ms`, animationPlayState: paused || hold || stopped ? 'paused' : 'running' }}
             aria-hidden="true"
           />
+        )}
+        {len > 1 && (
+          <button
+            type="button"
+            className="motion-toggle motion-toggle--dark actmenu__pause"
+            onClick={() => setStopped((v) => !v)}
+            aria-pressed={stopped}
+            aria-label={L({ he: 'עצירת ההחלפה האוטומטית', en: 'Pause auto rotation' })}
+          >
+            <Icon name={stopped ? 'play' : 'pause'} size={12} />
+          </button>
         )}
       </div>
 

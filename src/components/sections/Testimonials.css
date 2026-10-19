@@ -349,8 +349,9 @@
   gap: 0.3rem;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.72rem;   /* הוקטן */
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;   /* מינימום 12px (נגישות) */
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
   margin-block-start: clamp(0.4rem, 1.6vw, 1rem);   /* "חזרה" מעט נמוך יותר */
 }
 
@@ -362,6 +363,7 @@
   gap: 1.5rem;
   transform: translateY(10px);   /* החצים מעט נמוך יותר */
 }
+.testimonials__nav .carousel__arrow.carousel__arrow--pause { width: 36px; height: 36px; }
 .testimonials__nav .carousel__arrow {
   display: grid;
   place-items: center;

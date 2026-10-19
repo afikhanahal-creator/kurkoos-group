@@ -116,6 +116,6 @@
 @media (max-width: 600px) {
   .imgcmp { aspect-ratio: 4 / 3; }
   .imgcmp__knob { width: 40px; height: 40px; }
-  .imgcmp__tag { font-size: 0.72rem; padding: 0.25rem 0.7rem; }
+  .imgcmp__tag { font-size: 0.75rem; padding: 0.25rem 0.7rem; }
   .imgcmp__caption { font-size: 0.78rem; }
 }

@@ -7,6 +7,7 @@ import ErrorBoundary, { reloadOnce } from './components/ErrorBoundary.jsx'
 
 import './styles/global.css'
 import './styles/polish.css'
+import './styles/a11y.css'
 
 // iOS Safari applies :active (the press feedback) only when the page listens to touchstart
 if (typeof document !== 'undefined') document.addEventListener('touchstart', () => {}, { passive: true })

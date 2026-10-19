@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import { useSettings } from '../../lib/cms.js'
@@ -7,6 +7,7 @@ import { isDemoTestimonial } from '../../data/testimonials.js'
 import SmartImage from '../ui/SmartImage.jsx'
 import Icon from '../ui/Icon.jsx'
 import KineticText from '../ui/KineticText.jsx'
+import useFocusTrap from '../../hooks/useFocusTrap.js'
 import './Testimonials.css'
 
 const AUTO_MS = 4500 // החלפה אוטומטית כל ~4.5 שניות (האטה — שנייה נוספת בין כרטיסים)
@@ -29,6 +30,9 @@ export default function Testimonials() {
   const settings = useSettings()
   const [i, setI] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [focusIn, setFocusIn] = useState(false)   // מיקוד מקלדת בתוך הקרוסלה → עוצרים
+  const [stopped, setStopped] = useState(false)   // המשתמש עצר את ההחלפה האוטומטית (WCAG 2.2.2)
+  const lbRef = useRef(null)
   const [shot, setShot] = useState(null)   // אינדקס התמונה הפתוחה ב-lightbox (או null)
   const [flipped, setFlipped] = useState(false)   // הכרטיס מוצג בצדו האחורי (תמונות הנכס)
 
@@ -52,11 +56,11 @@ export default function Testimonials() {
 
   // החלפה אוטומטית — נעצרת בריחוף, כשה-lightbox פתוח, כשהכרטיס מהופך, ומכבדת prefers-reduced-motion
   useEffect(() => {
-    if (count < 2 || paused || shot !== null || flipped) return
+    if (count < 2 || paused || focusIn || stopped || shot !== null || flipped) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const id = setInterval(next, AUTO_MS)
     return () => clearInterval(id)
-  }, [next, paused, i, shot, flipped])
+  }, [next, paused, focusIn, stopped, i, shot, flipped])
 
   const item = testimonials[i] || testimonials[0]
 
@@ -69,6 +73,7 @@ export default function Testimonials() {
   const shotNext = useCallback(() => setShot((p) => (p === null ? p : (p + 1) % shots.length)), [shots.length])
 
   const canFlip = shots.length > 0
+  useFocusTrap(lbRef, shot !== null)
 
   // איפוס lightbox + היפוך כשמחליפים המלצה
   useEffect(() => { setShot(null); setFlipped(false) }, [i])
@@ -100,19 +105,19 @@ export default function Testimonials() {
           className="tc"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
+          onFocus={() => setFocusIn(true)}
+          onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setFocusIn(false) }}
         >
           <div className="tc__card-effect">
             <div
               className={`tc__flip${flipped ? ' is-flipped' : ''}${canFlip ? ' tc__flip--enabled' : ''}`}
-              role={canFlip ? 'button' : undefined}
-              tabIndex={canFlip ? 0 : undefined}
-              aria-pressed={canFlip ? flipped : undefined}
-              aria-label={canFlip ? t('testimonials.photosCtaBack') : undefined}
               onClick={canFlip ? () => setFlipped((f) => !f) : undefined}
-              onKeyDown={canFlip ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFlipped((f) => !f) } } : undefined}
             >
+              {/* היפוך הכרטיס הוא קיצור לעכבר ולמגע. במקלדת ובקורא מסך אותן
+                  תמונות זמינות בכפתורי התמונות שמתחת לכרטיס, ולכן אין כאן
+                  role=button שעוטף כפתורים אחרים. הצד שלא מוצג מסומן inert. */}
               {/* ===== צד קדמי — ההמלצה ===== */}
-              <div className="tc__face tc__face--front">
+              <div className="tc__face tc__face--front" inert={flipped ? '' : undefined}>
                 <div className="tc__card">
                   <span className="tc__liquid" aria-hidden="true" />
                   <span className="tc__shine" aria-hidden="true" />
@@ -160,7 +165,7 @@ export default function Testimonials() {
 
               {/* ===== צד אחורי — תמונות הנכס (אפקט הריבועים הכחולים) ===== */}
               {canFlip && (
-              <div className="tc__face tc__face--back" aria-hidden={!flipped}>
+              <div className="tc__face tc__face--back" inert={flipped ? undefined : ''}>
                 <div className="tc__card tc__card--back">
                   <h3 className="tc__back-title">{t('testimonials.photosCtaBack')}</h3>
                   <div className="tc-shots__row tc-shots__row--back">
@@ -170,7 +175,6 @@ export default function Testimonials() {
                         key={idx}
                         className="tc-shots__tile tc-shots__tile--back"
                         style={{ zIndex: 10 - idx }}
-                        tabIndex={flipped ? 0 : -1}
                         onClick={(e) => { e.stopPropagation(); setShot(idx) }}
                         aria-label={`${t('testimonials.photosCtaBack')} ${idx + 1}`}
                       >
@@ -178,9 +182,13 @@ export default function Testimonials() {
                       </button>
                     ))}
                   </div>
-                  <span className="tc__back-hint">
+                  <button
+                    type="button"
+                    className="tc__back-hint"
+                    onClick={(e) => { e.stopPropagation(); setFlipped(false) }}
+                  >
                     <Icon name="arrow" size={14} />{t('common.back')}
-                  </span>
+                  </button>
                 </div>
               </div>
               )}
@@ -213,10 +221,21 @@ export default function Testimonials() {
             )}
 
             <div className="testimonials__nav">
-              <button type="button" className="carousel__arrow" onClick={prev} aria-label="Previous">
+              <button type="button" className="carousel__arrow" onClick={prev} aria-label={L({ he: 'ההמלצה הקודמת', en: 'Previous testimonial' })}>
                 <Icon name={isRTL ? 'arrowLeft' : 'arrow'} size={20} />
               </button>
-              <button type="button" className="carousel__arrow" onClick={next} aria-label="Next">
+              {count > 1 && (
+                <button
+                  type="button"
+                  className="carousel__arrow carousel__arrow--pause"
+                  onClick={() => setStopped((v) => !v)}
+                  aria-pressed={stopped}
+                  aria-label={L({ he: 'עצירת ההחלפה האוטומטית', en: 'Pause auto rotation' })}
+                >
+                  <Icon name={stopped ? 'play' : 'pause'} size={16} />
+                </button>
+              )}
+              <button type="button" className="carousel__arrow" onClick={next} aria-label={L({ he: 'ההמלצה הבאה', en: 'Next testimonial' })}>
                 <Icon name={isRTL ? 'arrow' : 'arrowLeft'} size={20} />
               </button>
             </div>
@@ -228,7 +247,11 @@ export default function Testimonials() {
       <AnimatePresence>
         {shot !== null && shots[shot] && (
           <motion.div
+            ref={lbRef}
             className="tc-lb"
+            role="dialog"
+            aria-modal="true"
+            aria-label={L({ he: 'תמונות הבית', en: 'Home photos' })}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

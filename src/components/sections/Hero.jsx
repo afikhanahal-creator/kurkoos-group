@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase.js'
 import { listCounters, cachedSnapshot } from '../../lib/cms.js'
 import { openContactPopup } from '../../lib/contact.js'
 import { track } from '../../lib/track.js'
+import { motionStopped } from '../../lib/motion.js'
 import VideoModal from '../ui/VideoModal.jsx'
 import GeometricBlurMesh from '../ui/GeometricBlurMesh.jsx'
 import InfiniteGrid from '../ui/InfiniteGrid.jsx'
@@ -58,6 +59,9 @@ export default function Hero() {
   const { t } = useI18n()
   const L = useLocalized()
   const [turn, setTurn] = useState(0)
+  // עצירת החלפת השקופיות (WCAG 2.2.2): כפתור עצירה, ריחוף ומיקוד מקלדת בתוך ה-Hero
+  const [stopped, setStopped] = useState(false)
+  const [hold, setHold] = useState(false)
   const [filmOpen, setFilmOpen] = useState(false)
   // ה-Hero מציג את המונים מהניהול ("מונים ומספרים") ישירות — לפי הסדר. כך
   // עריכת המונים מעדכנת מיד גם את המונה שבראש עמוד הבית. הכותרות והתמונות
@@ -79,11 +83,10 @@ export default function Hero() {
   const slide = slides[active] || slides[0]
 
   useEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduce) return
-    const id = setInterval(() => setTurn((t) => t + 1), 5000)
+    if (stopped || hold || motionStopped()) return
+    const id = setInterval(() => { if (!motionStopped()) setTurn((t) => t + 1) }, 5000)
     return () => clearInterval(id)
-  }, [])
+  }, [stopped, hold])
 
   useEffect(() => {
     if (!supabase) return
@@ -121,7 +124,13 @@ export default function Hero() {
 
       <div className="container hero__grid">
         {/* צד תוכן */}
-        <div className="hero__content">
+        <div
+          className="hero__content"
+          onMouseEnter={() => setHold(true)}
+          onMouseLeave={() => setHold(false)}
+          onFocus={() => setHold(true)}
+          onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setHold(false) }}
+        >
           {/* מספר מתגלגל + תווית */}
           <div className="hero__stat" style={{ opacity: statReady ? 1 : 0, transition: 'opacity 0.45s ease' }}>
             <div className="hero__stat-number">
@@ -148,6 +157,17 @@ export default function Hero() {
                 {slide.stat.sub && <span className="hero__stat-sub">{L(slide.stat.sub)}</span>}
               </motion.div>
             </AnimatePresence>
+            {slides.length > 1 && (
+              <button
+                type="button"
+                className="hero__pause"
+                onClick={() => setStopped((v) => !v)}
+                aria-pressed={stopped}
+                aria-label={L({ he: 'עצירת החלפת הכותרות', en: 'Pause rotating headlines' })}
+              >
+                <Icon name={stopped ? 'play' : 'pause'} size={14} />
+              </button>
+            )}
           </div>
 
           {/* כותרת שנחשפת שורה-שורה */}

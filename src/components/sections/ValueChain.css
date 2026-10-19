@@ -82,11 +82,11 @@
 .vc-item__tag {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-primary-900);
-  opacity: 0.6;
+  /* היה כחול המותג בשקיפות 60% (ניגודיות 4.0). גוון אטום קרוב: 5.5:1 */
+  color: #52656f;
 }
 .vc-item__title {
   font-family: var(--font-heading);
@@ -151,7 +151,7 @@
   fill: var(--color-text-soft);
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.12em;
 }
 

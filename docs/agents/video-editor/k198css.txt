@@ -1,0 +1,30 @@
+<style id="k198">
+/* ===== V198 · mobile native, pilot: the publishing queue (תור הפרסום). Phones only (up to 599px).
+   Only existing values: the 16px page gutter (12px of .appbody plus 4px of the view), the 44px touch target, the existing cards and tabs.
+   Nothing is added or removed; the same content is laid out the way a native app list reads. ===== */
+@media (max-width:599px){
+ /* the summary strip runs edge to edge and snaps card by card, the first card lines up with the page gutter */
+ body[data-pxview="queue"] .sumr{margin-inline:-16px!important;padding:2px 16px!important;scroll-padding-inline:16px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain}
+ body[data-pxview="queue"] .sumr>.s{scroll-snap-align:start;flex:0 0 156px}
+ body[data-pxview="queue"] .sumr::-webkit-scrollbar{display:none}
+ /* the tab bar stays under the header while the list scrolls, and scrolls sideways edge to edge */
+ body[data-pxview="queue"] .qtabs{position:sticky;top:0;z-index:5;margin-inline:-16px;padding-inline:16px;background:var(--bg);overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-inline:16px;overscroll-behavior-x:contain}
+ body[data-pxview="queue"] .qtabs::-webkit-scrollbar{display:none}
+ body[data-pxview="queue"] .qtabs>*{flex:0 0 auto;scroll-snap-align:start;min-height:44px}
+ /* one column: the time reads first, then the post card at the full width of the page */
+ body[data-pxview="queue"] .qrow{grid-template-columns:minmax(0,1fr)!important;gap:6px}
+ body[data-pxview="queue"] .qrow>time{grid-column:1;padding-inline:4px;font-size:14px;line-height:20px;text-align:start}
+ body[data-pxview="queue"] .qrow>.qcard{grid-column:1}
+ body[data-pxview="queue"] .qa{max-width:none!important;justify-content:flex-start}
+ body[data-pxview="queue"] .qa>*{min-height:44px}
+ /* day headers stay pinned under the tab bar while their posts scroll by, like section headers in a native list */
+ body[data-pxview="queue"] .qday{position:sticky;top:53px;z-index:4;margin-inline:-16px;padding:8px 16px;background:var(--bg)}
+ /* touch feedback: no grey flash on tap, a short press state on cards and buttons, momentum and contained scrolling */
+ body[data-pxview="queue"] .qcard,body[data-pxview="queue"] .qtabs>*,body[data-pxview="queue"] .qa>*{-webkit-tap-highlight-color:transparent}
+ body[data-pxview="queue"] .qa>button:active,body[data-pxview="queue"] .qtabs>button:active{transform:scale(.97)}
+ #appmain{overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+}
+@media (max-width:599px) and (prefers-reduced-motion:reduce){
+ body[data-pxview="queue"] .qa>button:active,body[data-pxview="queue"] .qtabs>button:active{transform:none}
+}
+</style>

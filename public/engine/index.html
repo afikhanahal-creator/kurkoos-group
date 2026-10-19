@@ -3020,6 +3020,35 @@ input.v191h{position:absolute!important;width:1px!important;height:1px!important
 .v196sk i:first-child{height:28px;width:55%}
 @keyframes v196sh{from{background-position:100% 0}to{background-position:-100% 0}}
 @media (prefers-reduced-motion:reduce){.v196sk i{animation:none}}
+</style><style id="k198">
+/* ===== V198 · mobile native, pilot: the publishing queue (תור הפרסום). Phones only (up to 599px).
+   Only existing values: the 16px page gutter (12px of .appbody plus 4px of the view), the 44px touch target, the existing cards and tabs.
+   Nothing is added or removed; the same content is laid out the way a native app list reads. ===== */
+@media (max-width:599px){
+ /* the summary strip runs edge to edge and snaps card by card, the first card lines up with the page gutter */
+ body[data-pxview="queue"] .sumr{margin-inline:-16px!important;padding:2px 16px!important;scroll-padding-inline:16px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain}
+ body[data-pxview="queue"] .sumr>.s{scroll-snap-align:start;flex:0 0 156px}
+ body[data-pxview="queue"] .sumr::-webkit-scrollbar{display:none}
+ /* the tab bar stays under the header while the list scrolls, and scrolls sideways edge to edge */
+ body[data-pxview="queue"] .qtabs{position:sticky;top:0;z-index:5;margin-inline:-16px;padding-inline:16px;background:var(--bg);overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-inline:16px;overscroll-behavior-x:contain}
+ body[data-pxview="queue"] .qtabs::-webkit-scrollbar{display:none}
+ body[data-pxview="queue"] .qtabs>*{flex:0 0 auto;scroll-snap-align:start;min-height:44px}
+ /* one column: the time reads first, then the post card at the full width of the page */
+ body[data-pxview="queue"] .qrow{grid-template-columns:minmax(0,1fr)!important;gap:6px}
+ body[data-pxview="queue"] .qrow>time{grid-column:1;padding-inline:4px;font-size:14px;line-height:20px;text-align:start}
+ body[data-pxview="queue"] .qrow>.qcard{grid-column:1}
+ body[data-pxview="queue"] .qa{max-width:none!important;justify-content:flex-start}
+ body[data-pxview="queue"] .qa>*{min-height:44px}
+ /* day headers stay pinned under the tab bar while their posts scroll by, like section headers in a native list */
+ body[data-pxview="queue"] .qday{position:sticky;top:53px;z-index:4;margin-inline:-16px;padding:8px 16px;background:var(--bg)}
+ /* touch feedback: no grey flash on tap, a short press state on cards and buttons, momentum and contained scrolling */
+ body[data-pxview="queue"] .qcard,body[data-pxview="queue"] .qtabs>*,body[data-pxview="queue"] .qa>*{-webkit-tap-highlight-color:transparent}
+ body[data-pxview="queue"] .qa>button:active,body[data-pxview="queue"] .qtabs>button:active{transform:scale(.97)}
+ #appmain{overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+}
+@media (max-width:599px) and (prefers-reduced-motion:reduce){
+ body[data-pxview="queue"] .qa>button:active,body[data-pxview="queue"] .qtabs>button:active{transform:none}
+}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -28388,7 +28417,9 @@ const SVG=(d,w)=>`<svg width="${w||16}" height="${w||16}" viewBox="0 0 24 24" fi
 const IC={play:SVG('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',14),search:SVG('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
  wand:SVG('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1zM4 20l9-9M11 9l4 4"/>',15),layers:SVG('<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',14),
  clock:SVG('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',14),x:SVG('<path d="M6 6l12 12M18 6 6 18"/>',14)};
-let tabSaved='ads';try{tabSaved=localStorage.getItem('v194_tab')||'ads'}catch(e){}
+// the page always opens on their ads (all the posts). The tab is not remembered between visits, so a device
+// where the cards tab was once chosen does not keep hiding the posts behind it.
+let tabSaved='ads';try{localStorage.removeItem('v194_tab')}catch(e){}
 const S={tab:tabSaved==='comps'?'comps':'ads',sort:'top',fmt:'',comp:'',q:'',page:1,sig:''};
 const PAGE=24;
 const safeUrl=u=>{try{const x=new URL(String(u||''));return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}};
@@ -28479,7 +28510,7 @@ try{new MutationObserver(()=>{const g=G6();if(g&&g.S.open&&!document.getElementB
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v194]');if(!b)return;const a=b.dataset.v194;if(a==='q')return;e.preventDefault();e.stopPropagation();
- if(a==='tab'){S.tab=b.dataset.v==='comps'?'comps':'ads';try{localStorage.setItem('v194_tab',S.tab)}catch(x){}mount(true);return}
+ if(a==='tab'){S.tab=b.dataset.v==='comps'?'comps':'ads';mount(true);return}
  if(a==='view'){openCampaign(b.dataset.k);return}
  if(a==='clone'){try{V().openGen(b.dataset.id)}catch(x){}return}
  if(a==='more'){S.page++;mount(true);return}

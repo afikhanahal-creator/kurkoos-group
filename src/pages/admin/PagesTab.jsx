@@ -32,7 +32,7 @@ function statusOf(slug, pub, drafts) {
   const changed = d && (!p || JSON.stringify(d.layout) !== JSON.stringify(p.layout))
   if (changed) return { id: 'draft', label: p ? 'יש שינויים בטיוטה' : 'טיוטה, עוד לא פורסם' }
   if (p) return { id: 'live', label: 'באוויר מהעורך' }
-  return { id: 'code', label: 'מוכן לעריכה' }
+  return { id: 'code', label: 'עוד לא נערך' }
 }
 
 /* תצוגה חיה וזעירה של העמוד: נטענת רק כשהכרטיס נכנס למסך */
@@ -88,6 +88,8 @@ export default function PagesTab({ onNavigate }) {
 
   return (
     <div className="pe-board" dir="rtl">
+      {/* כשהעורך פתוח, הלוח שמאחוריו לא נגיש למקלדת ולקוראי מסך */}
+      <div className="pe-board__inner" inert={open ? '' : undefined}>
       <div className="pe-kpis">
         {[['all', 'כל העמודים', all.length, 'מוכנים לעריכה בעורך'], ['live', 'באוויר מהעורך', stats.live, 'פורסמו לפחות פעם אחת'], ['draft', 'טיוטות', stats.draft, 'יש שינויים שמחכים לפרסום'], ['code', 'עוד לא נערכו', stats.code, 'מוצגים כמו היום, מהקוד']].map(([id, label, n, sub]) => (
           <button key={id} type="button" className={`pe-kpi pe-kpi--${id}${filter === id ? ' is-on' : ''}`} onClick={() => setFilter(filter === id && id !== 'all' ? 'all' : id)} aria-pressed={filter === id}>
@@ -127,7 +129,7 @@ export default function PagesTab({ onNavigate }) {
               <div className={view === 'cards' ? 'pe-cards' : 'pe-list'}>
                 {rows.map(([slug, label]) => {
                   const st = statusOf(slug, pub, drafts)
-                  const when = pub[slug] ? `פורסם ${fmt(pub[slug].published_at)} · גרסה ${pub[slug].version}` : drafts[slug] ? `טיוטה מ ${fmt(drafts[slug].updated_at)}` : 'עוד לא נערך בעורך'
+                  const when = pub[slug] ? `פורסם ${fmt(pub[slug].published_at)} · גרסה ${pub[slug].version}` : drafts[slug] ? `טיוטה מ ${fmt(drafts[slug].updated_at)}` : 'מוצג באתר כמו היום'
                   return (
                     <article className="pe-card" key={slug}>
                       {view === 'cards' && <Thumb slug={slug} label={label} onOpen={() => setOpen(slug)} />}
@@ -154,6 +156,7 @@ export default function PagesTab({ onNavigate }) {
         )
       })}
 
+      </div>
       {open && (
         <Suspense fallback={<div className="pe-loading"><span className="adm-spin" />פותח את העורך…</div>}>
           <PageEditor

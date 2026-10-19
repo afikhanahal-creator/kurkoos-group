@@ -29,7 +29,7 @@
 }
 
 /* ---------- הלוח ---------- */
-.pe-board { display: grid; gap: 26px; }
+.pe-board, .pe-board__inner { display: grid; gap: 26px; }
 
 .pe-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .pe-kpi {

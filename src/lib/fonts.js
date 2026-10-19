@@ -103,17 +103,40 @@ export function applyFonts(settings = {}) {
    נשמר ב-site_settings תחת 'type_scale' (JSON). ערך ריק = ברירת
    המחדל של העיצוב — כלום לא משתנה עד שבוחרים ערך במפורש.
    ============================================================ */
+/* spec: מה שהאתר מציג היום, נמדד בדפדפן ב-19.10.2026 על 21 עמודים ברוחב מחשב (1440) ונייד (390).
+   d = גודל במחשב, m = גודל בנייד, w = המשקל שהאתר מבקש, fam = פונט הכותרות או פונט הגוף.
+   where = איפה הרמה הזו מופיעה באתר בפועל. */
 export const TYPE_LEVELS = [
-  { key: 'hero',  label: 'כותרת ענק (Hero)', tag: 'Hero', cssVar: '--fs-hero',    sample: 'בונים את הבית הבא שלכם' },
-  { key: 'h1',    label: 'כותרת ראשית',      tag: 'H1',   cssVar: '--fs-h1',      selector: 'h1',  sample: 'כותרת ראשית לדוגמה' },
-  { key: 'h2',    label: 'כותרת מקטע',       tag: 'H2',   cssVar: '--fs-h2',      selector: 'h2',  sample: 'כותרת מקטע לדוגמה' },
-  { key: 'h3',    label: 'תת-כותרת',         tag: 'H3',   cssVar: '--fs-h3',      selector: 'h3',  sample: 'תת-כותרת לדוגמה' },
-  { key: 'h4',    label: 'כותרת קטנה',       tag: 'H4',   selector: 'h4',         sample: 'כותרת קטנה לדוגמה' },
-  { key: 'h5',    label: 'כותרת זעירה',      tag: 'H5',   selector: 'h5',         sample: 'כותרת זעירה לדוגמה' },
-  { key: 'lead',  label: 'טקסט מוביל',       tag: 'Lead', cssVar: '--fs-body-lg', sample: 'משפט פתיחה שמוביל את הקורא פנימה.' },
-  { key: 'body',  label: 'טקסט רץ (גוף)',    tag: 'P',    cssVar: '--fs-body',    selector: 'body', sample: 'טקסט רץ רגיל של פסקאות התוכן באתר.' },
-  { key: 'small', label: 'טקסט קטן',         tag: 'Small', cssVar: '--fs-small',  sample: 'הערות שוליים ותוויות קטנות.' },
+  { key: 'hero',  label: 'כותרת ענק (Hero)', tag: 'Hero', cssVar: '--fs-hero',    targets: '.hero__title,.hl-hero__title,.division-hero__title,.cx-hero__title', sample: 'בונים את הבית הבא שלכם',
+    spec: { d: 68, m: 46.4, w: 900, lh: 1.05, ls: -0.02, fam: 'heading', where: 'פתיחת עמוד הבית, החטיבות ועמודי הנחיתה' } },
+  { key: 'h1',    label: 'כותרת ראשית',      tag: 'H1',   cssVar: '--fs-h1',      selector: 'h1',  targets: '.page-header__title,.hero-collage__title,.story__title', sample: 'כותרת ראשית לדוגמה',
+    spec: { d: 56, m: 36.8, w: 800, lh: 1.08, ls: -0.02, fam: 'heading', where: 'כותרת העמוד באודות, צוות, קריירה, בלוג, מדריכים' } },
+  { key: 'h2',    label: 'כותרת מקטע',       tag: 'H2',   cssVar: '--fs-h2',      selector: 'h2',  targets: '.section-title', sample: 'כותרת מקטע לדוגמה',
+    spec: { d: 35.2, m: 31.2, w: 900, lh: 1.12, ls: -0.018, fam: 'heading', where: 'כותרות הסקשנים בכל העמודים' } },
+  { key: 'h3',    label: 'תת-כותרת',         tag: 'H3',   cssVar: '--fs-h3',      selector: 'h3',  sample: 'תת-כותרת לדוגמה',
+    spec: { d: 20.8, m: 20.8, w: 900, lh: 1.25, ls: -0.01, fam: 'heading', where: 'כותרות כרטיסים: פרויקטים, כתבות, שלבים' } },
+  { key: 'h4',    label: 'כותרת קטנה',       tag: 'H4',   selector: 'h4',         sample: 'כותרת קטנה לדוגמה',
+    spec: { d: 16.8, m: 16.8, w: 700, lh: 1.3, ls: 0, fam: 'heading', where: 'מעט מאוד מקומות' } },
+  { key: 'h5',    label: 'כותרת זעירה',      tag: 'H5',   selector: 'h5',         sample: 'כותרת זעירה לדוגמה',
+    spec: { d: 13.3, m: 13.3, w: 900, lh: 1.3, ls: 0, fam: 'heading', where: 'לא בשימוש כרגע' } },
+  { key: 'lead',  label: 'טקסט מוביל',       tag: 'Lead', cssVar: '--fs-body-lg', targets: '.section-lead', sample: 'משפט פתיחה שמוביל את הקורא פנימה.',
+    spec: { d: 18.4, m: 18.4, w: 400, lh: 1.65, ls: 0, fam: 'body', where: 'הפסקה שמתחת לכותרות הסקשנים' } },
+  { key: 'body',  label: 'טקסט רץ (גוף)',    tag: 'P',    cssVar: '--fs-body',    selector: 'body', sample: 'טקסט רץ רגיל של פסקאות התוכן באתר.',
+    spec: { d: 16, m: 16, w: 400, lh: 1.65, ls: 0, fam: 'body', where: 'כל הפסקאות, הכתבות והטפסים' } },
+  { key: 'small', label: 'טקסט קטן',         tag: 'Small', cssVar: '--fs-small',  selector: 'small', sample: 'הערות שוליים ותוויות קטנות.',
+    spec: { d: 13.3, m: 13.3, w: 400, lh: 1.6, ls: 0, fam: 'body', where: 'תאריכים, הערות, תוויות בכרטיסים' } },
 ]
+/* המשקלים שקבצי הפונט באמת כוללים. Heebo נטען מ-Google כפונט משתנה, כל משקל קיים.
+   Almoni מותקן בשלושה קבצים: 300, 400 (מוצג גם כ-500) ו-700 (מוצג גם כ-600 עד 900). */
+export const FONT_FILES = {
+  Heebo: { source: 'Google Fonts, פונט משתנה', weights: { 300: 300, 400: 400, 500: 500, 600: 600, 700: 700, 800: 800, 900: 900 } },
+  Almoni: { source: 'קבצים באתר (public/fonts)', weights: { 300: 300, 400: 400, 500: 400, 600: 700, 700: 700, 800: 700, 900: 700 } },
+}
+/* חלק המשקלים מכל הטקסט באתר, לפי מספר התווים שמוצגים במחשב (19.10.2026) */
+export const WEIGHT_USAGE = {
+  Almoni: { 400: 71.4, 600: 5.1, 700: 1.2, 500: 0.1, 800: 0.1 },
+  Heebo: { 700: 9.1, 900: 6.7, 600: 3.8, 800: 1.6, 500: 0.5, 400: 0.2 },
+}
 export const TYPE_WEIGHTS = [300, 400, 500, 600, 700, 800, 900]
 
 export function parseTypeScale(v) {
@@ -128,19 +151,22 @@ export function applyTypeScale(settings = {}) {
   if (typeof document === 'undefined') return
   const scale = parseTypeScale(settings.type_scale)
   const root = document.documentElement
-  let css = ''
+  let desk = ''
+  let all = ''
   TYPE_LEVELS.forEach((lvl) => {
     const cfg = scale[lvl.key] || {}
     const size = Number(cfg.size) > 0 ? Number(cfg.size) : null
     const weight = Number(cfg.weight) > 0 ? Number(cfg.weight) : null
-    if (lvl.cssVar) {
-      if (size) root.style.setProperty(lvl.cssVar, `${size}px`)
-      else root.style.removeProperty(lvl.cssVar)
-    } else if (lvl.selector && size) {
-      css += `${lvl.selector}{font-size:${size}px !important;}\n`
+    if (lvl.cssVar) root.style.removeProperty(lvl.cssVar)   // older versions set the variable inline on every screen
+    const sel = [lvl.selector, lvl.targets].filter(Boolean).join(',')
+    // הגודל שנבחר הוא הגודל במחשב, ומוחל מ-981 פיקסלים ומעלה. בנייד נשאר הגודל של העיצוב.
+    if (size) {
+      if (lvl.cssVar) desk += `:root{${lvl.cssVar}:${size}px}`
+      if (sel && lvl.key !== 'body') desk += `${sel}{font-size:${size}px !important}`
     }
-    if (weight && lvl.selector) css += `${lvl.selector}{font-weight:${weight} !important;}\n`
+    if (weight && sel) all += `${sel}{font-weight:${weight} !important}\n`
   })
+  const css = (desk ? `@media (min-width: 981px){${desk}}\n` : '') + all
   let style = document.getElementById('cms-type-scale')
   if (css) {
     if (!style) {

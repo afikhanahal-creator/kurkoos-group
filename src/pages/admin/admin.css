@@ -2725,3 +2725,53 @@
 .adm-qs__list li span { font-size: 0.82rem; color: #5f6b80; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-qs__none { color: #5f6b80; cursor: default !important; }
 .adm-qs__foot { margin: 0; padding: 10px 16px; border-top: 1px solid #e3e7ee; font-size: 0.78rem; color: #5f6b80; background: #f7f8fa; }
+
+/* ============================================================
+   הסולם הטיפוגרפי, גרסה 2: כל שורה בגודל האמיתי באתר
+   ============================================================ */
+.tsc .tsc__head-actions { flex-wrap: wrap; }
+.tsc__view { display: flex; padding: 3px; border-radius: 10px; background: var(--adm-bg); }
+.tsc__view button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-weight: 700; font-size: 0.85rem; color: var(--adm-muted); cursor: pointer; }
+.tsc__view button.is-on { background: var(--adm-surface); color: var(--adm-ink); box-shadow: var(--adm-shadow-sm); }
+.tsc .tsc__row { display: block; padding: 1.1rem 0 1.2rem; }
+.tsc .tsc__row.is-changed { background: linear-gradient(90deg, transparent, rgba(201, 138, 4, 0.06)); }
+.tsc__rowhead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; }
+.tsc .tsc__tag { min-width: 56px; padding-inline: 8px; }
+.tsc .tsc__label { font-weight: 800; color: var(--adm-ink); font-size: 0.95rem; }
+.tsc__spec { font-size: 0.82rem; color: var(--adm-muted); font-variant-numeric: tabular-nums; }
+.tsc__spec b { color: var(--adm-ink); }
+.tsc__warn, .tsc__chg { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+.tsc__warn { background: #fdf1d8; color: #7a5300; }
+.tsc__chg { background: #e3eef4; color: #0f4d66; }
+.tsc .tsc__preview {
+  display: block; margin: 0.6rem 0 0.3rem; color: var(--adm-ink); max-width: none;
+  overflow-wrap: anywhere; white-space: normal; text-overflow: clip; overflow: visible;
+}
+.tsc__where { margin: 0 0 0.7rem; font-size: 0.8rem; color: var(--adm-muted); }
+.tsc__controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.7rem; }
+.tsc__controls .tsc__field { min-width: 150px; }
+.tsc .tsc__row-reset { width: auto; height: auto; min-height: 38px; padding: 0 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; }
+
+.wmap__text { flex: 1 1 260px; max-width: 420px; }
+.wmap__text input { width: 100%; }
+.wmap__fam + .wmap__fam { margin-top: 1.2rem; }
+.wmap__name { font-size: 1rem; font-weight: 800; color: var(--adm-ink); margin: 0 0 0.4rem; }
+.wmap__name small { font-weight: 500; font-size: 0.8rem; color: var(--adm-muted); margin-inline-start: 0.4rem; }
+.wmap__list { list-style: none; margin: 0; padding: 0; }
+.wmap__row { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid var(--adm-border); }
+.wmap__row:last-child { border-bottom: 0; }
+.wmap__w { font-size: 0.85rem; color: var(--adm-muted); }
+.wmap__w b { color: var(--adm-ink); font-size: 1rem; margin-inline-end: 4px; }
+.wmap__sample { font-size: 32px; line-height: 1.25; color: var(--adm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wmap__meta { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.wmap__badge, .wmap__use { font-style: normal; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.wmap__badge { background: #dcf3e8; color: #13623f; }
+.wmap__badge--faux { background: #fdf1d8; color: #7a5300; }
+.wmap__use { background: var(--adm-bg); color: var(--adm-ink); }
+.wmap__use--none { color: var(--adm-muted); font-weight: 500; }
+.wmap__row.is-faux .wmap__sample { opacity: 0.75; }
+@media (max-width: 760px) {
+  .wmap__row { grid-template-columns: 1fr; gap: 0.3rem; }
+  .wmap__meta { justify-content: flex-start; }
+  .wmap__sample { font-size: 26px; white-space: normal; }
+}

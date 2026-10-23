@@ -5,6 +5,7 @@ s=open(P,encoding='utf8').read()
 # V204: the video editing studio tab. JS before the V83 marker (after V202), styles before <style id="k150">.
 # Runs after build203, and again on its own output.
 js=open(os.path.join(H,'v204.js'),encoding='utf8').read().strip('\n')
+js=js.replace('__LOGOS__',open(os.path.join(H,'v202logos.json'),encoding='utf8').read().strip())
 A,Z='/*V204:START*/','/*V204:END*/'
 if A in s:
     i=s.index(A);j=s.index(Z,i)+len(Z);s=s[:i]+js+s[j:]

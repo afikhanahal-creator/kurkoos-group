@@ -402,6 +402,8 @@
     status: () => mcCall('status'),
   }
 
+  // the video studio calls site routes of its own (/api/transcribe) with the same admin session
+  window.__engineToken = token
   const SERVICES = { db, assets, sample, downloads, mcp }
   window.claude = { use: async (name) => (readSession() ? SERVICES[name] || null : null) }
 

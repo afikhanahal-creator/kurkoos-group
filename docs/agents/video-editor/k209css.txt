@@ -1,0 +1,28 @@
+<style id="k209">
+/* ===== V209 · the template library ===== */
+.v209{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;font-family:Almoni,Heebo,Arial,sans-serif;color:#07293a;padding-bottom:80px}
+.v209 :focus-visible{outline:3px solid #a90b0c;outline-offset:2px}
+.v209sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.v209bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.v209q{flex:1 1 300px;display:grid}.v209q input{min-height:46px;border:1px solid #c9d8e0;border-radius:12px;padding:0 14px;font:inherit;font-size:16px;background:#fff;color:#07293a}
+.v209fl{display:grid;gap:4px;font-size:13px;font-weight:700;color:#4a6575}.v209fl select{min-height:44px;border:1px solid #c9d8e0;border-radius:12px;padding:0 10px;font:inherit;font-size:15px;background:#fff;color:#07293a}
+.v209b{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid #c9d8e0;background:#fff;color:#07293a;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.v209b.pri{background:#07293a;border-color:#07293a;color:#fff}.v209b.pri:hover{background:#105572}.v209b.ghost{border-color:transparent;background:none;color:#105572;text-decoration:underline;text-underline-offset:3px}
+.v209cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.v209cats button{flex:none;min-height:42px;padding:0 14px;border-radius:999px;border:1px solid #dfe8ed;background:#fff;color:#4a6575;font:inherit;font-size:15px;font-weight:800;cursor:pointer}.v209cats [aria-selected=true]{background:#07293a;border-color:#07293a;color:#fff}
+.v209hint{margin:0;font-size:14px;color:#4a6575;line-height:1.5}.v209cnt{margin:0;font-size:14px;color:#4a6575}
+.v209grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+.v209c{display:grid;grid-template-rows:auto 1fr;background:#fff;border:1px solid #e3eaee;border-radius:16px;overflow:hidden}
+.v209pv{position:relative;display:block;padding:0;border:0;background:#e7eff3;cursor:zoom-in;aspect-ratio:4/5}.v209pv canvas{display:block;width:100%;height:100%}
+.v209new{position:absolute;top:10px;inset-inline-start:10px;padding:3px 10px;border-radius:999px;background:#a90b0c;color:#fff;font-size:13px;font-weight:800}
+.v209in{display:grid;gap:4px;padding:12px;align-content:start}.v209t{display:flex;gap:6px;align-items:start;justify-content:space-between}.v209in h3{margin:0;font-size:16px;font-weight:900;line-height:1.3}.v209in p{margin:0;font-size:13px;color:#4a6575}.v209r{color:#105572!important;font-weight:700}
+.v209in .v209b{margin-top:6px}
+.v209fav{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid #dfe8ed;background:#fff;color:#a90b0c;font-size:20px;cursor:pointer}
+.v209more{justify-self:center;min-height:48px;padding:0 24px;border-radius:14px;border:1px solid #c9d8e0;background:#fff;font:inherit;font-size:15px;font-weight:800;cursor:pointer;color:#07293a}
+.v209empty{display:grid;gap:8px;justify-items:center;text-align:center;padding:40px 16px;border-radius:18px;background:#f7f8fa;border:1px dashed #c9d8e0}.v209empty h2{margin:0;font-size:20px}.v209empty p{margin:0;color:#4a6575}
+.v209modal{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center}.v209bk{position:absolute;inset:0;background:rgba(7,41,58,.6)}
+.v209modal section{position:relative;display:grid;gap:10px;justify-items:center;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:16px;border-radius:18px;background:#fff}
+.v209modal header{display:flex;justify-content:space-between;align-items:center;width:100%}.v209modal h2{margin:0;font-size:20px}.v209modal canvas{width:100%;height:auto;aspect-ratio:4/5;border-radius:10px;background:#e7eff3}.v209modal p{margin:0;font-size:14px;color:#4a6575;text-align:center}
+.v209ib{width:44px;height:44px;border-radius:12px;border:1px solid #dfe8ed;background:#fff;font-size:18px;cursor:pointer}.v209row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+@media (max-width:640px){.v209grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v209in{padding:8px}.v209in h3{font-size:14px}.v209in p:not(.v209r){display:none}.v209bar .v209fl{flex:1 1 30%}.v209fl select{width:100%}}
+</style>

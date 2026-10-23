@@ -6,7 +6,7 @@
 if(window.__v211)return;window.__v211=1;
 const C27=__C27__;
 function add(){const T=window.TPL;if(!T||!T.register)return false;T.fam.c27='שכפול ממתחרים 2026';if(T.famNote)T.famNote.c27='עיצובים שנבנו אחד לאחד לפי מודעות אמיתיות של יזמים מובילים מספריית המודעות של Meta, בצבעים ובפונט של קורקוס';
-  let n=0;C27.forEach(d=>{if(T.register({id:d.id,fam:'c27',name:d.name,theme:d.theme,el:d.el,cats:(d.cats||[]).concat(['cmp']),themable:false,tags:{ct:d.cats||[],st:['competitor']}})){n++;if(T.meta[d.id])T.meta[d.id].src=d.src}});window.__v211.n=n;return true}
+  let n=0;C27.forEach(d=>{const ph=d.el.filter(e=>/photo/.test(e.t));const shots=ph.length?Math.max(...ph.map(e=>e.s||0))+1:0;if(T.register({shots,id:d.id,fam:'c27',name:d.name,theme:d.theme,el:d.el,cats:(d.cats||[]).concat(['cmp']),themable:false,tags:{ct:d.cats||[],st:['competitor']}})){n++;if(T.meta[d.id])T.meta[d.id].src=d.src}});window.__v211.n=n;return true}
 window.__v211={n:0,C27};(function boot(){if(!add())setTimeout(boot,400)})();
 })();
 /*V211:END*/

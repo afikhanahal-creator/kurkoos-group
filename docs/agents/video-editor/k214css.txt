@@ -1,0 +1,14 @@
+<style id="k214">
+/* ===== V214 · video from a prompt, quick actions and the guide strip in the studio ===== */
+.v214gen{display:grid;gap:10px;padding:14px;border-radius:14px;background:var(--b1);border:1px solid var(--ln)}
+.v214hd{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}.v214hd b{font-size:16px}
+.v214gen form{display:grid;gap:10px}.v214row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.v214fl{display:grid;gap:4px;font-size:12.5px;color:var(--mu);font-weight:700;flex:1 1 160px}.v214fl textarea,.v214fl select{min-height:40px;background:var(--b0);border:1px solid var(--ln);border-radius:9px;color:var(--tx);font:inherit;font-size:14px;padding:0 10px;width:100%;box-sizing:border-box}.v214fl textarea{padding:8px 10px;resize:vertical;line-height:1.5}
+.v214pick{display:flex;gap:6px;align-items:center}.v214pick img{width:44px;height:44px;object-fit:cover;border-radius:8px}
+.v214err{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;border-radius:10px;background:#3a1518;color:#ffd0d2;font-size:13px}
+.v214jobs{display:grid;gap:6px}.v214job{display:grid;gap:4px;padding:8px 10px;border-radius:10px;background:var(--b2)}.v214job b{font-size:13px}.v214job small{font-size:12px}.v214job .v204b{justify-self:start;min-height:30px;font-size:12px}
+.v214qa{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin}
+.v214qa button{flex:none;display:grid;gap:1px;min-width:124px;text-align:start;padding:7px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--b2);color:var(--tx);font:inherit;cursor:pointer}.v214qa button:hover{border-color:var(--ac)}.v214qa b{font-size:13.5px}.v214qa small{font-size:11px;color:var(--mu)}
+.v214help{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:12px;background:#12303f;border:1px solid #1d6f95;font-size:13px;line-height:1.5}.v214help p{margin:0;flex:1 1 320px}
+@media (max-width:640px){.v214qa button{min-width:112px;padding:6px 10px}.v214qa small{display:none}}
+</style>

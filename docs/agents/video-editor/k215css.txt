@@ -1,0 +1,11 @@
+<style id="k215">
+/* ===== V215 · connections card and chip ===== */
+.v215{display:grid;gap:8px;margin-bottom:18px}
+.v215rows{display:grid;gap:6px}
+.v215row{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #dfe8ed}
+.v215row i{width:12px;height:12px;border-radius:50%;background:#c9d8e0}.v215row.on i{background:#1e7a4e}.v215row.off i{background:#c7772a}
+.v215row b{font-size:14px}.v215row small{display:block;font-size:12.5px;color:#4a6575;line-height:1.5}.v215row code{font-size:12px;background:#f2f6f8;padding:1px 5px;border-radius:5px;direction:ltr;display:inline-block}
+.v215row em{display:block;font-style:normal;font-size:12.5px;font-weight:800}.v215row em.ok{color:#1e7a4e}.v215row em.bad{color:#a90b0c}
+.v215ok{margin:0;padding:10px 12px;border-radius:12px;background:#e7f4ec;color:#1e6b44;font-size:14px;line-height:1.5}.v215bad{margin:0;color:#a90b0c;font-size:13px}
+.v215chip{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:800;background:#eef2f4;color:#4a6575}.v215chip.on{background:#e7f4ec;color:#1e6b44}.v215chip.off{background:#fff4e0;color:#7a4700}
+</style>

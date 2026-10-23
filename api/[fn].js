@@ -13,6 +13,8 @@
 //   POST /api/claude         (מנוע התוכן: Claude)
 //   POST /api/engine-image   (מנוע התוכן: סטודיו התמונות)
 //   POST /api/metricool      (מנוע התוכן: תזמון לערוצים דרך Metricool, תמיד כטיוטה)
+//   POST /api/video-gen      (מנוע התוכן: יצירת וידאו מפרומפט, משימה אסינכרונית)
+//   GET  /api/status         (מנוע התוכן: אילו שירותים מחוברים, בלי סודות)
 //   GET  /api/sitemap        (וגם /sitemap.xml דרך rewrite)
 //   GET  /api/indexnow       (cron יומי, מודיע ל-Bing על עמודים חדשים)
 //
@@ -33,6 +35,8 @@ const ROUTES = {
   'article-images': () => import('../server/article-images.js'),
   transcribe: () => import('../server/transcribe.js'),
   tts: () => import('../server/tts.js'),
+  'video-gen': () => import('../server/video-gen.js'),
+  status: () => import('../server/status.js'),
 }
 
 /* שם המטפל מגיע מהסגמנט הדינמי של הנתיב. יש גיבוי לקריאה מתוך

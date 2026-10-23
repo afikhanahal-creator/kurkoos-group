@@ -1,0 +1,7 @@
+<style id="k210">
+.v210st{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border-radius:999px;font-family:Almoni,Heebo,Arial,sans-serif;font-size:13px;font-weight:800;white-space:nowrap}
+.v210st::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.v210st.ok{background:#e7f4ec;color:#1e6b44}.v210st.dirty{background:#fff4e0;color:#7a4700}
+@media (max-width:640px){.v210st{font-size:0;padding:0 8px;min-height:24px}.v210st::before{width:10px;height:10px}}
+.v210hi{outline:3px solid #a90b0c!important;outline-offset:2px;transition:outline-color .3s}
+</style>

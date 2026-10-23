@@ -3527,6 +3527,12 @@ html.v202-on,html.v202-on body{overflow:hidden}
 .v209modal header{display:flex;justify-content:space-between;align-items:center;width:100%}.v209modal h2{margin:0;font-size:20px}.v209modal canvas{width:100%;height:auto;aspect-ratio:4/5;border-radius:10px;background:#e7eff3}.v209modal p{margin:0;font-size:14px;color:#4a6575;text-align:center}
 .v209ib{width:44px;height:44px;border-radius:12px;border:1px solid #dfe8ed;background:#fff;font-size:18px;cursor:pointer}.v209row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 @media (max-width:640px){.v209grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v209in{padding:8px}.v209in h3{font-size:14px}.v209in p:not(.v209r){display:none}.v209bar .v209fl{flex:1 1 30%}.v209fl select{width:100%}}
+</style><style id="k210">
+.v210st{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border-radius:999px;font-family:Almoni,Heebo,Arial,sans-serif;font-size:13px;font-weight:800;white-space:nowrap}
+.v210st::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.v210st.ok{background:#e7f4ec;color:#1e6b44}.v210st.dirty{background:#fff4e0;color:#7a4700}
+@media (max-width:640px){.v210st{font-size:0;padding:0 8px;min-height:24px}.v210st::before{width:10px;height:10px}}
+.v210hi{outline:3px solid #a90b0c!important;outline-offset:2px;transition:outline-color .3s}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -30748,9 +30754,9 @@ function slotAt(pt){if(!pt||SL.id!==(PE.p&&PE.p.id))return null;for(let i=SL.lis
 function v53img(){try{const S=window.__v53&&__v53.SEL;const arr=Array.isArray(S)?S:S&&S.items?S.items:S?[S]:[];if(arr.length!==1)return null;const it=arr[0];const o=it&&it.o;if(o&&o.type==='image')return {it,o:(PE.p.fx.objs||[]).find(x=>x.id===o.id)||o};return null}catch(e){return null}}
 function v53any(){try{const S=window.__v53&&__v53.SEL;return Array.isArray(S)?S.length>0:!!(S&&(S.items?S.items.length:true))}catch(e){return false}}
 const TB={on:null,down:null};
-document.addEventListener('pointerdown',e=>{if(e.target.id!=='pe-cv'||!canEdit())return;const pt=toT(e);TB.down={x:e.clientX,y:e.clientY,t:Date.now()};const hit=slotAt(pt);if(hit){const i=slotIndex(hit.s);if(i>=0&&PE.slot!==i){PE.slot=i}}},true);
-document.addEventListener('pointerup',e=>{if(e.target.id!=='pe-cv'||!canEdit()||!TB.down)return;const d=TB.down;TB.down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5)return;const pt=toT(e);setTimeout(()=>{const im=v53img();if(im){TB.on={kind:'layer',id:im.o.id};paintSel();return}if(v53any()){TB.on=null;paintSel();return}const hit=slotAt(pt);TB.on=hit?{kind:'slot',s:hit.s,i:slotIndex(hit.s)}:null;paintSel()},40)},true);
-document.addEventListener('pointermove',e=>{if(e.target.id!=='pe-cv'||!canEdit()||e.buttons)return;const hit=slotAt(toT(e));const h=$('#v206hov');if(!hit||(TB.on&&TB.on.kind==='slot'&&TB.on.s===hit.s)){if(h)h.hidden=true;return}place(h||mkHov(),hit.box,true)},true);
+window.addEventListener('pointerdown',e=>{if(e.target.id!=='pe-cv'||!canEdit())return;const pt=toT(e);TB.down={x:e.clientX,y:e.clientY,t:Date.now()};const hit=slotAt(pt);if(hit){const i=slotIndex(hit.s);if(i>=0&&PE.slot!==i){PE.slot=i}}},true);
+window.addEventListener('pointerup',e=>{if(e.target.id!=='pe-cv'||!canEdit()||!TB.down)return;const d=TB.down;TB.down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5)return;const pt=toT(e);setTimeout(()=>{const im=v53img();if(im){TB.on={kind:'layer',id:im.o.id};paintSel();return}if(v53any()){TB.on=null;paintSel();return}const hit=slotAt(pt);TB.on=hit?{kind:'slot',s:hit.s,i:slotIndex(hit.s)}:null;paintSel()},40)},true);
+window.addEventListener('pointermove',e=>{if(e.target.id!=='pe-cv'||!canEdit()||e.buttons)return;const hit=slotAt(toT(e));const h=$('#v206hov');if(!hit||(TB.on&&TB.on.kind==='slot'&&TB.on.s===hit.s)){if(h)h.hidden=true;return}place(h||mkHov(),hit.box,true)},true);
 function mkHov(){const h=document.createElement('div');h.id='v206hov';h.className='v206hov';h.setAttribute('aria-hidden','true');(cv().parentElement||document.body).appendChild(h);return h}
 function place(el,b,hov){const c=cv();if(!c||!el)return;const host=el.parentElement;const r=c.getBoundingClientRect(),hr=host.getBoundingClientRect();const k=r.width/TW;Object.assign(el.style,{left:(r.left-hr.left+b.x*k)+'px',top:(r.top-hr.top+b.y*TH*k/TH)+'px',width:(b.w*k)+'px',height:(b.h*k)+'px'});el.hidden=false}
 function paintSel(){const c=cv();let box=$('#v206sel'),tb=$('#v206tb');if(!c||!TB.on||!PE.p||!canEdit()){if(box)box.hidden=true;if(tb)tb.hidden=true;return}const host=c.parentElement;if(getComputedStyle(host).position==='static')host.style.position='relative';
@@ -31101,6 +31107,27 @@ try{render=(f=>function(){const bk=document.getElementById('v209back');if(typeof
 window.__v209={L,K,register,filtered,useTpl,sample,ADDED:()=>ADDED};
 })();
 /*V209:END*/
+
+/*V210:START*/
+// ================= V210 · the editor always says whether the work is saved: a status next to the title ("כל השינויים נשמרו" or
+// "יש שינויים שלא נשמרו", with the time of the device draft), and a warning before leaving the page with unsaved changes. =================
+(()=>{
+if(window.__v210)return;window.__v210=1;
+const snap=p=>{try{return JSON.stringify(['layout','visual','fx','fb','ig','hook','photoKey','series'].map(k=>p&&p[k]))}catch(e){return ''}};
+let last='',T=0;
+function dirty(){try{return !!(PE.p&&PE.orig&&snap(PE.p)!==snap(PE.orig))}catch(e){return false}}
+function tick(){const top=document.querySelector('.pe-top');if(!top||typeof PE==='undefined'||!PE.p)return;let b=top.querySelector('#v210st');if(!b){b=document.createElement('span');b.id='v210st';b.className='v210st';b.setAttribute('role','status');const ref=top.querySelector('[data-v206e="replaceAny"]')||top.querySelector('[data-pe-a="close"]');ref&&ref.nextSibling?top.insertBefore(b,ref.nextSibling):top.appendChild(b)}
+  const d=dirty();const txt=d?'יש שינויים שלא נשמרו':'כל השינויים נשמרו';if(txt!==last){last=txt;b.textContent=txt;b.className='v210st '+(d?'dirty':'ok');b.title=d?'שמירה (Ctrl+S) מעדכנת את הפוסט. בינתיים טיוטה נשמרת במכשיר כל כמה שניות':'הפוסט שמור'}}
+setInterval(tick,900);
+// a click on the design moves the keyboard to the design: Delete, arrows and [ ] then act on the selected element, not on the text field
+const onDesign=t=>{const cv=document.getElementById('pe-cv');return !!(cv&&t&&t.closest&&!t.closest('input,textarea,select,button')&&(t===cv||(cv.parentElement&&cv.parentElement.contains(t))))};
+window.addEventListener('pointerdown',e=>{if(!onDesign(e.target))return;const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!a.closest('#v53edit,.v53edit'))a.blur()},true);
+// clicking a text on the design shows its field in the panel (scrolled and marked) but leaves the keyboard on the design
+window.addEventListener('pointerup',e=>{if(!onDesign(e.target))return;setTimeout(()=>{const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&a.closest('.pe-body')&&!a.closest('#v53edit,.v53edit')){a.classList.add('v210hi');setTimeout(()=>a.classList.remove('v210hi'),1600);a.blur()}},80)},true);
+window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.returnValue=''}});
+window.__v210={dirty};
+})();
+/*V210:END*/
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

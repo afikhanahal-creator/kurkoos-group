@@ -31,6 +31,7 @@ const ROUTES = {
   sitemap: () => import('../server/sitemap.js'),
   indexnow: () => import('../server/indexnow.js'),
   'article-images': () => import('../server/article-images.js'),
+  transcribe: () => import('../server/transcribe.js'),
 }
 
 /* שם המטפל מגיע מהסגמנט הדינמי של הנתיב. יש גיבוי לקריאה מתוך

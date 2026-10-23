@@ -3365,6 +3365,56 @@ html.v202-on,html.v202-on body{overflow:hidden}
 .v205.lc .v205left,.v205.rc .v205right{display:none}
 @media (max-width:1100px){.v205work{flex-wrap:wrap}.v205mid{flex:1 1 100%;order:-1}.v205split:not(.h){display:none}.v205right,.v205left{flex:1 1 320px;max-height:520px}}
 @media (max-width:599px){.v205right,.v205left{flex-basis:100%}.v205tg{border:0;padding:0}.v205sel i{width:20px;height:20px}.v205sel [data-h=nw]{top:-11px;left:-11px}.v205sel [data-h=se]{bottom:-11px;right:-11px}.v205sel [data-h=ne]{top:-11px;right:-11px}.v205sel [data-h=sw]{bottom:-11px;left:-11px}.v205sel [data-h=e],.v205sel [data-h=w]{margin-top:-10px}.v205stg{min-height:240px}.v205stg canvas{max-height:58vh}.v205card.fx{grid-column:auto}.v204ib{width:44px;height:44px}.v205ln{min-height:44px}.v205sga button{min-width:44px;min-height:44px}}
+</style><style id="k206">
+/* ===== V206 · the image picker sheet and the photo toolbar in the editor ===== */
+.v206pk{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;font-family:Almoni,Heebo,Arial,sans-serif;direction:rtl}
+.v206lock{overflow:hidden}
+.v206bk{position:absolute;inset:0;background:rgba(7,41,58,.55)}
+.v206sh{position:relative;width:min(1080px,calc(100vw - 32px));height:min(820px,calc(100dvh - 32px));background:#fff;color:#07293a;border-radius:18px;display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden;box-shadow:0 24px 60px rgba(7,41,58,.35)}
+.v206sh header{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:18px 20px 10px}.v206sh h2{margin:0;font-size:22px;font-weight:900}.v206sh header p{margin:0;font-size:14px;color:#4a6575;grid-column:1}.v206sh header .v206ib{grid-row:1/3;grid-column:2}
+.v206tabs{display:flex;gap:4px;padding:0 16px;border-bottom:1px solid #dfe8ed;overflow-x:auto}
+.v206tabs button{flex:none;min-height:44px;padding:0 14px;border:0;border-bottom:3px solid transparent;background:none;color:#4a6575;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.v206tabs [aria-selected=true]{color:#07293a;border-bottom-color:#a90b0c}
+.v206body{overflow:auto;padding:16px 20px 24px;display:grid;gap:14px;align-content:start}
+.v206body h3{margin:4px 0 0;font-size:15px;font-weight:900}
+.v206b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #c9d8e0;background:#fff;color:#07293a;font:inherit;font-size:14px;font-weight:800;cursor:pointer;text-decoration:none;white-space:nowrap}
+.v206b:hover{border-color:#105572}.v206b.pri{background:#07293a;border-color:#07293a;color:#fff}.v206b.pri:hover{background:#105572}.v206b:disabled{opacity:.5;cursor:not-allowed}
+.v206ib{width:44px;height:44px;border-radius:12px;border:1px solid #dfe8ed;background:#fff;color:#07293a;font-size:18px;cursor:pointer}
+.v206pk :focus-visible,.v206tb :focus-visible,.v206imgbar :focus-visible,.v206hdr:focus-visible{outline:3px solid #a90b0c;outline-offset:2px}
+.v206drop{display:grid;gap:6px;place-items:center;text-align:center;padding:48px 20px;border:2px dashed #8fb6c8;border-radius:16px;background:#f7f8fa;cursor:pointer;position:relative}
+.v206drop b{font-size:19px}.v206drop span{font-size:14px;color:#4a6575;max-width:520px;line-height:1.5}
+.v206file{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.v206drop:focus-within{outline:3px solid #a90b0c;outline-offset:2px}
+.v206flt{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.v206flt small{color:#4a6575;font-size:13px;margin-inline-start:auto}
+.v206fl{display:grid;gap:4px;font-size:13px;font-weight:700;color:#4a6575;min-width:150px}.v206fl.wide{width:100%}
+.v206fl input,.v206fl select,.v206fl textarea{min-height:42px;border:1px solid #c9d8e0;border-radius:10px;padding:0 12px;font:inherit;font-size:15px;color:#07293a;background:#fff}
+.v206fl textarea{padding:10px 12px;resize:vertical;line-height:1.5}
+.v206grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.v206it{display:grid;gap:4px;padding:0;border:2px solid transparent;border-radius:12px;background:none;cursor:pointer;text-align:start;font:inherit;color:#07293a}
+.v206it img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:10px;background:#e7eff3;display:block}
+.v206it span{font-size:12.5px;padding:0 4px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v206it:hover,.v206it:focus-visible{border-color:#a90b0c}
+.v206more{justify-self:center;min-height:44px;padding:0 20px;border-radius:12px;border:1px solid #c9d8e0;background:#fff;font:inherit;font-weight:800;cursor:pointer}
+.v206empty{margin:0;padding:24px;border-radius:14px;background:#f7f8fa;color:#4a6575;font-size:15px;line-height:1.6;text-align:center}
+.v206gen{display:grid;gap:10px}.v206row{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.v206tg{display:flex;gap:8px;align-items:center;font-size:14px;min-height:42px}.v206tg input{width:20px;height:20px;accent-color:#07293a}
+.v206hint{margin:0;font-size:13px;color:#4a6575;line-height:1.5}
+.v206grid.res{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.v206res{margin:0;display:grid;gap:8px;padding:8px;border:1px solid #dfe8ed;border-radius:14px}.v206res img{width:100%;border-radius:10px;display:block;background:#e7eff3}.v206res figcaption{display:grid;gap:6px}.v206res small{color:#1e7a4e;font-weight:800}
+.v206res .v206b{min-height:38px;padding:0 10px;font-size:13px}
+.v206err{display:grid;gap:6px;justify-items:start;padding:12px 14px;border-radius:12px;background:#fdecec;border:1px solid #f1b4b5;color:#7a0d10}.v206err b{font-size:15px}.v206err small{color:#7a0d10;opacity:.85}
+.v206stage{display:flex;align-items:center;gap:10px;padding:12px 20px;border-top:1px solid #dfe8ed;font-weight:800;background:#f7f8fa}
+.v206spin{width:20px;height:20px;border-radius:50%;border:3px solid #c9d8e0;border-top-color:#07293a;animation:v206s .9s linear infinite}@keyframes v206s{to{transform:rotate(360deg)}}
+/* the editor */
+.v206sel{position:absolute;pointer-events:none;outline:3px solid #a90b0c;outline-offset:-1px;border-radius:2px;z-index:30}
+.v206hov{position:absolute;pointer-events:none;outline:2px dashed rgba(169,11,12,.7);outline-offset:-1px;z-index:29}
+.v206tb{position:absolute;z-index:40;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px;border-radius:14px;background:#fff;box-shadow:0 10px 28px rgba(7,41,58,.28);direction:rtl;font-family:Almoni,Heebo,Arial,sans-serif;max-width:calc(100% - 8px)}
+.v206tb .v206b{min-height:40px}.v206tb .v206ib{width:40px;height:40px}
+.v206seg{display:inline-flex;border:1px solid #c9d8e0;border-radius:10px;overflow:hidden}.v206seg button{min-height:38px;padding:0 12px;border:0;background:#fff;color:#07293a;font:inherit;font-size:14px;font-weight:800;cursor:pointer}.v206seg [aria-pressed=true]{background:#07293a;color:#fff}
+.v206imgbar{display:grid;gap:6px;padding:12px;margin-bottom:10px;border-radius:14px;background:#f2f6f8;border:1px solid #dfe8ed}.v206imgbar .v206b{min-height:46px;font-size:15px}.v206imgbar span{font-size:13px;color:#4a6575;line-height:1.5}
+.v206hdr{min-height:40px}
+@media (max-width:640px){.v206sh{width:100vw;height:100dvh;border-radius:0}.v206grid{grid-template-columns:repeat(3,1fr);gap:6px}.v206grid.res{grid-template-columns:1fr}.v206fl{min-width:0;flex:1 1 45%}.v206tabs button{padding:0 10px;font-size:14px}.v206tb{left:4px!important;right:4px;justify-content:center}.v206hdr{padding:0 10px;font-size:13px}}
+@media (prefers-reduced-motion:reduce){.v206spin{animation:none}}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -8406,11 +8456,12 @@ function mark(c,x,y,h,col){if(h<120&&(window.__logoMode==='none'||window.__logoM
   try{(G.__mk=G.__mk||[]).push({cv:c.canvas,x:x,y:y,w:w,h:h,col:col})}catch(e){}}
 
 // ---- images ----
-function crop(c,img,r,x,y,w,h){if(!img)return false;r=r||[0,0,1,1];const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+function crop(c,img,r,x,y,w,h,fit){if(!img)return false;r=r||[0,0,1,1];const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
   let sx=r[0]*iw,sy=r[1]*ih,sw=r[2]*iw,sh=r[3]*ih;const da=w/h,sa=sw/sh;
-  if(sa>da){const nw=sh*da;sx+=(sw-nw)*(r[4]??.5);sw=nw}else{const nh=sw/da;sy+=(sh-nh)*(r[5]??.5);sh=nh}
+  if(fit==='contain'){c.save();try{c.filter='blur(18px) brightness(.62)';const ca=iw/ih;let bw=w,bh=w/ca;if(bh<h){bh=h;bw=h*ca}c.drawImage(img,x+(w-bw)/2,y+(h-bh)/2,bw,bh)}catch(e){}c.restore();const k=Math.min(w/sw,h/sh);const dw=sw*k,dh=sh*k;c.drawImage(img,sx,sy,sw,sh,x+(w-dw)/2,y+(h-dh)/2,dw,dh);return true}
+  if(sa>da){const nw=sh*da;const fx=r[4]==null?sx+(sw-nw)/2:Math.min(Math.max(r[4]*iw-nw/2,sx),sx+sw-nw);sx=fx;sw=nw}else{const nh=sw/da;const fy=r[5]==null?sy+(sh-nh)/2:Math.min(Math.max(r[5]*ih-nh/2,sy),sy+sh-nh);sy=fy;sh=nh}
   c.drawImage(img,sx,sy,sw,sh,x,y,w,h);return true}
-function shot(c,I,s,x,y,w,h){if(!s)return false;const cmsK=/^(bg|bv|hk|hm|hn|hv|kv|mh|rm|sk|yh|zr)\d$/.test(s.k);const img=I[s.k]||(cmsK?null:I.a);if(!img){c.save();c.fillStyle='rgba(143,182,200,.25)';c.fillRect(x,y,w,h);if(cmsK&&w>160){c.fillStyle='#07293a';c.font='700 '+Math.max(16,Math.min(30,w/14))+'px Almoni, Heebo, Arial';c.textAlign='center';c.direction='rtl';c.fillText('תמונה מהאתר · ממתינה לייבוא',x+w/2,y+h/2)}c.restore();return false}if(s.flip){c.save();c.translate(x+w,0);c.scale(-1,1);const ok=crop(c,img,s.r,0,y,w,h);c.restore();return ok}if(s.flip){c.save();c.translate(2*x+w,0);c.scale(-1,1);const ok=crop(c,img,s.r,x,y,w,h);c.restore();return ok}return crop(c,img,s.r,x,y,w,h)}
+function shot(c,I,s,x,y,w,h){if(!s)return false;const cmsK=/^(bg|bv|hk|hm|hn|hv|kv|mh|rm|sk|yh|zr)\d$/.test(s.k);const img=I[s.k]||(cmsK?null:I.a);if(!img){c.save();c.fillStyle='rgba(143,182,200,.25)';c.fillRect(x,y,w,h);if(cmsK&&w>160){c.fillStyle='#07293a';c.font='700 '+Math.max(16,Math.min(30,w/14))+'px Almoni, Heebo, Arial';c.textAlign='center';c.direction='rtl';c.fillText('תמונה מהאתר · ממתינה לייבוא',x+w/2,y+h/2)}c.restore();return false}if(s.flip){c.save();c.translate(x+w,0);c.scale(-1,1);const ok=crop(c,img,s.r,0,y,w,h,s.fit);c.restore();return ok}if(s.flip){c.save();c.translate(2*x+w,0);c.scale(-1,1);const ok=crop(c,img,s.r,x,y,w,h,s.fit);c.restore();return ok}return crop(c,img,s.r,x,y,w,h,s.fit)}
 function grain(c,x,y,w,h,a=.05,seed=11){if(window.__grainFill)return __grainFill(c,x,y,w,h,a,seed,140);let s=seed;const r=()=>(s=(s*16807)%2147483647)/2147483647;c.save();for(let i=0;i<w*h/140;i++){c.fillStyle=r()<.5?`rgba(255,255,255,${a*r()})`:`rgba(0,0,0,${a*r()})`;c.fillRect(x+r()*w,y+r()*h,1.5,1.5)}c.restore()}
 function vg(c,x,y,w,h,a0,a1,rgb='7,41,58'){const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,`rgba(${rgb},${a0})`);g.addColorStop(1,`rgba(${rgb},${a1})`);c.fillStyle=g;c.fillRect(x,y,w,h)}
 
@@ -16038,7 +16089,7 @@ function buildControls(){
     if(e.target.matches('[data-asel]')){e.target.checked?AG.sel.add(p.id):AG.sel.delete(p.id);card.classList.toggle('sel',e.target.checked);updSel();return}
     if(e.target.matches('[data-layout]')){p.layout=e.target.value;p.slide=0;p.theme=THEME_BY_LAYOUT[p.layout]??p.theme;saveAgent();refreshCard(p);return}
     if(e.target.matches('[data-lib]')){const k=e.target.value;if(k==='__own')return;if(!k){delete PHOTOS[p.id];p.photoKey=null}else{const im=await libImg(k);if(im){PHOTOS[p.id]=im;p.photoKey=k}}saveAgent();refreshCard(p);return}
-    if(e.target.matches('[data-photo]')){const f=e.target.files&&e.target.files[0];if(!f)return;try{PHOTOS[p.id]=await loadImg(f);p.photoKey=null;saveAgent();refreshCard(p)}catch(err){toast('לא הצלחתי לקרוא את התמונה')}}});
+    if(e.target.matches('[data-photo]')){const f=e.target.files&&e.target.files[0];if(!f)return;try{PHOTOS[p.id]=await loadImg(f);p.photoKey=null;saveAgent();refreshCard(p);if(window.KImg)KImg.save(f,{name:f.name,project:p.project,tags:'agent'}).then(r=>{p.photoKey=r.k;saveAgent()}).catch(e=>toast(KImg.msg(e)))}catch(err){toast('לא הצלחתי לקרוא את התמונה')}}});
 }
 function buildKit(){const g=$('ag-kit');
   g.innerHTML=KF.map(([k,l,t])=>t==='area'?`<label class="full" for="kit-${k}">${l}<textarea id="kit-${k}" data-k="${k}" rows="4">${esc(KIT[k])}</textarea></label>`:`<label class="${['voice','banned','hashtags','tagline','signoff'].includes(k)?'full':''}" for="kit-${k}">${l}<input id="kit-${k}" type="${t}" data-k="${k}" value="${esc(KIT[k])}"></label>`).join('')+`<div class="full" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><small class="muted">כל שינוי חל מיד על העיצובים ועל הכתיבה הבאה.</small><span style="display:flex;gap:6px"><button class="btn ghost sm" type="button" id="ag-seed">טען מחדש את הפוסטים המוכנים</button><button class="btn ghost sm" type="button" id="ag-kit-reset">ברירת מחדל</button></span></div>`;
@@ -17454,7 +17505,7 @@ function peKeepSig(t,old){if(/קבוצת קורקוס\. מקרקע/.test(t))retu
 function peFresh(){const p=PE.p;const sl=peSlots(p);const cur=sl[PE.slot];if(!cur)return toast('אין תמונה להחלפה בעיצוב הזה');const m=metaOf(cur.o.k);const {u}=usage();const used=new Set(sl.map(s=>s.o.k));
   let c=libKeys().filter(k=>!used.has(k)&&metaOf(k).k!=='people'&&(m.k==='render'?(metaOf(k).k==='render'&&metaOf(k).p===m.p):metaOf(k).k!=='render'&&(!m.p||metaOf(k).p===m.p||!metaOf(k).p)));
   if(!c.length)c=libKeys().filter(k=>!used.has(k)&&metaOf(k).k!=='render');c.sort((a,b)=>(u[a]||0)-(u[b]||0));const k=c[Math.floor(Math.random()*Math.min(4,c.length))];if(!k)return;pePick(k)}
-function pePick(k){const sl=peSlots(PE.p);const cur=sl[PE.slot];pePush();if(!cur){toast('אין תמונה בעיצוב הזה');return}if(cur.legacy){PE.p.photoKey=k;libImg(k).then(im=>{if(im)PHOTOS[PE.p.id]=im;peDraw()})}else{cur.o.k=k;cur.o.r=[0,0,1,1]}peSyncKeys(PE.p);
+function pePick(k){const sl=peSlots(PE.p);const cur=sl[PE.slot];pePush();if(!cur){toast('אין תמונה בעיצוב הזה');return}if(cur.legacy){PE.p.photoKey=k;libImg(k).then(im=>{if(im)PHOTOS[PE.p.id]=im;peDraw()})}else{const z0=peCropState(cur.o).z;cur.o.k=k;if(z0>1.01)peSetCrop(cur.o,{z:z0,cx:.5,cy:.5});else cur.o.r=[0,0,1,1]}peSyncKeys(PE.p);
   libImg(k).then(()=>{peRender()});}
 async function peAutoLight(){const p=PE.p;const k=(peSlots(p)[0]||{o:{}}).o.k;const im=k&&await libImg(k);if(!im){toast('אין תמונה לאיזון');return}const c=document.createElement('canvas');c.width=64;c.height=64;const x=c.getContext('2d');x.drawImage(im,0,0,64,64);let s=0,s2=0,n=0;try{const d=x.getImageData(0,0,64,64).data;for(let i=0;i<d.length;i+=4){const l=.299*d[i]+.587*d[i+1]+.114*d[i+2];s+=l;s2+=l*l;n++}}catch(e){return}
   const mean=s/n,sd=Math.sqrt(s2/n-mean*mean);pePush();p.fx.adj=Object.assign({},PE_ADJ0,p.fx.adj||{},{b:Math.round(Math.max(-30,Math.min(30,(128-mean)/2.2))),c:Math.round(Math.max(-10,Math.min(30,(58-sd)/1.4))),s:6});peRender();toast('התאורה אוזנה לפי התמונה')}
@@ -19692,7 +19743,7 @@ function drawObj(c,o){if(o.hide)return;c.save();const cx=o.x+o.w/2,cy=o.y+o.h/2,
       if(st.fill&&st.fill!=='none'){c.fillStyle=col(st.fill);c.fill()}if(st.stroke&&st.stroke!=='none'&&st.sw){c.strokeStyle=col(st.stroke);c.lineWidth=st.sw;c.lineJoin='round';c.stroke()}}
     else if(o.type==='line'){c.strokeStyle=col(st.stroke||'red');c.lineWidth=st.sw||6;c.lineCap='round';c.beginPath();c.moveTo(st.sw/2||3,o.h/2);c.lineTo(o.w-(st.sw/2||3),o.h/2);c.stroke()}
     else if(o.type==='image'){const im=(typeof LIBREADY!=='undefined'&&LIBREADY[o.k])||null;c.save();rr(c,0,0,o.w,o.h,st.rad||0);c.clip();
-      if(im){const cr=o.crop||{},z=Math.max(1,cr.z||1),sc=Math.max(o.w/im.naturalWidth,o.h/im.naturalHeight)*z,dw=im.naturalWidth*sc,dh=im.naturalHeight*sc;c.drawImage(im,-(dw-o.w)*(cr.fx==null?.5:cr.fx),-(dh-o.h)*(cr.fy==null?.5:cr.fy),dw,dh)}
+      if(im){const cr=o.crop||{},z=Math.max(1,cr.z||1),sc=(o.fit==='contain'?Math.min(o.w/im.naturalWidth,o.h/im.naturalHeight):Math.max(o.w/im.naturalWidth,o.h/im.naturalHeight)*z),dw=im.naturalWidth*sc,dh=im.naturalHeight*sc;c.drawImage(im,-(dw-o.w)*(cr.fx==null?.5:cr.fx),-(dh-o.h)*(cr.fy==null?.5:cr.fy),dw,dh)}
       else{c.fillStyle='#dbe8ee';c.fillRect(0,0,o.w,o.h);try{libImg(o.k).then(()=>window.__v53redraw&&window.__v53redraw())}catch(e){}}
       c.restore();if(st.stroke&&st.stroke!=='none'&&st.sw){rr(c,0,0,o.w,o.h,st.rad||0);c.strokeStyle=col(st.stroke);c.lineWidth=st.sw;c.stroke()}}
   }catch(e){console.warn('v53 obj',e)}c.restore()}
@@ -20043,7 +20094,7 @@ async function keyFromFile(file){const {blob,w,h}=await downscale(file);const na
   await libImg(k);return {k,w,h,name}}
 function pickFile(cb){const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);i.onchange=()=>{const f=i.files&&i.files[0];i.remove();if(f)cb(f)};i.click()}
 async function addImage(file){if(!file||!/^image\//.test(file.type))return say('בחרו קובץ תמונה');say('מעלה תמונה…');try{const r=await keyFromFile(file);push();const w=Math.min(560,r.w),h=Math.round(w*r.h/r.w);addObjs([mkObj('image',{k:r.k,name:r.name||'תמונה',x:W/2-w/2,y:H/2-h/2,w,h,style:{rad:0}})]);commit()}catch(e){say('ההעלאה נכשלה')}}
-async function replaceImage(it,file){if(!file||!/^image\//.test(file.type))return say('בחרו קובץ תמונה');try{const r=await keyFromFile(file);push();const o=liveObj(it);o.k=r.k;delete o.crop;commit();say('התמונה הוחלפה. המסגרת נשארה במקומה')}catch(e){say('ההחלפה נכשלה')}}
+async function replaceImage(it,file){if(!file||!/^image\//.test(file.type))return say('בחרו קובץ תמונה');try{const r=await keyFromFile(file);push();const o=liveObj(it);o.k=r.k;commit();say('התמונה הוחלפה. המסגרת נשארה במקומה')}catch(e){say('ההחלפה נכשלה')}}
 document.addEventListener('dragover',e=>{if(e.target.closest&&e.target.closest('#pe-cv')&&hasPE()&&editable()&&e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files')){const it=hitAt(toC(e),1);if(it&&it.kind==='obj'&&it.o.type==='image'){e.preventDefault()}}},true);
 document.addEventListener('drop',e=>{const cv=e.target.closest&&e.target.closest('#pe-cv');if(!cv||!hasPE()||!editable())return;const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(!f)return;const it=hitAt(toC(e),1);if(it&&it.kind==='obj'&&it.o.type==='image'){e.preventDefault();e.stopImmediatePropagation();replaceImage(it,f)}},true);
 
@@ -23351,7 +23402,7 @@ async function uploadMany(files){const list=[...files].filter(f=>/^image\//.test
  for(const f of list){try{const {blob,w,h}=await downscale(f);const name=f.name.replace(/\.[^.]+$/,'').slice(0,60);const r=await KC.assets.upload(blob);
    const meta={name,project:proj,kind:'site',tags:'upload,studio',w,h,addedAt:new Date().toISOString(),url:r.url,src:'upload:'+name};if(KC.db){try{await KC.db.collection('photos').doc(r.id).set(meta)}catch(e){}}regUpload(r.id,meta);if(!first)first='u_'+r.id;n++}catch(e){console.warn('v115 upload',e)}}
  try{PM&&Object.keys(PM).forEach(k=>{if(k.startsWith('u_'))PM[k]=undefined})}catch(e){}
- if(n){const sl=peSlots(PE.p);toast(n===1&&first&&sl.length?'התמונה הוחלפה ונשמרה בספרייה. "ביטול" מחזיר את הקודמת':`${n} תמונות נכנסו לספרייה${proj?' של '+(PRJ()[proj]||proj):''}`);if(first&&sl.length){pePick(first)}else refresh()}else toast('ההעלאה נכשלה')}
+ if(n){const sl=peSlots(PE.p);toast(`${n} תמונות נכנסו לספרייה${proj?' של '+(PRJ()[proj]||proj):''}`);refresh()}else toast('ההעלאה נכשלה')}
 document.addEventListener('change',e=>{const t=e.target;if(!t||!t.matches||!t.matches('[data-v115up]')||!PE.p)return;const files=[...(t.files||[])];t.value='';if(files.length)uploadMany(files)},true);
 let qt=0;
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.v115!=='q'||!PE.p)return;const L=state();L.q=t.value;clearTimeout(qt);qt=setTimeout(()=>{if(t.closest('#v115lib'))refresh();else{peRender();const n=document.querySelector('#pe-root [data-v115="q"]');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}}},220)},true);
@@ -25147,10 +25198,10 @@ Answer JSON only: {"en":"the English prompt","he":"one short Hebrew sentence des
 async function keep(r,usePost){if(r.saving)return;r.saving=true;paint();
  try{let blob=r.blob;if(!blob){const x=await fetch(r.url);blob=await x.blob()}const f=new File([blob],'ai.png',{type:blob.type||'image/png'});const {blob:jb,w,h}=await downscale(f);
   const name=('AI · '+(r.prompt||'תמונה')).replace(/\s+/g,' ').slice(0,60),proj=(PE.p&&PE.p.project)||'';let k;
-  const meta={name,project:proj,kind:'render',tags:'ai,chatgpt',ai:true,prompt:(r.full||'').slice(0,900),w,h,addedAt:new Date().toISOString()};
+  const meta={name,project:proj,kind:'site',tags:'ai,chatgpt',ai:true,prompt:(r.full||'').slice(0,900),w,h,addedAt:new Date().toISOString()};
   if(typeof KC!=='undefined'&&KC.assets){const up=await KC.assets.upload(jb);meta.url=up.url;meta.src='ai:'+up.id;if(KC.db){try{await KC.db.collection('photos').doc(up.id).set(meta)}catch(e){}}regUpload(up.id,meta);k='u_'+up.id}
   else{const id='ai'+Date.now().toString(36);k='u_'+id;PHOTO_LIB[k]=URL.createObjectURL(jb);LIB_NAMES[k]=name;try{PM[k]={k:'render',p:proj,t:'נוצר ב-AI'}}catch(e){}if(usePost)tst('התמונה בפוסט, אבל נשמרת לספרייה רק כשהדף פתוח ב-claude.ai')}
-  try{PM[k]=Object.assign({},PM[k]||{},{k:'render',p:proj,t:'נוצר ב-AI'})}catch(e){}
+  try{PM[k]=Object.assign({},PM[k]||{},{k:'site',p:proj,t:'ai'})}catch(e){}
   r.saved=true;r.key=k;
   if(usePost){const sl=peSlots(PE.p);if(!sl.length){tst('בעיצוב הזה אין תמונה להחלפה. התמונה נשמרה בספרייה')}else{pePick(k);r.used=true;tst('התמונה החדשה בפוסט. היא נוצרה ב-AI, אז לא מציגים אותה כצילום של פרויקט')}}
   else tst('נשמר בספרייה, תחת הדמיות')}
@@ -30473,6 +30524,154 @@ try{render=(f=>function(){const v=typeof APP!=='undefined'?APP.view:'';if(v!=='v
 window.__v204={S,WS,P,lay,at,applyOps,validate,aiPrompt,opText,rules,learn,keysOf,PREF:()=>PREF,openProject,fromFile,fromSource,analyze,gaps,subFile,parseSub,fromTimeline,planScript,doExport,seek,playToggle,stopPlay,refresh,ask,acceptProp,rejectProp,previewProp,transcribe,undo,redo,AUD,AAUD,tlSegs,compose,outDims,addLayer,addAudioFile,syncOffset,BOX:()=>BOX,scopeOf,mkLayer,Mixer,lstate,MX:()=>MX,WSsave:()=>saveL(WKEY,WS)};
 })();
 /*V204:END*/
+
+/*V206:START*/
+// ================= V206 · one image component for the whole engine (KImg): save to the library with a real error when it fails,
+// upload with progress, generate with OpenAI through /api/engine-image with clear errors and retry, and one picker sheet
+// (upload / library / generated / generate new). In the post editor a click on a photo opens a small toolbar with
+// "החלפת תמונה", fill or fit, and crop; the new photo goes into the same frame, keeping its zoom and fit. =================
+(()=>{
+if(window.__v206)return;window.__v206=1;
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const say=m=>{try{toast(m)}catch(e){console.log(m)}};
+const TW=1080,TH=1350;
+const PH=()=>{try{return PROJ_HE}catch(e){return {}}};
+const projKey=v=>{if(!v)return '';const P=PH();if(P[v])return v;const k=Object.keys(P).find(k=>P[k]===v);return k||String(v)};
+const MAXMB=25;
+const TYPES=/^image\/(jpeg|png|webp|gif|avif)$/;
+
+// ---------- errors: one sentence the user can act on ----------
+const MSG={no_storage:'אין כאן הרשאה לשמור תמונות. פתחו את המנוע מתוך האתר (ניהול > מנוע תוכן) עם התחברות',db_failed:'התמונה הועלתה אבל לא נרשמה בספרייה. נסו שוב',upload_failed:'ההעלאה נכשלה. בדקו את החיבור ונסו שוב',too_large:'הקובץ גדול מדי (עד '+MAXMB+'MB)',bad_type:'אפשר להעלות JPG, PNG, WEBP או GIF',quota_or_state:'נגמר המקום בספרייה',
+ no_site:'יצירת תמונות עובדת כשהמנוע פתוח מתוך האתר עם התחברות לאדמין',not_configured:'יצירת תמונות עוד לא מוגדרת: צריך OPENAI_API_KEY ב-Vercel > Settings > Environment Variables',auth:'החיבור לאדמין פג. התחברו מחדש ונסו שוב',rate_limited:'נוצרו הרבה תמונות ברצף. נסו שוב בעוד כמה דקות',
+ timeout:'היצירה לקחה יותר מדי זמן. נסו איכות רגילה או פחות אפשרויות',blocked:'OpenAI סירב לתיאור הזה. נסחו אותו אחרת',provider_busy:'OpenAI עמוס כרגע. נסו שוב בעוד דקה',provider_auth:'מפתח OpenAI לא תקין או בלי הרשאה לתמונות. בודקים את OPENAI_API_KEY ב-Vercel',too_big_request:'התמונה לשינוי גדולה מדי. נסו שוב, היא תוקטן',
+ network:'אין חיבור לשרת. בדקו את האינטרנט ונסו שוב',busy:'כבר נוצרת תמונה. מחכים שתסתיים',no_prompt:'כתבו מה ליצור',empty:'OpenAI לא החזיר תמונה. נסו שוב'};
+function err(code,detail){const e=new Error(MSG[code]||detail||code);e.code=code;e.detail=detail;return e}
+const msg=e=>(e&&MSG[e.code])||(e&&e.message)||'משהו נכשל';
+
+// ---------- save: downscale, upload, register in the library. A failed library write is an error, never silent ----------
+async function toBlob(src){if(src instanceof Blob)return src;if(typeof src==='string'){const r=await fetch(src);return await r.blob()}throw err('bad_type')}
+async function save(src,meta){meta=meta||{};const blob0=await toBlob(src);if(blob0.type&&!TYPES.test(blob0.type))throw err('bad_type');if(blob0.size>MAXMB*1048576)throw err('too_large');
+  const A=(typeof KC!=='undefined'&&KC.assets)||null;if(!A)throw err('no_storage');const on=meta.onStage||(()=>{});
+  on('מכין את התמונה');const {blob,w,h}=await downscale(blob0);on('מעלה לענן');let up;try{up=await A.upload(blob)}catch(e){throw err(e&&e.code==='too_large'?'too_large':e&&e.code==='quota_or_state'?'quota_or_state':'upload_failed',e&&e.message)}
+  const name=String(meta.name||'תמונה').replace(/\.[^.]+$/,'').replace(/\s+/g,' ').slice(0,60);
+  const m={name,project:projKey(meta.project),kind:meta.kind||'site',tags:meta.tags||'',w,h,addedAt:new Date().toISOString(),url:up.url,src:meta.src||((meta.ai?'ai:':'upload:')+up.id)};if(meta.ai){m.ai=true;m.prompt=String(meta.prompt||'').slice(0,900)}
+  on('שומר בספרייה');let ok=!KC.db;for(let i=0;i<3&&!ok;i++){try{await KC.db.collection('photos').doc(up.id).set(m);ok=true}catch(e){await new Promise(r=>setTimeout(r,500*(i+1)))}}
+  regUpload(up.id,m);try{if(typeof PM!=='undefined')PM['u_'+up.id]=undefined}catch(e){}if(!ok)throw Object.assign(err('db_failed'),{k:'u_'+up.id});return {k:'u_'+up.id,id:up.id,url:up.url,meta:m}}
+
+// ---------- generate ----------
+const G={busy:false,recent:[],last:null};
+async function jpegData(src,max){let img;if(src instanceof Blob)img=await loadImg(src);else{const u=PHOTO_LIB[src];if(!u)throw err('bad_type');img=await libImg(src);if(!img)throw err('bad_type')}const s=Math.min(1,max/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));const c=document.createElement('canvas');c.width=Math.round((img.naturalWidth||img.width)*s);c.height=Math.round((img.naturalHeight||img.height)*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);try{return c.toDataURL('image/jpeg',.85)}catch(e){throw err('bad_type','tainted')}}
+const sizeFor=ar=>!ar?'1024x1536':ar>1.15?'1536x1024':ar<0.87?'1024x1536':'1024x1024';
+async function generate(o){o=o||{};const prompt=String(o.prompt||'').trim();if(!prompt)throw err('no_prompt');if(G.busy)throw err('busy');G.busy=true;
+  try{const body={prompt,size:o.size||sizeFor(o.aspect),quality:o.quality||'medium',n:o.n||1};if(o.editFrom)body.image=await jpegData(o.editFrom,1024);
+   let d;if(window.__kimgMock)d=await window.__kimgMock(body);else{const tok=window.__engineToken?await window.__engineToken():null;if(!tok)throw err('no_site');let r;try{r=await fetch('/api/engine-image',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body),signal:o.signal})}catch(e){if(e&&e.name==='AbortError')throw e;throw err('network')}
+    if(r.status===413)throw err('too_big_request');d=await r.json().catch(()=>({}));if(!r.ok){throw err(d.code||(r.status===504?'timeout':r.status===401?'auth':'empty'),d.error)}}
+   const out=(d.images||[]).map((b,i)=>{const u8=Uint8Array.from(atob(b),ch=>ch.charCodeAt(0));const blob=new Blob([u8],{type:'image/jpeg'});return {id:'g'+Date.now().toString(36)+i,blob,url:URL.createObjectURL(blob),prompt,size:body.size,quality:body.quality,model:d.model||'gpt-image-1',at:Date.now()}});if(!out.length)throw err('empty');
+   G.recent.unshift(...out);G.recent.length=Math.min(G.recent.length,24);G.last={prompt,size:body.size,quality:body.quality,n:body.n};try{localStorage.setItem('v206_gen',JSON.stringify(G.last))}catch(e){}return out}finally{G.busy=false}}
+try{G.last=JSON.parse(localStorage.getItem('v206_gen')||'null')}catch(e){}
+
+// ---------- the library as a list ----------
+function libList(){let ks=[];try{ks=libKeys()}catch(e){ks=Object.keys(PHOTO_LIB||{})}return ks.filter(k=>PHOTO_LIB[k]).map(k=>{let m={};try{m=metaOf(k)}catch(e){}const up=k.startsWith('u_')&&typeof KC!=='undefined'&&KC.up?KC.up[k.slice(2)]||{}:{};return {k,url:PHOTO_LIB[k],name:m.n||LIB_NAMES[k]||'תמונה',p:m.p||up.project||'',kind:m.k||'site',ai:!!(up.ai||/(^|,)ai(,|$)/.test(m.t||'')||/^AI/.test(m.n||'')),at:up.addedAt||''}})}
+const thumbOf=u=>u;
+
+// ---------- the picker sheet ----------
+const P={open:false,tab:'lib',q:'',proj:'',kind:'',lim:90,res:null,opt:{},stage:'',err:null,gen:{prompt:'',quality:'medium',n:2},results:[],ret:null};
+function pick(opt){opt=opt||{};if(P.open)close(null);Object.assign(P,{open:true,opt,tab:opt.tab||'lib',q:'',lim:90,stage:'',err:null,ret:document.activeElement,proj:opt.project!=null?projKey(opt.project):''});P.gen.prompt=opt.prompt||(G.last&&G.last.prompt)||'';if(G.last){P.gen.quality=G.last.quality||'medium';P.gen.n=G.last.n||2}P.results=G.recent.slice(0,8);
+  return new Promise(res=>{P.res=res;render();setTimeout(()=>{const f=$('#v206pk [data-v206f]')||$('#v206pk .v206tabs [aria-selected=true]');f&&f.focus()},30)})}
+function close(v){const el=$('#v206pk');if(el)el.remove();P.open=false;const r=P.res;P.res=null;document.body.classList.remove('v206lock');try{P.ret&&P.ret.focus&&P.ret.focus()}catch(e){}if(r)r(v||null)}
+const TABS=[['up','העלאה מהמכשיר'],['lib','ספריית התמונות'],['ai','תמונות שנוצרו'],['gen','יצירת תמונה חדשה']];
+function render(){let el=$('#v206pk');if(!el){el=document.createElement('div');el.id='v206pk';el.className='v206pk';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','v206pkt');document.body.appendChild(el);document.body.classList.add('v206lock')}
+  const st=$('#v206pk .v206body');const sc=st?st.scrollTop:0;
+  el.innerHTML=`<div class="v206bk" data-v206="x"></div><section class="v206sh"><header><h2 id="v206pkt">${E(P.opt.title||'בחירת תמונה')}</h2>${P.opt.sub?`<p>${E(P.opt.sub)}</p>`:''}<button type="button" class="v206ib" data-v206="x" aria-label="סגירה">✕</button></header>
+   <div class="v206tabs" role="tablist">${TABS.filter(t=>t[0]!=='gen'||P.opt.allowGen!==false).map(([k,l])=>`<button type="button" role="tab" aria-selected="${P.tab===k}" data-v206="tab" data-t="${k}">${l}</button>`).join('')}</div>
+   <div class="v206body">${body()}</div>${P.stage?`<div class="v206stage" role="status"><span class="v206spin"></span>${E(P.stage)}</div>`:''}</section>`;
+  const nb=$('#v206pk .v206body');if(nb)nb.scrollTop=sc}
+function grid(list,empty){if(!list.length)return `<p class="v206empty">${empty}</p>`;return `<div class="v206grid">${list.slice(0,P.lim).map(x=>`<button type="button" class="v206it" data-v206="use" data-k="${E(x.k)}" title="${E(x.name)}"><img src="${E(thumbOf(x.url))}" alt="${E(x.name)}" loading="lazy" decoding="async"><span>${E(x.name)}</span></button>`).join('')}</div>${list.length>P.lim?`<button type="button" class="v206more" data-v206="more">עוד ${list.length-P.lim} תמונות</button>`:''}`}
+function body(){const t=P.tab;
+  if(t==='up')return `<label class="v206drop" data-v206drop><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-v206f="file" class="v206file"><b>גררו לכאן תמונה או לחצו לבחירה</b><span>JPG, PNG או WEBP עד ${MAXMB}MB. התמונה נשמרת בספרייה${P.opt.project?' של '+E(PH()[projKey(P.opt.project)]||P.opt.project):''} ונכנסת ${P.opt.verb||'לעיצוב'}.</span></label>${P.err?errBox():''}`;
+  if(t==='lib'||t==='ai'){const all=libList();const q=P.q.trim().toLowerCase();let L=all.filter(x=>(t!=='ai'||x.ai)&&(!P.proj||x.p===P.proj)&&(!P.kind||x.kind===P.kind)&&(!q||x.name.toLowerCase().includes(q)||(PH()[x.p]||'').includes(q)));L.sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+   const projs=[...new Set(all.map(x=>x.p).filter(Boolean))];
+   return `<div class="v206flt"><label class="v206fl"><span>חיפוש</span><input type="search" data-v206f="q" value="${E(P.q)}" placeholder="שם או פרויקט"></label><label class="v206fl"><span>פרויקט</span><select data-v206f="proj"><option value="">כל הפרויקטים</option>${projs.map(p=>`<option value="${E(p)}"${P.proj===p?' selected':''}>${E(PH()[p]||p)}</option>`).join('')}</select></label>${t==='lib'?`<label class="v206fl"><span>סוג</span><select data-v206f="kind"><option value="">הכל</option>${[['site','צילום'],['render','הדמיה'],['aerial','רחפן'],['brand','מותג']].map(([k,l])=>`<option value="${k}"${P.kind===k?' selected':''}>${l}</option>`).join('')}</select></label>`:''}<small>${L.length} תמונות</small></div>
+    ${t==='ai'&&G.recent.length?`<h3>מהסשן הזה (עוד לא נשמרו)</h3>${resGrid(G.recent)}`:''}${t==='ai'&&G.recent.length?'<h3>שמורות בספרייה</h3>':''}${grid(L,t==='ai'?'עוד אין תמונות שנוצרו ב-AI. בלשונית "יצירת תמונה חדשה" כותבים תיאור ולוחצים "יצירת תמונה".':P.proj||P.q||P.kind?'אין תמונות שמתאימות לסינון. נקו את הסינון או בחרו "כל הפרויקטים".':'הספרייה ריקה. מעלים תמונה בלשונית "העלאה מהמכשיר".')}`}
+  if(t==='gen'){const g=P.gen;return `<form class="v206gen" data-v206form="gen"><label class="v206fl wide"><span>מה ליצור</span><textarea data-v206f="prompt" rows="4" required placeholder='למשל: "בניין מגורים בוטיק בן 6 קומות, אבן בהירה ומרפסות זכוכית, שעת זהב, צילום ארכיטקטוני"'>${E(g.prompt)}</textarea></label>
+    <div class="v206row"><label class="v206fl"><span>איכות</span><select data-v206f="quality">${[['medium','רגילה (כ-20 שניות)'],['high','גבוהה (עד דקה)'],['low','מהירה, לטיוטה']].map(([k,l])=>`<option value="${k}"${g.quality===k?' selected':''}>${l}</option>`).join('')}</select></label><label class="v206fl"><span>כמה אפשרויות</span><select data-v206f="n">${[1,2,4].map(n=>`<option value="${n}"${+g.n===n?' selected':''}>${n}</option>`).join('')}</select></label>
+     ${P.opt.editFrom?`<label class="v206tg"><input type="checkbox" data-v206f="edit"${g.edit?' checked':''}> שינוי של התמונה הנוכחית במקום תמונה חדשה</label>`:''}</div>
+    <p class="v206hint">השירות: OpenAI gpt-image-1, דרך השרת של האתר. גודל ${sizeFor(P.opt.aspect).replace('x','×')} לפי מסגרת התמונה. התיאור נשמר, אפשר לשנות ולנסות שוב.</p>
+    <div class="v206row"><button type="submit" class="v206b pri" ${G.busy?'disabled':''}>${G.busy?'יוצר…':'יצירת תמונה'}</button>${G.busy?'<button type="button" class="v206b" data-v206="stop">עצירה</button>':''}</div></form>${P.err?errBox():''}
+    ${P.results.length?`<h3>התוצאות</h3>${resGrid(P.results)}`:''}`}
+  return ''}
+function resGrid(list){return `<div class="v206grid res">${list.map(r=>`<figure class="v206res"><img src="${r.url}" alt="${E(r.prompt)}"><figcaption>${r.saved?'<small>נשמרה בספרייה</small>':''}<div class="v206row"><button type="button" class="v206b pri" data-v206="gUse" data-id="${r.id}">${E(P.opt.useLabel||'שימוש בתמונה')}</button><button type="button" class="v206b" data-v206="gSave" data-id="${r.id}" ${r.saved?'disabled':''}>שמירה לספרייה</button><a class="v206b" href="${r.url}" download="kurkoos-ai.jpg">הורדה</a><button type="button" class="v206b" data-v206="gAgain" data-id="${r.id}">שוב עם התיאור</button></div></figcaption></figure>`).join('')}</div>`}
+function errBox(){const e=P.err;return `<div class="v206err" role="alert"><b>${E(msg(e))}</b>${e.detail&&e.detail!==msg(e)?`<small>${E(String(e.detail).slice(0,200))}</small>`:''}${e.retry?'<button type="button" class="v206b" data-v206="retry">לנסות שוב</button>':''}</div>`}
+let AB=null,lastFile=null;
+async function doUpload(f){P.err=null;lastFile=f;if(!f)return;if(!TYPES.test(f.type)){P.err=err('bad_type');render();return}if(f.size>MAXMB*1048576){P.err=err('too_large');render();return}
+  try{const r=await save(f,{name:f.name,project:P.opt.project,tags:P.opt.tags||'upload',onStage:s=>{P.stage=s;render()}});P.stage='';close({k:r.k,from:'upload'})}catch(e){P.stage='';P.err=Object.assign(e,{retry:true});render()}}
+async function doGen(){const fm=$('#v206pk form[data-v206form="gen"]');if(fm){P.gen.prompt=fm.querySelector('[data-v206f="prompt"]').value;P.gen.quality=fm.querySelector('[data-v206f="quality"]').value;P.gen.n=+fm.querySelector('[data-v206f="n"]').value;const ed=fm.querySelector('[data-v206f="edit"]');P.gen.edit=!!(ed&&ed.checked)}
+  P.err=null;AB=new AbortController();P.stage='יוצר תמונה ב-OpenAI. זה לוקח 15 עד 60 שניות';render();
+  try{const out=await generate({prompt:P.gen.prompt,quality:P.gen.quality,n:P.gen.n,aspect:P.opt.aspect,editFrom:P.gen.edit?P.opt.editFrom:null,signal:AB.signal});P.results=out.concat(P.results.filter(r=>!out.includes(r))).slice(0,12)}catch(e){if(e&&e.name!=='AbortError')P.err=Object.assign(e,{retry:true})}P.stage='';AB=null;if(P.open)render()}
+async function saveGen(r,use){if(r.saving)return;r.saving=true;P.err=null;try{const s=await save(r.blob,{name:'AI · '+r.prompt,project:P.opt.project,kind:'site',tags:'ai,chatgpt',ai:true,prompt:r.prompt,onStage:x=>{P.stage=x;render()}});r.saved=s.k;P.stage='';if(use)close({k:s.k,from:'ai'});else{render();say('התמונה נשמרה בספרייה')}}catch(e){P.stage='';P.err=Object.assign(e,{retry:false});render()}r.saving=false}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#v206pk [data-v206]');if(!b)return;const a=b.dataset.v206;e.preventDefault();
+  if(a==='x')return close(null);if(a==='tab'){P.tab=b.dataset.t;P.err=null;P.lim=90;render();const f=$('#v206pk [data-v206f]');return}if(a==='more'){P.lim+=90;return render()}
+  if(a==='use')return close({k:b.dataset.k,from:P.tab});if(a==='retry'){if(P.tab==='up'&&lastFile)return doUpload(lastFile);if(P.tab==='gen')return doGen();return}
+  if(a==='stop'){if(AB)AB.abort();return}const r=G.recent.find(x=>x.id===b.dataset.id)||P.results.find(x=>x.id===b.dataset.id);
+  if(a==='gUse'&&r){if(r.saved)return close({k:r.saved,from:'ai'});return saveGen(r,true)}if(a==='gSave'&&r)return saveGen(r,false);if(a==='gAgain'&&r){P.tab='gen';P.gen.prompt=r.prompt;render();const ta=$('#v206pk [data-v206f="prompt"]');if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}},true);
+document.addEventListener('submit',e=>{if(!e.target.closest||!e.target.closest('#v206pk'))return;e.preventDefault();doGen()},true);
+document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#v206pk'))return;const f=t.dataset.v206f;if(f==='file'){const x=t.files&&t.files[0];t.value='';doUpload(x)}else if(f==='proj'||f==='kind'){P[f]=t.value;P.lim=90;render()}else if(f==='quality'||f==='n')P.gen[f]=f==='n'?+t.value:t.value;else if(f==='edit')P.gen.edit=t.checked},true);
+let qT=0;document.addEventListener('input',e=>{const t=e.target;if(!t.closest||!t.closest('#v206pk'))return;if(t.dataset.v206f==='q'){P.q=t.value;clearTimeout(qT);qT=setTimeout(()=>{render();const i=$('#v206pk [data-v206f="q"]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},180)}else if(t.dataset.v206f==='prompt')P.gen.prompt=t.value},true);
+document.addEventListener('keydown',e=>{if(!P.open)return;if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close(null);return}if(e.key==='Tab'){const f=[...document.querySelectorAll('#v206pk button:not([disabled]),#v206pk input,#v206pk select,#v206pk textarea,#v206pk a[href]')].filter(x=>x.offsetParent!==null);if(!f.length)return;const i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}}},true);
+['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>{const z=e.target.closest&&e.target.closest('#v206pk [data-v206drop]');if(!z)return;e.preventDefault();e.stopPropagation();if(ev==='drop'){const f=[...(e.dataTransfer.files||[])].find(x=>/^image\//.test(x.type));if(f)doUpload(f)}},true));
+
+window.KImg={save,generate,pick,close,msg,err,libList,sizeFor,projKey,G,P};
+
+// ---------- the post editor: a photo on the canvas is clickable ----------
+const SL={id:null,list:[]};
+// template photo elements are drawn without the selection recorder; their frames are known from the template itself
+if(window.__v50el){const prev=window.__v50el;window.__v50el=function(c,f,e,ix,p){if(SL.rec&&e&&/^(photo|pphoto|cphoto)$/.test(e.t)){let b=null;if(e.pts){const xs=e.pts.map(q=>q[0]),ys=e.pts.map(q=>q[1]);b={x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)}}else if(e.w&&e.h)b={x:e.x,y:e.y,w:e.w,h:e.h};if(b)SL.list.push({s:e.s||0,box:b,r:e.r||0})}return prev.apply(this,arguments)}}
+if(typeof peCanvas==='function')peCanvas=(f=>function(p){const mine=typeof PE!=='undefined'&&PE.p&&p===PE.p&&!PE.cmp;if(!mine)return f.apply(this,arguments);SL.rec=true;SL.list=[];try{return f.apply(this,arguments)}finally{SL.rec=false;SL.id=p.id;setTimeout(paintSel,0)}})(peCanvas);
+function slotIndex(s){const sl=peSlots(PE.p);const want=s===0?['shot','shots[0]']:['shots['+s+']'];let i=sl.findIndex(x=>want.includes(x.path));if(i<0)i=Math.min(s,sl.length-1);return i}
+const cv=()=>document.getElementById('pe-cv');
+function toT(ev){const c=cv();if(!c)return null;const r=c.getBoundingClientRect();if(!r.width)return null;return {x:(ev.clientX-r.left)/r.width*TW,y:(ev.clientY-r.top)/r.height*TH,r}}
+function canEdit(){return typeof PE!=='undefined'&&PE.p&&(!PE.fmt||PE.fmt==='45')&&!PE.cmp}
+function slotAt(pt){if(!pt||SL.id!==(PE.p&&PE.p.id))return null;for(let i=SL.list.length-1;i>=0;i--){const b=SL.list[i].box;if(pt.x>=b.x&&pt.x<=b.x+b.w&&pt.y>=b.y&&pt.y<=b.y+b.h)return SL.list[i]}return null}
+function v53img(){try{const S=window.__v53&&__v53.SEL;const arr=Array.isArray(S)?S:S&&S.items?S.items:S?[S]:[];if(arr.length!==1)return null;const it=arr[0];const o=it&&it.o;if(o&&o.type==='image')return {it,o:(PE.p.fx.objs||[]).find(x=>x.id===o.id)||o};return null}catch(e){return null}}
+function v53any(){try{const S=window.__v53&&__v53.SEL;return Array.isArray(S)?S.length>0:!!(S&&(S.items?S.items.length:true))}catch(e){return false}}
+const TB={on:null,down:null};
+document.addEventListener('pointerdown',e=>{if(e.target.id!=='pe-cv'||!canEdit())return;const pt=toT(e);TB.down={x:e.clientX,y:e.clientY,t:Date.now()};const hit=slotAt(pt);if(hit){const i=slotIndex(hit.s);if(i>=0&&PE.slot!==i){PE.slot=i}}},true);
+document.addEventListener('pointerup',e=>{if(e.target.id!=='pe-cv'||!canEdit()||!TB.down)return;const d=TB.down;TB.down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5)return;const pt=toT(e);setTimeout(()=>{const im=v53img();if(im){TB.on={kind:'layer',id:im.o.id};paintSel();return}if(v53any()){TB.on=null;paintSel();return}const hit=slotAt(pt);TB.on=hit?{kind:'slot',s:hit.s,i:slotIndex(hit.s)}:null;paintSel()},40)},true);
+document.addEventListener('pointermove',e=>{if(e.target.id!=='pe-cv'||!canEdit()||e.buttons)return;const hit=slotAt(toT(e));const h=$('#v206hov');if(!hit||(TB.on&&TB.on.kind==='slot'&&TB.on.s===hit.s)){if(h)h.hidden=true;return}place(h||mkHov(),hit.box,true)},true);
+function mkHov(){const h=document.createElement('div');h.id='v206hov';h.className='v206hov';h.setAttribute('aria-hidden','true');(cv().parentElement||document.body).appendChild(h);return h}
+function place(el,b,hov){const c=cv();if(!c||!el)return;const host=el.parentElement;const r=c.getBoundingClientRect(),hr=host.getBoundingClientRect();const k=r.width/TW;Object.assign(el.style,{left:(r.left-hr.left+b.x*k)+'px',top:(r.top-hr.top+b.y*TH*k/TH)+'px',width:(b.w*k)+'px',height:(b.h*k)+'px'});el.hidden=false}
+function paintSel(){const c=cv();let box=$('#v206sel'),tb=$('#v206tb');if(!c||!TB.on||!PE.p||!canEdit()){if(box)box.hidden=true;if(tb)tb.hidden=true;return}const host=c.parentElement;if(getComputedStyle(host).position==='static')host.style.position='relative';
+  let b=null,fit='cover';if(TB.on.kind==='slot'){const x=SL.list.find(q=>q.s===TB.on.s);if(!x){TB.on=null;return paintSel()}b=x.box;const sl=peSlots(PE.p)[TB.on.i];fit=sl&&sl.o.fit==='contain'?'contain':'cover'}else{const o=(PE.p.fx.objs||[]).find(x=>x.id===TB.on.id);if(!o){TB.on=null;return paintSel()}fit=o.fit==='contain'?'contain':'cover'}
+  if(b){if(!box){box=document.createElement('div');box.id='v206sel';box.className='v206sel';box.setAttribute('aria-hidden','true');host.appendChild(box)}place(box,b)}else if(box)box.hidden=true;
+  if(!tb){tb=document.createElement('div');tb.id='v206tb';tb.className='v206tb';tb.setAttribute('role','toolbar');tb.setAttribute('aria-label','פעולות לתמונה');host.appendChild(tb)}
+  tb.innerHTML=`<button type="button" class="v206b pri" data-v206e="replace">החלפת תמונה</button><span class="v206seg" role="group" aria-label="איך התמונה ממלאת את המסגרת"><button type="button" data-v206e="fit" data-f="cover" aria-pressed="${fit==='cover'}">מילוי</button><button type="button" data-v206e="fit" data-f="contain" aria-pressed="${fit==='contain'}">התאמה</button></span>${TB.on.kind==='slot'?'<button type="button" class="v206b" data-v206e="crop">מיקום וחיתוך</button><button type="button" class="v206b" data-v206e="light">תאורה</button>':''}<button type="button" class="v206ib" data-v206e="off" aria-label="סגירת סרגל התמונה">✕</button>`;tb.hidden=false;
+  const r=c.getBoundingClientRect(),hr=host.getBoundingClientRect();const k=r.width/TW;const top=b?r.top-hr.top+b.y*k-tb.offsetHeight-8:r.top-hr.top+8;tb.style.top=Math.max(4,top<4&&b?r.top-hr.top+(b.y+b.h)*k+8:top)+'px';tb.style.left=Math.max(4,Math.min(hr.width-tb.offsetWidth-4,(b?r.left-hr.left+(b.x+b.w/2)*k:r.left-hr.left+r.width/2)-tb.offsetWidth/2))+'px'}
+window.addEventListener('resize',()=>setTimeout(paintSel,50));
+document.addEventListener('scroll',()=>{if(TB.on)paintSel()},true);
+// replace the image of a slot in place: the frame, the zoom and the fit stay
+async function replaceSlot(i,opt){const sl=peSlots(PE.p);const cur=sl[i];const ar=(()=>{const x=SL.list.find(q=>slotIndex(q.s)===i);return x?x.box.w/x.box.h:4/5})();
+  const r=await pick(Object.assign({title:'החלפת תמונה',sub:cur?'התמונה החדשה תיכנס לאותה מסגרת, באותו גודל ומיקום':'',project:PE.p.project,aspect:ar,verb:'למסגרת שבחרתם',useLabel:'שימוש בתמונה',editFrom:cur&&!cur.legacy?cur.o.k:null,tags:'upload,studio'},opt||{}));if(!r||!PE.p)return false;
+  PE.slot=Math.max(0,i);const before=cur?{fit:cur.o.fit,flip:cur.o.flip}:{};pePick(r.k);const now=peSlots(PE.p)[PE.slot];if(now&&before.fit)now.o.fit=before.fit;if(now&&before.flip!=null)now.o.flip=before.flip;try{peSyncKeys(PE.p)}catch(e){}try{TC&&TC.clear&&TC.clear()}catch(e){}
+  await (typeof libImg==='function'?libImg(r.k):null);try{peRender()}catch(e){}say('התמונה הוחלפה. ביטול (Ctrl+Z) מחזיר את הקודמת');return true}
+async function replaceLayer(id){const o=(PE.p.fx.objs||[]).find(x=>x.id===id);if(!o)return;const r=await pick({title:'החלפת תמונה',sub:'התמונה החדשה תיכנס לאותה מסגרת',project:PE.p.project,aspect:(o.w&&o.h)?o.w/o.h:1,editFrom:o.k});if(!r)return;try{pePush()}catch(e){}o.k=r.k;await libImg(r.k);try{peRender()}catch(e){}say('התמונה הוחלפה. ביטול (Ctrl+Z) מחזיר את הקודמת')}
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-v206e]');if(!b||!PE.p)return;e.preventDefault();e.stopPropagation();const a=b.dataset.v206e;const on=TB.on;
+  if(a==='off'){TB.on=null;return paintSel()}
+  if(a==='replace'||a==='replaceAny'){if(a==='replaceAny'||!on){const sl=peSlots(PE.p);if(!sl.length){const r=await pick({title:'הוספת תמונה לפוסט',project:PE.p.project});if(r){pePick(r.k);try{peRender()}catch(x){}}return}return replaceSlot(PE.slot||0)}if(on.kind==='slot')return replaceSlot(on.i);return replaceLayer(on.id)}
+  if(a==='fit'&&on){try{pePush()}catch(x){}const f=b.dataset.f;if(on.kind==='slot'){const s=peSlots(PE.p)[on.i];if(s&&!s.legacy){if(f==='contain')s.o.fit='contain';else delete s.o.fit}}else{const o=(PE.p.fx.objs||[]).find(x=>x.id===on.id);if(o){if(f==='contain')o.fit='contain';else delete o.fit}}try{TC&&TC.clear&&TC.clear()}catch(x){}try{peRender()}catch(x){}return}
+  if(a==='crop'||a==='light'){PE.tab=a==='crop'?'image':'light';try{peRender()}catch(x){}setTimeout(()=>{const d=document.querySelector('.pe-body details.v175crop,.pe-body details');if(a==='crop'&&d&&!d.open)d.open=true},60)}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&TB.on&&!P.open){TB.on=null;paintSel()}});
+// the editor header always has a way in, also for designs whose photo is drawn by hand-made layouts
+if(typeof peRender==='function')peRender=(f=>function(){const r=f.apply(this,arguments);try{const top=document.querySelector('.pe-top');if(top&&!top.querySelector('[data-v206e="replaceAny"]')){const b=document.createElement('button');b.type='button';b.className='v206b v206hdr';b.dataset.v206e='replaceAny';b.textContent='החלפת תמונה';b.title='החלפת התמונה שנבחרה (או הראשית) בתמונה מהמכשיר, מהספרייה או מ-AI';const ref=top.querySelector('[data-pe-a="close"]');ref&&ref.nextSibling?top.insertBefore(b,ref.nextSibling):top.appendChild(b)}
+  const body=document.querySelector('.pe-body');if(PE.tab==='image'&&body&&!body.querySelector('.v206imgbar')){const d=document.createElement('div');d.className='v206imgbar';d.innerHTML=`<button type="button" class="v206b pri" data-v206e="replaceAny">החלפת תמונה…</button><span>מהמכשיר, מהספרייה, מתמונות שנוצרו, או יצירה חדשה. אפשר גם ללחוץ על התמונה בעיצוב עצמו.</span>`;body.insertBefore(d,body.firstChild)}}catch(e){}setTimeout(paintSel,0);return r})(peRender);
+if(typeof peClose==='function')peClose=(f=>function(){TB.on=null;['#v206sel','#v206tb','#v206hov'].forEach(s=>{const x=$(s);x&&x.remove()});return f.apply(this,arguments)})(peClose);
+
+// ---------- uploads that went through other paths now persist and report their failures ----------
+if(typeof peUploadInto==='function')peUploadInto=(f=>async function(file){if(!file||!/^image\//.test(file.type))return say('בחרו קובץ תמונה');if(typeof KC==='undefined'||!KC.assets)return f.apply(this,arguments);
+  say('מעלה את התמונה…');try{const r=await save(file,{name:file.name,project:PE.p&&PE.p.project,tags:'upload,studio'});const i=PE.slot||0;const cur=peSlots(PE.p)[i];const keep=cur?{fit:cur.o.fit,flip:cur.o.flip}:{};pePick(r.k);const now=peSlots(PE.p)[PE.slot];if(now&&keep.fit)now.o.fit=keep.fit;if(now&&keep.flip!=null)now.o.flip=keep.flip;await libImg(r.k);try{peRender()}catch(e){}say('התמונה הוחלפה ונשמרה בספרייה')}catch(e){say(msg(e))}})(peUploadInto);
+window.__v206={SL,TB,replaceSlot,replaceLayer,paintSel,slotAt,slotIndex};
+})();
+/*V206:END*/
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

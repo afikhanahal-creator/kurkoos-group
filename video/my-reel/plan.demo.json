@@ -1,0 +1,25 @@
+{
+  "_": "דוגמה ל-14 האפקטים על הקליפ החלופי. הזמנים כאן הם זמנים ידניים (at) כי אין תמלול לקליפ הזה. עם transcript.json אפשר לכתוב word במקום at.",
+  "source": "assets/video.mp4",
+  "cutout": "assets/cutout.webm",
+  "duration": 14.7,
+  "fps": 30,
+  "accent": "#FF7A3D",
+  "titles": true,
+  "effects": [
+    { "id": "title", "at": 0.3, "params": { "text": "כותרת אות-אות" } },
+    { "id": "pill", "at": 1.3, "params": { "text": "הדגשה" } },
+    { "id": "behind", "at": 2.3, "params": { "text": "מאחור" } },
+    { "id": "counter", "at": 3.3, "params": { "value": 14, "label": "אפקטים" } },
+    { "id": "underline", "at": 4.3, "params": { "text": "קו שמצויר ביד" } },
+    { "id": "card", "at": 5.3, "params": { "title": "כרטיס מידע", "text": "כותרת ושורת פירוט" } },
+    { "id": "punch", "at": 6.3, "params": { "zoom": 1.08 } },
+    { "id": "checklist", "at": 7.3, "params": { "items": ["שורה ראשונה", "שורה שנייה", "שורה שלישית"] } },
+    { "id": "quote", "at": 8.3, "params": { "text": "בועת ציטוט ליד הכתף" } },
+    { "id": "pin", "at": 9.3, "params": { "text": "הוד השרון" } },
+    { "id": "icon", "at": 10.3, "params": { "icon": "home", "text": "בית" } },
+    { "id": "split", "at": 11.3, "params": { "a": "לפני", "b": "אחרי" } },
+    { "id": "bar", "at": 12.3, "params": { "text": "פס" } },
+    { "id": "cta", "at": 13.2, "params": { "text": "לפרטים בפרופיל" } }
+  ]
+}

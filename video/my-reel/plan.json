@@ -1,0 +1,11 @@
+{
+  "_": "שלב 4 עד 6: השכבות בלבד, בלי אפקטים. debug מצייר פס מאחורי הדובר ומעמעם את המקור כדי להוכיח שהקאט-אאוט מסונכרן.",
+  "source": "assets/video.mp4",
+  "cutout": "assets/cutout.webm",
+  "duration": 14.7,
+  "fps": 30,
+  "accent": "#FF7A3D",
+  "titles": true,
+  "debug": true,
+  "effects": []
+}

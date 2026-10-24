@@ -1,0 +1,12 @@
+<style id="k228">
+/* V228 · video from a description, built by Claude Code */
+.v228jobs{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.v228jobs b{display:block;font-size:13px;margin-bottom:6px}
+.v228jobs ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.v228jobs li{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.22)}
+.v228jobs li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v228jobs li small{opacity:.8;white-space:nowrap}
+.v228jobs li.st-done small{color:#7fd6a4}.v228jobs li.st-failed small{color:#ff9a9a}
+.v228jobs li.st-queued small::before,.v228jobs li.st-planning small::before,.v228jobs li.st-editing small::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffd47a;margin-inline-end:6px;animation:v228p 1s infinite alternate}
+@keyframes v228p{from{opacity:.3}to{opacity:1}}
+</style>

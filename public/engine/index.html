@@ -3761,6 +3761,17 @@ html.v226-on{overflow:hidden}
 .v226sc table{width:100%;border-collapse:collapse;font-size:12.5px}.v226sc th,.v226sc td{padding:6px;border-bottom:1px solid rgba(255,255,255,.1);vertical-align:top;text-align:right}
 .v226sc th{font-size:11.5px;opacity:.75}.v226cap{margin:0;font-size:12.5px;opacity:.85;white-space:pre-wrap}
 @media (max-width:900px){.v226body{grid-template-columns:1fr;overflow:auto}.v226player{grid-template-rows:auto auto auto auto}.v226stg{min-height:46vh}}
+</style><style id="k228">
+/* V228 · video from a description, built by Claude Code */
+.v228jobs{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.v228jobs b{display:block;font-size:13px;margin-bottom:6px}
+.v228jobs ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.v228jobs li{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.22)}
+.v228jobs li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v228jobs li small{opacity:.8;white-space:nowrap}
+.v228jobs li.st-done small{color:#7fd6a4}.v228jobs li.st-failed small{color:#ff9a9a}
+.v228jobs li.st-queued small::before,.v228jobs li.st-planning small::before,.v228jobs li.st-editing small::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffd47a;margin-inline-end:6px;animation:v228p 1s infinite alternate}
+@keyframes v228p{from{opacity:.3}to{opacity:1}}
 </style><style id="k150">
 /* V150 · the "show more" button becomes a quiet loading line while the list fills itself */
 .v150auto{opacity:.75}
@@ -23220,7 +23231,7 @@ async function init(){const use=n=>(window.claude&&window.claude.use)?window.cla
  if(typeof APP!=='undefined'&&APP.view==='videos')render()}
 // ---------- queue a video for the editor ----------
 async function queueDoc(doc){if(!VD.db)throw new Error('nodb');const d=Object.assign({status:'queued',created:new Date().toISOString(),style:VD.style,brand:'full',hook:'',cta:'',keywords:[]},doc);await VD.db.collection('videos').doc(d.id).set(d);return d}
-async function fire(d){if(!VD.mcp)throw new Error('nomcp');const payload={id:d.id,name:d.name||'',asset:d.srcId||null,path:d.path||null,brand:d.brand||'full',style:d.preset||d.style||VD.style,preset:d.preset||d.style||VD.style,effects:d.effects||null,hook:d.hook||'',cta:d.cta||'',keywords:d.keywords||[],emojis:d.emojis||{},kit:d.kit||null,parts:d.parts||null,mode:d.mode||null,trim:d.trim||null,mute:!!d.mute,pro:d.pro||null,sig:d.sig||null,stylemaker:d.stylemaker||null,phase:d.phase||null,base:d.base||null,planNote:d.planNote||null,reel:d.reel||null,reelPrompt:d.reelPrompt||null,fixes:d.fixes||null,fixNote:d.fixNote||null,artifact:ART};
+async function fire(d){if(!VD.mcp)throw new Error('nomcp');const payload={id:d.id,name:d.name||'',asset:d.srcId||null,path:d.path||null,brand:d.brand||'full',style:d.preset||d.style||VD.style,preset:d.preset||d.style||VD.style,effects:d.effects||null,hook:d.hook||'',cta:d.cta||'',keywords:d.keywords||[],emojis:d.emojis||{},kit:d.kit||null,parts:d.parts||null,mode:d.mode||null,trim:d.trim||null,mute:!!d.mute,pro:d.pro||null,sig:d.sig||null,stylemaker:d.stylemaker||null,phase:d.phase||null,base:d.base||null,planNote:d.planNote||null,reel:d.reel||null,reelPrompt:d.reelPrompt||null,fixes:d.fixes||null,fixNote:d.fixNote||null,prompt:d.prompt||null,len:d.len||null,fmt:d.fmt||null,firstFrame:d.firstFrame||null,artifact:ART};
  await VD.mcp.callTool('Claude Code Remote','fire_trigger',{trigger_id:VIDEO_TRIGGER,text:JSON.stringify(payload)},{cache:false})}
 async function editVideo(d){try{await fire(d);toastSafe('הסרטון נשלח לעורך. העריכה לוקחת כמה דקות ותופיע בעמוד "סרטונים"');return true}catch(e){const c=e&&e.code;toastSafe(c==='not_granted'?'אשרו לדף גישה ל-Claude Code Remote כדי לשלוח לעורך':'לא הצלחתי לשלוח לעורך: '+(e&&e.message||e));return false}}
 async function uploadAndQueue(file,opts={}){if(!VD.assets||!VD.db){toastSafe('העלאת סרטונים לעריכה זמינה כשהדף פתוח ב-claude.ai עם הרשאת עריכה');return null}
@@ -31487,10 +31498,10 @@ async function token(){return window.__engineToken?await window.__engineToken():
 async function api(body){if(window.__v214mock)return window.__v214mock(body);const tok=await token();if(!tok){const e=new Error('no');e.code='no_site';throw e}let r;try{r=await fetch('/api/video-gen',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body)})}catch(x){const e=new Error('net');e.code='network';throw e}const d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.error||('HTTP '+r.status));e.code=d.code||(r.status===401?'auth':'provider_error');throw e}return d}
 // ---------- the generator card in the studio library ----------
 function card(){const f=G.form;const j=G.jobs.filter(x=>x.status!=='done'&&x.status!=='failed');const done=G.jobs.filter(x=>x.status==='done').slice(-3);
-  return `<section class="v214gen" id="v214gen" aria-label="יצירת סרטון מפרומפט"><div class="v214hd"><b>✦ סרטון חדש מתיאור</b><small>${G.info?(G.info.configured?`מחובר: ${G.info.provider==='veo'?'Google Veo':'OpenAI Sora'} (${E(G.info.model)})`:'לא מוגדר עדיין: צריך מפתח ב-Vercel'):''}</small></div>
+  return `<section class="v214gen" id="v214gen" aria-label="יצירת סרטון מפרומפט"><div class="v214hd"><b>✦ סרטון חדש מתיאור</b><small>Claude Code (Opus 5.5) בונה את הסרטון עם HyperFrames לפי התיאור, בערכת המותג של קורקוס</small></div>
    <form data-v214="gen"><label class="v214fl"><span>מה לצלם</span><textarea data-v214f="prompt" rows="3" placeholder='למשל: "טיסת רחפן איטית מעל וילה לבנה מודרנית עם בריכה, שעת זהב, הוד השרון"' required>${E(f.prompt)}</textarea></label>
    <div class="v214row"><label class="v214fl"><span>אורך</span><select data-v214f="seconds">${[['4','4 שניות'],['8','8 שניות'],['12','12 שניות']].map(([k,l])=>`<option value="${k}"${f.seconds===k?' selected':''}>${l}</option>`).join('')}</select></label><label class="v214fl"><span>פורמט</span><select data-v214f="size">${[['720x1280','אנכי 9:16 (רילס, סטורי)'],['1280x720','אופקי 16:9']].map(([k,l])=>`<option value="${k}"${f.size===k?' selected':''}>${l}</option>`).join('')}</select></label><label class="v214fl"><span>פריים ראשון (לא חובה)</span><span class="v214pick">${f.image?`<img src="${f.image}" alt=""><button type="button" class="v204b" data-v214="imgx">הסרה</button>`:`<button type="button" class="v204b" data-v214="img">בחירת תמונה</button>`}</span></label></div>
-   <div class="v214row"><button type="submit" class="v204b pri" ${G.busy?'disabled':''}>יצירת הסרטון</button><span class="v204hint">הסרטון נוצר אצל ספק הווידאו (כמה דקות), נשמר בענן שלנו ונפתח כאן לעריכה: כתוביות, לוגו, מוזיקה וייצוא.</span></div></form>
+   <div class="v214row"><button type="submit" class="v204b pri" ${G.busy?'disabled':''}>יצירת הסרטון עם Claude Code</button><span class="v204hint">הסרטון נוצר אצל Claude Code (Opus 5.5) עם HyperFrames (כמה דקות): אנימציה, כותרות, לוגו ומוזיקה לפי התיאור, בלי ספק וידאו חיצוני. הוא נשמר בענן שלנו ונפתח כאן לעריכה.</span></div></form>
    ${G.err?`<div class="v214err" role="alert"><b>${E(msg(G.err))}</b><button type="button" class="v204b" data-v214="retry">לנסות שוב</button></div>`:''}
    ${j.length?`<div class="v214jobs">${j.map(x=>`<div class="v214job" data-id="${E(x.id)}"><b>${E(x.prompt.slice(0,60))}</b><span class="v204xbar"><i style="width:${x.progress||3}%"></i></span><small>${({queued:'בתור אצל הספק',in_progress:'מצלם',finishing:'שומר בענן'})[x.status]||x.status}${x.progress?' · '+x.progress+'%':''} · ${Math.round((Date.now()-x.at)/60000)} דק׳</small><button type="button" class="v204b" data-v214="drop" data-id="${E(x.id)}">הסרה מהרשימה</button></div>`).join('')}</div>`:''}
    ${done.length?`<p class="v204hint">נוצרו לאחרונה: ${done.map(x=>E(x.prompt.slice(0,30))).join(' · ')}</p>`:''}</section>`}
@@ -31507,7 +31518,7 @@ async function finish(j){try{const d=await api({op:'finish',id:j.id});let url=d.
    j.status='done';j.url=url;SS('v214_jobs',G.jobs);const name=('AI · '+j.prompt).slice(0,60);try{if(typeof KC!=='undefined'&&KC.db)await KC.db.collection('videos').doc('vg_'+String(j.id).replace(/[^a-z0-9]/gi,'').slice(-24)).set({name,srcUrl:url,ai:true,prompt:j.prompt,created:new Date().toISOString(),kind:'ai'})}catch(e){}
    say('הסרטון מוכן. פותחים אותו לעריכה');if(window.__v204&&__v204.fromSource)await __v204.fromSource({name,url,from:'נוצר מתיאור'})}catch(e){j.status='failed';j.error=msg(e);G.err=e;SS('v214_jobs',G.jobs);paint()}}
 // ---------- events ----------
-document.addEventListener('submit',e=>{const f=e.target;if(!f.dataset||f.dataset.v214!=='gen')return;e.preventDefault();G.form.prompt=(f.querySelector('[data-v214f="prompt"]')||{}).value||'';G.form.seconds=(f.querySelector('[data-v214f="seconds"]')||{}).value||'8';G.form.size=(f.querySelector('[data-v214f="size"]')||{}).value||'720x1280';SS('v214_form',Object.assign({},G.form,{image:undefined}));start()},true);
+document.addEventListener('submit',e=>{const f=e.target;if(!f.dataset||f.dataset.v214!=='gen')return;if(window.__v228)return;e.preventDefault();G.form.prompt=(f.querySelector('[data-v214f="prompt"]')||{}).value||'';G.form.seconds=(f.querySelector('[data-v214f="seconds"]')||{}).value||'8';G.form.size=(f.querySelector('[data-v214f="size"]')||{}).value||'720x1280';SS('v214_form',Object.assign({},G.form,{image:undefined}));start()},true);
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.v214f==='prompt'&&t.closest('#v214gen')){G.form.prompt=t.value}},true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.v214f&&t.dataset.v214f!=='prompt'&&t.closest('#v214gen')){G.form[t.dataset.v214f]=t.value;SS('v214_form',Object.assign({},G.form,{image:undefined}))}},true);
 document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-v214]');if(!b)return;const a=b.dataset.v214;if(a==='gen')return;e.preventDefault();
@@ -32102,6 +32113,49 @@ window.addEventListener('keydown',e=>{if(!R.open)return;const tag=(e.target.tagN
 window.__v226={open,close,R,items,instruction,spreadAnswers,stageMax,scriptPrompt,applyScriptAsSubs,step,addNote,inject,cutsBar};
 })();
 /*V226:END*/
+
+/*V228:START*/
+// ================= V228 · a video from a description is made by Claude Code (Opus 5.5) with HyperFrames, in the brand kit, not by
+// OpenAI Sora or Google Veo. The card in the studio library keeps its form; the submit goes to the cloud editor as a
+// "generate" job (videos doc + the video trigger), the job list shows its state, and the finished file opens in the studio.
+// The OpenAI path stays in the code but is no longer reachable from the card. =================
+(()=>{
+if(window.__v228)return;window.__v228=1;
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const say=m=>{try{toast(m)}catch(e){console.log(m)}};
+const LSK='v228_jobs';const J={jobs:[]};try{J.jobs=JSON.parse(localStorage.getItem(LSK)||'[]')}catch(e){}
+function save(){try{localStorage.setItem(LSK,JSON.stringify(J.jobs.slice(-20)))}catch(e){}}
+const ST={queued:'נשלח ל-Claude Code',planning:'Claude Code קורא את התיאור',editing:'Claude Code בונה ומרנדר',done:'מוכן',failed:'נכשל'};
+function jobsHtml(){if(!J.jobs.length)return '';return `<div class="v228jobs"><b>סרטונים שנבנים עם Claude Code</b><ul>${J.jobs.slice().reverse().slice(0,6).map(j=>`<li class="st-${j.status}"><span>${E(j.prompt.slice(0,70))}</span><small>${ST[j.status]||j.status}${j.error?': '+E(j.error):''}</small>${j.status==='done'&&j.url?`<button type="button" class="v204b" data-v228="open" data-id="${E(j.id)}">פתיחה בסטודיו</button>`:''}<button type="button" class="v204b" data-v228="drop" data-id="${E(j.id)}" aria-label="הסרה מהרשימה">✕</button></li>`).join('')}</ul></div>`}
+function relabel(){const card=document.getElementById('v214gen');if(!card)return;
+  // the provider line and the button come from the patched card itself (build228); the jobs box lives beside the card so repaints keep it
+  let box=document.getElementById('v228jobs');const html=jobsHtml();if(box){if(html)box.innerHTML=html;else box.remove()}else if(html){card.insertAdjacentHTML('afterend','<div id="v228jobs">'+html+'</div>')}}
+let obT=0;new MutationObserver(()=>{clearTimeout(obT);obT=setTimeout(relabel,60)}).observe(document.body,{childList:true,subtree:true});setTimeout(relabel,1200);setInterval(()=>{try{if(document.getElementById('v214gen'))relabel()}catch(e){}},700);
+// the submit, before the OpenAI path gets it
+document.addEventListener('submit',async e=>{const f=e.target;if(!f||!f.dataset||f.dataset.v214!=='gen')return;e.preventDefault();e.stopImmediatePropagation();
+  const prompt=((f.querySelector('[data-v214f="prompt"]')||{}).value||'').trim();if(!prompt){say('כתבו מה לצלם');return}
+  const seconds=+((f.querySelector('[data-v214f="seconds"]')||{}).value||8)||8;const size=(f.querySelector('[data-v214f="size"]')||{}).value||'720x1280';
+  const G=window.__v214&&__v214.G;const im=G&&G.form&&G.form.image;const firstFrame=typeof im==='string'?im:(im&&im.url)||null;
+  try{if(G){G.form.prompt=prompt;G.form.seconds=String(seconds);G.form.size=size}}catch(x){}
+  const V=window.__vid;if(!V||!V.VD||!V.VD.db){say('היצירה עם Claude Code זמינה כשהדף פתוח ב-claude.ai עם הרשאת עריכה');return}
+  const id='vg'+Date.now().toString(36);const j={id,prompt,seconds,size,at:Date.now(),status:'queued'};J.jobs.push(j);save();relabel();
+  try{const d=await V.queueDoc({id,name:('Claude · '+prompt).slice(0,60),source:'generate',mode:'generate',prompt,len:seconds,fmt:size==='1280x720'?'16:9':'9:16',firstFrame,kit:{brand:'kurkoos'},status:'queued',phase:'render',requested:new Date().toISOString()});
+    const ok=await V.editVideo(Object.assign({__direct:1},d));if(ok===false){j.status='failed';j.error='השליחה לעורך לא הצליחה';save();relabel();return}say('Claude Code בונה את הסרטון. זה לוקח כמה דקות, נעדכן כאן')}
+  catch(x){j.status='failed';j.error=(x&&x.message)||'השליחה נכשלה';save();relabel()}
+  poll()},true);
+let pollT=0;
+function poll(){clearTimeout(pollT);const live=J.jobs.filter(j=>j.status!=='done'&&j.status!=='failed');if(!live.length)return;
+  const docs=(window.__vid&&__vid.VD&&__vid.VD.docs)||[];let changed=false;
+  live.forEach(j=>{const d=docs.find(x=>x.id===j.id);if(!d)return;if(d.status==='done'&&d.out){j.status='done';j.url=d.out;changed=true;say('הסרטון מוכן. פותחים אותו בסטודיו');try{if(window.__v204&&__v204.fromSource)__v204.fromSource({name:d.name||j.prompt.slice(0,40),url:d.out,from:'נוצר עם Claude Code'})}catch(e){}}
+    else if(d.status==='failed'){j.status='failed';j.error=d.error||'';changed=true}else if(d.status&&d.status!==j.status){j.status=d.status;changed=true}});
+  if(changed){save();relabel()}if(J.jobs.some(j=>j.status!=='done'&&j.status!=='failed'))pollT=setTimeout(poll,10000)}
+setTimeout(poll,4000);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v228]');if(!b)return;const j=J.jobs.find(x=>x.id===b.dataset.id);if(!j)return;
+  if(b.dataset.v228==='drop'){J.jobs=J.jobs.filter(x=>x!==j);save();relabel()}
+  else if(b.dataset.v228==='open'&&j.url){try{__v204.fromSource({name:j.prompt.slice(0,40),url:j.url,from:'נוצר עם Claude Code'})}catch(x){}}},true);
+window.__v228={J,poll,relabel};
+})();
+/*V228:END*/
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

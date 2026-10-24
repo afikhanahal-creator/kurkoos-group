@@ -37,6 +37,7 @@ const ROUTES = {
   tts: () => import('../server/tts.js'),
   'video-gen': () => import('../server/video-gen.js'),
   status: () => import('../server/status.js'),
+  'fetch-url': () => import('../server/fetch-url.js'),
 }
 
 /* שם המטפל מגיע מהסגמנט הדינמי של הנתיב. יש גיבוי לקריאה מתוך

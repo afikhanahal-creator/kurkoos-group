@@ -5,11 +5,13 @@ import { HOUSE_PAGES } from '../../../data/houseLanding.js'
 const LANDING_LABELS = {
   '/kablan-bniya-bayit-prati': 'קבלן לבית פרטי',
   '/bniyat-vila-sharon': 'בניית וילה בשרון',
+  '/bniyat-bayit-prati': 'בניית בית פרטי בכל הארץ',
+  '/migrashim-vekarkaot': 'מגרשים וקרקעות',
 }
 
 export default {
   route: '/kablan-bniya-bayit-prati',
-  routes: [{ route: '/bniyat-vila-sharon' }, { route: '/bniyat-bayit-prati/:city' }],
+  routes: [{ route: '/bniyat-vila-sharon' }, { route: '/bniyat-bayit-prati' }, { route: '/bniyat-bayit-prati/:city' }, { route: '/migrashim-vekarkaot' }],
   group: 'land',
   label: 'קבלן לבית פרטי',
   pages: HOUSE_PAGES.map((p) => (p.city ? [p.path, p.city, 'city'] : [p.path, LANDING_LABELS[p.path] || p.navLabel, 'land'])),

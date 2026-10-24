@@ -36,13 +36,35 @@ const PROJECT_PLACE = {
   'hankin-41': 'הוד השרון, שכונת מגדיאל',
 }
 
-const TOPIC = 'construction'
+/* נושא הליד: ביצוע בעמודי הבית הפרטי, תיווך בעמוד המגרשים */
+const topicOf = (page) => page.topic || 'construction'
+
+/* ניסוחי הכפתורים, הטופס והקישורים. עמוד יכול להחליף חלק מהם ב-page.copy
+   (עמוד המגרשים), וכל השאר נשאר כמו בעמודי הבית הפרטי. */
+const DEFAULT_COPY = {
+  heroCta: 'קבלו הערכת עלות לבית שלכם',
+  bandText: 'נעבור יחד על המגרש והתוכנית, ונראה ממה בנוי המחיר של הבית שלכם.',
+  bandCta: 'קבלו הערכת עלות לבית שלכם',
+  waText: 'שלום, אשמח לקבל הערכת עלות לבניית בית פרטי',
+  waTrust: 'שלום שלומי, אשמח לדבר על בניית בית פרטי',
+  jumpSteps: 'השלבים, מהמגרש ועד המפתח',
+  jumpCheck: 'מה בודקים לפני שבונים',
+  jumpForm: 'הערכת עלות',
+  introLink: { to: '/villas-sharon', label: 'הווילות והבתים הפרטיים שאנחנו מקימים בהוד השרון' },
+  armsNote: 'מי שבודק אינו מי שבונה. שתי הזרועות באותה קבוצה, בידיים נפרדות.',
+  stepsLead: 'חמישה שלבים, וכתובת אחת לאורך כולם.',
+  guidesTitle: 'מדריכים שכדאי לקרוא לפני שמחליטים',
+  formTitle: 'קבלו הערכת עלות לבית שלכם',
+  formLead: 'השאירו פרטים, ונחזור אליכם כדי לעבור יחד על המגרש והתוכנית.',
+  placeholder: 'איפה המגרש, ובאיזה שלב אתם?',
+}
+const copyOf = (page) => ({ ...DEFAULT_COPY, ...(page.copy || {}) })
 
 /* הסקשנים של העמוד, לפי הסדר. הנתונים מחושבים פעם אחת בעמוד ומגיעים ב-ctx.
    ה-ref של ציר השלבים נשאר בעמוד, כי האפקט שמפעיל אותו יושב שם */
 const LOCAL = {
   /* ---------- כותרת ---------- */
-  hero: ({ ctx: { page, estimate, call, heroW, heroH, portrait } }) => (
+  hero: ({ ctx: { page, estimate, call, heroW, heroH, portrait, C } }) => (
     <header className="hl-hero">
       <InfiniteGrid color="rgba(143,182,200,1)" baseOpacity={0.14} revealOpacity={0.42} size={48} speed={0.25} />
       <div className="hl-hero__glow" aria-hidden="true" />
@@ -54,7 +76,7 @@ const LOCAL = {
             <p className="hl-hero__lead">{page.lead}</p>
             <div className="hl-hero__actions">
               <button type="button" className="btn btn--primary btn--lg" onClick={estimate('hero')}>
-                קבלו הערכת עלות לבית שלכם
+                {C.heroCta}
                 <Icon name="arrowLeft" size={20} />
               </button>
               <a href={telHref()} className="btn btn--lg hl-btn-ghost" onClick={call('hero')}>
@@ -80,42 +102,42 @@ const LOCAL = {
     </header>
   ),
   /* ---------- הוכחות ---------- */
-  proof: () => (
+  proof: ({ ctx: { page } }) => (
     <div className="container hl-proof-wrap">
       <ul className="hl-proof" aria-label="בקצרה">
-        {HOUSE_PROOF.map((f) => (
+        {(page.proof || HOUSE_PROOF).map((f) => (
           <li key={f.v}><b>{f.v}</b><span>{f.u}</span></li>
         ))}
       </ul>
     </div>
   ),
   /* ---------- בעמוד הזה: קפיצה ישר לתשובה ---------- */
-  jump: ({ ctx: { page } }) => (
+  jump: ({ ctx: { page, C } }) => (
     <nav className="container hl-jump" aria-label="בעמוד הזה">
       <span className="hl-jump__label">בעמוד הזה</span>
       <ul>
         <li><a href="#hl-intro-title">{page.intro.q}</a></li>
-        <li><a href="#hl-steps-title">השלבים, מהמגרש ועד המפתח</a></li>
-        <li><a href="#hl-check-title">מה בודקים לפני שבונים</a></li>
+        <li><a href="#hl-steps-title">{C.jumpSteps}</a></li>
+        <li><a href="#hl-check-title">{C.jumpCheck}</a></li>
         <li><a href="#hl-faq-title">שאלות נפוצות</a></li>
-        <li><a href="#contact">הערכת עלות</a></li>
+        <li><a href="#contact">{C.jumpForm}</a></li>
       </ul>
     </nav>
   ),
   /* ---------- תשובה ישירה + שתי הזרועות ---------- */
-  intro: ({ ctx: { page } }) => (
+  intro: ({ ctx: { page, C } }) => (
     <section className="hl-section hl-intro">
       <div className="container hl-intro__grid">
         <div className="hl-intro__text">
           <h2 className="hl-h2" id="hl-intro-title">{page.intro.q}</h2>
           <p className="hl-intro__answer">{page.intro.a}</p>
-          <Link to="/villas-sharon" className="hl-textlink">
-            הווילות והבתים הפרטיים שאנחנו מקימים בהוד השרון
+          <Link to={C.introLink.to} className="hl-textlink">
+            {C.introLink.label}
             <Icon name="arrowLeft" size={16} />
           </Link>
         </div>
         <div className="hl-arms">
-          {HOUSE_ARMS.map((a) => (
+          {(page.arms || HOUSE_ARMS).map((a) => (
             <Link key={a.name} to={a.to} className="hl-arm">
               <img src={a.logo} alt="" className="hl-arm__logo" loading="lazy" width="72" height="72" />
               <span className="hl-arm__body">
@@ -124,21 +146,21 @@ const LOCAL = {
               </span>
             </Link>
           ))}
-          <p className="hl-arms__note">מי שבודק אינו מי שבונה. שתי הזרועות באותה קבוצה, בידיים נפרדות.</p>
+          <p className="hl-arms__note">{C.armsNote}</p>
         </div>
       </div>
     </section>
   ),
   /* ---------- התהליך ---------- */
-  steps: ({ ctx: { page, timelineRef } }) => (
+  steps: ({ ctx: { page, timelineRef, C } }) => (
     <section className="hl-section hl-steps" aria-labelledby="hl-steps-title">
       <div className="container">
         <div className="hl-head">
           <h2 className="hl-h2" id="hl-steps-title">{page.stepsTitle}</h2>
-          <p className="hl-head__lead">חמישה שלבים, וכתובת אחת לאורך כולם.</p>
+          <p className="hl-head__lead">{C.stepsLead}</p>
         </div>
         <ol className="hl-timeline" ref={timelineRef}>
-          {HOUSE_STEPS.map((s, i) => (
+          {(page.steps || HOUSE_STEPS).map((s, i) => (
             <li key={s.t} className="hl-stage" style={{ '--i': i }}>
               <span className="hl-stage__num" aria-hidden="true">{i + 1}</span>
               <div className="hl-stage__body">
@@ -153,20 +175,20 @@ const LOCAL = {
     </section>
   ),
   /* ---------- קריאה לפעולה באמצע העמוד ---------- */
-  band: ({ ctx: { page, estimate, placement } }) => (
+  band: ({ ctx: { page, estimate, placement, C } }) => (
     <section className="hl-band-wrap" aria-labelledby="hl-band-title">
       <div className="container">
         <div className="hl-band">
           <div className="hl-band__text">
             <h2 id="hl-band-title">{page.ctaTitle}</h2>
-            <p>נעבור יחד על המגרש והתוכנית, ונראה ממה בנוי המחיר של הבית שלכם.</p>
+            <p>{C.bandText}</p>
           </div>
           <div className="hl-band__actions">
             <button type="button" className="btn btn--primary btn--lg" onClick={estimate('band')}>
-              קבלו הערכת עלות לבית שלכם
+              {C.bandCta}
             </button>
             <a
-              href={waHref('שלום, אשמח לקבל הערכת עלות לבניית בית פרטי')}
+              href={waHref(C.waText)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn--lg hl-btn-ghost"
@@ -222,13 +244,13 @@ const LOCAL = {
     </section>
   ),
   /* ---------- קישורים פנימיים ---------- */
-  links: ({ ctx: { siblings } }) => (
+  links: ({ ctx: { page, siblings, C } }) => (
     <nav className="hl-section hl-links" aria-label="עוד בנושא">
       <div className="container hl-links__grid">
         <div>
-          <h2 className="hl-links__title">מדריכים שכדאי לקרוא לפני שמחליטים</h2>
+          <h2 className="hl-links__title">{C.guidesTitle}</h2>
           <ul>
-            {HOUSE_GUIDES.map((g) => (
+            {(page.guides || HOUSE_GUIDES).filter((g) => g.to !== page.path).map((g) => (
               <li key={g.to}><Link to={g.to}>{g.label}<Icon name="arrowLeft" size={15} /></Link></li>
             ))}
           </ul>
@@ -246,8 +268,8 @@ const LOCAL = {
     </nav>
   ),
   /* ---------- טופס ---------- */
-  lead: ({ ctx: { placement } }) => (
-    <HouseLead placement={placement} />
+  lead: ({ ctx: { placement, page, C } }) => (
+    <HouseLead placement={placement} topic={topicOf(page)} C={C} />
   ),
 }
 
@@ -273,10 +295,11 @@ function HouseLandingPage({ page }) {
     return () => io.disconnect()
   }, [])
   const jsonLd = useMemo(() => houseJsonLd(page), [page])
+  const C = useMemo(() => copyOf(page), [page])
   const placement = `house_${page.key}`
   const estimate = (where) => () => {
     track('cta_click', { placement: `${placement}_${where}` })
-    openContactPopup(TOPIC)
+    openContactPopup(topicOf(page))
   }
   const call = (where) => () => track('phone_click', { placement: `${placement}_${where}` })
 
@@ -287,7 +310,7 @@ function HouseLandingPage({ page }) {
   return (
     <article className="hl">
       <Seo title={page.title} description={page.description} image={page.heroImage} jsonLd={jsonLd} />
-      <PageSections def={DEF} slug={page.path} local={LOCAL} ctx={{ page, estimate, call, heroW, heroH, portrait, timelineRef, placement, siblings }} />
+      <PageSections def={DEF} slug={page.path} local={LOCAL} ctx={{ page, estimate, call, heroW, heroH, portrait, timelineRef, placement, siblings, C }} />
     </article>
   )
 }
@@ -298,7 +321,7 @@ function HouseLandingPage({ page }) {
    מקבל את העובדות בבת אחת, לפני שהוא גולל. */
 function SiteSign({ page, onCall }) {
   const committee = page.committee ? page.committee.replace('הוועדה המקומית לתכנון ובנייה ', 'הוועדה המקומית ') : ''
-  const rows = [
+  const rows = page.signRows || [
     ['העבודה', page.city ? 'בניית בית פרטי על המגרש שלכם' : 'בתים פרטיים ווילות על המגרש שלכם'],
     page.city && ['המקום', page.city],
     committee && ['ההיתר', committee],
@@ -380,7 +403,7 @@ function HouseProjects({ title, lead }) {
 /* ---------- הטופס בסוף העמוד ----------
    אותם רכיבי טופס ואותה שורת ליד כמו בסקשן צור קשר (Contact.jsx),
    עם נושא קבוע של ביצוע, ולצידם עמודת אמון: שלומי קורקוס והקשר הישיר. */
-function HouseLead({ placement }) {
+function HouseLead({ placement, topic = 'construction', C = DEFAULT_COPY }) {
   const lf = useLeadForm({ form: 'house_landing', idPrefix: 'hl' })
 
   const handleSubmit = (e) => {
@@ -389,14 +412,14 @@ function HouseLead({ placement }) {
       ...v,
       project: (() => {
         const interest = getLastProject()
-        const he = heDict.contactExtra.topics[TOPIC] + (interest ? ` · התעניין ב: ${interest.name}` : '')
-        const en = enDict.contactExtra.topics[TOPIC] + (interest ? ` · Interested in: ${interest.name}` : '')
+        const he = heDict.contactExtra.topics[topic] + (interest ? ` · התעניין ב: ${interest.name}` : '')
+        const en = enDict.contactExtra.topics[topic] + (interest ? ` · Interested in: ${interest.name}` : '')
         return interest ? { he, en, slug: interest.slug || '' } : { he, en }
       })(),
       notes: trailSummary() ? `מסע באתר: ${trailSummary()}` : undefined,
       source: 'contact',
       status: 'new',
-    }), { topic: TOPIC })
+    }), { topic })
   }
 
   return (
@@ -413,7 +436,7 @@ function HouseLead({ placement }) {
                 <Icon name="phone" size={18} /> <span dir="ltr">{CONTACT_PHONE_DISPLAY}</span>
               </a>
               <a
-                href={waHref('שלום שלומי, אשמח לדבר על בניית בית פרטי')}
+                href={waHref(C.waTrust)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hl-trust__link"
@@ -427,14 +450,14 @@ function HouseLead({ placement }) {
         </div>
 
         <div className="hl-form">
-          <h2 className="hl-form__title" id="hl-lead-title">קבלו הערכת עלות לבית שלכם</h2>
-          <p className="hl-form__lead">השאירו פרטים, ונחזור אליכם כדי לעבור יחד על המגרש והתוכנית.</p>
+          <h2 className="hl-form__title" id="hl-lead-title">{C.formTitle}</h2>
+          <p className="hl-form__lead">{C.formLead}</p>
           {lf.sent ? (
             <LeadSuccess form="house_landing" tone="dark" />
           ) : (
             <form className="hl-form__fields lf-dark" onSubmit={handleSubmit} onInput={lf.onStart} noValidate>
-              <LeadFields lf={lf} messagePlaceholder="איפה המגרש, ובאיזה שלב אתם?" />
-              <LeadFailure lf={lf} topicLabel={heDict.contactExtra.topics[TOPIC]} tone="dark" />
+              <LeadFields lf={lf} messagePlaceholder={C.placeholder} />
+              <LeadFailure lf={lf} topicLabel={heDict.contactExtra.topics[topic]} tone="dark" />
               <LeadSubmit lf={lf} className="btn btn--primary btn--lg hl-form__submit" />
             </form>
           )}

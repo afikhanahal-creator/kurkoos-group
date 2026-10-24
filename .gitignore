@@ -19,6 +19,9 @@ dist-ssr
 # claude code agent state / worktrees
 .claude/*
 !.claude/skills/
+# סוכני ה-SEO והתוסף claude-seo (docs/seo/agents-program.md). סביבת ה-Python שלו נוצרת מחוץ למאגר
+!.claude/agents/
+!.claude/seo/
 
 # vercel
 .vercel

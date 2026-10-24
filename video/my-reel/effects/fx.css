@@ -1,0 +1,33 @@
+/* one design language for the 14 effects (style.md): one accent, Heebo 900 for titles and 500 for text,
+   rounded corners 28 to 40, soft shadows, no gradients, no glow */
+.fx { position: absolute; font-family: 'Heebo', sans-serif; font-weight: 500; color: #fff; will-change: transform, opacity; }
+.fx .t-count { display: inline-block; font-size: 32px; font-weight: 900; color: var(--accent); letter-spacing: 0.04em; margin-bottom: 10px; background: rgba(17,17,17,.72); padding: 6px 18px; border-radius: 28px; }
+.fx .t-name { font-size: 92px; font-weight: 900; line-height: 1.05; text-shadow: 0 6px 24px rgba(0,0,0,.35); }
+.fx .t-name .ch { display: inline-block; }
+.fx .pill { display: inline-block; background: var(--accent); color: #111; font-weight: 900; font-size: 64px; line-height: 1; padding: 22px 44px; border-radius: 40px; box-shadow: 0 18px 48px rgba(0,0,0,.28); }
+.fx .big { font-size: 260px; font-weight: 900; line-height: 1; color: var(--accent); white-space: nowrap; letter-spacing: -0.02em; }
+.fx .num { font-size: 220px; font-weight: 900; line-height: 1; color: #fff; text-shadow: 0 10px 32px rgba(0,0,0,.35); font-variant-numeric: tabular-nums; }
+.fx .lbl { font-size: 44px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+.fx .line-txt { font-size: 56px; font-weight: 900; line-height: 1.2; text-shadow: 0 6px 24px rgba(0,0,0,.35); margin-bottom: 10px; }
+.fx .card { background: #2A2522; border-radius: 32px; padding: 30px 36px 30px 30px; position: relative; box-shadow: 0 18px 48px rgba(0,0,0,.28); overflow: hidden; }
+.fx .card-bar { position: absolute; top: 0; bottom: 0; right: 0; width: 12px; background: var(--accent); }
+.fx .card-t { font-size: 54px; font-weight: 900; line-height: 1.15; }
+.fx .card-x { font-size: 40px; font-weight: 500; line-height: 1.3; color: rgba(255,255,255,.88); margin-top: 6px; }
+.fx .chk { display: grid; gap: 14px; }
+.fx .chk .row { display: flex; align-items: center; gap: 18px; background: rgba(42,37,34,.92); border-radius: 30px; padding: 18px 24px; box-shadow: 0 14px 36px rgba(0,0,0,.24); }
+.fx .chk .dot { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.fx .chk .txt { font-size: 44px; font-weight: 700; line-height: 1.2; }
+.fx .bubble { position: relative; background: #fff; color: #111; border-radius: 36px; padding: 26px 32px; font-size: 42px; font-weight: 700; line-height: 1.25; box-shadow: 0 18px 48px rgba(0,0,0,.28); }
+.fx .bubble .tail { position: absolute; left: 86px; bottom: -22px; width: 0; height: 0; border-left: 22px solid transparent; border-right: 22px solid transparent; border-top: 26px solid #fff; }
+.fx .pinrow { display: inline-flex; align-items: center; gap: 14px; }
+.fx .pinico { width: 76px; height: 76px; border-radius: 50%; background: var(--accent); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 14px 36px rgba(0,0,0,.28); }
+.fx .pinlbl { background: #fff; color: #111; font-size: 42px; font-weight: 900; padding: 14px 28px; border-radius: 30px; box-shadow: 0 14px 36px rgba(0,0,0,.24); }
+.fx .icowrap { display: inline-grid; justify-items: center; gap: 10px; }
+.fx .ico { width: 124px; height: 124px; border-radius: 50%; background: var(--accent); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 18px 48px rgba(0,0,0,.28); }
+.fx .icolbl { font-size: 36px; font-weight: 900; background: rgba(42,37,34,.92); padding: 10px 22px; border-radius: 28px; }
+.fx .split { display: grid; grid-template-columns: 1fr 10px 1fr; gap: 18px; align-items: stretch; }
+.fx .split .pane { background: rgba(42,37,34,.94); border-radius: 32px; padding: 34px 26px; font-size: 48px; font-weight: 900; text-align: center; line-height: 1.15; box-shadow: 0 14px 36px rgba(0,0,0,.24); }
+.fx .split .div { width: 10px; border-radius: 6px; background: var(--accent); transform-origin: 50% 0; }
+.fx .bar { background: var(--accent); color: #111; font-size: 92px; font-weight: 900; line-height: 1; padding: 34px 0; text-align: center; white-space: nowrap; }
+.fx .cta { display: inline-flex; align-items: center; gap: 22px; background: var(--accent); color: #111; font-size: 52px; font-weight: 900; padding: 26px 48px; border-radius: 40px; box-shadow: 0 18px 48px rgba(0,0,0,.28); }
+.fx .cta b { font-weight: 900; font-size: 56px; line-height: 1; }

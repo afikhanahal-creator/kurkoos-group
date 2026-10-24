@@ -70,6 +70,8 @@ export default function Footer() {
           <Link to="/villas-sharon">בניית וילות ובתים פרטיים</Link>
           <Link to="/kablan-bniya-bayit-prati">קבלן בנייה לבית פרטי</Link>
           <Link to="/bniyat-vila-sharon">בניית וילה בשרון</Link>
+          <Link to="/bniyat-bayit-prati">בניית בית פרטי בכל הארץ</Link>
+          <Link to="/migrashim-vekarkaot">מגרשים וקרקעות</Link>
           <Link to="/real-estate-calculators">מחשבוני נדל"ן</Link>
           <Link to="/contact">השארת פרטים</Link>
         </nav>

@@ -411,6 +411,10 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
         throw new Error(`prerender: התיאור של ${pg.path} חייב להיות 150 עד 160 תווים (${pg.description?.length || 0})`)
       }
       const siblings = HOUSE_PAGES.filter((x) => x.path !== pg.path)
+      /* עמוד המגרשים מביא שלבים ומדריכים משלו, ונושא ליד של תיווך */
+      const steps = pg.steps || HOUSE_STEPS
+      const guides = (pg.guides || HOUSE_GUIDES).filter((g) => g.to !== pg.path)
+      const guidesTitle = pg.copy?.guidesTitle || 'מדריכים שכדאי לקרוא לפני שמחליטים'
       done.push(renderPage({
         path: pg.path,
         title: pg.title,
@@ -421,7 +425,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
           `<p>${esc(pg.lead)}</p>` +
           `<h2>${esc(pg.intro.q)}</h2><p>${esc(pg.intro.a)}</p>` +
           `<h2>${esc(pg.stepsTitle)}</h2><ol>` +
-          HOUSE_STEPS.map((st) => `<li><strong>${esc(st.t)}</strong> (${esc(st.who)}): ${esc(st.d)}</li>`).join('') + `</ol>` +
+          steps.map((st) => `<li><strong>${esc(st.t)}</strong> (${esc(st.who)}): ${esc(st.d)}</li>`).join('') + `</ol>` +
           `<h2>${esc(pg.projectsTitle)}</h2><ul>` +
           `<li><a href="/villas-sharon">יורדי הים 3, שכונת גרינברג, הוד השרון</a>: שתי וילות פרטיות. בתכנון.</li>` +
           `<li><a href="/villas-sharon">הנרייטה סאלד 22-24, מערב הוד השרון</a>: ארבע יחידות דו משפחתיות. בבנייה.</li>` +
@@ -430,11 +434,11 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
           pg.check.items.map(([t, d]) => `<li><strong>${esc(t)}</strong>: ${esc(d)}</li>`).join('') + `</ul>` +
           `<h2>${esc(pg.faqTitle)}</h2>` +
           pg.faqs.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('\n') +
-          `<h2>מדריכים שכדאי לקרוא לפני שמחליטים</h2><ul>` +
-          HOUSE_GUIDES.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>` +
+          `<h2>${esc(guidesTitle)}</h2><ul>` +
+          guides.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>` +
           `<h2>בונים בית פרטי באזור</h2><ul>` +
           siblings.map((x) => `<li><a href="${esc(x.path)}">${esc(x.navLabel)}</a></li>`).join('') + `</ul>` +
-          `<p>טלפון 055-981-1814. רחוב הנגר 24, הוד השרון. <a href="/contact?topic=construction">השארת פרטים</a></p>`,
+          `<p>טלפון 055-981-1814. רחוב הנגר 24, הוד השרון. <a href="/contact?topic=${esc(pg.topic || 'construction')}">השארת פרטים</a></p>`,
       }))
     }
   }

@@ -87,8 +87,8 @@ export const divisions = [
   {
     slug: 'execution',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
-    seoTitle: 'חברת בנייה לבתים פרטיים ווילות בהוד השרון',
-    seoDescription: 'ראיתה, זרוע הביצוע של קבוצת קורקוס, היא חברת בנייה וקבלן מבצע: בתים פרטיים ווילות על המגרש של הלקוח ופרויקטים למגורים, משלד ומעטפת ועד גימור.',
+    seoTitle: 'חברת בנייה לבתים פרטיים ווילות בכל הארץ',
+    seoDescription: 'ראיתה, זרוע הביצוע של קבוצת קורקוס, היא חברת בנייה וקבלן מבצע: בתים פרטיים ווילות על המגרש של הלקוח, בשרון ובכל הארץ, ופרויקטים למגורים, משלד ועד גימור.',
     serviceName: 'ביצוע ובנייה: בניית בתים פרטיים, וילות ופרויקטים למגורים',
     /* משפט התשובה שפותח את העמוד, עם קישור לעמוד הבנייה והפיקוח בהוד השרון */
     answer: {
@@ -302,8 +302,8 @@ export const divisions = [
   {
     slug: 'supervision',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
-    seoTitle: 'ניהול ופיקוח בנייה בהוד השרון ובאזור המרכז',
-    seoDescription: 'שכינתא, זרוע הפיקוח של קבוצת קורקוס: פיקוח בנייה וניהול פרויקטים מטעם המזמין, גם בבית פרטי או וילה. בקרת איכות, תקציב ולוחות זמנים ופרוטוקול מסירה.',
+    seoTitle: 'פיקוח בנייה וניהול פרויקטים, בשרון ובכל הארץ',
+    seoDescription: 'שכינתא, זרוע הפיקוח של קבוצת קורקוס: פיקוח בנייה וניהול פרויקטים מטעם המזמין, בבית פרטי, בווילה ובבניין מגורים, בשרון ובכל הארץ. בקרת איכות, תקציב ולוח זמנים.',
     serviceName: 'ניהול ופיקוח בנייה: מפקח בנייה וניהול פרויקט מטעם המזמין',
     answer: {
       he: 'שכינתא היא זרוע הפיקוח וניהול הבנייה של קבוצת קורקוס, שמשרדה ברחוב הנגר 24 בהוד השרון. היא מפקחת מטעם בעל הבית בהוד השרון ובערי השרון והמרכז, גם על בית פרטי או וילה שקבלן אחר בונה.',
@@ -311,6 +311,7 @@ export const divisions = [
     },
     related: [
       { to: '/hod-hasharon/bniya-vepikuach', label: 'חברת בנייה ופיקוח בהוד השרון' },
+      { to: '/bniyat-bayit-prati', label: 'בניית בית פרטי עם פיקוח, בכל הארץ' },
       { to: '/construction-supervision/mefakeach-bniya-bayit-prati', label: 'מפקח בנייה לבית פרטי: מה הוא בודק' },
       { to: '/construction-supervision/protokol-mesira-bayit-prati', label: 'פרוטוקול מסירה לבית פרטי' },
       { to: '/construction-supervision/mechir-pikuach-bniya', label: 'כמה עולה פיקוח בנייה' },
@@ -417,16 +418,33 @@ export const divisions = [
                   "he": "מנהל פרויקט מוביל את הפרויקט כולו מטעם המזמין: תכנון, התקשרויות, תקציב ולוחות זמנים ברמת העל. מפקח הבנייה מתמקד בבקרת הביצוע בשטח: איכות, התאמה לתוכניות ואישור חשבונות. בפרויקטים רבים שני התפקידים משלימים זה את זה, ולעיתים גורם אחד ממלא את שניהם.",
                   "en": "A project manager leads the whole project for the client: planning, contracting, budget and high-level schedule. A supervisor focuses on on-site execution control: quality, conformity and invoice approval. The roles complement each other and are sometimes combined."
             }
+      },
+      // מחיר הפיקוח: construction-supervision/mechir-pikuach-bniya. בלי סכומים.
+      {
+        q: { he: 'ממה נקבע מחיר פיקוח בנייה לבית פרטי?', en: 'What determines the price of construction supervision for a private house?' },
+        a: {
+          he: 'אין מחיר אחד לפיקוח בנייה. המחיר נקבע לפי מודל ההתקשרות (אחוז מעלות הבנייה, ריטיינר חודשי, תשלום לפי ביקור או מחיר קבוע לכל שלב) ולפי היקף הפיקוח שבחוזה: באילו שלבים המפקח מגיע, פיקוח עליון או צמוד, איך נראה הדיווח, והאם בדיקת חשבונות הקבלן לפני תשלום כלולה. משווים הצעות רק אחרי שכל אחת עונה על אותן שאלות בכתב.',
+          en: 'There is no single price. It depends on the engagement model (percentage of build cost, monthly retainer, per visit or fixed price per stage) and on the scope in the contract: which stages are inspected, periodic or close supervision, how reporting looks, and whether contractor invoice checks are included. Compare quotes only after each answers the same questions in writing.',
+        },
+      },
+      // אזור הפעילות הארצי: לפי הבעלים (אוקטובר 2026)
+      {
+        q: { he: 'אתם מפקחים גם על בנייה מחוץ לשרון?', en: 'Do you supervise construction outside the Sharon area?' },
+        a: {
+          he: 'כן. המשרד של שכינתא נמצא ברחוב הנגר 24 בהוד השרון, והפיקוח ניתן בשרון, במרכז ובכל רחבי ישראל: בית פרטי, וילה או בניין מגורים, גם כשקבלן אחר בונה. בפגישה הראשונה עוברים על התוכניות, שלב הבנייה ולוח הזמנים, ואומרים בכנות אם ואיך הפיקוח אצלכם מתאים לנו.',
+          en: 'Yes. Shechinta is based at HaNagar 24, Hod HaSharon, and supervises in the Sharon, the centre and across Israel: private houses, villas or residential buildings, also when another contractor builds.',
+        },
       }
 ],
   },
   {
     slug: 'brokerage',
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
-    seoTitle: 'תיווך ושיווק נכסים בהוד השרון ובאזור המרכז',
-    seoDescription: 'אפיק הנחל, משרד התיווך של קבוצת קורקוס בהוד השרון: מכירה וקנייה של בתים פרטיים, וילות, דירות ומגרשים, ושיווק פרויקטים, מהערכת השווי ועד החתימה.',
+    seoTitle: 'תיווך נכסים, מגרשים וקרקעות בשרון ובמרכז',
+    seoDescription: 'אפיק הנחל, משרד התיווך של קבוצת קורקוס בהוד השרון: קנייה ומכירה של בתים פרטיים, וילות, דירות, מגרשים וקרקעות, ושיווק פרויקטים, מהערכת השווי ועד החתימה.',
     serviceName: 'תיווך נדל"ן ושיווק פרויקטים בהוד השרון',
     related: [
+      { to: '/migrashim-vekarkaot', label: 'מגרשים וקרקעות: לקנות, לבדוק, לבנות או למכור' },
       { to: '/real-estate-guide/timchur-dira-lemchira-hamechir-harishon', label: 'תמחור דירה למכירה' },
       { to: '/real-estate-guide/bdikot-lifney-rechishat-dira', label: 'הבדיקות לפני רכישת דירה' },
       { to: '/real-estate-guide/mas-rechisha-madregot', label: 'מס רכישה: המדרגות והפטורים' },

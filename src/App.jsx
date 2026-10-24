@@ -189,7 +189,10 @@ export default function App() {
               {/* עמודי נחיתה לבניית בית פרטי. התוכן ב-data/houseLanding.js */}
               <Route path="/kablan-bniya-bayit-prati" element={<HouseLanding />} />
               <Route path="/bniyat-vila-sharon" element={<HouseLanding />} />
+              <Route path="/bniyat-bayit-prati" element={<HouseLanding />} />
               <Route path="/bniyat-bayit-prati/:city" element={<HouseLanding />} />
+              {/* מגרשים וקרקעות: קנייה, בדיקה, בנייה ומכירה. אותו רכיב, התוכן ב-data/houseLanding.js */}
+              <Route path="/migrashim-vekarkaot" element={<HouseLanding />} />
               {/* עמוד התשובה: חברת בנייה ופיקוח בהוד השרון. התוכן ב-data/hodHasharonAnswer.js */}
               <Route path="/hod-hasharon/bniya-vepikuach" element={<HodHasharonAnswer />} />
               <Route path="/real-estate-calculators" element={<Calculators />} />

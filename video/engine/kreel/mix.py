@@ -36,9 +36,11 @@ for i, ln in enumerate(pj['lines'], 1):
 inputs = ['-i', os.path.join(OUT, 'video.mp4'), '-i', os.path.join(OUT, 'music.wav')]
 for p, a, sp in vo: inputs += ['-i', p]
 if vo:
-    parts = [f'[{k + 2}:a]aresample=48000,aformat=channel_layouts=stereo,atempo={sp:.3f},highpass=f=80,acompressor=threshold=-18dB:ratio=3:attack=5:release=80,adelay={int(a * 1000)}|{int(a * 1000)}[v{k}]' for k, (p, a, sp) in enumerate(vo)]
+    # a short fade on both edges of every line: a cut that starts mid-waveform clicks
+    parts = [f'[{k + 2}:a]aresample=48000,aformat=channel_layouts=stereo,atempo={sp:.3f},highpass=f=80,afade=t=in:d=0.012,areverse,afade=t=in:d=0.04,areverse,acompressor=threshold=-18dB:ratio=3:attack=5:release=80,adelay={int(a * 1000)}|{int(a * 1000)}[v{k}]' for k, (p, a, sp) in enumerate(vo)]
     parts += [''.join(f'[v{k}]' for k in range(len(vo))) + f'amix=inputs={len(vo)}:normalize=0,apad,asplit=2[vsc][vout]',
-              '[1:a]volume=0.8[mus]', '[mus][vsc]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=300[duck]',
+              *(['[1:a]volume=0.34[duck]', '[vsc]anullsink'] if pj.get('mix', {}).get('duck') == 'steady' else
+                ['[1:a]volume=0.8[mus]', '[mus][vsc]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=300[duck]']),
               '[duck][vout]amix=inputs=2:normalize=0:duration=first,loudnorm=I=-14:TP=-1.5:LRA=9[a]']
     fc = ';'.join(parts)
 else:

@@ -30,8 +30,12 @@ end_at = pj['scenes'][-1]['start']
 bars = int(D / (4 * B)) + 1
 for b in range(bars):
     t0 = b * 4 * B; ch = prog[b % 4]; d = 4 * B; k = np.arange(int(SR * d)) / SR
-    saw = sum(((k * f(m) * det) % 1 * 2 - 1) for m in ch for det in (1, 1.004)) / 6
-    pad = np.convolve(saw, np.ones(40) / 40, 'same') * np.minimum(1, k / .4) * np.minimum(1, (d - k) / .4)
+    if QUIET:  # pure tones: a sawtooth pad, even filtered, reads as hiss under the voice
+        saw = sum(np.sin(2 * np.pi * f(m) * det * k) + .25 * np.sin(4 * np.pi * f(m) * det * k) for m in ch for det in (1, 1.003)) / 7.5
+        pad = saw * np.minimum(1, k / .4) * np.minimum(1, (d - k) / .4)
+    else:
+        saw = sum(((k * f(m) * det) % 1 * 2 - 1) for m in ch for det in (1, 1.004)) / 6
+        pad = np.convolve(saw, np.ones(40) / 40, 'same') * np.minimum(1, k / .4) * np.minimum(1, (d - k) / .4)
     add(pad, t0, .12 + .05 * min(1, t0 / 8))
     # sub pulse on eighths
     for q in range(8):
@@ -48,7 +52,7 @@ for b in range(bars):
     # drums after the hook
     for q in range(4):
         bt = t0 + q * B
-        if QUIET or bt < 3.8 or bt >= end_at: continue
+        if (QUIET and not MU.get('drums')) or bt < MU.get('drums_from', 3.8) or bt >= end_at: continue
         kk = np.arange(int(SR * .35)) / SR
         add(np.sin(2 * np.pi * np.cumsum(46 + 90 * np.exp(-kk / .03)) / SR) * env(.35, .001, .11), bt, .7)
         if q in (1, 3):  # a soft tonal rim on the backbeat instead of a noise clap

@@ -12,7 +12,7 @@ export const executionShowcaseDefault = {
   text: 'סרטונים אמיתיים מאתרי הבנייה של ראיתה, זרוע הביצוע של קבוצת קורקוס: חפירה, כלונסאות, ברזל ושלד.',
   bold: 'צילום מהשטח, בלי הדמיות.',
   note: 'צילומים מפרויקטים פעילים',
-  ctaLabel: 'לשיחת ייעוץ עם מהנדס',
+  ctaLabel: 'לשיחת ייעוץ עם נציג',
   intensity: 'balanced',
   /* 'bento': רשת MagicBento של ארבעת הסרטונים הראשונים, 'marquee': שתי שורות מסכים נעים */
   layout: 'marquee',

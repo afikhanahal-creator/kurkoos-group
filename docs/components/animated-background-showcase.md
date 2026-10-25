@@ -32,8 +32,9 @@ Order rule: videos alternate between the rows (1st on the top row, 2nd on the bo
 | `bold` | string | none | Bold ending of the paragraph |
 | `note` | string | none | Highlight line with an icon |
 | `cta` | `{ label, to }` | none | Internal `to` uses `Link`. An `http` link opens in a new tab. |
-| `intensity` | `'subtle' \| 'balanced' \| 'expressive'` | `balanced` | Speed per screen 13 s, 10 s or 7 s. Tilt 5°, 8° or 12°. |
-| `height` | number | `560` | Desktop card height in px. Mobile uses its own 300 px media band (380 px from 600 px). |
+| `intensity` | `'subtle' \| 'balanced' \| 'expressive'` | `balanced` | Speed per screen 14 s, 11 s or 8 s. Tilt 9°, 14° or 20°. |
+| `height` | number | none | Desktop card height in px. Without it: `clamp(560px, 38vw, 720px)`. Mobile uses its own 300 px media band (380 px from 600 px). |
+| `wide` | boolean | `false` | Desktop only: the card leaves the content column and spans the screen, `min(100vw - 64px, 1760px)`. The execution page uses it. |
 | `onCta` | function | none | Click handler, for example analytics |
 
 Colors come from `tokens.css` (`--color-primary-*` and `--color-accent-500`).
@@ -45,6 +46,8 @@ Colors come from `tokens.css` (`--color-primary-*` and `--color-accent-500`).
 - **Off-screen:** videos load only when the card is near the screen (`preload="none"` until then). They pause, and the rows stop, when it leaves.
 - **`prefers-reduced-motion`:** the rows stand still and the videos show their poster.
 - **Background:** `aria-hidden` and `pointer-events: none`. Only the text and the button are interactive.
+- **3D wall (desktop):** as in the reference recording. The wall is near at the far edge of the card and recedes toward the text: `rotateY(tilt)`, a small `rotateX`/`rotateZ`, transform origin at the far edge. The two rows fill the full height, a little past the card's edges, and fade out under the text. With `wide`, the wall is 86% of the card.
+- **Red hover (desktop with a mouse only):** the screens take the pointer, only for hover, with no click and no focus. The hovered screen grows a little and gets a red ring and an outer glow (`--color-accent-500`). A red light follows the pointer inside the screen: `--mx` and `--my` are written straight to the style, with no React render. Entering takes 0.2 s and leaving takes about 0.7 s, so a sweep from right to left leaves a fading trail of lit screens. Reduced motion: no growth and no fades.
 - **Layout:**
 
   | Width | Layout |

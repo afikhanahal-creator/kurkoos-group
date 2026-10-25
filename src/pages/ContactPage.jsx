@@ -127,7 +127,7 @@ const LOCAL = {
               <Icon name="whatsapp" size={18} /> {L({ he: 'וואטסאפ', en: 'WhatsApp' })}
             </a>
           </div>
-          <OfficeMap />
+          <OfficeMap stacked />
         </div>
       </div>
     </section>

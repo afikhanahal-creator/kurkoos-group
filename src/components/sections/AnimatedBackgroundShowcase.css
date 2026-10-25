@@ -6,7 +6,7 @@
 .abs {
   --abs-gap: 26px;
   --abs-ink: #07222e;
-  --abs-h: clamp(560px, 38vw, 720px);
+  --abs-h: clamp(520px, 34vw, 640px);
   --abs-red: var(--color-accent-500, #a90b0c);
   position: relative;
   isolation: isolate;
@@ -269,6 +269,32 @@
   [dir='ltr'] .abs__cta:hover i { transform: translateX(3px); }
 }
 
+/* ---------- באנטו: רשת MagicBento בצד הסיום, התוכן בצד ההתחלה ---------- */
+.abs__bento {
+  position: absolute;
+  z-index: 1;
+  inset-block: 28px;
+  inset-inline-end: 28px;
+  width: 58%;
+}
+/* הסדר בתוך הרשת משמאל לימין (הכרטיס הגדול בקצה), אבל רק ברשת עצמה:
+   direction על העוטף היה הופך גם את inset-inline-end שלו */
+.abs__bento > .magic-bento { direction: ltr; }
+.abs__bento .magic-bento__content { direction: rtl; padding: 12px; }
+/* הכיתוב על כל כרטיס: אותה גלולה כמו במסכים הנעים */
+.abs__bento .magic-bento__header { justify-content: flex-start; }
+.abs__bento .magic-bento__label {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(7, 41, 58, 0.72);
+  border: 1px solid rgba(143, 182, 200, 0.35);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+  font: 700 12px/1.2 var(--font-body);
+  color: #fff;
+}
+.abs--bento .abs__veil { opacity: 0.6; }
+
 /* ---------- עוצמה ---------- */
 .abs--subtle .abs__tile { box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06); }
 .abs--expressive .abs__stage { width: 82%; }
@@ -292,7 +318,8 @@
 /* ---------- רחב: במחשב הכרטיס יוצא מעמודת התוכן, כמעט על כל רוחב המסך ---------- */
 @media (min-width: 961px) {
   .abs--wide {
-    --abs-w: min(calc(100vw - 64px), 1760px);
+    /* שוליים קצת רחבים יותר מהגרסה הקודמת (64px, 1760px), כדי שהכרטיס לא ייראה מתוח במסך רחב */
+    --abs-w: min(calc(100vw - 160px), 1560px);
     width: var(--abs-w);
     margin-inline: calc((100% - var(--abs-w)) / 2);
     border-radius: 34px;
@@ -347,6 +374,15 @@
   }
   .abs__row { height: calc((var(--abs-mh) - var(--abs-gap) * 3) / 2); }
   .abs__tile { border-radius: 12px; }
+  .abs__bento {
+    inset-block: 16px auto;
+    inset-inline: 16px;
+    width: auto;
+    height: auto;
+  }
+  .abs--bento .abs__content { padding-top: var(--abs-mh); }
+  .abs__bento .magic-bento__content { padding: 8px; }
+  .abs__bento .magic-bento__label { font-size: 11px; padding: 4px 9px; }
   .abs__tag { top: 8px; right: 8px; font-size: 11px; padding: 4px 9px; }
   .abs__glow,
   [dir='ltr'] .abs__glow {

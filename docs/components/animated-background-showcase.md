@@ -14,6 +14,7 @@ A dark card with two rows of video screens that move slowly in opposite directio
 - Upload several videos at once. Mp4, webm or mov, up to 40 MB each. Photos work too.
 - Per video: caption, move up or down, replace, remove.
 - Edit the texts: badge, word next to the badge, title, paragraph, bold ending, highlight line, button text.
+- Layout: באנטו or מסכים נעים.
 - Motion: עדין, מאוזן or בולט.
 
 Every change saves immediately and shows on the site without publishing. The editor preview refreshes after each save.
@@ -33,8 +34,9 @@ Order rule: videos alternate between the rows (1st on the top row, 2nd on the bo
 | `note` | string | none | Highlight line with an icon |
 | `cta` | `{ label, to }` | none | Internal `to` uses `Link`. An `http` link opens in a new tab. |
 | `intensity` | `'subtle' \| 'balanced' \| 'expressive'` | `balanced` | Speed per screen 14 s, 11 s or 8 s. Tilt 9°, 14° or 20°. |
-| `height` | number | none | Desktop card height in px. Without it: `clamp(560px, 38vw, 720px)`. Mobile uses its own 300 px media band (380 px from 600 px). |
-| `wide` | boolean | `false` | Desktop only: the card leaves the content column and spans the screen, `min(100vw - 64px, 1760px)`. The execution page uses it. |
+| `height` | number | none | Desktop card height in px. Without it: `clamp(520px, 34vw, 640px)`. Mobile uses its own 300 px media band (380 px from 600 px). |
+| `wide` | boolean | `false` | Desktop only: the card leaves the content column and spans the screen, `min(100vw - 160px, 1560px)`. The execution page uses it. |
+| `layout` | `'bento' \| 'marquee'` | `marquee` | `bento`: a MagicBento grid of the first 4 videos (cursor spotlight, glowing edges, click wave, sparkles; tilt and magnetism at `expressive`). `marquee`: two rows of moving screens. The execution page default is `bento`, switchable in the editor (תצוגה). |
 | `onCta` | function | none | Click handler, for example analytics |
 
 Colors come from `tokens.css` (`--color-primary-*` and `--color-accent-500`).
@@ -67,3 +69,16 @@ Default loops in `public/divisions/showcase/`: 7 clips, 640×400, 24 fps, no aud
 The deploy size budget in `scripts/check-deploy-size.mjs` was raised from 30 to 33 MB for these clips.
 
 Uploads go to Cloudinary when `VITE_CLOUDINARY_*` is set, otherwise to Supabase Storage. At the time of writing, Cloudinary was not set and storage was at about 880 MB of 1 GB. Prefer short 720p clips.
+
+## MagicBento
+
+`src/components/ui/MagicBento.jsx` and `.css` are adapted from React Bits:
+- Kept: the light engine, the border glow, the click wave, the sparkles, tilt and magnetism.
+- Removed: the built-in illustrations, so the `@hugeicons` dependency is not needed.
+- Added:
+  - `video` and `poster` per item. Videos load near the screen and pause off screen.
+  - `playMedia`
+  - `minCell` and `minPair`, so phones keep two columns.
+  - A navy dark theme.
+
+With `wide`, the card spans `min(100vw - 160px, 1560px)` on desktop.

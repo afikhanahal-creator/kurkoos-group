@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import MagicBento from '../ui/MagicBento.jsx'
 import './AnimatedBackgroundShowcase.css'
 
 /* ============================================================
@@ -19,6 +20,7 @@ import './AnimatedBackgroundShowcase.css'
    מעבר עכבר (מחשב בלבד): כל מסך מקבל זוהר אדום שעוקב אחרי הסמן ומסגרת
    אדומה, שנמוגים לאט כשהסמן ממשיך הלאה, כך שתנועה מימין לשמאל משאירה
    שובל של מסכים מוארים.
+     layout     'marquee' שתי שורות מסכים נעים | 'bento' רשת MagicBento עם אור שעוקב אחרי העכבר
    הרקע לא תופס לחיצות: pointer-events כבוי ו-aria-hidden, כך שרק
    התוכן שמעליו נגיש למקלדת ולקורא מסך.
    ============================================================ */
@@ -39,6 +41,21 @@ function glowAt(e) {
   el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`)
 }
 const isVideo = (it) => it.type === 'video' || (!it.type && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(it.src || ''))
+
+/* רשת הבאנטו: מחשב 4 עמודות על 2 שורות (גדול, שניים קטנים, רחב), במסך צר 2 על 2 */
+const BENTO_WIDE = [{ colSpan: 2, rowSpan: 2 }, {}, {}, { colSpan: 2 }]
+const BENTO_SLOTS = 4
+function useNarrow(query = '(max-width: 960px)') {
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const on = () => setNarrow(mq.matches)
+    on()
+    mq.addEventListener?.('change', on)
+    return () => mq.removeEventListener?.('change', on)
+  }, [query])
+  return narrow
+}
 
 /* כל שורה צריכה מספיק מסכים כדי למלא את הרוחב; אחר כך משכפלים פעם אחת
    ומזיזים בחצי מהאורך, כך שהלולאה חוזרת בדיוק לנקודת ההתחלה בלי קפיצה */
@@ -104,6 +121,7 @@ export default function AnimatedBackgroundShowcase({
   intensity = 'balanced',
   height,
   wide = false,
+  layout = 'marquee',
   className = '',
   onCta,
 }) {
@@ -112,6 +130,8 @@ export default function AnimatedBackgroundShowcase({
   const [seen, setSeen] = useState(false)
   const [reduce, setReduce] = useState(false)
   const cfg = INTENSITY[intensity] || INTENSITY.balanced
+  const narrow = useNarrow()
+  const bento = layout === 'bento'
 
   /* הווידאו נטען ומתנגן רק כשהכרטיס על המסך, ונעצר כשיוצאים ממנו */
   useEffect(() => {
@@ -135,6 +155,14 @@ export default function AnimatedBackgroundShowcase({
   const top = clean.filter((_, i) => i % 2 === 0)
   const bottom = clean.filter((_, i) => i % 2 === 1)
   const rowB = bottom.length ? bottom : top
+  /* בבאנטו מוצגים ארבעת הסרטונים הראשונים לפי הסדר בעורך */
+  const bentoItems = bento ? clean.slice(0, BENTO_SLOTS).map((it, i) => ({
+    id: `${it.src}-${i}`,
+    ...(isVideo(it) ? { video: it.src, poster: it.poster } : { image: it.src }),
+    label: it.label || undefined,
+    ...(narrow ? {} : BENTO_WIDE[i]),
+  })) : []
+  const bentoGap = narrow ? 10 : 12
 
   const ctaEl = cta?.label && cta?.to ? (
     /^https?:/i.test(cta.to)
@@ -145,18 +173,44 @@ export default function AnimatedBackgroundShowcase({
   return (
     <section
       ref={root}
-      className={`abs abs--${intensity}${wide ? ' abs--wide' : ''}${active ? ' is-active' : ''}${reduce ? ' is-still' : ''} ${className}`}
+      className={`abs abs--${intensity}${wide ? ' abs--wide' : ''}${bento ? ' abs--bento' : ''}${active ? ' is-active' : ''}${reduce ? ' is-still' : ''} ${className}`}
       style={{ ...(height ? { '--abs-h': `${height}px` } : null), '--tilt': `${cfg.tilt}deg` }}
       aria-label={title || undefined}
     >
       <div className="abs__bg" aria-hidden="true">
-        <div className="abs__stage">
-          <Row items={top} dir="a" sec={cfg.sec} active={active} seen={seen} reduce={reduce} />
-          <Row items={rowB} dir="b" sec={cfg.sec * 1.15} active={active} seen={seen} reduce={reduce} />
-        </div>
+        {!bento && (
+          <div className="abs__stage">
+            <Row items={top} dir="a" sec={cfg.sec} active={active} seen={seen} reduce={reduce} />
+            <Row items={rowB} dir="b" sec={cfg.sec * 1.15} active={active} seen={seen} reduce={reduce} />
+          </div>
+        )}
         <span className="abs__glow" />
         <span className="abs__veil" />
       </div>
+
+      {/* הבאנטו מגיב לעכבר, ולכן הוא מחוץ לרקע שלא תופס לחיצות. הכרטיסים
+          לא לחיצים ולא נכנסים לסדר המקלדת, והתוכן שלהם דקורטיבי */}
+      {bento && bentoItems.length > 0 && (
+        <div className="abs__bento" aria-hidden="true">
+          <MagicBento
+            items={bentoItems}
+            columns={narrow ? 2 : 4}
+            rowHeight={128}
+            /* במחשב שתי השורות ממלאות את כל גובה הכרטיס, שנקבע ב-CSS לפי רוחב המסך */
+            style={narrow ? undefined : { height: '100%', gridAutoRows: '1fr', gridTemplateRows: 'repeat(2, 1fr)' }}
+            gap={bentoGap}
+            radius={18}
+            glowColor="#8fb6c8"
+            spotlightRadius={narrow ? 220 : 300}
+            enableStars={intensity !== 'subtle'}
+            enableTilt={intensity === 'expressive'}
+            enableMagnetism={intensity === 'expressive'}
+            playMedia={!reduce}
+            minCell={narrow ? 110 : 150}
+            minPair={narrow ? 110 : 200}
+          />
+        </div>
+      )}
 
       <div className="abs__content">
         {(badge || badgeWord) && (

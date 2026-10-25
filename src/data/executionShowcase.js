@@ -14,6 +14,8 @@ export const executionShowcaseDefault = {
   note: 'צילומים מפרויקטים פעילים',
   ctaLabel: 'לשיחת ייעוץ עם מהנדס',
   intensity: 'balanced',
+  /* 'bento': רשת MagicBento של ארבעת הסרטונים הראשונים, 'marquee': שתי שורות מסכים נעים */
+  layout: 'bento',
   videos: [
     { src: `${V}/piles-a.mp4`, poster: `${V}/piles-a.webp`, label: 'קידוח כלונסאות' },
     { src: `${V}/szold-a.mp4`, poster: `${V}/szold-a.webp`, label: 'כלוב ברזל לכלונס' },

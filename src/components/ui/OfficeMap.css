@@ -98,3 +98,43 @@
 @media (max-width: 600px) {
   .office-map__map { height: 100vw; min-height: 300px; max-height: 560px; }
 }
+
+/* ---- stacked: מפה, פרטים, ואז הכפתורים (עמוד יצירת הקשר) ----
+   באותה שפה של כרטיס הטופס שלידו: הפרטים מיושרים לימין, והכפתורים
+   ברוחב מלא ובגובה של כפתור השליחה ושל כפתורי "או ישירות" */
+.office-map--stacked { grid-template-columns: minmax(0, 1fr); }
+.office-map--stacked .office-map__map {
+  height: clamp(200px, 18vw, 248px);
+  min-height: 0;
+  max-height: none;
+  border-bottom: 1px solid var(--color-border, rgba(7, 41, 58, 0.12));
+}
+.office-map--stacked .office-map__info {
+  justify-content: flex-start;
+  gap: 0.35rem;
+  padding: clamp(1.2rem, 2vw, 1.6rem) clamp(1.2rem, 2.2vw, 1.75rem) clamp(1.25rem, 2.2vw, 1.75rem);
+}
+.office-map--stacked .office-map__title { font-size: clamp(1.15rem, 1.6vw, 1.35rem); margin-bottom: 0.35rem; }
+.office-map--stacked .office-map__facts { margin-bottom: 1.1rem; gap: 0.35rem; }
+.office-map--stacked .office-map__facts li { font-size: 0.92rem; }
+.office-map--stacked .office-map__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: auto;
+}
+.office-map--stacked .office-map__actions .btn {
+  min-height: 48px;
+  padding-inline: 0.9em;
+  font-size: 0.95rem;
+  justify-content: center;
+}
+@media (max-width: 860px) {
+  .office-map--stacked .office-map__map { height: 56.25vw; min-height: 240px; max-height: 420px; }
+}
+@media (max-width: 600px) {
+  .office-map--stacked .office-map__map { height: 80vw; min-height: 260px; max-height: 420px; }
+}
+@media (max-width: 360px) {
+  .office-map--stacked .office-map__actions { grid-template-columns: minmax(0, 1fr); }
+}

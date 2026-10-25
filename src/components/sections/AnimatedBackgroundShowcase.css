@@ -1,0 +1,319 @@
+/* ============================================================
+   AnimatedBackgroundShowcase: כרטיס כהה, שתי שורות מסכים נעות,
+   הילה בצבעי המותג ותוכן בצד ההתחלה (ימין בעברית).
+   כל התנועה ב-transform בלבד, ונעצרת כשהכרטיס מחוץ למסך.
+   ============================================================ */
+.abs {
+  --abs-gap: 22px;
+  --abs-ink: #07222e;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-items: center;
+  min-height: var(--abs-h, 560px);
+  border-radius: 30px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, var(--color-primary-900) 0%, var(--abs-ink) 55%, #062030 100%);
+  border: 1px solid rgba(143, 182, 200, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(22, 104, 140, 0.18),
+    0 30px 70px -30px rgba(7, 34, 46, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+/* ---------- הרקע: מסכים, הילה ומעבר ---------- */
+.abs__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.abs__stage {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 76%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--abs-gap);
+  padding-block: var(--abs-gap);
+  transform: perspective(1800px) rotateY(calc(var(--tilt, 8deg) * -1)) rotateX(2deg);
+  transform-origin: 100% 50%;
+  -webkit-mask-image: linear-gradient(to right, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
+          mask-image: linear-gradient(to right, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
+}
+[dir='ltr'] .abs__stage {
+  transform: perspective(1800px) rotateY(var(--tilt, 8deg)) rotateX(2deg);
+  transform-origin: 0% 50%;
+  -webkit-mask-image: linear-gradient(to left, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
+          mask-image: linear-gradient(to left, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
+}
+
+.abs__row {
+  height: calc((var(--abs-h, 560px) - var(--abs-gap) * 3) / 2);
+  direction: ltr;
+  overflow: visible;
+}
+.abs__track {
+  display: flex;
+  height: 100%;
+  width: max-content;
+  will-change: transform;
+  animation: abs-left var(--dur, 40s) linear infinite;
+}
+.abs__row--b .abs__track { animation-name: abs-right; }
+.abs:not(.is-active) .abs__track { animation-play-state: paused; }
+
+@keyframes abs-left { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+@keyframes abs-right { from { transform: translate3d(-50%, 0, 0); } to { transform: translate3d(0, 0, 0); } }
+
+/* הרווח הוא margin ולא gap: כך שני העותקים באורך זהה בדיוק, והלולאה סגורה */
+.abs__tile {
+  position: relative;
+  flex: none;
+  height: 100%;
+  aspect-ratio: var(--ar, 1.3);
+  margin: 0 var(--abs-gap) 0 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0b3446;
+  box-shadow:
+    0 22px 44px -18px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+.abs__tile video,
+.abs__tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* בהיר עדין מלמעלה, כמו מסך שמחזיר אור */
+.abs__tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 34%, rgba(7, 34, 46, 0.22));
+}
+.abs__tag {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 12px;
+  direction: rtl;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(7, 41, 58, 0.72);
+  border: 1px solid rgba(143, 182, 200, 0.35);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+  font: 700 12px/1.2 var(--font-body);
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* הילת המותג מתחת לתוכן: כחול כהה שמאיר לטורקיז, ועוד נגיעת ערפל */
+.abs__glow {
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(30% 36% at 80% 96%, rgba(143, 182, 200, 0.42) 0%, transparent 70%),
+    radial-gradient(52% 66% at 80% 104%, rgba(22, 104, 140, 1) 0%, rgba(16, 85, 114, 0.6) 40%, transparent 74%),
+    radial-gradient(34% 44% at 68% 58%, rgba(143, 182, 200, 0.16) 0%, transparent 70%);
+  animation: abs-glow 16s ease-in-out infinite alternate;
+}
+[dir='ltr'] .abs__glow {
+  background:
+    radial-gradient(30% 36% at 20% 96%, rgba(143, 182, 200, 0.42) 0%, transparent 70%),
+    radial-gradient(52% 66% at 20% 104%, rgba(22, 104, 140, 1) 0%, rgba(16, 85, 114, 0.6) 40%, transparent 74%),
+    radial-gradient(34% 44% at 32% 58%, rgba(143, 182, 200, 0.16) 0%, transparent 70%);
+}
+@keyframes abs-glow {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.9; }
+  to { transform: translate3d(-3%, -2%, 0) scale(1.06); opacity: 1; }
+}
+.abs--subtle .abs__glow { animation: none; }
+.abs:not(.is-active) .abs__glow { animation-play-state: paused; }
+
+/* מעבר כהה מאחורי הטקסט, כדי שהקריאות לא תלויה במה שמתנגן */
+.abs__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to left, rgba(7, 34, 46, 0.78) 0%, rgba(7, 34, 46, 0.35) 34%, transparent 58%);
+}
+[dir='ltr'] .abs__veil {
+  background: linear-gradient(to right, rgba(7, 34, 46, 0.78) 0%, rgba(7, 34, 46, 0.35) 34%, transparent 58%);
+}
+
+/* ---------- התוכן ---------- */
+.abs__content {
+  position: relative;
+  z-index: 1;
+  justify-self: start;
+  width: min(40%, 470px);
+  padding: clamp(32px, 4.4vw, 64px);
+  padding-inline-end: 0;
+  margin-inline-start: clamp(8px, 2vw, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: start;
+}
+.abs__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 26px;
+}
+.abs__chip {
+  display: inline-block;
+  padding: 6px 14px 7px;
+  border-radius: 12px;
+  background: var(--color-accent-500);
+  color: #fff;
+  font: 900 clamp(1.35rem, 2.2vw, 1.75rem)/1 var(--font-heading);
+  transform: rotate(-3deg);
+  box-shadow: 0 10px 26px -8px rgba(169, 11, 12, 0.7), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+.abs__word {
+  font: 900 clamp(1.35rem, 2.2vw, 1.75rem)/1 var(--font-heading);
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.abs__title {
+  margin: 0 0 14px;
+  font: 800 clamp(1.6rem, 2.6vw, 2.1rem)/1.15 var(--font-heading);
+  color: #fff;
+}
+.abs__text {
+  margin: 0;
+  max-width: 40ch;
+  font: 400 clamp(1rem, 1.25vw, 1.12rem)/1.6 var(--font-body);
+  color: rgba(255, 255, 255, 0.86);
+}
+.abs__text strong { color: #fff; font-weight: 800; }
+.abs__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 34px 0 0;
+  font: 800 1rem/1.3 var(--font-body);
+  color: #fff;
+}
+.abs__note svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  fill: var(--color-primary-300);
+  filter: drop-shadow(0 0 8px rgba(143, 182, 200, 0.6));
+}
+.abs__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 30px;
+  min-height: 48px;
+  padding-block: 6px;
+  padding-inline: 22px 6px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-primary-900);
+  font: 700 1rem/1 var(--font-body);
+  text-decoration: none;
+  box-shadow: 0 0 0 3px rgba(143, 182, 200, 0.35), 0 14px 30px -12px rgba(0, 0, 0, 0.55);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.abs__cta i {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary-900);
+  color: #fff;
+  transition: transform 0.25s ease;
+}
+.abs__cta svg { width: 18px; height: 18px; }
+[dir='ltr'] .abs__cta svg { transform: scaleX(-1); }
+.abs__cta:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+@media (hover: hover) {
+  .abs__cta:hover { transform: translateY(-2px); box-shadow: 0 0 0 4px rgba(143, 182, 200, 0.5), 0 18px 34px -12px rgba(0, 0, 0, 0.6); }
+  .abs__cta:hover i { transform: translateX(-3px); }
+  [dir='ltr'] .abs__cta:hover i { transform: translateX(3px); }
+}
+
+/* ---------- עוצמה ---------- */
+.abs--subtle .abs__tile { box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06); }
+.abs--expressive .abs__stage { width: 82%; }
+
+/* ---------- טאבלט ---------- */
+@media (max-width: 1100px) {
+  .abs { --abs-gap: 18px; }
+  .abs__stage { width: 80%; }
+  .abs__content { width: min(46%, 430px); }
+}
+
+/* ---------- טאבלט צר ונייד: המסכים למעלה, התוכן מתחת ---------- */
+@media (max-width: 960px) {
+  .abs {
+    --abs-gap: 12px;
+    --abs-mh: 300px;
+    min-height: 0;
+    align-items: end;
+    border-radius: 24px;
+  }
+  .abs__stage {
+    inset-block: 0 auto;
+    inset-inline: 0;
+    width: 100%;
+    height: var(--abs-mh);
+    transform: perspective(1200px) rotateX(calc(var(--tilt, 8deg) * 0.6));
+    transform-origin: 50% 0%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
+  }
+  [dir='ltr'] .abs__stage {
+    transform: perspective(1200px) rotateX(calc(var(--tilt, 8deg) * 0.6));
+    transform-origin: 50% 0%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
+  }
+  .abs__row { height: calc((var(--abs-mh) - var(--abs-gap) * 3) / 2); }
+  .abs__tile { border-radius: 12px; }
+  .abs__tag { top: 8px; right: 8px; font-size: 11px; padding: 4px 9px; }
+  .abs__glow,
+  [dir='ltr'] .abs__glow {
+    background: radial-gradient(90% 55% at 50% 100%, rgba(22, 104, 140, 0.9) 0%, rgba(16, 85, 114, 0.45) 45%, transparent 75%);
+  }
+  .abs__veil,
+  [dir='ltr'] .abs__veil {
+    background: linear-gradient(to top, rgba(7, 34, 46, 0.7) 0%, rgba(7, 34, 46, 0.2) 55%, transparent 70%);
+  }
+  .abs__content {
+    width: 100%;
+    margin: 0;
+    padding: calc(var(--abs-mh) - 28px) 22px 26px;
+  }
+  .abs__badge { margin-bottom: 18px; }
+  .abs__note { margin-top: 22px; }
+  .abs__cta { margin-top: 22px; }
+}
+@media (min-width: 600px) and (max-width: 960px) {
+  .abs { --abs-gap: 16px; --abs-mh: 380px; }
+  .abs__content { padding-inline: 36px; padding-bottom: 36px; }
+  .abs__text { max-width: 56ch; }
+}
+
+/* ---------- בלי תנועה: מסכים במקום, תמונת פתיחה במקום וידאו ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .abs__track,
+  .abs__glow { animation: none !important; }
+  .abs__cta,
+  .abs__cta i { transition: none; }
+}
+.abs.is-still .abs__track,
+.abs.is-still .abs__glow { animation: none; }

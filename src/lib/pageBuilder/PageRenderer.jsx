@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { WIDGETS } from './widgets.jsx'
 import { sectionCss, EDIT_MODE, PREVIEW_MODE, useDraftStore, setDraftState, usePageLayout } from './layout.js'
 import { useI18n } from '../../i18n/index.jsx'
+import { refreshSettings } from '../cms.js'
 
 /* ============================================================
    מצייר עמוד מתוך רשימת הסקשנים. אותו רנדרר משמש את האתר, את
@@ -89,6 +90,8 @@ function EditBridge({ sections, meta }) {
       if (d.type === 'state') {
         setDraftState({ layout: d.layout, texts: d.layout.texts || {}, selected: d.selected })
       }
+      /* הגדרה של האתר נשמרה מהפאנל (תמונות, סרטונים): התצוגה טוענת אותה מחדש */
+      if (d.type === 'settings') refreshSettings()
       if (d.type === 'scrollTo') {
         const el = document.querySelector(`[data-pb="${d.id}"] > *`)
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })

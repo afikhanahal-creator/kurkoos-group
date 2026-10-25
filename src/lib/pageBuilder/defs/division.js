@@ -27,6 +27,10 @@ export default {
       images: { setting: 'cover_execution_gallery', label: 'תמונות הגלריה', folder: 'execution-gallery', max: 12, only: '/divisions/execution', fallback: 'execution' },
       manage: { tab: 'covers', label: 'תמונות קאבר' },
     }],
+    /* סרטונים מהשטח (רק בעמוד הביצוע, מתחת לגלריה): הסרטונים והטקסטים נשמרים ב-execution_showcase */
+    ['reels', 'סרטונים מהשטח', 'play', [], {
+      showcase: { setting: 'execution_showcase', folder: 'execution-showcase', max: 16, only: '/divisions/execution' },
+    }],
     ['projects', 'פרויקטים', 'building', [T('projects.title', 'כותרת'), T('projects.lead', 'טקסט מוביל', true)]],
     ['testimonials', 'המלצות', 'quote', [T('testimonials.eyebrow', 'תווית עליונה'), T('testimonials.title', 'כותרת'), T('testimonials.lead', 'טקסט מוביל', true)]],
     ['guide', 'מדריך', 'book', [T('common.readMore', 'קרא עוד')]],

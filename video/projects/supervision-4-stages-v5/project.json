@@ -1,0 +1,498 @@
+{
+ "name": "מהקרקע ועד המפתח: הליווי של קבוצת קורקוס (גרסה 5, קצבית)",
+ "duration": 40.49,
+ "vo_tempo": 1.12,
+ "music": {
+  "bpm": 116,
+  "style": "cinematic",
+  "quiet": true,
+  "drums": true,
+  "drums_from": 0.0
+ },
+ "mix": {
+  "duck": "steady"
+ },
+ "lines": [
+  {
+   "id": "v01",
+   "vo": "v01",
+   "start": 0.15,
+   "end": 3.55,
+   "text": "כל וילה שאנחנו מוסרים, מתחילה כאן. בקרקע."
+  },
+  {
+   "id": "v02",
+   "vo": "v02",
+   "start": 3.67,
+   "end": 8.569,
+   "text": "יסודות וכלונסאות, עמוק באדמה. הם מחזיקים את כל הבית."
+  },
+  {
+   "id": "v03",
+   "vo": "v03",
+   "start": 8.689,
+   "end": 15.124,
+   "text": "קירות בטון, תבניות וברזל. כל שלב נבדק, לפני שממשיכים הלאה."
+  },
+  {
+   "id": "v04",
+   "vo": "v04",
+   "start": 15.244,
+   "end": 20.18,
+   "text": "ברזל לתקרה, לפני היציקה. הרגע שבו אין מקום לטעויות."
+  },
+  {
+   "id": "v05",
+   "vo": "v05",
+   "start": 20.3,
+   "end": 26.878,
+   "text": "ולאורך כל הדרך, אנחנו מלווים אתכם. מהתכנון, דרך השלד והגמר, ועד המפתח."
+  },
+  {
+   "id": "v06",
+   "vo": "v06",
+   "start": 26.998,
+   "end": 29.29,
+   "text": "וזה הרגע, שבשבילו בונים."
+  },
+  {
+   "id": "v07",
+   "vo": "v07",
+   "start": 29.41,
+   "end": 33.524,
+   "text": "קבוצת קורקוס. מקרקע ועד מסירת מפתח."
+  },
+  {
+   "id": "v08",
+   "vo": "v08",
+   "start": 33.644,
+   "end": 38.686,
+   "text": "בונים וילה? השאירו פרטים, ונציג שלנו יחזור אליכם לשיחת ייעוץ."
+  }
+ ],
+ "scenes": [
+  {
+   "start": 0.0,
+   "end": 3.67,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_land.mp4",
+     "t0": 0,
+     "len": 1.835,
+     "dur": 1.835,
+     "speed": 1.25,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_land.mp4",
+     "t0": 3.2,
+     "len": 1.835,
+     "dur": 1.835,
+     "speed": 1.25,
+     "push": 0.03
+    }
+   ],
+   "effects": [
+    {
+     "type": "title",
+     "at": 0.25,
+     "y": 1150,
+     "lines": [
+      [
+       "מהקרקע",
+       170
+      ],
+      [
+       "ועד המפתח",
+       112,
+       700,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 1,
+     "text": "קרקע"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.18,
+   "shade_from": 0.42,
+   "shade_k": 0.85
+  },
+  {
+   "start": 3.67,
+   "end": 8.689,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_found.mp4",
+     "t0": 0,
+     "len": 1.25475,
+     "dur": 1.25475,
+     "speed": 1.3,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_found.mp4",
+     "t0": 3.6,
+     "len": 1.25475,
+     "dur": 1.25475,
+     "speed": 1.3,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_worker.mp4",
+     "t0": 0,
+     "len": 1.25475,
+     "dur": 1.25475,
+     "speed": 1.0,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_found.mp4",
+     "t0": 7.4,
+     "len": 1.25475,
+     "dur": 1.25475,
+     "speed": 1.3,
+     "push": 0.03
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 2,
+     "text": "יסודות"
+    },
+    {
+     "type": "title",
+     "at": 0.05,
+     "until": 1.15,
+     "y": 760,
+     "bar": true,
+     "lines": [
+      [
+       "יסודות",
+       190
+      ]
+     ]
+    }
+   ],
+   "punch": true,
+   "xfade": 0.18,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 8.689,
+   "end": 15.244,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_w1full.mp4",
+     "t0": 3.5,
+     "len": 1.0925,
+     "dur": 1.0925,
+     "speed": 1.35,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_w1full.mp4",
+     "t0": 16.5,
+     "len": 1.0925,
+     "dur": 1.0925,
+     "speed": 1.35,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_w1full.mp4",
+     "t0": 25.5,
+     "len": 1.0925,
+     "dur": 1.0925,
+     "speed": 1.35,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_w1full.mp4",
+     "t0": 32.5,
+     "len": 1.0925,
+     "dur": 1.0925,
+     "speed": 1.35,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_walls3.mp4",
+     "t0": 0,
+     "len": 1.0925,
+     "dur": 1.0925,
+     "speed": 1.0,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_w1full.mp4",
+     "t0": 43.5,
+     "len": 1.0925,
+     "dur": 1.0925,
+     "speed": 1.35,
+     "push": 0.03
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 3,
+     "text": "שלד"
+    },
+    {
+     "type": "title",
+     "at": 0.05,
+     "until": 1.15,
+     "y": 760,
+     "bar": true,
+     "lines": [
+      [
+       "שלד",
+       190
+      ]
+     ]
+    }
+   ],
+   "punch": true,
+   "xfade": 0.18,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 15.244,
+   "end": 20.3,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_roof.mp4",
+     "t0": 0,
+     "len": 1.2640000000000002,
+     "dur": 1.2640000000000002,
+     "speed": 1.25,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_roof.mp4",
+     "t0": 2.6,
+     "len": 1.2640000000000002,
+     "dur": 1.2640000000000002,
+     "speed": 1.25,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_roof.mp4",
+     "t0": 5.2,
+     "len": 1.2640000000000002,
+     "dur": 1.2640000000000002,
+     "speed": 1.25,
+     "push": 0.03
+    },
+    {
+     "src": "video/projects/_media/v4_roof.mp4",
+     "t0": 7.6,
+     "len": 1.2640000000000002,
+     "dur": 1.2640000000000002,
+     "speed": 1.2,
+     "push": 0.03
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 4,
+     "text": "תקרה"
+    },
+    {
+     "type": "title",
+     "at": 0.05,
+     "until": 1.15,
+     "y": 760,
+     "bar": true,
+     "lines": [
+      [
+       "תקרה",
+       190
+      ]
+     ]
+    }
+   ],
+   "punch": true,
+   "xfade": 0.18,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 20.3,
+   "end": 26.998,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_w1full.mp4",
+     "t0": 55,
+     "len": 4.95652,
+     "dur": 4.95652,
+     "push": 0.02
+    },
+    {
+     "src": "video/projects/_media/v4_ph80.webp",
+     "len": 1.7414800000000001,
+     "push": 0.03
+    }
+   ],
+   "effects": [
+    {
+     "type": "zoomout",
+     "at": 2.07,
+     "back": 3.94,
+     "scale": 0.52,
+     "title": "אנחנו מלווים אתכם",
+     "steps": [
+      "קרקע ותכנון",
+      "היתר בנייה",
+      "שלד ובטון",
+      "גמר ומערכות",
+      "מסירת מפתח"
+     ]
+    }
+   ],
+   "punch": false,
+   "xfade": 0.18,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 26.998,
+   "end": 29.41,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph79.webp",
+     "len": 1,
+     "push": 0.04
+    },
+    {
+     "src": "video/projects/_media/v4_ph77.webp",
+     "len": 1,
+     "push": 0.04
+    },
+    {
+     "src": "video/projects/_media/v4_ph80.webp",
+     "len": 1,
+     "push": 0.04,
+     "fx": 0.3
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 5,
+     "text": "מסירה"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.18,
+   "shade_from": 0.6,
+   "shade_k": 0.75
+  },
+  {
+   "start": 29.41,
+   "end": 33.644,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph78.webp",
+     "len": 4.233999999999998,
+     "push": 0.03
+    }
+   ],
+   "effects": [
+    {
+     "type": "title",
+     "at": 0.2,
+     "y": 1180,
+     "lines": [
+      [
+       "קבוצת קורקוס",
+       128
+      ],
+      [
+       "מקרקע ועד מסירת מפתח",
+       74,
+       700,
+       "paper"
+      ]
+     ]
+    }
+   ],
+   "punch": true,
+   "xfade": 0.18,
+   "shade_from": 0.32,
+   "shade_k": 1.0
+  },
+  {
+   "start": 33.644,
+   "end": 40.486,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph78.webp",
+     "len": 6.841999999999999,
+     "push": 0
+    }
+   ],
+   "effects": [
+    {
+     "type": "endcard",
+     "at": 0,
+     "blur": 10,
+     "tint": 200,
+     "lines": [
+      [
+       "הצעד הבא",
+       54,
+       400,
+       "mist"
+      ],
+      [
+       "שיחת ייעוץ עם נציג",
+       100,
+       700,
+       "paper"
+      ],
+      [
+       "055-981-1814",
+       120,
+       700,
+       "paper"
+      ],
+      [
+       "kurkoos-group.co.il",
+       46,
+       400,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "pill",
+     "at": 0.8,
+     "text": "השאירו פרטים בקישור",
+     "bg": "red",
+     "x": 815,
+     "y": 1500,
+     "size": 56
+    }
+   ],
+   "punch": false,
+   "xfade": 0.18,
+   "shade": false
+  }
+ ],
+ "caption_style": {
+  "size": 60,
+  "y": 1700
+ }
+}

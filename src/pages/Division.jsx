@@ -422,7 +422,7 @@ export default function Division() {
   const consultTo = `/contact?topic=${topic}&src=division`
   const consultLabel = slug === 'brokerage'
     ? L({ he: 'לשיחת ייעוץ', en: 'Talk to us' })
-    : L({ he: 'לשיחת ייעוץ עם מהנדס', en: 'Talk to an engineer' })
+    : L({ he: 'לשיחת ייעוץ עם נציג', en: 'Talk to our team' })
   const guideTo = slug === 'development' ? '/yazamut-nadlan' : slug === 'execution' ? '/constructions' : slug === 'supervision' ? '/construction-supervision' : slug === 'brokerage' ? '/real-estate-guide' : '/blog'
 
   /* נתונים מובנים: Service (הישות של השירות) + FAQ אמיתי מהעמוד */

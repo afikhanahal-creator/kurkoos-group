@@ -101,25 +101,34 @@ class Video:
     """sequential frame reader for one shot (src from t0, dur seconds), scaled to cover W x H"""
     _cache = {}
     @classmethod
-    def get(cls, src, t0, dur, fx=.5, fy=.5):
-        k = (src, t0, dur, fx, fy)
-        if k not in cls._cache: cls._cache[k] = cls(src, t0, dur, fx, fy)
+    def get(cls, src, t0, dur, fx=.5, fy=.5, speed=1.0, frame=False):
+        k = (src, t0, dur, fx, fy, speed, frame)
+        if k not in cls._cache: cls._cache[k] = cls(src, t0, dur, fx, fy, speed, frame)
         return cls._cache[k]
     @classmethod
     def drop(cls, keep=()):
         for k in list(cls._cache):
             if k not in keep: cls._cache.pop(k).close()
-    def __init__(self, src, t0, dur, fx, fy):
+    def __init__(self, src, t0, dur, fx, fy, speed=1.0, frame=False):
         self.src, self.t0, self.dur, self.fx, self.fy = resolve(src), t0, dur, fx, fy
+        self.speed, self.fit = speed, frame
         self.i, self.last, self.p = -1, None, None
         # a shot longer than its clip holds the clip's last frame (the slow push keeps it moving)
         d = float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', self.src],
                                  capture_output=True, text=True).stdout or 0)
-        self.nmax = max(0, int((d - t0) * FPS) - 2)
+        self.nmax = max(0, int((d - t0) / speed * FPS) - 2)
     def _open(self, start_frame=0):
         self.close()
-        vf = f'fps={FPS},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}:(iw-{W})*{self.fx}:(ih-{H})*{self.fy}'
-        self.p = subprocess.Popen(['ffmpeg', '-v', 'error', '-ss', str(self.t0 + start_frame / FPS), '-i', self.src, '-t', str(self.dur + .5),
+        sp = f'setpts=PTS/{self.speed},' if self.speed != 1 else ''
+        if self.fit:  # keep the whole landscape frame: W wide, its own height, the backdrop is made in shot_frame
+            vf = f'{sp}fps={FPS},scale={W}:-2:flags=lanczos'
+        else:
+            vf = f'{sp}fps={FPS},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}:(iw-{W})*{self.fx}:(ih-{H})*{self.fy}'
+        if self.fit:
+            iw, ih = map(int, subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', self.src], capture_output=True, text=True).stdout.strip().split(',')[:2])
+            self.fw, self.fh = W, int(round(ih * W / iw / 2) * 2)
+        else: self.fw, self.fh = W, H
+        self.p = subprocess.Popen(['ffmpeg', '-v', 'error', '-ss', str(self.t0 + start_frame / FPS * self.speed), '-i', self.src, '-t', str(self.dur * self.speed + .5),
                                    '-vf', vf, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], stdout=subprocess.PIPE)
         self.i = start_frame - 1
     def frame(self, f):
@@ -127,9 +136,9 @@ class Video:
         if self.last is not None and f <= self.i and f == self.nmax: return self.last
         if self.p is None or f < self.i or f > self.i + 45: self._open(f)
         while self.i < f:
-            raw = self.p.stdout.read(W * H * 3)
-            if len(raw) < W * H * 3: break
-            self.last = Image.frombytes('RGB', (W, H), raw); self.i += 1
+            sz = self.fw * self.fh * 3; raw = self.p.stdout.read(sz)
+            if len(raw) < sz: break
+            self.last = Image.frombytes('RGB', (self.fw, self.fh), raw); self.i += 1
         return self.last if self.last is not None else Image.new('RGB', (W, H), C('navy'))
     def close(self):
         if self.p: self.p.kill(); self.p = None
@@ -139,12 +148,30 @@ def shot_frame(sh, f, n):
     src = sh['src']; fx, fy = sh.get('fx', .5), sh.get('fy', .5)
     k = f / max(1, n)
     if src.lower().endswith(('.mp4', '.mov', '.webm', '.m4v')):
-        im = Video.get(src, sh.get('t0', 0), sh.get('dur', n / FPS), fx, fy).frame(f)
+        fit = sh.get('fit') == 'frame'
+        im = Video.get(src, sh.get('t0', 0), sh.get('dur', n / FPS), fx, fy, sh.get('speed', 1.0), fit).frame(f)
+        if fit: return framed(im, k, sh)
         z = 1 + sh.get('push', .06) * k
         if z > 1.001: im = cover(im, W, H, .5, .5, z)
         return im.convert('RGBA')
+    if sh.get('fit') == 'frame':
+        return framed(image(src, sh.get('grade', True)), k, sh)
     z0 = sh.get('zoom', 1.0); push = sh.get('push', .06)
     return cover(image(src, sh.get('grade', True)), W, H, fx, fy, z0 + push * k).convert('RGBA')
+
+def framed(im, k, sh):
+    """a landscape picture inside a 9:16 frame: the picture W wide with rounded corners and a soft shadow, over a blurred,
+    darkened copy of itself. sh.y: centre of the frame (default 760), push: slow zoom inside the frame"""
+    im = im.convert('RGB'); fw = W - 2 * sh.get('margin', 0); fh = round(im.height * fw / im.width)
+    if sh.get('aspect'): fh = round(fw / sh['aspect'])
+    inner = cover(im, fw, fh, sh.get('fx', .5), sh.get('fy', .5), 1 + sh.get('push', .05) * k)
+    bg = cover(im.resize((im.width // 8, im.height // 8)), W, H, .5, .5, 1.1).filter(ImageFilter.GaussianBlur(14)).convert('RGBA')
+    tint(bg, 'navy', 150)
+    cy = sh.get('y', 760); x = (W - fw) // 2; y = int(cy - fh / 2)
+    card = inner.convert('RGBA')
+    if sh.get('margin', 0): card.putalpha(round_mask(fw, fh, 28))
+    sh_, (ox, oy) = drop_shadow(card, 22, .45, (0, 18)); bg.alpha_composite(sh_, (x + ox, y + oy)); bg.alpha_composite(card, (x, y))
+    return bg
 
 LOGO = {}
 def logo(h, kind='white'):

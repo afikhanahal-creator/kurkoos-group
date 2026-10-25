@@ -472,3 +472,84 @@ def fx_endcard(im, t, p, ctx):
         if kk > 0: tx(d, (W // 2, y + (1 - kk) * 30), s, F(wt, size), C(col, A(kk)), 'ma')
         y += int(size * 1.35)
     im.alpha_composite(ov); return im
+
+# ---------------------------------------------------------------- clearer, slower effects (v2)
+@fx('callout')
+def fx_callout(im, t, p, ctx):
+    """points at a real thing in the shot: a pulsing ring on the point, a line drawn to a large label card.
+    p: x, y (the point), lx, ly (label centre), text, sub (optional), col"""
+    x, y = p['x'], p['y']; lx, ly = p.get('lx', x), p.get('ly', y - 260)
+    ov = layer(); d = ImageDraw.Draw(ov)
+    k0 = back_out(t / .3)
+    if k0 <= 0: return im
+    r = 26 * k0; pul = (t % 1.2) / 1.2
+    d.ellipse((x - r, y - r, x + r, y + r), fill=C('red'), outline=C('paper'), width=6)
+    pr = r + 50 * pul; d.ellipse((x - pr, y - pr, x + pr, y + pr), outline=C('paper', A(1 - pul)), width=4)
+    kl = out3((t - .15) / .35)
+    if kl > 0:
+        ex, ey = x + (lx - x) * kl, y + (ly - y) * kl
+        d.line((x, y, ex, ey), fill=C('paper'), width=6)
+    im.alpha_composite(ov)
+    kc = out3((t - .4) / .3)
+    if kc > 0:
+        fnt = F(700, p.get('size', 62)); s = clean(p['text']); bw = tlen(s, fnt) + 70
+        sub = p.get('sub'); bh = 110 + (60 if sub else 0)
+        c, cd = _card(int(bw if not sub else max(bw, tlen(sub, F(400, 42)) + 70)), bh, 'paper', 24)
+        cw = c.width
+        cd.rectangle((cw - 14, 22, cw - 4, 88), fill=C('red'))
+        tx(cd, (cw - 34, 18), s, fnt, C('navy'))
+        if sub: tx(cd, (cw - 34, 104), sub, F(400, 42), C('teal'))
+        paste(im, c, lx, ly, scale=.7 + .3 * kc, alpha=kc)
+    return im
+
+@fx('chapcard')
+def fx_chapcard(im, t, p, ctx):
+    """full chapter card that holds while the chapter is named: navy sheet with a drawing grid, the number large in red,
+    the chapter line and a short subtitle. It covers the picture and fades out at 'out' (seconds)"""
+    out_at = p.get('out', 2.4)
+    a = min(out3(t / .35), 1 - out3((t - out_at) / .35))
+    if a <= 0: return im
+    ov = layer(); d = ImageDraw.Draw(ov)
+    d.rectangle((0, 0, W, H), fill=C('navy', A(a)))
+    for gx in range(0, W, 54): d.line((gx, 0, gx, H), fill=C('teal', A(a * .35)), width=1)
+    for gy in range(0, H, 54): d.line((0, gy, W, gy), fill=C('teal', A(a * .35)), width=1)
+    k1 = out3((t - .05) / .45)
+    tx(d, (W // 2, 430 + (1 - k1) * 80), str(p['num']).zfill(2), F(700, 470), C('red', A(a * k1)), 'ma')
+    k2 = out3((t - .3) / .4)
+    for i, ln in enumerate(wrap(p['text'], F(700, 104), W - 160)):
+        tx(d, (W // 2, 1000 + i * 118 + (1 - k2) * 40), ln, F(700, 104), C('paper', A(a * k2)), 'ma')
+    if p.get('sub'):
+        k3 = out3((t - .6) / .4)
+        for i, ln in enumerate(wrap(p['sub'], F(400, 58), W - 200)):
+            tx(d, (W // 2, 1290 + i * 72), ln, F(400, 58), C('mist', A(a * k3)), 'ma')
+    k4 = out3((t - .2) / .5); bw = 260 * k4
+    d.rectangle((W / 2 - bw / 2, 950, W / 2 + bw / 2, 964), fill=C('red', A(a)))
+    im.alpha_composite(ov); return im
+
+@fx('lower')
+def fx_lower(im, t, p, ctx):
+    """the chapter bar that stays on screen through the chapter: number and name, top right"""
+    k = out3(t / .35)
+    fnt = F(700, 50); s = clean(p['text']); num = str(p['num']).zfill(2)
+    bw = tlen(s, fnt) + 170
+    ov = layer(); d = ImageDraw.Draw(ov); x2 = W - 50; y = 150 - (1 - k) * 40
+    d.rounded_rectangle((x2 - bw, y, x2, y + 92), 46, fill=C('navy', A(k * .94)))
+    d.ellipse((x2 - 84, y + 10, x2 - 12, y + 82), fill=C('red', A(k)))
+    tx(d, (x2 - 48, y + 14), num, F(700, 50), C('paper', A(k)), 'ma')
+    tx(d, (x2 - 104, y + 16), s, fnt, C('paper', A(k)))
+    im.alpha_composite(ov); return im
+
+@fx('quote')
+def fx_quote(im, t, p, ctx):
+    """a centred statement on a navy slab, one line after another"""
+    lines = p['lines']; size = p.get('size', 92); y = p.get('y', 1080)
+    k = out3(t / .4)
+    if k <= 0: return im
+    h = len(lines) * int(size * 1.2) + 120
+    ov = layer(); d = ImageDraw.Draw(ov)
+    d.rounded_rectangle((70, y - 60, W - 70, y - 60 + h), 34, fill=C('navy', A(k * .9)))
+    d.rectangle((W - 70 - 16, y - 20, W - 70, y + 70), fill=C('red', A(k)))
+    for i, s in enumerate(lines):
+        kk = out3((t - .2 - i * p.get('stagger', .5)) / .35)
+        tx(d, (W - 130, y + i * int(size * 1.2) + (1 - kk) * 30), s, F(700, size), C('paper' if i % 2 == 0 else 'mist', A(kk)))
+    im.alpha_composite(ov); return im

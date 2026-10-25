@@ -27,18 +27,19 @@ if '--tts' in sys.argv:
 
 vo = []
 for i, ln in enumerate(pj['lines'], 1):
-    hits = glob.glob(os.path.join(VO, f'{i:02d}.*'))
+    hits = [h for h in glob.glob(os.path.join(VO, f"{ln.get('vo', f'{i:02d}')}.*")) if h.endswith(('.wav', '.mp3', '.m4a'))]
     if not hits: continue
-    d = dur(hits[0]); slot = ln['end'] - ln['start']; sp = min(1.12, d / slot) if d > slot else 1.0
+    d = dur(hits[0]); slot = ln['end'] - ln['start']; base = pj.get('vo_tempo', 1.0)
+    sp = max(base, min(1.12, d / slot)) if d / base > slot else base
     if d / sp > slot + .05: print(f'line {i}: {d:.2f}s in a {slot:.2f}s slot, record it shorter: {ln["text"]}')
     vo.append((hits[0], ln['start'], sp))
 inputs = ['-i', os.path.join(OUT, 'video.mp4'), '-i', os.path.join(OUT, 'music.wav')]
 for p, a, sp in vo: inputs += ['-i', p]
 if vo:
     parts = [f'[{k + 2}:a]aresample=48000,aformat=channel_layouts=stereo,atempo={sp:.3f},highpass=f=80,acompressor=threshold=-18dB:ratio=3:attack=5:release=80,adelay={int(a * 1000)}|{int(a * 1000)}[v{k}]' for k, (p, a, sp) in enumerate(vo)]
-    parts += [''.join(f'[v{k}]' for k in range(len(vo))) + f'amix=inputs={len(vo)}:normalize=0,asplit=2[vsc][vout]',
+    parts += [''.join(f'[v{k}]' for k in range(len(vo))) + f'amix=inputs={len(vo)}:normalize=0,apad,asplit=2[vsc][vout]',
               '[1:a]volume=0.8[mus]', '[mus][vsc]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=300[duck]',
-              '[duck][vout]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=9[a]']
+              '[duck][vout]amix=inputs=2:normalize=0:duration=first,loudnorm=I=-14:TP=-1.5:LRA=9[a]']
     fc = ';'.join(parts)
 else:
     fc = '[1:a]loudnorm=I=-14:TP=-1.5:LRA=9[a]'

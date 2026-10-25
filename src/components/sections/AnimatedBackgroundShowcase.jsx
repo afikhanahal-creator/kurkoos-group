@@ -132,15 +132,6 @@ export default function AnimatedBackgroundShowcase({
   const cfg = INTENSITY[intensity] || INTENSITY.balanced
   const narrow = useNarrow()
   const bento = layout === 'bento'
-  /* בלי height הגובה בא מה-CSS (לפי רוחב המסך), והרשת מודדת אותו כדי לחלק את השורות */
-  const [boxH, setBoxH] = useState(0)
-  useEffect(() => {
-    const el = root.current
-    if (!bento || !el || typeof ResizeObserver === 'undefined') return undefined
-    const ro = new ResizeObserver(() => setBoxH(Math.round(el.getBoundingClientRect().height)))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [bento])
 
   /* הווידאו נטען ומתנגן רק כשהכרטיס על המסך, ונעצר כשיוצאים ממנו */
   useEffect(() => {
@@ -171,9 +162,7 @@ export default function AnimatedBackgroundShowcase({
     label: it.label || undefined,
     ...(narrow ? {} : BENTO_WIDE[i]),
   })) : []
-  const pad = narrow ? 0 : 28
   const bentoGap = narrow ? 10 : 12
-  const rowHeight = narrow ? 128 : Math.max(120, Math.round(((height || boxH || 560) - pad * 2 - bentoGap) / 2))
 
   const ctaEl = cta?.label && cta?.to ? (
     /^https?:/i.test(cta.to)
@@ -206,7 +195,9 @@ export default function AnimatedBackgroundShowcase({
           <MagicBento
             items={bentoItems}
             columns={narrow ? 2 : 4}
-            rowHeight={rowHeight}
+            rowHeight={128}
+            /* במחשב שתי השורות ממלאות את כל גובה הכרטיס, שנקבע ב-CSS לפי רוחב המסך */
+            style={narrow ? undefined : { height: '100%', gridAutoRows: '1fr', gridTemplateRows: 'repeat(2, 1fr)' }}
             gap={bentoGap}
             radius={18}
             glowColor="#8fb6c8"

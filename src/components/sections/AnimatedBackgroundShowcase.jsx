@@ -14,18 +14,30 @@ import './AnimatedBackgroundShowcase.css'
      note       שורת הדגשה עם אייקון
      cta        { label, to }  כפתור ראשי (to פנימי = Link, חיצוני = a)
      intensity  'subtle' | 'balanced' | 'expressive'  מהירות, זווית ועומק
-     height     גובה הכרטיס במחשב (px), ברירת מחדל 560
+     height     גובה הכרטיס במחשב (px). בלי ערך: לפי רוחב המסך (540 עד 700)
+     wide       במחשב הכרטיס יוצא מעמודת התוכן ונפרש כמעט על כל רוחב המסך
+   מעבר עכבר (מחשב בלבד): כל מסך מקבל זוהר אדום שעוקב אחרי הסמן ומסגרת
+   אדומה, שנמוגים לאט כשהסמן ממשיך הלאה, כך שתנועה מימין לשמאל משאירה
+   שובל של מסכים מוארים.
    הרקע לא תופס לחיצות: pointer-events כבוי ו-aria-hidden, כך שרק
    התוכן שמעליו נגיש למקלדת ולקורא מסך.
    ============================================================ */
 
 const INTENSITY = {
-  subtle: { sec: 13, tilt: 5 },
-  balanced: { sec: 10, tilt: 8 },
-  expressive: { sec: 7, tilt: 12 },
+  subtle: { sec: 14, tilt: 9 },
+  balanced: { sec: 11, tilt: 14 },
+  expressive: { sec: 8, tilt: 20 },
 }
 /* יחס רוחב לגובה של המסכים, מתחלף כדי שהשורה לא תיראה כמו רשת אחידה */
-const ASPECTS = [1.5, 1.08, 1.34, 1.2]
+const ASPECTS = [1.62, 1.28, 1.5, 1.12]
+
+/* הזוהר האדום עוקב אחרי הסמן בתוך המסך: המיקום נכתב ישר ל-style, בלי רינדור של React */
+function glowAt(e) {
+  const el = e.currentTarget
+  const r = el.getBoundingClientRect()
+  el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`)
+  el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`)
+}
 const isVideo = (it) => it.type === 'video' || (!it.type && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(it.src || ''))
 
 /* כל שורה צריכה מספיק מסכים כדי למלא את הרוחב; אחר כך משכפלים פעם אחת
@@ -46,7 +58,7 @@ function Tile({ it, i, active, seen, reduce, hidden }) {
     if (active && !reduce) { const p = v.play(); if (p && p.catch) p.catch(() => {}) } else v.pause()
   }, [active, seen, reduce, video])
   return (
-    <figure className="abs__tile" style={{ '--ar': ASPECTS[i % ASPECTS.length] }} aria-hidden={hidden || undefined}>
+    <figure className="abs__tile" style={{ '--ar': ASPECTS[i % ASPECTS.length] }} aria-hidden={hidden || undefined} onPointerMove={glowAt}>
       {video ? (
         <video
           ref={ref}
@@ -90,7 +102,8 @@ export default function AnimatedBackgroundShowcase({
   note,
   cta,
   intensity = 'balanced',
-  height = 560,
+  height,
+  wide = false,
   className = '',
   onCta,
 }) {
@@ -132,8 +145,8 @@ export default function AnimatedBackgroundShowcase({
   return (
     <section
       ref={root}
-      className={`abs abs--${intensity}${active ? ' is-active' : ''}${reduce ? ' is-still' : ''} ${className}`}
-      style={{ '--abs-h': `${height}px`, '--tilt': `${cfg.tilt}deg` }}
+      className={`abs abs--${intensity}${wide ? ' abs--wide' : ''}${active ? ' is-active' : ''}${reduce ? ' is-still' : ''} ${className}`}
+      style={{ ...(height ? { '--abs-h': `${height}px` } : null), '--tilt': `${cfg.tilt}deg` }}
       aria-label={title || undefined}
     >
       <div className="abs__bg" aria-hidden="true">

@@ -4,13 +4,15 @@
    כל התנועה ב-transform בלבד, ונעצרת כשהכרטיס מחוץ למסך.
    ============================================================ */
 .abs {
-  --abs-gap: 22px;
+  --abs-gap: 26px;
   --abs-ink: #07222e;
+  --abs-h: clamp(560px, 38vw, 720px);
+  --abs-red: var(--color-accent-500, #a90b0c);
   position: relative;
   isolation: isolate;
   display: grid;
   align-items: center;
-  min-height: var(--abs-h, 560px);
+  min-height: var(--abs-h);
   border-radius: 30px;
   overflow: hidden;
   background:
@@ -31,30 +33,33 @@
   pointer-events: none;
   overflow: hidden;
 }
+/* כמו בסרטון המקור: הקיר קרוב בקצה הרחוק של הכרטיס ומתרחק לכיוון הטקסט, בהטיה קלה,
+   ושתי השורות ממלאות את כל הגובה (קצת מעבר לשוליים, כך שהמסכים נחתכים בקצה הכרטיס) */
 .abs__stage {
   position: absolute;
-  inset-block: 0;
-  inset-inline-end: 0;
-  width: 76%;
+  inset-block: -4%;
+  inset-inline-end: -1%;
+  width: 78%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--abs-gap);
   padding-block: var(--abs-gap);
-  transform: perspective(1800px) rotateY(calc(var(--tilt, 8deg) * -1)) rotateX(2deg);
-  transform-origin: 100% 50%;
-  -webkit-mask-image: linear-gradient(to right, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
-          mask-image: linear-gradient(to right, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
+  transform: perspective(1700px) rotateY(var(--tilt, 14deg)) rotateX(3deg) rotateZ(-0.6deg);
+  transform-origin: 0% 50%;
+  -webkit-mask-image: linear-gradient(to right, #000 46%, rgba(0, 0, 0, 0.55) 68%, transparent 90%);
+          mask-image: linear-gradient(to right, #000 46%, rgba(0, 0, 0, 0.55) 68%, transparent 90%);
 }
 [dir='ltr'] .abs__stage {
-  transform: perspective(1800px) rotateY(var(--tilt, 8deg)) rotateX(2deg);
-  transform-origin: 0% 50%;
-  -webkit-mask-image: linear-gradient(to left, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
-          mask-image: linear-gradient(to left, #000 44%, rgba(0, 0, 0, 0.5) 66%, transparent 86%);
+  transform: perspective(1700px) rotateY(calc(var(--tilt, 14deg) * -1)) rotateX(3deg) rotateZ(0.6deg);
+  transform-origin: 100% 50%;
+  -webkit-mask-image: linear-gradient(to left, #000 46%, rgba(0, 0, 0, 0.55) 68%, transparent 90%);
+          mask-image: linear-gradient(to left, #000 46%, rgba(0, 0, 0, 0.55) 68%, transparent 90%);
 }
 
 .abs__row {
-  height: calc((var(--abs-h, 560px) - var(--abs-gap) * 3) / 2);
+  flex: 1 1 0;
+  min-height: 0;
   direction: ltr;
   overflow: visible;
 }
@@ -78,12 +83,30 @@
   height: 100%;
   aspect-ratio: var(--ar, 1.3);
   margin: 0 var(--abs-gap) 0 0;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
   background: #0b3446;
   box-shadow:
     0 22px 44px -18px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.07);
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  /* היציאה איטית (שובל), הכניסה מהירה (ב-:hover למטה) */
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.7s ease;
+}
+/* זוהר אדום שעוקב אחרי הסמן בתוך המסך */
+.abs__tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(340px circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--abs-red) 62%, transparent) 0%,
+      color-mix(in srgb, var(--abs-red) 22%, transparent) 38%,
+      transparent 66%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.8s ease;
 }
 .abs__tile video,
 .abs__tile img {
@@ -101,7 +124,7 @@
 }
 .abs__tag {
   position: absolute;
-  z-index: 1;
+  z-index: 3;
   top: 12px;
   right: 12px;
   direction: rtl;
@@ -250,6 +273,46 @@
 .abs--subtle .abs__tile { box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06); }
 .abs--expressive .abs__stage { width: 82%; }
 
+/* ---------- מעבר עכבר: מסגרת אדומה וזוהר שעוקב אחרי הסמן (מחשב בלבד) ----------
+   הרקע כולו pointer-events: none, רק המסכים עצמם מקבלים את המעבר (בלי לחיצה, בלי פוקוס) */
+@media (hover: hover) and (pointer: fine) and (min-width: 961px) {
+  .abs__tile { pointer-events: auto; }
+  .abs__tile:hover {
+    z-index: 2;
+    transform: scale(1.04);
+    box-shadow:
+      0 0 0 2px var(--abs-red),
+      0 0 46px -4px color-mix(in srgb, var(--abs-red) 80%, transparent),
+      0 26px 50px -18px rgba(0, 0, 0, 0.65);
+    transition-duration: 0.22s, 0.22s;
+  }
+  .abs__tile:hover::before { opacity: 1; transition-duration: 0.15s; }
+}
+
+/* ---------- רחב: במחשב הכרטיס יוצא מעמודת התוכן, כמעט על כל רוחב המסך ---------- */
+@media (min-width: 961px) {
+  .abs--wide {
+    --abs-w: min(calc(100vw - 64px), 1760px);
+    width: var(--abs-w);
+    margin-inline: calc((100% - var(--abs-w)) / 2);
+    border-radius: 34px;
+  }
+  /* המסכים ממשיכים עד מתחת לטקסט ונמוגים שם, כמו בסרטון */
+  .abs--wide .abs__stage {
+    width: 86%;
+    -webkit-mask-image: linear-gradient(to right, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+            mask-image: linear-gradient(to right, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+  }
+  [dir='ltr'] .abs--wide .abs__stage {
+    -webkit-mask-image: linear-gradient(to left, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+            mask-image: linear-gradient(to left, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+  }
+  .abs--wide .abs__content {
+    width: min(34%, 500px);
+    margin-inline-start: clamp(16px, 3vw, 56px);
+  }
+}
+
 /* ---------- טאבלט ---------- */
 @media (max-width: 1100px) {
   .abs { --abs-gap: 18px; }
@@ -313,7 +376,10 @@
   .abs__track,
   .abs__glow { animation: none !important; }
   .abs__cta,
-  .abs__cta i { transition: none; }
+  .abs__cta i,
+  .abs__tile,
+  .abs__tile::before { transition: none; }
+  .abs__tile:hover { transform: none; }
 }
 .abs.is-still .abs__track,
 .abs.is-still .abs__glow { animation: none; }

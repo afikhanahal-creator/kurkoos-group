@@ -302,3 +302,15 @@
 @media (prefers-reduced-motion: reduce) {
   .pe-btn, .pe-tile, .pe-group__chev, .pe-sgroup__head svg { transition: none; }
 }
+
+/* סרטונים מהשטח: רשימת הסרטונים בפאנל ההגדרות */
+.pe-show__list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.pe-show__item { display: grid; grid-template-columns: 72px 1fr; grid-template-rows: auto auto; gap: 6px 10px; align-items: center; padding: 8px; border: 1px solid var(--pe-line-2); border-radius: 10px; background: #fff; }
+.pe-show__thumb { grid-row: span 2; width: 72px; aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; background: #07293a; }
+.pe-show__thumb video, .pe-show__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pe-show__acts { display: flex; gap: 4px; }
+.pe-iconbtn { min-width: 34px; height: 34px; border: 1px solid var(--pe-line-2); border-radius: 8px; background: #fff; color: var(--pe-navy); font-size: 15px; line-height: 1; cursor: pointer; }
+.pe-iconbtn:hover:not(:disabled) { background: var(--pe-sel); }
+.pe-iconbtn:disabled { opacity: 0.35; cursor: default; }
+.pe-iconbtn--danger { color: #a90b0c; }
+.pe-show .pe-seg { margin-bottom: 12px; }

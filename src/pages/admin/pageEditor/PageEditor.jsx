@@ -10,7 +10,8 @@ import {
   fetchDraft, fetchPublished, saveDraft, publishPage, listVersions,
 } from '../../../lib/pageBuilder/layout.js'
 import { loadHeadingOverrides } from '../../../lib/headings.js'
-import { uploadMedia, fetchSettings, setSetting } from '../../../lib/cms.js'
+import { uploadMedia, uploadVideoFile, fetchSettings, setSetting } from '../../../lib/cms.js'
+import { readExecutionShowcase } from '../../../data/executionShowcase.js'
 import ImageManager from '../ImageManager.jsx'
 import { executionGallery } from '../../../data/executionGallery.js'
 import { toast } from '../../../lib/toast.js'
@@ -352,6 +353,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
                     onText={setText}
                     onAct={(a) => act(sel.id, a)}
                     slug={slug}
+                    onSettings={() => send({ type: 'settings' })}
                     onNavigate={async (tab) => { try { await flush() } catch { /* noop */ } onClose(); onNavigate && onNavigate(tab) }}
                   />
                 : <PageSettings seoOn={!!def?.seo} layout={layout} onSeo={(seo) => h.set((l) => ({ ...l, seo: { ...(l.seo || {}), ...seo } }), { group: `seo:${Object.keys(seo)[0]}` })} />
@@ -612,7 +614,126 @@ function SettingImages({ cfg, onSaved }) {
   )
 }
 
-function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPatch, onText, onAct, onNavigate, W_, slug }) {
+/* תמונת פתיחה לסרטון שהועלה: פריים מתוך הקובץ עצמו, כדי שהמסך לא יהיה ריק עד שהסרטון נטען */
+async function posterFrom(file) {
+  const url = URL.createObjectURL(file)
+  try {
+    const v = document.createElement('video')
+    v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url
+    await new Promise((ok, bad) => { v.onloadeddata = ok; v.onerror = bad; setTimeout(bad, 15000) })
+    v.currentTime = Math.min(0.6, (v.duration || 1) / 3)
+    await new Promise((ok) => { v.onseeked = ok; setTimeout(ok, 4000) })
+    const w = Math.min(720, v.videoWidth || 720)
+    const h = Math.round(w * ((v.videoHeight || 405) / (v.videoWidth || 720)))
+    const c = document.createElement('canvas'); c.width = w; c.height = h
+    c.getContext('2d').drawImage(v, 0, 0, w, h)
+    const blob = await new Promise((ok) => c.toBlob(ok, 'image/webp', 0.75))
+    return blob ? new File([blob], 'poster.webp', { type: 'image/webp' }) : null
+  } catch { return null } finally { URL.revokeObjectURL(url) }
+}
+
+/* "סרטונים מהשטח": רשימת הסרטונים והטקסטים של הכרטיס, נשמרים מיד בהגדרות האתר.
+   אפשר להעלות כמה סרטונים יחד, להחליף, לשנות כיתוב, לסדר ולהסיר */
+const SHOWCASE_TEXTS = [
+  ['badge', 'תגית אדומה'], ['badgeWord', 'מילה ליד התגית'], ['title', 'כותרת'],
+  ['text', 'פסקה', true], ['bold', 'סוף הפסקה בהדגשה'], ['note', 'שורת הדגשה'], ['ctaLabel', 'טקסט הכפתור'],
+]
+const MAX_SHOWCASE_MB = 40
+const INTENSITIES = [['subtle', 'עדין'], ['balanced', 'מאוזן'], ['expressive', 'בולט']]
+function SettingShowcase({ cfg, onSaved }) {
+  const [val, setVal] = useState(null)
+  const [busy, setBusy] = useState('')
+  const fileRef = useRef(null)
+  const replaceAt = useRef(-1)
+  useEffect(() => {
+    let on = true
+    fetchSettings().then((st) => on && setVal(readExecutionShowcase(st && st[cfg.setting])))
+      .catch(() => on && setVal(readExecutionShowcase(null)))
+    return () => { on = false }
+  }, [cfg.setting])
+  if (!val) return <p className="pe-muted">טוען את הסרטונים…</p>
+  const save = (next, msg = 'נשמר ומופיע באתר') => {
+    setVal(next)
+    return setSetting(cfg.setting, JSON.stringify(next))
+      .then(() => { toast.success(msg); onSaved && onSaved() })
+      .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
+  }
+  const setVideos = (videos, msg) => save({ ...val, videos }, msg)
+  const upload = async (files) => {
+    const list = Array.from(files || [])
+    if (!list.length) return
+    const at = replaceAt.current
+    replaceAt.current = -1
+    const added = []
+    for (let i = 0; i < list.length; i++) {
+      const f = list[i]
+      setBusy(`מעלה ${i + 1} מתוך ${list.length}…`)
+      const isVid = f.type.startsWith('video/')
+      /* האחסון באתר מוגבל: סרטון כבד מהטלפון ימלא אותו מהר. מעל 40 MB מבקשים קובץ קצר יותר */
+      if (isVid && f.size > MAX_SHOWCASE_MB * 1024 * 1024) { toast.error(`${f.name}: ${Math.round(f.size / 1048576)} MB. צריך קובץ עד ${MAX_SHOWCASE_MB} MB, אפשר לקצר ל-10 שניות או לייצא ב-720p`); continue }
+      try {
+        const src = isVid ? await uploadVideoFile(f, `${cfg.folder}/videos`) : await uploadMedia(f, cfg.folder)
+        let poster = ''
+        if (isVid) { const p = await posterFrom(f); if (p) poster = await uploadMedia(p, cfg.folder, { compress: false }).catch(() => '') }
+        added.push({ src, poster, label: '', type: isVid ? 'video' : 'image' })
+      } catch (e) { toast.error(`${f.name}: ${e.message || e}`) }
+    }
+    setBusy('')
+    if (!added.length) return
+    const cur = val.videos.slice()
+    if (at >= 0) cur.splice(at, 1, { ...added[0], label: cur[at].label })
+    else cur.push(...added)
+    setVideos(cur.slice(0, cfg.max || 16), at >= 0 ? 'הסרטון הוחלף ומופיע באתר' : `${added.length} נוספו ומופיעים באתר`)
+  }
+  const move = (i, d) => { const a = val.videos.slice(); const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; setVideos(a, 'הסדר נשמר') }
+  const remove = (i) => { if (val.videos.length <= 1) { toast.error('צריך להשאיר לפחות סרטון אחד'); return } setVideos(val.videos.filter((_, k) => k !== i), 'הוסר מהאתר') }
+  const setLabel = (i, label) => setVal({ ...val, videos: val.videos.map((x, k) => (k === i ? { ...x, label } : x)) })
+  const full = val.videos.length >= (cfg.max || 16)
+  return (
+    <div className="pe-field pe-show">
+      <span className="pe-label">סרטונים ({val.videos.length})</span>
+      <ul className="pe-show__list">
+        {val.videos.map((v, i) => (
+          <li key={`${v.src}-${i}`} className="pe-show__item">
+            <span className="pe-show__thumb">
+              {v.type === 'video' || (v.type !== 'image' && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(v.src))
+                ? <video src={v.src} poster={v.poster || undefined} muted playsInline preload="metadata" />
+                : <img src={v.src} alt="" />}
+            </span>
+            <input className="pe-input" value={v.label || ''} placeholder="כיתוב על המסך (לא חובה)" aria-label={`כיתוב לסרטון ${i + 1}`}
+              onChange={(e) => setLabel(i, e.target.value)} onBlur={() => save(val, 'הכיתוב נשמר')} />
+            <span className="pe-show__acts">
+              <button type="button" className="pe-iconbtn" aria-label="הזזה למעלה" disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
+              <button type="button" className="pe-iconbtn" aria-label="הזזה למטה" disabled={i === val.videos.length - 1} onClick={() => move(i, 1)}>↓</button>
+              <button type="button" className="pe-iconbtn" aria-label="החלפת הסרטון" onClick={() => { replaceAt.current = i; fileRef.current?.click() }}>⟳</button>
+              <button type="button" className="pe-iconbtn pe-iconbtn--danger" aria-label="הסרה" onClick={() => remove(i)}>✕</button>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <input ref={fileRef} type="file" accept="video/mp4,video/webm,video/quicktime,image/*" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = '' }} />
+      <button type="button" className="pe-btn pe-btn--soft pe-btn--block" disabled={!!busy || full} onClick={() => { replaceAt.current = -1; fileRef.current?.click() }}>
+        {busy || (full ? `הגעתם למקסימום (${cfg.max || 16})` : 'העלאת סרטונים')}
+      </button>
+      <p className="pe-muted">סרטון קצר (5 עד 10 שניות, עד 40 MB), בלי סאונד, עדיף לרוחב. הסרטונים מתחלקים לשתי שורות לפי הסדר: הראשון למעלה, השני למטה וכן הלאה.</p>
+
+      <span className="pe-label">עוצמת התנועה</span>
+      <Seg label="עוצמת התנועה" value={val.intensity} options={INTENSITIES} onChange={(v) => save({ ...val, intensity: v }, 'העוצמה נשמרה')} />
+
+      {SHOWCASE_TEXTS.map(([k, label, multi]) => (
+        <label key={k} className="pe-field">
+          <span className="pe-label">{label}</span>
+          {multi
+            ? <textarea className="pe-input" rows={3} value={val[k] || ''} onChange={(e) => setVal({ ...val, [k]: e.target.value })} onBlur={() => save(val, 'הטקסט נשמר')} />
+            : <input className="pe-input" value={val[k] || ''} onChange={(e) => setVal({ ...val, [k]: e.target.value })} onBlur={() => save(val, 'הטקסט נשמר')} />}
+        </label>
+      ))}
+      <p className="pe-muted">כל שינוי נשמר מיד ומופיע באתר, בלי פרסום.</p>
+    </div>
+  )
+}
+
+function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPatch, onText, onAct, onNavigate, W_, slug, onSettings }) {
   const W = W_(s.type) || {}
   const p = { ...(W.defaults || {}), ...(s.props || {}) }
   const setProp = (k, v) => onPatch((x) => ({ ...x, props: { ...(x.props || {}), [k]: v } }), { group: `prop:${s.id}:${k}` })
@@ -664,7 +785,8 @@ function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPa
           )
         })}
         {!W.basic && W.texts?.length > 0 && <p className="pe-muted">אפשר גם לערוך בלחיצה כפולה על הטקסט בעמוד. הטקסט מתעדכן בכל מקום באתר שבו הוא מופיע.</p>}
-        {W.images && (!W.images.only || W.images.only === slug) && <SettingImages cfg={W.images} />}
+        {W.images && (!W.images.only || W.images.only === slug) && <SettingImages cfg={W.images} onSaved={onSettings} />}
+        {W.showcase && (!W.showcase.only || W.showcase.only === slug) && <SettingShowcase cfg={W.showcase} onSaved={onSettings} />}
         {W.manage && (!W.images || !W.images.only || W.images.only === slug) && (
           <button type="button" className="pe-btn pe-btn--soft pe-btn--block" onClick={() => onNavigate(W.manage.tab)}>
             ניהול התוכן בלשונית "{W.manage.label}"

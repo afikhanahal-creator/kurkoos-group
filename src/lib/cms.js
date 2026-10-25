@@ -643,6 +643,11 @@ export async function setSetting(key, value) {
    לא מאופשר על הטבלה / נכשל — זה לעולם לא יפיל את הרינדור. */
 let _settingsChannel = null
 const _settingsListeners = new Set()
+/* רענון ההגדרות בכל הקומפוננטות שמחוברות, למשל בתצוגה של עורך העמודים אחרי שמירה */
+export function refreshSettings() {
+  invalidate('setting')
+  _settingsListeners.forEach((fn) => { try { fn() } catch { /* noop */ } })
+}
 function ensureSettingsRealtime() {
   if (_settingsChannel || !supabase || typeof supabase.channel !== 'function') return
   try {

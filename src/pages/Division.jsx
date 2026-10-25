@@ -30,6 +30,8 @@ import { DIVISION_TOPIC } from '../lib/contact.js'
 import { track } from '../lib/track.js'
 import KineticText from '../components/ui/KineticText.jsx'
 import BgMediaDemo from '../components/sections/BgMediaDemo.jsx'
+import AnimatedBackgroundShowcase from '../components/sections/AnimatedBackgroundShowcase.jsx'
+import { readExecutionShowcase, EXECUTION_SHOWCASE_KEY } from '../data/executionShowcase.js'
 import DIVISION_DEF from '../lib/pageBuilder/defs/division.js'
 import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './Division.css'
@@ -251,6 +253,31 @@ const LOCAL = {
     )
   ),
 
+  /* סרטונים מהשטח: כרטיס עם מסכי וידאו נעים, מתחת לגלריה (רק בעמוד הביצוע).
+     הסרטונים והטקסטים נערכים בעורך העמודים ונשמרים מיד (execution_showcase) */
+  reels: ({ ctx: { slug, reels, consultTo } }) => (
+    slug === 'execution' && reels.videos.length > 0 && (
+      <section className="section section--soft division-reels">
+        <div className="container">
+          <Reveal variant="scale">
+            <AnimatedBackgroundShowcase
+              items={reels.videos}
+              badge={reels.badge}
+              badgeWord={reels.badgeWord}
+              title={reels.title}
+              text={reels.text}
+              bold={reels.bold}
+              note={reels.note}
+              intensity={reels.intensity}
+              cta={{ label: reels.ctaLabel, to: consultTo }}
+              onCta={() => track('cta_click', { placement: 'division_reels_execution' })}
+            />
+          </Reveal>
+        </div>
+      </section>
+    )
+  ),
+
   /* פרויקטים — קרוסלה זהה לדף הבית (לולאה אינסופית רציפה במובייל) */
   projects: ({ ctx: { L, slug, list } }) => (
     <ProjectsGallery
@@ -367,6 +394,8 @@ export default function Division() {
   if (typeof exOverride === 'string') { try { exOverride = JSON.parse(exOverride) } catch { exOverride = null } }
   const exGallery = Array.isArray(exOverride) && exOverride.length ? exOverride : executionGallery
 
+  const reels = readExecutionShowcase(settings[EXECUTION_SHOWCASE_KEY])
+
   // הפרויקטים שיוצגו: ברירת מחדל = מקומיים; אם הוגדרו ב-CMS לעמוד הזה — מהם.
   const [list, setList] = useState(() => projects.slice(0, 4))
 
@@ -417,7 +446,7 @@ export default function Division() {
     }] : []),
   ]
 
-  const ctx = { t, lang, L, slug, division, isMobile, heroImage, logoSrc, baBefore, baAfter, exGallery, list, topic, consultTo, consultLabel, guideTo }
+  const ctx = { t, lang, L, slug, division, isMobile, heroImage, logoSrc, baBefore, baAfter, exGallery, reels, list, topic, consultTo, consultLabel, guideTo }
 
   return (
     <article className={`division division--${slug}`}>

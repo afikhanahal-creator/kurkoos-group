@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
 
-const BUDGET_MB = 30        // מעבר לזה ה-build נכשל
+const BUDGET_MB = 33        // מעבר לזה ה-build נכשל. הועלה מ-30 בשביל 3 MB של לולאות וידאו מהשטח בעמוד הביצוע (public/divisions/showcase)
 const WARN_MB = 25          // מעבר לזה מתריעים בלוג
 const BIG_FILE_MB = 5       // קובץ בודד גדול מזה חשוד כמעט תמיד
 const MB = 1024 * 1024

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MagicBento from '../ui/MagicBento.jsx'
+import { cloudVideo } from '../../lib/cms.js'
 import './AnimatedBackgroundShowcase.css'
 
 /* ============================================================
@@ -79,7 +80,7 @@ function Tile({ it, i, active, seen, reduce, hidden }) {
       {video ? (
         <video
           ref={ref}
-          src={seen ? it.src : undefined}
+          src={seen ? cloudVideo(it.src) : undefined}
           poster={it.poster || undefined}
           muted
           loop

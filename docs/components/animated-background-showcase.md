@@ -68,7 +68,7 @@ Default loops in `public/divisions/showcase/`: 7 clips, 640×400, 24 fps, no aud
 
 The deploy size budget in `scripts/check-deploy-size.mjs` was raised from 30 to 33 MB for these clips.
 
-Uploads go to Cloudinary when `VITE_CLOUDINARY_*` is set, otherwise to Supabase Storage. At the time of writing, Cloudinary was not set and storage was at about 880 MB of 1 GB. Prefer short 720p clips.
+Uploads go to the Kurkoos Cloudinary account (cloud `hb7875r8`, unsigned preset `kurkoos_site`, folder `kurkoos/<section>`). `VITE_CLOUDINARY_*` overrides both. If Cloudinary fails, the upload falls back to Supabase Storage. Uploaded videos are served through `cloudVideo()` (`src/lib/cms.js`) as `q_auto,vc_auto,c_limit,w_720` mp4, so an iPhone mov plays everywhere and stays light.
 
 ## MagicBento
 

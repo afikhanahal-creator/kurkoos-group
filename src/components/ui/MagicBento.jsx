@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { cloudVideo } from '../../lib/cms.js'
 import './MagicBento.css'
 
 /* ============================================================
@@ -73,7 +74,7 @@ function CardVideo({ src, poster, play }) {
     <video
       ref={ref}
       className="magic-bento__image"
-      src={src}
+      src={cloudVideo(src)}
       poster={poster || undefined}
       muted
       loop

@@ -10,7 +10,9 @@ import {
   fetchDraft, fetchPublished, saveDraft, publishPage, listVersions,
 } from '../../../lib/pageBuilder/layout.js'
 import { loadHeadingOverrides } from '../../../lib/headings.js'
-import { uploadMedia } from '../../../lib/cms.js'
+import { uploadMedia, fetchSettings, setSetting } from '../../../lib/cms.js'
+import ImageManager from '../ImageManager.jsx'
+import { executionGallery } from '../../../data/executionGallery.js'
 import { toast } from '../../../lib/toast.js'
 import { WIcon, UiIcon } from './icons.jsx'
 import { defFor } from '../../../lib/pageBuilder/defs/index.js'
@@ -349,6 +351,7 @@ export default function PageEditor({ slug, title, onClose, onNavigate }) {
                     onPatch={(fn, opts) => patchSection(sel.id, fn, opts)}
                     onText={setText}
                     onAct={(a) => act(sel.id, a)}
+                    slug={slug}
                     onNavigate={async (tab) => { try { await flush() } catch { /* noop */ } onClose(); onNavigate && onNavigate(tab) }}
                   />
                 : <PageSettings seoOn={!!def?.seo} layout={layout} onSeo={(seo) => h.set((l) => ({ ...l, seo: { ...(l.seo || {}), ...seo } }), { group: `seo:${Object.keys(seo)[0]}` })} />
@@ -579,7 +582,37 @@ function SpaceChips({ value, onChange, label, inherited }) {
   )
 }
 
-function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPatch, onText, onAct, onNavigate, W_ }) {
+/* תמונות של סקשן שנשמרות בהגדרות האתר (site_settings), למשל גלריית הביצוע. נשמר מיד ומופיע באתר,
+   כמו בלשונית שמנהלת את אותן תמונות */
+const FALLBACK_IMAGES = { execution: executionGallery }
+function SettingImages({ cfg, onSaved }) {
+  const [value, setValue] = useState(null)
+  useEffect(() => {
+    let on = true
+    fetchSettings().then((st) => {
+      let v = st && st[cfg.setting]
+      if (typeof v === 'string') { try { v = JSON.parse(v) } catch { v = null } }
+      if (on) setValue(Array.isArray(v) && v.length ? v : (FALLBACK_IMAGES[cfg.fallback] || []))
+    }).catch(() => on && setValue(FALLBACK_IMAGES[cfg.fallback] || []))
+    return () => { on = false }
+  }, [cfg.setting, cfg.fallback])
+  if (!value) return <p className="pe-muted">טוען את התמונות…</p>
+  const save = (arr) => {
+    setValue(arr)
+    setSetting(cfg.setting, JSON.stringify(arr))
+      .then(() => { toast.success('התמונות נשמרו ומופיעות באתר'); onSaved && onSaved() })
+      .catch((e) => toast.error('שמירה נכשלה: ' + (e.message || e)))
+  }
+  return (
+    <div className="pe-field">
+      <span className="pe-label">{cfg.label}</span>
+      <ImageManager value={value} onChange={save} folder={cfg.folder || 'general'} max={cfg.max || 12} />
+      <p className="pe-muted">העלאה, החלפה, הסרה וגרירה לסידור. השינוי נשמר מיד ומופיע באתר, בלי פרסום.</p>
+    </div>
+  )
+}
+
+function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPatch, onText, onAct, onNavigate, W_, slug }) {
   const W = W_(s.type) || {}
   const p = { ...(W.defaults || {}), ...(s.props || {}) }
   const setProp = (k, v) => onPatch((x) => ({ ...x, props: { ...(x.props || {}), [k]: v } }), { group: `prop:${s.id}:${k}` })
@@ -631,7 +664,8 @@ function SettingsPanel({ s, device, setDevice, texts, overrides, foundKeys, onPa
           )
         })}
         {!W.basic && W.texts?.length > 0 && <p className="pe-muted">אפשר גם לערוך בלחיצה כפולה על הטקסט בעמוד. הטקסט מתעדכן בכל מקום באתר שבו הוא מופיע.</p>}
-        {W.manage && (
+        {W.images && (!W.images.only || W.images.only === slug) && <SettingImages cfg={W.images} />}
+        {W.manage && (!W.images || !W.images.only || W.images.only === slug) && (
           <button type="button" className="pe-btn pe-btn--soft pe-btn--block" onClick={() => onNavigate(W.manage.tab)}>
             ניהול התוכן בלשונית "{W.manage.label}"
           </button>

@@ -21,7 +21,12 @@ export default {
     ['why', 'למה אנחנו', 'cards', [T('activities.eyebrow', 'תווית עליונה')]],
     ['beforeAfter', 'לפני ואחרי', 'images'],
     ['site', 'האתר שלנו', 'page'],
-    ['gallery', 'תיעוד מהשטח', 'images'],
+    /* הגלריה "הופכים תוכניות לביצוע" (רק בעמוד הביצוע). התמונות נערכות כאן בעורך, או בלשונית תמונות קאבר:
+       אותה הגדרה (cover_execution_gallery), ולכן שני המקומות תמיד מסונכרנים */
+    ['gallery', 'תיעוד מהשטח: הופכים תוכניות לביצוע', 'images', [], {
+      images: { setting: 'cover_execution_gallery', label: 'תמונות הגלריה', folder: 'execution-gallery', max: 12, only: '/divisions/execution', fallback: 'execution' },
+      manage: { tab: 'covers', label: 'תמונות קאבר' },
+    }],
     ['projects', 'פרויקטים', 'building', [T('projects.title', 'כותרת'), T('projects.lead', 'טקסט מוביל', true)]],
     ['testimonials', 'המלצות', 'quote', [T('testimonials.eyebrow', 'תווית עליונה'), T('testimonials.title', 'כותרת'), T('testimonials.lead', 'טקסט מוביל', true)]],
     ['guide', 'מדריך', 'book', [T('common.readMore', 'קרא עוד')]],

@@ -57,14 +57,12 @@ def scene_frame(pj, sc, t, hold=False):
     im = kit.shot_frame(sh, f, n)
     if fr:
         g = im.convert('L').convert('RGBA'); im = Image.blend(im, g, .7); kit.tint(im, 'navy', 70)
-        d0 = ImageDraw.Draw(im); k = kit.out3((ts - fr['at']) / .12)
-        d0.rectangle((24, 24, W - 24, H - 24), outline=C('paper', int(255 * k)), width=6)
+
     if sh.get('in') == 'wipe' and j > 0 and f < 9:
         ps = sc['shots'][j - 1]; pn = max(1, int(round(ps.get('len', ps.get('dur', 1.0)) * FPS)))
         prev = kit.shot_frame(ps, pn, pn)  # the previous shot at its last frame
         k = kit.inout(f / 9); x = int(W * (1 - k))
         prev.paste(im.crop((x, 0, W, H)), (x, 0)); im = prev
-        ImageDraw.Draw(im).rectangle((x - 6, 0, x + 6, H), fill=C('mist'))
     if sc.get('dim'): kit.tint(im, 'navy', int(255 * sc['dim']))
     if sc.get('shade', True): kit.shade(im, bottom=sc.get('shade_from', .5), strength=sc.get('shade_k', .88), top=sc.get('shade_top', 0))
     if sh.get('label'): fx.fx_pill(im, tl, {'text': sh['label'], 'bg': 'teal', 'x': W - 80, 'y': 1500, 'size': 46}, {})

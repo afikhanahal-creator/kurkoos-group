@@ -18,6 +18,7 @@ export default function BgMediaDemo() {
             variant="light"
             forcePlay
             src="/divisions/kurkoos-showcase.mp4"
+            mobileSrc="/divisions/kurkoos-showcase-m.mp4"
             poster="/divisions/kurkoos-showcase-poster.jpg"
             alt="זרוע הביצוע של קורקוס — סרטון התקדמות בנייה"
           />

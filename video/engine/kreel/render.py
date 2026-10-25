@@ -36,7 +36,19 @@ def shot_at(sc, ts):
         acc += d
 
 def frame(pj, fi):
-    t = fi / FPS; i, sc = scene_at(pj, t); ts = t - sc['start']
+    t = fi / FPS; i, sc = scene_at(pj, t)
+    im = scene_frame(pj, sc, t)
+    xf = sc.get('xfade', pj.get('xfade', 0))
+    if xf and i > 0 and t - sc['start'] < xf:  # crossfade from the previous scene, which keeps running under it
+        prev = scene_frame(pj, pj['scenes'][i - 1], t, hold=True)
+        im = Image.blend(prev, im, kit.inout((t - sc['start']) / xf))
+    if sc.get('captions', True): 
+        im = im.convert('RGBA'); kit.draw_caption(im, pj['_chunks'], t, pj.get('caption_style'))
+    return im.convert('RGB')
+
+def scene_frame(pj, sc, t, hold=False):
+    ts = t - sc['start']
+    if hold: ts = min(ts, sc['end'] - sc['start'] - 1 / FPS)
     j, sh, tl, d = shot_at(sc, ts)
     f, n = int(round(tl * FPS)), max(1, int(round(d * FPS)))
     # freeze: hold the shot's frame at the freeze start, desaturated and tinted
@@ -60,7 +72,6 @@ def frame(pj, fi):
         lg = kit.logo(80); im.alpha_composite(lg, (60, 60))
     im = fx.run(im, ts, sc.get('effects', []), {'scene': sc, 'f': f, 'n': n})
     if sc.get('punch', True) and not fr and sh.get('in') != 'wipe': im = kit.punch(im, f, 3, .045)
-    if sc.get('captions', True): kit.draw_caption(im, pj['_chunks'], t)
     return im.convert('RGB')
 
 def main():

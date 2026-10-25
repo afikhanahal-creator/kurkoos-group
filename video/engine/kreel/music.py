@@ -69,7 +69,9 @@ for sc in pj['scenes']:
         acc += d * scale; whoosh(acc, .28)
     for e in sc.get('effects', []):
         at = s0 + e.get('at', 0); ty = e['type']
-        if ty == 'chapter': impact(at, .9)
+        if ty in ('chapter', 'chapcard'): impact(at, .9)
+        elif ty == 'callout': tick(at + .4, .26)
+        elif ty == 'quote': impact(at, .35)
         elif ty == 'checks':
             for i, _ in enumerate(e['points']): tick(at + i * e.get('stagger', .22) + .15, .28, (-.3 if i % 2 else .3))
         elif ty == 'checklist':

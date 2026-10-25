@@ -23,7 +23,9 @@ import './OfficeMap.css'
       והמעבר מהשלד למפה לא מזיז שום דבר בעמוד (CLS נשאר אפס).
    ============================================================ */
 
-export default function OfficeMap() {
+/* stacked: המפה למעלה, הפרטים מתחתיה והכפתורים בתחתית הכרטיס.
+   לעמודה צרה (עמוד יצירת הקשר), שבה מפה ופרטים זה לצד זה נדחסים */
+export default function OfficeMap({ stacked = false }) {
   const L = useLocalized()
   const s = useSettings()
 
@@ -54,7 +56,7 @@ export default function OfficeMap() {
   }, [visible])
 
   return (
-    <div className="office-map">
+    <div className={`office-map${stacked ? ' office-map--stacked' : ''}`}>
       <div className="office-map__map" ref={holderRef}>
         {visible
           ? <PropertyMap

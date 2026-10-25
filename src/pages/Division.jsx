@@ -270,6 +270,7 @@ const LOCAL = {
               note={reels.note}
               intensity={reels.intensity}
               wide
+              layout={reels.layout}
               cta={{ label: reels.ctaLabel, to: consultTo }}
               onCta={() => track('cta_click', { placement: 'division_reels_execution' })}
             />

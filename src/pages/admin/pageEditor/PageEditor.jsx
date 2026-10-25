@@ -639,6 +639,7 @@ const SHOWCASE_TEXTS = [
   ['text', 'פסקה', true], ['bold', 'סוף הפסקה בהדגשה'], ['note', 'שורת הדגשה'], ['ctaLabel', 'טקסט הכפתור'],
 ]
 const MAX_SHOWCASE_MB = 40
+const LAYOUTS = [['bento', 'באנטו'], ['marquee', 'מסכים נעים']]
 const INTENSITIES = [['subtle', 'עדין'], ['balanced', 'מאוזן'], ['expressive', 'בולט']]
 function SettingShowcase({ cfg, onSaved }) {
   const [val, setVal] = useState(null)
@@ -716,6 +717,10 @@ function SettingShowcase({ cfg, onSaved }) {
         {busy || (full ? `הגעתם למקסימום (${cfg.max || 16})` : 'העלאת סרטונים')}
       </button>
       <p className="pe-muted">סרטון קצר (5 עד 10 שניות, עד 40 MB), בלי סאונד, עדיף לרוחב. הסרטונים מתחלקים לשתי שורות לפי הסדר: הראשון למעלה, השני למטה וכן הלאה.</p>
+
+      <span className="pe-label">תצוגה</span>
+      <Seg label="תצוגה" value={val.layout} options={LAYOUTS} onChange={(v) => save({ ...val, layout: v }, 'התצוגה נשמרה')} />
+      {val.layout === 'bento' && <p className="pe-muted">בבאנטו מוצגים ארבעת הסרטונים הראשונים ברשימה. הראשון הוא הגדול.</p>}
 
       <span className="pe-label">עוצמת התנועה</span>
       <Seg label="עוצמת התנועה" value={val.intensity} options={INTENSITIES} onChange={(v) => save({ ...val, intensity: v }, 'העוצמה נשמרה')} />

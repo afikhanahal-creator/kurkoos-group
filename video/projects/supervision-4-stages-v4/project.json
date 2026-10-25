@@ -1,0 +1,356 @@
+{
+ "name": "מהקרקע ועד המפתח: הליווי של קבוצת קורקוס (גרסה 4)",
+ "duration": 45.76,
+ "vo_tempo": 1.04,
+ "music": {
+  "bpm": 84,
+  "style": "cinematic",
+  "quiet": true
+ },
+ "lines": [
+  {
+   "id": "v01",
+   "vo": "v01",
+   "start": 0.35,
+   "end": 4.011,
+   "text": "כל וילה שאנחנו מוסרים, מתחילה כאן. בקרקע."
+  },
+  {
+   "id": "v02",
+   "vo": "v02",
+   "start": 4.461,
+   "end": 9.737,
+   "text": "יסודות וכלונסאות, עמוק באדמה. הם מחזיקים את כל הבית."
+  },
+  {
+   "id": "v03",
+   "vo": "v03",
+   "start": 10.188,
+   "end": 17.118,
+   "text": "קירות בטון, תבניות וברזל. כל שלב נבדק, לפני שממשיכים הלאה."
+  },
+  {
+   "id": "v04",
+   "vo": "v04",
+   "start": 17.568,
+   "end": 22.883,
+   "text": "ברזל לתקרה, לפני היציקה. הרגע שבו אין מקום לטעויות."
+  },
+  {
+   "id": "v05",
+   "vo": "v05",
+   "start": 23.333,
+   "end": 30.417,
+   "text": "ולאורך כל הדרך, אנחנו מלווים אתכם. מהתכנון, דרך השלד והגמר, ועד המפתח."
+  },
+  {
+   "id": "v06",
+   "vo": "v06",
+   "start": 30.867,
+   "end": 33.336,
+   "text": "וזה הרגע, שבשבילו בונים."
+  },
+  {
+   "id": "v07",
+   "vo": "v07",
+   "start": 33.786,
+   "end": 38.216,
+   "text": "קבוצת קורקוס. מקרקע ועד מסירת מפתח."
+  },
+  {
+   "id": "v08",
+   "vo": "v08",
+   "start": 38.666,
+   "end": 43.558,
+   "text": "בונים וילה? השאירו פרטים, ומהנדס שלנו יחזור אליכם לשיחת ייעוץ."
+  }
+ ],
+ "scenes": [
+  {
+   "start": 0.0,
+   "end": 4.461,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_land.mp4",
+     "t0": 0,
+     "dur": 4.461
+    }
+   ],
+   "effects": [
+    {
+     "type": "title",
+     "at": 0.5,
+     "y": 1180,
+     "lines": [
+      [
+       "מהקרקע",
+       170
+      ],
+      [
+       "ועד המפתח",
+       112,
+       700,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "lower",
+     "at": 0.25,
+     "num": 1,
+     "text": "קרקע"
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "shade_from": 0.45,
+   "shade_k": 0.85
+  },
+  {
+   "start": 4.461,
+   "end": 10.187,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_found.mp4",
+     "t0": 0,
+     "dur": 5.725999999999999
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.25,
+     "num": 2,
+     "text": "יסודות"
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 10.188,
+   "end": 17.568,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_walls1.mp4",
+     "t0": 0,
+     "len": 2.9520000000000004,
+     "dur": 2.9520000000000004
+    },
+    {
+     "src": "video/projects/_media/v4_walls2.mp4",
+     "t0": 0.5,
+     "len": 2.9520000000000004,
+     "dur": 2.9520000000000004
+    },
+    {
+     "src": "video/projects/_media/v4_walls3.mp4",
+     "t0": 0,
+     "len": 1.4760000000000002,
+     "dur": 1.4760000000000002
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.25,
+     "num": 3,
+     "text": "שלד"
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 17.568,
+   "end": 23.333,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_roof.mp4",
+     "t0": 0,
+     "dur": 5.764999999999997
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.25,
+     "num": 4,
+     "text": "תקרה"
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 23.333,
+   "end": 30.867,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_walls4.mp4",
+     "t0": 0,
+     "len": 5.424480000000002,
+     "dur": 5.424480000000002
+    },
+    {
+     "src": "video/projects/_media/v4_ph80.webp",
+     "len": 2.1095200000000007
+    }
+   ],
+   "effects": [
+    {
+     "type": "zoomout",
+     "at": 2.23,
+     "back": 4.25,
+     "scale": 0.52,
+     "title": "אנחנו מלווים אתכם",
+     "steps": [
+      "קרקע ותכנון",
+      "היתר בנייה",
+      "שלד ובטון",
+      "גמר ומערכות",
+      "מסירת מפתח"
+     ]
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 30.867,
+   "end": 33.786,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph80.webp",
+     "len": 0.9924600000000002,
+     "push": 0.025
+    },
+    {
+     "src": "video/projects/_media/v4_ph79.webp",
+     "len": 0.9632700000000002,
+     "push": 0.025
+    },
+    {
+     "src": "video/projects/_media/v4_ph77.webp",
+     "len": 0.9632700000000002,
+     "push": 0.025
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.25,
+     "num": 5,
+     "text": "מסירה"
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "shade_from": 0.6,
+   "shade_k": 0.75
+  },
+  {
+   "start": 33.786,
+   "end": 38.666,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph78.webp",
+     "len": 4.8799999999999955,
+     "push": 0.02
+    }
+   ],
+   "effects": [
+    {
+     "type": "title",
+     "at": 0.25,
+     "y": 1180,
+     "lines": [
+      [
+       "קבוצת קורקוס",
+       128
+      ],
+      [
+       "מקרקע ועד מסירת מפתח",
+       74,
+       700,
+       "paper"
+      ]
+     ]
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "shade_from": 0.32,
+   "shade_k": 1.0
+  },
+  {
+   "start": 38.666,
+   "end": 45.758,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph78.webp",
+     "len": 7.092000000000006
+    }
+   ],
+   "effects": [
+    {
+     "type": "endcard",
+     "at": 0,
+     "blur": 10,
+     "tint": 200,
+     "lines": [
+      [
+       "הצעד הבא",
+       54,
+       400,
+       "mist"
+      ],
+      [
+       "שיחת ייעוץ עם מהנדס",
+       96,
+       700,
+       "paper"
+      ],
+      [
+       "055-981-1814",
+       120,
+       700,
+       "paper"
+      ],
+      [
+       "kurkoos-group.co.il",
+       46,
+       400,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "pill",
+     "at": 1.0,
+     "text": "השאירו פרטים בקישור",
+     "bg": "red",
+     "x": 815,
+     "y": 1500,
+     "size": 56
+    }
+   ],
+   "punch": false,
+   "xfade": 0.3,
+   "captions": true,
+   "shade": false
+  }
+ ],
+ "caption_style": {
+  "size": 60,
+  "y": 1700
+ }
+}

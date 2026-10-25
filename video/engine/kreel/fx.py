@@ -461,7 +461,10 @@ def _fade(c, a):
 # ---------------------------------------------------------------- end card
 @fx('endcard')
 def fx_endcard(im, t, p, ctx):
-    tint(im, 'navy', int(225 * out3(t / .3)))
+    if p.get('blur'):  # a blurred photo under the tint has texture, so the navy never bands into blotches
+        k0 = out3(t / .4); b = im.resize((W // 6, H // 6), Image.BILINEAR).filter(ImageFilter.GaussianBlur(p['blur'])).resize((W, H), Image.BILINEAR)
+        im = Image.blend(im, b, k0)
+    tint(im, 'navy', int(p.get('tint', 225) * out3(t / .3)))
     k = out3(t / .35)
     lg = logo(round(260 * (.9 + .1 * k))); lg = _fade(lg, k); im.alpha_composite(lg, ((W - lg.width) // 2, 300))
     ov = layer(); d = ImageDraw.Draw(ov); y = 720
@@ -551,3 +554,79 @@ def fx_quote(im, t, p, ctx):
         kk = out3((t - .2 - i * p.get('stagger', .5)) / .35)
         tx(d, (W - 130, y + i * int(size * 1.2) + (1 - kk) * 30), s, F(700, size), C('paper' if i % 2 == 0 else 'mist', A(kk)))
     im.alpha_composite(ov); return im
+
+# ---------------------------------------------------------------- zoom out to an app window (v4)
+@fx('zoomout')
+def fx_zoomout(im, t, p, ctx):
+    """placeholder in the scene pass: the zoom out works on the finished frame (captions and titles included),
+    so render.frame() applies zoom_window() after the captions"""
+    return im
+
+_STEP_FONT = None
+def zoom_window(im, t, p):
+    """"התרחקות", about two seconds or more. 1) the whole frame shrinks to 52% with rounded corners (70 px) and a
+    shadow, so it reads as an app window (0.6 s, power3.inOut); 2) a top bar on the window: three dots (red, yellow,
+    green) and the logo; 3) a side panel (title + 5 steps) marks its steps one after another: pending ring, spinner,
+    red check; 4) at 'back' (seconds from the start) everything returns to full screen (0.5 s, power3.inOut).
+    p: title, steps [..5], back, scale (.52), side ('right' panel on the reading side)."""
+    back = p.get('back', 2.0); s_min = p.get('scale', .52)
+    k_in = inout(t / .6); k_out = inout((t - back) / .5)
+    k = k_in * (1 - k_out)                                   # 0 full frame -> 1 window
+    if k <= 0.001: return im
+    base = im.convert('RGBA')
+    # backdrop: the same frame, blurred and darkened (smooth, no gradient banding)
+    small = base.resize((W // 8, H // 8), Image.BILINEAR).filter(ImageFilter.GaussianBlur(6)).resize((W, H), Image.BILINEAR)
+    bg = small.copy(); tint(bg, 'navy', int(185 * k))
+    s = 1 - (1 - s_min) * k
+    ww, wh = round(W * s), round(H * s)
+    # the window sits on the left, the panel on the right (Hebrew reading side)
+    cx = W / 2 - (W / 2 - 40 - W * s_min / 2) * k; cy = H / 2 + 30 * k
+    bar_h = round(64 * k)
+    win = base.resize((ww, wh), Image.BICUBIC)
+    r = max(1, round(70 * k * s / s_min * s_min))  # 70 px corners at the window size
+    full = Image.new('RGBA', (ww, wh + bar_h), (0, 0, 0, 0))
+    if bar_h > 2:
+        bar = Image.new('RGBA', (ww, bar_h + r), C('navy'))
+        bd = ImageDraw.Draw(bar)
+        dr = round(11 * k) + 1
+        for i, col in enumerate(('#ff5f57', '#febc2e', '#28c840')):
+            x = 34 + i * 34; y = bar_h // 2
+            bd.ellipse((x - dr, y - dr, x + dr, y + dr), fill=C(col))
+        lg = logo(max(8, round(40 * k)))
+        bar.alpha_composite(lg, (ww - lg.width - 28, max(0, (bar_h - lg.height) // 2)))
+        full.alpha_composite(bar, (0, 0))
+    full.alpha_composite(win, (0, bar_h))
+    full.putalpha(Image.composite(full.split()[3], Image.new('L', full.size, 0), round_mask(full.width, full.height, r)))
+    out = bg
+    paste(out, full, cx, cy, shadow=k > .05)
+    # side panel
+    steps = p.get('steps', []); title = p.get('title', '')
+    pk = out3((t - .35) / .35) * (1 - k_out)
+    if pk > 0 and steps:
+        pw = W - round(cx + W * s_min / 2) - 60; px2 = W - 30
+        rows = len(steps); row_h = 118; ph = 150 + rows * row_h
+        py = round(cy - ph / 2 + (1 - pk) * 50)
+        ov = layer(); d = ImageDraw.Draw(ov)
+        d.rounded_rectangle((px2 - pw, py, px2, py + ph), 36, fill=C('white', A(pk * .97)))
+        tx(d, (px2 - 34, py + 40), title, F(700, 46), C('navy', A(pk)))
+        d.rectangle((px2 - 34 - 90, py + 104, px2 - 34, py + 110), fill=C('red', A(pk)))
+        t0 = .75; span = max(.4, back - t0 - .25); per = span / rows
+        for i, lab in enumerate(steps):
+            y = py + 150 + i * row_h; rx = px2 - 64; ry = y + 34
+            ts = t - t0 - i * per                       # this step's own clock
+            done = ts > per * .8; run = 0 <= ts <= per * .8
+            col = 'ink' if (done or run) else 'muted'
+            if done:
+                kk = back_out(clamp((ts - per * .8) / .25))
+                rr = 24 * kk; d.ellipse((rx - rr, ry - rr, rx + rr, ry + rr), fill=C('red', A(pk)))
+                if kk > .5:
+                    d.line((rx - 11, ry + 1, rx - 3, ry + 9), fill=C('white', A(pk)), width=5); d.line((rx - 3, ry + 9, rx + 12, ry - 8), fill=C('white', A(pk)), width=5)
+            elif run:
+                d.ellipse((rx - 22, ry - 22, rx + 22, ry + 22), outline=C('line', A(pk)), width=5)
+                a0 = (ts * 540) % 360; d.arc((rx - 22, ry - 22, rx + 22, ry + 22), a0, a0 + 100, fill=C('red', A(pk)), width=5)
+            else:
+                for q in range(0, 360, 40): d.arc((rx - 20, ry - 20, rx + 20, ry + 20), q, q + 20, fill=C('muted', A(pk * .7)), width=3)
+            for j, ln in enumerate(wrap(lab, F(700 if (done or run) else 400, 40), pw - 130)[:2]):
+                tx(d, (rx - 44, y + 12 + j * 46), ln, F(700 if (done or run) else 400, 40), C(col, A(pk)))
+        out.alpha_composite(ov)
+    return out

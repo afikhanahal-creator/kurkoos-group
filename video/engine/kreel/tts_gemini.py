@@ -19,15 +19,17 @@ def tts(text, model, voice):
     key = os.environ.get('GEMINI_API_KEY', '')
     rq = urllib.request.Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', data=json.dumps(body).encode(),
                                 headers={'Content-Type': 'application/json', **({'x-goog-api-key': key} if key else {})})
-    for i in range(8):
+    for i in range(int(os.environ.get('TTS_TRIES', 8))):
         try: return base64.b64decode(json.load(urllib.request.urlopen(rq, timeout=300))['candidates'][0]['content']['parts'][0]['inlineData']['data'])
         except urllib.error.HTTPError as e:
-            if e.code not in (429, 500, 503) or i == 7: raise
-            print('retry', e.code, flush=True); time.sleep(30)
+            if e.code not in (429, 500, 503) or i == int(os.environ.get('TTS_TRIES', 8)) - 1: raise
+            print('retry', e.code, flush=True); time.sleep(int(os.environ.get('TTS_WAIT', 30)))
 model = sc.get('model', 'gemini-3.8-flash-tts'); voice = sc.get('voice', 'Charon'); style = sc.get('style', '')
 out = {}
 for ln in sc['lines']:
     wav = os.path.join(VO, f"{ln['id']}.wav"); tag = os.path.join(VO, f"{ln['id']}.txt")
+    # a line can use another model of the same voice (model_by_line), for example when one model is rate limited
+    model = sc.get('model_by_line', {}).get(ln['id'], sc.get('model', 'gemini-3.8-flash-tts'))
     text = fix(ln['text']); h = hashlib.sha1((model + voice + style + text).encode()).hexdigest()
     if '--fresh' in sys.argv or not os.path.exists(wav) or not os.path.exists(tag) or open(tag).read() != h:
         pcm = tts((style + ' ' if style else '') + text, model, voice)

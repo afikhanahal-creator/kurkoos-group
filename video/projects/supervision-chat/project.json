@@ -1,0 +1,99 @@
+{
+ "name": "פיקוח בנייה בקבוצת קורקוס: אפקט בתוך הצ'אט",
+ "duration": 40.0,
+ "music": {"bpm": 104, "style": "cinematic"},
+ "lines": [
+  {"start": 0.15, "end": 1.45, "text": "פיקוח בנייה, קבוצת קורקוס."},
+  {"start": 2.00, "end": 6.70, "text": "בית פרטי לא נבנה רק מתוכניות. הוא נבנה מאלפי החלטות קטנות."},
+  {"start": 7.30, "end": 13.70, "text": "בודקים את הביצוע, מתעדים את מה שצריך לתקן ומוודאים שכל שלב מתקדם לפי התכנון והדרישות."},
+  {"start": 14.30, "end": 19.40, "text": "לפני שלבים שאי אפשר להחזיר לאחור, עוצרים לבדוק."},
+  {"start": 20.20, "end": 25.70, "text": "גם התשלומים צריכים לשקף את מה שבוצע בפועל, בהתאם להסכם ולשלבי הפרויקט."},
+  {"start": 26.20, "end": 32.10, "text": "כי המטרה היא לא רק לסיים לבנות. המטרה היא להגיע לבית שאתם יכולים להיות גאים בו."},
+  {"start": 32.70, "end": 35.20, "text": "מתכננים לבנות בית? התחילו בפיקוח נכון."},
+  {"start": 36.20, "end": 39.40, "text": "כתבו 'מדריך' בתגובות לקבלת המדריך המלא."}
+ ],
+ "scenes": [
+  {"start": 0.0, "end": 1.5, "captions": false, "shade": false, "punch": false, "mark": false,
+   "shots": [{"src": "video/videos/hankin-steel/assets/seg/s02.mp4", "t0": 0, "dur": 1.5}],
+   "effects": [
+    {"type": "chat", "at": 0, "dur": 1.5, "prompt": "תערוך לי את הריל בסגנון של קבוצת קורקוס עם כתוביות, דיבוב ופונט אלמוני", "thumb": "video/projects/_media/post_cover"}
+   ]},
+  {"start": 1.5, "end": 7.0,
+   "shots": [
+    {"src": "video/projects/_media/ph_t02", "len": 2.5, "push": 0.16},
+    {"src": "video/projects/_media/ph_film2", "len": 3.0, "push": 0.06, "in": "wipe"}
+   ],
+   "effects": [
+    {"type": "blueprint", "at": 0.1, "until": 2.5, "dur": 0.6, "grid": [60, 260, 1020, 1520]},
+    {"type": "blueprint", "at": 0.3, "until": 2.5, "dur": 0.9, "rects": [[180, 520, 900, 1120], [420, 700, 900, 1120]], "paths": [[[180, 820], [900, 820]]]},
+    {"type": "float", "at": 0.4, "until": 2.4, "src": "video/projects/_media/il_plans", "x": 300, "y": 400, "w": 380, "rot": -5},
+    {"type": "blueprint", "at": 2.6, "until": 5.5, "dur": 0.8, "out": 4.6, "rects": [[120, 480, 960, 1150]], "paths": [[[120, 700], [960, 700]], [[540, 480], [540, 1150]]]},
+    {"type": "dims", "at": 2.8, "until": 4.8, "items": [{"a": [120, 1220], "b": [960, 1220], "label": "תכנון"}, {"a": [1010, 480], "b": [1010, 1150], "label": "ביצוע"}]},
+    {"type": "title", "at": 3.0, "y": 1300, "lines": [["מתכנון לביצוע.", 124], ["עם פיקוח.", 124, 700, "mist"]]}
+   ]},
+  {"start": 7.0, "end": 14.0,
+   "shots": [
+    {"src": "video/projects/_media/ph_mgr", "len": 2.0, "fx": 0.4, "push": 0.08},
+    {"src": "video/videos/hankin-steel/assets/seg/s08.mp4", "t0": 0, "dur": 1.6},
+    {"src": "video/videos/szold-ground/assets/seg/s12.mp4", "t0": 0, "dur": 1.6},
+    {"src": "video/videos/hankin-steel/assets/seg/s13.mp4", "t0": 0, "dur": 1.8}
+   ],
+   "effects": [
+    {"type": "icons", "at": 0.3, "until": 2.0, "items": [{"kind": "measure", "x": 860, "y": 420}, {"kind": "doc", "x": 880, "y": 640}, {"kind": "check", "x": 700, "y": 330}, {"kind": "camera", "x": 230, "y": 360}]},
+    {"type": "checks", "at": 2.2, "until": 3.6, "points": [[320, 820, "נבדק"], [740, 1020, "מתועד"]]},
+    {"type": "scan", "at": 3.6, "until": 5.2, "rect": [90, 360, 990, 1360], "dur": 1.1},
+    {"type": "float", "at": 4.9, "until": 7.0, "src": "video/projects/_media/il_clip", "x": 290, "y": 520, "w": 380, "rot": -4},
+    {"type": "title", "at": 5.2, "y": 1180, "lines": [["בודקים. מתעדים.", 124], ["עוקבים.", 124, 700, "mist"]]}
+   ]},
+  {"start": 14.0, "end": 20.0,
+   "shots": [
+    {"src": "video/videos/hankin-steel/assets/seg/s04.mp4", "t0": 0, "dur": 1.6},
+    {"src": "video/videos/hankin-steel/assets/seg/s06.mp4", "t0": 0, "dur": 1.6},
+    {"src": "video/videos/szold-ground/assets/seg/s10.mp4", "t0": 0, "dur": 1.2},
+    {"src": "video/projects/_media/ph_t11", "len": 1.6, "push": 0.08}
+   ],
+   "effects": [
+    {"type": "blueprint", "at": 0.1, "until": 1.6, "dur": 0.7, "rects": [[120, 600, 960, 1300]], "paths": [[[120, 950], [960, 950]]]},
+    {"type": "freeze", "at": 1.7, "dur": 0.8},
+    {"type": "checks", "at": 1.75, "until": 3.1, "points": [[340, 900, "זיון"], [760, 760, "טפסנות"]]},
+    {"type": "float", "at": 3.2, "until": 4.4, "src": "video/projects/_media/il_rebar", "x": 760, "y": 470, "w": 420, "rot": 5},
+    {"type": "title", "at": 4.4, "y": 1180, "lines": [["הבדיקות החשובות", 116], ["קורות בזמן.", 116, 700, "mist"]]}
+   ]},
+  {"start": 20.0, "end": 26.0,
+   "shots": [
+    {"src": "video/projects/_media/ph_t12", "len": 2.5, "push": 0.05},
+    {"src": "video/videos/hankin-steel/assets/seg/s10.mp4", "t0": 0, "dur": 1.7},
+    {"src": "video/videos/hankin-steel/assets/seg/s14.mp4", "t0": 0, "dur": 1.8}
+   ],
+   "effects": [
+    {"type": "invoice", "at": 0.3, "until": 2.5, "y": 860, "title": "חשבון חלקי", "tag": "דוגמה להמחשה", "rows": [["עבודות שלד", "בוצע"], ["איטום", "בבדיקה"], ["פיתוח", "לתיקון"]], "stamp_at": 1.3, "stamp": "נבדק"},
+    {"type": "blueprint", "at": 2.55, "until": 4.1, "dur": 0.7, "paths": [[[980, 300], [760, 520], [520, 760], [300, 980]]]},
+    {"type": "progress", "at": 2.6, "until": 4.2, "x": 100, "y": 1500, "w": 880, "dur": 1.5, "label": "התקדמות לפי שלבי הפרויקט"},
+    {"type": "float", "at": 2.7, "until": 4.2, "src": "video/projects/_media/il_sched", "x": 300, "y": 470, "w": 380, "rot": -4},
+    {"type": "title", "at": 4.2, "y": 1180, "lines": [["שליטה בפרטים.", 116], ["שליטה בתהליך.", 116, 700, "mist"]]}
+   ]},
+  {"start": 26.0, "end": 32.4,
+   "shots": [
+    {"src": "video/projects/_media/ph_film9", "len": 1.7, "push": 0.05},
+    {"src": "video/projects/_media/ph_hm1", "len": 2.4, "push": 0.07, "in": "wipe"},
+    {"src": "video/projects/_media/ph_hm4", "len": 2.3, "push": 0.07}
+   ],
+   "effects": [
+    {"type": "blueprint", "at": 0.0, "until": 2.4, "dur": 0.6, "out": 1.6, "fade": 0.5, "rects": [[140, 520, 940, 1200], [140, 860, 940, 1200]], "paths": [[[540, 520], [540, 1200]]]},
+    {"type": "title", "at": 2.6, "y": 1180, "lines": [["בית שאתם יכולים", 116], ["להיות גאים בו.", 116, 700, "mist"]]}
+   ]},
+  {"start": 32.4, "end": 35.6, "dim": 0.55,
+   "shots": [{"src": "video/projects/_media/ph_hm2", "len": 3.2, "push": 0.06}],
+   "effects": [
+    {"type": "float", "at": 0.1, "src": "video/projects/_media/post_cover", "x": 540, "y": 600, "w": 560, "rot": -3, "bob": 6},
+    {"type": "chips", "at": 0.6, "y": 1010, "size": 50, "items": [["01", "למי המפקח עונה"], ["02", "בדיקות לפני יציקה"], ["03", "חשבונות ותשלומים"], ["04", "סיור מסירה וליקויים"]]}
+   ]},
+  {"start": 35.6, "end": 40.0, "captions": false, "shade": false,
+   "shots": [{"src": "video/projects/_media/ph_hm3", "len": 4.4, "push": 0.04}],
+   "effects": [
+    {"type": "endcard", "at": 0, "lines": [["פיקוח בנייה | קבוצת קורקוס", 80, 700, "paper"], ["מקרקע ועד מסירת מפתח", 58, 400, "mist"], ["055-981-1814", 120, 700, "paper"], ["kurkoos-group.co.il/divisions/supervision", 42, 400, "mist"]]},
+    {"type": "pill", "at": 0.9, "text": "מתכננים לבנות בית? התחילו בפיקוח נכון.", "bg": "teal", "x": 1010, "y": 1400, "size": 44},
+    {"type": "pill", "at": 1.4, "text": "כתבו 'מדריך' בתגובות לקבלת המדריך המלא", "bg": "red", "x": 1020, "y": 1530, "size": 44}
+   ]}
+ ]
+}

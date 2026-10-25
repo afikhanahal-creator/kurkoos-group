@@ -1,0 +1,188 @@
+{
+ "il_rebar": {
+  "library_id": "2aac80e99734bddfb89c7003ea8bb6e3"
+ },
+ "il_stamp": {
+  "library_id": "2b720cfa2171d855866a8762436f7eee"
+ },
+ "il_clip": {
+  "library_id": "7e1a857ae2b6434084807892898ea4af"
+ },
+ "il_crack": {
+  "library_id": "a71b8d6c06f331bd3a92324a6cf21635"
+ },
+ "il_plans": {
+  "library_id": "21b00e8cf36cd27ad898c4c72c2d0c65"
+ },
+ "il_calc": {
+  "library_id": "4517dca2e425f350fc164ed403bb2a21"
+ },
+ "il_contract": {
+  "library_id": "a94458029443e88cc58c69acd70f52db"
+ },
+ "il_key": {
+  "library_id": "fe78e064e48de17d28882b99bbc114f8"
+ },
+ "il_door": {
+  "library_id": "f782a44e53692bc2ee7d30c7345f14d8"
+ },
+ "il_helmet": {
+  "library_id": "87523a75f4bd6931f91668236bd01e0c"
+ },
+ "il_frame": {
+  "library_id": "01927272fc29d17e3528a44b3e1309ba"
+ },
+ "il_tape": {
+  "library_id": "55c41d144e366861ba47829f9bceb843"
+ },
+ "il_glass": {
+  "library_id": "b7bc231783533f3bba192096f8fd7d0b"
+ },
+ "il_check": {
+  "library_id": "9911f3ec650d6f5f118e65966daca4d9"
+ },
+ "il_mixer": {
+  "library_id": "4242ece4817106623b8750fc6bcfdb15"
+ },
+ "il_level": {
+  "library_id": "7c117c06e485fb9f5f7fb3d26853d9e8"
+ },
+ "il_villa": {
+  "library_id": "88922451b0fc46821750e174a27ca3ce"
+ },
+ "il_table": {
+  "library_id": "d8864d4668024645b82ddec3fc079999"
+ },
+ "il_plan": {
+  "library_id": "c0c81991779bcf04317868049e3a12ac"
+ },
+ "il_sched": {
+  "library_id": "3bc1ee8a01e61a7277f8988e8d7a9c87"
+ },
+ "ph_hk1": {
+  "library_id": "72212dcd99e90c59f5a918774207d109"
+ },
+ "ph_hk2": {
+  "library_id": "668b302ba2a3ea62dbaecfd046f1b35b"
+ },
+ "ph_hk3": {
+  "library_id": "c274d517700a071ba028279595b44028"
+ },
+ "ph_hk4": {
+  "library_id": "522837677b4dacabe2c16828b3052420"
+ },
+ "ph_hv2": {
+  "library_id": "748fcbfc7d3d032149776806f237ad65"
+ },
+ "ph_hv3": {
+  "library_id": "5c6997ad5723d0779c5fb5d122c4f031"
+ },
+ "ph_hv4": {
+  "library_id": "d639d0ec75b706ac5c56fb3e60d5464c"
+ },
+ "ph_site1": {
+  "library_id": "05eddce60701936cbc7bf1980515ff4b"
+ },
+ "ph_site2": {
+  "library_id": "69587519546aa9515b75b323dae1a177"
+ },
+ "ph_site3": {
+  "library_id": "bbcbb4e10ecac77b1d905ec239f96b44"
+ },
+ "ph_site4": {
+  "library_id": "b699b29c15051cb318c3b42395d66be4"
+ },
+ "ph_site5": {
+  "library_id": "d8b6daed0a95661dbe969eb479178e4e"
+ },
+ "ph_site6": {
+  "library_id": "101baab65053eda14a1b8e507b3583a3"
+ },
+ "ph_pikuach": {
+  "library_id": "26b642131e4f4fe00658c4eb4e36f77e"
+ },
+ "ph_film1": {
+  "library_id": "7f597ec96d80095d3b860d6b4eb153c3"
+ },
+ "ph_film2": {
+  "library_id": "e9d6402e02e1c57b114eaa284d90a9ba"
+ },
+ "ph_film3": {
+  "library_id": "f94276928aabdd932d260f2ad0654857"
+ },
+ "ph_film4": {
+  "library_id": "dd1251a6f0cc2857c1cf2a0b69f4b2bd"
+ },
+ "ph_film5": {
+  "library_id": "7a283be1cdbbd2c0cf9bea29f38c5497"
+ },
+ "ph_film6": {
+  "library_id": "4683b01aa499442e3be0e55650d3f9ea"
+ },
+ "ph_film7": {
+  "library_id": "ff367205f76d95db547f9cdb2c3b5512"
+ },
+ "ph_film9": {
+  "library_id": "d6385950097888f6f5172910570a6e7e"
+ },
+ "ph_film10": {
+  "library_id": "862767f9a7803ffe27a58210f3eb99bd"
+ },
+ "ph_hm1": {
+  "library_id": "3a18ce8269897ce7ab323da0896fd995"
+ },
+ "ph_hm2": {
+  "library_id": "2fc9d1d9891b743df94fb9f59456d650"
+ },
+ "ph_hm3": {
+  "library_id": "d10c93398380ee0859f4fac9d9d0b1f4"
+ },
+ "ph_hm4": {
+  "library_id": "4b47773d18564b8a0a88bbd8e3bc0704"
+ },
+ "ph_bg2": {
+  "library_id": "3901ea30a5eacee7e15504c366af6f86"
+ },
+ "ph_sk1": {
+  "library_id": "2d934c73f819b4c12c16c4830ee3326f"
+ },
+ "ph_sk2": {
+  "library_id": "faae81770e1ad7a189692438f3ce0644"
+ },
+ "ph_rm1": {
+  "library_id": "d5c4df2caa39537a66ce6c303577b6be"
+ },
+ "ph_rm5": {
+  "library_id": "05162f8fa7a862c1d0e2bc1c611d4367"
+ },
+ "ph_t02": {
+  "library_id": "3357323f6909f2f0899683c0fb8ad538"
+ },
+ "ph_t08": {
+  "library_id": "32cd384a28aa64d44cf665a14ae9463e"
+ },
+ "ph_t12": {
+  "library_id": "3fe0db77400fbcdc2c9c1c9fdcfb8e9e"
+ },
+ "ph_t17": {
+  "library_id": "74f88666e115ed43129c0de966fb1e20"
+ },
+ "ph_t01": {
+  "library_id": "e9810a3f7c399439f4dcaafa9a176410"
+ },
+ "ph_t11": {
+  "library_id": "ffcf3dc89a32884d3ff76921000ce6a9"
+ },
+ "ph_mgr": {
+  "library_id": "3182d915dd8f78d39ea0d993ee473286"
+ },
+ "ph_helmetplans": {
+  "library_id": "35ea9c30b2e510610e7722e2901381cf"
+ },
+ "ph_pour": {
+  "library_id": "3c9febb0cf567adf8d5ce6a32ed35016"
+ },
+ "post_cover": {
+  "file": "the carousel cover 'מדריך הפיקוח למשפחות: 4 פרקים' sent by the owner on 25.10.2026; put it here by hand"
+ }
+}

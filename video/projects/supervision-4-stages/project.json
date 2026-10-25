@@ -1,0 +1,108 @@
+{
+ "name": "פיקוח בנייה: ארבעת השלבים שכל משפחה שבונה בית חייבת להכיר",
+ "duration": 44.5,
+ "music": {"bpm": 112, "style": "cinematic"},
+ "lines": [
+  {"start": 0.20, "end": 3.60, "text": "בונים בית? יש ארבעה דברים שחשוב להבין לפני שמתחילים."},
+  {"start": 4.60, "end": 12.30, "text": "המפקח מייצג את האינטרסים של בעלי הבית. הוא בודק את העבודה, מתאם בין הגורמים ועוזר לוודא שהביצוע תואם לתכנון ולדרישות הפרויקט."},
+  {"start": 13.30, "end": 18.70, "text": "לפני יציקה, עוצרים ובודקים. כי אחרי שהבטון מתקשה, הרבה יותר קשה לזהות ולתקן טעויות."},
+  {"start": 19.70, "end": 25.90, "text": "לא משלמים רק כי הגיעה דרישה. בודקים מה באמת בוצע, מה סוכם ומה מגיע לתשלום לפי ההסכם."},
+  {"start": 26.90, "end": 33.90, "text": "לפני המסירה, עוברים פרט אחר פרט, מתעדים ליקויים ועוקבים אחרי התיקונים. כי הפרטים הקטנים הם חלק מהבית שאתם מקבלים."},
+  {"start": 35.00, "end": 40.40, "text": "פיקוח נכון הוא לא רק לבדוק מה השתבש. הוא לנהל את הדרך לבית טוב יותר."},
+  {"start": 41.20, "end": 44.20, "text": "כתבו 'מדריך' בתגובות לקבלת המדריך המלא."}
+ ],
+ "scenes": [
+  {"start": 0.0, "end": 4.0, "shade_from": 0.45,
+   "shots": [
+    {"src": "video/videos/szold-ground/assets/seg/s03.mp4", "t0": 0, "dur": 0.9},
+    {"src": "video/projects/_media/ph_t02", "len": 1.0, "push": 0.22},
+    {"src": "video/videos/hankin-steel/assets/seg/s01.mp4", "t0": 0, "dur": 0.9},
+    {"src": "video/projects/_media/ph_mgr", "len": 1.2, "fx": 0.35, "push": 0.08}
+   ],
+   "effects": [
+    {"type": "blueprint", "at": 0.95, "until": 1.9, "dur": 0.7, "paths": [[[160, 820], [520, 820], [520, 1180], [900, 1180]], [[300, 600], [300, 1400]]], "rects": [[600, 520, 960, 760]]},
+    {"type": "title", "at": 1.9, "y": 1120, "lines": [["פיקוח בנייה:", 130], ["מה זה באמת אומר?", 100, 700, "mist"]]}
+   ]},
+  {"start": 4.0, "end": 12.6, "dim": 0.15,
+   "shots": [
+    {"src": "video/projects/_media/ph_pikuach", "len": 3.4, "fx": 0.62, "push": 0.05},
+    {"src": "video/videos/hankin-steel/assets/seg/s09.mp4", "t0": 0, "dur": 1.7, "in": "wipe"},
+    {"src": "video/projects/_media/ph_helmetplans", "len": 1.6, "push": 0.08},
+    {"src": "video/videos/hankin-steel/assets/seg/s12.mp4", "t0": 0, "dur": 1.9}
+   ],
+   "effects": [
+    {"type": "chapter", "at": 0, "num": 1, "text": "מי שומר על האינטרסים שלכם?", "chip": "מי שומר על האינטרסים שלכם"},
+    {"type": "blueprint", "at": 0.8, "until": 3.3, "dur": 1.0, "out": 2.2, "paths": [[[200, 1060], [420, 860], [700, 640], [900, 520]]]},
+    {"type": "roles", "at": 0.9, "until": 3.35, "y": 1250, "items": [
+      {"label": "בעלי הבית", "img": "video/projects/_media/il_door", "sub": "מקבלים את ההחלטות"},
+      {"label": "המפקח", "img": "video/projects/_media/il_helmet", "sub": "מייצג את בעלי הבית"},
+      {"label": "הקבלן", "img": "video/projects/_media/il_mixer", "sub": "מבצע את העבודה"}]},
+    {"type": "blueprint", "at": 3.5, "until": 5.0, "dur": 0.7, "rects": [[120, 520, 960, 1100]], "paths": [[[120, 810], [960, 810]]]},
+    {"type": "title", "at": 3.6, "until": 5.0, "y": 1200, "lines": [["המפקח עובד", 120], ["מטעם בעלי הבית", 120, 700, "mist"]]},
+    {"type": "icons", "at": 5.2, "until": 6.7, "items": [{"kind": "doc", "x": 880, "y": 560}, {"kind": "measure", "x": 700, "y": 470}, {"kind": "check", "x": 520, "y": 560}]},
+    {"type": "title", "at": 5.2, "until": 6.7, "y": 1200, "lines": [["בודק, מתאם", 120], ["ומשווה לתוכניות", 110, 700, "mist"]]},
+    {"type": "checks", "at": 6.9, "points": [[330, 760, "תוכניות"], [740, 980, "ביצוע"]]}
+   ]},
+  {"start": 12.6, "end": 19.0,
+   "shots": [
+    {"src": "video/videos/szold-ground/assets/seg/s16.mp4", "t0": 0, "dur": 1.9},
+    {"src": "video/videos/hankin-steel/assets/seg/s04.mp4", "t0": 0, "dur": 1.6},
+    {"src": "video/videos/hankin-steel/assets/seg/s06.mp4", "t0": 0, "dur": 1.5},
+    {"src": "video/projects/_media/ph_pour", "len": 1.4, "fx": 0.5, "push": 0.1}
+   ],
+   "effects": [
+    {"type": "chapter", "at": 0, "num": 2, "text": "בודקים לפני שיוצקים", "chip": "בודקים לפני שיוצקים"},
+    {"type": "freeze", "at": 1.0, "dur": 0.9},
+    {"type": "checks", "at": 1.05, "until": 1.9, "points": [[560, 1080, "זיון"], [760, 760, "מיקום"]]},
+    {"type": "blueprint", "at": 1.95, "until": 3.5, "dur": 0.6, "grid": [60, 300, 1020, 1500]},
+    {"type": "dims", "at": 2.1, "until": 3.5, "items": [{"a": [160, 1300], "b": [920, 1300], "label": "לפי התוכניות"}, {"a": [160, 520], "b": [160, 1200], "label": "טפסנות"}]},
+    {"type": "float", "at": 3.6, "until": 5.0, "src": "video/projects/_media/il_rebar", "x": 330, "y": 620, "w": 440, "rot": -4},
+    {"type": "pill", "at": 3.8, "until": 5.0, "text": "תיעוד והערות לביצוע", "bg": "teal", "x": 1000, "y": 1460},
+    {"type": "title", "at": 5.1, "y": 1180, "lines": [["בודקים", 140], ["לפני שיוצקים", 140, 700, "mist"]]}
+   ]},
+  {"start": 19.0, "end": 26.2,
+   "shots": [
+    {"src": "video/projects/_media/ph_t12", "len": 2.6, "push": 0.05},
+    {"src": "video/videos/hankin-steel/assets/seg/s07.mp4", "t0": 0, "dur": 1.6},
+    {"src": "video/videos/hankin-steel/assets/seg/s10.mp4", "t0": 0, "dur": 1.4},
+    {"src": "video/projects/_media/ph_film2", "len": 1.6, "push": 0.06}
+   ],
+   "effects": [
+    {"type": "chapter", "at": 0, "num": 3, "text": "כל תשלום צריך להיבדק", "chip": "חשבונות ותשלומים"},
+    {"type": "invoice", "at": 0.8, "until": 2.65, "y": 860, "title": "חשבון חלקי", "tag": "דוגמה להמחשה", "rows": [["עבודות שלד", "בוצע"], ["איטום", "בבדיקה"], ["פיתוח", "לתיקון"]], "stamp_at": 1.4, "stamp": "נבדק"},
+    {"type": "checks", "at": 2.8, "until": 4.2, "points": [[300, 820, "מה בוצע"], [760, 1040, "מה סוכם"]]},
+    {"type": "float", "at": 2.9, "until": 4.2, "src": "video/projects/_media/il_calc", "x": 780, "y": 470, "w": 380, "rot": 5},
+    {"type": "float", "at": 4.3, "until": 5.6, "src": "video/projects/_media/il_contract", "x": 300, "y": 560, "w": 400, "rot": -5},
+    {"type": "title", "at": 5.6, "y": 1180, "lines": [["כל תשלום", 140], ["צריך להיבדק", 140, 700, "mist"]]}
+   ]},
+  {"start": 26.2, "end": 34.4,
+   "shots": [
+    {"src": "video/projects/_media/ph_hm1", "len": 1.6, "fx": 0.55},
+    {"src": "video/projects/_media/ph_rm5", "len": 2.2, "fx": 0.4, "push": 0.05},
+    {"src": "video/projects/_media/ph_sk2", "len": 2.2, "push": 0.05},
+    {"src": "video/projects/_media/ph_hm4", "len": 2.2, "fx": 0.45, "push": 0.06}
+   ],
+   "effects": [
+    {"type": "chapter", "at": 0, "num": 4, "text": "לא מוסרים בלי לבדוק", "chip": "סיור מסירה וליקויים"},
+    {"type": "checks", "at": 1.8, "until": 3.8, "points": [[300, 1000, "גמרים"], [760, 620, "חלונות"], [880, 1140, "דלתות"]]},
+    {"type": "checklist", "at": 3.9, "until": 6.3, "y": 860, "title": "סיור מסירה", "stagger": 0.3, "items": ["גמרים ודלתות", "פתיחה וסגירה של חלונות", "התאמה לתוכניות ולמפרט", "תיעוד ליקויים בתמונות", "רשימת תיקונים ומעקב"]},
+    {"type": "icons", "at": 4.0, "until": 6.3, "items": [{"kind": "camera", "x": 140, "y": 380}]},
+    {"type": "title", "at": 6.3, "y": 1180, "lines": [["לא מוסרים", 140], ["בלי לבדוק", 140, 700, "mist"]]}
+   ]},
+  {"start": 34.4, "end": 40.8,
+   "shots": [
+    {"src": "video/projects/_media/ph_hm2", "len": 3.2, "push": 0.08},
+    {"src": "video/projects/_media/ph_sk1", "len": 3.2, "push": 0.08, "in": "wipe"}
+   ],
+   "effects": [
+    {"type": "float", "at": 0.5, "until": 3.1, "src": "video/projects/_media/il_key", "x": 290, "y": 560, "w": 380, "rot": -4},
+    {"type": "title", "at": 1.4, "y": 1150, "lines": [["בית טוב מתחיל", 124], ["בהחלטות נכונות.", 124, 700, "mist"]]}
+   ]},
+  {"start": 40.8, "end": 44.5, "captions": false, "shade": false,
+   "shots": [{"src": "video/projects/_media/ph_hm3", "len": 3.7, "push": 0.04}],
+   "effects": [
+    {"type": "endcard", "at": 0, "lines": [["קבוצת קורקוס", 92, 700, "paper"], ["מקרקע ועד מסירת מפתח", 58, 400, "mist"], ["055-981-1814", 120, 700, "paper"], ["kurkoos-group.co.il/divisions/supervision", 42, 400, "mist"]]},
+    {"type": "pill", "at": 0.9, "text": "כתבו 'מדריך' בתגובות לקבלת המדריך המלא", "bg": "red", "x": 1020, "y": 1440, "size": 44}
+   ]}
+ ]
+}

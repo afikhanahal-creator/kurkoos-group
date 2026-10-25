@@ -303,16 +303,29 @@
    הרקע כולו pointer-events: none, רק המסכים עצמם מקבלים את המעבר (בלי לחיצה, בלי פוקוס) */
 @media (hover: hover) and (pointer: fine) and (min-width: 961px) {
   .abs__tile { pointer-events: auto; }
+  /* השורה שהסמן עליה עוצרת, כדי שהמסך המואר לא יברח מהעכבר. השורה השנייה ממשיכה לזוז */
+  .abs__row:hover .abs__track { animation-play-state: paused; }
+  /* המסכים האחרים מתעמעמים מעט, כך שהעין נשארת על המסך שמתחת לסמן */
+  .abs__tile { transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.7s ease, opacity 0.6s ease; }
+  .abs__stage:hover .abs__tile:not(:hover) { opacity: 0.55; }
   .abs__tile:hover {
     z-index: 2;
-    transform: scale(1.04);
+    opacity: 1;
+    transform: translateY(-6px) scale(1.06);
     box-shadow:
       0 0 0 2px var(--abs-red),
-      0 0 46px -4px color-mix(in srgb, var(--abs-red) 80%, transparent),
-      0 26px 50px -18px rgba(0, 0, 0, 0.65);
-    transition-duration: 0.22s, 0.22s;
+      0 0 0 6px color-mix(in srgb, var(--abs-red) 22%, transparent),
+      0 0 70px -6px color-mix(in srgb, var(--abs-red) 85%, transparent),
+      0 30px 56px -18px rgba(0, 0, 0, 0.7);
+    transition-duration: 0.25s, 0.25s, 0.2s;
   }
   .abs__tile:hover::before { opacity: 1; transition-duration: 0.15s; }
+  .abs__tile:hover .abs__tag {
+    background: var(--abs-red);
+    border-color: color-mix(in srgb, #fff 35%, var(--abs-red));
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .abs__tag { transition: background 0.6s ease, border-color 0.6s ease; }
 }
 
 /* ---------- רחב: במחשב הכרטיס יוצא מעמודת התוכן, כמעט על כל רוחב המסך ---------- */
@@ -327,12 +340,12 @@
   /* המסכים ממשיכים עד מתחת לטקסט ונמוגים שם, כמו בסרטון */
   .abs--wide .abs__stage {
     width: 86%;
-    -webkit-mask-image: linear-gradient(to right, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
-            mask-image: linear-gradient(to right, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+    -webkit-mask-image: linear-gradient(to right, #000 40%, rgba(0, 0, 0, 0.5) 62%, rgba(0, 0, 0, 0.15) 76%, transparent 84%);
+            mask-image: linear-gradient(to right, #000 40%, rgba(0, 0, 0, 0.5) 62%, rgba(0, 0, 0, 0.15) 76%, transparent 84%);
   }
   [dir='ltr'] .abs--wide .abs__stage {
-    -webkit-mask-image: linear-gradient(to left, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
-            mask-image: linear-gradient(to left, #000 50%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+    -webkit-mask-image: linear-gradient(to left, #000 40%, rgba(0, 0, 0, 0.5) 62%, rgba(0, 0, 0, 0.15) 76%, transparent 84%);
+            mask-image: linear-gradient(to left, #000 40%, rgba(0, 0, 0, 0.5) 62%, rgba(0, 0, 0, 0.15) 76%, transparent 84%);
   }
   .abs--wide .abs__content {
     width: min(34%, 500px);

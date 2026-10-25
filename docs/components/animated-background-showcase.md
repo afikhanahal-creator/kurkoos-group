@@ -36,7 +36,7 @@ Order rule: videos alternate between the rows (1st on the top row, 2nd on the bo
 | `intensity` | `'subtle' \| 'balanced' \| 'expressive'` | `balanced` | Speed per screen 14 s, 11 s or 8 s. Tilt 9°, 14° or 20°. |
 | `height` | number | none | Desktop card height in px. Without it: `clamp(520px, 34vw, 640px)`. Mobile uses its own 300 px media band (380 px from 600 px). |
 | `wide` | boolean | `false` | Desktop only: the card leaves the content column and spans the screen, `min(100vw - 160px, 1560px)`. The execution page uses it. |
-| `layout` | `'bento' \| 'marquee'` | `marquee` | `bento`: a MagicBento grid of the first 4 videos (cursor spotlight, glowing edges, click wave, sparkles; tilt and magnetism at `expressive`). `marquee`: two rows of moving screens. The execution page default is `bento`, switchable in the editor (תצוגה). |
+| `layout` | `'bento' \| 'marquee'` | `marquee` | `bento`: a MagicBento grid of the first 4 videos (cursor spotlight, glowing edges, click wave, sparkles; tilt and magnetism at `expressive`). `marquee`: two rows of moving screens. The execution page default is `marquee`, switchable in the editor (תצוגה). |
 | `onCta` | function | none | Click handler, for example analytics |
 
 Colors come from `tokens.css` (`--color-primary-*` and `--color-accent-500`).
@@ -82,3 +82,10 @@ Uploads go to Cloudinary when `VITE_CLOUDINARY_*` is set, otherwise to Supabase 
   - A navy dark theme.
 
 With `wide`, the card spans `min(100vw - 160px, 1560px)` on desktop.
+
+## Hover (desktop, marquee)
+
+- The row under the pointer stops. The other row keeps moving.
+- The hovered screen lifts. It gets a red ring and a red glow that follows the pointer, and its caption turns red.
+- The other screens dim to 55%.
+- The lights fade out slowly after the pointer moves on, so a sweep leaves a trail.

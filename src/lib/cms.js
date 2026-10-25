@@ -59,26 +59,54 @@ export function invalidate(prefix) {
 }
 
 // ---------- Cloudinary (וידאו/מדיה כבדה) ----------
-export const hasCloudinary = Boolean(
-  import.meta.env.VITE_CLOUDINARY_CLOUD_NAME && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-)
-export async function uploadToCloudinary(file) {
-  const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-  const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-  if (!cloud || !preset) throw new Error('Cloudinary לא מוגדר (חסרים משתני סביבה)')
-  const fd = new FormData()
-  fd.append('file', file)
-  fd.append('upload_preset', preset)
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/auto/upload`, { method: 'POST', body: fd })
-  if (!res.ok) throw new Error('שגיאת העלאה ל-Cloudinary')
+/* החשבון של קבוצת קורקוס. שני הערכים האלה ציבוריים מטבעם (הם מופיעים בכל בקשת
+   העלאה מהדפדפן), וה-preset הוא Unsigned: מאפשר להעלות בלבד, לא למחוק ולא לשנות.
+   משתני הסביבה גוברים, כך שאפשר להחליף חשבון בלי לשנות קוד. ה-API Secret לא
+   נמצא כאן ולא צריך להיות כאן. */
+const CLOUDINARY_CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'hb7875r8'
+const CLOUDINARY_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'kurkoos_site'
+export const hasCloudinary = Boolean(CLOUDINARY_CLOUD && CLOUDINARY_PRESET)
+export async function uploadToCloudinary(file, folder) {
+  if (!hasCloudinary) throw new Error('Cloudinary לא מוגדר')
+  const send = (withFolder) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('upload_preset', CLOUDINARY_PRESET)
+    if (withFolder) fd.append('folder', `kurkoos/${withFolder}`)
+    return fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, { method: 'POST', body: fd })
+  }
+  let res = await send(folder)
+  // preset שנועל תיקייה מחזיר שגיאה על folder: מנסים שוב בלי
+  if (!res.ok && folder && res.status === 400) res = await send(null)
+  if (!res.ok) {
+    let msg = 'שגיאת העלאה ל-Cloudinary'
+    try { const j = await res.json(); if (j?.error?.message) msg += `: ${j.error.message}` } catch { /* noop */ }
+    throw new Error(msg)
+  }
   const data = await res.json()
   return data.secure_url
 }
 
+/* סרטון שהועלה ל-Cloudinary: מוגש מכווץ (איכות אוטומטית, עד 720 פיקסלים רוחב)
+   וכ-mp4, גם כשהקובץ המקורי הוא mov מהאייפון. כתובת אחרת חוזרת כמו שהיא */
+export function cloudVideo(src, width = 720) {
+  if (!src || !src.includes('res.cloudinary.com/') || !src.includes('/video/upload/')) return src
+  const marker = '/video/upload/'
+  const i = src.indexOf(marker)
+  const rest = src.slice(i + marker.length)
+  if (/^[a-z]+_[^/]*\//.test(rest)) return src
+  return src.slice(0, i + marker.length) + `q_auto,vc_auto,c_limit,w_${width}/` + rest.replace(/\.(mov|m4v|webm|avi|mkv)$/i, '.mp4')
+}
+
 // העלאת וידאו — מעדיף Cloudinary (מתאים לקבצים כבדים) ונופל-לאחור ל-Supabase
 export async function uploadVideoFile(file, folder = 'videos') {
-  if (hasCloudinary) return uploadToCloudinary(file)
-  return uploadMedia(file, folder)
+  if (hasCloudinary) {
+    try { return await uploadToCloudinary(file, folder) } catch (e) {
+      // Cloudinary לא זמין: לא מאבדים את ההעלאה, נופלים לאחסון של Supabase
+      if (!supabase) throw e
+    }
+  }
+  return uploadMedia(file, folder, { compress: false })
 }
 
 // ---------- Media (Storage) ----------
@@ -118,7 +146,7 @@ export async function uploadMedia(file, folder = 'general', { compress = true } 
   // Cloudinary תחילה (כשמוגדר): המדיה מוגשת מ-CDN חינמי במקום ממכסת ה-Egress
   // של Supabase. נפילה חיננית ל-Storage אם ההעלאה נכשלת.
   if (hasCloudinary) {
-    try { return await uploadToCloudinary(file) } catch { /* fallback ל-Supabase */ }
+    try { return await uploadToCloudinary(file, folder) } catch { /* fallback ל-Supabase */ }
   }
   if (!supabase) throw new Error('Supabase לא מוגדר')
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()

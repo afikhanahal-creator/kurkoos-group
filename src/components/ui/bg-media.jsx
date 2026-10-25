@@ -22,15 +22,16 @@ const prefersReducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-/* וידאו רקע כבד לא מנוגן מאליו בטלפון ובחיבור חסכוני. סרטון של חמישה
-   מגה בגלישה סלולרית הוא גם חשבון הגלישה של המבקר וגם מדד LCP כושל.
-   מוצג הפוסטר עם כפתור הפעלה, ומי שרוצה לראות מקיש ומקבל אותו. */
-const heavyVideoOnDemand = () => {
+/* בטלפון מנוגנת גרסה קלה של הסרטון (mobileSrc), אוטומטית כמו במחשב.
+   רק במצב חיסכון בנתונים או בחיבור איטי מאוד מוצג הפוסטר עם כפתור הפעלה,
+   וגם כשאין גרסה קלה (סרטון כבד בלבד) בטלפון. */
+const isPhone = () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 900px)').matches === true
+const heavyVideoOnDemand = (hasLight) => {
   if (typeof window === 'undefined') return false
   const c = navigator.connection || {}
   if (c.saveData) return true
-  if (/^(slow-2g|2g|3g)$/.test(c.effectiveType || '')) return true
-  return window.matchMedia?.('(max-width: 900px)').matches === true
+  if (/^(slow-2g|2g)$/.test(c.effectiveType || '')) return true
+  return !hasLight && isPhone()
 }
 
 export default function BackgroundMedia({
@@ -43,6 +44,7 @@ export default function BackgroundMedia({
   style,
   children,
   forcePlay = false,   // כשדולק — הווידאו תמיד מתנגן (מתעלם מ-reduced-motion)
+  mobileSrc,           // גרסה קלה לטלפון (עד 900px), מתנגנת אוטומטית
 }) {
   const [loaded, setLoaded] = useState(false)
   const [playing, setPlaying] = useState(false)
@@ -52,7 +54,9 @@ export default function BackgroundMedia({
   const [near, setNear] = useState(false)
   // המבקר ביקש במפורש לראות את הסרטון (הקשה על כפתור ההפעלה)
   const [asked, setAsked] = useState(false)
-  const onDemand = type === 'video' && !asked && heavyVideoOnDemand()
+  const onDemand = type === 'video' && !asked && heavyVideoOnDemand(Boolean(mobileSrc))
+  const [phone] = useState(isPhone)
+  const videoSrc = phone && mobileSrc ? mobileSrc : src
   const wrapRef = useRef(null)
   const videoRef = useRef(null)
 
@@ -78,7 +82,8 @@ export default function BackgroundMedia({
     v.setAttribute('muted', '')
     v.setAttribute('playsinline', '')
     v.setAttribute('webkit-playsinline', 'true')
-    const tryPlay = () => { const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
+    // בלי קובץ אין מה לנגן: play() על וידאו ריק מסמן אותו "מתנגן" ומעלים את כפתור ההפעלה
+    const tryPlay = () => { if (!v.getAttribute('src')) return; const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
     tryPlay()
 
     // iOS (במיוחד במצב חיסכון בסוללה) חוסם autoplay עד למחווה כלשהי של המשתמש.
@@ -107,7 +112,7 @@ export default function BackgroundMedia({
       document.removeEventListener('visibilitychange', onVisible)
       gestureEvents.forEach((e) => window.removeEventListener(e, onGesture))
     }
-  }, [src, type, near])
+  }, [videoSrc, type, near])
 
   // הפעלה ידנית (מחווה של המשתמש) — תמיד מותרת ב-iOS גם כשה-autoplay חסום
   const manualPlay = () => {
@@ -140,7 +145,7 @@ export default function BackgroundMedia({
           <video
             ref={videoRef}
             className="bg-media__el"
-            src={near && !onDemand ? src : undefined}
+            src={near && !onDemand ? videoSrc : undefined}
             poster={poster}
             autoPlay
             muted
@@ -152,7 +157,7 @@ export default function BackgroundMedia({
             preload="metadata"
             onLoadedData={() => setLoaded(true)}
             onPlaying={() => { setLoaded(true); setPlaying(true) }}
-            onPlay={() => setPlaying(true)}
+            /* "מתנגן" רק כשיש פריימים (onPlaying), לא על אירוע play, שקורה גם כשהדפדפן חוסם או שאין קובץ */
             onPause={() => setPlaying(false)}
             onError={() => setFailed(true)}
             onCanPlay={(e) => { setLoaded(true); const p = e.currentTarget.play?.(); if (p && p.catch) p.catch(() => {}) }}

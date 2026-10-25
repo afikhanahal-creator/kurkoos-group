@@ -101,17 +101,17 @@ class Video:
     """sequential frame reader for one shot (src from t0, dur seconds), scaled to cover W x H"""
     _cache = {}
     @classmethod
-    def get(cls, src, t0, dur, fx=.5, fy=.5, speed=1.0, frame=False):
-        k = (src, t0, dur, fx, fy, speed, frame)
-        if k not in cls._cache: cls._cache[k] = cls(src, t0, dur, fx, fy, speed, frame)
+    def get(cls, src, t0, dur, fx=.5, fy=.5, speed=1.0, frame=False, pan=None):
+        k = (src, t0, dur, fx, fy, speed, frame, tuple(pan) if pan else None)
+        if k not in cls._cache: cls._cache[k] = cls(src, t0, dur, fx, fy, speed, frame, pan)
         return cls._cache[k]
     @classmethod
     def drop(cls, keep=()):
         for k in list(cls._cache):
             if k not in keep: cls._cache.pop(k).close()
-    def __init__(self, src, t0, dur, fx, fy, speed=1.0, frame=False):
+    def __init__(self, src, t0, dur, fx, fy, speed=1.0, frame=False, pan=None):
         self.src, self.t0, self.dur, self.fx, self.fy = resolve(src), t0, dur, fx, fy
-        self.speed, self.fit = speed, frame
+        self.speed, self.fit, self.pan = speed, frame, pan
         self.i, self.last, self.p = -1, None, None
         # a shot longer than its clip holds the clip's last frame (the slow push keeps it moving)
         d = float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', self.src],
@@ -120,11 +120,15 @@ class Video:
     def _open(self, start_frame=0):
         self.close()
         sp = f'setpts=PTS/{self.speed},' if self.speed != 1 else ''
-        if self.fit:  # keep the whole landscape frame: W wide, its own height, the backdrop is made in shot_frame
+        if self.pan:  # a vertical crop out of landscape footage that travels from pan[0] to pan[1] (0 = left, 1 = right)
+            a, b = self.pan; Dd = max(.1, self.dur)
+            vf = (f"{sp}fps={FPS},crop=ih*9/16:ih:x='(iw-ow)*({a}+({b}-{a})*min(1,(t+{start_frame / FPS})/{Dd}))':y=0,"
+                  f"scale={W}:{H}:flags=lanczos,unsharp=5:5:0.8:5:5:0,eq=contrast=1.05:saturation=1.05")
+        elif self.fit:  # keep the whole landscape frame: W wide, its own height, the backdrop is made in shot_frame
             vf = f'{sp}fps={FPS},scale={W}:-2:flags=lanczos'
         else:
             vf = f'{sp}fps={FPS},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}:(iw-{W})*{self.fx}:(ih-{H})*{self.fy}'
-        if self.fit:
+        if self.fit and not self.pan:
             iw, ih = map(int, subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', self.src], capture_output=True, text=True).stdout.strip().split(',')[:2])
             self.fw, self.fh = W, int(round(ih * W / iw / 2) * 2)
         else: self.fw, self.fh = W, H
@@ -149,7 +153,8 @@ def shot_frame(sh, f, n):
     k = f / max(1, n)
     if src.lower().endswith(('.mp4', '.mov', '.webm', '.m4v')):
         fit = sh.get('fit') == 'frame'
-        im = Video.get(src, sh.get('t0', 0), sh.get('dur', n / FPS), fx, fy, sh.get('speed', 1.0), fit).frame(f)
+        im = Video.get(src, sh.get('t0', 0), sh.get('dur', n / FPS), fx, fy, sh.get('speed', 1.0), fit and not sh.get('pan'), sh.get('pan')).frame(f)
+        if sh.get('pan'): fit = False
         if fit: return framed(im, k, sh)
         z = 1 + sh.get('push', .06) * k
         if z > 1.001: im = cover(im, W, H, .5, .5, z)

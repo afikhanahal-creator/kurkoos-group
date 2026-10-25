@@ -51,8 +51,8 @@ export function localMeta(def) {
   const out = {}
   for (const x of def?.sections || []) {
     if (!Array.isArray(x)) continue
-    const [id, label, icon, texts] = x
-    out[`l:${id}`] = { label, icon, texts: (texts || []).map((t) => (typeof t === 'string' ? { key: t, label: t } : t)) }
+    const [id, label, icon, texts, extra] = x
+    out[`l:${id}`] = { label, icon, texts: (texts || []).map((t) => (typeof t === 'string' ? { key: t, label: t } : t)), ...(extra || {}) }
   }
   return out
 }

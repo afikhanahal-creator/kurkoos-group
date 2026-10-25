@@ -1,0 +1,676 @@
+{
+ "name": "פיקוח בנייה: ארבעת הדברים שכל משפחה צריכה לדעת (גרסה 3)",
+ "duration": 64.48,
+ "vo_tempo": 1.08,
+ "music": {
+  "bpm": 92,
+  "style": "cinematic"
+ },
+ "lines": [
+  {
+   "id": "v01",
+   "vo": "v01",
+   "start": 0.45,
+   "end": 5.568,
+   "text": "בונים בית פרטי? הנה ארבעה דברים, שכל משפחה צריכה לדעת על פיקוח בנייה."
+  },
+  {
+   "id": "v02",
+   "vo": "v02",
+   "start": 6.068,
+   "end": 8.852,
+   "text": "אחת. למי המפקח עונה."
+  },
+  {
+   "id": "v03",
+   "vo": "v03",
+   "start": 9.352,
+   "end": 16.619,
+   "text": "המפקח עובד בשביל בעלי הבית, ולא בשביל הקבלן. הוא בודק את העבודה באתר, ומוודא שהיא תואמת לתוכניות."
+  },
+  {
+   "id": "v04",
+   "vo": "v04",
+   "start": 17.119,
+   "end": 19.607,
+   "text": "שתיים. בדיקות לפני יציקה."
+  },
+  {
+   "id": "v05",
+   "vo": "v05",
+   "start": 20.107,
+   "end": 28.374,
+   "text": "לפני שיוצקים בטון, בודקים את הברזל, את הטפסנות, ואת המיקום לפי התוכניות. כי אחרי שהבטון מתקשה, כבר מאוחר לתקן."
+  },
+  {
+   "id": "v06",
+   "vo": "v06",
+   "start": 28.874,
+   "end": 31.4,
+   "text": "שלוש. חשבונות ותשלומים."
+  },
+  {
+   "id": "v07",
+   "vo": "v07",
+   "start": 31.9,
+   "end": 36.981,
+   "text": "כל חשבון של הקבלן נבדק מול מה שבוצע בפועל, ומול ההסכם, לפני שמשלמים."
+  },
+  {
+   "id": "v08",
+   "vo": "v08",
+   "start": 37.481,
+   "end": 40.228,
+   "text": "ארבע. סיור מסירה וליקויים."
+  },
+  {
+   "id": "v09",
+   "vo": "v09",
+   "start": 40.728,
+   "end": 47.994,
+   "text": "לפני שמקבלים את המפתח, עוברים על הבית פרט אחר פרט, מתעדים כל ליקוי, ועוקבים עד שהוא מתוקן."
+  },
+  {
+   "id": "v10",
+   "vo": "v10",
+   "start": 48.494,
+   "end": 54.316,
+   "text": "משפחה שמבינה את ארבעת השלבים האלה, שואלת שאלות טובות יותר, ומקבלת בית טוב יותר."
+  },
+  {
+   "id": "v11",
+   "vo": "v11",
+   "start": 54.816,
+   "end": 59.081,
+   "text": "קבוצת קורקוס. מקרקע ועד מסירת מפתח."
+  },
+  {
+   "id": "v12",
+   "vo": "v12",
+   "start": 59.581,
+   "end": 62.884,
+   "text": "כתבו מדריך בתגובות, ונשלח לכם את המדריך המלא."
+  }
+ ],
+ "scenes": [
+  {
+   "start": 0.0,
+   "end": 6.068,
+   "shots": [
+    {
+     "src": "video/projects/_media/site_piles.mp4",
+     "t0": 0.5,
+     "len": 3.034,
+     "dur": 3.034,
+     "pan": [
+      0.05,
+      0.2
+     ]
+    },
+    {
+     "src": "video/projects/_media/szold_2011.mov",
+     "t0": 0.4,
+     "len": 3.034,
+     "dur": 3.034,
+     "push": 0.05
+    }
+   ],
+   "effects": [
+    {
+     "type": "pill",
+     "at": 0.5,
+     "text": "פיקוח בנייה",
+     "bg": "red",
+     "x": 1000,
+     "y": 1090,
+     "size": 50
+    },
+    {
+     "type": "title",
+     "at": 0.8,
+     "y": 1260,
+     "bar": false,
+     "lines": [
+      [
+       "4 דברים",
+       170
+      ],
+      [
+       "שכל משפחה צריכה לדעת",
+       84,
+       700,
+       "mist"
+      ]
+     ]
+    }
+   ],
+   "shade_from": 0.45,
+   "shade_k": 0.9,
+   "punch": false
+  },
+  {
+   "start": 5.868,
+   "end": 9.352,
+   "shots": [
+    {
+     "src": "video/projects/_media/szold_2016.mov",
+     "t0": 0,
+     "dur": 3.5
+    }
+   ],
+   "effects": [
+    {
+     "type": "chapcard",
+     "at": 0,
+     "num": 1,
+     "text": "למי המפקח עונה",
+     "sub": "מטעם בעלי הבית",
+     "out": 3.134
+    }
+   ],
+   "captions": false,
+   "shade": false,
+   "punch": false,
+   "mark": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 9.352,
+   "end": 17.119,
+   "shots": [
+    {
+     "src": "video/projects/_media/szold_2016.mov",
+     "t0": 1.0,
+     "len": 2.64078,
+     "dur": 2.64078,
+     "push": 0.06
+    },
+    {
+     "src": "video/projects/_media/site_piles.mp4",
+     "t0": 9.0,
+     "len": 2.3301,
+     "dur": 2.3301,
+     "pan": [
+      0.62,
+      0.72
+     ]
+    },
+    {
+     "src": "video/projects/_media/ph_skeleton",
+     "len": 2.7961199999999997,
+     "fx": 0.5,
+     "push": 0.07
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.2,
+     "num": 1,
+     "text": "למי המפקח עונה"
+    },
+    {
+     "type": "roles",
+     "at": 0.3,
+     "until": 4.92088,
+     "y": 1300,
+     "w": 300,
+     "h": 360,
+     "stagger": 0.35,
+     "items": [
+      {
+       "label": "בעלי הבית",
+       "img": "video/projects/_media/il_door",
+       "sub": "המפקח עובד בשבילם"
+      },
+      {
+       "label": "המפקח",
+       "img": "video/projects/_media/il_helmet",
+       "sub": "בודק את העבודה"
+      },
+      {
+       "label": "הקבלן",
+       "img": "video/projects/_media/il_mixer",
+       "sub": "מבצע את העבודה"
+      }
+     ]
+    },
+    {
+     "type": "callout",
+     "at": 5.22088,
+     "x": 540,
+     "y": 760,
+     "lx": 560,
+     "ly": 1220,
+     "text": "בדיקה באתר",
+     "sub": "מול התוכניות"
+    }
+   ],
+   "shade_from": 0.55,
+   "shade_k": 0.85,
+   "punch": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 16.919,
+   "end": 20.107,
+   "shots": [
+    {
+     "src": "video/projects/_media/szold_2015.mov",
+     "t0": 0,
+     "dur": 3.0
+    }
+   ],
+   "effects": [
+    {
+     "type": "chapcard",
+     "at": 0,
+     "num": 2,
+     "text": "בדיקות לפני יציקה",
+     "sub": "הרגע הקריטי",
+     "out": 2.8379999999999987
+    }
+   ],
+   "captions": false,
+   "shade": false,
+   "punch": false,
+   "mark": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 20.107,
+   "end": 28.874,
+   "shots": [
+    {
+     "src": "video/projects/_media/szold_2015.mov",
+     "t0": 2.5,
+     "len": 2.6300999999999997,
+     "dur": 2.6300999999999997,
+     "push": 0.07
+    },
+    {
+     "src": "video/videos/hankin-steel/assets/seg/s06.mp4",
+     "t0": 0,
+     "len": 1.92874,
+     "dur": 1.92874,
+     "speed": 0.45,
+     "push": 0.08
+    },
+    {
+     "src": "video/projects/_media/szold_2017.mov",
+     "t0": 0.3,
+     "len": 4.2081599999999995,
+     "dur": 4.2081599999999995,
+     "push": 0.05
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.2,
+     "num": 2,
+     "text": "בדיקות לפני יציקה"
+    },
+    {
+     "type": "callout",
+     "at": 1.32,
+     "until": 2.5801,
+     "x": 560,
+     "y": 1150,
+     "lx": 560,
+     "ly": 560,
+     "text": "ברזל זיון"
+    },
+    {
+     "type": "callout",
+     "at": 2.7800999999999996,
+     "until": 4.50884,
+     "x": 560,
+     "y": 820,
+     "lx": 560,
+     "ly": 1230,
+     "text": "טפסנות"
+    },
+    {
+     "type": "callout",
+     "at": 4.75884,
+     "until": 6.4875799999999995,
+     "x": 520,
+     "y": 1300,
+     "lx": 560,
+     "ly": 520,
+     "text": "מיקום",
+     "sub": "לפי התוכניות"
+    },
+    {
+     "type": "freeze",
+     "at": 6.4875799999999995,
+     "dur": 2.22942
+    },
+    {
+     "type": "quote",
+     "at": 6.587579999999999,
+     "y": 760,
+     "size": 84,
+     "stagger": 0.6,
+     "lines": [
+      "אחרי שהבטון מתקשה,",
+      "כבר מאוחר לתקן."
+     ]
+    }
+   ],
+   "shade_from": 0.6,
+   "shade_k": 0.6,
+   "punch": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 28.674,
+   "end": 31.9,
+   "shots": [
+    {
+     "src": "video/projects/_media/szold_2014.mov",
+     "t0": 0,
+     "dur": 3.0
+    }
+   ],
+   "effects": [
+    {
+     "type": "chapcard",
+     "at": 0,
+     "num": 3,
+     "text": "חשבונות ותשלומים",
+     "sub": "לפני שמשלמים",
+     "out": 2.875999999999999
+    }
+   ],
+   "captions": false,
+   "shade": false,
+   "punch": false,
+   "mark": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 31.9,
+   "end": 37.481,
+   "shots": [
+    {
+     "src": "video/projects/_media/szold_2014.mov",
+     "t0": 0.3,
+     "len": 2.7905000000000015,
+     "dur": 2.7905000000000015,
+     "push": 0.05
+    },
+    {
+     "src": "video/projects/_media/site_piles.mp4",
+     "t0": 16.0,
+     "len": 2.7905000000000015,
+     "dur": 2.7905000000000015,
+     "pan": [
+      0.75,
+      0.9
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.2,
+     "num": 3,
+     "text": "חשבונות ותשלומים"
+    },
+    {
+     "type": "checklist",
+     "at": 0.25,
+     "y": 1180,
+     "w": 900,
+     "title": "כל חשבון של הקבלן נבדק",
+     "stagger": 1.6743000000000008,
+     "items": [
+      "מול מה שבוצע בפועל",
+      "מול ההסכם",
+      "ורק אז משלמים"
+     ]
+    }
+   ],
+   "shade_from": 0.55,
+   "shade_k": 0.8,
+   "punch": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 37.281,
+   "end": 40.728,
+   "shots": [
+    {
+     "src": "video/projects/_media/ph_hm1",
+     "len": 3,
+     "push": 0.05
+    }
+   ],
+   "effects": [
+    {
+     "type": "chapcard",
+     "at": 0,
+     "num": 4,
+     "text": "סיור מסירה וליקויים",
+     "sub": "לפני שמקבלים מפתח",
+     "out": 3.0970000000000026
+    }
+   ],
+   "captions": false,
+   "shade": false,
+   "punch": false,
+   "mark": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 40.728,
+   "end": 48.494,
+   "shots": [
+    {
+     "src": "video/projects/_media/ph_hm1",
+     "len": 2.329799999999999,
+     "push": 0.06,
+     "fx": 0.55
+    },
+    {
+     "src": "video/projects/_media/ph_rm5",
+     "len": 2.7180999999999993,
+     "push": 0.06,
+     "fx": 0.45
+    },
+    {
+     "src": "video/projects/_media/ph_sk2",
+     "len": 2.7180999999999993,
+     "push": 0.05
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.2,
+     "num": 4,
+     "text": "סיור מסירה וליקויים"
+    },
+    {
+     "type": "checks",
+     "at": 2.629799999999999,
+     "until": 5.047899999999999,
+     "r": 70,
+     "stagger": 0.5,
+     "points": [
+      [
+       300,
+       1050,
+       "גמרים"
+      ],
+      [
+       760,
+       640,
+       "חלונות"
+      ],
+      [
+       820,
+       1260,
+       "רצפה"
+      ]
+     ]
+    },
+    {
+     "type": "checklist",
+     "at": 4.814919999999999,
+     "y": 1150,
+     "w": 900,
+     "title": "סיור מסירה",
+     "stagger": 0.55,
+     "items": [
+      "פרט אחר פרט",
+      "תיעוד כל ליקוי",
+      "מעקב עד התיקון"
+     ]
+    }
+   ],
+   "shade_from": 0.55,
+   "shade_k": 0.8,
+   "punch": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 48.494,
+   "end": 54.816,
+   "shots": [
+    {
+     "src": "video/projects/_media/szold_2018.mov",
+     "t0": 0.2,
+     "len": 2.8449000000000013,
+     "dur": 2.8449000000000013,
+     "push": 0.06
+    },
+    {
+     "src": "video/projects/_media/ph_hm4",
+     "len": 3.477100000000002,
+     "push": 0.07,
+     "fx": 0.45,
+     "in": "wipe"
+    }
+   ],
+   "effects": [
+    {
+     "type": "quote",
+     "at": 1.75,
+     "y": 1180,
+     "size": 76,
+     "stagger": 0.9,
+     "lines": [
+      "שואלים שאלות טובות יותר,",
+      "ומקבלים בית טוב יותר."
+     ]
+    }
+   ],
+   "shade_from": 0.5,
+   "shade_k": 0.85,
+   "punch": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 54.816,
+   "end": 59.581,
+   "shots": [
+    {
+     "src": "video/projects/_media/ph_owner_office",
+     "len": 4.765000000000001,
+     "fy": 0.2,
+     "push": 0.05
+    }
+   ],
+   "effects": [
+    {
+     "type": "title",
+     "at": 0.3,
+     "y": 1300,
+     "lines": [
+      [
+       "קבוצת קורקוס",
+       130
+      ],
+      [
+       "מקרקע ועד מסירת מפתח",
+       76,
+       400,
+       "mist"
+      ]
+     ]
+    }
+   ],
+   "shade_from": 0.45,
+   "shade_k": 0.92,
+   "punch": false,
+   "xfade": 0.35
+  },
+  {
+   "start": 59.581,
+   "end": 64.484,
+   "shots": [
+    {
+     "src": "video/projects/_media/ph_hm3",
+     "len": 4.902999999999992,
+     "push": 0.04
+    }
+   ],
+   "effects": [
+    {
+     "type": "endcard",
+     "at": 0,
+     "lines": [
+      [
+       "פיקוח בנייה | קבוצת קורקוס",
+       74,
+       700,
+       "paper"
+      ],
+      [
+       "055-981-1814",
+       118,
+       700,
+       "paper"
+      ],
+      [
+       "kurkoos-group.co.il/divisions/supervision",
+       42,
+       400,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "float",
+     "at": 0.5,
+     "src": "video/projects/_media/post_cover",
+     "x": 540,
+     "y": 1330,
+     "w": 420,
+     "rot": -3,
+     "bob": 6
+    },
+    {
+     "type": "pill",
+     "at": 0.8,
+     "text": "כתבו \"מדריך\" בתגובות",
+     "bg": "red",
+     "x": 860,
+     "y": 1650,
+     "size": 52
+    }
+   ],
+   "captions": false,
+   "shade": false,
+   "punch": false,
+   "xfade": 0.35
+  }
+ ],
+ "caption_style": {
+  "size": 60,
+  "y": 1700
+ }
+}

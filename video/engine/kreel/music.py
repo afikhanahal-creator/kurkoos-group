@@ -49,14 +49,17 @@ for b in range(bars):
         if bt < 3.8 or bt >= end_at: continue
         kk = np.arange(int(SR * .35)) / SR
         add(np.sin(2 * np.pi * np.cumsum(46 + 90 * np.exp(-kk / .03)) / SR) * env(.35, .001, .11), bt, .7)
-        if q in (1, 3): add(np.convolve(rng.standard_normal(int(SR * .2)), np.ones(5) / 5, 'same') * env(.2, .001, .05), bt, .18)
-        add(np.diff(rng.standard_normal(int(SR * .04)), prepend=0) * env(.04, .001, .012), bt + B / 2, .1, .3)
+        if q in (1, 3):  # a soft tonal rim on the backbeat instead of a noise clap
+            kk2 = np.arange(int(SR * .12)) / SR; add(np.sin(2 * np.pi * 330 * kk2) * env(.12, .001, .03), bt, .1)
 # effects from the scenes
 def whoosh(at, g=.35):
-    k = np.arange(int(SR * .3)) / SR; w = np.convolve(rng.standard_normal(len(k)), np.ones(30) / 30, 'same') * np.sin(np.pi * k / .3) ** 2; add(w, at - .2, g)
+    # a soft tonal swell into the cut (no noise): a low sine gliding up with a gentle swell envelope
+    d = .45; k = np.arange(int(SR * d)) / SR; fr = 110 + 110 * (k / d) ** 2
+    w = (np.sin(2 * np.pi * np.cumsum(fr) / SR) + .4 * np.sin(4 * np.pi * np.cumsum(fr) / SR)) * np.sin(np.pi * k / d) ** 3
+    add(w, at - .35, g * .45)
 def impact(at, g=.8):
     k = np.arange(int(SR * 1.2)) / SR
-    add(np.sin(2 * np.pi * 40 * k) * env(1.2, .002, .35) + .25 * np.convolve(rng.standard_normal(len(k)), np.ones(12) / 12, 'same') * env(1.2, .001, .08), at, g)
+    add(np.sin(2 * np.pi * 40 * k) * env(1.2, .002, .35) + .35 * np.sin(2 * np.pi * 80 * k) * env(1.2, .002, .2), at, g)
 def tick(at, g=.25, p=0):
     k = np.arange(int(SR * .06)) / SR; add(np.sin(2 * np.pi * 2200 * k) * env(.06, .0005, .012), at, g, p)
 def key(at): add(np.diff(rng.standard_normal(int(SR * .012)), prepend=0) * env(.012, .0003, .003), at, .12, .1)

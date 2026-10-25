@@ -26,8 +26,6 @@ def A(k): return int(255 * clamp(k))
 @fx('freeze')
 def fx_freeze(im, t, p, ctx):
     """freeze frame: the renderer holds the background frame; here only the brief white flash on entry"""
-    k = 1 - clamp(t / .12)
-    if k > 0: im.alpha_composite(Image.new('RGBA', (W, H), C('paper', int(150 * k))))
     return im
 
 # ---------------------------------------------------------------- titles and labels

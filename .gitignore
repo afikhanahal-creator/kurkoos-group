@@ -53,3 +53,8 @@ video/studio/*-out-stills/
 /scripts/meta_capture/*.out
 /scripts/meta_capture/older.json
 /out/
+
+# media pulled from the content engine library by video/projects/fetch_media.py
+video/projects/_media/
+video/projects/*/out/
+video/projects/*/vo/

@@ -38,6 +38,7 @@ description: "High-end Hebrew video editing for Kurkoos Group: cut silences, fil
 | הרצה לאחור VHS | `references/27-rewind.md` | `rewind` |
 | הסאונד | `references/28-sound.md` | `signature.py sfx`, מיקס ב-`reel.py` |
 | בדיקת עורך | `references/29-review.md` | `reel.py check` |
+| רילס מסופר מצילומי אתר, איורי המותג ואפקטים (פיקוח, פרויקטים, מותג), כולל "בתוך הצ'אט" | `video/engine/kreel/README.md` | `kreel/render.py`, `fx.py`, `music.py`, `mix.py` |
 | 14 אפקטי הריל בשכבות (HyperFrames, שפה עיצובית אחת, `reel` במסמך הווידאו) | `references/30-reel-14-effects.md` | `video/my-reel/build.mjs` |
 
 ## מצב תוכנית: אישור לפני רינדור

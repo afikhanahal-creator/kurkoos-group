@@ -9,7 +9,9 @@ import os, sys, json, wave
 import numpy as np
 SR = 48000
 pj = json.load(open(sys.argv[1], encoding='utf-8')); OUT = os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), 'out')
-D = pj['duration']; BPM = pj.get('music', {}).get('bpm', 108); B = 60 / BPM
+D = pj['duration']; MU = pj.get('music', {}); BPM = MU.get('bpm', 108); B = 60 / BPM
+# quiet: a premium bed with no drums and no transition sounds (whoosh, impacts); only soft ticks and the end chord
+QUIET = MU.get('quiet', False)
 n = int(SR * (D + .4)); L = np.zeros(n); R = np.zeros(n); rng = np.random.default_rng(7)
 def add(sig, at, g=1.0, pan=0.0):
     i = int(at * SR)
@@ -46,7 +48,7 @@ for b in range(bars):
     # drums after the hook
     for q in range(4):
         bt = t0 + q * B
-        if bt < 3.8 or bt >= end_at: continue
+        if QUIET or bt < 3.8 or bt >= end_at: continue
         kk = np.arange(int(SR * .35)) / SR
         add(np.sin(2 * np.pi * np.cumsum(46 + 90 * np.exp(-kk / .03)) / SR) * env(.35, .001, .11), bt, .7)
         if q in (1, 3):  # a soft tonal rim on the backbeat instead of a noise clap
@@ -67,11 +69,17 @@ def thud(at): k = np.arange(int(SR * .4)) / SR; add(np.sin(2 * np.pi * 70 * k) *
 for sc in pj['scenes']:
     s0, s1 = sc['start'], sc['end']; durs = [sh.get('len', sh.get('dur', 1.0)) for sh in sc['shots']]
     scale = (s1 - s0) / max(1e-6, sum(durs)); acc = s0
-    if s0 > .1: whoosh(s0, .45)
-    for d in durs[:-1]:
-        acc += d * scale; whoosh(acc, .28)
+    if not QUIET:
+        if s0 > .1: whoosh(s0, .45)
+        for d in durs[:-1]:
+            acc += d * scale; whoosh(acc, .28)
     for e in sc.get('effects', []):
         at = s0 + e.get('at', 0); ty = e['type']
+        if ty == 'zoomout':
+            n_st = len(e.get('steps', [])); per = max(.4, e.get('back', 2.0) - .75 - .25) / max(1, n_st)
+            for i in range(n_st): tick(at + .75 + i * per + per * .8, .16, (-.2 if i % 2 else .2))
+            continue
+        if QUIET and ty in ('chapter', 'chapcard', 'quote', 'freeze'): continue
         if ty in ('chapter', 'chapcard'): impact(at, .9)
         elif ty == 'callout': tick(at + .4, .26)
         elif ty == 'quote': impact(at, .35)
@@ -89,7 +97,8 @@ for sc in pj['scenes']:
             tick(at + T - .05, .3)
         elif ty == 'endcard':
             k = np.arange(int(SR * 2.4)) / SR
-            add(sum(np.sin(2 * np.pi * f(m) * k) for m in (45, 57, 64, 69)) / 4 * env(2.4, .01, 1.1), at, .45); impact(at, .6)
+            add(sum(np.sin(2 * np.pi * f(m) * k) for m in (45, 57, 64, 69)) / 4 * env(2.4, .01, 1.1), at, .45)
+            if not QUIET: impact(at, .6)
 mix = np.stack([L, R], 1); mix /= max(1e-9, np.abs(mix).max()) / .89
 fd = int(SR * .5); mix[-fd:] *= np.linspace(1, 0, fd)[:, None]
 os.makedirs(OUT, exist_ok=True)

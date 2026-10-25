@@ -22,8 +22,8 @@ export default {
   "excerpt": "רטיבות שחוזרת לאותה פינה היא לא מזל רע: יש חור בשכבת האיטום, והמים הולכים בכל פעם באותו מסלול. צביעה מסתירה, איטום מחדש של החיבורים ובדיקת הצפה פותרים.",
   "readingTime": "6 דקות קריאה",
   "video": {
-    "src": "https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/engine-media/site/video/itum-retivut.mp4",
-    "poster": "https://filnzlnvujnlazwcxbuq.supabase.co/storage/v1/object/public/engine-media/site/video/itum-retivut.jpg",
+    "src": "https://res.cloudinary.com/hb7875r8/video/upload/v1792937248/kurkoos/engine/site/video/itum-retivut_video.mp4",
+    "poster": "https://res.cloudinary.com/hb7875r8/image/upload/v1792937109/kurkoos/engine/site/video/itum-retivut.jpg",
     "title": "איטום: איפה מחפשים את מקור הרטיבות",
     "description": "סרטון קצר: שלושה מקומות לבדוק לפני הגשם, חדירות במעטפת הבית, חיבורים בין חלקי המבנה וסדקים.",
     "duration": "PT55S",

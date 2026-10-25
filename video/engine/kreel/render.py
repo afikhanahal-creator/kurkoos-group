@@ -44,6 +44,10 @@ def frame(pj, fi):
         im = Image.blend(prev, im, kit.inout((t - sc['start']) / xf))
     if sc.get('captions', True): 
         im = im.convert('RGBA'); kit.draw_caption(im, pj['_chunks'], t, pj.get('caption_style'))
+    # zoom out to an app window: works on the finished frame, captions and titles included
+    ts = t - sc['start']
+    zo = next((e for e in sc.get('effects', []) if e['type'] == 'zoomout' and e['at'] <= ts <= e['at'] + e.get('back', 2.0) + .55), None)
+    if zo: im = fx.zoom_window(im.convert('RGBA'), ts - zo['at'], zo)
     return im.convert('RGB')
 
 def scene_frame(pj, sc, t, hold=False):

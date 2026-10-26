@@ -318,7 +318,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       title: d.seoTitle || d.menuTitle.he,
       description: d.seoDescription || d.intro.he,
       jsonLd: [
-        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: SERVICE_AREA_LD, url: SITE + path },
+        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: d.nationwide ? [...SERVICE_AREA_LD, { '@type': 'Country', name: 'ישראל' }] : SERVICE_AREA_LD, url: SITE + path },
         ...(faqs.length ? [faqLd(faqs, (f) => [f.q.he, f.a.he])] : []),
         breadcrumbLd([HOME_CRUMB, { name: d.menuTitle.he, path }]),
       ],

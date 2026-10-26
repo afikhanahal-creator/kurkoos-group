@@ -86,13 +86,15 @@ export const divisions = [
   },
   {
     slug: 'execution',
+    // השירות ניתן בכל רחבי ישראל (הבעלים, אוקטובר 2026): נכנס ל-areaServed של ה-Service
+    nationwide: true,
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
     seoTitle: 'חברת בנייה לבתים פרטיים ווילות בכל הארץ',
     seoDescription: 'ראיתה, זרוע הביצוע של קבוצת קורקוס, היא חברת בנייה וקבלן מבצע: בתים פרטיים ווילות על המגרש של הלקוח, בשרון ובכל הארץ, ופרויקטים למגורים, משלד ועד גימור.',
     serviceName: 'ביצוע ובנייה: בניית בתים פרטיים, וילות ופרויקטים למגורים',
     /* משפט התשובה שפותח את העמוד, עם קישור לעמוד הבנייה והפיקוח בהוד השרון */
     answer: {
-      he: 'ראיתה היא חברת הבנייה והקבלן המבצע של קבוצת קורקוס, שמשרדה ברחוב הנגר 24 בהוד השרון. היא בונה בתים פרטיים, וילות ובנייני מגורים בהוד השרון ובערי השרון והמרכז, ושכינתא, זרוע נפרדת של הקבוצה, מפקחת על הבנייה מטעם בעל הבית.',
+      he: 'ראיתה היא חברת הבנייה והקבלן המבצע של קבוצת קורקוס, שמשרדה ברחוב הנגר 24 בהוד השרון. היא בונה בתים פרטיים ווילות כקבלן מפתח על המגרש של הלקוח, בשרון, במרכז ובכל רחבי ישראל: יסודות, שלד, מעטפת ואיטום, מערכות, גמר ופיתוח החצר, עד המסירה. שכינתא, זרוע נפרדת של הקבוצה, מפקחת על הבנייה מטעם בעל הבית.',
       link: { to: '/hod-hasharon/bniya-vepikuach', label: 'חברת בנייה ופיקוח בהוד השרון' },
     },
     related: [
@@ -137,6 +139,20 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'האם ראיתה בונה בתים פרטיים גם מחוץ לשרון?', en: 'Does Raita build private houses outside the Sharon?' },
+        a: {
+          he: 'כן. המשרד של הקבוצה נמצא ברחוב הנגר 24 בהוד השרון, והפרויקטים שהיא מקימה כיום נבנים בעיר, אבל ראיתה בונה בתים פרטיים ווילות על המגרש של הלקוח גם מחוץ לשרון, בכל רחבי ישראל, ושכינתא מפקחת מטעמו. בפגישה הראשונה עוברים על המגרש, התוכניות ולוח הזמנים, ואומרים בכנות אם ואיך הבנייה אצלכם מתאימה לנו.',
+          en: 'Yes. The office is in Hod HaSharon, and Raita builds private houses and villas on the client’s plot across Israel, with Shechinta supervising.',
+        },
+      },
+      {
+        q: { he: 'מה זה קבלן מפתח?', en: 'What is a turnkey contractor?' },
+        a: {
+          he: 'קבלן מפתח הוא גוף אחד שמתחייב לבנות את הבית לפי תוכנית ומפרט ולמסור אותו גמור. הוא מביא את אנשי המקצוע, מתאם ביניהם ואחראי על התוצאה, כך שיש כתובת אחת. ראיתה בונה בתים פרטיים ווילות כקבלן מפתח, ואפשר לצרף פיקוח נפרד של שכינתא.',
+          en: 'One party that commits to build the house to plan and specification and hand it over finished. Raita builds as a turnkey contractor; Shechinta supervision can be added.',
+        },
+      },
       {
         q: { he: 'איזו חברה בונה וילה פרטית מהיסודות ועד המסירה?', en: 'Which company builds a private villa from foundations to handover?' },
         a: {
@@ -214,6 +230,10 @@ export const divisions = [
     seoTitle: 'יזמות נדל"ן בהוד השרון ובאזור המרכז',
     seoDescription: 'קורקוס יזמות, יזם נדל"ן מהוד השרון, מייזמת פרויקטים למגורים, בתים פרטיים ובנייני בוטיק: מאיתור הקרקע ובדיקות ההיתכנות, דרך התכנון והרישוי ועד המסירה.',
     serviceName: 'יזמות נדל"ן למגורים בהוד השרון',
+    answer: {
+      he: 'קורקוס יזמות היא זרוע הייזום של קבוצת קורקוס, שמשרדה ברחוב הנגר 24 בהוד השרון. היא מייזמת פרויקטים למגורים, בתים פרטיים ובנייני בוטיק, מאיתור הקרקע ובדיקות ההיתכנות, דרך התכנון והרישוי ועד השיווק והמסירה. בין הפרויקטים שלה בהוד השרון: הנרייטה סאלד 22-24, יורדי הים 3 וחנקין 41 במגדיאל. היא עובדת גם עם בעלי קרקע ומגרשים בשרון שמחפשים יזם.',
+      link: { to: '/real-estate-guide/yesh-li-migrash', label: 'יש לכם מגרש: לבנות, למכור או לעבוד עם יזם' },
+    },
     related: [
       { to: '/villas-sharon', label: 'הפרויקטים שלנו בהוד השרון' },
       { to: '/madrich-yazamim/bdikat-hetkenut-karka', label: 'בדיקת היתכנות לפני רכישת קרקע' },
@@ -250,6 +270,13 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'יש לי מגרש בשרון. איך עובדים עם יזם, ומה חשוב בחוזה?', en: 'I own a plot in the Sharon. How does working with a developer work?' },
+        a: {
+          he: 'קורקוס יזמות עובדת עם בעלי קרקע ומגרשים בשרון שמחפשים יזם. עבודה עם יזם מתאימה כשהזכויות במגרש גדולות ממה שאתם צריכים. בחוזה העיקר הוא בטוחות שמגינות עליכם עד שתקבלו את התמורה, לוח זמנים עם השלכות לאיחור, הגדרה מדויקת של מה תקבלו, ומה קורה אם הפרויקט נעצר. עורך הדין צריך לייצג רק אתכם.',
+          en: 'Kurkoos Development works with plot owners in the Sharon. In the contract the key points are guarantees, a timetable with consequences, exactly what you receive, and what happens if the project stops.',
+        },
+      },
       {
         q: { he: 'יש לי מגרש, או שאני מחפש מגרש. אפשר לקבל אצלכם גם את הקרקע וגם את הבנייה?', en: 'Can you help with both the land and the building?' },
         a: {
@@ -301,12 +328,14 @@ export const divisions = [
   },
   {
     slug: 'supervision',
+    // השירות ניתן בכל רחבי ישראל (הבעלים, אוקטובר 2026): נכנס ל-areaServed של ה-Service
+    nationwide: true,
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
     seoTitle: 'פיקוח בנייה וניהול פרויקטים, בשרון ובכל הארץ',
     seoDescription: 'שכינתא, זרוע הפיקוח של קבוצת קורקוס: פיקוח בנייה וניהול פרויקטים מטעם המזמין, בבית פרטי, בווילה ובבניין מגורים, בשרון ובכל הארץ. בקרת איכות, תקציב ולוח זמנים.',
     serviceName: 'ניהול ופיקוח בנייה: מפקח בנייה וניהול פרויקט מטעם המזמין',
     answer: {
-      he: 'שכינתא היא זרוע הפיקוח וניהול הבנייה של קבוצת קורקוס, שמשרדה ברחוב הנגר 24 בהוד השרון. היא מפקחת מטעם בעל הבית בהוד השרון ובערי השרון והמרכז, גם על בית פרטי או וילה שקבלן אחר בונה.',
+      he: 'פיקוח בנייה הוא בקרה מקצועית על הבנייה מטעם מי שמזמין אותה: בדיקה שהביצוע תואם לתוכניות, למפרט ולתקנים, בדיקת חשבונות הקבלן לפני תשלום ומעקב אחרי התקציב ולוח הזמנים. שכינתא, זרוע הפיקוח של קבוצת קורקוס מרחוב הנגר 24 בהוד השרון, מפקחת מטעם בעל הבית על בית פרטי, וילה או בניין מגורים, בשרון ובכל רחבי ישראל, גם כשקבלן אחר בונה.',
       link: { to: '/hod-hasharon/bniya-vepikuach', label: 'חברת בנייה ופיקוח בהוד השרון' },
     },
     related: [
@@ -350,6 +379,27 @@ export const divisions = [
     },
     /* שאלות נפוצות, מוצגות בעמוד ומוזנות ל-Structured Data (FAQPage) */
     faqs: [
+      {
+        q: { he: 'מה ההבדל בין פיקוח עליון לפיקוח צמוד?', en: 'What is the difference between periodic and full-time supervision?' },
+        a: {
+          he: 'בפיקוח עליון המפקח מגיע בשלבים מוגדרים ובודק לפני שממשיכים. בפיקוח צמוד יש נוכחות קבועה באתר, וזה ההבדל הגדול ביותר במחיר. בבית פרטי רבים בוחרים פיקוח בשלבים, בלי לדלג על שלב קריטי: לפני יציקות, באיטום, לפני סגירת קירות ובמסירה.',
+          en: 'Periodic supervision checks at defined stages; full-time supervision means a constant presence on site, which is the biggest difference in price.',
+        },
+      },
+      {
+        q: { he: 'האם מפקח בנייה חייב להיות מהנדס?', en: 'Does a construction supervisor have to be an engineer?' },
+        a: {
+          he: 'מי שמגיע לאתר יכול להיות מהנדס אזרחי, הנדסאי בניין או בעל ניסיון בשטח. חשוב לדעת מי בדיוק יעמוד מולכם, ואם הוא מהנדס, לבקש את פרטי הרישום ולבדוק אותם בפנקס המהנדסים והאדריכלים.',
+          en: 'The person on site may be a civil engineer, a building technician or an experienced site professional. Ask who exactly, and check any engineer in the official register.',
+        },
+      },
+      {
+        q: { he: 'האם צריך מפקח גם כשבונים עם קבלן מפתח?', en: 'Do you need a supervisor with a turnkey contractor?' },
+        a: {
+          he: 'מומלץ. קבלן מפתח אחראי לבנייה, והמפקח בודק אותה מטעמכם מול התוכנית, התקציב ולוח הזמנים. בקבוצת קורקוס ראיתה בונה כקבלן מפתח ושכינתא מפקחת, בשתי זרועות נפרדות, כך שמי שבונה לא מפקח על עצמו.',
+          en: 'Recommended. The turnkey contractor is responsible for the build; the supervisor checks it on your behalf. At Kurkoos Group Raita builds and Shechinta supervises, as separate arms.',
+        },
+      },
       {
         q: { he: 'מי מבצע פיקוח הנדסי וניהול תקציב על בניית בית פרטי?', en: 'Who provides engineering supervision and budget control for a private house build?' },
         a: {

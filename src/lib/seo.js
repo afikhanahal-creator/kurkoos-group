@@ -10,7 +10,7 @@ export const SITE_URL = 'https://www.kurkoos-group.co.il'
 export const BRAND = 'קבוצת קורקוס'
 /* גוגל חותך כותרות בסביבות 60 תווים. שם המותג נוסף רק כשהוא נכנס בתקרה,
    כדי שהמילה שמחפשים תישאר גלויה ולא תיחתך לטובת שם החברה. */
-export const TITLE_MAX = 65
+export const TITLE_MAX = 60
 export const DESC_MIN = 120
 export const DESC_MAX = 160
 

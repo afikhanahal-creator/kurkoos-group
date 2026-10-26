@@ -19,34 +19,33 @@
   transition: opacity 0.8s ease;
   /* the wash: barely there on light cards so text and fields stay clean */
   background: radial-gradient(460px circle at var(--gx, 50%) var(--gy, 50%),
-    color-mix(in srgb, var(--k-red) 9%, transparent), transparent 62%);
+    color-mix(in srgb, var(--k-red) 4%, transparent), transparent 60%);
 }
 .k-glow--dark > .k-glow__light {
   background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%),
-    color-mix(in srgb, var(--k-red) 26%, transparent), color-mix(in srgb, var(--k-red) 8%, transparent) 40%, transparent 66%);
+    color-mix(in srgb, var(--k-red) 12%, transparent), transparent 62%);
 }
-.k-glow--dark > .k-glow__light::before { padding: 2.5px; }
+.k-glow--dark > .k-glow__light::before { padding: 1.5px; }
 /* the ring: only the border, brightest where the pointer is */
 .k-glow__light::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 2px;
+  padding: 1px;
   background:
-    radial-gradient(260px circle at var(--gx, 50%) var(--gy, 50%), var(--k-red) 0%, color-mix(in srgb, var(--k-red) 60%, transparent) 35%, transparent 72%),
-    linear-gradient(color-mix(in srgb, var(--k-red) 30%, transparent), color-mix(in srgb, var(--k-red) 30%, transparent));
+    radial-gradient(220px circle at var(--gx, 50%) var(--gy, 50%), color-mix(in srgb, var(--k-red) 75%, transparent) 0%, color-mix(in srgb, var(--k-red) 25%, transparent) 40%, transparent 72%),
+    linear-gradient(color-mix(in srgb, var(--k-red) 12%, transparent), color-mix(in srgb, var(--k-red) 12%, transparent));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 @media (hover: hover) and (pointer: fine) {
   .k-glow:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--k-red) 10%, transparent),
-      0 0 64px -14px color-mix(in srgb, var(--k-red) 70%, transparent),
-      0 28px 56px -26px rgba(7, 41, 58, 0.45);
+      0 0 36px -18px color-mix(in srgb, var(--k-red) 40%, transparent),
+      0 24px 48px -28px rgba(7, 41, 58, 0.35);
     transition-duration: 0.25s, 0.25s;
   }
   .k-glow:hover > .k-glow__light { opacity: 1; transition-duration: 0.18s; }
@@ -54,7 +53,7 @@
 /* typing in the form keeps a steady ring, with no pointer needed */
 .k-glow:focus-within > .k-glow__light { opacity: 1; }
 .k-glow:focus-within > .k-glow__light::before {
-  background: linear-gradient(color-mix(in srgb, var(--k-red) 70%, transparent), color-mix(in srgb, var(--k-red) 70%, transparent));
+  background: linear-gradient(color-mix(in srgb, var(--k-red) 40%, transparent), color-mix(in srgb, var(--k-red) 40%, transparent));
 }
 @media (prefers-reduced-motion: reduce) {
   .k-glow, .k-glow__light { transition: none; }

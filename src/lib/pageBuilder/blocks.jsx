@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { videoSources } from '../cms.js'
 import './blocks.css'
 
 /* ============================================================
@@ -82,7 +83,7 @@ export function VideoW({ props: p }) {
         {yt
           ? <iframe src={`https://www.youtube-nocookie.com/embed/${yt}`} title={p.title || 'וידאו'} loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
           : p.url
-            ? <video src={p.url} controls playsInline preload="metadata" title={p.title || undefined} />
+            ? <video key={p.url} controls playsInline preload="metadata" title={p.title || undefined}>{videoSources(p.url).map((x) => <source key={x.src} src={x.src} type={x.type} />)}</video>
             : <div className="pb-empty">הדביקו קישור לסרטון בהגדרות</div>}
       </div>
     </Shell>

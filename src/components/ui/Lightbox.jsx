@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
+import { videoSources } from '../../lib/cms.js'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
@@ -109,7 +110,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }) {
       <figure className="pd-lightbox__fig" onClick={(e) => e.stopPropagation()}>
         {isVideo ? (
           item.type === 'file' ? (
-            <video className="pd-lightbox__video" src={item.src} controls autoPlay playsInline />
+            <video key={item.src} className="pd-lightbox__video" controls autoPlay playsInline>{videoSources(item.src).map((x) => <source key={x.src} src={x.src} type={x.type} />)}</video>
           ) : (
             <div className="pd-lightbox__video-wrap">
               <iframe

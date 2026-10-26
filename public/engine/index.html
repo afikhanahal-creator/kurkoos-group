@@ -20726,7 +20726,7 @@ function probe(p){const key=p.layout;if(key in NC)return NC[key];let r=false;
     const px=q=>{const cv=document.createElement('canvas');cv.width=270;cv.height=338;drawSlide(cv,q,0);return cv.getContext('2d').getImageData(0,0,270,338).data};
     const a=px(mk('לקביעת פגישה עכשיו')),b=px(mk(''));let d=0;for(let i=0;i<a.length;i+=4){if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>60)d++}r=d>12}catch(e){r=false}
   NC[key]=r;return r}
-function isOn(p){const s=S(p);if(s)return !!s.on;return !!((p.visual||{}).cta)&&probe(p)}
+function isOn(p){const s=S(p);if(s)return !!s.on;if(window.__v229)return window.__v229.draws(p);return !!((p.visual||{}).cta)&&probe(p)}
 function modeOf(p){const s=S(p);if(s&&s.mode)return s.mode;return probe(p)?'native':'btn'}
 // ---- button geometry
 let mc=null;function measure(t,fs){if(!mc)mc=document.createElement('canvas').getContext('2d');mc.font=`700 ${fs}px Almoni, sans-serif`;return mc.measureText(t).width}
@@ -32527,6 +32527,95 @@ setInterval(()=>{try{const d=D();if(typeof APP!=='undefined'&&APP.view==='carous
 window.__v227={S,D,newDoc,generate,build,runQa,syncPost,heal,LAY,contentPrompt,paint,zip,textsOf,regen,exportAll};
 })();
 /*V227:END*/
+
+/*V229:START*/
+(function(){
+// ===== V229 · the button on the image can always be removed =====
+// Many designs draw their own call to action pill, and fall back to a default text
+// ("לפרטים", "כתבו לנו בתגובות") when the field is empty, so clearing the text never hid it.
+// When the switch is off the post is drawn twice: a dry pass with a marker as the button text
+// finds the canvas group that paints the marker, and the real pass skips that group.
+const MK='ǂǂǂǂǂǂǂǂ',hasMk=t=>typeof t==='string'&&t.indexOf('ǂ')>=0;
+const P=CanvasRenderingContext2D.prototype;
+const PAINT=['fill','stroke','fillRect','strokeRect','fillText','strokeText','drawImage','clearRect','putImageData'];
+const isOff=p=>!!(p&&p.fx&&p.fx.ctaBtn&&p.fx.ctaBtn.on===false);
+function marked(p){const fx=Object.assign({},p.fx||{});delete fx.ctaBtn;if(fx.objs)fx.objs=fx.objs.filter(o=>o.id!=='cta');
+  return Object.assign({},p,{fx,visual:Object.assign({},p.visual||{},{cta:MK})})}
+// run draw() with every 2d context instrumented. mode 'scan' records, mode 'mute' skips what scan flagged
+function traced(draw,mode,plan){const ORIG={save:P.save,restore:P.restore};PAINT.forEach(k=>ORIG[k]=P[k]);const st=new Map();let order=0;const S=c=>{let s=st.get(c);if(!s){s={id:order++,seq:0,op:0,stack:[],mute:-1};st.set(c,s)}return s};
+  const found={groups:new Set(),ops:new Set(),hits:0};
+  P.save=function(){const s=S(this);const g=s.id+':'+(s.seq++);s.stack.push({g,paint:0,last:[]});if(mode==='mute'&&s.mute<0&&plan.groups.has(g))s.mute=s.stack.length;return ORIG.save.call(this)};
+  P.restore=function(){const s=S(this);const fr=s.stack.pop();if(mode==='mute'&&s.mute>0&&s.stack.length<s.mute)s.mute=-1;
+    if(mode==='scan'&&fr&&fr.paint&&s.stack.length){s.stack[s.stack.length-1].paint+=fr.paint}return ORIG.restore.call(this)};
+  PAINT.forEach(k=>{P[k]=function(){const s=S(this);const id=s.id+'#'+(s.op++);const fr=s.stack[s.stack.length-1];const txt=(k==='fillText'||k==='strokeText')&&hasMk(arguments[0]);
+    if(mode==='scan'){if(txt){found.hits++;if(fr&&fr.paint<=8)found.groups.add(fr.g);else{found.ops.add(id);(fr?fr.last:[]).forEach(x=>found.ops.add(x))}}
+      else if(fr){fr.paint++;if(k==='fill'||k==='fillRect'||k==='stroke'){fr.last.push(id);if(fr.last.length>2)fr.last.shift()}else fr.last=[]}}
+    if(txt)return;if(mode==='mute'&&(s.mute>0||plan.ops.has(id)))return;
+    return ORIG[k].apply(this,arguments)}});
+  try{draw()}finally{P.save=ORIG.save;P.restore=ORIG.restore;PAINT.forEach(k=>P[k]=ORIG[k])}
+  return found}
+function scratch(cv){const c=document.createElement('canvas');c.width=cv.width||1080;c.height=cv.height||1350;return c}
+// does this design draw a button at all (cached per design and theme)
+const DR={};
+function draws(p){const k=(p.layout||'')+'|'+((p.fx&&p.fx.theme)||p.theme||'')+'|'+(p.fx&&p.fx.zo?p.fx.zo.join(','):'');if(k in DR)return DR[k];let r=false;
+  try{const q=marked(p);const c=document.createElement('canvas');c.width=270;c.height=338;r=traced(()=>inner(c,q,0),'scan').hits>0}catch(e){r=!!((p.visual||{}).cta)}
+  DR[k]=r;return r}
+let inner=drawSlide;
+drawSlide=(f=>{inner=f;return function(cv,p,i){if(!isOff(p))return f.apply(this,arguments);
+  const q=marked(p);let plan=null;
+  try{const c=scratch(cv);plan=traced(()=>f.call(this,c,q,i),'scan')}catch(e){plan=null}
+  if(!plan||!plan.hits)return f.call(this,cv,Object.assign({},p,{visual:Object.assign({},p.visual||{},{cta:''})}),i);
+  window.__v229last=plan;return traced(()=>f.call(this,cv,q,i),'mute',plan)}})(drawSlide);
+// a quick switch in the bar under the preview, next to the logo and safe zones
+function chip(){const bar=document.querySelector('#pe-root .pe-sbar');if(!bar||!PE.p||!window.__v54)return;let b=bar.querySelector('[data-v229]');
+  const on=window.__v54.isOn(PE.p);const html=`<span aria-hidden="true">${on?'◉':'○'}</span> כפתור על התמונה: ${on?'מוצג':'מוסתר'}`;
+  if(!b){bar.insertAdjacentHTML('afterbegin',`<button type="button" class="px-btn sm" data-v229 aria-pressed="${on}" title="הצגה או הסתרה של כפתור הקריאה לפעולה שעל התמונה">${html}</button>`);return}
+  b.setAttribute('aria-pressed',String(on));b.innerHTML=html}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#pe-root [data-v229]');if(!b||!PE.p||!window.__v54)return;e.preventDefault();e.stopPropagation();
+  window.__v54.setOn(PE.p,!window.__v54.isOn(PE.p));chip()},true);
+document.addEventListener('change',e=>{if(e.target&&e.target.matches&&e.target.matches('#pe-root [data-v54="on"]'))setTimeout(chip,0)});
+if(typeof peRender==='function')peRender=(f=>function(){const r=f.apply(this,arguments);try{chip()}catch(e){}return r})(peRender);
+window.__v229={draws,isOff,MK,draw:(c,q,i)=>drawSlide(c,q,i||0)};
+})();
+/*V229:END*/
+
+/*V230:START*/
+(function(){
+// ===== V230 · every post leads to its guide: article suggestions in the editor =====
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STOP=new Set('איך מה למה מתי כמה איפה של את עם על בלי לא כן זה זאת הוא היא הם אתם אנחנו מי או גם רק כל יותר פחות באמת לפני אחרי בין שלא שאתם שלכם חייב צריך כדאי עושים'.split(' '));
+const TERMS=new Map();
+function termsOf(a){let t=TERMS.get(a.id);if(t)return t;t=[];const seen=new Set();
+  [...(a.tags||[]),a.kw||''].forEach(x=>{x=String(x).trim();if(x.length>=4&&!seen.has(x)){seen.add(x);t.push([x,4])}});
+  (String(a.t||'').match(/[֐-׿"״׳']{4,}/g)||[]).forEach(w=>{w=w.replace(/^["״]+|["״]+$/g,'');if(w.length>=4&&!STOP.has(w)&&!seen.has(w)){seen.add(w);t.push([w,1])}});
+  TERMS.set(a.id,t);return t}
+function textOf(p){const v=p.visual||{};const fb=String(p.fb||'').split(/\n\n(?:קבוצת קורקוס|אפיק הנחל)\./)[0];return [v.headline,p.hook,v.sub,v.eyebrow,fb,(p.fx&&p.fx.details)||''].join(' ').replace(/\*/g,'')}
+function suggest(p,n=3){const t=textOf(p);return ARTICLES.map(a=>({a,s:termsOf(a).reduce((s,[k,w])=>s+(t.includes(k)?w:0),0)})).filter(x=>x.s>=3).sort((x,y)=>y.s-x.s||String(y.a.d).localeCompare(String(x.a.d))).slice(0,n)}
+// when the text names no guide, fall back to the guide that fits the kind of post
+const RULES=[[/יציק|ברזל|שלד|תבני/,'supervision/construction-supervision-likuei-sheled'],[/כלונס|חפיר|עפר|קרקע/,'constructions/doch-karka-bayit-prati'],[/וילה|וילות|בריכה/,'constructions/bniyat-vila-mah-kolel'],[/פיקוח|מפקח/,'supervision/mefakeach-bniya-bayit-prati'],[/מסירה|מסירת|מפתח/,'supervision/protokol-mesira-bayit-prati'],[/יזמ|יזם/,'mentorguide/iskat-kombinatsia'],[/דירה|דירות|למכירה|נכס|שכירות/,'brokerage/kniya-mekablan-mul-yad-shniya']];
+function fallback(p){const t=textOf(p);const r=RULES.find(([re])=>re.test(t));const id=r?r[1]:(p.brand==='afik'?'brokerage/bdikot-lifney-rechishat-dira':'constructions/shlavei-bniyat-bayit-prati');return ARTICLES.find(a=>a.id===id)||null}
+const COL={constructions:'בנייה',supervision:'פיקוח',yazamut:'יזמות',brokerage:'תיווך',mentorguide:'ליזמים'};
+if(typeof peText==='function')peText=(f=>function(){let h=f.apply(this,arguments);try{const p=PE.p;const a=h.indexOf('<details class="pe-sec"',h.indexOf('כיתוב לרשתות'));const m=h.indexOf('קישור לכתבה מהאתר',a);if(a<0||m<0)return h;
+  const end=h.indexOf('</details>',m);let blk=h.slice(a,end);
+  blk=blk.replace(/^<details class="pe-sec"[^>]*>/,'<details class="pe-sec v230" open>');
+  const cur=p.article;let sug=suggest(p);if(!sug.length){const fa=fallback(p);if(fa)sug=[{a:fa,s:0}]}sug=sug.filter(x=>!cur||x.a.id!==cur.id);
+  const chips=sug.length?`<div class="v230l">מתאימות לפוסט הזה</div><div class="v230s">${sug.map(x=>`<button type="button" data-v230="${esc(x.a.id)}"><small>${esc(COL[x.a.col]||'')}</small>${esc(x.a.t)}</button>`).join('')}</div>`:cur?'':'<small class="v230n">לא נמצאה כתבה שמתאימה לפי הטקסט. אפשר לבחור מהרשימה.</small>';
+  const open=cur&&cur.url?`<a class="v230o" href="${esc(cur.url)}" target="_blank" rel="noopener">פתיחת הכתבה באתר</a>`:'';
+  blk=blk.replace('<select id="pe-art"',chips+'<select id="pe-art"')+open;
+  h=h.slice(0,a)+blk+h.slice(end)}catch(e){console.warn('v230',e)}return h})(peText);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#pe-root [data-v230]');if(!b)return;e.preventDefault();e.stopPropagation();const s=document.getElementById('pe-art');if(!s)return;s.value=b.dataset.v230;s.dispatchEvent(new Event('change',{bubbles:true}))},true);
+document.head.insertAdjacentHTML('beforeend',`<style>
+.v230 .v230l{font-size:12px;font-weight:700;color:#52656f;margin:6px 0 6px}
+.v230 .v230s{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.v230 .v230s button{display:flex;gap:8px;align-items:baseline;text-align:start;padding:9px 11px;border:1px solid #d5dfe5;border-radius:10px;background:#fff;color:#07293a;font:600 13px/1.35 inherit;cursor:pointer;min-height:44px}
+.v230 .v230s button small{flex:none;font-size:11px;font-weight:700;color:#a90b0c}
+.v230 .v230s button:hover{border-color:#105572;background:#f2f7f9}
+.v230 .v230n{display:block;color:#52656f;margin-bottom:8px}
+.v230 .v230o{display:inline-block;margin-top:8px;font-weight:700;color:#105572}
+</style>`);
+window.__v230={suggest,termsOf,textOf,fallback};
+})();
+/*V230:END*/
 
 // ================= V83 · safe external opener: a link never leaves a blank page behind =================
 (function(){

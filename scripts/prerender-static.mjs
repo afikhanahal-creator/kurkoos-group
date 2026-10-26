@@ -538,7 +538,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
         jobTitle: he(m.role),
         description: he(m.bio) || undefined,
         image: m.photo && m.photo.startsWith('/') ? `${SITE}${m.photo}` : (m.photo || undefined),
-        worksFor: { '@type': 'Organization', name: BRAND, url: `${SITE}/` },
+        worksFor: { '@id': `${SITE}/#organization` },
         url: `${SITE}/team`,
       })),
     ],
@@ -681,7 +681,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   done.push(renderPage({
     path: '/',
     ...meta('/'),
-    jsonLd: [breadcrumbLd(PAGE_CRUMBS['/']), faqLd(HOME_FAQS)],
+    // בעמוד הבית אין פירור לחם: רשימה של פריט אחד לא זכאית לתוצאה עשירה
+    jsonLd: [faqLd(HOME_FAQS)],
     bodyHtml:
       `<h1>קבוצת קורקוס: בניית וילות ובתים פרטיים, יזמות ופיקוח בנייה בהוד השרון</h1>` +
       `<p>קבוצת קורקוס (קורקוס גרופ) היא חברת בנייה ונדל"ן מהוד השרון, שמשרדה ברחוב הנגר 24, ובונה וילות ובתים פרטיים בהוד השרון. הקבוצה עוסקת ביזמות נדל"ן, בביצוע ובנייה באמצעות ראיתה, בניהול ופיקוח פרויקטים באמצעות שכינתא, ובתיווך ושיווק נכסים באמצעות אפיק הנחל. את הקבוצה ייסד ומנהל שלומי קורקוס.</p>` +

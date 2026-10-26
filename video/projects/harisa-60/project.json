@@ -1,13 +1,13 @@
 {
  "name": "הריסה ובנייה מחדש: מהבית הישן לבית החדש (דקה)",
- "duration": 49.65,
- "vo_tempo": 1.1,
+ "duration": 41.94,
+ "vo_tempo": 1.22,
  "music": {
-  "bpm": 112,
+  "bpm": 122,
   "style": "cinematic",
   "quiet": true,
   "drums": true,
-  "drums_from": 18.0
+  "drums_from": 2.0
  },
  "mix": {
   "duck": "steady"
@@ -16,84 +16,103 @@
   {
    "id": "v01",
    "vo": "v01",
-   "start": 0.2,
-   "end": 5.225,
+   "start": 0.1,
+   "end": 4.42,
    "text": "בית ישן, על מגרש טוב. לשפץ אותו, או להרוס ולבנות מחדש?"
   },
   {
    "id": "v02",
    "vo": "v02",
-   "start": 5.365,
-   "end": 11.59,
+   "start": 4.47,
+   "end": 9.83,
    "text": "לפני שמחליטים, בודקים. את מצב השלד, את הקרקע, ואת זכויות הבנייה במגרש."
   },
   {
    "id": "v03",
    "vo": "v03",
-   "start": 11.73,
-   "end": 16.864,
+   "start": 9.88,
+   "end": 14.315,
    "text": "מתכננים את הבית החדש, ומגישים להיתר. בלי היתר ביד, לא מתחילים."
   },
   {
    "id": "v04",
    "vo": "v04",
-   "start": 17.004,
-   "end": 22.865,
+   "start": 14.365,
+   "end": 19.414,
    "text": "מגדרים את האתר, מנתקים תשתיות, ורק אז הריסה מבוקרת, עם בטיחות מלאה."
   },
   {
    "id": "v05",
    "vo": "v05",
-   "start": 23.005,
-   "end": 26.612,
+   "start": 19.464,
+   "end": 22.538,
    "text": "המגרש מתפנה, ומסמנים בשטח את קווי הבית החדש."
   },
   {
    "id": "v06",
    "vo": "v06",
-   "start": 26.752,
-   "end": 31.959,
+   "start": 22.588,
+   "end": 27.063,
    "text": "כלונסאות, יסודות ושלד. כל שלב נבדק, לפני שיוצקים."
   },
   {
    "id": "v07",
    "vo": "v07",
-   "start": 32.099,
-   "end": 37.051,
+   "start": 27.113,
+   "end": 31.416,
    "text": "מערכות, איטום וגמר. עם פיקוח צמוד, עד המסירה."
   },
   {
    "id": "v08",
    "vo": "v08",
-   "start": 37.191,
-   "end": 42.216,
+   "start": 31.466,
+   "end": 35.745,
    "text": "ובסוף, בית חדש. בנוי לפי מה שתכננתם, מהיסוד."
   },
   {
    "id": "v09",
    "vo": "v09",
-   "start": 42.356,
-   "end": 47.854,
+   "start": 35.795,
+   "end": 40.541,
    "text": "קבוצת קורקוס. מקרקע ועד מסירת מפתח. דברו איתנו, לפני שמחליטים."
   }
  ],
  "scenes": [
   {
    "start": 0.0,
-   "end": 5.365,
+   "end": 1.9,
+   "shots": [
+    {
+     "src": "video/projects/_media/hr_cover.png",
+     "fit": "frame",
+     "y": 960,
+     "len": 1.9,
+     "push": 0.03,
+     "grade": false
+    }
+   ],
+   "effects": [],
+   "punch": false,
+   "xfade": 0.12,
+   "shade": false,
+   "mark": false
+  },
+  {
+   "start": 1.9,
+   "end": 4.47,
    "shots": [
     {
      "src": "video/projects/_media/hr_house",
      "fx": 0.3,
      "fy": 0.5,
-     "len": 5.365,
+     "len": 2.57,
      "push": 0.08
     }
    ],
    "effects": [
     {
      "type": "title",
-     "at": 0.3,
+     "at": 0.1,
      "y": 1180,
      "lines": [
       [
@@ -110,34 +129,34 @@
     },
     {
      "type": "lower",
-     "at": 0.1,
+     "at": 0,
      "num": 1,
      "text": "הבית הישן"
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade_from": 0.45,
    "shade_k": 0.85
   },
   {
-   "start": 5.365,
-   "end": 11.73,
+   "start": 4.47,
+   "end": 9.88,
    "shots": [
     {
      "src": "video/projects/_media/ph_pikuach",
      "push": 0.04,
-     "len": 2.1216666666666666
+     "len": 1.8033333333333337
     },
     {
      "src": "video/projects/_media/ph_mgr",
      "push": 0.04,
-     "len": 2.1216666666666666
+     "len": 1.8033333333333337
     },
     {
      "src": "video/projects/_media/ph_helmetplans",
      "push": 0.04,
-     "len": 2.1216666666666666
+     "len": 1.8033333333333337
     }
    ],
    "effects": [
@@ -168,25 +187,25 @@
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade_from": 0.5,
    "shade_k": 0.85
   },
   {
-   "start": 11.73,
-   "end": 17.004,
+   "start": 9.88,
+   "end": 14.365,
    "shots": [
     {
      "src": "video/projects/_media/hr_house",
      "fx": 0.3,
-     "len": 2.900700000000001,
+     "len": 2.4667499999999998,
      "push": 0.03,
      "grade": true
     },
     {
      "src": "video/projects/_media/il_stamp",
      "fit": "frame",
-     "len": 2.3733000000000004,
+     "len": 2.0182499999999997,
      "push": 0.04
     }
    ],
@@ -216,11 +235,11 @@
        1080
       ]
      ],
-     "out": 2.6370000000000005
+     "out": 2.2424999999999997
     },
     {
      "type": "stamp",
-     "at": 3.1644000000000005,
+     "at": 2.6909999999999994,
      "text": "היתר בנייה"
     },
     {
@@ -231,24 +250,24 @@
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade_from": 0.55,
    "shade_k": 0.8
   },
   {
-   "start": 17.004,
-   "end": 23.005,
+   "start": 14.365,
+   "end": 19.464,
    "shots": [
     {
      "src": "video/projects/_media/hr_il_fence",
      "fit": "frame",
-     "len": 3.000499999999999,
+     "len": 2.549499999999999,
      "push": 0.05
     },
     {
      "src": "video/projects/_media/hr_il_dig",
      "fit": "frame",
-     "len": 3.000499999999999,
+     "len": 2.549499999999999,
      "push": 0.05
     }
    ],
@@ -287,24 +306,24 @@
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade": false
   },
   {
-   "start": 23.005,
-   "end": 26.752,
+   "start": 19.464,
+   "end": 22.588,
    "shots": [
     {
      "src": "video/projects/_media/hr_house",
      "fx": 0.82,
      "fy": 0.6,
-     "len": 1.8735,
+     "len": 1.5620000000000012,
      "push": 0.06
     },
     {
      "src": "video/projects/_media/hr_il_plot",
      "fit": "frame",
-     "len": 1.8735,
+     "len": 1.5620000000000012,
      "push": 0.04
     }
    ],
@@ -339,7 +358,7 @@
        ]
       ]
      ],
-     "out": 1.68615
+     "out": 1.405800000000001
     },
     {
      "type": "lower",
@@ -349,45 +368,45 @@
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade_from": 0.55,
    "shade_k": 0.8
   },
   {
-   "start": 26.752,
-   "end": 32.099,
+   "start": 22.588,
+   "end": 27.113,
    "shots": [
     {
      "src": "video/projects/_media/site_piles.mp4",
      "t0": 1,
      "speed": 1.2,
      "push": 0.04,
-     "len": 1.3367499999999994,
-     "dur": 1.3367499999999994
+     "len": 1.1312499999999996,
+     "dur": 1.1312499999999996
     },
     {
      "src": "video/projects/_media/v4_found.mp4",
      "t0": 0,
      "speed": 1.3,
      "push": 0.04,
-     "len": 1.3367499999999994,
-     "dur": 1.3367499999999994
+     "len": 1.1312499999999996,
+     "dur": 1.1312499999999996
     },
     {
      "src": "video/projects/_media/v4_w1full.mp4",
      "t0": 16.5,
      "speed": 1.35,
      "push": 0.04,
-     "len": 1.3367499999999994,
-     "dur": 1.3367499999999994
+     "len": 1.1312499999999996,
+     "dur": 1.1312499999999996
     },
     {
      "src": "video/projects/_media/v4_roof.mp4",
      "t0": 2.6,
      "speed": 1.25,
      "push": 0.04,
-     "len": 1.3367499999999994,
-     "dur": 1.3367499999999994
+     "len": 1.1312499999999996,
+     "dur": 1.1312499999999996
     }
    ],
    "effects": [
@@ -412,33 +431,33 @@
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade_from": 0.55,
    "shade_k": 0.8
   },
   {
-   "start": 32.099,
-   "end": 37.191,
+   "start": 27.113,
+   "end": 31.466,
    "shots": [
     {
      "src": "video/projects/_media/hr_pour",
      "push": 0.04,
-     "len": 1.2730000000000015
+     "len": 1.0882500000000004
     },
     {
      "src": "video/projects/_media/hr_t24",
      "push": 0.04,
-     "len": 1.2730000000000015
+     "len": 1.0882500000000004
     },
     {
      "src": "video/projects/_media/hr_t18",
      "push": 0.04,
-     "len": 1.2730000000000015
+     "len": 1.0882500000000004
     },
     {
      "src": "video/projects/_media/v4_ph80.webp",
      "push": 0.04,
-     "len": 1.2730000000000015
+     "len": 1.0882500000000004
     }
    ],
    "effects": [
@@ -473,27 +492,27 @@
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade_from": 0.5,
    "shade_k": 0.85
   },
   {
-   "start": 37.191,
-   "end": 42.356,
+   "start": 31.466,
+   "end": 35.795,
    "shots": [
     {
      "src": "video/projects/_media/v4_ph78.webp",
-     "len": 1.7560999999999998,
+     "len": 1.4718600000000004,
      "push": 0.05
     },
     {
      "src": "video/projects/_media/v4_ph79.webp",
-     "len": 1.7044499999999998,
+     "len": 1.4285700000000003,
      "push": 0.05
     },
     {
      "src": "video/projects/_media/v4_ph77.webp",
-     "len": 1.7044499999999998,
+     "len": 1.4285700000000003,
      "push": 0.05
     }
    ],
@@ -532,17 +551,17 @@
     }
    ],
    "punch": true,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade_from": 0.45,
    "shade_k": 0.85
   },
   {
-   "start": 42.356,
-   "end": 49.653999999999996,
+   "start": 35.795,
+   "end": 41.940999999999995,
    "shots": [
     {
      "src": "video/projects/_media/v4_ph78.webp",
-     "len": 7.297999999999995,
+     "len": 6.145999999999994,
      "push": 0
     }
    ],
@@ -590,7 +609,7 @@
     }
    ],
    "punch": false,
-   "xfade": 0.2,
+   "xfade": 0.12,
    "shade": false
   }
  ],

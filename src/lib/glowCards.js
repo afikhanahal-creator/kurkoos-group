@@ -23,10 +23,13 @@ function prepare(el) {
   if (getComputedStyle(el).position === 'static') el.style.position = 'relative'
   el.classList.add('k-glow')
   if (isDark(el)) el.classList.add('k-glow--dark')
-  const layer = document.createElement('span')
-  layer.className = 'k-glow__light'
-  layer.setAttribute('aria-hidden', 'true')
-  el.appendChild(layer)
+  /* two layers: the wash sits under the content (fields and text cover it), the ring sits on the edge only */
+  for (const cls of ['k-glow__wash', 'k-glow__light']) {
+    const layer = document.createElement('span')
+    layer.className = cls
+    layer.setAttribute('aria-hidden', 'true')
+    el.appendChild(layer)
+  }
 }
 
 export function initGlowCards() {

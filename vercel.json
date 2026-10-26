@@ -1,6 +1,8 @@
 {
   "functions": {
-    "api/[fn].js": { "maxDuration": 60 }
+    "api/[fn].js": {
+      "maxDuration": 60
+    }
   },
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
@@ -59,6 +61,26 @@
     {
       "source": "/m/projects",
       "destination": "/projects",
+      "permanent": true
+    },
+    {
+      "source": "/m/execution",
+      "destination": "/divisions/execution",
+      "permanent": true
+    },
+    {
+      "source": "/m/management",
+      "destination": "/divisions/supervision",
+      "permanent": true
+    },
+    {
+      "source": "/m/villas",
+      "destination": "/villas-sharon",
+      "permanent": true
+    },
+    {
+      "source": "/m/projects/mohaliver-70",
+      "destination": "/projects/mohaliver-17",
       "permanent": true
     },
     {
@@ -295,7 +317,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
         }
       ]
     },
@@ -313,7 +335,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
         }
       ]
     },

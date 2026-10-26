@@ -434,7 +434,7 @@ export default function Division() {
       serviceType: division.serviceName || L(division.menuTitle),
       description: L(division.intro),
       provider: { '@id': 'https://www.kurkoos-group.co.il/#organization' },
-      areaServed: SERVICE_AREA_LD,
+      areaServed: division.nationwide ? [...SERVICE_AREA_LD, { '@type': 'Country', name: 'ישראל' }] : SERVICE_AREA_LD,
       url: `https://www.kurkoos-group.co.il/divisions/${slug}`,
     },
     ...(division.faqs?.length ? [{

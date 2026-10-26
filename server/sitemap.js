@@ -117,11 +117,14 @@ export default async function handler(req, res) {
   const part = String((req.query && req.query.part) || '').toLowerCase()
 
   if (!part) {
-    const lastmod = new Date().toISOString().slice(0, 10)
+    /* תאריך אמיתי בלבד: לקובץ הכתבות התאריך של הכתבה האחרונה שעודכנה, ולשאר
+       בלי תאריך. תאריך של היום בכל בקשה גורם לגוגל להפסיק לסמוך על lastmod */
+    const todayIL = new Date().toISOString().slice(0, 10)
+    const artLast = ARTICLES.map((a) => String(a.lastmod || '').slice(0, 10)).filter((d) => d && d <= todayIL).sort().pop()
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
       ['/sitemap-pages.xml', '/sitemap-articles.xml', '/sitemap-images.xml']
-        .map((p) => `  <sitemap><loc>${SITE}${p}</loc><lastmod>${lastmod}</lastmod></sitemap>`)
+        .map((p) => `  <sitemap><loc>${SITE}${p}</loc>${p === '/sitemap-articles.xml' && artLast ? `<lastmod>${artLast}</lastmod>` : ''}</sitemap>`)
         .join('\n') +
       `\n</sitemapindex>\n`
     res.setHeader('Content-Type', 'application/xml; charset=utf-8')
@@ -191,14 +194,13 @@ export default async function handler(req, res) {
   }
 
   // part === 'pages' — עמודי האתר והפרויקטים, בלי הכתבות
-  const today = new Date().toISOString().slice(0, 10)
   const rows = [
     ...STATIC.map((s) => urlTag({ loc: `${SITE}${s.path}`, changefreq: s.changefreq, priority: s.priority })),
     ...projects
       .filter((p) => p && p.slug)
       .map((p) => urlTag({
         loc: `${SITE}/projects/${p.slug}`,
-        lastmod: (p.updated_at ? String(p.updated_at).slice(0, 10) : today),
+        lastmod: p.updated_at ? String(p.updated_at).slice(0, 10) : undefined,
         changefreq: 'monthly',
         priority: '0.7',
       })),

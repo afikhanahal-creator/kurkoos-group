@@ -154,6 +154,8 @@ const SITE_LINKS =
     ['/', 'דף הבית'],
     ['/projects', 'הפרויקטים'],
     ['/villas-sharon', 'בניית וילות ובתים פרטיים'],
+    ['/bniyat-bayit-prati', 'בניית בית פרטי בכל הארץ'],
+    ['/migrashim-vekarkaot', 'מגרשים וקרקעות'],
     ['/kablan-bniya-bayit-prati', 'קבלן בנייה לבית פרטי'],
     ['/bniyat-vila-sharon', 'בניית וילה בשרון'],
     ['/hod-hasharon/bniya-vepikuach', 'חברת בנייה ופיקוח בהוד השרון'],
@@ -167,6 +169,10 @@ const SITE_LINKS =
     ['/livy-yazamim', 'ליווי יזמי נדל"ן'],
     ['/real-estate-glossary', 'מילון מונחי נדל"ן'],
     ['/real-estate-calculators', 'מחשבוני נדל"ן'],
+    ['/shelot-ve-tshuvot', 'שאלות ותשובות'],
+    ['/divisions/residential', 'מגורים'],
+    ['/blog', 'הבלוג'],
+    ['/careers', 'דרושים'],
   ].map(([href, label]) => `<li><a href="${href}">${esc(label)}</a></li>`).join('') +
   `</ul></nav>`
 
@@ -312,7 +318,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       title: d.seoTitle || d.menuTitle.he,
       description: d.seoDescription || d.intro.he,
       jsonLd: [
-        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: SERVICE_AREA_LD, url: SITE + path },
+        { '@context': 'https://schema.org', '@type': 'Service', name: d.serviceName || d.menuTitle.he, serviceType: d.serviceName || d.menuTitle.he, description: d.intro.he, provider: { '@id': `${SITE}/#organization` }, areaServed: d.nationwide ? [...SERVICE_AREA_LD, { '@type': 'Country', name: 'ישראל' }] : SERVICE_AREA_LD, url: SITE + path },
         ...(faqs.length ? [faqLd(faqs, (f) => [f.q.he, f.a.he])] : []),
         breadcrumbLd([HOME_CRUMB, { name: d.menuTitle.he, path }]),
       ],
@@ -538,7 +544,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
         jobTitle: he(m.role),
         description: he(m.bio) || undefined,
         image: m.photo && m.photo.startsWith('/') ? `${SITE}${m.photo}` : (m.photo || undefined),
-        worksFor: { '@type': 'Organization', name: BRAND, url: `${SITE}/` },
+        worksFor: { '@id': `${SITE}/#organization` },
         url: `${SITE}/team`,
       })),
     ],
@@ -681,7 +687,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   done.push(renderPage({
     path: '/',
     ...meta('/'),
-    jsonLd: [breadcrumbLd(PAGE_CRUMBS['/']), faqLd(HOME_FAQS)],
+    // בעמוד הבית אין פירור לחם: רשימה של פריט אחד לא זכאית לתוצאה עשירה
+    jsonLd: [faqLd(HOME_FAQS)],
     bodyHtml:
       `<h1>קבוצת קורקוס: בניית וילות ובתים פרטיים, יזמות ופיקוח בנייה בהוד השרון</h1>` +
       `<p>קבוצת קורקוס (קורקוס גרופ) היא חברת בנייה ונדל"ן מהוד השרון, שמשרדה ברחוב הנגר 24, ובונה וילות ובתים פרטיים בהוד השרון. הקבוצה עוסקת ביזמות נדל"ן, בביצוע ובנייה באמצעות ראיתה, בניהול ופיקוח פרויקטים באמצעות שכינתא, ובתיווך ושיווק נכסים באמצעות אפיק הנחל. את הקבוצה ייסד ומנהל שלומי קורקוס.</p>` +

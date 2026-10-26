@@ -10,7 +10,7 @@ export const SITE_URL = 'https://www.kurkoos-group.co.il'
 export const BRAND = 'קבוצת קורקוס'
 /* גוגל חותך כותרות בסביבות 60 תווים. שם המותג נוסף רק כשהוא נכנס בתקרה,
    כדי שהמילה שמחפשים תישאר גלויה ולא תיחתך לטובת שם החברה. */
-export const TITLE_MAX = 65
+export const TITLE_MAX = 60
 export const DESC_MIN = 120
 export const DESC_MAX = 160
 
@@ -100,7 +100,8 @@ export function articleCrumbs(col, article) {
 /* Article. הכותב בכל הכתבות הוא "המערכת" ולא אדם בשם, ולכן author הוא
    הארגון. תאריך העדכון נלקח משדה updated אם קיים בקובץ, אחרת תאריך הפרסום. */
 export function articleLd(article, path, image) {
-  const img = image ? (String(image).startsWith('http') ? image : SITE_URL + image) : undefined
+  // כתבה בלי תמונת שער מקבלת את תמונת השיתוף של האתר: image מומלץ ל-Article
+  const img = image ? (String(image).startsWith('http') ? image : SITE_URL + image) : `${SITE_URL}/og-image.jpg`
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -109,13 +110,8 @@ export function articleLd(article, path, image) {
     image: img ? [img] : undefined,
     datePublished: article.date || undefined,
     dateModified: article.updated || article.date || undefined,
-    author: { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: BRAND, url: `${SITE_URL}/` },
-    publisher: {
-      '@type': 'Organization',
-      '@id': `${SITE_URL}/#organization`,
-      name: BRAND,
-      logo: { '@type': 'ImageObject', url: `${SITE_URL}/kurkoos-groip-logo.png` },
-    },
+    author: { '@id': `${SITE_URL}/#organization` },
+    publisher: { '@id': `${SITE_URL}/#organization` },
     mainEntityOfPage: { '@type': 'WebPage', '@id': SITE_URL + path },
     articleSection: article.category || undefined,
     keywords: [article.focusKeyword, ...(Array.isArray(article.tags) ? article.tags : [])].filter(Boolean).join(', ') || undefined,
@@ -137,7 +133,7 @@ export function videoLd(article) {
     duration: v.duration || undefined,
     contentUrl: v.src,
     inLanguage: 'he',
-    publisher: { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: BRAND },
+    publisher: { '@id': `${SITE_URL}/#organization` },
   }
 }
 

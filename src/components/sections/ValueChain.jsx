@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useRef, useState } from 'react'
+import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useI18n, useLocalized } from '../../i18n/index.jsx'
 import valueChain from '../../data/valueChain.js'
 import Reveal from '../ui/Reveal.jsx'
@@ -11,6 +11,9 @@ export default function ValueChain() {
   const { t } = useI18n()
   const L = useLocalized()
   const [open, setOpen] = useState(0)
+  /* המספרים 01 עד 06 נופלים למקום בזה אחר זה, והקו האדום יורד ביניהם */
+  const listRef = useRef(null)
+  const dropped = useInView(listRef, { once: true, amount: 0.25 })
 
   return (
     <section className="section value-chain" id="value-chain">
@@ -34,10 +37,11 @@ export default function ValueChain() {
         </Reveal>
 
         <Reveal className="value-chain__list" variant="left" delay={0.1}>
+          <div ref={listRef} className={`vc-drop ${dropped ? 'vc-drop--in' : ''}`} style={{ '--vc-n': valueChain.length }}>
           {valueChain.map((step, i) => {
             const isOpen = open === i
             return (
-              <div className={`vc-item ${isOpen ? 'vc-item--open' : ''}`} key={step.id}>
+              <div className={`vc-item ${isOpen ? 'vc-item--open' : ''}`} key={step.id} style={{ '--i': i }}>
                 <button
                   type="button"
                   className="vc-item__head"
@@ -69,6 +73,7 @@ export default function ValueChain() {
               </div>
             )
           })}
+          </div>
         </Reveal>
       </div>
     </section>

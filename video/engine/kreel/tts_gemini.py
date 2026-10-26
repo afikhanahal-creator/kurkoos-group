@@ -24,6 +24,23 @@ def tts(text, model, voice):
         except urllib.error.HTTPError as e:
             if e.code not in (429, 500, 503) or i == int(os.environ.get('TTS_TRIES', 8)) - 1: raise
             print('retry', e.code, flush=True); time.sleep(int(os.environ.get('TTS_WAIT', 30)))
+def strip_noise_tail(pcm, sr=24000):
+    """The TTS answer ends with a burst of white noise (about 0.1 s, as loud as the speech) after the voice has gone
+    quiet. It was the hiss heard on every cut. Drop every trailing 10 ms frame that is noise (flat spectrum) or silence,
+    then fade the last 30 ms so the line never ends on a click."""
+    import numpy as np
+    x = np.frombuffer(pcm[:len(pcm) // 2 * 2], dtype='<i2').astype(np.float32) / 32768
+    n = int(sr * .01); fr = [float(np.sqrt((x[i:i + n] ** 2).mean())) for i in range(0, len(x) // n * n, n)]
+    # the burst: the trailing run of loud frames, right after at least 100 ms of near silence
+    j = len(fr)
+    while j > 0 and (fr[j - 1] > .02 or j > len(fr) - 4): j -= 1
+    end = len(fr) * n
+    if j < len(fr) and j >= 10 and max(fr[j - 10:j]) < .01:
+        end = j * n
+        while end > n * 20 and fr[end // n - 1] < .003: end -= n
+    x = x[:min(len(x), end + int(sr * .12))].copy()
+    f = min(len(x), int(sr * .03)); x[-f:] *= np.linspace(1, 0, f)
+    return (np.clip(x, -1, 1) * 32767).astype('<i2').tobytes()
 model = sc.get('model', 'gemini-3.8-flash-tts'); voice = sc.get('voice', 'Charon'); style = sc.get('style', '')
 out = {}
 for ln in sc['lines']:
@@ -32,7 +49,7 @@ for ln in sc['lines']:
     model = sc.get('model_by_line', {}).get(ln['id'], sc.get('model', 'gemini-3.8-flash-tts'))
     text = fix(ln['text']); h = hashlib.sha1((model + voice + style + text).encode()).hexdigest()
     if '--fresh' in sys.argv or not os.path.exists(wav) or not os.path.exists(tag) or open(tag).read() != h:
-        pcm = tts((style + ' ' if style else '') + text, model, voice)
+        pcm = strip_noise_tail(tts((style + ' ' if style else '') + text, model, voice))
         raw = wav + '.pcm'; open(raw, 'wb').write(pcm)
         # trim leading and trailing silence, keep 40 ms before and 120 ms after the speech
         subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-f', 's16le', '-ar', '24000', '-ac', '1', '-i', raw, '-af',

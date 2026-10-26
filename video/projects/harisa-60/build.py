@@ -10,8 +10,8 @@ Honesty rules: the old house and the cleared plot are one real photo. Demolition
 illustrations and say so. The finished houses are Kurkoos villas or illustrative pictures, never this plot."""
 import json, os, subprocess
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPO = 1.1
-LEAD, GAP = 0.2, 0.14
+TEMPO = 1.22
+LEAD, GAP = 0.1, 0.05
 M = 'video/projects/_media/'
 script = json.load(open(os.path.join(HERE, 'script.json'), encoding='utf-8'))
 def wav_len(i):
@@ -26,7 +26,7 @@ def word_at(lid, word, s0):
     return round(ln['start'] + (ln['end'] - ln['start']) * i / len(txt) - s0, 2)
 scenes = []
 def scene(a, b, shots, effects, **kw):
-    scenes.append({'start': a, 'end': b, 'shots': shots, 'effects': effects, 'punch': True, 'xfade': .2, **kw})
+    scenes.append({'start': a, 'end': b, 'shots': shots, 'effects': effects, 'punch': True, 'xfade': .12, **kw})
 def split(n, parts):
     d = n / len(parts); out = []
     for p in parts:
@@ -40,9 +40,11 @@ def stage(num, word, y=760):
 
 # 1. the old house on a good plot: the question
 a, b = 0.0, span('v01')[1]
-scene(a, b, [{'src': M + 'hr_house', 'fx': .3, 'fy': .5, 'len': b - a, 'push': .08}], [
-    {'type': 'title', 'at': .3, 'y': 1180, 'lines': [['לשפץ?', 170], ['או לבנות מחדש?', 108, 700, 'mist']]},
-    {'type': 'lower', 'at': .1, 'num': 1, 'text': 'הבית הישן'}], shade_from=.45, shade_k=.85)
+COVER = 1.9  # the post cover opens the film, then the house
+scene(a, COVER, [{'src': M + 'hr_cover.png', 'fit': 'frame', 'y': 960, 'len': COVER, 'push': .03, 'grade': False}], [], shade=False, punch=False, mark=False)
+scene(COVER, b, [{'src': M + 'hr_house', 'fx': .3, 'fy': .5, 'len': b - COVER, 'push': .08}], [
+    {'type': 'title', 'at': .1, 'y': 1180, 'lines': [['לשפץ?', 170], ['או לבנות מחדש?', 108, 700, 'mist']]},
+    {'type': 'lower', 'at': 0, 'num': 1, 'text': 'הבית הישן'}], shade_from=.45, shade_k=.85)
 # 2. checking: structure, soil, rights
 a, b = span('v02'); n = b - a
 scene(a, b, split(n, [{'src': M + 'ph_pikuach'}, {'src': M + 'ph_mgr'}, {'src': M + 'ph_helmetplans'}]), [
@@ -86,7 +88,7 @@ scene(a, b, [{'src': M + 'v4_ph78.webp', 'len': n * .34, 'push': .05}, {'src': M
     {'type': 'pill', 'at': .3, 'text': 'מבתים שבנינו', 'bg': 'teal', 'x': 1000, 'y': 230, 'size': 40},
     {'type': 'lower', 'at': .1, 'num': 8, 'text': 'מסירה'}], shade_from=.45, shade_k=.85)
 # 9. brand and the next step
-a = span('v09')[0]; b = L['v09']['end'] + 1.8
+a = span('v09')[0]; b = L['v09']['end'] + 1.4
 scene(a, b, [{'src': M + 'v4_ph78.webp', 'len': b - a, 'push': 0}], [
     {'type': 'endcard', 'at': 0, 'blur': 10, 'tint': 200, 'lines': [
         ['קבוצת קורקוס', 110, 700, 'paper'], ['מקרקע ועד מסירת מפתח', 66, 400, 'mist'],
@@ -95,7 +97,7 @@ scene(a, b, [{'src': M + 'v4_ph78.webp', 'len': b - a, 'push': 0}], [
 ], shade=False, punch=False)
 
 pj = {'name': 'הריסה ובנייה מחדש: מהבית הישן לבית החדש (דקה)', 'duration': round(b, 2), 'vo_tempo': TEMPO,
-      'music': {'bpm': 112, 'style': 'cinematic', 'quiet': True, 'drums': True, 'drums_from': 18.0},
+      'music': {'bpm': 122, 'style': 'cinematic', 'quiet': True, 'drums': True, 'drums_from': 2.0},
       'mix': {'duck': 'steady'}, 'lines': lines, 'scenes': scenes, 'caption_style': {'size': 60, 'y': 1700}}
 json.dump(pj, open(os.path.join(HERE, 'project.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('duration', pj['duration'], 's,', len(scenes), 'scenes')

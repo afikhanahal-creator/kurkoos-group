@@ -1,4 +1,5 @@
 import { useI18n } from '../../i18n/index.jsx'
+import { videoSources } from '../../lib/cms.js'
 import Modal from './Modal.jsx'
 import './VideoModal.css'
 
@@ -19,7 +20,7 @@ export default function VideoModal({ open, onClose, video, title = '' }) {
             allowFullScreen
           />
         ) : hasFile ? (
-          <video src={video.src} controls autoPlay />
+          <video key={video.src} controls autoPlay>{videoSources(video.src).map((x) => <source key={x.src} src={x.src} type={x.type} />)}</video>
         ) : (
           <div className="video-modal__empty">
             {lang === 'he'

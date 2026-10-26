@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
+import { videoSources } from '../lib/cms.js'
 import { useState, useEffect, useRef, useId, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
 import projects, { getProject } from '../data/projects.js'
@@ -890,7 +891,7 @@ export default function ProjectDetail() {
                     {thumb
                       ? <img src={thumb} alt={vid.title || ''} loading="lazy" />
                       : (vid.src
-                        ? <video className="pd-video-tile__vid" src={`${vid.src}#t=0.5`} muted playsInline preload="metadata" tabIndex={-1} aria-hidden="true" />
+                        ? <video key={vid.src} className="pd-video-tile__vid" muted playsInline preload="metadata" tabIndex={-1} aria-hidden="true">{videoSources(`${vid.src}#t=0.5`).map((x) => <source key={x.src} src={x.src} type={x.type} />)}</video>
                         : <span className="pd-video-tile__file" aria-hidden="true" />)}
                     <span className="pd-video-tile__play"><Icon name="play" size={24} /></span>
                     {vid.title && <span className="pd-video-tile__title">{vid.title}</span>}

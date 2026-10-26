@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MagicBento from '../ui/MagicBento.jsx'
-import { cloudVideo } from '../../lib/cms.js'
+import { videoSources } from '../../lib/cms.js'
+import { useAutoplay } from '../../lib/useAutoplay.js'
 import './AnimatedBackgroundShowcase.css'
 
 /* ============================================================
@@ -70,25 +71,23 @@ function fillRow(list, min) {
 function Tile({ it, i, active, seen, reduce, hidden }) {
   const ref = useRef(null)
   const video = isVideo(it)
-  useEffect(() => {
-    const v = ref.current
-    if (!v || !video) return
-    if (active && !reduce) { const p = v.play(); if (p && p.catch) p.catch(() => {}) } else v.pause()
-  }, [active, seen, reduce, video])
+  const vsrc = video && seen ? it.src : undefined
+  useAutoplay(ref, video && active && !reduce, vsrc)
   return (
     <figure className="abs__tile" style={{ '--ar': ASPECTS[i % ASPECTS.length] }} aria-hidden={hidden || undefined} onPointerMove={glowAt}>
       {video ? (
         <video
           ref={ref}
-          src={seen ? cloudVideo(it.src) : undefined}
           poster={it.poster || undefined}
           muted
           loop
           playsInline
-          preload="none"
+          preload={seen ? 'auto' : 'none'}
           disablePictureInPicture
           tabIndex={-1}
-        />
+        >
+          {vsrc ? videoSources(vsrc).map((x) => <source key={x.src} src={x.src} type={x.type} />) : null}
+        </video>
       ) : (
         <img src={it.src} alt="" loading="lazy" decoding="async" />
       )}

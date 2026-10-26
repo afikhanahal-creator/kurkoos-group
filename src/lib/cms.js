@@ -98,6 +98,22 @@ export function cloudVideo(src, width = 720) {
   return src.slice(0, i + marker.length) + `q_auto,vc_auto,c_limit,w_${width}/` + rest.replace(/\.(mov|m4v|webm|avi|mkv)$/i, '.mp4')
 }
 
+/* The sources a background video offers. MP4 (H.264) first, typed with its codec so a browser built without the H.264
+   licence (Chromium on Linux, some Firefox and Opera builds) skips it, then WebM (VP9) for those browsers.
+   Cloudinary makes both from one upload. Local clips under /divisions/ ship a .webm next to the .mp4; `webm` overrides it. */
+const MP4 = 'video/mp4; codecs="avc1.640028"'
+export function videoSources(src, webm, width = 720) {
+  if (!src) return []
+  if (src.includes('res.cloudinary.com/') && src.includes('/video/upload/')) {
+    const mp4 = cloudVideo(src, width)
+    const vp9 = mp4.replace('q_auto,vc_auto,', 'q_auto,vc_vp9,').replace(/\.mp4(\?|$)/i, '.webm$1')
+    return vp9 !== mp4 ? [{ src: mp4, type: MP4 }, { src: vp9, type: 'video/webm' }] : [{ src: mp4, type: MP4 }]
+  }
+  const alt = webm || (/^\/divisions\/.+\.mp4$/i.test(src) ? src.replace(/\.mp4$/i, '.webm') : null)
+  /* with no alternative the browser gets the file untyped and decides by itself (an uploaded .mov may be HEVC) */
+  return alt ? [{ src, type: MP4 }, { src: alt, type: 'video/webm' }] : [{ src }]
+}
+
 // העלאת וידאו — מעדיף Cloudinary (מתאים לקבצים כבדים) ונופל-לאחור ל-Supabase
 export async function uploadVideoFile(file, folder = 'videos') {
   if (hasCloudinary) {

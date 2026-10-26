@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { videoSources } from '../../lib/cms.js'
 import './bg-media.css'
 
 /* ============================================================
@@ -83,7 +84,9 @@ export default function BackgroundMedia({
     v.setAttribute('playsinline', '')
     v.setAttribute('webkit-playsinline', 'true')
     // בלי קובץ אין מה לנגן: play() על וידאו ריק מסמן אותו "מתנגן" ומעלים את כפתור ההפעלה
-    const tryPlay = () => { if (!v.getAttribute('src')) return; const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
+    const tryPlay = () => { if (!(v.getAttribute('src') || v.querySelector('source'))) return; const p = v.play?.(); if (p && p.catch) p.catch(() => {}) }
+    /* sources added after mount need an explicit load */
+    if (!v.currentSrc && v.querySelector('source')) { try { v.load() } catch (e) { /* ignore */ } }
     tryPlay()
 
     // iOS (במיוחד במצב חיסכון בסוללה) חוסם autoplay עד למחווה כלשהי של המשתמש.
@@ -145,7 +148,6 @@ export default function BackgroundMedia({
           <video
             ref={videoRef}
             className="bg-media__el"
-            src={near && !onDemand ? videoSrc : undefined}
             poster={poster}
             autoPlay
             muted
@@ -161,7 +163,11 @@ export default function BackgroundMedia({
             onPause={() => setPlaying(false)}
             onError={() => setFailed(true)}
             onCanPlay={(e) => { setLoaded(true); const p = e.currentTarget.play?.(); if (p && p.catch) p.catch(() => {}) }}
-          />
+          >
+            {/* the light WebM of the phone version is the fallback for browsers without H.264 */}
+            {near && !onDemand ? videoSources(videoSrc, mobileSrc && /\.mp4$/i.test(mobileSrc) ? mobileSrc.replace(/\.mp4$/i, '.webm') : undefined)
+              .map((x) => <source key={x.src} src={x.src} type={x.type} />) : null}
+          </video>
           {/* כפתור Play — מופיע כשהסרטון לא מתנגן (iOS שחוסם autoplay) */}
           {!playing && (
             <button type="button" className="bg-media__play" onClick={manualPlay} aria-label="הפעלת הסרטון">

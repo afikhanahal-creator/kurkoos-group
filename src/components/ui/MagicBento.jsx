@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { cloudVideo } from '../../lib/cms.js'
+import { videoSources } from '../../lib/cms.js'
+import { useAutoplay } from '../../lib/useAutoplay.js'
 import './MagicBento.css'
 
 /* ============================================================
@@ -65,16 +66,12 @@ const parseRgb = (value) => {
 /* וידאו של כרטיס: מתנגן רק כשהרשת על המסך, ונטען רק בפעם הראשונה שהיא מתקרבת */
 function CardVideo({ src, poster, play }) {
   const ref = useRef(null)
-  useEffect(() => {
-    const v = ref.current
-    if (!v) return
-    if (play) { const p = v.play(); if (p && p.catch) p.catch(() => {}) } else v.pause()
-  }, [play, src])
+  const vsrc = src
+  useAutoplay(ref, play, vsrc)
   return (
     <video
       ref={ref}
       className="magic-bento__image"
-      src={cloudVideo(src)}
       poster={poster || undefined}
       muted
       loop
@@ -82,7 +79,9 @@ function CardVideo({ src, poster, play }) {
       preload="none"
       disablePictureInPicture
       tabIndex={-1}
-    />
+    >
+      {videoSources(vsrc).map((x) => <source key={x.src} src={x.src} type={x.type} />)}
+    </video>
   )
 }
 

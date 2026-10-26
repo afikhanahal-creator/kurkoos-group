@@ -6,22 +6,27 @@
   isolation: isolate;
   transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.7s ease;
 }
-.k-glow > .k-glow__light {
-  /* cards style their children (position, z-index), so the layer holds its own box firmly */
+.k-glow > .k-glow__light,
+.k-glow > .k-glow__wash {
+  /* cards style their children (position, z-index), so the layers hold their own box firmly */
   position: absolute !important;
   inset: 0 !important;
-  z-index: 3 !important;
   display: block;
   margin: 0 !important;
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.8s ease;
-  /* the wash: barely there on light cards so text and fields stay clean */
+}
+/* the ring on top, but only on the border: never over the fields */
+.k-glow > .k-glow__light { z-index: 3 !important; }
+/* the wash under all the content: the card's background shows it, fields and text cover it */
+.k-glow > .k-glow__wash {
+  z-index: -1 !important;
   background: radial-gradient(460px circle at var(--gx, 50%) var(--gy, 50%),
     color-mix(in srgb, var(--k-red) 4%, transparent), transparent 60%);
 }
-.k-glow--dark > .k-glow__light {
+.k-glow--dark > .k-glow__wash {
   background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%),
     color-mix(in srgb, var(--k-red) 12%, transparent), transparent 62%);
 }
@@ -48,7 +53,8 @@
       0 24px 48px -28px rgba(7, 41, 58, 0.35);
     transition-duration: 0.25s, 0.25s;
   }
-  .k-glow:hover > .k-glow__light { opacity: 1; transition-duration: 0.18s; }
+  .k-glow:hover > .k-glow__light,
+  .k-glow:hover > .k-glow__wash { opacity: 1; transition-duration: 0.18s; }
 }
 /* typing in the form keeps a steady ring, with no pointer needed */
 .k-glow:focus-within > .k-glow__light { opacity: 1; }
@@ -56,6 +62,6 @@
   background: linear-gradient(color-mix(in srgb, var(--k-red) 40%, transparent), color-mix(in srgb, var(--k-red) 40%, transparent));
 }
 @media (prefers-reduced-motion: reduce) {
-  .k-glow, .k-glow__light { transition: none; }
+  .k-glow, .k-glow__light, .k-glow__wash { transition: none; }
   .k-glow:hover { transform: none; }
 }

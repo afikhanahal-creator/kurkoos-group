@@ -154,6 +154,8 @@ const SITE_LINKS =
     ['/', 'דף הבית'],
     ['/projects', 'הפרויקטים'],
     ['/villas-sharon', 'בניית וילות ובתים פרטיים'],
+    ['/bniyat-bayit-prati', 'בניית בית פרטי בכל הארץ'],
+    ['/migrashim-vekarkaot', 'מגרשים וקרקעות'],
     ['/kablan-bniya-bayit-prati', 'קבלן בנייה לבית פרטי'],
     ['/bniyat-vila-sharon', 'בניית וילה בשרון'],
     ['/hod-hasharon/bniya-vepikuach', 'חברת בנייה ופיקוח בהוד השרון'],
@@ -167,6 +169,10 @@ const SITE_LINKS =
     ['/livy-yazamim', 'ליווי יזמי נדל"ן'],
     ['/real-estate-glossary', 'מילון מונחי נדל"ן'],
     ['/real-estate-calculators', 'מחשבוני נדל"ן'],
+    ['/shelot-ve-tshuvot', 'שאלות ותשובות'],
+    ['/divisions/residential', 'מגורים'],
+    ['/blog', 'הבלוג'],
+    ['/careers', 'דרושים'],
   ].map(([href, label]) => `<li><a href="${href}">${esc(label)}</a></li>`).join('') +
   `</ul></nav>`
 

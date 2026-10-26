@@ -8,6 +8,8 @@ import ErrorBoundary, { reloadOnce } from './components/ErrorBoundary.jsx'
 import './styles/global.css'
 import './styles/polish.css'
 import './styles/a11y.css'
+import './styles/glow.css'
+import { initGlowCards } from './lib/glowCards.js'
 
 // iOS Safari applies :active (the press feedback) only when the page listens to touchstart
 if (typeof document !== 'undefined') document.addEventListener('touchstart', () => {}, { passive: true })
@@ -73,3 +75,5 @@ function holdPrerendered(node) {
   mo.observe(document.body, { childList: true, subtree: true })
   const timer = setTimeout(done, 25000)
 }
+
+initGlowCards()

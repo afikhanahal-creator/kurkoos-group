@@ -1,0 +1,601 @@
+{
+ "name": "הריסה ובנייה מחדש: מהבית הישן לבית החדש (דקה)",
+ "duration": 49.65,
+ "vo_tempo": 1.1,
+ "music": {
+  "bpm": 112,
+  "style": "cinematic",
+  "quiet": true,
+  "drums": true,
+  "drums_from": 18.0
+ },
+ "mix": {
+  "duck": "steady"
+ },
+ "lines": [
+  {
+   "id": "v01",
+   "vo": "v01",
+   "start": 0.2,
+   "end": 5.225,
+   "text": "בית ישן, על מגרש טוב. לשפץ אותו, או להרוס ולבנות מחדש?"
+  },
+  {
+   "id": "v02",
+   "vo": "v02",
+   "start": 5.365,
+   "end": 11.59,
+   "text": "לפני שמחליטים, בודקים. את מצב השלד, את הקרקע, ואת זכויות הבנייה במגרש."
+  },
+  {
+   "id": "v03",
+   "vo": "v03",
+   "start": 11.73,
+   "end": 16.864,
+   "text": "מתכננים את הבית החדש, ומגישים להיתר. בלי היתר ביד, לא מתחילים."
+  },
+  {
+   "id": "v04",
+   "vo": "v04",
+   "start": 17.004,
+   "end": 22.865,
+   "text": "מגדרים את האתר, מנתקים תשתיות, ורק אז הריסה מבוקרת, עם בטיחות מלאה."
+  },
+  {
+   "id": "v05",
+   "vo": "v05",
+   "start": 23.005,
+   "end": 26.612,
+   "text": "המגרש מתפנה, ומסמנים בשטח את קווי הבית החדש."
+  },
+  {
+   "id": "v06",
+   "vo": "v06",
+   "start": 26.752,
+   "end": 31.959,
+   "text": "כלונסאות, יסודות ושלד. כל שלב נבדק, לפני שיוצקים."
+  },
+  {
+   "id": "v07",
+   "vo": "v07",
+   "start": 32.099,
+   "end": 37.051,
+   "text": "מערכות, איטום וגמר. עם פיקוח צמוד, עד המסירה."
+  },
+  {
+   "id": "v08",
+   "vo": "v08",
+   "start": 37.191,
+   "end": 42.216,
+   "text": "ובסוף, בית חדש. בנוי לפי מה שתכננתם, מהיסוד."
+  },
+  {
+   "id": "v09",
+   "vo": "v09",
+   "start": 42.356,
+   "end": 47.854,
+   "text": "קבוצת קורקוס. מקרקע ועד מסירת מפתח. דברו איתנו, לפני שמחליטים."
+  }
+ ],
+ "scenes": [
+  {
+   "start": 0.0,
+   "end": 5.365,
+   "shots": [
+    {
+     "src": "video/projects/_media/hr_house",
+     "fx": 0.3,
+     "fy": 0.5,
+     "len": 5.365,
+     "push": 0.08
+    }
+   ],
+   "effects": [
+    {
+     "type": "title",
+     "at": 0.3,
+     "y": 1180,
+     "lines": [
+      [
+       "לשפץ?",
+       170
+      ],
+      [
+       "או לבנות מחדש?",
+       108,
+       700,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 1,
+     "text": "הבית הישן"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade_from": 0.45,
+   "shade_k": 0.85
+  },
+  {
+   "start": 5.365,
+   "end": 11.73,
+   "shots": [
+    {
+     "src": "video/projects/_media/ph_pikuach",
+     "push": 0.04,
+     "len": 2.1216666666666666
+    },
+    {
+     "src": "video/projects/_media/ph_mgr",
+     "push": 0.04,
+     "len": 2.1216666666666666
+    },
+    {
+     "src": "video/projects/_media/ph_helmetplans",
+     "push": 0.04,
+     "len": 2.1216666666666666
+    }
+   ],
+   "effects": [
+    {
+     "type": "chips",
+     "at": 0.4,
+     "y": 1180,
+     "items": [
+      [
+       "1",
+       "מצב השלד"
+      ],
+      [
+       "2",
+       "הקרקע"
+      ],
+      [
+       "3",
+       "זכויות הבנייה"
+      ]
+     ]
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 2,
+     "text": "בדיקות"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade_from": 0.5,
+   "shade_k": 0.85
+  },
+  {
+   "start": 11.73,
+   "end": 17.004,
+   "shots": [
+    {
+     "src": "video/projects/_media/hr_house",
+     "fx": 0.3,
+     "len": 2.900700000000001,
+     "push": 0.03,
+     "grade": true
+    },
+    {
+     "src": "video/projects/_media/il_stamp",
+     "fit": "frame",
+     "len": 2.3733000000000004,
+     "push": 0.04
+    }
+   ],
+   "effects": [
+    {
+     "type": "blueprint",
+     "at": 0.2,
+     "dur": 1.2,
+     "col": "mist",
+     "grid": [
+      80,
+      500,
+      1000,
+      1300
+     ],
+     "rects": [
+      [
+       180,
+       620,
+       900,
+       1180
+      ],
+      [
+       300,
+       760,
+       640,
+       1080
+      ]
+     ],
+     "out": 2.6370000000000005
+    },
+    {
+     "type": "stamp",
+     "at": 3.1644000000000005,
+     "text": "היתר בנייה"
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 3,
+     "text": "תכנון והיתר"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 17.004,
+   "end": 23.005,
+   "shots": [
+    {
+     "src": "video/projects/_media/hr_il_fence",
+     "fit": "frame",
+     "len": 3.000499999999999,
+     "push": 0.05
+    },
+    {
+     "src": "video/projects/_media/hr_il_dig",
+     "fit": "frame",
+     "len": 3.000499999999999,
+     "push": 0.05
+    }
+   ],
+   "effects": [
+    {
+     "type": "pill",
+     "at": 0.3,
+     "text": "איור להמחשה",
+     "bg": "teal",
+     "x": 1000,
+     "y": 1290,
+     "size": 40
+    },
+    {
+     "type": "title",
+     "at": 0.2,
+     "y": 1420,
+     "lines": [
+      [
+       "הריסה מבוקרת",
+       120
+      ],
+      [
+       "גידור, ניתוק תשתיות ובטיחות",
+       64,
+       700,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 4,
+     "text": "הריסה"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade": false
+  },
+  {
+   "start": 23.005,
+   "end": 26.752,
+   "shots": [
+    {
+     "src": "video/projects/_media/hr_house",
+     "fx": 0.82,
+     "fy": 0.6,
+     "len": 1.8735,
+     "push": 0.06
+    },
+    {
+     "src": "video/projects/_media/hr_il_plot",
+     "fit": "frame",
+     "len": 1.8735,
+     "push": 0.04
+    }
+   ],
+   "effects": [
+    {
+     "type": "blueprint",
+     "at": 0.3,
+     "dur": 0.9,
+     "col": "red",
+     "width": 5,
+     "paths": [
+      [
+       [
+        160,
+        1240
+       ],
+       [
+        920,
+        1180
+       ],
+       [
+        980,
+        1520
+       ],
+       [
+        120,
+        1600
+       ],
+       [
+        160,
+        1240
+       ]
+      ]
+     ],
+     "out": 1.68615
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 5,
+     "text": "סימון"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 26.752,
+   "end": 32.099,
+   "shots": [
+    {
+     "src": "video/projects/_media/site_piles.mp4",
+     "t0": 1,
+     "speed": 1.2,
+     "push": 0.04,
+     "len": 1.3367499999999994,
+     "dur": 1.3367499999999994
+    },
+    {
+     "src": "video/projects/_media/v4_found.mp4",
+     "t0": 0,
+     "speed": 1.3,
+     "push": 0.04,
+     "len": 1.3367499999999994,
+     "dur": 1.3367499999999994
+    },
+    {
+     "src": "video/projects/_media/v4_w1full.mp4",
+     "t0": 16.5,
+     "speed": 1.35,
+     "push": 0.04,
+     "len": 1.3367499999999994,
+     "dur": 1.3367499999999994
+    },
+    {
+     "src": "video/projects/_media/v4_roof.mp4",
+     "t0": 2.6,
+     "speed": 1.25,
+     "push": 0.04,
+     "len": 1.3367499999999994,
+     "dur": 1.3367499999999994
+    }
+   ],
+   "effects": [
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 6,
+     "text": "שלד"
+    },
+    {
+     "type": "title",
+     "at": 0.05,
+     "until": 1.2,
+     "y": 760,
+     "bar": true,
+     "lines": [
+      [
+       "שלד",
+       170
+      ]
+     ]
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade_from": 0.55,
+   "shade_k": 0.8
+  },
+  {
+   "start": 32.099,
+   "end": 37.191,
+   "shots": [
+    {
+     "src": "video/projects/_media/hr_pour",
+     "push": 0.04,
+     "len": 1.2730000000000015
+    },
+    {
+     "src": "video/projects/_media/hr_t24",
+     "push": 0.04,
+     "len": 1.2730000000000015
+    },
+    {
+     "src": "video/projects/_media/hr_t18",
+     "push": 0.04,
+     "len": 1.2730000000000015
+    },
+    {
+     "src": "video/projects/_media/v4_ph80.webp",
+     "push": 0.04,
+     "len": 1.2730000000000015
+    }
+   ],
+   "effects": [
+    {
+     "type": "chips",
+     "at": 0.35,
+     "y": 1180,
+     "items": [
+      [
+       "1",
+       "מערכות"
+      ],
+      [
+       "2",
+       "איטום"
+      ],
+      [
+       "3",
+       "גמר"
+      ],
+      [
+       "4",
+       "פיקוח צמוד"
+      ]
+     ]
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 7,
+     "text": "גמר"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade_from": 0.5,
+   "shade_k": 0.85
+  },
+  {
+   "start": 37.191,
+   "end": 42.356,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph78.webp",
+     "len": 1.7560999999999998,
+     "push": 0.05
+    },
+    {
+     "src": "video/projects/_media/v4_ph79.webp",
+     "len": 1.7044499999999998,
+     "push": 0.05
+    },
+    {
+     "src": "video/projects/_media/v4_ph77.webp",
+     "len": 1.7044499999999998,
+     "push": 0.05
+    }
+   ],
+   "effects": [
+    {
+     "type": "title",
+     "at": 0.3,
+     "y": 1200,
+     "lines": [
+      [
+       "בית חדש",
+       170
+      ],
+      [
+       "מהיסוד",
+       110,
+       700,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "pill",
+     "at": 0.3,
+     "text": "מבתים שבנינו",
+     "bg": "teal",
+     "x": 1000,
+     "y": 230,
+     "size": 40
+    },
+    {
+     "type": "lower",
+     "at": 0.1,
+     "num": 8,
+     "text": "מסירה"
+    }
+   ],
+   "punch": true,
+   "xfade": 0.2,
+   "shade_from": 0.45,
+   "shade_k": 0.85
+  },
+  {
+   "start": 42.356,
+   "end": 49.653999999999996,
+   "shots": [
+    {
+     "src": "video/projects/_media/v4_ph78.webp",
+     "len": 7.297999999999995,
+     "push": 0
+    }
+   ],
+   "effects": [
+    {
+     "type": "endcard",
+     "at": 0,
+     "blur": 10,
+     "tint": 200,
+     "lines": [
+      [
+       "קבוצת קורקוס",
+       110,
+       700,
+       "paper"
+      ],
+      [
+       "מקרקע ועד מסירת מפתח",
+       66,
+       400,
+       "mist"
+      ],
+      [
+       "055-981-1814",
+       120,
+       700,
+       "paper"
+      ],
+      [
+       "kurkoos-group.co.il",
+       46,
+       400,
+       "mist"
+      ]
+     ]
+    },
+    {
+     "type": "pill",
+     "at": 0.9,
+     "text": "לפני שמחליטים, דברו איתנו",
+     "bg": "red",
+     "x": 960,
+     "y": 1500,
+     "size": 54
+    }
+   ],
+   "punch": false,
+   "xfade": 0.2,
+   "shade": false
+  }
+ ],
+ "caption_style": {
+  "size": 60,
+  "y": 1700
+ }
+}

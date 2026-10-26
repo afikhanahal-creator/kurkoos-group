@@ -107,7 +107,8 @@
 
 .vc-item__panel { overflow: hidden; }
 .vc-item__panel p {
-  padding: 0 1.2rem 1.6rem calc(1.2rem + 1.1rem + 1.2rem);
+  padding-block: 0 1.6rem;
+  padding-inline: calc(1.2rem + 1.6rem + 1.2rem) 1.2rem;
   color: var(--color-text-soft);
   font-size: 1.05rem;
 }
@@ -161,11 +162,53 @@
   .value-chain__intro { position: static; text-align: center; }
   .value-chain__intro .eyebrow { justify-content: center; }
   .value-chain__intro .section-lead { margin-inline: auto; }
-  .vc-item__panel p { padding-inline-start: 1.2rem; }
+  .vc-item__panel p { padding-inline-start: calc(1.2rem + 1.6rem + 0.8rem); }
   .value-chain__art { max-width: 460px; margin-inline: auto; margin-top: 1.5rem; }
 }
 
 /* מובייל — הגדלת התגית האדומה (vc-item__tag) ב-3px */
 @media (max-width: 768px) {
   .vc-item__tag { font-size: calc(0.7rem + 3px); }
+}
+
+/* ---- אפקט יורד על המספרים 01 עד 06 ----
+   בכניסה למסך: קו אדום יורד לאורך עמודת המספרים, וכל מספר נופל למקום
+   כשהקו מגיע אליו, עם קפיצה קטנה בנחיתה. השלב הפתוח מסומן באדום. */
+.vc-drop { position: relative; }
+.vc-drop::before {
+  content: '';
+  position: absolute;
+  inset-block: 1.9rem;
+  inset-inline-start: calc(2rem - 1px);
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, var(--color-accent-500), color-mix(in srgb, var(--color-accent-500) 15%, transparent));
+  transform: scaleY(0);
+  transform-origin: top;
+  pointer-events: none;
+}
+.vc-drop--in::before { transform: scaleY(1); transition: transform calc(var(--vc-n) * 0.14s + 0.3s) cubic-bezier(0.45, 0, 0.2, 1); }
+.vc-drop .vc-item__num {
+  position: relative;
+  z-index: 1;
+  width: 1.6rem;
+  padding-block: 0.2em;
+  text-align: center;
+  background: var(--color-bg);
+  transition: color var(--dur-base);
+}
+.vc-drop .vc-item--open .vc-item__num { background: var(--color-bg-soft); color: var(--color-accent-500); }
+.vc-drop:not(.vc-drop--in) .vc-item__num { opacity: 0; transform: translateY(-34px); }
+.vc-drop--in .vc-item__num {
+  animation: vc-num-drop 0.62s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation-delay: calc(var(--i) * 0.14s + 0.12s);
+}
+@keyframes vc-num-drop {
+  0% { opacity: 0; transform: translateY(-34px); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-drop::before, .vc-drop--in::before { transform: none; transition: none; }
+  .vc-drop .vc-item__num, .vc-drop--in .vc-item__num { opacity: 1; transform: none; animation: none; }
 }

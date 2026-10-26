@@ -1,0 +1,62 @@
+/* Red hover light on form and office cards: the same language as the execution page screens, calmer for a card
+   people type in. A ring of red light follows the pointer around the edge, a soft wash inside, a small lift and a red
+   halo outside. Enter fast, leave slow, so a pass of the pointer leaves a short trail. */
+.k-glow {
+  --k-red: var(--color-accent-500, #a90b0c);
+  isolation: isolate;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.7s ease;
+}
+.k-glow > .k-glow__light {
+  /* cards style their children (position, z-index), so the layer holds its own box firmly */
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  display: block;
+  margin: 0 !important;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  /* the wash: barely there on light cards so text and fields stay clean */
+  background: radial-gradient(460px circle at var(--gx, 50%) var(--gy, 50%),
+    color-mix(in srgb, var(--k-red) 9%, transparent), transparent 62%);
+}
+.k-glow--dark > .k-glow__light {
+  background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%),
+    color-mix(in srgb, var(--k-red) 26%, transparent), color-mix(in srgb, var(--k-red) 8%, transparent) 40%, transparent 66%);
+}
+.k-glow--dark > .k-glow__light::before { padding: 2.5px; }
+/* the ring: only the border, brightest where the pointer is */
+.k-glow__light::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background:
+    radial-gradient(260px circle at var(--gx, 50%) var(--gy, 50%), var(--k-red) 0%, color-mix(in srgb, var(--k-red) 60%, transparent) 35%, transparent 72%),
+    linear-gradient(color-mix(in srgb, var(--k-red) 30%, transparent), color-mix(in srgb, var(--k-red) 30%, transparent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+@media (hover: hover) and (pointer: fine) {
+  .k-glow:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--k-red) 10%, transparent),
+      0 0 64px -14px color-mix(in srgb, var(--k-red) 70%, transparent),
+      0 28px 56px -26px rgba(7, 41, 58, 0.45);
+    transition-duration: 0.25s, 0.25s;
+  }
+  .k-glow:hover > .k-glow__light { opacity: 1; transition-duration: 0.18s; }
+}
+/* typing in the form keeps a steady ring, with no pointer needed */
+.k-glow:focus-within > .k-glow__light { opacity: 1; }
+.k-glow:focus-within > .k-glow__light::before {
+  background: linear-gradient(color-mix(in srgb, var(--k-red) 70%, transparent), color-mix(in srgb, var(--k-red) 70%, transparent));
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-glow, .k-glow__light { transition: none; }
+  .k-glow:hover { transform: none; }
+}

@@ -13,6 +13,29 @@
      links  : שורת קישורים בסוף הסקשן [{ to, label }].
    ============================================================ */
 
+import { VILLAS_PROJECTS } from './villasPage.js'
+
+/* ---------- פרויקטים: מפרט מ-villasPage.js, סטטוס מה-CMS ---------- */
+export const PROJECT_STATUS_HE = { planning: 'בתכנון', construction: 'בבנייה', completed: 'הושלם', marketing: 'בשיווק', sold: 'נמכר' }
+
+/* תיאור הכרטיס של וילה, מהמפרט עצמו: היחידות, ואז כל שורת מפרט והאדריכל */
+function villaText(v) {
+  const specs = v.specs || []
+  const units = specs.find(([k]) => k === 'יחידות')?.[1] || v.kind
+  /* "גינה: גינה פרטית" נכתב "גינה פרטית", ו"מפלסים: שלושה: מרתף" נכתב "שלושה מפלסים: מרתף" */
+  const rest = specs.filter(([k]) => k !== 'יחידות').map(([k, val]) =>
+    val.includes(k) ? val : val.includes(':') ? val.replace(':', ` ${k}:`) : `${k}: ${val}`)
+  return [units, ...rest, v.architect ? `אדריכל: ${v.architect}` : ''].filter(Boolean).join('. ') + '.'
+}
+
+function projectItem({ t, cms, villa, status = '', d = '', link }) {
+  const v = villa ? VILLAS_PROJECTS.find((p) => p.slug === villa) : null
+  return { t, d: v ? villaText(v) : d, to: `/projects/${cms}`, link, cms, status: v?.status || status }
+}
+
+/* הסטטוס להצגה: מה-CMS כשיש (מפתח באנגלית, כמו בעמוד הפרויקט), אחרת הנפילה לאחור */
+export const statusOf = (item, cmsStatus = {}) => PROJECT_STATUS_HE[cmsStatus[item.cms]] || item.status || ''
+
 /* ---------- אודות ----------
    מקורות: divisions.js (answer, intro ו-seoDescription של כל זרוע),
    houseLanding.js (HOUSE_ARMS, F.nationwide), SharonHub.jsx (המשרד ושעות
@@ -144,37 +167,17 @@ export const PROJECTS_FACTS = [
     paras: [
       'הפרויקטים שהקבוצה מקימה כיום נמצאים בהוד השרון, ופרויקט נוסף נמצא ביהוד-מונוסון. הביצוע בידי ראיתה, זרוע הביצוע של הקבוצה, והפיקוח בידי שכינתא.',
     ],
+    /* הסטטוס והמפרט לא כתובים כאן: הסטטוס מגיע מהפרויקט ב-CMS (cms), כמו
+       בעמוד הפרויקט עצמו, והמפרט של שלוש הווילות מ-villasPage.js (villa).
+       status כאן הוא רק נפילה לאחור כשה-CMS לא זמין. */
     items: [
-      {
-        t: 'הנרייטה סאלד 22-24, מערב הוד השרון. בבנייה.',
-        d: 'ארבע יחידות דו משפחתיות לשמונה משפחות. לכל יחידה מגרש 380 מ"ר הרשום בטאבו, כ-300 מ"ר בנוי בשלושה מפלסים, 7 חדרים, 4 חדרי רחצה ובריכת שחייה 3x6 מטר. אדריכל: בני נדלסטיצ\'ר.',
-        to: '/projects/henrietta-sald-22-24',
-        link: 'הנרייטה סאלד 22-24',
-      },
-      {
-        t: 'חנקין 41, שכונת מגדיאל. בבנייה.',
-        d: 'בניין בוטיק של שש דירות, עם מרפסות מרווחות, שתי חניות נפרדות בחניון תת קרקעי לכל דירה וגינה פרטית בשטח כ-150 מ"ר. אדריכל: בני נדלסטיצ\'ר.',
-        to: '/projects/project-hankin-41',
-        link: 'חנקין 41, מגדיאל',
-      },
-      {
-        t: 'יורדי הים 3, שכונת גרינברג. בתכנון.',
-        d: 'שתי וילות פרטיות על מגרשים של למעלה מחצי דונם לכל יחידה. כל בית כ-300 מ"ר בנוי בשלושה מפלסים, עם קומת מרתף ובריכת שחייה מאושרת 4x9 מטר. אדריכל: רמי שחר.',
-        to: '/projects/yordei-hayam-3',
-        link: 'יורדי הים 3',
-      },
-      {
-        t: 'בן גוריון 17, יהוד-מונוסון.',
-        d: 'בית דו משפחתי, בליווי מלא של הקבוצה מהחתימה ועד המפתח.',
-        to: '/projects/ben-gurion-17',
-        link: 'בן גוריון 17, יהוד-מונוסון',
-      },
-      {
-        t: 'החומש 22-24, הוד השרון. הושלם.',
-        d: 'פרויקט שהקבוצה השלימה. בעמוד היזמות מוצג המעבר שלו מהשרטוט אל הבית הגמור.',
-        to: '/projects/hahumash-22-24',
-        link: 'פרויקט החומש 22-24',
-      },
+      projectItem({ t: 'הנרייטה סאלד 22-24, מערב הוד השרון', cms: 'henrietta-sald-22-24', villa: 'henrietta-szold', link: 'הנרייטה סאלד 22-24' }),
+      projectItem({ t: 'חנקין 41, שכונת מגדיאל', cms: 'project-hankin-41', villa: 'hankin-41', link: 'חנקין 41, מגדיאל' }),
+      projectItem({ t: 'יורדי הים 3, שכונת גרינברג', cms: 'yordei-hayam-3', villa: 'yordei-hayam', link: 'יורדי הים 3' }),
+      projectItem({ t: 'בן גוריון 17, יהוד-מונוסון', cms: 'ben-gurion-17', link: 'בן גוריון 17, יהוד-מונוסון',
+        d: 'בית דו משפחתי, בליווי מלא של הקבוצה מהחתימה ועד המפתח.' }),
+      projectItem({ t: 'החומש 22-24, הוד השרון', cms: 'hahumash-22-24', status: 'הושלם', link: 'פרויקט החומש 22-24',
+        d: 'פרויקט שהקבוצה השלימה. בעמוד היזמות מוצג המעבר שלו מהשרטוט אל הבית הגמור.' }),
     ],
   },
   {
@@ -272,3 +275,39 @@ export const CALC_FACTS = [
     ],
   },
 ]
+
+/* ---------- עריכה בעורך העמודים ----------
+   כל טקסט בסקשנים האלה הוא מפתח i18n: facts.<page>.<block>.<field>.
+   he.js טוען את FACTS_DICT, ולכן הערכים כאן הם ברירת המחדל של t() ושל
+   העורך. עריכה בעורך נשמרת ככותרת אתר (heading.<key>) וגוברת עליהם. */
+export const FACTS = {
+  about: ABOUT_FACTS, team: TEAM_FACTS, projects: PROJECTS_FACTS, sharon: SHARON_FACTS, calc: CALC_FACTS,
+}
+export const FACTS_DICT = Object.fromEntries(
+  Object.entries(FACTS).map(([page, blocks]) => [page, Object.fromEntries(blocks.map((b) => [b.id, b]))]),
+)
+export const factKey = (page, id, field) => `facts.${page}.${id}.${field}`
+
+/* רשימת השדות של סקשן, לעורך (defs/<page>.js): כל מה שמוצג, כולל כתובות הקישורים */
+export function factTexts(page, id) {
+  const b = FACTS_DICT[page][id]
+  const k = (f) => factKey(page, id, f)
+  const T = (key, label, multiline = false) => ({ key, label, multiline })
+  return [
+    ...(b.eyebrow ? [T(k('eyebrow'), 'תווית עליונה')] : []),
+    T(k('title'), 'כותרת'),
+    ...(b.paras || []).map((_, i) => T(k(`paras.${i}`), `פסקה ${i + 1}`, true)),
+    ...(b.items || []).flatMap((it, i) => [
+      T(k(`items.${i}.t`), `כרטיס ${i + 1}: כותרת`),
+      T(k(`items.${i}.d`), `כרטיס ${i + 1}: טקסט`, true),
+      ...(it.to ? [T(k(`items.${i}.link`), `כרטיס ${i + 1}: טקסט הקישור`), T(k(`items.${i}.to`), `כרטיס ${i + 1}: כתובת הקישור`)] : []),
+    ]),
+    ...(b.links || []).flatMap((_, i) => [
+      T(k(`links.${i}.label`), `קישור ${i + 1}: טקסט`),
+      T(k(`links.${i}.to`), `קישור ${i + 1}: כתובת`),
+    ]),
+  ]
+}
+
+/* סקשן לעורך: [id, label, icon, texts] */
+export const factSection = (page, id, icon) => [id, FACTS_DICT[page][id].label, icon, factTexts(page, id)]

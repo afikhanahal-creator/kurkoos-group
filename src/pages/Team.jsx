@@ -12,7 +12,7 @@ import { TEAM_FACTS } from '../data/pageFacts.js'
 /* הסקשנים של העמוד, הסדר הקבוע ב-defs/team.js */
 const LOCAL = {
   /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
-  ...Object.fromEntries(TEAM_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
+  ...Object.fromEntries(TEAM_FACTS.map((b) => [b.id, ({ ctx }) => <FactsSection page="team" block={b} cmsStatus={ctx?.cmsStatus} />])),
   /* תיאור החיפוש מונה את האנשים בשמם, זהה לעמוד המרונדר מראש.
      הכותרת והליד שעל המסך לא משתנים. */
   header: ({ ctx: { t, members } }) => (

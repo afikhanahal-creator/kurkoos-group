@@ -1,3 +1,5 @@
+import { factSection } from '../../../data/pageFacts.js'
+
 /* עמוד אודות: כותרת, החזון, ואחריהם רכיבים משותפים מספריית העורך */
 export default {
   route: '/about',
@@ -10,9 +12,9 @@ export default {
       { key: 'pages.about.lead', label: 'טקסט מוביל', multiline: true },
     ]],
     ['vision', 'החזון', 'book'],
-    /* סקשני עובדות מ-data/pageFacts.js (ABOUT_FACTS) */
-    ['arms', 'ארבע הזרועות', 'cards'],
-    ['how', 'איך אנחנו עובדים', 'text'],
+    /* סקשני עובדות מ-data/pageFacts.js, כל הטקסטים והקישורים נערכים בעורך (ABOUT_FACTS) */
+    factSection('about', 'arms', 'cards'),
+    factSection('about', 'how', 'text'),
     'stats',
     'valueChain',
     'partners',

@@ -10,7 +10,7 @@ import {
   fetchDraft, fetchPublished, saveDraft, publishPage, listVersions,
 } from '../../../lib/pageBuilder/layout.js'
 import { loadHeadingOverrides } from '../../../lib/headings.js'
-import { uploadMedia, uploadVideoFile, fetchSettings, setSetting } from '../../../lib/cms.js'
+import { uploadMedia, uploadVideoFile, fetchSettings, setSetting, movedVideo } from '../../../lib/cms.js'
 import { readExecutionShowcase } from '../../../data/executionShowcase.js'
 import ImageManager from '../ImageManager.jsx'
 import { executionGallery } from '../../../data/executionGallery.js'
@@ -698,7 +698,7 @@ function SettingShowcase({ cfg, onSaved }) {
           <li key={`${v.src}-${i}`} className="pe-show__item">
             <span className="pe-show__thumb">
               {v.type === 'video' || (v.type !== 'image' && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(v.src))
-                ? <video src={v.src} poster={v.poster || undefined} muted playsInline preload="metadata" />
+                ? <video src={movedVideo(v.src)} poster={v.poster || undefined} muted playsInline preload="metadata" />
                 : <img src={v.src} alt="" />}
             </span>
             <input className="pe-input" value={v.label || ''} placeholder="כיתוב על המסך (לא חובה)" aria-label={`כיתוב לסרטון ${i + 1}`}

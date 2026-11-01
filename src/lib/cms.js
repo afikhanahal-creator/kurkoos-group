@@ -89,7 +89,33 @@ export async function uploadToCloudinary(file, folder) {
 
 /* סרטון שהועלה ל-Cloudinary: מוגש מכווץ (איכות אוטומטית, עד 720 פיקסלים רוחב)
    וכ-mp4, גם כשהקובץ המקורי הוא mov מהאייפון. כתובת אחרת חוזרת כמו שהיא */
+/* The site's own clips used to ship inside every Vercel build (public/divisions, about 12 MB with the WebM copies).
+   They live in Cloudinary now, uploaded as they were: these are the same files, served untransformed, because
+   Cloudinary's automatic re-encode came out larger than our hand-made ones. Saved editor settings still hold the
+   old /divisions/ paths, so they are mapped here. */
+const MOVED_VIDEOS = {
+  '/divisions/kurkoos-showcase-m.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/kurkoos-showcase-m.mp4',
+  '/divisions/kurkoos-showcase-m.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534297/kurkoos/site/videos/kurkoos-showcase-m-webm.webm',
+  '/divisions/kurkoos-showcase.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/kurkoos-showcase.mp4',
+  '/divisions/showcase/frame-a.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/showcase-frame-a.mp4',
+  '/divisions/showcase/frame-a.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534297/kurkoos/site/videos/showcase-frame-a-webm.webm',
+  '/divisions/showcase/frame-b.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/showcase-frame-b.mp4',
+  '/divisions/showcase/frame-b.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534297/kurkoos/site/videos/showcase-frame-b-webm.webm',
+  '/divisions/showcase/piles-a.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/showcase-piles-a.mp4',
+  '/divisions/showcase/piles-a.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534297/kurkoos/site/videos/showcase-piles-a-webm.webm',
+  '/divisions/showcase/piles-b.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/showcase-piles-b.mp4',
+  '/divisions/showcase/piles-b.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534297/kurkoos/site/videos/showcase-piles-b-webm.webm',
+  '/divisions/showcase/szold-a.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/showcase-szold-a.mp4',
+  '/divisions/showcase/szold-a.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534297/kurkoos/site/videos/showcase-szold-a-webm.webm',
+  '/divisions/showcase/szold-b.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/showcase-szold-b.mp4',
+  '/divisions/showcase/szold-b.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534298/kurkoos/site/videos/showcase-szold-b-webm.webm',
+  '/divisions/showcase/szold-c.mp4': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534177/kurkoos/site/videos/showcase-szold-c.mp4',
+  '/divisions/showcase/szold-c.webm': 'https://res.cloudinary.com/hb7875r8/video/upload/v1793534297/kurkoos/site/videos/showcase-szold-c-webm.webm',
+}
+export const movedVideo = (src) => (src && MOVED_VIDEOS[src]) || src
+
 export function cloudVideo(src, width = 720) {
+  if (src && MOVED_VIDEOS[src]) return MOVED_VIDEOS[src]
   if (!src || !src.includes('res.cloudinary.com/') || !src.includes('/video/upload/')) return src
   const marker = '/video/upload/'
   const i = src.indexOf(marker)
@@ -104,6 +130,10 @@ export function cloudVideo(src, width = 720) {
 const MP4 = 'video/mp4; codecs="avc1.640028"'
 export function videoSources(src, webm, width = 720) {
   if (!src) return []
+  if (MOVED_VIDEOS[src]) {
+    const alt = MOVED_VIDEOS[webm || src.replace(/\.mp4$/i, '.webm')]
+    return alt ? [{ src: MOVED_VIDEOS[src], type: MP4 }, { src: alt, type: 'video/webm' }] : [{ src: MOVED_VIDEOS[src], type: MP4 }]
+  }
   if (src.includes('res.cloudinary.com/') && src.includes('/video/upload/')) {
     const mp4 = cloudVideo(src, width)
     const vp9 = mp4.replace('q_auto,vc_auto,', 'q_auto,vc_vp9,').replace(/\.mp4(\?|$)/i, '.webm$1')

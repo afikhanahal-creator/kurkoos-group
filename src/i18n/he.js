@@ -1,5 +1,10 @@
 // תרגומי ממשק בעברית. הוסף/ערוך מפתחות כאן.
+import { FACTS_DICT } from '../data/pageFacts.js'
+
 export default {
+  /* טקסטי סקשני העובדות (אודות, צוות, פרויקטים, שרון, מחשבונים). ברירות המחדל
+     ב-data/pageFacts.js, וכאן הם נכנסים למילון כדי שהעורך יוכל לערוך אותם */
+  facts: FACTS_DICT,
   dir: 'rtl',
   langLabel: 'EN',
   nav: {

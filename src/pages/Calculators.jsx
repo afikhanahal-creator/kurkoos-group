@@ -356,7 +356,7 @@ function YieldCalc({ onSummary }) {
 /* הסקשנים של העמוד. הסדר הקבוע ב-defs/calculators.js */
 const LOCAL = {
   /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
-  ...Object.fromEntries(CALC_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
+  ...Object.fromEntries(CALC_FACTS.map((b) => [b.id, ({ ctx }) => <FactsSection page="calc" block={b} cmsStatus={ctx?.cmsStatus} />])),
   /* ---------- כותרת ---------- */
   hero: ({ ctx: { jump } }) => (
     <header className="cx-hero">

@@ -26,6 +26,9 @@ function mapRows(rows) {
     card_layout: p.card_layout,
   }))
 }
+/* הסטטוס של כל פרויקט לפי ה-slug, מאותן שורות CMS שמזינות את עמודי הפרויקטים.
+   סקשן הפרויקטים בפירוט מציג אותו, כך שהסטטוס לא יכול להתפצל מעמוד הפרויקט. */
+const statusMap = (rows) => Object.fromEntries((rows || []).filter((p) => p && p.slug && p.status).map((p) => [p.slug, p.status]))
 import BuyerFaq from '../components/ui/BuyerFaq.jsx'
 import DEF from '../lib/pageBuilder/defs/projects.js'
 import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
@@ -33,7 +36,7 @@ import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 /* הסקשנים של העמוד, הסדר הקבוע ב-defs/projects.js */
 const LOCAL = {
   /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
-  ...Object.fromEntries(PROJECTS_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
+  ...Object.fromEntries(PROJECTS_FACTS.map((b) => [b.id, ({ ctx }) => <FactsSection page="projects" block={b} cmsStatus={ctx?.cmsStatus} />])),
   collage: ({ ctx: { allTitle, lead, statItems, collageItems } }) => (
     <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
   ),
@@ -46,6 +49,7 @@ export default function Projects() {
 
   // זריעה מיידית מתמונת-מצב שמורה → הפרויקטים מופיעים מיד ברענון/חזרה לעמוד (בלי דמו)
   const [projects, setProjects] = useState(() => mapRows(cachedSnapshot('projects:cards')))
+  const [cmsStatus, setCmsStatus] = useState(() => statusMap(cachedSnapshot('projects:cards')))
   const [statItems, setStatItems] = useState(() =>
     localStats.slice(0, 3).map((s) => ({ value: `${s.value.toLocaleString('en-US')}${s.suffix}`, label: L(s.label) }))
   )
@@ -53,7 +57,7 @@ export default function Projects() {
   useEffect(() => {
     if (!supabase) return
     listProjectCards()
-      .then((rows) => { if (rows) setProjects(mapRows(rows)) })
+      .then((rows) => { if (rows) { setProjects(mapRows(rows)); setCmsStatus(statusMap(rows)) } })
       .catch(() => {})
     listCounters({ activeOnly: true })
       .then((rows) => {
@@ -91,7 +95,7 @@ export default function Projects() {
         title='פרויקטים בהוד השרון ובאזור המרכז'
         description='הפרויקטים של קורקוס גרופ בהוד השרון ובאזור המרכז: בנייה למגורים, וילות ובתים פרטיים, ופרויקטים בליווי ובפיקוח הקבוצה, מקרקע ועד מסירת מפתח.'
       />
-      <PageSections def={DEF} local={LOCAL} ctx={{ allTitle, lead, statItems, collageItems }} />
+      <PageSections def={DEF} local={LOCAL} ctx={{ allTitle, lead, statItems, collageItems, cmsStatus }} />
     </>
   )
 }

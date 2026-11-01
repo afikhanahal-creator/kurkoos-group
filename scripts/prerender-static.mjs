@@ -130,13 +130,45 @@ function mdToHtml(md) {
   return out.join('\n')
 }
 
+/* הפרויקטים המפורסמים ב-CMS, נשלפים פעם אחת ל-build: לעמודי הפרויקטים ולסטטוס
+   שבסקשן "הפרויקטים בפירוט" ב-/projects. בלי משתני סביבה או בלי גישה, רשימה
+   ריקה: עמודי הפרויקטים מדולגים, וב-/projects מוצג הסטטוס מ-villasPage.js. */
+let cmsProjectsP = null
+function loadCmsProjects() {
+  if (cmsProjectsP) return cmsProjectsP
+  cmsProjectsP = (async () => {
+    const SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const SB_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+    if (!SB_URL || !SB_KEY) {
+      console.warn('prerender: אין משתני סביבה של Supabase, מדלגים על עמודי הפרויקטים')
+      return []
+    }
+    try {
+      const r = await fetch(
+        `${SB_URL.replace(/\/$/, '')}/rest/v1/projects?is_published=eq.true&is_archived=eq.false` +
+        `&select=slug,name,location,subtitle,description,hero_image_url,status,address,seo_description&order=sort_order.asc`,
+        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
+      )
+      if (r.ok) return await r.json()
+      console.warn(`prerender: שליפת הפרויקטים מה-CMS החזירה ${r.status}, מדלגים על עמודי הפרויקטים`)
+    } catch (e) {
+      console.warn('prerender: אין גישה ל-CMS, מדלגים על עמודי הפרויקטים:', e.message)
+    }
+    return []
+  })()
+  return cmsProjectsP
+}
+
 /* סקשני העובדות מ-src/data/pageFacts.js, באותו סדר ובאותו טקסט כמו
    ב-components/sections/FactsSection.jsx בעמוד החי */
-const factsHtml = (blocks) => blocks.map((b) =>
+const factsHtml = (blocks, cmsStatus = {}) => blocks.map((b) =>
   `<h2>${esc(b.title)}</h2>` +
   (b.paras || []).map((p) => `<p>${esc(p)}</p>`).join('') +
-  ((b.items || []).length ? '<ul>' + b.items.map((it) =>
-    `<li><strong>${esc(it.t)}</strong> ${esc(it.d)}${it.to ? ` <a href="${esc(it.to)}">${esc(it.link || it.t)}</a>` : ''}</li>`).join('') + '</ul>' : '') +
+  ((b.items || []).length ? '<ul>' + b.items.map((it) => {
+    /* סטטוס הפרויקט מה-CMS, כמו בעמוד החי, ובלעדיו מ-villasPage.js */
+    const status = it.cms ? FACTS.statusOf(it, cmsStatus) : ''
+    return `<li><strong>${esc(it.t)}${status ? `. ${esc(status)}.` : ''}</strong> ${esc(it.d)}${it.to ? ` <a href="${esc(it.to)}">${esc(it.link || it.t)}</a>` : ''}</li>`
+  }).join('') + '</ul>' : '') +
   ((b.links || []).length ? '<ul>' + b.links.map((l) => `<li><a href="${esc(l.to)}">${esc(l.label)}</a></li>`).join('') + '</ul>' : '')
 ).join('')
 
@@ -517,6 +549,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
   /* שלושת העמודים המסחריים המרכזיים לא היו מרונדרים מראש, ולכן סורק שלא
      מריץ JavaScript ראה בהם מעטפת ריקה בלי כותרת, בלי תיאור ובלי קישורים.
      עמוד כזה כמעט לא נבחר כקישור אתר בתוצאות החיפוש. */
+  const projectStatus = Object.fromEntries((await loadCmsProjects()).filter((p) => p && p.slug && p.status).map((p) => [p.slug, p.status]))
+  if (!Object.keys(projectStatus).length) console.warn('prerender: סטטוס הפרויקטים לא נטען מה-CMS, ב-/projects מוצג הסטטוס מ-villasPage.js')
   done.push(renderPage({
     path: '/projects',
     ...meta('/projects'),
@@ -530,7 +564,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<li><a href="/villas-sharon">חנקין 41, שכונת מגדיאל</a>: פרויקט בוטיק של שש דירות יוקרה בבניין אחד, שתי חניות תת קרקעיות לכל דירה. בבנייה.</li>` +
       `<li><a href="/villas-sharon">יורדי הים 3, שכונת גרינברג</a>: שתי וילות פרטיות על מגרשים של למעלה מחצי דונם, עם בריכת שחייה 4x9 מטר. בתכנון.</li>` +
       `</ul>` +
-      factsHtml(FACTS.PROJECTS_FACTS) +
+      factsHtml(FACTS.PROJECTS_FACTS, projectStatus) +
       `<h2>מדריכים לבניית בית פרטי</h2><ul>` +
       PRIVATE_HOUSE_GUIDES.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>` +
       `<h2>תחומי הפעילות</h2>` +
@@ -592,24 +626,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
      בלי משתני סביבה, למשל בבנייה מקומית, פשוט מדלגים. אלה עמודי הכוונה
      הגבוהה ביותר באתר: מי שמחפש "הנרייטה סאלד הוד השרון" נוחת בדיוק כאן,
      ועד היום סורק בלי JavaScript ראה בהם מעטפת ריקה. */
-  const SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const SB_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
-  let cmsProjects = []
-  if (SB_URL && SB_KEY) {
-    try {
-      const r = await fetch(
-        `${SB_URL.replace(/\/$/, '')}/rest/v1/projects?is_published=eq.true&is_archived=eq.false` +
-        `&select=slug,name,location,subtitle,description,hero_image_url,status,address,seo_description&order=sort_order.asc`,
-        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
-      )
-      if (r.ok) cmsProjects = await r.json()
-      else console.warn(`prerender: שליפת הפרויקטים מה-CMS החזירה ${r.status}, מדלגים על עמודי הפרויקטים`)
-    } catch (e) {
-      console.warn('prerender: אין גישה ל-CMS, מדלגים על עמודי הפרויקטים:', e.message)
-    }
-  } else {
-    console.warn('prerender: אין משתני סביבה של Supabase, מדלגים על עמודי הפרויקטים')
-  }
+  const cmsProjects = await loadCmsProjects()
 
   const txt = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
   /* שמות הפרויקטים מגיעים מהניהול, ואין שום דבר שמונע שני פרויקטים באותו

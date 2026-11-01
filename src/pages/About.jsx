@@ -12,7 +12,7 @@ import { ABOUT_FACTS } from '../data/pageFacts.js'
    הרכיבים המשותפים: מספרים, שרשרת ערך, שותפים ויצירת קשר. */
 const LOCAL = {
   /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
-  ...Object.fromEntries(ABOUT_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
+  ...Object.fromEntries(ABOUT_FACTS.map((b) => [b.id, ({ ctx }) => <FactsSection page="about" block={b} cmsStatus={ctx?.cmsStatus} />])),
   header: ({ ctx: { t } }) => (
     <PageHeader
       eyebrow={t('pages.about.eyebrow')}

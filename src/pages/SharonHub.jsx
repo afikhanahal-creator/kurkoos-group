@@ -39,7 +39,7 @@ const FAQS = [
    רכיב יצירת הקשר המשותף. */
 const LOCAL = {
   /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
-  ...Object.fromEntries(SHARON_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
+  ...Object.fromEntries(SHARON_FACTS.map((b) => [b.id, ({ ctx }) => <FactsSection page="sharon" block={b} cmsStatus={ctx?.cmsStatus} />])),
   header: () => (
     <PageHeader
       noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */

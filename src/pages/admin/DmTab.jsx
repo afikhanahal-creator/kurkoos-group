@@ -4,26 +4,30 @@ import { toast } from '../../lib/toast.js'
 import './DmTab.css'
 
 /* ============================================================
-   DmTab — הודעות ואוטומציות לאינסטגרם ולפייסבוק (בסגנון ManyChat).
+   DmTab — Kurkoos DM: הודעות ואוטומציות לאינסטגרם ולפייסבוק (בסגנון ManyChat).
    • שיחות: תיבה אחת לכל העמודים, או לחשבון אחד שבוחרים למעלה
-   • אוטומציות: תגובה על פוסט עם מילה ← הודעה פרטית, תשובה להודעה, ברוכים הבאים
-   • חשבונות: התחברות עם פייסבוק (כמה חשבונות), התנתקות, הפעלה וכיבוי של כל עמוד
+   • אוטומציות: תגובה על פוסט או ריל עם מילה ← הודעה פרטית (עם כפתור ותגובה פומבית),
+     תגובה לסטורי, הודעה עם מילה, ברוכים הבאים. בחירת פוסט מתוך גלריית החשבון
+   • פעילות: כל מה שנשלח, מה שבתור (עד 150 בשעה לחשבון) ומה שנכשל
+   • חשבונות: התחברות עם אינסטגרם או עם פייסבוק (כמה חשבונות), התנתקות, הפעלה וכיבוי
    התשובות האוטומטיות עונות רק למי שפנה קודם, פעם אחת לאדם.
    ============================================================ */
 
 const ACC_KEY = 'kurkoos-dm-account'
-const VIEWS = [['inbox', 'שיחות'], ['rules', 'אוטומציות'], ['accounts', 'חשבונות וחיבור']]
+const VIEWS = [['inbox', 'שיחות'], ['rules', 'אוטומציות'], ['activity', 'פעילות'], ['accounts', 'חשבונות וחיבור']]
 const TRIGGERS = {
   comment: { label: 'מישהו מגיב על פוסט', short: 'תגובה על פוסט', hint: 'שולחים לו הודעה פרטית, ואפשר גם תגובה ציבורית מתחת לתגובה שלו' },
+  story: { label: 'מישהו מגיב לסטורי', short: 'תגובה לסטורי', hint: 'מי שעונה לסטורי עם המילה מקבל הודעה, פעם אחת לכל אדם' },
   dm: { label: 'מישהו שולח הודעה', short: 'הודעה נכנסת', hint: 'עונים בהודעה, פעם אחת לכל אדם' },
   first_dm: { label: 'פונה חדש שולח הודעה ראשונה', short: 'הודעה ראשונה', hint: 'הודעת ברוכים הבאים, נשלחת רק בהודעה הראשונה של כל אדם' },
 }
 const PRESETS = [
   { name: 'מחיר בתגובה', trigger: 'comment', keywords: 'מחיר, כמה עולה, פרטים', reply_text: 'היי {שם}, תודה על ההתעניינות! אשמח לשלוח פרטים. מה מספר הטלפון שלך?', public_reply: 'שלחנו לך הודעה פרטית 🙂' },
   { name: 'ברוכים הבאים', trigger: 'first_dm', keywords: '', reply_text: 'היי {שם}, תודה שפנית לקבוצת קורקוס. נחזור אליך בהקדם. במה נוכל לעזור?', public_reply: '' },
+  { name: 'קישור בכפתור', trigger: 'comment', keywords: 'קישור, לינק, מדריך', reply_text: 'היי {שם}, הנה המדריך שביקשת 👇', public_reply: 'שלחנו לך בפרטי 🙂\nנשלח בהודעה פרטית ✉️', button_text: 'למדריך', button_url: 'https://www.kurkoos-group.co.il/real-estate-guide' },
   { name: 'פגישה', trigger: 'dm', keywords: 'פגישה, לתאם, שיחה', reply_text: 'בשמחה! אפשר לבחור מועד לשיחה קצרה כאן, או להשאיר מספר ונחזור אליך.', public_reply: '' },
 ]
-const EMPTY_RULE = { name: '', trigger: 'comment', keywords: '', account_id: '', post_id: '', reply_text: '', public_reply: '', enabled: true }
+const EMPTY_RULE = { name: '', trigger: 'comment', keywords: '', account_id: '', post_id: '', media_label: '', media_thumb: '', reply_text: '', public_reply: '', button_text: '', button_url: '', enabled: true }
 
 const NetIcon = ({ net, size = 14 }) => net === 'instagram'
   ? <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" /></svg>
@@ -53,7 +57,8 @@ async function copy(text, what) {
 export default function DmTab() {
   const [st, setSt] = useState(null)
   const [err, setErr] = useState('')
-  const [view, setView] = useState('inbox')
+  // ?view=rules|activity|accounts opens a tab directly (the content engine links straight to them)
+  const [view, setView] = useState(() => { try { const v = new URLSearchParams(window.location.search).get('view'); return VIEWS.some(([k]) => k === v) ? v : 'inbox' } catch { return 'inbox' } })
   const [acc, setAcc] = useState(() => { try { return localStorage.getItem(ACC_KEY) || '' } catch { return '' } })
   const tabRefs = useRef([])
 
@@ -125,6 +130,7 @@ export default function DmTab() {
       <section id={`dm-panel-${view}`} role="tabpanel" aria-labelledby={`dm-tab-${view}`} className="dm-panel">
         {view === 'inbox' && <Inbox acc={acc} accounts={accounts} onChanged={load} empty={noAccounts} goAccounts={() => setView('accounts')} />}
         {view === 'rules' && <Rules accounts={accounts} />}
+        {view === 'activity' && <Activity accounts={accounts} />}
         {view === 'accounts' && st && <Accounts st={st} reload={load} />}
       </section>
     </div>
@@ -305,7 +311,7 @@ function Rules({ accounts }) {
   return (
     <div className="dm-rules">
       <div className="dm-intro">
-        <p>אוטומציות עונות רק למי שפנה אליכם קודם: הגיב על פוסט או שלח הודעה. כל אוטומציה עונה לכל אדם פעם אחת, ולא עונה בשיחה שבה השהיתם אותה.</p>
+        <p>אוטומציות עונות רק למי שפנה אליכם קודם: הגיב על פוסט, ענה לסטורי או שלח הודעה. כל אוטומציה עונה לכל אדם פעם אחת, ולא עונה בשיחה שבה השהיתם אותה. אוטומציה של פוסט מסוים קודמת לאוטומציה של כל הפוסטים.</p>
         {!edit && <button type="button" className="dm-btn dm-btn--pri" onClick={() => setEdit({ ...EMPTY_RULE })}>+ אוטומציה חדשה</button>}
       </div>
 
@@ -329,33 +335,36 @@ function Rules({ accounts }) {
               <div className="dm-field">
                 <label htmlFor="r-kw">מילות מפתח</label>
                 <input id="r-kw" className="dm-input" value={edit.keywords} onChange={set('keywords')} aria-describedby="r-kw-h" placeholder="מחיר, פרטים" />
-                <small id="r-kw-h">מפרידים בפסיק. השאירו ריק כדי לענות על כל {edit.trigger === 'comment' ? 'תגובה' : 'הודעה'}.</small>
+                <small id="r-kw-h">מפרידים בפסיק. מילה שלמה, גם עם ו/ה/ל/ב/ש לפניה ("לפרטים" עונה על "פרטים"). ריק = עונים על כל {edit.trigger === 'comment' ? 'תגובה' : 'הודעה'}.</small>
               </div>
             )}
             <div className="dm-field">
               <label htmlFor="r-acc">באיזה חשבון</label>
-              <select id="r-acc" className="dm-input" value={edit.account_id || ''} onChange={set('account_id')}>
+              <select id="r-acc" className="dm-input" value={edit.account_id || ''} onChange={(e) => setEdit({ ...edit, account_id: e.target.value, post_id: '', media_label: '', media_thumb: '' })}>
                 <option value="">כל החשבונות</option>
                 {accounts.map((a) => <option key={a.id} value={a.id}>{accLabel(a)}</option>)}
               </select>
             </div>
-            {edit.trigger === 'comment' && (
-              <div className="dm-field">
-                <label htmlFor="r-post">פוסט מסוים (לא חובה)</label>
-                <input id="r-post" className="dm-input" dir="ltr" value={edit.post_id || ''} onChange={set('post_id')} aria-describedby="r-post-h" placeholder="קישור או מזהה של הפוסט" />
-                <small id="r-post-h">השאירו ריק כדי שהאוטומציה תעבוד על כל הפוסטים.</small>
-              </div>
-            )}
           </div>
+          {edit.trigger === 'comment' && <MediaPicker accounts={accounts} edit={edit} setEdit={setEdit} />}
           <div className="dm-field">
             <label htmlFor="r-reply">ההודעה הפרטית שנשלחת</label>
             <textarea id="r-reply" className="dm-input" rows={3} required value={edit.reply_text} onChange={set('reply_text')} aria-describedby="r-reply-h" />
             <small id="r-reply-h">אפשר לכתוב {'{שם}'} והמערכת תכניס את השם הפרטי של הפונה.</small>
           </div>
+          <fieldset className="dm-fs dm-fs--box">
+            <legend>כפתור בהודעה (לא חובה)</legend>
+            <small className="dm-muted">במקום קישור ארוך, מופיע כפתור לחיץ מתחת להודעה. אם מטא לא מקבלת את הכפתור, הקישור נשלח בסוף ההודעה.</small>
+            <div className="dm-grid2">
+              <div className="dm-field"><label htmlFor="r-btxt">הטקסט על הכפתור</label><input id="r-btxt" className="dm-input" maxLength={20} value={edit.button_text || ''} onChange={set('button_text')} placeholder="למדריך" /></div>
+              <div className="dm-field"><label htmlFor="r-burl">לאן הכפתור מוביל</label><input id="r-burl" className="dm-input" dir="ltr" type="url" inputMode="url" value={edit.button_url || ''} onChange={set('button_url')} placeholder="https://" /></div>
+            </div>
+          </fieldset>
           {edit.trigger === 'comment' && (
             <div className="dm-field">
-              <label htmlFor="r-pub">תגובה ציבורית מתחת לתגובה (לא חובה)</label>
-              <input id="r-pub" className="dm-input" value={edit.public_reply || ''} onChange={set('public_reply')} placeholder="שלחנו לך הודעה פרטית 🙂" />
+              <label htmlFor="r-pub">תגובה פומבית מתחת לתגובה שלו (לא חובה)</label>
+              <textarea id="r-pub" className="dm-input" rows={2} value={edit.public_reply || ''} onChange={set('public_reply')} aria-describedby="r-pub-h" placeholder="שלחנו לך הודעה פרטית 🙂" />
+              <small id="r-pub-h">כמה נוסחים, אחד בכל שורה, ונבחר אחד באקראי. כך התגובות לא נראות זהות.</small>
             </div>
           )}
           <div className="dm-field">
@@ -365,7 +374,10 @@ function Rules({ accounts }) {
           {edit.reply_text && (
             <div className="dm-preview" aria-label="תצוגה מקדימה">
               <span className="dm-muted">כך זה ייראה:</span>
-              <p className="dm-msg dm-msg--out"><span>{edit.reply_text.replace(/\{שם\}|\{name\}/g, 'דנה')}</span></p>
+              <div className="dm-msg dm-msg--out">
+                <p>{edit.reply_text.replace(/\{שם\}|\{name\}/g, 'דנה').replace(/@?\{username\}/g, '@dana')}</p>
+                {edit.button_url && <span className="dm-msg__btn">{edit.button_text || 'לפתיחה'}</span>}
+              </div>
             </div>
           )}
           <div className="dm-actions">
@@ -382,16 +394,17 @@ function Rules({ accounts }) {
         <ul className="dm-rule-list">
           {rules.map((r) => (
             <li key={r.id} className={`dm-card dm-rule${r.enabled ? '' : ' dm-rule--off'}`}>
+              {r.media_thumb && <img className="dm-rule__thumb" src={r.media_thumb} alt={r.media_label || 'הפוסט של האוטומציה'} loading="lazy" />}
               <div className="dm-rule__main">
                 <h3>{r.name}</h3>
-                <p className="dm-muted">{TRIGGERS[r.trigger]?.short} · {accName(r.account_id)}{r.post_id ? ' · פוסט אחד' : ''}</p>
+                <p className="dm-muted">{TRIGGERS[r.trigger]?.short} · {accName(r.account_id)}{r.post_id ? ` · ${r.media_label ? '"' + r.media_label.slice(0, 40) + '"' : 'פוסט אחד'}` : r.trigger === 'comment' ? ' · כל הפוסטים' : ''}{r.button_url ? ' · עם כפתור' : ''}</p>
                 {r.keywords?.length > 0 && <p className="dm-kws">{r.keywords.map((k) => <span key={k} className="dm-kw">{k}</span>)}</p>}
                 <p className="dm-rule__reply">{r.reply_text}</p>
               </div>
               <div className="dm-rule__side">
                 <span className="dm-stat"><b>{r.hits}</b> נשלחו</span>
                 <label className="dm-toggle"><input type="checkbox" role="switch" checked={r.enabled} onChange={() => toggle(r)} aria-label={`הפעלה של ${r.name}`} /><span>{r.enabled ? 'פעילה' : 'כבויה'}</span></label>
-                <button type="button" className="dm-btn dm-btn--ghost" onClick={() => setEdit({ ...r, keywords: (r.keywords || []).join(', '), account_id: r.account_id || '' })} aria-label={`עריכה של ${r.name}`}>עריכה</button>
+                <button type="button" className="dm-btn dm-btn--ghost" onClick={() => setEdit({ ...EMPTY_RULE, ...r, keywords: (r.keywords || []).join(', '), account_id: r.account_id || '', post_id: r.post_id || '', media_label: r.media_label || '', media_thumb: r.media_thumb || '', public_reply: r.public_reply || '', button_text: r.button_text || '', button_url: r.button_url || '' })} aria-label={`עריכה של ${r.name}`}>עריכה</button>
                 <button type="button" className="dm-btn dm-btn--ghost dm-btn--danger" onClick={() => del(r)} aria-label={`מחיקה של ${r.name}`}>מחיקה</button>
               </div>
             </li>
@@ -399,6 +412,98 @@ function Rules({ accounts }) {
         </ul>
       )}
       <Snippets />
+    </div>
+  )
+}
+
+/* הגלריה: הפוסטים והרילס של החשבון, כדי לבחור על איזה מהם האוטומציה עובדת */
+const MEDIA_TYPE = { REELS: 'ריל', VIDEO: 'סרטון', CAROUSEL_ALBUM: 'קרוסלה', FEED: 'פוסט', IMAGE: 'פוסט', STORY: 'סטורי' }
+function MediaPicker({ accounts, edit, setEdit }) {
+  const accId = edit.account_id || (accounts.length === 1 ? accounts[0].id : '')
+  const [media, setMedia] = useState(null)
+  const [err, setErr] = useState('')
+  const [manual, setManual] = useState(false)
+  useEffect(() => {
+    if (!accId) { setMedia(null); return }
+    let live = true
+    setMedia(null); setErr('')
+    dm('media', { account_id: accId }).then((d) => live && setMedia(d.media)).catch((e) => { if (live) { setErr(e.message); setMedia([]) } })
+    return () => { live = false }
+  }, [accId])
+  const pick = (m) => setEdit({ ...edit, account_id: edit.account_id || accId, post_id: m ? m.id : '', media_label: m ? (m.caption || MEDIA_TYPE[m.type] || 'פוסט') : '', media_thumb: m ? m.thumb || '' : '' })
+  return (
+    <fieldset className="dm-fs dm-fs--box">
+      <legend>על איזה פוסט או ריל?</legend>
+      {!accId ? <p className="dm-muted">כדי לבחור פוסט מסוים, בוחרים קודם חשבון. בלי בחירה, האוטומציה עובדת על כל הפוסטים בכל החשבונות.</p> : (
+        <>
+          {err && <p className="dm-warn" role="status">{err}</p>}
+          {media === null ? <p className="dm-muted">טוען את הפוסטים…</p> : (
+            <div className="dm-gallery" role="radiogroup" aria-label="בחירת פוסט">
+              <label className={`dm-gal${!edit.post_id ? ' dm-gal--on' : ''}`}>
+                <input type="radio" name="media" checked={!edit.post_id} onChange={() => pick(null)} />
+                <span className="dm-gal__all">כל הפוסטים והרילס</span>
+              </label>
+              {media.map((m) => (
+                <label key={m.id} className={`dm-gal${edit.post_id === m.id ? ' dm-gal--on' : ''}`} title={m.caption || ''}>
+                  <input type="radio" name="media" checked={edit.post_id === m.id} onChange={() => pick(m)} aria-label={`${MEDIA_TYPE[m.type] || 'פוסט'}: ${m.caption ? m.caption.slice(0, 60) : 'בלי כיתוב'}${m.at ? ', ' + new Date(m.at).toLocaleDateString('he-IL') : ''}`} />
+                  {m.thumb ? <img src={m.thumb} alt="" loading="lazy" /> : <span className="dm-gal__none">אין תמונה</span>}
+                  <span className="dm-gal__type">{MEDIA_TYPE[m.type] || 'פוסט'}</span>
+                  {m.at && <span className="dm-gal__date">{new Date(m.at).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })}</span>}
+                </label>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      {edit.post_id && edit.media_label && <p className="dm-muted">נבחר: {edit.media_label.slice(0, 90)}</p>}
+      <button type="button" className="dm-link" aria-expanded={manual} onClick={() => setManual(!manual)}>{manual ? 'הסתרה' : 'יש לי קישור לפוסט'}</button>
+      {manual && (
+        <div className="dm-field">
+          <label htmlFor="r-post">קישור או מזהה של הפוסט</label>
+          <input id="r-post" className="dm-input" dir="ltr" value={edit.post_id || ''} onChange={(e) => setEdit({ ...edit, post_id: e.target.value, media_label: '', media_thumb: '' })} placeholder="https://www.instagram.com/p/…" />
+        </div>
+      )}
+    </fieldset>
+  )
+}
+
+/* ---------------- פעילות ---------------- */
+const Q_STATUS = { sent: ['נשלח', 'ok'], pending: ['בתור', 'wait'], sending: ['נשלח עכשיו', 'wait'], failed: ['נכשל', 'bad'] }
+function Activity({ accounts }) {
+  const [d, setD] = useState(null)
+  const load = useCallback(() => dm('activity').then(setD).catch((e) => { setD({ items: [] }); toast.error(e.message) }), [])
+  useEffect(() => { load(); const i = setInterval(() => { if (document.visibilityState === 'visible') load() }, 20000); return () => clearInterval(i) }, [load])
+  const retry = async (it) => { try { await dm('retry', { id: it.id }); toast.success('נשלח שוב לתור'); load() } catch (e) { toast.error(e.message) } }
+  if (!d) return <p className="dm-muted">טוען…</p>
+  const pending = d.items.filter((x) => x.status === 'pending').length
+  const acc = (id) => accounts.find((a) => a.id === id)
+  return (
+    <div className="dm-activity">
+      <div className="dm-kpis" role="group" aria-label="סיכום">
+        <div className="dm-kpi"><b>{d.sentLastHour ?? 0}</b><span>נשלחו בשעה האחרונה (עד {d.maxPerHour || 150} לחשבון)</span></div>
+        <div className="dm-kpi"><b>{pending}</b><span>מחכות בתור ויישלחו תוך כמה דקות</span></div>
+        <div className="dm-kpi"><b>{d.items.filter((x) => x.status === 'failed').length}</b><span>נכשלו מתוך 80 האחרונות</span></div>
+        <button type="button" className="dm-btn dm-btn--ghost" onClick={load}>רענון</button>
+      </div>
+      {!d.items.length ? <div className="dm-empty"><h2>עוד לא נשלח כלום</h2><p>כשמישהו יגיב או יכתוב עם אחת ממילות המפתח, ההודעה שנשלחה תופיע כאן.</p></div> : (
+        <ul className="dm-act-list">
+          {d.items.map((it) => {
+            const [label, tone] = Q_STATUS[it.status] || [it.status, 'wait']
+            const a = acc(it.account_id)
+            return (
+              <li key={it.id} className="dm-act">
+                <span className={`dm-pill dm-pill--${tone}`}>{label}</span>
+                <div className="dm-act__body">
+                  <p><b>{it.person_name || 'פונה'}</b> {it.kind === 'comment' ? 'הגיב' : 'כתב'}: "{it.incoming}"</p>
+                  <p className="dm-muted">{it.rule_name ? `אוטומציה: ${it.rule_name}` : 'אוטומציה שנמחקה'}{a ? ` · ${accLabel(a)}` : ''} · <time dateTime={it.created_at}>{new Date(it.created_at).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></p>
+                  {it.error && <p className="dm-warn">{it.error}</p>}
+                </div>
+                {it.status === 'failed' && <button type="button" className="dm-btn dm-btn--ghost" onClick={() => retry(it)} aria-label={`לשלוח שוב ל${it.person_name || 'פונה'}`}>לשלוח שוב</button>}
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
@@ -432,25 +537,45 @@ function Snippets() {
 }
 
 /* ---------------- חשבונות וחיבור ---------------- */
+function CopyRow({ label, value, what }) {
+  return <div className="dm-copy">{label && <span>{label}</span>}<code dir="ltr">{value}</code><button type="button" className="dm-btn dm-btn--ghost" onClick={() => copy(value, what)} aria-label={`העתקה של ${label || what}`}>העתקה</button></div>
+}
+function AppForm({ action, idLabel, secretLabel, where, onDone, onCancel }) {
+  const [f, setF] = useState({ app_id: '', app_secret: '' })
+  const [busy, setBusy] = useState(false)
+  const save = async (e) => {
+    e.preventDefault(); setBusy(true)
+    try { await dm(action, f); setF({ app_id: '', app_secret: '' }); toast.success('נשמר'); onDone() } catch (er) { toast.error(er.message) } finally { setBusy(false) }
+  }
+  return (
+    <form className="dm-appform" onSubmit={save}>
+      <div className="dm-field"><label htmlFor={`${action}-id`}>{idLabel}</label><input id={`${action}-id`} className="dm-input" dir="ltr" inputMode="numeric" autoComplete="off" value={f.app_id} onChange={(e) => setF({ ...f, app_id: e.target.value })} required /></div>
+      <div className="dm-field"><label htmlFor={`${action}-sec`}>{secretLabel}</label><input id={`${action}-sec`} className="dm-input" dir="ltr" type="password" autoComplete="off" value={f.app_secret} onChange={(e) => setF({ ...f, app_secret: e.target.value })} required /></div>
+      <small className="dm-muted">{where} נשמר בשרת בלבד, לא מוצג שוב ולא נשלח לשום מקום אחר. לא מדביקים אותו בצ'אט.</small>
+      <div className="dm-actions">{onCancel && <button type="button" className="dm-btn dm-btn--ghost" onClick={onCancel}>ביטול</button>}<button type="submit" className="dm-btn dm-btn--pri" disabled={busy}>שמירה</button></div>
+    </form>
+  )
+}
+
 function Accounts({ st, reload }) {
   const [busy, setBusy] = useState('')
-  const [app, setApp] = useState({ app_id: '', app_secret: '' })
-  const [showApp, setShowApp] = useState(!st.app)
+  const [showFb, setShowFb] = useState(false)
+  const [showIg, setShowIg] = useState(!st.igApp)
 
-  const login = async () => {
-    setBusy('login')
-    // inside the content engine the screen is framed, and Facebook refuses to open in a frame: log in in a new tab
+  // inside the content engine the screen is framed, and Facebook and Instagram refuse to open in a frame: log in in a new tab
+  const login = async (kind) => {
+    setBusy(kind)
     const framed = window.top !== window.self
     const tab = framed ? window.open('', '_blank') : null
     try {
       const back = framed ? `${window.location.origin}/admin?tab=dm` : window.location.href.split('#')[0]
-      const d = await dm('start', { back })
+      const d = await dm(kind === 'ig' ? 'ig_start' : 'start', { back })
       if (tab) { tab.location.href = d.url; toast.info('ההתחברות נפתחה בלשונית חדשה. בסיום חוזרים לכאן ולוחצים "רענון"'); setBusy('') }
       else window.location.href = d.url
     } catch (e) { if (tab) tab.close(); toast.error(e.message); setBusy('') }
   }
   const logout = async (c) => {
-    if (!window.confirm(`להתנתק מ"${c.name}"? העמודים שלו יפסיקו לקבל הודעות כאן, וההיסטוריה תישמר.`)) return
+    if (!window.confirm(`להתנתק מ"${c.name}"? ${c.kind === 'instagram' ? 'החשבון' : 'העמודים שלו'} יפסיקו לקבל הודעות ואוטומציות כאן. ההיסטוריה נשמרת.`)) return
     setBusy('out:' + c.id)
     try { await dm('logout', { connection_id: c.id }); toast.success('ההתנתקות בוצעה'); await reload() } catch (e) { toast.error(e.message) } finally { setBusy('') }
   }
@@ -459,11 +584,7 @@ function Accounts({ st, reload }) {
   }
   const resub = async () => {
     setBusy('sub')
-    try { const d = await dm('resubscribe'); const bad = Object.values(d.results).filter(Boolean); bad.length ? toast.error(bad[0]) : toast.success('כל העמודים מחוברים לקבלת הודעות'); await reload() } catch (e) { toast.error(e.message) } finally { setBusy('') }
-  }
-  const saveApp = async (e) => {
-    e.preventDefault(); setBusy('app')
-    try { await dm('config', app); setApp({ app_id: '', app_secret: '' }); setShowApp(false); toast.success('פרטי האפליקציה נשמרו'); await reload() } catch (er) { toast.error(er.message) } finally { setBusy('') }
+    try { const d = await dm('resubscribe'); const bad = Object.values(d.results).filter(Boolean); bad.length ? toast.error(bad[0]) : toast.success('כל החשבונות מחוברים לקבלת הודעות'); await reload() } catch (e) { toast.error(e.message) } finally { setBusy('') }
   }
   const hookOk = st.lastHook && Date.now() - new Date(st.lastHook).getTime() < 14 * 864e5
 
@@ -472,17 +593,26 @@ function Accounts({ st, reload }) {
       <section className="dm-card" aria-labelledby="dm-con-h">
         <div className="dm-card__head">
           <h2 id="dm-con-h">חשבונות מחוברים</h2>
-          <div className="dm-actions">
-            <button type="button" className="dm-btn dm-btn--ghost" onClick={reload}>רענון</button>
-            <button type="button" className="dm-btn dm-btn--pri" onClick={login} disabled={!st.app || busy === 'login'}>{busy === 'login' ? 'פותח את פייסבוק…' : st.connections.length ? '+ התחברות לחשבון נוסף' : 'התחברות עם פייסבוק'}</button>
+          <button type="button" className="dm-btn dm-btn--ghost" onClick={reload}>רענון</button>
+        </div>
+        <div className="dm-connect">
+          <div className="dm-connect__opt">
+            <span className="dm-connect__ico dm-connect__ico--ig"><NetIcon net="instagram" size={20} /></span>
+            <div><b>התחברות עם אינסטגרם</b><small>מומלץ לאינסטגרם. חשבון מקצועי (עסקי או יוצר), גם בלי עמוד פייסבוק</small></div>
+            <button type="button" className="dm-btn dm-btn--pri" onClick={() => login('ig')} disabled={!st.igApp || busy === 'ig'}>{busy === 'ig' ? 'פותח…' : 'התחברות'}</button>
+          </div>
+          <div className="dm-connect__opt">
+            <span className="dm-connect__ico dm-connect__ico--fb"><NetIcon net="facebook" size={20} /></span>
+            <div><b>התחברות עם פייסבוק</b><small>עמודי פייסבוק (Messenger ותגובות), וחשבונות אינסטגרם שמקושרים אליהם</small></div>
+            <button type="button" className="dm-btn" onClick={() => login('fb')} disabled={!st.app || busy === 'fb'}>{busy === 'fb' ? 'פותח…' : 'התחברות'}</button>
           </div>
         </div>
-        <p className="dm-muted">בחלון של פייסבוק מסמנים את כל העמודים ואת חשבונות האינסטגרם שרוצים לנהל כאן. כדי לחבר משתמש פייסבוק אחר, מתנתקים קודם מפייסבוק בדפדפן ונכנסים עם המשתמש השני.</p>
+        <p className="dm-muted">כל התחברות נוספת מוסיפה חשבונות, ובראש המסך עוברים ביניהם. כדי לחבר משתמש אחר, מתנתקים קודם ממנו באינסטגרם או בפייסבוק בדפדפן.</p>
         {!st.connections.length ? <p className="dm-pad">עוד לא חובר חשבון.</p> : st.connections.map((c) => (
           <div key={c.id} className="dm-con">
             <div className="dm-con__head">
-              <Avatar src={c.picture} name={c.name} />
-              <div><b>{c.name || 'משתמש פייסבוק'}</b><span className="dm-muted"> · חובר ב-{new Date(c.connected_at).toLocaleDateString('he-IL')}</span></div>
+              <Avatar src={c.picture} name={c.name} net={c.kind} />
+              <div><b>{c.name || 'חשבון'}</b><span className="dm-muted"> · {c.kind === 'instagram' ? 'התחברות אינסטגרם' : 'התחברות פייסבוק'} · {new Date(c.connected_at).toLocaleDateString('he-IL')}</span></div>
               <button type="button" className="dm-btn dm-btn--ghost dm-btn--danger" onClick={() => logout(c)} disabled={busy === 'out:' + c.id}>{busy === 'out:' + c.id ? 'מתנתק…' : 'התנתקות'}</button>
             </div>
             <ul className="dm-acc-list">
@@ -491,6 +621,7 @@ function Accounts({ st, reload }) {
                   <Avatar src={a.picture} name={a.name} net={a.network} />
                   <div className="dm-acc__name"><b>{a.username ? '@' + a.username : a.name}</b><span className="dm-muted">{netName(a.network)}{a.username && a.name ? ' · ' + a.name : ''}</span>
                     {a.subscribed ? <span className="dm-ok">מקבל הודעות</span> : <span className="dm-warn">{a.sub_error || 'לא מחובר לקבלת הודעות'}</span>}
+                    {a.token_error && <span className="dm-warn">{a.token_error}</span>}
                   </div>
                   <label className="dm-toggle"><input type="checkbox" role="switch" checked={a.enabled} onChange={() => toggle(a)} aria-label={`אוטומציות פעילות ב-${a.username || a.name}`} /><span>{a.enabled ? 'פעיל' : 'כבוי'}</span></label>
                 </li>
@@ -502,34 +633,51 @@ function Accounts({ st, reload }) {
       </section>
 
       <section className="dm-card" aria-labelledby="dm-setup-h">
-        <h2 id="dm-setup-h">הגדרה חד־פעמית באפליקציה של מטא</h2>
+        <h2 id="dm-setup-h">הקמה חד־פעמית באפליקציה של מטא</h2>
+        <p className="dm-muted">עושים פעם אחת, ב-developers.facebook.com. שמות הכפתורים כתובים כמו שהם מופיעים במסך, באנגלית.</p>
         <ol className="dm-steps">
-          <li className={st.app ? 'dm-step--done' : ''}>
-            <b>אפליקציית מטא</b> {st.app ? <span className="dm-ok">מוגדרת{st.ownApp ? ' (אפליקציה נפרדת להודעות)' : ' (אותה אפליקציה של הפרסום)'}</span> : <span className="dm-warn">חסרה</span>}
-            {!showApp && <button type="button" className="dm-link" onClick={() => setShowApp(true)}>{st.app ? 'החלפה לאפליקציה אחרת' : 'הגדרה'}</button>}
-            {showApp && (
-              <form className="dm-appform" onSubmit={saveApp}>
-                <div className="dm-field"><label htmlFor="a-id">App ID</label><input id="a-id" className="dm-input" dir="ltr" inputMode="numeric" value={app.app_id} onChange={(e) => setApp({ ...app, app_id: e.target.value })} required /></div>
-                <div className="dm-field"><label htmlFor="a-sec">App Secret</label><input id="a-sec" className="dm-input" dir="ltr" type="password" autoComplete="off" value={app.app_secret} onChange={(e) => setApp({ ...app, app_secret: e.target.value })} required /></div>
-                <small className="dm-muted">נשמר בשרת בלבד ולא מוצג שוב. בפייסבוק: האפליקציה ← App settings ← Basic.</small>
-                <div className="dm-actions"><button type="button" className="dm-btn dm-btn--ghost" onClick={() => setShowApp(false)}>ביטול</button><button type="submit" className="dm-btn dm-btn--pri" disabled={busy === 'app'}>שמירה</button></div>
-              </form>
-            )}
+          <li className={st.igApp ? 'dm-step--done' : ''}>
+            <b>אפליקציה לאינסטגרם</b> {st.igApp ? <span className="dm-ok">מוגדרת</span> : <span className="dm-warn">חסרה</span>}
+            <p className="dm-muted">My Apps ← Create App. ב-Use case בוחרים Manage messaging &amp; content on Instagram ומשייכים לתיק העסקי. אחר כך API setup with Instagram login ← Add all required permissions. באותו מסך מופיעים Instagram app ID ו-Instagram app secret. זה לא ה-App ID הרגיל של מטא.</p>
+            {!showIg ? <button type="button" className="dm-link" onClick={() => setShowIg(true)}>החלפת הפרטים</button>
+              : <AppForm action="ig_config" idLabel="Instagram app ID" secretLabel="Instagram app secret" where="ה-secret" onDone={() => { setShowIg(false); reload() }} onCancel={st.igApp ? () => setShowIg(false) : null} />}
           </li>
           <li className={hookOk ? 'dm-step--done' : ''}>
             <b>Webhooks</b> {hookOk ? <span className="dm-ok">התקבל אירוע ב-{new Date(st.lastHook).toLocaleString('he-IL')}</span> : <span className="dm-warn">עוד לא התקבלו אירועים</span>}
-            <p className="dm-muted">באפליקציה של מטא: Webhooks ← בוחרים Page ואז Instagram, ובכל אחד מדביקים את שני הערכים האלה:</p>
-            <div className="dm-copy"><span>Callback URL</span><code dir="ltr">{st.webhook}</code><button type="button" className="dm-btn dm-btn--ghost" onClick={() => copy(st.webhook, 'הקישור')}>העתקה</button></div>
-            <div className="dm-copy"><span>Verify token</span><code dir="ltr">{st.verifyToken}</code><button type="button" className="dm-btn dm-btn--ghost" onClick={() => copy(st.verifyToken, 'הקוד')}>העתקה</button></div>
-            <p className="dm-muted">אחר כך מסמנים: ב-Page את <code dir="ltr">messages</code> ו-<code dir="ltr">feed</code>, וב-Instagram את <code dir="ltr">messages</code> ו-<code dir="ltr">comments</code>.</p>
+            <p className="dm-muted">ב-Configure webhooks מדביקים את שני הערכים, לוחצים Verify and save, ואז Subscribe ל-comments ול-messages. בעמוד פייסבוק (Webhooks ← Page): messages ו-feed.</p>
+            <CopyRow label="Callback URL" value={st.webhook} what="הקישור" />
+            <CopyRow label="Verify token" value={st.verifyToken} what="הקוד" />
           </li>
           <li>
-            <b>כתובת החזרה של ההתחברות</b>
-            <p className="dm-muted">ב-Facebook Login ← Settings ← Valid OAuth Redirect URIs מוסיפים:</p>
-            <div className="dm-copy"><code dir="ltr">{st.redirect}</code><button type="button" className="dm-btn dm-btn--ghost" onClick={() => copy(st.redirect, 'הקישור')}>העתקה</button></div>
+            <b>כתובות החזרה של ההתחברות</b>
+            <p className="dm-muted">ב-Set up Instagram business login ← Redirect URL:</p>
+            <CopyRow value={st.igRedirect} what="הקישור" />
+            <p className="dm-muted">ואם מתחברים גם עם פייסבוק: Facebook Login ← Settings ← Valid OAuth Redirect URIs:</p>
+            <CopyRow value={st.redirect} what="הקישור" />
+          </li>
+          <li>
+            <b>פרטיות ומחיקת מידע</b>
+            <p className="dm-muted">App settings ← Basic: מדביקים את שתי הכתובות, מוסיפים אייקון וקטגוריה ולוחצים Save changes.</p>
+            <CopyRow label="Privacy Policy URL" value={st.privacyUrl} what="הקישור" />
+            <CopyRow label="User data deletion" value={st.deletionUrl} what="הקישור" />
+          </li>
+          <li>
+            <b>בודק ופרסום</b>
+            <p className="dm-muted">App roles ← Roles: מוסיפים את חשבון האינסטגרם כ-Instagram Tester, ומאשרים בדפדפן במחשב (לא באפליקציה) ב-instagram.com/accounts/manage_access, בלשונית Tester invites. אחר כך Publish בתפריט האפליקציה, ומתחברים כאן למעלה.</p>
+          </li>
+          <li>
+            <b>בדיקה</b>
+            <p className="dm-muted">יוצרים אוטומציה, ומגיבים את המילה מחשבון אחר שאינו הבודק. התוצאה מופיעה בלשונית "פעילות". לא להפעיל את אותה מילה גם במניצ'ט או בכלי אחר, אחרת יישלחו שתי הודעות.</p>
+          </li>
+          <li className={st.app ? 'dm-step--done' : ''}>
+            <b>אפליקציה לפייסבוק (לא חובה)</b> {st.app ? <span className="dm-ok">מוגדרת{st.ownApp ? '' : ' (אפליקציית הפרסום)'}</span> : <span className="dm-muted">לא מוגדרת</span>}
+            <p className="dm-muted">רק לעמודי פייסבוק וה-Messenger שלהם. App settings ← Basic ← App ID ו-App Secret.</p>
+            {!showFb ? <button type="button" className="dm-link" onClick={() => setShowFb(true)}>{st.app ? 'החלפת הפרטים' : 'הגדרה'}</button>
+              : <AppForm action="config" idLabel="App ID" secretLabel="App Secret" where="ה-App Secret" onDone={() => { setShowFb(false); reload() }} onCancel={() => setShowFb(false)} />}
           </li>
         </ol>
         {st.lastError && <p className="dm-warn" role="status">השגיאה האחרונה ממטא: {st.lastError}</p>}
+        <p className="dm-muted dm-honest">אף אחד לא יכול להבטיח מה מטא תעשה: היא יכולה לשנות כללים, לבקש בדיקה של האפליקציה (App Review) או להגביל אותה. כשהאפליקציה בתיק העסקי ופועלת על החשבונות שלכם, זה עובד בדרך כלל גם בלי App Review.</p>
       </section>
     </div>
   )

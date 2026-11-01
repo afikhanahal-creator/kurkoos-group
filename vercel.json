@@ -318,7 +318,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=86400, stale-while-revalidate=604800"
+          "value": "public, max-age=79200, stale-while-revalidate=7200"
         }
       ]
     },
@@ -332,11 +332,11 @@
       ]
     },
     {
-      "source": "/(.*)\\.(jpg|jpeg|png|webp|avif|svg|ico)",
+      "source": "/((?!assets/).*)\\.(jpg|jpeg|png|webp|avif|svg|ico)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=86400, stale-while-revalidate=604800"
+          "value": "public, max-age=79200, stale-while-revalidate=7200"
         }
       ]
     },

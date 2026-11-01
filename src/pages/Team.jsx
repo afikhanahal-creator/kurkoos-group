@@ -6,9 +6,13 @@ import TeamGrid from '../components/ui/TeamGrid.jsx'
 import DEF from '../lib/pageBuilder/defs/team.js'
 import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './Team.css'
+import FactsSection from '../components/sections/FactsSection.jsx'
+import { TEAM_FACTS } from '../data/pageFacts.js'
 
 /* הסקשנים של העמוד, הסדר הקבוע ב-defs/team.js */
 const LOCAL = {
+  /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
+  ...Object.fromEntries(TEAM_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
   /* תיאור החיפוש מונה את האנשים בשמם, זהה לעמוד המרונדר מראש.
      הכותרת והליד שעל המסך לא משתנים. */
   header: ({ ctx: { t, members } }) => (

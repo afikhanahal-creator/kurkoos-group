@@ -26,6 +26,8 @@ const {
 } = await import(pathToFileURL(join(root, 'src/lib/seo.js')).href)
 const { ABOUT_VISION } = await import(pathToFileURL(join(root, 'src/data/aboutVision.js')).href)
 const { srcOfResponsive } = await import(pathToFileURL(join(root, 'src/lib/responsiveImage.js')).href)
+const { relatedArticles } = await import(pathToFileURL(join(root, 'src/lib/related.js')).href)
+const FACTS = await import(pathToFileURL(join(root, 'src/data/pageFacts.js')).href)
 /* כותרת ותיאור של עמוד קבוע, מהמקור המשותף */
 const meta = (path) => {
   const m = PAGE_META[path]
@@ -127,6 +129,16 @@ function mdToHtml(md) {
   }
   return out.join('\n')
 }
+
+/* סקשני העובדות מ-src/data/pageFacts.js, באותו סדר ובאותו טקסט כמו
+   ב-components/sections/FactsSection.jsx בעמוד החי */
+const factsHtml = (blocks) => blocks.map((b) =>
+  `<h2>${esc(b.title)}</h2>` +
+  (b.paras || []).map((p) => `<p>${esc(p)}</p>`).join('') +
+  ((b.items || []).length ? '<ul>' + b.items.map((it) =>
+    `<li><strong>${esc(it.t)}</strong> ${esc(it.d)}${it.to ? ` <a href="${esc(it.to)}">${esc(it.link || it.t)}</a>` : ''}</li>`).join('') + '</ul>' : '') +
+  ((b.links || []).length ? '<ul>' + b.links.map((l) => `<li><a href="${esc(l.to)}">${esc(l.label)}</a></li>`).join('') + '</ul>' : '')
+).join('')
 
 const faqLd = (faqs, pick = (f) => [f.q, f.a]) => ({
   '@context': 'https://schema.org',
@@ -243,6 +255,11 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       (a.excerpt ? `<p><strong>${esc(a.excerpt)}</strong></p>` : '') +
       (a.video && a.video.src ? `<video src="${esc(a.video.src)}" poster="${esc(a.video.poster || '')}" controls preload="none" playsinline width="360" height="640" aria-label="${esc(a.video.title || a.title)}"></video>` : '') +
       mdToHtml(a.body) +
+      /* "עוד מהמדריך": אותה בחירה כמו בעמוד החי (src/lib/related.js) */
+      (() => {
+        const rel = relatedArticles(a, articles, 3)
+        return rel.length ? `<h2>עוד מהמדריך</h2><ul>` + rel.map((r) => `<li><a href="${col.route}/${r.slug}">${esc(r.title)}</a></li>`).join('') + `</ul>` : ''
+      })() +
       `<p><a href="${col.route}">לכל הכתבות ב${esc(col.index)}</a> · <a href="/">${BRAND}</a></p>`
     done.push(renderPage({
       path,
@@ -346,6 +363,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<p>קורקוס גרופ היא קבוצת נדל"ן שמשרדה ברחוב הנגר 24 בהוד השרון. הקבוצה פועלת בארבעה תחומים משלימים: יזמות נדל"ן, ביצוע ובנייה, ניהול ופיקוח פרויקטים, ותיווך ושיווק נכסים, עם פעילות באזור השרון והמרכז ופרויקטים נבחרים ברחבי הארץ.</p>` +
       `<p>מחפשים חברת בנייה ופיקוח בהוד השרון? ראיתה בונה ושכינתא מפקחת מטעם בעל הבית, בשתי זרועות נפרדות. <a href="/hod-hasharon/bniya-vepikuach">חברת בנייה ופיקוח בהוד השרון: כל הפרטים</a></p>` +
       `<ul><li><a href="/divisions/development">יזמות נדל"ן</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/divisions/brokerage">תיווך ושיווק נכסים</a></li></ul>` +
+      factsHtml(FACTS.SHARON_FACTS) +
       sharonFaqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n'),
   }))
 
@@ -388,6 +406,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     bodyHtml:
       `<h1>מחשבון משכנתא ומחשבון תשואה לנדל"ן</h1><p>כמה תחזירו כל חודש, וכמה הנכס באמת מכניס. מחשבון החזר חודשי למשכנתא לפי לוח שפיצר ומחשבון תשואת שכירות ברוטו ונטו. החישוב מתבצע בדפדפן, להערכה ראשונית בלבד ואינו ייעוץ פיננסי.</p>` +
       `<h2>מחשבון החזר חודשי למשכנתא</h2><h2>מחשבון תשואת שכירות</h2>` +
+      factsHtml(FACTS.CALC_FACTS) +
       calcFaqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n'),
   }))
 
@@ -511,6 +530,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<li><a href="/villas-sharon">חנקין 41, שכונת מגדיאל</a>: פרויקט בוטיק של שש דירות יוקרה בבניין אחד, שתי חניות תת קרקעיות לכל דירה. בבנייה.</li>` +
       `<li><a href="/villas-sharon">יורדי הים 3, שכונת גרינברג</a>: שתי וילות פרטיות על מגרשים של למעלה מחצי דונם, עם בריכת שחייה 4x9 מטר. בתכנון.</li>` +
       `</ul>` +
+      factsHtml(FACTS.PROJECTS_FACTS) +
       `<h2>מדריכים לבניית בית פרטי</h2><ul>` +
       PRIVATE_HOUSE_GUIDES.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>` +
       `<h2>תחומי הפעילות</h2>` +
@@ -528,7 +548,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       /* טקסט החזון, אותו טקסט שמוצג בעמוד החי (src/data/aboutVision.js) */
       `<h2>${esc(ABOUT_VISION.he.heading)}</h2>` +
       ABOUT_VISION.he.paragraphs.map((p) => `<p>${esc(p)}</p>`).join('') +
-      `<p>${esc(ABOUT_VISION.he.tagline)}</p>`,
+      `<p>${esc(ABOUT_VISION.he.tagline)}</p>` +
+      factsHtml(FACTS.ABOUT_FACTS),
   }))
 
   /* עמוד הצוות. אנשים בעלי שם ותפקיד הם סימן אמון מרכזי בעיני מנוע חיפוש,
@@ -561,6 +582,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
         `<h2>${esc(he(m.name))}, ${esc(he(m.role))}</h2>` +
         (he(m.bio) ? `<p>${esc(he(m.bio))}</p>` : '')
       ).join('\n') +
+      factsHtml(FACTS.TEAM_FACTS) +
       `<ul><li><a href="/about">אודות הקבוצה</a></li><li><a href="/projects">הפרויקטים</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/livy-yazamim">ליווי יזמי נדל"ן</a></li></ul>`,
   }))
 

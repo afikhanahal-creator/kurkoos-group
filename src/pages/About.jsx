@@ -5,10 +5,14 @@ import { ABOUT_VISION } from '../data/aboutVision.js'
 import DEF from '../lib/pageBuilder/defs/about.js'
 import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './About.css'
+import FactsSection from '../components/sections/FactsSection.jsx'
+import { ABOUT_FACTS } from '../data/pageFacts.js'
 
 /* הסקשנים של העמוד. הסדר הקבוע ב-defs/about.js, אחרי החזון באים
    הרכיבים המשותפים: מספרים, שרשרת ערך, שותפים ויצירת קשר. */
 const LOCAL = {
+  /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
+  ...Object.fromEntries(ABOUT_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
   header: ({ ctx: { t } }) => (
     <PageHeader
       eyebrow={t('pages.about.eyebrow')}

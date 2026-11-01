@@ -12,6 +12,8 @@ import { openContactPopup, telHref, waHref, CONTACT_PHONE_DISPLAY } from '../lib
 import { track } from '../lib/track.js'
 import DEF from '../lib/pageBuilder/defs/calculators.js'
 import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
+import FactsSection from '../components/sections/FactsSection.jsx'
+import { CALC_FACTS } from '../data/pageFacts.js'
 import './Calculators.css'
 
 /* ============================================================
@@ -353,6 +355,8 @@ function YieldCalc({ onSummary }) {
 
 /* הסקשנים של העמוד. הסדר הקבוע ב-defs/calculators.js */
 const LOCAL = {
+  /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
+  ...Object.fromEntries(CALC_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
   /* ---------- כותרת ---------- */
   hero: ({ ctx: { jump } }) => (
     <header className="cx-hero">

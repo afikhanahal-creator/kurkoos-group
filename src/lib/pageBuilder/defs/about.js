@@ -10,6 +10,9 @@ export default {
       { key: 'pages.about.lead', label: 'טקסט מוביל', multiline: true },
     ]],
     ['vision', 'החזון', 'book'],
+    /* סקשני עובדות מ-data/pageFacts.js (ABOUT_FACTS) */
+    ['arms', 'ארבע הזרועות', 'cards'],
+    ['how', 'איך אנחנו עובדים', 'text'],
     'stats',
     'valueChain',
     'partners',

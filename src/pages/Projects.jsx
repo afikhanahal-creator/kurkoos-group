@@ -7,6 +7,8 @@ import { supabase } from '../lib/supabase.js'
 import { listProjectCards, listCounters, projectPages, cachedSnapshot } from '../lib/cms.js'
 import { srcOfResponsive } from '../lib/responsiveImage.js'
 import './Projects.css'
+import FactsSection from '../components/sections/FactsSection.jsx'
+import { PROJECTS_FACTS } from '../data/pageFacts.js'
 
 // ממיר שורות CMS לפריטי הקולאז' — "פרויקטים נבחרים" אם תויגו, אחרת כל הפרויקטים
 function mapRows(rows) {
@@ -30,6 +32,8 @@ import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 
 /* הסקשנים של העמוד, הסדר הקבוע ב-defs/projects.js */
 const LOCAL = {
+  /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
+  ...Object.fromEntries(PROJECTS_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
   collage: ({ ctx: { allTitle, lead, statItems, collageItems } }) => (
     <HeroCollage title={allTitle} subtitle={lead} stats={statItems} items={collageItems} />
   ),

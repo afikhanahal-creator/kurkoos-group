@@ -7,6 +7,8 @@ export default {
     ['hero', 'פתיחה', 'hero'],
     ['mortgage', 'מחשבון משכנתא', 'chart'],
     ['yield', 'מחשבון תשואה', 'chart'],
+    /* סקשן עובדות מ-data/pageFacts.js (CALC_FACTS) */
+    ['read', 'איך קוראים את התוצאה', 'check'],
     ['faq', 'שאלות נפוצות', 'faq'],
     ['links', 'המשך קריאה', 'page'],
     ['lead', 'טופס', 'form'],

@@ -1,0 +1,50 @@
+/* ============================================================
+   סקשן עובדות (FactsSection). אותה שפה כמו כרטיסי השאלות בעמוד השרון
+   (SharonHub.css): משטח לבן, מסגרת דקה, פינות 14px וטקסט במשקל רגיל.
+   ============================================================ */
+.facts__head { text-align: center; margin-bottom: 1.6rem; }
+
+.facts__text { max-width: 78ch; margin: 0 auto 1.6rem; }
+.facts__text p {
+  margin: 0 0 0.9rem; font-size: 1.05rem; line-height: 1.85;
+  color: var(--color-text, #16202e);
+}
+.facts__text p:last-child { margin-bottom: 0; }
+
+.facts__grid {
+  list-style: none; margin: 0 auto; padding: 0; max-width: 1080px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;
+}
+.facts__card {
+  background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e3e7ee);
+  border-radius: 14px; padding: 1.15rem 1.3rem 1.2rem; min-width: 0;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.facts__card h3 {
+  margin: 0; font-family: var(--font-heading); font-weight: 700;
+  font-size: 1.05rem; color: var(--color-text, #16202e);
+}
+.facts__card p { margin: 0; color: var(--color-text-muted, #5a6a7a); font-size: 1rem; line-height: 1.75; }
+.facts__more {
+  margin-top: auto; padding-top: 0.25rem; align-self: flex-start;
+  color: var(--color-secondary, #16688c); font-weight: 700; text-decoration: none;
+}
+
+.facts__links { margin-top: 1.4rem; }
+.facts__links ul {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem;
+}
+.facts__links a { color: var(--color-secondary, #16688c); font-weight: 700; text-decoration: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .facts__more:hover, .facts__links a:hover { text-decoration: underline; }
+}
+
+@media (max-width: 720px) {
+  .facts__grid { grid-template-columns: 1fr; }
+  .facts__text p { font-size: 1rem; }
+  .facts__card { padding: 0.95rem 1rem 1rem; }
+  .facts__card h3 { font-size: 0.98rem; }
+  .facts__card p { font-size: 0.95rem; }
+}

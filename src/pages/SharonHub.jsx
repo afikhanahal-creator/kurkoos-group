@@ -12,6 +12,8 @@ import { listProjectCards, cmsRowToCard } from '../lib/cms.js'
 import DEF from '../lib/pageBuilder/defs/sharon.js'
 import { PageSections } from '../lib/pageBuilder/PageRenderer.jsx'
 import './SharonHub.css'
+import FactsSection from '../components/sections/FactsSection.jsx'
+import { SHARON_FACTS } from '../data/pageFacts.js'
 
 /* ============================================================
    נדל"ן בהוד השרון ובאזור המרכז, עמוד מוקד מקומי (Local Hub).
@@ -36,6 +38,8 @@ const FAQS = [
 /* הסקשנים של העמוד, הסדר הקבוע ב-defs/sharon.js. אחריהם בא
    רכיב יצירת הקשר המשותף. */
 const LOCAL = {
+  /* סקשני העובדות, אחד לכל בלוק ב-data/pageFacts.js */
+  ...Object.fromEntries(SHARON_FACTS.map((b) => [b.id, () => <FactsSection block={b} />])),
   header: () => (
     <PageHeader
       noSeo   /* ה-SEO של העמוד מוגדר ב-Seo שמעליו, מקור אחד בלבד */

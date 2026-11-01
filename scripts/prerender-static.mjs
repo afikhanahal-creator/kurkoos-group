@@ -759,12 +759,17 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<h2>יצירת קשר</h2><p>רחוב הנגר 24, מגדלי Amy, הוד השרון. טלפון 055-981-1814. ימים א׳ עד ה׳, 9:00 עד 18:00. <a href="/contact">השארת פרטים</a></p>`,
   }))
 
+  // the Instagram / Facebook messages section, so Meta's URL check (no scripts) finds /privacy#data-deletion
+  const { privacyDm } = await import(pathToFileURL(join(root, 'src/data/privacyDm.js')).href)
+  const COMPANY_EMAIL = (readFileSync(join(root, 'src/pages/Legal.jsx'), 'utf8').match(/email:\s*'([^']+)'/) || [])[1] || ''
+  const legalSection = (sec) => `<section id="${esc(sec.id)}"><h2>${esc(sec.h)}</h2>${sec.p.map((x) => `<p>${esc(x)}</p>`).join('')}</section>`
   const LEGAL = ['/accessibility', '/privacy', '/terms'].map((path) => [path, meta(path).title, meta(path).description])
   for (const [path, title, description] of LEGAL) {
     done.push(renderPage({
       path, title, description,
       jsonLd: [breadcrumbLd([HOME_CRUMB, { name: title, path }])],
-      bodyHtml: `<h1>${esc(title)}</h1><p>${esc(description)}</p><p>לפניות: 055-981-1814, רחוב הנגר 24, הוד השרון.</p>`,
+      bodyHtml: `<h1>${esc(title)}</h1><p>${esc(description)}</p><p>לפניות: 055-981-1814, רחוב הנגר 24, הוד השרון.</p>` +
+        (path === '/privacy' ? legalSection(privacyDm('he', COMPANY_EMAIL)) : ''),
     }))
   }
 }

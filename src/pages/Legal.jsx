@@ -1,3 +1,4 @@
+import { privacyDm } from '../data/privacyDm.js'
 import { useI18n } from '../i18n/index.jsx'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Reveal from '../components/ui/Reveal.jsx'
@@ -87,6 +88,7 @@ const privacyDoc = {
       `לצורך כך ניתן לפנות אלינו לכתובת הדוא"ל: ${EMAIL}.`,
       'כל המידע אודותייך יימחק ממאגר המידע בעת בקשתך לכך, לא יאוחר מ-2 ימי עסקים ממועד פנייתך בכתב.',
     ] },
+    privacyDm('he', EMAIL),
     { h: 'אבטחת מידע', p: [
       'אנו מיישמים מערכות ונהלים עדכניים ומחמירים לאבטחת מידע, כמקובל בתעשייה, על מנת למנוע שימוש לא מורשה במידע. יחד עם זאת, אין בהם בטחון מוחלט, ועל המשתמש לנקוט אמצעי הגנה מתאימים על מכשיר הקצה שלו ולשמור על חיסיון סיסמתו.',
     ] },
@@ -160,6 +162,7 @@ const privacyDoc = {
       `To do so, contact us at: ${EMAIL}.`,
       'All information about you will be deleted from the database upon your request, no later than 2 business days from your written request.',
     ] },
+    privacyDm('en', EMAIL),
     { h: 'Data Security', p: [
       'We apply up-to-date, industry-standard security systems and procedures to prevent unauthorized use of information. However, no system is completely secure, and the user should take appropriate measures on their device and keep their password confidential.',
     ] },
@@ -311,7 +314,7 @@ const a11yDoc = {
 
 function Section({ s }) {
   return (
-    <section className="priv-sec">
+    <section className="priv-sec" id={s.id}>
       <h2>{s.h}</h2>
       {s.p?.map((para, i) => <p key={i}>{para}</p>)}
       {s.sub?.map((g, i) => (

@@ -236,7 +236,10 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     const path = `${col.route}/${a.slug}`
     const body =
       `<h1>${esc(a.title)}</h1>` +
-      `<p><em>${esc(col.label)}${a.date ? ` · ${esc(a.date)}` : ''}${a.readingTime ? ` · ${esc(a.readingTime)}` : ''}</em></p>` +
+      `<p><em>${esc(col.label)}${a.date ? ` · <time datetime="${esc(a.date)}">${esc(a.date)}</time>` : ''}` +
+      /* תאריך עדכון גלוי, כמו בעמוד החי: רק כשיש updated מאוחר מתאריך הפרסום */
+      `${a.updated && String(a.updated) > String(a.date) ? ` · עודכן לאחרונה: <time datetime="${esc(a.updated)}">${esc(a.updated)}</time>` : ''}` +
+      `${a.readingTime ? ` · ${esc(a.readingTime)}` : ''}</em></p>` +
       (a.excerpt ? `<p><strong>${esc(a.excerpt)}</strong></p>` : '') +
       (a.video && a.video.src ? `<video src="${esc(a.video.src)}" poster="${esc(a.video.poster || '')}" controls preload="none" playsinline width="360" height="640" aria-label="${esc(a.video.title || a.title)}"></video>` : '') +
       mdToHtml(a.body) +
@@ -367,7 +370,10 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<h2>חנקין 41, שכונת מגדיאל</h2>` +
       `<p>פרויקט בוטיק אקסקלוסיבי של שש דירות יוקרה בבניין אחד, עם תכנון אדריכלי מוקפד, מרפסות מרווחות, שתי חניות נפרדות בחניון תת קרקעי לכל דירה וגינה פרטית בשטח כ-150 מ"ר. אדריכל: בני נדלסטיצ\'ר. סטטוס: בבנייה.</p>` +
       `<ul><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li><li><a href="/projects">כל הפרויקטים</a></li></ul>` +
-      villaFaqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n'),
+      villaFaqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n') +
+      /* אותה רשימת מדריכים שהעמוד החי מציג מתחת לשאלות (FaqCta) */
+      `<h2>מדריכים שכדאי לקרוא לפני שמחליטים</h2><ul>` +
+      PRIVATE_HOUSE_GUIDES.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>`,
   }))
 
   const calcFaqs = [

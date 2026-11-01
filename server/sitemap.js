@@ -63,7 +63,7 @@ export const STATIC = [
 
 /* כתבות הטורים — נוצר אוטומטית בזמן build מ-src/content (ראו scripts/generate-sitemap-paths.mjs) */
 export const ARTICLES = CONTENT_PATHS.map((a) => ({
-  path: a.path, lastmod: a.lastmod, changefreq: 'monthly', priority: '0.7',
+  path: a.path, lastmod: a.lastmod, date: a.date || a.lastmod, changefreq: 'monthly', priority: '0.7',
 }))
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
@@ -170,7 +170,7 @@ export default async function handler(req, res) {
   if (part === 'articles') {
     /* כתבה מתוזמנת נכנסת למפה רק ביום שלה, כמו באתר עצמו */
     const todayIL = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
-    const rows = ARTICLES.filter((a) => !a.lastmod || String(a.lastmod).slice(0, 10) <= todayIL).map((a) => urlTag({
+    const rows = ARTICLES.filter((a) => !a.date || String(a.date).slice(0, 10) <= todayIL).map((a) => urlTag({
       loc: `${SITE}${a.path}`, lastmod: a.lastmod || undefined, changefreq: a.changefreq, priority: a.priority,
     }))
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +

@@ -73,7 +73,11 @@ export default function SupervisionArticle() {
           <div className="yz-hero__meta">
             <span>{article.author || 'מערכת קבוצת קורקוס'}</span>
             <span className="yz-dot">·</span>
-            <time>{fmtDate(article.date)}</time>
+            <time dateTime={article.date}>{fmtDate(article.date)}</time>
+            {/* תאריך עדכון גלוי, רק כשבקובץ הכתבה יש updated מאוחר מהפרסום. זה אותו תאריך שב-dateModified */}
+            {article.updated && String(article.updated) > String(article.date) && (
+              <><span className="yz-dot">·</span><span>{lang === 'en' ? 'Updated' : 'עודכן לאחרונה'}: <time dateTime={article.updated}>{fmtDate(article.updated)}</time></span></>
+            )}
             {article.readingTime && <><span className="yz-dot">·</span><span>{article.readingTime}</span></>}
           </div>
         </div>

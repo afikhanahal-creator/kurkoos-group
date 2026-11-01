@@ -24,7 +24,7 @@ export default function ArticleBody({ article, contactHref }) {
           <MiniMarkdown source={src} autoLink={i === 0} contactHref={contactHref} />
           {images.map((im, j) => (at[j] === i + 1 && i < parts.length - 1) || (parts.length === 1 && i === 0) ? (
             <figure key={im.url} className={`artb__fig${j % 3 === 0 ? ' artb__fig--wide' : ''}`}>
-              <SmartImage src={im.url} alt={im.alt || ''} label={im.alt || article.title} w={1400} sizes="(max-width: 760px) 100vw, 760px" />
+              <SmartImage src={im.url} alt={im.alt || article.title} label={im.alt || article.title} w={1400} sizes="(max-width: 760px) 100vw, 760px" />
               {im.alt ? <figcaption>{im.alt}</figcaption> : null}
             </figure>
           ) : null)}

@@ -114,6 +114,9 @@ export function orderedVillasProjects(settings) {
 /* המדריכים המלאים לבניית בית פרטי, לעמוד הווילות ולעמוד הבית הסטטי: עמוד המוקד של האשכול
    מקשר לכל הכתבות שבו, והן מקשרות אליו בחזרה */
 export const PRIVATE_HOUSE_GUIDES = [
+  { to: '/bniyat-bayit-prati', label: 'בניית בית פרטי בכל הארץ, מהמגרש ועד המפתח' },
+  { to: '/kablan-bniya-bayit-prati', label: 'קבלן לבניית בית פרטי' },
+  { to: '/bniyat-vila-sharon', label: 'בניית וילה בשרון' },
   { to: '/constructions/bniyat-vila-mah-kolel', label: 'בניית וילה: מה זה כולל' },
   { to: '/constructions/kama-ole-livnot-bayit-prati', label: 'כמה עולה לבנות בית פרטי' },
   { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },

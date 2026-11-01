@@ -20,7 +20,7 @@ export function pickUrls(now = new Date(), all = false) {
   const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
   const dayMs = 86400000
   const recentFrom = new Date(now.getTime() - 3 * dayMs).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
-  const live = ARTICLES.filter((a) => !a.lastmod || String(a.lastmod).slice(0, 10) <= today)
+  const live = ARTICLES.filter((a) => !a.date || String(a.date).slice(0, 10) <= today)
   const paths = all
     ? [...STATIC.map((p) => p.path), ...live.map((a) => a.path), '/llms.txt', '/llms-full.txt']
     : [...CORE, ...live.filter((a) => a.lastmod && String(a.lastmod).slice(0, 10) >= recentFrom).map((a) => a.path)]

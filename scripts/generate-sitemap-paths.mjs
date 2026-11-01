@@ -29,8 +29,12 @@ for (const [dir, route] of Object.entries(COLUMN_ROUTE)) {
     /* תומך בשני סגנונות הקבצים: slug: '...' וגם "slug": "..." */
     const slug = /["']?slug["']?\s*:\s*["']([^"']+)["']/.exec(src)?.[1]
     const date = /["']?date["']?\s*:\s*["']([^"']+)["']/.exec(src)?.[1]
+    /* lastmod הוא תאריך העדכון (updated) כשהוא מאוחר מהפרסום, כמו dateModified
+       ב-Article. תאריך הפרסום נשמר בנפרד, כי כתבה מתוזמנת נכנסת למפה רק ביום שלה */
+    const updated = /["']?updated["']?\s*:\s*["']([^"']+)["']/.exec(src)?.[1]
     const published = !/["']?published["']?\s*:\s*false/.test(src)
-    if (slug && published) out.push({ path: `${route}/${slug}`, lastmod: date || null, file: `${dir}/${f}` })
+    const lastmod = date && updated && updated > date ? updated : date || null
+    if (slug && published) out.push({ path: `${route}/${slug}`, lastmod, date: date || null, file: `${dir}/${f}` })
   }
 }
 /* שתי כתבות עם אותו slug = כתובת אחת, והשנייה פשוט לא נגישה באתר
@@ -50,6 +54,6 @@ if (clashes.length) {
 out.sort((a, b) => a.path.localeCompare(b.path))
 
 const banner = '/* קובץ שנוצר אוטומטית ע"י scripts/generate-sitemap-paths.mjs — אל תערכו ידנית */\n'
-const emitted = out.map(({ path, lastmod }) => ({ path, lastmod }))
+const emitted = out.map(({ path, lastmod, date }) => ({ path, lastmod, date }))
 writeFileSync(join(root, 'server', '_content-paths.js'), `${banner}export default ${JSON.stringify(emitted, null, 2)}\n`)
 console.log(`sitemap paths: ${out.length} article urls written to server/_content-paths.js`)

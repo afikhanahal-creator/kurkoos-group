@@ -123,7 +123,7 @@ const LOCAL = {
       <div className="container">
         <Reveal className="lhub-head">
           <span className="eyebrow">הפרויקטים שלנו</span>
-          <h2 className="section-title">מה אנחנו מקימים בהוד השרון</h2>
+          <h2 className="section-title">מה אנחנו מקימים בהוד השרון?</h2>
         </Reveal>
 
         <div className="vsh-tabs" role="tablist">
@@ -230,7 +230,7 @@ const LOCAL = {
       <div className="container">
         <Reveal className="lhub-head">
           <span className="eyebrow">איך אנחנו בונים</span>
-          <h2 className="section-title">מה מאפיין בית פרטי של קורקוס גרופ</h2>
+          <h2 className="section-title">מה מאפיין בית פרטי של קורקוס גרופ?</h2>
         </Reveal>
         <div className="lhub-services__grid">
           {TRAITS.map((s, i) => (

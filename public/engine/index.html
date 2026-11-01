@@ -32911,6 +32911,25 @@ function decorate(){document.querySelectorAll('#appviews .qa').forEach(qa=>{if(q
   d.append(s,g);qa.append(d)})}
 if(typeof render==='function')render=(f=>function(){const r=f.apply(this,arguments);try{decorate()}catch(e){console.error('v80',e)}return r})(render);
 })();
+/*V236:START*/
+// V236 · "הודעות ואוטומציות": the Instagram and Facebook inbox with its automations, the same screen as the admin tab
+// (admin?tab=dm&embed=1), shown inside the engine. Accounts, log in and log out, and switching accounts live in that screen.
+(function(){if(window.__v236||typeof VIEWS==='undefined')return;window.__v236=1;
+const SRC=(window.__ENGINE_HOST==='site'?'':'https://www.kurkoos-group.co.il')+'/admin?tab=dm&embed=1';
+try{if(typeof IC!=='undefined'&&!IC.dm)IC.dm='<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.1A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>'}catch(e){}
+try{let g=VIEWS.find(x=>x[0]==='לקוחות');if(!g){g=['לקוחות',[]];const i=VIEWS.findIndex(x=>x[0]==='הגדרות');VIEWS.splice(i<0?VIEWS.length:i,0,g)}if(!g[1].some(v=>v[0]==='dm'))g[1].push(['dm','הודעות ואוטומציות','dm']);
+  VTITLE.dm=['הודעות ואוטומציות','הודעות ותגובות מאינסטגרם ומהעמודים, תשובות אוטומטיות וחשבונות מחוברים']}catch(e){}
+const page=()=>window.__ENGINE_HOST==='site'
+  ?`<div class="v236"><iframe class="v236f" src="${SRC}" title="הודעות ואוטומציות" loading="lazy"></iframe></div>`
+  :`<div class="v236 v236out"><p>תיבת ההודעות נפתחת באתר של קורקוס, כדי שההתחברות לפייסבוק תישמר בחשבון האדמין.</p><a class="px-btn" href="${SRC.replace('&embed=1','')}" target="_blank" rel="noopener">פתיחת ההודעות והאוטומציות</a></div>`;
+try{render=(f=>function(){if(typeof APP==='undefined'||APP.view!=='dm')return f.apply(this,arguments);
+  try{renderNav()}catch(e){}const [t,s]=VTITLE.dm;const vt=document.getElementById('vt'),vs=document.getElementById('vs');if(vt)vt.textContent=t;if(vs)vs.textContent=s;
+  document.querySelectorAll('.wrap > section').forEach(x=>x.classList.add('view-hidden'));const act=document.getElementById('vact');if(act)act.innerHTML='';
+  const root=document.getElementById('appviews');if(root){root.classList.remove('view-hidden');if(!root.querySelector('.v236'))root.innerHTML=page()}
+  try{window.__v99&&__v99.ensureNav()}catch(e){}})(render)}catch(e){console.warn('v236',e)}
+const st=document.createElement('style');st.textContent='.v236{display:block}.v236f{display:block;width:100%;height:calc(100dvh - 150px);min-height:560px;border:0;border-radius:16px;background:#eef1f6}.v236out{padding:24px;border:1px dashed #d2d8e3;border-radius:16px;display:grid;gap:12px;justify-items:start}@media(max-width:760px){.v236f{height:calc(100dvh - 120px);border-radius:0}}';document.head.appendChild(st);
+})();
+/*V236:END*/
 // quality scores are cached per post version; the cache resets whenever the library-wide fatigue index is rebuilt
 (function(){if(typeof pxQuality!=='function'||window.__v196q)return;/*V196q: the V195 cache is the one cache*/const C=new Map();let fc=null;
   const h=t=>{t=String(t||'');let x=t.length;for(let i=0;i<t.length;i+=5)x=(Math.imul(x,31)+t.charCodeAt(i))|0;return x};

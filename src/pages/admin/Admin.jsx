@@ -20,6 +20,7 @@ import SocialEngineTab, { openEngine } from './SocialEngineTab.jsx'
 import ContentTab from './ContentTab.jsx'
 import AnalyticsTab from './AnalyticsTab.jsx'
 import PagesTab from './PagesTab.jsx'
+import DmTab from './DmTab.jsx'
 import QuickSearch from './QuickSearch.jsx'
 import Toaster from '../../components/ui/Toaster.jsx'
 import './admin.css'
@@ -30,6 +31,7 @@ const Ico = {
   projects: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3" /><path d="M9 9v0M9 12v0M9 15v0" /></svg>,
   counters: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 19V10M10 19V5M16 19v-7M22 19H2" /></svg>,
   logos: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="4" width="18" height="14" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="M21 15l-5-4-9 7" /></svg>,
+  chat: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.1A8 8 0 1 1 21 12z" /><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" /></svg>,
   leads: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
   logout: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>,
   external: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>,
@@ -101,6 +103,7 @@ const TABS = [
   { id: 'content', label: 'מאמרים ומדריכים', sub: 'כל הטורים במקום אחד: יזמות, ביצוע, פיקוח ותיווך — עריכה, תמונה, AI, ארכיון', icon: 'yazamut', group: 'תוכן' },
   { id: 'covers', label: 'תמונות קאבר', sub: 'באנרי החטיבות וגלריית הביצוע — החלפה/סידור/גרירה', icon: 'covers', group: 'תוכן' },
   { id: 'leads', label: 'לידים', sub: 'ניהול פניות ולקוחות פוטנציאליים', icon: 'leads', group: 'לקוחות' },
+  { id: 'dm', label: 'הודעות ואוטומציות', sub: 'הודעות ותגובות מאינסטגרם ומהעמודים בפייסבוק, ותשובות אוטומטיות', icon: 'chat', group: 'לקוחות' },
   { id: 'newsletter', label: 'ניוזלטר', sub: 'מאגר הנרשמים + חיבור ESP/וובהוק לאוטומציות', icon: 'newsletter', group: 'לקוחות' },
   { id: 'analytics', label: 'תנועה וסטטיסטיקות', sub: 'חיבור Google Analytics — כמה נכנסים לאתר ומה הם רואים', icon: 'counters', group: 'לקוחות' },
   { id: 'social', label: 'מנוע התוכן לרשתות', sub: 'תזמון, עיצוב ופרסום לפייסבוק ואינסטגרם · נפתח במסך מלא', icon: 'engine', group: 'שיווק', ext: true },
@@ -114,7 +117,10 @@ const THEME_KEY = 'kurkoos-adm-theme'
 
 export default function Admin() {
   const session = useAuth()
-  const [tab, setTab] = useState('overview')
+  // ?tab=<id> opens a tab directly; ?embed=1 shows only that tab (the content engine embeds the inbox this way)
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
+  const embed = params.get('embed') === '1'
+  const [tab, setTab] = useState(() => (TABS.some((t) => t.id === params.get('tab') && !t.ext) ? params.get('tab') : 'overview'))
   const [navOpen, setNavOpen] = useState(false)   // מגירת ניווט במובייל
   const [theme, setTheme] = useState(() => {
     if (typeof localStorage !== 'undefined') return localStorage.getItem(THEME_KEY) || 'light'
@@ -158,6 +164,16 @@ export default function Admin() {
   const active = TABS.find((t) => t.id === tab) || TABS[0]
   const email = session.user?.email || ''
   const initials = (email[0] || 'A').toUpperCase()
+
+  if (embed) return (
+    <div className="adm adm--embed" dir="rtl" data-theme={theme}>
+      <main className="adm__content" aria-label={active.label}>
+        <h1 className="dm-sr">{active.label}</h1>
+        {tab === 'dm' ? <DmTab /> : tab === 'leads' ? <LeadsTab /> : <OverviewTab onNavigate={setTab} />}
+      </main>
+      <Toaster />
+    </div>
+  )
 
   return (
     <div className={`adm${navOpen ? ' adm--nav-open' : ''}`} dir="rtl" data-theme={theme}>
@@ -249,6 +265,7 @@ export default function Admin() {
           {tab === 'content' && <ContentTab />}
           {tab === 'covers' && <CoverImagesTab />}
           {tab === 'leads' && <LeadsTab />}
+          {tab === 'dm' && <DmTab />}
           {tab === 'newsletter' && <NewsletterTab />}
           {tab === 'analytics' && <AnalyticsTab />}
           {tab === 'social' && <SocialEngineTab />}

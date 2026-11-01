@@ -165,6 +165,7 @@
       "main": true
     }
   },
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs' ':(exclude)supabase' ':(exclude).github' ':(exclude).claude' ':(exclude)*.md' ':(exclude)**/*.md'",
   "rewrites": [
     {
       "source": "/sitemap.xml",

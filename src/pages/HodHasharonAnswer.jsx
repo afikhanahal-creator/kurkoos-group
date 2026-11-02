@@ -117,7 +117,7 @@ const LOCAL = {
               <Link to={p.to} className="hh-project">
                 <span className="hh-project__top">
                   <b className="hl-project__name">{p.name}</b>
-                  {p.status && <span className={`hh-project__status${p.status === 'בבנייה' ? ' is-building' : ''}`}>{p.status}</span>}
+                  {p.status && <span className={`hh-project__status${p.status === 'בבנייה' ? ' is-building' : p.status === 'בשיווק' ? ' is-marketing' : ''}`}>{p.status}</span>}
                 </span>
                 <span className="hl-project__place"><Icon name="location" size={14} /> {p.place}</span>
                 <span className="hl-project__kind">{p.text}</span>

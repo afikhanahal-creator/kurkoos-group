@@ -89,7 +89,7 @@ export const HH_PROJECTS = [
   {
     name: 'בן גוריון 17',
     place: 'יהוד-מונוסון',
-    status: '',
+    status: 'בשיווק',
     text: 'בית דו משפחתי.',
     to: '/projects',
   },

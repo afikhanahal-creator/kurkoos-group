@@ -33140,4 +33140,72 @@ if(!lsGet('ag_seed_kg10',false)){const s10=SEED10.map(r=>normalize(r,{src:'seed'
 })();
 </script>
 
+<!-- V240: mobile editing and reliable copy -->
+<style id="v240css">
+/* text is always selectable inside fields, even inside draggable cards */
+textarea,input[type=text],input[type=search],input:not([type]),[contenteditable="true"],.v240sel,.v240sel *{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
+.v240sheet{position:fixed;inset:0;z-index:2147483600;background:rgba(7,20,28,.55);display:flex;align-items:flex-end;justify-content:center}
+.v240sheet>div{background:#fff;width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:grid;gap:10px;max-height:88svh;font-family:Almoni,Heebo,Arial,sans-serif;direction:rtl}
+.v240sheet h3{margin:0;font:800 17px/1.3 Heebo,Almoni,sans-serif;color:#07293a}
+.v240sheet p{margin:0;font-size:14px;color:#4a5866}
+.v240sheet textarea{width:100%;box-sizing:border-box;min-height:38svh;max-height:56svh;border:1px solid #cbd1da;border-radius:12px;padding:12px;font:16px/1.6 Almoni,Heebo,Arial,sans-serif;color:#07293a;resize:none}
+.v240sheet .v240row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.v240sheet button{min-height:48px;border-radius:12px;border:1px solid #07293a;font:700 16px Heebo,Almoni,sans-serif;cursor:pointer}
+.v240sheet .v240go{background:#07293a;color:#fff}
+.v240sheet .v240x{background:#fff;color:#07293a;padding:0 18px}
+@media (max-width:760px){
+  /* design editor: the tools panel gets real room and scrolls; the preview takes about 40% of the screen */
+  #pe-root .pe-top{flex-wrap:wrap;row-gap:6px}
+  #pe-root .pe-top .pe-ttl{display:none!important}
+  #pe-root .pe-top .v210st{min-width:0;max-width:52vw;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  #pe-root .pe-top{justify-content:space-between}
+  #pe-root .pe-top .pe-acts{order:9;flex:1 1 100%;display:flex;gap:8px;min-width:0}
+  #pe-root .pe-top .pe-acts>*{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;justify-content:center}
+  #pe-root .pe-top .pe-acts>*{min-height:40px!important;padding-block:6px!important}
+  /* one natural page scroll: preview on top, then the tool tabs (pinned while scrolling), then the tools */
+  #pe-root .pe-main{display:block!important;min-height:0;overflow-y:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  #pe-root .pe-stage{overflow:visible!important}
+  #pe-root .pe-canvas{height:40svh!important;min-height:0!important;display:flex;align-items:center;justify-content:center}
+  #pe-root #pe-cv{height:100%!important;max-height:100%!important;width:auto!important;max-width:100%!important}
+  #pe-root .pe-sbar{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #pe-root .pe-sbar::-webkit-scrollbar{display:none}
+  #pe-root .pe-side{display:block!important;overflow:visible!important;height:auto!important;min-height:0!important}
+  #pe-root .pe-tabs{position:sticky!important;top:0;z-index:6;background:#fff;box-shadow:0 6px 12px -10px rgba(7,41,58,.35);overflow-x:auto;scrollbar-width:none}
+  #pe-root .pe-body{overflow:visible!important;height:auto!important;min-height:0!important;padding-bottom:24px!important}
+  #pe-root .pe-body textarea{font-size:16px}
+  /* the "..." menu on a post card opens as a sheet at the bottom instead of being cut off at the side */
+  #appviews .v207menu{position:fixed!important;inset:auto 12px calc(84px + env(safe-area-inset-bottom)) 12px!important;width:auto!important;max-width:none!important;max-height:60svh;overflow-y:auto;z-index:2147483100!important;border-radius:16px!important;box-shadow:0 18px 50px -12px rgba(7,41,58,.45)!important}
+  #appviews .v207menu button{min-height:48px;font-size:16px}
+  /* text editor (עריכת טקסט): one scroll, the text box grows with the text */
+  .cmpb .cmpbody{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+  .cmpb textarea,#pe-root .pe-body textarea{font-size:16px!important;line-height:1.6}
+  .cmpb textarea.v240grow,#pe-root textarea.v240grow{overflow:hidden!important;resize:none!important}
+}
+</style>
+<script id="v240js">
+(()=>{
+  const mobile=()=>matchMedia('(max-width:760px)').matches;
+  /* copy that always works: try the clipboard; if the phone refuses, open a sheet whose button is a fresh tap */
+  const nav=navigator.clipboard;const orig=nav&&nav.writeText?nav.writeText.bind(nav):null;
+  function execCopy(t){const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px';document.body.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,t.length);let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();return ok}
+  function sheet(t){return new Promise(res=>{const old=document.querySelector('.v240sheet');if(old)old.remove();
+    const w=document.createElement('div');w.className='v240sheet';w.innerHTML='<div role="dialog" aria-modal="true" aria-label="העתקת טקסט"><h3>העתקת הטקסט</h3><p>לחצו "העתק". אם זה לא עובד, לחיצה ארוכה על הטקסט ואז "בחר הכל" ו"העתק".</p><textarea readonly></textarea><div class="v240row"><button type="button" class="v240go">העתק</button><button type="button" class="v240x">סגירה</button></div></div>';
+    const ta=w.querySelector('textarea');ta.value=t;document.body.appendChild(w);
+    const close=()=>{w.remove();res()};
+    w.querySelector('.v240x').onclick=close;w.addEventListener('click',e=>{if(e.target===w)close()});
+    w.querySelector('.v240go').onclick=async()=>{let ok=false;try{if(orig){await orig(t);ok=true}}catch(e){}if(!ok){ta.removeAttribute('readonly');ta.focus();ta.select();ta.setSelectionRange(0,t.length);try{ok=document.execCommand('copy')}catch(e){}ta.setAttribute('readonly','')}
+      const b=w.querySelector('.v240go');b.textContent=ok?'הועתק ✓':'סמנו והעתיקו ידנית';if(ok)setTimeout(close,700)};
+  })}
+  async function robust(t){t=String(t==null?'':t);try{if(orig){await orig(t);return}}catch(e){}if(execCopy(t))return;await sheet(t)}
+  if(nav){try{nav.writeText=robust}catch(e){try{Object.defineProperty(nav,'writeText',{value:robust,configurable:true})}catch(x){}}}
+  window.__v240copy=robust;
+  /* the text boxes grow with their text on the phone instead of being a small box inside a scrolling page */
+  const grow=ta=>{if(!mobile())return;ta.classList.add('v240grow');ta.style.height='auto';ta.style.height=Math.max(ta.scrollHeight+2,64)+'px'};
+  const sel='.cmpb textarea,#pe-root .pe-body textarea';
+  document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches(sel))grow(e.target)},true);
+  let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;if(!mobile())return;document.querySelectorAll(sel).forEach(grow)})}).observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('click',()=>setTimeout(()=>{if(mobile())document.querySelectorAll(sel).forEach(grow)},60),true);
+})();
+</script>
+
 </body></html>

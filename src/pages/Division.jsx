@@ -119,32 +119,50 @@ const LOCAL = {
     )
   ),
 
-  /* אינטרו (מתחת לסרטון) */
-  intro: ({ ctx: { L, lang, division } }) => (
-    <section className="section division-intro">
-      <div className="container">
-        <Reveal className="division-intro__text">
-          {/* משפט תשובה ישיר: מי, איפה ומה, עם קישור לעמוד הבנייה והפיקוח בהוד השרון */}
-          {division.answer && lang === 'he' && (
-            <p className="division-intro__answer">
-              <strong>{division.answer.he}</strong>{' '}
-              <Link to={division.answer.link.to}>{division.answer.link.label}</Link>
-            </p>
-          )}
-          <p>{L(division.intro)}</p>
+  /* אינטרו (מתחת לסרטון): משפט תשובה מוביל מימין, פסקת הרחבה משמאל,
+     ומתחת אינדקס מסודר של עמודים קשורים (במקום ענן כפתורים) */
+  intro: ({ ctx: { L, lang, division } }) => {
+    const answer = division.answer && lang === 'he' ? division.answer : null
+    return (
+      <section className="section division-intro">
+        <div className="container">
+          <Reveal className={`division-intro__grid${answer ? '' : ' division-intro__grid--single'}`}>
+            {answer && (
+              <div className="division-intro__lead">
+                <p className="division-intro__answer">{answer.he}</p>
+                <Link className="division-intro__more" to={answer.link.to}>
+                  <span>{answer.link.label}</span>
+                  <Icon name="arrow" size={18} className="division-intro__arrow" />
+                </Link>
+              </div>
+            )}
+            <div className="division-intro__body">
+              <p>{L(division.intro)}</p>
+            </div>
+          </Reveal>
           {/* קישורים לעמודים הקשורים: מחברים את השירות למדריכים ולפרויקטים,
               כדי שגם הקורא וגם גוגל יבינו איך הנושאים באתר מתחברים */}
           {division.related?.length > 0 && (
-            <ul className="division-intro__related" aria-label="עוד בנושא">
-              {division.related.map((r) => (
-                <li key={r.to}><Link to={r.to}>{r.label}</Link></li>
-              ))}
-            </ul>
+            <Reveal as="nav" className="division-intro__related" aria-labelledby={`related-${division.slug}`}>
+              <h2 className="division-intro__related-title" id={`related-${division.slug}`}>
+                {lang === 'he' ? 'עוד בנושא' : 'Related'}
+              </h2>
+              <ul className="division-intro__related-list">
+                {division.related.map((r) => (
+                  <li key={r.to}>
+                    <Link to={r.to}>
+                      <span>{r.label}</span>
+                      <Icon name="arrow" size={16} className="division-intro__arrow" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
           )}
-        </Reveal>
-      </div>
-    </section>
-  ),
+        </div>
+      </section>
+    )
+  },
 
   /* למה אנחנו */
   why: ({ ctx: { t, L, division, isMobile } }) => (

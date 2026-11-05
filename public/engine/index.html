@@ -33208,6 +33208,8 @@ function wrapL(id,fn){const w=function(c,props,I){const cu=CUR;
   const groups=merge(c,ops,split(ops));const tf=(cu.p.fx&&cu.p.fx.tf)||{};const n={};
   groups.forEach(g=>{const [k,name]=kindOf(g);const key='h:'+k+':'+(n[k]=(n[k]||0)+1,n[k]-1);
    const draw=()=>{c.save();for(let j=0;j<=g.end;j++){const o=ops[j];if(!o.d||g.ids.has(o.g))run1(c,o)}c.restore()};
+   // the post's photo stays the photo: dragging it moves the picture inside its frame (the crop), as it always did
+   if(k==='img'&&!g.text){draw();return}
    obj(c,draw,key,tf[key],{kind:'el',name,t:k==='text'?'text':'rect',colOk:false})});
   for(const o of ops)if(!o.d)run1(c,o)};
  w.__v243=fn;return w}

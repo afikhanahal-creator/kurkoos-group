@@ -33137,6 +33137,91 @@ if(!lsGet('ag_seed_kg10',false)){const s10=SEED10.map(r=>normalize(r,{src:'seed'
   try{await Promise.race([hostReady,new Promise(r=>setTimeout(r,1500))]);await creativeInit()}catch(e){console.error('creative',e)}
   await appReady;
 })();
+/*V243 · every element of a hand-written layout is a layer.
+  The layers editor (V50/V53) can select, move, resize, hide and delete only what is drawn through window.__v50obj.
+  The template library draws that way, but about 200 hand-written layouts (the ad layouts such as x_t_speech, the
+  magazine and series layouts) draw straight on the canvas, so the editor saw only the logo and nothing could be
+  deleted. Here such a layout is run once on a recording context: the drawing calls are kept in order and split into
+  elements (each top-level save/restore block, or each paint call at the top level with the path that led to it).
+  The elements are then painted again through __v50obj under stable keys (h:text:0, h:shape:3, h:img:0), so the
+  editor lists them and fx.tf stores what was moved or hidden. A post nobody edited this way is drawn exactly as
+  before: the recording runs only while the editor records, or when the post already has such changes.*/
+(function(){
+const obj=window.__v50obj,REC=window.__v50rec;
+if(!obj||!REC||typeof FX==='undefined'||!FX.L||window.__v243)return;
+const PAINT=new Set(['fill','stroke','fillText','strokeText','fillRect','strokeRect','drawImage','clearRect','putImageData']);
+const PATHOP=new Set(['beginPath','moveTo','lineTo','arc','arcTo','bezierCurveTo','quadraticCurveTo','rect','roundRect','ellipse','closePath']);
+const LIVE=new Set(['measureText','getTransform','isPointInPath','isPointInStroke','getImageData','getLineDash','getContextAttributes','createLinearGradient','createRadialGradient','createConicGradient','createPattern','createImageData']);
+const isTpl=id=>{try{return TPL.specs.some(s=>s.id===id)}catch(e){return false}};
+let CUR=null;
+drawSlide=(f=>function(cv,p,i){const o=CUR;CUR={p,i:i||0};try{return f.apply(this,arguments)}finally{CUR=o}})(drawSlide);
+const hasH=p=>{const t=p&&p.fx&&p.fx.tf;if(!t)return false;for(const k in t)if(k.startsWith('h:'))return true;return false};
+function capture(c,run){const ops=[];
+ const P=new Proxy(c,{get(t,k){const v=t[k];if(typeof v!=='function')return v;
+   if(LIVE.has(k))return function(){return v.apply(t,arguments)};
+   if(PAINT.has(k))return function(){ops.push({k,a:[...arguments],d:1,f:t.canvas?t.canvas.__v151:undefined})};
+   return function(){ops.push({k,a:[...arguments],f:t.canvas?t.canvas.__v151:undefined});return v.apply(t,arguments)}},
+  set(t,k,v){ops.push({k,set:v,f:t.canvas?t.canvas.__v151:undefined});t[k]=v;return true}});
+ c.save();try{run(P)}finally{c.restore()}return ops}
+// each op gets the element it belongs to (gid), or -1 for the shared state and path calls at the top level.
+// An element is painted by replaying, in the original order, every call before its end except the paint calls of
+// the other elements: a path or a state can outlive the block that made it, so nothing else is skipped.
+function split(ops){let depth=0,cur=-1,n=0;const groups=[];
+ ops.forEach((o,j)=>{
+  if(cur>=0){o.g=cur;if(o.k==='save')depth++;else if(o.k==='restore'){depth--;if(!depth){groups[cur].end=j;cur=-1}}else if(o.d)groups[o.g].paint.push(o);return}
+  if(o.k==='save'){cur=n++;groups.push({id:cur,paint:[],end:j});o.g=cur;depth=1;return}
+  if(o.d){const id=n++;groups.push({id,paint:[o],end:j});o.g=id;return}
+  o.g=-1});
+ return groups.filter(g=>g.paint.length)}
+// V151 reads a flag on the canvas while it paints text; the flag is replayed as it was when the call was made
+// a label is one element with the shape behind it (a pill, a bubble, a button): a shape followed by text that sits
+// inside it, the shape smaller than a quarter of the post
+function merge(c,ops,groups){groups.forEach(g=>{g.ids=new Set([g.id])});const rec=window.__v50record;if(!rec)return groups;
+ const box=g=>{try{return rec(c,()=>{c.save();for(let j=0;j<=g.end;j++){const o=ops[j];if(!o.d||g.ids.has(o.g))run1(c,o)}c.restore()},true)}catch(e){return null}};
+ const isT=g=>g.paint.some(o=>o.k==='fillText'||o.k==='strokeText'),isI=g=>g.paint.some(o=>o.k==='drawImage');
+ const inside=(b,P)=>P&&b&&P.w*P.h<W*H*.25&&b.x>=P.x-4&&b.y>=P.y-4&&b.x+b.w<=P.x+P.w+4&&b.y+b.h<=P.y+P.h+4;
+ const out=[];
+ for(const g of groups){
+  if(isT(g)&&!isI(g)){const b=box(g);let hit=-1;
+   for(let k=out.length-1;k>=0&&k>=out.length-4;k--){const e=out[k];if(isI(e))break;if(isT(e)&&!e.sb)break;
+    if(!e.text){e.sb=e.sb||box(e)}if(inside(b,e.sb)){hit=k;break}}
+   if(hit>=0){const e=out[hit];for(const x of out.splice(hit+1))if(!isI(x)){x.ids.forEach(i=>e.ids.add(i));e.paint.push(...x.paint)}
+    e.ids.add(g.id);e.paint.push(...g.paint);e.end=g.end;e.text=1;continue}}
+  // an icon drawn after the label's text, inside the label (the arrow of a button) joins it too
+  else if(!isI(g)){const e=out[out.length-1];if(e&&e.text&&e.sb&&inside(box(g),e.sb)){g.ids.forEach(i=>e.ids.add(i));e.paint.push(...g.paint);e.end=g.end;continue}}
+  out.push(g)}
+ return out}
+const run1=(c,o)=>{const cv=c.canvas;const old=cv?cv.__v151:undefined;if(cv)cv.__v151=o.f;try{if('set' in o)c[o.k]=o.set;else c[o.k].apply(c,o.a)}finally{if(cv)cv.__v151=old}};
+function kindOf(g){const t=g.paint.find(o=>o.k==='fillText'||o.k==='strokeText');if(t)return ['text','טקסט: '+String(t.a[0]).slice(0,22)];if(g.paint.some(o=>o.k==='drawImage'))return ['img','תמונה'];return ['shape','צורה']}
+// a layout is split only after it was shown once to draw the same pixels both ways (a few, like "tape", read the
+// canvas back while drawing); otherwise it stays as it was: drawn whole, with the logo as its only layer
+const OK={};
+function same(id,fn,props,I){const mk=()=>{const cv=document.createElement('canvas');cv.width=W;cv.height=H;return cv};
+ try{const a=mk(),b=mk();const ca=a.getContext('2d'),cb=b.getContext('2d');const F=window.__v243force;window.__v243force=false;fn(ca,props,I);
+  const ops=capture(cb,P=>fn(P,props,I));const groups=merge(cb,ops,split(ops));groups.forEach(g=>{cb.save();for(let j=0;j<=g.end;j++){const o=ops[j];if(!o.d||g.ids.has(o.g))run1(cb,o)}cb.restore()});window.__v243force=F;
+  const A=ca.getImageData(0,0,W,H).data,B=cb.getImageData(0,0,W,H).data;let n=0;for(let i=0;i<A.length;i+=16)if(Math.abs(A[i]-B[i])+Math.abs(A[i+1]-B[i+1])+Math.abs(A[i+2]-B[i+2])>40&&++n>60)return false;return true}catch(e){return false}}
+function wrapL(id,fn){const w=function(c,props,I){const cu=CUR;
+  if(!cu||cu.i||isTpl(id)||!(REC.on||window.__v243force||hasH(cu.p)))return fn.apply(this,arguments);
+  if(!window.__v243force&&!(id in OK))OK[id]=same(id,fn,props,I);
+  if(!window.__v243force&&!OK[id])return fn.apply(this,arguments);
+  let ops;try{ops=capture(c,P=>fn.call(this,P,props,I))}catch(e){console.warn('v243',id,e);return fn.apply(this,arguments)}
+  const groups=merge(c,ops,split(ops));const tf=(cu.p.fx&&cu.p.fx.tf)||{};const n={};
+  groups.forEach(g=>{const [k,name]=kindOf(g);const key='h:'+k+':'+(n[k]=(n[k]||0)+1,n[k]-1);
+   const draw=()=>{c.save();for(let j=0;j<=g.end;j++){const o=ops[j];if(!o.d||g.ids.has(o.g))run1(c,o)}c.restore()};
+   obj(c,draw,key,tf[key],{kind:'el',name,t:k==='text'?'text':'rect',colOk:false})});
+  for(const o of ops)if(!o.d)run1(c,o)};
+ w.__v243=fn;return w}
+for(const id of Object.keys(FX.L)){const f=FX.L[id];if(typeof f==='function'&&!f.__v243)FX.L[id]=wrapL(id,f)}
+// diff(id,layouts): draws the post under each layout normally and through the recorder; returns the layouts whose
+// pixels differ (a self check, used by the tests)
+async function diff(id,layouts){const p0=(AG.posts||[]).find(x=>x.id===id);if(!p0)return null;const out=[];
+ for(const lay of layouts||Object.keys(FX.L).filter(k=>FX.L[k].__v243&&!isTpl(k))){const q=JSON.parse(JSON.stringify(p0));q.layout=lay;try{await preloadPosts([q])}catch(e){}
+  const draw=f=>{const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;window.__v243force=f;try{drawSlide(cv,q,0)}catch(e){window.__v243force=false;return null}window.__v243force=false;return cv.getContext('2d').getImageData(0,0,1080,1350).data};
+  draw(false);const A=draw(false),B=draw(true);if(!A||!B){out.push([lay,'error']);continue}let n=0;for(let i=0;i<A.length;i+=4)if(Math.abs(A[i]-B[i])+Math.abs(A[i+1]-B[i+1])+Math.abs(A[i+2]-B[i+2])>40)n++;if(n>300)out.push([lay,n])}
+ return out}
+window.__v243={wrapL,diff,OK,count:()=>Object.values(FX.L).filter(f=>f&&f.__v243).length};
+})();
+
 /*V242 creative department bridge*/
 // V242 · מחלקת קריאייטיב (public/engine/studio/): three concepts per post, an editor with layers, a design review,
 // redesign of an existing post, reference and photo libraries. Here: the menu entry, the "redesign" action on every

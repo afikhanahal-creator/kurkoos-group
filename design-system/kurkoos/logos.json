@@ -1,0 +1,29 @@
+{
+  "$source": "public/ (files on the live site)",
+  "master": {
+    "name": "קבוצת קורקוס",
+    "files": {
+      "rasterOnDark":  { "path": "/kurkoos-groip-logo.png", "size": [700, 700], "note": "white wordmark, red and teal interlocking O, transparent. Preferred for exports." },
+      "rasterOnLight": { "path": "/kurkoos-logo-nadlan.png", "size": [700, 701], "note": "dark wordmark on a white square. Only on white or paper." },
+      "svgStacked":    { "path": "/kurkoos-logo.svg", "viewBox": [0, 0, 320, 300] },
+      "svgStackedWhite": { "path": "/kurkoos-logo-white.svg", "viewBox": [0, 0, 320, 300] },
+      "svgHorizontal": { "path": "/kurkoos-logo-h.svg", "viewBox": [-42, 0, 384, 96] },
+      "svgHorizontalWhite": { "path": "/kurkoos-logo-h-white.svg", "viewBox": [-42, 0, 384, 96] }
+    },
+    "svgWarning": "The SVG wordmarks are live <text> in Georgia, not outlines. On a machine without Georgia the letters change shape. For exported images use the PNG files.",
+    "clearSpace": "the height of the tallest tower on every side",
+    "minWidth1080": 150,
+    "maxWidth1080": 260
+  },
+  "divisions": {
+    "development": { "he": "קבוצת קורקוס", "en": "Kurkoos Group", "role": "יזמות ופיתוח", "logo": "/divisions/development-logo.png", "size": [800, 800] },
+    "raita":       { "he": "ראיתה", "en": "Ra'ita", "role": "בנייה וביצוע", "logo": "/divisions/raita-logo.webp", "note": "white R with a red excavator, for dark backgrounds" },
+    "shchinta":    { "he": "שכינתא", "en": "Shchinta", "role": "פיקוח הנדסי וניהול פרויקטים", "logo": "/divisions/shchinta-logo.webp", "note": "round badge, works on light and dark" },
+    "afik":        { "he": "אפיק הנחל", "en": "Afik Hanahal", "role": "תיווך ושיווק נדל\"ן", "logo": "/afik-hanahal-logo.webp", "note": "thin white AH monogram, dark backgrounds only" }
+  },
+  "rules": [
+    "Never stretch, recolor, rotate, outline or put a shadow on a logo. Scale proportionally only.",
+    "One master logo per design. A division logo may sit next to it as an endorsement, smaller.",
+    "Never put the Afik Hanahal logo on a construction post, or the Ra'ita logo on a brokerage post."
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "$source": "src/styles/tokens.css (the live site's own tokens). Do not add colors here without the owner.",
+  "brand": {
+    "navy":  { "hex": "#07293a", "token": "--color-primary-900", "role": "dark surfaces, headlines on light" },
+    "teal":  { "hex": "#105572", "token": "--color-primary-700", "role": "main brand color, structure, outline numerals" },
+    "blue":  { "hex": "#16688c", "token": "--color-primary-500", "role": "links, active state (UI only, rarely in posts)" },
+    "mist":  { "hex": "#8fb6c8", "token": "--color-primary-300", "role": "secondary text on navy, hairlines on navy" },
+    "ice":   { "hex": "#e7eef1", "token": "--color-primary-100", "role": "soft light panels" },
+    "red":   { "hex": "#a90b0c", "token": "--color-accent-500", "role": "the single accent: one rule, one chip, one number. Never large fills behind body text" },
+    "redDeep": { "hex": "#8c0809", "token": "--color-accent-600", "role": "red on red, pressed states" },
+    "blush": { "hex": "#f7e5e5", "token": "--color-accent-100", "role": "rare soft accent panel" }
+  },
+  "neutral": {
+    "paper":   { "hex": "#f7f8fa", "token": "--color-bg" },
+    "white":   { "hex": "#ffffff", "token": "--color-surface" },
+    "stone":   { "hex": "#f1f3f6", "token": "--color-surface-alt" },
+    "line":    { "hex": "#e2e6ec", "token": "--color-border" },
+    "lineStrong": { "hex": "#cbd2db", "token": "--color-border-strong" },
+    "ink":     { "hex": "#1a1f2b", "token": "--color-text" },
+    "inkSoft": { "hex": "#58606e", "token": "--color-text-muted" },
+    "night":   { "hex": "#07222e", "token": "--color-bg-dark" }
+  },
+  "logoOnly": {
+    "logoInk":  { "hex": "#14202b", "where": "public/kurkoos-logo*.svg, dark logo ink. Not a design color." },
+    "logoRedOnDark":  { "hex": "#e0696a", "where": "white logo, the red O" },
+    "logoTealOnDark": { "hex": "#5ba8c8", "where": "white logo, the teal O" }
+  },
+  "approvedPairs": [
+    { "fg": "white", "bg": "navy", "minSize": 0 },
+    { "fg": "mist",  "bg": "navy", "minSize": 0 },
+    { "fg": "navy",  "bg": "paper", "minSize": 0 },
+    { "fg": "ink",   "bg": "paper", "minSize": 0 },
+    { "fg": "white", "bg": "red", "minSize": 0 },
+    { "fg": "white", "bg": "teal", "minSize": 0 },
+    { "fg": "teal",  "bg": "paper", "minSize": 0 },
+    { "fg": "red",   "bg": "paper", "minSize": 24 },
+    { "fg": "inkSoft", "bg": "paper", "minSize": 0 }
+  ],
+  "rules": [
+    "Red appears at most in two small places per design (a rule, a chip, a key number).",
+    "No gradients between brand colors. The only gradient allowed is a navy scrim over a photo, for legibility.",
+    "No gold. The old #ffd47a numeral color is retired: it is not on the site."
+  ]
+}

@@ -1,0 +1,17 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Studio render</title></head>
+<body style="margin:0;background:#ddd">
+<!-- Headless render endpoint for scripts/studio-examples.mjs: builds and reviews concepts and returns PNGs. -->
+<script type="module">
+import { loadBrand, loadFonts, render, exportBlob } from './core.js'
+import { concepts, buildReviewed, contentFromPost, analyzePost } from './engine.js'
+import { DIRECTIONS } from './directions.js'
+await loadBrand(); await loadFonts()
+const png = async (scene, i = 0) => { const c = document.createElement('canvas'); await render({ w: scene.w, h: scene.h, layers: scene.pages[i] }, c); return c.toDataURL(window.studio.mime || 'image/png', 0.9) }
+window.studio = {
+  directions: Object.keys(DIRECTIONS),
+  async one(content, fmt, direction, opts) { const s = await buildReviewed(content, fmt, direction, opts || {}); return { scene: s, pngs: await Promise.all(s.pages.map((_, i) => png(s, i))) } },
+  async redesign(post, photos, fmt, ctx) { const c = contentFromPost(post, photos); return { content: c, analysis: analyzePost(post, {}), concepts: await this.three(c, fmt, ctx) } },
+  async three(content, fmt, ctx) { const r = await concepts(content, fmt, ctx || {}); return Promise.all(r.concepts.map(async (s) => ({ scene: s, pngs: [await png(s, 0)] }))) },
+}
+window.studioReady = true
+</script></body></html>

@@ -1,0 +1,708 @@
+{
+ "$generated": "from design-system/kurkoos by scripts/build-design-system.mjs. Do not edit.",
+ "brandColors": {
+  "$source": "src/styles/tokens.css (the live site's own tokens). Do not add colors here without the owner.",
+  "brand": {
+   "navy": {
+    "hex": "#07293a",
+    "token": "--color-primary-900",
+    "role": "dark surfaces, headlines on light"
+   },
+   "teal": {
+    "hex": "#105572",
+    "token": "--color-primary-700",
+    "role": "main brand color, structure, outline numerals"
+   },
+   "blue": {
+    "hex": "#16688c",
+    "token": "--color-primary-500",
+    "role": "links, active state (UI only, rarely in posts)"
+   },
+   "mist": {
+    "hex": "#8fb6c8",
+    "token": "--color-primary-300",
+    "role": "secondary text on navy, hairlines on navy"
+   },
+   "ice": {
+    "hex": "#e7eef1",
+    "token": "--color-primary-100",
+    "role": "soft light panels"
+   },
+   "red": {
+    "hex": "#a90b0c",
+    "token": "--color-accent-500",
+    "role": "the single accent: one rule, one chip, one number. Never large fills behind body text"
+   },
+   "redDeep": {
+    "hex": "#8c0809",
+    "token": "--color-accent-600",
+    "role": "red on red, pressed states"
+   },
+   "blush": {
+    "hex": "#f7e5e5",
+    "token": "--color-accent-100",
+    "role": "rare soft accent panel"
+   }
+  },
+  "neutral": {
+   "paper": {
+    "hex": "#f7f8fa",
+    "token": "--color-bg"
+   },
+   "white": {
+    "hex": "#ffffff",
+    "token": "--color-surface"
+   },
+   "stone": {
+    "hex": "#f1f3f6",
+    "token": "--color-surface-alt"
+   },
+   "line": {
+    "hex": "#e2e6ec",
+    "token": "--color-border"
+   },
+   "lineStrong": {
+    "hex": "#cbd2db",
+    "token": "--color-border-strong"
+   },
+   "ink": {
+    "hex": "#1a1f2b",
+    "token": "--color-text"
+   },
+   "inkSoft": {
+    "hex": "#58606e",
+    "token": "--color-text-muted"
+   },
+   "night": {
+    "hex": "#07222e",
+    "token": "--color-bg-dark"
+   }
+  },
+  "logoOnly": {
+   "logoInk": {
+    "hex": "#14202b",
+    "where": "public/kurkoos-logo*.svg, dark logo ink. Not a design color."
+   },
+   "logoRedOnDark": {
+    "hex": "#e0696a",
+    "where": "white logo, the red O"
+   },
+   "logoTealOnDark": {
+    "hex": "#5ba8c8",
+    "where": "white logo, the teal O"
+   }
+  },
+  "approvedPairs": [
+   {
+    "fg": "white",
+    "bg": "navy",
+    "minSize": 0
+   },
+   {
+    "fg": "mist",
+    "bg": "navy",
+    "minSize": 0
+   },
+   {
+    "fg": "navy",
+    "bg": "paper",
+    "minSize": 0
+   },
+   {
+    "fg": "ink",
+    "bg": "paper",
+    "minSize": 0
+   },
+   {
+    "fg": "white",
+    "bg": "red",
+    "minSize": 0
+   },
+   {
+    "fg": "white",
+    "bg": "teal",
+    "minSize": 0
+   },
+   {
+    "fg": "teal",
+    "bg": "paper",
+    "minSize": 0
+   },
+   {
+    "fg": "red",
+    "bg": "paper",
+    "minSize": 24
+   },
+   {
+    "fg": "inkSoft",
+    "bg": "paper",
+    "minSize": 0
+   }
+  ],
+  "rules": [
+   "Red appears at most in two small places per design (a rule, a chip, a key number).",
+   "No gradients between brand colors. The only gradient allowed is a navy scrim over a photo, for legibility.",
+   "No gold. The old #ffd47a numeral color is retired: it is not on the site."
+  ]
+ },
+ "designComponents": {
+  "components": {
+   "rule": {
+    "desc": "a thin red or mist line, 4 to 8 px, that anchors a headline",
+    "max": 1
+   },
+   "chip": {
+    "desc": "editorial label in caps or short Hebrew, Heebo 700, on red, navy or none",
+    "maxWords": 3
+   },
+   "index": {
+    "desc": "numbering 01 02 03 in teal or red, Heebo 800"
+   },
+   "dimension": {
+    "desc": "architectural dimension line with end ticks, mist or teal, over a number"
+   },
+   "panel": {
+    "desc": "solid navy or paper panel holding specs, square corners"
+   },
+   "specRow": {
+    "desc": "label and value on one line, hairline between rows"
+   },
+   "signature": {
+    "desc": "logo and site address, the closing block of a design"
+   },
+   "mask": {
+    "desc": "photo inside a tall rectangle, an arch or a split. One mask per design"
+   },
+   "towers": {
+    "desc": "the four tower bars of the logo mark, used large and faint as a watermark",
+    "maxAlpha": 0.08
+   }
+  },
+  "rule": "Every element must do a job: anchor, separate, count, measure or sign. If it only decorates, remove it."
+ },
+ "imageTreatments": {
+  "treatments": {
+   "natural": {
+    "label": "טבעי",
+    "filter": "none",
+    "use": "real property photos. Default."
+   },
+   "scrimBottom": {
+    "label": "הצללה תחתונה",
+    "scrim": {
+     "from": "navy",
+     "alpha": [
+      0,
+      0.86
+     ],
+     "stops": [
+      0.42,
+      1
+     ]
+    },
+    "use": "text sits at the bottom of a photo"
+   },
+   "scrimSide": {
+    "label": "הצללה צדדית",
+    "scrim": {
+     "from": "navy",
+     "alpha": [
+      0.88,
+      0
+     ],
+     "stops": [
+      0,
+      0.62
+     ],
+     "dir": "rtl"
+    },
+    "use": "text column on the right"
+   },
+   "duotoneNavy": {
+    "label": "דואוטון כחול לילה",
+    "filter": "grayscale(1) contrast(1.08)",
+    "tint": {
+     "color": "navy",
+     "alpha": 0.55,
+     "blend": "multiply"
+    },
+    "use": "construction photos that are busy or have poor color. Never for a finished property sold on its looks."
+   },
+   "mono": {
+    "label": "שחור לבן",
+    "filter": "grayscale(1) contrast(1.12) brightness(1.02)",
+    "use": "editorial, process, archive"
+   },
+   "lift": {
+    "label": "הבהרה עדינה",
+    "filter": "contrast(1.05) saturate(1.06) brightness(1.03)",
+    "use": "flat phone photos. Nothing stronger."
+   }
+  },
+  "rules": [
+   "Never change how a real property looks: no added pools, sky swaps, removed buildings or fake greenery.",
+   "Crop, not stretch. Keep the focal point inside the crop.",
+   "A text area on a photo must reach 4.5:1 contrast. If it does not, add a scrim or move the text, do not lower the text size."
+  ]
+ },
+ "layouts": {
+  "$note": "Creative directions, not templates. The studio engine (public/engine/studio/directions.js) adapts each one to the copy and the photo: text length, image focal point, image brightness and format.",
+  "directions": [
+   {
+    "id": "editorial",
+    "he": "מגזין אדריכלי",
+    "needs": [
+     "image"
+    ],
+    "best": [
+     "אבן דרך",
+     "פרויקט",
+     "אדריכלות"
+    ]
+   },
+   {
+    "id": "realestate",
+    "he": "מודעת נדל\"ן פרימיום",
+    "needs": [
+     "image"
+    ],
+    "best": [
+     "מכירה",
+     "דירה",
+     "בית"
+    ]
+   },
+   {
+    "id": "corporate",
+    "he": "תאגידי מינימלי",
+    "needs": [],
+    "best": [
+     "הודעה",
+     "חברה",
+     "שירות"
+    ]
+   },
+   {
+    "id": "fullbleed",
+    "he": "צילום מלא",
+    "needs": [
+     "image"
+    ],
+    "best": [
+     "תמונה חזקה",
+     "מסירה"
+    ]
+   },
+   {
+    "id": "progress",
+    "he": "התקדמות בנייה",
+    "needs": [
+     "image"
+    ],
+    "best": [
+     "ביצוע",
+     "שלד",
+     "כלונסאות",
+     "יציקה"
+    ]
+   },
+   {
+    "id": "beforeafter",
+    "he": "לפני ואחרי",
+    "needs": [
+     "image",
+     "image2"
+    ],
+    "best": [
+     "לפני",
+     "אחרי",
+     "שינוי"
+    ]
+   },
+   {
+    "id": "typographic",
+    "he": "קמפיין טיפוגרפי",
+    "needs": [],
+    "best": [
+     "שאלה",
+     "עמדה",
+     "ציטוט"
+    ]
+   },
+   {
+    "id": "specs",
+    "he": "מפרט נכס",
+    "needs": [],
+    "best": [
+     "מ\"ר",
+     "חדרים",
+     "מפרט"
+    ]
+   },
+   {
+    "id": "launch",
+    "he": "השקת פרויקט",
+    "needs": [
+     "image"
+    ],
+    "best": [
+     "השקה",
+     "חדש",
+     "בקרוב"
+    ]
+   },
+   {
+    "id": "edu",
+    "he": "קרוסלה מלמדת",
+    "needs": [],
+    "best": [
+     "איך",
+     "טיפ",
+     "שלבים",
+     "מדריך"
+    ]
+   },
+   {
+    "id": "authority",
+    "he": "סמכות ומומחיות",
+    "needs": [],
+    "best": [
+     "שנים",
+     "פרויקטים",
+     "ניסיון",
+     "מספרים"
+    ]
+   },
+   {
+    "id": "lifestyle",
+    "he": "מגורים וסגנון חיים",
+    "needs": [
+     "image"
+    ],
+    "best": [
+     "משפחה",
+     "בית",
+     "שכונה"
+    ]
+   }
+  ]
+ },
+ "logos": {
+  "$source": "public/ (files on the live site)",
+  "master": {
+   "name": "קבוצת קורקוס",
+   "files": {
+    "rasterOnDark": {
+     "path": "/kurkoos-groip-logo.png",
+     "size": [
+      700,
+      700
+     ],
+     "note": "white wordmark, red and teal interlocking O, transparent. Preferred for exports."
+    },
+    "rasterOnLight": {
+     "path": "/kurkoos-logo-nadlan.png",
+     "size": [
+      700,
+      701
+     ],
+     "note": "dark wordmark on a white square. Only on white or paper."
+    },
+    "svgStacked": {
+     "path": "/kurkoos-logo.svg",
+     "viewBox": [
+      0,
+      0,
+      320,
+      300
+     ]
+    },
+    "svgStackedWhite": {
+     "path": "/kurkoos-logo-white.svg",
+     "viewBox": [
+      0,
+      0,
+      320,
+      300
+     ]
+    },
+    "svgHorizontal": {
+     "path": "/kurkoos-logo-h.svg",
+     "viewBox": [
+      -42,
+      0,
+      384,
+      96
+     ]
+    },
+    "svgHorizontalWhite": {
+     "path": "/kurkoos-logo-h-white.svg",
+     "viewBox": [
+      -42,
+      0,
+      384,
+      96
+     ]
+    }
+   },
+   "svgWarning": "The SVG wordmarks are live <text> in Georgia, not outlines. On a machine without Georgia the letters change shape. For exported images use the PNG files.",
+   "clearSpace": "the height of the tallest tower on every side",
+   "minWidth1080": 150,
+   "maxWidth1080": 260
+  },
+  "divisions": {
+   "development": {
+    "he": "קבוצת קורקוס",
+    "en": "Kurkoos Group",
+    "role": "יזמות ופיתוח",
+    "logo": "/divisions/development-logo.png",
+    "size": [
+     800,
+     800
+    ]
+   },
+   "raita": {
+    "he": "ראיתה",
+    "en": "Ra'ita",
+    "role": "בנייה וביצוע",
+    "logo": "/divisions/raita-logo.webp",
+    "note": "white R with a red excavator, for dark backgrounds"
+   },
+   "shchinta": {
+    "he": "שכינתא",
+    "en": "Shchinta",
+    "role": "פיקוח הנדסי וניהול פרויקטים",
+    "logo": "/divisions/shchinta-logo.webp",
+    "note": "round badge, works on light and dark"
+   },
+   "afik": {
+    "he": "אפיק הנחל",
+    "en": "Afik Hanahal",
+    "role": "תיווך ושיווק נדל\"ן",
+    "logo": "/afik-hanahal-logo.webp",
+    "note": "thin white AH monogram, dark backgrounds only"
+   }
+  },
+  "rules": [
+   "Never stretch, recolor, rotate, outline or put a shadow on a logo. Scale proportionally only.",
+   "One master logo per design. A division logo may sit next to it as an endorsement, smaller.",
+   "Never put the Afik Hanahal logo on a construction post, or the Ra'ita logo on a brokerage post."
+  ]
+ },
+ "socialFormats": {
+  "feed": {
+   "w": 1080,
+   "h": 1350,
+   "label": "אינסטגרם פיד 4:5",
+   "safe": "feed"
+  },
+  "square": {
+   "w": 1080,
+   "h": 1080,
+   "label": "ריבוע 1:1",
+   "safe": "feed"
+  },
+  "story": {
+   "w": 1080,
+   "h": 1920,
+   "label": "סטורי 9:16",
+   "safe": "story"
+  },
+  "facebook": {
+   "w": 1200,
+   "h": 1500,
+   "label": "פייסבוק פיד 4:5",
+   "safe": "feed"
+  },
+  "carousel": {
+   "w": 1080,
+   "h": 1350,
+   "label": "קרוסלה, כל השקפים באותו גודל",
+   "safe": "feed"
+  },
+  "export": {
+   "png": {
+    "type": "image/png"
+   },
+   "jpeg": {
+    "type": "image/jpeg",
+    "quality": 0.92
+   },
+   "scale": [
+    1,
+    2
+   ],
+   "maxBytes": 8000000
+  }
+ },
+ "spacing": {
+  "$source": "src/styles/tokens.css --space-*, scaled for a 1080 canvas",
+  "unit": 8,
+  "scale": [
+   8,
+   16,
+   24,
+   32,
+   48,
+   64,
+   96,
+   128
+  ],
+  "margins1080": {
+   "tight": 64,
+   "standard": 88,
+   "generous": 120
+  },
+  "safeArea": {
+   "feed": {
+    "top": 64,
+    "bottom": 64,
+    "side": 64
+   },
+   "story": {
+    "top": 250,
+    "bottom": 300,
+    "side": 72,
+    "note": "Instagram puts the profile row on top and the reply bar at the bottom"
+   }
+  },
+  "grid": {
+   "columns": 12,
+   "gutter": 24
+  },
+  "radius": {
+   "none": 0,
+   "chip": 999,
+   "panel": 0,
+   "note": "Posts use square corners. Rounded cards read as an app, not a firm."
+  }
+ },
+ "typography": {
+  "$source": "src/styles/tokens.css, src/styles/fonts.css, public/fonts/README.md (owner decision 19.10.2026: headlines Heebo, body Almoni)",
+  "families": {
+   "display": {
+    "family": "Heebo",
+    "source": "Google Fonts, variable 300-900",
+    "use": "headlines, numbers, labels in caps"
+   },
+   "body": {
+    "family": "Almoni",
+    "source": "/fonts/almoni-{300,400,700}.woff2",
+    "use": "sub lines, body, specs, captions"
+   }
+  },
+  "installedWeights": {
+   "Almoni": [
+    300,
+    400,
+    700
+   ],
+   "Heebo": [
+    300,
+    400,
+    500,
+    600,
+    700,
+    800,
+    900
+   ]
+  },
+  "missing": [
+   "Almoni has no Medium or Black in the files the owner holds. Requests for 500 render 400; 600 to 900 render 700.",
+   "Fb Metropolis and PowerStation Solid are declared in fonts.css but were never bought. Do not use."
+  ],
+  "scale1080": {
+   "$note": "pixel sizes on a 1080 wide canvas. Headline size is fitted between min and max by the engine.",
+   "hero": {
+    "family": "display",
+    "weight": 900,
+    "min": 96,
+    "max": 168,
+    "lineHeight": 0.98,
+    "tracking": -0.025
+   },
+   "headline": {
+    "family": "display",
+    "weight": 800,
+    "min": 64,
+    "max": 112,
+    "lineHeight": 1.02,
+    "tracking": -0.02
+   },
+   "title": {
+    "family": "display",
+    "weight": 700,
+    "min": 40,
+    "max": 64,
+    "lineHeight": 1.08,
+    "tracking": -0.01
+   },
+   "sub": {
+    "family": "body",
+    "weight": 400,
+    "min": 30,
+    "max": 40,
+    "lineHeight": 1.3,
+    "tracking": 0
+   },
+   "body": {
+    "family": "body",
+    "weight": 400,
+    "min": 26,
+    "max": 32,
+    "lineHeight": 1.42,
+    "tracking": 0
+   },
+   "label": {
+    "family": "display",
+    "weight": 700,
+    "min": 20,
+    "max": 24,
+    "lineHeight": 1,
+    "tracking": 0.08
+   },
+   "number": {
+    "family": "display",
+    "weight": 900,
+    "min": 120,
+    "max": 260,
+    "lineHeight": 0.9,
+    "tracking": -0.04
+   },
+   "caption": {
+    "family": "body",
+    "weight": 400,
+    "min": 20,
+    "max": 24,
+    "lineHeight": 1.3,
+    "tracking": 0.01
+   }
+  },
+  "rules": [
+   "Hebrew is set RTL. Latin words and digits inside Hebrew keep their own order (bidi).",
+   "Never break a line between a number and its unit (380 מ\"ר), or after a one letter word (ו, ב, ל, ה, מ, ש, כ).",
+   "No dashes as punctuation in Hebrew copy. Use a period or a comma.",
+   "Use gershayim ״ and geresh ׳ where they belong (מ״ר, ת״א), not straight quotes, when the text is set large.",
+   "At most two families and three weights in one design.",
+   "Headlines: at most 8 words. Sub line: at most 14 words. Body on an image: never."
+  ]
+ },
+ "hex": {
+  "navy": "#07293a",
+  "teal": "#105572",
+  "blue": "#16688c",
+  "mist": "#8fb6c8",
+  "ice": "#e7eef1",
+  "red": "#a90b0c",
+  "redDeep": "#8c0809",
+  "blush": "#f7e5e5",
+  "paper": "#f7f8fa",
+  "white": "#ffffff",
+  "stone": "#f1f3f6",
+  "line": "#e2e6ec",
+  "lineStrong": "#cbd2db",
+  "ink": "#1a1f2b",
+  "inkSoft": "#58606e",
+  "night": "#07222e"
+ }
+}

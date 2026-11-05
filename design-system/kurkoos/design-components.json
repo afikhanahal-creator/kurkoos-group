@@ -1,0 +1,14 @@
+{
+  "components": {
+    "rule":      { "desc": "a thin red or mist line, 4 to 8 px, that anchors a headline", "max": 1 },
+    "chip":      { "desc": "editorial label in caps or short Hebrew, Heebo 700, on red, navy or none", "maxWords": 3 },
+    "index":     { "desc": "numbering 01 02 03 in teal or red, Heebo 800" },
+    "dimension": { "desc": "architectural dimension line with end ticks, mist or teal, over a number" },
+    "panel":     { "desc": "solid navy or paper panel holding specs, square corners" },
+    "specRow":   { "desc": "label and value on one line, hairline between rows" },
+    "signature": { "desc": "logo and site address, the closing block of a design" },
+    "mask":      { "desc": "photo inside a tall rectangle, an arch or a split. One mask per design" },
+    "towers":    { "desc": "the four tower bars of the logo mark, used large and faint as a watermark", "maxAlpha": 0.08 }
+  },
+  "rule": "Every element must do a job: anchor, separate, count, measure or sign. If it only decorates, remove it."
+}

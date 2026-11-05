@@ -1,0 +1,13 @@
+{
+  "feed":     { "w": 1080, "h": 1350, "label": "אינסטגרם פיד 4:5", "safe": "feed" },
+  "square":   { "w": 1080, "h": 1080, "label": "ריבוע 1:1", "safe": "feed" },
+  "story":    { "w": 1080, "h": 1920, "label": "סטורי 9:16", "safe": "story" },
+  "facebook": { "w": 1200, "h": 1500, "label": "פייסבוק פיד 4:5", "safe": "feed" },
+  "carousel": { "w": 1080, "h": 1350, "label": "קרוסלה, כל השקפים באותו גודל", "safe": "feed" },
+  "export": {
+    "png":  { "type": "image/png" },
+    "jpeg": { "type": "image/jpeg", "quality": 0.92 },
+    "scale": [1, 2],
+    "maxBytes": 8000000
+  }
+}

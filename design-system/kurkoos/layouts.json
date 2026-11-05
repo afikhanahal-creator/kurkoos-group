@@ -1,0 +1,17 @@
+{
+  "$note": "Creative directions, not templates. The studio engine (public/engine/studio/directions.js) adapts each one to the copy and the photo: text length, image focal point, image brightness and format.",
+  "directions": [
+    { "id": "editorial",   "he": "מגזין אדריכלי",      "needs": ["image"], "best": ["אבן דרך", "פרויקט", "אדריכלות"] },
+    { "id": "realestate",  "he": "מודעת נדל\"ן פרימיום", "needs": ["image"], "best": ["מכירה", "דירה", "בית"] },
+    { "id": "corporate",   "he": "תאגידי מינימלי",      "needs": [],        "best": ["הודעה", "חברה", "שירות"] },
+    { "id": "fullbleed",   "he": "צילום מלא",           "needs": ["image"], "best": ["תמונה חזקה", "מסירה"] },
+    { "id": "progress",    "he": "התקדמות בנייה",        "needs": ["image"], "best": ["ביצוע", "שלד", "כלונסאות", "יציקה"] },
+    { "id": "beforeafter", "he": "לפני ואחרי",           "needs": ["image", "image2"], "best": ["לפני", "אחרי", "שינוי"] },
+    { "id": "typographic", "he": "קמפיין טיפוגרפי",      "needs": [],        "best": ["שאלה", "עמדה", "ציטוט"] },
+    { "id": "specs",       "he": "מפרט נכס",            "needs": [],        "best": ["מ\"ר", "חדרים", "מפרט"] },
+    { "id": "launch",      "he": "השקת פרויקט",          "needs": ["image"], "best": ["השקה", "חדש", "בקרוב"] },
+    { "id": "edu",         "he": "קרוסלה מלמדת",         "needs": [],        "best": ["איך", "טיפ", "שלבים", "מדריך"] },
+    { "id": "authority",   "he": "סמכות ומומחיות",       "needs": [],        "best": ["שנים", "פרויקטים", "ניסיון", "מספרים"] },
+    { "id": "lifestyle",   "he": "מגורים וסגנון חיים",    "needs": ["image"], "best": ["משפחה", "בית", "שכונה"] }
+  ]
+}

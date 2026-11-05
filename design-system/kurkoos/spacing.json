@@ -1,0 +1,12 @@
+{
+  "$source": "src/styles/tokens.css --space-*, scaled for a 1080 canvas",
+  "unit": 8,
+  "scale": [8, 16, 24, 32, 48, 64, 96, 128],
+  "margins1080": { "tight": 64, "standard": 88, "generous": 120 },
+  "safeArea": {
+    "feed":  { "top": 64, "bottom": 64, "side": 64 },
+    "story": { "top": 250, "bottom": 300, "side": 72, "note": "Instagram puts the profile row on top and the reply bar at the bottom" }
+  },
+  "grid": { "columns": 12, "gutter": 24 },
+  "radius": { "none": 0, "chip": 999, "panel": 0, "note": "Posts use square corners. Rounded cards read as an app, not a firm." }
+}

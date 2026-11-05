@@ -33137,6 +33137,49 @@ if(!lsGet('ag_seed_kg10',false)){const s10=SEED10.map(r=>normalize(r,{src:'seed'
   try{await Promise.race([hostReady,new Promise(r=>setTimeout(r,1500))]);await creativeInit()}catch(e){console.error('creative',e)}
   await appReady;
 })();
+/*V242 creative department bridge*/
+// V242 · מחלקת קריאייטיב (public/engine/studio/): three concepts per post, an editor with layers, a design review,
+// redesign of an existing post, reference and photo libraries. Here: the menu entry, the "redesign" action on every
+// post card, the messages the studio sends (post list, one post, its current render, save, close), and the post's
+// image when a studio design was saved for it.
+(function(){
+if(window.__v242)return;
+const SRC='/engine/studio/';
+const posts=()=>typeof AG!=='undefined'&&AG.posts?AG.posts:[];
+// menu entry and page
+try{const grp=VIEWS.find(g=>g[1].some(v=>v[0]==='gallery'))||VIEWS.find(g=>g[0]==='תוכן')||VIEWS[0];if(grp&&!VIEWS.some(g=>g[1].some(v=>v[0]==='cdept'))){const at=grp[1].findIndex(v=>v[0]==='gallery');grp[1].splice(at<0?grp[1].length:at+1,0,['cdept','מחלקת קריאייטיב','art'])}VTITLE.cdept=['מחלקת קריאייטיב','שלושה קונספטים לכל פוסט, עורך שכבות, ביקורת עיצוב ועיצוב מחדש לפוסטים קיימים']}catch(e){}
+try{render=(f=>function(){const v=typeof APP!=='undefined'?APP.view:'';if(v!=='cdept')return f.apply(this,arguments);renderNav();const [t,s]=VTITLE[v];document.getElementById('vt').textContent=t;document.getElementById('vs').textContent=s;document.querySelectorAll('.wrap > section').forEach(sec=>sec.classList.add('view-hidden'));const va=document.getElementById('vact');if(va)va.innerHTML='';const av=document.getElementById('appviews');if(!av.querySelector('.v242page'))av.innerHTML='<div class="v242page"><iframe title="מחלקת קריאייטיב" src="'+SRC+'"></iframe></div>';try{window.__v99&&__v99.ensureNav()}catch(e){}})(render)}catch(e){}
+try{renderNav()}catch(e){}
+// full screen studio for one post
+let ov=null;
+function open(id){close(true);ov=document.createElement('div');ov.id='v242ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','מחלקת קריאייטיב');
+ ov.innerHTML='<iframe title="מחלקת קריאייטיב" src="'+SRC+'?mode=redesign&post='+encodeURIComponent(id)+'"></iframe>';document.body.appendChild(ov);
+ try{history.pushState({v242:1},'')}catch(e){};setTimeout(()=>{try{ov.querySelector('iframe').focus()}catch(e){}},300)}
+function close(silent){if(!ov)return;ov.remove();ov=null;if(!silent&&history.state&&history.state.v242)try{history.back()}catch(e){}}
+window.addEventListener('popstate',()=>{if(ov)close(true)});
+// the redesign action in each card's ⋯ menu
+const addItems=()=>document.querySelectorAll('.v207menu').forEach(m=>{if(m.querySelector('[data-v242]'))return;const c=m.closest('[data-id]');const id=c&&c.dataset.id;if(!id)return;const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.dataset.v242='open';b.dataset.id=id;b.textContent='עיצוב מחדש במחלקת הקריאייטיב';m.insertBefore(b,m.firstChild)});
+new MutationObserver(addItems).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v242="open"]');if(!b)return;e.preventDefault();e.stopPropagation();open(b.dataset.id)},true);
+// messages from the studio
+const IMGS={};const imgOf=u=>{if(!IMGS[u]){const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{try{typeof render==='function'&&render()}catch(e){}};i.src=u;IMGS[u]=i}return IMGS[u]};
+window.addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||!String(e.data.type||'').startsWith('kurkoos-studio:'))return;
+ const d=e.data,reply=v=>{try{e.source.postMessage({re:d.id,value:v},location.origin)}catch(x){}};
+ if(d.type==='kurkoos-studio:close'){close();return}
+ if(d.type==='kurkoos-studio:posts')return reply(posts().filter(p=>p&&!p.removed).map(p=>({id:p.id,topic:p.topic,hook:p.hook,layout:p.layout,theme:p.theme,photoKey:p.photoKey,photo2Key:p.photo2Key,upd:p.upd,visual:p.visual?{headline:p.visual.headline}:null,fx:p.fx?{theme:p.fx.theme}:null})));
+ const p=posts().find(x=>x.id===d.postId);
+ if(d.type==='kurkoos-studio:post')return reply(p?JSON.parse(JSON.stringify(p)):null);
+ if(d.type==='kurkoos-studio:thumb')return reply(p?await thumb(p.id):null);
+ if(d.type==='kurkoos-studio:save'){if(!p)return reply(false);p.studio=d.design;p.upd=new Date().toISOString();try{saveAgent()}catch(x){};try{render()}catch(x){};return reply(true)}
+});
+// a post with a saved studio design shows that design (4:5 only); the original layout stays in the post untouched
+const orig=p=>{if(!p||!p.studio)return p;const q=Object.assign({},p);delete q.studio;return q};
+try{drawSlide=(f=>function(cv,p,i){const s=p&&p.studio;if(s&&s.use&&s.pages&&s.pages[i||0]&&cv.width*5===cv.height*4){const im=imgOf(s.pages[i||0]);if(im.complete&&im.naturalWidth){const c=cv.getContext('2d');c.drawImage(im,0,0,cv.width,cv.height);return}}return f.apply(this,arguments)})(drawSlide)}catch(e){}
+// the post as the engine draws it today (without a studio design), for the before and after view
+async function thumb(id){const p=posts().find(x=>x.id===id);if(!p)return null;try{const draw=()=>{const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;drawSlide(cv,orig(p),0);return cv};try{await preloadPosts([orig(p)])}catch(x){};draw();await new Promise(r=>setTimeout(r,900));return draw().toDataURL('image/jpeg',0.88)}catch(x){return null}}
+window.__v242={open,close,thumb};
+})();
+
 })();
 </script>
 
@@ -33265,5 +33308,10 @@ textarea,input[type=text],input[type=search],input:not([type]),[contenteditable=
     const b=document.querySelector(next?'#ga-lb [data-ga="lbnext"]':'#ga-lb [data-ga="lbprev"]');if(b)b.click()},{passive:true});
 })();
 </script>
+
+<style id="v242css">
+#v242ov{position:fixed;inset:0;z-index:2147483000;background:#07293a}#v242ov iframe{width:100%;height:100%;border:0;display:block;background:#f7f8fa}
+.v242page{height:calc(100vh - 140px);min-height:560px;border-radius:14px;overflow:hidden;border:1px solid #dfe8ed}.v242page iframe{width:100%;height:100%;border:0;display:block}
+</style>
 
 </body></html>

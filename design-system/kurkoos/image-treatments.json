@@ -1,0 +1,15 @@
+{
+  "treatments": {
+    "natural":  { "label": "טבעי", "filter": "none", "use": "real property photos. Default." },
+    "scrimBottom": { "label": "הצללה תחתונה", "scrim": { "from": "navy", "alpha": [0, 0.86], "stops": [0.42, 1] }, "use": "text sits at the bottom of a photo" },
+    "scrimSide":   { "label": "הצללה צדדית", "scrim": { "from": "navy", "alpha": [0.88, 0], "stops": [0, 0.62], "dir": "rtl" }, "use": "text column on the right" },
+    "duotoneNavy": { "label": "דואוטון כחול לילה", "filter": "grayscale(1) contrast(1.08)", "tint": { "color": "navy", "alpha": 0.55, "blend": "multiply" }, "use": "construction photos that are busy or have poor color. Never for a finished property sold on its looks." },
+    "mono":     { "label": "שחור לבן", "filter": "grayscale(1) contrast(1.12) brightness(1.02)", "use": "editorial, process, archive" },
+    "lift":     { "label": "הבהרה עדינה", "filter": "contrast(1.05) saturate(1.06) brightness(1.03)", "use": "flat phone photos. Nothing stronger." }
+  },
+  "rules": [
+    "Never change how a real property looks: no added pools, sky swaps, removed buildings or fake greenery.",
+    "Crop, not stretch. Keep the focal point inside the crop.",
+    "A text area on a photo must reach 4.5:1 contrast. If it does not, add a scrim or move the text, do not lower the text size."
+  ]
+}

@@ -1,0 +1,102 @@
+/* Kurkoos creative studio. Colours are the site's tokens (design-system/kurkoos/brand-colors.json). */
+@font-face { font-family: 'Almoni'; src: url('/fonts/almoni-300.woff2') format('woff2'); font-weight: 300; font-display: swap }
+@font-face { font-family: 'Almoni'; src: url('/fonts/almoni-400.woff2') format('woff2'); font-weight: 400 500; font-display: swap }
+@font-face { font-family: 'Almoni'; src: url('/fonts/almoni-700.woff2') format('woff2'); font-weight: 600 900; font-display: swap }
+:root {
+  --navy: #07293a; --teal: #105572; --blue: #16688c; --mist: #8fb6c8; --ice: #e7eef1; --red: #a90b0c;
+  --paper: #f7f8fa; --white: #fff; --stone: #f1f3f6; --line: #e2e6ec; --line2: #cbd2db; --ink: #1a1f2b; --ink2: #58606e;
+  color-scheme: light;
+}
+* { box-sizing: border-box }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 Almoni, Heebo, Assistant, system-ui, sans-serif }
+h1, h2, h3 { font-family: Heebo, Almoni, sans-serif; color: var(--navy); letter-spacing: -0.01em; margin: 0 0 8px }
+h1 { font-size: 26px; font-weight: 800 } h2 { font-size: 21px; font-weight: 800 } h3 { font-size: 16px; font-weight: 700; margin-top: 16px }
+button, input, select, textarea { font: inherit; color: inherit }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px }
+.st-skip { position: absolute; inset-inline-start: 8px; top: -60px; background: var(--white); padding: 8px 14px; z-index: 10; border-radius: 8px }
+.st-skip:focus { top: 8px }
+.st-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 10px 16px; padding-top: max(10px, env(safe-area-inset-top)); background: var(--navy); color: var(--white) }
+.st-brand { display: flex; flex-direction: column; line-height: 1.1 } .st-brand b { font: 800 18px Heebo, sans-serif } .st-brand span { color: var(--mist); font-size: 13px }
+.st-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: none } .st-tabs::-webkit-scrollbar { display: none }
+.st-tabs button { background: none; border: 0; color: var(--mist); padding: 10px 14px; border-radius: 10px; white-space: nowrap; cursor: pointer; min-height: 44px; font-weight: 700 }
+.st-tabs button[aria-selected="true"] { background: rgba(255, 255, 255, .1); color: var(--white); box-shadow: inset 0 -3px 0 var(--red) }
+.st-x { background: none; border: 1px solid var(--mist); color: var(--white); width: 44px; height: 44px; border-radius: 10px; cursor: pointer; font-size: 18px }
+main { padding: 16px; max-width: 1480px; margin: 0 auto; outline: none }
+.st-brief { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px }
+.st-note { color: var(--ink2); font-size: 14px; margin: 4px 0 12px }
+.st-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px }
+.st-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px } .st-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px }
+.st-f { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px; color: var(--navy) } .st-f.wide { grid-column: 1 / -1 } .st-f.sm { font-size: 13px }
+.st-f.inline { flex-direction: row; align-items: center; gap: 6px; font-weight: 400 }
+.st-f input, .st-f select, .st-f textarea, .st-item input, .st-grid3 select, .st-grid3 input { border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px; background: var(--white); font-weight: 400; min-height: 44px; width: 100% }
+.st-f textarea { resize: vertical; min-height: 80px }
+.st-f input[type="range"] { padding: 0; min-height: 32px; accent-color: var(--teal) }
+.st-items { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 0 0 12px } .st-items legend { font-weight: 700; color: var(--navy); padding: 0 6px; font-size: 14px }
+.st-item { display: grid; grid-template-columns: 1fr 2fr auto; gap: 8px; margin-bottom: 8px }
+.st-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 }
+.st-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--teal); background: var(--teal); color: var(--white); font-weight: 700; cursor: pointer; text-decoration: none }
+.st-btn.pri { background: var(--red); border-color: var(--red) } .st-btn.ghost { background: var(--white); color: var(--teal) } .st-btn.sm { min-height: 38px; padding: 0 12px; font-size: 14px }
+.st-btn:disabled { opacity: .5; cursor: default }
+.st-imgslot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px dashed var(--line2); border-radius: 12px; padding: 10px; min-height: 72px }
+.st-imgslot img { width: 72px; height: 56px; object-fit: cover; border-radius: 6px } .st-imgslot div { display: flex; flex-direction: column; flex: 1; min-width: 120px } .st-imgslot small { color: var(--ink2) }
+.st-ai { background: var(--ice); border-radius: 12px; padding: 12px; margin-top: 8px }
+.st-cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px } .st-cgrid.sm { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) }
+.st-card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px }
+.st-card canvas, .st-thumb { width: 100%; height: auto; border-radius: 6px; background: var(--stone); display: block }
+.st-cmeta { display: flex; justify-content: space-between; align-items: center; gap: 8px } .st-card small { color: var(--ink2) }
+.st-score { font: 800 14px Heebo, sans-serif; padding: 3px 10px; border-radius: 999px; background: var(--stone); color: var(--ink) }
+.st-score.ok { background: #e3f3ea; color: #1d6b47 } .st-score.mid { background: #fdf1d8; color: #7a5200 } .st-score.bad { background: var(--blush, #f7e5e5); color: #8c0809 }
+.st-combine { margin-top: 16px } .st-combine summary { cursor: pointer; font-weight: 700; color: var(--teal); min-height: 44px; display: flex; align-items: center }
+.st-ed { display: flex; flex-direction: column; gap: 10px }
+.st-edbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 8px }
+.st-edbar b { font-family: Heebo, sans-serif; color: var(--navy); margin-inline-end: auto }
+.st-pages { display: flex; gap: 6px; overflow-x: auto } .st-pages button { min-width: 44px; min-height: 40px; border-radius: 8px; border: 1px solid var(--line2); background: var(--white); cursor: pointer }
+.st-pages button[aria-selected="true"] { background: var(--navy); color: var(--white) }
+.st-edgrid { display: grid; grid-template-columns: 290px minmax(0, 1fr) 310px; gap: 12px; align-items: start }
+.st-side { background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 12px; max-height: calc(100vh - 150px); overflow: auto; position: sticky; top: 76px }
+.st-stage { background: repeating-conic-gradient(var(--stone) 0 25%, var(--white) 0 50%) 0 0 / 24px 24px; border-radius: 12px; border: 1px solid var(--line); padding: 12px; overflow: auto; min-height: 60vh; display: flex; justify-content: center; align-items: flex-start }
+.st-canvaswrap { position: relative; touch-action: none; box-shadow: 0 12px 28px rgba(10, 40, 55, .14) } #st-cv { display: block; cursor: default }
+.st-selbox { position: absolute; border: 2px solid var(--blue); pointer-events: none } .st-selbox.locked { border-style: dashed; border-color: var(--ink2) }
+.st-selbox i { position: absolute; width: 16px; height: 16px; background: var(--white); border: 2px solid var(--blue); border-radius: 50%; pointer-events: auto; touch-action: none }
+.st-selbox i[data-h="nw"] { left: -9px; top: -9px; cursor: nwse-resize } .st-selbox i[data-h="ne"] { right: -9px; top: -9px; cursor: nesw-resize }
+.st-selbox i[data-h="sw"] { left: -9px; bottom: -9px; cursor: nesw-resize } .st-selbox i[data-h="se"] { right: -9px; bottom: -9px; cursor: nwse-resize }
+.st-selbox.locked i { display: none }
+.st-layers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow: auto }
+.st-layers li { display: flex; align-items: center; gap: 2px; border-radius: 8px } .st-layers li.sel { background: var(--ice) }
+.st-layers button { background: none; border: 0; min-height: 36px; min-width: 36px; cursor: pointer; border-radius: 6px }
+.st-lname { flex: 1; text-align: right; display: flex; gap: 8px; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 6px }
+.st-lname span { width: 22px; font: 700 12px Heebo; color: var(--teal); flex: none; text-align: center }
+.st-sw { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px } .st-sw button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line2); cursor: pointer }
+.st-sw button[aria-checked="true"] { outline: 3px solid var(--blue); outline-offset: 2px }
+.st-seg { display: flex; border: 1px solid var(--line2); border-radius: 10px; overflow: hidden; margin: 8px 0 } .st-seg button { flex: 1; border: 0; background: var(--white); min-height: 38px; cursor: pointer }
+.st-seg button[aria-pressed="true"] { background: var(--navy); color: var(--white) }
+.st-lbl { font-weight: 700; font-size: 13px; color: var(--navy); margin: 8px 0 4px }
+.st-check { display: flex; gap: 8px; align-items: center; min-height: 44px }
+.st-review { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 8px }
+.st-crit { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px } .st-crit li { display: grid; grid-template-columns: 1fr 90px 32px; gap: 8px; align-items: center; font-size: 13px }
+.st-crit meter { width: 100% } .st-crit b { font-family: Heebo; text-align: left }
+.st-issues { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; font-size: 13px } .st-issues li { padding: 6px 10px; border-radius: 8px; background: var(--stone) }
+.st-issues li.fail { background: #f7e5e5; color: #8c0809 } .st-issues li.warn { background: #fdf6e4 }
+.st-plist { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; max-height: 420px; overflow: auto }
+.st-plist button { width: 100%; text-align: right; background: var(--white); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; min-height: 44px }
+.st-plist small { color: var(--ink2) }
+.st-orig { display: grid; grid-template-columns: minmax(0, 320px) 1fr; gap: 16px } .st-orig img { width: 100%; border-radius: 8px; border: 1px solid var(--line) }
+.st-assets { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px }
+.st-assets li { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--white) } .st-assets img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block }
+.st-assets li > div { padding: 8px; display: flex; flex-direction: column; gap: 6px } .st-assets small { color: var(--ink2) }
+.st-dlg { border: 0; border-radius: 16px; padding: 20px; width: min(1100px, 96vw); max-height: 90vh; overflow: auto } .st-dlg::backdrop { background: rgba(7, 41, 58, .6) }
+.st-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 16px }
+.st-pick button { border: 1px solid var(--line); border-radius: 10px; padding: 0; background: var(--white); cursor: pointer; overflow: hidden; text-align: right }
+.st-pick img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block } .st-pick small { display: block; padding: 6px; font-size: 12px }
+.st-cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px } .st-cmp figure { margin: 0 } .st-cmp figcaption { font: 800 16px Heebo; color: var(--navy); margin-bottom: 6px }
+.st-cmp img, .st-cmp canvas { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line) }
+.st-toast { position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); inset-inline: 16px; margin: auto; max-width: 520px; background: var(--navy); color: var(--white); border-radius: 12px; padding: 12px 16px; transform: translateY(160%); transition: transform .2s; z-index: 20; text-align: center }
+.st-toast.on { transform: none }
+@media (max-width: 1100px) { .st-edgrid { grid-template-columns: minmax(0, 1fr) 300px } .st-left { grid-column: 1 / -1; position: static; max-height: none; order: 3 } }
+@media (max-width: 760px) {
+  main { padding: 10px } .st-brief { padding: 14px } .st-top { gap: 8px; padding-inline: 10px } .st-brand span { display: none }
+  .st-edgrid { grid-template-columns: minmax(0, 1fr) } .st-side { position: static; max-height: none } .st-stage { order: 1 } .st-left { order: 2 } .st-right { order: 3 } .st-stage { min-height: 0; padding: 8px }
+  .st-grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)) } .st-grid3 { grid-template-columns: minmax(0, 1fr) } .st-orig, .st-cmp { grid-template-columns: minmax(0, 1fr) }
+  .st-item { grid-template-columns: 1fr 1.4fr auto }
+}
+@media (prefers-reduced-motion: reduce) { .st-toast { transition: none } }

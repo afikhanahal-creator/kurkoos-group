@@ -1,11 +1,11 @@
-// Re-save the ad card screenshots already in storage at 2400px wide (webp q80) instead of 4K, to make room on the free
-// plan. The ad picture on the card comes from a 600px original, so nothing is lost there; the text stays sharp.
+// Re-save the ad card screenshots already in storage at 1600px wide (webp q75; 2026-11-06 — was 2400 / q80, before that 4K),
+// to make room on the free plan. The ad picture on the card comes from a 600px original, so nothing is lost there; the text stays sharp.
 // Uses the original 4K capture from out/ when it is still on disk, otherwise the stored webp. Needs policies_on.sql.
-// node shrink.cjs [--dry] [--limit 20] [--width 2400]
+// node shrink.cjs [--dry] [--limit 20] [--width 1600] [--quality 75]
 const fs=require('fs');const path=require('path');const cp=require('child_process');
 const A=Object.fromEntries(process.argv.slice(2).map((a,i,v)=>a.startsWith('--')?[a.slice(2),(v[i+1]&&!v[i+1].startsWith('--'))?v[i+1]:true]:[]).filter(x=>x.length));
 const H=__dirname;const OUT=path.join(H,'out');const TMP=path.join(H,'shrink');fs.mkdirSync(TMP,{recursive:true});
-const W=+A.width||2400;const LIMIT=+A.limit||0;
+const W=+A.width||1600;const Q=+A.quality||75;const LIMIT=+A.limit||0;
 const KEY=(fs.readFileSync(path.join(H,'..','..','public','engine','bridge.js'),'utf8').match(/const KEY = '([^']+)'/)||[])[1];
 const SB='https://filnzlnvujnlazwcxbuq.supabase.co';const PUB=SB+'/storage/v1/object/public/engine-media/';
 const log=s=>{const l=new Date().toISOString().slice(11,19)+' '+s;console.log(l);fs.appendFileSync(path.join(H,'shrink.log'),l+'\n')};
@@ -24,15 +24,15 @@ const auth={apikey:KEY,Authorization:'Bearer '+KEY};
  for(const row of todo){if(LIMIT&&n>=LIMIT)break;if(done.has(row.id))continue;const d=row.data;const ad=String(d.ad_id||row.id.replace(/^meta_/,''));
   try{let src=path.join(OUT,ad+'_card.jpg');if(!fs.existsSync(src)){src=path.join(TMP,ad+'_in.webp');const r=sh(`curl -s -m 120 -o "${src}" -w '%{http_code}' "${PUB}${d.blob}"`);if(r.trim()!=='200')throw new Error('get '+r)}
    const dst=path.join(TMP,ad+'_card.webp');
-   const wh=sh(`python3 - "${src}" "${dst}" ${W} <<'EOF'
+   const wh=sh(`python3 - "${src}" "${dst}" ${W} ${Q} <<'EOF'
 import sys;from PIL import Image
 im=Image.open(sys.argv[1]).convert('RGB');W=int(sys.argv[3])
 if im.width>W:im=im.resize((W,round(im.height*W/im.width)),Image.LANCZOS)
-im.save(sys.argv[2],'WEBP',quality=80,method=6);print(im.width,im.height)
+im.save(sys.argv[2],'WEBP',quality=int(sys.argv[4]),method=6);print(im.width,im.height)
 EOF`).trim().split(' ').map(Number);
-   const sz=fs.statSync(dst).size;before+=+d.bytes||0;after+=sz;
+   const sz=fs.statSync(dst).size;if(sz>=(+d.bytes||Infinity)*0.95){fs.unlinkSync(dst);continue}before+=+d.bytes||0;after+=sz;
    // a 429 (too many connections) passes after a short wait
-   if(!A.dry){let u;for(let k=0;k<6;k++){u=curl('POST',`${SB}/storage/v1/object/engine-media/${d.blob}`,Object.assign({'Content-Type':'image/webp','x-upsert':'true','cache-control':'3600'},auth),dst);if(u.status!==429&&u.status<500)break;cp.execSync('sleep '+(5+k*5))}if(u.status>=300)throw new Error('upload '+u.status+' '+u.body.slice(0,160))}
+   if(!A.dry){let u;for(let k=0;k<6;k++){u=curl('POST',`${SB}/storage/v1/object/engine-media/${d.blob}`,Object.assign({'Content-Type':'image/webp','x-upsert':'true','cache-control':'max-age=31536000'},auth),dst);if(u.status!==429&&u.status<500)break;cp.execSync('sleep '+(5+k*5))}if(u.status>=300)throw new Error('upload '+u.status+' '+u.body.slice(0,160))}
    batch.push({collection:'comp_shots',id:row.id,data:Object.assign({},d,{w:wh[0],h:wh[1],bytes:sz,shrunk:new Date().toISOString().slice(0,10)})});n++;
    try{fs.unlinkSync(dst)}catch(e){}if(src.startsWith(TMP))try{fs.unlinkSync(src)}catch(e){}
    if(batch.length>=20){flush();log(`shrunk ${n}, ${(before/1048576).toFixed(0)} MB -> ${(after/1048576).toFixed(0)} MB`)}

@@ -39,7 +39,7 @@ Keep this project in an organization of its own, and keep the captures small:
 - A card is 1600px wide, webp q75 (about 60 KB; it was 2400px / q80, 130 KB). `shrink.cjs` re-saves older ones in place.
 - `prune.cjs` — ads that stopped running keep only the creative (~40 KB); the card screenshot and the old preview are deleted.
   Run it before every capture round: `node prune.cjs --dry`, then `node prune.cjs`.
-- `up.cjs` reads the whole project's files (`public.storage_usage()`, `server/storage-usage.sql`) and stops before it passes
+- `up.cjs` reads the whole project's files (`public.storage_usage()`, `scripts/storage/storage-usage.sql`) and stops before it passes
   `--cap-pct` (75%) of 1 GB. `--budget-mb` still caps one run.
 - The Afik site's daily cron reads the same function and texts the office once a day while this project passes 70%.
 - Videos: `scripts/storage/recompress-videos.cjs` re-encodes them in place (H.264, short side ≤ 1080 px, kept only when 25% smaller).

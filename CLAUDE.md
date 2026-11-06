@@ -6,7 +6,7 @@ The free plan's 1 GB of files and 5 GB of traffic are per Supabase **organizatio
 shared an org, passed 1.1 GB together (this one 930 MB, mostly Meta ad captures in `engine-media/blob/meta/`) and every request
 of both sites answered 402. Keep this project in an organization of its own. Rules: ad captures are 1600px webp q75 and an ad
 that stopped running keeps only its creative (`scripts/meta_capture/prune.cjs`); `up.cjs` stops at 75% of the quota
-(`public.storage_usage()`, `server/storage-usage.sql` — sizes only, readable with the publishable key); videos are re-encoded
+(`public.storage_usage()`, `scripts/storage/storage-usage.sql` — sizes only, readable with the publishable key); videos are re-encoded
 in place by `scripts/storage/recompress-videos.cjs`; every upload carries `cache-control: max-age=31536000`. The Afik site's
 daily cron reads `storage_usage()` and texts the office once a day while this project passes 70%.
 

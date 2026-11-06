@@ -1,13 +1,16 @@
 // Upload captured Meta ads into the engine: one comp_shots row per unique creative (same page, picture and text),
-// with the card screenshot (webp, 2400px wide) and the creative itself (the 600px picture or the video frame).
+// with the card screenshot (webp, 1600px wide — 2026-11-06, was 2400; the free plan's 1 GB is shared by everything) and the creative itself (the 600px picture or the video frame).
 // The 1080px preview is no longer made: the viewer shows the creative, and the card when asked for the whole ad.
-// node up.cjs [--per-comp 6] [--dry] [--only C001] [--budget-mb 550]
+// node up.cjs [--per-comp 6] [--dry] [--only C001] [--budget-mb 550] [--cap-pct 75]
+// Stops before the whole project passes --cap-pct of the free plan's 1 GB (read from public.storage_usage(); the project was
+// restricted on 2026-11-06 at 1.23 GB). Run prune.cjs first: it frees the room taken by ads that stopped running.
 const fs=require('fs');const path=require('path');const cp=require('child_process');const crypto=require('crypto');
 const A=Object.fromEntries(process.argv.slice(2).map((a,i,v)=>a.startsWith('--')?[a.slice(2),(v[i+1]&&!v[i+1].startsWith('--'))?v[i+1]:true]:[]).filter(x=>x.length));
 const H=__dirname;const OUT=path.join(H,'out');const UP=path.join(H,'up');fs.mkdirSync(UP,{recursive:true});
 const PER=+A['per-comp']||0;const ONLY=A.only?String(A.only).split(','):null;const BUDGET=(+A['budget-mb']||0)*1048576;
 const KEY=(fs.readFileSync(path.join(H,'..','..','public','engine','bridge.js'),'utf8').match(/const KEY = '([^']+)'/)||[])[1];
 const SB='https://filnzlnvujnlazwcxbuq.supabase.co';const PUB=SB+'/storage/v1/object/public/engine-media/';
+const CARD_W=1600,CARD_Q=75;const QUOTA=1024*1048576;const CAP=QUOTA*(+A['cap-pct']||75)/100;
 const ads=Object.fromEntries(JSON.parse(fs.readFileSync(path.join(H,'ads.json'),'utf8')).map(a=>[a.id,a]));
 const log=s=>{const l=new Date().toISOString().slice(11,19)+' '+s;console.log(l);fs.appendFileSync(path.join(H,'up.log'),l+'\n')};
 const sh=(c)=>cp.execSync(c,{maxBuffer:64e6}).toString();
@@ -15,18 +18,19 @@ function curl(method,url,headers,file){const hs=Object.entries(headers).map(([k,
  const b=sh(`curl -s -m 180 -X ${method} -w '\\n%{http_code}' ${hs} ${data} "${url}"`);const k=b.lastIndexOf('\n');return {status:+b.slice(k+1),body:b.slice(0,k)}}
 // uploads are free (ingress); a 402 means the project is restricted for going over its transfer quota: stop
 function upload(file,name,ct){if(A.dry)return {ok:true};const r=curl('POST',`${SB}/storage/v1/object/engine-media/${name}`,{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':ct,'x-upsert':'true','cache-control':'max-age=31536000'},file);
- if(r.status===402){log('STOP: Supabase answered 402 (the monthly transfer quota is used up). Upload again after it resets.');process.exit(3)}
+ if(r.status===402){log('STOP: Supabase answered 402 (the project is restricted: a free-plan quota is used up).');process.exit(3)}
  if(r.status>=300)throw new Error('upload '+r.status+' '+r.body.slice(0,160));return {ok:true}}
 function upsert(rows){if(A.dry)return;const f=path.join(UP,'_rows.json');fs.writeFileSync(f,JSON.stringify(rows));
  const r=curl('POST',`${SB}/rest/v1/engine_docs?on_conflict=collection,id`,{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},f);
  if(r.status>=300)throw new Error('upsert '+r.status+' '+r.body.slice(0,200))}
 // pictures: card -> webp q80 at 2400px wide (enough for the text to stay sharp; the picture on it is a 600px original), creative kept (jpg)
-function pics(id){const card=path.join(OUT,id+'_card.jpg');if(!fs.existsSync(card))return null;const big=path.join(UP,id+'_card24.webp');
- if(!fs.existsSync(big)){sh(`python3 - "${card}" "${big}" <<'EOF'
+function pics(id){const card=path.join(OUT,id+'_card.jpg');if(!fs.existsSync(card))return null;const big=path.join(UP,id+'_card16.webp');
+ if(!fs.existsSync(big)){sh(`python3 - "${card}" "${big}" ${CARD_W} ${CARD_Q} <<'EOF'
 import sys;from PIL import Image
 im=Image.open(sys.argv[1]).convert('RGB')
-if im.width>2400:im=im.resize((2400,round(im.height*2400/im.width)),Image.LANCZOS)
-im.save(sys.argv[2],'WEBP',quality=80,method=6)
+W=int(sys.argv[3]);Q=int(sys.argv[4])
+if im.width>W:im=im.resize((W,round(im.height*W/im.width)),Image.LANCZOS)
+im.save(sys.argv[2],'WEBP',quality=Q,method=6)
 EOF`)}
  const [w,h]=sh(`python3 -c "from PIL import Image;im=Image.open('${big}');print(im.width,im.height)"`).trim().split(' ').map(Number);
  return {big,w,h,bytes:fs.statSync(big).size}}
@@ -41,10 +45,16 @@ EOF`)}
  const byC={};groups.forEach(l=>{(byC[l[0].comp_id]=byC[l[0].comp_id]||[]).push(l)});
  let picked=[];for(const [c,ls] of Object.entries(byC)){ls.sort((x,y)=>y[0].startTs-x[0].startTs);picked=picked.concat(PER?ls.slice(0,PER):ls)}
  log(`captured ${rs.length} ads, ${groups.length} unique creatives, ${picked.length} to upload`);
+ // the whole project's files, so the capture never fills the free plan (unknown = stop: better no upload than a blocked site)
+ const us=curl('POST',`${SB}/rest/v1/rpc/storage_usage`,{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'});
+ const used=us.status===200?+(JSON.parse(us.body).storage_bytes||0):NaN;
+ if(!Number.isFinite(used)){log(`STOP: could not read the storage usage (HTTP ${us.status}).`);process.exit(3)}
+ log(`storage ${(used/1048576).toFixed(0)} MB of ${(QUOTA/1048576).toFixed(0)} MB, cap ${(CAP/1048576).toFixed(0)} MB`);
  let total=0,n=0,rows=[],done=0;const doneSet=new Set(fs.existsSync(path.join(H,'up.done'))?fs.readFileSync(path.join(H,'up.done'),'utf8').split('\n').filter(Boolean):[]);
  for(const l of picked){const r=l[0];if(doneSet.has(r.id))continue;const p=pics(r.id);if(!p)continue;
   const cre=r.frame||r.file||'';const creExt=cre?path.extname(cre).slice(1):'';const sz=p.bytes+(cre&&fs.existsSync(cre)?fs.statSync(cre).size:0);
   if(BUDGET&&total+sz>BUDGET){log('budget reached');break}
+  if(used+total+sz>CAP){log('STOP: the project would pass its storage cap. Run prune.cjs, or capture fewer ads.');break}
   try{
    const bigN='blob/meta/'+r.id+'_card.webp',creN=cre?'blob/meta/'+r.id+'_creative.'+creExt:'';
    upload(p.big,bigN,'image/webp');if(creN&&fs.existsSync(cre))upload(cre,creN,creExt==='png'?'image/png':'image/jpeg');

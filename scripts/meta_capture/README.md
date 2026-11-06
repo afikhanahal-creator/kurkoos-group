@@ -30,7 +30,16 @@ node scripts/meta_capture/up.cjs --budget-mb 500                                
 creative (same page, picture and text), uploads one row per creative with the newest ad id (`ad_ids` lists the copies),
 and remembers uploaded ids in `up.done`.
 
-## Sizes (free Supabase plan, 1 GB)
+## Sizes (free Supabase plan, 1 GB — the project was restricted on 2026-11-06)
 
-A creative costs about 0.5 MB (4K card as webp, 1080px preview, the creative). Use `--budget-mb` and `--per-comp` to stay
-inside the plan, newest ads first.
+The free plan's 1 GB of files is counted per Supabase **organization**: on 2026-11-06 this project (930 MB, 486 MB of it Meta
+captures) and the Afik Hanahal one shared an org, passed 1.1 GB together and every request of both sites answered 402.
+Keep this project in an organization of its own, and keep the captures small:
+
+- A card is 1600px wide, webp q75 (about 60 KB; it was 2400px / q80, 130 KB). `shrink.cjs` re-saves older ones in place.
+- `prune.cjs` — ads that stopped running keep only the creative (~40 KB); the card screenshot and the old preview are deleted.
+  Run it before every capture round: `node prune.cjs --dry`, then `node prune.cjs`.
+- `up.cjs` reads the whole project's files (`public.storage_usage()`, `server/storage-usage.sql`) and stops before it passes
+  `--cap-pct` (75%) of 1 GB. `--budget-mb` still caps one run.
+- The Afik site's daily cron reads the same function and texts the office once a day while this project passes 70%.
+- Videos: `scripts/storage/recompress-videos.cjs` re-encodes them in place (H.264, short side ≤ 1080 px, kept only when 25% smaller).

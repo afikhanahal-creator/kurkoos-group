@@ -7,3 +7,7 @@ insert into public.fin_businesses (name, sort) values ('קורקוס גרופ', 
 update public.fin_automations set last_run_at = null, last_status = null, last_error = null, next_run_at = null, enabled = true;
 delete from storage.objects where bucket_id = 'finance-docs';
 delete from auth.users;
+delete from public.fin_rule_hits; delete from public.fin_document_allocations;
+delete from public.fin_categories where name in ('פרסום ושיווק', 'ייעוץ הנדסי');
+update public.fin_settings set value = '"controlled"' where key = 'supplier_mode';
+update public.fin_settings set value = '50000' where key = 'second_approval_amount';

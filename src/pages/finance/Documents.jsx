@@ -4,7 +4,8 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal } from './format.js'
 import { makeZip, saveBlob } from './zip.js'
-import { Confidence, Empty, Icon, PageHead, StatusPill, UploadZone } from './ui.jsx'
+import { Confidence, Empty, Icon, Modal, PageHead, StatusPill, UploadZone } from './ui.jsx'
+import Thumbnail from './Thumbnail.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 
 const TABS = [
@@ -14,9 +15,10 @@ const TABS = [
   { id: 'sent', label: 'יוצאו' },
   { id: 'problems', label: 'שגיאות וכפולים' },
   { id: 'rejected', label: 'נדחו' },
+  { id: 'archived', label: 'ארכיון' },
 ]
 const inTab = (d, tab) => {
-  if (!tab) return !['rejected'].includes(d.status)
+  if (!tab) return !['rejected', 'archived'].includes(d.status)
   if (tab === 'problems') return ['failed', 'duplicate', 'processing'].includes(d.status) || hasError(d)
   return d.status === tab
 }
@@ -30,16 +32,20 @@ const SORTS = {
   before: (d) => Number(d.amount_before_vat) || 0, conf: (d) => Number(d.confidence ?? -1), created: (d) => d.created_at, number: (d) => d.doc_number || '',
 }
 const EMPTY_F = { from: '', to: '', supplier: '', biz: '', project: '', cat: '', type: '', source: '', min: '', max: '' }
+const VIEW_KEY = 'fin-doc-view'
 
 export default function Documents({ preset = 'all' }) {
-  const { documents, businesses, projects, categories, suppliers, mailboxes, role, can, reload, patchDoc, go } = useFinance()
+  const { documents, businesses, projects, categories, suppliers, mailboxes, allocations, role, can, reload, patchDoc, go } = useFinance()
   const { id } = useParams()
   const [params, setParams] = useSearchParams()
   const P = PRESET[preset]
   const base = preset === 'all' ? '/documents' : `/${preset}`
   const tab = preset === 'all' ? params.get('status') || '' : ''
   const [q, setQ] = useState(() => params.get('q') || '')
-  const [f, setF] = useState(() => ({ ...EMPTY_F, supplier: params.get('supplier') || '', project: params.get('project') || '', biz: params.get('company') || '' }))
+  const [f, setF] = useState(() => ({ ...EMPTY_F, supplier: params.get('supplier') || '', project: params.get('project') || '', biz: params.get('company') || '', cat: params.get('category') ? categories.find((c) => c.id === params.get('category'))?.name || '' : '' }))
+  const [view, setView] = useState(() => { try { return localStorage.getItem(VIEW_KEY) || 'table' } catch { return 'table' } })
+  const [confirm, setConfirm] = useState(null)   // { label, run, count, skipped }
+  const switchView = (v) => { setView(v); try { localStorage.setItem(VIEW_KEY, v) } catch { /* noop */ } }
   const [showFilters, setShowFilters] = useState(false)
   const [sort, setSort] = useState({ key: 'date', dir: -1 })
   const [sel, setSel] = useState(() => new Set())
@@ -54,29 +60,33 @@ export default function Documents({ preset = 'all' }) {
     const list = documents.filter((d) => P.filter(d) && (preset !== 'all' || inTab(d, tab))
       && (!f.from || String(docDate(d)) >= f.from) && (!f.to || String(docDate(d)) <= f.to)
       && (!f.supplier || d.supplier_id === f.supplier) && (!f.biz || (f.biz === 'none' ? !d.business_id : d.business_id === f.biz))
-      && (!f.project || (f.project === 'none' ? !d.project_id : d.project_id === f.project)) && (!f.cat || d.category === f.cat)
+      && (!f.project || (f.project === 'none' ? !d.project_id && !allocations.some((a) => a.document_id === d.id) : d.project_id === f.project || allocations.some((a) => a.document_id === d.id && a.project_id === f.project))) && (!f.cat || d.category === f.cat)
+      && (tab === 'archived' || d.status !== 'archived')
       && (!f.type || d.doc_type === f.type) && (!f.source || d.source === f.source || d.mailbox_id === f.source)
       && (!f.min || Math.abs(Number(d.total_amount) || 0) >= Number(f.min)) && (!f.max || Math.abs(Number(d.total_amount) || 0) <= Number(f.max))
       && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, d.category, nameOf(businesses, d.business_id), nameOf(projects, d.project_id), String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
     const key = SORTS[sort.key]
     return list.sort((a, b) => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
-  }, [documents, P, preset, tab, f, q, sort, businesses, projects])
+  }, [documents, P, preset, tab, f, q, sort, businesses, projects, allocations])
 
   const total = rows.reduce((s, d) => s + signedTotal(d), 0)
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
   const toggle = (did) => setSel((s) => { const n = new Set(s); if (n.has(did)) n.delete(did); else n.add(did); return n })
   const picked = rows.filter((d) => sel.has(d.id))
 
-  const bulk = async (label, patchFor, only = () => true) => {
+  const bulk = (label, patchFor, only = () => true) => {
     const targets = picked.filter(only)
     const skipped = picked.length - targets.length
     if (!targets.length) { setNote(`אין מסמכים מתאימים לפעולה (${skipped} דולגו)`); return }
-    setBusy(label); setNote('')
+    setConfirm({ label, count: targets.length, skipped, run: () => runBulk(label, patchFor, targets, skipped) })
+  }
+  const runBulk = async (label, patchFor, targets, skipped) => {
+    setConfirm(null); setBusy(label); setNote('')
     try {
       await api.updateDocuments(targets.map((d) => d.id), patchFor)
       setNote(`${targets.length} מסמכים עודכנו${skipped ? `, ${skipped} דולגו` : ''}`)
       setSel(new Set()); await reload()
-    } catch (e) { setNote(e.message) } finally { setBusy('') }
+    } catch (e) { setNote(/SECOND_APPROVAL/.test(e.message) ? 'חלק מהמסמכים דורשים מאשר נוסף' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת מזו של המסמך' : e.message) } finally { setBusy('') }
   }
   const downloadOriginals = async () => {
     setBusy('zip')
@@ -123,6 +133,10 @@ export default function Documents({ preset = 'all' }) {
           <Icon name="search" size={18} />
           <input type="search" placeholder="ספק, מספר, חברה, פרויקט, קטגוריה, סכום…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="חיפוש מסמכים" />
         </label>
+        <div className="fin-seg" role="group" aria-label="תצוגה">
+          <button type="button" className={view === 'table' ? 'is-on' : ''} onClick={() => switchView('table')} aria-pressed={view === 'table'} title="טבלה"><Icon name="rows" size={17} /><span className="fin-sr">טבלה</span></button>
+          <button type="button" className={view === 'cards' ? 'is-on' : ''} onClick={() => switchView('cards')} aria-pressed={view === 'cards'} title="כרטיסים"><Icon name="grid" size={17} /><span className="fin-sr">כרטיסים</span></button>
+        </div>
         <button type="button" className={`fin-btn ${activeFilters ? 'fin-btn--on' : ''}`} onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} aria-controls="fin-doc-filters"><Icon name="filter" size={18} /> סינון{activeFilters ? ` (${activeFilters})` : ''}</button>
         {can('upload') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => setShowUpload((v) => !v)}><Icon name="plus" size={18} /> הוספת מסמכים</button>}
       </div>
@@ -151,6 +165,12 @@ export default function Documents({ preset = 'all' }) {
           {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
           {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status))}>דחייה</button>}
           {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status))}>סימון ככפול</button>}
+          {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, (d) => !['approved', 'sent', 'processing'].includes(d.status))}>ארכיון</button>}
+          {edit && (
+            <select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שיוך לקטגוריה" disabled={!!busy}>
+              <option value="">שיוך לקטגוריה…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          )}
           {edit && businesses.length > 0 && (
             <select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
               <option value="">שיוך לחברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -172,6 +192,45 @@ export default function Documents({ preset = 'all' }) {
         <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
+      ) : view === 'cards' ? (
+        <ul className="fin-doccards">
+          {rows.map((d) => (
+            <li key={d.id} className={`fin-doccard ${sel.has(d.id) ? 'is-selected' : ''}`}>
+              <button type="button" className="fin-doccard__open" onClick={() => go(link(d.id))} aria-label={`פתיחת ${d.supplier_name || d.file_name}`}><Thumbnail doc={d} /></button>
+              <label className="fin-doccard__check"><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></label>
+              <div className="fin-doccard__body">
+                <div className="fin-doccard__top">
+                  {d.supplier_id ? <button type="button" className="fin-doccard__supplier" onClick={() => go(`/suppliers/${d.supplier_id}`)}>{d.supplier_name}</button> : <span className="fin-doccard__supplier">{d.supplier_name || d.file_name}</span>}
+                  <StatusPill status={d.status} />
+                </div>
+                <p className="fin-doccard__amount">{money(d.total_amount, d.currency)}<small>מע״מ {money(d.vat_amount, d.currency)}</small></p>
+                <dl className="fin-doccard__meta">
+                  <div><dt>תאריך</dt><dd>{date(docDate(d))}</dd></div>
+                  <div><dt>מספר</dt><dd dir="ltr">{d.doc_number || '—'}</dd></div>
+                  <div><dt>חברה</dt><dd>{nameOf(businesses, d.business_id) || <span className="fin-attn-text">לא משויך</span>}</dd></div>
+                  <div><dt>פרויקט</dt><dd>{allocations.some((a) => a.document_id === d.id) ? 'מפוצל' : nameOf(projects, d.project_id) || '—'}</dd></div>
+                  <div><dt>קטגוריה</dt><dd>{d.category || '—'}</dd></div>
+                  <div><dt>עיבוד</dt><dd>{d.processed_at ? <Confidence value={d.confidence} /> : d.status === 'failed' ? 'נכשל' : 'ממתין'}</dd></div>
+                </dl>
+                <div className="fin-doccard__actions">
+                  <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(link(d.id))}><Icon name="edit" size={15} /> צפייה ועריכה</button>
+                  {can('approve') && d.status === 'review' && <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" onClick={() => { setSel(new Set([d.id])); setConfirm({ label: 'approve', count: 1, skipped: 0, run: () => runBulk('approve', { status: 'approved' }, [d], 0) }) }}><Icon name="check" size={15} /> אישור</button>}
+                  <details className="fin-menu">
+                    <summary className="fin-icon-btn" aria-label="פעולות נוספות"><Icon name="more" size={18} /></summary>
+                    <div className="fin-menu__pop">
+                      {edit && <label>חברה<select value={d.business_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { business_id: e.target.value || null })) } catch (er) { setNote(er.message) } }}><option value="">—</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>}
+                      {edit && <label>פרויקט<select value={d.project_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { project_id: e.target.value || null })) } catch (er) { setNote(/PROJECT_COMPANY/.test(er.message) ? 'הפרויקט שייך לחברה אחרת' : er.message) } }}><option value="">—</option>{projects.filter((p) => !d.business_id || p.business_id === d.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
+                      {edit && <label>קטגוריה<select value={d.category_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { category_id: e.target.value || null })) } catch (er) { setNote(er.message) } }}><option value="">—</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
+                      {d.supplier_id && <button type="button" onClick={() => go(`/suppliers/${d.supplier_id}`)}>פרופיל הספק</button>}
+                      {d.file_path && <button type="button" onClick={async () => saveBlob(await api.fileBlob(d), d.file_name || 'document')}>הורדת המקור</button>}
+                      {edit && !['approved', 'sent', 'archived'].includes(d.status) && <button type="button" onClick={() => setConfirm({ label: 'archive', count: 1, skipped: 0, run: () => runBulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, [d], 0) })}>העברה לארכיון</button>}
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       ) : (
         <div className="fin-table-wrap">
           <table className="fin-table fin-table--docs">
@@ -230,6 +289,12 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
 
+      {confirm && (
+        <Modal title="אישור פעולה" onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
+          <p>הפעולה תחול על {confirm.count} מסמכים{confirm.skipped ? ` (${confirm.skipped} דולגו כי הם לא מתאימים לה)` : ''}. כל שינוי נרשם ביומן.</p>
+          {confirm.label === 'approve' && <p className="fin-muted">מסמכים עם שגיאות בקרה לא נכללים. מסמך מעל סף האישור הכפול מחכה למאשר נוסף.</p>}
+        </Modal>
+      )}
       {current && (
         <DocumentPanel
           key={current.id}

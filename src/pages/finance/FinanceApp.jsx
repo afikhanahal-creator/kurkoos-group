@@ -7,9 +7,9 @@ import { ROLE, can } from './format.js'
 import { Icon } from './ui.jsx'
 import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
-import Companies from './Companies.jsx'
-import Projects from './Projects.jsx'
-import Suppliers from './Suppliers.jsx'
+import MasterData from './MasterData.jsx'
+import EntityOverview from './EntityOverview.jsx'
+import CommandPalette from './CommandPalette.jsx'
 import Reports from './Reports.jsx'
 import DataManagement from './DataManagement.jsx'
 import Automations from './Automations.jsx'
@@ -19,6 +19,7 @@ import Integrations from './Integrations.jsx'
 import ExportHistory from './ExportHistory.jsx'
 import Users from './Users.jsx'
 import Settings from './Settings.jsx'
+import '../../styles/fonts.css'
 import './finance.css'
 
 /* ============================================================
@@ -31,37 +32,39 @@ export const BASE = '/admin/finance'
 const ALL = ['admin', 'finance_manager', 'employee', 'accountant']
 const OPS = ['admin', 'finance_manager']
 export const NAV = [
-  { to: '', label: 'לוח בקרה', icon: 'home', roles: ALL, el: <Dashboard /> },
-  { to: '/documents', label: 'כל המסמכים', accLabel: 'מסמכים מאושרים', icon: 'docs', roles: ALL, el: <Documents preset="all" /> },
-  { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new' },
-  { to: '/pending', label: 'ממתינים לאישור', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending' },
-  { to: '/companies', label: 'חברות', icon: 'company', roles: OPS, el: <Companies /> },
-  { to: '/projects', label: 'פרויקטים', icon: 'project', roles: OPS, el: <Projects /> },
-  { to: '/suppliers', label: 'ספקים', icon: 'suppliers', roles: OPS, el: <Suppliers /> },
-  { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports /> },
-  { to: '/data', label: 'ניהול נתונים', icon: 'data', roles: OPS, el: <DataManagement /> },
-  { to: '/automations', label: 'כללי אוטומציה', icon: 'rules', roles: OPS, el: <Automations /> },
-  { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents /> },
-  { to: '/mailboxes', label: 'חשבונות מייל מחוברים', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes /> },
-  { to: '/integrations', label: 'אינטגרציות הנהלת חשבונות', icon: 'plug', roles: OPS, el: <Integrations /> },
-  { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory /> },
-  { to: '/users', label: 'משתמשים והרשאות', icon: 'users', roles: ['admin'], el: <Users /> },
-  { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings /> },
+  { to: '', label: 'מרכז בקרה', icon: 'home', roles: ALL, el: <Dashboard />, group: 'עבודה' },
+  { to: '/documents', label: 'כל המסמכים', accLabel: 'מסמכים מאושרים', icon: 'docs', roles: ALL, el: <Documents preset="all" />, group: 'עבודה' },
+  { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'עבודה' },
+  { to: '/pending', label: 'ממתינים לאישור', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'עבודה' },
+  { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'עבודה' },
+  { to: '/companies', label: 'חברות', icon: 'company', roles: OPS, el: <MasterData kind="businesses" />, group: 'נתוני יסוד', detail: <EntityOverview kind="businesses" /> },
+  { to: '/projects', label: 'פרויקטים', icon: 'project', roles: OPS, el: <MasterData kind="projects" />, group: 'נתוני יסוד', detail: <EntityOverview kind="projects" /> },
+  { to: '/suppliers', label: 'ספקים', icon: 'suppliers', roles: OPS, el: <MasterData kind="suppliers" />, badge: 'suppliers', group: 'נתוני יסוד', detail: <EntityOverview kind="suppliers" /> },
+  { to: '/categories', label: 'קטגוריות', icon: 'tag', roles: OPS, el: <MasterData kind="categories" />, group: 'נתוני יסוד', detail: <EntityOverview kind="categories" /> },
+  { to: '/data', label: 'ניהול נתונים', icon: 'data', roles: OPS, el: <DataManagement />, group: 'נתוני יסוד' },
+  { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'אוטומציה' },
+  { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'אוטומציה' },
+  { to: '/mailboxes', label: 'חשבונות מייל מחוברים', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'אוטומציה' },
+  { to: '/integrations', label: 'אינטגרציות הנהלת חשבונות', icon: 'plug', roles: OPS, el: <Integrations />, group: 'ייצוא' },
+  { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory />, group: 'ייצוא' },
+  { to: '/users', label: 'משתמשים והרשאות', icon: 'users', roles: ['admin'], el: <Users />, group: 'מערכת' },
+  { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings />, group: 'מערכת' },
 ]
+const GROUPS = ['עבודה', 'נתוני יסוד', 'אוטומציה', 'ייצוא', 'מערכת']
 
 const Ctx = createContext(null)
 export const useFinance = () => useContext(Ctx)
 
 function useFinanceData(enabled) {
-  const [state, setState] = useState({ loading: true, error: '', me: null, documents: [], businesses: [], projects: [], categories: [], suppliers: [], mailboxes: [], members: [] })
+  const [state, setState] = useState({ loading: true, error: '', me: null, documents: [], businesses: [], projects: [], categories: [], suppliers: [], mailboxes: [], members: [], allocations: [], settings: {} })
   const reload = useCallback(async () => {
     try {
       const me = await api.me()
       if (!me?.role) { setState((s) => ({ ...s, loading: false, error: '', me })); return }
-      const [documents, businesses, projects, categories, suppliers, mailboxes, members] = await Promise.all([
-        api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(),
+      const [documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = await Promise.all([
+        api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(), api.loadAllocations(), api.loadSettings(),
       ])
-      setState({ loading: false, error: '', me, documents, businesses, projects, categories, suppliers, mailboxes, members })
+      setState({ loading: false, error: '', me, documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings })
     } catch (e) {
       setState((s) => ({ ...s, loading: false, error: /does not exist|schema cache|fin_me/.test(e.message) ? 'הטבלאות של המערכת עוד לא קיימות. מריצים את supabase/finance.sql ב-Supabase › SQL Editor' : e.message }))
     }
@@ -142,6 +145,15 @@ export default function FinanceApp() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [navOpen, setNavOpen] = useState(false)
+  const [cmd, setCmd] = useState(false)
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setCmd((v) => !v) }
+      else if (e.key === '/' && !e.target.closest('input, textarea, select, [contenteditable]')) { e.preventDefault(); setCmd(true) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem(THEME_KEY) || 'light' } catch { return 'light' } })
   useEffect(() => { try { localStorage.setItem(THEME_KEY, theme) } catch { /* noop */ } }, [theme])
   useEffect(() => { document.title = 'Kurkoos Finance AI · קבוצת קורקוס' }, [])
@@ -163,8 +175,9 @@ export default function FinanceApp() {
     return {
       new: data.documents.filter((d) => new Date(d.created_at).getTime() > week && ['review', 'processing'].includes(d.status)).length,
       pending: data.documents.filter((d) => d.status === 'review').length,
+      suppliers: data.suppliers.filter((x) => x.status === 'pending').length,
     }
-  }, [data.documents])
+  }, [data.documents, data.suppliers])
 
   if (!hasSupabase) return <p className="fin-msg">Supabase לא מוגדר בסביבה הזו.</p>
   if (session === undefined || (session && data.loading && !data.me)) return <div className="fin-msg">טוען…</div>
@@ -178,11 +191,14 @@ export default function FinanceApp() {
       <div className="fin" dir="rtl" data-theme={theme}>
         <aside className={`fin__side ${navOpen ? 'is-open' : ''}`} id="fin-side" aria-label="תפריט המערכת">
           <Link to={BASE} className="fin__brand">
-            <img src="/kurkoos-logo-white.svg" alt="" />
-            <span><strong>KURKOOS FINANCE</strong><small>קבוצת קורקוס · AI</small></span>
+            <img src="/kurkoos-logo.svg" alt="" />
+            <span><strong>Kurkoos Finance</strong><small>קבוצת קורקוס</small></span>
           </Link>
           <nav className="fin__nav">
-            {nav.map((n) => {
+            {GROUPS.filter((g) => nav.some((n) => n.group === g)).map((g) => (
+            <div className="fin__nav-group" key={g}>
+            <span className="fin__nav-label">{g}</span>
+            {nav.filter((n) => n.group === g).map((n) => {
               const on = n === active
               const count = n.badge ? badges[n.badge] : 0
               return (
@@ -193,6 +209,8 @@ export default function FinanceApp() {
                 </Link>
               )
             })}
+            </div>
+            ))}
           </nav>
           <div className="fin__side-foot">
             {role === 'admin' && <a href="/admin" className="fin__back"><Icon name="back" size={16} /> ניהול האתר</a>}
@@ -209,6 +227,9 @@ export default function FinanceApp() {
           <header className="fin__top">
             <button type="button" className="fin-icon-btn fin__burger" onClick={() => setNavOpen(true)} aria-label="פתיחת התפריט" aria-expanded={navOpen} aria-controls="fin-side"><Icon name="menu" /></button>
             <h1 className="fin__title">{role === 'accountant' && active?.accLabel ? active.accLabel : active?.label}</h1>
+            <button type="button" className="fin-searchbar" onClick={() => setCmd(true)} aria-label="חיפוש (Ctrl+K)">
+              <Icon name="search" size={17} /><span>חיפוש מסמך, ספק או פרויקט</span><kbd>⌘K</kbd>
+            </button>
             <div className="fin__top-actions">
               <button type="button" className="fin-icon-btn" onClick={data.reload} aria-label="רענון" title="רענון"><Icon name="refresh" /></button>
               <button type="button" className="fin-icon-btn" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} aria-label={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'} title={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button>
@@ -219,10 +240,12 @@ export default function FinanceApp() {
             <Routes>
               {nav.map((n) => <Route key={n.to} path={`${BASE}${n.to}`} element={n.el} />)}
               {nav.filter((n) => ['/documents', '/new', '/pending'].includes(n.to)).map((n) => <Route key={`${n.to}-id`} path={`${BASE}${n.to}/:id`} element={n.el} />)}
+              {nav.filter((n) => n.detail).map((n) => <Route key={`${n.to}-detail`} path={`${BASE}${n.to}/:id`} element={n.detail} />)}
               <Route path="*" element={<Dashboard />} />
             </Routes>
           </main>
         </div>
+        <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav} />
       </div>
     </Ctx.Provider>
   )

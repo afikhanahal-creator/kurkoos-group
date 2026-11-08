@@ -6,7 +6,7 @@ import { MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.
 import { sb, one, insert, patch, q, upload, download, storageUsage } from './db.js'
 import { extract } from './extract.js'
 import { validate, minConfidence } from './validate.js'
-import { assign } from './assign.js'
+import { assign, identifySupplier, settings, flushHits } from './assign.js'
 import * as gmail from './providers/gmail.js'
 import * as outlook from './providers/outlook.js'
 
@@ -25,18 +25,9 @@ let catCache = null
 const categories = async () => (catCache ||= ((await sb('fin_categories?select=name&order=sort')) || []).map((c) => c.name))
 const automation = async (key) => one(`fin_automations?key=eq.${key}&select=*`)
 
-async function findOrCreateSupplier(name, vat, domain) {
-  let s = null
-  if (vat) s = await one(`fin_suppliers?vat_id=eq.${vat}&select=*`)
-  if (!s && name) s = await one(`fin_suppliers?name=ilike.${q(name.replace(/[%*,()]/g, ''))}&select=*`)
-  if (!s && name) s = await insert('fin_suppliers', { name: name.slice(0, 200), vat_id: vat, email_domain: domain }).catch(() => null)
-  return s
-}
-
 /* Claude's answer → document fields, issues and suggestions. Never approves. */
 export async function analyze(x, { selfId = null, mailbox = null, fromEmail = '', subject = '', text = '' } = {}, runs) {
   const vat = digits(x.supplier_vat_id)
-  const domain = (String(fromEmail).match(/@([\w.-]+)/) || [])[1] || null
   const fields = {
     supplier_name: x.supplier_name || null,
     supplier_vat_id: vat,
@@ -56,23 +47,29 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
     extraction: x,
     email_subject: subject || undefined,
   }
-  const supplier = await findOrCreateSupplier(fields.supplier_name, vat, domain)
+  // step 4: the supplier (existing, or a suggestion that waits for approval in controlled mode)
+  const cfg = await settings()
+  const sup = await identifySupplier(x, { fromEmail, cfg, documentId: selfId })
+  const supplier = sup.supplier
   fields.supplier_id = supplier?.id || null
+  if (x.supplier_email) fields.supplier_email = x.supplier_email
 
-  // classification
-  const cls = await assign({ fields, x, mailbox, fromEmail, text, supplier })
+  // steps 5-7: company, category, project
+  const cls = await assign({ fields, x, mailbox, fromEmail, text, supplier, cfg, documentId: selfId })
   if (runs) runs.classification.stat.processed++
   for (const k of ['business_id', 'project_id', 'category']) if (cls[k]) fields[k] = cls[k]
-  fields.suggestions = cls.suggestions
+  fields.suggestions = { ...cls.suggestions, supplier: { value: supplier?.id || null, match: sup.match, confidence: Math.round((sup.confidence || 0) * 100) / 100, pending: !!sup.pending } }
+  fields.ai_snapshot = { supplier_id: supplier?.id || null, supplier_match: sup.match, business_id: cls.suggestions.business_id?.value || null, category: cls.suggestions.category?.value || null, project_id: cls.suggestions.project_id?.value || null }
+  fields._pendingHits = cls.pendingHits
 
   // validation
   const not = selfId ? `&id=neq.${selfId}` : ''
   const dupCheck = await automation('duplicate_check')
   let duplicateOf = null; let possibleDuplicate = false
   if (dupCheck?.enabled !== false) {
-    if (fields.doc_number && vat) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${vat}&doc_number=eq.${q(fields.doc_number)}&status=neq.rejected${not}&select=id`))?.id || null
+    if (fields.doc_number && vat) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${vat}&doc_number=eq.${q(fields.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))?.id || null
     if (!duplicateOf && fields.supplier_id && fields.issue_date && fields.total_amount !== null) {
-      possibleDuplicate = !!(await one(`fin_documents?supplier_id=eq.${fields.supplier_id}&issue_date=eq.${fields.issue_date}&total_amount=eq.${fields.total_amount}&status=neq.rejected${not}&select=id`))
+      possibleDuplicate = !!(await one(`fin_documents?supplier_id=eq.${fields.supplier_id}&issue_date=eq.${fields.issue_date}&total_amount=eq.${fields.total_amount}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))
     }
   }
   const flag = await automation('amount_flag')
@@ -83,7 +80,9 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
     const past = ((await sb(`fin_documents?supplier_id=eq.${fields.supplier_id}&status=in.(approved,sent)&select=total_amount&limit=30`)) || []).map((d) => Number(d.total_amount)).filter((v) => v > 0).sort((a, b) => a - b)
     if (past.length >= 3) supplierMedian = past[Math.floor(past.length / 2)]
   }
-  fields.issues = validate(fields, { duplicateOf, possibleDuplicate, flagAmount: thresholds.length ? Math.min(...thresholds) : null, supplierMedian, extractionNotes: x.notes })
+  fields.issues = [...validate(fields, { duplicateOf, possibleDuplicate, flagAmount: thresholds.length ? Math.min(...thresholds) : null, supplierMedian, extractionNotes: x.notes }), ...cls.issues]
+  if (sup.pending) fields.issues.push({ level: 'warn', code: 'supplier_pending', field: 'supplier_name', message: 'ספק חדש: נוצרה הצעה שממתינה לאישור' })
+  if (sup.conflict) fields.issues.push({ level: 'error', code: 'supplier_conflict', field: 'supplier_vat_id', message: `השם תואם לספק "${sup.conflict.name}" אבל מספר העוסק שונה` })
   if (!x.is_financial_document) fields.issues.unshift({ level: 'warn', code: 'not_financial', field: null, message: 'Claude: לא נראה כמו מסמך כספי' })
   if (runs) { runs.validation.stat.processed++; if (fields.issues.some((i) => i.level === 'error')) runs.validation.stat.details.flagged = (runs.validation.stat.details.flagged || 0) + 1 }
 
@@ -97,13 +96,20 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
 export async function revalidate(doc) {
   const not = `&id=neq.${doc.id}`
   let duplicateOf = null; let possibleDuplicate = false
-  if (doc.doc_number && doc.supplier_vat_id) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${doc.supplier_vat_id}&doc_number=eq.${q(doc.doc_number)}&status=neq.rejected${not}&select=id`))?.id || null
-  if (!duplicateOf && doc.supplier_id && doc.issue_date && doc.total_amount !== null) possibleDuplicate = !!(await one(`fin_documents?supplier_id=eq.${doc.supplier_id}&issue_date=eq.${doc.issue_date}&total_amount=eq.${doc.total_amount}&status=neq.rejected${not}&select=id`))
+  if (doc.doc_number && doc.supplier_vat_id) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${doc.supplier_vat_id}&doc_number=eq.${q(doc.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))?.id || null
+  if (!duplicateOf && doc.supplier_id && doc.issue_date && doc.total_amount !== null) possibleDuplicate = !!(await one(`fin_documents?supplier_id=eq.${doc.supplier_id}&issue_date=eq.${doc.issue_date}&total_amount=eq.${doc.total_amount}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))
   const flag = await automation('amount_flag')
   // a value a person typed is no longer "unsure": drop the AI confidence of fields that changed
   const fc = { ...(doc.field_confidence || {}) }
   for (const k of Object.keys(fc)) if (doc.extraction && String(doc.extraction[k] ?? '') !== String(doc[k] ?? '') && !(Number(doc.extraction[k]) === Number(doc[k]) && doc[k] !== null)) fc[k] = 1
   const issues = validate({ ...doc, field_confidence: fc }, { duplicateOf, possibleDuplicate, flagAmount: flag?.enabled !== false ? Number(flag?.config?.min_amount) || null : null })
+  // assignment findings that are still true after the edit
+  const sup = doc.supplier_id ? await one(`fin_suppliers?id=eq.${doc.supplier_id}&select=status`) : null
+  for (const i of doc.issues || []) {
+    if (i.code === 'supplier_pending' && sup?.status === 'pending') issues.push(i)
+    if (['no_company', 'unknown_recipient', 'company_suggested'].includes(i.code) && !doc.business_id) issues.push(i)
+    if (i.code === 'rule_missing_vat' && !doc.supplier_vat_id) issues.push(i)
+  }
   return patch(`fin_documents?id=eq.${doc.id}`, { issues, field_confidence: fc, confidence: minConfidence(fc) })
 }
 
@@ -120,6 +126,7 @@ export async function processStored(doc, runs, trigger = 'upload') {
     const fields = await analyze(x, { selfId: doc.id, mailbox: mb, fromEmail: doc.email_from || '' }, runs)
     if (doc.business_id) fields.business_id = doc.business_id      // a company chosen at upload wins
     fields.attempts = (doc.attempts || 0) + 1
+    delete fields._pendingHits
     return await patch(`fin_documents?id=eq.${doc.id}`, fields)
   } catch (e) {
     runs.ocr.stat.errors++
@@ -189,7 +196,11 @@ export async function syncMailbox(mb, started, runs, trigger) {
         const fields = x
           ? await analyze(x, { mailbox: mb, fromEmail: meta.email_from, subject: meta.email_subject, text: msg.text || '' }, runs)
           : { status: 'failed', issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${String(failure.message || failure).slice(0, 200)}` }] }
-        try { await insert('fin_documents', { ...base, ...fields }); stats.imported++; got++ } catch (e) { if (e.code === '23505') stats.skipped++; else throw e }
+        const pendingHits = fields._pendingHits; delete fields._pendingHits
+        try {
+          const row = await insert('fin_documents', { ...base, ...fields }); stats.imported++; got++
+          if (row) { await flushHits(row.id, pendingHits); if (fields.supplier_id) await patch(`fin_suppliers?id=eq.${fields.supplier_id}&suggested_from=is.null&status=eq.pending`, { suggested_from: row.id }).catch(() => {}) }
+        } catch (e) { if (e.code === '23505') stats.skipped++; else throw e }
       }
 
       for (const f of files.slice(0, 5)) {

@@ -668,3 +668,315 @@ on conflict (key) do nothing;
 
 -- tell PostgREST to pick up the new tables and functions now
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v3 (2026-11-08): master data, smart assignment, allocations, rules engine, control
+-- How the spec's tables map here: organizations = this Supabase project (one organization);
+-- organization_memberships = fin_members; companies = fin_businesses; document_extractions = fin_documents.extraction
+-- (Claude's raw answer, never edited) + field_confidence + ai_snapshot; document_company_assignments = fin_documents.business_id;
+-- document_project_allocations = fin_document_allocations; expense_rules = fin_rules (+ fin_rule_hits); approval_records =
+-- fin_audit rows with action approved/second_approval; processing_jobs = fin_agent_runs + fin_sync_runs; export_records = fin_exports.
+-- ============================================================
+
+-- companies
+alter table public.fin_businesses add column if not exists commercial_name text;
+alter table public.fin_businesses add column if not exists name_en text;
+alter table public.fin_businesses add column if not exists address text;
+alter table public.fin_businesses add column if not exists phone text;
+alter table public.fin_businesses add column if not exists email text;
+alter table public.fin_businesses add column if not exists accounting_system_id text;
+alter table public.fin_businesses add column if not exists accountant_name text;
+alter table public.fin_businesses add column if not exists notes text;
+alter table public.fin_businesses add column if not exists active boolean not null default true;
+alter table public.fin_businesses add column if not exists archived_at timestamptz;
+create unique index if not exists fin_businesses_vat_uq on public.fin_businesses (vat_id) where vat_id is not null and vat_id <> '';
+
+-- projects
+alter table public.fin_projects add column if not exists project_type text;
+alter table public.fin_projects add column if not exists manager_id uuid;
+alter table public.fin_projects add column if not exists manager_name text;
+alter table public.fin_projects add column if not exists start_date date;
+alter table public.fin_projects add column if not exists expected_end date;
+alter table public.fin_projects add column if not exists budget numeric(16, 2);
+alter table public.fin_projects add column if not exists archived_at timestamptz;
+
+-- suppliers
+alter table public.fin_suppliers add column if not exists trading_name text;
+alter table public.fin_suppliers add column if not exists vat_number text;
+alter table public.fin_suppliers add column if not exists supplier_type text;
+alter table public.fin_suppliers add column if not exists contact_person text;
+alter table public.fin_suppliers add column if not exists email text;
+alter table public.fin_suppliers add column if not exists phone text;
+alter table public.fin_suppliers add column if not exists website text;
+alter table public.fin_suppliers add column if not exists address text;
+alter table public.fin_suppliers add column if not exists status text not null default 'active';
+alter table public.fin_suppliers add column if not exists normalized_name text;
+alter table public.fin_suppliers add column if not exists suggested_from uuid;   -- the document that suggested it
+alter table public.fin_suppliers add column if not exists match_confidence numeric;
+alter table public.fin_suppliers add column if not exists approved_by uuid;
+alter table public.fin_suppliers add column if not exists archived_at timestamptz;
+alter table public.fin_suppliers drop constraint if exists fin_suppliers_status_check;
+alter table public.fin_suppliers add constraint fin_suppliers_status_check check (status in ('pending', 'active', 'archived'));
+create or replace function public.fin_norm(t text) returns text language sql immutable as $$
+  select nullif(trim(regexp_replace(regexp_replace(lower(coalesce(t, '')),
+    '(בע"מ|בע״מ|בעמ|ltd\.?|inc\.?|llc|limited|ושות׳|ושות''|ושות|ש\.?ת\.?פ|\(\d+\))', '', 'g'), '[^[:alnum:]א-ת]+', '', 'g')), '')
+$$;
+update public.fin_suppliers set normalized_name = public.fin_norm(name) where normalized_name is null;
+create unique index if not exists fin_suppliers_norm_uq on public.fin_suppliers (normalized_name) where normalized_name is not null and status <> 'archived';
+
+-- categories
+alter table public.fin_categories add column if not exists name_en text;
+alter table public.fin_categories add column if not exists description text;
+alter table public.fin_categories add column if not exists parent_id uuid references public.fin_categories(id) on delete restrict;
+alter table public.fin_categories add column if not exists accounting_code text;
+alter table public.fin_categories add column if not exists vat_treatment text;
+alter table public.fin_categories add column if not exists business_ids uuid[];
+alter table public.fin_categories add column if not exists active boolean not null default true;
+alter table public.fin_categories add column if not exists created_at timestamptz default now();
+alter table public.fin_categories add column if not exists keywords text[] default '{}';
+
+-- documents: a category is a real relation (category_id), the name stays for exports and history
+alter table public.fin_documents add column if not exists category_id uuid references public.fin_categories(id) on delete restrict;
+alter table public.fin_documents add column if not exists supplier_email text;
+alter table public.fin_documents add column if not exists ai_snapshot jsonb;      -- what the agents proposed, to measure accuracy
+alter table public.fin_documents add column if not exists requires_second_approval boolean not null default false;
+alter table public.fin_documents add column if not exists first_approved_by uuid;
+alter table public.fin_documents add column if not exists first_approved_at timestamptz;
+alter table public.fin_documents add column if not exists archived_at timestamptz;
+update public.fin_documents d set category_id = c.id from public.fin_categories c where d.category_id is null and d.category = c.name;
+create index if not exists fin_documents_category_idx on public.fin_documents (category_id);
+create index if not exists fin_documents_business_idx on public.fin_documents (business_id);
+
+-- master data that has documents is archived, never deleted
+do $$ begin
+  alter table public.fin_documents drop constraint if exists fin_documents_supplier_id_fkey;
+  alter table public.fin_documents add constraint fin_documents_supplier_id_fkey foreign key (supplier_id) references public.fin_suppliers(id) on delete restrict;
+  alter table public.fin_documents drop constraint if exists fin_documents_project_id_fkey;
+  alter table public.fin_documents add constraint fin_documents_project_id_fkey foreign key (project_id) references public.fin_projects(id) on delete restrict;
+  alter table public.fin_documents drop constraint if exists fin_documents_business_id_fkey;
+  alter table public.fin_documents add constraint fin_documents_business_id_fkey foreign key (business_id) references public.fin_businesses(id) on delete restrict;
+  alter table public.fin_projects drop constraint if exists fin_projects_business_id_fkey;
+  alter table public.fin_projects add constraint fin_projects_business_id_fkey foreign key (business_id) references public.fin_businesses(id) on delete restrict;
+end $$;
+
+-- splitting one invoice across projects. The rows always add up to the document (fin_set_allocations).
+create table if not exists public.fin_document_allocations (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references public.fin_documents(id) on delete cascade,
+  project_id uuid not null references public.fin_projects(id) on delete restrict,
+  amount numeric(14, 2) not null,
+  vat_amount numeric(14, 2),
+  note text,
+  created_by uuid,
+  created_at timestamptz default now()
+);
+create index if not exists fin_alloc_doc_idx on public.fin_document_allocations (document_id);
+create index if not exists fin_alloc_project_idx on public.fin_document_allocations (project_id);
+
+create or replace function public.fin_set_allocations(p_document uuid, p_rows jsonb) returns int
+language plpgsql security definer set search_path = '' as $$
+declare d record; s numeric; v numeric; n int; uid uuid := auth.uid(); mail text;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager']) then raise exception 'only finance staff can split documents'; end if;
+  select * into d from public.fin_documents where id = p_document;
+  if d.id is null or not public.fin_business_ok(d.business_id) then raise exception 'document not found'; end if;
+  n := coalesce(jsonb_array_length(p_rows), 0);
+  if n > 0 then
+    select coalesce(sum((r->>'amount')::numeric), 0), coalesce(sum(nullif(r->>'vat_amount', '')::numeric), 0) into s, v from jsonb_array_elements(p_rows) r;
+    if abs(s - coalesce(d.total_amount, 0)) > 0.01 then raise exception 'SPLIT_TOTAL:% != %', s, d.total_amount; end if;
+    if exists (select 1 from jsonb_array_elements(p_rows) r join public.fin_projects p on p.id = (r->>'project_id')::uuid where d.business_id is not null and p.business_id is distinct from d.business_id) then
+      raise exception 'a project of another company cannot share this document';
+    end if;
+  end if;
+  delete from public.fin_document_allocations where document_id = p_document;
+  insert into public.fin_document_allocations (document_id, project_id, amount, vat_amount, note, created_by)
+  select p_document, (r->>'project_id')::uuid, (r->>'amount')::numeric, nullif(r->>'vat_amount', '')::numeric, r->>'note', uid from jsonb_array_elements(coalesce(p_rows, '[]'::jsonb)) r;
+  -- one project: the document points at it; several: the allocations carry the projects
+  update public.fin_documents set project_id = case when n = 1 then (p_rows->0->>'project_id')::uuid when n = 0 then project_id else null end where id = p_document;
+  select email into mail from public.fin_members where user_id = uid;
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email) values ('document', p_document::text, 'split', jsonb_build_object('rows', p_rows), uid, mail);
+  return n;
+end $$;
+grant execute on function public.fin_set_allocations(uuid, jsonb) to authenticated;
+
+-- moves the documents of a duplicate supplier to the one that stays, then removes the duplicate
+create or replace function public.fin_merge_suppliers(p_from uuid, p_into uuid) returns int
+language plpgsql security definer set search_path = '' as $$
+declare n int; uid uuid := auth.uid(); mail text;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager']) then raise exception 'only finance staff can merge suppliers'; end if;
+  if p_from = p_into then raise exception 'same supplier'; end if;
+  update public.fin_documents set supplier_id = p_into where supplier_id = p_from;
+  get diagnostics n = row_count;
+  update public.fin_rules set match = jsonb_set(match, '{supplier_id}', to_jsonb(p_into::text)) where match->>'supplier_id' = p_from::text;
+  delete from public.fin_suppliers where id = p_from;
+  select email into mail from public.fin_members where user_id = uid;
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email) values ('supplier', p_into::text, 'merged', jsonb_build_object('from', p_from, 'documents', n), uid, mail);
+  return n;
+end $$;
+grant execute on function public.fin_merge_suppliers(uuid, uuid) to authenticated;
+
+-- settings the administrator controls (supplier mode, confidence thresholds)
+create table if not exists public.fin_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_by uuid,
+  updated_at timestamptz default now()
+);
+insert into public.fin_settings (key, value) values
+  ('supplier_mode', '"controlled"'),          -- controlled: new suppliers wait for approval · automatic: created above the threshold
+  ('supplier_auto_threshold', '0.92'),
+  ('category_auto_threshold', '0.85'),
+  ('project_auto_threshold', '0.9'),
+  ('second_approval_amount', '50000')
+on conflict (key) do nothing;
+alter table public.fin_settings enable row level security;
+
+-- rules engine: who changed a rule, and every time it acted
+alter table public.fin_rules add column if not exists updated_by uuid;
+alter table public.fin_rules add column if not exists updated_at timestamptz default now();
+alter table public.fin_rules drop constraint if exists fin_rules_kind_check;
+alter table public.fin_rules add constraint fin_rules_kind_check check (kind in (
+  'supplier_category', 'supplier_company', 'supplier_project', 'keyword_project', 'project_code', 'sender_company',
+  'recipient_company', 'keyword_category', 'amount_flag', 'amount_approval', 'missing_vat_flag'));
+create table if not exists public.fin_rule_hits (
+  id bigint generated always as identity primary key,
+  rule_id uuid references public.fin_rules(id) on delete cascade,
+  document_id uuid references public.fin_documents(id) on delete cascade,
+  outcome text,                       -- applied | suggested | flagged | overridden
+  detail text,
+  at timestamptz default now()
+);
+create index if not exists fin_rule_hits_rule_idx on public.fin_rule_hits (rule_id, at desc);
+alter table public.fin_rule_hits enable row level security;
+
+create or replace function public.fin_rules_touch() returns trigger language plpgsql security definer set search_path = '' as $$
+declare mail text;
+begin
+  select email into mail from public.fin_members where user_id = auth.uid();
+  if tg_op = 'DELETE' then
+    insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email) values ('rule', old.id::text, 'deleted', to_jsonb(old) - 'hits' - 'last_hit_at', auth.uid(), mail);
+    return old;
+  end if;
+  if auth.uid() is not null then new.updated_by := auth.uid(); new.updated_at := now(); end if;
+  if tg_op = 'INSERT' or (to_jsonb(new) - 'hits' - 'last_hit_at' - 'updated_at' - 'updated_by') is distinct from (to_jsonb(old) - 'hits' - 'last_hit_at' - 'updated_at' - 'updated_by') then
+    insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+    values ('rule', new.id::text, lower(tg_op) || 'd', jsonb_build_object('name', new.name, 'kind', new.kind, 'enabled', new.enabled, 'priority', new.priority, 'match', new.match, 'action', new.action), auth.uid(), mail);
+  end if;
+  return new;
+end $$;
+drop trigger if exists fin_rules_touch on public.fin_rules;
+create trigger fin_rules_touch before insert or update on public.fin_rules for each row execute function public.fin_rules_touch();
+drop trigger if exists fin_rules_audit_del on public.fin_rules;
+create trigger fin_rules_audit_del after delete on public.fin_rules for each row execute function public.fin_rules_touch();
+
+-- master data trail (suppliers, categories, projects, companies)
+create or replace function public.fin_master_audit() returns trigger language plpgsql security definer set search_path = '' as $$
+declare mail text; ent text := replace(replace(tg_table_name, 'fin_', ''), 'businesses', 'company');
+begin
+  ent := case ent when 'suppliers' then 'supplier' when 'categories' then 'category' when 'projects' then 'project' else ent end;
+  select email into mail from public.fin_members where user_id = auth.uid();
+  if tg_op = 'DELETE' then
+    insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email) values (ent, old.id::text, 'deleted', jsonb_build_object('name', old.name), auth.uid(), coalesce(mail, 'agent'));
+    return old;
+  end if;
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+  values (ent, new.id::text, case when tg_op = 'INSERT' then 'created' when (to_jsonb(new)->>'archived_at') is not null and (to_jsonb(old)->>'archived_at') is null then 'archived' else 'updated' end,
+          jsonb_build_object('name', new.name), auth.uid(), coalesce(mail, 'agent'));
+  return new;
+end $$;
+do $$ declare t text; begin
+  foreach t in array array['fin_suppliers', 'fin_categories', 'fin_projects', 'fin_businesses'] loop
+    execute format('drop trigger if exists fin_master_audit on public.%I', t);
+    execute format('create trigger fin_master_audit after insert or update or delete on public.%I for each row execute function public.fin_master_audit()', t);
+  end loop;
+end $$;
+
+-- supplier name normalization + an approved supplier needs a valid identity
+create or replace function public.fin_suppliers_norm() returns trigger language plpgsql as $$
+begin
+  new.normalized_name := public.fin_norm(new.name);
+  new.vat_id := nullif(regexp_replace(coalesce(new.vat_id, ''), '\D', '', 'g'), '');
+  if new.status = 'active' and (tg_op = 'INSERT' or old.status = 'pending') and auth.uid() is not null then new.approved_by := auth.uid(); end if;
+  return new;
+end $$;
+drop trigger if exists fin_suppliers_norm on public.fin_suppliers;
+create trigger fin_suppliers_norm before insert or update on public.fin_suppliers for each row execute function public.fin_suppliers_norm();
+
+-- documents: keep category_id and category in step, inherit the company of the project, dual approval above the threshold
+create or replace function public.fin_documents_relations() returns trigger language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid(); pb uuid;
+begin
+  if new.category_id is distinct from (case when tg_op = 'UPDATE' then old.category_id end) and new.category_id is not null then
+    select name into new.category from public.fin_categories where id = new.category_id;
+  elsif new.category is distinct from (case when tg_op = 'UPDATE' then old.category end) then
+    select id into new.category_id from public.fin_categories where name = new.category;
+  end if;
+  if new.project_id is not null then
+    select business_id into pb from public.fin_projects where id = new.project_id;
+    if new.business_id is null then new.business_id := pb;
+    elsif pb is not null and pb <> new.business_id then raise exception 'PROJECT_COMPANY: the project belongs to another company';
+    end if;
+  end if;
+  if tg_op = 'UPDATE' and new.status = 'approved' and old.status <> 'approved' and new.requires_second_approval then
+    if new.first_approved_by is null and old.first_approved_by is null then
+      -- first signature: recorded, the document stays in review until someone else signs
+      new.first_approved_by := uid; new.first_approved_at := now(); new.status := old.status;
+      insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+      values ('document', new.id::text, 'first_approval', jsonb_build_object('total_amount', new.total_amount), uid, (select email from public.fin_members where user_id = uid));
+    elsif coalesce(new.first_approved_by, old.first_approved_by) = uid then
+      raise exception 'SECOND_APPROVAL: a second, different approver is required';
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists fin_documents_relations on public.fin_documents;
+create trigger fin_documents_relations before insert or update on public.fin_documents for each row execute function public.fin_documents_relations();
+
+-- document status: archived (kept, hidden from the work queues)
+alter table public.fin_documents drop constraint if exists fin_documents_status_check;
+alter table public.fin_documents add constraint fin_documents_status_check check (status in ('processing', 'review', 'approved', 'sent', 'rejected', 'duplicate', 'failed', 'archived'));
+
+-- RLS for the new tables
+do $$
+declare p record;
+begin
+  for p in select policyname, tablename from pg_policies where schemaname = 'public' and tablename in ('fin_document_allocations', 'fin_settings', 'fin_rule_hits') loop
+    execute format('drop policy %I on public.%I', p.policyname, p.tablename);
+  end loop;
+end $$;
+grant select, insert, update, delete on public.fin_document_allocations, public.fin_settings to authenticated;
+grant select on public.fin_rule_hits to authenticated;
+revoke all on public.fin_document_allocations, public.fin_settings, public.fin_rule_hits from anon;
+create policy "fin_alloc read" on public.fin_document_allocations for select to authenticated using (document_id in (select id from public.fin_documents));
+create policy "fin_settings read" on public.fin_settings for select to authenticated using (public.fin_role() is not null);
+create policy "fin_settings write" on public.fin_settings for update to authenticated using (public.fin_has_role(array['admin'])) with check (public.fin_has_role(array['admin']));
+create policy "fin_rule_hits read" on public.fin_rule_hits for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+
+-- permissions per the spec: companies and global rules are admin-only; suppliers, categories, projects are finance staff
+drop policy if exists "fin_rules write" on public.fin_rules;
+create policy "fin_rules write" on public.fin_rules for all to authenticated using (public.fin_has_role(array['admin'])) with check (public.fin_has_role(array['admin']));
+-- an accountant sees the companies they serve; finance staff see suppliers; employees see active ones
+drop policy if exists "fin_suppliers read" on public.fin_suppliers;
+create policy "fin_suppliers read" on public.fin_suppliers for select to authenticated using (public.fin_role() is not null and (status <> 'pending' or public.fin_has_role(array['admin', 'finance_manager'])));
+-- categories limited to some companies stay visible (they are reference data); restriction applies in the screens
+
+insert into public.fin_categories (name, name_en, vat_deductible_pct, sort, keywords) values
+  ('פרסום ושיווק', 'Advertising & marketing', 100, 9, '{meta,facebook,google ads,פרסום,קמפיין}'),
+  ('ציוד משרדי', 'Office supplies', 100, 13, '{נייר,טונר,משרד}'),
+  ('תוכנות ומערכות', 'Software & systems', 100, 8, '{מנוי,subscription,saas,license}'),
+  ('שירותים מקצועיים', 'Professional services', 100, 10, '{}'),
+  ('ייעוץ משפטי', 'Legal', 100, 10, '{עו״ד,עורך דין,משפטי}'),
+  ('הנהלת חשבונות', 'Accounting', 100, 10, '{רו״ח,הנהלת חשבונות}'),
+  ('ציוד בנייה', 'Construction equipment', 100, 3, '{מקדחה,פיגום,ציוד}'),
+  ('תחבורה ורכב', 'Transport & vehicles', 66.67, 5, '{דלק,חניה,ליסינג}'),
+  ('תקשורת', 'Telecom', 100, 7, '{אינטרנט,סלולר}'),
+  ('שכירות ואחזקה', 'Rent & maintenance', 100, 4, '{שכירות,אחזקה}'),
+  ('ביטוחים', 'Insurance', 0, 12, '{ביטוח,פוליסה}'),
+  ('מימון וריבית', 'Finance & interest', 0, 16, '{ריבית,עמלה}'),
+  ('הוצאות כלליות', 'General', 100, 98, '{}')
+on conflict (name) do update set name_en = coalesce(public.fin_categories.name_en, excluded.name_en), keywords = case when public.fin_categories.keywords = '{}' then excluded.keywords else public.fin_categories.keywords end;
+update public.fin_categories set keywords = '{צבע,בלוקים,מלט,ברזל,חומרי בניין}', name_en = coalesce(name_en, 'Building materials') where name = 'חומרי בניין';
+update public.fin_categories set name_en = coalesce(name_en, 'Subcontractors') where name = 'קבלני משנה';
+
+notify pgrst, 'reload schema';

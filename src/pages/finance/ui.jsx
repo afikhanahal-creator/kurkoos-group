@@ -45,6 +45,10 @@ const P = {
   play: <path d="M7 4v16l13-8z" />,
   shield: <path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" />,
   edit: <path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />,
+  tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" /><circle cx="8" cy="8" r="1.5" /></>,
+  rows: <path d="M4 6h16M4 12h16M4 18h16" />,
+  grid: <><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></>,
+  more: <><circle cx="5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="19" cy="12" r="1.2" /></>,
 }
 
 export function Icon({ name, size = 20, ...rest }) {

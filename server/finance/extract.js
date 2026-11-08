@@ -10,7 +10,7 @@ const str = (description) => ({ type: 'string', description })
 export const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['is_financial_document', 'doc_type', 'supplier_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'field_confidence', 'notes'],
+  required: ['is_financial_document', 'doc_type', 'supplier_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'supplier_email', 'supplier_phone', 'supplier_address', 'supplier_website', 'field_confidence', 'notes'],
   properties: {
     is_financial_document: { type: 'boolean', description: 'true for an invoice, receipt, credit note, supplier bill, payment confirmation, proforma or quote' },
     doc_type: { type: 'string', enum: DOC_TYPES },
@@ -30,7 +30,11 @@ export const SCHEMA = {
     description: str('one short Hebrew line: what was bought'),
     category: str('the closest category from the list'),
     payment_method: str('אשראי / העברה בנקאית / מזומן / צ׳ק / הוראת קבע; empty if not printed'),
-    project_hint: str('a project, site address or job name printed on the document; empty if none'),
+    project_hint: str('a project, site address, project code or job name printed on the document; empty if none'),
+    supplier_email: str('the issuer email printed on the document; empty if none'),
+    supplier_phone: str('the issuer phone; empty if none'),
+    supplier_address: str('the issuer address; empty if none'),
+    supplier_website: str('the issuer website; empty if none'),
     field_confidence: {
       type: 'object', additionalProperties: false, required: FIELDS,
       properties: Object.fromEntries(FIELDS.map((f) => [f, { type: 'number', description: '0 to 1' }])),

@@ -47,6 +47,12 @@ export const loadAudit = async ({ entity, entityId, limit = 100 } = {}) => {
   if (entityId) qy = qy.eq('entity_id', String(entityId))
   return soft(must(await qy))
 }
+export const loadAllocations = () => soft(all('fin_document_allocations', 'created_at', true, 10000))
+export const loadSettings = async () => Object.fromEntries(((await soft(must(await supabase.from('fin_settings').select('*')))) || []).map((r) => [r.key, r.value]))
+export const saveSetting = async (key, value) => must(await supabase.from('fin_settings').update({ value, updated_at: new Date().toISOString() }).eq('key', key).select().single())
+export const loadRuleHits = (limit = 200) => soft(all('fin_rule_hits', 'at', false, limit))
+export const mergeSuppliers = async (from, into) => must(await supabase.rpc('fin_merge_suppliers', { p_from: from, p_into: into }))
+export const setAllocations = async (documentId, rows) => must(await supabase.rpc('fin_set_allocations', { p_document: documentId, p_rows: rows }))
 export const storageUsage = async () => { try { return must(await supabase.rpc('storage_usage')) } catch { return null } }
 
 export const updateDocument = async (id, patch) => must(await supabase.from('fin_documents').update(patch).eq('id', id).select().single())

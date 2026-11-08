@@ -17,11 +17,11 @@ export function validId(prefix8) {
     if (sum % 10 === 0) return s
   }
 }
-export const IDS = { tambour: validId('52003187'), bezeq: validId('52003193'), paz: validId('51021605'), electra: validId('51345678'), ace: validId('52003841'), kurkoos: validId('51500000'), execution: validId('51500001') }
+export const IDS = { meta: validId('51577777'), office: validId('51488888'), soleh: validId('52000121'), henrietta: validId('51699999'), tambour: validId('52003187'), bezeq: validId('52003193'), paz: validId('51021605'), electra: validId('51345678'), ace: validId('52003841'), kurkoos: validId('51500000'), execution: validId('51500001') }
 
 const today = new Date()
 const iso = (daysAgo) => { const d = new Date(today); d.setDate(d.getDate() - daysAgo); return d.toISOString().slice(0, 10) }
-const D = { tambour: iso(6), bezeq: iso(5), paz: iso(4), electra: iso(3), ace: iso(2) }
+const D = { tambour: iso(6), bezeq: iso(5), paz: iso(4), electra: iso(3), ace: iso(2), meta: iso(2), office: iso(1), bg: iso(1), soleh: iso(1) }
 
 const invoice = ({ supplier, id, title, number, date, lines, before, vat, total, customer, customerId, note = '' }) => `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
 body{font-family:'DejaVu Sans',Arial,sans-serif;margin:48px;color:#222}h1{color:#a00;margin:0}table{width:100%;border-collapse:collapse;margin:20px 0}td,th{border:1px solid #999;padding:8px;text-align:right}.t{font-size:22px;font-weight:bold}</style></head><body>
@@ -48,12 +48,20 @@ await pdf('bezeq-oct.pdf', invoice({ supplier: 'בזק החברה הישראלי
 await pdf('brochure.pdf', '<html dir="rtl"><body style="font-family:sans-serif;padding:60px"><h1>קטלוג סתיו 2026</h1><p>מבצעים על ריהוט גן!</p></body></html>')
 await pdf('electra-778.pdf', invoice({ supplier: 'אלקטרה בנייה בע״מ', id: IDS.electra, title: 'חשבונית מס', number: '778', date: D.electra, lines: [['עבודות חשמל, שלב ב׳', '50,000.00']], before: '50,000.00', vat: '9,000.00', total: '59,000.00', customer: 'קורקוס ביצוע', customerId: IDS.execution }))
 await png('ace-receipt.png', invoice({ supplier: 'ACE', id: IDS.ace, title: 'קבלה', number: '5501', date: D.ace, lines: [['מקדחה', '200.00']], before: '200.00', vat: '36.00', total: '236.00', customer: '', customerId: '' }))
+await pdf('meta-ads.pdf', invoice({ supplier: 'Meta Platforms Ireland Ltd', id: IDS.meta, title: 'חשבונית מס', number: 'FBADS-90211', date: D.meta, lines: [['Facebook & Instagram ads, campaign "וילות השרון"', '4,000.00']], before: '4,000.00', vat: '720.00', total: '4,720.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
+await pdf('office-depot.pdf', invoice({ supplier: 'אופיס דיפו ישראל', id: IDS.office, title: 'חשבונית מס/קבלה', number: '330178', date: D.office, lines: [['כסאות משרד ×4, נייר, טונר', '2,500.00']], before: '2,500.00', vat: '450.00', total: '2,950.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
+await pdf('benguryon-blocks.pdf', invoice({ supplier: 'טמבור בע״מ', id: IDS.tambour, title: 'חשבונית מס', number: '4602', date: D.bg, lines: [['בלוקים ומלט לפרויקט BG-17 בן גוריון 17 יהוד', '10,000.00']], before: '10,000.00', vat: '1,800.00', total: '11,800.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
+await pdf('soleh-boneh.pdf', invoice({ supplier: 'סולל בונה תשתיות', id: IDS.soleh, title: 'חשבונית מס', number: 'SB-5521', date: D.soleh, lines: [['ייעוץ הנדסי, פרויקט HS-22', '20,000.00']], before: '20,000.00', vat: '3,600.00', total: '23,600.00', customer: 'הנרייטה סולד 22 בע״מ', customerId: IDS.henrietta }))
 await browser.close()
 
-const H = { tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
+const H = { meta: sha('meta-ads.pdf'), office: sha('office-depot.pdf'), bg: sha('benguryon-blocks.pdf'), soleh: sha('soleh-boneh.pdf'), tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
 const at = (d, h = 9) => `${d}T0${h}:15:00Z`
 const fixtures = {
   answers: {
+    [H.meta]: answer({ supplier_name: 'Meta Platforms Ireland Ltd', supplier_vat_id: IDS.meta, doc_number: 'FBADS-90211', issue_date: D.meta, amount_before_vat: 4000, vat_amount: 720, total_amount: 4720, description: 'פרסום בפייסבוק ואינסטגרם', category: 'פרסום ושיווק', supplier_website: 'www.facebook.com', field_confidence: { supplier_name: 0.99, supplier_vat_id: 0.97, doc_type: 0.95, doc_number: 0.98, issue_date: 0.97, payment_date: 0.9, amount_before_vat: 0.96, vat_amount: 0.96, total_amount: 0.98, currency: 0.99, category: 0.91, description: 0.9, customer: 0.95 } }),
+    [H.office]: answer({ doc_type: 'invoice_receipt', supplier_name: 'אופיס דיפו ישראל', supplier_vat_id: IDS.office, doc_number: '330178', issue_date: D.office, amount_before_vat: 2500, vat_amount: 450, total_amount: 2950, description: 'כסאות משרד וציוד', category: 'ציוד משרדי', supplier_email: 'billing@officedepot.test', supplier_phone: '03-5551234', supplier_address: 'הברזל 3, תל אביב', field_confidence: { supplier_name: 0.97, supplier_vat_id: 0.95, doc_type: 0.95, doc_number: 0.97, issue_date: 0.96, payment_date: 0.9, amount_before_vat: 0.95, vat_amount: 0.95, total_amount: 0.97, currency: 0.99, category: 0.88, description: 0.9, customer: 0.95 } }),
+    [H.bg]: answer({ supplier_name: 'טמבור בע״מ', supplier_vat_id: IDS.tambour, doc_number: '4602', issue_date: D.bg, amount_before_vat: 10000, vat_amount: 1800, total_amount: 11800, description: 'בלוקים ומלט', category: 'חומרי בניין', project_hint: 'BG-17 בן גוריון 17 יהוד', field_confidence: { supplier_name: 0.98, supplier_vat_id: 0.97, doc_type: 0.95, doc_number: 0.97, issue_date: 0.96, payment_date: 0.9, amount_before_vat: 0.95, vat_amount: 0.95, total_amount: 0.97, currency: 0.99, category: 0.86, description: 0.9, customer: 0.95 } }),
+    [H.soleh]: answer({ supplier_name: 'סולל בונה תשתיות', supplier_vat_id: IDS.soleh, customer_name: 'הנרייטה סולד 22 בע״מ', customer_vat_id: IDS.henrietta, doc_number: 'SB-5521', issue_date: D.soleh, amount_before_vat: 20000, vat_amount: 3600, total_amount: 23600, description: 'ייעוץ הנדסי', category: 'שירותים מקצועיים', project_hint: 'HS-22' }),
     [H.tambour]: answer({ supplier_name: 'טמבור בע״מ', supplier_vat_id: IDS.tambour, doc_number: '4521', issue_date: D.tambour, amount_before_vat: 3050.85, vat_amount: 549.15, total_amount: 3600, description: 'צבע אקרילי לאתר', category: 'חומרי בניין', project_hint: 'מוהליבר 17' }),
     [H.copy]: answer({ supplier_name: 'טמבור בע״מ', supplier_vat_id: IDS.tambour, doc_number: '4521', issue_date: D.tambour, amount_before_vat: 3050.85, vat_amount: 549.15, total_amount: 3600, description: 'צבע אקרילי לאתר (העתק)', category: 'חומרי בניין' }),
     [H.bezeq]: answer({ doc_type: 'invoice_receipt', supplier_name: 'בזק', supplier_vat_id: IDS.bezeq, doc_number: '88-120394', issue_date: D.bezeq, amount_before_vat: 500, vat_amount: 90, total_amount: 590, description: 'אינטרנט עסקי', category: 'תקשורת ואינטרנט', payment_method: 'הוראת קבע' }),

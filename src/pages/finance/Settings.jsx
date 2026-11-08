@@ -2,7 +2,49 @@ import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
 import { ROLE, nameOf } from './format.js'
+import { useState } from 'react'
 import { Card, Icon, PageHead, Pill, useAsync } from './ui.jsx'
+
+function SmartSettings() {
+  const { settings, can, reload } = useFinance()
+  const [f, setF] = useState(() => ({ mode: settings.supplier_mode || 'controlled', sup: Number(settings.supplier_auto_threshold ?? 0.92), cat: Number(settings.category_auto_threshold ?? 0.85), proj: Number(settings.project_auto_threshold ?? 0.9), second: Number(settings.second_approval_amount ?? 50000) }))
+  const [msg, setMsg] = useState('')
+  const admin = can('manage')
+  const save = async () => {
+    try {
+      await api.saveSetting('supplier_mode', f.mode)
+      await api.saveSetting('supplier_auto_threshold', f.sup)
+      await api.saveSetting('category_auto_threshold', f.cat)
+      await api.saveSetting('project_auto_threshold', f.proj)
+      await api.saveSetting('second_approval_amount', f.second)
+      setMsg('ההגדרות נשמרו. הן חלות על מסמכים שיעובדו מעכשיו.'); reload()
+    } catch (e) { setMsg(e.message) }
+  }
+  const Slider = ({ k, label, hint }) => (
+    <label className="fin-slider"><span>{label}<strong>{Math.round(f[k] * 100)}%</strong></span>
+      <input type="range" min="0.5" max="1" step="0.01" value={f[k]} onChange={(e) => setF({ ...f, [k]: Number(e.target.value) })} disabled={!admin} />
+      <small>{hint}</small>
+    </label>
+  )
+  return (
+    <Card title="זיהוי ושיוך אוטומטי" className="fin-card--wide">
+      <fieldset className="fin-radio-cards" disabled={!admin}>
+        <legend className="fin-sr">מצב יצירת ספקים</legend>
+        <label className={f.mode === 'controlled' ? 'is-on' : ''}><input type="radio" name="mode" checked={f.mode === 'controlled'} onChange={() => setF({ ...f, mode: 'controlled' })} /><strong>מבוקר</strong><span>ספק חדש שזוהה בחשבונית נוצר כהצעה וממתין לאישור של מנהל כספים.</span></label>
+        <label className={f.mode === 'automatic' ? 'is-on' : ''}><input type="radio" name="mode" checked={f.mode === 'automatic'} onChange={() => setF({ ...f, mode: 'automatic' })} /><strong>אוטומטי</strong><span>ספק חדש נוצר מיד, אם יש לו ח.פ, הוודאות מעל הסף ואין לו כפילות.</span></label>
+      </fieldset>
+      <div className="fin-sliders">
+        {f.mode === 'automatic' && Slider({ k: 'sup', label: 'סף ליצירת ספק', hint: 'ודאות מינימלית בזיהוי השם ומספר העוסק' })}
+        {Slider({ k: 'cat', label: 'סף לשיוך קטגוריה', hint: 'מתחת לסף: הצעה בלבד, אדם מחליט' })}
+        {Slider({ k: 'proj', label: 'סף לשיוך פרויקט', hint: 'ספק שעובד בכמה פרויקטים לא משויך לפי שמו' })}
+      </div>
+      <label className="fin-inline-label">אישור כפול לחשבונית מעל <input type="number" className="fin-select fin-select--sm" value={f.second} onChange={(e) => setF({ ...f, second: Number(e.target.value) })} disabled={!admin} /> ₪</label>
+      {admin && <div className="fin-form__actions"><button type="button" className="fin-btn fin-btn--primary" onClick={save}>שמירת ההגדרות</button></div>}
+      {msg && <p className="fin-note" role="status">{msg}</p>}
+      {!admin && <p className="fin-muted fin-small">רק מנהל מערכת משנה את ההגדרות האלה.</p>}
+    </Card>
+  )
+}
 
 const ENV = [
   ['claude', 'ANTHROPIC_API_KEY', 'קריאת המסמכים ע״י Claude'],
@@ -21,6 +63,7 @@ export default function Settings() {
     <div className="fin-stack">
       <PageHead title="הגדרות" />
       <div className="fin-grid">
+        {can('operate') && <SmartSettings />}
         <Card title="החשבון שלי">
           <ul className="fin-kv">
             <li><span>אימייל</span><strong dir="ltr">{u?.email}</strong></li>

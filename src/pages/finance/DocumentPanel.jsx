@@ -6,7 +6,7 @@ import { saveBlob } from './zip.js'
 import { Confidence, Icon, Pill, StatusPill, useAsync } from './ui.jsx'
 
 const VAT = 0.18
-const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'category', 'business_id', 'project_id', 'description', 'payment_method', 'paid', 'notes']
+const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'category_id', 'business_id', 'project_id', 'description', 'payment_method', 'paid', 'notes']
 const blank = (k) => (k === 'paid' ? false : '')
 const SOURCE_LABEL = { rule: 'כלל אוטומציה', supplier: 'ברירת מחדל של הספק', history: 'היסטוריית אישורים', document: 'מופיע במסמך', mailbox: 'לפי תיבת המייל', ai: 'הצעת AI' }
 
@@ -36,7 +36,11 @@ function Preview({ doc }) {
 }
 
 export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext }) {
-  const { businesses, projects, categories, mailboxes, can } = useFinance()
+  const { businesses, projects, categories, mailboxes, suppliers, allocations, can, go, reload } = useFinance()
+  const supplierRow = suppliers.find((x) => x.id === doc.supplier_id)
+  const myAlloc = allocations.filter((a) => a.document_id === doc.id)
+  const [split, setSplit] = useState(() => (myAlloc.length ? myAlloc.map((a) => ({ project_id: a.project_id, amount: String(a.amount) })) : null))
+  const [splitMsg, setSplitMsg] = useState('')
   const editable = can('edit') || (can('upload') && ['processing', 'review', 'failed'].includes(doc.status))
   const [form, setForm] = useState(() => Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])))
   const [busy, setBusy] = useState('')
@@ -67,7 +71,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     for (const k of FIELDS) {
       let v = form[k]
       if (['amount_before_vat', 'vat_amount', 'total_amount'].includes(k)) v = v === '' || v === null ? null : Number(v)
-      else if (['issue_date', 'due_date', 'payment_date', 'business_id', 'project_id', 'category'].includes(k)) v = v || null
+      else if (['issue_date', 'due_date', 'payment_date', 'business_id', 'project_id', 'category_id'].includes(k)) v = v || null
       out[k] = v
     }
     return out
@@ -79,7 +83,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
       // the rules run again on what the person typed (sums, VAT, duplicates); confidence of edited fields becomes 100%
       if (dirty) { const r = await api.callServer('revalidate', { document_id: doc.id }).catch(() => null); if (r?.document) saved = r.document }
       onSaved(saved)
-    } catch (e) { setErr(e.message) } finally { setBusy('') }
+      if (extra.status === 'approved' && saved.status !== 'approved' && saved.first_approved_by) setErr('נרשמה חתימה ראשונה. מסמך מעל סף האישור הכפול מחכה למאשר נוסף.')
+    } catch (e) { setErr(/SECOND_APPROVAL/.test(e.message) ? 'המסמך דורש מאשר שני, שונה ממי שאישר ראשון' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת. בחרו פרויקט של אותה חברה' : e.message) } finally { setBusy('') }
   }
   const approve = () => {
     const errors = issues.filter((i) => i.level === 'error' && i.code !== 'ai_note')
@@ -121,13 +126,13 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   }
   const Suggest = ({ k, list }) => {  // called as a function
     const s = sug[k]
-    if (!s || !s.value || String(form[k] || '') === String(s.value)) return null
+    if (!s || !s.value || (k === 'category' ? categories.find((c) => c.id === form.category_id)?.name === s.value : String(form[k] || '') === String(s.value))) return null
     const name = list ? nameOf(list, s.value) : s.value
     if (!name) return null
     return (
       <p className="fin-suggest">
         <Icon name="sparkle" size={15} /> הצעה: <strong>{name}</strong> <span className="fin-muted">({SOURCE_LABEL[s.source] || s.source}{s.reason ? `: ${s.reason}` : ''})</span>
-        {editable && <button type="button" className="fin-link" onClick={() => setForm((f) => ({ ...f, [k]: s.value }))}>החלה</button>}
+        {editable && <button type="button" className="fin-link" onClick={() => setForm((f) => (k === 'category' ? { ...f, category_id: categories.find((c) => c.name === s.value)?.id || f.category_id } : { ...f, [k]: s.value }))}>החלה</button>}{typeof s.confidence === 'number' && <span className="fin-muted"> {Math.round(s.confidence * 100)}%</span>}
       </p>
     )
   }
@@ -166,6 +171,15 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                 {['approved', 'sent'].includes(doc.status) && editable && <p className="fin-note"><Icon name="shield" size={16} /> מסמך מאושר. שינוי בסכומים, בספק או בשיוך יחזיר אותו לאישור.</p>}
                 <div className="fin-form__grid">
                   {F({ k: 'supplier_name', wide: true })}
+                  {(supplierRow || doc.suggestions?.supplier) && (
+                    <div className="fin-field--wide fin-supplier-link">
+                      {supplierRow ? <>
+                        <span>רשומת ספק: <button type="button" className="fin-link" onClick={() => go(`/suppliers/${supplierRow.id}`)}>{supplierRow.name}</button></span>
+                        {supplierRow.status === 'pending' ? <><Pill tone="attn">ספק חדש, ממתין לאישור</Pill>{can('edit') && <button type="button" className="fin-btn fin-btn--sm" onClick={async () => { try { await api.saveRow('fin_suppliers', { id: supplierRow.id, status: 'active' }); await api.callServer('revalidate', { document_id: doc.id }).then((r) => r?.document && onSaved(r.document)).catch(() => {}); reload() } catch (e) { setErr(e.message) } }}>אישור הספק</button>}</>
+                          : <Pill tone="ok">{doc.suggestions?.supplier?.match === 'id' ? 'זוהה לפי ח.פ' : doc.suggestions?.supplier?.match === 'name' ? 'זוהה לפי שם' : doc.suggestions?.supplier?.match === 'new' ? 'נוצר מהחשבונית' : 'מקושר'}</Pill>}
+                      </> : <span className="fin-muted">לא נמצא ספק תואם</span>}
+                    </div>
+                  )}
                   {F({ k: 'supplier_vat_id' })}
                   {F({ k: 'doc_type', children: <><select value={form.doc_type || ''} onChange={set('doc_type')} disabled={!editable}>{Object.entries(DOC_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></> })}
                   {F({ k: 'doc_number' })}
@@ -176,11 +190,40 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                   {F({ k: 'amount_before_vat', type: 'number' })}
                   {F({ k: 'vat_amount', type: 'number' })}
                   {F({ k: 'total_amount', type: 'number' })}
-                  {F({ k: 'category', children: <><select value={form.category || ''} onChange={set('category')} disabled={!editable}><option value="">בחרו…</option>{categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}</select></> })}
+                  {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><select value={form.category_id || ''} onChange={set('category_id')} disabled={!editable}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</select></> })}
                   <div className="fin-field--wide">{Suggest({ k: 'category' })}</div>
                   {F({ k: 'business_id', children: <><select value={form.business_id || ''} onChange={set('business_id')} disabled={!editable}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></> })}
-                  {F({ k: 'project_id', children: <><select value={form.project_id || ''} onChange={set('project_id')} disabled={!editable}><option value="">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.code ? ` (${p.code})` : ''}</option>)}</select></> })}
+                  {F({ k: 'project_id', children: <><select value={form.project_id || ''} onChange={set('project_id')} disabled={!editable || !!split}><option value="">{split ? 'מפוצל בין פרויקטים' : 'ללא פרויקט'}</option>{projects.filter((p) => !form.business_id || !p.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}{p.code ? ` (${p.code})` : ''}</option>)}</select></> })}
                   <div className="fin-field--wide">{Suggest({ k: 'business_id', list: businesses })}{Suggest({ k: 'project_id', list: projects })}</div>
+                  {can('edit') && (
+                    <div className="fin-field--wide fin-splitbox">
+                      {!split ? <button type="button" className="fin-link" onClick={() => setSplit([{ project_id: form.project_id || '', amount: String(doc.total_amount ?? '') }, { project_id: '', amount: '' }])}>פיצול החשבונית בין כמה פרויקטים</button> : (() => {
+                        const total = Number(doc.total_amount) || 0
+                        const used = split.reduce((a, r) => a + (Number(r.amount) || 0), 0)
+                        const left = Math.round((total - used) * 100) / 100
+                        return (
+                          <>
+                            <strong>פיצול בין פרויקטים</strong>
+                            {split.map((r, n) => (
+                              <div key={n} className="fin-splitbox__row">
+                                <select value={r.project_id} onChange={(e) => setSplit(split.map((x, m) => (m === n ? { ...x, project_id: e.target.value } : x)))} aria-label={`פרויקט ${n + 1}`}><option value="">פרויקט…</option>{projects.filter((p) => !form.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+                                <input type="number" step="0.01" inputMode="decimal" value={r.amount} onChange={(e) => setSplit(split.map((x, m) => (m === n ? { ...x, amount: e.target.value } : x)))} aria-label={`סכום ${n + 1}`} />
+                                <button type="button" className="fin-icon-btn" onClick={() => setSplit(split.filter((_, m) => m !== n))} aria-label="הסרת שורה"><Icon name="x" size={16} /></button>
+                              </div>
+                            ))}
+                            <div className="fin-splitbox__foot">
+                              <button type="button" className="fin-link" onClick={() => setSplit([...split, { project_id: '', amount: left > 0 ? String(left) : '' }])}>הוספת פרויקט</button>
+                              <span className={Math.abs(left) > 0.01 ? 'fin-attn-text' : 'fin-ok-text'}>{Math.abs(left) > 0.01 ? `נותרו ${money(left)} לחלוקה` : 'מתאזן לסה״כ החשבונית'}</span>
+                              <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={Math.abs(left) > 0.01 || split.some((r) => !r.project_id)} onClick={async () => { setSplitMsg(''); try { await api.setAllocations(doc.id, split.map((r) => ({ project_id: r.project_id, amount: Number(r.amount) }))); setSplitMsg('הפיצול נשמר'); reload() } catch (e) { setSplitMsg(/SPLIT_TOTAL/.test(e.message) ? 'הסכומים לא מתאזנים לסה״כ החשבונית' : e.message) } }}>שמירת הפיצול</button>
+                              {myAlloc.length > 0 && <button type="button" className="fin-link" onClick={async () => { await api.setAllocations(doc.id, []); setSplit(null); reload() }}>ביטול הפיצול</button>}
+                            </div>
+                            {splitMsg && <span className="fin-field__hint">{splitMsg}</span>}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  )}
+                  {doc.requires_second_approval && <p className="fin-field--wide fin-callout fin-callout--warn">מסמך מעל סף האישור הכפול: צריך שני מאשרים שונים.{doc.first_approved_at ? ` חתימה ראשונה נרשמה (${dateTime(doc.first_approved_at)}).` : ''}</p>}
                   {F({ k: 'payment_method', children: <><input value={form.payment_method || ''} onChange={set('payment_method')} list="fin-pay" disabled={!editable} /></> })}
                   <label className="fin-field fin-field--check"><input type="checkbox" checked={!!form.paid} onChange={set('paid')} disabled={!editable} /> שולם</label>
                   {F({ k: 'description', wide: true })}

@@ -7,6 +7,7 @@ import { DOC_TYPE, PROJECT_STATUS, counts, date, docDate, money, monthLabel, nam
 import { docsFor, summarize } from './stats.js'
 import { EntityForm } from './MasterData.jsx'
 import { Empty, Icon, Modal, Pill, StatusPill, useAsync } from './ui.jsx'
+import Select from './Select.jsx'
 
 const PERIODS = { all: 'כל הזמן', year: 'השנה', '12m': '12 חודשים', '3m': '3 חודשים', month: 'החודש' }
 const inPeriod = (p, k) => {
@@ -69,7 +70,7 @@ function MergeDialog({ supplier, onClose, onDone }) {
   return (
     <Modal title={`איחוד "${supplier.name}" עם ספק קיים`} onClose={onClose} footer={<><button type="button" className="fin-btn fin-btn--danger" disabled={!into} onClick={run}>איחוד והעברת המסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={onClose}>ביטול</button></>}>
       <p className="fin-muted">כל המסמכים והכללים של "{supplier.name}" יעברו לספק שתבחרו, והרישום הכפול יימחק. הפעולה נרשמת ביומן.</p>
-      <select className="fin-select" value={into} onChange={(e) => setInto(e.target.value)} aria-label="הספק שנשאר"><option value="">בחרו ספק…</option>{suppliers.filter((s) => s.id !== supplier.id && s.status !== 'archived').map((s) => <option key={s.id} value={s.id}>{s.name}{s.vat_id ? ` (${s.vat_id})` : ''}</option>)}</select>
+      <Select className="fin-select" value={into} onChange={(e) => setInto(e.target.value)} aria-label="הספק שנשאר"><option value="">בחרו ספק…</option>{suppliers.filter((s) => s.id !== supplier.id && s.status !== 'archived').map((s) => <option key={s.id} value={s.id}>{s.name}{s.vat_id ? ` (${s.vat_id})` : ''}</option>)}</Select>
       {err && <p className="fin-error" role="alert">{err}</p>}
     </Modal>
   )

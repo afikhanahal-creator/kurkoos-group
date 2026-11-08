@@ -4,7 +4,8 @@ import { useSession } from './session.js'
 import * as api from './api.js'
 import { ago, date, dateTime, nameOf } from './format.js'
 import { ProviderLogo } from './logos.jsx'
-import { Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
+import { Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, Skeleton } from './ui.jsx'
+import Select from './Select.jsx'
 
 /* Israeli mobile: 05X-XXXXXXX in any format → 9725XXXXXXXX */
 export function normalizePhone(raw) {
@@ -57,7 +58,7 @@ export default function Scanners() {
       {status.data && !status.data.whatsapp?.configured && can('manage') && <p className="fin-note fin-note--warn">הקבלה מ-WhatsApp עוד לא הופעלה בשרת (GREENAPI_ID_INSTANCE, GREENAPI_TOKEN, FINANCE_WHATSAPP_WEBHOOK_TOKEN). אפשר לרשום מספרים כבר עכשיו.</p>}
       {msg && <p className="fin-note" role="status">{msg}</p>}
 
-      {list.loading ? <p className="fin-muted">טוען…</p> : !(list.data || []).length ? (
+      {list.loading ? <Skeleton /> : !(list.data || []).length ? (
         <Empty title="עוד אין טלפונים" icon="phone">הוסיפו את המספר שלכם, ומהיום כל קבלה שתצלמו תגיע לכאן בלי להתחבר למערכת.</Empty>
       ) : (
         <ul className="fin-acc-list">
@@ -103,8 +104,8 @@ export default function Scanners() {
           <form id="fin-wa" className="fin-form__grid" onSubmit={save} noValidate>
             <Field label="מספר הנייד" wide tone={err ? 'error' : undefined} hint={err || 'המספר שממנו תשלחו את הצילומים'}><input type="tel" inputMode="tel" dir="ltr" autoComplete="tel" placeholder="054-3049491" value={add.phone} onChange={(e) => setAdd({ ...add, phone: e.target.value })} required /></Field>
             <Field label="שם (לא חובה)"><input value={add.label} onChange={(e) => setAdd({ ...add, label: e.target.value })} placeholder="למשל: הטלפון של שלומי" /></Field>
-            <Field label="שיוך לחברה (לא חובה)"><select value={add.business_id} onChange={(e) => setAdd({ ...add, business_id: e.target.value })}><option value="">לפי החשבונית</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>
-            {can('operate') && <Field label="המשתמש" wide hint="המסמכים יירשמו כאילו המשתמש הזה העלה אותם"><select value={add.user_id} onChange={(e) => setAdd({ ...add, user_id: e.target.value })}>{members.filter((m) => m.active).map((m) => <option key={m.user_id} value={m.user_id}>{m.full_name || m.email}</option>)}</select></Field>}
+            <Field label="שיוך לחברה (לא חובה)"><Select value={add.business_id} onChange={(e) => setAdd({ ...add, business_id: e.target.value })}><option value="">לפי החשבונית</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>
+            {can('operate') && <Field label="המשתמש" wide hint="המסמכים יירשמו כאילו המשתמש הזה העלה אותם"><Select value={add.user_id} onChange={(e) => setAdd({ ...add, user_id: e.target.value })}>{members.filter((m) => m.active).map((m) => <option key={m.user_id} value={m.user_id}>{m.full_name || m.email}</option>)}</Select></Field>}
           </form>
           {office && <p className="fin-callout">אחרי ההוספה: שמרו באנשי הקשר את <strong dir="ltr">{pretty(office)}</strong> ושלחו אליו צילום של חשבונית. תקבלו אישור תוך כמה שניות.</p>}
         </Modal>

@@ -3,7 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { AGENTS, FIELD_LABEL, ago, claimableVat, counts, money, monthLabel, period, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { docsFor, summarize } from './stats.js'
-import { Empty, Icon, Pill, UploadZone, useAsync } from './ui.jsx'
+import { Empty, Icon, Pill, UploadZone, useAsync, Skeleton } from './ui.jsx'
 
 /* Every figure on this screen is computed from stored records. Nothing is sampled, estimated or invented. */
 const ACTION = {
@@ -179,7 +179,7 @@ export default function Dashboard() {
           </Section>
         )}
         <Section title="פעילות אחרונה" className="fin-cc__feed">
-          {feed.loading ? <p className="fin-muted">טוען…</p> : <ActivityFeed items={feed.data || []} documents={documents} go={go} />}
+          {feed.loading ? <Skeleton /> : <ActivityFeed items={feed.data || []} documents={documents} go={go} />}
         </Section>
       </div>
       {!documents.length && can('connect') && <Empty title="המערכת מוכנה" icon="inbox" action={<button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>חברו תיבת מייל או העלו חשבונית ראשונה, והסוכנים יתחילו לעבוד.</Empty>}

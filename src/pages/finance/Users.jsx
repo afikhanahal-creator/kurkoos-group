@@ -5,6 +5,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ROLE, ago, date, money, nameOf, thisMonth } from './format.js'
 import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync } from './ui.jsx'
+import Select from './Select.jsx'
 
 const ROLE_DESC = {
   admin: 'הכול: הגדרות, משתמשים, חיבורים, אינטגרציות, מסמכים וייצוא',
@@ -167,7 +168,7 @@ export default function Users() {
           </div>
           <div className="fin-org-tools">
             <label className="fin-search"><Icon name="search" size={18} /><input type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="חיפוש שם או מייל" aria-label="חיפוש לפי שם או אימייל" /></label>
-            <select className="fin-select" value={role} onChange={(e) => setRole(e.target.value)} aria-label="סינון לפי תפקיד"><option value="">כל התפקידים</option>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <Select className="fin-select" value={role} onChange={(e) => setRole(e.target.value)} aria-label="סינון לפי תפקיד"><option value="">כל התפקידים</option>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
             <button type="button" className="fin-icon-btn" onClick={() => setSort(sort === 'name' ? 'new' : 'name')} title={sort === 'name' ? 'ממוין לפי שם' : 'ממוין לפי הצטרפות'} aria-label={sort === 'name' ? 'מיון לפי הצטרפות' : 'מיון לפי שם'}><Icon name="sort" size={19} /></button>
           </div>
           <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={newInvite}><Icon name="plus" size={18} /> הוספת רו״ח או חבר צוות</button>
@@ -247,7 +248,7 @@ export default function Users() {
         <Modal title={edit.full_name || edit.email} onClose={() => setEdit(null)} footer={<><button type="submit" form="fin-member" className="fin-btn fin-btn--primary">שמירה</button><button type="button" className="fin-btn" onClick={() => setEdit(null)}>ביטול</button></>}>
           <form id="fin-member" className="fin-form__grid" onSubmit={save}>
             <Field label="שם"><input value={edit.full_name || ''} onChange={(e) => setEdit({ ...edit, full_name: e.target.value })} /></Field>
-            <Field label="תפקיד" hint={ROLE_DESC[edit.role]}><select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
+            <Field label="תפקיד" hint={ROLE_DESC[edit.role]}><Select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
             {BizPick({ value: edit.business_ids, onChange: (v) => setEdit({ ...edit, business_ids: v }) })}
             <div className="fin-field fin-field--wide fin-field--row"><span className="fin-field__label">משתמש פעיל</span><Toggle checked={edit.active} onChange={(v) => setEdit({ ...edit, active: v })} label="משתמש פעיל" disabled={edit.user_id === me?.id} /></div>
           </form>

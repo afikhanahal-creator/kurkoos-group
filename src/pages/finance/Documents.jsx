@@ -7,6 +7,7 @@ import { makeZip, saveBlob } from './zip.js'
 import { Confidence, Empty, Icon, Modal, PageHead, StatusPill, UploadZone } from './ui.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
+import Select from './Select.jsx'
 
 const TABS = [
   { id: '', label: 'הכול' },
@@ -145,12 +146,12 @@ export default function Documents({ preset = 'all' }) {
         <div className="fin-filter-panel" id="fin-doc-filters">
           <label className="fin-field"><span className="fin-field__label">מתאריך</span><input type="date" value={f.from} onChange={setFilter('from')} /></label>
           <label className="fin-field"><span className="fin-field__label">עד תאריך</span><input type="date" value={f.to} onChange={setFilter('to')} /></label>
-          <label className="fin-field"><span className="fin-field__label">ספק</span><select value={f.supplier} onChange={setFilter('supplier')}><option value="">הכול</option>{suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-          <label className="fin-field"><span className="fin-field__label">חברה</span><select value={f.biz} onChange={setFilter('biz')}><option value="">הכול</option><option value="none">לא משויך</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
-          <label className="fin-field"><span className="fin-field__label">פרויקט</span><select value={f.project} onChange={setFilter('project')}><option value="">הכול</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
-          <label className="fin-field"><span className="fin-field__label">קטגוריה</span><select value={f.cat} onChange={setFilter('cat')}><option value="">הכול</option>{categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}</select></label>
-          <label className="fin-field"><span className="fin-field__label">סוג מסמך</span><select value={f.type} onChange={setFilter('type')}><option value="">הכול</option>{Object.entries(DOC_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-          <label className="fin-field"><span className="fin-field__label">מקור</span><select value={f.source} onChange={setFilter('source')}><option value="">הכול</option>{Object.entries(SOURCE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}{mailboxes.map((m) => <option key={m.id} value={m.id}>{m.email}</option>)}</select></label>
+          <label className="fin-field"><span className="fin-field__label">ספק</span><Select value={f.supplier} onChange={setFilter('supplier')}><option value="">הכול</option>{suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></label>
+          <label className="fin-field"><span className="fin-field__label">חברה</span><Select value={f.biz} onChange={setFilter('biz')}><option value="">הכול</option><option value="none">לא משויך</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></label>
+          <label className="fin-field"><span className="fin-field__label">פרויקט</span><Select value={f.project} onChange={setFilter('project')}><option value="">הכול</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></label>
+          <label className="fin-field"><span className="fin-field__label">קטגוריה</span><Select value={f.cat} onChange={setFilter('cat')}><option value="">הכול</option>{categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}</Select></label>
+          <label className="fin-field"><span className="fin-field__label">סוג מסמך</span><Select value={f.type} onChange={setFilter('type')}><option value="">הכול</option>{Object.entries(DOC_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></label>
+          <label className="fin-field"><span className="fin-field__label">מקור</span><Select value={f.source} onChange={setFilter('source')}><option value="">הכול</option>{Object.entries(SOURCE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}{mailboxes.map((m) => <option key={m.id} value={m.id}>{m.email}</option>)}</Select></label>
           <label className="fin-field"><span className="fin-field__label">סכום מ-</span><input type="number" inputMode="decimal" value={f.min} onChange={setFilter('min')} /></label>
           <label className="fin-field"><span className="fin-field__label">סכום עד</span><input type="number" inputMode="decimal" value={f.max} onChange={setFilter('max')} /></label>
           <button type="button" className="fin-link" onClick={() => setF(EMPTY_F)} disabled={!activeFilters}>ניקוי הסינון</button>
@@ -167,19 +168,19 @@ export default function Documents({ preset = 'all' }) {
           {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status))}>סימון ככפול</button>}
           {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, (d) => !['approved', 'sent', 'processing'].includes(d.status))}>ארכיון</button>}
           {edit && (
-            <select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שיוך לקטגוריה" disabled={!!busy}>
+            <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שיוך לקטגוריה" disabled={!!busy}>
               <option value="">שיוך לקטגוריה…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            </Select>
           )}
           {edit && businesses.length > 0 && (
-            <select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
+            <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
               <option value="">שיוך לחברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+            </Select>
           )}
           {edit && projects.length > 0 && (
-            <select className="fin-select" value="" onChange={(e) => e.target.value && bulk('project', { project_id: e.target.value === 'none' ? null : e.target.value })} aria-label="שיוך לפרויקט" disabled={!!busy}>
+            <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('project', { project_id: e.target.value === 'none' ? null : e.target.value })} aria-label="שיוך לפרויקט" disabled={!!busy}>
               <option value="">שיוך לפרויקט…</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            </Select>
           )}
           {can('export') && <button type="button" className="fin-btn" disabled={!!busy} onClick={exportSelected}><Icon name="plug" size={18} /> ייצוא</button>}
           <button type="button" className="fin-btn" disabled={!!busy} onClick={downloadOriginals}><Icon name="download" size={18} /> {busy === 'zip' ? 'מכין…' : 'הורדת המקור'}</button>
@@ -218,9 +219,9 @@ export default function Documents({ preset = 'all' }) {
                   <details className="fin-menu">
                     <summary className="fin-icon-btn" aria-label="פעולות נוספות"><Icon name="more" size={18} /></summary>
                     <div className="fin-menu__pop">
-                      {edit && <label>חברה<select value={d.business_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { business_id: e.target.value || null })) } catch (er) { setNote(er.message) } }}><option value="">—</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>}
-                      {edit && <label>פרויקט<select value={d.project_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { project_id: e.target.value || null })) } catch (er) { setNote(/PROJECT_COMPANY/.test(er.message) ? 'הפרויקט שייך לחברה אחרת' : er.message) } }}><option value="">—</option>{projects.filter((p) => !d.business_id || p.business_id === d.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
-                      {edit && <label>קטגוריה<select value={d.category_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { category_id: e.target.value || null })) } catch (er) { setNote(er.message) } }}><option value="">—</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
+                      {edit && <label>חברה<Select value={d.business_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { business_id: e.target.value || null })) } catch (er) { setNote(er.message) } }}><option value="">—</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></label>}
+                      {edit && <label>פרויקט<Select value={d.project_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { project_id: e.target.value || null })) } catch (er) { setNote(/PROJECT_COMPANY/.test(er.message) ? 'הפרויקט שייך לחברה אחרת' : er.message) } }}><option value="">—</option>{projects.filter((p) => !d.business_id || p.business_id === d.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></label>}
+                      {edit && <label>קטגוריה<Select value={d.category_id || ''} onChange={async (e) => { try { patchDoc(await api.updateDocument(d.id, { category_id: e.target.value || null })) } catch (er) { setNote(er.message) } }}><option value="">—</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></label>}
                       {d.supplier_id && <button type="button" onClick={() => go(`/suppliers/${d.supplier_id}`)}>פרופיל הספק</button>}
                       {d.file_path && <button type="button" onClick={async () => saveBlob(await api.fileBlob(d), d.file_name || 'document')}>הורדת המקור</button>}
                       {edit && !['approved', 'sent', 'archived'].includes(d.status) && <button type="button" onClick={() => setConfirm({ label: 'archive', count: 1, skipped: 0, run: () => runBulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, [d], 0) })}>העברה לארכיון</button>}

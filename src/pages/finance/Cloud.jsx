@@ -5,6 +5,7 @@ import * as api from './api.js'
 import { ago, nameOf } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync } from './ui.jsx'
+import Select from './Select.jsx'
 
 const P = {
   gdrive: { title: 'Google Drive', desc: 'מסמכים מאושרים מועתקים לתיקייה ב-Google Drive, מסודרים לפי חברה וחודש.' },
@@ -108,8 +109,8 @@ export default function Cloud() {
         <Modal title={`הגדרות ${P[edit.provider].title}`} onClose={() => setEdit(null)} footer={<><button type="submit" form="fin-cloud" className="fin-btn fin-btn--primary">שמירה</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setEdit(null)}>ביטול</button></>}>
           <form id="fin-cloud" className="fin-form__grid" onSubmit={save}>
             <Field label="שם תיקיית הבסיס" wide><input value={edit.folder} onChange={(e) => setEdit({ ...edit, folder: e.target.value })} /></Field>
-            <Field label="סידור התיקיות"><select value={edit.structure} onChange={(e) => setEdit({ ...edit, structure: e.target.value })}>{Object.entries(STRUCT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
-            <Field label="חברה"><select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>
+            <Field label="סידור התיקיות"><Select value={edit.structure} onChange={(e) => setEdit({ ...edit, structure: e.target.value })}>{Object.entries(STRUCT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
+            <Field label="חברה"><Select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>
             <label className="fin-field fin-field--check fin-field--wide"><input type="checkbox" checked={edit.onlyApproved} onChange={(e) => setEdit({ ...edit, onlyApproved: e.target.checked })} /> רק מסמכים מאושרים (מומלץ)</label>
             <div className="fin-field fin-field--wide fin-field--row"><span className="fin-field__label">סנכרון פעיל</span><Toggle checked={edit.enabled} onChange={(v) => setEdit({ ...edit, enabled: v })} label="סנכרון פעיל" /></div>
           </form>

@@ -3,7 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { dateTime, money, monthLabel, nameOf } from './format.js'
 import { buildPackage } from './exportPackage.js'
-import { Empty, Icon, PageHead, Pill, useAsync } from './ui.jsx'
+import { Empty, Icon, PageHead, Pill, useAsync, Skeleton } from './ui.jsx'
 
 const FMT = { zip: 'ZIP', excel: 'Excel', csv: 'CSV', pdf: 'PDF', api: 'API' }
 
@@ -24,7 +24,7 @@ export default function ExportHistory() {
     <div className="fin-stack">
       <PageHead title="היסטוריית ייצוא" sub="כל ייצוא נרשם: מתי, מי, לאן, כמה מסמכים ומה הסכום. אפשר להוריד שוב את אותה חבילה בדיוק." />
       {msg && <p className="fin-note" role="status">{msg}</p>}
-      {list.loading ? <p className="fin-muted">טוען…</p> : !(list.data || []).length ? <Empty title="עוד לא בוצע ייצוא" icon="history" /> : (
+      {list.loading ? <Skeleton /> : !(list.data || []).length ? <Empty title="עוד לא בוצע ייצוא" icon="history" /> : (
         <div className="fin-table-wrap">
           <table className="fin-table">
             <thead><tr><th>תאריך</th><th>חברה</th><th className="fin-col-md">תקופה</th><th className="fin-num">מסמכים</th><th className="fin-num">סה״כ</th><th className="fin-col-md fin-num">מע״מ</th><th className="fin-col-md">פורמט</th><th className="fin-col-lg">יעד</th><th className="fin-col-lg">משתמש</th><th>סטטוס</th><th /></tr></thead>

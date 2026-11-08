@@ -151,6 +151,8 @@ export default function FinanceApp() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [navOpen, setNavOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem('fin-side') === 'rail' } catch { return false } })
+  const toggleRail = () => setCollapsed((v) => { try { localStorage.setItem('fin-side', v ? 'full' : 'rail') } catch { /* private mode */ } return !v })
   const [cmd, setCmd] = useState(false)
   useEffect(() => {
     const onKey = (e) => {
@@ -186,7 +188,7 @@ export default function FinanceApp() {
   }, [data.documents, data.suppliers])
 
   if (!hasSupabase) return <p className="fin-msg">Supabase לא מוגדר בסביבה הזו.</p>
-  if (session === undefined || (session && data.loading && !data.me)) return <div className="fin-msg">טוען…</div>
+  if (session === undefined || (session && data.loading && !data.me)) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
   if (!session) return <Login />
   const email = session.user?.email || ''
   const myName = data.members.find((m) => m.user_id === session.user?.id)?.full_name || ''
@@ -195,7 +197,7 @@ export default function FinanceApp() {
 
   return (
     <Ctx.Provider value={ctx}>
-      <div className="fin" dir="rtl" data-theme={theme}>
+      <div className={`fin ${collapsed ? 'is-collapsed' : ''}`} dir="rtl" data-theme={theme}>
         <aside className={`fin__side ${navOpen ? 'is-open' : ''}`} id="fin-side" aria-label="תפריט המערכת">
           <div className="fin__drawer-head">
             <span className="fin__avatar fin__avatar--lg" aria-hidden="true">{(myName || email).trim().slice(0, 1).toUpperCase()}</span>
@@ -207,10 +209,13 @@ export default function FinanceApp() {
             <span className="fin__org-meta"><strong>קבוצת קורקוס</strong><small>{data.businesses.length === 1 ? 'חברה אחת' : `${data.businesses.length} חברות`} · {ROLE[role]}</small></span>
             <Icon name="next" size={17} />
           </Link>
-          <Link to={BASE} className="fin__brand">
-            <img src="/kurkoos-logo.svg" alt="" />
-            <span><strong>Kurkoos Finance</strong><small>קבוצת קורקוס</small></span>
-          </Link>
+          <div className="fin__brand-row">
+            <Link to={BASE} className="fin__brand" aria-label="Kurkoos Finance, מרכז בקרה">
+              <img src="/kurkoos-logo.svg" alt="" />
+              <span><strong>Kurkoos Finance</strong><small>קבוצת קורקוס</small></span>
+            </Link>
+            <button type="button" className="fin__collapse" onClick={toggleRail} aria-label={collapsed ? 'הרחבת התפריט' : 'כיווץ התפריט'} title={collapsed ? 'הרחבת התפריט' : 'כיווץ התפריט'} aria-pressed={collapsed}><Icon name="back" size={17} /></button>
+          </div>
           <nav className="fin__nav">
             {GROUPS.filter((g) => nav.some((n) => n.group === g)).map((g) => (
             <div className="fin__nav-group" key={g}>
@@ -219,7 +224,7 @@ export default function FinanceApp() {
               const on = n === active
               const count = n.badge ? badges[n.badge] : 0
               return (
-                <Link key={n.to} to={`${BASE}${n.to}`} className={`fin__nav-item ${on ? 'is-active' : ''}`} aria-current={on ? 'page' : undefined}>
+                <Link key={n.to} to={`${BASE}${n.to}`} className={`fin__nav-item ${on ? 'is-active' : ''}`} aria-current={on ? 'page' : undefined} title={collapsed ? (role === 'accountant' && n.accLabel ? n.accLabel : n.label) : undefined}>
                   <Icon name={n.icon} size={19} />
                   <span>{role === 'accountant' && n.accLabel ? n.accLabel : n.label}</span>
                   {count > 0 && <em className="fin__badge" aria-label={`${count} פריטים`}>{count}</em>}

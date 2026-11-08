@@ -5,7 +5,7 @@ import * as api from './api.js'
    images as they are, emails as a short text preview. Cached for the session. */
 const cache = new Map()
 let pdfjs = null
-async function loadPdf() {
+export async function loadPdf() {
   if (!pdfjs) {
     const [lib, worker] = await Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')])
     lib.GlobalWorkerOptions.workerSrc = worker.default

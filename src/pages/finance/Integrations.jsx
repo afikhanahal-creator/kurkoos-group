@@ -6,6 +6,7 @@ import { DOC_TYPE, claimableVat, date, docDate, money, monthLabel, nameOf, perio
 import { buildPackage } from './exportPackage.js'
 import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
 import { Monogram } from './logos.jsx'
+import Select from './Select.jsx'
 
 const FORMATS = { zip: 'ZIP: קבצים מקוריים + Excel + CSV + metadata', excel: 'Excel', csv: 'CSV', pdf: 'PDF (דוח להדפסה)' }
 
@@ -51,7 +52,7 @@ function ExportWizard({ onDone }) {
         <li><span>1</span><div className="fin-steps__body"><strong>חברה ותקופה</strong>
           {preset ? <p className="fin-muted">{preset.length} מסמכים שנבחרו ברשימת המסמכים. <button type="button" className="fin-link" onClick={() => { try { sessionStorage.removeItem('fin-export-ids') } catch { /* noop */ } go('/integrations') }}>בחירה לפי תקופה במקום</button></p> : (
             <div className="fin-filters">
-              <select className="fin-select" value={biz} onChange={(e) => { setBiz(e.target.value); setPicked(null) }} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+              <Select className="fin-select" value={biz} onChange={(e) => { setBiz(e.target.value); setPicked(null) }} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>
               <input type="month" className="fin-select" value={per} max={thisMonth()} onChange={(e) => { setPer(e.target.value); setPicked(null) }} aria-label="תקופה חשבונאית" />
             </div>
           )}
@@ -71,8 +72,8 @@ function ExportWizard({ onDone }) {
         </div></li>
         <li><span>3</span><div className="fin-steps__body"><strong>פורמט ויעד</strong>
           <div className="fin-filters">
-            <select className="fin-select" value={format} onChange={(e) => setFormat(e.target.value)} aria-label="פורמט">{Object.entries(FORMATS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-            <select className="fin-select" value={dest} onChange={(e) => setDest(e.target.value)} aria-label="יעד"><option value="download">הורדה למחשב</option><option value="email" disabled={!accountant}>מייל לרו״ח{accountant ? ` (${accountant})` : ' (אין מייל לחברה)'}</option><option value="api" disabled>חיבור API לתוכנה (לא הופעל)</option></select>
+            <Select className="fin-select" value={format} onChange={(e) => setFormat(e.target.value)} aria-label="פורמט">{Object.entries(FORMATS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
+            <Select className="fin-select" value={dest} onChange={(e) => setDest(e.target.value)} aria-label="יעד"><option value="download">הורדה למחשב</option><option value="email" disabled={!accountant}>מייל לרו״ח{accountant ? ` (${accountant})` : ' (אין מייל לחברה)'}</option><option value="api" disabled>חיבור API לתוכנה (לא הופעל)</option></Select>
           </div>
         </div></li>
       </ol>
@@ -202,7 +203,7 @@ export default function Integrations() {
         return (
           <Modal title={edit.id ? `הגדרות ${edit.name}` : `חיבור ${a?.label || ''}`} onClose={() => setEdit(null)} footer={<><button type="submit" form="fin-int" className="fin-btn fin-btn--primary">{edit.id ? 'שמירה' : 'חיבור'}</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setEdit(null)}>ביטול</button></>}>
             <form id="fin-int" className="fin-form__grid" onSubmit={save}>
-              <Field label="חברה" hint="התוכנה תקבל רק את המסמכים של החברה הזו"><select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>
+              <Field label="חברה" hint="התוכנה תקבל רק את המסמכים של החברה הזו"><Select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>
               <Field label="שם"><input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={a?.label} /></Field>
               {(a?.secrets || []).map((s) => <Field key={s} label={s.replace(/_/g, ' ')} hint="נשמר בשרת בלבד, ולא מוצג שוב" wide><input type="password" autoComplete="off" onChange={(e) => setEdit({ ...edit, secret: { ...(edit.secret || {}), [s]: e.target.value } })} dir="ltr" /></Field>)}
             </form>

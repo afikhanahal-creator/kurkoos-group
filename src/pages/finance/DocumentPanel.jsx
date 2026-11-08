@@ -3,7 +3,9 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf } from './format.js'
 import { saveBlob } from './zip.js'
-import { Confidence, Icon, Pill, StatusPill, useAsync } from './ui.jsx'
+import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton } from './ui.jsx'
+import Select from './Select.jsx'
+import Viewer from './Viewer.jsx'
 
 const VAT = 0.18
 const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'category_id', 'business_id', 'project_id', 'description', 'payment_method', 'paid', 'notes']
@@ -30,9 +32,8 @@ function Preview({ doc }) {
   if (!doc.file_path) return <div className="fin-msg">אין קובץ</div>
   if (err) return <p className="fin-error fin-error--block">הקובץ לא נטען: {err}</p>
   if (html !== null) return <iframe className="fin-preview__frame" title="המייל המקורי" sandbox="" srcDoc={html} />
-  if (!src) return <div className="fin-msg">טוען את הקובץ…</div>
-  if (doc.file_mime === 'application/pdf') return <iframe className="fin-preview__frame" title={doc.file_name || 'המסמך'} src={src} />
-  return <img className="fin-preview__img" src={src} alt={doc.file_name || 'המסמך'} />
+  if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
+  return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} />
 }
 
 export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext }) {
@@ -146,7 +147,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
         <header className="fin-panel__head">
           <div className="fin-panel__title">
             <h2>{doc.supplier_name || doc.file_name || 'מסמך'}</h2>
-            <p className="fin-muted"><StatusPill status={doc.status} /> {DOC_TYPE[doc.doc_type]}{doc.doc_number ? ` ${doc.doc_number}` : ''} · {money(doc.total_amount, doc.currency)} · ודאות <Confidence value={doc.confidence} /></p>
+            <p className="fin-muted fin-panel__meta"><StatusPill status={doc.status} /> <span>{DOC_TYPE[doc.doc_type]}{doc.doc_number ? ` ${doc.doc_number}` : ''}</span> <span>{money(doc.total_amount, doc.currency)}</span> <span className="fin-nowrap">ודאות <Confidence value={doc.confidence} /></span></p>
           </div>
           <div className="fin-panel__nav">
             {doc.file_path && <button type="button" className="fin-icon-btn" onClick={async () => saveBlob(await api.fileBlob(doc), doc.file_name || 'document')} aria-label="הורדת הקובץ המקורי" title="הורדת הקובץ המקורי"><Icon name="download" /></button>}
@@ -183,19 +184,19 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                     </div>
                   )}
                   {F({ k: 'supplier_vat_id' })}
-                  {F({ k: 'doc_type', children: <><select value={form.doc_type || ''} onChange={set('doc_type')} disabled={!editable}>{Object.entries(DOC_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></> })}
+                  {F({ k: 'doc_type', children: <><Select value={form.doc_type || ''} onChange={set('doc_type')} disabled={!editable}>{Object.entries(DOC_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></> })}
                   {F({ k: 'doc_number' })}
                   {F({ k: 'issue_date', type: 'date' })}
                   {F({ k: 'payment_date', type: 'date' })}
                   {F({ k: 'due_date', type: 'date' })}
-                  {F({ k: 'currency', children: <><select value={form.currency || 'ILS'} onChange={set('currency')} disabled={!editable}>{['ILS', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}</select></> })}
+                  {F({ k: 'currency', children: <><Select value={form.currency || 'ILS'} onChange={set('currency')} disabled={!editable}>{['ILS', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}</Select></> })}
                   {F({ k: 'amount_before_vat', type: 'number' })}
                   {F({ k: 'vat_amount', type: 'number' })}
                   {F({ k: 'total_amount', type: 'number' })}
-                  {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><select value={form.category_id || ''} onChange={set('category_id')} disabled={!editable}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</select></> })}
+                  {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><Select value={form.category_id || ''} onChange={set('category_id')} disabled={!editable}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</Select></> })}
                   <div className="fin-field--wide">{Suggest({ k: 'category' })}</div>
-                  {F({ k: 'business_id', children: <><select value={form.business_id || ''} onChange={set('business_id')} disabled={!editable}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></> })}
-                  {F({ k: 'project_id', children: <><select value={form.project_id || ''} onChange={set('project_id')} disabled={!editable || !!split}><option value="">{split ? 'מפוצל בין פרויקטים' : 'ללא פרויקט'}</option>{projects.filter((p) => !form.business_id || !p.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}{p.code ? ` (${p.code})` : ''}</option>)}</select></> })}
+                  {F({ k: 'business_id', children: <><Select value={form.business_id || ''} onChange={set('business_id')} disabled={!editable}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></> })}
+                  {F({ k: 'project_id', children: <><Select value={form.project_id || ''} onChange={set('project_id')} disabled={!editable || !!split}><option value="">{split ? 'מפוצל בין פרויקטים' : 'ללא פרויקט'}</option>{projects.filter((p) => !form.business_id || !p.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}{p.code ? ` (${p.code})` : ''}</option>)}</Select></> })}
                   <div className="fin-field--wide">{Suggest({ k: 'business_id', list: businesses })}{Suggest({ k: 'project_id', list: projects })}</div>
                   {can('edit') && (
                     <div className="fin-field--wide fin-splitbox">
@@ -208,7 +209,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                             <strong>פיצול בין פרויקטים</strong>
                             {split.map((r, n) => (
                               <div key={n} className="fin-splitbox__row">
-                                <select value={r.project_id} onChange={(e) => setSplit(split.map((x, m) => (m === n ? { ...x, project_id: e.target.value } : x)))} aria-label={`פרויקט ${n + 1}`}><option value="">פרויקט…</option>{projects.filter((p) => !form.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+                                <Select value={r.project_id} onChange={(e) => setSplit(split.map((x, m) => (m === n ? { ...x, project_id: e.target.value } : x)))} aria-label={`פרויקט ${n + 1}`}><option value="">פרויקט…</option>{projects.filter((p) => !form.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
                                 <input type="number" step="0.01" inputMode="decimal" value={r.amount} onChange={(e) => setSplit(split.map((x, m) => (m === n ? { ...x, amount: e.target.value } : x)))} aria-label={`סכום ${n + 1}`} />
                                 <button type="button" className="fin-icon-btn" onClick={() => setSplit(split.filter((_, m) => m !== n))} aria-label="הסרת שורה"><Icon name="x" size={16} /></button>
                               </div>
@@ -280,7 +281,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
 
             {tab === 'history' && (
               <div className="fin-history">
-                {history.loading ? <p className="fin-muted">טוען…</p> : (history.data || []).length === 0 ? <p className="fin-muted">אין היסטוריה.</p> : (
+                {history.loading ? <Skeleton /> : (history.data || []).length === 0 ? <p className="fin-muted">אין היסטוריה.</p> : (
                   <ol className="fin-audit">
                     {history.data.map((a) => (
                       <li key={a.id}>

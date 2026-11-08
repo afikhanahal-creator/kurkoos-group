@@ -3,6 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago, dateTime, nameOf } from './format.js'
 import { Empty, Field, Icon, Modal, PageHead, Pill, Toggle, useAsync } from './ui.jsx'
+import Select from './Select.jsx'
 
 const FREQ = { daily: 'כל יום', weekly: 'כל שבוע', monthly: 'כל חודש', on_event: 'בכל מסמך' }
 /* condition → action. "strength" is how much the rule weighs against other signals (see server/finance/assign.js) */
@@ -119,16 +120,16 @@ export default function Automations() {
           <Modal title={edit.id ? 'עריכת כלל' : 'כלל חדש'} onClose={() => setEdit(null)} footer={<><button type="submit" form="fin-rule" className="fin-btn fin-btn--primary">שמירת הכלל</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setEdit(null)}>ביטול</button></>}>
             <form id="fin-rule" className="fin-form__grid" onSubmit={saveRule}>
               <Field label="שם הכלל" wide><input required value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></Field>
-              <Field label="סוג" wide hint={`משקל: ${k.strength}`}><select value={edit.kind} onChange={(e) => setEdit({ ...edit, kind: e.target.value })}>{Object.entries(KINDS).map(([key, v]) => <option key={key} value={key}>{v.label}</option>)}</select></Field>
-              {k.cond === 'supplier' && <Field label="תנאי: הספק" wide><select required value={edit.supplier_id || ''} onChange={(e) => setEdit({ ...edit, supplier_id: e.target.value })}><option value="">בחרו…</option>{suppliers.filter((s) => s.status !== 'archived').map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>}
+              <Field label="סוג" wide hint={`משקל: ${k.strength}`}><Select value={edit.kind} onChange={(e) => setEdit({ ...edit, kind: e.target.value })}>{Object.entries(KINDS).map(([key, v]) => <option key={key} value={key}>{v.label}</option>)}</Select></Field>
+              {k.cond === 'supplier' && <Field label="תנאי: הספק" wide><Select required value={edit.supplier_id || ''} onChange={(e) => setEdit({ ...edit, supplier_id: e.target.value })}><option value="">בחרו…</option>{suppliers.filter((s) => s.status !== 'archived').map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>}
               {k.cond === 'keyword' && <Field label="תנאי: מילה או ביטוי במסמך" wide><input required value={edit.keyword || ''} onChange={(e) => setEdit({ ...edit, keyword: e.target.value })} /></Field>}
               {k.cond === 'code' && <Field label="תנאי: קוד שמופיע במסמך" wide><input required value={edit.code || ''} onChange={(e) => setEdit({ ...edit, code: e.target.value })} dir="ltr" /></Field>}
               {k.cond === 'sender' && <Field label="תנאי: כתובת או דומיין השולח" wide><input required value={edit.sender || ''} onChange={(e) => setEdit({ ...edit, sender: e.target.value })} dir="ltr" /></Field>}
               {k.cond === 'reg_number' && <Field label="תנאי: ח.פ הנמען במסמך" wide><input required inputMode="numeric" value={edit.reg_number || ''} onChange={(e) => setEdit({ ...edit, reg_number: e.target.value })} dir="ltr" /></Field>}
               {k.cond === 'min_amount' && <Field label="תנאי: סכום מינימלי (₪)" wide><input required type="number" value={edit.min_amount || ''} onChange={(e) => setEdit({ ...edit, min_amount: e.target.value })} /></Field>}
-              {k.act === 'category' && <Field label="פעולה: קטגוריה" wide><select required value={edit.category || ''} onChange={(e) => setEdit({ ...edit, category: e.target.value })}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}</select></Field>}
-              {k.act === 'business_id' && <Field label="פעולה: חברה" wide><select required value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>}
-              {k.act === 'project_id' && <Field label="פעולה: פרויקט" wide><select required value={edit.project_id || ''} onChange={(e) => setEdit({ ...edit, project_id: e.target.value })}><option value="">בחרו…</option>{projects.filter((p) => !p.archived_at).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></Field>}
+              {k.act === 'category' && <Field label="פעולה: קטגוריה" wide><Select required value={edit.category || ''} onChange={(e) => setEdit({ ...edit, category: e.target.value })}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}</Select></Field>}
+              {k.act === 'business_id' && <Field label="פעולה: חברה" wide><Select required value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>}
+              {k.act === 'project_id' && <Field label="פעולה: פרויקט" wide><Select required value={edit.project_id || ''} onChange={(e) => setEdit({ ...edit, project_id: e.target.value })}><option value="">בחרו…</option>{projects.filter((p) => !p.archived_at).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
               <Field label="עדיפות (נמוך = קודם)"><input type="number" value={edit.priority} onChange={(e) => setEdit({ ...edit, priority: e.target.value })} /></Field>
             </form>
           </Modal>

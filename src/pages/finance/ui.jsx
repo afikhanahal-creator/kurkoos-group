@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { placeNear, popRoot } from './Select.jsx'
 import { STATUS, money } from './format.js'
 import { uploadFile } from './api.js'
 
@@ -52,6 +54,8 @@ const P = {
   rows: <path d="M4 6h16M4 12h16M4 18h16" />,
   grid: <><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></>,
   webhook: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
+  minus: <path d="M5 12h14" />,
+  external: <><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></>,
   more: <><circle cx="5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="19" cy="12" r="1.2" /></>,
 }
 
@@ -137,8 +141,17 @@ export function Modal({ title, onClose, children, wide, footer }) {
   const box = useRef(null)
   useEffect(() => {
     const back = document.activeElement
-    box.current?.querySelector('input, select, textarea, button')?.focus({ preventScroll: true })
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    box.current?.querySelector('.fin-modal__body input:not([type="hidden"]), .fin-modal__body select, .fin-modal__body textarea, .fin-modal__body button, .fin-modal__foot button')?.focus({ preventScroll: true })
+    const onKey = (e) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key !== 'Tab' || !box.current) return
+      // keep Tab inside the dialog
+      const f = [...box.current.querySelectorAll('a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null || el.classList.contains('fin-sel__native'))
+      if (!f.length) return
+      const first = f[0]; const last = f[f.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
     window.addEventListener('keydown', onKey)
     return () => { window.removeEventListener('keydown', onKey); back?.focus?.({ preventScroll: true }) }
   }, [onClose])
@@ -146,12 +159,18 @@ export function Modal({ title, onClose, children, wide, footer }) {
     <div className="fin-modal" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="fin-modal__scrim" aria-label="סגירה" tabIndex={-1} onClick={onClose} />
       <div className={`fin-modal__box ${wide ? 'fin-modal__box--wide' : ''}`} ref={box}>
+        <span className="fin-sheet__grip" aria-hidden="true" />
         <header className="fin-modal__head"><h2>{title}</h2><button type="button" className="fin-icon-btn" onClick={onClose} aria-label="סגירה"><Icon name="close" /></button></header>
         <div className="fin-modal__body">{children}</div>
         {footer && <footer className="fin-modal__foot">{footer}</footer>}
       </div>
     </div>
   )
+}
+
+/* loading placeholder: the shape of what is coming, not a word */
+export function Skeleton({ lines = 3, label = 'טוען' }) {
+  return <div className="fin-skel" aria-busy="true" aria-label={label} role="status">{Array.from({ length: lines }, (_, i) => <span key={i} />)}</div>
 }
 
 export function Field({ label, children, wide, hint, tone }) {
@@ -249,24 +268,54 @@ export function InfoTip({ label = 'מידע', children }) {
   )
 }
 
-/* ⋮ menu: a list of actions in a small popover */
+/* ⋮ menu: a list of actions. Floats above everything (never clipped by a card or a table), stays inside the
+   viewport, and on phones opens as an action sheet. Arrow keys move, Enter runs, Escape closes. */
 export function MoreMenu({ label, items }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const [pos, setPos] = useState(null)
+  const [sheet, setSheet] = useState(false)
+  const btn = useRef(null)
+  const pop = useRef(null)
+  const list = items.filter(Boolean)
+  const close = (refocus = true) => { setOpen(false); if (refocus) btn.current?.focus({ preventScroll: true }) }
+  const toggle = () => {
+    if (open) { close(); return }
+    const phone = window.matchMedia('(max-width: 700px)').matches
+    setSheet(phone)
+    if (!phone && btn.current) setPos(placeNear(btn.current, { minWidth: 200, maxHeight: 320 }))
+    setOpen(true)
+  }
   useEffect(() => {
     if (!open) return undefined
-    const off = (e) => { if (e.key === 'Escape' || (e.type === 'mousedown' && !ref.current?.contains(e.target))) setOpen(false) }
-    window.addEventListener('keydown', off); window.addEventListener('mousedown', off)
-    return () => { window.removeEventListener('keydown', off); window.removeEventListener('mousedown', off) }
-  }, [open])
+    const t = setTimeout(() => pop.current?.querySelector('button:not(:disabled)')?.focus({ preventScroll: true }), 0)
+    const away = (e) => { if (!pop.current?.contains(e.target) && !btn.current?.contains(e.target)) close(false) }
+    const move = () => { if (!sheet && btn.current) setPos(placeNear(btn.current, { minWidth: 200, maxHeight: 320 })) }
+    document.addEventListener('pointerdown', away, true)
+    window.addEventListener('resize', move); window.addEventListener('scroll', move, true)
+    return () => { clearTimeout(t); document.removeEventListener('pointerdown', away, true); window.removeEventListener('resize', move); window.removeEventListener('scroll', move, true) }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  const onKey = (e) => {
+    const all = [...(pop.current?.querySelectorAll('button[role="menuitem"]:not(:disabled)') || [])]
+    const i = all.indexOf(document.activeElement)
+    if (e.key === 'ArrowDown') { e.preventDefault(); all[(i + 1) % all.length]?.focus() }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); all[(i - 1 + all.length) % all.length]?.focus() }
+    else if (e.key === 'Home') { e.preventDefault(); all[0]?.focus() }
+    else if (e.key === 'End') { e.preventDefault(); all[all.length - 1]?.focus() }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close() }
+    else if (e.key === 'Tab') close(false)
+  }
   return (
-    <span className="fin-more" ref={ref}>
-      <button type="button" className="fin-icon-btn" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}><Icon name="more" size={19} style={{ transform: 'rotate(90deg)' }} /></button>
-      {open && (
-        <span className="fin-more__pop" role="menu">
-          {items.filter(Boolean).map((it) => <button key={it.label} type="button" role="menuitem" className={it.danger ? 'is-danger' : ''} disabled={it.disabled} onClick={() => { setOpen(false); it.onClick() }}>{it.label}</button>)}
-        </span>
-      )}
+    <span className="fin-more">
+      <button ref={btn} type="button" className="fin-icon-btn" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={toggle}><Icon name="more" size={19} style={{ transform: 'rotate(90deg)' }} /></button>
+      {open && createPortal(
+        <>
+          {sheet && <button type="button" className="fin-sheet__scrim" aria-label="סגירה" tabIndex={-1} onClick={() => close()} />}
+          <span ref={pop} className={`fin-pop fin-more__pop ${sheet ? 'is-sheet' : ''}`} role="menu" aria-label={label} style={sheet ? undefined : pos || undefined} onKeyDown={onKey}>
+            {sheet && <span className="fin-sheet__grip" aria-hidden="true" />}
+            {list.map((it) => <button key={it.label} type="button" role="menuitem" className={it.danger ? 'is-danger' : ''} disabled={it.disabled} onClick={() => { close(); it.onClick() }}>{it.label}</button>)}
+            {sheet && <button type="button" className="fin-more__cancel" onClick={() => close()}>ביטול</button>}
+          </span>
+        </>, popRoot())}
     </span>
   )
 }

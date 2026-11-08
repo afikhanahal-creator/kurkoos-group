@@ -6,6 +6,7 @@ import { PROJECT_STATUS, date, money, nameOf, toCsv } from './format.js'
 import { entityStats } from './stats.js'
 import { saveBlob } from './zip.js'
 import { Empty, Icon, Modal, PageHead, Pill, Toggle } from './ui.jsx'
+import Select from './Select.jsx'
 
 /* One input for a master-data field. Exported for the overview page's edit form. */
 export function FieldInput({ f, value, onChange, refs, selfId, error }) {
@@ -14,18 +15,18 @@ export function FieldInput({ f, value, onChange, refs, selfId, error }) {
   let input
   if (f.type === 'textarea') input = <textarea {...common} rows={2} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
   else if (f.type === 'select') input = (
-    <select {...common} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+    <Select {...common} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
       <option value="">—</option>
       {f.options.map((o) => (typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>))}
-    </select>
+    </Select>
   )
   else if (f.type === 'ref') {
     const list = (refs[f.ref] || []).filter((r) => !f.self || r.id !== selfId)
     input = (
-      <select {...common} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+      <Select {...common} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         <option value="">—</option>
         {list.map((r) => <option key={r.id} value={f.by === 'name' ? r.name : r.id}>{r.name}{r.code ? ` (${r.code})` : ''}</option>)}
-      </select>
+      </Select>
     )
   } else if (f.type === 'multi') {
     const v = value || []
@@ -221,10 +222,10 @@ export default function MasterData({ kind }) {
       <div className="fin-filters">
         <label className="fin-search"><Icon name="search" size={17} /><input type="search" placeholder={`חיפוש ${def.title}…`} value={q} onChange={(e) => setQ(e.target.value)} aria-label={`חיפוש ${def.title}`} /></label>
         {def.filters.map((fl) => (
-          <select key={fl.key} className="fin-select" value={filters[fl.key] || ''} onChange={(e) => setFilters((x) => ({ ...x, [fl.key]: e.target.value }))} aria-label={fl.label}>
+          <Select key={fl.key} className="fin-select" value={filters[fl.key] || ''} onChange={(e) => setFilters((x) => ({ ...x, [fl.key]: e.target.value }))} aria-label={fl.label}>
             <option value="">{fl.label}: הכול</option>
             {fl.ref ? (ctx[fl.ref] || []).map((r) => <option key={r.id} value={r.id}>{r.name}</option>) : Object.entries(fl.options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
+          </Select>
         ))}
         <label className="fin-check"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> כולל ארכיון</label>
       </div>

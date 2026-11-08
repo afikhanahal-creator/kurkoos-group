@@ -3,7 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { STATUS, dateTime, toCsv } from './format.js'
 import { saveBlob } from './zip.js'
-import { Card, Field, Icon, PageHead, useAsync } from './ui.jsx'
+import { Card, Field, Icon, PageHead, useAsync, Skeleton } from './ui.jsx'
 import { ActivityFeed } from './Dashboard.jsx'
 
 export default function DataManagement() {
@@ -62,7 +62,7 @@ export default function DataManagement() {
         </Card>
       </div>
       <Card title="יומן פעולות (Audit log)">
-        {audit.loading ? <p className="fin-muted">טוען…</p> : <ActivityFeed items={audit.data || []} documents={documents} go={go} />}
+        {audit.loading ? <Skeleton /> : <ActivityFeed items={audit.data || []} documents={documents} go={go} />}
         <p className="fin-muted">כל יצירה, תיקון, אישור, דחייה, ייצוא ומחיקה נרשמים עם המשתמש והשעה ({dateTime(new Date())}).</p>
       </Card>
     </div>

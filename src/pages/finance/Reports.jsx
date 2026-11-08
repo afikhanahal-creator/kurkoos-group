@@ -4,6 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, toExcel } from './format.js'
 import { saveBlob } from './zip.js'
 import { Bars, Card, Empty, Icon, PageHead } from './ui.jsx'
+import Select from './Select.jsx'
 
 /* All totals come from stored records (validated by people), never from AI. */
 const REPORTS = [
@@ -91,9 +92,9 @@ export default function Reports() {
         {REPORTS.map(([k, v]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`fin-tab ${kind === k ? 'is-active' : ''}`} onClick={() => setKind(k)}>{v}</button>)}
       </div>
       <div className="fin-filters">
-        {businesses.length > 1 && <select className="fin-select" value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>}
+        {businesses.length > 1 && <Select className="fin-select" value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>}
         <label className="fin-inline-label">עד חודש <input type="month" className="fin-select" value={to} max={thisMonth()} onChange={(e) => setTo(e.target.value || thisMonth())} /></label>
-        <select className="fin-select" value={span} onChange={(e) => setSpan(Number(e.target.value))} aria-label="טווח"><option value={1}>חודש אחד</option><option value={3}>3 חודשים</option><option value={6}>6 חודשים</option><option value={12}>12 חודשים</option><option value={24}>24 חודשים</option></select>
+        <Select className="fin-select" value={span} onChange={(e) => setSpan(Number(e.target.value))} aria-label="טווח"><option value={1}>חודש אחד</option><option value={3}>3 חודשים</option><option value={6}>6 חודשים</option><option value={12}>12 חודשים</option><option value={24}>24 חודשים</option></Select>
       </div>
       {report.note && <p className="fin-muted">{report.note}</p>}
       {!report.rows.length ? <Empty title="אין נתונים לדוח הזה" icon="reports">נסו טווח אחר או חברה אחרת.</Empty> : (

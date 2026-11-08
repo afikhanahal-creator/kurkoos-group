@@ -3,6 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago, dateTime, nameOf } from './format.js'
 import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
+import Select from './Select.jsx'
 
 export const EVENTS = {
   'document.received': 'מסמך חדש נקלט',
@@ -162,7 +163,7 @@ export default function Delivery() {
             <fieldset className="fin-field fin-field--wide fin-checkset"><legend className="fin-field__label">מתי לשלוח</legend>
               {Object.entries(EVENTS).map(([k, v]) => <label key={k} className="fin-check"><input type="checkbox" checked={edit.events.includes(k)} onChange={(e) => setEdit({ ...edit, events: e.target.checked ? [...edit.events, k] : edit.events.filter((x) => x !== k) })} /> {v}</label>)}
             </fieldset>
-            <Field label="חברה"><select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>
+            <Field label="חברה"><Select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>
             <Field label="שם (לא חובה)"><input value={edit.name || ''} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={edit.kind === 'email' ? 'רו״ח' : 'Make'} /></Field>
           </form>
         </Modal>

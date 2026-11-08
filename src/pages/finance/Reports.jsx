@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
-import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, toExcel } from './format.js'
+import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, toExcel, recentMonths } from './format.js'
 import { saveBlob } from './zip.js'
 import { Bars, Card, Empty, Icon, PageHead } from './ui.jsx'
 import Select from './Select.jsx'
@@ -93,7 +93,7 @@ export default function Reports() {
       </div>
       <div className="fin-filters">
         {businesses.length > 1 && <Select className="fin-select" value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>}
-        <label className="fin-inline-label">עד חודש <input type="month" className="fin-select" value={to} max={thisMonth()} onChange={(e) => setTo(e.target.value || thisMonth())} /></label>
+        <Select className="fin-select" value={to} onChange={(e) => setTo(e.target.value || thisMonth())} aria-label="עד חודש">{recentMonths().map((k) => <option key={k} value={k}>עד {monthLabel(k)}</option>)}</Select>
         <Select className="fin-select" value={span} onChange={(e) => setSpan(Number(e.target.value))} aria-label="טווח"><option value={1}>חודש אחד</option><option value={3}>3 חודשים</option><option value={6}>6 חודשים</option><option value={12}>12 חודשים</option><option value={24}>24 חודשים</option></Select>
       </div>
       {report.note && <p className="fin-muted">{report.note}</p>}

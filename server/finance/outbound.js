@@ -69,7 +69,7 @@ export const emailOk = (s) => /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]{2,}$/.test(S
 
 export const sign = (secret, t, body) => crypto.createHmac('sha256', secret).update(`${t}.${body}`).digest('hex')
 
-async function signedUrl(path, seconds = 86400) {
+export async function signedUrl(path, seconds = 86400) {
   const r = await fetch(`${env.sbUrl()}/storage/v1/object/sign/${BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`, {
     method: 'POST', headers: { apikey: env.sbKey(), Authorization: `Bearer ${env.sbKey()}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresIn: seconds }),
   }).catch(() => null)

@@ -201,7 +201,7 @@ record('R1', 'אין ייצוא של מסמך שלא אושר', 'מסד הנתו
 // ---------- T10 + T11: export and history ----------
 await nav('תוכנת הנהלת חשבונות')
 const period = meta.D.tambour.slice(0, 7)
-await page.locator('.fin-wizard input[type=month]').fill(period); await page.waitForTimeout(400)
+await page.locator('.fin-wizard').getByLabel('תקופה חשבונאית').selectOption(period); await page.waitForTimeout(400)
 const wizardShot = await shot('14-export-wizard')
 await page.getByRole('button', { name: 'המשך לאישור הייצוא' }).click()
 const [download] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.getByRole('button', { name: 'אני מאשר/ת את הייצוא' }).click()])
@@ -637,6 +637,46 @@ record('INV', 'הזמנת משתמש במייל', 'נשלח מייל הזמנה 
     `כתובות: ${JSON.stringify(urls)}; מדיה: ${JSON.stringify(media)}; טלפון של אחר: ${empPhoneOther.status}; מונה: ${empCounter.status}; תור ענן: ${pendingFn.status}`, ok)
 }
 
+// =================== DATE RANGE + SEND TO THE ACCOUNTANT ===================
+await nav('כל המסמכים'); await page.waitForTimeout(600)
+const totalRows = await page.locator('.fin-table tbody tr').count()
+await page.locator('.fin-datechip__main').click(); await page.waitForSelector('.fin-cal'); await page.waitForTimeout(250)
+const months = (await page.locator('.fin-cal__mname').allInnerTexts()).join(' | ')
+await page.locator('.fin-cal__day[data-date="2026-11-02"]').click()
+const midTitle = await page.locator('.fin-cal__head strong').innerText()
+await page.locator('.fin-cal__day[data-date="2026-11-05"]').hover(); await page.waitForTimeout(150)
+const preview = await page.locator('.fin-cal__day.is-in').count()
+await page.locator('.fin-cal__day[data-date="2026-11-05"]').click()
+const calShot = await shot('69-date-range')
+await page.getByRole('button', { name: 'החל', exact: true }).click(); await page.waitForTimeout(400)
+const chip = await page.locator('.fin-datechip__main').innerText()
+const inRange = await page.locator('.fin-table tbody tr').count()
+const barCount = await page.locator('.fin-rangebar__text strong').innerText()
+const expectRange = sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived')")
+const rangeShot = await shot('70-range-summary')
+await page.getByRole('button', { name: 'שליחה לרו״ח' }).first().click(); await page.waitForTimeout(300)
+const prefilled = await page.locator('.fin-modal input[type=email]').inputValue()
+await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
+await page.locator('.fin-modal textarea').fill('שלום דנה, מצורפות החשבוניות של תחילת נובמבר.')
+const sendShot = await shot('71-send-to-accountant')
+await page.locator('.fin-modal__foot .fin-btn--primary').click()
+await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 30000 }).catch(() => {})
+await page.waitForTimeout(500)
+const sentNote = await page.locator('.fin-note').first().innerText().catch(() => '')
+const lgS = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const mailS = [...lgS.emails].reverse().find((e) => /מסמכים לרו״ח/.test(e.subject || ''))
+const withFiles = Number(sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived','rejected','duplicate') and file_path is not null"))
+const auditSend = sql("select count(*) from fin_audit where action='sent_to_accountant'")
+// clearing the chip restores the full list
+await page.locator('.fin-datechip__x').click(); await page.waitForTimeout(300)
+const cleared = await page.locator('.fin-table tbody tr').count()
+// a person without approval rights cannot send
+const empSend = await api(empToken, { action: 'send-to-accountant', ids: [sql("select id from fin_documents limit 1")], to: 'x@y.test' })
+record('SEND', 'סינון לפי טווח תאריכים ושליחה לרו״ח', 'לוח שנה של שני חודשים: לחיצה ראשונה מתחילה, השנייה מסיימת, הטווח מוצג מראש בריחוף; "החל" מסנן את הרשימה; "שליחה לרו״ח" שולחת מייל אחד עם כל הקבצים המקוריים וקובץ CSV; ניקוי מחזיר הכול; עובד לא יכול לשלוח',
+  `חודשים: ${months}; אחרי לחיצה ראשונה: "${midTitle}"; תצוגה מקדימה: ${preview} ימים; צ׳יפ: "${chip}"; שורות: ${inRange}/${totalRows} (צפוי ${expectRange}), בסרגל: "${barCount}"; נמען מוצע: "${prefilled}"; מייל: ${mailS ? `"${mailS.subject}" אל ${mailS.to}, ${mailS.attachments.length} קבצים (${mailS.attachments.filter((a) => /\.csv$/.test(a.filename)).length} CSV)` : 'לא נשלח'}; הודעה: "${sentNote}"; יומן: ${auditSend}; אחרי ניקוי: ${cleared}; עובד: ${empSend.status}`,
+  /אוקטובר|נובמבר/.test(months) && /\?/.test(midTitle) && preview === 2 && /2 בנובמבר.*5 בנובמבר/.test(chip) && inRange === Number(expectRange) && inRange > 0 && inRange < totalRows && !!mailS && mailS.to.includes('cpa@accountants.test') && mailS.attachments.length === withFiles + 1 && mailS.attachments[0].filename.endsWith('.csv') && auditSend === '1' && cleared === totalRows && empSend.status === 403 && /נשלח/.test(sentNote),
+  [calShot, rangeShot, sendShot])
+
 // =================== ORGANIZATION ===================
 await api(adminToken, { action: 'invite', email: 'pending@kurkoos.test', role: 'employee', full_name: 'מוזמן חדש' })
 await nav('הארגון ומשתמשים'); await page.reload(); await page.waitForSelector('.fin-member'); await page.waitForTimeout(1200)
@@ -688,6 +728,14 @@ await m.waitForSelector('.fin__main'); await m.waitForTimeout(1200)
 const overflow = async () => m.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 const mShots = []; const ov = {}
 mShots.push(await shot('m1-dashboard', m)); ov.dashboard = await overflow()
+await m.goto(`${APP}/documents`); await m.waitForTimeout(900)
+await m.locator('.fin-datechip__main').tap(); await m.waitForSelector('.fin-cal'); await m.waitForTimeout(300)
+const mCal = { sheet: await m.locator('.fin-cal.is-sheet').count(), months: await m.locator('.fin-cal__month').count(), dayH: Math.round(await m.locator('.fin-cal__day').first().evaluate((el) => el.getBoundingClientRect().height)) }
+const mCalShot = await shot('m-calendar', m)
+await m.locator('.fin-cal__preset', { hasText: 'החודש' }).first().tap(); await m.getByRole('button', { name: 'החל', exact: true }).tap(); await m.waitForTimeout(400)
+mCal.applied = await m.locator('.fin-rangebar').count()
+await m.locator('.fin-datechip__x').tap(); await m.waitForTimeout(300)
+await m.goto(APP); await m.waitForTimeout(800)
 await m.getByRole('button', { name: 'פתיחת התפריט' }).click(); await m.waitForTimeout(400); mShots.push(await shot('m2-menu', m))
 const drawer = { email: await m.locator('.fin__drawer-head small').innerText().catch(() => ''), org: await m.locator('.fin__org').innerText().catch(() => ''), groups: (await m.locator('.fin__nav-label').allInnerTexts()).join('|') }
 await m.locator('.fin__drawer-head button[aria-label="סגירת התפריט"]').click(); await m.waitForTimeout(400)
@@ -713,6 +761,7 @@ const mForm = sql("select count(*) from fin_suppliers where name='ספק מהט�
 record('G', 'מובייל: המסכים החדשים', 'אין גלילה אופקית, חיפוש עובד, טופס ספק נשמר מהטלפון', `גלילה: ${JSON.stringify(ov)}; חיפוש "סולל": ${mSearch}; טופס: ${mForm}`, Object.values(ov).every((v) => v <= 0) && mSearch === 1 && mForm === '1', mShots.slice(-9))
 const smallTargets = await m.evaluate(() => [...document.querySelectorAll('.fin button, .fin a, .fin input, .fin select')].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 24 && e.type !== 'checkbox').map((e) => e.className || e.tagName).slice(0, 5))
 const dir = await m.evaluate(() => document.querySelector('.fin')?.getAttribute('dir'))
+record('MCAL', 'לוח השנה בטלפון', 'נפתח כגיליון תחתון עם חודש אחד, ימים בגובה 44px לפחות, טווח מהיר מוחל', JSON.stringify(mCal), mCal.sheet === 1 && mCal.months === 1 && mCal.dayH >= 44 && mCal.applied === 1, [mCalShot])
 record('DRAWER', 'תפריט מובייל: משתמש, ארגון וקבוצות', 'בראש התפריט: המשתמש עם כפתור סגירה וכרטיס הארגון; הקבוצות כוללות "מקורות"; הסגירה עובדת',
   `מייל: ${drawer.email}; ארגון: ${drawer.org.replace(/\s+/g, ' ')}; קבוצות: ${drawer.groups}; נסגר: ${drawer.closed}`,
   drawer.email === 'admin@kurkoos.test' && /קבוצת קורקוס/.test(drawer.org) && /מקורות/.test(drawer.groups) && drawer.closed, mShots.slice(1, 2))

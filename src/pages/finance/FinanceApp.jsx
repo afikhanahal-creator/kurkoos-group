@@ -152,6 +152,13 @@ export default function FinanceApp() {
   const navigate = useNavigate()
   const [navOpen, setNavOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem('fin-side') === 'rail' } catch { return false } })
+  // the page title sits large in the page; the top bar repeats it only after it has scrolled away
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 56)
+    on(); window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
   const toggleRail = () => setCollapsed((v) => { try { localStorage.setItem('fin-side', v ? 'full' : 'rail') } catch { /* private mode */ } return !v })
   const [cmd, setCmd] = useState(false)
   useEffect(() => {
@@ -197,7 +204,7 @@ export default function FinanceApp() {
 
   return (
     <Ctx.Provider value={ctx}>
-      <div className={`fin ${collapsed ? 'is-collapsed' : ''}`} dir="rtl" data-theme={theme}>
+      <div className={`fin ${collapsed ? 'is-collapsed' : ''} ${scrolled ? 'is-scrolled' : ''}`} dir="rtl" data-theme={theme}>
         <aside className={`fin__side ${navOpen ? 'is-open' : ''}`} id="fin-side" aria-label="תפריט המערכת">
           <div className="fin__drawer-head">
             <span className="fin__avatar fin__avatar--lg" aria-hidden="true">{(myName || email).trim().slice(0, 1).toUpperCase()}</span>
@@ -227,7 +234,7 @@ export default function FinanceApp() {
                 <Link key={n.to} to={`${BASE}${n.to}`} className={`fin__nav-item ${on ? 'is-active' : ''}`} aria-current={on ? 'page' : undefined} title={collapsed ? (role === 'accountant' && n.accLabel ? n.accLabel : n.label) : undefined}>
                   <Icon name={n.icon} size={19} />
                   <span>{role === 'accountant' && n.accLabel ? n.accLabel : n.label}</span>
-                  {count > 0 && <em className="fin__badge" aria-label={`${count} פריטים`}>{count}</em>}
+                  {count > 0 && <em className={`fin__badge ${n.badge === 'pending' ? 'fin__badge--attn' : ''}`} aria-label={`${count} פריטים`}>{count}</em>}
                 </Link>
               )
             })}

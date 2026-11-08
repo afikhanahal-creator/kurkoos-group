@@ -8,6 +8,8 @@ import { Confidence, Empty, Icon, Modal, PageHead, StatusPill, UploadZone } from
 import Thumbnail from './Thumbnail.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
+import DateRange, { sayRange } from './DateRange.jsx'
+import SendToAccountant from './SendToAccountant.jsx'
 
 const TABS = [
   { id: '', label: 'הכול' },
@@ -53,13 +55,15 @@ export default function Documents({ preset = 'all' }) {
   const [busy, setBusy] = useState('')
   const [note, setNote] = useState('')
   const [showUpload, setShowUpload] = useState(false)
+  const [dateBy, setDateBy] = useState('doc')            // filter by the date on the document, or by when it arrived
+  const [sending, setSending] = useState(null)           // the documents in the "send to the accountant" dialog
   const setFilter = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }))
   const activeFilters = Object.values(f).filter(Boolean).length
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()
     const list = documents.filter((d) => P.filter(d) && (preset !== 'all' || inTab(d, tab))
-      && (!f.from || String(docDate(d)) >= f.from) && (!f.to || String(docDate(d)) <= f.to)
+      && (!f.from || String(dateBy === 'received' ? String(d.created_at).slice(0, 10) : docDate(d)) >= f.from) && (!f.to || String(dateBy === 'received' ? String(d.created_at).slice(0, 10) : docDate(d)) <= f.to)
       && (!f.supplier || d.supplier_id === f.supplier) && (!f.biz || (f.biz === 'none' ? !d.business_id : d.business_id === f.biz))
       && (!f.project || (f.project === 'none' ? !d.project_id && !allocations.some((a) => a.document_id === d.id) : d.project_id === f.project || allocations.some((a) => a.document_id === d.id && a.project_id === f.project))) && (!f.cat || d.category === f.cat)
       && (tab === 'archived' || d.status !== 'archived')
@@ -68,7 +72,7 @@ export default function Documents({ preset = 'all' }) {
       && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, d.category, nameOf(businesses, d.business_id), nameOf(projects, d.project_id), String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
     const key = SORTS[sort.key]
     return list.sort((a, b) => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
-  }, [documents, P, preset, tab, f, q, sort, businesses, projects, allocations])
+  }, [documents, P, preset, tab, f, q, sort, businesses, projects, allocations, dateBy])
 
   const total = rows.reduce((s, d) => s + signedTotal(d), 0)
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
@@ -134,6 +138,7 @@ export default function Documents({ preset = 'all' }) {
           <Icon name="search" size={18} />
           <input type="search" placeholder="ספק, מספר, חברה, פרויקט, קטגוריה, סכום…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="חיפוש מסמכים" />
         </label>
+        <DateRange from={f.from} to={f.to} label={dateBy === 'received' ? 'תאריך קליטה' : 'תאריך המסמך'} by={dateBy} onBy={setDateBy} byOptions={[['doc', 'תאריך המסמך'], ['received', 'תאריך קליטה']]} onChange={(from, to) => setF((x) => ({ ...x, from, to }))} />
         <div className="fin-seg" role="group" aria-label="תצוגה">
           <button type="button" className={view === 'table' ? 'is-on' : ''} onClick={() => switchView('table')} aria-pressed={view === 'table'} title="טבלה"><Icon name="rows" size={17} /><span className="fin-sr">טבלה</span></button>
           <button type="button" className={view === 'cards' ? 'is-on' : ''} onClick={() => switchView('cards')} aria-pressed={view === 'cards'} title="כרטיסים"><Icon name="grid" size={17} /><span className="fin-sr">כרטיסים</span></button>
@@ -144,8 +149,6 @@ export default function Documents({ preset = 'all' }) {
 
       {showFilters && (
         <div className="fin-filter-panel" id="fin-doc-filters">
-          <label className="fin-field"><span className="fin-field__label">מתאריך</span><input type="date" value={f.from} onChange={setFilter('from')} /></label>
-          <label className="fin-field"><span className="fin-field__label">עד תאריך</span><input type="date" value={f.to} onChange={setFilter('to')} /></label>
           <label className="fin-field"><span className="fin-field__label">ספק</span><Select value={f.supplier} onChange={setFilter('supplier')}><option value="">הכול</option>{suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></label>
           <label className="fin-field"><span className="fin-field__label">חברה</span><Select value={f.biz} onChange={setFilter('biz')}><option value="">הכול</option><option value="none">לא משויך</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></label>
           <label className="fin-field"><span className="fin-field__label">פרויקט</span><Select value={f.project} onChange={setFilter('project')}><option value="">הכול</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></label>
@@ -159,10 +162,18 @@ export default function Documents({ preset = 'all' }) {
       )}
 
       {showUpload && <UploadZone onDone={reload} />}
+      {(f.from || f.to) && (
+        <div className="fin-rangebar" role="region" aria-label="סיכום הטווח">
+          <div className="fin-rangebar__text"><strong>{rows.length === 1 ? 'מסמך אחד' : `${rows.length} מסמכים`}</strong><span>{sayRange(f.from, f.to)}</span></div>
+          <strong className="fin-rangebar__sum">{money(total)}</strong>
+          {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!rows.length} onClick={() => setSending(rows)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
+        </div>
+      )}
 
       {sel.size > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <strong>{sel.size} מסומנים</strong>
+          {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(documents.filter((d) => sel.has(d.id)))}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
           {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
           {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status))}>דחייה</button>}
           {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status))}>סימון ככפול</button>}
@@ -307,6 +318,7 @@ export default function Documents({ preset = 'all' }) {
           onNext={idx >= 0 && idx < rows.length - 1 ? () => go(link(rows[idx + 1].id)) : null}
         />
       )}
+      {sending && <SendToAccountant docs={sending} period={sayRange(f.from, f.to)} onClose={() => setSending(null)} onSent={(r) => { setSending(null); setSel(new Set()); setNote(`נשלח ל-${r.to.join(', ')}: ${r.sent === 1 ? 'מסמך אחד' : `${r.sent} מסמכים`}, ${r.attached} קבצים מצורפים${r.linked ? `, ${r.linked} בקישור` : ''}.`) }} />}
     </div>
   )
 }

@@ -18,6 +18,7 @@ import { ADAPTERS } from './finance/adapters.js'
 import { CLOUD, syncCloud, connectCloud } from './finance/cloud.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
+import { sendToAccountant } from './finance/mailout.js'
 
 const ROLES = {
   'auth-url': ['admin', 'finance_manager', 'employee'],
@@ -41,6 +42,7 @@ const ROLES = {
   'outbound-test': ['admin'],
   'outbound-flush': ['admin', 'finance_manager', 'employee'],
   'members-meta': ['admin'],
+  'send-to-accountant': ['admin', 'finance_manager'],
 }
 
 // per-user rate limit (in memory, per instance): 120 calls in 10 minutes
@@ -289,6 +291,11 @@ export default async function handler(req, res) {
         res.status(200).json({ ok: true })
         return
       }
+      case 'send-to-accountant': {
+        const r = await sendToAccountant({ ids: body.ids, to: body.to, note: String(body.note || '').slice(0, 2000), subject: String(body.subject || '').slice(0, 200) || null, ccMe: !!body.cc_me, period: String(body.period || '').slice(0, 60) || null, user })
+        res.status(200).json(r)
+        return
+      }
       case 'outbound-test': {
         const o = await one(`fin_outbound?id=eq.${q(body.id)}&select=*`)
         if (!o) { res.status(404).json({ error: 'לא נמצא' }); return }
@@ -344,6 +351,6 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'unknown action' })
     }
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) })
+    res.status(e.status >= 400 && e.status < 600 ? e.status : 500).json({ error: String(e.message || e) })
   }
 }

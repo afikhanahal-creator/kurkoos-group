@@ -3,7 +3,7 @@ import { useSession } from './session.js'
 import * as api from './api.js'
 import { ROLE, nameOf } from './format.js'
 import { useState } from 'react'
-import { Card, Icon, PageHead, Pill, useAsync } from './ui.jsx'
+import { Card, Icon, PageHead, Pill, useAsync, Skeleton } from './ui.jsx'
 
 function SmartSettings() {
   const { settings, can, reload } = useFinance()
@@ -73,10 +73,16 @@ export default function Settings() {
         </Card>
         {can('operate') && (
           <Card title="חיבורי השרת">
-            {status.loading ? <p className="fin-muted">בודק…</p> : status.data?.error ? <p className="fin-error">{status.data.error}</p> : (
-              <ul className="fin-setup">{ENV.map(([k, env, what]) => <li key={k}>{ok(k) ? <Pill tone="ok">מוגדר</Pill> : <Pill tone="warn">חסר</Pill>}<span>{what}</span><code dir="ltr">{env}</code></li>)}</ul>
+            {status.loading ? <Skeleton lines={4} /> : status.data?.error ? <p className="fin-muted"><Pill tone="warn">לא זמין כרגע</Pill> בדיקת החיבורים לא הצליחה. נסו לרענן בעוד דקה.</p> : (
+              <ul className="fin-setup">{ENV.map(([k, , what]) => <li key={k}>{ok(k) ? <Pill tone="ok">פועל</Pill> : <Pill tone="warn">לא מחובר</Pill>}<span>{what}</span></li>)}</ul>
             )}
-            <p className="fin-muted">המפתחות נשמרים רק ב-Vercel › Settings › Environment Variables, אף פעם לא בקוד. ההוראות המלאות: docs/finance/README.md</p>
+            {can('manage') && (
+              <details className="fin-disclosure fin-disclosure--quiet">
+                <summary>פרטים טכניים</summary>
+                <ul className="fin-setup">{ENV.map(([k, env, what]) => <li key={k}><span>{what}</span><code dir="ltr">{env}</code></li>)}</ul>
+                <p className="fin-muted fin-small">המפתחות נשמרים רק בהגדרות השרת (Vercel), אף פעם לא בקוד. ההוראות המלאות: docs/finance/README.md</p>
+              </details>
+            )}
           </Card>
         )}
         {can('manage') && (

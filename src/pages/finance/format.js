@@ -105,3 +105,6 @@ export function toExcel(sheet, head, rows) {
   const cell = (v) => (typeof v === 'number' && Number.isFinite(v) ? `<Cell><Data ss:Type="Number">${v}</Data></Cell>` : `<Cell><Data ss:Type="String">${esc(v ?? '')}</Data></Cell>`)
   return `<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="h"><Font ss:Bold="1"/></Style></Styles><Worksheet ss:Name="${esc(sheet).slice(0, 30)}" ss:RightToLeft="1"><Table><Row>${head.map((h) => `<Cell ss:StyleID="h"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('')}</Row>${rows.map((r) => `<Row>${r.map(cell).join('')}</Row>`).join('')}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><DisplayRightToLeft/></WorksheetOptions></Worksheet></Workbook>`
 }
+
+/* the last n months, newest first, for month pickers */
+export const recentMonths = (n = 36) => Array.from({ length: n }, (_, i) => shiftMonth(thisMonth(), -i))

@@ -138,7 +138,7 @@ export default function Dashboard() {
 
       {role !== 'accountant' && (
         <section className="fin-control" aria-label="בקרת מסמכים">
-          {[['new', 'חדשים (7 ימים)', '/new'], ['approved', 'מאושרים', '/documents?status=approved'], ['pending', 'ממתינים', '/pending'], ['rejected', 'נדחו', '/documents?status=rejected'], ['duplicates', 'אזהרות כפילות', '/documents?status=problems'], ['failed', 'כשלי עיבוד', '/documents?status=problems']].map(([k, label, to]) => (
+          {[['new', 'חדשים (7 ימים)', '/new'], ['approved', 'מאושרים', '/documents?status=approved'], ['rejected', 'נדחו', '/documents?status=rejected'], ['duplicates', 'אזהרות כפילות', '/documents?status=problems'], ['failed', 'כשלי עיבוד', '/documents?status=problems']].map(([k, label, to]) => (
             <button key={k} type="button" className={`fin-control__item ${['failed', 'duplicates'].includes(k) && m.control[k] ? 'is-attn' : ''}`} onClick={() => go(to)}>
               <strong>{m.control[k]}</strong><span>{label}</span>
             </button>

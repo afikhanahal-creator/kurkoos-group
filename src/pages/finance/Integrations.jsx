@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, claimableVat, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedTotal, thisMonth } from './format.js'
+import { DOC_TYPE, claimableVat, date, docDate, money, monthLabel, nameOf, period, recentMonths, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { buildPackage } from './exportPackage.js'
 import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
 import { Monogram } from './logos.jsx'
@@ -53,7 +53,7 @@ function ExportWizard({ onDone }) {
           {preset ? <p className="fin-muted">{preset.length} מסמכים שנבחרו ברשימת המסמכים. <button type="button" className="fin-link" onClick={() => { try { sessionStorage.removeItem('fin-export-ids') } catch { /* noop */ } go('/integrations') }}>בחירה לפי תקופה במקום</button></p> : (
             <div className="fin-filters">
               <Select className="fin-select" value={biz} onChange={(e) => { setBiz(e.target.value); setPicked(null) }} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>
-              <input type="month" className="fin-select" value={per} max={thisMonth()} onChange={(e) => { setPer(e.target.value); setPicked(null) }} aria-label="תקופה חשבונאית" />
+              <Select className="fin-select" value={per} onChange={(e) => { setPer(e.target.value); setPicked(null) }} aria-label="תקופה חשבונאית">{recentMonths().map((k) => <option key={k} value={k}>{monthLabel(k)}</option>)}</Select>
             </div>
           )}
           <label className="fin-check"><input type="checkbox" checked={withExported} onChange={(e) => setWithExported(e.target.checked)} /> לכלול מסמכים שכבר יוצאו (ייצוא חוזר)</label>

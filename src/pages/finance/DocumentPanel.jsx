@@ -74,6 +74,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
       else if (['issue_date', 'due_date', 'payment_date', 'business_id', 'project_id', 'category_id'].includes(k)) v = v || null
       out[k] = v
     }
+    // a split document's projects live in its allocations: the single project field is not sent back
+    if (myAlloc.length > 1 || (split && split.length > 1)) delete out.project_id
     return out
   }
   const save = async (extra = {}) => {

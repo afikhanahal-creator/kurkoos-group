@@ -369,7 +369,7 @@ language plpgsql security definer set search_path = '' as $$
 declare
   uid uuid := auth.uid();
   r text := public.fin_role();
-  money_cols text[] := array['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'business_id', 'project_id', 'category'];
+  money_cols text[] := array['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'business_id', 'project_id', 'category', 'category_id'];
   c text;
   changed boolean := false;
 begin
@@ -385,6 +385,10 @@ begin
       if new.status = old.status then
         new.status := 'review'; new.approved_by := null; new.approved_at := null;
       end if;
+    end if;
+    -- back in review: every signature is cleared, the next approval starts over
+    if new.status = 'review' and old.status in ('approved', 'sent') then
+      new.approved_by := null; new.approved_at := null; new.first_approved_by := null; new.first_approved_at := null;
     end if;
     if new.status in ('approved', 'sent') and old.status not in ('approved', 'sent') then
       if uid is not null and coalesce(r, '') not in ('admin', 'finance_manager') then
@@ -689,7 +693,11 @@ alter table public.fin_businesses add column if not exists accountant_name text;
 alter table public.fin_businesses add column if not exists notes text;
 alter table public.fin_businesses add column if not exists active boolean not null default true;
 alter table public.fin_businesses add column if not exists archived_at timestamptz;
-create unique index if not exists fin_businesses_vat_uq on public.fin_businesses (vat_id) where vat_id is not null and vat_id <> '';
+do $$ begin
+  create unique index if not exists fin_businesses_vat_uq on public.fin_businesses (vat_id) where vat_id is not null and vat_id <> '';
+exception when unique_violation then
+  raise notice 'two companies share a VAT number: fix them, then re-run this file';
+end $$;
 
 -- projects
 alter table public.fin_projects add column if not exists project_type text;
@@ -717,12 +725,20 @@ alter table public.fin_suppliers add column if not exists approved_by uuid;
 alter table public.fin_suppliers add column if not exists archived_at timestamptz;
 alter table public.fin_suppliers drop constraint if exists fin_suppliers_status_check;
 alter table public.fin_suppliers add constraint fin_suppliers_status_check check (status in ('pending', 'active', 'archived'));
+-- one normalizer for supplier names (the server calls it too): legal suffixes removed only as whole words
 create or replace function public.fin_norm(t text) returns text language sql immutable as $$
-  select nullif(trim(regexp_replace(regexp_replace(lower(coalesce(t, '')),
-    '(בע"מ|בע״מ|בעמ|ltd\.?|inc\.?|llc|limited|ושות׳|ושות''|ושות|ש\.?ת\.?פ|\(\d+\))', '', 'g'), '[^[:alnum:]א-ת]+', '', 'g')), '')
+  select nullif(regexp_replace(regexp_replace(regexp_replace(lower(coalesce(t, '')),
+    '(בע"מ|בע״מ|\mבעמ\M|ושות׳|ושות''|\mושות\M|ש\.ת\.פ|\mשתפ\M|\(\d+\))', ' ', 'g'),
+    '\m(ltd|inc|llc|limited|co)\M\.?', ' ', 'g'), '[^[:alnum:]א-ת]+', '', 'g'), '')
 $$;
+grant execute on function public.fin_norm(text) to authenticated, service_role;
+update public.fin_suppliers set normalized_name = public.fin_norm(name) where normalized_name is distinct from public.fin_norm(name);
 update public.fin_suppliers set normalized_name = public.fin_norm(name) where normalized_name is null;
-create unique index if not exists fin_suppliers_norm_uq on public.fin_suppliers (normalized_name) where normalized_name is not null and status <> 'archived';
+do $$ begin
+  create unique index if not exists fin_suppliers_norm_uq on public.fin_suppliers (normalized_name) where normalized_name is not null and status <> 'archived';
+exception when unique_violation then
+  raise notice 'fin_suppliers has suppliers with the same normalized name: merge them in the suppliers screen, then re-run this file';
+end $$;
 
 -- categories
 alter table public.fin_categories add column if not exists name_en text;
@@ -861,7 +877,7 @@ begin
   if auth.uid() is not null then new.updated_by := auth.uid(); new.updated_at := now(); end if;
   if tg_op = 'INSERT' or (to_jsonb(new) - 'hits' - 'last_hit_at' - 'updated_at' - 'updated_by') is distinct from (to_jsonb(old) - 'hits' - 'last_hit_at' - 'updated_at' - 'updated_by') then
     insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
-    values ('rule', new.id::text, lower(tg_op) || 'd', jsonb_build_object('name', new.name, 'kind', new.kind, 'enabled', new.enabled, 'priority', new.priority, 'match', new.match, 'action', new.action), auth.uid(), mail);
+    values ('rule', new.id::text, case when tg_op = 'INSERT' then 'created' else 'updated' end, jsonb_build_object('name', new.name, 'kind', new.kind, 'enabled', new.enabled, 'priority', new.priority, 'match', new.match, 'action', new.action), auth.uid(), mail);
   end if;
   return new;
 end $$;
@@ -918,6 +934,14 @@ begin
     elsif pb is not null and pb <> new.business_id then raise exception 'PROJECT_COMPANY: the project belongs to another company';
     end if;
   end if;
+  -- dual approval: the threshold is the administrator's setting, computed here; a person cannot set or clear the
+  -- flag or the first signature through the API
+  if tg_op = 'UPDATE' and uid is not null then
+    new.first_approved_by := old.first_approved_by; new.first_approved_at := old.first_approved_at;
+    new.requires_second_approval := coalesce(abs(new.total_amount), 0) >= coalesce((select (value #>> '{}')::numeric from public.fin_settings where key = 'second_approval_amount'), 0)
+      and coalesce((select (value #>> '{}')::numeric from public.fin_settings where key = 'second_approval_amount'), 0) > 0
+      or (old.requires_second_approval and new.total_amount is not distinct from old.total_amount);
+  end if;
   if tg_op = 'UPDATE' and new.status = 'approved' and old.status <> 'approved' and new.requires_second_approval then
     if new.first_approved_by is null and old.first_approved_by is null then
       -- first signature: recorded, the document stays in review until someone else signs
@@ -930,8 +954,10 @@ begin
   end if;
   return new;
 end $$;
+-- BEFORE triggers run in name order: relations ("fin_documents_a_…") must run before the guard
 drop trigger if exists fin_documents_relations on public.fin_documents;
-create trigger fin_documents_relations before insert or update on public.fin_documents for each row execute function public.fin_documents_relations();
+drop trigger if exists fin_documents_a_relations on public.fin_documents;
+create trigger fin_documents_a_relations before insert or update on public.fin_documents for each row execute function public.fin_documents_relations();
 
 -- document status: archived (kept, hidden from the work queues)
 alter table public.fin_documents drop constraint if exists fin_documents_status_check;

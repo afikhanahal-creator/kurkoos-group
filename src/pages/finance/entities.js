@@ -10,7 +10,11 @@ export function validIsraeliId(id) {
   for (let i = 0; i < 9; i++) { let d = Number(p[i]) * ((i % 2) + 1); if (d > 9) d -= 9; sum += d }
   return sum % 10 === 0
 }
-export const normName = (t) => String(t || '').toLowerCase().replace(/(בע"מ|בע״מ|בעמ|ltd\.?|inc\.?|llc|limited|ושות׳|ושות'|ושות)/g, '').replace(/[^\p{L}\p{N}]+/gu, '')
+/* mirrors the database's fin_norm(): legal suffixes removed only as whole words (the database stays the authority) */
+export const normName = (t) => String(t || '').toLowerCase()
+  .replace(/(בע"מ|בע״מ|ושות׳|ושות'|ש\.ת\.פ|\(\d+\))/g, ' ')
+  .replace(/(^|[^\p{L}\p{N}])(בעמ|ושות|שתפ|ltd|inc|llc|limited|co)(?=$|[^\p{L}\p{N}])\.?/gu, '$1 ')
+  .replace(/[^\p{L}\p{N}]+/gu, '')
 const host = (u) => String(u || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
 
 export const SUPPLIER_TYPES = ['ספק חומרים', 'קבלן משנה', 'נותן שירות', 'יועץ', 'תוכנה ומנויים', 'רשות או מוסד', 'אחר']

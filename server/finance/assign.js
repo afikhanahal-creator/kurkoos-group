@@ -8,9 +8,10 @@
 //   project:  project code printed on the document › supplier_project / keyword_project rule › supplier default (only if the
 //             supplier works on one project) › approved history (only if one project) › project keywords (suggestion only)
 // Conflicts between strong signals are flagged for review, never resolved silently.
-import { sb, one, insert, patch, q } from './db.js'
+import { sb, one, insert, patch, q, rpc } from './db.js'
 
-const norm = (t) => String(t || '').toLowerCase().replace(/(בע"מ|בע״מ|בעמ|ltd\.?|inc\.?|llc|limited|ושות׳|ושות'|ושות)/g, '').replace(/[^\p{L}\p{N}]+/gu, '')
+// the database's fin_norm() is the one normalizer, so a lookup here matches the unique index there
+const norm = async (t) => (await rpc('fin_norm', { t: String(t || '') }).catch(() => null)) || ''
 const like = (a, b) => !!a && !!b && String(a).toLowerCase().includes(String(b).toLowerCase())
 const digits = (s) => String(s || '').replace(/\D/g, '') || null
 
@@ -33,8 +34,9 @@ export async function identifySupplier(x, { fromEmail, cfg, documentId }) {
   const domain = (String(x.supplier_email || fromEmail || '').match(/@([\w.-]+)/) || [])[1] || null
   const site = String(x.supplier_website || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0] || null
   let s = null; let how = null
-  if (vat) { s = await one(`fin_suppliers?or=(vat_id.eq.${vat},vat_number.eq.${vat})&select=*`); if (s) how = 'id' }
-  if (!s && name) { s = await one(`fin_suppliers?normalized_name=eq.${q(norm(name))}&status=neq.archived&select=*`); if (s) how = 'name' }
+  if (vat) { s = await one(`fin_suppliers?or=(vat_id.eq.${vat},vat_number.eq.${vat})&status=neq.archived&select=*`); if (s) how = 'id' }
+  const nn = name ? await norm(name) : ''
+  if (!s && nn) { s = await one(`fin_suppliers?normalized_name=eq.${q(nn)}&status=neq.archived&select=*`); if (s) how = 'name' }
   if (!s && domain && !/gmail|outlook|hotmail|yahoo|walla|kurkoos/.test(domain)) { s = await one(`fin_suppliers?email_domain=eq.${q(domain)}&status=neq.archived&select=*`); if (s) how = 'domain' }
   if (!s && site) { s = await one(`fin_suppliers?website=ilike.*${q(site)}*&status=neq.archived&select=*`); if (s) how = 'website' }
   if (s) {
@@ -51,8 +53,9 @@ export async function identifySupplier(x, { fromEmail, cfg, documentId }) {
     address: x.supplier_address || null, website: x.supplier_website || null, default_category: null,
     status: auto ? 'active' : 'pending', suggested_from: documentId || null, match_confidence: Math.round(conf * 100) / 100,
   }
-  const created = await insert('fin_suppliers', row).catch(async (e) => (e.code === '23505' ? one(`fin_suppliers?normalized_name=eq.${q(norm(name))}&select=*`) : null))
-  return { supplier: created, match: 'new', created: !!created, pending: created?.status === 'pending', confidence: conf }
+  let isNew = true
+  const created = await insert('fin_suppliers', row).catch(async (e) => { isNew = false; return e.code === '23505' ? one(`fin_suppliers?normalized_name=eq.${q(nn)}&select=*`) : null })
+  return { supplier: created, match: isNew ? 'new' : 'name', created: isNew && !!created, pending: created?.status === 'pending', confidence: conf }
 }
 
 export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cfg, documentId }) {
@@ -60,17 +63,18 @@ export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cf
   const sug = {}
   const issues = []
   const hits = []
-  const consider = (k, value, conf, source, reason, ruleId) => {
+  const consider = (k, value, conf, source, reason, ruleId) => {  // ruleId: which rule proposed it, for the execution history
     if (!value) return
     const cur = sug[k]
     if (cur && cur.confidence >= conf) {
       if (cur.value !== value && conf >= 0.95 && cur.confidence >= 0.95) issues.push({ level: 'error', code: `${k}_conflict`, field: k, message: `שני מקורות ודאיים סותרים: ${cur.reason} מול ${reason}` })
-      if (ruleId) hits.push({ rule_id: ruleId, outcome: 'overridden', detail: `נדחה מפני ${cur.reason}` })
+      if (ruleId) hits.push({ rule_id: ruleId, key: k, outcome: 'overridden', detail: `נדחה מפני ${cur.reason}` })
       return
     }
     if (cur && cur.value !== value && cur.confidence >= 0.95 && conf >= 0.95) issues.push({ level: 'error', code: `${k}_conflict`, field: k, message: `שני מקורות ודאיים סותרים: ${cur.reason} מול ${reason}` })
-    sug[k] = { value, confidence: Math.round(conf * 100) / 100, source, reason }
-    if (ruleId) hits.push({ rule_id: ruleId, outcome: 'suggested', detail: reason })
+    if (cur?.ruleId) { const h = hits.find((x) => x.rule_id === cur.ruleId && x.key === k); if (h) { h.outcome = 'overridden'; h.detail = `נדחה מפני ${reason}` } }
+    sug[k] = { value, confidence: Math.round(conf * 100) / 100, source, reason, ...(ruleId ? { ruleId } : {}) }
+    if (ruleId) hits.push({ rule_id: ruleId, key: k, outcome: 'suggested', detail: reason })
   }
   const hay = [x.project_hint, x.description, fields.description, text, fields.email_subject].filter(Boolean).join(' ')
 
@@ -150,11 +154,14 @@ export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cf
   if (sug.project_id && sug.project_id.confidence >= cfg.projectThreshold) out.project_id = sug.project_id.value
   if (cfg.secondApprovalAmount && Math.abs(Number(fields.total_amount) || 0) >= cfg.secondApprovalAmount) fields.requires_second_approval = true
 
+  // a hit is "applied" only when this rule's own value was filled in
+  for (const h of hits) if (h.outcome === 'suggested' && h.key && sug[h.key]?.ruleId === h.rule_id && out[h.key] === sug[h.key].value) h.outcome = 'applied'
+  for (const k of Object.keys(sug)) delete sug[k].ruleId
+  const counted = new Set()
   for (const h of hits) {
-    const applied = h.outcome === 'suggested' && Object.entries(sug).some(([k, s]) => s.reason?.startsWith('כלל') && out[k] === s.value)
-    if (documentId) await insert('fin_rule_hits', { rule_id: h.rule_id, document_id: documentId, outcome: applied ? 'applied' : h.outcome, detail: h.detail }, 'return=minimal').catch(() => {})
+    if (documentId) await insert('fin_rule_hits', { rule_id: h.rule_id, document_id: documentId, outcome: h.outcome, detail: h.detail }, 'return=minimal').catch(() => {})
     const r = rules.find((y) => y.id === h.rule_id)
-    if (r) await patch(`fin_rules?id=eq.${r.id}`, { hits: (r.hits || 0) + 1, last_hit_at: new Date().toISOString() }).catch(() => {})
+    if (r && !counted.has(r.id)) { counted.add(r.id); await patch(`fin_rules?id=eq.${r.id}`, { hits: (r.hits || 0) + 1, last_hit_at: new Date().toISOString() }).catch(() => {}) }
   }
   return { ...out, suggestions: sug, issues, pendingHits: documentId ? [] : hits }
 }

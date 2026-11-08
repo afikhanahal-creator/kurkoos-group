@@ -92,6 +92,16 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
   return fields
 }
 
+/* a project of another company never rides along: it becomes a suggestion and the document is flagged */
+async function keepProjectInCompany(fields) {
+  if (!fields.project_id || !fields.business_id) return
+  const p = await one(`fin_projects?id=eq.${fields.project_id}&select=business_id,name`)
+  if (p?.business_id && p.business_id !== fields.business_id) {
+    fields.project_id = null
+    ;(fields.issues ||= []).push({ level: 'warn', code: 'project_company', field: 'project_id', message: `הפרויקט "${p.name}" שייך לחברה אחרת ולכן לא שויך` })
+  }
+}
+
 /* after a person edits a document: run the validation rules again on the stored fields (no AI) */
 export async function revalidate(doc) {
   const not = `&id=neq.${doc.id}`
@@ -125,6 +135,7 @@ export async function processStored(doc, runs, trigger = 'upload') {
     const mb = doc.mailbox_id ? await one(`fin_mailboxes?id=eq.${doc.mailbox_id}&select=*`) : null
     const fields = await analyze(x, { selfId: doc.id, mailbox: mb, fromEmail: doc.email_from || '' }, runs)
     if (doc.business_id) fields.business_id = doc.business_id      // a company chosen at upload wins
+    await keepProjectInCompany(fields)
     fields.attempts = (doc.attempts || 0) + 1
     delete fields._pendingHits
     return await patch(`fin_documents?id=eq.${doc.id}`, fields)
@@ -197,10 +208,16 @@ export async function syncMailbox(mb, started, runs, trigger) {
           ? await analyze(x, { mailbox: mb, fromEmail: meta.email_from, subject: meta.email_subject, text: msg.text || '' }, runs)
           : { status: 'failed', issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${String(failure.message || failure).slice(0, 200)}` }] }
         const pendingHits = fields._pendingHits; delete fields._pendingHits
+        await keepProjectInCompany(fields)
+        const newSupplier = fields.suggestions?.supplier?.match === 'new' ? fields.supplier_id : null
         try {
           const row = await insert('fin_documents', { ...base, ...fields }); stats.imported++; got++
           if (row) { await flushHits(row.id, pendingHits); if (fields.supplier_id) await patch(`fin_suppliers?id=eq.${fields.supplier_id}&suggested_from=is.null&status=eq.pending`, { suggested_from: row.id }).catch(() => {}) }
-        } catch (e) { if (e.code === '23505') stats.skipped++; else throw e }
+        } catch (e) {
+          // the document was not stored: a supplier suggested only by it goes too
+          if (newSupplier) await sb(`fin_suppliers?id=eq.${newSupplier}&status=eq.pending`, { method: 'DELETE', prefer: 'return=minimal' }).catch(() => {})
+          if (e.code === '23505') stats.skipped++; else throw e
+        }
       }
 
       for (const f of files.slice(0, 5)) {

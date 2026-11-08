@@ -118,6 +118,12 @@ const THEME_KEY = 'kurkoos-adm-theme'
 
 export default function Admin() {
   const session = useAuth()
+  // members of the finance system who are not admins never get the website admin (supabase/finance.sql)
+  const [financeOnly, setFinanceOnly] = useState(false)
+  useEffect(() => {
+    if (!session || !supabase) return
+    supabase.rpc('fin_is_external').then(({ data }) => setFinanceOnly(data === true), () => {})
+  }, [session])
   // ?tab=<id> opens a tab directly; ?embed=1 shows only that tab (the content engine embeds the inbox this way)
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
   const embed = params.get('embed') === '1'
@@ -161,6 +167,12 @@ export default function Admin() {
   if (!hasSupabase) return <div className="adm-msg">החיבור ל‑Supabase לא מוגדר (חסרים משתני סביבה).</div>
   if (session === undefined) return <div className="adm-msg adm-msg--loading"><span className="adm-spin" />טוען…</div>
   if (session === null) return <Login />
+  if (financeOnly) return (
+    <div className="adm-msg" dir="rtl">
+      <p>החשבון הזה מורשה למערכת הנהלת החשבונות בלבד.</p>
+      <p><a className="btn btn--primary" href="/admin/finance">למערכת הנהלת החשבונות</a></p>
+    </div>
+  )
 
   const active = TABS.find((t) => t.id === tab) || TABS[0]
   const email = session.user?.email || ''

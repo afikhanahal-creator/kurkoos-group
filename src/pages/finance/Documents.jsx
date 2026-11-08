@@ -2,158 +2,229 @@ import { useMemo, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, SOURCE, date, docDate, money, monthKey, monthLabel } from './format.js'
-import { Empty, Icon, StatusPill, UploadZone } from './ui.jsx'
+import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal } from './format.js'
+import { makeZip, saveBlob } from './zip.js'
+import { Confidence, Empty, Icon, PageHead, StatusPill, UploadZone } from './ui.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 
 const TABS = [
   { id: '', label: 'הכול' },
-  { id: 'review', label: 'לבדיקה' },
+  { id: 'review', label: 'ממתינים' },
   { id: 'approved', label: 'מאושרים' },
-  { id: 'sent', label: 'נשלחו' },
-  { id: 'problems', label: 'בעיות' },
+  { id: 'sent', label: 'יוצאו' },
+  { id: 'problems', label: 'שגיאות וכפולים' },
+  { id: 'rejected', label: 'נדחו' },
 ]
 const inTab = (d, tab) => {
-  if (!tab) return !['rejected', 'duplicate'].includes(d.status)
-  if (tab === 'problems') return ['failed', 'duplicate', 'rejected', 'processing'].includes(d.status)
+  if (!tab) return !['rejected'].includes(d.status)
+  if (tab === 'problems') return ['failed', 'duplicate', 'processing'].includes(d.status) || hasError(d)
   return d.status === tab
 }
+const PRESET = {
+  all: { title: null, filter: () => true },
+  new: { title: 'חשבוניות חדשות', sub: 'מה שנאסף בשבעת הימים האחרונים ועוד לא אושר', filter: (d) => Date.now() - new Date(d.created_at).getTime() < 7 * 86400_000 && ['processing', 'review', 'failed', 'duplicate'].includes(d.status) },
+  pending: { title: 'ממתינים לאישור', sub: 'מסמכים שנקראו ומחכים לבדיקה של אדם. שום מסמך לא מאושר אוטומטית', filter: (d) => d.status === 'review' },
+}
+const SORTS = {
+  date: (d) => String(docDate(d)), supplier: (d) => d.supplier_name || '', total: (d) => Number(d.total_amount) || 0, vat: (d) => Number(d.vat_amount) || 0,
+  before: (d) => Number(d.amount_before_vat) || 0, conf: (d) => Number(d.confidence ?? -1), created: (d) => d.created_at, number: (d) => d.doc_number || '',
+}
+const EMPTY_F = { from: '', to: '', supplier: '', biz: '', project: '', cat: '', type: '', source: '', min: '', max: '' }
 
-export default function Documents() {
-  const { documents, businesses, categories, reload, patchDoc, go } = useFinance()
+export default function Documents({ preset = 'all' }) {
+  const { documents, businesses, projects, categories, suppliers, mailboxes, role, can, reload, patchDoc, go } = useFinance()
   const { id } = useParams()
   const [params, setParams] = useSearchParams()
-  const tab = params.get('status') || ''
+  const P = PRESET[preset]
+  const base = preset === 'all' ? '/documents' : `/${preset}`
+  const tab = preset === 'all' ? params.get('status') || '' : ''
   const [q, setQ] = useState(() => params.get('q') || '')
-  const [month, setMonth] = useState('')
-  const [biz, setBiz] = useState('')
-  const [cat, setCat] = useState('')
-  const [source, setSource] = useState('')
+  const [f, setF] = useState(() => ({ ...EMPTY_F, supplier: params.get('supplier') || '', project: params.get('project') || '', biz: params.get('company') || '' }))
+  const [showFilters, setShowFilters] = useState(false)
+  const [sort, setSort] = useState({ key: 'date', dir: -1 })
   const [sel, setSel] = useState(() => new Set())
   const [busy, setBusy] = useState('')
+  const [note, setNote] = useState('')
   const [showUpload, setShowUpload] = useState(false)
-
-  const months = useMemo(() => [...new Set(documents.map((d) => monthKey(docDate(d))).filter(Boolean))].sort().reverse(), [documents])
-  const bizName = (bid) => businesses.find((b) => b.id === bid)?.name || ''
+  const setFilter = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }))
+  const activeFilters = Object.values(f).filter(Boolean).length
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return documents.filter((d) => inTab(d, tab)
-      && (!month || monthKey(docDate(d)) === month)
-      && (!biz || d.business_id === biz)
-      && (!cat || d.category === cat)
-      && (!source || d.source === source)
-      && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
-      .sort((a, b) => String(docDate(b)).localeCompare(String(docDate(a))))
-  }, [documents, tab, month, biz, cat, source, q])
+    const list = documents.filter((d) => P.filter(d) && (preset !== 'all' || inTab(d, tab))
+      && (!f.from || String(docDate(d)) >= f.from) && (!f.to || String(docDate(d)) <= f.to)
+      && (!f.supplier || d.supplier_id === f.supplier) && (!f.biz || (f.biz === 'none' ? !d.business_id : d.business_id === f.biz))
+      && (!f.project || (f.project === 'none' ? !d.project_id : d.project_id === f.project)) && (!f.cat || d.category === f.cat)
+      && (!f.type || d.doc_type === f.type) && (!f.source || d.source === f.source || d.mailbox_id === f.source)
+      && (!f.min || Math.abs(Number(d.total_amount) || 0) >= Number(f.min)) && (!f.max || Math.abs(Number(d.total_amount) || 0) <= Number(f.max))
+      && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, d.category, nameOf(businesses, d.business_id), nameOf(projects, d.project_id), String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
+    const key = SORTS[sort.key]
+    return list.sort((a, b) => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
+  }, [documents, P, preset, tab, f, q, sort, businesses, projects])
 
-  const total = rows.reduce((s, d) => s + (d.doc_type === 'credit' ? -1 : 1) * (Number(d.total_amount) || 0), 0)
+  const total = rows.reduce((s, d) => s + signedTotal(d), 0)
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
   const toggle = (did) => setSel((s) => { const n = new Set(s); if (n.has(did)) n.delete(did); else n.add(did); return n })
+  const picked = rows.filter((d) => sel.has(d.id))
 
-  const bulk = async (status) => {
-    setBusy(status)
+  const bulk = async (label, patchFor, only = () => true) => {
+    const targets = picked.filter(only)
+    const skipped = picked.length - targets.length
+    if (!targets.length) { setNote(`אין מסמכים מתאימים לפעולה (${skipped} דולגו)`); return }
+    setBusy(label); setNote('')
     try {
-      await api.updateDocuments([...sel], { status, ...(status === 'sent' ? { sent_at: new Date().toISOString() } : {}) })
-      setSel(new Set())
-      await reload()
-    } catch (e) { alert(e.message) } finally { setBusy('') }
+      await api.updateDocuments(targets.map((d) => d.id), patchFor)
+      setNote(`${targets.length} מסמכים עודכנו${skipped ? `, ${skipped} דולגו` : ''}`)
+      setSel(new Set()); await reload()
+    } catch (e) { setNote(e.message) } finally { setBusy('') }
   }
+  const downloadOriginals = async () => {
+    setBusy('zip')
+    try {
+      const files = []
+      for (const d of picked) if (d.file_path) files.push({ name: `${docDate(d)}_${(d.supplier_name || 'מסמך').replace(/[\\/:*?"<>|]/g, '')}_${d.doc_number || d.id.slice(0, 6)}.${(d.file_name || '').split('.').pop() || 'pdf'}`, data: await api.fileBlob(d) })
+      saveBlob(await makeZip(files), `מסמכים_${new Date().toISOString().slice(0, 10)}.zip`)
+    } catch (e) { setNote(e.message) } finally { setBusy('') }
+  }
+  const exportSelected = () => {
+    try { sessionStorage.setItem('fin-export-ids', JSON.stringify(picked.map((d) => d.id))) } catch { /* noop */ }
+    go('/integrations?from=selection')
+  }
+  const sortBy = (key) => setSort((s) => ({ key, dir: s.key === key ? -s.dir : -1 }))
+  const Th = ({ k, children, className = '' }) => (
+    <th className={className} aria-sort={sort.key === k ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+      <button type="button" className="fin-th-sort" onClick={() => sortBy(k)}>{children}{sort.key === k && <span aria-hidden="true">{sort.dir === 1 ? '▲' : '▼'}</span>}</button>
+    </th>
+  )
 
   const idx = rows.findIndex((d) => d.id === id)
   const current = id ? documents.find((d) => d.id === id) : null
+  const link = (did) => `${base}/${did}${tab ? `?status=${tab}` : ''}`
+  const edit = can('edit')
 
   return (
     <div className="fin-stack">
-      <div className="fin-tabs" role="tablist" aria-label="סטטוס">
-        {TABS.map((t) => {
-          const n = documents.filter((d) => inTab(d, t.id)).length
-          return (
-            <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={`fin-tab ${tab === t.id ? 'is-active' : ''}`} onClick={() => { const p = new URLSearchParams(params); if (t.id) p.set('status', t.id); else p.delete('status'); setParams(p); setSel(new Set()) }}>
-              {t.label} <em>{n}</em>
-            </button>
-          )
-        })}
-        <button type="button" className="fin-btn fin-btn--primary fin-tabs__cta" onClick={() => setShowUpload((v) => !v)}><Icon name="plus" size={18} /> הוספת מסמכים</button>
-      </div>
-
-      {showUpload && <UploadZone businessId={biz} onDone={reload} />}
+      {P.title && <PageHead title={P.title} sub={P.sub} />}
+      {preset === 'all' && (
+        <div className="fin-tabs" role="tablist" aria-label="סטטוס">
+          {TABS.filter((t) => role !== 'accountant' || ['', 'approved', 'sent'].includes(t.id)).map((t) => {
+            const n = documents.filter((d) => inTab(d, t.id)).length
+            return (
+              <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={`fin-tab ${tab === t.id ? 'is-active' : ''}`} onClick={() => { const p = new URLSearchParams(params); if (t.id) p.set('status', t.id); else p.delete('status'); setParams(p); setSel(new Set()) }}>
+                {t.label} <em>{n}</em>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <div className="fin-filters">
         <label className="fin-search">
           <Icon name="search" size={18} />
-          <input type="search" placeholder="חיפוש ספק, מספר חשבונית, סכום…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="חיפוש" />
+          <input type="search" placeholder="ספק, מספר, חברה, פרויקט, קטגוריה, סכום…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="חיפוש מסמכים" />
         </label>
-        <select className="fin-select" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="חודש">
-          <option value="">כל החודשים</option>
-          {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
-        </select>
-        {businesses.length > 1 && (
-          <select className="fin-select" value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="חברה">
-            <option value="">כל החברות</option>
-            {businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
-        )}
-        <select className="fin-select" value={cat} onChange={(e) => setCat(e.target.value)} aria-label="קטגוריה">
-          <option value="">כל הקטגוריות</option>
-          {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-        </select>
-        <select className="fin-select" value={source} onChange={(e) => setSource(e.target.value)} aria-label="מקור">
-          <option value="">כל המקורות</option>
-          {Object.entries(SOURCE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
+        <button type="button" className={`fin-btn ${activeFilters ? 'fin-btn--on' : ''}`} onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} aria-controls="fin-doc-filters"><Icon name="filter" size={18} /> סינון{activeFilters ? ` (${activeFilters})` : ''}</button>
+        {can('upload') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => setShowUpload((v) => !v)}><Icon name="plus" size={18} /> הוספת מסמכים</button>}
       </div>
+
+      {showFilters && (
+        <div className="fin-filter-panel" id="fin-doc-filters">
+          <label className="fin-field"><span className="fin-field__label">מתאריך</span><input type="date" value={f.from} onChange={setFilter('from')} /></label>
+          <label className="fin-field"><span className="fin-field__label">עד תאריך</span><input type="date" value={f.to} onChange={setFilter('to')} /></label>
+          <label className="fin-field"><span className="fin-field__label">ספק</span><select value={f.supplier} onChange={setFilter('supplier')}><option value="">הכול</option>{suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+          <label className="fin-field"><span className="fin-field__label">חברה</span><select value={f.biz} onChange={setFilter('biz')}><option value="">הכול</option><option value="none">לא משויך</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+          <label className="fin-field"><span className="fin-field__label">פרויקט</span><select value={f.project} onChange={setFilter('project')}><option value="">הכול</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+          <label className="fin-field"><span className="fin-field__label">קטגוריה</span><select value={f.cat} onChange={setFilter('cat')}><option value="">הכול</option>{categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}</select></label>
+          <label className="fin-field"><span className="fin-field__label">סוג מסמך</span><select value={f.type} onChange={setFilter('type')}><option value="">הכול</option>{Object.entries(DOC_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+          <label className="fin-field"><span className="fin-field__label">מקור</span><select value={f.source} onChange={setFilter('source')}><option value="">הכול</option>{Object.entries(SOURCE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}{mailboxes.map((m) => <option key={m.id} value={m.id}>{m.email}</option>)}</select></label>
+          <label className="fin-field"><span className="fin-field__label">סכום מ-</span><input type="number" inputMode="decimal" value={f.min} onChange={setFilter('min')} /></label>
+          <label className="fin-field"><span className="fin-field__label">סכום עד</span><input type="number" inputMode="decimal" value={f.max} onChange={setFilter('max')} /></label>
+          <button type="button" className="fin-link" onClick={() => setF(EMPTY_F)} disabled={!activeFilters}>ניקוי הסינון</button>
+        </div>
+      )}
+
+      {showUpload && <UploadZone onDone={reload} />}
 
       {sel.size > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <strong>{sel.size} מסומנים</strong>
-          <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approved')}><Icon name="check" size={18} /> אישור</button>
-          <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('sent')}>סימון כנשלח לרו״ח</button>
-          <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('rejected')}>דחייה</button>
-          <button type="button" className="fin-link" onClick={() => setSel(new Set())}>ביטול סימון</button>
+          {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
+          {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status))}>דחייה</button>}
+          {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status))}>סימון ככפול</button>}
+          {edit && businesses.length > 0 && (
+            <select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
+              <option value="">שיוך לחברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          )}
+          {edit && projects.length > 0 && (
+            <select className="fin-select" value="" onChange={(e) => e.target.value && bulk('project', { project_id: e.target.value === 'none' ? null : e.target.value })} aria-label="שיוך לפרויקט" disabled={!!busy}>
+              <option value="">שיוך לפרויקט…</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          )}
+          {can('export') && <button type="button" className="fin-btn" disabled={!!busy} onClick={exportSelected}><Icon name="plug" size={18} /> ייצוא</button>}
+          <button type="button" className="fin-btn" disabled={!!busy} onClick={downloadOriginals}><Icon name="download" size={18} /> {busy === 'zip' ? 'מכין…' : 'הורדת המקור'}</button>
+          <button type="button" className="fin-link" onClick={() => setSel(new Set())}>ביטול</button>
         </div>
       )}
+      {note && <p className="fin-note" role="status">{note}</p>}
 
       {rows.length === 0 ? (
-        <Empty title={documents.length ? 'אין מסמכים שמתאימים לסינון' : 'עוד אין מסמכים'} action={!documents.length && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
-          {documents.length ? 'נסו להסיר חלק מהמסננים.' : 'חברו תיבת Gmail כדי שהחשבוניות ייאספו לבד, או העלו קבצים ידנית.'}
+        <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
+          {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : (
         <div className="fin-table-wrap">
-          <table className="fin-table">
+          <table className="fin-table fin-table--docs">
             <thead>
               <tr>
                 <th className="fin-table__check"><input type="checkbox" checked={allOn} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="סימון הכול" /></th>
-                <th>תאריך</th>
-                <th>ספק</th>
-                <th className="fin-hide-sm">סוג ומספר</th>
-                <th className="fin-hide-sm">קטגוריה</th>
-                {businesses.length > 1 && <th className="fin-hide-md">חברה</th>}
-                <th className="fin-num">מע״מ</th>
-                <th className="fin-num">סה״כ</th>
+                <Th k="supplier">ספק</Th>
+                <th className="fin-col-md">סוג</th>
+                <Th k="number" className="fin-col-md">מספר</Th>
+                <Th k="date">תאריך</Th>
+                <th className="fin-col-lg">חברה</th>
+                <th className="fin-col-lg">פרויקט</th>
+                <th className="fin-col-lg">קטגוריה</th>
+                <Th k="before" className="fin-num fin-col-xl">לפני מע״מ</Th>
+                <Th k="vat" className="fin-num fin-col-md">מע״מ</Th>
+                <Th k="total" className="fin-num">סה״כ</Th>
                 <th>סטטוס</th>
+                <th className="fin-col-xl">מקור</th>
+                <Th k="conf" className="fin-col-md">ודאות</Th>
+                <th className="fin-col-md"><span className="fin-sr">פעולות</span></th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((d) => (
-                <tr key={d.id} className={d.id === id ? 'is-current' : ''} onClick={() => go(`/documents/${d.id}${tab ? `?status=${tab}` : ''}`)}>
-                  <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
-                  <td>{date(docDate(d))}</td>
-                  <td>
-                    <span className="fin-cell-main">{d.supplier_name || <em className="fin-muted">{d.file_name}</em>}</span>
-                    <small className="fin-cell-sub">{SOURCE[d.source]}{d.description ? ` · ${d.description}` : ''}</small>
-                  </td>
-                  <td className="fin-hide-sm">{DOC_TYPE[d.doc_type] || ''}{d.doc_number ? ` ${d.doc_number}` : ''}</td>
-                  <td className="fin-hide-sm">{d.category || '—'}</td>
-                  {businesses.length > 1 && <td className="fin-hide-md">{bizName(d.business_id)}</td>}
-                  <td className="fin-num">{money(d.vat_amount, d.currency)}</td>
-                  <td className="fin-num"><strong>{money(d.total_amount, d.currency)}</strong></td>
-                  <td><StatusPill status={d.status} /></td>
-                </tr>
-              ))}
+              {rows.map((d) => {
+                const errs = issuesOf(d).filter((i) => i.level === 'error').length
+                return (
+                  <tr key={d.id} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))}>
+                    <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
+                    <td className="fin-td-main">
+                      <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>
+                      <small className="fin-cell-sub">{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
+                    </td>
+                    <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
+                    <td className="fin-col-md fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
+                    <td data-label="תאריך">{date(docDate(d))}</td>
+                    <td className="fin-col-lg" data-label="חברה">{nameOf(businesses, d.business_id) || <span className="fin-muted">—</span>}</td>
+                    <td className="fin-col-lg" data-label="פרויקט">{nameOf(projects, d.project_id) || <span className="fin-muted">—</span>}</td>
+                    <td className="fin-col-lg" data-label="קטגוריה">{d.category || '—'}</td>
+                    <td className="fin-num fin-col-xl" data-label="לפני מע״מ">{money(d.amount_before_vat, d.currency)}</td>
+                    <td className="fin-num fin-col-md" data-label="מע״מ">{money(d.vat_amount, d.currency)}</td>
+                    <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
+                    <td className="fin-td-status"><StatusPill status={d.status} /></td>
+                    <td className="fin-col-xl" data-label="מקור">{SOURCE[d.source]}</td>
+                    <td className="fin-col-md" data-label="ודאות"><Confidence value={d.confidence} /></td>
+                    <td className="fin-col-md" onClick={(e) => e.stopPropagation()}>
+                      {d.file_path && <button type="button" className="fin-icon-btn" aria-label={`הורדת המקור של ${d.supplier_name || d.file_name}`} title="הורדת הקובץ המקורי" onClick={async () => saveBlob(await api.fileBlob(d), d.file_name || 'document')}><Icon name="download" size={18} /></button>}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
             <tfoot>
-              <tr><td colSpan={businesses.length > 1 ? 7 : 6}>{rows.length} מסמכים</td><td className="fin-num"><strong>{money(total)}</strong></td><td /></tr>
+              <tr><td colSpan={15}><span>{rows.length} מסמכים</span><strong>{money(total)}</strong></td></tr>
             </tfoot>
           </table>
         </div>
@@ -163,11 +234,11 @@ export default function Documents() {
         <DocumentPanel
           key={current.id}
           doc={current}
-          onClose={() => go(`/documents${tab ? `?status=${tab}` : ''}`)}
+          onClose={() => go(`${base}${tab ? `?status=${tab}` : ''}`)}
           onSaved={patchDoc}
-          onDeleted={async () => { await reload(); go('/documents') }}
-          onPrev={idx > 0 ? () => go(`/documents/${rows[idx - 1].id}${tab ? `?status=${tab}` : ''}`) : null}
-          onNext={idx >= 0 && idx < rows.length - 1 ? () => go(`/documents/${rows[idx + 1].id}${tab ? `?status=${tab}` : ''}`) : null}
+          onDeleted={async () => { await reload(); go(base) }}
+          onPrev={idx > 0 ? () => go(link(rows[idx - 1].id)) : null}
+          onNext={idx >= 0 && idx < rows.length - 1 ? () => go(link(rows[idx + 1].id)) : null}
         />
       )}
     </div>

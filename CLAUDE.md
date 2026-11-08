@@ -20,3 +20,10 @@ When you add a route to `src/App.jsx`:
 3. Only if the page truly cannot be edited (an article, a legal page, a tool), add it to `EXCLUDED` in `defs/index.js` with a reason.
 
 `scripts/check-pages.mjs` runs as part of `npm run build`, and it fails when a route is neither covered nor excluded.
+
+## Finance system (/admin/finance)
+
+KURKOOS FINANCE AI, the internal invoice system: `docs/finance/README.md`. Rules: approval, export and the audit trail are enforced in
+`supabase/finance.sql` (RLS + triggers), never only in the screens. Finance members who are not admins must not reach the website admin:
+re-run `supabase/finance.sql` after adding a site table (it adds RESTRICTIVE policies to every public table), and keep the
+`FINANCE_ONLY_OK` check in `api/[fn].js`. Run `scripts/finance-e2e` (docs/finance/TESTING.md) after changing the finance system.

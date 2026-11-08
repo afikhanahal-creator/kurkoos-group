@@ -20,12 +20,12 @@ export const can = (role, what) => !!role && (CAN[what] || []).includes(role)
 
 export const STATUS = {
   processing: { label: 'בעיבוד', tone: 'info' },
-  review: { label: 'ממתין לאישור', tone: 'warn' },
-  approved: { label: 'מאושר', tone: 'ok' },
-  sent: { label: 'יוצא לרו״ח', tone: 'done' },
+  review: { label: 'לבדיקה', tone: 'warn' },
+  approved: { label: 'מוכן לרו״ח', tone: 'ok' },
+  sent: { label: 'נשלח לרו״ח', tone: 'done' },
   rejected: { label: 'נדחה', tone: 'muted' },
-  duplicate: { label: 'כפול', tone: 'muted' },
-  failed: { label: 'שגיאה', tone: 'bad' },
+  duplicate: { label: 'חשד לכפילות', tone: 'muted' },
+  failed: { label: 'לא נקרא', tone: 'bad' },
 }
 export const DOC_TYPE = {
   invoice: 'חשבונית מס',

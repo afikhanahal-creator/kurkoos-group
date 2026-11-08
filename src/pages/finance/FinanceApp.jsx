@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, hasSupabase } from '../../lib/supabase.js'
 import { useAuth } from '../../lib/useAuth.js'
@@ -13,6 +13,8 @@ import CommandPalette from './CommandPalette.jsx'
 import Scanners from './Scanners.jsx'
 import Cloud from './Cloud.jsx'
 import Delivery from './Delivery.jsx'
+import SendCenter from './SendCenter.jsx'
+import Connections from './Connections.jsx'
 import Reports from './Reports.jsx'
 import DataManagement from './DataManagement.jsx'
 import Automations from './Automations.jsx'
@@ -35,34 +37,41 @@ export const BASE = '/admin/finance'
 const ALL = ['admin', 'finance_manager', 'employee', 'accountant']
 const OPS = ['admin', 'finance_manager']
 export const NAV = [
-  { to: '', label: 'מרכז בקרה', icon: 'home', roles: ALL, el: <Dashboard />, group: 'עבודה' },
-  { to: '/documents', label: 'כל המסמכים', accLabel: 'מסמכים מאושרים', icon: 'docs', roles: ALL, el: <Documents preset="all" />, group: 'עבודה' },
-  { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'עבודה' },
-  { to: '/pending', label: 'ממתינים לאישור', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'עבודה' },
-  { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'עבודה' },
+  // daily work: what arrived, what needs a look, what goes to the accountant
+  { to: '', label: 'מרכז בקרה', icon: 'home', roles: ALL, el: <Dashboard />, group: 'מסמכים' },
+  { to: '/documents', label: 'כל המסמכים', accLabel: 'מסמכים מאושרים', icon: 'docs', roles: ALL, el: <Documents preset="all" />, group: 'מסמכים' },
+  { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'מסמכים' },
+  { to: '/pending', label: 'ממתינים לבדיקה', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'מסמכים' },
+  { to: '/send', label: 'שליחה לרו״ח', icon: 'send', roles: OPS, el: <SendCenter />, badge: 'ready', group: 'מסמכים' },
+  { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory />, group: 'מסמכים' },
+  { to: '/suppliers', label: 'ספקים', icon: 'suppliers', roles: OPS, el: <MasterData kind="suppliers" />, badge: 'suppliers', group: 'נתוני יסוד', detail: <EntityOverview kind="suppliers" /> },
   { to: '/companies', label: 'חברות', icon: 'company', roles: OPS, el: <MasterData kind="businesses" />, group: 'נתוני יסוד', detail: <EntityOverview kind="businesses" /> },
   { to: '/projects', label: 'פרויקטים', icon: 'project', roles: OPS, el: <MasterData kind="projects" />, group: 'נתוני יסוד', detail: <EntityOverview kind="projects" /> },
-  { to: '/suppliers', label: 'ספקים', icon: 'suppliers', roles: OPS, el: <MasterData kind="suppliers" />, badge: 'suppliers', group: 'נתוני יסוד', detail: <EntityOverview kind="suppliers" /> },
   { to: '/categories', label: 'קטגוריות', icon: 'tag', roles: OPS, el: <MasterData kind="categories" />, group: 'נתוני יסוד', detail: <EntityOverview kind="categories" /> },
-  { to: '/data', label: 'ניהול נתונים', icon: 'data', roles: OPS, el: <DataManagement />, group: 'נתוני יסוד' },
-  { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'אוטומציה' },
-  { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'אוטומציה' },
-  { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'מקורות' },
-  { to: '/scanners', label: 'סורקים ניידים', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'מקורות' },
-  { to: '/integrations', label: 'תוכנת הנהלת חשבונות', icon: 'plug', roles: OPS, el: <Integrations />, group: 'ייצוא' },
-  { to: '/cloud', label: 'סנכרון לענן', icon: 'cloud', roles: OPS, el: <Cloud />, group: 'ייצוא' },
-  { to: '/delivery', label: 'שליחה אוטומטית', icon: 'webhook', roles: ['admin'], el: <Delivery />, group: 'ייצוא' },
-  { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory />, group: 'ייצוא' },
-  { to: '/users', label: 'הארגון ומשתמשים', icon: 'users', roles: ['admin'], el: <Users />, group: 'מערכת' },
-  { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings />, group: 'מערכת' },
+  // where documents come from
+  { to: '/connections', label: 'חיבורים', icon: 'plug', roles: ['admin', 'finance_manager', 'employee'], el: <Connections />, group: 'קליטה' },
+  { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'קליטה' },
+  { to: '/scanners', label: 'סורקים ניידים', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
+  // everything else, folded away until needed
+  { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
+  { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'מתקדם' },
+  { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'מתקדם' },
+  { to: '/data', label: 'ניהול נתונים', icon: 'data', roles: OPS, el: <DataManagement />, group: 'מתקדם' },
+  { to: '/integrations', label: 'תוכנת הנהלת חשבונות', icon: 'plug', roles: OPS, el: <Integrations />, group: 'מתקדם' },
+  { to: '/cloud', label: 'סנכרון לענן', icon: 'cloud', roles: OPS, el: <Cloud />, group: 'מתקדם' },
+  { to: '/delivery', label: 'שליחה אוטומטית', icon: 'webhook', roles: ['admin'], el: <Delivery />, group: 'מתקדם' },
+  { to: '/users', label: 'הארגון ומשתמשים', icon: 'users', roles: ['admin'], el: <Users />, group: 'מתקדם' },
+  { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings />, group: 'מתקדם' },
 ]
-const GROUPS = ['עבודה', 'נתוני יסוד', 'מקורות', 'אוטומציה', 'ייצוא', 'מערכת']
+const GROUPS = ['מסמכים', 'נתוני יסוד', 'קליטה', 'מתקדם']
+const FOLDED = 'מתקדם'
 
 const Ctx = createContext(null)
 export const useFinance = () => useContext(Ctx)
 
 function useFinanceData(enabled) {
   const [state, setState] = useState({ loading: true, error: '', me: null, documents: [], businesses: [], projects: [], categories: [], suppliers: [], mailboxes: [], members: [], allocations: [], settings: {} })
+  const loadedAt = useRef(0)
   const reload = useCallback(async () => {
     try {
       const me = await api.me()
@@ -70,12 +79,20 @@ function useFinanceData(enabled) {
       const [documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = await Promise.all([
         api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(), api.loadAllocations(), api.loadSettings(),
       ])
+      loadedAt.current = Date.now()
       setState({ loading: false, error: '', me, documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings })
     } catch (e) {
       setState((s) => ({ ...s, loading: false, error: /does not exist|schema cache|fin_me/.test(e.message) ? 'הטבלאות של המערכת עוד לא קיימות. מריצים את supabase/finance.sql ב-Supabase › SQL Editor' : e.message }))
     }
   }, [])
   useEffect(() => { if (enabled) reload() }, [enabled, reload])
+  // others work in the system too: refresh quietly when the tab comes back into view, if the data is older than 20 s
+  useEffect(() => {
+    if (!enabled) return undefined
+    const on = () => { if (document.visibilityState === 'visible' && Date.now() - loadedAt.current > 20_000) reload() }
+    document.addEventListener('visibilitychange', on); window.addEventListener('focus', on)
+    return () => { document.removeEventListener('visibilitychange', on); window.removeEventListener('focus', on) }
+  }, [enabled, reload])
   const reading = state.documents.some((d) => d.status === 'processing')
   useEffect(() => {
     if (!reading) return undefined
@@ -83,7 +100,8 @@ function useFinanceData(enabled) {
     return () => clearInterval(t)
   }, [reading, reload])
   const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
-  return { ...state, reload, patchDoc }
+  const refreshIfStale = useCallback(() => { if (Date.now() - loadedAt.current > 20_000) reload() }, [reload])
+  return { ...state, reload, patchDoc, refreshIfStale }
 }
 
 function Login() {
@@ -159,6 +177,8 @@ export default function FinanceApp() {
     on(); window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
   }, [])
+  const [moreOpen, setMoreOpen] = useState(() => { try { return localStorage.getItem('fin-nav-more') === 'open' } catch { return false } })
+  const toggleMore = () => setMoreOpen((v) => { try { localStorage.setItem('fin-nav-more', v ? 'closed' : 'open') } catch { /* private mode */ } return !v })
   const toggleRail = () => setCollapsed((v) => { try { localStorage.setItem('fin-side', v ? 'full' : 'rail') } catch { /* private mode */ } return !v })
   const [cmd, setCmd] = useState(false)
   useEffect(() => {
@@ -172,7 +192,7 @@ export default function FinanceApp() {
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem(THEME_KEY) || 'light' } catch { return 'light' } })
   useEffect(() => { try { localStorage.setItem(THEME_KEY, theme) } catch { /* noop */ } }, [theme])
   useEffect(() => { document.title = 'Kurkoos Finance AI · קבוצת קורקוס' }, [])
-  useEffect(() => { setNavOpen(false) }, [pathname])
+  useEffect(() => { setNavOpen(false); data.refreshIfStale?.() }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!navOpen) return undefined
     const onKey = (e) => { if (e.key === 'Escape') setNavOpen(false) }
@@ -191,6 +211,7 @@ export default function FinanceApp() {
       new: data.documents.filter((d) => new Date(d.created_at).getTime() > week && ['review', 'processing'].includes(d.status)).length,
       pending: data.documents.filter((d) => d.status === 'review').length,
       suppliers: data.suppliers.filter((x) => x.status === 'pending').length,
+      ready: data.documents.filter((d) => d.status === 'approved' && !d.exported_at).length,
     }
   }, [data.documents, data.suppliers])
 
@@ -224,9 +245,15 @@ export default function FinanceApp() {
             <button type="button" className="fin__collapse" onClick={toggleRail} aria-label={collapsed ? 'הרחבת התפריט' : 'כיווץ התפריט'} title={collapsed ? 'הרחבת התפריט' : 'כיווץ התפריט'} aria-pressed={collapsed}><Icon name="back" size={17} /></button>
           </div>
           <nav className="fin__nav">
-            {GROUPS.filter((g) => nav.some((n) => n.group === g)).map((g) => (
-            <div className="fin__nav-group" key={g}>
-            <span className="fin__nav-label">{g}</span>
+            {GROUPS.filter((g) => nav.some((n) => n.group === g)).map((g) => {
+            const foldable = g === FOLDED && nav.length > 12
+            const open = !foldable || moreOpen || nav.some((n) => n.group === g && n === active)
+            return (
+            <div className={`fin__nav-group ${foldable ? 'is-foldable' : ''} ${open ? '' : 'is-folded'}`} key={g}>
+            {foldable ? (
+              <button type="button" className="fin__nav-label fin__nav-more" onClick={toggleMore} aria-expanded={open} aria-controls="fin-nav-more">{g}<Icon name="chev" size={14} /></button>
+            ) : <span className="fin__nav-label">{g}</span>}
+            <div className="fin__nav-items" id={foldable ? 'fin-nav-more' : undefined}>
             {nav.filter((n) => n.group === g).map((n) => {
               const on = n === active
               const count = n.badge ? badges[n.badge] : 0
@@ -239,7 +266,9 @@ export default function FinanceApp() {
               )
             })}
             </div>
-            ))}
+            </div>
+            )
+            })}
           </nav>
           <div className="fin__side-foot">
             {role === 'admin' && <a href="/admin" className="fin__back"><Icon name="back" size={16} /> ניהול האתר</a>}

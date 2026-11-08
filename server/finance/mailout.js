@@ -2,7 +2,7 @@
 // with the original files attached, a CSV summary for the accounting software, and a short table in the body.
 // Attachments stop at ~25MB (Resend takes 40MB after base64); the rest go as links valid for 7 days.
 import { env } from './env.js'
-import { sb, download, audit } from './db.js'
+import { sb, download, audit, insert, rpc } from './db.js'
 import { signedUrl, emailOk } from './outbound.js'
 import { money } from './format-server.js'
 
@@ -14,7 +14,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const csvCell = (v) => { const s = String(v ?? ''); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
 const safeName = (s) => String(s || '').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 60)
 
-export async function sendToAccountant({ ids, to, note, subject, ccMe, user, period }) {
+export async function sendToAccountant({ ids, to, note, subject, ccMe, user, period, mark }) {
   const list = [...new Set((Array.isArray(ids) ? ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x))
   if (!list.length) throw Object.assign(new Error('לא נבחרו מסמכים'), { status: 400 })
   if (list.length > MAX_DOCS) throw Object.assign(new Error(`אפשר לשלוח עד ${MAX_DOCS} מסמכים במייל אחד. צמצמו את הטווח.`), { status: 400 })
@@ -77,7 +77,22 @@ ${links.length ? `<p>קבצים שלא נכנסו למייל (גדולים מד�
     body: JSON.stringify({ from: process.env.FINANCE_FROM || process.env.NOTIFY_FROM || 'Kurkoos Finance <onboarding@resend.dev>', to: rcpt, ...(ccMe && emailOk(user.email) ? { cc: [user.email] } : {}), reply_to: emailOk(user.email) ? user.email : undefined, subject: title, html, attachments }),
   })
   const body = await r.text()
-  if (!r.ok) throw Object.assign(new Error(`שליחת המייל נכשלה (${r.status}): ${body.slice(0, 160)}`), { status: 502 })
-  await audit('mail', null, 'sent_to_accountant', { to: rcpt, documents: docs.map((d) => d.id), attached: attachments.length - 1, linked: links.length, total }, user)
-  return { sent: docs.length, attached: attachments.length - 1, linked: links.length, total, notApproved, to: rcpt }
+  let providerId = null
+  try { providerId = JSON.parse(body).id || null } catch { /* not json */ }
+  const base = { channel: 'email', recipients: rcpt, document_ids: docs.map((d) => d.id), documents_count: docs.length, total, period: period || null, attached: attachments.length - 1, linked: links.length, created_by: user.id, created_by_email: user.email }
+  // "sent" only when the mail provider accepted the message and gave it an id; otherwise it is a failed delivery
+  if (!r.ok || !providerId) {
+    const error = `שליחת המייל נכשלה (${r.status}): ${body.slice(0, 160)}`
+    await insert('fin_deliveries', { ...base, status: 'failed', error }, 'return=minimal').catch(() => {})
+    throw Object.assign(new Error(error), { status: 502 })
+  }
+  const delivery = await insert('fin_deliveries', { ...base, status: 'sent', provider_id: providerId }).catch(() => null)
+  // approved documents become "sent to the accountant" through the same audited export function the screens use
+  let marked = 0
+  const approved = docs.filter((d) => d.status === 'approved' && !d.exported_at).map((d) => d.id)
+  if (mark && approved.length) {
+    try { await rpc('fin_record_export', { p_ids: approved, p_business_id: null, p_period: period || null, p_format: 'email', p_destination: `email:${rcpt.join(',')}`, p_integration_id: null, p_allow_reexport: false }, user.token); marked = approved.length } catch { marked = 0 }
+  }
+  await audit('mail', delivery?.id || null, 'sent_to_accountant', { to: rcpt, documents: docs.map((d) => d.id), attached: attachments.length - 1, linked: links.length, total, provider_id: providerId, marked }, user)
+  return { sent: docs.length, attached: attachments.length - 1, linked: links.length, total, notApproved, to: rcpt, marked, delivery: delivery?.id || null }
 }

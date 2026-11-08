@@ -4,7 +4,7 @@ import * as api from './api.js'
 import { STATUS, dateTime, toCsv } from './format.js'
 import { saveBlob } from './zip.js'
 import { Card, Field, Icon, PageHead, useAsync, Skeleton } from './ui.jsx'
-import { ActivityFeed } from './Dashboard.jsx'
+import { ActivityFeed } from './Overview.jsx'
 
 export default function DataManagement() {
   const { documents, categories, can, reload, go } = useFinance()

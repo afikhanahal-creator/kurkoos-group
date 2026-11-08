@@ -101,7 +101,13 @@ export default async function whatsappWebhook(req, res) {
     await closeRuns(runs)
     await patch(`fin_whatsapp_senders?id=eq.${sender.id}`, { docs_count: (sender.docs_count || 0) + 1, last_received_at: new Date().toISOString() })
     await log({ sender_id: sender.id, outcome: 'imported', document_id: doc.id, file_name: file.fileName })
-    await reply(phone, done?.status === 'failed' ? 'קיבלנו את הקובץ. הקריאה האוטומטית נכשלה, והמסמך ממתין לבדיקה ידנית.' : `קיבלנו ✓ ${done?.supplier_name || 'המסמך'}${done?.total_amount ? `, ${_m(done.total_amount)}` : ''}. ממתין לאישור.`)
+    const site = String(process.env.SITE_URL || '').replace(/\/$/, '')
+    const link = site ? `\n${site}/admin/finance/documents/${doc.id}` : ''
+    const company = done?.business_id ? (await one(`fin_businesses?id=eq.${done.business_id}&select=name`))?.name : null
+    const unclear = done?.status === 'failed' || !done?.supplier_name || !done?.total_amount
+    await reply(phone, unclear
+      ? `קיבלנו את הקובץ, אבל לא הצלחנו לקרוא את כל הפרטים. המסמך נשמר וממתין לבדיקה ידנית.${link}`
+      : `החשבונית התקבלה ונקלטה במערכת בהצלחה.\n\nספק: ${done.supplier_name}\nסכום: ${_m(done.total_amount)}${company ? `\nחברה: ${company}` : ''}\n\nאפשר לצפות בה ב-Kurkoos Finance.${link}`)
     // the sender already has the confirmation; now the automatic deliveries (webhook / email) for the new document
     const { flushOutbound } = await import('./outbound.js'); await flushOutbound({ budgetMs: 6_000 }).catch(() => {})
     res.status(200).json({ ok: true, outcome: 'imported', document_id: doc.id })
@@ -110,4 +116,20 @@ export default async function whatsappWebhook(req, res) {
     await reply(phone, 'משהו השתבש בקבלת הקובץ. נסו שוב בעוד כמה דקות.')
     res.status(200).json({ ok: false, outcome: 'failed' })   // 200: a retry storm would not help
   }
+}
+
+/* sends one document as a WhatsApp file message. Green API fetches the file from a signed link (24 hours). */
+export async function sendDocument({ doc, phone, caption }) {
+  if (!process.env.GREENAPI_ID_INSTANCE || !process.env.GREENAPI_TOKEN) throw Object.assign(new Error('WhatsApp לא הוגדר בשרת (GREENAPI_ID_INSTANCE, GREENAPI_TOKEN)'), { status: 503 })
+  const { signedUrl } = await import('./outbound.js')
+  const url = await signedUrl(doc.file_path, 86400)
+  if (!url) throw Object.assign(new Error('לא הצלחנו להכין קישור לקובץ'), { status: 500 })
+  const ext = (doc.file_name || '').match(/\.[a-z0-9]{2,5}$/i)?.[0] || (doc.file_mime === 'application/pdf' ? '.pdf' : '.jpg')
+  const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/sendFileByUrl/${process.env.GREENAPI_TOKEN}`, {
+    method: 'POST', signal: AbortSignal.timeout(20_000), headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chatId: `${phone}@c.us`, urlFile: url, fileName: `${String(doc.supplier_name || 'מסמך').slice(0, 40)}${doc.doc_number ? `-${doc.doc_number}` : ''}${ext}`, caption: caption || '' }),
+  })
+  const d = await r.json().catch(() => ({}))
+  if (!r.ok || !d.idMessage) throw Object.assign(new Error(`השליחה ב-WhatsApp נכשלה (${r.status})`), { status: 502 })
+  return d.idMessage
 }

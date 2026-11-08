@@ -1275,3 +1275,32 @@ $$;
 revoke all on function public.fin_outbound_count(uuid, boolean, text) from public, anon, authenticated;
 grant execute on function public.fin_outbound_count(uuid, boolean, text) to service_role;
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v8 (2026-11-08): accountant delivery history
+-- ============================================================
+-- every "send to the accountant": who, to whom, which documents, and what the mail provider answered.
+-- 'sent' means the provider accepted the message (it returned an id); a failure is kept with its reason.
+create table if not exists public.fin_deliveries (
+  id uuid primary key default gen_random_uuid(),
+  channel text not null default 'email' check (channel in ('email', 'whatsapp')),
+  recipients text[] not null,
+  document_ids uuid[] not null,
+  documents_count int not null,
+  total numeric(14, 2),
+  period text,
+  status text not null check (status in ('sent', 'failed')),
+  provider_id text,
+  error text,
+  attached int, linked int,
+  created_by uuid, created_by_email text,
+  created_at timestamptz default now()
+);
+create index if not exists fin_deliveries_at on public.fin_deliveries (created_at desc);
+alter table public.fin_deliveries enable row level security;
+revoke all on public.fin_deliveries from anon;
+revoke insert, update, delete on public.fin_deliveries from authenticated;
+grant select on public.fin_deliveries to authenticated;
+drop policy if exists "fin_deliveries read" on public.fin_deliveries;
+create policy "fin_deliveries read" on public.fin_deliveries for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager', 'accountant']));
+notify pgrst, 'reload schema';

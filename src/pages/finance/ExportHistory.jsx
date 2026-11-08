@@ -7,8 +7,38 @@ import { Empty, Icon, PageHead, Pill, useAsync, Skeleton } from './ui.jsx'
 
 const FMT = { zip: 'ZIP', excel: 'Excel', csv: 'CSV', pdf: 'PDF', api: 'API' }
 
+/* empty state: what an export is, in four steps, and where to start */
+function FirstExport({ onStart }) {
+  const [guide, setGuide] = useState(false)
+  const steps = ['בוחרים מסמכים', 'בודקים את הסיכום', 'שולחים לרו״ח', 'רואים כאן מה נשלח']
+  return (
+    <section className="fin-firstexp">
+      <svg className="fin-firstexp__art" viewBox="0 0 240 150" aria-hidden="true" direction="ltr">
+        <g transform="translate(118 8) rotate(4 50 60)"><rect width="100" height="128" rx="10" fill="var(--ok-wash)" stroke="color-mix(in srgb, var(--ok) 35%, transparent)" /><rect width="100" height="24" rx="10" fill="color-mix(in srgb, var(--ok) 22%, var(--ok-wash))" /><text x="10" y="16" fontSize="10" fill="var(--ok)" textAnchor="start" fontFamily="system-ui, sans-serif" direction="ltr">export.xlsx</text><rect x="14" y="40" width="72" height="5" rx="2.5" fill="color-mix(in srgb, var(--ok) 30%, transparent)" /><rect x="30" y="54" width="56" height="5" rx="2.5" fill="color-mix(in srgb, var(--ok) 22%, transparent)" /><rect x="22" y="68" width="64" height="5" rx="2.5" fill="color-mix(in srgb, var(--ok) 22%, transparent)" /><rect x="40" y="82" width="46" height="5" rx="2.5" fill="color-mix(in srgb, var(--ok) 22%, transparent)" /></g>
+        <g transform="translate(30 16) rotate(-4 50 60)"><rect width="100" height="128" rx="10" fill="var(--ocean-wash)" stroke="color-mix(in srgb, var(--ocean) 35%, transparent)" /><rect width="100" height="24" rx="10" fill="color-mix(in srgb, var(--ocean) 20%, var(--ocean-wash))" /><text x="10" y="16" fontSize="10" fill="var(--ocean)" textAnchor="start" fontFamily="system-ui, sans-serif" direction="ltr">receipt.pdf</text><rect x="14" y="40" width="72" height="5" rx="2.5" fill="color-mix(in srgb, var(--ocean) 35%, transparent)" /><rect x="34" y="54" width="52" height="5" rx="2.5" fill="color-mix(in srgb, var(--ocean) 22%, transparent)" /><rect x="44" y="68" width="42" height="5" rx="2.5" fill="color-mix(in srgb, var(--ocean) 22%, transparent)" /></g>
+        <g transform="translate(108 104)"><circle r="18" fill="var(--sheet)" stroke="var(--line-2)" /><path d="M0 -7v13M-5 1l5 5 5-5" fill="none" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></g>
+      </svg>
+      <h3>עוד לא נשלחו מסמכים לרו״ח</h3>
+      <p>כל שליחה וכל ייצוא יופיעו כאן: מתי, מי שלח, לאן, כמה מסמכים ומה הסכום. אפשר להוריד שוב כל חבילה.</p>
+      <ol className="fin-firstexp__steps">
+        {steps.map((t, i) => <li key={t}><span>{i + 1}</span><small>{t}</small></li>)}
+      </ol>
+      <button type="button" className="fin-btn fin-btn--primary fin-btn--wide" onClick={onStart}>בחירת מסמכים לשליחה</button>
+      <button type="button" className="fin-link" onClick={() => setGuide((v) => !v)} aria-expanded={guide}>מדריך שלב אחרי שלב</button>
+      {guide && (
+        <ol className="fin-guide__steps fin-firstexp__guide">
+          <li><strong>בוחרים מסמכים.</strong> במסך "שליחה לרו״ח" מופיעים המסמכים שאושרו ועוד לא נשלחו. אפשר לסנן לפי תאריך, חברה ופרויקט, ולבטל מסמכים בודדים.</li>
+          <li><strong>בודקים את הסיכום.</strong> מספר המסמכים, הסכום, החברות והתקופה מופיעים בסרגל התחתון, וגם מסמכים שעוד לא אושרו.</li>
+          <li><strong>שולחים.</strong> רו״ח מקבל מייל אחד עם כל הקבצים המקוריים וקובץ סיכום לקליטה בתוכנה.</li>
+          <li><strong>עוקבים.</strong> המסמכים מסומנים "נשלח לרו״ח" רק אחרי ששרת הדואר קיבל את ההודעה, והשליחה נרשמת כאן.</li>
+        </ol>
+      )}
+    </section>
+  )
+}
+
 export default function ExportHistory() {
-  const { documents, businesses, projects, categories } = useFinance()
+  const { documents, businesses, projects, categories, can, go } = useFinance()
   const list = useAsync(() => api.loadExports(), [documents.length])
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
@@ -24,7 +54,7 @@ export default function ExportHistory() {
     <div className="fin-stack">
       <PageHead title="היסטוריית ייצוא" sub="כל ייצוא נרשם: מתי, מי, לאן, כמה מסמכים ומה הסכום. אפשר להוריד שוב את אותה חבילה בדיוק." />
       {msg && <p className="fin-note" role="status">{msg}</p>}
-      {list.loading ? <Skeleton /> : !(list.data || []).length ? <Empty title="עוד לא בוצע ייצוא" icon="history" /> : (
+      {list.loading ? <Skeleton /> : !(list.data || []).length ? <FirstExport onStart={() => go(can('export') ? '/send' : '/documents')} /> : (
         <div className="fin-table-wrap">
           <table className="fin-table">
             <thead><tr><th>תאריך</th><th>חברה</th><th className="fin-col-md">תקופה</th><th className="fin-num">מסמכים</th><th className="fin-num">סה״כ</th><th className="fin-col-md fin-num">מע״מ</th><th className="fin-col-md">פורמט</th><th className="fin-col-lg">יעד</th><th className="fin-col-lg">משתמש</th><th>סטטוס</th><th /></tr></thead>

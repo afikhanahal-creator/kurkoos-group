@@ -16,7 +16,7 @@ import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
 import { CLOUD, syncCloud, connectCloud } from './finance/cloud.js'
-import whatsappWebhook, { configured as waConfigured, officeNumber } from './finance/whatsapp.js'
+import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 import { sendToAccountant } from './finance/mailout.js'
 
@@ -43,6 +43,7 @@ const ROLES = {
   'outbound-flush': ['admin', 'finance_manager', 'employee'],
   'members-meta': ['admin'],
   'send-to-accountant': ['admin', 'finance_manager'],
+  'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
 }
 
 // per-user rate limit (in memory, per instance): 120 calls in 10 minutes
@@ -137,7 +138,7 @@ export default async function handler(req, res) {
   const allowed = ROLES[body.action]
   if (!allowed) { res.status(400).json({ error: 'unknown action' }); return }
   if (!user.role || !allowed.includes(user.role)) { res.status(403).json({ error: 'אין לך הרשאה לפעולה הזו' }); return }
-  if (limited(user.id)) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
+  if (body.action !== 'status' && limited(user.id)) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
 
   try {
     switch (body.action) {
@@ -148,6 +149,7 @@ export default async function handler(req, res) {
           email: !!process.env.RESEND_API_KEY,
           cron: !!process.env.CRON_SECRET,
           whatsapp: { configured: waConfigured(), number: officeNumber() },
+          schedule: { cron: '23 3 * * *', tz: 'UTC' },
           cloud: Object.fromEntries(Object.entries(CLOUD).map(([k, c]) => [k, c.configured()])),
           adapters: Object.values(ADAPTERS).map(({ id, label, kind, fields, secrets }) => ({ id, label, kind, fields, secrets })),
         })
@@ -292,8 +294,23 @@ export default async function handler(req, res) {
         return
       }
       case 'send-to-accountant': {
-        const r = await sendToAccountant({ ids: body.ids, to: body.to, note: String(body.note || '').slice(0, 2000), subject: String(body.subject || '').slice(0, 200) || null, ccMe: !!body.cc_me, period: String(body.period || '').slice(0, 60) || null, user })
+        const r = await sendToAccountant({ ids: body.ids, to: body.to, note: String(body.note || '').slice(0, 2000), subject: String(body.subject || '').slice(0, 200) || null, ccMe: !!body.cc_me, period: String(body.period || '').slice(0, 60) || null, mark: !!body.mark, user })
         res.status(200).json(r)
+        return
+      }
+      case 'whatsapp-send-doc': {
+        // share one document to a phone on WhatsApp. Employees: only their own documents, only to registered phones.
+        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
+        if (!doc || !doc.file_path) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (user.role === 'employee' && doc.created_by !== user.id) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
+        if (user.business_ids?.length && doc.business_id && !user.business_ids.includes(doc.business_id)) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
+        let phone = String(body.phone || '').replace(/\D/g, '')
+        if (phone.startsWith('0')) phone = `972${phone.slice(1)}`
+        if (!/^9725\d{8}$/.test(phone) && !/^[1-9]\d{9,14}$/.test(phone)) { res.status(400).json({ error: 'מספר נייד לא תקין' }); return }
+        if (user.role === 'employee' && !(await one(`fin_whatsapp_senders?phone=eq.${phone}&active=eq.true&select=id`))) { res.status(403).json({ error: 'אפשר לשלוח רק למספר שרשום במסך סורקים ניידים' }); return }
+        const id = await sendDocument({ doc, phone, caption: String(body.caption || '').slice(0, 500) })
+        await audit('document', doc.id, 'shared_whatsapp', { phone, message_id: id }, user)
+        res.status(200).json({ ok: true, message_id: id, phone })
         return
       }
       case 'outbound-test': {

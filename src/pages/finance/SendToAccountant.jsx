@@ -5,14 +5,14 @@ import { money, signedTotal } from './format.js'
 import { Field, Icon, Modal } from './ui.jsx'
 
 /* One email with the chosen documents: originals attached, a CSV summary, and a table in the body. */
-export default function SendToAccountant({ docs, period, onClose, onSent }) {
+export default function SendToAccountant({ docs, period, onClose, onSent, markDefault = false }) {
   const { businesses, reload } = useFinance()
   const sendable = docs.filter((d) => !['rejected', 'duplicate', 'archived'].includes(d.status))
   const suggested = useMemo(() => [...new Set(sendable.map((d) => businesses.find((b) => b.id === d.business_id)?.accountant_email).filter(Boolean))], [sendable, businesses])
   const [to, setTo] = useState(suggested.join(', '))
   const [note, setNote] = useState('')
   const [ccMe, setCcMe] = useState(true)
-  const [mark, setMark] = useState(false)
+  const [mark, setMark] = useState(markDefault)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const total = sendable.reduce((s, d) => s + signedTotal(d), 0)
@@ -22,11 +22,8 @@ export default function SendToAccountant({ docs, period, onClose, onSent }) {
   const send = async (e) => {
     e.preventDefault(); setErr(''); setBusy(true)
     try {
-      const r = await api.callServer('send-to-accountant', { ids: sendable.map((d) => d.id), to, note, cc_me: ccMe, period })
-      if (mark && markable.length) {
-        await api.recordExport({ ids: markable.map((d) => d.id), businessId: null, period: null, format: 'email', destination: `email:${r.to.join(',')}`, allowReexport: false }).catch(() => {})
-        await reload()
-      }
+      const r = await api.callServer('send-to-accountant', { ids: sendable.map((d) => d.id), to, note, cc_me: ccMe, period, mark: mark && markable.length > 0 })
+      if (r.marked) await reload()
       onSent(r)
     } catch (e2) { setErr(e2.message) } finally { setBusy(false) }
   }
@@ -46,7 +43,7 @@ export default function SendToAccountant({ docs, period, onClose, onSent }) {
         </Field>
         <Field label="הודעה (לא חובה)" wide><textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="שלום, מצורפות החשבוניות של החודש." /></Field>
         <label className="fin-check fin-field--wide"><input type="checkbox" checked={ccMe} onChange={(e) => setCcMe(e.target.checked)} /> לשלוח לי עותק</label>
-        {markable.length > 0 && <label className="fin-check fin-field--wide"><input type="checkbox" checked={mark} onChange={(e) => setMark(e.target.checked)} /> לסמן את {markable.length === 1 ? 'המסמך המאושר' : `${markable.length} המסמכים המאושרים`} כ"יוצא לרו״ח" (נרשם בהיסטוריית הייצוא)</label>}
+        {markable.length > 0 && <label className="fin-check fin-field--wide"><input type="checkbox" checked={mark} onChange={(e) => setMark(e.target.checked)} /> לסמן את {markable.length === 1 ? 'המסמך המאושר' : `${markable.length} המסמכים המאושרים`} כ"נשלח לרו״ח" (נרשם בהיסטוריית הייצוא)</label>}
       </form>
       <p className="fin-muted fin-small">הקבצים המקוריים מצורפים למייל עם קובץ סיכום (CSV) לקליטה בתוכנה. אם הם גדולים מ-25MB ביחד, השאר נשלחים כקישורים בתוקף 7 ימים.</p>
     </Modal>

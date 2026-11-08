@@ -18,7 +18,7 @@ const WIDTHS = [320, 375, 390, 430, 768, 1024, 1280, 1440, 1920]
 const SHOT_AT = new Set([390, 1440])
 const one = (q) => sql(q) || 'none'
 const ROUTES = [
-  ['dashboard', ''], ['documents', '/documents'], ['new', '/new'], ['pending', '/pending'], ['document', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`],
+  ['dashboard', ''], ['send', '/send'], ['connections', '/connections'], ['documents', '/documents'], ['new', '/new'], ['pending', '/pending'], ['document', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`],
   ['reports', '/reports'], ['companies', '/companies'], ['company', `/companies/${one('select id from fin_businesses order by sort limit 1')}`],
   ['projects', '/projects'], ['project', `/projects/${one('select id from fin_projects order by created_at limit 1')}`], ['suppliers', '/suppliers'],
   ['supplier', `/suppliers/${one('select id from fin_suppliers order by created_at limit 1')}`], ['categories', '/categories'], ['data', '/data'],
@@ -97,7 +97,7 @@ const inView = (page, sel) => page.evaluate((sel) => { const el = document.query
   const kbOpen = await page.locator('.fin-sel__pop').count(); await page.keyboard.press('Escape')
   check('DD3', 'מקלדת בלבד: חץ למטה על השדה פותח את הרשימה', kbOpen === 1, `נפתח: ${kbOpen === 1}`)
   // a long searchable list inside a dialog: search, empty result, long names wrap, list scrolls inside
-  sql("insert into fin_projects (name, code, business_id) select 'פרויקט עם שם ארוך במיוחד לבדיקת שבירת שורות ברשימה הנפתחת ' || g, 'QA-' || g, (select id from fin_businesses order by sort limit 1) from generate_series(1, 14) g on conflict do nothing")
+  sql("insert into fin_projects (name, code, business_id) select 'פרויקט עם שם ארוך במיוחד לבדיקת שבירת שורות ברשימה הנפתחת ' || g || ' ' || left(b.name, 6), 'QA-' || g || '-' || left(b.id::text, 4), b.id from generate_series(1, 14) g cross join fin_businesses b on conflict do nothing")
   await page.goto(`${APP}/projects`); await page.waitForTimeout(800)
   await page.reload(); await page.waitForTimeout(900)
   await page.goto(`${APP}/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`); await page.waitForTimeout(1300)
@@ -107,7 +107,7 @@ const inView = (page, sel) => page.evaluate((sel) => { const el = document.query
     await projSel.locator('.fin-sel__btn').click(); await page.waitForTimeout(250)
     const hasSearch = await page.locator('.fin-sel__search input').count()
     const before = await page.locator('.fin-sel__pop [role=option]').count()
-    await page.keyboard.type('ארוך במיוחד 12'); await page.waitForTimeout(150)
+    await page.keyboard.type('ארוך במיוחד QA-12-'); await page.waitForTimeout(150)
     const after = await page.locator('.fin-sel__pop [role=option]').count()
     await page.screenshot({ path: `${OUT}/dd-search-1440.png` })
     const scrolls = await page.evaluate(() => { const l = document.querySelector('.fin-sel__list'); return l ? l.scrollHeight >= l.clientHeight : false })

@@ -33,7 +33,7 @@ function Preview({ doc }) {
   if (err) return <p className="fin-error fin-error--block">הקובץ לא נטען: {err}</p>
   if (html !== null) return <iframe className="fin-preview__frame" title="המייל המקורי" sandbox="" srcDoc={html} />
   if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
-  return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} />
+  return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} />
 }
 
 export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext }) {
@@ -308,6 +308,6 @@ function fmt(v, k, businesses, projects) {
   if (k === 'business_id') return nameOf(businesses, v) || v
   if (k === 'project_id') return nameOf(projects, v) || v
   if (k === 'doc_type') return DOC_TYPE[v] || v
-  if (k === 'status') return ({ review: 'ממתין', approved: 'מאושר', sent: 'יוצא', rejected: 'נדחה', duplicate: 'כפול', failed: 'שגיאה', processing: 'בעיבוד' })[v] || v
+  if (k === 'status') return ({ review: 'לבדיקה', approved: 'מוכן לרו״ח', sent: 'נשלח לרו״ח', rejected: 'נדחה', duplicate: 'כפול', failed: 'שגיאה', processing: 'בעיבוד' })[v] || v
   return String(v)
 }

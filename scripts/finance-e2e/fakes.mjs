@@ -14,7 +14,7 @@ import fs from 'node:fs'
 const FIX = process.env.FIN_FIXTURES || '/var/tmp/finfix'
 const PORT = Number(process.env.FAKES_PORT || 54400)
 const hookFails = {}
-const log = { emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
+const log = { waFiles: [], emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
 const driveItems = []   // { id, name, parents, folder }
 const fixtures = () => JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
 const failed = {}   // sha256 → how many times Claude already failed on it
@@ -160,6 +160,14 @@ const server = http.createServer(async (req, res) => {
   if (p === '/dropbox/api/2/users/get_current_account') return send(res, auth === 'Bearer dbx-at' ? 200 : 401, { email: 'office@kurkoos.test' })
   if (p === '/dropbox/content/2/files/upload') { if (auth !== 'Bearer dbx-at') return send(res, 401, {}); const arg = JSON.parse(req.headers['dropbox-api-arg']); await readBody(req); log.dropbox.push(arg.path); return send(res, 200, { id: `id:${log.dropbox.length}`, path_display: arg.path }) }
   // ---------- Green API (WhatsApp) ----------
+  // Green API sendFileByUrl: downloads the file like the real service does, and records what arrived
+  if (/^\/green\/waInstance[^/]+\/sendFileByUrl\//.test(p)) {
+    const b = JSON.parse(await readBody(req))
+    const f = await fetch(b.urlFile).catch(() => null)
+    const buf = f && f.ok ? Buffer.from(await f.arrayBuffer()) : null
+    log.waFiles.push({ to: b.chatId, fileName: b.fileName, caption: b.caption, bytes: buf ? buf.length : 0, sha: buf ? crypto.createHash('sha256').update(buf).digest('hex') : null })
+    return send(res, buf ? 200 : 400, buf ? { idMessage: `file${log.waFiles.length}` } : { error: 'download failed' })
+  }
   if (/^\/green\/waInstance[^/]+\/sendMessage\//.test(p)) { const b = JSON.parse(await readBody(req)); log.wa.push({ to: b.chatId, message: b.message }); return send(res, 200, { idMessage: `out${log.wa.length}` }) }
   if (p.startsWith('/green/file/')) { const f = decodeURIComponent(p.slice('/green/file/'.length)); res.writeHead(200, { 'Content-Type': f.endsWith('.pdf') ? 'application/pdf' : 'image/png' }); res.end(fs.readFileSync(`${FIX}/${f}`)); return }
   // a webhook receiver: records every delivery; ?fail=N answers 500 to the first N deliveries
@@ -172,7 +180,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

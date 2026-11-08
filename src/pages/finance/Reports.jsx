@@ -5,10 +5,11 @@ import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel,
 import { saveBlob } from './zip.js'
 import { Bars, Card, Empty, Icon, PageHead } from './ui.jsx'
 import Select from './Select.jsx'
+import Overview from './Overview.jsx'
 
 /* All totals come from stored records (validated by people), never from AI. */
 const REPORTS = [
-  ['monthly', 'הוצאות חודשיות'], ['company', 'לפי חברה'], ['project', 'לפי פרויקט'], ['supplier', 'לפי ספק'], ['vat', 'סיכום מע״מ'],
+  ['monthly', 'הוצאות חודשיות'], ['overview', 'תמונת מצב'], ['company', 'לפי חברה'], ['project', 'לפי פרויקט'], ['supplier', 'לפי ספק'], ['vat', 'סיכום מע״מ'],
   ['missing', 'חשבוניות חסרות'], ['unprocessed', 'לא מעובדים'], ['duplicates', 'כפילויות'], ['collection', 'סטטיסטיקת איסוף'],
 ]
 
@@ -91,6 +92,7 @@ export default function Reports() {
       <div className="fin-tabs fin-tabs--scroll" role="tablist" aria-label="סוג דוח">
         {REPORTS.map(([k, v]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`fin-tab ${kind === k ? 'is-active' : ''}`} onClick={() => setKind(k)}>{v}</button>)}
       </div>
+      {kind === 'overview' ? <Overview /> : <>
       <div className="fin-filters">
         {businesses.length > 1 && <Select className="fin-select" value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>}
         <Select className="fin-select" value={to} onChange={(e) => setTo(e.target.value || thisMonth())} aria-label="עד חודש">{recentMonths().map((k) => <option key={k} value={k}>עד {monthLabel(k)}</option>)}</Select>
@@ -109,6 +111,7 @@ export default function Reports() {
           </div>
         </div>
       )}
+      </>}
     </div>
   )
 }

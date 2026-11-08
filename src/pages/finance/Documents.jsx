@@ -13,15 +13,17 @@ import SendToAccountant from './SendToAccountant.jsx'
 
 const TABS = [
   { id: '', label: 'הכול' },
-  { id: 'review', label: 'ממתינים' },
-  { id: 'approved', label: 'מאושרים' },
-  { id: 'sent', label: 'יוצאו' },
-  { id: 'problems', label: 'שגיאות וכפולים' },
+  { id: 'new', label: 'חדשים' },
+  { id: 'review', label: 'לבדיקה' },
+  { id: 'approved', label: 'מוכנים לרו״ח' },
+  { id: 'sent', label: 'נשלחו לרו״ח' },
+  { id: 'problems', label: 'דורשים טיפול' },
   { id: 'rejected', label: 'נדחו' },
   { id: 'archived', label: 'ארכיון' },
 ]
 const inTab = (d, tab) => {
   if (!tab) return !['rejected', 'archived'].includes(d.status)
+  if (tab === 'new') return new Date(d.created_at).getTime() > Date.now() - 7 * 86400_000 && ['review', 'processing', 'failed'].includes(d.status)
   if (tab === 'problems') return ['failed', 'duplicate', 'processing'].includes(d.status) || hasError(d)
   return d.status === tab
 }

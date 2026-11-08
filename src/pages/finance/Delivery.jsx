@@ -9,7 +9,7 @@ export const EVENTS = {
   'document.received': 'מסמך חדש נקלט',
   'document.approved': 'מסמך אושר',
   'document.rejected': 'מסמך נדחה',
-  'document.exported': 'מסמך יוצא לרו״ח',
+  'document.exported': 'מסמך נשלח לרו״ח',
 }
 const KIND = {
   webhook: { title: 'API (Webhook)', icon: 'webhook', desc: 'הודעה בזמן אמת לכתובת שלכם בכל פעם שמסמך נקלט או משנה סטטוס, כולל כל הנתונים וקישור לקובץ.', cta: 'חיבור webhook', defaults: ['document.received', 'document.approved', 'document.rejected', 'document.exported'] },

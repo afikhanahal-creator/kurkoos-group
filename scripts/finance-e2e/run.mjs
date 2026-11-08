@@ -52,7 +52,7 @@ const go = async (path, p = page) => { await p.goto(`${APP}${path}`); await p.wa
 const modalSave = async (p = page) => { await p.locator('.fin-modal__foot .fin-btn--primary').first().click(); await p.waitForTimeout(900) }
 const lbl = (re, p = page) => p.getByLabel(re).first()
 const waitProcessed = async (names) => { for (let i = 0; i < 40; i++) { if (sql(`select count(*) from fin_documents where file_name in (${names.map((n) => `'${n}'`).join(',')}) and status <> 'processing'`) === String(names.length)) return true; await page.waitForTimeout(500) } return false }
-const nav = async (label) => { await page.locator('.fin__nav-item', { hasText: label }).first().click(); await page.waitForLoadState('networkidle').catch(() => {}); await page.waitForTimeout(500) }
+const nav = async (label) => { const it = page.locator('.fin__nav-item', { hasText: label }).first(); if (!(await it.isVisible())) await page.locator('.fin__nav-more').click(); await it.click(); await page.waitForLoadState('networkidle').catch(() => {}); await page.waitForTimeout(500) }
 
 // ---------- T0: sign in, first admin ----------
 await go('')
@@ -75,8 +75,16 @@ const inviteShot = await shot('68-team-invite')
 await page.locator('.fin-modal__foot .fin-btn', { hasText: 'ביטול' }).click()
 record('TEAM', 'הזמנת רו״ח או צוות: מצב ריק ומדריך', 'כשבארגון רק המנהל: מסך הזמנה עם מדריך שלב אחרי שלב; טופס ההזמנה בוחר תפקיד בכרטיסים, וברירת המחדל היא רו״ח', `כותרת: "${heroTitle}"; שלבים: ${guideSteps}; כרטיסי תפקיד: ${roleCards}; ברירת מחדל: ${roleDefault.split('\n')[0]}`,
   /רואה החשבון/.test(heroTitle) && guideSteps === 5 && roleCards === 4 && /רואה חשבון/.test(roleDefault), [heroShot, teamGuideShot, inviteShot])
+await nav('היסטוריית ייצוא'); await page.waitForTimeout(500)
+const expEmpty = { art: await page.locator('.fin-firstexp__art').count(), steps: await page.locator('.fin-firstexp__steps li').count() }
+await page.getByRole('button', { name: 'מדריך שלב אחרי שלב' }).click(); await page.waitForTimeout(200)
+expEmpty.guide = await page.locator('.fin-firstexp__guide li').count()
+const expEmptyShot = await shot('72-export-history-empty')
+await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' }).click(); await page.waitForTimeout(500)
+expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
+record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 20 פריטי תפריט', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 20, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 22 פריטי תפריט (מהם 9 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 22, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -142,8 +150,13 @@ await page.getByRole('tab', { name: 'פרטים' }).click()
 record('A6', 'הצעת פרויקט לפי מילת מפתח, בלי שיוך אוטומטי', 'מוצעת "מוהליבר 17" אבל השדה נשאר ריק עד שאדם מחיל', `הצעות: ${sugg}, project_id: ${sql("select coalesce(project_id::text,'ריק') from fin_documents where file_name='tambour-4521.pdf'")}`, sugg === 1 && sql("select project_id is null from fin_documents where file_name='tambour-4521.pdf'") === 't', [checksShot])
 await page.keyboard.press('Escape'); await page.waitForTimeout(400)
 await nav('מרכז בקרה')
-const kpi = await page.locator('.fin-ledger__main').first().innerText()
-record('T5', 'המסמכים מופיעים בלוח הבקרה', 'הסכומים מחושבים מהרשומות (ללא כפולים ושגיאות)', kpi.replace(/\n/g, ' '), /₪|ILS/.test(kpi) && !/0\.00 ₪\s*$/.test(kpi), [listShot, await shot('08-dashboard')])
+const tile = async (k) => Number((await page.locator(`.fin-tile[data-k="${k}"] .fin-tile__value`).innerText()).trim())
+const homeNums = { fresh: await tile('fresh'), review: await tile('review'), ready: await tile('ready') }
+const homeWant = { fresh: Number(sql("select count(*) from fin_documents where created_at > now() - interval '7 days' and status in ('review','processing','failed')")), review: Number(sql("select count(*) from fin_documents where status='review'")), ready: Number(sql("select count(*) from fin_documents where status='approved' and exported_at is null")) }
+const recentRows = await page.locator('.fin-recent li').count()
+const sources = (await page.locator('.fin-sources').innerText()).replace(/\s+/g, ' ')
+const homeShot = await shot('05-home')
+record('T5', 'המסמכים מופיעים במרכז הבקרה', 'המספרים (חדשים, לבדיקה, מוכנים לרו״ח) מחושבים מהרשומות; המסמכים האחרונים מופיעים; מצב האיסוף מראה את התיבה המחוברת', `במסך: ${JSON.stringify(homeNums)}; במסד: ${JSON.stringify(homeWant)}; אחרונים: ${recentRows}; איסוף: ${sources.slice(0, 80)}`, JSON.stringify(homeNums) === JSON.stringify(homeWant) && recentRows > 0 && /invoices@kurkoos\.test/.test(sources), [homeShot])
 
 // ---------- T6: an uploaded duplicate ----------
 await nav('כל המסמכים')
@@ -187,7 +200,7 @@ record('T8', 'שיוך לחברה ולפרויקט', 'קורקוס גרופ + מ
 record('T9', 'אישור המסמך', 'סטטוס מאושר, נרשם מי אישר', `${t8.split('|')[2]}, אושר ע״י ${t8.split('|')[3] ? 'admin' : '—'}; יומן: ${sql("select count(*) from fin_audit where action='approved'")}`, t8.split('|')[2] === 'approved' && !!t8.split('|')[3], [await shot('13-approved')])
 await page.keyboard.press('Escape'); await page.waitForTimeout(300)
 // approve two more for the export, from the pending list in bulk
-await nav('ממתינים לאישור')
+await nav('ממתינים לבדיקה')
 for (const name of ['בזק', 'ACE']) await page.locator('tbody tr', { hasText: name }).first().locator('input[type=checkbox]').check()
 await page.locator('.fin-bulk').getByRole('button', { name: 'אישור' }).click(); await page.waitForTimeout(400)
 await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForTimeout(1200)
@@ -458,7 +471,7 @@ const waLog = (await fetch(`${FAKES}/__log`).then((r) => r.json())).wa
 await page.reload(); await page.waitForTimeout(1200)
 const scannersShot = await shot('53-scanners')
 record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה עם תשובה; טוקן שגוי ← 401; טקסט ← הסבר', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}`,
-  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /קיבלנו/.test(m.message) && /295/.test(m.message)) && waLog.some((m) => /לא רשום/.test(m.message)), [scannersEmpty, scannersShot])
+  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /נקלטה במערכת בהצלחה/.test(m.message) && /ספק: קפה לנדוור/.test(m.message) && /295/.test(m.message)) && waLog.some((m) => /לא רשום/.test(m.message)), [scannersEmpty, scannersShot])
 
 // CLOUD: Google Drive and Dropbox, through the real OAuth round trip and the real upload code
 await fetch(`${FAKES}/__next_account?email=office@kurkoos.test`)
@@ -637,7 +650,72 @@ record('INV', 'הזמנת משתמש במייל', 'נשלח מייל הזמנה 
     `כתובות: ${JSON.stringify(urls)}; מדיה: ${JSON.stringify(media)}; טלפון של אחר: ${empPhoneOther.status}; מונה: ${empCounter.status}; תור ענן: ${pendingFn.status}`, ok)
 }
 
+// =================== CONNECTIONS, DOCUMENT VIEWER, WHATSAPP SHARE, SEND CENTER ===================
+await nav('חיבורים'); await page.waitForTimeout(900)
+const connRows = await page.locator('.fin-conn').count()
+const connText = (await page.locator('.fin-connlist').first().innerText()).replace(/\s+/g, ' ')
+const connShot = await shot('73-connections')
+record('CONN', 'מסך חיבורים: כל המקורות והיעדים במקום אחד', 'Gmail, Microsoft, WhatsApp, קריאת מסמכים, סריקה אוטומטית, ויעדים, כל אחד עם מצב ופעילות אחרונה', `${connRows} שורות; ${connText.slice(0, 160)}`,
+  connRows >= 8 && /invoices@kurkoos\.test/.test(connText) && /טלפון אחד רשום|טלפונים רשומים/.test(connText) && /קריאת מסמכים/.test(connText), [connShot])
+
+// the viewer: every page, zoom, fit to screen, the original file downloads intact
+const vDoc = sql("select id||'|'||file_hash from fin_documents where file_mime='application/pdf' and status in ('review','approved') order by created_at limit 1").split('|')
+await page.goto(`${APP}/documents/${vDoc[0]}`); await page.waitForSelector('.fin-viewer__page:not(.fin-viewer__page--skel)', { timeout: 20000 }); await page.waitForTimeout(400)
+const pct0 = await page.locator('.fin-viewer__pct').innerText()
+await page.getByRole('button', { name: 'הגדלה' }).click(); await page.waitForTimeout(200)
+const pct1 = await page.locator('.fin-viewer__pct').innerText()
+const vw1 = await page.locator('.fin-viewer__page').first().evaluate((el) => el.getBoundingClientRect().width)
+await page.getByRole('button', { name: 'התאמה למסך' }).click(); await page.waitForTimeout(200)
+const fitBox = await page.evaluate(() => { const p = document.querySelector('.fin-viewer__page').getBoundingClientRect(); const s = document.querySelector('.fin-viewer__scroll').getBoundingClientRect(); return p.height <= s.height && p.width <= s.width })
+const viewerShot = await shot('74-viewer')
+const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'הורדה' }).click()])
+const dlPath = await dl.path()
+const dlHash = crypto.createHash('sha256').update(fs.readFileSync(dlPath)).digest('hex')
+record('VIEW', 'תצוגת מסמך: זום, התאמה למסך והורדת המקור', 'הגדלה משנה את הגודל; "התאמה למסך" מכניסה עמוד שלם; הקובץ שיורד זהה לקובץ השמור (טביעת SHA-256)', `${pct0} → ${pct1} (${Math.round(vw1)}px); עמוד שלם בתצוגה: ${fitBox}; הורדה: ${dl.suggestedFilename()}, טביעה ${dlHash === vDoc[1] ? 'זהה' : 'שונה'}`,
+  pct0 !== pct1 && fitBox && dlHash === vDoc[1], [viewerShot])
+
+// share the same document on WhatsApp to a registered phone: Green API downloads the file, it must be the same file
+await page.getByRole('button', { name: 'שיתוף' }).click(); await page.waitForSelector('.fin-modal'); await page.waitForTimeout(300)
+const shareShot = await shot('75-share-whatsapp')
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForTimeout(1500)
+const shareMsg = await page.locator('.fin-modal .fin-note').innerText().catch(() => '')
+const waf = (await fetch(`${FAKES}/__log`).then((r) => r.json())).waFiles.slice(-1)[0] || {}
+const shareAudit = sql(`select count(*) from fin_audit where action='shared_whatsapp' and entity_id='${vDoc[0]}'`)
+await page.locator('.fin-modal__foot .fin-btn--ghost').click(); await page.keyboard.press('Escape'); await page.waitForTimeout(300)
+const empShare = await api(empToken, { action: 'whatsapp-send-doc', document_id: vDoc[0], phone: '0543049491' })
+record('SHARE', 'שיתוף מסמך בוואטסאפ', 'המסמך נשלח מה-WhatsApp של המשרד לטלפון רשום; הקובץ שהגיע זהה למקור; נרשם ביומן; עובד לא שולח מסמך שאינו שלו',
+  `הודעה: "${shareMsg}"; אל: ${waf.to}; קובץ: ${waf.fileName} (${waf.bytes} bytes), טביעה ${waf.sha === vDoc[1] ? 'זהה' : 'שונה'}; יומן: ${shareAudit}; עובד: ${empShare.status}`,
+  /נשלח בוואטסאפ/.test(shareMsg) && waf.to === '972543049491@c.us' && waf.sha === vDoc[1] && shareAudit === '1' && empShare.status === 403, [shareShot])
+
+// the accountant delivery center: approved documents, unselect one, send, they become "sent"
+// a second ready document: any one waiting for review without blocking errors, approved through the API like the button does
+const toApprove = sql("select id from fin_documents d where status='review' and exported_at is null and coalesce(total_amount,0) < 50000 and not exists (select 1 from jsonb_array_elements(coalesce(d.issues,'[]'::jsonb)) i where i->>'level'='error') order by created_at limit 1")
+const approveRes = toApprove ? await rest(`fin_documents?id=eq.${toApprove}`, adminToken, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'approved' }) }) : { status: 'none' }
+const readyIds = sql("select string_agg(id::text, ',') from fin_documents where status='approved' and exported_at is null").split(',').filter(Boolean)
+await nav('שליחה לרו״ח'); await page.reload(); await page.waitForSelector('.fin-picklist'); await page.waitForTimeout(800)
+const listed = await page.locator('.fin-picklist li').count()
+const badge = await page.locator('.fin__nav-item', { hasText: 'שליחה לרו״ח' }).locator('.fin__badge').innerText().catch(() => '0')
+const sendCenterShot = await shot('76-send-center')
+if (listed > 1) await page.locator('.fin-picklist li input[type=checkbox]').last().uncheck()
+const barNow = (await page.locator('.fin-sendbar').innerText()).replace(/\s+/g, ' ')
+await page.getByRole('button', { name: 'המשך לשליחה' }).click(); await page.waitForSelector('.fin-modal'); await page.waitForTimeout(300)
+const markOn = await page.locator('.fin-modal .fin-check', { hasText: 'נשלח לרו״ח' }).locator('input').isChecked().catch(() => false)
+await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
+await page.locator('.fin-modal__foot .fin-btn--primary').click()
+await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 30000 }).catch(() => {}); await page.waitForTimeout(1200)
+const doneNote = await page.locator('.fin-note').first().innerText().catch(() => '')
+const expectSent = listed > 1 ? listed - 1 : listed
+const nowSent = sql(`select count(*) from fin_documents where id in ('${readyIds.join("','")}') and status='sent' and exported_at is not null`)
+const delivery = sql("select status||'|'||documents_count||'|'||coalesce(provider_id,'')||'|'||array_to_string(recipients, ',') from fin_deliveries order by created_at desc limit 1")
+const historyRow = await page.locator('.fin-deliveries li').first().innerText().catch(() => '')
+const sentCenterShot = await shot('77-send-center-sent')
+record('SENDC', 'מרכז השליחה לרו״ח', 'מופיעים כל המסמכים המוכנים (גם בתג בתפריט); ביטול מסמך אחד מעדכן את הסיכום; אחרי שליחה רק המסמכים שנשלחו מסומנים "נשלח לרו״ח"; השליחה נרשמת עם מזהה משרת הדואר',
+  `אישור נוסף: ${approveRes.status}; במסך: ${listed}, במסד: ${readyIds.length}, תג: ${badge}; סיכום: ${barNow.slice(0, 60)}; סימון ברירת מחדל: ${markOn}; הודעה: "${doneNote}"; סומנו: ${nowSent}/${expectSent}; משלוח: ${delivery}; היסטוריה: ${historyRow.replace(/\s+/g, ' ').slice(0, 70)}`,
+  listed === readyIds.length && listed >= 2 && Number(badge) === readyIds.length && markOn && Number(nowSent) === expectSent && /^sent\|\d+\|.+\|cpa@accountants\.test$/.test(delivery) && /נמסר לשרת הדואר/.test(historyRow),
+  [sendCenterShot, sentCenterShot])
+
 // =================== DATE RANGE + SEND TO THE ACCOUNTANT ===================
+const auditBefore = Number(sql("select count(*) from fin_audit where action='sent_to_accountant'"))
 await nav('כל המסמכים'); await page.waitForTimeout(600)
 const totalRows = await page.locator('.fin-table tbody tr').count()
 await page.locator('.fin-datechip__main').click(); await page.waitForSelector('.fin-cal'); await page.waitForTimeout(250)
@@ -666,7 +744,7 @@ const sentNote = await page.locator('.fin-note').first().innerText().catch(() =>
 const lgS = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const mailS = [...lgS.emails].reverse().find((e) => /מסמכים לרו״ח/.test(e.subject || ''))
 const withFiles = Number(sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived','rejected','duplicate') and file_path is not null"))
-const auditSend = sql("select count(*) from fin_audit where action='sent_to_accountant'")
+const auditSend = String(Number(sql("select count(*) from fin_audit where action='sent_to_accountant'")) - auditBefore)
 // clearing the chip restores the full list
 await page.locator('.fin-datechip__x').click(); await page.waitForTimeout(300)
 const cleared = await page.locator('.fin-table tbody tr').count()
@@ -762,9 +840,9 @@ record('G', 'מובייל: המסכים החדשים', 'אין גלילה אופ
 const smallTargets = await m.evaluate(() => [...document.querySelectorAll('.fin button, .fin a, .fin input, .fin select')].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 24 && e.type !== 'checkbox').map((e) => e.className || e.tagName).slice(0, 5))
 const dir = await m.evaluate(() => document.querySelector('.fin')?.getAttribute('dir'))
 record('MCAL', 'לוח השנה בטלפון', 'נפתח כגיליון תחתון עם חודש אחד, ימים בגובה 44px לפחות, טווח מהיר מוחל', JSON.stringify(mCal), mCal.sheet === 1 && mCal.months === 1 && mCal.dayH >= 44 && mCal.applied === 1, [mCalShot])
-record('DRAWER', 'תפריט מובייל: משתמש, ארגון וקבוצות', 'בראש התפריט: המשתמש עם כפתור סגירה וכרטיס הארגון; הקבוצות כוללות "מקורות"; הסגירה עובדת',
+record('DRAWER', 'תפריט מובייל: משתמש, ארגון וקבוצות', 'בראש התפריט: המשתמש עם כפתור סגירה וכרטיס הארגון; הקבוצות כוללות "קליטה"; הסגירה עובדת',
   `מייל: ${drawer.email}; ארגון: ${drawer.org.replace(/\s+/g, ' ')}; קבוצות: ${drawer.groups}; נסגר: ${drawer.closed}`,
-  drawer.email === 'admin@kurkoos.test' && /קבוצת קורקוס/.test(drawer.org) && /מקורות/.test(drawer.groups) && drawer.closed, mShots.slice(1, 2))
+  drawer.email === 'admin@kurkoos.test' && /קבוצת קורקוס/.test(drawer.org) && /קליטה/.test(drawer.groups) && drawer.closed, mShots.slice(1, 2))
 record('T12', 'גרסת מובייל', 'אין גלילה אופקית בשום מסך, התפריט נפתח ונסגר, מסמך נפתח ומאושר מהטלפון, כיוון RTL', `גלילה אופקית (px): ${JSON.stringify(ov)} · dir=${dir} · כפתורים קטנים מ-24px: ${smallTargets.length}`, Object.values(ov).every((v) => v <= 0) && dir === 'rtl', mShots)
 await mob.close()
 

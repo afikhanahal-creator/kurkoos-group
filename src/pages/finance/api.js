@@ -63,6 +63,7 @@ export const flushOutbound = () => { callServer('outbound-flush').catch(() => {}
 const afterStatus = (patch, out) => { if (patch && 'status' in patch) flushOutbound(); return out }
 export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(patch).eq('id', id).select().single()))
 export const updateDocuments = async (ids, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(patch).in('id', ids).select()))
+export const loadDeliveries = (limit = 30) => soft(all('fin_deliveries', 'created_at', false, limit))
 export const loadOutbound = () => soft(all('fin_outbound', 'created_at', true))
 export const loadOutboundQueue = (limit = 30) => soft(all('fin_outbound_queue', 'id', false, limit))
 export async function deleteDocument(doc) {

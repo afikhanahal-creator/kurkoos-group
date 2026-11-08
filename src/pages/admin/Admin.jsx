@@ -109,6 +109,7 @@ const TABS = [
   { id: 'social', label: 'מנוע התוכן לרשתות', sub: 'תזמון, עיצוב ופרסום לפייסבוק ואינסטגרם · נפתח במסך מלא', icon: 'engine', group: 'שיווק', ext: true },
   { id: 'engine', label: 'תוכן האתר ותחרות', sub: 'סוכני הכתיבה, הנושאים הבאים, פוסטים מוכנים מהכתבות, והמתחרים', icon: 'counters', group: 'שיווק' },
   { id: 'fonts', label: 'פונטים וטיפוגרפיה', sub: 'פונטים, גדלים ומשקלים (H1–H5) של כל האתר', icon: 'fonts', group: 'עיצוב' },
+  { id: 'finance', label: 'הנהלת חשבונות', sub: 'איסוף חשבוניות מהמייל, קריאה אוטומטית, ייצוא לרו״ח · נפתח במסך מלא', icon: 'counters', group: 'מערכת', href: '/admin/finance' },
   { id: 'settings', label: 'הגדרות', sub: 'התראות מייל, יומן פגישות והגדרות מערכת', icon: 'settings', group: 'מערכת' },
 ]
 const NAV_GROUPS = ['ראשי', 'תוכן', 'לקוחות', 'שיווק', 'עיצוב', 'מערכת']
@@ -120,7 +121,7 @@ export default function Admin() {
   // ?tab=<id> opens a tab directly; ?embed=1 shows only that tab (the content engine embeds the inbox this way)
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
   const embed = params.get('embed') === '1'
-  const [tab, setTab] = useState(() => (TABS.some((t) => t.id === params.get('tab') && !t.ext) ? params.get('tab') : 'overview'))
+  const [tab, setTab] = useState(() => (TABS.some((t) => t.id === params.get('tab') && !t.ext && !t.href) ? params.get('tab') : 'overview'))
   const [navOpen, setNavOpen] = useState(false)   // מגירת ניווט במובייל
   const [theme, setTheme] = useState(() => {
     if (typeof localStorage !== 'undefined') return localStorage.getItem(THEME_KEY) || 'light'
@@ -195,12 +196,12 @@ export default function Admin() {
                     key={t.id}
                     type="button"
                     className={`adm__nav-item ${tab === t.id ? 'adm__nav-item--active' : ''}`}
-                    onClick={() => { if (t.ext) openEngine(); setTab(t.id); setNavOpen(false) }}
-                    title={t.ext ? 'נפתח בחלון משלו, על כל המסך' : undefined}
+                    onClick={() => { if (t.href) { window.location.assign(t.href); return } if (t.ext) openEngine(); setTab(t.id); setNavOpen(false) }}
+                    title={t.ext ? 'נפתח בחלון משלו, על כל המסך' : t.href ? 'נפתח על כל המסך' : undefined}
                   >
                     <I width={20} height={20} />
                     <span>{t.label}</span>
-                    {t.ext && <Ico.external className="adm__nav-ext" width={14} height={14} aria-hidden="true" />}
+                    {(t.ext || t.href) && <Ico.external className="adm__nav-ext" width={14} height={14} aria-hidden="true" />}
                   </button>
                 )
               })}
@@ -239,7 +240,7 @@ export default function Admin() {
             <p className="adm__page-sub">{active.sub}</p>
           </div>
           <div className="adm__topbar-actions">
-            <QuickSearch tabs={TABS} onPick={(t) => { if (t.ext) openEngine(); setTab(t.id) }} />
+            <QuickSearch tabs={TABS} onPick={(t) => { if (t.href) { window.location.assign(t.href); return } if (t.ext) openEngine(); setTab(t.id) }} />
             <button
               type="button"
               className="adm__theme-toggle"

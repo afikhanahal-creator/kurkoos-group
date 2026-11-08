@@ -15,6 +15,8 @@
 //   POST /api/metricool      (מנוע התוכן: תזמון לערוצים דרך Metricool, תמיד כטיוטה)
 //   POST /api/video-gen      (מנוע התוכן: יצירת וידאו מפרומפט, משימה אסינכרונית)
 //   GET  /api/status         (מנוע התוכן: אילו שירותים מחוברים, בלי סודות)
+//   POST /api/finance       (מערכת החשבוניות: Gmail, סריקה, קריאת חשבוניות ע"י Claude)
+//   GET  /api/finance-oauth (חזרה מחלון ההרשאה של Google)
 //   GET  /api/sitemap        (וגם /sitemap.xml דרך rewrite)
 //   GET  /api/indexnow       (cron יומי, מודיע ל-Bing על עמודים חדשים)
 //
@@ -38,6 +40,8 @@ const ROUTES = {
   'video-gen': () => import('../server/video-gen.js'),
   status: () => import('../server/status.js'),
   'fetch-url': () => import('../server/fetch-url.js'),
+  finance: () => import('../server/finance.js'),
+  'finance-oauth': () => import('../server/finance.js'),
 }
 
 /* שם המטפל מגיע מהסגמנט הדינמי של הנתיב. יש גיבוי לקריאה מתוך

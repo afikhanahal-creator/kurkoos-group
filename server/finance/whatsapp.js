@@ -4,7 +4,7 @@
 // Every message is logged in fin_whatsapp_inbox, accepted or refused; unknown numbers are refused with a reply.
 import crypto from 'node:crypto'
 import { env, MIME_OK, MAX_FILE, QUOTA_STOP } from './env.js'
-import { one, insert, patch, upload, storageUsage } from './db.js'
+import { sb, one, insert, patch, upload, storageUsage } from './db.js'
 import { processStored } from './pipeline.js'
 import { newDocRuns, closeRuns } from './agents.js'
 import { money as _m } from './format-server.js'
@@ -56,8 +56,11 @@ export default async function whatsappWebhook(req, res) {
   // the inbox row is claimed first: its unique message_id makes a Green API retry a no-op even while the first delivery is still being read
   let row
   try { row = await insert('fin_whatsapp_inbox', { message_id: messageId || null, phone, kind, outcome: 'received' }) } catch (e) {
-    if (/duplicate|unique|23505|409/i.test(String(e.message || e.status))) { res.status(200).json({ ok: true, repeat: true }); return }
-    throw e
+    if (!/duplicate|unique|23505|409/i.test(String(e.message || e.status))) throw e
+    // a retry of a delivery that died half way (function timeout) may take it over after 3 minutes
+    const stale = new Date(Date.now() - 3 * 60_000).toISOString()
+    row = (await sb(`fin_whatsapp_inbox?message_id=eq.${encodeURIComponent(messageId)}&outcome=eq.received&at=lt.${encodeURIComponent(stale)}`, { method: 'PATCH', body: { at: new Date().toISOString() } }).catch(() => []))?.[0]
+    if (!row) { res.status(200).json({ ok: true, repeat: true }); return }
   }
   const log = (r) => patch(`fin_whatsapp_inbox?id=eq.${row.id}`, r).catch(() => {})
 

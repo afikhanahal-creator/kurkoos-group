@@ -1262,3 +1262,16 @@ exception when unique_violation then
 end $$;
 
 notify pgrst, 'reload schema';
+
+-- v5.1: delivery counters are incremented in one statement (parallel flushes do not lose counts)
+create or replace function public.fin_outbound_count(p_id uuid, p_ok boolean, p_status text)
+returns void language sql volatile security definer set search_path = '' as $$
+  update public.fin_outbound set
+    sent_count = sent_count + case when p_ok then 1 else 0 end,
+    fail_count = fail_count + case when p_ok then 0 else 1 end,
+    last_status = left(p_status, 300), last_at = now()
+  where id = p_id;
+$$;
+revoke all on function public.fin_outbound_count(uuid, boolean, text) from public, anon, authenticated;
+grant execute on function public.fin_outbound_count(uuid, boolean, text) to service_role;
+notify pgrst, 'reload schema';

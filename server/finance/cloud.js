@@ -114,7 +114,7 @@ export async function syncCloud({ targetId, started = Date.now(), trigger = 'man
     // lock: the cron and the button must not copy the same target at the same time
     const locked = await rpc('fin_cloud_lock', { p_target: t.id }).catch(() => false)
     if (locked !== true) { results.push({ target: t.id, provider: t.provider, copied: 0, busy: true, error: null }); continue }
-    let copied = 0; let failed = 0; let error = null; let lastFail = null
+    let copied = 0; let failed = 0; let error = null; let lastFail = null; let authFailed = false
     try {
       const { token, secret } = await tokenFor(t)
       const cache = { ...(secret.folder_cache || {}) }
@@ -140,10 +140,10 @@ export async function syncCloud({ targetId, started = Date.now(), trigger = 'man
       await patch(`fin_cloud_secrets?target_id=eq.${t.id}`, { folder_cache: cache })
     } catch (e) {
       error = String(e.message || e).slice(0, 300); run.stat.errors++
-      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'error' }).catch(() => {})
+      authFailed = !!(e.auth || e.status === 401)
     }
     if (!error && failed) error = `${failed} מסמכים לא הועתקו (ינסו שוב בסנכרון הבא). ${lastFail}`.slice(0, 300)
-    await patch(`fin_cloud_targets?id=eq.${t.id}`, { syncing_until: null, last_sync_at: new Date().toISOString(), last_error: error, files_failed: failed, files_synced: (t.files_synced || 0) + copied, ...(error && !failed ? {} : { status: 'active' }) }).catch(() => {})
+    await patch(`fin_cloud_targets?id=eq.${t.id}`, { syncing_until: null, last_sync_at: new Date().toISOString(), last_error: error, files_failed: failed, files_synced: (t.files_synced || 0) + copied, ...(authFailed ? { status: 'error' } : error && !failed ? {} : { status: 'active' }) }).catch(() => {})
     results.push({ target: t.id, provider: t.provider, copied, failed, error })
   }
   run.stat.details.results = results

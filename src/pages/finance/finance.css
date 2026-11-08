@@ -818,3 +818,37 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-org-stat span { grid-column: 1 / -1; font-size: 0.9rem; }
   .fin-code { font-size: 0.74rem; }
 }
+
+/* ---------- v6: team invite empty state, role cards, mobile drawer, top chip ---------- */
+.fin-hero-empty { display: grid; justify-items: center; text-align: center; gap: 0.9rem; padding: 2.4rem 1rem 1.6rem; }
+.fin-hero-empty__icon { width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--ocean) 11%, var(--sheet)); color: var(--ocean); }
+.fin-hero-empty h3 { font-size: 1.5rem; line-height: 1.25; max-width: 22ch; text-wrap: balance; }
+.fin-hero-empty p { margin: 0; color: var(--text-2); max-width: 46ch; text-wrap: pretty; }
+.fin-btn--wide { min-width: min(100%, 320px); min-height: 46px; justify-content: center; font-size: 1rem; }
+.fin-hero-empty .fin-link { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 40px; }
+.fin-guide__steps--modal { margin: 0; }
+.fin-rolepick { display: grid; gap: 0.5rem; border: 0; padding: 0; margin: 0; }
+.fin-rolecard { display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.75rem 0.85rem; border: 1px solid var(--line-2); border-radius: var(--r-m); cursor: pointer; background: var(--sheet); transition: border-color 0.12s, box-shadow 0.12s; }
+.fin-rolecard input { margin-top: 0.25rem; accent-color: var(--ink); width: 18px; height: 18px; flex: none; }
+.fin-rolecard span { display: grid; gap: 0.1rem; }
+.fin-rolecard strong { color: var(--ink); }
+.fin-rolecard small { color: var(--muted); font-size: 0.86rem; }
+.fin-rolecard.is-on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.fin-rolecard:focus-within { box-shadow: var(--ring); }
+.fin-chiplink { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 36px; padding: 0 0.75rem; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--ocean) 30%, var(--line)); background: color-mix(in srgb, var(--ocean) 8%, var(--sheet)); color: var(--ocean); font-weight: 600; font-size: 0.92rem; text-decoration: none; white-space: nowrap; flex: none; }
+.fin-chiplink:hover { border-color: var(--ocean); }
+.fin__drawer-head, .fin__org { display: none; }
+@media (max-width: 900px) {
+  .fin__side.is-open .fin__brand { display: none; }
+  .fin__drawer-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; padding: 1rem 0.9rem 0.6rem; }
+  .fin__avatar--lg { width: 46px; height: 46px; font-size: 1.05rem; }
+  .fin__drawer-head .fin__user-meta strong { font-size: 1.02rem; }
+  .fin__drawer-head .fin__user-meta small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end; }
+  .fin__org { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.65rem; margin: 0.2rem 0.75rem 0.6rem; padding: 0.7rem 0.75rem; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet-2); color: var(--ink); text-decoration: none; }
+  .fin__org > svg { color: var(--muted); }
+  .fin__org-mark { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--ink); color: #fff; font-weight: 700; font-size: 0.9rem; }
+  .fin__org-meta { display: grid; min-width: 0; }
+  .fin__org-meta small { color: var(--muted); font-size: 0.82rem; }
+  .fin-chiplink span { display: none; }
+  .fin-chiplink { width: 40px; min-height: 40px; padding: 0; justify-content: center; }
+}

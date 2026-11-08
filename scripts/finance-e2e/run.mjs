@@ -61,7 +61,22 @@ await page.click('button[type=submit]')
 await page.getByRole('button', { name: 'אני מנהל/ת המערכת' }).click()
 await page.waitForSelector('.fin__nav')
 const navCount = await page.locator('.fin__nav-item').count()
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 20 פריטי תפריט', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 20, [await shot('00-dashboard-empty')])
+const t0Shot = await shot('00-dashboard-empty')
+await nav('הארגון ומשתמשים'); await page.waitForTimeout(600)
+const heroTitle = await page.locator('.fin-hero-empty h3').innerText().catch(() => '')
+const heroShot = await shot('66-team-empty')
+await page.getByRole('button', { name: /מדריך שלב אחרי שלב/ }).click(); await page.waitForTimeout(300)
+const guideSteps = await page.locator('.fin-modal .fin-guide__steps li').count()
+const teamGuideShot = await shot('67-team-guide')
+await page.getByRole('button', { name: 'להזמנה' }).click(); await page.waitForTimeout(300)
+const roleCards = await page.locator('.fin-modal .fin-rolecard').count()
+const roleDefault = await page.locator('.fin-modal .fin-rolecard.is-on').innerText()
+const inviteShot = await shot('68-team-invite')
+await page.locator('.fin-modal__foot .fin-btn', { hasText: 'ביטול' }).click()
+record('TEAM', 'הזמנת רו״ח או צוות: מצב ריק ומדריך', 'כשבארגון רק המנהל: מסך הזמנה עם מדריך שלב אחרי שלב; טופס ההזמנה בוחר תפקיד בכרטיסים, וברירת המחדל היא רו״ח', `כותרת: "${heroTitle}"; שלבים: ${guideSteps}; כרטיסי תפקיד: ${roleCards}; ברירת מחדל: ${roleDefault.split('\n')[0]}`,
+  /רואה החשבון/.test(heroTitle) && guideSteps === 5 && roleCards === 4 && /רואה חשבון/.test(roleDefault), [heroShot, teamGuideShot, inviteShot])
+await nav('מרכז בקרה')
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 20 פריטי תפריט', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 20, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -406,7 +421,9 @@ await nav('חשבונות אימייל')
 const oldBefore = sql("select count(*) from fin_documents where file_name='old-invoice.pdf'")
 const periodBefore = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const accountsShot = await shot('50-email-accounts')
-await page.getByRole('button', { name: 'קבלות ישנות' }).click(); await page.waitForTimeout(300)
+await nav('מרכז בקרה')
+await page.locator('.fin-chiplink', { hasText: 'קבלות ישנות' }).click(); await page.waitForSelector('.fin-modal'); await page.waitForTimeout(300)
+const chipLanded = page.url().endsWith('/mailboxes')
 await page.locator('.fin-modal .fin-seg button', { hasText: 'שנה' }).first().click()
 const oldModalShot = await shot('51-old-receipts')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
@@ -415,7 +432,7 @@ const oldAfter = sql("select count(*)||'|'||coalesce((select source from fin_doc
 const boxState = sql("select sync_from||'|'||backfill_pending from fin_mailboxes where email='invoices@kurkoos.test'")
 const periodAfter = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const gapQuery = (await fetch(`${FAKES}/__log`).then((r) => r.json())).gmailQueries.filter((q2) => /before:/.test(q2)).length
-record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}`, oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1, [accountsShot, oldModalShot])
+record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1, [accountsShot, oldModalShot])
 
 // MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
 await nav('סורקים ניידים')
@@ -482,12 +499,13 @@ const morning = sql("select provider||'|'||status||'|'||enabled from fin_integra
 const morningSecret = sql("select count(*) from fin_integration_secrets s join fin_integrations i on i.id=s.integration_id where i.provider='morning'")
 const swSecond = await api(adminToken, { action: 'integration-save', provider: 'icount', name: 'iCount', business_id: bizExec, enabled: true })
 const otherBiz = await api(adminToken, { action: 'integration-save', provider: 'icount', name: 'iCount', business_id: sql("select id from fin_businesses where name='קורקוס גרופ'"), enabled: true })
+const allBiz = await api(adminToken, { action: 'integration-save', provider: 'rivhit', name: 'רווחית', business_id: null, enabled: true })
 const secretRead = await rest('fin_integration_secrets?select=*', adminToken)
 await page.reload(); await page.waitForTimeout(1000)
 const swAfterShot = await shot('58-accounting-connected')
 record('SW', 'חיבור תוכנת הנהלת חשבונות', 'חיפוש מסנן את הכרטיסים; חיבור Morning לחברה שומר את המפתח בשרת בלבד ומסמן "ממתין להפעלה"; תוכנה שנייה לאותה חברה נחסמת, לחברה אחרת מותרת',
-  `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, חיפוש ללא תוצאה: ${swNone}; Morning: ${morning}, מפתחות: ${morningSecret}; שנייה לאותה חברה: ${swSecond.status} ${swSecond.data.error || ''}; לחברה אחרת: ${otherBiz.status}; קריאת מפתחות מהדפדפן: ${secretRead.status}`,
-  swAll === 8 && swOne === 1 && swNone === 1 && morning === 'morning|not_active|true' && morningSecret === '1' && swSecond.status === 409 && otherBiz.status === 200 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swAfterShot])
+  `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, חיפוש ללא תוצאה: ${swNone}; Morning: ${morning}, מפתחות: ${morningSecret}; שנייה לאותה חברה: ${swSecond.status} ${swSecond.data.error || ''}; לחברה אחרת: ${otherBiz.status}; לכל החברות: ${allBiz.status}; קריאת מפתחות מהדפדפן: ${secretRead.status}`,
+  swAll === 8 && swOne === 1 && swNone === 1 && morning === 'morning|not_active|true' && morningSecret === '1' && swSecond.status === 409 && otherBiz.status === 200 && allBiz.status === 409 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swAfterShot])
 
 // =================== AUTOMATIC DELIVERY ===================
 await fetch(`${FAKES}/__reset_hooks`).catch(() => {})
@@ -564,10 +582,10 @@ await nav('הגדרות'); const settingsShot = await shot('23-settings')
 
 // ---------- T13: roles and access ----------
 await nav('הארגון ומשתמשים')
-await page.getByRole('button', { name: 'הזמנת משתמש' }).click()
+await page.getByRole('button', { name: /^(הזמנה|הוספת רו״ח או חבר צוות)$/ }).first().click()
 await page.locator('.fin-modal').getByLabel('אימייל', { exact: true }).fill('cpa@accountants.test')
 await page.locator('.fin-modal').getByLabel('שם', { exact: true }).fill('רו״ח דנה לוי')
-await page.locator('.fin-modal').getByLabel('תפקיד').selectOption('accountant')
+await page.locator('.fin-modal .fin-rolecard', { hasText: 'רואה חשבון' }).click()
 await page.getByRole('button', { name: 'שליחת הזמנה' }).click(); await page.waitForTimeout(1500)
 const inviteNote = await page.locator('.fin-note').first().innerText().catch(() => '')
 const usersShot = await shot('24-users')
@@ -609,13 +627,13 @@ record('INV', 'הזמנת משתמש במייל', 'נשלח מייל הזמנה 
 {
   const ob = await import('../../server/finance/outbound.js')
   const wa = await import('../../server/finance/whatsapp.js')
-  const urls = { http: await ob.checkUrl('http://example.com/h'), loop: await ob.checkUrl('https://127.0.0.1/h'), meta: await ob.checkUrl('https://169.254.169.254/latest'), local: await ob.checkUrl('https://localhost/h'), lan: await ob.checkUrl('https://192.168.1.4/h'), creds: await ob.checkUrl('https://u:p@example.com/h') }
+  const urls = { http: await ob.checkUrl('http://example.com/h'), loop: await ob.checkUrl('https://127.0.0.1/h'), meta: await ob.checkUrl('https://169.254.169.254/latest'), local: await ob.checkUrl('https://localhost/h'), lan: await ob.checkUrl('https://192.168.1.4/h'), creds: await ob.checkUrl('https://u:p@example.com/h'), mapped: await ob.checkUrl('https://[::ffff:127.0.0.1]/h'), mapped10: await ob.checkUrl('https://[::ffff:a00:1]/h'), nat64: await ob.checkUrl('https://[64:ff9b::a9fe:a9fe]/h') }
   const media = { green: wa.mediaUrlOk('https://sw-media-out.greenapi.net/x.jpg'), evil: wa.mediaUrlOk('https://evil.example/x.jpg'), plain: wa.mediaUrlOk('http://sw-media-out.greenapi.net/x.jpg'), meta: wa.mediaUrlOk('https://169.254.169.254/') }
   const empPhoneOther = await rest('fin_whatsapp_senders', empToken, { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ phone: '972541111111', user_id: sql("select user_id from fin_members where role='admin' limit 1") }) })
   const empCounter = await rest(`fin_whatsapp_senders?phone=eq.972543049491`, empToken, { method: 'PATCH', body: JSON.stringify({ docs_count: 999 }) })
   const pendingFn = await rest('rpc/fin_cloud_pending', adminToken, { method: 'POST', body: JSON.stringify({ p_target: sql("select id from fin_cloud_targets limit 1") }) })
   const ok = Object.values(urls).every(Boolean) && media.green && !media.evil && !media.plain && !media.meta && empPhoneOther.status >= 400 && empCounter.status >= 400 && pendingFn.status >= 400
-  record('SEC5', 'הגנות בנתיבי הקליטה והשליחה החדשים', 'webhook רק ב-https ולא לכתובת פנימית (localhost, 127/192.168, metadata); קבצי WhatsApp רק משרתי Green API; עובד לא רושם טלפון בשם אחר ולא משנה מונים; פונקציית התור של הענן לא נגישה מהדפדפן',
+  record('SEC5', 'הגנות בנתיבי הקליטה והשליחה החדשים', 'webhook רק ב-https ולא לכתובת פנימית (localhost, 127/192.168, metadata, וגם בצורת IPv6); קבצי WhatsApp רק משרתי Green API; עובד לא רושם טלפון בשם אחר ולא משנה מונים; פונקציית התור של הענן לא נגישה מהדפדפן',
     `כתובות: ${JSON.stringify(urls)}; מדיה: ${JSON.stringify(media)}; טלפון של אחר: ${empPhoneOther.status}; מונה: ${empCounter.status}; תור ענן: ${pendingFn.status}`, ok)
 }
 
@@ -671,6 +689,10 @@ const overflow = async () => m.evaluate(() => document.documentElement.scrollWid
 const mShots = []; const ov = {}
 mShots.push(await shot('m1-dashboard', m)); ov.dashboard = await overflow()
 await m.getByRole('button', { name: 'פתיחת התפריט' }).click(); await m.waitForTimeout(400); mShots.push(await shot('m2-menu', m))
+const drawer = { email: await m.locator('.fin__drawer-head small').innerText().catch(() => ''), org: await m.locator('.fin__org').innerText().catch(() => ''), groups: (await m.locator('.fin__nav-label').allInnerTexts()).join('|') }
+await m.locator('.fin__drawer-head button[aria-label="סגירת התפריט"]').click(); await m.waitForTimeout(400)
+drawer.closed = !(await m.locator('.fin__side.is-open').count())
+await m.getByRole('button', { name: 'פתיחת התפריט' }).click(); await m.waitForTimeout(400)
 await m.locator('.fin__nav-item', { hasText: 'כל המסמכים' }).click(); await m.waitForTimeout(1000); mShots.push(await shot('m3-documents', m)); ov.documents = await overflow()
 await m.locator('tbody tr').first().locator('.fin-cell-btn').click(); await m.waitForTimeout(1500); mShots.push(await shot('m4-review', m)); ov.review = await overflow()
 await m.evaluate(() => document.querySelector('.fin-panel__body')?.scrollTo(0, 99999)); await m.waitForTimeout(300); mShots.push(await shot('m5-review-actions', m))
@@ -691,6 +713,9 @@ const mForm = sql("select count(*) from fin_suppliers where name='ספק מהט�
 record('G', 'מובייל: המסכים החדשים', 'אין גלילה אופקית, חיפוש עובד, טופס ספק נשמר מהטלפון', `גלילה: ${JSON.stringify(ov)}; חיפוש "סולל": ${mSearch}; טופס: ${mForm}`, Object.values(ov).every((v) => v <= 0) && mSearch === 1 && mForm === '1', mShots.slice(-9))
 const smallTargets = await m.evaluate(() => [...document.querySelectorAll('.fin button, .fin a, .fin input, .fin select')].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 24 && e.type !== 'checkbox').map((e) => e.className || e.tagName).slice(0, 5))
 const dir = await m.evaluate(() => document.querySelector('.fin')?.getAttribute('dir'))
+record('DRAWER', 'תפריט מובייל: משתמש, ארגון וקבוצות', 'בראש התפריט: המשתמש עם כפתור סגירה וכרטיס הארגון; הקבוצות כוללות "מקורות"; הסגירה עובדת',
+  `מייל: ${drawer.email}; ארגון: ${drawer.org.replace(/\s+/g, ' ')}; קבוצות: ${drawer.groups}; נסגר: ${drawer.closed}`,
+  drawer.email === 'admin@kurkoos.test' && /קבוצת קורקוס/.test(drawer.org) && /מקורות/.test(drawer.groups) && drawer.closed, mShots.slice(1, 2))
 record('T12', 'גרסת מובייל', 'אין גלילה אופקית בשום מסך, התפריט נפתח ונסגר, מסמך נפתח ומאושר מהטלפון, כיוון RTL', `גלילה אופקית (px): ${JSON.stringify(ov)} · dir=${dir} · כפתורים קטנים מ-24px: ${smallTargets.length}`, Object.values(ov).every((v) => v <= 0) && dir === 'rtl', mShots)
 await mob.close()
 

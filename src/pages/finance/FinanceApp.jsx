@@ -47,8 +47,8 @@ export const NAV = [
   { to: '/data', label: 'ניהול נתונים', icon: 'data', roles: OPS, el: <DataManagement />, group: 'נתוני יסוד' },
   { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'אוטומציה' },
   { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'אוטומציה' },
-  { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'אוטומציה' },
-  { to: '/scanners', label: 'סורקים ניידים', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'אוטומציה' },
+  { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'מקורות' },
+  { to: '/scanners', label: 'סורקים ניידים', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'מקורות' },
   { to: '/integrations', label: 'תוכנת הנהלת חשבונות', icon: 'plug', roles: OPS, el: <Integrations />, group: 'ייצוא' },
   { to: '/cloud', label: 'סנכרון לענן', icon: 'cloud', roles: OPS, el: <Cloud />, group: 'ייצוא' },
   { to: '/delivery', label: 'שליחה אוטומטית', icon: 'webhook', roles: ['admin'], el: <Delivery />, group: 'ייצוא' },
@@ -56,7 +56,7 @@ export const NAV = [
   { to: '/users', label: 'הארגון ומשתמשים', icon: 'users', roles: ['admin'], el: <Users />, group: 'מערכת' },
   { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings />, group: 'מערכת' },
 ]
-const GROUPS = ['עבודה', 'נתוני יסוד', 'אוטומציה', 'ייצוא', 'מערכת']
+const GROUPS = ['עבודה', 'נתוני יסוד', 'מקורות', 'אוטומציה', 'ייצוא', 'מערכת']
 
 const Ctx = createContext(null)
 export const useFinance = () => useContext(Ctx)
@@ -189,6 +189,7 @@ export default function FinanceApp() {
   if (session === undefined || (session && data.loading && !data.me)) return <div className="fin-msg">טוען…</div>
   if (!session) return <Login />
   const email = session.user?.email || ''
+  const myName = data.members.find((m) => m.user_id === session.user?.id)?.full_name || ''
   if (data.error && !data.me) return <div className="fin-login" dir="rtl"><div className="fin-login__box"><h1>שגיאה</h1><p className="fin-error">{data.error}</p></div></div>
   if (!role) return <NoAccess me={data.me} email={email} onClaimed={data.reload} />
 
@@ -196,6 +197,16 @@ export default function FinanceApp() {
     <Ctx.Provider value={ctx}>
       <div className="fin" dir="rtl" data-theme={theme}>
         <aside className={`fin__side ${navOpen ? 'is-open' : ''}`} id="fin-side" aria-label="תפריט המערכת">
+          <div className="fin__drawer-head">
+            <span className="fin__avatar fin__avatar--lg" aria-hidden="true">{(myName || email).trim().slice(0, 1).toUpperCase()}</span>
+            <span className="fin__user-meta"><strong>{myName || ROLE[role]}</strong><small dir="ltr">{email}</small></span>
+            <button type="button" className="fin-icon-btn" onClick={() => setNavOpen(false)} aria-label="סגירת התפריט"><Icon name="close" /></button>
+          </div>
+          <Link to={role === 'admin' ? `${BASE}/users` : `${BASE}/settings`} className="fin__org">
+            <span className="fin__org-mark" aria-hidden="true">KG</span>
+            <span className="fin__org-meta"><strong>קבוצת קורקוס</strong><small>{data.businesses.length === 1 ? 'חברה אחת' : `${data.businesses.length} חברות`} · {ROLE[role]}</small></span>
+            <Icon name="next" size={17} />
+          </Link>
           <Link to={BASE} className="fin__brand">
             <img src="/kurkoos-logo.svg" alt="" />
             <span><strong>Kurkoos Finance</strong><small>קבוצת קורקוס</small></span>
@@ -236,6 +247,11 @@ export default function FinanceApp() {
             <button type="button" className="fin-searchbar" onClick={() => setCmd(true)} aria-label="חיפוש (Ctrl+K)">
               <Icon name="search" size={17} /><span>חיפוש מסמך, ספק או פרויקט</span><kbd>⌘K</kbd>
             </button>
+            {['admin', 'finance_manager'].includes(role) && (
+              <Link to={`${BASE}/mailboxes?old=1`} className="fin-chiplink" title="סריקת חשבוניות מתקופה מוקדמת יותר">
+                <Icon name="history" size={17} /><span>קבלות ישנות</span>
+              </Link>
+            )}
             <div className="fin__top-actions">
               <button type="button" className="fin-icon-btn" onClick={data.reload} aria-label="רענון" title="רענון"><Icon name="refresh" /></button>
               <button type="button" className="fin-icon-btn" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} aria-label={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'} title={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button>

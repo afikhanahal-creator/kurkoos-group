@@ -269,7 +269,9 @@ export default async function handler(req, res) {
         const events = (Array.isArray(body.events) ? body.events : []).filter((e) => EVENTS.includes(e))
         if (!events.length) { res.status(400).json({ error: 'בחרו לפחות אירוע אחד' }); return }
         if (kind === 'email' && !emailOk(target)) { res.status(400).json({ error: 'כתובת מייל לא תקינה' }); return }
-        if (kind === 'webhook') { const bad = await checkUrl(target); if (bad) { res.status(400).json({ error: bad }); return } }
+        // an unchanged address is not checked again: pausing a webhook whose host went away must still work
+        const before = body.id ? await one(`fin_outbound?id=eq.${q(body.id)}&select=target`) : null
+        if (kind === 'webhook' && before?.target !== target) { const bad = await checkUrl(target); if (bad) { res.status(400).json({ error: bad }); return } }
         const row = { kind, target, name: String(body.name || '').slice(0, 80) || null, events, business_id: body.business_id || null, enabled: body.enabled !== false }
         let saved; let secret = null
         if (body.id) saved = await patch(`fin_outbound?id=eq.${q(body.id)}`, row)
@@ -313,8 +315,9 @@ export default async function handler(req, res) {
         if (ad.kind === 'api' && body.enabled) {
           // one accounting system per company: a second one would receive the same documents twice
           const others = (await sb(`fin_integrations?enabled=eq.true&provider=not.in.(file,hashavshevet)&select=id,name,business_id${body.id ? `&id=neq.${q(body.id)}` : ''}`)) || []
-          const clash = others.find((o) => (o.business_id || null) === (body.business_id || null))
-          if (clash) { res.status(409).json({ error: `ל${body.business_id ? 'חברה הזו' : 'כל החברות'} כבר מחוברת תוכנה (${clash.name}). נתקו אותה קודם.` }); return }
+          // "all companies" overlaps every company, so either side being empty is a clash too
+          const clash = others.find((o) => !o.business_id || !body.business_id || o.business_id === body.business_id)
+          if (clash) { res.status(409).json({ error: `${clash.business_id ? 'לחברה הזו' : 'לכל החברות'} כבר מחוברת תוכנה (${clash.name}). נתקו אותה קודם.` }); return }
         }
         const row = { provider: body.provider, name: body.name || ad.label, business_id: body.business_id || null, config: body.config || {}, enabled: !!body.enabled, status: ad.kind === 'file' ? 'ready' : 'not_active' }
         const saved = body.id ? await patch(`fin_integrations?id=eq.${q(body.id)}`, row) : await insert('fin_integrations', row)

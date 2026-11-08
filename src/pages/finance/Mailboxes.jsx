@@ -47,11 +47,19 @@ export default function Mailboxes() {
   useEffect(() => {
     const ok = params.get('connected'); const bad = params.get('error')
     if (ok) setMsg(`התיבה ${ok} חוברה. אפשר להריץ סריקה ראשונה (90 הימים האחרונים).`)
-    if (bad) setErr(bad === 'no_refresh' ? 'הספק לא החזיר הרשאה קבועה. נסו שוב.' : bad === 'state' ? 'פג הזמן של החיבור. נסו שוב.' : `החיבור נכשל: ${bad}`)
+    if (bad) setErr(bad === 'no_refresh' ? 'הספק לא החזיר הרשאה קבועה. נסו שוב.' : bad === 'state' ? 'פג הזמן של החיבור. נסו שוב.' : bad === 'forbidden' ? 'אין לך הרשאה לחבר תיבה.' : `החיבור נכשל: ${bad}`)
     if (ok || bad) { setParams({}, { replace: true }); reload() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const live = mailboxes.filter((m) => m.status !== 'revoked')
+  // "קבלות ישנות" in the top bar lands here with ?old=1
+  useEffect(() => {
+    if (params.get('old') !== '1') return
+    setParams({}, { replace: true })
+    if (!can('operate')) return
+    if (live.length) setOld(true)
+    else setMsg('כדי לאסוף קבלות ישנות, חברו קודם תיבת דואר.')
+  }, [params]) // eslint-disable-line react-hooks/exhaustive-deps
   const periodFrom = useMemo(() => live.map((m) => m.sync_from).filter(Boolean).sort()[0] || null, [live])
   const prov = status.data?.providers || {}
 

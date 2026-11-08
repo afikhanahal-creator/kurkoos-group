@@ -4,8 +4,10 @@
 import crypto from 'node:crypto'
 import dns from 'node:dns/promises'
 import net from 'node:net'
+import http from 'node:http'
+import https from 'node:https'
 import { env, BUCKET } from './env.js'
-import { sb, one, patch, download, agentRun } from './db.js'
+import { sb, one, patch, download, agentRun, rpc } from './db.js'
 import { money } from './format-server.js'
 
 export const EVENTS = ['document.received', 'document.approved', 'document.rejected', 'document.exported']
@@ -15,13 +17,38 @@ const MAX_ATTACH = 10 * 1024 * 1024
 
 const allowPrivate = () => process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS === '1'
 
-function privateIp(ip) {
-  if (net.isIPv4(ip)) {
-    const [a, b] = ip.split('.').map(Number)
-    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224
-  }
-  const v = ip.toLowerCase()
-  return v === '::1' || v === '::' || v.startsWith('fc') || v.startsWith('fd') || v.startsWith('fe80') || v.startsWith('::ffff:') && privateIp(v.slice(7))
+// every address range a webhook must never reach (private, loopback, link-local, CGNAT, benchmark, multicast, reserved,
+// and the IPv6 forms that embed an IPv4 address: mapped ::ffff:0:0/96, NAT64 64:ff9b::/96, 6to4 2002::/16)
+const BLOCK = new net.BlockList()
+for (const [a, n] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.0.2.0', 24], ['192.168.0.0', 16], ['198.18.0.0', 15], ['198.51.100.0', 24], ['203.0.113.0', 24], ['224.0.0.0', 3]]) BLOCK.addSubnet(a, n, 'ipv4')
+for (const [a, n] of [['::', 127], ['64:ff9b::', 96], ['64:ff9b:1::', 48], ['100::', 64], ['2001:db8::', 32], ['2002::', 16], ['fc00::', 7], ['fe80::', 10], ['fec0::', 10], ['ff00::', 8]]) BLOCK.addSubnet(a, n, 'ipv6')
+export function privateIp(ip) {
+  const fam = net.isIP(ip)
+  if (!fam) return true
+  return BLOCK.check(ip, fam === 4 ? 'ipv4' : 'ipv6')
+}
+
+// the address is checked at connect time, so a name that resolves to a public address for the check and to a private
+// one for the request (DNS rebinding) is still refused
+function guardedLookup(host, opts, cb) {
+  dns.lookup(host, { ...opts, all: true }).then((list) => {
+    const bad = list.find((r) => privateIp(r.address))
+    if (bad && !allowPrivate()) return cb(Object.assign(new Error('כתובת פנימית לא מותרת'), { code: 'EBLOCKED' }))
+    if (opts && opts.all) return cb(null, list)
+    return cb(null, list[0].address, list[0].family)
+  }, (e) => cb(e))
+}
+
+/* POST with the guarded lookup, no redirects, 10 s timeout */
+function postGuarded(target, headers, body) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(target)
+    const mod = u.protocol === 'https:' ? https : http
+    const req = mod.request(u, { method: 'POST', headers: { ...headers, 'Content-Length': Buffer.byteLength(body) }, lookup: guardedLookup, timeout: 10_000 }, (res) => { res.resume(); res.on('end', () => resolve(res.statusCode)); res.on('error', reject) })
+    req.on('timeout', () => req.destroy(new Error('הכתובת לא ענתה תוך 10 שניות')))
+    req.on('error', reject)
+    req.end(body)
+  })
 }
 
 /* https only, and never an address inside a private network (the server must not be used to reach internal services) */
@@ -42,7 +69,7 @@ export const emailOk = (s) => /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]{2,}$/.test(S
 
 export const sign = (secret, t, body) => crypto.createHmac('sha256', secret).update(`${t}.${body}`).digest('hex')
 
-async function signedUrl(path, seconds = 7 * 86400) {
+async function signedUrl(path, seconds = 86400) {
   const r = await fetch(`${env.sbUrl()}/storage/v1/object/sign/${BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`, {
     method: 'POST', headers: { apikey: env.sbKey(), Authorization: `Bearer ${env.sbKey()}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresIn: seconds }),
   }).catch(() => null)
@@ -70,13 +97,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 async function deliverWebhook(o, secret, event, data, deliveryId) {
   const body = JSON.stringify({ id: String(deliveryId), event, created_at: new Date().toISOString(), data })
   const t = Math.floor(Date.now() / 1000)
-  const r = await fetch(o.target, {
-    method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10_000),
-    headers: { 'Content-Type': 'application/json', 'User-Agent': 'Kurkoos-Finance-Webhook/1', 'X-Kurkoos-Event': event, 'X-Kurkoos-Delivery': String(deliveryId), 'X-Kurkoos-Signature': `t=${t},v1=${sign(secret, t, body)}` },
-    body,
-  })
-  await r.arrayBuffer().catch(() => {})
-  return r.status
+  return postGuarded(o.target, { 'Content-Type': 'application/json', 'User-Agent': 'Kurkoos-Finance-Webhook/1', 'X-Kurkoos-Event': event, 'X-Kurkoos-Delivery': String(deliveryId), 'X-Kurkoos-Signature': `t=${t},v1=${sign(secret, t, body)}` }, body)
 }
 
 async function deliverEmail(o, event, doc, data) {
@@ -88,9 +109,9 @@ async function deliverEmail(o, event, doc, data) {
     if (buf.length <= MAX_ATTACH) attachments.push({ filename: doc.file_name || 'document.pdf', content: buf.toString('base64') })
   }
   const title = doc ? `${SUBJECT[event]}: ${doc.supplier_name || doc.file_name || 'מסמך'}${doc.total_amount ? ` · ${money(doc.total_amount)}` : ''}` : SUBJECT[event]
-  const html = `<div dir="rtl" style="font-family:Arial,sans-serif">${doc ? `<p><b>${esc(doc.supplier_name || 'ספק לא מזוהה')}</b>${doc.doc_number ? ` · ${esc(doc.doc_number)}` : ''}</p><p>${doc.issue_date ? `תאריך: ${esc(doc.issue_date)}<br>` : ''}${doc.total_amount ? `סה״כ: ${esc(money(doc.total_amount))}<br>` : ''}${data?.company?.name ? `חברה: ${esc(data.company.name)}<br>` : ''}</p>${attachments.length ? '<p>הקובץ המקורי מצורף.</p>' : data?.file_url ? `<p><a href="${esc(data.file_url)}">להורדת הקובץ</a> (הקישור בתוקף 7 ימים)</p>` : ''}` : '<p>זו הודעת בדיקה ממערכת הנהלת החשבונות של קבוצת קורקוס. החיבור תקין.</p>'}</div>`
+  const html = `<div dir="rtl" style="font-family:Arial,sans-serif">${doc ? `<p><b>${esc(doc.supplier_name || 'ספק לא מזוהה')}</b>${doc.doc_number ? ` · ${esc(doc.doc_number)}` : ''}</p><p>${doc.issue_date ? `תאריך: ${esc(doc.issue_date)}<br>` : ''}${doc.total_amount ? `סה״כ: ${esc(money(doc.total_amount))}<br>` : ''}${data?.company?.name ? `חברה: ${esc(data.company.name)}<br>` : ''}</p>${attachments.length ? '<p>הקובץ המקורי מצורף.</p>' : data?.file_url ? `<p><a href="${esc(data.file_url)}">להורדת הקובץ</a> (הקישור בתוקף 24 שעות)</p>` : ''}` : '<p>זו הודעת בדיקה ממערכת הנהלת החשבונות של קבוצת קורקוס. החיבור תקין.</p>'}</div>`
   const r = await fetch(`${env.resendApi()}/emails`, {
-    method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    method: 'POST', signal: AbortSignal.timeout(15_000), headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ from: process.env.FINANCE_FROM || process.env.NOTIFY_FROM || 'Kurkoos Finance <onboarding@resend.dev>', to: [o.target], subject: title, html, attachments }),
   })
   await r.arrayBuffer().catch(() => {})
@@ -107,6 +128,8 @@ async function namesMap() {
 /* sends what is due. Safe to call often and from several places: each row is claimed before it is sent. */
 export async function flushOutbound({ max = 40, started = Date.now(), budgetMs = 25_000, trigger = 'event' } = {}) {
   const due = (await sb(`fin_outbound_queue?done_at=is.null&next_at=lte.${encodeURIComponent(new Date().toISOString())}&attempts=lt.${MAX_ATTEMPTS}&select=*&order=id.asc&limit=${max}`)) || []
+  // a delivery that crashed on its last attempt is closed here
+  await sb(`fin_outbound_queue?done_at=is.null&attempts=gte.${MAX_ATTEMPTS}&next_at=lte.${encodeURIComponent(new Date().toISOString())}`, { method: 'PATCH', prefer: 'return=minimal', body: { done_at: new Date().toISOString(), last_error: 'נכשל אחרי כל הניסיונות' } }).catch(() => {})
   if (!due.length) return { sent: 0, failed: 0 }
   const run = await agentRun('outbound', trigger)
   const outs = Object.fromEntries(((await sb(`fin_outbound?id=in.(${[...new Set(due.map((d) => d.outbound_id))].join(',')})&select=*`)) || []).map((o) => [o.id, o]))
@@ -115,10 +138,13 @@ export async function flushOutbound({ max = 40, started = Date.now(), budgetMs =
   for (const q of due) {
     if (Date.now() - started > budgetMs) break
     // claim: push next_at forward so a parallel flush skips this row
-    const claimed = await sb(`fin_outbound_queue?id=eq.${q.id}&done_at=is.null&next_at=eq.${encodeURIComponent(q.next_at)}`, { method: 'PATCH', body: { next_at: new Date(Date.now() + 2 * 60_000).toISOString() } }).catch(() => [])
-    if (!claimed?.length) continue
     const o = outs[q.outbound_id]
-    if (!o || !o.enabled) { await patch(`fin_outbound_queue?id=eq.${q.id}`, { done_at: new Date().toISOString(), last_error: 'היעד כבוי' }); continue }
+    if (!o) continue
+    if (!o.enabled) continue                          // paused: the row waits for the target to be turned on again
+    // claim: the attempt is counted now, so a delivery that kills the function still runs out of attempts
+    const attempts = q.attempts + 1
+    const claimed = await sb(`fin_outbound_queue?id=eq.${q.id}&done_at=is.null&attempts=eq.${q.attempts}&next_at=eq.${encodeURIComponent(q.next_at)}`, { method: 'PATCH', body: { attempts, next_at: new Date(Date.now() + 2 * 60_000).toISOString() } }).catch(() => [])
+    if (!claimed?.length) continue
     let status = 0; let error = null
     try {
       const doc = q.document_id ? await one(`fin_documents?id=eq.${q.document_id}&select=*`) : null
@@ -133,16 +159,15 @@ export async function flushOutbound({ max = 40, started = Date.now(), budgetMs =
       } else status = await deliverEmail(o, q.event, doc, data)
       if (status < 200 || status >= 300) error = `HTTP ${status}`
     } catch (e) { error = String(e.message || e).slice(0, 200) }
-    const attempts = q.attempts + 1
     if (!error) {
       await patch(`fin_outbound_queue?id=eq.${q.id}`, { attempts, done_at: new Date().toISOString(), last_status: status, last_error: null })
-      await patch(`fin_outbound?id=eq.${o.id}`, { sent_count: (o.sent_count || 0) + 1, last_status: 'ok', last_at: new Date().toISOString() })
-      o.sent_count = (o.sent_count || 0) + 1; sent++; run.stat.processed++
+      await rpc('fin_outbound_count', { p_id: o.id, p_ok: true, p_status: 'ok' }).catch(() => {})
+      sent++; run.stat.processed++
     } else {
       const giveUp = attempts >= MAX_ATTEMPTS
       await patch(`fin_outbound_queue?id=eq.${q.id}`, { attempts, last_status: status || null, last_error: error, ...(giveUp ? { done_at: new Date().toISOString() } : { next_at: new Date(Date.now() + BACKOFF_MIN[attempts - 1] * 60_000).toISOString() }) })
-      await patch(`fin_outbound?id=eq.${o.id}`, { fail_count: (o.fail_count || 0) + 1, last_status: error, last_at: new Date().toISOString() })
-      o.fail_count = (o.fail_count || 0) + 1; failed++; run.stat.errors++
+      await rpc('fin_outbound_count', { p_id: o.id, p_ok: false, p_status: error }).catch(() => {})
+      failed++; run.stat.errors++
     }
   }
   run.stat.details = { sent, failed }

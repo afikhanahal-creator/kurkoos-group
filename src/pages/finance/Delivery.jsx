@@ -53,7 +53,7 @@ function Guide() {
           <pre dir="ltr" className="fin-code">{VERIFY}</pre>
         </li>
         <li><strong>תשובה.</strong> החזירו קוד 2xx תוך 10 שניות. תשובה אחרת נשלחת שוב אחרי 1, 5, 30 דקות, שעתיים ו-12 שעות. הכותרת <bdi dir="ltr">X-Kurkoos-Delivery</bdi> זהה בכל הניסיונות, כך שאפשר לזהות כפילות.</li>
-        <li><strong>מה נשלח.</strong> הקישור לקובץ בתוקף 7 ימים.
+        <li><strong>מה נשלח.</strong> הקישור לקובץ בתוקף 24 שעות. כל אירוע נשלח פעם אחת לכל מסמך.
           <pre dir="ltr" className="fin-code">{SAMPLE}</pre>
         </li>
       </ol>

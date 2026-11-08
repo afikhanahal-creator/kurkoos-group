@@ -17,6 +17,38 @@ const ROLE_TONE = { admin: 'done', finance_manager: 'ok', employee: 'muted', acc
 const TABS = [['members', 'חברי ארגון'], ['companies', 'חברות'], ['usage', 'שימוש']]
 const initials = (m) => (m.full_name || m.email || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
+const ROLE_PICK = [
+  ['accountant', 'רואה חשבון', 'רואה מסמכים מאושרים ודוחות, ומוריד חבילות. לא משנה כלום.'],
+  ['employee', 'חבר/ת צוות', 'מעלה קבלות, מחבר תיבה וטלפון, ורואה רק את מה שהביא.'],
+  ['finance_manager', 'מנהל/ת כספים', 'בודק, מתקן ומאשר מסמכים, ומייצא לרו״ח.'],
+  ['admin', 'מנהל מערכת', 'הכול, כולל משתמשים, חיבורים והגדרות.'],
+]
+function RolePick({ value, onChange }) {
+  return (
+    <fieldset className="fin-field fin-field--wide fin-rolepick"><legend className="fin-field__label">תפקיד</legend>
+      {ROLE_PICK.map(([k, title, desc]) => (
+        <label key={k} className={`fin-rolecard ${value === k ? 'is-on' : ''}`}>
+          <input type="radio" name="fin-role" value={k} checked={value === k} onChange={() => onChange(k)} />
+          <span><strong>{title}</strong><small>{desc}</small></span>
+        </label>
+      ))}
+    </fieldset>
+  )
+}
+function InviteGuide({ onClose, onInvite }) {
+  return (
+    <Modal title="הזמנת רו״ח או חבר צוות, שלב אחרי שלב" onClose={onClose} footer={<><button type="button" className="fin-btn fin-btn--primary" onClick={onInvite}>להזמנה</button><button type="button" className="fin-btn fin-btn--ghost" onClick={onClose}>סגירה</button></>}>
+      <ol className="fin-guide__steps fin-guide__steps--modal">
+        <li><strong>בוחרים תפקיד.</strong> רו״ח רואה רק מסמכים מאושרים ודוחות. חבר צוות מעלה קבלות ורואה רק את שלו. מנהל כספים מאשר ומייצא.</li>
+        <li><strong>מגבילים לחברות</strong> (לא חובה). רו״ח של חברה אחת יראה רק אותה. ההגבלה נאכפת במסד הנתונים, לא רק במסך.</li>
+        <li><strong>שולחים.</strong> המוזמן מקבל מייל עם קישור להגדרת סיסמה, ומופיע כאן כ"ממתין להצטרפות" עד הכניסה הראשונה.</li>
+        <li><strong>עדיין לא נכנס?</strong> בתפריט שליד השם: "שליחת ההזמנה שוב".</li>
+        <li><strong>מישהו עזב?</strong> משביתים אותו. ההיסטוריה שלו נשארת ביומן, והגישה נחסמת מיד.</li>
+      </ol>
+    </Modal>
+  )
+}
+
 function Usage() {
   const { documents, mailboxes } = useFinance()
   const usage = useAsync(() => api.storageUsage(), [])
@@ -69,6 +101,8 @@ export default function Users() {
   const [term, setTerm] = useState('')
   const [role, setRole] = useState('')
   const [sort, setSort] = useState('name')
+  const [guide, setGuide] = useState(false)
+  const newInvite = () => { setGuide(false); setInvite({ email: '', full_name: '', role: 'accountant', business_ids: null }) }
   const admins = members.filter((m) => m.role === 'admin' && m.active).length
   const seen = useMemo(() => Object.fromEntries((meta.data?.users || []).map((u) => [u.id, u])), [meta.data])
   const pendingOf = (m) => meta.data && seen[m.user_id] && !seen[m.user_id].last_sign_in_at
@@ -115,7 +149,16 @@ export default function Users() {
       </div>
       {msg && <p className="fin-note" role="status">{msg}</p>}
 
-      {tab === 'members' && (
+      {tab === 'members' && members.length <= 1 && (
+        <div className="fin-hero-empty">
+          <span className="fin-hero-empty__icon" aria-hidden="true"><Icon name="users" size={44} /></span>
+          <h3>הזמינו את רואה החשבון או את חברי הצוות</h3>
+          <p>תנו גישה לרו״ח או לאנשי הצוות. הם יקבלו הזמנה במייל, וכל אחד יראה רק את מה שהתפקיד שלו מתיר.</p>
+          <button type="button" className="fin-btn fin-btn--primary fin-btn--wide" onClick={newInvite}>הזמנה</button>
+          <button type="button" className="fin-link" onClick={() => setGuide(true)}>מדריך שלב אחרי שלב <Icon name="next" size={15} /></button>
+        </div>
+      )}
+      {tab === 'members' && members.length > 1 && (
         <>
           <h3 className="fin-org-name">קבוצת קורקוס</h3>
           <div className="fin-org-stats">
@@ -127,8 +170,8 @@ export default function Users() {
             <select className="fin-select" value={role} onChange={(e) => setRole(e.target.value)} aria-label="סינון לפי תפקיד"><option value="">כל התפקידים</option>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
             <button type="button" className="fin-icon-btn" onClick={() => setSort(sort === 'name' ? 'new' : 'name')} title={sort === 'name' ? 'ממוין לפי שם' : 'ממוין לפי הצטרפות'} aria-label={sort === 'name' ? 'מיון לפי הצטרפות' : 'מיון לפי שם'}><Icon name="sort" size={19} /></button>
           </div>
-          <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={() => setInvite({ email: '', full_name: '', role: 'employee', business_ids: null })}><Icon name="plus" size={18} /> הזמנת משתמש</button>
-          <div className="fin-section-head"><h3>חברי ארגון <span className="fin-count">{shown.length}</span></h3></div>
+          <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={newInvite}><Icon name="plus" size={18} /> הוספת רו״ח או חבר צוות</button>
+          <div className="fin-section-head"><h3>חברי ארגון <span className="fin-count">{shown.length}</span></h3><button type="button" className="fin-link" onClick={() => setGuide(true)}>מדריך הזמנה</button></div>
           {!shown.length ? <Empty title="אין משתמשים שמתאימים לחיפוש" icon="users">נסו מילה אחרת או הסירו את הסינון.</Empty> : (
             <ul className="fin-member-list">
               {shown.map((m) => {
@@ -187,13 +230,14 @@ export default function Users() {
       )}
 
       {tab === 'usage' && <Usage />}
+      {guide && <InviteGuide onClose={() => setGuide(false)} onInvite={newInvite} />}
 
       {invite && (
-        <Modal title="הזמנת משתמש" onClose={() => setInvite(null)} footer={<><button type="submit" form="fin-invite" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'שולח…' : 'שליחת הזמנה'}</button><button type="button" className="fin-btn" onClick={() => setInvite(null)}>ביטול</button></>}>
+        <Modal title="הוספת רו״ח או חבר צוות" onClose={() => setInvite(null)} footer={<><button type="submit" form="fin-invite" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'שולח…' : 'שליחת הזמנה'}</button><button type="button" className="fin-btn" onClick={() => setInvite(null)}>ביטול</button></>}>
           <form id="fin-invite" className="fin-form__grid" onSubmit={send}>
             <Field label="אימייל" wide><input type="email" required value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} dir="ltr" /></Field>
             <Field label="שם"><input value={invite.full_name} onChange={(e) => setInvite({ ...invite, full_name: e.target.value })} /></Field>
-            <Field label="תפקיד" hint={ROLE_DESC[invite.role]}><select value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value })}>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
+            <RolePick value={invite.role} onChange={(r) => setInvite({ ...invite, role: r })} />
             {BizPick({ value: invite.business_ids, onChange: (v) => setInvite({ ...invite, business_ids: v }) })}
           </form>
           <p className="fin-muted">המשתמש יקבל מייל עם קישור להגדרת סיסמה.</p>

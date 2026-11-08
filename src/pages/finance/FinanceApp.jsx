@@ -10,6 +10,8 @@ import Documents from './Documents.jsx'
 import MasterData from './MasterData.jsx'
 import EntityOverview from './EntityOverview.jsx'
 import CommandPalette from './CommandPalette.jsx'
+import Scanners from './Scanners.jsx'
+import Cloud from './Cloud.jsx'
 import Reports from './Reports.jsx'
 import DataManagement from './DataManagement.jsx'
 import Automations from './Automations.jsx'
@@ -44,8 +46,10 @@ export const NAV = [
   { to: '/data', label: 'ניהול נתונים', icon: 'data', roles: OPS, el: <DataManagement />, group: 'נתוני יסוד' },
   { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'אוטומציה' },
   { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'אוטומציה' },
-  { to: '/mailboxes', label: 'חשבונות מייל מחוברים', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'אוטומציה' },
+  { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'אוטומציה' },
+  { to: '/scanners', label: 'סורקים ניידים', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'אוטומציה' },
   { to: '/integrations', label: 'אינטגרציות הנהלת חשבונות', icon: 'plug', roles: OPS, el: <Integrations />, group: 'ייצוא' },
+  { to: '/cloud', label: 'סנכרון לענן', icon: 'cloud', roles: OPS, el: <Cloud />, group: 'ייצוא' },
   { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory />, group: 'ייצוא' },
   { to: '/users', label: 'משתמשים והרשאות', icon: 'users', roles: ['admin'], el: <Users />, group: 'מערכת' },
   { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings />, group: 'מערכת' },

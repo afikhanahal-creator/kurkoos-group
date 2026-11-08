@@ -15,6 +15,8 @@ import { sb, one, insert, patch, q, caller, audit } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
+import { CLOUD, syncCloud, connectCloud } from './finance/cloud.js'
+import whatsappWebhook, { configured as waConfigured, officeNumber } from './finance/whatsapp.js'
 
 const ROLES = {
   'auth-url': ['admin', 'finance_manager', 'employee'],
@@ -29,6 +31,10 @@ const ROLES = {
   'integration-save': ['admin'],
   'integration-test': ['admin', 'finance_manager'],
   status: ['admin', 'finance_manager', 'employee', 'accountant'],
+  backfill: ['admin', 'finance_manager'],
+  'cloud-auth-url': ['admin'],
+  'cloud-sync': ['admin', 'finance_manager'],
+  'cloud-disconnect': ['admin'],
 }
 
 // per-user rate limit (in memory, per instance): 120 calls in 10 minutes
@@ -66,13 +72,22 @@ async function oauthCallback(req, res, url) {
   const st = readState(url.searchParams.get('state'))
   if (!st) return back('error=state')
   if (url.searchParams.get('error')) return back(`error=${encodeURIComponent(url.searchParams.get('error_description') || url.searchParams.get('error'))}`)
+  if (CLOUD[st.p]) {
+    const cloudBack = (qs) => redirect(res, `${origin(req)}/admin/finance/cloud?${qs}`)
+    try {
+      const t = await CLOUD[st.p].exchange(url.searchParams.get('code'), redirectUri(req))
+      if (!t.email) return cloudBack('error=no_email')
+      await connectCloud(st.p, t, st)
+      return cloudBack(`connected=${encodeURIComponent(t.email)}`)
+    } catch (e) { return cloudBack(`error=${encodeURIComponent(String(e.message || e).slice(0, 120))}`) }
+  }
   const prov = PROVIDERS[st.p]
   if (!prov) return back('error=provider')
   try {
     const t = await prov.exchange(url.searchParams.get('code'), redirectUri(req))
     if (!t.email) return back('error=no_email')
     let mb = await one(`fin_mailboxes?provider=eq.${st.p}&email=eq.${q(t.email)}&select=*`)
-    if (!mb) mb = await insert('fin_mailboxes', { provider: st.p, email: t.email, business_id: st.b || null, connected_by: st.u })
+    if (!mb) mb = await insert('fin_mailboxes', { provider: st.p, email: t.email, business_id: st.b || null, connected_by: st.u, sync_from: new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10) })
     else await patch(`fin_mailboxes?id=eq.${mb.id}`, { status: 'active', last_error: null })
     const existing = await one(`fin_mailbox_secrets?mailbox_id=eq.${mb.id}&select=refresh_token`)
     const refresh = t.refresh_token || existing?.refresh_token
@@ -90,6 +105,10 @@ export default async function handler(req, res) {
   const url = new URL(req.url, 'http://x')
 
   if (url.pathname.endsWith('/finance-oauth')) return oauthCallback(req, res, url)
+  if (url.pathname.endsWith('/finance-whatsapp')) {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
+    return whatsappWebhook(req, res)
+  }
 
   if (req.method === 'GET' && url.searchParams.get('action') === 'cron') {
     if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) { res.status(401).json({ error: 'unauthorized' }); return }
@@ -114,6 +133,8 @@ export default async function handler(req, res) {
           claude: !!env.anthropicKey(),
           email: !!process.env.RESEND_API_KEY,
           cron: !!process.env.CRON_SECRET,
+          whatsapp: { configured: waConfigured(), number: officeNumber() },
+          cloud: Object.fromEntries(Object.entries(CLOUD).map(([k, c]) => [k, c.configured()])),
           adapters: Object.values(ADAPTERS).map(({ id, label, kind, fields, secrets }) => ({ id, label, kind, fields, secrets })),
         })
         return
@@ -145,6 +166,40 @@ export default async function handler(req, res) {
         if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
         if (user.role === 'employee' && doc.created_by !== user.id) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
         res.status(200).json({ document: await revalidate(doc) })
+        return
+      }
+      case 'backfill': {
+        // "old receipts": the period starts earlier; the next scan reads the gap once
+        const from = String(body.from || '')
+        const d = new Date(`${from}T00:00:00Z`)
+        const min = new Date(); min.setUTCFullYear(min.getUTCFullYear() - 3)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || Number.isNaN(d.getTime()) || d > new Date() || d < min) { res.status(400).json({ error: 'תאריך לא תקין (עד שלוש שנים אחורה)' }); return }
+        const boxes = (await sb(`fin_mailboxes?status=in.(active,error)${body.mailbox_id ? `&id=eq.${q(body.mailbox_id)}` : ''}&select=id,sync_from,email`)) || []
+        for (const b of boxes) if (!b.sync_from || b.sync_from > from) await patch(`fin_mailboxes?id=eq.${b.id}`, { sync_from: from, backfill_pending: true })
+        await audit('mailbox', body.mailbox_id || 'all', 'backfill', { from, mailboxes: boxes.length }, user)
+        res.status(200).json({ ok: true, mailboxes: boxes.length, results: body.run === false ? [] : await syncAll({ mailboxId: body.mailbox_id, trigger: 'backfill', user }) })
+        return
+      }
+      case 'cloud-auth-url': {
+        const c = CLOUD[body.provider]
+        if (!c) { res.status(400).json({ error: 'ספק לא נתמך' }); return }
+        if (!c.configured()) { res.status(503).json({ error: body.provider === 'gdrive' ? 'Google Drive עוד לא הוגדר: חסרים GOOGLE_CLIENT_ID ו-GOOGLE_CLIENT_SECRET' : 'Dropbox עוד לא הוגדר: חסרים DROPBOX_APP_KEY ו-DROPBOX_APP_SECRET' }); return }
+        res.status(200).json({ url: c.authUrl(signState({ u: user.id, e: user.email, p: body.provider, t: Date.now() }), redirectUri(req)) })
+        return
+      }
+      case 'cloud-sync': {
+        res.status(200).json({ results: await syncCloud({ targetId: body.target_id, trigger: 'manual' }) })
+        return
+      }
+      case 'cloud-disconnect': {
+        const t = await one(`fin_cloud_targets?id=eq.${q(body.target_id)}&select=*`)
+        if (!t) { res.status(404).json({ error: 'לא נמצא' }); return }
+        const s2 = await one(`fin_cloud_secrets?target_id=eq.${t.id}&select=*`)
+        if (s2) await CLOUD[t.provider].revoke(s2.refresh_token, s2.access_token)
+        await sb(`fin_cloud_secrets?target_id=eq.${t.id}`, { method: 'DELETE', prefer: 'return=minimal' })
+        await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'revoked', enabled: false })
+        await audit('cloud', t.id, 'disconnected', { provider: t.provider, email: t.account_email }, user)
+        res.status(200).json({ ok: true })
         return
       }
       case 'retry-failed': {

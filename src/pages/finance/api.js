@@ -53,6 +53,9 @@ export const saveSetting = async (key, value) => must(await supabase.from('fin_s
 export const loadRuleHits = (limit = 200) => soft(all('fin_rule_hits', 'at', false, limit))
 export const mergeSuppliers = async (from, into) => must(await supabase.rpc('fin_merge_suppliers', { p_from: from, p_into: into }))
 export const setAllocations = async (documentId, rows) => must(await supabase.rpc('fin_set_allocations', { p_document: documentId, p_rows: rows }))
+export const loadWhatsappSenders = () => soft(all('fin_whatsapp_senders', 'created_at', true))
+export const loadWhatsappInbox = (limit = 50) => soft(all('fin_whatsapp_inbox', 'at', false, limit))
+export const loadCloudTargets = () => soft(all('fin_cloud_targets', 'created_at', true))
 export const storageUsage = async () => { try { return must(await supabase.rpc('storage_usage')) } catch { return null } }
 
 export const updateDocument = async (id, patch) => must(await supabase.from('fin_documents').update(patch).eq('id', id).select().single())

@@ -17,11 +17,11 @@ export function validId(prefix8) {
     if (sum % 10 === 0) return s
   }
 }
-export const IDS = { meta: validId('51577777'), office: validId('51488888'), soleh: validId('52000121'), henrietta: validId('51699999'), tambour: validId('52003187'), bezeq: validId('52003193'), paz: validId('51021605'), electra: validId('51345678'), ace: validId('52003841'), kurkoos: validId('51500000'), execution: validId('51500001') }
+export const IDS = { iec: validId('52000046'), cafe: validId('51333333'), meta: validId('51577777'), office: validId('51488888'), soleh: validId('52000121'), henrietta: validId('51699999'), tambour: validId('52003187'), bezeq: validId('52003193'), paz: validId('51021605'), electra: validId('51345678'), ace: validId('52003841'), kurkoos: validId('51500000'), execution: validId('51500001') }
 
 const today = new Date()
 const iso = (daysAgo) => { const d = new Date(today); d.setDate(d.getDate() - daysAgo); return d.toISOString().slice(0, 10) }
-const D = { tambour: iso(6), bezeq: iso(5), paz: iso(4), electra: iso(3), ace: iso(2), meta: iso(2), office: iso(1), bg: iso(1), soleh: iso(1) }
+const D = { old: iso(150), wa: iso(1), tambour: iso(6), bezeq: iso(5), paz: iso(4), electra: iso(3), ace: iso(2), meta: iso(2), office: iso(1), bg: iso(1), soleh: iso(1) }
 
 const invoice = ({ supplier, id, title, number, date, lines, before, vat, total, customer, customerId, note = '' }) => `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
 body{font-family:'DejaVu Sans',Arial,sans-serif;margin:48px;color:#222}h1{color:#a00;margin:0}table{width:100%;border-collapse:collapse;margin:20px 0}td,th{border:1px solid #999;padding:8px;text-align:right}.t{font-size:22px;font-weight:bold}</style></head><body>
@@ -52,12 +52,16 @@ await pdf('meta-ads.pdf', invoice({ supplier: 'Meta Platforms Ireland Ltd', id: 
 await pdf('office-depot.pdf', invoice({ supplier: 'אופיס דיפו ישראל', id: IDS.office, title: 'חשבונית מס/קבלה', number: '330178', date: D.office, lines: [['כסאות משרד ×4, נייר, טונר', '2,500.00']], before: '2,500.00', vat: '450.00', total: '2,950.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
 await pdf('benguryon-blocks.pdf', invoice({ supplier: 'טמבור בע״מ', id: IDS.tambour, title: 'חשבונית מס', number: '4602', date: D.bg, lines: [['בלוקים ומלט לפרויקט BG-17 בן גוריון 17 יהוד', '10,000.00']], before: '10,000.00', vat: '1,800.00', total: '11,800.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
 await pdf('soleh-boneh.pdf', invoice({ supplier: 'סולל בונה תשתיות', id: IDS.soleh, title: 'חשבונית מס', number: 'SB-5521', date: D.soleh, lines: [['ייעוץ הנדסי, פרויקט HS-22', '20,000.00']], before: '20,000.00', vat: '3,600.00', total: '23,600.00', customer: 'הנרייטה סולד 22 בע״מ', customerId: IDS.henrietta }))
+await pdf('old-invoice.pdf', invoice({ supplier: 'חברת החשמל לישראל', id: IDS.iec, title: 'חשבונית מס/קבלה', number: 'IEC-20419', date: D.old, lines: [['חשמל משרד, חודשיים', '1,200.00']], before: '1,200.00', vat: '216.00', total: '1,416.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
+await png('wa-receipt.png', invoice({ supplier: 'קפה לנדוור', id: IDS.cafe, title: 'חשבונית מס/קבלה', number: '88123', date: D.wa, lines: [['ארוחת עבודה, פגישת יזמים', '250.00']], before: '250.00', vat: '45.00', total: '295.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
 await browser.close()
 
-const H = { meta: sha('meta-ads.pdf'), office: sha('office-depot.pdf'), bg: sha('benguryon-blocks.pdf'), soleh: sha('soleh-boneh.pdf'), tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
+const H = { old: sha('old-invoice.pdf'), wa: sha('wa-receipt.png'), meta: sha('meta-ads.pdf'), office: sha('office-depot.pdf'), bg: sha('benguryon-blocks.pdf'), soleh: sha('soleh-boneh.pdf'), tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
 const at = (d, h = 9) => `${d}T0${h}:15:00Z`
 const fixtures = {
   answers: {
+    [H.old]: answer({ doc_type: 'invoice_receipt', supplier_name: 'חברת החשמל לישראל', supplier_vat_id: IDS.iec, doc_number: 'IEC-20419', issue_date: D.old, amount_before_vat: 1200, vat_amount: 216, total_amount: 1416, description: 'חשמל משרד', category: 'חשמל, מים וארנונה' }),
+    [H.wa]: answer({ doc_type: 'invoice_receipt', supplier_name: 'קפה לנדוור', supplier_vat_id: IDS.cafe, doc_number: '88123', issue_date: D.wa, amount_before_vat: 250, vat_amount: 45, total_amount: 295, description: 'ארוחת עבודה', category: 'כיבוד ואירוח', payment_method: 'אשראי' }),
     [H.meta]: answer({ supplier_name: 'Meta Platforms Ireland Ltd', supplier_vat_id: IDS.meta, doc_number: 'FBADS-90211', issue_date: D.meta, amount_before_vat: 4000, vat_amount: 720, total_amount: 4720, description: 'פרסום בפייסבוק ואינסטגרם', category: 'פרסום ושיווק', supplier_website: 'www.facebook.com', field_confidence: { supplier_name: 0.99, supplier_vat_id: 0.97, doc_type: 0.95, doc_number: 0.98, issue_date: 0.97, payment_date: 0.9, amount_before_vat: 0.96, vat_amount: 0.96, total_amount: 0.98, currency: 0.99, category: 0.91, description: 0.9, customer: 0.95 } }),
     [H.office]: answer({ doc_type: 'invoice_receipt', supplier_name: 'אופיס דיפו ישראל', supplier_vat_id: IDS.office, doc_number: '330178', issue_date: D.office, amount_before_vat: 2500, vat_amount: 450, total_amount: 2950, description: 'כסאות משרד וציוד', category: 'ציוד משרדי', supplier_email: 'billing@officedepot.test', supplier_phone: '03-5551234', supplier_address: 'הברזל 3, תל אביב', field_confidence: { supplier_name: 0.97, supplier_vat_id: 0.95, doc_type: 0.95, doc_number: 0.97, issue_date: 0.96, payment_date: 0.9, amount_before_vat: 0.95, vat_amount: 0.95, total_amount: 0.97, currency: 0.99, category: 0.88, description: 0.9, customer: 0.95 } }),
     [H.bg]: answer({ supplier_name: 'טמבור בע״מ', supplier_vat_id: IDS.tambour, doc_number: '4602', issue_date: D.bg, amount_before_vat: 10000, vat_amount: 1800, total_amount: 11800, description: 'בלוקים ומלט', category: 'חומרי בניין', project_hint: 'BG-17 בן גוריון 17 יהוד', field_confidence: { supplier_name: 0.98, supplier_vat_id: 0.97, doc_type: 0.95, doc_number: 0.97, issue_date: 0.96, payment_date: 0.9, amount_before_vat: 0.95, vat_amount: 0.95, total_amount: 0.97, currency: 0.99, category: 0.86, description: 0.9, customer: 0.95 } }),
@@ -82,6 +86,7 @@ const fixtures = {
         { id: 'm4', date: at(D.paz), subject: 'קבלה על תדלוק', from: 'פז <receipts@paz.test>', html: '<div dir="rtl"><h2>פז חברת נפט בע״מ</h2><p>חשבונית מס/קבלה 7731-22</p><p>דלק 95, 52.4 ליטר</p><p>סה״כ לפני מע״מ 349.41, מע״מ 62.89</p><p><b>סה״כ 412.30 ₪</b>, שולם באשראי</p></div>' },
         { id: 'm5', date: at(D.paz, 7), subject: 'Fwd: חשבונית מס 4521', from: 'יוסי <yossi@kurkoos.test>', text: 'שוב החשבונית', files: ['tambour-4521.pdf'] },
         { id: 'm6', date: at(D.electra, 6), subject: 'העתק חשבונית 4521', from: 'טמבור <billing@tambour.test>', text: 'העתק', files: ['tambour-4521-copy.pdf'] },
+        { id: 'm0', date: at(D.old), subject: 'חשבונית חשמל', from: 'חברת החשמל <bills@iec.test>', text: 'מצורפת', files: ['old-invoice.pdf'] },
         { id: 'm7', date: at(D.electra), subject: 'חשבון 778 עבודות חשמל', from: 'אלקטרה <office@electra.test>', text: 'מצורף', files: ['electra-778.pdf'] },
       ],
     },

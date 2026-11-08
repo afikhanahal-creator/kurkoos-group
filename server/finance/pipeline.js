@@ -173,7 +173,9 @@ export async function syncMailbox(mb, started, runs, trigger) {
   try {
     if (!prov) throw new Error(`ספק לא נתמך: ${mb.provider}`)
     const token = await accessTokenFor(mb)
-    const since = mb.last_sync_at ? new Date(new Date(mb.last_sync_at).getTime() - 2 * 86400_000) : new Date(Date.now() - (mb.days_back || 90) * 86400_000)
+    // a backfill ("old receipts") scans from the new start of the period; seen messages are skipped, so only the gap costs anything
+    const start = mb.sync_from ? new Date(`${mb.sync_from}T00:00:00Z`) : new Date(Date.now() - (mb.days_back || 90) * 86400_000)
+    const since = mb.backfill_pending || !mb.last_sync_at ? start : new Date(new Date(mb.last_sync_at).getTime() - 2 * 86400_000)
     const ids = await prov.listCandidates(token, since, mb.query)
     runs.scanner.stat.processed += ids.length
     const seenRows = ids.length ? await sb(`fin_mail_seen?mailbox_id=eq.${mb.id}&select=message_id&message_id=in.(${ids.map((i) => `"${i}"`).join(',')})`) : []
@@ -248,7 +250,7 @@ export async function syncMailbox(mb, started, runs, trigger) {
     errors_count: error ? (mb.errors_count || 0) + 1 : mb.errors_count || 0,
   }
   if (!error) upd.last_success_at = new Date().toISOString()
-  if (complete) upd.last_sync_at = scanStart
+  if (complete) { upd.last_sync_at = scanStart; upd.backfill_pending = false }
   await patch(`fin_mailboxes?id=eq.${mb.id}`, upd).catch(() => {})
   if (run) await patch(`fin_sync_runs?id=eq.${run.id}`, { ...stats, finished_at: new Date().toISOString(), error }).catch(() => {})
   return { mailbox: mb.email, provider: mb.provider, ...stats, complete, error, attempt }

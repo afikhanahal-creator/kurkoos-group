@@ -153,6 +153,7 @@ export async function runDaily(origin) {
     if (missing.length) await sendMail(await managers(), `חסרות ${missing.length} חשבוניות קבועות החודש`, `<div dir="rtl"><p>לא הגיעה עדיין חשבונית החודש מ:</p><ul>${missing.map((m) => `<li>${m}</li>`).join('')}</ul></div>`)
     return { missing }
   }))
+  out.push(await automation('cloud_sync', async () => { const { syncCloud } = await import('./cloud.js'); return syncCloud({ started, trigger: 'cron' }) }))
   out.push(await automation('daily_summary', (cfg) => dailySummary({ origin, email: cfg.email !== false })))
   out.push(await automation('monthly_package', async () => {
     const prev = new Date(); prev.setUTCDate(1); prev.setUTCMonth(prev.getUTCMonth() - 1)

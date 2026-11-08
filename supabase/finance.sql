@@ -1006,3 +1006,110 @@ update public.fin_categories set keywords = '{צבע,בלוקים,מלט,ברז�
 update public.fin_categories set name_en = coalesce(name_en, 'Subcontractors') where name = 'קבלני משנה';
 
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v4 (2026-11-08): old receipts (mailbox backfill), mobile scanners (WhatsApp), cloud sync (Google Drive, Dropbox)
+-- ============================================================
+
+-- the period a mailbox covers; "old receipts" moves sync_from back and scans the gap once
+alter table public.fin_mailboxes add column if not exists sync_from date;
+alter table public.fin_mailboxes add column if not exists backfill_pending boolean not null default false;
+update public.fin_mailboxes set sync_from = (created_at - make_interval(days => coalesce(days_back, 90)))::date where sync_from is null;
+
+-- phones allowed to send documents to the office WhatsApp number
+create table if not exists public.fin_whatsapp_senders (
+  id uuid primary key default gen_random_uuid(),
+  phone text not null unique,                 -- digits only, 972…
+  label text,
+  user_id uuid,
+  business_id uuid references public.fin_businesses(id) on delete set null,
+  active boolean not null default true,
+  docs_count int not null default 0,
+  last_received_at timestamptz,
+  created_by uuid,
+  created_at timestamptz default now()
+);
+alter table public.fin_whatsapp_senders enable row level security;
+
+-- every incoming WhatsApp message, accepted or refused (nothing disappears silently)
+create table if not exists public.fin_whatsapp_inbox (
+  id uuid primary key default gen_random_uuid(),
+  message_id text unique,
+  phone text,
+  sender_id uuid references public.fin_whatsapp_senders(id) on delete set null,
+  kind text,
+  file_name text,
+  outcome text not null,                      -- imported | duplicate | refused_unknown_number | unsupported | failed
+  document_id uuid references public.fin_documents(id) on delete set null,
+  detail text,
+  at timestamptz default now()
+);
+alter table public.fin_whatsapp_inbox enable row level security;
+
+-- cloud folders that receive copies of documents
+create table if not exists public.fin_cloud_targets (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null check (provider in ('gdrive', 'dropbox')),
+  account_email text,
+  folder text not null default 'Kurkoos Finance',
+  structure text not null default '{company}/{period}',
+  statuses text[] not null default '{approved,sent}',
+  business_id uuid references public.fin_businesses(id) on delete cascade,
+  enabled boolean not null default true,
+  status text not null default 'active' check (status in ('active', 'error', 'revoked')),
+  last_sync_at timestamptz,
+  last_error text,
+  files_synced int not null default 0,
+  connected_by uuid,
+  created_at timestamptz default now()
+);
+create table if not exists public.fin_cloud_secrets (
+  target_id uuid primary key references public.fin_cloud_targets(id) on delete cascade,
+  refresh_token text not null,
+  access_token text,
+  expires_at timestamptz,
+  folder_cache jsonb not null default '{}'::jsonb,   -- path → remote folder id (Drive)
+  updated_at timestamptz default now()
+);
+create table if not exists public.fin_cloud_synced (
+  target_id uuid references public.fin_cloud_targets(id) on delete cascade,
+  document_id uuid references public.fin_documents(id) on delete cascade,
+  remote_id text,
+  path text,
+  at timestamptz default now(),
+  primary key (target_id, document_id)
+);
+alter table public.fin_cloud_targets enable row level security;
+alter table public.fin_cloud_secrets enable row level security;
+alter table public.fin_cloud_synced enable row level security;
+
+do $$
+declare p record;
+begin
+  for p in select policyname, tablename from pg_policies where schemaname = 'public' and tablename in ('fin_whatsapp_senders', 'fin_whatsapp_inbox', 'fin_cloud_targets', 'fin_cloud_synced') loop
+    execute format('drop policy %I on public.%I', p.policyname, p.tablename);
+  end loop;
+end $$;
+revoke all on public.fin_cloud_secrets from anon, authenticated;
+revoke all on public.fin_whatsapp_senders, public.fin_whatsapp_inbox, public.fin_cloud_targets, public.fin_cloud_synced from anon;
+grant select, insert, update, delete on public.fin_whatsapp_senders, public.fin_cloud_targets to authenticated;
+grant select on public.fin_whatsapp_inbox, public.fin_cloud_synced to authenticated;
+-- a member registers their own phone; finance staff manage all phones
+create policy "fin_wa_senders read" on public.fin_whatsapp_senders for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or user_id = auth.uid());
+create policy "fin_wa_senders insert" on public.fin_whatsapp_senders for insert to authenticated with check (public.fin_has_role(array['admin', 'finance_manager']) or (public.fin_has_role(array['employee']) and user_id = auth.uid()));
+create policy "fin_wa_senders update" on public.fin_whatsapp_senders for update to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or user_id = auth.uid()) with check (public.fin_has_role(array['admin', 'finance_manager']) or user_id = auth.uid());
+create policy "fin_wa_senders delete" on public.fin_whatsapp_senders for delete to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or user_id = auth.uid());
+create policy "fin_wa_inbox read" on public.fin_whatsapp_inbox for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or sender_id in (select id from public.fin_whatsapp_senders where user_id = auth.uid()));
+-- cloud folders: admins connect and change them, finance managers see them
+create policy "fin_cloud read" on public.fin_cloud_targets for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+create policy "fin_cloud write" on public.fin_cloud_targets for update to authenticated using (public.fin_has_role(array['admin'])) with check (public.fin_has_role(array['admin']));
+create policy "fin_cloud delete" on public.fin_cloud_targets for delete to authenticated using (public.fin_has_role(array['admin']));
+create policy "fin_cloud synced read" on public.fin_cloud_synced for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+
+alter table public.fin_agent_runs drop constraint if exists fin_agent_runs_agent_check;
+alter table public.fin_agent_runs add constraint fin_agent_runs_agent_check check (agent in ('scanner', 'collector', 'ocr', 'validation', 'classification', 'export', 'summary', 'cloud', 'whatsapp'));
+insert into public.fin_automations (key, name, description, frequency, config) values
+  ('cloud_sync', 'סנכרון לענן', 'מסמכים מאושרים מועתקים לתיקיות ב-Google Drive וב-Dropbox', 'daily', '{}')
+on conflict (key) do nothing;
+
+notify pgrst, 'reload schema';

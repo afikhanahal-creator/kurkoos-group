@@ -11,3 +11,4 @@ delete from public.fin_rule_hits; delete from public.fin_document_allocations;
 delete from public.fin_categories where name in ('פרסום ושיווק', 'ייעוץ הנדסי');
 update public.fin_settings set value = '"controlled"' where key = 'supplier_mode';
 update public.fin_settings set value = '50000' where key = 'second_approval_amount';
+truncate public.fin_whatsapp_inbox, public.fin_whatsapp_senders, public.fin_cloud_synced, public.fin_cloud_secrets, public.fin_cloud_targets cascade;

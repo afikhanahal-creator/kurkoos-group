@@ -60,7 +60,7 @@ await page.click('button[type=submit]')
 await page.getByRole('button', { name: 'אני מנהל/ת המערכת' }).click()
 await page.waitForSelector('.fin__nav')
 const navCount = await page.locator('.fin__nav-item').count()
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 17 פריטי תפריט', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 17, [await shot('00-dashboard-empty')])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 19 פריטי תפריט', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 19, [await shot('00-dashboard-empty')])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -89,7 +89,7 @@ const projectsShot = await shot('02-projects')
 record('S1', 'הקמת חברות ופרויקט מהממשק', 'שתי חברות עם ח.פ, פרויקט עם קוד ומילת מפתח', `${sql('select count(*) from fin_businesses where vat_id is not null')} חברות עם ח.פ, פרויקט: ${sql("select name||' '||code from fin_projects")}`, sql('select count(*) from fin_businesses where vat_id is not null') === '2' && sql('select count(*) from fin_projects') === '1', [companiesShot, projectsShot])
 
 // ---------- T1: connect Gmail (OAuth round trip) ----------
-await nav('חשבונות מייל')
+await nav('חשבונות אימייל')
 await page.getByRole('button', { name: 'חיבור Gmail' }).click()
 await page.waitForURL(/mailboxes\?connected=|mailboxes$/, { timeout: 15000 }); await page.waitForTimeout(800)
 const t1 = sql("select email||'|'||status||'|'||(select count(*) from fin_mailbox_secrets) from fin_mailboxes")
@@ -98,7 +98,7 @@ const anonSecrets = await rest('fin_mailbox_secrets?select=*', await login('admi
 record('SEC1', 'טוקן OAuth לא נגיש לדפדפן', 'גם מנהל מחובר לא יכול לקרוא את טבלת הסודות', `HTTP ${anonSecrets.status}`, anonSecrets.status === 401 || anonSecrets.status === 403 || (Array.isArray(anonSecrets.data) && anonSecrets.data.length === 0))
 
 // ---------- T2 + T3: scan, find invoices, download originals ----------
-await page.locator('.fin-box').first().getByRole('button', { name: 'סריקה' }).click()
+await page.getByRole('button', { name: 'סנכרון כל החשבונות עכשיו' }).click()
 await page.waitForSelector('.fin-note', { timeout: 60000 }); await page.waitForTimeout(800)
 const scanMsg = await page.locator('.fin-note').first().innerText()
 const docs = sql("select string_agg(coalesce(supplier_name,'?')||':'||status||':'||source, ', ' order by email_date) from fin_documents")
@@ -353,7 +353,7 @@ record('H', 'קצה לקצה: ספק, קטגוריה, חברה ופרויקט ח
 
 // ---------- T14: failed sync logged and retried; failed OCR retried ----------
 await fetch(`${FAKES}/__next_account?email=broken@kurkoos.test`)
-await nav('חשבונות מייל')
+await nav('חשבונות אימייל')
 await page.getByRole('button', { name: 'חיבור Gmail' }).click()
 await page.waitForSelector('text=broken@kurkoos.test', { timeout: 15000 }); await page.waitForTimeout(800)
 await fetch(`${FAKES}/__next_account?email=`)
@@ -364,6 +364,7 @@ const fx2 = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); fx2.mai
 const r3 = await api(adminToken, { action: 'sync', mailbox_id: brokenId })
 const syncLog = sql(`select string_agg(attempt||':'||coalesce(left(error,30),'ok'), ' | ' order by started_at) from fin_sync_runs where mailbox_id='${brokenId}'`)
 await page.reload(); await page.waitForTimeout(1200)
+await page.locator('.fin-disclosure summary').first().click().catch(() => {})
 const brokenShot = await shot('17-mailboxes-log')
 const ocrBefore = failedNow
 const retry = await api(adminToken, { action: 'retry-failed' })
@@ -396,6 +397,69 @@ const fmDocs = await rest('fin_documents?select=file_name', fmToken)
 const fmCompanies = await rest('fin_businesses?select=name', fmToken)
 const sep = sql("select string_agg(b.name||':'||coalesce(round(sum_total)::text,'0'), ', ' order by b.name) from fin_businesses b left join lateral (select sum(total_amount) sum_total from fin_documents d where d.business_id=b.id and d.status not in ('rejected','duplicate','failed','archived')) x on true")
 record('E', 'כמה חברות: הפרדה מלאה', 'כל חברה עם מספר רישום משלה; כל חשבונית שויכה לחברה לפי ח.פ הנמען; מנהלת כספים של "קורקוס ביצוע" רואה רק את המסמכים והחברה שלה', `סכומים לפי חברה: ${sep}; מנהלת הביצוע רואה: ${(fmDocs.data || []).map((d) => d.file_name).join(', ')} / חברות: ${(fmCompanies.data || []).map((b) => b.name).join(', ')}`, sql("select count(distinct vat_id) from fin_businesses") === '3' && sql("select (select name from fin_businesses where id=business_id) from fin_documents where file_name='electra-778.pdf'") === 'קורקוס ביצוע' && Array.isArray(fmDocs.data) && fmDocs.data.length >= 1 && fmDocs.data.every((d) => d.file_name === 'electra-778.pdf') && (fmCompanies.data || []).length === 1)
+
+
+// =================== EMAIL ACCOUNTS, MOBILE SCANNERS, CLOUD SYNC ===================
+// OLD RECEIPTS: the first scan reads 90 days; an invoice from 150 days ago arrives only after "old receipts"
+await nav('חשבונות אימייל')
+const oldBefore = sql("select count(*) from fin_documents where file_name='old-invoice.pdf'")
+const periodBefore = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
+const accountsShot = await shot('50-email-accounts')
+await page.getByRole('button', { name: 'קבלות ישנות' }).click(); await page.waitForTimeout(300)
+await page.locator('.fin-modal .fin-seg button', { hasText: 'שנה' }).first().click()
+const oldModalShot = await shot('51-old-receipts')
+await page.locator('.fin-modal__foot .fin-btn--primary').click()
+await page.waitForSelector('.fin-note', { timeout: 60000 }); await page.waitForTimeout(800)
+const oldAfter = sql("select count(*)||'|'||coalesce((select source from fin_documents where file_name='old-invoice.pdf'),'-') from fin_documents where file_name='old-invoice.pdf'")
+const boxState = sql("select sync_from||'|'||backfill_pending from fin_mailboxes where email='invoices@kurkoos.test'")
+const periodAfter = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
+record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}`, oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter, [accountsShot, oldModalShot])
+
+// MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
+await nav('סורקים ניידים')
+const scannersEmpty = await shot('52-scanners-empty')
+await page.getByRole('button', { name: 'חיבור WhatsApp' }).click()
+await lbl(/^מספר הנייד/).fill('12')
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForTimeout(300)
+const badPhone = await page.locator('.fin-modal .fin-field__hint').first().innerText()
+await lbl(/^מספר הנייד/).fill('054-304-9491')
+await lbl(/^שם/).fill('הטלפון של שלומי')
+await modalSave()
+const waRow = sql("select phone||'|'||active from fin_whatsapp_senders")
+const hook = (body, tok = 'test-wa-hook') => fetch('http://127.0.0.1:5180/api/finance-whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, data: await r.json().catch(() => ({})) }))
+const imgMsg = (id, phone, file = 'wa-receipt.png') => ({ typeWebhook: 'incomingMessageReceived', idMessage: id, senderData: { chatId: `${phone}@c.us`, sender: `${phone}@c.us` }, messageData: { typeMessage: 'imageMessage', fileMessageData: { downloadUrl: `${FAKES}/green/file/${file}`, fileName: file, mimeType: 'image/png', caption: 'ארוחה עם יזמים' } } })
+const w1 = await hook(imgMsg('wa-1', '972543049491'))
+const w1again = await hook(imgMsg('wa-1', '972543049491'))
+const w2 = await hook(imgMsg('wa-2', '972543049491'))
+const w3 = await hook(imgMsg('wa-3', '972529999999'))
+const w4 = await hook(imgMsg('wa-4', '972543049491'), 'wrong-token')
+const w5 = await hook({ typeWebhook: 'incomingMessageReceived', idMessage: 'wa-5', senderData: { chatId: '972543049491@c.us' }, messageData: { typeMessage: 'textMessage', textMessageData: { textMessage: 'שלום' } } })
+const waDoc = sql("select source||'|'||status||'|'||coalesce(supplier_name,'-')||'|'||total_amount||'|'||(created_by is not null) from fin_documents where file_name='wa-receipt.png'")
+const waLog = (await fetch(`${FAKES}/__log`).then((r) => r.json())).wa
+await page.reload(); await page.waitForTimeout(1200)
+const scannersShot = await shot('53-scanners')
+record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה עם תשובה; טוקן שגוי ← 401; טקסט ← הסבר', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}`,
+  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /קיבלנו/.test(m.message) && /295/.test(m.message)) && waLog.some((m) => /לא רשום/.test(m.message)), [scannersEmpty, scannersShot])
+
+// CLOUD: Google Drive and Dropbox, through the real OAuth round trip and the real upload code
+await fetch(`${FAKES}/__next_account?email=office@kurkoos.test`)
+await nav('סנכרון לענן')
+const cloudEmpty = await shot('54-cloud-empty')
+await page.getByRole('button', { name: 'חיבור Google Drive' }).click()
+await page.waitForSelector('text=מחובר', { timeout: 15000 }); await page.waitForTimeout(600)
+await fetch(`${FAKES}/__next_account?email=`)
+await page.getByRole('button', { name: 'חיבור Dropbox' }).click()
+await page.waitForTimeout(2500)
+const targets = sql("select string_agg(provider||':'||account_email||':'||status, ', ' order by provider) from fin_cloud_targets")
+const eligible = Number(sql("select count(*) from fin_documents where status in ('approved','sent') and file_path is not null"))
+for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1500) }
+const cFirst = sql("select string_agg(provider||'='||files_synced, ', ' order by provider) from fin_cloud_targets")
+for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1200) }
+const cSecond = sql("select string_agg(provider||'='||files_synced, ', ' order by provider) from fin_cloud_targets")
+const cl = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const cloudShot = await shot('55-cloud-connected')
+record('CLOUD', 'סנכרון לענן: Google Drive ו-Dropbox', `שני החשבונות מתחברים ב-OAuth; כל ${eligible} המסמכים המאושרים מועתקים לתיקייה "Kurkoos Finance/<חברה>/<חודש>"; סנכרון שני לא מעתיק שוב; שמות בעברית נשמרים`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; Drive: ${cl.drive.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
+  targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${eligible}` && cSecond === cFirst && cl.drive.length === eligible && cl.dropbox.length === eligible && cl.drive.every((x) => x.startsWith('/Kurkoos Finance/')) && cl.dropbox.some((x) => /קורקוס/.test(x)), [cloudEmpty, cloudShot])
 
 // ---------- the daily cron run ----------
 const cron = await fetch('http://127.0.0.1:5180/api/finance?action=cron', { headers: { Authorization: 'Bearer test-cron' } }).then((r) => r.json())
@@ -492,8 +556,8 @@ await m.keyboard.press('Escape')
 await m.goto(`${APP}/mailboxes`); await m.waitForTimeout(1200); mShots.push(await shot('m6-mailboxes', m)); ov.mailboxes = await overflow()
 await m.goto(`${APP}/integrations`); await m.waitForTimeout(1200); mShots.push(await shot('m7-export', m)); ov.export = await overflow()
 await m.goto(`${APP}/reports`); await m.waitForTimeout(1200); mShots.push(await shot('m8-reports', m)); ov.reports = await overflow()
-for (const [k, path] of [['suppliers', '/suppliers'], ['categories', '/categories'], ['projects', '/projects'], ['companies', '/companies'], ['project_page', `/projects/${sql("select id from fin_projects where code='BG-17'")}`], ['supplier_page', `/suppliers/${sql("select id from fin_suppliers where name='סולל בונה תשתיות'")}`], ['control', '']]) {
-  await m.goto(`${APP}${path}`); await m.waitForTimeout(1100); ov[k] = await overflow(); if (['suppliers', 'project_page', 'control'].includes(k)) mShots.push(await shot(`m-${k}`, m))
+for (const [k, path] of [['suppliers', '/suppliers'], ['categories', '/categories'], ['projects', '/projects'], ['companies', '/companies'], ['email', '/mailboxes'], ['scanners', '/scanners'], ['cloud', '/cloud'], ['project_page', `/projects/${sql("select id from fin_projects where code='BG-17'")}`], ['supplier_page', `/suppliers/${sql("select id from fin_suppliers where name='סולל בונה תשתיות'")}`], ['control', '']]) {
+  await m.goto(`${APP}${path}`); await m.waitForTimeout(1100); ov[k] = await overflow(); if (['suppliers', 'project_page', 'control', 'email', 'scanners', 'cloud'].includes(k)) mShots.push(await shot(`m-${k}`, m))
 }
 await m.goto(`${APP}/suppliers`); await m.waitForTimeout(900)
 await m.locator('.fin-search input').fill('סולל'); await m.waitForTimeout(300)
@@ -502,7 +566,7 @@ await m.getByRole('button', { name: 'הוסף ספק' }).first().click(); await 
 await m.getByLabel(/^שם משפטי/).first().fill('ספק מהטלפון'); mShots.push(await shot('m-supplier-form', m))
 await m.locator('.fin-modal__foot .fin-btn--primary').first().click(); await m.waitForTimeout(1000)
 const mForm = sql("select count(*) from fin_suppliers where name='ספק מהטלפון'")
-record('G', 'מובייל: המסכים החדשים', 'אין גלילה אופקית, חיפוש עובד, טופס ספק נשמר מהטלפון', `גלילה: ${JSON.stringify(ov)}; חיפוש "סולל": ${mSearch}; טופס: ${mForm}`, Object.values(ov).every((v) => v <= 0) && mSearch === 1 && mForm === '1', mShots.slice(-4))
+record('G', 'מובייל: המסכים החדשים', 'אין גלילה אופקית, חיפוש עובד, טופס ספק נשמר מהטלפון', `גלילה: ${JSON.stringify(ov)}; חיפוש "סולל": ${mSearch}; טופס: ${mForm}`, Object.values(ov).every((v) => v <= 0) && mSearch === 1 && mForm === '1', mShots.slice(-7))
 const smallTargets = await m.evaluate(() => [...document.querySelectorAll('.fin button, .fin a, .fin input, .fin select')].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 24 && e.type !== 'checkbox').map((e) => e.className || e.tagName).slice(0, 5))
 const dir = await m.evaluate(() => document.querySelector('.fin')?.getAttribute('dir'))
 record('T12', 'גרסת מובייל', 'אין גלילה אופקית בשום מסך, התפריט נפתח ונסגר, מסמך נפתח ומאושר מהטלפון, כיוון RTL', `גלילה אופקית (px): ${JSON.stringify(ov)} · dir=${dir} · כפתורים קטנים מ-24px: ${smallTargets.length}`, Object.values(ov).every((v) => v <= 0) && dir === 'rtl', mShots)
@@ -510,7 +574,7 @@ await mob.close()
 
 // desktop: no page is wider than the screen
 const deskOv = {}
-for (const path of ['', '/documents', '/new', '/pending', '/companies', '/projects', '/suppliers', '/categories', '/reports', '/data', '/automations', '/agents', '/mailboxes', '/integrations', '/exports', '/users', '/settings', `/suppliers/${sql("select id from fin_suppliers order by created_at limit 1")}`, `/projects/${sql("select id from fin_projects order by created_at limit 1")}`, `/companies/${sql("select id from fin_businesses order by sort limit 1")}`, `/categories/${sql("select id from fin_categories where name='חומרי בניין'")}`]) {
+for (const path of ['', '/documents', '/new', '/pending', '/companies', '/projects', '/suppliers', '/categories', '/reports', '/data', '/automations', '/agents', '/mailboxes', '/scanners', '/cloud', '/integrations', '/exports', '/users', '/settings', `/suppliers/${sql("select id from fin_suppliers order by created_at limit 1")}`, `/projects/${sql("select id from fin_projects order by created_at limit 1")}`, `/companies/${sql("select id from fin_businesses order by sort limit 1")}`, `/categories/${sql("select id from fin_categories where name='חומרי בניין'")}`]) {
   await go(path); deskOv[path || '/'] = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 }
 await go('/documents'); await page.locator('tbody tr').first().locator('.fin-cell-btn').click(); await page.waitForTimeout(800)

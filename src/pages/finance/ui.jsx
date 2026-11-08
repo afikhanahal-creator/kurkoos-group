@@ -45,6 +45,9 @@ const P = {
   play: <path d="M7 4v16l13-8z" />,
   shield: <path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" />,
   edit: <path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />,
+  phone: <><rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M11 18.5h2" /></>,
+  cloud: <path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6.2 9.3 4.4 4.4 0 0 0 7 18z" />,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5h.01" /></>,
   tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" /><circle cx="8" cy="8" r="1.5" /></>,
   rows: <path d="M4 6h16M4 12h16M4 18h16" />,
   grid: <><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></>,
@@ -224,5 +227,45 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
       </div>
       {msg && <p className="fin-drop__msg" role="status">{msg}</p>}
     </div>
+  )
+}
+
+/* the ⓘ next to a page title: a short explanation that opens on click and closes on Escape or outside click */
+export function InfoTip({ label = 'מידע', children }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return undefined
+    const off = (e) => { if (e.key === 'Escape' || (e.type === 'mousedown' && !ref.current?.contains(e.target))) setOpen(false) }
+    window.addEventListener('keydown', off); window.addEventListener('mousedown', off)
+    return () => { window.removeEventListener('keydown', off); window.removeEventListener('mousedown', off) }
+  }, [open])
+  return (
+    <span className="fin-infotip" ref={ref}>
+      <button type="button" className="fin-icon-btn" aria-label={label} aria-expanded={open} onClick={() => setOpen((v) => !v)}><Icon name="info" size={19} /></button>
+      {open && <span className="fin-infotip__pop" role="note">{children}</span>}
+    </span>
+  )
+}
+
+/* ⋮ menu: a list of actions in a small popover */
+export function MoreMenu({ label, items }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return undefined
+    const off = (e) => { if (e.key === 'Escape' || (e.type === 'mousedown' && !ref.current?.contains(e.target))) setOpen(false) }
+    window.addEventListener('keydown', off); window.addEventListener('mousedown', off)
+    return () => { window.removeEventListener('keydown', off); window.removeEventListener('mousedown', off) }
+  }, [open])
+  return (
+    <span className="fin-more" ref={ref}>
+      <button type="button" className="fin-icon-btn" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}><Icon name="more" size={19} style={{ transform: 'rotate(90deg)' }} /></button>
+      {open && (
+        <span className="fin-more__pop" role="menu">
+          {items.filter(Boolean).map((it) => <button key={it.label} type="button" role="menuitem" className={it.danger ? 'is-danger' : ''} disabled={it.disabled} onClick={() => { setOpen(false); it.onClick() }}>{it.label}</button>)}
+        </span>
+      )}
+    </span>
   )
 }

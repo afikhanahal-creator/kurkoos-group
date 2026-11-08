@@ -13,6 +13,13 @@ export const env = {
   gmailApi: () => process.env.FINANCE_GMAIL_API || 'https://gmail.googleapis.com/gmail/v1/users/me',
   msLogin: () => process.env.FINANCE_MS_LOGIN || `https://login.microsoftonline.com/${process.env.MS_TENANT_ID || 'common'}/oauth2/v2.0`,
   graphApi: () => process.env.FINANCE_GRAPH_API || 'https://graph.microsoft.com/v1.0/me',
+  googleUserinfo: () => process.env.FINANCE_GOOGLE_USERINFO || 'https://openidconnect.googleapis.com/v1/userinfo',
+  driveApi: () => process.env.FINANCE_DRIVE_API || 'https://www.googleapis.com/drive/v3',
+  driveUpload: () => process.env.FINANCE_DRIVE_UPLOAD || 'https://www.googleapis.com/upload/drive/v3',
+  dropboxAuth: () => process.env.FINANCE_DROPBOX_AUTH || 'https://www.dropbox.com/oauth2/authorize',
+  dropboxApi: () => process.env.FINANCE_DROPBOX_API || 'https://api.dropboxapi.com',
+  dropboxContent: () => process.env.FINANCE_DROPBOX_CONTENT || 'https://content.dropboxapi.com',
+  greenApi: () => String(process.env.GREENAPI_BASE || 'https://api.green-api.com').replace(/\/$/, ''),
   resendApi: () => process.env.FINANCE_RESEND_API || 'https://api.resend.com',
 }
 export const BUCKET = 'finance-docs'

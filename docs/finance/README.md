@@ -17,6 +17,8 @@
 | תזמון | Vercel Cron פעם ביום (`/api/finance?action=cron`) | `vercel.json` |
 | AI | Claude (`claude-opus-5-5`, פלט מובנה לפי סכמה) | `server/finance/extract.js` |
 | מייל | Gmail API ו-Microsoft Graph, OAuth בהרשאת קריאה בלבד | `server/finance/providers/` |
+| WhatsApp | Green API: webhook נכנס ותשובה לשולח | `server/finance/whatsapp.js` |
+| ענן | Google Drive (`drive.file`) ו-Dropbox, העתקת מסמכים מאושרים | `server/finance/cloud.js` |
 
 ### מודולי השרת (הסוכנים)
 
@@ -34,7 +36,8 @@
 
 `fin_businesses` (חברות) · `fin_projects` · `fin_members` (משתמשים ותפקידים) · `fin_suppliers` · `fin_categories` (עם % קיזוז מע״מ) ·
 `fin_documents` · `fin_mailboxes` + `fin_mailbox_secrets` (טוקנים, שרת בלבד) · `fin_mail_seen` · `fin_rules` · `fin_automations` ·
-`fin_agent_runs` · `fin_sync_runs` · `fin_summaries` · `fin_exports` · `fin_integrations` + `fin_integration_secrets` · `fin_audit`.
+`fin_agent_runs` · `fin_sync_runs` · `fin_summaries` · `fin_exports` · `fin_integrations` + `fin_integration_secrets` · `fin_audit` ·
+`fin_whatsapp_senders` + `fin_whatsapp_inbox` · `fin_cloud_targets` + `fin_cloud_secrets` (שרת בלבד) + `fin_cloud_synced`.
 
 כללי ברזל שנאכפים במסד עצמו (לא רק במסכים):
 - שום מסמך לא נולד מאושר. רק מנהל מערכת או מנהל כספים מאשרים.
@@ -67,6 +70,15 @@
 - **כרטיסי מסמכים** עם תמונה ממוזערת של העמוד הראשון (pdf.js, נטען רק כשצריך), ופעולות מהירות.
 - **חיפוש גלובלי**: ‎Ctrl/⌘+K או `/`.
 
+## חיבורים: אימייל, סורקים ניידים וענן (גרסה 4)
+
+- **חשבונות אימייל**: כרטיס לכל תיבה (ספק, חברה משויכת או "אין עסק", סנכרון אחרון, מצב, תפריט פעולות), "סנכרון כל החשבונות עכשיו", והוספת Gmail או Office 365.
+  תיבה חדשה נסרקת 90 יום אחורה. **קבלות ישנות** קובע תאריך מוקדם יותר (עד 3 שנים) וסורק רק את הטווח החדש. מיילים שכבר נקראו לא נקראים שוב (`fin_mail_seen`).
+- **סורקים ניידים (WhatsApp)**: רושמים מספר נייד (עם שם, חברה ומשתמש). צילום או PDF שנשלח מהמספר הזה למספר של המשרד נכנס כמסמך לבדיקה, נקרא ב-AI, והשולח מקבל אישור עם הספק והסכום.
+  מספר לא רשום, קבוצה, הודעה כפולה וקובץ שכבר קיים מטופלים בנפרד, וכל הודעה נרשמת ב"הודעות אחרונות".
+- **סנכרון לענן**: Google Drive ו-Dropbox. מסמכים מאושרים ומיוצאים מועתקים לתיקייה (ברירת מחדל `Kurkoos Finance/<חברה>/<חודש>`), פעם ביום ובלחיצה. כל מסמך מועתק פעם אחת בלבד לכל יעד.
+  ל-Drive ההרשאה היא `drive.file`: המערכת רואה רק את הקבצים שהיא יצרה.
+
 ## הפעלה
 
 1. **מסד הנתונים**: Supabase › SQL Editor › להריץ את `supabase/finance.sql` (בטוח להרצה חוזרת. להריץ שוב גם אחרי שמוסיפים טבלה לאתר, כדי שהחסימה של משתמשי הכספים תחול עליה).
@@ -81,6 +93,11 @@
 | `CRON_SECRET` | הריצה היומית |
 | `RESEND_API_KEY`, `FINANCE_FROM` (לא חובה) | סיכום יומי והתראות במייל |
 | `FINANCE_MODEL`, `FINANCE_EFFORT` (לא חובה) | ברירת מחדל `claude-opus-5-5` ו-`low` |
+| Google Drive | אותו `GOOGLE_CLIENT_ID`. ב-Google Cloud להפעיל Google Drive API ולהוסיף את ה-scope `drive.file` |
+| `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET` | Dropbox. ‏App Console › Scoped access › App folder או Full Dropbox, הרשאות `files.content.write`, `account_info.read`. ‏redirect: `https://<האתר>/api/finance-oauth` |
+| `GREENAPI_ID_INSTANCE`, `GREENAPI_TOKEN` | WhatsApp דרך Green API (מופע מחובר למספר של המשרד) |
+| `FINANCE_WHATSAPP_WEBHOOK_TOKEN` | סוד שמוגדר ב-Green API כ-`webhookUrlToken`. ה-webhook: `https://<האתר>/api/finance-whatsapp`, לסמן רק "הודעות נכנסות" |
+| `FINANCE_WHATSAPP_NUMBER` | מספר המשרד בפורמט בינלאומי (למשל `972501234567`), מוצג במסך ובקישור wa.me |
 
 4. במערכת: הגדרות › "הגדרה ראשונה": חברות עם ח.פ ומייל רו״ח › פרויקטים עם מילות מפתח › חיבור תיבות › הזמנת הצוות ורו״ח › כללים לספקים הקבועים.
 
@@ -90,13 +107,15 @@
 
 ## בדיקות
 
-`docs/finance/TESTING.md`: בדיקת קצה-לקצה שמרימה Supabase מקומי (Postgres, Auth, Storage, PostgREST) ומריצה את 14 תרחישי הקבלה ועוד, בדפדפן אמיתי.
+`docs/finance/TESTING.md`: בדיקת קצה-לקצה שמרימה Supabase מקומי (Postgres, Auth, Storage, PostgREST) ומריצה את 14 תרחישי הקבלה ועוד (45 בדיקות), בדפדפן אמיתי.
 
 ## הגבלות ידועות
 
 - כל קריאת API מוגבלת ל-60 שניות: סריקה עוצרת אחרי כ-45 שניות וממשיכה בפעם הבאה ("יש עוד מיילים").
 - Vercel בתוכנית החינמית מריץ cron פעם ביום.
 - חשבוניות שמגיעות רק כקישור להורדה (פורטל ספק) עוד לא נאספות.
+- WhatsApp, Google Drive ו-Dropbox נבדקו מול שרתים מדומים שמחקים את ה-API שלהם. לפני שימוש אמיתי צריך לחבר מופע Green API ואפליקציות OAuth ולבדוק פעם אחת עם מסמך אמיתי.
+- סריקת "קבלות ישנות" ארוכה ממשיכה בריצות הבאות (מגבלת 60 שניות לקריאה).
 - ייצוא API ל-iCount / Morning: הממשק מוכן, ההפעלה מחכה לתוכנה שרו״ח עובד איתה ולמפתח.
 - PDF בייצוא הוא דוח להדפסה (נפתח בדפדפן ונשמר כ-PDF), לא קובץ PDF שנוצר בשרת.
 - גיבוי: Supabase מגבה את המסד; בתוכנית החינמית אין שחזור לנקודת זמן, ולכן יש במסך "ניהול נתונים" גיבוי ידני (CSV + JSON).

@@ -13,7 +13,8 @@ import fs from 'node:fs'
 
 const FIX = process.env.FIN_FIXTURES || '/var/tmp/finfix'
 const PORT = Number(process.env.FAKES_PORT || 54400)
-const log = { emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0 }
+const log = { emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [] }
+const driveItems = []   // { id, name, parents, folder }
 const fixtures = () => JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
 const failed = {}   // sha256 → how many times Claude already failed on it
 let nextAccount = null
@@ -132,8 +133,34 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { id: crypto.randomUUID() })
   }
 
+  // ---------- Google userinfo + Drive ----------
+  if (p === '/google/userinfo') return send(res, 200, { email: mailbox })
+  if (p === '/drive/files' && req.method === 'GET') {
+    const q = url.searchParams.get('q') || ''
+    const name = (q.match(/name='((?:[^'\\]|\\.)*)'/) || [])[1]?.replace(/\\'/g, "'")
+    const parent = (q.match(/'([^']+)' in parents/) || [])[1]
+    return send(res, 200, { files: driveItems.filter((f) => f.folder && f.name === name && f.parents[0] === parent).map((f) => ({ id: f.id })) })
+  }
+  if (p === '/drive/files' && req.method === 'POST') {
+    const b = JSON.parse(await readBody(req)); const id = `fld${driveItems.length + 1}`
+    driveItems.push({ id, name: b.name, parents: b.parents, folder: true }); return send(res, 200, { id })
+  }
+  if (p === '/drive-upload/files') {
+    const raw = await readBody(req); const meta = JSON.parse(raw.split('\r\n\r\n')[1].split('\r\n--')[0])
+    const id = `file${driveItems.length + 1}`; driveItems.push({ id, name: meta.name, parents: meta.parents, folder: false })
+    const pathOf = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${pathOf(f.parents[0])}/${f.name}` : '' }
+    log.drive.push(`${pathOf(meta.parents[0])}/${meta.name}`); return send(res, 200, { id })
+  }
+  // ---------- Dropbox ----------
+  if (p === '/dropbox/authorize') { const back = new URL(url.searchParams.get('redirect_uri')); back.searchParams.set('code', 'dbx-code'); back.searchParams.set('state', url.searchParams.get('state')); res.writeHead(302, { Location: back.toString() }); res.end(); return }
+  if (p === '/dropbox/api/oauth2/token') { const f = new URLSearchParams(await readBody(req)); if (f.get('client_secret') !== 'test-dropbox-secret') return send(res, 400, { error: 'invalid_client' }); return send(res, 200, { access_token: 'dbx-at', refresh_token: 'dbx-rt', expires_in: 14400 }) }
+  if (p === '/dropbox/api/2/users/get_current_account') return send(res, auth === 'Bearer dbx-at' ? 200 : 401, { email: 'office@kurkoos.test' })
+  if (p === '/dropbox/content/2/files/upload') { if (auth !== 'Bearer dbx-at') return send(res, 401, {}); const arg = JSON.parse(req.headers['dropbox-api-arg']); await readBody(req); log.dropbox.push(arg.path); return send(res, 200, { id: `id:${log.dropbox.length}`, path_display: arg.path }) }
+  // ---------- Green API (WhatsApp) ----------
+  if (/^\/green\/waInstance[^/]+\/sendMessage\//.test(p)) { const b = JSON.parse(await readBody(req)); log.wa.push({ to: b.chatId, message: b.message }); return send(res, 200, { idMessage: `out${log.wa.length}` }) }
+  if (p.startsWith('/green/file/')) { const f = decodeURIComponent(p.slice('/green/file/'.length)); res.writeHead(200, { 'Content-Type': f.endsWith('.pdf') ? 'application/pdf' : 'image/png' }); res.end(fs.readFileSync(`${FIX}/${f}`)); return }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; driveItems.length = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

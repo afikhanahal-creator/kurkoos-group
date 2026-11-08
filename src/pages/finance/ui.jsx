@@ -51,6 +51,7 @@ const P = {
   tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" /><circle cx="8" cy="8" r="1.5" /></>,
   rows: <path d="M4 6h16M4 12h16M4 18h16" />,
   grid: <><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></>,
+  webhook: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
   more: <><circle cx="5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="19" cy="12" r="1.2" /></>,
 }
 

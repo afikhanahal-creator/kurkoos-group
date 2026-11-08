@@ -11,5 +11,7 @@ export const ADAPTERS = {
   morning: { id: 'morning', label: 'Morning (חשבונית ירוקה)', kind: 'api', fields: ['business_id'], secrets: ['api_key', 'api_secret'], test: notActive('Morning'), send: notActive('Morning') },
   hashavshevet: { id: 'hashavshevet', label: 'חשבשבת', kind: 'file', fields: ['import_format'], secrets: [], test: async () => ({ ok: true, note: 'ייצוא קובץ לקליטה בחשבשבת' }), send: null },
   rivhit: { id: 'rivhit', label: 'רווחית', kind: 'api', fields: [], secrets: ['api_token'], test: notActive('רווחית'), send: notActive('רווחית') },
+  sumit: { id: 'sumit', label: 'SUMIT', kind: 'api', fields: ['company_id'], secrets: ['api_key'], test: notActive('SUMIT'), send: notActive('SUMIT') },
+  paperless: { id: 'paperless', label: 'Paperless', kind: 'api', fields: [], secrets: ['api_key'], test: notActive('Paperless'), send: notActive('Paperless') },
   priority: { id: 'priority', label: 'Priority', kind: 'api', fields: ['url', 'company'], secrets: ['user', 'password'], test: notActive('Priority'), send: notActive('Priority') },
 }

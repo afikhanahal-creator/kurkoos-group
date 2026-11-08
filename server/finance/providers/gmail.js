@@ -36,15 +36,15 @@ async function api(accessToken, path) {
 // Gmail search covers the inbox, labels and archived mail (not spam or trash).
 const BASE = '(subject:(חשבונית OR קבלה OR "חשבון עסקה" OR זיכוי OR invoice OR receipt OR "tax invoice" OR billing OR payment OR statement) OR filename:(חשבונית OR קבלה OR invoice OR receipt) OR "סה״כ לתשלום" OR "total due" OR "amount paid" OR (has:attachment filename:pdf)) -in:sent -in:chats -in:drafts'
 
-export async function listCandidates(accessToken, since, extra) {
-  const q = `${BASE} after:${Math.floor(since.getTime() / 1000)}${extra ? ` ${extra}` : ''}`
+export async function listCandidates(accessToken, since, extra, { until, max = 500 } = {}) {
+  const q = `${BASE} after:${Math.floor(since.getTime() / 1000)}${until ? ` before:${Math.floor(until.getTime() / 1000)}` : ''}${extra ? ` ${extra}` : ''}`
   const ids = []
   let page = ''
   do {
     const list = await api(accessToken, `messages?maxResults=100&q=${encodeURIComponent(q)}${page ? `&pageToken=${page}` : ''}`)
     for (const m of list.messages || []) ids.push(m.id)
     page = list.nextPageToken || ''
-  } while (page && ids.length < 500)
+  } while (page && ids.length < max)
   return ids
 }
 

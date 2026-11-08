@@ -4,7 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago, nameOf } from './format.js'
 import { ProviderLogo } from './logos.jsx'
-import { Field, Icon, InfoTip, Modal, Pill, Toggle, useAsync } from './ui.jsx'
+import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync } from './ui.jsx'
 
 const P = {
   gdrive: { title: 'Google Drive', desc: 'מסמכים מאושרים מועתקים לתיקייה ב-Google Drive, מסודרים לפי חברה וחודש.' },
@@ -19,6 +19,7 @@ export default function Cloud() {
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
+  const [cardMsg, setCardMsg] = useState({})
   const [err, setErr] = useState('')
   const [edit, setEdit] = useState(null)
   const admin = can('manage')
@@ -35,8 +36,15 @@ export default function Cloud() {
     try { const { url } = await api.callServer('cloud-auth-url', { provider }); window.location.assign(url) } catch (e) { setErr(e.message); setBusy('') }
   }
   const sync = async (t) => {
-    setBusy(t.id); setErr(''); setMsg('')
-    try { const { results } = await api.callServer('cloud-sync', { target_id: t.id }); const r = results[0]; if (r?.error) setErr(r.error); else setMsg(r?.copied ? `${r.copied === 1 ? 'מסמך אחד הועתק' : `${r.copied} מסמכים הועתקו`} ל-${P[t.provider].title}.` : `הכול כבר נמצא ב-${P[t.provider].title}. אין מסמכים חדשים להעתקה.`); list.reload() } catch (e) { setErr(e.message) } finally { setBusy('') }
+    setBusy(t.id); setErr(''); setMsg(''); setCardMsg({})
+    try {
+      const { results } = await api.callServer('cloud-sync', { target_id: t.id }); const r = results[0]
+      const c = Number(r?.copied) || 0
+      if (r?.error) setErr(r.error)
+      else if (r?.busy) setCardMsg({ [t.id]: 'סנכרון אחר כבר רץ עכשיו. נסו שוב בעוד דקה.' })
+      else setCardMsg({ [t.id]: c ? `${c === 1 ? 'מסמך אחד הועתק' : `${c} מסמכים הועתקו`} עכשיו.` : 'הכול כבר בתיקייה. אין מסמכים חדשים להעתקה.' })
+      list.reload()
+    } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
   const disconnect = async (t) => {
     if (!window.confirm(`לנתק את ${P[t.provider].title} (${t.account_email})? הקבצים שכבר הועתקו נשארים בתיקייה.`)) return
@@ -64,9 +72,10 @@ export default function Cloud() {
           <article key={id} className="fin-cloud-card">
             <header>
               <ProviderLogo name={id} size={32} />
-              <div><h3>{p.title}</h3><span className="fin-muted">{mine.length ? `מחובר · ${mine.map((t) => t.account_email).join(', ')}` : 'לא מחובר'}</span></div>
+              <div><h3>{p.title}</h3><span className="fin-muted">{mine.length ? <bdi dir="ltr">{mine.map((t) => t.account_email).join(', ')}</bdi> : 'לא מחובר'}</span></div>
+              {mine.map((t) => <Pill key={t.id} tone={!t.enabled ? 'muted' : t.status === 'error' ? 'attn' : 'ok'}>{!t.enabled ? 'כבוי' : t.status === 'error' ? 'תקלה' : 'מחובר'}</Pill>)}
             </header>
-            <p>{p.desc}</p>
+            {!mine.length && <p>{p.desc}</p>}
             {mine.map((t) => (
               <div key={t.id} className="fin-cloud-target">
                 <dl>
@@ -77,16 +86,19 @@ export default function Cloud() {
                 </dl>
                 {t.last_error && <p className="fin-acc__err">{t.last_error}</p>}
                 <div className="fin-form__actions">
-                  <Pill tone={!t.enabled ? 'muted' : t.status === 'error' ? 'attn' : 'ok'}>{!t.enabled ? 'כבוי' : t.status === 'error' ? 'תקלה' : 'פעיל'}</Pill>
                   <button type="button" className="fin-btn fin-btn--sm" onClick={() => sync(t)} disabled={!!busy || !t.enabled}><Icon name="sync" size={15} /> {busy === t.id ? 'מעתיק…' : 'סנכרון עכשיו'}</button>
-                  {admin && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => setEdit({ ...t, onlyApproved: !t.statuses.includes('review') })}>הגדרות</button>}
                   {admin && t.status === 'error' && <button type="button" className="fin-btn fin-btn--sm" onClick={() => connect(id)}>חיבור מחדש</button>}
-                  {admin && <button type="button" className="fin-link fin-link--danger" onClick={() => disconnect(t)}>ניתוק</button>}
+                  {cardMsg[t.id] && <span className="fin-muted fin-small" role="status">{cardMsg[t.id]}</span>}
+                  {admin && <MoreMenu label={`פעולות עבור ${p.title}`} items={[
+                    { label: 'הגדרות', onClick: () => setEdit({ ...t, onlyApproved: !t.statuses.includes('review') }) },
+                    { label: 'ניתוק', onClick: () => disconnect(t), danger: true },
+                  ]} />}
                 </div>
               </div>
             ))}
-            {admin && !mine.length && <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={() => connect(id)} disabled={!!busy}>{busy === id ? 'מעביר…' : `חיבור ${p.title}`}</button>}
-            {status.data && !configured && !mine.length && <small className="fin-muted">{id === 'gdrive' ? 'משתמש באותו חיבור Google של Gmail (GOOGLE_CLIENT_ID), עם הרשאת drive.file.' : 'דורש אפליקציית Dropbox (DROPBOX_APP_KEY, DROPBOX_APP_SECRET).'}</small>}
+            {admin && !mine.length && (status.data && !configured ? (
+              <div className="fin-connect-card__soon"><Pill tone="muted">בקרוב</Pill><small className="fin-muted">{id === 'gdrive' ? 'GOOGLE_CLIENT_ID לא מוגדר בשרת' : 'DROPBOX_APP_KEY לא מוגדר בשרת'}</small></div>
+            ) : <button type="button" className="fin-btn fin-btn--primary fin-btn--block-sm fin-btn--start" onClick={() => connect(id)} disabled={!!busy}>{busy === id ? 'מעביר…' : `חיבור ${p.title}`}</button>)}
             {!admin && !mine.length && <small className="fin-muted">רק מנהל מערכת מחבר חשבונות ענן.</small>}
           </article>
         )

@@ -17,6 +17,7 @@ import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns } f
 import { ADAPTERS } from './finance/adapters.js'
 import { CLOUD, syncCloud, connectCloud } from './finance/cloud.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber } from './finance/whatsapp.js'
+import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 
 const ROLES = {
   'auth-url': ['admin', 'finance_manager', 'employee'],
@@ -35,6 +36,11 @@ const ROLES = {
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
+  'outbound-save': ['admin'],
+  'outbound-delete': ['admin'],
+  'outbound-test': ['admin'],
+  'outbound-flush': ['admin', 'finance_manager', 'employee'],
+  'members-meta': ['admin'],
 }
 
 // per-user rate limit (in memory, per instance): 120 calls in 10 minutes
@@ -51,7 +57,7 @@ function limited(key, max = 120, windowMs = 600_000) {
 
 const STATE_KEY = () => process.env.FINANCE_STATE_SECRET || env.sbKey()
 function signState(obj) {
-  const p = Buffer.from(JSON.stringify(obj)).toString('base64url')
+  const p = Buffer.from(JSON.stringify({ ...obj, n: crypto.randomBytes(12).toString('base64url') })).toString('base64url')
   return `${p}.${crypto.createHmac('sha256', STATE_KEY()).update(p).digest('base64url')}`
 }
 function readState(s) {
@@ -71,6 +77,12 @@ async function oauthCallback(req, res, url) {
   const back = (qs) => redirect(res, `${origin(req)}/admin/finance/mailboxes?${qs}`)
   const st = readState(url.searchParams.get('state'))
   if (!st) return back('error=state')
+  // single use: a leaked or replayed state cannot attach another account
+  try { await insert('fin_oauth_used', { nonce: String(st.n || ''), at: new Date().toISOString() }, 'return=minimal') } catch { return back('error=state') }
+  // the role is checked again: the person may have lost it in the 15 minutes since the link was made
+  const who = await one(`fin_members?user_id=eq.${q(st.u)}&active=eq.true&select=role`)
+  const allowed = CLOUD[st.p] ? ['admin'] : ['admin', 'finance_manager', 'employee']
+  if (!who || !allowed.includes(who.role)) return back('error=forbidden')
   if (url.searchParams.get('error')) return back(`error=${encodeURIComponent(url.searchParams.get('error_description') || url.searchParams.get('error'))}`)
   if (CLOUD[st.p]) {
     const cloudBack = (qs) => redirect(res, `${origin(req)}/admin/finance/cloud?${qs}`)
@@ -147,7 +159,9 @@ export default async function handler(req, res) {
         return
       }
       case 'sync': {
-        res.status(200).json({ results: await syncAll({ mailboxId: body.mailbox_id, trigger: 'manual', user }) })
+        const results = await syncAll({ mailboxId: body.mailbox_id, trigger: 'manual', user })
+        await flushOutbound({ budgetMs: 8_000 }).catch(() => {})
+        res.status(200).json({ results })
         return
       }
       case 'extract': {
@@ -158,6 +172,7 @@ export default async function handler(req, res) {
         const runs = await newDocRuns(body.trigger === 'upload' ? 'upload' : 'manual')
         const updated = await processStored(doc, runs, body.trigger === 'upload' ? 'upload' : 'manual')
         await closeRuns(runs)
+        await flushOutbound({ budgetMs: 8_000 }).catch(() => {})
         res.status(200).json({ document: updated })
         return
       }
@@ -174,8 +189,8 @@ export default async function handler(req, res) {
         const d = new Date(`${from}T00:00:00Z`)
         const min = new Date(); min.setUTCFullYear(min.getUTCFullYear() - 3)
         if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || Number.isNaN(d.getTime()) || d > new Date() || d < min) { res.status(400).json({ error: 'תאריך לא תקין (עד שלוש שנים אחורה)' }); return }
-        const boxes = (await sb(`fin_mailboxes?status=in.(active,error)${body.mailbox_id ? `&id=eq.${q(body.mailbox_id)}` : ''}&select=id,sync_from,email`)) || []
-        for (const b of boxes) if (!b.sync_from || b.sync_from > from) await patch(`fin_mailboxes?id=eq.${b.id}`, { sync_from: from, backfill_pending: true })
+        const boxes = (await sb(`fin_mailboxes?status=in.(active,error)${body.mailbox_id ? `&id=eq.${q(body.mailbox_id)}` : ''}&select=id,sync_from,email,backfill_pending,backfill_until`)) || []
+        for (const b of boxes) if (!b.sync_from || b.sync_from > from) await patch(`fin_mailboxes?id=eq.${b.id}`, { sync_from: from, backfill_pending: true, backfill_until: b.backfill_pending && b.backfill_until ? b.backfill_until : b.sync_from || null })
         await audit('mailbox', body.mailbox_id || 'all', 'backfill', { from, mailboxes: boxes.length }, user)
         res.status(200).json({ ok: true, mailboxes: boxes.length, results: body.run === false ? [] : await syncAll({ mailboxId: body.mailbox_id, trigger: 'backfill', user }) })
         return
@@ -247,9 +262,60 @@ export default async function handler(req, res) {
         res.status(200).json({ ok: true, user_id: uid, emailed: r.ok })
         return
       }
+      case 'outbound-save': {
+        // a webhook or an email address that receives document events. The webhook secret is returned once, here.
+        const kind = body.kind === 'email' ? 'email' : 'webhook'
+        const target = String(body.target || '').trim()
+        const events = (Array.isArray(body.events) ? body.events : []).filter((e) => EVENTS.includes(e))
+        if (!events.length) { res.status(400).json({ error: 'בחרו לפחות אירוע אחד' }); return }
+        if (kind === 'email' && !emailOk(target)) { res.status(400).json({ error: 'כתובת מייל לא תקינה' }); return }
+        if (kind === 'webhook') { const bad = await checkUrl(target); if (bad) { res.status(400).json({ error: bad }); return } }
+        const row = { kind, target, name: String(body.name || '').slice(0, 80) || null, events, business_id: body.business_id || null, enabled: body.enabled !== false }
+        let saved; let secret = null
+        if (body.id) saved = await patch(`fin_outbound?id=eq.${q(body.id)}`, row)
+        else {
+          saved = await insert('fin_outbound', { ...row, created_by: user.id })
+          if (kind === 'webhook') { secret = `whsec_${crypto.randomBytes(24).toString('base64url')}`; await insert('fin_outbound_secrets', { outbound_id: saved.id, secret }, 'return=minimal') }
+        }
+        await audit('outbound', saved.id, body.id ? 'updated' : 'created', { kind, target, events }, user)
+        res.status(200).json({ outbound: saved, secret })
+        return
+      }
+      case 'outbound-delete': {
+        await sb(`fin_outbound?id=eq.${q(body.id)}`, { method: 'DELETE', prefer: 'return=minimal' })
+        await audit('outbound', body.id, 'deleted', {}, user)
+        res.status(200).json({ ok: true })
+        return
+      }
+      case 'outbound-test': {
+        const o = await one(`fin_outbound?id=eq.${q(body.id)}&select=*`)
+        if (!o) { res.status(404).json({ error: 'לא נמצא' }); return }
+        const r = await testOutbound(o)
+        await patch(`fin_outbound?id=eq.${o.id}`, { last_status: r.ok ? 'ok' : r.error, last_at: new Date().toISOString() })
+        res.status(200).json(r)
+        return
+      }
+      case 'outbound-flush': {
+        res.status(200).json(await flushOutbound({ budgetMs: 15_000, trigger: 'event' }))
+        return
+      }
+      case 'members-meta': {
+        // last sign-in per user, to tell an accepted invitation from one still waiting
+        const r = await fetch(`${env.sbUrl()}/auth/v1/admin/users?per_page=1000`, { headers: { apikey: env.sbKey(), Authorization: `Bearer ${env.sbKey()}` } })
+        const d = await r.json().catch(() => ({}))
+        const ids = new Set(((await sb('fin_members?select=user_id')) || []).map((m) => m.user_id))
+        res.status(200).json({ users: (d.users || []).filter((u) => ids.has(u.id)).map((u) => ({ id: u.id, last_sign_in_at: u.last_sign_in_at || null, invited_at: u.invited_at || null, confirmed: !!(u.email_confirmed_at || u.confirmed_at) })) })
+        return
+      }
       case 'integration-save': {
         const ad = ADAPTERS[body.provider]
         if (!ad) { res.status(400).json({ error: 'יעד לא מוכר' }); return }
+        if (ad.kind === 'api' && body.enabled) {
+          // one accounting system per company: a second one would receive the same documents twice
+          const others = (await sb(`fin_integrations?enabled=eq.true&provider=not.in.(file,hashavshevet)&select=id,name,business_id${body.id ? `&id=neq.${q(body.id)}` : ''}`)) || []
+          const clash = others.find((o) => (o.business_id || null) === (body.business_id || null))
+          if (clash) { res.status(409).json({ error: `ל${body.business_id ? 'חברה הזו' : 'כל החברות'} כבר מחוברת תוכנה (${clash.name}). נתקו אותה קודם.` }); return }
+        }
         const row = { provider: body.provider, name: body.name || ad.label, business_id: body.business_id || null, config: body.config || {}, enabled: !!body.enabled, status: ad.kind === 'file' ? 'ready' : 'not_active' }
         const saved = body.id ? await patch(`fin_integrations?id=eq.${q(body.id)}`, row) : await insert('fin_integrations', row)
         if (body.secret && Object.keys(body.secret).length) await sb('fin_integration_secrets', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { integration_id: saved.id, secret: body.secret, updated_at: new Date().toISOString() } })

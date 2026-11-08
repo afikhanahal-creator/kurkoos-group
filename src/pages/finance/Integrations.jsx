@@ -4,7 +4,8 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, claimableVat, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { buildPackage } from './exportPackage.js'
-import { Card, Empty, Field, Icon, Modal, PageHead, Pill, useAsync } from './ui.jsx'
+import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
+import { Monogram } from './logos.jsx'
 
 const FORMATS = { zip: 'ZIP: קבצים מקוריים + Excel + CSV + metadata', excel: 'Excel', csv: 'CSV', pdf: 'PDF (דוח להדפסה)' }
 
@@ -98,53 +99,118 @@ function ExportWizard({ onDone }) {
   )
 }
 
+const SOFTWARE = {
+  morning: { mono: 'M', tone: 'green', desc: 'העברת חשבוניות ספקים מאושרות ל-Morning (חשבונית ירוקה).' },
+  icount: { mono: 'iC', tone: 'ocean', desc: 'העברת מסמכי הוצאות מאושרים ל-iCount.' },
+  rivhit: { mono: 'ר', tone: 'red', desc: 'העברת הוצאות מאושרות לרווחית.' },
+  sumit: { mono: 'S', tone: 'ink', desc: 'העברת מסמכים מאושרים ל-SUMIT.' },
+  paperless: { mono: 'P', tone: 'ocean', desc: 'העברת מסמכים מאושרים ל-Paperless.' },
+  priority: { mono: 'Pr', tone: 'ink', desc: 'קליטת חשבוניות ספק ב-Priority ERP.' },
+  hashavshevet: { mono: 'ח', tone: 'green', desc: 'קובץ קליטה במבנה של חשבשבת, להורדה או לשליחה לרו״ח.' },
+  file: { mono: 'ZIP', tone: 'muted', desc: 'הקבצים המקוריים עם Excel ו-CSV, שכל תוכנה קולטת.' },
+}
+const STATUS_TXT = { ready: ['ok', 'מחובר'], not_active: ['warn', 'ממתין להפעלה'], error: ['bad', 'שגיאה'] }
+
 export default function Integrations() {
   const { businesses, can } = useFinance()
   const list = useAsync(() => api.loadIntegrations(), [])
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
   const [edit, setEdit] = useState(null)
   const [msg, setMsg] = useState('')
+  const [err, setErr] = useState('')
+  const [term, setTerm] = useState('')
   const adapters = status.data?.adapters || []
+  const admin = can('manage')
+  const live = (list.data || []).filter((i) => i.enabled)
+  const match = (a) => !term.trim() || `${a.label} ${SOFTWARE[a.id]?.desc || ''}`.toLowerCase().includes(term.trim().toLowerCase())
+  const apiApps = adapters.filter((a) => a.kind === 'api' && match(a))
+  const fileApps = adapters.filter((a) => a.kind === 'file' && match(a))
+
   const save = async (e) => {
-    e.preventDefault()
-    try { await api.callServer('integration-save', edit); setEdit(null); list.reload() } catch (e2) { setMsg(e2.message) }
+    e.preventDefault(); setErr('')
+    try { await api.callServer('integration-save', edit); setMsg(`${edit.name || adapters.find((a) => a.id === edit.provider)?.label} נשמר.`); setEdit(null); list.reload() } catch (e2) { setErr(e2.message) }
   }
   const test = async (it) => {
-    setMsg('')
-    try { const r = await api.callServer('integration-test', { id: it.id }); setMsg(r.ok ? `${it.name}: החיבור תקין${r.note ? ` (${r.note})` : ''}` : `${it.name}: ${r.error}`); list.reload() } catch (e) { setMsg(e.message) }
+    setMsg(''); setErr('')
+    try { const r = await api.callServer('integration-test', { id: it.id }); if (r.ok) setMsg(`${it.name}: החיבור תקין${r.note ? ` (${r.note})` : ''}`); else setErr(`${it.name}: ${r.error}`); list.reload() } catch (e) { setErr(e.message) }
   }
+  const disconnect = async (it) => {
+    if (!window.confirm(`לנתק את ${it.name}? מסמכים שכבר יוצאו לא משתנים.`)) return
+    try { await api.callServer('integration-save', { ...it, enabled: false }); list.reload() } catch (e) { setErr(e.message) }
+  }
+  const open = (a, it) => { setErr(''); setEdit(it ? { ...it } : { provider: a.id, name: a.label, business_id: businesses.length === 1 ? businesses[0].id : '', config: {}, enabled: true }) }
+
+  const card = (a) => {
+    const sw = SOFTWARE[a.id] || { mono: a.label.slice(0, 2), tone: 'ink', desc: '' }
+    const mine = live.filter((i) => i.provider === a.id)
+    return (
+      <article key={a.id} className="fin-app-card">
+        <Monogram text={sw.mono} tone={sw.tone} />
+        <div className="fin-app-card__head">
+          <h4>{a.label}</h4>
+          <span className="fin-muted">{mine.length ? mine.map((i) => (i.business_id ? nameOf(businesses, i.business_id) : 'כל החברות')).join(', ') : 'לא מחובר'}</span>
+        </div>
+        <p>{sw.desc}</p>
+        {mine.map((i) => {
+          const [tone, label] = STATUS_TXT[i.status] || ['muted', i.status]
+          return (
+            <div key={i.id} className="fin-app-card__row">
+              <Pill tone={tone}>{label}</Pill>
+              {i.last_error && i.status === 'error' && <small className="fin-cell-err">{i.last_error}</small>}
+              <span className="fin-grow" />
+              <button type="button" className="fin-btn fin-btn--sm" onClick={() => test(i)}>בדיקת חיבור</button>
+              {admin && <MoreMenu label={`פעולות עבור ${i.name}`} items={[{ label: 'הגדרות', onClick: () => open(a, i) }, { label: 'ניתוק', onClick: () => disconnect(i), danger: true }]} />}
+            </div>
+          )
+        })}
+        {admin && (!mine.length || a.kind === 'file') && (
+          <button type="button" className={`fin-btn ${mine.length ? 'fin-btn--ghost' : ''} fin-app-card__cta`} onClick={() => open(a)}>
+            <Icon name={mine.length ? 'plus' : 'plug'} size={17} /> {mine.length ? 'חיבור לחברה נוספת' : `חיבור ${a.label}`}
+          </button>
+        )}
+      </article>
+    )
+  }
+
   return (
     <div className="fin-stack">
-      <PageHead title="אינטגרציות הנהלת חשבונות" sub="ייצוא מסמכים מאושרים בלבד, עם אישור לפני כל שליחה, בלי כפילויות, וכל ייצוא נרשם." />
-      <ExportWizard onDone={list.reload} />
-      <Card title="יעדים ותוכנות" actions={can('manage') && <button type="button" className="fin-btn" onClick={() => setEdit({ provider: 'file', name: '', business_id: '', config: {}, enabled: true })}><Icon name="plus" size={18} /> הגדרת יעד</button>}>
-        <p className="fin-muted">תוכנת הנהלת החשבונות של רו״ח עוד לא נקבעה. ייצוא קבצים עובד תמיד; חיבור API (iCount, Morning ועוד) יופעל אחרי שרו״ח יאשר באיזו תוכנה הוא עובד ויינתן מפתח API.</p>
-        {msg && <p className="fin-note" role="status">{msg}</p>}
-        <ul className="fin-adapters">
-          {adapters.map((a) => {
-            const mine = (list.data || []).filter((i) => i.provider === a.id)
-            return (
-              <li key={a.id}>
-                <div><strong>{a.label}</strong><small className="fin-muted">{a.kind === 'file' ? 'ייצוא קובץ' : 'חיבור API'}</small></div>
-                {mine.length ? mine.map((i) => (
-                  <span key={i.id} className="fin-adapters__item">{i.name}{i.business_id ? ` · ${nameOf(businesses, i.business_id)}` : ''} <Pill tone={i.status === 'ready' ? 'ok' : i.status === 'error' ? 'bad' : 'muted'}>{i.status === 'ready' ? 'מוכן' : i.status === 'not_active' ? 'לא הופעל' : i.status === 'error' ? 'שגיאה' : i.status}</Pill>{i.last_error && <small className="fin-cell-err"> {i.last_error}</small>} <button type="button" className="fin-link" onClick={() => test(i)}>בדיקה</button></span>
-                )) : <Pill tone={a.kind === 'file' ? 'ok' : 'muted'}>{a.kind === 'file' ? 'זמין' : 'לא מוגדר'}</Pill>}
-              </li>
-            )
-          })}
-        </ul>
-        {!adapters.length && <Empty title="השרת לא זמין" icon="plug">רשימת היעדים נטענת מהשרת.</Empty>}
-      </Card>
-      {edit && (
-        <Modal title="הגדרת יעד ייצוא" onClose={() => setEdit(null)} footer={<><button type="submit" form="fin-int" className="fin-btn fin-btn--primary">שמירה</button><button type="button" className="fin-btn" onClick={() => setEdit(null)}>ביטול</button></>}>
-          <form id="fin-int" className="fin-form__grid" onSubmit={save}>
-            <Field label="תוכנה / יעד"><select value={edit.provider} onChange={(e) => setEdit({ ...edit, provider: e.target.value })}>{adapters.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}</select></Field>
-            <Field label="חברה"><select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>
-            <Field label="שם" wide><input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={adapters.find((a) => a.id === edit.provider)?.label} /></Field>
-            {(adapters.find((a) => a.id === edit.provider)?.secrets || []).map((s) => <Field key={s} label={`${s} (נשמר מוצפן בשרת)`} wide><input type="password" autoComplete="off" onChange={(e) => setEdit({ ...edit, secret: { ...(edit.secret || {}), [s]: e.target.value } })} dir="ltr" /></Field>)}
-          </form>
-        </Modal>
+      <div className="fin-titlerow">
+        <h2 className="fin-pagehead__title">חיבור תוכנת הנהלת החשבונות</h2>
+        <InfoTip label="על חיבור תוכנה">רק מסמכים מאושרים יוצאים, עם אישור לפני כל שליחה, ובלי כפילויות: מסמך שיוצא מסומן ולא יוצא שוב אלא אם מבקשים ייצוא חוזר. כל ייצוא נרשם בהיסטוריה.</InfoTip>
+      </div>
+      <p className="fin-muted fin-lead">בחרו את התוכנה שרו״ח עובד איתה. לכל חברה אפשר לחבר תוכנה אחת, וייצוא קבצים זמין תמיד.</p>
+      <label className="fin-search fin-search--wide">
+        <Icon name="search" size={18} />
+        <input type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="חיפוש תוכנת הנהלת חשבונות" aria-label="חיפוש תוכנת הנהלת חשבונות" />
+      </label>
+      {msg && <p className="fin-note" role="status">{msg}</p>}
+      {err && !edit && <p className="fin-error fin-error--block" role="alert">{err}</p>}
+
+      {!adapters.length && !status.loading ? <Empty title="השרת לא זמין" icon="plug">רשימת התוכנות נטענת מהשרת.</Empty> : (
+        <>
+          {apiApps.length > 0 && <section className="fin-app-section"><h3>תוכנות הנהלת חשבונות ישראליות</h3><div className="fin-app-grid">{apiApps.map(card)}</div></section>}
+          {fileApps.length > 0 && <section className="fin-app-section"><h3>ייצוא קבצים</h3><div className="fin-app-grid">{fileApps.map(card)}</div></section>}
+          {!apiApps.length && !fileApps.length && <Empty title={`לא מצאנו את "${term}"`} icon="search">אם התוכנה של רו״ח לא ברשימה, ייצוא הקבצים (ZIP, Excel, CSV) נקלט בכל תוכנה.</Empty>}
+          {apiApps.length > 0 && <p className="fin-muted fin-small">חיבור ישיר לתוכנה מופעל אחרי שרו״ח מאשר באיזו תוכנה הוא עובד ונותן מפתח API. עד אז המסמכים יוצאים בקבצים.</p>}
+        </>
       )}
+
+      <ExportWizard onDone={list.reload} />
+
+      {edit && (() => {
+        const a = adapters.find((x) => x.id === edit.provider)
+        return (
+          <Modal title={edit.id ? `הגדרות ${edit.name}` : `חיבור ${a?.label || ''}`} onClose={() => setEdit(null)} footer={<><button type="submit" form="fin-int" className="fin-btn fin-btn--primary">{edit.id ? 'שמירה' : 'חיבור'}</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setEdit(null)}>ביטול</button></>}>
+            <form id="fin-int" className="fin-form__grid" onSubmit={save}>
+              <Field label="חברה" hint="התוכנה תקבל רק את המסמכים של החברה הזו"><select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>
+              <Field label="שם"><input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={a?.label} /></Field>
+              {(a?.secrets || []).map((s) => <Field key={s} label={s.replace(/_/g, ' ')} hint="נשמר בשרת בלבד, ולא מוצג שוב" wide><input type="password" autoComplete="off" onChange={(e) => setEdit({ ...edit, secret: { ...(edit.secret || {}), [s]: e.target.value } })} dir="ltr" /></Field>)}
+            </form>
+            {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
+            {a?.kind === 'api' && <p className="fin-callout">המפתחות נשמרים עכשיו, והשליחה הישירה תופעל אחרי בדיקה מול התוכנה. עד אז המסמכים יוצאים בקבצים, ושום דבר לא נשלח בלי אישור.</p>}
+          </Modal>
+        )
+      })()}
     </div>
   )
 }

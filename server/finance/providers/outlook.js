@@ -29,10 +29,10 @@ export async function revoke() { /* Microsoft has no token revoke endpoint for t
 const WORDS = /חשבונית|קבלה|חשבון עסקה|זיכוי|invoice|receipt|billing|payment|statement|סה"?״?כ לתשלום|total due|amount paid/i
 
 // every message since the date that has an attachment or invoice words (all folders, archive included)
-export async function listCandidates(accessToken, since) {
+export async function listCandidates(accessToken, since, _extra, { until, max = 500 } = {}) {
   const ids = []
-  let url = `/messages?$filter=${encodeURIComponent(`receivedDateTime ge ${since.toISOString()}`)}&$select=id,subject,hasAttachments,bodyPreview&$orderby=receivedDateTime desc&$top=50`
-  while (url && ids.length < 500) {
+  let url = `/messages?$filter=${encodeURIComponent(`receivedDateTime ge ${since.toISOString()}${until ? ` and receivedDateTime lt ${until.toISOString()}` : ''}`)}&$select=id,subject,hasAttachments,bodyPreview&$orderby=receivedDateTime desc&$top=50`
+  while (url && ids.length < max) {
     const page = await api(accessToken, url)
     for (const m of page.value || []) if (m.hasAttachments || WORDS.test(`${m.subject} ${m.bodyPreview}`)) ids.push(m.id)
     url = page['@odata.nextLink'] || ''

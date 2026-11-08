@@ -25,7 +25,7 @@ function OldReceipts({ current, onClose, onDone }) {
       <div className="fin-seg" role="group" aria-label="כמה זמן אחורה">
         {PRESETS.map(([n, l]) => <button key={n} type="button" className={from === monthsAgo(n) ? 'is-on' : ''} onClick={() => setFrom(monthsAgo(n))}>{l}</button>)}
       </div>
-      <Field label="או מתאריך"><input type="date" value={from} max={current || undefined} min={monthsAgo(36)} onChange={(e) => setFrom(e.target.value)} /></Field>
+      <Field label="או מתאריך"><input type="date" lang="he-IL" value={from} max={current || undefined} min={monthsAgo(36)} onChange={(e) => setFrom(e.target.value)} /></Field>
       <p className="fin-muted fin-small">סריקה גדולה מתחלקת לכמה הרצות. הריצה היומית ממשיכה מאיפה שעצרה, ואפשר גם ללחוץ "סנכרון" שוב.</p>
       {err && <p className="fin-error" role="alert">{err}</p>}
     </Modal>
@@ -118,12 +118,12 @@ export default function Mailboxes() {
                   <span className="fin-acc__meta">
                     {PROV[m.provider]}
                     {pickBiz === m.id ? (
-                      <select className="fin-select fin-select--sm" autoFocus defaultValue={m.business_id || ''} onChange={(e) => setBusiness(m, e.target.value)} onBlur={() => setPickBiz(null)} aria-label={`החברה של ${m.email}`}><option value="">אין עסק</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+                      <select className="fin-select fin-select--sm" autoFocus defaultValue={m.business_id || ''} onChange={(e) => setBusiness(m, e.target.value)} onBlur={() => setPickBiz(null)} aria-label={`החברה של ${m.email}`}><option value="">ללא חברה (לפי החשבונית)</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
                     ) : (
-                      <button type="button" className="fin-chipbtn" onClick={() => can('operate') && setPickBiz(m.id)} disabled={!can('operate')} title="שיוך התיבה לחברה">{biz ? biz.name : 'אין עסק'}</button>
+                      <button type="button" className={`fin-chipbtn${biz ? '' : ' is-empty'}`} onClick={() => can('operate') && setPickBiz(m.id)} disabled={!can('operate')} title="שיוך התיבה לחברה">{biz ? biz.name : can('operate') ? '+ שיוך לחברה' : 'ללא חברה'}</button>
                     )}
                   </span>
-                  <span className="fin-acc__sub">{m.last_success_at ? `סנכרון אחרון ${dateTime(m.last_success_at)}` : 'עוד לא סונכרנה'}{n ? `, ${n} מסמכים` : ''}{m.backfill_pending ? ', סריקת קבלות ישנות בהמתנה' : ''}</span>
+                  <span className="fin-acc__sub">{m.last_success_at ? `סנכרון אחרון ${dateTime(m.last_success_at)}` : 'עוד לא סונכרנה'}{n ? ` · ${n === 1 ? 'מסמך אחד' : `${n} מסמכים`}` : ''}{m.backfill_pending ? ' · סריקת קבלות ישנות בהמתנה' : ''}</span>
                   {m.last_error && <span className="fin-acc__err">{m.last_error}</span>}
                 </div>
                 <Pill tone={tone}>{busy === m.id ? 'מסנכרן…' : label}</Pill>
@@ -142,13 +142,16 @@ export default function Mailboxes() {
       <div className="fin-section-head"><h3>הוספת תיבת דואר</h3></div>
       {!live.length && <Empty title="עוד לא חוברה תיבה" icon="mail">חברו את התיבה שאליה מגיעות החשבוניות, למשל של הנהלת החשבונות.</Empty>}
       <div className="fin-connect-cards">
-        {[['gmail', 'Gmail', 'Gmail ו-Google Workspace', 'חיבור Gmail', true], ['outlook', 'Office 365', 'Outlook, Microsoft 365 ו-Exchange Online', 'חיבור Office 365', false]].map(([id, title, desc, cta, primary]) => (
+        {[['gmail', 'Gmail', 'חשבונות Gmail ו-Google Workspace', 'חיבור Gmail', true], ['outlook', 'Office 365', 'חשבונות Outlook ו-Microsoft 365, כולל Exchange', 'חיבור Office 365', false]].map(([id, title, desc, cta, primary]) => (
           <article key={id} className="fin-connect-card">
             <ProviderLogo name={id} size={30} />
             <h4>{title}</h4>
             <p>{desc}. קריאה בלבד.</p>
-            <button type="button" className={`fin-btn ${primary ? 'fin-btn--primary' : ''}`} onClick={() => connect(id)} disabled={!!busy}>{busy === id ? 'מעביר…' : cta}</button>
-            {status.data && !prov[id] && <small className="fin-muted">{id === 'gmail' ? 'Gmail עוד לא הוגדר בשרת' : 'Office 365 עוד לא הוגדר בשרת'}</small>}
+            {status.data && !prov[id] ? (
+              <div className="fin-connect-card__soon"><Pill tone="muted">בקרוב</Pill>{can('manage') && <small className="fin-muted">{id === 'gmail' ? 'GOOGLE_CLIENT_ID לא מוגדר בשרת' : 'MS_CLIENT_ID לא מוגדר בשרת'}</small>}</div>
+            ) : (
+              <button type="button" className={`fin-btn ${primary && !live.length ? 'fin-btn--primary' : ''}`} onClick={() => connect(id)} disabled={!!busy}>{busy === id ? 'מעביר…' : cta}</button>
+            )}
           </article>
         ))}
       </div>

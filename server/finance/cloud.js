@@ -3,7 +3,7 @@
 // with files.content.write. Tokens live in fin_cloud_secrets (server only). Originals stay in our storage.
 import { env } from './env.js'
 import { fetchRetry, json } from './http.js'
-import { sb, one, insert, patch, download, audit } from './db.js'
+import { sb, one, insert, patch, download, audit, rpc } from './db.js'
 import { agentRun } from './db.js'
 import { TIME_BUDGET_MS } from './env.js'
 
@@ -29,19 +29,26 @@ export const CLOUD = {
         if (cache[key]) { parent = cache[key]; continue }
         const qy = `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and '${parent}' in parents and trashed=false`
         const found = await json(await fetchRetry(`${env.driveApi()}/files?q=${encodeURIComponent(qy)}&fields=files(id)`, { headers: { Authorization: `Bearer ${token}` } }), 'drive list')
-        const id = found.files?.[0]?.id || (await json(await fetchRetry(`${env.driveApi()}/files?fields=id`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parent] }) }), 'drive folder')).id
+        const id = found.files?.[0]?.id || (await json(await fetch(`${env.driveApi()}/files?fields=id`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parent] }) }), 'drive folder')).id
         cache[key] = id; parent = id
       }
       return parent
     },
-    async upload(token, { parts, fileName, mime, buf, cache }) {
+    async upload(token, args) {
+      try { return await this.uploadOnce(token, args) } catch (e) {
+        if (e.status !== 404) throw e
+        for (const k of Object.keys(args.cache)) delete args.cache[k]
+        return this.uploadOnce(token, args)
+      }
+    },
+    async uploadOnce(token, { parts, fileName, mime, buf, cache }) {
       const parent = await this.ensureFolder(token, parts, cache)
       const boundary = `kurkoos${Date.now()}`
       const body = Buffer.concat([
         Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: fileName, parents: [parent] })}\r\n--${boundary}\r\nContent-Type: ${mime}\r\n\r\n`),
         buf, Buffer.from(`\r\n--${boundary}--`),
       ])
-      const r = await json(await fetchRetry(`${env.driveUpload()}/files?uploadType=multipart&fields=id`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body }), 'drive upload')
+      const r = await json(await fetch(`${env.driveUpload()}/files?uploadType=multipart&fields=id`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body }), 'drive upload')
       return { id: r.id, path: `/${[...parts, fileName].join('/')}` }
     },
   },
@@ -55,10 +62,13 @@ export const CLOUD = {
       return { email: String(me.email || '').toLowerCase(), ...t }
     },
     refresh: async (rt) => json(await fetchRetry(`${env.dropboxApi()}/oauth2/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: rt, client_id: process.env.DROPBOX_APP_KEY, client_secret: process.env.DROPBOX_APP_SECRET }) }), 'dropbox token'),
-    revoke: async (_rt, token) => { if (token) await fetch(`${env.dropboxApi()}/2/auth/token/revoke`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {}) },
+    revoke: async (rt, token) => {
+      try { token = (await CLOUD.dropbox.refresh(rt)).access_token || token } catch { /* already revoked */ }
+      if (token) await fetch(`${env.dropboxApi()}/2/auth/token/revoke`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {})
+    },
     async upload(token, { parts, fileName, buf }) {
       const path = `/${[...parts, fileName].join('/')}`
-      const r = await json(await fetchRetry(`${env.dropboxContent()}/2/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': asciiJson({ path, mode: 'add', autorename: true, mute: true }) }, body: buf }), 'dropbox upload')
+      const r = await json(await fetch(`${env.dropboxContent()}/2/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': asciiJson({ path, mode: 'add', autorename: true, mute: true }) }, body: buf }), 'dropbox upload')
       return { id: r.id, path: r.path_display || path }
     },
   },
@@ -101,26 +111,40 @@ export async function syncCloud({ targetId, started = Date.now(), trigger = 'man
   }
   const results = []
   for (const t of targets) {
-    let copied = 0; let error = null
+    // lock: the cron and the button must not copy the same target at the same time
+    const locked = await rpc('fin_cloud_lock', { p_target: t.id }).catch(() => false)
+    if (locked !== true) { results.push({ target: t.id, provider: t.provider, copied: 0, busy: true, error: null }); continue }
+    let copied = 0; let failed = 0; let error = null; let lastFail = null
     try {
       const { token, secret } = await tokenFor(t)
       const cache = { ...(secret.folder_cache || {}) }
-      const done = new Set(((await sb(`fin_cloud_synced?target_id=eq.${t.id}&select=document_id`)) || []).map((r) => r.document_id))
-      const docs = ((await sb(`fin_documents?status=in.(${t.statuses.join(',')})&file_path=not.is.null${t.business_id ? `&business_id=eq.${t.business_id}` : ''}&select=*&order=created_at.asc&limit=500`)) || []).filter((d) => !done.has(d.id))
-      for (const d of docs) {
-        if (Date.now() - started > TIME_BUDGET_MS) break
-        const buf = await download(d.file_path)
-        const up = await CLOUD[t.provider].upload(token, { parts: partsFor(t, d, names), fileName: fileNameFor(d), mime: d.file_mime || 'application/pdf', buf, cache })
-        await insert('fin_cloud_synced', { target_id: t.id, document_id: d.id, remote_id: up.id, path: up.path }, 'resolution=ignore-duplicates,return=minimal')
-        copied++; run.stat.processed++
+      const skip = new Set()
+      let more = true
+      while (more && Date.now() - started < TIME_BUDGET_MS) {
+        const docs = ((await rpc('fin_cloud_pending', { p_target: t.id, p_limit: 200 })) || []).filter((d) => !skip.has(d.id))
+        if (!docs.length) break
+        for (const d of docs) {
+          if (Date.now() - started > TIME_BUDGET_MS) { more = false; break }
+          try {
+            const buf = await download(d.file_path)
+            const up = await CLOUD[t.provider].upload(token, { parts: partsFor(t, d, names), fileName: fileNameFor(d), mime: d.file_mime || 'application/pdf', buf, cache })
+            await insert('fin_cloud_synced', { target_id: t.id, document_id: d.id, remote_id: up.id, path: up.path }, 'resolution=ignore-duplicates,return=minimal')
+            copied++; run.stat.processed++
+          } catch (e) {
+            if (e.auth || e.status === 401) throw e          // the whole connection is broken, not this file
+            failed++; skip.add(d.id); run.stat.errors++
+            lastFail = `${d.file_name || d.id}: ${String(e.message || e).slice(0, 160)}`
+          }
+        }
       }
       await patch(`fin_cloud_secrets?target_id=eq.${t.id}`, { folder_cache: cache })
     } catch (e) {
       error = String(e.message || e).slice(0, 300); run.stat.errors++
-      if (e.auth) await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'error' }).catch(() => {})
+      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'error' }).catch(() => {})
     }
-    await patch(`fin_cloud_targets?id=eq.${t.id}`, { last_sync_at: new Date().toISOString(), last_error: error, files_synced: (t.files_synced || 0) + copied, ...(error ? {} : { status: 'active' }) }).catch(() => {})
-    results.push({ target: t.id, provider: t.provider, copied, error })
+    if (!error && failed) error = `${failed} מסמכים לא הועתקו (ינסו שוב בסנכרון הבא). ${lastFail}`.slice(0, 300)
+    await patch(`fin_cloud_targets?id=eq.${t.id}`, { syncing_until: null, last_sync_at: new Date().toISOString(), last_error: error, files_failed: failed, files_synced: (t.files_synced || 0) + copied, ...(error && !failed ? {} : { status: 'active' }) }).catch(() => {})
+    results.push({ target: t.id, provider: t.provider, copied, failed, error })
   }
   run.stat.details.results = results
   await run.done()

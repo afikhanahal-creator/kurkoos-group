@@ -1107,9 +1107,158 @@ create policy "fin_cloud delete" on public.fin_cloud_targets for delete to authe
 create policy "fin_cloud synced read" on public.fin_cloud_synced for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
 
 alter table public.fin_agent_runs drop constraint if exists fin_agent_runs_agent_check;
-alter table public.fin_agent_runs add constraint fin_agent_runs_agent_check check (agent in ('scanner', 'collector', 'ocr', 'validation', 'classification', 'export', 'summary', 'cloud', 'whatsapp'));
+alter table public.fin_agent_runs add constraint fin_agent_runs_agent_check check (agent in ('scanner', 'collector', 'ocr', 'validation', 'classification', 'export', 'summary', 'cloud', 'whatsapp', 'outbound'));
 insert into public.fin_automations (key, name, description, frequency, config) values
   ('cloud_sync', 'סנכרון לענן', 'מסמכים מאושרים מועתקים לתיקיות ב-Google Drive וב-Dropbox', 'daily', '{}')
 on conflict (key) do nothing;
+
+notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v4.1 (2026-11-08): review fixes for the connection screens
+-- ============================================================
+
+-- "old receipts" scans only the gap [sync_from, backfill_until), so a busy mailbox still reaches it
+alter table public.fin_mailboxes add column if not exists backfill_until date;
+
+-- one cloud sync per target at a time (cron and the button can overlap)
+alter table public.fin_cloud_targets add column if not exists syncing_until timestamptz;
+alter table public.fin_cloud_targets add column if not exists files_failed int not null default 0;
+
+-- OAuth state is single use
+create table if not exists public.fin_oauth_used (nonce text primary key, at timestamptz default now());
+alter table public.fin_oauth_used enable row level security;
+revoke all on public.fin_oauth_used from anon, authenticated;
+
+-- claims a target for one sync run (true) or reports that another run holds it (false)
+create or replace function public.fin_cloud_lock(p_target uuid, p_minutes int default 5)
+returns boolean language sql volatile security definer set search_path = '' as $$
+  with c as (update public.fin_cloud_targets set syncing_until = now() + make_interval(mins => p_minutes)
+             where id = p_target and (syncing_until is null or syncing_until < now()) returning 1)
+  select exists (select 1 from c);
+$$;
+revoke all on function public.fin_cloud_lock(uuid, int) from public, anon, authenticated;
+grant execute on function public.fin_cloud_lock(uuid, int) to service_role;
+
+-- documents a cloud target still needs, filtered in SQL (no page cap that stalls after the oldest N)
+create or replace function public.fin_cloud_pending(p_target uuid, p_limit int default 200)
+returns setof public.fin_documents language sql stable security definer set search_path = '' as $$
+  select d.* from public.fin_documents d, public.fin_cloud_targets t
+  where t.id = p_target and d.status = any(t.statuses) and d.file_path is not null
+    and (t.business_id is null or d.business_id = t.business_id)
+    and not exists (select 1 from public.fin_cloud_synced s where s.target_id = t.id and s.document_id = d.id)
+  order by d.created_at, d.id limit greatest(1, least(p_limit, 1000));
+$$;
+revoke all on function public.fin_cloud_pending(uuid, int) from public, anon, authenticated;
+grant execute on function public.fin_cloud_pending(uuid, int) to service_role;
+
+-- a phone may be registered only for a company the user may see; employees register only their own phone
+drop policy if exists "fin_wa_senders insert" on public.fin_whatsapp_senders;
+drop policy if exists "fin_wa_senders update" on public.fin_whatsapp_senders;
+create policy "fin_wa_senders insert" on public.fin_whatsapp_senders for insert to authenticated with check (
+  public.fin_business_ok(business_id)
+  and (public.fin_has_role(array['admin', 'finance_manager']) or (public.fin_has_role(array['employee']) and user_id = auth.uid())));
+create policy "fin_wa_senders update" on public.fin_whatsapp_senders for update to authenticated
+  using (public.fin_has_role(array['admin', 'finance_manager']) or user_id = auth.uid())
+  with check (public.fin_business_ok(business_id) and (public.fin_has_role(array['admin', 'finance_manager']) or user_id = auth.uid()));
+-- counters belong to the server
+revoke update on public.fin_whatsapp_senders from authenticated;
+grant update (label, business_id, user_id, active) on public.fin_whatsapp_senders to authenticated;
+
+notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v5 (2026-11-08): automatic delivery (webhooks + email forwarding), organization view
+-- ============================================================
+
+-- where documents are sent automatically: a webhook (signed JSON) or an email address (the file as an attachment)
+create table if not exists public.fin_outbound (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('webhook', 'email')),
+  name text,
+  target text not null,                          -- https URL or email address
+  events text[] not null default '{document.received}',
+  business_id uuid references public.fin_businesses(id) on delete set null,
+  enabled boolean not null default true,
+  sent_count int not null default 0,
+  fail_count int not null default 0,
+  last_status text,
+  last_at timestamptz,
+  created_by uuid,
+  created_at timestamptz default now()
+);
+-- the webhook signing secret, server only
+create table if not exists public.fin_outbound_secrets (
+  outbound_id uuid primary key references public.fin_outbound(id) on delete cascade,
+  secret text not null
+);
+-- one row per (destination, event, document); the server drains it with retries
+create table if not exists public.fin_outbound_queue (
+  id bigserial primary key,
+  outbound_id uuid not null references public.fin_outbound(id) on delete cascade,
+  event text not null,
+  document_id uuid references public.fin_documents(id) on delete cascade,
+  attempts int not null default 0,
+  next_at timestamptz not null default now(),
+  done_at timestamptz,
+  last_status int,
+  last_error text,
+  created_at timestamptz default now(),
+  unique (outbound_id, event, document_id)
+);
+create index if not exists fin_outbound_queue_due on public.fin_outbound_queue (next_at) where done_at is null;
+alter table public.fin_outbound enable row level security;
+alter table public.fin_outbound_secrets enable row level security;
+alter table public.fin_outbound_queue enable row level security;
+revoke all on public.fin_outbound_secrets from anon, authenticated;
+revoke all on public.fin_outbound, public.fin_outbound_queue from anon;
+revoke insert, update, delete on public.fin_outbound, public.fin_outbound_queue from authenticated;
+grant select on public.fin_outbound, public.fin_outbound_queue to authenticated;
+drop policy if exists "fin_outbound read" on public.fin_outbound;
+drop policy if exists "fin_outbound_queue read" on public.fin_outbound_queue;
+create policy "fin_outbound read" on public.fin_outbound for select to authenticated using (public.fin_has_role(array['admin']));
+create policy "fin_outbound_queue read" on public.fin_outbound_queue for select to authenticated using (public.fin_has_role(array['admin']));
+
+-- document events: received (read and waiting for review), approved, rejected, exported
+create or replace function public.fin_outbound_enqueue() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare ev text;
+begin
+  if tg_op = 'INSERT' then
+    ev := case when new.status in ('review', 'failed') then 'document.received' end;
+  elsif new.status is distinct from old.status then
+    ev := case
+      when new.status in ('review', 'failed') and old.status in ('processing', 'failed') then 'document.received'
+      when new.status = 'approved' then 'document.approved'
+      when new.status = 'rejected' then 'document.rejected'
+      when new.status = 'sent' then 'document.exported'
+    end;
+  end if;
+  if ev is null then return new; end if;
+  insert into public.fin_outbound_queue (outbound_id, event, document_id)
+  select o.id, ev, new.id from public.fin_outbound o
+  where o.enabled and ev = any(o.events) and (o.business_id is null or o.business_id = new.business_id)
+  on conflict do nothing;
+  return new;
+end $$;
+drop trigger if exists fin_documents_outbound on public.fin_documents;
+create trigger fin_documents_outbound after insert or update of status on public.fin_documents for each row execute function public.fin_outbound_enqueue();
+
+alter table public.fin_agent_runs drop constraint if exists fin_agent_runs_agent_check;
+alter table public.fin_agent_runs add constraint fin_agent_runs_agent_check check (agent in ('scanner', 'collector', 'ocr', 'validation', 'classification', 'export', 'summary', 'cloud', 'whatsapp', 'outbound'));
+insert into public.fin_automations (key, name, description, frequency, config) values
+  ('outbound', 'שליחה אוטומטית', 'מסמכים חדשים ושינויי סטטוס נשלחים ל-webhook ולכתובות המייל שהוגדרו', 'on_event', '{}')
+on conflict (key) do nothing;
+
+-- one accounting system per company (a second one would export the same documents twice)
+alter table public.fin_integrations drop constraint if exists fin_integrations_provider_check;
+alter table public.fin_integrations add constraint fin_integrations_provider_check check (provider in ('file', 'icount', 'morning', 'hashavshevet', 'rivhit', 'priority', 'sumit', 'paperless'));
+do $$ begin
+  create unique index if not exists fin_integrations_one_api_per_business
+    on public.fin_integrations (coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid))
+    where enabled and provider not in ('file', 'hashavshevet');
+exception when unique_violation then
+  raise notice 'two accounting systems are enabled for one company: disable one, then run this file again';
+end $$;
 
 notify pgrst, 'reload schema';

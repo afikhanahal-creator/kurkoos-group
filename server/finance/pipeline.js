@@ -175,8 +175,10 @@ export async function syncMailbox(mb, started, runs, trigger) {
     const token = await accessTokenFor(mb)
     // a backfill ("old receipts") scans from the new start of the period; seen messages are skipped, so only the gap costs anything
     const start = mb.sync_from ? new Date(`${mb.sync_from}T00:00:00Z`) : new Date(Date.now() - (mb.days_back || 90) * 86400_000)
+    // a backfill reads only the gap [sync_from, backfill_until), with a higher cap, so a busy mailbox still reaches its old mail
+    const gap = mb.backfill_pending && mb.backfill_until && mb.last_sync_at
     const since = mb.backfill_pending || !mb.last_sync_at ? start : new Date(new Date(mb.last_sync_at).getTime() - 2 * 86400_000)
-    const ids = await prov.listCandidates(token, since, mb.query)
+    const ids = await prov.listCandidates(token, since, mb.query, gap ? { until: new Date(`${mb.backfill_until}T00:00:00Z`), max: 3000 } : {})
     runs.scanner.stat.processed += ids.length
     const seenRows = ids.length ? await sb(`fin_mail_seen?mailbox_id=eq.${mb.id}&select=message_id&message_id=in.(${ids.map((i) => `"${i}"`).join(',')})`) : []
     const seen = new Set((seenRows || []).map((r) => r.message_id))
@@ -250,7 +252,8 @@ export async function syncMailbox(mb, started, runs, trigger) {
     errors_count: error ? (mb.errors_count || 0) + 1 : mb.errors_count || 0,
   }
   if (!error) upd.last_success_at = new Date().toISOString()
-  if (complete) { upd.last_sync_at = scanStart; upd.backfill_pending = false }
+  // a gap scan does not move last_sync_at: the regular scan still owns the recent mail
+  if (complete) { if (!(mb.backfill_pending && mb.backfill_until && mb.last_sync_at)) upd.last_sync_at = scanStart; upd.backfill_pending = false; upd.backfill_until = null }
   await patch(`fin_mailboxes?id=eq.${mb.id}`, upd).catch(() => {})
   if (run) await patch(`fin_sync_runs?id=eq.${run.id}`, { ...stats, finished_at: new Date().toISOString(), error }).catch(() => {})
   return { mailbox: mb.email, provider: mb.provider, ...stats, complete, error, attempt }

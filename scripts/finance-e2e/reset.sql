@@ -12,3 +12,4 @@ delete from public.fin_categories where name in ('פרסום ושיווק', 'י�
 update public.fin_settings set value = '"controlled"' where key = 'supplier_mode';
 update public.fin_settings set value = '50000' where key = 'second_approval_amount';
 truncate public.fin_whatsapp_inbox, public.fin_whatsapp_senders, public.fin_cloud_synced, public.fin_cloud_secrets, public.fin_cloud_targets cascade;
+truncate public.fin_outbound_queue, public.fin_outbound_secrets, public.fin_outbound, public.fin_oauth_used cascade;

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 // End-to-end acceptance test of KURKOOS FINANCE AI against the local stack (stack.sh + services.sh).
 // Real database (RLS, triggers), real auth, real file storage, the real server code and the real UI in Chromium.
 // Gmail and Claude are local stand-ins (fakes.mjs): the flow is real, the AI's reading quality is not tested here.
@@ -60,7 +61,7 @@ await page.click('button[type=submit]')
 await page.getByRole('button', { name: 'אני מנהל/ת המערכת' }).click()
 await page.waitForSelector('.fin__nav')
 const navCount = await page.locator('.fin__nav-item').count()
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 19 פריטי תפריט', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 19, [await shot('00-dashboard-empty')])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 20 פריטי תפריט', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 20, [await shot('00-dashboard-empty')])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -183,7 +184,7 @@ const sneaky = await rest('rpc/fin_record_export', adminToken, { method: 'POST',
 record('R1', 'אין ייצוא של מסמך שלא אושר', 'מסד הנתונים דוחה ייצוא של מסמך במצב "ממתין"', `HTTP ${sneaky.status}: ${sneaky.data?.message || ''}`, sneaky.status >= 400 && /not approved/.test(sneaky.data?.message || ''))
 
 // ---------- T10 + T11: export and history ----------
-await nav('אינטגרציות')
+await nav('תוכנת הנהלת חשבונות')
 const period = meta.D.tambour.slice(0, 7)
 await page.locator('.fin-wizard input[type=month]').fill(period); await page.waitForTimeout(400)
 const wizardShot = await shot('14-export-wizard')
@@ -413,12 +414,13 @@ await page.waitForSelector('.fin-note', { timeout: 60000 }); await page.waitForT
 const oldAfter = sql("select count(*)||'|'||coalesce((select source from fin_documents where file_name='old-invoice.pdf'),'-') from fin_documents where file_name='old-invoice.pdf'")
 const boxState = sql("select sync_from||'|'||backfill_pending from fin_mailboxes where email='invoices@kurkoos.test'")
 const periodAfter = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
-record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}`, oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter, [accountsShot, oldModalShot])
+const gapQuery = (await fetch(`${FAKES}/__log`).then((r) => r.json())).gmailQueries.filter((q2) => /before:/.test(q2)).length
+record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}`, oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1, [accountsShot, oldModalShot])
 
 // MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
 await nav('סורקים ניידים')
 const scannersEmpty = await shot('52-scanners-empty')
-await page.getByRole('button', { name: 'חיבור WhatsApp' }).click()
+await page.getByRole('button', { name: 'הוספת טלפון' }).click()
 await lbl(/^מספר הנייד/).fill('12')
 await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForTimeout(300)
 const badPhone = await page.locator('.fin-modal .fin-field__hint').first().innerText()
@@ -461,6 +463,88 @@ const cloudShot = await shot('55-cloud-connected')
 record('CLOUD', 'סנכרון לענן: Google Drive ו-Dropbox', `שני החשבונות מתחברים ב-OAuth; כל ${eligible} המסמכים המאושרים מועתקים לתיקייה "Kurkoos Finance/<חברה>/<חודש>"; סנכרון שני לא מעתיק שוב; שמות בעברית נשמרים`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; Drive: ${cl.drive.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
   targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${eligible}` && cSecond === cFirst && cl.drive.length === eligible && cl.dropbox.length === eligible && cl.drive.every((x) => x.startsWith('/Kurkoos Finance/')) && cl.dropbox.some((x) => /קורקוס/.test(x)), [cloudEmpty, cloudShot])
 
+// =================== ACCOUNTING SOFTWARE ===================
+await nav('תוכנת הנהלת חשבונות')
+const swAll = await page.locator('.fin-app-card').count()
+await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill('icount'); await page.waitForTimeout(200)
+const swOne = await page.locator('.fin-app-card').count()
+await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill('אין כזאת'); await page.waitForTimeout(200)
+const swNone = await page.locator('.fin-empty').count()
+await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill(''); await page.waitForTimeout(200)
+const swShot = await shot('56-accounting-software')
+await page.getByRole('button', { name: 'חיבור Morning (חשבונית ירוקה)' }).click(); await page.waitForTimeout(300)
+const bizExec = sql("select id from fin_businesses where name='קורקוס ביצוע'")
+await page.locator('.fin-modal select').first().selectOption(bizExec)
+await page.locator('.fin-modal input[type=password]').first().fill('test-morning-key')
+const swModalShot = await shot('57-connect-morning')
+await modalSave()
+const morning = sql("select provider||'|'||status||'|'||enabled from fin_integrations where provider='morning'")
+const morningSecret = sql("select count(*) from fin_integration_secrets s join fin_integrations i on i.id=s.integration_id where i.provider='morning'")
+const swSecond = await api(adminToken, { action: 'integration-save', provider: 'icount', name: 'iCount', business_id: bizExec, enabled: true })
+const otherBiz = await api(adminToken, { action: 'integration-save', provider: 'icount', name: 'iCount', business_id: sql("select id from fin_businesses where name='קורקוס גרופ'"), enabled: true })
+const secretRead = await rest('fin_integration_secrets?select=*', adminToken)
+await page.reload(); await page.waitForTimeout(1000)
+const swAfterShot = await shot('58-accounting-connected')
+record('SW', 'חיבור תוכנת הנהלת חשבונות', 'חיפוש מסנן את הכרטיסים; חיבור Morning לחברה שומר את המפתח בשרת בלבד ומסמן "ממתין להפעלה"; תוכנה שנייה לאותה חברה נחסמת, לחברה אחרת מותרת',
+  `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, חיפוש ללא תוצאה: ${swNone}; Morning: ${morning}, מפתחות: ${morningSecret}; שנייה לאותה חברה: ${swSecond.status} ${swSecond.data.error || ''}; לחברה אחרת: ${otherBiz.status}; קריאת מפתחות מהדפדפן: ${secretRead.status}`,
+  swAll === 8 && swOne === 1 && swNone === 1 && morning === 'morning|not_active|true' && morningSecret === '1' && swSecond.status === 409 && otherBiz.status === 200 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swAfterShot])
+
+// =================== AUTOMATIC DELIVERY ===================
+await fetch(`${FAKES}/__reset_hooks`).catch(() => {})
+await nav('שליחה אוטומטית')
+const delEmptyShot = await shot('59-delivery-empty')
+await page.getByRole('button', { name: 'חיבור webhook' }).click(); await page.waitForTimeout(300)
+await page.locator('.fin-modal input[type=url]').fill('ftp://bad.example/x')
+await modalSave()
+const badUrlMsg = await page.locator('.fin-modal .fin-field__hint').first().innerText()
+await page.locator('.fin-modal input[type=url]').fill(`${FAKES}/hook`)
+await modalSave(); await page.waitForTimeout(400)
+const hookSecret = await page.locator('.fin-secret input').inputValue()
+const secretShot = await shot('60-webhook-secret')
+await page.getByRole('button', { name: 'שמרתי את הסוד' }).click()
+await page.getByRole('button', { name: 'הוספת מייל לייצוא אוטומטי' }).click(); await page.waitForTimeout(300)
+await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
+await page.locator('.fin-modal .fin-check', { hasText: 'מסמך נדחה' }).locator('input').check()
+await modalSave(); await page.waitForTimeout(400)
+const retryHook = await api(adminToken, { action: 'outbound-save', kind: 'webhook', target: `${FAKES}/hook?fail=2`, events: ['document.rejected'] })
+const secretsVisible = await rest('fin_outbound_secrets?select=*', adminToken)
+// the test ping from the menu
+await page.locator('.fin-out-list li', { hasText: `${FAKES}/hook` }).first().locator('.fin-more button').first().click()
+await page.getByRole('menuitem', { name: 'שליחת בדיקה' }).click().catch(async () => { await page.locator('.fin-more__pop button', { hasText: 'שליחת בדיקה' }).click() })
+await page.waitForTimeout(1200)
+const pingMsg = await page.locator('.fin-note').first().innerText().catch(() => '')
+// an event: a manager rejects a document, the client asks the server to deliver
+const rejId = sql("select id from fin_documents where status='review' and file_path is not null and project_id is null and total_amount < 1000 order by created_at desc limit 1")
+const rej = await rest(`fin_documents?id=eq.${rejId}`, adminToken, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'rejected' }) })
+const queued = sql(`select count(*) from fin_outbound_queue where document_id='${rejId}'`)
+const f1 = await api(adminToken, { action: 'outbound-flush' })
+sql(`update fin_outbound_queue set next_at = now() where done_at is null`)
+const f2 = await api(adminToken, { action: 'outbound-flush' })
+sql(`update fin_outbound_queue set next_at = now() where done_at is null`)
+const f3 = await api(adminToken, { action: 'outbound-flush' })
+const f4 = await api(adminToken, { action: 'outbound-flush' })
+const lg = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const main = lg.hooks.find((h) => h.query === '' && h.event === 'document.rejected')
+let sigOk = false; let payload = {}
+if (main) {
+  const { t, v1 } = Object.fromEntries(main.signature.split(',').map((x) => x.split('=')))
+  sigOk = crypto.createHmac('sha256', hookSecret).update(`${t}.${main.raw}`).digest('hex') === v1
+  payload = JSON.parse(main.raw)
+}
+const retried = lg.hooks.filter((h) => h.query === '?fail=2' && h.event === 'document.rejected').map((h) => h.status).join(',')
+const sameDelivery = new Set(lg.hooks.filter((h) => h.query === '?fail=2' && h.event === 'document.rejected').map((h) => h.delivery)).size
+const mail = lg.emails.find((e) => (e.to || []).includes('cpa@accountants.test') && /נדחה/.test(e.subject))
+const queueState = sql(`select string_agg(attempts||':'||(done_at is not null)||':'||coalesce(last_error,'-'), ' | ' order by id) from fin_outbound_queue where document_id='${rejId}'`)
+await page.reload(); await page.waitForTimeout(1000)
+await page.locator('.fin-disclosure summary', { hasText: 'יומן משלוחים' }).click().catch(() => {})
+const delShot = await shot('61-delivery')
+await page.locator('.fin-guide summary').click(); await page.waitForTimeout(300)
+const guideShot = await shot('62-webhook-guide')
+record('OUT', 'שליחה אוטומטית: webhook ומייל', 'כתובת לא https נדחית; הסוד מוצג פעם אחת ולא נגיש מהדפדפן; בדיקת חיבור עונה 200; דחיית מסמך נשלחת ל-webhook עם חתימה תקינה ונתוני המסמך, ולמייל עם הקובץ מצורף; יעד שנכשל מקבל ניסיון חוזר עם אותו מזהה משלוח ומצליח בשלישי',
+  `כתובת שגויה: "${badUrlMsg}"; סודות מהדפדפן: ${secretsVisible.status}/${Array.isArray(secretsVisible.data) ? secretsVisible.data.length : '-'}; בדיקה: "${pingMsg}"; בתור: ${queued}; סבבים: ${[f1, f2, f3, f4].map((f) => `${f.data.sent}/${f.data.failed}`).join(' ')}; חתימה: ${sigOk}; אירוע: ${payload.event} ${payload.data?.supplier?.name || ''} ${payload.data?.file_url ? 'עם קישור' : 'בלי קישור'}; ניסיונות חוזרים: ${retried} (מזהים: ${sameDelivery}); מייל: ${mail ? `${mail.subject} · ${mail.attachments.length} קבצים` : 'לא נשלח'}; תור: ${queueState}`,
+  /https/.test(badUrlMsg) && (secretsVisible.status >= 400 || (Array.isArray(secretsVisible.data) && !secretsVisible.data.length)) && /200/.test(pingMsg) && rej.status < 300 && queued === '3' && sigOk && payload.event === 'document.rejected' && payload.data?.id === rejId && !!payload.data?.file_url && retried === '500,500,200' && sameDelivery === 1 && mail?.attachments?.length === 1 && mail.attachments[0].bytes > 1000 && !/false/.test(queueState) && retryHook.status === 200,
+  [delEmptyShot, secretShot, delShot, guideShot])
+
 // ---------- the daily cron run ----------
 const cron = await fetch('http://127.0.0.1:5180/api/finance?action=cron', { headers: { Authorization: 'Bearer test-cron' } }).then((r) => r.json())
 const cronBad = await fetch('http://127.0.0.1:5180/api/finance?action=cron').then((r) => r.status)
@@ -479,11 +563,11 @@ await nav('ניהול נתונים'); const dataShot = await shot('22-data')
 await nav('הגדרות'); const settingsShot = await shot('23-settings')
 
 // ---------- T13: roles and access ----------
-await nav('משתמשים והרשאות')
+await nav('הארגון ומשתמשים')
 await page.getByRole('button', { name: 'הזמנת משתמש' }).click()
-await page.getByLabel('אימייל').fill('cpa@accountants.test')
-await page.getByLabel('שם').fill('רו״ח דנה לוי')
-await page.getByLabel('תפקיד').selectOption('accountant')
+await page.locator('.fin-modal').getByLabel('אימייל', { exact: true }).fill('cpa@accountants.test')
+await page.locator('.fin-modal').getByLabel('שם', { exact: true }).fill('רו״ח דנה לוי')
+await page.locator('.fin-modal').getByLabel('תפקיד').selectOption('accountant')
 await page.getByRole('button', { name: 'שליחת הזמנה' }).click(); await page.waitForTimeout(1500)
 const inviteNote = await page.locator('.fin-note').first().innerText().catch(() => '')
 const usersShot = await shot('24-users')
@@ -521,6 +605,44 @@ record('T13', 'משתמשים לא מורשים לא ניגשים לרשומות
   JSON.stringify(t13), t13pass && t13.accountantEdit === '0 שורות' && t13.accountantLeads === '0 שורות' && t13.accountantApi === 403 && t13.accountantPrivateFile >= 400 && t13.employeeSees === 0 && t13.employeeApprove === '0 שורות' && t13.strangerSees === 0 && inv2.status === 200, [usersShot])
 record('INV', 'הזמנת משתמש במייל', 'נשלח מייל הזמנה (SMTP) והמשתמש נוסף עם תפקיד רו״ח', `${inviteNote}; מיילים ב-SMTP: ${smtp.length}; תפקיד: ${sql("select role from fin_members where email='cpa@accountants.test'")}`, smtp.length >= 1 && sql("select role from fin_members where email='cpa@accountants.test'") === 'accountant')
 
+// =================== SECURITY CHECKS ON THE NEW INTAKE PATHS ===================
+{
+  const ob = await import('../../server/finance/outbound.js')
+  const wa = await import('../../server/finance/whatsapp.js')
+  const urls = { http: await ob.checkUrl('http://example.com/h'), loop: await ob.checkUrl('https://127.0.0.1/h'), meta: await ob.checkUrl('https://169.254.169.254/latest'), local: await ob.checkUrl('https://localhost/h'), lan: await ob.checkUrl('https://192.168.1.4/h'), creds: await ob.checkUrl('https://u:p@example.com/h') }
+  const media = { green: wa.mediaUrlOk('https://sw-media-out.greenapi.net/x.jpg'), evil: wa.mediaUrlOk('https://evil.example/x.jpg'), plain: wa.mediaUrlOk('http://sw-media-out.greenapi.net/x.jpg'), meta: wa.mediaUrlOk('https://169.254.169.254/') }
+  const empPhoneOther = await rest('fin_whatsapp_senders', empToken, { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ phone: '972541111111', user_id: sql("select user_id from fin_members where role='admin' limit 1") }) })
+  const empCounter = await rest(`fin_whatsapp_senders?phone=eq.972543049491`, empToken, { method: 'PATCH', body: JSON.stringify({ docs_count: 999 }) })
+  const pendingFn = await rest('rpc/fin_cloud_pending', adminToken, { method: 'POST', body: JSON.stringify({ p_target: sql("select id from fin_cloud_targets limit 1") }) })
+  const ok = Object.values(urls).every(Boolean) && media.green && !media.evil && !media.plain && !media.meta && empPhoneOther.status >= 400 && empCounter.status >= 400 && pendingFn.status >= 400
+  record('SEC5', 'הגנות בנתיבי הקליטה והשליחה החדשים', 'webhook רק ב-https ולא לכתובת פנימית (localhost, 127/192.168, metadata); קבצי WhatsApp רק משרתי Green API; עובד לא רושם טלפון בשם אחר ולא משנה מונים; פונקציית התור של הענן לא נגישה מהדפדפן',
+    `כתובות: ${JSON.stringify(urls)}; מדיה: ${JSON.stringify(media)}; טלפון של אחר: ${empPhoneOther.status}; מונה: ${empCounter.status}; תור ענן: ${pendingFn.status}`, ok)
+}
+
+// =================== ORGANIZATION ===================
+await api(adminToken, { action: 'invite', email: 'pending@kurkoos.test', role: 'employee', full_name: 'מוזמן חדש' })
+await nav('הארגון ומשתמשים'); await page.reload(); await page.waitForSelector('.fin-member'); await page.waitForTimeout(1200)
+const orgCards = await page.locator('.fin-member').count()
+const pendingCard = await page.locator('.fin-member', { hasText: 'pending@kurkoos.test' }).innerText().catch(() => '')
+const pendingStat = (await page.locator('.fin-org-stat').nth(1).innerText()).replace(/\s+/g, ' ')
+const orgShot = await shot('63-organization')
+await page.getByPlaceholder('חיפוש שם או מייל').fill('דנה'); await page.waitForTimeout(200)
+const orgSearch = await page.locator('.fin-member').count()
+await page.getByPlaceholder('חיפוש שם או מייל').fill('')
+await page.getByLabel('סינון לפי תפקיד').selectOption('employee'); await page.waitForTimeout(200)
+const orgEmployees = await page.locator('.fin-member').count()
+await page.getByLabel('סינון לפי תפקיד').selectOption('')
+await page.getByRole('tab', { name: 'חברות' }).click(); await page.waitForTimeout(300)
+const orgCompanies = await page.locator('.fin-acc').count()
+const orgCompaniesShot = await shot('64-organization-companies')
+await page.getByRole('tab', { name: 'שימוש' }).click(); await page.waitForTimeout(1200)
+const usageText = (await page.locator('.fin-org-panel').first().innerText()).replace(/\s+/g, ' ')
+const orgUsageShot = await shot('65-organization-usage')
+const memberCount = Number(sql('select count(*) from fin_members'))
+record('ORG', 'הארגון: חברים, חברות ושימוש', 'כל חבר מופיע בכרטיס עם תפקיד ומצב; הזמנה שלא התקבלה מסומנת "ממתין להצטרפות" ונספרת; חיפוש וסינון לפי תפקיד עובדים; לשונית החברות מראה את כל החברות; לשונית השימוש מראה את האחסון',
+  `כרטיסים: ${orgCards}/${memberCount}; מוזמן: ${/ממתין להצטרפות/.test(pendingCard) ? 'ממתין להצטרפות' : pendingCard.slice(0, 40)}; ${pendingStat}; חיפוש "דנה": ${orgSearch}; עובדים: ${orgEmployees}; חברות: ${orgCompanies}; שימוש: ${usageText.slice(0, 60)}`,
+  orgCards === memberCount && /ממתין להצטרפות/.test(pendingCard) && /^1 /.test(pendingStat) && orgSearch === 1 && orgEmployees === Number(sql("select count(*) from fin_members where role='employee'")) && orgCompanies === Number(sql('select count(*) from fin_businesses')) && /%/.test(usageText), [orgShot, orgCompaniesShot, orgUsageShot])
+
 // accountant portal in the browser
 const accCtx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'he-IL' })
 const acc = await accCtx.newPage()
@@ -556,8 +678,8 @@ await m.keyboard.press('Escape')
 await m.goto(`${APP}/mailboxes`); await m.waitForTimeout(1200); mShots.push(await shot('m6-mailboxes', m)); ov.mailboxes = await overflow()
 await m.goto(`${APP}/integrations`); await m.waitForTimeout(1200); mShots.push(await shot('m7-export', m)); ov.export = await overflow()
 await m.goto(`${APP}/reports`); await m.waitForTimeout(1200); mShots.push(await shot('m8-reports', m)); ov.reports = await overflow()
-for (const [k, path] of [['suppliers', '/suppliers'], ['categories', '/categories'], ['projects', '/projects'], ['companies', '/companies'], ['email', '/mailboxes'], ['scanners', '/scanners'], ['cloud', '/cloud'], ['project_page', `/projects/${sql("select id from fin_projects where code='BG-17'")}`], ['supplier_page', `/suppliers/${sql("select id from fin_suppliers where name='סולל בונה תשתיות'")}`], ['control', '']]) {
-  await m.goto(`${APP}${path}`); await m.waitForTimeout(1100); ov[k] = await overflow(); if (['suppliers', 'project_page', 'control', 'email', 'scanners', 'cloud'].includes(k)) mShots.push(await shot(`m-${k}`, m))
+for (const [k, path] of [['suppliers', '/suppliers'], ['categories', '/categories'], ['projects', '/projects'], ['companies', '/companies'], ['email', '/mailboxes'], ['scanners', '/scanners'], ['cloud', '/cloud'], ['delivery', '/delivery'], ['org', '/users'], ['project_page', `/projects/${sql("select id from fin_projects where code='BG-17'")}`], ['supplier_page', `/suppliers/${sql("select id from fin_suppliers where name='סולל בונה תשתיות'")}`], ['control', '']]) {
+  await m.goto(`${APP}${path}`); await m.waitForTimeout(1100); ov[k] = await overflow(); if (['suppliers', 'project_page', 'control', 'email', 'scanners', 'cloud', 'delivery', 'org'].includes(k)) mShots.push(await shot(`m-${k}`, m))
 }
 await m.goto(`${APP}/suppliers`); await m.waitForTimeout(900)
 await m.locator('.fin-search input').fill('סולל'); await m.waitForTimeout(300)
@@ -566,7 +688,7 @@ await m.getByRole('button', { name: 'הוסף ספק' }).first().click(); await 
 await m.getByLabel(/^שם משפטי/).first().fill('ספק מהטלפון'); mShots.push(await shot('m-supplier-form', m))
 await m.locator('.fin-modal__foot .fin-btn--primary').first().click(); await m.waitForTimeout(1000)
 const mForm = sql("select count(*) from fin_suppliers where name='ספק מהטלפון'")
-record('G', 'מובייל: המסכים החדשים', 'אין גלילה אופקית, חיפוש עובד, טופס ספק נשמר מהטלפון', `גלילה: ${JSON.stringify(ov)}; חיפוש "סולל": ${mSearch}; טופס: ${mForm}`, Object.values(ov).every((v) => v <= 0) && mSearch === 1 && mForm === '1', mShots.slice(-7))
+record('G', 'מובייל: המסכים החדשים', 'אין גלילה אופקית, חיפוש עובד, טופס ספק נשמר מהטלפון', `גלילה: ${JSON.stringify(ov)}; חיפוש "סולל": ${mSearch}; טופס: ${mForm}`, Object.values(ov).every((v) => v <= 0) && mSearch === 1 && mForm === '1', mShots.slice(-9))
 const smallTargets = await m.evaluate(() => [...document.querySelectorAll('.fin button, .fin a, .fin input, .fin select')].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 24 && e.type !== 'checkbox').map((e) => e.className || e.tagName).slice(0, 5))
 const dir = await m.evaluate(() => document.querySelector('.fin')?.getAttribute('dir'))
 record('T12', 'גרסת מובייל', 'אין גלילה אופקית בשום מסך, התפריט נפתח ונסגר, מסמך נפתח ומאושר מהטלפון, כיוון RTL', `גלילה אופקית (px): ${JSON.stringify(ov)} · dir=${dir} · כפתורים קטנים מ-24px: ${smallTargets.length}`, Object.values(ov).every((v) => v <= 0) && dir === 'rtl', mShots)
@@ -574,7 +696,7 @@ await mob.close()
 
 // desktop: no page is wider than the screen
 const deskOv = {}
-for (const path of ['', '/documents', '/new', '/pending', '/companies', '/projects', '/suppliers', '/categories', '/reports', '/data', '/automations', '/agents', '/mailboxes', '/scanners', '/cloud', '/integrations', '/exports', '/users', '/settings', `/suppliers/${sql("select id from fin_suppliers order by created_at limit 1")}`, `/projects/${sql("select id from fin_projects order by created_at limit 1")}`, `/companies/${sql("select id from fin_businesses order by sort limit 1")}`, `/categories/${sql("select id from fin_categories where name='חומרי בניין'")}`]) {
+for (const path of ['', '/documents', '/new', '/pending', '/companies', '/projects', '/suppliers', '/categories', '/reports', '/data', '/automations', '/agents', '/mailboxes', '/scanners', '/cloud', '/delivery', '/integrations', '/exports', '/users', '/settings', `/suppliers/${sql("select id from fin_suppliers order by created_at limit 1")}`, `/projects/${sql("select id from fin_projects order by created_at limit 1")}`, `/companies/${sql("select id from fin_businesses order by sort limit 1")}`, `/categories/${sql("select id from fin_categories where name='חומרי בניין'")}`]) {
   await go(path); deskOv[path || '/'] = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 }
 await go('/documents'); await page.locator('tbody tr').first().locator('.fin-cell-btn').click(); await page.waitForTimeout(800)

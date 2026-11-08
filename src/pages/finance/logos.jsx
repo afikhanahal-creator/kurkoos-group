@@ -19,3 +19,8 @@ export function ProviderLogo({ name, size = 26 }) {
   )
   return <span className="fin-logo-tile" aria-hidden="true">{mark}</span>
 }
+
+/* accounting software: a neutral monogram, not the vendor's trademark */
+export function Monogram({ text, tone = 'ink', size = 46 }) {
+  return <span className={`fin-logo-tile fin-mono fin-mono--${tone}`} style={{ width: size, height: size }} aria-hidden="true">{text}</span>
+}

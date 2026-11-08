@@ -15,7 +15,7 @@ export function normalizePhone(raw) {
 }
 export const validMobile = (p) => /^9725\d{8}$/.test(p) || /^[1-9]\d{9,14}$/.test(p) && !p.startsWith('972')
 const pretty = (p) => (p.startsWith('972') ? `+972 ${p.slice(3, 5)}-${p.slice(5, 8)}-${p.slice(8)}` : `+${p}`)
-const OUTCOME = { imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], refused_unknown_number: ['attn', 'מספר לא רשום'], unsupported: ['warn', 'לא קובץ'], failed: ['bad', 'נכשל'] }
+const OUTCOME = { imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], refused_unknown_number: ['attn', 'מספר לא רשום'], unsupported: ['warn', 'אין קובץ מצורף'], failed: ['bad', 'נכשל'] }
 
 export default function Scanners() {
   const { businesses, members, can } = useFinance()
@@ -48,10 +48,13 @@ export default function Scanners() {
         <InfoTip label="על סורקים ניידים">כל טלפון שרשום כאן הוא סורק: מצלמים קבלה או שולחים PDF ל-WhatsApp של המשרד, והמסמך נכנס למערכת, נקרא ע״י הסוכנים וממתין לאישור. מספר שלא רשום מקבל תשובה שהוא לא מורשה, והניסיון נרשם ביומן.</InfoTip>
       </div>
 
-      <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={() => { setErr(''); setAdd({ phone: '', label: '', business_id: '', user_id: me?.id || '' }) }} disabled={!can('upload')}>
-        <Icon name="phone" size={18} /> חיבור WhatsApp
-      </button>
-      {status.data && !status.data.whatsapp?.configured && <p className="fin-note fin-note--warn">החיבור ל-WhatsApp עוד לא הוגדר בשרת (GREENAPI_ID_INSTANCE, GREENAPI_TOKEN, FINANCE_WHATSAPP_WEBHOOK_TOKEN). אפשר לרשום מספרים כבר עכשיו.</p>}
+      <div className="fin-section-head">
+        <h3>הטלפונים שלכם</h3>
+        <button type="button" className="fin-btn fin-btn--primary fin-btn--block-sm" onClick={() => { setErr(''); setAdd({ phone: '', label: '', business_id: '', user_id: me?.id || '' }) }} disabled={!can('upload')}>
+          <Icon name="plus" size={18} /> הוספת טלפון
+        </button>
+      </div>
+      {status.data && !status.data.whatsapp?.configured && can('manage') && <p className="fin-note fin-note--warn">הקבלה מ-WhatsApp עוד לא הופעלה בשרת (GREENAPI_ID_INSTANCE, GREENAPI_TOKEN, FINANCE_WHATSAPP_WEBHOOK_TOKEN). אפשר לרשום מספרים כבר עכשיו.</p>}
       {msg && <p className="fin-note" role="status">{msg}</p>}
 
       {list.loading ? <p className="fin-muted">טוען…</p> : !(list.data || []).length ? (
@@ -64,7 +67,7 @@ export default function Scanners() {
               <div className="fin-acc__main">
                 <strong dir="ltr">{pretty(s.phone)}</strong>
                 <span className="fin-acc__meta">{s.label || nameOf(members.map((m) => ({ id: m.user_id, name: m.full_name || m.email })), s.user_id) || ''}{s.business_id ? <span className="fin-chipbtn is-static">{nameOf(businesses, s.business_id)}</span> : null}</span>
-                <span className="fin-acc__sub">נוסף {date(s.created_at)}, {s.last_received_at ? `מסמך אחרון ${ago(s.last_received_at)}, ${s.docs_count} מסמכים` : 'טרם נשלחו מסמכים'}</span>
+                <span className="fin-acc__sub">נוסף {date(s.created_at)} · {s.last_received_at ? `מסמך אחרון ${ago(s.last_received_at)} · ${s.docs_count === 1 ? 'מסמך אחד' : `${s.docs_count} מסמכים`}` : 'טרם נשלחו מסמכים'}</span>
               </div>
               <Pill tone={s.active ? 'ok' : 'muted'}>{s.active ? 'פעיל' : 'מושהה'}</Pill>
               <MoreMenu label={`פעולות עבור ${pretty(s.phone)}`} items={[
@@ -76,23 +79,27 @@ export default function Scanners() {
         </ul>
       )}
 
-      <section className="fin-help">
-        <h3>לא מוצאים אותנו ב-WhatsApp?</h3>
-        {waLink ? <p>לחצו על <a href={waLink} target="_blank" rel="noopener noreferrer"><ProviderLogo name="whatsapp" size={16} /> הצ׳אט של קורקוס</a> כדי לפתוח שיחה עם המספר <span dir="ltr">{pretty(office)}</span>, ושם שלחו צילומים או קבצי PDF.</p> : <p className="fin-muted">המספר של המשרד יופיע כאן אחרי ההגדרה בשרת (FINANCE_WHATSAPP_NUMBER).</p>}
-      </section>
+      {((list.data || []).length > 0 || waLink) && (
+        <section className="fin-help">
+          <h3>המספר של המשרד ב-WhatsApp</h3>
+          {waLink ? <p>שלחו צילומים או קבצי PDF למספר <bdi dir="ltr">{pretty(office)}</bdi>. לא מוצאים אותו? <a href={waLink} target="_blank" rel="noopener noreferrer">פתיחת שיחה עם קורקוס</a>.</p> : <p className="fin-muted">המספר של המשרד יופיע כאן אחרי שהקבלה מ-WhatsApp תופעל{can('manage') ? ' (FINANCE_WHATSAPP_NUMBER)' : ''}.</p>}
+        </section>
+      )}
 
       {can('operate') && (inbox.data || []).length > 0 && (
         <details className="fin-disclosure" open>
           <summary>הודעות אחרונות</summary>
+          <div className="fin-table-wrap fin-table-wrap--flat">
           <table className="fin-table fin-table--plain">
-            <thead><tr><th>מתי</th><th>מספר</th><th>קובץ</th><th>תוצאה</th></tr></thead>
-            <tbody>{inbox.data.map((r) => <tr key={r.id}><td>{dateTime(r.at)}</td><td dir="ltr">{pretty(r.phone || '')}</td><td>{r.document_id ? <a className="fin-link" href={`/admin/finance/documents/${r.document_id}`}>{r.file_name || 'מסמך'}</a> : r.file_name || '—'}</td><td><Pill tone={OUTCOME[r.outcome]?.[0]}>{OUTCOME[r.outcome]?.[1] || r.outcome}</Pill></td></tr>)}</tbody>
+            <thead><tr><th>מתי</th><th className="fin-col-md">מספר</th><th>קובץ</th><th>תוצאה</th></tr></thead>
+            <tbody>{inbox.data.map((r) => <tr key={r.id}><td>{dateTime(r.at)}</td><td className="fin-col-md" dir="ltr">{pretty(r.phone || '')}</td><td>{r.document_id ? <a className="fin-link" href={`/admin/finance/documents/${r.document_id}`}>{r.file_name || 'מסמך'}</a> : r.file_name || '—'}</td><td><Pill tone={OUTCOME[r.outcome]?.[0]}>{OUTCOME[r.outcome]?.[1] || r.outcome}</Pill></td></tr>)}</tbody>
           </table>
+          </div>
         </details>
       )}
 
       {add && (
-        <Modal title="חיבור WhatsApp" onClose={() => setAdd(null)} footer={<><button type="submit" form="fin-wa" className="fin-btn fin-btn--primary">הוספת המספר</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setAdd(null)}>ביטול</button></>}>
+        <Modal title="הוספת טלפון" onClose={() => setAdd(null)} footer={<><button type="submit" form="fin-wa" className="fin-btn fin-btn--primary">הוספת המספר</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setAdd(null)}>ביטול</button></>}>
           <form id="fin-wa" className="fin-form__grid" onSubmit={save} noValidate>
             <Field label="מספר הנייד" wide tone={err ? 'error' : undefined} hint={err || 'המספר שממנו תשלחו את הצילומים'}><input type="tel" inputMode="tel" dir="ltr" autoComplete="tel" placeholder="054-3049491" value={add.phone} onChange={(e) => setAdd({ ...add, phone: e.target.value })} required /></Field>
             <Field label="שם (לא חובה)"><input value={add.label} onChange={(e) => setAdd({ ...add, label: e.target.value })} placeholder="למשל: הטלפון של שלומי" /></Field>

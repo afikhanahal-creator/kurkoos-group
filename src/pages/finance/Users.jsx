@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSession } from './session.js'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { ROLE, dateTime, nameOf } from './format.js'
-import { Card, Field, Icon, Modal, PageHead, Pill, Toggle } from './ui.jsx'
+import { ROLE, ago, date, money, nameOf, thisMonth } from './format.js'
+import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync } from './ui.jsx'
 
 const ROLE_DESC = {
   admin: 'הכול: הגדרות, משתמשים, חיבורים, אינטגרציות, מסמכים וייצוא',
@@ -12,18 +13,77 @@ const ROLE_DESC = {
   accountant: 'צפייה במסמכים מאושרים, דוחות, הורדות והיסטוריית ייצוא. בלי גישה לניהול',
 }
 
+const ROLE_TONE = { admin: 'done', finance_manager: 'ok', employee: 'muted', accountant: 'info' }
+const TABS = [['members', 'חברי ארגון'], ['companies', 'חברות'], ['usage', 'שימוש']]
+const initials = (m) => (m.full_name || m.email || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+
+function Usage() {
+  const { documents, mailboxes } = useFinance()
+  const usage = useAsync(() => api.storageUsage(), [])
+  const runs = useAsync(() => api.loadAgentRuns(500), [])
+  const phones = useAsync(() => api.loadWhatsappSenders(), [])
+  const clouds = useAsync(() => api.loadCloudTargets(), [])
+  const month = thisMonth()
+  const docsMonth = documents.filter((d) => String(d.created_at || '').slice(0, 7) === month)
+  const reads = (runs.data || []).filter((r) => r.agent === 'ocr' && String(r.started_at).slice(0, 7) === month).reduce((a, r) => a + (r.processed || 0), 0)
+  const pct = usage.data ? (usage.data.storage_bytes / 1024 ** 3) * 100 : null
+  const fin = usage.data?.buckets?.['finance-docs'] || 0
+  return (
+    <div className="fin-stack">
+      <section className="fin-org-panel">
+        <h3>אחסון</h3>
+        {pct === null ? <p className="fin-muted">{usage.loading ? 'טוען…' : 'נתוני האחסון לא זמינים.'}</p> : (
+          <>
+            <div className="fin-org-stat"><strong>{pct.toFixed(1)}%</strong><span>מ-1GB של התוכנית החינמית</span></div>
+            <div className={`fin-meter ${pct >= 75 ? 'is-bad' : pct >= 60 ? 'is-warn' : ''}`} role="meter" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="שימוש באחסון"><span style={{ width: `${Math.min(100, pct)}%` }} /></div>
+            <p className="fin-muted fin-small">מסמכי הכספים תופסים {(fin / 1024 ** 2).toFixed(1)}MB. המכסה משותפת לכל האתר, ולכן קליטת מסמכים נעצרת ב-75%.</p>
+          </>
+        )}
+      </section>
+      <section className="fin-org-panel">
+        <h3>החודש</h3>
+        <dl className="fin-org-grid">
+          <div><dt>מסמכים שנקלטו</dt><dd>{docsMonth.length}</dd></div>
+          <div><dt>קריאות AI</dt><dd>{reads}</dd></div>
+          <div><dt>סכום המסמכים</dt><dd>{money(docsMonth.filter((d) => !['rejected', 'duplicate'].includes(d.status)).reduce((a, d) => a + Number(d.total_amount || 0), 0))}</dd></div>
+          <div><dt>תיבות מייל</dt><dd>{mailboxes.filter((m) => m.status !== 'revoked').length}</dd></div>
+          <div><dt>טלפונים סורקים</dt><dd>{(phones.data || []).filter((p) => p.active).length}</dd></div>
+          <div><dt>חיבורי ענן</dt><dd>{(clouds.data || []).filter((c) => c.status !== 'revoked').length}</dd></div>
+        </dl>
+        <p className="fin-muted fin-small">המערכת פנימית ואין בה חיוב לפי משתמש. העלות היחידה שמשתנה היא קריאות ה-AI, לפי המפתח של Anthropic.</p>
+      </section>
+    </div>
+  )
+}
+
 export default function Users() {
-  const { members, businesses, reload } = useFinance()
+  const { members, businesses, mailboxes, documents, reload, go } = useFinance()
   const me = useSession()
+  const [params, setParams] = useSearchParams()
+  const tab = TABS.some(([k]) => k === params.get('tab')) ? params.get('tab') : 'members'
+  const meta = useAsync(() => api.callServer('members-meta').catch(() => ({ users: [] })), [members.length])
   const [invite, setInvite] = useState(null)
   const [edit, setEdit] = useState(null)
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
+  const [term, setTerm] = useState('')
+  const [role, setRole] = useState('')
+  const [sort, setSort] = useState('name')
   const admins = members.filter((m) => m.role === 'admin' && m.active).length
+  const seen = useMemo(() => Object.fromEntries((meta.data?.users || []).map((u) => [u.id, u])), [meta.data])
+  const pendingOf = (m) => meta.data && seen[m.user_id] && !seen[m.user_id].last_sign_in_at
+  const pending = members.filter((m) => m.active && pendingOf(m)).length
+  const shown = members
+    .filter((m) => (!role || m.role === role) && (!term.trim() || `${m.full_name || ''} ${m.email}`.toLowerCase().includes(term.trim().toLowerCase())))
+    .sort((a, b) => (sort === 'name' ? (a.full_name || a.email).localeCompare(b.full_name || b.email, 'he') : String(b.created_at).localeCompare(String(a.created_at))))
 
   const send = async (e) => {
     e.preventDefault(); setBusy(true); setMsg('')
     try { const r = await api.callServer('invite', invite); setInvite(null); setMsg(r.emailed ? `נשלחה הזמנה ל-${invite.email}` : `${invite.email} נוסף (כבר היה לו חשבון, הוא יכול להיכנס עם הסיסמה שלו)`); reload() } catch (e2) { setMsg(e2.message) } finally { setBusy(false) }
+  }
+  const resend = async (m) => {
+    setMsg('')
+    try { await api.callServer('invite', { email: m.email, full_name: m.full_name || '', role: m.role, business_ids: m.business_ids }); setMsg(`ההזמנה נשלחה שוב ל-${m.email}`) } catch (e) { setMsg(e.message) }
   }
   const save = async (e) => {
     e.preventDefault()
@@ -33,6 +93,10 @@ export default function Users() {
       setEdit(null); reload()
     } catch (e2) { setMsg(e2.message) }
   }
+  const setActive = async (m, active) => {
+    if (m.user_id === me?.id) return
+    try { await api.updateMember(m.user_id, { active }); reload() } catch (e) { setMsg(e.message) }
+  }
   const BizPick = ({ value, onChange }) => (
     <fieldset className="fin-field fin-field--wide fin-checkset"><legend className="fin-field__label">גישה לחברות</legend>
       <label className="fin-check"><input type="checkbox" checked={!value?.length} onChange={(e) => onChange(e.target.checked ? null : [])} /> כל החברות</label>
@@ -41,31 +105,89 @@ export default function Users() {
   )
 
   return (
-    <div className="fin-stack">
-      <PageHead title="משתמשים והרשאות" sub="ההרשאות נאכפות במסד הנתונים עצמו: כל משתמש רואה רק את מה שהתפקיד והחברות שלו מתירים.">
-        <button type="button" className="fin-btn fin-btn--primary" onClick={() => setInvite({ email: '', full_name: '', role: 'employee', business_ids: null })}><Icon name="plus" size={18} /> הזמנת משתמש</button>
-      </PageHead>
-      {msg && <p className="fin-note" role="status">{msg}</p>}
-      <div className="fin-table-wrap">
-        <table className="fin-table">
-          <thead><tr><th>משתמש</th><th>תפקיד</th><th className="fin-col-md">חברות</th><th className="fin-col-lg">הצטרף</th><th>פעיל</th></tr></thead>
-          <tbody>
-            {members.map((m) => (
-              <tr key={m.user_id} onClick={() => setEdit({ ...m })}>
-                <td className="fin-td-main"><span className="fin-cell-main">{m.full_name || m.email}</span><small className="fin-cell-sub" dir="ltr">{m.email}{m.user_id === me?.id ? ' (את/ה)' : ''}</small></td>
-                <td><Pill tone={m.role === 'admin' ? 'done' : m.role === 'accountant' ? 'info' : m.role === 'finance_manager' ? 'ok' : 'muted'}>{ROLE[m.role]}</Pill></td>
-                <td className="fin-col-md" data-label="חברות">{m.business_ids?.length ? m.business_ids.map((b) => nameOf(businesses, b)).join(', ') : 'כולן'}</td>
-                <td className="fin-col-lg" data-label="הצטרף">{dateTime(m.created_at)}</td>
-                <td>{m.active ? <Pill tone="ok">פעיל</Pill> : <Pill>מושבת</Pill>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="fin-stack fin-narrow">
+      <div className="fin-titlerow">
+        <h2 className="fin-pagehead__title">הארגון</h2>
+        <InfoTip label="על ההרשאות">ההרשאות נאכפות במסד הנתונים עצמו: כל משתמש רואה רק את מה שהתפקיד והחברות שלו מתירים. משתמשים שאינם מנהלי מערכת לא יכולים לערוך את תוכן האתר.</InfoTip>
       </div>
-      <Card title="מה כל תפקיד יכול">
-        <ul className="fin-kv">{Object.entries(ROLE).map(([k, v]) => <li key={k}><span>{v}</span><strong className="fin-kv__text">{ROLE_DESC[k]}</strong></li>)}</ul>
-        <p className="fin-muted">משתמשים שאינם מנהלי מערכת לא יכולים לערוך את תוכן האתר, גם אם יש להם חשבון.</p>
-      </Card>
+      <div className="fin-seg fin-seg--wide" role="tablist" aria-label="חלקי הארגון">
+        {TABS.map(([k, v]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setParams(k === 'members' ? {} : { tab: k }, { replace: true })}>{v}</button>)}
+      </div>
+      {msg && <p className="fin-note" role="status">{msg}</p>}
+
+      {tab === 'members' && (
+        <>
+          <h3 className="fin-org-name">קבוצת קורקוס</h3>
+          <div className="fin-org-stats">
+            <div className="fin-org-stat"><Icon name="users" size={20} /><strong>{members.filter((m) => m.active).length}</strong><span>משתמשים פעילים</span></div>
+            <div className="fin-org-stat"><Icon name="mail" size={20} /><strong>{meta.data ? pending : '…'}</strong><span>{pending === 1 ? 'הזמנה ממתינה' : 'הזמנות ממתינות'}</span></div>
+          </div>
+          <div className="fin-org-tools">
+            <label className="fin-search"><Icon name="search" size={18} /><input type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="חיפוש שם או מייל" aria-label="חיפוש לפי שם או אימייל" /></label>
+            <select className="fin-select" value={role} onChange={(e) => setRole(e.target.value)} aria-label="סינון לפי תפקיד"><option value="">כל התפקידים</option>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <button type="button" className="fin-icon-btn" onClick={() => setSort(sort === 'name' ? 'new' : 'name')} title={sort === 'name' ? 'ממוין לפי שם' : 'ממוין לפי הצטרפות'} aria-label={sort === 'name' ? 'מיון לפי הצטרפות' : 'מיון לפי שם'}><Icon name="sort" size={19} /></button>
+          </div>
+          <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={() => setInvite({ email: '', full_name: '', role: 'employee', business_ids: null })}><Icon name="plus" size={18} /> הזמנת משתמש</button>
+          <div className="fin-section-head"><h3>חברי ארגון <span className="fin-count">{shown.length}</span></h3></div>
+          {!shown.length ? <Empty title="אין משתמשים שמתאימים לחיפוש" icon="users">נסו מילה אחרת או הסירו את הסינון.</Empty> : (
+            <ul className="fin-member-list">
+              {shown.map((m) => {
+                const wait = pendingOf(m)
+                return (
+                  <li key={m.user_id} className="fin-member">
+                    <button type="button" className="fin-member__main" onClick={() => setEdit({ ...m })} aria-label={`עריכת ${m.full_name || m.email}`}>
+                      <span className="fin-avatar" aria-hidden="true">{initials(m)}</span>
+                      <span className="fin-member__who"><strong>{m.full_name || m.email}{m.user_id === me?.id ? ' (את/ה)' : ''}</strong><small dir="ltr">{m.email}</small></span>
+                    </button>
+                    <div className="fin-member__foot">
+                      <Pill tone={ROLE_TONE[m.role]}>{ROLE[m.role]}</Pill>
+                      <span className="fin-acc__sub">{m.business_ids?.length ? m.business_ids.map((b) => nameOf(businesses, b)).join(', ') : 'כל החברות'}</span>
+                      <span className="fin-grow" />
+                      {!m.active ? <Pill>מושבת</Pill> : wait ? <Pill tone="warn">ממתין להצטרפות</Pill> : <Pill tone="ok">פעיל</Pill>}
+                      <MoreMenu label={`פעולות עבור ${m.email}`} items={[
+                        { label: 'עריכה', onClick: () => setEdit({ ...m }) },
+                        wait && m.active && { label: 'שליחת ההזמנה שוב', onClick: () => resend(m) },
+                        m.user_id !== me?.id && { label: m.active ? 'השבתה' : 'הפעלה מחדש', onClick: () => setActive(m, !m.active), danger: m.active },
+                      ]} />
+                    </div>
+                    {seen[m.user_id]?.last_sign_in_at && <small className="fin-member__seen">כניסה אחרונה {ago(seen[m.user_id].last_sign_in_at)} · הצטרף {date(m.created_at)}</small>}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          <details className="fin-disclosure">
+            <summary>מה כל תפקיד יכול</summary>
+            <ul className="fin-kv">{Object.entries(ROLE).map(([k, v]) => <li key={k}><span>{v}</span><strong className="fin-kv__text">{ROLE_DESC[k]}</strong></li>)}</ul>
+          </details>
+        </>
+      )}
+
+      {tab === 'companies' && (
+        businesses.length ? (
+          <ul className="fin-acc-list">
+            {businesses.map((b) => {
+              const people = members.filter((m) => m.active && (!m.business_ids?.length || m.business_ids.includes(b.id))).length
+              const boxes = mailboxes.filter((x) => x.business_id === b.id && x.status !== 'revoked').length
+              const docs = documents.filter((d) => d.business_id === b.id && !['rejected', 'duplicate'].includes(d.status)).length
+              return (
+                <li key={b.id} className="fin-acc fin-acc--link">
+                  <span className="fin-avatar fin-avatar--square" aria-hidden="true"><Icon name="company" size={20} /></span>
+                  <button type="button" className="fin-acc__main fin-acc__btn" onClick={() => go(`/companies/${b.id}`)}>
+                    <strong>{b.name}</strong>
+                    <span className="fin-acc__sub">{b.vat_id ? `ח.פ ${b.vat_id} · ` : ''}{people === 1 ? 'משתמש אחד' : `${people} משתמשים`} · {boxes === 1 ? 'תיבה אחת' : `${boxes} תיבות`} · {docs === 1 ? 'מסמך אחד' : `${docs} מסמכים`}</span>
+                  </button>
+                  <Pill tone={b.active === false ? 'muted' : 'ok'}>{b.active === false ? 'בארכיון' : 'פעילה'}</Pill>
+                  <Icon name="next" size={18} />
+                </li>
+              )
+            })}
+          </ul>
+        ) : <Empty title="עוד אין חברות" icon="company" action={<button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/companies')}>הוספת חברה</button>}>החברות בקבוצה, עם ח.פ ומייל של רו״ח.</Empty>
+      )}
+
+      {tab === 'usage' && <Usage />}
+
       {invite && (
         <Modal title="הזמנת משתמש" onClose={() => setInvite(null)} footer={<><button type="submit" form="fin-invite" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'שולח…' : 'שליחת הזמנה'}</button><button type="button" className="fin-btn" onClick={() => setInvite(null)}>ביטול</button></>}>
           <form id="fin-invite" className="fin-form__grid" onSubmit={send}>

@@ -58,8 +58,13 @@ export const loadWhatsappInbox = (limit = 50) => soft(all('fin_whatsapp_inbox', 
 export const loadCloudTargets = () => soft(all('fin_cloud_targets', 'created_at', true))
 export const storageUsage = async () => { try { return must(await supabase.rpc('storage_usage')) } catch { return null } }
 
-export const updateDocument = async (id, patch) => must(await supabase.from('fin_documents').update(patch).eq('id', id).select().single())
-export const updateDocuments = async (ids, patch) => must(await supabase.from('fin_documents').update(patch).in('id', ids).select())
+// a status change may have queued automatic deliveries (webhook / email); ask the server to send them, without waiting
+export const flushOutbound = () => { callServer('outbound-flush').catch(() => {}) }
+const afterStatus = (patch, out) => { if (patch && 'status' in patch) flushOutbound(); return out }
+export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(patch).eq('id', id).select().single()))
+export const updateDocuments = async (ids, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(patch).in('id', ids).select()))
+export const loadOutbound = () => soft(all('fin_outbound', 'created_at', true))
+export const loadOutboundQueue = (limit = 30) => soft(all('fin_outbound_queue', 'id', false, limit))
 export async function deleteDocument(doc) {
   must(await supabase.from('fin_documents').delete().eq('id', doc.id))
   if (doc.file_path) await supabase.storage.from(BUCKET).remove([doc.file_path])
@@ -73,10 +78,12 @@ export const updateMember = async (userId, patch) => must(await supabase.from('f
 export const deleteRow = async (table, id, key = 'id') => must(await supabase.from(table).delete().eq(key, id))
 
 export async function recordExport({ ids, businessId, period, format, destination, integrationId, allowReexport }) {
-  return must(await supabase.rpc('fin_record_export', {
+  const out = must(await supabase.rpc('fin_record_export', {
     p_ids: ids, p_business_id: businessId || null, p_period: period || null, p_format: format, p_destination: destination,
     p_integration_id: integrationId || null, p_allow_reexport: !!allowReexport,
   }))
+  flushOutbound()
+  return out
 }
 
 async function sha256(file) {

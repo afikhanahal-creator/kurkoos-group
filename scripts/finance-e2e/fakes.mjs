@@ -13,7 +13,8 @@ import fs from 'node:fs'
 
 const FIX = process.env.FIN_FIXTURES || '/var/tmp/finfix'
 const PORT = Number(process.env.FAKES_PORT || 54400)
-const log = { emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [] }
+const hookFails = {}
+const log = { emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
 const driveItems = []   // { id, name, parents, folder }
 const fixtures = () => JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
 const failed = {}   // sha256 → how many times Claude already failed on it
@@ -84,7 +85,9 @@ const server = http.createServer(async (req, res) => {
     if (rest === 'messages') {
       const q = url.searchParams.get('q') || ''
       const after = Number((q.match(/after:(\d+)/) || [])[1] || 0) * 1000
-      const msgs = box.messages.filter((m) => Date.parse(m.date) >= after).sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+      const before = Number((q.match(/before:(\d+)/) || [])[1] || 0) * 1000
+      log.gmailQueries.push(q)
+      const msgs = box.messages.filter((m) => Date.parse(m.date) >= after && (!before || Date.parse(m.date) < before)).sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
       return send(res, 200, { messages: msgs.map((m) => ({ id: m.id, threadId: m.id })), resultSizeEstimate: msgs.length })
     }
     const mm = rest.match(/^messages\/([^/]+)(?:\/attachments\/(.+))?$/)
@@ -129,7 +132,7 @@ const server = http.createServer(async (req, res) => {
   // ---------- Resend ----------
   if (p === '/resend/emails') {
     const body = JSON.parse(await readBody(req))
-    log.emails.push({ to: body.to, subject: body.subject })
+    log.emails.push({ to: body.to, subject: body.subject, attachments: (body.attachments || []).map((x) => ({ filename: x.filename, bytes: Buffer.from(x.content || '', 'base64').length })) })
     return send(res, 200, { id: crypto.randomUUID() })
   }
 
@@ -159,8 +162,17 @@ const server = http.createServer(async (req, res) => {
   // ---------- Green API (WhatsApp) ----------
   if (/^\/green\/waInstance[^/]+\/sendMessage\//.test(p)) { const b = JSON.parse(await readBody(req)); log.wa.push({ to: b.chatId, message: b.message }); return send(res, 200, { idMessage: `out${log.wa.length}` }) }
   if (p.startsWith('/green/file/')) { const f = decodeURIComponent(p.slice('/green/file/'.length)); res.writeHead(200, { 'Content-Type': f.endsWith('.pdf') ? 'application/pdf' : 'image/png' }); res.end(fs.readFileSync(`${FIX}/${f}`)); return }
+  // a webhook receiver: records every delivery; ?fail=N answers 500 to the first N deliveries
+  if (p === '/hook') {
+    const raw = await readBody(req)
+    const key = url.search
+    hookFails[key] = (hookFails[key] || 0) + 1
+    const fail = Number(url.searchParams.get('fail') || 0) >= hookFails[key]
+    log.hooks.push({ query: key, event: req.headers['x-kurkoos-event'], delivery: req.headers['x-kurkoos-delivery'], signature: req.headers['x-kurkoos-signature'], raw, status: fail ? 500 : 200 })
+    return send(res, fail ? 500 : 200, { ok: !fail })
+  }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; driveItems.length = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

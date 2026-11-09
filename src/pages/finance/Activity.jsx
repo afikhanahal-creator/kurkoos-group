@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { AGENTS, FIELD_LABEL, ago, dateTime } from './format.js'
+import { AGENTS, FIELD_LABEL, ago, date, dateTime } from './format.js'
 import Select from './Select.jsx'
 import { Empty, Icon, InfoTip, Pill, Skeleton, useAsync } from './ui.jsx'
 
@@ -10,6 +10,7 @@ import { Empty, Icon, InfoTip, Pill, Skeleton, useAsync } from './ui.jsx'
 const ACT = {
   created: 'מסמך נקלט', updated: 'מסמך עודכן', approved: 'אושר', rejected: 'נדחה', exported: 'יוצא לרו״ח', marked_duplicate: 'סומן ככפול', ai_processed: 'חולץ ע״י AI',
   deleted: 'נמחק', connected: 'חיבור נוסף', disconnected: 'חיבור נותק', invited: 'הוזמן משתמש', claimed_admin: 'הוגדר מנהל מערכת', cron_run: 'ריצת לילה',
+  blocked: 'משתמש נחסם', unblocked: 'חסימה בוטלה', asked: 'שאלה לעוזר', sessions_ended: 'חיבורים נותקו', mfa_reset: 'אימות דו-שלבי אופס', settings_saved: 'הגדרות נשמרו', integration_saved: 'חיבור עודכן',
   split: 'פוצל בין פרויקטים', first_approval: 'חתימה ראשונה', merged: 'אוחד ספק', archived: 'הועבר לארכיון',
   sent_to_accountant: 'נשלח לרו״ח במייל', shared_by_email: 'שותף במייל', exported_excel: 'הורד קובץ Excel', exported_csv: 'הורד קובץ CSV', downloaded_originals: 'הורדו קבצים מקוריים',
   printed: 'הודפס', downloaded_document: 'הורד מסמך', saved_documents: 'נשמר בענן', test_passed: 'בדיקת חיבור עברה', test_failed: 'בדיקת חיבור נכשלה',
@@ -40,6 +41,7 @@ export default function Activity() {
   const runs = useAsync(() => api.loadAgentRuns(200), [])
   const skipped = useAsync(() => api.loadSkipped(100), [])
   const [tab, setTab] = useState('log')
+  const [limit, setLimit] = useState(100)   // the log opens on the latest 100 actions; more on request
   const [kind, setKind] = useState('')
   const [person, setPerson] = useState('')
   const [q, setQ] = useState('')
@@ -90,17 +92,28 @@ export default function Activity() {
             <div className="fin-table-wrap">
               <table className="fin-table fin-table--log">
                 <thead><tr><th>מתי</th><th>פעולה</th><th>על מה</th><th className="fin-col-md">מי</th></tr></thead>
-                <tbody>
-                  {shown.slice(0, 300).map((a) => (
-                    <tr key={a.id} className={kindOf(a) === 'errors' ? 'is-err' : ''}>
-                      <td data-label="מתי" title={dateTime(a.at)}><span className="fin-nowrap">{ago(a.at)}</span></td>
-                      <td data-label="פעולה">{kindOf(a) === 'errors' ? <Pill tone="attn">{a.kind === 'error' ? 'שגיאה' : ACT[a.action] || a.action}</Pill> : <strong>{ACT[a.action] || a.action}</strong>}</td>
-                      <td data-label="על מה" className="fin-td-main">{describe(a) || <span className="fin-muted">—</span>}</td>
-                      <td data-label="מי" className="fin-col-md">{who(a.user_email)}</td>
-                    </tr>
-                  ))}
-                </tbody>
+                {(() => {
+                  // grouped by day (today, yesterday, then the date) so a long log reads as days, not one endless list
+                  const dayOf = (t) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
+                  const today = dayOf(Date.now()); const yday = dayOf(Date.now() - 86400000)
+                  const groups = []
+                  for (const a of shown.slice(0, limit)) { const k = dayOf(a.at); const g = groups[groups.length - 1]; if (g && g.k === k) g.rows.push(a); else groups.push({ k, label: k === today ? 'היום' : k === yday ? 'אתמול' : date(k), rows: [a] }) }
+                  return groups.map((g) => (
+                    <tbody key={g.k}>
+                      <tr className="fin-log-day"><th colSpan={4} scope="colgroup">{g.label}<span>{g.rows.length === 1 ? 'פעולה אחת' : `${g.rows.length} פעולות`}</span></th></tr>
+                      {g.rows.map((a) => (
+                        <tr key={a.id} className={kindOf(a) === 'errors' ? 'is-err' : ''}>
+                          <td data-label="מתי" title={dateTime(a.at)}><span className="fin-nowrap">{new Date(a.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span></td>
+                          <td data-label="פעולה">{kindOf(a) === 'errors' ? <Pill tone="attn">{a.kind === 'error' ? 'שגיאה' : ACT[a.action] || a.action}</Pill> : <strong>{ACT[a.action] || a.action}</strong>}</td>
+                          <td data-label="על מה" className="fin-td-main">{describe(a) || <span className="fin-muted">—</span>}</td>
+                          <td data-label="מי" className="fin-col-md">{who(a.user_email)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  ))
+                })()}
               </table>
+              {shown.length > limit && <div className="fin-more-rows"><span>מוצגות {limit.toLocaleString('he-IL')} מתוך {shown.length.toLocaleString('he-IL')} פעולות</span><button type="button" className="fin-btn fin-btn--sm" onClick={() => setLimit((n) => n + 200)}>הצגת עוד</button></div>}
             </div>
           )}
         </>

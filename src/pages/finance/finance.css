@@ -2228,3 +2228,12 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 @media (max-width: 760px) { .fin-chat__cards { grid-template-columns: 1fr; } }
 /* the site's a11y rule forces a 3px outline on every focused field; the composer shows focus around itself (:focus-within) */
 .fin .fin-chat__composer textarea:focus-visible { outline: none !important; outline-width: 0 !important; }
+
+/* waiting is amber, broken is red: 'pending' counts and pills use the warning colour */
+.fin-warn-text { color: var(--warn); font-weight: 600; }
+/* the activity log, day by day */
+.fin-table--log .fin-log-day th { position: sticky; top: 0; z-index: var(--z-raised); text-align: start; padding: 10px 12px 6px; background: var(--paper); color: var(--ink); font-size: var(--t-sm); font-weight: 700; border-bottom: 1px solid var(--line); }
+.fin-table--log .fin-log-day span { margin-inline-start: 8px; color: var(--muted); font-weight: 400; font-size: var(--t-xs); }
+/* reports: a month with nothing in it steps back so the months with activity stand out */
+.fin-table tr.is-zero td { color: var(--muted); }
+.fin-table tr.is-zero td strong { color: var(--muted); font-weight: 400; }

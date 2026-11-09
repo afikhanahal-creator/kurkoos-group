@@ -217,7 +217,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                     <div className="fin-field--wide fin-supplier-link">
                       {supplierRow ? <>
                         <span>רשומת ספק: <button type="button" className="fin-link" onClick={() => go(`/suppliers/${supplierRow.id}`)}>{supplierRow.name}</button></span>
-                        {supplierRow.status === 'pending' ? <><Pill tone="attn">ספק חדש, ממתין לאישור</Pill>{can('edit') && <button type="button" className="fin-btn fin-btn--sm" onClick={async () => { try { await api.saveRow('fin_suppliers', { id: supplierRow.id, status: 'active' }); await api.callServer('revalidate', { document_id: doc.id }).then((r) => r?.document && onSaved(r.document)).catch(() => {}); reload() } catch (e) { setErr(e.message) } }}>אישור הספק</button>}</>
+                        {supplierRow.status === 'pending' ? <><Pill tone="warn">ספק חדש, ממתין לאישור</Pill>{can('edit') && <button type="button" className="fin-btn fin-btn--sm" onClick={async () => { try { await api.saveRow('fin_suppliers', { id: supplierRow.id, status: 'active' }); await api.callServer('revalidate', { document_id: doc.id }).then((r) => r?.document && onSaved(r.document)).catch(() => {}); reload() } catch (e) { setErr(e.message) } }}>אישור הספק</button>}</>
                           : <Pill tone="ok">{doc.suggestions?.supplier?.match === 'id' ? 'זוהה לפי ח.פ' : doc.suggestions?.supplier?.match === 'name' ? 'זוהה לפי שם' : doc.suggestions?.supplier?.match === 'new' ? 'נוצר מהחשבונית' : 'מקושר'}</Pill>}
                       </> : <span className="fin-muted">לא נמצא ספק תואם</span>}
                     </div>

@@ -66,7 +66,7 @@ export default function Mailboxes() {
 
   const connect = async (provider) => {
     setBusy(provider); setErr('')
-    try { const { url } = await api.callServer('auth-url', { provider }); window.location.assign(url) } catch (e) { setErr(e.message); setBusy('') }
+    try { const { url } = await api.callServer('auth-url', { provider, choose: true }); window.location.assign(url) } catch (e) { setErr(e.message); setBusy('') }
   }
   const sync = async (id) => {
     setBusy(id || 'all'); setErr(''); setMsg('')

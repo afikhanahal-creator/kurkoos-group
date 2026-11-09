@@ -189,8 +189,15 @@ export default async function handler(req, res) {
       case 'auth-url': {
         const prov = PROVIDERS[body.provider]
         if (!prov) { res.status(400).json({ error: 'ספק לא נתמך' }); return }
-        if (!prov.configured()) { res.status(503).json({ error: body.provider === 'gmail' ? 'חיבור Gmail עוד לא הוגדר: חסרים GOOGLE_CLIENT_ID ו-GOOGLE_CLIENT_SECRET ב-Vercel' : 'חיבור Outlook עוד לא הוגדר: חסרים MS_CLIENT_ID ו-MS_CLIENT_SECRET ב-Vercel' }); return }
-        res.status(200).json({ url: prov.authUrl(signState({ u: user.id, e: user.email, b: body.business_id || null, p: body.provider, t: Date.now() }), redirectUri(req)) })
+        if (!prov.configured()) {
+          // the person sees what it means for them; only an admin also gets the server detail to fix it
+          const name = body.provider === 'gmail' ? 'Gmail' : 'Outlook'
+          const keys = body.provider === 'gmail' ? 'GOOGLE_CLIENT_ID ו-GOOGLE_CLIENT_SECRET' : 'MS_CLIENT_ID ו-MS_CLIENT_SECRET'
+          res.status(503).json({ code: 'NOT_CONFIGURED', error: user.role === 'admin' ? `חיבור ${name} עוד לא הופעל בשרת. להפעלה מוסיפים ב-Vercel את ${keys}.` : `חיבור ${name} עוד לא הופעל. מנהל המערכת יכול להפעיל אותו.` })
+          return
+        }
+        const hint = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(body.hint || '').trim()) ? String(body.hint).trim().toLowerCase() : ''
+        res.status(200).json({ url: prov.authUrl(signState({ u: user.id, e: user.email, b: body.business_id || null, p: body.provider, t: Date.now() }), redirectUri(req), { hint, choose: !!body.choose }) })
         return
       }
       case 'sync': {

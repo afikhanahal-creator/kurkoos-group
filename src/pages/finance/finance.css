@@ -1795,6 +1795,25 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 @media (max-width: 900px) and (prefers-reduced-motion: reduce) { .fin-auth__ticker span { animation: none; } }
 
 /* first-run welcome: one card, a two-step progress line */
+.fin-onb__or { display: flex; align-items: center; gap: 12px; color: var(--text-2); font-size: var(--t-sm); margin-top: 2px; }
+.fin-onb__or::before, .fin-onb__or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.fin-onb__opts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fin-onb__opts > li { border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); overflow: hidden; }
+.fin-onb__opts > li.is-open { border-color: var(--ocean); box-shadow: var(--ring); }
+.fin-onb__opt { all: unset; box-sizing: border-box; width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; }
+.fin-onb__opt > span { flex: 1; display: grid; gap: 2px; text-align: start; }
+.fin-onb__opt strong { color: var(--ink); font-size: var(--t-base); }
+.fin-onb__opt small { color: var(--text-2); font-size: var(--t-xs); }
+.fin-onb__opt > svg:last-child { color: var(--muted); transform: rotate(90deg); transition: transform var(--dur) var(--ease); }
+.fin-onb__opts > li.is-open .fin-onb__opt > svg:last-child { transform: rotate(0deg); }
+.fin-onb__opt:hover:not(:disabled) { background: var(--wash); }
+.fin-onb__opt:focus-visible { outline: 2px solid var(--ocean); outline-offset: -2px; }
+.fin-onb__opt:disabled { cursor: default; opacity: 0.55; }
+.fin-onb__other { display: grid; gap: 8px; padding: 4px 14px 14px; }
+.fin-onb__other small { color: var(--text-2); font-size: var(--t-xs); line-height: 1.5; }
+.fin-onb__off { display: block; color: var(--text-2); font-size: var(--t-xs); line-height: 1.5; padding: 0 2px; }
+.fin-onb__later { margin: 0; color: var(--text-2); font-size: var(--t-xs); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .fin-onb__opt > svg:last-child { transition: none; } }
 .fin-onb { background: var(--paper); }
 .fin-onb__card { width: min(480px, 100%); background: var(--sheet); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--pop); padding: 28px 32px 18px; display: grid; gap: 18px; }
 .fin-onb__progress { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px; align-items: center; }

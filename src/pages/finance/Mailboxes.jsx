@@ -164,6 +164,13 @@ export default function Mailboxes() {
           </article>
         ))}
       </div>
+      {can('manage') && status.data?.oauth_redirect && (
+        <details className="fin-disclosure">
+          <summary>הגדרה ב-Google וב-Microsoft: כתובת החזרה</summary>
+          <p className="fin-muted fin-small">אם Google מציג "redirect_uri_mismatch", הכתובת הזו לא רשומה באפליקציה. ב-Google Cloud Console › APIs &amp; Services › Credentials › ה-OAuth client › Authorized redirect URIs מוסיפים אותה בדיוק כך (וב-Azure › App registrations › Authentication › Redirect URIs):</p>
+          <span className="fin-copyline"><code dir="ltr">{status.data.oauth_redirect}</code><button type="button" className="fin-btn fin-btn--sm" onClick={() => navigator.clipboard?.writeText(status.data.oauth_redirect)}>העתקה</button></span>
+        </details>
+      )}
 
       {(runs.data || []).length > 0 && (
         <details className="fin-disclosure">

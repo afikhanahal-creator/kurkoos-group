@@ -177,6 +177,8 @@ export default async function handler(req, res) {
       case 'status': {
         res.status(200).json({
           providers: Object.fromEntries(Object.entries(PROVIDERS).map(([k, p]) => [k, p.configured()])),
+          // the exact address Google and Microsoft must list as an allowed redirect (a mismatch is Google's redirect_uri_mismatch)
+          oauth_redirect: redirectUri(req),
           claude: !!env.anthropicKey(),
           email: !!process.env.RESEND_API_KEY,
           cron: !!process.env.CRON_SECRET,

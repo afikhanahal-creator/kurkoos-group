@@ -2035,3 +2035,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-profile__theme button.is-on { border-color: var(--ocean); background: var(--ocean-wash); color: var(--ocean-2); font-weight: 700; }
 .fin-profile__theme button:focus-visible { outline: 2px solid var(--ocean); }
 .fin.is-collapsed .fin-profile__btn .fin__user-meta, .fin.is-collapsed .fin-profile__btn > svg { display: none; }
+
+/* a value to copy as is (a redirect address, a key name) */
+.fin-copyline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.fin-copyline code { padding: 6px 10px; border-radius: var(--r-s); background: var(--wash); color: var(--ink); font-size: var(--t-sm); word-break: break-all; }

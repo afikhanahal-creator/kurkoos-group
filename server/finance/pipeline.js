@@ -7,6 +7,7 @@ import { sb, one, insert, patch, q, rpc, upload, download, storageUsage } from '
 import { extract, verify, needsVerify, crossCheck, relevanceOf, CLASS_LABEL } from './extract.js'
 import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
+import { gate, triage } from './triage.js'
 import * as gmail from './providers/gmail.js'
 import * as outlook from './providers/outlook.js'
 
@@ -265,6 +266,16 @@ export async function syncMailbox(mb, started, runs, trigger) {
     const seenRows = ids.length ? await sb(`fin_mail_seen?mailbox_id=eq.${mb.id}&select=message_id&message_id=in.(${ids.map((i) => `"${i}"`).join(',')})`) : []
     const seen = new Set((seenRows || []).map((r) => r.message_id))
     const todo = ids.filter((id) => !seen.has(id)).reverse()       // oldest first
+    // the conductor's memory: senders that sent a kept document before, and senders that only ever sent skipped files
+    const GENERIC = /^(gmail|googlemail|outlook|hotmail|live|yahoo|walla|icloud|me)\./
+    const addr = (f) => (String(f || '').match(/<([^>]+)>/)?.[1] || String(f || '')).trim().toLowerCase()
+    const kept = todo.length ? ((await sb('fin_documents?select=email_from&email_from=not.is.null&status=not.in.(rejected,failed)&limit=5000').catch(() => [])) || []) : []
+    const supplierAddrs = new Set()
+    for (const r of kept) { const a = addr(r.email_from); if (!a) continue; supplierAddrs.add(a); const dm = a.split('@')[1]; if (dm && !GENERIC.test(dm)) supplierAddrs.add(`@${dm}`) }
+    const skippedRows = todo.length ? ((await sb('fin_skipped?select=email_from&email_from=not.is.null&limit=5000').catch(() => [])) || []) : []
+    const skipCount = new Map(); for (const r of skippedRows) { const a = addr(r.email_from); if (a) skipCount.set(a, (skipCount.get(a) || 0) + 1) }
+    const gateCtx = { supplierAddrs, noiseSenders: new Set([...skipCount].filter(([a, n]) => n >= 3 && !supplierAddrs.has(a)).map(([a]) => a)) }
+    const tally = (k) => { const g = runs.collector.stat.details.conductor || (runs.collector.stat.details.conductor = {}); g[k] = (g[k] || 0) + 1 }
     runs.scanner.stat.details.new_messages = (runs.scanner.stat.details.new_messages || 0) + todo.length
 
     for (const id of todo) {
@@ -282,6 +293,36 @@ export async function syncMailbox(mb, started, runs, trigger) {
         if (await one(`fin_documents?file_hash=eq.${hash}&select=id`)) { stats.skipped++; runs.collector.stat.details.duplicates = (runs.collector.stat.details.duplicates || 0) + 1; return }
         // a file that was already read and skipped as "not an invoice" is not read (and paid for) again
         if (await one(`fin_skipped?file_hash=eq.${hash}&select=id`).catch(() => null)) { stats.skipped++; return }
+        // gate 1 (rules, free) and gate 2 (a short question to a small model) decide whether the full reading is worth paying for
+        const skipAs = async (cls, conf, reason, label) => {
+          tally(label); stats.skipped++
+          runs.collector.stat.details.not_financial = [...(runs.collector.stat.details.not_financial || []), `${meta.email_subject} · ${name}`].slice(-20)
+          await insert('fin_skipped', { source: mb.provider, mailbox_id: mb.id, email_subject: meta.email_subject, email_from: meta.email_from, file_name: String(name).slice(0, 200), file_hash: hash, document_class: cls, confidence: conf, reason }, 'return=minimal').catch(() => {})
+        }
+        const g = gate({ name, subject: meta.email_subject, from: meta.email_from }, gateCtx)
+        if (g.verdict === 'noise') { await skipAs(g.cls, 1, `דולג בלי קריאה: ${g.reason}`, 'skipped_by_rule'); return }
+        let doubt = null
+        if (g.verdict === 'invoice') tally('direct')
+        else {
+          try {
+            const t = await triage({ buf: extractInput.buf, mime, text: extractInput.text, name, subject: meta.email_subject, from: meta.email_from })
+            runs.ocr.stat.details.triage_tokens = (runs.ocr.stat.details.triage_tokens || 0) + (t.usage?.in || 0) + (t.usage?.out || 0)
+            if (t.verdict === 'skip') { await skipAs(t.cls, t.conf, `בדיקה מקדימה: ${CLASS_LABEL[t.cls] || 'לא חשבונית או קבלה'}`, 'skipped_by_triage'); return }
+            if (t.verdict === 'unsure') doubt = t; else tally('triage_keep')
+          } catch { tally('triage_error') }   // a fault of the check is not a doubt about the file: the full reading decides, and it retries on its own
+        }
+        if (doubt) {
+          // a doubt goes to a person, without paying for the reading: "yes, it is an invoice" reads it, "not relevant" lists it
+          tally('needs_confirmation')
+          const path = `${mb.provider}/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${extOf(mime)}`
+          await upload(path, buf, mime.startsWith('text/') ? 'text/html; charset=utf-8' : mime)
+          try {
+            await insert('fin_documents', { ...meta, file_path: path, file_name: String(name).slice(0, 200), file_mime: mime.startsWith('text/') ? 'text/html' : mime, file_size: buf.length, file_hash: hash, attempts: 0, status: 'review', confidence: doubt.conf,
+              issues: [{ level: 'warn', code: 'needs_confirmation', field: null, message: `המערכת לא בטוחה שזה חשבונית או קבלה${doubt.cls && CLASS_LABEL[doubt.cls] ? ` (נראה כמו ${CLASS_LABEL[doubt.cls]})` : ''}. אם זו חשבונית, לוחצים "כן, לקרוא"; אם לא, "לא רלוונטי".` }] })
+            stats.imported++; got++
+          } catch (e) { if (e.code === '23505') stats.skipped++; else throw e }
+          return
+        }
         let x = null; let failure = null
         try { x = await readDocument(extractInput, runs, { deadline: started + TIME_BUDGET_MS - 20_000 }); runs.ocr.stat.processed++ } catch (e) { failure = e; runs.ocr.stat.errors++ }
         // not an invoice or a receipt (quote, contract, newsletter, letter): no financial record, one line in the skip list.

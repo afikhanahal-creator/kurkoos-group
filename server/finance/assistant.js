@@ -50,7 +50,9 @@ async function plan(question, names, history = []) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({ model: env.model(), max_tokens: 1200, output_config: { effort: 'low', format: { type: 'json_schema', schema: PLAN } }, messages: [{ role: 'user', content: [{ type: 'text', text }] }] }),
-  })
+    // the function has 60 seconds: a slow or overloaded answer ends here with a clear message, not a silent cut-off
+    signal: AbortSignal.timeout(40000),
+  }, 2).catch((e) => { throw new Error(e.name === 'TimeoutError' ? 'Claude לא ענה בזמן (עומס זמני). אפשר לשלוח את השאלה שוב בעוד רגע.' : e.message) })
   const d = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error((d.error && d.error.message) || `claude ${r.status}`)
   return JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join(''))

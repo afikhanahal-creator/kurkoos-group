@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf } from './format.js'
@@ -77,6 +77,24 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, onNext, onPrev])
 
+  // the panel covers the whole screen, so Tab stays inside it (a dialog opened on top of it keeps its own trap)
+  const body = useRef(null)
+  useEffect(() => {
+    const onTab = (e) => {
+      if (e.key !== 'Tab' || !body.current) return
+      const a = document.activeElement
+      if (a && !body.current.contains(a) && a.closest('[role="dialog"]') && !a.closest('.fin-panel')) return
+      const f = [...body.current.querySelectorAll('a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null || el.classList.contains('fin-sel__native'))
+      if (!f.length) return
+      const first = f[0]; const last = f[f.length - 1]
+      if (!body.current.contains(a)) { e.preventDefault(); (e.shiftKey ? last : first).focus() }
+      else if (e.shiftKey && a === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus() }
+    }
+    window.addEventListener('keydown', onTab)
+    return () => window.removeEventListener('keydown', onTab)
+  }, [])
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
   const clean = () => {
     const out = {}
@@ -108,6 +126,11 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     const btn = document.activeElement
     const s = await save({ status: 'approved' })
     if (s?.status === 'approved') moments.approve({ from: btn, title: 'המסמך אושר', sub: doc.supplier_name || '' })
+  }
+  // the conductor's doubt answered "no": the document leaves the list and joins the skipped files, never imported again
+  const notRelevant = async () => {
+    setBusy('not'); setErr('')
+    try { await api.callServer('not-relevant', { document_id: doc.id }); onDeleted?.(doc); onClose() } catch (e) { setErr(e.message); setBusy('') }
   }
   const reread = async () => {
     setBusy('extract'); setErr('')
@@ -157,7 +180,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   return (
     <div className="fin-panel" role="dialog" aria-modal="true" aria-label={`מסמך: ${doc.supplier_name || doc.file_name}`}>
       <button type="button" className="fin-panel__scrim" aria-label="סגירה" tabIndex={-1} onClick={onClose} />
-      <div className="fin-panel__body">
+      <div className="fin-panel__body" ref={body}>
         <header className="fin-panel__head">
           <div className="fin-panel__title">
             <h2>{doc.supplier_name || doc.file_name || 'מסמך'}</h2>
@@ -173,6 +196,16 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
 
         {doc.status === 'processing' && <p className="fin-panel__banner is-info" role="status"><Icon name="sparkle" size={16} /> {({ ocr: 'הסוכנים קוראים את המסמך…', validating: 'בודקים את הסכומים…', matching: 'מזהים ספק, חברה ופרויקט…' })[doc.stage] || 'המסמך בעיבוד…'}</p>}
         {doc.status === 'failed' && <p className="fin-panel__banner is-attn" role="status"><Icon name="alert" size={16} /> <span>{doc.next_retry_at ? 'הקריאה נכשלה. הסוכנים ינסו שוב בסריקת הלילה, או שאפשר לנסות עכשיו.' : 'הקריאה נכשלה כמה פעמים. אפשר לנסות שוב או למלא את הפרטים ידנית.'}</span>{editable && <button type="button" className="fin-btn fin-btn--sm" onClick={reread} disabled={!!busy}>{busy === 'extract' ? 'קורא…' : 'קריאה מחדש עכשיו'}</button>}</p>}
+        {(doc.issues || []).some((i) => i.code === 'needs_confirmation') && (
+          <div className="fin-panel__banner is-warn fin-panel__confirm" role="status">
+            <Icon name="info" size={16} />
+            <span><strong>האם זו חשבונית או קבלה?</strong> המערכת לא הייתה בטוחה, ולכן עוד לא שילמה על קריאה מלאה של המסמך.</span>
+            {can('edit') && <span className="fin-panel__banner-actions">
+              <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" onClick={reread} disabled={!!busy}>{busy === 'extract' ? 'קורא…' : 'כן, זו חשבונית — לקרוא'}</button>
+              <button type="button" className="fin-btn fin-btn--sm" onClick={notRelevant} disabled={!!busy}>לא רלוונטי</button>
+            </span>}
+          </div>
+        )}
         {doc.duplicate_state === 'suspected' && doc.status === 'review' && (
           <div className="fin-panel__banner is-warn" role="status">
             <Icon name="copy" size={16} />
@@ -217,7 +250,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                     <div className="fin-field--wide fin-supplier-link">
                       {supplierRow ? <>
                         <span>רשומת ספק: <button type="button" className="fin-link" onClick={() => go(`/suppliers/${supplierRow.id}`)}>{supplierRow.name}</button></span>
-                        {supplierRow.status === 'pending' ? <><Pill tone="attn">ספק חדש, ממתין לאישור</Pill>{can('edit') && <button type="button" className="fin-btn fin-btn--sm" onClick={async () => { try { await api.saveRow('fin_suppliers', { id: supplierRow.id, status: 'active' }); await api.callServer('revalidate', { document_id: doc.id }).then((r) => r?.document && onSaved(r.document)).catch(() => {}); reload() } catch (e) { setErr(e.message) } }}>אישור הספק</button>}</>
+                        {supplierRow.status === 'pending' ? <><Pill tone="warn">ספק חדש, ממתין לאישור</Pill>{can('edit') && <button type="button" className="fin-btn fin-btn--sm" onClick={async () => { try { await api.saveRow('fin_suppliers', { id: supplierRow.id, status: 'active' }); await api.callServer('revalidate', { document_id: doc.id }).then((r) => r?.document && onSaved(r.document)).catch(() => {}); reload() } catch (e) { setErr(e.message) } }}>אישור הספק</button>}</>
                           : <Pill tone="ok">{doc.suggestions?.supplier?.match === 'id' ? 'זוהה לפי ח.פ' : doc.suggestions?.supplier?.match === 'name' ? 'זוהה לפי שם' : doc.suggestions?.supplier?.match === 'new' ? 'נוצר מהחשבונית' : 'מקושר'}</Pill>}
                       </> : <span className="fin-muted">לא נמצא ספק תואם</span>}
                     </div>

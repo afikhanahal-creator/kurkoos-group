@@ -13,7 +13,7 @@ export async function loadPdf() {
   }
   return pdfjs
 }
-async function render(doc) {
+async function render(doc, width = 360) {
   const blob = await api.fileBlob(doc)
   if ((doc.file_mime || '').startsWith('image/')) return URL.createObjectURL(blob)
   if ((doc.file_mime || '').startsWith('text/')) return { text: (await blob.text()).replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220) }
@@ -21,7 +21,7 @@ async function render(doc) {
   const pdf = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise
   const page = await pdf.getPage(1)
   const vp = page.getViewport({ scale: 1 })
-  const scale = 360 / vp.width
+  const scale = width / vp.width
   const canvas = document.createElement('canvas')
   const v = page.getViewport({ scale })
   canvas.width = v.width; canvas.height = v.height
@@ -30,9 +30,17 @@ async function render(doc) {
   return canvas.toDataURL('image/jpeg', 0.82)
 }
 
-export default function Thumbnail({ doc }) {
+/* start drawing before it is needed (a row the pointer entered): the floating preview then opens already drawn */
+export function prefetchThumb(doc, size = 'lg') {
+  if (!doc?.file_path) return
+  const key = size === 'lg' ? `${doc.file_path}@lg` : doc.file_path
+  if (!cache.has(key)) cache.set(key, render(doc, size === 'lg' ? 880 : 360).catch((e) => { cache.delete(key); throw e }))
+}
+
+export default function Thumbnail({ doc, size }) {
+  const key = size === 'lg' ? `${doc.file_path}@lg` : doc.file_path
   const box = useRef(null)
-  const [src, setSrc] = useState(() => cache.get(doc.file_path) || null)
+  const [src, setSrc] = useState(null)
   const [failed, setFailed] = useState(false)
   useEffect(() => {
     if (src || !doc.file_path) return undefined
@@ -41,19 +49,19 @@ export default function Thumbnail({ doc }) {
       if (!e.isIntersecting) return
       io.disconnect()
       try {
-        if (!cache.has(doc.file_path)) cache.set(doc.file_path, render(doc))
-        const r = await cache.get(doc.file_path)
+        if (!cache.has(key)) cache.set(key, render(doc, size === 'lg' ? 880 : 360))
+        const r = await cache.get(key)
         if (alive) setSrc(r)
       } catch { if (alive) setFailed(true) }
     }, { rootMargin: '200px' })
     if (box.current) io.observe(box.current)
     return () => { alive = false; io.disconnect() }
-  }, [doc.file_path]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="fin-thumb" ref={box} aria-hidden="true">
       {src && typeof src === 'string' && <img src={src} alt="" />}
       {src && typeof src === 'object' && <p className="fin-thumb__text">{src.text}</p>}
-      {!src && <span className={`fin-thumb__ph ${failed ? '' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : 'קובץ'}</span>}
+      {!src && <span className={`fin-thumb__ph ${failed ? 'is-failed' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : 'קובץ'}{failed && <small>אין תצוגה מקדימה</small>}</span>}
     </div>
   )
 }

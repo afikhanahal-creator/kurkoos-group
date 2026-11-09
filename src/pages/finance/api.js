@@ -8,9 +8,10 @@ async function token() {
 }
 
 /* the server side (server/finance.js) */
-export async function callServer(action, payload = {}) {
+export async function callServer(action, payload = {}, { timeout } = {}) {
   const r = await fetch('/api/finance', {
     method: 'POST',
+    ...(timeout && typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? { signal: AbortSignal.timeout(timeout) } : {}),
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await token()}` },
     body: JSON.stringify({ action, ...payload }),
   })

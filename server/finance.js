@@ -11,7 +11,7 @@
 // ============================================================
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
-import { sb, one, insert, patch, q, caller, audit } from './finance/db.js'
+import { sb, one, insert, patch, q, caller, audit, removeFile } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
@@ -56,6 +56,7 @@ const ROLES = {
   tick: ['admin', 'finance_manager', 'employee'],
   'retry-doc': ['admin', 'finance_manager', 'employee'],
   'duplicate-decide': ['admin', 'finance_manager'],
+  'not-relevant': ['admin', 'finance_manager'],
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
 }
 
@@ -373,6 +374,19 @@ export default async function handler(req, res) {
         const updated = await processStored(doc, runs, 'manual')
         await closeRuns(runs)
         res.status(200).json({ document: updated })
+        return
+      }
+      case 'not-relevant': {
+        // a person says a document the conductor was unsure about is not an invoice: it leaves the documents, its file is
+        // removed, and it joins the skipped list so the same file is never read or imported again
+        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
+        if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (['approved', 'sent'].includes(doc.status)) { res.status(409).json({ error: 'מסמך מאושר לא נמחק כאן' }); return }
+        await insert('fin_skipped', { source: doc.source, mailbox_id: doc.mailbox_id, email_subject: doc.email_subject, email_from: doc.email_from, file_name: doc.file_name, file_hash: doc.file_hash, document_class: 'other', confidence: 1, reason: `סומן כלא רלוונטי ע״י ${user.email}` }, 'return=minimal').catch(() => {})
+        await sb(`fin_documents?id=eq.${doc.id}`, { method: 'DELETE', prefer: 'return=minimal' })
+        if (doc.file_path) await removeFile(doc.file_path).catch(() => {})
+        await audit('document', doc.id, 'not_relevant', { file_name: doc.file_name, email_from: doc.email_from }, user)
+        res.status(200).json({ ok: true })
         return
       }
       case 'duplicate-decide': {

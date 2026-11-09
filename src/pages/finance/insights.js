@@ -118,6 +118,23 @@ export function overview(documents, { businesses = [], projects = [], categories
   const alerts = []
   const unassigned = live.filter((d) => !d.business_id && !['duplicate', 'failed', 'processing'].includes(d.status))
   if (!businessId && unassigned.length) alerts.push({ key: 'unassigned', tone: 'attn', title: `${unassigned.length === 1 ? 'מסמך אחד' : `${unassigned.length} מסמכים`} בלי חברה`, sub: `${moneyTxt(sum(ils(unassigned)))} שלא נכנסים לאף חברה`, to: '/documents?status=unassigned', ids: unassigned.map((d) => d.id) })
+  // the conductor's completeness check: a supplier whose document arrived in each of the last three months and not this
+  // month, past its usual day by five days, probably sent one that did not reach the system (or did not send it at all)
+  {
+    const [ty, tm] = thisMonth.split('-').map(Number)
+    const back = [1, 2, 3].map((k) => { const t = new Date(Date.UTC(ty, tm - 1 - k, 1)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}` })
+    const bySup = new Map()
+    for (const d of live) {
+      const key = d.supplier_id || d.supplier_name; const m = dayOf(d).slice(0, 7)
+      if (!key || !m) continue
+      const g = bySup.get(key) || { name: d.supplier_name, id: d.supplier_id, months: new Map() }
+      g.months.set(m, Math.max(g.months.get(m) || 0, Number(dayOf(d).slice(8, 10)) || 0)); bySup.set(key, g)
+    }
+    const dayNow = Number(today.slice(8, 10))
+    const missing = [...bySup.values()].filter((g) => back.every((m) => g.months.has(m)) && !g.months.has(thisMonth))
+      .map((g) => ({ ...g, usual: Math.max(...back.map((m) => g.months.get(m))) })).filter((g) => dayNow > Math.min(28, g.usual + 5)).slice(0, 5)
+    for (const g of missing) alerts.push({ key: `missing-${g.id || g.name}`, tone: 'warn', title: `${g.name}: החשבונית של החודש עוד לא הגיעה`, sub: `הגיעה בכל אחד משלושת החודשים האחרונים, בדרך כלל עד ה-${g.usual} בחודש`, to: g.id ? `/suppliers/${g.id}` : '/documents' })
+  }
   for (const p of projectRows.filter((r) => r.over)) alerts.push({ key: `over-${p.id}`, tone: 'attn', title: `${p.name}: חריגה מהתקציב`, sub: `${moneyTxt(p.spent)} מתוך ${moneyTxt(p.budget)} (${Math.round(p.used * 100)}%)`, to: `/projects/${p.id}` })
   for (const p of projectRows.filter((r) => r.near)) alerts.push({ key: `near-${p.id}`, tone: 'warn', title: `${p.name}: ${Math.round(p.used * 100)}% מהתקציב`, sub: `נשארו ${moneyTxt(p.budget - p.spent)}`, to: `/projects/${p.id}` })
   for (const s of bySupplier.filter((r) => r.prev > 0 && r.total - r.prev > 5000 && r.change > 50).slice(0, 3)) alerts.push({ key: `sup-${s.key}`, tone: 'warn', title: `${s.name}: עלייה של ${Math.round(s.change)}%`, sub: `${moneyTxt(s.total)} לעומת ${moneyTxt(s.prev)} בתקופה הקודמת`, to: s.id ? `/suppliers/${s.id}` : '/documents', ids: s.ids })

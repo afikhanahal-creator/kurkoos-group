@@ -15,6 +15,7 @@ import Documents from './Documents.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
+import './moments.css'
 const MasterData = lazy(() => import('./MasterData.jsx'))
 const EntityOverview = lazy(() => import('./EntityOverview.jsx'))
 const Scanners = lazy(() => import('./Scanners.jsx'))

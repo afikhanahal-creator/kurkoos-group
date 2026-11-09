@@ -8,6 +8,7 @@ import Attachments from './Attachments.jsx'
 import { PAY_LABEL, payState } from './ledger.js'
 import Select from './Select.jsx'
 import Viewer from './Viewer.jsx'
+import { moments } from './moments.js'
 
 const VAT = 0.18
 const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'category_id', 'business_id', 'project_id', 'description', 'payment_method', 'paid', 'notes']
@@ -96,6 +97,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
       // the rules run again on what the person typed (sums, VAT, duplicates); confidence of edited fields becomes 100%
       if (dirty) { const r = await api.callServer('revalidate', { document_id: doc.id }).catch(() => null); if (r?.document) saved = r.document }
       onSaved(saved)
+      return saved
       if (extra.status === 'approved' && saved.status !== 'approved' && saved.first_approved_by) setErr('נרשמה חתימה ראשונה. מסמך מעל סף האישור הכפול מחכה למאשר נוסף.')
     } catch (e) { setErr(/SECOND_APPROVAL/.test(e.message) ? 'המסמך דורש מאשר שני, שונה ממי שאישר ראשון' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת. בחרו פרויקט של אותה חברה' : e.message) } finally { setBusy('') }
   }
@@ -103,7 +105,9 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     const errors = issues.filter((i) => i.level === 'error' && i.code !== 'ai_note')
     if (!form.business_id) { setErr('לפני אישור צריך לשייך את המסמך לחברה'); return }
     if (errors.length && !(await askConfirm({ title: 'לאשר למרות הבעיות?', text: `יש במסמך ${errors.length === 1 ? 'בעיה אחת' : `${errors.length} בעיות`}:`, lines: errors.map((i) => `${FIELD_LABEL[i.field] || ''} ${i.message}`.trim()), ok: 'אישור בכל זאת', danger: true }))) return
-    save({ status: 'approved' })
+    const btn = document.activeElement
+    const s = await save({ status: 'approved' })
+    if (s?.status === 'approved') moments.approve({ from: btn, title: 'המסמך אושר', sub: doc.supplier_name || '' })
   }
   const reread = async () => {
     setBusy('extract'); setErr('')

@@ -962,7 +962,7 @@ await m.locator('.fin__drawer-head button[aria-label="סגירת התפריט"]'
 drawer.closed = !(await m.locator('.fin__side.is-open').count())
 await m.getByRole('button', { name: 'פתיחת התפריט' }).click(); await m.waitForTimeout(400)
 await m.locator('.fin__nav-item', { hasText: 'כל המסמכים' }).click(); await m.waitForTimeout(1000); mShots.push(await shot('m3-documents', m)); ov.documents = await overflow()
-await m.locator('tbody tr').first().locator('.fin-cell-btn').click(); await m.waitForTimeout(1500); mShots.push(await shot('m4-review', m)); ov.review = await overflow()
+await m.locator('tbody tr .fin-cell-btn, .fin-doccard__open').first().click(); await m.waitForTimeout(1500); mShots.push(await shot('m4-review', m)); ov.review = await overflow()
 await m.evaluate(() => document.querySelector('.fin-panel__body')?.scrollTo(0, 99999)); await m.waitForTimeout(300); mShots.push(await shot('m5-review-actions', m))
 await m.keyboard.press('Escape')
 await m.goto(`${APP}/mailboxes`); await m.waitForTimeout(1200); mShots.push(await shot('m6-mailboxes', m)); ov.mailboxes = await overflow()
@@ -1433,6 +1433,35 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   await lx.close()
   record('AUTHUI', 'מסך הכניסה', 'שני חלקים: הטופס והסיפור של המערכת; שכחתי סיסמה; בטלפון טור אחד בלי גלילה אופקית', `${authTxt.replace(/\s+/g, ' ').slice(0, 120)}; גלילה בטלפון: ${authOv}`,
     /ברוכים הבאים ל-Kurkoos Finance/.test(authTxt) && /שכחתי את הסיסמה/.test(authTxt) && /מפסיקים לרדוף אחרי חשבוניות/.test(authTxt) && authOv <= 0, [authShot, authShotM])
+
+  // 8. moments: an upload flies into the inbox, a download drops into the tray, each ends with a toast; reduced motion keeps only the toast
+  const pdfOf = (tag) => ({ name: `moment-${tag}.pdf`, mimeType: 'application/pdf', buffer: Buffer.from(`%PDF-1.4\n% moment ${tag} ${Date.now()}\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`) })
+  await go(''); await page.waitForTimeout(800)
+  await page.locator('.fin__upload').click(); await page.waitForTimeout(400)
+  await page.locator('.fin-modal [data-testid=upload-input]').setInputFiles(pdfOf('a'))
+  let chips = 0
+  for (let i = 0; i < 40 && !chips; i++) { chips = await page.locator('.fin-moment__chip').count(); if (!chips) await page.waitForTimeout(50) }
+  const flyShot = await shot('113-moment-upload')
+  await page.waitForTimeout(900)
+  const upToast = await page.locator('#fin-toasts').innerText().catch(() => '')
+  const leftover = await page.locator('.fin-moment__chip').count()
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300)
+  await go(`/documents/${ronirInv}`); await page.waitForTimeout(1500)
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }).catch(() => null), page.locator('.fin-viewer__bar a[aria-label="הורדה"]').click()])
+  await page.waitForTimeout(250)
+  const dlToast = await page.locator('#fin-toasts').innerText().catch(() => '')
+  const dlShot = await shot('114-moment-download')
+  await page.keyboard.press('Escape')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await go(''); await page.waitForTimeout(800)
+  await page.locator('.fin__upload').click(); await page.waitForTimeout(400)
+  await page.locator('.fin-modal [data-testid=upload-input]').setInputFiles(pdfOf('b'))
+  let calmChips = 0; let calmToast = ''
+  for (let i = 0; i < 40 && !/התקבל/.test(calmToast); i++) { calmChips += await page.locator('.fin-moment__chip').count(); calmToast = await page.locator('#fin-toasts').innerText().catch(() => ''); await page.waitForTimeout(50) }
+  await page.keyboard.press('Escape'); await page.emulateMedia({ reducedMotion: null })
+  record('MOMENTS', 'רגעים: העלאה, הורדה ושליחה', 'בהעלאה המסמך עף אל "חשבוניות חדשות" ונעלם בסוף; בהורדה הקובץ יורד והודעה אומרת מה ירד; כל רגע נגמר בהודעה כתובה; במצב "הפחתת תנועה" רק ההודעה, בלי תנועה',
+    `עף: ${chips} ונשארו ${leftover}; הודעה: ${upToast.replace(/\s+/g, ' ').slice(0, 70)}; הורדה: ${dl ? dl.suggestedFilename() : 'לא ירד'}, ${dlToast.replace(/\s+/g, ' ').slice(0, 50)}; הפחתת תנועה: ${calmChips} תנועות, ${calmToast.replace(/\s+/g, ' ').slice(0, 40)}`,
+    chips > 0 && leftover === 0 && /המסמך התקבל/.test(upToast) && /moment-a\.pdf/.test(upToast) && !!dl && /הקובץ הורד/.test(dlToast) && calmChips === 0 && /התקבל/.test(calmToast), [flyShot, dlShot])
 }
 
 // dark mode screenshot

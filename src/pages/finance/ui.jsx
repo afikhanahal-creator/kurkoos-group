@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { placeNear, popRoot } from './Select.jsx'
 import { STATUS, money } from './format.js'
 import { uploadFile } from './api.js'
+import { moments } from './moments.js'
 
 const P = {
   home: <><path d="M3 11l9-8 9 8" /><path d="M5 10v10h5v-6h4v6h5V10" /></>,
@@ -219,6 +220,7 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
   const [over, setOver] = useState(false)
   const [busy, setBusy] = useState(0)
   const [msg, setMsg] = useState('')
+  const zone = useRef(null)
 
   const send = async (files, source = 'upload') => {
     const list = [...files]
@@ -226,20 +228,24 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
     setBusy(list.length); setMsg('')
     const notes = []
     let added = 0
+    const names = []
     for (const f of list) {
       try {
         const r = await uploadFile(f, { businessId, projectId, source })
         if (r.duplicate) notes.push(`${f.name}: כפילות, הקובץ כבר קיים במערכת${r.of?.supplier_name ? ` (${r.of.supplier_name}${r.of.doc_number ? ` ${r.of.doc_number}` : ''})` : ''}`)
-        else added++
+        else { added++; names.push(f.name) }
       } catch (e) { notes.push(e.message) }
       setBusy((n) => n - 1)
     }
     setMsg([added ? `${added} קבצים הועלו וממתינים לקריאה` : '', ...notes].filter(Boolean).join(' · '))
+    if (added) moments.upload({ from: zone.current, count: added, names })
+    else if (notes.length) moments.fail({ title: 'לא הועלו קבצים', sub: notes[0] })
     onDone?.()
   }
 
   return (
     <div
+      ref={zone}
       className={`fin-drop ${over ? 'is-over' : ''} ${compact ? 'fin-drop--compact' : ''}`}
       onDragOver={(e) => { e.preventDefault(); setOver(true) }}
       onDragLeave={() => setOver(false)}

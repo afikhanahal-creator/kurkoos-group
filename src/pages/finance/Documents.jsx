@@ -12,6 +12,7 @@ import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
 import DateRange, { sayRange } from './DateRange.jsx'
 import SendToAccountant from './SendToAccountant.jsx'
+import { moments } from './moments.js'
 
 const TABS = [
   { id: '', label: 'הכול' },
@@ -118,8 +119,10 @@ export default function Documents({ preset = 'all' }) {
   const runBulk = async (label, patchFor, targets, skipped) => {
     setConfirm(null); setBusy(label); setNote('')
     try {
-      await api.updateDocuments(targets.map((d) => d.id), patchFor)
+      const out = await api.updateDocuments(targets.map((d) => d.id), patchFor)
+      const approved = (out || []).filter((d) => d.status === 'approved').length
       setNote(`${targets.length} מסמכים עודכנו${skipped ? `, ${skipped} דולגו` : ''}`)
+      if (label === 'approve' && approved) moments.approve({ from: document.querySelector('.fin-bulk .fin-btn--primary'), title: approved === 1 ? 'המסמך אושר' : `${approved} מסמכים אושרו`, sub: 'מוכנים לשליחה לרו״ח' })
       setSel(new Set()); await reload()
     } catch (e) { setNote(/SECOND_APPROVAL/.test(e.message) ? 'חלק מהמסמכים דורשים מאשר נוסף' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת מזו של המסמך' : e.message) } finally { setBusy('') }
   }
@@ -143,6 +146,7 @@ export default function Documents({ preset = 'all' }) {
       const r = await api.saveToCloud(list.map((d) => d.id))
       const ok = r.results.filter((x) => x.ok); const bad = r.results.filter((x) => !x.ok)
       const fresh = ok.filter((x) => !x.already).length
+      if (fresh) moments.save({ title: `${fresh === 1 ? 'מסמך אחד נשמר' : `${fresh} מסמכים נשמרו`} ב-${r.provider === 'gdrive' ? 'Google Drive' : 'Dropbox'}`, sub: 'בתיקיית השנה והחודש' })
       const where = r.provider === 'gdrive' ? 'Google Drive' : 'Dropbox'
       setNote([fresh ? `${fresh === 1 ? 'מסמך אחד נשמר' : `${fresh} מסמכים נשמרו`} ב-${where}` : '', ok.length - fresh ? `${ok.length - fresh} כבר היו שמורים` : '', bad.length ? `${bad.length} לא נשמרו: ${bad[0].error}` : ''].filter(Boolean).join('. ') + '.')
       copies.reload()

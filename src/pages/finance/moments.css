@@ -1,0 +1,43 @@
+/* moments: the overlay layer, the flying pieces, the toasts; hover and press states on the cards people touch most */
+.fin-moments { position: fixed; inset: 0; pointer-events: none; z-index: var(--z-top, 140); }
+.fin-moment__chip { position: fixed; display: grid; place-items: center; width: 38px; height: 46px; border-radius: 7px; background: var(--sheet); color: var(--ocean-2); border: 1px solid var(--line-2); box-shadow: 0 10px 24px rgba(7, 41, 58, 0.22); will-change: transform, opacity; }
+.fin-moment__chip.is-down { width: 40px; height: 40px; border-radius: 12px; background: var(--ocean); color: #fff; border: 0; }
+.fin-moment__plane { position: fixed; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: var(--paper); box-shadow: 0 10px 28px rgba(7, 41, 58, 0.3); will-change: transform, opacity; }
+.fin-moment__trail { position: fixed; width: 8px; height: 8px; border-radius: 50%; background: var(--ocean); will-change: transform, opacity; }
+.fin-moment__ring { position: fixed; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ocean); will-change: transform, opacity; }
+.fin-moment__stamp { position: fixed; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--ok-wash); color: var(--ok); border: 2px solid var(--ok); box-shadow: 0 8px 24px rgba(31, 111, 76, 0.25); will-change: transform, opacity; }
+.fin-moment__stamp .fin-moment__tick { stroke-dasharray: 24; stroke-dashoffset: 24; animation: fin-tick 360ms 120ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fin-tick { to { stroke-dashoffset: 0; } }
+
+.fin-toasts { position: fixed; z-index: var(--z-top, 140); inset-inline-start: 24px; bottom: calc(24px + var(--safe-b, 0px)); display: grid; gap: 8px; width: min(380px, calc(100vw - 32px)); pointer-events: none; }
+.fin-toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 14px; border-radius: var(--r-l); background: var(--ink); color: var(--paper); box-shadow: 0 14px 34px rgba(7, 41, 58, 0.28); }
+.fin-toast__icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: rgba(255, 255, 255, 0.12); color: #8fe0b5; flex: none; }
+.fin-toast.is-attn .fin-toast__icon { color: #ffb4a8; }
+.fin-toast__text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.fin-toast__text strong { font-size: var(--t-md); }
+.fin-toast__text small { font-size: var(--t-xs); color: rgba(255, 255, 255, 0.75); overflow: hidden; text-overflow: ellipsis; }
+.fin-toast__act { all: unset; cursor: pointer; font-weight: 700; color: #9cd3ea; padding: 6px 8px; border-radius: 8px; }
+.fin-toast__x { all: unset; cursor: pointer; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1; }
+.fin-toast__x:hover, .fin-toast__act:hover { background: rgba(255, 255, 255, 0.1); }
+.fin-toast__x:focus-visible, .fin-toast__act:focus-visible { outline: 2px solid #9cd3ea; }
+.fin[data-theme='dark'] .fin-toast { background: #1f3342; }
+@media (max-width: 760px) { .fin-toasts { inset-inline: 16px; width: auto; bottom: calc(80px + var(--safe-b, 0px)); } }
+
+/* touch and hover: a lift you can feel on the surfaces that open something, a press on everything that acts */
+@media (hover: hover) {
+  .fin-x-act, .fin-doccard, .fin-wa__phone, .fin-settings__links button, .fin-cset__pick button, .fin-tile, .fin-action, .fin-x-hero__main, .fin-onb__card .fin-btn {
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .fin-x-act:hover, .fin-doccard:hover, .fin-wa__phone:hover, .fin-settings__links button:hover, .fin-tile:hover, .fin-action:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(7, 41, 58, 0.10); }
+  .fin-x-rows button:hover .fin-x-rows__bar i, .fin-x-list button:hover i { filter: brightness(1.08); }
+  .fin-x-feed li button:hover .fin-x-feed__src { background: var(--ocean-wash); color: var(--ocean-2); }
+}
+.fin-btn:active:not(:disabled), .fin-x-act:active, .fin-tile:active, .fin-action:active, .fin__upload:active, .fin-tabbar__add:active span { transform: scale(0.97); }
+.fin-table--docs tbody tr { transition: background-color var(--dur) var(--ease); }
+/* the drop zone answers a file held over it */
+.fin-drop.is-over { transform: scale(1.01); box-shadow: 0 0 0 3px var(--ocean-wash), 0 12px 30px rgba(7, 41, 58, 0.12); transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+@media (prefers-reduced-motion: reduce) {
+  .fin-moments { display: none; }
+  .fin-x-act:hover, .fin-doccard:hover, .fin-wa__phone:hover, .fin-settings__links button:hover, .fin-tile:hover, .fin-action:hover, .fin-drop.is-over { transform: none; }
+  .fin-btn:active:not(:disabled), .fin-x-act:active, .fin-tile:active, .fin-action:active, .fin__upload:active { transform: none; }
+}

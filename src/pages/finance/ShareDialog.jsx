@@ -6,6 +6,7 @@ import { money, signedTotal } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Select from './Select.jsx'
 import { Field, Icon, Modal, useAsync } from './ui.jsx'
+import { moments } from './moments.js'
 
 const pretty = (p) => (p.startsWith('972') ? `0${p.slice(3, 5)}-${p.slice(5)}` : `+${p}`)
 const MAX_WA = 20
@@ -58,11 +59,13 @@ export default function ShareDialog({ doc, docs: many, blobUrl, onClose, initial
       setProgress({ done: sent + failed.length, of: files.length })
     }
     setProgress(null)
+    if (sent) moments.send({ title: `${sent === 1 ? 'מסמך אחד נשלח' : `${sent} מסמכים נשלחו`} בוואטסאפ`, sub: target })
     if (sent) setMsg(`${sent === 1 ? 'מסמך אחד נשלח' : `${sent} מסמכים נשלחו`} בוואטסאפ ל-${pretty(target.replace(/\D/g, '').replace(/^0/, '972'))}.`)
     if (failed.length) setErr(`${failed.length === 1 ? 'מסמך אחד לא נשלח' : `${failed.length} מסמכים לא נשלחו`}: ${failed.slice(0, 2).join(' · ')}`)
   }
   const sendMail = async () => {
     const r = await api.callServer('email-docs', { ids: docs.map((d) => d.id), to, note, cc_me: ccMe })
+    moments.send({ title: `נשלח במייל: ${r.sent === 1 ? 'מסמך אחד' : `${r.sent} מסמכים`}`, sub: r.to.join(', ') })
     setMsg(`נשלח במייל ל-${r.to.join(', ')}: ${r.sent === 1 ? 'מסמך אחד' : `${r.sent} מסמכים`}, ${r.attached} קבצים מצורפים וקובץ Excel${r.linked ? `, ${r.linked} בקישור` : ''}.`)
   }
   const submit = async (e) => {

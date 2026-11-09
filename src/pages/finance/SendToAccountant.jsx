@@ -3,6 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { money, signedTotal } from './format.js'
 import { Field, Icon, Modal } from './ui.jsx'
+import { moments } from './moments.js'
 
 /* One email with the chosen documents: originals attached, a CSV summary, and a table in the body. */
 export default function SendToAccountant({ docs, period, onClose, onSent, markDefault = false }) {
@@ -25,6 +26,7 @@ export default function SendToAccountant({ docs, period, onClose, onSent, markDe
     try {
       const r = await api.callServer('send-to-accountant', { ids: sendable.map((d) => d.id), to, note, cc_me: ccMe, period, mark: mark && markable.length > 0 })
       if (r.marked) await reload()
+      moments.send({ from: e.nativeEvent?.submitter || document.activeElement, title: `נשלח לרו״ח: ${r.sent === 1 ? 'מסמך אחד' : `${r.sent} מסמכים`}`, sub: r.to.join(', ') })
       onSent(r)
     } catch (e2) { setErr(e2.message) } finally { setBusy(false) }
   }

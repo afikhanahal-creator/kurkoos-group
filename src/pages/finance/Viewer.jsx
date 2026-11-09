@@ -4,6 +4,7 @@ import * as api from './api.js'
 import ShareDialog from './ShareDialog.jsx'
 import { loadPdf } from './Thumbnail.jsx'
 import { Icon } from './ui.jsx'
+import { moments } from './moments.js'
 
 const MAX_PAGES = 12
 const STEPS = [0.6, 0.8, 1, 1.25, 1.5, 2, 2.5]
@@ -83,6 +84,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       const r = await api.saveToCloud([doc.id])
       const x = r.results[0]
       if (!x?.ok) throw new Error(x?.error || 'השמירה לא הצליחה')
+      if (!x.already) moments.save({ title: `נשמר ב-${r.provider === 'gdrive' ? 'Google Drive' : 'Dropbox'}`, sub: x.path || '' })
       setDrive({ busy: false, link: x.link || '', msg: x.already ? 'המסמך כבר שמור בענן' : `נשמר ב-${r.provider === 'gdrive' ? 'Google Drive' : 'Dropbox'}`, err: '' })
     } catch (e) { setDrive({ busy: false, link: '', msg: '', err: e.message }) }
   }
@@ -126,7 +128,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       )}
       <span className="fin-viewer__sep" aria-hidden="true" />
       <a className="fin-icon-btn" href={blobUrl} target="_blank" rel="noopener noreferrer" aria-label="פתיחה בחלון חדש" title="פתיחה בחלון חדש של הדפדפן"><Icon name="external" size={17} /></a>
-      <a className="fin-icon-btn" href={blobUrl} download={name || 'document'} aria-label="הורדה" title="הורדת הקובץ המקורי"><Icon name="download" size={17} /></a>
+      <a className="fin-icon-btn" href={blobUrl} download={name || 'document'} onClick={(e) => moments.download({ from: e.currentTarget, name: name || 'document' })} aria-label="הורדה" title="הורדת הקובץ המקורי"><Icon name="download" size={17} /></a>
       <button type="button" className="fin-icon-btn fin-viewer__wide" onClick={print} aria-label="הדפסה" title="הדפסה"><Icon name="print" size={17} /></button>
       {canSave && <button type="button" className="fin-icon-btn" onClick={saveDrive} disabled={drive.busy} aria-label="שמירה בדרייב" title="שמירה ב-Google Drive"><Icon name={drive.busy ? 'sync' : 'cloud'} size={17} /></button>}
       {doc && <button type="button" className="fin-icon-btn" onClick={() => setShare(true)} aria-label="שיתוף" title="שיתוף בוואטסאפ או במייל"><Icon name="share" size={17} /></button>}

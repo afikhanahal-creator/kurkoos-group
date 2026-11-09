@@ -1,6 +1,19 @@
 // Agent 5: deterministic checks on the extracted fields. Nothing here is AI: every issue is a rule
 // a person can read. Errors keep the document in review; nothing is ever approved automatically.
 
+/* Israeli VAT by date (חוק מע״מ, the standard rate). A rate is never hard-coded: the date on the document picks it.
+   A change in the law is one new row here. */
+export const VAT_RATES = [
+  { from: '2012-09-01', to: '2013-06-01', rate: 0.17 },
+  { from: '2013-06-02', to: '2015-09-30', rate: 0.18 },
+  { from: '2015-10-01', to: '2024-12-31', rate: 0.17 },
+  { from: '2025-01-01', to: null, rate: 0.18 },
+]
+export const vatRateOn = (iso) => {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(String(iso || '')) ? iso : new Date().toISOString().slice(0, 10)
+  return (VAT_RATES.find((r) => d >= r.from && (!r.to || d <= r.to)) || VAT_RATES[VAT_RATES.length - 1]).rate
+}
+
 /* Israeli company / person ID check digit (ת"ז, ח.פ, ע.מ: 9 digits) */
 export function validIsraeliId(id) {
   const s = String(id || '').replace(/\D/g, '')
@@ -29,8 +42,7 @@ export function validate(doc, ctx = {}) {
 
   if (before !== null && vat !== null && total !== null && Math.abs(before + vat - total) > 1) add('error', 'sum', 'total_amount', `לפני מע״מ ועוד מע״מ (${(before + vat).toFixed(2)}) אינם שווים לסה״כ`)
   if (before && vat !== null && (doc.currency || 'ILS') === 'ILS' && INVOICE_TYPES.includes(doc.doc_type) && vat !== 0) {
-    const year = Number(String(doc.issue_date || '').slice(0, 4)) || new Date().getFullYear()
-    const rate = year >= 2025 ? 0.18 : 0.17
+    const rate = vatRateOn(doc.issue_date)
     if (Math.abs(vat / before - rate) > 0.006) add('warn', 'vat_rate', 'vat_amount', `שיעור המע״מ (${((vat / before) * 100).toFixed(1)}%) שונה מ-${rate * 100}%`)
   }
   if (total !== null && total < 0 && doc.doc_type !== 'credit') add('warn', 'negative', 'total_amount', 'סכום שלילי במסמך שאינו זיכוי')

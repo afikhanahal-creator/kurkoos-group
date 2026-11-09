@@ -206,8 +206,8 @@ export default async function handler(req, res) {
         // "old receipts": the period starts earlier; the next scan reads the gap once
         const from = String(body.from || '')
         const d = new Date(`${from}T00:00:00Z`)
-        const min = new Date(); min.setUTCFullYear(min.getUTCFullYear() - 3)
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || Number.isNaN(d.getTime()) || d > new Date() || d < min) { res.status(400).json({ error: 'תאריך לא תקין (עד שלוש שנים אחורה)' }); return }
+        const min = new Date(); min.setUTCFullYear(min.getUTCFullYear() - 4); min.setUTCDate(min.getUTCDate() - 1)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || Number.isNaN(d.getTime()) || d > new Date() || d < min) { res.status(400).json({ error: 'תאריך לא תקין (עד ארבע שנים אחורה)' }); return }
         const boxes = (await sb(`fin_mailboxes?status=in.(active,error)${body.mailbox_id ? `&id=eq.${q(body.mailbox_id)}` : ''}&select=id,sync_from,email,backfill_pending,backfill_until`)) || []
         for (const b of boxes) if (!b.sync_from || b.sync_from > from) await patch(`fin_mailboxes?id=eq.${b.id}`, { sync_from: from, backfill_pending: true, backfill_until: b.backfill_pending && b.backfill_until ? b.backfill_until : b.sync_from || null })
         await audit('mailbox', body.mailbox_id || 'all', 'backfill', { from, mailboxes: boxes.length }, user)

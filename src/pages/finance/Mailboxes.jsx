@@ -9,7 +9,7 @@ import Select from './Select.jsx'
 
 const PROV = { gmail: 'Gmail', outlook: 'Office 365', imap: 'IMAP' }
 const STATE = { active: ['ok', 'מחובר'], error: ['attn', 'תקלה בחיבור'], paused: ['muted', 'מושהה'] }
-const PRESETS = [[3, '3 חודשים'], [6, 'חצי שנה'], [12, 'שנה'], [24, 'שנתיים']]
+const PRESETS = [[3, '3 חודשים'], [6, 'חצי שנה'], [12, 'שנה'], [24, 'שנתיים'], [48, '4 שנים']]
 const monthsAgo = (n) => { const d = new Date(); d.setMonth(d.getMonth() - n); return d.toISOString().slice(0, 10) }
 
 function OldReceipts({ current, onClose, onDone }) {
@@ -26,7 +26,7 @@ function OldReceipts({ current, onClose, onDone }) {
       <div className="fin-seg" role="group" aria-label="כמה זמן אחורה">
         {PRESETS.map(([n, l]) => <button key={n} type="button" className={from === monthsAgo(n) ? 'is-on' : ''} onClick={() => setFrom(monthsAgo(n))}>{l}</button>)}
       </div>
-      <Field label="או מתאריך"><input type="date" lang="he-IL" value={from} max={current || undefined} min={monthsAgo(36)} onChange={(e) => setFrom(e.target.value)} /></Field>
+      <Field label="או מתאריך"><input type="date" lang="he-IL" value={from} max={current || undefined} min={monthsAgo(48)} onChange={(e) => setFrom(e.target.value)} /></Field>
       <p className="fin-muted fin-small">סריקה גדולה מתחלקת לכמה הרצות. הריצה היומית ממשיכה מאיפה שעצרה, ואפשר גם ללחוץ "סנכרון" שוב.</p>
       {err && <p className="fin-error" role="alert">{err}</p>}
     </Modal>

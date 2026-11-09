@@ -214,6 +214,16 @@ export default function FinanceApp() {
   }, [navOpen])
 
   const role = data.me?.role || null
+  // a private system: never indexed, never cached by a search engine (the server also sends X-Robots-Tag for /admin)
+  useEffect(() => {
+    let m = document.querySelector('meta[name="robots"]')
+    const before = m?.getAttribute('content')
+    if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'robots'); document.head.appendChild(m) }
+    m.setAttribute('content', 'noindex, nofollow, noarchive')
+    // and no measurement: any Google tag loaded by a public page before stays silent here
+    for (const k of Object.keys(window)) if (k.startsWith('ga-disable-')) window[k] = true
+    return () => { if (before) m.setAttribute('content', before); else m.remove() }
+  }, [])
   const [capture, setCapture] = useState(false)
   const ctx = useMemo(() => ({ ...data, role, can: (w) => can(role, w), go: (p) => navigate(`${BASE}${p}`) }), [data, role, navigate])
   const nav = NAV.filter((n) => role && n.roles.includes(role))

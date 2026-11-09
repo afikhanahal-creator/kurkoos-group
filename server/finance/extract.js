@@ -88,7 +88,7 @@ export async function extract({ buf, mime, text, categories, hint }) {
     text: [
       'This document (or email) was received by a company of the Kurkoos group in Israel (construction, real estate development, supervision, brokerage).',
       'Fill the fields ONLY from what is printed. Never invent or compute a value that is not printed: leave it empty (or null) and give it a low confidence.',
-      'Amounts are plain numbers, no currency signs or thousands separators. Israeli VAT is 18% since 2025 (17% before).',
+      'Amounts are plain numbers, no currency signs or thousands separators. Israeli VAT by document date: 18% from 2025-01-01, 17% from 2015-10-01 to 2024-12-31, 18% from 2013-06-02 to 2015-09-30. Read the rate printed on the document; never assume it.',
       'חשבונית מס = invoice, חשבונית מס/קבלה = invoice_receipt, קבלה = receipt, חשבונית זיכוי = credit, דרישת תשלום / חשבון ספק = supplier_bill, אישור תשלום / אישור העברה = payment_confirmation, חשבון עסקה = proforma, הצעת מחיר = quote.',
       'First decide document_class. Kept as expenses: tax_invoice (חשבונית מס), invoice_receipt (חשבונית מס/קבלה), receipt (קבלה), transaction_invoice (חשבון עסקה / proforma), credit_note (חשבונית זיכוי), supplier_bill (דרישת תשלום), payment_confirmation (אישור תשלום / העברה).',
       'Not expenses: quote (הצעת מחיר), purchase_order (הזמנה), contract (חוזה / הסכם), legal (מכתב עורך דין, כתב תביעה), marketing (newsletter, advertisement, promotion), correspondence (a letter or email with no invoice), bank_statement, personal, other.',

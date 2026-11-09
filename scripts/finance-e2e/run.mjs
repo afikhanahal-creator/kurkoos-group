@@ -1215,6 +1215,30 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   `גלילה: ${phOv}px; פריטים: ${tabs}; מסמכים: ${phDocs}; ריווח תחתון ${lastRowCovered.pad}px מול סרגל ${Math.round(lastRowCovered.bar)}px; צילום: ${capOpen}`,
   phOv <= 0 && tabVisible && tabs === 5 && phDocs && lastRowCovered.pad >= lastRowCovered.bar && capOpen, [phShot, phShot2])
 
+// =================== analytics never sees the finance system ===================
+{
+  const ga = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'he-IL' })
+  const gp = await ga.newPage()
+  const hits = []
+  await gp.route(/google-analytics\.com|googletagmanager\.com|facebook\.net|connect\.facebook|doubleclick/, (route) => { hits.push({ url: route.request().url(), at: gp.url() }); route.fulfill({ status: 204, body: '' }) })
+  await gp.goto('http://127.0.0.1:5180/'); await gp.waitForTimeout(1500)
+  const onPublic = hits.length
+  // into the finance system without a page load, as a person clicking a link would
+  await gp.evaluate(() => { history.pushState({}, '', '/admin/finance'); dispatchEvent(new PopStateEvent('popstate')) }); await gp.waitForTimeout(1200)
+  await gp.fill('input[type=email]', 'admin@kurkoos.test').catch(() => {}); await gp.fill('input[type=password]', 'Passw0rd!x').catch(() => {}); await gp.click('button[type=submit]').catch(() => {})
+  await gp.waitForTimeout(2500)
+  const flag = await gp.evaluate(() => Object.keys(window).filter((k) => k.startsWith('ga-disable-')).map((k) => window[k]))
+  const robots = await gp.evaluate(() => document.querySelector('meta[name="robots"]')?.content || '')
+  const inFinance = hits.filter((h) => /\/admin/.test(h.at) && /collect|\/g\/|tr\?/.test(h.url))
+  const vj = JSON.parse(fs.readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'))
+  const adminHeaders = Object.fromEntries((vj.headers.find((h) => h.source === '/admin(.*)')?.headers || []).map((h) => [h.key, h.value]))
+  const robotsTxt = fs.readFileSync(new URL('../../public/robots.txt', import.meta.url), 'utf8')
+  await ga.close()
+  record('GA-SEP', 'הפרדת אנליטיקה: מערכת הכספים לא נמדדת', 'מעבר מעמוד ציבורי למערכת הכספים בלי טעינת עמוד: הדגל ga-disable דולק, אף בקשת מדידה לא יוצאת ממערכת הכספים, meta robots=noindex, השרת שולח X-Robots-Tag ו-Referrer-Policy: no-referrer, ו-robots.txt חוסם /admin',
+    `בקשות מדידה בעמוד הציבורי: ${onPublic}; ממערכת הכספים: ${inFinance.length}; דגל: ${JSON.stringify(flag)}; meta: "${robots}"; כותרות: ${JSON.stringify(adminHeaders)}`,
+    inFinance.length === 0 && flag.length > 0 && flag.every((x) => x === true) && /noindex/.test(robots) && /noindex/.test(adminHeaders['X-Robots-Tag'] || '') && adminHeaders['Referrer-Policy'] === 'no-referrer' && /Disallow: \/admin/.test(robotsTxt))
+}
+
 // dark mode screenshot
 await page.goto(`${APP}/documents`); await page.waitForTimeout(500)
 await page.getByRole('button', { name: 'מצב כהה' }).click(); await page.waitForTimeout(500)

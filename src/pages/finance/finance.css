@@ -449,6 +449,8 @@
 .fin-doccard__top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
 .fin-doccard__supplier { background: none; border: 0; padding: 0; font-weight: 700; color: var(--ink); cursor: pointer; text-align: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--t-base); }
 button.fin-doccard__supplier:hover { color: var(--ocean); }
+/* the supplier name opens the supplier: on a phone it is a full 44px target */
+@media (max-width: 760px) { button.fin-doccard__supplier { min-height: 44px; display: inline-flex; align-items: center; } }
 .fin-doccard__amount { margin: 0; font-size: var(--t-2xl); font-weight: 300; color: var(--ink); line-height: 1.1; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
 .fin-doccard__amount small { font-size: var(--t-xs); color: var(--muted); }
 .fin-doccard__meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 0.75rem; margin: 0; padding-top: 0.5rem; border-top: 1px solid var(--line); }
@@ -1283,8 +1285,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-sharebig span { display: grid; }
 .fin-sharebig small { color: var(--muted); font-size: var(--t-sm); }
 @media (max-width: 700px) { .fin-viewer__wide, .fin-viewer__sep:first-of-type { display: none; } }
-/* a phone narrower than the toolbar: it stays inside the viewer and scrolls sideways instead of being cut at both ends */
-@media (max-width: 700px) { .fin-viewer__bar { max-width: calc(100% - var(--s-4)); overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; } .fin-viewer__bar::-webkit-scrollbar { display: none; } .fin-viewer__bar > * { flex: none; } }
+/* a phone narrower than the toolbar: it stays inside the viewer and wraps to a second row instead of being cut */
+@media (max-width: 700px) { .fin-viewer__bar { max-width: calc(100% - var(--s-4)); flex-wrap: wrap; justify-content: center; border-radius: 24px; } .fin-viewer__bar > * { flex: none; } }
 
 /* first-export empty state */
 .fin-firstexp { display: grid; justify-items: center; text-align: center; gap: var(--s-3); padding: var(--s-6) var(--s-4) var(--s-8); max-width: 560px; margin: 0 auto; }
@@ -1605,7 +1607,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-more-rows { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 14px; color: var(--text-2); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
 
 /* overview: one tab per company, with its spend for the period; the chosen company gets its own card */
-.fin-x-cos { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px; margin: -2px; scroll-snap-type: x proximity; }
+/* every company stays in view: the tabs wrap to a second row instead of hiding past the edge */
+.fin-x-cos { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px; margin: -2px; }
 .fin-x-cos::-webkit-scrollbar { display: none; }
 .fin-x-cos button { all: unset; box-sizing: border-box; flex: none; scroll-snap-align: start; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 120px; min-height: 52px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
 .fin-x-cos button span { font-weight: 700; color: var(--ink); white-space: nowrap; }
@@ -1890,7 +1893,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 @media (max-width: 860px) {
   .fin-settings { grid-template-columns: 1fr; gap: 14px; }
   .fin-settings__nav { position: static; }
-  .fin-settings__nav ul { display: flex; overflow-x: auto; scrollbar-width: none; gap: 6px; }
+  .fin-settings__nav ul { display: flex; flex-wrap: wrap; gap: 6px; }
   .fin-settings__nav ul::-webkit-scrollbar { display: none; }
   .fin-settings__nav button { flex: none; width: auto; white-space: nowrap; border: 1px solid var(--line); background: var(--sheet); }
   .fin-cset__grid { grid-template-columns: 1fr; }

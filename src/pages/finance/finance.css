@@ -2043,3 +2043,40 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 /* a value to copy as is (a redirect address, a key name) */
 .fin-copyline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .fin-copyline code { padding: 6px 10px; border-radius: var(--r-s); background: var(--wash); color: var(--ink); font-size: var(--t-sm); word-break: break-all; }
+
+/* company profile: identity, official numbers and address on the start side; the company card (what documents show, the
+   details a tax invoice must carry) beside it on a computer, under it on a phone */
+.fin-cset__logo-img { border-radius: 10px; object-fit: contain; background: #fff; border: 1px solid var(--line); flex: none; }
+.fin-cset__mark { display: grid; place-items: center; flex: none; }
+.fin-cset__who { display: flex; align-items: center; gap: 12px; }
+.fin-cset__new { border-style: dashed !important; }
+.fin-cprof { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.fin-cprof__main { display: grid; gap: 22px; min-width: 0; }
+.fin-cprof__sec { display: grid; gap: 12px; }
+.fin-cprof__sec + .fin-cprof__sec { padding-top: 20px; border-top: 1px solid var(--line); }
+.fin-cprof__sec h4 { margin: 0; font-size: var(--t-base); color: var(--ink); }
+.fin-cprof__logo { display: flex; align-items: center; gap: 16px; padding: 12px; border: 1px dashed var(--line-2); border-radius: var(--r-l); }
+.fin-cprof__logo > img, .fin-cprof__logo-empty { width: 76px; height: 76px; border-radius: 14px; object-fit: contain; background: #fff; border: 1px solid var(--line); flex: none; }
+.fin-cprof__logo-empty { display: grid; place-items: center; color: var(--muted); background: var(--wash); }
+.fin-cprof__logo > div { display: grid; gap: 4px; }
+.fin-cprof__logo strong { color: var(--ink); }
+.fin-cprof__logo small { color: var(--text-2); font-size: var(--t-xs); }
+.fin-cprof__logo-acts { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.fin-cprof__logo-acts label { cursor: pointer; }
+.fin-cprof__inline { display: flex; gap: 8px; align-items: center; }
+.fin-cprof__inline input { flex: 1; min-width: 0; }
+.fin-cprof__card { position: sticky; top: 84px; display: grid; gap: 14px; padding: 18px; border-radius: var(--r-l); background: var(--sheet); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(7, 41, 58, 0.06); }
+.fin-cprof__card-label { font-size: var(--t-xs); color: var(--text-2); }
+.fin-cprof__card-head { display: flex; align-items: center; gap: 12px; }
+.fin-cprof__card-head strong { display: block; color: var(--ink); font-size: var(--t-lg); line-height: 1.25; }
+.fin-cprof__card-head small { color: var(--text-2); font-size: var(--t-xs); }
+.fin-cprof__card dl { margin: 0; display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.fin-cprof__card dl div { display: flex; justify-content: space-between; gap: 12px; font-size: var(--t-sm); }
+.fin-cprof__card dt { color: var(--text-2); flex: none; }
+.fin-cprof__card dd { margin: 0; color: var(--ink); font-weight: 600; text-align: end; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fin-cprof__must { list-style: none; margin: 0; padding: 12px; border-radius: var(--r-m); background: var(--wash); display: grid; gap: 6px; font-size: var(--t-sm); }
+.fin-cprof__must-title { font-weight: 700; color: var(--ink); font-size: var(--t-xs); }
+.fin-cprof__must li { display: flex; align-items: center; gap: 6px; }
+.fin-cprof__must li.is-ok { color: var(--ok); }
+.fin-cprof__must li.is-miss { color: var(--attn); }
+@media (max-width: 1100px) { .fin-cprof { grid-template-columns: 1fr; } .fin-cprof__card { position: static; } }

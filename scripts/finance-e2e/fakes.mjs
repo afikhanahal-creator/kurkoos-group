@@ -121,6 +121,17 @@ const server = http.createServer(async (req, res) => {
     if (req.headers['x-api-key'] !== 'test-anthropic-key') return send(res, 401, { type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } })
     const body = JSON.parse(await readBody(req))
     if (!body.output_config?.format?.schema) return send(res, 400, { type: 'error', error: { type: 'invalid_request_error', message: 'expected structured output' } })
+    // like the real API: structured outputs reject numeric, length and array-size constraints (only minItems 0 or 1)
+    const badKey = (function walk(n, path) {
+      if (!n || typeof n !== 'object') return null
+      for (const [k, v] of Object.entries(n)) {
+        if (['maxItems', 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf', 'minLength', 'maxLength', 'uniqueItems'].includes(k) || (k === 'minItems' && v > 1)) return `${path}: property '${k}' is not supported`
+        const r = typeof v === 'object' ? walk(v, k === 'properties' ? path : `${path}.${k}`) : null
+        if (r) return r
+      }
+      return null
+    })(body.output_config.format.schema, 'output_config.format.schema')
+    if (badKey) return send(res, 400, { type: 'error', error: { type: 'invalid_request_error', message: badKey } })
     const content = body.messages[0].content
     const doc = content.find((c) => c.type === 'document' || c.type === 'image')
     const text = content.find((c) => c.type === 'text')?.text || ''

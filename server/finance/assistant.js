@@ -25,7 +25,7 @@ const PART = {
   },
 }
 // a complex question becomes up to three parts, each one query computed on its own (a comparison plus a ranking, two periods)
-const PLAN = { type: 'object', additionalProperties: false, required: ['parts'], properties: { parts: { type: 'array', minItems: 1, maxItems: 3, items: PART } } }
+const PLAN = { type: 'object', additionalProperties: false, required: ['parts'], properties: { parts: { type: 'array', description: '1 to 3 parts; most questions are one part', items: PART } } }   // the API takes no maxItems: the code keeps the first 3
 const docsTxt = (n) => (n === 1 ? 'מסמך אחד' : `${n} מסמכים`)
 const money = (v) => `${(Math.round(v * 100) / 100).toLocaleString('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₪`
 const sign = (d) => (d.doc_type === 'credit' ? -1 : 1)

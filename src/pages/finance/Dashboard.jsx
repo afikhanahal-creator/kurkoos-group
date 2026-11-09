@@ -1,15 +1,16 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useState } from 'react'
+import CaptureReceipt from './CaptureReceipt.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
 import { ago, date, docDate, hasError, money } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Thumbnail from './Thumbnail.jsx'
-import { Icon, Pill, StatusPill, UploadZone, useAsync } from './ui.jsx'
+import { Icon, Pill, StatusPill, useAsync } from './ui.jsx'
 
-// The daily cron runs at 03:23 UTC (vercel.json); the next scan is shown in the viewer's local time
+// The night collection runs at 00:23 UTC (vercel.json: 02:23 or 03:23 in Israel); shown in the viewer's local time
 function nextScan() {
-  const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), 3, 23))
+  const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), 0, 23))
   if (t <= n) t.setUTCDate(t.getUTCDate() + 1)
   const today = t.toDateString() === n.toDateString()
   return `${today ? 'היום' : 'מחר'} ב-${t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`
@@ -24,7 +25,7 @@ export default function Dashboard() {
   const ops = can('operate')
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
   const phones = useAsync(() => (can('upload') ? api.loadWhatsappSenders() : []), [])
-  const upload = useRef(null)
+  const [capture, setCapture] = useState(false)
 
   const m = useMemo(() => {
     const week = Date.now() - 7 * 86400_000
@@ -67,15 +68,14 @@ export default function Dashboard() {
 
       {can('upload') && (
         <section className="fin-home__actions" aria-label="הוספת מסמך">
-          <button type="button" className="fin-action" onClick={() => upload.current?.querySelector('[data-testid="upload-input"]')?.click()}>
-            <span className="fin-action__icon"><Icon name="upload" size={22} /></span>
-            <span className="fin-action__text"><strong>העלאת מסמך</strong><small>PDF או צילום. הסוכנים יקראו אותו תוך שניות</small></span>
+          <button type="button" className="fin-action" onClick={() => setCapture(true)}>
+            <span className="fin-action__icon"><Icon name="camera" size={22} /></span>
+            <span className="fin-action__text"><strong>צילום או העלאת קבלה</strong><small>הסוכנים קוראים ספק, סכומים, מע״מ ותאריך, ואתם משייכים לפרויקט</small></span>
           </button>
           <a className={`fin-action ${waLink ? '' : 'is-off'}`} href={waLink || undefined} target="_blank" rel="noopener noreferrer" onClick={(e) => { if (!waLink) { e.preventDefault(); go('/scanners') } }}>
             <span className="fin-action__icon fin-action__icon--wa"><ProviderLogo name="whatsapp" size={24} /></span>
             <span className="fin-action__text"><strong>שליחה בוואטסאפ</strong><small>{waLink ? <>צלמו ושלחו ל-<bdi dir="ltr">{pretty(wa.number)}</bdi>{myPhone ? '' : ' (רשמו קודם את הטלפון שלכם)'}</> : 'הגדרת הקליטה מ-WhatsApp'}</small></span>
           </a>
-          <div ref={upload} className="fin-sr" aria-hidden="true"><UploadZone onDone={reload} compact /></div>
         </section>
       )}
 
@@ -140,6 +140,7 @@ export default function Dashboard() {
           </section>
         )}
       </div>
+      {capture && <CaptureReceipt onClose={() => setCapture(false)} />}
     </div>
   )
 }

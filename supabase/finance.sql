@@ -1304,3 +1304,57 @@ grant select on public.fin_deliveries to authenticated;
 drop policy if exists "fin_deliveries read" on public.fin_deliveries;
 create policy "fin_deliveries read" on public.fin_deliveries for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager', 'accountant']));
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v9 (2026-11-08): the collection engine — stages, retries with backoff, duplicate links, quality, AI usage
+-- ============================================================
+alter table public.fin_documents add column if not exists stage text;                 -- received | ocr | validating | matching | ready | failed | dead
+alter table public.fin_documents add column if not exists stage_at timestamptz;
+alter table public.fin_documents add column if not exists next_retry_at timestamptz;   -- a failed read is retried with growing gaps
+alter table public.fin_documents add column if not exists duplicate_of uuid references public.fin_documents(id) on delete set null;
+alter table public.fin_documents add column if not exists duplicate_state text;        -- suspected | confirmed | dismissed
+alter table public.fin_documents add column if not exists quality jsonb;               -- image/document quality as Claude saw it
+alter table public.fin_documents add column if not exists page_count int;
+alter table public.fin_documents add column if not exists ai_tokens_in int not null default 0;
+alter table public.fin_documents add column if not exists ai_tokens_out int not null default 0;
+alter table public.fin_documents add column if not exists ai_calls int not null default 0;
+create index if not exists fin_documents_retry on public.fin_documents (next_retry_at) where status = 'failed';
+create index if not exists fin_documents_stuck on public.fin_documents (stage_at) where status = 'processing';
+create index if not exists fin_documents_dup on public.fin_documents (duplicate_of) where duplicate_of is not null;
+
+-- the morning report inherits the owner's choice for the old daily summary (email or not)
+insert into public.fin_automations (key, name, description, frequency, config, enabled)
+select 'morning_report', 'דוח בוקר', 'סיכום האיסוף של הלילה, נשלח בבוקר למנהלים', 'daily', coalesce((select config from public.fin_automations where key = 'daily_summary'), '{"email": true}'), coalesce((select enabled from public.fin_automations where key = 'daily_summary'), true)
+on conflict (key) do nothing;
+insert into public.fin_automations (key, name, description, frequency, config) values
+  ('day_collection', 'איסוף במהלך היום', 'סריקה קצרה של התיבות כשמישהו פותח את המערכת, אם עברו יותר משעתיים מהסריקה האחרונה', 'on_event', '{"every_minutes": 120}')
+on conflict (key) do nothing;
+insert into public.fin_settings (key, value) values ('engine_tick', '{"at": null}') on conflict (key) do nothing;
+
+notify pgrst, 'reload schema';
+
+-- one engine tick at a time (the night cron, the morning cron and people opening the app can overlap)
+create or replace function public.fin_engine_claim(p_minutes int default 5)
+returns boolean language sql volatile security definer set search_path = '' as $$
+  with c as (update public.fin_settings set value = jsonb_build_object('at', now()), updated_at = now()
+             where key = 'engine_tick' and (value->>'at' is null or (value->>'at')::timestamptz < now() - make_interval(mins => p_minutes)) returning 1)
+  select exists (select 1 from c);
+$$;
+revoke all on function public.fin_engine_claim(int) from public, anon, authenticated;
+grant execute on function public.fin_engine_claim(int) to service_role;
+notify pgrst, 'reload schema';
+
+-- v9.1: one reader per document. The attempt is counted when the reading starts, so a function that dies half way
+-- still moves the document towards "a person needs to look" instead of being read again forever.
+alter table public.fin_documents add column if not exists failures int not null default 0;   -- failed readings in a row
+create or replace function public.fin_doc_claim(p_id uuid, p_next timestamptz)
+returns int language sql volatile security definer set search_path = '' as $$
+  update public.fin_documents
+     set stage = 'ocr', stage_at = now(), attempts = attempts + 1, failures = failures + 1, next_retry_at = p_next
+   where id = p_id and status in ('processing', 'failed', 'review', 'duplicate')
+     and not (coalesce(stage, '') = 'ocr' and coalesce(stage_at, 'epoch'::timestamptz) > now() - interval '3 minutes')
+  returning attempts;
+$$;
+revoke all on function public.fin_doc_claim(uuid, timestamptz) from public, anon, authenticated;
+grant execute on function public.fin_doc_claim(uuid, timestamptz) to service_role;
+notify pgrst, 'reload schema';

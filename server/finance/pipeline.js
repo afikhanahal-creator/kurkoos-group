@@ -3,8 +3,8 @@
 //   → classification (company, project, category) → the document waits in review for a person.
 import crypto from 'node:crypto'
 import { MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.js'
-import { sb, one, insert, patch, q, upload, download, storageUsage } from './db.js'
-import { extract } from './extract.js'
+import { sb, one, insert, patch, q, rpc, upload, download, storageUsage } from './db.js'
+import { extract, verify, needsVerify, crossCheck } from './extract.js'
 import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
 import * as gmail from './providers/gmail.js'
@@ -21,12 +21,38 @@ export const mimeOf = (name, given) => {
   return { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' }[String(name).toLowerCase().split('.').pop()] || given
 }
 
+/* every source reads documents the same way: a full reading, then, when the reading is unsure, the arithmetic does
+   not close or the image is poor, a second independent reading of the critical fields (validation layer 3) */
+export async function readDocument(input, runs, { deadline = Infinity } = {}) {
+  const x = await extract(input)
+  const usage = { ...(x._usage || { in: 0, out: 0, calls: 1 }) }
+  if (x.is_financial_document && needsVerify(x) && Date.now() > deadline) x.verification = { skipped: 'time' }
+  else if (x.is_financial_document && needsVerify(x)) {
+    try {
+      const y = await verify(input)
+      const cc = crossCheck(x, y)
+      x.field_confidence = cc.field_confidence
+      x.verification = { second: y, disagree: cc.disagree, at: new Date().toISOString() }
+      usage.in += y._usage?.in || 0; usage.out += y._usage?.out || 0; usage.calls += 1
+      if (runs) runs.validation.stat.details.verified = (runs.validation.stat.details.verified || 0) + 1
+    } catch (e) { x.verification = { error: String(e.message || e).slice(0, 200) } }
+  }
+  Object.defineProperty(x, '_usage', { value: usage, enumerable: false, configurable: true, writable: true })
+  return x
+}
+const usageFields = (x, prev = {}) => ({ ai_tokens_in: (prev.ai_tokens_in || 0) + (x?._usage?.in || 0), ai_tokens_out: (prev.ai_tokens_out || 0) + (x?._usage?.out || 0), ai_calls: (prev.ai_calls || 0) + (x?._usage?.calls || 0) })
+
+/* failed readings come back after 15 min, 1 h, 4 h, 12 h; after 5 attempts the document waits for a person */
+export const MAX_ATTEMPTS = 5
+const BACKOFF_MIN = [15, 60, 240, 720]
+export const nextRetry = (attempts) => (attempts >= MAX_ATTEMPTS ? null : new Date(Date.now() + BACKOFF_MIN[Math.min(attempts - 1, BACKOFF_MIN.length - 1)] * 60_000).toISOString())
+
 let catCache = null
 const categories = async () => (catCache ||= ((await sb('fin_categories?select=name&order=sort')) || []).map((c) => c.name))
 const automation = async (key) => one(`fin_automations?key=eq.${key}&select=*`)
 
 /* Claude's answer → document fields, issues and suggestions. Never approves. */
-export async function analyze(x, { selfId = null, mailbox = null, fromEmail = '', subject = '', text = '' } = {}, runs) {
+export async function analyze(x, { selfId = null, selfCreated = null, mailbox = null, fromEmail = '', subject = '', text = '' } = {}, runs) {
   const vat = digits(x.supplier_vat_id)
   const fields = {
     supplier_name: x.supplier_name || null,
@@ -43,6 +69,8 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
     description: x.description || null,
     payment_method: x.payment_method || null,
     field_confidence: x.field_confidence || null,
+    quality: x.quality || null,
+    page_count: Number.isInteger(x.page_count) ? x.page_count : null,
     confidence: minConfidence(x.field_confidence),
     extraction: x,
     email_subject: subject || undefined,
@@ -67,9 +95,18 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
   const dupCheck = await automation('duplicate_check')
   let duplicateOf = null; let possibleDuplicate = false
   if (dupCheck?.enabled !== false) {
-    if (fields.doc_number && vat) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${vat}&doc_number=eq.${q(fields.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))?.id || null
-    if (!duplicateOf && fields.supplier_id && fields.issue_date && fields.total_amount !== null) {
-      possibleDuplicate = !!(await one(`fin_documents?supplier_id=eq.${fields.supplier_id}&issue_date=eq.${fields.issue_date}&total_amount=eq.${fields.total_amount}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))
+    // signal 1: the same issuer number and document number (any source, any file)
+    if (fields.doc_number && vat) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${vat}&doc_number=eq.${q(fields.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id&order=created_at.asc`))?.id || null
+    // signal 2: the same supplier, total and date (±1 day): a photo of an invoice that also arrived by email
+    if (!duplicateOf && fields.total_amount !== null && fields.issue_date && (fields.supplier_id || vat)) {
+      const d0 = new Date(`${fields.issue_date}T00:00:00Z`); const lo = new Date(d0.getTime() - 86400_000).toISOString().slice(0, 10); const hi = new Date(d0.getTime() + 86400_000).toISOString().slice(0, 10)
+      const who = fields.supplier_id ? `supplier_id=eq.${fields.supplier_id}` : `supplier_vat_id=eq.${vat}`
+      // two receipts with different printed numbers are two purchases (two coffees, two fuel fill-ups): only a copy
+      // without a number, or with the same number, is suspected; and only an earlier document can be "the original"
+      // a receipt with a number is compared only with the same number; one without a number with any earlier receipt
+      const numbers = fields.doc_number ? `&doc_number=eq.${q(fields.doc_number)}` : ''
+      const earlier = selfCreated ? `&created_at=lt.${encodeURIComponent(selfCreated)}` : ''
+      possibleDuplicate = (await one(`fin_documents?${who}&total_amount=eq.${fields.total_amount}&issue_date=gte.${lo}&issue_date=lte.${hi}&status=not.in.(rejected,duplicate,archived)${not}${numbers}${earlier}&select=id&order=created_at.asc`))?.id || false
     }
   }
   const flag = await automation('amount_flag')
@@ -80,7 +117,10 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
     const past = ((await sb(`fin_documents?supplier_id=eq.${fields.supplier_id}&status=in.(approved,sent)&select=total_amount&limit=30`)) || []).map((d) => Number(d.total_amount)).filter((v) => v > 0).sort((a, b) => a - b)
     if (past.length >= 3) supplierMedian = past[Math.floor(past.length / 2)]
   }
-  fields.issues = [...validate(fields, { duplicateOf, possibleDuplicate, flagAmount: thresholds.length ? Math.min(...thresholds) : null, supplierMedian, extractionNotes: x.notes }), ...cls.issues]
+  fields.issues = [...validate(fields, { duplicateOf, possibleDuplicate: !!possibleDuplicate, flagAmount: thresholds.length ? Math.min(...thresholds) : null, supplierMedian, extractionNotes: x.notes, quality: x.quality, disagree: x.verification?.disagree }), ...cls.issues]
+  // a suspected duplicate is linked to the original, never dropped: a person confirms or dismisses it
+  fields.duplicate_of = duplicateOf || possibleDuplicate || null
+  fields.duplicate_state = duplicateOf ? 'confirmed' : possibleDuplicate ? 'suspected' : null
   if (sup.pending) fields.issues.push({ level: 'warn', code: 'supplier_pending', field: 'supplier_name', message: 'ספק חדש: נוצרה הצעה שממתינה לאישור' })
   if (sup.conflict) fields.issues.push({ level: 'error', code: 'supplier_conflict', field: 'supplier_vat_id', message: `השם תואם לספק "${sup.conflict.name}" אבל מספר העוסק שונה` })
   if (!x.is_financial_document) fields.issues.unshift({ level: 'warn', code: 'not_financial', field: null, message: 'Claude: לא נראה כמו מסמך כספי' })
@@ -88,6 +128,8 @@ export async function analyze(x, { selfId = null, mailbox = null, fromEmail = ''
 
   fields.status = duplicateOf ? 'duplicate' : 'review'
   fields.processed_at = new Date().toISOString()
+  fields.stage = duplicateOf ? 'ready' : fields.issues.some((i) => i.level === 'error') ? 'validating' : 'ready'
+  fields.stage_at = fields.processed_at
   if (fields.email_subject === undefined) delete fields.email_subject
   return fields
 }
@@ -107,7 +149,7 @@ export async function revalidate(doc) {
   const not = `&id=neq.${doc.id}`
   let duplicateOf = null; let possibleDuplicate = false
   if (doc.doc_number && doc.supplier_vat_id) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${doc.supplier_vat_id}&doc_number=eq.${q(doc.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))?.id || null
-  if (!duplicateOf && doc.supplier_id && doc.issue_date && doc.total_amount !== null) possibleDuplicate = !!(await one(`fin_documents?supplier_id=eq.${doc.supplier_id}&issue_date=eq.${doc.issue_date}&total_amount=eq.${doc.total_amount}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))
+  if (!duplicateOf && doc.duplicate_state !== 'dismissed' && doc.supplier_id && doc.issue_date && doc.total_amount !== null) possibleDuplicate = !!(await one(`fin_documents?supplier_id=eq.${doc.supplier_id}&issue_date=eq.${doc.issue_date}&total_amount=eq.${doc.total_amount}&status=not.in.(rejected,duplicate,archived)${not}&select=id`))
   const flag = await automation('amount_flag')
   // a value a person typed is no longer "unsure": drop the AI confidence of fields that changed
   const fc = { ...(doc.field_confidence || {}) }
@@ -116,6 +158,11 @@ export async function revalidate(doc) {
   // assignment findings that are still true after the edit
   const sup = doc.supplier_id ? await one(`fin_suppliers?id=eq.${doc.supplier_id}&select=status`) : null
   for (const i of doc.issues || []) {
+    // what the reading found about the paper itself stays true after an edit
+    if (['unreadable', 'blurry', 'cropped', 'missing_pages', 'handwritten'].includes(i.code)) issues.push(i)
+    // a disagreement between the two readings stays until a person changes that field
+    if (i.code === 'ai_disagree' && doc.extraction && String(doc.extraction[i.field] ?? '') === String(doc[i.field] ?? '')) issues.push(i)
+    if (i.code === 'possible_duplicate' && doc.duplicate_state === 'suspected' && !possibleDuplicate) issues.push(i)
     if (i.code === 'supplier_pending' && sup?.status === 'pending') issues.push(i)
     if (['no_company', 'unknown_recipient', 'company_suggested'].includes(i.code) && !doc.business_id) issues.push(i)
     if (i.code === 'rule_missing_vat' && !doc.supplier_vat_id) issues.push(i)
@@ -124,25 +171,41 @@ export async function revalidate(doc) {
 }
 
 /* re-read a stored document (an upload, or a retry of a failed one). Approved ones are left alone. */
-export async function processStored(doc, runs, trigger = 'upload') {
+export async function processStored(doc, runs, trigger = 'upload', started = Date.now()) {
   if (['approved', 'sent'].includes(doc.status)) return { skipped: 'approved' }
+  // one reader per document: the claim counts the attempt up front and parks the next retry in the future, so two runs
+  // never read (and pay for) the same document, and a reading that kills the function still runs out of attempts
+  let legacy = false
+  const claimed = await rpc('fin_doc_claim', { p_id: doc.id, p_next: nextRetry((doc.failures || 0) + 1) }).catch((e) => { if (/fin_doc_claim|schema cache/.test(String(e.message))) { legacy = true; return 0 } throw e })
+  if (!legacy && (claimed === null || claimed === undefined || (Array.isArray(claimed) && !claimed.length))) return { skipped: 'busy' }
+  const cur = legacy ? { ...doc, attempts: (doc.attempts || 0) + 1, failures: (doc.failures || 0) + 1 } : await one(`fin_documents?id=eq.${doc.id}&select=attempts,failures,ai_tokens_in,ai_tokens_out,ai_calls`)
+  let x = null
   try {
     const buf = await download(doc.file_path)
     const mime = doc.file_mime || 'application/pdf'
     const isText = mime.startsWith('text/')
-    const x = await extract(isText ? { text: buf.toString('utf8').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' '), categories: await categories() } : { buf, mime, categories: await categories(), hint: `${trigger} file ${doc.file_name || ''}` })
+    x = await readDocument(isText ? { text: buf.toString('utf8').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' '), categories: await categories() } : { buf, mime, categories: await categories(), hint: `${trigger} file ${doc.file_name || ''}` }, runs, { deadline: started + 25_000 })
     runs.ocr.stat.processed++
     const mb = doc.mailbox_id ? await one(`fin_mailboxes?id=eq.${doc.mailbox_id}&select=*`) : null
-    const fields = await analyze(x, { selfId: doc.id, mailbox: mb, fromEmail: doc.email_from || '' }, runs)
+    const fields = await analyze(x, { selfId: doc.id, selfCreated: doc.created_at, mailbox: mb, fromEmail: doc.email_from || '' }, runs)
     if (doc.business_id) fields.business_id = doc.business_id      // a company chosen at upload wins
+    // a person already said "not a duplicate": a new reading does not raise it again
+    if (doc.duplicate_state === 'dismissed' && fields.duplicate_state === 'suspected') { fields.duplicate_state = 'dismissed'; fields.issues = fields.issues.filter((i) => i.code !== 'possible_duplicate') }
     await keepProjectInCompany(fields)
-    fields.attempts = (doc.attempts || 0) + 1
+    fields.attempts = cur.attempts
+    fields.failures = 0
+    fields.next_retry_at = null
+    Object.assign(fields, usageFields(x, cur))
     delete fields._pendingHits
     return await patch(`fin_documents?id=eq.${doc.id}`, fields)
   } catch (e) {
     runs.ocr.stat.errors++
-    const attempts = (doc.attempts || 0) + 1
-    return await patch(`fin_documents?id=eq.${doc.id}`, { status: 'failed', attempts, issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון ${attempts}): ${String(e.message || e).slice(0, 200)}` }] })
+    const retry = nextRetry(cur.failures)
+    const why = String(e.message || e).slice(0, 200)
+    return await patch(`fin_documents?id=eq.${doc.id}`, {
+      status: 'failed', attempts: cur.attempts, failures: cur.failures, stage: retry ? 'failed' : 'dead', stage_at: new Date().toISOString(), next_retry_at: retry, ...usageFields(x, cur),
+      issues: [{ level: 'error', code: 'ocr_failed', field: null, message: retry ? `הקריאה נכשלה (ניסיון ${cur.attempts}): ${why}. ניסיון נוסף אוטומטי בקרוב.` : `הקריאה נכשלה ${cur.failures} פעמים ברצף: ${why}. אפשר לנסות שוב ידנית או למלא את הפרטים.` }],
+    })
   }
 }
 
@@ -199,7 +262,7 @@ export async function syncMailbox(mb, started, runs, trigger) {
         const hash = sha(buf)
         if (await one(`fin_documents?file_hash=eq.${hash}&select=id`)) { stats.skipped++; runs.collector.stat.details.duplicates = (runs.collector.stat.details.duplicates || 0) + 1; return }
         let x = null; let failure = null
-        try { x = await extract(extractInput); runs.ocr.stat.processed++ } catch (e) { failure = e; runs.ocr.stat.errors++ }
+        try { x = await readDocument(extractInput, runs, { deadline: started + TIME_BUDGET_MS - 20_000 }); runs.ocr.stat.processed++ } catch (e) { failure = e; runs.ocr.stat.errors++ }
         if (x && !x.is_financial_document) {
           runs.collector.stat.details.not_financial = [...(runs.collector.stat.details.not_financial || []), `${meta.email_subject} · ${name}`].slice(-20)
           return
@@ -210,7 +273,8 @@ export async function syncMailbox(mb, started, runs, trigger) {
         const base = { ...meta, file_path: path, file_name: String(name).slice(0, 200), file_mime: mime.startsWith('text/') ? 'text/html' : mime, file_size: buf.length, file_hash: hash, attempts: 1 }
         const fields = x
           ? await analyze(x, { mailbox: mb, fromEmail: meta.email_from, subject: meta.email_subject, text: msg.text || '' }, runs)
-          : { status: 'failed', issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${String(failure.message || failure).slice(0, 200)}` }] }
+          : { status: 'failed', failures: 1, stage: 'failed', stage_at: new Date().toISOString(), next_retry_at: nextRetry(1), issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${String(failure.message || failure).slice(0, 200)}. ניסיון נוסף אוטומטי בקרוב.` }] }
+        if (x) Object.assign(fields, usageFields(x))
         const pendingHits = fields._pendingHits; delete fields._pendingHits
         await keepProjectInCompany(fields)
         const newSupplier = fields.suggestions?.supplier?.match === 'new' ? fields.supplier_id : null

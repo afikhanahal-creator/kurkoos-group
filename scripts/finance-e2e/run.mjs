@@ -545,7 +545,7 @@ await page.getByRole('menuitem', { name: 'שליחת בדיקה' }).click().catc
 await page.waitForTimeout(1200)
 const pingMsg = await page.locator('.fin-note').first().innerText().catch(() => '')
 // an event: a manager rejects a document, the client asks the server to deliver
-const rejId = sql("select id from fin_documents where status='review' and file_path is not null and project_id is null and total_amount < 1000 order by created_at desc limit 1")
+const rejId = sql("select id from fin_documents where status='review' and file_path is not null and project_id is null and total_amount < 1000 and file_name not in ('wa-receipt.png') and file_name not like 'cafe-dup-%' order by created_at desc limit 1")
 const rej = await rest(`fin_documents?id=eq.${rejId}`, adminToken, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'rejected' }) })
 const queued = sql(`select count(*) from fin_outbound_queue where document_id='${rejId}'`)
 const f1 = await api(adminToken, { action: 'outbound-flush' })
@@ -571,16 +571,116 @@ await page.locator('.fin-disclosure summary', { hasText: 'יומן משלוחי�
 const delShot = await shot('61-delivery')
 await page.locator('.fin-guide summary').click(); await page.waitForTimeout(300)
 const guideShot = await shot('62-webhook-guide')
+let outChecks = {}
 record('OUT', 'שליחה אוטומטית: webhook ומייל', 'כתובת לא https נדחית; הסוד מוצג פעם אחת ולא נגיש מהדפדפן; בדיקת חיבור עונה 200; דחיית מסמך נשלחת ל-webhook עם חתימה תקינה ונתוני המסמך, ולמייל עם הקובץ מצורף; יעד שנכשל מקבל ניסיון חוזר עם אותו מזהה משלוח ומצליח בשלישי',
   `כתובת שגויה: "${badUrlMsg}"; סודות מהדפדפן: ${secretsVisible.status}/${Array.isArray(secretsVisible.data) ? secretsVisible.data.length : '-'}; בדיקה: "${pingMsg}"; בתור: ${queued}; סבבים: ${[f1, f2, f3, f4].map((f) => `${f.data.sent}/${f.data.failed}`).join(' ')}; חתימה: ${sigOk}; אירוע: ${payload.event} ${payload.data?.supplier?.name || ''} ${payload.data?.file_url ? 'עם קישור' : 'בלי קישור'}; ניסיונות חוזרים: ${retried} (מזהים: ${sameDelivery}); מייל: ${mail ? `${mail.subject} · ${mail.attachments.length} קבצים` : 'לא נשלח'}; תור: ${queueState}`,
-  /https/.test(badUrlMsg) && (secretsVisible.status >= 400 || (Array.isArray(secretsVisible.data) && !secretsVisible.data.length)) && /200/.test(pingMsg) && rej.status < 300 && queued === '3' && sigOk && payload.event === 'document.rejected' && payload.data?.id === rejId && !!payload.data?.file_url && retried === '500,500,200' && sameDelivery === 1 && mail?.attachments?.length === 1 && mail.attachments[0].bytes > 1000 && !/false/.test(queueState) && retryHook.status === 200,
+  (outChecks = { https: /https/.test(badUrlMsg), secrets: secretsVisible.status >= 400 || (Array.isArray(secretsVisible.data) && !secretsVisible.data.length), ping: /200/.test(pingMsg), rej: rej.status < 300, queued: queued === '3', sigOk, ev: payload.event === 'document.rejected', id: payload.data?.id === rejId, url: !!payload.data?.file_url, retried: retried === '500,500,200', same: sameDelivery === 1, mail: mail?.attachments?.length === 1 && mail.attachments[0].bytes > 100, queue: !/false/.test(queueState), hook: retryHook.status === 200 }) && /https/.test(badUrlMsg) && (secretsVisible.status >= 400 || (Array.isArray(secretsVisible.data) && !secretsVisible.data.length)) && /200/.test(pingMsg) && rej.status < 300 && queued === '3' && sigOk && payload.event === 'document.rejected' && payload.data?.id === rejId && !!payload.data?.file_url && retried === '500,500,200' && sameDelivery === 1 && mail?.attachments?.length === 1 && mail.attachments[0].bytes > 100 && !/false/.test(queueState) && retryHook.status === 200,
   [delEmptyShot, secretShot, delShot, guideShot])
+if (!results.at(-1).pass) console.log('OUT checks', JSON.stringify(outChecks))
+
+// =================== THE COLLECTION ENGINE ===================
+// CAP: a phone photo of a receipt — prepared on the device, read, cross-checked, and attached to a project
+await nav('מרכז בקרה')
+await page.locator('.fin-action', { hasText: 'צילום או העלאת קבלה' }).click(); await page.waitForSelector('.fin-capture__start')
+const capStartShot = await shot('80-capture-start')
+const logC0 = await fetch(`${FAKES}/__log`).then((r) => r.json())
+await page.locator('[data-testid=capture-file]').setInputFiles(`${FIX}/receipt-photo.jpg`)
+await page.waitForSelector('.fin-capture__result', { timeout: 60000 }); await page.waitForTimeout(400)
+const capHead = (await page.locator('.fin-capture__head').innerText()).replace(/\s+/g, ' ')
+const capFacts = (await page.locator('.fin-capture__facts').innerText()).replace(/\s+/g, ' ')
+const capCheck = await page.locator('.fin-capture__check').innerText().catch(() => '')
+const capWarn = await page.locator('.fin-capture__warn').innerText().catch(() => '')
+const capShot = await shot('81-capture-result')
+const logC1 = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const capRow = sql(`select file_mime||'|'||file_size||'|'||status||'|'||supplier_name||'|'||total_amount||'|'||vat_amount||'|'||doc_number||'|'||issue_date||'|'||(extraction->'verification'->'disagree')::text||'|'||coalesce(quality->>'blurry','-')||'|'||ai_calls||'|'||(ai_tokens_in>0) from fin_documents where supplier_vat_id='${meta.IDS.hasharon}'`).split('|')
+const origSize = fs.statSync(`${FIX}/receipt-photo.jpg`).size
+await page.locator('.fin-modal').getByLabel(/^פרויקט/).first().selectOption({ label: 'מוהליבר 17' })
+await page.locator('.fin-modal').getByLabel(/^קטגוריה/).first().selectOption({ label: 'חומרי בניין' })
+await page.locator('.fin-modal__foot .fin-btn--primary').click()
+await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 15000 }).catch(() => {})
+const capSaved = sql(`select coalesce((select name from fin_projects where id=d.project_id),'-')||'|'||coalesce(d.category,'-')||'|'||d.status from fin_documents d where supplier_vat_id='${meta.IDS.hasharon}'`)
+record('CAP', 'צילום קבלה: הכנה, קריאה, אימות ושיוך', 'התמונה (2400×3200) מוקטנת במכשיר ל-1650×2200 JPEG לפני ההעלאה; הסוכנים קוראים ספק, מספר, תאריך, לפני מע״מ, מע״מ וסה״כ; צילום מטושטש מקבל קריאה שנייה לאימות ואזהרה; משייכים לפרויקט ולקטגוריה ונשמר כהוצאה לבדיקה',
+  `הוקטנה: ${logC1.claudeDims.includes('1650x2200')}, ${capRow[0]} ${Math.round(capRow[1] / 1024)}KB (המקור ${Math.round(origSize / 1024)}KB); במסך: "${capHead}" · ${capFacts}; קריאה שנייה: ${(logC1.verifyCalls || 0) - (logC0.verifyCalls || 0)}, אי-הסכמות: ${capRow[8]}; "${capCheck}"; אזהרה: "${capWarn.replace(/\s+/g, ' ')}"; קריאות AI: ${capRow[10]}, טוקנים: ${capRow[11]}; אחרי שמירה: ${capSaved}`,
+  logC1.claudeDims.includes('1650x2200') && capRow[0] === 'image/jpeg' && capRow[2] === 'review' && capRow[3] === 'חומרי בניין השרון' && capRow[4] === '755.20' && capRow[5] === '115.20' && capRow[6] === '24-7781' && capRow[8] === '[]' && capRow[9] === 'true' && capRow[10] === '2' && capRow[11] === 'true'
+    && (logC1.verifyCalls || 0) - (logC0.verifyCalls || 0) === 1 && /755/.test(capHead) && /24-7781/.test(capFacts) && /תואמים/.test(capCheck) && /מטושטש/.test(capWarn) && capSaved === 'מוהליבר 17|חומרי בניין|review',
+  [capStartShot, capShot])
+
+// XVAL: the ACE receipt was misread as 263; the second reading saw 236 — the disagreement is kept and flagged
+const aceVer = JSON.parse(sql("select coalesce((extraction->'verification'->'disagree')::text,'[]') from fin_documents where file_name='ace-receipt.png'") || '[]')
+const aceTotal = aceVer.find((d) => d.field === 'total_amount')
+record('XVAL', 'אימות בשתי קריאות (שכבה 3)', 'כשהחשבון לא נסגר או שהוודאות נמוכה, קריאה שנייה ממוקדת של השדות הקריטיים; כשהן לא מסכימות, שני הערכים נשמרים והשדה מסומן לבדיקה', `אי-הסכמה: ${JSON.stringify(aceVer)}`, aceTotal && Number(aceTotal.first) === 263 && Number(aceTotal.second) === 236)
+
+// DUPX: the WhatsApp café receipt arrives again by email — with its number (certain) and without (suspected)
+const waDocId = sql("select id from fin_documents where file_name='wa-receipt.png'")
+await nav('כל המסמכים')
+await page.getByRole('button', { name: 'הוספת מסמכים' }).click()
+await page.locator('[data-testid=upload-input]').setInputFiles([`${FIX}/cafe-dup-exact.pdf`, `${FIX}/cafe-dup-fuzzy.pdf`, `${FIX}/cafe-second.pdf`])
+await page.waitForFunction(() => /הועלו/.test(document.querySelector('.fin-drop__msg')?.textContent || ''), null, { timeout: 30000 })
+for (let i = 0; i < 40 && sql("select count(*) from fin_documents where (file_name like 'cafe-dup-%' or file_name='cafe-second.pdf') and status='processing'") !== '0'; i++) await page.waitForTimeout(500)
+const secondCafe = sql("select status||'|'||coalesce(duplicate_state,'-') from fin_documents where file_name='cafe-second.pdf'")
+const dupExact = sql("select status||'|'||coalesce(duplicate_of::text,'-')||'|'||coalesce(duplicate_state,'-') from fin_documents where file_name='cafe-dup-exact.pdf'").split('|')
+const fuzzyId = sql("select id from fin_documents where file_name='cafe-dup-fuzzy.pdf'")
+const dupFuzzy = sql(`select status||'|'||coalesce(duplicate_of::text,'-')||'|'||coalesce(duplicate_state,'-') from fin_documents where id='${fuzzyId}'`).split('|')
+await page.goto(`${APP}/documents/${fuzzyId}`); await page.waitForSelector('.fin-panel'); await page.waitForTimeout(800)
+const bannerText = await page.locator('.fin-panel__banner.is-warn').innerText().catch(() => '')
+const dupBannerShot = await shot('82-duplicate-suspected')
+await page.locator('.fin-panel__banner.is-warn').getByRole('button', { name: 'זה כפול' }).click(); await page.waitForTimeout(800)
+const dupAfter = sql(`select status||'|'||duplicate_state from fin_documents where id='${fuzzyId}'`)
+const dupAudit = sql(`select count(*) from fin_audit where action='duplicate_confirmed' and entity_id='${fuzzyId}'`)
+await page.keyboard.press('Escape'); await page.waitForTimeout(300)
+record('DUPX', 'כפילות בין מקורות: ודאית וחשודה', 'אותה קבלה מ-WhatsApp ובמייל: עם אותו מספר היא נסגרת ככפולה ומקושרת למקור; בלי מספר (אותו ספק, סכום ותאריך) היא נשארת לבדיקה עם קישור למקור, ואדם מאשר "זה כפול"; קבלה אחרת של אותו בית קפה, באותו סכום ובמספר אחר, לא מסומנת',
+  `ודאית: ${dupExact.join('/')}; חשודה: ${dupFuzzy.join('/')}; קבלה אחרת (מספר שונה): ${secondCafe}; באנר: "${bannerText.replace(/\s+/g, ' ').slice(0, 80)}"; אחרי החלטה: ${dupAfter}, יומן: ${dupAudit}`,
+  secondCafe === 'review|-' && dupExact[0] === 'duplicate' && dupExact[1] === waDocId && dupExact[2] === 'confirmed' && dupFuzzy[0] === 'review' && dupFuzzy[1] === waDocId && dupFuzzy[2] === 'suspected' && /קפה לנדוור/.test(bannerText) && dupAfter === 'duplicate|confirmed' && dupAudit === '1', [dupBannerShot])
+
+// REC: a document stuck "in processing" (the function died) is recovered; a failed reading waits for its backoff, then succeeds
+const pl = await import('../../server/finance/pipeline.js')
+const back = { a1: Math.round((new Date(pl.nextRetry(1)) - Date.now()) / 60000), a2: Math.round((new Date(pl.nextRetry(2)) - Date.now()) / 60000), a5: pl.nextRetry(5) }
+const stuckId = sql("select id from fin_documents where file_name='bezeq-oct.pdf'")
+sql(`update fin_documents set status='processing', stage='ocr', stage_at=now() - interval '30 minutes' where id='${stuckId}'`)
+if (!(await page.locator('[data-testid=upload-input]').count())) await page.getByRole('button', { name: 'הוספת מסמכים' }).click()
+await page.locator('[data-testid=upload-input]').setInputFiles(`${FIX}/flaky.pdf`)
+// the reading fails three times with backoff inside one attempt (1 s + 3 s), then the document is marked failed
+for (let i = 0; i < 80 && sql("select coalesce((select status from fin_documents where file_name='flaky.pdf'),'none')") !== 'failed'; i++) await page.waitForTimeout(500)
+const flaky1 = sql("select status||'|'||attempts||'|'||coalesce(stage,'-')||'|'||round(extract(epoch from (next_retry_at - now()))/60) from fin_documents where file_name='flaky.pdf'").split('|')
+const tick1 = await api(adminToken, { action: 'tick', force: true })
+const afterTick1 = { stuck: sql(`select status from fin_documents where id='${stuckId}'`), flaky: sql("select status||'|'||attempts from fin_documents where file_name='flaky.pdf'") }
+sql("update fin_documents set next_retry_at = now() - interval '1 minute' where file_name='flaky.pdf'")
+const tick2 = await api(adminToken, { action: 'tick', force: true })
+const flaky2 = sql("select status||'|'||attempts||'|'||coalesce(stage,'-')||'|'||coalesce(next_retry_at::text,'-')||'|'||supplier_name from fin_documents where file_name='flaky.pdf'").split('|')
+// the lock: two ticks right after each other — the second one finds the engine busy
+const tickA = await api(adminToken, { action: 'tick' })
+const tickBusy = await api(adminToken, { action: 'tick' })
+record('REC', 'התאוששות וניסיונות חוזרים', 'מסמך שנתקע "בעיבוד" (פונקציה שנפלה) נקרא מחדש; קריאה שנכשלה מחכה 15 דקות, אחר כך שעה, ואחרי 5 ניסיונות עוצרת לטיפול ידני; כשהזמן מגיע היא מצליחה; שתי ריצות לא רצות במקביל',
+  `מרווחים: ${back.a1} דק׳, ${back.a2} דק׳, אחרי 5: ${back.a5}; ראשון: ${flaky1.join('/')}; טיק 1: ${JSON.stringify(tick1.data.retry)} → תקוע: ${afterTick1.stuck}, נכשל: ${afterTick1.flaky}; טיק 2: ${JSON.stringify(tick2.data.retry)} → ${flaky2.join('/')}; טיק נוסף מיד: ${JSON.stringify(tickBusy.data)}`,
+  back.a1 === 15 && back.a2 === 60 && back.a5 === null && flaky1[0] === 'failed' && flaky1[1] === '1' && flaky1[2] === 'failed' && Number(flaky1[3]) >= 14 && tick1.data.retry?.unstuck === 1 && afterTick1.stuck === 'review' && afterTick1.flaky === 'failed|1'
+    && flaky2[0] === 'review' && flaky2[1] === '2' && flaky2[3] === '-' && flaky2[4] === 'גרניט הנדסה' && tickBusy.data.skipped === 'busy' && !!tickA.data)
+
+// SCHED: the night collection runs inside 00:00–05:00 in Israel, the report around 07:00
+const vj = JSON.parse(fs.readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'))
+const cronOf = (q) => vj.crons.find((c) => c.path.includes(q))?.schedule || ''
+const ilHour = (cronExpr, offset) => { const [m, h] = cronExpr.split(' ').map(Number); return (h + offset) % 24 + m / 60 }
+const night = cronOf('action=cron'); const morn = cronOf('action=morning')
+record('SCHED', 'תזמון: איסוף לילה ודוח בוקר', 'איסוף הלילה בין 00:00 ל-05:00 בשעון ישראל (חורף וקיץ), דוח הבוקר סביב 07:00, ואיסוף קצר במהלך היום כשפותחים את המערכת',
+  `לילה: ${night} UTC = ${ilHour(night, 2).toFixed(2)} בחורף / ${ilHour(night, 3).toFixed(2)} בקיץ; בוקר: ${morn} UTC = ${ilHour(morn, 2).toFixed(2)} / ${ilHour(morn, 3).toFixed(2)}`,
+  [2, 3].every((o) => ilHour(night, o) < 5) && ilHour(morn, 2) >= 6.5 && ilHour(morn, 3) <= 8)
+
+// ENGSTAT: the monitoring panel shows real state
+await nav('סוכני AI'); await page.waitForTimeout(1000)
+const engAgents = (await page.locator('.fin-engine__agents').innerText()).replace(/\s+/g, ' ')
+const engFacts = (await page.locator('.fin-engine__facts').innerText()).replace(/\s+/g, ' ')
+const engAi = await page.locator('.fin-engine .fin-muted').innerText()
+const engShot = await shot('83-engine-status')
+record('ENGSTAT', 'מצב המנוע', '"פעיל" רק כשהסוכן עבד באמת: מייל נסרק, WhatsApp קיבל הודעה, הקריאה עבדה; זמני הריצות הבאות; מספרי היום; שימוש ב-AI החודש', `${engAgents.slice(0, 160)} | ${engFacts.slice(0, 120)} | ${engAi}`,
+  (engAgents.match(/פעיל/g) || []).length === 3 && /איסוף הלילה הבא/.test(engFacts) && /טוקנים/.test(engAi) && /קריאה שנייה/.test(engAi), [engShot])
 
 // ---------- the daily cron run ----------
 const cron = await fetch('http://127.0.0.1:5180/api/finance?action=cron', { headers: { Authorization: 'Bearer test-cron' } }).then((r) => r.json())
 const cronBad = await fetch('http://127.0.0.1:5180/api/finance?action=cron').then((r) => r.status)
+const morningRun = await fetch('http://127.0.0.1:5180/api/finance?action=morning', { headers: { Authorization: 'Bearer test-cron' } }).then((r) => r.json())
 const mails = await fetch(`${FAKES}/__log`).then((r) => r.json())
-record('A7', 'הריצה היומית והסיכום היומי', 'ה-cron מריץ את האוטומציות, שומר סיכום ושולח מייל; בלי הסוד הוא נדחה', `${(cron.results || []).map((r) => `${r.key}:${r.status}`).join(', ')}; מיילים: ${mails.emails.map((m) => m.subject).join(' / ')}; בלי סוד: ${cronBad}`, (cron.results || []).find((r) => r.key === 'daily_summary')?.status === 'ok' && mails.emails.some((m) => /סיכום יומי/.test(m.subject)) && cronBad === 401)
+const summary = JSON.parse(sql("select data::text from fin_summaries order by created_at desc limit 1") || '{}')
+const want24 = Number(sql("select count(*) from fin_documents where created_at > now() - interval '24 hours'"))
+record('A7', 'ריצת הלילה ודוח הבוקר', 'ה-cron של הלילה אוסף, מנסה שוב ומשחזר; ה-cron של הבוקר שומר דוח ושולח מייל "דוח בוקר" עם מה שבאמת נשמר (מייל, WhatsApp, לבדיקה, כפילויות, תקלות); בלי הסוד שניהם נדחים', `לילה: ${(cron.results || []).map((r) => `${r.key}:${r.status}`).join(', ')}; בוקר: ${(morningRun.results || []).map((r) => `${r.key}:${r.status || (r.retry ? 'tick' : '')}`).join(', ')}; דוח: נאספו ${summary.collected} (במסד ${want24}), מייל ${summary.by_email}, WhatsApp ${summary.by_whatsapp}, לבדיקה ${summary.review}, חשודים ככפולים ${summary.suspected_duplicates}; מיילים: ${mails.emails.map((m) => m.subject).join(' / ')}; בלי סוד: ${cronBad}`, (cron.results || []).find((r) => r.key === 'daily_scan')?.status === 'ok' && !(cron.results || []).some((r) => r.key === 'daily_summary') && (morningRun.results || []).find((r) => r.key === 'morning_report')?.status === 'ok' && summary.collected === want24 && summary.by_whatsapp >= 1 && summary.by_email >= 1 && mails.emails.some((m) => /דוח בוקר/.test(m.subject)) && cronBad === 401)
 await nav('סוכני AI')
 const agentsShot = await shot('18-agents')
 await nav('כללים ואוטומציה')
@@ -730,7 +830,7 @@ await page.getByRole('button', { name: 'החל', exact: true }).click(); await p
 const chip = await page.locator('.fin-datechip__main').innerText()
 const inRange = await page.locator('.fin-table tbody tr').count()
 const barCount = await page.locator('.fin-rangebar__text strong').innerText()
-const expectRange = sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived')")
+const expectRange = sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived','rejected')")
 const rangeShot = await shot('70-range-summary')
 await page.getByRole('button', { name: 'שליחה לרו״ח' }).first().click(); await page.waitForTimeout(300)
 const prefilled = await page.locator('.fin-modal input[type=email]').inputValue()

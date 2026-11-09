@@ -1,8 +1,8 @@
 // The daily run (Vercel cron) and the automations it drives. Each automation records its own
 // last run, status and error in fin_automations, and each agent records its batch in fin_agent_runs.
 import { env, TIME_BUDGET_MS } from './env.js'
-import { sb, one, patch, insert, agentRun, audit } from './db.js'
-import { syncMailbox, processStored } from './pipeline.js'
+import { rpc, sb, one, patch, insert, agentRun, audit } from './db.js'
+import { syncMailbox, processStored, MAX_ATTEMPTS } from './pipeline.js'
 
 export function newRuns(trigger) {
   const make = async () => ({
@@ -58,18 +58,41 @@ export async function syncAll({ mailboxId, trigger = 'manual', started = Date.no
   return results
 }
 
-export async function retryFailed({ max = 3, started = Date.now(), trigger = 'retry' } = {}) {
-  const docs = (await sb(`fin_documents?status=eq.failed&attempts=lt.${max}&file_path=not.is.null&select=*&order=updated_at.asc&limit=20`)) || []
-  if (!docs.length) return { retried: 0 }
+/* failed readings whose backoff time has come (15 min, 1 h, 4 h, 12 h), and documents stuck "in processing"
+   because a function died half way (a deploy, a timeout). Nothing is lost: the original file is always stored. */
+export async function retryFailed({ max = MAX_ATTEMPTS, started = Date.now(), trigger = 'retry', force = false } = {}) {
+  const now = encodeURIComponent(new Date().toISOString())
+  const due = force ? '' : `&or=(next_retry_at.is.null,next_retry_at.lte.${now})`
+  const docs = (await sb(`fin_documents?status=eq.failed&attempts=lt.${max}&file_path=not.is.null${due}&select=*&order=updated_at.asc&limit=20`)) || []
+  const stuckBefore = encodeURIComponent(new Date(Date.now() - 10 * 60_000).toISOString())
+  const stuck = (await sb(`fin_documents?status=eq.processing&file_path=not.is.null&or=(stage_at.lt.${stuckBefore},and(stage_at.is.null,created_at.lt.${stuckBefore}))&select=*&limit=20`)) || []
+  if (!docs.length && !stuck.length) return { retried: 0, recovered: 0, stuck: 0 }
   const runs = await newDocRuns(trigger)
-  let ok = 0
-  for (const d of docs) {
+  let ok = 0; let unstuck = 0
+  for (const d of [...stuck, ...docs]) {
     if (Date.now() - started > TIME_BUDGET_MS) break
     const r = await processStored(d, runs, 'retry')
-    if (r && r.status !== 'failed') ok++
+    if (r && r.status && r.status !== 'failed') { ok++; if (d.status === 'processing') unstuck++ }
   }
   await closeRuns(runs)
-  return { retried: docs.length, recovered: ok }
+  return { retried: docs.length, recovered: ok, stuck: stuck.length, unstuck }
+}
+
+/* the engine between the nightly runs: recover and retry, and when the last collection is older than the
+   configured gap, a short incremental collection. Runs when the cron calls it or when someone opens the app. */
+export async function engineTick({ started = Date.now(), trigger = 'tick', force = false } = {}) {
+  const claimed = force || (await rpc('fin_engine_claim', { p_minutes: 5 }).catch(() => false)) === true
+  if (!claimed) return { skipped: 'busy' }
+  const out = { retry: await retryFailed({ started, trigger }) }
+  const day = await one('fin_automations?key=eq.day_collection&select=enabled,config')
+  if (day?.enabled !== false) {
+    const gap = (Number(day?.config?.every_minutes) || 120) * 60_000
+    const boxes = (await sb('fin_mailboxes?status=in.(active,error)&select=id,last_scan_at')) || []
+    const stale = boxes.filter((b) => !b.last_scan_at || Date.now() - new Date(b.last_scan_at).getTime() > gap)
+    if (stale.length && Date.now() - started < TIME_BUDGET_MS / 2) out.collection = await syncAll({ trigger: 'day', started })
+  }
+  try { const { flushOutbound } = await import('./outbound.js'); out.outbound = await flushOutbound({ budgetMs: 8_000 }) } catch { /* optional */ }
+  return out
 }
 
 async function managers() {
@@ -88,8 +111,8 @@ export async function sendMail(to, subject, html) {
 }
 
 /* Agent 7: the day's numbers, read from the stored records (not from AI) */
-export async function buildSummary(day = new Date()) {
-  const from = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate() - 1)).toISOString()
+export async function buildSummary(now = new Date()) {
+  const from = new Date(now.getTime() - 24 * 3600_000).toISOString()
   const count = async (path) => ((await sb(`${path}&select=id`)) || []).length
   const data = {
     since: from,
@@ -100,21 +123,28 @@ export async function buildSummary(day = new Date()) {
     failed_docs: await count('fin_documents?status=eq.failed'),
     failed_mailboxes: ((await sb("fin_mailboxes?status=eq.error&select=email,last_error")) || []),
     ready_to_export: await count('fin_documents?status=eq.approved&exported_at=is.null'),
+    by_whatsapp: await count(`fin_documents?created_at=gte.${from}&source=eq.whatsapp`),
+    by_email: await count(`fin_documents?created_at=gte.${from}&mailbox_id=not.is.null`),
+    suspected_duplicates: await count('fin_documents?duplicate_state=eq.suspected&status=eq.review'),
+    needs_person: await count('fin_documents?status=eq.failed&next_retry_at=is.null'),
+    verified: await count(`fin_documents?processed_at=gte.${from}&extraction->verification=not.is.null`),
+    ai_tokens: ((await sb(`fin_documents?processed_at=gte.${from}&select=ai_tokens_in,ai_tokens_out`)) || []).reduce((a, d) => a + (d.ai_tokens_in || 0) + (d.ai_tokens_out || 0), 0),
   }
   return data
 }
 
 const summaryHtml = (d, origin) => `<div dir="rtl" style="font-family:Arial,sans-serif;color:#1a1f2b">
-<h2 style="color:#07293a">סיכום יומי · הנהלת חשבונות קורקוס</h2>
+<h2 style="color:#07293a">KURKOOS FINANCE AI · דוח בוקר</h2>
 <table cellpadding="6" style="border-collapse:collapse">
-<tr><td>מסמכים חדשים שנאספו</td><td><b>${d.collected}</b></td></tr>
+<tr><td>נאספו ב-24 השעות האחרונות</td><td><b>${d.collected}</b> (מייל ${d.by_email ?? 0}, WhatsApp ${d.by_whatsapp ?? 0})</td></tr>
 <tr><td>עובדו בהצלחה</td><td><b>${d.processed}</b></td></tr>
 <tr><td>ממתינים לבדיקה</td><td><b>${d.review}</b></td></tr>
-<tr><td>כפילויות שזוהו</td><td><b>${d.duplicates}</b></td></tr>
+<tr><td>כפילויות שזוהו</td><td><b>${d.duplicates}</b>${d.suspected_duplicates ? ` ועוד ${d.suspected_duplicates} חשודות לבדיקה` : ''}</td></tr>
 <tr><td>מסמכים שהקריאה שלהם נכשלה</td><td><b>${d.failed_docs}</b></td></tr>
 <tr><td>תיבות מייל עם תקלה</td><td><b>${d.failed_mailboxes.length}</b>${d.failed_mailboxes.map((m) => `<br><small>${m.email}: ${m.last_error || ''}</small>`).join('')}</td></tr>
 <tr><td>מאושרים ומוכנים לייצוא</td><td><b>${d.ready_to_export}</b></td></tr>
 </table>
+<p>כל המסמכים שבדוח נשמרו במערכת.${d.needs_person ? ` ${d.needs_person} מסמכים לא נקראו גם אחרי 5 ניסיונות ומחכים לטיפול ידני.` : ''}</p>
 <p><a href="${origin}/admin/finance">לכניסה למערכת</a></p></div>`
 
 export async function dailySummary({ origin = '', email = true } = {}) {
@@ -123,7 +153,7 @@ export async function dailySummary({ origin = '', email = true } = {}) {
     const data = await buildSummary()
     const day = new Date().toISOString().slice(0, 10)
     let sentTo = []
-    if (email) { const to = await managers(); const s = await sendMail(to, `סיכום יומי · ${data.collected} חדשים, ${data.review} לבדיקה`, summaryHtml(data, origin)); if (s.sent) sentTo = to; run.stat.details.email = s }
+    if (email) { const to = await managers(); const s = await sendMail(to, `דוח בוקר · נאספו ${data.collected}, ${data.review} לבדיקה${data.failed_mailboxes.length ? `, ${data.failed_mailboxes.length} תיבות עם תקלה` : ''}`, summaryHtml(data, origin)); if (s.sent) sentTo = to; run.stat.details.email = s }
     await sb('fin_summaries', { method: 'POST', body: { day, data, sent_to: sentTo }, prefer: 'resolution=merge-duplicates,return=minimal' })
     run.stat.processed = 1
     await run.done('ok')
@@ -136,7 +166,7 @@ export async function runDaily(origin) {
   const started = Date.now()
   const out = []
   out.push(await automation('daily_scan', () => syncAll({ trigger: 'cron', started })))
-  out.push(await automation('retry_failed', (cfg) => retryFailed({ max: Number(cfg.max_attempts) || 3, started, trigger: 'cron' })))
+  out.push(await automation('retry_failed', () => retryFailed({ started, trigger: 'cron' })))
   out.push(await automation('connection_alerts', async () => {
     const bad = (await sb('fin_mailboxes?status=eq.error&select=email,last_error')) || []
     if (!bad.length) return { alerts: 0 }
@@ -155,7 +185,7 @@ export async function runDaily(origin) {
   }))
   out.push(await automation('outbound', async () => { const { flushOutbound } = await import('./outbound.js'); return flushOutbound({ max: 200, started, budgetMs: 40_000, trigger: 'cron' }) }))
   out.push(await automation('cloud_sync', async () => { const { syncCloud } = await import('./cloud.js'); return syncCloud({ started, trigger: 'cron' }) }))
-  out.push(await automation('daily_summary', (cfg) => dailySummary({ origin, email: cfg.email !== false })))
+
   out.push(await automation('monthly_package', async () => {
     const prev = new Date(); prev.setUTCDate(1); prev.setUTCMonth(prev.getUTCMonth() - 1)
     const period = prev.toISOString().slice(0, 7)
@@ -168,3 +198,11 @@ export async function runDaily(origin) {
   return out
 }
 
+
+/* the morning: the report of what the night collected (in the app, and by email when enabled) */
+export async function morningReport(origin) {
+  const started = Date.now()
+  const out = [await automation('morning_report', (cfg) => dailySummary({ origin, email: cfg.email !== false }))]
+  out.push({ key: 'tick', ...(await engineTick({ started, trigger: 'cron', force: true })) })
+  return out
+}

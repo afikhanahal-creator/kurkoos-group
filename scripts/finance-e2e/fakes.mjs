@@ -13,6 +13,19 @@ import fs from 'node:fs'
 
 const FIX = process.env.FIN_FIXTURES || '/var/tmp/finfix'
 const PORT = Number(process.env.FAKES_PORT || 54400)
+/* pixel size of a JPEG or PNG, "WxH" */
+function imageDims(b) {
+  if (b[0] === 0x89 && b[1] === 0x50) return `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}`
+  if (b[0] !== 0xff || b[1] !== 0xd8) return null
+  let i = 2
+  while (i < b.length) {
+    if (b[i] !== 0xff) { i++; continue }
+    const m = b[i + 1]
+    if (m >= 0xc0 && m <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(m)) return `${b.readUInt16BE(i + 7)}x${b.readUInt16BE(i + 5)}`
+    i += 2 + b.readUInt16BE(i + 2)
+  }
+  return null
+}
 const hookFails = {}
 const log = { waFiles: [], emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
 const driveItems = []   // { id, name, parents, folder }
@@ -113,11 +126,18 @@ const server = http.createServer(async (req, res) => {
     const text = content.find((c) => c.type === 'text')?.text || ''
     const fx = fixtures()
     let answer = null
+    // the second reading (VERIFY): answers only the critical fields, from verifyAnswers, else the same as the first reading
+    const verifying = text.startsWith('VERIFY:')
+    if (verifying) log.verifyCalls = (log.verifyCalls || 0) + 1
     if (doc) {
-      const hash = crypto.createHash('sha256').update(Buffer.from(doc.source.data, 'base64')).digest('hex')
+      const raw = Buffer.from(doc.source.data, 'base64')
+      const hash = crypto.createHash('sha256').update(raw).digest('hex')
+      const dims = imageDims(raw)
       const limit = fx.claudeFail?.[hash] || 0
       if ((failed[hash] || 0) < limit) { failed[hash] = (failed[hash] || 0) + 1; return send(res, 529, { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }) }
-      answer = fx.answers[hash]
+      answer = fx.answers[hash] || (dims && fx.dimAnswers?.[dims])
+      if (verifying) { const v = fx.verifyAnswers?.[hash] || (dims && fx.verifyAnswers?.[`dims:${dims}`]); answer = v || (answer && Object.fromEntries(['supplier_vat_id', 'doc_number', 'issue_date', 'amount_before_vat', 'vat_amount', 'total_amount'].map((k) => [k, answer[k]]))) }
+      if (dims) log.claudeDims = [...(log.claudeDims || []), dims].slice(-10)
     } else {
       const key = Object.keys(fx.textAnswers || {}).find((k) => text.includes(k))
       answer = key ? fx.textAnswers[key] : null
@@ -180,7 +200,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

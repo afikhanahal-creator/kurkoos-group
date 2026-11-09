@@ -10,11 +10,12 @@ const str = (description) => ({ type: 'string', description })
 export const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['is_financial_document', 'doc_type', 'supplier_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'supplier_email', 'supplier_phone', 'supplier_address', 'supplier_website', 'field_confidence', 'notes'],
+  required: ['is_financial_document', 'doc_type', 'supplier_name', 'supplier_trading_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'supplier_email', 'supplier_phone', 'supplier_address', 'supplier_website', 'discount_amount', 'extra_charges', 'page_count', 'quality', 'totals_text', 'field_confidence', 'notes'],
   properties: {
     is_financial_document: { type: 'boolean', description: 'true for an invoice, receipt, credit note, supplier bill, payment confirmation, proforma or quote' },
     doc_type: { type: 'string', enum: DOC_TYPES },
     supplier_name: str('the business that issued the document, exactly as printed; empty if not printed'),
+    supplier_trading_name: str('the brand / trading name when it differs from the legal name (e.g. "שופרסל דיל" for "שופרסל בע״מ"); empty otherwise'),
     supplier_vat_id: str('issuer ח.פ / ע.מ / VAT number, digits only; empty if not printed'),
     customer_name: str('who the document is addressed to; empty if not printed'),
     customer_vat_id: str('digits only; empty if not printed'),
@@ -35,6 +36,21 @@ export const SCHEMA = {
     supplier_phone: str('the issuer phone; empty if none'),
     supplier_address: str('the issuer address; empty if none'),
     supplier_website: str('the issuer website; empty if none'),
+    discount_amount: { type: ['number', 'null'], description: 'a discount printed on the document, as a positive number; null if none' },
+    extra_charges: { type: ['number', 'null'], description: 'extra charges printed separately (delivery, service, tip); null if none' },
+    page_count: { type: ['integer', 'null'], description: 'pages in this document' },
+    quality: {
+      type: 'object', additionalProperties: false, required: ['readable', 'blurry', 'cropped', 'rotated', 'missing_pages', 'handwritten'],
+      properties: {
+        readable: { type: 'boolean', description: 'the text can be read' },
+        blurry: { type: 'boolean', description: 'a photo that is out of focus or too dark to read some values' },
+        cropped: { type: 'boolean', description: 'part of the document (often the totals or the header) is cut off' },
+        rotated: { type: 'boolean', description: 'the page is sideways or upside down' },
+        missing_pages: { type: 'boolean', description: 'it says "page 1 of 2" (or similar) and a page is missing' },
+        handwritten: { type: 'boolean', description: 'key values are handwritten' },
+      },
+    },
+    totals_text: str('the exact printed lines of the totals block (subtotal, VAT, total), copied as printed; empty if none'),
     field_confidence: {
       type: 'object', additionalProperties: false, required: FIELDS,
       properties: Object.fromEntries(FIELDS.map((f) => [f, { type: 'number', description: '0 to 1' }])),
@@ -77,5 +93,65 @@ export async function extract({ buf, mime, text, categories, hint }) {
   if (!r.ok) throw new Error((d.error && d.error.message) || `claude ${r.status}`)
   if (d.stop_reason === 'refusal') throw new Error('Claude declined to read this document')
   if (d.stop_reason === 'max_tokens') throw new Error('Claude answer was cut off')
-  return JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join(''))
+  const out = JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join(''))
+  // usage, kept per document so the cost of reading is visible (tokens, not a price guess)
+  Object.defineProperty(out, '_usage', { value: { in: d.usage?.input_tokens || 0, out: d.usage?.output_tokens || 0, calls: 1 }, enumerable: false, configurable: true, writable: true })
+  return out
+}
+
+/* Layer 3: a second, independent reading of the critical fields only, with more thinking effort.
+   It runs when the first reading is unsure, the arithmetic does not close, or the image is poor.
+   Agreement raises confidence; disagreement is flagged on the field, and both readings are kept. */
+const VERIFY_FIELDS = ['supplier_vat_id', 'doc_number', 'issue_date', 'amount_before_vat', 'vat_amount', 'total_amount']
+export const VERIFY_SCHEMA = {
+  type: 'object', additionalProperties: false, required: VERIFY_FIELDS,
+  properties: {
+    supplier_vat_id: str('issuer ח.פ / ע.מ, digits only; empty if not printed'),
+    doc_number: str('the document number; empty if not printed'),
+    issue_date: str('YYYY-MM-DD; empty if not printed'),
+    amount_before_vat: num, vat_amount: num,
+    total_amount: { type: ['number', 'null'], description: 'the final total to pay, as printed' },
+  },
+}
+export async function verify({ buf, mime, text }) {
+  if (!env.anthropicKey()) throw new Error('ANTHROPIC_API_KEY לא הוגדר ב-Vercel')
+  const content = []
+  if (buf && mime === 'application/pdf') content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: buf.toString('base64') } })
+  else if (buf) content.push({ type: 'image', source: { type: 'base64', media_type: mime, data: buf.toString('base64') } })
+  content.push({ type: 'text', text: ['VERIFY: read only these values from the document, exactly as printed. Look at the totals block and the header carefully.', 'If a value is not printed or cannot be read with certainty, leave it empty (or null). Do not compute missing values.', text ? `\n--- email ---\n${text.slice(0, 20_000)}` : ''].filter(Boolean).join('\n') })
+  const r = await fetchRetry(`${env.anthropic()}/v1/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
+    body: JSON.stringify({ model: env.model(), max_tokens: 1500, fallbacks: 'default', output_config: { effort: 'high', format: { type: 'json_schema', schema: VERIFY_SCHEMA } }, messages: [{ role: 'user', content }] }),
+  })
+  const d = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error((d.error && d.error.message) || `claude ${r.status}`)
+  const out = JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join(''))
+  Object.defineProperty(out, '_usage', { value: { in: d.usage?.input_tokens || 0, out: d.usage?.output_tokens || 0, calls: 1 }, enumerable: false, configurable: true, writable: true })
+  return out
+}
+
+const same = (k, a, b) => {
+  if (['amount_before_vat', 'vat_amount', 'total_amount'].includes(k)) return (a === null || a === undefined || a === '') === (b === null || b === undefined || b === '') && (a === null || a === undefined || a === '' || Math.abs(Number(a) - Number(b)) <= 0.01)
+  const n = (v) => String(v ?? '').replace(/[\s\-/.]/g, '').toLowerCase()
+  return n(a) === n(b)
+}
+/* should the critical fields get a second reading? */
+export function needsVerify(x) {
+  const fc = x.field_confidence || {}
+  const unsure = VERIFY_FIELDS.some((k) => typeof fc[k] === 'number' && fc[k] < 0.85 && x[k] !== null && x[k] !== '')
+  const b = x.amount_before_vat; const v = x.vat_amount; const t = x.total_amount
+  const sumOff = [b, v, t].every((n) => typeof n === 'number') && Math.abs(b + v - t) > 1
+  const q = x.quality || {}
+  return unsure || sumOff || q.blurry || q.cropped || q.handwritten
+}
+/* compares the two readings; returns the per-field result and the confidence to keep */
+export function crossCheck(x, y) {
+  const fc = { ...(x.field_confidence || {}) }
+  const disagree = []
+  for (const k of VERIFY_FIELDS) {
+    if (same(k, x[k], y[k])) { if (x[k] !== null && x[k] !== '' && typeof fc[k] === 'number') fc[k] = Math.max(fc[k], 0.9) }
+    else { disagree.push({ field: k, first: x[k] ?? null, second: y[k] ?? null }); fc[k] = Math.min(typeof fc[k] === 'number' ? fc[k] : 1, 0.5) }
+  }
+  return { field_confidence: fc, disagree }
 }

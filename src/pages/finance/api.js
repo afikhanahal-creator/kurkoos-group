@@ -94,7 +94,30 @@ async function sha256(file) {
 const OK_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 /* one file from the computer or the phone camera: fingerprint, upload, create the row, Claude reads it */
-export async function uploadFile(file, { businessId, projectId, source = 'upload' } = {}) {
+/* phone photos: turned upright (EXIF), at most 2200 px on the long side, JPEG 86%. Big enough for OCR to read every
+   digit, small enough to keep storage (and the reading) light. PDFs and small images pass through untouched. */
+export async function prepareImage(file) {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
+  let bmp
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }) } catch {
+    if (/heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name)) throw new Error('תמונות HEIC לא נתמכות בדפדפן הזה. צלמו מתוך המערכת או שמרו כ-JPG')
+    return file
+  }
+  const MAX = 2200
+  const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height))
+  if (scale === 1 && file.size < 600_000 && !/hei[cf]/i.test(file.type)) { bmp.close?.(); return file }
+  const c = document.createElement('canvas')
+  c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale)
+  const g = c.getContext('2d')
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height)
+  g.drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.()
+  const blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.86))
+  if (!blob) return file
+  return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'receipt'}.jpg`, { type: 'image/jpeg' })
+}
+
+export async function uploadFile(rawFile, { businessId, projectId, source = 'upload', wait = false, prepared = false } = {}) {
+  const file = prepared ? rawFile : await prepareImage(rawFile)
   if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)
   if (file.size > 12 * 1024 * 1024) throw new Error(`${file.name}: הקובץ גדול מ-12MB`)
   const hash = await sha256(file)
@@ -116,6 +139,11 @@ export async function uploadFile(file, { businessId, projectId, source = 'upload
     // another document with this file exists but this person cannot see it
     if (/duplicate key|unique/i.test(e.message)) return { duplicate: true, hidden: true }
     throw e
+  }
+  // wait: the caller shows the result (receipt capture); otherwise the reading runs in the background
+  if (wait) {
+    // the reading can outlive the request (function limit): the receipt is saved either way and the agents finish it
+    try { return (await callServer('extract', { document_id: row.id, trigger: 'upload' })).document || row } catch { return { ...row, pending: true } }
   }
   callServer('extract', { document_id: row.id, trigger: 'upload' }).catch(() => {})
   return row

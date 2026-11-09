@@ -13,7 +13,7 @@ import crypto from 'node:crypto'
 import { env } from './finance/env.js'
 import { sb, one, insert, patch, q, caller, audit } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
-import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns } from './finance/agents.js'
+import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
 import { CLOUD, syncCloud, connectCloud } from './finance/cloud.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument } from './finance/whatsapp.js'
@@ -43,6 +43,9 @@ const ROLES = {
   'outbound-flush': ['admin', 'finance_manager', 'employee'],
   'members-meta': ['admin'],
   'send-to-accountant': ['admin', 'finance_manager'],
+  tick: ['admin', 'finance_manager', 'employee'],
+  'retry-doc': ['admin', 'finance_manager', 'employee'],
+  'duplicate-decide': ['admin', 'finance_manager'],
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
 }
 
@@ -130,6 +133,12 @@ export default async function handler(req, res) {
     try { res.status(200).json({ results: await runDaily(origin(req)) }) } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
   }
+  // 07:00 Israel: the morning report, then a short catch-up (retries, stuck documents, a day collection)
+  if (req.method === 'GET' && url.searchParams.get('action') === 'morning') {
+    if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) { res.status(401).json({ error: 'unauthorized' }); return }
+    try { res.status(200).json({ results: await morningReport(origin(req)) }) } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
+    return
+  }
 
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
   const user = await caller(req)
@@ -149,7 +158,7 @@ export default async function handler(req, res) {
           email: !!process.env.RESEND_API_KEY,
           cron: !!process.env.CRON_SECRET,
           whatsapp: { configured: waConfigured(), number: officeNumber() },
-          schedule: { cron: '23 3 * * *', tz: 'UTC' },
+          schedule: { night: '23 0 * * *', morning: '57 4 * * *', tz: 'UTC' },
           cloud: Object.fromEntries(Object.entries(CLOUD).map(([k, c]) => [k, c.configured()])),
           adapters: Object.values(ADAPTERS).map(({ id, label, kind, fields, secrets }) => ({ id, label, kind, fields, secrets })),
         })
@@ -175,6 +184,7 @@ export default async function handler(req, res) {
         if (['approved', 'sent'].includes(doc.status)) { res.status(409).json({ error: 'מסמך מאושר לא נקרא מחדש. החזירו אותו לבדיקה קודם' }); return }
         const runs = await newDocRuns(body.trigger === 'upload' ? 'upload' : 'manual')
         const updated = await processStored(doc, runs, body.trigger === 'upload' ? 'upload' : 'manual')
+        if (updated?.skipped === 'busy') { await closeRuns(runs); res.status(200).json({ document: await one(`fin_documents?id=eq.${doc.id}&select=*`), busy: true }); return }
         await closeRuns(runs)
         await flushOutbound({ budgetMs: 8_000 }).catch(() => {})
         res.status(200).json({ document: updated })
@@ -222,7 +232,8 @@ export default async function handler(req, res) {
         return
       }
       case 'retry-failed': {
-        res.status(200).json(await retryFailed({ trigger: 'manual' }))
+        // a person asked: retry now, whatever the backoff schedule says
+        res.status(200).json(await retryFailed({ trigger: 'manual', force: true }))
         return
       }
       case 'summary-now': {
@@ -296,6 +307,34 @@ export default async function handler(req, res) {
       case 'send-to-accountant': {
         const r = await sendToAccountant({ ids: body.ids, to: body.to, note: String(body.note || '').slice(0, 2000), subject: String(body.subject || '').slice(0, 200) || null, ccMe: !!body.cc_me, period: String(body.period || '').slice(0, 60) || null, mark: !!body.mark, user })
         res.status(200).json(r)
+        return
+      }
+      case 'tick': {
+        // someone opened the app: let the engine catch up (it decides itself whether anything is due)
+        res.status(200).json(await engineTick({ trigger: 'tick', force: !!body.force && user.role === 'admin' }))
+        return
+      }
+      case 'retry-doc': {
+        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
+        if (!doc || !doc.file_path) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (user.role === 'employee' && doc.created_by !== user.id) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
+        if (!['failed', 'review', 'processing'].includes(doc.status)) { res.status(409).json({ error: 'אפשר לקרוא מחדש רק מסמך שלא אושר' }); return }
+        const runs = await newDocRuns('manual')
+        const updated = await processStored(doc, runs, 'manual')
+        await closeRuns(runs)
+        res.status(200).json({ document: updated })
+        return
+      }
+      case 'duplicate-decide': {
+        // a person decides on a suspected duplicate: "duplicate" closes it, "not" keeps it and stops the warning
+        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
+        if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (['approved', 'sent'].includes(doc.status)) { res.status(409).json({ error: 'מסמך מאושר לא משתנה כאן' }); return }
+        const dup = body.decision === 'duplicate'
+        const issues = (doc.issues || []).filter((i) => !['possible_duplicate', 'duplicate'].includes(i.code))
+        const row = await patch(`fin_documents?id=eq.${doc.id}`, dup ? { status: 'duplicate', duplicate_state: 'confirmed', issues } : { duplicate_state: 'dismissed', issues })
+        await audit('document', doc.id, dup ? 'duplicate_confirmed' : 'duplicate_dismissed', { of: doc.duplicate_of }, user)
+        res.status(200).json({ document: row })
         return
       }
       case 'whatsapp-send-doc': {

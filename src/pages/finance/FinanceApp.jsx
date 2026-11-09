@@ -101,6 +101,21 @@ function useFinanceData(enabled) {
   }, [reading, reload])
   const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
   const refreshIfStale = useCallback(() => { if (Date.now() - loadedAt.current > 20_000) reload() }, [reload])
+  // opening the app lets the engine catch up between the nightly runs (retries, stuck documents, a day collection).
+  // The server decides whether anything is due and holds a lock, so many open tabs cost nothing.
+  const ticked = useRef(false)
+  useEffect(() => {
+    if (ticked.current || !state.me?.role || state.me.role === 'accountant') return
+    ticked.current = true
+    let last = 0
+    try { last = Number(sessionStorage.getItem('fin-tick') || 0) } catch { /* private mode */ }
+    if (Date.now() - last < 10 * 60_000) return
+    try { sessionStorage.setItem('fin-tick', String(Date.now())) } catch { /* private mode */ }
+    api.callServer('tick').then((r) => {
+      const got = (r?.collection || []).reduce((a, x) => a + (x.imported || 0), 0) + (r?.retry?.recovered || 0)
+      if (got) reload()
+    }).catch(() => {})
+  }, [state.me, reload])
   return { ...state, reload, patchDoc, refreshIfStale }
 }
 

@@ -31,6 +31,30 @@ export default function Agents() {
     } catch (e) { setMsg(e.message) } finally { setBusy('') }
   }
   const latest = (sums.data || [])[0]
+  const status = useAsync(() => api.callServer('status').catch(() => null), [])
+  const inbox = useAsync(() => api.loadWhatsappInbox(1), [])
+  const at = (h, m) => { const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), h, m)); if (t <= n) t.setUTCDate(t.getUTCDate() + 1); return `${t.toDateString() === n.toDateString() ? 'היום' : 'מחר'} ${t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` }
+
+  // an agent is "active" only when its last real run worked; switched on is not enough
+  const engine = useMemo(() => {
+    const boxes = mailboxes.filter((m) => m.status !== 'revoked')
+    const lastOk = boxes.map((m) => m.last_success_at).filter(Boolean).sort().pop()
+    const ocrRuns = list.filter((r) => r.agent === 'ocr')
+    const lastOcr = ocrRuns[0]
+    const today = new Date().toDateString()
+    const month = new Date().toISOString().slice(0, 7)
+    const todays = documents.filter((d) => new Date(d.created_at).toDateString() === today)
+    const thisMonth = documents.filter((d) => String(d.processed_at || d.created_at).slice(0, 7) === month)
+    const fresh = (t, h) => t && Date.now() - new Date(t).getTime() < h * 3600_000
+    return {
+      email: !boxes.length ? ['muted', 'לא מחובר', 'אין תיבה מחוברת'] : boxes.some((m) => m.status === 'error') ? ['attn', 'תקלה', `${boxes.filter((m) => m.status === 'error').length} תיבות צריכות חיבור מחדש`] : fresh(lastOk, 26) ? ['ok', 'פעיל', `נסרק ${ago(lastOk)}`] : ['warn', 'לא נסרק לאחרונה', lastOk ? `נסרק ${ago(lastOk)}` : 'עוד לא נסרק'],
+      whatsapp: !status.data ? ['muted', 'לא ידוע', ''] : !status.data.whatsapp?.configured ? ['muted', 'לא מוגדר', 'חסרים פרטי Green API בשרת'] : (inbox.data || [])[0] ? ['ok', 'פעיל', `הודעה אחרונה ${ago(inbox.data[0].at)}`] : ['ok', 'מוגדר', 'ממתין להודעה ראשונה'],
+      ocr: !status.data ? ['muted', 'לא ידוע', ''] : !status.data.claude ? ['attn', 'לא מוגדר', 'חסר ANTHROPIC_API_KEY'] : lastOcr && lastOcr.errors && !lastOcr.processed ? ['attn', 'תקלה', `קריאה אחרונה נכשלה ${ago(lastOcr.started_at)}`] : lastOcr ? ['ok', 'פעיל', `קריאה אחרונה ${ago(lastOcr.finished_at || lastOcr.started_at)}`] : ['ok', 'מוגדר', 'עוד לא נקרא מסמך'],
+      lastOk,
+      today: { collected: todays.length, ok: todays.filter((d) => ['review', 'approved', 'sent', 'duplicate'].includes(d.status)).length, review: documents.filter((d) => d.status === 'review').length, retrying: documents.filter((d) => d.status === 'failed' && d.next_retry_at).length, person: documents.filter((d) => d.status === 'failed' && !d.next_retry_at).length },
+      ai: { calls: thisMonth.reduce((a, d) => a + (d.ai_calls || 0), 0), tokens: thisMonth.reduce((a, d) => a + (d.ai_tokens_in || 0) + (d.ai_tokens_out || 0), 0), second: thisMonth.filter((d) => d.extraction?.verification && !d.extraction.verification.error).length, docs: thisMonth.filter((d) => d.ai_calls).length },
+    }
+  }, [mailboxes, list, documents, status.data, inbox.data])
 
   return (
     <div className="fin-stack">
@@ -40,6 +64,23 @@ export default function Agents() {
         <button type="button" className="fin-btn" onClick={() => act('summary-now', 'סיכום', { email: false })} disabled={!!busy}><Icon name="docs" size={18} /> סיכום עכשיו</button>
       </PageHead>
       {msg && <p className="fin-note" role="status">{msg}</p>}
+      <section className="fin-engine" aria-label="מצב המנוע">
+        <ul className="fin-engine__agents">
+          {[['mail', 'איסוף ממייל', engine.email], ['phone', 'איסוף מ-WhatsApp', engine.whatsapp], ['sparkle', 'קריאה (OCR ו-AI)', engine.ocr]].map(([icon, name, [tone, state, note]]) => (
+            <li key={name}><span className="fin-engine__icon"><Icon name={icon} size={18} /></span><span className="fin-engine__name"><strong>{name}</strong><small>{note}</small></span><Pill tone={tone}>{state}</Pill></li>
+          ))}
+        </ul>
+        <dl className="fin-engine__facts">
+          <div><dt>איסוף אחרון</dt><dd>{engine.lastOk ? ago(engine.lastOk) : '—'}</dd></div>
+          <div><dt>איסוף הלילה הבא</dt><dd>{at(0, 23)}</dd></div>
+          <div><dt>דוח בוקר</dt><dd>{at(4, 57)}</dd></div>
+          <div><dt>נאספו היום</dt><dd>{engine.today.collected}</dd></div>
+          <div><dt>נקראו בהצלחה היום</dt><dd>{engine.today.ok}</dd></div>
+          <div><dt>ממתינים לבדיקה</dt><dd>{engine.today.review}</dd></div>
+          <div className={engine.today.person ? 'is-attn' : ''}><dt>נכשלו</dt><dd>{engine.today.retrying + engine.today.person}{engine.today.person ? ` (${engine.today.person} לטיפול ידני)` : ''}</dd></div>
+        </dl>
+        <p className="fin-muted fin-small">AI החודש: {engine.ai.docs} מסמכים, {engine.ai.calls} קריאות ({engine.ai.second} מהן קריאה שנייה לאימות), {engine.ai.tokens.toLocaleString('he-IL')} טוקנים. העלות לפי המחירון של Anthropic לטוקנים.</p>
+      </section>
       <div className="fin-agent-grid">
         {cards.map((c) => (
           <article key={c.k} className="fin-agent">

@@ -49,6 +49,18 @@ export function validate(doc, ctx = {}) {
   if (ctx.flagAmount && total !== null && Math.abs(total) >= ctx.flagAmount) add('warn', 'large_amount', 'total_amount', `סכום מעל ${ctx.flagAmount.toLocaleString('he-IL')} ₪`)
   if (ctx.supplierMedian && total !== null && total > ctx.supplierMedian * 3 && total - ctx.supplierMedian > 1000) add('warn', 'unusual_amount', 'total_amount', `פי ${Math.round(total / ctx.supplierMedian)} מהסכום הרגיל של הספק`)
   if (ctx.extractionNotes) add('info', 'ai_note', null, ctx.extractionNotes)
+  // layer 1: can the document be read at all, and is the picture good enough
+  const qy = ctx.quality || {}
+  if (qy.readable === false) add('error', 'unreadable', null, 'המסמך לא קריא. כדאי לצלם שוב באור טוב')
+  else {
+    if (qy.blurry) add('warn', 'blurry', null, 'הצילום מטושטש: כדאי לבדוק את הסכומים')
+    if (qy.cropped) add('warn', 'cropped', null, 'חלק מהמסמך חתוך בצילום')
+    if (qy.missing_pages) add('warn', 'missing_pages', null, 'חסר עמוד במסמך')
+    if (qy.handwritten) add('info', 'handwritten', null, 'חלק מהערכים בכתב יד')
+  }
+  // layer 3: two independent readings did not agree on a field
+  const LABEL = { supplier_vat_id: 'מספר העוסק', doc_number: 'מספר המסמך', issue_date: 'התאריך', amount_before_vat: 'הסכום לפני מע״מ', vat_amount: 'המע״מ', total_amount: 'הסה״כ' }
+  for (const d of ctx.disagree || []) add('error', 'ai_disagree', d.field, `שתי קריאות שונות של ${LABEL[d.field] || d.field}: ${d.first ?? 'ריק'} מול ${d.second ?? 'ריק'}. בדקו מול המסמך`)
   return issues
 }
 

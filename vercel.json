@@ -361,7 +361,11 @@
     },
     {
       "path": "/api/finance?action=cron",
-      "schedule": "23 3 * * *"
+      "schedule": "23 0 * * *"
+    },
+    {
+      "path": "/api/finance?action=morning",
+      "schedule": "57 4 * * *"
     }
   ]
 }

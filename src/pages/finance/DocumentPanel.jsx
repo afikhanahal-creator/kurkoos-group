@@ -54,6 +54,12 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const issueFor = (k) => issues.filter((i) => i.field === k)
   const sug = doc.suggestions || {}
   const mailbox = mailboxes.find((m) => m.id === doc.mailbox_id)
+  const { documents } = useFinance()
+  const original = doc.duplicate_of ? documents.find((d) => d.id === doc.duplicate_of) : null
+  const decideDuplicate = async (decision) => {
+    setBusy(`dup-${decision}`); setErr('')
+    try { const r = await api.callServer('duplicate-decide', { document_id: doc.id, decision }); onSaved(r.document) } catch (e) { setErr(e.message) } finally { setBusy('') }
+  }
 
   useEffect(() => {
     const onKey = (e) => {
@@ -156,6 +162,17 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
             <button type="button" className="fin-icon-btn" onClick={onClose} aria-label="סגירה"><Icon name="close" /></button>
           </div>
         </header>
+
+        {doc.status === 'processing' && <p className="fin-panel__banner is-info" role="status"><Icon name="sparkle" size={16} /> {({ ocr: 'הסוכנים קוראים את המסמך…', validating: 'בודקים את הסכומים…', matching: 'מזהים ספק, חברה ופרויקט…' })[doc.stage] || 'המסמך בעיבוד…'}</p>}
+        {doc.status === 'failed' && <p className="fin-panel__banner is-attn" role="status"><Icon name="alert" size={16} /> <span>{doc.next_retry_at ? `הקריאה נכשלה. ניסיון אוטומטי נוסף ${new Date(doc.next_retry_at) > new Date() ? `ב-${new Date(doc.next_retry_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : 'בקרוב'}.` : 'הקריאה נכשלה כמה פעמים. אפשר לנסות שוב או למלא את הפרטים ידנית.'}</span>{editable && <button type="button" className="fin-btn fin-btn--sm" onClick={reread} disabled={!!busy}>{busy === 'extract' ? 'קורא…' : 'קריאה מחדש עכשיו'}</button>}</p>}
+        {doc.duplicate_state === 'suspected' && doc.status === 'review' && (
+          <div className="fin-panel__banner is-warn" role="status">
+            <Icon name="copy" size={16} />
+            <span>ייתכן שזה כפול של {original ? <button type="button" className="fin-link" onClick={() => go(`/documents/${original.id}`)}>{original.supplier_name || original.file_name}{original.doc_number ? ` ${original.doc_number}` : ''} ({money(original.total_amount, original.currency)})</button> : 'מסמך אחר'}: אותו ספק, אותו סכום ותאריך קרוב.</span>
+            {can('edit') && <span className="fin-panel__banner-actions"><button type="button" className="fin-btn fin-btn--sm" onClick={() => decideDuplicate('duplicate')} disabled={!!busy}>זה כפול</button><button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => decideDuplicate('not')} disabled={!!busy}>לא כפול</button></span>}
+          </div>
+        )}
+        {doc.status === 'duplicate' && original && <p className="fin-panel__banner" role="status"><Icon name="copy" size={16} /> סומן ככפול של <button type="button" className="fin-link" onClick={() => go(`/documents/${original.id}`)}>{original.supplier_name || original.file_name}{original.doc_number ? ` ${original.doc_number}` : ''}</button></p>}
 
         <div className="fin-panel__split">
           <div className="fin-preview"><Preview doc={doc} /></div>

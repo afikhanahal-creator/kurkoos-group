@@ -1170,7 +1170,7 @@ record('EXEC', 'סקירה פיננסית למנכ״ל', 'נפתחת ראשונ�
 
 // the assistant: answers computed from the database, the same number as the overview
 await go('/assistant'); await page.waitForTimeout(600)
-await page.getByRole('button', { name: 'כמה הוצאנו החודש בכל החברות?' }).click()
+await page.getByRole('button', { name: 'שליחה: כמה הוצאנו החודש בכל החברות?', exact: true }).click()
 await page.waitForSelector('.fin-chat__value', { timeout: 20000 })
 const a1 = await page.locator('.fin-chat__bubble.is-ai').first().innerText()
 const a1Value = await page.locator('.fin-chat__value').first().innerText()

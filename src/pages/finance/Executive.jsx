@@ -16,6 +16,7 @@ import { docDate, signedTotal } from './format.js'
 /* The group's financial picture in one screen: what was spent, where it went, which project costs most, who the main
    suppliers are, and what needs the CEO's attention. Every figure comes from stored documents (insights.js), follows
    the bookkeeping rules (ledger.js: a receipt that pays an invoice is not counted again), and opens the documents behind it. */
+const SPANS = [['3', '3 חודשים'], ['6', '6 חודשים'], ['12', '12 חודשים'], ['year', 'השנה']]
 const PERIODS = [['month', 'החודש'], ['last_month', 'החודש שעבר'], ['quarter', 'הרבעון'], ['ytd', 'מתחילת השנה'], ['12m', '12 חודשים'], ['year_last', 'השנה שעברה'], ['custom', 'טווח תאריכים…']]
 const short = (v) => { const a = Math.abs(v); return a >= 1e6 ? `${(v / 1e6).toFixed(a >= 1e7 ? 0 : 1)}M ₪` : a >= 1e4 ? `${Math.round(v / 1e3)}K ₪` : money(v) }
 
@@ -47,7 +48,26 @@ export default function Executive() {
   const group = useMemo(() => (biz ? overview(documents, { businesses, projects, categories, allocations }, period) : o), [biz, o, documents, businesses, projects, categories, allocations, period])
   const k = o.kpi
   const last = documents.map((d) => d.updated_at || d.created_at).filter(Boolean).sort().pop()
-  const maxTrend = Math.max(1, ...o.trend.map((t) => Math.max(t.total, t.lastYear)))
+  // the monthly chart is anchored at this month, whatever period is in view; a month picked on it becomes the period
+  const nowPeriod = useMemo(() => periodOf('month', new Date()), [])
+  const nowKey = nowPeriod.from.slice(0, 7)
+  const base = useMemo(() => (period.to.slice(0, 7) === nowKey && period.key === 'month' ? o : overview(documents, { businesses, projects, categories, allocations }, nowPeriod, { businessId: biz || null })), [o, period, nowKey, nowPeriod, documents, businesses, projects, categories, allocations, biz])
+  const [span, setSpan] = useState(() => { const d = typeof window !== 'undefined' && window.matchMedia('(max-width: 560px)').matches ? '6' : '12'; try { return sessionStorage.getItem('fin-x-span') || d } catch { return d } })
+  const pickSpan = (v) => { setSpan(v); try { sessionStorage.setItem('fin-x-span', v) } catch { /* noop */ } }
+  const months = span === 'year' ? base.trend.filter((t) => t.key.slice(0, 4) === nowKey.slice(0, 4)) : base.trend.slice(-Number(span))
+  const full = months.filter((t) => t.key !== nowKey)
+  const avg = full.length ? full.reduce((a, t) => a + t.total, 0) / full.length : 0
+  const maxTrend = Math.max(1, ...months.map((t) => Math.max(t.total, t.lastYear)))
+  const step = 10 ** Math.floor(Math.log10(maxTrend)); const unit = [1, 2, 2.5, 5, 10].map((m) => m * step).find((u) => maxTrend / u <= 4) || step * 10
+  const top = Math.ceil(maxTrend / unit) * unit
+  const ticks = Array.from({ length: Math.round(top / unit) + 1 }, (_, n) => n * unit)
+  const lastOf = (key) => `${key}-${String(new Date(Date.UTC(+key.slice(0, 4), +key.slice(5), 0)).getUTCDate()).padStart(2, '0')}`
+  const picked = pk === 'custom' && custom.from && custom.from.endsWith('-01') && custom.to === lastOf(custom.from.slice(0, 7)) ? custom.from.slice(0, 7) : null
+  const pickMonth = (key) => { setCustom({ from: `${key}-01`, to: lastOf(key) }); pickPeriod('custom') }
+  const keyAt = (n) => { const i = base.trend.findIndex((t) => t.key === picked); return i < 0 ? null : base.trend[i + n]?.key || null }
+  const canStep = (n) => !!keyAt(n)
+  const stepMonth = (n) => { const k2 = keyAt(n); if (k2) pickMonth(k2) }
+  const focus = hover || picked || nowKey
   const maxCo = Math.max(1, ...o.byCompany.map((c) => c.total))
   const company = businesses.find((b) => b.id === biz)
   const open = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go(`/documents?ids=1&from=${period.from}&to=${period.to}`) }
@@ -153,27 +173,65 @@ export default function Executive() {
 
       <div className="fin-x-grid">
         <div className="fin-x-main">
-          <section className="fin-x-card" aria-label="הוצאות לפי חודש">
-            <header><h3>הוצאות לפי חודש</h3><span className="fin-x-legend"><i className="is-now" /> השנה <i className="is-ly" /> שנה קודמת</span></header>
-            <div className="fin-x-trend" onMouseLeave={() => setHover(null)}>
-              {o.trend.map((t) => (
-                <button key={t.key} type="button" className={`fin-x-trend__col ${hover === t.key ? 'is-hover' : ''}`} onMouseEnter={() => setHover(t.key)} onFocus={() => setHover(t.key)} onClick={() => { pickPeriod('custom'); setCustom({ from: `${t.key}-01`, to: `${t.key}-${new Date(Date.UTC(+t.key.slice(0, 4), +t.key.slice(5), 0)).getUTCDate()}` }) }} aria-label={`${monthName(t.key)}: ${money(t.total)}, שנה קודמת ${money(t.lastYear)}`}>
-                  <span className="fin-x-trend__bars">
-                    <i className="is-ly" style={{ height: `${(t.lastYear / maxTrend) * 100}%` }} />
-                    <i className="is-now" style={{ height: `${Math.max(t.total ? 2 : 0, (t.total / maxTrend) * 100)}%` }} />
-                  </span>
-                  <em>{monthName(t.key).split(' ')[0].slice(0, 3)}</em>
-                </button>
-              ))}
-              {hover && (() => { const t = o.trend.find((x) => x.key === hover); return <div className="fin-x-tip" role="status"><strong>{monthName(t.key)}</strong><span>{money(t.total)} · {t.count} מסמכים</span><span className="fin-muted">שנה קודמת {money(t.lastYear)}</span></div> })()}
+          <section className="fin-x-card fin-x-months" aria-label="הוצאות לפי חודש">
+            <header>
+              <h3>הוצאות לפי חודש</h3>
+              {picked && (
+                <span className="fin-x-monthchip">
+                  <button type="button" onClick={() => stepMonth(-1)} disabled={!canStep(-1)} aria-label="החודש הקודם"><Icon name="chev" size={15} style={{ transform: 'rotate(-90deg)' }} /></button>
+                  <strong>{monthName(picked)}</strong>
+                  <button type="button" onClick={() => stepMonth(1)} disabled={!canStep(1)} aria-label="החודש הבא"><Icon name="chev" size={15} style={{ transform: 'rotate(90deg)' }} /></button>
+                  <button type="button" className="fin-x-monthchip__x" onClick={() => pickPeriod('month')} aria-label="ביטול בחירת החודש">×</button>
+                </span>
+              )}
+              <div className="fin-seg fin-x-span" role="group" aria-label="טווח הגרף">
+                {SPANS.map(([v, l]) => <button key={v} type="button" className={span === v ? 'is-on' : ''} aria-pressed={span === v} onClick={() => pickSpan(v)}>{l}</button>)}
+              </div>
+            </header>
+            {(() => {
+              const f = months.find((t) => t.key === focus) || months[months.length - 1]
+              const i = base.trend.findIndex((t) => t.key === f.key); const before = i > 0 ? base.trend[i - 1] : null
+              const change = before && before.total ? ((f.total - before.total) / Math.abs(before.total)) * 100 : null
+              return (
+                <div className="fin-x-monthsum" aria-live="polite">
+                  <div>
+                    <span className="fin-x-label">{monthName(f.key)}{f.key === nowKey ? ' · עד היום' : ''}</span>
+                    <strong className="fin-x-big">{money(f.total)}</strong>
+                    <Delta value={change} label={before ? `מ${monthName(before.key).split(' ')[0]}` : ''} />
+                  </div>
+                  <dl>
+                    <div><dt>מסמכים</dt><dd>{f.count}</dd></div>
+                    <div><dt>שנה קודמת</dt><dd>{f.lastYear ? short(f.lastYear) : '—'}</dd></div>
+                    <div><dt>ממוצע חודשי</dt><dd>{avg ? short(avg) : '—'}</dd></div>
+                  </dl>
+                </div>
+              )
+            })()}
+            <div className="fin-x-chart" ref={(el) => { if (el && el.scrollWidth > el.clientWidth && !el.dataset.placed) { el.dataset.placed = '1'; el.scrollLeft = getComputedStyle(el).direction === 'rtl' ? -el.scrollWidth : el.scrollWidth } }}>
+              <div className="fin-x-axis" aria-hidden="true">{ticks.map((v) => <span key={v} style={{ bottom: `${(v / top) * 100}%` }}><em>{v ? short(v).replace(' ₪', '') : '0'}</em></span>)}</div>
+              <div className="fin-x-trend" style={{ '--n': months.length }} onPointerLeave={() => setHover(null)}>
+                <div className="fin-x-plot" aria-hidden="true">
+                  {ticks.map((v) => <i key={v} style={{ bottom: `${(v / top) * 100}%` }} />)}
+                  {avg > 0 && <div className="fin-x-avg" style={{ bottom: `${(avg / top) * 100}%` }}><em>ממוצע {short(avg)}</em></div>}
+                </div>
+                {months.map((t, idx) => {
+                  const on = t.key === picked; const isNow = t.key === nowKey
+                  const showYear = idx === 0 || t.key.endsWith('-01')
+                  return (
+                    <button key={t.key} type="button" aria-pressed={on} aria-label={`${monthName(t.key)}: ${money(t.total)}, ${t.count} מסמכים`}
+                      className={`fin-x-trend__col ${hover === t.key ? 'is-hover' : ''} ${on ? 'is-on' : ''} ${picked && !on ? 'is-dim' : ''} ${isNow ? 'is-now-month' : ''}`}
+                      onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHover(t.key) }} onFocus={(e) => { if (e.target.matches(':focus-visible')) setHover(t.key) }} onBlur={() => setHover(null)} onClick={() => (on ? pickPeriod('month') : pickMonth(t.key))}>
+                      <span className="fin-x-trend__bars">
+                        <i className="is-ly" style={{ height: `${(t.lastYear / top) * 100}%` }} />
+                        <i className="is-now" style={{ height: `${Math.max(t.total ? 2 : 0, (t.total / top) * 100)}%` }} />
+                      </span>
+                      <em>{monthName(t.key).split(' ')[0].slice(0, 3)}{isNow ? <small>עד היום</small> : showYear ? <small>{t.key.slice(0, 4)}</small> : null}</em>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-            <ul className="fin-x-trendlist" aria-label="ששת החודשים האחרונים">
-              {o.trend.slice(-6).reverse().map((t) => (
-                <li key={t.key}><button type="button" onClick={() => { pickPeriod('custom'); setCustom({ from: `${t.key}-01`, to: `${t.key}-${new Date(Date.UTC(+t.key.slice(0, 4), +t.key.slice(5), 0)).getUTCDate()}` }) }}>
-                  <span>{monthName(t.key)}</span><span className="fin-x-rows__bar"><i style={{ width: `${(t.total / maxTrend) * 100}%` }} /></span><strong>{short(t.total)}</strong>
-                </button></li>
-              ))}
-            </ul>
+            <p className="fin-x-hint">לחיצה על חודש מציגה את כל הסקירה לאותו חודש. <span className="fin-x-legend"><i className="is-now" /> בפועל <i className="is-ly" /> שנה קודמת</span></p>
           </section>
 
           {!biz && (

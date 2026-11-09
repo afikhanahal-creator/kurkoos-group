@@ -31,10 +31,14 @@ export function periodOf(key, now = new Date(), custom = {}) {
   else if (key === 'ytd') { cur = { from: `${y}-01-01`, to: israelDay(now) }; prev = { from: `${y - 1}-01-01`, to: `${y - 1}-${israelDay(now).slice(5)}` }; label = `מתחילת ${y}` }
   else if (key === 'year_last') { cur = span(y - 1, 1, y - 1, 12); prev = span(y - 2, 1, y - 2, 12); label = `${y - 1}` }
   else if (key === '12m') { const [a, b] = ym(y, m - 11); const [c, d] = ym(y, m - 23); const [e, f] = ym(y, m - 12); cur = span(a, b, y, m); prev = span(c, d, e, f); label = '12 החודשים האחרונים' }
-  else if (key === 'custom' && custom.from && custom.to) {
+  else if (key === 'custom' && custom.from && custom.to && custom.from.slice(0, 7) === custom.to.slice(0, 7) && custom.from.endsWith('-01') && custom.to === span(...custom.from.slice(0, 7).split('-').map(Number), ...custom.from.slice(0, 7).split('-').map(Number)).to) {
+    // a whole calendar month (a bar in the monthly chart): named like a month and compared with the month before
+    const [a, b] = custom.from.slice(0, 7).split('-').map(Number); const [c, d] = ym(a, b - 1)
+    cur = span(a, b, a, b); prev = span(c, d, c, d); label = monthName(custom.from.slice(0, 7))
+  } else if (key === 'custom' && custom.from && custom.to) {
     const len = (new Date(custom.to) - new Date(custom.from)) / 86400_000 + 1
     const pTo = new Date(new Date(custom.from).getTime() - 86400_000); const pFrom = new Date(pTo.getTime() - (len - 1) * 86400_000)
-    cur = { from: custom.from, to: custom.to }; prev = { from: pFrom.toISOString().slice(0, 10), to: pTo.toISOString().slice(0, 10) }; label = 'תקופה מותאמת'
+    cur = { from: custom.from, to: custom.to }; prev = { from: pFrom.toISOString().slice(0, 10), to: pTo.toISOString().slice(0, 10) }; const dm = (x) => `${Number(x.slice(8, 10))}.${Number(x.slice(5, 7))}${x.slice(0, 4) !== custom.to.slice(0, 4) || x === custom.to ? `.${x.slice(2, 4)}` : ''}`; label = custom.from === custom.to ? dm(custom.from) : `${dm(custom.from)}–${dm(custom.to)}`
   } else { const [c, d] = ym(y, m - 1); cur = span(y, m, y, m); prev = span(c, d, c, d); label = monthName(`${y}-${pad(m)}`) }
   return { key, label, ...cur, prevFrom: prev.from, prevTo: prev.to }
 }

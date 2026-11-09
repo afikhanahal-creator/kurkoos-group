@@ -127,7 +127,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
         </span>
       )}
       <span className="fin-viewer__sep" aria-hidden="true" />
-      <a className="fin-icon-btn" href={blobUrl} target="_blank" rel="noopener noreferrer" aria-label="פתיחה בחלון חדש" title="פתיחה בחלון חדש של הדפדפן"><Icon name="external" size={17} /></a>
+      <a className="fin-icon-btn fin-viewer__wide" href={blobUrl} target="_blank" rel="noopener noreferrer" aria-label="פתיחה בחלון חדש" title="פתיחה בחלון חדש של הדפדפן"><Icon name="external" size={17} /></a>
       <a className="fin-icon-btn" href={blobUrl} download={name || 'document'} onClick={(e) => moments.download({ from: e.currentTarget, name: name || 'document' })} aria-label="הורדה" title="הורדת הקובץ המקורי"><Icon name="download" size={17} /></a>
       <button type="button" className="fin-icon-btn fin-viewer__wide" onClick={print} aria-label="הדפסה" title="הדפסה"><Icon name="print" size={17} /></button>
       {canSave && <button type="button" className="fin-icon-btn" onClick={saveDrive} disabled={drive.busy} aria-label="שמירה בדרייב" title="שמירה ב-Google Drive"><Icon name={drive.busy ? 'sync' : 'cloud'} size={17} /></button>}

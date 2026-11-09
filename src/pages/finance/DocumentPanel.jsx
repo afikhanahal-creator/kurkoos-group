@@ -270,10 +270,10 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                     {(can('manage') || (can('operate') && !['approved', 'sent'].includes(doc.status))) && <button type="button" className="fin-btn fin-btn--danger" disabled={!!busy} onClick={remove} aria-label="מחיקה (מסמך לא רלוונטי)" title="מחיקה: מסמך לא רלוונטי"><Icon name="trash" size={18} /> מחיקה</button>}
                   </div>
                 )}
+                {/* attachments scroll with the details, under the actions, instead of a strip pinned to the bottom */}
+                <Attachments doc={doc} />
               </form>
             )}
-
-            {tab === 'fields' && <Attachments doc={doc} />}
 
             {tab === 'checks' && (
               <div className="fin-checks">

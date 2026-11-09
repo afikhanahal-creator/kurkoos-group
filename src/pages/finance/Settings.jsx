@@ -217,7 +217,7 @@ export default function Settings() {
         {tab === 'account' && (
           <div className="fin-stack">
             {recovery && <NewPassword />}
-            <Card title="החשבון שלי">
+            <Card title="פרטי החשבון">
               <ul className="fin-kv">
                 <li><span>אימייל</span><strong dir="ltr">{u?.email}</strong></li>
                 <li><span>תפקיד</span><strong>{ROLE[role]}</strong></li>

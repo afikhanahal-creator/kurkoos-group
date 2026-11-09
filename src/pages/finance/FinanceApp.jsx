@@ -16,6 +16,8 @@ import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
 import './moments.css'
+import { toast } from './moments.js'
+import { money } from './format.js'
 const MasterData = lazy(() => import('./MasterData.jsx'))
 const EntityOverview = lazy(() => import('./EntityOverview.jsx'))
 const Scanners = lazy(() => import('./Scanners.jsx'))
@@ -84,9 +86,12 @@ const FOLDED = 'מתקדם'
 const Ctx = createContext(null)
 export const useFinance = () => useContext(Ctx)
 
-function useFinanceData(enabled) {
+// the same "count|newest change" the server answers in api.docsStamp, computed from the rows already loaded
+const stampOf = (docs) => `${docs.length}|${docs.reduce((m, d) => (d.updated_at && d.updated_at > m ? d.updated_at : m), '')}`
+function useFinanceData(enabled, onChange) {
   const [state, setState] = useState({ loading: true, error: '', me: null, documents: [], businesses: [], projects: [], categories: [], suppliers: [], mailboxes: [], members: [], allocations: [], settings: {} })
   const loadedAt = useRef(0)
+  const stamp = useRef(''); const prevDocs = useRef(null)
   const reload = useCallback(async () => {
     try {
       const me = await api.me()
@@ -95,6 +100,9 @@ function useFinanceData(enabled) {
         api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(), api.loadAllocations(), api.loadSettings(),
       ])
       loadedAt.current = Date.now()
+      stamp.current = stampOf(documents)
+      const before = prevDocs.current; prevDocs.current = documents
+      if (before) onChange.current?.(before, documents)
       setState({ loading: false, error: '', me, documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings })
     } catch (e) {
       setState((s) => ({ ...s, loading: false, error: /does not exist|schema cache|fin_me/.test(e.message) ? 'הטבלאות של המערכת עוד לא קיימות. מריצים את supabase/finance.sql ב-Supabase › SQL Editor' : e.message }))
@@ -114,6 +122,17 @@ function useFinanceData(enabled) {
     const t = setInterval(reload, 4000)
     return () => clearInterval(t)
   }, [reading, reload])
+  // invoices keep arriving (mail, WhatsApp, scanners, colleagues): a tiny check every 15 s while the tab is in view, and
+  // a full reload only when something really changed. While documents are being read the 4 s loop above covers it.
+  useEffect(() => {
+    if (!enabled) return undefined
+    const t = setInterval(async () => {
+      if (document.visibilityState !== 'visible' || reading) return
+      const now = await api.docsStamp().catch(() => null)
+      if (now && stamp.current && now !== stamp.current) reload()
+    }, 15_000)
+    return () => clearInterval(t)
+  }, [enabled, reading, reload])
   const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
   const refreshIfStale = useCallback(() => { if (Date.now() - loadedAt.current > 20_000) reload() }, [reload])
   // the bookkeeping pass (ledger.js): receipts that pay an invoice, proformas replaced by an invoice. Every screen reads
@@ -166,20 +185,37 @@ export default function FinanceApp() {
     let alive = true
     // a reload keeps the answer for the same token, so the screen appears as fast as before the gate existed
     const cacheKey = `fin-sec:${session.access_token.slice(-24)}`
-    try { const c = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); if (c) { setSec(c); return undefined } } catch { /* noop */ }
-    ;(async () => {
+    // the cached answer only paints the screen; the server is always asked again, because a block, an ended session or a
+    // changed policy (MFA roles, idle minutes) must take effect on the next load, not when the token expires
+    try { const c = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); if (c) setSec(c) } catch { /* noop */ }
+    const check = async () => {
+      // the session itself: an admin who blocks someone deletes their sessions, and the auth server then refuses the token
+      const { error: gone } = await supabase.auth.getUser()
+      if (!alive) return
+      if (gone && [401, 403].includes(gone.status)) {
+        try { sessionStorage.removeItem(cacheKey) } catch { /* noop */ }
+        await supabase.auth.signOut({ scope: 'local' })
+        return
+      }
       const [me, { data: lvl }] = await Promise.all([api.mySecurity(), supabase.auth.mfa.getAuthenticatorAssuranceLevel()])
       if (!alive) return
       const v = me ? { ...me, aal: lvl?.currentLevel || 'aal1', next: lvl?.nextLevel || 'aal1' } : false
       setSec(v)
-      try { if (v && !(v.mfa_required && v.aal !== 'aal2') && !v.onboard) sessionStorage.setItem(cacheKey, JSON.stringify(v)) } catch { /* noop */ }
-    })()
-    return () => { alive = false }
+      try { if (v && !(v.mfa_required && v.aal !== 'aal2') && !v.onboard) sessionStorage.setItem(cacheKey, JSON.stringify(v)); else sessionStorage.removeItem(cacheKey) } catch { /* noop */ }
+    }
+    check()
+    // coming back to the tab after a while asks again
+    const onShow = () => { if (document.visibilityState === 'visible') check() }
+    document.addEventListener('visibilitychange', onShow)
+    return () => { alive = false; document.removeEventListener('visibilitychange', onShow) }
   }, [session?.access_token]) // eslint-disable-line react-hooks/exhaustive-deps
   // a required second step is pending when the role requires it and the token is still aal1
   const mfaPending = !!sec && sec.mfa_required && sec.aal !== 'aal2'
   const ready = !!session && sec !== null && !mfaPending
-  const data = useFinanceData(ready)
+  // what changed since the last load, said in words: documents that arrived from elsewhere, and documents that finished
+  // being read (with what was read), so nobody has to refresh to know a scan is done
+  const onChange = useRef(null)
+  const data = useFinanceData(ready, onChange)
   // one line per sign-in (device, time); a sign-in from a new device also sends a mail
   useEffect(() => {
     if (!ready || !session?.access_token) return
@@ -190,6 +226,28 @@ export default function FinanceApp() {
   const idleSoon = useIdleSignOut(sec?.idle_minutes || 30, ready)
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  onChange.current = async (before, after) => {
+    const was = new Map(before.map((d) => [d.id, d]))
+    const myId = (await supabase.auth.getSession()).data.session?.user?.id
+    // arrived from somewhere else (my own uploads already got their moment when I dropped them)
+    const arrived = after.filter((d) => !was.has(d.id) && d.created_by !== myId)
+    const read = after.filter((d) => was.get(d.id)?.status === 'processing' && !['processing', 'failed'].includes(d.status))
+    const failed = after.filter((d) => was.get(d.id)?.status === 'processing' && d.status === 'failed')
+    const SRC = { gmail: 'מהמייל', outlook: 'מהמייל', forward: 'ממייל שהועבר', whatsapp: 'מ-WhatsApp', upload: 'מהעלאה', camera: 'מצילום' }
+    if (arrived.length) {
+      const from = [...new Set(arrived.map((d) => SRC[d.source] || '').filter(Boolean))].join(', ')
+      toast({ icon: 'doc', title: arrived.length === 1 ? 'מסמך חדש נקלט' : `${arrived.length} מסמכים חדשים נקלטו`, sub: [from, arrived.some((d) => d.status === 'processing') ? 'נקראים עכשיו' : ''].filter(Boolean).join(' · '),
+        action: { label: 'הצגה', onClick: () => navigate(`${BASE}/new`) } })
+    }
+    if (read.length === 1) {
+      const d = read[0]
+      toast({ title: 'המסמך נקרא', sub: [d.supplier_name || d.file_name, d.total_amount != null ? money(d.total_amount, d.currency) : '', d.status === 'review' ? 'מחכה לבדיקה' : ''].filter(Boolean).join(' · '),
+        action: { label: 'פתיחה', onClick: () => navigate(`${BASE}/documents/${d.id}`) } })
+    } else if (read.length > 1) {
+      toast({ title: `${read.length} מסמכים נקראו`, sub: 'מחכים לבדיקה בחשבוניות חדשות', action: { label: 'הצגה', onClick: () => navigate(`${BASE}/new`) } })
+    }
+    for (const d of failed.slice(0, 2)) toast({ tone: 'attn', title: 'מסמך לא נקרא', sub: `${d.file_name || 'מסמך'} · אפשר לנסות שוב או למלא ידנית`, action: { label: 'פתיחה', onClick: () => navigate(`${BASE}/documents/${d.id}`) } })
+  }
   const [navOpen, setNavOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem('fin-side') === 'rail' } catch { return false } })
   // the page title sits large in the page; the top bar repeats it only after it has scrolled away
@@ -362,12 +420,16 @@ export default function FinanceApp() {
         </div>
         {/* phones: the main places one thumb away; "עוד" opens the full menu */}
         <nav className="fin-tabbar" aria-label="ניווט מהיר">
-          {[nav.find((n) => n.to === ''), nav.find((n) => n.to === '/documents')].filter(Boolean).map((n) => (
+          {/* RTL: "עוד" on the right, under the menu button at the top; the camera stays in the middle */}
+          <button type="button" onClick={() => setNavOpen(true)} aria-label="עוד" aria-expanded={navOpen} aria-controls="fin-side"><Icon name="menu" size={21} /><span>עוד</span></button>
+          {[nav.find((n) => n.to === '')].filter(Boolean).map((n) => (
             <Link key={n.to || 'home'} to={`${BASE}${n.to}`} className={active === n ? 'is-on' : ''} aria-current={active === n ? 'page' : undefined}><Icon name={n.icon} size={21} /><span>{n.to === '' && ['admin', 'finance_manager'].includes(role) ? 'סקירה' : n.to === '' ? 'בית' : 'מסמכים'}</span></Link>
           ))}
           {can(role, 'upload') && <button type="button" className="fin-tabbar__add" onClick={() => setCapture(true)} aria-label="צילום או העלאת קבלה"><span><Icon name="camera" size={22} /></span></button>}
+          {[nav.find((n) => n.to === '/documents')].filter(Boolean).map((n) => (
+            <Link key={n.to || 'home'} to={`${BASE}${n.to}`} className={active === n ? 'is-on' : ''} aria-current={active === n ? 'page' : undefined}><Icon name={n.icon} size={21} /><span>{n.to === '' && ['admin', 'finance_manager'].includes(role) ? 'סקירה' : n.to === '' ? 'בית' : 'מסמכים'}</span></Link>
+          ))}
           {nav.find((n) => n.to === '/reports') && <Link to={`${BASE}/reports`} className={active?.to === '/reports' ? 'is-on' : ''}><Icon name="reports" size={21} /><span>דוחות</span></Link>}
-          <button type="button" onClick={() => setNavOpen(true)} aria-label="עוד" aria-expanded={navOpen} aria-controls="fin-side"><Icon name="menu" size={21} /><span>עוד</span></button>
         </nav>
         {capture && <Suspense fallback={null}><CaptureReceipt onClose={() => setCapture(false)} /></Suspense>}
         {uploading && <Modal title="העלאת מסמכים" onClose={() => setUploading(false)} footer={<><button type="button" className="fin-btn" onClick={() => { setUploading(false); navigate(`${BASE}/documents?status=new`) }}>למסמכים החדשים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setUploading(false)}>סגירה</button></>}><UploadZone onDone={data.reload} /><p className="fin-muted fin-small">PDF או תמונה, עד 12MB, אחד או כמה ביחד. המסמכים נקראים ברקע ומחכים לבדיקה ב"חשבוניות חדשות".</p></Modal>}

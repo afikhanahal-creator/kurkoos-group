@@ -263,7 +263,7 @@ export default async function handler(req, res) {
         return
       }
       case 'ask': {
-        res.status(200).json(await ask({ question: body.question, user }))
+        res.status(200).json(await ask({ question: body.question, history: body.history, user }))
         return
       }
       case 'email-docs': {

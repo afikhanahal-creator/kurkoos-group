@@ -2150,3 +2150,54 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 
 /* the overview reads from a distance: one step up on the whole type scale, inside the overview only */
 .fin-x { --t-xs: 0.86rem; --t-sm: 0.95rem; --t-md: 1.03rem; --t-base: 1.08rem; --t-lg: 1.22rem; --t-xl: 1.45rem; --t-2xl: 1.9rem; font-size: 1.05rem; }
+
+/* the finance assistant as a conversation: questions on the end side, answers with an avatar on the start side, a
+   composer that stays at the bottom, follow-up suggestions under the latest answer */
+.fin-chat { display: flex; flex-direction: column; min-height: calc(100dvh - 150px); max-width: 1100px; margin-inline: auto; width: 100%; }
+.fin-chat__head { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.fin-chat__head h2 { margin: 0; }
+.fin-chat__head small { color: var(--text-2); font-size: var(--t-sm); }
+.fin-chat__new { margin-inline-start: auto; }
+.fin-chat__avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; flex: none; }
+.fin-chat__avatar.is-big { width: 64px; height: 64px; }
+.fin-chat__body { flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 22px 2px; }
+.fin-chat__hello { margin: auto; max-width: 720px; display: grid; justify-items: center; gap: 12px; text-align: center; padding: 24px 0; }
+.fin-chat__hello h3 { margin: 6px 0 0; font-size: var(--t-2xl); color: var(--ink); }
+.fin-chat__hello p { margin: 0; color: var(--text-2); font-size: var(--t-base); line-height: 1.6; max-width: 56ch; }
+.fin-chat__chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 8px; }
+.fin-chat__chips button { all: unset; box-sizing: border-box; cursor: pointer; padding: 9px 14px; min-height: 40px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--sheet); color: var(--ink); font-size: var(--t-sm); transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.fin-chat__chips button:hover:not(:disabled) { border-color: var(--ocean); background: var(--ocean-wash); }
+.fin-chat__chips button:focus-visible { outline: 2px solid var(--ocean); }
+.fin-chat__chips button:disabled { opacity: 0.5; cursor: default; }
+.fin-chat__chips.is-follow { justify-content: flex-start; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.fin-chat__row { display: flex; align-items: flex-end; gap: 10px; }
+.fin-chat__row.is-me { justify-content: flex-end; }
+.fin-chat__bubble { margin: 0; max-width: min(760px, 86%); padding: 12px 16px; border-radius: 18px; line-height: 1.6; font-size: var(--t-base); animation: fin-chat-in var(--dur-slow) var(--ease) both; }
+.fin-chat__bubble.is-me { background: var(--ink); color: #fff; border-end-end-radius: 6px; }
+.fin-chat__bubble.is-ai { background: var(--sheet); border: 1px solid var(--line); border-end-start-radius: 6px; box-shadow: 0 6px 18px rgba(7, 41, 58, 0.05); }
+.fin-chat__answer { display: grid; gap: 8px; }
+.fin-chat__reply { margin: 0; color: var(--text); }
+.fin-chat__value { font-size: var(--t-2xl); color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.fin-chat__meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.fin-chat__meta span { padding: 2px 10px; border-radius: 999px; background: var(--wash); color: var(--text-2); font-size: var(--t-xs); }
+.fin-chat__explain { margin: 0; color: var(--text-2); font-size: var(--t-sm); }
+.fin-chat__rows { margin-top: 4px; }
+.fin-chat__acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.fin-chat__typing { display: inline-flex; gap: 5px; padding: 16px 18px; }
+.fin-chat__typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: fin-chat-dot 1.2s infinite ease-in-out; }
+.fin-chat__typing i:nth-child(2) { animation-delay: 0.15s; } .fin-chat__typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes fin-chat-dot { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@keyframes fin-chat-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.fin-chat__composer { position: sticky; bottom: 12px; display: flex; align-items: flex-end; gap: 8px; padding: 8px; border-radius: 18px; border: 1px solid var(--line-2); background: var(--sheet); box-shadow: 0 10px 30px rgba(7, 41, 58, 0.10); }
+.fin-chat__composer:focus-within { border-color: var(--ocean); box-shadow: var(--ring), 0 10px 30px rgba(7, 41, 58, 0.10); }
+.fin-chat__composer textarea { flex: 1; resize: none; border: 0; background: transparent; font: inherit; font-size: var(--t-base); line-height: 1.5; padding: 10px 12px; min-height: 44px; max-height: 160px; color: var(--text); field-sizing: content; }
+.fin-chat__composer textarea:focus { outline: none; }
+.fin-chat__send { width: 46px; min-height: 46px !important; padding: 0 !important; border-radius: 14px !important; justify-content: center; flex: none; }
+@media (max-width: 760px) {
+  .fin-chat { min-height: calc(100dvh - 170px); }
+  .fin-chat__bubble { max-width: 92%; }
+  .fin-chat__composer { bottom: calc(76px + var(--safe-b, 0px)); }
+  .fin-chat__head small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .fin-chat__bubble { animation: none; } .fin-chat__typing i { animation: none; opacity: 0.6; } }
+.fin .fin-chat__composer textarea, .fin .fin-chat__composer textarea:focus { border: 0 !important; box-shadow: none !important; background: transparent !important; outline: none; }

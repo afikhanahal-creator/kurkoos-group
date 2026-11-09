@@ -483,14 +483,14 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-modal__body { padding: 0.5rem 1.25rem 1rem; overflow-y: auto; display: grid; gap: 0.9rem; }
 .fin-modal__foot { display: flex; gap: 0.45rem; padding: 0.8rem 1.25rem; border-top: 1px solid var(--line); flex-wrap: wrap; }
 .fin-panel { justify-content: flex-start; }
-.fin-panel__body { position: relative; background: var(--sheet); width: min(1240px, 97vw); height: 100%; display: flex; flex-direction: column; box-shadow: var(--float); overflow: hidden; animation: fin-slide 0.18s ease-out; }
+.fin-panel__body { position: relative; background: var(--sheet); width: min(1720px, calc(100vw - 48px)); height: 100%; display: flex; flex-direction: column; box-shadow: var(--float); overflow: hidden; animation: fin-slide 0.18s ease-out; }
 @keyframes fin-slide { from { transform: translateX(-24px); opacity: 0.6; } }
 .fin-panel__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--line); }
 .fin-panel__title { min-width: 0; }
 .fin-panel__head h2 { font-size: var(--t-xl); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fin-panel__head .fin-muted { display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; margin-top: 0.15rem; }
 .fin-panel__nav { display: flex; gap: 0.1rem; flex: none; }
-.fin-panel__split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(400px, 1fr); flex: 1; min-height: 0; }
+.fin-panel__split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(440px, 1fr); flex: 1; min-height: 0; }   /* the document gets a little more room than the form */
 .fin-preview { background: var(--wash); border-inline-end: 1px solid var(--line); display: flex; align-items: center; justify-content: center; overflow: auto; min-height: 0; }
 .fin-preview__frame { width: 100%; height: 100%; border: 0; background: #fff; }
 .fin-preview__img { max-width: 100%; max-height: 100%; object-fit: contain; }

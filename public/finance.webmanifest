@@ -1,0 +1,27 @@
+{
+  "name": "KURKOOS FINANCE",
+  "short_name": "Kurkoos Finance",
+  "description": "מערכת הכספים של קבוצת קורקוס: חשבוניות, קבלות, מע״מ ודוחות הנהלה.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/admin/finance",
+  "scope": "/admin/finance",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f7f5",
+  "theme_color": "#07293a",
+  "icons": [
+    {
+      "src": "/kurkoos-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/kurkoos-groip-logo.png",
+      "sizes": "700x700",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

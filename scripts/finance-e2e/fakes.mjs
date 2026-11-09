@@ -1,0 +1,232 @@
+// Local stand-ins for the outside services, used ONLY by the end-to-end test:
+//   Google OAuth + Gmail API, Microsoft login + Graph (not used yet), Claude, Resend, and an SMTP sink for
+//   GoTrue's invitation emails. They speak the same HTTP shapes as the real APIs, so the production code
+//   in server/finance runs unchanged against them.
+//
+// Claude cannot be faked by "reading" a PDF, so the fake answers from a table keyed by the file's SHA-256
+// (written by run.mjs when it renders the fixture invoices). This tests everything around the AI, not the
+// AI's reading quality; that part is checked with a real ANTHROPIC_API_KEY (docs/finance/TESTING.md).
+import http from 'node:http'
+import net from 'node:net'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const FIX = process.env.FIN_FIXTURES || '/var/tmp/finfix'
+const PORT = Number(process.env.FAKES_PORT || 54400)
+/* pixel size of a JPEG or PNG, "WxH" */
+function imageDims(b) {
+  if (b[0] === 0x89 && b[1] === 0x50) return `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}`
+  if (b[0] !== 0xff || b[1] !== 0xd8) return null
+  let i = 2
+  while (i < b.length) {
+    if (b[i] !== 0xff) { i++; continue }
+    const m = b[i + 1]
+    if (m >= 0xc0 && m <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(m)) return `${b.readUInt16BE(i + 7)}x${b.readUInt16BE(i + 5)}`
+    i += 2 + b.readUInt16BE(i + 2)
+  }
+  return null
+}
+const hookFails = {}
+const log = { waFiles: [], emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
+const driveItems = []   // { id, name, parents, folder }
+const fixtures = () => JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
+const failed = {}   // sha256 → how many times Claude already failed on it
+let nextAccount = null
+
+function send(res, status, body, headers = {}) {
+  res.writeHead(status, { 'Content-Type': 'application/json', ...headers })
+  res.end(typeof body === 'string' ? body : JSON.stringify(body))
+}
+const readBody = (req) => new Promise((ok) => { let d = ''; req.on('data', (c) => { d += c }); req.on('end', () => ok(d)) })
+
+const b64u = (buf) => Buffer.from(buf).toString('base64url')
+
+function gmailMessage(m) {
+  const parts = []
+  if (m.html) parts.push({ partId: '0', mimeType: 'text/html', filename: '', body: { size: m.html.length, data: b64u(m.html) } })
+  if (m.text) parts.push({ partId: '1', mimeType: 'text/plain', filename: '', body: { size: m.text.length, data: b64u(m.text) } })
+  for (const [i, f] of (m.files || []).entries()) {
+    const size = fs.statSync(`${FIX}/${f}`).size
+    parts.push({ partId: `a${i}`, mimeType: f.endsWith('.pdf') ? 'application/pdf' : 'image/png', filename: f, body: { size, attachmentId: `${m.id}__${i}` } })
+  }
+  return {
+    id: m.id,
+    internalDate: String(Date.parse(m.date)),
+    payload: { mimeType: 'multipart/mixed', headers: [{ name: 'Subject', value: m.subject }, { name: 'From', value: m.from }], parts },
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://127.0.0.1:${PORT}`)
+  const p = url.pathname
+  const auth = req.headers.authorization || ''
+  const mailbox = auth.replace('Bearer ', '').replace(/^at-/, '')   // the access token names the mailbox
+
+  // ---------- Google OAuth ----------
+  if (p === '/google/authorize') {
+    // the consent screen: approves at once and sends the person back with a code naming the account
+    const who = nextAccount || url.searchParams.get('login_hint') || 'invoices@kurkoos.test'
+    const back = new URL(url.searchParams.get('redirect_uri'))
+    back.searchParams.set('code', `code-${who}`)
+    back.searchParams.set('state', url.searchParams.get('state'))
+    res.writeHead(302, { Location: back.toString() }); res.end(); return
+  }
+  if (p === '/google/token') {
+    const f = new URLSearchParams(await readBody(req))
+    if (f.get('client_secret') !== 'test-google-secret') return send(res, 401, { error: 'invalid_client' })
+    if (f.get('grant_type') === 'authorization_code') {
+      const who = String(f.get('code')).replace(/^code-/, '')
+      return send(res, 200, { access_token: `at-${who}`, refresh_token: `rt-${who}`, expires_in: 3600, token_type: 'Bearer' })
+    }
+    if (f.get('grant_type') === 'refresh_token') {
+      const who = String(f.get('refresh_token')).replace(/^rt-/, '')
+      if (who.startsWith('revoked')) return send(res, 400, { error: 'invalid_grant', error_description: 'Token has been expired or revoked.' })
+      return send(res, 200, { access_token: `at-${who}`, expires_in: 3600, token_type: 'Bearer' })
+    }
+    return send(res, 400, { error: 'unsupported_grant_type' })
+  }
+  if (p === '/google/revoke') return send(res, 200, {})
+
+  // ---------- Gmail API ----------
+  if (p.startsWith('/gmail/')) {
+    log.gmailCalls++
+    const box = fixtures().mailboxes[mailbox]
+    if (!box) return send(res, 401, { error: { code: 401, message: 'Invalid Credentials' } })
+    const rest = p.slice('/gmail/'.length)
+    if (rest === 'profile') return send(res, 200, { emailAddress: mailbox })
+    if (box.failing) return send(res, 503, { error: { code: 503, message: 'Backend Error' } })   // an outage during the scan
+    if (rest === 'messages') {
+      const q = url.searchParams.get('q') || ''
+      const after = Number((q.match(/after:(\d+)/) || [])[1] || 0) * 1000
+      const before = Number((q.match(/before:(\d+)/) || [])[1] || 0) * 1000
+      log.gmailQueries.push(q)
+      const msgs = box.messages.filter((m) => Date.parse(m.date) >= after && (!before || Date.parse(m.date) < before)).sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+      return send(res, 200, { messages: msgs.map((m) => ({ id: m.id, threadId: m.id })), resultSizeEstimate: msgs.length })
+    }
+    const mm = rest.match(/^messages\/([^/]+)(?:\/attachments\/(.+))?$/)
+    if (mm) {
+      const m = box.messages.find((x) => x.id === mm[1])
+      if (!m) return send(res, 404, { error: { code: 404, message: 'Not Found' } })
+      if (!mm[2]) return send(res, 200, gmailMessage(m))
+      const [, idx] = mm[2].split('__')
+      const buf = fs.readFileSync(`${FIX}/${m.files[Number(idx)]}`)
+      return send(res, 200, { size: buf.length, data: b64u(buf) })
+    }
+    return send(res, 404, { error: { code: 404, message: 'Not Found' } })
+  }
+
+  // ---------- Claude ----------
+  if (p === '/claude/v1/messages') {
+    log.claudeCalls++
+    if (req.headers['x-api-key'] !== 'test-anthropic-key') return send(res, 401, { type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } })
+    const body = JSON.parse(await readBody(req))
+    if (!body.output_config?.format?.schema) return send(res, 400, { type: 'error', error: { type: 'invalid_request_error', message: 'expected structured output' } })
+    const content = body.messages[0].content
+    const doc = content.find((c) => c.type === 'document' || c.type === 'image')
+    const text = content.find((c) => c.type === 'text')?.text || ''
+    const fx = fixtures()
+    let answer = null
+    // the second reading (VERIFY): answers only the critical fields, from verifyAnswers, else the same as the first reading
+    const verifying = text.startsWith('VERIFY:')
+    if (verifying) log.verifyCalls = (log.verifyCalls || 0) + 1
+    if (doc) {
+      const raw = Buffer.from(doc.source.data, 'base64')
+      const hash = crypto.createHash('sha256').update(raw).digest('hex')
+      const dims = imageDims(raw)
+      const limit = fx.claudeFail?.[hash] || 0
+      if ((failed[hash] || 0) < limit) { failed[hash] = (failed[hash] || 0) + 1; return send(res, 529, { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }) }
+      answer = fx.answers[hash] || (dims && fx.dimAnswers?.[dims])
+      if (verifying) { const v = fx.verifyAnswers?.[hash] || (dims && fx.verifyAnswers?.[`dims:${dims}`]); answer = v || (answer && Object.fromEntries(['supplier_vat_id', 'doc_number', 'issue_date', 'amount_before_vat', 'vat_amount', 'total_amount'].map((k) => [k, answer[k]]))) }
+      if (dims) log.claudeDims = [...(log.claudeDims || []), dims].slice(-10)
+    } else {
+      const key = Object.keys(fx.textAnswers || {}).find((k) => text.includes(k))
+      answer = key ? fx.textAnswers[key] : null
+    }
+    if (!answer) answer = { ...fx.notFinancial }
+    return send(res, 200, {
+      id: `msg_${crypto.randomUUID()}`, type: 'message', role: 'assistant', model: body.model, stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify(answer) }], usage: { input_tokens: 1000, output_tokens: 300 },
+    })
+  }
+
+  // ---------- Resend ----------
+  if (p === '/resend/emails') {
+    const body = JSON.parse(await readBody(req))
+    log.emails.push({ to: body.to, subject: body.subject, attachments: (body.attachments || []).map((x) => ({ filename: x.filename, bytes: Buffer.from(x.content || '', 'base64').length })) })
+    return send(res, 200, { id: crypto.randomUUID() })
+  }
+
+  // ---------- Google userinfo + Drive ----------
+  if (p === '/google/userinfo') return send(res, 200, { email: mailbox })
+  if (p === '/drive/files' && req.method === 'GET') {
+    const q = url.searchParams.get('q') || ''
+    const name = (q.match(/name='((?:[^'\\]|\\.)*)'/) || [])[1]?.replace(/\\'/g, "'")
+    const parent = (q.match(/'([^']+)' in parents/) || [])[1]
+    const wantFolder = !q.includes("mimeType!=")
+    return send(res, 200, { files: driveItems.filter((f) => f.folder === wantFolder && !f.trashed && f.name === name && f.parents[0] === parent).map((f) => ({ id: f.id, webViewLink: `https://drive.test/file/${f.id}` })) })
+  }
+  if (p.startsWith('/drive/files/') && req.method === 'GET') {
+    if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
+    const f = driveItems.find((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length)))
+    return f ? send(res, 200, { id: f.id, name: f.name, size: String(f.size || 0), trashed: !!f.trashed, webViewLink: `https://drive.test/file/${f.id}` }) : send(res, 404, { error: { message: 'File not found' } })
+  }
+  if (p === '/drive/files' && req.method === 'POST') {
+    const b = JSON.parse(await readBody(req)); const id = `fld${driveItems.length + 1}`
+    driveItems.push({ id, name: b.name, parents: b.parents, folder: true }); return send(res, 200, { id })
+  }
+  if (p === '/drive-upload/files') {
+    const raw = await readBody(req); const meta = JSON.parse(raw.split('\r\n\r\n')[1].split('\r\n--')[0])
+    const id = `file${driveItems.length + 1}`; driveItems.push({ id, name: meta.name, parents: meta.parents, folder: false, size: raw.length })
+    const pathOf = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${pathOf(f.parents[0])}/${f.name}` : '' }
+    log.drive.push(`${pathOf(meta.parents[0])}/${meta.name}`); return send(res, 200, { id, webViewLink: `https://drive.test/file/${id}` })
+  }
+  // ---------- Dropbox ----------
+  if (p === '/dropbox/authorize') { const back = new URL(url.searchParams.get('redirect_uri')); back.searchParams.set('code', 'dbx-code'); back.searchParams.set('state', url.searchParams.get('state')); res.writeHead(302, { Location: back.toString() }); res.end(); return }
+  if (p === '/dropbox/api/oauth2/token') { const f = new URLSearchParams(await readBody(req)); if (f.get('client_secret') !== 'test-dropbox-secret') return send(res, 400, { error: 'invalid_client' }); if (f.get('grant_type') === 'refresh_token' && f.get('refresh_token') !== 'dbx-rt') return send(res, 400, { error: 'invalid_grant' }); return send(res, 200, { access_token: 'dbx-at', refresh_token: 'dbx-rt', expires_in: 14400 }) }
+  if (p === '/dropbox/api/2/users/get_current_account') return send(res, auth === 'Bearer dbx-at' ? 200 : 401, { email: 'office@kurkoos.test' })
+  if (p === '/dropbox/api/2/files/get_metadata') { const b = JSON.parse(await readBody(req)); const hit = log.dropbox.find((x) => x === b.path || `id:${log.dropbox.indexOf(x) + 1}` === b.path); return hit ? send(res, 200, { '.tag': 'file', name: hit.split('/').pop(), path_display: hit }) : send(res, 409, { error_summary: 'path/not_found/' }) }
+  if (p === '/dropbox/content/2/files/upload') { if (auth !== 'Bearer dbx-at') return send(res, 401, {}); const arg = JSON.parse(req.headers['dropbox-api-arg']); await readBody(req); log.dropbox.push(arg.path); return send(res, 200, { id: `id:${log.dropbox.length}`, path_display: arg.path }) }
+  // ---------- Green API (WhatsApp) ----------
+  // Green API sendFileByUrl: downloads the file like the real service does, and records what arrived
+  if (/^\/green\/waInstance[^/]+\/sendFileByUrl\//.test(p)) {
+    const b = JSON.parse(await readBody(req))
+    const f = await fetch(b.urlFile).catch(() => null)
+    const buf = f && f.ok ? Buffer.from(await f.arrayBuffer()) : null
+    log.waFiles.push({ to: b.chatId, fileName: b.fileName, caption: b.caption, bytes: buf ? buf.length : 0, sha: buf ? crypto.createHash('sha256').update(buf).digest('hex') : null })
+    return send(res, buf ? 200 : 400, buf ? { idMessage: `file${log.waFiles.length}` } : { error: 'download failed' })
+  }
+  if (/^\/green\/waInstance[^/]+\/sendMessage\//.test(p)) { const b = JSON.parse(await readBody(req)); log.wa.push({ to: b.chatId, message: b.message }); return send(res, 200, { idMessage: `out${log.wa.length}` }) }
+  if (p.startsWith('/green/file/')) { const f = decodeURIComponent(p.slice('/green/file/'.length)); res.writeHead(200, { 'Content-Type': f.endsWith('.pdf') ? 'application/pdf' : 'image/png' }); res.end(fs.readFileSync(`${FIX}/${f}`)); return }
+  // a webhook receiver: records every delivery; ?fail=N answers 500 to the first N deliveries
+  if (p === '/hook') {
+    const raw = await readBody(req)
+    const key = url.search
+    hookFails[key] = (hookFails[key] || 0) + 1
+    const fail = Number(url.searchParams.get('fail') || 0) >= hookFails[key]
+    log.hooks.push({ query: key, event: req.headers['x-kurkoos-event'], delivery: req.headers['x-kurkoos-delivery'], signature: req.headers['x-kurkoos-signature'], raw, status: fail ? 500 : 200 })
+    return send(res, fail ? 500 : 200, { ok: !fail })
+  }
+  if (p === '/__log') return send(res, 200, log)
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
+  send(res, 404, { error: 'fake: no route' })
+})
+server.listen(PORT, '127.0.0.1', () => console.log(`fakes on :${PORT}`))
+
+// a minimal SMTP sink for GoTrue's invitation emails
+net.createServer((sock) => {
+  let data = false; let buf = ''
+  sock.write('220 fake-smtp ready\r\n')
+  sock.on('data', (chunk) => {
+    for (const line of chunk.toString().split('\r\n')) {
+      if (data) { if (line === '.') { data = false; log.smtp.push(buf.slice(0, 2000)); buf = ''; sock.write('250 queued\r\n') } else buf += `${line}\n`; continue }
+      if (!line) continue
+      const cmd = line.slice(0, 4).toUpperCase()
+      if (cmd === 'EHLO' || cmd === 'HELO') sock.write('250-fake\r\n250 AUTH PLAIN LOGIN\r\n')
+      else if (cmd === 'DATA') { data = true; sock.write('354 go\r\n') }
+      else if (cmd === 'QUIT') { sock.write('221 bye\r\n'); sock.end() }
+      else if (cmd === 'AUTH') sock.write('235 ok\r\n')
+      else sock.write('250 ok\r\n')
+    }
+  })
+}).listen(2525, '127.0.0.1')

@@ -185,6 +185,11 @@ export default function Users() {
     if (!(await askConfirm({ text: `לנתק את ${m.full_name || m.email} מכל המכשירים? הוא יצטרך להתחבר שוב.`, ok: 'ניתוק', danger: true }))) return
     try { const r = await api.callServer('member-end-sessions', { user_id: m.user_id }); setMsg(`${r.sessions_ended === 1 ? 'חיבור אחד נותק' : `${r.sessions_ended} חיבורים נותקו`}`); meta.reload() } catch (e) { setMsg(e.message) }
   }
+  // a new phone or a deleted app: the person's authenticator is removed and they set it up again at the next sign-in
+  const resetMfa = async (m) => {
+    if (!(await askConfirm({ text: `לאפס את האימות הדו-שלבי של ${m.full_name || m.email}? האפליקציה הקיימת תפסיק לעבוד, החיבורים שלו יתנתקו, ובכניסה הבאה הוא יגדיר את האפליקציה מחדש.`, ok: 'איפוס', danger: true }))) return
+    try { await api.callServer('member-mfa-reset', { user_id: m.user_id }); setMsg(`האימות הדו-שלבי של ${m.email} אופס. בכניסה הבאה הוא יגדיר אותו מחדש.`); meta.reload() } catch (e) { setMsg(e.message) }
+  }
   const BizPick = ({ value, onChange }) => (
     <fieldset className="fin-field fin-field--wide fin-checkset"><legend className="fin-field__label">גישה לחברות</legend>
       <label className="fin-check"><input type="checkbox" checked={!value?.length} onChange={(e) => onChange(e.target.checked ? null : [])} /> כל החברות</label>
@@ -247,6 +252,7 @@ export default function Users() {
                         { label: 'עריכה', onClick: () => setEdit({ ...m }) },
                         wait && m.active && { label: 'שליחת ההזמנה שוב', onClick: () => resend(m) },
                         m.user_id !== me?.id && seen[m.user_id]?.sessions > 0 && { label: 'ניתוק מכל המכשירים', onClick: () => endSessions(m) },
+                        m.user_id !== me?.id && seen[m.user_id]?.mfa && { label: 'איפוס אימות דו-שלבי', onClick: () => resetMfa(m) },
                         m.user_id !== me?.id && { label: m.active ? 'חסימה' : 'הפעלה מחדש', onClick: () => setActive(m, !m.active), danger: m.active },
                       ]} />
                     </div>

@@ -1772,6 +1772,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-auth__addapp { min-height: 48px; justify-content: center; }
 .fin-auth__secret { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .fin-auth__hint { display: block; margin-top: 6px; color: var(--text-2); font-size: var(--t-xs); }
+.fin-auth__note { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--r-m); background: var(--ocean-wash); color: var(--ocean-2); font-size: var(--t-sm); line-height: 1.5; }
+.fin-auth__note svg { flex: none; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .fin-auth__beam { animation: none; top: 30%; }
   .fin-auth__bill.is-front, .fin-auth__read, .fin-auth__row.is-new, .fin-auth__total { animation: none; }

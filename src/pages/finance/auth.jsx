@@ -282,10 +282,21 @@ export function SecondStep({ mfaRequired, onDone }) {
                 </details>
               </>
             )}
-            {!enroll && <p className="fin-auth__sub">פתחו את אפליקציית האימות בטלפון והקלידו את הקוד של Kurkoos Finance.</p>}
+            {!enroll && (
+              <>
+                <p className="fin-auth__sub">פתחו את אפליקציית האימות בטלפון (Google Authenticator או Microsoft Authenticator) והקלידו את 6 הספרות שמופיעות תחת Kurkoos Finance.</p>
+                <p className="fin-auth__note"><Icon name="shield" size={15} /> הקוד לא נשלח במייל או ב-SMS: הוא נוצר באפליקציה ומתחלף כל 30 שניות.</p>
+              </>
+            )}
             <label>קוד אימות<input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" dir="ltr" className="fin-login__code" autoFocus aria-label="קוד אימות בן 6 ספרות" /></label>
             {err && <p className="fin-error" role="alert">{err}</p>}
             <button type="submit" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'בודק…' : 'אימות'}</button>
+            {!enroll && (
+              <details className="fin-disclosure fin-disclosure--quiet">
+                <summary>אין לי גישה לאפליקציה</summary>
+                <p className="fin-auth__hint">טלפון חדש או שהאפליקציה נמחקה? מנהל המערכת מאפס את האימות (הארגון ומשתמשים › הפעולות ליד השם › איפוס אימות דו-שלבי). בכניסה הבאה תגדירו את האפליקציה מחדש, עם קוד QR.</p>
+              </details>
+            )}
           </>
         )}
         <button type="button" className="fin-link" onClick={signOut}>יציאה</button>

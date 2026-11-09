@@ -7,7 +7,7 @@ import { makeZip, saveBlob } from './zip.js'
 import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZone, askConfirm, useAsync } from './ui.jsx'
 import ShareDialog from './ShareDialog.jsx'
 import { exportSheet } from './exportPackage.js'
-import Thumbnail from './Thumbnail.jsx'
+import Thumbnail, { prefetchThumb } from './Thumbnail.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
 import DateRange, { sayRange } from './DateRange.jsx'
@@ -365,11 +365,15 @@ export default function Documents({ preset = 'all' }) {
               {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
-                  <tr key={d.id} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))}>
+                  <tr key={d.id} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
-                      <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const below = r.bottom + 380 < innerHeight; setPeek({ id: d.id, right: Math.max(8, innerWidth - r.right), ...(below ? { top: r.bottom + 6 } : { bottom: innerHeight - r.top + 6 }) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
-                      {peek?.id === d.id && d.file_path && <span className="fin-peek__pop" style={{ top: peek.top, bottom: peek.bottom, right: peek.right }} aria-hidden="true"><Thumbnail doc={d} /><span className="fin-peek__cap"><strong>{d.supplier_name || d.file_name}</strong><small>{[DOC_TYPE[d.doc_type], d.doc_number, date(docDate(d)), d.total_amount != null ? money(d.total_amount, d.currency) : ''].filter(Boolean).join(' · ')}</small></span></span>}
+                      <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
+                      {peek?.id === d.id && d.file_path && <span className="fin-peek__pop" style={{ top: peek.top, right: peek.right }} aria-hidden="true">
+                        <span className="fin-peek__head"><strong>{d.supplier_name || d.file_name}</strong><StatusPill status={d.status} /></span>
+                        <span className="fin-peek__doc"><Thumbnail doc={d} size="lg" /></span>
+                        <span className="fin-peek__foot"><small>{[DOC_TYPE[d.doc_type], d.doc_number, date(docDate(d))].filter(Boolean).join(' · ')}</small>{d.total_amount != null && <b>{money(d.total_amount, d.currency)}</b>}</span>
+                      </span>}
                       <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button></span>
                       <small className="fin-cell-sub">{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>

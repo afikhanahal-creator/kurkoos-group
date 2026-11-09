@@ -2141,7 +2141,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-icon-btn--danger:hover:not(:disabled) { background: var(--attn-wash); color: var(--attn); }
 .fin-peek { display: inline-block; max-width: 100%; }
 .fin-peek__pop { position: fixed; z-index: var(--z-pop); width: 260px; display: grid; gap: 8px; padding: 10px; border-radius: var(--r-l); background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--pop); pointer-events: none; animation: fin-peek-in var(--dur) var(--ease) both; }
-.fin-peek__pop .fin-thumb, .fin-peek__pop > :first-child { width: 100%; height: 300px; border-radius: var(--r-m); overflow: hidden; }
+
 .fin-peek__cap { display: grid; gap: 2px; white-space: normal; }
 .fin-peek__cap strong { color: var(--ink); font-size: var(--t-sm); }
 .fin-peek__cap small { color: var(--text-2); font-size: var(--t-xs); }
@@ -2237,3 +2237,15 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 /* reports: a month with nothing in it steps back so the months with activity stand out */
 .fin-table tr.is-zero td { color: var(--muted); }
 .fin-table tr.is-zero td strong { color: var(--muted); font-weight: 400; }
+
+/* hover preview v2: beside the name, large and sharp (drawn at 880px), header with status, footer with the total */
+.fin-peek__pop { width: 440px !important; height: 640px; grid-template-rows: auto 1fr auto; gap: 10px !important; padding: 14px !important; }
+.fin-peek__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; white-space: normal; }
+.fin-peek__head strong { color: var(--ink); font-size: var(--t-base); line-height: 1.3; }
+.fin-peek__doc { min-height: 0; border-radius: var(--r-m); overflow: hidden; background: var(--wash); border: 1px solid var(--line); }
+.fin-peek__doc .fin-thumb { width: 100% !important; height: 100% !important; }
+.fin-peek__doc .fin-thumb img { width: 100%; height: 100%; object-fit: contain; object-position: top; background: #fff; }
+.fin-peek__foot { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; white-space: normal; }
+.fin-peek__foot small { color: var(--text-2); font-size: var(--t-sm); }
+.fin-peek__foot b { color: var(--ink); font-size: var(--t-lg); font-variant-numeric: tabular-nums; }
+@media (max-height: 760px) { .fin-peek__pop { height: calc(100vh - 24px); } }

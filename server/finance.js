@@ -331,6 +331,11 @@ export default async function handler(req, res) {
         if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
         if (['approved', 'sent'].includes(doc.status)) { res.status(409).json({ error: 'מסמך מאושר לא משתנה כאן' }); return }
         const dup = body.decision === 'duplicate'
+        // never close a document as a copy of something that is itself closed: the original would be lost
+        if (dup) {
+          const target = doc.duplicate_of ? await one(`fin_documents?id=eq.${doc.duplicate_of}&select=status`) : null
+          if (!target || ['duplicate', 'rejected', 'archived'].includes(target.status)) { res.status(409).json({ error: 'המסמך המקורי כבר לא פעיל, ולכן אי אפשר לסמן את זה ככפול שלו' }); return }
+        }
         const issues = (doc.issues || []).filter((i) => !['possible_duplicate', 'duplicate'].includes(i.code))
         const row = await patch(`fin_documents?id=eq.${doc.id}`, dup ? { status: 'duplicate', duplicate_state: 'confirmed', issues } : { duplicate_state: 'dismissed', issues })
         await audit('document', doc.id, dup ? 'duplicate_confirmed' : 'duplicate_dismissed', { of: doc.duplicate_of }, user)

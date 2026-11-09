@@ -60,18 +60,20 @@ export async function syncAll({ mailboxId, trigger = 'manual', started = Date.no
 
 /* failed readings whose backoff time has come (15 min, 1 h, 4 h, 12 h), and documents stuck "in processing"
    because a function died half way (a deploy, a timeout). Nothing is lost: the original file is always stored. */
-export async function retryFailed({ max = MAX_ATTEMPTS, started = Date.now(), trigger = 'retry', force = false } = {}) {
+export async function retryFailed({ max = MAX_ATTEMPTS, started = Date.now(), trigger = 'retry', force = false, stuckOnly = false } = {}) {
   const now = encodeURIComponent(new Date().toISOString())
   const due = force ? '' : `&or=(next_retry_at.is.null,next_retry_at.lte.${now})`
-  const docs = (await sb(`fin_documents?status=eq.failed&attempts=lt.${max}&file_path=not.is.null${due}&select=*&order=updated_at.asc&limit=20`)) || []
+  // failures counts readings that failed in a row (a success resets it), so successful re-reads never use up retries
+  const docs = stuckOnly ? [] : (await sb(`fin_documents?status=eq.failed&failures=lt.${max}&file_path=not.is.null${due}&select=*&order=updated_at.asc&limit=20`)) || []
   const stuckBefore = encodeURIComponent(new Date(Date.now() - 10 * 60_000).toISOString())
-  const stuck = (await sb(`fin_documents?status=eq.processing&file_path=not.is.null&or=(stage_at.lt.${stuckBefore},and(stage_at.is.null,created_at.lt.${stuckBefore}))&select=*&limit=20`)) || []
+  const stuck = (await sb(`fin_documents?status=eq.processing&failures=lt.${MAX_ATTEMPTS}&file_path=not.is.null&or=(stage_at.lt.${stuckBefore},and(stage_at.is.null,created_at.lt.${stuckBefore}))&select=*&limit=20`)) || []
   if (!docs.length && !stuck.length) return { retried: 0, recovered: 0, stuck: 0 }
   const runs = await newDocRuns(trigger)
   let ok = 0; let unstuck = 0
   for (const d of [...stuck, ...docs]) {
-    if (Date.now() - started > TIME_BUDGET_MS) break
-    const r = await processStored(d, runs, 'retry')
+    // a reading takes up to ~20 s: never start one that cannot finish inside the function limit
+    if (Date.now() - started > TIME_BUDGET_MS - 20_000) break
+    const r = await processStored(d, runs, 'retry', started)
     if (r && r.status && r.status !== 'failed') { ok++; if (d.status === 'processing') unstuck++ }
   }
   await closeRuns(runs)
@@ -81,16 +83,16 @@ export async function retryFailed({ max = MAX_ATTEMPTS, started = Date.now(), tr
 /* the engine between the nightly runs: recover and retry, and when the last collection is older than the
    configured gap, a short incremental collection. Runs when the cron calls it or when someone opens the app. */
 export async function engineTick({ started = Date.now(), trigger = 'tick', force = false } = {}) {
-  const claimed = force || (await rpc('fin_engine_claim', { p_minutes: 5 }).catch(() => false)) === true
-  if (!claimed) return { skipped: 'busy' }
-  const out = { retry: await retryFailed({ started, trigger }) }
-  const day = await one('fin_automations?key=eq.day_collection&select=enabled,config')
-  if (day?.enabled !== false) {
-    const gap = (Number(day?.config?.every_minutes) || 120) * 60_000
-    const boxes = (await sb('fin_mailboxes?status=in.(active,error)&select=id,last_scan_at')) || []
-    const stale = boxes.filter((b) => !b.last_scan_at || Date.now() - new Date(b.last_scan_at).getTime() > gap)
-    if (stale.length && Date.now() - started < TIME_BUDGET_MS / 2) out.collection = await syncAll({ trigger: 'day', started })
+  let claimed = force
+  if (!claimed) {
+    const r = await rpc('fin_engine_claim', { p_minutes: 5 }).catch((e) => (/fin_engine_claim|schema cache/.test(String(e.message)) ? 'missing' : false))
+    if (r === 'missing') return { skipped: 'not_installed', hint: 'run supabase/finance.sql (v9)' }
+    claimed = r === true
   }
+  if (!claimed) return { skipped: 'busy' }
+  // collection and retries happen once a night (runDaily). Between nights only documents a crashed function left
+  // "in processing" are read again (an admin can force a full retry from the agents screen)
+  const out = { retry: await retryFailed({ started, trigger, stuckOnly: !force }) }
   try { const { flushOutbound } = await import('./outbound.js'); out.outbound = await flushOutbound({ budgetMs: 8_000 }) } catch { /* optional */ }
   return out
 }
@@ -125,9 +127,10 @@ export async function buildSummary(now = new Date()) {
     ready_to_export: await count('fin_documents?status=eq.approved&exported_at=is.null'),
     by_whatsapp: await count(`fin_documents?created_at=gte.${from}&source=eq.whatsapp`),
     by_email: await count(`fin_documents?created_at=gte.${from}&mailbox_id=not.is.null`),
+    by_upload: await count(`fin_documents?created_at=gte.${from}&source=in.(upload,camera)`),
     suspected_duplicates: await count('fin_documents?duplicate_state=eq.suspected&status=eq.review'),
-    needs_person: await count('fin_documents?status=eq.failed&next_retry_at=is.null'),
-    verified: await count(`fin_documents?processed_at=gte.${from}&extraction->verification=not.is.null`),
+    needs_person: await count(`fin_documents?status=eq.failed&failures=gte.${MAX_ATTEMPTS}`),
+    verified: await count(`fin_documents?processed_at=gte.${from}&extraction->verification->second=not.is.null`),
     ai_tokens: ((await sb(`fin_documents?processed_at=gte.${from}&select=ai_tokens_in,ai_tokens_out`)) || []).reduce((a, d) => a + (d.ai_tokens_in || 0) + (d.ai_tokens_out || 0), 0),
   }
   return data
@@ -136,7 +139,7 @@ export async function buildSummary(now = new Date()) {
 const summaryHtml = (d, origin) => `<div dir="rtl" style="font-family:Arial,sans-serif;color:#1a1f2b">
 <h2 style="color:#07293a">KURKOOS FINANCE AI · דוח בוקר</h2>
 <table cellpadding="6" style="border-collapse:collapse">
-<tr><td>נאספו ב-24 השעות האחרונות</td><td><b>${d.collected}</b> (מייל ${d.by_email ?? 0}, WhatsApp ${d.by_whatsapp ?? 0})</td></tr>
+<tr><td>נאספו ב-24 השעות האחרונות</td><td><b>${d.collected}</b> (מייל ${d.by_email ?? 0}, WhatsApp ${d.by_whatsapp ?? 0}, העלאה וצילום ${d.by_upload ?? 0})</td></tr>
 <tr><td>עובדו בהצלחה</td><td><b>${d.processed}</b></td></tr>
 <tr><td>ממתינים לבדיקה</td><td><b>${d.review}</b></td></tr>
 <tr><td>כפילויות שזוהו</td><td><b>${d.duplicates}</b>${d.suspected_duplicates ? ` ועוד ${d.suspected_duplicates} חשודות לבדיקה` : ''}</td></tr>
@@ -144,7 +147,7 @@ const summaryHtml = (d, origin) => `<div dir="rtl" style="font-family:Arial,sans
 <tr><td>תיבות מייל עם תקלה</td><td><b>${d.failed_mailboxes.length}</b>${d.failed_mailboxes.map((m) => `<br><small>${m.email}: ${m.last_error || ''}</small>`).join('')}</td></tr>
 <tr><td>מאושרים ומוכנים לייצוא</td><td><b>${d.ready_to_export}</b></td></tr>
 </table>
-<p>כל המסמכים שבדוח נשמרו במערכת.${d.needs_person ? ` ${d.needs_person} מסמכים לא נקראו גם אחרי 5 ניסיונות ומחכים לטיפול ידני.` : ''}</p>
+<p>כל המסמכים שבדוח נשמרו במערכת.${d.needs_person ? ` ${d.needs_person} מסמכים לא נקראו גם אחרי 3 ניסיונות ומחכים לטיפול ידני.` : ''}</p>
 <p><a href="${origin}/admin/finance">לכניסה למערכת</a></p></div>`
 
 export async function dailySummary({ origin = '', email = true } = {}) {
@@ -202,7 +205,7 @@ export async function runDaily(origin) {
 /* the morning: the report of what the night collected (in the app, and by email when enabled) */
 export async function morningReport(origin) {
   const started = Date.now()
-  const out = [await automation('morning_report', (cfg) => dailySummary({ origin, email: cfg.email !== false }))]
-  out.push({ key: 'tick', ...(await engineTick({ started, trigger: 'cron', force: true })) })
-  return out
+  // the report reads the database only: no mail scan and no AI in the morning
+  void started
+  return [await automation('morning_report', (cfg) => dailySummary({ origin, email: cfg.email !== false }))]
 }

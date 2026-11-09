@@ -634,7 +634,8 @@ record('DUPX', 'כפילות בין מקורות: ודאית וחשודה', 'א�
 
 // REC: a document stuck "in processing" (the function died) is recovered; a failed reading waits for its backoff, then succeeds
 const pl = await import('../../server/finance/pipeline.js')
-const back = { a1: Math.round((new Date(pl.nextRetry(1)) - Date.now()) / 60000), a2: Math.round((new Date(pl.nextRetry(2)) - Date.now()) / 60000), a5: pl.nextRetry(5) }
+const toNight = Math.round((pl.nextNight() - Date.now()) / 60000)
+const back = { a1: Math.round((new Date(pl.nextRetry(1)) - Date.now()) / 60000), a2: Math.round((new Date(pl.nextRetry(2)) - Date.now()) / 60000), a3: pl.nextRetry(3), night: new Date(pl.nextRetry(1)).toISOString().slice(11, 16) }
 const stuckId = sql("select id from fin_documents where file_name='bezeq-oct.pdf'")
 sql(`update fin_documents set status='processing', stage='ocr', stage_at=now() - interval '30 minutes' where id='${stuckId}'`)
 if (!(await page.locator('[data-testid=upload-input]').count())) await page.getByRole('button', { name: 'הוספת מסמכים' }).click()
@@ -650,9 +651,9 @@ const flaky2 = sql("select status||'|'||attempts||'|'||coalesce(stage,'-')||'|'|
 // the lock: two ticks right after each other — the second one finds the engine busy
 const tickA = await api(adminToken, { action: 'tick' })
 const tickBusy = await api(adminToken, { action: 'tick' })
-record('REC', 'התאוששות וניסיונות חוזרים', 'מסמך שנתקע "בעיבוד" (פונקציה שנפלה) נקרא מחדש; קריאה שנכשלה מחכה 15 דקות, אחר כך שעה, ואחרי 5 ניסיונות עוצרת לטיפול ידני; כשהזמן מגיע היא מצליחה; שתי ריצות לא רצות במקביל',
-  `מרווחים: ${back.a1} דק׳, ${back.a2} דק׳, אחרי 5: ${back.a5}; ראשון: ${flaky1.join('/')}; טיק 1: ${JSON.stringify(tick1.data.retry)} → תקוע: ${afterTick1.stuck}, נכשל: ${afterTick1.flaky}; טיק 2: ${JSON.stringify(tick2.data.retry)} → ${flaky2.join('/')}; טיק נוסף מיד: ${JSON.stringify(tickBusy.data)}`,
-  back.a1 === 15 && back.a2 === 60 && back.a5 === null && flaky1[0] === 'failed' && flaky1[1] === '1' && flaky1[2] === 'failed' && Number(flaky1[3]) >= 14 && tick1.data.retry?.unstuck === 1 && afterTick1.stuck === 'review' && afterTick1.flaky === 'failed|1'
+record('REC', 'התאוששות וניסיונות חוזרים', 'מסמך שנתקע "בעיבוד" (פונקציה שנפלה) נקרא מחדש; קריאה שנכשלה מחכה לסריקת הלילה (לא במהלך היום), ואחרי 3 ניסיונות עוצרת לטיפול ידני; בלילה היא מצליחה; שתי ריצות לא רצות במקביל',
+  `ניסיון חוזר: ${back.night} UTC (בעוד ${back.a1} דק׳, הלילה הבא), אחרי 3: ${back.a3}; ראשון: ${flaky1.join('/')}; טיק 1: ${JSON.stringify(tick1.data.retry)} → תקוע: ${afterTick1.stuck}, נכשל: ${afterTick1.flaky}; טיק 2: ${JSON.stringify(tick2.data.retry)} → ${flaky2.join('/')}; טיק נוסף מיד: ${JSON.stringify(tickBusy.data)}`,
+  back.night === '00:22' && Math.abs(back.a1 - (toNight - 1)) <= 1 && back.a2 === back.a1 && back.a3 === null && flaky1[0] === 'failed' && flaky1[1] === '1' && flaky1[2] === 'failed' && Number(flaky1[3]) >= 59 && tick1.data.retry?.unstuck === 1 && afterTick1.stuck === 'review' && afterTick1.flaky === 'failed|1'
     && flaky2[0] === 'review' && flaky2[1] === '2' && flaky2[3] === '-' && flaky2[4] === 'גרניט הנדסה' && tickBusy.data.skipped === 'busy' && !!tickA.data)
 
 // SCHED: the night collection runs inside 00:00–05:00 in Israel, the report around 07:00
@@ -663,6 +664,17 @@ const night = cronOf('action=cron'); const morn = cronOf('action=morning')
 record('SCHED', 'תזמון: איסוף לילה ודוח בוקר', 'איסוף הלילה בין 00:00 ל-05:00 בשעון ישראל (חורף וקיץ), דוח הבוקר סביב 07:00, ואיסוף קצר במהלך היום כשפותחים את המערכת',
   `לילה: ${night} UTC = ${ilHour(night, 2).toFixed(2)} בחורף / ${ilHour(night, 3).toFixed(2)} בקיץ; בוקר: ${morn} UTC = ${ilHour(morn, 2).toFixed(2)} / ${ilHour(morn, 3).toFixed(2)}`,
   [2, 3].every((o) => ilHour(night, o) < 5) && ilHour(morn, 2) >= 6.5 && ilHour(morn, 3) <= 8)
+
+// NOCOST: opening and browsing the app, and the morning report, never scan mail or call the AI
+const cost0 = await fetch(`${FAKES}/__log`).then((r) => r.json())
+for (const path of ['', '/documents', '/connections', '/agents']) { await page.goto(`${APP}${path}`); await page.waitForTimeout(700) }
+const ctxFresh = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'he-IL' }); const pFresh = await ctxFresh.newPage()
+await pFresh.goto(APP); await pFresh.fill('input[type=email]', 'admin@kurkoos.test'); await pFresh.fill('input[type=password]', 'Passw0rd!x'); await pFresh.click('button[type=submit]'); await pFresh.waitForSelector('.fin__main'); await pFresh.waitForTimeout(2500); await ctxFresh.close()
+const morningNoCost = await fetch('http://127.0.0.1:5180/api/finance?action=morning', { headers: { Authorization: 'Bearer test-cron' } }).then((r) => r.json())
+const cost1 = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const dayRuns = sql("select count(*) from fin_sync_runs where trigger not in ('cron','manual','backfill')")
+record('NOCOST', 'מנוע חסכוני: סריקה רק בלילה', 'כניסה למערכת, מעבר בין מסכים ודוח הבוקר לא סורקים מייל ולא קוראים ל-AI; אין סריקות "במהלך היום"', `Gmail: ${cost0.gmailCalls}→${cost1.gmailCalls}; Claude: ${cost0.claudeCalls}→${cost1.claudeCalls}; דוח בוקר: ${(morningNoCost.results || []).map((r) => r.key).join(',')}; סריקות יום: ${dayRuns}`,
+  cost1.gmailCalls === cost0.gmailCalls && cost1.claudeCalls === cost0.claudeCalls && (morningNoCost.results || []).length === 1 && dayRuns === '0')
 
 // ENGSTAT: the monitoring panel shows real state
 await nav('סוכני AI'); await page.waitForTimeout(1000)

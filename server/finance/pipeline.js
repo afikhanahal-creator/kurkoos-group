@@ -42,10 +42,16 @@ export async function readDocument(input, runs, { deadline = Infinity } = {}) {
 }
 const usageFields = (x, prev = {}) => ({ ai_tokens_in: (prev.ai_tokens_in || 0) + (x?._usage?.in || 0), ai_tokens_out: (prev.ai_tokens_out || 0) + (x?._usage?.out || 0), ai_calls: (prev.ai_calls || 0) + (x?._usage?.calls || 0) })
 
-/* failed readings come back after 15 min, 1 h, 4 h, 12 h; after 5 attempts the document waits for a person */
-export const MAX_ATTEMPTS = 5
-const BACKOFF_MIN = [15, 60, 240, 720]
-export const nextRetry = (attempts) => (attempts >= MAX_ATTEMPTS ? null : new Date(Date.now() + BACKOFF_MIN[Math.min(attempts - 1, BACKOFF_MIN.length - 1)] * 60_000).toISOString())
+/* a failed reading is tried again in the next night run (00:23 UTC), at most 3 times in all; then it waits for a
+   person. Retrying during the day would spend money on the same file again and again. */
+export const MAX_ATTEMPTS = 3
+export const NIGHT_UTC = { h: 0, m: 23 }
+export function nextNight(from = new Date()) {
+  const t = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate(), NIGHT_UTC.h, NIGHT_UTC.m))
+  if (t.getTime() - from.getTime() < 60 * 60_000) t.setUTCDate(t.getUTCDate() + 1)   // too close: the night after
+  return t
+}
+export const nextRetry = (failures) => (failures >= MAX_ATTEMPTS ? null : new Date(nextNight().getTime() - 60_000).toISOString())
 
 let catCache = null
 const categories = async () => (catCache ||= ((await sb('fin_categories?select=name&order=sort')) || []).map((c) => c.name))
@@ -204,7 +210,7 @@ export async function processStored(doc, runs, trigger = 'upload', started = Dat
     const why = String(e.message || e).slice(0, 200)
     return await patch(`fin_documents?id=eq.${doc.id}`, {
       status: 'failed', attempts: cur.attempts, failures: cur.failures, stage: retry ? 'failed' : 'dead', stage_at: new Date().toISOString(), next_retry_at: retry, ...usageFields(x, cur),
-      issues: [{ level: 'error', code: 'ocr_failed', field: null, message: retry ? `הקריאה נכשלה (ניסיון ${cur.attempts}): ${why}. ניסיון נוסף אוטומטי בקרוב.` : `הקריאה נכשלה ${cur.failures} פעמים ברצף: ${why}. אפשר לנסות שוב ידנית או למלא את הפרטים.` }],
+      issues: [{ level: 'error', code: 'ocr_failed', field: null, message: retry ? `הקריאה נכשלה (ניסיון ${cur.attempts}): ${why}. ניסיון נוסף אוטומטי בסריקת הלילה.` : `הקריאה נכשלה ${cur.failures} פעמים ברצף: ${why}. אפשר לנסות שוב ידנית או למלא את הפרטים.` }],
     })
   }
 }
@@ -273,7 +279,7 @@ export async function syncMailbox(mb, started, runs, trigger) {
         const base = { ...meta, file_path: path, file_name: String(name).slice(0, 200), file_mime: mime.startsWith('text/') ? 'text/html' : mime, file_size: buf.length, file_hash: hash, attempts: 1 }
         const fields = x
           ? await analyze(x, { mailbox: mb, fromEmail: meta.email_from, subject: meta.email_subject, text: msg.text || '' }, runs)
-          : { status: 'failed', failures: 1, stage: 'failed', stage_at: new Date().toISOString(), next_retry_at: nextRetry(1), issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${String(failure.message || failure).slice(0, 200)}. ניסיון נוסף אוטומטי בקרוב.` }] }
+          : { status: 'failed', failures: 1, stage: 'failed', stage_at: new Date().toISOString(), next_retry_at: nextRetry(1), issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${String(failure.message || failure).slice(0, 200)}. ניסיון נוסף אוטומטי בסריקת הלילה.` }] }
         if (x) Object.assign(fields, usageFields(x))
         const pendingHits = fields._pendingHits; delete fields._pendingHits
         await keepProjectInCompany(fields)

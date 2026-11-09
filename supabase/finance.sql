@@ -1326,9 +1326,8 @@ create index if not exists fin_documents_dup on public.fin_documents (duplicate_
 insert into public.fin_automations (key, name, description, frequency, config, enabled)
 select 'morning_report', 'דוח בוקר', 'סיכום האיסוף של הלילה, נשלח בבוקר למנהלים', 'daily', coalesce((select config from public.fin_automations where key = 'daily_summary'), '{"email": true}'), coalesce((select enabled from public.fin_automations where key = 'daily_summary'), true)
 on conflict (key) do nothing;
-insert into public.fin_automations (key, name, description, frequency, config) values
-  ('day_collection', 'איסוף במהלך היום', 'סריקה קצרה של התיבות כשמישהו פותח את המערכת, אם עברו יותר משעתיים מהסריקה האחרונה', 'on_event', '{"every_minutes": 120}')
-on conflict (key) do nothing;
+-- collection runs once a night only (cost): there is no day collection
+delete from public.fin_automations where key = 'day_collection';
 insert into public.fin_settings (key, value) values ('engine_tick', '{"at": null}') on conflict (key) do nothing;
 
 notify pgrst, 'reload schema';

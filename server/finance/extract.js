@@ -122,7 +122,7 @@ export async function verify({ buf, mime, text }) {
   const r = await fetchRetry(`${env.anthropic()}/v1/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
-    body: JSON.stringify({ model: env.model(), max_tokens: 1500, fallbacks: 'default', output_config: { effort: 'high', format: { type: 'json_schema', schema: VERIFY_SCHEMA } }, messages: [{ role: 'user', content }] }),
+    body: JSON.stringify({ model: env.model(), max_tokens: 1500, fallbacks: 'default', output_config: { effort: 'medium', format: { type: 'json_schema', schema: VERIFY_SCHEMA } }, messages: [{ role: 'user', content }] }),
   })
   const d = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error((d.error && d.error.message) || `claude ${r.status}`)
@@ -138,12 +138,13 @@ const same = (k, a, b) => {
 }
 /* should the critical fields get a second reading? */
 export function needsVerify(x) {
+  // only when something is really wrong: it doubles the cost of that document
   const fc = x.field_confidence || {}
-  const unsure = VERIFY_FIELDS.some((k) => typeof fc[k] === 'number' && fc[k] < 0.85 && x[k] !== null && x[k] !== '')
+  const unsure = ['total_amount', 'vat_amount'].some((k) => typeof fc[k] === 'number' && fc[k] < 0.7 && x[k] !== null && x[k] !== '')
   const b = x.amount_before_vat; const v = x.vat_amount; const t = x.total_amount
   const sumOff = [b, v, t].every((n) => typeof n === 'number') && Math.abs(b + v - t) > 1
   const q = x.quality || {}
-  return unsure || sumOff || q.blurry || q.cropped || q.handwritten
+  return unsure || sumOff || q.blurry || q.cropped
 }
 /* compares the two readings; returns the per-field result and the confidence to keep */
 export function crossCheck(x, y) {

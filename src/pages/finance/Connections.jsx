@@ -55,7 +55,7 @@ export default function Connections() {
               {mailRow('outlook', 'Microsoft 365 ו-Outlook')}
               <Row logo="whatsapp" title="WhatsApp" detail={!s ? 'המצב לא ידוע כרגע' : s.whatsapp?.configured ? `${activePhones === 1 ? 'טלפון אחד רשום' : `${activePhones} טלפונים רשומים`}${lastWa ? ` · הודעה אחרונה ${ago(lastWa)}` : ''}` : 'עוד לא הופעל בשרת'} tone={s?.whatsapp?.configured ? 'ok' : 'muted'} state={!s ? 'לא ידוע' : s.whatsapp?.configured ? 'פעיל' : 'לא פעיל'} onOpen={() => go('/scanners')} />
               <Row icon="sparkle" title="קריאת מסמכים (OCR ו-AI)" detail="Claude קורא כל מסמך: ספק, מספר, תאריך, מע״מ וסכום, עם ודאות לכל שדה" tone={!s ? 'muted' : s.claude ? 'ok' : 'attn'} state={!s ? 'לא ידוע' : s.claude ? 'פעיל' : 'לא מוגדר'} onOpen={can('operate') ? () => go('/agents') : null} cta="פעולות" />
-              <Row icon="clock" title="סריקה אוטומטית" detail="כל התיבות נסרקות פעם ביום, ומסמך שנכשל מנוסה שוב" tone={!s ? 'muted' : s.cron ? 'ok' : 'attn'} state={!s ? 'לא ידוע' : s.cron ? 'פעם ביום' : 'לא מוגדר'} onOpen={can('operate') ? () => go('/automations') : null} cta="הגדרות" />
+              <Row icon="clock" title="סריקה אוטומטית" detail="פעם אחת בלילה: כל התיבות נסרקות, ומסמך שלא נקרא מנוסה שוב (עד 3 פעמים)" tone={!s ? 'muted' : s.cron ? 'ok' : 'attn'} state={!s ? 'לא ידוע' : s.cron ? 'פעם ביום' : 'לא מוגדר'} onOpen={can('operate') ? () => go('/automations') : null} cta="הגדרות" />
             </ul>
           </section>
           {can('operate') && (

@@ -164,7 +164,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
         </header>
 
         {doc.status === 'processing' && <p className="fin-panel__banner is-info" role="status"><Icon name="sparkle" size={16} /> {({ ocr: 'הסוכנים קוראים את המסמך…', validating: 'בודקים את הסכומים…', matching: 'מזהים ספק, חברה ופרויקט…' })[doc.stage] || 'המסמך בעיבוד…'}</p>}
-        {doc.status === 'failed' && <p className="fin-panel__banner is-attn" role="status"><Icon name="alert" size={16} /> <span>{doc.next_retry_at ? `הקריאה נכשלה. ניסיון אוטומטי נוסף ${new Date(doc.next_retry_at) > new Date() ? `ב-${new Date(doc.next_retry_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : 'בקרוב'}.` : 'הקריאה נכשלה כמה פעמים. אפשר לנסות שוב או למלא את הפרטים ידנית.'}</span>{editable && <button type="button" className="fin-btn fin-btn--sm" onClick={reread} disabled={!!busy}>{busy === 'extract' ? 'קורא…' : 'קריאה מחדש עכשיו'}</button>}</p>}
+        {doc.status === 'failed' && <p className="fin-panel__banner is-attn" role="status"><Icon name="alert" size={16} /> <span>{doc.next_retry_at ? 'הקריאה נכשלה. הסוכנים ינסו שוב בסריקת הלילה, או שאפשר לנסות עכשיו.' : 'הקריאה נכשלה כמה פעמים. אפשר לנסות שוב או למלא את הפרטים ידנית.'}</span>{editable && <button type="button" className="fin-btn fin-btn--sm" onClick={reread} disabled={!!busy}>{busy === 'extract' ? 'קורא…' : 'קריאה מחדש עכשיו'}</button>}</p>}
         {doc.duplicate_state === 'suspected' && doc.status === 'review' && (
           <div className="fin-panel__banner is-warn" role="status">
             <Icon name="copy" size={16} />

@@ -127,7 +127,7 @@
 
 .fin__main { min-width: 0; display: flex; flex-direction: column; overflow-x: clip; }
 .fin__top { display: flex; align-items: center; gap: 0.75rem; min-height: 60px; padding: 0.5rem 2rem; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: var(--z-bar); }
-.fin__title { font-size: var(--t-lg); font-weight: 700; white-space: nowrap; }
+.fin__title { font-size: var(--t-lg); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }   /* a long page name shortens; the bar buttons stay */
 .fin-searchbar { margin-inline-start: auto; display: flex; align-items: center; gap: 0.55rem; width: min(380px, 40vw); min-height: 36px; padding: 0 0.7rem; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); color: var(--muted); cursor: text; font-size: var(--t-md); }
 .fin-searchbar span { flex: 1; text-align: start; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .fin-searchbar:hover { border-color: var(--line-2); }
@@ -1824,9 +1824,11 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-wachip__icon .fin-logo-tile { width: 28px; height: 28px; border: 0; border-radius: 8px; background: none; }
 .fin-wachip__text { display: flex; flex-direction: column; line-height: 1.15; }
 .fin-wachip__text small { font-size: var(--t-xs); color: var(--text-2); }
-.fin-wachip__text strong { font-size: var(--t-sm); font-variant-numeric: tabular-nums; color: var(--ink); }
+.fin-wachip__text strong { font-size: var(--t-sm); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; direction: ltr; unicode-bidi: isolate; }
 .fin-wachip__copy { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: var(--text-2); cursor: pointer; }
 .fin-wachip__copy:hover { background: var(--wash); color: var(--ink); }
+/* a mid-size screen: the WhatsApp number alone (no label, no copy) and a narrower search, so the page name keeps its room */
+@media (min-width: 761px) and (max-width: 1180px) { .fin-wachip__text small, .fin-wachip__copy { display: none; } .fin-searchbar { width: min(240px, 26vw); } }
 .fin-wachip__pop { position: absolute; top: calc(100% + 8px); inset-inline-end: 0; z-index: var(--z-pop); width: 300px; padding: 14px 16px; border-radius: var(--r-l); background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--pop); display: grid; gap: 6px; }
 .fin-wachip__pop p { margin: 0; font-size: var(--t-sm); line-height: 1.55; }
 .fin-wachip__pop .fin-link { justify-self: start; }

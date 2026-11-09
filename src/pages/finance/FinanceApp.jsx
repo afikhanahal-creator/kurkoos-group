@@ -92,7 +92,14 @@ function useFinanceData(enabled, onChange) {
   const [state, setState] = useState({ loading: true, error: '', me: null, documents: [], businesses: [], projects: [], categories: [], suppliers: [], mailboxes: [], members: [], allocations: [], settings: {} })
   const loadedAt = useRef(0)
   const stamp = useRef(''); const prevDocs = useRef(null)
-  const reload = useCallback(async () => {
+  const inflight = useRef(null)
+  // one load at a time: a second call while a load runs (focus, a timer, a screen's refresh) shares it
+  const reload = useCallback(() => {
+    if (inflight.current) return inflight.current
+    inflight.current = load().finally(() => { inflight.current = null })
+    return inflight.current
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const load = async () => {
     try {
       const me = await api.me()
       if (!me?.role) { setState((s) => ({ ...s, loading: false, error: '', me })); return }
@@ -107,12 +114,13 @@ function useFinanceData(enabled, onChange) {
     } catch (e) {
       setState((s) => ({ ...s, loading: false, error: /does not exist|schema cache|fin_me/.test(e.message) ? 'הטבלאות של המערכת עוד לא קיימות. מריצים את supabase/finance.sql ב-Supabase › SQL Editor' : e.message }))
     }
-  }, [])
+  }
   useEffect(() => { if (enabled) reload() }, [enabled, reload])
   // others work in the system too: refresh quietly when the tab comes back into view, if the data is older than 20 s
   useEffect(() => {
     if (!enabled) return undefined
-    const on = () => { if (document.visibilityState === 'visible' && Date.now() - loadedAt.current > 20_000) reload() }
+    // before the first load ends (loadedAt 0) a focus is not a reason to load everything again
+    const on = () => { if (document.visibilityState === 'visible' && loadedAt.current && Date.now() - loadedAt.current > 20_000) reload() }
     document.addEventListener('visibilitychange', on); window.addEventListener('focus', on)
     return () => { document.removeEventListener('visibilitychange', on); window.removeEventListener('focus', on) }
   }, [enabled, reload])
@@ -230,6 +238,15 @@ export default function FinanceApp() {
   // being read (with what was read), so nobody has to refresh to know a scan is done
   const onChange = useRef(null)
   const data = useFinanceData(ready, onChange)
+  // once the data is in, the screens people open most are fetched in the background, so moving to them is instant
+  // (each is a few KB; the rest still load on first use)
+  useEffect(() => {
+    if (!ready || data.loading) return undefined
+    const warm = () => { import('./Executive.jsx'); import('./Reports.jsx'); import('./Assistant.jsx'); import('./MasterData.jsx'); import('./Integrations.jsx'); import('./Settings.jsx') }
+    const ric = window.requestIdleCallback
+    const id = ric ? ric(warm, { timeout: 4000 }) : setTimeout(warm, 2500)
+    return () => { if (ric && window.cancelIdleCallback) window.cancelIdleCallback(id); else clearTimeout(id) }
+  }, [ready, data.loading])
   // one line per sign-in (device, time); a sign-in from a new device also sends a mail
   useEffect(() => {
     if (!ready || !session?.access_token) return

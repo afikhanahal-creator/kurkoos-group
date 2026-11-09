@@ -5,7 +5,7 @@ import * as api from './api.js'
 import { DOC_TYPE, claimableVat, date, docDate, money, monthLabel, nameOf, period, recentMonths, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { buildPackage } from './exportPackage.js'
 import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, askConfirm } from './ui.jsx'
-import { Monogram } from './logos.jsx'
+import { VendorLogo } from './logos.jsx'
 import Select from './Select.jsx'
 
 const FORMATS = { zip: 'ZIP: קבצים מקוריים + Excel + CSV + metadata', excel: 'Excel', csv: 'CSV', pdf: 'PDF (דוח להדפסה)' }
@@ -124,7 +124,8 @@ export default function Integrations() {
   const admin = can('manage')
   const live = (list.data || []).filter((i) => i.enabled)
   const match = (a) => !term.trim() || `${a.label} ${SOFTWARE[a.id]?.desc || ''}`.toLowerCase().includes(term.trim().toLowerCase())
-  const apiApps = adapters.filter((a) => a.kind === 'api' && match(a))
+  const onFirst = (x, y) => Number(live.some((i) => i.provider === y.id)) - Number(live.some((i) => i.provider === x.id))
+  const apiApps = adapters.filter((a) => a.kind === 'api' && match(a)).sort(onFirst)
   const fileApps = adapters.filter((a) => a.kind === 'file' && match(a))
 
   const save = async (e) => {
@@ -145,11 +146,13 @@ export default function Integrations() {
     const sw = SOFTWARE[a.id] || { mono: a.label.slice(0, 2), tone: 'ink', desc: '' }
     const mine = live.filter((i) => i.provider === a.id)
     return (
-      <article key={a.id} className="fin-app-card">
-        <Monogram text={sw.mono} tone={sw.tone} />
-        <div className="fin-app-card__head">
-          <h4>{a.label}</h4>
-          <span className="fin-muted">{mine.length ? mine.map((i) => (i.business_id ? nameOf(businesses, i.business_id) : 'כל החברות')).join(', ') : 'לא מחובר'}</span>
+      <article key={a.id} className={`fin-app-card ${mine.length ? 'is-on' : ''}`}>
+        <div className="fin-app-card__top">
+          <VendorLogo id={a.id} mono={sw.mono} tone={sw.tone} />
+          <div className="fin-app-card__head">
+            <h4>{a.label}</h4>
+            <span className="fin-muted">{mine.length ? mine.map((i) => (i.business_id ? nameOf(businesses, i.business_id) : 'כל החברות')).join(', ') : a.kind === 'file' ? 'זמין תמיד' : 'לא מחובר'}</span>
+          </div>
         </div>
         <p>{sw.desc}</p>
         {mine.map((i) => {
@@ -184,6 +187,14 @@ export default function Integrations() {
         <Icon name="search" size={18} />
         <input type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="חיפוש תוכנת הנהלת חשבונות" aria-label="חיפוש תוכנת הנהלת חשבונות" />
       </label>
+      {adapters.length > 0 && (
+        <div className="fin-app-sum" role="status">
+          <span><b>{new Set(live.map((i) => i.provider)).size}</b> תוכנות מחוברות</span>
+          <span><b>{live.filter((i) => i.status === 'ready').length}</b> פעילות</span>
+          <span className={live.some((i) => i.status === 'not_active') ? 'is-warn' : ''}><b>{live.filter((i) => i.status === 'not_active').length}</b> ממתינות להפעלה</span>
+          {live.some((i) => i.status === 'error') && <span className="is-bad"><b>{live.filter((i) => i.status === 'error').length}</b> בשגיאה</span>}
+        </div>
+      )}
       {msg && <p className="fin-note" role="status">{msg}</p>}
       {err && !edit && <p className="fin-error fin-error--block" role="alert">{err}</p>}
 

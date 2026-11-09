@@ -2303,3 +2303,19 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot td.fin-td-main { margin-bottom: 0.25rem; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot td[data-label]::before { content: attr(data-label); color: var(--muted); font-weight: 400; }
 }
+
+/* accounting software screen: the vendor's icon beside its name, connected apps first and marked, a status line */
+.fin-logo-tile--vendor { background: #fff; border-color: var(--line); border-radius: 14px; }
+.fin-logo-tile--vendor img { display: block; object-fit: contain; }
+.fin-app-card__top { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+.fin-app-card__top .fin-app-card__head { min-width: 0; }
+.fin-app-card__top h4 { margin: 0 0 0.1rem; overflow-wrap: anywhere; }
+.fin-app-card { grid-template-rows: auto 1fr auto; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.fin-app-card:hover { border-color: var(--line-2); box-shadow: 0 6px 18px rgba(7, 41, 58, 0.06); }
+.fin-app-card.is-on { border-color: color-mix(in srgb, var(--ocean) 45%, var(--line)); box-shadow: inset 0 3px 0 var(--ocean); }
+.fin-app-sum { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.fin-app-sum span { display: inline-flex; align-items: baseline; gap: 0.35rem; padding: 0.45rem 0.8rem; border: 1px solid var(--line); border-radius: 99px; background: var(--sheet); color: var(--text-2); font-size: var(--t-sm); }
+.fin-app-sum b { color: var(--ink); font-size: var(--t-base); font-variant-numeric: tabular-nums; }
+.fin-app-sum .is-warn b { color: var(--warn); }
+.fin-app-sum .is-bad b { color: var(--attn); }
+@media (prefers-reduced-motion: reduce) { .fin-app-card { transition: none; } }

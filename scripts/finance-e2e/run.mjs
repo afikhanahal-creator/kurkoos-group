@@ -1401,8 +1401,12 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   await page.locator('.fin-attach__link select').selectOption(sql("select id from fin_documents where file_name='ronir-receipt.pdf'")); await page.getByRole('button', { name: 'קישור', exact: true }).click(); await page.waitForTimeout(1000)
   const attRows = await page.locator('.fin-attach__list li').allInnerTexts()
   const attShot = await shot('107-attachments')
-  const [popup] = await Promise.all([page.waitForEvent('popup', { timeout: 8000 }).catch(() => null), page.locator('.fin-viewer__bar a[aria-label="פתיחה בחלון חדש"]').click()])
-  const popupUrl = popup ? popup.url() : ''
+  // the window opens with the file's own address; whether the browser can draw a PDF there is the browser's part
+  // (headless Chromium has no PDF viewer and leaves the window blank), so the link itself is checked: it is the file, and it loads
+  const openLink = page.locator('.fin-viewer__bar a[aria-label="פתיחה בחלון חדש"]')
+  const linkFile = await openLink.evaluate(async (a) => { try { const r = await fetch(a.href); const b = await r.blob(); return a.target === '_blank' && r.ok && b.size > 0 ? a.href : '' } catch { return '' } }).catch(() => '')
+  const [popup] = await Promise.all([page.waitForEvent('popup', { timeout: 8000 }).catch(() => null), openLink.click()])
+  const popupUrl = popup ? linkFile : ''
   if (popup) await popup.close()
   const attAudit = sql(`select count(*) from fin_audit where entity_id='${ronirInv}' and action='attachment_added'`)
   const empAtt = await rest(`fin_document_attachments?document_id=eq.${ronirInv}&select=id`, empToken)

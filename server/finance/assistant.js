@@ -8,8 +8,8 @@ import { sb, audit } from './db.js'
 import { markLedger } from '../../src/pages/finance/ledger.js'
 import { overview, periodOf, booked, within, dayOf, monthName } from '../../src/pages/finance/insights.js'
 
-const INTENTS = ['spend_total', 'top_companies', 'top_suppliers', 'top_categories', 'category_growth', 'project_spend', 'projects_over_budget', 'unassigned', 'vat_total', 'period_compare', 'pending_review', 'open_invoices', 'unknown']
-const PLAN = {
+const INTENTS = ['monthly_trend', 'doc_count', 'avg_invoice', 'largest_docs', 'spend_total', 'top_companies', 'top_suppliers', 'top_categories', 'category_growth', 'project_spend', 'projects_over_budget', 'unassigned', 'vat_total', 'period_compare', 'pending_review', 'open_invoices', 'unknown']
+const PART = {
   type: 'object', additionalProperties: false,
   required: ['intent', 'period', 'from', 'to', 'company', 'project', 'category', 'supplier', 'limit'],
   properties: {
@@ -24,6 +24,8 @@ const PLAN = {
     limit: { type: 'integer', description: 'how many rows for a "top N" question; 5 when not said' },
   },
 }
+// a complex question becomes up to three parts, each one query computed on its own (a comparison plus a ranking, two periods)
+const PLAN = { type: 'object', additionalProperties: false, required: ['parts'], properties: { parts: { type: 'array', minItems: 1, maxItems: 3, items: PART } } }
 const docsTxt = (n) => (n === 1 ? 'מסמך אחד' : `${n} מסמכים`)
 const money = (v) => `${(Math.round(v * 100) / 100).toLocaleString('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₪`
 const sign = (d) => (d.doc_type === 'credit' ? -1 : 1)
@@ -39,6 +41,7 @@ async function plan(question, names, history = []) {
     `Companies: ${names.companies.join(' | ') || '(none)'}`,
     `Projects: ${names.projects.join(' | ') || '(none)'}`,
     `Categories: ${names.categories.join(' | ') || '(none)'}`,
+    'If the question asks several things (a total and a ranking, two periods, two companies, a figure and the documents behind it), return up to 3 parts, each a full query; most questions are one part. Extra intents: monthly_trend (spending month by month in the period), doc_count (how many documents), avg_invoice (the average document amount), largest_docs (the biggest documents).',
     'Intents: spend_total (how much was spent), top_companies (which company spent most), top_suppliers, top_categories, category_growth (which category grew most vs the previous period), project_spend (how much on a project), projects_over_budget, unassigned (documents without a company or a project), vat_total, period_compare (this period vs the previous one), pending_review, open_invoices (invoices without proof of payment), unknown (anything else).',
     ...(history.length ? ['Earlier in this conversation (use it for follow-ups such as "and last month?", "what about Ronir?", "and the suppliers?": keep what the new question does not change):', ...history.map((h, i) => `${i + 1}. "${h.q}" -> intent ${h.intent || '?'}, period ${h.period || '?'}, scope ${h.scope || 'all'}`)] : []),
     `Question: ${question}`,
@@ -46,7 +49,7 @@ async function plan(question, names, history = []) {
   const r = await fetchRetry(`${env.anthropic()}/v1/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: env.model(), max_tokens: 600, output_config: { effort: 'low', format: { type: 'json_schema', schema: PLAN } }, messages: [{ role: 'user', content: [{ type: 'text', text }] }] }),
+    body: JSON.stringify({ model: env.model(), max_tokens: 1200, output_config: { effort: 'low', format: { type: 'json_schema', schema: PLAN } }, messages: [{ role: 'user', content: [{ type: 'text', text }] }] }),
   })
   const d = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error((d.error && d.error.message) || `claude ${r.status}`)
@@ -81,7 +84,9 @@ export async function ask({ question, history, user }) {
   markLedger(docs)
 
   const hist = (Array.isArray(history) ? history : []).slice(-6).map((h) => ({ q: String(h?.q || '').slice(0, 300), intent: String(h?.intent || '').slice(0, 40), period: String(h?.period || '').slice(0, 60), scope: String(h?.scope || '').slice(0, 120) })).filter((h) => h.q)
-  const p = await plan(qn, { companies: bizList.map((b) => b.name), projects: projList.map((x) => x.name), categories: (categories || []).map((c) => c.name) }, hist)
+  const planned = await plan(qn, { companies: bizList.map((b) => b.name), projects: projList.map((x) => x.name), categories: (categories || []).map((c) => c.name) }, hist)
+  const parts = (Array.isArray(planned.parts) && planned.parts.length ? planned.parts : [planned]).slice(0, 3)
+  const runPart = (p) => {
   const company = pick(bizList, p.company); const project = pick(projList, p.project); const category = pick(categories || [], p.category)
   const period = p.period === 'all' ? { key: 'all', label: 'מאז תחילת הנתונים', from: '1900-01-01', to: '2999-12-31', prevFrom: '1900-01-01', prevTo: '1900-01-01' } : periodOf(p.period, new Date(), { from: p.from, to: p.to })
   const ctx = { businesses: bizList, projects: projList, categories: categories || [], allocations: allocations || [] }
@@ -135,13 +140,42 @@ export async function ask({ question, history, user }) {
     }
     case 'pending_review': { const w = docs.filter((d) => d.status === 'review' && (!company || d.business_id === company.id)); out.value = w.length; out.unit = 'count'; out.ids = w.map((d) => d.id); out.answer = `${docsTxt(w.length)} ${w.length === 1 ? 'ממתין' : 'ממתינים'} לבדיקה`; out.explain = 'מסמכים שנקראו ומחכים שאדם יאשר אותם.'; break }
     case 'open_invoices': out.value = o.kpi.openNoProof; out.ids = o.ids.open; out.answer = `${money(o.kpi.openNoProof)} ב-${o.kpi.openCount === 1 ? 'חשבונית אחת' : `${o.kpi.openCount} חשבוניות`}`; out.explain = 'חשבוניות בתקופה שאין במערכת קבלה או אישור תשלום שמתאים להן. זה לא בדיקה מול הבנק.'; break
+    case 'monthly_trend': {
+      const m = new Map()
+      for (const d of inScope) { const key = dayOf(d).slice(0, 7); const g = m.get(key) || { label: monthName(key), key, value: 0, count: 0, ids: [] }; g.value += tot(d); g.count++; g.ids.push(d.id); m.set(key, g) }
+      out.rows = [...m.values()].sort((a, b) => a.key.localeCompare(b.key)); out.ids = inScope.map((d) => d.id)
+      const avg = out.rows.length ? out.rows.reduce((x, r) => x + r.value, 0) / out.rows.length : 0; out.value = avg
+      const peak = [...out.rows].sort((a, b) => b.value - a.value)[0]
+      out.answer = out.rows.length ? `ממוצע חודשי ${money(avg)}${peak ? `, השיא ב${peak.label} (${money(peak.value)})` : ''}` : 'אין הוצאות בתקופה'
+      out.explain = `ההוצאות לפי החודש שעל המסמך, ${out.rows.length} חודשים.`; break
+    }
+    case 'doc_count': out.value = inScope.length; out.unit = 'count'; out.ids = inScope.map((d) => d.id); out.answer = docsTxt(inScope.length); out.explain = 'חשבוניות, חשבוניות מס/קבלה וקבלות שלא משלמות חשבונית שכבר נספרה.'; break
+    case 'avg_invoice': { const v = inScope.length ? sum(inScope) / inScope.length : 0; out.value = v; out.ids = inScope.map((d) => d.id); out.answer = `${money(v)} בממוצע`; out.explain = `ממוצע של ${docsTxt(inScope.length)}.`; break }
+    case 'largest_docs': {
+      out.rows = [...inScope].sort((a, b) => tot(b) - tot(a)).slice(0, n).map((d) => ({ label: `${d.supplier_name || 'מסמך'} · ${dayOf(d)}`, value: tot(d), count: 1, ids: [d.id] }))
+      out.ids = out.rows.flatMap((r) => r.ids); out.value = out.rows[0]?.value ?? 0
+      out.answer = out.rows[0] ? `הגדול ביותר: ${out.rows[0].label}, ${money(out.rows[0].value)}` : 'אין מסמכים בתקופה'; break
+    }
     default: out.intent = 'unknown'; out.answer = 'לא הצלחתי להבין את השאלה כשאלה על הנתונים.'; out.explain = 'נסו למשל: "כמה הוצאנו החודש?", "מי חמשת הספקים הגדולים מתחילת השנה?", "כמה הוצאנו על פרויקט ...?"'
   }
   out.count = out.ids.length
+  // what the answer rests on and what it leaves out
+  out.checked = inScope.length
+  const foreign = docs.filter((d) => booked(d) && !ils(d) && within(d, period.from, period.to)).length
+  const unread = docs.filter((d) => ['failed', 'processing'].includes(d.status) && within(d, period.from, period.to)).length
+  out.limits = [foreign && `${docsTxt(foreign)} במטבע זר לא נכללו בסכומים בש״ח.`, unread && `${docsTxt(unread)} עוד לא נקראו, ולכן לא נספרו.`, out.intent !== 'unknown' && !out.checked && !['projects_over_budget', 'unassigned', 'pending_review', 'open_invoices', 'project_spend'].includes(out.intent) && 'אין מסמכים בתקופה ובהיקף שנבחרו.'].filter(Boolean)
+  out.ids = out.ids.slice(0, 500)
+  for (const r of out.rows) if (r.ids) r.ids = r.ids.slice(0, 300)
+  return out
+  }
+  const results = parts.map(runPart)
+  const out = { ...results[0], parts: results.slice(1).map((r) => ({ intent: r.intent, answer: r.answer, explain: r.explain, period: r.period, scope: r.scope, rows: r.rows, unit: r.unit, ids: r.ids, count: r.count, limits: r.limits })) }
+  out.limits = [...new Set(results.flatMap((r) => r.limits || []))]
+  out.checked = results.reduce((x, r) => Math.max(x, r.checked || 0), 0)
   // the reply as a person would say it, built only from the computed result (no number comes from the AI)
-  const where = [scope && scope !== 'כל החברות' ? scope : 'כל החברות', period.label].filter(Boolean).join(', ')
+  const where = [out.scope && out.scope !== 'כל החברות' ? out.scope : 'כל החברות', out.period].filter(Boolean).join(', ')
   out.reply = out.intent === 'unknown' ? 'לא הצלחתי להבין את השאלה כשאלה על הנתונים. אפשר לשאול למשל כמה הוצאנו החודש, מי הספקים הגדולים, או אילו מסמכים מחכים לבדיקה.'
-    : `בדקתי (${where}). ${String(out.answer).replace(/[.]+$/, '')}.${out.count ? ` מבוסס על ${docsTxt(out.count)}.` : ''}`
+    : results.length > 1 ? `בדקתי ${results.length} דברים בשאלה. ${results.map((r) => `${r.answer}${r.scope || r.period ? ` (${[r.scope, r.period].filter(Boolean).join(', ')})` : ''}`).join(' · ')}.` : `בדקתי (${where}). ${String(out.answer).replace(/[.]+$/, '')}.${out.count ? ` מבוסס על ${docsTxt(out.count)}.` : ''}`
   out.follow = ({
     spend_total: ['ואיך זה לעומת התקופה הקודמת?', 'מי הספקים הגדולים?', 'לפי קטגוריות?'],
     top_companies: ['ומה הספקים הגדולים?', 'ואיך זה לעומת התקופה הקודמת?'],
@@ -151,9 +185,7 @@ export async function ask({ question, history, user }) {
     pending_review: ['כמה מסמכים עדיין לא שויכו?', 'כמה חשבוניות בלי אישור תשלום?'],
     open_invoices: ['מי הספקים עם הכי הרבה חשבוניות פתוחות?', 'כמה מסמכים מחכים לבדיקה?'],
   })[out.intent] || ['כמה הוצאנו החודש?', 'מי הספקים הגדולים?']
-  out.ids = out.ids.slice(0, 500)
-  for (const r of out.rows) if (r.ids) r.ids = r.ids.slice(0, 300)
-  await audit('assistant', null, 'asked', { question: qn, intent: p.intent, period: period.label, scope }, user).catch(() => {})
+  await audit('assistant', null, 'asked', { question: qn, intent: results.map((r) => r.intent).join('+'), period: out.period, scope: out.scope }, user).catch(() => {})
   return out
 }
 

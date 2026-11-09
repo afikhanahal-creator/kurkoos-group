@@ -2201,3 +2201,30 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 }
 @media (prefers-reduced-motion: reduce) { .fin-chat__bubble { animation: none; } .fin-chat__typing i { animation: none; opacity: 0.6; } }
 .fin .fin-chat__composer textarea, .fin .fin-chat__composer textarea:focus { border: 0 !important; box-shadow: none !important; background: transparent !important; outline: none; }
+
+/* chat v2: question cards (fill or send), thinking stages, a structured answer card with parts, basis and limits */
+.fin-chat__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; margin-top: 10px; text-align: start; }
+.fin-chat__card { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); overflow: hidden; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.fin-chat__card:hover { border-color: var(--ocean); box-shadow: 0 6px 18px rgba(7, 41, 58, 0.08); }
+.fin-chat__card.is-complex { border-style: dashed; }
+.fin-chat__card-q { all: unset; box-sizing: border-box; flex: 1; cursor: pointer; padding: 12px 14px; color: var(--ink); font-size: var(--t-sm); line-height: 1.5; display: grid; gap: 4px; }
+.fin-chat__card-q em { font-style: normal; font-size: var(--t-xs); font-weight: 700; color: var(--ocean-2); }
+.fin-chat__card-q:focus-visible, .fin-chat__card-go:focus-visible { outline: 2px solid var(--ocean); outline-offset: -2px; }
+.fin-chat__card-go { all: unset; box-sizing: border-box; cursor: pointer; display: grid; place-items: center; width: 46px; color: var(--ocean-2); border-inline-start: 1px solid var(--line); }
+.fin-chat__card-go:hover:not(:disabled) { background: var(--ocean-wash); }
+.fin-chat__hint { margin: 6px 0 0; font-size: var(--t-xs) !important; color: var(--muted) !important; }
+.fin-chat__thinking { display: inline-flex !important; align-items: center; gap: 10px; color: var(--text-2); font-size: var(--t-sm); }
+.fin-chat__thinking .fin-chat__typing { padding: 0; }
+.fin-chat__part { display: grid; gap: 6px; margin-top: 6px; padding: 12px 14px; border-radius: var(--r-m); background: var(--wash); }
+.fin-chat__part > strong { font-size: var(--t-lg); color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-chat__part-label { font-size: var(--t-xs); font-weight: 700; color: var(--ocean-2); }
+.fin-chat__part .fin-link { justify-self: start; }
+.fin-chat__basis { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 8px; }
+.fin-chat__basis summary { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--ocean-2); font-size: var(--t-sm); font-weight: 600; }
+.fin-chat__basis ul { margin: 8px 0 0; padding-inline-start: 1.1em; display: grid; gap: 4px; color: var(--text-2); font-size: var(--t-sm); }
+.fin-chat__limits { list-style: none; margin: 0; padding: 8px 10px; border-radius: var(--r-m); background: var(--warn-wash); display: grid; gap: 4px; font-size: var(--t-sm); color: var(--text); }
+.fin-chat__limits li { display: flex; gap: 6px; align-items: flex-start; }
+.fin-chat__limits svg { color: var(--warn); flex: none; margin-top: 3px; }
+@media (max-width: 760px) { .fin-chat__cards { grid-template-columns: 1fr; } }
+/* the site's a11y rule forces a 3px outline on every focused field; the composer shows focus around itself (:focus-within) */
+.fin .fin-chat__composer textarea:focus-visible { outline: none !important; outline-width: 0 !important; }

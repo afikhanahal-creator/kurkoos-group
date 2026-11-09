@@ -61,7 +61,8 @@ function Usage() {
   const month = thisMonth()
   const docsMonth = documents.filter((d) => String(d.created_at || '').slice(0, 7) === month)
   const reads = (runs.data || []).filter((r) => r.agent === 'ocr' && String(r.started_at).slice(0, 7) === month).reduce((a, r) => a + (r.processed || 0), 0)
-  const pct = usage.data ? (usage.data.storage_bytes / 1024 ** 3) * 100 : null
+  const quota = Number(usage.data?.quota_bytes) || 1024 ** 3
+  const pct = usage.data ? (usage.data.storage_bytes / quota) * 100 : null
   const fin = usage.data?.buckets?.['finance-docs'] || 0
   return (
     <div className="fin-stack">
@@ -69,7 +70,7 @@ function Usage() {
         <h3>אחסון</h3>
         {pct === null ? <p className="fin-muted">{usage.loading ? 'טוען…' : 'נתוני האחסון לא זמינים.'}</p> : (
           <>
-            <div className="fin-org-stat"><strong>{pct.toFixed(1)}%</strong><span>מ-1GB של התוכנית החינמית</span></div>
+            <div className="fin-org-stat"><strong>{pct.toFixed(1)}%</strong><span>מ-{Math.round(quota / 1024 ** 3)}GB של הארגון</span></div>
             <div className={`fin-meter ${pct >= 75 ? 'is-bad' : pct >= 60 ? 'is-warn' : ''}`} role="meter" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="שימוש באחסון"><span style={{ width: `${Math.min(100, pct)}%` }} /></div>
             <p className="fin-muted fin-small">מסמכי הכספים תופסים {(fin / 1024 ** 2).toFixed(1)}MB. המכסה משותפת לכל האתר, ולכן קליטת מסמכים נעצרת ב-75%.</p>
           </>

@@ -1171,19 +1171,20 @@ record('EXEC', 'סקירה פיננסית למנכ״ל', 'נפתחת ראשונ�
 // the assistant: answers computed from the database, the same number as the overview
 await go('/assistant'); await page.waitForTimeout(600)
 await page.getByRole('button', { name: 'כמה הוצאנו החודש בכל החברות?' }).click()
-await page.waitForSelector('.fin-ask__value', { timeout: 20000 })
-const a1 = await page.locator('.fin-ask__item').first().innerText()
-await page.locator('.fin-ask__bar input').fill('כמה מסמכים עדיין לא שויכו?'); await page.locator('.fin-ask__bar button[type=submit]').click()
-await page.waitForFunction(() => document.querySelectorAll('.fin-ask__item').length >= 2, null, { timeout: 20000 }).catch(() => {})
-const a2 = await page.locator('.fin-ask__item').first().innerText()
+await page.waitForSelector('.fin-chat__value', { timeout: 20000 })
+const a1 = await page.locator('.fin-chat__bubble.is-ai').first().innerText()
+const a1Value = await page.locator('.fin-chat__value').first().innerText()
+await page.locator('.fin-chat__composer textarea').fill('כמה מסמכים עדיין לא שויכו?'); await page.locator('.fin-chat__composer button[type=submit]').click()
+await page.waitForFunction(() => document.querySelectorAll('.fin-chat__bubble.is-ai .fin-chat__answer').length >= 2, null, { timeout: 20000 }).catch(() => {})
+const a2 = await page.locator('.fin-chat__bubble.is-ai').last().innerText()
 const unassignedNow = sql("select count(*) from fin_documents where business_id is null and status not in ('rejected','archived','duplicate','failed','processing')")
 const askShot = await shot('94-assistant')
-await page.locator('.fin-ask__item').first().getByRole('button', { name: 'פתיחת המסמכים' }).click(); await page.waitForTimeout(800)
+await page.locator('.fin-chat__bubble.is-ai').last().getByRole('button', { name: /^פתיחת/ }).click(); await page.waitForTimeout(800)
 const openedRows = await page.locator('.fin-table tbody tr').count()
 const openedBar = await page.locator('.fin-onlybar').innerText().catch(() => '')
 const askAudit = sql("select count(*) from fin_audit where entity='assistant' and action='asked'")
 const empAsk = await api(empToken, { action: 'ask', question: 'כמה הוצאנו החודש בכל החברות?' })
-const a1Num = Number((a1.split('\n').find((l) => /₪/.test(l)) || '').replace(/[^\d.\-]/g, ''))
+const a1Num = Number(a1Value.replace(/[^\d.\-]/g, ''))
 record('ASK', 'עוזר פיננסי שעונה מהנתונים', 'השאלה הופכת לשאילתה, המספר מחושב בשרת ושווה למספר בסקירה; כל תשובה עם תקופה והיקף; "פתיחת המסמכים" מציגה בדיוק את המסמכים שבחישוב; עובד לא יכול לשאול',
   `תשובה 1: ${a1.replace(/\s+/g, ' ').slice(0, 140)} (מספר ${a1Num}, בסקירה ${hero}); תשובה 2: ${a2.replace(/\s+/g, ' ').slice(0, 80)} (במסד ${unassignedNow}); נפתחו ${openedRows} מסמכים ("${openedBar.replace(/\s+/g, ' ').slice(0, 60)}"); ביומן ${askAudit}; עובד: ${empAsk.status}`,
   Math.abs(a1Num - hero) < 0.01 && /החודש|נובמבר|דצמבר|ינואר/.test(a1) && (unassignedNow === '1' ? /מסמך אחד בלי חברה/ : new RegExp(`${unassignedNow} מסמכים בלי חברה`)).test(a2) && openedRows === Number(unassignedNow) && Number(askAudit) >= 2 && empAsk.status === 403,

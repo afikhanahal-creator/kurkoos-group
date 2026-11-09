@@ -4,7 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal } from './format.js'
 import { makeZip, saveBlob } from './zip.js'
-import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZone, useAsync } from './ui.jsx'
+import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZone, askConfirm, useAsync } from './ui.jsx'
 import ShareDialog from './ShareDialog.jsx'
 import { exportSheet } from './exportPackage.js'
 import Thumbnail from './Thumbnail.jsx'
@@ -73,6 +73,7 @@ export default function Documents({ preset = 'all' }) {
   const [sel, setSel] = useState(() => new Set())
   const [busy, setBusy] = useState('')
   const [note, setNote] = useState('')
+  const [peek, setPeek] = useState(null)   // the row whose document floats over its name
   const [showUpload, setShowUpload] = useState(false)
   const [dateBy, setDateBy] = useState('doc')            // filter by the date on the document, or by when it arrived
   const [sending, setSending] = useState(null)           // the documents in the "send to the accountant" dialog
@@ -125,6 +126,22 @@ export default function Documents({ preset = 'all' }) {
       if (label === 'approve' && approved) moments.approve({ from: document.querySelector('.fin-bulk .fin-btn--primary'), title: approved === 1 ? 'המסמך אושר' : `${approved} מסמכים אושרו`, sub: 'מוכנים לשליחה לרו״ח' })
       setSel(new Set()); await reload()
     } catch (e) { setNote(/SECOND_APPROVAL/.test(e.message) ? 'חלק מהמסמכים דורשים מאשר נוסף' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת מזו של המסמך' : e.message) } finally { setBusy('') }
+  }
+  // suspected duplicates: a pair is "certain" when the original has the same supplier, number and total; those can be merged
+  // in one click (the copy is closed as a duplicate of the original, nothing is deleted), the rest are opened one by one
+  const dups = useMemo(() => documents.filter((d) => d.duplicate_state === 'suspected' && d.status === 'review'), [documents])
+  const sameAs = (d) => { const o = documents.find((x) => x.id === d.duplicate_of); return !!o && !['duplicate', 'rejected', 'archived'].includes(o.status) && String(o.doc_number || '') === String(d.doc_number || '') && Number(o.total_amount) === Number(d.total_amount) && (o.supplier_vat_id ? o.supplier_vat_id === d.supplier_vat_id : o.supplier_name === d.supplier_name) }
+  const sureDups = dups.filter(sameAs)
+  const mergeDups = async () => {
+    if (!(await askConfirm({ title: 'מיזוג כפילויות', text: `${sureDups.length === 1 ? 'מסמך אחד זהה' : `${sureDups.length} מסמכים זהים`} למסמך שכבר במערכת (אותו ספק, מספר וסכום). העותק ייסגר ככפול של המקורי; שום דבר לא נמחק.`, ok: 'מיזוג' }))) return
+    setBusy('dups'); let ok = 0
+    for (const d of sureDups) { try { await api.callServer('duplicate-decide', { document_id: d.id, decision: 'duplicate' }); ok++ } catch { /* the next */ } }
+    setBusy(''); setNote(ok === 1 ? 'כפילות אחת מוזגה' : `${ok} כפילויות מוזגו`); await reload()
+  }
+  const canDelete = (d) => can('manage') || (can('operate') && !['approved', 'sent'].includes(d.status))
+  const removeDoc = async (d) => {
+    if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. הפעולה נרשמת בהיסטוריה.`, ok: 'מחיקה', danger: true }))) return
+    try { await api.deleteDocument(d); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
   }
   const downloadOriginals = async () => {
     setBusy('zip')
@@ -268,6 +285,14 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
       {note && <p className="fin-note" role="status">{note}</p>}
+      {dups.length > 0 && (
+        <div className="fin-dupbar" role="status">
+          <span className="fin-dupbar__icon"><Icon name="copy" size={18} /></span>
+          <span className="fin-dupbar__text"><strong>{dups.length === 1 ? 'מסמך אחד נראה כפול' : `${dups.length} מסמכים נראים כפולים`}</strong><small>{sureDups.length ? `${sureDups.length} מהם זהים לגמרי למסמך שכבר במערכת: אותו ספק, מספר וסכום.` : 'דומים למסמך קיים; כדאי לבדוק לפני שמאשרים.'}</small></span>
+          {can('edit') && sureDups.length > 0 && <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" onClick={mergeDups} disabled={!!busy}>{busy === 'dups' ? 'ממזג…' : `מיזוג ${sureDups.length} זהים`}</button>}
+          <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(link(dups[0].id))}>הצגה</button>
+        </div>
+      )}
 
       {rows.length === 0 ? (
         tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
@@ -343,8 +368,10 @@ export default function Documents({ preset = 'all' }) {
                   <tr key={d.id} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
-                      <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>
-                      <small className="fin-cell-sub">{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
+                      <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const below = r.bottom + 380 < innerHeight; setPeek({ id: d.id, right: Math.max(8, innerWidth - r.right), ...(below ? { top: r.bottom + 6 } : { bottom: innerHeight - r.top + 6 }) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
+                      {peek?.id === d.id && d.file_path && <span className="fin-peek__pop" style={{ top: peek.top, bottom: peek.bottom, right: peek.right }} aria-hidden="true"><Thumbnail doc={d} /><span className="fin-peek__cap"><strong>{d.supplier_name || d.file_name}</strong><small>{[DOC_TYPE[d.doc_type], d.doc_number, date(docDate(d)), d.total_amount != null ? money(d.total_amount, d.currency) : ''].filter(Boolean).join(' · ')}</small></span></span>}
+                      <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button></span>
+                      <small className="fin-cell-sub">{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>
                     <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td className="fin-col-md fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
@@ -362,6 +389,7 @@ export default function Documents({ preset = 'all' }) {
                     <td className="fin-col-md" data-label="ודאות"><Confidence value={d.confidence} /></td>
                     <td className="fin-col-md" onClick={(e) => e.stopPropagation()}>
                       {d.file_path && <button type="button" className="fin-icon-btn" aria-label={`הורדת המקור של ${d.supplier_name || d.file_name}`} title="הורדת הקובץ המקורי" onClick={async () => saveBlob(await api.fileBlob(d), d.file_name || 'document')}><Icon name="download" size={18} /></button>}
+                    {canDelete(d) && <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={() => removeDoc(d)} aria-label={`מחיקת ${d.supplier_name || d.file_name || 'המסמך'}`} title="מחיקה"><Icon name="trash" size={17} /></button>}
                     </td>
                   </tr>
                 )

@@ -30,7 +30,7 @@ const sign = (d) => (d.doc_type === 'credit' ? -1 : 1)
 const tot = (d) => sign(d) * Math.abs(Number(d.total_amount) || 0)
 const ils = (d) => !d.currency || d.currency === 'ILS'
 
-async function plan(question, names) {
+async function plan(question, names, history = []) {
   if (!env.anthropicKey()) { const e = new Error('העוזר דורש ANTHROPIC_API_KEY בשרת'); e.status = 503; throw e }
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
   const text = [
@@ -40,6 +40,7 @@ async function plan(question, names) {
     `Projects: ${names.projects.join(' | ') || '(none)'}`,
     `Categories: ${names.categories.join(' | ') || '(none)'}`,
     'Intents: spend_total (how much was spent), top_companies (which company spent most), top_suppliers, top_categories, category_growth (which category grew most vs the previous period), project_spend (how much on a project), projects_over_budget, unassigned (documents without a company or a project), vat_total, period_compare (this period vs the previous one), pending_review, open_invoices (invoices without proof of payment), unknown (anything else).',
+    ...(history.length ? ['Earlier in this conversation (use it for follow-ups such as "and last month?", "what about Ronir?", "and the suppliers?": keep what the new question does not change):', ...history.map((h, i) => `${i + 1}. "${h.q}" -> intent ${h.intent || '?'}, period ${h.period || '?'}, scope ${h.scope || 'all'}`)] : []),
     `Question: ${question}`,
   ].join('\n')
   const r = await fetchRetry(`${env.anthropic()}/v1/messages`, {
@@ -64,7 +65,7 @@ async function pages(path, size = 1000) {
 }
 const pick = (list, name) => (name ? list.find((x) => x.name === name) || list.find((x) => x.name?.includes(name) || name.includes(x.name)) : null)
 
-export async function ask({ question, user }) {
+export async function ask({ question, history, user }) {
   const qn = String(question || '').trim().slice(0, 500)
   if (qn.length < 3) { const e = new Error('כתבו שאלה'); e.status = 400; throw e }
   const [docsRaw, businesses, projects, categories, allocations] = await Promise.all([
@@ -79,7 +80,8 @@ export async function ask({ question, user }) {
   const projList = (projects || []).filter((p) => !user.business_ids?.length || user.business_ids.includes(p.business_id))
   markLedger(docs)
 
-  const p = await plan(qn, { companies: bizList.map((b) => b.name), projects: projList.map((x) => x.name), categories: (categories || []).map((c) => c.name) })
+  const hist = (Array.isArray(history) ? history : []).slice(-6).map((h) => ({ q: String(h?.q || '').slice(0, 300), intent: String(h?.intent || '').slice(0, 40), period: String(h?.period || '').slice(0, 60), scope: String(h?.scope || '').slice(0, 120) })).filter((h) => h.q)
+  const p = await plan(qn, { companies: bizList.map((b) => b.name), projects: projList.map((x) => x.name), categories: (categories || []).map((c) => c.name) }, hist)
   const company = pick(bizList, p.company); const project = pick(projList, p.project); const category = pick(categories || [], p.category)
   const period = p.period === 'all' ? { key: 'all', label: 'מאז תחילת הנתונים', from: '1900-01-01', to: '2999-12-31', prevFrom: '1900-01-01', prevTo: '1900-01-01' } : periodOf(p.period, new Date(), { from: p.from, to: p.to })
   const ctx = { businesses: bizList, projects: projList, categories: categories || [], allocations: allocations || [] }
@@ -133,9 +135,22 @@ export async function ask({ question, user }) {
     }
     case 'pending_review': { const w = docs.filter((d) => d.status === 'review' && (!company || d.business_id === company.id)); out.value = w.length; out.unit = 'count'; out.ids = w.map((d) => d.id); out.answer = `${docsTxt(w.length)} ${w.length === 1 ? 'ממתין' : 'ממתינים'} לבדיקה`; out.explain = 'מסמכים שנקראו ומחכים שאדם יאשר אותם.'; break }
     case 'open_invoices': out.value = o.kpi.openNoProof; out.ids = o.ids.open; out.answer = `${money(o.kpi.openNoProof)} ב-${o.kpi.openCount === 1 ? 'חשבונית אחת' : `${o.kpi.openCount} חשבוניות`}`; out.explain = 'חשבוניות בתקופה שאין במערכת קבלה או אישור תשלום שמתאים להן. זה לא בדיקה מול הבנק.'; break
-    default: out.answer = 'לא הצלחתי להבין את השאלה כשאלה על הנתונים.'; out.explain = 'נסו למשל: "כמה הוצאנו החודש?", "מי חמשת הספקים הגדולים מתחילת השנה?", "כמה הוצאנו על פרויקט ...?"'
+    default: out.intent = 'unknown'; out.answer = 'לא הצלחתי להבין את השאלה כשאלה על הנתונים.'; out.explain = 'נסו למשל: "כמה הוצאנו החודש?", "מי חמשת הספקים הגדולים מתחילת השנה?", "כמה הוצאנו על פרויקט ...?"'
   }
   out.count = out.ids.length
+  // the reply as a person would say it, built only from the computed result (no number comes from the AI)
+  const where = [scope && scope !== 'כל החברות' ? scope : 'כל החברות', period.label].filter(Boolean).join(', ')
+  out.reply = out.intent === 'unknown' ? 'לא הצלחתי להבין את השאלה כשאלה על הנתונים. אפשר לשאול למשל כמה הוצאנו החודש, מי הספקים הגדולים, או אילו מסמכים מחכים לבדיקה.'
+    : `בדקתי (${where}). ${String(out.answer).replace(/[.]+$/, '')}.${out.count ? ` מבוסס על ${docsTxt(out.count)}.` : ''}`
+  out.follow = ({
+    spend_total: ['ואיך זה לעומת התקופה הקודמת?', 'מי הספקים הגדולים?', 'לפי קטגוריות?'],
+    top_companies: ['ומה הספקים הגדולים?', 'ואיך זה לעומת התקופה הקודמת?'],
+    top_suppliers: ['ולפי קטגוריות?', 'כמה מע״מ יש במסמכים האלה?'],
+    top_categories: ['איזו קטגוריה עלתה הכי הרבה?', 'מי הספקים הגדולים?'],
+    period_compare: ['באיזו קטגוריה נרשמה העלייה?', 'מי הספקים הגדולים?'],
+    pending_review: ['כמה מסמכים עדיין לא שויכו?', 'כמה חשבוניות בלי אישור תשלום?'],
+    open_invoices: ['מי הספקים עם הכי הרבה חשבוניות פתוחות?', 'כמה מסמכים מחכים לבדיקה?'],
+  })[out.intent] || ['כמה הוצאנו החודש?', 'מי הספקים הגדולים?']
   out.ids = out.ids.slice(0, 500)
   for (const r of out.rows) if (r.ids) r.ids = r.ids.slice(0, 300)
   await audit('assistant', null, 'asked', { question: qn, intent: p.intent, period: period.label, scope }, user).catch(() => {})

@@ -148,6 +148,18 @@ function NoAccess({ me, email, onClaimed }) {
     setBusy(true); setErr('')
     try { await api.claimAdmin(); onClaimed() } catch (e) { setErr(e.message); setBusy(false) }
   }
+  // "no access" can be a stale answer (a check that failed for a moment, a saved result from before an invitation):
+  // forget every saved check, take a fresh token and ask again; once by itself, then on the button
+  const recheck = async () => {
+    setBusy(true); setErr('')
+    try {
+      for (const k of Object.keys(sessionStorage)) if (k.startsWith('fin-sec:')) sessionStorage.removeItem(k)
+    } catch { /* noop */ }
+    await supabase.auth.refreshSession().catch(() => {})
+    await Promise.resolve(onClaimed()).catch(() => {})
+    setBusy(false)
+  }
+  useEffect(() => { const t = setTimeout(recheck, 600); return () => clearTimeout(t) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="fin-login" dir="rtl">
       <div className="fin-login__box">
@@ -155,7 +167,9 @@ function NoAccess({ me, email, onClaimed }) {
         {me?.has_members ? (
           <>
             <h1>אין לך גישה למערכת</h1>
-            <p>החשבון <span dir="ltr">{email}</span> עוד לא הוזמן למערכת הנהלת החשבונות. בקשו ממנהל המערכת הזמנה.</p>
+            <p>החשבון <strong dir="ltr">{email}</strong> עוד לא הוזמן למערכת הנהלת החשבונות. אם זה לא החשבון הנכון, נכנסים עם החשבון שהוזמן; אחרת מבקשים הזמנה ממנהל המערכת.</p>
+            <button type="button" className="fin-btn fin-btn--primary" onClick={recheck} disabled={busy}>{busy ? 'בודק…' : 'בדיקה מחדש'}</button>
+            <button type="button" className="fin-btn" onClick={() => supabase.auth.signOut({ scope: 'local' })} disabled={busy}>כניסה עם חשבון אחר</button>
           </>
         ) : (
           <>

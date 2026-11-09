@@ -11,6 +11,14 @@ import * as gmail from './providers/gmail.js'
 import * as outlook from './providers/outlook.js'
 
 export const PROVIDERS = { gmail, outlook }
+/* a reading failure in words the office can act on; the known causes come from Anthropic's API, anything else as is */
+export function explainFailure(e) {
+  const m = String(e?.message || e || '')
+  if (/credit balance is too low|billing/i.test(m)) return 'אין יתרה בחשבון Claude (Anthropic). מנהל המערכת מוסיף קרדיט ב-console.anthropic.com › Plans & Billing, ואז "קריאה מחדש"'
+  if (/invalid x-api-key|authentication_error|401/i.test(m)) return 'מפתח Claude לא תקין. בודקים את ANTHROPIC_API_KEY ב-Vercel'
+  if (/overloaded|rate.?limit|529|429/i.test(m)) return 'שירות הקריאה עמוס כרגע'
+  return m.slice(0, 200)
+}
 const isoDate = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || '')) ? s : null)
 const digits = (s) => String(s || '').replace(/\D/g, '') || null
 const money = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 100) / 100 : null)
@@ -212,7 +220,7 @@ export async function processStored(doc, runs, trigger = 'upload', started = Dat
   } catch (e) {
     runs.ocr.stat.errors++
     const retry = nextRetry(cur.failures)
-    const why = String(e.message || e).slice(0, 200)
+    const why = explainFailure(e)
     return await patch(`fin_documents?id=eq.${doc.id}`, {
       status: 'failed', attempts: cur.attempts, failures: cur.failures, stage: retry ? 'failed' : 'dead', stage_at: new Date().toISOString(), next_retry_at: retry, ...usageFields(x, cur),
       issues: [{ level: 'error', code: 'ocr_failed', field: null, message: retry ? `הקריאה נכשלה (ניסיון ${cur.attempts}): ${why}. ניסיון נוסף אוטומטי בסריקת הלילה.` : `הקריאה נכשלה ${cur.failures} פעמים ברצף: ${why}. אפשר לנסות שוב ידנית או למלא את הפרטים.` }],
@@ -292,7 +300,7 @@ export async function syncMailbox(mb, started, runs, trigger) {
         const base = { ...meta, file_path: path, file_name: String(name).slice(0, 200), file_mime: mime.startsWith('text/') ? 'text/html' : mime, file_size: buf.length, file_hash: hash, attempts: 1 }
         const fields = x
           ? await analyze(x, { mailbox: mb, fromEmail: meta.email_from, subject: meta.email_subject, text: msg.text || '' }, runs)
-          : { status: 'failed', failures: 1, stage: 'failed', stage_at: new Date().toISOString(), next_retry_at: nextRetry(1), issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${String(failure.message || failure).slice(0, 200)}. ניסיון נוסף אוטומטי בסריקת הלילה.` }] }
+          : { status: 'failed', failures: 1, stage: 'failed', stage_at: new Date().toISOString(), next_retry_at: nextRetry(1), issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${explainFailure(failure)}. ניסיון נוסף אוטומטי בסריקת הלילה.` }] }
         if (x) Object.assign(fields, usageFields(x))
         const pendingHits = fields._pendingHits; delete fields._pendingHits
         await keepProjectInCompany(fields)

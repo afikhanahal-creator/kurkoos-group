@@ -98,6 +98,28 @@ export async function endSessions({ userId, user }) {
   return { ok: true, sessions_ended: ended }
 }
 
+/* an admin resets someone's second step (a new phone, a deleted app): every authenticator of that person is removed and
+   their sessions end, so the next sign-in sets up the app again. Never one's own: that would let a stolen session switch
+   the protection off; a sole admin who lost the app resets it in the Supabase dashboard (docs/finance/README.md). */
+export async function resetMfa({ userId, user }) {
+  if (userId === user.id) { const e = new Error('אי אפשר לאפס את האימות של עצמך. מנהל אחר יכול, או מאפסים ב-Supabase (README).'); e.status = 400; throw e }
+  const m = await one(`fin_members?user_id=eq.${userId}&select=email`)
+  if (!m) { const e = new Error('המשתמש לא נמצא'); e.status = 404; throw e }
+  const h = { apikey: env.sbKey(), Authorization: `Bearer ${env.sbKey()}` }
+  const r = await fetch(`${env.sbUrl()}/auth/v1/admin/users/${userId}/factors`, { headers: h })
+  if (!r.ok) { const e = new Error(`שרת ההתחברות סירב (${r.status})`); e.status = 502; throw e }
+  const factors = await r.json().catch(() => [])
+  let removed = 0
+  for (const f of Array.isArray(factors) ? factors : []) {
+    const d = await fetch(`${env.sbUrl()}/auth/v1/admin/users/${userId}/factors/${f.id}`, { method: 'DELETE', headers: h })
+    if (d.ok) removed++
+  }
+  const ended = await rpc('fin_end_sessions', { p_user: userId }).catch(() => 0)
+  await insert('fin_login_events', { user_id: userId, email: m.email, kind: 'mfa_removed' }, 'return=minimal').catch(() => {})
+  await audit('member', userId, 'mfa_reset', { email: m.email, factors_removed: removed, sessions_ended: ended }, user)
+  return { ok: true, factors_removed: removed, sessions_ended: ended }
+}
+
 /* sessions, second step and last activity of every member, for the user management screen */
 export async function memberSecurity() {
   return (await rpc('fin_member_security', {}).catch(() => [])) || []

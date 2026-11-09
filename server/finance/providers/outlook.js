@@ -7,8 +7,9 @@ export const label = 'Outlook'
 export const configured = () => !!(process.env.MS_CLIENT_ID && process.env.MS_CLIENT_SECRET)
 const SCOPE = 'offline_access openid email User.Read Mail.Read'
 
-export function authUrl(state, redirectUri) {
-  const q = new URLSearchParams({ client_id: process.env.MS_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', response_mode: 'query', scope: SCOPE, prompt: 'select_account', state })
+export function authUrl(state, redirectUri, { hint = '', choose = true } = {}) {
+  const q = new URLSearchParams({ client_id: process.env.MS_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', response_mode: 'query', scope: SCOPE, prompt: choose || !hint ? 'select_account' : 'login', state })
+  if (hint) q.set('login_hint', hint)
   return `${env.msLogin()}/authorize?${q}`
 }
 async function token(params) {

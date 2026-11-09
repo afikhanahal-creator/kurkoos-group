@@ -197,6 +197,20 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                 {doc.status === 'processing' && <p className="fin-note"><Icon name="sparkle" size={16} /> הסוכנים קוראים את המסמך…</p>}
                 {doc.status === 'duplicate' && <p className="fin-note fin-note--warn"><Icon name="copy" size={16} /> זוהה ככפילות של מסמך קיים.</p>}
                 {['approved', 'sent'].includes(doc.status) && editable && <p className="fin-note"><Icon name="shield" size={16} /> מסמך מאושר. שינוי בסכומים, בספק או בשיוך יחזיר אותו לאישור.</p>}
+                {/* the three numbers that matter, read at a glance before the fields: net, VAT with its rate, and the total */}
+                {(() => {
+                  const net = Number(form.amount_before_vat); const vat = Number(form.vat_amount); const tot = Number(form.total_amount)
+                  if (![net, vat, tot].some((v) => Number.isFinite(v) && v !== 0)) return null
+                  const rate = Number.isFinite(net) && net && Number.isFinite(vat) ? Math.round((vat / net) * 100) : null
+                  const cur = form.currency || 'ILS'
+                  return (
+                    <dl className="fin-amounts" aria-label="סכומי המסמך">
+                      <div><dt>סכום נטו</dt><dd>{Number.isFinite(net) && form.amount_before_vat !== '' && form.amount_before_vat != null ? money(net, cur) : '—'}</dd></div>
+                      <div><dt>מע״מ{rate !== null ? ` (${rate}%)` : ''}</dt><dd>{Number.isFinite(vat) && form.vat_amount !== '' && form.vat_amount != null ? money(vat, cur) : '—'}</dd></div>
+                      <div className="is-total"><dt>סכום כולל</dt><dd>{Number.isFinite(tot) && form.total_amount !== '' && form.total_amount != null ? money(tot, cur) : '—'}</dd></div>
+                    </dl>
+                  )
+                })()}
                 <div className="fin-form__grid">
                   {F({ k: 'supplier_name', wide: true })}
                   {(supplierRow || doc.suggestions?.supplier) && (

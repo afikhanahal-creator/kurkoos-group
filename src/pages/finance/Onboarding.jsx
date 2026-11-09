@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as api from './api.js'
 import { supabase } from '../../lib/supabase.js'
 import { ProviderLogo } from './logos.jsx'
@@ -7,7 +7,8 @@ import { normalizePhone, validMobile } from './phone.js'
 
 /* The first visit of a new member, two short steps:
    1. name and the phone that will send receipts on WhatsApp (registered as a scanner right away);
-   2. connect the inbox they signed in with (the existing Gmail / Microsoft connection), another inbox, or later.
+   2. connect the inbox they signed in with, another Gmail (Google's account picker, optionally a given address), Outlook /
+      Microsoft 365, or later. Connections the server has not switched on show as unavailable before anyone clicks.
    Every step can be skipped; the welcome never shows again once finished (fin_finish_onboarding). */
 const providerOf = (user) => {
   const p = user?.app_metadata?.provider
@@ -42,14 +43,21 @@ export default function Onboarding({ session, sec, onDone }) {
     } catch (er) { setErr(er.message) } finally { setBusy(false) }
   }
   const finish = async () => { await api.finishOnboarding(name.trim()).catch(() => {}); onDone() }
-  const connect = async (prov) => {
-    setErr(''); setBusy(true)
+  // which mail connections the server has switched on (null while asking)
+  const [ready, setReady] = useState(null)
+  useEffect(() => { if (step === 2 && ready === null) api.callServer('status').then((r) => setReady(r?.providers || {})).catch(() => setReady({})) }, [step, ready])
+  const [other, setOther] = useState('')          // '' | 'gmail' (the "another Gmail" form is open)
+  const [otherEmail, setOtherEmail] = useState('')
+  const connect = async (prov, opts = {}) => {
+    setErr(''); setBusy(`${prov}${opts.choose ? '-other' : ''}`)
     try {
       await api.finishOnboarding(name.trim())
-      const { url } = await api.callServer('auth-url', { provider: prov })
+      const { url } = await api.callServer('auth-url', { provider: prov, ...opts })
       window.location.assign(url)
     } catch (er) { setErr(er.message); setBusy(false) }
   }
+  const off = (prov) => ready !== null && ready[prov] === false
+  const OffNote = ({ prov }) => (off(prov) ? <small className="fin-onb__off">{prov === 'gmail' ? 'Gmail' : 'Outlook'} עוד לא הופעל במערכת. מנהל המערכת יכול להפעיל אותו; בינתיים אפשר להמשיך בלי.</small> : null)
   const signOut = () => supabase.auth.signOut()
 
   return (
@@ -84,10 +92,33 @@ export default function Onboarding({ session, sec, onDone }) {
               <span className="fin-onb__who-text"><strong>{name || user?.email}</strong><small dir="ltr">{user?.email}</small></span>
               <span className="fin-onb__prov"><ProviderLogo name={provider} size={18} /> {label}</span>
             </div>
+            <button type="button" className="fin-btn fin-btn--primary" onClick={() => connect(provider, { hint: user?.email })} disabled={!!busy || off(provider)}>{busy === provider ? 'מעביר…' : 'לחבר את התיבה הזו'}</button>
+            <OffNote prov={provider} />
+
+            <div className="fin-onb__or"><span>או תיבה אחרת</span></div>
+            <ul className="fin-onb__opts">
+              <li className={other === 'gmail' ? 'is-open' : ''}>
+                <button type="button" className="fin-onb__opt" onClick={() => setOther((v) => (v === 'gmail' ? '' : 'gmail'))} aria-expanded={other === 'gmail'} disabled={off('gmail')}>
+                  <ProviderLogo name="gmail" size={20} /><span><strong>תיבת Gmail אחרת</strong><small>למשל תיבת החשבוניות של המשרד</small></span><Icon name="chev" size={16} />
+                </button>
+                {other === 'gmail' && (
+                  <form className="fin-onb__other" onSubmit={(e) => { e.preventDefault(); connect('gmail', { choose: true, hint: otherEmail.trim() }) }}>
+                    <label>הכתובת (לא חובה)<input type="email" dir="ltr" inputMode="email" value={otherEmail} onChange={(e) => setOtherEmail(e.target.value)} placeholder="invoices@company.co.il" autoComplete="off" /></label>
+                    <small>ב-Google תופיע רשימת החשבונות: בוחרים את התיבה, או "שימוש בחשבון אחר" ומתחברים אליה.</small>
+                    <button type="submit" className="fin-btn" disabled={!!busy}>{busy === 'gmail-other' ? 'מעביר…' : 'המשך ל-Google'}</button>
+                  </form>
+                )}
+                <OffNote prov={provider === 'gmail' ? '' : 'gmail'} />
+              </li>
+              <li>
+                <button type="button" className="fin-onb__opt" onClick={() => connect('outlook', { choose: true })} disabled={!!busy || off('outlook')}>
+                  <ProviderLogo name="outlook" size={20} /><span><strong>Outlook / Microsoft 365</strong><small>{off('outlook') ? 'עוד לא הופעל במערכת' : 'תיבה של החברה או תיבה אישית'}</small></span><Icon name="chev" size={16} />
+                </button>
+              </li>
+            </ul>
             {err && <p className="fin-error" role="alert">{err}</p>}
-            <button type="button" className="fin-btn fin-btn--primary" onClick={() => connect(provider)} disabled={busy}>{busy ? 'מעביר…' : 'לחבר את התיבה הזו'}</button>
-            <button type="button" className="fin-btn" onClick={() => connect(provider === 'gmail' ? 'outlook' : 'gmail')} disabled={busy}>תיבה אחרת ({provider === 'gmail' ? 'Outlook' : 'Gmail'})</button>
-            <button type="button" className="fin-link" onClick={finish} disabled={busy}>לא עכשיו</button>
+            <p className="fin-onb__later">אפשר לחבר עוד תיבות בכל זמן, מ"חשבונות אימייל".</p>
+            <button type="button" className="fin-link" onClick={finish} disabled={!!busy}>לא עכשיו</button>
             <p className="fin-onb__trust"><Icon name="shield" size={16} /> הרשאת קריאה בלבד: לא שולחים, לא מוחקים, ואפשר לנתק בכל רגע.</p>
           </div>
         )}

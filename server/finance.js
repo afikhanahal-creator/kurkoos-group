@@ -16,7 +16,7 @@ import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
 import { ask } from './finance/assistant.js'
-import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, memberSecurity } from './finance/security.js'
+import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
@@ -51,6 +51,7 @@ const ROLES = {
   'auth-event': ['admin', 'finance_manager', 'employee', 'accountant'],
   'member-block': ['admin'],
   'member-end-sessions': ['admin'],
+  'member-mfa-reset': ['admin'],
   'send-to-accountant': ['admin', 'finance_manager'],
   tick: ['admin', 'finance_manager', 'employee'],
   'retry-doc': ['admin', 'finance_manager', 'employee'],
@@ -176,6 +177,8 @@ export default async function handler(req, res) {
       case 'status': {
         res.status(200).json({
           providers: Object.fromEntries(Object.entries(PROVIDERS).map(([k, p]) => [k, p.configured()])),
+          // the exact address Google and Microsoft must list as an allowed redirect (a mismatch is Google's redirect_uri_mismatch)
+          oauth_redirect: redirectUri(req),
           claude: !!env.anthropicKey(),
           email: !!process.env.RESEND_API_KEY,
           cron: !!process.env.CRON_SECRET,
@@ -189,8 +192,15 @@ export default async function handler(req, res) {
       case 'auth-url': {
         const prov = PROVIDERS[body.provider]
         if (!prov) { res.status(400).json({ error: 'ספק לא נתמך' }); return }
-        if (!prov.configured()) { res.status(503).json({ error: body.provider === 'gmail' ? 'חיבור Gmail עוד לא הוגדר: חסרים GOOGLE_CLIENT_ID ו-GOOGLE_CLIENT_SECRET ב-Vercel' : 'חיבור Outlook עוד לא הוגדר: חסרים MS_CLIENT_ID ו-MS_CLIENT_SECRET ב-Vercel' }); return }
-        res.status(200).json({ url: prov.authUrl(signState({ u: user.id, e: user.email, b: body.business_id || null, p: body.provider, t: Date.now() }), redirectUri(req)) })
+        if (!prov.configured()) {
+          // the person sees what it means for them; only an admin also gets the server detail to fix it
+          const name = body.provider === 'gmail' ? 'Gmail' : 'Outlook'
+          const keys = body.provider === 'gmail' ? 'GOOGLE_CLIENT_ID ו-GOOGLE_CLIENT_SECRET' : 'MS_CLIENT_ID ו-MS_CLIENT_SECRET'
+          res.status(503).json({ code: 'NOT_CONFIGURED', error: user.role === 'admin' ? `חיבור ${name} עוד לא הופעל בשרת. להפעלה מוסיפים ב-Vercel את ${keys}.` : `חיבור ${name} עוד לא הופעל. מנהל המערכת יכול להפעיל אותו.` })
+          return
+        }
+        const hint = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(body.hint || '').trim()) ? String(body.hint).trim().toLowerCase() : ''
+        res.status(200).json({ url: prov.authUrl(signState({ u: user.id, e: user.email, b: body.business_id || null, p: body.provider, t: Date.now() }), redirectUri(req), { hint, choose: !!body.choose }) })
         return
       }
       case 'sync': {
@@ -412,6 +422,7 @@ export default async function handler(req, res) {
       case 'auth-event': { res.status(200).json(await authEvent(req, body, user)); return }
       case 'member-block': { res.status(200).json(await blockMember({ userId: q(body.user_id), blocked: !!body.blocked, user })); return }
       case 'member-end-sessions': { res.status(200).json(await endSessions({ userId: q(body.user_id), user })); return }
+      case 'member-mfa-reset': { res.status(200).json(await resetMfa({ userId: q(body.user_id), user })); return }
       case 'members-meta': {
         // last sign-in per user, to tell an accepted invitation from one still waiting
         const r = await fetch(`${env.sbUrl()}/auth/v1/admin/users?per_page=1000`, { headers: { apikey: env.sbKey(), Authorization: `Bearer ${env.sbKey()}` } })

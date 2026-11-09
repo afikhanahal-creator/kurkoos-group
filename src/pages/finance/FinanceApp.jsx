@@ -223,7 +223,7 @@ export default function FinanceApp() {
     try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1') } catch { /* noop */ }
     api.callServer('auth-event', { kind: 'signed_in', device_id: deviceId() }).catch(() => {})
   }, [ready, session?.access_token])
-  const idleSoon = useIdleSignOut(sec?.idle_minutes || 30, ready)
+  const idleSoon = useIdleSignOut(Number(sec?.idle_minutes) || 0, ready)   // 0 = never sign out for inactivity
   const { pathname } = useLocation()
   const navigate = useNavigate()
   onChange.current = async (before, after) => {
@@ -405,7 +405,7 @@ export default function FinanceApp() {
               <button type="button" className="fin-icon-btn" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} aria-label={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'} title={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button>
             </div>
           </header>
-          {idleSoon && <div className="fin-idlebar" role="alert"><Icon name="clock" size={16} /> בלי פעילות במשך {sec?.idle_minutes || 30} דקות המערכת מתנתקת בעוד דקה. כל נגיעה מבטלת.</div>}
+          {idleSoon && <div className="fin-idlebar" role="alert"><Icon name="clock" size={16} /> בלי פעילות במשך {sec?.idle_minutes} דקות המערכת מתנתקת בעוד דקה. כל נגיעה מבטלת.</div>}
           <main className="fin__content" id="fin-main">
             {data.error && <p className="fin-error fin-error--block" role="alert">{data.error}</p>}
             <Suspense fallback={<div className="fin-stack" aria-busy="true"><Skeleton lines={6} /></div>}>

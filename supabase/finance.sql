@@ -1452,8 +1452,24 @@ create index if not exists fin_allocations_list_order on public.fin_document_all
 -- from anywhere, a record of every sign-in and failed attempt, and blocked users
 -- ============================================================
 -- which roles must sign in with a second step. Changing this row is the only switch: no code change.
-insert into public.fin_settings (key, value) values ('mfa_required_roles', '["admin", "finance_manager"]') on conflict (key) do nothing;
-insert into public.fin_settings (key, value) values ('idle_minutes', '30') on conflict (key) do nothing;
+-- sign-in is a password only by default (the owner's decision, v14); an admin can require the authenticator app for chosen
+-- roles in Settings › security. Installations that had the old default get it switched off once; a later choice stays.
+insert into public.fin_settings (key, value) values ('mfa_required_roles', '[]') on conflict (key) do nothing;
+do $$ begin
+  if not exists (select 1 from public.fin_settings where key = 'mfa_password_only_v14') then
+    update public.fin_settings set value = '[]' where key = 'mfa_required_roles';
+    insert into public.fin_settings (key, value) values ('mfa_password_only_v14', 'true');
+  end if;
+end $$;
+-- no sign-out for inactivity by default (the owner's decision, v15); an admin can choose a limit in Settings › security.
+-- Installations still on the old 30-minute default get it switched off once; a later choice stays.
+insert into public.fin_settings (key, value) values ('idle_minutes', '0') on conflict (key) do nothing;
+do $$ begin
+  if not exists (select 1 from public.fin_settings where key = 'idle_off_v15') then
+    update public.fin_settings set value = '0' where key = 'idle_minutes' and value = '30'::jsonb;
+    insert into public.fin_settings (key, value) values ('idle_off_v15', 'true');
+  end if;
+end $$;
 
 create or replace function public.fin_mfa_roles() returns text[]
 language sql stable security definer set search_path = '' as $$
@@ -1477,7 +1493,7 @@ $$;
 create or replace function public.fin_my_security() returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object('role', m.role, 'active', m.active, 'mfa_required', m.role = any(public.fin_mfa_roles()),
-    'idle_minutes', coalesce((select (value #>> '{}')::int from public.fin_settings where key = 'idle_minutes'), 30))
+    'idle_minutes', coalesce((select (value #>> '{}')::int from public.fin_settings where key = 'idle_minutes'), 0))
   from public.fin_members m where m.user_id = auth.uid()
 $$;
 revoke all on function public.fin_my_security() from public, anon;
@@ -1575,7 +1591,7 @@ insert into public.fin_settings (key, value) values ('onboarding_enabled', 'true
 create or replace function public.fin_my_security() returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object('role', m.role, 'active', m.active, 'mfa_required', m.role = any(public.fin_mfa_roles()),
-    'idle_minutes', coalesce((select (value #>> '{}')::int from public.fin_settings where key = 'idle_minutes'), 30),
+    'idle_minutes', coalesce((select (value #>> '{}')::int from public.fin_settings where key = 'idle_minutes'), 0),
     'full_name', m.full_name,
     'onboard', m.onboarded_at is null and coalesce((select (value #>> '{}')::boolean from public.fin_settings where key = 'onboarding_enabled'), true))
   from public.fin_members m where m.user_id = auth.uid()

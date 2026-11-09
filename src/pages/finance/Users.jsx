@@ -186,6 +186,11 @@ export default function Users() {
     if (!(await askConfirm({ text: `לנתק את ${m.full_name || m.email} מכל המכשירים? הוא יצטרך להתחבר שוב.`, ok: 'ניתוק', danger: true }))) return
     try { const r = await api.callServer('member-end-sessions', { user_id: m.user_id }); setMsg(`${r.sessions_ended === 1 ? 'חיבור אחד נותק' : `${r.sessions_ended} חיבורים נותקו`}`); meta.reload() } catch (e) { setMsg(e.message) }
   }
+  // a new phone or a deleted app: the person's authenticator is removed and they set it up again at the next sign-in
+  const resetMfa = async (m) => {
+    if (!(await askConfirm({ text: `לאפס את האימות הדו-שלבי של ${m.full_name || m.email}? האפליקציה הקיימת תפסיק לעבוד, החיבורים שלו יתנתקו, ובכניסה הבאה הוא יגדיר את האפליקציה מחדש.`, ok: 'איפוס', danger: true }))) return
+    try { await api.callServer('member-mfa-reset', { user_id: m.user_id }); setMsg(`האימות הדו-שלבי של ${m.email} אופס. בכניסה הבאה הוא יגדיר אותו מחדש.`); meta.reload() } catch (e) { setMsg(e.message) }
+  }
   const BizPick = ({ value, onChange }) => (
     <fieldset className="fin-field fin-field--wide fin-checkset"><legend className="fin-field__label">גישה לחברות</legend>
       <label className="fin-check"><input type="checkbox" checked={!value?.length} onChange={(e) => onChange(e.target.checked ? null : [])} /> כל החברות</label>
@@ -225,7 +230,7 @@ export default function Users() {
             <Select className="fin-select" value={role} onChange={(e) => setRole(e.target.value)} aria-label="סינון לפי תפקיד"><option value="">כל התפקידים</option>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
             <button type="button" className="fin-icon-btn" onClick={() => setSort(sort === 'name' ? 'new' : 'name')} title={sort === 'name' ? 'ממוין לפי שם' : 'ממוין לפי הצטרפות'} aria-label={sort === 'name' ? 'מיון לפי הצטרפות' : 'מיון לפי שם'}><Icon name="sort" size={19} /></button>
           </div>
-          <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={newInvite}><Icon name="plus" size={18} /> הוספת רו״ח או חבר צוות</button>
+          <button type="button" className="fin-btn fin-btn--primary fin-btn--block-sm fin-users__add" onClick={newInvite}><Icon name="plus" size={18} /> הוספת רו״ח או חבר צוות</button>
           <div className="fin-section-head"><h3>חברי ארגון <span className="fin-count">{shown.length}</span></h3><button type="button" className="fin-link" onClick={() => setGuide(true)}>מדריך הזמנה</button></div>
           {!shown.length ? <Empty title="אין משתמשים שמתאימים לחיפוש" icon="users">נסו מילה אחרת או הסירו את הסינון.</Empty> : (
             <ul className="fin-member-list">
@@ -248,6 +253,7 @@ export default function Users() {
                         { label: 'עריכה', onClick: () => setEdit({ ...m }) },
                         wait && m.active && { label: 'שליחת ההזמנה שוב', onClick: () => resend(m) },
                         m.user_id !== me?.id && seen[m.user_id]?.sessions > 0 && { label: 'ניתוק מכל המכשירים', onClick: () => endSessions(m) },
+                        m.user_id !== me?.id && seen[m.user_id]?.mfa && { label: 'איפוס אימות דו-שלבי', onClick: () => resetMfa(m) },
                         m.user_id !== me?.id && { label: m.active ? 'חסימה' : 'הפעלה מחדש', onClick: () => setActive(m, !m.active), danger: m.active },
                       ]} />
                     </div>

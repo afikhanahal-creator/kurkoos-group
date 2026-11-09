@@ -8,6 +8,7 @@ import { deviceId, qrSrc } from './auth.jsx'
 import { ROLE, nameOf } from './format.js'
 import { useEffect, useState } from 'react'
 import { Card, Icon, PageHead, Pill, useAsync, Skeleton, askConfirm } from './ui.jsx'
+import Select from './Select.jsx'
 
 function SmartSettings() {
   const { settings, can, reload } = useFinance()
@@ -157,14 +158,15 @@ function NewPassword() {
 function SecurityPolicy() {
   const { settings, can, reload, go } = useFinance()
   const admin = can('manage')
-  const [roles, setRoles] = useState(() => (Array.isArray(settings.mfa_required_roles) ? settings.mfa_required_roles : ['admin', 'finance_manager']))
-  const [idle, setIdle] = useState(() => Number(settings.idle_minutes ?? 30))
+  const [roles, setRoles] = useState(() => (Array.isArray(settings.mfa_required_roles) ? settings.mfa_required_roles : []))
+  const [idle, setIdle] = useState(() => Number(settings.idle_minutes ?? 0))
   const [msg, setMsg] = useState('')
   const check = useAsync(() => supabase.rpc('fin_session_check_ok').then((r) => r.data), [])
   const save = async () => {
     setMsg('')
-    if (!roles.includes('admin') && !(await askConfirm({ text: 'להסיר את חובת האימות הדו-שלבי ממנהלי המערכת? למנהל יש גישה לכל המידע.', ok: 'להסיר בכל זאת', danger: true }))) return
-    try { await api.saveSetting('mfa_required_roles', roles); await api.saveSetting('idle_minutes', Math.max(5, Math.min(480, idle))); setMsg('מדיניות הכניסה נשמרה. היא חלה מהכניסה הבאה של כל משתמש.'); reload() } catch (e) { setMsg(e.message) }
+    const hadAdmin = Array.isArray(settings.mfa_required_roles) && settings.mfa_required_roles.includes('admin')
+    if (hadAdmin && !roles.includes('admin') && !(await askConfirm({ text: 'להסיר את חובת האימות הדו-שלבי ממנהלי המערכת? למנהל יש גישה לכל המידע.', ok: 'להסיר בכל זאת', danger: true }))) return
+    try { await api.saveSetting('mfa_required_roles', roles); await api.saveSetting('idle_minutes', IDLE.some(([v]) => v === idle) ? idle : 0); setMsg('מדיניות הכניסה נשמרה. היא חלה מהכניסה הבאה של כל משתמש.'); reload() } catch (e) { setMsg(e.message) }
   }
   const toggle = (r) => setRoles((x) => (x.includes(r) ? x.filter((y) => y !== r) : [...x, r]))
   return (
@@ -175,7 +177,7 @@ function SecurityPolicy() {
             <div className="fin-checkrow">{Object.entries(ROLE).map(([k, v]) => <label key={k} className="fin-check"><input type="checkbox" checked={roles.includes(k)} onChange={() => toggle(k)} /> {v}</label>)}</div>
             <small className="fin-cset__hint">האכיפה במסד הנתונים: בלי הקוד מהאפליקציה, תפקיד מסומן לא רואה נתונים, גם לא דרך ה-API.</small>
           </div>
-          <label className="fin-cset__field"><span className="fin-cset__label">ניתוק אחרי חוסר פעילות (דקות)</span><input type="number" inputMode="numeric" min={5} max={480} value={idle} onChange={(e) => setIdle(Number(e.target.value))} /><small className="fin-cset__hint">דקה לפני הניתוק מופיעה אזהרה</small></label>
+          <label className="fin-cset__field"><span className="fin-cset__label">ניתוק אחרי חוסר פעילות</span><Select value={String(idle)} onChange={(e) => setIdle(Number(e.target.value))}>{IDLE.map(([v, l]) => <option key={v} value={String(v)}>{l}</option>)}</Select><small className="fin-cset__hint">{idle ? 'מכשיר שלא נגעו בו בזמן הזה מתנתק, רק הוא. מומלץ למחשבים משותפים.' : 'נשארים מחוברים עד שמתנתקים. חסימת משתמש או "יציאה מכל המכשירים" מנתקים מיד.'}</small></label>
           <div className="fin-cset__field"><span className="fin-cset__label">ניתוק מיידי של חיבורים</span><span>{check.loading ? '…' : check.data === true ? <Pill tone="ok">פעיל</Pill> : <Pill tone="warn">לא זמין במסד הזה</Pill>}</span><small className="fin-cset__hint">{check.data === true ? 'חסימה ויציאה מכל המכשירים עוצרות גישה מיד' : 'חסימה עדיין חוסמת כניסה; חיבור פתוח נסגר כשהטוקן פג (עד שעה)'}</small></div>
         </div>
       </fieldset>
@@ -185,6 +187,7 @@ function SecurityPolicy() {
   )
 }
 
+const IDLE = [[0, 'ללא ניתוק (ברירת מחדל)'], [30, '30 דקות'], [60, 'שעה'], [240, '4 שעות'], [480, '8 שעות'], [1440, 'יום'], [10080, 'שבוע']]
 const SECTIONS = [
   { id: 'account', label: 'החשבון שלי', icon: 'users', roles: null },
   { id: 'companies', label: 'חברות ודיווח', icon: 'company', roles: ['admin', 'finance_manager'] },

@@ -7,8 +7,10 @@ export const label = 'Gmail'
 export const configured = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
 const SCOPE = 'https://www.googleapis.com/auth/gmail.readonly openid email'
 
-export function authUrl(state, redirectUri) {
-  const q = new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', scope: SCOPE, access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true', state })
+// hint: the address to connect (Google opens straight on it); choose: show Google's account picker (another mailbox)
+export function authUrl(state, redirectUri, { hint = '', choose = false } = {}) {
+  const q = new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', scope: SCOPE, access_type: 'offline', prompt: choose ? 'select_account consent' : 'consent', include_granted_scopes: 'true', state })
+  if (hint) q.set('login_hint', hint)
   return `${env.googleAuthorize()}?${q}`
 }
 

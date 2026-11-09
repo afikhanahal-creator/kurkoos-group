@@ -25,39 +25,76 @@ export function AuthLayout({ children, aside = true }) {
         {children}
         <p className="fin-auth__legal">מערכת פרטית של קבוצת קורקוס. הכניסה למוזמנים בלבד, והכניסות נרשמות.</p>
       </main>
-      {aside && (
-        <aside className="fin-auth__story" aria-hidden="true">
-          <div className="fin-auth__story-in">
-            <h2>מפסיקים לרדוף אחרי חשבוניות</h2>
-            <p>כל חשבונית שמגיעה במייל או בוואטסאפ נקראת, מתויגת לחברה ולפרויקט ומחכה במקום אחד. לרו״ח נשאר רק לייצא.</p>
-            <ul className="fin-auth__sources">
-              <li className="is-wa"><ProviderLogo name="whatsapp" size={24} /></li>
-              <li><Icon name="mail" size={22} /></li>
-              <li><Icon name="upload" size={22} /></li>
-            </ul>
-            <div className="fin-auth__scan">
-              <div className="fin-auth__receipt">
-                <strong>חשמל ישראל</strong>
-                <span>03.11 · ‎1,249.90 ₪</span>
-                <i className="fin-auth__beam" />
-              </div>
-              <span className="fin-auth__read"><Icon name="check" size={13} /> נקראה</span>
-            </div>
-            <div className="fin-auth__summary">
-              <header><strong>סקירה חודשית</strong><em>הדגמה</em></header>
-              <div className="fin-auth__row"><span><Icon name="upload" size={14} /></span><span>‎642.50 ₪</span><b>רכב</b><span className="fin-auth__row-name">פז חברת נפט</span></div>
-              <div className="fin-auth__row"><span><ProviderLogo name="whatsapp" size={14} /></span><span>‎1,180.00 ₪</span><b>חומרי בניין</b><span className="fin-auth__row-name">מתכת הצפון</span></div>
-              <footer><span>מע״מ ‎2,014.33 ₪</span><strong>סה״כ ‎13,122.80 ₪</strong></footer>
-            </div>
-            <ul className="fin-auth__checks">
-              <li><Icon name="check" size={15} /> נכנס לבד</li>
-              <li><Icon name="check" size={15} /> מתויג לבד</li>
-              <li><Icon name="check" size={15} /> ייצוא לרו״ח בלחיצה</li>
-            </ul>
-          </div>
-        </aside>
-      )}
+      {aside && <AuthStory />}
     </div>
+  )
+}
+
+/* The story side: bills arrive from different places (mail, WhatsApp, a photo), the top one is read, gets its company
+   tag and joins the month. A demonstration with made-up amounts; it moves one step every few seconds, stops when the
+   tab is hidden, and stands still under reduced motion. */
+const BILLS = [
+  { name: 'חברת החשמל', tag: 'חשמל', amount: 1249.9, day: '03.11', src: 'mail', tone: 'is-power' },
+  { name: 'בזק', tag: 'תקשורת', amount: 389, day: '04.11', src: 'mail', tone: 'is-net' },
+  { name: 'פז חברת נפט', tag: 'רכב', amount: 642.5, day: '05.11', src: 'whatsapp', tone: 'is-fuel' },
+  { name: 'מי אביבים', tag: 'מים', amount: 612.4, day: '06.11', src: 'upload', tone: 'is-water' },
+  { name: 'עיריית תל אביב', tag: 'ארנונה', amount: 2840, day: '07.11', src: 'mail', tone: 'is-city' },
+  { name: 'מתכת הצפון', tag: 'חומרי בניין', amount: 1180, day: '08.11', src: 'whatsapp', tone: 'is-build' },
+]
+const ils = (v) => `\u200e${v.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₪`
+function SourceIcon({ src, size = 14 }) { return src === 'whatsapp' ? <ProviderLogo name="whatsapp" size={size} /> : <Icon name={src === 'mail' ? 'mail' : 'upload'} size={size} /> }
+function AuthStory() {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+    const t = setInterval(() => { if (document.visibilityState === 'visible') setN((x) => x + 1) }, 3400)
+    return () => clearInterval(t)
+  }, [])
+  const cur = BILLS[n % BILLS.length]
+  const queue = [1, 2].map((k) => BILLS[(n + k) % BILLS.length])
+  // the month so far: the bills read before the one on the scanner, newest first
+  const read = Array.from({ length: Math.min(n, BILLS.length) }, (_, k) => BILLS[(n - 1 - k + BILLS.length * 10) % BILLS.length])
+  const total = 9840 + read.reduce((a, b) => a + b.amount, 0)
+  return (
+    <aside className="fin-auth__story" aria-hidden="true">
+      <div className="fin-auth__story-in">
+        <h2>מפסיקים לרדוף אחרי חשבוניות</h2>
+        <p>כל חשבונית שמגיעה במייל, בוואטסאפ או בצילום נקראת, מתויגת לחברה ולפרויקט ומחכה במקום אחד.</p>
+        <ul className="fin-auth__sources">
+          {['whatsapp', 'mail', 'upload'].map((k) => <li key={k} className={`${k === 'whatsapp' ? 'is-wa' : ''} ${cur.src === k ? 'is-live' : ''}`}><SourceIcon src={k} size={22} /></li>)}
+        </ul>
+        <div className="fin-auth__scan">
+          <div className="fin-auth__stack">
+            {queue.slice().reverse().map((b, i) => <div key={`${b.name}-${n}-q${i}`} className={`fin-auth__bill is-back is-back-${2 - i} ${b.tone}`}><strong>{b.name}</strong></div>)}
+            <div key={`${cur.name}-${n}`} className={`fin-auth__bill is-front ${cur.tone}`}>
+              <span className="fin-auth__bill-src"><SourceIcon src={cur.src} size={13} /></span>
+              <strong>{cur.name}</strong>
+              <span>{cur.day} · {ils(cur.amount)}</span>
+              <em>{cur.tag}</em>
+              <i className="fin-auth__beam" />
+            </div>
+          </div>
+          <span key={`ok-${n}`} className="fin-auth__read"><Icon name="check" size={13} /> נקראה ושויכה לקורקוס גרופ</span>
+        </div>
+        <div className="fin-auth__summary">
+          <header><strong>נובמבר, עד עכשיו</strong><em>הדגמה</em></header>
+          <ul>
+            {(read.length ? read : BILLS.slice(-2)).slice(0, 3).map((b, i) => (
+              <li key={`${b.name}-${n}-${i}`} className={`fin-auth__row ${i === 0 && read.length ? 'is-new' : ''}`}>
+                <span className={`fin-auth__dot ${b.tone}`} /><span className="fin-auth__row-name">{b.name}</span><b>{b.tag}</b><span className="fin-auth__amt">{ils(b.amount)}</span>
+              </li>
+            ))}
+          </ul>
+          <footer><span>מע״מ {ils(total - total / 1.18)}</span><strong key={`t-${n}`} className="fin-auth__total">סה״כ {ils(total)}</strong></footer>
+        </div>
+        <ul className="fin-auth__checks">
+          <li><Icon name="check" size={15} /> נכנס לבד</li>
+          <li><Icon name="check" size={15} /> מתויג לבד</li>
+          <li><Icon name="check" size={15} /> ייצוא לרו״ח בלחיצה</li>
+        </ul>
+        <p className="fin-auth__ticker"><SourceIcon src={cur.src} size={13} /> <span key={`tk-${n}`}>{cur.name} · {ils(cur.amount)} · נקראה</span></p>
+      </div>
+    </aside>
   )
 }
 
@@ -87,7 +124,10 @@ export function Login({ onSignedIn }) {
     fetch('/api/finance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'public-config' }) }).then((r) => r.json()).then((d) => setSso((d.sso || []).filter((k) => SSO[k]))).catch(() => {})
   }, [])
   const submit = async (e) => {
-    e.preventDefault(); setErr(''); setInfo(''); setBusy(true)
+    e.preventDefault(); setErr(''); setInfo('')
+    if (!email.trim()) { setErr('צריך למלא אימייל.'); return }
+    if (!password) { setErr('צריך למלא סיסמה.'); return }
+    setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     setBusy(false)
     if (!error) { fails.current = 0; onSignedIn?.(); return }
@@ -95,13 +135,16 @@ export function Login({ onSignedIn }) {
     // the server keeps a line per failed attempt (email and time only); the auth server locks on its own
     fetch('/api/finance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login-failed', email: email.trim() }) }).catch(() => {})
     const msg = String(error.message || '')
+    if (/fetch|network|load failed/i.test(msg)) { setErr('אין חיבור לשרת הכניסה. בדקו את החיבור לאינטרנט ונסו שוב.'); return }
     if (/banned|not allowed/i.test(msg)) setErr('החשבון הזה חסום. פנו למנהל המערכת.')
     else if (/rate limit|too many/i.test(msg)) setErr('יותר מדי ניסיונות. חכו כמה דקות ונסו שוב.')
     else if (/not confirmed/i.test(msg)) setErr('המייל עוד לא אושר. פתחו את מייל ההזמנה ולחצו על הקישור.')
     else setErr(fails.current >= 3 ? 'האימייל או הסיסמה שגויים. אפשר לאפס את הסיסמה למטה.' : 'האימייל או הסיסמה שגויים.')
   }
   const reset = async (e) => {
-    e.preventDefault(); setErr(''); setInfo(''); setBusy(true)
+    e.preventDefault(); setErr(''); setInfo('')
+    if (!email.trim()) { setErr('צריך למלא את האימייל שאיתו נכנסים.'); return }
+    setBusy(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/admin/finance/settings?reset=1` })
     setBusy(false)
     // the same message whether the address exists or not: the screen never says who has an account
@@ -130,7 +173,7 @@ export function Login({ onSignedIn }) {
         {mode === 'login' && <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} />}
         {err && <p className="fin-error" role="alert">{err}</p>}
         {info && <p className="fin-note" role="status">{info}</p>}
-        <button type="submit" className="fin-btn fin-btn--primary" disabled={busy || !email || (mode === 'login' && !password)}>{busy ? 'רגע…' : mode === 'login' ? 'כניסה' : 'שליחת קישור לאיפוס'}</button>
+        <button type="submit" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'רגע…' : mode === 'login' ? 'כניסה' : 'שליחת קישור לאיפוס'}</button>
         <button type="button" className="fin-link" onClick={() => { setMode((m) => (m === 'login' ? 'reset' : 'login')); setErr(''); setInfo('') }}>{mode === 'login' ? 'שכחתי את הסיסמה' : 'חזרה לכניסה'}</button>
         {mode === 'login' && <p className="fin-auth__invite">עוד אין לך חשבון? ההצטרפות היא בהזמנה ממנהל המערכת: קיבלת מייל הזמנה? פתח/י אותו ובחר/י סיסמה.</p>}
       </form>
@@ -173,6 +216,8 @@ export function InviteWelcome({ email, onDone }) {
 
 /* The second step. Required roles: a code from an authenticator app on every sign-in; the first time, the app is
    set up here with a QR code. Nothing in the system opens before this passes (and the database refuses too). */
+const mfaError = (e) => (/fetch|network|load failed/i.test(String(e?.message)) ? 'אין חיבור לשרת. בדקו את החיבור ונסו שוב; הקוד באפליקציה יישאר תקף.' : /expired|not found|factor/i.test(String(e?.message)) ? 'ההגדרה פגה. לחצו "יציאה", היכנסו שוב והתחילו את ההגדרה מחדש.' : String(e?.message || 'משהו השתבש. נסו שוב.'))
+const touch = () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 export function SecondStep({ mfaRequired, onDone }) {
   const [factors, setFactors] = useState(null)
   const [enroll, setEnroll] = useState(null)     // { id, qr, secret }
@@ -186,18 +231,22 @@ export function SecondStep({ mfaRequired, onDone }) {
     // an unfinished earlier attempt (the page was closed mid-way) is removed first, or the next enrol is refused
     const { data: all } = await supabase.auth.mfa.listFactors()
     for (const f of (all?.all || []).filter((f) => f.status !== 'verified')) await supabase.auth.mfa.unenroll({ factorId: f.id }).catch(() => {})
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `Kurkoos Finance ${new Date().toLocaleDateString('he-IL')}` })
+    // the issuer is the name the authenticator app shows above the code
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', issuer: 'Kurkoos Finance', friendlyName: `Kurkoos Finance ${new Date().toLocaleDateString('he-IL')}` })
     setBusy(false)
-    if (error) { setErr(error.message); return }
-    setEnroll({ id: data.id, qr: qrSrc(data.totp.qr_code), secret: data.totp.secret })
+    if (error) { setErr(mfaError(error)); return }
+    setEnroll({ id: data.id, qr: qrSrc(data.totp.qr_code), secret: data.totp.secret, uri: data.totp.uri })
   }
   const verify = async (e) => {
-    e.preventDefault(); setErr(''); setBusy(true)
+    e.preventDefault(); setErr('')
+    if (code.replace(/\D/g, '').length !== 6) { setErr('הקוד הוא 6 ספרות מהאפליקציה.'); return }
+    setBusy(true)
     const factorId = enroll?.id || factors?.[0]?.id
     const { data: ch, error: e1 } = await supabase.auth.mfa.challenge({ factorId })
-    if (e1) { setBusy(false); setErr(e1.message); return }
+    if (e1) { setBusy(false); setErr(mfaError(e1)); return }
     const { error } = await supabase.auth.mfa.verify({ factorId, challengeId: ch.id, code: code.replace(/\D/g, '') })
     setBusy(false)
+    if (error && /fetch|network|load failed/i.test(String(error.message))) { setErr(mfaError(error)); return }
     if (error) { setTries((t) => t + 1); setCode(''); api.callServer('auth-event', { kind: 'mfa_failed', device_id: deviceId() }).catch(() => {}); setErr(tries >= 4 ? 'הקוד שגוי שוב. בדקו שהשעון בטלפון מדויק, או התחברו מחדש.' : 'הקוד שגוי או שפג תוקפו. נסו את הקוד הבא.'); return }
     api.callServer('auth-event', { kind: enroll ? 'mfa_enrolled' : 'mfa_verified', device_id: deviceId() }).catch(() => {})
     onDone()
@@ -221,15 +270,33 @@ export function SecondStep({ mfaRequired, onDone }) {
             <h1>{enroll ? 'סריקת הקוד באפליקציה' : 'קוד מהאפליקציה'}</h1>
             {enroll && (
               <>
-                <img src={enroll.qr} alt="קוד QR לאפליקציית האימות" className="fin-login__qr" />
-                <details className="fin-disclosure fin-disclosure--quiet"><summary>אי אפשר לסרוק? הזנה ידנית</summary><code dir="ltr" className="fin-login__secret">{enroll.secret}</code></details>
-                <p className="fin-auth__sub">אחרי הסריקה, הקלידו את הקוד בן 6 הספרות שהאפליקציה מציגה.</p>
+                <ol className="fin-auth__steps">
+                  <li>מתקינים בטלפון אפליקציית אימות: <b>Google Authenticator</b> או <b>Microsoft Authenticator</b>.</li>
+                  <li>{touch() ? <>בטלפון הזה: לוחצים על הכפתור למטה, והחשבון נוסף לאפליקציה.</> : <>באפליקציה לוחצים <b>+</b> ואז <b>סריקת קוד QR</b>, ומכוונים אל הקוד. מצלמת הטלפון הרגילה לא מוסיפה את החשבון.</>}</li>
+                  <li>מקלידים כאן את 6 הספרות שמופיעות באפליקציה תחת Kurkoos Finance.</li>
+                </ol>
+                {touch() && enroll.uri ? <a className="fin-btn fin-auth__addapp" href={enroll.uri}><Icon name="shield" size={17} /> הוספה לאפליקציית האימות</a> : <img src={enroll.qr} alt="קוד QR לאפליקציית האימות" className="fin-login__qr" />}
+                <details className="fin-disclosure fin-disclosure--quiet"><summary>אי אפשר לסרוק? הזנה ידנית של המפתח</summary>
+                  <span className="fin-auth__secret"><code dir="ltr" className="fin-login__secret">{enroll.secret}</code><button type="button" className="fin-btn fin-btn--sm" onClick={() => navigator.clipboard?.writeText(enroll.secret)}>העתקה</button></span>
+                  <small className="fin-auth__hint">באפליקציה: "הזנת מפתח הגדרה", שם: Kurkoos Finance, סוג: מבוסס זמן.</small>
+                </details>
               </>
             )}
-            {!enroll && <p className="fin-auth__sub">פתחו את אפליקציית האימות בטלפון והקלידו את הקוד של Kurkoos Finance.</p>}
+            {!enroll && (
+              <>
+                <p className="fin-auth__sub">פתחו את אפליקציית האימות בטלפון (Google Authenticator או Microsoft Authenticator) והקלידו את 6 הספרות שמופיעות תחת Kurkoos Finance.</p>
+                <p className="fin-auth__note"><Icon name="shield" size={15} /> הקוד לא נשלח במייל או ב-SMS: הוא נוצר באפליקציה ומתחלף כל 30 שניות.</p>
+              </>
+            )}
             <label>קוד אימות<input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" dir="ltr" className="fin-login__code" autoFocus aria-label="קוד אימות בן 6 ספרות" /></label>
             {err && <p className="fin-error" role="alert">{err}</p>}
-            <button type="submit" className="fin-btn fin-btn--primary" disabled={busy || code.length !== 6}>{busy ? 'בודק…' : 'אימות'}</button>
+            <button type="submit" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'בודק…' : 'אימות'}</button>
+            {!enroll && (
+              <details className="fin-disclosure fin-disclosure--quiet">
+                <summary>אין לי גישה לאפליקציה</summary>
+                <p className="fin-auth__hint">טלפון חדש או שהאפליקציה נמחקה? מנהל המערכת מאפס את האימות (הארגון ומשתמשים › הפעולות ליד השם › איפוס אימות דו-שלבי). בכניסה הבאה תגדירו את האפליקציה מחדש, עם קוד QR.</p>
+              </details>
+            )}
           </>
         )}
         <button type="button" className="fin-link" onClick={signOut}>יציאה</button>

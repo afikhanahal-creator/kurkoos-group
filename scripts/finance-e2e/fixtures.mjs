@@ -17,7 +17,7 @@ export function validId(prefix8) {
     if (sum % 10 === 0) return s
   }
 }
-export const IDS = { granite: validId('51377777'), hasharon: validId('51366666'), iec: validId('52000046'), cafe: validId('51333333'), meta: validId('51577777'), office: validId('51488888'), soleh: validId('52000121'), henrietta: validId('51699999'), tambour: validId('52003187'), bezeq: validId('52003193'), paz: validId('51021605'), electra: validId('51345678'), ace: validId('52003841'), kurkoos: validId('51500000'), execution: validId('51500001') }
+export const IDS = { ronir: validId('51611111'), raita: validId('51622222'), metal: validId('51633333'), cast: validId('51644444'), granite: validId('51377777'), hasharon: validId('51366666'), iec: validId('52000046'), cafe: validId('51333333'), meta: validId('51577777'), office: validId('51488888'), soleh: validId('52000121'), henrietta: validId('51699999'), tambour: validId('52003187'), bezeq: validId('52003193'), paz: validId('51021605'), electra: validId('51345678'), ace: validId('52003841'), kurkoos: validId('51500000'), execution: validId('51500001') }
 
 const today = new Date()
 const iso = (daysAgo) => { const d = new Date(today); d.setDate(d.getDate() - daysAgo); return d.toISOString().slice(0, 10) }
@@ -48,6 +48,12 @@ await pdf('tambour-4521-copy.pdf', invoice({ supplier: 'טמבור בע״מ', id
 await pdf('bezeq-oct.pdf', invoice({ supplier: 'בזק החברה הישראלית לתקשורת', id: IDS.bezeq, title: 'חשבונית מס/קבלה', number: '88-120394', date: D.bezeq, lines: [['קו אינטרנט עסקי', '500.00']], before: '500.00', vat: '90.00', total: '590.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
 await pdf('brochure.pdf', '<html dir="rtl"><body style="font-family:sans-serif;padding:60px"><h1>קטלוג סתיו 2026</h1><p>מבצעים על ריהוט גן!</p></body></html>')
 await pdf('quote-hs22.pdf', '<html dir="rtl"><body style="font-family:sans-serif;padding:60px"><h1>הצעת מחיר 2026-118</h1><p>סולל בונה תשתיות</p><p>עבודות פיתוח, פרויקט HS-22: 180,000 ₪ + מע״מ</p><p>ההצעה בתוקף 30 יום</p></body></html>')
+// v11: a group of companies. The same supplier sells to Ronir (its company ID is printed) and to Raita (only the name)
+await pdf('ronir-inv.pdf', invoice({ supplier: 'מתכת הצפון', id: IDS.metal, title: 'חשבונית מס', number: 'MT-301', date: D.office, lines: [['קורות פלדה', '1,000.00']], before: '1,000.00', vat: '180.00', total: '1,180.00', customer: 'רוניר בע״מ', customerId: IDS.ronir }))
+await pdf('ronir-receipt.pdf', invoice({ supplier: 'מתכת הצפון', id: IDS.metal, title: 'קבלה', number: 'R-77', date: D.photo, lines: [['תשלום חשבונית MT-301', '1,180.00']], before: '1,000.00', vat: '180.00', total: '1,180.00', customer: 'רוניר בע״מ', customerId: IDS.ronir }))
+await pdf('raita-inv.pdf', invoice({ supplier: 'מתכת הצפון', id: IDS.metal, title: 'חשבונית מס', number: 'MT-302', date: D.office, lines: [['רשתות ברזל', '2,000.00']], before: '2,000.00', vat: '360.00', total: '2,360.00', customer: 'ראיתה חברה לבניין בע״מ', customerId: '' }))
+await pdf('cast-1.pdf', invoice({ supplier: 'יציקות גליל', id: IDS.cast, title: 'חשבונית מס', number: 'YG-1', date: D.office, lines: [['יציקת בטון', '5,000.00']], before: '5,000.00', vat: '900.00', total: '5,900.00', customer: 'מאפיית השכונה', customerId: '' }))
+await pdf('cast-2.pdf', invoice({ supplier: 'יציקות גליל', id: IDS.cast, title: 'חשבונית מס', number: 'YG-2', date: D.photo, lines: [['יציקת בטון, שלב ב׳', '3,000.00']], before: '3,000.00', vat: '540.00', total: '3,540.00', customer: '', customerId: '' }))
 await pdf('electra-778.pdf', invoice({ supplier: 'אלקטרה בנייה בע״מ', id: IDS.electra, title: 'חשבונית מס', number: '778', date: D.electra, lines: [['עבודות חשמל, שלב ב׳', '50,000.00']], before: '50,000.00', vat: '9,000.00', total: '59,000.00', customer: 'קורקוס ביצוע', customerId: IDS.execution }))
 await png('ace-receipt.png', invoice({ supplier: 'ACE', id: IDS.ace, title: 'קבלה', number: '5501', date: D.ace, lines: [['מקדחה', '200.00']], before: '200.00', vat: '36.00', total: '236.00', customer: '', customerId: '' }))
 await pdf('meta-ads.pdf', invoice({ supplier: 'Meta Platforms Ireland Ltd', id: IDS.meta, title: 'חשבונית מס', number: 'FBADS-90211', date: D.meta, lines: [['Facebook & Instagram ads, campaign "וילות השרון"', '4,000.00']], before: '4,000.00', vat: '720.00', total: '4,720.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
@@ -66,10 +72,15 @@ async function photo(name, html) { const p2 = await browser.newPage({ viewport: 
 await photo('receipt-photo.jpg', invoice({ supplier: 'חומרי בניין השרון', id: IDS.hasharon, title: 'חשבונית מס/קבלה', number: '24-7781', date: D.photo, lines: [['ברגים, דיבלים ומקדחים לאתר מוהליבר 17', '640.00']], before: '640.00', vat: '115.20', total: '755.20', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
 await browser.close()
 
-const H = { quote: sha('quote-hs22.pdf'), second: sha('cafe-second.pdf'), dupExact: sha('cafe-dup-exact.pdf'), dupFuzzy: sha('cafe-dup-fuzzy.pdf'), flaky: sha('flaky.pdf'), old: sha('old-invoice.pdf'), wa: sha('wa-receipt.png'), meta: sha('meta-ads.pdf'), office: sha('office-depot.pdf'), bg: sha('benguryon-blocks.pdf'), soleh: sha('soleh-boneh.pdf'), tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
+const H = { ronirInv: sha('ronir-inv.pdf'), ronirRcpt: sha('ronir-receipt.pdf'), raitaInv: sha('raita-inv.pdf'), cast1: sha('cast-1.pdf'), cast2: sha('cast-2.pdf'), quote: sha('quote-hs22.pdf'), second: sha('cafe-second.pdf'), dupExact: sha('cafe-dup-exact.pdf'), dupFuzzy: sha('cafe-dup-fuzzy.pdf'), flaky: sha('flaky.pdf'), old: sha('old-invoice.pdf'), wa: sha('wa-receipt.png'), meta: sha('meta-ads.pdf'), office: sha('office-depot.pdf'), bg: sha('benguryon-blocks.pdf'), soleh: sha('soleh-boneh.pdf'), tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
 const at = (d, h = 9) => `${d}T0${h}:15:00Z`
 const fixtures = {
   answers: {
+    [H.ronirInv]: answer({ supplier_name: 'מתכת הצפון', supplier_vat_id: IDS.metal, customer_name: 'רוניר בע״מ', customer_vat_id: IDS.ronir, doc_number: 'MT-301', issue_date: D.office, amount_before_vat: 1000, vat_amount: 180, total_amount: 1180, description: 'קורות פלדה', category: 'חומרי בניין' }),
+    [H.ronirRcpt]: answer({ doc_type: 'receipt', document_class: 'receipt', supplier_name: 'מתכת הצפון', supplier_vat_id: IDS.metal, customer_name: 'רוניר בע״מ', customer_vat_id: IDS.ronir, doc_number: 'R-77', issue_date: D.photo, amount_before_vat: 1000, vat_amount: 180, total_amount: 1180, description: 'תשלום חשבונית', category: 'חומרי בניין' }),
+    [H.raitaInv]: answer({ supplier_name: 'מתכת הצפון', supplier_vat_id: IDS.metal, customer_name: 'ראיתה חברה לבניין בע״מ', customer_vat_id: '', doc_number: 'MT-302', issue_date: D.office, amount_before_vat: 2000, vat_amount: 360, total_amount: 2360, description: 'רשתות ברזל', category: 'חומרי בניין' }),
+    [H.cast1]: answer({ supplier_name: 'יציקות גליל', supplier_vat_id: IDS.cast, customer_name: 'מאפיית השכונה', customer_vat_id: '', doc_number: 'YG-1', issue_date: D.office, amount_before_vat: 5000, vat_amount: 900, total_amount: 5900, description: 'יציקת בטון', category: 'חומרי בניין' }),
+    [H.cast2]: answer({ supplier_name: 'יציקות גליל', supplier_vat_id: IDS.cast, customer_name: '', customer_vat_id: '', doc_number: 'YG-2', issue_date: D.photo, amount_before_vat: 3000, vat_amount: 540, total_amount: 3540, description: 'יציקת בטון', category: 'חומרי בניין' }),
     // a quote: amounts are printed, but it is not an expense. Sure (0.93) → skipped, no financial record
     [H.quote]: answer({ is_financial_document: false, document_class: 'quote', relevance_confidence: 0.93, doc_type: 'quote', supplier_name: 'סולל בונה תשתיות', doc_number: '2026-118', amount_before_vat: 180000, total_amount: null, vat_amount: null, category: 'אחר' }),
     [H.second]: answer({ doc_type: 'invoice_receipt', supplier_name: 'קפה לנדוור', supplier_vat_id: IDS.cafe, doc_number: '88124', issue_date: D.wa, amount_before_vat: 250, vat_amount: 45, total_amount: 295, description: 'ארוחת עבודה', category: 'אחר' }),
@@ -98,6 +109,10 @@ const fixtures = {
     'dims:1650x2200': { supplier_vat_id: IDS.hasharon, doc_number: '24-7781', issue_date: D.photo, amount_before_vat: 640, vat_amount: 115.2, total_amount: 755.2 },
   },
   textAnswers: {
+    // the finance assistant: questions become queries (the server computes the numbers)
+    'Question: כמה הוצאנו החודש בכל החברות': { intent: 'spend_total', period: 'month', from: '', to: '', company: '', project: '', category: '', supplier: '', limit: 5 },
+    'Question: איזו חברה הוציאה הכי הרבה': { intent: 'top_companies', period: 'month', from: '', to: '', company: '', project: '', category: '', supplier: '', limit: 5 },
+    'Question: כמה מסמכים עדיין לא שויכו': { intent: 'unassigned', period: 'all', from: '', to: '', company: '', project: '', category: '', supplier: '', limit: 5 },
     'פז חברת נפט': answer({ doc_type: 'invoice_receipt', supplier_name: 'פז חברת נפט', supplier_vat_id: IDS.paz, doc_number: '7731-22', issue_date: D.paz, amount_before_vat: 349.41, vat_amount: 62.89, total_amount: 412.3, description: 'דלק 95', category: 'רכב ודלק', payment_method: 'אשראי' }),
   },
   notFinancial: answer({ is_financial_document: false, document_class: 'marketing', relevance_confidence: 0.96, doc_type: 'other', customer_name: '', customer_vat_id: '', category: 'אחר', vat_rate: null }),

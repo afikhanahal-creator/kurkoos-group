@@ -24,6 +24,11 @@ export async function sendToAccountant({ ids, to, note, subject, ccMe, user, per
   // only documents this person may see: their companies, and never rejected or duplicate ones
   let docs = (await sb(`fin_documents?id=in.(${list.join(',')})&status=not.in.(rejected,duplicate,archived)&select=*&order=issue_date.asc.nullslast`)) || []
   if (user.business_ids?.length) docs = docs.filter((d) => d.business_id && user.business_ids.includes(d.business_id))
+  // an employee shares only documents they brought in (the same rule as WhatsApp and the database's own policy)
+  if (user.role === 'employee') {
+    const mine = new Set(((await sb(`fin_mailboxes?connected_by=eq.${user.id}&select=id`).catch(() => [])) || []).map((m) => m.id))
+    docs = docs.filter((d) => d.created_by === user.id || (d.mailbox_id && mine.has(d.mailbox_id)))
+  }
   if (!docs.length) throw Object.assign(new Error('אין מסמכים שאפשר לשלוח מהבחירה הזו'), { status: 400 })
   const names = {
     b: Object.fromEntries(((await sb('fin_businesses?select=id,name')) || []).map((x) => [x.id, x.name])),
@@ -82,7 +87,7 @@ ${links.length ? `<p>קבצים שלא נכנסו למייל (גדולים מד�
   const body = await r.text()
   let providerId = null
   try { providerId = JSON.parse(body).id || null } catch { /* not json */ }
-  const base = { channel: 'email', recipients: rcpt, document_ids: docs.map((d) => d.id), documents_count: docs.length, total, period: period || null, attached: attachments.length - SUMMARY_FILES, linked: links.length, created_by: user.id, created_by_email: user.email }
+  const base = { channel: 'email', kind: share ? 'share' : 'accountant', recipients: rcpt, document_ids: docs.map((d) => d.id), documents_count: docs.length, total, period: period || null, attached: attachments.length - SUMMARY_FILES, linked: links.length, created_by: user.id, created_by_email: user.email }
   // "sent" only when the mail provider accepted the message and gave it an id; otherwise it is a failed delivery
   if (!r.ok || !providerId) {
     const error = `שליחת המייל נכשלה (${r.status}): ${body.slice(0, 160)}`

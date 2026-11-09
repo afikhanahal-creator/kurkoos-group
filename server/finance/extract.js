@@ -26,7 +26,7 @@ const str = (description) => ({ type: 'string', description })
 export const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['is_financial_document', 'document_class', 'relevance_confidence', 'doc_type', 'supplier_name', 'supplier_trading_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'supplier_email', 'supplier_phone', 'supplier_address', 'supplier_website', 'discount_amount', 'extra_charges', 'page_count', 'quality', 'totals_text', 'field_confidence', 'notes'],
+  required: ['is_financial_document', 'document_class', 'relevance_confidence', 'doc_type', 'supplier_name', 'supplier_trading_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'customer_address', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'supplier_email', 'supplier_phone', 'supplier_address', 'supplier_website', 'discount_amount', 'extra_charges', 'page_count', 'quality', 'totals_text', 'field_confidence', 'notes'],
   properties: {
     is_financial_document: { type: 'boolean', description: 'true only for a document that records an expense or a payment: tax invoice, invoice-receipt, receipt, transaction invoice (חשבון עסקה), credit note, supplier bill, payment confirmation. false for a quote, order, contract, legal letter, marketing, correspondence, statement or anything personal' },
     document_class: { type: 'string', enum: DOC_CLASSES, description: 'what this document is' },
@@ -37,6 +37,7 @@ export const SCHEMA = {
     supplier_vat_id: str('issuer ח.פ / ע.מ / VAT number, digits only; empty if not printed'),
     customer_name: str('who the document is addressed to; empty if not printed'),
     customer_vat_id: str('digits only; empty if not printed'),
+    customer_address: str('the address of the customer (who the document is addressed to), as printed; empty if not printed'),
     doc_number: str('the document number; empty if not printed'),
     issue_date: str('YYYY-MM-DD; empty if not printed'),
     due_date: str('YYYY-MM-DD; empty if not printed'),

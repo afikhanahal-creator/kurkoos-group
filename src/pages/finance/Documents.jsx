@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -19,6 +19,7 @@ const TABS = [
   { id: 'review', label: 'לבדיקה' },
   { id: 'approved', label: 'מוכנים לרו״ח' },
   { id: 'sent', label: 'נשלחו לרו״ח' },
+  { id: 'unassigned', label: 'ממתין לשיוך' },
   { id: 'problems', label: 'דורשים טיפול' },
   { id: 'rejected', label: 'נדחו' },
   { id: 'archived', label: 'ארכיון' },
@@ -26,6 +27,7 @@ const TABS = [
 const inTab = (d, tab) => {
   if (!tab) return !['rejected', 'archived'].includes(d.status)
   if (tab === 'new') return new Date(d.created_at).getTime() > Date.now() - 7 * 86400_000 && ['review', 'processing', 'failed'].includes(d.status)
+  if (tab === 'unassigned') return !d.business_id && !['rejected', 'archived', 'duplicate', 'processing', 'failed'].includes(d.status)
   if (tab === 'problems') return ['failed', 'duplicate', 'processing'].includes(d.status) || hasError(d)
   return d.status === tab
 }
@@ -49,7 +51,9 @@ export default function Documents({ preset = 'all' }) {
   const base = preset === 'all' ? '/documents' : `/${preset}`
   const tab = preset === 'all' ? params.get('status') || '' : ''
   const [q, setQ] = useState(() => params.get('q') || '')
-  const [f, setF] = useState(() => ({ ...EMPTY_F, supplier: params.get('supplier') || '', project: params.get('project') || '', biz: params.get('company') || '', cat: params.get('category') ? categories.find((c) => c.id === params.get('category'))?.name || '' : '' }))
+  // "open the documents behind this number" from the overview: an exact list of ids, shown as a removable chip
+  const [only, setOnly] = useState(() => { if (!params.get('ids')) return null; try { const v = JSON.parse(sessionStorage.getItem('fin-x-ids') || 'null'); return v?.ids ? { ids: new Set(v.ids), title: v.title } : null } catch { return null } })
+  const [f, setF] = useState(() => ({ ...EMPTY_F, from: only ? '' : params.get('from') || '', to: only ? '' : params.get('to') || '', supplier: params.get('supplier') || '', project: params.get('project') || '', biz: params.get('company') || '', cat: params.get('category') ? categories.find((c) => c.id === params.get('category'))?.name || '' : '' }))
   const [view, setView] = useState(() => { try { return localStorage.getItem(VIEW_KEY) || 'table' } catch { return 'table' } })
   const [confirm, setConfirm] = useState(null)   // { label, run, count, skipped }
   const switchView = (v) => { setView(v); try { localStorage.setItem(VIEW_KEY, v) } catch { /* noop */ } }
@@ -67,9 +71,11 @@ export default function Documents({ preset = 'all' }) {
   const setFilter = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }))
   const activeFilters = Object.values(f).filter(Boolean).length
 
+  // typing stays instant: the list follows the search a frame later
+  const qd = useDeferredValue(q)
   const rows = useMemo(() => {
-    const needle = q.trim().toLowerCase()
-    const list = documents.filter((d) => P.filter(d) && (preset !== 'all' || inTab(d, tab))
+    const needle = qd.trim().toLowerCase()
+    const list = documents.filter((d) => (only ? only.ids.has(d.id) : P.filter(d) && (preset !== 'all' || inTab(d, tab)))
       && (!f.from || String(dateBy === 'received' ? String(d.created_at).slice(0, 10) : docDate(d)) >= f.from) && (!f.to || String(dateBy === 'received' ? String(d.created_at).slice(0, 10) : docDate(d)) <= f.to)
       && (!f.supplier || d.supplier_id === f.supplier) && (!f.biz || (f.biz === 'none' ? !d.business_id : d.business_id === f.biz))
       && (!f.project || (f.project === 'none' ? !d.project_id && !allocations.some((a) => a.document_id === d.id) : d.project_id === f.project || allocations.some((a) => a.document_id === d.id && a.project_id === f.project))) && (!f.cat || d.category === f.cat)
@@ -79,12 +85,19 @@ export default function Documents({ preset = 'all' }) {
       && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, d.category, nameOf(businesses, d.business_id), nameOf(projects, d.project_id), String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
     const key = SORTS[sort.key]
     return list.sort((a, b) => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
-  }, [documents, P, preset, tab, f, q, sort, businesses, projects, allocations, dateBy])
+  }, [documents, P, preset, tab, f, qd, sort, businesses, projects, allocations, dateBy, only])
 
   const total = rows.reduce((s, d) => s + signedTotal(d), 0)
+  // draw 100 rows at a time (10,000 rows in the page took 17 seconds); totals, "select all" and exports use every row
+  const STEP = 100
+  const [shown, setShown] = useState(STEP)
+  useEffect(() => { setShown(STEP) }, [qd, f, tab, sort, dateBy, only, preset])
+  const visible = rows.length > shown ? rows.slice(0, shown) : rows
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
   const toggle = (did) => setSel((s) => { const n = new Set(s); if (n.has(did)) n.delete(did); else n.add(did); return n })
   const picked = rows.filter((d) => sel.has(d.id))
+  // a search or filter that hides selected documents drops them from the selection: the bar counts what the actions use
+  useEffect(() => { setSel((s) => { const keep = new Set(rows.filter((d) => s.has(d.id)).map((d) => d.id)); return keep.size === s.size ? s : keep }) }, [rows])
 
   const bulk = (label, patchFor, only = () => true) => {
     const targets = picked.filter(only)
@@ -185,6 +198,12 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
 
+      {only && (
+        <div className="fin-onlybar" role="status">
+          <Icon name="filter" size={16} /><span>מוצגים {only.ids.size} המסמכים של: <strong>{only.title}</strong></span>
+          <button type="button" className="fin-link" onClick={() => { setOnly(null); const p = new URLSearchParams(params); p.delete('ids'); setParams(p) }}>הצגת כל המסמכים</button>
+        </div>
+      )}
       {showUpload && <UploadZone onDone={reload} />}
       {(f.from || f.to) && (
         <div className="fin-rangebar" role="region" aria-label="סיכום הטווח">
@@ -194,10 +213,10 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
 
-      {sel.size > 0 && (
+      {picked.length > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <div className="fin-bulk__row">
-            <strong className="fin-bulk__count">{sel.size === 1 ? 'מסמך אחד מסומן' : `${sel.size} מסומנים`}<small>{money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
+            <strong className="fin-bulk__count">{picked.length === 1 ? 'מסמך אחד מסומן' : `${picked.length} מסומנים`}<small>{money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
             {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
             {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
             <button type="button" className="fin-btn" disabled={!!busy} onClick={() => sheet('excel')}><Icon name="table" size={17} /> Excel</button>
@@ -242,7 +261,7 @@ export default function Documents({ preset = 'all' }) {
         </Empty>
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
-          {rows.map((d) => (
+          {visible.map((d) => (
             <li key={d.id} className={`fin-doccard ${sel.has(d.id) ? 'is-selected' : ''}`}>
               <button type="button" className="fin-doccard__open" onClick={() => go(link(d.id))} aria-label={`פתיחת ${d.supplier_name || d.file_name}`}><Thumbnail doc={d} /></button>
               <label className="fin-doccard__check"><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></label>
@@ -304,7 +323,7 @@ export default function Documents({ preset = 'all' }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((d) => {
+              {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
                   <tr key={d.id} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))}>
@@ -341,6 +360,13 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
 
+      {rows.length > shown && (
+        <div className="fin-more-rows">
+          <span>מוצגים {shown.toLocaleString('he-IL')} מתוך {rows.length.toLocaleString('he-IL')}</span>
+          <button type="button" className="fin-btn" onClick={() => setShown((n) => n + STEP * 2)}>הצגת עוד {Math.min(STEP * 2, rows.length - shown)}</button>
+          {rows.length - shown > STEP * 2 && <button type="button" className="fin-link" onClick={() => setShown(rows.length)}>הצגת הכול</button>}
+        </div>
+      )}
       {confirm && (
         <Modal title="אישור פעולה" onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
           <p>הפעולה תחול על {confirm.count} מסמכים{confirm.skipped ? ` (${confirm.skipped} דולגו כי הם לא מתאימים לה)` : ''}. כל שינוי נרשם ביומן.</p>

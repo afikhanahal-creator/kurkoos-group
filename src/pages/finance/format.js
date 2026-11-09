@@ -89,7 +89,7 @@ export function claimableVat(doc, categories) {
   return sign(doc) * Math.abs(Number(doc.vat_amount) || 0) * pct / 100
 }
 /* documents that count in the books: not quotes, proformas, duplicates, rejected or unread */
-export const counts = (d) => !['rejected', 'duplicate', 'failed', 'processing'].includes(d.status) && !['quote', 'proforma', 'payment_confirmation'].includes(d.doc_type)
+export const counts = (d) => !['rejected', 'duplicate', 'failed', 'processing'].includes(d.status) && !['quote', 'proforma', 'payment_confirmation'].includes(d.doc_type) && !d._proofFor   // a receipt that pays an invoice already counted (ledger.js)
 export const issuesOf = (d) => (Array.isArray(d.issues) ? d.issues : [])
 export const hasError = (d) => issuesOf(d).some((i) => i.level === 'error')
 export const nameOf = (list, id) => list.find((x) => x.id === id)?.name || ''

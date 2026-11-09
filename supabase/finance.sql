@@ -1415,3 +1415,33 @@ end $$;
 revoke all on function public.fin_log(text, jsonb) from public, anon;
 grant execute on function public.fin_log(text, jsonb) to authenticated;
 notify pgrst, 'reload schema';
+
+-- v10.1 (review fixes): shares by email are not deliveries to the accountant; the browser log line stays small
+alter table public.fin_deliveries add column if not exists kind text not null default 'accountant';
+create or replace function public.fin_log(p_action text, p_details jsonb default '{}'::jsonb)
+returns void language plpgsql volatile security definer set search_path = '' as $$
+declare mail text;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager', 'employee', 'accountant']) then raise exception 'FORBIDDEN'; end if;
+  if p_action not in ('exported_excel', 'exported_csv', 'downloaded_originals', 'printed', 'downloaded_document') then raise exception 'BAD_ACTION'; end if;
+  if length(coalesce(p_details, '{}'::jsonb)::text) > 12000 then raise exception 'TOO_LARGE'; end if;
+  select email into mail from public.fin_members where user_id = auth.uid();
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+  values ('export', null, p_action, coalesce(p_details, '{}'::jsonb) - 'user', auth.uid(), mail);
+end $$;
+revoke all on function public.fin_log(text, jsonb) from public, anon;
+grant execute on function public.fin_log(text, jsonb) to authenticated;
+notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v11 (2026-11-09): a group of companies — how each document got its company (certain / likely / by a person),
+-- so a person's correction teaches the next document and the CEO view can show what is verified
+-- ============================================================
+alter table public.fin_documents add column if not exists business_source text;   -- auto | auto_likely | manual
+create index if not exists fin_documents_business on public.fin_documents (business_id, issue_date);
+create index if not exists fin_documents_unassigned on public.fin_documents (created_at) where business_id is null;
+create index if not exists fin_documents_supplier_hist on public.fin_documents (supplier_id, updated_at desc);
+notify pgrst, 'reload schema';
+-- the documents list is read in pages ordered by (created_at desc, id): without this index every page sorts the table
+create index if not exists fin_documents_list_order on public.fin_documents (created_at desc, id);
+create index if not exists fin_allocations_list_order on public.fin_document_allocations (created_at, id);

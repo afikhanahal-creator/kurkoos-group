@@ -84,7 +84,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 23 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 23, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 25 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 25, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -931,7 +931,7 @@ const accAdminText = await acc.locator('body').innerText()
 const siteApi = async (t) => (await fetch('http://127.0.0.1:5180/api/claude', { method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ input: 'x' }) })).status
 const accClaude = await siteApi(accToken); const adminClaude = await siteApi(adminToken)
 record('SEC2', 'משתמש כספים לא נכנס לניהול האתר', 'רו״ח שנכנס ל-/admin מקבל הפניה למערכת הכספים; קריאה ל-API של האתר נחסמת (403), למנהל היא לא נחסמת', `/admin: ${/מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) ? 'הפניה' : accAdminText.slice(0, 60)}; /api/claude רו״ח=${accClaude}, מנהל=${adminClaude}`, /מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) && accClaude === 403 && adminClaude !== 403, [await shot('26b-accountant-site-admin', acc)])
-record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 5 && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
+record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 6 && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
 await accCtx.close()
 
 // ---------- T12: mobile ----------
@@ -1086,13 +1086,126 @@ const empLog = await rest('rpc/fin_log', empToken, { method: 'POST', body: JSON.
 record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן ולא מריץ בדיקת חיבור; היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; פעולה אסורה ביומן: ${empLog.status}`,
   empSave.status === 403 && empTest.status === 403 && empLog.status >= 400)
 
-// the home screen shows the month's spend, VAT and six months
-await go(''); await page.waitForTimeout(600)
+// the daily work screen shows the month's spend, VAT and six months
+await go('/today'); await page.waitForTimeout(600)
 const spendTxt = await page.locator('.fin-spend').innerText().catch(() => '')
 const bars = await page.locator('.fin-spend__chart span').count()
 const homeShot10 = await shot('86-home-spend')
 record('HOME2', 'מרכז הבקרה: הוצאות החודש', 'הוצאות החודש, מע״מ, מתחילת השנה ושישה חודשים בגרף, מחושב מהרשומות',
   `${spendTxt.replace(/\s+/g, ' ').slice(0, 160)}; עמודות: ${bars}`, /הוצאות/.test(spendTxt) && /מע״מ החודש/.test(spendTxt) && /מתחילת/.test(spendTxt) && bars === 6, [homeShot10])
+
+// =================== v11: a group of companies, the executive overview, the assistant ===================
+const H11 = JSON.parse(fs.readFileSync(`${FIX}/meta.json`, 'utf8'))
+const coIns = async (row) => (await rest('fin_businesses', adminToken, { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(row) })).data?.[0]
+const raita = await coIns({ name: 'ראיתה חברה לבניין', vat_id: H11.IDS.raita, address: 'הרצל 10, רחובות' })
+const ronir = await coIns({ name: 'רוניר', vat_id: H11.IDS.ronir })
+const afik = await coIns({ name: 'אפיק הנחל' })
+const renamed = await rest(`fin_businesses?id=eq.${afik?.id}`, adminToken, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ name: 'אפיק הנחל בע״מ' }) })
+const empCo = await rest('fin_businesses', empToken, { method: 'POST', body: JSON.stringify({ name: 'חברה של עובד' }) })
+await go('/companies'); await page.waitForTimeout(800)
+const coList = await page.locator('.fin-table tbody, .fin-cards, main11').first().innerText().catch(() => '')
+const coShot = await shot('90-companies')
+record('CO', 'ניהול חברות: הוספה ועריכה בלי קוד', 'מנהל מוסיף את ראיתה, רוניר ואפיק הנחל ומשנה שם; הן מופיעות ברשימה; עובד לא יכול להוסיף חברה',
+  `נוספו: ${[raita?.name, ronir?.name, afik?.name].join(', ')}; שם חדש: ${renamed.data?.[0]?.name}; עובד: ${empCo.status}`,
+  !!raita?.id && !!ronir?.id && renamed.data?.[0]?.name === 'אפיק הנחל בע״מ' && /ראיתה חברה לבניין/.test(coList) && /רוניר/.test(coList) && /אפיק הנחל בע״מ/.test(coList) && empCo.status >= 400, [coShot])
+
+// the engine: the printed company ID is certain, the printed name is likely (assigned and flagged), anything else waits
+await go('/documents')
+await page.getByRole('button', { name: 'הוספת מסמכים' }).click()
+await page.locator('[data-testid=upload-input]').setInputFiles([`${FIX}/ronir-inv.pdf`, `${FIX}/raita-inv.pdf`, `${FIX}/cast-1.pdf`])
+await page.waitForFunction(() => /הועלו/.test(document.querySelector('.fin-drop__msg')?.textContent || ''), null, { timeout: 30000 }).catch(() => {})
+await waitProcessed(['ronir-inv.pdf', 'raita-inv.pdf', 'cast-1.pdf'])
+const asg = (f) => sql(`select coalesce(b.name,'-')||'|'||coalesce(d.business_source,'-')||'|'||coalesce((select string_agg(i->>'code', ',') from jsonb_array_elements(d.issues) i where i->>'code' in ('company_check','no_company','company_suggested')),'-') from fin_documents d left join fin_businesses b on b.id=d.business_id where d.file_name='${f}'`)
+const aRonir = asg('ronir-inv.pdf'); const aRaita = asg('raita-inv.pdf'); const aCast = asg('cast-1.pdf')
+await page.reload(); await page.waitForTimeout(800)
+await go('/documents?status=unassigned'); await page.waitForTimeout(800)
+const unassignedRows = await page.locator('.fin-table tbody tr').allInnerTexts()
+const unShot = await shot('91-waiting-for-company')
+// a person assigns it: the correction is recorded as "manual" and teaches the next document from that supplier
+await page.locator('.fin-table tbody tr', { hasText: 'יציקות גליל' }).locator('input[type=checkbox]').check()
+await page.locator('.fin-bulk select[aria-label="שיוך לחברה"]').selectOption(ronir.id); await page.waitForTimeout(300)
+await page.locator('.fin-modal__foot .fin-btn').first().click(); await page.waitForTimeout(1200)
+const corrected = asg('cast-1.pdf')
+const auditCorr = sql(`select count(*) from fin_audit a join fin_documents d on a.entity_id=d.id::text where d.file_name='cast-1.pdf' and a.action='updated' and a.changes ? 'business_id'`)
+await go('/documents')
+await page.getByRole('button', { name: 'הוספת מסמכים' }).click()
+await page.locator('[data-testid=upload-input]').setInputFiles([`${FIX}/cast-2.pdf`, `${FIX}/ronir-receipt.pdf`])
+await page.waitForFunction(() => /הועלו/.test(document.querySelector('.fin-drop__msg')?.textContent || ''), null, { timeout: 30000 }).catch(() => {})
+await waitProcessed(['cast-2.pdf', 'ronir-receipt.pdf'])
+const learned = sql(`select coalesce(business_id::text,'-')||'|'||coalesce(suggestions->'business_id'->>'value','-')||'|'||coalesce(suggestions->'business_id'->>'confidence','-') from fin_documents where file_name='cast-2.pdf'`)
+record('ASSIGN', 'שיוך חשבוניות לחברות בשלוש רמות', 'ח.פ הנמען: שיוך ודאי; שם הנמען בלבד: שיוך עם סימון לבדיקה; חברה לא מוכרת: "ממתין לשיוך"; תיקון ידני נרשם ומלמד, אבל ספק לבד לא משייך אוטומטית',
+  `רוניר (ח.פ): ${aRonir}; ראיתה (שם): ${aRaita}; לא מוכרת: ${aCast}; בלשונית: ${unassignedRows.length} שורות; אחרי תיקון: ${corrected} (ביומן ${auditCorr}); מסמך הבא של הספק: ${learned}`,
+  aRonir === 'רוניר|auto|-' && aRaita === 'ראיתה חברה לבניין|auto_likely|company_check' && /^-\|-\|(no_company|company_suggested)$/.test(aCast) && unassignedRows.some((r) => /יציקות גליל/.test(r)) && corrected.startsWith('רוניר|manual') && Number(auditCorr) >= 1 && learned.startsWith(`-|${ronir.id}|`) && Number(learned.split('|')[2]) <= 0.84,
+  [unShot])
+
+// the overview: the receipt that pays the Ronir invoice is not a second expense
+await go(''); await page.waitForTimeout(1500)
+const thisMonth11 = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' }).slice(0, 7)
+const naive = Number(sql(`select coalesce(sum(case when doc_type='credit' then -abs(total_amount) else abs(total_amount) end),0) from fin_documents where status not in ('rejected','duplicate','failed','processing','archived') and doc_type not in ('quote','proforma','payment_confirmation') and coalesce(currency,'ILS')='ILS' and to_char(coalesce(issue_date, (email_date at time zone 'Asia/Jerusalem')::date, (created_at at time zone 'Asia/Jerusalem')::date),'YYYY-MM')='${thisMonth11}'`))
+const heroTxt = await page.locator('.fin-x-big').innerText().catch(() => '')
+const hero = Number(heroTxt.replace(/[^\d.\-]/g, ''))
+const kpiTxt = await page.locator('.fin-x-kpis').innerText().catch(() => '')
+const coRows = await page.locator('.fin-x-rows li').allInnerTexts()
+const xShot = await shot('92-executive-overview')
+await page.locator('.fin-x-rows li', { hasText: 'רוניר' }).click(); await page.waitForTimeout(1000)
+const coPage = page.url()
+const coDashShot = await shot('93-company-dashboard')
+record('EXEC', 'סקירה פיננסית למנכ״ל', 'נפתחת ראשונה; סכום החודש שווה לחישוב ישיר מהמסד פחות קבלה שמשלמת חשבונית קיימת (1,180 ₪); חשבוניות, קבלות, מע״מ, ממתינים; השוואת חברות שמובילה לדשבורד החברה',
+  `על המסך: ${heroTxt}; ישיר מהמסד: ${naive.toFixed(2)} − 1,180 = ${(naive - 1180).toFixed(2)}; מדדים: ${kpiTxt.replace(/\s+/g, ' ').slice(0, 160)}; חברות: ${coRows.map((r) => r.split('\n')[0]).join(', ')}; לחיצה: ${coPage.replace(/.*\/admin\/finance/, '')}`,
+  Math.abs(hero - (naive - 1180)) < 0.01 && /קבלות/.test(kpiTxt) && /מהן אישור לחשבונית/.test(kpiTxt) && coRows.some((r) => /רוניר/.test(r)) && coRows.some((r) => /ממתין לשיוך/.test(r)) && /\/companies\/[0-9a-f-]{36}$/.test(coPage),
+  [xShot, coDashShot])
+
+// the assistant: answers computed from the database, the same number as the overview
+await go('/assistant'); await page.waitForTimeout(600)
+await page.getByRole('button', { name: 'כמה הוצאנו החודש בכל החברות?' }).click()
+await page.waitForSelector('.fin-ask__value', { timeout: 20000 })
+const a1 = await page.locator('.fin-ask__item').first().innerText()
+await page.locator('.fin-ask__bar input').fill('כמה מסמכים עדיין לא שויכו?'); await page.locator('.fin-ask__bar button[type=submit]').click()
+await page.waitForFunction(() => document.querySelectorAll('.fin-ask__item').length >= 2, null, { timeout: 20000 }).catch(() => {})
+const a2 = await page.locator('.fin-ask__item').first().innerText()
+const unassignedNow = sql("select count(*) from fin_documents where business_id is null and status not in ('rejected','archived','duplicate','failed','processing')")
+const askShot = await shot('94-assistant')
+await page.locator('.fin-ask__item').first().getByRole('button', { name: 'פתיחת המסמכים' }).click(); await page.waitForTimeout(800)
+const openedRows = await page.locator('.fin-table tbody tr').count()
+const openedBar = await page.locator('.fin-onlybar').innerText().catch(() => '')
+const askAudit = sql("select count(*) from fin_audit where entity='assistant' and action='asked'")
+const empAsk = await api(empToken, { action: 'ask', question: 'כמה הוצאנו החודש בכל החברות?' })
+const a1Num = Number((a1.split('\n').find((l) => /₪/.test(l)) || '').replace(/[^\d.\-]/g, ''))
+record('ASK', 'עוזר פיננסי שעונה מהנתונים', 'השאלה הופכת לשאילתה, המספר מחושב בשרת ושווה למספר בסקירה; כל תשובה עם תקופה והיקף; "פתיחת המסמכים" מציגה בדיוק את המסמכים שבחישוב; עובד לא יכול לשאול',
+  `תשובה 1: ${a1.replace(/\s+/g, ' ').slice(0, 140)} (מספר ${a1Num}, בסקירה ${hero}); תשובה 2: ${a2.replace(/\s+/g, ' ').slice(0, 80)} (במסד ${unassignedNow}); נפתחו ${openedRows} מסמכים ("${openedBar.replace(/\s+/g, ' ').slice(0, 60)}"); ביומן ${askAudit}; עובד: ${empAsk.status}`,
+  Math.abs(a1Num - hero) < 0.01 && /החודש|נובמבר|דצמבר|ינואר/.test(a1) && (unassignedNow === '1' ? /מסמך אחד בלי חברה/ : new RegExp(`${unassignedNow} מסמכים בלי חברה`)).test(a2) && openedRows === Number(unassignedNow) && Number(askAudit) >= 2 && empAsk.status === 403,
+  [askShot])
+
+// permissions between companies: an accountant limited to Ronir sees only Ronir, in the database and in the answers
+sql(`update fin_members set business_ids = array['${ronir.id}']::uuid[] where email='cpa@accountants.test'`)
+sql(`update fin_documents set status='approved' where file_name in ('ronir-inv.pdf','raita-inv.pdf')`)
+const accDocs11 = await rest('fin_documents?select=business_id', accToken)
+const accAsk = await api(accToken, { action: 'ask', question: 'איזו חברה הוציאה הכי הרבה מתחילת השנה?' })
+sql("update fin_members set business_ids = null where email='cpa@accountants.test'")
+const accCos = [...new Set((accDocs11.data || []).map((d) => d.business_id))]
+record('SEC-CO', 'הפרדה בין חברות', 'משתמש שמורשה לחברה אחת רואה רק את המסמכים שלה, וגם העוזר עונה רק עליה',
+  `מסמכים: ${(accDocs11.data || []).length} מחברות ${accCos.length}; עוזר: ${(accAsk.data.rows || []).map((r) => r.label).join(', ')}`,
+  (accDocs11.data || []).length >= 1 && accCos.length === 1 && accCos[0] === ronir.id && (accAsk.data.rows || []).every((r) => r.label === 'רוניר'))
+
+// phones: the overview and the tab bar
+const ph = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'he-IL', hasTouch: true, isMobile: true })
+const pp = await ph.newPage()
+await pp.goto(APP); await pp.fill('input[type=email]', 'admin@kurkoos.test'); await pp.fill('input[type=password]', 'Passw0rd!x'); await pp.click('button[type=submit]')
+await pp.waitForSelector('.fin-x-big', { timeout: 20000 }).catch(() => {}); await pp.waitForTimeout(800)
+const phOv = await pp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+const tabs = await pp.locator('.fin-tabbar > *').count()
+const tabVisible = await pp.locator('.fin-tabbar').isVisible()
+const phShot = await shot('95-phone-overview', pp)
+await pp.locator('.fin-tabbar').getByRole('link', { name: 'מסמכים' }).click(); await pp.waitForTimeout(1000)
+const phDocs = pp.url().endsWith('/documents')
+const lastRowCovered = await pp.evaluate(() => { const bar = document.querySelector('.fin-tabbar')?.getBoundingClientRect(); window.scrollTo(0, document.body.scrollHeight); const main11 = document.querySelector('.fin__content'); const pad = parseFloat(getComputedStyle(main11).paddingBottom); return { pad, bar: bar?.height } })
+await pp.locator('.fin-tabbar__add').click(); await pp.waitForTimeout(500)
+const capOpen = await pp.locator('.fin-modal').isVisible().catch(() => false)
+const phShot2 = await shot('96-phone-capture', pp)
+await ph.close()
+record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', 'אין גלילה אופקית; סרגל תחתון עם סקירה, מסמכים, צילום, דוחות, עוד; התוכן לא מוסתר מאחוריו; כפתור המצלמה פותח צילום קבלה',
+  `גלילה: ${phOv}px; פריטים: ${tabs}; מסמכים: ${phDocs}; ריווח תחתון ${lastRowCovered.pad}px מול סרגל ${Math.round(lastRowCovered.bar)}px; צילום: ${capOpen}`,
+  phOv <= 0 && tabVisible && tabs === 5 && phDocs && lastRowCovered.pad >= lastRowCovered.bar && capOpen, [phShot, phShot2])
 
 // dark mode screenshot
 await page.goto(`${APP}/documents`); await page.waitForTimeout(500)

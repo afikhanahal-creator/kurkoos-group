@@ -1,0 +1,192 @@
+import { useMemo, useState } from 'react'
+import { useFinance } from './FinanceApp.jsx'
+import { ago, money } from './format.js'
+import { overview, periodOf, monthName } from './insights.js'
+import { exportSheet } from './exportPackage.js'
+import DateRange from './DateRange.jsx'
+import Select from './Select.jsx'
+import { Empty, Icon, InfoTip } from './ui.jsx'
+
+/* The group's financial picture in one screen: what was spent, where it went, which project costs most, who the main
+   suppliers are, and what needs the CEO's attention. Every figure comes from stored documents (insights.js), follows
+   the bookkeeping rules (ledger.js: a receipt that pays an invoice is not counted again), and opens the documents behind it. */
+const PERIODS = [['month', 'החודש'], ['last_month', 'החודש שעבר'], ['quarter', 'הרבעון'], ['ytd', 'מתחילת השנה'], ['12m', '12 חודשים'], ['year_last', 'השנה שעברה'], ['custom', 'טווח תאריכים…']]
+const short = (v) => { const a = Math.abs(v); return a >= 1e6 ? `${(v / 1e6).toFixed(a >= 1e7 ? 0 : 1)}M ₪` : a >= 1e4 ? `${Math.round(v / 1e3)}K ₪` : money(v) }
+
+function Delta({ value, invert = false, label = 'מהתקופה הקודמת' }) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return <span className="fin-x-delta is-none">אין בסיס להשוואה</span>
+  const up = value > 0.5; const down = value < -0.5
+  // for spending, up is the direction to watch; the colour says "look", not "good" or "bad"
+  return <span className={`fin-x-delta ${up ? (invert ? 'is-good' : 'is-watch') : down ? (invert ? 'is-watch' : 'is-good') : ''}`}>{up ? '▲' : down ? '▼' : '•'} {Math.abs(Math.round(value))}% {label}</span>
+}
+
+export default function Executive() {
+  const { documents, businesses, projects, categories, allocations, go, can } = useFinance()
+  const [pk, setPk] = useState(() => { try { return sessionStorage.getItem('fin-x-period') || 'month' } catch { return 'month' } })
+  const [custom, setCustom] = useState({ from: '', to: '' })
+  const [biz, setBiz] = useState('')
+  const [hover, setHover] = useState(null)
+  const pickPeriod = (v) => { setPk(v); try { sessionStorage.setItem('fin-x-period', v) } catch { /* noop */ } }
+  const period = useMemo(() => periodOf(pk === 'custom' && !(custom.from && custom.to) ? 'month' : pk, new Date(), custom), [pk, custom])
+  const o = useMemo(() => overview(documents, { businesses, projects, categories, allocations }, period, { businessId: biz || null }), [documents, businesses, projects, categories, allocations, period, biz])
+  const k = o.kpi
+  const last = documents.map((d) => d.updated_at || d.created_at).filter(Boolean).sort().pop()
+  const maxTrend = Math.max(1, ...o.trend.map((t) => Math.max(t.total, t.lastYear)))
+  const maxCo = Math.max(1, ...o.byCompany.map((c) => c.total))
+  const company = businesses.find((b) => b.id === biz)
+  const open = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go(`/documents?ids=1&from=${period.from}&to=${period.to}`) }
+  const report = () => exportSheet(documents.filter((d) => o.ids.spend.includes(d.id)), 'excel', { businesses, projects }, {}, `הוצאות ${period.label}${company ? ` ${company.name}` : ''}`)
+
+  if (!documents.length) return <Empty title="עוד אין נתונים" icon="reports">הסקירה נבנית מהמסמכים שנאספים. חברו תיבת מייל או העלו חשבוניות.</Empty>
+
+  return (
+    <div className="fin-x">
+      <header className="fin-x__head">
+        <div>
+          <h2 className="fin-x__title">סקירה פיננסית</h2>
+          <p className="fin-x__sub">{company ? company.name : 'כל החברות בקבוצה'} · {period.label} · עודכן {ago(last)}</p>
+        </div>
+        <div className="fin-x__controls">
+          <Select value={pk} onChange={(e) => pickPeriod(e.target.value)} aria-label="תקופה">{PERIODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
+          {pk === 'custom' && <DateRange from={custom.from} to={custom.to} label="טווח" onChange={(from, to) => setCustom({ from, to })} />}
+          {businesses.length > 1 && <Select value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="חברה"><option value="">כל החברות</option>{businesses.filter((b) => b.active !== false).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>}
+          <button type="button" className="fin-btn" onClick={report} disabled={!o.ids.spend.length}><Icon name="table" size={17} /> דוח Excel</button>
+        </div>
+      </header>
+
+      {/* the headline: one number, then the five that explain it */}
+      <section className="fin-x-hero" aria-label="מדדים מרכזיים">
+        <button type="button" className="fin-x-hero__main" onClick={() => open(o.ids.spend, `הוצאות ${period.label}`)}>
+          <span className="fin-x-label">הוצאות {period.label}</span>
+          <strong className="fin-x-big">{money(k.spend)}</strong>
+          <Delta value={k.spendChange} />
+          <span className="fin-x-hero__foot">מתחילת השנה {money(k.ytd)} · <Delta value={k.ytdChange} label="מהשנה שעברה" /></span>
+        </button>
+        <div className="fin-x-kpis">
+          <button type="button" onClick={() => go(`/documents?from=${period.from}&to=${period.to}`)}><span className="fin-x-label">מסמכים שנאספו</span><strong className="fin-x-kpi">{o.quality.total}</strong><small>{o.quality.total ? `${Math.round((o.quality.read / o.quality.total) * 100)}% נקראו בהצלחה` : 'בתקופה'}</small></button>
+          <div><span className="fin-x-label">חשבוניות</span><strong className="fin-x-kpi">{k.invoices}</strong><Delta value={k.invoicesPrev ? ((k.invoices - k.invoicesPrev) / k.invoicesPrev) * 100 : null} invert label="" /></div>
+          <div><span className="fin-x-label">קבלות</span><strong className="fin-x-kpi">{k.receipts}</strong><small>{k.receiptsAsProof ? `${k.receiptsAsProof} מהן אישור לחשבונית` : 'נקלטו בתקופה'}</small></div>
+          <div><span className="fin-x-label">מע״מ תשומות</span><strong className="fin-x-kpi">{money(k.vat)}</strong><small>{k.vatClaimable !== k.vat ? `לקיזוז לפי הקטגוריות ${money(k.vatClaimable)}` : 'מהמסמכים שזוהו'}</small></div>
+          <button type="button" onClick={() => open(o.ids.open, 'חשבוניות בלי אישור תשלום')}><span className="fin-x-label">בלי אישור תשלום</span><strong className="fin-x-kpi">{money(k.openNoProof)}</strong><small>{k.openCount} חשבוניות, לפי מסמכים בלבד</small></button>
+          <button type="button" onClick={() => go('/pending')}><span className="fin-x-label">ממתינים לבדיקה</span><strong className={`fin-x-kpi ${k.reviewing ? 'is-attn' : ''}`}>{k.reviewing}</strong><small>{k.processing ? `${k.processing} עוד בקריאה או לא נקראו` : 'כל השאר נקראו'}</small></button>
+        </div>
+      </section>
+
+      <div className="fin-x-grid">
+        <div className="fin-x-main">
+          <section className="fin-x-card" aria-label="הוצאות לפי חודש">
+            <header><h3>הוצאות לפי חודש</h3><span className="fin-x-legend"><i className="is-now" /> השנה <i className="is-ly" /> שנה קודמת</span></header>
+            <div className="fin-x-trend" onMouseLeave={() => setHover(null)}>
+              {o.trend.map((t) => (
+                <button key={t.key} type="button" className={`fin-x-trend__col ${hover === t.key ? 'is-hover' : ''}`} onMouseEnter={() => setHover(t.key)} onFocus={() => setHover(t.key)} onClick={() => { pickPeriod('custom'); setCustom({ from: `${t.key}-01`, to: `${t.key}-${new Date(Date.UTC(+t.key.slice(0, 4), +t.key.slice(5), 0)).getUTCDate()}` }) }} aria-label={`${monthName(t.key)}: ${money(t.total)}, שנה קודמת ${money(t.lastYear)}`}>
+                  <span className="fin-x-trend__bars">
+                    <i className="is-ly" style={{ height: `${(t.lastYear / maxTrend) * 100}%` }} />
+                    <i className="is-now" style={{ height: `${Math.max(t.total ? 2 : 0, (t.total / maxTrend) * 100)}%` }} />
+                  </span>
+                  <em>{monthName(t.key).split(' ')[0].slice(0, 3)}</em>
+                </button>
+              ))}
+              {hover && (() => { const t = o.trend.find((x) => x.key === hover); return <div className="fin-x-tip" role="status"><strong>{monthName(t.key)}</strong><span>{money(t.total)} · {t.count} מסמכים</span><span className="fin-muted">שנה קודמת {money(t.lastYear)}</span></div> })()}
+            </div>
+            <ul className="fin-x-trendlist" aria-label="ששת החודשים האחרונים">
+              {o.trend.slice(-6).reverse().map((t) => (
+                <li key={t.key}><button type="button" onClick={() => { pickPeriod('custom'); setCustom({ from: `${t.key}-01`, to: `${t.key}-${new Date(Date.UTC(+t.key.slice(0, 4), +t.key.slice(5), 0)).getUTCDate()}` }) }}>
+                  <span>{monthName(t.key)}</span><span className="fin-x-rows__bar"><i style={{ width: `${(t.total / maxTrend) * 100}%` }} /></span><strong>{short(t.total)}</strong>
+                </button></li>
+              ))}
+            </ul>
+          </section>
+
+          {!biz && (
+            <section className="fin-x-card" aria-label="השוואת חברות">
+              <header><h3>השוואת חברות</h3><InfoTip label="על ההשוואה">סכום ההוצאות של כל חברה בתקופה, מול התקופה הקודמת באותו אורך. לחיצה פותחת את הדשבורד של החברה.</InfoTip></header>
+              <ul className="fin-x-rows">
+                {o.byCompany.map((c) => (
+                  <li key={c.key || 'none'}>
+                    <button type="button" onClick={() => (c.key ? go(`/companies/${c.key}`) : go('/documents?status=unassigned'))} className={!c.key ? 'is-attn' : ''}>
+                      <span className="fin-x-rows__name"><strong>{c.name}</strong><small>{c.count} מסמכים{c.key ? ` · ${c.projects} פרויקטים פעילים` : ''}</small></span>
+                      <span className="fin-x-rows__bar"><i style={{ width: `${(c.total / maxCo) * 100}%` }} /></span>
+                      <span className="fin-x-rows__num"><strong>{short(c.total)}</strong><Delta value={c.prev ? c.change : null} label="" /></span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <div className="fin-x-pair">
+            <section className="fin-x-card" aria-label="לאן הכסף הולך">
+              <header><h3>לאן הכסף הולך</h3><small className="fin-muted">לפי קטגוריה</small></header>
+              <div className="fin-x-stack" aria-hidden="true">{o.byCategory.slice(0, 6).map((c, i) => <i key={c.key} style={{ flexGrow: c.share, '--n': i }} title={`${c.name} ${Math.round(c.share * 100)}%`} />)}</div>
+              <ul className="fin-x-list">
+                {o.byCategory.slice(0, 7).map((c, i) => (
+                  <li key={c.key}><button type="button" onClick={() => (c.id ? go(`/categories/${c.id}`) : open(c.ids, c.name))}><i style={{ '--n': i }} /><span>{c.name}</span><b>{Math.round(c.share * 100)}%</b><strong>{short(c.total)}</strong></button></li>
+                ))}
+                {!o.byCategory.length && <li className="fin-muted">אין הוצאות בתקופה.</li>}
+              </ul>
+            </section>
+            <section className="fin-x-card" aria-label="ספקים מרכזיים">
+              <header><h3>ספקים מרכזיים</h3><small className="fin-muted">בתקופה</small></header>
+              <ol className="fin-x-list fin-x-list--num">
+                {o.bySupplier.slice(0, 7).map((s) => (
+                  <li key={s.key}><button type="button" onClick={() => (s.id ? go(`/suppliers/${s.id}`) : open(s.ids, s.name))}><span>{s.name}</span><small>{s.count}</small><strong>{short(s.total)}</strong></button></li>
+                ))}
+                {!o.bySupplier.length && <li className="fin-muted">אין הוצאות בתקופה.</li>}
+              </ol>
+            </section>
+          </div>
+
+          <section className="fin-x-card" aria-label="פרויקטים">
+            <header><h3>פרויקטים: תקציב מול ביצוע</h3><small className="fin-muted">ביצוע מצטבר מכל המסמכים</small></header>
+            {!o.projects.length ? <p className="fin-muted">אין פרויקטים{biz ? ' לחברה הזו' : ''}. <button type="button" className="fin-link" onClick={() => go('/projects')}>הוספת פרויקט</button></p> : (
+              <div className="fin-table-wrap">
+                <table className="fin-table fin-x-proj">
+                  <thead><tr><th>פרויקט</th>{!biz && <th className="fin-col-md">חברה</th>}<th className="fin-num fin-col-md">תקציב</th><th className="fin-num">בפועל</th><th className="fin-num fin-col-lg">בתקופה</th><th>ניצול</th></tr></thead>
+                  <tbody>
+                    {o.projects.slice(0, 12).map((p) => (
+                      <tr key={p.id} onClick={() => go(`/projects/${p.id}`)} className={p.over ? 'is-over' : ''}>
+                        <td className="fin-td-main" data-label="פרויקט"><button type="button" className="fin-cell-btn fin-cell-main" onClick={(e) => { e.stopPropagation(); go(`/projects/${p.id}`) }}>{p.name}</button></td>
+                        {!biz && <td className="fin-col-md" data-label="חברה">{p.business || '—'}</td>}
+                        <td className="fin-num fin-col-md" data-label="תקציב">{p.budget ? money(p.budget) : <span className="fin-muted">לא הוגדר</span>}</td>
+                        <td className="fin-num" data-label="בפועל"><strong>{money(p.spent)}</strong></td>
+                        <td className="fin-num fin-col-lg" data-label="בתקופה">{money(p.inPeriod)}</td>
+                        <td data-label="ניצול">{p.used === null ? <span className="fin-muted">—</span> : <span className={`fin-x-use ${p.over ? 'is-over' : p.near ? 'is-near' : ''}`}><span><i style={{ width: `${Math.min(100, p.used * 100)}%` }} /></span><b>{Math.round(p.used * 100)}%</b></span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <aside className="fin-x-side">
+          <section className="fin-x-card fin-x-attn" aria-label="דורש תשומת לב">
+            <header><h3>דורש תשומת לב</h3>{o.alerts.length > 0 && <span className="fin-x-count">{o.alerts.length}</span>}</header>
+            {!o.alerts.length ? <p className="fin-x-calm"><Icon name="check" size={16} /> אין חריגות. כל המסמכים משויכים, אין חריגות תקציב ואין כפילויות פתוחות.</p> : (
+              <ul>
+                {o.alerts.slice(0, 8).map((a) => (
+                  <li key={a.key} className={`is-${a.tone}`}><button type="button" onClick={() => go(a.to)}><strong>{a.title}</strong><small>{a.sub}</small></button></li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section className="fin-x-card" aria-label="אמינות הנתונים">
+            <header><h3>אמינות הנתונים</h3><InfoTip label="על אמינות הנתונים">כמה ממסמכי התקופה נקראו, כמה אדם בדק ואישר, וכמה עוד דורשים בדיקה. הסכומים כוללים גם מסמכים שעוד לא אושרו.</InfoTip></header>
+            <div className="fin-x-quality" role="img" aria-label={`${o.quality.checked} אושרו, ${o.quality.read - o.quality.checked} נקראו וממתינים, ${o.quality.total - o.quality.read} לא נקראו`}>
+              <i className="is-ok" style={{ flexGrow: o.quality.checked }} /><i className="is-read" style={{ flexGrow: Math.max(0, o.quality.read - o.quality.checked) }} /><i className="is-none" style={{ flexGrow: Math.max(0, o.quality.total - o.quality.read) }} />
+            </div>
+            <dl className="fin-x-qlist">
+              <div><dt><i className="is-ok" /> אושרו ע״י אדם</dt><dd>{o.quality.total ? Math.round((o.quality.checked / o.quality.total) * 100) : 0}%</dd></div>
+              <div><dt><i className="is-read" /> חולצו, ממתינים לבדיקה</dt><dd>{o.quality.total ? Math.round(((o.quality.read - o.quality.checked) / o.quality.total) * 100) : 0}%</dd></div>
+              <div><dt><i className="is-none" /> עוד לא נקראו</dt><dd>{o.quality.total ? Math.round(((o.quality.total - o.quality.read) / o.quality.total) * 100) : 0}%</dd></div>
+            </dl>
+            {k.otherCurrencyCount > 0 && <p className="fin-muted fin-small">{k.otherCurrencyCount} מסמכים במטבע זר לא נכללים בסכומים בש״ח.</p>}
+          </section>
+          {can('operate') && <button type="button" className="fin-x-ask" onClick={() => go('/assistant')}><Icon name="sparkle" size={18} /><span><strong>לשאול על הנתונים</strong><small>"כמה הוצאנו על חומרי בניין מתחילת השנה?"</small></span></button>}
+        </aside>
+      </div>
+      <p className="fin-x-note">כל הסכומים בש״ח, לפי התאריך שעל המסמך, ממסמכים שנקלטו במערכת. קבלה שמשלמת חשבונית שכבר במערכת לא נספרת פעמיים. "בלי אישור תשלום" מבוסס על מסמכים בלבד, לא על דפי בנק. זו תמונת ניהול, לא דיווח לרשויות.</p>
+    </div>
+  )
+}

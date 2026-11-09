@@ -63,8 +63,10 @@ export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cf
   const sug = {}
   const issues = []
   const hits = []
+  const votes = []   // every company signal, to see whether independent sources agree
   const consider = (k, value, conf, source, reason, ruleId) => {  // ruleId: which rule proposed it, for the execution history
     if (!value) return
+    if (k === 'business_id') votes.push({ value, conf, source, reason })
     const cur = sug[k]
     if (cur && cur.confidence >= conf) {
       if (cur.value !== value && conf >= 0.95 && cur.confidence >= 0.95) issues.push({ level: 'error', code: `${k}_conflict`, field: k, message: `שני מקורות ודאיים סותרים: ${cur.reason} מול ${reason}` })
@@ -80,11 +82,28 @@ export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cf
 
   // ---- company: the printed recipient ID is the strongest signal there is ----
   const custVat = digits(x.customer_vat_id)
-  const companies = (await sb('fin_businesses?select=id,name,vat_id,reg_number,active')) || []
+  const companies = (await sb('fin_businesses?select=id,name,commercial_name,name_en,address,vat_id,reg_number,active')) || []
   if (custVat) {
     const b = companies.find((c) => c.vat_id === custVat || c.reg_number === custVat)
     if (b) consider('business_id', b.id, 1, 'document', `ח.פ הנמען במסמך (${b.name})`)
     else issues.push({ level: 'warn', code: 'unknown_recipient', field: 'business_id', message: `ח.פ הנמען ${custVat} לא שייך לאף חברה בקבוצה` })
+  }
+
+  // the recipient's name and address as printed: a name match is likely, not certain (two companies can share words)
+  // words, not regex \b (it does not see Hebrew letters): drop punctuation, legal suffixes and generic words
+  const STOP = new Set(['בע', 'מ', 'בעמ', 'בעם', 'ltd', 'limited', 'inc', 'co', 'חברה', 'לבניין', 'החברה', 'ח', 'פ'])
+  const nameKey = (t) => String(t || '').replace(/["'״׳`]/g, '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w && !STOP.has(w)).join(' ')
+  const custName = nameKey(x.customer_name)
+  if (custName && custName.length > 1) {
+    const exact = companies.filter((c) => c.active !== false && [c.name, c.commercial_name, c.name_en].some((n) => n && nameKey(n) === custName))
+    const part = companies.filter((c) => c.active !== false && [c.name, c.commercial_name, c.name_en].some((n) => { const k = nameKey(n); return k && k.length > 2 && (custName.includes(k) || k.includes(custName)) }))
+    if (exact.length === 1) consider('business_id', exact[0].id, 0.9, 'name', `שם הנמען במסמך: "${x.customer_name}"`)
+    else if (part.length === 1) consider('business_id', part[0].id, 0.75, 'name', `שם הנמען דומה ל"${part[0].name}"`)
+  }
+  const custAddr = nameKey(x.customer_address)
+  if (custAddr && custAddr.length > 5) {
+    const hit = companies.filter((c) => c.active !== false && c.address && nameKey(c.address).length > 5 && (custAddr.includes(nameKey(c.address)) || nameKey(c.address).includes(custAddr)))
+    if (hit.length === 1) consider('business_id', hit[0].id, 0.7, 'address', `כתובת הנמען במסמך (${hit[0].name})`)
   }
 
   const rules = (await sb('fin_rules?enabled=eq.true&select=*&order=priority.asc')) || []
@@ -108,7 +127,8 @@ export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cf
 
   // ---- supplier defaults and what people approved before (learning, never changing approved records) ----
   if (supplier && supplier.status !== 'pending') {
-    const past = (await sb(`fin_documents?supplier_id=eq.${supplier.id}&status=in.(approved,sent)&select=business_id,project_id,category&order=approved_at.desc&limit=30`)) || []
+    // approved documents, and documents whose company a person set by hand (a correction teaches the next document)
+    const past = (await sb(`fin_documents?supplier_id=eq.${supplier.id}&or=(status.in.(approved,sent),business_source.eq.manual)&status=not.in.(rejected,duplicate,archived)&select=business_id,project_id,category&order=updated_at.desc&limit=30`)) || []
     const best = (k) => {
       const c = {}
       for (const p of past) if (p[k]) c[p[k]] = (c[p[k]] || 0) + 1
@@ -118,13 +138,22 @@ export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cf
     if (supplier.default_category) consider('category', supplier.default_category, 0.95, 'supplier', `ברירת המחדל של ${supplier.name}`)
     const hc = best('category'); if (hc) consider('category', hc.v, Math.min(0.94, 0.5 + hc.share * 0.45 * Math.min(1, hc.n / 3)), 'history', `${hc.n} מתוך ${past.length} המסמכים המאושרים של הספק`)
     if (supplier.default_business_id) consider('business_id', supplier.default_business_id, 0.85, 'supplier', `ברירת המחדל של ${supplier.name}`)
-    const hb = best('business_id'); if (hb) consider('business_id', hb.v, Math.min(0.88, 0.5 + hb.share * 0.4 * Math.min(1, hb.n / 3)), 'history', `${hb.n} מתוך ${past.length} המסמכים המאושרים`)
     // a supplier who works on several projects never decides the project by name alone
     const hp = best('project_id')
     const multi = hp && hp.distinct > 1
     if (supplier.default_project_id && !multi) consider('project_id', supplier.default_project_id, 0.9, 'supplier', `ברירת המחדל של ${supplier.name}`)
     else if (supplier.default_project_id) consider('project_id', supplier.default_project_id, 0.6, 'supplier', `ברירת מחדל, אבל הספק עובד בכמה פרויקטים`)
     if (hp && !multi) consider('project_id', hp.v, Math.min(0.92, 0.5 + 0.42 * Math.min(1, hp.n / 3)), 'history', `כל ${hp.n} המסמכים המאושרים של הספק`)
+  }
+
+  // ---- the company of this supplier's earlier documents that a person approved or assigned (also for a supplier that
+  // still waits for approval): a learning signal, never enough alone to assign (see the levels below) ----
+  if (supplier?.id) {
+    const hist = (await sb(`fin_documents?supplier_id=eq.${supplier.id}&business_id=not.is.null&or=(status.in.(approved,sent),business_source.eq.manual)&status=not.in.(rejected,duplicate,archived)${documentId ? `&id=neq.${documentId}` : ''}&select=business_id&order=updated_at.desc&limit=30`)) || []
+    const c = {}
+    for (const h of hist) c[h.business_id] = (c[h.business_id] || 0) + 1
+    const [v, n] = Object.entries(c).sort((a, b) => b[1] - a[1])[0] || []
+    if (v) consider('business_id', v, Math.min(0.88, 0.5 + (n / hist.length) * 0.4 * Math.min(1, n / 3) + (n / hist.length === 1 ? 0.15 : 0)), 'history', `${n} מתוך ${hist.length} המסמכים של הספק שאדם שייך`)
   }
 
   // ---- what is printed on the document ----
@@ -146,10 +175,24 @@ export async function assign({ fields, x, mailbox, fromEmail, text, supplier, cf
     sug.project_id.confidence = Math.min(sug.project_id.confidence, 0.5)
   }
 
-  // ---- apply only what passes the thresholds ----
-  if (sug.business_id && sug.business_id.confidence >= 0.85) out.business_id = sug.business_id.value
-  else if (!sug.business_id) issues.push({ level: 'warn', code: 'no_company', field: 'business_id', message: 'לא זוהתה חברה נמענת. יש לשייך ידנית' })
-  else issues.push({ level: 'info', code: 'company_suggested', field: 'business_id', message: 'החברה מוצעת בלבד, לא שויכה אוטומטית' })
+  // ---- company: three levels. Certain (0.95+): assigned. Likely (0.85+): assigned and flagged for a look.
+  // Below: not assigned, the document waits in "ממתין לשיוך". The supplier's history, the supplier default or the mailbox
+  // alone never assign a company; they count only when another, independent signal points to the same company.
+  if (sug.business_id) {
+    const weak = ['history', 'supplier', 'mailbox']
+    const top = sug.business_id
+    const agree = new Set(votes.filter((v) => v.value === top.value && v.conf >= 0.6).map((v) => (weak.includes(v.source) ? 'weak:' + v.source : v.source)))
+    const independent = [...agree].filter((s2) => !s2.startsWith('weak:')).length + (([...agree].some((s2) => s2.startsWith('weak:'))) ? 1 : 0)
+    if (weak.includes(top.source) && independent < 2) top.confidence = Math.min(top.confidence, 0.84)
+    else if (independent >= 2 && top.confidence < 0.95) top.confidence = Math.max(top.confidence, 0.9)
+    top.level = top.confidence >= 0.95 ? 'certain' : top.confidence >= 0.85 ? 'likely' : 'unsure'
+  }
+  if (sug.business_id?.level === 'certain') { out.business_id = sug.business_id.value; out.business_source = 'auto' }
+  else if (sug.business_id?.level === 'likely') {
+    out.business_id = sug.business_id.value; out.business_source = 'auto_likely'
+    issues.push({ level: 'warn', code: 'company_check', field: 'business_id', message: `החברה שויכה בסבירות גבוהה (${sug.business_id.reason}). בדקו שהיא נכונה` })
+  } else if (!sug.business_id) issues.push({ level: 'warn', code: 'no_company', field: 'business_id', message: 'לא זוהתה חברה נמענת. המסמך ממתין לשיוך' })
+  else issues.push({ level: 'warn', code: 'company_suggested', field: 'business_id', message: `ממתין לשיוך: הצעה בלבד (${sug.business_id.reason})` })
   if (sug.category && sug.category.confidence >= cfg.categoryThreshold) out.category = sug.category.value
   if (sug.project_id && sug.project_id.confidence >= cfg.projectThreshold) out.project_id = sug.project_id.value
   if (cfg.secondApprovalAmount && Math.abs(Number(fields.total_amount) || 0) >= cfg.secondApprovalAmount) fields.requires_second_approval = true

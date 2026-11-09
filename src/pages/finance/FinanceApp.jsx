@@ -1,32 +1,36 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, createContext, lazy, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, hasSupabase } from '../../lib/supabase.js'
 import { useAuth } from '../../lib/useAuth.js'
 import * as api from './api.js'
 import { ROLE, can } from './format.js'
-import { Icon } from './ui.jsx'
+import { Icon, Skeleton } from './ui.jsx'
+import { markLedger } from './ledger.js'
 import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
-import MasterData from './MasterData.jsx'
-import EntityOverview from './EntityOverview.jsx'
 import CommandPalette from './CommandPalette.jsx'
-import Scanners from './Scanners.jsx'
-import Cloud from './Cloud.jsx'
-import Delivery from './Delivery.jsx'
-import SendCenter from './SendCenter.jsx'
-import Connections from './Connections.jsx'
-import Reports from './Reports.jsx'
-import DataManagement from './DataManagement.jsx'
-import Automations from './Automations.jsx'
-import Agents from './Agents.jsx'
-import Mailboxes from './Mailboxes.jsx'
-import Integrations from './Integrations.jsx'
-import ExportHistory from './ExportHistory.jsx'
-import Users from './Users.jsx'
-import Settings from './Settings.jsx'
-import Activity from './Activity.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
+const MasterData = lazy(() => import('./MasterData.jsx'))
+const EntityOverview = lazy(() => import('./EntityOverview.jsx'))
+const Scanners = lazy(() => import('./Scanners.jsx'))
+const Cloud = lazy(() => import('./Cloud.jsx'))
+const Delivery = lazy(() => import('./Delivery.jsx'))
+const SendCenter = lazy(() => import('./SendCenter.jsx'))
+const Connections = lazy(() => import('./Connections.jsx'))
+const Reports = lazy(() => import('./Reports.jsx'))
+const DataManagement = lazy(() => import('./DataManagement.jsx'))
+const Automations = lazy(() => import('./Automations.jsx'))
+const Agents = lazy(() => import('./Agents.jsx'))
+const Mailboxes = lazy(() => import('./Mailboxes.jsx'))
+const Integrations = lazy(() => import('./Integrations.jsx'))
+const ExportHistory = lazy(() => import('./ExportHistory.jsx'))
+const Users = lazy(() => import('./Users.jsx'))
+const Settings = lazy(() => import('./Settings.jsx'))
+const Activity = lazy(() => import('./Activity.jsx'))
+const Executive = lazy(() => import('./Executive.jsx'))
+const Assistant = lazy(() => import('./Assistant.jsx'))
+const CaptureReceipt = lazy(() => import('./CaptureReceipt.jsx'))
 
 /* ============================================================
    KURKOOS FINANCE AI — the group's internal invoice and bookkeeping system.
@@ -39,7 +43,11 @@ const ALL = ['admin', 'finance_manager', 'employee', 'accountant']
 const OPS = ['admin', 'finance_manager']
 export const NAV = [
   // daily work: what arrived, what needs a look, what goes to the accountant
-  { to: '', label: 'מרכז בקרה', icon: 'home', roles: ALL, el: <Dashboard />, group: 'מסמכים' },
+  // management: the group's financial picture opens first for managers
+  { to: '', label: 'סקירה פיננסית', icon: 'reports', roles: OPS, el: <Executive />, group: 'הנהלה' },
+  { to: '/assistant', label: 'שאלות על הנתונים', icon: 'sparkle', roles: [...OPS, 'accountant'], el: <Assistant />, group: 'הנהלה' },
+  { to: '', label: 'מרכז בקרה', icon: 'home', roles: ['employee', 'accountant'], el: <Dashboard />, group: 'מסמכים' },
+  { to: '/today', label: 'מרכז בקרה', icon: 'home', roles: OPS, el: <Dashboard />, group: 'מסמכים' },
   { to: '/documents', label: 'כל המסמכים', accLabel: 'מסמכים מאושרים', icon: 'docs', roles: ALL, el: <Documents preset="all" />, group: 'מסמכים' },
   { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'מסמכים' },
   { to: '/pending', label: 'ממתינים לבדיקה', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'מסמכים' },
@@ -65,7 +73,7 @@ export const NAV = [
   { to: '/users', label: 'הארגון ומשתמשים', icon: 'users', roles: ['admin'], el: <Users />, group: 'מתקדם' },
   { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings />, group: 'מתקדם' },
 ]
-const GROUPS = ['מסמכים', 'נתוני יסוד', 'קליטה', 'מתקדם']
+const GROUPS = ['הנהלה', 'מסמכים', 'נתוני יסוד', 'קליטה', 'מתקדם']
 const FOLDED = 'מתקדם'
 
 const Ctx = createContext(null)
@@ -103,7 +111,10 @@ function useFinanceData(enabled) {
   }, [reading, reload])
   const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
   const refreshIfStale = useCallback(() => { if (Date.now() - loadedAt.current > 20_000) reload() }, [reload])
-  return { ...state, reload, patchDoc, refreshIfStale }
+  // the bookkeeping pass (ledger.js): receipts that pay an invoice, proformas replaced by an invoice. Every screen reads
+  // the same flags, so no figure counts the same money twice.
+  const documents = useMemo(() => markLedger(state.documents), [state.documents])
+  return { ...state, documents, reload, patchDoc, refreshIfStale }
 }
 
 function Login() {
@@ -203,6 +214,7 @@ export default function FinanceApp() {
   }, [navOpen])
 
   const role = data.me?.role || null
+  const [capture, setCapture] = useState(false)
   const ctx = useMemo(() => ({ ...data, role, can: (w) => can(role, w), go: (p) => navigate(`${BASE}${p}`) }), [data, role, navigate])
   const nav = NAV.filter((n) => role && n.roles.includes(role))
   const sub = pathname.slice(BASE.length).replace(/\/$/, '') || ''
@@ -240,7 +252,7 @@ export default function FinanceApp() {
             <Icon name="next" size={17} />
           </Link>
           <div className="fin__brand-row">
-            <Link to={BASE} className="fin__brand" aria-label="Kurkoos Finance, מרכז בקרה">
+            <Link to={BASE} className="fin__brand" aria-label="Kurkoos Finance, דף הבית">
               <img src="/kurkoos-logo.svg" alt="" />
               <span><strong>Kurkoos Finance</strong><small>קבוצת קורקוס</small></span>
             </Link>
@@ -302,14 +314,26 @@ export default function FinanceApp() {
           </header>
           <main className="fin__content" id="fin-main">
             {data.error && <p className="fin-error fin-error--block" role="alert">{data.error}</p>}
+            <Suspense fallback={<div className="fin-stack" aria-busy="true"><Skeleton lines={6} /></div>}>
             <Routes>
               {nav.map((n) => <Route key={n.to} path={`${BASE}${n.to}`} element={n.el} />)}
               {nav.filter((n) => ['/documents', '/new', '/pending'].includes(n.to)).map((n) => <Route key={`${n.to}-id`} path={`${BASE}${n.to}/:id`} element={n.el} />)}
               {nav.filter((n) => n.detail).map((n) => <Route key={`${n.to}-detail`} path={`${BASE}${n.to}/:id`} element={n.detail} />)}
               <Route path="*" element={<Dashboard />} />
             </Routes>
+            </Suspense>
           </main>
         </div>
+        {/* phones: the main places one thumb away; "עוד" opens the full menu */}
+        <nav className="fin-tabbar" aria-label="ניווט מהיר">
+          {[nav.find((n) => n.to === ''), nav.find((n) => n.to === '/documents')].filter(Boolean).map((n) => (
+            <Link key={n.to || 'home'} to={`${BASE}${n.to}`} className={active === n ? 'is-on' : ''} aria-current={active === n ? 'page' : undefined}><Icon name={n.icon} size={21} /><span>{n.to === '' && ['admin', 'finance_manager'].includes(role) ? 'סקירה' : n.to === '' ? 'בית' : 'מסמכים'}</span></Link>
+          ))}
+          {can(role, 'upload') && <button type="button" className="fin-tabbar__add" onClick={() => setCapture(true)} aria-label="צילום או העלאת קבלה"><span><Icon name="camera" size={22} /></span></button>}
+          {nav.find((n) => n.to === '/reports') && <Link to={`${BASE}/reports`} className={active?.to === '/reports' ? 'is-on' : ''}><Icon name="reports" size={21} /><span>דוחות</span></Link>}
+          <button type="button" onClick={() => setNavOpen(true)} aria-label="עוד" aria-expanded={navOpen} aria-controls="fin-side"><Icon name="menu" size={21} /><span>עוד</span></button>
+        </nav>
+        {capture && <Suspense fallback={null}><CaptureReceipt onClose={() => setCapture(false)} /></Suspense>}
         <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav} />
       </div>
     </Ctx.Provider>

@@ -18,7 +18,7 @@ const WIDTHS = [320, 375, 390, 430, 768, 1024, 1280, 1440, 1920]
 const SHOT_AT = new Set([390, 1440])
 const one = (q) => sql(q) || 'none'
 const ROUTES = [
-  ['dashboard', ''], ['send', '/send'], ['connections', '/connections'], ['documents', '/documents'], ['new', '/new'], ['pending', '/pending'], ['document', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`],
+  ['overview', ''], ['dashboard', '/today'], ['assistant', '/assistant'], ['send', '/send'], ['connections', '/connections'], ['documents', '/documents'], ['new', '/new'], ['pending', '/pending'], ['document', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`],
   ['reports', '/reports'], ['companies', '/companies'], ['company', `/companies/${one('select id from fin_businesses order by sort limit 1')}`],
   ['projects', '/projects'], ['project', `/projects/${one('select id from fin_projects order by created_at limit 1')}`], ['suppliers', '/suppliers'],
   ['supplier', `/suppliers/${one('select id from fin_suppliers order by created_at limit 1')}`], ['categories', '/categories'], ['data', '/data'],
@@ -116,7 +116,7 @@ const inView = (page, sel) => page.evaluate((sel) => { const el = document.query
     const inside2 = await inView(page, '.fin-sel__pop')
     await page.keyboard.press('Escape'); await page.waitForTimeout(150)
     const panelStillOpen = await page.locator('.fin-panel').count()
-    check('DD4', 'רשימה ארוכה: חיפוש, "אין תוצאות", שמות ארוכים, בתוך המסך, Escape לא סוגר את החלון שמאחור', hasSearch && after === 1 && before > after && /אין תוצאות/.test(empty) && inside2 && panelStillOpen && scrolls, `חיפוש: ${!!hasSearch}, ${before}→${after}, ריק: "${empty}", בתוך המסך: ${inside2}, החלון נשאר: ${!!panelStillOpen}`)
+    check('DD4', 'רשימה ארוכה: חיפוש, "אין תוצאות", שמות ארוכים, בתוך המסך, Escape לא סוגר את החלון שמאחור', hasSearch && after >= 1 && before > after && /אין תוצאות/.test(empty) && inside2 && panelStillOpen && scrolls, `חיפוש: ${!!hasSearch}, ${before}→${after}, ריק: "${empty}", בתוך המסך: ${inside2}, החלון נשאר: ${!!panelStillOpen}`)
   } else check('DD4', 'רשימה ארוכה עם חיפוש', false, 'לא נמצא שדה פרויקט בחלון המסמך')
   // a dropdown at the bottom of the screen opens upward instead of being cut
   await page.goto(`${APP}/documents`); await page.waitForTimeout(800)

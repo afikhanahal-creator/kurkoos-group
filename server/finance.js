@@ -15,6 +15,7 @@ import { sb, one, insert, patch, q, caller, audit } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
+import { ask } from './finance/assistant.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
@@ -40,6 +41,7 @@ const ROLES = {
   'cloud-save': ['admin', 'finance_manager'],
   'cloud-test': ['admin', 'finance_manager'],
   'email-docs': ['admin', 'finance_manager', 'employee'],
+  ask: ['admin', 'finance_manager', 'accountant'],
   'outbound-save': ['admin'],
   'outbound-delete': ['admin'],
   'outbound-test': ['admin'],
@@ -231,6 +233,10 @@ export default async function handler(req, res) {
       }
       case 'cloud-test': {
         res.status(200).json(await testCloud({ targetId: q(body.target_id), user }))
+        return
+      }
+      case 'ask': {
+        res.status(200).json(await ask({ question: body.question, user }))
         return
       }
       case 'email-docs': {

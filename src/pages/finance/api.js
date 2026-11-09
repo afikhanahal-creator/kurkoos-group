@@ -20,14 +20,32 @@ export async function callServer(action, payload = {}) {
 }
 
 const must = ({ data, error }) => { if (error) throw new Error(error.message); return data }
-const all = async (table, order = 'created_at', asc = false, limit = 5000) => must(await supabase.from(table).select('*').order(order, { ascending: asc }).limit(limit))
+// Supabase answers at most 1,000 rows per request: larger tables are read in pages, in parallel after the first
+const PAGE = 1000
+// tie: a unique column that keeps the pages stable when many rows share a timestamp (documents imported together)
+const all = async (table, order = 'created_at', asc = false, limit = 5000, columns = '*', tie = null) => {
+  const page = (from) => { let qy = supabase.from(table).select(columns).order(order, { ascending: asc }); if (tie) qy = qy.order(tie, { ascending: true }); return qy.range(from, Math.min(from + PAGE, limit) - 1) }
+  const first = must(await page(0))
+  if (first.length < Math.min(PAGE, limit)) return first
+  const rest = []
+  for (let from = PAGE; from < limit; from += PAGE * 4) {
+    const batch = await Promise.all([0, 1, 2, 3].map((i) => from + i * PAGE).filter((x) => x < limit).map((x) => page(x).then(must)))
+    rest.push(...batch.flat())
+    if (batch.some((b) => b.length < PAGE)) break
+  }
+  return [...first, ...rest]
+}
 /* a table the role cannot read answers empty, not with an error */
 const soft = async (p) => { try { return await p } catch { return [] } }
 
 export const me = async () => must(await supabase.rpc('fin_me'))
 export const claimAdmin = async () => must(await supabase.rpc('fin_claim_admin'))
 
-export const loadDocuments = () => all('fin_documents')
+// the list reads every column except the raw reading (extraction, about a third of a row): the document panel and
+// the capture dialog get it with the document itself. A database that is not migrated yet falls back to all columns.
+const DOC_COLUMNS = 'id,business_id,project_id,supplier_id,supplier_name,supplier_vat_id,doc_type,doc_number,issue_date,due_date,payment_date,accounting_period,currency,amount_before_vat,vat_amount,total_amount,category,description,payment_method,paid,status,source,mailbox_id,email_message_id,email_subject,email_from,email_date,file_path,file_name,file_mime,file_size,file_hash,field_confidence,confidence,issues,suggestions,attempts,processed_at,approved_by,approved_at,exported_at,export_id,sent_at,notes,created_by,created_at,updated_at,category_id,supplier_email,ai_snapshot,requires_second_approval,first_approved_by,first_approved_at,archived_at,stage,stage_at,next_retry_at,duplicate_of,duplicate_state,quality,page_count,ai_tokens_in,ai_tokens_out,ai_calls,failures,document_class,relevance,business_source'
+export const loadDocuments = async () => { try { return await all('fin_documents', 'created_at', false, 200000, DOC_COLUMNS, 'id') } catch { return all('fin_documents', 'created_at', false, 200000, '*', 'id') } }
+export const loadDocumentFull = async (id) => must(await supabase.from('fin_documents').select('*').eq('id', id).single())
 export const loadBusinesses = () => all('fin_businesses', 'sort', true)
 export const loadProjects = () => soft(all('fin_projects', 'name', true))
 export const loadCategories = () => all('fin_categories', 'sort', true)
@@ -47,7 +65,7 @@ export const loadAudit = async ({ entity, entityId, limit = 100 } = {}) => {
   if (entityId) qy = qy.eq('entity_id', String(entityId))
   return soft(must(await qy))
 }
-export const loadAllocations = () => soft(all('fin_document_allocations', 'created_at', true, 10000))
+export const loadAllocations = () => soft(all('fin_document_allocations', 'created_at', true, 200000, '*', 'id'))
 export const loadSettings = async () => Object.fromEntries(((await soft(must(await supabase.from('fin_settings').select('*')))) || []).map((r) => [r.key, r.value]))
 export const saveSetting = async (key, value) => must(await supabase.from('fin_settings').update({ value, updated_at: new Date().toISOString() }).eq('key', key).select().single())
 export const loadRuleHits = (limit = 200) => soft(all('fin_rule_hits', 'at', false, limit))
@@ -61,9 +79,11 @@ export const storageUsage = async () => { try { return must(await supabase.rpc('
 // a status change may have queued automatic deliveries (webhook / email); ask the server to send them, without waiting
 export const flushOutbound = () => { callServer('outbound-flush').catch(() => {}) }
 const afterStatus = (patch, out) => { if (patch && 'status' in patch) flushOutbound(); return out }
-export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(patch).eq('id', id).select().single()))
-export const updateDocuments = async (ids, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(patch).in('id', ids).select()))
-export const loadDeliveries = (limit = 30) => soft(all('fin_deliveries', 'created_at', false, limit))
+// a company chosen by a person is marked "manual": the engine learns from it for the next document of that supplier
+const byPerson = (patch) => ('business_id' in patch ? { ...patch, business_source: patch.business_id ? 'manual' : null } : patch)
+export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).eq('id', id).select().single()))
+export const updateDocuments = async (ids, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).in('id', ids).select()))
+export const loadDeliveries = (limit = 30) => soft((async () => (await all('fin_deliveries', 'created_at', false, limit * 2)).filter((d) => (d.kind || 'accountant') === 'accountant').slice(0, limit))())
 export const loadOutbound = () => soft(all('fin_outbound', 'created_at', true))
 export const loadOutboundQueue = (limit = 30) => soft(all('fin_outbound_queue', 'id', false, limit))
 export async function deleteDocument(doc) {

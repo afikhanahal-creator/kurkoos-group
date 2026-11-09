@@ -50,6 +50,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const history = useAsync(() => api.loadAudit({ entity: 'document', entityId: doc.id, limit: 50 }), [doc.updated_at])
   const dirty = FIELDS.some((k) => String(form[k] ?? '') !== String(doc[k] ?? blank(k)))
   const fc = doc.field_confidence || {}
+  // the raw reading is not in the list (it is heavy): fetched with the document when the panel opens
+  const full = useAsync(() => (doc.extraction !== undefined ? Promise.resolve(doc) : api.loadDocumentFull(doc.id).catch(() => doc)), [doc.id, doc.updated_at])
   const issues = issuesOf(doc)
   const issueFor = (k) => issues.filter((i) => i.field === k)
   const sug = doc.suggestions || {}
@@ -274,7 +276,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                 )}
                 <h4>ודאות לכל שדה</h4>
                 <table className="fin-table fin-table--plain">
-                  <tbody>{Object.entries(fc).map(([k, v]) => <tr key={k}><td>{FIELD_LABEL[k] || k}</td><td>{String(doc.extraction?.[k] ?? doc[k] ?? '—')}</td><td><Confidence value={v} /></td></tr>)}</tbody>
+                  <tbody>{Object.entries(fc).map(([k, v]) => <tr key={k}><td>{FIELD_LABEL[k] || k}</td><td>{String(full.data?.extraction?.[k] ?? doc[k] ?? '—')}</td><td><Confidence value={v} /></td></tr>)}</tbody>
                 </table>
                 {!Object.keys(fc).length && <p className="fin-muted">אין עדיין קריאה של AI.</p>}
               </div>

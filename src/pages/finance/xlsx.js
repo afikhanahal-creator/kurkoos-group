@@ -37,7 +37,7 @@ const col = (i) => { let s = ''; i += 1; while (i) { const m = (i - 1) % 26; s =
 const serial = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); if (!m) return null; return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(1899, 11, 30)) / 86400000) }
 
 // style ids (cellXfs order below)
-const ST = { text: 0, head: 1, money: 2, date: 3, int: 4, totalLabel: 5, totalMoney: 6, totalInt: 7, pct: 8 }
+const ST = { text: 0, head: 1, money: 2, date: 3, int: 4, totalLabel: 5, totalMoney: 6, totalInt: 7, pct: 8, totalPct: 9 }
 const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 <numFmts count="3"><numFmt numFmtId="164" formatCode="#,##0.00"/><numFmt numFmtId="165" formatCode="dd/mm/yyyy"/><numFmt numFmtId="166" formatCode="0.0%"/></numFmts>
@@ -45,7 +45,7 @@ const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF07293A"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEEF2F4"/><bgColor indexed="64"/></patternFill></fill></fills>
 <borders count="2"><border/><border><top style="thin"><color rgb="FF07293A"/></top></border></borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="9">
+<cellXfs count="10">
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right" readingOrder="2"/></xf>
 <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="right" vertical="center" readingOrder="2"/></xf>
 <xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
@@ -55,6 +55,7 @@ const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xf numFmtId="164" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
 <xf numFmtId="1" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
 <xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="166" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>`
@@ -64,7 +65,7 @@ function cell(ref, v, type, total) {
   if (type === 'money' || type === 'int' || type === 'pct') {
     const n = Number(v)
     if (!Number.isFinite(n)) return `<c r="${ref}" s="${total ? ST.totalLabel : ST.text}" t="inlineStr"><is><t xml:space="preserve">${esc(v)}</t></is></c>`
-    const s = total ? (type === 'money' ? ST.totalMoney : ST.totalInt) : ST[type === 'money' ? 'money' : type === 'pct' ? 'pct' : 'int']
+    const s = total ? (type === 'money' ? ST.totalMoney : type === 'pct' ? ST.totalPct : ST.totalInt) : ST[type === 'money' ? 'money' : type === 'pct' ? 'pct' : 'int']
     return `<c r="${ref}" s="${s}"><v>${type === 'money' ? Math.round(n * 100) / 100 : n}</v></c>`
   }
   if (type === 'date') { const d = serial(v); if (d !== null) return `<c r="${ref}" s="${ST.date}"><v>${d}</v></c>` }

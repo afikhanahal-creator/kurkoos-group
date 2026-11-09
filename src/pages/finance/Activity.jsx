@@ -13,7 +13,7 @@ const ACT = {
   split: 'פוצל בין פרויקטים', first_approval: 'חתימה ראשונה', merged: 'אוחד ספק', archived: 'הועבר לארכיון',
   sent_to_accountant: 'נשלח לרו״ח במייל', shared_by_email: 'שותף במייל', exported_excel: 'הורד קובץ Excel', exported_csv: 'הורד קובץ CSV', downloaded_originals: 'הורדו קבצים מקוריים',
   printed: 'הודפס', downloaded_document: 'הורד מסמך', saved_documents: 'נשמר בענן', test_passed: 'בדיקת חיבור עברה', test_failed: 'בדיקת חיבור נכשלה',
-  whatsapp_sent: 'נשלח בוואטסאפ', duplicate_confirmed: 'כפילות אושרה', duplicate_dismissed: 'כפילות נדחתה',
+  shared_whatsapp: 'נשלח בוואטסאפ', duplicate_confirmed: 'כפילות אושרה', duplicate_dismissed: 'כפילות נדחתה',
 }
 const KINDS = [
   ['', 'הכול'],
@@ -27,7 +27,7 @@ const kindOf = (a) => {
   if (a.kind === 'error') return 'errors'
   if (['created', 'ai_processed'].includes(a.action)) return 'intake'
   if (['approved', 'rejected', 'updated', 'marked_duplicate', 'first_approval', 'split', 'archived', 'deleted', 'merged', 'duplicate_confirmed', 'duplicate_dismissed'].includes(a.action)) return 'review'
-  if (['exported', 'sent_to_accountant', 'shared_by_email', 'exported_excel', 'exported_csv', 'downloaded_originals', 'printed', 'downloaded_document', 'saved_documents', 'whatsapp_sent'].includes(a.action)) return 'out'
+  if (['exported', 'sent_to_accountant', 'shared_by_email', 'exported_excel', 'exported_csv', 'downloaded_originals', 'printed', 'downloaded_document', 'saved_documents', 'shared_whatsapp'].includes(a.action)) return 'out'
   if (['connected', 'disconnected', 'test_passed', 'test_failed', 'invited', 'claimed_admin'].includes(a.action) || ['mailbox', 'cloud', 'member', 'integration'].includes(a.entity)) return a.action === 'test_failed' ? 'errors' : 'connect'
   return 'review'
 }

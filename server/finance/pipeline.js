@@ -93,7 +93,7 @@ export async function analyze(x, { selfId = null, selfCreated = null, mailbox = 
   // steps 5-7: company, category, project
   const cls = await assign({ fields, x, mailbox, fromEmail, text, supplier, cfg, documentId: selfId })
   if (runs) runs.classification.stat.processed++
-  for (const k of ['business_id', 'project_id', 'category']) if (cls[k]) fields[k] = cls[k]
+  for (const k of ['business_id', 'project_id', 'category', 'business_source']) if (cls[k]) fields[k] = cls[k]
   fields.suggestions = { ...cls.suggestions, supplier: { value: supplier?.id || null, match: sup.match, confidence: Math.round((sup.confidence || 0) * 100) / 100, pending: !!sup.pending } }
   fields.ai_snapshot = { supplier_id: supplier?.id || null, supplier_match: sup.match, business_id: cls.suggestions.business_id?.value || null, category: cls.suggestions.category?.value || null, project_id: cls.suggestions.project_id?.value || null }
   fields._pendingHits = cls.pendingHits

@@ -2297,6 +2297,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 }
 /* phones: a report's total row is a card like the rows above it, a little stronger */
 @media (max-width: 760px) {
+  .fin-menu__pop > button, .fin-menu__pop > a { min-height: 44px; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot tr { display: grid; grid-template-columns: 1fr; gap: 0.15rem; background: var(--wash); border: 1px solid var(--line-2); border-radius: var(--r-l); padding: 0.75rem 0.85rem; font-weight: 700; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot td { display: flex; justify-content: space-between; gap: 1rem; padding: 0.1rem 0; border: 0; grid-column: 1 / -1 !important; grid-row: auto !important; background: none !important; position: static; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot td.fin-td-main { margin-bottom: 0.25rem; }

@@ -196,7 +196,7 @@ export default function Executive() {
                 <div className="fin-x-monthsum" aria-live="polite">
                   <div>
                     <span className="fin-x-label">{monthName(f.key)}{f.key === nowKey ? ' · עד היום' : ''}</span>
-                    <strong className="fin-x-big">{money(f.total)}</strong>
+                    <strong className="fin-x-monthsum__total">{money(f.total)}</strong>
                     <Delta value={change} label={before ? `מ${monthName(before.key).split(' ')[0]}` : ''} />
                   </div>
                   <dl>

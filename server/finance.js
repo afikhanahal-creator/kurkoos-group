@@ -15,7 +15,7 @@ import { sb, one, insert, patch, q, caller, audit } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
-import { CLOUD, syncCloud, connectCloud } from './finance/cloud.js'
+import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 import { sendToAccountant } from './finance/mailout.js'
@@ -37,6 +37,9 @@ const ROLES = {
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
+  'cloud-save': ['admin', 'finance_manager'],
+  'cloud-test': ['admin', 'finance_manager'],
+  'email-docs': ['admin', 'finance_manager', 'employee'],
   'outbound-save': ['admin'],
   'outbound-delete': ['admin'],
   'outbound-test': ['admin'],
@@ -218,6 +221,20 @@ export default async function handler(req, res) {
       }
       case 'cloud-sync': {
         res.status(200).json({ results: await syncCloud({ targetId: body.target_id, trigger: 'manual' }) })
+        return
+      }
+      case 'cloud-save': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 100)
+        if (!ids.length) { res.status(400).json({ error: 'לא נבחרו מסמכים' }); return }
+        res.status(200).json(await saveDocsToCloud({ ids, targetId: body.target_id ? q(body.target_id) : null, user }))
+        return
+      }
+      case 'cloud-test': {
+        res.status(200).json(await testCloud({ targetId: q(body.target_id), user }))
+        return
+      }
+      case 'email-docs': {
+        res.status(200).json(await sendToAccountant({ ids: body.ids, to: body.to, note: String(body.note || '').slice(0, 2000), subject: String(body.subject || '').slice(0, 200) || null, ccMe: !!body.cc_me, period: null, mark: false, kind: 'share', user }))
         return
       }
       case 'cloud-disconnect': {

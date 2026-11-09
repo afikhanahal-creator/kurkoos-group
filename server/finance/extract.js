@@ -3,6 +3,22 @@
 import { env, DOC_TYPES } from './env.js'
 import { fetchRetry } from './http.js'
 
+// what a document can be. The first group is kept as an expense; the second is skipped (no financial record)
+export const RELEVANT_CLASSES = ['tax_invoice', 'invoice_receipt', 'receipt', 'transaction_invoice', 'credit_note', 'supplier_bill', 'payment_confirmation']
+export const SKIP_CLASSES = ['quote', 'purchase_order', 'contract', 'legal', 'marketing', 'correspondence', 'bank_statement', 'personal', 'other']
+const DOC_CLASSES = [...RELEVANT_CLASSES, ...SKIP_CLASSES]
+export const CLASS_LABEL = { tax_invoice: 'חשבונית מס', invoice_receipt: 'חשבונית מס/קבלה', receipt: 'קבלה', transaction_invoice: 'חשבון עסקה', credit_note: 'חשבונית זיכוי', supplier_bill: 'דרישת תשלום', payment_confirmation: 'אישור תשלום', quote: 'הצעת מחיר', purchase_order: 'הזמנת רכש', contract: 'חוזה או הסכם', legal: 'מסמך משפטי', marketing: 'פרסום או ניוזלטר', correspondence: 'התכתבות', bank_statement: 'דף חשבון', personal: 'מסמך אישי', other: 'מסמך אחר' }
+/* keep | skip | unsure. A document is skipped only when the reader is sure it is not an expense; an unsure answer
+   is kept and sent to a person. Old answers without a class fall back to is_financial_document. */
+export function relevanceOf(x) {
+  const cls = x?.document_class
+  const conf = Number.isFinite(Number(x?.relevance_confidence)) ? Number(x.relevance_confidence) : null
+  if (!cls) return { verdict: x?.is_financial_document ? 'keep' : 'skip', cls: null, conf }
+  if (RELEVANT_CLASSES.includes(cls)) return { verdict: x.is_financial_document === false && (conf ?? 1) < 0.8 ? 'unsure' : 'keep', cls, conf }
+  if ((conf ?? 0) >= 0.8 && !x.is_financial_document) return { verdict: 'skip', cls, conf }
+  return { verdict: 'unsure', cls, conf }
+}
+
 const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'payment_date', 'amount_before_vat', 'vat_amount', 'total_amount', 'currency', 'category', 'description', 'customer']
 const num = { type: ['number', 'null'] }
 const str = (description) => ({ type: 'string', description })
@@ -10,9 +26,11 @@ const str = (description) => ({ type: 'string', description })
 export const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['is_financial_document', 'doc_type', 'supplier_name', 'supplier_trading_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'supplier_email', 'supplier_phone', 'supplier_address', 'supplier_website', 'discount_amount', 'extra_charges', 'page_count', 'quality', 'totals_text', 'field_confidence', 'notes'],
+  required: ['is_financial_document', 'document_class', 'relevance_confidence', 'doc_type', 'supplier_name', 'supplier_trading_name', 'supplier_vat_id', 'customer_name', 'customer_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'vat_rate', 'description', 'category', 'payment_method', 'project_hint', 'supplier_email', 'supplier_phone', 'supplier_address', 'supplier_website', 'discount_amount', 'extra_charges', 'page_count', 'quality', 'totals_text', 'field_confidence', 'notes'],
   properties: {
-    is_financial_document: { type: 'boolean', description: 'true for an invoice, receipt, credit note, supplier bill, payment confirmation, proforma or quote' },
+    is_financial_document: { type: 'boolean', description: 'true only for a document that records an expense or a payment: tax invoice, invoice-receipt, receipt, transaction invoice (חשבון עסקה), credit note, supplier bill, payment confirmation. false for a quote, order, contract, legal letter, marketing, correspondence, statement or anything personal' },
+    document_class: { type: 'string', enum: DOC_CLASSES, description: 'what this document is' },
+    relevance_confidence: { type: 'number', description: '0 to 1: how sure you are about document_class' },
     doc_type: { type: 'string', enum: DOC_TYPES },
     supplier_name: str('the business that issued the document, exactly as printed; empty if not printed'),
     supplier_trading_name: str('the brand / trading name when it differs from the legal name (e.g. "שופרסל דיל" for "שופרסל בע״מ"); empty otherwise'),
@@ -71,7 +89,9 @@ export async function extract({ buf, mime, text, categories, hint }) {
       'Fill the fields ONLY from what is printed. Never invent or compute a value that is not printed: leave it empty (or null) and give it a low confidence.',
       'Amounts are plain numbers, no currency signs or thousands separators. Israeli VAT is 18% since 2025 (17% before).',
       'חשבונית מס = invoice, חשבונית מס/קבלה = invoice_receipt, קבלה = receipt, חשבונית זיכוי = credit, דרישת תשלום / חשבון ספק = supplier_bill, אישור תשלום / אישור העברה = payment_confirmation, חשבון עסקה = proforma, הצעת מחיר = quote.',
-      'A newsletter, an advertisement, an order confirmation without amounts or a shipping notice is not a financial document.',
+      'First decide document_class. Kept as expenses: tax_invoice (חשבונית מס), invoice_receipt (חשבונית מס/קבלה), receipt (קבלה), transaction_invoice (חשבון עסקה / proforma), credit_note (חשבונית זיכוי), supplier_bill (דרישת תשלום), payment_confirmation (אישור תשלום / העברה).',
+      'Not expenses: quote (הצעת מחיר), purchase_order (הזמנה), contract (חוזה / הסכם), legal (מכתב עורך דין, כתב תביעה), marketing (newsletter, advertisement, promotion), correspondence (a letter or email with no invoice), bank_statement, personal, other.',
+      'An order confirmation without a tax invoice, a shipping notice or a Word letter is not an expense. When the class is not clear, give relevance_confidence below 0.8.',
       `category must be one of: ${categories.join(' | ')}.`,
       'field_confidence: how sure you are that each value is exactly what is printed (1 = printed clearly, below 0.7 = unsure or missing).',
       hint ? `Context: ${hint}` : '',

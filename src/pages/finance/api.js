@@ -154,3 +154,17 @@ export async function fileBlob(doc) {
   if (error) throw new Error(error.message || 'הקובץ לא נטען')
   return data
 }
+
+// ---- cloud copies (Drive / Dropbox): where each document was saved, saving now, and the connection test ----
+export const loadCloudCopies = async () => {
+  const { data, error } = await supabase.from('fin_cloud_synced').select('document_id, target_id, web_link, path, at').order('at', { ascending: false }).limit(5000)
+  if (error) return {}
+  const map = {}
+  for (const r of data || []) if (!map[r.document_id]) map[r.document_id] = r
+  return map
+}
+export const saveToCloud = (ids, targetId) => callServer('cloud-save', { ids, target_id: targetId || undefined })
+export const testCloud = (targetId) => callServer('cloud-test', { target_id: targetId })
+export const loadSkipped = (limit = 50) => soft((async () => must(await supabase.from('fin_skipped').select('*').order('at', { ascending: false }).limit(limit)))())
+/* one line in the activity log for something done in the browser (an Excel file, a download). Never blocks the action. */
+export const logAction = (action, details = {}) => { supabase.rpc('fin_log', { p_action: action, p_details: details }).then(() => {}, () => {}) }

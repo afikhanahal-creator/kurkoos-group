@@ -6,9 +6,10 @@ import { Field, Icon, Modal } from './ui.jsx'
 
 /* One email with the chosen documents: originals attached, a CSV summary, and a table in the body. */
 export default function SendToAccountant({ docs, period, onClose, onSent, markDefault = false }) {
-  const { businesses, reload } = useFinance()
+  const { businesses, settings, reload } = useFinance()
   const sendable = docs.filter((d) => !['rejected', 'duplicate', 'archived'].includes(d.status))
-  const suggested = useMemo(() => [...new Set(sendable.map((d) => businesses.find((b) => b.id === d.business_id)?.accountant_email).filter(Boolean))], [sendable, businesses])
+  const fixed = typeof settings?.accountant_email === 'string' ? settings.accountant_email : ''
+  const suggested = useMemo(() => { const own = [...new Set(sendable.map((d) => businesses.find((b) => b.id === d.business_id)?.accountant_email).filter(Boolean))]; return own.length ? own : fixed ? [fixed] : [] }, [sendable, businesses, fixed])
   const [to, setTo] = useState(suggested.join(', '))
   const [note, setNote] = useState('')
   const [ccMe, setCcMe] = useState(true)
@@ -38,14 +39,14 @@ export default function SendToAccountant({ docs, period, onClose, onSent, markDe
       {docs.length > sendable.length && <p className="fin-muted fin-small">{docs.length - sendable.length === 1 ? 'מסמך אחד כפול, נדחה או בארכיון לא יישלח.' : `${docs.length - sendable.length} מסמכים כפולים, נדחים או בארכיון לא יישלחו.`}</p>}
       {notApproved > 0 && <p className="fin-note fin-note--warn"><Icon name="alert" size={16} /> {notApproved === 1 ? 'מסמך אחד עוד לא אושר' : `${notApproved} מסמכים עוד לא אושרו`}. הם יישלחו, ובמייל יצוין שהם ממתינים לאישור.</p>}
       <form id="fin-send" className="fin-form__grid" onSubmit={send} noValidate>
-        <Field label="אל" wide tone={err ? 'error' : undefined} hint={err || (suggested.length ? 'המייל של רו״ח מהגדרות החברה. אפשר להוסיף כתובות, מופרדות בפסיק' : 'אין מייל רו״ח בהגדרות החברה. הקלידו כתובת')}>
+        <Field label="אל" wide tone={err ? 'error' : undefined} hint={err || (suggested.length ? 'המייל של רו״ח מההגדרות. אפשר להוסיף כתובות, מופרדות בפסיק' : 'אין מייל רו״ח קבוע בהגדרות. הקלידו כתובת')}>
           <input type="email" multiple dir="ltr" value={to} onChange={(e) => setTo(e.target.value)} placeholder="cpa@example.co.il" required autoComplete="email" />
         </Field>
         <Field label="הודעה (לא חובה)" wide><textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="שלום, מצורפות החשבוניות של החודש." /></Field>
         <label className="fin-check fin-field--wide"><input type="checkbox" checked={ccMe} onChange={(e) => setCcMe(e.target.checked)} /> לשלוח לי עותק</label>
         {markable.length > 0 && <label className="fin-check fin-field--wide"><input type="checkbox" checked={mark} onChange={(e) => setMark(e.target.checked)} /> לסמן את {markable.length === 1 ? 'המסמך המאושר' : `${markable.length} המסמכים המאושרים`} כ"נשלח לרו״ח" (נרשם בהיסטוריית הייצוא)</label>}
       </form>
-      <p className="fin-muted fin-small">הקבצים המקוריים מצורפים למייל עם קובץ סיכום (CSV) לקליטה בתוכנה. אם הם גדולים מ-25MB ביחד, השאר נשלחים כקישורים בתוקף 7 ימים.</p>
+      <p className="fin-muted fin-small">הקבצים המקוריים מצורפים למייל עם קובץ Excel (סיכום לפי קטגוריה וספק) וקובץ CSV לקליטה בתוכנה. אם הם גדולים מ-25MB ביחד, השאר נשלחים כקישורים בתוקף 7 ימים.</p>
     </Modal>
   )
 }

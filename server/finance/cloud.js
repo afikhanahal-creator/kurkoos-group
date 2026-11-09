@@ -3,11 +3,15 @@
 // with files.content.write. Tokens live in fin_cloud_secrets (server only). Originals stay in our storage.
 import { env } from './env.js'
 import { fetchRetry, json } from './http.js'
-import { sb, one, insert, patch, download, audit, rpc } from './db.js'
+import { sb, one, insert, patch, download, audit, rpc, q } from './db.js'
 import { agentRun } from './db.js'
 import { TIME_BUDGET_MS } from './env.js'
 
 const safe = (s) => String(s || '').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 80)
+const driveLink = (id) => `https://drive.google.com/file/d/${id}/view`
+const dropboxLink = (path) => `https://www.dropbox.com/home${encodeURI(String(path || '').split('/').slice(0, -1).join('/'))}?preview=${encodeURIComponent(String(path || '').split('/').pop())}`
+export const HEB_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const TYPE_HE = { invoice: 'חשבונית מס', invoice_receipt: 'חשבונית מס-קבלה', receipt: 'קבלה', credit: 'חשבונית זיכוי', supplier_bill: 'דרישת תשלום', payment_confirmation: 'אישור תשלום', proforma: 'חשבון עסקה', quote: 'הצעת מחיר', other: 'מסמך' }
 const asciiJson = (o) => JSON.stringify(o).replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
 
 export const CLOUD = {
@@ -43,13 +47,22 @@ export const CLOUD = {
     },
     async uploadOnce(token, { parts, fileName, mime, buf, cache }) {
       const parent = await this.ensureFolder(token, parts, cache)
+      // the same name in the same folder is the same document (a second sync, a retry): keep the one that is there
+      const qy = `name='${fileName.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}' and '${parent}' in parents and mimeType!='application/vnd.google-apps.folder' and trashed=false`
+      const there = await json(await fetchRetry(`${env.driveApi()}/files?q=${encodeURIComponent(qy)}&fields=files(id,webViewLink)`, { headers: { Authorization: `Bearer ${token}` } }), 'drive list')
+      if (there.files?.[0]?.id) return { id: there.files[0].id, path: `/${[...parts, fileName].join('/')}`, link: there.files[0].webViewLink || driveLink(there.files[0].id), existed: true }
       const boundary = `kurkoos${Date.now()}`
       const body = Buffer.concat([
         Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: fileName, parents: [parent] })}\r\n--${boundary}\r\nContent-Type: ${mime}\r\n\r\n`),
         buf, Buffer.from(`\r\n--${boundary}--`),
       ])
-      const r = await json(await fetch(`${env.driveUpload()}/files?uploadType=multipart&fields=id`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body }), 'drive upload')
-      return { id: r.id, path: `/${[...parts, fileName].join('/')}` }
+      const r = await json(await fetch(`${env.driveUpload()}/files?uploadType=multipart&fields=id,webViewLink`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body }), 'drive upload')
+      return { id: r.id, path: `/${[...parts, fileName].join('/')}`, link: r.webViewLink || driveLink(r.id) }
+    },
+    /* reads the file back: proves it is really there */
+    async check(token, id) {
+      const r = await json(await fetchRetry(`${env.driveApi()}/files/${encodeURIComponent(id)}?fields=id,name,size,webViewLink,trashed`, { headers: { Authorization: `Bearer ${token}` } }), 'drive get')
+      return { ok: !!r.id && !r.trashed, name: r.name, link: r.webViewLink || driveLink(r.id) }
     },
   },
   dropbox: {
@@ -68,8 +81,15 @@ export const CLOUD = {
     },
     async upload(token, { parts, fileName, buf }) {
       const path = `/${[...parts, fileName].join('/')}`
-      const r = await json(await fetch(`${env.dropboxContent()}/2/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': asciiJson({ path, mode: 'add', autorename: true, mute: true }) }, body: buf }), 'dropbox upload')
-      return { id: r.id, path: r.path_display || path }
+      // mode add without autorename: a file with the same name is the same document and is kept, not copied again
+      const res = await fetch(`${env.dropboxContent()}/2/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': asciiJson({ path, mode: 'add', autorename: false, mute: true }) }, body: buf })
+      if (res.status === 409) { const t = await res.text(); if (/conflict/.test(t)) return { id: null, path, link: dropboxLink(path), existed: true } ; const e = new Error(`dropbox upload: ${t.slice(0, 160)}`); e.status = 409; throw e }
+      const r = await json(res, 'dropbox upload')
+      return { id: r.id, path: r.path_display || path, link: dropboxLink(r.path_display || path) }
+    },
+    async check(token, id, path) {
+      const r = await json(await fetchRetry(`${env.dropboxApi()}/2/files/get_metadata`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: asciiJson({ path: id || path }) }), 'dropbox metadata')
+      return { ok: r['.tag'] === 'file', name: r.name, link: dropboxLink(r.path_display || path) }
     },
   },
 }
@@ -88,16 +108,24 @@ async function tokenFor(target) {
   }
 }
 
+/* the folder path of a document. {year} and {month} come from the date printed on the document (the arrival date only
+   when none was read): "Kurkoos Finance/2026/11 נובמבר". The month number keeps the folders in calendar order. */
 export function partsFor(target, doc, names) {
-  const period = doc.accounting_period || String(doc.issue_date || doc.created_at || '').slice(0, 7) || 'ללא תאריך'
+  const when = /^\d{4}-\d{2}/.test(String(doc.issue_date || '')) ? doc.issue_date : String(doc.email_date || doc.created_at || '')
+  const m = /^(\d{4})-(\d{2})/.exec(when) || /^(\d{4})-(\d{2})/.exec(new Date(when).toISOString?.() || '')
+  const year = m ? m[1] : 'ללא תאריך'
+  const month = m ? `${m[2]} ${HEB_MONTHS[Number(m[2]) - 1]}` : 'ללא תאריך'
+  const period = doc.accounting_period || (m ? `${m[1]}-${m[2]}` : 'ללא תאריך')
   const company = names.businesses[doc.business_id] || 'ללא חברה'
   const project = names.projects[doc.project_id] || 'ללא פרויקט'
-  const sub = target.structure.replace('{company}', company).replace('{period}', period).replace('{project}', project).split('/').map(safe).filter(Boolean)
+  const sub = String(target.structure || '{year}/{month}').replace('{company}', company).replace('{period}', period).replace('{project}', project).replace('{year}', year).replace('{month}', month).split('/').map(safe).filter(Boolean)
   return [safe(target.folder) || 'Kurkoos Finance', ...sub]
 }
+/* date_supplier_type_number.ext: "2026-11-03_חשמל ישראל_חשבונית מס_448812.pdf". Without a number, a short id keeps it unique. */
 export function fileNameFor(doc) {
   const ext = doc.file_mime === 'application/pdf' ? 'pdf' : (doc.file_mime || '').startsWith('text/') ? 'html' : (doc.file_mime || 'image/jpeg').split('/')[1]
-  return `${doc.issue_date || String(doc.created_at).slice(0, 10)}_${safe(doc.supplier_name) || 'מסמך'}${doc.doc_number ? `_${safe(doc.doc_number)}` : ''}_${doc.id.slice(0, 6)}.${ext}`
+  const date = doc.issue_date || String(doc.created_at).slice(0, 10)
+  return `${[date, safe(doc.supplier_name) || 'ספק לא ידוע', TYPE_HE[doc.doc_type] || 'מסמך', safe(doc.doc_number) || doc.id.slice(0, 8)].join('_')}.${ext}`
 }
 
 /* copies the matching documents that were not copied yet. Idempotent: fin_cloud_synced holds one row per (folder, document). */
@@ -128,7 +156,7 @@ export async function syncCloud({ targetId, started = Date.now(), trigger = 'man
           try {
             const buf = await download(d.file_path)
             const up = await CLOUD[t.provider].upload(token, { parts: partsFor(t, d, names), fileName: fileNameFor(d), mime: d.file_mime || 'application/pdf', buf, cache })
-            await insert('fin_cloud_synced', { target_id: t.id, document_id: d.id, remote_id: up.id, path: up.path }, 'resolution=ignore-duplicates,return=minimal')
+            await insert('fin_cloud_synced', { target_id: t.id, document_id: d.id, remote_id: up.id, path: up.path, web_link: up.link, file_name: fileNameFor(d) }, 'resolution=ignore-duplicates,return=minimal')
             copied++; run.stat.processed++
           } catch (e) {
             if (e.auth || e.status === 401) throw e          // the whole connection is broken, not this file
@@ -149,6 +177,71 @@ export async function syncCloud({ targetId, started = Date.now(), trigger = 'man
   run.stat.details.results = results
   await run.done()
   return results
+}
+
+const namesMap = async () => ({
+  businesses: Object.fromEntries(((await sb('fin_businesses?select=id,name')) || []).map((b) => [b.id, b.name])),
+  projects: Object.fromEntries(((await sb('fin_projects?select=id,name')) || []).map((p) => [p.id, p.name])),
+})
+
+/* "save to Drive" for chosen documents, now, whatever their status. Each result says what really happened. */
+export async function saveDocsToCloud({ ids, targetId, user }) {
+  const target = targetId ? await one(`fin_cloud_targets?id=eq.${targetId}&status=neq.revoked&select=*`) : (await sb('fin_cloud_targets?status=neq.revoked&enabled=eq.true&select=*&order=provider.desc,created_at.asc&limit=1'))?.[0]
+  if (!target) { const e = new Error('אין תיקייה בענן מחוברת. חברו Google Drive במסך "סנכרון לענן"'); e.status = 409; throw e }
+  const list = (await sb(`fin_documents?id=in.(${ids.map((i) => q(i)).join(',')})&select=*`)) || []
+  const done = Object.fromEntries(((await sb(`fin_cloud_synced?target_id=eq.${target.id}&document_id=in.(${ids.map((i) => q(i)).join(',')})&select=document_id,web_link,path`)) || []).map((r) => [r.document_id, r]))
+  const { token, secret } = await tokenFor(target)
+  const cache = { ...(secret.folder_cache || {}) }
+  const names = await namesMap()
+  const results = []
+  for (const d of list) {
+    if (done[d.id]) { results.push({ id: d.id, ok: true, already: true, link: done[d.id].web_link, path: done[d.id].path }); continue }
+    if (!d.file_path) { results.push({ id: d.id, ok: false, error: 'אין קובץ מקור למסמך הזה' }); continue }
+    try {
+      const buf = await download(d.file_path)
+      const up = await CLOUD[target.provider].upload(token, { parts: partsFor(target, d, names), fileName: fileNameFor(d), mime: d.file_mime || 'application/pdf', buf, cache })
+      await insert('fin_cloud_synced', { target_id: target.id, document_id: d.id, remote_id: up.id, path: up.path, web_link: up.link, file_name: fileNameFor(d) }, 'resolution=merge-duplicates,return=minimal')
+      results.push({ id: d.id, ok: true, link: up.link, path: up.path })
+    } catch (e) {
+      if (e.auth || e.status === 401) { await patch(`fin_cloud_targets?id=eq.${target.id}`, { status: 'error', last_error: 'ההרשאה בוטלה או פגה. חברו מחדש' }).catch(() => {}); throw e }
+      results.push({ id: d.id, ok: false, error: String(e.message || e).slice(0, 200) })
+    }
+  }
+  await patch(`fin_cloud_secrets?target_id=eq.${target.id}`, { folder_cache: cache }).catch(() => {})
+  const saved = results.filter((r) => r.ok && !r.already).length
+  if (saved) await patch(`fin_cloud_targets?id=eq.${target.id}`, { files_synced: (target.files_synced || 0) + saved, last_sync_at: new Date().toISOString() }).catch(() => {})
+  await audit('cloud', target.id, 'saved_documents', { provider: target.provider, saved, failed: results.filter((r) => !r.ok).length, ids: ids.slice(0, 50) }, user)
+  return { provider: target.provider, account: target.account_email, results }
+}
+
+/* a real test: refresh the token, create (or find) the folder, upload a small file, read it back, keep the link */
+export async function testCloud({ targetId, user }) {
+  const target = await one(`fin_cloud_targets?id=eq.${targetId}&select=*`)
+  if (!target || target.status === 'revoked') { const e = new Error('התיקייה לא מחוברת'); e.status = 404; throw e }
+  const steps = []
+  const finish = async (ok, link, error) => {
+    await patch(`fin_cloud_targets?id=eq.${target.id}`, { last_test_at: new Date().toISOString(), last_test_ok: ok, last_test_link: link || null, last_test_error: error || null, ...(ok ? { status: 'active', last_error: null } : {}) }).catch(() => {})
+    await audit('cloud', target.id, ok ? 'test_passed' : 'test_failed', { provider: target.provider, steps, error }, user)
+    return { ok, link, steps, error }
+  }
+  try {
+    const { token, secret } = await tokenFor(target); steps.push('התחברות')
+    const cache = { ...(secret.folder_cache || {}) }
+    const parts = [safe(target.folder) || 'Kurkoos Finance', 'בדיקת חיבור']
+    const at = new Date()
+    const name = `בדיקה_${at.toISOString().slice(0, 19).replace(/[:T]/g, '-')}.txt`
+    const buf = Buffer.from(`בדיקת חיבור של KURKOOS FINANCE\n${at.toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}\nאפשר למחוק את הקובץ הזה.\n`, 'utf8')
+    if (target.provider === 'gdrive') { await CLOUD.gdrive.ensureFolder(token, parts, cache); steps.push('יצירת תיקייה') }
+    const up = await CLOUD[target.provider].upload(token, { parts, fileName: name, mime: 'text/plain', buf, cache }); steps.push('העלאת קובץ')
+    const back = await CLOUD[target.provider].check(token, up.id, up.path)
+    if (!back.ok) return finish(false, null, 'הקובץ הועלה אבל לא נמצא בבדיקה חוזרת')
+    steps.push('הקובץ נמצא בתיקייה')
+    await patch(`fin_cloud_secrets?target_id=eq.${target.id}`, { folder_cache: cache }).catch(() => {})
+    return finish(true, back.link || up.link, null)
+  } catch (e) {
+    if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${target.id}`, { status: 'error', last_error: 'ההרשאה בוטלה או פגה. חברו מחדש' }).catch(() => {})
+    return finish(false, null, String(e.message || e).slice(0, 240))
+  }
 }
 
 export async function connectCloud(provider, t, st) {

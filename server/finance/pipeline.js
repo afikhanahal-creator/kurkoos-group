@@ -4,7 +4,7 @@
 import crypto from 'node:crypto'
 import { MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.js'
 import { sb, one, insert, patch, q, rpc, upload, download, storageUsage } from './db.js'
-import { extract, verify, needsVerify, crossCheck } from './extract.js'
+import { extract, verify, needsVerify, crossCheck, relevanceOf, CLASS_LABEL } from './extract.js'
 import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
 import * as gmail from './providers/gmail.js'
@@ -77,6 +77,8 @@ export async function analyze(x, { selfId = null, selfCreated = null, mailbox = 
     field_confidence: x.field_confidence || null,
     quality: x.quality || null,
     page_count: Number.isInteger(x.page_count) ? x.page_count : null,
+    document_class: x.document_class || null,
+    relevance: Number.isFinite(Number(x.relevance_confidence)) ? Math.round(Number(x.relevance_confidence) * 100) / 100 : null,
     confidence: minConfidence(x.field_confidence),
     extraction: x,
     email_subject: subject || undefined,
@@ -129,7 +131,10 @@ export async function analyze(x, { selfId = null, selfCreated = null, mailbox = 
   fields.duplicate_state = duplicateOf ? 'confirmed' : possibleDuplicate ? 'suspected' : null
   if (sup.pending) fields.issues.push({ level: 'warn', code: 'supplier_pending', field: 'supplier_name', message: 'ספק חדש: נוצרה הצעה שממתינה לאישור' })
   if (sup.conflict) fields.issues.push({ level: 'error', code: 'supplier_conflict', field: 'supplier_vat_id', message: `השם תואם לספק "${sup.conflict.name}" אבל מספר העוסק שונה` })
-  if (!x.is_financial_document) fields.issues.unshift({ level: 'warn', code: 'not_financial', field: null, message: 'Claude: לא נראה כמו מסמך כספי' })
+  const rel = relevanceOf(x)
+  const what = rel.cls ? CLASS_LABEL[rel.cls] : null
+  if (rel.verdict === 'skip') fields.issues.unshift({ level: 'warn', code: 'not_financial', field: null, message: what ? `זה נראה כמו ${what}, לא חשבונית או קבלה. אם זו לא הוצאה, דחו אותו` : 'לא נראה כמו מסמך כספי' })
+  else if (rel.verdict === 'unsure') fields.issues.unshift({ level: 'warn', code: 'unsure_class', field: null, message: `לא בטוח שזה מסמך הוצאה${what ? ` (אולי ${what})` : ''}. בדקו לפני האישור` })
   if (runs) { runs.validation.stat.processed++; if (fields.issues.some((i) => i.level === 'error')) runs.validation.stat.details.flagged = (runs.validation.stat.details.flagged || 0) + 1 }
 
   fields.status = duplicateOf ? 'duplicate' : 'review'
@@ -267,10 +272,18 @@ export async function syncMailbox(mb, started, runs, trigger) {
       const take = async (buf, mime, name, extractInput) => {
         const hash = sha(buf)
         if (await one(`fin_documents?file_hash=eq.${hash}&select=id`)) { stats.skipped++; runs.collector.stat.details.duplicates = (runs.collector.stat.details.duplicates || 0) + 1; return }
+        // a file that was already read and skipped as "not an invoice" is not read (and paid for) again
+        if (await one(`fin_skipped?file_hash=eq.${hash}&select=id`).catch(() => null)) { stats.skipped++; return }
         let x = null; let failure = null
         try { x = await readDocument(extractInput, runs, { deadline: started + TIME_BUDGET_MS - 20_000 }); runs.ocr.stat.processed++ } catch (e) { failure = e; runs.ocr.stat.errors++ }
-        if (x && !x.is_financial_document) {
+        // not an invoice or a receipt (quote, contract, newsletter, letter): no financial record, one line in the skip list.
+        // Only a sure answer skips; an unsure one is kept and goes to a person.
+        const rel = x ? relevanceOf(x) : null
+        if (rel?.verdict === 'skip') {
           runs.collector.stat.details.not_financial = [...(runs.collector.stat.details.not_financial || []), `${meta.email_subject} · ${name}`].slice(-20)
+          runs.collector.stat.details.skipped_by_class = { ...(runs.collector.stat.details.skipped_by_class || {}), [rel.cls || 'other']: ((runs.collector.stat.details.skipped_by_class || {})[rel.cls || 'other'] || 0) + 1 }
+          await insert('fin_skipped', { source: mb.provider, mailbox_id: mb.id, email_subject: meta.email_subject, email_from: meta.email_from, file_name: String(name).slice(0, 200), file_hash: hash, document_class: rel.cls, confidence: rel.conf, reason: rel.cls ? `${CLASS_LABEL[rel.cls]}, לא חשבונית או קבלה` : 'לא מסמך כספי' }, 'return=minimal').catch(() => {})
+          stats.skipped++
           return
         }
         const path = `${mb.provider}/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${extOf(mime)}`

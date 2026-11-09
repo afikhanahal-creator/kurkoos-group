@@ -162,7 +162,13 @@ const server = http.createServer(async (req, res) => {
     const q = url.searchParams.get('q') || ''
     const name = (q.match(/name='((?:[^'\\]|\\.)*)'/) || [])[1]?.replace(/\\'/g, "'")
     const parent = (q.match(/'([^']+)' in parents/) || [])[1]
-    return send(res, 200, { files: driveItems.filter((f) => f.folder && f.name === name && f.parents[0] === parent).map((f) => ({ id: f.id })) })
+    const wantFolder = !q.includes("mimeType!=")
+    return send(res, 200, { files: driveItems.filter((f) => f.folder === wantFolder && !f.trashed && f.name === name && f.parents[0] === parent).map((f) => ({ id: f.id, webViewLink: `https://drive.test/file/${f.id}` })) })
+  }
+  if (p.startsWith('/drive/files/') && req.method === 'GET') {
+    if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
+    const f = driveItems.find((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length)))
+    return f ? send(res, 200, { id: f.id, name: f.name, size: String(f.size || 0), trashed: !!f.trashed, webViewLink: `https://drive.test/file/${f.id}` }) : send(res, 404, { error: { message: 'File not found' } })
   }
   if (p === '/drive/files' && req.method === 'POST') {
     const b = JSON.parse(await readBody(req)); const id = `fld${driveItems.length + 1}`
@@ -170,14 +176,15 @@ const server = http.createServer(async (req, res) => {
   }
   if (p === '/drive-upload/files') {
     const raw = await readBody(req); const meta = JSON.parse(raw.split('\r\n\r\n')[1].split('\r\n--')[0])
-    const id = `file${driveItems.length + 1}`; driveItems.push({ id, name: meta.name, parents: meta.parents, folder: false })
+    const id = `file${driveItems.length + 1}`; driveItems.push({ id, name: meta.name, parents: meta.parents, folder: false, size: raw.length })
     const pathOf = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${pathOf(f.parents[0])}/${f.name}` : '' }
-    log.drive.push(`${pathOf(meta.parents[0])}/${meta.name}`); return send(res, 200, { id })
+    log.drive.push(`${pathOf(meta.parents[0])}/${meta.name}`); return send(res, 200, { id, webViewLink: `https://drive.test/file/${id}` })
   }
   // ---------- Dropbox ----------
   if (p === '/dropbox/authorize') { const back = new URL(url.searchParams.get('redirect_uri')); back.searchParams.set('code', 'dbx-code'); back.searchParams.set('state', url.searchParams.get('state')); res.writeHead(302, { Location: back.toString() }); res.end(); return }
-  if (p === '/dropbox/api/oauth2/token') { const f = new URLSearchParams(await readBody(req)); if (f.get('client_secret') !== 'test-dropbox-secret') return send(res, 400, { error: 'invalid_client' }); return send(res, 200, { access_token: 'dbx-at', refresh_token: 'dbx-rt', expires_in: 14400 }) }
+  if (p === '/dropbox/api/oauth2/token') { const f = new URLSearchParams(await readBody(req)); if (f.get('client_secret') !== 'test-dropbox-secret') return send(res, 400, { error: 'invalid_client' }); if (f.get('grant_type') === 'refresh_token' && f.get('refresh_token') !== 'dbx-rt') return send(res, 400, { error: 'invalid_grant' }); return send(res, 200, { access_token: 'dbx-at', refresh_token: 'dbx-rt', expires_in: 14400 }) }
   if (p === '/dropbox/api/2/users/get_current_account') return send(res, auth === 'Bearer dbx-at' ? 200 : 401, { email: 'office@kurkoos.test' })
+  if (p === '/dropbox/api/2/files/get_metadata') { const b = JSON.parse(await readBody(req)); const hit = log.dropbox.find((x) => x === b.path || `id:${log.dropbox.indexOf(x) + 1}` === b.path); return hit ? send(res, 200, { '.tag': 'file', name: hit.split('/').pop(), path_display: hit }) : send(res, 409, { error_summary: 'path/not_found/' }) }
   if (p === '/dropbox/content/2/files/upload') { if (auth !== 'Bearer dbx-at') return send(res, 401, {}); const arg = JSON.parse(req.headers['dropbox-api-arg']); await readBody(req); log.dropbox.push(arg.path); return send(res, 200, { id: `id:${log.dropbox.length}`, path_display: arg.path }) }
   // ---------- Green API (WhatsApp) ----------
   // Green API sendFileByUrl: downloads the file like the real service does, and records what arrived

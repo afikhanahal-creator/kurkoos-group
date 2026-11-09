@@ -1,7 +1,19 @@
 // Builds an accountant package in the browser from stored, approved records.
 import * as api from './api.js'
-import { DOC_TYPE, claimableVat, docDate, money, monthLabel, nameOf, signedNet, signedTotal, toCsv, toExcel } from './format.js'
+import { DOC_TYPE, claimableVat, docDate, money, monthLabel, nameOf, signedNet, signedTotal, toCsv } from './format.js'
 import { makeZip, saveBlob } from './zip.js'
+import { expenseWorkbook, expenseCsv } from './expenseReport.js'
+import { XLSX_MIME } from './xlsx.js'
+
+const namesOf = (ctx) => ({ businesses: Object.fromEntries((ctx.businesses || []).map((b) => [b.id, b.name])), projects: Object.fromEntries((ctx.projects || []).map((p) => [p.id, p.name])) })
+const linksOf = (copies) => Object.fromEntries(Object.entries(copies || {}).filter(([, c]) => c?.web_link).map(([id, c]) => [id, c.web_link]))
+/* the chosen documents as a real Excel workbook (right to left, totals, by category, by supplier) or as CSV */
+export function exportSheet(docs, format, ctx, copies, title = 'מסמכים') {
+  const name = `קורקוס_${safe(title).replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}`
+  if (format === 'csv') saveBlob(new Blob([expenseCsv(docs, namesOf(ctx), linksOf(copies))], { type: 'text/csv;charset=utf-8' }), `${name}.csv`)
+  else saveBlob(new Blob([expenseWorkbook(docs, namesOf(ctx), linksOf(copies), { title })], { type: XLSX_MIME }), `${name}.xlsx`)
+  api.logAction(format === 'csv' ? 'exported_csv' : 'exported_excel', { count: docs.length, ids: docs.slice(0, 200).map((d) => d.id), title })
+}
 
 const safe = (s) => String(s || '').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 60)
 export const HEAD = ['#', 'תאריך', 'תקופה', 'ספק', 'ח.פ ספק', 'סוג', 'מספר', 'חברה', 'פרויקט', 'קטגוריה', 'לפני מע״מ', 'מע״מ', 'מע״מ לקיזוז', 'סה״כ', 'מטבע', 'אמצעי תשלום', 'שולם', 'תיאור', 'קובץ', 'מזהה']
@@ -27,14 +39,14 @@ export async function buildPackage(docs, format, ctx, base) {
   const title = `קורקוס · הוצאות ${base.period ? monthLabel(base.period) : ''} ${base.company || ''}`.trim()
   const name = `קורקוס_הוצאות_${safe(base.period || 'בחירה')}${base.company ? `_${safe(base.company)}` : ''}`
   if (format === 'csv') return saveBlob(new Blob([toCsv(HEAD, rows)], { type: 'text/csv;charset=utf-8' }), `${name}.csv`)
-  if (format === 'excel') return saveBlob(new Blob([toExcel('הוצאות', HEAD, rows)], { type: 'application/vnd.ms-excel' }), `${name}.xls`)
+  if (format === 'excel') return saveBlob(new Blob([expenseWorkbook(docs, namesOf(ctx), linksOf(base.copies), { title })], { type: XLSX_MIME }), `${name}.xlsx`)
   if (format === 'pdf') {
     const w = window.open('', '_blank')
     if (w) { w.document.write(pdfHtml(docs, ctx, title)); w.document.close() } else saveBlob(new Blob([pdfHtml(docs, ctx, title)], { type: 'text/html' }), `${name}.html`)
     return
   }
   const files = [
-    { name: `${name}.xls`, data: new TextEncoder().encode(toExcel('הוצאות', HEAD, rows)) },
+    { name: `${name}.xlsx`, data: expenseWorkbook(docs, namesOf(ctx), linksOf(base.copies), { title }) },
     { name: `${name}.csv`, data: new TextEncoder().encode(toCsv(HEAD, rows)) },
     { name: 'metadata.json', data: new TextEncoder().encode(JSON.stringify({ generated_at: new Date().toISOString(), period: base.period, company: base.company, count: docs.length, documents: docs.map((d, i) => ({ id: d.id, file: fileNameOf(d, i), hash: d.file_hash, supplier: d.supplier_name, supplier_vat_id: d.supplier_vat_id, number: d.doc_number, date: d.issue_date, type: d.doc_type, before_vat: d.amount_before_vat, vat: d.vat_amount, total: d.total_amount, currency: d.currency, category: d.category, company: nameOf(ctx.businesses, d.business_id), project: nameOf(ctx.projects, d.project_id), approved_at: d.approved_at })) }, null, 1)) },
   ]

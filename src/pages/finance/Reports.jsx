@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
-import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, toExcel, recentMonths } from './format.js'
+import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, recentMonths } from './format.js'
 import { saveBlob } from './zip.js'
+import { buildXlsx, XLSX_MIME } from './xlsx.js'
+import * as api from './api.js'
+
+/* a report table as a real right-to-left workbook: numbers stay numbers, ISO dates become dates */
+const reportXlsx = (name, head, rows) => buildXlsx([{ name, columns: head.map((h, i) => { const col = rows.map((r) => r[i]).filter((v) => v !== '' && v !== null && v !== undefined); const isNum = col.length > 0 && col.every((v) => typeof v === 'number'); const isDate = col.length > 0 && col.every((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v))); return { header: String(h), type: isDate ? 'date' : isNum ? (col.every(Number.isInteger) && !/סה״כ|מע״מ|סכום|לפני/.test(h) ? 'int' : 'money') : 'text', width: Math.min(40, Math.max(10, String(h).length + 4)) } }), rows }], { title: name })
 import { Bars, Card, Empty, Icon, PageHead } from './ui.jsx'
 import Select from './Select.jsx'
 import Overview from './Overview.jsx'
@@ -87,7 +92,7 @@ export default function Reports() {
     <div className="fin-stack">
       <PageHead title="דוחות" sub={role === 'accountant' ? 'מבוסס על מסמכים מאושרים בלבד' : 'כל הסכומים מחושבים מהרשומות השמורות, לא ע״י AI'}>
         <button type="button" className="fin-btn" onClick={() => saveBlob(new Blob([toCsv(report.head, report.rows)], { type: 'text/csv;charset=utf-8' }), `${name}.csv`)} disabled={!report.rows.length}><Icon name="download" size={18} /> CSV</button>
-        <button type="button" className="fin-btn" onClick={() => saveBlob(new Blob([toExcel(name, report.head, report.rows)], { type: 'application/vnd.ms-excel' }), `${name}.xls`)} disabled={!report.rows.length}><Icon name="download" size={18} /> Excel</button>
+        <button type="button" className="fin-btn" onClick={() => { saveBlob(new Blob([reportXlsx(name, report.head, report.rows)], { type: XLSX_MIME }), `${name}.xlsx`); api.logAction('exported_excel', { report: kind, rows: report.rows.length }) }} disabled={!report.rows.length}><Icon name="download" size={18} /> Excel</button>
       </PageHead>
       <div className="fin-tabs fin-tabs--scroll" role="tablist" aria-label="סוג דוח">
         {REPORTS.map(([k, v]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`fin-tab ${kind === k ? 'is-active' : ''}`} onClick={() => setKind(k)}>{v}</button>)}

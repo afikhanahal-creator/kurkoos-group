@@ -4,7 +4,9 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal } from './format.js'
 import { makeZip, saveBlob } from './zip.js'
-import { Confidence, Empty, Icon, Modal, PageHead, StatusPill, UploadZone } from './ui.jsx'
+import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZone, useAsync } from './ui.jsx'
+import ShareDialog from './ShareDialog.jsx'
+import { exportSheet } from './exportPackage.js'
 import Thumbnail from './Thumbnail.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
@@ -59,6 +61,9 @@ export default function Documents({ preset = 'all' }) {
   const [showUpload, setShowUpload] = useState(false)
   const [dateBy, setDateBy] = useState('doc')            // filter by the date on the document, or by when it arrived
   const [sending, setSending] = useState(null)           // the documents in the "send to the accountant" dialog
+  const [sharing, setSharing] = useState(null)           // { docs, mode } for the share dialog (WhatsApp / email)
+  const copies = useAsync(() => (can('operate') ? api.loadCloudCopies() : {}), [documents.length])
+  const cloud = copies.data || {}
   const setFilter = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }))
   const activeFilters = Object.values(f).filter(Boolean).length
 
@@ -100,7 +105,24 @@ export default function Documents({ preset = 'all' }) {
     try {
       const files = []
       for (const d of picked) if (d.file_path) files.push({ name: `${docDate(d)}_${(d.supplier_name || 'מסמך').replace(/[\\/:*?"<>|]/g, '')}_${d.doc_number || d.id.slice(0, 6)}.${(d.file_name || '').split('.').pop() || 'pdf'}`, data: await api.fileBlob(d) })
+      if (!files.length) { setNote('למסמכים שנבחרו אין קובץ מקור'); return }
       saveBlob(await makeZip(files), `מסמכים_${new Date().toISOString().slice(0, 10)}.zip`)
+      api.logAction('downloaded_originals', { count: files.length, ids: picked.slice(0, 200).map((d) => d.id) })
+    } catch (e) { setNote(e.message) } finally { setBusy('') }
+  }
+  const sheet = (format) => {
+    try { exportSheet(picked, format, { businesses, projects }, cloud, P.title || 'מסמכים'); setNote(`${format === 'csv' ? 'קובץ CSV' : 'קובץ Excel'} עם ${picked.length === 1 ? 'מסמך אחד' : `${picked.length} מסמכים`} הורד.`) } catch (e) { setNote(e.message) }
+  }
+  // "save to Drive": the server copies each file and answers per file; the note says only what really happened
+  const toDrive = async (list) => {
+    setBusy('drive'); setNote('')
+    try {
+      const r = await api.saveToCloud(list.map((d) => d.id))
+      const ok = r.results.filter((x) => x.ok); const bad = r.results.filter((x) => !x.ok)
+      const fresh = ok.filter((x) => !x.already).length
+      const where = r.provider === 'gdrive' ? 'Google Drive' : 'Dropbox'
+      setNote([fresh ? `${fresh === 1 ? 'מסמך אחד נשמר' : `${fresh} מסמכים נשמרו`} ב-${where}` : '', ok.length - fresh ? `${ok.length - fresh} כבר היו שמורים` : '', bad.length ? `${bad.length} לא נשמרו: ${bad[0].error}` : ''].filter(Boolean).join('. ') + '.')
+      copies.reload()
     } catch (e) { setNote(e.message) } finally { setBusy('') }
   }
   const exportSelected = () => {
@@ -174,30 +196,42 @@ export default function Documents({ preset = 'all' }) {
 
       {sel.size > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
-          <strong>{sel.size} מסומנים</strong>
-          {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(documents.filter((d) => sel.has(d.id)))}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
-          {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
-          {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status))}>דחייה</button>}
-          {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status))}>סימון ככפול</button>}
-          {edit && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => bulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, (d) => !['approved', 'sent', 'processing'].includes(d.status))}>ארכיון</button>}
+          <div className="fin-bulk__row">
+            <strong className="fin-bulk__count">{sel.size === 1 ? 'מסמך אחד מסומן' : `${sel.size} מסומנים`}<small>{money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
+            {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
+            {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
+            <button type="button" className="fin-btn" disabled={!!busy} onClick={() => sheet('excel')}><Icon name="table" size={17} /> Excel</button>
+            <button type="button" className="fin-btn fin-col-md" disabled={!!busy} onClick={() => sheet('csv')}>CSV</button>
+            {can('operate') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => toDrive(picked)}><Icon name="cloud" size={17} /> {busy === 'drive' ? 'שומר…' : 'שמירה בדרייב'}</button>}
+            {can('upload') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSharing({ docs: picked, mode: 'whatsapp' })}><Icon name="share" size={17} /> שיתוף</button>}
+            <MoreMenu label="פעולות נוספות" items={[
+              { label: busy === 'zip' ? 'מכין…' : 'הורדת הקבצים (ZIP)', icon: 'download', onClick: downloadOriginals },
+              { label: 'קובץ CSV', icon: 'download', onClick: () => sheet('csv') },
+              can('upload') && { label: 'שליחה במייל', icon: 'mail', onClick: () => setSharing({ docs: picked, mode: 'email' }) },
+              can('export') && { label: 'ייצוא לתוכנה או למערכת חיצונית', icon: 'plug', onClick: exportSelected },
+              edit && { label: 'דחייה', icon: 'close', onClick: () => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status)) },
+              edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },
+              edit && { label: 'העברה לארכיון', icon: 'archive', danger: true, onClick: () => bulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, (d) => !['approved', 'sent', 'processing'].includes(d.status)) },
+            ]} />
+            <button type="button" className="fin-link" onClick={() => setSel(new Set())}>ביטול</button>
+          </div>
           {edit && (
-            <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שיוך לקטגוריה" disabled={!!busy}>
-              <option value="">שיוך לקטגוריה…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </Select>
+            <div className="fin-bulk__row fin-bulk__assign">
+              <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שינוי קטגוריה" disabled={!!busy}>
+                <option value="">שינוי קטגוריה…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </Select>
+              {businesses.length > 0 && (
+                <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
+                  <option value="">שיוך לחברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </Select>
+              )}
+              {projects.length > 0 && (
+                <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('project', { project_id: e.target.value === 'none' ? null : e.target.value })} aria-label="שיוך לפרויקט" disabled={!!busy}>
+                  <option value="">שיוך לפרויקט…</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </Select>
+              )}
+            </div>
           )}
-          {edit && businesses.length > 0 && (
-            <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
-              <option value="">שיוך לחברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </Select>
-          )}
-          {edit && projects.length > 0 && (
-            <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('project', { project_id: e.target.value === 'none' ? null : e.target.value })} aria-label="שיוך לפרויקט" disabled={!!busy}>
-              <option value="">שיוך לפרויקט…</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </Select>
-          )}
-          {can('export') && <button type="button" className="fin-btn" disabled={!!busy} onClick={exportSelected}><Icon name="plug" size={18} /> ייצוא</button>}
-          <button type="button" className="fin-btn" disabled={!!busy} onClick={downloadOriginals}><Icon name="download" size={18} /> {busy === 'zip' ? 'מכין…' : 'הורדת המקור'}</button>
-          <button type="button" className="fin-link" onClick={() => setSel(new Set())}>ביטול</button>
         </div>
       )}
       {note && <p className="fin-note" role="status">{note}</p>}
@@ -262,7 +296,9 @@ export default function Documents({ preset = 'all' }) {
                 <Th k="vat" className="fin-num fin-col-md">מע״מ</Th>
                 <Th k="total" className="fin-num">סה״כ</Th>
                 <th>סטטוס</th>
+                <th className="fin-col-xl">מטבע</th>
                 <th className="fin-col-xl">מקור</th>
+                {can('operate') && <th className="fin-col-lg">ענן</th>}
                 <Th k="conf" className="fin-col-md">ודאות</Th>
                 <th className="fin-col-md"><span className="fin-sr">פעולות</span></th>
               </tr>
@@ -287,7 +323,9 @@ export default function Documents({ preset = 'all' }) {
                     <td className="fin-num fin-col-md" data-label="מע״מ">{money(d.vat_amount, d.currency)}</td>
                     <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
                     <td className="fin-td-status"><StatusPill status={d.status} /></td>
+                    <td className="fin-col-xl fin-ltr" data-label="מטבע">{d.currency || 'ILS'}</td>
                     <td className="fin-col-xl" data-label="מקור">{SOURCE[d.source]}</td>
+                    {can('operate') && <td className="fin-col-lg" data-label="ענן" onClick={(e) => e.stopPropagation()}>{cloud[d.id]?.web_link ? <a className="fin-cloudcell is-on" href={cloud[d.id].web_link} target="_blank" rel="noopener noreferrer" title={cloud[d.id].path}><Icon name="cloud" size={15} /> נשמר</a> : <span className="fin-cloudcell">—</span>}</td>}
                     <td className="fin-col-md" data-label="ודאות"><Confidence value={d.confidence} /></td>
                     <td className="fin-col-md" onClick={(e) => e.stopPropagation()}>
                       {d.file_path && <button type="button" className="fin-icon-btn" aria-label={`הורדת המקור של ${d.supplier_name || d.file_name}`} title="הורדת הקובץ המקורי" onClick={async () => saveBlob(await api.fileBlob(d), d.file_name || 'document')}><Icon name="download" size={18} /></button>}
@@ -297,7 +335,7 @@ export default function Documents({ preset = 'all' }) {
               })}
             </tbody>
             <tfoot>
-              <tr><td colSpan={15}><span>{rows.length} מסמכים</span><strong>{money(total)}</strong></td></tr>
+              <tr><td colSpan={can('operate') ? 17 : 16}><span>{rows.length} מסמכים</span><strong>{money(total)}</strong></td></tr>
             </tfoot>
           </table>
         </div>
@@ -320,6 +358,7 @@ export default function Documents({ preset = 'all' }) {
           onNext={idx >= 0 && idx < rows.length - 1 ? () => go(link(rows[idx + 1].id)) : null}
         />
       )}
+      {sharing && <ShareDialog docs={sharing.docs} initial={sharing.mode} onClose={() => setSharing(null)} />}
       {sending && <SendToAccountant docs={sending} period={sayRange(f.from, f.to)} onClose={() => setSending(null)} onSent={(r) => { setSending(null); setSel(new Set()); setNote(`נשלח ל-${r.to.join(', ')}: ${r.sent === 1 ? 'מסמך אחד' : `${r.sent} מסמכים`}, ${r.attached} קבצים מצורפים${r.linked ? `, ${r.linked} בקישור` : ''}.`) }} />}
     </div>
   )

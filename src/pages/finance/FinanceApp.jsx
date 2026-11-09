@@ -24,6 +24,7 @@ import Integrations from './Integrations.jsx'
 import ExportHistory from './ExportHistory.jsx'
 import Users from './Users.jsx'
 import Settings from './Settings.jsx'
+import Activity from './Activity.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
 
@@ -56,6 +57,7 @@ export const NAV = [
   { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
   { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'מתקדם' },
   { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'מתקדם' },
+  { to: '/activity', label: 'יומן פעילות', icon: 'activity', roles: OPS, el: <Activity />, group: 'מתקדם' },
   { to: '/data', label: 'ניהול נתונים', icon: 'data', roles: OPS, el: <DataManagement />, group: 'מתקדם' },
   { to: '/integrations', label: 'תוכנת הנהלת חשבונות', icon: 'plug', roles: OPS, el: <Integrations />, group: 'מתקדם' },
   { to: '/cloud', label: 'סנכרון לענן', icon: 'cloud', roles: OPS, el: <Cloud />, group: 'מתקדם' },

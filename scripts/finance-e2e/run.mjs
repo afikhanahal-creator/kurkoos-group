@@ -84,7 +84,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 22 פריטי תפריט (מהם 9 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 22, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 23 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 23, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -491,7 +491,32 @@ const cSecond = sql("select string_agg(provider||'='||files_synced, ', ' order b
 const cl = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const cloudShot = await shot('55-cloud-connected')
 record('CLOUD', 'סנכרון לענן: Google Drive ו-Dropbox', `שני החשבונות מתחברים ב-OAuth; כל ${eligible} המסמכים המאושרים מועתקים לתיקייה "Kurkoos Finance/<חברה>/<חודש>"; סנכרון שני לא מעתיק שוב; שמות בעברית נשמרים`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; Drive: ${cl.drive.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
-  targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${eligible}` && cSecond === cFirst && cl.drive.length === eligible && cl.dropbox.length === eligible && cl.drive.every((x) => x.startsWith('/Kurkoos Finance/')) && cl.dropbox.some((x) => /קורקוס/.test(x)), [cloudEmpty, cloudShot])
+  targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${eligible}` && cSecond === cFirst && cl.drive.length === eligible && cl.dropbox.length === eligible && cl.drive.every((x) => /^\/Kurkoos Finance\/20\d\d\/\d\d (ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)\/20\d\d-\d\d-\d\d_[^_]+_[^_]+_[^_]+\.(pdf|png|jpeg|html)$/.test(x)) && cl.dropbox.every((x) => /\/20\d\d\/\d\d [א-ת]+\//.test(x)), [cloudEmpty, cloudShot])
+
+// ---- Drive: a real connection test, "save to Drive" for chosen documents, links back, no second copy ----
+await page.locator('.fin-cloud-card', { hasText: 'Google Drive' }).getByRole('button', { name: 'בדיקת חיבור' }).click()
+await page.waitForSelector('.fin-cloud-card >> text=הבדיקה עברה', { timeout: 15000 }).catch(() => {})
+const testMsg = await page.locator('.fin-cloud-card', { hasText: 'Google Drive' }).locator('[role=status]').innerText().catch(() => '')
+const testRow = sql("select last_test_ok||'|'||(last_test_link is not null) from fin_cloud_targets where provider='gdrive'")
+const clT = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const testFile = clT.drive.find((x) => x.includes('/בדיקת חיבור/')) || ''
+const driveTarget = sql("select id from fin_cloud_targets where provider='gdrive'")
+const reviewDoc = sql("select id from fin_documents where status='review' and file_path is not null order by created_at limit 1")
+const saved1 = await api(adminToken, { action: 'cloud-save', ids: [reviewDoc], target_id: driveTarget })
+const saved2 = await api(adminToken, { action: 'cloud-save', ids: [reviewDoc], target_id: driveTarget })
+const linkRow = sql(`select coalesce(web_link,'')||'|'||coalesce(file_name,'') from fin_cloud_synced where target_id='${driveTarget}' and document_id='${reviewDoc}'`)
+const dbxId = sql("select id from fin_cloud_targets where provider='dropbox'")
+const dbxSecret = sql(`select refresh_token from fin_cloud_secrets where target_id='${dbxId}'`)
+sql(`update fin_cloud_secrets set access_token=null, expires_at=null, refresh_token='revoked-token' where target_id='${dbxId}'`)
+const brokenTest = await api(adminToken, { action: 'cloud-test', target_id: dbxId })
+const brokenState = sql(`select status from fin_cloud_targets where id='${dbxId}'`)
+sql(`update fin_cloud_secrets set refresh_token='${dbxSecret}' where target_id='${dbxId}'`); sql(`update fin_cloud_targets set status='active', last_error=null where id='${dbxId}'`)
+await page.reload(); await page.waitForTimeout(1200)
+const driveShot = await shot('55b-cloud-tested')
+record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה ידנית', 'הבדיקה מתחברת, יוצרת תיקייה, מעלה קובץ ומוצאת אותו; "שמירה בדרייב" מעתיקה מסמך שעוד לא אושר, שומרת קישור, ולחיצה שנייה לא מעתיקה שוב; חיבור שבור מדווח כשלון ולא הצלחה',
+  `הודעה: "${testMsg}"; שורה: ${testRow}; קובץ בדיקה: ${testFile}; שמירה 1: ${JSON.stringify(saved1.data.results?.[0] || saved1.data)}; שמירה 2: ${saved2.data.results?.[0]?.already}; קישור: ${linkRow}; חיבור שבור: ${brokenTest.data.ok}/${brokenState}/${String(brokenTest.data.error || '').slice(0, 60)}`,
+  /הבדיקה עברה/.test(testMsg) && testRow === 'true|true' && /^\/Kurkoos Finance\/בדיקת חיבור\/בדיקה_.*\.txt$/.test(testFile) && saved1.data.results?.[0]?.ok === true && /^https:\/\/drive\.test\/file\//.test(saved1.data.results[0].link) && /\/20\d\d\/\d\d [א-ת]+$/.test(saved1.data.results[0].path.split('/').slice(0, -1).join('/')) && saved2.data.results?.[0]?.already === true && /^https:\/\/drive\.test\/file\/.+\|20\d\d-\d\d-\d\d_/.test(linkRow) && brokenTest.data.ok === false && brokenState === 'error' && !!brokenTest.data.error,
+  [driveShot])
 
 // =================== ACCOUNTING SOFTWARE ===================
 await nav('תוכנת הנהלת חשבונות')
@@ -863,8 +888,8 @@ const cleared = await page.locator('.fin-table tbody tr').count()
 // a person without approval rights cannot send
 const empSend = await api(empToken, { action: 'send-to-accountant', ids: [sql("select id from fin_documents limit 1")], to: 'x@y.test' })
 record('SEND', 'סינון לפי טווח תאריכים ושליחה לרו״ח', 'לוח שנה של שני חודשים: לחיצה ראשונה מתחילה, השנייה מסיימת, הטווח מוצג מראש בריחוף; "החל" מסנן את הרשימה; "שליחה לרו״ח" שולחת מייל אחד עם כל הקבצים המקוריים וקובץ CSV; ניקוי מחזיר הכול; עובד לא יכול לשלוח',
-  `חודשים: ${months}; אחרי לחיצה ראשונה: "${midTitle}"; תצוגה מקדימה: ${preview} ימים; צ׳יפ: "${chip}"; שורות: ${inRange}/${totalRows} (צפוי ${expectRange}), בסרגל: "${barCount}"; נמען מוצע: "${prefilled}"; מייל: ${mailS ? `"${mailS.subject}" אל ${mailS.to}, ${mailS.attachments.length} קבצים (${mailS.attachments.filter((a) => /\.csv$/.test(a.filename)).length} CSV)` : 'לא נשלח'}; הודעה: "${sentNote}"; יומן: ${auditSend}; אחרי ניקוי: ${cleared}; עובד: ${empSend.status}`,
-  /אוקטובר|נובמבר/.test(months) && /\?/.test(midTitle) && preview === 2 && /2 בנובמבר.*5 בנובמבר/.test(chip) && inRange === Number(expectRange) && inRange > 0 && inRange < totalRows && !!mailS && mailS.to.includes('cpa@accountants.test') && mailS.attachments.length === withFiles + 1 && mailS.attachments[0].filename.endsWith('.csv') && auditSend === '1' && cleared === totalRows && empSend.status === 403 && /נשלח/.test(sentNote),
+  `חודשים: ${months}; אחרי לחיצה ראשונה: "${midTitle}"; תצוגה מקדימה: ${preview} ימים; צ׳יפ: "${chip}"; שורות: ${inRange}/${totalRows} (צפוי ${expectRange}), בסרגל: "${barCount}"; נמען מוצע: "${prefilled}"; מייל: ${mailS ? `"${mailS.subject}" אל ${mailS.to}, ${mailS.attachments.length} קבצים (${mailS.attachments.filter((a) => /\.csv$/.test(a.filename)).length} CSV, ${mailS.attachments.filter((a) => /\.xlsx$/.test(a.filename)).length} Excel)` : 'לא נשלח'}; הודעה: "${sentNote}"; יומן: ${auditSend}; אחרי ניקוי: ${cleared}; עובד: ${empSend.status}`,
+  /אוקטובר|נובמבר/.test(months) && /\?/.test(midTitle) && preview === 2 && /2 בנובמבר.*5 בנובמבר/.test(chip) && inRange === Number(expectRange) && inRange > 0 && inRange < totalRows && !!mailS && mailS.to.includes('cpa@accountants.test') && mailS.attachments.length === withFiles + 2 && mailS.attachments[0].filename.endsWith('.xlsx') && mailS.attachments[1].filename.endsWith('.csv') && auditSend === '1' && cleared === totalRows && empSend.status === 403 && /נשלח/.test(sentNote),
   [calShot, rangeShot, sendShot])
 
 // =================== ORGANIZATION ===================
@@ -967,6 +992,107 @@ await go('/documents'); await page.locator('tbody tr').first().locator('.fin-cel
 deskOv.review = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 await page.keyboard.press('Escape')
 record('DESK', 'מחשב: אין גלילה אופקית בכל המסכים ובעמודי הישויות', '0 בכל מסך', JSON.stringify(deskOv), Object.values(deskOv).every((v) => v <= 0))
+
+// =================== v10: Excel/CSV of chosen documents, skipped files, activity log, monthly report, viewer ===================
+await go('/documents')
+await page.locator('.fin-table thead input[type=checkbox]').check(); await page.waitForTimeout(300)
+const bulkShot = await shot('80-bulk-bar')
+const pickedN = await page.locator('.fin-table tbody input[type=checkbox]:checked').count()
+const [xDl] = await Promise.all([page.waitForEvent('download'), page.locator('.fin-bulk').getByRole('button', { name: 'Excel' }).click()])
+const xPath = `${OUT}/export.xlsx`; await xDl.saveAs(xPath)
+const xBuf = fs.readFileSync(xPath)
+const xText = xBuf.toString('utf8')
+const [cDl] = await Promise.all([page.waitForEvent('download'), page.locator('.fin-bulk').getByRole('button', { name: 'CSV' }).first().click()])
+const cPath = `${OUT}/export.csv`; await cDl.saveAs(cPath)
+const csvText = fs.readFileSync(cPath, 'utf8')
+const csvLines = csvText.replace(/^﻿/, '').split('\r\n').filter(Boolean)
+let xCheck = ''
+try { xCheck = execSync(`python3 -c "import openpyxl,sys;wb=openpyxl.load_workbook(sys.argv[1]);ws=wb['מסמכים'];print(wb.sheetnames==['מסמכים','לפי קטגוריה','לפי ספק'], ws.sheet_view.rightToLeft, ws['A1'].value, type(ws['A2'].value).__name__, isinstance(ws['K2'].value,(int,float)), ws.max_row-3)" ${xPath}`, { encoding: 'utf8' }).trim() } catch (e) { xCheck = `openpyxl: ${String(e.message).slice(0, 120)}` }
+const logX = sql("select count(*) from fin_audit where action in ('exported_excel','exported_csv')")
+record('XLSX', 'ייצוא מסמכים מסומנים ל-Excel ו-CSV', 'קובץ xlsx אמיתי (מימין לשמאל, תאריכים ומספרים אמיתיים, גיליונות סיכום לפי קטגוריה וספק) וקובץ CSV ב-UTF-8 עם BOM; שורה לכל מסמך; כל הורדה נרשמת ביומן',
+  `${pickedN} מסומנים; xlsx: ${xDl.suggestedFilename()} (${xBuf.length} בתים), ${xCheck}; csv: ${cDl.suggestedFilename()}, ${csvLines.length} שורות, BOM ${csvText.charCodeAt(0) === 0xFEFF}, כותרת "${csvLines[0].slice(0, 40)}"; ביומן: ${logX}`,
+  xBuf.slice(0, 2).toString() === 'PK' && /rightToLeft="1"/.test(xText) && /\.xlsx$/.test(xDl.suggestedFilename()) && xCheck === `True True תאריך המסמך datetime True ${pickedN}` && /^קורקוס_.+\.xlsx$/.test(xDl.suggestedFilename()) && /\.csv$/.test(cDl.suggestedFilename()) && csvText.charCodeAt(0) === 0xFEFF && csvLines[0].startsWith('תאריך המסמך,ספק') && csvLines.length === pickedN + 2 && /^\d\d\/\d\d\/20\d\d,/.test(csvLines[1]) && Number(logX) >= 2,
+  [bulkShot])
+await page.locator('.fin-bulk').getByRole('button', { name: 'ביטול' }).click()
+
+// a quote in the newsletter email: read once, skipped (no financial record), listed; never read again
+const skipRow = sql("select document_class||'|'||round(confidence*100)||'|'||file_name from fin_skipped where file_name='quote-hs22.pdf'")
+const quoteDoc = sql("select count(*) from fin_documents where file_name='quote-hs22.pdf'")
+await go('/activity'); await page.waitForTimeout(800)
+await page.getByRole('tab', { name: /קבצים שדולגו/ }).click(); await page.waitForTimeout(400)
+const skipShot = await shot('81-skipped-files')
+const skipUi = await page.locator('.fin-table tbody tr', { hasText: 'quote-hs22.pdf' }).innerText().catch(() => '')
+const relevance = await import('../../server/finance/extract.js').then((m) => [m.relevanceOf({ is_financial_document: true, document_class: 'tax_invoice', relevance_confidence: 0.95 }).verdict, m.relevanceOf({ is_financial_document: false, document_class: 'quote', relevance_confidence: 0.93 }).verdict, m.relevanceOf({ is_financial_document: false, document_class: 'purchase_order', relevance_confidence: 0.6 }).verdict, m.relevanceOf({ is_financial_document: false }).verdict, m.relevanceOf({ is_financial_document: true, document_class: 'contract', relevance_confidence: 0.9 }).verdict].join(','))
+record('CLASSIFY', 'הבחנה בין חשבוניות וקבלות למסמכים אחרים', 'הצעת מחיר במייל נקראת, מזוהה בוודאות ולא נשמרת כרשומה כספית; היא מופיעה ב"קבצים שדולגו"; תשובה לא בטוחה נשמרת לבדיקה ולא מדולגת',
+  `דולג: ${skipRow}; רשומות: ${quoteDoc}; במסך: "${skipUi.replace(/\s+/g, ' ')}"; החלטות (חשבונית, הצעה בטוחה, הזמנה לא בטוחה, ישן לא כספי, חוזה שסומן כספי): ${relevance}`,
+  skipRow === 'quote|93|quote-hs22.pdf' && quoteDoc === '0' && /הצעת מחיר/.test(skipUi) && relevance === 'keep,skip,unsure,skip,unsure', [skipShot])
+
+// activity log: exports, Drive saves and connection tests are there, with who and when
+await page.getByRole('tab', { name: /פעולות/ }).click(); await page.waitForTimeout(300)
+const logRows = await page.locator('.fin-table--log tbody tr').allInnerTexts()
+const logShot = await shot('82-activity-log')
+await page.locator('select[aria-label="סוג פעולה"]').selectOption('out'); await page.waitForTimeout(300)
+const outRows = await page.locator('.fin-table--log tbody tr').allInnerTexts()
+record('ACTIVITY', 'יומן פעילות', 'כל הפעולות במקום אחד: קליטה, ייצוא Excel/CSV, שמירה בענן, בדיקת חיבור; סינון לפי סוג',
+  `${logRows.length} שורות; ייצוא/ענן: ${outRows.length}; לדוגמה: ${outRows.slice(0, 3).map((r) => r.replace(/\s+/g, ' ')).join(' | ')}`,
+  logRows.length > 10 && outRows.length >= 3 && outRows.some((r) => /Excel/.test(r)) && outRows.some((r) => /נשמר בענן/.test(r)) && logRows.some((r) => /בדיקת חיבור עברה/.test(r)) && outRows.every((r) => !/מסמך נקלט/.test(r)), [logShot])
+
+// monthly report: pick the month, see the summary, download the preview, send with the Excel attached
+await go('/send'); await page.waitForTimeout(500)
+const thisMonthKey = new Date().toISOString().slice(0, 7)
+await page.locator('.fin-monthly select').selectOption(thisMonthKey); await page.waitForTimeout(200)
+await page.locator('.fin-monthly').getByRole('button', { name: 'הכנת הדוח' }).click(); await page.waitForTimeout(500)
+const mPrev = await page.locator('.fin-monthly__preview dl').innerText().catch(() => '')
+const expectMonth = sql(`select count(*) from fin_documents where to_char(coalesce(issue_date, (email_date)::date, created_at::date),'YYYY-MM')='${thisMonthKey}' and ((status='approved' and exported_at is null) or status='review')`)
+const monthShot = await shot('83-monthly-report')
+await page.locator('.fin-monthly').getByRole('button', { name: 'שליחת הדוח' }).click(); await page.waitForTimeout(300)
+await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
+await page.locator('.fin-modal__foot .fin-btn--primary').click()
+await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 30000 }).catch(() => {})
+const lgM = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const mailM = [...lgM.emails].reverse().find((e) => /מסמכים לרו״ח/.test(e.subject || ''))
+record('MONTHLY', 'דוח חודשי לרו״ח', 'בוחרים חודש, רואים מספר מסמכים, לפני מע״מ, מע״מ וסה״כ, ושולחים מייל עם Excel, CSV והקבצים',
+  `תצוגה: ${mPrev.replace(/\s+/g, ' ')} (צפוי ${expectMonth} מסמכים); מייל: ${mailM ? `"${mailM.subject}", ${mailM.attachments.map((a) => a.filename.split('.').pop()).join(',')}` : 'לא נשלח'}`,
+  new RegExp(`מסמכים\\s*${expectMonth}\\b`).test(mPrev.replace(/\n/g, ' ')) && /מע״מ/.test(mPrev) && !!mailM && /נובמבר|דצמבר|ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר/.test(mailM.subject) && mailM.attachments[0].filename.endsWith('.xlsx'), [monthShot])
+
+// the viewer: rotate, page counter, save to Drive from the document
+await go('/documents'); await page.locator('tbody tr').first().locator('.fin-cell-btn').click(); await page.waitForTimeout(1500)
+const frame0 = await page.locator('.fin-viewer__frame').first().boundingBox().catch(() => null)
+await page.getByRole('button', { name: 'סיבוב' }).click(); await page.waitForTimeout(500)
+const frame1 = await page.locator('.fin-viewer__frame').first().boundingBox().catch(() => null)
+const turned = await page.locator('.fin-viewer__frame img').first().evaluate((e) => e.style.transform).catch(() => '')
+await page.getByRole('button', { name: 'שמירה בדרייב' }).click(); await page.waitForTimeout(1500)
+const vToast = await page.locator('.fin-viewer__toast').innerText().catch(() => '')
+const vLink = await page.locator('.fin-viewer__toast a').getAttribute('href').catch(() => '')
+const viewerShot10 = await shot('84-viewer-rotate-drive')
+await page.getByRole('button', { name: 'שיתוף' }).first().click(); await page.waitForTimeout(400)
+const shareTabs = await page.locator('.fin-share__seg [role=tab]').allInnerTexts()
+await page.getByRole('tab', { name: /מייל/ }).click(); await page.waitForTimeout(200)
+await page.locator('.fin-modal input[type=email]').fill('partner@example.test')
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForTimeout(1500)
+const shareMsg10 = await page.locator('.fin-modal [role=status]').innerText().catch(() => '')
+const lgV = await fetch(`${FAKES}/__log`).then((r) => r.json())
+const shareMail = [...lgV.emails].reverse().find((e) => (e.to || []).includes('partner@example.test'))
+const shareShot10 = await shot('85-share-email')
+await page.keyboard.press('Escape'); await page.keyboard.press('Escape')
+record('VIEWER2', 'תצוגת המסמך: סיבוב, שמירה בדרייב, שיתוף במייל', 'סיבוב ב-90° מחליף את מידות המסגרת; "שמירה בדרייב" מראה הודעה עם קישור רק אחרי שהשרת אישר; שיתוף במייל שולח את הקובץ עם Excel',
+  `מסגרת: ${frame0 ? `${Math.round(frame0.width)}x${Math.round(frame0.height)}` : '-'} → ${frame1 ? `${Math.round(frame1.width)}x${Math.round(frame1.height)}` : '-'} (${turned}); דרייב: "${vToast.replace(/\s+/g, ' ')}" ${vLink}; לשוניות: ${shareTabs.join('/')}; מייל: "${shareMsg10}" ${shareMail ? `${shareMail.attachments.length} קבצים` : 'לא נשלח'}`,
+  !!frame0 && !!frame1 && Math.abs(frame0.width - frame1.width) < 2 && Math.abs(frame0.height - frame1.height) > 20 && /rotate\(90deg\)/.test(turned) && /(נשמר ב-Google Drive|כבר שמור)/.test(vToast) && /^https:\/\/drive\.test\/file\//.test(vLink || '') && shareTabs.length === 2 && /נשלח במייל/.test(shareMsg10) && !!shareMail && shareMail.attachments.some((a) => a.filename.endsWith('.xlsx')),
+  [viewerShot10, shareShot10])
+
+const empSave = await api(empToken, { action: 'cloud-save', ids: [sql("select id from fin_documents where file_path is not null limit 1")] })
+const empTest = await api(empToken, { action: 'cloud-test', target_id: sql("select id from fin_cloud_targets where provider='gdrive'") })
+const empLog = await rest('rpc/fin_log', empToken, { method: 'POST', body: JSON.stringify({ p_action: 'deleted', p_details: {} }) })
+record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן ולא מריץ בדיקת חיבור; היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; פעולה אסורה ביומן: ${empLog.status}`,
+  empSave.status === 403 && empTest.status === 403 && empLog.status >= 400)
+
+// the home screen shows the month's spend, VAT and six months
+await go(''); await page.waitForTimeout(600)
+const spendTxt = await page.locator('.fin-spend').innerText().catch(() => '')
+const bars = await page.locator('.fin-spend__chart span').count()
+const homeShot10 = await shot('86-home-spend')
+record('HOME2', 'מרכז הבקרה: הוצאות החודש', 'הוצאות החודש, מע״מ, מתחילת השנה ושישה חודשים בגרף, מחושב מהרשומות',
+  `${spendTxt.replace(/\s+/g, ' ').slice(0, 160)}; עמודות: ${bars}`, /הוצאות/.test(spendTxt) && /מע״מ החודש/.test(spendTxt) && /מתחילת/.test(spendTxt) && bars === 6, [homeShot10])
 
 // dark mode screenshot
 await page.goto(`${APP}/documents`); await page.waitForTimeout(500)

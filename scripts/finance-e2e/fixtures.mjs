@@ -30,7 +30,7 @@ body{font-family:'DejaVu Sans',Arial,sans-serif;margin:48px;color:#222}h1{color:
 <p>סה״כ לפני מע״מ: ${before}</p><p>מע״מ 18%: ${vat}</p><p class="t">סה״כ לתשלום: ₪${total}</p><p>${note}</p></body></html>`
 
 const answer = (o) => ({
-  is_financial_document: true, doc_type: 'invoice', supplier_name: '', supplier_vat_id: '', customer_name: 'קורקוס גרופ', customer_vat_id: IDS.kurkoos,
+  is_financial_document: true, document_class: 'tax_invoice', relevance_confidence: 0.97, doc_type: 'invoice', supplier_name: '', supplier_vat_id: '', customer_name: 'קורקוס גרופ', customer_vat_id: IDS.kurkoos,
   doc_number: '', issue_date: '', due_date: '', payment_date: '', currency: 'ILS', amount_before_vat: null, vat_amount: null, total_amount: null, vat_rate: 18,
   description: '', category: 'אחר', payment_method: '', project_hint: '', notes: '', supplier_trading_name: '', discount_amount: null, extra_charges: null, page_count: 1, totals_text: '',
   quality: { readable: true, blurry: false, cropped: false, rotated: false, missing_pages: false, handwritten: false },
@@ -47,6 +47,7 @@ await pdf('tambour-4521.pdf', invoice({ supplier: 'טמבור בע״מ', id: IDS
 await pdf('tambour-4521-copy.pdf', invoice({ supplier: 'טמבור בע״מ', id: IDS.tambour, title: 'חשבונית מס (העתק)', number: '4521', date: D.tambour, lines: [['צבע אקרילי 18 ל׳ ×12, אתר מוהליבר 17', '3,050.85']], before: '3,050.85', vat: '549.15', total: '3,600.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos, note: 'העתק נאמן למקור' }))
 await pdf('bezeq-oct.pdf', invoice({ supplier: 'בזק החברה הישראלית לתקשורת', id: IDS.bezeq, title: 'חשבונית מס/קבלה', number: '88-120394', date: D.bezeq, lines: [['קו אינטרנט עסקי', '500.00']], before: '500.00', vat: '90.00', total: '590.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
 await pdf('brochure.pdf', '<html dir="rtl"><body style="font-family:sans-serif;padding:60px"><h1>קטלוג סתיו 2026</h1><p>מבצעים על ריהוט גן!</p></body></html>')
+await pdf('quote-hs22.pdf', '<html dir="rtl"><body style="font-family:sans-serif;padding:60px"><h1>הצעת מחיר 2026-118</h1><p>סולל בונה תשתיות</p><p>עבודות פיתוח, פרויקט HS-22: 180,000 ₪ + מע״מ</p><p>ההצעה בתוקף 30 יום</p></body></html>')
 await pdf('electra-778.pdf', invoice({ supplier: 'אלקטרה בנייה בע״מ', id: IDS.electra, title: 'חשבונית מס', number: '778', date: D.electra, lines: [['עבודות חשמל, שלב ב׳', '50,000.00']], before: '50,000.00', vat: '9,000.00', total: '59,000.00', customer: 'קורקוס ביצוע', customerId: IDS.execution }))
 await png('ace-receipt.png', invoice({ supplier: 'ACE', id: IDS.ace, title: 'קבלה', number: '5501', date: D.ace, lines: [['מקדחה', '200.00']], before: '200.00', vat: '36.00', total: '236.00', customer: '', customerId: '' }))
 await pdf('meta-ads.pdf', invoice({ supplier: 'Meta Platforms Ireland Ltd', id: IDS.meta, title: 'חשבונית מס', number: 'FBADS-90211', date: D.meta, lines: [['Facebook & Instagram ads, campaign "וילות השרון"', '4,000.00']], before: '4,000.00', vat: '720.00', total: '4,720.00', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
@@ -65,10 +66,12 @@ async function photo(name, html) { const p2 = await browser.newPage({ viewport: 
 await photo('receipt-photo.jpg', invoice({ supplier: 'חומרי בניין השרון', id: IDS.hasharon, title: 'חשבונית מס/קבלה', number: '24-7781', date: D.photo, lines: [['ברגים, דיבלים ומקדחים לאתר מוהליבר 17', '640.00']], before: '640.00', vat: '115.20', total: '755.20', customer: 'קורקוס גרופ', customerId: IDS.kurkoos }))
 await browser.close()
 
-const H = { second: sha('cafe-second.pdf'), dupExact: sha('cafe-dup-exact.pdf'), dupFuzzy: sha('cafe-dup-fuzzy.pdf'), flaky: sha('flaky.pdf'), old: sha('old-invoice.pdf'), wa: sha('wa-receipt.png'), meta: sha('meta-ads.pdf'), office: sha('office-depot.pdf'), bg: sha('benguryon-blocks.pdf'), soleh: sha('soleh-boneh.pdf'), tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
+const H = { quote: sha('quote-hs22.pdf'), second: sha('cafe-second.pdf'), dupExact: sha('cafe-dup-exact.pdf'), dupFuzzy: sha('cafe-dup-fuzzy.pdf'), flaky: sha('flaky.pdf'), old: sha('old-invoice.pdf'), wa: sha('wa-receipt.png'), meta: sha('meta-ads.pdf'), office: sha('office-depot.pdf'), bg: sha('benguryon-blocks.pdf'), soleh: sha('soleh-boneh.pdf'), tambour: sha('tambour-4521.pdf'), copy: sha('tambour-4521-copy.pdf'), bezeq: sha('bezeq-oct.pdf'), brochure: sha('brochure.pdf'), electra: sha('electra-778.pdf'), ace: sha('ace-receipt.png') }
 const at = (d, h = 9) => `${d}T0${h}:15:00Z`
 const fixtures = {
   answers: {
+    // a quote: amounts are printed, but it is not an expense. Sure (0.93) → skipped, no financial record
+    [H.quote]: answer({ is_financial_document: false, document_class: 'quote', relevance_confidence: 0.93, doc_type: 'quote', supplier_name: 'סולל בונה תשתיות', doc_number: '2026-118', amount_before_vat: 180000, total_amount: null, vat_amount: null, category: 'אחר' }),
     [H.second]: answer({ doc_type: 'invoice_receipt', supplier_name: 'קפה לנדוור', supplier_vat_id: IDS.cafe, doc_number: '88124', issue_date: D.wa, amount_before_vat: 250, vat_amount: 45, total_amount: 295, description: 'ארוחת עבודה', category: 'אחר' }),
     [H.dupExact]: answer({ doc_type: 'invoice_receipt', supplier_name: 'קפה לנדוור', supplier_vat_id: IDS.cafe, doc_number: '88123', issue_date: D.wa, amount_before_vat: 250, vat_amount: 45, total_amount: 295, description: 'ארוחת עבודה', category: 'אחר' }),
     [H.dupFuzzy]: answer({ doc_type: 'receipt', supplier_name: 'קפה לנדוור', supplier_vat_id: IDS.cafe, doc_number: '', issue_date: D.wa, amount_before_vat: 250, vat_amount: 45, total_amount: 295, description: 'ארוחת עבודה', category: 'אחר' }),
@@ -97,14 +100,14 @@ const fixtures = {
   textAnswers: {
     'פז חברת נפט': answer({ doc_type: 'invoice_receipt', supplier_name: 'פז חברת נפט', supplier_vat_id: IDS.paz, doc_number: '7731-22', issue_date: D.paz, amount_before_vat: 349.41, vat_amount: 62.89, total_amount: 412.3, description: 'דלק 95', category: 'רכב ודלק', payment_method: 'אשראי' }),
   },
-  notFinancial: answer({ is_financial_document: false, doc_type: 'other', customer_name: '', customer_vat_id: '', category: 'אחר', vat_rate: null }),
+  notFinancial: answer({ is_financial_document: false, document_class: 'marketing', relevance_confidence: 0.96, doc_type: 'other', customer_name: '', customer_vat_id: '', category: 'אחר', vat_rate: null }),
   claudeFail: { [H.electra]: 3, [H.flaky]: 3 },   // three overloads in a row: the document fails once, the retry recovers it
   mailboxes: {
     'invoices@kurkoos.test': {
       messages: [
         { id: 'm1', date: at(D.tambour), subject: 'חשבונית מס 4521 - טמבור', from: 'טמבור <billing@tambour.test>', text: 'מצורפת חשבונית', files: ['tambour-4521.pdf'] },
         { id: 'm2', date: at(D.bezeq), subject: 'Your October statement is ready', from: 'Bezeq Business <noreply@bezeq.test>', text: 'Your statement is attached.', files: ['bezeq-oct.pdf'] },
-        { id: 'm3', date: at(D.bezeq, 8), subject: 'קטלוג סתיו - מבצעים', from: 'Garden Shop <news@garden.test>', text: 'ניוזלטר', files: ['brochure.pdf'] },
+        { id: 'm3', date: at(D.bezeq, 8), subject: 'קטלוג סתיו - מבצעים', from: 'Garden Shop <news@garden.test>', text: 'ניוזלטר', files: ['brochure.pdf', 'quote-hs22.pdf'] },
         { id: 'm4', date: at(D.paz), subject: 'קבלה על תדלוק', from: 'פז <receipts@paz.test>', html: '<div dir="rtl"><h2>פז חברת נפט בע״מ</h2><p>חשבונית מס/קבלה 7731-22</p><p>דלק 95, 52.4 ליטר</p><p>סה״כ לפני מע״מ 349.41, מע״מ 62.89</p><p><b>סה״כ 412.30 ₪</b>, שולם באשראי</p></div>' },
         { id: 'm5', date: at(D.paz, 7), subject: 'Fwd: חשבונית מס 4521', from: 'יוסי <yossi@kurkoos.test>', text: 'שוב החשבונית', files: ['tambour-4521.pdf'] },
         { id: 'm6', date: at(D.electra, 6), subject: 'העתק חשבונית 4521', from: 'טמבור <billing@tambour.test>', text: 'העתק', files: ['tambour-4521-copy.pdf'] },

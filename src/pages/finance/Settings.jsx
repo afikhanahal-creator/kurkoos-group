@@ -7,7 +7,7 @@ import { Card, Icon, PageHead, Pill, useAsync, Skeleton } from './ui.jsx'
 
 function SmartSettings() {
   const { settings, can, reload } = useFinance()
-  const [f, setF] = useState(() => ({ mode: settings.supplier_mode || 'controlled', sup: Number(settings.supplier_auto_threshold ?? 0.92), cat: Number(settings.category_auto_threshold ?? 0.85), proj: Number(settings.project_auto_threshold ?? 0.9), second: Number(settings.second_approval_amount ?? 50000) }))
+  const [f, setF] = useState(() => ({ mode: settings.supplier_mode || 'controlled', sup: Number(settings.supplier_auto_threshold ?? 0.92), cat: Number(settings.category_auto_threshold ?? 0.85), proj: Number(settings.project_auto_threshold ?? 0.9), second: Number(settings.second_approval_amount ?? 50000), cpa: typeof settings.accountant_email === 'string' ? settings.accountant_email : '' }))
   const [msg, setMsg] = useState('')
   const admin = can('manage')
   const save = async () => {
@@ -17,6 +17,9 @@ function SmartSettings() {
       await api.saveSetting('category_auto_threshold', f.cat)
       await api.saveSetting('project_auto_threshold', f.proj)
       await api.saveSetting('second_approval_amount', f.second)
+      const cpa = f.cpa.trim().toLowerCase()
+      if (cpa && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cpa)) { setMsg('כתובת המייל של רו״ח לא תקינה'); return }
+      await api.saveSetting('accountant_email', cpa)
       setMsg('ההגדרות נשמרו. הן חלות על מסמכים שיעובדו מעכשיו.'); reload()
     } catch (e) { setMsg(e.message) }
   }
@@ -39,6 +42,10 @@ function SmartSettings() {
         {Slider({ k: 'proj', label: 'סף לשיוך פרויקט', hint: 'ספק שעובד בכמה פרויקטים לא משויך לפי שמו' })}
       </div>
       <label className="fin-inline-label">אישור כפול לחשבונית מעל <input type="number" className="fin-select fin-select--sm" value={f.second} onChange={(e) => setF({ ...f, second: Number(e.target.value) })} disabled={!admin} /> ₪</label>
+      <label className="fin-field fin-field--cpa"><span className="fin-field__label">המייל הקבוע של רואה החשבון</span>
+        <input type="email" dir="ltr" value={f.cpa} onChange={(e) => setF({ ...f, cpa: e.target.value })} placeholder="cpa@example.co.il" disabled={!admin} autoComplete="off" />
+        <small className="fin-muted">מוצע בכל שליחה לרו״ח ובדוח החודשי. רו״ח שונה לחברה מוגדר בפרטי החברה.</small>
+      </label>
       {admin && <div className="fin-form__actions"><button type="button" className="fin-btn fin-btn--primary" onClick={save}>שמירת ההגדרות</button></div>}
       {msg && <p className="fin-note" role="status">{msg}</p>}
       {!admin && <p className="fin-muted fin-small">רק מנהל מערכת משנה את ההגדרות האלה.</p>}

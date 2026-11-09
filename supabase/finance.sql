@@ -1357,3 +1357,61 @@ $$;
 revoke all on function public.fin_doc_claim(uuid, timestamptz) from public, anon, authenticated;
 grant execute on function public.fin_doc_claim(uuid, timestamptz) to service_role;
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v10 (2026-11-09): Drive by year and Hebrew month, links back to the copy, a real connection test,
+-- documents that are not invoices are skipped (and listed), and what kind of document each one is
+-- ============================================================
+-- new folders are "<folder>/<year>/<month>" by the date on the document; a folder that never copied a file moves to it
+alter table public.fin_cloud_targets alter column structure set default '{year}/{month}';
+update public.fin_cloud_targets set structure = '{year}/{month}' where structure = '{company}/{period}' and files_synced = 0;
+alter table public.fin_cloud_targets add column if not exists last_test_at timestamptz;
+alter table public.fin_cloud_targets add column if not exists last_test_ok boolean;
+alter table public.fin_cloud_targets add column if not exists last_test_link text;
+alter table public.fin_cloud_targets add column if not exists last_test_error text;
+alter table public.fin_cloud_synced add column if not exists web_link text;       -- opens the copy in Drive / Dropbox
+alter table public.fin_cloud_synced add column if not exists file_name text;
+
+-- what the reader decided the document is (tax_invoice, receipt, quote, contract, ...) and how sure it is
+alter table public.fin_documents add column if not exists document_class text;
+alter table public.fin_documents add column if not exists relevance numeric;
+
+-- files the engine read and did not keep because they are not invoices or receipts: no financial record, only this line
+create table if not exists public.fin_skipped (
+  id uuid primary key default gen_random_uuid(),
+  source text,
+  mailbox_id uuid references public.fin_mailboxes(id) on delete set null,
+  email_subject text,
+  email_from text,
+  file_name text,
+  file_hash text,
+  document_class text,
+  confidence numeric,
+  reason text,
+  at timestamptz default now()
+);
+create index if not exists fin_skipped_at on public.fin_skipped (at desc);
+alter table public.fin_skipped enable row level security;
+revoke all on public.fin_skipped from anon;
+revoke insert, update, delete on public.fin_skipped from authenticated;
+grant select on public.fin_skipped to authenticated;
+drop policy if exists "fin_skipped read" on public.fin_skipped;
+create policy "fin_skipped read" on public.fin_skipped for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+notify pgrst, 'reload schema';
+-- the accountant's fixed address: offered in every "send to the accountant", next to the company's own address
+insert into public.fin_settings (key, value) values ('accountant_email', '""') on conflict (key) do nothing;
+-- the screens record exports and downloads made in the browser (Excel, CSV, originals) in the activity log.
+-- Only these actions, only by members, and the user is taken from the session (never from the request).
+create or replace function public.fin_log(p_action text, p_details jsonb default '{}'::jsonb)
+returns void language plpgsql volatile security definer set search_path = '' as $$
+declare mail text;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager', 'employee', 'accountant']) then raise exception 'FORBIDDEN'; end if;
+  if p_action not in ('exported_excel', 'exported_csv', 'downloaded_originals', 'printed', 'downloaded_document') then raise exception 'BAD_ACTION'; end if;
+  select email into mail from public.fin_members where user_id = auth.uid();
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+  values ('export', null, p_action, coalesce(p_details, '{}'::jsonb) - 'user', auth.uid(), mail);
+end $$;
+revoke all on function public.fin_log(text, jsonb) from public, anon;
+grant execute on function public.fin_log(text, jsonb) to authenticated;
+notify pgrst, 'reload schema';

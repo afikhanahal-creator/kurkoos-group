@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { date, dateTime, docDate, money, nameOf, signedTotal } from './format.js'
+import { date, dateTime, docDate, money, monthLabel, nameOf, recentMonths, shiftMonth, signedTotal, thisMonth } from './format.js'
+import { exportSheet } from './exportPackage.js'
+import { summaryOf } from './expenseReport.js'
 import DateRange, { sayRange } from './DateRange.jsx'
 import Select from './Select.jsx'
 import SendToAccountant from './SendToAccountant.jsx'
@@ -26,6 +28,8 @@ export default function SendCenter() {
   const [picked, setPicked] = useState(null)        // null = everything in the list
   const [sending, setSending] = useState(null)
   const [done, setDone] = useState(null)
+  const [month, setMonth] = useState('')           // the monthly report: '' until a month is chosen
+  const [monthPick, setMonthPick] = useState(() => shiftMonth(thisMonth(), -1))
   const history = useAsync(() => api.loadDeliveries(20), [done])
 
   const list = useMemo(() => documents
@@ -38,12 +42,46 @@ export default function SendCenter() {
   const attention = chosen.filter((d) => d.status !== 'approved').length
   const toggle = (id) => setPicked((p) => { const n = new Set(p || list.map((d) => d.id)); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const allOn = !picked || picked.size === list.length
+  // monthly report: the whole month by the date on the document, approved and waiting, in one preview before sending
+  const openMonth = (k) => {
+    const [y, m] = k.split('-').map(Number); const last = new Date(Date.UTC(y, m, 0)).getUTCDate()
+    setMonth(k); setShow('withReview'); setRange({ from: `${k}-01`, to: `${k}-${String(last).padStart(2, '0')}` }); setPicked(null); setDone(null)
+  }
+  const sum = useMemo(() => summaryOf(chosen), [chosen])
+  const byCat = useMemo(() => { const m = new Map(); for (const d of chosen) m.set(d.category || 'ללא קטגוריה', (m.get(d.category || 'ללא קטגוריה') || 0) + signedTotal(d)); return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5) }, [chosen])
 
   return (
     <div className="fin-stack fin-send">
       <div className="fin-titlerow"><h2 className="fin-pagehead__title">שליחה לרו״ח</h2></div>
       <p className="fin-muted fin-lead">בחרו מסמכים, בדקו את הסיכום ושלחו לרואה החשבון במייל אחד, עם הקבצים המקוריים וקובץ סיכום לקליטה.</p>
       {done && <p className="fin-note" role="status"><Icon name="check" size={16} /> נשלח ל-{done.to.join(', ')}: {done.sent === 1 ? 'מסמך אחד' : `${done.sent} מסמכים`}{done.marked ? `, ${done.marked} סומנו "נשלח לרו״ח"` : ''}.</p>}
+
+      <section className="fin-monthly" aria-label="דוח חודשי לרו״ח">
+        <div className="fin-monthly__head">
+          <span className="fin-monthly__icon"><Icon name="calendar" size={20} /></span>
+          <span><strong>דוח חודשי לרו״ח</strong><small>כל המסמכים של החודש, קובץ Excel עם סיכום לפי קטגוריה וספק, והקבצים המקוריים, במייל אחד</small></span>
+          <Select className="fin-select" value={monthPick} onChange={(e) => setMonthPick(e.target.value)} aria-label="חודש">{recentMonths(18).map((k) => <option key={k} value={k}>{monthLabel(k)}</option>)}</Select>
+          <button type="button" className="fin-btn fin-btn--primary" onClick={() => openMonth(monthPick)}>הכנת הדוח</button>
+        </div>
+        {month && (
+          <div className="fin-monthly__preview" aria-live="polite">
+            <dl>
+              <div><dt>חודש</dt><dd>{monthLabel(month)}</dd></div>
+              <div><dt>מסמכים</dt><dd>{chosen.length}</dd></div>
+              <div><dt>לפני מע״מ</dt><dd>{money(sum.before)}</dd></div>
+              <div><dt>מע״מ</dt><dd>{money(sum.vat)}</dd></div>
+              <div><dt>סה״כ</dt><dd>{money(sum.total)}</dd></div>
+            </dl>
+            {byCat.length > 0 && <ul className="fin-monthly__cats">{byCat.map(([c, v]) => <li key={c}><span>{c}</span><strong>{money(v)}</strong></li>)}</ul>}
+            {attention > 0 && <p className="fin-note fin-note--warn"><Icon name="alert" size={16} /> {attention === 1 ? 'מסמך אחד בחודש עוד לא אושר' : `${attention} מסמכים בחודש עוד לא אושרו`}. אפשר להסיר אותם מהרשימה למטה, או לשלוח ובמייל יצוין שהם ממתינים.</p>}
+            <div className="fin-form__actions">
+              <button type="button" className="fin-btn fin-btn--primary" disabled={!chosen.length} onClick={() => { setDone(null); setSending(chosen) }}><Icon name="send" size={17} /> שליחת הדוח</button>
+              <button type="button" className="fin-btn" disabled={!chosen.length} onClick={() => exportSheet(chosen, 'excel', { businesses, projects }, {}, `הוצאות ${monthLabel(month)}`)}><Icon name="table" size={17} /> תצוגה מקדימה ב-Excel</button>
+              <button type="button" className="fin-link" onClick={() => { setMonth(''); setRange({ from: '', to: '' }); setShow('ready') }}>סגירה</button>
+            </div>
+          </div>
+        )}
+      </section>
 
       <div className="fin-filters fin-send__filters">
         <DateRange from={range.from} to={range.to} label="תאריך המסמך" onChange={(from, to) => { setRange({ from, to }); setPicked(null) }} />
@@ -107,7 +145,7 @@ export default function SendCenter() {
         </section>
       )}
 
-      {sending && <SendToAccountant docs={sending} period={sayRange(range.from, range.to)} markDefault onClose={() => setSending(null)} onSent={(r) => { setSending(null); setPicked(null); setDone(r) }} />}
+      {sending && <SendToAccountant docs={sending} period={month ? monthLabel(month) : sayRange(range.from, range.to)} markDefault onClose={() => setSending(null)} onSent={(r) => { setSending(null); setPicked(null); setDone(r); setMonth('') }} />}
     </div>
   )
 }

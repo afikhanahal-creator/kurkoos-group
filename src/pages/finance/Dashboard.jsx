@@ -3,7 +3,7 @@ import CaptureReceipt from './CaptureReceipt.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
-import { ago, date, docDate, hasError, money } from './format.js'
+import { ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { Icon, Pill, StatusPill, useAsync } from './ui.jsx'
@@ -41,6 +41,24 @@ export default function Dashboard() {
       recent: [...live].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 6),
     }
   }, [documents])
+
+  // spend by the date on the document: this month, last month, the year, and six months for the chart
+  const spend = useMemo(() => {
+    const counted = documents.filter((d) => !['rejected', 'duplicate', 'archived', 'failed', 'processing'].includes(d.status))
+    const now = thisMonth(); const year = now.slice(0, 4)
+    const sum = (list, f) => list.reduce((a, d) => a + f(d), 0)
+    const vatOf = (d) => (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.vat_amount) || 0)
+    const inMonth = (k) => counted.filter((d) => String(docDate(d)).slice(0, 7) === k)
+    const months = Array.from({ length: 6 }, (_, i) => shiftMonth(now, i - 5)).map((k) => ({ k, total: sum(inMonth(k), signedTotal) }))
+    const cur = inMonth(now); const prev = inMonth(shiftMonth(now, -1))
+    const yearDocs = counted.filter((d) => String(docDate(d)).slice(0, 4) === year)
+    const top = (list, key) => { const m = new Map(); for (const d of list) { const k = key(d); if (k) m.set(k, (m.get(k) || 0) + signedTotal(d)) } return [...m.entries()].sort((a, b) => b[1] - a[1])[0] }
+    return {
+      month: sum(cur, signedTotal), vat: sum(cur, vatOf), count: cur.length, prev: sum(prev, signedTotal), year: sum(yearDocs, signedTotal), yearVat: sum(yearDocs, vatOf),
+      months, max: Math.max(1, ...months.map((x) => Math.abs(x.total))), topSupplier: top(cur, (d) => d.supplier_name), topCategory: top(cur, (d) => d.category), yearLabel: year,
+    }
+  }, [documents])
+  const delta = spend.prev ? Math.round(((spend.month - spend.prev) / Math.abs(spend.prev)) * 100) : null
 
   const boxes = mailboxes.filter((x) => x.status !== 'revoked')
   const lastScan = boxes.map((x) => x.last_success_at).filter(Boolean).sort().pop()
@@ -88,6 +106,32 @@ export default function Dashboard() {
           </button>
         ))}
       </section>
+
+      {role !== 'employee' && documents.length > 0 && (
+        <section className="fin-spend" aria-label="הוצאות">
+          <div className="fin-spend__nums">
+            <div className="fin-spend__main">
+              <span>הוצאות {monthLabel(thisMonth())}</span>
+              <strong>{money(spend.month)}</strong>
+              <small>{spend.count === 1 ? 'מסמך אחד' : `${spend.count} מסמכים`}{delta !== null ? <> · <b className={delta > 0 ? 'is-up' : 'is-down'}>{delta > 0 ? '+' : ''}{delta}%</b> מהחודש שעבר</> : ''}</small>
+            </div>
+            <dl>
+              <div><dt>מע״מ החודש</dt><dd>{money(spend.vat)}</dd></div>
+              <div><dt>מתחילת {spend.yearLabel}</dt><dd>{money(spend.year)}</dd></div>
+              {spend.topSupplier && <div className="fin-spend__wide"><dt>הספק הגדול החודש</dt><dd>{spend.topSupplier[0]}</dd></div>}
+              {spend.topCategory && <div className="fin-spend__wide"><dt>הקטגוריה הגדולה</dt><dd>{spend.topCategory[0]}</dd></div>}
+            </dl>
+          </div>
+          <button type="button" className="fin-spend__chart" onClick={() => go('/reports')} aria-label="שישה חודשים אחרונים, לדוחות">
+            {spend.months.map((x) => (
+              <span key={x.k} className={x.k === thisMonth() ? 'is-now' : ''} title={`${monthLabel(x.k)}: ${money(x.total)}`}>
+                <i style={{ height: `${Math.max(3, (Math.abs(x.total) / spend.max) * 100)}%` }} />
+                <em>{new Date(`${x.k}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'short' })}</em>
+              </span>
+            ))}
+          </button>
+        </section>
+      )}
 
       {m.attention > 0 && ops && (
         <button type="button" className="fin-alertrow" onClick={() => go('/documents?status=problems')}>

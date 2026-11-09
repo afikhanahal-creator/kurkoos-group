@@ -1346,6 +1346,12 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
 
   // 2. company settings: tabs per company, saved and used by the VAT report
   await go('/settings?tab=companies'); await page.waitForTimeout(800)
+  // the security steps above may have ended this window's session (the app then returns to the sign-in screen): sign in again
+  if (await page.locator('.fin-auth input[type=email]').count()) {
+    await page.fill('input[type=email]', 'admin@kurkoos.test'); await page.fill('input[type=password]', 'Passw0rd!x'); await page.click('button[type=submit]')
+    await page.waitForSelector('.fin__main', { timeout: 20000 }).catch(() => {}); await go('/settings?tab=companies'); await page.waitForTimeout(800)
+  }
+  if (!(await page.locator('.fin-cset__pick').count())) { await shot('103-cset-missing'); console.log('CSET page:', page.url(), (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 300)) }
   await page.locator('.fin-cset__pick button', { hasText: 'רוניר' }).click(); await page.waitForTimeout(300)
   await page.locator('.fin-cset__tabs button', { hasText: 'דיווח ומע״מ' }).click(); await page.waitForTimeout(200)
   await page.locator('.fin-cset select').nth(1).selectOption('bimonthly'); await page.waitForTimeout(200)

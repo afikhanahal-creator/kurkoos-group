@@ -1854,6 +1854,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-cset { display: grid; gap: 16px; }
 .fin-cset__pick { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
 .fin-cset__pick::-webkit-scrollbar { display: none; }
+/* on a computer every company is visible (a second row if needed); a phone keeps the sideways strip */
+@media (min-width: 761px) { .fin-cset__pick { flex-wrap: wrap; overflow: visible; } }
 .fin-cset__pick button { all: unset; box-sizing: border-box; flex: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); }
 .fin-cset__pick button span:last-child { display: flex; flex-direction: column; }
 .fin-cset__pick button small { color: var(--text-2); font-size: var(--t-xs); }

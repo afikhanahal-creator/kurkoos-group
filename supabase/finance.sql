@@ -1452,7 +1452,15 @@ create index if not exists fin_allocations_list_order on public.fin_document_all
 -- from anywhere, a record of every sign-in and failed attempt, and blocked users
 -- ============================================================
 -- which roles must sign in with a second step. Changing this row is the only switch: no code change.
-insert into public.fin_settings (key, value) values ('mfa_required_roles', '["admin", "finance_manager"]') on conflict (key) do nothing;
+-- sign-in is a password only by default (the owner's decision, v14); an admin can require the authenticator app for chosen
+-- roles in Settings › security. Installations that had the old default get it switched off once; a later choice stays.
+insert into public.fin_settings (key, value) values ('mfa_required_roles', '[]') on conflict (key) do nothing;
+do $$ begin
+  if not exists (select 1 from public.fin_settings where key = 'mfa_password_only_v14') then
+    update public.fin_settings set value = '[]' where key = 'mfa_required_roles';
+    insert into public.fin_settings (key, value) values ('mfa_password_only_v14', 'true');
+  end if;
+end $$;
 insert into public.fin_settings (key, value) values ('idle_minutes', '30') on conflict (key) do nothing;
 
 create or replace function public.fin_mfa_roles() returns text[]

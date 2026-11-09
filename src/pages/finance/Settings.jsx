@@ -157,7 +157,7 @@ function NewPassword() {
 function SecurityPolicy() {
   const { settings, can, reload, go } = useFinance()
   const admin = can('manage')
-  const [roles, setRoles] = useState(() => (Array.isArray(settings.mfa_required_roles) ? settings.mfa_required_roles : ['admin', 'finance_manager']))
+  const [roles, setRoles] = useState(() => (Array.isArray(settings.mfa_required_roles) ? settings.mfa_required_roles : []))
   const [idle, setIdle] = useState(() => Number(settings.idle_minutes ?? 30))
   const [msg, setMsg] = useState('')
   const check = useAsync(() => supabase.rpc('fin_session_check_ok').then((r) => r.data), [])

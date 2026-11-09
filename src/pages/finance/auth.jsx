@@ -249,7 +249,7 @@ export function useIdleSignOut(minutes, enabled) {
     evs.forEach((e) => window.addEventListener(e, bump, { passive: true }))
     const t = setInterval(async () => {
       const idle = (Date.now() - last) / 60_000
-      if (idle >= minutes) { clearInterval(t); try { await api.callServer('auth-event', { kind: 'idle_timeout', device_id: deviceId() }) } catch { /* the session may already be gone */ } await supabase.auth.signOut(); return }
+      if (idle >= minutes) { clearInterval(t); try { await api.callServer('auth-event', { kind: 'idle_timeout', device_id: deviceId() }) } catch { /* the session may already be gone */ } await supabase.auth.signOut({ scope: 'local' }); return }   // this device only: the phone in a pocket stays signed in
       if (idle >= minutes - 1 && !warned) { warned = true; setSoon(true) }
     }, 5000)
     return () => { clearInterval(t); evs.forEach((e) => window.removeEventListener(e, bump)) }

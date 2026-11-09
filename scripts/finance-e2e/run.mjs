@@ -453,7 +453,7 @@ const gapQuery = (await fetch(`${FAKES}/__log`).then((r) => r.json())).gmailQuer
 record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1, [accountsShot, oldModalShot])
 
 // MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
-await nav('סורקים ניידים')
+await nav('מספרי WhatsApp')
 const scannersEmpty = await shot('52-scanners-empty')
 await page.getByRole('button', { name: 'הוספת טלפון' }).click()
 await lbl(/^מספר הנייד/).fill('12')
@@ -1316,6 +1316,123 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   record('IDLE', 'מסך האבטחה, האבטחה שלי וניתוק אחרי חוסר פעילות', 'לשונית "כניסות ואבטחה" עם מספרים ויומן; כרטיס "האבטחה שלי" עם אימות דו-שלבי פעיל; אחרי זמן ההגדרה בלי פעילות מופיעה אזהרה ואז המערכת מתנתקת, והניתוק נרשם',
     `לשונית: ${secTab.replace(/\s+/g, ' ').slice(0, 120)}, ${secRows} שורות; שלי: ${/אימות דו-שלבי פעיל/.test(mine)}; אזהרה: ${idleBar}; נותק אחרי ${Math.round((Date.now() - t0) / 1000)} שניות: ${signedOut}; ביומן: ${idleEv}`,
     /כניסות ב-24 שעות/.test(secTab) && secRows >= 3 && /אימות דו-שלבי פעיל/.test(mine) && idleBar && signedOut && Number(idleEv) >= 1, [secShot, mineShot])
+}
+
+// =================== v13: welcome, company settings, numbers to check, WhatsApp, attachments, profile menu ===================
+{
+  // 1. a new member sees the two-step welcome once: name and phone, then the inbox
+  sql("update fin_settings set value='true' where key='onboarding_enabled'")
+  const newEmail = 'newcomer@kurkoos.test'
+  await admin('admin/users', { email: newEmail, password: 'N3wcomer!xx', email_confirm: true })
+  const newId = sql(`select id from auth.users where email='${newEmail}'`)
+  sql(`insert into fin_members (user_id, email, full_name, role, active) values ('${newId}', '${newEmail}', 'נועה כהן', 'employee', true) on conflict (user_id) do update set onboarded_at = null`)
+  const ox = await browser.newContext({ viewport: { width: 1280, height: 860 }, locale: 'he-IL' }); const op = await ox.newPage()
+  await op.goto(APP); await op.fill('input[type=email]', newEmail); await op.fill('input[autocomplete="current-password"]', 'N3wcomer!xx'); await op.click('button[type=submit]')
+  await op.waitForSelector('.fin-onb', { timeout: 20000 }).catch(() => {})
+  const step1 = await op.locator('.fin-onb h1').innerText().catch(() => '')
+  const onbShot1 = await shot('101-welcome-1', op)
+  await op.locator('.fin-onb input[type=tel]').fill('050-7777123'); await op.locator('.fin-onb button[type=submit]').click(); await op.waitForTimeout(900)
+  const step2 = await op.locator('.fin-onb h1').innerText().catch(() => '')
+  const onbShot2 = await shot('102-welcome-2', op)
+  await op.getByRole('button', { name: 'לא עכשיו' }).click(); await op.waitForSelector('.fin__nav', { timeout: 20000 }).catch(() => {})
+  const inApp = await op.locator('.fin__nav').count()
+  const phoneRow = sql(`select phone||'|'||(user_id='${newId}') from fin_whatsapp_senders where phone='972507777123'`)
+  const onboarded = sql(`select (onboarded_at is not null) from fin_members where user_id='${newId}'`)
+  await op.reload(); await op.waitForTimeout(1500); const again = await op.locator('.fin-onb').count()
+  await ox.close(); sql("update fin_settings set value='false' where key='onboarding_enabled'")
+  record('ONBOARD', 'ברוכים הבאים: שני שלבים בכניסה הראשונה', 'שלב 1 עם השם והטלפון ל-WhatsApp (נרשם כמספר מחובר), שלב 2 חיבור תיבת המייל או "לא עכשיו"; אחרי הסיום נכנסים למערכת והמסך לא חוזר',
+    `שלב 1: "${step1}"; שלב 2: "${step2}"; טלפון: ${phoneRow}; סומן: ${onboarded}; במערכת: ${inApp}; חוזר אחרי רענון: ${again}`,
+    /נעים להכיר, נועה/.test(step1) && /לאסוף חשבוניות מהמייל/.test(step2) && phoneRow === '972507777123|true' && onboarded === 't' && inApp === 1 && again === 0, [onbShot1, onbShot2])
+
+  // 2. company settings: tabs per company, saved and used by the VAT report
+  await go('/settings?tab=companies'); await page.waitForTimeout(800)
+  await page.locator('.fin-cset__pick button', { hasText: 'רוניר' }).click(); await page.waitForTimeout(300)
+  await page.locator('.fin-cset__tabs button', { hasText: 'דיווח ומע״מ' }).click(); await page.waitForTimeout(200)
+  await page.locator('.fin-cset select').nth(1).selectOption('bimonthly'); await page.waitForTimeout(200)
+  await page.locator('.fin-cset__tabs button', { hasText: 'רואה החשבון' }).click()
+  await page.locator('.fin-cset input[type=email]').first().fill('ronir-cpa@accountants.test')
+  const csetShot = await shot('103-company-settings')
+  await page.getByRole('button', { name: 'שמירת השינויים' }).click(); await page.waitForTimeout(1000)
+  const saved = sql(`select report_settings->>'vat_period'||'|'||coalesce(accountant_email,'') from fin_businesses where name='רוניר'`)
+  await go(`/reports?company=${sql("select id from fin_businesses where name='רוניר'")}`); await page.waitForTimeout(600)
+  await page.getByRole('tab', { name: 'סיכום מע״מ' }).click(); await page.waitForTimeout(500)
+  const vatHead = await page.locator('.fin-table thead').first().innerText().catch(() => '')
+  const vatRow = await page.locator('.fin-table tbody tr').first().innerText().catch(() => '')
+  record('CSET', 'הגדרות לכל חברה ודוח מע״מ לפי תקופת הדיווח', 'לשוניות פרטים / דיווח ומע״מ / רואה החשבון / מקורות; שמירה למסד; דוח המע״מ של חברה שמדווחת דו-חודשי מקובץ בזוגות חודשים',
+    `נשמר: ${saved}; כותרת: ${vatHead.replace(/\s+/g, ' ').slice(0, 60)}; שורה: ${vatRow.replace(/\s+/g, ' ').slice(0, 40)}`,
+    saved === 'bimonthly|ronir-cpa@accountants.test' && /דו-חודשי/.test(vatHead) && /–/.test(vatRow), [csetShot])
+
+  // 3. numbers to check: a document whose sums do not add up is listed, and the home screen points at it
+  const numId = sql("select id from fin_documents where status='review' and file_path is not null order by created_at limit 1")
+  sql(`update fin_documents set issues = coalesce(issues,'[]'::jsonb) || '[{"level":"error","code":"sum","field":"total_amount","message":"לפני מע״מ ועוד מע״מ אינם שווים לסה״כ"}]'::jsonb where id='${numId}'`)
+  await go('/documents?status=numbers'); await page.waitForTimeout(800)
+  const numRows = await page.locator('.fin-table tbody tr, .fin-doccard').count()
+  const numShot = await shot('104-numbers-to-check')
+  await go('/today'); await page.waitForTimeout(600)
+  const homeNums = await page.locator('.fin-alertrow--warn').innerText().catch(() => '')
+  record('NUMS', 'מסמכים שהמערכת לא בטוחה בסכומים שלהם', 'לשונית "מספרים לבדיקה" מראה מסמך שהסכומים בו לא מסתדרים; מרכז הבקרה מפנה אליה', `שורות: ${numRows}; בבית: "${homeNums}"`, numRows >= 1 && /אשרו את המספרים/.test(homeNums), [numShot])
+
+  // 4. the WhatsApp screen: office number, stats, an unknown sender can be added in one tap; the top-bar chip
+  await go('/scanners'); await page.waitForTimeout(1200)
+  const waOffice = await page.locator('.fin-wa__office').innerText().catch(() => '')
+  const waStats = await page.locator('.fin-wa__stats').innerText().catch(() => '')
+  const waUnknown = await page.locator('.fin-wa__unknown').count()
+  const waShot = await shot('105-whatsapp-numbers')
+  await page.locator('.fin-wachip__btn').click(); await page.waitForTimeout(300)
+  const chipPop = await page.locator('.fin-wachip__pop').innerText().catch(() => '')
+  const chipShot = await shot('106-whatsapp-chip')
+  await page.keyboard.press('Escape')
+  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, מספר לא רשום שניסה לשלוח מוצג עם "הוספה"; בפס העליון המספר עם הסבר וקישור לניהול',
+    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
+    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 1 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
+
+  // 5. a document: attachment file and a linked document, paid state, open in a new window, delete for a finance manager
+  const ronirInv = sql("select id from fin_documents where file_name='ronir-inv.pdf'")
+  await go(`/documents/${ronirInv}`); await page.waitForTimeout(1500)
+  const paidPill = await page.locator('.fin-panel__meta').innerText().catch(() => '')
+  await page.locator('[data-testid=attach-input]').setInputFiles(`${FIX}/brochure.pdf`); await page.waitForTimeout(1500)
+  await page.getByRole('button', { name: 'קישור מסמך קיים' }).click(); await page.waitForTimeout(200)
+  await page.locator('.fin-attach__link select').selectOption(sql("select id from fin_documents where file_name='ronir-receipt.pdf'")); await page.getByRole('button', { name: 'קישור', exact: true }).click(); await page.waitForTimeout(1000)
+  const attRows = await page.locator('.fin-attach__list li').allInnerTexts()
+  const attShot = await shot('107-attachments')
+  const [popup] = await Promise.all([page.waitForEvent('popup', { timeout: 8000 }).catch(() => null), page.locator('.fin-viewer__bar a[aria-label="פתיחה בחלון חדש"]').click()])
+  const popupUrl = popup ? popup.url() : ''
+  if (popup) await popup.close()
+  const attAudit = sql(`select count(*) from fin_audit where entity_id='${ronirInv}' and action='attachment_added'`)
+  const empAtt = await rest(`fin_document_attachments?document_id=eq.${ronirInv}&select=id`, empToken)
+  await page.keyboard.press('Escape')
+  record('ATTACH', 'מסמך: נספחים, סטטוס תשלום, פתיחה בחלון גדול', 'סטטוס "שולם" כשיש קבלה מתאימה; נספח קובץ וקישור למסמך אחר נשמרים ונרשמים בהיסטוריה; פתיחה בחלון חדש של הדפדפן; עובד שלא רואה את המסמך לא רואה את הנספחים',
+    `סטטוס: ${paidPill.replace(/\s+/g, ' ').slice(0, 60)}; נספחים: ${attRows.map((r) => r.split('\n')[0]).join(' | ')}; חלון: ${popupUrl.slice(0, 30)}; בהיסטוריה: ${attAudit}; עובד: ${Array.isArray(empAtt.data) ? empAtt.data.length : empAtt.status}`,
+    /שולם/.test(paidPill) && attRows.length === 2 && attRows.some((r) => /brochure\.pdf/.test(r)) && attRows.some((r) => /מתכת הצפון/.test(r)) && /^blob:/.test(popupUrl) && attAudit === '2' && Array.isArray(empAtt.data) && empAtt.data.length === 0, [attShot])
+
+  // 6. the profile menu and the upload window
+  await go(''); await page.waitForTimeout(800)
+  await page.locator('.fin-profile__btn').click(); await page.waitForTimeout(300)
+  const menu = await page.locator('.fin-profile__pop').innerText().catch(() => '')
+  const menuShot = await shot('108-profile-menu')
+  await page.keyboard.press('Escape')
+  await page.locator('.fin__upload').click(); await page.waitForTimeout(400)
+  const upModal = await page.locator('.fin-modal').innerText().catch(() => '')
+  const upShot = await shot('109-upload-window')
+  await page.keyboard.press('Escape')
+  const xActs = await page.locator('.fin-x-acts').innerText().catch(() => '')
+  const xFeed = await page.locator('.fin-x-feed li').count()
+  const xShot = await shot('110-overview-v13')
+  record('PROFILE', 'תפריט פרופיל, חלון העלאה וסקירה משופרת', 'התפריט: הפרופיל שלי, הגדרות, חברות ודיווח, משתמשים, חיבורים, מראה בהיר/כהה, התנתקות, בלי חיובים; כפתור "העלאת מסמכים" פותח חלון; בסקירה שלושה כרטיסי פעולה ופעילות אחרונה',
+    `תפריט: ${menu.replace(/\s+/g, ' ')}; חלון: ${upModal.replace(/\s+/g, ' ').slice(0, 50)}; כרטיסים: ${xActs.replace(/\s+/g, ' ').slice(0, 80)}; פעילות: ${xFeed}`,
+    /הפרופיל שלי/.test(menu) && /חברות ודיווח/.test(menu) && /התנתקות/.test(menu) && /כהה/.test(menu) && !/חיוב|מנוי/.test(menu) && /העלאת מסמכים/.test(upModal) && /מוכן לרו״ח/.test(xActs) && /לבדיקה/.test(xActs) && xFeed >= 3, [menuShot, upShot, xShot])
+
+  // 7. the sign-in screen
+  const lx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'he-IL' }); const lp = await lx.newPage()
+  await lp.goto(APP); await lp.waitForSelector('.fin-auth', { timeout: 20000 }).catch(() => {})
+  const authTxt = await lp.locator('.fin-auth').innerText().catch(() => '')
+  const authShot = await shot('111-sign-in', lp)
+  await lp.setViewportSize({ width: 390, height: 844 }); await lp.waitForTimeout(300)
+  const authOv = await lp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  const authShotM = await shot('112-sign-in-phone', lp)
+  await lx.close()
+  record('AUTHUI', 'מסך הכניסה', 'שני חלקים: הטופס והסיפור של המערכת; שכחתי סיסמה; בטלפון טור אחד בלי גלילה אופקית', `${authTxt.replace(/\s+/g, ' ').slice(0, 120)}; גלילה בטלפון: ${authOv}`,
+    /ברוכים הבאים ל-Kurkoos Finance/.test(authTxt) && /שכחתי את הסיסמה/.test(authTxt) && /מפסיקים לרדוף אחרי חשבוניות/.test(authTxt) && authOv <= 0, [authShot, authShotM])
 }
 
 // dark mode screenshot

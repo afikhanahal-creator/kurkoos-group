@@ -6,6 +6,7 @@ import * as api from './api.js'
 import { ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Thumbnail from './Thumbnail.jsx'
+import { unsureNumbers } from './Documents.jsx'
 import { Icon, Pill, StatusPill, useAsync } from './ui.jsx'
 
 // The night collection runs at 00:23 UTC (vercel.json: 02:23 or 03:23 in Israel); shown in the viewer's local time
@@ -36,6 +37,7 @@ export default function Dashboard() {
       review: live.filter((d) => d.status === 'review').length,
       ready: live.filter((d) => d.status === 'approved' && !d.exported_at),
       sent: live.filter((d) => d.status === 'sent' && d.exported_at && new Date(d.exported_at).getMonth() === new Date().getMonth()).length,
+      numbers: live.filter(unsureNumbers).length,
       attention: live.filter((d) => d.status === 'failed' || d.status === 'duplicate' || (d.status === 'review' && hasError(d))).length,
       todayCount: documents.filter((d) => new Date(d.created_at).toDateString() === today).length,
       recent: [...live].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 6),
@@ -133,6 +135,11 @@ export default function Dashboard() {
         </section>
       )}
 
+      {m.numbers > 0 && ops && (
+        <button type="button" className="fin-alertrow fin-alertrow--warn" onClick={() => go('/documents?status=numbers')}>
+          <Icon name="alert" size={18} /><span>{m.numbers === 1 ? 'מסמך אחד שהמערכת לא בטוחה בסכומים שלו: אשרו את המספרים' : `${m.numbers} מסמכים שהמערכת לא בטוחה בסכומים שלהם: אשרו את המספרים`}</span><Icon name="next" size={16} />
+        </button>
+      )}
       {m.attention > 0 && ops && (
         <button type="button" className="fin-alertrow" onClick={() => go('/documents?status=problems')}>
           <Icon name="alert" size={18} /><span>{m.attention === 1 ? 'מסמך אחד לא נקרא או חשוד ככפול' : `${m.attention} מסמכים לא נקראו, חשודים ככפולים או עם שגיאה`}</span><Icon name="next" size={16} />

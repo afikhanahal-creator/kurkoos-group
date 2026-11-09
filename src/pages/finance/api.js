@@ -191,3 +191,21 @@ export const logAction = (action, details = {}) => { supabase.rpc('fin_log', { p
 /* my role, whether it requires the second step, and the idle timeout; null when I am not a member */
 export const mySecurity = async () => { try { return must(await supabase.rpc('fin_my_security')) } catch { return null } }
 export const loadLoginEvents = (limit = 100) => soft(all('fin_login_events', 'at', false, limit))
+export const finishOnboarding = async (name) => must(await supabase.rpc('fin_finish_onboarding', { p_name: name || null }))
+
+// ---- attachments (נספחים) of a document: extra files, or a link to another document ----
+export const loadAttachments = async (documentId) => must(await supabase.from('fin_document_attachments').select('*').eq('document_id', documentId).order('created_at'))
+export async function addAttachmentFile(documentId, rawFile) {
+  const file = await prepareImage(rawFile)
+  if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)
+  if (file.size > 12 * 1024 * 1024) throw new Error(`${file.name}: הקובץ גדול מ-12MB`)
+  const hash = await sha256(file)
+  const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1]
+  const path = `uploads/attachments/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${ext}`
+  const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })
+  if (up.error && !/exists|duplicate/i.test(up.error.message)) throw new Error(up.error.message)
+  return must(await supabase.from('fin_document_attachments').insert({ document_id: documentId, kind: 'file', file_path: path, file_name: rawFile.name?.slice(0, 200) || `נספח.${ext}`, file_mime: file.type, file_size: file.size }).select().single())
+}
+export const linkDocument = async (documentId, linkedId, note) => must(await supabase.from('fin_document_attachments').insert({ document_id: documentId, kind: 'link', linked_document_id: linkedId, note: note || null }).select().single())
+export const removeAttachment = async (id) => must(await supabase.from('fin_document_attachments').delete().eq('id', id))
+export const attachmentBlob = async (a) => { const { data, error } = await supabase.storage.from(BUCKET).download(a.file_path); if (error) throw new Error(error.message || 'הקובץ לא נטען'); return data }

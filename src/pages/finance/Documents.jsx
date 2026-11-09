@@ -17,6 +17,7 @@ const TABS = [
   { id: '', label: 'הכול' },
   { id: 'new', label: 'חדשים' },
   { id: 'review', label: 'לבדיקה' },
+  { id: 'numbers', label: 'מספרים לבדיקה' },
   { id: 'approved', label: 'מוכנים לרו״ח' },
   { id: 'sent', label: 'נשלחו לרו״ח' },
   { id: 'unassigned', label: 'ממתין לשיוך' },
@@ -24,9 +25,17 @@ const TABS = [
   { id: 'rejected', label: 'נדחו' },
   { id: 'archived', label: 'ארכיון' },
 ]
+/* the reading is not sure of the amounts: they do not add up, the VAT rate does not fit the date, a second reading
+   disagreed, or the confidence of a sum is low. A person confirms them before the document counts as checked. */
+const NUM_CODES = ['sum', 'vat_rate', 'ai_disagree', 'unsure_amount']
+const NUM_FIELDS = ['total_amount', 'vat_amount', 'amount_before_vat']
+export const unsureNumbers = (d) => ['review', 'duplicate'].includes(d.status) && (
+  issuesOf(d).some((i) => NUM_CODES.includes(i.code) || (i.level === 'error' && NUM_FIELDS.includes(i.field)))
+  || NUM_FIELDS.some((k) => d[k] !== null && d[k] !== undefined && Number(d.field_confidence?.[k] ?? 1) < 0.7))
 const inTab = (d, tab) => {
   if (!tab) return !['rejected', 'archived'].includes(d.status)
   if (tab === 'new') return new Date(d.created_at).getTime() > Date.now() - 7 * 86400_000 && ['review', 'processing', 'failed'].includes(d.status)
+  if (tab === 'numbers') return unsureNumbers(d)
   if (tab === 'unassigned') return !d.business_id && !['rejected', 'archived', 'duplicate', 'processing', 'failed'].includes(d.status)
   if (tab === 'problems') return ['failed', 'duplicate', 'processing'].includes(d.status) || hasError(d)
   return d.status === tab
@@ -54,7 +63,8 @@ export default function Documents({ preset = 'all' }) {
   // "open the documents behind this number" from the overview: an exact list of ids, shown as a removable chip
   const [only, setOnly] = useState(() => { if (!params.get('ids')) return null; try { const v = JSON.parse(sessionStorage.getItem('fin-x-ids') || 'null'); return v?.ids ? { ids: new Set(v.ids), title: v.title } : null } catch { return null } })
   const [f, setF] = useState(() => ({ ...EMPTY_F, from: only ? '' : params.get('from') || '', to: only ? '' : params.get('to') || '', supplier: params.get('supplier') || '', project: params.get('project') || '', biz: params.get('company') || '', cat: params.get('category') ? categories.find((c) => c.id === params.get('category'))?.name || '' : '' }))
-  const [view, setView] = useState(() => { try { return localStorage.getItem(VIEW_KEY) || 'table' } catch { return 'table' } })
+  // cards on a phone, a table on a wide screen, unless the person chose (the choice is kept on the device)
+  const [view, setView] = useState(() => { const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches; try { return localStorage.getItem(VIEW_KEY) || (phone ? 'cards' : 'table') } catch { return phone ? 'cards' : 'table' } })
   const [confirm, setConfirm] = useState(null)   // { label, run, count, skipped }
   const switchView = (v) => { setView(v); try { localStorage.setItem(VIEW_KEY, v) } catch { /* noop */ } }
   const [showFilters, setShowFilters] = useState(false)
@@ -256,7 +266,7 @@ export default function Documents({ preset = 'all' }) {
       {note && <p className="fin-note" role="status">{note}</p>}
 
       {rows.length === 0 ? (
-        <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
+        tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : view === 'cards' ? (

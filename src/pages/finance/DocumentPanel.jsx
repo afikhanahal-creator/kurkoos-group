@@ -4,6 +4,8 @@ import * as api from './api.js'
 import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf } from './format.js'
 import { saveBlob } from './zip.js'
 import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton, askConfirm } from './ui.jsx'
+import Attachments from './Attachments.jsx'
+import { PAY_LABEL, payState } from './ledger.js'
 import Select from './Select.jsx'
 import Viewer from './Viewer.jsx'
 
@@ -111,7 +113,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
   const remove = async () => {
-    if (!(await askConfirm({ text: 'למחוק את המסמך ואת הקובץ? אי אפשר לבטל, והמחיקה נרשמת ביומן.', ok: 'מחיקה', danger: true }))) return
+    if (!(await askConfirm({ title: 'מחיקת המסמך', text: 'מסמך לא רלוונטי (לא חשבונית, נשלח בטעות, כפול לגמרי) נמחק יחד עם הקובץ והנספחים שלו. אי אפשר לבטל, והמחיקה נרשמת ביומן. מסמך שאולי עוד יידרש עדיף לדחות.', ok: 'מחיקה', danger: true }))) return
     setBusy('delete')
     try { await api.deleteDocument(doc); onDeleted() } catch (e) { setErr(e.message); setBusy('') }
   }
@@ -155,7 +157,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
         <header className="fin-panel__head">
           <div className="fin-panel__title">
             <h2>{doc.supplier_name || doc.file_name || 'מסמך'}</h2>
-            <p className="fin-muted fin-panel__meta"><StatusPill status={doc.status} /> <span>{DOC_TYPE[doc.doc_type]}{doc.doc_number ? ` ${doc.doc_number}` : ''}</span> <span>{money(doc.total_amount, doc.currency)}</span> <span className="fin-nowrap">ודאות <Confidence value={doc.confidence} /></span></p>
+            <p className="fin-muted fin-panel__meta"><StatusPill status={doc.status} /> {payState(doc) !== 'na' && <Pill tone={payState(doc) === 'proof' ? 'ok' : payState(doc) === 'manual' ? 'info' : 'warn'}><Icon name={payState(doc) === 'proof' ? 'check' : payState(doc) === 'manual' ? 'edit' : 'clock'} size={12} /> {payState(doc) === 'open' ? 'לא שולם' : PAY_LABEL[payState(doc)]}</Pill>} <span>{DOC_TYPE[doc.doc_type]}{doc.doc_number ? ` ${doc.doc_number}` : ''}</span> <span>{money(doc.total_amount, doc.currency)}</span> <span className="fin-nowrap">ודאות <Confidence value={doc.confidence} /></span></p>
           </div>
           <div className="fin-panel__nav">
             {doc.file_path && <button type="button" className="fin-icon-btn" onClick={async () => saveBlob(await api.fileBlob(doc), doc.file_name || 'document')} aria-label="הורדת הקובץ המקורי" title="הורדת הקובץ המקורי"><Icon name="download" /></button>}
@@ -261,11 +263,13 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                     {can('edit') && !['approved', 'sent', 'rejected'].includes(doc.status) && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => save({ status: 'rejected' })}><Icon name="x" size={18} /> דחייה</button>}
                     {can('edit') && !['approved', 'sent', 'duplicate'].includes(doc.status) && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => save({ status: 'duplicate' })}><Icon name="copy" size={18} /> כפול</button>}
                     {can('edit') && ['rejected', 'duplicate', 'approved'].includes(doc.status) && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => save({ status: 'review' })}>החזרה לבדיקה</button>}
-                    {can('manage') && <button type="button" className="fin-btn fin-btn--danger" disabled={!!busy} onClick={remove} aria-label="מחיקה" title="מחיקה"><Icon name="trash" size={18} /></button>}
+                    {(can('manage') || (can('operate') && !['approved', 'sent'].includes(doc.status))) && <button type="button" className="fin-btn fin-btn--danger" disabled={!!busy} onClick={remove} aria-label="מחיקה (מסמך לא רלוונטי)" title="מחיקה: מסמך לא רלוונטי"><Icon name="trash" size={18} /> מחיקה</button>}
                   </div>
                 )}
               </form>
             )}
+
+            {tab === 'fields' && <Attachments doc={doc} />}
 
             {tab === 'checks' && (
               <div className="fin-checks">

@@ -1,3 +1,5 @@
+import CompanySettings from './CompanySettings.jsx'
+import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
@@ -151,28 +153,93 @@ function NewPassword() {
   )
 }
 
+/* system-wide sign-in policy (admins): which roles need the second step, and the idle sign-out */
+function SecurityPolicy() {
+  const { settings, can, reload, go } = useFinance()
+  const admin = can('manage')
+  const [roles, setRoles] = useState(() => (Array.isArray(settings.mfa_required_roles) ? settings.mfa_required_roles : ['admin', 'finance_manager']))
+  const [idle, setIdle] = useState(() => Number(settings.idle_minutes ?? 30))
+  const [msg, setMsg] = useState('')
+  const check = useAsync(() => supabase.rpc('fin_session_check_ok').then((r) => r.data), [])
+  const save = async () => {
+    setMsg('')
+    if (!roles.includes('admin') && !(await askConfirm({ text: 'להסיר את חובת האימות הדו-שלבי ממנהלי המערכת? למנהל יש גישה לכל המידע.', ok: 'להסיר בכל זאת', danger: true }))) return
+    try { await api.saveSetting('mfa_required_roles', roles); await api.saveSetting('idle_minutes', Math.max(5, Math.min(480, idle))); setMsg('מדיניות הכניסה נשמרה. היא חלה מהכניסה הבאה של כל משתמש.'); reload() } catch (e) { setMsg(e.message) }
+  }
+  const toggle = (r) => setRoles((x) => (x.includes(r) ? x.filter((y) => y !== r) : [...x, r]))
+  return (
+    <Card title="מדיניות כניסה" className="fin-card--wide">
+      <fieldset className="fin-cset__body" disabled={!admin}>
+        <div className="fin-cset__grid">
+          <div className="fin-cset__field is-wide"><span className="fin-cset__label">אימות דו-שלבי חובה ל:</span>
+            <div className="fin-checkrow">{Object.entries(ROLE).map(([k, v]) => <label key={k} className="fin-check"><input type="checkbox" checked={roles.includes(k)} onChange={() => toggle(k)} /> {v}</label>)}</div>
+            <small className="fin-cset__hint">האכיפה במסד הנתונים: בלי הקוד מהאפליקציה, תפקיד מסומן לא רואה נתונים, גם לא דרך ה-API.</small>
+          </div>
+          <label className="fin-cset__field"><span className="fin-cset__label">ניתוק אחרי חוסר פעילות (דקות)</span><input type="number" inputMode="numeric" min={5} max={480} value={idle} onChange={(e) => setIdle(Number(e.target.value))} /><small className="fin-cset__hint">דקה לפני הניתוק מופיעה אזהרה</small></label>
+          <div className="fin-cset__field"><span className="fin-cset__label">ניתוק מיידי של חיבורים</span><span>{check.loading ? '…' : check.data === true ? <Pill tone="ok">פעיל</Pill> : <Pill tone="warn">לא זמין במסד הזה</Pill>}</span><small className="fin-cset__hint">{check.data === true ? 'חסימה ויציאה מכל המכשירים עוצרות גישה מיד' : 'חסימה עדיין חוסמת כניסה; חיבור פתוח נסגר כשהטוקן פג (עד שעה)'}</small></div>
+        </div>
+      </fieldset>
+      {admin && <div className="fin-form__actions"><button type="button" className="fin-btn fin-btn--primary" onClick={save}>שמירת המדיניות</button><button type="button" className="fin-link" onClick={() => go('/users?tab=security')}>כניסות ואבטחה ←</button></div>}
+      {msg && <p className="fin-note" role="status">{msg}</p>}
+    </Card>
+  )
+}
+
+const SECTIONS = [
+  { id: 'account', label: 'החשבון שלי', icon: 'users', roles: null },
+  { id: 'companies', label: 'חברות ודיווח', icon: 'company', roles: ['admin', 'finance_manager'] },
+  { id: 'engine', label: 'זיהוי ושיוך', icon: 'sparkle', roles: ['admin', 'finance_manager'] },
+  { id: 'security', label: 'אבטחת המערכת', icon: 'shield', roles: ['admin'] },
+  { id: 'server', label: 'חיבורי השרת', icon: 'plug', roles: ['admin', 'finance_manager'] },
+  { id: 'more', label: 'עוד הגדרות', icon: 'settings', roles: ['admin', 'finance_manager'] },
+]
+
 export default function Settings() {
   const { role, me, businesses, can, go } = useFinance()
+  const [params, setParams] = useSearchParams()
   const [recovery, setRecovery] = useState(() => { try { return new URLSearchParams(window.location.search).get('reset') === '1' } catch { return false } })
   useEffect(() => { const { data } = supabase.auth.onAuthStateChange((ev) => { if (ev === 'PASSWORD_RECOVERY') setRecovery(true) }); return () => data.subscription.unsubscribe() }, [])
   const u = useSession()
-  const status = useAsync(() => api.callServer('status').catch((e) => ({ error: e.message })), [])
+  const sections = SECTIONS.filter((x) => !x.roles || x.roles.includes(role))
+  const tab = sections.some((x) => x.id === params.get('tab')) ? params.get('tab') : recovery ? 'account' : sections[0].id
+  const pick = (id) => { const p = new URLSearchParams(params); p.set('tab', id); setParams(p, { replace: true }); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const status = useAsync(() => (tab === 'server' ? api.callServer('status').catch((e) => ({ error: e.message })) : Promise.resolve(null)), [tab])
   const ok = (k) => (k === 'gmail' || k === 'outlook' ? status.data?.providers?.[k] : status.data?.[k])
+  const current = sections.find((x) => x.id === tab)
   return (
-    <div className="fin-stack">
-      <PageHead title="הגדרות" />
-      <div className="fin-grid">
-        {can('operate') && <SmartSettings />}
-        {recovery && <NewPassword />}
-        <MySecurity />
-        <Card title="החשבון שלי">
-          <ul className="fin-kv">
-            <li><span>אימייל</span><strong dir="ltr">{u?.email}</strong></li>
-            <li><span>תפקיד</span><strong>{ROLE[role]}</strong></li>
-            <li><span>חברות</span><strong>{me?.business_ids?.length ? me.business_ids.map((b) => nameOf(businesses, b)).join(', ') : 'כולן'}</strong></li>
-          </ul>
-        </Card>
-        {can('operate') && (
+    <div className="fin-settings">
+      <nav className="fin-settings__nav" aria-label="נושאי הגדרות">
+        <h2 className="fin-pagehead__title">הגדרות</h2>
+        <ul role="tablist">{sections.map((x) => <li key={x.id}><button type="button" role="tab" aria-selected={tab === x.id} className={tab === x.id ? 'is-on' : ''} onClick={() => pick(x.id)}><Icon name={x.icon} size={18} /> {x.label}</button></li>)}</ul>
+      </nav>
+      <div className="fin-settings__main" role="tabpanel" aria-label={current?.label}>
+        <h3 className="fin-settings__title">{current?.label}</h3>
+        {tab === 'account' && (
+          <div className="fin-stack">
+            {recovery && <NewPassword />}
+            <Card title="החשבון שלי">
+              <ul className="fin-kv">
+                <li><span>אימייל</span><strong dir="ltr">{u?.email}</strong></li>
+                <li><span>תפקיד</span><strong>{ROLE[role]}</strong></li>
+                <li><span>חברות</span><strong>{me?.business_ids?.length ? me.business_ids.map((b) => nameOf(businesses, b)).join(', ') : 'כולן'}</strong></li>
+              </ul>
+            </Card>
+            <MySecurity />
+          </div>
+        )}
+        {tab === 'companies' && <CompanySettings />}
+        {tab === 'engine' && <div className="fin-stack"><SmartSettings /></div>}
+        {tab === 'security' && <div className="fin-stack"><SecurityPolicy />
+          <Card title="איך המערכת מוגנת">
+            <ul className="fin-bullets">
+              <li><Icon name="shield" size={16} /> הרשאות נאכפות במסד הנתונים (RLS), לא רק במסכים</li>
+              <li><Icon name="shield" size={16} /> הקבצים בדלי פרטי. אין קישורים ציבוריים למסמכים</li>
+              <li><Icon name="shield" size={16} /> טוקנים של Google ו-Microsoft נשמרים בשרת בלבד, בהרשאת קריאה</li>
+              <li><Icon name="shield" size={16} /> כל פעולה נרשמת ביומן, וכל כניסה וניסיון שנכשל ביומן הכניסות</li>
+              <li><Icon name="shield" size={16} /> המערכת לא נמדדת ב-Google Analytics ולא נסרקת ע״י מנועי חיפוש</li>
+            </ul>
+          </Card></div>}
+        {tab === 'server' && (
           <Card title="חיבורי השרת">
             {status.loading ? <Skeleton lines={4} /> : status.data?.error ? <p className="fin-muted"><Pill tone="warn">לא זמין כרגע</Pill> בדיקת החיבורים לא הצליחה. נסו לרענן בעוד דקה.</p> : (
               <ul className="fin-setup">{ENV.map(([k, , what]) => <li key={k}>{ok(k) ? <Pill tone="ok">פועל</Pill> : <Pill tone="warn">לא מחובר</Pill>}<span>{what}</span></li>)}</ul>
@@ -186,26 +253,13 @@ export default function Settings() {
             )}
           </Card>
         )}
-        {can('manage') && (
-          <Card title="הגדרה ראשונה">
-            <ol className="fin-checklist">
-              <li><button type="button" className="fin-link" onClick={() => go('/companies')}>החברות בקבוצה</button>: שם, ח.פ, מייל רו״ח</li>
-              <li><button type="button" className="fin-link" onClick={() => go('/projects')}>הפרויקטים הפעילים</button> ומילות מפתח לזיהוי</li>
-              <li><button type="button" className="fin-link" onClick={() => go('/mailboxes')}>חיבור תיבות המייל</button></li>
-              <li><button type="button" className="fin-link" onClick={() => go('/users')}>הזמנת הצוות ורואה החשבון</button></li>
-              <li><button type="button" className="fin-link" onClick={() => go('/automations')}>כללי שיוך</button> לספקים הקבועים</li>
-            </ol>
-          </Card>
-        )}
-        <Card title="אבטחה">
-          <ul className="fin-bullets">
-            <li><Icon name="shield" size={16} /> הרשאות נאכפות במסד הנתונים (RLS), לא רק במסכים</li>
-            <li><Icon name="shield" size={16} /> הקבצים בדלי פרטי. אין קישורים ציבוריים למסמכים</li>
-            <li><Icon name="shield" size={16} /> טוקנים של Google ו-Microsoft נשמרים בשרת בלבד, בהרשאת קריאה</li>
-            <li><Icon name="shield" size={16} /> כל פעולה נרשמת ביומן. מסמך מאושר לא משתנה בלי שאדם יחזיר אותו לבדיקה</li>
-            <li><Icon name="shield" size={16} /> הצפנה בתעבורה (HTTPS) ובמנוחה (Supabase)</li>
+        {tab === 'more' && (
+          <ul className="fin-settings__links">
+            {[['/users', 'users', 'משתמשים והרשאות', 'הזמנות, תפקידים, חסימה וכניסות'], ['/categories', 'tag', 'קטגוריות הוצאה', 'הוספה ועריכה, אחוז מע״מ לקיזוז'], ['/automations', 'rules', 'כללים ואוטומציה', 'שיוך קבוע של ספקים, סף סכום'], ['/mailboxes', 'mail', 'תיבות מייל', 'Gmail ו-Outlook מחוברים'], ['/scanners', 'phone', 'מספרי WhatsApp', 'הטלפונים ששולחים חשבוניות'], ['/integrations', 'plug', 'תוכנת הנהלת חשבונות', 'ייצוא ומתאמים'], ['/cloud', 'cloud', 'סנכרון לענן', 'Google Drive ו-Dropbox'], ['/delivery', 'webhook', 'שליחה אוטומטית', 'Webhook ומייל לכל מסמך']]
+              .filter(([path]) => can('manage') || !['/users', '/delivery'].includes(path))
+              .map(([path, icon, title, sub]) => <li key={path}><button type="button" onClick={() => go(path)}><span className="fin-settings__icon"><Icon name={icon} size={19} /></span><span><strong>{title}</strong><small>{sub}</small></span><Icon name="next" size={16} /></button></li>)}
           </ul>
-        </Card>
+        )}
       </div>
     </div>
   )

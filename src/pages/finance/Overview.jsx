@@ -9,7 +9,7 @@ import { Empty, Icon, Pill, UploadZone, useAsync, Skeleton } from './ui.jsx'
 const ACTION = {
   created: 'נוסף מסמך', updated: 'עודכן', approved: 'אושר', rejected: 'נדחה', exported: 'יוצא', marked_duplicate: 'סומן כפול', ai_processed: 'נקרא ע״י AI',
   deleted: 'נמחק', connected: 'חוברה תיבה', disconnected: 'נותקה תיבה', invited: 'הוזמן משתמש', claimed_admin: 'הוגדר מנהל מערכת', cron_run: 'ריצה יומית',
-  split: 'פוצל בין פרויקטים', first_approval: 'חתימה ראשונה', merged: 'אוחד ספק', archived: 'הועבר לארכיון',
+  split: 'פוצל בין פרויקטים', attachment_added: 'נוסף נספח', attachment_removed: 'הוסר נספח', first_approval: 'חתימה ראשונה', merged: 'אוחד ספק', archived: 'הועבר לארכיון',
 }
 const ENTITY = { supplier: 'ספק', project: 'פרויקט', company: 'חברה', category: 'קטגוריה', rule: 'כלל', export: 'ייצוא', mailbox: 'תיבה', member: 'משתמש' }
 

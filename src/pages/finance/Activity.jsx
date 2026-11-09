@@ -13,7 +13,7 @@ const ACT = {
   split: 'פוצל בין פרויקטים', first_approval: 'חתימה ראשונה', merged: 'אוחד ספק', archived: 'הועבר לארכיון',
   sent_to_accountant: 'נשלח לרו״ח במייל', shared_by_email: 'שותף במייל', exported_excel: 'הורד קובץ Excel', exported_csv: 'הורד קובץ CSV', downloaded_originals: 'הורדו קבצים מקוריים',
   printed: 'הודפס', downloaded_document: 'הורד מסמך', saved_documents: 'נשמר בענן', test_passed: 'בדיקת חיבור עברה', test_failed: 'בדיקת חיבור נכשלה',
-  shared_whatsapp: 'נשלח בוואטסאפ', duplicate_confirmed: 'כפילות אושרה', duplicate_dismissed: 'כפילות נדחתה',
+  shared_whatsapp: 'נשלח בוואטסאפ', duplicate_confirmed: 'כפילות אושרה', duplicate_dismissed: 'כפילות נדחתה', attachment_added: 'נוסף נספח', attachment_removed: 'הוסר נספח',
 }
 const KINDS = [
   ['', 'הכול'],

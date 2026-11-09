@@ -11,6 +11,7 @@ const reportXlsx = (name, head, rows) => buildXlsx([{ name, columns: head.map((h
 import { Bars, Card, Empty, Icon, PageHead } from './ui.jsx'
 import Select from './Select.jsx'
 import Overview from './Overview.jsx'
+import { reportOf } from './CompanySettings.jsx'
 
 /* All totals come from stored records (validated by people), never from AI. */
 const REPORTS = [
@@ -43,16 +44,24 @@ export default function Reports() {
       case 'company': return { head: ['חברה', ...moneyHead], rows: group((d) => d.business_id, (k) => nameOf(businesses, k) || 'לא משויך'), chart: 4 }
       case 'project': return { head: ['פרויקט', ...moneyHead], rows: group((d) => d.project_id, (k) => nameOf(projects, k) || 'ללא פרויקט'), chart: 4 }
       case 'supplier': return { head: ['ספק', ...moneyHead], rows: group((d) => d.supplier_name, (k) => (k === '__none' ? 'לא ידוע' : k)), chart: 4 }
-      case 'vat': return {
-        head: ['חודש', 'מסמכים', 'מע״מ במסמכים', 'מע״מ לקיזוז', 'לא לקיזוז'],
-        rows: months.map((m) => {
-          const l = booked.filter((d) => period(d) === m)
+      case 'vat': {
+        // the company's VAT period (Settings › חברות ודיווח): a bi-monthly filer sees January–February, March–April…
+        const co = businesses.find((b) => b.id === biz)
+        const bi = co && reportOf(co).vat_period === 'bimonthly'
+        const periods = bi ? [...new Set(months.map((m) => { const [y, mm] = m.split('-').map(Number); return `${y}-${String(mm % 2 === 0 ? mm - 1 : mm).padStart(2, '0')}` }))] : months
+        const inPeriod = (d, m) => (bi ? [m, shiftMonth(m, 1)].includes(period(d)) : period(d) === m)
+        const label = (m) => (bi ? `${monthLabel(m).split(' ')[0]}–${monthLabel(shiftMonth(m, 1))}` : monthLabel(m))
+        return {
+        head: [bi ? 'תקופת דיווח (דו-חודשי)' : 'חודש', 'מסמכים', 'מע״מ במסמכים', 'מע״מ לקיזוז', 'לא לקיזוז'],
+        note: co ? `${co.name}: דיווח מע״מ ${bi ? 'דו-חודשי' : reportOf(co).vat_period === 'none' ? '— עוסק פטור, אין קיזוז' : 'חודשי'} (לפי הגדרות החברה).` : undefined,
+        rows: periods.map((m) => {
+          const l = booked.filter((d) => inPeriod(d, m))
           const vat = l.reduce((a, d) => a + (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.vat_amount) || 0), 0)
           const claim = l.reduce((a, d) => a + claimableVat(d, categories), 0)
-          return [monthLabel(m), l.length, vat, claim, vat - claim]
+          return [label(m), l.length, vat, claim, vat - claim]
         }),
         chart: 3,
-      }
+      } }
       case 'missing': {
         const by = {}
         for (const d of scoped.filter(counts)) if (d.supplier_name) (by[d.supplier_name] ||= new Set()).add(period(d))

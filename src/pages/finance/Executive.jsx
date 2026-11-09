@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
-import { ago, money } from './format.js'
+import { ago, date, money } from './format.js'
 import { overview, periodOf, monthName } from './insights.js'
 import { exportSheet } from './exportPackage.js'
 import DateRange from './DateRange.jsx'
 import Select from './Select.jsx'
-import { Empty, Icon, InfoTip } from './ui.jsx'
+import { Empty, Icon, InfoTip, Pill } from './ui.jsx'
+import { payState } from './ledger.js'
+import { unsureNumbers } from './Documents.jsx'
+import { useSession } from './session.js'
+import { ProviderLogo } from './logos.jsx'
+import { docDate, signedTotal } from './format.js'
 
 /* The group's financial picture in one screen: what was spent, where it went, which project costs most, who the main
    suppliers are, and what needs the CEO's attention. Every figure comes from stored documents (insights.js), follows
@@ -22,7 +27,12 @@ function Delta({ value, invert = false, label = 'מהתקופה הקודמת' })
 }
 
 export default function Executive() {
-  const { documents, businesses, projects, categories, allocations, go, can } = useFinance()
+  const { documents, businesses, projects, categories, allocations, members, go, can } = useFinance()
+  const me = useSession()
+  const firstName = (members.find((m) => m.user_id === me?.id)?.full_name || '').split(' ')[0]
+  const hour = new Date().getHours()
+  const hello = hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : 'ערב טוב'
+  const [feed, setFeed] = useState('all')
   const [pk, setPk] = useState(() => { try { return sessionStorage.getItem('fin-x-period') || 'month' } catch { return 'month' } })
   const [custom, setCustom] = useState({ from: '', to: '' })
   // the company in view lives in the address (?company=<id>), so a company picture can be bookmarked or shared
@@ -49,8 +59,8 @@ export default function Executive() {
     <div className="fin-x">
       <header className="fin-x__head">
         <div>
-          <h2 className="fin-x__title">סקירה פיננסית</h2>
-          <p className="fin-x__sub">{company ? company.name : 'כל החברות בקבוצה'} · {period.label} · עודכן {ago(last)}</p>
+          <h2 className="fin-x__title">{hello}{firstName ? `, ${firstName}` : ''}</h2>
+          <p className="fin-x__sub">סקירה פיננסית · {new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })} · {company ? company.name : 'כל החברות בקבוצה'} · {period.label} · עודכן {ago(last)}</p>
         </div>
         <div className="fin-x__controls">
           <Select value={pk} onChange={(e) => pickPeriod(e.target.value)} aria-label="תקופה">{PERIODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
@@ -111,6 +121,35 @@ export default function Executive() {
           <button type="button" onClick={() => go('/pending')}><span className="fin-x-label">ממתינים לבדיקה</span><strong className={`fin-x-kpi ${k.reviewing ? 'is-attn' : ''}`}>{k.reviewing}</strong><small>{k.processing ? `${k.processing} עוד בקריאה או לא נקראו` : 'כל השאר נקראו'}</small></button>
         </div>
       </section>
+
+      {(() => {
+        const scope = documents.filter((d) => !biz || d.business_id === biz)
+        const toCheck = scope.filter((d) => d.status === 'review')
+        const nums = scope.filter(unsureNumbers)
+        const ready = scope.filter((d) => d.status === 'approved' && !d.exported_at)
+        return (
+          <section className="fin-x-acts" aria-label="מה לעשות עכשיו">
+            <button type="button" onClick={() => go('/reports')} className="fin-x-act">
+              <span className="fin-x-act__icon"><Icon name="tag" size={18} /></span>
+              <span className="fin-x-act__label">מע״מ תשומות {period.label}</span>
+              <strong>{money(k.vatClaimable)}</strong>
+              <small>{k.vatPrev ? `${money(k.vatPrev)} בתקופה הקודמת` : 'לקיזוז לפי הקטגוריות; ההחלטה הסופית של רו״ח'}</small>
+            </button>
+            <button type="button" onClick={() => go(nums.length ? '/documents?status=numbers' : '/pending')} className={`fin-x-act ${toCheck.length ? 'is-attn' : ''}`}>
+              <span className="fin-x-act__icon"><Icon name="alert" size={18} /></span>
+              <span className="fin-x-act__label">לבדיקה</span>
+              <strong>{toCheck.length}</strong>
+              <small>{nums.length ? `${nums.length} מהם עם סכומים לא ודאיים` : toCheck.length ? `${money(toCheck.reduce((a, d) => a + signedTotal(d), 0))} ממתינים לאישור` : 'הכול נבדק'}</small>
+            </button>
+            <button type="button" onClick={() => go('/send')} className="fin-x-act">
+              <span className="fin-x-act__icon"><Icon name="send" size={18} /></span>
+              <span className="fin-x-act__label">מוכן לרו״ח</span>
+              <strong>{money(ready.reduce((a, d) => a + signedTotal(d), 0))}</strong>
+              <small>{ready.length ? `${ready.length === 1 ? 'מסמך אחד מאושר' : `${ready.length} מסמכים מאושרים`} שעוד לא נשלחו` : 'אין מסמכים מאושרים שממתינים'}</small>
+            </button>
+          </section>
+        )
+      })()}
 
       <div className="fin-x-grid">
         <div className="fin-x-main">
@@ -210,6 +249,23 @@ export default function Executive() {
                 ))}
               </ul>
             )}
+          </section>
+          <section className="fin-x-card fin-x-feed" aria-label="פעילות אחרונה">
+            <header><h3>פעילות אחרונה</h3><div className="fin-seg" role="group" aria-label="סינון">{[['all', 'הכול'], ['open', 'לא שולם'], ['review', 'לבדיקה']].map(([k, l]) => <button key={k} type="button" className={feed === k ? 'is-on' : ''} aria-pressed={feed === k} onClick={() => setFeed(k)}>{l}</button>)}</div></header>
+            <ul>
+              {documents.filter((d) => (!biz || d.business_id === biz) && !['archived'].includes(d.status) && (feed === 'all' || (feed === 'open' ? payState(d) === 'open' : d.status === 'review')))
+                .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 8).map((d) => {
+                  const ps = payState(d)
+                  return (
+                    <li key={d.id}><button type="button" onClick={() => go(`/documents/${d.id}`)}>
+                      <span className="fin-x-feed__src">{d.source === 'whatsapp' ? <ProviderLogo name="whatsapp" size={15} /> : <Icon name={d.mailbox_id ? 'mail' : 'upload'} size={15} />}</span>
+                      <span className="fin-x-feed__main"><strong>{d.supplier_name || d.file_name || 'מסמך'}</strong><small>{date(docDate(d))} · {ago(d.created_at)}</small></span>
+                      <span className="fin-x-feed__side"><b>{money(d.total_amount, d.currency)}</b>{ps === 'proof' ? <Pill tone="ok">שולם</Pill> : ps === 'open' ? <Pill tone="warn">לא שולם</Pill> : ps === 'manual' ? <Pill tone="info">סומן כשולם</Pill> : d.status === 'review' ? <Pill tone="muted">לבדיקה</Pill> : null}</span>
+                    </button></li>
+                  )
+                })}
+            </ul>
+            <button type="button" className="fin-link" onClick={() => go('/documents')}>לכל המסמכים ←</button>
           </section>
           <section className="fin-x-card" aria-label="אמינות הנתונים">
             <header><h3>אמינות הנתונים</h3><InfoTip label="על אמינות הנתונים">כמה ממסמכי התקופה נקראו, כמה אדם בדק ואישר, וכמה עוד דורשים בדיקה. הסכומים כוללים גם מסמכים שעוד לא אושרו.</InfoTip></header>

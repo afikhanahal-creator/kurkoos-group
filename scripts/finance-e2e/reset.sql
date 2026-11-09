@@ -17,3 +17,4 @@ truncate public.fin_skipped;
 update public.fin_settings set value = '""' where key = 'accountant_email';
 update public.fin_settings set value = '[]' where key = 'mfa_required_roles';
 truncate public.fin_login_events;
+update public.fin_settings set value = 'false' where key = 'onboarding_enabled';

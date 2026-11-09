@@ -152,6 +152,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
   const body = readBody(req)
   // the sign-in screen reports a failed attempt before there is a session (rate limited, no password ever)
+  // what the sign-in screen may know before a session: which social providers were enabled in Supabase Auth
+  // (FINANCE_SSO_PROVIDERS=google,azure, set only after the providers really work); nothing else
+  if (body.action === 'public-config') { res.status(200).json({ sso: String(process.env.FINANCE_SSO_PROVIDERS || '').split(',').map((x) => x.trim().toLowerCase()).filter((x) => ['google', 'azure'].includes(x)) }); return }
   if (body.action === 'login-failed') {
     if (limited(`fail:${String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0]}`, 60)) { res.status(429).json({ error: 'יותר מדי ניסיונות' }); return }
     res.status(200).json(await loginFailed(req, body)); return

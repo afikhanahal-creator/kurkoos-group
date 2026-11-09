@@ -1562,3 +1562,93 @@ language sql stable security definer set search_path = '' as $$
     from public.fin_members m where m.user_id = auth.uid() and m.active), false)
 $$;
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v13 (2026-11-09): a first-run welcome (name, WhatsApp phone, connect the inbox) once per person
+-- ============================================================
+alter table public.fin_members add column if not exists onboarded_at timestamptz;
+-- everyone who is already working in the system counts as onboarded; only people who join from now on see the welcome
+update public.fin_members set onboarded_at = coalesce(onboarded_at, created_at, now()) where onboarded_at is null and created_at < now() - interval '1 minute';
+insert into public.fin_settings (key, value) values ('onboarding_enabled', 'true') on conflict (key) do nothing;
+
+create or replace function public.fin_my_security() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('role', m.role, 'active', m.active, 'mfa_required', m.role = any(public.fin_mfa_roles()),
+    'idle_minutes', coalesce((select (value #>> '{}')::int from public.fin_settings where key = 'idle_minutes'), 30),
+    'full_name', m.full_name,
+    'onboard', m.onboarded_at is null and coalesce((select (value #>> '{}')::boolean from public.fin_settings where key = 'onboarding_enabled'), true))
+  from public.fin_members m where m.user_id = auth.uid()
+$$;
+
+-- the welcome's last step: my own name (members cannot edit their own row otherwise) and "done"
+create or replace function public.fin_finish_onboarding(p_name text default null) returns void
+language sql volatile security definer set search_path = '' as $$
+  update public.fin_members
+     set onboarded_at = now(),
+         full_name = coalesce(nullif(btrim(left(p_name, 120)), ''), full_name)
+   where user_id = auth.uid();
+$$;
+revoke all on function public.fin_finish_onboarding(text) from public, anon;
+grant execute on function public.fin_finish_onboarding(text) to authenticated;
+notify pgrst, 'reload schema';
+
+-- v13.1: how each company reports — VAT period, type of business, fiscal year, currency and date format, the
+-- accountant's office, and the file formats sent to them. Edited in Settings › חברות ודיווח.
+alter table public.fin_businesses add column if not exists report_settings jsonb not null default '{}'::jsonb;
+notify pgrst, 'reload schema';
+
+-- v13.2: attachments (נספחים) — extra files (a delivery note, a signed order, a payment slip) or a link to another
+-- document. Visible to whoever can see the document; every add and remove is written to the document's history.
+create table if not exists public.fin_document_attachments (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references public.fin_documents(id) on delete cascade,
+  kind text not null check (kind in ('file', 'link')),
+  file_path text,
+  file_name text,
+  file_mime text,
+  file_size int,
+  linked_document_id uuid references public.fin_documents(id) on delete cascade,
+  note text,
+  created_by uuid default auth.uid(),
+  created_at timestamptz default now(),
+  check ((kind = 'file' and file_path is not null) or (kind = 'link' and linked_document_id is not null))
+);
+create index if not exists fin_attachments_doc on public.fin_document_attachments (document_id, created_at);
+create unique index if not exists fin_attachments_link_uq on public.fin_document_attachments (document_id, linked_document_id) where kind = 'link';
+alter table public.fin_document_attachments enable row level security;
+revoke all on public.fin_document_attachments from anon;
+grant select, insert, delete on public.fin_document_attachments to authenticated;
+drop policy if exists "fin_attachments read" on public.fin_document_attachments;
+drop policy if exists "fin_attachments insert" on public.fin_document_attachments;
+drop policy if exists "fin_attachments delete" on public.fin_document_attachments;
+-- the document subquery runs under the caller's own document policy: no document, no attachment
+create policy "fin_attachments read" on public.fin_document_attachments for select to authenticated using (exists (select 1 from public.fin_documents d where d.id = document_id));
+create policy "fin_attachments insert" on public.fin_document_attachments for insert to authenticated with check (
+  public.fin_has_role(array['admin', 'finance_manager', 'employee']) and created_by = auth.uid()
+  and exists (select 1 from public.fin_documents d where d.id = document_id)
+  and (linked_document_id is null or exists (select 1 from public.fin_documents d2 where d2.id = linked_document_id))
+  and (file_path is null or file_path like 'uploads/attachments/%'));
+create policy "fin_attachments delete" on public.fin_document_attachments for delete to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or created_by = auth.uid());
+
+create or replace function public.fin_attachment_audit() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare r record := coalesce(new, old); mail text;
+begin
+  select email into mail from public.fin_members where user_id = auth.uid();
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+  values ('document', r.document_id::text, case when tg_op = 'INSERT' then 'attachment_added' else 'attachment_removed' end,
+          jsonb_build_object('kind', r.kind, 'file_name', r.file_name, 'linked_document_id', r.linked_document_id), auth.uid(), coalesce(mail, 'agent'));
+  return r;
+end $$;
+drop trigger if exists fin_attachment_audit on public.fin_document_attachments;
+create trigger fin_attachment_audit after insert or delete on public.fin_document_attachments for each row execute function public.fin_attachment_audit();
+
+-- a file is readable when its document is, or when it is an attachment of a document the caller can see
+drop policy if exists "finance docs read" on storage.objects;
+create policy "finance docs read" on storage.objects for select to authenticated
+  using (bucket_id = 'finance-docs' and (
+    exists (select 1 from public.fin_documents d where d.file_path = storage.objects.name)
+    or exists (select 1 from public.fin_document_attachments a where a.file_path = storage.objects.name)
+    or (owner = auth.uid() and public.fin_has_role(array['admin', 'finance_manager', 'employee']))
+  ));
+notify pgrst, 'reload schema';

@@ -4,9 +4,12 @@ import { supabase, hasSupabase } from '../../lib/supabase.js'
 import { useAuth } from '../../lib/useAuth.js'
 import * as api from './api.js'
 import { ROLE, can } from './format.js'
-import { ConfirmHost, Icon, Skeleton } from './ui.jsx'
+import { ConfirmHost, Icon, Modal, Skeleton, UploadZone } from './ui.jsx'
 import { markLedger } from './ledger.js'
-import { Login, SecondStep, useIdleSignOut, deviceId } from './auth.jsx'
+import Onboarding from './Onboarding.jsx'
+import { prettyPhone } from './phone.js'
+import { ProviderLogo } from './logos.jsx'
+import { InviteWelcome, Login, SecondStep, linkType, useIdleSignOut, deviceId } from './auth.jsx'
 import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
 import CommandPalette from './CommandPalette.jsx'
@@ -61,7 +64,7 @@ export const NAV = [
   // where documents come from
   { to: '/connections', label: 'חיבורים', icon: 'plug', roles: ['admin', 'finance_manager', 'employee'], el: <Connections />, group: 'קליטה' },
   { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'קליטה' },
-  { to: '/scanners', label: 'סורקים ניידים', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
+  { to: '/scanners', label: 'מספרי WhatsApp', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
   // everything else, folded away until needed
   { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
   { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'מתקדם' },
@@ -152,6 +155,8 @@ const THEME_KEY = 'kurkoos-adm-theme'
 
 export default function FinanceApp() {
   const session = useAuth()
+  // an invited person arrives signed in from the invitation link: they choose a password before anything else
+  const [welcome, setWelcome] = useState(() => linkType === 'invite')
   // after sign-in: my role, whether it requires the second step (TOTP), and the idle timeout. Data loads only once
   // the second step passed; the database refuses it before that anyway (fin_has_role checks the token's aal).
   const [sec, setSec] = useState(null)        // null = not checked yet · { role, mfa_required, idle_minutes, aal } · false = no member row
@@ -166,7 +171,7 @@ export default function FinanceApp() {
       if (!alive) return
       const v = me ? { ...me, aal: lvl?.currentLevel || 'aal1', next: lvl?.nextLevel || 'aal1' } : false
       setSec(v)
-      try { if (v && !(v.mfa_required && v.aal !== 'aal2')) sessionStorage.setItem(cacheKey, JSON.stringify(v)) } catch { /* noop */ }
+      try { if (v && !(v.mfa_required && v.aal !== 'aal2') && !v.onboard) sessionStorage.setItem(cacheKey, JSON.stringify(v)) } catch { /* noop */ }
     })()
     return () => { alive = false }
   }, [session?.access_token]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -223,11 +228,22 @@ export default function FinanceApp() {
     const before = m?.getAttribute('content')
     if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'robots'); document.head.appendChild(m) }
     m.setAttribute('content', 'noindex, nofollow, noarchive')
+    // installable from a phone: its own manifest and standalone metas, only while the finance app is on screen
+    const added = []
+    const tag = (name, attrs) => { const el = document.createElement(name); for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); document.head.appendChild(el); added.push(el) }
+    const otherManifest = document.querySelector('link[rel="manifest"]'); const prevManifestHref = otherManifest?.getAttribute('href'); if (otherManifest) otherManifest.setAttribute('href', '/finance.webmanifest'); else tag('link', { rel: 'manifest', href: '/finance.webmanifest' })
+    const themeMeta = document.querySelector('meta[name="theme-color"]'); const prevTheme = themeMeta?.getAttribute('content'); if (themeMeta) themeMeta.setAttribute('content', '#07293a')
+    tag('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }); tag('meta', { name: 'mobile-web-app-capable', content: 'yes' }); tag('meta', { name: 'apple-mobile-web-app-title', content: 'Kurkoos Finance' }); tag('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }); tag('link', { rel: 'apple-touch-icon', href: '/kurkoos-groip-logo.png' })
+    const cleanupInstall = () => { added.forEach((el) => el.remove()); if (otherManifest && prevManifestHref) otherManifest.setAttribute('href', prevManifestHref); if (themeMeta && prevTheme) themeMeta.setAttribute('content', prevTheme) }
     // and no measurement: any Google tag loaded by a public page before stays silent here
     for (const k of Object.keys(window)) if (k.startsWith('ga-disable-')) window[k] = true
-    return () => { if (before) m.setAttribute('content', before); else m.remove() }
+    return () => { cleanupInstall(); if (before) m.setAttribute('content', before); else m.remove() }
   }, [])
   const [capture, setCapture] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  // the office WhatsApp number, for the top bar (one status call per sign-in)
+  const [waNumber, setWaNumber] = useState('')
+  useEffect(() => { if (!ready) return; api.callServer('status').then((r) => setWaNumber(r?.whatsapp?.configured ? r.whatsapp.number || '' : '')).catch(() => {}) }, [ready])
   const ctx = useMemo(() => ({ ...data, role, can: (w) => can(role, w), go: (p) => navigate(`${BASE}${p}`) }), [data, role, navigate])
   const nav = NAV.filter((n) => role && n.roles.includes(role))
   const sub = pathname.slice(BASE.length).replace(/\/$/, '') || ''
@@ -245,11 +261,13 @@ export default function FinanceApp() {
   if (!hasSupabase) return <p className="fin-msg">Supabase לא מוגדר בסביבה הזו.</p>
   if (!session && session !== undefined) return <Login />
   if (session === undefined || (session && sec === null)) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
+  if (welcome && session) return <InviteWelcome email={session.user?.email || ''} onDone={() => setWelcome(false)} />
   if (mfaPending) return <SecondStep mfaRequired onDone={() => supabase.auth.refreshSession().then(() => setSec((x) => ({ ...x, aal: 'aal2' })))} />
   if (sec !== false && data.loading && !data.me) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
   const email = session.user?.email || ''
   const myName = data.members.find((m) => m.user_id === session.user?.id)?.full_name || ''
   if (data.error && !data.me) return <div className="fin-login" dir="rtl"><div className="fin-login__box"><h1>שגיאה</h1><p className="fin-error" role="alert">{data.error}</p></div></div>
+  if (role && sec?.onboard) return <Onboarding session={session} sec={sec} onDone={() => setSec((x) => ({ ...x, onboard: false }))} />
   if (!role) return <NoAccess me={data.me} email={email} onClaimed={data.reload} />
 
   return (
@@ -267,6 +285,9 @@ export default function FinanceApp() {
             <span className="fin__org-meta"><strong>קבוצת קורקוס</strong><small>{data.businesses.length === 1 ? 'חברה אחת' : `${data.businesses.length} חברות`} · {ROLE[role]}</small></span>
             <Icon name="next" size={17} />
           </Link>
+          {['admin', 'finance_manager'].includes(role) && (
+            <Link to={`${BASE}/mailboxes?old=1`} className="fin__drawer-link" onClick={() => setNavOpen(false)}><Icon name="history" size={18} /><span>קבלות ישנות</span><small>סריקת חשבוניות מתקופה מוקדמת</small></Link>
+          )}
           <div className="fin__brand-row">
             <Link to={BASE} className="fin__brand" aria-label="Kurkoos Finance, דף הבית">
               <img src="/kurkoos-logo.svg" alt="" />
@@ -274,6 +295,7 @@ export default function FinanceApp() {
             </Link>
             <button type="button" className="fin__collapse" onClick={toggleRail} aria-label={collapsed ? 'הרחבת התפריט' : 'כיווץ התפריט'} title={collapsed ? 'הרחבת התפריט' : 'כיווץ התפריט'} aria-pressed={collapsed}><Icon name="back" size={17} /></button>
           </div>
+          {can(role, 'upload') && <button type="button" className="fin__upload" onClick={() => { setNavOpen(false); setUploading(true) }}><span><Icon name="plus" size={18} /></span> העלאת מסמכים</button>}
           <nav className="fin__nav">
             {GROUPS.filter((g) => nav.some((n) => n.group === g)).map((g) => {
             const foldable = g === FOLDED && nav.length > 12
@@ -301,12 +323,7 @@ export default function FinanceApp() {
             })}
           </nav>
           <div className="fin__side-foot">
-            {role === 'admin' && <a href="/admin" className="fin__back"><Icon name="back" size={16} /> ניהול האתר</a>}
-            <div className="fin__user">
-              <span className="fin__avatar" aria-hidden="true">{email.slice(0, 1).toUpperCase()}</span>
-              <span className="fin__user-meta"><strong>{ROLE[role]}</strong><small dir="ltr">{email}</small></span>
-              <button type="button" className="fin-icon-btn" onClick={() => supabase.auth.signOut()} aria-label="יציאה" title="יציאה"><Icon name="logout" /></button>
-            </div>
+            <ProfileMenu name={myName} email={email} role={role} theme={theme} setTheme={setTheme} waNumber={waNumber} go={(p) => { setNavOpen(false); navigate(`${BASE}${p}`) }} />
           </div>
         </aside>
         {navOpen && <button type="button" className="fin__scrim" aria-label="סגירת התפריט" onClick={() => setNavOpen(false)} />}
@@ -318,6 +335,7 @@ export default function FinanceApp() {
             <button type="button" className="fin-searchbar" onClick={() => setCmd(true)} aria-label="חיפוש (Ctrl+K)">
               <Icon name="search" size={17} /><span>חיפוש מסמך, ספק או פרויקט</span><kbd>⌘K</kbd>
             </button>
+            {waNumber && <WaChip number={waNumber} canManage={can(role, 'upload')} go={(p) => navigate(`${BASE}${p}`)} />}
             {['admin', 'finance_manager'].includes(role) && (
               <Link to={`${BASE}/mailboxes?old=1`} className="fin-chiplink" title="סריקת חשבוניות מתקופה מוקדמת יותר">
                 <Icon name="history" size={17} /><span>קבלות ישנות</span>
@@ -351,9 +369,88 @@ export default function FinanceApp() {
           <button type="button" onClick={() => setNavOpen(true)} aria-label="עוד" aria-expanded={navOpen} aria-controls="fin-side"><Icon name="menu" size={21} /><span>עוד</span></button>
         </nav>
         {capture && <Suspense fallback={null}><CaptureReceipt onClose={() => setCapture(false)} /></Suspense>}
+        {uploading && <Modal title="העלאת מסמכים" onClose={() => setUploading(false)} footer={<><button type="button" className="fin-btn" onClick={() => { setUploading(false); navigate(`${BASE}/documents?status=new`) }}>למסמכים החדשים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setUploading(false)}>סגירה</button></>}><UploadZone onDone={data.reload} /><p className="fin-muted fin-small">PDF או תמונה, עד 12MB, אחד או כמה ביחד. המסמכים נקראים ברקע ומחכים לבדיקה ב"חשבוניות חדשות".</p></Modal>}
         <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav} />
         <ConfirmHost />
       </div>
     </Ctx.Provider>
+  )
+}
+
+/* "send on WhatsApp" in the top bar: the office number, copy, and the way to the connected numbers */
+function WaChip({ number, canManage, go }) {
+  const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const box = useRef(null)
+  useEffect(() => {
+    if (!open) return undefined
+    const away = (e) => { if (!box.current?.contains(e.target)) setOpen(false) }
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', away); document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc) }
+  }, [open])
+  const copy = async (e) => { e.stopPropagation(); try { await navigator.clipboard.writeText(`+${number}`); setCopied(true); setTimeout(() => setCopied(false), 1600) } catch { /* visible to copy by hand */ } }
+  return (
+    <span className="fin-wachip" ref={box}>
+      <button type="button" className="fin-wachip__btn" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-haspopup="dialog">
+        <span className="fin-wachip__icon"><ProviderLogo name="whatsapp" size={16} /></span>
+        <span className="fin-wachip__text"><small>שליחה ב-WhatsApp</small><strong dir="ltr">{prettyPhone(number)}</strong></span>
+      </button>
+      <span role="button" tabIndex={0} className="fin-wachip__copy" onClick={copy} onKeyDown={(e) => { if (e.key === 'Enter') copy(e) }} aria-label="העתקת המספר" title="העתקת המספר"><Icon name={copied ? 'check' : 'copy'} size={15} /></span>
+      {open && (
+        <div className="fin-wachip__pop" role="dialog" aria-label="מספר ה-WhatsApp של המשרד">
+          <strong>מספר ה-WhatsApp של קורקוס</strong>
+          <p>שולחים אליו חשבוניות בצילום או כקובץ, והן נכנסות ישירות למערכת ונקראות.</p>
+          <p className="fin-muted">השליחה זמינה ממספרים שאושרו בלבד.</p>
+          {canManage && <button type="button" className="fin-link" onClick={() => { setOpen(false); go('/scanners') }}>ניהול מספרים מחוברים ←</button>}
+        </div>
+      )}
+    </span>
+  )
+}
+
+/* the person at the bottom of the menu: profile, managing the system, appearance, help, sign out. An internal system:
+   no billing or plans. Opens upward; Escape or a click outside closes it. */
+function ProfileMenu({ name, email, role, theme, setTheme, waNumber, go }) {
+  const [open, setOpen] = useState(false)
+  const box = useRef(null)
+  useEffect(() => {
+    if (!open) return undefined
+    const away = (e) => { if (!box.current?.contains(e.target)) setOpen(false) }
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', away); document.addEventListener('keydown', esc)
+    setTimeout(() => box.current?.querySelector('.fin-profile__pop button')?.focus(), 0)
+    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc) }
+  }, [open])
+  const item = (icon, label, onClick, cls = '') => <button type="button" role="menuitem" className={cls} onClick={() => { setOpen(false); onClick() }}><Icon name={icon} size={17} /> {label}</button>
+  const admin = role === 'admin'; const ops = ['admin', 'finance_manager'].includes(role)
+  return (
+    <div className="fin-profile" ref={box}>
+      {open && (
+        <div className="fin-profile__pop" role="menu" aria-label="תפריט המשתמש">
+          {item('users', 'הפרופיל שלי', () => go('/settings?tab=account'))}
+          {ops && <><span className="fin-profile__label">ניהול המערכת</span>
+            {item('settings', 'הגדרות', () => go('/settings'))}
+            {item('company', 'חברות ודיווח', () => go('/settings?tab=companies'))}
+            {admin && item('shield', 'משתמשים והרשאות', () => go('/users'))}
+            {item('plug', 'חיבורים', () => go('/connections'))}
+          </>}
+          <span className="fin-profile__sep" />
+          <div className="fin-profile__theme" role="group" aria-label="מראה">
+            <button type="button" className={theme !== 'dark' ? 'is-on' : ''} aria-pressed={theme !== 'dark'} onClick={() => setTheme('light')}><Icon name="sun" size={15} /> בהיר</button>
+            <button type="button" className={theme === 'dark' ? 'is-on' : ''} aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')}><Icon name="moon" size={15} /> כהה</button>
+          </div>
+          <span className="fin-profile__sep" />
+          {waNumber && <a role="menuitem" href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}><ProviderLogo name="whatsapp" size={16} /> שליחת מסמך ב-WhatsApp</a>}
+          {admin && <a role="menuitem" href="/admin" onClick={() => setOpen(false)}><Icon name="back" size={17} /> ניהול האתר</a>}
+          {item('logout', 'התנתקות', () => supabase.auth.signOut(), 'is-danger')}
+        </div>
+      )}
+      <button type="button" className="fin-profile__btn" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-haspopup="menu" aria-label={`תפריט המשתמש: ${name || email}`}>
+        <span className="fin__avatar" aria-hidden="true">{(name || email).trim().slice(0, 1).toUpperCase()}</span>
+        <span className="fin__user-meta"><strong>{name || ROLE[role]}</strong><small dir="ltr">{name ? ROLE[role] : email}</small></span>
+        <Icon name="chev" size={15} style={{ transform: open ? 'none' : 'rotate(180deg)' }} />
+      </button>
+    </div>
   )
 }

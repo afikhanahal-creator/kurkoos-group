@@ -644,8 +644,9 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 }
 @media (max-width: 900px) {
   .fin { grid-template-columns: 1fr; }
-  .fin__side { position: fixed; inset-block: 0; inset-inline-start: 0; width: min(290px, 86vw); z-index: var(--z-pop); transform: translateX(105%); transition: transform var(--dur-slow) ease; box-shadow: var(--float); background: var(--sheet); }
-  .fin__side.is-open { transform: none; }
+  .fin__side { position: fixed; inset-block: 0; inset-inline-start: 0; width: min(290px, 86vw); z-index: var(--z-pop); transform: translateX(105%); visibility: hidden; transition: transform var(--dur-slow) ease, visibility 0s linear var(--dur-slow); box-shadow: var(--float); background: var(--sheet); }
+  /* closed, the drawer waits outside the screen; hidden too, or iPhone Safari lets the page be dragged sideways to it */
+  .fin__side.is-open { transform: none; visibility: visible; transition: transform var(--dur-slow) ease, visibility 0s; }
   .fin__scrim { display: block; position: fixed; inset: 0; z-index: var(--z-overlay); background: rgba(7, 26, 38, 0.38); border: 0; }
   .fin .fin__burger { display: inline-grid; }
   .fin__top { padding: 0.45rem 0.75rem; min-height: 54px; gap: 0.4rem; }
@@ -2275,4 +2276,29 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-toggle { position: relative; }
   .fin-toggle::after { content: ''; position: absolute; inset: -11px -4px; }
   .fin-viewer__pct, .fin__content .fin-chipbtn, .fin-chipbtn { min-height: 44px; }
+}
+
+/* phones: no zoom and no sideways jump.
+   - iPhone Safari zooms into any field under 16px when it is focused, and the page can then be dragged sideways.
+   - While typing in the chat, the bottom tab bar steps aside so the keyboard, the box and the answer have the screen.
+   - A question card is one button (a tap sends it), and the answers keep clear of the box. */
+@media (max-width: 900px) {
+  .fin :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) { font-size: 16px !important; }
+  .fin { touch-action: manipulation; }
+  .fin:has(.fin-chat__composer textarea:focus) .fin-tabbar { display: none; }
+  .fin:has(.fin-chat__composer textarea:focus) .fin-chat__composer { bottom: calc(8px + var(--safe-b, 0px)); }
+  .fin-chat__body { padding-bottom: 28px; scroll-margin-bottom: 120px; }
+  .fin-chat__row { scroll-margin-top: 76px; }
+  .fin-chat__end { scroll-margin-bottom: 110px; }
+}
+@media (hover: none) {
+  .fin-chat__card-go { display: none; }
+  .fin-chat__card-q { padding-inline-end: 16px; }
+}
+/* phones: a report's total row is a card like the rows above it, a little stronger */
+@media (max-width: 760px) {
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot tr { display: grid; grid-template-columns: 1fr; gap: 0.15rem; background: var(--wash); border: 1px solid var(--line-2); border-radius: var(--r-l); padding: 0.75rem 0.85rem; font-weight: 700; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot td { display: flex; justify-content: space-between; gap: 1rem; padding: 0.1rem 0; border: 0; grid-column: 1 / -1 !important; grid-row: auto !important; background: none !important; position: static; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot td.fin-td-main { margin-bottom: 0.25rem; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table tfoot td[data-label]::before { content: attr(data-label); color: var(--muted); font-weight: 400; }
 }

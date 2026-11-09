@@ -21,26 +21,39 @@ export default function Assistant() {
   const [msgs, setMsgs] = useState([])          // { id, who: 'me' | 'ai', text?, result?, error? }
   const [phase, setPhase] = useState(0)
   useEffect(() => { if (!busy) { setPhase(0); return undefined } const t = setInterval(() => setPhase((x) => Math.min(PHASES.length - 1, x + 1)), 1300); return () => clearInterval(t) }, [busy])
-  const fill = (text) => { setQ(text); requestAnimationFrame(() => input.current?.focus()) }
+  // a phone: a tap on a question card sends it (no second tiny button), and the keyboard is not reopened after each
+  // answer, so the page does not jump under the finger
+  const touch = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches
+  const fill = (text) => { if (touch) { send(text); return } setQ(text); requestAnimationFrame(() => input.current?.focus()) }
   const input = useRef(null)
   const end = useRef(null)
-  useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [msgs.length, busy])
+  const lastAi = useRef(null)
+  const sending = useRef(false)   // a second tap before React re-renders must not send twice
+  // nothing to scroll to before the first question; a new answer is shown from its top, the waiting bubble at the end
+  useEffect(() => {
+    if (!msgs.length && !busy) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    if (!busy && msgs[msgs.length - 1]?.who === 'ai') lastAi.current?.scrollIntoView({ behavior: reduce, block: 'start' })
+    else end.current?.scrollIntoView({ behavior: reduce, block: 'end' })
+  }, [msgs.length, busy]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = async (text) => {
     const question = (text ?? q).trim()
-    if (question.length < 3 || busy) return
+    if (question.length < 3 || busy || sending.current) return
+    sending.current = true
     const history = msgs.filter((m) => m.who === 'ai' && m.result).slice(-6).map((m) => ({ q: m.result.question, intent: m.result.intent, period: m.result.period, scope: m.result.scope }))
     setMsgs((x) => [...x, { id: `q${Date.now()}`, who: 'me', text: question }]); setQ(''); setBusy(true)
     try {
-      const r = await api.callServer('ask', { question, history })
+      const r = await api.callServer('ask', { question, history }, { timeout: 55000 })
       setMsgs((x) => [...x, { id: `a${Date.now()}`, who: 'ai', result: r }])
     } catch (e) {
       setMsgs((x) => [...x, { id: `e${Date.now()}`, who: 'ai', error: /credit balance|billing/i.test(e.message) ? 'אין יתרה בחשבון Claude, ולכן אי אפשר לפענח שאלות כרגע. מנהל המערכת מוסיף קרדיט ב-console.anthropic.com.'
+        : e.name === 'TimeoutError' || e.name === 'AbortError' ? 'התשובה מתעכבת יותר מדי, כנראה עומס זמני אצל Claude. השאלה נשמרה בתיבה, אפשר לשלוח שוב בעוד רגע.'
         : /failed to fetch|networkerror|load failed/i.test(e.message) ? 'אין חיבור לשרת כרגע. בודקים את האינטרנט ושולחים שוב.'
         : /[\u0590-\u05FF]/.test(e.message) && !/^שגיאה \d+$/.test(e.message) ? e.message
         : 'לא הצלחתי לענות כרגע בגלל תקלה בשרת. השאלה נשמרה בתיבה, אפשר לשלוח שוב בעוד רגע.' }])
       setQ((cur) => cur || question)
-    } finally { setBusy(false); input.current?.focus() }
+    } finally { sending.current = false; setBusy(false); if (!touch) input.current?.focus() }
   }
   const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }
   const excel = (ids, title) => exportSheet(documents.filter((d) => ids.includes(d.id)), 'excel', { businesses, projects }, {}, title)
@@ -64,7 +77,7 @@ export default function Assistant() {
             <div className="fin-chat__cards">
               {[...EXAMPLES.slice(0, 4), ...COMPLEX].map((e) => (
                 <div key={e} className={`fin-chat__card ${COMPLEX.includes(e) ? 'is-complex' : ''}`}>
-                  <button type="button" className="fin-chat__card-q" onClick={() => fill(e)} title="לחיצה ממלאת את תיבת השאלה, אפשר לערוך לפני השליחה">{COMPLEX.includes(e) && <em>שאלה מורכבת</em>}{e}</button>
+                  <button type="button" className="fin-chat__card-q" onClick={() => fill(e)} title={touch ? 'שליחת השאלה' : 'לחיצה ממלאת את תיבת השאלה, אפשר לערוך לפני השליחה'}>{COMPLEX.includes(e) && <em>שאלה מורכבת</em>}{e}</button>
                   <button type="button" className="fin-chat__card-go" onClick={() => send(e)} disabled={busy} aria-label={`שליחה: ${e}`} title="שליחה כמו שהיא"><Icon name="send" size={15} /></button>
                 </div>
               ))}
@@ -75,7 +88,7 @@ export default function Assistant() {
         {msgs.map((m, i) => (m.who === 'me' ? (
           <div key={m.id} className="fin-chat__row is-me"><p className="fin-chat__bubble is-me">{m.text}</p></div>
         ) : (
-          <div key={m.id} className="fin-chat__row is-ai">
+          <div key={m.id} className="fin-chat__row is-ai" ref={i === msgs.length - 1 ? lastAi : undefined}>
             <span className="fin-chat__avatar" aria-hidden="true"><Icon name="sparkle" size={16} /></span>
             <div className="fin-chat__bubble is-ai">
               {m.error ? <p className="fin-error" role="alert">{m.error}</p> : <Answer r={m.result} openDocs={openDocs} excel={excel} />}
@@ -86,7 +99,7 @@ export default function Assistant() {
           </div>
         )))}
         {busy && <div className="fin-chat__row is-ai"><span className="fin-chat__avatar" aria-hidden="true"><Icon name="sparkle" size={16} /></span><div className="fin-chat__bubble is-ai fin-chat__thinking" role="status"><span className="fin-chat__typing" aria-hidden="true"><i /><i /><i /></span><span>{PHASES[phase]}</span></div></div>}
-        <div ref={end} />
+        <div ref={end} className="fin-chat__end" />
       </div>
 
       <form className="fin-chat__composer" onSubmit={(e) => { e.preventDefault(); send() }}>

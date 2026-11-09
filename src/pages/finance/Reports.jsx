@@ -119,8 +119,8 @@ export default function Reports() {
           <div className="fin-table-wrap">
             <table className="fin-table fin-table--plain">
               <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0][i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>
-              <tbody>{report.rows.map((r, n) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : undefined} className={[report.ids ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={typeof c === 'number' ? 'fin-num' : ''}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
-              {totals && <tfoot><tr>{totals.map((t, i) => <td key={i} className={i ? 'fin-num' : ''}>{typeof t === 'number' ? (isMoney(i) ? money(t) : t) : t}</td>)}</tr></tfoot>}
+              <tbody>{report.rows.map((r, n) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : undefined} className={[report.ids ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
+              {totals && <tfoot><tr>{totals.map((t, i) => <td key={i} className={i ? 'fin-num' : 'fin-td-main'} data-label={i ? report.head[i] : undefined}>{typeof t === 'number' ? (isMoney(i) ? money(t) : t) : t}</td>)}</tr></tfoot>}
             </table>
           </div>
         </div>

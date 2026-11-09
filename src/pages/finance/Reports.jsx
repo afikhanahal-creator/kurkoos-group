@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, recentMonths } from './format.js'
@@ -94,6 +94,12 @@ export default function Reports() {
   }, [kind, booked, scoped, months, businesses, projects, categories, to])
 
   const name = `${REPORTS.find((r) => r[0] === kind)[1]}_${from}_${to}${biz ? `_${nameOf(businesses, biz)}` : ''}`
+  // on a phone the month reports read newest first, top to bottom (the table on a desktop and the exports stay in calendar order)
+  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches)
+  useEffect(() => { const mq = window.matchMedia('(max-width: 760px)'); const on = () => setPhone(mq.matches); mq.addEventListener('change', on); return () => mq.removeEventListener('change', on) }, [])
+  const byMonth = ['monthly', 'vat', 'collection'].includes(kind)
+  const shown = report.rows.map((r, n) => ({ r, n }))
+  if (phone && byMonth) shown.reverse()
   const isMoney = (i) => !report.count && typeof report.rows[0]?.[i] === 'number' && report.head[i] !== 'מסמכים' && report.head[i] !== 'ניסיונות'
   const totals = report.rows.length && report.chart ? report.head.map((_, i) => (i === 0 ? 'סה״כ' : report.rows.reduce((a, r) => a + (typeof r[i] === 'number' ? r[i] : 0), 0))) : null
 
@@ -115,11 +121,11 @@ export default function Reports() {
       {report.note && <p className="fin-muted">{report.note}</p>}
       {!report.rows.length ? <Empty title="אין נתונים לדוח הזה" icon="reports">נסו טווח אחר או חברה אחרת.</Empty> : (
         <div className="fin-grid fin-grid--report">
-          {report.chart && <Card title="תצוגה"><Bars rows={report.rows.filter((r) => r[report.chart]).slice(0, 12).map((r) => ({ name: String(r[0]), value: r[report.chart] }))} format={report.count ? (v) => String(v) : money} /></Card>}
+          {report.chart && <Card title="תצוגה"><Bars rows={shown.map(({ r }) => r).filter((r) => r[report.chart]).slice(0, 12).map((r) => ({ name: String(r[0]), value: r[report.chart] }))} format={report.count ? (v) => String(v) : money} /></Card>}
           <div className="fin-table-wrap">
             <table className="fin-table fin-table--plain">
               <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0][i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>
-              <tbody>{report.rows.map((r, n) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : undefined} className={[report.ids ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
+              <tbody>{shown.map(({ r, n }) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : undefined} className={[report.ids ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
               {totals && <tfoot><tr>{totals.map((t, i) => <td key={i} className={i ? 'fin-num' : 'fin-td-main'} data-label={i ? report.head[i] : undefined}>{typeof t === 'number' ? (isMoney(i) ? money(t) : t) : t}</td>)}</tr></tfoot>}
             </table>
           </div>

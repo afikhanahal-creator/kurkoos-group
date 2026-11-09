@@ -24,3 +24,17 @@ export function ProviderLogo({ name, size = 26 }) {
 export function Monogram({ text, tone = 'ink', size = 46 }) {
   return <span className={`fin-logo-tile fin-mono fin-mono--${tone}`} style={{ width: size, height: size }} aria-hidden="true">{text}</span>
 }
+
+/* accounting software: the vendor's own icon, as published on its website (public/finance/logos), only to name the
+   service the documents are sent to. A vendor without a published icon keeps a neutral monogram. */
+const VENDOR = { morning: 'morning.webp', icount: 'icount.svg', rivhit: 'rivhit.webp', sumit: 'sumit.webp', priority: 'priority.webp', hashavshevet: 'hashavshevet.webp' }
+export function VendorLogo({ id, mono, tone = 'ink', size = 52 }) {
+  const file = VENDOR[id]
+  if (!file) return <Monogram text={mono} tone={tone} size={size} />
+  const inner = Math.round(size * 0.66)
+  return (
+    <span className="fin-logo-tile fin-logo-tile--vendor" style={{ width: size, height: size }} aria-hidden="true">
+      <img src={`/finance/logos/${file}`} alt="" width={inner} height={inner} loading="lazy" decoding="async" />
+    </span>
+  )
+}

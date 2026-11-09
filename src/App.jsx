@@ -126,6 +126,9 @@ export default function App() {
   // טעינה-מוקדמת (prefetch) של ה-chunks של העמודים הנפוצים בזמן idle — כך הניווט
   // נשאר מיידי (בלי השהיית chunk/הבהוב), ועם זאת חבילת ההתחלה נשארת קטנה.
   useEffect(() => {
+    // the admin and the finance system are separate apps: they don't need the public pages (each warm import also
+    // pulled a shared chunk of ~150 KB into the finance sign-in screen)
+    if (location.pathname.startsWith('/admin')) return undefined
     const warm = () => {
       import('./pages/ProjectDetail.jsx')
       import('./pages/Division.jsx')

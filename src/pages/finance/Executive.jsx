@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
-import { ago, date, money } from './format.js'
+import { ago, date, money, DOC_TYPE } from './format.js'
 import { overview, periodOf, monthName } from './insights.js'
 import { exportSheet } from './exportPackage.js'
 import DateRange from './DateRange.jsx'
@@ -47,6 +47,17 @@ export default function Executive() {
   // the whole group for the same period: the amount on every company tab and this company's share of the group
   const group = useMemo(() => (biz ? overview(documents, { businesses, projects, categories, allocations }, period) : o), [biz, o, documents, businesses, projects, categories, allocations, period])
   const k = o.kpi
+  // recent activity, newest first, grouped by day (today, yesterday, then the date)
+  const feedRows = useMemo(() => documents.filter((d) => (!biz || d.business_id === biz) && d.status !== 'archived' && (feed === 'all' || (feed === 'open' ? payState(d) === 'open' : d.status === 'review')))
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 14), [documents, biz, feed])
+  const feedDays = useMemo(() => {
+    const dayOf = (t) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
+    const today = dayOf(Date.now()); const yday = dayOf(Date.now() - 86400000)
+    const m = new Map()
+    for (const d of feedRows) { const k = dayOf(d.created_at); const label = k === today ? 'היום' : k === yday ? 'אתמול' : date(k); if (!m.has(label)) m.set(label, []); m.get(label).push(d) }
+    return [...m.entries()]
+  }, [feedRows])
+  const weekNew = documents.filter((d) => (!biz || d.business_id === biz) && Date.now() - new Date(d.created_at).getTime() < 7 * 86400000).length
   const last = documents.map((d) => d.updated_at || d.created_at).filter(Boolean).sort().pop()
   // the monthly chart is anchored at this month, whatever period is in view; a month picked on it becomes the period
   const nowPeriod = useMemo(() => periodOf('month', new Date()), [])
@@ -142,34 +153,6 @@ export default function Executive() {
         </div>
       </section>
 
-      {(() => {
-        const scope = documents.filter((d) => !biz || d.business_id === biz)
-        const toCheck = scope.filter((d) => d.status === 'review')
-        const nums = scope.filter(unsureNumbers)
-        const ready = scope.filter((d) => d.status === 'approved' && !d.exported_at)
-        return (
-          <section className="fin-x-acts" aria-label="מה לעשות עכשיו">
-            <button type="button" onClick={() => go('/reports')} className="fin-x-act">
-              <span className="fin-x-act__icon"><Icon name="tag" size={18} /></span>
-              <span className="fin-x-act__label">מע״מ תשומות {period.label}</span>
-              <strong>{money(k.vatClaimable)}</strong>
-              <small>{k.vatPrev ? `${money(k.vatPrev)} בתקופה הקודמת` : 'לקיזוז לפי הקטגוריות; ההחלטה הסופית של רו״ח'}</small>
-            </button>
-            <button type="button" onClick={() => go(nums.length ? '/documents?status=numbers' : '/pending')} className={`fin-x-act ${toCheck.length ? 'is-attn' : ''}`}>
-              <span className="fin-x-act__icon"><Icon name="alert" size={18} /></span>
-              <span className="fin-x-act__label">לבדיקה</span>
-              <strong>{toCheck.length}</strong>
-              <small>{nums.length ? `${nums.length} מהם עם סכומים לא ודאיים` : toCheck.length ? `${money(toCheck.reduce((a, d) => a + signedTotal(d), 0))} ממתינים לאישור` : 'הכול נבדק'}</small>
-            </button>
-            <button type="button" onClick={() => go('/send')} className="fin-x-act">
-              <span className="fin-x-act__icon"><Icon name="send" size={18} /></span>
-              <span className="fin-x-act__label">מוכן לרו״ח</span>
-              <strong>{money(ready.reduce((a, d) => a + signedTotal(d), 0))}</strong>
-              <small>{ready.length ? `${ready.length === 1 ? 'מסמך אחד מאושר' : `${ready.length} מסמכים מאושרים`} שעוד לא נשלחו` : 'אין מסמכים מאושרים שממתינים'}</small>
-            </button>
-          </section>
-        )
-      })()}
 
       <div className="fin-x-grid">
         <div className="fin-x-main">
@@ -234,6 +217,35 @@ export default function Executive() {
             <p className="fin-x-hint">לחיצה על חודש מציגה את כל הסקירה לאותו חודש. <span className="fin-x-legend"><i className="is-now" /> בפועל <i className="is-ly" /> שנה קודמת</span></p>
           </section>
 
+      {(() => {
+        const scope = documents.filter((d) => !biz || d.business_id === biz)
+        const toCheck = scope.filter((d) => d.status === 'review')
+        const nums = scope.filter(unsureNumbers)
+        const ready = scope.filter((d) => d.status === 'approved' && !d.exported_at)
+        return (
+          <section className="fin-x-acts" aria-label="מה לעשות עכשיו">
+            <button type="button" onClick={() => go('/reports')} className="fin-x-act">
+              <span className="fin-x-act__icon"><Icon name="tag" size={18} /></span>
+              <span className="fin-x-act__label">מע״מ תשומות {period.label}</span>
+              <strong>{money(k.vatClaimable)}</strong>
+              <small>{k.vatPrev ? `${money(k.vatPrev)} בתקופה הקודמת` : 'לקיזוז לפי הקטגוריות; ההחלטה הסופית של רו״ח'}</small>
+            </button>
+            <button type="button" onClick={() => go(nums.length ? '/documents?status=numbers' : '/pending')} className={`fin-x-act ${toCheck.length ? 'is-attn' : ''}`}>
+              <span className="fin-x-act__icon"><Icon name="alert" size={18} /></span>
+              <span className="fin-x-act__label">לבדיקה</span>
+              <strong>{toCheck.length}</strong>
+              <small>{nums.length ? `${nums.length} מהם עם סכומים לא ודאיים` : toCheck.length ? `${money(toCheck.reduce((a, d) => a + signedTotal(d), 0))} ממתינים לאישור` : 'הכול נבדק'}</small>
+            </button>
+            <button type="button" onClick={() => go('/send')} className="fin-x-act">
+              <span className="fin-x-act__icon"><Icon name="send" size={18} /></span>
+              <span className="fin-x-act__label">מוכן לרו״ח</span>
+              <strong>{money(ready.reduce((a, d) => a + signedTotal(d), 0))}</strong>
+              <small>{ready.length ? `${ready.length === 1 ? 'מסמך אחד מאושר' : `${ready.length} מסמכים מאושרים`} שעוד לא נשלחו` : 'אין מסמכים מאושרים שממתינים'}</small>
+            </button>
+          </section>
+        )
+      })()}
+
           {!biz && (
             <section className="fin-x-card" aria-label="השוואת חברות">
               <header><h3>השוואת חברות</h3><InfoTip label="על ההשוואה">סכום ההוצאות של כל חברה בתקופה, מול התקופה הקודמת באותו אורך. לחיצה על חברה מציגה את כל הסקירה רק שלה.</InfoTip></header>
@@ -263,13 +275,18 @@ export default function Executive() {
               </ul>
             </section>
             <section className="fin-x-card" aria-label="ספקים מרכזיים">
-              <header><h3>ספקים מרכזיים</h3><small className="fin-muted">בתקופה</small></header>
-              <ol className="fin-x-list fin-x-list--num">
-                {o.bySupplier.slice(0, 7).map((s) => (
-                  <li key={s.key}><button type="button" onClick={() => (s.id ? go(`/suppliers/${s.id}`) : open(s.ids, s.name))}><span>{s.name}</span><small>{s.count}</small><strong>{short(s.total)}</strong></button></li>
-                ))}
-                {!o.bySupplier.length && <li className="fin-muted">אין הוצאות בתקופה.</li>}
-              </ol>
+              <header><h3>ספקים מרכזיים</h3><small className="fin-muted">לפי סכום · {period.label}</small></header>
+              {!o.bySupplier.length ? <p className="fin-muted">אין הוצאות בתקופה.</p> : (
+                <ul className="fin-x-bars">
+                  {o.bySupplier.slice(0, 6).map((s2) => (
+                    <li key={s2.key}><button type="button" onClick={() => (s2.id ? go(`/suppliers/${s2.id}`) : open(s2.ids, s2.name))}>
+                      <span className="fin-x-bars__name">{s2.name}</span><strong>{short(s2.total)}</strong>
+                      <span className="fin-x-bars__bar"><i style={{ width: `${Math.max(2, (s2.total / Math.max(1, o.bySupplier[0].total)) * 100)}%` }} /></span>
+                    </button></li>
+                  ))}
+                </ul>
+              )}
+              {o.bySupplier.length > 6 && <small className="fin-muted">ועוד {o.bySupplier.length - 6} ספקים</small>}
             </section>
           </div>
 
@@ -298,6 +315,30 @@ export default function Executive() {
         </div>
 
         <aside className="fin-x-side">
+          <section className="fin-x-card fin-x-feed" aria-label="פעילות אחרונה">
+            <header className="fin-x-feed__head">
+              <div><h3>פעילות אחרונה</h3><small className="fin-muted">{weekNew === 1 ? 'מסמך חדש אחד השבוע' : `${weekNew} מסמכים חדשים השבוע`}</small></div>
+            </header>
+            <div className="fin-seg fin-x-feed__filter" role="group" aria-label="סינון">{[['all', 'הכול'], ['open', 'לא שולם'], ['review', 'לבדיקה']].map(([k, l]) => <button key={k} type="button" className={feed === k ? 'is-on' : ''} aria-pressed={feed === k} onClick={() => setFeed(k)}>{l}</button>)}</div>
+            {!feedRows.length ? <p className="fin-muted fin-small">אין מסמכים שמתאימים לסינון.</p> : feedDays.map(([day, rows]) => (
+              <div key={day} className="fin-x-feed__day">
+                <span className="fin-x-feed__daylabel">{day}</span>
+                <ul>
+                  {rows.map((d) => {
+                    const ps = payState(d)
+                    return (
+                      <li key={d.id}><button type="button" onClick={() => go(`/documents/${d.id}`)}>
+                        <span className="fin-x-feed__src">{d.source === 'whatsapp' ? <ProviderLogo name="whatsapp" size={15} /> : <Icon name={d.mailbox_id ? 'mail' : 'upload'} size={15} />}</span>
+                        <span className="fin-x-feed__main"><strong>{d.supplier_name || d.file_name || 'מסמך'}</strong><small>{[DOC_TYPE[d.doc_type] || 'מסמך', d.mailbox_id ? 'מהמייל' : d.source === 'whatsapp' ? 'מ-WhatsApp' : 'הועלה', new Date(d.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })].join(' · ')}</small></span>
+                        <span className="fin-x-feed__side"><b>{d.total_amount != null ? money(d.total_amount, d.currency) : '—'}</b>{d.status === 'failed' ? <Pill tone="attn">לא נקרא</Pill> : d.status === 'review' ? <Pill tone="warn">לבדיקה</Pill> : ps === 'proof' || ps === 'manual' ? <Pill tone="ok">שולם</Pill> : ps === 'open' ? <Pill tone="attn">לא שולם</Pill> : null}</span>
+                      </button></li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+            <button type="button" className="fin-link" onClick={() => go('/documents')}>לכל המסמכים ←</button>
+          </section>
           <section className="fin-x-card fin-x-attn" aria-label="דורש תשומת לב">
             <header><h3>דורש תשומת לב</h3>{o.alerts.length > 0 && <span className="fin-x-count">{o.alerts.length}</span>}</header>
             {!o.alerts.length ? <p className="fin-x-calm"><Icon name="check" size={16} /> אין חריגות. כל המסמכים משויכים, אין חריגות תקציב ואין כפילויות פתוחות.</p> : (
@@ -307,23 +348,6 @@ export default function Executive() {
                 ))}
               </ul>
             )}
-          </section>
-          <section className="fin-x-card fin-x-feed" aria-label="פעילות אחרונה">
-            <header><h3>פעילות אחרונה</h3><div className="fin-seg" role="group" aria-label="סינון">{[['all', 'הכול'], ['open', 'לא שולם'], ['review', 'לבדיקה']].map(([k, l]) => <button key={k} type="button" className={feed === k ? 'is-on' : ''} aria-pressed={feed === k} onClick={() => setFeed(k)}>{l}</button>)}</div></header>
-            <ul>
-              {documents.filter((d) => (!biz || d.business_id === biz) && !['archived'].includes(d.status) && (feed === 'all' || (feed === 'open' ? payState(d) === 'open' : d.status === 'review')))
-                .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 8).map((d) => {
-                  const ps = payState(d)
-                  return (
-                    <li key={d.id}><button type="button" onClick={() => go(`/documents/${d.id}`)}>
-                      <span className="fin-x-feed__src">{d.source === 'whatsapp' ? <ProviderLogo name="whatsapp" size={15} /> : <Icon name={d.mailbox_id ? 'mail' : 'upload'} size={15} />}</span>
-                      <span className="fin-x-feed__main"><strong>{d.supplier_name || d.file_name || 'מסמך'}</strong><small>{date(docDate(d))} · {ago(d.created_at)}</small></span>
-                      <span className="fin-x-feed__side"><b>{money(d.total_amount, d.currency)}</b>{ps === 'proof' ? <Pill tone="ok">שולם</Pill> : ps === 'open' ? <Pill tone="warn">לא שולם</Pill> : ps === 'manual' ? <Pill tone="info">סומן כשולם</Pill> : d.status === 'review' ? <Pill tone="muted">לבדיקה</Pill> : null}</span>
-                    </button></li>
-                  )
-                })}
-            </ul>
-            <button type="button" className="fin-link" onClick={() => go('/documents')}>לכל המסמכים ←</button>
           </section>
           <section className="fin-x-card" aria-label="אמינות הנתונים">
             <header><h3>אמינות הנתונים</h3><InfoTip label="על אמינות הנתונים">כמה ממסמכי התקופה נקראו, כמה אדם בדק ואישר, וכמה עוד דורשים בדיקה. הסכומים כוללים גם מסמכים שעוד לא אושרו.</InfoTip></header>

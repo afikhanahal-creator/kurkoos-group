@@ -2080,3 +2080,51 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-cprof__must li.is-ok { color: var(--ok); }
 .fin-cprof__must li.is-miss { color: var(--attn); }
 @media (max-width: 1100px) { .fin-cprof { grid-template-columns: 1fr; } .fin-cprof__card { position: static; } }
+
+/* overview, v15: the headline numbers on a light card (the chart below now carries the weight), recent activity at the top
+   of the side column grouped by day, top suppliers as bars */
+.fin-x-hero { background: var(--sheet); color: var(--text); border: 1px solid var(--line); }
+.fin-x-hero__main { border-inline-end: 1px solid var(--line); }
+.fin-x-hero__main:hover { background: var(--wash); }
+.fin-x-hero__main:focus-visible, .fin-x-kpis > button:focus-visible { outline: 2px solid var(--ocean); }
+.fin-x-hero .fin-x-big { color: var(--ink); }
+.fin-x-hero .fin-x-label, .fin-x-hero__foot, .fin-x-kpis small { color: var(--text-2); }
+.fin-x-hero .fin-x-delta { color: var(--text-2); }
+.fin-x-hero .fin-x-delta.is-watch { color: var(--warn-ink, #8a5a00); }
+.fin-x-hero .fin-x-delta.is-good { color: var(--ok); }
+.fin-x-kpis > * { border-color: var(--line) !important; }
+.fin-x-kpis > button:hover { background: var(--wash); }
+.fin-x-kpis .fin-x-kpi { color: var(--ink); }
+.fin[data-theme='dark'] .fin-x-hero { background: var(--sheet); }
+@media (max-width: 900px) { .fin-x-hero__main { border-inline-end: 0; border-bottom: 1px solid var(--line); } }
+
+.fin-x-feed__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.fin-x-feed__head h3 { margin: 0; }
+.fin-x-feed__filter { margin-bottom: 10px; }
+.fin-x-feed__day + .fin-x-feed__day { margin-top: 6px; }
+.fin-x-feed__daylabel { display: block; padding: 6px 2px 2px; font-size: var(--t-xs); font-weight: 700; color: var(--text-2); }
+.fin-x-feed__side { display: grid; justify-items: end; gap: 4px; }
+.fin-x-feed__src { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--wash); color: var(--ocean-2); flex: none; }
+
+.fin-x-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.fin-x-bars button { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 10px 4px; border-radius: var(--r-s); }
+.fin-x-bars button:hover { background: var(--wash); }
+.fin-x-bars button:focus-visible { outline: 2px solid var(--ocean); }
+.fin-x-bars__name { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-x-bars strong { font-variant-numeric: tabular-nums; color: var(--ink); }
+.fin-x-bars__bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--wash); overflow: hidden; }
+.fin-x-bars__bar i { display: block; height: 100%; border-radius: 3px; background: color-mix(in srgb, var(--ocean) 55%, var(--sheet)); }
+
+/* document amounts: net, VAT and the total, the total marked as the number that is paid */
+.fin-amounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 4px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); min-height: max-content; }   /* no overflow:hidden: inside the scrolling form grid it would let the strip collapse */
+.fin-amounts > :first-child { border-start-start-radius: var(--r-l); border-end-start-radius: var(--r-l); }
+.fin-amounts > :last-child { border-start-end-radius: var(--r-l); border-end-end-radius: var(--r-l); }
+.fin-amounts > div { display: grid; gap: 4px; padding: 12px 14px; }
+.fin-amounts > div + div { border-inline-start: 1px solid var(--line); }
+.fin-amounts dt { font-size: var(--t-xs); color: var(--text-2); }
+.fin-amounts dd { margin: 0; font-size: var(--t-lg); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-amounts .is-total { background: var(--ocean-wash); }
+.fin-amounts .is-total dt, .fin-amounts .is-total dd { color: var(--ocean-2); }
+/* the details form scrolls inside a fixed height: its rows keep their content height (an auto row could shrink and let a
+   block such as the amounts strip collapse under the next field) */
+.fin-form { grid-auto-rows: max-content; }

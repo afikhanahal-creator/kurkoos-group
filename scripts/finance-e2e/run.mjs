@@ -1031,12 +1031,13 @@ const gateT = await import('../../server/finance/triage.js').then(({ gate }) => 
   gate({ name: 'חשבונית 778.pdf' }).verdict, gate({ name: 'הצעת מחיר HS-22.pdf' }).verdict, gate({ name: 'brochure.pdf' }).verdict,
   gate({ name: 'הצעת מחיר וחשבונית.pdf' }).verdict, gate({ name: 'scan001.pdf', from: 'Tambour <billing@tambour.test>' }, { supplierAddrs: new Set(['billing@tambour.test']) }).verdict,
   gate({ name: 'doc.pdf', from: 'news@garden.test' }, { noiseSenders: new Set(['news@garden.test']) }).verdict, gate({ name: 'scan001.pdf', subject: 'מסמך מצורף' }).verdict,
+  gate({ name: 'לקבלה_מס_12.pdf' }).verdict, gate({ name: 'הצעה.pdf' }).verdict, gate({ name: 'Statement.pdf', subject: 'החשבון שלך לחודש אוקטובר' }).verdict,
 ].join(','))
 const ruleSkips = sql("select count(*) from fin_skipped where reason like 'דולג בלי קריאה%'")
-const conductorLog = sql("select coalesce(details->>'conductor','') from fin_agent_runs where agent='collector' and details ? 'conductor' order by started_at desc limit 1")
+const conductorLog = sql("select coalesce(string_agg(details->>'conductor', ' ' order by started_at), '') from fin_agent_runs where agent='collector' and details ? 'conductor'")
 record('MASTER', 'המנצח הלילי: כללים לפני קריאה בתשלום', 'שם של חשבונית או ספק מוכר נקרא; הצעת מחיר, ברושור או שולח שתמיד דולג מדולג בלי קריאה; "הצעת מחיר וחשבונית" נקרא; שם לא ברור עובר לבדיקה מקדימה; כל דילוג נרשם עם סיבה',
   `החלטות: ${gateT}; דולגו בכלל: ${ruleSkips}; ריצה: ${conductorLog}`,
-  gateT === 'invoice,noise,noise,invoice,invoice,noise,unsure' && Number(ruleSkips) >= 2 && /skipped_by_rule/.test(conductorLog))
+  gateT === 'invoice,noise,noise,invoice,invoice,noise,unsure,invoice,noise,invoice' && Number(ruleSkips) >= 2 && /skipped_by_rule/.test(conductorLog))
 const skipUi = await page.locator('.fin-table tbody tr', { hasText: 'quote-hs22.pdf' }).innerText().catch(() => '')
 const relevance = await import('../../server/finance/extract.js').then((m) => [m.relevanceOf({ is_financial_document: true, document_class: 'tax_invoice', relevance_confidence: 0.95 }).verdict, m.relevanceOf({ is_financial_document: false, document_class: 'quote', relevance_confidence: 0.93 }).verdict, m.relevanceOf({ is_financial_document: false, document_class: 'purchase_order', relevance_confidence: 0.6 }).verdict, m.relevanceOf({ is_financial_document: false }).verdict, m.relevanceOf({ is_financial_document: true, document_class: 'contract', relevance_confidence: 0.9 }).verdict].join(','))
 record('CLASSIFY', 'הבחנה בין חשבוניות וקבלות למסמכים אחרים', 'הצעת מחיר במייל נקראת, מזוהה בוודאות ולא נשמרת כרשומה כספית; היא מופיעה ב"קבצים שדולגו"; תשובה לא בטוחה נשמרת לבדיקה ולא מדולגת',

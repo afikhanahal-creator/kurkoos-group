@@ -46,7 +46,7 @@ const AUDIT = `(() => {
   for (const el of controls) {
     const r = el.getBoundingClientRect(); const cs = getComputedStyle(el)
     const isCheck = el.type === 'checkbox' || el.type === 'radio' || el.type === 'range'
-    if (phone && !isCheck && (r.width < 44 || r.height < 44) && !el.closest('.fin-table thead, .fin-sel__native') && !(el.tagName === 'A' && cs.display === 'inline') && !el.classList.contains('fin-cell-btn') && !el.classList.contains('fin-link')) { const k = 'small|' + tag(el) + '|' + label(el).slice(0, 12); if (!seen.has(k)) { seen.set(k, 1); out.small.push({ el: tag(el), name: label(el).slice(0, 30), w: Math.round(r.width), h: Math.round(r.height) }) } }
+    if (phone && !isCheck && (r.width < 44 || r.height < 44) && !el.closest('.fin-table thead, .fin-sel__native') && !(el.tagName === 'A' && cs.display === 'inline') && !el.classList.contains('fin-cell-btn') && !el.classList.contains('fin-toggle') /* the switch has a 44px ::after hit area on phones */ && !el.classList.contains('fin-link')) { const k = 'small|' + tag(el) + '|' + label(el).slice(0, 12); if (!seen.has(k)) { seen.set(k, 1); out.small.push({ el: tag(el), name: label(el).slice(0, 30), w: Math.round(r.width), h: Math.round(r.height) }) } }
     if (!label(el) && !['input', 'select'].includes(el.tagName.toLowerCase())) { const k = 'noname|' + tag(el); if (!seen.has(k)) { seen.set(k, 1); out.noname.push({ el: tag(el), html: el.outerHTML.slice(0, 80) }) } }
     const t = cs.transitionDuration.split(',').map((d) => parseFloat(d) * (d.includes('ms') ? 1 : 1000)).filter((d) => d > 0)
     const props = cs.transitionProperty.split(',').map((p) => p.trim())

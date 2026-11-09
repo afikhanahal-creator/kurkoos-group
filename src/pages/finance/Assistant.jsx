@@ -35,7 +35,11 @@ export default function Assistant() {
       const r = await api.callServer('ask', { question, history })
       setMsgs((x) => [...x, { id: `a${Date.now()}`, who: 'ai', result: r }])
     } catch (e) {
-      setMsgs((x) => [...x, { id: `e${Date.now()}`, who: 'ai', error: /credit balance|billing/i.test(e.message) ? 'אין יתרה בחשבון Claude, ולכן אי אפשר לפענח שאלות כרגע. מנהל המערכת מוסיף קרדיט ב-console.anthropic.com.' : e.message }])
+      setMsgs((x) => [...x, { id: `e${Date.now()}`, who: 'ai', error: /credit balance|billing/i.test(e.message) ? 'אין יתרה בחשבון Claude, ולכן אי אפשר לפענח שאלות כרגע. מנהל המערכת מוסיף קרדיט ב-console.anthropic.com.'
+        : /failed to fetch|networkerror|load failed/i.test(e.message) ? 'אין חיבור לשרת כרגע. בודקים את האינטרנט ושולחים שוב.'
+        : /[\u0590-\u05FF]/.test(e.message) && !/^שגיאה \d+$/.test(e.message) ? e.message
+        : 'לא הצלחתי לענות כרגע בגלל תקלה בשרת. השאלה נשמרה בתיבה, אפשר לשלוח שוב בעוד רגע.' }])
+      setQ((cur) => cur || question)
     } finally { setBusy(false); input.current?.focus() }
   }
   const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }

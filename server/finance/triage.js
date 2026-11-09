@@ -14,9 +14,12 @@ import { RELEVANT_CLASSES } from './extract.js'
 // word boundaries that work for Hebrew and Latin together
 const H = '\\u0590-\\u05FFA-Za-z0-9'
 const words = (list) => new RegExp(`(?<![${H}])(?:${list.join('|')})(?![${H}])`, 'i')
+// Hebrew glues "and / the / for / in / that" to the word ("וחשבונית", "לקבלה"), so an invoice word may carry up to two
+// of those letters. Only the invoice words get this: a missed invoice costs more than one extra reading.
+const wordsHe = (list) => new RegExp(`(?<![${H}])(?:[ובהלשמכ]{1,2})?(?:${list.join('|')})(?![${H}])`, 'i')
 
 // an expense document by its own name or subject
-export const POSITIVE = words(['חשבונית', 'חשבוניות', 'חשבון', 'חשבון עסקה', 'חשבון מס', 'קבלה', 'קבלות', 'זיכוי', 'חשבונית מס', 'invoice', 'invoices', 'receipt', 'receipts', 'tax invoice', 'bill', 'credit note', 'payment confirmation', 'אישור תשלום'])
+export const POSITIVE = wordsHe(['חשבונית', 'חשבוניות', 'חשבון', 'חשבונות', 'חשבון עסקה', 'חשבון מס', 'קבלה', 'קבלות', 'זיכוי', 'חשבונית מס', 'invoice', 'invoices', 'receipt', 'receipts', 'tax invoice', 'bill', 'credit note', 'payment confirmation', 'אישור תשלום'])
 // clearly not an expense document, by the file's name (the subject alone is not enough: "הצעת מחיר + חשבונית")
 export const NOISE_FILE = words(['הצעת מחיר', 'הצעה', 'quote', 'quotation', 'proposal', 'estimate', 'חוזה', 'הסכם', 'contract', 'agreement', 'תקנון', 'terms', 'conditions', 'privacy', 'policy', 'מדיניות', 'brochure', 'ברושור', 'קטלוג', 'catalog', 'catalogue', 'newsletter', 'ניוזלטר', 'מצגת', 'presentation', 'deck', 'קורות חיים', 'cv', 'resume', 'שרטוט', 'drawing', 'dwg', 'הזמנת רכש', 'purchase order', 'מפרט', 'specification', 'datasheet', 'מבצע', 'מבצעים', 'promo', 'flyer'])
 const NOISE_CLASS = (name) => (/quote|quotation|proposal|estimate|הצע/i.test(name) ? 'quote' : /contract|agreement|חוזה|הסכם/i.test(name) ? 'contract' : /terms|conditions|privacy|policy|תקנון|מדיניות/i.test(name) ? 'legal' : /purchase order|הזמנת רכש/i.test(name) ? 'purchase_order' : /cv|resume|קורות/i.test(name) ? 'personal' : 'marketing')

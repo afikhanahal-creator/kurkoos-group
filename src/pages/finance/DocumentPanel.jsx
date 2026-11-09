@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf } from './format.js'
@@ -76,6 +76,24 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, onNext, onPrev])
+
+  // the panel covers the whole screen, so Tab stays inside it (a dialog opened on top of it keeps its own trap)
+  const body = useRef(null)
+  useEffect(() => {
+    const onTab = (e) => {
+      if (e.key !== 'Tab' || !body.current) return
+      const a = document.activeElement
+      if (a && !body.current.contains(a) && a.closest('[role="dialog"]') && !a.closest('.fin-panel')) return
+      const f = [...body.current.querySelectorAll('a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null || el.classList.contains('fin-sel__native'))
+      if (!f.length) return
+      const first = f[0]; const last = f[f.length - 1]
+      if (!body.current.contains(a)) { e.preventDefault(); (e.shiftKey ? last : first).focus() }
+      else if (e.shiftKey && a === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus() }
+    }
+    window.addEventListener('keydown', onTab)
+    return () => window.removeEventListener('keydown', onTab)
+  }, [])
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
   const clean = () => {
@@ -162,7 +180,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   return (
     <div className="fin-panel" role="dialog" aria-modal="true" aria-label={`מסמך: ${doc.supplier_name || doc.file_name}`}>
       <button type="button" className="fin-panel__scrim" aria-label="סגירה" tabIndex={-1} onClick={onClose} />
-      <div className="fin-panel__body">
+      <div className="fin-panel__body" ref={body}>
         <header className="fin-panel__head">
           <div className="fin-panel__title">
             <h2>{doc.supplier_name || doc.file_name || 'מסמך'}</h2>

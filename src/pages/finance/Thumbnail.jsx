@@ -61,7 +61,7 @@ export default function Thumbnail({ doc, size }) {
     <div className="fin-thumb" ref={box} aria-hidden="true">
       {src && typeof src === 'string' && <img src={src} alt="" />}
       {src && typeof src === 'object' && <p className="fin-thumb__text">{src.text}</p>}
-      {!src && <span className={`fin-thumb__ph ${failed ? '' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : 'קובץ'}</span>}
+      {!src && <span className={`fin-thumb__ph ${failed ? 'is-failed' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : 'קובץ'}{failed && <small>אין תצוגה מקדימה</small>}</span>}
     </div>
   )
 }

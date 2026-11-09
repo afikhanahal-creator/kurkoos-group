@@ -99,6 +99,9 @@
 
 /* ---------- shell ---------- */
 .fin { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); min-height: 100vh; min-height: 100dvh; }
+/* the site's global heading colour (navy) is not theme-aware: inside the finance app headings follow the theme.
+   Same weight as one class and placed early, so any heading with its own colour rule below still wins. */
+.fin :where(h1, h2, h3, h4, h5, h6) { color: var(--ink); }
 .fin__side { background: var(--sheet-2); border-inline-end: 1px solid var(--line); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; scrollbar-width: thin; }
 .fin__brand { display: flex; align-items: center; gap: 0.65rem; padding: 1.05rem 1.1rem 0.9rem; text-decoration: none; color: var(--ink); }
 .fin__brand img { width: 30px; height: 30px; object-fit: contain; }
@@ -1626,7 +1629,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-x-cos button:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; }
 .fin-x-cos button.is-on { background: var(--ink); border-color: var(--ink); }
 .fin-x-cos button.is-on span { color: var(--paper); }
-.fin-x-cos button.is-on b { color: rgba(255, 255, 255, 0.75); }
+.fin-x-cos button.is-on b { color: color-mix(in srgb, var(--paper) 78%, transparent); }
 .fin-x-company { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; padding: 16px 20px; border: 1px solid var(--line); border-inline-start: 4px solid var(--ocean); border-radius: var(--r-l); background: var(--sheet); }
 .fin-x-company__id { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 240px; }
 .fin-x-company__id > span:last-child { display: flex; flex-direction: column; min-width: 0; }
@@ -1742,9 +1745,9 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-auth__bill.is-front span { font-size: var(--t-xs); color: var(--text-2); font-variant-numeric: tabular-nums; }
 .fin-auth__bill.is-front em { justify-self: start; font-style: normal; font-size: var(--t-xs); font-weight: 700; color: var(--bill, var(--ocean)); background: color-mix(in srgb, var(--bill, var(--ocean)) 12%, #fff); border-radius: 999px; padding: 2px 8px; margin-top: 4px; }
 .fin-auth__bill-src { position: absolute; inset-inline-end: 12px; top: 14px; color: var(--text-2); }
-.fin-auth__bill.is-power { --bill: #c98a06; } .fin-auth__bill.is-net { --bill: #16688c; } .fin-auth__bill.is-fuel { --bill: #a90b0c; }
+.fin-auth__bill.is-power { --bill: #9a6800; } .fin-auth__bill.is-net { --bill: #16688c; } .fin-auth__bill.is-fuel { --bill: #a90b0c; }
 .fin-auth__bill.is-water { --bill: #1f8bb8; } .fin-auth__bill.is-city { --bill: #5b4bb5; } .fin-auth__bill.is-build { --bill: #1f6f4c; }
-.fin-auth__dot.is-power { --bill: #c98a06; } .fin-auth__dot.is-net { --bill: #16688c; } .fin-auth__dot.is-fuel { --bill: #a90b0c; }
+.fin-auth__dot.is-power { --bill: #9a6800; } .fin-auth__dot.is-net { --bill: #16688c; } .fin-auth__dot.is-fuel { --bill: #a90b0c; }
 .fin-auth__dot.is-water { --bill: #1f8bb8; } .fin-auth__dot.is-city { --bill: #5b4bb5; } .fin-auth__dot.is-build { --bill: #1f6f4c; }
 @keyframes fin-auth-in { from { transform: translateY(14px) scale(0.96); opacity: 0; } to { transform: none; opacity: 1; } }
 .fin-auth__beam { position: absolute; inset-inline: 0; top: -40%; height: 40%; background: linear-gradient(to bottom, transparent, rgba(22, 104, 140, 0.14), rgba(22, 104, 140, 0.4)); border-bottom: 2px solid var(--ocean); animation: fin-auth-beam 1.6s 0.4s var(--ease) both; }
@@ -2255,3 +2258,21 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-dupbar.is-confirm .fin-dupbar__icon { color: var(--ocean-2); }
 .fin-duppill.is-confirm { background: var(--ocean-wash); color: var(--ocean-2); }
 .fin-panel__confirm { flex-wrap: wrap; }
+
+/* design QA: card flags (for confirmation, duplicate) and a preview that could not be drawn */
+.fin-doccard__flags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.15rem 0 0.1rem; }
+.fin-thumb__ph.is-failed { display: grid; justify-items: center; gap: 0.2rem; text-align: center; }
+.fin-thumb__ph.is-failed small { font-weight: 400; font-size: var(--t-xs); }
+
+
+/* design QA (dark): surfaces painted with --ink turn light in the dark theme, so their text takes the page colour */
+.fin[data-theme='dark'] :is(.fin-action:first-child, .fin-code, .fin-mono--ink, .fin-mono--ocean, .fin-mono--red, .fin-cal__preset.is-on, .fin__org-mark, .fin-capture__big span, .fin-chat__avatar, .fin-chat__bubble.is-me) { color: var(--paper); }
+.fin[data-theme='dark'] .fin-action:first-child small { color: color-mix(in srgb, var(--paper) 72%, transparent); }
+.fin[data-theme='dark'] .fin-action:first-child .fin-action__icon { background: color-mix(in srgb, var(--paper) 10%, transparent); }
+
+/* design QA (touch): phone targets reach 44px; the switch keeps its look and gets a larger invisible hit area */
+@media (max-width: 760px) {
+  .fin-toggle { position: relative; }
+  .fin-toggle::after { content: ''; position: absolute; inset: -11px -4px; }
+  .fin-viewer__pct, .fin__content .fin-chipbtn, .fin-chipbtn { min-height: 44px; }
+}

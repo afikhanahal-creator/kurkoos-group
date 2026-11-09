@@ -318,6 +318,7 @@ export default function Documents({ preset = 'all' }) {
                   {d.supplier_id ? <button type="button" className="fin-doccard__supplier" onClick={() => go(`/suppliers/${d.supplier_id}`)}>{d.supplier_name}</button> : <span className="fin-doccard__supplier">{d.supplier_name || d.file_name}</span>}
                   <StatusPill status={d.status} />
                 </div>
+                {d.status === 'review' && ((d.issues || []).some((i) => i.code === 'needs_confirmation') || d.duplicate_state === 'suspected') && <p className="fin-doccard__flags">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && <span className="fin-duppill is-confirm"><Icon name="info" size={11} /> לאישור שזו חשבונית</span>}{d.duplicate_state === 'suspected' && <span className="fin-duppill"><Icon name="copy" size={11} /> כפול?</span>}</p>}
                 <p className="fin-doccard__amount">{money(d.total_amount, d.currency)}<small>מע״מ {money(d.vat_amount, d.currency)}</small></p>
                 <dl className="fin-doccard__meta">
                   <div><dt>תאריך</dt><dd>{date(docDate(d))}</dd></div>
@@ -329,7 +330,7 @@ export default function Documents({ preset = 'all' }) {
                 </dl>
                 <div className="fin-doccard__actions">
                   <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(link(d.id))}><Icon name="edit" size={15} /> צפייה ועריכה</button>
-                  {can('approve') && d.status === 'review' && <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" onClick={() => { setSel(new Set([d.id])); setConfirm({ label: 'approve', count: 1, skipped: 0, run: () => runBulk('approve', { status: 'approved' }, [d], 0) }) }}><Icon name="check" size={15} /> אישור</button>}
+                  {can('approve') && d.status === 'review' && !(d.issues || []).some((i) => i.code === 'needs_confirmation') && <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" onClick={() => { setSel(new Set([d.id])); setConfirm({ label: 'approve', count: 1, skipped: 0, run: () => runBulk('approve', { status: 'approved' }, [d], 0) }) }}><Icon name="check" size={15} /> אישור</button>}
                   <details className="fin-menu">
                     <summary className="fin-icon-btn" aria-label="פעולות נוספות"><Icon name="more" size={18} /></summary>
                     <div className="fin-menu__pop">

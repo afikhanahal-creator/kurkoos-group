@@ -788,6 +788,7 @@ create table if not exists public.fin_document_allocations (
 );
 create index if not exists fin_alloc_doc_idx on public.fin_document_allocations (document_id);
 create index if not exists fin_alloc_project_idx on public.fin_document_allocations (project_id);
+alter table public.fin_document_allocations enable row level security;
 
 create or replace function public.fin_set_allocations(p_document uuid, p_rows jsonb) returns int
 language plpgsql security definer set search_path = '' as $$

@@ -4,7 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, claimableVat, date, docDate, money, monthLabel, nameOf, period, recentMonths, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { buildPackage } from './exportPackage.js'
-import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
+import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, askConfirm } from './ui.jsx'
 import { Monogram } from './logos.jsx'
 import Select from './Select.jsx'
 
@@ -136,7 +136,7 @@ export default function Integrations() {
     try { const r = await api.callServer('integration-test', { id: it.id }); if (r.ok) setMsg(`${it.name}: החיבור תקין${r.note ? ` (${r.note})` : ''}`); else setErr(`${it.name}: ${r.error}`); list.reload() } catch (e) { setErr(e.message) }
   }
   const disconnect = async (it) => {
-    if (!window.confirm(`לנתק את ${it.name}? מסמכים שכבר יוצאו לא משתנים.`)) return
+    if (!(await askConfirm({ text: `לנתק את ${it.name}? מסמכים שכבר יוצאו לא משתנים.`, ok: 'ניתוק', danger: true }))) return
     try { await api.callServer('integration-save', { ...it, enabled: false }); list.reload() } catch (e) { setErr(e.message) }
   }
   const open = (a, it) => { setErr(''); setEdit(it ? { ...it } : { provider: a.id, name: a.label, business_id: businesses.length === 1 ? businesses[0].id : '', config: {}, enabled: true }) }

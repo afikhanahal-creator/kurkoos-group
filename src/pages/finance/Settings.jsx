@@ -1,9 +1,11 @@
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
+import { supabase } from '../../lib/supabase.js'
+import { deviceId, qrSrc } from './auth.jsx'
 import { ROLE, nameOf } from './format.js'
-import { useState } from 'react'
-import { Card, Icon, PageHead, Pill, useAsync, Skeleton } from './ui.jsx'
+import { useEffect, useState } from 'react'
+import { Card, Icon, PageHead, Pill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 
 function SmartSettings() {
   const { settings, can, reload } = useFinance()
@@ -41,7 +43,7 @@ function SmartSettings() {
         {Slider({ k: 'cat', label: 'סף לשיוך קטגוריה', hint: 'מתחת לסף: הצעה בלבד, אדם מחליט' })}
         {Slider({ k: 'proj', label: 'סף לשיוך פרויקט', hint: 'ספק שעובד בכמה פרויקטים לא משויך לפי שמו' })}
       </div>
-      <label className="fin-inline-label">אישור כפול לחשבונית מעל <input type="number" className="fin-select fin-select--sm" value={f.second} onChange={(e) => setF({ ...f, second: Number(e.target.value) })} disabled={!admin} /> ₪</label>
+      <label className="fin-inline-label">אישור כפול לחשבונית מעל <input type="number" inputMode="decimal" className="fin-select fin-select--sm" value={f.second} onChange={(e) => setF({ ...f, second: Number(e.target.value) })} disabled={!admin} /> ₪</label>
       <label className="fin-field fin-field--cpa"><span className="fin-field__label">המייל הקבוע של רואה החשבון</span>
         <input type="email" dir="ltr" value={f.cpa} onChange={(e) => setF({ ...f, cpa: e.target.value })} placeholder="cpa@example.co.il" disabled={!admin} autoComplete="off" />
         <small className="fin-muted">מוצע בכל שליחה לרו״ח ובדוח החודשי. רו״ח שונה לחברה מוגדר בפרטי החברה.</small>
@@ -61,8 +63,98 @@ const ENV = [
   ['email', 'RESEND_API_KEY', 'סיכום יומי והתראות במייל'],
 ]
 
+/* the person's own protection: the second step, every device they are signed in on, and a way out of all of them */
+function MySecurity() {
+  const [state, setState] = useState({ factors: null, msg: '', err: '', busy: false, enroll: null, code: '' })
+  const sec = useAsync(() => api.mySecurity(), [])
+  const load = async () => { const { data } = await supabase.auth.mfa.listFactors(); setState((s) => ({ ...s, factors: (data?.totp || []).filter((f) => f.status === 'verified') })) }
+  useEffect(() => { load() }, [])
+  const set = (p) => setState((s) => ({ ...s, ...p }))
+  const start = async () => {
+    set({ busy: true, err: '', msg: '' })
+    const { data: all } = await supabase.auth.mfa.listFactors()
+    for (const f of (all?.all || []).filter((f) => f.status !== 'verified')) await supabase.auth.mfa.unenroll({ factorId: f.id }).catch(() => {})
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `Kurkoos Finance ${new Date().toLocaleDateString('he-IL')}` })
+    set({ busy: false, err: error?.message || '', enroll: error ? null : { id: data.id, qr: qrSrc(data.totp.qr_code), secret: data.totp.secret } })
+  }
+  const confirm = async (e) => {
+    e.preventDefault(); set({ busy: true, err: '' })
+    const { data: ch, error: e1 } = await supabase.auth.mfa.challenge({ factorId: state.enroll.id })
+    const { error } = e1 ? { error: e1 } : await supabase.auth.mfa.verify({ factorId: state.enroll.id, challengeId: ch.id, code: state.code })
+    if (error) { set({ busy: false, err: 'הקוד שגוי. נסו את הקוד הבא באפליקציה.' }); return }
+    api.callServer('auth-event', { kind: 'mfa_enrolled', device_id: deviceId() }).catch(() => {})
+    set({ busy: false, enroll: null, code: '', msg: 'אימות דו-שלבי הופעל. מעכשיו הכניסה דורשת גם קוד מהאפליקציה.' }); load()
+  }
+  const remove = async (f) => {
+    if (sec.data?.mfa_required) { set({ err: 'לתפקיד שלך אימות דו-שלבי הוא חובה. אפשר להחליף אפליקציה אבל לא להסיר.' }); return }
+    if (!(await askConfirm({ text: 'להסיר את אימות הדו-שלבי? הכניסה תדרוש סיסמה בלבד.', ok: 'הסרה', danger: true }))) return
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: f.id })
+    if (error) set({ err: error.message }); else { api.callServer('auth-event', { kind: 'mfa_removed', device_id: deviceId() }).catch(() => {}); set({ msg: 'אימות הדו-שלבי הוסר.' }); load() }
+  }
+  const signOutAll = async () => {
+    if (!(await askConfirm({ text: 'לצאת מכל המכשירים? גם המכשיר הזה יתנתק ותצטרכו להתחבר שוב.', ok: 'יציאה' }))) return
+    try { await api.callServer('auth-event', { kind: 'signed_out_all', device_id: deviceId() }) } catch { /* the sessions are ended by the server; signing out here too */ }
+    await supabase.auth.signOut({ scope: 'global' }).catch(() => supabase.auth.signOut())
+  }
+  const on = (state.factors || []).length > 0
+  return (
+    <Card title="האבטחה שלי" className="fin-card--wide">
+      <div className="fin-mysec">
+        <div className="fin-mysec__row">
+          <span className={`fin-mysec__icon ${on ? 'is-on' : ''}`}><Icon name="shield" size={20} /></span>
+          <span className="fin-mysec__text"><strong>אימות דו-שלבי {on ? 'פעיל' : 'כבוי'}</strong><small>{sec.data?.mfa_required ? 'חובה לתפקיד שלך. ' : ''}{on ? 'בכל כניסה נדרש קוד מאפליקציית האימות בטלפון.' : 'קוד מאפליקציה בטלפון (Google Authenticator, Microsoft Authenticator, 1Password) בנוסף לסיסמה.'}</small></span>
+          {state.factors === null ? null : on ? <button type="button" className="fin-btn fin-btn--sm" onClick={() => remove(state.factors[0])}>הסרה</button> : <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" onClick={start} disabled={state.busy}>הפעלה</button>}
+        </div>
+        {state.enroll && (
+          <form className="fin-mysec__enroll" onSubmit={confirm}>
+            <img src={state.enroll.qr} alt="קוד QR לאפליקציית האימות" className="fin-login__qr" />
+            <div>
+              <p>סרקו את הקוד באפליקציית האימות, ואז הקלידו את הקוד בן 6 הספרות שהיא מציגה.</p>
+              <details className="fin-disclosure fin-disclosure--quiet"><summary>הזנה ידנית</summary><code dir="ltr" className="fin-login__secret">{state.enroll.secret}</code></details>
+              <div className="fin-mysec__code"><input value={state.code} onChange={(e) => set({ code: e.target.value.replace(/\D/g, '').slice(0, 6) })} inputMode="numeric" autoComplete="one-time-code" dir="ltr" className="fin-login__code" aria-label="קוד אימות" /><button type="submit" className="fin-btn fin-btn--primary" disabled={state.busy || state.code.length !== 6}>אישור</button><button type="button" className="fin-link" onClick={() => set({ enroll: null, code: '' })}>ביטול</button></div>
+            </div>
+          </form>
+        )}
+        <div className="fin-mysec__row">
+          <span className="fin-mysec__icon"><Icon name="logout" size={20} /></span>
+          <span className="fin-mysec__text"><strong>יציאה מכל המכשירים</strong><small>מנתק את החשבון בכל טלפון ומחשב שהוא מחובר בהם. מומלץ אחרי אובדן טלפון. המערכת גם מתנתקת לבד אחרי {sec.data?.idle_minutes || 30} דקות בלי פעילות.</small></span>
+          <button type="button" className="fin-btn fin-btn--sm" onClick={signOutAll}>יציאה מהכול</button>
+        </div>
+        {state.err && <p className="fin-error fin-error--block" role="alert">{state.err}</p>}
+        {state.msg && <p className="fin-note" role="status">{state.msg}</p>}
+      </div>
+    </Card>
+  )
+}
+
+/* the recovery link from "forgot my password" lands here: a new password, then the normal screen */
+function NewPassword() {
+  const [pw, setPw] = useState(''); const [pw2, setPw2] = useState(''); const [msg, setMsg] = useState(''); const [err, setErr] = useState(''); const [done, setDone] = useState(false)
+  const save = async (e) => {
+    e.preventDefault(); setErr('')
+    if (pw.length < 10) { setErr('הסיסמה צריכה להיות באורך 10 תווים לפחות.'); return }
+    if (pw !== pw2) { setErr('שתי הסיסמאות לא זהות.'); return }
+    const { error } = await supabase.auth.updateUser({ password: pw })
+    if (error) setErr(/weak|pwned|easy/i.test(error.message) ? 'הסיסמה חלשה או מוכרת מדליפות. בחרו סיסמה אחרת.' : error.message)
+    else { setDone(true); setMsg('הסיסמה הוחלפה. החיבורים האחרים של החשבון נותקו.'); api.callServer('auth-event', { kind: 'signed_out_all', device_id: deviceId() }).catch(() => {}) }
+  }
+  if (done) return <Card title="סיסמה חדשה"><p className="fin-note" role="status">{msg}</p></Card>
+  return (
+    <Card title="בחירת סיסמה חדשה" className="fin-card--wide">
+      <form className="fin-form__grid" onSubmit={save} noValidate>
+        <label className="fin-field"><span className="fin-field__label">סיסמה חדשה</span><input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" dir="ltr" minLength={10} /></label>
+        <label className="fin-field"><span className="fin-field__label">שוב</span><input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" dir="ltr" /></label>
+        {err && <p className="fin-error fin-field--wide" role="alert">{err}</p>}
+        <div className="fin-form__actions fin-field--wide"><button type="submit" className="fin-btn fin-btn--primary">שמירת הסיסמה</button></div>
+      </form>
+    </Card>
+  )
+}
+
 export default function Settings() {
   const { role, me, businesses, can, go } = useFinance()
+  const [recovery, setRecovery] = useState(() => { try { return new URLSearchParams(window.location.search).get('reset') === '1' } catch { return false } })
+  useEffect(() => { const { data } = supabase.auth.onAuthStateChange((ev) => { if (ev === 'PASSWORD_RECOVERY') setRecovery(true) }); return () => data.subscription.unsubscribe() }, [])
   const u = useSession()
   const status = useAsync(() => api.callServer('status').catch((e) => ({ error: e.message })), [])
   const ok = (k) => (k === 'gmail' || k === 'outlook' ? status.data?.providers?.[k] : status.data?.[k])
@@ -71,6 +163,8 @@ export default function Settings() {
       <PageHead title="הגדרות" />
       <div className="fin-grid">
         {can('operate') && <SmartSettings />}
+        {recovery && <NewPassword />}
+        <MySecurity />
         <Card title="החשבון שלי">
           <ul className="fin-kv">
             <li><span>אימייל</span><strong dir="ltr">{u?.email}</strong></li>

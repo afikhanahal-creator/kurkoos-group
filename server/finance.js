@@ -16,6 +16,7 @@ import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
 import { ask } from './finance/assistant.js'
+import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
@@ -47,6 +48,9 @@ const ROLES = {
   'outbound-test': ['admin'],
   'outbound-flush': ['admin', 'finance_manager', 'employee'],
   'members-meta': ['admin'],
+  'auth-event': ['admin', 'finance_manager', 'employee', 'accountant'],
+  'member-block': ['admin'],
+  'member-end-sessions': ['admin'],
   'send-to-accountant': ['admin', 'finance_manager'],
   tick: ['admin', 'finance_manager', 'employee'],
   'retry-doc': ['admin', 'finance_manager', 'employee'],
@@ -146,12 +150,22 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
+  const body = readBody(req)
+  // the sign-in screen reports a failed attempt before there is a session (rate limited, no password ever)
+  if (body.action === 'login-failed') {
+    if (limited(`fail:${String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0]}`, 60)) { res.status(429).json({ error: 'יותר מדי ניסיונות' }); return }
+    res.status(200).json(await loginFailed(req, body)); return
+  }
   const user = await caller(req)
   if (!user) { res.status(401).json({ error: 'צריך להתחבר' }); return }
-  const body = readBody(req)
   const allowed = ROLES[body.action]
   if (!allowed) { res.status(400).json({ error: 'unknown action' }); return }
   if (!user.role || !allowed.includes(user.role)) { res.status(403).json({ error: 'אין לך הרשאה לפעולה הזו' }); return }
+  // a role that requires the second step acts only after it (the database applies the same rule in fin_has_role)
+  if (!['status', 'auth-event'].includes(body.action)) {
+    const why = await mfaBlock(user)
+    if (why) { res.status(403).json({ error: 'נדרש אימות דו-שלבי. התחברו מחדש עם הקוד מהאפליקציה', code: why }); return }
+  }
   if (body.action !== 'status' && limited(user.id)) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
 
   try {
@@ -392,12 +406,16 @@ export default async function handler(req, res) {
         res.status(200).json(await flushOutbound({ budgetMs: 15_000, trigger: 'event' }))
         return
       }
+      case 'auth-event': { res.status(200).json(await authEvent(req, body, user)); return }
+      case 'member-block': { res.status(200).json(await blockMember({ userId: q(body.user_id), blocked: !!body.blocked, user })); return }
+      case 'member-end-sessions': { res.status(200).json(await endSessions({ userId: q(body.user_id), user })); return }
       case 'members-meta': {
         // last sign-in per user, to tell an accepted invitation from one still waiting
         const r = await fetch(`${env.sbUrl()}/auth/v1/admin/users?per_page=1000`, { headers: { apikey: env.sbKey(), Authorization: `Bearer ${env.sbKey()}` } })
         const d = await r.json().catch(() => ({}))
         const ids = new Set(((await sb('fin_members?select=user_id')) || []).map((m) => m.user_id))
-        res.status(200).json({ users: (d.users || []).filter((u) => ids.has(u.id)).map((u) => ({ id: u.id, last_sign_in_at: u.last_sign_in_at || null, invited_at: u.invited_at || null, confirmed: !!(u.email_confirmed_at || u.confirmed_at) })) })
+        const sec = Object.fromEntries((await memberSecurity()).map((x) => [x.user_id, x]))
+        res.status(200).json({ users: (d.users || []).filter((u) => ids.has(u.id)).map((u) => ({ id: u.id, sessions: sec[u.id]?.sessions || 0, last_seen: sec[u.id]?.last_seen || null, mfa: !!sec[u.id]?.mfa, banned: !!(sec[u.id]?.banned_until && new Date(sec[u.id].banned_until) > new Date()), last_sign_in_at: u.last_sign_in_at || null, invited_at: u.invited_at || null, confirmed: !!(u.email_confirmed_at || u.confirmed_at) })) })
         return
       }
       case 'integration-save': {

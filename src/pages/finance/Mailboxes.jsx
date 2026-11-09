@@ -4,7 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { date, dateTime } from './format.js'
 import { ProviderLogo } from './logos.jsx'
-import { Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
+import { Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 
 const PROV = { gmail: 'Gmail', outlook: 'Office 365', imap: 'IMAP' }
@@ -82,7 +82,7 @@ export default function Mailboxes() {
     } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
   const disconnect = async (m) => {
-    if (!window.confirm(`לנתק את ${m.email}? ההרשאה תבוטל אצל הספק. המסמכים שכבר נאספו נשארים.`)) return
+    if (!(await askConfirm({ text: `לנתק את ${m.email}? ההרשאה תבוטל אצל הספק. המסמכים שכבר נאספו נשארים.`, ok: 'ניתוק', danger: true }))) return
     setBusy(m.id)
     try { await api.callServer('disconnect', { mailbox_id: m.id }); reload() } catch (e) { setErr(e.message) } finally { setBusy('') }
   }

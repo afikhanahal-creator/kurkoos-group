@@ -1445,3 +1445,120 @@ notify pgrst, 'reload schema';
 -- the documents list is read in pages ordered by (created_at desc, id): without this index every page sorts the table
 create index if not exists fin_documents_list_order on public.fin_documents (created_at desc, id);
 create index if not exists fin_allocations_list_order on public.fin_document_allocations (created_at, id);
+
+-- ============================================================
+-- v12 (2026-11-09): sign-in security — two-step sign-in (TOTP) for the roles that need it, sessions that can be ended
+-- from anywhere, a record of every sign-in and failed attempt, and blocked users
+-- ============================================================
+-- which roles must sign in with a second step. Changing this row is the only switch: no code change.
+insert into public.fin_settings (key, value) values ('mfa_required_roles', '["admin", "finance_manager"]') on conflict (key) do nothing;
+insert into public.fin_settings (key, value) values ('idle_minutes', '30') on conflict (key) do nothing;
+
+create or replace function public.fin_mfa_roles() returns text[]
+language sql stable security definer set search_path = '' as $$
+  select coalesce((select array(select jsonb_array_elements_text(value)) from public.fin_settings where key = 'mfa_required_roles' and jsonb_typeof(value) = 'array'), '{}'::text[])
+$$;
+
+-- the one permission check every policy uses. Three conditions, all enforced here and not only in the screens:
+--  1. an active member with one of the roles;
+--  2. a role that requires a second step only counts after it (the token's aal is aal2);
+--  3. the session still exists: "sign out everywhere" and blocking end database access at once, not when the token expires.
+create or replace function public.fin_has_role(roles text[]) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select coalesce((
+    select m.role = any(roles)
+       and (not (m.role = any(public.fin_mfa_roles())) or coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2')
+       and (auth.jwt() ->> 'session_id' is null or exists (select 1 from auth.sessions s where s.id = (auth.jwt() ->> 'session_id')::uuid))
+    from public.fin_members m where m.user_id = auth.uid() and m.active), false)
+$$;
+
+-- what the sign-in screen needs before any data: my role and whether it requires the second step
+create or replace function public.fin_my_security() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('role', m.role, 'active', m.active, 'mfa_required', m.role = any(public.fin_mfa_roles()),
+    'idle_minutes', coalesce((select (value #>> '{}')::int from public.fin_settings where key = 'idle_minutes'), 30))
+  from public.fin_members m where m.user_id = auth.uid()
+$$;
+revoke all on function public.fin_my_security() from public, anon;
+grant execute on function public.fin_my_security() to authenticated;
+
+-- every sign-in, failed attempt, second step, sign-out everywhere and block; written only by the server
+create table if not exists public.fin_login_events (
+  id bigint generated always as identity primary key,
+  user_id uuid,
+  email text,
+  kind text not null check (kind in ('signed_in', 'failed', 'mfa_enrolled', 'mfa_verified', 'mfa_failed', 'mfa_removed', 'signed_out_all', 'sessions_ended', 'blocked', 'unblocked', 'idle_timeout')),
+  ip text,
+  user_agent text,
+  device_id text,
+  new_device boolean,
+  at timestamptz default now()
+);
+create index if not exists fin_login_events_user on public.fin_login_events (user_id, at desc);
+create index if not exists fin_login_events_at on public.fin_login_events (at desc);
+alter table public.fin_login_events enable row level security;
+revoke all on public.fin_login_events from anon;
+revoke insert, update, delete on public.fin_login_events from authenticated;
+grant select on public.fin_login_events to authenticated;
+drop policy if exists "fin_login_events read" on public.fin_login_events;
+create policy "fin_login_events read" on public.fin_login_events for select to authenticated using (user_id = auth.uid() or public.fin_has_role(array['admin']));
+
+-- end every session of a user (blocking, "sign out from all devices" by an admin). Server only.
+create or replace function public.fin_end_sessions(p_user uuid) returns int
+language plpgsql volatile security definer set search_path = '' as $$
+declare n int;
+begin
+  delete from auth.sessions where user_id = p_user;
+  get diagnostics n = row_count;
+  return n;
+end $$;
+revoke all on function public.fin_end_sessions(uuid) from public, anon, authenticated;
+grant execute on function public.fin_end_sessions(uuid) to service_role;
+
+-- sessions and second-step factors of the members, for the user management screen (admins only, read from the server)
+create or replace function public.fin_member_security() returns table (user_id uuid, sessions int, last_seen timestamptz, mfa boolean, last_sign_in timestamptz, banned_until timestamptz)
+language sql stable security definer set search_path = '' as $$
+  select m.user_id,
+    (select count(*)::int from auth.sessions s where s.user_id = m.user_id),
+    (select max(coalesce(s.refreshed_at, s.updated_at, s.created_at)) from auth.sessions s where s.user_id = m.user_id),
+    exists (select 1 from auth.mfa_factors f where f.user_id = m.user_id and f.status = 'verified'),
+    (select u.last_sign_in_at from auth.users u where u.id = m.user_id),
+    (select u.banned_until from auth.users u where u.id = m.user_id)
+  from public.fin_members m
+$$;
+revoke all on function public.fin_member_security() from public, anon, authenticated;
+grant execute on function public.fin_member_security() to service_role;
+notify pgrst, 'reload schema';
+
+-- v12.1: the session check must never take the system down. If this database's role cannot read auth.sessions
+-- (privileges differ between projects), the check is skipped and fin_session_check_ok() says so; the rest still applies.
+create or replace function public.fin_session_alive() returns boolean
+language plpgsql stable security definer set search_path = '' as $$
+declare sid text := auth.jwt() ->> 'session_id';
+begin
+  if sid is null then return true; end if;
+  return exists (select 1 from auth.sessions s where s.id = sid::uuid);
+exception when insufficient_privilege or undefined_table then
+  return true;
+end $$;
+revoke all on function public.fin_session_alive() from public, anon, authenticated;
+-- to verify after applying in production: select public.fin_session_check_ok();  -- true = ended sessions are refused at once
+create or replace function public.fin_session_check_ok() returns boolean
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform 1 from auth.sessions limit 1;
+  return true;
+exception when insufficient_privilege or undefined_table then
+  return false;
+end $$;
+revoke all on function public.fin_session_check_ok() from public, anon;
+grant execute on function public.fin_session_check_ok() to authenticated;
+create or replace function public.fin_has_role(roles text[]) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select coalesce((
+    select m.role = any(roles)
+       and (not (m.role = any(public.fin_mfa_roles())) or coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2')
+       and public.fin_session_alive()
+    from public.fin_members m where m.user_id = auth.uid() and m.active), false)
+$$;
+notify pgrst, 'reload schema';

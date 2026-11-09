@@ -4,8 +4,9 @@ import { supabase, hasSupabase } from '../../lib/supabase.js'
 import { useAuth } from '../../lib/useAuth.js'
 import * as api from './api.js'
 import { ROLE, can } from './format.js'
-import { Icon, Skeleton } from './ui.jsx'
+import { ConfirmHost, Icon, Skeleton } from './ui.jsx'
 import { markLedger } from './ledger.js'
+import { Login, SecondStep, useIdleSignOut, deviceId } from './auth.jsx'
 import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
 import CommandPalette from './CommandPalette.jsx'
@@ -117,33 +118,6 @@ function useFinanceData(enabled) {
   return { ...state, documents, reload, patchDoc, refreshIfStale }
 }
 
-function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [err, setErr] = useState('')
-  const [busy, setBusy] = useState(false)
-  const submit = async (e) => {
-    e.preventDefault()
-    setErr(''); setBusy(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setBusy(false)
-    if (error) setErr('פרטי התחברות שגויים. נסו שוב.')
-  }
-  return (
-    <div className="fin-login" dir="rtl">
-      <form className="fin-login__box" onSubmit={submit}>
-        <img src="/kurkoos-logo.svg" alt="קבוצת קורקוס" className="fin-login__logo" />
-        <h1>KURKOOS FINANCE AI</h1>
-        <p>איסוף חשבוניות, בקרה ואישור, וייצוא לרואה החשבון.</p>
-        <label>אימייל<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" /></label>
-        <label>סיסמה<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" /></label>
-        {err && <p className="fin-error" role="alert">{err}</p>}
-        <button type="submit" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'מתחבר…' : 'כניסה'}</button>
-      </form>
-    </div>
-  )
-}
-
 function NoAccess({ me, email, onClaimed }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -178,7 +152,36 @@ const THEME_KEY = 'kurkoos-adm-theme'
 
 export default function FinanceApp() {
   const session = useAuth()
-  const data = useFinanceData(!!session)
+  // after sign-in: my role, whether it requires the second step (TOTP), and the idle timeout. Data loads only once
+  // the second step passed; the database refuses it before that anyway (fin_has_role checks the token's aal).
+  const [sec, setSec] = useState(null)        // null = not checked yet · { role, mfa_required, idle_minutes, aal } · false = no member row
+  useEffect(() => {
+    if (!session) { setSec(null); return }
+    let alive = true
+    // a reload keeps the answer for the same token, so the screen appears as fast as before the gate existed
+    const cacheKey = `fin-sec:${session.access_token.slice(-24)}`
+    try { const c = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); if (c) { setSec(c); return undefined } } catch { /* noop */ }
+    ;(async () => {
+      const [me, { data: lvl }] = await Promise.all([api.mySecurity(), supabase.auth.mfa.getAuthenticatorAssuranceLevel()])
+      if (!alive) return
+      const v = me ? { ...me, aal: lvl?.currentLevel || 'aal1', next: lvl?.nextLevel || 'aal1' } : false
+      setSec(v)
+      try { if (v && !(v.mfa_required && v.aal !== 'aal2')) sessionStorage.setItem(cacheKey, JSON.stringify(v)) } catch { /* noop */ }
+    })()
+    return () => { alive = false }
+  }, [session?.access_token]) // eslint-disable-line react-hooks/exhaustive-deps
+  // a required second step is pending when the role requires it and the token is still aal1
+  const mfaPending = !!sec && sec.mfa_required && sec.aal !== 'aal2'
+  const ready = !!session && sec !== null && !mfaPending
+  const data = useFinanceData(ready)
+  // one line per sign-in (device, time); a sign-in from a new device also sends a mail
+  useEffect(() => {
+    if (!ready || !session?.access_token) return
+    const key = `fin-signed-in:${session.access_token.slice(-24)}`
+    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1') } catch { /* noop */ }
+    api.callServer('auth-event', { kind: 'signed_in', device_id: deviceId() }).catch(() => {})
+  }, [ready, session?.access_token])
+  const idleSoon = useIdleSignOut(sec?.idle_minutes || 30, ready)
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [navOpen, setNavOpen] = useState(false)
@@ -240,16 +243,19 @@ export default function FinanceApp() {
   }, [data.documents, data.suppliers])
 
   if (!hasSupabase) return <p className="fin-msg">Supabase לא מוגדר בסביבה הזו.</p>
-  if (session === undefined || (session && data.loading && !data.me)) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
-  if (!session) return <Login />
+  if (!session && session !== undefined) return <Login />
+  if (session === undefined || (session && sec === null)) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
+  if (mfaPending) return <SecondStep mfaRequired onDone={() => supabase.auth.refreshSession().then(() => setSec((x) => ({ ...x, aal: 'aal2' })))} />
+  if (sec !== false && data.loading && !data.me) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
   const email = session.user?.email || ''
   const myName = data.members.find((m) => m.user_id === session.user?.id)?.full_name || ''
-  if (data.error && !data.me) return <div className="fin-login" dir="rtl"><div className="fin-login__box"><h1>שגיאה</h1><p className="fin-error">{data.error}</p></div></div>
+  if (data.error && !data.me) return <div className="fin-login" dir="rtl"><div className="fin-login__box"><h1>שגיאה</h1><p className="fin-error" role="alert">{data.error}</p></div></div>
   if (!role) return <NoAccess me={data.me} email={email} onClaimed={data.reload} />
 
   return (
     <Ctx.Provider value={ctx}>
       <div className={`fin ${collapsed ? 'is-collapsed' : ''} ${scrolled ? 'is-scrolled' : ''}`} dir="rtl" data-theme={theme}>
+        <a href="#fin-main" className="fin-skip">דילוג לתוכן</a>
         <aside className={`fin__side ${navOpen ? 'is-open' : ''}`} id="fin-side" aria-label="תפריט המערכת">
           <div className="fin__drawer-head">
             <span className="fin__avatar fin__avatar--lg" aria-hidden="true">{(myName || email).trim().slice(0, 1).toUpperCase()}</span>
@@ -322,6 +328,7 @@ export default function FinanceApp() {
               <button type="button" className="fin-icon-btn" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} aria-label={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'} title={theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button>
             </div>
           </header>
+          {idleSoon && <div className="fin-idlebar" role="alert"><Icon name="clock" size={16} /> בלי פעילות במשך {sec?.idle_minutes || 30} דקות המערכת מתנתקת בעוד דקה. כל נגיעה מבטלת.</div>}
           <main className="fin__content" id="fin-main">
             {data.error && <p className="fin-error fin-error--block" role="alert">{data.error}</p>}
             <Suspense fallback={<div className="fin-stack" aria-busy="true"><Skeleton lines={6} /></div>}>
@@ -345,6 +352,7 @@ export default function FinanceApp() {
         </nav>
         {capture && <Suspense fallback={null}><CaptureReceipt onClose={() => setCapture(false)} /></Suspense>}
         <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav} />
+        <ConfirmHost />
       </div>
     </Ctx.Provider>
   )

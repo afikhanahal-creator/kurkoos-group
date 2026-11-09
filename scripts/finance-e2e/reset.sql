@@ -15,3 +15,5 @@ truncate public.fin_whatsapp_inbox, public.fin_whatsapp_senders, public.fin_clou
 truncate public.fin_outbound_queue, public.fin_outbound_secrets, public.fin_outbound, public.fin_oauth_used, public.fin_deliveries cascade;
 truncate public.fin_skipped;
 update public.fin_settings set value = '""' where key = 'accountant_email';
+update public.fin_settings set value = '[]' where key = 'mfa_required_roles';
+truncate public.fin_login_events;

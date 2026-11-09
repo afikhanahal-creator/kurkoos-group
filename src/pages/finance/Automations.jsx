@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago, dateTime, nameOf } from './format.js'
-import { Empty, Field, Icon, Modal, PageHead, Pill, Toggle, useAsync } from './ui.jsx'
+import { Empty, Field, Icon, Modal, PageHead, Pill, Toggle, useAsync, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 
 const FREQ = { daily: 'כל יום', weekly: 'כל שבוע', monthly: 'כל חודש', on_event: 'בכל מסמך' }
@@ -79,7 +79,7 @@ export default function Automations() {
                     <td className="fin-col-lg">{r.updated_at ? `${who(r.updated_by) || '—'}, ${ago(r.updated_at)}` : '—'}</td>
                     <td className="fin-row-actions">
                       {admin && <button type="button" className="fin-link" onClick={() => setEdit({ ...r, ...(r.match || {}), ...(r.action || {}) })}>עריכה</button>}
-                      {admin && <button type="button" className="fin-link fin-link--danger" onClick={async () => { if (window.confirm(`למחוק את הכלל "${r.name}"? המחיקה נרשמת ביומן.`)) { await api.deleteRow('fin_rules', r.id); rules.reload() } }}>מחיקה</button>}
+                      {admin && <button type="button" className="fin-link fin-link--danger" onClick={async () => { if ((await askConfirm({ text: `למחוק את הכלל "${r.name}"? המחיקה נרשמת ביומן.`, ok: 'מחיקה', danger: true }))) { await api.deleteRow('fin_rules', r.id); rules.reload() } }}>מחיקה</button>}
                     </td>
                   </tr>
                 ))}
@@ -100,8 +100,8 @@ export default function Automations() {
                 <tr key={a.key}>
                   <td><Toggle checked={a.enabled} onChange={(v) => updateAuto(a, { enabled: v })} label={`הפעלת ${a.name}`} disabled={!admin} /></td>
                   <td className="fin-td-main"><span className="fin-cell-main">{a.name}</span><small className="fin-cell-sub fin-wrap">{a.description}</small>
-                    {a.key === 'amount_flag' && <label className="fin-inline-label">סף: <input type="number" className="fin-select fin-select--sm" defaultValue={a.config?.min_amount || 50000} disabled={!admin} onBlur={(e) => updateAuto(a, { config: { ...a.config, min_amount: Number(e.target.value) } })} /> ₪</label>}
-                    {a.key === 'retry_failed' && <label className="fin-inline-label">ניסיונות: <input type="number" min="1" max="10" className="fin-select fin-select--sm" defaultValue={a.config?.max_attempts || 3} disabled={!admin} onBlur={(e) => updateAuto(a, { config: { ...a.config, max_attempts: Number(e.target.value) } })} /></label>}
+                    {a.key === 'amount_flag' && <label className="fin-inline-label">סף: <input type="number" inputMode="decimal" className="fin-select fin-select--sm" defaultValue={a.config?.min_amount || 50000} disabled={!admin} onBlur={(e) => updateAuto(a, { config: { ...a.config, min_amount: Number(e.target.value) } })} /> ₪</label>}
+                    {a.key === 'retry_failed' && <label className="fin-inline-label">ניסיונות: <input type="number" inputMode="decimal" min="1" max="10" className="fin-select fin-select--sm" defaultValue={a.config?.max_attempts || 3} disabled={!admin} onBlur={(e) => updateAuto(a, { config: { ...a.config, max_attempts: Number(e.target.value) } })} /></label>}
                   </td>
                   <td className="fin-col-md">{FREQ[a.frequency]}</td>
                   <td>{a.last_run_at ? ago(a.last_run_at) : 'עוד לא רצה'}</td>
@@ -126,11 +126,11 @@ export default function Automations() {
               {k.cond === 'code' && <Field label="תנאי: קוד שמופיע במסמך" wide><input required value={edit.code || ''} onChange={(e) => setEdit({ ...edit, code: e.target.value })} dir="ltr" /></Field>}
               {k.cond === 'sender' && <Field label="תנאי: כתובת או דומיין השולח" wide><input required value={edit.sender || ''} onChange={(e) => setEdit({ ...edit, sender: e.target.value })} dir="ltr" /></Field>}
               {k.cond === 'reg_number' && <Field label="תנאי: ח.פ הנמען במסמך" wide><input required inputMode="numeric" value={edit.reg_number || ''} onChange={(e) => setEdit({ ...edit, reg_number: e.target.value })} dir="ltr" /></Field>}
-              {k.cond === 'min_amount' && <Field label="תנאי: סכום מינימלי (₪)" wide><input required type="number" value={edit.min_amount || ''} onChange={(e) => setEdit({ ...edit, min_amount: e.target.value })} /></Field>}
+              {k.cond === 'min_amount' && <Field label="תנאי: סכום מינימלי (₪)" wide><input required type="number" inputMode="decimal" value={edit.min_amount || ''} onChange={(e) => setEdit({ ...edit, min_amount: e.target.value })} /></Field>}
               {k.act === 'category' && <Field label="פעולה: קטגוריה" wide><Select required value={edit.category || ''} onChange={(e) => setEdit({ ...edit, category: e.target.value })}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}</Select></Field>}
               {k.act === 'business_id' && <Field label="פעולה: חברה" wide><Select required value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>}
               {k.act === 'project_id' && <Field label="פעולה: פרויקט" wide><Select required value={edit.project_id || ''} onChange={(e) => setEdit({ ...edit, project_id: e.target.value })}><option value="">בחרו…</option>{projects.filter((p) => !p.archived_at).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
-              <Field label="עדיפות (נמוך = קודם)"><input type="number" value={edit.priority} onChange={(e) => setEdit({ ...edit, priority: e.target.value })} /></Field>
+              <Field label="עדיפות (נמוך = קודם)"><input type="number" inputMode="decimal" value={edit.priority} onChange={(e) => setEdit({ ...edit, priority: e.target.value })} /></Field>
             </form>
           </Modal>
         )

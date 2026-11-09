@@ -52,7 +52,12 @@ const go = async (path, p = page) => { await p.goto(`${APP}${path}`); await p.wa
 const modalSave = async (p = page) => { await p.locator('.fin-modal__foot .fin-btn--primary').first().click(); await p.waitForTimeout(900) }
 const lbl = (re, p = page) => p.getByLabel(re).first()
 const waitProcessed = async (names) => { for (let i = 0; i < 40; i++) { if (sql(`select count(*) from fin_documents where file_name in (${names.map((n) => `'${n}'`).join(',')}) and status <> 'processing'`) === String(names.length)) return true; await page.waitForTimeout(500) } return false }
-const nav = async (label) => { const it = page.locator('.fin__nav-item', { hasText: label }).first(); if (!(await it.isVisible())) await page.locator('.fin__nav-more').click(); await it.click(); await page.waitForLoadState('networkidle').catch(() => {}); await page.waitForTimeout(500) }
+const nav = async (label) => {
+  await page.waitForSelector('.fin__nav', { timeout: 30000 }).catch(() => {})   // the shell first: a reload takes a moment
+  const it = page.locator('.fin__nav-item', { hasText: label }).first()
+  if (!(await it.isVisible())) { const more = page.locator('.fin__nav-more'); if (await more.isVisible()) await more.click() }
+  await it.click(); await page.waitForLoadState('networkidle').catch(() => {}); await page.waitForTimeout(500)
+}
 
 // ---------- T0: sign in, first admin ----------
 await go('')
@@ -1237,6 +1242,80 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   record('GA-SEP', 'הפרדת אנליטיקה: מערכת הכספים לא נמדדת', 'מעבר מעמוד ציבורי למערכת הכספים בלי טעינת עמוד: הדגל ga-disable דולק, אף בקשת מדידה לא יוצאת ממערכת הכספים, meta robots=noindex, השרת שולח X-Robots-Tag ו-Referrer-Policy: no-referrer, ו-robots.txt חוסם /admin',
     `בקשות מדידה בעמוד הציבורי: ${onPublic}; ממערכת הכספים: ${inFinance.length}; דגל: ${JSON.stringify(flag)}; meta: "${robots}"; כותרות: ${JSON.stringify(adminHeaders)}`,
     inFinance.length === 0 && flag.length > 0 && flag.every((x) => x === true) && /noindex/.test(robots) && /noindex/.test(adminHeaders['X-Robots-Tag'] || '') && adminHeaders['Referrer-Policy'] === 'no-referrer' && /Disallow: \/admin/.test(robotsTxt))
+}
+
+// =================== v12: sign-in security ===================
+{
+  const totp = (secret) => execSync(`python3 -c "import hmac,hashlib,base64,struct,time,sys;s=sys.argv[1];k=base64.b32decode(s.upper()+'='*(-len(s)%8));c=int(time.time()//30);h=hmac.new(k,struct.pack('>Q',c),hashlib.sha1).digest();o=h[-1]&15;print(str((struct.unpack('>I',h[o:o+4])[0]&0x7fffffff)%1000000).zfill(6))" ${secret}`, { encoding: 'utf8' }).trim()
+  // 1. a failed sign-in is recorded (email and time only), the screen explains, and the password can be shown
+  const sx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'he-IL' }); const sp = await sx.newPage()
+  await sp.goto(APP); await sp.fill('input[type=email]', 'admin@kurkoos.test'); await sp.fill('input[type=password]', 'wrong-password')
+  await sp.getByRole('button', { name: 'הצגת הסיסמה' }).click(); const shownType = await sp.locator('input[autocomplete="current-password"]').getAttribute('type')
+  await sp.click('button[type=submit]'); await sp.waitForTimeout(1200)
+  const failMsg = await sp.locator('.fin-login [role=alert]').innerText().catch(() => '')
+  const failRow = sql("select count(*) from fin_login_events where kind='failed' and email='admin@kurkoos.test'")
+  const loginShot = await shot('97-login')
+  // 2. MFA becomes mandatory for admins: the admin is stopped at the second step, the database refuses data, the UI enrols
+  sql(`update fin_settings set value='["admin","finance_manager"]' where key='mfa_required_roles'`)
+  await sp.fill('input[autocomplete="current-password"]', 'Passw0rd!x'); await sp.click('button[type=submit]')
+  await sp.waitForSelector('text=אימות דו-שלבי', { timeout: 15000 }); await sp.waitForTimeout(400)
+  const aal1Token = await sp.evaluate(() => { const k = Object.keys(localStorage).find((x) => x.startsWith('sb-') && x.endsWith('-auth-token')); return k ? JSON.parse(localStorage.getItem(k)).access_token : null })
+  const refusedDb = await rest('fin_documents?select=id&limit=1', aal1Token)
+  const refusedApi = await api(aal1Token, { action: 'status' }).then(() => api(aal1Token, { action: 'members-meta' }))
+  const mfaShot = await shot('98-mfa-required')
+  await sp.getByRole('button', { name: 'הגדרת אפליקציית אימות' }).click(); await sp.waitForSelector('.fin-login__qr', { timeout: 15000 })
+  await sp.locator('summary', { hasText: 'אי אפשר לסרוק' }).click(); const secret = (await sp.locator('.fin-login__secret').innerText()).trim()
+  await sp.fill('.fin-login__code', '000000'); await sp.click('button[type=submit]'); await sp.waitForTimeout(800)
+  const badCode = await sp.locator('.fin-login [role=alert]').innerText().catch(() => '')
+  await sp.fill('.fin-login__code', totp(secret)); await sp.click('button[type=submit]')
+  await sp.waitForSelector('.fin-x-big, .fin__nav', { timeout: 30000 }); await sp.waitForTimeout(800)
+  const aal2Token = await sp.evaluate(() => { const k = Object.keys(localStorage).find((x) => x.startsWith('sb-') && x.endsWith('-auth-token')); return k ? JSON.parse(localStorage.getItem(k)).access_token : null })
+  const aal = JSON.parse(Buffer.from(aal2Token.split('.')[1], 'base64url').toString()).aal
+  const okDb = await rest('fin_documents?select=id&limit=1', aal2Token)
+  const enrolled = sql("select count(*) from auth.mfa_factors f join auth.users u on u.id=f.user_id where u.email='admin@kurkoos.test' and f.status='verified'")
+  const events = sql("select string_agg(kind, ',' order by at) from fin_login_events where email='admin@kurkoos.test' and kind in ('mfa_failed','mfa_enrolled','signed_in')")
+  record('MFA', 'אימות דו-שלבי חובה למנהלים', 'ניסיון כושל נרשם ומוסבר; כשהתפקיד דורש, אחרי הסיסמה המסד וה-API מסרבים (aal1) עד שהאפליקציה מוגדרת; קוד שגוי נדחה; אחרי קוד נכון הטוקן aal2 והנתונים נפתחים; הכול ביומן הכניסות',
+    `סיסמה גלויה: ${shownType}; כשלון: "${failMsg}" (${failRow} ביומן); לפני: מסד ${refusedDb.status}/${Array.isArray(refusedDb.data) ? refusedDb.data.length : '-'}, API ${refusedApi.status} ${refusedApi.data.code || ''}; קוד שגוי: "${badCode.slice(0, 40)}"; אחרי: aal=${aal}, מסד ${okDb.status}/${okDb.data.length}, גורמים ${enrolled}; אירועים: ${events}`,
+    shownType === 'text' && /שגויים/.test(failMsg) && Number(failRow) >= 1 && Array.isArray(refusedDb.data) && refusedDb.data.length === 0 && refusedApi.status === 403 && refusedApi.data.code === 'MFA_REQUIRED' && /שגוי/.test(badCode) && aal === 'aal2' && okDb.data.length === 1 && enrolled === '1' && /mfa_failed/.test(events) && /mfa_enrolled/.test(events),
+    [loginShot, mfaShot])
+
+  // 3. blocking ends the sessions now; the blocked person cannot sign in; an employee cannot block; unblocking restores
+  const wx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'he-IL' }); const wp = await wx.newPage()
+  await wp.goto(APP); await wp.fill('input[type=email]', 'worker@kurkoos.test'); await wp.fill('input[type=password]', 'W0rker!xx'); await wp.click('button[type=submit]'); await wp.waitForSelector('.fin__nav', { timeout: 20000 })
+  const workerId = sql("select user_id from fin_members where email='worker@kurkoos.test'")
+  const sessBefore = Number(sql(`select count(*) from auth.sessions where user_id='${workerId}'`))
+  const empBlock = await api(empToken, { action: 'member-block', user_id: workerId, blocked: true })
+  const adminBlock = await api(aal2Token, { action: 'member-block', user_id: workerId, blocked: true })
+  const sessAfter = Number(sql(`select count(*) from auth.sessions where user_id='${workerId}'`))
+  await wp.reload(); await wp.waitForTimeout(2500)
+  const kicked = await wp.locator('.fin-login input[type=email]').count()
+  await wp.fill('input[type=email]', 'worker@kurkoos.test').catch(() => {}); await wp.fill('input[type=password]', 'W0rker!xx').catch(() => {}); await wp.click('button[type=submit]').catch(() => {}); await wp.waitForTimeout(1200)
+  const blockedMsg = await wp.locator('.fin-login [role=alert]').innerText().catch(() => '')
+  const unblock = await api(aal2Token, { action: 'member-block', user_id: workerId, blocked: false })
+  const selfBlock = await api(aal2Token, { action: 'member-block', user_id: sql("select user_id from fin_members where email='admin@kurkoos.test'"), blocked: true })
+  await wx.close()
+  record('BLOCK', 'חסימת משתמש וניתוק מכל המכשירים', 'מנהל חוסם עובד: כל החיבורים שלו נמחקים מיד, הדף שלו חוזר למסך הכניסה והכניסה נדחית כחסומה; עובד לא יכול לחסום; מנהל לא חוסם את עצמו; ביטול החסימה מחזיר',
+    `חיבורים: ${sessBefore} → ${sessAfter} (נותקו ${adminBlock.data.sessions_ended}); עובד מנסה: ${empBlock.status}; נזרק למסך כניסה: ${kicked === 1}; הודעה: "${blockedMsg}"; ביטול: ${unblock.status}; עצמי: ${selfBlock.status}`,
+    sessBefore >= 1 && sessAfter === 0 && adminBlock.data.sessions_ended >= 1 && empBlock.status === 403 && kicked === 1 && /חסום/.test(blockedMsg) && unblock.status === 200 && selfBlock.status === 400)
+
+  // 4. the users screen: sign-ins and security tab, "sign out everywhere", the my-security card, the idle sign-out
+  await sp.goto(`${APP}/users?tab=security`); await sp.waitForTimeout(1500)
+  const secTab = await sp.locator('.fin-org-stats').innerText().catch(() => '')
+  const secRows = await sp.locator('.fin-table--log tbody tr').count()
+  const secShot = await shot('99-security-tab', sp)
+  await sp.goto(`${APP}/settings`); await sp.waitForTimeout(1200)
+  const mine = await sp.locator('.fin-mysec').innerText().catch(() => '')
+  const mineShot = await shot('99b-my-security', sp)
+  sql("update fin_settings set value='1' where key='idle_minutes'")
+  await sp.reload(); await sp.waitForTimeout(1500)
+  const t0 = Date.now(); let idleBar = false; let signedOut = false
+  while (Date.now() - t0 < 90_000) { await sp.waitForTimeout(3000); if (!idleBar && await sp.locator('.fin-idlebar').count()) idleBar = true; if (await sp.locator('.fin-login input[type=email]').count()) { signedOut = true; break } }
+  const idleEv = sql("select count(*) from fin_login_events where kind='idle_timeout' and email='admin@kurkoos.test'")
+  sql("update fin_settings set value='30' where key='idle_minutes'"); sql(`update fin_settings set value='[]' where key='mfa_required_roles'`)
+  await sx.close()
+  record('IDLE', 'מסך האבטחה, האבטחה שלי וניתוק אחרי חוסר פעילות', 'לשונית "כניסות ואבטחה" עם מספרים ויומן; כרטיס "האבטחה שלי" עם אימות דו-שלבי פעיל; אחרי זמן ההגדרה בלי פעילות מופיעה אזהרה ואז המערכת מתנתקת, והניתוק נרשם',
+    `לשונית: ${secTab.replace(/\s+/g, ' ').slice(0, 120)}, ${secRows} שורות; שלי: ${/אימות דו-שלבי פעיל/.test(mine)}; אזהרה: ${idleBar}; נותק אחרי ${Math.round((Date.now() - t0) / 1000)} שניות: ${signedOut}; ביומן: ${idleEv}`,
+    /כניסות ב-24 שעות/.test(secTab) && secRows >= 3 && /אימות דו-שלבי פעיל/.test(mine) && idleBar && signedOut && Number(idleEv) >= 1, [secShot, mineShot])
 }
 
 // dark mode screenshot

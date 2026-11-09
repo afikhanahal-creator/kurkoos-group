@@ -4,7 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago, nameOf } from './format.js'
 import { ProviderLogo } from './logos.jsx'
-import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync } from './ui.jsx'
+import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 
 const P = {
@@ -60,7 +60,7 @@ export default function Cloud() {
     } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
   const disconnect = async (t) => {
-    if (!window.confirm(`לנתק את ${P[t.provider].title} (${t.account_email})? הקבצים שכבר הועתקו נשארים בתיקייה.`)) return
+    if (!(await askConfirm({ text: `לנתק את ${P[t.provider].title} (${t.account_email})? הקבצים שכבר הועתקו נשארים בתיקייה.`, ok: 'ניתוק', danger: true }))) return
     try { await api.callServer('cloud-disconnect', { target_id: t.id }); list.reload() } catch (e) { setErr(e.message) }
   }
   const save = async (e) => {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago, dateTime, nameOf } from './format.js'
-import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync } from './ui.jsx'
+import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 
 export const EVENTS = {
@@ -89,7 +89,7 @@ export default function Delivery() {
   }
   const toggle = async (o) => { try { await api.callServer('outbound-save', { ...o, enabled: !o.enabled }); list.reload() } catch (e) { setErr(e.message) } }
   const remove = async (o) => {
-    if (!window.confirm(`להפסיק לשלוח ל-${o.target}?`)) return
+    if (!(await askConfirm({ text: `להפסיק לשלוח ל-${o.target}?`, ok: 'הפסקה', danger: true }))) return
     try { await api.callServer('outbound-delete', { id: o.id }); list.reload() } catch (e) { setErr(e.message) }
   }
   const copy = async (t) => { try { await navigator.clipboard.writeText(t); setMsg('הועתק.') } catch { /* the field is selectable */ } }

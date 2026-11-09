@@ -330,3 +330,28 @@ export function MoreMenu({ label, items }) {
     </span>
   )
 }
+
+
+/* One confirmation dialog for the whole app. askConfirm({ title, text, lines, ok, danger }) resolves true/false.
+   The host is mounted once (FinanceApp); until it mounts, or outside it, the browser's own dialog answers. */
+let confirmHost = null
+export const askConfirm = (opts) => new Promise((resolve) => {
+  const o = typeof opts === 'string' ? { text: opts } : opts
+  if (confirmHost) confirmHost(o, resolve); else resolve(window.confirm([o.text, ...(o.lines || [])].filter(Boolean).join('\n')))
+})
+export function ConfirmHost() {
+  const [cur, setCur] = useState(null)
+  useEffect(() => { confirmHost = (o, resolve) => setCur({ ...o, resolve }); return () => { confirmHost = null } }, [])
+  if (!cur) return null
+  const done = (v) => { cur.resolve(v); setCur(null) }
+  return (
+    <Modal title={cur.title || 'אישור פעולה'} onClose={() => done(false)} footer={<>
+      <button type="button" className={`fin-btn ${cur.danger ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={() => done(true)} autoFocus>{cur.ok || 'אישור'}</button>
+      <button type="button" className="fin-btn fin-btn--ghost" onClick={() => done(false)}>{cur.cancel || 'ביטול'}</button>
+    </>}>
+      {cur.text && <p>{cur.text}</p>}
+      {cur.lines?.length > 0 && <ul className="fin-bullets fin-confirm__lines">{cur.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>}
+      {cur.note && <p className="fin-muted fin-small">{cur.note}</p>}
+    </Modal>
+  )
+}

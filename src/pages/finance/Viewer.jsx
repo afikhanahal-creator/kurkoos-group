@@ -144,7 +144,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       )}
       <div className="fin-viewer__scroll" tabIndex={0} aria-label={name || 'המסמך'} ref={scroller}>
         {pdf ? (
-          err ? <p className="fin-error fin-error--block">לא הצלחנו להציג את ה-PDF: {err}. <a href={blobUrl} target="_blank" rel="noopener noreferrer">פתיחה בחלון חדש</a></p>
+          err ? <p className="fin-error fin-error--block" role="alert">לא הצלחנו להציג את ה-PDF: {err}. <a href={blobUrl} target="_blank" rel="noopener noreferrer">פתיחה בחלון חדש</a></p>
             : !pages ? <div className="fin-viewer__page fin-viewer__page--skel" style={{ width: w, height: Math.round(w * 1.414) }} aria-busy="true" aria-label="טוען את המסמך" />
             : <>
               {pages.list.map((p, i) => <span key={i} className="fin-viewer__frame" data-page={i + 1} style={pageBox(p.ratio)}><img className="fin-viewer__page" src={p.src} alt={`${name || 'המסמך'}, עמוד ${i + 1}`} style={imgStyle(p.ratio)} /></span>)}

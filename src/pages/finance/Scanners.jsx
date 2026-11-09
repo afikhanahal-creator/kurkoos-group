@@ -4,7 +4,7 @@ import { useSession } from './session.js'
 import * as api from './api.js'
 import { ago, date, dateTime, nameOf } from './format.js'
 import { ProviderLogo } from './logos.jsx'
-import { Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, Skeleton } from './ui.jsx'
+import { Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 
 /* Israeli mobile: 05X-XXXXXXX in any format → 9725XXXXXXXX */
@@ -26,6 +26,7 @@ export default function Scanners() {
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
   const [add, setAdd] = useState(null)
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const office = status.data?.whatsapp?.number || ''
   const waLink = office ? `https://wa.me/${office}?text=${encodeURIComponent('שלום, אני רוצה לשלוח חשבוניות לקבוצת קורקוס')}` : null
@@ -34,13 +35,15 @@ export default function Scanners() {
     e.preventDefault(); setErr('')
     const phone = normalizePhone(add.phone)
     if (!validMobile(phone)) { setErr('מספר נייד לא תקין. למשל 054-3049491'); return }
+    if (busy) return
+    setBusy(true)
     try {
       await api.saveRow('fin_whatsapp_senders', { phone, label: add.label || null, business_id: add.business_id || null, user_id: add.user_id || me?.id || null, created_by: me?.id || null })
       setAdd(null); setMsg(`המספר ${pretty(phone)} נוסף. מעכשיו כל צילום או PDF שיישלח ממנו ל-WhatsApp של המשרד ייכנס למערכת.`); list.reload()
-    } catch (e2) { setErr(/unique|duplicate/i.test(e2.message) ? 'המספר הזה כבר רשום' : e2.message) }
+    } catch (e2) { setErr(/unique|duplicate/i.test(e2.message) ? 'המספר הזה כבר רשום' : e2.message) } finally { setBusy(false) }
   }
   const toggle = async (s) => { await api.saveRow('fin_whatsapp_senders', { id: s.id, active: !s.active }); list.reload() }
-  const remove = async (s) => { if (window.confirm(`להסיר את ${pretty(s.phone)}? המסמכים שנשלחו ממנו נשארים.`)) { await api.deleteRow('fin_whatsapp_senders', s.id); list.reload() } }
+  const remove = async (s) => { if ((await askConfirm({ text: `להסיר את ${pretty(s.phone)}? המסמכים שנשלחו ממנו נשארים.`, ok: 'הסרה', danger: true }))) { await api.deleteRow('fin_whatsapp_senders', s.id); list.reload() } }
 
   return (
     <div className="fin-stack fin-narrow">
@@ -100,7 +103,7 @@ export default function Scanners() {
       )}
 
       {add && (
-        <Modal title="הוספת טלפון" onClose={() => setAdd(null)} footer={<><button type="submit" form="fin-wa" className="fin-btn fin-btn--primary">הוספת המספר</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setAdd(null)}>ביטול</button></>}>
+        <Modal title="הוספת טלפון" onClose={() => setAdd(null)} footer={<><button type="submit" form="fin-wa" disabled={busy} className="fin-btn fin-btn--primary">הוספת המספר</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setAdd(null)}>ביטול</button></>}>
           <form id="fin-wa" className="fin-form__grid" onSubmit={save} noValidate>
             <Field label="מספר הנייד" wide tone={err ? 'error' : undefined} hint={err || 'המספר שממנו תשלחו את הצילומים'}><input type="tel" inputMode="tel" dir="ltr" autoComplete="tel" placeholder="054-3049491" value={add.phone} onChange={(e) => setAdd({ ...add, phone: e.target.value })} required /></Field>
             <Field label="שם (לא חובה)"><input value={add.label} onChange={(e) => setAdd({ ...add, label: e.target.value })} placeholder="למשל: הטלפון של שלומי" /></Field>

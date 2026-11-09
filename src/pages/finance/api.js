@@ -188,3 +188,6 @@ export const testCloud = (targetId) => callServer('cloud-test', { target_id: tar
 export const loadSkipped = (limit = 50) => soft((async () => must(await supabase.from('fin_skipped').select('*').order('at', { ascending: false }).limit(limit)))())
 /* one line in the activity log for something done in the browser (an Excel file, a download). Never blocks the action. */
 export const logAction = (action, details = {}) => { supabase.rpc('fin_log', { p_action: action, p_details: details }).then(() => {}, () => {}) }
+/* my role, whether it requires the second step, and the idle timeout; null when I am not a member */
+export const mySecurity = async () => { try { return must(await supabase.rpc('fin_my_security')) } catch { return null } }
+export const loadLoginEvents = (limit = 100) => soft(all('fin_login_events', 'at', false, limit))

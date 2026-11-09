@@ -3,7 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf } from './format.js'
 import { saveBlob } from './zip.js'
-import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton } from './ui.jsx'
+import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 import Viewer from './Viewer.jsx'
 
@@ -30,7 +30,7 @@ function Preview({ doc }) {
     return () => { alive = false; if (url) URL.revokeObjectURL(url) }
   }, [doc.file_path, doc.file_mime])
   if (!doc.file_path) return <div className="fin-msg">אין קובץ</div>
-  if (err) return <p className="fin-error fin-error--block">הקובץ לא נטען: {err}</p>
+  if (err) return <p className="fin-error fin-error--block" role="alert">הקובץ לא נטען: {err}</p>
   if (html !== null) return <iframe className="fin-preview__frame" title="המייל המקורי" sandbox="" srcDoc={html} />
   if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
   return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} />
@@ -97,10 +97,10 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
       if (extra.status === 'approved' && saved.status !== 'approved' && saved.first_approved_by) setErr('נרשמה חתימה ראשונה. מסמך מעל סף האישור הכפול מחכה למאשר נוסף.')
     } catch (e) { setErr(/SECOND_APPROVAL/.test(e.message) ? 'המסמך דורש מאשר שני, שונה ממי שאישר ראשון' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת. בחרו פרויקט של אותה חברה' : e.message) } finally { setBusy('') }
   }
-  const approve = () => {
+  const approve = async () => {
     const errors = issues.filter((i) => i.level === 'error' && i.code !== 'ai_note')
     if (!form.business_id) { setErr('לפני אישור צריך לשייך את המסמך לחברה'); return }
-    if (errors.length && !window.confirm(`יש במסמך ${errors.length} בעיות:\n${errors.map((i) => `• ${FIELD_LABEL[i.field] || ''} ${i.message}`).join('\n')}\n\nלאשר בכל זאת?`)) return
+    if (errors.length && !(await askConfirm({ title: 'לאשר למרות הבעיות?', text: `יש במסמך ${errors.length === 1 ? 'בעיה אחת' : `${errors.length} בעיות`}:`, lines: errors.map((i) => `${FIELD_LABEL[i.field] || ''} ${i.message}`.trim()), ok: 'אישור בכל זאת', danger: true }))) return
     save({ status: 'approved' })
   }
   const reread = async () => {
@@ -111,7 +111,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
   const remove = async () => {
-    if (!window.confirm('למחוק את המסמך ואת הקובץ? אי אפשר לבטל, והמחיקה נרשמת ביומן.')) return
+    if (!(await askConfirm({ text: 'למחוק את המסמך ואת הקובץ? אי אפשר לבטל, והמחיקה נרשמת ביומן.', ok: 'מחיקה', danger: true }))) return
     setBusy('delete')
     try { await api.deleteDocument(doc); onDeleted() } catch (e) { setErr(e.message); setBusy('') }
   }

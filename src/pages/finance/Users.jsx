@@ -4,7 +4,7 @@ import { useSession } from './session.js'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ROLE, ago, date, money, nameOf, thisMonth } from './format.js'
-import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync } from './ui.jsx'
+import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 
 const ROLE_DESC = {
@@ -15,7 +15,9 @@ const ROLE_DESC = {
 }
 
 const ROLE_TONE = { admin: 'done', finance_manager: 'ok', employee: 'muted', accountant: 'info' }
-const TABS = [['members', 'חברי ארגון'], ['companies', 'חברות'], ['usage', 'שימוש']]
+const TABS = [['members', 'חברי ארגון'], ['security', 'כניסות ואבטחה'], ['companies', 'חברות'], ['usage', 'שימוש']]
+const EV = { signed_in: 'כניסה', failed: 'ניסיון כניסה שנכשל', mfa_enrolled: 'הוגדר אימות דו-שלבי', mfa_verified: 'אימות דו-שלבי', mfa_failed: 'קוד אימות שגוי', mfa_removed: 'הוסר אימות דו-שלבי', signed_out_all: 'יציאה מכל המכשירים', sessions_ended: 'נותק מכל המכשירים ע״י מנהל', blocked: 'נחסם', unblocked: 'הופעל מחדש', idle_timeout: 'נותק אחרי חוסר פעילות' }
+const EV_TONE = { failed: 'attn', mfa_failed: 'attn', blocked: 'attn', sessions_ended: 'warn', idle_timeout: 'muted', signed_in: 'ok', mfa_enrolled: 'ok', mfa_verified: 'ok' }
 const initials = (m) => (m.full_name || m.email || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
 const ROLE_PICK = [
@@ -89,6 +91,51 @@ function Usage() {
   )
 }
 
+/* every sign-in, failed attempt, second step and block, newest first; the figures a security review asks for */
+function SecurityTab({ members, seen }) {
+  const events = useAsync(() => api.loadLoginEvents(300), [])
+  const [kind, setKind] = useState('')
+  const list = (events.data || []).filter((e) => !kind || (kind === 'bad' ? ['failed', 'mfa_failed', 'blocked'].includes(e.kind) : e.kind === kind))
+  const day = Date.now() - 86400_000; const month = Date.now() - 30 * 86400_000
+  const all = events.data || []
+  const stale = members.filter((m) => m.active && seen[m.user_id]?.last_sign_in_at && new Date(seen[m.user_id].last_sign_in_at).getTime() < month)
+  const stats = [
+    ['כניסות ב-24 שעות', all.filter((e) => e.kind === 'signed_in' && new Date(e.at).getTime() > day).length],
+    ['ניסיונות שנכשלו ב-24 שעות', all.filter((e) => e.kind === 'failed' && new Date(e.at).getTime() > day).length, 'attn'],
+    ['מחוברים עכשיו', members.filter((m) => seen[m.user_id]?.sessions > 0).length],
+    ['עם אימות דו-שלבי', `${members.filter((m) => seen[m.user_id]?.mfa).length}/${members.filter((m) => m.active).length}`],
+    ['חסומים', members.filter((m) => !m.active).length],
+    ['לא נכנסו 30 יום', stale.length, stale.length ? 'warn' : ''],
+  ]
+  const who = (e) => members.find((m) => m.user_id === e.user_id)?.full_name || e.email || '—'
+  const dev = (ua) => { ua = ua || ''; const os = /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : ''; const br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : ''; return [br, os].filter(Boolean).join(' · ') }
+  return (
+    <div className="fin-stack">
+      <div className="fin-org-stats">{stats.map(([l, v, t]) => <div key={l} className={`fin-org-stat ${t ? `is-${t}` : ''}`}><strong>{v}</strong><span>{l}</span></div>)}</div>
+      {stale.length > 0 && <p className="fin-note fin-note--warn"><Icon name="alert" size={16} /> לא נכנסו 30 יום: {stale.map((m) => m.full_name || m.email).join(', ')}. שקלו לחסום חשבונות שלא בשימוש.</p>}
+      <div className="fin-filters">
+        <Select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="סוג אירוע"><option value="">כל האירועים</option><option value="bad">כשלונות וחסימות</option>{Object.entries(EV).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
+      </div>
+      {events.loading ? <p className="fin-muted">טוען…</p> : !list.length ? <Empty title="אין אירועים" icon="shield">כל כניסה, ניסיון שנכשל וחסימה יירשמו כאן.</Empty> : (
+        <div className="fin-table-wrap">
+          <table className="fin-table fin-table--log">
+            <thead><tr><th>מתי</th><th>אירוע</th><th>מי</th><th className="fin-col-md">מכשיר</th><th className="fin-col-lg">IP</th></tr></thead>
+            <tbody>{list.map((e) => (
+              <tr key={e.id} className={['failed', 'mfa_failed', 'blocked'].includes(e.kind) ? 'is-err' : ''}>
+                <td data-label="מתי"><span className="fin-nowrap">{ago(e.at)}</span></td>
+                <td data-label="אירוע"><Pill tone={EV_TONE[e.kind] || 'muted'}>{EV[e.kind] || e.kind}</Pill>{e.new_device && <span className="fin-acc__sub"> מכשיר חדש</span>}</td>
+                <td data-label="מי" className="fin-td-main">{who(e)}</td>
+                <td data-label="מכשיר" className="fin-col-md">{dev(e.user_agent) || '—'}</td>
+                <td data-label="IP" className="fin-col-lg fin-ltr">{e.ip || '—'}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Users() {
   const { members, businesses, mailboxes, documents, reload, go } = useFinance()
   const me = useSession()
@@ -128,9 +175,15 @@ export default function Users() {
       setEdit(null); reload()
     } catch (e2) { setMsg(e2.message) }
   }
+  // blocking goes through the server: the auth server refuses the sign-in and every open session ends now
   const setActive = async (m, active) => {
     if (m.user_id === me?.id) return
-    try { await api.updateMember(m.user_id, { active }); reload() } catch (e) { setMsg(e.message) }
+    if (!active && !(await askConfirm({ text: `לחסום את ${m.full_name || m.email}? הכניסה תיחסם וכל החיבורים הפתוחים שלו יינתקו עכשיו. ההיסטוריה נשמרת.`, ok: 'חסימה', danger: true }))) return
+    try { const r = await api.callServer('member-block', { user_id: m.user_id, blocked: !active }); setMsg(active ? `${m.email} הופעל מחדש` : `${m.email} נחסם${r.sessions_ended ? `, ${r.sessions_ended} חיבורים נותקו` : ''}`); reload(); meta.reload() } catch (e) { setMsg(e.message) }
+  }
+  const endSessions = async (m) => {
+    if (!(await askConfirm({ text: `לנתק את ${m.full_name || m.email} מכל המכשירים? הוא יצטרך להתחבר שוב.`, ok: 'ניתוק', danger: true }))) return
+    try { const r = await api.callServer('member-end-sessions', { user_id: m.user_id }); setMsg(`${r.sessions_ended === 1 ? 'חיבור אחד נותק' : `${r.sessions_ended} חיבורים נותקו`}`); meta.reload() } catch (e) { setMsg(e.message) }
   }
   const BizPick = ({ value, onChange }) => (
     <fieldset className="fin-field fin-field--wide fin-checkset"><legend className="fin-field__label">גישה לחברות</legend>
@@ -187,11 +240,14 @@ export default function Users() {
                       <Pill tone={ROLE_TONE[m.role]}>{ROLE[m.role]}</Pill>
                       <span className="fin-acc__sub">{m.business_ids?.length ? m.business_ids.map((b) => nameOf(businesses, b)).join(', ') : 'כל החברות'}</span>
                       <span className="fin-grow" />
-                      {!m.active ? <Pill>מושבת</Pill> : wait ? <Pill tone="warn">ממתין להצטרפות</Pill> : <Pill tone="ok">פעיל</Pill>}
+                      {seen[m.user_id]?.mfa && <Pill tone="ok" title="אימות דו-שלבי פעיל"><Icon name="shield" size={12} /> 2FA</Pill>}
+                      {seen[m.user_id]?.sessions > 0 && m.active && <span className="fin-acc__sub" title="חיבורים פתוחים">{seen[m.user_id].sessions === 1 ? 'מכשיר אחד מחובר' : `${seen[m.user_id].sessions} מכשירים מחוברים`}</span>}
+                      {!m.active ? <Pill tone="attn">חסום</Pill> : wait ? <Pill tone="warn">ממתין להצטרפות</Pill> : <Pill tone="ok">פעיל</Pill>}
                       <MoreMenu label={`פעולות עבור ${m.email}`} items={[
                         { label: 'עריכה', onClick: () => setEdit({ ...m }) },
                         wait && m.active && { label: 'שליחת ההזמנה שוב', onClick: () => resend(m) },
-                        m.user_id !== me?.id && { label: m.active ? 'השבתה' : 'הפעלה מחדש', onClick: () => setActive(m, !m.active), danger: m.active },
+                        m.user_id !== me?.id && seen[m.user_id]?.sessions > 0 && { label: 'ניתוק מכל המכשירים', onClick: () => endSessions(m) },
+                        m.user_id !== me?.id && { label: m.active ? 'חסימה' : 'הפעלה מחדש', onClick: () => setActive(m, !m.active), danger: m.active },
                       ]} />
                     </div>
                     {seen[m.user_id]?.last_sign_in_at && <small className="fin-member__seen">כניסה אחרונה {ago(seen[m.user_id].last_sign_in_at)} · הצטרף {date(m.created_at)}</small>}
@@ -206,6 +262,8 @@ export default function Users() {
           </details>
         </>
       )}
+
+      {tab === 'security' && <SecurityTab members={members} seen={seen} />}
 
       {tab === 'companies' && (
         businesses.length ? (

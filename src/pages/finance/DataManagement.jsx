@@ -12,7 +12,8 @@ export default function DataManagement() {
   const audit = useAsync(() => api.loadAudit({ limit: 60 }), [documents.length])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState('')
-  const pct = usage.data ? (usage.data.storage_bytes / 1024 ** 3) * 100 : null
+  const quota = Number(usage.data?.quota_bytes) || 1024 ** 3
+  const pct = usage.data ? (usage.data.storage_bytes / quota) * 100 : null
   const finBytes = usage.data?.buckets?.['finance-docs'] || 0
   const byStatus = Object.keys(STATUS).map((s) => [s, documents.filter((d) => d.status === s).length])
 
@@ -35,7 +36,7 @@ export default function DataManagement() {
           {pct === null ? <p className="fin-muted">{usage.loading ? 'טוען…' : 'הפונקציה storage_usage לא זמינה.'}</p> : (
             <>
               <div className={`fin-meter ${pct >= 75 ? 'is-bad' : pct >= 60 ? 'is-warn' : ''}`} role="meter" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="שימוש באחסון"><span style={{ width: `${Math.min(100, pct)}%` }} /></div>
-              <p className="fin-muted">{pct.toFixed(1)}% מ-1GB (התוכנית החינמית, משותף לכל הארגון). מסמכי הכספים: {(finBytes / 1024 ** 2).toFixed(1)}MB. הייבוא נעצר ב-75%.</p>
+              <p className="fin-muted">{pct.toFixed(1)}% מ-{Math.round(quota / 1024 ** 3)}GB (משותף לכל הארגון). מסמכי הכספים: {(finBytes / 1024 ** 2).toFixed(1)}MB. הייבוא נעצר ב-75%.</p>
             </>
           )}
           <p className="fin-muted">שמירת קבצים: הקבצים המקוריים נשמרים לצמיתות בדלי פרטי. מחיקה רק ע״י מנהל, ונרשמת ביומן.</p>

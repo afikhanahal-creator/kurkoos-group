@@ -33,7 +33,7 @@ export async function rpc(fn, args = {}, token) {
 
 /* share of the 1 GB free quota in use (null when the function is missing) */
 export async function storageUsage() {
-  try { const u = await rpc('storage_usage'); return u && typeof u.storage_bytes === 'number' ? u.storage_bytes / QUOTA_BYTES : null } catch { return null }
+  try { const u = await rpc('storage_usage'); return u && typeof u.storage_bytes === 'number' ? u.storage_bytes / (Number(u.quota_bytes) || QUOTA_BYTES) : null } catch { return null }
 }
 
 export async function upload(path, buf, mime) {

@@ -312,7 +312,7 @@ export default async function handler(req, res) {
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !['admin', 'finance_manager', 'employee', 'accountant'].includes(role)) { res.status(400).json({ error: 'מייל או תפקיד לא תקינים' }); return }
         const auth = (path, init) => fetch(`${env.sbUrl()}/auth/v1/${path}`, { ...init, headers: { apikey: env.sbKey(), Authorization: `Bearer ${env.sbKey()}`, 'Content-Type': 'application/json' } })
         let uid = null
-        const r = await auth('invite', { method: 'POST', body: JSON.stringify({ email, data: { full_name: body.full_name || '' } }) })
+        const r = await auth(`invite?redirect_to=${encodeURIComponent(`${origin(req)}/admin/finance`)}`, { method: 'POST', body: JSON.stringify({ email, data: { full_name: body.full_name || '' } }) })
         const d = await r.json().catch(() => ({}))
         if (r.ok) uid = d.id
         else {

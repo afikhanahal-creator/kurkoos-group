@@ -229,7 +229,7 @@ export default function Users() {
             <Select className="fin-select" value={role} onChange={(e) => setRole(e.target.value)} aria-label="סינון לפי תפקיד"><option value="">כל התפקידים</option>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
             <button type="button" className="fin-icon-btn" onClick={() => setSort(sort === 'name' ? 'new' : 'name')} title={sort === 'name' ? 'ממוין לפי שם' : 'ממוין לפי הצטרפות'} aria-label={sort === 'name' ? 'מיון לפי הצטרפות' : 'מיון לפי שם'}><Icon name="sort" size={19} /></button>
           </div>
-          <button type="button" className="fin-btn fin-btn--primary fin-btn--block" onClick={newInvite}><Icon name="plus" size={18} /> הוספת רו״ח או חבר צוות</button>
+          <button type="button" className="fin-btn fin-btn--primary fin-btn--block-sm fin-users__add" onClick={newInvite}><Icon name="plus" size={18} /> הוספת רו״ח או חבר צוות</button>
           <div className="fin-section-head"><h3>חברי ארגון <span className="fin-count">{shown.length}</span></h3><button type="button" className="fin-link" onClick={() => setGuide(true)}>מדריך הזמנה</button></div>
           {!shown.length ? <Empty title="אין משתמשים שמתאימים לחיפוש" icon="users">נסו מילה אחרת או הסירו את הסינון.</Empty> : (
             <ul className="fin-member-list">

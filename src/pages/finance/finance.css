@@ -126,7 +126,7 @@
 .fin__scrim { display: none; }
 
 .fin__main { min-width: 0; display: flex; flex-direction: column; overflow-x: clip; }
-.fin__top { display: flex; align-items: center; gap: 0.75rem; min-height: 60px; padding: 0.5rem 2rem; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: var(--z-bar); }
+.fin__top { display: flex; align-items: center; gap: 0.75rem; min-height: 60px; padding: 0.5rem max(2rem, calc((100% - 1440px) / 2 + 2rem)); background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: var(--z-bar); }
 .fin__title { font-size: var(--t-lg); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }   /* a long page name shortens; the bar buttons stay */
 .fin-searchbar { margin-inline-start: auto; display: flex; align-items: center; gap: 0.55rem; width: min(380px, 40vw); min-height: 36px; padding: 0 0.7rem; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); color: var(--muted); cursor: text; font-size: var(--t-md); }
 .fin-searchbar span { flex: 1; text-align: start; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -134,7 +134,7 @@
 .fin kbd { font-family: inherit; font-size: var(--t-xs); color: var(--muted); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 0.35rem; background: var(--sheet-2); direction: ltr; }
 .fin__top-actions { display: flex; gap: 0.15rem; }
 .fin .fin__burger { display: none; }
-.fin__content { padding: 1.6rem 2rem 4rem; max-width: 1440px; width: 100%; }
+.fin__content { padding: 1.6rem 2rem 4rem; max-width: 1440px; width: 100%; margin-inline: auto; }   /* on a very wide screen the page sits in the middle of the space beside the menu */
 
 /* ---------- controls ---------- */
 .fin-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-height: 36px; padding: 0 0.85rem; border-radius: var(--r-s); border: 1px solid var(--line-2); background: var(--sheet); color: var(--ink); font-weight: 600; font-size: var(--t-md); cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--dur-fast), border-color 0.12s, color 0.12s; }
@@ -721,7 +721,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-doccard__supplier, .fin-cell-main { unicode-bidi: plaintext; }
 
 /* ---------- connection screens (email accounts, mobile scanners, cloud) ---------- */
-.fin-narrow { max-width: 860px; }
+/* screens that used to sit in an 860px column at the right edge now use the page's width like every other screen */
+.fin-narrow { max-width: none; }
 .fin-titlerow { display: flex; align-items: center; gap: 0.4rem; }
 .fin-lead { font-size: var(--t-base); max-width: 62ch; }
 .fin-section-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
@@ -835,6 +836,9 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-org-tools .fin-select { flex: none; width: auto; }
 .fin-count { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 0.4rem; margin-inline-start: 0.35rem; border-radius: 99px; background: var(--wash); color: var(--text-2); font-size: var(--t-sm); font-weight: 600; vertical-align: 2px; font-variant-numeric: lining-nums tabular-nums; }
 .fin-member-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+/* the add button keeps its own size on a computer (a phone stretches it); members sit two per row on a wide screen */
+.fin-users__add { justify-self: start; min-height: 44px; }
+@media (min-width: 1200px) { .fin-member-list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
 .fin-member { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); padding: 0.9rem 1rem; display: grid; gap: 0.65rem; }
 .fin-member__main { display: flex; align-items: center; gap: 0.8rem; background: none; border: 0; padding: 0; text-align: start; cursor: pointer; min-width: 0; color: inherit; }
 .fin-member__who { display: grid; gap: 0.1rem; min-width: 0; }
@@ -1165,7 +1169,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin.is-collapsed .fin__nav-group.is-folded .fin__nav-items { display: block; }
 
 /* ---------- home: greeting, two actions, four numbers, recent documents, collection ---------- */
-.fin-home { max-width: 1120px; }
+.fin-home { }
 .fin-home__hello p { margin-top: var(--s-1); font-size: var(--t-base); }
 .fin-home__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
 .fin-action { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-4) var(--s-5); min-height: 84px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); color: var(--text); text-decoration: none; text-align: start; cursor: pointer; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur-fast) var(--ease); }
@@ -1227,7 +1231,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-recent .fin-thumb { aspect-ratio: auto; place-items: center; } .fin-recent .fin-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
 
 /* ---------- send to the accountant ---------- */
-.fin-send { max-width: 980px; padding-bottom: 96px; }
+.fin-send { padding-bottom: 96px; }
 .fin-pickcard { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-xl); overflow: hidden; }
 .fin-pickcard > header { padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); background: var(--sheet-2); }
 .fin-picklist { list-style: none; margin: 0; padding: 0; }

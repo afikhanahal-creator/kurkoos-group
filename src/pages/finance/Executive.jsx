@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import { ago, money } from './format.js'
 import { overview, periodOf, monthName } from './insights.js'
@@ -24,11 +25,16 @@ export default function Executive() {
   const { documents, businesses, projects, categories, allocations, go, can } = useFinance()
   const [pk, setPk] = useState(() => { try { return sessionStorage.getItem('fin-x-period') || 'month' } catch { return 'month' } })
   const [custom, setCustom] = useState({ from: '', to: '' })
-  const [biz, setBiz] = useState('')
+  // the company in view lives in the address (?company=<id>), so a company picture can be bookmarked or shared
+  const [params, setParams] = useSearchParams()
+  const biz = businesses.some((b) => b.id === params.get('company')) ? params.get('company') : ''
+  const setBiz = (id) => { const p = new URLSearchParams(params); if (id) p.set('company', id); else p.delete('company'); setParams(p, { replace: true }); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const [hover, setHover] = useState(null)
   const pickPeriod = (v) => { setPk(v); try { sessionStorage.setItem('fin-x-period', v) } catch { /* noop */ } }
   const period = useMemo(() => periodOf(pk === 'custom' && !(custom.from && custom.to) ? 'month' : pk, new Date(), custom), [pk, custom])
   const o = useMemo(() => overview(documents, { businesses, projects, categories, allocations }, period, { businessId: biz || null }), [documents, businesses, projects, categories, allocations, period, biz])
+  // the whole group for the same period: the amount on every company tab and this company's share of the group
+  const group = useMemo(() => (biz ? overview(documents, { businesses, projects, categories, allocations }, period) : o), [biz, o, documents, businesses, projects, categories, allocations, period])
   const k = o.kpi
   const last = documents.map((d) => d.updated_at || d.created_at).filter(Boolean).sort().pop()
   const maxTrend = Math.max(1, ...o.trend.map((t) => Math.max(t.total, t.lastYear)))
@@ -49,21 +55,55 @@ export default function Executive() {
         <div className="fin-x__controls">
           <Select value={pk} onChange={(e) => pickPeriod(e.target.value)} aria-label="תקופה">{PERIODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
           {pk === 'custom' && <DateRange from={custom.from} to={custom.to} label="טווח" onChange={(from, to) => setCustom({ from, to })} />}
-          {businesses.length > 1 && <Select value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="חברה"><option value="">כל החברות</option>{businesses.filter((b) => b.active !== false).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>}
           <button type="button" className="fin-btn" onClick={report} disabled={!o.ids.spend.length}><Icon name="table" size={17} /> דוח Excel</button>
         </div>
       </header>
 
+      {businesses.length > 1 && (
+        <nav className="fin-x-cos" aria-label="בחירת חברה">
+          <button type="button" className={!biz ? 'is-on' : ''} aria-pressed={!biz} onClick={() => setBiz('')}><span>כל הקבוצה</span><b>{short(group.kpi.spend)}</b></button>
+          {businesses.filter((b) => b.active !== false).map((b) => {
+            const row = group.byCompany.find((c) => c.key === b.id)
+            return <button key={b.id} type="button" className={biz === b.id ? 'is-on' : ''} aria-pressed={biz === b.id} onClick={() => setBiz(b.id)}><span>{b.name}</span><b>{short(row?.total || 0)}</b></button>
+          })}
+        </nav>
+      )}
+
+      {company && (() => {
+        const mine = group.byCompany.find((c) => c.key === company.id)
+        const share = group.kpi.spend ? (mine?.total || 0) / group.kpi.spend : 0
+        const active = projects.filter((p) => p.business_id === company.id && ['active', 'planning'].includes(p.status) && !p.archived_at).length
+        const docs = documents.filter((d) => d.business_id === company.id && !['rejected', 'archived'].includes(d.status)).length
+        return (
+          <section className="fin-x-company" aria-label={`תמונת מצב: ${company.name}`}>
+            <div className="fin-x-company__id">
+              <span className="fin-x-company__mark" aria-hidden="true">{company.name.trim().slice(0, 1)}</span>
+              <span><strong>{company.name}</strong><small>{[company.vat_id && `ח.פ ${company.vat_id}`, company.address].filter(Boolean).join(' · ') || 'פרטי החברה לא הושלמו'}</small></span>
+            </div>
+            <dl>
+              <div><dt>מהוצאות הקבוצה</dt><dd>{Math.round(share * 100)}%</dd></div>
+              <div><dt>פרויקטים פעילים</dt><dd>{active}</dd></div>
+              <div><dt>מסמכים במערכת</dt><dd>{docs.toLocaleString('he-IL')}</dd></div>
+            </dl>
+            <div className="fin-x-company__go">
+              <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(`/documents?company=${company.id}`)}><Icon name="docs" size={15} /> המסמכים של החברה</button>
+              <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(`/companies/${company.id}`)}>פרטי החברה</button>
+              <button type="button" className="fin-link" onClick={() => setBiz('')}>חזרה לכל הקבוצה</button>
+            </div>
+          </section>
+        )
+      })()}
+
       {/* the headline: one number, then the five that explain it */}
       <section className="fin-x-hero" aria-label="מדדים מרכזיים">
         <button type="button" className="fin-x-hero__main" onClick={() => open(o.ids.spend, `הוצאות ${period.label}`)}>
-          <span className="fin-x-label">הוצאות {period.label}</span>
+          <span className="fin-x-label">הוצאות {period.label}{company ? ` · ${company.name}` : ''}</span>
           <strong className="fin-x-big">{money(k.spend)}</strong>
           <Delta value={k.spendChange} />
           <span className="fin-x-hero__foot">מתחילת השנה {money(k.ytd)} · <Delta value={k.ytdChange} label="מהשנה שעברה" /></span>
         </button>
         <div className="fin-x-kpis">
-          <button type="button" onClick={() => go(`/documents?from=${period.from}&to=${period.to}`)}><span className="fin-x-label">מסמכים שנאספו</span><strong className="fin-x-kpi">{o.quality.total}</strong><small>{o.quality.total ? `${Math.round((o.quality.read / o.quality.total) * 100)}% נקראו בהצלחה` : 'בתקופה'}</small></button>
+          <button type="button" onClick={() => go(`/documents?from=${period.from}&to=${period.to}${biz ? `&company=${biz}` : ''}`)}><span className="fin-x-label">מסמכים שנאספו</span><strong className="fin-x-kpi">{o.quality.total}</strong><small>{o.quality.total ? `${Math.round((o.quality.read / o.quality.total) * 100)}% נקראו בהצלחה` : 'בתקופה'}</small></button>
           <div><span className="fin-x-label">חשבוניות</span><strong className="fin-x-kpi">{k.invoices}</strong><Delta value={k.invoicesPrev ? ((k.invoices - k.invoicesPrev) / k.invoicesPrev) * 100 : null} invert label="" /></div>
           <div><span className="fin-x-label">קבלות</span><strong className="fin-x-kpi">{k.receipts}</strong><small>{k.receiptsAsProof ? `${k.receiptsAsProof} מהן אישור לחשבונית` : 'נקלטו בתקופה'}</small></div>
           <div><span className="fin-x-label">מע״מ תשומות</span><strong className="fin-x-kpi">{money(k.vat)}</strong><small>{k.vatClaimable !== k.vat ? `לקיזוז לפי הקטגוריות ${money(k.vatClaimable)}` : 'מהמסמכים שזוהו'}</small></div>
@@ -99,11 +139,11 @@ export default function Executive() {
 
           {!biz && (
             <section className="fin-x-card" aria-label="השוואת חברות">
-              <header><h3>השוואת חברות</h3><InfoTip label="על ההשוואה">סכום ההוצאות של כל חברה בתקופה, מול התקופה הקודמת באותו אורך. לחיצה פותחת את הדשבורד של החברה.</InfoTip></header>
+              <header><h3>השוואת חברות</h3><InfoTip label="על ההשוואה">סכום ההוצאות של כל חברה בתקופה, מול התקופה הקודמת באותו אורך. לחיצה על חברה מציגה את כל הסקירה רק שלה.</InfoTip></header>
               <ul className="fin-x-rows">
                 {o.byCompany.map((c) => (
                   <li key={c.key || 'none'}>
-                    <button type="button" onClick={() => (c.key ? go(`/companies/${c.key}`) : go('/documents?status=unassigned'))} className={!c.key ? 'is-attn' : ''}>
+                    <button type="button" onClick={() => (c.key ? setBiz(c.key) : go('/documents?status=unassigned'))} className={!c.key ? 'is-attn' : ''}>
                       <span className="fin-x-rows__name"><strong>{c.name}</strong><small>{c.count} מסמכים{c.key ? ` · ${c.projects} פרויקטים פעילים` : ''}</small></span>
                       <span className="fin-x-rows__bar"><i style={{ width: `${(c.total / maxCo) * 100}%` }} /></span>
                       <span className="fin-x-rows__num"><strong>{short(c.total)}</strong><Delta value={c.prev ? c.change : null} label="" /></span>

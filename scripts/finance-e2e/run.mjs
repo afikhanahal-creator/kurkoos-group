@@ -1147,12 +1147,20 @@ const hero = Number(heroTxt.replace(/[^\d.\-]/g, ''))
 const kpiTxt = await page.locator('.fin-x-kpis').innerText().catch(() => '')
 const coRows = await page.locator('.fin-x-rows li').allInnerTexts()
 const xShot = await shot('92-executive-overview')
-await page.locator('.fin-x-rows li', { hasText: 'רוניר' }).click(); await page.waitForTimeout(1000)
+// one company's picture: its tab filters every number on the screen; the address keeps the choice
+await page.locator('.fin-x-cos button', { hasText: 'רוניר' }).click(); await page.waitForTimeout(800)
 const coPage = page.url()
-const coDashShot = await shot('93-company-dashboard')
-record('EXEC', 'סקירה פיננסית למנכ״ל', 'נפתחת ראשונה; סכום החודש שווה לחישוב ישיר מהמסד פחות קבלה שמשלמת חשבונית קיימת (1,180 ₪); חשבוניות, קבלות, מע״מ, ממתינים; השוואת חברות שמובילה לדשבורד החברה',
-  `על המסך: ${heroTxt}; ישיר מהמסד: ${naive.toFixed(2)} − 1,180 = ${(naive - 1180).toFixed(2)}; מדדים: ${kpiTxt.replace(/\s+/g, ' ').slice(0, 160)}; חברות: ${coRows.map((r) => r.split('\n')[0]).join(', ')}; לחיצה: ${coPage.replace(/.*\/admin\/finance/, '')}`,
-  Math.abs(hero - (naive - 1180)) < 0.01 && /קבלות/.test(kpiTxt) && /מהן אישור לחשבונית/.test(kpiTxt) && coRows.some((r) => /רוניר/.test(r)) && coRows.some((r) => /ממתין לשיוך/.test(r)) && /\/companies\/[0-9a-f-]{36}$/.test(coPage),
+const ronirHero = Number((await page.locator('.fin-x-big').innerText()).replace(/[^\d.\-]/g, ''))
+const ronirExpect = Number(sql(`select coalesce(sum(case when doc_type='credit' then -abs(total_amount) else abs(total_amount) end),0) from fin_documents where business_id='${ronir.id}' and status not in ('rejected','duplicate','failed','processing','archived') and doc_type not in ('quote','proforma','payment_confirmation') and coalesce(currency,'ILS')='ILS' and to_char(coalesce(issue_date, (email_date at time zone 'Asia/Jerusalem')::date, (created_at at time zone 'Asia/Jerusalem')::date),'YYYY-MM')='${thisMonth11}'`)) - 1180
+const coCard = await page.locator('.fin-x-company').innerText().catch(() => '')
+const coDashShot = await shot('93-company-picture')
+await page.reload(); await page.waitForTimeout(1200)
+const keptAfterReload = await page.locator('.fin-x-cos button.is-on').innerText().catch(() => '')
+await page.locator('.fin-x-cos button', { hasText: 'כל הקבוצה' }).click(); await page.waitForTimeout(500)
+const backToGroup = Number((await page.locator('.fin-x-big').innerText()).replace(/[^\d.\-]/g, ''))
+record('EXEC', 'סקירה פיננסית למנכ״ל', 'נפתחת ראשונה; סכום החודש שווה לחישוב ישיר מהמסד פחות קבלה שמשלמת חשבונית קיימת (1,180 ₪); חשבוניות, קבלות, מע״מ, ממתינים; בחירת חברה מסננת את כל המספרים לחברה אחת, נשמרת בכתובת, ו"כל הקבוצה" מחזירה',
+  `על המסך: ${heroTxt}; ישיר מהמסד: ${naive.toFixed(2)} − 1,180 = ${(naive - 1180).toFixed(2)}; מדדים: ${kpiTxt.replace(/\s+/g, ' ').slice(0, 160)}; חברות: ${coRows.map((r) => r.split('\n')[0]).join(', ')}; רוניר: ${ronirHero} (צפוי ${ronirExpect}), כרטיס: "${coCard.replace(/\s+/g, ' ').slice(0, 80)}", אחרי רענון: ${keptAfterReload.split('\n')[0]}, חזרה לקבוצה: ${backToGroup}`,
+  Math.abs(hero - (naive - 1180)) < 0.01 && /קבלות/.test(kpiTxt) && /מהן אישור לחשבונית/.test(kpiTxt) && coRows.some((r) => /רוניר/.test(r)) && coRows.some((r) => /ממתין לשיוך/.test(r)) && coPage.includes(`company=${ronir.id}`) && Math.abs(ronirHero - ronirExpect) < 0.01 && /רוניר/.test(coCard) && /מהוצאות הקבוצה/.test(coCard) && /רוניר/.test(keptAfterReload) && Math.abs(backToGroup - hero) < 0.01,
   [xShot, coDashShot])
 
 // the assistant: answers computed from the database, the same number as the overview

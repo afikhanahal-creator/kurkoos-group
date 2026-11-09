@@ -1552,3 +1552,26 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-x-trendlist strong { font-variant-numeric: tabular-nums; }
 }
 .fin-more-rows { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 14px; color: var(--text-2); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+
+/* overview: one tab per company, with its spend for the period; the chosen company gets its own card */
+.fin-x-cos { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px; margin: -2px; scroll-snap-type: x proximity; }
+.fin-x-cos::-webkit-scrollbar { display: none; }
+.fin-x-cos button { all: unset; box-sizing: border-box; flex: none; scroll-snap-align: start; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 120px; min-height: 52px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.fin-x-cos button span { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.fin-x-cos button b { font-weight: 400; font-size: 0.84rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.fin-x-cos button:hover { border-color: var(--ocean); }
+.fin-x-cos button:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; }
+.fin-x-cos button.is-on { background: var(--ink); border-color: var(--ink); }
+.fin-x-cos button.is-on span { color: var(--paper); }
+.fin-x-cos button.is-on b { color: rgba(255, 255, 255, 0.75); }
+.fin-x-company { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; padding: 16px 20px; border: 1px solid var(--line); border-inline-start: 4px solid var(--ocean); border-radius: var(--r-l); background: var(--sheet); }
+.fin-x-company__id { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 240px; }
+.fin-x-company__id > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.fin-x-company__id strong { font-size: 1.15rem; color: var(--ink); }
+.fin-x-company__id small { color: var(--text-2); }
+.fin-x-company__mark { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--ocean-wash); color: var(--ocean-2); font-weight: 700; font-size: 1.2rem; flex: none; }
+.fin-x-company dl { display: flex; gap: 24px; margin: 0; }
+.fin-x-company dt { font-size: 0.8rem; color: var(--text-2); }
+.fin-x-company dd { margin: 0; font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.fin-x-company__go { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 560px) { .fin-x-company dl { width: 100%; justify-content: space-between; gap: 12px; } }

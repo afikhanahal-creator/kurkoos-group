@@ -27,3 +27,5 @@ KURKOOS FINANCE AI, the internal invoice system: `docs/finance/README.md`. Rules
 `supabase/finance.sql` (RLS + triggers), never only in the screens. Finance members who are not admins must not reach the website admin:
 re-run `supabase/finance.sql` after adding a site table (it adds RESTRICTIVE policies to every public table), and keep the
 `FINANCE_ONLY_OK` check in `api/[fn].js`. Run `scripts/finance-e2e` (docs/finance/TESTING.md) after changing the finance system.
+A change to the finance screens goes through `docs/finance/DESIGN-REVIEW-PROCESS.md`: its size sets the gates, and gate 4
+(`node scripts/finance-e2e/review.mjs` after `run.mjs`) must exit 0 before you ask the owner to merge.

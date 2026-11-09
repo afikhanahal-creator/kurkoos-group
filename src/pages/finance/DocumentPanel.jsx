@@ -109,6 +109,11 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     const s = await save({ status: 'approved' })
     if (s?.status === 'approved') moments.approve({ from: btn, title: 'המסמך אושר', sub: doc.supplier_name || '' })
   }
+  // the conductor's doubt answered "no": the document leaves the list and joins the skipped files, never imported again
+  const notRelevant = async () => {
+    setBusy('not'); setErr('')
+    try { await api.callServer('not-relevant', { document_id: doc.id }); onDeleted?.(doc); onClose() } catch (e) { setErr(e.message); setBusy('') }
+  }
   const reread = async () => {
     setBusy('extract'); setErr('')
     try {
@@ -173,6 +178,16 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
 
         {doc.status === 'processing' && <p className="fin-panel__banner is-info" role="status"><Icon name="sparkle" size={16} /> {({ ocr: 'הסוכנים קוראים את המסמך…', validating: 'בודקים את הסכומים…', matching: 'מזהים ספק, חברה ופרויקט…' })[doc.stage] || 'המסמך בעיבוד…'}</p>}
         {doc.status === 'failed' && <p className="fin-panel__banner is-attn" role="status"><Icon name="alert" size={16} /> <span>{doc.next_retry_at ? 'הקריאה נכשלה. הסוכנים ינסו שוב בסריקת הלילה, או שאפשר לנסות עכשיו.' : 'הקריאה נכשלה כמה פעמים. אפשר לנסות שוב או למלא את הפרטים ידנית.'}</span>{editable && <button type="button" className="fin-btn fin-btn--sm" onClick={reread} disabled={!!busy}>{busy === 'extract' ? 'קורא…' : 'קריאה מחדש עכשיו'}</button>}</p>}
+        {(doc.issues || []).some((i) => i.code === 'needs_confirmation') && (
+          <div className="fin-panel__banner is-warn fin-panel__confirm" role="status">
+            <Icon name="info" size={16} />
+            <span><strong>האם זו חשבונית או קבלה?</strong> המערכת לא הייתה בטוחה, ולכן עוד לא שילמה על קריאה מלאה של המסמך.</span>
+            {can('edit') && <span className="fin-panel__banner-actions">
+              <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" onClick={reread} disabled={!!busy}>{busy === 'extract' ? 'קורא…' : 'כן, זו חשבונית — לקרוא'}</button>
+              <button type="button" className="fin-btn fin-btn--sm" onClick={notRelevant} disabled={!!busy}>לא רלוונטי</button>
+            </span>}
+          </div>
+        )}
         {doc.duplicate_state === 'suspected' && doc.status === 'review' && (
           <div className="fin-panel__banner is-warn" role="status">
             <Icon name="copy" size={16} />

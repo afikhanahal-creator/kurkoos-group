@@ -45,6 +45,11 @@ export async function upload(path, buf, mime) {
   if (!r.ok) throw new Error(`storage upload ${r.status}: ${(await r.text()).slice(0, 200)}`)
 }
 
+export async function removeFile(path) {
+  const r = await fetch(`${env.sbUrl()}/storage/v1/object/${BUCKET}`, { method: 'DELETE', headers: headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: [path] }) })
+  if (!r.ok) throw new Error(`storage remove ${r.status}`)
+}
+
 export async function download(path) {
   const r = await fetch(`${env.sbUrl()}/storage/v1/object/${BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`, { headers: headers() })
   if (!r.ok) throw new Error(`storage download ${r.status}`)

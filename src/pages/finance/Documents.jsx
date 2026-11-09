@@ -132,6 +132,8 @@ export default function Documents({ preset = 'all' }) {
   const dups = useMemo(() => documents.filter((d) => d.duplicate_state === 'suspected' && d.status === 'review'), [documents])
   const sameAs = (d) => { const o = documents.find((x) => x.id === d.duplicate_of); return !!o && !['duplicate', 'rejected', 'archived'].includes(o.status) && String(o.doc_number || '') === String(d.doc_number || '') && Number(o.total_amount) === Number(d.total_amount) && (o.supplier_vat_id ? o.supplier_vat_id === d.supplier_vat_id : o.supplier_name === d.supplier_name) }
   const sureDups = dups.filter(sameAs)
+  // documents the nightly conductor was unsure about: they wait for a person's "yes, it is an invoice"
+  const toConfirm = useMemo(() => documents.filter((d) => d.status === 'review' && (d.issues || []).some((i) => i.code === 'needs_confirmation')), [documents])
   const mergeDups = async () => {
     if (!(await askConfirm({ title: 'מיזוג כפילויות', text: `${sureDups.length === 1 ? 'מסמך אחד זהה' : `${sureDups.length} מסמכים זהים`} למסמך שכבר במערכת (אותו ספק, מספר וסכום). העותק ייסגר ככפול של המקורי; שום דבר לא נמחק.`, ok: 'מיזוג' }))) return
     setBusy('dups'); let ok = 0
@@ -285,6 +287,13 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
       {note && <p className="fin-note" role="status">{note}</p>}
+      {toConfirm.length > 0 && (
+        <div className="fin-dupbar is-confirm" role="status">
+          <span className="fin-dupbar__icon"><Icon name="info" size={18} /></span>
+          <span className="fin-dupbar__text"><strong>{toConfirm.length === 1 ? 'מסמך אחד מחכה לאישור שהוא חשבונית' : `${toConfirm.length} מסמכים מחכים לאישור שהם חשבוניות`}</strong><small>המנצח הלילי לא היה בטוח, ולכן לא שילם על קריאה מלאה. "כן" קורא את המסמך, "לא רלוונטי" מוציא אותו.</small></span>
+          <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(link(toConfirm[0].id))}>לבדיקה</button>
+        </div>
+      )}
       {dups.length > 0 && (
         <div className="fin-dupbar" role="status">
           <span className="fin-dupbar__icon"><Icon name="copy" size={18} /></span>
@@ -375,7 +384,7 @@ export default function Documents({ preset = 'all' }) {
                         <span className="fin-peek__foot"><small>{[DOC_TYPE[d.doc_type], d.doc_number, date(docDate(d))].filter(Boolean).join(' · ')}</small>{d.total_amount != null && <b>{money(d.total_amount, d.currency)}</b>}</span>
                       </span>}
                       <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button></span>
-                      <small className="fin-cell-sub">{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
+                      <small className="fin-cell-sub">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>
                     <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td className="fin-col-md fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>

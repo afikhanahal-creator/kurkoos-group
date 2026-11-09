@@ -2249,3 +2249,9 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-peek__foot small { color: var(--text-2); font-size: var(--t-sm); }
 .fin-peek__foot b { color: var(--ink); font-size: var(--t-lg); font-variant-numeric: tabular-nums; }
 @media (max-height: 760px) { .fin-peek__pop { height: calc(100vh - 24px); } }
+
+/* the conductor's doubts: an ocean bar (a question, not a problem) and a 'to confirm' mark on the row */
+.fin-dupbar.is-confirm { border-color: color-mix(in srgb, var(--ocean) 35%, var(--line)); background: var(--ocean-wash); }
+.fin-dupbar.is-confirm .fin-dupbar__icon { color: var(--ocean-2); }
+.fin-duppill.is-confirm { background: var(--ocean-wash); color: var(--ocean-2); }
+.fin-panel__confirm { flex-wrap: wrap; }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { dateTime } from './format.js'
+import { date, dateTime, money, DOC_TYPE } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { Empty, Field, Icon, Modal, Pill, PageHead } from './ui.jsx'
 
@@ -37,7 +37,7 @@ function Folder({ node, depth, onPick, picked, first }) {
   return (
     // each company opens at its newest year and month; the rest stay closed until asked
     <details className="fin-dtree__dir" open={(depth === 0 || first) && node.count < 400}>
-      <summary><Icon name="folder" size={16} /> <span>{node.name}</span> <small>{n(node.count)}</small></summary>
+      <summary className={`fin-dtree__sum is-d${Math.min(depth, 3)}`}><Icon name="folder" size={depth === 0 ? 20 : 17} /> <span className="fin-dtree__name">{node.name}</span> <span className="fin-dtree__count" aria-label={`${node.count} מסמכים`}>{n(node.count)} <i>{node.count === 1 ? 'מסמך' : 'מסמכים'}</i></span></summary>
       <div className="fin-dtree__in">
         {kids.map((k, i) => <Folder key={k.name} node={k} depth={depth + 1} onPick={onPick} picked={picked} first={i === 0} />)}
         {node.files.length > 0 && (
@@ -260,8 +260,8 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
                 <li key={r.document_id}>
                   <label className="fin-dassign__row">
                     <input type="checkbox" checked={chosen.has(r.document_id)} onChange={(e) => setChosen((prev) => { const x = new Set(prev); if (e.target.checked) x.add(r.document_id); else x.delete(r.document_id); return x })} />
-                    <span dir="auto">{r.organized_name || d?.file_name || 'מסמך'}</span>
-                    {d?.email_from && <small dir="auto">{d.email_from.replace(/<[^>]*>/g, '').trim()}</small>}
+                    <span className="fin-dassign__what"><strong dir="auto">{d?.supplier_name || d?.file_name || 'מסמך'}</strong>{d?.total_amount != null && <b>{money(d.total_amount, d.currency)}</b>}</span>
+                    <small>{[DOC_TYPE[d?.doc_type], d?.doc_number, d && date(d.issue_date || d.created_at)].filter(Boolean).join(' · ')}{d?.email_from ? ` · ${d.email_from.replace(/<[^>]*>/g, '').trim()}` : ''}</small>
                   </label>
                 </li>
               )

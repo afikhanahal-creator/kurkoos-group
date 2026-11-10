@@ -14,8 +14,13 @@ const ACT = {
   split: 'פוצל בין פרויקטים', first_approval: 'חתימה ראשונה', merged: 'אוחד ספק', archived: 'הועבר לארכיון',
   sent_to_accountant: 'נשלח לרו״ח במייל', shared_by_email: 'שותף במייל', exported_excel: 'הורד קובץ Excel', exported_csv: 'הורד קובץ CSV', downloaded_originals: 'הורדו קבצים מקוריים',
   printed: 'הודפס', downloaded_document: 'הורד מסמך', saved_documents: 'נשמר בענן', test_passed: 'בדיקת חיבור עברה', test_failed: 'בדיקת חיבור נכשלה',
+  scan_started: 'סריקת תיבה התחילה', scan_done: 'סריקת תיבה הסתיימה', scan_incomplete: 'סריקה הסתיימה עם פריטים פתוחים', scan_item_accepted: 'פריט מסריקה אושר',
+  scan_pause: 'סריקה הושהתה', scan_resume: 'סריקה חודשה', scan_cancel: 'סריקה בוטלה', scan_rescan: 'סריקה חוזרת', scan_retry: 'ניסיון חוזר בסריקה',
+  archive_excluded: 'הוצא מארכיון ה-Drive', archive_included: 'הוחזר לארכיון ה-Drive', archive_renamed: 'שם הקובץ ב-Drive שונה', archive_settings: 'הגדרות הארכיון נשמרו',
+  not_relevant: 'סומן כלא רלוונטי', uploaded: 'קובץ הועלה', corrected: 'תוקן',
   shared_whatsapp: 'נשלח בוואטסאפ', duplicate_confirmed: 'כפילות אושרה', duplicate_dismissed: 'כפילות נדחתה', attachment_added: 'נוסף נספח', attachment_removed: 'הוסר נספח',
 }
+const OTHER_AGENTS = { cloud: 'סוכן הענן', outbound: 'שליחה אוטומטית' }
 const KINDS = [
   ['', 'הכול'],
   ['intake', 'קליטה וחילוץ'],
@@ -59,7 +64,7 @@ export default function Activity() {
 
   const describe = (a) => {
     const c = a.changes || {}
-    if (a.kind === 'error') return `${AGENTS[c.agent]?.name || c.agent}: ${c.message || `${c.errors} שגיאות`}`
+    if (a.kind === 'error') return `${AGENTS[c.agent]?.name || OTHER_AGENTS[c.agent] || 'סוכן'}: ${c.message || (c.errors === 1 ? 'שגיאה אחת' : `${c.errors} שגיאות`)}`
     const doc = docOf(a)
     if (doc) return <button type="button" className="fin-link" onClick={() => go(`/documents/${doc.id}`)}>{doc.supplier_name || doc.file_name || 'מסמך'}</button>
     if (a.action === 'updated' && c) return Object.keys(c).map((k) => FIELD_LABEL[k]).filter(Boolean).slice(0, 3).join(', ')
@@ -104,8 +109,8 @@ export default function Activity() {
                       {g.rows.map((a) => (
                         <tr key={a.id} className={kindOf(a) === 'errors' ? 'is-err' : ''}>
                           <td data-label="מתי" title={dateTime(a.at)}><span className="fin-nowrap">{new Date(a.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span></td>
-                          <td data-label="פעולה">{kindOf(a) === 'errors' ? <Pill tone="attn">{a.kind === 'error' ? 'שגיאה' : ACT[a.action] || a.action}</Pill> : <strong>{ACT[a.action] || a.action}</strong>}</td>
-                          <td data-label="על מה" className="fin-td-main">{describe(a) || <span className="fin-muted">—</span>}</td>
+                          <td className="fin-td-main">{kindOf(a) === 'errors' ? <Pill tone="attn">{a.kind === 'error' ? 'שגיאה' : ACT[a.action] || 'פעולה אחרת'}</Pill> : <strong title={ACT[a.action] ? undefined : a.action}>{ACT[a.action] || 'פעולה אחרת'}</strong>}</td>
+                          <td data-label="על מה">{describe(a) || <span className="fin-muted">—</span>}</td>
                           <td data-label="מי" className="fin-col-md">{who(a.user_email)}</td>
                         </tr>
                       ))}

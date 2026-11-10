@@ -36,6 +36,7 @@ export default function SendCenter() {
     .filter((d) => SHOW[show][1](d) && (!biz || d.business_id === biz) && (!proj || d.project_id === proj)
       && (!range.from || dateOf(d) >= range.from) && (!range.to || dateOf(d) <= range.to))
     .sort((a, b) => dateOf(a).localeCompare(dateOf(b))), [documents, show, biz, proj, range])
+  const counts = useMemo(() => ({ ready: documents.filter(SHOW.ready[1]).length, review: documents.filter((d) => d.status === 'review').length, sent: documents.filter((d) => d.status === 'sent' || (d.status === 'approved' && d.exported_at)).length }), [documents])
   const chosen = list.filter((d) => !picked || picked.has(d.id))
   const total = chosen.reduce((s, d) => s + signedTotal(d), 0)
   const companies = [...new Set(chosen.map((d) => nameOf(businesses, d.business_id) || 'ללא חברה'))]
@@ -54,7 +55,24 @@ export default function SendCenter() {
     <div className="fin-stack fin-send">
       <div className="fin-titlerow"><h2 className="fin-pagehead__title">שליחה לרו״ח</h2></div>
       <p className="fin-muted fin-lead">בחרו מסמכים, בדקו את הסיכום ושלחו לרואה החשבון במייל אחד, עם הקבצים המקוריים וקובץ סיכום לקליטה.</p>
-      {done && <p className="fin-note" role="status"><Icon name="check" size={16} /> נשלח ל-{done.to.join(', ')}: {done.sent === 1 ? 'מסמך אחד' : `${done.sent} מסמכים`}{done.marked ? `, ${done.marked} סומנו "נשלח לרו״ח"` : ''}.</p>}
+      {done && (
+        <section className="fin-sentcard" role="status" aria-label="המייל נשלח">
+          <span className="fin-sentcard__icon" aria-hidden="true"><Icon name="check" size={22} /></span>
+          <div>
+            <strong>נשלח לרואה החשבון</strong>
+            <p>{done.sent === 1 ? 'מסמך אחד' : `${done.sent} מסמכים`} נשלחו אל <b dir="ltr">{done.to.join(', ')}</b>, עם הקבצים המקוריים וקובץ הסיכום.{done.marked ? ` ${done.marked === 1 ? 'המסמך סומן' : `${done.marked} מסמכים סומנו`} "נשלח לרו״ח", ולא יופיעו שוב ברשימה.` : ''}</p>
+          </div>
+          <div className="fin-sentcard__acts">
+            <button type="button" className="fin-btn fin-btn--sm" onClick={() => document.querySelector('[aria-label="שליחות אחרונות"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>השליחות האחרונות</button>
+            <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => setDone(null)}>סגירה</button>
+          </div>
+        </section>
+      )}
+      <dl className="fin-sendstats" aria-label="מצב המסמכים">
+        <button type="button" className={show === 'ready' ? 'is-on' : ''} onClick={() => { setShow('ready'); setPicked(null) }}><dt>מאושרים, מוכנים לשליחה</dt><dd>{counts.ready}</dd></button>
+        <button type="button" onClick={() => go('/pending')}><dt>מחכים לאישור שלך</dt><dd className={counts.review ? 'is-attn' : ''}>{counts.review}</dd></button>
+        <div><dt>נשלחו לרו״ח</dt><dd>{counts.sent}</dd></div>
+      </dl>
 
       <section className="fin-monthly" aria-label="דוח חודשי לרו״ח">
         <div className="fin-monthly__head">
@@ -91,8 +109,13 @@ export default function SendCenter() {
       </div>
 
       {!list.length ? (
-        <Empty title={show === 'ready' ? 'אין מסמכים מוכנים לשליחה' : 'אין מסמכים בבחירה הזו'} icon="send" action={show === 'ready' && <button type="button" className="fin-btn" onClick={() => go('/pending')}>למסמכים שמחכים לבדיקה</button>}>
-          {show === 'ready' ? 'מסמך מוכן לשליחה אחרי שבודקים ומאשרים אותו. אפשר גם לשלוח מסמכים שעוד לא אושרו: "כולל ממתינים לבדיקה".' : 'נסו טווח תאריכים אחר או הסירו סינון.'}
+        <Empty title={show === 'ready' ? 'אין מסמכים מוכנים לשליחה' : 'אין מסמכים בבחירה הזו'} icon="send" action={show === 'ready' && (
+          <span className="fin-empty__acts">
+            {counts.review > 0 && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/pending')}>{counts.review === 1 ? 'לאישור המסמך שמחכה' : `לאישור ${counts.review} המסמכים שמחכים`}</button>}
+            {counts.review > 0 && <button type="button" className="fin-btn" onClick={() => { setShow('withReview'); setPicked(null) }}>לשלוח גם את מה שעוד לא אושר</button>}
+          </span>
+        )}>
+          {show === 'ready' ? (counts.review ? 'שולחים לרואה החשבון מסמכים שאושרו. קודם מאשרים אותם, ואז הם מופיעים כאן לבחירה.' : 'כשתאשרו מסמכים הם יופיעו כאן, מוכנים לבחירה ולשליחה.') : 'נסו טווח תאריכים אחר או הסירו סינון.'}
         </Empty>
       ) : (
         <section className="fin-pickcard" aria-label="המסמכים לשליחה">

@@ -48,7 +48,8 @@ const open = async (page, path, wait = 600) => { await page.goto(`${APP}${path}`
   for (const path of ['', '/documents', `/documents/${reviewId}`, '/assistant', '/activity']) {
     await open(page, path, 900)
     const m = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').map((a) => { const t = a.effect?.getComputedTiming?.() || {}; return { el: a.effect?.target?.className?.toString().slice(0, 40), dur: t.duration, it: t.iterations } }).filter((a) => a.it === Infinity || a.dur > 50))
-    const tr = await page.evaluate(() => getComputedStyle(document.querySelector('.fin-btn') || document.body).transitionDuration)
+    // a screen without a button (an empty activity log) has nothing to measure; the body's own rule is not a button's transition
+    const tr = await page.evaluate(() => { const b = document.querySelector('.fin-btn'); return b ? getComputedStyle(b).transitionDuration : '0s' })
     if (m.length || !/^0s/.test(tr)) moving.push({ path: path || '/', anims: m.slice(0, 3), btnTransition: tr })
   }
   check('RM1', 'הפחתת תנועה: אף אנימציה לא רצה ואין מעברים בכפתורים', !moving.length, moving.length ? JSON.stringify(moving).slice(0, 300) : '5 מסכים, 0 אנימציות')

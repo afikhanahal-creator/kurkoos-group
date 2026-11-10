@@ -458,7 +458,7 @@ const oldAfter = sql("select count(*)||'|'||coalesce((select source from fin_doc
 const boxState = sql("select sync_from||'|'||backfill_pending from fin_mailboxes where email='invoices@kurkoos.test'")
 const periodAfter = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const gapQuery = (await fetch(`${FAKES}/__log`).then((r) => r.json())).gmailQueries.filter((q2) => /before:/.test(q2)).length
-record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב. מסך ניהול הסריקות מראה התקדמות עד 100% ו"הסריקה הושלמה" רק אחרי בקרת השלמות', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}; חלון: ${histPct} ${histStats}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1 && histPct === '100%' && /חשבוניות\s*[1-9]/.test(histStats) && /הודעות שנבדקו\s*[1-9]/.test(histStats), [accountsShot, oldModalShot, histShot])
+record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב. מסך ניהול הסריקות מראה התקדמות עד 100% ו"הסריקה הושלמה" רק אחרי בקרת השלמות', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}; חלון: ${histPct} ${histStats}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1 && histPct === '100%' && /[1-9]\d*\s*חשבוניות/.test(histStats) && /הודעות שנבדקו\s*[1-9]/.test(histStats), [accountsShot, oldModalShot, histShot])
 
 // MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
 await nav('מספרי WhatsApp')
@@ -1039,7 +1039,7 @@ const markOn = await page.locator('.fin-modal .fin-check', { hasText: 'נשלח 
 await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
 await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 30000 }).catch(() => {}); await page.waitForTimeout(1200)
-const doneNote = await page.locator('.fin-note').first().innerText().catch(() => '')
+const doneNote = await page.locator('.fin-sentcard').first().innerText().catch(() => '')
 const expectSent = listed > 1 ? listed - 1 : listed
 const nowSent = sql(`select count(*) from fin_documents where id in ('${readyIds.join("','")}') and status='sent' and exported_at is not null`)
 const delivery = sql("select status||'|'||documents_count||'|'||coalesce(provider_id,'')||'|'||array_to_string(recipients, ',') from fin_deliveries order by created_at desc limit 1")
@@ -1298,6 +1298,25 @@ const empDrive = await Promise.all(['drive-overview', 'drive-run', 'drive-rename
 const empDriveRows = await rest('fin_drive_files?select=document_id', empToken)
 record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן, לא מריץ בדיקת חיבור ולא נוגע בארכיון ה-Drive (לא רואה ולא מריץ); היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; ארכיון: ${empDrive.join(',')}, שורות: ${JSON.stringify(empDriveRows.data).slice(0, 20)}; פעולה אסורה ביומן: ${empLog.status}`,
   empSave.status === 403 && empTest.status === 403 && empDrive.every((x) => x === 403) && Array.isArray(empDriveRows.data) && empDriveRows.data.length === 0 && empLog.status >= 400)
+
+// COVER: a mailbox that no scan covers gets a year of history by itself (the night run and a new connection do this), once
+{
+  sql("insert into fin_mailboxes (provider, email, status, connected_by) values ('gmail', 'cover@kurkoos.test', 'active', (select user_id from fin_members where email = 'admin@kurkoos.test')) on conflict do nothing")
+  sql("insert into fin_mailbox_secrets (mailbox_id, refresh_token) select id, 'rt-cover@kurkoos.test' from fin_mailboxes where email = 'cover@kurkoos.test' on conflict do nothing")
+  const cid = sql("select id from fin_mailboxes where email='cover@kurkoos.test'")
+  const c1 = await api(adminToken, { action: 'scan-coverage' })
+  const mine1 = c1.data.results?.find((r) => r.mailbox === 'cover@kurkoos.test') || {}
+  const job = sql(`select status||'|'||(current_date - date_from)||'|'||(select count(*) from fin_scan_segments s where s.job_id=j.id) from fin_scan_jobs j where mailbox_id='${cid}'`)
+  const c2 = await api(adminToken, { action: 'scan-coverage' })
+  const mine2 = c2.data.results?.find((r) => r.mailbox === 'cover@kurkoos.test') || {}
+  const jobs = sql(`select count(*) from fin_scan_jobs where mailbox_id='${cid}'`)
+  const empCover = await api(empToken, { action: 'scan-coverage' })
+  sql(`delete from fin_mailboxes where id='${cid}'`)
+  record('COVER', 'תיבה חדשה: שנה אחורה לבד',
+    'לתיבה שאף סריקה לא מכסה נפתחת סריקה של שנה (לפי שבועות), פעם אחת בלבד; עובד לא מפעיל',
+    `ראשונה: ${JSON.stringify(mine1).slice(0, 90)}; סריקה: ${job}; שנייה: ${mine2.reason || JSON.stringify(mine2).slice(0, 60)}; סריקות: ${jobs}; עובד: ${empCover.status}`,
+    mine1.started === true && /^(queued|running)\|36[5-7]\|5[2-4]$/.test(job) && mine2.started === false && mine2.reason === 'active' && jobs === '1' && empCover.status === 403)
+}
 
 // V14: fixed expenses, completing missing details, the bar's tip, a month's documents from the report, a supplier's history
 {

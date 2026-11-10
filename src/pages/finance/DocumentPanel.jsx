@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf } from './format.js'
@@ -165,7 +166,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     return (
       <label className={`fin-field ${wide ? 'fin-field--wide' : ''} ${tone ? `fin-field--${tone}` : ''}`}>
         <span className="fin-field__label">{label || FIELD_LABEL[k]}{typeof c === 'number' && <Confidence value={c} />}</span>
-        {children || <input type={type} value={form[k] ?? ''} onChange={set(k)} disabled={!editable} step={type === 'number' ? '0.01' : undefined} inputMode={type === 'number' ? 'decimal' : undefined} onBlur={type === 'number' ? calc : undefined} dir={['doc_number', 'supplier_vat_id'].includes(k) ? 'ltr' : undefined} />}
+        {children || (type === 'date' ? <DateField value={form[k] || ''} onChange={(v) => set(k)({ target: { value: v } })} disabled={!editable} /> : null) || <input type={type} value={form[k] ?? ''} onChange={set(k)} disabled={!editable} step={type === 'number' ? '0.01' : undefined} inputMode={type === 'number' ? 'decimal' : undefined} onBlur={type === 'number' ? calc : undefined} dir={['doc_number', 'supplier_vat_id'].includes(k) ? 'ltr' : undefined} />}
         {its.map((i) => <span key={i.code} className={`fin-field__hint fin-field__hint--${i.level}`}>{i.message}</span>)}
       </label>
     )

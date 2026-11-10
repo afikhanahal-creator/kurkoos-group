@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago } from './format.js'
@@ -139,7 +140,7 @@ export default function CompanySettings() {
                     </div>
                     <div className="fin-cset__grid">
                       <Row label="סוג התאגיד"><Select value={r.entity_type} onChange={setR('entity_type')}>{Object.entries(ENTITY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Row>
-                      <Row label="תאריך התאגדות"><input type="date" value={r.incorporated_on || ''} onChange={setR('incorporated_on')} /></Row>
+                      <Row label="תאריך התאגדות"><DateField value={r.incorporated_on || ''} onChange={(v) => setR('incorporated_on')({ target: { value: v } })} max={new Date().toISOString().slice(0, 10)} /></Row>
                       <Row label="השם הרשום" hint={nameWarn || 'כפי שמופיע בתעודת ההתאגדות וברשם החברות'} wide><input value={form.name || ''} onChange={set('name')} required placeholder={isCo ? 'למשל: ראיתה חברה לבניין בע״מ' : ''} /></Row>
                       <Row label="שם מסחרי" hint="אם החשבוניות מגיעות על שם אחר"><input value={form.commercial_name || ''} onChange={set('commercial_name')} /></Row>
                       <Row label="שם באנגלית" hint="לחשבוניות מספקים מחו״ל"><input dir="ltr" value={form.name_en || ''} onChange={set('name_en')} placeholder="Company Ltd." /></Row>
@@ -180,6 +181,19 @@ export default function CompanySettings() {
                     <div><dt>כתובת</dt><dd>{[form.address, r.zip].filter(Boolean).join(', ') || '—'}</dd></div>
                     {(form.phone || form.email) && <div><dt>קשר</dt><dd dir="ltr">{[form.phone, form.email].filter(Boolean).join(' · ')}</dd></div>}
                   </dl>
+                  {(() => {
+                    // how full the profile is: every detail that helps documents find their company and reports come out right
+                    const items = [['שם רשום', !!form.name], ['לוגו', !!r.logo], ['מספר עוסק (ע.מ)', !!form.vat_id], ['מספר חברה (ח.פ)', !!form.reg_number], ['כתובת', !!form.address], ['טלפון', !!form.phone], ['מייל', !!form.email], ['תאריך התאגדות', !!r.incorporated_on], ['מייל רואה החשבון', !!form.accountant_email]]
+                    const done = items.filter(([, ok]) => ok).length; const pct = Math.round((done / items.length) * 100)
+                    const missing = items.filter(([, ok]) => !ok).map(([k]) => k)
+                    return (
+                      <div className="fin-cprof__meter" role="group" aria-label={`הפרופיל מלא ב-${pct}%`}>
+                        <div className="fin-cprof__meter-top"><strong>{pct === 100 ? 'הפרופיל מלא' : `הפרופיל מלא ב-${pct}%`}</strong><small>{done} מתוך {items.length}</small></div>
+                        <div className="fin-cprof__meter-bar" aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
+                        {missing.length > 0 && <p className="fin-cprof__meter-miss">עוד חסר: {missing.join(' · ')}</p>}
+                      </div>
+                    )
+                  })()}
                   <ul className="fin-cprof__must" aria-label="פרטי חובה בחשבונית מס">
                     <li className="fin-cprof__must-title">פרטי חובה בחשבונית מס</li>
                     {must.map(([k, ok]) => <li key={k} className={ok ? 'is-ok' : 'is-miss'}><Icon name={ok ? 'check' : 'alert'} size={14} /> {k}</li>)}

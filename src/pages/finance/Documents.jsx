@@ -261,7 +261,7 @@ export default function Documents({ preset = 'all' }) {
       {picked.length > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <div className="fin-bulk__row">
-            <strong className="fin-bulk__count">{picked.length === 1 ? 'מסמך אחד מסומן' : `${picked.length} מסומנים`}<small>{money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
+            <strong className="fin-bulk__count"><span>{picked.length === 1 ? 'מסמך אחד מסומן' : `${picked.length} מסמכים מסומנים`}</span><small>סה״כ {money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
             {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
             {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
             <button type="button" className="fin-btn" disabled={!!busy} onClick={() => sheet('excel')}><Icon name="table" size={17} /> Excel</button>
@@ -278,10 +278,11 @@ export default function Documents({ preset = 'all' }) {
               edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },
               edit && { label: 'העברה לארכיון', icon: 'archive', danger: true, onClick: () => bulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, (d) => !['approved', 'sent', 'processing'].includes(d.status)) },
             ]} />
-            <button type="button" className="fin-link" onClick={() => setSel(new Set())}>ביטול</button>
+            <button type="button" className="fin-btn fin-btn--ghost fin-bulk__cancel" onClick={() => setSel(new Set())}><Icon name="x" size={16} /> ביטול הבחירה</button>
           </div>
           {edit && (
             <div className="fin-bulk__row fin-bulk__assign">
+              <span className="fin-bulk__label">שיוך לכל המסומנים:</span>
               <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שינוי קטגוריה" disabled={!!busy}>
                 <option value="">שינוי קטגוריה…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
@@ -370,20 +371,20 @@ export default function Documents({ preset = 'all' }) {
               <tr>
                 <th className="fin-table__check"><input type="checkbox" checked={allOn} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="סימון הכול" /></th>
                 <Th k="supplier">ספק</Th>
+                <Th k="total" className="fin-num">סה״כ</Th>
+                <th>סטטוס</th>
                 <th className="fin-col-md">סוג</th>
-                <Th k="number" className="fin-col-md">מספר</Th>
+                <Th k="number" className="fin-col-md fin-col-mid">מספר</Th>
                 <Th k="date">תאריך</Th>
                 <th className="fin-col-lg">חברה</th>
                 <th className="fin-col-lg">פרויקט</th>
                 <th className="fin-col-lg">קטגוריה</th>
                 <Th k="before" className="fin-num fin-col-xl">לפני מע״מ</Th>
-                <Th k="vat" className="fin-num fin-col-md">מע״מ</Th>
-                <Th k="total" className="fin-num">סה״כ</Th>
-                <th>סטטוס</th>
+                <Th k="vat" className="fin-num fin-col-md fin-col-wide">מע״מ</Th>
                 <th className="fin-col-xl">מטבע</th>
                 <th className="fin-col-xl">מקור</th>
-                {can('operate') && <th className="fin-col-lg">ענן</th>}
-                <Th k="conf" className="fin-col-md">ודאות</Th>
+                {can('operate') && <th className="fin-col-lg fin-col-wide">ענן</th>}
+                <Th k="conf" className="fin-col-md fin-col-wide">ודאות</Th>
                 <th className="fin-col-md"><span className="fin-sr">פעולות</span></th>
               </tr>
             </thead>
@@ -403,20 +404,20 @@ export default function Documents({ preset = 'all' }) {
                       <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>{d.supplier_name && <button type="button" className="fin-icon-btn fin-suphist" onClick={(e) => { e.stopPropagation(); supplierHistory(go, d, documents) }} aria-label={`כל ההיסטוריה עם ${d.supplier_name}`} title={`כל ההיסטוריה עם ${d.supplier_name}`}><Icon name="history" size={15} /></button>}{d.recurring_id && <span className="fin-fixedtag" title="הוצאה קבועה">קבועה</span>}</span>
                       <small className="fin-cell-sub">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>
+                    <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
+                    <td className="fin-td-status"><StatusPill status={d.status} /></td>
                     <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
-                    <td className="fin-col-md fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
+                    <td className="fin-col-md fin-col-mid fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
                     <td data-label="תאריך">{date(docDate(d))}</td>
                     <td className="fin-col-lg" data-label="חברה">{nameOf(businesses, d.business_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="פרויקט">{nameOf(projects, d.project_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="קטגוריה">{d.category || '—'}</td>
                     <td className="fin-num fin-col-xl" data-label="לפני מע״מ">{money(d.amount_before_vat, d.currency)}</td>
-                    <td className="fin-num fin-col-md" data-label="מע״מ">{money(d.vat_amount, d.currency)}</td>
-                    <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
-                    <td className="fin-td-status"><StatusPill status={d.status} /></td>
+                    <td className="fin-num fin-col-md fin-col-wide" data-label="מע״מ">{money(d.vat_amount, d.currency)}</td>
                     <td className="fin-col-xl fin-ltr" data-label="מטבע">{d.currency || 'ILS'}</td>
                     <td className="fin-col-xl" data-label="מקור">{SOURCE[d.source]}</td>
-                    {can('operate') && <td className="fin-col-lg" data-label="ענן" onClick={(e) => e.stopPropagation()}>{cloud[d.id]?.web_link ? <a className="fin-cloudcell is-on" href={cloud[d.id].web_link} target="_blank" rel="noopener noreferrer" title={cloud[d.id].path}><Icon name="cloud" size={15} /> נשמר</a> : <span className="fin-cloudcell">—</span>}</td>}
-                    <td className="fin-col-md" data-label="ודאות"><Confidence value={d.confidence} /></td>
+                    {can('operate') && <td className="fin-col-lg fin-col-wide" data-label="ענן" onClick={(e) => e.stopPropagation()}>{cloud[d.id]?.web_link ? <a className="fin-cloudcell is-on" href={cloud[d.id].web_link} target="_blank" rel="noopener noreferrer" title={cloud[d.id].path}><Icon name="cloud" size={15} /> נשמר</a> : <span className="fin-cloudcell">—</span>}</td>}
+                    <td className="fin-col-md fin-col-wide" data-label="ודאות"><Confidence value={d.confidence} /></td>
                     <td className="fin-col-md" onClick={(e) => e.stopPropagation()}>
                       {d.file_path && <button type="button" className="fin-icon-btn" aria-label={`הורדת המקור של ${d.supplier_name || d.file_name}`} title="הורדת הקובץ המקורי" onClick={async () => saveBlob(await api.fileBlob(d), d.file_name || 'document')}><Icon name="download" size={18} /></button>}
                     {canDelete(d) && <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={() => removeDoc(d)} aria-label={`מחיקת ${d.supplier_name || d.file_name || 'המסמך'}`} title="מחיקה"><Icon name="trash" size={17} /></button>}

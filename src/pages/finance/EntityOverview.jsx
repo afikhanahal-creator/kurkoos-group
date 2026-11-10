@@ -41,22 +41,31 @@ function Trend({ items }) {
 
 function Breakdown({ title, rows, onPick }) {
   const max = Math.max(...rows.map((r) => Math.abs(r.value)), 1)
+  const total = rows.reduce((a, r) => a + Math.abs(r.value), 0) || 1
+  const [all, setAll] = useState(false)
+  const shown = all ? rows : rows.slice(0, 6)
   return (
-    <section className="fin-panel-block">
-      <h3>{title}</h3>
+    <section className="fin-panel-block fin-rank">
+      <header className="fin-rank__head"><h3>{title}</h3>{rows.length > 0 && <small>{rows.length === 1 ? 'פריט אחד' : `${rows.length} פריטים`}</small>}</header>
       {!rows.length ? <p className="fin-muted">אין עדיין נתונים.</p> : (
-        <ul className="fin-split-list">
-          {rows.slice(0, 8).map((r) => (
-            <li key={r.key}>
-              <button type="button" onClick={r.id && onPick ? () => onPick(r.id) : undefined} disabled={!r.id || !onPick}>
-                <span className="fin-split-list__name">{r.name}</span>
-                <span className="fin-split-list__val">{money(r.value)}</span>
-                <span className="fin-split-list__bar"><span style={{ width: `${(Math.abs(r.value) / max) * 100}%` }} /></span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <ol className="fin-rank__list">
+          {shown.map((r, i) => {
+            const share = Math.round((Math.abs(r.value) / total) * 100)
+            return (
+              <li key={r.key}>
+                <button type="button" className="fin-rank__row" onClick={r.id && onPick ? () => onPick(r.id) : undefined} disabled={!r.id || !onPick}>
+                  <span className="fin-rank__n" aria-hidden="true">{i + 1}</span>
+                  <span className="fin-rank__name" title={r.name}>{r.name}</span>
+                  <span className="fin-rank__val">{money(r.value)}</span>
+                  <span className="fin-rank__bar" aria-hidden="true"><span style={{ width: `${Math.max(2, (Math.abs(r.value) / max) * 100)}%` }} /></span>
+                  <span className="fin-rank__share">{share}%</span>
+                </button>
+              </li>
+            )
+          })}
+        </ol>
       )}
+      {rows.length > 6 && <button type="button" className="fin-link fin-rank__more" onClick={() => setAll((v) => !v)}>{all ? 'הצגת 6 הראשונים' : `הצגת כל ה-${rows.length}`}</button>}
     </section>
   )
 }

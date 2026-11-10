@@ -2188,3 +2188,17 @@ revoke all on function public.fin_recurring_set(uuid, boolean, text, numeric) fr
 grant execute on function public.fin_recurring_set(uuid, boolean, text, numeric) to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v15 (2026-11-10): new mail is collected once a day, in the night run
+-- ============================================================
+-- The owner decided: one collection of new mail a day, at night. An hourly job that an earlier version of this file added
+-- is removed here if it exists. (History for a new mailbox does not wait for the night: it starts when the mailbox connects.)
+do $$ begin
+  if exists (select 1 from pg_namespace where nspname = 'cron') and exists (select 1 from cron.job where jobname = 'finance-mail-sync') then
+    perform cron.unschedule('finance-mail-sync');
+  end if;
+end $$;
+drop function if exists public.fin_mail_kick();
+
+notify pgrst, 'reload schema';

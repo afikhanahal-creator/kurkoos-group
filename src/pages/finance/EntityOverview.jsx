@@ -8,6 +8,7 @@ import { docsFor, summarize } from './stats.js'
 import { EntityForm } from './MasterData.jsx'
 import { Empty, Icon, Modal, Pill, StatusPill, useAsync } from './ui.jsx'
 import Select from './Select.jsx'
+import DocList from './DocList.jsx'
 
 const PERIODS = { all: 'כל הזמן', year: 'השנה', '12m': '12 חודשים', '3m': '3 חודשים', month: 'החודש' }
 const inPeriod = (p, k) => {
@@ -184,20 +185,15 @@ export default function EntityOverview({ kind }) {
 
       <div className="fin-overview fin-overview--wide">
         <section className="fin-panel-block">
-          <h3>מסמכים ({items.length})</h3>
+          <div className="fin-block-head">
+            <h3>מסמכים ({items.length})</h3>
+            {items.length > 0 && <button type="button" className="fin-btn fin-btn--sm" onClick={() => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids: items.map(({ doc }) => doc.id), title: `מסמכים · ${row?.name || ''}` })) } catch { /* noop */ } go('/documents?ids=1') }}><Icon name="list" size={15} /> {items.length > 30 ? `כל ${items.length} המסמכים` : 'פתיחה ברשימה'}</button>}
+          </div>
           {!items.length ? <p className="fin-muted">אין מסמכים בתקופה הזו.</p> : (
-            <table className="fin-table fin-table--plain fin-table--compact">
-              <tbody>
-                {items.sort((a, b) => String(docDate(b.doc)).localeCompare(String(docDate(a.doc)))).slice(0, 30).map(({ doc, share }) => (
-                  <tr key={doc.id} className="is-link" onClick={() => go(`/documents/${doc.id}`)}>
-                    <td>{date(docDate(doc))}</td>
-                    <td className="fin-td-main"><span className="fin-cell-main">{kind === 'suppliers' ? `${DOC_TYPE[doc.doc_type]} ${doc.doc_number || ''}` : doc.supplier_name || doc.file_name}</span></td>
-                    <td className="fin-num">{money(signedTotal(doc) * share)}{share < 1 && <small className="fin-muted"> ({Math.round(share * 100)}% מהחשבונית)</small>}</td>
-                    <td><StatusPill status={doc.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DocList
+              docs={[...items].sort((a, b) => String(docDate(b.doc)).localeCompare(String(docDate(a.doc)))).slice(0, 30).map(({ doc, share }) => ({ doc, amount: share < 1 ? signedTotal(doc) * share : undefined, note: share < 1 ? `${Math.round(share * 100)}% מהחשבונית` : '' }))}
+              onOpen={(d) => go(`/documents/${d.id}`)} businesses={businesses} showCompany={kind !== 'businesses'} flags={false}
+            />
           )}
         </section>
         <section className="fin-panel-block">

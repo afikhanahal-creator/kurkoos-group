@@ -8,6 +8,7 @@ import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZ
 import ShareDialog from './ShareDialog.jsx'
 import { exportSheet } from './exportPackage.js'
 import Thumbnail, { prefetchThumb } from './Thumbnail.jsx'
+import DocList from './DocList.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
 import DateRange, { sayRange } from './DateRange.jsx'
@@ -65,7 +66,7 @@ export default function Documents({ preset = 'all' }) {
   const [only, setOnly] = useState(() => { if (!params.get('ids')) return null; try { const v = JSON.parse(sessionStorage.getItem('fin-x-ids') || 'null'); return v?.ids ? { ids: new Set(v.ids), title: v.title } : null } catch { return null } })
   const [f, setF] = useState(() => ({ ...EMPTY_F, from: only ? '' : params.get('from') || '', to: only ? '' : params.get('to') || '', supplier: params.get('supplier') || '', project: params.get('project') || '', biz: params.get('company') || '', cat: params.get('category') ? categories.find((c) => c.id === params.get('category'))?.name || '' : '' }))
   // cards on a phone, a table on a wide screen, unless the person chose (the choice is kept on the device)
-  const [view, setView] = useState(() => { const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches; try { return localStorage.getItem(VIEW_KEY) || (phone ? 'cards' : 'table') } catch { return phone ? 'cards' : 'table' } })
+  const [view, setView] = useState(() => { const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches; try { return localStorage.getItem(VIEW_KEY) || (phone ? 'list' : 'table') } catch { return phone ? 'list' : 'table' } })
   const [confirm, setConfirm] = useState(null)   // { label, run, count, skipped }
   const switchView = (v) => { setView(v); try { localStorage.setItem(VIEW_KEY, v) } catch { /* noop */ } }
   const [showFilters, setShowFilters] = useState(false)
@@ -219,7 +220,8 @@ export default function Documents({ preset = 'all' }) {
         </label>
         <DateRange from={f.from} to={f.to} label={dateBy === 'received' ? 'תאריך קליטה' : 'תאריך המסמך'} by={dateBy} onBy={setDateBy} byOptions={[['doc', 'תאריך המסמך'], ['received', 'תאריך קליטה']]} onChange={(from, to) => setF((x) => ({ ...x, from, to }))} />
         <div className="fin-seg" role="group" aria-label="תצוגה">
-          <button type="button" className={view === 'table' ? 'is-on' : ''} onClick={() => switchView('table')} aria-pressed={view === 'table'} title="טבלה"><Icon name="rows" size={17} /><span className="fin-sr">טבלה</span></button>
+          <button type="button" className={view === 'list' ? 'is-on' : ''} onClick={() => switchView('list')} aria-pressed={view === 'list'} title="רשימה"><Icon name="list" size={17} /><span className="fin-sr">רשימה</span></button>
+          <button type="button" className={`fin-col-md ${view === 'table' ? 'is-on' : ''}`} onClick={() => switchView('table')} aria-pressed={view === 'table'} title="טבלה"><Icon name="table" size={17} /><span className="fin-sr">טבלה</span></button>
           <button type="button" className={view === 'cards' ? 'is-on' : ''} onClick={() => switchView('cards')} aria-pressed={view === 'cards'} title="כרטיסים"><Icon name="grid" size={17} /><span className="fin-sr">כרטיסים</span></button>
         </div>
         <button type="button" className={`fin-btn ${activeFilters ? 'fin-btn--on' : ''}`} onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} aria-controls="fin-doc-filters"><Icon name="filter" size={18} /> סינון{activeFilters ? ` (${activeFilters})` : ''}</button>
@@ -317,6 +319,8 @@ export default function Documents({ preset = 'all' }) {
         tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
+      ) : view === 'list' ? (
+        <DocList docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} />
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (

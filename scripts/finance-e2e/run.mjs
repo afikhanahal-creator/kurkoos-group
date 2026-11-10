@@ -41,7 +41,8 @@ const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); fx.mailb
 await fetch(`${FAKES}/__reset`)
 await admin('admin/users', { email: 'admin@kurkoos.test', password: 'Passw0rd!x', email_confirm: true, user_metadata: { full_name: 'שלומי קורקוס' } })
 
-const browser = await chromium.launch()
+// a UTF-8 locale: without it Chromium on Linux saves a download with a Hebrew name as "download"
+const browser = await chromium.launch({ env: { ...process.env, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' } })
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'he-IL', acceptDownloads: true })
 const page = await ctx.newPage()
 page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`))

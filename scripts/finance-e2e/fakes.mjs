@@ -284,9 +284,14 @@ const server = http.createServer(async (req, res) => {
   if (p.startsWith('/drive-upload/session/') && req.method === 'PUT') {
     const meta = driveSessions.get(p.split('/').pop()); const content = await readRaw(req)
     if (!meta) return send(res, 404, { error: { message: 'session not found' } })
+    // the same failures as a plain upload: 503, the rate limit, an answer that is lost, a file without md5
+    if (driveFail.upload503 > 0) { driveFail.upload503--; return send(res, 503, { error: { message: 'Backend Error' } }) }
+    if (driveFail.rate403 > 0) { driveFail.rate403--; return send(res, 403, { error: { code: 403, message: 'User rate limit exceeded.', errors: [{ reason: 'userRateLimitExceeded' }] } }) }
+    if (!driveItems.some((x) => x.id === meta.parents?.[0] && x.folder && !x.trashed)) return send(res, 404, { error: { message: 'File not found: parent' } })
     const id = `file${++driveSeq}`
-    driveItems.push({ id, name: meta.name, parents: [meta.parents?.[0]], folder: false, size: content.length, content, md5: crypto.createHash('md5').update(content).digest('hex'), appProperties: meta.appProperties || {}, resumable: true })
+    driveItems.push({ id, name: meta.name, parents: [meta.parents?.[0]], folder: false, size: content.length, content, md5: crypto.createHash('md5').update(content).digest('hex'), nomd5: driveFail.nomd5 > 0 && !!driveFail.nomd5--, appProperties: meta.appProperties || {}, resumable: true })
     log.drive.push(`${dpath(meta.parents?.[0])}/${meta.name}`)
+    if (driveFail.lose > 0) { driveFail.lose--; return send(res, 500, { error: { message: 'Internal Error' } }) }
     return send(res, 200, dfile(driveItems[driveItems.length - 1]))
   }
   if (p === '/drive-upload/files') {

@@ -77,7 +77,7 @@ export const NAV = [
   { to: '/scanners', label: 'מספרי WhatsApp', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
   // everything else, folded away until needed
   { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
-  { to: '/fixed', label: 'הוצאות קבועות', icon: 'calendar', roles: [...OPS, 'accountant'], el: <Fixed />, group: 'מתקדם' },
+  { to: '/fixed', label: 'הוצאות קבועות', icon: 'calendar', roles: OPS, el: <Fixed />, group: 'מתקדם' },
   { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'מתקדם' },
   { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'מתקדם' },
   { to: '/activity', label: 'יומן פעילות', icon: 'activity', roles: OPS, el: <Activity />, group: 'מתקדם' },

@@ -1471,7 +1471,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-x-axis { position: relative; grid-column: 2; grid-row: 1; height: 190px; margin-top: 24px; }
 .fin-x-axis span { position: absolute; inset-inline: 0; height: 0; }
 .fin-x-axis em { position: absolute; inset-inline-start: 6px; transform: translateY(-50%); font-style: normal; font-size: var(--t-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
-.fin-x-trend { position: relative; grid-column: 1; grid-row: 1; display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 6px; height: 238px; align-items: end; padding-top: 24px; }
+.fin-x-scroll { grid-column: 1; grid-row: 1; min-width: 0; }
+.fin-x-trend { position: relative; display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 6px; height: 238px; align-items: end; padding-top: 24px; }
 .fin-x-trend__col { all: unset; box-sizing: border-box; position: relative; height: 100%; display: grid; grid-template-rows: 190px auto; gap: 6px; cursor: pointer; border-radius: 6px; }
 .fin-x-trend__col:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; }
 .fin-x-trend__bars { position: relative; display: flex; align-items: flex-end; justify-content: center; }
@@ -1610,9 +1611,25 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-x-trendlist { display: none; list-style: none; margin: 0; padding: 0; }
 @media (max-width: 560px) {
   /* phones: the chart stays, and twelve months scroll sideways instead of being squeezed */
-  .fin-x-chart { overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
-  .fin-x-trend { min-width: calc(var(--n, 12) * 44px); }
-  .fin-x-monthsum dl { gap: 18px; }
+  /* the value axis stays put at the edge; only the bars scroll */
+  .fin-x-chart { grid-template-columns: minmax(0, 1fr) 34px; }
+  .fin-x-scroll { overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .fin-x-scroll::-webkit-scrollbar { display: none; }
+  .fin-x-trend { min-width: max(100%, calc(var(--n, 12) * 44px)); }
+  .fin-x-axis em { inset-inline-start: 4px; }
+  /* the average is already a number in the summary above; on a phone the line stays, its pill would cover the bars */
+  .fin-x-avg em { display: none; }
+  /* title on its own line, the four ranges share the full width */
+  .fin-x-months > header { gap: 10px; }
+  .fin-x-months > header h3 { flex: 1 1 100%; }
+  .fin-x-months > header .fin-x-span { flex: 1 1 100%; margin-inline-start: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fin-x-months > header .fin-x-span button { min-height: 40px; padding-inline: 4px; white-space: nowrap; }
+  /* the month's total on top, its three figures in an even row under it */
+  .fin-x-monthsum { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .fin-x-monthsum__total { font-size: var(--t-2xl, 1.75rem); }
+  .fin-x-monthsum dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .fin-x-monthsum dl div { padding: 8px 10px; border-radius: var(--r-m, 10px); background: var(--wash); min-width: 0; }
+  .fin-x-monthsum dd { font-size: var(--t-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fin-x-trendlist button { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); font-size: var(--t-sm); }
   .fin-x-trendlist button:focus-visible { outline: 2px solid var(--ocean); }
   .fin-x-trendlist strong { font-variant-numeric: tabular-nums; }
@@ -2323,8 +2340,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 /* phones, Safari: a scroller (the 12-month chart) must not decide its own width, or Safari stretches the card past the
    screen; together with minmax(0, 1fr) on the one-column grids above */
 @media (max-width: 1180px) {
-  .fin-x-main > *, .fin-x-side > *, .fin-x-card, .fin-x-chart { min-width: 0; max-width: 100%; }
-  .fin-x-chart { contain: inline-size; }
+  .fin-x-main > *, .fin-x-side > *, .fin-x-card, .fin-x-chart, .fin-x-scroll { min-width: 0; max-width: 100%; }
+  .fin-x-chart, .fin-x-scroll { contain: inline-size; }
 }
 
 /* documents as a compact list: one row each, the same on a phone and on a desktop */

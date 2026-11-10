@@ -580,7 +580,7 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   const resumed = row(mid).split('|')[0]; const copiesMid = await copies(mid)
   // a correction of the company: the archive's own file moves to the other company's folder (moved, not copied)
   const other = sql("select id||'|'||name from fin_businesses order by sort desc, name desc limit 1").split('|')
-  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.business_id is distinct from '${other[0]}' order by d.created_at desc limit 1`)
+  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.project_id is null and d.business_id is distinct from '${other[0]}' order by d.created_at desc limit 1`)
   sql(`update fin_documents set business_id='${other[0]}' where id='${moveDoc}'`)
   const queuedAfterFix = row(moveDoc).split('|')[0]
   await run()

@@ -14,6 +14,8 @@ import { PROVIDERS, accessTokenFor, messageProcessor, conductorContext } from '.
 import { newRuns, closeRuns } from './agents.js'
 
 const MAX_TRIES = 3
+const HARD_STOP_MS = 54_000   // the function is killed at 60s: a message still being read by then is given up for this run
+const CUT_OFF = 'הקריאה נקטעה באמצע: ההודעה כבדה או שהשרת לא ענה בזמן'
 const RETRY_MIN = [15, 60, 240]
 const q = (v) => encodeURIComponent(v)
 const DAY = 86400_000
@@ -162,7 +164,16 @@ async function runSegment(seg, started, runs, cache) {
       if (seg.phase === 'verify' && !k) c.missed++                    // the first pass did not get to it
       const dupBefore = runs.collector.stat.details.duplicates || 0
       try {
-        const r = await processMessage(prov, token, id)
+        // The attempt is written down before the message is read. A message that outlives the function (a huge attachment,
+        // a provider that never answers) used to leave no trace: the next run met it again, forever, and the scan never
+        // finished. Now a cut-off read counts as a failed attempt, and after MAX_TRIES the message waits for a person.
+        await item({ mailbox_id: mb.id, message_id: id, segment_id: seg.id, status: 'failed', attempts: (k?.attempts || 0) + 1, error: CUT_OFF, at: new Date().toISOString() })
+        const left = Math.max(8_000, HARD_STOP_MS - (Date.now() - started))
+        let timer
+        const r = await Promise.race([
+          processMessage(prov, token, id),
+          new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(CUT_OFF)), left) }),
+        ]).finally(() => clearTimeout(timer))
         await item({ mailbox_id: mb.id, message_id: id, segment_id: seg.id, status: r.unreadable ? 'unreadable' : 'done', attempts: (k?.attempts || 0) + 1, error: r.unreadable ? `${r.unreadable} קבצים לא נפתחו (פגומים או מוגנים)` : null, files: r.files, kept: r.kept, skipped: r.skipped, subject: r.subject, email_from: r.from, email_date: r.date, at: new Date().toISOString() })
         await sb('fin_mail_seen', { method: 'POST', body: { mailbox_id: mb.id, message_id: id }, prefer: 'resolution=ignore-duplicates,return=minimal' })
         const dups = (runs.collector.stat.details.duplicates || 0) - dupBefore     // a copy of a stored document is a duplicate, not "not relevant"

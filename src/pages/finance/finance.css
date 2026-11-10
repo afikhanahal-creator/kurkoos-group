@@ -2867,3 +2867,10 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-x-cos button span { overflow: hidden; text-overflow: ellipsis; }
 }
 }
+
+/* the menu folds what is not daily work; a folded group still says how many items inside wait for a person */
+.fin__nav-more > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.fin__nav-more .fin__badge { font-size: 0.68rem; height: 1.15rem; min-width: 1.25rem; }
+.fin__nav-more:disabled { cursor: default; }
+.fin__nav-more:disabled svg { opacity: 0.35; }
+.fin__nav-more:hover:not(:disabled) { color: var(--ink); }

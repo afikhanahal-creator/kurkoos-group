@@ -2890,3 +2890,32 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin__nav-more:disabled { cursor: default; }
 .fin__nav-more:disabled svg { opacity: 0.35; }
 .fin__nav-more:hover:not(:disabled) { color: var(--ink); }
+
+/* ---------- documents on a phone: which month am I in, and a date that can be read ---------- */
+.fin-monthchip { display: none; }
+.fin-htmlprev { position: relative; width: 100%; height: 100%; min-height: inherit; display: flex; }
+.fin-htmlprev .fin-preview__frame { flex: 1; }
+.fin-comp__doc .fin-htmlprev { display: block; }
+@media (max-width: 700px) { .fin-viewer__bar .fin-viewer__print { display: inline-flex; } }
+@media (max-width: 760px) {
+  /* the month on screen: a small chip under the top bar, at the start of the line, that follows the scroll */
+  .fin-monthchip { display: block; position: sticky; top: 68px; z-index: var(--z-sticky); height: 0; pointer-events: none; }
+  .fin-monthchip span { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: var(--t-xs); font-weight: 700; box-shadow: 0 4px 12px rgba(7, 41, 58, 0.22); }
+  /* the first document of a month carries the month's name above it */
+  .fin-doclistbox [data-month] { position: relative; margin-top: 2.1rem !important; }
+  .fin-doclistbox [data-month]::before { content: attr(data-month); position: absolute; inset-inline-start: 4px; top: -1.65rem; font-size: var(--t-sm); font-weight: 700; color: var(--text-2); letter-spacing: 0; white-space: nowrap; }
+  .fin-doclistbox [data-month]::after { content: ''; position: absolute; top: -0.85rem; inset-inline: 6.5rem 0; height: 1px; background: var(--line); }
+  .fin-doclistbox .fin-dlist__row[data-month] { margin-top: 0 !important; padding-top: 2.1rem; }
+  .fin-doclistbox .fin-dlist__row[data-month]::before { top: 0.55rem; inset-inline-start: 0.85rem; }
+  .fin-doclistbox .fin-dlist__row[data-month]::after { top: 1.15rem; inset-inline: 7.4rem 0.85rem; }
+
+  /* a document row: name and status on top; under them the date as a clear chip at the start and the total at the end */
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total, .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td[data-label="תאריך"] { grid-row: 2; padding: 0.55rem 0 0; margin-top: 0.45rem; border-top: 1px solid var(--line); align-self: stretch; align-items: center; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total::before, .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td[data-label="תאריך"]::before { content: none; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td[data-label="תאריך"] { grid-column: 1 / 3; justify-content: flex-start; font-size: var(--t-md); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total { grid-column: 3; display: flex; justify-content: flex-end; padding-inline-start: 0; min-width: 0; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total strong { font-size: var(--t-lg); }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs tbody tr { column-gap: 0; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs .fin-table__check { padding-inline-end: 0.6rem; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs .fin-td-status { padding-inline-start: 0.6rem; }
+}

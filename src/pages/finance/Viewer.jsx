@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { printImages, printPdf } from './print.js'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import ShareDialog from './ShareDialog.jsx'
@@ -111,14 +112,11 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
   const pct = Math.round((w / fit) * 100)
   const zoomBy = (d) => { setFitPage(false); setZoom((z) => Math.max(0, Math.min(STEPS.length - 1, z + d))) }
   const fullscreen = () => { if (document.fullscreenElement) document.exitFullscreen?.(); else box.current?.requestFullscreen?.().catch(() => {}) }
+  // pages that are already drawn print as images (this also works on a phone); a long PDF that is only partly drawn prints whole
   const print = () => {
-    const f = document.createElement('iframe')
-    f.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0'
-    f.src = pdf ? blobUrl : 'about:blank'
-    document.body.appendChild(f)
-    const go = () => { try { f.contentWindow.focus(); f.contentWindow.print() } catch { window.open(blobUrl, '_blank') } setTimeout(() => f.remove(), 60_000) }
-    if (pdf) f.onload = () => setTimeout(go, 250)
-    else { f.contentDocument.write(`<img src="${blobUrl}" style="max-width:100%" onload="setTimeout(()=>print(),100)">`); f.contentDocument.close() }
+    if (!pdf) return printImages([blobUrl], () => window.open(blobUrl, '_blank', 'noopener'))
+    if (pages?.list?.length && pages.total <= pages.list.length) return printImages(pages.list.map((p) => p.src), () => printPdf(blobUrl))
+    return printPdf(blobUrl)
   }
   const controls = (
     <div className="fin-viewer__bar" role="toolbar" aria-label="תצוגת המסמך">
@@ -139,7 +137,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       <span className="fin-viewer__sep" aria-hidden="true" />
       <a className="fin-icon-btn fin-viewer__wide" href={blobUrl} target="_blank" rel="noopener noreferrer" aria-label="פתיחה בחלון חדש" title="פתיחה בחלון חדש של הדפדפן"><Icon name="external" size={17} /></a>
       <a className="fin-icon-btn" href={blobUrl} download={name || 'document'} onClick={(e) => moments.download({ from: e.currentTarget, name: name || 'document' })} aria-label="הורדה" title="הורדת הקובץ המקורי"><Icon name="download" size={17} /></a>
-      <button type="button" className="fin-icon-btn fin-viewer__wide" onClick={print} aria-label="הדפסה" title="הדפסה"><Icon name="print" size={17} /></button>
+      <button type="button" className="fin-icon-btn fin-viewer__print" onClick={print} aria-label="הדפסה" title="הדפסה"><Icon name="print" size={17} /></button>
       {canSave && <button type="button" className="fin-icon-btn" onClick={saveDrive} disabled={drive.busy} aria-label="שמירה בדרייב" title="שמירה ב-Google Drive"><Icon name={drive.busy ? 'sync' : 'cloud'} size={17} /></button>}
       {doc && <button type="button" className="fin-icon-btn" onClick={() => setShare(true)} aria-label="שיתוף" title="שיתוף בוואטסאפ או במייל"><Icon name="share" size={17} /></button>}
     </div>

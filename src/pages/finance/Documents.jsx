@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -107,6 +107,38 @@ export default function Documents({ preset = 'all' }) {
   const [shown, setShown] = useState(STEP)
   useEffect(() => { setShown(STEP) }, [qd, f, tab, sort, dateBy, only, preset])
   const visible = rows.length > shown ? rows.slice(0, shown) : rows
+  // when the list runs by date, the first document of every month carries the month's name ("נובמבר 26"): on a phone it
+  // is printed above that document, and a small chip under the top bar says which month is on the screen while scrolling
+  const months = useMemo(() => {
+    const m = new Map()
+    if (sort.key !== 'date') return m
+    let prev = ''
+    for (const d of visible) {
+      const k = String(docDate(d) || '').slice(0, 7)
+      if (k && k !== prev) m.set(d.id, `${new Date(`${k}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'long' })} ${k.slice(2, 4)}`)
+      prev = k || prev
+    }
+    return m
+  }, [visible, sort.key])
+  const listRef = useRef(null)
+  const [monthNow, setMonthNow] = useState('')
+  useEffect(() => {
+    if (!months.size) { setMonthNow(''); return undefined }
+    let raf = 0
+    const read = () => {
+      raf = 0
+      const box = listRef.current
+      if (!box) return
+      const line = 132                                   // just under the top bar and the chip itself
+      let cur = ''
+      for (const el of box.querySelectorAll('[data-month]')) { if (el.getBoundingClientRect().top - 34 <= line) cur = el.dataset.month; else break }
+      setMonthNow(box.getBoundingClientRect().bottom > line ? cur : '')
+    }
+    const on = () => { if (!raf) raf = requestAnimationFrame(read) }
+    read()
+    window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on)
+    return () => { window.removeEventListener('scroll', on); window.removeEventListener('resize', on); if (raf) cancelAnimationFrame(raf) }
+  }, [months, view])
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
   const toggle = (did) => setSel((s) => { const n = new Set(s); if (n.has(did)) n.delete(did); else n.add(did); return n })
   const picked = rows.filter((d) => sel.has(d.id))
@@ -317,16 +349,18 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
 
+      {monthNow && <div className="fin-monthchip" aria-hidden="true"><span>{monthNow}</span></div>}
+      <div className="fin-doclistbox" ref={listRef}>
       {rows.length === 0 ? (
         tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : view === 'list' ? (
-        <DocList docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
+        <DocList marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (
-            <li key={d.id} className={`fin-doccard ${sel.has(d.id) ? 'is-selected' : ''}`}>
+            <li key={d.id} data-month={months.get(d.id)} className={`fin-doccard ${sel.has(d.id) ? 'is-selected' : ''}`}>
               <button type="button" className="fin-doccard__open" onClick={() => go(link(d.id))} aria-label={`פתיחת ${d.supplier_name || d.file_name}`}><Thumbnail doc={d} /></button>
               <label className="fin-doccard__check"><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></label>
               <div className="fin-doccard__body">
@@ -392,7 +426,7 @@ export default function Documents({ preset = 'all' }) {
               {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
-                  <tr key={d.id} data-mime={d.file_mime || undefined} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
+                  <tr key={d.id} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
@@ -432,6 +466,7 @@ export default function Documents({ preset = 'all' }) {
           </table>
         </div>
       )}
+      </div>
 
       {rows.length > shown && (
         <div className="fin-more-rows">

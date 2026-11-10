@@ -2961,3 +2961,4 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-alertgrid:empty { display: none; }
 .fin-alertgrid .fin-alertrow { margin: 0; text-align: start; }
 @media (max-width: 900px) { .fin-spend { grid-template-columns: minmax(0, 1fr); } .fin-spend__chart { border-inline-start: 0; padding-inline-start: 0; border-top: 1px solid var(--line); padding-top: 12px; min-height: 96px; } }
+

@@ -128,7 +128,7 @@ export default function Reports() {
         <div className="fin-grid fin-grid--report">
           {report.monthKeys && (
             <Card title="מסמכים לפי חודש">
-              <div className="fin-scroll-x fin-mcount-wrap">
+              <div className="fin-scroll-x fin-mcount-wrap" ref={(el) => { if (el && el.dataset.at !== String(report.monthKeys.length)) { el.dataset.at = String(report.monthKeys.length); el.scrollLeft = -el.scrollWidth } }}>
                 <div className="fin-mcount" style={{ '--n': report.monthKeys.length }}>
                   {report.monthKeys.map((m, n) => {
                     const c = report.lists[n].length; const max = Math.max(...report.lists.map((l) => l.length), 1)
@@ -145,7 +145,7 @@ export default function Reports() {
               <p className="fin-muted fin-small">לחיצה על חודש פותחת את המסמכים שלו, מסודרים לפי תאריך.</p>
             </Card>
           )}
-          {report.chart && <Card title="תצוגה"><Bars rows={shown.map(({ r }) => r).filter((r) => r[report.chart]).slice(0, 12).map((r) => ({ name: String(r[0]), value: r[report.chart] }))} format={report.count ? (v) => String(v) : money} /></Card>}
+          {report.chart && <Card title={`${report.head[report.chart]} לפי ${report.head[0]}`}><Bars rows={shown.map(({ r }) => r).filter((r) => r[report.chart]).slice(0, 12).map((r) => ({ name: String(r[0]), value: r[report.chart] }))} format={report.count ? (v) => String(v) : money} /></Card>}
           <div className="fin-table-wrap">
             <table className="fin-table fin-table--plain">
               <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0][i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>

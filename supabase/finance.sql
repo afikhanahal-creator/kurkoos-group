@@ -1779,6 +1779,7 @@ begin
    where id = sid returning *;
 end $$;
 revoke all on function public.fin_scan_claim(uuid[], int) from public, anon, authenticated;
+grant execute on function public.fin_scan_claim(uuid[], int) to service_role;
 
 -- production: a run every minute, only while a scan has work (pg_cron + pg_net, installed on Supabase). The address and the
 -- secret are read from Vault: select vault.create_secret('<CRON_SECRET from Vercel>', 'finance_tick_secret');

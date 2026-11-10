@@ -1987,3 +1987,91 @@ revoke all on function public.fin_drive_has_work() from public, anon, authentica
 grant execute on function public.fin_drive_has_work() to service_role;
 
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v13.1 (2026-11-10): the reconciliation agent (docs/finance/DRIVE-ARCHIVE-PLAN.md §5)
+-- ============================================================
+-- One reconciliation compares the whole archive with Drive in three resumable stages: list (every page of Drive, with its page
+-- token as the checkpoint, into fin_drive_seen), compare (every row against what Drive really holds), repair (missing files
+-- restored from our storage, wrong folder or name corrected, each one verified again). It is "completed" only when nothing is
+-- left; otherwise "completed_with_issues" with the exact list. It runs at night, on every (re)connection, on the button, and
+-- after a sync that uploaded files.
+alter table public.fin_drive_files add column if not exists excluded boolean not null default false;   -- a person took it out
+alter table public.fin_cloud_targets add column if not exists auto_correct boolean not null default true;   -- the archive's own files: wrong folder or name is corrected without asking
+alter table public.fin_drive_files add column if not exists repair text;                               -- missing | trashed | wrong_folder | wrong_name | changed
+
+create table if not exists public.fin_drive_reconciles (
+  id uuid primary key default gen_random_uuid(),
+  target_id uuid not null references public.fin_cloud_targets(id) on delete cascade,
+  trigger text not null default 'manual',          -- night | connect | manual | after_sync
+  status text not null default 'running',
+  phase text not null default 'list',
+  page_token text,
+  pages int not null default 0,
+  listed int not null default 0,
+  report jsonb not null default '{}'::jsonb,
+  error text,
+  requested_by uuid,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+alter table public.fin_drive_reconciles drop constraint if exists fin_drive_reconciles_status_check;
+alter table public.fin_drive_reconciles add constraint fin_drive_reconciles_status_check check (status in ('running', 'completed', 'completed_with_issues', 'failed', 'cancelled'));
+alter table public.fin_drive_reconciles drop constraint if exists fin_drive_reconciles_phase_check;
+alter table public.fin_drive_reconciles add constraint fin_drive_reconciles_phase_check check (phase in ('list', 'compare', 'repair', 'done'));
+create unique index if not exists fin_drive_reconciles_one_running on public.fin_drive_reconciles (target_id) where status = 'running';
+create index if not exists fin_drive_reconciles_target on public.fin_drive_reconciles (target_id, started_at desc);
+
+create table if not exists public.fin_drive_seen (
+  reconcile_id uuid not null references public.fin_drive_reconciles(id) on delete cascade,
+  drive_file_id text not null,
+  document_id uuid,
+  name text,
+  parent text,
+  size bigint,
+  md5 text,
+  mime text,
+  trashed boolean not null default false,
+  primary key (reconcile_id, drive_file_id)
+);
+create index if not exists fin_drive_seen_doc on public.fin_drive_seen (reconcile_id, document_id);
+
+create table if not exists public.fin_drive_repairs (
+  reconcile_id uuid not null references public.fin_drive_reconciles(id) on delete cascade,
+  document_id uuid not null references public.fin_documents(id) on delete cascade,
+  kind text not null,                               -- missing | trashed | wrong_folder | wrong_name | changed | no_source
+  outcome text not null default 'pending',          -- pending | restored | corrected | failed | attention
+  detail jsonb,
+  at timestamptz not null default now(),
+  primary key (reconcile_id, document_id)
+);
+
+alter table public.fin_drive_reconciles enable row level security;
+alter table public.fin_drive_seen enable row level security;
+alter table public.fin_drive_repairs enable row level security;
+revoke all on public.fin_drive_reconciles, public.fin_drive_seen, public.fin_drive_repairs from anon;
+revoke insert, update, delete on public.fin_drive_reconciles, public.fin_drive_seen, public.fin_drive_repairs from authenticated;
+grant select on public.fin_drive_reconciles, public.fin_drive_repairs to authenticated;
+revoke select on public.fin_drive_seen from authenticated;
+drop policy if exists "fin_drive_reconciles read" on public.fin_drive_reconciles;
+create policy "fin_drive_reconciles read" on public.fin_drive_reconciles for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+drop policy if exists "fin_drive_repairs read" on public.fin_drive_repairs;
+create policy "fin_drive_repairs read" on public.fin_drive_repairs for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+
+-- the minute run also wakes for a reconciliation in progress (and for a paused connection, never)
+create or replace function public.fin_drive_has_work()
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.fin_cloud_targets t
+    where t.provider = 'gdrive' and t.status = 'active' and t.enabled and (
+      exists (select 1 from public.fin_drive_reconciles r where r.target_id = t.id and r.status = 'running')
+      or (t.auto and (
+        exists (select 1 from public.fin_drive_files f where f.target_id = t.id and ((f.status = 'queued' and coalesce(f.next_try_at, now()) <= now()) or (f.status in ('uploading', 'uploaded') and coalesce(f.locked_until, now()) <= now())))
+        or exists (select 1 from public.fin_documents d where public.fin_drive_eligible(d.status, d.doc_type, d.file_mime, d.file_path)
+                   and (t.business_id is null or d.business_id = t.business_id)
+                   and not exists (select 1 from public.fin_drive_files f where f.target_id = t.id and f.document_id = d.id))))));
+$$;
+revoke all on function public.fin_drive_has_work() from public, anon, authenticated;
+grant execute on function public.fin_drive_has_work() to service_role;
+
+notify pgrst, 'reload schema';

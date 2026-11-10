@@ -60,7 +60,7 @@ function Folder({ node, depth, onPick, picked, first }) {
   )
 }
 
-function FilePanel({ row, doc, business, businesses, canEdit, onRename, onRequeue, onAssign, go, onClose }) {
+function FilePanel({ row, doc, business, businesses, canEdit, onRename, onRequeue, onAssign, onExclude, go, onClose }) {
   const [tone, label] = ST[row.status] || ['muted', row.status]
   const [biz, setBiz] = useState(row.business_id || '')
   useEffect(() => { setBiz(row.business_id || '') }, [row.document_id, row.business_id])
@@ -91,6 +91,7 @@ function FilePanel({ row, doc, business, businesses, canEdit, onRename, onRequeu
         <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(`/documents/${row.document_id}`)}><Icon name="file" size={15} /> המסמך והנתונים</button>
         {canEdit && row.status === 'verified' && <button type="button" className="fin-btn fin-btn--sm" onClick={onRename}>שינוי שם</button>}
         {canEdit && ['needs_review', 'failed'].includes(row.status) && <button type="button" className="fin-btn fin-btn--sm" onClick={onRequeue}>העלאה מחדש</button>}
+        {canEdit && row.status === 'verified' && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={onExclude}>הוצאה מהארכיון</button>}
       </div>
       <p className="fin-muted fin-small">שיוך לחברה, או תיקון של הספק, התאריך או הסכום, מעביר את הקובץ לתיקייה הנכונה ומשנה את שמו ב-Drive, תוך דקה.</p>
     </aside>
@@ -156,7 +157,21 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
     try { const m = await fn(); if (m) setMsg(m); await reloadAll(); await loadTree() } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
   const runNow = () => act('run', async () => { const { results } = await api.callServer('drive-run', { target_id: t.id }, { timeout: 70000 }); const r = results[0] || {}; return r.busy ? 'העלאה אחרת רצה עכשיו. המסך יתעדכן לבד.' : r.error ? (() => { throw new Error(r.error) })() : r.verified ? `${n(r.verified)} מסמכים הועלו ואומתו עכשיו.` : 'אין מסמכים חדשים להעלאה.' })
-  const check = () => act('check', async () => { const { results } = await api.callServer('drive-reconcile', {}, { timeout: 70000 }); const r = results.find((x) => x.target === t.id) || {}; if (r.error) throw new Error(r.error); return r.missing ? `נמצאו ${n(r.missing)} קבצים שחסרים ב-Drive. הם ברשימת "דורש בדיקה" עם "העלאה מחדש".` : 'הבדיקה הושלמה: כל מה שאמור להיות בארכיון נמצא ב-Drive.' })
+  // "verify all documents": the whole archive against Drive. What does not fit in one call goes on in the background.
+  const check = () => act('check', async () => {
+    const { results } = await api.callServer('drive-reconcile', { target_id: t.id }, { timeout: 70000 }); const r = results.find((x) => x.target === t.id) || {}
+    if (r.error) throw new Error(r.error)
+    if (r.status === 'running') return 'הבדיקה רצה ברקע וממשיכה לבד. הדוח יופיע כאן כשתסתיים.'
+    return r.outstanding ? `הבדיקה הסתיימה עם ${n(r.outstanding)} מסמכים שדורשים טיפול. הפירוט בדוח למטה.` : `הבדיקה הושלמה: ${n(r.verified_now)} מסמכים נמצאים ב-Drive ונבדקו${r.restored ? `, ${n(r.restored)} שוחזרו` : ''}${r.corrected ? `, ${n(r.corrected)} תוקנו` : ''}.`
+  })
+  const pause = (paused) => act('pause', async () => { await api.callServer('drive-pause', { target_id: t.id, paused }); return paused ? 'הארכיון מושהה. שום דבר לא עולה ולא נבדק עד שממשיכים.' : 'הארכיון ממשיך לעבוד.' })
+  const exclude = (ids) => act('exclude', async () => { await api.callServer('drive-exclude', { target_id: t.id, ids }); await api.callServer('drive-run', { target_id: t.id }, { timeout: 70000 }).catch(() => null); return 'המסמך הוצא מהארכיון. העותק שלו עבר לפח של Drive, והוא לא יעלה שוב.' })
+  const reconnect = async () => {
+    setBusy('reconnect'); setErr('')
+    try { const { url } = await api.callServer('cloud-auth-url', { provider: 'gdrive', back: 'drive' }); window.location.assign(url) } catch (e) { setErr(e.message); setBusy('') }
+  }
+  const rec = (t.reconciles || [])[0]
+  const paused = t.enabled === false
   const requeue = (ids) => act('requeue', async () => { await api.callServer('drive-requeue', { target_id: t.id, ids }); await api.callServer('drive-run', { target_id: t.id }, { timeout: 70000 }); return 'הקבצים הועלו שוב.' })
   // a company for documents: the file moves to that company's folder (the trigger queues it; run now so it moves at once)
   const assign = (ids, businessId) => act('assign', async () => {
@@ -173,7 +188,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
       <header className="fin-scan__head">
         <ProviderLogo name="gdrive" />
         <div className="fin-scan__who"><strong dir="ltr">{t.account_email}</strong><small>תיקייה ראשית: {t.root_name}{t.last_sync_at ? ` · העלאה אחרונה ${dateTime(t.last_sync_at)}` : ''}</small></div>
-        <Pill tone={t.status === 'active' ? 'ok' : 'bad'}>{t.status === 'active' ? 'מחובר' : 'דורש חיבור מחדש'}</Pill>
+        <Pill tone={t.status !== 'active' ? 'bad' : paused ? 'warn' : 'ok'}>{t.status !== 'active' ? 'דורש חיבור מחדש' : paused ? 'מושהה' : 'מחובר'}</Pill>
       </header>
       {t.last_error && <p className="fin-error" role="alert">{t.last_error}</p>}
 
@@ -208,8 +223,10 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
 
       {operate && (
         <div className="fin-scan__acts">
-          <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" disabled={!!busy} onClick={runNow}><Icon name="upload" size={15} /> {busy === 'run' ? 'מעלה…' : 'העלאה עכשיו'}</button>
-          <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={check}><Icon name="check" size={15} /> {busy === 'check' ? 'בודק…' : 'בדיקת שלמות מול Drive'}</button>
+          <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" disabled={!!busy || paused} onClick={runNow}><Icon name="upload" size={15} /> {busy === 'run' ? 'מעלה…' : 'העלאה עכשיו'}</button>
+          <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy || paused} onClick={check}><Icon name="check" size={15} /> {busy === 'check' ? 'בודק…' : 'בדיקת כל המסמכים מול Drive'}</button>
+          {can('manage') && <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={reconnect}><Icon name="sync" size={15} /> {busy === 'reconnect' ? 'מעביר ל-Google…' : 'חיבור מחדש ובדיקת כל המסמכים'}</button>}
+          <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={!!busy} onClick={() => pause(!paused)}>{paused ? 'המשך' : 'השהיה'}</button>
           {t.problems.length > 0 && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" aria-expanded={showProblems} onClick={() => setShowProblems((v) => !v)}><Icon name="alert" size={15} /> דורשים טיפול ({n(t.problems.length)})</button>}
         </div>
       )}
@@ -258,6 +275,35 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
         </section>
       )}
 
+      {rec && (
+        <details className="fin-drep" open={rec.status !== 'completed'}>
+          <summary>
+            <span>דוח בדיקה מול Drive</span>
+            <Pill tone={rec.status === 'completed' ? 'ok' : rec.status === 'running' ? 'info' : 'warn'}>{rec.status === 'completed' ? 'הושלמה ואומתה' : rec.status === 'running' ? ({ list: 'סורק את Drive', compare: 'משווה למערכת', repair: 'משחזר ומתקן' }[rec.phase] || 'רצה') : rec.status === 'completed_with_issues' ? `הסתיימה, ${n(rec.report?.outstanding)} דורשים טיפול` : 'נכשלה'}</Pill>
+            <small>{({ night: 'בדיקת הלילה', connect: 'אחרי חיבור', manual: 'ידנית', after_sync: 'אחרי העלאה' })[rec.trigger] || ''} · {dateTime(rec.finished_at || rec.started_at)}</small>
+          </summary>
+          {rec.status === 'running' && <p className="fin-muted fin-small">נסרקו עד עכשיו {n(rec.listed)} קבצים ב-{n(rec.pages)} עמודים. הבדיקה ממשיכה לבד, גם אם סוגרים את המסך.</p>}
+          {rec.error && rec.status === 'running' && <p className="fin-cell-err fin-small">ניסיון אחרון: {rec.error}. ממשיך מאותה נקודה.</p>}
+          {rec.report && rec.phase !== 'list' && (
+            <dl className="fin-drep__grid">
+              <div><dt>מסמכים בארכיון לפי המערכת</dt><dd>{n(rec.report.in_system)}</dd></div>
+              <div><dt>נמצאו ב-Drive</dt><dd>{n(rec.report.found_in_drive)}</dd></div>
+              <div><dt>תקינים (שם, תיקייה, תוכן)</dt><dd>{n(rec.report.verified_ok)}</dd></div>
+              <div className={(rec.report.missing || 0) + (rec.report.trashed || 0) ? 'is-attn' : ''}><dt>חסרים או בפח</dt><dd>{n((rec.report.missing || 0) + (rec.report.trashed || 0))}</dd></div>
+              <div><dt>שוחזרו מהמערכת</dt><dd>{n(rec.report.restored)}</dd></div>
+              <div><dt>תיקייה או שם שגויים</dt><dd>{n((rec.report.wrong_folder || 0) + (rec.report.wrong_name || 0))}</dd></div>
+              <div><dt>תוקנו</dt><dd>{n(rec.report.corrected)}</dd></div>
+              <div><dt>תוכן שהשתנה</dt><dd>{n(rec.report.changed)}</dd></div>
+              <div><dt>עותקים כפולים שהוסרו</dt><dd>{n(rec.report.duplicates_in_drive)}</dd></div>
+              <div><dt>קבצים ב-Drive שלא מוכרים למערכת</dt><dd>{n(rec.report.orphans)}</dd></div>
+              <div className={rec.report.outstanding ? 'is-attn' : ''}><dt>נשארו לטיפול</dt><dd>{n(rec.report.outstanding)}</dd></div>
+            </dl>
+          )}
+          {rec.report?.orphans > 0 && <p className="fin-muted fin-small">קבצים לא מוכרים לא נמחקים ולא מוזזים. לדוגמה: {(rec.report.orphan_names || []).slice(0, 5).join(', ')}</p>}
+          {(t.reconciles || []).length > 1 && <p className="fin-muted fin-small">בדיקות קודמות: {(t.reconciles || []).slice(1).map((r) => `${dateTime(r.finished_at || r.started_at)} (${r.status === 'completed' ? 'הושלמה' : r.status === 'running' ? 'רצה' : `${n(r.report?.outstanding)} לטיפול`})`).join(' · ')}</p>}
+        </details>
+      )}
+
       <section className="fin-dexplorer" aria-label="סייר הארכיון">
         <div className="fin-dexplorer__head">
           <h3>סייר הארכיון</h3>
@@ -269,7 +315,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
               <p className="fin-dtree__root"><Icon name="folder" size={16} /> {t.root_name}</p>
               {[...tree.values()].sort((a, b) => a.name.localeCompare(b.name, 'he')).map((node) => <Folder key={node.name} node={node} depth={0} onPick={(f) => setPicked(f.document_id)} picked={picked} />)}
             </div>
-            {pickedRow && <FilePanel row={pickedRow} doc={docOf.get(pickedRow.document_id)} business={bizName(pickedRow.business_id)} businesses={businesses} onAssign={assign} canEdit={operate} go={go} onClose={() => setPicked(null)} onRename={() => setRenaming(pickedRow)} onRequeue={() => requeue([pickedRow.document_id])} />}
+            {pickedRow && <FilePanel row={pickedRow} doc={docOf.get(pickedRow.document_id)} business={bizName(pickedRow.business_id)} businesses={businesses} onAssign={assign} canEdit={operate} go={go} onClose={() => setPicked(null)} onRename={() => setRenaming(pickedRow)} onRequeue={() => requeue([pickedRow.document_id])} onExclude={() => exclude([pickedRow.document_id])} />}
           </div>
         )}
       </section>
@@ -279,6 +325,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
           <summary>הגדרות הארכיון</summary>
           <Switch checked={t.auto} disabled={!!busy} onChange={(v) => setting({ auto: v })} label="כל מסמך חדש עולה לבד, כמה דקות אחרי שהוא נקרא" />
           <Switch checked={t.by_kind} disabled={!!busy} onChange={(v) => setting({ by_kind: v })} label="תת-תיקייה לפי סוג בתוך כל חודש (חשבוניות, קבלות, זיכויים)" />
+          <Switch checked={t.auto_correct !== false} disabled={!!busy} onChange={(v) => setting({ auto_correct: v })} label="קובץ של הארכיון שהוזז או ששמו שונה ב-Drive חוזר למקומו לבד" />
           <p className="fin-muted fin-small">המבנה: {t.root_name} › חברה › שנה › חודש{t.by_kind ? ' › סוג' : ''}. מסמך בלי חברה נכנס ל"מסמכים ללא שיוך", ועובר לתיקיית החברה ברגע שמשייכים אותו. שום קובץ לא נמחק מ-Drive.</p>
         </details>
       )}
@@ -301,11 +348,11 @@ export default function Drive() {
   useEffect(() => { alive.current = true; load(); return () => { alive.current = false } }, [load])
   useEffect(() => {
     const ok = params.get('connected'); const bad = params.get('error')
-    if (ok) setMsg(`Google Drive של ${ok} חובר. הסוכן יוצר עכשיו את "ארכיון מסמכים עסקי" ומעלה אליו את כל המסמכים.`)
+    if (ok) setMsg(`Google Drive של ${ok} חובר. הסוכן בודק עכשיו כל מסמך מול Drive: מה שחסר משוחזר, ושום דבר לא עולה פעמיים.`)
     if (bad) setErr(`החיבור נכשל: ${bad}`)
     if (ok || bad) { setParams({}, { replace: true }); load() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  const pending = (data?.targets || []).some((t) => t.auto && t.status === 'active' && ((t.counts?.pending || 0) > 0 || (data?.collected?.read || 0) > (t.counts?.expected || 0)))
+  const pending = (data?.targets || []).some((t) => t.enabled !== false && t.status === 'active' && ((t.auto && (t.counts?.pending || 0) > 0) || t.reconciles?.[0]?.status === 'running'))
   // while there is something to upload and the screen is open, it moves the queue on (in production the minute run does too;
   // the lock on each connection keeps two runs from uploading the same document)
   useEffect(() => {
@@ -313,7 +360,13 @@ export default function Drive() {
     pumping.current = true
     ;(async () => {
       for (let i = 0; i < 40 && alive.current; i++) {
-        try { const { results } = await api.callServer('drive-run', {}, { timeout: 70000 }); await load(); if (!results.some((r) => r.verified || r.retry || r.busy)) break } catch { await new Promise((ok) => setTimeout(ok, 4000)) }
+        try {
+          const { results } = await api.callServer('drive-run', {}, { timeout: 70000 })
+          const fresh = await api.callServer('drive-overview'); if (alive.current) setData(fresh)
+          const checking = (fresh.targets || []).filter((x) => x.reconciles?.[0]?.status === 'running')
+          for (const x of checking) await api.callServer('drive-reconcile', { target_id: x.id }, { timeout: 70000 }).catch(() => null)
+          if (!checking.length && !results.some((r) => r.verified || r.retry || r.busy)) break
+        } catch { await new Promise((ok) => setTimeout(ok, 4000)) }
       }
       pumping.current = false
     })()

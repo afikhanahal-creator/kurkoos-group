@@ -51,6 +51,8 @@ const ROLES = {
   'drive-rename': ['admin', 'finance_manager'],
   'drive-settings': ['admin'],
   'drive-reconcile': ['admin', 'finance_manager'],
+  'drive-exclude': ['admin', 'finance_manager'],
+  'drive-pause': ['admin', 'finance_manager'],
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
@@ -123,7 +125,12 @@ async function oauthCallback(req, res, url) {
       if (!t.email) return cloudBack('error=no_email')
       const target = await connectCloud(st.p, t, st)
       // a new Drive starts working at once: the main folder, then the first documents (the minute run does the rest)
-      if (st.p === 'gdrive' && target?.id) await archive.tick({ targetId: target.id, trigger: 'connect', budgetMs: 8_000, max: 10 }).catch(() => {})
+      // a reconnection never starts a new archive: the same account keeps its rows and folders, and everything it holds is
+      // checked against Drive first (missing files are restored, nothing is uploaded twice)
+      if (st.p === 'gdrive' && target?.id) {
+        await archive.startReconcile({ targetId: target.id, trigger: 'connect', user: { id: st.u, email: st.e } }).catch(() => {})
+        await archive.tick({ targetId: target.id, trigger: 'connect', budgetMs: 8_000, max: 10 }).catch(() => {})
+      }
       return cloudBack(`connected=${encodeURIComponent(t.email)}`)
     } catch (e) { return cloudBack(`error=${encodeURIComponent(String(e.message || e).slice(0, 120))}`) }
   }
@@ -172,6 +179,7 @@ export default async function handler(req, res) {
       // the Drive archive first (short: a few documents a minute is plenty), then the mail scan with the rest of the time
       const started = Date.now()
       const drive = await archive.tick({ started, budgetMs: 15_000, trigger: 'scan' }).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
+      await archive.reconcileStep({ started, budgetMs: 25_000 }).catch(() => [])
       res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
     } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
@@ -331,11 +339,21 @@ export default async function handler(req, res) {
         return
       }
       case 'drive-settings': {
-        res.status(200).json(await archive.settings({ targetId: String(body.target_id || ''), by_kind: body.by_kind, auto: body.auto, user }))
+        res.status(200).json(await archive.settings({ targetId: String(body.target_id || ''), by_kind: body.by_kind, auto: body.auto, auto_correct: body.auto_correct, user }))
         return
       }
       case 'drive-reconcile': {
-        res.status(200).json({ results: await archive.reconcile({}) })
+        // "verify all documents": the whole archive against Drive now; what does not fit in one call goes on every minute
+        res.status(200).json({ results: await archive.reconcile({ trigger: 'manual', targetId: body.target_id ? String(body.target_id) : null, user }) })
+        return
+      }
+      case 'drive-exclude': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
+        res.status(200).json(await archive.exclude({ targetId: String(body.target_id || ''), ids, excluded: body.excluded !== false, user }))
+        return
+      }
+      case 'drive-pause': {
+        res.status(200).json(await archive.settings({ targetId: String(body.target_id || ''), enabled: body.paused === false, user }))
         return
       }
       case 'cloud-auth-url': {

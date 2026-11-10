@@ -582,7 +582,7 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   await run()
   const resumed = row(mid).split('|')[0]; const copiesMid = await copies(mid)
   // a correction of the company: the archive's own file moves to the other company's folder (moved, not copied)
-  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' and d.project_id is null order by d.created_at desc limit 1`)
+  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' and d.project_id is null and f.document_id not in ('${fresh.join("','")}') order by d.created_at desc limit 1`)
   const other = sql(`select id||'|'||name from fin_businesses where id is distinct from (select business_id from fin_documents where id='${moveDoc}') order by sort desc, name desc limit 1`).split('|')
   sql(`update fin_documents set business_id='${other[0]}' where id='${moveDoc}'`)
   const queuedAfterFix = row(moveDoc).split('|')[0]
@@ -613,22 +613,77 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   const busy = [p1, p2].filter((r) => r.data.results?.[0]?.busy).length
   const kd = (await dget()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd)
   const doubleFiles = kd.length - new Set(kd).size
-  // the night check: a file removed and a file put in the trash by a person are found; nothing is uploaded on its own
-  const [gone, binned] = sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at limit 2`).split('\n')
+  // the reconciliation agent: a file removed and a file put in the trash are found, restored from our storage and verified
+  // again, in one check; the report says so, and "completed" only because nothing is left
+  const allVerified = () => sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at`).split('\n').filter(Boolean)
+  const [gone, binned, movedDoc, renamedDoc, changedDoc] = allVerified().filter((x) => x !== moveDoc)
   await dget(`?remove=${gone}`); await dget(`?trash=${binned}`)
-  const rec = await api(adminToken, { action: 'drive-reconcile' })
-  const recRes = rec.data.results?.find((r) => r.target === driveTarget) || {}
+  const reconcile = async () => { for (let i = 0; i < 8; i++) { const r = await api(adminToken, { action: 'drive-reconcile', target_id: driveTarget }); const x = r.data.results?.find((y) => y.target === driveTarget) || {}; if (x.status && x.status !== 'running') return x } return {} }
+  const recRes = await reconcile()
   const flagged = sql(`select string_agg(status, ',' order by status) from fin_drive_files where document_id in ('${gone}','${binned}') and target_id='${driveTarget}'`)
+  const restoredCopies = `${await copies(gone)}${await copies(binned)}`
   const ov = await api(adminToken, { action: 'drive-overview' })
   const card = ov.data.targets?.find((t) => t.id === driveTarget) || {}
-  // upload again from the screen: the removed file comes back, verified
-  await api(adminToken, { action: 'drive-requeue', target_id: driveTarget, ids: [gone] }); await run()
   const back = row(gone).split('|')[0]
-  const rec2 = await api(adminToken, { action: 'drive-reconcile' })
-  const rec2Res = rec2.data.results?.find((r) => r.target === driveTarget) || {}
+  // moved to a wrong folder, renamed, and changed in Drive by a person: found, put back, verified
+  const rightFolder = sql(`select drive_folder_id||'|'||organized_name from fin_drive_files where target_id='${driveTarget}' and document_id='${movedDoc}'`).split('|')[0]
+  const rightName = sql(`select organized_name from fin_drive_files where target_id='${driveTarget}' and document_id='${renamedDoc}'`)
+  await dget(`?move=${movedDoc}`); await dget(`?rename=${renamedDoc}`); await dget(`?change=${changedDoc}`)
+  const rec2Res = await reconcile()
+  const itemsFix = await dget()
+  const fixedFolder = itemsFix.find((f) => f.appProperties?.kd === movedDoc && !f.trashed)?.parents?.[0] === rightFolder
+  const fixedName = itemsFix.find((f) => f.appProperties?.kd === renamedDoc && !f.trashed)?.name === rightName
+  const changedCopies = await copies(changedDoc)
+  // Drive gives no md5 for a file: it is downloaded and its SHA-256 compared
+  await restart(fresh[0]); await fetch(`${FAKES}/__drive?nomd5=1`); await run()
+  const shaCheck = row(fresh[0]).split('|')[4]
+  // Google asks to slow down (403 rate limit): not a failure of the document; it waits and then goes up
+  await restart(fresh[1]); await fetch(`${FAKES}/__drive?rate403=1`); await run()
+  const rateRow = row(fresh[1]).split('|').slice(0, 2).join('/')
+  sql(`update fin_drive_files set next_try_at=now() where document_id='${fresh[1]}'`); await run()
+  const rateAfter = row(fresh[1]).split('|')[0]
+  // the access token ran out: it is refreshed and the upload goes on
+  await restart(fresh[0]); sql(`update fin_cloud_secrets set access_token='stale', expires_at=now() - interval '1 hour' where target_id='${driveTarget}'`); await run()
+  const afterExpiry = row(fresh[0]).split('|')[0]
+  // paused: nothing is uploaded; resumed: it goes on
+  await restart(fresh[1]); await api(adminToken, { action: 'drive-pause', target_id: driveTarget, paused: true }); await run()
+  const whilePaused = sql(`select coalesce((select status from fin_drive_files where target_id='${driveTarget}' and document_id='${fresh[1]}'), 'none')`)
+  await api(adminToken, { action: 'drive-pause', target_id: driveTarget, paused: false }); await run()
+  const afterResume = row(fresh[1]).split('|')[0]
+  // a person takes a document out: its copy goes to the Drive trash, and no check brings it back
+  await api(adminToken, { action: 'drive-exclude', target_id: driveTarget, ids: [fresh[1]] }); await run()
+  const excluded = row(fresh[1]).split('|')[0]; const excludedLive = await copies(fresh[1])
+  // a big archive: 1,200 more files in Drive that the system does not know. Every page is listed, they are reported as
+  // exceptions, nothing is deleted
+  const tagK = driveTarget.slice(0, 8)
+  await dget(`?seed=1200&kt=${tagK}`)
+  const rec3Res = await reconcile()
+  const pagesRow = sql(`select pages||'|'||listed||'|'||status from fin_drive_reconciles where target_id='${driveTarget}' order by started_at desc limit 1`)
+  const stillThere = (await dget()).filter((f) => /^unknown-\d+\.pdf$/.test(f.name) && !f.trashed).length
+  await dget('?unseed=1')
+  // reconnecting the same Google account: the same connection and archive, a check starts, and nothing is uploaded again
+  const uploadsBefore = (await fetch(`${FAKES}/__log`).then((r) => r.json())).drive.filter((x) => !/^(patch|trash):/.test(x)).length
+  await fetch(`${FAKES}/__next_account?email=office@kurkoos.test`)
+  await go('/drive'); await page.waitForSelector('.fin-drive', { timeout: 20000 })
+  const archShot = await shot('121-drive-archive')
+  await page.getByRole('button', { name: /חיבור מחדש ובדיקת כל המסמכים/ }).click()
+  await page.waitForSelector('text=חובר', { timeout: 20000 }).catch(() => {}); await page.waitForTimeout(1500)
+  await fetch(`${FAKES}/__next_account?email=`)
+  await reconcile()
+  const afterReconnect = sql(`select (select count(*) from fin_cloud_targets where provider='gdrive')||'|'||(select id from fin_cloud_targets where provider='gdrive' limit 1)||'|'||(select count(*) from fin_drive_reconciles where target_id='${driveTarget}' and trigger='connect')`)
+  const uploadsAfter = (await fetch(`${FAKES}/__log`).then((r) => r.json())).drive.filter((x) => !/^(patch|trash):/.test(x)).length
+  await page.reload(); await page.waitForSelector('.fin-drive', { timeout: 20000 }); await page.waitForTimeout(1200)
+  const reportShot = await shot('122-drive-after-reconnect')
+  // the promise: every row that says "verified" has exactly one live file in Drive with its id, name and folder; and both upload
+  // kinds were used (multipart and resumable)
+  const live = new Map((await dget()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => [f.id, f]))
+  const claims = sql(`select drive_file_id||'|'||organized_name||'|'||drive_folder_id from fin_drive_files where target_id='${driveTarget}' and status='verified'`).split('\n').filter(Boolean).map((x) => x.split('|'))
+  const falseClaims = claims.filter(([id, name, folder]) => { const f = live.get(id); return !f || f.name !== name || f.parents[0] !== folder }).length
+  const kinds = (await dget()).filter((f) => f.appProperties?.kd)
+  const resumableUsed = kinds.filter((f) => f.resumable).length; const multipartUsed = kinds.filter((f) => !f.resumable).length
   record('ARCHIVE', 'ארכיון Google Drive: תיקיות, שמות, ניסיון חוזר, העברה, בקרת שלמות',
-    'תיקייה ראשית ותיקייה לכל חברה, שנה וחודש (כל אחת פעם אחת, לפי מזהה); שם לפי תוכן החשבונית ובתיקיית החברה שלה; כפילות לא מועלית; 503 ← ניסיון חוזר ומאומת; תשובה שאבדה ← אותו קובץ ולא עותק; ריצה שנקטעה ← ממשיכה; תיקון חברה ← הקובץ עובר תיקייה; שינוי שם נשמר; מסמך דל ← בלי תאריך מומצא; שתי ריצות במקביל ← קובץ אחד לכל מסמך; בדיקת הלילה מוצאת קובץ שנמחק ושנזרק לפח, ו"העלה שוב" מחזיר; רק חשבוניות וקבלות (PDF או תמונה): מסמך שהתברר כהצעת מחיר עובר לפח של Drive וחוזר כשהוא שוב חשבונית; אין גוף מייל (HTML) ב-Drive',
-    `תיקיות כפולות: ${dupFolders}; חברות: ${companyFolders.join(', ')}; מפתחות: ${keys.split(' ').length}; שם: ${named[0]} → ${named[1]} (${named[2]}, ${named[3]}, ${named[4]}); כפילויות: ${dupRows}, ב-Drive: ${dupInDrive}; 503: ${after503.split('|').slice(0, 2).join('/')} → ${retried.split('|')[0]} (${copies503} עותקים); תשובה שאבדה: ${afterLost.split('|').slice(0, 2).join('/')} → ${recovered.split('|')[0]} (${copiesLost}); נקטע: ${resumed} (${copiesMid}); תיקון: ${queuedAfterFix} → ${moved.split('|')[3]} (${copiesMoved}); שם ידני: ${ren.status} ${renamed} / ${renamedInDrive}; דל: ${thinName}; במקביל: נעול ${busy}, קבצים כפולים ${doubleFiles}; לילה: חסרים ${recRes.missing}, ${flagged}; מסך: ${JSON.stringify(card.counts || {})}; אחרי העלאה חוזרת: ${back}, חסרים ${rec2Res.missing}; הצעת מחיר: ${wdRow}, לפח ${wdTrashed} → חשבונית: ${wdBack} (${wdLive}); HTML ב-Drive: ${htmlInDrive}; "בע-מ": ${quoted}`,
+    'תיקייה ראשית ותיקייה לכל חברה, שנה וחודש (כל אחת פעם אחת, לפי מזהה); שם לפי תוכן החשבונית ובתיקיית החברה שלה; כפילות לא מועלית; 503 ← ניסיון חוזר ומאומת; תשובה שאבדה ← אותו קובץ ולא עותק; ריצה שנקטעה ← ממשיכה; תיקון חברה ← הקובץ עובר תיקייה; שינוי שם נשמר; מסמך דל ← בלי תאריך מומצא; שתי ריצות במקביל ← קובץ אחד לכל מסמך; סוכן הבדיקה מוצא קובץ שנמחק ושנזרק לפח ומשחזר אותם לבד; קובץ שהוזז לתיקייה אחרת, ששמו שונה או שתוכנו שונה מתוקן; בלי md5 ← הורדה והשוואת SHA-256; האטה של Google (403) לא נספרת ככשל; טוקן שפג מתחדש; השהיה והמשך; מסמך שהוצא לא חוזר; 1,200 קבצים לא מוכרים נסרקים בעמודים ומדווחים בלי למחוק; חיבור מחדש לא מעלה שוב; כל "מאומת" קיים באמת ב-Drive; העלאה רגילה ו-resumable; רק חשבוניות וקבלות (PDF או תמונה): מסמך שהתברר כהצעת מחיר עובר לפח של Drive וחוזר כשהוא שוב חשבונית; אין גוף מייל (HTML) ב-Drive',
+    `תיקיות כפולות: ${dupFolders}; חברות: ${companyFolders.join(', ')}; מפתחות: ${keys.split(' ').length}; שם: ${named[0]} → ${named[1]} (${named[2]}, ${named[3]}, ${named[4]}); כפילויות: ${dupRows}, ב-Drive: ${dupInDrive}; 503: ${after503.split('|').slice(0, 2).join('/')} → ${retried.split('|')[0]} (${copies503} עותקים); תשובה שאבדה: ${afterLost.split('|').slice(0, 2).join('/')} → ${recovered.split('|')[0]} (${copiesLost}); נקטע: ${resumed} (${copiesMid}); תיקון: ${queuedAfterFix} → ${moved.split('|')[3]} (${copiesMoved}); שם ידני: ${ren.status} ${renamed} / ${renamedInDrive}; דל: ${thinName}; במקביל: נעול ${busy}, קבצים כפולים ${doubleFiles}; בדיקה: חסרים ${recRes.missing}, שוחזרו ${recRes.restored}, ${recRes.status}, ${flagged}, עותקים ${restoredCopies}; מסך: ${JSON.stringify(card.counts || {})}; תיקייה/שם/תוכן: ${rec2Res.wrong_folder}/${rec2Res.wrong_name}/${rec2Res.changed} → תוקנו ${rec2Res.corrected}, שוחזרו ${rec2Res.restored}, ${fixedFolder}/${fixedName}/${changedCopies}; בלי md5: ${shaCheck}; האטה: ${rateRow} → ${rateAfter}; טוקן שפג: ${afterExpiry}; מושהה: ${whilePaused} → ${afterResume}; הוצא: ${excluded} (${excludedLive}); 1,200 לא מוכרים: ${pagesRow}, חריגים ${rec3Res.orphans}, נשארו ${stillThere}; חיבור מחדש: ${afterReconnect}, העלאות ${uploadsBefore}→${uploadsAfter}; טענות שווא: ${falseClaims} מתוך ${claims.length}; resumable/multipart: ${resumableUsed}/${multipartUsed}; הצעת מחיר: ${wdRow}, לפח ${wdTrashed} → חשבונית: ${wdBack} (${wdLive}); HTML ב-Drive: ${htmlInDrive}; "בע-מ": ${quoted}`,
     dupFolders === 0 && companyFolders.length >= 1 && companyFolders.every((c) => companyNames.includes(c) || c === 'מסמכים ללא שיוך')
       && named[1] !== named[0] && /^20\d\d-\d\d-\d\d_[^_]+_[^_]+_[^_]+_-?[\d.]+-(שח|USD|EUR)\.[a-z]+$/.test(named[1]) && named[2].split('/')[2] === named[3] && named[4] === 'md5'
       && (!dupDoc || (/^(\d+)\|\1$/.test(dupRows) && dupInDrive === 0))
@@ -639,9 +694,14 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
       && ren.status === 200 && /^חוזה-שכירות-מחסן\./.test(renamed) && renamedInDrive === renamed
       && !/^20\d\d-/.test(thinName) && /_id-[0-9a-f]{8}\./.test(thinName)
       && busy >= 1 && doubleFiles === 0
-      && recRes.missing === 2 && flagged === 'needs_review,needs_review' && card.counts?.needs_review >= 2 && back === 'verified' && rec2Res.missing === 0
+      && recRes.missing === 2 && recRes.restored === 2 && recRes.status === 'completed' && flagged === 'verified,verified' && restoredCopies === '11' && card.counts?.needs_review === 0 && back === 'verified'
+      && rec2Res.wrong_folder === 1 && rec2Res.wrong_name === 1 && rec2Res.changed === 1 && rec2Res.corrected === 2 && rec2Res.restored === 1 && fixedFolder && fixedName && changedCopies === 1 && rec2Res.status === 'completed'
+      && shaCheck === 'sha256' && rateRow === 'queued/0' && rateAfter === 'verified' && afterExpiry === 'verified'
+      && ['none', 'queued'].includes(whilePaused) && afterResume === 'verified' && excluded === 'withdrawn' && excludedLive === 0
+      && Number(pagesRow.split('|')[0]) >= 2 && Number(pagesRow.split('|')[1]) >= 1200 && rec3Res.orphans === 1200 && stillThere === 1200
+      && afterReconnect === `1|${driveTarget}|1` && uploadsAfter === uploadsBefore && falseClaims === 0 && claims.length > 5 && resumableUsed >= 1 && multipartUsed >= 1
       && wdRow === 'withdrawn' && wdTrashed && wdBack === 'verified' && wdLive === 1 && htmlInDrive === 0 && quoted === '0',
-    [])
+    [archShot, reportShot])
 }
 
 // =================== ACCOUNTING SOFTWARE ===================

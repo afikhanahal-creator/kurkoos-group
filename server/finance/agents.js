@@ -193,7 +193,7 @@ export async function runDaily(origin) {
   out.push(await automation('outbound', async () => { const { flushOutbound } = await import('./outbound.js'); return flushOutbound({ max: 200, started, budgetMs: 40_000, trigger: 'cron' }) }))
   out.push(await automation('cloud_sync', async () => { const { syncCloud } = await import('./cloud.js'); return syncCloud({ started, trigger: 'cron' }) }))
   // the archive's night check: everything that should be in Drive is there, or a person sees what is missing
-  try { const { reconcile } = await import('./archive.js'); out.push({ key: 'drive_reconcile', result: await reconcile({ started }) }) } catch (e) { out.push({ key: 'drive_reconcile', error: String(e.message || e).slice(0, 200) }) }
+  try { const { reconcile } = await import('./archive.js'); out.push({ key: 'drive_reconcile', result: await reconcile({ started, trigger: 'night' }) }) } catch (e) { out.push({ key: 'drive_reconcile', error: String(e.message || e).slice(0, 200) }) }
 
   out.push(await automation('monthly_package', async () => {
     const prev = new Date(); prev.setUTCDate(1); prev.setUTCMonth(prev.getUTCMonth() - 1)

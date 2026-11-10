@@ -29,7 +29,8 @@ function imageDims(b) {
 const hookFails = {}
 const log = { waFiles: [], emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
 const driveItems = []   // { id, name, parents, folder, size, md5, appProperties, trashed }
-const driveFail = { upload503: 0, lose: 0 }
+const driveFail = { upload503: 0, lose: 0, rate403: 0, nomd5: 0 }
+const driveSessions = new Map()   // resumable upload sessions
 let driveSeq = 0   // ids never come back after a file is removed, as in Drive
 const fixtures = () => JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
 const failed = {}   // sha256 → how many times Claude already failed on it
@@ -204,16 +205,25 @@ const server = http.createServer(async (req, res) => {
   // Drive as the real API behaves for the archive: appProperties, md5Checksum of the bytes, rename/move with PATCH, 404 for a
   // parent that is gone, the trash. /__drive sets failures: upload503 (the next N uploads answer 503), lose (the next N
   // uploads are saved but answer 500, as when the answer is lost), trash / remove (a file of a document, as a person would).
-  const dfile = (f) => ({ id: f.id, name: f.name, parents: f.parents, mimeType: f.folder ? 'application/vnd.google-apps.folder' : 'application/octet-stream', md5Checksum: f.folder ? undefined : f.md5, size: f.folder ? undefined : String(f.size || 0), trashed: !!f.trashed, appProperties: f.appProperties || {}, webViewLink: `https://drive.test/file/${f.id}` })
+  const dfile = (f) => ({ id: f.id, name: f.name, parents: f.parents, mimeType: f.folder ? 'application/vnd.google-apps.folder' : 'application/octet-stream', md5Checksum: f.folder || f.nomd5 ? undefined : f.md5, size: f.folder ? undefined : String(f.size || 0), trashed: !!f.trashed, appProperties: f.appProperties || {}, webViewLink: `https://drive.test/file/${f.id}` })
   const dpath = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${dpath(f.parents[0])}/${f.name}` : '' }
   if (p === '/__drive') {
-    for (const k of ['upload503', 'lose']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
+    for (const k of ['upload503', 'lose', 'rate403', 'nomd5']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
+    // as a person would in Drive: move a document's file to another folder, rename it, change its content
+    const one = (doc) => driveItems.find((f) => f.appProperties?.kd === doc && !f.trashed)
+    if (url.searchParams.get('move')) { const f = one(url.searchParams.get('move')); const to = driveItems.find((x) => x.folder && x.id !== f?.parents[0] && x.name !== 'בדיקת חיבור' && driveItems.some((y) => !y.folder && y.parents[0] === x.id)); if (f && to) f.parents = [to.id] }
+    if (url.searchParams.get('rename')) { const f = one(url.searchParams.get('rename')); if (f) f.name = 'scan0001.pdf' }
+    if (url.searchParams.get('change')) { const f = one(url.searchParams.get('change')); if (f) { f.content = Buffer.from('changed'); f.size = 7; f.md5 = crypto.createHash('md5').update(f.content).digest('hex') } }
+    // many files of the archive that the system does not know (for paging and the exception report)
+    const seed = Number(url.searchParams.get('seed') || 0); const tagOf = url.searchParams.get('kt')
+    for (let i = 0; i < seed; i++) driveItems.push({ id: `file${++driveSeq}`, name: `unknown-${i}.pdf`, parents: ['root'], folder: false, size: 3, md5: 'x', content: Buffer.from('abc'), appProperties: { kt: tagOf } })
+    if (url.searchParams.has('unseed')) for (let i = driveItems.length - 1; i >= 0; i--) if (/^unknown-\d+\.pdf$/.test(driveItems[i].name)) driveItems.splice(i, 1)
     for (const k of ['trash', 'remove']) {
       const doc = url.searchParams.get(k); if (!doc) continue
       const i = driveItems.findIndex((f) => f.appProperties?.kd === doc && !f.trashed)
       if (i >= 0) { if (k === 'trash') driveItems[i].trashed = true; else driveItems.splice(i, 1) }
     }
-    return send(res, 200, { items: driveItems.map((f) => ({ ...dfile(f), path: dpath(f.id) })), fail: driveFail })
+    return send(res, 200, { items: driveItems.map((f) => ({ ...dfile(f), path: dpath(f.id), resumable: !!f.resumable })), fail: driveFail })
   }
   if (p === '/drive/files' && req.method === 'GET') {
     if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
@@ -227,12 +237,13 @@ const server = http.createServer(async (req, res) => {
       && (!prop || f.appProperties?.[prop[1]] === prop[2].replace(/\\'/g, "'")))
     if (!prop && !name) list = []
     const size = Number(url.searchParams.get('pageSize') || 100); const from = Number(url.searchParams.get('pageToken') || 0)
-    const page = list.slice(from, from + Math.min(size, 3))   // small pages, so paging is tested
+    const page = list.slice(from, from + (list.length > 50 ? Math.min(size, 1000) : Math.min(size, 3)))   // small pages, so paging is always tested; a big archive pages by 1000 as Drive does
     return send(res, 200, { files: page.map(dfile), ...(from + page.length < list.length ? { nextPageToken: String(from + page.length) } : {}) })
   }
   if (p.startsWith('/drive/files/') && req.method === 'GET') {
     if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
     const f = driveItems.find((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length)))
+    if (f && url.searchParams.get('alt') === 'media') { res.writeHead(200, { 'Content-Type': 'application/octet-stream' }); res.end(f.content || Buffer.alloc(0)); return }
     return f ? send(res, 200, dfile(f)) : send(res, 404, { error: { message: 'File not found' } })
   }
   if (p.startsWith('/drive/files/') && req.method === 'PATCH') {
@@ -254,6 +265,19 @@ const server = http.createServer(async (req, res) => {
     const id = `fld${++driveSeq}`
     driveItems.push({ id, name: b.name, parents: [par], folder: true, appProperties: b.appProperties || {} }); return send(res, 200, { id })
   }
+  // a resumable upload: the metadata opens a session, the bytes are PUT to it
+  if (p === '/drive-upload/files' && url.searchParams.get('uploadType') === 'resumable') {
+    const meta = JSON.parse(await readBody(req)); const sid = crypto.randomUUID(); driveSessions.set(sid, meta)
+    res.writeHead(200, { Location: `http://127.0.0.1:${PORT}/drive-upload/session/${sid}` }); res.end(); return
+  }
+  if (p.startsWith('/drive-upload/session/') && req.method === 'PUT') {
+    const meta = driveSessions.get(p.split('/').pop()); const content = await readRaw(req)
+    if (!meta) return send(res, 404, { error: { message: 'session not found' } })
+    const id = `file${++driveSeq}`
+    driveItems.push({ id, name: meta.name, parents: [meta.parents?.[0]], folder: false, size: content.length, content, md5: crypto.createHash('md5').update(content).digest('hex'), appProperties: meta.appProperties || {}, resumable: true })
+    log.drive.push(`${dpath(meta.parents?.[0])}/${meta.name}`)
+    return send(res, 200, dfile(driveItems[driveItems.length - 1]))
+  }
   if (p === '/drive-upload/files') {
     const raw = await readRaw(req); const ct = String(req.headers['content-type'] || ''); const boundary = (ct.match(/boundary=([^;]+)/) || [])[1]
     const sep = Buffer.from(`--${boundary}`); const partsAt = []; let at = raw.indexOf(sep)
@@ -261,10 +285,11 @@ const server = http.createServer(async (req, res) => {
     const piece = (i) => { const chunk = raw.subarray(partsAt[i] + sep.length, partsAt[i + 1]); const h = chunk.indexOf('\r\n\r\n'); return chunk.subarray(h + 4, chunk.length - 2) }
     const meta = JSON.parse(piece(0).toString('utf8')); const content = piece(1)
     if (driveFail.upload503 > 0) { driveFail.upload503--; return send(res, 503, { error: { message: 'Backend Error' } }) }
+    if (driveFail.rate403 > 0) { driveFail.rate403--; return send(res, 403, { error: { code: 403, message: 'User rate limit exceeded.', errors: [{ reason: 'userRateLimitExceeded' }] } }) }
     const par = meta.parents?.[0]
     if (!driveItems.some((x) => x.id === par && x.folder && !x.trashed)) return send(res, 404, { error: { message: 'File not found: parent' } })
     const id = `file${++driveSeq}`
-    driveItems.push({ id, name: meta.name, parents: [par], folder: false, size: content.length, md5: crypto.createHash('md5').update(content).digest('hex'), appProperties: meta.appProperties || {} })
+    driveItems.push({ id, name: meta.name, parents: [par], folder: false, size: content.length, content, md5: crypto.createHash('md5').update(content).digest('hex'), nomd5: driveFail.nomd5 > 0 && !!driveFail.nomd5--, appProperties: meta.appProperties || {} })
     log.drive.push(`${dpath(par)}/${meta.name}`)
     if (driveFail.lose > 0) { driveFail.lose--; return send(res, 500, { error: { message: 'Internal Error' } }) }
     return send(res, 200, dfile(driveItems[driveItems.length - 1]))
@@ -296,7 +321,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; driveSeq = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; driveFail.rate403 = 0; driveFail.nomd5 = 0; driveSeq = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

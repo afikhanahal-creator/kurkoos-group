@@ -18,3 +18,5 @@ update public.fin_settings set value = '""' where key = 'accountant_email';
 update public.fin_settings set value = '[]' where key = 'mfa_required_roles';
 truncate public.fin_login_events;
 update public.fin_settings set value = 'false' where key = 'onboarding_enabled';
+-- a run that was stopped in the middle of the security scenario must not leave the next run signing out after a minute
+update public.fin_settings set value = '0' where key = 'idle_minutes';

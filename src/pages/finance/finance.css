@@ -1668,7 +1668,9 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-login__qr { width: 180px; height: 180px; justify-self: center; border: 1px solid var(--line); border-radius: var(--r-m); background: #fff; padding: 6px; }
 .fin-login__secret { display: block; word-break: break-all; font-size: var(--t-sm); padding: 6px 8px; background: var(--wash); border-radius: var(--r-s); user-select: all; }
 .fin-login__code { font-size: var(--t-2xl); letter-spacing: 0.4em; text-align: center; font-variant-numeric: tabular-nums; }
-.fin-idlebar { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px 12px; background: var(--warn-wash); color: var(--warn); font-weight: 700; font-size: var(--t-md); }
+/* floats over the page: it disappears on the first touch, and a bar in the flow would move the page under the finger
+   exactly then (the press would land on one thing and the release on another, so the click was lost) */
+.fin-idlebar { position: fixed; z-index: var(--z-pop); top: 12px; inset-inline: 0; margin-inline: auto; width: fit-content; max-width: calc(100vw - 24px); display: flex; gap: 8px; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 999px; background: var(--warn-wash); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); box-shadow: 0 8px 24px rgba(7, 41, 58, 0.16); font-weight: 700; font-size: var(--t-sm); pointer-events: none; }
 .fin-mysec { display: grid; gap: 14px; }
 .fin-mysec__row { display: flex; gap: 12px; align-items: center; }
 .fin-mysec__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--wash); color: var(--text-2); flex: none; }
@@ -2588,3 +2590,9 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-suphist:hover { color: var(--ocean-2); }
 .fin-dlist__hist { align-self: center; margin-inline-end: 6px; min-width: 40px; min-height: 40px; }
 .fin-fixedbtn { justify-self: start; margin-top: 4px; }
+
+/* phones: the month's document count and the supplier's name in a document are comfortable to tap */
+@media (max-width: 760px) {
+  .fin-x-monthsum__docs { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 36px; }
+  .fin-suplink { display: inline-flex; align-items: center; min-height: 40px; }
+}

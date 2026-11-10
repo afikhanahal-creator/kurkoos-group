@@ -184,7 +184,7 @@
       "destination": "/api/sitemap?part=images"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|assets/).*)",
       "destination": "/app-shell"
     }
   ],

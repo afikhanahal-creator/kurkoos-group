@@ -8,6 +8,7 @@ import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZ
 import ShareDialog from './ShareDialog.jsx'
 import { exportSheet } from './exportPackage.js'
 import Thumbnail, { prefetchThumb } from './Thumbnail.jsx'
+import { supplierHistory } from './links.js'
 import DocList from './DocList.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
@@ -70,7 +71,7 @@ export default function Documents({ preset = 'all' }) {
   const [confirm, setConfirm] = useState(null)   // { label, run, count, skipped }
   const switchView = (v) => { setView(v); try { localStorage.setItem(VIEW_KEY, v) } catch { /* noop */ } }
   const [showFilters, setShowFilters] = useState(false)
-  const [sort, setSort] = useState({ key: 'date', dir: -1 })
+  const [sort, setSort] = useState(() => { try { if (params.get('ids') && JSON.parse(sessionStorage.getItem('fin-x-ids') || 'null')?.sort === 'chrono') return { key: 'date', dir: 1 } } catch { /* noop */ } return { key: 'date', dir: -1 } })
   const [sel, setSel] = useState(() => new Set())
   const [busy, setBusy] = useState('')
   const [note, setNote] = useState('')
@@ -320,7 +321,7 @@ export default function Documents({ preset = 'all' }) {
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : view === 'list' ? (
-        <DocList docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} />
+        <DocList docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (
@@ -399,7 +400,7 @@ export default function Documents({ preset = 'all' }) {
                         <span className="fin-peek__doc"><Thumbnail doc={d} size="lg" /></span>
                         <span className="fin-peek__foot"><small>{[DOC_TYPE[d.doc_type], d.doc_number, date(docDate(d))].filter(Boolean).join(' · ')}</small>{d.total_amount != null && <b>{money(d.total_amount, d.currency)}</b>}</span>
                       </span>}
-                      <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button></span>
+                      <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>{d.supplier_name && <button type="button" className="fin-icon-btn fin-suphist" onClick={(e) => { e.stopPropagation(); supplierHistory(go, d, documents) }} aria-label={`כל ההיסטוריה עם ${d.supplier_name}`} title={`כל ההיסטוריה עם ${d.supplier_name}`}><Icon name="history" size={15} /></button>}{d.recurring_id && <span className="fin-fixedtag" title="הוצאה קבועה">קבועה</span>}</span>
                       <small className="fin-cell-sub">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>
                     <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>

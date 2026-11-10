@@ -7,6 +7,7 @@ import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton, askConfirm } fr
 import Attachments from './Attachments.jsx'
 import { PAY_LABEL, payState } from './ledger.js'
 import Select from './Select.jsx'
+import { supplierHistory } from './links.js'
 import Viewer from './Viewer.jsx'
 import { moments } from './moments.js'
 
@@ -60,22 +61,27 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const sug = doc.suggestions || {}
   const mailbox = mailboxes.find((m) => m.id === doc.mailbox_id)
   const { documents } = useFinance()
+  const [fixedBusy, setFixedBusy] = useState(false)
   const original = doc.duplicate_of ? documents.find((d) => d.id === doc.duplicate_of) : null
   const decideDuplicate = async (decision) => {
     setBusy(`dup-${decision}`); setErr('')
     try { const r = await api.callServer('duplicate-decide', { document_id: doc.id, decision }); onSaved(r.document) } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
 
+  // the keys are registered once for the life of the panel; the handlers are read at the moment of the key. (Registered
+  // again on every render, a key pressed while the list refreshed was lost.)
+  const keys = useRef({ onClose, onNext, onPrev })
+  keys.current = { onClose, onNext, onPrev }
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target.closest('input, select, textarea')) return
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft' && onNext) onNext()
-      if (e.key === 'ArrowRight' && onPrev) onPrev()
+      if (e.target.closest?.('input, select, textarea')) return
+      if (e.key === 'Escape') keys.current.onClose()
+      if (e.key === 'ArrowLeft' && keys.current.onNext) keys.current.onNext()
+      if (e.key === 'ArrowRight' && keys.current.onPrev) keys.current.onPrev()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, onNext, onPrev])
+  }, [])
 
   // the panel covers the whole screen, so Tab stays inside it (a dialog opened on top of it keeps its own trap)
   const body = useRef(null)
@@ -183,7 +189,13 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
       <div className="fin-panel__body" ref={body}>
         <header className="fin-panel__head">
           <div className="fin-panel__title">
-            <h2>{doc.supplier_name || doc.file_name || 'מסמך'}</h2>
+            <h2>{doc.supplier_name ? <button type="button" className="fin-suplink" onClick={() => supplierHistory(go, doc, documents)} title={`כל ההיסטוריה עם ${doc.supplier_name}`}>{doc.supplier_name}</button> : (doc.file_name || 'מסמך')}</h2>
+            {doc.supplier_name && can('operate') && (
+              <button type="button" className={`fin-btn fin-btn--sm ${doc.recurring_id ? 'fin-btn--primary' : 'fin-btn--ghost'} fin-fixedbtn`} aria-pressed={!!doc.recurring_id} disabled={fixedBusy}
+                onClick={async () => { setFixedBusy(true); try { await api.markRecurring(doc.id, !doc.recurring_id); await reload() } catch (e) { window.alert(e.message) } finally { setFixedBusy(false) } }}>
+                <Icon name="calendar" size={15} /> {doc.recurring_id ? 'הוצאה קבועה' : 'סימון כהוצאה קבועה'}
+              </button>
+            )}
             <p className="fin-muted fin-panel__meta"><StatusPill status={doc.status} /> {payState(doc) !== 'na' && <Pill tone={payState(doc) === 'proof' ? 'ok' : payState(doc) === 'manual' ? 'info' : 'warn'}><Icon name={payState(doc) === 'proof' ? 'check' : payState(doc) === 'manual' ? 'edit' : 'clock'} size={12} /> {payState(doc) === 'open' ? 'לא שולם' : PAY_LABEL[payState(doc)]}</Pill>} <span>{DOC_TYPE[doc.doc_type]}{doc.doc_number ? ` ${doc.doc_number}` : ''}</span> <span>{money(doc.total_amount, doc.currency)}</span> <span className="fin-nowrap">ודאות <Confidence value={doc.confidence} /></span></p>
           </div>
           <div className="fin-panel__nav">

@@ -1875,7 +1875,7 @@ create table if not exists public.fin_drive_files (
   primary key (target_id, document_id)
 );
 alter table public.fin_drive_files drop constraint if exists fin_drive_files_status_check;
-alter table public.fin_drive_files add constraint fin_drive_files_status_check check (status in ('queued', 'uploading', 'uploaded', 'verified', 'failed', 'duplicate', 'needs_review'));
+alter table public.fin_drive_files add constraint fin_drive_files_status_check check (status in ('queued', 'uploading', 'uploaded', 'verified', 'failed', 'duplicate', 'needs_review', 'withdrawn'));
 alter table public.fin_drive_files add column if not exists name_override text;   -- a name a person gave; kept on every later run
 create index if not exists fin_drive_files_queue on public.fin_drive_files (target_id, status, next_try_at);
 create index if not exists fin_drive_files_drive on public.fin_drive_files (drive_file_id) where drive_file_id is not null;
@@ -1912,6 +1912,16 @@ join public.fin_documents d on d.id = s.document_id
 where s.remote_id is not null
 on conflict do nothing;
 
+-- what belongs in the archive: a tax invoice, invoice-receipt, receipt, credit note or payment demand that was read: a PDF,
+-- an image, or an email that is itself the receipt (it goes up as a PDF). Not a quote, an order or a payment confirmation,
+-- not "other".
+create or replace function public.fin_drive_eligible(p_status text, p_type text, p_mime text, p_path text)
+returns boolean language sql immutable set search_path = '' as $$
+  select p_path is not null and p_status in ('review', 'approved', 'sent', 'duplicate')
+     and p_type in ('invoice', 'invoice_receipt', 'receipt', 'credit', 'supplier_bill')
+     and (p_mime = 'application/pdf' or p_mime like 'image/%' or p_mime like 'text/%');   -- an email that is itself the receipt goes up as a PDF
+$$;
+
 -- every document the archive should hold gets its row: the ones that were read (in review or approved), and duplicates as
 -- "duplicate" pointing at the original. Rejected, failed and still-processing documents wait.
 create or replace function public.fin_drive_enqueue(p_target uuid)
@@ -1920,8 +1930,8 @@ returns int language sql volatile security definer set search_path = '' as $$
     insert into public.fin_drive_files (target_id, document_id, business_id, status, original_name, file_sha256, duplicate_of)
     select t.id, d.id, d.business_id, case when d.status = 'duplicate' then 'duplicate' else 'queued' end, d.file_name, d.file_hash, d.duplicate_of
     from public.fin_documents d, public.fin_cloud_targets t
-    where t.id = p_target and t.provider = 'gdrive' and t.status <> 'revoked' and d.file_path is not null
-      and d.status in ('review', 'approved', 'sent', 'duplicate')
+    where t.id = p_target and t.provider = 'gdrive' and t.status <> 'revoked'
+      and public.fin_drive_eligible(d.status, d.doc_type, d.file_mime, d.file_path)
       and (t.business_id is null or d.business_id = t.business_id)
     on conflict do nothing
     returning 1)
@@ -1954,10 +1964,10 @@ grant execute on function public.fin_drive_claim(uuid, int, int) to service_role
 -- queue: the next run renames or moves the archive's own file. Files a person made in Drive are never touched.
 create or replace function public.fin_drive_doc_changed() returns trigger language plpgsql security definer set search_path = '' as $$
 begin
-  if (new.business_id, new.supplier_id, new.supplier_name, new.doc_type, new.doc_number, new.issue_date, new.total_amount, new.currency, new.status, new.accounting_period)
-     is distinct from (old.business_id, old.supplier_id, old.supplier_name, old.doc_type, old.doc_number, old.issue_date, old.total_amount, old.currency, old.status, old.accounting_period) then
+  if (new.business_id, new.supplier_id, new.supplier_name, new.doc_type, new.doc_number, new.issue_date, new.total_amount, new.currency, new.status, new.accounting_period, new.file_mime)
+     is distinct from (old.business_id, old.supplier_id, old.supplier_name, old.doc_type, old.doc_number, old.issue_date, old.total_amount, old.currency, old.status, old.accounting_period, old.file_mime) then
     update public.fin_drive_files set status = 'queued', next_try_at = null, attempts = 0, business_id = new.business_id, updated_at = now()
-     where document_id = new.id and status in ('verified', 'uploaded', 'failed', 'duplicate');
+     where document_id = new.id and status in ('verified', 'uploaded', 'failed', 'duplicate', 'needs_review', 'withdrawn');
   end if;
   return new;
 end $$;
@@ -1970,11 +1980,211 @@ create or replace function public.fin_drive_has_work()
 returns boolean language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.fin_cloud_targets t where t.provider = 'gdrive' and t.status = 'active' and t.enabled and t.auto and (
     exists (select 1 from public.fin_drive_files f where f.target_id = t.id and ((f.status = 'queued' and coalesce(f.next_try_at, now()) <= now()) or (f.status in ('uploading', 'uploaded') and coalesce(f.locked_until, now()) <= now())))
-    or exists (select 1 from public.fin_documents d where d.file_path is not null and d.status in ('review', 'approved', 'sent', 'duplicate')
+    or exists (select 1 from public.fin_documents d where public.fin_drive_eligible(d.status, d.doc_type, d.file_mime, d.file_path)
                and (t.business_id is null or d.business_id = t.business_id)
                and not exists (select 1 from public.fin_drive_files f where f.target_id = t.id and f.document_id = d.id))));
 $$;
 revoke all on function public.fin_drive_has_work() from public, anon, authenticated;
 grant execute on function public.fin_drive_has_work() to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v13.1 (2026-11-10): the reconciliation agent (docs/finance/DRIVE-ARCHIVE-PLAN.md §5)
+-- ============================================================
+-- One reconciliation compares the whole archive with Drive in three resumable stages: list (every page of Drive, with its page
+-- token as the checkpoint, into fin_drive_seen), compare (every row against what Drive really holds), repair (missing files
+-- restored from our storage, wrong folder or name corrected, each one verified again). It is "completed" only when nothing is
+-- left; otherwise "completed_with_issues" with the exact list. It runs at night, on every (re)connection, on the button, and
+-- after a sync that uploaded files.
+alter table public.fin_drive_files add column if not exists excluded boolean not null default false;   -- a person took it out
+alter table public.fin_cloud_targets add column if not exists auto_correct boolean not null default true;   -- the archive's own files: wrong folder or name is corrected without asking
+alter table public.fin_drive_files add column if not exists rendition_path text;   -- the PDF made from an email-body receipt, in our storage
+alter table public.fin_drive_files add column if not exists repair text;                               -- missing | trashed | wrong_folder | wrong_name | changed
+
+create table if not exists public.fin_drive_reconciles (
+  id uuid primary key default gen_random_uuid(),
+  target_id uuid not null references public.fin_cloud_targets(id) on delete cascade,
+  trigger text not null default 'manual',          -- night | connect | manual | after_sync
+  status text not null default 'running',
+  phase text not null default 'list',
+  page_token text,
+  pages int not null default 0,
+  listed int not null default 0,
+  report jsonb not null default '{}'::jsonb,
+  error text,
+  requested_by uuid,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+alter table public.fin_drive_reconciles drop constraint if exists fin_drive_reconciles_status_check;
+alter table public.fin_drive_reconciles add constraint fin_drive_reconciles_status_check check (status in ('running', 'completed', 'completed_with_issues', 'failed', 'cancelled'));
+alter table public.fin_drive_reconciles drop constraint if exists fin_drive_reconciles_phase_check;
+alter table public.fin_drive_reconciles add constraint fin_drive_reconciles_phase_check check (phase in ('list', 'compare', 'repair', 'done'));
+create unique index if not exists fin_drive_reconciles_one_running on public.fin_drive_reconciles (target_id) where status = 'running';
+create index if not exists fin_drive_reconciles_target on public.fin_drive_reconciles (target_id, started_at desc);
+
+create table if not exists public.fin_drive_seen (
+  reconcile_id uuid not null references public.fin_drive_reconciles(id) on delete cascade,
+  drive_file_id text not null,
+  document_id uuid,
+  name text,
+  parent text,
+  size bigint,
+  md5 text,
+  mime text,
+  trashed boolean not null default false,
+  primary key (reconcile_id, drive_file_id)
+);
+create index if not exists fin_drive_seen_doc on public.fin_drive_seen (reconcile_id, document_id);
+
+create table if not exists public.fin_drive_repairs (
+  reconcile_id uuid not null references public.fin_drive_reconciles(id) on delete cascade,
+  document_id uuid not null references public.fin_documents(id) on delete cascade,
+  kind text not null,                               -- missing | trashed | wrong_folder | wrong_name | changed | no_source
+  outcome text not null default 'pending',          -- pending | restored | corrected | failed | attention
+  detail jsonb,
+  at timestamptz not null default now(),
+  primary key (reconcile_id, document_id)
+);
+
+alter table public.fin_drive_reconciles enable row level security;
+alter table public.fin_drive_seen enable row level security;
+alter table public.fin_drive_repairs enable row level security;
+revoke all on public.fin_drive_reconciles, public.fin_drive_seen, public.fin_drive_repairs from anon;
+revoke insert, update, delete on public.fin_drive_reconciles, public.fin_drive_seen, public.fin_drive_repairs from authenticated;
+grant select on public.fin_drive_reconciles, public.fin_drive_repairs to authenticated;
+revoke select on public.fin_drive_seen from authenticated;
+drop policy if exists "fin_drive_reconciles read" on public.fin_drive_reconciles;
+create policy "fin_drive_reconciles read" on public.fin_drive_reconciles for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+drop policy if exists "fin_drive_repairs read" on public.fin_drive_repairs;
+create policy "fin_drive_repairs read" on public.fin_drive_repairs for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+
+-- the minute run also wakes for a reconciliation in progress (and for a paused connection, never)
+create or replace function public.fin_drive_has_work()
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.fin_cloud_targets t
+    where t.provider = 'gdrive' and t.status = 'active' and t.enabled and (
+      exists (select 1 from public.fin_drive_reconciles r where r.target_id = t.id and r.status = 'running')
+      or (t.auto and (
+        exists (select 1 from public.fin_drive_files f where f.target_id = t.id and ((f.status = 'queued' and coalesce(f.next_try_at, now()) <= now()) or (f.status in ('uploading', 'uploaded') and coalesce(f.locked_until, now()) <= now())))
+        or exists (select 1 from public.fin_documents d where public.fin_drive_eligible(d.status, d.doc_type, d.file_mime, d.file_path)
+                   and (t.business_id is null or d.business_id = t.business_id)
+                   and not exists (select 1 from public.fin_drive_files f where f.target_id = t.id and f.document_id = d.id))))));
+$$;
+revoke all on function public.fin_drive_has_work() from public, anon, authenticated;
+grant execute on function public.fin_drive_has_work() to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v14 (2026-11-10): fixed (recurring) expenses
+-- ============================================================
+-- A fixed expense is a supplier whose invoice comes again and again (rent, electricity, software). A person marks one
+-- document as fixed; from then on every document of that supplier (for that company) is classified as that fixed expense by
+-- itself, the moment it is read. The screen shows what each one costs a month and a year, and which one did not arrive yet.
+create table if not exists public.fin_recurring (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references public.fin_businesses(id) on delete cascade,
+  supplier_id uuid references public.fin_suppliers(id) on delete cascade,
+  supplier_key text not null,                      -- the supplier's name, lower case, for documents without a supplier record
+  label text not null,
+  expected_amount numeric(14, 2),
+  active boolean not null default true,
+  source text not null default 'manual',            -- manual | suggested
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists fin_recurring_uq on public.fin_recurring (supplier_key, coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid));
+alter table public.fin_documents add column if not exists recurring_id uuid references public.fin_recurring(id) on delete set null;
+alter table public.fin_documents add column if not exists recurring_off boolean not null default false;   -- a person said: this one is not part of the fixed expense
+create index if not exists fin_documents_recurring on public.fin_documents (recurring_id) where recurring_id is not null;
+
+alter table public.fin_recurring enable row level security;
+revoke all on public.fin_recurring from anon;
+revoke insert, update, delete on public.fin_recurring from authenticated;
+grant select on public.fin_recurring to authenticated;
+drop policy if exists "fin_recurring read" on public.fin_recurring;
+create policy "fin_recurring read" on public.fin_recurring for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager', 'accountant']) and public.fin_business_ok(business_id));
+
+create or replace function public.fin_supplier_key(p_name text) returns text language sql immutable set search_path = '' as $$
+  select lower(regexp_replace(trim(coalesce(p_name, '')), '\s+', ' ', 'g'));
+$$;
+
+-- a new or corrected document of a supplier that is a fixed expense is classified by itself
+create or replace function public.fin_documents_recurring() returns trigger language plpgsql security definer set search_path = '' as $$
+declare rid uuid;
+begin
+  if new.recurring_off or coalesce(new.supplier_name, '') = '' then
+    if new.recurring_off then new.recurring_id := null; end if;
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and new.recurring_id is not null
+     and new.supplier_id is not distinct from old.supplier_id and new.supplier_name is not distinct from old.supplier_name and new.business_id is not distinct from old.business_id then
+    return new;
+  end if;
+  select r.id into rid from public.fin_recurring r
+   where r.active and (r.business_id is null or r.business_id = new.business_id)
+     and ((new.supplier_id is not null and r.supplier_id = new.supplier_id) or r.supplier_key = public.fin_supplier_key(new.supplier_name))
+   order by (r.business_id is not null) desc limit 1;
+  new.recurring_id := rid;
+  return new;
+end $$;
+drop trigger if exists fin_documents_recurring on public.fin_documents;
+create trigger fin_documents_recurring before insert or update of supplier_id, supplier_name, business_id, recurring_off on public.fin_documents
+  for each row execute function public.fin_documents_recurring();
+revoke all on function public.fin_documents_recurring() from public, anon, authenticated;
+
+-- "this is a fixed expense" on one document: the supplier (for that company) becomes a fixed expense, and all its documents,
+-- past and future, are classified. p_on = false: only this document leaves it. Returns the fixed expense.
+create or replace function public.fin_recurring_mark(p_document uuid, p_on boolean default true)
+returns public.fin_recurring language plpgsql security definer set search_path = '' as $$
+declare d public.fin_documents; r public.fin_recurring;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager']) then raise exception 'FORBIDDEN'; end if;
+  select * into d from public.fin_documents where id = p_document;
+  if d.id is null or not public.fin_business_ok(d.business_id) then raise exception 'NOT_FOUND'; end if;
+  if not p_on then
+    update public.fin_documents set recurring_off = true where id = d.id;
+    return null;
+  end if;
+  if coalesce(d.supplier_name, '') = '' then raise exception 'NO_SUPPLIER: fill in the supplier first'; end if;
+  insert into public.fin_recurring (business_id, supplier_id, supplier_key, label, expected_amount, created_by)
+  values (d.business_id, d.supplier_id, public.fin_supplier_key(d.supplier_name), d.supplier_name, abs(d.total_amount), auth.uid())
+  on conflict (supplier_key, coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid))
+  do update set active = true, supplier_id = coalesce(excluded.supplier_id, public.fin_recurring.supplier_id), updated_at = now()
+  returning * into r;
+  update public.fin_documents set recurring_off = false where id = d.id and recurring_off;
+  update public.fin_documents x set recurring_id = r.id
+   where not x.recurring_off and x.recurring_id is distinct from r.id and x.business_id is not distinct from r.business_id
+     and ((r.supplier_id is not null and x.supplier_id = r.supplier_id) or public.fin_supplier_key(x.supplier_name) = r.supplier_key);
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+  values ('recurring', r.id::text, 'marked_fixed', jsonb_build_object('supplier', r.label, 'document', d.id), auth.uid(), (select email from public.fin_members where user_id = auth.uid()));
+  return r;
+end $$;
+revoke all on function public.fin_recurring_mark(uuid, boolean) from public, anon;
+grant execute on function public.fin_recurring_mark(uuid, boolean) to authenticated;
+
+-- stop or rename a fixed expense, or set what it should cost. Stopping keeps the history: the documents stay, unmarked.
+create or replace function public.fin_recurring_set(p_id uuid, p_active boolean default null, p_label text default null, p_expected numeric default null)
+returns public.fin_recurring language plpgsql security definer set search_path = '' as $$
+declare r public.fin_recurring;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager']) then raise exception 'FORBIDDEN'; end if;
+  update public.fin_recurring set active = coalesce(p_active, active), label = coalesce(nullif(trim(p_label), ''), label), expected_amount = coalesce(p_expected, expected_amount), updated_at = now()
+   where id = p_id and public.fin_business_ok(business_id) returning * into r;
+  if r.id is null then raise exception 'NOT_FOUND'; end if;
+  if p_active = false then update public.fin_documents set recurring_id = null where recurring_id = r.id; end if;
+  if p_active = true then
+    update public.fin_documents x set recurring_id = r.id
+     where not x.recurring_off and x.recurring_id is null and x.business_id is not distinct from r.business_id
+       and ((r.supplier_id is not null and x.supplier_id = r.supplier_id) or public.fin_supplier_key(x.supplier_name) = r.supplier_key);
+  end if;
+  return r;
+end $$;
+revoke all on function public.fin_recurring_set(uuid, boolean, text, numeric) from public, anon;
+grant execute on function public.fin_recurring_set(uuid, boolean, text, numeric) to authenticated;
 
 notify pgrst, 'reload schema';

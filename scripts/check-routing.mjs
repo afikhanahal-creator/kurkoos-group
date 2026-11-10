@@ -16,9 +16,12 @@ let v
 try { v = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8')) }
 catch (e) { fail(`vercel.json אינו JSON תקין (${e.message})`) }
 
-/* 1. חייב להיות rewrite כללי שתופס את כל נתיבי ה-SPA (חוץ מ-api) */
-const spa = (v.rewrites || []).find((r) => r.source === '/((?!api/).*)')
-if (!spa) fail('חסר ה-rewrite הכללי של ה-SPA — source: "/((?!api/).*)". בלעדיו כל עמוד ללא קובץ סטטי יחזיר 404.')
+/* 1. חייב להיות rewrite כללי שתופס את כל נתיבי ה-SPA (חוץ מ-api ומ-assets). קבצי הקוד שב-/assets לא נכנסים אליו:
+      קובץ ישן שנמחק בפריסה חדשה חייב להחזיר 404, ולא את עמוד ה-HTML, כדי שהדפדפן יטען מחדש את הגרסה החדשה. */
+const SPA_SOURCES = ['/((?!api/|assets/).*)', '/((?!api/).*)']
+const spa = (v.rewrites || []).find((r) => SPA_SOURCES.includes(r.source))
+if (!spa) fail('חסר ה-rewrite הכללי של ה-SPA — source: "/((?!api/|assets/).*)". בלעדיו כל עמוד ללא קובץ סטטי יחזיר 404.')
+if (spa.source !== SPA_SOURCES[0]) fail('ה-rewrite הכללי של ה-SPA תופס גם את /assets: קובץ קוד ישן יקבל את עמוד ה-HTML במקום 404, ומסך יתקע אחרי פריסה. השתמשו ב-"/((?!api/|assets/).*)".')
 
 /* 2. כש-cleanUrls פעיל, יעד שמסתיים ב-.html אינו נגיש ב-Vercel → 404 בכל האתר */
 if (v.cleanUrls && (v.rewrites || []).some((r) => r.destination?.endsWith('.html'))) {

@@ -12,6 +12,7 @@ import { unsureNumbers } from './Documents.jsx'
 import { useSession } from './session.js'
 import { ProviderLogo } from './logos.jsx'
 import { docDate, signedTotal } from './format.js'
+import { openDocs } from './links.js'
 
 /* The group's financial picture in one screen: what was spent, where it went, which project costs most, who the main
    suppliers are, and what needs the CEO's attention. Every figure comes from stored documents (insights.js), follows
@@ -183,7 +184,7 @@ export default function Executive() {
                     <Delta value={change} label={before ? `מ${monthName(before.key).split(' ')[0]}` : ''} />
                   </div>
                   <dl>
-                    <div><dt>מסמכים</dt><dd>{f.count}</dd></div>
+                    <div><dt>מסמכים</dt><dd>{f.count ? <button type="button" className="fin-x-monthsum__docs" onClick={() => openDocs(go, (f.ids || []).map((id) => ({ id })), `מסמכים של ${monthName(f.key)}`)} aria-label={`${f.count} מסמכים ב${monthName(f.key)}: פתיחת הרשימה`}>{f.count}</button> : 0}</dd></div>
                     <div><dt>שנה קודמת</dt><dd>{f.lastYear ? short(f.lastYear) : '—'}</dd></div>
                     <div><dt>ממוצע חודשי</dt><dd>{avg ? short(avg) : '—'}</dd></div>
                   </dl>
@@ -207,7 +208,7 @@ export default function Executive() {
                       onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHover(t.key) }} onFocus={(e) => { if (e.target.matches(':focus-visible')) setHover(t.key) }} onBlur={() => setHover(null)} onClick={() => (on ? pickPeriod('month') : pickMonth(t.key))}>
                       <span className="fin-x-trend__bars">
                         <i className="is-ly" style={{ height: `${(t.lastYear / top) * 100}%` }} />
-                        <i className="is-now" style={{ height: `${Math.max(t.total ? 2 : 0, (t.total / top) * 100)}%` }} />
+                        <i className="is-now" style={{ height: `${Math.max(t.total ? 2 : 0, (t.total / top) * 100)}%` }}>{hover === t.key && <span className="fin-x-tip" role="tooltip">{money(t.total)} · {t.count === 1 ? 'מסמך אחד' : `${t.count} מסמכים`}</span>}</i>
                       </span>
                       <em>{monthName(t.key).split(' ')[0].slice(0, 3)}{isNow ? <small>עד היום</small> : showYear ? <small>{t.key.slice(0, 4)}</small> : null}</em>
                     </button>

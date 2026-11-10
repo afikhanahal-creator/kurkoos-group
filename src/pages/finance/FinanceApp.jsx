@@ -32,6 +32,8 @@ const Agents = lazy(() => import('./Agents.jsx'))
 const Mailboxes = lazy(() => import('./Mailboxes.jsx'))
 const Scans = lazy(() => import('./Scans.jsx'))
 const Drive = lazy(() => import('./Drive.jsx'))
+const Complete = lazy(() => import('./Complete.jsx'))
+const Fixed = lazy(() => import('./Fixed.jsx'))
 const Integrations = lazy(() => import('./Integrations.jsx'))
 const ExportHistory = lazy(() => import('./ExportHistory.jsx'))
 const Users = lazy(() => import('./Users.jsx'))
@@ -60,6 +62,7 @@ export const NAV = [
   { to: '/documents', label: 'כל המסמכים', accLabel: 'מסמכים מאושרים', icon: 'docs', roles: ALL, el: <Documents preset="all" />, group: 'מסמכים' },
   { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'מסמכים' },
   { to: '/pending', label: 'ממתינים לבדיקה', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'מסמכים' },
+  { to: '/complete', label: 'השלמת פרטים', icon: 'edit', roles: OPS, el: <Complete />, badge: 'incomplete', group: 'מסמכים' },
   { to: '/send', label: 'שליחה לרו״ח', icon: 'send', roles: OPS, el: <SendCenter />, badge: 'ready', group: 'מסמכים' },
   { to: '/drive', label: 'Google Drive', icon: 'folder', roles: ['admin', 'finance_manager'], el: <Drive />, group: 'מסמכים' },
   { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory />, group: 'מסמכים' },
@@ -74,6 +77,7 @@ export const NAV = [
   { to: '/scanners', label: 'מספרי WhatsApp', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
   // everything else, folded away until needed
   { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
+  { to: '/fixed', label: 'הוצאות קבועות', icon: 'calendar', roles: OPS, el: <Fixed />, group: 'מתקדם' },
   { to: '/automations', label: 'כללים ואוטומציה', icon: 'rules', roles: OPS, el: <Automations />, group: 'מתקדם' },
   { to: '/agents', label: 'סוכני AI', icon: 'agents', roles: OPS, el: <Agents />, group: 'מתקדם' },
   { to: '/activity', label: 'יומן פעילות', icon: 'activity', roles: OPS, el: <Activity />, group: 'מתקדם' },
@@ -261,6 +265,19 @@ export default function FinanceApp() {
   const idleSoon = useIdleSignOut(Number(sec?.idle_minutes) || 0, ready)   // 0 = never sign out for inactivity
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  // a tab that stayed open across a deploy keeps the old code; when a newer version is live, the next move to another
+  // screen loads it, so nobody works on an old screen (checked at most every 2 minutes, never while typing)
+  const versionAt = useRef(0)
+  useEffect(() => {
+    if (Date.now() - versionAt.current < 120_000) return
+    versionAt.current = Date.now()
+    const mine = document.querySelector('script[type="module"][src*="/assets/index-"]')?.getAttribute('src')
+    if (!mine) return
+    fetch('/admin/finance', { cache: 'no-store', credentials: 'same-origin' }).then((r) => (r.ok ? r.text() : '')).then((html) => {
+      const live = /\/assets\/index-[^"']+\.js/.exec(html)?.[0]
+      if (live && live !== mine && !document.querySelector('.fin-modal')) window.location.reload()
+    }).catch(() => {})
+  }, [pathname])
   onChange.current = async (before, after) => {
     const was = new Map(before.map((d) => [d.id, d]))
     const myId = (await supabase.auth.getSession()).data.session?.user?.id
@@ -347,6 +364,7 @@ export default function FinanceApp() {
     return {
       new: data.documents.filter((d) => new Date(d.created_at).getTime() > week && ['review', 'processing'].includes(d.status)).length,
       pending: data.documents.filter((d) => d.status === 'review').length,
+      incomplete: data.documents.filter((d) => d.status === 'review' && (!d.supplier_name || !d.doc_type || d.doc_type === 'other' || !d.business_id || !d.issue_date || d.total_amount == null || !d.doc_number)).length,
       suppliers: data.suppliers.filter((x) => x.status === 'pending').length,
       ready: data.documents.filter((d) => d.status === 'approved' && !d.exported_at).length,
     }

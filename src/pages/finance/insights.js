@@ -87,7 +87,7 @@ export function overview(documents, { businesses = [], projects = [], categories
   const [cy, cm] = period.to.slice(0, 7).split('-').map(Number)
   const months = Array.from({ length: 12 }, (_, i) => { const t = new Date(Date.UTC(cy, cm - 12 + i, 1)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}` })
   const byMonth = group(ils(books), (d) => dayOf(d).slice(0, 7))
-  const trend = months.map((k) => { const [yy, mm] = k.split('-'); const ly = `${Number(yy) - 1}-${mm}`; return { key: k, total: byMonth.get(k)?.total || 0, count: byMonth.get(k)?.count || 0, lastYear: byMonth.get(ly)?.total || 0 } })
+  const trend = months.map((k) => { const [yy, mm] = k.split('-'); const ly = `${Number(yy) - 1}-${mm}`; return { key: k, total: byMonth.get(k)?.total || 0, count: byMonth.get(k)?.count || 0, ids: byMonth.get(k)?.ids || [], lastYear: byMonth.get(ly)?.total || 0 } })
 
   const comp = (keyOf) => {
     const a = group(ils(cur), keyOf); const b = group(ils(prev), keyOf)

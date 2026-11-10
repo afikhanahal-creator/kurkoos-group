@@ -71,12 +71,17 @@ const categories = async () => (catCache ||= ((await sb('fin_categories?select=n
 const automation = async (key) => one(`fin_automations?key=eq.${key}&select=*`)
 
 /* Claude's answer → document fields, issues and suggestions. Never approves. */
-export async function analyze(x, { selfId = null, selfCreated = null, mailbox = null, fromEmail = '', subject = '', text = '' } = {}, runs) {
+/* An email that is itself the receipt (no file attached; the subject says "receipt" / "קבלה": Meta ads, app stores, online
+   services) is a receipt, not a "payment confirmation" of an invoice held elsewhere. As a confirmation it would be left out
+   of every report and of the archive, and the expense would be missed. */
+export const bodyReceipt = (docType, mime, subject) => docType === 'payment_confirmation' && String(mime || '').startsWith('text/') && /קבלה|receipt/i.test(String(subject || '')) && !/אישור הזמנה|order confirmation/i.test(String(subject || ''))
+
+export async function analyze(x, { selfId = null, selfCreated = null, mailbox = null, fromEmail = '', subject = '', text = '', mime = '' } = {}, runs) {
   const vat = digits(x.supplier_vat_id)
   const fields = {
     supplier_name: x.supplier_name || null,
     supplier_vat_id: vat,
-    doc_type: DOC_TYPES.includes(x.doc_type) ? x.doc_type : 'other',
+    doc_type: bodyReceipt(x.doc_type, mime, subject) ? 'receipt' : DOC_TYPES.includes(x.doc_type) ? x.doc_type : 'other',
     doc_number: String(x.doc_number || '').trim() || null,
     issue_date: isoDate(x.issue_date),
     due_date: isoDate(x.due_date),
@@ -211,7 +216,7 @@ export async function processStored(doc, runs, trigger = 'upload', started = Dat
     x = await readDocument(isText ? { text: buf.toString('utf8').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' '), categories: await categories() } : { ...readable(mime, buf), categories: await categories(), hint: `${trigger} file ${doc.file_name || ''}` }, runs, { deadline: started + 25_000 })
     runs.ocr.stat.processed++
     const mb = doc.mailbox_id ? await one(`fin_mailboxes?id=eq.${doc.mailbox_id}&select=*`) : null
-    const fields = await analyze(x, { selfId: doc.id, selfCreated: doc.created_at, mailbox: mb, fromEmail: doc.email_from || '' }, runs)
+    const fields = await analyze(x, { selfId: doc.id, selfCreated: doc.created_at, mailbox: mb, fromEmail: doc.email_from || '', subject: doc.email_subject || '', mime: doc.file_mime || '' }, runs)
     if (doc.business_id) fields.business_id = doc.business_id      // a company chosen at upload wins
     // a person already said "not a duplicate": a new reading does not raise it again
     if (doc.duplicate_state === 'dismissed' && fields.duplicate_state === 'suspected') { fields.duplicate_state = 'dismissed'; fields.issues = fields.issues.filter((i) => i.code !== 'possible_duplicate') }
@@ -328,7 +333,7 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
       runs.collector.stat.processed++
       const base = { ...meta, file_path: path, file_name: String(name).slice(0, 200), file_mime: mime.startsWith('text/') ? 'text/html' : mime, file_size: buf.length, file_hash: hash, attempts: 1 }
       const fields = x
-        ? await analyze(x, { mailbox: mb, fromEmail: meta.email_from, subject: meta.email_subject, text: msg.text || '' }, runs)
+        ? await analyze(x, { mailbox: mb, fromEmail: meta.email_from, subject: meta.email_subject, text: msg.text || '', mime }, runs)
         : { status: 'failed', failures: 1, stage: 'failed', stage_at: new Date().toISOString(), next_retry_at: nextRetry(1), issues: [{ level: 'error', code: 'ocr_failed', field: null, message: `הקריאה נכשלה (ניסיון 1): ${explainFailure(failure)}. ניסיון נוסף אוטומטי בסריקת הלילה.` }] }
       if (x) Object.assign(fields, usageFields(x))
       const pendingHits = fields._pendingHits; delete fields._pendingHits

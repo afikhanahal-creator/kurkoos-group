@@ -2190,29 +2190,15 @@ grant execute on function public.fin_recurring_set(uuid, boolean, text, numeric)
 notify pgrst, 'reload schema';
 
 -- ============================================================
--- v15 (2026-11-10): new mail every hour
+-- v15 (2026-11-10): new mail is collected once a day, in the night run
 -- ============================================================
--- The night run and the morning run collect new mail twice a day. With several mailboxes that is slow: an invoice that came at
--- ten should be in the system by eleven. Once an hour the database asks the site to collect new mail from every mailbox
--- (the same secret and address as the minute run of the scans).
+-- The owner decided: one collection of new mail a day, at night. An hourly job that an earlier version of this file added
+-- is removed here if it exists. (History for a new mailbox does not wait for the night: it starts when the mailbox connects.)
 do $$ begin
-  if exists (select 1 from pg_namespace where nspname = 'net') and exists (select 1 from pg_namespace where nspname = 'vault') then
-    execute $f$
-      create or replace function public.fin_mail_kick() returns void language plpgsql security definer set search_path = public as $k$
-      declare v_url text; v_secret text;
-      begin
-        if not exists (select 1 from public.fin_mailboxes where status = 'active') then return; end if;
-        select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'finance_tick_secret';
-        select decrypted_secret into v_url from vault.decrypted_secrets where name = 'finance_tick_url';
-        if v_secret is null or v_url is null then return; end if;
-        perform net.http_get(url := v_url || '?action=scan-tick&sync=1', headers := jsonb_build_object('Authorization', 'Bearer ' || v_secret), timeout_milliseconds := 65000);
-      end $k$
-    $f$;
-    execute 'revoke all on function public.fin_mail_kick() from public, anon, authenticated';
-  end if;
-  if exists (select 1 from pg_namespace where nspname = 'cron') and exists (select 1 from pg_proc where proname = 'fin_mail_kick') then
-    perform cron.schedule('finance-mail-sync', '7 * * * *', 'select public.fin_mail_kick()');
+  if exists (select 1 from pg_namespace where nspname = 'cron') and exists (select 1 from cron.job where jobname = 'finance-mail-sync') then
+    perform cron.unschedule('finance-mail-sync');
   end if;
 end $$;
+drop function if exists public.fin_mail_kick();
 
 notify pgrst, 'reload schema';

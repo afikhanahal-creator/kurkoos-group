@@ -1,6 +1,6 @@
 ---
 name: finance-mail-intake
-description: How KURKOOS FINANCE collects invoices and receipts from email — connecting another mailbox, scanning its history (a year back or more), the hourly collection of new mail, and getting each document to the right company and project. Use when a mailbox is added or reconnected; when the owner asks to "scan old invoices", "לסרוק חשבוניות ישנות", "לחבר עוד מייל", "לחלץ חשבוניות", "האם נאספו כל החשבוניות מהתיבה", "למה חשבונית לא הגיעה"; before changing server/finance/scan.js, pipeline.js, triage.js, extract.js, assign.js or the mail providers; and when a supplier's invoices are missing from the reports.
+description: How KURKOOS FINANCE collects invoices and receipts from email — connecting another mailbox, scanning its history (a year back or more), the nightly collection of new mail, and getting each document to the right company and project. Use when a mailbox is added or reconnected; when the owner asks to "scan old invoices", "לסרוק חשבוניות ישנות", "לחבר עוד מייל", "לחלץ חשבוניות", "האם נאספו כל החשבוניות מהתיבה", "למה חשבונית לא הגיעה"; before changing server/finance/scan.js, pipeline.js, triage.js, extract.js, assign.js or the mail providers; and when a supplier's invoices are missing from the reports.
 ---
 
 # Finance mail intake: every invoice from every mailbox, every day
@@ -13,10 +13,10 @@ For what happens after a document exists (Drive, verification) use the `finance-
 
 | What | When | Code |
 |---|---|---|
-| A year of history for a mailbox no scan covers | on connection, and every hour (`ensureCoverage`) | `server/finance/scan.js` |
+| A year of history for a mailbox no scan covers | on connection, and in the night run (`ensureCoverage`) | `server/finance/scan.js` |
 | The scan itself, week by week, with checkpoints | every minute while there is work (pg_cron → `scan-tick`) | `scan.js` `tick`, `fin_scan_claim` |
 | Completeness pass over the whole period | automatically at the end of every scan | `scan.js` `finishJob` |
-| New mail from every mailbox | every hour at :07 (pg_cron → `scan-tick&sync=1`), and the night and morning runs | `agents.js` `syncAll` |
+| New mail from every mailbox | once a day, in the night run (`?action=cron` → `runDaily`). The owner decided on one collection a day: do not add another schedule without asking | `agents.js` `syncAll` |
 | Reading a message: rules, cheap check, full extraction | for every message not seen before | `pipeline.js` `messageProcessor` |
 | Company / project / category suggestion | when a document is read, and again when it is corrected | `assign.js` |
 
@@ -27,7 +27,7 @@ sure, completing a missing detail ("השלמת פרטים"), approving, and deci
 
 1. The owner connects it in the app: קליטה › חשבונות אימייל › חיבור Gmail / Outlook, and picks the company it mostly belongs
    to (optional: documents are still matched by their content first).
-2. Within the hour a scan of the last year exists for it (`fin_scan_jobs`); the "ניהול סריקות" screen shows its progress. A
+2. A scan of the last year starts for it at once (`fin_scan_jobs`); the "ניהול סריקות" screen shows its progress. A
    longer period: "סריקה של תקופה חדשה" there (up to all history).
 3. Check with SQL (read-only) after a few minutes:
    - `fin_mailboxes`: `status = 'active'`, `last_error` null. `error` means the Google/Microsoft permission was refused or
@@ -76,5 +76,5 @@ Find the message, then follow it (all read-only SQL):
   `scripts/finance-e2e/run.mjs`. A new way to miss a message gets a fixture in the Gmail fake first.
 - Cost: triage on the cheap model, extraction on the middle one, verification on the strong one only when the sums do not add
   up (`env.js` `costOf`). Report the cost of a scan from `fin_agent_runs`, do not estimate it.
-- After a deploy: run `health.sql` of `finance-zero-loss`, and check that `finance-scan-tick` and `finance-mail-sync` exist in
-  `cron.job` and that their last answers in `net._http_response` are 200.
+- After a deploy: run `health.sql` of `finance-zero-loss`, and check that `finance-scan-tick` exists in `cron.job` (and that
+  `finance-mail-sync` does not), and that its last answers in `net._http_response` are 200.

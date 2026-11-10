@@ -89,7 +89,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 25 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 25, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 26 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 26, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -440,22 +440,23 @@ const oldBefore = sql("select count(*) from fin_documents where file_name='old-i
 const periodBefore = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const accountsShot = await shot('50-email-accounts')
 await nav('מרכז בקרה')
-await page.locator('.fin-chiplink', { hasText: 'קבלות ישנות' }).click(); await page.waitForSelector('.fin-modal'); await page.waitForTimeout(300)
-const chipLanded = page.url().endsWith('/mailboxes')
+await page.locator('.fin-chiplink', { hasText: 'קבלות ישנות' }).click(); await page.waitForSelector('.fin-scan'); await page.waitForTimeout(600)
+const chipLanded = page.url().endsWith('/scans')
+// the scan management screen: start a scan of a year on invoices@; the open screen moves it on, week after week
+await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).getByRole('button', { name: /התחלת סריקה|סריקה של תקופה חדשה/ }).click(); await page.waitForSelector('.fin-modal')
 await page.locator('.fin-modal .fin-seg button', { hasText: 'שנה' }).first().click()
 const oldModalShot = await shot('51-old-receipts')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
-// the history scan runs step after step while the window is open, with live progress, and says when it is done
-await page.locator('.fin-hist__top strong', { hasText: 'הסריקה הסתיימה' }).waitFor({ timeout: 120000 })
-const histStats = (await page.locator('.fin-hist__stats').innerText()).replace(/\s+/g, ' ')
-const histPct = await page.locator('.fin-hist__pct').innerText()
+await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).locator('.fin-pill', { hasText: 'הסריקה הושלמה' }).waitFor({ timeout: 180000 })
+const histStats = (await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).locator('.fin-scan__stats').innerText()).replace(/\s+/g, ' ')
+const histPct = await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).locator('.fin-scan__pct').innerText()
 const histShot = await shot('51b-history-scan-done')
-await page.locator('.fin-modal__foot .fin-btn--primary', { hasText: 'סיום' }).click(); await page.waitForTimeout(800)
+await nav('חשבונות אימייל'); await page.waitForTimeout(800)
 const oldAfter = sql("select count(*)||'|'||coalesce((select source from fin_documents where file_name='old-invoice.pdf'),'-') from fin_documents where file_name='old-invoice.pdf'")
 const boxState = sql("select sync_from||'|'||backfill_pending from fin_mailboxes where email='invoices@kurkoos.test'")
 const periodAfter = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const gapQuery = (await fetch(`${FAKES}/__log`).then((r) => r.json())).gmailQueries.filter((q2) => /before:/.test(q2)).length
-record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב. החלון מראה התקדמות עד 100%, כמה נכנסו ומה העלות', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}; חלון: ${histPct} ${histStats}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1 && histPct === '100%' && /נכנסו למערכת\s*[1-9]/.test(histStats) && /עלות עד עכשיו/.test(histStats), [accountsShot, oldModalShot, histShot])
+record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב. מסך ניהול הסריקות מראה התקדמות עד 100% ו"הסריקה הושלמה" רק אחרי בקרת השלמות', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}; חלון: ${histPct} ${histStats}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1 && histPct === '100%' && /חשבוניות\s*[1-9]/.test(histStats) && /הודעות שנבדקו\s*[1-9]/.test(histStats), [accountsShot, oldModalShot, histShot])
 
 // MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
 await nav('מספרי WhatsApp')
@@ -1529,6 +1530,87 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
     `נקלטו: ${got || '—'}; דולגו: ${skipped || '—'}; עם הגנה: ${flog.guarded || 0}, בלי: ${flog.unguarded || 0}; עלות: $${cost}; סנכרון: ${JSON.stringify(sync).slice(0, 80)}`,
     /bundle\.zip › zip-inv\.pdf=זיפ מים/.test(got || '') && /scan_0099\.docx=דוקס הנדסה בע״מ=vnd\.openxmlformats-officedocument\.wordprocessingml\.document/.test(got || '') && /bill\.xlsx=אקסל שירותים/.test(got || '') && /fax-0012\.tif=פקס הדפסות=tiff/.test(got || '') && /newsletter\.pdf/.test(skipped || '') && (flog.guarded || 0) >= 4 && !(flog.unguarded || 0) && Number(cost) > 0,
     [fmtShot])
+}
+
+// SCAN: the scan engine on a big mailbox and on invoices@ side by side. 1,502 messages (1,200 of them in one week, i.e.
+// three pages of 500), a 503 on listing, a message that fails once and then works, a damaged TIFF, the same invoice that
+// already came to invoices@, stop and resume, a message the first pass "missed", and the completeness rule: done only
+// when nothing is left; a person can mark a message that cannot be read as checked.
+{
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); const saved = JSON.stringify(fx)
+  const now = Date.now(); const DAYMS = 86400_000; const iso = (t) => new Date(t).toISOString()
+  fs.writeFileSync(`${FIX}/broken-scan.tif`, Buffer.concat([Buffer.from([0x49, 0x49, 0x2a, 0x00, 0xff, 0xff, 0xff, 0x7f]), crypto.randomBytes(30000)]))
+  fx.mailboxes['big@kurkoos.test'] = {
+    failListOnce: true,
+    failGet: { 'syn-a-17': 4 },
+    synthetic: { count: 300, from: iso(now - 100 * DAYMS), to: iso(now - 30 * DAYMS), dense: { count: 1200, from: iso(now - 20 * DAYMS), to: iso(now - 16 * DAYMS) } },
+    messages: [
+      { id: 'b1', date: iso(now - 40 * DAYMS), subject: 'חשבונית מס 4521 - טמבור', from: 'טמבור <billing@tambour.test>', text: 'מצורפת', files: ['tambour-4521.pdf'] },
+      { id: 'b2', date: iso(now - 25 * DAYMS), subject: 'סריקה', from: 'סורק <scanner@kurkoos.test>', text: 'מסמך', files: ['broken-scan.tif'] },
+    ],
+  }
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  await fetch(`${FAKES}/__reset`).catch(() => {})
+  sql("insert into fin_mailboxes (provider, email, status, connected_by) values ('gmail', 'big@kurkoos.test', 'active', (select user_id from fin_members where email = 'admin@kurkoos.test')) on conflict do nothing")
+  sql("insert into fin_mailbox_secrets (mailbox_id, refresh_token) select id, 'rt-big@kurkoos.test' from fin_mailboxes where email = 'big@kurkoos.test' on conflict do nothing")
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const bigId = sql("select id from fin_mailboxes where email = 'big@kurkoos.test'")
+  const invId = sql("select id from fin_mailboxes where email = 'invoices@kurkoos.test'")
+  const tambourBefore = sql("select count(*) from fin_documents where file_hash = (select file_hash from fin_documents where file_name = 'tambour-4521.pdf' limit 1)")
+  const fromDay = iso(now - 110 * DAYMS).slice(0, 10)
+  const st1 = await api(tok, { action: 'scan-start', mailbox_id: bigId, from: fromDay })
+  const st2 = await api(tok, { action: 'scan-start', mailbox_id: invId, from: fromDay })
+  const twice = await api(tok, { action: 'scan-start', mailbox_id: bigId, from: fromDay })
+  const bigJob = st1.data?.job?.id
+  // one small step serves both mailboxes
+  const r1 = await api(tok, { action: 'scan-run', max_segments: 2, max_messages: 40 })
+  const served = new Set((r1.data?.segments || []).map((x) => x.mailbox)).size
+  // stop: a run moves nothing of this mailbox; resume goes on from the same point
+  await api(tok, { action: 'scan-control', job_id: bigJob, op: 'pause' })
+  const itemsAtPause = sql(`select count(*) from fin_scan_items where mailbox_id = '${bigId}'`)
+  await api(tok, { action: 'scan-run', max_segments: 4 })
+  const itemsAfterPausedRun = sql(`select count(*) from fin_scan_items where mailbox_id = '${bigId}'`)
+  await api(tok, { action: 'scan-control', job_id: bigJob, op: 'resume' })
+  // steps of at most 450 messages: the dense week (3 pages) stops inside a page and resumes from its checkpoint
+  let missedPlanted = false; let midPage = 0; let steps = 0
+  for (; steps < 60; steps++) {
+    const job = sql(`select status || '|' || phase from fin_scan_jobs where id = '${bigJob}'`)
+    if (/^(done|incomplete)/.test(job)) break
+    if (job.endsWith('|verify') && !missedPlanted) {
+      // a message the first pass "did not see": the completeness pass must find it and check it
+      sql(`delete from fin_scan_items where mailbox_id = '${bigId}' and message_id = 'syn-d-10'`); sql(`delete from fin_mail_seen where mailbox_id = '${bigId}' and message_id = 'syn-d-10'`)
+      missedPlanted = true
+    }
+    const r = await api(tok, { action: 'scan-run', max_segments: 3, max_messages: 450 })
+    if (sql(`select count(*) from fin_scan_segments where job_id = '${bigJob}' and page_token is not null and last_message_id is not null`) !== '0') midPage++
+    if (!(r.data?.segments || []).length) sql("update fin_scan_segments set next_try_at = now() where status = 'retry'")   // the retry waits 15 minutes; the test does not
+  }
+  const jobBefore = sql(`select status || '|' || coalesce(report::text, '') from fin_scan_jobs where id = '${bigJob}'`)
+  const dense = sql(`select pages || '|' || listed || '|' || (processed + already) from fin_scan_segments where job_id = '${bigJob}' and phase = 'scan' order by listed desc limit 1`)
+  const retried = sql(`select status || '|' || attempts from fin_scan_items where mailbox_id = '${bigId}' and message_id = 'syn-a-17'`)
+  const items = sql(`select string_agg(status || ':' || n, ' ') from (select status, count(*) n from fin_scan_items where mailbox_id = '${bigId}' group by 1 order by 1) x`)
+  const tambourAfter = sql("select count(*) from fin_documents where file_hash = (select file_hash from fin_documents where file_name = 'tambour-4521.pdf' limit 1)")
+  const flog = await fetch(`${FAKES}/__log`).then((r) => r.json())
+  // the screen: the scan is not complete until the unreadable file is decided by a person
+  await go('/scans'); await page.waitForTimeout(1500)
+  const card = page.locator('.fin-scan', { hasText: 'big@kurkoos.test' })
+  const pillBefore = await card.locator('.fin-pill').first().innerText().catch(() => '')
+  await card.getByRole('button', { name: /הודעות שלא עובדו/ }).click(); await page.waitForTimeout(400)
+  const scanShot = await shot('119-scan-incomplete')
+  await card.getByRole('button', { name: 'סימון כנבדק' }).first().click(); await page.waitForTimeout(1500)
+  const pillAfter = await page.locator('.fin-scan', { hasText: 'big@kurkoos.test' }).locator('.fin-pill').first().innerText().catch(() => '')
+  const jobAfter = sql(`select status from fin_scan_jobs where id = '${bigJob}'`)
+  const invJob = sql(`select status from fin_scan_jobs where id = '${st2.data?.job?.id}'`)
+  const scanDoneShot = await shot('120-scan-done')
+  const rep = JSON.parse(sql(`select report::text from fin_scan_jobs where id = '${bigJob}'`) || '{}')
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  record('SCAN', 'סריקה עם בקרת שלמות: עמודים, עצירה והמשך, שתי תיבות, ניסיון חוזר, השלמה',
+    '1,502 הודעות נבדקות כולן (שבוע של יותר מ-1,000 בשלושה עמודים, עם עצירה באמצע עמוד והמשך מאותה נקודה); 503 ברשימה וכשל זמני בהודעה מטופלים בניסיון חוזר; סריקה שנייה לאותה תיבה נחסמת; עצירה עוצרת; שתי תיבות מתקדמות יחד; אותה חשבונית מתיבה שנייה לא נשמרת פעמיים; בקרת השלמות מוצאת הודעה שלא נבדקה; קובץ פגום משאיר "אינה מלאה" עד שאדם מחליט, ואז "הושלמה"',
+    `שירת ${served} תיבות; כפולה: ${twice.status}; בעצירה: ${itemsAtPause}→${itemsAfterPausedRun}; צעדים: ${steps}, אמצע עמוד: ${midPage}; שבוע צפוף: ${dense}; ניסיון חוזר: ${retried}; פריטים: ${items}; 503: ${flog.gmail503 || 0}; טמבור: ${tambourBefore}→${tambourAfter}; לפני: ${jobBefore.split('|')[0]} (${pillBefore}); אחרי: ${jobAfter} (${pillAfter}); invoices@: ${invJob}; דוח: נמצאו ${rep.listed}, נבדקו ${rep.checked}, נמצאו בהשלמה ${rep.missed_found}`,
+    st1.status === 200 && st2.status === 200 && twice.status === 409 && served === 2 && itemsAtPause === itemsAfterPausedRun && midPage > 0 && /^3\|(\d+)\|\1$/.test(dense) && Number(dense.split('|')[1]) > 1000 && retried === 'done|2'
+      && /done:1501/.test(items || '') && (flog.gmail503 || 0) >= 1 && tambourBefore === tambourAfter && /^incomplete/.test(jobBefore) && /אינה מלאה/.test(pillBefore)
+      && jobAfter === 'done' && /הושלמה/.test(pillAfter) && invJob === 'done' && rep.listed === 1502 && rep.checked === 1502 && rep.missed_found >= 1,
+    [scanShot, scanDoneShot])
 }
 
 // dark mode screenshot

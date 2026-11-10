@@ -1668,4 +1668,141 @@ create policy "finance docs read" on storage.objects for select to authenticated
     or exists (select 1 from public.fin_document_attachments a where a.file_path = storage.objects.name)
     or (owner = auth.uid() and public.fin_has_role(array['admin', 'finance_manager', 'employee']))
   ));
+-- ===== the mail scan engine (docs/finance/SCAN-AND-COMPANIES-PLAN.md) =====
+-- A scan job covers one mailbox and one period. The period is cut into week segments; each segment keeps where it stands
+-- (the provider's page token, the last message) so a stop resumes at the same point. Every message gets one row in
+-- fin_scan_items with what happened to it, so "not found" and "not checked" are never the same thing. A job is "done" only
+-- after a completeness pass over the same period found nothing left; otherwise it ends "incomplete".
+create table if not exists public.fin_scan_jobs (
+  id uuid primary key default gen_random_uuid(),
+  mailbox_id uuid not null references public.fin_mailboxes(id) on delete cascade,
+  date_from date not null,
+  date_to date not null,
+  tz text not null default 'Asia/Jerusalem',
+  include_sent boolean not null default false,
+  phase text not null default 'scan',
+  status text not null default 'queued',
+  requested_by uuid,
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  finished_at timestamptz,
+  error text,
+  report jsonb not null default '{}'::jsonb
+);
+alter table public.fin_scan_jobs drop constraint if exists fin_scan_jobs_status_check;
+alter table public.fin_scan_jobs add constraint fin_scan_jobs_status_check check (status in ('queued', 'running', 'paused', 'done', 'incomplete', 'failed', 'cancelled'));
+alter table public.fin_scan_jobs drop constraint if exists fin_scan_jobs_phase_check;
+alter table public.fin_scan_jobs add constraint fin_scan_jobs_phase_check check (phase in ('scan', 'verify'));
+create index if not exists fin_scan_jobs_mailbox on public.fin_scan_jobs (mailbox_id, created_at desc);
+
+create table if not exists public.fin_scan_segments (
+  id uuid primary key default gen_random_uuid(),
+  job_id uuid not null references public.fin_scan_jobs(id) on delete cascade,
+  mailbox_id uuid not null references public.fin_mailboxes(id) on delete cascade,
+  phase text not null default 'scan',
+  seq int not null,
+  t_from timestamptz not null,
+  t_to timestamptz not null,
+  status text not null default 'pending',
+  page_token text,
+  pages int not null default 0,
+  listed int not null default 0,
+  processed int not null default 0,
+  failed int not null default 0,
+  unreadable int not null default 0,
+  kept int not null default 0,
+  skipped int not null default 0,
+  duplicates int not null default 0,
+  missed int not null default 0,
+  already int not null default 0,
+  last_message_id text,
+  last_message_at timestamptz,
+  attempts int not null default 0,
+  next_try_at timestamptz,
+  locked_until timestamptz,
+  error text,
+  updated_at timestamptz not null default now()
+);
+alter table public.fin_scan_segments drop constraint if exists fin_scan_segments_status_check;
+alter table public.fin_scan_segments add constraint fin_scan_segments_status_check check (status in ('pending', 'running', 'done', 'failed', 'retry'));
+alter table public.fin_scan_segments add column if not exists already int not null default 0;   -- checked before (regular sync or an earlier job)
+create index if not exists fin_scan_segments_job on public.fin_scan_segments (job_id, phase, seq);
+create index if not exists fin_scan_segments_queue on public.fin_scan_segments (status, next_try_at);
+
+create table if not exists public.fin_scan_items (
+  mailbox_id uuid not null references public.fin_mailboxes(id) on delete cascade,
+  message_id text not null,
+  segment_id uuid references public.fin_scan_segments(id) on delete set null,
+  status text not null,
+  attempts int not null default 1,
+  error text,
+  files int not null default 0,
+  kept int not null default 0,
+  skipped int not null default 0,
+  subject text,
+  email_from text,
+  email_date timestamptz,
+  at timestamptz not null default now(),
+  primary key (mailbox_id, message_id)
+);
+alter table public.fin_scan_items drop constraint if exists fin_scan_items_status_check;
+alter table public.fin_scan_items add constraint fin_scan_items_status_check check (status in ('done', 'failed', 'unreadable', 'accepted'));
+create index if not exists fin_scan_items_problems on public.fin_scan_items (mailbox_id, status) where status in ('failed', 'unreadable');
+
+alter table public.fin_scan_jobs enable row level security;
+alter table public.fin_scan_segments enable row level security;
+alter table public.fin_scan_items enable row level security;
+revoke all on public.fin_scan_jobs, public.fin_scan_segments, public.fin_scan_items from anon;
+revoke insert, update, delete on public.fin_scan_jobs, public.fin_scan_segments, public.fin_scan_items from authenticated;
+grant select on public.fin_scan_jobs, public.fin_scan_segments, public.fin_scan_items to authenticated;
+drop policy if exists "fin_scan_jobs read" on public.fin_scan_jobs;
+create policy "fin_scan_jobs read" on public.fin_scan_jobs for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or mailbox_id in (select id from public.fin_mailboxes where connected_by = auth.uid()));
+drop policy if exists "fin_scan_segments read" on public.fin_scan_segments;
+create policy "fin_scan_segments read" on public.fin_scan_segments for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or mailbox_id in (select id from public.fin_mailboxes where connected_by = auth.uid()));
+drop policy if exists "fin_scan_items read" on public.fin_scan_items;
+create policy "fin_scan_items read" on public.fin_scan_items for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or mailbox_id in (select id from public.fin_mailboxes where connected_by = auth.uid()));
+
+-- the next segment to work on, taken under a lease so two runs never work on the same segment (SKIP LOCKED).
+-- A segment whose lease ran out (the function died half way) is taken again and resumes from its checkpoint.
+-- p_skip: mailboxes already served in this run, so several mailboxes advance side by side.
+create or replace function public.fin_scan_claim(p_skip uuid[] default '{}', p_lease_seconds int default 90)
+returns setof public.fin_scan_segments language plpgsql security definer set search_path = public as $$
+declare sid uuid;
+begin
+  select s.id into sid from public.fin_scan_segments s join public.fin_scan_jobs j on j.id = s.job_id
+   where j.status in ('queued', 'running') and s.phase = j.phase and not (s.mailbox_id = any(coalesce(p_skip, '{}')))
+     and ((s.status in ('pending', 'retry') and coalesce(s.next_try_at, now()) <= now()) or (s.status = 'running' and s.locked_until < now()))
+   order by j.created_at, s.seq
+   for update of s skip locked limit 1;
+  if sid is null then return; end if;
+  return query update public.fin_scan_segments set status = 'running', locked_until = now() + make_interval(secs => p_lease_seconds), updated_at = now()
+   where id = sid returning *;
+end $$;
+revoke all on function public.fin_scan_claim(uuid[], int) from public, anon, authenticated;
+
+-- production: a run every minute, only while a scan has work (pg_cron + pg_net, installed on Supabase). The address and the
+-- secret are read from Vault: select vault.create_secret('<CRON_SECRET from Vercel>', 'finance_tick_secret');
+-- select vault.create_secret('https://www.kurkoos-group.co.il/api/finance', 'finance_tick_url');
+do $$ begin
+  if exists (select 1 from pg_namespace where nspname = 'net') and exists (select 1 from pg_namespace where nspname = 'vault') then
+    execute $f$
+      create or replace function public.fin_scan_kick() returns void language plpgsql security definer set search_path = public as $k$
+      declare v_url text; v_secret text;
+      begin
+        if not exists (select 1 from public.fin_scan_segments s join public.fin_scan_jobs j on j.id = s.job_id
+                        where j.status in ('queued', 'running') and s.phase = j.phase and s.status in ('pending', 'retry', 'running')
+                          and coalesce(s.next_try_at, now()) <= now()) then return; end if;
+        select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'finance_tick_secret';
+        select decrypted_secret into v_url from vault.decrypted_secrets where name = 'finance_tick_url';
+        if v_secret is null or v_url is null then return; end if;
+        perform net.http_get(url := v_url || '?action=scan-tick', headers := jsonb_build_object('Authorization', 'Bearer ' || v_secret), timeout_milliseconds := 65000);
+      end $k$
+    $f$;
+    execute 'revoke all on function public.fin_scan_kick() from public, anon, authenticated';
+  end if;
+  if exists (select 1 from pg_namespace where nspname = 'cron') and exists (select 1 from pg_proc where proname = 'fin_scan_kick') then
+    perform cron.schedule('finance-scan-tick', '* * * * *', 'select public.fin_scan_kick()');
+  end if;
+end $$;
+
 notify pgrst, 'reload schema';

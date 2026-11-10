@@ -30,6 +30,7 @@ const DataManagement = lazy(() => import('./DataManagement.jsx'))
 const Automations = lazy(() => import('./Automations.jsx'))
 const Agents = lazy(() => import('./Agents.jsx'))
 const Mailboxes = lazy(() => import('./Mailboxes.jsx'))
+const Scans = lazy(() => import('./Scans.jsx'))
 const Integrations = lazy(() => import('./Integrations.jsx'))
 const ExportHistory = lazy(() => import('./ExportHistory.jsx'))
 const Users = lazy(() => import('./Users.jsx'))
@@ -67,6 +68,7 @@ export const NAV = [
   // where documents come from
   { to: '/connections', label: 'חיבורים', icon: 'plug', roles: ['admin', 'finance_manager', 'employee'], el: <Connections />, group: 'קליטה' },
   { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'קליטה' },
+  { to: '/scans', label: 'ניהול סריקות', icon: 'history', roles: ['admin', 'finance_manager'], el: <Scans />, group: 'קליטה' },
   { to: '/scanners', label: 'מספרי WhatsApp', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
   // everything else, folded away until needed
   { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
@@ -376,7 +378,7 @@ export default function FinanceApp() {
             <Icon name="next" size={17} />
           </Link>
           {['admin', 'finance_manager'].includes(role) && (
-            <Link to={`${BASE}/mailboxes?old=1`} className="fin__drawer-link" onClick={() => setNavOpen(false)}><Icon name="history" size={18} /><span>קבלות ישנות</span><small>סריקת חשבוניות מתקופה מוקדמת</small></Link>
+            <Link to={`${BASE}/scans`} className="fin__drawer-link" onClick={() => setNavOpen(false)}><Icon name="history" size={18} /><span>קבלות ישנות</span><small>סריקת חשבוניות מתקופה מוקדמת</small></Link>
           )}
           <div className="fin__brand-row">
             <Link to={BASE} className="fin__brand" aria-label="Kurkoos Finance, דף הבית">
@@ -427,7 +429,7 @@ export default function FinanceApp() {
             </button>
             {waNumber && <WaChip number={waNumber} canManage={can(role, 'upload')} go={(p) => navigate(`${BASE}${p}`)} />}
             {['admin', 'finance_manager'].includes(role) && (
-              <Link to={`${BASE}/mailboxes?old=1`} className="fin-chiplink" title="סריקת חשבוניות מתקופה מוקדמת יותר">
+              <Link to={`${BASE}/scans`} className="fin-chiplink" title="סריקת חשבוניות מתקופה מוקדמת יותר">
                 <Icon name="history" size={17} /><span>קבלות ישנות</span>
               </Link>
             )}

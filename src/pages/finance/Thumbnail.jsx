@@ -13,8 +13,25 @@ export async function loadPdf() {
   }
   return pdfjs
 }
+/* the first page of a TIFF (a scanner or a fax) as a PNG data URL: browsers do not show TIFF. utif loads only when a
+   TIFF is shown. `width` scales it down for a thumbnail. */
+export async function tiffPreview(buf, width) {
+  const UTIF = (await import('utif')).default
+  const ifds = UTIF.decode(buf)
+  UTIF.decodeImage(buf, ifds[0])
+  const w = ifds[0].width; const h = ifds[0].height
+  const c = document.createElement('canvas'); c.width = w; c.height = h
+  c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(UTIF.toRGBA8(ifds[0])), w, h), 0, 0)
+  if (!width || width >= w) return c.toDataURL('image/png')
+  const s = document.createElement('canvas'); s.width = width; s.height = Math.round((h * width) / w)
+  s.getContext('2d').drawImage(c, 0, 0, s.width, s.height)
+  return s.toDataURL('image/jpeg', 0.85)
+}
+const OFFICE = (mime) => (String(mime).includes('wordprocessing') ? 'Word' : String(mime).includes('spreadsheet') ? 'Excel' : '')
 async function render(doc, width = 360) {
   const blob = await api.fileBlob(doc)
+  if (doc.file_mime === 'image/tiff') return tiffPreview(await blob.arrayBuffer(), width)
+  if (OFFICE(doc.file_mime)) return { text: `${OFFICE(doc.file_mime)} · ${doc.file_name || ''}` }
   if ((doc.file_mime || '').startsWith('image/')) return URL.createObjectURL(blob)
   if ((doc.file_mime || '').startsWith('text/')) return { text: (await blob.text()).replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220) }
   const lib = await loadPdf()
@@ -61,7 +78,7 @@ export default function Thumbnail({ doc, size }) {
     <div className="fin-thumb" ref={box} aria-hidden="true">
       {src && typeof src === 'string' && <img src={src} alt="" />}
       {src && typeof src === 'object' && <p className="fin-thumb__text">{src.text}</p>}
-      {!src && <span className={`fin-thumb__ph ${failed ? 'is-failed' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : 'קובץ'}{failed && <small>אין תצוגה מקדימה</small>}</span>}
+      {!src && <span className={`fin-thumb__ph ${failed ? 'is-failed' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : OFFICE(doc.file_mime) || (doc.file_mime === 'image/tiff' ? 'TIFF' : 'קובץ')}{failed && <small>אין תצוגה מקדימה</small>}</span>}
     </div>
   )
 }

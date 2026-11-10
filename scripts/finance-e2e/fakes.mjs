@@ -41,6 +41,22 @@ const readBody = (req) => new Promise((ok) => { let d = ''; req.on('data', (c) =
 
 const b64u = (buf) => Buffer.from(buf).toString('base64url')
 
+/* a large mailbox without fixtures: `synthetic: { count, from, to, dense: { count, from, to } }` makes ordinary letters
+   (no file, no money) spread over a period, plus a dense week, so paging and checkpoints are tested at scale */
+const synCache = new Map()
+function synthetic(mailbox, box) {
+  if (!box.synthetic) return []
+  const key = `${mailbox}|${JSON.stringify(box.synthetic)}`
+  if (!synCache.has(key)) {
+    const out = []
+    const spread = (n, from, to, tag) => { const a = Date.parse(from); const b = Date.parse(to); for (let i = 0; i < n; i++) out.push({ id: `syn-${tag}-${i}`, date: new Date(a + ((b - a) * (i + 0.5)) / n).toISOString(), subject: `עדכון ${i}`, from: 'צוות <team@kurkoos.test>', text: 'שלום, מצורף עדכון קצר על הפגישה של השבוע. תודה.' }) }
+    spread(box.synthetic.count || 0, box.synthetic.from, box.synthetic.to, 'a')
+    if (box.synthetic.dense) spread(box.synthetic.dense.count, box.synthetic.dense.from, box.synthetic.dense.to, 'd')
+    synCache.set(key, out)
+  }
+  return synCache.get(key)
+}
+
 function gmailMessage(m) {
   const parts = []
   if (m.html) parts.push({ partId: '0', mimeType: 'text/html', filename: '', body: { size: m.html.length, data: b64u(m.html) } })
@@ -103,13 +119,20 @@ const server = http.createServer(async (req, res) => {
       const after = Number((q.match(/after:(\d+)/) || [])[1] || 0) * 1000
       const before = Number((q.match(/before:(\d+)/) || [])[1] || 0) * 1000
       log.gmailQueries.push(q)
-      const msgs = box.messages.filter((m) => Date.parse(m.date) >= after && (!before || Date.parse(m.date) < before)).sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
-      return send(res, 200, { messages: msgs.map((m) => ({ id: m.id, threadId: m.id })), resultSizeEstimate: msgs.length })
+      // like Gmail: an outage answered once (then the retry works), and pages of maxResults with a page token
+      if (box.failListOnce && !failed[`list:${mailbox}`]) { failed[`list:${mailbox}`] = 1; log.gmail503 = (log.gmail503 || 0) + 1; return send(res, 503, { error: { code: 503, message: 'Backend Error' } }) }
+      const msgs = [...box.messages, ...synthetic(mailbox, box)].filter((m) => Date.parse(m.date) >= after && (!before || Date.parse(m.date) < before)).sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || (a.id < b.id ? 1 : -1))
+      const size = Math.min(500, Number(url.searchParams.get('maxResults') || 100)); const off = Number(url.searchParams.get('pageToken') || 0)
+      const page = msgs.slice(off, off + size)
+      return send(res, 200, { messages: page.map((m) => ({ id: m.id, threadId: m.id })), resultSizeEstimate: msgs.length, ...(off + size < msgs.length ? { nextPageToken: String(off + size) } : {}) })
     }
     const mm = rest.match(/^messages\/([^/]+)(?:\/attachments\/(.+))?$/)
     if (mm) {
-      const m = box.messages.find((x) => x.id === mm[1])
+      const m = box.messages.find((x) => x.id === mm[1]) || synthetic(mailbox, box).find((x) => x.id === mm[1])
       if (!m) return send(res, 404, { error: { code: 404, message: 'Not Found' } })
+      // a message that fails a set number of times, then works (a temporary fault of the provider)
+      const k = `get:${mailbox}:${m.id}`
+      if (!mm[2] && box.failGet?.[m.id] && (failed[k] || 0) < box.failGet[m.id]) { failed[k] = (failed[k] || 0) + 1; return send(res, 500, { error: { code: 500, message: 'Backend Error' } }) }
       if (!mm[2]) return send(res, 200, gmailMessage(m))
       const [, idx] = mm[2].split('__')
       const buf = fs.readFileSync(`${FIX}/${m.files[Number(idx)]}`)

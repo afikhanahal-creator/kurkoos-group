@@ -81,3 +81,12 @@ export async function getMessage(accessToken, id) {
     })),
   }
 }
+
+/* the scan engine lists every message of a time window, page by page (500 a page, Gmail's maximum), and keeps the page
+   token as its checkpoint. Spam, trash, drafts and chats are left out; sent mail only when asked. after/before are exact
+   seconds, so no message falls between two windows whatever the time zone. */
+export async function listPage(accessToken, { from, to, pageToken = '', includeSent = false }) {
+  const q = `-in:spam -in:trash -in:drafts -in:chats${includeSent ? '' : ' -in:sent'} after:${Math.floor(from.getTime() / 1000) - 1} before:${Math.floor(to.getTime() / 1000)}`
+  const list = await api(accessToken, `messages?maxResults=500&includeSpamTrash=false&q=${encodeURIComponent(q)}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`)
+  return { ids: (list.messages || []).map((m) => m.id), next: list.nextPageToken || '', estimate: list.resultSizeEstimate ?? null }
+}

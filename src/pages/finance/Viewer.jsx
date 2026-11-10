@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import ShareDialog from './ShareDialog.jsx'
-import { loadPdf } from './Thumbnail.jsx'
+import { loadPdf, tiffPreview } from './Thumbnail.jsx'
 import { Icon } from './ui.jsx'
 import { moments } from './moments.js'
 
@@ -21,6 +21,16 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
   const [imgRatio, setImgRatio] = useState(1.414)
+  // a TIFF is shown as a PNG of its first page (download and "open" still give the original file); Word and Excel
+  // cannot be shown in a browser, so they get a clear way to open or download the original
+  const [tiffSrc, setTiffSrc] = useState(null)
+  const office = String(mime || '').includes('wordprocessing') ? 'Word' : String(mime || '').includes('spreadsheet') ? 'Excel' : ''
+  useEffect(() => {
+    if (mime !== 'image/tiff' || !blobUrl) return undefined
+    let alive = true
+    fetch(blobUrl).then((r) => r.arrayBuffer()).then((b) => tiffPreview(b)).then((u) => { if (alive) setTiffSrc(u) }).catch(() => { if (alive) setErr('לא הצלחנו להציג את קובץ ה-TIFF') })
+    return () => { alive = false }
+  }, [blobUrl, mime])
   const [share, setShare] = useState(false)
   const [full, setFull] = useState(false)
   const [turn, setTurn] = useState(0)            // 0 / 90 / 180 / 270, the view only: the file is never changed
@@ -153,7 +163,11 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
               {pages.list.map((p, i) => <span key={i} className="fin-viewer__frame" data-page={i + 1} style={pageBox(p.ratio)}><img className="fin-viewer__page" src={p.src} alt={`${name || 'המסמך'}, עמוד ${i + 1}`} style={imgStyle(p.ratio)} /></span>)}
               {pages.total > MAX_PAGES && <p className="fin-muted">מוצגים {MAX_PAGES} עמודים מתוך {pages.total}. <a href={blobUrl} target="_blank" rel="noopener noreferrer">לכל המסמך</a></p>}
             </>
-        ) : <span className="fin-viewer__frame" data-page={1} style={pageBox(imgRatio)}><img className="fin-viewer__page" src={blobUrl} alt={name || 'המסמך'} style={imgStyle(imgRatio)} onLoad={(e) => setImgRatio(e.currentTarget.naturalHeight / Math.max(1, e.currentTarget.naturalWidth))} /></span>}
+        ) : office ? (
+          <div className="fin-viewer__office"><Icon name="docs" size={34} /><strong>קובץ {office}</strong><p className="fin-muted">דפדפן לא מציג קבצי {office}. הנתונים נקראו מתוך הקובץ; את המקור אפשר להוריד.</p><a className="fin-btn fin-btn--primary" href={blobUrl} download={name || 'document'}><Icon name="download" size={16} /> הורדת הקובץ</a></div>
+        ) : mime === 'image/tiff' && !tiffSrc ? (
+          err ? <p className="fin-error fin-error--block" role="alert">{err}. <a href={blobUrl} download={name || 'document'}>הורדת הקובץ</a></p> : <span className="fin-viewer__frame fin-viewer__page--skel" style={pageBox(1.414)} aria-busy="true" />
+        ) : <span className="fin-viewer__frame" data-page={1} style={pageBox(imgRatio)}><img className="fin-viewer__page" src={tiffSrc || blobUrl} alt={name || 'המסמך'} style={imgStyle(imgRatio)} onLoad={(e) => setImgRatio(e.currentTarget.naturalHeight / Math.max(1, e.currentTarget.naturalWidth))} /></span>}
       </div>
       {share && <ShareDialog doc={doc} blobUrl={blobUrl} onClose={() => setShare(false)} />}
     </div>

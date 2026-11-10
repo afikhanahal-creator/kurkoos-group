@@ -9,6 +9,7 @@
 //
 // Environment (Vercel > Settings > Environment Variables, never in code): see docs/finance/README.md
 // ============================================================
+import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview } from './finance/scan.js'
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
 import { sb, one, insert, patch, q, caller, audit, removeFile } from './finance/db.js'
@@ -37,6 +38,11 @@ const ROLES = {
   status: ['admin', 'finance_manager', 'employee', 'accountant'],
   backfill: ['admin', 'finance_manager'],
   'scan-step': ['admin', 'finance_manager'],
+  'scan-start': ['admin', 'finance_manager'],
+  'scan-control': ['admin', 'finance_manager'],
+  'scan-accept': ['admin', 'finance_manager'],
+  'scan-overview': ['admin', 'finance_manager'],
+  'scan-run': ['admin', 'finance_manager'],
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
@@ -145,6 +151,13 @@ export default async function handler(req, res) {
     try { res.status(200).json({ results: await runDaily(origin(req)) }) } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
   }
+  // the scan engine, every minute while a scan has work (pg_cron + pg_net in Supabase; secret in Vault)
+  if (req.method === 'GET' && url.searchParams.get('action') === 'scan-tick') {
+    const secret = process.env.FINANCE_TICK_SECRET || process.env.CRON_SECRET
+    if (!secret || req.headers.authorization !== `Bearer ${secret}`) { res.status(401).json({ error: 'unauthorized' }); return }
+    try { res.status(200).json(await scanTick({ trigger: 'scan' })) } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
+    return
+  }
   // 07:00 Israel: the morning report, then a short catch-up (retries, stuck documents, a day collection)
   if (req.method === 'GET' && url.searchParams.get('action') === 'morning') {
     if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) { res.status(401).json({ error: 'unauthorized' }); return }
@@ -172,7 +185,10 @@ export default async function handler(req, res) {
     const why = await mfaBlock(user)
     if (why) { res.status(403).json({ error: 'נדרש אימות דו-שלבי. התחברו מחדש עם הקוד מהאפליקציה', code: why }); return }
   }
-  if (body.action !== 'status' && limited(user.id)) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
+  // the scan screen asks for the next step and the status again and again while a scan runs: its own, larger budget,
+  // so a long scan never uses up the person's budget for everything else (each step is already capped at ~45 s)
+  const scanPoll = ['scan-run', 'scan-overview'].includes(body.action)
+  if (body.action !== 'status' && (scanPoll ? limited(`scan:${user.id}`, 600) : limited(user.id))) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
 
   try {
     switch (body.action) {
@@ -242,6 +258,29 @@ export default async function handler(req, res) {
         await audit('mailbox', body.mailbox_id || 'all', 'backfill', { from, mailboxes: boxes.length }, user)
         const results = body.run === false ? [] : await syncAll({ mailboxId: body.mailbox_id, trigger: 'backfill', user, onlyBackfill: true })
         res.status(200).json({ ok: true, mailboxes: boxes.length, results, cost_usd: results.cost_usd || 0 })
+        return
+      }
+      case 'scan-start': {
+        const job = await createJob({ mailboxId: body.mailbox_id, from: String(body.from || ''), to: String(body.to || new Date().toISOString().slice(0, 10)), tz: body.tz || 'Asia/Jerusalem', includeSent: !!body.include_sent, user })
+        res.status(200).json({ ok: true, job })
+        return
+      }
+      case 'scan-control': {
+        res.status(200).json({ ok: true, job: await controlJob(body.job_id, String(body.op || ''), user) })
+        return
+      }
+      case 'scan-accept': {
+        await acceptItem(body.mailbox_id, String(body.message_id || ''), user)
+        res.status(200).json({ ok: true })
+        return
+      }
+      case 'scan-overview': {
+        res.status(200).json({ mailboxes: await scanOverview() })
+        return
+      }
+      case 'scan-run': {
+        // the open screen moves the scan on too (in production pg_cron does it every minute anyway)
+        res.status(200).json(await scanTick({ trigger: 'scan', limits: { segments: body.max_segments, messages: body.max_messages } }))
         return
       }
       case 'scan-step': {

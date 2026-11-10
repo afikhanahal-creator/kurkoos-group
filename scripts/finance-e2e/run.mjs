@@ -555,8 +555,10 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   const dupDoc = sql("select id from fin_documents where status='duplicate' limit 1")
   const dupInDrive = dupDoc ? await copies(dupDoc) : 0
   // a network error (503) on upload: the row waits and is retried; the second try is verified; one copy only
-  const fresh = sql("select id from fin_documents where status='rejected' and file_path is not null order by created_at limit 2").split('\n').filter(Boolean)
-  sql(`update fin_documents set status='review' where id in ('${fresh.join("','")}')`)
+  // two archived documents start over: their files leave Drive and their rows leave the archive, so each is uploaded afresh
+  const fresh = sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at desc limit 2`).split('\n').filter(Boolean)
+  const restart = async (id) => { await dget(`?remove=${id}`); sql(`delete from fin_drive_files where target_id='${driveTarget}' and document_id='${id}'`) }
+  await restart(fresh[0])
   await fetch(`${FAKES}/__drive?upload503=1`)
   await run({ max: 1 })
   const after503 = row(fresh[0])
@@ -564,6 +566,7 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   await run({ max: 1 })
   const retried = row(fresh[0]); const copies503 = await copies(fresh[0])
   // the answer of an upload is lost (the file was saved, the reply was 500): the retry finds that file, no second copy
+  await restart(fresh[1])
   await fetch(`${FAKES}/__drive?lose=1`)
   await run({ max: 1 })
   const afterLost = row(fresh[1])

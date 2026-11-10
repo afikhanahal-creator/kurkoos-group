@@ -192,7 +192,7 @@ export default function Executive() {
             })()}
             <div className="fin-x-chart">
               <div className="fin-x-axis" aria-hidden="true">{ticks.map((v) => <span key={v} style={{ bottom: `${(v / top) * 100}%` }}><em>{v ? short(v).replace(' ₪', '') : '0'}</em></span>)}</div>
-              <div className="fin-x-scroll" ref={(el) => { if (el && el.scrollWidth > el.clientWidth && el.dataset.placed !== String(months.length)) { el.dataset.placed = String(months.length); el.scrollLeft = getComputedStyle(el).direction === 'rtl' ? -el.scrollWidth : el.scrollWidth } }}>
+              <div className="fin-x-scroll fin-scroll-x" ref={(el) => { if (el && el.scrollWidth > el.clientWidth && el.dataset.placed !== String(months.length)) { el.dataset.placed = String(months.length); el.scrollLeft = getComputedStyle(el).direction === 'rtl' ? -el.scrollWidth : el.scrollWidth } }}>
               <div className="fin-x-trend" style={{ '--n': months.length }} onPointerLeave={() => setHover(null)}>
                 <div className="fin-x-plot" aria-hidden="true">
                   {ticks.map((v) => <i key={v} style={{ bottom: `${(v / top) * 100}%` }} />)}

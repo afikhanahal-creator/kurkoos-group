@@ -4,7 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { dateTime } from './format.js'
 import { ProviderLogo } from './logos.jsx'
-import { Empty, Field, Icon, Modal, Pill, PageHead, Toggle } from './ui.jsx'
+import { Empty, Field, Icon, Modal, Pill, PageHead } from './ui.jsx'
 
 // The Google Drive archive: every document that was read goes to "main folder / company / year / MM - month" under a clear
 // name, and counts as archived only after it was read back from Drive (server/finance/archive.js).
@@ -88,6 +88,15 @@ function FilePanel({ row, doc, business, canEdit, onRename, onRequeue, go, onClo
       </div>
       <p className="fin-muted fin-small">תיקון של החברה, הספק, התאריך או הסכום במסמך מעביר ומשנה את שם הקובץ ב-Drive לבד, תוך דקה.</p>
     </aside>
+  )
+}
+
+/* a setting as one row: the whole row is the switch, so it is easy to hit with a finger */
+function Switch({ checked, onChange, label, disabled }) {
+  return (
+    <button type="button" role="switch" aria-checked={!!checked} className="fin-drive__switch" disabled={disabled} onClick={() => onChange(!checked)}>
+      <span>{label}</span><span className={`fin-toggle ${checked ? 'is-on' : ''}`} aria-hidden="true"><span /></span>
+    </button>
   )
 }
 
@@ -202,8 +211,8 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
       {can('manage') && (
         <details className="fin-drive__settings">
           <summary>הגדרות הארכיון</summary>
-          <Toggle checked={t.auto} disabled={!!busy} onChange={(v) => setting({ auto: v })} label="כל מסמך חדש עולה לבד, כמה דקות אחרי שהוא נקרא" />
-          <Toggle checked={t.by_kind} disabled={!!busy} onChange={(v) => setting({ by_kind: v })} label="תת-תיקייה לפי סוג בתוך כל חודש (חשבוניות, קבלות, זיכויים)" />
+          <Switch checked={t.auto} disabled={!!busy} onChange={(v) => setting({ auto: v })} label="כל מסמך חדש עולה לבד, כמה דקות אחרי שהוא נקרא" />
+          <Switch checked={t.by_kind} disabled={!!busy} onChange={(v) => setting({ by_kind: v })} label="תת-תיקייה לפי סוג בתוך כל חודש (חשבוניות, קבלות, זיכויים)" />
           <p className="fin-muted fin-small">המבנה: {t.root_name} › חברה › שנה › חודש{t.by_kind ? ' › סוג' : ''}. מסמך בלי חברה נכנס ל"מסמכים ללא שיוך", ועובר לתיקיית החברה ברגע שמשייכים אותו. שום קובץ לא נמחק מ-Drive.</p>
         </details>
       )}

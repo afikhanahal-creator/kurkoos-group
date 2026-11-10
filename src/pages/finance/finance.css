@@ -2434,8 +2434,10 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-drive .fin-scan__totals dd { font-size: var(--t-xl); }
 .fin-drive__settings { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 10px; }
 .fin-drive__settings summary { cursor: pointer; font-weight: 700; color: var(--ink); min-height: 32px; display: flex; align-items: center; }
-.fin-drive__settings .fin-toggle { justify-self: start; }
-.fin-drive__settings > .fin-toggle + .fin-toggle { margin-top: 2px; }
+.fin-drive__switch { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 6px 10px; border-radius: var(--r-m); cursor: pointer; color: var(--ink); font-size: var(--t-sm); }
+.fin-drive__switch:hover { background: var(--wash); }
+.fin-drive__switch:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; }
+.fin-drive__switch:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .fin-dexplorer { display: grid; gap: 10px; min-width: 0; }
 .fin-dexplorer h3 { margin: 0; font-size: var(--t-base); color: var(--ink); }

@@ -2774,7 +2774,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 /* recent documents: a clean tile that says what kind of file it is (a tiny picture of a page only looked like noise) */
 .fin-recent button { grid-template-columns: 44px minmax(0, 1fr) auto; min-height: 60px; }
 .fin-doctile { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--ocean-wash); color: var(--ocean-2); flex: none; }
-.fin-doctile b { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; }
+.fin-doctile b { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; }
 .fin-doctile.is-pdf { background: color-mix(in srgb, var(--attn) 10%, var(--sheet)); color: var(--attn); }
 .fin-doctile.is-mail { background: var(--ocean-wash); color: var(--ink); }
 .fin-recent .fin-thumb { width: 44px; height: 44px; border-radius: 12px; }

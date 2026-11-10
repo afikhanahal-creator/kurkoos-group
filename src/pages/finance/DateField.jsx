@@ -72,6 +72,7 @@ export default function DateField({ value, onChange, disabled, min, max, id, pla
 
   return (
     <div className={`fin-date ${open ? 'is-open' : ''}`} ref={wrap} onKeyDown={open ? onKey : undefined}>
+      <input type="hidden" value={value || ''} readOnly data-date-value />
       <button type="button" id={id} ref={trigger} className={`fin-date__btn ${value ? '' : 'is-empty'} ${invalid ? 'is-invalid' : ''}`} disabled={disabled} aria-haspopup="dialog" aria-expanded={open} onClick={() => (open ? close() : show())} {...rest}>
         <Icon name="calendar" size={16} />
         <span>{value ? sayDate(value).replace(/^(\d+ ב\S+)$/, `$1 ${parts(value).y}`) : placeholder}</span>

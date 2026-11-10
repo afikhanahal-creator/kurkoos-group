@@ -160,8 +160,14 @@ export default function Scanners() {
             <Field label="שיוך לחברה (לא חובה)"><Select value={add.business_id} onChange={(e) => setAdd({ ...add, business_id: e.target.value })}><option value="">לפי החשבונית</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>
             {can('operate') && <Field label="המשתמש" wide hint="המסמכים יירשמו כאילו המשתמש הזה העלה אותם"><Select value={add.user_id} onChange={(e) => setAdd({ ...add, user_id: e.target.value })}>{members.filter((m) => m.active).map((m) => <option key={m.user_id} value={m.user_id}>{m.full_name || m.email}</option>)}</Select></Field>}
           </form>
-          {office && <p className="fin-callout">אחרי ההוספה: שמרו באנשי הקשר את <strong dir="ltr">{pretty(office)}</strong> ושלחו אליו צילום של חשבונית. תקבלו אישור תוך כמה שניות.</p>}
-          {!configured && <p className="fin-muted fin-small">הקליטה מ-WhatsApp עוד לא הופעלה בשרת: המספר יישמר ויתחיל לעבוד כשתופעל.</p>}
+          <ol className="fin-steps" aria-label="איך זה עובד">
+            <li><b>מוסיפים כאן את מספר הנייד.</b> רק מספרים רשומים יכולים לשלוח מסמכים למערכת.</li>
+            <li><b>שומרים באנשי הקשר את מספר המשרד{office ? <>: <span dir="ltr">{pretty(office)}</span></> : ''}.</b>{!office && ' הוא יופיע כאן אחרי שהקליטה מ-WhatsApp תופעל.'}</li>
+            <li><b>שולחים אליו ב-WhatsApp צילום או PDF של חשבונית.</b> אפשר כמה ברצף.</li>
+            <li><b>המערכת קוראת את המסמך (OCR) ומחזירה אישור תוך כמה שניות.</b> הוא מופיע ב"ממתינים לבדיקה" עם הספק, התאריך והסכום.</li>
+            <li><b>אחרי שמאשרים אותו</b> הוא נכנס לדוחות, למסמכי החודש ולארכיון ב-Google Drive.</li>
+          </ol>
+          {!configured && <p className="fin-callout fin-callout--warn">הקליטה מ-WhatsApp עוד לא הופעלה בשרת, ולכן שליחה לא תעבוד כרגע. המספר יישמר ויתחיל לעבוד ברגע שתופעל. עד אז אפשר להעלות חשבוניות ידנית מהכפתור "העלאת מסמכים": הן עוברות את אותה קריאה ואותו אישור.</p>}
         </Modal>
       )}
     </div>

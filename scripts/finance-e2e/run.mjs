@@ -1039,7 +1039,7 @@ const markOn = await page.locator('.fin-modal .fin-check', { hasText: 'נשלח 
 await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
 await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 30000 }).catch(() => {}); await page.waitForTimeout(1200)
-const doneNote = await page.locator('.fin-note').first().innerText().catch(() => '')
+const doneNote = await page.locator('.fin-sentcard').first().innerText().catch(() => '')
 const expectSent = listed > 1 ? listed - 1 : listed
 const nowSent = sql(`select count(*) from fin_documents where id in ('${readyIds.join("','")}') and status='sent' and exported_at is not null`)
 const delivery = sql("select status||'|'||documents_count||'|'||coalesce(provider_id,'')||'|'||array_to_string(recipients, ',') from fin_deliveries order by created_at desc limit 1")

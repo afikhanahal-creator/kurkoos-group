@@ -67,7 +67,7 @@ function MailboxScan({ row, documents, can, onAction, onStart, go }) {
     <article className={`fin-scan ${active ? 'is-active' : ''}`} aria-label={`סריקה של ${mb.email}`}>
       <header className="fin-scan__head">
         <ProviderLogo name={mb.provider} />
-        <div className="fin-scan__who"><strong dir="ltr">{mb.email}</strong><small>{job ? `תקופה: ${date(job.date_from)} – ${date(job.date_to)}` : 'לא נבחרה תקופה לסריקה'}</small></div>
+        <div className="fin-scan__who"><small className="fin-scan__kicker">החשבון המחובר</small><strong dir="ltr">{mb.email}</strong><small>{job ? `תקופת הסריקה: ${date(job.date_from)} עד ${date(job.date_to)}` : 'לא נבחרה תקופה לסריקה'}</small></div>
         <Pill tone={tone}>{label}</Pill>
       </header>
       {job && (
@@ -77,14 +77,30 @@ function MailboxScan({ row, documents, can, onAction, onStart, go }) {
           <small className="fin-scan__phase">{job.status === 'running' || job.status === 'queued' ? (job.phase === 'verify' ? 'בקרת שלמות: עובר שוב על כל התקופה' : `סורק שבוע ${n(progress?.closed)} מתוך ${n(progress?.segments)}`) : job.error || (job.finished_at ? `הסתיימה ${dateTime(job.finished_at)}` : '')}</small>
         </div>
       )}
-      <dl className="fin-scan__stats">
-        <div><dt>הודעות שנבדקו</dt><dd>{n(job?.report?.checked ?? progress?.checked)}</dd></div>
-        <div><dt>חשבוניות</dt><dd>{n(count((d) => ['invoice', 'invoice_receipt', 'supplier_bill', 'proforma'].includes(d.doc_type)))}</dd></div>
-        <div><dt>קבלות</dt><dd>{n(count((d) => d.doc_type === 'receipt'))}</dd></div>
-        <div><dt>נפסלו</dt><dd>{n(job?.report?.not_relevant ?? progress?.skipped)}</dd></div>
-        <div><dt>דורשות בדיקה</dt><dd>{n(count((d) => d.status === 'review'))}</dd></div>
-        <div className={problems.length ? 'is-bad' : ''}><dt>שגיאות</dt><dd>{n(problems.length)}</dd></div>
-      </dl>
+      {(() => {
+        const checked = Number(job?.report?.checked ?? progress?.checked ?? 0)
+        const invoices = count((d) => ['invoice', 'invoice_receipt', 'supplier_bill', 'proforma'].includes(d.doc_type))
+        const receipts = count((d) => d.doc_type === 'receipt')
+        const others = docs.length - invoices - receipts
+        const skipped = Number(job?.report?.not_relevant ?? progress?.skipped ?? 0)
+        const dupes = Number(job?.report?.duplicates ?? 0)
+        const review = count((d) => d.status === 'review')
+        return (
+          <>
+            {/* what happened to the mail, left to right: checked → kept as documents → waiting for a person */}
+            <dl className="fin-scan__stats fin-scan__flow">
+              <div><dt>הודעות שנבדקו</dt><dd>{n(checked)}</dd><small>כל הודעה בתקופה נבדקת פעם אחת</small></div>
+              <div className="is-key"><dt>מסמכים שנשמרו</dt><dd>{n(docs.length)}</dd><small>{[invoices && `${n(invoices)} חשבוניות`, receipts && `${n(receipts)} קבלות`, others > 0 && `${n(others)} אחרים`].filter(Boolean).join(' · ') || 'עוד לא נמצאו'}</small></div>
+              <div className={review ? 'is-attn' : ''}><dt>ממתינים לבדיקה שלך</dt><dd>{n(review)}</dd><small>{review ? 'נקראו, ומחכים לאישור' : 'אין מה לאשר'}</small></div>
+            </dl>
+            <ul className="fin-scan__rest" aria-label="מה לא נשמר">
+              <li><b>{n(skipped)}</b> הודעות נבדקו ולא נשמרו: לא חשבונית ולא קבלה</li>
+              {dupes > 0 && <li><b>{n(dupes)}</b> כפילויות של מסמך שכבר במערכת</li>}
+              <li className={problems.length ? 'is-bad' : 'is-ok'}><b>{n(problems.length)}</b> {problems.length ? 'הודעות שלא הצלחנו לעבד (ברשימה למטה)' : 'הודעות שלא עובדו. שום הודעה לא נפלה'}</li>
+            </ul>
+          </>
+        )
+      })()}
       <p className="fin-muted fin-small">סריקה אחרונה: {mb.last_scan_at ? dateTime(mb.last_scan_at) : 'עוד לא'}</p>
       {job && ['done', 'incomplete'].includes(job.status) && (
         <details className="fin-scan__summary" open={job.status === 'incomplete'}>
@@ -170,15 +186,15 @@ export default function Scans() {
         <Empty title="עוד לא חוברה תיבת מייל" icon="mail" action={can('operate') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>אחרי החיבור בוחרים תקופה, והסוכן סורק אותה לבד.</Empty>
       ) : (
         <>
-          <dl className="fin-scan__totals" aria-label="סיכום כל התיבות">
+          {rows.length > 1 && <dl className="fin-scan__totals" aria-label="סיכום כל התיבות">
             <div><dt>תיבות מחוברות</dt><dd>{n(rows.length)}</dd></div>
             <div><dt>סריקות פעילות</dt><dd>{n(tot.active)}</dd></div>
             <div><dt>הודעות שנבדקו</dt><dd>{n(tot.checked)}</dd></div>
             <div><dt>מסמכים מהמייל</dt><dd>{n(tot.docs)}</dd></div>
             <div><dt>דורשים בדיקה</dt><dd>{n(tot.review)}</dd></div>
             <div className={tot.problems ? 'is-bad' : ''}><dt>הודעות שלא עובדו</dt><dd>{n(tot.problems)}</dd></div>
-          </dl>
-          <div className="fin-scan__grid">
+          </dl>}
+          <div className={`fin-scan__grid ${rows.length === 1 ? 'is-single' : ''}`}>
             {rows.map((r) => <MailboxScan key={r.mailbox.id} row={r} documents={documents} can={can} go={go} onAction={act} onStart={setStarting} />)}
           </div>
         </>

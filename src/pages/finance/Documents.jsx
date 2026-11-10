@@ -141,6 +141,15 @@ export default function Documents({ preset = 'all' }) {
     setBusy(''); setNote(ok === 1 ? 'כפילות אחת מוזגה' : `${ok} כפילויות מוזגו`); await reload()
   }
   const canDelete = (d) => can('manage') || (can('operate') && !['approved', 'sent'].includes(d.status))
+  // several irrelevant documents at once; an approved or sent one is left out unless an admin deletes it
+  const removePicked = async () => {
+    const list = picked.filter(canDelete); const left = picked.length - list.length
+    if (!list.length) return
+    if (!(await askConfirm({ title: 'מחיקת מסמכים', text: `למחוק ${list.length === 1 ? 'מסמך אחד' : `${list.length} מסמכים`} יחד עם הקבצים שלהם?${left ? ` ${left} מאושרים או שנשלחו יישארו.` : ''} אי אפשר לבטל, והפעולה נרשמת ביומן.`, ok: 'מחיקה', danger: true }))) return
+    setBusy('delete'); let ok = 0; let firstErr = ''
+    for (const d of list) { try { await api.deleteDocument(d); ok++ } catch (e) { firstErr ||= e.message } }
+    setBusy(''); setSel(new Set()); setNote(firstErr ? `נמחקו ${ok} מתוך ${list.length}: ${firstErr}` : ok === 1 ? 'המסמך נמחק' : `${ok} מסמכים נמחקו`); await reload()
+  }
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. הפעולה נרשמת בהיסטוריה.`, ok: 'מחיקה', danger: true }))) return
     try { await api.deleteDocument(d); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
@@ -260,6 +269,7 @@ export default function Documents({ preset = 'all' }) {
               { label: busy === 'zip' ? 'מכין…' : 'הורדת הקבצים (ZIP)', icon: 'download', onClick: downloadOriginals },
               { label: 'קובץ CSV', icon: 'download', onClick: () => sheet('csv') },
               can('upload') && { label: 'שליחה במייל', icon: 'mail', onClick: () => setSharing({ docs: picked, mode: 'email' }) },
+              picked.some(canDelete) && { label: 'מחיקת המסומנים (לא רלוונטיים)', icon: 'trash', danger: true, onClick: removePicked },
               can('export') && { label: 'ייצוא לתוכנה או למערכת חיצונית', icon: 'plug', onClick: exportSelected },
               edit && { label: 'דחייה', icon: 'close', onClick: () => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status)) },
               edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },
@@ -331,6 +341,7 @@ export default function Documents({ preset = 'all' }) {
                 <div className="fin-doccard__actions">
                   <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(link(d.id))}><Icon name="edit" size={15} /> צפייה ועריכה</button>
                   {can('approve') && d.status === 'review' && !(d.issues || []).some((i) => i.code === 'needs_confirmation') && <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" onClick={() => { setSel(new Set([d.id])); setConfirm({ label: 'approve', count: 1, skipped: 0, run: () => runBulk('approve', { status: 'approved' }, [d], 0) }) }}><Icon name="check" size={15} /> אישור</button>}
+                  {canDelete(d) && <button type="button" className="fin-icon-btn fin-icon-btn--danger fin-doccard__del" onClick={() => removeDoc(d)} aria-label={`מחיקת ${d.supplier_name || d.file_name || 'המסמך'}`} title="מחיקה (לא רלוונטי)"><Icon name="trash" size={18} /></button>}
                   <details className="fin-menu">
                     <summary className="fin-icon-btn" aria-label="פעולות נוספות"><Icon name="more" size={18} /></summary>
                     <div className="fin-menu__pop">

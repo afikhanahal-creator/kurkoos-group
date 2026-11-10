@@ -445,12 +445,17 @@ const chipLanded = page.url().endsWith('/mailboxes')
 await page.locator('.fin-modal .fin-seg button', { hasText: 'שנה' }).first().click()
 const oldModalShot = await shot('51-old-receipts')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
-await page.waitForSelector('.fin-note', { timeout: 60000 }); await page.waitForTimeout(800)
+// the history scan runs step after step while the window is open, with live progress, and says when it is done
+await page.locator('.fin-hist__top strong', { hasText: 'הסריקה הסתיימה' }).waitFor({ timeout: 120000 })
+const histStats = (await page.locator('.fin-hist__stats').innerText()).replace(/\s+/g, ' ')
+const histPct = await page.locator('.fin-hist__pct').innerText()
+const histShot = await shot('51b-history-scan-done')
+await page.locator('.fin-modal__foot .fin-btn--primary', { hasText: 'סיום' }).click(); await page.waitForTimeout(800)
 const oldAfter = sql("select count(*)||'|'||coalesce((select source from fin_documents where file_name='old-invoice.pdf'),'-') from fin_documents where file_name='old-invoice.pdf'")
 const boxState = sql("select sync_from||'|'||backfill_pending from fin_mailboxes where email='invoices@kurkoos.test'")
 const periodAfter = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const gapQuery = (await fetch(`${FAKES}/__log`).then((r) => r.json())).gmailQueries.filter((q2) => /before:/.test(q2)).length
-record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1, [accountsShot, oldModalShot])
+record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב. החלון מראה התקדמות עד 100%, כמה נכנסו ומה העלות', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}; חלון: ${histPct} ${histStats}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1 && histPct === '100%' && /נכנסו למערכת\s*[1-9]/.test(histStats) && /עלות עד עכשיו/.test(histStats), [accountsShot, oldModalShot, histShot])
 
 // MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
 await nav('מספרי WhatsApp')
@@ -1485,6 +1490,45 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   record('MOMENTS', 'רגעים: העלאה, הורדה ושליחה', 'בהעלאה המסמך עף אל "חשבוניות חדשות" ונעלם בסוף; בהורדה הקובץ יורד והודעה אומרת מה ירד; כל רגע נגמר בהודעה כתובה; במצב "הפחתת תנועה" רק ההודעה, בלי תנועה',
     `עף: ${chips} ונשארו ${leftover}; הודעה: ${upToast.replace(/\s+/g, ' ').slice(0, 70)}; הורדה: ${dl ? dl.suggestedFilename() : 'לא ירד'}, ${dlToast.replace(/\s+/g, ' ').slice(0, 50)}; הפחתת תנועה: ${calmChips} תנועות, ${calmToast.replace(/\s+/g, ' ').slice(0, 40)}`,
     chips > 0 && leftover === 0 && /המסמך התקבל/.test(upToast) && /moment-a\.pdf/.test(upToast) && !!dl && /הקובץ הורד/.test(dlToast) && calmChips === 0 && /התקבל/.test(calmToast), [flyShot, dlShot])
+}
+
+// FORMATS: an email with a ZIP (an invoice and a newsletter inside), a Word invoice, an Excel payment demand and a scanned
+// TIFF sent as octet-stream. Added to the fake mailbox here, at the end, so no earlier count changes.
+{
+  const { zipOf, docxOf, xlsxOf, tiffOf } = await import('./formats.mjs')
+  await page.setContent('<div dir="rtl" style="font:16px sans-serif;padding:40px"><h1>זיפ מים בע״מ</h1><p>חשבונית מס 9901</p><p>מים לאתר, אוקטובר</p><p>סה״כ לתשלום 472.00</p></div>')
+  const zipPdf = await page.pdf({ format: 'A4' })
+  await page.setContent('<div style="font:16px sans-serif;padding:40px"><h1>Autumn newsletter</h1><p>New products</p></div>')
+  const newsPdf = await page.pdf({ format: 'A4' })
+  fs.writeFileSync(`${FIX}/bundle.zip`, zipOf([{ name: 'docs/zip-inv.pdf', data: zipPdf }, { name: 'newsletter.pdf', data: newsPdf }]))
+  fs.writeFileSync(`${FIX}/scan_0099.docx`, docxOf(['דוקס הנדסה בע״מ', 'חשבונית מס 5512', 'תכנון קונסטרוקציה', 'סה״כ 1,180.00']))
+  fs.writeFileSync(`${FIX}/bill.xlsx`, xlsxOf([['דרישת תשלום', 'אקסל שירותים'], ['מספר', 'DT-77'], ['סה״כ', 2360]]))
+  fs.writeFileSync(`${FIX}/fax-0012.tif`, tiffOf(400, 560))
+  const hashOf = (b) => crypto.createHash('sha256').update(b).digest('hex')
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
+  const saved = JSON.stringify(fx)
+  const base = fx.answers[Object.keys(fx.answers)[0]]
+  const ans = (o) => ({ ...base, supplier_vat_id: '', customer_name: '', customer_vat_id: '', category: 'אחר', vat_rate: 18, ...o })
+  fx.answers[hashOf(zipPdf)] = ans({ supplier_name: 'זיפ מים בע״מ', doc_number: '9901', issue_date: new Date().toISOString().slice(0, 10), amount_before_vat: 400, vat_amount: 72, total_amount: 472, description: 'מים לאתר' })
+  fx.textAnswers['דוקס הנדסה'] = ans({ supplier_name: 'דוקס הנדסה בע״מ', doc_number: '5512', issue_date: new Date().toISOString().slice(0, 10), amount_before_vat: 1000, vat_amount: 180, total_amount: 1180, description: 'תכנון קונסטרוקציה' })
+  fx.textAnswers['אקסל שירותים'] = ans({ doc_type: 'supplier_bill', document_class: 'payment_demand', supplier_name: 'אקסל שירותים', doc_number: 'DT-77', issue_date: new Date().toISOString().slice(0, 10), amount_before_vat: 2000, vat_amount: 360, total_amount: 2360, description: 'דרישת תשלום' })
+  fx.dimAnswers['400x560'] = ans({ supplier_name: 'פקס הדפסות', doc_number: 'FX-12', issue_date: new Date().toISOString().slice(0, 10), amount_before_vat: 100, vat_amount: 18, total_amount: 118, description: 'הדפסות' })
+  fx.mailboxes['invoices@kurkoos.test'].messages.push({ id: 'm20', date: new Date(Date.now() - 3600_000).toISOString(), subject: 'מסמכים', from: 'משרד <office@formats.test>', text: 'מצורפים', files: ['bundle.zip', 'scan_0099.docx', 'bill.xlsx', 'fax-0012.tif'] })
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  await fetch(`${FAKES}/__reset`).catch(() => {})
+  const boxId = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
+  const sync = await api(await login('admin@kurkoos.test', 'Passw0rd!x'), { action: 'sync', mailbox_id: boxId })   // a fresh token: the first one has expired by now
+  const got = sql("select string_agg(file_name||'='||coalesce(supplier_name,'-')||'='||split_part(file_mime,'/',2), ' | ' order by file_name) from fin_documents where email_message_id='m20'")
+  const skipped = sql("select string_agg(file_name, ' | ') from fin_skipped where email_subject='מסמכים'")
+  const flog = await fetch(`${FAKES}/__log`).then((r) => r.json())
+  const cost = sql("select coalesce(max((details->>'cost_usd')::numeric), 0) from fin_agent_runs where agent='ocr' and started_at > now() - interval '5 minutes'")
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  await go('/documents'); await page.waitForTimeout(900)
+  const fmtShot = await shot('118-formats')
+  record('FORMATS', 'ZIP, Word, Excel ו-TIFF מהמייל', 'בתוך ZIP: החשבונית נקלטת והניוזלטר מדולג בלי קריאה; Word ו-Excel נקראים כטקסט; TIFF שהגיע כ-octet-stream מזוהה לפי השם והופך לתמונה; כל קריאה של תוכן ממייל מסומנת כ"מידע ולא הוראות"; העלות נרשמת',
+    `נקלטו: ${got || '—'}; דולגו: ${skipped || '—'}; עם הגנה: ${flog.guarded || 0}, בלי: ${flog.unguarded || 0}; עלות: $${cost}; סנכרון: ${JSON.stringify(sync).slice(0, 80)}`,
+    /bundle\.zip › zip-inv\.pdf=זיפ מים/.test(got || '') && /scan_0099\.docx=דוקס הנדסה בע״מ=vnd\.openxmlformats-officedocument\.wordprocessingml\.document/.test(got || '') && /bill\.xlsx=אקסל שירותים/.test(got || '') && /fax-0012\.tif=פקס הדפסות=tiff/.test(got || '') && /newsletter\.pdf/.test(skipped || '') && (flog.guarded || 0) >= 4 && !(flog.unguarded || 0) && Number(cost) > 0,
+    [fmtShot])
 }
 
 // dark mode screenshot

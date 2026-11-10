@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, recentMonths } from './format.js'
@@ -94,12 +94,11 @@ export default function Reports() {
   }, [kind, booked, scoped, months, businesses, projects, categories, to])
 
   const name = `${REPORTS.find((r) => r[0] === kind)[1]}_${from}_${to}${biz ? `_${nameOf(businesses, biz)}` : ''}`
-  // on a phone the month reports read newest first, top to bottom (the table on a desktop and the exports stay in calendar order)
-  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches)
-  useEffect(() => { const mq = window.matchMedia('(max-width: 760px)'); const on = () => setPhone(mq.matches); mq.addEventListener('change', on); return () => mq.removeEventListener('change', on) }, [])
+  // the month reports read newest first, top to bottom (November, October, September…); the CSV/Excel exports stay in
+  // calendar order, as accounting software expects
   const byMonth = ['monthly', 'vat', 'collection'].includes(kind)
   const shown = report.rows.map((r, n) => ({ r, n }))
-  if (phone && byMonth) shown.reverse()
+  if (byMonth) shown.reverse()
   const isMoney = (i) => !report.count && typeof report.rows[0]?.[i] === 'number' && report.head[i] !== 'מסמכים' && report.head[i] !== 'ניסיונות'
   const totals = report.rows.length && report.chart ? report.head.map((_, i) => (i === 0 ? 'סה״כ' : report.rows.reduce((a, r) => a + (typeof r[i] === 'number' ? r[i] : 0), 0))) : null
 

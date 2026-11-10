@@ -36,6 +36,7 @@ const ROLES = {
   'integration-test': ['admin', 'finance_manager'],
   status: ['admin', 'finance_manager', 'employee', 'accountant'],
   backfill: ['admin', 'finance_manager'],
+  'scan-step': ['admin', 'finance_manager'],
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
@@ -239,7 +240,16 @@ export default async function handler(req, res) {
         const boxes = (await sb(`fin_mailboxes?status=in.(active,error)${body.mailbox_id ? `&id=eq.${q(body.mailbox_id)}` : ''}&select=id,sync_from,email,backfill_pending,backfill_until`)) || []
         for (const b of boxes) if (!b.sync_from || b.sync_from > from) await patch(`fin_mailboxes?id=eq.${b.id}`, { sync_from: from, backfill_pending: true, backfill_until: b.backfill_pending && b.backfill_until ? b.backfill_until : b.sync_from || null })
         await audit('mailbox', body.mailbox_id || 'all', 'backfill', { from, mailboxes: boxes.length }, user)
-        res.status(200).json({ ok: true, mailboxes: boxes.length, results: body.run === false ? [] : await syncAll({ mailboxId: body.mailbox_id, trigger: 'backfill', user }) })
+        const results = body.run === false ? [] : await syncAll({ mailboxId: body.mailbox_id, trigger: 'backfill', user, onlyBackfill: true })
+        res.status(200).json({ ok: true, mailboxes: boxes.length, results, cost_usd: results.cost_usd || 0 })
+        return
+      }
+      case 'scan-step': {
+        // one step of the history scan (about 45 s): the screen calls it again while it is open, the nightly run goes on
+        // when it is closed. Only mailboxes that still have old mail to read take part.
+        const results = await syncAll({ trigger: 'backfill', user, onlyBackfill: true })
+        const pending = (await sb('fin_mailboxes?status=in.(active,error)&backfill_pending=is.true&select=id')) || []
+        res.status(200).json({ ok: true, results, cost_usd: results.cost_usd || 0, done: !pending.length })
         return
       }
       case 'cloud-auth-url': {

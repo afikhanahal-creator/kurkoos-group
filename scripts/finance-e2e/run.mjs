@@ -50,7 +50,8 @@ page.on('console', (m) => { if (m.type() === 'error' && !/favicon|websocket|real
 page.on('dialog', (d) => d.accept())
 const shot = async (name, p = page) => { await p.waitForTimeout(350); await p.screenshot({ path: `${OUT}/${name}.png` }); return `${name}.png` }
 const go = async (path, p = page) => { await p.goto(`${APP}${path}`); await p.waitForLoadState('networkidle').catch(() => {}); await p.waitForTimeout(500) }
-const modalSave = async (p = page) => { await p.locator('.fin-modal__foot .fin-btn--primary').first().click(); await p.waitForTimeout(900) }
+// waits for the dialog to close (a save can take longer than a fixed pause); a dialog that stays open (a validation error) goes on after 5 s
+const modalSave = async (p = page) => { await p.locator('.fin-modal__foot .fin-btn--primary').first().click(); await p.waitForTimeout(900); await p.waitForSelector('.fin-modal', { state: 'detached', timeout: 5000 }).catch(() => {}) }
 const lbl = (re, p = page) => p.getByLabel(re).first()
 const waitProcessed = async (names) => { for (let i = 0; i < 40; i++) { if (sql(`select count(*) from fin_documents where file_name in (${names.map((n) => `'${n}'`).join(',')}) and status <> 'processing'`) === String(names.length)) return true; await page.waitForTimeout(500) } return false }
 const nav = async (label) => {

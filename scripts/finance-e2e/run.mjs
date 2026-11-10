@@ -541,6 +541,7 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   const run = (body = {}) => api(adminToken, { action: 'drive-run', target_id: driveTarget, ...body })
   const row = (id) => sql(`select status||'|'||coalesce(attempts,0)||'|'||coalesce(organized_name,'')||'|'||coalesce(folder_path,'')||'|'||coalesce(verify_status,'') from fin_drive_files where target_id='${driveTarget}' and document_id='${id}'`)
   const copies = async (id) => (await dget()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
+  await run()   // the queue starts empty, so each step below acts on the document it names
   // folders: the main folder, a folder per company, years and "MM - month", each once, kept by its Drive id
   const items0 = await dget()
   const folderPaths = items0.filter((f) => f.mimeType.endsWith('folder')).map((f) => f.path)
@@ -579,8 +580,8 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   await run()
   const resumed = row(mid).split('|')[0]; const copiesMid = await copies(mid)
   // a correction of the company: the archive's own file moves to the other company's folder (moved, not copied)
-  const other = sql("select id||'|'||name from fin_businesses order by sort desc, name desc limit 1").split('|')
-  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' and d.project_id is null and d.business_id is distinct from '${other[0]}' order by d.created_at desc limit 1`)
+  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' and d.project_id is null order by d.created_at desc limit 1`)
+  const other = sql(`select id||'|'||name from fin_businesses where id is distinct from (select business_id from fin_documents where id='${moveDoc}') order by sort desc, name desc limit 1`).split('|')
   sql(`update fin_documents set business_id='${other[0]}' where id='${moveDoc}'`)
   const queuedAfterFix = row(moveDoc).split('|')[0]
   await run()

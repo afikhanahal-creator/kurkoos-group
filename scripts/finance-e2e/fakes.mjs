@@ -30,6 +30,7 @@ const hookFails = {}
 const log = { waFiles: [], emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
 const driveItems = []   // { id, name, parents, folder, size, md5, appProperties, trashed }
 const driveFail = { upload503: 0, lose: 0 }
+let driveSeq = 0   // ids never come back after a file is removed, as in Drive
 const fixtures = () => JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
 const failed = {}   // sha256 → how many times Claude already failed on it
 let nextAccount = null
@@ -249,7 +250,7 @@ const server = http.createServer(async (req, res) => {
     const b = JSON.parse(await readBody(req))
     const par = b.parents?.[0] || 'root'
     if (par !== 'root' && !driveItems.some((x) => x.id === par && x.folder && !x.trashed)) return send(res, 404, { error: { message: 'File not found: parent' } })
-    const id = `fld${driveItems.length + 1}`
+    const id = `fld${++driveSeq}`
     driveItems.push({ id, name: b.name, parents: [par], folder: true, appProperties: b.appProperties || {} }); return send(res, 200, { id })
   }
   if (p === '/drive-upload/files') {
@@ -261,7 +262,7 @@ const server = http.createServer(async (req, res) => {
     if (driveFail.upload503 > 0) { driveFail.upload503--; return send(res, 503, { error: { message: 'Backend Error' } }) }
     const par = meta.parents?.[0]
     if (!driveItems.some((x) => x.id === par && x.folder && !x.trashed)) return send(res, 404, { error: { message: 'File not found: parent' } })
-    const id = `file${driveItems.length + 1}`
+    const id = `file${++driveSeq}`
     driveItems.push({ id, name: meta.name, parents: [par], folder: false, size: content.length, md5: crypto.createHash('md5').update(content).digest('hex'), appProperties: meta.appProperties || {} })
     log.drive.push(`${dpath(par)}/${meta.name}`)
     if (driveFail.lose > 0) { driveFail.lose--; return send(res, 500, { error: { message: 'Internal Error' } }) }
@@ -294,7 +295,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; driveSeq = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

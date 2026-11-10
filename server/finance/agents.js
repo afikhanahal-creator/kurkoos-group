@@ -17,6 +17,16 @@ export function newRuns(trigger) {
 export async function closeRuns(runs) {
   for (const r of Object.values(runs)) await r.done()
 }
+/* A run whose function was killed (a timeout, a deploy) stays "running" for ever and the agents screen shows it as
+   work in progress. After 15 minutes it is closed as cut off. It did not finish, so it is not counted as a success. */
+export async function closeStaleRuns() {
+  const before = encodeURIComponent(new Date(Date.now() - 15 * 60_000).toISOString())
+  await sb(`fin_agent_runs?status=eq.running&started_at=lt.${before}`, { method: 'PATCH', body: { status: 'partial', finished_at: new Date().toISOString(), details: { interrupted: true, error: 'הריצה נקטעה לפני שהסתיימה' } }, prefer: 'return=minimal' })
+  // minute runs of the scan that did nothing say nothing: after an hour they are removed (the scan's own tables keep
+  // what was read, message by message)
+  const hour = encodeURIComponent(new Date(Date.now() - 3600_000).toISOString())
+  await sb(`fin_agent_runs?trigger=eq.scan&processed=eq.0&errors=eq.0&started_at=lt.${hour}`, { method: 'DELETE', prefer: 'return=minimal' })
+}
 /* an upload touches only the reading agents */
 export async function newDocRuns(trigger) {
   const ocr = await agentRun('ocr', trigger); const validation = await agentRun('validation', trigger); const classification = await agentRun('classification', trigger)
@@ -168,6 +178,7 @@ export async function dailySummary({ origin = '', email = true } = {}) {
 
 /* the whole daily run */
 export async function runDaily(origin) {
+  await closeStaleRuns().catch(() => {})
   const started = Date.now()
   const out = []
   out.push(await automation('daily_scan', () => syncAll({ trigger: 'cron', started })))

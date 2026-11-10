@@ -166,7 +166,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     const tone = its.some((i) => i.level === 'error') ? 'error' : its.length || (typeof c === 'number' && c < 0.7) ? 'warn' : (doc[k] === null || doc[k] === '' || doc[k] === undefined) && ['supplier_name', 'doc_number', 'issue_date', 'total_amount'].includes(k) ? 'error' : ''
     return (
       <label className={`fin-field ${wide ? 'fin-field--wide' : ''} ${tone ? `fin-field--${tone}` : ''}`}>
-        <span className="fin-field__label">{label || FIELD_LABEL[k]}{typeof c === 'number' && <Confidence value={c} />}</span>
+        <span className="fin-field__label">{label || FIELD_LABEL[k]}{typeof c === 'number' && c < 0.9 && <Confidence value={c} />}</span>
         {children || (type === 'date' ? <DateField value={form[k] || ''} onChange={(v) => set(k)({ target: { value: v } })} disabled={!editable} /> : null) || <input type={type} value={form[k] ?? ''} onChange={set(k)} disabled={!editable} step={type === 'number' ? '0.01' : undefined} inputMode={type === 'number' ? 'decimal' : undefined} onBlur={type === 'number' ? calc : undefined} dir={['doc_number', 'supplier_vat_id'].includes(k) ? 'ltr' : undefined} />}
         {its.map((i) => <span key={i.code} className={`fin-field__hint fin-field__hint--${i.level}`}>{i.message}</span>)}
       </label>
@@ -261,6 +261,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                   )
                 })()}
                 <div className="fin-form__grid">
+                  <h4 className="fin-form__sec fin-field--wide">ספק</h4>
                   {F({ k: 'supplier_name', wide: true })}
                   {(supplierRow || doc.suggestions?.supplier) && (
                     <div className="fin-field--wide fin-supplier-link">
@@ -271,16 +272,19 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                       </> : <span className="fin-muted">לא נמצא ספק תואם</span>}
                     </div>
                   )}
-                  {F({ k: 'supplier_vat_id' })}
+                  {F({ k: 'supplier_vat_id', wide: true })}
+                  <h4 className="fin-form__sec fin-field--wide">המסמך</h4>
                   {F({ k: 'doc_type', children: <><Select value={form.doc_type || ''} onChange={set('doc_type')} disabled={!editable}>{Object.entries(DOC_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></> })}
                   {F({ k: 'doc_number' })}
                   {F({ k: 'issue_date', type: 'date' })}
                   {F({ k: 'payment_date', type: 'date' })}
                   {F({ k: 'due_date', type: 'date' })}
                   {F({ k: 'currency', children: <><Select value={form.currency || 'ILS'} onChange={set('currency')} disabled={!editable}>{['ILS', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}</Select></> })}
+                  <h4 className="fin-form__sec fin-field--wide">סכומים</h4>
                   {F({ k: 'amount_before_vat', type: 'number' })}
                   {F({ k: 'vat_amount', type: 'number' })}
-                  {F({ k: 'total_amount', type: 'number' })}
+                  {F({ k: 'total_amount', type: 'number', wide: true })}
+                  <h4 className="fin-form__sec fin-field--wide">שיוך</h4>
                   {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><Select value={form.category_id || ''} onChange={set('category_id')} disabled={!editable}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</Select></> })}
                   <div className="fin-field--wide">{Suggest({ k: 'category' })}</div>
                   {F({ k: 'business_id', children: <><Select value={form.business_id || ''} onChange={set('business_id')} disabled={!editable}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></> })}

@@ -135,6 +135,7 @@ export default function Dashboard() {
         </section>
       )}
 
+      <div className="fin-alertgrid">
       {m.numbers > 0 && ops && (
         <button type="button" className="fin-alertrow fin-alertrow--warn" onClick={() => go('/documents?status=numbers')}>
           <Icon name="alert" size={18} /><span>{m.numbers === 1 ? 'מסמך אחד שהמערכת לא בטוחה בסכומים שלו: אשרו את המספרים' : `${m.numbers} מסמכים שהמערכת לא בטוחה בסכומים שלהם: אשרו את המספרים`}</span><Icon name="next" size={16} />
@@ -145,6 +146,7 @@ export default function Dashboard() {
           <Icon name="alert" size={18} /><span>{m.attention === 1 ? 'מסמך אחד לא נקרא או חשוד ככפול' : `${m.attention} מסמכים לא נקראו, חשודים ככפולים או עם שגיאה`}</span><Icon name="next" size={16} />
         </button>
       )}
+      </div>
 
       <div className="fin-home__grid">
         <section className="fin-panelcard" aria-label="מסמכים אחרונים">

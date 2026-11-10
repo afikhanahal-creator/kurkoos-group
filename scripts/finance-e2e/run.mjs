@@ -877,7 +877,7 @@ const tickA = await api(adminToken, { action: 'tick' })
 const tickBusy = await api(adminToken, { action: 'tick' })
 record('REC', 'התאוששות וניסיונות חוזרים', 'מסמך שנתקע "בעיבוד" (פונקציה שנפלה) נקרא מחדש; קריאה שנכשלה מחכה לסריקת הלילה (לא במהלך היום), ואחרי 3 ניסיונות עוצרת לטיפול ידני; בלילה היא מצליחה; שתי ריצות לא רצות במקביל',
   `ניסיון חוזר: ${back.night} UTC (בעוד ${back.a1} דק׳, הלילה הבא), אחרי 3: ${back.a3}; ראשון: ${flaky1.join('/')}; טיק 1: ${JSON.stringify(tick1.data.retry)} → תקוע: ${afterTick1.stuck}, נכשל: ${afterTick1.flaky}; טיק 2: ${JSON.stringify(tick2.data.retry)} → ${flaky2.join('/')}; טיק נוסף מיד: ${JSON.stringify(tickBusy.data)}`,
-  back.night === '00:22' && Math.abs(back.a1 - (toNight - 1)) <= 1 && back.a2 === back.a1 && back.a3 === null && flaky1[0] === 'failed' && flaky1[1] === '1' && flaky1[2] === 'failed' && Number(flaky1[3]) >= 59 && tick1.data.retry?.unstuck === 1 && afterTick1.stuck === 'review' && afterTick1.flaky === 'failed|1'
+  back.night === '00:22' && Math.abs(back.a1 - (toNight - 1)) <= 1 && back.a2 === back.a1 && back.a3 === null && flaky1[0] === 'failed' && flaky1[1] === '1' && flaky1[2] === 'failed' && Number(flaky1[3]) >= Math.min(59, toNight - 3) && tick1.data.retry?.unstuck === 1 && afterTick1.stuck === 'review' && afterTick1.flaky === 'failed|1'
     && flaky2[0] === 'review' && flaky2[1] === '2' && flaky2[3] === '-' && flaky2[4] === 'גרניט הנדסה' && tickBusy.data.skipped === 'busy' && !!tickA.data)
 
 // SCHED: the night collection runs inside 00:00–05:00 in Israel, the report around 07:00

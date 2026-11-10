@@ -14,7 +14,7 @@ const dropboxLink = (path) => `https://www.dropbox.com/home${encodeURI(String(pa
 const IL_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
 const israelDay = (t) => { const d = new Date(t || Date.now()); return Number.isNaN(d.getTime()) ? '' : IL_DAY.format(d) }
 export const HEB_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
-const TYPE_HE = { invoice: 'חשבונית מס', invoice_receipt: 'חשבונית מס-קבלה', receipt: 'קבלה', credit: 'חשבונית זיכוי', supplier_bill: 'דרישת תשלום', payment_confirmation: 'אישור תשלום', proforma: 'חשבון עסקה', quote: 'הצעת מחיר', other: 'מסמך' }
+export const TYPE_HE = { invoice: 'חשבונית מס', invoice_receipt: 'חשבונית מס-קבלה', receipt: 'קבלה', credit: 'חשבונית זיכוי', supplier_bill: 'דרישת תשלום', payment_confirmation: 'אישור תשלום', proforma: 'חשבון עסקה', quote: 'הצעת מחיר', other: 'מסמך' }
 const asciiJson = (o) => JSON.stringify(o).replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
 
 export const CLOUD = {
@@ -97,7 +97,7 @@ export const CLOUD = {
   },
 }
 
-async function tokenFor(target) {
+export async function tokenFor(target) {
   const s = await one(`fin_cloud_secrets?target_id=eq.${target.id}&select=*`)
   if (!s) { const e = new Error('החיבור חסר. חברו מחדש'); e.auth = true; throw e }
   if (s.access_token && s.expires_at && new Date(s.expires_at).getTime() - Date.now() > 60_000) return { token: s.access_token, secret: s }
@@ -133,14 +133,21 @@ export function fileNameFor(doc) {
 
 /* copies the matching documents that were not copied yet. Idempotent: fin_cloud_synced holds one row per (folder, document). */
 export async function syncCloud({ targetId, started = Date.now(), trigger = 'manual' } = {}) {
-  const targets = (await sb(`fin_cloud_targets?enabled=eq.true&status=in.(active,error)${targetId ? `&id=eq.${targetId}` : ''}&select=*`)) || []
-  if (!targets.length) return []
+  const all = (await sb(`fin_cloud_targets?enabled=eq.true&status=in.(active,error)${targetId ? `&id=eq.${targetId}` : ''}&select=*`)) || []
+  // Google Drive is the archive (archive.js): queue, verified uploads, its own folders. Dropbox keeps the plain copy below.
+  const results = []
+  for (const t of all.filter((x) => x.provider === 'gdrive')) {
+    const { tick } = await import('./archive.js')
+    const [r] = await tick({ started, trigger, targetId: t.id })
+    results.push({ target: t.id, provider: 'gdrive', copied: r?.verified || 0, failed: r?.failed || 0, retry: r?.retry || 0, busy: !!r?.busy, error: r?.error || null })
+  }
+  const targets = all.filter((x) => x.provider !== 'gdrive')
+  if (!targets.length) return results
   const run = await agentRun('cloud', trigger)
   const names = {
     businesses: Object.fromEntries(((await sb('fin_businesses?select=id,name')) || []).map((b) => [b.id, b.name])),
     projects: Object.fromEntries(((await sb('fin_projects?select=id,name')) || []).map((p) => [p.id, p.name])),
   }
-  const results = []
   for (const t of targets) {
     // lock: the cron and the button must not copy the same target at the same time
     const locked = await rpc('fin_cloud_lock', { p_target: t.id }).catch(() => false)
@@ -199,6 +206,11 @@ export async function saveDocsToCloud({ ids, targetId, user }) {
     if (!ok) outside.push(d.id)
     return ok
   })
+  if (target.provider === 'gdrive') {
+    const { saveNow } = await import('./archive.js')
+    const res = await saveNow({ target, ids: list.map((d) => d.id), user })
+    return { provider: target.provider, account: target.account_email, results: [...outside.map((id) => ({ id, ok: false, error: 'המסמך לא שייך לחברה של התיקייה הזו או שאין לך הרשאה אליו' })), ...res] }
+  }
   const done = Object.fromEntries(((await sb(`fin_cloud_synced?target_id=eq.${target.id}&document_id=in.(${ids.map((i) => q(i)).join(',')})&select=document_id,web_link,path`)) || []).map((r) => [r.document_id, r]))
   const { token, secret } = await tokenFor(target)
   const cache = { ...(secret.folder_cache || {}) }
@@ -237,7 +249,7 @@ export async function testCloud({ targetId, user }) {
   try {
     const { token, secret } = await tokenFor(target); steps.push('התחברות')
     const cache = { ...(secret.folder_cache || {}) }
-    const parts = [safe(target.folder) || 'Kurkoos Finance', 'בדיקת חיבור']
+    const parts = [safe(target.provider === 'gdrive' ? target.root_name || 'ארכיון מסמכים עסקי' : target.folder) || 'Kurkoos Finance', 'בדיקת חיבור']
     const at = new Date()
     const name = `בדיקה_${at.toISOString().slice(0, 19).replace(/[:T]/g, '-')}.txt`
     const buf = Buffer.from(`בדיקת חיבור של KURKOOS FINANCE\n${at.toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}\nאפשר למחוק את הקובץ הזה.\n`, 'utf8')

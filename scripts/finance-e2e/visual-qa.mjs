@@ -22,7 +22,7 @@ const ROUTES = [
   ['reports', '/reports'], ['companies', '/companies'], ['company', `/companies/${one('select id from fin_businesses order by sort limit 1')}`],
   ['projects', '/projects'], ['project', `/projects/${one('select id from fin_projects order by created_at limit 1')}`], ['suppliers', '/suppliers'],
   ['supplier', `/suppliers/${one('select id from fin_suppliers order by created_at limit 1')}`], ['categories', '/categories'], ['data', '/data'],
-  ['automations', '/automations'], ['agents', '/agents'], ['mailboxes', '/mailboxes'], ['scanners', '/scanners'], ['integrations', '/integrations'],
+  ['automations', '/automations'], ['agents', '/agents'], ['mailboxes', '/mailboxes'], ['scans', '/scans'], ['drive', '/drive'], ['scanners', '/scanners'], ['integrations', '/integrations'],
   ['cloud', '/cloud'], ['activity', '/activity'], ['delivery', '/delivery'], ['exports', '/exports'], ['users', '/users'], ['settings', '/settings'],
 ]
 

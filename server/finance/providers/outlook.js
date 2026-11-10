@@ -57,3 +57,23 @@ export async function getMessage(accessToken, id) {
     })),
   }
 }
+
+/* the scan engine lists every message of a time window, page by page, in every folder except junk, deleted items and
+   drafts (sent items only when asked); the next-page link is the checkpoint */
+const SKIP_FOLDERS = ['junkemail', 'deleteditems', 'drafts']
+const folderCache = new Map()
+async function skippedFolders(accessToken, includeSent) {
+  const key = `${accessToken.slice(-12)}|${includeSent}`
+  if (!folderCache.has(key)) {
+    const ids = []
+    for (const f of [...SKIP_FOLDERS, ...(includeSent ? [] : ['sentitems'])]) { try { ids.push((await api(accessToken, `/mailFolders/${f}?$select=id`)).id) } catch { /* a folder that does not exist */ } }
+    folderCache.set(key, new Set(ids.filter(Boolean)))
+  }
+  return folderCache.get(key)
+}
+export async function listPage(accessToken, { from, to, pageToken = '', includeSent = false }) {
+  const skip = await skippedFolders(accessToken, includeSent)
+  const url = pageToken || `/messages?$filter=${encodeURIComponent(`receivedDateTime ge ${from.toISOString()} and receivedDateTime lt ${to.toISOString()}`)}&$select=id,parentFolderId&$orderby=receivedDateTime desc&$top=250`
+  const page = await api(accessToken, url)
+  return { ids: (page.value || []).filter((m) => !skip.has(m.parentFolderId)).map((m) => m.id), next: page['@odata.nextLink'] || '', estimate: null }
+}

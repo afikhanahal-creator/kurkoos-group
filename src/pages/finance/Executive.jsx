@@ -190,8 +190,9 @@ export default function Executive() {
                 </div>
               )
             })()}
-            <div className="fin-x-chart" ref={(el) => { if (el && el.scrollWidth > el.clientWidth && !el.dataset.placed) { el.dataset.placed = '1'; el.scrollLeft = getComputedStyle(el).direction === 'rtl' ? -el.scrollWidth : el.scrollWidth } }}>
+            <div className="fin-x-chart">
               <div className="fin-x-axis" aria-hidden="true">{ticks.map((v) => <span key={v} style={{ bottom: `${(v / top) * 100}%` }}><em>{v ? short(v).replace(' ₪', '') : '0'}</em></span>)}</div>
+              <div className="fin-x-scroll fin-scroll-x" ref={(el) => { if (el && el.scrollWidth > el.clientWidth && el.dataset.placed !== String(months.length)) { el.dataset.placed = String(months.length); el.scrollLeft = getComputedStyle(el).direction === 'rtl' ? -el.scrollWidth : el.scrollWidth } }}>
               <div className="fin-x-trend" style={{ '--n': months.length }} onPointerLeave={() => setHover(null)}>
                 <div className="fin-x-plot" aria-hidden="true">
                   {ticks.map((v) => <i key={v} style={{ bottom: `${(v / top) * 100}%` }} />)}
@@ -212,6 +213,7 @@ export default function Executive() {
                     </button>
                   )
                 })}
+              </div>
               </div>
             </div>
             <p className="fin-x-hint">לחיצה על חודש מציגה את כל הסקירה לאותו חודש. <span className="fin-x-legend"><i className="is-now" /> בפועל <i className="is-ly" /> שנה קודמת</span></p>

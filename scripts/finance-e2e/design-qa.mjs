@@ -197,7 +197,7 @@ for (const w of [1440, 390]) {
 {
   const { ctx, page } = await session(1440, { dpr: 2 })
   await open(page, '/documents', 900)
-  const row = page.locator('.fin-table tbody tr').filter({ has: page.locator('.fin-peek') }).filter({ hasText: '₪' }).first()   // a read invoice with a real PDF
+  const row = page.locator('.fin-table tbody tr[data-mime="application/pdf"]').filter({ has: page.locator('.fin-peek') }).filter({ hasText: '₪' }).first()   // a read invoice with a real PDF (a scanned TIFF is low resolution by nature)
   await row.hover(); await page.waitForTimeout(150)
   const name = row.locator('.fin-peek').first()
   const t0 = Date.now(); await name.hover()

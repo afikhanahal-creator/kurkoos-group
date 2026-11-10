@@ -172,6 +172,8 @@ export async function runDaily(origin) {
   const out = []
   out.push(await automation('daily_scan', () => syncAll({ trigger: 'cron', started })))
   out.push(await automation('retry_failed', () => retryFailed({ started, trigger: 'cron' })))
+  // the scan engine runs every minute through pg_cron; if that is not set up yet, the night run moves active scans on too
+  try { const { tick, ensureCoverage } = await import('./scan.js'); out.push({ key: 'scan_coverage', result: await ensureCoverage({}) }); out.push({ key: 'scan_engine', result: await tick({ started, trigger: 'cron' }) }) } catch (e) { out.push({ key: 'scan_engine', error: String(e.message || e).slice(0, 200) }) }
   out.push(await automation('connection_alerts', async () => {
     const bad = (await sb('fin_mailboxes?status=eq.error&select=email,last_error')) || []
     if (!bad.length) return { alerts: 0 }
@@ -190,6 +192,8 @@ export async function runDaily(origin) {
   }))
   out.push(await automation('outbound', async () => { const { flushOutbound } = await import('./outbound.js'); return flushOutbound({ max: 200, started, budgetMs: 40_000, trigger: 'cron' }) }))
   out.push(await automation('cloud_sync', async () => { const { syncCloud } = await import('./cloud.js'); return syncCloud({ started, trigger: 'cron' }) }))
+  // the archive's night check: everything that should be in Drive is there, or a person sees what is missing
+  try { const { reconcile } = await import('./archive.js'); out.push({ key: 'drive_reconcile', result: await reconcile({ started }) }) } catch (e) { out.push({ key: 'drive_reconcile', error: String(e.message || e).slice(0, 200) }) }
 
   out.push(await automation('monthly_package', async () => {
     const prev = new Date(); prev.setUTCDate(1); prev.setUTCMonth(prev.getUTCMonth() - 1)

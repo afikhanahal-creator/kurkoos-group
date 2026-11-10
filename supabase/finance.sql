@@ -1668,4 +1668,313 @@ create policy "finance docs read" on storage.objects for select to authenticated
     or exists (select 1 from public.fin_document_attachments a where a.file_path = storage.objects.name)
     or (owner = auth.uid() and public.fin_has_role(array['admin', 'finance_manager', 'employee']))
   ));
+-- ===== the mail scan engine (docs/finance/SCAN-AND-COMPANIES-PLAN.md) =====
+-- A scan job covers one mailbox and one period. The period is cut into week segments; each segment keeps where it stands
+-- (the provider's page token, the last message) so a stop resumes at the same point. Every message gets one row in
+-- fin_scan_items with what happened to it, so "not found" and "not checked" are never the same thing. A job is "done" only
+-- after a completeness pass over the same period found nothing left; otherwise it ends "incomplete".
+create table if not exists public.fin_scan_jobs (
+  id uuid primary key default gen_random_uuid(),
+  mailbox_id uuid not null references public.fin_mailboxes(id) on delete cascade,
+  date_from date not null,
+  date_to date not null,
+  tz text not null default 'Asia/Jerusalem',
+  include_sent boolean not null default false,
+  phase text not null default 'scan',
+  status text not null default 'queued',
+  requested_by uuid,
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  finished_at timestamptz,
+  error text,
+  report jsonb not null default '{}'::jsonb
+);
+alter table public.fin_scan_jobs drop constraint if exists fin_scan_jobs_status_check;
+alter table public.fin_scan_jobs add constraint fin_scan_jobs_status_check check (status in ('queued', 'running', 'paused', 'done', 'incomplete', 'failed', 'cancelled'));
+alter table public.fin_scan_jobs drop constraint if exists fin_scan_jobs_phase_check;
+alter table public.fin_scan_jobs add constraint fin_scan_jobs_phase_check check (phase in ('scan', 'verify'));
+create index if not exists fin_scan_jobs_mailbox on public.fin_scan_jobs (mailbox_id, created_at desc);
+
+create table if not exists public.fin_scan_segments (
+  id uuid primary key default gen_random_uuid(),
+  job_id uuid not null references public.fin_scan_jobs(id) on delete cascade,
+  mailbox_id uuid not null references public.fin_mailboxes(id) on delete cascade,
+  phase text not null default 'scan',
+  seq int not null,
+  t_from timestamptz not null,
+  t_to timestamptz not null,
+  status text not null default 'pending',
+  page_token text,
+  pages int not null default 0,
+  listed int not null default 0,
+  processed int not null default 0,
+  failed int not null default 0,
+  unreadable int not null default 0,
+  kept int not null default 0,
+  skipped int not null default 0,
+  duplicates int not null default 0,
+  missed int not null default 0,
+  already int not null default 0,
+  last_message_id text,
+  last_message_at timestamptz,
+  attempts int not null default 0,
+  next_try_at timestamptz,
+  locked_until timestamptz,
+  error text,
+  updated_at timestamptz not null default now()
+);
+alter table public.fin_scan_segments drop constraint if exists fin_scan_segments_status_check;
+alter table public.fin_scan_segments add constraint fin_scan_segments_status_check check (status in ('pending', 'running', 'done', 'failed', 'retry'));
+alter table public.fin_scan_segments add column if not exists already int not null default 0;   -- checked before (regular sync or an earlier job)
+create index if not exists fin_scan_segments_job on public.fin_scan_segments (job_id, phase, seq);
+create index if not exists fin_scan_segments_queue on public.fin_scan_segments (status, next_try_at);
+
+create table if not exists public.fin_scan_items (
+  mailbox_id uuid not null references public.fin_mailboxes(id) on delete cascade,
+  message_id text not null,
+  segment_id uuid references public.fin_scan_segments(id) on delete set null,
+  status text not null,
+  attempts int not null default 1,
+  error text,
+  files int not null default 0,
+  kept int not null default 0,
+  skipped int not null default 0,
+  subject text,
+  email_from text,
+  email_date timestamptz,
+  at timestamptz not null default now(),
+  primary key (mailbox_id, message_id)
+);
+alter table public.fin_scan_items drop constraint if exists fin_scan_items_status_check;
+alter table public.fin_scan_items add constraint fin_scan_items_status_check check (status in ('done', 'failed', 'unreadable', 'accepted'));
+create index if not exists fin_scan_items_problems on public.fin_scan_items (mailbox_id, status) where status in ('failed', 'unreadable');
+
+alter table public.fin_scan_jobs enable row level security;
+alter table public.fin_scan_segments enable row level security;
+alter table public.fin_scan_items enable row level security;
+revoke all on public.fin_scan_jobs, public.fin_scan_segments, public.fin_scan_items from anon;
+revoke insert, update, delete on public.fin_scan_jobs, public.fin_scan_segments, public.fin_scan_items from authenticated;
+grant select on public.fin_scan_jobs, public.fin_scan_segments, public.fin_scan_items to authenticated;
+drop policy if exists "fin_scan_jobs read" on public.fin_scan_jobs;
+create policy "fin_scan_jobs read" on public.fin_scan_jobs for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or mailbox_id in (select id from public.fin_mailboxes where connected_by = auth.uid()));
+drop policy if exists "fin_scan_segments read" on public.fin_scan_segments;
+create policy "fin_scan_segments read" on public.fin_scan_segments for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or mailbox_id in (select id from public.fin_mailboxes where connected_by = auth.uid()));
+drop policy if exists "fin_scan_items read" on public.fin_scan_items;
+create policy "fin_scan_items read" on public.fin_scan_items for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) or mailbox_id in (select id from public.fin_mailboxes where connected_by = auth.uid()));
+
+-- the next segment to work on, taken under a lease so two runs never work on the same segment (SKIP LOCKED).
+-- A segment whose lease ran out (the function died half way) is taken again and resumes from its checkpoint.
+-- p_skip: mailboxes already served in this run, so several mailboxes advance side by side.
+create or replace function public.fin_scan_claim(p_skip uuid[] default '{}', p_lease_seconds int default 90)
+returns setof public.fin_scan_segments language plpgsql security definer set search_path = public as $$
+declare sid uuid;
+begin
+  select s.id into sid from public.fin_scan_segments s join public.fin_scan_jobs j on j.id = s.job_id
+   where j.status in ('queued', 'running') and s.phase = j.phase and not (s.mailbox_id = any(coalesce(p_skip, '{}')))
+     and ((s.status in ('pending', 'retry') and coalesce(s.next_try_at, now()) <= now()) or (s.status = 'running' and s.locked_until < now()))
+   order by j.created_at, s.seq
+   for update of s skip locked limit 1;
+  if sid is null then return; end if;
+  return query update public.fin_scan_segments set status = 'running', locked_until = now() + make_interval(secs => p_lease_seconds), updated_at = now()
+   where id = sid returning *;
+end $$;
+revoke all on function public.fin_scan_claim(uuid[], int) from public, anon, authenticated;
+grant execute on function public.fin_scan_claim(uuid[], int) to service_role;
+
+-- production: a run every minute, only while a scan has work (pg_cron + pg_net, installed on Supabase). The address and the
+-- secret are read from Vault: select vault.create_secret('<CRON_SECRET from Vercel>', 'finance_tick_secret');
+-- select vault.create_secret('https://www.kurkoos-group.co.il/api/finance', 'finance_tick_url');
+do $$ begin
+  if exists (select 1 from pg_namespace where nspname = 'net') and exists (select 1 from pg_namespace where nspname = 'vault') then
+    execute $f$
+      create or replace function public.fin_scan_kick() returns void language plpgsql security definer set search_path = public as $k$
+      declare v_url text; v_secret text;
+      begin
+        if not exists (select 1 from public.fin_scan_segments s join public.fin_scan_jobs j on j.id = s.job_id
+                        where j.status in ('queued', 'running') and s.phase = j.phase and s.status in ('pending', 'retry', 'running')
+                          and coalesce(s.next_try_at, now()) <= now())
+           and not public.fin_drive_has_work() then return; end if;
+        select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'finance_tick_secret';
+        select decrypted_secret into v_url from vault.decrypted_secrets where name = 'finance_tick_url';
+        if v_secret is null or v_url is null then return; end if;
+        perform net.http_get(url := v_url || '?action=scan-tick', headers := jsonb_build_object('Authorization', 'Bearer ' || v_secret), timeout_milliseconds := 65000);
+      end $k$
+    $f$;
+    execute 'revoke all on function public.fin_scan_kick() from public, anon, authenticated';
+  end if;
+  if exists (select 1 from pg_namespace where nspname = 'cron') and exists (select 1 from pg_proc where proname = 'fin_scan_kick') then
+    perform cron.schedule('finance-scan-tick', '* * * * *', 'select public.fin_scan_kick()');
+  end if;
+  -- the minute run's secret is made here, inside the database, and never leaves it except as the run's header. The server
+  -- checks it with fin_tick_ok (service role only), so nobody has to copy a secret by hand. The address is not secret.
+  if exists (select 1 from pg_namespace where nspname = 'vault') then
+    if not exists (select 1 from vault.secrets where name = 'finance_tick_secret') then
+      perform vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'finance_tick_secret');
+    end if;
+    if not exists (select 1 from vault.secrets where name = 'finance_tick_url') then
+      perform vault.create_secret('https://www.kurkoos-group.co.il/api/finance', 'finance_tick_url');
+    end if;
+    execute $f$
+      create or replace function public.fin_tick_ok(p_token text) returns boolean language sql stable security definer set search_path = public as $t$
+        select coalesce(length(p_token) >= 32 and p_token = (select decrypted_secret from vault.decrypted_secrets where name = 'finance_tick_secret'), false)
+      $t$
+    $f$;
+    execute 'revoke all on function public.fin_tick_ok(text) from public, anon, authenticated';
+    execute 'grant execute on function public.fin_tick_ok(text) to service_role';
+  end if;
+end $$;
+
+notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v13 (2026-11-10): the Google Drive archive (docs/finance/DRIVE-ARCHIVE-PLAN.md)
+-- ============================================================
+-- Every financial document gets one row per Drive connection in fin_drive_files, with where it stands. A document is
+-- "organized" only when the file was read back from Drive with the same md5 (verified). Folders are kept by their Drive id
+-- in fin_drive_folders, never looked up by name alone. Nothing here deletes a file in Drive.
+alter table public.fin_cloud_targets add column if not exists root_folder_id text;
+alter table public.fin_cloud_targets add column if not exists root_name text not null default 'ארכיון מסמכים עסקי';
+alter table public.fin_cloud_targets add column if not exists by_kind boolean not null default false;     -- a subfolder per document type
+alter table public.fin_cloud_targets add column if not exists auto boolean not null default true;         -- every new document goes up by itself
+alter table public.fin_cloud_targets add column if not exists last_reconcile_at timestamptz;
+alter table public.fin_cloud_targets add column if not exists last_reconcile jsonb;
+
+create table if not exists public.fin_drive_folders (
+  target_id uuid not null references public.fin_cloud_targets(id) on delete cascade,
+  key text not null,                 -- root | b:<business id or none> | b:<id>/2026 | b:<id>/2026/11 | b:<id>/2026/11/k:<kind>
+  name text not null,
+  drive_folder_id text not null,
+  created_at timestamptz not null default now(),
+  primary key (target_id, key)
+);
+create table if not exists public.fin_drive_files (
+  target_id uuid not null references public.fin_cloud_targets(id) on delete cascade,
+  document_id uuid not null references public.fin_documents(id) on delete cascade,
+  business_id uuid references public.fin_businesses(id) on delete set null,
+  status text not null default 'queued',
+  drive_file_id text,
+  drive_folder_id text,
+  folder_key text,
+  folder_path text,
+  original_name text,
+  organized_name text,
+  file_sha256 text,
+  file_md5 text,
+  web_link text,
+  duplicate_of uuid references public.fin_documents(id) on delete set null,
+  attempts int not null default 0,
+  next_try_at timestamptz,
+  locked_until timestamptz,
+  uploaded_at timestamptz,
+  verified_at timestamptz,
+  verify_status text,
+  last_sync_at timestamptz,
+  error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (target_id, document_id)
+);
+alter table public.fin_drive_files drop constraint if exists fin_drive_files_status_check;
+alter table public.fin_drive_files add constraint fin_drive_files_status_check check (status in ('queued', 'uploading', 'uploaded', 'verified', 'failed', 'duplicate', 'needs_review'));
+alter table public.fin_drive_files add column if not exists name_override text;   -- a name a person gave; kept on every later run
+create index if not exists fin_drive_files_queue on public.fin_drive_files (target_id, status, next_try_at);
+create index if not exists fin_drive_files_drive on public.fin_drive_files (drive_file_id) where drive_file_id is not null;
+create table if not exists public.fin_drive_events (
+  id bigint generated always as identity primary key,
+  target_id uuid references public.fin_cloud_targets(id) on delete cascade,
+  document_id uuid references public.fin_documents(id) on delete cascade,
+  action text not null,              -- folder_created | uploaded | verified | renamed | moved | retry | failed | missing | requeued | duplicate
+  detail jsonb,
+  user_id uuid,
+  user_email text,
+  at timestamptz not null default now()
+);
+create index if not exists fin_drive_events_doc on public.fin_drive_events (document_id, at desc);
+
+alter table public.fin_drive_folders enable row level security;
+alter table public.fin_drive_files enable row level security;
+alter table public.fin_drive_events enable row level security;
+revoke all on public.fin_drive_folders, public.fin_drive_files, public.fin_drive_events from anon;
+revoke insert, update, delete on public.fin_drive_folders, public.fin_drive_files, public.fin_drive_events from authenticated;
+grant select on public.fin_drive_folders, public.fin_drive_files, public.fin_drive_events to authenticated;
+drop policy if exists "fin_drive_folders read" on public.fin_drive_folders;
+create policy "fin_drive_folders read" on public.fin_drive_folders for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+drop policy if exists "fin_drive_files read" on public.fin_drive_files;
+create policy "fin_drive_files read" on public.fin_drive_files for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']) and public.fin_business_ok(business_id));
+drop policy if exists "fin_drive_events read" on public.fin_drive_events;
+create policy "fin_drive_events read" on public.fin_drive_events for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager']));
+
+-- what was copied before this version is not lost: it becomes an "uploaded" row and is verified on the next run
+insert into public.fin_drive_files (target_id, document_id, business_id, status, drive_file_id, folder_path, organized_name, web_link, uploaded_at)
+select s.target_id, s.document_id, d.business_id, 'uploaded', s.remote_id, s.path, s.file_name, s.web_link, s.at
+from public.fin_cloud_synced s join public.fin_cloud_targets t on t.id = s.target_id and t.provider = 'gdrive'
+join public.fin_documents d on d.id = s.document_id
+where s.remote_id is not null
+on conflict do nothing;
+
+-- every document the archive should hold gets its row: the ones that were read (in review or approved), and duplicates as
+-- "duplicate" pointing at the original. Rejected, failed and still-processing documents wait.
+create or replace function public.fin_drive_enqueue(p_target uuid)
+returns int language sql volatile security definer set search_path = '' as $$
+  with ins as (
+    insert into public.fin_drive_files (target_id, document_id, business_id, status, original_name, file_sha256, duplicate_of)
+    select t.id, d.id, d.business_id, case when d.status = 'duplicate' then 'duplicate' else 'queued' end, d.file_name, d.file_hash, d.duplicate_of
+    from public.fin_documents d, public.fin_cloud_targets t
+    where t.id = p_target and t.provider = 'gdrive' and t.status <> 'revoked' and d.file_path is not null
+      and d.status in ('review', 'approved', 'sent', 'duplicate')
+      and (t.business_id is null or d.business_id = t.business_id)
+    on conflict do nothing
+    returning 1)
+  select count(*)::int from ins;
+$$;
+revoke all on function public.fin_drive_enqueue(uuid) from public, anon, authenticated;
+grant execute on function public.fin_drive_enqueue(uuid) to service_role;
+
+-- the next files to upload, under a lease (SKIP LOCKED: two runs never take the same document). A lease that ran out (the
+-- function died in the middle) is taken again; the upload looks for the file by its document id first, so no second copy.
+create or replace function public.fin_drive_claim(p_target uuid, p_limit int default 20, p_lease_seconds int default 120)
+returns setof public.fin_drive_files language plpgsql volatile security definer set search_path = '' as $$
+begin
+  return query
+  with c as (
+    select f.target_id, f.document_id from public.fin_drive_files f
+    where f.target_id = p_target
+      and ((f.status = 'queued' and coalesce(f.next_try_at, now()) <= now())
+        or (f.status in ('uploading', 'uploaded') and coalesce(f.locked_until, now()) <= now()))
+    order by f.attempts, f.created_at
+    for update skip locked limit greatest(1, least(p_limit, 200)))
+  update public.fin_drive_files f set status = 'uploading', locked_until = now() + make_interval(secs => p_lease_seconds), updated_at = now()
+  from c where f.target_id = c.target_id and f.document_id = c.document_id
+  returning f.*;
+end $$;
+revoke all on function public.fin_drive_claim(uuid, int, int) from public, anon, authenticated;
+grant execute on function public.fin_drive_claim(uuid, int, int) to service_role;
+
+-- a correction in the system (company, supplier, type, number, date, amount, status) sends the document's copy back to the
+-- queue: the next run renames or moves the archive's own file. Files a person made in Drive are never touched.
+create or replace function public.fin_drive_doc_changed() returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if (new.business_id, new.supplier_id, new.supplier_name, new.doc_type, new.doc_number, new.issue_date, new.total_amount, new.currency, new.status, new.accounting_period)
+     is distinct from (old.business_id, old.supplier_id, old.supplier_name, old.doc_type, old.doc_number, old.issue_date, old.total_amount, old.currency, old.status, old.accounting_period) then
+    update public.fin_drive_files set status = 'queued', next_try_at = null, attempts = 0, business_id = new.business_id, updated_at = now()
+     where document_id = new.id and status in ('verified', 'uploaded', 'failed', 'duplicate');
+  end if;
+  return new;
+end $$;
+drop trigger if exists fin_drive_doc_changed on public.fin_documents;
+create trigger fin_drive_doc_changed after update on public.fin_documents for each row execute function public.fin_drive_doc_changed();
+revoke all on function public.fin_drive_doc_changed() from public, anon, authenticated;
+
+-- does the minute run have archive work (new documents not queued yet, or rows due)?
+create or replace function public.fin_drive_has_work()
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.fin_cloud_targets t where t.provider = 'gdrive' and t.status = 'active' and t.enabled and t.auto and (
+    exists (select 1 from public.fin_drive_files f where f.target_id = t.id and ((f.status = 'queued' and coalesce(f.next_try_at, now()) <= now()) or (f.status in ('uploading', 'uploaded') and coalesce(f.locked_until, now()) <= now())))
+    or exists (select 1 from public.fin_documents d where d.file_path is not null and d.status in ('review', 'approved', 'sent', 'duplicate')
+               and (t.business_id is null or d.business_id = t.business_id)
+               and not exists (select 1 from public.fin_drive_files f where f.target_id = t.id and f.document_id = d.id))));
+$$;
+revoke all on function public.fin_drive_has_work() from public, anon, authenticated;
+grant execute on function public.fin_drive_has_work() to service_role;
+
 notify pgrst, 'reload schema';

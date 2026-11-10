@@ -41,7 +41,8 @@ const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); fx.mailb
 await fetch(`${FAKES}/__reset`)
 await admin('admin/users', { email: 'admin@kurkoos.test', password: 'Passw0rd!x', email_confirm: true, user_metadata: { full_name: 'שלומי קורקוס' } })
 
-const browser = await chromium.launch()
+// a UTF-8 locale: without it Chromium on Linux saves a download with a Hebrew name as "download"
+const browser = await chromium.launch({ env: { ...process.env, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' } })
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'he-IL', acceptDownloads: true })
 const page = await ctx.newPage()
 page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`))
@@ -89,7 +90,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 25 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 25, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 27 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 27, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -440,22 +441,23 @@ const oldBefore = sql("select count(*) from fin_documents where file_name='old-i
 const periodBefore = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const accountsShot = await shot('50-email-accounts')
 await nav('מרכז בקרה')
-await page.locator('.fin-chiplink', { hasText: 'קבלות ישנות' }).click(); await page.waitForSelector('.fin-modal'); await page.waitForTimeout(300)
-const chipLanded = page.url().endsWith('/mailboxes')
+await page.locator('.fin-chiplink', { hasText: 'קבלות ישנות' }).click(); await page.waitForSelector('.fin-scan'); await page.waitForTimeout(600)
+const chipLanded = page.url().endsWith('/scans')
+// the scan management screen: start a scan of a year on invoices@; the open screen moves it on, week after week
+await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).getByRole('button', { name: /התחלת סריקה|סריקה של תקופה חדשה/ }).click(); await page.waitForSelector('.fin-modal')
 await page.locator('.fin-modal .fin-seg button', { hasText: 'שנה' }).first().click()
 const oldModalShot = await shot('51-old-receipts')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
-// the history scan runs step after step while the window is open, with live progress, and says when it is done
-await page.locator('.fin-hist__top strong', { hasText: 'הסריקה הסתיימה' }).waitFor({ timeout: 120000 })
-const histStats = (await page.locator('.fin-hist__stats').innerText()).replace(/\s+/g, ' ')
-const histPct = await page.locator('.fin-hist__pct').innerText()
+await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).locator('.fin-pill', { hasText: 'הסריקה הושלמה' }).waitFor({ timeout: 180000 })
+const histStats = (await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).locator('.fin-scan__stats').innerText()).replace(/\s+/g, ' ')
+const histPct = await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).locator('.fin-scan__pct').innerText()
 const histShot = await shot('51b-history-scan-done')
-await page.locator('.fin-modal__foot .fin-btn--primary', { hasText: 'סיום' }).click(); await page.waitForTimeout(800)
+await nav('חשבונות אימייל'); await page.waitForTimeout(800)
 const oldAfter = sql("select count(*)||'|'||coalesce((select source from fin_documents where file_name='old-invoice.pdf'),'-') from fin_documents where file_name='old-invoice.pdf'")
 const boxState = sql("select sync_from||'|'||backfill_pending from fin_mailboxes where email='invoices@kurkoos.test'")
 const periodAfter = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const gapQuery = (await fetch(`${FAKES}/__log`).then((r) => r.json())).gmailQueries.filter((q2) => /before:/.test(q2)).length
-record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב. החלון מראה התקדמות עד 100%, כמה נכנסו ומה העלות', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}; חלון: ${histPct} ${histStats}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1 && histPct === '100%' && /נכנסו למערכת\s*[1-9]/.test(histStats) && /עלות עד עכשיו/.test(histStats), [accountsShot, oldModalShot, histShot])
+record('OLD', 'קבלות ישנות: סריקה רטרואקטיבית', 'חשבונית מלפני 150 יום לא נאספת בסריקה הראשונה (90 יום); אחרי "קבלות ישנות ← שנה" היא נאספת, התקופה מתעדכנת, ומיילים שכבר נקראו לא נקראים שוב. מסך ניהול הסריקות מראה התקדמות עד 100% ו"הסריקה הושלמה" רק אחרי בקרת השלמות', `לפני: ${oldBefore} (${periodBefore}); אחרי: ${oldAfter} (${periodAfter}); תיבה: ${boxState}; שאילתות פער: ${gapQuery}; חלון: ${histPct} ${histStats}`, chipLanded && oldBefore === '0' && oldAfter === '1|gmail' && /\|false$/.test(boxState) && periodBefore !== periodAfter && gapQuery >= 1 && histPct === '100%' && /חשבוניות\s*[1-9]/.test(histStats) && /הודעות שנבדקו\s*[1-9]/.test(histStats), [accountsShot, oldModalShot, histShot])
 
 // MOBILE SCANNERS: register a phone in the UI, then Green API posts messages to the webhook
 await nav('מספרי WhatsApp')
@@ -494,14 +496,20 @@ await page.getByRole('button', { name: 'חיבור Dropbox' }).click()
 await page.waitForTimeout(2500)
 const targets = sql("select string_agg(provider||':'||account_email||':'||status, ', ' order by provider) from fin_cloud_targets")
 const eligible = Number(sql("select count(*) from fin_documents where status in ('approved','sent') and file_path is not null"))
+// Drive is the archive: every document that was read goes up (in review too), not only the approved ones
+const gEligible = Number(sql("select count(*) from fin_documents where status in ('review','approved','sent') and file_path is not null"))
 for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1500) }
 const cFirst = sql("select string_agg(provider||'='||files_synced, ', ' order by provider) from fin_cloud_targets")
 for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1200) }
 const cSecond = sql("select string_agg(provider||'='||files_synced, ', ' order by provider) from fin_cloud_targets")
 const cl = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const cloudShot = await shot('55-cloud-connected')
-record('CLOUD', 'סנכרון לענן: Google Drive ו-Dropbox', `שני החשבונות מתחברים ב-OAuth; כל ${eligible} המסמכים המאושרים מועתקים לתיקייה "Kurkoos Finance/<חברה>/<חודש>"; סנכרון שני לא מעתיק שוב; שמות בעברית נשמרים`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; Drive: ${cl.drive.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
-  targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${eligible}` && cSecond === cFirst && cl.drive.length === eligible && cl.dropbox.length === eligible && cl.drive.every((x) => /^\/Kurkoos Finance\/20\d\d\/\d\d (ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)\/20\d\d-\d\d-\d\d_[^_]+_[^_]+_[^_]+\.(pdf|png|jpeg|html)$/.test(x)) && cl.dropbox.every((x) => /\/20\d\d\/\d\d [א-ת]+\//.test(x)), [cloudEmpty, cloudShot])
+const gVerified = sql("select count(*) from fin_drive_files f join fin_cloud_targets t on t.id=f.target_id and t.provider='gdrive' where f.status='verified'")
+const MONTHS_RE = '(ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)'
+const archRe = new RegExp(`^/ארכיון מסמכים עסקי/[^/]+/(20\\d\\d/\\d\\d - ${MONTHS_RE}|ללא תאריך)/[^/]+\\.(pdf|png|jpg|html|tif|tiff|zip|docx|xlsx)$`)
+const driveUploads = cl.drive.filter((x) => !x.startsWith('patch:'))
+record('CLOUD', 'סנכרון לענן: Google Drive כארכיון, Dropbox כהעתק', `שני החשבונות מתחברים ב-OAuth; ל-Drive עולים כל ${gEligible} המסמכים שנקראו (גם לפני אישור), לתיקיות "ארכיון מסמכים עסקי/<חברה>/<שנה>/<MM - חודש>", וכולם מאומתים; ל-Dropbox ${eligible} המאושרים; סנכרון שני לא מעתיק שוב`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; מאומתים: ${gVerified}; Drive: ${driveUploads.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
+  targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${gEligible}` && cSecond === cFirst && Number(gVerified) === gEligible && driveUploads.length === gEligible && cl.dropbox.length === eligible && driveUploads.every((x) => archRe.test(x)) && cl.dropbox.every((x) => /\/20\d\d\/\d\d [א-ת]+\//.test(x)), [cloudEmpty, cloudShot])
 
 // ---- Drive: a real connection test, "save to Drive" for chosen documents, links back, no second copy ----
 await page.locator('.fin-cloud-card', { hasText: 'Google Drive' }).getByRole('button', { name: 'בדיקת חיבור' }).click()
@@ -514,7 +522,7 @@ const driveTarget = sql("select id from fin_cloud_targets where provider='gdrive
 const reviewDoc = sql("select id from fin_documents where status='review' and file_path is not null order by created_at limit 1")
 const saved1 = await api(adminToken, { action: 'cloud-save', ids: [reviewDoc], target_id: driveTarget })
 const saved2 = await api(adminToken, { action: 'cloud-save', ids: [reviewDoc], target_id: driveTarget })
-const linkRow = sql(`select coalesce(web_link,'')||'|'||coalesce(file_name,'') from fin_cloud_synced where target_id='${driveTarget}' and document_id='${reviewDoc}'`)
+const linkRow = sql(`select coalesce(web_link,'')||'|'||coalesce(organized_name,'') from fin_drive_files where target_id='${driveTarget}' and document_id='${reviewDoc}'`)
 const dbxId = sql("select id from fin_cloud_targets where provider='dropbox'")
 const dbxSecret = sql(`select refresh_token from fin_cloud_secrets where target_id='${dbxId}'`)
 sql(`update fin_cloud_secrets set access_token=null, expires_at=null, refresh_token='revoked-token' where target_id='${dbxId}'`)
@@ -525,8 +533,104 @@ await page.reload(); await page.waitForTimeout(1200)
 const driveShot = await shot('55b-cloud-tested')
 record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה ידנית', 'הבדיקה מתחברת, יוצרת תיקייה, מעלה קובץ ומוצאת אותו; "שמירה בדרייב" מעתיקה מסמך שעוד לא אושר, שומרת קישור, ולחיצה שנייה לא מעתיקה שוב; חיבור שבור מדווח כשלון ולא הצלחה',
   `הודעה: "${testMsg}"; שורה: ${testRow}; קובץ בדיקה: ${testFile}; שמירה 1: ${JSON.stringify(saved1.data.results?.[0] || saved1.data)}; שמירה 2: ${saved2.data.results?.[0]?.already}; קישור: ${linkRow}; חיבור שבור: ${brokenTest.data.ok}/${brokenState}/${String(brokenTest.data.error || '').slice(0, 60)}`,
-  /הבדיקה עברה/.test(testMsg) && testRow === 'true|true' && /^\/Kurkoos Finance\/בדיקת חיבור\/בדיקה_.*\.txt$/.test(testFile) && saved1.data.results?.[0]?.ok === true && /^https:\/\/drive\.test\/file\//.test(saved1.data.results[0].link) && /\/20\d\d\/\d\d [א-ת]+$/.test(saved1.data.results[0].path.split('/').slice(0, -1).join('/')) && saved2.data.results?.[0]?.already === true && /^https:\/\/drive\.test\/file\/.+\|20\d\d-\d\d-\d\d_/.test(linkRow) && brokenTest.data.ok === false && brokenState === 'error' && !!brokenTest.data.error,
+  /הבדיקה עברה/.test(testMsg) && testRow === 'true|true' && /^\/ארכיון מסמכים עסקי\/בדיקת חיבור\/בדיקה_.*\.txt$/.test(testFile) && saved1.data.results?.[0]?.ok === true && /^https:\/\/drive\.test\/file\//.test(saved1.data.results[0].link) && /\/20\d\d\/\d\d - [א-ת]+$/.test(saved1.data.results[0].path) && saved2.data.results?.[0]?.already === true && /^https:\/\/drive\.test\/file\/.+\|20\d\d-\d\d-\d\d_/.test(linkRow) && brokenTest.data.ok === false && brokenState === 'error' && !!brokenTest.data.error,
   [driveShot])
+
+// ARCHIVE: the Drive archive end to end (docs/finance/DRIVE-ARCHIVE-PLAN.md, conditions 2–11, 14, 15)
+{
+  const dget = async (qs = '') => (await fetch(`${FAKES}/__drive${qs}`).then((r) => r.json())).items
+  const run = (body = {}) => api(adminToken, { action: 'drive-run', target_id: driveTarget, ...body })
+  const row = (id) => sql(`select status||'|'||coalesce(attempts,0)||'|'||coalesce(organized_name,'')||'|'||coalesce(folder_path,'')||'|'||coalesce(verify_status,'') from fin_drive_files where target_id='${driveTarget}' and document_id='${id}'`)
+  const copies = async (id) => (await dget()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
+  await run()   // the queue starts empty, so each step below acts on the document it names
+  // folders: the main folder, a folder per company, years and "MM - month", each once, kept by its Drive id
+  const items0 = await dget()
+  const folderPaths = items0.filter((f) => f.mimeType.endsWith('folder')).map((f) => f.path)
+  const dupFolders = folderPaths.length - new Set(folderPaths).size
+  const keys = sql(`select string_agg(key, ' ' order by key) from fin_drive_folders where target_id='${driveTarget}'`)
+  const companyNames = sql("select string_agg(name, '|') from fin_businesses").split('|')
+  const companyFolders = folderPaths.filter((x) => /^\/ארכיון מסמכים עסקי\/[^/]+$/.test(x) && !x.endsWith('/בדיקת חיבור')).map((x) => x.split('/')[2])
+  // a document with a random file name gets a name from what it says; its company decides the folder
+  const named = sql(`select d.file_name||'|'||f.organized_name||'|'||f.folder_path||'|'||coalesce(b.name,'')||'|'||coalesce(f.verify_status,'') from fin_drive_files f join fin_documents d on d.id=f.document_id left join fin_businesses b on b.id=d.business_id where f.target_id='${driveTarget}' and f.status='verified' and d.doc_number is not null and d.total_amount is not null and d.issue_date is not null and d.business_id is not null order by d.created_at limit 1`).split('|')
+  // duplicates found when the mail was read: a row that points at the original, no second file in Drive
+  const dupRows = sql(`select count(*)||'|'||count(*) filter (where f.status='duplicate') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and d.status='duplicate'`)
+  const dupDoc = sql("select id from fin_documents where status='duplicate' limit 1")
+  const dupInDrive = dupDoc ? await copies(dupDoc) : 0
+  // a network error (503) on upload: the row waits and is retried; the second try is verified; one copy only
+  // two archived documents start over: their files leave Drive and their rows leave the archive, so each is uploaded afresh
+  const fresh = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' order by f.created_at desc limit 2`).split('\n').filter(Boolean)
+  const restart = async (id) => { await dget(`?remove=${id}`); sql(`delete from fin_drive_files where target_id='${driveTarget}' and document_id='${id}'`) }
+  await restart(fresh[0])
+  await fetch(`${FAKES}/__drive?upload503=1`)
+  await run({ max: 1 })
+  const after503 = row(fresh[0])
+  sql(`update fin_drive_files set next_try_at=now() where document_id='${fresh[0]}'`)
+  await run({ max: 1 })
+  const retried = row(fresh[0]); const copies503 = await copies(fresh[0])
+  // the answer of an upload is lost (the file was saved, the reply was 500): the retry finds that file, no second copy
+  await restart(fresh[1])
+  await fetch(`${FAKES}/__drive?lose=1`)
+  await run({ max: 1 })
+  const afterLost = row(fresh[1])
+  sql(`update fin_drive_files set next_try_at=now() where document_id='${fresh[1]}'`)
+  await run({ max: 1 })
+  const recovered = row(fresh[1]); const copiesLost = await copies(fresh[1])
+  // stopped in the middle (the run died while uploading): its lease runs out and the next run finishes, with no second copy
+  const mid = sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at limit 1`)
+  sql(`update fin_drive_files set status='uploading', locked_until=now() - interval '1 minute' where document_id='${mid}'`)
+  await run()
+  const resumed = row(mid).split('|')[0]; const copiesMid = await copies(mid)
+  // a correction of the company: the archive's own file moves to the other company's folder (moved, not copied)
+  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' and d.project_id is null order by d.created_at desc limit 1`)
+  const other = sql(`select id||'|'||name from fin_businesses where id is distinct from (select business_id from fin_documents where id='${moveDoc}') order by sort desc, name desc limit 1`).split('|')
+  sql(`update fin_documents set business_id='${other[0]}' where id='${moveDoc}'`)
+  const queuedAfterFix = row(moveDoc).split('|')[0]
+  await run()
+  const moved = row(moveDoc); const copiesMoved = await copies(moveDoc)
+  // a person renames the copy: Drive gets the name, and the next run keeps it
+  const ren = await api(adminToken, { action: 'drive-rename', target_id: driveTarget, document_id: moveDoc, name: 'חוזה שכירות מחסן' })
+  sql(`update fin_drive_files set status='queued' where document_id='${moveDoc}'`); await run()
+  const renamed = row(moveDoc).split('|')[2]; const renamedInDrive = (await dget()).find((f) => f.appProperties?.kd === moveDoc)?.name
+  // a document with little to go on: no date, supplier or number on it — no date made up, an id keeps the name unique
+  const thin = fresh[0]
+  sql(`update fin_documents set issue_date=null, supplier_name=null, supplier_id=null, doc_number=null, total_amount=null, accounting_period=null where id='${thin}'`)
+  await run()
+  const thinName = row(thin).split('|')[2]
+  // two runs at the same time: one works, the other sees the lock; every document still has exactly one file
+  sql(`update fin_drive_files set status='queued', next_try_at=null where target_id='${driveTarget}' and status='verified'`)
+  const [p1, p2] = await Promise.all([run(), run()])
+  const busy = [p1, p2].filter((r) => r.data.results?.[0]?.busy).length
+  const kd = (await dget()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd)
+  const doubleFiles = kd.length - new Set(kd).size
+  // the night check: a file removed and a file put in the trash by a person are found; nothing is uploaded on its own
+  const [gone, binned] = sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at limit 2`).split('\n')
+  await dget(`?remove=${gone}`); await dget(`?trash=${binned}`)
+  const rec = await api(adminToken, { action: 'drive-reconcile' })
+  const recRes = rec.data.results?.find((r) => r.target === driveTarget) || {}
+  const flagged = sql(`select string_agg(status, ',' order by status) from fin_drive_files where document_id in ('${gone}','${binned}') and target_id='${driveTarget}'`)
+  const ov = await api(adminToken, { action: 'drive-overview' })
+  const card = ov.data.targets?.find((t) => t.id === driveTarget) || {}
+  // upload again from the screen: the removed file comes back, verified
+  await api(adminToken, { action: 'drive-requeue', target_id: driveTarget, ids: [gone] }); await run()
+  const back = row(gone).split('|')[0]
+  const rec2 = await api(adminToken, { action: 'drive-reconcile' })
+  const rec2Res = rec2.data.results?.find((r) => r.target === driveTarget) || {}
+  record('ARCHIVE', 'ארכיון Google Drive: תיקיות, שמות, ניסיון חוזר, העברה, בקרת שלמות',
+    'תיקייה ראשית ותיקייה לכל חברה, שנה וחודש (כל אחת פעם אחת, לפי מזהה); שם לפי תוכן החשבונית ובתיקיית החברה שלה; כפילות לא מועלית; 503 ← ניסיון חוזר ומאומת; תשובה שאבדה ← אותו קובץ ולא עותק; ריצה שנקטעה ← ממשיכה; תיקון חברה ← הקובץ עובר תיקייה; שינוי שם נשמר; מסמך דל ← בלי תאריך מומצא; שתי ריצות במקביל ← קובץ אחד לכל מסמך; בדיקת הלילה מוצאת קובץ שנמחק ושנזרק לפח, ו"העלה שוב" מחזיר',
+    `תיקיות כפולות: ${dupFolders}; חברות: ${companyFolders.join(', ')}; מפתחות: ${keys.split(' ').length}; שם: ${named[0]} → ${named[1]} (${named[2]}, ${named[3]}, ${named[4]}); כפילויות: ${dupRows}, ב-Drive: ${dupInDrive}; 503: ${after503.split('|').slice(0, 2).join('/')} → ${retried.split('|')[0]} (${copies503} עותקים); תשובה שאבדה: ${afterLost.split('|').slice(0, 2).join('/')} → ${recovered.split('|')[0]} (${copiesLost}); נקטע: ${resumed} (${copiesMid}); תיקון: ${queuedAfterFix} → ${moved.split('|')[3]} (${copiesMoved}); שם ידני: ${ren.status} ${renamed} / ${renamedInDrive}; דל: ${thinName}; במקביל: נעול ${busy}, קבצים כפולים ${doubleFiles}; לילה: חסרים ${recRes.missing}, ${flagged}; מסך: ${JSON.stringify(card.counts || {})}; אחרי העלאה חוזרת: ${back}, חסרים ${rec2Res.missing}`,
+    dupFolders === 0 && companyFolders.length >= 1 && companyFolders.every((c) => companyNames.includes(c) || c === 'מסמכים ללא שיוך')
+      && named[1] !== named[0] && /^20\d\d-\d\d-\d\d_[^_]+_[^_]+_[^_]+_-?[\d.]+-(שח|USD|EUR)\.[a-z]+$/.test(named[1]) && named[2].split('/')[2] === named[3] && named[4] === 'md5'
+      && (!dupDoc || (/^(\d+)\|\1$/.test(dupRows) && dupInDrive === 0))
+      && /^queued\|1$/.test(after503.split('|').slice(0, 2).join('|')) && retried.startsWith('verified|') && copies503 === 1
+      && /^queued\|1$/.test(afterLost.split('|').slice(0, 2).join('|')) && recovered.startsWith('verified|') && copiesLost === 1
+      && resumed === 'verified' && copiesMid === 1
+      && queuedAfterFix === 'queued' && moved.startsWith('verified|') && moved.split('|')[3].split('/')[2] === other[1] && copiesMoved === 1
+      && ren.status === 200 && /^חוזה-שכירות-מחסן\./.test(renamed) && renamedInDrive === renamed
+      && !/^20\d\d-/.test(thinName) && /_id-[0-9a-f]{8}\./.test(thinName)
+      && busy >= 1 && doubleFiles === 0
+      && recRes.missing === 2 && flagged === 'needs_review,needs_review' && card.counts?.needs_review >= 2 && back === 'verified' && rec2Res.missing === 0,
+    [])
+}
 
 // =================== ACCOUNTING SOFTWARE ===================
 await nav('תוכנת הנהלת חשבונות')
@@ -1105,8 +1209,10 @@ record('VIEWER2', 'תצוגת המסמך: סיבוב, שמירה בדרייב, �
 const empSave = await api(empToken, { action: 'cloud-save', ids: [sql("select id from fin_documents where file_path is not null limit 1")] })
 const empTest = await api(empToken, { action: 'cloud-test', target_id: sql("select id from fin_cloud_targets where provider='gdrive'") })
 const empLog = await rest('rpc/fin_log', empToken, { method: 'POST', body: JSON.stringify({ p_action: 'deleted', p_details: {} }) })
-record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן ולא מריץ בדיקת חיבור; היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; פעולה אסורה ביומן: ${empLog.status}`,
-  empSave.status === 403 && empTest.status === 403 && empLog.status >= 400)
+const empDrive = await Promise.all(['drive-overview', 'drive-run', 'drive-rename', 'drive-settings'].map((a) => api(empToken, { action: a, target_id: sql("select id from fin_cloud_targets where provider='gdrive'") }).then((r) => r.status)))
+const empDriveRows = await rest('fin_drive_files?select=document_id', empToken)
+record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן, לא מריץ בדיקת חיבור ולא נוגע בארכיון ה-Drive (לא רואה ולא מריץ); היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; ארכיון: ${empDrive.join(',')}, שורות: ${JSON.stringify(empDriveRows.data).slice(0, 20)}; פעולה אסורה ביומן: ${empLog.status}`,
+  empSave.status === 403 && empTest.status === 403 && empDrive.every((x) => x === 403) && Array.isArray(empDriveRows.data) && empDriveRows.data.length === 0 && empLog.status >= 400)
 
 // the daily work screen shows the month's spend, VAT and six months
 await go('/today'); await page.waitForTimeout(600)
@@ -1529,6 +1635,87 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
     `נקלטו: ${got || '—'}; דולגו: ${skipped || '—'}; עם הגנה: ${flog.guarded || 0}, בלי: ${flog.unguarded || 0}; עלות: $${cost}; סנכרון: ${JSON.stringify(sync).slice(0, 80)}`,
     /bundle\.zip › zip-inv\.pdf=זיפ מים/.test(got || '') && /scan_0099\.docx=דוקס הנדסה בע״מ=vnd\.openxmlformats-officedocument\.wordprocessingml\.document/.test(got || '') && /bill\.xlsx=אקסל שירותים/.test(got || '') && /fax-0012\.tif=פקס הדפסות=tiff/.test(got || '') && /newsletter\.pdf/.test(skipped || '') && (flog.guarded || 0) >= 4 && !(flog.unguarded || 0) && Number(cost) > 0,
     [fmtShot])
+}
+
+// SCAN: the scan engine on a big mailbox and on invoices@ side by side. 1,502 messages (1,200 of them in one week, i.e.
+// three pages of 500), a 503 on listing, a message that fails once and then works, a damaged TIFF, the same invoice that
+// already came to invoices@, stop and resume, a message the first pass "missed", and the completeness rule: done only
+// when nothing is left; a person can mark a message that cannot be read as checked.
+{
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); const saved = JSON.stringify(fx)
+  const now = Date.now(); const DAYMS = 86400_000; const iso = (t) => new Date(t).toISOString()
+  fs.writeFileSync(`${FIX}/broken-scan.tif`, Buffer.concat([Buffer.from([0x49, 0x49, 0x2a, 0x00, 0xff, 0xff, 0xff, 0x7f]), crypto.randomBytes(30000)]))
+  fx.mailboxes['big@kurkoos.test'] = {
+    failListOnce: true,
+    failGet: { 'syn-a-17': 4 },
+    synthetic: { count: 300, from: iso(now - 100 * DAYMS), to: iso(now - 30 * DAYMS), dense: { count: 1200, from: iso(now - 20 * DAYMS), to: iso(now - 16 * DAYMS) } },
+    messages: [
+      { id: 'b1', date: iso(now - 40 * DAYMS), subject: 'חשבונית מס 4521 - טמבור', from: 'טמבור <billing@tambour.test>', text: 'מצורפת', files: ['tambour-4521.pdf'] },
+      { id: 'b2', date: iso(now - 25 * DAYMS), subject: 'סריקה', from: 'סורק <scanner@kurkoos.test>', text: 'מסמך', files: ['broken-scan.tif'] },
+    ],
+  }
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  await fetch(`${FAKES}/__reset`).catch(() => {})
+  sql("insert into fin_mailboxes (provider, email, status, connected_by) values ('gmail', 'big@kurkoos.test', 'active', (select user_id from fin_members where email = 'admin@kurkoos.test')) on conflict do nothing")
+  sql("insert into fin_mailbox_secrets (mailbox_id, refresh_token) select id, 'rt-big@kurkoos.test' from fin_mailboxes where email = 'big@kurkoos.test' on conflict do nothing")
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const bigId = sql("select id from fin_mailboxes where email = 'big@kurkoos.test'")
+  const invId = sql("select id from fin_mailboxes where email = 'invoices@kurkoos.test'")
+  const tambourBefore = sql("select count(*) from fin_documents where file_hash = (select file_hash from fin_documents where file_name = 'tambour-4521.pdf' limit 1)")
+  const fromDay = iso(now - 110 * DAYMS).slice(0, 10)
+  const st1 = await api(tok, { action: 'scan-start', mailbox_id: bigId, from: fromDay })
+  const st2 = await api(tok, { action: 'scan-start', mailbox_id: invId, from: fromDay })
+  const twice = await api(tok, { action: 'scan-start', mailbox_id: bigId, from: fromDay })
+  const bigJob = st1.data?.job?.id
+  // one small step serves both mailboxes
+  const r1 = await api(tok, { action: 'scan-run', max_segments: 2, max_messages: 40 })
+  const served = new Set((r1.data?.segments || []).map((x) => x.mailbox)).size
+  // stop: a run moves nothing of this mailbox; resume goes on from the same point
+  await api(tok, { action: 'scan-control', job_id: bigJob, op: 'pause' })
+  const itemsAtPause = sql(`select count(*) from fin_scan_items where mailbox_id = '${bigId}'`)
+  await api(tok, { action: 'scan-run', max_segments: 4 })
+  const itemsAfterPausedRun = sql(`select count(*) from fin_scan_items where mailbox_id = '${bigId}'`)
+  await api(tok, { action: 'scan-control', job_id: bigJob, op: 'resume' })
+  // steps of at most 450 messages: the dense week (3 pages) stops inside a page and resumes from its checkpoint
+  let missedPlanted = false; let midPage = 0; let steps = 0
+  for (; steps < 60; steps++) {
+    const job = sql(`select status || '|' || phase from fin_scan_jobs where id = '${bigJob}'`)
+    if (/^(done|incomplete)/.test(job)) break
+    if (job.endsWith('|verify') && !missedPlanted) {
+      // a message the first pass "did not see": the completeness pass must find it and check it
+      sql(`delete from fin_scan_items where mailbox_id = '${bigId}' and message_id = 'syn-d-10'`); sql(`delete from fin_mail_seen where mailbox_id = '${bigId}' and message_id = 'syn-d-10'`)
+      missedPlanted = true
+    }
+    const r = await api(tok, { action: 'scan-run', max_segments: 3, max_messages: 450 })
+    if (sql(`select count(*) from fin_scan_segments where job_id = '${bigJob}' and page_token is not null and last_message_id is not null`) !== '0') midPage++
+    if (!(r.data?.segments || []).length) sql("update fin_scan_segments set next_try_at = now() where status = 'retry'")   // the retry waits 15 minutes; the test does not
+  }
+  const jobBefore = sql(`select status || '|' || coalesce(report::text, '') from fin_scan_jobs where id = '${bigJob}'`)
+  const dense = sql(`select pages || '|' || listed || '|' || (processed + already) from fin_scan_segments where job_id = '${bigJob}' and phase = 'scan' order by listed desc limit 1`)
+  const retried = sql(`select status || '|' || attempts from fin_scan_items where mailbox_id = '${bigId}' and message_id = 'syn-a-17'`)
+  const items = sql(`select string_agg(status || ':' || n, ' ') from (select status, count(*) n from fin_scan_items where mailbox_id = '${bigId}' group by 1 order by 1) x`)
+  const tambourAfter = sql("select count(*) from fin_documents where file_hash = (select file_hash from fin_documents where file_name = 'tambour-4521.pdf' limit 1)")
+  const flog = await fetch(`${FAKES}/__log`).then((r) => r.json())
+  // the screen: the scan is not complete until the unreadable file is decided by a person
+  await go('/scans'); await page.waitForTimeout(1500)
+  const card = page.locator('.fin-scan', { hasText: 'big@kurkoos.test' })
+  const pillBefore = await card.locator('.fin-pill').first().innerText().catch(() => '')
+  await card.getByRole('button', { name: /הודעות שלא עובדו/ }).click(); await page.waitForTimeout(400)
+  const scanShot = await shot('119-scan-incomplete')
+  await card.getByRole('button', { name: 'סימון כנבדק' }).first().click(); await page.waitForTimeout(1500)
+  const pillAfter = await page.locator('.fin-scan', { hasText: 'big@kurkoos.test' }).locator('.fin-pill').first().innerText().catch(() => '')
+  const jobAfter = sql(`select status from fin_scan_jobs where id = '${bigJob}'`)
+  const invJob = sql(`select status from fin_scan_jobs where id = '${st2.data?.job?.id}'`)
+  const scanDoneShot = await shot('120-scan-done')
+  const rep = JSON.parse(sql(`select report::text from fin_scan_jobs where id = '${bigJob}'`) || '{}')
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  record('SCAN', 'סריקה עם בקרת שלמות: עמודים, עצירה והמשך, שתי תיבות, ניסיון חוזר, השלמה',
+    '1,502 הודעות נבדקות כולן (שבוע של יותר מ-1,000 בשלושה עמודים, עם עצירה באמצע עמוד והמשך מאותה נקודה); 503 ברשימה וכשל זמני בהודעה מטופלים בניסיון חוזר; סריקה שנייה לאותה תיבה נחסמת; עצירה עוצרת; שתי תיבות מתקדמות יחד; אותה חשבונית מתיבה שנייה לא נשמרת פעמיים; בקרת השלמות מוצאת הודעה שלא נבדקה; קובץ פגום משאיר "אינה מלאה" עד שאדם מחליט, ואז "הושלמה"',
+    `שירת ${served} תיבות; כפולה: ${twice.status}; בעצירה: ${itemsAtPause}→${itemsAfterPausedRun}; צעדים: ${steps}, אמצע עמוד: ${midPage}; שבוע צפוף: ${dense}; ניסיון חוזר: ${retried}; פריטים: ${items}; 503: ${flog.gmail503 || 0}; טמבור: ${tambourBefore}→${tambourAfter}; לפני: ${jobBefore.split('|')[0]} (${pillBefore}); אחרי: ${jobAfter} (${pillAfter}); invoices@: ${invJob}; דוח: נמצאו ${rep.listed}, נבדקו ${rep.checked}, נמצאו בהשלמה ${rep.missed_found}`,
+    st1.status === 200 && st2.status === 200 && twice.status === 409 && served === 2 && itemsAtPause === itemsAfterPausedRun && midPage > 0 && /^3\|(\d+)\|\1$/.test(dense) && Number(dense.split('|')[1]) > 1000 && retried === 'done|2'
+      && /done:1501/.test(items || '') && (flog.gmail503 || 0) >= 1 && tambourBefore === tambourAfter && /^incomplete/.test(jobBefore) && /אינה מלאה/.test(pillBefore)
+      && jobAfter === 'done' && /הושלמה/.test(pillAfter) && invJob === 'done' && rep.listed === 1502 && rep.checked === 1502 && rep.missed_found >= 1,
+    [scanShot, scanDoneShot])
 }
 
 // dark mode screenshot

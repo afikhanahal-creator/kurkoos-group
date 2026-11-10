@@ -390,7 +390,7 @@ export default function Documents({ preset = 'all' }) {
               {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
-                  <tr key={d.id} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
+                  <tr key={d.id} data-mime={d.file_mime || undefined} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>

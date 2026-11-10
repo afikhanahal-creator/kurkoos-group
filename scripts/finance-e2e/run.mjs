@@ -315,7 +315,7 @@ await waitProcessed(['meta-ads.pdf', 'office-depot.pdf', 'benguryon-blocks.pdf']
 await page.reload(); await page.waitForTimeout(1200)
 
 await page.goto(`${APP}/suppliers/${metaId}`); await page.waitForTimeout(1200)
-const metaProfileDocs = await page.locator('.fin-table--compact tbody tr').count()
+const metaProfileDocs = await page.locator('.fin-dlist__row').count()
 const supplierProfileShot = await shot('33-supplier-profile')
 record('B', 'יצירת ספק עם ח.פ', 'נשמר; ח.פ כפול נחסם; ח.פ לא תקין נדחה; נמצא בחיפוש; הפרופיל מציג את המסמכים שלו', `db: ${sql(`select count(*) from fin_suppliers where vat_id='${meta.IDS.meta}'`)}; כפילות: "${supDupMsg}"; ח.פ שגוי: "${badId}"; חיפוש: ${supSearch} שורות; מסמכים בפרופיל: ${metaProfileDocs}`, sql(`select count(*) from fin_suppliers where vat_id='${meta.IDS.meta}'`) === '1' && /כפילות/.test(supDupMsg) && /ביקורת/.test(badId) && supSearch === 1 && metaProfileDocs === 1, [supSearchShot, supplierProfileShot])
 
@@ -380,7 +380,7 @@ const hRel = sql(`select (select name from fin_suppliers where id=supplier_id)||
 const views = {}
 for (const [k, path] of [['ספק', `/suppliers/${sql("select id from fin_suppliers where name='סולל בונה תשתיות'")}`], ['פרויקט', `/projects/${sql("select id from fin_projects where code='HS-22'")}`], ['חברה', `/companies/${sql("select id from fin_businesses where name='הנרייטה סולד 22 בע״מ'")}`], ['קטגוריה', `/categories/${sql("select id from fin_categories where name='ייעוץ הנדסי'")}`]]) {
   await page.goto(`${APP}${path}`); await page.waitForTimeout(1000)
-  views[k] = /23,600/.test(await page.locator('.fin-ledger').innerText()) && (await page.locator('.fin-table--compact tbody tr').count()) === 1
+  views[k] = /23,600/.test(await page.locator('.fin-ledger').innerText()) && (await page.locator('.fin-dlist__row').count()) === 1
 }
 const hCompanyShot = await shot('39-h-company')
 record('H', 'קצה לקצה: ספק, קטגוריה, חברה ופרויקט חדשים + חשבונית', 'החשבונית מזוהה לספק (ח.פ), לחברה (ח.פ הנמען), לפרויקט (קוד HS-22), משויכת לקטגוריה ומאושרת; מופיעה בכל ארבעת העמודים', `${hRel}; תצוגות: ${JSON.stringify(views)}`, hRel === 'סולל בונה תשתיות|הנרייטה סולד 22 בע״מ|הנרייטה סולד 22–24 — הוד השרון|ייעוץ הנדסי|approved' && Object.values(views).every(Boolean), [hReviewShot, hCompanyShot])
@@ -967,7 +967,7 @@ await m.locator('.fin__drawer-head button[aria-label="סגירת התפריט"]'
 drawer.closed = !(await m.locator('.fin__side.is-open').count())
 await m.getByRole('button', { name: 'פתיחת התפריט' }).click(); await m.waitForTimeout(400)
 await m.locator('.fin__nav-item', { hasText: 'כל המסמכים' }).click(); await m.waitForTimeout(1000); mShots.push(await shot('m3-documents', m)); ov.documents = await overflow()
-await m.locator('tbody tr .fin-cell-btn, .fin-doccard__open').first().click(); await m.waitForTimeout(1500); mShots.push(await shot('m4-review', m)); ov.review = await overflow()
+await m.locator('tbody tr .fin-cell-btn, .fin-doccard__open, .fin-dlist__open').first().click(); await m.waitForTimeout(1500); mShots.push(await shot('m4-review', m)); ov.review = await overflow()
 await m.evaluate(() => document.querySelector('.fin-panel__body')?.scrollTo(0, 99999)); await m.waitForTimeout(300); mShots.push(await shot('m5-review-actions', m))
 await m.keyboard.press('Escape')
 await m.goto(`${APP}/mailboxes`); await m.waitForTimeout(1200); mShots.push(await shot('m6-mailboxes', m)); ov.mailboxes = await overflow()
@@ -1390,7 +1390,7 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const numId = sql("select id from fin_documents where status='review' and file_path is not null order by created_at limit 1")
   sql(`update fin_documents set issues = coalesce(issues,'[]'::jsonb) || '[{"level":"error","code":"sum","field":"total_amount","message":"לפני מע״מ ועוד מע״מ אינם שווים לסה״כ"}]'::jsonb where id='${numId}'`)
   await go('/documents?status=numbers'); await page.waitForTimeout(800)
-  const numRows = await page.locator('.fin-table tbody tr, .fin-doccard').count()
+  const numRows = await page.locator('.fin-table tbody tr, .fin-doccard, .fin-dlist__row').count()
   const numShot = await shot('104-numbers-to-check')
   await go('/today'); await page.waitForTimeout(600)
   const homeNums = await page.locator('.fin-alertrow--warn').innerText().catch(() => '')

@@ -2346,3 +2346,38 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-hist__boxes li { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.35rem 0; border-bottom: 1px solid var(--line); }
 .fin-hist__boxes small { color: var(--text-2); }
 @media (prefers-reduced-motion: reduce) { .fin-hist__meter span { transition: none; } }
+
+/* documents as a compact list: one row each, the same on a phone and on a desktop */
+.fin-dlist { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); overflow: hidden; }
+.fin-dlist__row { display: flex; align-items: stretch; border-bottom: 1px solid var(--line); }
+.fin-dlist__row:last-child { border-bottom: 0; }
+.fin-dlist__row.is-selected { background: var(--ocean-wash); }
+.fin-dlist__check { display: grid; place-items: center; padding-inline-start: 12px; min-width: 44px; cursor: pointer; }
+.fin-dlist__open { all: unset; box-sizing: border-box; flex: 1; min-width: 0; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 14px; min-height: 60px; cursor: pointer; transition: background var(--dur-fast) var(--ease); }
+.fin-dlist__open:hover { background: var(--sheet-2); }
+.fin-dlist__open:focus-visible { outline: 2px solid var(--ocean); outline-offset: -2px; }
+.fin-dlist__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--wash); color: var(--text-2); }
+.fin-dlist__icon.is-credit { background: var(--ok-wash); color: var(--ok); }
+.fin-dlist__main { min-width: 0; display: grid; gap: 2px; }
+.fin-dlist__main strong { color: var(--ink); font-size: var(--t-base); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-dlist__main small { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; color: var(--text-2); font-size: var(--t-xs); }
+.fin-dlist__main small > span + span:not(.fin-duppill)::before { content: '·'; margin-inline-end: 8px; color: var(--muted); }
+.fin-dlist__main .fin-duppill { margin: 0; }
+.fin-dlist__side { display: grid; justify-items: end; gap: 2px; font-variant-numeric: tabular-nums; }
+.fin-dlist__side b { color: var(--ink); font-size: var(--t-base); white-space: nowrap; }
+.fin-dlist__side small { color: var(--text-2); font-size: var(--t-xs); white-space: nowrap; }
+.fin-dlist__mdate { display: none; }
+@media (max-width: 560px) {
+  /* two lines on a phone: who and what on the right, the amount and where it stands on the left */
+  .fin-dlist__open { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 4px 10px; padding: 10px 12px; }
+  .fin-dlist__icon { width: 32px; height: 32px; grid-row: 1 / span 2; align-self: center; }
+  .fin-dlist__main { grid-row: 1 / span 2; }
+  .fin-dlist__side { grid-column: 3; grid-row: 1; }
+  .fin-dlist__side small { display: none; }
+  .fin-dlist__status { grid-column: 3; grid-row: 2; justify-self: end; }
+  .fin-dlist__mdate { display: inline; }
+  .fin-dlist__check { padding-inline-start: 6px; min-width: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .fin-dlist__open { transition: none; } }
+.fin-block-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.fin-block-head h3 { margin: 0; }

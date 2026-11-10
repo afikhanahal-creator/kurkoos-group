@@ -53,6 +53,7 @@ const P = {
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5h.01" /></>,
   tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" /><circle cx="8" cy="8" r="1.5" /></>,
   rows: <path d="M4 6h16M4 12h16M4 18h16" />,
+  list: <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeWidth="2.2" />,
   grid: <><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></>,
   webhook: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
   fitpage: <><rect x="6" y="3.5" width="12" height="17" rx="1.5" /><path d="M3 8V4.5A1.5 1.5 0 0 1 4.5 3H6M21 8V4.5A1.5 1.5 0 0 0 19.5 3H18M3 16v3.5A1.5 1.5 0 0 0 4.5 21H6M21 16v3.5a1.5 1.5 0 0 1-1.5 1.5H18" /></>,

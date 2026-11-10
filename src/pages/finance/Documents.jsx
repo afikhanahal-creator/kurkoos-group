@@ -261,12 +261,12 @@ export default function Documents({ preset = 'all' }) {
       {picked.length > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <div className="fin-bulk__row">
-            <strong className="fin-bulk__count"><span>{picked.length === 1 ? 'מסמך אחד מסומן' : `${picked.length} מסמכים מסומנים`}</span><small>סה״כ {money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
+            <strong className="fin-bulk__count"><span>{picked.length === 1 ? 'מסמך אחד מסומן' : <>{picked.length} <span className="fin-bulk__long">מסמכים </span>מסומנים</>}</span><small>סה״כ {money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
             {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
             {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
             <button type="button" className="fin-btn" disabled={!!busy} onClick={() => sheet('excel')}><Icon name="table" size={17} /> Excel</button>
             <button type="button" className="fin-btn fin-col-md" disabled={!!busy} onClick={() => sheet('csv')}>CSV</button>
-            {can('operate') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => toDrive(picked)}><Icon name="cloud" size={17} /> {busy === 'drive' ? 'שומר…' : 'שמירה בדרייב'}</button>}
+            {can('operate') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => toDrive(picked)}><Icon name="cloud" size={17} /> {busy === 'drive' ? 'שומר…' : <><span className="fin-bulk__long">שמירה ב</span>דרייב</>}</button>}
             {can('upload') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSharing({ docs: picked, mode: 'whatsapp' })}><Icon name="share" size={17} /> שיתוף</button>}
             <MoreMenu label="פעולות נוספות" items={[
               { label: busy === 'zip' ? 'מכין…' : 'הורדת הקבצים (ZIP)', icon: 'download', onClick: downloadOriginals },
@@ -278,22 +278,22 @@ export default function Documents({ preset = 'all' }) {
               edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },
               edit && { label: 'העברה לארכיון', icon: 'archive', danger: true, onClick: () => bulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, (d) => !['approved', 'sent', 'processing'].includes(d.status)) },
             ]} />
-            <button type="button" className="fin-btn fin-btn--ghost fin-bulk__cancel" onClick={() => setSel(new Set())}><Icon name="x" size={16} /> ביטול הבחירה</button>
+            <button type="button" className="fin-btn fin-btn--ghost fin-bulk__cancel" onClick={() => setSel(new Set())} aria-label="ביטול הבחירה"><Icon name="x" size={16} /> <span className="fin-bulk__long">ביטול הבחירה</span></button>
           </div>
           {edit && (
             <div className="fin-bulk__row fin-bulk__assign">
-              <span className="fin-bulk__label">שיוך לכל המסומנים:</span>
+              <span className="fin-bulk__label">שיוך<span className="fin-bulk__long"> לכל המסומנים</span>:</span>
               <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שינוי קטגוריה" disabled={!!busy}>
-                <option value="">שינוי קטגוריה…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="">קטגוריה</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
               {businesses.length > 0 && (
                 <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
-                  <option value="">שיוך לחברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  <option value="">חברה</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </Select>
               )}
               {projects.length > 0 && (
                 <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('project', { project_id: e.target.value === 'none' ? null : e.target.value })} aria-label="שיוך לפרויקט" disabled={!!busy}>
-                  <option value="">שיוך לפרויקט…</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <option value="">פרויקט</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </Select>
               )}
             </div>

@@ -2649,13 +2649,29 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin[data-theme='dark'] .fin-bulk :is(.fin-btn, .fin-select, .fin-link) { color: var(--ink); border-color: var(--line-2, var(--line)); }
 .fin[data-theme='dark'] .fin-bulk .fin-btn--primary { color: var(--sheet); }
 @media (max-width: 760px) {
-  /* phones: one line that scrolls sideways, above the tab bar; the count and the main action come first */
-  .fin .fin-bulk { padding: 8px 10px; border-inline-start-width: 3px; }
-  .fin .fin-bulk__row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
-  .fin .fin-bulk__row::-webkit-scrollbar { display: none; }
-  .fin .fin-bulk__row > * { flex: none; }
-  .fin .fin-bulk__cancel { margin-inline-start: 0; }
-  .fin .fin-bulk__count { position: sticky; inset-inline-start: 0; z-index: 1; }
+  /* phones: nothing scrolls sideways. One line says what is chosen and its total, with the way out beside it;
+     under it the two main actions, then the secondary ones, then the three assignments, each row an even grid. */
+  /* the bar is pinned above the tab bar: it used to sit at the top of the list, out of sight once you scrolled to pick */
+  .fin .fin-bulk { position: fixed !important; top: auto !important; inset-inline: 8px; bottom: calc(72px + var(--safe-b, env(safe-area-inset-bottom))); z-index: var(--z-bar); padding: 8px; gap: 6px; border-inline-start-width: 3px; box-shadow: 0 -2px 10px rgba(7, 41, 58, 0.08), 0 14px 34px rgba(7, 41, 58, 0.22); }
+  .fin__content:has(.fin-bulk) { padding-bottom: calc(300px + var(--safe-b, env(safe-area-inset-bottom))) !important; }
+  .fin .fin-bulk__row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; overflow: visible; }
+  .fin .fin-bulk__row > * { min-width: 0; }
+  .fin .fin-bulk__long { display: none; }
+  .fin .fin-bulk__count { grid-column: 1 / 4; grid-row: 1; margin: 0; flex-direction: row; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 40px; padding: 8px 12px; }
+  .fin .fin-bulk__count span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fin .fin-bulk__count small { flex: none; font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
+  .fin .fin-bulk__cancel { grid-column: 4; grid-row: 1; margin: 0; min-height: 40px; justify-content: center; border-color: var(--line) !important; }
+  .fin .fin-bulk__row > .fin-btn { justify-content: center; min-height: 42px; padding-inline: 6px; gap: 5px; font-size: var(--t-sm); white-space: nowrap; overflow: hidden; }
+  .fin .fin-bulk__row > .fin-btn--primary, .fin .fin-bulk__row > .fin-btn--primary + .fin-btn { grid-column: span 2; font-size: var(--t-md); }
+  .fin .fin-bulk__row > .fin-more { display: flex; }
+  .fin .fin-bulk__row > .fin-more > .fin-icon-btn { width: 100%; min-height: 44px; border: 1px solid var(--line-2, var(--line)); border-radius: var(--r-m); }
+  /* "שיוך" sits on the dividing line like a legend, so the three choices get the full width */
+  .fin .fin-bulk__assign { position: relative; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding-top: 10px; margin-top: 4px; }
+  .fin .fin-bulk__label { position: absolute; top: -0.62em; inset-inline-start: 8px; padding: 0 6px; background: var(--sheet); font-size: var(--t-xs); line-height: 1.2; }
+  .fin .fin-bulk__assign .fin-sel__btn { font-size: var(--t-sm); padding: 0 8px; gap: 4px; min-height: 40px; }
+  .fin .fin-bulk__assign .fin-sel__chev { width: 14px; height: 14px; }
+  .fin .fin-bulk__assign :is(.fin-select, .fin-sel) { width: 100%; min-width: 0; min-height: 40px; font-size: var(--t-sm); }
+}
 }
 
 /* the documents table: the last column (download, delete) stays in view while the table scrolls sideways, and the three

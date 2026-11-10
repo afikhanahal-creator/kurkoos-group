@@ -2075,3 +2075,114 @@ revoke all on function public.fin_drive_has_work() from public, anon, authentica
 grant execute on function public.fin_drive_has_work() to service_role;
 
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v14 (2026-11-10): fixed (recurring) expenses
+-- ============================================================
+-- A fixed expense is a supplier whose invoice comes again and again (rent, electricity, software). A person marks one
+-- document as fixed; from then on every document of that supplier (for that company) is classified as that fixed expense by
+-- itself, the moment it is read. The screen shows what each one costs a month and a year, and which one did not arrive yet.
+create table if not exists public.fin_recurring (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references public.fin_businesses(id) on delete cascade,
+  supplier_id uuid references public.fin_suppliers(id) on delete cascade,
+  supplier_key text not null,                      -- the supplier's name, lower case, for documents without a supplier record
+  label text not null,
+  expected_amount numeric(14, 2),
+  active boolean not null default true,
+  source text not null default 'manual',            -- manual | suggested
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists fin_recurring_uq on public.fin_recurring (supplier_key, coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid));
+alter table public.fin_documents add column if not exists recurring_id uuid references public.fin_recurring(id) on delete set null;
+alter table public.fin_documents add column if not exists recurring_off boolean not null default false;   -- a person said: this one is not part of the fixed expense
+create index if not exists fin_documents_recurring on public.fin_documents (recurring_id) where recurring_id is not null;
+
+alter table public.fin_recurring enable row level security;
+revoke all on public.fin_recurring from anon;
+revoke insert, update, delete on public.fin_recurring from authenticated;
+grant select on public.fin_recurring to authenticated;
+drop policy if exists "fin_recurring read" on public.fin_recurring;
+create policy "fin_recurring read" on public.fin_recurring for select to authenticated using (public.fin_has_role(array['admin', 'finance_manager', 'accountant']) and public.fin_business_ok(business_id));
+
+create or replace function public.fin_supplier_key(p_name text) returns text language sql immutable set search_path = '' as $$
+  select lower(regexp_replace(trim(coalesce(p_name, '')), '\s+', ' ', 'g'));
+$$;
+
+-- a new or corrected document of a supplier that is a fixed expense is classified by itself
+create or replace function public.fin_documents_recurring() returns trigger language plpgsql security definer set search_path = '' as $$
+declare rid uuid;
+begin
+  if new.recurring_off or coalesce(new.supplier_name, '') = '' then
+    if new.recurring_off then new.recurring_id := null; end if;
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and new.recurring_id is not null
+     and new.supplier_id is not distinct from old.supplier_id and new.supplier_name is not distinct from old.supplier_name and new.business_id is not distinct from old.business_id then
+    return new;
+  end if;
+  select r.id into rid from public.fin_recurring r
+   where r.active and (r.business_id is null or r.business_id = new.business_id)
+     and ((new.supplier_id is not null and r.supplier_id = new.supplier_id) or r.supplier_key = public.fin_supplier_key(new.supplier_name))
+   order by (r.business_id is not null) desc limit 1;
+  new.recurring_id := rid;
+  return new;
+end $$;
+drop trigger if exists fin_documents_recurring on public.fin_documents;
+create trigger fin_documents_recurring before insert or update of supplier_id, supplier_name, business_id, recurring_off on public.fin_documents
+  for each row execute function public.fin_documents_recurring();
+revoke all on function public.fin_documents_recurring() from public, anon, authenticated;
+
+-- "this is a fixed expense" on one document: the supplier (for that company) becomes a fixed expense, and all its documents,
+-- past and future, are classified. p_on = false: only this document leaves it. Returns the fixed expense.
+create or replace function public.fin_recurring_mark(p_document uuid, p_on boolean default true)
+returns public.fin_recurring language plpgsql security definer set search_path = '' as $$
+declare d public.fin_documents; r public.fin_recurring;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager']) then raise exception 'FORBIDDEN'; end if;
+  select * into d from public.fin_documents where id = p_document;
+  if d.id is null or not public.fin_business_ok(d.business_id) then raise exception 'NOT_FOUND'; end if;
+  if not p_on then
+    update public.fin_documents set recurring_off = true where id = d.id;
+    return null;
+  end if;
+  if coalesce(d.supplier_name, '') = '' then raise exception 'NO_SUPPLIER: fill in the supplier first'; end if;
+  insert into public.fin_recurring (business_id, supplier_id, supplier_key, label, expected_amount, created_by)
+  values (d.business_id, d.supplier_id, public.fin_supplier_key(d.supplier_name), d.supplier_name, abs(d.total_amount), auth.uid())
+  on conflict (supplier_key, coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid))
+  do update set active = true, supplier_id = coalesce(excluded.supplier_id, public.fin_recurring.supplier_id), updated_at = now()
+  returning * into r;
+  update public.fin_documents set recurring_off = false where id = d.id and recurring_off;
+  update public.fin_documents x set recurring_id = r.id
+   where not x.recurring_off and x.recurring_id is distinct from r.id and x.business_id is not distinct from r.business_id
+     and ((r.supplier_id is not null and x.supplier_id = r.supplier_id) or public.fin_supplier_key(x.supplier_name) = r.supplier_key);
+  insert into public.fin_audit (entity, entity_id, action, changes, user_id, user_email)
+  values ('recurring', r.id::text, 'marked_fixed', jsonb_build_object('supplier', r.label, 'document', d.id), auth.uid(), (select email from public.fin_members where user_id = auth.uid()));
+  return r;
+end $$;
+revoke all on function public.fin_recurring_mark(uuid, boolean) from public, anon;
+grant execute on function public.fin_recurring_mark(uuid, boolean) to authenticated;
+
+-- stop or rename a fixed expense, or set what it should cost. Stopping keeps the history: the documents stay, unmarked.
+create or replace function public.fin_recurring_set(p_id uuid, p_active boolean default null, p_label text default null, p_expected numeric default null)
+returns public.fin_recurring language plpgsql security definer set search_path = '' as $$
+declare r public.fin_recurring;
+begin
+  if not public.fin_has_role(array['admin', 'finance_manager']) then raise exception 'FORBIDDEN'; end if;
+  update public.fin_recurring set active = coalesce(p_active, active), label = coalesce(nullif(trim(p_label), ''), label), expected_amount = coalesce(p_expected, expected_amount), updated_at = now()
+   where id = p_id and public.fin_business_ok(business_id) returning * into r;
+  if r.id is null then raise exception 'NOT_FOUND'; end if;
+  if p_active = false then update public.fin_documents set recurring_id = null where recurring_id = r.id; end if;
+  if p_active = true then
+    update public.fin_documents x set recurring_id = r.id
+     where not x.recurring_off and x.recurring_id is null and x.business_id is not distinct from r.business_id
+       and ((r.supplier_id is not null and x.supplier_id = r.supplier_id) or public.fin_supplier_key(x.supplier_name) = r.supplier_key);
+  end if;
+  return r;
+end $$;
+revoke all on function public.fin_recurring_set(uuid, boolean, text, numeric) from public, anon;
+grant execute on function public.fin_recurring_set(uuid, boolean, text, numeric) to authenticated;
+
+notify pgrst, 'reload schema';

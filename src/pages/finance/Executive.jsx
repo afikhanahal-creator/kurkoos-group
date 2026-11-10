@@ -207,8 +207,9 @@ export default function Executive() {
                       className={`fin-x-trend__col ${hover === t.key ? 'is-hover' : ''} ${on ? 'is-on' : ''} ${picked && !on ? 'is-dim' : ''} ${isNow ? 'is-now-month' : ''}`}
                       onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHover(t.key) }} onFocus={(e) => { if (e.target.matches(':focus-visible')) setHover(t.key) }} onBlur={() => setHover(null)} onClick={() => (on ? pickPeriod('month') : pickMonth(t.key))}>
                       <span className="fin-x-trend__bars">
+                        {t.total !== 0 && hover !== t.key && <b className="fin-x-val" aria-hidden="true" style={{ bottom: `calc(${Math.max(2, (t.total / top) * 100)}% + 3px)` }}>{short(t.total).replace(' ₪', '')}</b>}
                         <i className="is-ly" style={{ height: `${(t.lastYear / top) * 100}%` }} />
-                        <i className="is-now" style={{ height: `${Math.max(t.total ? 2 : 0, (t.total / top) * 100)}%` }}>{t.total !== 0 && hover !== t.key && <b className="fin-x-val" aria-hidden="true">{short(t.total).replace(' ₪', '')}</b>}{hover === t.key && <span className="fin-x-tip" role="tooltip">{money(t.total)} · {t.count === 1 ? 'מסמך אחד' : `${t.count} מסמכים`}</span>}</i>
+                        <i className="is-now" style={{ height: `${Math.max(t.total ? 2 : 0, (t.total / top) * 100)}%` }}>{hover === t.key && <span className="fin-x-tip" role="tooltip">{money(t.total)} · {t.count === 1 ? 'מסמך אחד' : `${t.count} מסמכים`}</span>}</i>
                       </span>
                       <em>{monthName(t.key).split(' ')[0].slice(0, 3)}{isNow ? <small>עד היום</small> : showYear ? <small>{t.key.slice(0, 4)}</small> : null}</em>
                     </button>

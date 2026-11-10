@@ -2700,9 +2700,10 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 
 /* the monthly chart: every bar carries its amount above it (short: 34K); the full amount and the number of documents show
    on the bar under the pointer */
-.fin-x-val { position: absolute; bottom: calc(100% + 3px); inset-inline-start: 50%; transform: translateX(50%); font-style: normal; font-size: var(--t-xs); font-weight: 700; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
+.fin-x-val { position: absolute; z-index: 1; inset-inline-start: 50%; transform: translateX(50%); font-style: normal; font-size: 0.78rem; font-weight: 700; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
 [dir="ltr"] .fin-x-val { transform: translateX(-50%); }
-.fin-x-trend__col.is-dim .fin-x-val { color: var(--muted); }
+.fin-x-trend__col.is-dim .fin-x-val { color: var(--text-2); }
+.fin-x-trend__bars { position: relative; }
 .fin-x-trend__bars i.is-now { position: relative; }
 @media (max-width: 560px) {
   /* phones: the whole range fits the card, no sideways scroll; tap a month to read it in the summary above */

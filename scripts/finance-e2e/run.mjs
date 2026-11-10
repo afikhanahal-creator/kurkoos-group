@@ -89,7 +89,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 26 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 26, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 27 פריטי תפריט (מהם 10 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 27, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -495,14 +495,20 @@ await page.getByRole('button', { name: 'חיבור Dropbox' }).click()
 await page.waitForTimeout(2500)
 const targets = sql("select string_agg(provider||':'||account_email||':'||status, ', ' order by provider) from fin_cloud_targets")
 const eligible = Number(sql("select count(*) from fin_documents where status in ('approved','sent') and file_path is not null"))
+// Drive is the archive: every document that was read goes up (in review too), not only the approved ones
+const gEligible = Number(sql("select count(*) from fin_documents where status in ('review','approved','sent') and file_path is not null"))
 for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1500) }
 const cFirst = sql("select string_agg(provider||'='||files_synced, ', ' order by provider) from fin_cloud_targets")
 for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1200) }
 const cSecond = sql("select string_agg(provider||'='||files_synced, ', ' order by provider) from fin_cloud_targets")
 const cl = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const cloudShot = await shot('55-cloud-connected')
-record('CLOUD', 'סנכרון לענן: Google Drive ו-Dropbox', `שני החשבונות מתחברים ב-OAuth; כל ${eligible} המסמכים המאושרים מועתקים לתיקייה "Kurkoos Finance/<חברה>/<חודש>"; סנכרון שני לא מעתיק שוב; שמות בעברית נשמרים`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; Drive: ${cl.drive.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
-  targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${eligible}` && cSecond === cFirst && cl.drive.length === eligible && cl.dropbox.length === eligible && cl.drive.every((x) => /^\/Kurkoos Finance\/20\d\d\/\d\d (ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)\/20\d\d-\d\d-\d\d_[^_]+_[^_]+_[^_]+\.(pdf|png|jpeg|html)$/.test(x)) && cl.dropbox.every((x) => /\/20\d\d\/\d\d [א-ת]+\//.test(x)), [cloudEmpty, cloudShot])
+const gVerified = sql("select count(*) from fin_drive_files f join fin_cloud_targets t on t.id=f.target_id and t.provider='gdrive' where f.status='verified'")
+const MONTHS_RE = '(ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)'
+const archRe = new RegExp(`^/ארכיון מסמכים עסקי/[^/]+/(20\\d\\d/\\d\\d - ${MONTHS_RE}|ללא תאריך)/[^/]+\\.(pdf|png|jpg|html|tif|tiff|zip|docx|xlsx)$`)
+const driveUploads = cl.drive.filter((x) => !x.startsWith('patch:'))
+record('CLOUD', 'סנכרון לענן: Google Drive כארכיון, Dropbox כהעתק', `שני החשבונות מתחברים ב-OAuth; ל-Drive עולים כל ${gEligible} המסמכים שנקראו (גם לפני אישור), לתיקיות "ארכיון מסמכים עסקי/<חברה>/<שנה>/<MM - חודש>", וכולם מאומתים; ל-Dropbox ${eligible} המאושרים; סנכרון שני לא מעתיק שוב`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; מאומתים: ${gVerified}; Drive: ${driveUploads.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
+  targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${gEligible}` && cSecond === cFirst && Number(gVerified) === gEligible && driveUploads.length === gEligible && cl.dropbox.length === eligible && driveUploads.every((x) => archRe.test(x)) && cl.dropbox.every((x) => /\/20\d\d\/\d\d [א-ת]+\//.test(x)), [cloudEmpty, cloudShot])
 
 // ---- Drive: a real connection test, "save to Drive" for chosen documents, links back, no second copy ----
 await page.locator('.fin-cloud-card', { hasText: 'Google Drive' }).getByRole('button', { name: 'בדיקת חיבור' }).click()
@@ -515,7 +521,7 @@ const driveTarget = sql("select id from fin_cloud_targets where provider='gdrive
 const reviewDoc = sql("select id from fin_documents where status='review' and file_path is not null order by created_at limit 1")
 const saved1 = await api(adminToken, { action: 'cloud-save', ids: [reviewDoc], target_id: driveTarget })
 const saved2 = await api(adminToken, { action: 'cloud-save', ids: [reviewDoc], target_id: driveTarget })
-const linkRow = sql(`select coalesce(web_link,'')||'|'||coalesce(file_name,'') from fin_cloud_synced where target_id='${driveTarget}' and document_id='${reviewDoc}'`)
+const linkRow = sql(`select coalesce(web_link,'')||'|'||coalesce(organized_name,'') from fin_drive_files where target_id='${driveTarget}' and document_id='${reviewDoc}'`)
 const dbxId = sql("select id from fin_cloud_targets where provider='dropbox'")
 const dbxSecret = sql(`select refresh_token from fin_cloud_secrets where target_id='${dbxId}'`)
 sql(`update fin_cloud_secrets set access_token=null, expires_at=null, refresh_token='revoked-token' where target_id='${dbxId}'`)
@@ -526,8 +532,100 @@ await page.reload(); await page.waitForTimeout(1200)
 const driveShot = await shot('55b-cloud-tested')
 record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה ידנית', 'הבדיקה מתחברת, יוצרת תיקייה, מעלה קובץ ומוצאת אותו; "שמירה בדרייב" מעתיקה מסמך שעוד לא אושר, שומרת קישור, ולחיצה שנייה לא מעתיקה שוב; חיבור שבור מדווח כשלון ולא הצלחה',
   `הודעה: "${testMsg}"; שורה: ${testRow}; קובץ בדיקה: ${testFile}; שמירה 1: ${JSON.stringify(saved1.data.results?.[0] || saved1.data)}; שמירה 2: ${saved2.data.results?.[0]?.already}; קישור: ${linkRow}; חיבור שבור: ${brokenTest.data.ok}/${brokenState}/${String(brokenTest.data.error || '').slice(0, 60)}`,
-  /הבדיקה עברה/.test(testMsg) && testRow === 'true|true' && /^\/Kurkoos Finance\/בדיקת חיבור\/בדיקה_.*\.txt$/.test(testFile) && saved1.data.results?.[0]?.ok === true && /^https:\/\/drive\.test\/file\//.test(saved1.data.results[0].link) && /\/20\d\d\/\d\d [א-ת]+$/.test(saved1.data.results[0].path.split('/').slice(0, -1).join('/')) && saved2.data.results?.[0]?.already === true && /^https:\/\/drive\.test\/file\/.+\|20\d\d-\d\d-\d\d_/.test(linkRow) && brokenTest.data.ok === false && brokenState === 'error' && !!brokenTest.data.error,
+  /הבדיקה עברה/.test(testMsg) && testRow === 'true|true' && /^\/ארכיון מסמכים עסקי\/בדיקת חיבור\/בדיקה_.*\.txt$/.test(testFile) && saved1.data.results?.[0]?.ok === true && /^https:\/\/drive\.test\/file\//.test(saved1.data.results[0].link) && /\/20\d\d\/\d\d - [א-ת]+$/.test(saved1.data.results[0].path) && saved2.data.results?.[0]?.already === true && /^https:\/\/drive\.test\/file\/.+\|20\d\d-\d\d-\d\d_/.test(linkRow) && brokenTest.data.ok === false && brokenState === 'error' && !!brokenTest.data.error,
   [driveShot])
+
+// ARCHIVE: the Drive archive end to end (docs/finance/DRIVE-ARCHIVE-PLAN.md, conditions 2–11, 14, 15)
+{
+  const dget = async (qs = '') => (await fetch(`${FAKES}/__drive${qs}`).then((r) => r.json())).items
+  const run = (body = {}) => api(adminToken, { action: 'drive-run', target_id: driveTarget, ...body })
+  const row = (id) => sql(`select status||'|'||coalesce(attempts,0)||'|'||coalesce(organized_name,'')||'|'||coalesce(folder_path,'')||'|'||coalesce(verify_status,'') from fin_drive_files where target_id='${driveTarget}' and document_id='${id}'`)
+  const copies = async (id) => (await dget()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
+  // folders: the main folder, a folder per company, years and "MM - month", each once, kept by its Drive id
+  const items0 = await dget()
+  const folderPaths = items0.filter((f) => f.mimeType.endsWith('folder')).map((f) => f.path)
+  const dupFolders = folderPaths.length - new Set(folderPaths).size
+  const keys = sql(`select string_agg(key, ' ' order by key) from fin_drive_folders where target_id='${driveTarget}'`)
+  const companyNames = sql("select string_agg(name, '|') from fin_businesses").split('|')
+  const companyFolders = folderPaths.filter((x) => /^\/ארכיון מסמכים עסקי\/[^/]+$/.test(x) && !x.endsWith('/בדיקת חיבור')).map((x) => x.split('/')[2])
+  // a document with a random file name gets a name from what it says; its company decides the folder
+  const named = sql(`select d.file_name||'|'||f.organized_name||'|'||f.folder_path||'|'||coalesce(b.name,'')||'|'||coalesce(f.verify_status,'') from fin_drive_files f join fin_documents d on d.id=f.document_id left join fin_businesses b on b.id=d.business_id where f.target_id='${driveTarget}' and f.status='verified' and d.doc_number is not null and d.total_amount is not null and d.issue_date is not null and d.business_id is not null order by d.created_at limit 1`).split('|')
+  // duplicates found when the mail was read: a row that points at the original, no second file in Drive
+  const dupRows = sql(`select count(*)||'|'||count(*) filter (where f.status='duplicate') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and d.status='duplicate'`)
+  const dupDoc = sql("select id from fin_documents where status='duplicate' limit 1")
+  const dupInDrive = dupDoc ? await copies(dupDoc) : 0
+  // a network error (503) on upload: the row waits and is retried; the second try is verified; one copy only
+  const fresh = sql("select id from fin_documents where status='rejected' and file_path is not null order by created_at limit 2").split('\n').filter(Boolean)
+  sql(`update fin_documents set status='review' where id in ('${fresh.join("','")}')`)
+  await fetch(`${FAKES}/__drive?upload503=1`)
+  await run({ max: 1 })
+  const after503 = row(fresh[0])
+  sql(`update fin_drive_files set next_try_at=now() where document_id='${fresh[0]}'`)
+  await run({ max: 1 })
+  const retried = row(fresh[0]); const copies503 = await copies(fresh[0])
+  // the answer of an upload is lost (the file was saved, the reply was 500): the retry finds that file, no second copy
+  await fetch(`${FAKES}/__drive?lose=1`)
+  await run({ max: 1 })
+  const afterLost = row(fresh[1])
+  sql(`update fin_drive_files set next_try_at=now() where document_id='${fresh[1]}'`)
+  await run({ max: 1 })
+  const recovered = row(fresh[1]); const copiesLost = await copies(fresh[1])
+  // stopped in the middle (the run died while uploading): its lease runs out and the next run finishes, with no second copy
+  const mid = sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at limit 1`)
+  sql(`update fin_drive_files set status='uploading', locked_until=now() - interval '1 minute' where document_id='${mid}'`)
+  await run()
+  const resumed = row(mid).split('|')[0]; const copiesMid = await copies(mid)
+  // a correction of the company: the archive's own file moves to the other company's folder (moved, not copied)
+  const other = sql("select id||'|'||name from fin_businesses order by sort desc, name desc limit 1").split('|')
+  const moveDoc = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.business_id is distinct from '${other[0]}' order by d.created_at desc limit 1`)
+  sql(`update fin_documents set business_id='${other[0]}' where id='${moveDoc}'`)
+  const queuedAfterFix = row(moveDoc).split('|')[0]
+  await run()
+  const moved = row(moveDoc); const copiesMoved = await copies(moveDoc)
+  // a person renames the copy: Drive gets the name, and the next run keeps it
+  const ren = await api(adminToken, { action: 'drive-rename', target_id: driveTarget, document_id: moveDoc, name: 'חוזה שכירות מחסן' })
+  sql(`update fin_drive_files set status='queued' where document_id='${moveDoc}'`); await run()
+  const renamed = row(moveDoc).split('|')[2]; const renamedInDrive = (await dget()).find((f) => f.appProperties?.kd === moveDoc)?.name
+  // a document with little to go on: no date, supplier or number on it — no date made up, an id keeps the name unique
+  const thin = fresh[0]
+  sql(`update fin_documents set issue_date=null, supplier_name=null, supplier_id=null, doc_number=null, total_amount=null, accounting_period=null where id='${thin}'`)
+  await run()
+  const thinName = row(thin).split('|')[2]
+  // two runs at the same time: one works, the other sees the lock; every document still has exactly one file
+  sql(`update fin_drive_files set status='queued', next_try_at=null where target_id='${driveTarget}' and status='verified'`)
+  const [p1, p2] = await Promise.all([run(), run()])
+  const busy = [p1, p2].filter((r) => r.data.results?.[0]?.busy).length
+  const kd = (await dget()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd)
+  const doubleFiles = kd.length - new Set(kd).size
+  // the night check: a file removed and a file put in the trash by a person are found; nothing is uploaded on its own
+  const [gone, binned] = sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at limit 2`).split('\n')
+  await dget(`?remove=${gone}`); await dget(`?trash=${binned}`)
+  const rec = await api(adminToken, { action: 'drive-reconcile' })
+  const recRes = rec.data.results?.find((r) => r.target === driveTarget) || {}
+  const flagged = sql(`select string_agg(status, ',' order by status) from fin_drive_files where document_id in ('${gone}','${binned}') and target_id='${driveTarget}'`)
+  const ov = await api(adminToken, { action: 'drive-overview' })
+  const card = ov.data.targets?.find((t) => t.id === driveTarget) || {}
+  // upload again from the screen: the removed file comes back, verified
+  await api(adminToken, { action: 'drive-requeue', target_id: driveTarget, ids: [gone] }); await run()
+  const back = row(gone).split('|')[0]
+  const rec2 = await api(adminToken, { action: 'drive-reconcile' })
+  const rec2Res = rec2.data.results?.find((r) => r.target === driveTarget) || {}
+  record('ARCHIVE', 'ארכיון Google Drive: תיקיות, שמות, ניסיון חוזר, העברה, בקרת שלמות',
+    'תיקייה ראשית ותיקייה לכל חברה, שנה וחודש (כל אחת פעם אחת, לפי מזהה); שם לפי תוכן החשבונית ובתיקיית החברה שלה; כפילות לא מועלית; 503 ← ניסיון חוזר ומאומת; תשובה שאבדה ← אותו קובץ ולא עותק; ריצה שנקטעה ← ממשיכה; תיקון חברה ← הקובץ עובר תיקייה; שינוי שם נשמר; מסמך דל ← בלי תאריך מומצא; שתי ריצות במקביל ← קובץ אחד לכל מסמך; בדיקת הלילה מוצאת קובץ שנמחק ושנזרק לפח, ו"העלה שוב" מחזיר',
+    `תיקיות כפולות: ${dupFolders}; חברות: ${companyFolders.join(', ')}; מפתחות: ${keys.split(' ').length}; שם: ${named[0]} → ${named[1]} (${named[2]}, ${named[3]}, ${named[4]}); כפילויות: ${dupRows}, ב-Drive: ${dupInDrive}; 503: ${after503.split('|').slice(0, 2).join('/')} → ${retried.split('|')[0]} (${copies503} עותקים); תשובה שאבדה: ${afterLost.split('|').slice(0, 2).join('/')} → ${recovered.split('|')[0]} (${copiesLost}); נקטע: ${resumed} (${copiesMid}); תיקון: ${queuedAfterFix} → ${moved.split('|')[3]} (${copiesMoved}); שם ידני: ${ren.status} ${renamed} / ${renamedInDrive}; דל: ${thinName}; במקביל: נעול ${busy}, קבצים כפולים ${doubleFiles}; לילה: חסרים ${recRes.missing}, ${flagged}; מסך: ${JSON.stringify(card.counts || {})}; אחרי העלאה חוזרת: ${back}, חסרים ${rec2Res.missing}`,
+    dupFolders === 0 && companyFolders.length >= 1 && companyFolders.every((c) => companyNames.includes(c) || c === 'מסמכים ללא שיוך')
+      && named[1] !== named[0] && /^20\d\d-\d\d-\d\d_[^_]+_[^_]+_[^_]+_-?[\d.]+-(שח|USD|EUR)\.[a-z]+$/.test(named[1]) && named[2].split('/')[2] === named[3] && named[4] === 'md5'
+      && (!dupDoc || (/^(\d+)\|\1$/.test(dupRows) && dupInDrive === 0))
+      && /^queued\|1$/.test(after503.split('|').slice(0, 2).join('|')) && retried.startsWith('verified|') && copies503 === 1
+      && /^queued\|1$/.test(afterLost.split('|').slice(0, 2).join('|')) && recovered.startsWith('verified|') && copiesLost === 1
+      && resumed === 'verified' && copiesMid === 1
+      && queuedAfterFix === 'queued' && moved.startsWith('verified|') && moved.split('|')[3].split('/')[2] === other[1] && copiesMoved === 1
+      && ren.status === 200 && /^חוזה-שכירות-מחסן\./.test(renamed) && renamedInDrive === renamed
+      && !/^20\d\d-/.test(thinName) && /_id-[0-9a-f]{8}\./.test(thinName)
+      && busy >= 1 && doubleFiles === 0
+      && recRes.missing === 2 && flagged === 'needs_review,needs_review' && card.counts?.needs_review >= 2 && back === 'verified' && rec2Res.missing === 0,
+    [])
+}
 
 // =================== ACCOUNTING SOFTWARE ===================
 await nav('תוכנת הנהלת חשבונות')
@@ -1106,8 +1204,10 @@ record('VIEWER2', 'תצוגת המסמך: סיבוב, שמירה בדרייב, �
 const empSave = await api(empToken, { action: 'cloud-save', ids: [sql("select id from fin_documents where file_path is not null limit 1")] })
 const empTest = await api(empToken, { action: 'cloud-test', target_id: sql("select id from fin_cloud_targets where provider='gdrive'") })
 const empLog = await rest('rpc/fin_log', empToken, { method: 'POST', body: JSON.stringify({ p_action: 'deleted', p_details: {} }) })
-record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן ולא מריץ בדיקת חיבור; היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; פעולה אסורה ביומן: ${empLog.status}`,
-  empSave.status === 403 && empTest.status === 403 && empLog.status >= 400)
+const empDrive = await Promise.all(['drive-overview', 'drive-run', 'drive-rename', 'drive-settings'].map((a) => api(empToken, { action: a, target_id: sql("select id from fin_cloud_targets where provider='gdrive'") }).then((r) => r.status)))
+const empDriveRows = await rest('fin_drive_files?select=document_id', empToken)
+record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן, לא מריץ בדיקת חיבור ולא נוגע בארכיון ה-Drive (לא רואה ולא מריץ); היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; ארכיון: ${empDrive.join(',')}, שורות: ${JSON.stringify(empDriveRows.data).slice(0, 20)}; פעולה אסורה ביומן: ${empLog.status}`,
+  empSave.status === 403 && empTest.status === 403 && empDrive.every((x) => x === 403) && Array.isArray(empDriveRows.data) && empDriveRows.data.length === 0 && empLog.status >= 400)
 
 // the daily work screen shows the month's spend, VAT and six months
 await go('/today'); await page.waitForTimeout(600)

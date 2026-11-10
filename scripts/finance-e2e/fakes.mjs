@@ -28,7 +28,8 @@ function imageDims(b) {
 }
 const hookFails = {}
 const log = { waFiles: [], emails: [], smtp: [], claudeCalls: 0, gmailCalls: 0, drive: [], dropbox: [], wa: [], gmailQueries: [], hooks: [] }
-const driveItems = []   // { id, name, parents, folder }
+const driveItems = []   // { id, name, parents, folder, size, md5, appProperties, trashed }
+const driveFail = { upload503: 0, lose: 0 }
 const fixtures = () => JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
 const failed = {}   // sha256 → how many times Claude already failed on it
 let nextAccount = null
@@ -38,6 +39,7 @@ function send(res, status, body, headers = {}) {
   res.end(typeof body === 'string' ? body : JSON.stringify(body))
 }
 const readBody = (req) => new Promise((ok) => { let d = ''; req.on('data', (c) => { d += c }); req.on('end', () => ok(d)) })
+const readRaw = (req) => new Promise((ok) => { const d = []; req.on('data', (c) => d.push(c)); req.on('end', () => ok(Buffer.concat(d))) })
 
 const b64u = (buf) => Buffer.from(buf).toString('base64url')
 
@@ -198,27 +200,72 @@ const server = http.createServer(async (req, res) => {
 
   // ---------- Google userinfo + Drive ----------
   if (p === '/google/userinfo') return send(res, 200, { email: mailbox })
+  // Drive as the real API behaves for the archive: appProperties, md5Checksum of the bytes, rename/move with PATCH, 404 for a
+  // parent that is gone, the trash. /__drive sets failures: upload503 (the next N uploads answer 503), lose (the next N
+  // uploads are saved but answer 500, as when the answer is lost), trash / remove (a file of a document, as a person would).
+  const dfile = (f) => ({ id: f.id, name: f.name, parents: f.parents, mimeType: f.folder ? 'application/vnd.google-apps.folder' : 'application/octet-stream', md5Checksum: f.folder ? undefined : f.md5, size: f.folder ? undefined : String(f.size || 0), trashed: !!f.trashed, appProperties: f.appProperties || {}, webViewLink: `https://drive.test/file/${f.id}` })
+  const dpath = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${dpath(f.parents[0])}/${f.name}` : '' }
+  if (p === '/__drive') {
+    for (const k of ['upload503', 'lose']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
+    for (const k of ['trash', 'remove']) {
+      const doc = url.searchParams.get(k); if (!doc) continue
+      const i = driveItems.findIndex((f) => f.appProperties?.kd === doc && !f.trashed)
+      if (i >= 0) { if (k === 'trash') driveItems[i].trashed = true; else driveItems.splice(i, 1) }
+    }
+    return send(res, 200, { items: driveItems.map((f) => ({ ...dfile(f), path: dpath(f.id) })), fail: driveFail })
+  }
   if (p === '/drive/files' && req.method === 'GET') {
-    const q = url.searchParams.get('q') || ''
-    const name = (q.match(/name='((?:[^'\\]|\\.)*)'/) || [])[1]?.replace(/\\'/g, "'")
-    const parent = (q.match(/'([^']+)' in parents/) || [])[1]
-    const wantFolder = !q.includes("mimeType!=")
-    return send(res, 200, { files: driveItems.filter((f) => f.folder === wantFolder && !f.trashed && f.name === name && f.parents[0] === parent).map((f) => ({ id: f.id, webViewLink: `https://drive.test/file/${f.id}` })) })
+    if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
+    const qy = url.searchParams.get('q') || ''
+    const name = (qy.match(/name='((?:[^'\\]|\\.)*)'/) || [])[1]?.replace(/\\'/g, "'").replace(/\\\\/g, '\\')
+    const parent = (qy.match(/'([^']+)' in parents/) || [])[1]
+    const prop = qy.match(/appProperties has \{ key='([^']+)' and value='((?:[^'\\]|\\.)*)' \}/)
+    const folderOnly = /mimeType='application\/vnd\.google-apps\.folder'/.test(qy); const filesOnly = qy.includes('mimeType!=')
+    const noTrash = qy.includes('trashed=false')
+    let list = driveItems.filter((f) => (!noTrash || !f.trashed) && (!folderOnly || f.folder) && (!filesOnly || !f.folder) && (!name || f.name === name) && (!parent || f.parents[0] === parent)
+      && (!prop || f.appProperties?.[prop[1]] === prop[2].replace(/\\'/g, "'")))
+    if (!prop && !name) list = []
+    const size = Number(url.searchParams.get('pageSize') || 100); const from = Number(url.searchParams.get('pageToken') || 0)
+    const page = list.slice(from, from + Math.min(size, 3))   // small pages, so paging is tested
+    return send(res, 200, { files: page.map(dfile), ...(from + page.length < list.length ? { nextPageToken: String(from + page.length) } : {}) })
   }
   if (p.startsWith('/drive/files/') && req.method === 'GET') {
     if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
     const f = driveItems.find((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length)))
-    return f ? send(res, 200, { id: f.id, name: f.name, size: String(f.size || 0), trashed: !!f.trashed, webViewLink: `https://drive.test/file/${f.id}` }) : send(res, 404, { error: { message: 'File not found' } })
+    return f ? send(res, 200, dfile(f)) : send(res, 404, { error: { message: 'File not found' } })
+  }
+  if (p.startsWith('/drive/files/') && req.method === 'PATCH') {
+    const f = driveItems.find((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length)))
+    if (!f) return send(res, 404, { error: { message: 'File not found' } })
+    const b = JSON.parse(await readBody(req) || '{}')
+    if (b.name) f.name = b.name
+    const add = url.searchParams.get('addParents'); const rm = (url.searchParams.get('removeParents') || '').split(',').filter(Boolean)
+    if (add) { if (!driveItems.some((x) => x.id === add && x.folder)) return send(res, 404, { error: { message: 'File not found: parent' } }); f.parents = [add, ...f.parents.filter((x) => !rm.includes(x) && x !== add)] }
+    else if (rm.length) f.parents = f.parents.filter((x) => !rm.includes(x))
+    log.drive.push(`patch:${dpath(f.id)}`)
+    return send(res, 200, dfile(f))
   }
   if (p === '/drive/files' && req.method === 'POST') {
-    const b = JSON.parse(await readBody(req)); const id = `fld${driveItems.length + 1}`
-    driveItems.push({ id, name: b.name, parents: b.parents, folder: true }); return send(res, 200, { id })
+    const b = JSON.parse(await readBody(req))
+    const par = b.parents?.[0] || 'root'
+    if (par !== 'root' && !driveItems.some((x) => x.id === par && x.folder && !x.trashed)) return send(res, 404, { error: { message: 'File not found: parent' } })
+    const id = `fld${driveItems.length + 1}`
+    driveItems.push({ id, name: b.name, parents: [par], folder: true, appProperties: b.appProperties || {} }); return send(res, 200, { id })
   }
   if (p === '/drive-upload/files') {
-    const raw = await readBody(req); const meta = JSON.parse(raw.split('\r\n\r\n')[1].split('\r\n--')[0])
-    const id = `file${driveItems.length + 1}`; driveItems.push({ id, name: meta.name, parents: meta.parents, folder: false, size: raw.length })
-    const pathOf = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${pathOf(f.parents[0])}/${f.name}` : '' }
-    log.drive.push(`${pathOf(meta.parents[0])}/${meta.name}`); return send(res, 200, { id, webViewLink: `https://drive.test/file/${id}` })
+    const raw = await readRaw(req); const ct = String(req.headers['content-type'] || ''); const boundary = (ct.match(/boundary=([^;]+)/) || [])[1]
+    const sep = Buffer.from(`--${boundary}`); const partsAt = []; let at = raw.indexOf(sep)
+    while (at >= 0) { partsAt.push(at); at = raw.indexOf(sep, at + sep.length) }
+    const piece = (i) => { const chunk = raw.subarray(partsAt[i] + sep.length, partsAt[i + 1]); const h = chunk.indexOf('\r\n\r\n'); return chunk.subarray(h + 4, chunk.length - 2) }
+    const meta = JSON.parse(piece(0).toString('utf8')); const content = piece(1)
+    if (driveFail.upload503 > 0) { driveFail.upload503--; return send(res, 503, { error: { message: 'Backend Error' } }) }
+    const par = meta.parents?.[0]
+    if (!driveItems.some((x) => x.id === par && x.folder && !x.trashed)) return send(res, 404, { error: { message: 'File not found: parent' } })
+    const id = `file${driveItems.length + 1}`
+    driveItems.push({ id, name: meta.name, parents: [par], folder: false, size: content.length, md5: crypto.createHash('md5').update(content).digest('hex'), appProperties: meta.appProperties || {} })
+    log.drive.push(`${dpath(par)}/${meta.name}`)
+    if (driveFail.lose > 0) { driveFail.lose--; return send(res, 500, { error: { message: 'Internal Error' } }) }
+    return send(res, 200, dfile(driveItems[driveItems.length - 1]))
   }
   // ---------- Dropbox ----------
   if (p === '/dropbox/authorize') { const back = new URL(url.searchParams.get('redirect_uri')); back.searchParams.set('code', 'dbx-code'); back.searchParams.set('state', url.searchParams.get('state')); res.writeHead(302, { Location: back.toString() }); res.end(); return }
@@ -247,7 +294,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

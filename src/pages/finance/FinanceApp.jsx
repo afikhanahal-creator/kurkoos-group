@@ -31,6 +31,7 @@ const Automations = lazy(() => import('./Automations.jsx'))
 const Agents = lazy(() => import('./Agents.jsx'))
 const Mailboxes = lazy(() => import('./Mailboxes.jsx'))
 const Scans = lazy(() => import('./Scans.jsx'))
+const Drive = lazy(() => import('./Drive.jsx'))
 const Integrations = lazy(() => import('./Integrations.jsx'))
 const ExportHistory = lazy(() => import('./ExportHistory.jsx'))
 const Users = lazy(() => import('./Users.jsx'))
@@ -60,6 +61,7 @@ export const NAV = [
   { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'מסמכים' },
   { to: '/pending', label: 'ממתינים לבדיקה', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'מסמכים' },
   { to: '/send', label: 'שליחה לרו״ח', icon: 'send', roles: OPS, el: <SendCenter />, badge: 'ready', group: 'מסמכים' },
+  { to: '/drive', label: 'Google Drive', icon: 'folder', roles: ['admin', 'finance_manager'], el: <Drive />, group: 'מסמכים' },
   { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory />, group: 'מסמכים' },
   { to: '/suppliers', label: 'ספקים', icon: 'suppliers', roles: OPS, el: <MasterData kind="suppliers" />, badge: 'suppliers', group: 'נתוני יסוד', detail: <EntityOverview kind="suppliers" /> },
   { to: '/companies', label: 'חברות', icon: 'company', roles: OPS, el: <MasterData kind="businesses" />, group: 'נתוני יסוד', detail: <EntityOverview kind="businesses" /> },

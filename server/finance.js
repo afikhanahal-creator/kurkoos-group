@@ -10,6 +10,7 @@
 // Environment (Vercel > Settings > Environment Variables, never in code): see docs/finance/README.md
 // ============================================================
 import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview } from './finance/scan.js'
+import * as archive from './finance/archive.js'
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
 import { sb, one, insert, patch, q, caller, audit, removeFile, rpc } from './finance/db.js'
@@ -43,6 +44,13 @@ const ROLES = {
   'scan-accept': ['admin', 'finance_manager'],
   'scan-overview': ['admin', 'finance_manager'],
   'scan-run': ['admin', 'finance_manager'],
+  'drive-overview': ['admin', 'finance_manager'],
+  'drive-tree': ['admin', 'finance_manager'],
+  'drive-run': ['admin', 'finance_manager'],
+  'drive-requeue': ['admin', 'finance_manager'],
+  'drive-rename': ['admin', 'finance_manager'],
+  'drive-settings': ['admin'],
+  'drive-reconcile': ['admin', 'finance_manager'],
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
@@ -109,11 +117,13 @@ async function oauthCallback(req, res, url) {
   if (!who || !allowed.includes(who.role)) return back('error=forbidden')
   if (url.searchParams.get('error')) return back(`error=${encodeURIComponent(url.searchParams.get('error_description') || url.searchParams.get('error'))}`)
   if (CLOUD[st.p]) {
-    const cloudBack = (qs) => redirect(res, `${origin(req)}/admin/finance/cloud?${qs}`)
+    const cloudBack = (qs) => redirect(res, `${origin(req)}/admin/finance/${st.r === 'drive' ? 'drive' : 'cloud'}?${qs}`)
     try {
       const t = await CLOUD[st.p].exchange(url.searchParams.get('code'), redirectUri(req))
       if (!t.email) return cloudBack('error=no_email')
-      await connectCloud(st.p, t, st)
+      const target = await connectCloud(st.p, t, st)
+      // a new Drive starts working at once: the main folder, then the first documents (the minute run does the rest)
+      if (st.p === 'gdrive' && target?.id) await archive.tick({ targetId: target.id, trigger: 'connect', budgetMs: 8_000, max: 10 }).catch(() => {})
       return cloudBack(`connected=${encodeURIComponent(t.email)}`)
     } catch (e) { return cloudBack(`error=${encodeURIComponent(String(e.message || e).slice(0, 120))}`) }
   }
@@ -158,7 +168,12 @@ export default async function handler(req, res) {
     // the env secret, or the one the database made for itself in Vault (checked inside the database)
     const ok = (secret && given === secret) || (given.length >= 32 && await rpc('fin_tick_ok', { p_token: given }).catch(() => false) === true)
     if (!ok) { res.status(401).json({ error: 'unauthorized' }); return }
-    try { res.status(200).json(await scanTick({ trigger: 'scan' })) } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
+    try {
+      // the Drive archive first (short: a few documents a minute is plenty), then the mail scan with the rest of the time
+      const started = Date.now()
+      const drive = await archive.tick({ started, budgetMs: 15_000, trigger: 'scan' }).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
+      res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
+    } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
   }
   // 07:00 Israel: the morning report, then a short catch-up (retries, stuck documents, a day collection)
@@ -190,7 +205,7 @@ export default async function handler(req, res) {
   }
   // the scan screen asks for the next step and the status again and again while a scan runs: its own, larger budget,
   // so a long scan never uses up the person's budget for everything else (each step is already capped at ~45 s)
-  const scanPoll = ['scan-run', 'scan-overview'].includes(body.action)
+  const scanPoll = ['scan-run', 'scan-overview', 'drive-overview', 'drive-run'].includes(body.action)
   if (body.action !== 'status' && (scanPoll ? limited(`scan:${user.id}`, 600) : limited(user.id))) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
 
   try {
@@ -294,11 +309,40 @@ export default async function handler(req, res) {
         res.status(200).json({ ok: true, results, cost_usd: results.cost_usd || 0, done: !pending.length })
         return
       }
+      case 'drive-overview': {
+        res.status(200).json(await archive.overview({ user }))
+        return
+      }
+      case 'drive-tree': {
+        res.status(200).json({ rows: await archive.tree({ targetId: String(body.target_id || ''), user }) })
+        return
+      }
+      case 'drive-run': {
+        res.status(200).json({ results: await archive.tick({ trigger: 'manual', targetId: body.target_id ? String(body.target_id) : null, max: Math.max(1, Math.min(500, Number(body.max) || 500)) }) })
+        return
+      }
+      case 'drive-requeue': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
+        res.status(200).json(await archive.requeue({ targetId: String(body.target_id || ''), ids, user }))
+        return
+      }
+      case 'drive-rename': {
+        res.status(200).json(await archive.renameDoc({ targetId: String(body.target_id || ''), documentId: String(body.document_id || ''), name: String(body.name || ''), user }))
+        return
+      }
+      case 'drive-settings': {
+        res.status(200).json(await archive.settings({ targetId: String(body.target_id || ''), by_kind: body.by_kind, auto: body.auto, user }))
+        return
+      }
+      case 'drive-reconcile': {
+        res.status(200).json({ results: await archive.reconcile({}) })
+        return
+      }
       case 'cloud-auth-url': {
         const c = CLOUD[body.provider]
         if (!c) { res.status(400).json({ error: 'ספק לא נתמך' }); return }
         if (!c.configured()) { res.status(503).json({ error: body.provider === 'gdrive' ? 'Google Drive עוד לא הוגדר: חסרים GOOGLE_CLIENT_ID ו-GOOGLE_CLIENT_SECRET' : 'Dropbox עוד לא הוגדר: חסרים DROPBOX_APP_KEY ו-DROPBOX_APP_SECRET' }); return }
-        res.status(200).json({ url: c.authUrl(signState({ u: user.id, e: user.email, p: body.provider, t: Date.now() }), redirectUri(req)) })
+        res.status(200).json({ url: c.authUrl(signState({ u: user.id, e: user.email, p: body.provider, t: Date.now(), ...(body.back === 'drive' && body.provider === 'gdrive' ? { r: 'drive' } : {}) }), redirectUri(req)) })
         return
       }
       case 'cloud-sync': {

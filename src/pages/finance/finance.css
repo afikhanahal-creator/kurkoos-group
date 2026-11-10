@@ -2421,3 +2421,63 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 @media (prefers-reduced-motion: reduce) { .fin-scan__bar span { transition: none; } }
 .fin-viewer__office { display: grid; justify-items: center; gap: 10px; text-align: center; max-width: 360px; margin: 48px auto; padding: 28px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); color: var(--text-2); }
 .fin-viewer__office strong { color: var(--ink); font-size: var(--t-lg); }
+
+/* the Google Drive archive: one card per connection; the line that proves completeness, the totals, the explorer */
+.fin-drive { display: grid; gap: 14px; padding: 18px 20px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); min-width: 0; }
+.fin-drive__proof { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 14px; border-radius: var(--r-m); }
+.fin-drive__proof p { margin: 0; line-height: 1.55; }
+.fin-drive__proof.is-ok { background: var(--ok-wash, color-mix(in srgb, var(--ok, #1f7a4d) 10%, var(--sheet))); color: var(--ok, #1f7a4d); }
+.fin-drive__proof.is-ok p { color: var(--ink); }
+.fin-drive__proof.is-warn { background: var(--attn-wash); color: var(--attn); }
+.fin-drive__proof.is-warn p { color: var(--ink); }
+.fin-drive .fin-scan__totals { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+.fin-drive .fin-scan__totals dd { font-size: var(--t-xl); }
+.fin-drive__settings { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 10px; }
+.fin-drive__settings summary { cursor: pointer; font-weight: 700; color: var(--ink); min-height: 32px; display: flex; align-items: center; }
+.fin-drive__settings .fin-toggle { justify-self: start; }
+.fin-drive__settings > .fin-toggle + .fin-toggle { margin-top: 2px; }
+
+.fin-dexplorer { display: grid; gap: 10px; min-width: 0; }
+.fin-dexplorer h3 { margin: 0; font-size: var(--t-base); color: var(--ink); }
+.fin-dexplorer__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+.fin-dexplorer__body.has-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 340px); }
+.fin-dtree { border: 1px solid var(--line); border-radius: var(--r-m); padding: 8px 10px; max-height: 560px; overflow: auto; overscroll-behavior: contain; min-width: 0; }
+.fin-dtree__root { display: flex; align-items: center; gap: 6px; margin: 2px 0 6px; font-weight: 700; color: var(--ink); }
+.fin-dtree__dir > summary { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 6px; border-radius: 8px; cursor: pointer; color: var(--ink); list-style: none; }
+.fin-dtree__dir > summary::-webkit-details-marker { display: none; }
+.fin-dtree__dir > summary::before { content: ''; width: 7px; height: 7px; border-inline-end: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(45deg); transition: transform var(--dur) var(--ease); margin-inline-end: 2px; }
+.fin-dtree__dir:not([open]) > summary::before { transform: rotate(135deg); }
+.fin-dtree__dir > summary:hover { background: var(--wash); }
+.fin-dtree__dir > summary:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; }
+.fin-dtree__dir > summary svg { color: var(--ocean); flex: none; }
+.fin-dtree__dir > summary small { margin-inline-start: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fin-dtree__in { padding-inline-start: 18px; border-inline-start: 1px solid var(--line); margin-inline-start: 9px; }
+.fin-dtree__files { list-style: none; margin: 0; padding: 0; }
+.fin-dtree__files li { display: flex; align-items: center; gap: 6px; border-radius: 8px; }
+.fin-dtree__files li.is-on { background: var(--ocean-wash); }
+.fin-dtree__file { all: unset; box-sizing: border-box; flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 6px; cursor: pointer; color: var(--text-1, var(--ink)); font-size: var(--t-sm); border-radius: 8px; }
+.fin-dtree__file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fin-dtree__file svg { color: var(--muted); flex: none; }
+.fin-dtree__file:hover { background: var(--wash); }
+.fin-dtree__file:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; }
+.fin-dpanel { display: grid; gap: 10px; align-content: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--paper, var(--sheet)); position: sticky; top: 84px; min-width: 0; }
+.fin-dpanel > header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.fin-dpanel > header strong { color: var(--ink); overflow-wrap: anywhere; font-size: var(--t-sm); line-height: 1.45; }
+.fin-dpanel > .fin-pill { justify-self: start; }
+.fin-dpanel__meta { display: grid; gap: 8px; margin: 0; }
+.fin-dpanel__meta div { display: grid; gap: 1px; }
+.fin-dpanel__meta dt { font-size: var(--t-xs); color: var(--text-2); }
+.fin-dpanel__meta dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; font-size: var(--t-sm); }
+.fin-dpanel__acts { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 900px) {
+  /* narrow screens: the file's details rise as a sheet over the tree, next to the file that was tapped */
+  .fin-dexplorer__body.has-panel { grid-template-columns: minmax(0, 1fr); }
+  .fin-dpanel { position: fixed; z-index: var(--z-overlay); inset-inline: 0; top: auto; bottom: 0; max-height: 72vh; overflow: auto; overscroll-behavior: contain; border-radius: 18px 18px 0 0; border-bottom: 0; background: var(--sheet); box-shadow: 0 -10px 30px rgba(7, 41, 58, 0.18); padding-bottom: calc(16px + var(--safe-b, env(safe-area-inset-bottom))); }
+}
+@media (max-width: 560px) {
+  .fin-drive { padding: 16px; }
+  .fin-drive .fin-scan__totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fin-dtree { max-height: none; }
+  .fin-dtree__in { padding-inline-start: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .fin-dtree__dir > summary::before { transition: none; } }

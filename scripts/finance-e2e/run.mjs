@@ -1299,6 +1299,28 @@ const empDriveRows = await rest('fin_drive_files?select=document_id', empToken)
 record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא שומר לענן, לא מריץ בדיקת חיבור ולא נוגע בארכיון ה-Drive (לא רואה ולא מריץ); היומן מקבל רק פעולות ייצוא מותרות', `שמירה: ${empSave.status}; בדיקה: ${empTest.status}; ארכיון: ${empDrive.join(',')}, שורות: ${JSON.stringify(empDriveRows.data).slice(0, 20)}; פעולה אסורה ביומן: ${empLog.status}`,
   empSave.status === 403 && empTest.status === 403 && empDrive.every((x) => x === 403) && Array.isArray(empDriveRows.data) && empDriveRows.data.length === 0 && empLog.status >= 400)
 
+// COVER: a mailbox that no scan covers gets a year of history by itself (the hourly run and a new connection do this), once;
+// and the hourly call collects new mail with the database's secret
+{
+  sql("insert into fin_mailboxes (provider, email, status, connected_by) values ('gmail', 'cover@kurkoos.test', 'active', (select user_id from fin_members where email = 'admin@kurkoos.test')) on conflict do nothing")
+  sql("insert into fin_mailbox_secrets (mailbox_id, refresh_token) select id, 'rt-cover@kurkoos.test' from fin_mailboxes where email = 'cover@kurkoos.test' on conflict do nothing")
+  const cid = sql("select id from fin_mailboxes where email='cover@kurkoos.test'")
+  const c1 = await api(adminToken, { action: 'scan-coverage' })
+  const mine1 = c1.data.results?.find((r) => r.mailbox === 'cover@kurkoos.test') || {}
+  const job = sql(`select status||'|'||(current_date - date_from)||'|'||(select count(*) from fin_scan_segments s where s.job_id=j.id) from fin_scan_jobs j where mailbox_id='${cid}'`)
+  const c2 = await api(adminToken, { action: 'scan-coverage' })
+  const mine2 = c2.data.results?.find((r) => r.mailbox === 'cover@kurkoos.test') || {}
+  const jobs = sql(`select count(*) from fin_scan_jobs where mailbox_id='${cid}'`)
+  const empCover = await api(empToken, { action: 'scan-coverage' })
+  const hourlyBad = await fetch('http://127.0.0.1:5180/api/finance?action=scan-tick&sync=1', { headers: { Authorization: 'Bearer wrong-secret-wrong-secret-wrong-secret' } }).then((r) => r.status)
+  const hourly = await fetch('http://127.0.0.1:5180/api/finance?action=scan-tick&sync=1', { headers: { Authorization: 'Bearer test-cron' } }).then(async (r) => ({ status: r.status, data: await r.json().catch(() => ({})) }))
+  sql(`delete from fin_mailboxes where id='${cid}'`)
+  record('COVER', 'תיבה חדשה: שנה אחורה לבד, ואיסוף כל שעה',
+    'לתיבה שאף סריקה לא מכסה נפתחת סריקה של שנה (לפי שבועות), פעם אחת בלבד; עובד לא מפעיל; הקריאה השעתית דורשת את הסוד ומחזירה מה נאסף מכל תיבה',
+    `ראשונה: ${JSON.stringify(mine1).slice(0, 90)}; סריקה: ${job}; שנייה: ${mine2.reason || JSON.stringify(mine2).slice(0, 60)}; סריקות: ${jobs}; עובד: ${empCover.status}; שעתי בלי סוד: ${hourlyBad}; שעתי: ${hourly.status}, תיבות ${hourly.data.sync?.length}`,
+    mine1.started === true && /^(queued|running)\|36[5-7]\|5[2-4]$/.test(job) && mine2.started === false && mine2.reason === 'active' && jobs === '1' && empCover.status === 403 && hourlyBad === 401 && hourly.status === 200 && Array.isArray(hourly.data.sync))
+}
+
 // V14: fixed expenses, completing missing details, the bar's tip, a month's documents from the report, a supplier's history
 {
   const rpc = (fn, token, body) => rest(`rpc/${fn}`, token, { method: 'POST', body: JSON.stringify(body) })

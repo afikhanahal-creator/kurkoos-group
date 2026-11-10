@@ -9,7 +9,7 @@
 //
 // Environment (Vercel > Settings > Environment Variables, never in code): see docs/finance/README.md
 // ============================================================
-import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview } from './finance/scan.js'
+import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview, ensureCoverage } from './finance/scan.js'
 import * as archive from './finance/archive.js'
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
@@ -44,6 +44,7 @@ const ROLES = {
   'scan-accept': ['admin', 'finance_manager'],
   'scan-overview': ['admin', 'finance_manager'],
   'scan-run': ['admin', 'finance_manager'],
+  'scan-coverage': ['admin', 'finance_manager'],
   'drive-overview': ['admin', 'finance_manager'],
   'drive-tree': ['admin', 'finance_manager'],
   'drive-run': ['admin', 'finance_manager'],
@@ -147,6 +148,7 @@ async function oauthCallback(req, res, url) {
     if (!refresh) return back('error=no_refresh')
     await sb('fin_mailbox_secrets', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { mailbox_id: mb.id, refresh_token: refresh, access_token: t.access_token, expires_at: new Date(Date.now() + (t.expires_in || 3600) * 1000).toISOString(), updated_at: new Date().toISOString() } })
     await audit('mailbox', mb.id, 'connected', { provider: st.p, email: t.email }, { id: st.u, email: st.e })
+    if (process.env.FINANCE_SCAN_ON_CONNECT !== '0') await ensureCoverage({ user: { id: st.u, email: st.e } }).catch(() => {})
     return back(`connected=${encodeURIComponent(t.email)}`)
   } catch (e) {
     return back(`error=${encodeURIComponent(String(e.message || e).slice(0, 120))}`)
@@ -176,8 +178,16 @@ export default async function handler(req, res) {
     const ok = (secret && given === secret) || (given.length >= 32 && await rpc('fin_tick_ok', { p_token: given }).catch(() => false) === true)
     if (!ok) { res.status(401).json({ error: 'unauthorized' }); return }
     try {
-      // the Drive archive first (short: a few documents a minute is plenty), then the mail scan with the rest of the time
       const started = Date.now()
+      // once an hour (pg_cron, ?sync=1): new mail from every mailbox, and a year of history for a mailbox that has none yet
+      if (url.searchParams.get('sync') === '1') {
+        const coverage = await ensureCoverage({}).catch((e) => [{ error: String(e.message || e).slice(0, 160) }])
+        const results = await syncAll({ trigger: 'cron', started }).catch((e) => ({ error: String(e.message || e).slice(0, 200) }))
+        const drive = await archive.tick({ started, budgetMs: 50_000, trigger: 'scan' }).catch(() => [])
+        res.status(200).json({ sync: Array.isArray(results) ? results.map((r) => ({ mailbox: r.mailbox, error: r.error || null, deferred: !!r.deferred })) : results, coverage, drive })
+        return
+      }
+      // the Drive archive first (short: a few documents a minute is plenty), then the mail scan with the rest of the time
       const drive = await archive.tick({ started, budgetMs: 15_000, trigger: 'scan' }).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
       await archive.reconcileStep({ started, budgetMs: 25_000 }).catch(() => [])
       res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
@@ -304,6 +314,11 @@ export default async function handler(req, res) {
       }
       case 'scan-overview': {
         res.status(200).json({ mailboxes: await scanOverview() })
+        return
+      }
+      case 'scan-coverage': {
+        // every active mailbox gets a scan of the last year if no scan covers it (the hourly run does this by itself)
+        res.status(200).json({ results: await ensureCoverage({ user }) })
         return
       }
       case 'scan-run': {

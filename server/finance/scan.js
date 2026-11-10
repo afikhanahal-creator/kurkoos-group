@@ -62,6 +62,23 @@ export async function createJob({ mailboxId, from, to, tz = 'Asia/Jerusalem', in
   return { ...job, segments: wins.length }
 }
 
+/* every active mailbox is covered at least `days` back by a scan that finished or is still going. The night run and a new
+   connection call this, so a full year is collected without anyone pressing a button. A job that ended "incomplete" counts
+   as coverage (its problems wait for a person on the scans screen); a cancelled or failed one does not. */
+export async function ensureCoverage({ days = 366, user = null } = {}) {
+  const mbs = (await sb('fin_mailboxes?status=eq.active&select=id,email')) || []
+  const today = new Date().toISOString().slice(0, 10)
+  const from = new Date(Date.now() - days * DAY).toISOString().slice(0, 10)
+  const out = []
+  for (const mb of mbs) {
+    const jobs = (await sb(`fin_scan_jobs?mailbox_id=eq.${mb.id}&status=in.(queued,running,paused,done,incomplete)&select=id,status,date_from`)) || []
+    if (jobs.some((j) => ['queued', 'running', 'paused'].includes(j.status))) { out.push({ mailbox: mb.email, started: false, reason: 'active' }); continue }
+    if (jobs.some((j) => j.date_from <= from)) { out.push({ mailbox: mb.email, started: false, reason: 'covered' }); continue }
+    try { const job = await createJob({ mailboxId: mb.id, from, to: today, user }); out.push({ mailbox: mb.email, started: true, job: job.id, segments: job.segments }) } catch (e) { out.push({ mailbox: mb.email, started: false, error: String(e.message || e).slice(0, 160) }) }
+  }
+  return out
+}
+
 /* pause / resume / cancel; "rescan" starts a new job over the same period in which failed messages get new tries */
 export async function controlJob(jobId, op, user) {
   const job = await one(`fin_scan_jobs?id=eq.${q(jobId)}&select=*`)

@@ -1804,6 +1804,23 @@ do $$ begin
   if exists (select 1 from pg_namespace where nspname = 'cron') and exists (select 1 from pg_proc where proname = 'fin_scan_kick') then
     perform cron.schedule('finance-scan-tick', '* * * * *', 'select public.fin_scan_kick()');
   end if;
+  -- the minute run's secret is made here, inside the database, and never leaves it except as the run's header. The server
+  -- checks it with fin_tick_ok (service role only), so nobody has to copy a secret by hand. The address is not secret.
+  if exists (select 1 from pg_namespace where nspname = 'vault') then
+    if not exists (select 1 from vault.secrets where name = 'finance_tick_secret') then
+      perform vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'finance_tick_secret');
+    end if;
+    if not exists (select 1 from vault.secrets where name = 'finance_tick_url') then
+      perform vault.create_secret('https://www.kurkoos-group.co.il/api/finance', 'finance_tick_url');
+    end if;
+    execute $f$
+      create or replace function public.fin_tick_ok(p_token text) returns boolean language sql stable security definer set search_path = public as $t$
+        select coalesce(length(p_token) >= 32 and p_token = (select decrypted_secret from vault.decrypted_secrets where name = 'finance_tick_secret'), false)
+      $t$
+    $f$;
+    execute 'revoke all on function public.fin_tick_ok(text) from public, anon, authenticated';
+    execute 'grant execute on function public.fin_tick_ok(text) to service_role';
+  end if;
 end $$;
 
 notify pgrst, 'reload schema';

@@ -12,7 +12,7 @@
 import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview } from './finance/scan.js'
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
-import { sb, one, insert, patch, q, caller, audit, removeFile } from './finance/db.js'
+import { sb, one, insert, patch, q, caller, audit, removeFile, rpc } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
@@ -154,7 +154,10 @@ export default async function handler(req, res) {
   // the scan engine, every minute while a scan has work (pg_cron + pg_net in Supabase; secret in Vault)
   if (req.method === 'GET' && url.searchParams.get('action') === 'scan-tick') {
     const secret = process.env.FINANCE_TICK_SECRET || process.env.CRON_SECRET
-    if (!secret || req.headers.authorization !== `Bearer ${secret}`) { res.status(401).json({ error: 'unauthorized' }); return }
+    const given = String(req.headers.authorization || '').replace(/^Bearer /, '')
+    // the env secret, or the one the database made for itself in Vault (checked inside the database)
+    const ok = (secret && given === secret) || (given.length >= 32 && await rpc('fin_tick_ok', { p_token: given }).catch(() => false) === true)
+    if (!ok) { res.status(401).json({ error: 'unauthorized' }); return }
     try { res.status(200).json(await scanTick({ trigger: 'scan' })) } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
   }

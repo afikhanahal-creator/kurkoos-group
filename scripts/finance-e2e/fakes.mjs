@@ -326,6 +326,11 @@ const server = http.createServer(async (req, res) => {
     log.waFiles.push({ to: b.chatId, fileName: b.fileName, caption: b.caption, bytes: buf ? buf.length : 0, sha: buf ? crypto.createHash('sha256').update(buf).digest('hex') : null })
     return send(res, buf ? 200 : 400, buf ? { idMessage: `file${log.waFiles.length}` } : { error: 'download failed' })
   }
+  // the instance: its state and settings, as getStateInstance / getSettings / setSettings answer
+  if (/^\/green\/waInstance[^/]+\/getStateInstance\//.test(p)) return send(res, 200, { stateInstance: log.greenState || 'authorized' })
+  if (/^\/green\/waInstance[^/]+\/getSettings\//.test(p)) return send(res, 200, { wid: '972501234567@c.us', webhookUrl: '', webhookUrlToken: '', incomingWebhook: 'no', outgoingWebhook: 'no', ...(log.greenSettings || {}) })
+  if (/^\/green\/waInstance[^/]+\/setSettings\//.test(p)) { log.greenSettings = { ...(log.greenSettings || {}), ...JSON.parse(await readBody(req)) }; return send(res, 200, { saveSettings: true }) }
+  if (p === '/__green') { const u = new URL(req.url, 'http://x'); if (u.searchParams.has('state')) log.greenState = u.searchParams.get('state') || null; if (u.searchParams.has('webhook')) log.greenSettings = { ...(log.greenSettings || {}), webhookUrl: u.searchParams.get('webhook') }; if (u.searchParams.has('reset')) { log.greenSettings = null; log.greenState = null } return send(res, 200, { ok: true }) }
   if (/^\/green\/waInstance[^/]+\/sendMessage\//.test(p)) { const b = JSON.parse(await readBody(req)); log.wa.push({ to: b.chatId, message: b.message }); return send(res, 200, { idMessage: `out${log.wa.length}` }) }
   if (p.startsWith('/green/file/')) { const f = decodeURIComponent(p.slice('/green/file/'.length)); res.writeHead(200, { 'Content-Type': f.endsWith('.pdf') ? 'application/pdf' : 'image/png' }); res.end(fs.readFileSync(`${FIX}/${f}`)); return }
   // a webhook receiver: records every delivery; ?fail=N answers 500 to the first N deliveries

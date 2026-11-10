@@ -946,6 +946,32 @@ await admin('admin/users', { email: 'worker@kurkoos.test', password: 'W0rker!xx'
 const inv2 = await api(adminToken, { action: 'invite', email: 'worker@kurkoos.test', role: 'employee', full_name: 'עובד שטח' })
 const accToken = await login('cpa@accountants.test', 'Acc0untant!x')
 const empToken = await login('worker@kurkoos.test', 'W0rker!xx')
+// WACHECK: the connection check reads the provider's own state; turning the reception on writes the webhook there, and
+// refuses to take over a webhook that points elsewhere unless told to
+{
+  await fetch(`${FAKES}/__green?reset=1`)
+  const c1 = (await api(adminToken, { action: 'whatsapp-check' })).data
+  const step = (c, k) => c.steps?.find((x) => x.key === k)
+  await fetch(`${FAKES}/__green?webhook=${encodeURIComponent('https://other.example/hook')}`)
+  const taken = await api(adminToken, { action: 'whatsapp-setup' })
+  const on = await api(adminToken, { action: 'whatsapp-setup', force: true })
+  const set = (await fetch(`${FAKES}/__log`).then((r) => r.json())).greenSettings || {}
+  const c2 = (await api(adminToken, { action: 'whatsapp-check' })).data
+  await fetch(`${FAKES}/__green?state=notAuthorized`)
+  const c3 = (await api(adminToken, { action: 'whatsapp-check' })).data
+  await fetch(`${FAKES}/__green?state=`)
+  const empCheck = await api(empToken, { action: 'whatsapp-check' })
+  const empSetup = await api(empToken, { action: 'whatsapp-setup' })
+  await go('/scanners'); await page.getByRole('button', { name: 'בדיקת החיבור' }).click(); await page.waitForSelector('.fin-wacheck__steps li', { timeout: 15000 }).catch(() => {})
+  const uiSteps = await page.locator('.fin-wacheck__steps li').count()
+  const uiOk = await page.locator('.fin-wacheck.is-ok').count()
+  const wcShot = await shot('54-whatsapp-check')
+  record('WACHECK', 'בדיקת החיבור ל-WhatsApp והפעלה בלחיצה',
+    'הבדיקה קוראת את מצב המכשיר וההגדרות מהספק; לפני ההפעלה שלב ההודעות הנכנסות חסר; הפעלה לא דורסת כתובת של מערכת אחרת בלי אישור; אחריה הכול תקין; מכשיר מנותק מסומן; עובד לא בודק ולא מפעיל',
+    `לפני: webhook ${step(c1, 'webhook')?.ok}, אפשר להפעיל ${c1.can_setup}; כתובת אחרת: ${taken.status}; הפעלה: ${on.status}, נשמר ${set.webhookUrl} / ${set.incomingWebhook} / טוקן ${set.webhookUrlToken === 'test-wa-hook'}; אחרי: ${c2.ok}; מנותק: phone ${step(c3, 'phone')?.ok}; עובד: ${empCheck.status},${empSetup.status}; מסך: ${uiSteps} שלבים, תקין ${uiOk}`,
+    step(c1, 'webhook')?.ok === false && c1.can_setup === true && step(c1, 'phone')?.ok === true && taken.status === 409 && on.status === 200 && /\/api\/finance-whatsapp$/.test(set.webhookUrl || '') && set.incomingWebhook === 'yes' && set.webhookUrlToken === 'test-wa-hook'
+      && c2.ok === true && step(c3, 'phone')?.ok === false && c3.ok === false && empCheck.status === 403 && empSetup.status === 403 && uiSteps === 5 && uiOk === 1, [wcShot])
+}
 const accDocs = await rest('fin_documents?select=status', accToken)
 const accEdit = await rest(`fin_documents?status=eq.sent`, accToken, { method: 'PATCH', body: JSON.stringify({ notes: 'x' }) })
 const accLeads = await rest('leads?select=id', accToken)

@@ -133,3 +133,60 @@ export async function sendDocument({ doc, phone, caption }) {
   if (!r.ok || !d.idMessage) throw Object.assign(new Error(`השליחה ב-WhatsApp נכשלה (${r.status})`), { status: 502 })
   return d.idMessage
 }
+
+/* ---------- is the reception really on? ----------
+   The answers come from Green API itself (the state of the instance and its settings), not from what we hope is set.
+   Nothing secret leaves the server: the token is only compared. */
+const hookUrl = (origin) => `${String(origin || '').replace(/\/$/, '')}/api/finance-whatsapp`
+const green = async (method, path, body) => {
+  const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/${path}/${process.env.GREENAPI_TOKEN}`, {
+    method, signal: AbortSignal.timeout(12_000), ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
+  })
+  const d = await r.json().catch(() => null)
+  if (!r.ok || !d) throw new Error(`Green API ${r.status}`)
+  return d
+}
+export async function health(origin) {
+  const steps = []
+  const add = (key, ok, title, detail = '', fix = '') => steps.push({ key, ok, title, detail, fix })
+  const hasInstance = !!(process.env.GREENAPI_ID_INSTANCE && process.env.GREENAPI_TOKEN)
+  const hasToken = !!process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN
+  add('server', hasInstance && hasToken, 'הגדרות השרת',
+    hasInstance && hasToken ? 'פרטי החיבור ל-WhatsApp שמורים בשרת' : `חסר בשרת: ${[!process.env.GREENAPI_ID_INSTANCE && 'GREENAPI_ID_INSTANCE', !process.env.GREENAPI_TOKEN && 'GREENAPI_TOKEN', !hasToken && 'FINANCE_WHATSAPP_WEBHOOK_TOKEN'].filter(Boolean).join(', ')}`,
+    hasInstance && hasToken ? '' : 'מוסיפים את המשתנים ב-Vercel › Settings › Environment Variables ומעלים גרסה מחדש')
+  let settings = null; let state = null; let apiError = ''
+  if (hasInstance) {
+    try { state = (await green('GET', 'getStateInstance'))?.stateInstance || null; settings = await green('GET', 'getSettings') } catch (e) { apiError = String(e.message || e).slice(0, 120) }
+    add('phone', state === 'authorized', 'הטלפון של המשרד מחובר',
+      apiError ? `לא התקבלה תשובה מספק ה-WhatsApp (${apiError})` : state === 'authorized' ? 'המכשיר מחובר ופעיל' : `מצב המכשיר: ${state || 'לא ידוע'}`,
+      state === 'authorized' || apiError ? '' : 'נכנסים לחשבון Green API וסורקים את קוד ה-QR עם ה-WhatsApp של המשרד')
+  } else add('phone', false, 'הטלפון של המשרד מחובר', 'אי אפשר לבדוק בלי פרטי החיבור בשרת')
+  const wid = String(settings?.wid || '').replace(/\D/g, '')
+  const office = officeNumber()
+  add('number', !!office && (!wid || wid === office), 'מספר המשרד',
+    !office ? 'המספר שמוצג לעובדים לא הוגדר בשרת (FINANCE_WHATSAPP_NUMBER)' : wid && wid !== office ? `במערכת מוצג ${office}, אבל המכשיר המחובר הוא ${wid}` : `העובדים שולחים אל ${office}`,
+    !office ? `מוסיפים ב-Vercel את FINANCE_WHATSAPP_NUMBER${wid ? ` = ${wid}` : ''}` : wid && wid !== office ? 'מתקנים את FINANCE_WHATSAPP_NUMBER למספר של המכשיר המחובר' : '')
+  const want = hookUrl(origin)
+  const urlOk = !!settings && String(settings.webhookUrl || '').replace(/\/$/, '') === want
+  const tokenOk = !!settings && hasToken && String(settings.webhookUrlToken || '') === process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN
+  const incomingOk = !!settings && settings.incomingWebhook === 'yes'
+  const elsewhere = !!settings?.webhookUrl && !urlOk
+  add('webhook', urlOk && tokenOk && incomingOk, 'הודעות נכנסות מגיעות למערכת',
+    !settings ? 'אי אפשר לבדוק בלי תשובה מספק ה-WhatsApp' : urlOk && tokenOk && incomingOk ? 'כל הודעה שמגיעה למספר המשרד נשלחת למערכת' : elsewhere ? 'ההודעות הנכנסות נשלחות כרגע לכתובת אחרת' : !urlOk ? 'הודעות נכנסות לא נשלחות למערכת' : !tokenOk ? 'קוד האימות של ההודעות לא תואם' : 'קבלת הודעות נכנסות כבויה',
+    !settings || (urlOk && tokenOk && incomingOk) ? '' : 'לוחצים "הפעלת הקליטה" והמערכת מגדירה את זה לבד')
+  const senders = (await sb('fin_whatsapp_senders?active=eq.true&select=id')) || []
+  add('senders', senders.length > 0, 'טלפונים רשומים', senders.length ? `${senders.length} טלפונים יכולים לשלוח מסמכים` : 'עוד לא נרשם אף טלפון', senders.length ? '' : 'מוסיפים טלפון בכפתור "הוספת טלפון"')
+  const last = ((await sb('fin_whatsapp_inbox?select=outcome,at,kind&order=at.desc&limit=1')) || [])[0] || null
+  return { ok: steps.every((x) => x.ok), steps, last, can_setup: hasInstance && hasToken && !!settings && !(urlOk && tokenOk && incomingOk), elsewhere }
+}
+/* points the incoming messages of the office number at this system. A webhook that already goes somewhere else is
+   replaced only when the person says so (force): another tool may be listening on it. */
+export async function setup(origin, { force = false } = {}) {
+  if (!configured()) throw Object.assign(new Error('חסרות הגדרות בשרת. הריצו קודם את בדיקת החיבור'), { status: 400 })
+  const cur = await green('GET', 'getSettings')
+  const want = hookUrl(origin)
+  if (cur.webhookUrl && String(cur.webhookUrl).replace(/\/$/, '') !== want && !force) throw Object.assign(new Error('ההודעות הנכנסות נשלחות כרגע לכתובת אחרת. אם מערכת אחרת משתמשת בהן היא תפסיק לקבל אותן'), { status: 409, elsewhere: true })
+  const r = await green('POST', 'setSettings', { webhookUrl: want, webhookUrlToken: process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN, incomingWebhook: 'yes' })
+  if (!r.saveSettings) throw Object.assign(new Error('ספק ה-WhatsApp לא שמר את ההגדרות'), { status: 502 })
+  return { saved: true }
+}

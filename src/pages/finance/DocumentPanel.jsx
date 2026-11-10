@@ -202,7 +202,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
           </div>
           <div className="fin-panel__nav">
             {doc.file_path && <button type="button" className="fin-icon-btn" onClick={async () => saveBlob(await api.fileBlob(doc), doc.file_name || 'document')} aria-label="הורדת הקובץ המקורי" title="הורדת הקובץ המקורי"><Icon name="download" /></button>}
-            {doc.file_path && <button type="button" className="fin-icon-btn" onClick={() => document.querySelector('.fin-panel .fin-viewer__print')?.click()} aria-label="הדפסת המסמך" title="הדפסה"><Icon name="print" /></button>}
+            {doc.file_path && <button type="button" className="fin-icon-btn fin-panel__print" onClick={() => document.querySelector('.fin-panel .fin-viewer__print')?.click()} aria-label="הדפסת המסמך" title="הדפסה"><Icon name="print" /></button>}
             {(can('manage') || (can('operate') && !['approved', 'sent'].includes(doc.status))) && <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={remove} disabled={!!busy} aria-label="מחיקת המסמך (לא רלוונטי)" title="מחיקת המסמך"><Icon name="trash" /></button>}
             <button type="button" className="fin-icon-btn" onClick={onPrev} disabled={!onPrev} aria-label="המסמך הקודם" title="הקודם"><Icon name="back" /></button>
             <button type="button" className="fin-icon-btn" onClick={onNext} disabled={!onNext} aria-label="המסמך הבא" title="הבא"><Icon name="next" /></button>

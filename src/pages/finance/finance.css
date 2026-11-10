@@ -2919,3 +2919,24 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs .fin-table__check { padding-inline-end: 0.6rem; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs .fin-td-status { padding-inline-start: 0.6rem; }
 }
+
+/* ---------- WhatsApp: is the reception working? a checklist that names what is missing ---------- */
+.fin-wacheck { display: grid; gap: 12px; padding: 16px 18px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); }
+.fin-wacheck.is-ok { border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+.fin-wacheck.is-open { border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+.fin-wacheck header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fin-wacheck header > div { flex: 1 1 260px; min-width: 0; display: grid; gap: 2px; }
+.fin-wacheck h3 { font-size: var(--t-base); }
+.fin-wacheck__steps { list-style: none; margin: 0; padding: 0; display: grid; }
+.fin-wacheck__steps li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); }
+.fin-wacheck__steps li > div { display: grid; gap: 1px; min-width: 0; }
+.fin-wacheck__steps strong { color: var(--ink); font-size: var(--t-md); }
+.fin-wacheck__steps small { color: var(--text-2); font-size: var(--t-sm); overflow-wrap: anywhere; }
+.fin-wacheck__mark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; }
+.fin-wacheck__steps .is-ok .fin-wacheck__mark { background: var(--ok-wash); color: var(--ok); }
+.fin-wacheck__steps .is-bad .fin-wacheck__mark { background: var(--warn-wash); color: var(--warn); }
+.fin-wacheck__steps small.fin-wacheck__fix { color: var(--ink); font-weight: 700; }
+.fin-wacheck > .fin-btn--primary { justify-self: start; }
+@media (max-width: 700px) { .fin-wacheck header .fin-btn, .fin-wacheck > .fin-btn--primary { width: 100%; justify-content: center; } }
+/* a narrow phone: the header keeps room for the supplier's name; print stays in the viewer's own bar just below */
+@media (max-width: 430px) { .fin-panel__print { display: none; } }

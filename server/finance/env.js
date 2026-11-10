@@ -6,6 +6,11 @@ export const env = {
   anthropic: () => process.env.FINANCE_ANTHROPIC_API || 'https://api.anthropic.com',
   anthropicKey: () => process.env.ANTHROPIC_API_KEY || '',
   model: () => process.env.FINANCE_MODEL || 'claude-opus-5-5',
+  // the cost plan of the mail agent: a small model decides what is worth reading, a mid model reads the invoice, the
+  // strongest model checks only the critical fields when the first reading was unsure (see readDocument)
+  modelExtract: () => process.env.FINANCE_MODEL_EXTRACT || 'claude-sonnet-5-5',
+  modelVerify: () => process.env.FINANCE_MODEL_VERIFY || 'claude-opus-5-5',
+  modelTriage: () => process.env.FINANCE_TRIAGE_MODEL || 'claude-haiku-5-5',
   // low effort keeps one document at a few seconds inside the 60s function; raise it if mistakes show
   effort: () => process.env.FINANCE_EFFORT || 'low',
   googleOauth: () => process.env.FINANCE_GOOGLE_OAUTH || 'https://oauth2.googleapis.com',
@@ -29,3 +34,7 @@ export const MAX_FILE = 12 * 1024 * 1024
 export const TIME_BUDGET_MS = 45_000
 export const MIME_OK = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 export const DOC_TYPES = ['invoice', 'receipt', 'invoice_receipt', 'credit', 'supplier_bill', 'payment_confirmation', 'proforma', 'quote', 'other']
+
+/* list prices per million tokens (input, output), to show what reading cost. An unknown model counts at the top price. */
+const PRICE = { 'claude-haiku-5-5': [0.1, 0.5], 'claude-sonnet-5-5': [2, 10], 'claude-opus-5-5': [4, 20] }
+export const costOf = (model, inTok = 0, outTok = 0) => { const [i, o] = PRICE[model] || [4, 20]; return (inTok * i + outTok * o) / 1e6 }

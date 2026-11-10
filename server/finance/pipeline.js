@@ -2,12 +2,13 @@
 //   collector (download, fingerprint, de-duplicate) → ocr (Claude reads it) → validation (rules)
 //   → classification (company, project, category) → the document waits in review for a person.
 import crypto from 'node:crypto'
-import { MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.js'
+import { env, costOf, MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.js'
 import { sb, one, insert, patch, q, rpc, upload, download, storageUsage } from './db.js'
 import { extract, verify, needsVerify, crossCheck, relevanceOf, CLASS_LABEL } from './extract.js'
 import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
 import { gate, triage } from './triage.js'
+import { expand, readable, mimeByName, ZIP, DOCX, XLSX, TIFF } from './unpack.js'
 import * as gmail from './providers/gmail.js'
 import * as outlook from './providers/outlook.js'
 
@@ -24,10 +25,12 @@ const isoDate = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || '')) ? s : null)
 const digits = (s) => String(s || '').replace(/\D/g, '') || null
 const money = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 100) / 100 : null)
 const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex')
-const extOf = (mime) => (mime === 'application/pdf' ? 'pdf' : mime.startsWith('text/') ? 'html' : mime.split('/')[1])
+const extOf = (mime) => ({ 'application/pdf': 'pdf', [DOCX]: 'docx', [XLSX]: 'xlsx', [TIFF]: 'tif', 'image/jpeg': 'jpg' }[mime] || (mime.startsWith('text/') ? 'html' : mime.split('/')[1]))
+// what the mail scan accepts: what Claude reads directly, and what unpack.js turns into something it reads
+export const MAIL_OK = new Set([...MIME_OK, ZIP, DOCX, XLSX, TIFF])
 export const mimeOf = (name, given) => {
-  if (MIME_OK.has(given)) return given
-  return { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' }[String(name).toLowerCase().split('.').pop()] || given
+  if (MAIL_OK.has(given)) return given
+  return mimeByName(name) || given
 }
 
 /* every source reads documents the same way: a full reading, then, when the reading is unsure, the arithmetic does
@@ -42,11 +45,12 @@ export async function readDocument(input, runs, { deadline = Infinity } = {}) {
       const cc = crossCheck(x, y)
       x.field_confidence = cc.field_confidence
       x.verification = { second: y, disagree: cc.disagree, at: new Date().toISOString() }
-      usage.in += y._usage?.in || 0; usage.out += y._usage?.out || 0; usage.calls += 1
+      usage.in += y._usage?.in || 0; usage.out += y._usage?.out || 0; usage.calls += 1; usage.usd = (usage.usd || 0) + (y._usage?.usd || 0)
       if (runs) runs.validation.stat.details.verified = (runs.validation.stat.details.verified || 0) + 1
     } catch (e) { x.verification = { error: String(e.message || e).slice(0, 200) } }
   }
   Object.defineProperty(x, '_usage', { value: usage, enumerable: false, configurable: true, writable: true })
+  if (runs) runs.ocr.stat.details.cost_usd = (runs.ocr.stat.details.cost_usd || 0) + (usage.usd || 0)
   return x
 }
 const usageFields = (x, prev = {}) => ({ ai_tokens_in: (prev.ai_tokens_in || 0) + (x?._usage?.in || 0), ai_tokens_out: (prev.ai_tokens_out || 0) + (x?._usage?.out || 0), ai_calls: (prev.ai_calls || 0) + (x?._usage?.calls || 0) })
@@ -204,7 +208,7 @@ export async function processStored(doc, runs, trigger = 'upload', started = Dat
     const buf = await download(doc.file_path)
     const mime = doc.file_mime || 'application/pdf'
     const isText = mime.startsWith('text/')
-    x = await readDocument(isText ? { text: buf.toString('utf8').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' '), categories: await categories() } : { buf, mime, categories: await categories(), hint: `${trigger} file ${doc.file_name || ''}` }, runs, { deadline: started + 25_000 })
+    x = await readDocument(isText ? { text: buf.toString('utf8').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' '), categories: await categories() } : { ...readable(mime, buf), categories: await categories(), hint: `${trigger} file ${doc.file_name || ''}` }, runs, { deadline: started + 25_000 })
     runs.ocr.stat.processed++
     const mb = doc.mailbox_id ? await one(`fin_mailboxes?id=eq.${doc.mailbox_id}&select=*`) : null
     const fields = await analyze(x, { selfId: doc.id, selfCreated: doc.created_at, mailbox: mb, fromEmail: doc.email_from || '' }, runs)
@@ -251,6 +255,7 @@ export async function syncMailbox(mb, started, runs, trigger) {
   for (const r of lastRuns) { if (r.error) attempt++; else break }
   const run = await insert('fin_sync_runs', { mailbox_id: mb.id, trigger, attempt })
   const stats = { scanned: 0, imported: 0, skipped: 0 }
+  const progress = { candidates: 0, todo: 0 }   // for the history scan's progress (not stored in fin_sync_runs)
   let complete = true; let error = null; let authError = false
   const scanStart = new Date().toISOString()
   try {
@@ -261,11 +266,23 @@ export async function syncMailbox(mb, started, runs, trigger) {
     // a backfill reads only the gap [sync_from, backfill_until), with a higher cap, so a busy mailbox still reaches its old mail
     const gap = mb.backfill_pending && mb.backfill_until && mb.last_sync_at
     const since = mb.backfill_pending || !mb.last_sync_at ? start : new Date(new Date(mb.last_sync_at).getTime() - 2 * 86400_000)
-    const ids = await prov.listCandidates(token, since, mb.query, gap ? { until: new Date(`${mb.backfill_until}T00:00:00Z`), max: 3000 } : {})
+    // a long range (a year back, or a first scan of an old period) is listed one month at a time, newest month first:
+    // a list cap never hides the oldest months of a busy mailbox
+    const until = gap ? new Date(`${mb.backfill_until}T00:00:00Z`) : new Date()
+    let ids = []
+    if (until - since > 40 * 86400_000) {
+      for (let b = until; b > since;) { const a = new Date(b); a.setUTCMonth(a.getUTCMonth() - 1); const from = a < since ? since : a; ids.push(...await prov.listCandidates(token, from, mb.query, { until: b, max: 2500 })); b = from }
+      ids = [...new Set(ids)]
+    } else ids = await prov.listCandidates(token, since, mb.query, gap ? { until, max: 2500 } : {})
     runs.scanner.stat.processed += ids.length
-    const seenRows = ids.length ? await sb(`fin_mail_seen?mailbox_id=eq.${mb.id}&select=message_id&message_id=in.(${ids.map((i) => `"${i}"`).join(',')})`) : []
-    const seen = new Set((seenRows || []).map((r) => r.message_id))
+    // which were already scanned, 150 ids per question (a long list does not fit in one address)
+    const seen = new Set()
+    for (let i = 0; i < ids.length; i += 150) {
+      const part = ids.slice(i, i + 150)
+      for (const r of (await sb(`fin_mail_seen?mailbox_id=eq.${mb.id}&select=message_id&message_id=in.(${part.map((x) => `"${x}"`).join(',')})`)) || []) seen.add(r.message_id)
+    }
     const todo = ids.filter((id) => !seen.has(id)).reverse()       // oldest first
+    progress.candidates = ids.length; progress.todo = todo.length
     // the conductor's memory: senders that sent a kept document before, and senders that only ever sent skipped files
     const GENERIC = /^(gmail|googlemail|outlook|hotmail|live|yahoo|walla|icloud|me)\./
     const addr = (f) => (String(f || '').match(/<([^>]+)>/)?.[1] || String(f || '')).trim().toLowerCase()
@@ -285,7 +302,8 @@ export async function syncMailbox(mb, started, runs, trigger) {
       stats.scanned++
       const msg = await prov.getMessage(token, id)
       const meta = { email_message_id: id, email_subject: (msg.subject || '').slice(0, 300), email_from: (msg.from || '').slice(0, 300), email_date: msg.date, mailbox_id: mb.id, source: mb.provider }
-      const files = msg.files.map((f) => ({ ...f, mime: mimeOf(f.name, f.mime) })).filter((f) => MIME_OK.has(f.mime) && f.size <= MAX_FILE && !(f.mime.startsWith('image/') && f.size < 15_000))
+      // a logo or a signature image (under 15 KB) is not a document; a ZIP opens into its files further down
+      const files = msg.files.map((f) => ({ ...f, mime: mimeOf(f.name, f.mime) })).filter((f) => MAIL_OK.has(f.mime) && f.size <= MAX_FILE && !(f.mime.startsWith('image/') && f.mime !== TIFF && f.size < 15_000))
       let got = 0
 
       const take = async (buf, mime, name, extractInput) => {
@@ -299,14 +317,15 @@ export async function syncMailbox(mb, started, runs, trigger) {
           runs.collector.stat.details.not_financial = [...(runs.collector.stat.details.not_financial || []), `${meta.email_subject} · ${name}`].slice(-20)
           await insert('fin_skipped', { source: mb.provider, mailbox_id: mb.id, email_subject: meta.email_subject, email_from: meta.email_from, file_name: String(name).slice(0, 200), file_hash: hash, document_class: cls, confidence: conf, reason }, 'return=minimal').catch(() => {})
         }
-        const g = gate({ name, subject: meta.email_subject, from: meta.email_from }, gateCtx)
+        const g = gate({ name: String(name).split(' › ').pop(), subject: meta.email_subject, from: meta.email_from }, gateCtx)   // a file inside a ZIP is judged by its own name
         if (g.verdict === 'noise') { await skipAs(g.cls, 1, `דולג בלי קריאה: ${g.reason}`, 'skipped_by_rule'); return }
         let doubt = null
         if (g.verdict === 'invoice') tally('direct')
         else {
           try {
-            const t = await triage({ buf: extractInput.buf, mime, text: extractInput.text, name, subject: meta.email_subject, from: meta.email_from })
+            const t = await triage({ buf: extractInput.buf, mime: extractInput.mime || mime, text: extractInput.text, name, subject: meta.email_subject, from: meta.email_from })
             runs.ocr.stat.details.triage_tokens = (runs.ocr.stat.details.triage_tokens || 0) + (t.usage?.in || 0) + (t.usage?.out || 0)
+            runs.collector.stat.details.triage_usd = (runs.collector.stat.details.triage_usd || 0) + costOf(env.modelTriage(), t.usage?.in, t.usage?.out)
             if (t.verdict === 'skip') { await skipAs(t.cls, t.conf, `בדיקה מקדימה: ${CLASS_LABEL[t.cls] || 'לא חשבונית או קבלה'}`, 'skipped_by_triage'); return }
             if (t.verdict === 'unsure') doubt = t; else tally('triage_keep')
           } catch { tally('triage_error') }   // a fault of the check is not a doubt about the file: the full reading decides, and it retries on its own
@@ -356,9 +375,17 @@ export async function syncMailbox(mb, started, runs, trigger) {
         }
       }
 
-      for (const f of files.slice(0, 5)) {
-        const buf = await f.load()
-        await take(buf, f.mime, f.name, { buf, mime: f.mime, categories: await categories(), hint: `email from ${meta.email_from}, subject "${meta.email_subject}", file ${f.name}` })
+      // up to 12 files from one email (ZIP contents included); each is checked by the gate before anything is paid for
+      let left = 12
+      for (const f of files) {
+        if (left <= 0) break
+        for (const part of expand(f.name, f.mime, await f.load())) {
+          if (left-- <= 0) break
+          if (part.mime.startsWith('image/') && part.mime !== TIFF && part.data.length < 15_000) continue
+          let input
+          try { input = readable(part.mime, part.data) } catch { runs.collector.stat.errors++; continue }   // a damaged TIFF or Office file
+          await take(part.data, part.mime, part.name, { ...input, categories: await categories(), hint: `email from ${meta.email_from}, subject "${meta.email_subject}", file ${part.name}${input.note ? `. ${input.note}` : ''}` })
+        }
       }
       // a receipt written in the email itself
       if (!got && !files.length) {
@@ -388,5 +415,5 @@ export async function syncMailbox(mb, started, runs, trigger) {
   if (complete) { if (!(mb.backfill_pending && mb.backfill_until && mb.last_sync_at)) upd.last_sync_at = scanStart; upd.backfill_pending = false; upd.backfill_until = null }
   await patch(`fin_mailboxes?id=eq.${mb.id}`, upd).catch(() => {})
   if (run) await patch(`fin_sync_runs?id=eq.${run.id}`, { ...stats, finished_at: new Date().toISOString(), error }).catch(() => {})
-  return { mailbox: mb.email, provider: mb.provider, ...stats, complete, error, attempt }
+  return { mailbox: mb.email, provider: mb.provider, ...stats, complete, error, attempt, candidates: progress.candidates, remaining: Math.max(0, progress.todo - stats.scanned), from: mb.sync_from, backfill: !!mb.backfill_pending && !complete }
 }

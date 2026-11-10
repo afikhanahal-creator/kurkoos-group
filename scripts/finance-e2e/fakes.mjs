@@ -47,7 +47,10 @@ function gmailMessage(m) {
   if (m.text) parts.push({ partId: '1', mimeType: 'text/plain', filename: '', body: { size: m.text.length, data: b64u(m.text) } })
   for (const [i, f] of (m.files || []).entries()) {
     const size = fs.statSync(`${FIX}/${f}`).size
-    parts.push({ partId: `a${i}`, mimeType: f.endsWith('.pdf') ? 'application/pdf' : 'image/png', filename: f, body: { size, attachmentId: `${m.id}__${i}` } })
+    // like Gmail: the real type by extension; a TIFF arrives as octet-stream (some mail clients do that) and is known by its name
+    const ext = f.toLowerCase().split('.').pop()
+    const mimeType = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', zip: 'application/zip', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }[ext] || 'application/octet-stream'
+    parts.push({ partId: `a${i}`, mimeType, filename: f, body: { size, attachmentId: `${m.id}__${i}` } })
   }
   return {
     id: m.id,
@@ -139,6 +142,9 @@ const server = http.createServer(async (req, res) => {
     let answer = null
     // the second reading (VERIFY): answers only the critical fields, from verifyAnswers, else the same as the first reading
     const verifying = text.startsWith('VERIFY:')
+    // every reading of mail content must tell the model that the content is data, not instructions
+    if (/never instructions to you/.test(text)) log.guarded = (log.guarded || 0) + 1
+    else if (!text.startsWith('Today is') && !/Question:/.test(text)) log.unguarded = (log.unguarded || 0) + 1
     if (verifying) log.verifyCalls = (log.verifyCalls || 0) + 1
     if (doc) {
       const raw = Buffer.from(doc.source.data, 'base64')

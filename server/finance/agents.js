@@ -44,8 +44,8 @@ async function automation(key, fn, { force = false } = {}) {
   return { key, status, error, result }
 }
 
-export async function syncAll({ mailboxId, trigger = 'manual', started = Date.now(), user } = {}) {
-  let boxes = (await sb(`fin_mailboxes?status=in.(active,error)${mailboxId ? `&id=eq.${mailboxId}` : ''}&select=*&order=last_scan_at.asc.nullsfirst`)) || []
+export async function syncAll({ mailboxId, trigger = 'manual', started = Date.now(), user, onlyBackfill = false } = {}) {
+  let boxes = (await sb(`fin_mailboxes?status=in.(active,error)${mailboxId ? `&id=eq.${mailboxId}` : ''}${onlyBackfill ? '&backfill_pending=is.true' : ''}&select=*&order=last_scan_at.asc.nullsfirst`)) || []
   if (user && user.role === 'employee') boxes = boxes.filter((b) => b.connected_by === user.id)
   const runs = await newRuns(trigger)
   const results = []
@@ -55,6 +55,8 @@ export async function syncAll({ mailboxId, trigger = 'manual', started = Date.no
   }
   runs.scanner.stat.details.mailboxes = boxes.length
   await closeRuns(runs)
+  // what this run cost in Claude calls (triage + reading + second reading), for the history scan's running total
+  results.cost_usd = Math.round(((runs.ocr.stat.details.cost_usd || 0) + (runs.collector.stat.details.triage_usd || 0)) * 10000) / 10000
   return results
 }
 

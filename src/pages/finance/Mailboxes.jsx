@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -12,22 +12,82 @@ const STATE = { active: ['ok', 'מחובר'], error: ['attn', 'תקלה בחיב
 const PRESETS = [[3, '3 חודשים'], [6, 'חצי שנה'], [12, 'שנה'], [24, 'שנתיים'], [48, '4 שנים']]
 const monthsAgo = (n) => { const d = new Date(); d.setMonth(d.getMonth() - n); return d.toISOString().slice(0, 10) }
 
+/* The history scan: reads a year (or any range) of old mail into the system. Each step is about 45 s on the server;
+   the window keeps calling the next step while it is open, and the nightly run continues if it is closed.
+   Only what passes the free rules and the cheap check is read in full, so the cost stays with the real invoices. */
 function OldReceipts({ current, onClose, onDone }) {
   const [from, setFrom] = useState(monthsAgo(12))
-  const [busy, setBusy] = useState(false)
+  const [phase, setPhase] = useState('choose')       // choose → running → paused | done
   const [err, setErr] = useState('')
-  const run = async () => {
-    setBusy(true); setErr('')
-    try { const r = await api.callServer('backfill', { from }); onDone(r) } catch (e) { setErr(e.message); setBusy(false) }
+  const [boxes, setBoxes] = useState({})             // email → last progress of that mailbox
+  const [found, setFound] = useState({ imported: 0, skipped: 0, scanned: 0, cost: 0 })
+  const stop = useRef(false)
+  useEffect(() => () => { stop.current = true }, [])
+  const sum = (r, k) => (r.results || []).reduce((a, x) => a + (x[k] || 0), 0)
+  const absorb = (r) => {
+    setBoxes((b) => { const n = { ...b }; for (const x of r.results || []) if (x.mailbox && !x.deferred) n[x.mailbox] = { ...x, remaining: x.complete ? 0 : x.remaining }; return n })
+    setFound((f) => ({ imported: f.imported + sum(r, 'imported'), skipped: f.skipped + sum(r, 'skipped'), scanned: f.scanned + sum(r, 'scanned'), cost: f.cost + (r.cost_usd || 0) }))
   }
+  const loop = async (first) => {
+    stop.current = false; setPhase('running'); setErr('')
+    try {
+      if (first) absorb(await api.callServer('backfill', { from }, { timeout: 70000 }))
+      for (let i = 0; i < 400 && !stop.current; i++) {
+        const r = await api.callServer('scan-step', {}, { timeout: 70000 })
+        absorb(r)
+        if (r.done) { setPhase('done'); onDone?.(); return }
+        const blocked = (r.results || []).find((x) => x.error && /הרשאה|מלא/.test(x.error))
+        if (blocked) { setErr(blocked.error); setPhase('paused'); return }
+      }
+      setPhase('paused')
+    } catch (e) { setErr(e.message); setPhase('paused') }
+  }
+  const list = Object.values(boxes)
+  const total = list.reduce((a, x) => a + (x.candidates || 0), 0)
+  const left = list.reduce((a, x) => a + (x.remaining || 0), 0)
+  const pct = phase === 'done' ? 100 : total ? Math.round(((total - left) / total) * 100) : 0
+  const usd = (v) => `$${v < 1 ? v.toFixed(3) : v.toFixed(2)}`
+  const n = (v) => v.toLocaleString('he-IL')
+  const footer = phase === 'choose'
+    ? <><button type="button" className="fin-btn fin-btn--primary" onClick={() => loop(true)} disabled={!from || (current && from >= current)}><Icon name="search" size={17} /> התחלת הסריקה</button><button type="button" className="fin-btn" onClick={onClose}>ביטול</button></>
+    : phase === 'running'
+      ? <button type="button" className="fin-btn" onClick={() => { stop.current = true }}>עצירה</button>
+      : phase === 'paused'
+        ? <><button type="button" className="fin-btn fin-btn--primary" onClick={() => loop(false)}>המשך הסריקה</button><button type="button" className="fin-btn" onClick={onClose}>סגירה</button></>
+        : <button type="button" className="fin-btn fin-btn--primary" onClick={onClose}>סיום</button>
   return (
-    <Modal title="קבלות ישנות" onClose={onClose} footer={<><button type="button" className="fin-btn fin-btn--primary" onClick={run} disabled={busy || !from || (current && from >= current)}>{busy ? 'סורק…' : 'סריקה מהתאריך הזה'}</button><button type="button" className="fin-btn fin-btn--ghost" onClick={onClose}>ביטול</button></>}>
-      <p className="fin-muted">התיבות נסרקות כרגע {current ? `מ-${date(current)}` : 'מהחיבור'}. בחרו תאריך מוקדם יותר, והסוכנים יאספו גם את החשבוניות שהגיעו לפניו. מיילים שכבר נקראו לא נקראים שוב.</p>
-      <div className="fin-seg" role="group" aria-label="כמה זמן אחורה">
-        {PRESETS.map(([n, l]) => <button key={n} type="button" className={from === monthsAgo(n) ? 'is-on' : ''} onClick={() => setFrom(monthsAgo(n))}>{l}</button>)}
-      </div>
-      <Field label="או מתאריך"><input type="date" lang="he-IL" value={from} max={current || undefined} min={monthsAgo(48)} onChange={(e) => setFrom(e.target.value)} /></Field>
-      <p className="fin-muted fin-small">סריקה גדולה מתחלקת לכמה הרצות. הריצה היומית ממשיכה מאיפה שעצרה, ואפשר גם ללחוץ "סנכרון" שוב.</p>
+    <Modal title="סריקת מיילים ישנים" onClose={() => { stop.current = true; onClose() }} footer={footer}>
+      {phase === 'choose' ? (
+        <>
+          <p className="fin-muted">התיבות נסרקות כרגע {current ? `מ-${date(current)}` : 'מהחיבור'}. בחרו כמה זמן אחורה לחפש חשבוניות וקבלות. מייל שכבר נסרק לא נקרא שוב.</p>
+          <div className="fin-seg" role="group" aria-label="כמה זמן אחורה">
+            {PRESETS.map(([m, l]) => <button key={m} type="button" className={from === monthsAgo(m) ? 'is-on' : ''} aria-pressed={from === monthsAgo(m)} onClick={() => setFrom(monthsAgo(m))}>{l}</button>)}
+          </div>
+          <Field label="או מתאריך"><input type="date" lang="he-IL" value={from} max={current || undefined} min={monthsAgo(48)} onChange={(e) => setFrom(e.target.value)} /></Field>
+          <ol className="fin-hist__how">
+            <li><b>כללים, בחינם:</b> שם קובץ או נושא של חשבונית, ספק מוכר, הצעת מחיר, ניוזלטר.</li>
+            <li><b>בדיקה קצרה במודל זול:</b> רק לקבצים שלא ברור מהם מה הם.</li>
+            <li><b>קריאה מלאה:</b> רק לחשבוניות וקבלות. מה שלא בטוח עולה לאישור שלכם ולא נזרק.</li>
+          </ol>
+        </>
+      ) : (
+        <div className="fin-hist" aria-live="polite">
+          <div className="fin-hist__top">
+            <strong>{phase === 'done' ? 'הסריקה הסתיימה' : phase === 'paused' ? 'הסריקה בהפסקה' : 'סורק…'}</strong>
+            <span className="fin-hist__pct">{pct}%</span>
+          </div>
+          <div className="fin-meter fin-hist__meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="התקדמות הסריקה"><span style={{ width: `${pct}%` }} /></div>
+          <p className="fin-muted fin-small">{total ? `${n(total - left)} מתוך ${n(total)} מיילים עם מסמכים${left ? `, נשארו ${n(left)}` : ''}` : 'מחפש מיילים עם מסמכים בתקופה…'}</p>
+          <dl className="fin-hist__stats">
+            <div><dt>נכנסו למערכת</dt><dd>{n(found.imported)}</dd></div>
+            <div><dt>דולגו, לא רלוונטיים</dt><dd>{n(found.skipped)}</dd></div>
+            <div><dt>מיילים שנבדקו</dt><dd>{n(found.scanned)}</dd></div>
+            <div><dt>עלות עד עכשיו</dt><dd dir="ltr">{usd(found.cost)}</dd></div>
+          </dl>
+          {list.length > 1 && <ul className="fin-hist__boxes">{list.map((x) => <li key={x.mailbox}><span dir="ltr">{x.mailbox}</span><small>{x.remaining ? `נשארו ${n(x.remaining)}` : 'הושלם'}{x.error ? ` · ${x.error}` : ''}</small></li>)}</ul>}
+          {phase !== 'done' && <p className="fin-muted fin-small">אפשר לסגור את החלון: הריצה הלילית ממשיכה מאיפה שעצרה. מסמכים שלא ברור שהם חשבוניות מחכים ב"כל המסמכים" › "לאישור".</p>}
+        </div>
+      )}
       {err && <p className="fin-error" role="alert">{err}</p>}
     </Modal>
   )
@@ -184,7 +244,7 @@ export default function Mailboxes() {
         </details>
       )}
 
-      {old && <OldReceipts current={periodFrom} onClose={() => setOld(false)} onDone={(r) => { setOld(false); setMsg(`תקופת הסנכרון הוארכה. ${(r.results || []).reduce((s, x) => s + (x.imported || 0), 0)} מסמכים נאספו בסריקה הראשונה.`); reload(); runs.reload() }} />}
+      {old && <OldReceipts current={periodFrom} onClose={() => { setOld(false); reload() }} onDone={() => reload()} />}
       {settings && (
         <Modal title={`הגדרות ${settings.email}`} onClose={() => setSettings(null)} footer={<><button type="submit" form="fin-box" className="fin-btn fin-btn--primary">שמירה</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setSettings(null)}>ביטול</button></>}>
           <form id="fin-box" className="fin-form__grid" onSubmit={saveSettings}>

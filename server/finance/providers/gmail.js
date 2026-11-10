@@ -33,10 +33,10 @@ async function api(accessToken, path) {
   return json(await fetchRetry(`${env.gmailApi()}/${path}`, { headers: { Authorization: `Bearer ${accessToken}` } }), 'gmail')
 }
 
-// The words an invoice email carries, plus any email with a PDF attached: Claude decides what is
+// The words an invoice email carries, plus any email with a document attached (PDF, image, TIFF, ZIP, Word, Excel): Claude decides what is
 // financial, so an invoice whose subject says nothing ("Your October statement", "מסמך מצורף") is still found.
 // Gmail search covers the inbox, labels and archived mail (not spam or trash).
-const BASE = '(subject:(חשבונית OR קבלה OR "חשבון עסקה" OR זיכוי OR invoice OR receipt OR "tax invoice" OR billing OR payment OR statement) OR filename:(חשבונית OR קבלה OR invoice OR receipt) OR "סה״כ לתשלום" OR "total due" OR "amount paid" OR (has:attachment filename:pdf)) -in:sent -in:chats -in:drafts'
+const BASE = '(subject:(חשבונית OR קבלה OR "חשבון עסקה" OR זיכוי OR invoice OR receipt OR "tax invoice" OR billing OR payment OR statement) OR filename:(חשבונית OR קבלה OR invoice OR receipt) OR "סה״כ לתשלום" OR "total due" OR "amount paid" OR (has:attachment filename:(pdf OR jpg OR jpeg OR png OR tif OR tiff OR zip OR docx OR xlsx))) -in:sent -in:chats -in:drafts'
 
 export async function listCandidates(accessToken, since, extra, { until, max = 500 } = {}) {
   const q = `${BASE} after:${Math.floor(since.getTime() / 1000)}${until ? ` before:${Math.floor(until.getTime() / 1000)}` : ''}${extra ? ` ${extra}` : ''}`

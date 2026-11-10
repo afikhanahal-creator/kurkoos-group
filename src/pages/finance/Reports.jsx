@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
+import { openDocs } from './links.js'
 import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, recentMonths } from './format.js'
 import { saveBlob } from './zip.js'
 import { buildXlsx, XLSX_MIME } from './xlsx.js'
@@ -33,17 +34,20 @@ export default function Reports() {
 
   const report = useMemo(() => {
     const sum = (list) => [list.length, list.reduce((a, d) => a + signedNet(d), 0), list.reduce((a, d) => a + (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.vat_amount) || 0), 0), list.reduce((a, d) => a + signedTotal(d), 0)]
+    let groupLists = null
     const group = (keyFn, labelFn) => {
       const g = {}
       for (const d of booked) { const k = keyFn(d) || '__none'; (g[k] ||= []).push(d) }
-      return Object.entries(g).map(([k, list]) => [labelFn(k), ...sum(list)]).sort((a, b) => b[4] - a[4])
+      const out = Object.entries(g).map(([k, list]) => ({ row: [labelFn(k), ...sum(list)], list })).sort((a, b) => b.row[4] - a.row[4])
+      groupLists = out.map((x) => x.list)
+      return out.map((x) => x.row)
     }
     const moneyHead = ['מסמכים', 'לפני מע״מ', 'מע״מ', 'סה״כ']
     switch (kind) {
-      case 'monthly': return { head: ['חודש', ...moneyHead], rows: months.map((m) => [monthLabel(m), ...sum(booked.filter((d) => period(d) === m))]), chart: 4 }
-      case 'company': return { head: ['חברה', ...moneyHead], rows: group((d) => d.business_id, (k) => nameOf(businesses, k) || 'לא משויך'), chart: 4 }
-      case 'project': return { head: ['פרויקט', ...moneyHead], rows: group((d) => d.project_id, (k) => nameOf(projects, k) || 'ללא פרויקט'), chart: 4 }
-      case 'supplier': return { head: ['ספק', ...moneyHead], rows: group((d) => d.supplier_name, (k) => (k === '__none' ? 'לא ידוע' : k)), chart: 4 }
+      case 'monthly': return { head: ['חודש', ...moneyHead], rows: months.map((m) => [monthLabel(m), ...sum(booked.filter((d) => period(d) === m))]), chart: 4, lists: months.map((m) => booked.filter((d) => period(d) === m)), monthKeys: months }
+      case 'company': { const rows = group((d) => d.business_id, (k) => nameOf(businesses, k) || 'לא משויך'); return { head: ['חברה', ...moneyHead], rows, chart: 4, lists: groupLists } }
+      case 'project': { const rows = group((d) => d.project_id, (k) => nameOf(projects, k) || 'ללא פרויקט'); return { head: ['פרויקט', ...moneyHead], rows, chart: 4, lists: groupLists } }
+      case 'supplier': { const rows = group((d) => d.supplier_name, (k) => (k === '__none' ? 'לא ידוע' : k)); return { head: ['ספק', ...moneyHead], rows, chart: 4, lists: groupLists } }
       case 'vat': {
         // the company's VAT period (Settings › חברות ודיווח): a bi-monthly filer sees January–February, March–April…
         const co = businesses.find((b) => b.id === biz)
@@ -99,6 +103,8 @@ export default function Reports() {
   const byMonth = ['monthly', 'vat', 'collection'].includes(kind)
   const shown = report.rows.map((r, n) => ({ r, n }))
   if (byMonth) shown.reverse()
+  // a row (or a month's column) opens its documents as a list, oldest first
+  const openRow = (n) => { const list = report.lists?.[n]; if (list?.length) openDocs(go, [...list].sort((a, b) => String(docDate(a)).localeCompare(String(docDate(b)))), `${String(report.rows[n][0])} · ${list.length === 1 ? 'מסמך אחד' : `${list.length} מסמכים`}`) }
   const isMoney = (i) => !report.count && typeof report.rows[0]?.[i] === 'number' && report.head[i] !== 'מסמכים' && report.head[i] !== 'ניסיונות'
   const totals = report.rows.length && report.chart ? report.head.map((_, i) => (i === 0 ? 'סה״כ' : report.rows.reduce((a, r) => a + (typeof r[i] === 'number' ? r[i] : 0), 0))) : null
 
@@ -120,11 +126,30 @@ export default function Reports() {
       {report.note && <p className="fin-muted">{report.note}</p>}
       {!report.rows.length ? <Empty title="אין נתונים לדוח הזה" icon="reports">נסו טווח אחר או חברה אחרת.</Empty> : (
         <div className="fin-grid fin-grid--report">
+          {report.monthKeys && (
+            <Card title="מסמכים לפי חודש">
+              <div className="fin-scroll-x fin-mcount-wrap">
+                <div className="fin-mcount" style={{ '--n': report.monthKeys.length }}>
+                  {report.monthKeys.map((m, n) => {
+                    const c = report.lists[n].length; const max = Math.max(...report.lists.map((l) => l.length), 1)
+                    return (
+                      <button key={m} type="button" className={`fin-mcount__col ${c ? '' : 'is-zero'}`} disabled={!c} onClick={() => openRow(n)} aria-label={`${monthLabel(m)}: ${c} מסמכים${c ? ', פתיחת הרשימה' : ''}`}>
+                        <span className="fin-mcount__n">{c || ''}</span>
+                        <span className="fin-mcount__bar" style={{ height: `${c ? Math.max(4, (c / max) * 100) : 0}%` }} />
+                        <span className="fin-mcount__m">{new Date(`${m}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'short' })}{m.endsWith('-01') || n === 0 ? ` ${m.slice(2, 4)}` : ''}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <p className="fin-muted fin-small">לחיצה על חודש פותחת את המסמכים שלו, מסודרים לפי תאריך.</p>
+            </Card>
+          )}
           {report.chart && <Card title="תצוגה"><Bars rows={shown.map(({ r }) => r).filter((r) => r[report.chart]).slice(0, 12).map((r) => ({ name: String(r[0]), value: r[report.chart] }))} format={report.count ? (v) => String(v) : money} /></Card>}
           <div className="fin-table-wrap">
             <table className="fin-table fin-table--plain">
               <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0][i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>
-              <tbody>{shown.map(({ r, n }) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : undefined} className={[report.ids ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
+              <tbody>{shown.map(({ r, n }) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : report.lists?.[n]?.length ? () => openRow(n) : undefined} className={[report.ids || report.lists?.[n]?.length ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
               {totals && <tfoot><tr>{totals.map((t, i) => <td key={i} className={i ? 'fin-num' : 'fin-td-main'} data-label={i ? report.head[i] : undefined}>{typeof t === 'number' ? (isMoney(i) ? money(t) : t) : t}</td>)}</tr></tfoot>}
             </table>
           </div>

@@ -213,3 +213,8 @@ export async function addAttachmentFile(documentId, rawFile) {
 export const linkDocument = async (documentId, linkedId, note) => must(await supabase.from('fin_document_attachments').insert({ document_id: documentId, kind: 'link', linked_document_id: linkedId, note: note || null }).select().single())
 export const removeAttachment = async (id) => must(await supabase.from('fin_document_attachments').delete().eq('id', id))
 export const attachmentBlob = async (a) => { const { data, error } = await supabase.storage.from(BUCKET).download(a.file_path); if (error) throw new Error(error.message || 'הקובץ לא נטען'); return data }
+
+/* fixed (recurring) expenses: the list, marking a document's supplier as one, stopping one */
+export const loadRecurring = async () => must(await supabase.from('fin_recurring').select('*').order('created_at'))
+export const markRecurring = async (documentId, on = true) => must(await supabase.rpc('fin_recurring_mark', { p_document: documentId, p_on: on }))
+export const setRecurring = async (id, { active = null, label = null, expected = null } = {}) => must(await supabase.rpc('fin_recurring_set', { p_id: id, p_active: active, p_label: label, p_expected: expected }))

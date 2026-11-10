@@ -4,7 +4,7 @@ import { Icon, StatusPill } from './ui.jsx'
 /* Documents as a compact list, one row each: what it is, from whom, when, how much, and where it stands. The same rows on
    a phone and on a desktop. A row opens the document; with `sel` it also has a check box for the bulk actions.
    docs: [{ doc, amount? }] (amount overrides the document total, e.g. a project's share of a split invoice) */
-export default function DocList({ docs, onOpen, businesses, sel, onToggle, showCompany = true, flags = true }) {
+export default function DocList({ docs, onOpen, businesses, sel, onToggle, onSupplier, showCompany = true, flags = true }) {
   return (
     <ul className="fin-dlist" aria-label="מסמכים">
       {docs.map(({ doc: d, amount, note }) => {
@@ -33,6 +33,7 @@ export default function DocList({ docs, onOpen, businesses, sel, onToggle, showC
               </span>
               <span className="fin-dlist__status"><StatusPill status={d.status} /></span>
             </button>
+            {onSupplier && d.supplier_name && <button type="button" className="fin-icon-btn fin-suphist fin-dlist__hist" onClick={() => onSupplier(d)} aria-label={`כל ההיסטוריה עם ${d.supplier_name}`} title={`כל ההיסטוריה עם ${d.supplier_name}`}><Icon name="history" size={16} /></button>}
           </li>
         )
       })}

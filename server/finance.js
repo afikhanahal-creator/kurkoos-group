@@ -213,8 +213,10 @@ export default async function handler(req, res) {
   }
   // the scan screen asks for the next step and the status again and again while a scan runs: its own, larger budget,
   // so a long scan never uses up the person's budget for everything else (each step is already capped at ~45 s)
-  const scanPoll = ['scan-run', 'scan-overview', 'drive-overview', 'drive-run'].includes(body.action)
-  if (body.action !== 'status' && (scanPoll ? limited(`scan:${user.id}`, 600) : limited(user.id))) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
+  // each polling screen has its own budget, so the Drive screen can never use up the scan screen's (or the other way round)
+  const scanPoll = ['scan-run', 'scan-overview'].includes(body.action)
+  const drivePoll = ['drive-overview', 'drive-run', 'drive-reconcile', 'drive-tree'].includes(body.action)
+  if (body.action !== 'status' && (scanPoll ? limited(`scan:${user.id}`, 600) : drivePoll ? limited(`drive:${user.id}`, 600) : limited(user.id))) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
 
   try {
     switch (body.action) {

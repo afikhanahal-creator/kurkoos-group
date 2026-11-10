@@ -1912,13 +1912,14 @@ join public.fin_documents d on d.id = s.document_id
 where s.remote_id is not null
 on conflict do nothing;
 
--- what belongs in the archive: a tax invoice, invoice-receipt, receipt, credit note or payment demand that was read, as a
--- PDF or an image. Not an email body (HTML), not a quote, an order or a payment confirmation, not "other".
+-- what belongs in the archive: a tax invoice, invoice-receipt, receipt, credit note or payment demand that was read: a PDF,
+-- an image, or an email that is itself the receipt (it goes up as a PDF). Not a quote, an order or a payment confirmation,
+-- not "other".
 create or replace function public.fin_drive_eligible(p_status text, p_type text, p_mime text, p_path text)
 returns boolean language sql immutable set search_path = '' as $$
   select p_path is not null and p_status in ('review', 'approved', 'sent', 'duplicate')
      and p_type in ('invoice', 'invoice_receipt', 'receipt', 'credit', 'supplier_bill')
-     and (p_mime = 'application/pdf' or p_mime like 'image/%');
+     and (p_mime = 'application/pdf' or p_mime like 'image/%' or p_mime like 'text/%');   -- an email that is itself the receipt goes up as a PDF
 $$;
 
 -- every document the archive should hold gets its row: the ones that were read (in review or approved), and duplicates as
@@ -1998,6 +1999,7 @@ notify pgrst, 'reload schema';
 -- after a sync that uploaded files.
 alter table public.fin_drive_files add column if not exists excluded boolean not null default false;   -- a person took it out
 alter table public.fin_cloud_targets add column if not exists auto_correct boolean not null default true;   -- the archive's own files: wrong folder or name is corrected without asking
+alter table public.fin_drive_files add column if not exists rendition_path text;   -- the PDF made from an email-body receipt, in our storage
 alter table public.fin_drive_files add column if not exists repair text;                               -- missing | trashed | wrong_folder | wrong_name | changed
 
 create table if not exists public.fin_drive_reconciles (

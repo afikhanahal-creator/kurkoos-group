@@ -6,7 +6,7 @@
 import crypto from 'node:crypto'
 import { env, TIME_BUDGET_MS } from './env.js'
 import { fetchRetry, json } from './http.js'
-import { sb, one, insert, patch, download, audit, rpc, q, agentRun } from './db.js'
+import { sb, one, insert, patch, download, upload, audit, rpc, q, agentRun } from './db.js'
 import { tokenFor, HEB_MONTHS, TYPE_HE } from './cloud.js'
 
 const FOLDER = 'application/vnd.google-apps.folder'
@@ -21,7 +21,8 @@ export const part = (s) => String(s ?? '').normalize('NFC').replace(/["״׳'`’
 /* what belongs in the archive (the same rule as fin_drive_eligible in finance.sql): a tax invoice, invoice-receipt, receipt,
    credit note or payment demand that was read, as a PDF or an image. Not an email body, a quote, an order or a confirmation. */
 export const ARCHIVE_TYPES = ['invoice', 'invoice_receipt', 'receipt', 'credit', 'supplier_bill']
-export const eligible = (d) => !!d && !!d.file_path && ['review', 'approved', 'sent', 'duplicate'].includes(d.status) && ARCHIVE_TYPES.includes(d.doc_type) && (d.file_mime === 'application/pdf' || String(d.file_mime || '').startsWith('image/'))
+const isBody = (d) => String(d?.file_mime || '').startsWith('text/')     // the email itself is the receipt (Meta ads, online services)
+export const eligible = (d) => !!d && !!d.file_path && ['review', 'approved', 'sent', 'duplicate'].includes(d.status) && ARCHIVE_TYPES.includes(d.doc_type) && (d.file_mime === 'application/pdf' || String(d.file_mime || '').startsWith('image/') || isBody(d))
 const GENERIC = /^(scan|scanned|img|image|dsc|pxl|photo|document|doc|file|invoice|receipt|untitled|attachment|מסמך|סריקה|קובץ)[-_ ]?\d*$/i
 /* the supplier as people know it: the name read from the document, else the sender's display name, else the original file
    name when it says something (not "scan001", "IMG_2026…", "document"). Hebrew and English alike. */
@@ -112,6 +113,26 @@ async function driveDownload(token, id) {
   if (!r.ok) return json(r, 'drive download')
   return Buffer.from(await r.arrayBuffer())
 }
+/* an email that is itself the receipt has no file to open. Drive turns its HTML into a PDF: the HTML goes up as a temporary
+   Google document, is exported as PDF, and the temporary document is removed (it is ours, made a moment ago; it is the one
+   thing this module ever removes). The PDF is what the archive keeps. */
+async function htmlToPdf(token, html, documentId) {
+  const boundary = `kurkoos${crypto.randomBytes(8).toString('hex')}`
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: `kurkoos-convert-${documentId}`, mimeType: 'application/vnd.google-apps.document', appProperties: { kc: documentId } })}\r\n--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n`),
+    html, Buffer.from(`\r\n--${boundary}--`),
+  ])
+  const tmp = await json(await fetch(`${env.driveUpload()}/files?uploadType=multipart&fields=id`, { method: 'POST', headers: H(token, { 'Content-Type': `multipart/related; boundary=${boundary}` }), body }), 'drive convert')
+  try {
+    const r = await fetchRetry(`${env.driveApi()}/files/${encodeURIComponent(tmp.id)}/export?mimeType=${encodeURIComponent('application/pdf')}`, { headers: H(token) })
+    if (!r.ok) return json(r, 'drive export')
+    const pdf = Buffer.from(await r.arrayBuffer())
+    if (pdf.subarray(0, 4).toString() !== '%PDF') throw new Error('drive export: not a PDF')
+    return pdf
+  } finally {
+    await fetch(`${env.driveApi()}/files/${encodeURIComponent(tmp.id)}`, { method: 'DELETE', headers: H(token) }).catch(() => {})
+  }
+}
 async function driveTrash(token, id) {
   const r = await fetchRetry(`${env.driveApi()}/files/${encodeURIComponent(id)}?fields=id,trashed`, { method: 'PATCH', headers: H(token, { 'Content-Type': 'application/json' }), body: JSON.stringify({ trashed: true }) })
   if (r.status === 404) return null
@@ -195,7 +216,19 @@ export async function processRow(ctx, row) {
   // already in Drive → the archive's own copy goes to the Drive trash (30 days to restore) and the row says why
   if (row.excluded || !eligible(doc) || doc.status === 'duplicate') return withdraw(ctx, row, doc)
 
-  const buf = await download(doc.file_path)
+  let buf = await download(doc.file_path)
+  let fileMime = doc.file_mime || 'application/pdf'
+  if (isBody(doc)) {
+    // the PDF made from the email is kept in our storage too, so every later check compares the same bytes
+    if (row.rendition_path) buf = await download(row.rendition_path)
+    else {
+      buf = await htmlToPdf(ctx.token, buf, row.document_id)
+      const path = `${String(doc.file_path).replace(/\.[a-z0-9]+$/i, '')}.drive.pdf`
+      await upload(path, buf, 'application/pdf')
+      await setRow(row, { rendition_path: path })
+    }
+    fileMime = 'application/pdf'
+  }
   const sha256 = crypto.createHash('sha256').update(buf).digest('hex')
   const md5 = crypto.createHash('md5').update(buf).digest('hex')
   // the same file already verified for another document: one copy in Drive, this one points at it
@@ -207,7 +240,7 @@ export async function processRow(ctx, row) {
   }
 
   const folder = await folderFor(ctx, doc)
-  const wanted = row.name_override || organizedName(doc, await supplierName(ctx, doc))
+  const wanted = (row.name_override || organizedName(doc, await supplierName(ctx, doc))).replace(isBody(doc) ? /\.html?$/i : /$^/, '.pdf')
   const name = await uniqueName(ctx, folder.id, wanted, row.document_id)
 
   // the file this document already has in Drive: by the id we kept, else by the document id it carries
@@ -227,7 +260,7 @@ export async function processRow(ctx, row) {
   } else {
     await setRow(row, { status: 'uploading', file_sha256: sha256, file_md5: md5, drive_folder_id: folder.id, folder_key: folder.key, folder_path: folder.path, organized_name: name })
     try {
-      file = await (buf.length > RESUMABLE_FROM ? driveUploadResumable : driveUpload)(ctx.token, { name, parent: folder.id, mime: doc.file_mime || 'application/pdf', buf, props: { kd: row.document_id, kt: tag(row.target_id), ks: sha256 } })
+      file = await (buf.length > RESUMABLE_FROM ? driveUploadResumable : driveUpload)(ctx.token, { name, parent: folder.id, mime: fileMime, buf, props: { kd: row.document_id, kt: tag(row.target_id), ks: sha256 } })
     } catch (e) {
       if (e.status === 404) { await forgetFolders(ctx, ['root', ...folderPlan(ctx.target, doc, '').map((l) => l.key)]); await patch(`fin_cloud_targets?id=eq.${ctx.target.id}`, { root_folder_id: null }); ctx.target.root_folder_id = null }
       throw e
@@ -254,7 +287,7 @@ export async function processRow(ctx, row) {
   return { state: 'verified', link: row.web_link, path: folder.path, name }
 }
 
-const WHY = (doc, row) => row?.excluded ? 'הוצא מהארכיון על ידי אדם' : !doc ? 'המסמך נמחק מהמערכת' : doc.status === 'duplicate' ? 'כפילות של מסמך אחר שכבר בארכיון' : doc.status === 'rejected' ? 'המסמך סומן במערכת כלא רלוונטי' : !ARCHIVE_TYPES.includes(doc.doc_type) ? 'לא חשבונית ולא קבלה (למשל אישור הזמנה, הצעת מחיר או אישור תשלום)' : !(doc.file_mime === 'application/pdf' || String(doc.file_mime || '').startsWith('image/')) ? 'גוף של מייל ולא קובץ חשבונית (PDF או תמונה)' : 'לא שייך לארכיון'
+const WHY = (doc, row) => row?.excluded ? 'הוצא מהארכיון על ידי אדם' : !doc ? 'המסמך נמחק מהמערכת' : doc.status === 'duplicate' ? 'כפילות של מסמך אחר שכבר בארכיון' : doc.status === 'rejected' ? 'המסמך סומן במערכת כלא רלוונטי' : !ARCHIVE_TYPES.includes(doc.doc_type) ? 'לא חשבונית ולא קבלה (למשל אישור הזמנה, הצעת מחיר או אישור תשלום)' : !(doc.file_mime === 'application/pdf' || String(doc.file_mime || '').startsWith('image/') || isBody(doc)) ? 'סוג קובץ שלא נשמר בארכיון' : 'לא שייך לארכיון'
 async function withdraw(ctx, row, doc) {
   const dup = doc?.status === 'duplicate'
   if (!row.drive_file_id) {

@@ -240,6 +240,17 @@ const server = http.createServer(async (req, res) => {
     const page = list.slice(from, from + (list.length > 50 ? Math.min(size, 1000) : Math.min(size, 3)))   // small pages, so paging is always tested; a big archive pages by 1000 as Drive does
     return send(res, 200, { files: page.map(dfile), ...(from + page.length < list.length ? { nextPageToken: String(from + page.length) } : {}) })
   }
+  // HTML uploaded as a Google document is exported as a PDF; the temporary document is then deleted
+  if (p.startsWith('/drive/files/') && p.endsWith('/export') && req.method === 'GET') {
+    const f = driveItems.find((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length, -'/export'.length)))
+    if (!f || !f.gdoc) return send(res, 404, { error: { message: 'File not found' } })
+    res.writeHead(200, { 'Content-Type': 'application/pdf' }); res.end(Buffer.concat([Buffer.from('%PDF-1.4\n% made from an email\n'), Buffer.from(crypto.createHash('sha256').update(f.content).digest('hex'))])); return
+  }
+  if (p.startsWith('/drive/files/') && req.method === 'DELETE') {
+    const i = driveItems.findIndex((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length)))
+    if (i < 0) return send(res, 404, { error: { message: 'File not found' } })
+    log.drive.push(`delete:${driveItems[i].name}`); driveItems.splice(i, 1); res.writeHead(204); res.end(); return
+  }
   if (p.startsWith('/drive/files/') && req.method === 'GET') {
     if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
     const f = driveItems.find((x) => x.id === decodeURIComponent(p.slice('/drive/files/'.length)))
@@ -286,6 +297,7 @@ const server = http.createServer(async (req, res) => {
     const meta = JSON.parse(piece(0).toString('utf8')); const content = piece(1)
     if (driveFail.upload503 > 0) { driveFail.upload503--; return send(res, 503, { error: { message: 'Backend Error' } }) }
     if (driveFail.rate403 > 0) { driveFail.rate403--; return send(res, 403, { error: { code: 403, message: 'User rate limit exceeded.', errors: [{ reason: 'userRateLimitExceeded' }] } }) }
+    if (meta.mimeType === 'application/vnd.google-apps.document') { const gid = `gdoc${++driveSeq}`; driveItems.push({ id: gid, name: meta.name, parents: ['root'], folder: false, gdoc: true, size: content.length, content, md5: 'gdoc', appProperties: meta.appProperties || {} }); return send(res, 200, { id: gid }) }
     const par = meta.parents?.[0]
     if (!driveItems.some((x) => x.id === par && x.folder && !x.trashed)) return send(res, 404, { error: { message: 'File not found: parent' } })
     const id = `file${++driveSeq}`

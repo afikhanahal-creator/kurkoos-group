@@ -86,7 +86,8 @@ export default function Agents() {
           <article key={c.k} className="fin-agent">
             <header><span className={`fin-agent-dot fin-agent-dot--${c.last ? TONE[c.last.status] : 'idle'}`} aria-hidden="true" /><h3>{c.name}</h3>{c.last ? <Pill tone={TONE[c.last.status]}>{LABEL[c.last.status]}</Pill> : <Pill>לא רץ עדיין</Pill>}</header>
             <p className="fin-muted">{c.desc}</p>
-            <dl><div><dt>ריצה אחרונה</dt><dd>{c.last ? ago(c.last.finished_at || c.last.started_at) : '—'}</dd></div><div><dt>ריצות (7 ימים)</dt><dd>{c.runs}</dd></div><div><dt>טופלו</dt><dd>{c.processed}</dd></div><div><dt>שגיאות</dt><dd className={c.errors ? 'fin-cell-err' : ''}>{c.errors}</dd></div></dl>
+            <p className="fin-agent__last">{c.last ? `ריצה אחרונה ${ago(c.last.finished_at || c.last.started_at)}` : 'עוד לא רץ'}</p>
+            <dl><div><dt>טופלו</dt><dd>{c.processed}</dd></div><div><dt>ריצות השבוע</dt><dd>{c.runs}</dd></div><div><dt>שגיאות</dt><dd className={c.errors ? 'fin-cell-err' : ''}>{c.errors}</dd></div></dl>
             {c.last?.details?.not_financial?.length > 0 && <p className="fin-muted fin-small">דולגו כלא כספיים: {c.last.details.not_financial.slice(-3).join(' · ')}</p>}
             {c.last?.details?.error && <p className="fin-cell-err fin-small">{c.last.details.error}</p>}
           </article>

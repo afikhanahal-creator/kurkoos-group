@@ -371,20 +371,20 @@ export default function Documents({ preset = 'all' }) {
               <tr>
                 <th className="fin-table__check"><input type="checkbox" checked={allOn} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="סימון הכול" /></th>
                 <Th k="supplier">ספק</Th>
+                <Th k="total" className="fin-num">סה״כ</Th>
+                <th>סטטוס</th>
                 <th className="fin-col-md">סוג</th>
-                <Th k="number" className="fin-col-md">מספר</Th>
+                <Th k="number" className="fin-col-md fin-col-mid">מספר</Th>
                 <Th k="date">תאריך</Th>
                 <th className="fin-col-lg">חברה</th>
                 <th className="fin-col-lg">פרויקט</th>
                 <th className="fin-col-lg">קטגוריה</th>
                 <Th k="before" className="fin-num fin-col-xl">לפני מע״מ</Th>
-                <Th k="vat" className="fin-num fin-col-md">מע״מ</Th>
-                <Th k="total" className="fin-num">סה״כ</Th>
-                <th>סטטוס</th>
+                <Th k="vat" className="fin-num fin-col-md fin-col-wide">מע״מ</Th>
                 <th className="fin-col-xl">מטבע</th>
                 <th className="fin-col-xl">מקור</th>
-                {can('operate') && <th className="fin-col-lg">ענן</th>}
-                <Th k="conf" className="fin-col-md">ודאות</Th>
+                {can('operate') && <th className="fin-col-lg fin-col-wide">ענן</th>}
+                <Th k="conf" className="fin-col-md fin-col-wide">ודאות</Th>
                 <th className="fin-col-md"><span className="fin-sr">פעולות</span></th>
               </tr>
             </thead>
@@ -404,20 +404,20 @@ export default function Documents({ preset = 'all' }) {
                       <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>{d.supplier_name && <button type="button" className="fin-icon-btn fin-suphist" onClick={(e) => { e.stopPropagation(); supplierHistory(go, d, documents) }} aria-label={`כל ההיסטוריה עם ${d.supplier_name}`} title={`כל ההיסטוריה עם ${d.supplier_name}`}><Icon name="history" size={15} /></button>}{d.recurring_id && <span className="fin-fixedtag" title="הוצאה קבועה">קבועה</span>}</span>
                       <small className="fin-cell-sub">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>
+                    <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
+                    <td className="fin-td-status"><StatusPill status={d.status} /></td>
                     <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
-                    <td className="fin-col-md fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
+                    <td className="fin-col-md fin-col-mid fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
                     <td data-label="תאריך">{date(docDate(d))}</td>
                     <td className="fin-col-lg" data-label="חברה">{nameOf(businesses, d.business_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="פרויקט">{nameOf(projects, d.project_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="קטגוריה">{d.category || '—'}</td>
                     <td className="fin-num fin-col-xl" data-label="לפני מע״מ">{money(d.amount_before_vat, d.currency)}</td>
-                    <td className="fin-num fin-col-md" data-label="מע״מ">{money(d.vat_amount, d.currency)}</td>
-                    <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
-                    <td className="fin-td-status"><StatusPill status={d.status} /></td>
+                    <td className="fin-num fin-col-md fin-col-wide" data-label="מע״מ">{money(d.vat_amount, d.currency)}</td>
                     <td className="fin-col-xl fin-ltr" data-label="מטבע">{d.currency || 'ILS'}</td>
                     <td className="fin-col-xl" data-label="מקור">{SOURCE[d.source]}</td>
-                    {can('operate') && <td className="fin-col-lg" data-label="ענן" onClick={(e) => e.stopPropagation()}>{cloud[d.id]?.web_link ? <a className="fin-cloudcell is-on" href={cloud[d.id].web_link} target="_blank" rel="noopener noreferrer" title={cloud[d.id].path}><Icon name="cloud" size={15} /> נשמר</a> : <span className="fin-cloudcell">—</span>}</td>}
-                    <td className="fin-col-md" data-label="ודאות"><Confidence value={d.confidence} /></td>
+                    {can('operate') && <td className="fin-col-lg fin-col-wide" data-label="ענן" onClick={(e) => e.stopPropagation()}>{cloud[d.id]?.web_link ? <a className="fin-cloudcell is-on" href={cloud[d.id].web_link} target="_blank" rel="noopener noreferrer" title={cloud[d.id].path}><Icon name="cloud" size={15} /> נשמר</a> : <span className="fin-cloudcell">—</span>}</td>}
+                    <td className="fin-col-md fin-col-wide" data-label="ודאות"><Confidence value={d.confidence} /></td>
                     <td className="fin-col-md" onClick={(e) => e.stopPropagation()}>
                       {d.file_path && <button type="button" className="fin-icon-btn" aria-label={`הורדת המקור של ${d.supplier_name || d.file_name}`} title="הורדת הקובץ המקורי" onClick={async () => saveBlob(await api.fileBlob(d), d.file_name || 'document')}><Icon name="download" size={18} /></button>}
                     {canDelete(d) && <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={() => removeDoc(d)} aria-label={`מחיקת ${d.supplier_name || d.file_name || 'המסמך'}`} title="מחיקה"><Icon name="trash" size={17} /></button>}

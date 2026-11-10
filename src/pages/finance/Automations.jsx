@@ -67,12 +67,12 @@ export default function Automations() {
         {!(rules.data || []).length ? <Empty title="עוד אין כללים" icon="rules">למשל: ספק Meta Platforms ← פרסום ושיווק. או: קוד MOH-17 בחשבונית ← פרויקט מוהליבר 17.</Empty> : (
           <div className="fin-table-wrap fin-table-wrap--flat">
             <table className="fin-table fin-table--plain">
-              <thead><tr><th>פעיל</th><th>עדיפות</th><th>כלל</th><th className="fin-col-md">משקל</th><th className="fin-num">הפעלות</th><th className="fin-col-lg">שונה לאחרונה</th><th /></tr></thead>
+              <thead><tr><th>פעיל</th><th className="fin-col-md">עדיפות</th><th>כלל</th><th className="fin-col-md">משקל</th><th className="fin-num">הפעלות</th><th className="fin-col-lg">שונה לאחרונה</th><th /></tr></thead>
               <tbody>
                 {rules.data.map((r) => (
                   <tr key={r.id}>
                     <td><Toggle checked={r.enabled} label={`הפעלת ${r.name}`} disabled={!admin} onChange={async (v) => { await api.saveRow('fin_rules', { id: r.id, enabled: v }); rules.reload() }} /></td>
-                    <td className="fin-num">{r.priority}</td>
+                    <td className="fin-num fin-col-md">{r.priority}</td>
                     <td className="fin-td-main"><span className="fin-cell-main">{r.name}</span><small className="fin-cell-sub fin-wrap">{KINDS[r.kind]?.label}: {describe(r)}</small></td>
                     <td className="fin-col-md">{KINDS[r.kind]?.strength}</td>
                     <td className="fin-num"><button type="button" className="fin-link" onClick={() => setHist(r)}>{r.hits || 0}</button>{r.last_hit_at && <small className="fin-cell-sub">{ago(r.last_hit_at)}</small>}</td>

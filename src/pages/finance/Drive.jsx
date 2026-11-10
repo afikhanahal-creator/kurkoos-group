@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { dateTime } from './format.js'
+import { date, dateTime, money, DOC_TYPE } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { Empty, Field, Icon, Modal, Pill, PageHead } from './ui.jsx'
 
@@ -260,8 +260,8 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
                 <li key={r.document_id}>
                   <label className="fin-dassign__row">
                     <input type="checkbox" checked={chosen.has(r.document_id)} onChange={(e) => setChosen((prev) => { const x = new Set(prev); if (e.target.checked) x.add(r.document_id); else x.delete(r.document_id); return x })} />
-                    <span dir="auto">{r.organized_name || d?.file_name || 'מסמך'}</span>
-                    {d?.email_from && <small dir="auto">{d.email_from.replace(/<[^>]*>/g, '').trim()}</small>}
+                    <span className="fin-dassign__what"><strong dir="auto">{d?.supplier_name || d?.file_name || 'מסמך'}</strong>{d?.total_amount != null && <b>{money(d.total_amount, d.currency)}</b>}</span>
+                    <small>{[DOC_TYPE[d?.doc_type], d?.doc_number, d && date(d.issue_date || d.created_at)].filter(Boolean).join(' · ')}{d?.email_from ? ` · ${d.email_from.replace(/<[^>]*>/g, '').trim()}` : ''}</small>
                   </label>
                 </li>
               )

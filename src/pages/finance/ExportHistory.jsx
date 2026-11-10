@@ -5,7 +5,10 @@ import { dateTime, money, monthLabel, nameOf } from './format.js'
 import { buildPackage } from './exportPackage.js'
 import { Empty, Icon, PageHead, Pill, useAsync, Skeleton } from './ui.jsx'
 
-const FMT = { zip: 'ZIP', excel: 'Excel', csv: 'CSV', pdf: 'PDF', api: 'API' }
+const FMT = { zip: 'ZIP', excel: 'Excel', csv: 'CSV', pdf: 'PDF', api: 'API', email: 'מייל' }
+// the period is saved either as a month key (2026-11) or already in words; never show a broken date
+const periodLabel = (p) => (!p ? 'מסמכים שנבחרו' : /^\d{4}-\d{2}$/.test(p) ? monthLabel(p) : p)
+const destLabel = (d) => (!d ? '—' : d === 'download' ? 'הורדה למחשב' : d.startsWith('email:') ? d.slice(6) : d)
 
 /* empty state: what an export is, in four steps, and where to start */
 function FirstExport({ onStart }) {
@@ -63,12 +66,12 @@ export default function ExportHistory() {
                 <tr key={x.id} className="is-static">
                   <td className="fin-td-main"><span className="fin-cell-main">{dateTime(x.created_at)}</span></td>
                   <td data-label="חברה">{nameOf(businesses, x.business_id) || 'כל החברות'}</td>
-                  <td className="fin-col-md" data-label="תקופה">{x.period ? monthLabel(x.period) : 'בחירה'}</td>
+                  <td className="fin-col-md" data-label="תקופה">{periodLabel(x.period)}</td>
                   <td className="fin-num" data-label="מסמכים">{x.doc_count}</td>
                   <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(x.total)}</strong></td>
                   <td className="fin-col-md fin-num" data-label="מע״מ">{money(x.vat_total)}</td>
                   <td className="fin-col-md" data-label="פורמט">{FMT[x.format] || x.format}</td>
-                  <td className="fin-col-lg" data-label="יעד" dir="auto">{x.destination}</td>
+                  <td className="fin-col-lg" data-label="יעד" dir="auto">{destLabel(x.destination)}</td>
                   <td className="fin-col-lg" data-label="משתמש" dir="ltr">{x.user_email}</td>
                   <td><Pill tone={x.status === 'done' ? 'ok' : x.status === 'failed' ? 'bad' : 'info'}>{x.status === 'done' ? 'הושלם' : x.status === 'failed' ? 'נכשל' : 'ממתין'}</Pill></td>
                   <td><button type="button" className="fin-btn fin-btn--sm" onClick={() => again(x)} disabled={!!busy}><Icon name="download" size={16} /> {busy === x.id ? 'מכין…' : 'הורדה'}</button></td>

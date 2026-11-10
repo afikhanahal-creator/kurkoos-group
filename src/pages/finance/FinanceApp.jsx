@@ -89,7 +89,8 @@ export const NAV = [
   { to: '/settings', label: 'הגדרות', icon: 'settings', roles: ALL, el: <Settings />, group: 'מתקדם' },
 ]
 const GROUPS = ['הנהלה', 'מסמכים', 'נתוני יסוד', 'קליטה', 'מתקדם']
-const FOLDED = 'מתקדם'
+// setup and tools are folded until needed; daily work (documents, master data) is always open
+const FOLDED = ['קליטה', 'מתקדם']
 
 const Ctx = createContext(null)
 export const useFinance = () => useContext(Ctx)
@@ -309,8 +310,9 @@ export default function FinanceApp() {
     on(); window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
   }, [])
-  const [moreOpen, setMoreOpen] = useState(() => { try { return localStorage.getItem('fin-nav-more') === 'open' } catch { return false } })
-  const toggleMore = () => setMoreOpen((v) => { try { localStorage.setItem('fin-nav-more', v ? 'closed' : 'open') } catch { /* private mode */ } return !v })
+  // which folded groups the person opened (a display preference only: group names, nothing financial)
+  const [openGroups, setOpenGroups] = useState(() => { try { const v = JSON.parse(localStorage.getItem('fin-nav-open') || 'null'); return Array.isArray(v) ? v : (localStorage.getItem('fin-nav-more') === 'open' ? ['מתקדם'] : []) } catch { return [] } })
+  const toggleGroup = (g, isOpen) => setOpenGroups((v) => { const next = isOpen ? v.filter((x) => x !== g) : [...v.filter((x) => x !== g), g]; try { localStorage.setItem('fin-nav-open', JSON.stringify(next)) } catch { /* private mode */ } return next })
   const toggleRail = () => setCollapsed((v) => { try { localStorage.setItem('fin-side', v ? 'full' : 'rail') } catch { /* private mode */ } return !v })
   const [cmd, setCmd] = useState(false)
   useEffect(() => {
@@ -410,14 +412,16 @@ export default function FinanceApp() {
           {can(role, 'upload') && <button type="button" className="fin__upload" onClick={() => { setNavOpen(false); setUploading(true) }}><span><Icon name="plus" size={18} /></span> העלאת מסמכים</button>}
           <nav className="fin__nav">
             {GROUPS.filter((g) => nav.some((n) => n.group === g)).map((g) => {
-            const foldable = g === FOLDED && nav.length > 12
-            const open = !foldable || moreOpen || nav.some((n) => n.group === g && n === active)
+            const foldable = FOLDED.includes(g) && nav.length > 12
+            const here = nav.some((n) => n.group === g && n === active)      // the page you are on is never hidden
+            const open = !foldable || here || openGroups.includes(g)
+            const waiting = foldable && !open ? nav.filter((n) => n.group === g && n.badge).reduce((a, n) => a + (badges[n.badge] || 0), 0) : 0
             return (
             <div className={`fin__nav-group ${foldable ? 'is-foldable' : ''} ${open ? '' : 'is-folded'}`} key={g}>
             {foldable ? (
-              <button type="button" className="fin__nav-label fin__nav-more" onClick={toggleMore} aria-expanded={open} aria-controls="fin-nav-more">{g}<Icon name="chev" size={14} /></button>
+              <button type="button" className="fin__nav-label fin__nav-more" onClick={() => toggleGroup(g, open)} disabled={here} aria-expanded={open} aria-controls={`fin-nav-${GROUPS.indexOf(g)}`}><span>{g}{waiting > 0 && <em className="fin__badge" aria-label={`${waiting} פריטים בפנים`}>{waiting}</em>}</span><Icon name="chev" size={14} /></button>
             ) : <span className="fin__nav-label">{g}</span>}
-            <div className="fin__nav-items" id={foldable ? 'fin-nav-more' : undefined}>
+            <div className="fin__nav-items" id={foldable ? `fin-nav-${GROUPS.indexOf(g)}` : undefined}>
             {nav.filter((n) => n.group === g).map((n) => {
               const on = n === active
               const count = n.badge ? badges[n.badge] : 0

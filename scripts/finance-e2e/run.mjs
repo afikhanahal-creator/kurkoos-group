@@ -57,7 +57,7 @@ const waitProcessed = async (names) => { for (let i = 0; i < 40; i++) { if (sql(
 const nav = async (label) => {
   await page.waitForSelector('.fin__nav', { timeout: 30000 }).catch(() => {})   // the shell first: a reload takes a moment
   const it = page.locator('.fin__nav-item', { hasText: label }).first()
-  if (!(await it.isVisible())) { const more = page.locator('.fin__nav-more'); if (await more.isVisible()) await more.click() }
+  if (!(await it.isVisible())) { const more = page.locator('.fin__nav-group.is-folded', { has: page.locator('.fin__nav-item', { hasText: label }) }).locator('.fin__nav-more').first(); if (await more.isVisible()) await more.click() }
   await it.click(); await page.waitForLoadState('networkidle').catch(() => {}); await page.waitForTimeout(500)
 }
 
@@ -91,7 +91,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 29 פריטי תפריט (מהם 11 מקופלים תחת "מתקדם")', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 29, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 29 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 29, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')

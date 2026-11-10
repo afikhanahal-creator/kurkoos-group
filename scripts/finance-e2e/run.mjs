@@ -556,7 +556,7 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   const dupInDrive = dupDoc ? await copies(dupDoc) : 0
   // a network error (503) on upload: the row waits and is retried; the second try is verified; one copy only
   // two archived documents start over: their files leave Drive and their rows leave the archive, so each is uploaded afresh
-  const fresh = sql(`select document_id from fin_drive_files where target_id='${driveTarget}' and status='verified' order by created_at desc limit 2`).split('\n').filter(Boolean)
+  const fresh = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' order by f.created_at desc limit 2`).split('\n').filter(Boolean)
   const restart = async (id) => { await dget(`?remove=${id}`); sql(`delete from fin_drive_files where target_id='${driveTarget}' and document_id='${id}'`) }
   await restart(fresh[0])
   await fetch(`${FAKES}/__drive?upload503=1`)

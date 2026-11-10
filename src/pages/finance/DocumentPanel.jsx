@@ -68,16 +68,20 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     try { const r = await api.callServer('duplicate-decide', { document_id: doc.id, decision }); onSaved(r.document) } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
 
+  // the keys are registered once for the life of the panel; the handlers are read at the moment of the key. (Registered
+  // again on every render, a key pressed while the list refreshed was lost.)
+  const keys = useRef({ onClose, onNext, onPrev })
+  keys.current = { onClose, onNext, onPrev }
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target.closest('input, select, textarea')) return
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft' && onNext) onNext()
-      if (e.key === 'ArrowRight' && onPrev) onPrev()
+      if (e.target.closest?.('input, select, textarea')) return
+      if (e.key === 'Escape') keys.current.onClose()
+      if (e.key === 'ArrowLeft' && keys.current.onNext) keys.current.onNext()
+      if (e.key === 'ArrowRight' && keys.current.onPrev) keys.current.onPrev()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, onNext, onPrev])
+  }, [])
 
   // the panel covers the whole screen, so Tab stays inside it (a dialog opened on top of it keeps its own trap)
   const body = useRef(null)

@@ -2534,7 +2534,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-mcount__col.is-zero .fin-mcount__bar { background: var(--line); }
 .fin-mcount__m { font-size: var(--t-xs); color: var(--text-2); white-space: nowrap; }
 .fin-scroll-x.fin-mcount-wrap { overflow-x: auto; scrollbar-width: none; }
-@media (max-width: 560px) { .fin-mcount { min-width: calc(var(--n, 12) * 40px); } }
+@media (max-width: 760px) { .fin-mcount { min-width: calc(var(--n, 12) * 50px); } .fin-mcount__col { min-width: 44px; } }
 @media (prefers-reduced-motion: reduce) { .fin-mcount__bar { transition: none; } }
 .fin-table tr.is-link { cursor: pointer; }
 
@@ -2555,8 +2555,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-comp__step.is-open { background: var(--sheet); border-color: var(--ocean); box-shadow: 0 0 0 3px var(--ocean-wash); }
 .fin-comp__stephead { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; cursor: pointer; font-weight: 700; color: var(--ink); border-radius: var(--r-m); }
 .fin-comp__stephead:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; }
-.fin-comp__num { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--line); color: var(--ink); font-size: var(--t-xs); flex: none; font-variant-numeric: tabular-nums; }
-.fin-comp__step.is-open .fin-comp__num { background: var(--ocean); color: #fff; }
+.fin-comp__num { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: transparent; border: 1.5px solid var(--text-2); color: var(--text-2); font-weight: 700; font-size: var(--t-xs); flex: none; font-variant-numeric: tabular-nums; }
+.fin-comp__step.is-open .fin-comp__num { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
 .fin-comp__body { padding: 0 12px 12px; display: grid; gap: 8px; }
 .fin-comp__form { display: grid; gap: 8px; }
 .fin-comp__label { font-size: var(--t-xs); color: var(--text-2); }
@@ -2567,7 +2567,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-comp__acts { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
 .fin-comp__doc { min-width: 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); overflow: hidden; min-height: 60vh; }
 .fin-comp__doc .fin-preview__frame { width: 100%; min-height: 70vh; border: 0; display: block; }
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   .fin-comp { grid-template-columns: minmax(0, 1fr); }
   .fin-comp__side { position: static; }
   .fin-comp__doc { min-height: 50vh; }
@@ -2594,5 +2594,5 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 /* phones: the month's document count and the supplier's name in a document are comfortable to tap */
 @media (max-width: 760px) {
   .fin-x-monthsum__docs { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 36px; }
-  .fin-suplink { display: inline-flex; align-items: center; min-height: 40px; }
+  .fin-suplink { display: inline-flex; align-items: center; min-height: 44px; }
 }

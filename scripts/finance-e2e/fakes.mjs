@@ -240,6 +240,7 @@ const server = http.createServer(async (req, res) => {
     if (!f) return send(res, 404, { error: { message: 'File not found' } })
     const b = JSON.parse(await readBody(req) || '{}')
     if (b.name) f.name = b.name
+    if (b.trashed === true) { f.trashed = true; log.drive.push(`trash:${dpath(f.id)}`); return send(res, 200, dfile(f)) }
     const add = url.searchParams.get('addParents'); const rm = (url.searchParams.get('removeParents') || '').split(',').filter(Boolean)
     if (add) { if (!driveItems.some((x) => x.id === add && x.folder)) return send(res, 404, { error: { message: 'File not found: parent' } }); f.parents = [add, ...f.parents.filter((x) => !rm.includes(x) && x !== add)] }
     else if (rm.length) f.parents = f.parents.filter((x) => !rm.includes(x))

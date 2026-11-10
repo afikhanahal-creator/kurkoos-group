@@ -17,7 +17,21 @@ const CUR = { ILS: 'שח', USD: 'USD', EUR: 'EUR', GBP: 'GBP' }
 const IL_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
 
 /* a safe part of a file name: no / \ : * ? " < > |, no control characters, a dash instead of spaces */
-export const part = (s) => String(s ?? '').normalize('NFC').replace(/[\u0000-\u001f\u007f\\/:*?"<>|]+/g, ' ').replace(/[״"]/g, '').trim().replace(/\s+/g, '-').replace(/-{2,}/g, '-').replace(/^[-.]+|[-.]+$/g, '')
+export const part = (s) => String(s ?? '').normalize('NFC').replace(/["״׳'`’]/g, '').replace(/[\u0000-\u001f\u007f\\/:*?<>|]+/g, ' ').trim().replace(/\s+/g, '-').replace(/-{2,}/g, '-').replace(/^[-.]+|[-.]+$/g, '')
+/* what belongs in the archive (the same rule as fin_drive_eligible in finance.sql): a tax invoice, invoice-receipt, receipt,
+   credit note or payment demand that was read, as a PDF or an image. Not an email body, a quote, an order or a confirmation. */
+export const ARCHIVE_TYPES = ['invoice', 'invoice_receipt', 'receipt', 'credit', 'supplier_bill']
+export const eligible = (d) => !!d && !!d.file_path && ['review', 'approved', 'sent', 'duplicate'].includes(d.status) && ARCHIVE_TYPES.includes(d.doc_type) && (d.file_mime === 'application/pdf' || String(d.file_mime || '').startsWith('image/'))
+const GENERIC = /^(scan|scanned|img|image|dsc|pxl|photo|document|doc|file|invoice|receipt|untitled|attachment|מסמך|סריקה|קובץ)[-_ ]?\d*$/i
+/* the supplier as people know it: the name read from the document, else the sender's display name, else the original file
+   name when it says something (not "scan001", "IMG_2026…", "document"). Hebrew and English alike. */
+export function supplierFallback(doc) {
+  const sender = String(doc.email_from || '').replace(/<[^>]*>/g, '').replace(/["']/g, '').trim()
+  if (sender && !/@/.test(sender) && !/^(no-?reply|noreply|info|billing|invoices?|support|accounts?)$/i.test(sender)) return sender
+  const base = String(doc.file_name || '').replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[_]+/g, ' ').trim()
+  if (base && !GENERIC.test(base.replace(/\s+/g, '')) && /[a-zA-Z\u0590-\u05FF]{3,}/.test(base) && !/^\d|^(img|dsc|pxl|scan)/i.test(base)) return base.slice(0, 40)
+  return ''
+}
 const money = (n) => { const v = Math.abs(Number(n)); return Number.isInteger(v) ? String(v) : v.toFixed(2) }
 const extOf = (doc) => {
   const fromName = /\.([a-z0-9]{2,5})$/i.exec(String(doc.file_name || ''))?.[1]?.toLowerCase()
@@ -38,7 +52,7 @@ export function dateOf(doc) {
 export function organizedName(doc, supplierName) {
   const d = dateOf(doc)
   const amount = doc.total_amount == null || doc.total_amount === '' ? '' : `${doc.doc_type === 'credit' || Number(doc.total_amount) < 0 ? '-' : ''}${money(doc.total_amount)}-${CUR[doc.currency || 'ILS'] || part(doc.currency)}`
-  const parts = [d.printed ? d.day : '', part(supplierName || doc.supplier_name), part(TYPE_HE[doc.doc_type] || 'מסמך'), part(doc.doc_number) || `id-${String(doc.id).slice(0, 8)}`, amount].filter(Boolean)
+  const parts = [d.printed ? d.day : '', part(supplierName || doc.supplier_name || supplierFallback(doc)), part(TYPE_HE[doc.doc_type] || 'מסמך'), part(doc.doc_number) || `id-${String(doc.id).slice(0, 8)}`, amount].filter(Boolean)
   let base = parts.join('_')
   if (base.length > 120) base = base.slice(0, 120).replace(/[_-]+$/, '')
   return `${base}.${extOf(doc)}`
@@ -83,6 +97,11 @@ async function driveUpload(token, { name, parent, mime, buf, props }) {
   ])
   // not retried here: a lost answer is retried by the queue, which first looks for the file by its document id
   return json(await fetch(`${env.driveUpload()}/files?uploadType=multipart&fields=${encodeURIComponent(FILE_FIELDS)}`, { method: 'POST', headers: H(token, { 'Content-Type': `multipart/related; boundary=${boundary}` }), body }), 'drive upload')
+}
+async function driveTrash(token, id) {
+  const r = await fetchRetry(`${env.driveApi()}/files/${encodeURIComponent(id)}?fields=id,trashed`, { method: 'PATCH', headers: H(token, { 'Content-Type': 'application/json' }), body: JSON.stringify({ trashed: true }) })
+  if (r.status === 404) return null
+  return json(r, 'drive trash')
 }
 async function drivePatch(token, id, { name, addParent, removeParents }) {
   const p = new URLSearchParams({ fields: FILE_FIELDS })
@@ -157,14 +176,10 @@ async function setRow(row, body) {
 export async function processRow(ctx, row) {
   const doc = await one(`fin_documents?id=eq.${row.document_id}&select=*`)
   if (!doc) return { state: 'gone' }
-  if (doc.status === 'duplicate') { await setRow(row, { status: 'duplicate', duplicate_of: doc.duplicate_of, locked_until: null, error: null }); return { state: 'duplicate' } }
-  if (['rejected', 'failed', 'processing'].includes(doc.status)) {
-    // never uploaded: it leaves the queue. Already in Drive: the copy stays (nothing is deleted) and a person sees it.
-    if (!row.drive_file_id) { await sb(`fin_drive_files?target_id=eq.${row.target_id}&document_id=eq.${row.document_id}`, { method: 'DELETE', prefer: 'return=minimal' }); return { state: 'left' } }
-    await setRow(row, { status: 'needs_review', locked_until: null, error: doc.status === 'rejected' ? 'המסמך נדחה במערכת, והעותק שלו עדיין ב-Drive' : 'המסמך חזר לקריאה' })
-    return { state: 'needs_review' }
-  }
-  if (!doc.file_path) { await setRow(row, { status: 'needs_review', locked_until: null, error: 'אין קובץ מקור למסמך' }); return { state: 'needs_review' } }
+  if (doc.status === 'processing') { await setRow(row, { status: 'queued', next_try_at: new Date(Date.now() + 10 * 60_000).toISOString(), locked_until: null }); return { state: 'waiting' } }
+  // not (or no longer) an invoice or receipt for the archive, or a duplicate: never uploaded → it leaves the queue;
+  // already in Drive → the archive's own copy goes to the Drive trash (30 days to restore) and the row says why
+  if (!eligible(doc) || doc.status === 'duplicate') return withdraw(ctx, row, doc)
 
   const buf = await download(doc.file_path)
   const sha256 = crypto.createHash('sha256').update(buf).digest('hex')
@@ -219,6 +234,21 @@ export async function processRow(ctx, row) {
   return { state: 'verified', link: row.web_link, path: folder.path, name }
 }
 
+const WHY = (doc) => !doc ? 'המסמך נמחק מהמערכת' : doc.status === 'duplicate' ? 'כפילות של מסמך אחר שכבר בארכיון' : doc.status === 'rejected' ? 'המסמך סומן במערכת כלא רלוונטי' : !ARCHIVE_TYPES.includes(doc.doc_type) ? 'לא חשבונית ולא קבלה (למשל אישור הזמנה, הצעת מחיר או אישור תשלום)' : !(doc.file_mime === 'application/pdf' || String(doc.file_mime || '').startsWith('image/')) ? 'גוף של מייל ולא קובץ חשבונית (PDF או תמונה)' : 'לא שייך לארכיון'
+async function withdraw(ctx, row, doc) {
+  const dup = doc?.status === 'duplicate'
+  if (!row.drive_file_id) {
+    if (dup) { await setRow(row, { status: 'duplicate', duplicate_of: doc.duplicate_of, locked_until: null, error: null }); return { state: 'duplicate' } }
+    await sb(`fin_drive_files?target_id=eq.${row.target_id}&document_id=eq.${row.document_id}`, { method: 'DELETE', prefer: 'return=minimal' })
+    return { state: 'left' }
+  }
+  await driveTrash(ctx.token, row.drive_file_id)
+  const why = WHY(doc)
+  await setRow(row, { status: dup ? 'duplicate' : 'withdrawn', duplicate_of: dup ? doc.duplicate_of : row.duplicate_of, drive_file_id: null, web_link: null, locked_until: null, next_try_at: null, error: why })
+  await event(row.target_id, row.document_id, 'withdrawn', { why, name: row.organized_name, path: row.folder_path })
+  return { state: 'withdrawn' }
+}
+
 async function failRow(row, e) {
   const attempts = (row.attempts || 0) + 1
   const gaveUp = attempts >= RETRY_MIN.length
@@ -252,7 +282,7 @@ export async function tick({ started = Date.now(), budgetMs = TIME_BUDGET_MS, tr
           if (Date.now() - started > budgetMs) { await setRow(row, { status: row.drive_file_id ? 'uploaded' : 'queued', locked_until: null }); continue }
           try {
             const r = await processRow(ctx, row)
-            if (r.state === 'verified') { res.verified++; run.stat.processed++ } else if (r.state === 'duplicate') res.duplicates++
+            if (r.state === 'verified') { res.verified++; run.stat.processed++ } else if (r.state === 'duplicate') res.duplicates++; else if (r.state === 'withdrawn') res.withdrawn = (res.withdrawn || 0) + 1
           } catch (e) {
             if (e.auth || e.status === 401) { await setRow(row, { status: row.drive_file_id ? 'uploaded' : 'queued', locked_until: null }); throw e }
             await failRow(row, e); run.stat.errors++
@@ -308,6 +338,11 @@ export async function reconcile({ started = Date.now(), budgetMs = TIME_BUDGET_M
     if (Date.now() - started > budgetMs) break
     try {
       await rpc('fin_drive_enqueue', { p_target: t.id })
+      // what is in the archive and no longer belongs (not an invoice or receipt, an email body, rejected, a duplicate) goes back
+      // to the queue, where the run moves the archive's own copy to the Drive trash
+      const held = (await sb(`fin_drive_files?target_id=eq.${t.id}&status=in.(verified,uploaded,needs_review,failed)&select=document_id,fin_documents!fin_drive_files_document_id_fkey(id,status,doc_type,file_mime,file_path)`)) || []
+      const stray = held.filter((r) => !r.fin_documents || !eligible(r.fin_documents) || r.fin_documents.status === 'duplicate').map((r) => r.document_id)
+      for (let i = 0; i < stray.length; i += 100) await patch(`fin_drive_files?target_id=eq.${t.id}&document_id=in.(${stray.slice(i, i + 100).join(',')})`, { status: 'queued', next_try_at: null, updated_at: new Date().toISOString() })
       const { token } = await tokenFor(t)
       const inDrive = new Map()
       let pageToken = ''; let pages = 0; let complete = true
@@ -335,7 +370,7 @@ export async function reconcile({ started = Date.now(), budgetMs = TIME_BUDGET_M
       const stale = new Date(Date.now() - 12 * 3600_000).toISOString()
       await patch(`fin_drive_files?target_id=eq.${t.id}&status=eq.failed&updated_at=lt.${stale}`, { status: 'queued', attempts: RETRY_MIN.length - 1, next_try_at: null, updated_at: new Date().toISOString() }).catch(() => {})
       const known = new Set(rows.map((r) => r.document_id))
-      const summary = { ...(await counts(t)), missing, orphans: [...inDrive.keys()].filter((k) => !known.has(k)).length, pages, complete, at: new Date().toISOString() }
+      const summary = { ...(await counts(t)), missing, to_withdraw: stray.length, orphans: [...inDrive.keys()].filter((k) => !known.has(k)).length, pages, complete, at: new Date().toISOString() }
       await patch(`fin_cloud_targets?id=eq.${t.id}`, { last_reconcile_at: summary.at, last_reconcile: summary })
       out.push({ target: t.id, ...summary })
     } catch (e) { out.push({ target: t.id, error: String(e.message || e).slice(0, 300) }) }
@@ -346,7 +381,7 @@ export async function reconcile({ started = Date.now(), budgetMs = TIME_BUDGET_M
 async function counts(t) {
   const rows = (await sb(`fin_drive_files?target_id=eq.${t.id}&select=status`)) || []
   const by = {}; for (const r of rows) by[r.status] = (by[r.status] || 0) + 1
-  return { expected: rows.filter((r) => r.status !== 'duplicate').length, verified: by.verified || 0, pending: (by.queued || 0) + (by.uploading || 0) + (by.uploaded || 0), failed: by.failed || 0, duplicates: by.duplicate || 0, needs_review: by.needs_review || 0 }
+  return { withdrawn: by.withdrawn || 0, expected: rows.filter((r) => !['duplicate', 'withdrawn'].includes(r.status)).length, verified: by.verified || 0, pending: (by.queued || 0) + (by.uploading || 0) + (by.uploaded || 0), failed: by.failed || 0, duplicates: by.duplicate || 0, needs_review: by.needs_review || 0 }
 }
 
 /* the screen: the connection, totals from the documents to Drive, problems, and the explorer rows */
@@ -368,7 +403,7 @@ export async function overview({ user }) {
 }
 
 export async function tree({ targetId, user }) {
-  const rows = (await sb(`fin_drive_files?target_id=eq.${q(targetId)}&select=document_id,business_id,status,folder_key,folder_path,organized_name,web_link,verified_at,error,duplicate_of&order=folder_path,organized_name&limit=5000`)) || []
+  const rows = (await sb(`fin_drive_files?target_id=eq.${q(targetId)}&status=neq.withdrawn&select=document_id,business_id,status,folder_key,folder_path,organized_name,web_link,verified_at,error,duplicate_of&order=folder_path,organized_name&limit=5000`)) || []
   const ok = (r) => !user?.business_ids?.length || (r.business_id && user.business_ids.includes(r.business_id))
   return rows.filter(ok)
 }

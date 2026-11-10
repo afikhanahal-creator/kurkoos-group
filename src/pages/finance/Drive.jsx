@@ -11,7 +11,7 @@ import { Empty, Field, Icon, Modal, Pill, PageHead } from './ui.jsx'
 const n = (v) => Number(v || 0).toLocaleString('he-IL')
 const ST = {
   verified: ['ok', 'בארכיון'], uploaded: ['info', 'הועלה, בבדיקה'], uploading: ['info', 'בהעלאה'], queued: ['muted', 'ממתין להעלאה'],
-  failed: ['bad', 'ההעלאה נכשלה'], duplicate: ['muted', 'כפילות'], needs_review: ['warn', 'דורש בדיקה'],
+  failed: ['bad', 'ההעלאה נכשלה'], duplicate: ['muted', 'כפילות'], needs_review: ['warn', 'דורש בדיקה'], withdrawn: ['muted', 'הוצא מהארכיון'],
 }
 
 /* "main / company / year / month" → a tree: company → year → month → files */
@@ -60,8 +60,10 @@ function Folder({ node, depth, onPick, picked, first }) {
   )
 }
 
-function FilePanel({ row, doc, business, canEdit, onRename, onRequeue, go, onClose }) {
+function FilePanel({ row, doc, business, businesses, canEdit, onRename, onRequeue, onAssign, go, onClose }) {
   const [tone, label] = ST[row.status] || ['muted', row.status]
+  const [biz, setBiz] = useState(row.business_id || '')
+  useEffect(() => { setBiz(row.business_id || '') }, [row.document_id, row.business_id])
   return (
     <aside className="fin-dpanel" aria-label="פרטי הקובץ בארכיון">
       <header>
@@ -71,7 +73,12 @@ function FilePanel({ row, doc, business, canEdit, onRename, onRequeue, go, onClo
       <Pill tone={tone}>{label}</Pill>
       <dl className="fin-dpanel__meta">
         <div><dt>תיקייה</dt><dd dir="auto">{row.folder_path || '—'}</dd></div>
-        <div><dt>חברה</dt><dd>{business || 'ללא שיוך'}</dd></div>
+        <div><dt>חברה</dt><dd>{canEdit && doc && doc.status !== 'approved' && doc.status !== 'sent' ? (
+          <span className="fin-dpanel__assign">
+            <select value={biz} onChange={(e) => setBiz(e.target.value)} aria-label="החברה של המסמך"><option value="">ללא שיוך</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+            {biz !== (row.business_id || '') && <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" onClick={() => onAssign([row.document_id], biz)}>שיוך והעברה</button>}
+          </span>
+        ) : (business || 'ללא שיוך')}</dd></div>
         {doc && <div><dt>ספק</dt><dd>{doc.supplier_name || '—'}</dd></div>}
         {doc && <div><dt>סכום</dt><dd>{doc.total_amount != null ? `${Number(doc.total_amount).toLocaleString('he-IL', { minimumFractionDigits: 2 })} ${doc.currency === 'ILS' || !doc.currency ? '₪' : doc.currency}` : '—'}</dd></div>}
         {doc && <div><dt>שם הקובץ המקורי</dt><dd dir="auto">{doc.file_name || '—'}</dd></div>}
@@ -83,10 +90,9 @@ function FilePanel({ row, doc, business, canEdit, onRename, onRequeue, go, onClo
         {row.web_link && <a className="fin-btn fin-btn--primary fin-btn--sm" href={row.web_link} target="_blank" rel="noopener noreferrer"><Icon name="external" size={15} /> פתיחה ב-Drive</a>}
         <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(`/documents/${row.document_id}`)}><Icon name="file" size={15} /> המסמך והנתונים</button>
         {canEdit && row.status === 'verified' && <button type="button" className="fin-btn fin-btn--sm" onClick={onRename}>שינוי שם</button>}
-        {canEdit && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => go(`/documents/${row.document_id}`)}>תיקון שיוך</button>}
         {canEdit && ['needs_review', 'failed'].includes(row.status) && <button type="button" className="fin-btn fin-btn--sm" onClick={onRequeue}>העלאה מחדש</button>}
       </div>
-      <p className="fin-muted fin-small">תיקון של החברה, הספק, התאריך או הסכום במסמך מעביר ומשנה את שם הקובץ ב-Drive לבד, תוך דקה.</p>
+      <p className="fin-muted fin-small">שיוך לחברה, או תיקון של הספק, התאריך או הסכום, מעביר את הקובץ לתיקייה הנכונה ומשנה את שמו ב-Drive, תוך דקה.</p>
     </aside>
   )
 }
@@ -125,11 +131,21 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [showProblems, setShowProblems] = useState(false)
+  const [query, setQuery] = useState('')
+  const [bulkBiz, setBulkBiz] = useState('')
+  const [chosen, setChosen] = useState(() => new Set())
   const loadTree = useCallback(async () => { try { const r = await api.callServer('drive-tree', { target_id: t.id }); setRows((r.rows || []).map((x) => ({ ...x, target_id: t.id }))) } catch (e) { setErr(e.message) } }, [t.id])
   useEffect(() => { loadTree() }, [loadTree, t.counts?.verified])
   const c = t.counts || {}
-  const tree = useMemo(() => buildTree(rows || []), [rows])
+  const shown = useMemo(() => {
+    const qq = query.trim().toLowerCase()
+    if (!qq) return rows || []
+    return (rows || []).filter((r) => `${r.organized_name || ''} ${r.folder_path || ''}`.toLowerCase().includes(qq))
+  }, [rows, query])
+  const tree = useMemo(() => buildTree(shown), [shown])
   const docOf = useMemo(() => new Map(documents.map((d) => [d.id, d])), [documents])
+  // in the archive without a company: they sit in "מסמכים ללא שיוך" until a person (or the learning) assigns them
+  const unassigned = useMemo(() => (rows || []).filter((r) => !r.business_id && ['verified', 'uploaded', 'queued'].includes(r.status)), [rows])
   const bizName = (id) => businesses.find((b) => b.id === id)?.name
   const pickedRow = picked && (rows || []).find((r) => r.document_id === picked)
   const missing = Math.max(0, (c.expected || 0) - (c.verified || 0))
@@ -142,6 +158,14 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
   const runNow = () => act('run', async () => { const { results } = await api.callServer('drive-run', { target_id: t.id }, { timeout: 70000 }); const r = results[0] || {}; return r.busy ? 'העלאה אחרת רצה עכשיו. המסך יתעדכן לבד.' : r.error ? (() => { throw new Error(r.error) })() : r.verified ? `${n(r.verified)} מסמכים הועלו ואומתו עכשיו.` : 'אין מסמכים חדשים להעלאה.' })
   const check = () => act('check', async () => { const { results } = await api.callServer('drive-reconcile', {}, { timeout: 70000 }); const r = results.find((x) => x.target === t.id) || {}; if (r.error) throw new Error(r.error); return r.missing ? `נמצאו ${n(r.missing)} קבצים שחסרים ב-Drive. הם ברשימת "דורש בדיקה" עם "העלאה מחדש".` : 'הבדיקה הושלמה: כל מה שאמור להיות בארכיון נמצא ב-Drive.' })
   const requeue = (ids) => act('requeue', async () => { await api.callServer('drive-requeue', { target_id: t.id, ids }); await api.callServer('drive-run', { target_id: t.id }, { timeout: 70000 }); return 'הקבצים הועלו שוב.' })
+  // a company for documents: the file moves to that company's folder (the trigger queues it; run now so it moves at once)
+  const assign = (ids, businessId) => act('assign', async () => {
+    const name = businesses.find((b) => b.id === businessId)?.name || 'ללא שיוך'
+    await api.updateDocuments(ids, { business_id: businessId || null })
+    await api.callServer('drive-run', { target_id: t.id }, { timeout: 70000 }).catch(() => null)
+    setChosen(new Set())
+    return `${ids.length === 1 ? 'המסמך שויך' : `${n(ids.length)} מסמכים שויכו`} ל${name}, והקבצים עברו לתיקייה שלה.`
+  })
   const setting = (body) => act('settings', async () => { await api.callServer('drive-settings', { target_id: t.id, ...body }); return body.by_kind !== undefined ? 'המבנה עודכן. הקבצים יעברו לתיקיות החדשות בדקות הקרובות.' : '' })
 
   return (
@@ -153,12 +177,23 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
       </header>
       {t.last_error && <p className="fin-error" role="alert">{t.last_error}</p>}
 
-      <div className={`fin-drive__proof ${missing || c.failed || c.needs_review ? 'is-warn' : 'is-ok'}`} role="status">
-        <Icon name={missing || c.failed || c.needs_review ? 'alert' : 'check'} size={18} />
-        <p><strong>{n(c.verified)} מתוך {n(c.expected)}</strong> מסמכים בארכיון, וכל אחד נבדק מול Drive.{' '}
-          {missing ? `${n(missing)} עוד לא שם: ${[c.pending && `${n(c.pending)} בתור`, c.failed && `${n(c.failed)} נכשלו`, c.needs_review && `${n(c.needs_review)} דורשים בדיקה`].filter(Boolean).join(', ')}.` : 'שום מסמך לא חסר.'}
-          {t.last_reconcile_at ? ` בדיקת שלמות אחרונה: ${dateTime(t.last_reconcile_at)}.` : ''}</p>
-      </div>
+      {(() => {
+        const problems = (c.failed || 0) + (c.needs_review || 0)
+        const state = problems ? 'is-warn' : missing ? 'is-busy' : 'is-ok'
+        const pct = c.expected ? Math.round(((c.verified || 0) / c.expected) * 100) : 100
+        return (
+          <div className={`fin-drive__proof ${state}`} role="status">
+            <Icon name={problems ? 'alert' : missing ? 'upload' : 'check'} size={18} />
+            <div>
+              <p><strong>{n(c.verified)} מתוך {n(c.expected)}</strong> חשבוניות וקבלות בארכיון, וכל אחת נבדקה מול Drive.{' '}
+                {problems ? `${n(problems)} דורשות טיפול (ברשימה למטה).` : missing ? `מעלה עכשיו את ${n(missing)} הנותרות. אין צורך להשאיר את המסך פתוח.` : 'שום מסמך לא חסר.'}
+                {t.last_reconcile_at ? ` בדיקה אחרונה מול Drive: ${dateTime(t.last_reconcile_at)}.` : ''}</p>
+              {missing > 0 && !problems && <div className="fin-scan__bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="התקדמות ההעלאה"><span style={{ width: `${pct}%` }} /></div>}
+            </div>
+          </div>
+        )
+      })()}
+      <p className="fin-muted fin-small">עולות רק חשבוניות, חשבוניות-קבלה, קבלות, זיכויים ודרישות תשלום, כקובץ PDF או תמונה. גוף של מייל, אישור הזמנה, הצעת מחיר ואישור תשלום נשארים במערכת ולא עולים. בכל לילה הסוכן עובר על הארכיון: מה שלא שייך עובר לפח של Drive, ומה שחסר עולה.</p>
 
       <dl className="fin-scan__totals" aria-label="מצב הארכיון">
         <div><dt>נאספו מהמייל</dt><dd>{n(collected.total)}</dd></div>
@@ -166,8 +201,8 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
         <div><dt>בארכיון ומאומתים</dt><dd>{n(c.verified)}</dd></div>
         <div><dt>ממתינים להעלאה</dt><dd>{n(c.pending)}</dd></div>
         <div className={c.failed ? 'is-bad' : ''}><dt>נכשלו</dt><dd>{n(c.failed)}</dd></div>
-        <div><dt>ממתינים לשיוך</dt><dd>{n(t.unassigned)}</dd></div>
-        <div><dt>כפילויות</dt><dd>{n(c.duplicates)}</dd></div>
+        <div className={unassigned.length ? 'is-attn' : ''}><dt>ממתינים לשיוך</dt><dd>{n(unassigned.length)}</dd></div>
+        <div><dt>כפילויות · הוצאו</dt><dd>{n(c.duplicates)} · {n(c.withdrawn)}</dd></div>
         <div><dt>חברות · תיקיות</dt><dd>{n(t.companies)} · {n(t.folders)}</dd></div>
       </dl>
 
@@ -195,15 +230,46 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll }) {
         </ul>
       )}
 
+      {operate && unassigned.length > 0 && (
+        <section className="fin-dassign" aria-label="מסמכים שממתינים לשיוך">
+          <header>
+            <h3>ממתינים לשיוך ({n(unassigned.length)})</h3>
+            <p className="fin-muted fin-small">בחרו מסמכים וחברה. הקבצים יעברו מ"מסמכים ללא שיוך" לתיקיית החברה, והשיוך ילמד את הסוכן לפעם הבאה.</p>
+          </header>
+          <ul>
+            {unassigned.slice(0, 200).map((r) => {
+              const d = docOf.get(r.document_id)
+              return (
+                <li key={r.document_id}>
+                  <label className="fin-dassign__row">
+                    <input type="checkbox" checked={chosen.has(r.document_id)} onChange={(e) => setChosen((prev) => { const x = new Set(prev); if (e.target.checked) x.add(r.document_id); else x.delete(r.document_id); return x })} />
+                    <span dir="auto">{r.organized_name || d?.file_name || 'מסמך'}</span>
+                    {d?.email_from && <small dir="auto">{d.email_from.replace(/<[^>]*>/g, '').trim()}</small>}
+                  </label>
+                </li>
+              )
+            })}
+          </ul>
+          <div className="fin-dassign__bar">
+            <button type="button" className="fin-btn fin-btn--ghost fin-btn--sm" onClick={() => setChosen(chosen.size === unassigned.length ? new Set() : new Set(unassigned.map((r) => r.document_id)))}>{chosen.size === unassigned.length ? 'ניקוי הבחירה' : 'בחירת הכול'}</button>
+            <select value={bulkBiz} onChange={(e) => setBulkBiz(e.target.value)} aria-label="החברה לשיוך"><option value="">בחרו חברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+            <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" disabled={!chosen.size || !bulkBiz || !!busy} onClick={() => assign([...chosen], bulkBiz)}>{busy === 'assign' ? 'משייך…' : `שיוך ${chosen.size ? n(chosen.size) : ''} והעברה`}</button>
+          </div>
+        </section>
+      )}
+
       <section className="fin-dexplorer" aria-label="סייר הארכיון">
-        <h3>סייר הארכיון</h3>
-        {rows === null ? <p className="fin-muted" aria-busy="true">טוען…</p> : !tree.size ? <p className="fin-muted">עוד אין קבצים בארכיון. מסמכים חדשים עולים לבד כמה דקות אחרי שהם נקראים.</p> : (
+        <div className="fin-dexplorer__head">
+          <h3>סייר הארכיון</h3>
+          <input type="search" className="fin-dexplorer__search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="חיפוש לפי ספק, מספר, חודש…" aria-label="חיפוש בארכיון" />
+        </div>
+        {rows === null ? <p className="fin-muted" aria-busy="true">טוען…</p> : !tree.size ? <p className="fin-muted">{query ? 'לא נמצא קובץ שמתאים לחיפוש.' : 'עוד אין קבצים בארכיון. חשבוניות וקבלות חדשות עולות לבד כמה דקות אחרי שהן נקראות.'}</p> : (
           <div className={`fin-dexplorer__body ${pickedRow ? 'has-panel' : ''}`}>
             <div className="fin-dtree" dir="rtl">
               <p className="fin-dtree__root"><Icon name="folder" size={16} /> {t.root_name}</p>
               {[...tree.values()].sort((a, b) => a.name.localeCompare(b.name, 'he')).map((node) => <Folder key={node.name} node={node} depth={0} onPick={(f) => setPicked(f.document_id)} picked={picked} />)}
             </div>
-            {pickedRow && <FilePanel row={pickedRow} doc={docOf.get(pickedRow.document_id)} business={bizName(pickedRow.business_id)} canEdit={operate} go={go} onClose={() => setPicked(null)} onRename={() => setRenaming(pickedRow)} onRequeue={() => requeue([pickedRow.document_id])} />}
+            {pickedRow && <FilePanel row={pickedRow} doc={docOf.get(pickedRow.document_id)} business={bizName(pickedRow.business_id)} businesses={businesses} onAssign={assign} canEdit={operate} go={go} onClose={() => setPicked(null)} onRename={() => setRenaming(pickedRow)} onRequeue={() => requeue([pickedRow.document_id])} />}
           </div>
         )}
       </section>

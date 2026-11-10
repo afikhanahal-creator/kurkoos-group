@@ -1875,7 +1875,7 @@ create table if not exists public.fin_drive_files (
   primary key (target_id, document_id)
 );
 alter table public.fin_drive_files drop constraint if exists fin_drive_files_status_check;
-alter table public.fin_drive_files add constraint fin_drive_files_status_check check (status in ('queued', 'uploading', 'uploaded', 'verified', 'failed', 'duplicate', 'needs_review'));
+alter table public.fin_drive_files add constraint fin_drive_files_status_check check (status in ('queued', 'uploading', 'uploaded', 'verified', 'failed', 'duplicate', 'needs_review', 'withdrawn'));
 alter table public.fin_drive_files add column if not exists name_override text;   -- a name a person gave; kept on every later run
 create index if not exists fin_drive_files_queue on public.fin_drive_files (target_id, status, next_try_at);
 create index if not exists fin_drive_files_drive on public.fin_drive_files (drive_file_id) where drive_file_id is not null;
@@ -1912,6 +1912,15 @@ join public.fin_documents d on d.id = s.document_id
 where s.remote_id is not null
 on conflict do nothing;
 
+-- what belongs in the archive: a tax invoice, invoice-receipt, receipt, credit note or payment demand that was read, as a
+-- PDF or an image. Not an email body (HTML), not a quote, an order or a payment confirmation, not "other".
+create or replace function public.fin_drive_eligible(p_status text, p_type text, p_mime text, p_path text)
+returns boolean language sql immutable set search_path = '' as $$
+  select p_path is not null and p_status in ('review', 'approved', 'sent', 'duplicate')
+     and p_type in ('invoice', 'invoice_receipt', 'receipt', 'credit', 'supplier_bill')
+     and (p_mime = 'application/pdf' or p_mime like 'image/%');
+$$;
+
 -- every document the archive should hold gets its row: the ones that were read (in review or approved), and duplicates as
 -- "duplicate" pointing at the original. Rejected, failed and still-processing documents wait.
 create or replace function public.fin_drive_enqueue(p_target uuid)
@@ -1920,8 +1929,8 @@ returns int language sql volatile security definer set search_path = '' as $$
     insert into public.fin_drive_files (target_id, document_id, business_id, status, original_name, file_sha256, duplicate_of)
     select t.id, d.id, d.business_id, case when d.status = 'duplicate' then 'duplicate' else 'queued' end, d.file_name, d.file_hash, d.duplicate_of
     from public.fin_documents d, public.fin_cloud_targets t
-    where t.id = p_target and t.provider = 'gdrive' and t.status <> 'revoked' and d.file_path is not null
-      and d.status in ('review', 'approved', 'sent', 'duplicate')
+    where t.id = p_target and t.provider = 'gdrive' and t.status <> 'revoked'
+      and public.fin_drive_eligible(d.status, d.doc_type, d.file_mime, d.file_path)
       and (t.business_id is null or d.business_id = t.business_id)
     on conflict do nothing
     returning 1)
@@ -1954,10 +1963,10 @@ grant execute on function public.fin_drive_claim(uuid, int, int) to service_role
 -- queue: the next run renames or moves the archive's own file. Files a person made in Drive are never touched.
 create or replace function public.fin_drive_doc_changed() returns trigger language plpgsql security definer set search_path = '' as $$
 begin
-  if (new.business_id, new.supplier_id, new.supplier_name, new.doc_type, new.doc_number, new.issue_date, new.total_amount, new.currency, new.status, new.accounting_period)
-     is distinct from (old.business_id, old.supplier_id, old.supplier_name, old.doc_type, old.doc_number, old.issue_date, old.total_amount, old.currency, old.status, old.accounting_period) then
+  if (new.business_id, new.supplier_id, new.supplier_name, new.doc_type, new.doc_number, new.issue_date, new.total_amount, new.currency, new.status, new.accounting_period, new.file_mime)
+     is distinct from (old.business_id, old.supplier_id, old.supplier_name, old.doc_type, old.doc_number, old.issue_date, old.total_amount, old.currency, old.status, old.accounting_period, old.file_mime) then
     update public.fin_drive_files set status = 'queued', next_try_at = null, attempts = 0, business_id = new.business_id, updated_at = now()
-     where document_id = new.id and status in ('verified', 'uploaded', 'failed', 'duplicate');
+     where document_id = new.id and status in ('verified', 'uploaded', 'failed', 'duplicate', 'needs_review', 'withdrawn');
   end if;
   return new;
 end $$;
@@ -1970,7 +1979,7 @@ create or replace function public.fin_drive_has_work()
 returns boolean language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.fin_cloud_targets t where t.provider = 'gdrive' and t.status = 'active' and t.enabled and t.auto and (
     exists (select 1 from public.fin_drive_files f where f.target_id = t.id and ((f.status = 'queued' and coalesce(f.next_try_at, now()) <= now()) or (f.status in ('uploading', 'uploaded') and coalesce(f.locked_until, now()) <= now())))
-    or exists (select 1 from public.fin_documents d where d.file_path is not null and d.status in ('review', 'approved', 'sent', 'duplicate')
+    or exists (select 1 from public.fin_documents d where public.fin_drive_eligible(d.status, d.doc_type, d.file_mime, d.file_path)
                and (t.business_id is null or d.business_id = t.business_id)
                and not exists (select 1 from public.fin_drive_files f where f.target_id = t.id and f.document_id = d.id))));
 $$;

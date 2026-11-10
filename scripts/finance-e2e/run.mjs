@@ -497,7 +497,8 @@ await page.waitForTimeout(2500)
 const targets = sql("select string_agg(provider||':'||account_email||':'||status, ', ' order by provider) from fin_cloud_targets")
 const eligible = Number(sql("select count(*) from fin_documents where status in ('approved','sent') and file_path is not null"))
 // Drive is the archive: every document that was read goes up (in review too), not only the approved ones
-const gEligible = Number(sql("select count(*) from fin_documents where status in ('review','approved','sent') and file_path is not null"))
+const gEligible = Number(sql("select count(*) from fin_documents where status in ('review','approved','sent') and file_path is not null and doc_type in ('invoice','invoice_receipt','receipt','credit','supplier_bill') and (file_mime='application/pdf' or file_mime like 'image/%')"))
+const gSkipped = Number(sql("select count(*) from fin_documents where status in ('review','approved','sent') and file_path is not null and not (doc_type in ('invoice','invoice_receipt','receipt','credit','supplier_bill') and (file_mime='application/pdf' or file_mime like 'image/%'))"))
 for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1500) }
 const cFirst = sql("select string_agg(provider||'='||files_synced, ', ' order by provider) from fin_cloud_targets")
 for (const t of ['Google Drive', 'Dropbox']) { await page.locator('.fin-cloud-card', { hasText: t }).getByRole('button', { name: 'סנכרון עכשיו' }).click(); await page.waitForTimeout(1200) }
@@ -506,9 +507,9 @@ const cl = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const cloudShot = await shot('55-cloud-connected')
 const gVerified = sql("select count(*) from fin_drive_files f join fin_cloud_targets t on t.id=f.target_id and t.provider='gdrive' where f.status='verified'")
 const MONTHS_RE = '(ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)'
-const archRe = new RegExp(`^/ארכיון מסמכים עסקי/[^/]+/(20\\d\\d/\\d\\d - ${MONTHS_RE}|ללא תאריך)/[^/]+\\.(pdf|png|jpg|html|tif|tiff|zip|docx|xlsx)$`)
-const driveUploads = cl.drive.filter((x) => !x.startsWith('patch:'))
-record('CLOUD', 'סנכרון לענן: Google Drive כארכיון, Dropbox כהעתק', `שני החשבונות מתחברים ב-OAuth; ל-Drive עולים כל ${gEligible} המסמכים שנקראו (גם לפני אישור), לתיקיות "ארכיון מסמכים עסקי/<חברה>/<שנה>/<MM - חודש>", וכולם מאומתים; ל-Dropbox ${eligible} המאושרים; סנכרון שני לא מעתיק שוב`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; מאומתים: ${gVerified}; Drive: ${driveUploads.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
+const archRe = new RegExp(`^/ארכיון מסמכים עסקי/[^/]+/(20\\d\\d/\\d\\d - ${MONTHS_RE}|ללא תאריך)/[^/]+\\.(pdf|png|jpg|tif|tiff)$`)
+const driveUploads = cl.drive.filter((x) => !/^(patch|trash):/.test(x))
+record('CLOUD', 'סנכרון לענן: Google Drive כארכיון, Dropbox כהעתק', `שני החשבונות מתחברים ב-OAuth; ל-Drive עולות רק חשבוניות וקבלות כקובץ PDF או תמונה: ${gEligible} (גם לפני אישור), ו-${gSkipped} מסמכים אחרים (גוף מייל, אישור הזמנה, הצעת מחיר) לא עולים; לתיקיות "ארכיון מסמכים עסקי/<חברה>/<שנה>/<MM - חודש>", וכולם מאומתים; ל-Dropbox ${eligible} המאושרים; סנכרון שני לא מעתיק שוב`, `חשבונות: ${targets}; אחרי סנכרון ראשון: ${cFirst}; אחרי שני: ${cSecond}; מאומתים: ${gVerified}; Drive: ${driveUploads.slice(0, 2).join(' | ')}; Dropbox: ${cl.dropbox.slice(0, 1).join('')}`,
   targets === 'dropbox:office@kurkoos.test:active, gdrive:office@kurkoos.test:active' && cFirst === `dropbox=${eligible}, gdrive=${gEligible}` && cSecond === cFirst && Number(gVerified) === gEligible && driveUploads.length === gEligible && cl.dropbox.length === eligible && driveUploads.every((x) => archRe.test(x)) && cl.dropbox.every((x) => /\/20\d\d\/\d\d [א-ת]+\//.test(x)), [cloudEmpty, cloudShot])
 
 // ---- Drive: a real connection test, "save to Drive" for chosen documents, links back, no second copy ----
@@ -558,7 +559,7 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   const dupInDrive = dupDoc ? await copies(dupDoc) : 0
   // a network error (503) on upload: the row waits and is retried; the second try is verified; one copy only
   // two archived documents start over: their files leave Drive and their rows leave the archive, so each is uploaded afresh
-  const fresh = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' order by f.created_at desc limit 2`).split('\n').filter(Boolean)
+  const fresh = sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${driveTarget}' and f.status='verified' and d.status='review' order by f.created_at desc limit 3`).split('\n').filter(Boolean)
   const restart = async (id) => { await dget(`?remove=${id}`); sql(`delete from fin_drive_files where target_id='${driveTarget}' and document_id='${id}'`) }
   await restart(fresh[0])
   await fetch(`${FAKES}/__drive?upload503=1`)
@@ -596,6 +597,16 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   sql(`update fin_documents set issue_date=null, supplier_name=null, supplier_id=null, doc_number=null, total_amount=null, accounting_period=null where id='${thin}'`)
   await run()
   const thinName = row(thin).split('|')[2]
+  // only invoices and receipts: a document that turns out to be a quote leaves the archive (its copy goes to the Drive trash,
+  // never erased); when it is an invoice again it comes back. An email body (HTML) never goes up.
+  const wd = fresh[2]
+  sql(`update fin_documents set doc_type='quote' where id='${wd}'`); await run()
+  const wdRow = row(wd).split('|')[0]; const wdTrashed = (await dget()).filter((f) => f.appProperties?.kd === wd).every((f) => f.trashed)
+  sql(`update fin_documents set doc_type='invoice' where id='${wd}'`); await run()
+  const wdBack = row(wd).split('|')[0]; const wdLive = await copies(wd)
+  const htmlInDrive = (await dget()).filter((f) => !f.mimeType.endsWith('folder') && /\.html?$/i.test(f.name) && !f.trashed && !f.path.includes('/בדיקת חיבור/')).length
+  // a supplier name with quotes stays readable (בע"מ → בעמ, not בע-מ)
+  const quoted = sql(`select count(*) from fin_drive_files where target_id='${driveTarget}' and organized_name ~ 'בע-מ'`)
   // two runs at the same time: one works, the other sees the lock; every document still has exactly one file
   sql(`update fin_drive_files set status='queued', next_try_at=null where target_id='${driveTarget}' and status='verified'`)
   const [p1, p2] = await Promise.all([run(), run()])
@@ -616,8 +627,8 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
   const rec2 = await api(adminToken, { action: 'drive-reconcile' })
   const rec2Res = rec2.data.results?.find((r) => r.target === driveTarget) || {}
   record('ARCHIVE', 'ארכיון Google Drive: תיקיות, שמות, ניסיון חוזר, העברה, בקרת שלמות',
-    'תיקייה ראשית ותיקייה לכל חברה, שנה וחודש (כל אחת פעם אחת, לפי מזהה); שם לפי תוכן החשבונית ובתיקיית החברה שלה; כפילות לא מועלית; 503 ← ניסיון חוזר ומאומת; תשובה שאבדה ← אותו קובץ ולא עותק; ריצה שנקטעה ← ממשיכה; תיקון חברה ← הקובץ עובר תיקייה; שינוי שם נשמר; מסמך דל ← בלי תאריך מומצא; שתי ריצות במקביל ← קובץ אחד לכל מסמך; בדיקת הלילה מוצאת קובץ שנמחק ושנזרק לפח, ו"העלה שוב" מחזיר',
-    `תיקיות כפולות: ${dupFolders}; חברות: ${companyFolders.join(', ')}; מפתחות: ${keys.split(' ').length}; שם: ${named[0]} → ${named[1]} (${named[2]}, ${named[3]}, ${named[4]}); כפילויות: ${dupRows}, ב-Drive: ${dupInDrive}; 503: ${after503.split('|').slice(0, 2).join('/')} → ${retried.split('|')[0]} (${copies503} עותקים); תשובה שאבדה: ${afterLost.split('|').slice(0, 2).join('/')} → ${recovered.split('|')[0]} (${copiesLost}); נקטע: ${resumed} (${copiesMid}); תיקון: ${queuedAfterFix} → ${moved.split('|')[3]} (${copiesMoved}); שם ידני: ${ren.status} ${renamed} / ${renamedInDrive}; דל: ${thinName}; במקביל: נעול ${busy}, קבצים כפולים ${doubleFiles}; לילה: חסרים ${recRes.missing}, ${flagged}; מסך: ${JSON.stringify(card.counts || {})}; אחרי העלאה חוזרת: ${back}, חסרים ${rec2Res.missing}`,
+    'תיקייה ראשית ותיקייה לכל חברה, שנה וחודש (כל אחת פעם אחת, לפי מזהה); שם לפי תוכן החשבונית ובתיקיית החברה שלה; כפילות לא מועלית; 503 ← ניסיון חוזר ומאומת; תשובה שאבדה ← אותו קובץ ולא עותק; ריצה שנקטעה ← ממשיכה; תיקון חברה ← הקובץ עובר תיקייה; שינוי שם נשמר; מסמך דל ← בלי תאריך מומצא; שתי ריצות במקביל ← קובץ אחד לכל מסמך; בדיקת הלילה מוצאת קובץ שנמחק ושנזרק לפח, ו"העלה שוב" מחזיר; רק חשבוניות וקבלות (PDF או תמונה): מסמך שהתברר כהצעת מחיר עובר לפח של Drive וחוזר כשהוא שוב חשבונית; אין גוף מייל (HTML) ב-Drive',
+    `תיקיות כפולות: ${dupFolders}; חברות: ${companyFolders.join(', ')}; מפתחות: ${keys.split(' ').length}; שם: ${named[0]} → ${named[1]} (${named[2]}, ${named[3]}, ${named[4]}); כפילויות: ${dupRows}, ב-Drive: ${dupInDrive}; 503: ${after503.split('|').slice(0, 2).join('/')} → ${retried.split('|')[0]} (${copies503} עותקים); תשובה שאבדה: ${afterLost.split('|').slice(0, 2).join('/')} → ${recovered.split('|')[0]} (${copiesLost}); נקטע: ${resumed} (${copiesMid}); תיקון: ${queuedAfterFix} → ${moved.split('|')[3]} (${copiesMoved}); שם ידני: ${ren.status} ${renamed} / ${renamedInDrive}; דל: ${thinName}; במקביל: נעול ${busy}, קבצים כפולים ${doubleFiles}; לילה: חסרים ${recRes.missing}, ${flagged}; מסך: ${JSON.stringify(card.counts || {})}; אחרי העלאה חוזרת: ${back}, חסרים ${rec2Res.missing}; הצעת מחיר: ${wdRow}, לפח ${wdTrashed} → חשבונית: ${wdBack} (${wdLive}); HTML ב-Drive: ${htmlInDrive}; "בע-מ": ${quoted}`,
     dupFolders === 0 && companyFolders.length >= 1 && companyFolders.every((c) => companyNames.includes(c) || c === 'מסמכים ללא שיוך')
       && named[1] !== named[0] && /^20\d\d-\d\d-\d\d_[^_]+_[^_]+_[^_]+_-?[\d.]+-(שח|USD|EUR)\.[a-z]+$/.test(named[1]) && named[2].split('/')[2] === named[3] && named[4] === 'md5'
       && (!dupDoc || (/^(\d+)\|\1$/.test(dupRows) && dupInDrive === 0))
@@ -628,7 +639,8 @@ record('DRIVE', 'Google Drive: בדיקת חיבור אמיתית ושמירה �
       && ren.status === 200 && /^חוזה-שכירות-מחסן\./.test(renamed) && renamedInDrive === renamed
       && !/^20\d\d-/.test(thinName) && /_id-[0-9a-f]{8}\./.test(thinName)
       && busy >= 1 && doubleFiles === 0
-      && recRes.missing === 2 && flagged === 'needs_review,needs_review' && card.counts?.needs_review >= 2 && back === 'verified' && rec2Res.missing === 0,
+      && recRes.missing === 2 && flagged === 'needs_review,needs_review' && card.counts?.needs_review >= 2 && back === 'verified' && rec2Res.missing === 0
+      && wdRow === 'withdrawn' && wdTrashed && wdBack === 'verified' && wdLive === 1 && htmlInDrive === 0 && quoted === '0',
     [])
 }
 

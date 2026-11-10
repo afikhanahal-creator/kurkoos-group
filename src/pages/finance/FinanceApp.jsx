@@ -261,6 +261,19 @@ export default function FinanceApp() {
   const idleSoon = useIdleSignOut(Number(sec?.idle_minutes) || 0, ready)   // 0 = never sign out for inactivity
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  // a tab that stayed open across a deploy keeps the old code; when a newer version is live, the next move to another
+  // screen loads it, so nobody works on an old screen (checked at most every 2 minutes, never while typing)
+  const versionAt = useRef(0)
+  useEffect(() => {
+    if (Date.now() - versionAt.current < 120_000) return
+    versionAt.current = Date.now()
+    const mine = document.querySelector('script[type="module"][src*="/assets/index-"]')?.getAttribute('src')
+    if (!mine) return
+    fetch('/admin/finance', { cache: 'no-store', credentials: 'same-origin' }).then((r) => (r.ok ? r.text() : '')).then((html) => {
+      const live = /\/assets\/index-[^"']+\.js/.exec(html)?.[0]
+      if (live && live !== mine && !document.querySelector('.fin-modal')) window.location.reload()
+    }).catch(() => {})
+  }, [pathname])
   onChange.current = async (before, after) => {
     const was = new Map(before.map((d) => [d.id, d]))
     const myId = (await supabase.auth.getSession()).data.session?.user?.id

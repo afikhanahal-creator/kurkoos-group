@@ -27,6 +27,18 @@ export default function Scanners() {
   const [msg, setMsg] = useState('')
   const [copied, setCopied] = useState(false)
   const [q, setQ] = useState('')
+  // the connection check asks the WhatsApp provider itself: is the office phone linked, and do incoming messages reach us
+  const [check, setCheck] = useState(null)
+  const [checking, setChecking] = useState('')
+  const runCheck = async () => { setChecking('check'); try { setCheck(await api.callServer('whatsapp-check')) } catch (e) { setCheck({ error: e.message, steps: [] }) } finally { setChecking('') } }
+  const turnOn = async (force = false) => {
+    setChecking('setup')
+    try { const r = await api.callServer('whatsapp-setup', { force }); setCheck(r.health); setMsg('הקליטה הופעלה. ההגדרה נכנסת לתוקף אצל ספק ה-WhatsApp תוך כמה דקות.') } catch (e) {
+      if (/כתובת אחרת/.test(e.message) && (await askConfirm({ text: 'ההודעות הנכנסות של מספר המשרד נשלחות כרגע למערכת אחרת. אם מפעילים כאן, המערכת האחרת תפסיק לקבל אותן. להפעיל בכל זאת?', ok: 'להפעיל כאן', danger: true }))) return turnOn(true)
+      setCheck((c) => ({ ...(c || { steps: [] }), error: e.message }))
+    } finally { setChecking('') }
+    return undefined
+  }
   const office = status.data?.whatsapp?.number || ''
   const configured = !!status.data?.whatsapp?.configured
   const waLink = office ? `https://wa.me/${office}?text=${encodeURIComponent('שלום, אני רוצה לשלוח חשבוניות לקבוצת קורקוס')}` : null
@@ -82,6 +94,33 @@ export default function Scanners() {
           </div>
         )}
       </section>
+
+      {can('operate') && (
+        <section className={`fin-wacheck ${check ? (check.ok ? 'is-ok' : 'is-open') : ''}`} aria-label="בדיקת החיבור ל-WhatsApp">
+          <header>
+            <div>
+              <h3>האם הקליטה מ-WhatsApp עובדת?</h3>
+              <p className="fin-muted fin-small">{!check ? 'הבדיקה שואלת את ספק ה-WhatsApp אם הטלפון של המשרד מחובר ואם הודעות נכנסות מגיעות למערכת.' : check.ok ? 'הכול מחובר. צילום שנשלח למספר המשרד מטלפון רשום ייכנס למערכת וייקרא.' : 'יש מה לתקן. כל שורה אומרת מה חסר ומה עושים.'}</p>
+            </div>
+            <button type="button" className="fin-btn" onClick={runCheck} disabled={!!checking}><Icon name="sync" size={16} /> {checking === 'check' ? 'בודק…' : check ? 'בדיקה מחדש' : 'בדיקת החיבור'}</button>
+          </header>
+          {check?.error && <p className="fin-error" role="alert">{check.error}</p>}
+          {check?.steps?.length > 0 && (
+            <ul className="fin-wacheck__steps">
+              {check.steps.map((st) => (
+                <li key={st.key} className={st.ok ? 'is-ok' : 'is-bad'}>
+                  <span className="fin-wacheck__mark" aria-hidden="true"><Icon name={st.ok ? 'check' : 'alert'} size={15} /></span>
+                  <div><strong>{st.title}</strong><small>{st.detail}</small>{!st.ok && st.fix && <small className="fin-wacheck__fix">מה עושים: {st.fix}</small>}</div>
+                  <span className="fin-sr">{st.ok ? 'תקין' : 'דורש תיקון'}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {check?.can_setup && can('manage') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => turnOn(false)} disabled={!!checking}>{checking === 'setup' ? 'מפעיל…' : 'הפעלת הקליטה'}</button>}
+          {check?.last && <p className="fin-muted fin-small">ההודעה האחרונה שהגיעה: {dateTime(check.last.at)} · {OUTCOME[check.last.outcome]?.[1] || check.last.outcome}</p>}
+          {check && !check.last && check.ok && <p className="fin-muted fin-small">עוד לא הגיעה אף הודעה. שלחו צילום של קבלה למספר המשרד כדי לבדוק.</p>}
+        </section>
+      )}
 
       <dl className="fin-wa__stats">
         <div><dt>מספרים פעילים</dt><dd>{stats.active}</dd></div>

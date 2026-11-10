@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -107,6 +107,38 @@ export default function Documents({ preset = 'all' }) {
   const [shown, setShown] = useState(STEP)
   useEffect(() => { setShown(STEP) }, [qd, f, tab, sort, dateBy, only, preset])
   const visible = rows.length > shown ? rows.slice(0, shown) : rows
+  // when the list runs by date, the first document of every month carries the month's name ("נובמבר 26"): on a phone it
+  // is printed above that document, and a small chip under the top bar says which month is on the screen while scrolling
+  const months = useMemo(() => {
+    const m = new Map()
+    if (sort.key !== 'date') return m
+    let prev = ''
+    for (const d of visible) {
+      const k = String(docDate(d) || '').slice(0, 7)
+      if (k && k !== prev) m.set(d.id, `${new Date(`${k}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'long' })} ${k.slice(2, 4)}`)
+      prev = k || prev
+    }
+    return m
+  }, [visible, sort.key])
+  const listRef = useRef(null)
+  const [monthNow, setMonthNow] = useState('')
+  useEffect(() => {
+    if (!months.size) { setMonthNow(''); return undefined }
+    let raf = 0
+    const read = () => {
+      raf = 0
+      const box = listRef.current
+      if (!box) return
+      const line = 132                                   // just under the top bar and the chip itself
+      let cur = ''
+      for (const el of box.querySelectorAll('[data-month]')) { if (el.getBoundingClientRect().top - 34 <= line) cur = el.dataset.month; else break }
+      setMonthNow(box.getBoundingClientRect().bottom > line ? cur : '')
+    }
+    const on = () => { if (!raf) raf = requestAnimationFrame(read) }
+    read()
+    window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on)
+    return () => { window.removeEventListener('scroll', on); window.removeEventListener('resize', on); if (raf) cancelAnimationFrame(raf) }
+  }, [months, view])
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
   const toggle = (did) => setSel((s) => { const n = new Set(s); if (n.has(did)) n.delete(did); else n.add(did); return n })
   const picked = rows.filter((d) => sel.has(d.id))
@@ -261,12 +293,12 @@ export default function Documents({ preset = 'all' }) {
       {picked.length > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <div className="fin-bulk__row">
-            <strong className="fin-bulk__count"><span>{picked.length === 1 ? 'מסמך אחד מסומן' : `${picked.length} מסמכים מסומנים`}</span><small>סה״כ {money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
+            <strong className="fin-bulk__count"><span>{picked.length === 1 ? 'מסמך אחד מסומן' : <>{picked.length} <span className="fin-bulk__long">מסמכים </span>מסומנים</>}</span><small>סה״כ {money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
             {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
             {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
             <button type="button" className="fin-btn" disabled={!!busy} onClick={() => sheet('excel')}><Icon name="table" size={17} /> Excel</button>
             <button type="button" className="fin-btn fin-col-md" disabled={!!busy} onClick={() => sheet('csv')}>CSV</button>
-            {can('operate') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => toDrive(picked)}><Icon name="cloud" size={17} /> {busy === 'drive' ? 'שומר…' : 'שמירה בדרייב'}</button>}
+            {can('operate') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => toDrive(picked)}><Icon name="cloud" size={17} /> {busy === 'drive' ? 'שומר…' : <><span className="fin-bulk__long">שמירה ב</span>דרייב</>}</button>}
             {can('upload') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSharing({ docs: picked, mode: 'whatsapp' })}><Icon name="share" size={17} /> שיתוף</button>}
             <MoreMenu label="פעולות נוספות" items={[
               { label: busy === 'zip' ? 'מכין…' : 'הורדת הקבצים (ZIP)', icon: 'download', onClick: downloadOriginals },
@@ -278,22 +310,22 @@ export default function Documents({ preset = 'all' }) {
               edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },
               edit && { label: 'העברה לארכיון', icon: 'archive', danger: true, onClick: () => bulk('archive', { status: 'archived', archived_at: new Date().toISOString() }, (d) => !['approved', 'sent', 'processing'].includes(d.status)) },
             ]} />
-            <button type="button" className="fin-btn fin-btn--ghost fin-bulk__cancel" onClick={() => setSel(new Set())}><Icon name="x" size={16} /> ביטול הבחירה</button>
+            <button type="button" className="fin-btn fin-btn--ghost fin-bulk__cancel" onClick={() => setSel(new Set())} aria-label="ביטול הבחירה"><Icon name="x" size={16} /> <span className="fin-bulk__long">ביטול הבחירה</span></button>
           </div>
           {edit && (
             <div className="fin-bulk__row fin-bulk__assign">
-              <span className="fin-bulk__label">שיוך לכל המסומנים:</span>
+              <span className="fin-bulk__label">שיוך<span className="fin-bulk__long"> לכל המסומנים</span>:</span>
               <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שינוי קטגוריה" disabled={!!busy}>
-                <option value="">שינוי קטגוריה…</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="">קטגוריה</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
               {businesses.length > 0 && (
                 <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('biz', { business_id: e.target.value })} aria-label="שיוך לחברה" disabled={!!busy}>
-                  <option value="">שיוך לחברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  <option value="">חברה</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </Select>
               )}
               {projects.length > 0 && (
                 <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('project', { project_id: e.target.value === 'none' ? null : e.target.value })} aria-label="שיוך לפרויקט" disabled={!!busy}>
-                  <option value="">שיוך לפרויקט…</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <option value="">פרויקט</option><option value="none">ללא פרויקט</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </Select>
               )}
             </div>
@@ -317,16 +349,18 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
 
+      {monthNow && <div className="fin-monthchip" aria-hidden="true"><span>{monthNow}</span></div>}
+      <div className="fin-doclistbox" ref={listRef}>
       {rows.length === 0 ? (
         tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : view === 'list' ? (
-        <DocList docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
+        <DocList marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (
-            <li key={d.id} className={`fin-doccard ${sel.has(d.id) ? 'is-selected' : ''}`}>
+            <li key={d.id} data-month={months.get(d.id)} className={`fin-doccard ${sel.has(d.id) ? 'is-selected' : ''}`}>
               <button type="button" className="fin-doccard__open" onClick={() => go(link(d.id))} aria-label={`פתיחת ${d.supplier_name || d.file_name}`}><Thumbnail doc={d} /></button>
               <label className="fin-doccard__check"><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></label>
               <div className="fin-doccard__body">
@@ -392,7 +426,7 @@ export default function Documents({ preset = 'all' }) {
               {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
-                  <tr key={d.id} data-mime={d.file_mime || undefined} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
+                  <tr key={d.id} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
@@ -432,6 +466,7 @@ export default function Documents({ preset = 'all' }) {
           </table>
         </div>
       )}
+      </div>
 
       {rows.length > shown && (
         <div className="fin-more-rows">

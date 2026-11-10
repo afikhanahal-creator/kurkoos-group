@@ -2649,13 +2649,29 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin[data-theme='dark'] .fin-bulk :is(.fin-btn, .fin-select, .fin-link) { color: var(--ink); border-color: var(--line-2, var(--line)); }
 .fin[data-theme='dark'] .fin-bulk .fin-btn--primary { color: var(--sheet); }
 @media (max-width: 760px) {
-  /* phones: one line that scrolls sideways, above the tab bar; the count and the main action come first */
-  .fin .fin-bulk { padding: 8px 10px; border-inline-start-width: 3px; }
-  .fin .fin-bulk__row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
-  .fin .fin-bulk__row::-webkit-scrollbar { display: none; }
-  .fin .fin-bulk__row > * { flex: none; }
-  .fin .fin-bulk__cancel { margin-inline-start: 0; }
-  .fin .fin-bulk__count { position: sticky; inset-inline-start: 0; z-index: 1; }
+  /* phones: nothing scrolls sideways. One line says what is chosen and its total, with the way out beside it;
+     under it the two main actions, then the secondary ones, then the three assignments, each row an even grid. */
+  /* the bar is pinned above the tab bar: it used to sit at the top of the list, out of sight once you scrolled to pick */
+  .fin .fin-bulk { position: fixed !important; top: auto !important; inset-inline: 8px; bottom: calc(72px + var(--safe-b, env(safe-area-inset-bottom))); z-index: var(--z-bar); padding: 8px; gap: 6px; border-inline-start-width: 3px; box-shadow: 0 -2px 10px rgba(7, 41, 58, 0.08), 0 14px 34px rgba(7, 41, 58, 0.22); }
+  .fin__content:has(.fin-bulk) { padding-bottom: calc(300px + var(--safe-b, env(safe-area-inset-bottom))) !important; }
+  .fin .fin-bulk__row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; overflow: visible; }
+  .fin .fin-bulk__row > * { min-width: 0; }
+  .fin .fin-bulk__long { display: none; }
+  .fin .fin-bulk__count { grid-column: 1 / 4; grid-row: 1; margin: 0; flex-direction: row; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 40px; padding: 8px 12px; }
+  .fin .fin-bulk__count span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fin .fin-bulk__count small { flex: none; font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
+  .fin .fin-bulk__cancel { grid-column: 4; grid-row: 1; margin: 0; min-height: 40px; justify-content: center; border-color: var(--line) !important; }
+  .fin .fin-bulk__row > .fin-btn { justify-content: center; min-height: 42px; padding-inline: 6px; gap: 5px; font-size: var(--t-sm); white-space: nowrap; overflow: hidden; }
+  .fin .fin-bulk__row > .fin-btn--primary, .fin .fin-bulk__row > .fin-btn--primary + .fin-btn { grid-column: span 2; font-size: var(--t-md); }
+  .fin .fin-bulk__row > .fin-more { display: flex; }
+  .fin .fin-bulk__row > .fin-more > .fin-icon-btn { width: 100%; min-height: 44px; border: 1px solid var(--line-2, var(--line)); border-radius: var(--r-m); }
+  /* "שיוך" sits on the dividing line like a legend, so the three choices get the full width */
+  .fin .fin-bulk__assign { position: relative; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding-top: 10px; margin-top: 4px; }
+  .fin .fin-bulk__label { position: absolute; top: -0.62em; inset-inline-start: 8px; padding: 0 6px; background: var(--sheet); font-size: var(--t-xs); line-height: 1.2; }
+  .fin .fin-bulk__assign .fin-sel__btn { font-size: var(--t-sm); padding: 0 8px; gap: 4px; min-height: 40px; }
+  .fin .fin-bulk__assign .fin-sel__chev { width: 14px; height: 14px; }
+  .fin .fin-bulk__assign :is(.fin-select, .fin-sel) { width: 100%; min-width: 0; min-height: 40px; font-size: var(--t-sm); }
+}
 }
 
 /* the documents table: the last column (download, delete) stays in view while the table scrolls sideways, and the three
@@ -2874,3 +2890,53 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin__nav-more:disabled { cursor: default; }
 .fin__nav-more:disabled svg { opacity: 0.35; }
 .fin__nav-more:hover:not(:disabled) { color: var(--ink); }
+
+/* ---------- documents on a phone: which month am I in, and a date that can be read ---------- */
+.fin-monthchip { display: none; }
+.fin-htmlprev { position: relative; width: 100%; height: 100%; min-height: inherit; display: flex; }
+.fin-htmlprev .fin-preview__frame { flex: 1; }
+.fin-comp__doc .fin-htmlprev { display: block; }
+@media (max-width: 700px) { .fin-viewer__bar .fin-viewer__print { display: inline-flex; } }
+@media (max-width: 760px) {
+  /* the month on screen: a small chip under the top bar, at the start of the line, that follows the scroll */
+  .fin-monthchip { display: block; position: sticky; top: 68px; z-index: var(--z-sticky); height: 0; pointer-events: none; }
+  .fin-monthchip span { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: var(--t-xs); font-weight: 700; box-shadow: 0 4px 12px rgba(7, 41, 58, 0.22); }
+  /* the first document of a month carries the month's name above it */
+  .fin-doclistbox [data-month] { position: relative; margin-top: 2.1rem !important; }
+  .fin-doclistbox [data-month]::before { content: attr(data-month); position: absolute; inset-inline-start: 4px; top: -1.65rem; font-size: var(--t-sm); font-weight: 700; color: var(--text-2); letter-spacing: 0; white-space: nowrap; }
+  .fin-doclistbox [data-month]::after { content: ''; position: absolute; top: -0.85rem; inset-inline: 6.5rem 0; height: 1px; background: var(--line); }
+  .fin-doclistbox .fin-dlist__row[data-month] { margin-top: 0 !important; padding-top: 2.1rem; }
+  .fin-doclistbox .fin-dlist__row[data-month]::before { top: 0.55rem; inset-inline-start: 0.85rem; }
+  .fin-doclistbox .fin-dlist__row[data-month]::after { top: 1.15rem; inset-inline: 7.4rem 0.85rem; }
+
+  /* a document row: name and status on top; under them the date as a clear chip at the start and the total at the end */
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total, .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td[data-label="תאריך"] { grid-row: 2; padding: 0.55rem 0 0; margin-top: 0.45rem; border-top: 1px solid var(--line); align-self: stretch; align-items: center; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total::before, .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td[data-label="תאריך"]::before { content: none; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td[data-label="תאריך"] { grid-column: 1 / 3; justify-content: flex-start; font-size: var(--t-md); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total { grid-column: 3; display: flex; justify-content: flex-end; padding-inline-start: 0; min-width: 0; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs td.fin-td-total strong { font-size: var(--t-lg); }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs tbody tr { column-gap: 0; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs .fin-table__check { padding-inline-end: 0.6rem; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--docs .fin-td-status { padding-inline-start: 0.6rem; }
+}
+
+/* ---------- WhatsApp: is the reception working? a checklist that names what is missing ---------- */
+.fin-wacheck { display: grid; gap: 12px; padding: 16px 18px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); }
+.fin-wacheck.is-ok { border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+.fin-wacheck.is-open { border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+.fin-wacheck header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fin-wacheck header > div { flex: 1 1 260px; min-width: 0; display: grid; gap: 2px; }
+.fin-wacheck h3 { font-size: var(--t-base); }
+.fin-wacheck__steps { list-style: none; margin: 0; padding: 0; display: grid; }
+.fin-wacheck__steps li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); }
+.fin-wacheck__steps li > div { display: grid; gap: 1px; min-width: 0; }
+.fin-wacheck__steps strong { color: var(--ink); font-size: var(--t-md); }
+.fin-wacheck__steps small { color: var(--text-2); font-size: var(--t-sm); overflow-wrap: anywhere; }
+.fin-wacheck__mark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; }
+.fin-wacheck__steps .is-ok .fin-wacheck__mark { background: var(--ok-wash); color: var(--ok); }
+.fin-wacheck__steps .is-bad .fin-wacheck__mark { background: var(--warn-wash); color: var(--warn); }
+.fin-wacheck__steps small.fin-wacheck__fix { color: var(--ink); font-weight: 700; }
+.fin-wacheck > .fin-btn--primary { justify-self: start; }
+@media (max-width: 700px) { .fin-wacheck header .fin-btn, .fin-wacheck > .fin-btn--primary { width: 100%; justify-content: center; } }
+/* a narrow phone: the header keeps room for the supplier's name; print stays in the viewer's own bar just below */
+@media (max-width: 430px) { .fin-panel__print { display: none; } }

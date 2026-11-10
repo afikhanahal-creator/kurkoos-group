@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { HtmlPreview } from './DocPreview.jsx'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -36,7 +37,7 @@ function Preview({ doc }) {
   }, [doc.file_path, doc.file_mime])
   if (!doc.file_path) return <div className="fin-msg">אין קובץ</div>
   if (err) return <p className="fin-error fin-error--block" role="alert">הקובץ לא נטען: {err}</p>
-  if (html !== null) return <iframe className="fin-preview__frame" title="המייל המקורי" sandbox="" srcDoc={html} />
+  if (html !== null) return <HtmlPreview html={html} />
   if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
   return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} />
 }
@@ -201,6 +202,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
           </div>
           <div className="fin-panel__nav">
             {doc.file_path && <button type="button" className="fin-icon-btn" onClick={async () => saveBlob(await api.fileBlob(doc), doc.file_name || 'document')} aria-label="הורדת הקובץ המקורי" title="הורדת הקובץ המקורי"><Icon name="download" /></button>}
+            {doc.file_path && <button type="button" className="fin-icon-btn fin-panel__print" onClick={() => document.querySelector('.fin-panel .fin-viewer__print')?.click()} aria-label="הדפסת המסמך" title="הדפסה"><Icon name="print" /></button>}
             {(can('manage') || (can('operate') && !['approved', 'sent'].includes(doc.status))) && <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={remove} disabled={!!busy} aria-label="מחיקת המסמך (לא רלוונטי)" title="מחיקת המסמך"><Icon name="trash" /></button>}
             <button type="button" className="fin-icon-btn" onClick={onPrev} disabled={!onPrev} aria-label="המסמך הקודם" title="הקודם"><Icon name="back" /></button>
             <button type="button" className="fin-icon-btn" onClick={onNext} disabled={!onNext} aria-label="המסמך הבא" title="הבא"><Icon name="next" /></button>

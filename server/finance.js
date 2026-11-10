@@ -20,7 +20,7 @@ import { ADAPTERS } from './finance/adapters.js'
 import { ask } from './finance/assistant.js'
 import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
-import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument } from './finance/whatsapp.js'
+import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 import { sendToAccountant } from './finance/mailout.js'
 
@@ -76,6 +76,8 @@ const ROLES = {
   'duplicate-decide': ['admin', 'finance_manager'],
   'not-relevant': ['admin', 'finance_manager'],
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
+  'whatsapp-check': ['admin', 'finance_manager'],
+  'whatsapp-setup': ['admin'],
 }
 
 // per-user rate limit (in memory, per instance): 120 calls in 10 minutes
@@ -527,6 +529,18 @@ export default async function handler(req, res) {
         const row = await patch(`fin_documents?id=eq.${doc.id}`, dup ? { status: 'duplicate', duplicate_state: 'confirmed', issues } : { duplicate_state: 'dismissed', issues })
         await audit('document', doc.id, dup ? 'duplicate_confirmed' : 'duplicate_dismissed', { of: doc.duplicate_of }, user)
         res.status(200).json({ document: row })
+        return
+      }
+      case 'whatsapp-check': {
+        res.status(200).json(await waHealth(origin(req)))
+        return
+      }
+      case 'whatsapp-setup': {
+        try {
+          const r = await waSetup(origin(req), { force: body.force === true })
+          await audit('integration', null, 'integration_saved', { provider: 'whatsapp', webhook: true }, user)
+          res.status(200).json({ ...r, health: await waHealth(origin(req)) })
+        } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e), elsewhere: !!e.elsewhere }) }
         return
       }
       case 'whatsapp-send-doc': {

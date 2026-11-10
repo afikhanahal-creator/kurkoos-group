@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { date, dateTime } from './format.js'
@@ -37,8 +38,8 @@ function PeriodDialog({ mailbox, onClose, onStarted }) {
         {PRESETS.map(([id, label, days]) => <button key={id} type="button" className={preset === id ? 'is-on' : ''} aria-pressed={preset === id} onClick={() => pick(id, days)}>{label}</button>)}
       </div>
       <div className="fin-form__grid">
-        <Field label="מתאריך"><input type="date" lang="he-IL" value={from} max={to} onChange={(e) => { setPreset('custom'); setFrom(e.target.value) }} /></Field>
-        <Field label="עד תאריך"><input type="date" lang="he-IL" value={to} min={from} max={today()} onChange={(e) => { setPreset('custom'); setTo(e.target.value) }} /></Field>
+        <Field label="מתאריך"><DateField value={from} max={to} clearable={false} onChange={(v) => { setPreset('custom'); setFrom(v) }} /></Field>
+        <Field label="עד תאריך"><DateField value={to} min={from} max={today()} clearable={false} onChange={(v) => { setPreset('custom'); setTo(v) }} /></Field>
       </div>
       <label className="fin-check"><input type="checkbox" checked={sent} onChange={(e) => setSent(e.target.checked)} /> לסרוק גם הודעות יוצאות (חשבוניות שהעסק שלח)</label>
       <p className="fin-muted fin-small">התאריכים לפי שעון ישראל. הודעה שכבר נבדקה לא נקראת שוב, ולכן סריקה חוזרת של תקופה עולה רק על מה שלא נבדק.</p>

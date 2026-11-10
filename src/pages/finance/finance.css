@@ -2596,3 +2596,125 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-x-monthsum__docs { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 36px; }
   .fin-suplink { display: inline-flex; align-items: center; min-height: 44px; }
 }
+
+/* one date picker for the whole system (DateField.jsx): a field that says the date in words, a calendar under it */
+.fin-date { position: relative; min-width: 0; }
+.fin-date__btn { all: unset; box-sizing: border-box; width: 100%; min-height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--line-2, var(--line)); border-radius: var(--r-m); background: var(--sheet); color: var(--ink); cursor: pointer; font-size: var(--t-md); font-variant-numeric: tabular-nums; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.fin-date__btn svg { color: var(--ocean); flex: none; }
+.fin-date__btn.is-empty span { color: var(--muted); }
+.fin-date__btn:hover:not(:disabled) { border-color: var(--ocean); }
+.fin-date__btn:focus-visible, .fin-date.is-open .fin-date__btn { border-color: var(--ocean); box-shadow: 0 0 0 3px var(--ocean-wash); }
+.fin-date__btn:disabled { background: var(--wash); color: var(--text-2); cursor: not-allowed; }
+.fin-date__btn.is-invalid { border-color: var(--attn); }
+.fin-date__pop { position: fixed; z-index: var(--z-top); width: 296px; max-width: calc(100vw - 32px); padding: 14px; display: grid; gap: 10px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); box-shadow: 0 18px 44px rgba(7, 41, 58, 0.18), 0 2px 6px rgba(7, 41, 58, 0.06); animation: fin-date-in 140ms var(--ease); }
+@keyframes fin-date-in { from { opacity: 0; transform: translateY(-4px); } }
+.fin-date__head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; text-align: center; }
+.fin-date__head strong { color: var(--ink); font-size: var(--t-base); }
+.fin-date__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.fin-date__dow { text-align: center; font-size: var(--t-xs); color: var(--muted); padding: 4px 0; }
+.fin-date__day { all: unset; box-sizing: border-box; aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; cursor: pointer; font-size: var(--t-sm); color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-date__day:hover:not(:disabled) { background: var(--ocean-wash); }
+.fin-date__day:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; }
+.fin-date__day.is-today { box-shadow: inset 0 0 0 1.5px var(--ocean); font-weight: 700; }
+.fin-date__day.is-on { background: var(--ink); color: var(--sheet); font-weight: 700; box-shadow: none; }
+.fin-date__day:disabled { color: var(--line-2, var(--line)); cursor: default; }
+.fin-date__type { display: grid; gap: 4px; }
+.fin-date__type input { min-height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--wash); color: var(--ink); font: inherit; font-size: 16px; text-align: start; }
+.fin-date__type input:focus-visible { outline: 2px solid var(--ocean); outline-offset: 1px; background: var(--sheet); }
+.fin-date__type small { color: var(--attn); font-size: var(--t-xs); }
+.fin-date__foot { display: flex; justify-content: space-between; gap: 8px; }
+@media (max-width: 560px) {
+  /* phones: the calendar rises from the bottom, full width, days big enough for a thumb */
+  .fin-date__pop { position: fixed; inset-inline: 0 !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 0; width: auto; max-width: none; border-radius: 20px 20px 0 0; padding: 18px 16px calc(18px + var(--safe-b, env(safe-area-inset-bottom))); z-index: var(--z-top); box-shadow: 0 -12px 40px rgba(7, 41, 58, 0.25); }
+  .fin-date__day { font-size: var(--t-base); }
+}
+@media (prefers-reduced-motion: reduce) { .fin-date__pop { animation: none; } .fin-date__btn { transition: none; } }
+
+/* the bar of actions on the chosen documents: a light card with a navy edge, so its buttons read like every other button.
+   What is chosen and how much it adds up to, the main action, the rest, and one clear way out. */
+.fin .fin-bulk { background: var(--sheet); color: var(--ink); border: 1px solid color-mix(in srgb, var(--ocean) 40%, var(--line)); border-inline-start: 4px solid var(--ink); border-radius: var(--r-l); padding: 10px 14px; gap: 10px; box-shadow: 0 10px 28px rgba(7, 41, 58, 0.12); }
+.fin .fin-bulk__row { gap: 8px; }
+.fin .fin-bulk__count { flex-direction: column; gap: 1px; padding: 6px 12px; margin-inline-end: 6px; border-radius: var(--r-m); background: var(--ocean-wash); color: var(--ink); font-size: var(--t-sm); }
+.fin .fin-bulk__count small { opacity: 1; color: var(--text-2); font-weight: 400; }
+.fin .fin-bulk .fin-btn { background: var(--sheet); color: var(--ink); border-color: var(--line-2, var(--line)); }
+.fin .fin-bulk .fin-btn:hover:not(:disabled) { background: var(--wash); border-color: var(--ocean); }
+.fin .fin-bulk .fin-btn--primary { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+.fin .fin-bulk .fin-btn--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 88%, var(--ocean)); }
+.fin .fin-bulk .fin-btn--ghost { border-color: transparent; color: var(--text-2); }
+.fin .fin-bulk__cancel { margin-inline-start: auto; }
+.fin .fin-bulk .fin-more .fin-icon-btn { color: var(--ink); }
+.fin .fin-bulk :is(.fin-select, .fin-sel) { background: var(--sheet); color: var(--ink); border-color: var(--line-2, var(--line)); }
+.fin .fin-bulk__assign { border-top: 1px solid var(--line); padding-top: 10px; align-items: center; }
+.fin-bulk__label { font-size: var(--t-sm); color: var(--text-2); font-weight: 700; }
+.fin[data-theme='dark'] .fin-bulk :is(.fin-btn, .fin-select, .fin-link) { color: var(--ink); border-color: var(--line-2, var(--line)); }
+.fin[data-theme='dark'] .fin-bulk .fin-btn--primary { color: var(--sheet); }
+@media (max-width: 760px) {
+  /* phones: one line that scrolls sideways, above the tab bar; the count and the main action come first */
+  .fin .fin-bulk { padding: 8px 10px; border-inline-start-width: 3px; }
+  .fin .fin-bulk__row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .fin .fin-bulk__row::-webkit-scrollbar { display: none; }
+  .fin .fin-bulk__row > * { flex: none; }
+  .fin .fin-bulk__cancel { margin-inline-start: 0; }
+  .fin .fin-bulk__count { position: sticky; inset-inline-start: 0; z-index: 1; }
+}
+
+/* the documents table: the last column (download, delete) stays in view while the table scrolls sideways, and the three
+   least needed columns give way sooner, so the delete button is always there */
+.fin-table--docs :is(th, td):last-child { position: sticky; inset-inline-end: 0; z-index: 1; background: var(--sheet); box-shadow: 10px 0 12px -12px rgba(7, 41, 58, 0.25); }
+[dir="rtl"] .fin-table--docs :is(th, td):last-child, .fin[dir="rtl"] .fin-table--docs :is(th, td):last-child { box-shadow: 10px 0 12px -12px rgba(7, 41, 58, 0.25); }
+.fin-table--docs thead th:last-child { background: var(--sheet-2); z-index: 2; }
+.fin-table--docs tbody tr:hover td:last-child { background: var(--sheet-2); }
+.fin-table--docs td:last-child .fin-icon-btn--danger { color: var(--attn); }
+@media (max-width: 1760px) { .fin-table--docs .fin-col-xl { display: none; } }
+/* the supplier's name with its history button beside it, on one line */
+.fin-table--docs .fin-peek { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+.fin-table--docs .fin-peek .fin-cell-btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-table--docs .fin-suphist { width: 26px; height: 26px; min-width: 26px; opacity: 0; transition: opacity var(--dur) var(--ease); }
+.fin-table--docs tr:hover .fin-suphist, .fin-table--docs .fin-suphist:focus-visible { opacity: 1; }
+@media (hover: none) { .fin-table--docs .fin-suphist { opacity: 1; } }
+
+/* the archive explorer: navy folders, the number of documents in each as a clear chip, files darker and easy to read */
+.fin-dtree { padding: 10px 12px; background: var(--sheet); }
+.fin-dtree__root { font-size: var(--t-base); padding: 4px 6px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.fin-dtree__root svg, .fin-dtree__dir > summary svg { color: var(--ink); fill: color-mix(in srgb, var(--ink) 88%, transparent); stroke: var(--ink); }
+.fin-dtree__dir > summary { min-height: 42px; gap: 10px; padding: 0 8px; }
+.fin-dtree__name { font-weight: 700; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-dtree__sum.is-d0 .fin-dtree__name { font-size: var(--t-base); }
+.fin-dtree__sum.is-d1 .fin-dtree__name, .fin-dtree__sum.is-d2 .fin-dtree__name, .fin-dtree__sum.is-d3 .fin-dtree__name { font-weight: 600; font-size: var(--t-md); }
+.fin-dtree__count { margin-inline-start: auto; flex: none; display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 10px; border-radius: 999px; background: var(--ocean-wash); color: var(--ink); font-size: var(--t-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+.fin-dtree__count i { font-style: normal; font-weight: 400; font-size: var(--t-xs); color: var(--text-2); }
+.fin-dtree__sum.is-d0 .fin-dtree__count { background: var(--ink); color: var(--sheet); }
+.fin-dtree__sum.is-d0 .fin-dtree__count i { color: color-mix(in srgb, var(--sheet) 78%, transparent); }
+.fin-dtree__dir[open] > summary { background: color-mix(in srgb, var(--ocean-wash) 55%, transparent); }
+.fin-dtree__in { border-inline-start: 2px solid color-mix(in srgb, var(--ink) 16%, var(--line)); margin-inline-start: 17px; padding-inline-start: 14px; padding-block: 4px; }
+.fin-dtree__file { color: var(--ink); min-height: 40px; }
+.fin-dtree__file svg { color: var(--ocean); }
+.fin-dtree__files li + li { border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+@media (max-width: 560px) {
+  .fin-dtree { padding: 8px; border-radius: var(--r-m); }
+  .fin-dtree__in { margin-inline-start: 10px; padding-inline-start: 8px; }
+  .fin-dtree__count i { display: none; }
+  .fin-dtree__file { align-items: flex-start; padding-block: 8px; }
+  .fin-dtree__file span { white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+}
+
+/* the monthly chart: every bar carries its amount above it (short: 34K); the full amount and the number of documents show
+   on the bar under the pointer */
+.fin-x-val { position: absolute; bottom: calc(100% + 3px); inset-inline-start: 50%; transform: translateX(50%); font-style: normal; font-size: var(--t-xs); font-weight: 700; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
+[dir="ltr"] .fin-x-val { transform: translateX(-50%); }
+.fin-x-trend__col.is-dim .fin-x-val { color: var(--muted); }
+.fin-x-trend__bars i.is-now { position: relative; }
+@media (max-width: 560px) {
+  /* phones: the whole range fits the card, no sideways scroll; tap a month to read it in the summary above */
+  .fin-x-scroll { overflow-x: visible; }
+  .fin-x-trend { min-width: 0; gap: 3px; height: 196px; }
+  .fin-x-trend__col { grid-template-rows: 150px auto; }
+  .fin-x-plot, .fin-x-axis { height: 150px; }
+  .fin-x-trend__col em { font-size: 0.66rem; letter-spacing: -0.02em; }
+  .fin-x-trend__col em small { font-size: 0.6rem; }
+  .fin-x-val { font-size: 0.6rem; }
+  .fin-x-trend[style*="--n: 12"] .fin-x-val, .fin-x-trend[style*="--n:12"] .fin-x-val { display: none; }
+  .fin-x-trend__col.is-on .fin-x-val { display: block !important; }
+  .fin-x-hint { display: none; }
+  .fin-x-months { padding-bottom: 12px; }
+}

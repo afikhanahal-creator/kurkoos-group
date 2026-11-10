@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ENTITIES, SUPPLIER_STATUS, toRow, validate } from './entities.js'
@@ -38,6 +39,7 @@ export function FieldInput({ f, value, onChange, refs, selfId, error }) {
       </div>
     )
   } else if (f.type === 'toggle') input = <Toggle checked={!!value} onChange={onChange} label={f.label} />
+  else if (f.type === 'date') input = <DateField id={common.id} value={value || ''} onChange={onChange} invalid={!!error} />
   else if (f.type === 'tags') input = <input {...common} value={Array.isArray(value) ? value.join(', ') : value ?? ''} onChange={(e) => onChange(e.target.value)} />
   else input = <input {...common} type={f.type === 'id' ? 'text' : f.type === 'url' ? 'text' : f.type} inputMode={f.type === 'id' ? 'numeric' : f.type === 'number' ? 'decimal' : undefined} dir={f.ltr || ['id', 'email', 'url', 'tel'].includes(f.type) ? 'ltr' : undefined} value={value ?? ''} onChange={(e) => onChange(e.target.value)} min={f.min} max={f.max} step={f.type === 'number' ? 'any' : undefined} />
   return (

@@ -37,7 +37,7 @@ function Folder({ node, depth, onPick, picked, first }) {
   return (
     // each company opens at its newest year and month; the rest stay closed until asked
     <details className="fin-dtree__dir" open={(depth === 0 || first) && node.count < 400}>
-      <summary><Icon name="folder" size={16} /> <span>{node.name}</span> <small>{n(node.count)}</small></summary>
+      <summary className={`fin-dtree__sum is-d${Math.min(depth, 3)}`}><Icon name="folder" size={depth === 0 ? 20 : 17} /> <span className="fin-dtree__name">{node.name}</span> <span className="fin-dtree__count" aria-label={`${node.count} מסמכים`}>{n(node.count)} <i>{node.count === 1 ? 'מסמך' : 'מסמכים'}</i></span></summary>
       <div className="fin-dtree__in">
         {kids.map((k, i) => <Folder key={k.name} node={k} depth={depth + 1} onPick={onPick} picked={picked} first={i === 0} />)}
         {node.files.length > 0 && (

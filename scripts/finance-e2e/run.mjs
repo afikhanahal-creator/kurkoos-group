@@ -2118,8 +2118,14 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
   const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
   const liveOf = async (id) => (await items()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
-  const pick = () => sql("select f.document_id||'|'||f.target_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.status='verified' and f.drive_file_id is not null and d.status='review' order by f.updated_at limit 1")
-  const [docA, tgt] = pick().split('|')
+  // the archive is brought in line with the stand-in Drive first (earlier scenarios empty it): missing copies are restored
+  const tgt = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  const liveIds = async () => new Set((await items()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd))
+  const verified = () => sql(`select coalesce(string_agg(f.document_id::text, ','), '') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${tgt}' and f.status='verified' and d.status='review'`).split(',').filter(Boolean)
+  let cands = []
+  for (let i = 0; i < 12 && cands.length < 2; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await api(tok, { action: 'drive-run', target_id: tgt }); const live = await liveIds(); cands = verified().filter((id) => live.has(id)) }
+  const docA = cands[0]
+  const pick = () => String(cands[1] || '')
   const beforeA = await liveOf(docA)
   const emp = await api(tokE, { action: 'drive-forget', ids: [docA] })
   const stillA = await liveOf(docA)

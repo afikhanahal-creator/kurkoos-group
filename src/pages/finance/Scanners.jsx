@@ -30,6 +30,12 @@ export default function Scanners() {
   // the connection check asks the WhatsApp provider itself: is the office phone linked, and do incoming messages reach us
   const [check, setCheck] = useState(null)
   const [checking, setChecking] = useState('')
+  // lines of the log that brought no document (failed, refused, not a file) can be cleared; a line that brought one stays
+  const clearLog = async (ids) => {
+    if (!ids.length) return
+    if (ids.length > 1 && !(await askConfirm({ title: 'ניקוי היומן', text: `למחוק מהיומן ${ids.length} הודעות שלא נקלטו? מסמכים שכבר במערכת לא מושפעים.`, ok: 'ניקוי', danger: true }))) return
+    try { const r = await api.callServer('whatsapp-inbox-delete', { ids }); setMsg(r.removed === 1 ? 'שורה אחת נמחקה מהיומן' : `${r.removed} שורות נמחקו מהיומן`); inbox.reload?.() } catch (e) { setMsg(e.message) }
+  }
   const runCheck = async () => { setChecking('check'); try { setCheck(await api.callServer('whatsapp-check')) } catch (e) { setCheck({ error: e.message, steps: [] }) } finally { setChecking('') } }
   const turnOn = async (force = false) => {
     setChecking('setup')
@@ -109,9 +115,9 @@ export default function Scanners() {
             <ul className="fin-wacheck__steps">
               {check.steps.map((st) => (
                 <li key={st.key} className={st.ok ? 'is-ok' : 'is-bad'}>
-                  <span className="fin-wacheck__mark" aria-hidden="true"><Icon name={st.ok ? 'check' : 'alert'} size={15} /></span>
+                  <span className="fin-wacheck__mark" aria-hidden="true"><Icon name={({ server: 'plug', phone: 'phone', number: 'users', webhook: 'inbox', office: 'send', forward: 'webhook', code: 'shield', senders: 'users' })[st.key] || 'check'} size={18} /></span>
                   <div><strong>{st.title}</strong><small>{st.detail}</small>{!st.ok && st.fix && <small className="fin-wacheck__fix">מה עושים: {st.fix}</small>}</div>
-                  <span className="fin-sr">{st.ok ? 'תקין' : 'דורש תיקון'}</span>
+                  <span className={`fin-pill fin-pill--${st.ok ? 'ok' : 'attn'} fin-wacheck__state`}>{st.ok ? 'תקין' : 'לטיפול'}</span>
                 </li>
               ))}
             </ul>
@@ -181,7 +187,10 @@ export default function Scanners() {
 
       {can('operate') && (inbox.data || []).length > 0 && (
         <section className="fin-panelcard" aria-label="הודעות אחרונות">
-          <header><h3>הודעות אחרונות</h3></header>
+          <header>
+            <h3>הודעות אחרונות</h3>
+            {can('manage') && inbox.data.some((r) => !r.document_id && r.outcome !== 'imported') && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={busy} onClick={() => clearLog(inbox.data.filter((r) => !r.document_id && r.outcome !== 'imported').map((r) => r.id))}><Icon name="trash" size={15} /> ניקוי הודעות שלא נקלטו</button>}
+          </header>
           <ul className="fin-wa__log">
             {inbox.data.slice(0, 20).map((r) => {
               const [tone, label] = OUTCOME[r.outcome] || ['muted', r.outcome]
@@ -190,6 +199,7 @@ export default function Scanners() {
                   <span className="fin-wa__log-main"><strong>{r.document_id ? <a className="fin-link" href={`/admin/finance/documents/${r.document_id}`}>{r.file_name || 'מסמך'}</a> : r.file_name || (r.kind === 'text' ? 'הודעת טקסט' : 'הודעה')}</strong><small><bdi dir="ltr">{pretty(r.phone || '')}</bdi> · {dateTime(r.at)}</small></span>
                   <Pill tone={tone}>{label}</Pill>
                   {r.outcome === 'refused_unknown_number' && r.phone && !phones.some((s) => s.phone === r.phone) && <button type="button" className="fin-btn fin-btn--sm" onClick={() => openAdd(r.phone)}>הוספה</button>}
+                  {can('manage') && !r.document_id && r.outcome !== 'imported' && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={busy} onClick={() => clearLog([r.id])} aria-label="מחיקת השורה מהיומן" title="מחיקה מהיומן"><Icon name="trash" size={16} /></button>}
                 </li>
               )
             })}

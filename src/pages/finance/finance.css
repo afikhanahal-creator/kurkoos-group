@@ -3384,3 +3384,20 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
 .fin-merge__card dl > div:nth-child(3) dd { font-size: var(--t-md); }
 .fin-peek__foot small { font-weight: 700; font-variant-numeric: tabular-nums; }
 .fin-panel__meta time, .fin-panel__head time { font-weight: 700; color: var(--ink); }
+
+@media (max-width: 700px) { .fin-suplink { min-width: 44px; min-height: 44px; justify-content: center; } }
+
+/* WhatsApp connection check: every step is a row with its own icon, what it found, and its state */
+.fin-wacheck__steps { display: grid; gap: 8px; border: 0; }
+.fin-wacheck__steps li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); }
+.fin-wacheck__steps li.is-bad { border-color: color-mix(in srgb, var(--attn) 35%, var(--line)); background: color-mix(in srgb, var(--attn-wash) 45%, var(--sheet)); }
+.fin-wacheck__steps .fin-wacheck__mark { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--ok-wash); color: var(--ok); }
+.fin-wacheck__steps li.is-bad .fin-wacheck__mark { background: var(--attn-wash); color: var(--attn); }
+.fin-wacheck__steps strong { display: block; font-size: var(--t-md); color: var(--ink); }
+.fin-wacheck__steps small { display: block; font-size: var(--t-sm); color: var(--text-2); line-height: 1.5; overflow-wrap: anywhere; }
+.fin-wacheck__steps .fin-wacheck__fix { color: var(--ink); font-weight: 600; margin-top: 2px; }
+.fin-wacheck__state { white-space: nowrap; }
+.fin-panelcard > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fin-wa__log li { align-items: center; }
+.fin-wa__log .fin-icon-btn--danger { color: var(--attn); }
+@media (max-width: 700px) { .fin-wacheck__steps li { grid-template-columns: 40px minmax(0, 1fr); } .fin-wacheck__state { grid-column: 2; justify-self: start; } .fin-wa__log .fin-icon-btn { width: 44px; height: 44px; } }

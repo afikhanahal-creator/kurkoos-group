@@ -18,7 +18,7 @@ const WIDTHS = [320, 375, 390, 430, 768, 1024, 1280, 1440, 1920]
 const SHOT_AT = new Set([390, 1440])
 const one = (q) => sql(q) || 'none'
 const ROUTES = [
-  ['overview', ''], ['dashboard', '/today'], ['assistant', '/assistant'], ['send', '/send'], ['connections', '/connections'], ['documents', '/documents'], ['new', '/new'], ['pending', '/pending'], ['document', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`],
+  ['overview', ''], ['dashboard', '/today'], ['assistant', '/assistant'], ['send', '/send'], ['connections', '/connections'], ['documents', '/documents'], ['receipts', '/receipts'], ['new', '/new'], ['pending', '/pending'], ['document', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`],
   ['reports', '/reports'], ['companies', '/companies'], ['company', `/companies/${one('select id from fin_businesses order by sort limit 1')}`],
   ['projects', '/projects'], ['project', `/projects/${one('select id from fin_projects order by created_at limit 1')}`], ['suppliers', '/suppliers'],
   ['supplier', `/suppliers/${one('select id from fin_suppliers order by created_at limit 1')}`], ['categories', '/categories'], ['data', '/data'],

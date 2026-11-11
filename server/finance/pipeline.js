@@ -12,6 +12,9 @@ import { expand, readable, mimeByName, ZIP, DOCX, XLSX, TIFF } from './unpack.js
 import * as gmail from './providers/gmail.js'
 import * as outlook from './providers/outlook.js'
 
+// senders that mail a receipt for a payment made to someone else
+const PAYMENT_SERVICE = /paypal|payoneer|stripe\.com|tranzila|cardcom|payplus|meshulam|grow\.(link|business)|bit\.co\.il/i
+
 export const PROVIDERS = { gmail, outlook }
 /* a reading failure in words the office can act on; the known causes come from Anthropic's API, anything else as is */
 export function explainFailure(e) {
@@ -133,6 +136,15 @@ export async function analyze(x, { selfId = null, selfCreated = null, mailbox = 
       const numbers = fields.doc_number ? `&doc_number=eq.${q(fields.doc_number)}` : ''
       const earlier = selfCreated ? `&created_at=lt.${encodeURIComponent(selfCreated)}` : ''
       possibleDuplicate = (await one(`fin_documents?${who}&total_amount=eq.${fields.total_amount}&issue_date=gte.${lo}&issue_date=lte.${hi}&status=not.in.(rejected,duplicate,archived)${not}${numbers}${earlier}&select=id&order=created_at.asc`))?.id || false
+      // signal 3: one charge, two papers. A payment service (PayPal and the like) mails its own receipt for a payment
+      // the supplier also mails a receipt for; the two carry different numbers, so signal 2 lets both in and the expense
+      // counts twice. Same supplier, same total, the same day (±1), one from a payment service and one not: suspected,
+      // for a person to decide (two real charges of the same sum on following days stay possible).
+      if (!possibleDuplicate && fields.supplier_id) {
+        const mine = PAYMENT_SERVICE.test(fromEmail || '')
+        const near = (await sb(`fin_documents?supplier_id=eq.${fields.supplier_id}&total_amount=eq.${fields.total_amount}&issue_date=gte.${lo}&issue_date=lte.${hi}&status=not.in.(rejected,duplicate,archived)${not}${earlier}&select=id,email_from&order=created_at.asc`)) || []
+        possibleDuplicate = near.find((d) => PAYMENT_SERVICE.test(d.email_from || '') !== mine && (d.email_from || fromEmail))?.id || false
+      }
     }
   }
   const flag = await automation('amount_flag')

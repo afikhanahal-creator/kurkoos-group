@@ -47,7 +47,7 @@ export function windows(from, to, monthly = false) {
 }
 
 /* a new scan of one mailbox over a period. One active scan per mailbox. */
-export async function createJob({ mailboxId, from, to, tz = 'Asia/Jerusalem', includeSent = false, user }) {
+export async function createJob({ mailboxId, from, to, tz = 'Asia/Jerusalem', includeSent = false, user, mark = null }) {
   const mb = await one(`fin_mailboxes?id=eq.${q(mailboxId)}&select=*`)
   if (!mb) throw Object.assign(new Error('התיבה לא נמצאה'), { status: 404 })
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw Object.assign(new Error('תאריכים לא תקינים'), { status: 400 })
@@ -55,7 +55,7 @@ export async function createJob({ mailboxId, from, to, tz = 'Asia/Jerusalem', in
   const start = localMidnight(from, tz)
   const endDay = new Date(Date.parse(`${to}T00:00:00Z`) + DAY).toISOString().slice(0, 10)
   const end = new Date(Math.min(localMidnight(endDay, tz).getTime(), Date.now() + 60_000))
-  const job = await insert('fin_scan_jobs', { mailbox_id: mb.id, date_from: from, date_to: to, tz, include_sent: !!includeSent, requested_by: user?.id || null })
+  const job = await insert('fin_scan_jobs', { mailbox_id: mb.id, date_from: from, date_to: to, tz, include_sent: !!includeSent, requested_by: user?.id || null, ...(mark ? { report: mark } : {}) })
   const wins = windows(start, end, end - start > 3 * 366 * DAY)
   for (let i = 0; i < wins.length; i += 200) {
     await sb('fin_scan_segments', { method: 'POST', body: wins.slice(i, i + 200).map(([a, b], k) => ({ job_id: job.id, mailbox_id: mb.id, phase: 'scan', seq: i + k, t_from: a.toISOString(), t_to: b.toISOString() })), prefer: 'return=minimal' })
@@ -116,6 +116,28 @@ async function knownOf(mailboxId, ids) {
   return known
 }
 const item = (row) => sb('fin_scan_items', { method: 'POST', body: row, prefer: 'resolution=merge-duplicates,return=minimal' })
+
+/* The night's collection, done the way a careful clerk would: once at night and once before morning, every mailbox,
+   every message of the last days, each message read once.
+   - One pass lists every message of the last `days` by date (no search words) and reads only those never read before:
+     sender rules first, then the cheap check, a full reading only for what looks like an invoice or a receipt.
+   - It goes through the scan engine, so it is checkpointed: a pass that does not fit in one run continues where it
+     stopped, and the fourth mailbox is done as fully as the first. Nothing runs when no pass is open.
+   - The morning pass is the second look: whatever arrived since, and whatever the night pass could not finish.
+   - A message that cannot be read stays on the scans screen for a person.
+   On 10.11.2026 the collection of the time (a search query) did not get an invoice that had arrived four hours
+   earlier; listing by date found it at once. */
+export async function nightlyCheck({ days = 3, pass = 1 } = {}) {
+  const mbs = (await sb('fin_mailboxes?status=eq.active&select=id,email')) || []
+  const today = new Date().toISOString().slice(0, 10)
+  const from = new Date(Date.now() - days * DAY).toISOString().slice(0, 10)
+  const out = []
+  for (const mb of mbs) {
+    if (await one(`fin_scan_jobs?mailbox_id=eq.${mb.id}&status=in.(queued,running,paused)&select=id`)) { out.push({ mailbox: mb.email, started: false, reason: 'active' }); continue }
+    try { const job = await createJob({ mailboxId: mb.id, from, to: today, mark: { single: true, night: pass } }); out.push({ mailbox: mb.email, started: true, job: job.id }) } catch (e) { out.push({ mailbox: mb.email, started: false, error: String(e.message || e).slice(0, 160) }) }
+  }
+  return out
+}
 
 /* one segment until it is finished or the time is up. Returns 'done' | 'paused' | 'time' */
 async function runSegment(seg, started, runs, cache) {
@@ -205,7 +227,8 @@ export async function finishJob(job) {
   if (!job) return
   const segs = (await sb(`fin_scan_segments?job_id=eq.${job.id}&phase=eq.${job.phase}&select=status`)) || []
   if (['running', 'queued'].includes(job.status) && segs.some((s) => !['done', 'failed'].includes(s.status))) return
-  if (job.phase === 'scan' && ['running', 'queued'].includes(job.status)) {
+  // a night pass is one pass: the second look is the morning pass, a few hours later, not an immediate repeat
+  if (job.phase === 'scan' && ['running', 'queued'].includes(job.status) && !job.report?.single) {
     // the completeness pass: a month a window, only messages with no final row are read
     const start = localMidnight(job.date_from, job.tz)
     const end = new Date(Math.min(localMidnight(new Date(Date.parse(`${job.date_to}T00:00:00Z`) + DAY).toISOString().slice(0, 10), job.tz).getTime(), Date.now()))
@@ -214,7 +237,7 @@ export async function finishJob(job) {
     await patch(`fin_scan_jobs?id=eq.${job.id}`, { phase: 'verify' })
     return
   }
-  const report = await buildReport(job)
+  const report = { ...(await buildReport(job)), ...(job.report?.single ? { single: true, night: job.report.night || 1 } : {}) }
   const complete = report.failed === 0 && report.unreadable === 0 && report.failed_segments === 0
   await patch(`fin_scan_jobs?id=eq.${job.id}`, { status: complete ? 'done' : 'incomplete', finished_at: job.finished_at || new Date().toISOString(), report })
   // the mailbox's period now starts at the scanned period, when that is earlier (the regular sync goes on from its last run)
@@ -287,8 +310,20 @@ export async function overview() {
   const boxes = (await sb('fin_mailboxes?status=neq.revoked&select=id,email,provider,status,business_id,last_scan_at,last_error,sync_from&order=created_at')) || []
   const out = []
   for (const mb of boxes) {
-    const jobs = (await sb(`fin_scan_jobs?mailbox_id=eq.${mb.id}&select=*&order=created_at.desc&limit=5`)) || []
-    const job = jobs[0] || null
+    const recent = (await sb(`fin_scan_jobs?mailbox_id=eq.${mb.id}&select=*&order=created_at.desc&limit=40`)) || []
+    // the screen's headline is the history scan (or whatever is running now); the short night checks are shown beside it
+    const span = (j) => Date.parse(j.date_to) - Date.parse(j.date_from)
+    const short = (j) => span(j) <= 7 * DAY
+    const running = recent.find((j) => ['queued', 'running', 'paused'].includes(j.status))
+    const job = (running && !short(running) ? running : recent.find((j) => !short(j))) || running || recent[0] || null
+    const jobs = [job, ...recent.filter((j) => j !== job && !short(j))].filter(Boolean).slice(0, 5)
+    const lastCheck = recent.find((j) => short(j) && j !== job) || null
+    let check = null
+    if (lastCheck) {
+      const cs = (await sb(`fin_scan_segments?job_id=eq.${lastCheck.id}&select=phase,listed,kept,missed,failed,unreadable`)) || []
+      const tot = (k, ph) => cs.filter((x) => !ph || x.phase === ph).reduce((a, x) => a + (x[k] || 0), 0)
+      check = { id: lastCheck.id, pass: lastCheck.report?.night || 1, status: lastCheck.status, at: lastCheck.finished_at || lastCheck.started_at || lastCheck.created_at, from: lastCheck.date_from, to: lastCheck.date_to, listed: tot('listed', 'scan'), kept: tot('kept'), missed: tot('missed', 'verify'), open: tot('failed') + tot('unreadable') }
+    }
     let progress = null
     if (job) {
       const segs = (await sb(`fin_scan_segments?job_id=eq.${job.id}&select=phase,status,listed,processed,failed,unreadable,kept,skipped,missed,already,t_from,t_to`)) || []
@@ -298,7 +333,7 @@ export async function overview() {
       progress = { phase: job.phase, segments: cur.length, closed, pct: job.status === 'done' ? 100 : Math.round(((job.phase === 'verify' ? 0.9 : 0) + (cur.length ? closed / cur.length : 0) * (job.phase === 'verify' ? 0.1 : 0.9)) * 100), listed: sum('listed'), checked: sum('processed') + sum('already'), kept: sum('kept'), skipped: sum('skipped'), failed: sum('failed'), unreadable: sum('unreadable') }
     }
     const problems = (await sb(`fin_scan_items?mailbox_id=eq.${mb.id}&status=in.(failed,unreadable)&select=message_id,status,attempts,error,subject,email_from,email_date&order=at.desc&limit=50`)) || []
-    out.push({ mailbox: mb, job, jobs, progress, problems })
+    out.push({ mailbox: mb, job, jobs, progress, problems, check })
   }
   return out
 }

@@ -17,7 +17,7 @@ const ACT = {
   scan_started: 'סריקת תיבה התחילה', scan_done: 'סריקת תיבה הסתיימה', scan_incomplete: 'סריקה הסתיימה עם פריטים פתוחים', scan_item_accepted: 'פריט מסריקה אושר',
   scan_pause: 'סריקה הושהתה', scan_resume: 'סריקה חודשה', scan_cancel: 'סריקה בוטלה', scan_rescan: 'סריקה חוזרת', scan_retry: 'ניסיון חוזר בסריקה',
   archive_excluded: 'הוצא מארכיון ה-Drive', archive_included: 'הוחזר לארכיון ה-Drive', archive_renamed: 'שם הקובץ ב-Drive שונה', archive_settings: 'הגדרות הארכיון נשמרו',
-  not_relevant: 'סומן כלא רלוונטי', uploaded: 'קובץ הועלה', corrected: 'תוקן',
+  merged_documents: 'מסמכים מוזגו', not_relevant: 'סומן כלא רלוונטי', uploaded: 'קובץ הועלה', corrected: 'תוקן',
   shared_whatsapp: 'נשלח בוואטסאפ', duplicate_confirmed: 'כפילות אושרה', duplicate_dismissed: 'כפילות נדחתה', attachment_added: 'נוסף נספח', attachment_removed: 'הוסר נספח',
 }
 const OTHER_AGENTS = { cloud: 'סוכן הענן', outbound: 'שליחה אוטומטית' }

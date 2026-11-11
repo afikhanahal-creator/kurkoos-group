@@ -27,15 +27,14 @@ export async function exchange(code, redirectUri) {
 export const refresh = (refreshToken) => token({ grant_type: 'refresh_token', refresh_token: refreshToken })
 export async function revoke() { /* Microsoft has no token revoke endpoint for this flow; the secret row is deleted */ }
 
-const WORDS = /חשבונית|קבלה|חשבון עסקה|זיכוי|invoice|receipt|billing|payment|statement|סה"?״?כ לתשלום|total due|amount paid/i
 
-// every message since the date that has an attachment or invoice words (all folders, archive included)
-export async function listCandidates(accessToken, since, _extra, { until, max = 500 } = {}) {
+// every message since the date (all folders, archive included)
+export async function listCandidates(accessToken, since, _extra, { until, max = 3000 } = {}) {
   const ids = []
   let url = `/messages?$filter=${encodeURIComponent(`receivedDateTime ge ${since.toISOString()}${until ? ` and receivedDateTime lt ${until.toISOString()}` : ''}`)}&$select=id,subject,hasAttachments,bodyPreview&$orderby=receivedDateTime desc&$top=50`
   while (url && ids.length < max) {
     const page = await api(accessToken, url)
-    for (const m of page.value || []) if (m.hasAttachments || WORDS.test(`${m.subject} ${m.bodyPreview}`)) ids.push(m.id)
+    for (const m of page.value || []) ids.push(m.id)   // every message: what is financial is decided after listing, as in the history scan
     url = page['@odata.nextLink'] || ''
   }
   return ids

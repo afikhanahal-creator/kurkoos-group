@@ -33,12 +33,13 @@ async function api(accessToken, path) {
   return json(await fetchRetry(`${env.gmailApi()}/${path}`, { headers: { Authorization: `Bearer ${accessToken}` } }), 'gmail')
 }
 
-// The words an invoice email carries, plus any email with a document attached (PDF, image, TIFF, ZIP, Word, Excel): Claude decides what is
-// financial, so an invoice whose subject says nothing ("Your October statement", "מסמך מצורף") is still found.
-// Gmail search covers the inbox, labels and archived mail (not spam or trash).
-const BASE = '(subject:(חשבונית OR קבלה OR "חשבון עסקה" OR זיכוי OR invoice OR receipt OR "tax invoice" OR billing OR payment OR statement) OR filename:(חשבונית OR קבלה OR invoice OR receipt) OR "סה״כ לתשלום" OR "total due" OR "amount paid" OR (has:attachment filename:(pdf OR jpg OR jpeg OR png OR tif OR tiff OR zip OR docx OR xlsx))) -in:sent -in:chats -in:drafts'
+// Every message since the date, like the history scan (not spam, trash, drafts, chats or sent mail). The daily collection
+// used to search for invoice words or an attachment with a known ending; an invoice whose subject says nothing of the
+// kind ("פרסום באתר Yad2") and whose file has no such ending was read by the year scan and missed by the daily one.
+// What is financial is decided after listing: the sender rules and the cheap check first, a full reading only if needed.
+const BASE = '-in:spam -in:trash -in:sent -in:chats -in:drafts'
 
-export async function listCandidates(accessToken, since, extra, { until, max = 500 } = {}) {
+export async function listCandidates(accessToken, since, extra, { until, max = 3000 } = {}) {   // every message is listed now, so a busy week is far more than the old 500
   const q = `${BASE} after:${Math.floor(since.getTime() / 1000)}${until ? ` before:${Math.floor(until.getTime() / 1000)}` : ''}${extra ? ` ${extra}` : ''}`
   const ids = []
   let page = ''

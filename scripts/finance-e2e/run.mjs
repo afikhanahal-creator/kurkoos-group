@@ -1930,6 +1930,80 @@ await page.getByRole('button', { name: 'מצב כהה' }).click(); await page.wa
 await shot('27-dark')
 await page.getByRole('button', { name: 'מצב בהיר' }).click()
 
+// NIGHT: the night's collection, once at night and once before morning. Every active mailbox gets one pass over its
+// last three days through the scan engine (no second pass of its own); a message that was never read is found and
+// read; the morning pass is the second look; the history scan stays the headline of the scans screen.
+{
+  // fresh tokens: the ones from the start of the run expired an hour in
+  const tokA = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const inv = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
+  sql("update fin_scan_jobs set status='cancelled' where status in ('queued','running','paused')")
+  // a message of the last days that the daily collection is taken to have missed: no trace of it anywhere
+  const lost = sql(`select message_id from fin_scan_items where mailbox_id='${inv}' and status='done' and email_date > now() - interval '3 days' order by email_date desc limit 1`)
+  if (lost) { sql(`delete from fin_scan_items where mailbox_id='${inv}' and message_id='${lost}'`); sql(`delete from fin_mail_seen where mailbox_id='${inv}' and message_id='${lost}'`) }
+  const n1 = await api(tokA, { action: 'scan-night-check' })
+  const started = (n1.data.results || []).filter((r) => r.started).length
+  const active = sql("select count(*) from fin_mailboxes where status='active'")
+  const range = sql(`select (date_to - date_from)::text from fin_scan_jobs where mailbox_id='${inv}' order by created_at desc limit 1`)
+  const n2 = await api(tokA, { action: 'scan-night-check' })
+  const again = (n2.data.results || []).every((r) => r.started === false)
+  for (let i = 0; i < 40; i++) { const r = await api(tokA, { action: 'scan-run', max_segments: 6 }); if (!r.data?.more) break; if (!(r.data?.segments || []).length) sql("update fin_scan_segments set next_try_at = now() where status = 'retry'") }
+  const jobEnd = sql(`select status from fin_scan_jobs where mailbox_id='${inv}' order by created_at desc limit 1`)
+  const back = lost ? sql(`select count(*) from fin_scan_items where mailbox_id='${inv}' and message_id='${lost}'`) : 'no-recent-message'
+  const ov = (await api(tokA, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
+  const headDays = ov.job ? Math.round((Date.parse(ov.job.date_to) - Date.parse(ov.job.date_from)) / 86400000) : -1
+  const phases = sql(`select string_agg(distinct phase, ',') from fin_scan_segments where job_id=(select id from fin_scan_jobs where mailbox_id='${inv}' order by created_at desc limit 1)`)
+  const m1 = await api(tokA, { action: 'scan-night-check', pass: 2 })
+  for (let i = 0; i < 40; i++) { const r = await api(tokA, { action: 'scan-run', max_segments: 6 }); if (!r.data?.more) break }
+  const ov2 = (await api(tokA, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
+  const empNight = await api(tokE, { action: 'scan-night-check' })
+  record('NIGHT', 'בדיקת השלמות הלילית דרך מנוע הסריקה', 'לכל תיבה פעילה נפתח מעבר אחד על שלושת הימים האחרונים (בלי מעבר שני משלו); הפעלה שנייה באמצע לא פותחת כפולה; הודעה שלא נקראה אף פעם נמצאת ונקראת; מעבר הבוקר הוא המבט השני; במסך הסריקות הכותרת נשארת סריקת ההיסטוריה; עובד לא מפעיל',
+    `נפתחו: ${started} מתוך ${active} תיבות, טווח ${range} ימים; שנייה: ${again ? 'לא נפתחה' : 'נפתחה'}; סוף: ${jobEnd}; ההודעה שנמחקה חזרה: ${back}; כותרת המסך: סריקה של ${headDays} ימים; שלבים: ${phases}; מעבר לילה: ${JSON.stringify(ov.check || null).slice(0, 120)}; מעבר בוקר: נפתח ${(m1.data.results || []).filter((r) => r.started).length}, pass ${ov2.check?.pass}; עובד: ${empNight.status}`,
+    started === Number(active) && started > 0 && range === '3' && again && ['done', 'incomplete'].includes(jobEnd) && (back === '1' || back === 'no-recent-message') && headDays > 7 && !!ov.check && ov.check.pass === 1 && phases === 'scan' && ov2.check?.pass === 2 && empNight.status === 403)
+}
+
+// MERGE: two documents are merged by a person. The dialog opens from two checked rows; keeping one closes the other as
+// its duplicate and moves a missing detail over; an approved document is never the one that is closed; an employee cannot.
+{
+  const tokA = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  await go('/documents')
+  const boxes = page.locator('.fin-table tbody tr input[type=checkbox]')
+  await boxes.nth(0).check(); await boxes.nth(1).check(); await page.waitForTimeout(300)
+  await page.locator('.fin-bulk').getByRole('button', { name: 'מיזוג' }).click(); await page.waitForSelector('.fin-merge__card', { timeout: 10000 }).catch(() => {})
+  const cards = await page.locator('.fin-merge__card').count()
+  const diffs = await page.locator('.fin-merge__card .is-diff').count()
+  const mergeShot = await shot('121-merge-dialog')
+  await page.locator('.fin-modal__foot').getByRole('button', { name: 'סגירה' }).click(); await page.waitForTimeout(300)
+  await page.locator('.fin-bulk').getByRole('button', { name: 'ביטול' }).click().catch(() => {})
+  const [keepId, dropId] = sql("select string_agg(id::text, ',') from (select id from fin_documents where status='review' and project_id is null order by created_at desc limit 2) x").split(',')
+  const projId = sql('select id from fin_projects order by created_at limit 1')
+  sql(`update fin_documents set project_id='${projId}', business_id=(select business_id from fin_projects where id='${projId}') where id='${dropId}'`)
+  const approvedId = sql("select id from fin_documents where status in ('approved','sent') limit 1")
+  const emp = await api(tokE, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
+  const same = await api(tokA, { action: 'merge-docs', keep_id: keepId, drop_id: keepId })
+  const lockedDrop = approvedId ? await api(tokA, { action: 'merge-docs', keep_id: keepId, drop_id: approvedId }) : { status: 409 }
+  const done = await api(tokA, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
+  const after = sql(`select (select status||'|'||duplicate_state||'|'||(duplicate_of='${keepId}') from fin_documents where id='${dropId}')||' ; '||(select status||'|'||(project_id='${projId}') from fin_documents where id='${keepId}')`)
+  const logged = sql(`select count(*) from fin_audit where action='merged_documents' and entity_id='${keepId}'`)
+  record('MERGE', 'מיזוג שני מסמכים', 'שני מסמכים מסומנים פותחים חלון השוואה עם סימון ההבדלים; "להשאיר" סוגר את השני ככפול ומעביר פרט חסר (פרויקט) למסמך שנשאר; מסמך מאושר לא נסגר; אותו מסמך פעמיים נדחה; עובד לא ממזג; נרשם ביומן',
+    `חלון: ${cards} מסמכים, ${diffs} הבדלים; עובד: ${emp.status}; אותו מסמך: ${same.status}; מאושר: ${lockedDrop.status}; מיזוג: ${done.status}, הועבר ${JSON.stringify(done.data.filled)}; אחרי: ${after}; יומן: ${logged}`,
+    cards === 2 && diffs > 0 && emp.status === 403 && same.status === 400 && lockedDrop.status === 409 && done.status === 200 && (done.data.filled || []).includes('project_id') && after === 'duplicate|confirmed|true ; review|true' && logged === '1', [mergeShot])
+}
+
+// PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the
+// system is a suspected duplicate; the supplier's own second receipt with another number is a separate purchase.
+{
+  process.env.SUPABASE_URL = SB; process.env.SUPABASE_SERVICE_ROLE_KEY = SERVICE
+  const plx = await import('../../server/finance/pipeline.js')
+  const base = JSON.parse(sql("select row_to_json(d) from (select id, extraction, supplier_name, supplier_vat_id, doc_type, issue_date, total_amount, amount_before_vat, vat_amount, currency, email_from from fin_documents where source='gmail' and supplier_id is not null and supplier_vat_id is not null and issue_date is not null and total_amount > 0 and status='review' and coalesce(email_from,'') !~* 'paypal' order by created_at limit 1) d") || 'null')
+  const x = { ...(base?.extraction || {}), supplier_name: base?.supplier_name, supplier_vat_id: base?.supplier_vat_id, doc_type: 'receipt', doc_number: 'PP-7H4063P0605481J', issue_date: base?.issue_date, total_amount: Number(base?.total_amount), amount_before_vat: Number(base?.amount_before_vat), vat_amount: Number(base?.vat_amount), currency: base?.currency || 'ILS' }
+  const viaService = base ? await plx.analyze(x, { fromEmail: 'PayPal <service@paypal.co.il>', subject: 'הקבלה שלך עבור התשלום' }) : {}
+  const viaSupplier = base ? await plx.analyze(x, { fromEmail: base.email_from || 'billing@supplier.test', subject: 'קבלה' }) : {}
+  record('PAYDUP', 'אותו חיוב בשתי קבלות (שירות תשלומים וספק)', 'קבלה של שירות תשלומים על סכום ותאריך שכבר יש עליהם קבלה מהספק מסומנת "חשד לכפילות" ומקושרת למקור; קבלה נוספת מהספק עצמו עם מספר אחר היא רכישה נפרדת',
+    `בסיס: ${base?.supplier_name} ${base?.total_amount} ${base?.issue_date}; דרך שירות תשלומים: ${viaService.duplicate_state}/${viaService.duplicate_of === base?.id}; מהספק: ${viaSupplier.duplicate_state}`,
+    !!base && viaService.duplicate_state === 'suspected' && viaService.duplicate_of === base.id && viaSupplier.duplicate_state == null)
+}
+
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)
 fs.writeFileSync(`${OUT}/results.json`, JSON.stringify({ at: new Date().toISOString(), results, extra: { companiesShot, projectsShot, agentsShot, autoShot, dataShot, settingsShot } }, null, 1))
 console.log(`\n${results.filter((r) => r.pass).length}/${results.length} passed`)

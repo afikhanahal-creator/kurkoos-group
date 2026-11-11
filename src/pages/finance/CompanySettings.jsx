@@ -50,6 +50,13 @@ export const CompanyMark = ({ b, size = 36 }) => {
   return logo ? <img className="fin-cset__logo-img" src={logo} alt="" width={size} height={size} style={{ width: size, height: size }} /> : <span className="fin-cset__mark" aria-hidden="true" style={{ width: size, height: size }}>{String(b?.name || '?').trim().slice(0, 1)}</span>
 }
 
+/* how full a company's profile is, the same nine details the checklist on its page lists */
+export const profilePct = (b) => {
+  const r = reportOf(b)
+  const items = [b?.name, b?.vat_id, b?.reg_number, b?.address, b?.accountant_name, b?.accountant_email, r.logo, b?.phone, b?.email]
+  return Math.round((items.filter(Boolean).length / items.length) * 100)
+}
+
 function Row({ label, hint, children, wide }) {
   return <label className={`fin-cset__field ${wide ? 'is-wide' : ''}`}><span className="fin-cset__label">{label}</span>{children}{hint && <small className="fin-cset__hint">{hint}</small>}</label>
 }
@@ -65,6 +72,19 @@ export default function CompanySettings() {
   const [form, setForm] = useState(null)
   const [msg, setMsg] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
   const phones = useAsync(() => api.loadWhatsappSenders(), [])
+  const hints = useAsync(() => api.loadCompanyHints(company?.id), [company?.id])
+  // the value most invoices agree on for each detail (at least two invoices, and a clear lead), offered when it differs
+  // from what is saved: the profile fills itself from the paperwork instead of from memory
+  const learned = useMemo(() => {
+    const top = (vals, norm = (v) => v) => {
+      const m = new Map()
+      for (const v of vals) { const k = norm(String(v || '').trim()); if (k) m.set(k, (m.get(k) || 0) + 1) }
+      const [best, second] = [...m.entries()].sort((a, b) => b[1] - a[1])
+      return best && best[1] >= 2 && (!second || best[1] >= second[1] * 2) ? { value: best[0], count: best[1] } : null
+    }
+    const rows = hints.data || []
+    return { vat: top(rows.map((r) => r.vat), (v) => { const d = v.replace(/\D/g, ''); return d.length === 9 ? d : '' }), address: top(rows.map((r) => r.address)), name: top(rows.map((r) => r.name)), total: rows.length }
+  }, [hints.data])
   useEffect(() => { if (company) setForm({ ...company, rs: reportOf(company) }); setMsg(''); setErr('') }, [company?.id, id === 'new']) // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = useMemo(() => form && company && JSON.stringify({ ...form, rs: undefined }) !== JSON.stringify({ ...company, rs: undefined }) || (form && company && JSON.stringify(form.rs) !== JSON.stringify(reportOf(company))), [form, company])
   if (!businesses.length && id !== 'new') return <Empty title="עוד אין חברות" icon="company" action={admin && <button type="button" className="fin-btn fin-btn--primary" onClick={() => setId('new')}>הוספת חברה</button>}>מוסיפים את החברות של הקבוצה במסך "חברות", ואז מגדירים כאן איך כל אחת מדווחת.</Empty>
@@ -101,7 +121,7 @@ export default function CompanySettings() {
       <div className="fin-cset__pick" role="tablist" aria-label="חברה">
         {businesses.map((b) => (
           <button key={b.id} type="button" role="tab" aria-selected={b.id === company.id} className={b.id === company.id ? 'is-on' : ''} onClick={async () => { if (dirty && !(await askConfirm({ text: 'יש שינויים שלא נשמרו. לעבור לחברה אחרת בלי לשמור?', ok: 'מעבר בלי לשמור', danger: true }))) return; setId(b.id) }}>
-            <CompanyMark b={b} />
+            <span className="fin-cset__ring" style={{ '--p': profilePct(b) }} title={`הפרופיל מלא ב-${profilePct(b)}%`}><CompanyMark b={b} /></span>
             <span><strong>{b.name}</strong><small>{b.active === false ? 'מושבתת' : `${ENTITY[reportOf(b).entity_type]} · מע״מ ${VAT_PERIOD[reportOf(b).vat_period]}`}</small></span>
           </button>
         ))}
@@ -125,6 +145,28 @@ export default function CompanySettings() {
             return (
               <div className="fin-cprof">
                 <div className="fin-cprof__main">
+                  {admin && form.id && (() => {
+                    const offers = [
+                      learned.vat && digits(form.vat_id) !== learned.vat.value && idOk(learned.vat.value) && ['מספר עוסק (ע.מ)', learned.vat.value, learned.vat.count, () => setForm((f) => ({ ...f, vat_id: learned.vat.value, reg_number: f.reg_number || (r.entity_type === 'company' ? learned.vat.value : f.reg_number) })), true],
+                      learned.address && !form.address?.trim() && ['כתובת', learned.address.value, learned.address.count, () => setForm((f) => ({ ...f, address: learned.address.value }))],
+                      learned.name && !form.commercial_name?.trim() && learned.name.value !== (form.name || '').trim() && ['שם כפי שמופיע בחשבוניות', learned.name.value, learned.name.count, () => setForm((f) => ({ ...f, commercial_name: learned.name.value }))],
+                    ].filter(Boolean)
+                    if (!offers.length) return null
+                    return (
+                      <section className="fin-cprof__learn" aria-label="הצעות מתוך החשבוניות">
+                        <h4><Icon name="sparkle" size={16} /> מצאנו בחשבוניות של החברה</h4>
+                        <p className="fin-muted fin-small">הפרטים האלה מודפסים על חשבוניות שמשויכות לחברה. לחיצה ממלאת את השדה; השינוי נשמר רק כשלוחצים "שמירת השינויים".</p>
+                        <ul>
+                          {offers.map(([label, value, count, apply, ltr]) => (
+                            <li key={label}>
+                              <div><span>{label}</span><strong dir={ltr ? 'ltr' : 'auto'}>{value}</strong><small>ב-{count} חשבוניות</small></div>
+                              <button type="button" className="fin-btn fin-btn--sm" onClick={apply}>שימוש</button>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )
+                  })()}
                   <section className="fin-cprof__sec" aria-label="זהות החברה">
                     <h4>זהות החברה</h4>
                     <div className="fin-cprof__logo">
@@ -133,7 +175,7 @@ export default function CompanySettings() {
                         <strong>לוגו</strong>
                         <small>PNG, SVG או JPG. מופיע בבחירת החברה, בסקירה ובכרטיס החברה.</small>
                         <span className="fin-cprof__logo-acts">
-                          <label className="fin-btn fin-btn--sm">{r.logo ? 'החלפה' : 'העלאת לוגו'}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={(e) => { pickLogo(e.target.files?.[0]); e.target.value = '' }} /></label>
+                          <label className="fin-btn fin-btn--sm" data-pf="logo" tabIndex={0}>{r.logo ? 'החלפה' : 'העלאת לוגו'}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={(e) => { pickLogo(e.target.files?.[0]); e.target.value = '' }} /></label>
                           {r.logo && <button type="button" className="fin-link" onClick={() => setForm((f) => ({ ...f, rs: { ...f.rs, logo: '' } }))}>הסרה</button>}
                         </span>
                       </div>
@@ -141,7 +183,7 @@ export default function CompanySettings() {
                     <div className="fin-cset__grid">
                       <Row label="סוג התאגיד"><Select value={r.entity_type} onChange={setR('entity_type')}>{Object.entries(ENTITY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Row>
                       <Row label="תאריך התאגדות"><DateField value={r.incorporated_on || ''} onChange={(v) => setR('incorporated_on')({ target: { value: v } })} max={new Date().toISOString().slice(0, 10)} /></Row>
-                      <Row label="השם הרשום" hint={nameWarn || 'כפי שמופיע בתעודת ההתאגדות וברשם החברות'} wide><input value={form.name || ''} onChange={set('name')} required placeholder={isCo ? 'למשל: ראיתה חברה לבניין בע״מ' : ''} /></Row>
+                      <Row label="השם הרשום" hint={nameWarn || 'כפי שמופיע בתעודת ההתאגדות וברשם החברות'} wide><input data-pf="name" value={form.name || ''} onChange={set('name')} required placeholder={isCo ? 'למשל: ראיתה חברה לבניין בע״מ' : ''} /></Row>
                       <Row label="שם מסחרי" hint="אם החשבוניות מגיעות על שם אחר"><input value={form.commercial_name || ''} onChange={set('commercial_name')} /></Row>
                       <Row label="שם באנגלית" hint="לחשבוניות מספקים מחו״ל"><input dir="ltr" value={form.name_en || ''} onChange={set('name_en')} placeholder="Company Ltd." /></Row>
                     </div>
@@ -150,9 +192,9 @@ export default function CompanySettings() {
                     <h4>מספרים רשמיים</h4>
                     <div className="fin-cset__grid">
                       <Row label={r.entity_type === 'licensed' || r.entity_type === 'exempt' ? 'מספר זהות' : 'מספר חברה (ח.פ)'} hint={!idOk(form.reg_number) ? 'המספר לא תקין: 9 ספרות עם ספרת ביקורת' : prefixNote(r.entity_type, form.reg_number) || 'ברשם החברות / ברשם השותפויות / ברשם העמותות'}>
-                        <input value={form.reg_number || ''} onChange={set('reg_number')} inputMode="numeric" dir="ltr" maxLength={11} aria-invalid={!idOk(form.reg_number)} /></Row>
+                        <input data-pf="reg" value={form.reg_number || ''} onChange={set('reg_number')} inputMode="numeric" dir="ltr" maxLength={11} aria-invalid={!idOk(form.reg_number)} /></Row>
                       <Row label="מספר עוסק במע״מ (ע.מ)" hint={!idOk(form.vat_id) ? 'המספר לא תקין' : 'הסימן החזק ביותר לשיוך חשבונית לחברה. בחברה זהה בדרך כלל לח.פ'}>
-                        <span className="fin-cprof__inline"><input value={form.vat_id || ''} onChange={set('vat_id')} inputMode="numeric" dir="ltr" maxLength={11} aria-invalid={!idOk(form.vat_id)} />{form.reg_number && digits(form.reg_number) !== digits(form.vat_id) && <button type="button" className="fin-btn fin-btn--sm" onClick={() => setForm((f) => ({ ...f, vat_id: digits(f.reg_number) }))}>זהה לח.פ</button>}</span></Row>
+                        <span className="fin-cprof__inline"><input data-pf="vat" value={form.vat_id || ''} onChange={set('vat_id')} inputMode="numeric" dir="ltr" maxLength={11} aria-invalid={!idOk(form.vat_id)} />{form.reg_number && digits(form.reg_number) !== digits(form.vat_id) && <button type="button" className="fin-btn fin-btn--sm" onClick={() => setForm((f) => ({ ...f, vat_id: digits(f.reg_number) }))}>זהה לח.פ</button>}</span></Row>
                       <Row label="תיק ניכויים" hint="9 ספרות. לדיווחי 102 ו-856 על משכורות ותשלומים לספקים"><input value={r.deductions_file || ''} onChange={setR('deductions_file')} inputMode="numeric" dir="ltr" maxLength={11} /></Row>
                       <Row label="סוג דיווח מע״מ" hint="נקבע בלשונית 'דיווח ומע״מ'"><input value={r.entity_type === 'exempt' ? 'פטור' : VAT_PERIOD[r.vat_period]} readOnly tabIndex={-1} /></Row>
                     </div>
@@ -160,10 +202,10 @@ export default function CompanySettings() {
                   <section className="fin-cprof__sec" aria-label="כתובת ופרטי קשר">
                     <h4>כתובת ופרטי קשר</h4>
                     <div className="fin-cset__grid">
-                      <Row label="כתובת רשומה" hint="רחוב, מספר ועיר. גם הכתובת שעל החשבונית עוזרת לשיוך" wide><input value={form.address || ''} onChange={set('address')} placeholder="למשל: הברזל 30, תל אביב" /></Row>
+                      <Row label="כתובת רשומה" hint="רחוב, מספר ועיר. גם הכתובת שעל החשבונית עוזרת לשיוך" wide><input data-pf="address" value={form.address || ''} onChange={set('address')} placeholder="למשל: הברזל 30, תל אביב" /></Row>
                       <Row label="מיקוד"><input value={r.zip || ''} onChange={setR('zip')} inputMode="numeric" dir="ltr" maxLength={7} /></Row>
-                      <Row label="טלפון"><input type="tel" inputMode="tel" dir="ltr" value={form.phone || ''} onChange={set('phone')} /></Row>
-                      <Row label="מייל החברה"><input type="email" dir="ltr" value={form.email || ''} onChange={set('email')} /></Row>
+                      <Row label="טלפון"><input data-pf="phone" type="tel" inputMode="tel" dir="ltr" value={form.phone || ''} onChange={set('phone')} /></Row>
+                      <Row label="מייל החברה"><input data-pf="email" type="email" dir="ltr" value={form.email || ''} onChange={set('email')} /></Row>
                       <Row label="אתר"><input type="url" dir="ltr" value={r.website || ''} onChange={setR('website')} placeholder="https://" /></Row>
                     </div>
                   </section>
@@ -182,15 +224,27 @@ export default function CompanySettings() {
                     {(form.phone || form.email) && <div><dt>קשר</dt><dd dir="ltr">{[form.phone, form.email].filter(Boolean).join(' · ')}</dd></div>}
                   </dl>
                   {(() => {
-                    // how full the profile is: every detail that helps documents find their company and reports come out right
-                    const items = [['שם רשום', !!form.name], ['לוגו', !!r.logo], ['מספר עוסק (ע.מ)', !!form.vat_id], ['מספר חברה (ח.פ)', !!form.reg_number], ['כתובת', !!form.address], ['טלפון', !!form.phone], ['מייל', !!form.email], ['תאריך התאגדות', !!r.incorporated_on], ['מייל רואה החשבון', !!form.accountant_email]]
+                    // What is still missing, by what it is needed for. Each line is a button that takes you to the field.
+                    const jump = (t, sel) => { setTab(t); setTimeout(() => { const el = document.querySelector(sel); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }) } }, 60) }
+                    const groups = [
+                      ['שחשבוניות ימצאו את החברה', [['שם רשום', !!form.name, 'details', '[data-pf="name"]'], ['מספר עוסק (ע.מ)', !!form.vat_id, 'details', '[data-pf="vat"]'], ['מספר חברה (ח.פ)', !!form.reg_number, 'details', '[data-pf="reg"]'], ['כתובת', !!form.address, 'details', '[data-pf="address"]']]],
+                      ['שהמסמכים יגיעו לרואה החשבון', [['שם רואה החשבון', !!form.accountant_name, 'accountant', '[data-pf="acc-name"]'], ['מייל רואה החשבון', !!form.accountant_email, 'accountant', '[data-pf="acc-email"]']]],
+                      ['שהחברה תיראה כמו שצריך', [['לוגו', !!r.logo, 'details', '[data-pf="logo"]'], ['טלפון', !!form.phone, 'details', '[data-pf="phone"]'], ['מייל החברה', !!form.email, 'details', '[data-pf="email"]']]],
+                    ]
+                    const items = groups.flatMap(([, list]) => list)
                     const done = items.filter(([, ok]) => ok).length; const pct = Math.round((done / items.length) * 100)
-                    const missing = items.filter(([, ok]) => !ok).map(([k]) => k)
+                    const next = items.find(([, ok]) => !ok)
                     return (
                       <div className="fin-cprof__meter" role="group" aria-label={`הפרופיל מלא ב-${pct}%`}>
                         <div className="fin-cprof__meter-top"><strong>{pct === 100 ? 'הפרופיל מלא' : `הפרופיל מלא ב-${pct}%`}</strong><small>{done} מתוך {items.length}</small></div>
                         <div className="fin-cprof__meter-bar" aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-                        {missing.length > 0 && <p className="fin-cprof__meter-miss">עוד חסר: {missing.join(' · ')}</p>}
+                        {next && admin && <button type="button" className="fin-btn fin-btn--sm fin-cprof__next" onClick={() => jump(next[2], next[3])}>הצעד הבא: {next[0]} <Icon name="next" size={14} /></button>}
+                        {groups.filter(([, list]) => list.some(([, ok]) => !ok)).map(([why, list]) => (
+                          <div key={why} className="fin-cprof__todo">
+                            <span>כדי {why}</span>
+                            <ul>{list.filter(([, ok]) => !ok).map(([k, , t, sel]) => <li key={k}><button type="button" className="fin-link" onClick={() => jump(t, sel)}>{k}</button></li>)}</ul>
+                          </div>
+                        ))}
                       </div>
                     )
                   })()}
@@ -214,8 +268,8 @@ export default function CompanySettings() {
           )}
           {tab === 'accountant' && (
             <div className="fin-cset__grid">
-              <Row label="שם רואה החשבון"><input value={form.accountant_name || ''} onChange={set('accountant_name')} /></Row>
-              <Row label="מייל רואה החשבון" hint="אליו נשלחים המסמכים והדוח החודשי של החברה"><input type="email" dir="ltr" value={form.accountant_email || ''} onChange={set('accountant_email')} /></Row>
+              <Row label="שם רואה החשבון"><input data-pf="acc-name" value={form.accountant_name || ''} onChange={set('accountant_name')} /></Row>
+              <Row label="מייל רואה החשבון" hint="אליו נשלחים המסמכים והדוח החודשי של החברה"><input data-pf="acc-email" type="email" dir="ltr" value={form.accountant_email || ''} onChange={set('accountant_email')} /></Row>
               <Row label="שם המשרד"><input value={r.accountant_office} onChange={setR('accountant_office')} /></Row>
               <Row label="טלפון המשרד"><input type="tel" inputMode="tel" dir="ltr" value={r.accountant_phone} onChange={setR('accountant_phone')} /></Row>
               <Row label="קבצי סיכום במייל"><Select value={r.send_format} onChange={setR('send_format')}><option value="both">Excel וגם CSV</option><option value="xlsx">Excel בלבד</option><option value="csv">CSV בלבד</option></Select></Row>

@@ -9,7 +9,7 @@
 //
 // Environment (Vercel > Settings > Environment Variables, never in code): see docs/finance/README.md
 // ============================================================
-import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview, ensureCoverage } from './finance/scan.js'
+import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview, ensureCoverage, nightlyCheck } from './finance/scan.js'
 import * as archive from './finance/archive.js'
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
@@ -45,6 +45,7 @@ const ROLES = {
   'scan-overview': ['admin', 'finance_manager'],
   'scan-run': ['admin', 'finance_manager'],
   'scan-coverage': ['admin', 'finance_manager'],
+  'scan-night-check': ['admin', 'finance_manager'],
   'drive-overview': ['admin', 'finance_manager'],
   'drive-tree': ['admin', 'finance_manager'],
   'drive-run': ['admin', 'finance_manager'],
@@ -75,6 +76,7 @@ const ROLES = {
   'retry-doc': ['admin', 'finance_manager', 'employee'],
   'duplicate-decide': ['admin', 'finance_manager'],
   'not-relevant': ['admin', 'finance_manager'],
+  'merge-docs': ['admin', 'finance_manager'],
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
   'whatsapp-check': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
@@ -315,6 +317,11 @@ export default async function handler(req, res) {
         res.status(200).json({ results: await ensureCoverage({ user }) })
         return
       }
+      case 'scan-night-check': {
+        // the night's completeness check, on demand: a scan of the last days of every active mailbox through the scan engine
+        res.status(200).json({ results: await nightlyCheck({ days: Math.max(1, Math.min(7, Number(body.days) || 3)), pass: body.pass === 2 ? 2 : 1 }) })
+        return
+      }
       case 'scan-run': {
         // the open screen moves the scan on too (in production pg_cron does it every minute anyway)
         res.status(200).json(await scanTick({ trigger: 'scan', limits: { segments: body.max_segments, messages: body.max_messages } }))
@@ -512,6 +519,26 @@ export default async function handler(req, res) {
         if (doc.file_path) await removeFile(doc.file_path).catch(() => {})
         await audit('document', doc.id, 'not_relevant', { file_name: doc.file_name, email_from: doc.email_from }, user)
         res.status(200).json({ ok: true })
+        return
+      }
+      case 'merge-docs': {
+        // Two documents are one: a person keeps one and the other is closed as its duplicate (never deleted: its file and
+        // history stay). Details the kept document lacks are taken from the closed one, so nothing that was read is lost.
+        const keep = await one(`fin_documents?id=eq.${q(body.keep_id)}&select=*`)
+        const drop = await one(`fin_documents?id=eq.${q(body.drop_id)}&select=*`)
+        if (!keep || !drop || keep.id === drop.id) { res.status(400).json({ error: 'צריך לבחור שני מסמכים שונים' }); return }
+        if (['approved', 'sent'].includes(drop.status)) { res.status(409).json({ error: 'מסמך מאושר לא נסגר ככפול. אפשר להשאיר אותו ולסגור את השני' }); return }
+        if (['duplicate', 'rejected', 'archived'].includes(keep.status)) { res.status(409).json({ error: 'המסמך שנבחר להישאר כבר לא פעיל' }); return }
+        const FILL = ['supplier_id', 'supplier_name', 'supplier_vat_id', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'amount_before_vat', 'vat_amount', 'total_amount', 'category', 'category_id', 'business_id', 'project_id', 'description', 'payment_method']
+        const fill = {}
+        if (!['approved', 'sent'].includes(keep.status)) for (const k of FILL) if ((keep[k] === null || keep[k] === '' || keep[k] === undefined) && drop[k] !== null && drop[k] !== '' && drop[k] !== undefined) fill[k] = drop[k]
+        const clean = (d) => (d.issues || []).filter((i) => !['possible_duplicate', 'duplicate'].includes(i.code))
+        const closed = await patch(`fin_documents?id=eq.${drop.id}`, { status: 'duplicate', duplicate_state: 'confirmed', duplicate_of: keep.id, issues: clean(drop) })
+        // the kept one stops being "suspected" itself (it may have pointed at the one that was just closed)
+        const kept = await patch(`fin_documents?id=eq.${keep.id}`, { ...fill, issues: clean(keep), ...(keep.duplicate_of === drop.id ? { duplicate_of: null, duplicate_state: 'dismissed' } : keep.duplicate_state === 'suspected' ? { duplicate_state: 'dismissed' } : {}) })
+        await audit('document', keep.id, 'merged_documents', { closed: drop.id, filled: Object.keys(fill) }, user)
+        await audit('document', drop.id, 'duplicate_confirmed', { of: keep.id, by: 'merge' }, user)
+        res.status(200).json({ kept, closed, filled: Object.keys(fill) })
         return
       }
       case 'duplicate-decide': {

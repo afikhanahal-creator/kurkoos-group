@@ -339,7 +339,7 @@ const server = http.createServer(async (req, res) => {
     const key = url.search
     hookFails[key] = (hookFails[key] || 0) + 1
     const fail = Number(url.searchParams.get('fail') || 0) >= hookFails[key]
-    log.hooks.push({ query: key, event: req.headers['x-kurkoos-event'], delivery: req.headers['x-kurkoos-delivery'], signature: req.headers['x-kurkoos-signature'], raw, status: fail ? 500 : 200 })
+    log.hooks.push({ query: key, event: req.headers['x-kurkoos-event'], delivery: req.headers['x-kurkoos-delivery'], signature: req.headers['x-kurkoos-signature'], auth: req.headers.authorization || '', raw, status: fail ? 500 : 200 })
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)

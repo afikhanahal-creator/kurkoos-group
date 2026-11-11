@@ -2978,3 +2978,11 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   /* overview: with an odd number of companies the group total takes the first line, so no chip is left alone */
   .fin-x-cos button:first-child:nth-last-child(odd) { grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: space-between; }
 }
+
+/* round 6: with fewer months on an entity's chart the columns stay slim and the amounts show on phones too */
+.fin-trend2__bar { max-width: 56px; }
+@media (max-width: 700px) { .fin-trend2__val { display: block; font-size: var(--t-xs); } }
+/* an entity's summary: the total carries the weight (as on the overview); the supporting figures are regular, not hairline */
+.fin-ledger strong { font-weight: 400; font-variant-numeric: tabular-nums; }
+.fin-ledger .fin-ledger__main strong { font-weight: 700; letter-spacing: -0.015em; }
+.fin-ledger .is-attn strong { font-weight: 700; }

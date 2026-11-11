@@ -2079,10 +2079,37 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const textSelf = await hook(outMsg('out-self-2', own, 'תזכורת'))
   const apiEcho = await hook({ ...outMsg('out-api-1', own), typeWebhook: 'outgoingAPIMessageReceived' })
   const rowsAfter = sql('select count(*) from fin_whatsapp_inbox')
-  const officeStep = (await api(adminToken, { action: 'whatsapp-check' })).data.steps?.find((x) => x.key === 'office')
+  const officeStep = (await api(await login('admin@kurkoos.test', 'Passw0rd!x'), { action: 'whatsapp-check' })).data.steps?.find((x) => x.key === 'office')
   record('OFFICE', 'קבלה שנשלחת מהטלפון של המשרד', 'תמונה שהטלפון של המשרד שולח לעצמו או לטלפון רשום נקלטת (כאן: אותו קובץ כבר במערכת); תמונה שנשלחת ללקוח, הודעת טקסט והודעות שהמערכת עצמה שלחה לא נרשמות בכלל; בדיקת החיבור מציגה את השלב',
     `לעצמי: ${toSelf.data.outcome}; לטלפון רשום: ${toScanner.data.outcome}; ללקוח: ${toClient.data.ignored}; טקסט: ${textSelf.data.ignored}; הודעת מערכת: ${apiEcho.data.ignored}; שורות ביומן: ${Number(rowsAfter) - Number(rowsBefore)}; שלב: ${officeStep?.ok}`,
     toSelf.data.outcome === 'duplicate' && toScanner.data.outcome === 'duplicate' && toClient.data.ignored === 'office_chat' && textSelf.data.ignored === 'office_chat' && apiEcho.data.ignored === 'outgoingAPIMessageReceived' && Number(rowsAfter) - Number(rowsBefore) === 2 && officeStep?.ok === true)
+}
+
+// LINKED: an email that only points at the document. The links are read from the stored email; a link that is not in
+// the email is refused; an internal address is not opened; a web page is handed back to the person; a file that is
+// already in the system is refused as a duplicate.
+{
+  process.env.SUPABASE_URL = SB; process.env.SUPABASE_SERVICE_ROLE_KEY = SERVICE
+  const lk = await import('../../server/finance/linked.js'); const dbm = await import('../../server/finance/db.js')
+  const html = `<p>שלום</p><a href="${FAKES}/green/file/wa-receipt.png">לחץ כאן לצפייה במסמך</a> <a href="${FAKES}/__log">לצפייה בעמוד המסמך</a> <a href="https://mail.example/unsubscribe">להסרה</a> <a href="https://get.adobe.com/reader">מכאן</a>`
+  await dbm.upload('e2e/linked-mail.html', Buffer.from(html), 'text/html')
+  const id = sql("insert into fin_documents (status, source, supplier_name, doc_type, currency, file_path, file_name, file_mime, file_size) values ('review','gmail','ספק קישור','receipt','ILS','e2e/linked-mail.html','mail.html','text/html',300) returning id").split('\n')[0]
+  const links = (await lk.listLinks(id)).links
+  delete process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS
+  const internal = await lk.fetchLinked(id, links[0]?.url)
+  process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS = '1'
+  const page2 = await lk.fetchLinked(id, links[1]?.url)
+  const dupErr = await lk.fetchLinked(id, links[0]?.url).then(() => null, (e) => e)
+  const foreign = await lk.fetchLinked(id, 'https://elsewhere.example/doc.pdf').then(() => null, (e) => e)
+  delete process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS
+  const still = sql(`select file_mime from fin_documents where id='${id}'`)
+  await go(`/documents/${id}`); await page.waitForSelector('.fin-linked', { timeout: 15000 }).catch(() => {})
+  const bar = await page.locator('.fin-linked').count(); const btns = await page.locator('.fin-linked__acts .fin-btn').count()
+  const linkedShot = await shot('127-linked-document')
+  sql(`delete from fin_documents where id='${id}'`)
+  record('LINKED', 'מייל שמפנה למסמך: הורדה מהקישור או העלאת המסמך עצמו', 'מהמייל נקראים רק קישורים למסמך (לא "הסרה" ולא Adobe); כתובת פנימית לא נפתחת מהשרת; קישור שפותח עמוד מוחזר לפתיחה ידנית; קובץ שכבר במערכת נדחה ככפול; קישור שלא מופיע במייל נדחה; המסמך לא משתנה באף אחד מהמקרים; מתחת למייל מופיעים כפתורי ההורדה וההעלאה',
+    `קישורים: ${links.length} (${links.map((l) => l.text).join(' | ')}); פנימית: ${internal.fetched}/${internal.reason}; עמוד: ${page2.fetched}/${!!page2.open}; כפול: ${dupErr?.status}; זר: ${foreign?.status}; נשאר: ${still}; במסך: ${bar} אזור, ${btns} כפתורים`,
+    links.length === 2 && /wa-receipt/.test(links[0].url) && internal.fetched === false && /פנימית/.test(internal.reason) && page2.fetched === false && !!page2.open && dupErr?.status === 409 && foreign?.status === 400 && still === 'text/html' && bar === 1 && btns === 3, [linkedShot])
 }
 
 // PLACEHOLDER: a charge entered without its paper waits for it. When the paper arrives (same supplier, same total, the

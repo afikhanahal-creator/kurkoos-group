@@ -159,6 +159,17 @@ export async function attachMainFile(doc, rawFile) {
   return must(await supabase.from('fin_documents').update({ file_path: path, file_name: file.name.slice(0, 200), file_mime: file.type, file_size: file.size, file_hash: hash, issues }).eq('id', doc.id).select().single())
 }
 
+/* the real paper replaces an email that only pointed at it: the email stays with the document as an attachment, the
+   file becomes the document's file, and it is read like any upload. A file that already belongs to another document
+   is refused (attachMainFile). */
+export async function replaceMainFile(doc, rawFile) {
+  const old = { path: doc.file_path, name: doc.file_name, mime: doc.file_mime, size: doc.file_size }
+  const saved = await attachMainFile(doc, rawFile)
+  if (old.path && old.path !== saved.file_path) await supabase.from('fin_document_attachments').insert({ document_id: doc.id, kind: 'file', file_path: old.path, file_name: old.name || 'המייל המקורי.html', file_mime: old.mime || 'text/html', file_size: old.size || null, note: 'המייל שבו הגיע הקישור למסמך' }).then(() => {}, () => {})
+  const r = await callServer('extract', { document_id: doc.id, trigger: 'upload' }).catch(() => null)
+  return r?.document || saved
+}
+
 export async function uploadFile(rawFile, { businessId, projectId, source = 'upload', wait = false, prepared = false } = {}) {
   const file = prepared ? rawFile : await prepareImage(rawFile)
   if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)

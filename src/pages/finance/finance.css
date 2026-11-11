@@ -3288,3 +3288,54 @@ button.fin-rbars__row { cursor: pointer; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-last { grid-column: 1 / -1; justify-content: flex-start; gap: 6px; font-size: var(--t-xs); color: var(--text-2); padding: 0; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-last::before { content: 'מסמך אחרון:'; }
 }
+
+/* dates are what people look for first: larger and darker wherever a document is listed */
+.fin-table td.fin-td-date, .fin-table td[data-label="תאריך"] { font-size: var(--t-md); font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-doccard__meta > div:first-child dd { font-size: var(--t-md); font-weight: 700; color: var(--ink); }
+.fin-dlist__row time, .fin-dlist__date { font-size: var(--t-sm); font-weight: 600; color: var(--ink); }
+.fin-slip__rows > span:first-child em { font-size: var(--t-md); font-weight: 700; }
+.fin-peek__foot small { font-size: var(--t-sm); color: var(--ink); }
+.fin-x-feed__main small time, .fin-recent time { font-weight: 600; color: var(--ink); }
+/* a number written left to right keeps its place in a right-to-left column */
+.fin-table td bdi { unicode-bidi: isolate; }
+/* the slip leaves room for the check box of a card */
+.fin-doccard .fin-slip { padding-inline-end: 46px; }
+.fin-doccard .fin-slip__tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* the company's logo next to its name, or the frame that waits for it */
+.fin-entity-head { align-items: center; }
+.fin-entity-logo { all: unset; box-sizing: border-box; flex: none; width: 72px; height: 72px; border-radius: 16px; display: grid; place-items: center; align-content: center; gap: 2px; cursor: pointer; border: 1px dashed var(--line-2); background: var(--sheet); color: var(--text-2); overflow: hidden; }
+.fin-entity-logo small { font-size: var(--t-xs); }
+.fin-entity-logo.has-logo { border-style: solid; border-color: var(--line); background: #fff; }
+.fin-entity-logo img { width: 100%; height: 100%; object-fit: contain; }
+.fin-entity-logo:hover { border-color: var(--ocean); color: var(--ocean); }
+.fin-entity-logo:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; }
+.fin-entity-head__main { flex: 1; min-width: 0; }
+/* column widths set by hand: a grip on the edge of every head, and cells that cut their text instead of pushing */
+.fin-table--resizable thead th { position: sticky; }
+.fin-table--resizable thead th::after { content: ''; position: absolute; inset-block: 25%; inset-inline-end: 0; width: 2px; border-radius: 1px; background: var(--line); transition: background-color var(--dur) var(--ease); }
+.fin-table--resizable thead th:last-child::after { display: none; }
+.fin-table--resizable thead th:hover::after { background: var(--ocean); }
+.fin-table.is-sized :is(th, td) { overflow: hidden; text-overflow: ellipsis; }
+body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
+@media (max-width: 700px) {
+  .fin-table.is-sized { width: auto !important; min-width: 0 !important; table-layout: auto !important; }
+  .fin-table--resizable thead th::after { display: none; }
+  .fin-entity-logo { width: 56px; height: 56px; border-radius: 14px; }
+}
+
+/* under an email that only points at the document: bring the document itself */
+.fin-linked { display: grid; gap: 12px; margin: 12px 16px 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); }
+.fin-linked__text { display: grid; gap: 2px; }
+.fin-linked__text strong { color: var(--ink); font-size: var(--t-md); }
+.fin-linked__text span { color: var(--text-2); font-size: var(--t-sm); line-height: 1.5; }
+.fin-linked__acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.fin-linked__acts .fin-btn { min-height: 44px; cursor: pointer; }
+.fin-linked__msg { margin: 0; font-size: var(--t-sm); line-height: 1.5; color: var(--warn); }
+.fin-linked__msg.is-bad { color: var(--attn); }
+@media (max-width: 700px) { .fin-linked { margin: 10px 12px 12px; } .fin-linked__acts .fin-btn { flex: 1 1 100%; justify-content: center; } }
+
+.fin-receipts__month { min-width: 12rem; font-weight: 600; }
+.fin-receipts__count { margin: 0; font-size: var(--t-md); font-weight: 600; color: var(--ink); }
+.fin-receipts__more { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fin-receipts__table .fin-td-main .fin-peek { cursor: default; }
+@media (max-width: 700px) { .fin-receipts__table td.fin-receipts__act { display: flex; gap: 8px; align-items: center; } .fin-receipts__table td.fin-receipts__act .fin-receipts__del { display: inline-grid; flex: none; width: 44px; height: 44px; } .fin-receipts__month { flex: 1 1 100%; } }

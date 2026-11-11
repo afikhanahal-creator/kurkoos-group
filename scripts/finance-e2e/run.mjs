@@ -2067,6 +2067,28 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     off.status === 200 && quiet.data.outcome === 'duplicate' && n1 === n0 && on.status === 200 && n2 === n1 + 1 && empSwitch.status === 403 && early.data.reason === 'not_applicable' && st === 'approved' && first.data.reason === 'sent' && second.data.reason === 'already' && /המסמך אושר ונשמר/.test(lastMsg) && driveMap.status === 200 && typeof driveMap.data.files === 'object' && figs === 5 && rowsAll >= rowsWa && rowsWa >= 1 && /אושר|נשמר ב-Drive/.test(pills) && opened && passed.length >= 2 && passedQuiet?.auth === 'Bearer test-other-system' && fwdStep?.ok === true, [recShot])
 }
 
+// PLACEHOLDER: a charge entered without its paper waits for it. When the paper arrives (same supplier, same total, the
+// same day ±1) it takes the record's place and inherits what was set on it; a charge of another day is left alone.
+{
+  process.env.SUPABASE_URL = SB; process.env.SUPABASE_SERVICE_ROLE_KEY = SERVICE
+  const plx = await import('../../server/finance/pipeline.js')
+  const supId = sql("select id from fin_suppliers order by created_at limit 1")
+  const bizId = sql('select id from fin_businesses order by created_at limit 1')
+  const ins = (extra) => sql(`insert into fin_documents (status, source, supplier_id, supplier_name, doc_type, currency, ${Object.keys(extra).join(', ')}) values ('review','upload','${supId}','ספק בדיקה','receipt','ILS', ${Object.values(extra).join(', ')}) returning id`).split('\n')[0]
+  const ph = ins({ doc_number: "'PH-TXN-1'", issue_date: "'2026-10-16'", total_amount: 500, business_id: `'${bizId}'`, notes: "'חיוב מיומן החיובים'" })
+  const other = ins({ doc_number: "'PH-TXN-2'", issue_date: "'2026-10-24'", total_amount: 500 })
+  const paper = ins({ doc_number: "'RCPT-778'", issue_date: "'2026-10-17'", total_amount: 500, file_path: "'uploads/e2e/ph-paper.pdf'", file_name: "'receipt.pdf'", file_mime: "'application/pdf'", duplicate_of: `'${ph}'`, duplicate_state: "'suspected'" })
+  const row = JSON.parse(sql(`select row_to_json(d) from fin_documents d where id='${paper}'`))
+  const done = await plx.settlePlaceholder(row)
+  const again = await plx.settlePlaceholder(JSON.parse(sql(`select row_to_json(d) from fin_documents d where id='${paper}'`)))
+  const after = sql(`select (select status||'|'||duplicate_state||'|'||(duplicate_of='${paper}') from fin_documents where id='${ph}')||' ; '||(select status||'|'||coalesce(duplicate_state,'-')||'|'||(business_id='${bizId}')||'|'||coalesce(notes,'-') from fin_documents where id='${paper}')||' ; '||(select status from fin_documents where id='${other}')`)
+  const logged = sql(`select count(*) from fin_audit where action='file_arrived_for_record' and entity_id='${paper}'`)
+  sql(`delete from fin_documents where id in ('${ph}','${other}','${paper}')`)
+  record('PLACEHOLDER', 'קובץ שמגיע לרשומה שחיכתה לו', 'רשומה שנרשמה בלי קובץ נסגרת ככפולה של המסמך שהגיע עם הקובץ (אותו ספק, אותו סכום, יום ±1); החברה וההערה שנקבעו עליה עוברות למסמך; החשד לכפילות מול הרשומה מוסר; חיוב של יום אחר לא נוגעים בו; פעם שנייה לא עושה כלום; נרשם ביומן',
+    `הוחלפה: ${done?.record === ph}; שוב: ${again === null}; אחרי: ${after}; יומן: ${logged}`,
+    done?.record === ph && again === null && after === `duplicate|confirmed|true ; review|-|true|חיוב מיומן החיובים ; review` && logged === '1')
+}
+
 // PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the
 // system is a suspected duplicate; the supplier's own second receipt with another number is a separate purchase.
 {

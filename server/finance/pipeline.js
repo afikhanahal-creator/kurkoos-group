@@ -3,7 +3,7 @@
 //   → classification (company, project, category) → the document waits in review for a person.
 import crypto from 'node:crypto'
 import { env, costOf, MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.js'
-import { sb, one, insert, patch, q, rpc, upload, download, storageUsage } from './db.js'
+import { sb, one, insert, patch, q, rpc, upload, download, storageUsage, audit } from './db.js'
 import { extract, verify, needsVerify, crossCheck, relevanceOf, CLASS_LABEL } from './extract.js'
 import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
@@ -175,6 +175,36 @@ export async function analyze(x, { selfId = null, selfCreated = null, mailbox = 
   return fields
 }
 
+/* A record that was entered without its paper (a charge taken from a supplier's billing log, a receipt somebody will
+   bring later) waits for the paper. When a document with a file arrives for the same charge (same supplier, and the
+   same number or the same total on the same day ±1) the paper takes the record's place: the record is closed as its
+   duplicate, and what a person already set on it (company, project, category, notes) moves to the document. A record
+   that was already approved is left alone; the new document then stays flagged for a person. */
+export async function settlePlaceholder(doc, user = null) {
+  if (!doc?.id || !doc.file_path || !doc.supplier_id || doc.total_amount == null) return null
+  const open = (await sb(`fin_documents?supplier_id=eq.${doc.supplier_id}&file_path=is.null&status=in.(review,processing,failed)&id=neq.${doc.id}&select=id,doc_number,issue_date,total_amount,business_id,project_id,category,category_id,notes,description`)) || []
+  const day = (d) => (d ? new Date(`${d}T00:00:00Z`).getTime() / 86400_000 : null)
+  const same = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005
+  const byNumber = doc.doc_number ? open.find((p) => p.doc_number && String(p.doc_number).trim() === String(doc.doc_number).trim()) : null
+  const near = open.filter((p) => same(p.total_amount, doc.total_amount) && day(p.issue_date) !== null && day(doc.issue_date) !== null && Math.abs(day(p.issue_date) - day(doc.issue_date)) <= 1)
+    .sort((a, b) => Math.abs(day(a.issue_date) - day(doc.issue_date)) - Math.abs(day(b.issue_date) - day(doc.issue_date)))
+  const ph = byNumber || near[0]
+  if (!ph) return null
+  await patch(`fin_documents?id=eq.${ph.id}`, { status: 'duplicate', duplicate_state: 'confirmed', duplicate_of: doc.id })
+  const take = {}
+  for (const k of ['business_id', 'project_id', 'category', 'category_id', 'notes']) if ((doc[k] === null || doc[k] === undefined || doc[k] === '') && ph[k]) take[k] = ph[k]
+  if (doc.duplicate_of === ph.id) {
+    // the reading compared the paper with its own placeholder: that is not a duplicate
+    take.duplicate_of = null; take.duplicate_state = null
+    if (doc.status === 'duplicate') { take.status = 'review'; take.stage = 'ready' }
+    take.issues = (doc.issues || []).filter((i) => !['possible_duplicate', 'duplicate'].includes(i.code))
+  }
+  const out = Object.keys(take).length ? await patch(`fin_documents?id=eq.${doc.id}`, take) : doc
+  await audit('document', doc.id, 'file_arrived_for_record', { record: ph.id, moved: Object.keys(take).filter((k) => !['duplicate_of', 'duplicate_state', 'status', 'stage', 'issues'].includes(k)) }, user).catch(() => {})
+  await audit('document', ph.id, 'duplicate_confirmed', { of: doc.id, reason: 'the source file arrived' }, user).catch(() => {})
+  return { record: ph.id, document: out || doc }
+}
+
 /* a project of another company never rides along: it becomes a suggestion and the document is flagged */
 async function keepProjectInCompany(fields) {
   if (!fields.project_id || !fields.business_id) return
@@ -238,7 +268,9 @@ export async function processStored(doc, runs, trigger = 'upload', started = Dat
     fields.next_retry_at = null
     Object.assign(fields, usageFields(x, cur))
     delete fields._pendingHits
-    return await patch(`fin_documents?id=eq.${doc.id}`, fields)
+    const saved = await patch(`fin_documents?id=eq.${doc.id}`, fields)
+    const settled = saved ? await settlePlaceholder(saved).catch(() => null) : null
+    return settled?.document || saved
   } catch (e) {
     runs.ocr.stat.errors++
     const retry = nextRetry(cur.failures)
@@ -353,7 +385,7 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
       const newSupplier = fields.suggestions?.supplier?.match === 'new' ? fields.supplier_id : null
       try {
         const row = await insert('fin_documents', { ...base, ...fields }); stats.imported++; got++
-        if (row) { await flushHits(row.id, pendingHits); if (fields.supplier_id) await patch(`fin_suppliers?id=eq.${fields.supplier_id}&suggested_from=is.null&status=eq.pending`, { suggested_from: row.id }).catch(() => {}) }
+        if (row) { await settlePlaceholder(row).catch(() => {}); await flushHits(row.id, pendingHits); if (fields.supplier_id) await patch(`fin_suppliers?id=eq.${fields.supplier_id}&suggested_from=is.null&status=eq.pending`, { suggested_from: row.id }).catch(() => {}) }
       } catch (e) {
         // the document was not stored: a supplier suggested only by it goes too
         if (newSupplier) await sb(`fin_suppliers?id=eq.${newSupplier}&status=eq.pending`, { method: 'DELETE', prefer: 'return=minimal' }).catch(() => {})

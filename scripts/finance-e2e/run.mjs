@@ -1934,27 +1934,29 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
 // last three days through the scan engine (no second pass of its own); a message that was never read is found and
 // read; the morning pass is the second look; the history scan stays the headline of the scans screen.
 {
+  // fresh tokens: the ones from the start of the run expired an hour in
+  const tokA = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
   const inv = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
   sql("update fin_scan_jobs set status='cancelled' where status in ('queued','running','paused')")
   // a message of the last days that the daily collection is taken to have missed: no trace of it anywhere
   const lost = sql(`select message_id from fin_scan_items where mailbox_id='${inv}' and status='done' and email_date > now() - interval '3 days' order by email_date desc limit 1`)
   if (lost) { sql(`delete from fin_scan_items where mailbox_id='${inv}' and message_id='${lost}'`); sql(`delete from fin_mail_seen where mailbox_id='${inv}' and message_id='${lost}'`) }
-  const n1 = await api(adminToken, { action: 'scan-night-check' })
+  const n1 = await api(tokA, { action: 'scan-night-check' })
   const started = (n1.data.results || []).filter((r) => r.started).length
   const active = sql("select count(*) from fin_mailboxes where status='active'")
   const range = sql(`select (date_to - date_from)::text from fin_scan_jobs where mailbox_id='${inv}' order by created_at desc limit 1`)
-  const n2 = await api(adminToken, { action: 'scan-night-check' })
+  const n2 = await api(tokA, { action: 'scan-night-check' })
   const again = (n2.data.results || []).every((r) => r.started === false)
-  for (let i = 0; i < 40; i++) { const r = await api(adminToken, { action: 'scan-run', max_segments: 6 }); if (!r.data?.more) break; if (!(r.data?.segments || []).length) sql("update fin_scan_segments set next_try_at = now() where status = 'retry'") }
+  for (let i = 0; i < 40; i++) { const r = await api(tokA, { action: 'scan-run', max_segments: 6 }); if (!r.data?.more) break; if (!(r.data?.segments || []).length) sql("update fin_scan_segments set next_try_at = now() where status = 'retry'") }
   const jobEnd = sql(`select status from fin_scan_jobs where mailbox_id='${inv}' order by created_at desc limit 1`)
   const back = lost ? sql(`select count(*) from fin_scan_items where mailbox_id='${inv}' and message_id='${lost}'`) : 'no-recent-message'
-  const ov = (await api(adminToken, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
+  const ov = (await api(tokA, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
   const headDays = ov.job ? Math.round((Date.parse(ov.job.date_to) - Date.parse(ov.job.date_from)) / 86400000) : -1
   const phases = sql(`select string_agg(distinct phase, ',') from fin_scan_segments where job_id=(select id from fin_scan_jobs where mailbox_id='${inv}' order by created_at desc limit 1)`)
-  const m1 = await api(adminToken, { action: 'scan-night-check', pass: 2 })
-  for (let i = 0; i < 40; i++) { const r = await api(adminToken, { action: 'scan-run', max_segments: 6 }); if (!r.data?.more) break }
-  const ov2 = (await api(adminToken, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
-  const empNight = await api(empToken, { action: 'scan-night-check' })
+  const m1 = await api(tokA, { action: 'scan-night-check', pass: 2 })
+  for (let i = 0; i < 40; i++) { const r = await api(tokA, { action: 'scan-run', max_segments: 6 }); if (!r.data?.more) break }
+  const ov2 = (await api(tokA, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
+  const empNight = await api(tokE, { action: 'scan-night-check' })
   record('NIGHT', 'בדיקת השלמות הלילית דרך מנוע הסריקה', 'לכל תיבה פעילה נפתח מעבר אחד על שלושת הימים האחרונים (בלי מעבר שני משלו); הפעלה שנייה באמצע לא פותחת כפולה; הודעה שלא נקראה אף פעם נמצאת ונקראת; מעבר הבוקר הוא המבט השני; במסך הסריקות הכותרת נשארת סריקת ההיסטוריה; עובד לא מפעיל',
     `נפתחו: ${started} מתוך ${active} תיבות, טווח ${range} ימים; שנייה: ${again ? 'לא נפתחה' : 'נפתחה'}; סוף: ${jobEnd}; ההודעה שנמחקה חזרה: ${back}; כותרת המסך: סריקה של ${headDays} ימים; שלבים: ${phases}; מעבר לילה: ${JSON.stringify(ov.check || null).slice(0, 120)}; מעבר בוקר: נפתח ${(m1.data.results || []).filter((r) => r.started).length}, pass ${ov2.check?.pass}; עובד: ${empNight.status}`,
     started === Number(active) && started > 0 && range === '3' && again && ['done', 'incomplete'].includes(jobEnd) && (back === '1' || back === 'no-recent-message') && headDays > 7 && !!ov.check && ov.check.pass === 1 && phases === 'scan' && ov2.check?.pass === 2 && empNight.status === 403)
@@ -1963,6 +1965,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
 // MERGE: two documents are merged by a person. The dialog opens from two checked rows; keeping one closes the other as
 // its duplicate and moves a missing detail over; an approved document is never the one that is closed; an employee cannot.
 {
+  const tokA = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
   await go('/documents')
   const boxes = page.locator('.fin-table tbody tr input[type=checkbox]')
   await boxes.nth(0).check(); await boxes.nth(1).check(); await page.waitForTimeout(300)
@@ -1976,10 +1979,10 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const projId = sql('select id from fin_projects order by created_at limit 1')
   sql(`update fin_documents set project_id='${projId}', business_id=(select business_id from fin_projects where id='${projId}') where id='${dropId}'`)
   const approvedId = sql("select id from fin_documents where status in ('approved','sent') limit 1")
-  const emp = await api(empToken, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
-  const same = await api(adminToken, { action: 'merge-docs', keep_id: keepId, drop_id: keepId })
-  const lockedDrop = approvedId ? await api(adminToken, { action: 'merge-docs', keep_id: keepId, drop_id: approvedId }) : { status: 409 }
-  const done = await api(adminToken, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
+  const emp = await api(tokE, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
+  const same = await api(tokA, { action: 'merge-docs', keep_id: keepId, drop_id: keepId })
+  const lockedDrop = approvedId ? await api(tokA, { action: 'merge-docs', keep_id: keepId, drop_id: approvedId }) : { status: 409 }
+  const done = await api(tokA, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
   const after = sql(`select (select status||'|'||duplicate_state||'|'||(duplicate_of='${keepId}') from fin_documents where id='${dropId}')||' ; '||(select status||'|'||(project_id='${projId}') from fin_documents where id='${keepId}')`)
   const logged = sql(`select count(*) from fin_audit where action='merged_documents' and entity_id='${keepId}'`)
   record('MERGE', 'מיזוג שני מסמכים', 'שני מסמכים מסומנים פותחים חלון השוואה עם סימון ההבדלים; "להשאיר" סוגר את השני ככפול ומעביר פרט חסר (פרויקט) למסמך שנשאר; מסמך מאושר לא נסגר; אותו מסמך פעמיים נדחה; עובד לא ממזג; נרשם ביומן',

@@ -3339,3 +3339,48 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
 .fin-receipts__more { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .fin-receipts__table .fin-td-main .fin-peek { cursor: default; }
 @media (max-width: 700px) { .fin-receipts__table td.fin-receipts__act { display: flex; gap: 8px; align-items: center; } .fin-receipts__table td.fin-receipts__act .fin-receipts__del { display: inline-grid; flex: none; width: 44px; height: 44px; } .fin-receipts__month { flex: 1 1 100%; } }
+
+/* Drive: the waiting list. Tools and actions above the list, one grid for every row so the columns line up. */
+.fin-dassign__tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 8px; }
+.fin-dassign__tools .fin-search { flex: 1 1 260px; }
+.fin-dassign__tools select, .fin-dassign__bar select { min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); color: var(--ink); font: inherit; }
+.fin-dassign .fin-dassign__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; margin: 0 0 8px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); position: sticky; top: 0; z-index: 2; }
+.fin-dassign__all { display: inline-flex; align-items: center; gap: 8px; margin-inline-end: auto; font-size: var(--t-sm); font-weight: 600; color: var(--ink); min-height: 40px; cursor: pointer; }
+.fin-dassign__all input { width: 18px; height: 18px; }
+.fin-dassign__none { margin: 12px 4px; }
+.fin-dassign li.fin-dassign__row { grid-template-columns: 28px 4.8rem minmax(0, 1fr) 8.5rem 5.5rem; }
+.fin-dassign__main { text-align: start; }
+.fin-dassign__open { direction: inherit; text-align: start; justify-items: start; }
+.fin-dassign__open strong, .fin-dassign__open small { text-align: start; width: 100%; }
+.fin-dassign__sum { text-align: end; font-size: var(--t-md); font-weight: 700; }
+.fin-dassign__acts { justify-content: flex-end; }
+.fin-dassign__date b { font-size: var(--t-md); }
+@media (max-width: 700px) {
+  .fin-dassign li.fin-dassign__row { grid-template-columns: auto 3.9rem minmax(0, 1fr) auto; }
+  .fin-dassign .fin-dassign__bar { position: static; }
+  .fin-dassign__bar select, .fin-dassign__bar .fin-btn { flex: 1 1 140px; min-height: 44px; justify-content: center; }
+  .fin-dassign__all { flex: 1 1 100%; min-height: 44px; }
+  .fin-dassign__sum { text-align: start; }
+}
+@media (max-width: 400px) { .fin-dassign li.fin-dassign__row { grid-template-columns: auto minmax(0, 1fr) auto; } }
+
+/* "select all" above cards and the list (the table has it in its head; on a phone the table is cards too) */
+.fin-selall { display: flex; align-items: center; gap: 12px; padding: 4px 2px; }
+.fin-selall label { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-size: var(--t-md); font-weight: 600; color: var(--ink); }
+.fin-selall input { width: 20px; height: 20px; accent-color: var(--ink); }
+.fin-selall small { color: var(--text-2); font-size: var(--t-sm); }
+.fin-selall--phone { display: none; }
+@media (max-width: 700px) { .fin-selall--phone { display: flex; } }
+
+/* dates, everywhere a document is listed: the size of the main text, dark, in figures that line up */
+.fin-doccard__meta > div:first-child dd { font-size: 1rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-doccard__meta > div:first-child dt { color: var(--text-2); }
+.fin-dlist__row small, .fin-dlist__mdate { font-size: var(--t-sm); }
+.fin-dlist__mdate { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-recent__main small, .fin-picklist__main small { font-size: var(--t-sm); color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fin-ledger .fin-ledger__dates { font-size: var(--t-md); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-x-feed__day, .fin-x-feed h4 { font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
+.fin-table td.fin-td-date, .fin-table td[data-label="תאריך"], .fin-table td[data-label="אחרון"] { font-size: 0.95rem; font-weight: 700; color: var(--ink); }
+.fin-merge__card dl > div:nth-child(3) dd { font-size: var(--t-md); }
+.fin-peek__foot small { font-weight: 700; font-variant-numeric: tabular-nums; }
+.fin-panel__meta time, .fin-panel__head time { font-weight: 700; color: var(--ink); }

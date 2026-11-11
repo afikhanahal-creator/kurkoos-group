@@ -93,6 +93,9 @@ export const loadDeliveries = (limit = 30) => soft((async () => (await all('fin_
 export const loadOutbound = () => soft(all('fin_outbound', 'created_at', true))
 export const loadOutboundQueue = (limit = 30) => soft(all('fin_outbound_queue', 'id', false, limit))
 export async function deleteDocument(doc) {
+  // a deletion in the system is a deletion in Drive: the archive's copy goes to the Drive trash first. If Drive cannot
+  // be reached the document is still deleted, and the next check against Drive trashes the copy.
+  await callServer('drive-forget', { ids: [doc.id] }).catch(() => null)
   must(await supabase.from('fin_documents').delete().eq('id', doc.id))
   if (doc.file_path) await supabase.storage.from(BUCKET).remove([doc.file_path])
 }

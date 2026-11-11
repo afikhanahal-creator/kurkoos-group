@@ -7,7 +7,8 @@ import https from 'node:https'
 import crypto from 'node:crypto'
 import { MAX_FILE } from './env.js'
 import { one, patch, insert, download, upload, audit } from './db.js'
-import { guardedLookup } from './outbound.js'
+import net from 'node:net'
+import { guardedLookup, privateIp } from './outbound.js'
 
 const WANT = /צפייה|לצפות|מסמך|הורד|חשבונית|קבלה|להדפסה|download|view|invoice|receipt|document|pdf/i
 const SKIP = /unsubscribe|הסרה|להסרה|facebook\.com|instagram\.com|linkedin\.com|twitter\.com|wa\.me|youtube\.com|google\.com\/maps|adobe\.com|get\.adobe|privacy|terms|mailto:/i
@@ -32,6 +33,9 @@ export function linksOf(html) {
 function getOnce(url) {
   return new Promise((resolve, reject) => {
     const u = new URL(url); const mod = u.protocol === 'https:' ? https : http
+    // an address written as a number never goes through the name lookup, so it is checked here
+    const host = u.hostname.replace(/^\[|\]$/g, '')
+    if (net.isIP(host) && privateIp(host) && process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS !== '1') { reject(Object.assign(new Error('כתובת פנימית לא מותרת'), { code: 'EBLOCKED' })); return }
     const req = mod.request(u, { method: 'GET', lookup: guardedLookup, timeout: 12_000, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; document-fetch)', Accept: 'application/pdf,image/*,*/*;q=0.5' } }, (res) => {
       const loc = res.headers.location
       if (res.statusCode >= 300 && res.statusCode < 400 && loc) { res.resume(); resolve({ redirect: new URL(loc, u).toString() }); return }

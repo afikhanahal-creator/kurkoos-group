@@ -379,6 +379,13 @@ export default function Documents({ preset = 'all' }) {
       )}
 
       {monthNow && <div className="fin-monthchip" aria-hidden="true"><span>{monthNow}</span></div>}
+      {/* cards and the list have no table head to tick: the same "all" lives in a bar above them */}
+      {rows.length > 0 && (
+        <div className={`fin-selall ${view === 'table' ? 'fin-selall--phone' : ''}`}>
+          <label><input type="checkbox" checked={allOn} ref={(el) => { if (el) el.indeterminate = !allOn && rows.some((d) => sel.has(d.id)) }} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="בחירת כל המסמכים שברשימה" /> <span>{allOn ? 'ניקוי הבחירה' : `בחירת הכול (${rows.length.toLocaleString('he-IL')})`}</span></label>
+          {sel.size > 0 && !allOn && <small>{sel.size.toLocaleString('he-IL')} נבחרו</small>}
+        </div>
+      )}
       <div className="fin-doclistbox" ref={listRef}>
       {rows.length === 0 ? (
         tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>

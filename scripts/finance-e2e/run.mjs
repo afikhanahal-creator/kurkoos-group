@@ -2112,6 +2112,32 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     links.length === 2 && /wa-receipt/.test(links[0].url) && internal.fetched === false && /פנימית/.test(internal.reason) && page2.fetched === false && !!page2.open && dupErr?.status === 409 && foreign?.status === 400 && still === 'text/html' && bar === 1 && btns === 3, [linkedShot])
 }
 
+// DRIVEDEL: a deletion in the system is a deletion in Drive. The archive's copy of a deleted document goes to the Drive
+// trash at the moment of deletion; a copy whose document vanished some other way is trashed by the next check.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
+  const liveOf = async (id) => (await items()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
+  const pick = () => sql("select f.document_id||'|'||f.target_id from fin_drive_files f join fin_documents d on d.id=f.document_id where f.status='verified' and f.drive_file_id is not null and d.status='review' order by f.updated_at limit 1")
+  const [docA, tgt] = pick().split('|')
+  const beforeA = await liveOf(docA)
+  const emp = await api(tokE, { action: 'drive-forget', ids: [docA] })
+  const stillA = await liveOf(docA)
+  const forget = await api(tok, { action: 'drive-forget', ids: [docA] })
+  const afterA = await liveOf(docA)
+  sql(`delete from fin_documents where id='${docA}'`)
+  // a document removed behind the system's back: its copy is found by the check against Drive
+  const [docB] = pick().split('|')
+  const beforeB = await liveOf(docB)
+  sql(`delete from fin_documents where id='${docB}'`)
+  await api(tok, { action: 'drive-reconcile', target_id: tgt })
+  for (let i = 0; i < 12 && (await liveOf(docB)) > 0; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await new Promise((r) => setTimeout(r, 800)) }
+  const afterB = await liveOf(docB)
+  record('DRIVEDEL', 'מחיקת מסמך מוחקת גם את העותק ב-Drive', 'לפני מחיקה העותק של המסמך ב-Drive עובר לפח של Drive; עובד לא יכול להעביר לפח מסמך שאינו שלו; עותק של מסמך שנמחק בלי לעבור דרך המערכת נמצא בבדיקה מול Drive ועובר לפח',
+    `מסמך א׳: ${beforeA} עותק → עובד ${emp.status}/${emp.data.trashed} (נשאר ${stillA}) → מנהל ${forget.status}/${forget.data.trashed} → ${afterA}; מסמך ב׳: ${beforeB} → אחרי בדיקה ${afterB}`,
+    !!docA && !!docB && beforeA === 1 && emp.data.trashed === 0 && stillA === 1 && forget.status === 200 && forget.data.trashed === 1 && afterA === 0 && beforeB === 1 && afterB === 0)
+}
+
 // PLACEHOLDER: a charge entered without its paper waits for it. When the paper arrives (same supplier, same total, the
 // same day ±1) it takes the record's place and inherits what was set on it; a charge of another day is left alone.
 {

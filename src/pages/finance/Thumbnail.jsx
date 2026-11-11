@@ -35,7 +35,7 @@ async function render(doc, width = 360) {
   if ((doc.file_mime || '').startsWith('image/')) return URL.createObjectURL(blob)
   // a receipt that is the body of an email: the large preview shows the email itself (in a frame that cannot run
   // scripts or load anything by itself), the small one a few words of it
-  if ((doc.file_mime || '').startsWith('text/') && width > 400) return { html: await blob.text() }
+  if ((doc.file_mime || '').startsWith('text/')) return { html: await blob.text() }
   if ((doc.file_mime || '').startsWith('text/')) return { text: (await blob.text()).replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220) }
   const lib = await loadPdf()
   const pdf = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise
@@ -77,6 +77,7 @@ export default function Thumbnail({ doc, size }) {
     if (box.current) io.observe(box.current)
     return () => { alive = false; io.disconnect() }
   }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (!doc.file_path) return <div className="fin-thumb fin-thumb--nofile" aria-hidden="true"><span>אין קובץ מצורף</span></div>
   return (
     <div className="fin-thumb" ref={box} aria-hidden="true">
       {src && typeof src === 'string' && <img src={src} alt="" />}

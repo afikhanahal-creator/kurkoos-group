@@ -3,7 +3,7 @@ import CaptureReceipt from './CaptureReceipt.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
-import { ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth } from './format.js'
+import { byDocDate, ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { unsureNumbers } from './Documents.jsx'
@@ -40,7 +40,8 @@ export default function Dashboard() {
       numbers: live.filter(unsureNumbers).length,
       attention: live.filter((d) => d.status === 'failed' || d.status === 'duplicate' || (d.status === 'review' && hasError(d))).length,
       todayCount: documents.filter((d) => new Date(d.created_at).toDateString() === today).length,
-      recent: [...live].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 6),
+      // the latest documents by the date printed on them (a paper of last month that was added today is not "latest")
+      recent: [...live].sort(byDocDate).slice(0, 8),
     }
   }, [documents])
 

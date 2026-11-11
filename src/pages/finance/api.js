@@ -140,6 +140,23 @@ export async function prepareImage(file) {
   return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'receipt'}.jpg`, { type: 'image/jpeg' })
 }
 
+/* A record that was entered without a file (a charge known from the supplier's billing log) gets its paper: the file is
+   stored and linked, the details already on the record stay as they are, and the "file missing" note is cleared. */
+export async function attachMainFile(doc, rawFile) {
+  const file = await prepareImage(rawFile)
+  if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)
+  if (file.size > 12 * 1024 * 1024) throw new Error(`${file.name}: הקובץ גדול מ-12MB`)
+  const hash = await sha256(file)
+  const { data: dup } = await supabase.from('fin_documents').select('id,supplier_name,doc_number').eq('file_hash', hash).maybeSingle()
+  if (dup) throw new Error(`הקובץ הזה כבר שייך למסמך אחר במערכת${dup.supplier_name ? ` (${dup.supplier_name}${dup.doc_number ? ` ${dup.doc_number}` : ''})` : ''}.`)
+  const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1]
+  const path = `uploads/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${ext}`
+  const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })
+  if (up.error && !/exists|duplicate/i.test(up.error.message)) throw new Error(up.error.message)
+  const issues = (doc.issues || []).filter((i) => i.code !== 'missing_file')
+  return must(await supabase.from('fin_documents').update({ file_path: path, file_name: file.name.slice(0, 200), file_mime: file.type, file_size: file.size, file_hash: hash, issues }).eq('id', doc.id).select().single())
+}
+
 export async function uploadFile(rawFile, { businessId, projectId, source = 'upload', wait = false, prepared = false } = {}) {
   const file = prepared ? rawFile : await prepareImage(rawFile)
   if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)

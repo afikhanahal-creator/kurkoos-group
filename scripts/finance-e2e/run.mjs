@@ -1990,6 +1990,40 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     cards === 2 && diffs > 0 && emp.status === 403 && same.status === 400 && lockedDrop.status === 409 && done.status === 200 && (done.data.filled || []).includes('project_id') && after === 'duplicate|confirmed|true ; review|true' && logged === '1', [mergeShot])
 }
 
+// DRAGMERGE: in the card view one document is dragged onto another. Nothing is merged by the drop itself: the comparison
+// window opens and the person decides. ATTACH: a record with no file says so, and the file can be added from the document.
+{
+  await go('/documents')
+  await page.locator('button[title="כרטיסים"]').click(); await page.waitForSelector('.fin-doccard', { timeout: 10000 }).catch(() => {})
+  const before = sql("select count(*) from fin_documents where status='duplicate'")
+  const src = page.locator('.fin-doccard').nth(0); const dst = page.locator('.fin-doccard').nth(1)
+  const a = await src.boundingBox(); const b = await dst.boundingBox()
+  await page.mouse.move(a.x + a.width / 2, a.y + 60); await page.mouse.down()
+  await page.mouse.move(a.x + a.width / 2 - 20, a.y + 70, { steps: 4 }); await page.mouse.move(b.x + b.width / 2, b.y + 80, { steps: 12 }); await page.waitForTimeout(300)
+  const hint = await page.locator('.fin-draghint').count(); const target = await page.locator('.fin-doccard.is-droptarget').count()
+  const dragShot = await shot('122-drag-merge')
+  await page.mouse.up(); await page.waitForSelector('.fin-merge__card', { timeout: 8000 }).catch(() => {})
+  const cards = await page.locator('.fin-merge__card').count()
+  const untouched = sql("select count(*) from fin_documents where status='duplicate'") === before
+  await page.locator('.fin-modal__foot').getByRole('button', { name: 'סגירה' }).click().catch(() => {}); await page.waitForTimeout(300)
+  await page.locator('button[title="טבלה"]').click().catch(() => {})
+  record('DRAGMERGE', 'גרירת מסמך על מסמך אחר בתצוגת הכרטיסים', 'בזמן הגרירה מופיע הסבר והכרטיס שמתחת מסומן כיעד; השחרור פותח את חלון ההשוואה ושום דבר לא מתמזג לפני אישור',
+    `הסבר: ${hint}; יעד מסומן: ${target}; חלון: ${cards} מסמכים; בלי שינוי לפני אישור: ${untouched}`, hint === 1 && target === 1 && cards === 2 && untouched, [dragShot])
+
+  sql("insert into fin_documents (status, source, supplier_name, doc_type, doc_number, issue_date, currency, total_amount, description, issues) values ('review','upload','Meta Platforms, Inc.','receipt','E2E-NOFILE-1', current_date - 20, 'ILS', 500, 'חיוב לפי יומן החיובים. קובץ הקבלה חסר.', '[{\"code\":\"missing_file\",\"message\":\"חסר קובץ\"}]'::jsonb)")
+  const nf = sql("select id from fin_documents where doc_number='E2E-NOFILE-1'")
+  await go(`/documents/${nf}`); await page.waitForSelector('.fin-nofile', { timeout: 10000 }).catch(() => {})
+  const said = await page.locator('.fin-nofile').count()
+  const nofileShot = await shot('123-no-file')
+  const bytes = Buffer.concat([fs.readFileSync(`${FIX}/meta-ads.pdf`), Buffer.from(`\n%e2e ${Date.now()}\n`)])
+  await page.locator('.fin-nofile input[type=file]').setInputFiles({ name: 'meta-receipt-oct.pdf', mimeType: 'application/pdf', buffer: bytes })
+  await page.waitForFunction(() => !document.querySelector('.fin-nofile'), null, { timeout: 20000 }).catch(() => {})
+  const row = sql(`select (file_path is not null)||'|'||coalesce(file_name,'')||'|'||total_amount||'|'||doc_number||'|'||(issues::text like '%missing_file%') from fin_documents where id='${nf}'`)
+  const attachedShot = await shot('124-file-attached')
+  record('ATTACH', 'רשומה בלי קובץ: הודעה ברורה וצירוף הקובץ', 'מסמך בלי קובץ מציג "לרשומה הזו אין קובץ" במקום תצוגה ריקה; צירוף קובץ מקשר אותו לרשומה, הפרטים הרשומים נשארים והסימון "חסר קובץ" יורד',
+    `הודעה: ${said}; אחרי צירוף: ${row}`, said === 1 && row === 'true|meta-receipt-oct.pdf|500.00|E2E-NOFILE-1|false', [nofileShot, attachedShot])
+}
+
 // PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the
 // system is a suspected duplicate; the supplier's own second receipt with another number is a separate purchase.
 {

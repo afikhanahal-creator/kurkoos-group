@@ -133,7 +133,7 @@ export default function Documents({ preset = 'all' }) {
     onDragStart: (e) => { setDragId(d.id); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', d.id) } catch { /* some browsers refuse */ } },
     onDragEnd: () => { setDragId(null); setOverId(null) },
     onDragOver: (e) => { if (dragId && dragId !== d.id) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (overId !== d.id) setOverId(d.id) } },
-    onDragLeave: () => { if (overId === d.id) setOverId(null) },
+    onDragLeave: (e) => { if (overId === d.id && !e.currentTarget.contains(e.relatedTarget)) setOverId(null) },
     onDrop: (e) => { e.preventDefault(); const from = byId(dragId); setDragId(null); setOverId(null); if (from && from.id !== d.id) setMerge([from, d]) },
   } : {})
   const [monthNow, setMonthNow] = useState('')
@@ -308,7 +308,18 @@ export default function Documents({ preset = 'all' }) {
       {picked.length > 0 && (
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <div className="fin-bulk__row">
-            <strong className="fin-bulk__count"><span>{picked.length === 1 ? 'מסמך אחד מסומן' : <>{picked.length} <span className="fin-bulk__long">מסמכים </span>מסומנים</>}</span><small>סה״כ {money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
+            <strong className="fin-bulk__count">
+              {(() => {
+                // the total of what is checked, per currency (never added across currencies); a document with no amount is named, not hidden
+                const sums = {}; let blank = 0
+                for (const d of picked) { if (d.total_amount == null) { blank++; continue } const c = d.currency || 'ILS'; sums[c] = (sums[c] || 0) + signedTotal(d) }
+                const parts = Object.entries(sums)
+                return <>
+                  <small className="fin-bulk__total">{parts.length ? parts.map(([c, v]) => money(v, c)).join(' + ') : '—'}</small>
+                  <span>{picked.length === 1 ? 'מסמך אחד מסומן' : <>{picked.length} <span className="fin-bulk__long">מסמכים </span>מסומנים</>}{blank > 0 && <em className="fin-bulk__blank"> · {blank === 1 ? 'אחד בלי סכום' : `${blank} בלי סכום`}</em>}</span>
+                </>
+              })()}
+            </strong>
             {edit && picked.length === 2 && <button type="button" className="fin-btn fin-bulk__merge" disabled={!!busy} onClick={() => setMerge(picked)}><Icon name="copy" size={17} /> מיזוג</button>}
             {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
             {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
@@ -376,7 +387,7 @@ export default function Documents({ preset = 'all' }) {
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (
-            <li key={d.id} data-month={months.get(d.id)} className={`fin-doccard ${sel.has(d.id) ? 'is-selected' : ''}`}>
+            <li key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-drop={overId === d.id ? 'שחררו כאן כדי למזג' : undefined} className={['fin-doccard', sel.has(d.id) ? 'is-selected' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : '', dragId && dragId !== d.id ? 'is-dropzone' : ''].filter(Boolean).join(' ')}>
               <button type="button" className="fin-doccard__open" onClick={() => go(link(d.id))} aria-label={`פתיחת ${d.supplier_name || d.file_name}`}><Thumbnail doc={d} /></button>
               <label className="fin-doccard__check"><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></label>
               <div className="fin-doccard__body">
@@ -487,6 +498,7 @@ export default function Documents({ preset = 'all' }) {
           {rows.length - shown > STEP * 2 && <button type="button" className="fin-link" onClick={() => setShown(rows.length)}>הצגת הכול</button>}
         </div>
       )}
+      {dragId && <p className="fin-draghint" role="status"><Icon name="copy" size={16} /> גוררים את "{byId(dragId)?.supplier_name || byId(dragId)?.file_name || 'המסמך'}": משחררים על מסמך אחר כדי למזג. לפני המיזוג תתבקשו לאשר.</p>}
       {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); setNote(text); await reload() }} />}
       {confirm && (
         <Modal title="אישור פעולה" onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>

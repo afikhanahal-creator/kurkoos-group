@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
-import { ago, date, money, DOC_TYPE } from './format.js'
+import { arrivedAt, byArrival, ago, date, money, DOC_TYPE } from './format.js'
 import { overview, periodOf, monthName } from './insights.js'
 import { exportSheet } from './exportPackage.js'
 import DateRange from './DateRange.jsx'
@@ -19,7 +19,7 @@ import { openDocs } from './links.js'
    the bookkeeping rules (ledger.js: a receipt that pays an invoice is not counted again), and opens the documents behind it. */
 const SPANS = [['3', '3 חודשים'], ['6', '6 חודשים'], ['12', '12 חודשים'], ['year', 'השנה']]
 const PERIODS = [['month', 'החודש'], ['last_month', 'החודש שעבר'], ['quarter', 'הרבעון'], ['ytd', 'מתחילת השנה'], ['12m', '12 חודשים'], ['year_last', 'השנה שעברה'], ['custom', 'טווח תאריכים…']]
-const short = (v) => { const a = Math.abs(v); return a >= 1e6 ? `${(v / 1e6).toFixed(a >= 1e7 ? 0 : 1)}M ₪` : a >= 1e4 ? `${Math.round(v / 1e3)}K ₪` : money(v) }
+const short = (v) => { const a = Math.abs(v); return a >= 1e6 ? `${(v / 1e6).toFixed(a >= 1e7 ? 1 : 2)}M ₪` : a >= 1e5 ? `${Math.round(v / 1e3)}K ₪` : `${Math.round(v).toLocaleString('he-IL')} ₪` }
 
 function Delta({ value, invert = false, label = 'מהתקופה הקודמת' }) {
   if (value === null || value === undefined || !Number.isFinite(value)) return <span className="fin-x-delta is-none">אין בסיס להשוואה</span>
@@ -50,12 +50,12 @@ export default function Executive() {
   const k = o.kpi
   // recent activity, newest first, grouped by day (today, yesterday, then the date)
   const feedRows = useMemo(() => documents.filter((d) => (!biz || d.business_id === biz) && d.status !== 'archived' && (feed === 'all' || (feed === 'open' ? payState(d) === 'open' : d.status === 'review')))
-    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 14), [documents, biz, feed])
+    .sort(byArrival).slice(0, 14), [documents, biz, feed])
   const feedDays = useMemo(() => {
     const dayOf = (t) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
     const today = dayOf(Date.now()); const yday = dayOf(Date.now() - 86400000)
     const m = new Map()
-    for (const d of feedRows) { const k = dayOf(d.created_at); const label = k === today ? 'היום' : k === yday ? 'אתמול' : date(k); if (!m.has(label)) m.set(label, []); m.get(label).push(d) }
+    for (const d of feedRows) { const k = dayOf(arrivedAt(d)); const label = k === today ? 'היום' : k === yday ? 'אתמול' : date(k); if (!m.has(label)) m.set(label, []); m.get(label).push(d) }
     return [...m.entries()]
   }, [feedRows])
   const weekNew = documents.filter((d) => (!biz || d.business_id === biz) && Date.now() - new Date(d.created_at).getTime() < 7 * 86400000).length

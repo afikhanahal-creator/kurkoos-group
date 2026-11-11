@@ -75,6 +75,11 @@ export function ago(t) {
 }
 export const monthKey = (d) => (d ? String(d).slice(0, 7) : '')
 export const monthLabel = (k) => (k ? new Date(`${k}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : '')
+// when the document reached the system: the email's time when it came by mail, else when it was added
+export const arrivedAt = (d) => d.email_date || d.created_at || ''
+// newest first, by a chosen time and then by the other (two documents that came in together keep a stable, sensible order)
+export const byArrival = (a, b) => String(arrivedAt(b)).localeCompare(String(arrivedAt(a))) || String(docDate(b)).localeCompare(String(docDate(a))) || String(b.id).localeCompare(String(a.id))
+export const byDocDate = (a, b) => String(docDate(b)).localeCompare(String(docDate(a))) || String(arrivedAt(b)).localeCompare(String(arrivedAt(a))) || String(b.id).localeCompare(String(a.id))
 export const docDate = (d) => d.issue_date || (d.email_date || d.created_at || '').slice(0, 10)
 export const period = (d) => d.accounting_period || monthKey(docDate(d))
 export const thisMonth = () => new Date().toISOString().slice(0, 7)

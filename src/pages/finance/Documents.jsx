@@ -10,6 +10,7 @@ import { exportSheet } from './exportPackage.js'
 import Thumbnail, { prefetchThumb } from './Thumbnail.jsx'
 import { supplierHistory } from './links.js'
 import DocList from './DocList.jsx'
+import MergeDialog from './MergeDialog.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
 import DateRange, { sayRange } from './DateRange.jsx'
@@ -121,6 +122,19 @@ export default function Documents({ preset = 'all' }) {
     return m
   }, [visible, sort.key])
   const listRef = useRef(null)
+  // two documents that may be one: picked with the check boxes ("מיזוג"), or by dragging one row onto another
+  const [merge, setMerge] = useState(null)
+  const [dragId, setDragId] = useState(null)
+  const [overId, setOverId] = useState(null)
+  const byId = (did) => documents.find((d) => d.id === did)
+  const dragProps = (d) => (edit ? {
+    draggable: true,
+    onDragStart: (e) => { setDragId(d.id); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', d.id) } catch { /* some browsers refuse */ } },
+    onDragEnd: () => { setDragId(null); setOverId(null) },
+    onDragOver: (e) => { if (dragId && dragId !== d.id) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (overId !== d.id) setOverId(d.id) } },
+    onDragLeave: () => { if (overId === d.id) setOverId(null) },
+    onDrop: (e) => { e.preventDefault(); const from = byId(dragId); setDragId(null); setOverId(null); if (from && from.id !== d.id) setMerge([from, d]) },
+  } : {})
   const [monthNow, setMonthNow] = useState('')
   useEffect(() => {
     if (!months.size) { setMonthNow(''); return undefined }
@@ -294,6 +308,7 @@ export default function Documents({ preset = 'all' }) {
         <div className="fin-bulk" role="region" aria-label="פעולות על המסומנים">
           <div className="fin-bulk__row">
             <strong className="fin-bulk__count"><span>{picked.length === 1 ? 'מסמך אחד מסומן' : <>{picked.length} <span className="fin-bulk__long">מסמכים </span>מסומנים</>}</span><small>סה״כ {money(picked.reduce((a, d) => a + signedTotal(d), 0))}</small></strong>
+            {edit && picked.length === 2 && <button type="button" className="fin-btn fin-bulk__merge" disabled={!!busy} onClick={() => setMerge(picked)}><Icon name="copy" size={17} /> מיזוג</button>}
             {can('approve') && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy} onClick={() => bulk('approve', { status: 'approved' }, (d) => d.status === 'review' && !hasError(d))}><Icon name="check" size={18} /> אישור</button>}
             {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
             <button type="button" className="fin-btn" disabled={!!busy} onClick={() => sheet('excel')}><Icon name="table" size={17} /> Excel</button>
@@ -356,7 +371,7 @@ export default function Documents({ preset = 'all' }) {
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : view === 'list' ? (
-        <DocList marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
+        <DocList rowProps={dragProps} rowClass={(d) => [overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (
@@ -426,7 +441,7 @@ export default function Documents({ preset = 'all' }) {
               {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
-                  <tr key={d.id} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={d.id === id ? 'is-current' : ''} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
+                  <tr key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={[d.id === id ? 'is-current' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
@@ -475,6 +490,7 @@ export default function Documents({ preset = 'all' }) {
           {rows.length - shown > STEP * 2 && <button type="button" className="fin-link" onClick={() => setShown(rows.length)}>הצגת הכול</button>}
         </div>
       )}
+      {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); setNote(text); await reload() }} />}
       {confirm && (
         <Modal title="אישור פעולה" onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
           <p>הפעולה תחול על {confirm.count} מסמכים{confirm.skipped ? ` (${confirm.skipped} דולגו כי הם לא מתאימים לה)` : ''}. כל שינוי נרשם ביומן.</p>

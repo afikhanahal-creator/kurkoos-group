@@ -1930,6 +1930,33 @@ await page.getByRole('button', { name: 'מצב כהה' }).click(); await page.wa
 await shot('27-dark')
 await page.getByRole('button', { name: 'מצב בהיר' }).click()
 
+// MERGE: two documents are merged by a person. The dialog opens from two checked rows; keeping one closes the other as
+// its duplicate and moves a missing detail over; an approved document is never the one that is closed; an employee cannot.
+{
+  await go('/documents')
+  const boxes = page.locator('.fin-table tbody tr input[type=checkbox]')
+  await boxes.nth(0).check(); await boxes.nth(1).check(); await page.waitForTimeout(300)
+  await page.locator('.fin-bulk').getByRole('button', { name: 'מיזוג' }).click(); await page.waitForSelector('.fin-merge__card', { timeout: 10000 }).catch(() => {})
+  const cards = await page.locator('.fin-merge__card').count()
+  const diffs = await page.locator('.fin-merge__card .is-diff').count()
+  const mergeShot = await shot('121-merge-dialog')
+  await page.getByRole('button', { name: 'סגירה' }).click(); await page.waitForTimeout(300)
+  await page.locator('.fin-bulk').getByRole('button', { name: 'ביטול' }).click().catch(() => {})
+  const [keepId, dropId] = sql("select string_agg(id::text, ',') from (select id from fin_documents where status='review' and project_id is null order by created_at desc limit 2) x").split(',')
+  const projId = sql('select id from fin_projects order by created_at limit 1')
+  sql(`update fin_documents set project_id='${projId}', business_id=(select business_id from fin_projects where id='${projId}') where id='${dropId}'`)
+  const approvedId = sql("select id from fin_documents where status in ('approved','sent') limit 1")
+  const emp = await api(empToken, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
+  const same = await api(adminToken, { action: 'merge-docs', keep_id: keepId, drop_id: keepId })
+  const lockedDrop = approvedId ? await api(adminToken, { action: 'merge-docs', keep_id: keepId, drop_id: approvedId }) : { status: 409 }
+  const done = await api(adminToken, { action: 'merge-docs', keep_id: keepId, drop_id: dropId })
+  const after = sql(`select (select status||'|'||duplicate_state||'|'||(duplicate_of='${keepId}') from fin_documents where id='${dropId}')||' ; '||(select status||'|'||(project_id='${projId}') from fin_documents where id='${keepId}')`)
+  const logged = sql(`select count(*) from fin_audit where action='merged_documents' and entity_id='${keepId}'`)
+  record('MERGE', 'מיזוג שני מסמכים', 'שני מסמכים מסומנים פותחים חלון השוואה עם סימון ההבדלים; "להשאיר" סוגר את השני ככפול ומעביר פרט חסר (פרויקט) למסמך שנשאר; מסמך מאושר לא נסגר; אותו מסמך פעמיים נדחה; עובד לא ממזג; נרשם ביומן',
+    `חלון: ${cards} מסמכים, ${diffs} הבדלים; עובד: ${emp.status}; אותו מסמך: ${same.status}; מאושר: ${lockedDrop.status}; מיזוג: ${done.status}, הועבר ${JSON.stringify(done.data.filled)}; אחרי: ${after}; יומן: ${logged}`,
+    cards === 2 && diffs > 0 && emp.status === 403 && same.status === 400 && lockedDrop.status === 409 && done.status === 200 && (done.data.filled || []).includes('project_id') && after === 'duplicate|confirmed|true ; review|true' && logged === '1', [mergeShot])
+}
+
 // PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the
 // system is a suspected duplicate; the supplier's own second receipt with another number is a separate purchase.
 {

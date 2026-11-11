@@ -3009,3 +3009,29 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 @media (max-width: 700px) { .fin-cprof__todo .fin-link { min-height: 44px; } .fin-cprof__learn li { flex-wrap: wrap; } .fin-cprof__learn li .fin-btn { width: 100%; justify-content: center; } }
 /* on a phone the checklist comes first: what is missing is the reason to open this screen */
 @media (max-width: 1000px) { .fin-cprof { display: flex; flex-direction: column; } .fin-cprof > .fin-cprof__card { order: -1; position: static; } }
+
+/* ---------- two documents, one charge: side by side, with what differs marked ---------- */
+.fin-merge { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.fin-merge__lead { margin: 0 0 12px; font-size: var(--t-sm); }
+.fin-merge__card { display: grid; gap: 10px; align-content: start; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); min-width: 0; }
+.fin-merge__thumb { display: grid; place-items: center; height: 180px; border-radius: var(--r-m); background: var(--wash); overflow: hidden; }
+.fin-merge__thumb > * { max-height: 100%; }
+.fin-merge__card dl { margin: 0; display: grid; gap: 0; }
+.fin-merge__card dl > div { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 8px; padding: 6px 8px; border-radius: var(--r-s); font-size: var(--t-sm); }
+.fin-merge__card dt { color: var(--text-2); }
+.fin-merge__card dd { margin: 0; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.fin-merge__card dl > div.is-diff { background: var(--warn-wash); }
+.fin-merge__card .fin-btn--primary { justify-content: center; min-height: 44px; }
+.fin-merge__card .fin-link { justify-self: center; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; }
+.fin-merge__vs { align-self: center; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--wash); color: var(--text-2); }
+/* dragging a document onto another offers to merge them */
+.fin-table tbody tr.is-dragging, .fin-dlist__row.is-dragging { opacity: 0.45; }
+.fin-table tbody tr.is-droptarget > td, .fin-dlist__row.is-droptarget { background: var(--ocean-wash) !important; box-shadow: inset 0 2px 0 var(--ocean), inset 0 -2px 0 var(--ocean); }
+.fin .fin-bulk .fin-bulk__merge { border-color: var(--ocean); color: var(--ocean-2); font-weight: 700; }
+@media (max-width: 700px) {
+  .fin-merge { grid-template-columns: minmax(0, 1fr); }
+  .fin-merge__vs { justify-self: center; }
+  .fin-merge__thumb { height: 120px; }
+  .fin-merge__card .fin-link { min-height: 44px; }
+  .fin .fin-bulk__row > .fin-bulk__merge { grid-column: 1 / -1; }
+}

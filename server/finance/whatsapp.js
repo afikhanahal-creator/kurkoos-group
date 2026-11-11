@@ -1,9 +1,7 @@
 // Mobile scanners: a registered phone sends a photo or a PDF to the office WhatsApp number, and it enters the same
 // pipeline as an upload. Green API (already used for the lead alerts) posts each incoming message to
 // /api/finance-whatsapp with "Authorization: Bearer <FINANCE_WHATSAPP_WEBHOOK_TOKEN>" (the webhookUrlToken setting).
-// Every message is logged in fin_whatsapp_inbox, accepted or refused. Only a registered phone that sent a file is ever
-// answered: an unknown number, and an ordinary text from a registered one, get no reply at all — the same number is the
-// line clients write to.
+// Every message is logged in fin_whatsapp_inbox, accepted or refused; unknown numbers are refused with a reply.
 import crypto from 'node:crypto'
 import { env, MIME_OK, MAX_FILE, QUOTA_STOP } from './env.js'
 import { sb, one, insert, patch, upload, storageUsage, audit } from './db.js'
@@ -48,13 +46,15 @@ export async function notifyApproved(documentId, user) {
 }
 
 // Green API serves media from its own storage hosts. Anything else is refused (no fetching of internal URLs).
-const MEDIA_HOSTS = () => String(process.env.FINANCE_WA_MEDIA_HOSTS || 'greenapi.net,green-api.com').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)
+// Green API keeps media on its own domains and on object storage it rents (DigitalOcean "do-media-<pool>", Yandex "sw-media")
+const MEDIA_STORAGE = [/^do-media-\d+\.[a-z0-9-]+\.digitaloceanspaces\.com$/, /^sw-media(-out)?\.storage\.yandexcloud\.net$/]
+const MEDIA_HOSTS = () => String(process.env.FINANCE_WA_MEDIA_HOSTS || 'greenapi.net,green-api.com,greenapi.com').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)
 export function mediaUrlOk(raw) {
   let u; try { u = new URL(raw) } catch { return false }
   const host = u.hostname.toLowerCase()
   const local = process.env.FINANCE_WA_MEDIA_HOSTS && (u.protocol === 'http:' || u.protocol === 'https:')
   if (u.protocol !== 'https:' && !local) return false
-  return MEDIA_HOSTS().some((h) => host === h || host.endsWith(`.${h}`))
+  return MEDIA_HOSTS().some((h) => host === h || host.endsWith(`.${h}`)) || (u.protocol === 'https:' && MEDIA_STORAGE.some((re) => re.test(host)))
 }
 async function fetchMedia(url) {
   const r = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(20_000) })
@@ -67,6 +67,21 @@ async function fetchMedia(url) {
 
 const extOf = (mime) => (mime === 'application/pdf' ? 'pdf' : mime.split('/')[1])
 
+/* The office number may already feed another system (a chatbot, a CRM). Green API sends each message to one address
+   only, so when this system takes the address over it passes every message on, unchanged, to the address that had it
+   before: FINANCE_WHATSAPP_FORWARD_URL, with FINANCE_WHATSAPP_FORWARD_TOKEN as its bearer token when it has one. */
+export const forwardTo = () => { try { const u = new URL(String(process.env.FINANCE_WHATSAPP_FORWARD_URL || '')); return u.protocol === 'https:' || process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS === '1' ? u.toString() : '' } catch { return '' } }
+async function forward(body) {
+  const url = forwardTo()
+  if (!url) return
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000)
+  const tok = process.env.FINANCE_WHATSAPP_FORWARD_TOKEN
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) }, body: JSON.stringify(body), signal: ctl.signal })
+    if (!r.ok) console.warn('[finance-whatsapp] forward answered', r.status)
+  } catch (e) { console.warn('[finance-whatsapp] forward failed', String(e.message || e).slice(0, 120)) } finally { clearTimeout(t) }
+}
+
 export default async function whatsappWebhook(req, res) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim()
   const want = process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN || ''
@@ -74,6 +89,10 @@ export default async function whatsappWebhook(req, res) {
   let b = req.body
   if (typeof b === 'string') { try { b = JSON.parse(b) } catch { b = {} } }
   b = b || {}
+  // the other system gets the message whatever this one decides about it
+  await Promise.all([forward(b), take(b, res)])
+}
+async function take(b, res) {
   if (b.typeWebhook !== 'incomingMessageReceived') { res.status(200).json({ ok: true, ignored: b.typeWebhook || 'unknown' }); return }
   const chat = String(b.senderData?.chatId || b.senderData?.sender || '')
   if (!chat.endsWith('@c.us')) { res.status(200).json({ ok: true, ignored: 'group' }); return }   // groups are not scanners
@@ -81,6 +100,12 @@ export default async function whatsappWebhook(req, res) {
   const messageId = String(b.idMessage || '')
   const md = b.messageData || {}
   const kind = md.typeMessage || 'unknown'
+  let sender = await one(`fin_whatsapp_senders?phone=eq.${phone}&active=eq.true&select=*`)
+  // a phone whose user was deactivated stops being a scanner
+  if (sender?.user_id && !(await one(`fin_members?user_id=eq.${sender.user_id}&active=eq.true&select=user_id`))) sender = null
+  // On a number that also serves another system (clients write to it), a stranger's message leaves no trace here:
+  // it is not this system's business, and their phone numbers do not belong in the finance records.
+  if (!sender && forwardTo()) { res.status(200).json({ ok: true, outcome: 'refused_unknown_number' }); return }
   // the inbox row is claimed first: its unique message_id makes a Green API retry a no-op even while the first delivery is still being read
   let row
   try { row = await insert('fin_whatsapp_inbox', { message_id: messageId || null, phone, kind, outcome: 'received' }) } catch (e) {
@@ -92,27 +117,21 @@ export default async function whatsappWebhook(req, res) {
   }
   const log = (r) => patch(`fin_whatsapp_inbox?id=eq.${row.id}`, r).catch(() => {})
 
-  let sender = await one(`fin_whatsapp_senders?phone=eq.${phone}&active=eq.true&select=*`)
-  // a phone whose user was deactivated stops being a scanner
-  if (sender?.user_id && !(await one(`fin_members?user_id=eq.${sender.user_id}&active=eq.true&select=user_id`))) sender = null
   if (!sender) {
-    // A number that is not a registered scanner gets NOTHING back, ever (2026-11-11: a client of the office got "this
-    // number is not registered as a scanner"). The office number is first of all the line clients and leads write to;
-    // a stranger must never hear from the accounting system. The message is only logged (the screen offers "add").
+    // nothing is written back: the office number is also where clients write, and they must never hear from this system
     await log({ outcome: 'refused_unknown_number' })
     res.status(200).json({ ok: true, outcome: 'refused_unknown_number' }); return
   }
   const file = md.fileMessageData
   if (!['imageMessage', 'documentMessage'].includes(kind) || !file?.downloadUrl) {
-    // an ordinary message (text, a voice note, a reaction) from a registered phone is a conversation with the office,
-    // not a scan: logged, never answered
+    // an ordinary chat message from a registered phone is not a failed scan: logged, not answered
     await log({ sender_id: sender.id, outcome: 'unsupported' })
     res.status(200).json({ ok: true, outcome: 'unsupported' }); return
   }
   try {
     const mime = MIME_OK.has(file.mimeType) ? file.mimeType : kind === 'imageMessage' ? 'image/jpeg' : file.mimeType
     if (!MIME_OK.has(mime)) { await log({ sender_id: sender.id, outcome: 'unsupported', file_name: file.fileName, detail: mime }); await reply(phone, 'אפשר לשלוח רק תמונה או PDF.'); res.status(200).json({ ok: true, outcome: 'unsupported' }); return }
-    if (!mediaUrlOk(file.downloadUrl)) { await log({ sender_id: sender.id, outcome: 'failed', file_name: file.fileName, detail: 'download host not allowed' }); res.status(200).json({ ok: false, outcome: 'failed' }); return }
+    if (!mediaUrlOk(file.downloadUrl)) { await log({ sender_id: sender.id, outcome: 'failed', file_name: file.fileName, detail: `download host not allowed: ${(() => { try { return new URL(file.downloadUrl).hostname } catch { return 'unreadable address' } })()}` }); res.status(200).json({ ok: false, outcome: 'failed' }); return }
     const usage = await storageUsage()
     if (usage !== null && usage >= QUOTA_STOP) {
       await log({ sender_id: sender.id, outcome: 'refused_quota', file_name: file.fileName, detail: `storage ${Math.round(usage * 100)}%` })
@@ -202,13 +221,19 @@ export async function health(origin) {
   const tokenOk = !!settings && hasToken && String(settings.webhookUrlToken || '') === process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN
   const incomingOk = !!settings && settings.incomingWebhook === 'yes'
   const elsewhere = !!settings?.webhookUrl && !urlOk
+  // the other address is shown without its query string (a token may ride there)
+  const bare = (u) => { try { const x = new URL(u); return `${x.origin}${x.pathname}`.replace(/\/$/, '') } catch { return '' } }
+  const other = elsewhere ? bare(settings.webhookUrl) : ''
+  const fwd = forwardTo()
+  const fwdSame = !!fwd && !!other && bare(fwd) === other
   add('webhook', urlOk && tokenOk && incomingOk, 'הודעות נכנסות מגיעות למערכת',
-    !settings ? 'אי אפשר לבדוק בלי תשובה מספק ה-WhatsApp' : urlOk && tokenOk && incomingOk ? 'כל הודעה שמגיעה למספר המשרד נשלחת למערכת' : elsewhere ? 'ההודעות הנכנסות נשלחות כרגע לכתובת אחרת' : !urlOk ? 'הודעות נכנסות לא נשלחות למערכת' : !tokenOk ? 'קוד האימות של ההודעות לא תואם' : 'קבלת הודעות נכנסות כבויה',
+    !settings ? 'אי אפשר לבדוק בלי תשובה מספק ה-WhatsApp' : urlOk && tokenOk && incomingOk ? 'כל הודעה שמגיעה למספר המשרד נשלחת למערכת' : elsewhere ? `ההודעות הנכנסות נשלחות כרגע לכתובת אחרת: ${other}${fwdSame ? '. היא מוגדרת כיעד העברה, ולכן אפשר להפעיל כאן בלי לנתק אותה' : ''}` : !urlOk ? 'הודעות נכנסות לא נשלחות למערכת' : !tokenOk ? 'קוד האימות של ההודעות לא תואם' : 'קבלת הודעות נכנסות כבויה',
     !settings || (urlOk && tokenOk && incomingOk) ? '' : 'לוחצים "הפעלת הקליטה" והמערכת מגדירה את זה לבד')
+  if (fwd) add('forward', true, 'העברה למערכת הקודמת', `כל הודעה שמגיעה מועברת גם ל-${bare(fwd)}`)
   const senders = (await sb('fin_whatsapp_senders?active=eq.true&select=id')) || []
   add('senders', senders.length > 0, 'טלפונים רשומים', senders.length ? `${senders.length} טלפונים יכולים לשלוח מסמכים` : 'עוד לא נרשם אף טלפון', senders.length ? '' : 'מוסיפים טלפון בכפתור "הוספת טלפון"')
   const last = ((await sb('fin_whatsapp_inbox?select=outcome,at,kind&order=at.desc&limit=1')) || [])[0] || null
-  return { ok: steps.every((x) => x.ok), steps, last, replies: await repliesOn(), can_setup: hasInstance && hasToken && !!settings && !(urlOk && tokenOk && incomingOk), elsewhere }
+  return { ok: steps.every((x) => x.ok), steps, last, replies: await repliesOn(), can_setup: hasInstance && hasToken && !!settings && !(urlOk && tokenOk && incomingOk), elsewhere: elsewhere && !fwdSame, other, forwarding: !!fwd }
 }
 /* points the incoming messages of the office number at this system. A webhook that already goes somewhere else is
    replaced only when the person says so (force): another tool may be listening on it. */
@@ -216,7 +241,9 @@ export async function setup(origin, { force = false } = {}) {
   if (!configured()) throw Object.assign(new Error('חסרות הגדרות בשרת. הריצו קודם את בדיקת החיבור'), { status: 400 })
   const cur = await green('GET', 'getSettings')
   const want = hookUrl(origin)
-  if (cur.webhookUrl && String(cur.webhookUrl).replace(/\/$/, '') !== want && !force) throw Object.assign(new Error('ההודעות הנכנסות נשלחות כרגע לכתובת אחרת. אם מערכת אחרת משתמשת בהן היא תפסיק לקבל אותן'), { status: 409, elsewhere: true })
+  const bare = (u) => { try { const x = new URL(u); return `${x.origin}${x.pathname}`.replace(/\/$/, '') } catch { return '' } }
+  const kept = !!forwardTo() && bare(forwardTo()) === bare(cur.webhookUrl || '')
+  if (cur.webhookUrl && String(cur.webhookUrl).replace(/\/$/, '') !== want && !force && !kept) throw Object.assign(new Error('ההודעות הנכנסות נשלחות כרגע לכתובת אחרת. אם מערכת אחרת משתמשת בהן היא תפסיק לקבל אותן'), { status: 409, elsewhere: true })
   const r = await green('POST', 'setSettings', { webhookUrl: want, webhookUrlToken: process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN, incomingWebhook: 'yes' })
   if (!r.saveSettings) throw Object.assign(new Error('ספק ה-WhatsApp לא שמר את ההגדרות'), { status: 502 })
   return { saved: true }

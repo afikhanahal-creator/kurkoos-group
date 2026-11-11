@@ -483,8 +483,8 @@ const waDoc = sql("select source||'|'||status||'|'||coalesce(supplier_name,'-')|
 const waLog = (await fetch(`${FAKES}/__log`).then((r) => r.json())).wa
 await page.reload(); await page.waitForTimeout(1200)
 const scannersShot = await shot('53-scanners')
-record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה בלי שום תשובה (זה גם הקו של הלקוחות); טוקן שגוי ← 401; טקסט ממספר רשום ← בלי תשובה', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}`,
-  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /נקלטה במערכת בהצלחה/.test(m.message) && /ספק: קפה לנדוור/.test(m.message) && /295/.test(m.message)) && !waLog.some((m) => /לא רשום|שלחו צילום|סורק/.test(m.message)), [scannersEmpty, scannersShot])
+record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה בלי שום הודעה אליו (לקוחות כותבים לאותו מספר); טוקן שגוי ← 401; הודעת טקסט נרשמת ולא נענית', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}`,
+  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /נקלטה במערכת בהצלחה/.test(m.message) && /ספק: קפה לנדוור/.test(m.message) && /295/.test(m.message)) && !waLog.some((m) => /לא רשום|שלחו צילום/.test(m.message)), [scannersEmpty, scannersShot])
 
 // CLOUD: Google Drive and Dropbox, through the real OAuth round trip and the real upload code
 await fetch(`${FAKES}/__next_account?email=office@kurkoos.test`)
@@ -970,7 +970,7 @@ const empToken = await login('worker@kurkoos.test', 'W0rker!xx')
     'הבדיקה קוראת את מצב המכשיר וההגדרות מהספק; לפני ההפעלה שלב ההודעות הנכנסות חסר; הפעלה לא דורסת כתובת של מערכת אחרת בלי אישור; אחריה הכול תקין; מכשיר מנותק מסומן; עובד לא בודק ולא מפעיל',
     `לפני: webhook ${step(c1, 'webhook')?.ok}, אפשר להפעיל ${c1.can_setup}; כתובת אחרת: ${taken.status}; הפעלה: ${on.status}, נשמר ${set.webhookUrl} / ${set.incomingWebhook} / טוקן ${set.webhookUrlToken === 'test-wa-hook'}; אחרי: ${c2.ok}; מנותק: phone ${step(c3, 'phone')?.ok}; עובד: ${empCheck.status},${empSetup.status}; מסך: ${uiSteps} שלבים, תקין ${uiOk}`,
     step(c1, 'webhook')?.ok === false && c1.can_setup === true && step(c1, 'phone')?.ok === true && taken.status === 409 && on.status === 200 && /\/api\/finance-whatsapp$/.test(set.webhookUrl || '') && set.incomingWebhook === 'yes' && set.webhookUrlToken === 'test-wa-hook'
-      && c2.ok === true && step(c3, 'phone')?.ok === false && c3.ok === false && empCheck.status === 403 && empSetup.status === 403 && uiSteps === 5 && uiOk === 1, [wcShot])
+      && c2.ok === true && step(c3, 'phone')?.ok === false && c3.ok === false && empCheck.status === 403 && empSetup.status === 403 && uiSteps === 6 && uiOk === 1, [wcShot])
 }
 const accDocs = await rest('fin_documents?select=status', accToken)
 const accEdit = await rest(`fin_documents?status=eq.sent`, accToken, { method: 'PATCH', body: JSON.stringify({ notes: 'x' }) })
@@ -1718,9 +1718,9 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const chipPop = await page.locator('.fin-wachip__pop').innerText().catch(() => '')
   const chipShot = await shot('106-whatsapp-chip')
   await page.keyboard.press('Escape')
-  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, מספר לא רשום שניסה לשלוח מוצג עם "הוספה"; בפס העליון המספר עם הסבר וקישור לניהול',
+  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, על מספר שמשרת גם מערכת אחרת מספרים לא רשומים לא נרשמים ולא מוצגים; בפס העליון המספר עם הסבר וקישור לניהול',
     `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
-    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 1 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
+    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
 
   // 5. a document: attachment file and a linked document, paid state, open in a new window, delete for a finance manager
   const ronirInv = sql("select id from fin_documents where file_name='ronir-inv.pdf'")
@@ -2049,6 +2049,10 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const second = await api(tokA, { action: 'whatsapp-approved', document_id: waId })
   const lastMsg = ((await fetch(`${FAKES}/__log`).then((r) => r.json())).wa.slice(-1)[0] || {}).message || ''
   const driveMap = await api(tokA, { action: 'receipts-drive' })
+  // the address that had the office number before still gets every message, with its own token
+  const passed = (await fetch(`${FAKES}/__log`).then((r) => r.json())).hooks.filter((h) => h.query === '?wa=1')
+  const passedQuiet = passed.find((h) => /wa-quiet-1/.test(h.raw))
+  const fwdStep = (await api(tokA, { action: 'whatsapp-check' })).data.steps?.find((x) => x.key === 'forward')
   await go('/receipts'); await page.waitForSelector('.fin-receipts__table', { timeout: 15000 }).catch(() => {})
   const figs = await page.locator('.fin-receipts__figs > *').count()
   const rowsAll = await page.locator('.fin-receipts__table tbody tr').count()
@@ -2058,9 +2062,9 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const recShot = await shot('125-receipts')
   await page.locator('.fin-receipts__table tbody tr').first().click(); await page.waitForTimeout(1200)
   const opened = /\/documents\//.test(page.url())
-  record('RECEIPTS', 'קבלות וחשבוניות: מסך, הודעות אוטומטיות והודעת אישור', 'המסך מציג חמישה מספרים ואת המסמכים שהגיעו ב-WhatsApp ובהעלאה, עם סטטוס לכל אחד, ושורה פותחת את המסמך; כשההודעות כבויות לא נשלחת הודעה והודעה נכנסת עדיין נרשמת; כשהן פועלות נשלחת; עובד לא משנה את ההגדרה; מסמך שאושר שולח לשולח הודעה אחת בלבד, ומסמך שלא אושר לא שולח',
-    `כיבוי: ${off.status}, הודעה נכנסת ${quiet.data.outcome}, נשלחו ${n1 - n0}; הפעלה: ${on.status}, ${loud.data.outcome}, נשלחו ${n2 - n1}; עובד: ${empSwitch.status}; לפני אישור: ${early.data.reason}; סטטוס: ${st}; אישור: ${first.data.reason}, שוב: ${second.data.reason}; הודעה: ${lastMsg.slice(0, 40)}; Drive: ${driveMap.status}/${typeof driveMap.data.files}; מסך: ${figs} מספרים, ${rowsAll} שורות, WhatsApp ${rowsWa}, סטטוסים ${pills}; נפתח: ${opened}`,
-    off.status === 200 && quiet.data.outcome === 'duplicate' && n1 === n0 && on.status === 200 && n2 === n1 + 1 && empSwitch.status === 403 && early.data.reason === 'not_applicable' && st === 'approved' && first.data.reason === 'sent' && second.data.reason === 'already' && /המסמך אושר ונשמר/.test(lastMsg) && driveMap.status === 200 && typeof driveMap.data.files === 'object' && figs === 5 && rowsAll >= rowsWa && rowsWa >= 1 && /אושר|נשמר ב-Drive/.test(pills) && opened, [recShot])
+  record('RECEIPTS', 'קבלות וחשבוניות: מסך, הודעות אוטומטיות והודעת אישור', 'המסך מציג חמישה מספרים ואת המסמכים שהגיעו ב-WhatsApp ובהעלאה, עם סטטוס לכל אחד, ושורה פותחת את המסמך; כשההודעות כבויות לא נשלחת הודעה והודעה נכנסת עדיין נרשמת; כשהן פועלות נשלחת; עובד לא משנה את ההגדרה; מסמך שאושר שולח לשולח הודעה אחת בלבד, ומסמך שלא אושר לא שולח; כל הודעה נכנסת מועברת גם לכתובת של המערכת הקודמת',
+    `כיבוי: ${off.status}, הודעה נכנסת ${quiet.data.outcome}, נשלחו ${n1 - n0}; הפעלה: ${on.status}, ${loud.data.outcome}, נשלחו ${n2 - n1}; עובד: ${empSwitch.status}; לפני אישור: ${early.data.reason}; סטטוס: ${st}; אישור: ${first.data.reason}, שוב: ${second.data.reason}; הודעה: ${lastMsg.slice(0, 40)}; Drive: ${driveMap.status}/${typeof driveMap.data.files}; מסך: ${figs} מספרים, ${rowsAll} שורות, WhatsApp ${rowsWa}, סטטוסים ${pills}; נפתח: ${opened}; העברה למערכת הקודמת: ${passed.length} הודעות, עם הטוקן שלה ${passedQuiet?.auth === 'Bearer test-other-system'}, שלב בבדיקה ${fwdStep?.ok}`,
+    off.status === 200 && quiet.data.outcome === 'duplicate' && n1 === n0 && on.status === 200 && n2 === n1 + 1 && empSwitch.status === 403 && early.data.reason === 'not_applicable' && st === 'approved' && first.data.reason === 'sent' && second.data.reason === 'already' && /המסמך אושר ונשמר/.test(lastMsg) && driveMap.status === 200 && typeof driveMap.data.files === 'object' && figs === 5 && rowsAll >= rowsWa && rowsWa >= 1 && /אושר|נשמר ב-Drive/.test(pills) && opened && passed.length >= 2 && passedQuiet?.auth === 'Bearer test-other-system' && fwdStep?.ok === true, [recShot])
 }
 
 // PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the

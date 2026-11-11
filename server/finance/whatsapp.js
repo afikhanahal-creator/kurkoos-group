@@ -188,6 +188,18 @@ export async function sendDocument({ doc, phone, caption }) {
    The answers come from Green API itself (the state of the instance and its settings), not from what we hope is set.
    Nothing secret leaves the server: the token is only compared. */
 const hookUrl = (origin) => `${String(origin || '').replace(/\/$/, '')}/api/finance-whatsapp`
+/* The address Green API is given must answer by itself: a site that redirects (the bare domain to "www") would make
+   every message depend on the sender following a redirect of a POST. The address is asked once and, when it redirects
+   to the same path on another host of this site, the final address is the one that is registered and checked. */
+async function finalHook(origin) {
+  const want = hookUrl(origin)
+  try {
+    const r = await fetch(want, { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(6000) })
+    const to = r.status >= 300 && r.status < 400 ? r.headers.get('location') : ''
+    if (to) { const u = new URL(to, want); if (u.protocol === 'https:' && u.pathname === '/api/finance-whatsapp') return u.toString().replace(/\/$/, '') }
+  } catch { /* the plain address stands */ }
+  return want
+}
 const green = async (method, path, body) => {
   const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/${path}/${process.env.GREENAPI_TOKEN}`, {
     method, signal: AbortSignal.timeout(12_000), ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
@@ -216,7 +228,7 @@ export async function health(origin) {
   add('number', !!office && (!wid || wid === office), 'מספר המשרד',
     !office ? 'המספר שמוצג לעובדים לא הוגדר בשרת (FINANCE_WHATSAPP_NUMBER)' : wid && wid !== office ? `במערכת מוצג ${office}, אבל המכשיר המחובר הוא ${wid}` : `העובדים שולחים אל ${office}`,
     !office ? `מוסיפים ב-Vercel את FINANCE_WHATSAPP_NUMBER${wid ? ` = ${wid}` : ''}` : wid && wid !== office ? 'מתקנים את FINANCE_WHATSAPP_NUMBER למספר של המכשיר המחובר' : '')
-  const want = hookUrl(origin)
+  const want = await finalHook(origin)
   const urlOk = !!settings && String(settings.webhookUrl || '').replace(/\/$/, '') === want
   const tokenOk = !!settings && hasToken && String(settings.webhookUrlToken || '') === process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN
   const incomingOk = !!settings && settings.incomingWebhook === 'yes'
@@ -240,7 +252,7 @@ export async function health(origin) {
 export async function setup(origin, { force = false } = {}) {
   if (!configured()) throw Object.assign(new Error('חסרות הגדרות בשרת. הריצו קודם את בדיקת החיבור'), { status: 400 })
   const cur = await green('GET', 'getSettings')
-  const want = hookUrl(origin)
+  const want = await finalHook(origin)
   const bare = (u) => { try { const x = new URL(u); return `${x.origin}${x.pathname}`.replace(/\/$/, '') } catch { return '' } }
   const kept = !!forwardTo() && bare(forwardTo()) === bare(cur.webhookUrl || '')
   if (cur.webhookUrl && String(cur.webhookUrl).replace(/\/$/, '') !== want && !force && !kept) throw Object.assign(new Error('ההודעות הנכנסות נשלחות כרגע לכתובת אחרת. אם מערכת אחרת משתמשת בהן היא תפסיק לקבל אותן'), { status: 409, elsewhere: true })

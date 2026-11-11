@@ -11,6 +11,7 @@ import * as api from './api.js'
 const reportXlsx = (name, head, rows) => buildXlsx([{ name, columns: head.map((h, i) => { const col = rows.map((r) => r[i]).filter((v) => v !== '' && v !== null && v !== undefined); const isNum = col.length > 0 && col.every((v) => typeof v === 'number'); const isDate = col.length > 0 && col.every((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v))); return { header: String(h), type: isDate ? 'date' : isNum ? (col.every(Number.isInteger) && !/סה״כ|מע״מ|סכום|לפני/.test(h) ? 'int' : 'money') : 'text', width: Math.min(40, Math.max(10, String(h).length + 4)) } }), rows }], { title: name })
 import { Card, Empty, Icon, PageHead } from './ui.jsx'
 import { MonthChart, RankBars, ReportFigures } from './ReportCharts.jsx'
+import { useResizableColumns } from './columns.js'
 import Select from './Select.jsx'
 import Overview from './Overview.jsx'
 import { reportOf } from './CompanySettings.jsx'
@@ -28,6 +29,7 @@ export default function Reports() {
   const [biz, setBiz] = useState(params.get('company') || '')
   const [to, setTo] = useState(thisMonth())
   const [span, setSpan] = useState(12)
+  const colsRef = useResizableColumns(`report-${kind}`)
   const from = shiftMonth(to, -(span - 1))
   const months = Array.from({ length: span }, (_, i) => shiftMonth(from, i))
   const scoped = useMemo(() => documents.filter((d) => !biz || d.business_id === biz), [documents, biz])
@@ -142,7 +144,7 @@ export default function Reports() {
             ? <Card title="הוצאות לפי חודש" className="fin-report__wide"><MonthChart months={report.monthKeys} rows={report.rows} onOpen={openRow} /></Card>
             : report.chart && <Card title={`${report.head[report.chart]} לפי ${report.head[0]}`}><RankBars rows={shown.filter(({ r }) => r[report.chart]).slice(0, 12).map(({ r, n }) => ({ key: n, n, name: String(r[0]), value: r[report.chart], count: typeof r[1] === 'number' ? r[1] : null, detail: report.head.slice(2).map((h, k) => [h, report.count ? String(r[k + 2]) : money(r[k + 2])]) }))} format={report.count ? (v) => String(v) : money} onPick={report.lists ? (r) => openRow(r.n) : undefined} /></Card>}
           <div className="fin-table-wrap">
-            <table className="fin-table fin-table--plain">
+            <table ref={colsRef} className="fin-table fin-table--plain">
               <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0][i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>
               <tbody>{shown.map(({ r, n }) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : report.lists?.[n]?.length ? () => openRow(n) : undefined} className={[report.ids || report.lists?.[n]?.length ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
               {totals && <tfoot><tr>{totals.map((t, i) => <td key={i} className={i ? 'fin-num' : 'fin-td-main'} data-label={i ? report.head[i] : undefined}>{typeof t === 'number' ? (isMoney(i) ? money(t) : t) : t}</td>)}</tr></tfoot>}

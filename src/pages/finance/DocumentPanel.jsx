@@ -40,6 +40,46 @@ function NoFile({ doc, onSaved, canEdit }) {
   )
 }
 
+/* An email that says "click here to view the document": the paper is behind a link. Two ways to bring it in, right
+   under the email: the system fetches the link, or the person opens it, saves the file and gives it here. Either way
+   the file is read like any upload and the document waits for approval. */
+function LinkedDoc({ doc, onSaved }) {
+  const [links, setLinks] = useState(null)
+  const [busy, setBusy] = useState('')
+  const [msg, setMsg] = useState(null)
+  useEffect(() => { let on = true; setLinks(null); setMsg(null); api.callServer('linked-links', { document_id: doc.id }).then((r) => { if (on) setLinks(r?.links || []) }).catch(() => { if (on) setLinks([]) }); return () => { on = false } }, [doc.id])
+  const fetchIt = async (url) => {
+    setBusy(url); setMsg(null)
+    try {
+      const r = await api.callServer('linked-fetch', { document_id: doc.id, url })
+      if (r.fetched && r.document) { onSaved?.(r.document); return }
+      setMsg({ tone: 'warn', text: r.reason || 'המסמך לא ירד מהקישור', open: r.open })
+    } catch (e) { setMsg({ tone: 'bad', text: e.message }) } finally { setBusy('') }
+  }
+  const give = async (file) => {
+    if (!file) return
+    setBusy('upload'); setMsg(null)
+    try { onSaved?.(await api.replaceMainFile(doc, file)) } catch (e) { setMsg({ tone: 'bad', text: e.message }) } finally { setBusy('') }
+  }
+  return (
+    <section className="fin-linked" aria-label="המסמך שמאחורי המייל">
+      <div className="fin-linked__text">
+        <strong>זה המייל, לא המסמך עצמו</strong>
+        <span>{links === null ? 'מחפש במייל קישור למסמך…' : links.length ? 'המסמך נמצא מאחורי קישור במייל. אפשר להוריד אותו לכאן, והמערכת תקרא ממנו את כל הפרטים.' : 'לא נמצא במייל קישור למסמך. אם יש לכם את הקובץ, אפשר להעלות אותו כאן.'}</span>
+      </div>
+      <div className="fin-linked__acts">
+        {(links || []).slice(0, 2).map((l, i) => (
+          <button key={l.url} type="button" className={`fin-btn ${i === 0 ? 'fin-btn--primary' : ''}`} disabled={!!busy} onClick={() => fetchIt(l.url)} title={l.host}>
+            <Icon name="download" size={17} /> {busy === l.url ? 'מוריד וקורא…' : i === 0 ? 'הורדת המסמך מהמייל' : `קישור נוסף: ${l.text.slice(0, 24)}`}
+          </button>
+        ))}
+        <label className={`fin-btn ${busy === 'upload' ? 'is-busy' : ''}`}><Icon name="upload" size={17} /> {busy === 'upload' ? 'מעלה וקורא…' : 'העלאת המסמך עצמו'}<input type="file" accept="application/pdf,image/*" hidden disabled={!!busy} onChange={(e) => { give(e.target.files?.[0]); e.target.value = '' }} /></label>
+      </div>
+      {msg && <p className={`fin-linked__msg is-${msg.tone}`} role="alert">{msg.text}{msg.open && <> <a className="fin-link" href={msg.open} target="_blank" rel="noreferrer noopener">פתיחת הקישור בלשונית חדשה</a></>}</p>}
+    </section>
+  )
+}
+
 function Preview({ doc, onSaved, canEdit }) {
   const [src, setSrc] = useState(null)
   const [html, setHtml] = useState(null)
@@ -59,7 +99,7 @@ function Preview({ doc, onSaved, canEdit }) {
   }, [doc.file_path, doc.file_mime])
   if (!doc.file_path) return <NoFile doc={doc} onSaved={onSaved} canEdit={canEdit} />
   if (err) return <p className="fin-error fin-error--block" role="alert">הקובץ לא נטען: {err}</p>
-  if (html !== null) return <HtmlPreview html={html} />
+  if (html !== null) return <><HtmlPreview html={html} />{canEdit && !['approved', 'sent'].includes(doc.status) && <LinkedDoc doc={doc} onSaved={onSaved} />}</>
   if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
   return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} />
 }
@@ -77,6 +117,29 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const [tab, setTab] = useState('fields')
   const history = useAsync(() => api.loadAudit({ entity: 'document', entityId: doc.id, limit: 50 }), [doc.updated_at])
   const dirty = FIELDS.some((k) => String(form[k] ?? '') !== String(doc[k] ?? blank(k)))
+  // The document changes underneath an open form: the reading ends a few seconds after an upload, a rule assigns a
+  // company, a colleague edits. A field the person has not touched follows the document; a field they typed in keeps
+  // what they typed. (Before, the form stayed as it was when it opened, and saving wrote its blanks over the reading.)
+  const base = useRef(Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])))
+  const formRef = useRef(form); formRef.current = form
+  useEffect(() => {
+    const f = formRef.current; const change = {}
+    for (const k of FIELDS) {
+      const was = base.current[k]; const now = doc[k] ?? blank(k)
+      if (String(was ?? '') === String(now ?? '')) continue
+      if (String(f[k] ?? '') === String(was ?? '')) change[k] = now
+      base.current[k] = now
+    }
+    if (Object.keys(change).length) setForm((cur) => ({ ...cur, ...change }))
+  }, [doc])
+  // leaving with typed changes asks first: a stray tap outside the panel or on an arrow must not throw the work away
+  const dirtyRef = useRef(false); dirtyRef.current = dirty
+  const leave = async (go) => { if (!go) return; if (dirtyRef.current && !(await askConfirm({ title: 'יש שינויים שלא נשמרו', text: 'מה שהוקלד במסמך הזה עוד לא נשמר. לצאת בלי לשמור?', ok: 'יציאה בלי שמירה', danger: true }))) return; go() }
+  useEffect(() => {
+    const warn = (e) => { if (dirtyRef.current) { e.preventDefault(); e.returnValue = '' } }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [])
   const fc = doc.field_confidence || {}
   // the raw reading is not in the list (it is heavy): fetched with the document when the panel opens
   const full = useAsync(() => (doc.extraction !== undefined ? Promise.resolve(doc) : api.loadDocumentFull(doc.id).catch(() => doc)), [doc.id, doc.updated_at])
@@ -94,14 +157,15 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
 
   // the keys are registered once for the life of the panel; the handlers are read at the moment of the key. (Registered
   // again on every render, a key pressed while the list refreshed was lost.)
-  const keys = useRef({ onClose, onNext, onPrev })
-  keys.current = { onClose, onNext, onPrev }
+  const keys = useRef({ onClose, onNext, onPrev, leave })
+  keys.current = { onClose, onNext, onPrev, leave }
   useEffect(() => {
     const onKey = (e) => {
       if (e.target.closest?.('input, select, textarea')) return
-      if (e.key === 'Escape') keys.current.onClose()
-      if (e.key === 'ArrowLeft' && keys.current.onNext) keys.current.onNext()
-      if (e.key === 'ArrowRight' && keys.current.onPrev) keys.current.onPrev()
+      if (document.querySelector('.fin-modal')) return   // a dialog on top of the panel owns the keys
+      if (e.key === 'Escape') keys.current.leave(keys.current.onClose)
+      if (e.key === 'ArrowLeft' && keys.current.onNext) keys.current.leave(keys.current.onNext)
+      if (e.key === 'ArrowRight' && keys.current.onPrev) keys.current.leave(keys.current.onPrev)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -129,6 +193,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const clean = () => {
     const out = {}
     for (const k of FIELDS) {
+      // only what the person changed is sent: an untouched field is never written back over a newer value
+      if (String(form[k] ?? '') === String(doc[k] ?? blank(k))) continue
       let v = form[k]
       if (['amount_before_vat', 'vat_amount', 'total_amount'].includes(k)) v = v === '' || v === null ? null : Number(v)
       else if (['issue_date', 'due_date', 'payment_date', 'business_id', 'project_id', 'category_id'].includes(k)) v = v || null
@@ -166,7 +232,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     setBusy('extract'); setErr('')
     try {
       const { document } = await api.callServer('extract', { document_id: doc.id })
-      if (document) { onSaved(document); setForm(Object.fromEntries(FIELDS.map((k) => [k, document[k] ?? blank(k)]))) }
+      if (document) { const fresh = Object.fromEntries(FIELDS.map((k) => [k, document[k] ?? blank(k)])); base.current = { ...fresh }; onSaved(document); setForm(fresh) }
     } catch (e) { setErr(e.message) } finally { setBusy('') }
   }
   const remove = async () => {
@@ -209,7 +275,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
 
   return (
     <div className="fin-panel" role="dialog" aria-modal="true" aria-label={`מסמך: ${doc.supplier_name || doc.file_name}`}>
-      <button type="button" className="fin-panel__scrim" aria-label="סגירה" tabIndex={-1} onClick={onClose} />
+      <button type="button" className="fin-panel__scrim" aria-label="סגירה" tabIndex={-1} onClick={() => leave(onClose)} />
       <div className="fin-panel__body" ref={body}>
         <header className="fin-panel__head">
           <div className="fin-panel__title">
@@ -226,9 +292,9 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
             {doc.file_path && <button type="button" className="fin-icon-btn" onClick={async () => saveBlob(await api.fileBlob(doc), doc.file_name || 'document')} aria-label="הורדת הקובץ המקורי" title="הורדת הקובץ המקורי"><Icon name="download" /></button>}
             {doc.file_path && <button type="button" className="fin-icon-btn fin-panel__print" onClick={() => document.querySelector('.fin-panel .fin-viewer__print')?.click()} aria-label="הדפסת המסמך" title="הדפסה"><Icon name="print" /></button>}
             {(can('manage') || (can('operate') && !['approved', 'sent'].includes(doc.status))) && <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={remove} disabled={!!busy} aria-label="מחיקת המסמך (לא רלוונטי)" title="מחיקת המסמך"><Icon name="trash" /></button>}
-            <button type="button" className="fin-icon-btn" onClick={onPrev} disabled={!onPrev} aria-label="המסמך הקודם" title="הקודם"><Icon name="back" /></button>
-            <button type="button" className="fin-icon-btn" onClick={onNext} disabled={!onNext} aria-label="המסמך הבא" title="הבא"><Icon name="next" /></button>
-            <button type="button" className="fin-icon-btn" onClick={onClose} aria-label="סגירה"><Icon name="close" /></button>
+            <button type="button" className="fin-icon-btn" onClick={() => leave(onPrev)} disabled={!onPrev} aria-label="המסמך הקודם" title="הקודם"><Icon name="back" /></button>
+            <button type="button" className="fin-icon-btn" onClick={() => leave(onNext)} disabled={!onNext} aria-label="המסמך הבא" title="הבא"><Icon name="next" /></button>
+            <button type="button" className="fin-icon-btn" onClick={() => leave(onClose)} aria-label="סגירה"><Icon name="close" /></button>
           </div>
         </header>
 

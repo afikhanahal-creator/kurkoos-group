@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
+import { useResizableColumns } from './columns.js'
 import * as api from './api.js'
 import { ENTITIES, SUPPLIER_STATUS, toRow, validate } from './entities.js'
 import { PROJECT_STATUS, date, money, nameOf, toCsv } from './format.js'
@@ -171,6 +172,7 @@ export default function MasterData({ kind }) {
   const [edit, setEdit] = useState(null)
   const [importing, setImporting] = useState(false)
   const [sort, setSort] = useState({ key: 'total', dir: -1 })
+  const colsRef = useResizableColumns(`entities-${kind}`)
   const [toast, setToast] = useState('')
   const canWrite = can(def.write)
 
@@ -239,7 +241,7 @@ export default function MasterData({ kind }) {
         </Empty>
       ) : (
         <div className="fin-table-wrap">
-          <table className="fin-table fin-table--ent">
+          <table ref={colsRef} className="fin-table fin-table--ent">
             <thead><tr>
               <Th k="name">{def.one}</Th>
               {kind === 'suppliers' && <><th className="fin-col-md">ח.פ</th><th className="fin-col-lg">סוג</th><th className="fin-col-lg">קטגוריה קבועה</th></>}
@@ -266,7 +268,7 @@ export default function MasterData({ kind }) {
                   <td className={`fin-num fin-ent-stat ${kind === 'suppliers' || kind === 'projects' ? 'fin-ent-stat--wide' : ''}`} data-label="מסמכים"><span className="fin-ent-stat__n">{r.docs || 0}</span>{r.pendingDocs ? <small className="fin-warn-text fin-ent-stat__wait"> ({r.pendingDocs} ממתינים)</small> : null}</td>
                   <td className="fin-num fin-td-total" data-label="הוצאות"><strong>{money(r.total || 0)}</strong></td>
                   {kind === 'projects' && <td className="fin-col-md" data-label="תקציב">{r.budget ? <span className="fin-budget"><span style={{ width: `${Math.min(100, ((r.total || 0) / r.budget) * 100)}%` }} className={(r.total || 0) > r.budget ? 'is-over' : ''} />{Math.round(((r.total || 0) / r.budget) * 100)}%</span> : '—'}</td>}
-                  <td className="fin-ent-last" data-label="אחרון">{date(r.last) || '—'}</td>
+                  <td className="fin-ent-last fin-td-date" data-label="אחרון">{date(r.last) || '—'}</td>
                   <td className="fin-td-status">{status(r)}</td>
                 </tr>
               ))}

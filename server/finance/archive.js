@@ -468,6 +468,13 @@ async function compareStep(ctx, rec) {
     if (noSource) R.no_source++
     repairs.push({ r, kind, own, noSource })
   }
+  // The archive's own copy of a document that no longer exists in the system (deleted there) goes to the Drive trash:
+  // a deletion in the system is a deletion in Drive. A file with no mark of ours is somebody's own and is only counted.
+  const loose = seen.filter((f) => !f.trashed && f.document_id && !held.has(f.document_id))
+  const alive = new Set()
+  for (let i = 0; i < loose.length; i += 100) for (const d of (await sb(`fin_documents?id=in.(${loose.slice(i, i + 100).map((f) => f.document_id).join(',')})&select=id`)) || []) alive.add(d.id)
+  R.deleted_trashed = 0
+  for (const f of loose) if (!alive.has(f.document_id) && t.auto_correct !== false) { const done = await driveTrash(ctx.token, f.drive_file_id).then(() => true, () => false); if (done) { f.trashed = true; R.deleted_trashed++; await event(t.id, null, 'withdrawn', { why: 'המסמך נמחק מהמערכת', name: f.name, reconcile: rec.id }) } }
   for (const f of seen) if (!f.trashed && (!f.document_id || !held.has(f.document_id))) { R.orphans++; if (R.orphan_names.length < 30) R.orphan_names.push(f.name) }
   // the ones that are right: "last checked against Drive" moves on
   const now = new Date().toISOString()
@@ -635,6 +642,29 @@ export async function settings({ targetId, by_kind, auto, auto_correct, enabled,
 }
 
 /* a person takes documents out of the archive (or puts them back): the copy goes to the Drive trash and is not uploaded again */
+/* A document is about to be deleted from the system: its copy in Drive goes to the Drive trash first (30 days to
+   restore there). Only the archive's own file is touched. A failure does not stop the deletion: the next check against
+   Drive finds a file whose document no longer exists and trashes it then. */
+export async function removeFromDrive({ ids, user }) {
+  let trashed = 0; const failed = []
+  const ctxs = new Map()
+  for (const id of ids) {
+    const rows = (await sb(`fin_drive_files?document_id=eq.${q(id)}&drive_file_id=not.is.null&select=target_id,drive_file_id,organized_name,folder_path`)) || []
+    for (const r of rows) {
+      try {
+        if (!ctxs.has(r.target_id)) { const t = await one(`fin_cloud_targets?id=eq.${q(r.target_id)}&select=*`); ctxs.set(r.target_id, t && t.status !== 'revoked' ? await context(t) : null) }
+        const ctx = ctxs.get(r.target_id)
+        if (!ctx) { failed.push(id); continue }
+        await driveTrash(ctx.token, r.drive_file_id)
+        await event(r.target_id, null, 'withdrawn', { why: 'המסמך נמחק מהמערכת', name: r.organized_name, path: r.folder_path, document: id }, user)
+        trashed++
+      } catch { failed.push(id) }
+    }
+  }
+  if (trashed) await audit('cloud', null, 'archive_file_trashed', { documents: ids.slice(0, 50), trashed }, user).catch(() => {})
+  return { trashed, failed: [...new Set(failed)] }
+}
+
 export async function exclude({ targetId, ids, excluded = true, user }) {
   for (const id of ids) {
     await patch(`fin_drive_files?target_id=eq.${q(targetId)}&document_id=eq.${q(id)}`, { excluded: !!excluded, status: 'queued', attempts: 0, next_try_at: null, locked_until: null, updated_at: new Date().toISOString() })

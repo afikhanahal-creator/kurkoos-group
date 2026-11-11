@@ -11,6 +11,7 @@ import Thumbnail, { prefetchThumb } from './Thumbnail.jsx'
 import { supplierHistory } from './links.js'
 import DocList from './DocList.jsx'
 import MergeDialog from './MergeDialog.jsx'
+import { useResizableColumns } from './columns.js'
 import { PeekCard } from './Peek.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
@@ -123,6 +124,7 @@ export default function Documents({ preset = 'all' }) {
     return m
   }, [visible, sort.key])
   const listRef = useRef(null)
+  const colsRef = useResizableColumns(`documents-${preset || 'all'}`)
   // two documents that may be one: picked with the check boxes ("מיזוג"), or by dragging one row onto another
   const [merge, setMerge] = useState(null)
   const [dragId, setDragId] = useState(null)
@@ -377,6 +379,13 @@ export default function Documents({ preset = 'all' }) {
       )}
 
       {monthNow && <div className="fin-monthchip" aria-hidden="true"><span>{monthNow}</span></div>}
+      {/* cards and the list have no table head to tick: the same "all" lives in a bar above them */}
+      {rows.length > 0 && (
+        <div className={`fin-selall ${view === 'table' ? 'fin-selall--phone' : ''}`}>
+          <label><input type="checkbox" checked={allOn} ref={(el) => { if (el) el.indeterminate = !allOn && rows.some((d) => sel.has(d.id)) }} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="בחירת כל המסמכים שברשימה" /> <span>{allOn ? 'ניקוי הבחירה' : `בחירת הכול (${rows.length.toLocaleString('he-IL')})`}</span></label>
+          {sel.size > 0 && !allOn && <small>{sel.size.toLocaleString('he-IL')} נבחרו</small>}
+        </div>
+      )}
       <div className="fin-doclistbox" ref={listRef}>
       {rows.length === 0 ? (
         tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
@@ -427,7 +436,7 @@ export default function Documents({ preset = 'all' }) {
         </ul>
       ) : (
         <div className="fin-table-wrap">
-          <table className="fin-table fin-table--docs">
+          <table ref={colsRef} className="fin-table fin-table--docs">
             <thead>
               <tr>
                 <th className="fin-table__check"><input type="checkbox" checked={allOn} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="סימון הכול" /></th>
@@ -465,7 +474,7 @@ export default function Documents({ preset = 'all' }) {
                     <td className="fin-td-status"><StatusPill status={d.status} /></td>
                     <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td className="fin-col-md fin-col-mid fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
-                    <td data-label="תאריך">{date(docDate(d))}</td>
+                    <td data-label="תאריך" className="fin-td-date">{date(docDate(d))}</td>
                     <td className="fin-col-lg" data-label="חברה">{nameOf(businesses, d.business_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="פרויקט">{nameOf(projects, d.project_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="קטגוריה">{d.category || '—'}</td>

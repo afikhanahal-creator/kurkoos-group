@@ -102,7 +102,11 @@ export default async function whatsappWebhook(req, res) {
   await Promise.all([forward(b), take(b, res)])
 }
 async function take(b, res) {
-  if (b.typeWebhook !== 'incomingMessageReceived') { res.status(200).json({ ok: true, ignored: b.typeWebhook || 'unknown' }); return }
+  // Two kinds of message bring a document: one that arrives at the office number, and one sent FROM the office phone
+  // itself (Green API: outgoingMessageReceived, "messages sent from the phone"). Messages this system sends through the
+  // API (outgoingAPIMessageReceived) are never read, so its own confirmations cannot loop back.
+  const fromOffice = b.typeWebhook === 'outgoingMessageReceived'
+  if (b.typeWebhook !== 'incomingMessageReceived' && !fromOffice) { res.status(200).json({ ok: true, ignored: b.typeWebhook || 'unknown' }); return }
   const chat = String(b.senderData?.chatId || b.senderData?.sender || '')
   if (!chat.endsWith('@c.us')) { res.status(200).json({ ok: true, ignored: 'group' }); return }   // groups are not scanners
   const phone = chat.split('@')[0].replace(/\D/g, '')
@@ -110,6 +114,15 @@ async function take(b, res) {
   const md = b.messageData || {}
   const kind = md.typeMessage || 'unknown'
   let sender = await one(`fin_whatsapp_senders?phone=eq.${phone}&active=eq.true&select=*`)
+  if (fromOffice) {
+    // The office phone talks to clients all day, so only two chats count: the note-to-self chat (the office number
+    // writing to itself) and a chat with a registered scanner. A file sent anywhere else is the office's own business
+    // and leaves no trace here; so does plain text in any chat.
+    const own = String(b.instanceData?.wid || '').split('@')[0].replace(/\D/g, '')
+    const toSelf = !!own && phone === own
+    if (!['imageMessage', 'documentMessage'].includes(kind) || !(toSelf || sender)) { res.status(200).json({ ok: true, ignored: 'office_chat' }); return }
+    if (!sender) sender = { id: null, user_id: null, business_id: null, docs_count: 0 }
+  }
   // a phone whose user was deactivated stops being a scanner
   if (sender?.user_id && !(await one(`fin_members?user_id=eq.${sender.user_id}&active=eq.true&select=user_id`))) sender = null
   // On a number that also serves another system (clients write to it), a stranger's message leaves no trace here:
@@ -158,7 +171,7 @@ async function take(b, res) {
     const runs = await newDocRuns('whatsapp')
     const done = await processStored(doc, runs, 'whatsapp')
     await closeRuns(runs)
-    await patch(`fin_whatsapp_senders?id=eq.${sender.id}`, { docs_count: (sender.docs_count || 0) + 1, last_received_at: new Date().toISOString() })
+    if (sender.id) await patch(`fin_whatsapp_senders?id=eq.${sender.id}`, { docs_count: (sender.docs_count || 0) + 1, last_received_at: new Date().toISOString() })
     await log({ sender_id: sender.id, outcome: 'imported', document_id: doc.id, file_name: file.fileName })
     const site = String(process.env.SITE_URL || '').replace(/\/$/, '')
     const link = site ? `\n${site}/admin/finance/documents/${doc.id}` : ''
@@ -241,15 +254,22 @@ export async function health(origin) {
   const urlOk = !!settings && String(settings.webhookUrl || '').replace(/\/$/, '') === want
   const tokenOk = !!settings && hasToken && String(settings.webhookUrlToken || '') === process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN
   const incomingOk = !!settings && settings.incomingWebhook === 'yes'
+  const officeOk = !!settings && settings.outgoingMessageWebhook === 'yes'
   const elsewhere = !!settings?.webhookUrl && !urlOk
   // the other address is shown without its query string (a token may ride there)
   const bare = (u) => { try { const x = new URL(u); return `${x.origin}${x.pathname}`.replace(/\/$/, '') } catch { return '' } }
   const other = elsewhere ? bare(settings.webhookUrl) : ''
   const fwd = forwardTo()
+  // The line's webhook may belong to another system that passes every message on to this one (FINANCE_WHATSAPP_VIA_URL
+  // names its address). Then the address at the provider is rightly "elsewhere", and this system must not take it.
+  const via = bare(String(process.env.FINANCE_WHATSAPP_VIA_URL || ''))
+  const viaOk = !!via && !!other && other === via
   const fwdSame = !!fwd && !!other && bare(fwd) === other
-  add('webhook', urlOk && tokenOk && incomingOk, 'הודעות נכנסות מגיעות למערכת',
+  if (viaOk) add('webhook', incomingOk, 'הודעות נכנסות מגיעות למערכת', incomingOk ? `ההודעות של הקו מגיעות ל-${via}, והיא מעבירה כל הודעה גם למערכת הזו. אין מה להפעיל כאן` : 'הודעות נכנסות כבויות אצל ספק ה-WhatsApp', incomingOk ? '' : 'מפעילים הודעות נכנסות במערכת שמחזיקה את הקו')
+  else add('webhook', urlOk && tokenOk && incomingOk, 'הודעות נכנסות מגיעות למערכת',
     !settings ? 'אי אפשר לבדוק בלי תשובה מספק ה-WhatsApp' : urlOk && tokenOk && incomingOk ? 'כל הודעה שמגיעה למספר המשרד נשלחת למערכת' : elsewhere ? `ההודעות הנכנסות נשלחות כרגע לכתובת אחרת: ${other}${fwdSame ? '. היא מוגדרת כיעד העברה, ולכן אפשר להפעיל כאן בלי לנתק אותה' : ''}` : !urlOk ? 'הודעות נכנסות לא נשלחות למערכת' : !tokenOk ? 'קוד האימות של ההודעות לא תואם' : 'קבלת הודעות נכנסות כבויה',
     !settings || (urlOk && tokenOk && incomingOk) ? '' : 'לוחצים "הפעלת הקליטה" והמערכת מגדירה את זה לבד')
+  if (settings) add('office', officeOk, 'שליחה מהטלפון של המשרד', officeOk ? 'קבלה שנשלחת מהטלפון של המשרד בצ׳אט "הודעה לעצמי", או לטלפון רשום, נקלטת' : 'קבלות שנשלחות מהטלפון של המשרד עצמו עוד לא מגיעות למערכת', officeOk ? '' : 'לוחצים "הפעלת הקליטה"')
   if (fwd) add('forward', true, 'העברה למערכת הקודמת', `כל הודעה שמגיעה מועברת גם ל-${bare(fwd)}`)
   const senders = (await sb('fin_whatsapp_senders?active=eq.true&select=id')) || []
   add('senders', senders.length > 0, 'טלפונים רשומים', senders.length ? `${senders.length} טלפונים יכולים לשלוח מסמכים` : 'עוד לא נרשם אף טלפון', senders.length ? '' : 'מוסיפים טלפון בכפתור "הוספת טלפון"')
@@ -258,7 +278,7 @@ export async function health(origin) {
   const dayAgo = new Date(Date.now() - 86400_000).toISOString()
   const badCode = ((await sb(`fin_whatsapp_inbox?outcome=eq.unauthorized&at=gt.${encodeURIComponent(dayAgo)}&select=at,detail&order=at.desc&limit=1`).catch(() => [])) || [])[0] || null
   if (badCode && (!last || badCode.at > last.at)) add('code', false, 'הודעות מגיעות ונדחות', `ההודעה האחרונה נדחתה: ${badCode.detail}`, 'לוחצים "הפעלת הקליטה" כדי לרשום מחדש את הכתובת ואת קוד האימות אצל ספק ה-WhatsApp')
-  return { ok: steps.every((x) => x.ok), steps, last, replies: await repliesOn(), can_setup: hasInstance && hasToken && !!settings && (!(urlOk && tokenOk && incomingOk) || !!(badCode && (!last || badCode.at > last.at))), elsewhere: elsewhere && !fwdSame, other, forwarding: !!fwd }
+  return { ok: steps.every((x) => x.ok), steps, last, replies: await repliesOn(), can_setup: !viaOk && hasInstance && hasToken && !!settings && (!(urlOk && tokenOk && incomingOk && officeOk) || !!(badCode && (!last || badCode.at > last.at))), elsewhere: elsewhere && !fwdSame && !viaOk, other, forwarding: !!fwd, via: viaOk ? via : '' }
 }
 /* points the incoming messages of the office number at this system. A webhook that already goes somewhere else is
    replaced only when the person says so (force): another tool may be listening on it. */
@@ -268,8 +288,10 @@ export async function setup(origin, { force = false } = {}) {
   const want = await finalHook(origin)
   const bare = (u) => { try { const x = new URL(u); return `${x.origin}${x.pathname}`.replace(/\/$/, '') } catch { return '' } }
   const kept = !!forwardTo() && bare(forwardTo()) === bare(cur.webhookUrl || '')
+  const via = bare(String(process.env.FINANCE_WHATSAPP_VIA_URL || ''))
+  if (via && bare(cur.webhookUrl || '') === via && !force) throw Object.assign(new Error('הקו מחובר למערכת אחרת שמעבירה את ההודעות לכאן. אין צורך להפעיל, והפעלה כאן תנתק אותה'), { status: 409, elsewhere: true })
   if (cur.webhookUrl && String(cur.webhookUrl).replace(/\/$/, '') !== want && !force && !kept) throw Object.assign(new Error('ההודעות הנכנסות נשלחות כרגע לכתובת אחרת. אם מערכת אחרת משתמשת בהן היא תפסיק לקבל אותן'), { status: 409, elsewhere: true })
-  const r = await green('POST', 'setSettings', { webhookUrl: want, webhookUrlToken: process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN, incomingWebhook: 'yes' })
+  const r = await green('POST', 'setSettings', { webhookUrl: want, webhookUrlToken: process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN, incomingWebhook: 'yes', outgoingMessageWebhook: 'yes' })
   if (!r.saveSettings) throw Object.assign(new Error('ספק ה-WhatsApp לא שמר את ההגדרות'), { status: 502 })
   return { saved: true }
 }

@@ -970,7 +970,7 @@ const empToken = await login('worker@kurkoos.test', 'W0rker!xx')
     'הבדיקה קוראת את מצב המכשיר וההגדרות מהספק; לפני ההפעלה שלב ההודעות הנכנסות חסר; הפעלה לא דורסת כתובת של מערכת אחרת בלי אישור; אחריה הכול תקין; מכשיר מנותק מסומן; עובד לא בודק ולא מפעיל',
     `לפני: webhook ${step(c1, 'webhook')?.ok}, אפשר להפעיל ${c1.can_setup}; כתובת אחרת: ${taken.status}; הפעלה: ${on.status}, נשמר ${set.webhookUrl} / ${set.incomingWebhook} / טוקן ${set.webhookUrlToken === 'test-wa-hook'}; אחרי: ${c2.ok}; מנותק: phone ${step(c3, 'phone')?.ok}; עובד: ${empCheck.status},${empSetup.status}; מסך: ${uiSteps} שלבים, תקין ${uiOk}`,
     step(c1, 'webhook')?.ok === false && c1.can_setup === true && step(c1, 'phone')?.ok === true && taken.status === 409 && on.status === 200 && /\/api\/finance-whatsapp$/.test(set.webhookUrl || '') && set.incomingWebhook === 'yes' && set.webhookUrlToken === 'test-wa-hook'
-      && c2.ok === true && step(c3, 'phone')?.ok === false && c3.ok === false && empCheck.status === 403 && empSetup.status === 403 && uiSteps === 6 && uiOk === 1, [wcShot])
+      && c2.ok === true && step(c3, 'phone')?.ok === false && c3.ok === false && empCheck.status === 403 && empSetup.status === 403 && uiSteps === 7 && uiOk === 1, [wcShot])
 }
 const accDocs = await rest('fin_documents?select=status', accToken)
 const accEdit = await rest(`fin_documents?status=eq.sent`, accToken, { method: 'PATCH', body: JSON.stringify({ notes: 'x' }) })
@@ -2065,6 +2065,83 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   record('RECEIPTS', 'קבלות וחשבוניות: מסך, הודעות אוטומטיות והודעת אישור', 'המסך מציג חמישה מספרים ואת המסמכים שהגיעו ב-WhatsApp ובהעלאה, עם סטטוס לכל אחד, ושורה פותחת את המסמך; כשההודעות כבויות לא נשלחת הודעה והודעה נכנסת עדיין נרשמת; כשהן פועלות נשלחת; עובד לא משנה את ההגדרה; מסמך שאושר שולח לשולח הודעה אחת בלבד, ומסמך שלא אושר לא שולח; כל הודעה נכנסת מועברת גם לכתובת של המערכת הקודמת',
     `כיבוי: ${off.status}, הודעה נכנסת ${quiet.data.outcome}, נשלחו ${n1 - n0}; הפעלה: ${on.status}, ${loud.data.outcome}, נשלחו ${n2 - n1}; עובד: ${empSwitch.status}; לפני אישור: ${early.data.reason}; סטטוס: ${st}; אישור: ${first.data.reason}, שוב: ${second.data.reason}; הודעה: ${lastMsg.slice(0, 40)}; Drive: ${driveMap.status}/${typeof driveMap.data.files}; מסך: ${figs} מספרים, ${rowsAll} שורות, WhatsApp ${rowsWa}, סטטוסים ${pills}; נפתח: ${opened}; העברה למערכת הקודמת: ${passed.length} הודעות, עם הטוקן שלה ${passedQuiet?.auth === 'Bearer test-other-system'}, שלב בבדיקה ${fwdStep?.ok}`,
     off.status === 200 && quiet.data.outcome === 'duplicate' && n1 === n0 && on.status === 200 && n2 === n1 + 1 && empSwitch.status === 403 && early.data.reason === 'not_applicable' && st === 'approved' && first.data.reason === 'sent' && second.data.reason === 'already' && /המסמך אושר ונשמר/.test(lastMsg) && driveMap.status === 200 && typeof driveMap.data.files === 'object' && figs === 5 && rowsAll >= rowsWa && rowsWa >= 1 && /אושר|נשמר ב-Drive/.test(pills) && opened && passed.length >= 2 && passedQuiet?.auth === 'Bearer test-other-system' && fwdStep?.ok === true, [recShot])
+}
+
+// OFFICE: a receipt sent FROM the office phone. Only the note-to-self chat and a chat with a registered phone count;
+// a file the office sends to anybody else, and plain text, leave no trace.
+{
+  const own = '972501234567'
+  const outMsg = (id, to, text) => ({ typeWebhook: 'outgoingMessageReceived', idMessage: id, instanceData: { idInstance: 1101, wid: `${own}@c.us`, typeInstance: 'whatsapp' }, senderData: { chatId: `${to}@c.us`, sender: `${own}@c.us` }, messageData: text ? { typeMessage: 'textMessage', textMessageData: { textMessage: text } } : { typeMessage: 'imageMessage', fileMessageData: { downloadUrl: `${FAKES}/green/file/wa-receipt.png`, fileName: 'x.jpg', mimeType: 'image/png', caption: '' } } })
+  const rowsBefore = sql('select count(*) from fin_whatsapp_inbox')
+  const toSelf = await hook(outMsg('out-self-1', own))
+  const toScanner = await hook(outMsg('out-scan-1', '972543049491'))
+  const toClient = await hook(outMsg('out-client-1', '972521112222'))
+  const textSelf = await hook(outMsg('out-self-2', own, 'תזכורת'))
+  const apiEcho = await hook({ ...outMsg('out-api-1', own), typeWebhook: 'outgoingAPIMessageReceived' })
+  const rowsAfter = sql('select count(*) from fin_whatsapp_inbox')
+  const officeStep = (await api(await login('admin@kurkoos.test', 'Passw0rd!x'), { action: 'whatsapp-check' })).data.steps?.find((x) => x.key === 'office')
+  record('OFFICE', 'קבלה שנשלחת מהטלפון של המשרד', 'תמונה שהטלפון של המשרד שולח לעצמו או לטלפון רשום נקלטת (כאן: אותו קובץ כבר במערכת); תמונה שנשלחת ללקוח, הודעת טקסט והודעות שהמערכת עצמה שלחה לא נרשמות בכלל; בדיקת החיבור מציגה את השלב',
+    `לעצמי: ${toSelf.data.outcome}; לטלפון רשום: ${toScanner.data.outcome}; ללקוח: ${toClient.data.ignored}; טקסט: ${textSelf.data.ignored}; הודעת מערכת: ${apiEcho.data.ignored}; שורות ביומן: ${Number(rowsAfter) - Number(rowsBefore)}; שלב: ${officeStep?.ok}`,
+    toSelf.data.outcome === 'duplicate' && toScanner.data.outcome === 'duplicate' && toClient.data.ignored === 'office_chat' && textSelf.data.ignored === 'office_chat' && apiEcho.data.ignored === 'outgoingAPIMessageReceived' && Number(rowsAfter) - Number(rowsBefore) === 2 && officeStep?.ok === true)
+}
+
+// LINKED: an email that only points at the document. The links are read from the stored email; a link that is not in
+// the email is refused; an internal address is not opened; a web page is handed back to the person; a file that is
+// already in the system is refused as a duplicate.
+{
+  process.env.SUPABASE_URL = SB; process.env.SUPABASE_SERVICE_ROLE_KEY = SERVICE
+  const lk = await import('../../server/finance/linked.js'); const dbm = await import('../../server/finance/db.js')
+  const html = `<p>שלום</p><a href="${FAKES}/green/file/wa-receipt.png">לחץ כאן לצפייה במסמך</a> <a href="${FAKES}/__log">לצפייה בעמוד המסמך</a> <a href="https://mail.example/unsubscribe">להסרה</a> <a href="https://get.adobe.com/reader">מכאן</a>`
+  await dbm.upload('e2e/linked-mail.html', Buffer.from(html), 'text/html')
+  const id = sql("insert into fin_documents (status, source, supplier_name, doc_type, currency, file_path, file_name, file_mime, file_size) values ('review','gmail','ספק קישור','receipt','ILS','e2e/linked-mail.html','mail.html','text/html',300) returning id").split('\n')[0]
+  const links = (await lk.listLinks(id)).links
+  delete process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS
+  const internal = await lk.fetchLinked(id, links[0]?.url)
+  process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS = '1'
+  const page2 = await lk.fetchLinked(id, links[1]?.url)
+  const dupErr = await lk.fetchLinked(id, links[0]?.url).then(() => null, (e) => e)
+  const foreign = await lk.fetchLinked(id, 'https://elsewhere.example/doc.pdf').then(() => null, (e) => e)
+  delete process.env.FINANCE_ALLOW_PRIVATE_WEBHOOKS
+  const still = sql(`select file_mime from fin_documents where id='${id}'`)
+  await go(`/documents/${id}`); await page.waitForSelector('.fin-linked', { timeout: 15000 }).catch(() => {})
+  const bar = await page.locator('.fin-linked').count(); const btns = await page.locator('.fin-linked__acts .fin-btn').count()
+  const linkedShot = await shot('127-linked-document')
+  sql(`delete from fin_documents where id='${id}'`)
+  record('LINKED', 'מייל שמפנה למסמך: הורדה מהקישור או העלאת המסמך עצמו', 'מהמייל נקראים רק קישורים למסמך (לא "הסרה" ולא Adobe); כתובת פנימית לא נפתחת מהשרת; קישור שפותח עמוד מוחזר לפתיחה ידנית; קובץ שכבר במערכת נדחה ככפול; קישור שלא מופיע במייל נדחה; המסמך לא משתנה באף אחד מהמקרים; מתחת למייל מופיעים כפתורי ההורדה וההעלאה',
+    `קישורים: ${links.length} (${links.map((l) => l.text).join(' | ')}); פנימית: ${internal.fetched}/${internal.reason}; עמוד: ${page2.fetched}/${!!page2.open}; כפול: ${dupErr?.status}; זר: ${foreign?.status}; נשאר: ${still}; במסך: ${bar} אזור, ${btns} כפתורים`,
+    links.length === 2 && /wa-receipt/.test(links[0].url) && internal.fetched === false && /פנימית/.test(internal.reason) && page2.fetched === false && !!page2.open && dupErr?.status === 409 && foreign?.status === 400 && still === 'text/html' && bar === 1 && btns === 3, [linkedShot])
+}
+
+// DRIVEDEL: a deletion in the system is a deletion in Drive. The archive's copy of a deleted document goes to the Drive
+// trash at the moment of deletion; a copy whose document vanished some other way is trashed by the next check.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
+  const liveOf = async (id) => (await items()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
+  // the archive is brought in line with the stand-in Drive first (earlier scenarios empty it): missing copies are restored
+  const tgt = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  const liveIds = async () => new Set((await items()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd))
+  const verified = () => sql(`select coalesce(string_agg(f.document_id::text, ','), '') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${tgt}' and f.status='verified' and d.status='review'`).split(',').filter(Boolean)
+  let cands = []
+  for (let i = 0; i < 12 && cands.length < 2; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await api(tok, { action: 'drive-run', target_id: tgt }); const live = await liveIds(); cands = verified().filter((id) => live.has(id)) }
+  const docA = cands[0]
+  const pick = () => String(cands[1] || '')
+  const beforeA = await liveOf(docA)
+  const emp = await api(tokE, { action: 'drive-forget', ids: [docA] })
+  const stillA = await liveOf(docA)
+  const forget = await api(tok, { action: 'drive-forget', ids: [docA] })
+  const afterA = await liveOf(docA)
+  sql(`delete from fin_documents where id='${docA}'`)
+  // a document removed behind the system's back: its copy is found by the check against Drive
+  const [docB] = pick().split('|')
+  const beforeB = await liveOf(docB)
+  sql(`delete from fin_documents where id='${docB}'`)
+  await api(tok, { action: 'drive-reconcile', target_id: tgt })
+  for (let i = 0; i < 12 && (await liveOf(docB)) > 0; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await new Promise((r) => setTimeout(r, 800)) }
+  const afterB = await liveOf(docB)
+  record('DRIVEDEL', 'מחיקת מסמך מוחקת גם את העותק ב-Drive', 'לפני מחיקה העותק של המסמך ב-Drive עובר לפח של Drive; עובד לא יכול להעביר לפח מסמך שאינו שלו; עותק של מסמך שנמחק בלי לעבור דרך המערכת נמצא בבדיקה מול Drive ועובר לפח',
+    `מסמך א׳: ${beforeA} עותק → עובד ${emp.status}/${emp.data.trashed} (נשאר ${stillA}) → מנהל ${forget.status}/${forget.data.trashed} → ${afterA}; מסמך ב׳: ${beforeB} → אחרי בדיקה ${afterB}`,
+    !!docA && !!docB && beforeA === 1 && emp.data.trashed === 0 && stillA === 1 && forget.status === 200 && forget.data.trashed === 1 && afterA === 0 && beforeB === 1 && afterB === 0)
 }
 
 // PLACEHOLDER: a charge entered without its paper waits for it. When the paper arrives (same supplier, same total, the

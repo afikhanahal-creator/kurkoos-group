@@ -20,6 +20,7 @@ import { ADAPTERS } from './finance/adapters.js'
 import { ask } from './finance/assistant.js'
 import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
+import { listLinks, fetchLinked } from './finance/linked.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup, setReplies as waSetReplies, notifyApproved as waNotifyApproved } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 import { sendToAccountant } from './finance/mailout.js'
@@ -80,6 +81,10 @@ const ROLES = {
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
   'whatsapp-check': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
+  'whatsapp-inbox-delete': ['admin', 'finance_manager'],
+  'drive-forget': ['admin', 'finance_manager', 'employee'],
+  'linked-links': ['admin', 'finance_manager', 'employee'],
+  'linked-fetch': ['admin', 'finance_manager', 'employee'],
   'whatsapp-replies': ['admin', 'finance_manager'],
   'whatsapp-approved': ['admin', 'finance_manager'],
   'receipts-drive': ['admin', 'finance_manager', 'employee', 'accountant'],
@@ -277,6 +282,28 @@ export default async function handler(req, res) {
         res.status(200).json({ document: updated })
         return
       }
+      case 'linked-links': {
+        const d0 = await one(`fin_documents?id=eq.${q(body.document_id)}&select=id,created_by`)
+        if (!d0) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (user.role === 'employee' && d0.created_by !== user.id) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
+        res.status(200).json(await listLinks(d0.id))
+        return
+      }
+      case 'linked-fetch': {
+        const d0 = await one(`fin_documents?id=eq.${q(body.document_id)}&select=id,created_by`)
+        if (!d0) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (user.role === 'employee' && d0.created_by !== user.id) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
+        try {
+          const r = await fetchLinked(d0.id, String(body.url || ''), user)
+          if (!r.fetched) { res.status(200).json(r); return }
+          // the paper is read like any upload; the result waits for a person
+          const runs = await newDocRuns('manual')
+          const updated = await processStored(r.document, runs, 'manual')
+          await closeRuns(runs)
+          res.status(200).json({ fetched: true, document: updated?.skipped ? await one(`fin_documents?id=eq.${d0.id}&select=*`) : updated })
+        } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e), duplicate: e.duplicate || null }) }
+        return
+      }
       case 'revalidate': {
         const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
         if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
@@ -371,6 +398,16 @@ export default async function handler(req, res) {
       case 'drive-exclude': {
         const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
         res.status(200).json(await archive.exclude({ targetId: String(body.target_id || ''), ids, excluded: body.excluded !== false, user }))
+        return
+      }
+      case 'drive-forget': {
+        // before a document is deleted: its copy in Drive goes to the Drive trash. The same people who may delete it.
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        const mine = []
+        for (let i = 0; i < ids.length; i += 100) for (const d of (await sb(`fin_documents?id=in.(${ids.slice(i, i + 100).join(',')})&select=id,status,created_by`)) || []) {
+          if (user.role === 'admin' || (user.role === 'finance_manager' && !['approved', 'sent'].includes(d.status)) || (user.role === 'employee' && d.created_by === user.id && !['approved', 'sent'].includes(d.status))) mine.push(d.id)
+        }
+        res.status(200).json(mine.length ? await archive.removeFromDrive({ ids: mine, user }) : { trashed: 0, failed: [] })
         return
       }
       case 'drive-pause': {
@@ -565,6 +602,16 @@ export default async function handler(req, res) {
         res.status(200).json(await waHealth(origin(req)))
         return
       }
+      case 'whatsapp-inbox-delete': {
+        // lines of the reception log that brought nothing (failed, refused, not a file): they can be cleared. A line that
+        // brought a document stays, it is the record of where that document came from.
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
+        let removed = 0
+        for (let i = 0; i < ids.length; i += 100) { const out = await sb(`fin_whatsapp_inbox?id=in.(${ids.slice(i, i + 100).join(',')})&outcome=neq.imported&document_id=is.null`, { method: 'DELETE', prefer: 'return=representation' }).catch(() => []); removed += (out || []).length }
+        if (removed) await audit('integration', null, 'whatsapp_log_cleared', { removed }, user)
+        res.status(200).json({ removed })
+        return
+      }
       case 'whatsapp-replies': {
         const r = await waSetReplies(body.on !== false, user)
         await audit('integration', null, 'integration_saved', { provider: 'whatsapp', auto_replies: r.replies }, user)
@@ -577,7 +624,7 @@ export default async function handler(req, res) {
       }
       case 'receipts-drive': {
         // where each hand-delivered document (WhatsApp, upload) stands in the Drive archive: status and link only
-        const docs = (await sb("fin_documents?source=in.(whatsapp,upload)&select=id&order=created_at.desc&limit=1000")) || []
+        const docs = (await sb("fin_documents?select=id&order=created_at.desc&limit=2000")) || []
         const out = {}
         for (let i = 0; i < docs.length; i += 150) {
           const ids = docs.slice(i, i + 150).map((d) => d.id).join(',')

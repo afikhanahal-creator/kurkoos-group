@@ -1930,6 +1930,20 @@ await page.getByRole('button', { name: 'מצב כהה' }).click(); await page.wa
 await shot('27-dark')
 await page.getByRole('button', { name: 'מצב בהיר' }).click()
 
+// PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the
+// system is a suspected duplicate; the supplier's own second receipt with another number is a separate purchase.
+{
+  process.env.SUPABASE_URL = SB; process.env.SUPABASE_SERVICE_ROLE_KEY = SERVICE
+  const plx = await import('../../server/finance/pipeline.js')
+  const base = JSON.parse(sql("select row_to_json(d) from (select id, extraction, supplier_name, supplier_vat_id, doc_type, issue_date, total_amount, amount_before_vat, vat_amount, currency, email_from from fin_documents where source='gmail' and supplier_id is not null and supplier_vat_id is not null and issue_date is not null and total_amount > 0 and status='review' and coalesce(email_from,'') !~* 'paypal' order by created_at limit 1) d") || 'null')
+  const x = { ...(base?.extraction || {}), supplier_name: base?.supplier_name, supplier_vat_id: base?.supplier_vat_id, doc_type: 'receipt', doc_number: 'PP-7H4063P0605481J', issue_date: base?.issue_date, total_amount: Number(base?.total_amount), amount_before_vat: Number(base?.amount_before_vat), vat_amount: Number(base?.vat_amount), currency: base?.currency || 'ILS' }
+  const viaService = base ? await plx.analyze(x, { fromEmail: 'PayPal <service@paypal.co.il>', subject: 'הקבלה שלך עבור התשלום' }) : {}
+  const viaSupplier = base ? await plx.analyze(x, { fromEmail: base.email_from || 'billing@supplier.test', subject: 'קבלה' }) : {}
+  record('PAYDUP', 'אותו חיוב בשתי קבלות (שירות תשלומים וספק)', 'קבלה של שירות תשלומים על סכום ותאריך שכבר יש עליהם קבלה מהספק מסומנת "חשד לכפילות" ומקושרת למקור; קבלה נוספת מהספק עצמו עם מספר אחר היא רכישה נפרדת',
+    `בסיס: ${base?.supplier_name} ${base?.total_amount} ${base?.issue_date}; דרך שירות תשלומים: ${viaService.duplicate_state}/${viaService.duplicate_of === base?.id}; מהספק: ${viaSupplier.duplicate_state}`,
+    !!base && viaService.duplicate_state === 'suspected' && viaService.duplicate_of === base.id && viaSupplier.duplicate_state == null)
+}
+
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)
 fs.writeFileSync(`${OUT}/results.json`, JSON.stringify({ at: new Date().toISOString(), results, extra: { companiesShot, projectsShot, agentsShot, autoShot, dataShot, settingsShot } }, null, 1))
 console.log(`\n${results.filter((r) => r.pass).length}/${results.length} passed`)

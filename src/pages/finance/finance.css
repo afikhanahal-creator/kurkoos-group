@@ -2986,3 +2986,26 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-ledger strong { font-weight: 400; font-variant-numeric: tabular-nums; }
 .fin-ledger .fin-ledger__main strong { font-weight: 700; letter-spacing: -0.015em; }
 .fin-ledger .is-attn strong { font-weight: 700; }
+
+/* ---------- company profile: it fills itself from the paperwork, and says what to do next ---------- */
+.fin-cprof__learn { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--ocean) 30%, var(--line)); border-radius: var(--r-l); background: color-mix(in srgb, var(--ocean-wash) 55%, var(--sheet)); }
+.fin-cprof__learn h4 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--t-base); color: var(--ink); }
+.fin-cprof__learn ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fin-cprof__learn li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); }
+.fin-cprof__learn li > div { display: grid; gap: 1px; min-width: 0; }
+.fin-cprof__learn li span { font-size: var(--t-xs); color: var(--text-2); }
+.fin-cprof__learn li strong { color: var(--ink); overflow-wrap: anywhere; text-align: start; }
+.fin-cprof__learn li small { font-size: var(--t-xs); color: var(--text-2); }
+.fin-cprof__learn li .fin-btn { flex: none; }
+.fin-cprof__next { justify-content: space-between; width: 100%; background: var(--ink); color: var(--sheet); border-color: var(--ink); min-height: 40px; }
+.fin-cprof__next:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 88%, var(--ocean)); }
+.fin-cprof__todo { display: grid; gap: 2px; font-size: var(--t-sm); }
+.fin-cprof__todo > span { color: var(--text-2); font-size: var(--t-xs); }
+.fin-cprof__todo ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 12px; }
+.fin-cprof__todo .fin-link { min-height: 32px; display: inline-flex; align-items: center; }
+/* the ring around a company's mark shows how full its profile is */
+.fin-cset__ring { --p: 0; display: grid; place-items: center; padding: 3px; border-radius: 50%; background: conic-gradient(var(--ok) calc(var(--p) * 1%), var(--line) 0); flex: none; }
+.fin-cset__ring > * { border-radius: 50%; box-shadow: 0 0 0 2px var(--sheet); }
+@media (max-width: 700px) { .fin-cprof__todo .fin-link { min-height: 44px; } .fin-cprof__learn li { flex-wrap: wrap; } .fin-cprof__learn li .fin-btn { width: 100%; justify-content: center; } }
+/* on a phone the checklist comes first: what is missing is the reason to open this screen */
+@media (max-width: 1000px) { .fin-cprof { display: flex; flex-direction: column; } .fin-cprof > .fin-cprof__card { order: -1; position: static; } }

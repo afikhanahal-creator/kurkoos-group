@@ -215,6 +215,11 @@ export const removeAttachment = async (id) => must(await supabase.from('fin_docu
 export const attachmentBlob = async (a) => { const { data, error } = await supabase.storage.from(BUCKET).download(a.file_path); if (error) throw new Error(error.message || 'הקובץ לא נטען'); return data }
 
 /* fixed (recurring) expenses: the list, marking a document's supplier as one, stopping one */
+// what the company's own invoices say about it: the name, number and address printed as "to" on documents assigned to it
+export const loadCompanyHints = async (businessId) => {
+  if (!businessId) return []
+  try { return must(await supabase.from('fin_documents').select('name:extraction->>customer_name,vat:extraction->>customer_vat_id,address:extraction->>customer_address').eq('business_id', businessId).not('extraction', 'is', null).order('created_at', { ascending: false }).limit(300)) } catch { return [] }
+}
 export const loadRecurring = async () => must(await supabase.from('fin_recurring').select('*').order('created_at'))
 export const markRecurring = async (documentId, on = true) => must(await supabase.rpc('fin_recurring_mark', { p_document: documentId, p_on: on }))
 export const setRecurring = async (id, { active = null, label = null, expected = null } = {}) => must(await supabase.rpc('fin_recurring_set', { p_id: id, p_active: active, p_label: label, p_expected: expected }))

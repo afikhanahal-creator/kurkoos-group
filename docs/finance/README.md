@@ -292,6 +292,7 @@
 | `FINANCE_WHATSAPP_WEBHOOK_TOKEN` | סוד שמוגדר ב-Green API כ-`webhookUrlToken`. ה-webhook: `https://<האתר>/api/finance-whatsapp`, לסמן רק "הודעות נכנסות" |
 | `FINANCE_WHATSAPP_NUMBER` | מספר המשרד בפורמט בינלאומי (למשל `972501234567`), מוצג במסך ובקישור wa.me |
 | `FINANCE_WHATSAPP_FORWARD_URL`, `FINANCE_WHATSAPP_FORWARD_TOKEN` | כשמספר המשרד משרת גם מערכת אחרת (צ'אטבוט, CRM): הכתובת שקיבלה את ההודעות לפני כן, והטוקן שלה אם יש. כל הודעה נכנסת מועברת אליה כמו שהיא, מספרים לא רשומים לא נרשמים ולא נענים |
+| `FINANCE_WHATSAPP_VIA_URL` | כשמערכת אחרת מחזיקה את ה-webhook של הקו ומעבירה כל הודעה לכאן (למשל ה-CRM של אפיק הנחל, `https://www.afikhanahal.co.il/api/meta/green-hook`): הכתובת שלה. בדיקת החיבור מציגה את המצב כתקין, ו"הפעלת הקליטה" לא לוקחת את הקו |
 | `SITE_URL` | כתובת האתר, לקישור למסמך בהודעת האישור ב-WhatsApp |
 | `FINANCE_WA_MEDIA_HOSTS` (לא חובה) | השרתים שמהם מותר להוריד קבצי WhatsApp. ברירת מחדל `greenapi.net,green-api.com` |
 

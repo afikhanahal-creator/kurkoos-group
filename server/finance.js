@@ -81,6 +81,7 @@ const ROLES = {
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
   'whatsapp-check': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
+  'whatsapp-inbox-delete': ['admin', 'finance_manager'],
   'drive-forget': ['admin', 'finance_manager', 'employee'],
   'linked-links': ['admin', 'finance_manager', 'employee'],
   'linked-fetch': ['admin', 'finance_manager', 'employee'],
@@ -599,6 +600,16 @@ export default async function handler(req, res) {
       }
       case 'whatsapp-check': {
         res.status(200).json(await waHealth(origin(req)))
+        return
+      }
+      case 'whatsapp-inbox-delete': {
+        // lines of the reception log that brought nothing (failed, refused, not a file): they can be cleared. A line that
+        // brought a document stays, it is the record of where that document came from.
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
+        let removed = 0
+        for (let i = 0; i < ids.length; i += 100) { const out = await sb(`fin_whatsapp_inbox?id=in.(${ids.slice(i, i + 100).join(',')})&outcome=neq.imported&document_id=is.null`, { method: 'DELETE', prefer: 'return=representation' }).catch(() => []); removed += (out || []).length }
+        if (removed) await audit('integration', null, 'whatsapp_log_cleared', { removed }, user)
+        res.status(200).json({ removed })
         return
       }
       case 'whatsapp-replies': {

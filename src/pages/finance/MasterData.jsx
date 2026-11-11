@@ -239,7 +239,7 @@ export default function MasterData({ kind }) {
         </Empty>
       ) : (
         <div className="fin-table-wrap">
-          <table className="fin-table">
+          <table className="fin-table fin-table--ent">
             <thead><tr>
               <Th k="name">{def.one}</Th>
               {kind === 'suppliers' && <><th className="fin-col-md">ח.פ</th><th className="fin-col-lg">סוג</th><th className="fin-col-lg">קטגוריה קבועה</th></>}
@@ -260,13 +260,13 @@ export default function MasterData({ kind }) {
                     <small className="fin-cell-sub">{r.trading_name || r.commercial_name || r.name_en || r.location || r.description || ''}</small>
                   </td>
                   {kind === 'suppliers' && <><td className="fin-col-md fin-ltr" data-label="ח.פ">{r.vat_id || <span className="fin-attn-text">חסר</span>}</td><td className="fin-col-lg" data-label="סוג">{r.supplier_type || '—'}</td><td className="fin-col-lg" data-label="קטגוריה">{r.default_category || '—'}</td></>}
-                  {kind === 'categories' && <><td className="fin-col-md" data-label="אב">{nameOf(categories, r.parent_id) || '—'}</td><td className="fin-col-md fin-ltr" data-label="קוד">{r.accounting_code || '—'}</td><td className="fin-num" data-label="קיזוז">{Number(r.vat_deductible_pct)}%</td></>}
+                  {kind === 'categories' && <><td className="fin-col-md" data-label="אב">{nameOf(categories, r.parent_id) || '—'}</td><td className="fin-col-md fin-ltr" data-label="קוד">{r.accounting_code || '—'}</td><td className="fin-num fin-ent-stat" data-label="קיזוז">{Number(r.vat_deductible_pct)}%</td></>}
                   {kind === 'projects' && <><td className="fin-col-md fin-ltr" data-label="קוד">{r.code || '—'}</td><td className="fin-col-md" data-label="חברה">{nameOf(businesses, r.business_id) || <span className="fin-attn-text">לא משויך</span>}</td><td className="fin-col-lg" data-label="סוג">{r.project_type || '—'}</td></>}
-                  {kind === 'businesses' && <><td className="fin-col-md fin-ltr" data-label="עוסק">{r.vat_id || '—'}</td><td className="fin-col-lg" data-label="רו״ח">{r.accountant_name || r.accountant_email || '—'}</td><td className="fin-num" data-label="פרויקטים">{r.projects || 0}</td></>}
-                  <td className="fin-num" data-label="מסמכים">{r.docs || 0}{r.pendingDocs ? <small className="fin-warn-text"> ({r.pendingDocs} ממתינים)</small> : null}</td>
+                  {kind === 'businesses' && <><td className="fin-col-md fin-ltr" data-label="עוסק">{r.vat_id || '—'}</td><td className="fin-col-lg" data-label="רו״ח">{r.accountant_name || r.accountant_email || '—'}</td><td className="fin-num fin-ent-stat" data-label="פרויקטים">{r.projects || 0}</td></>}
+                  <td className={`fin-num fin-ent-stat ${kind === 'suppliers' || kind === 'projects' ? 'fin-ent-stat--wide' : ''}`} data-label="מסמכים"><span className="fin-ent-stat__n">{r.docs || 0}</span>{r.pendingDocs ? <small className="fin-warn-text fin-ent-stat__wait"> ({r.pendingDocs} ממתינים)</small> : null}</td>
                   <td className="fin-num fin-td-total" data-label="הוצאות"><strong>{money(r.total || 0)}</strong></td>
                   {kind === 'projects' && <td className="fin-col-md" data-label="תקציב">{r.budget ? <span className="fin-budget"><span style={{ width: `${Math.min(100, ((r.total || 0) / r.budget) * 100)}%` }} className={(r.total || 0) > r.budget ? 'is-over' : ''} />{Math.round(((r.total || 0) / r.budget) * 100)}%</span> : '—'}</td>}
-                  <td data-label="אחרון">{date(r.last)}</td>
+                  <td className="fin-ent-last" data-label="אחרון">{date(r.last) || '—'}</td>
                   <td className="fin-td-status">{status(r)}</td>
                 </tr>
               ))}

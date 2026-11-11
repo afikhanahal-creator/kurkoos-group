@@ -3270,3 +3270,21 @@ button.fin-rbars__row { cursor: pointer; }
   .fin-receipts__table tr.is-attn > td:first-child { box-shadow: none; }
   .fin-receipts__table tbody tr.is-attn { border-inline-start: 3px solid var(--attn); }
 }
+
+/* companies, suppliers, projects, categories on a phone: name and status, the total in large figures, the counts as
+   two tiles, and when the last document arrived */
+@media (max-width: 700px) {
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent tbody tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 16px; cursor: pointer; }
+  .fin-table.fin-table--ent td.fin-td-main { grid-column: 1; grid-row: 1; }
+  .fin-table.fin-table--ent td.fin-td-main .fin-cell-main { font-size: var(--t-lg); font-weight: 700; text-align: start; min-height: 44px; }
+  .fin-table.fin-table--ent td.fin-td-status { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-td-total { grid-column: 1 / -1; grid-row: 2; display: grid; gap: 2px; justify-content: start; padding: 0; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-td-total::before { font-size: var(--t-xs); }
+  .fin-table.fin-table--ent td.fin-td-total strong { font-size: 1.6rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-stat { grid-column: auto; align-self: stretch; align-content: start; display: grid; gap: 2px; justify-content: start; justify-items: start; padding: 10px 12px; border-radius: var(--r-m); background: var(--wash); font-size: var(--t-lg); font-weight: 700; color: var(--ink); text-align: start; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-stat--wide { grid-column: 1 / -1; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-stat::before { font-size: var(--t-xs); font-weight: 400; order: -1; }
+  .fin-ent-stat__wait { font-size: var(--t-xs); font-weight: 600; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-last { grid-column: 1 / -1; justify-content: flex-start; gap: 6px; font-size: var(--t-xs); color: var(--text-2); padding: 0; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-last::before { content: 'מסמך אחרון:'; }
+}

@@ -33,6 +33,9 @@ async function render(doc, width = 360) {
   if (doc.file_mime === 'image/tiff') return tiffPreview(await blob.arrayBuffer(), width)
   if (OFFICE(doc.file_mime)) return { text: `${OFFICE(doc.file_mime)} · ${doc.file_name || ''}` }
   if ((doc.file_mime || '').startsWith('image/')) return URL.createObjectURL(blob)
+  // a receipt that is the body of an email: the large preview shows the email itself (in a frame that cannot run
+  // scripts or load anything by itself), the small one a few words of it
+  if ((doc.file_mime || '').startsWith('text/') && width > 400) return { html: await blob.text() }
   if ((doc.file_mime || '').startsWith('text/')) return { text: (await blob.text()).replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220) }
   const lib = await loadPdf()
   const pdf = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise
@@ -77,7 +80,8 @@ export default function Thumbnail({ doc, size }) {
   return (
     <div className="fin-thumb" ref={box} aria-hidden="true">
       {src && typeof src === 'string' && <img src={src} alt="" />}
-      {src && typeof src === 'object' && <p className="fin-thumb__text">{src.text}</p>}
+      {src && typeof src === 'object' && src.html && <span className="fin-thumb__mail"><iframe title="" sandbox="" srcDoc={src.html} tabIndex={-1} /></span>}
+      {src && typeof src === 'object' && !src.html && <p className="fin-thumb__text">{src.text}</p>}
       {!src && <span className={`fin-thumb__ph ${failed ? 'is-failed' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : OFFICE(doc.file_mime) || (doc.file_mime === 'image/tiff' ? 'TIFF' : 'קובץ')}{failed && <small>אין תצוגה מקדימה</small>}</span>}
     </div>
   )

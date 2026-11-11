@@ -11,6 +11,7 @@ import Thumbnail, { prefetchThumb } from './Thumbnail.jsx'
 import { supplierHistory } from './links.js'
 import DocList from './DocList.jsx'
 import MergeDialog from './MergeDialog.jsx'
+import { PeekCard } from './Peek.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
 import DateRange, { sayRange } from './DateRange.jsx'
@@ -445,11 +446,7 @@ export default function Documents({ preset = 'all' }) {
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
-                      {peek?.id === d.id && d.file_path && <span className="fin-peek__pop" style={{ top: peek.top, right: peek.right }} aria-hidden="true">
-                        <span className="fin-peek__head"><strong>{d.supplier_name || d.file_name}</strong><StatusPill status={d.status} /></span>
-                        <span className="fin-peek__doc"><Thumbnail doc={d} size="lg" /></span>
-                        <span className="fin-peek__foot"><small>{[DOC_TYPE[d.doc_type], d.doc_number, date(docDate(d))].filter(Boolean).join(' · ')}</small>{d.total_amount != null && <b>{money(d.total_amount, d.currency)}</b>}</span>
-                      </span>}
+                      {peek?.id === d.id && <span className="fin-peek__pop" style={{ top: peek.top, right: peek.right }} aria-hidden="true"><PeekCard doc={d} /></span>}
                       <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>{d.supplier_name && <button type="button" className="fin-icon-btn fin-suphist" onClick={(e) => { e.stopPropagation(); supplierHistory(go, d, documents) }} aria-label={`כל ההיסטוריה עם ${d.supplier_name}`} title={`כל ההיסטוריה עם ${d.supplier_name}`}><Icon name="history" size={15} /></button>}{d.recurring_id && <span className="fin-fixedtag" title="הוצאה קבועה">קבועה</span>}</span>
                       <small className="fin-cell-sub">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>

@@ -3044,3 +3044,40 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-scan__night.is-ok svg { color: var(--ok); }
 .fin-scan__night.is-open { background: var(--warn-wash); }
 .fin-scan__night.is-open svg { color: var(--warn); }
+
+/* ---------- hover preview: every kind of document shows ---------- */
+.fin-thumb__mail { display: block; width: 100%; height: 100%; overflow: hidden; background: #fff; direction: ltr; }
+.fin-thumb__mail iframe { display: block; width: 182%; height: 182%; border: 0; transform: scale(0.55); transform-origin: 0 0; pointer-events: none; background: #fff; }
+.fin-peek__nofile { display: grid; gap: 8px; place-content: center; justify-items: center; text-align: center; height: 100%; padding: 28px; color: var(--text-2); font-size: var(--t-sm); line-height: 1.5; white-space: normal; }
+.fin-peek__nofile svg { color: var(--warn); }
+.fin-peek__nofile b { color: var(--ink); font-size: var(--t-md); }
+
+/* ---------- Drive: documents waiting for a company. A row reads date, who, how much; hover shows the paper ---------- */
+.fin-dassign ul { max-height: 440px; }
+.fin-dassign li.fin-dassign__row { display: grid; grid-template-columns: auto 4.6rem minmax(0, 1fr) auto auto; gap: 4px 14px; align-items: center; min-height: 60px; padding: 8px 12px; cursor: default; }
+.fin-dassign li.fin-dassign__row.is-on { background: var(--ocean-wash); }
+.fin-dassign li.fin-dassign__row:hover { background: var(--sheet-2); }
+.fin-dassign li.fin-dassign__row.is-on:hover { background: var(--ocean-wash); }
+.fin-dassign__check { display: grid; place-items: center; min-width: 32px; min-height: 44px; cursor: pointer; }
+.fin-dassign__check input { width: 18px; height: 18px; grid-row: auto; }
+.fin-dassign__date { display: grid; justify-items: center; gap: 0; padding: 5px 6px; border-radius: var(--r-m); background: var(--wash); line-height: 1.2; }
+.fin-dassign__date b { color: var(--ink); font-size: var(--t-md); font-weight: 700; white-space: nowrap; }
+.fin-dassign__date small { color: var(--text-2); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+.fin-dassign__row.is-on .fin-dassign__date { background: var(--sheet); }
+.fin-dassign__main { display: block; min-width: 0; }
+.fin-dassign__open { all: unset; box-sizing: border-box; display: grid; gap: 1px; width: 100%; min-width: 0; cursor: pointer; padding: 4px 0; border-radius: var(--r-s); }
+.fin-dassign__open strong { color: var(--ink); font-size: var(--t-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-dassign__open small { color: var(--text-2); font-size: var(--t-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-dassign__open:hover strong { color: var(--ocean-2); text-decoration: underline; }
+.fin-dassign__open:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; }
+.fin-dassign__sum { color: var(--ink); font-size: var(--t-md); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-dassign__acts { display: inline-flex; gap: 2px; }
+.fin-dassign__acts .fin-icon-btn--danger { color: var(--attn); }
+.fin-dassign__bar { position: sticky; bottom: 0; padding: 10px 0 0; }
+@media (max-width: 700px) {
+  .fin-dassign li.fin-dassign__row { grid-template-columns: auto 3.9rem minmax(0, 1fr) auto; gap: 2px 10px; }
+  .fin-dassign__sum { grid-column: 3; grid-row: 2; font-size: var(--t-sm); }
+  .fin-dassign__acts { grid-column: 4; grid-row: 1 / span 2; flex-direction: column; }
+  .fin-dassign__acts .fin-icon-btn { width: 44px; height: 44px; }
+  .fin-dassign__check { min-width: 44px; }
+}

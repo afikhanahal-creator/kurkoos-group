@@ -1,7 +1,9 @@
 // Mobile scanners: a registered phone sends a photo or a PDF to the office WhatsApp number, and it enters the same
 // pipeline as an upload. Green API (already used for the lead alerts) posts each incoming message to
 // /api/finance-whatsapp with "Authorization: Bearer <FINANCE_WHATSAPP_WEBHOOK_TOKEN>" (the webhookUrlToken setting).
-// Every message is logged in fin_whatsapp_inbox, accepted or refused; unknown numbers are refused with a reply.
+// Every message is logged in fin_whatsapp_inbox, accepted or refused. Only a registered phone that sent a file is ever
+// answered: an unknown number, and an ordinary text from a registered one, get no reply at all — the same number is the
+// line clients write to.
 import crypto from 'node:crypto'
 import { env, MIME_OK, MAX_FILE, QUOTA_STOP } from './env.js'
 import { sb, one, insert, patch, upload, storageUsage, audit } from './db.js'
@@ -94,14 +96,17 @@ export default async function whatsappWebhook(req, res) {
   // a phone whose user was deactivated stops being a scanner
   if (sender?.user_id && !(await one(`fin_members?user_id=eq.${sender.user_id}&active=eq.true&select=user_id`))) sender = null
   if (!sender) {
+    // A number that is not a registered scanner gets NOTHING back, ever (2026-11-11: a client of the office got "this
+    // number is not registered as a scanner"). The office number is first of all the line clients and leads write to;
+    // a stranger must never hear from the accounting system. The message is only logged (the screen offers "add").
     await log({ outcome: 'refused_unknown_number' })
-    await reply(phone, 'המספר הזה לא רשום כסורק במערכת הנהלת החשבונות של קבוצת קורקוס. בקשו ממנהל המערכת להוסיף אותו במסך "סורקים ניידים".')
     res.status(200).json({ ok: true, outcome: 'refused_unknown_number' }); return
   }
   const file = md.fileMessageData
   if (!['imageMessage', 'documentMessage'].includes(kind) || !file?.downloadUrl) {
+    // an ordinary message (text, a voice note, a reaction) from a registered phone is a conversation with the office,
+    // not a scan: logged, never answered
     await log({ sender_id: sender.id, outcome: 'unsupported' })
-    await reply(phone, 'כדי להוסיף חשבונית שלחו צילום שלה או קובץ PDF.')
     res.status(200).json({ ok: true, outcome: 'unsupported' }); return
   }
   try {

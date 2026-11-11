@@ -124,7 +124,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       <button type="button" className="fin-viewer__pct" onClick={() => { setFitPage(false); setZoom(2) }} aria-label="התאמה לרוחב" title="התאמה לרוחב">{pct}%</button>
       <button type="button" className="fin-icon-btn" onClick={() => zoomBy(1)} disabled={!fitPage && zoom === STEPS.length - 1} aria-label="הגדלה" title="הגדלה"><Icon name="plus" size={17} /></button>
       <span className="fin-viewer__sep" aria-hidden="true" />
-      <button type="button" className={`fin-icon-btn ${fitPage ? 'is-on' : ''}`} onClick={() => setFitPage((v) => !v)} aria-pressed={fitPage} aria-label="התאמה למסך" title="התאמה למסך"><Icon name="fitpage" size={17} /></button>
+      <button type="button" className={`fin-icon-btn fin-viewer__wide ${fitPage ? 'is-on' : ''}`} onClick={() => setFitPage((v) => !v)} aria-pressed={fitPage} aria-label="התאמה למסך" title="התאמה למסך"><Icon name="fitpage" size={17} /></button>
       <button type="button" className="fin-icon-btn fin-viewer__wide" onClick={fullscreen} aria-label={full ? 'יציאה ממסך מלא' : 'מסך מלא'} title={full ? 'יציאה ממסך מלא' : 'מסך מלא'}><Icon name={full ? 'shrink' : 'expand'} size={17} /></button>
       <button type="button" className="fin-icon-btn" onClick={() => setTurn((t) => (t + 90) % 360)} aria-label="סיבוב" title="סיבוב ב-90°"><Icon name="rotate" size={17} /></button>
       {total > 1 && (

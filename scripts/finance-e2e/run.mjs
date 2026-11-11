@@ -1851,7 +1851,7 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   fx.mailboxes['big@kurkoos.test'] = {
     failListOnce: true,
     failGet: { 'syn-a-17': 4 },
-    synthetic: { count: 300, from: iso(now - 100 * DAYMS), to: iso(now - 30 * DAYMS), dense: { count: 1200, from: iso(now - 20 * DAYMS), to: iso(now - 16 * DAYMS) } },
+    synthetic: { count: 300, from: iso(now - 100 * DAYMS), to: iso(now - 30 * DAYMS), dense: { count: 1200, from: iso(now - 18 * DAYMS), to: iso(now - 14 * DAYMS) } },
     messages: [
       { id: 'b1', date: iso(now - 40 * DAYMS), subject: 'חשבונית מס 4521 - טמבור', from: 'טמבור <billing@tambour.test>', text: 'מצורפת', files: ['tambour-4521.pdf'] },
       { id: 'b2', date: iso(now - 25 * DAYMS), subject: 'סריקה', from: 'סורק <scanner@kurkoos.test>', text: 'מסמך', files: ['broken-scan.tif'] },
@@ -1865,6 +1865,8 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const bigId = sql("select id from fin_mailboxes where email = 'big@kurkoos.test'")
   const invId = sql("select id from fin_mailboxes where email = 'invoices@kurkoos.test'")
   const tambourBefore = sql("select count(*) from fin_documents where file_hash = (select file_hash from fin_documents where file_name = 'tambour-4521.pdf' limit 1)")
+  // weeks are counted from this day: the edges nearest the dense days fall 19 and 12 days back, at midnight, so the
+  // dense days (18 to 14 back) are inside one week whatever hour the suite runs at
   const fromDay = iso(now - 110 * DAYMS).slice(0, 10)
   const st1 = await api(tok, { action: 'scan-start', mailbox_id: bigId, from: fromDay })
   const st2 = await api(tok, { action: 'scan-start', mailbox_id: invId, from: fromDay })

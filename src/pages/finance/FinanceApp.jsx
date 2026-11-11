@@ -163,6 +163,8 @@ function useFinanceData(enabled, onChange) {
 function NoAccess({ me, email, onClaimed }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  // the first "no access" is checked once more before anybody sees it: right after sign-in it is often a stale answer
+  const [first, setFirst] = useState(true)
   const claim = async () => {
     setBusy(true); setErr('')
     try { await api.claimAdmin(); onClaimed() } catch (e) { setErr(e.message); setBusy(false) }
@@ -176,9 +178,10 @@ function NoAccess({ me, email, onClaimed }) {
     } catch { /* noop */ }
     await supabase.auth.refreshSession().catch(() => {})
     await Promise.resolve(onClaimed()).catch(() => {})
-    setBusy(false)
+    setBusy(false); setFirst(false)
   }
-  useEffect(() => { const t = setTimeout(recheck, 600); return () => clearTimeout(t) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { recheck() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  if (first) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
   return (
     <div className="fin-login" dir="rtl">
       <div className="fin-login__box">
@@ -379,7 +382,8 @@ export default function FinanceApp() {
   if (session === undefined || (session && sec === null)) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
   if (welcome && session) return <InviteWelcome email={session.user?.email || ''} onDone={() => setWelcome(false)} />
   if (mfaPending) return <SecondStep mfaRequired onDone={() => supabase.auth.refreshSession().then(() => setSec((x) => ({ ...x, aal: 'aal2' })))} />
-  if (sec !== false && data.loading && !data.me) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
+  // while the membership answer is on its way nothing is said about access (a failed security check is not an answer)
+  if (data.loading && !data.me) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
   const email = session.user?.email || ''
   const myName = data.members.find((m) => m.user_id === session.user?.id)?.full_name || ''
   if (data.error && !data.me) return <div className="fin-login" dir="rtl"><div className="fin-login__box"><h1>שגיאה</h1><p className="fin-error" role="alert">{data.error}</p></div></div>

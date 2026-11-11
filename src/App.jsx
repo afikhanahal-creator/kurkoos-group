@@ -51,6 +51,7 @@ const MentorGuideArticle = lazy(() => import('./pages/MentorGuideArticle.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'))
 const Admin = lazy(() => import('./pages/admin/Admin.jsx'))
+const FinanceApp = lazy(() => import('./pages/finance/FinanceApp.jsx'))
 
 // גלילה לראש העמוד במעבר בין דפים; גלילה לעוגן (#) אם קיים.
 function ScrollManager() {
@@ -125,6 +126,9 @@ export default function App() {
   // טעינה-מוקדמת (prefetch) של ה-chunks של העמודים הנפוצים בזמן idle — כך הניווט
   // נשאר מיידי (בלי השהיית chunk/הבהוב), ועם זאת חבילת ההתחלה נשארת קטנה.
   useEffect(() => {
+    // the admin and the finance system are separate apps: they don't need the public pages (each warm import also
+    // pulled a shared chunk of ~150 KB into the finance sign-in screen)
+    if (location.pathname.startsWith('/admin')) return undefined
     const warm = () => {
       import('./pages/ProjectDetail.jsx')
       import('./pages/Division.jsx')
@@ -140,6 +144,18 @@ export default function App() {
     const id = ric ? window.requestIdleCallback(warm, { timeout: 3000 }) : setTimeout(warm, 1800)
     return () => { if (ric && window.cancelIdleCallback) window.cancelIdleCallback(id); else clearTimeout(id) }
   }, [])
+
+  // מערכת הנהלת החשבונות (פנימית, תחת אותה כניסה של האדמין) — אפליקציה נפרדת על כל המסך
+  if (location.pathname.startsWith('/admin/finance')) {
+    return (
+      <>
+        <FontLoader />
+        <Suspense fallback={null}>
+          <FinanceApp />
+        </Suspense>
+      </>
+    )
+  }
 
   // אזור האדמין — עמוד מלא נפרד, ללא ה-Header/Footer של האתר הציבורי
   if (location.pathname.startsWith('/admin')) {

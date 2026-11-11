@@ -32,6 +32,16 @@ export default function Analytics() {
   const isAdmin = location.pathname.startsWith('/admin')
   const off = isAdmin || trackingDisabled()
 
+  // כניסה למערכת הניהול או למערכת הכספים אחרי עמוד ציבורי: gtag כבר טעון, ואירועים אוטומטיים (שינוי היסטוריה,
+  // מעורבות) היו נשלחים גם משם. הדגל הרשמי ga-disable חוסם כל שליחה מהתג כל עוד נמצאים ב-/admin.
+  // the admin and finance screens render outside this component's tree, so leaving the public site unmounts it:
+  // the cleanup turns measurement off, and only a public page turns it back on
+  useEffect(() => {
+    if (!valid) return undefined
+    window[`ga-disable-${id}`] = isAdmin
+    return () => { window[`ga-disable-${id}`] = true }
+  }, [valid, id, isAdmin])
+
   // טעינת gtag פעם אחת, ולא בעמודי האדמין
   useEffect(() => {
     if (!valid || off || window.__kcGaLoaded) return

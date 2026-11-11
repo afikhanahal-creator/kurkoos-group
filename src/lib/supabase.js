@@ -5,6 +5,8 @@ const anon = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 /* לקוח Supabase יחיד. אם חסרים משתני סביבה — נשאר null והאתר
    נופל בחן חזרה לנתונים המקומיים (לא קורס). */
+/* the kind of link that opened the page (invite / recovery / magiclink), read before supabase-js consumes the hash */
+export const initialAuthType = (() => { try { return new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type') || '' } catch { return '' } })()
 export const supabase = url && anon ? createClient(url, anon) : null
 export const hasSupabase = !!supabase
 

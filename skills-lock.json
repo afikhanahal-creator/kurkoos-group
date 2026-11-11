@@ -577,6 +577,12 @@
       "skillPath": "ui-design/skills/readable-measure/SKILL.md",
       "computedHash": "e9accb0dfffecc61ff8c66894239505b4f2835315078b57a67919af277166ccf"
     },
+    "refero-design": {
+      "source": "referodesign/refero_skill",
+      "sourceType": "github",
+      "skillPath": "skills/refero-design/SKILL.md",
+      "computedHash": "b39b8c1f87664b1b63c50f5e2bbe7586b08790101920c96d9bbf75fc3a2d5a61"
+    },
     "research-repository": {
       "source": "Owl-Listener/designer-skills",
       "sourceType": "github",

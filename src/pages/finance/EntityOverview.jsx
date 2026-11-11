@@ -19,18 +19,22 @@ const inPeriod = (p, k) => {
   return p >= shiftMonth(now, k === '3m' ? -2 : -11) && p <= now
 }
 
-/* twelve months as columns: the bars are the money, the current period is drawn darker */
+/* up to twelve months as columns: the bars are the money, the current period is drawn darker. Months before the first
+   movement are left out (at least six stay), so one busy month is not lost in a row of empty ones */
 function Trend({ items }) {
-  const months = Array.from({ length: 12 }, (_, i) => shiftMonth(thisMonth(), i - 11))
-  const vals = months.map((m) => items.filter(({ doc }) => counts(doc) && period(doc) === m).reduce((s, { doc, share }) => s + signedTotal(doc) * share, 0))
+  const all = Array.from({ length: 12 }, (_, i) => shiftMonth(thisMonth(), i - 11))
+  const sums = all.map((m) => items.filter(({ doc }) => counts(doc) && period(doc) === m).reduce((s, { doc, share }) => s + signedTotal(doc) * share, 0))
+  const first = sums.findIndex((v) => v)
+  const keep = Math.max(6, first < 0 ? 6 : 12 - first)
+  const months = all.slice(-keep); const vals = sums.slice(-keep)
   const max = Math.max(...vals, 1)
   return (
-    <figure className="fin-trend2" aria-label="הוצאות לפי חודש, 12 חודשים">
-      <div className="fin-trend2__bars">
+    <figure className="fin-trend2" aria-label={`הוצאות לפי חודש, ${keep} חודשים`}>
+      <div className="fin-trend2__bars" style={{ gridTemplateColumns: `repeat(${keep}, minmax(0, 1fr))` }}>
         {vals.map((v, i) => (
           <div key={months[i]} className="fin-trend2__col" title={`${monthLabel(months[i])}: ${money(v)}`}>
             <span className="fin-trend2__val">{v ? money(v).replace(/\.\d\d/, '') : ''}</span>
-            <span className={`fin-trend2__bar ${i === 11 ? 'is-now' : ''}`} style={{ height: `${Math.max(v ? 4 : 1, (v / max) * 100)}%` }} />
+            <span className={`fin-trend2__bar ${i === keep - 1 ? 'is-now' : ''}`} style={{ height: `${Math.max(v ? 4 : 1, (v / max) * 100)}%` }} />
             <span className="fin-trend2__m">{new Date(`${months[i]}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'short' })}</span>
           </div>
         ))}

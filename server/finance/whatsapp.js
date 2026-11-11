@@ -46,13 +46,15 @@ export async function notifyApproved(documentId, user) {
 }
 
 // Green API serves media from its own storage hosts. Anything else is refused (no fetching of internal URLs).
-const MEDIA_HOSTS = () => String(process.env.FINANCE_WA_MEDIA_HOSTS || 'greenapi.net,green-api.com').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)
+// Green API keeps media on its own domains and on object storage it rents (DigitalOcean "do-media-<pool>", Yandex "sw-media")
+const MEDIA_STORAGE = [/^do-media-\d+\.[a-z0-9-]+\.digitaloceanspaces\.com$/, /^sw-media(-out)?\.storage\.yandexcloud\.net$/]
+const MEDIA_HOSTS = () => String(process.env.FINANCE_WA_MEDIA_HOSTS || 'greenapi.net,green-api.com,greenapi.com').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)
 export function mediaUrlOk(raw) {
   let u; try { u = new URL(raw) } catch { return false }
   const host = u.hostname.toLowerCase()
   const local = process.env.FINANCE_WA_MEDIA_HOSTS && (u.protocol === 'http:' || u.protocol === 'https:')
   if (u.protocol !== 'https:' && !local) return false
-  return MEDIA_HOSTS().some((h) => host === h || host.endsWith(`.${h}`))
+  return MEDIA_HOSTS().some((h) => host === h || host.endsWith(`.${h}`)) || (u.protocol === 'https:' && MEDIA_STORAGE.some((re) => re.test(host)))
 }
 async function fetchMedia(url) {
   const r = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(20_000) })
@@ -129,7 +131,7 @@ async function take(b, res) {
   try {
     const mime = MIME_OK.has(file.mimeType) ? file.mimeType : kind === 'imageMessage' ? 'image/jpeg' : file.mimeType
     if (!MIME_OK.has(mime)) { await log({ sender_id: sender.id, outcome: 'unsupported', file_name: file.fileName, detail: mime }); await reply(phone, 'אפשר לשלוח רק תמונה או PDF.'); res.status(200).json({ ok: true, outcome: 'unsupported' }); return }
-    if (!mediaUrlOk(file.downloadUrl)) { await log({ sender_id: sender.id, outcome: 'failed', file_name: file.fileName, detail: 'download host not allowed' }); res.status(200).json({ ok: false, outcome: 'failed' }); return }
+    if (!mediaUrlOk(file.downloadUrl)) { await log({ sender_id: sender.id, outcome: 'failed', file_name: file.fileName, detail: `download host not allowed: ${(() => { try { return new URL(file.downloadUrl).hostname } catch { return 'unreadable address' } })()}` }); res.status(200).json({ ok: false, outcome: 'failed' }); return }
     const usage = await storageUsage()
     if (usage !== null && usage >= QUOTA_STOP) {
       await log({ sender_id: sender.id, outcome: 'refused_quota', file_name: file.fileName, detail: `storage ${Math.round(usage * 100)}%` })

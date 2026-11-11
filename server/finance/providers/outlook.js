@@ -29,7 +29,7 @@ export async function revoke() { /* Microsoft has no token revoke endpoint for t
 
 
 // every message since the date (all folders, archive included)
-export async function listCandidates(accessToken, since, _extra, { until, max = 500 } = {}) {
+export async function listCandidates(accessToken, since, _extra, { until, max = 3000 } = {}) {
   const ids = []
   let url = `/messages?$filter=${encodeURIComponent(`receivedDateTime ge ${since.toISOString()}${until ? ` and receivedDateTime lt ${until.toISOString()}` : ''}`)}&$select=id,subject,hasAttachments,bodyPreview&$orderby=receivedDateTime desc&$top=50`
   while (url && ids.length < max) {

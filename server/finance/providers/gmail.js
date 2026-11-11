@@ -39,7 +39,7 @@ async function api(accessToken, path) {
 // What is financial is decided after listing: the sender rules and the cheap check first, a full reading only if needed.
 const BASE = '-in:spam -in:trash -in:sent -in:chats -in:drafts'
 
-export async function listCandidates(accessToken, since, extra, { until, max = 500 } = {}) {
+export async function listCandidates(accessToken, since, extra, { until, max = 3000 } = {}) {   // every message is listed now, so a busy week is far more than the old 500
   const q = `${BASE} after:${Math.floor(since.getTime() / 1000)}${until ? ` before:${Math.floor(until.getTime() / 1000)}` : ''}${extra ? ` ${extra}` : ''}`
   const ids = []
   let page = ''

@@ -11,7 +11,7 @@
 import { TIME_BUDGET_MS, QUOTA_STOP } from './env.js'
 import { sb, one, insert, patch, rpc, audit, storageUsage } from './db.js'
 import { PROVIDERS, accessTokenFor, messageProcessor, conductorContext } from './pipeline.js'
-import { newRuns, closeRuns } from './agents.js'
+import { closeStaleRuns, newRuns, closeRuns } from './agents.js'
 
 const MAX_TRIES = 3
 const HARD_STOP_MS = 54_000   // the function is killed at 60s: a message still being read by then is given up for this run
@@ -253,24 +253,33 @@ export async function buildReport(job) {
 
 /* one run: segments one after another until the time is up, a different mailbox each time while there are several */
 export async function tick({ started = Date.now(), trigger = 'scan', limits = {} } = {}) {
-  const runs = await newRuns(trigger)
   // limits: at most this many segments / messages in this run (the screen's "step", and the tests of stop and resume)
   const maxSegments = Math.max(1, Math.min(10_000, Number(limits.segments) || 10_000))
   const cache = { tokens: new Map(), ctx: null, msgLeft: Math.max(1, Math.min(1e9, Number(limits.messages) || 1e9)) }
   const served = []; const done = []
+  const claim = async () => {
+    let seg = ((await rpc('fin_scan_claim', { p_skip: served, p_lease_seconds: 90 })) || [])[0]
+    if (!seg && served.length) { served.length = 0; seg = ((await rpc('fin_scan_claim', { p_skip: [], p_lease_seconds: 90 })) || [])[0] }
+    return seg
+  }
+  // The agents' run rows are opened only when there is a segment to work on. This runs every minute: opening five
+  // rows each time, work or no work, filled the agents screen with thousands of empty runs.
+  let seg = await claim()
+  let runs = null
+  if (!seg) await closeStaleRuns().catch(() => {})
   try {
-    while (Date.now() - started < TIME_BUDGET_MS - 12_000) {
-      let seg = ((await rpc('fin_scan_claim', { p_skip: served, p_lease_seconds: 90 })) || [])[0]
-      if (!seg && served.length) { served.length = 0; seg = ((await rpc('fin_scan_claim', { p_skip: [], p_lease_seconds: 90 })) || [])[0] }
-      if (!seg) break
+    while (seg && Date.now() - started < TIME_BUDGET_MS - 12_000) {
+      if (!runs) runs = await newRuns(trigger)
       served.push(seg.mailbox_id)
       const r = await runSegment(seg, started, runs, cache)
       done.push({ segment: seg.id, mailbox: seg.mailbox_id, result: r })
       if (r === 'time' || done.length >= maxSegments) break
+      seg = await claim()
     }
-  } finally { await closeRuns(runs) }
+  } finally { if (runs) await closeRuns(runs) }
   const left = (await sb('fin_scan_segments?status=in.(pending,retry,running)&select=id&limit=1')) || []
-  return { segments: done, more: left.length > 0, cost_usd: Math.round(((runs.ocr.stat.details.cost_usd || 0) + (runs.collector.stat.details.triage_usd || 0)) * 10000) / 10000 }
+  const cost = runs ? (runs.ocr.stat.details.cost_usd || 0) + (runs.collector.stat.details.triage_usd || 0) : 0
+  return { segments: done, more: left.length > 0, cost_usd: Math.round(cost * 10000) / 10000 }
 }
 
 /* what the screen shows per mailbox: the latest job with its segments' totals, and the problems left */

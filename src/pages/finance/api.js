@@ -82,7 +82,9 @@ export const storageUsage = async () => { try { return must(await supabase.rpc('
 
 // a status change may have queued automatic deliveries (webhook / email); ask the server to send them, without waiting
 export const flushOutbound = () => { callServer('outbound-flush').catch(() => {}) }
-const afterStatus = (patch, out) => { if (patch && 'status' in patch) flushOutbound(); return out }
+// a document that came by WhatsApp and was just approved: its sender gets one short message (the server decides whether)
+const tellSender = (out) => { for (const d of [].concat(out || [])) if (d?.source === 'whatsapp' && d.status === 'approved') callServer('whatsapp-approved', { document_id: d.id }).catch(() => {}) }
+const afterStatus = (patch, out) => { if (patch && 'status' in patch) { flushOutbound(); if (patch.status === 'approved') tellSender(out) } return out }
 // a company chosen by a person is marked "manual": the engine learns from it for the next document of that supplier
 const byPerson = (patch) => ('business_id' in patch ? { ...patch, business_source: patch.business_id ? 'manual' : null } : patch)
 export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).eq('id', id).select().single()))

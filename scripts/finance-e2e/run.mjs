@@ -2027,6 +2027,42 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     `הודעה: ${said}; אחרי צירוף: ${row}`, said === 1 && row === 'true|meta-receipt-oct.pdf|500.00|E2E-NOFILE-1|false', [nofileShot, attachedShot])
 }
 
+// RECEIPTS: the "קבלות וחשבוניות" screen of documents handed in by people; the automatic WhatsApp messages can be turned
+// off (the document is still taken in); an approved WhatsApp document tells its sender once.
+{
+  const tokA = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const sentNow = async () => (await fetch(`${FAKES}/__log`).then((r) => r.json())).wa.length
+  const n0 = await sentNow()
+  const off = await api(tokA, { action: 'whatsapp-replies', on: false })
+  const quiet = await hook(imgMsg('wa-quiet-1', '972543049491'))
+  const n1 = await sentNow()
+  const on = await api(tokA, { action: 'whatsapp-replies', on: true })
+  const loud = await hook(imgMsg('wa-loud-1', '972543049491'))
+  const n2 = await sentNow()
+  const empSwitch = await api(tokE, { action: 'whatsapp-replies', on: false })
+  const waId = sql("select id from fin_documents where source='whatsapp' order by created_at limit 1")
+  sql(`update fin_documents set issues='[]'::jsonb where id='${waId}' and status='review'`)
+  const early = await api(tokA, { action: 'whatsapp-approved', document_id: waId })
+  await rest(`fin_documents?id=eq.${waId}`, tokA, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) })
+  const st = sql(`select status from fin_documents where id='${waId}'`)
+  const first = await api(tokA, { action: 'whatsapp-approved', document_id: waId })
+  const second = await api(tokA, { action: 'whatsapp-approved', document_id: waId })
+  const lastMsg = ((await fetch(`${FAKES}/__log`).then((r) => r.json())).wa.slice(-1)[0] || {}).message || ''
+  const driveMap = await api(tokA, { action: 'receipts-drive' })
+  await go('/receipts'); await page.waitForSelector('.fin-receipts__table', { timeout: 15000 }).catch(() => {})
+  const figs = await page.locator('.fin-receipts__figs > *').count()
+  const rowsAll = await page.locator('.fin-receipts__table tbody tr').count()
+  await page.locator('.fin-receipts__bar .fin-seg').getByRole('button', { name: 'WhatsApp' }).click(); await page.waitForTimeout(300)
+  const rowsWa = await page.locator('.fin-receipts__table tbody tr').count()
+  const pills = (await page.locator('.fin-receipts__table tbody tr .fin-pill').allInnerTexts()).join(',')
+  const recShot = await shot('125-receipts')
+  await page.locator('.fin-receipts__table tbody tr').first().click(); await page.waitForTimeout(1200)
+  const opened = /\/documents\//.test(page.url())
+  record('RECEIPTS', 'קבלות וחשבוניות: מסך, הודעות אוטומטיות והודעת אישור', 'המסך מציג חמישה מספרים ואת המסמכים שהגיעו ב-WhatsApp ובהעלאה, עם סטטוס לכל אחד, ושורה פותחת את המסמך; כשההודעות כבויות לא נשלחת הודעה והודעה נכנסת עדיין נרשמת; כשהן פועלות נשלחת; עובד לא משנה את ההגדרה; מסמך שאושר שולח לשולח הודעה אחת בלבד, ומסמך שלא אושר לא שולח',
+    `כיבוי: ${off.status}, הודעה נכנסת ${quiet.data.outcome}, נשלחו ${n1 - n0}; הפעלה: ${on.status}, ${loud.data.outcome}, נשלחו ${n2 - n1}; עובד: ${empSwitch.status}; לפני אישור: ${early.data.reason}; סטטוס: ${st}; אישור: ${first.data.reason}, שוב: ${second.data.reason}; הודעה: ${lastMsg.slice(0, 40)}; Drive: ${driveMap.status}/${typeof driveMap.data.files}; מסך: ${figs} מספרים, ${rowsAll} שורות, WhatsApp ${rowsWa}, סטטוסים ${pills}; נפתח: ${opened}`,
+    off.status === 200 && quiet.data.outcome === 'duplicate' && n1 === n0 && on.status === 200 && n2 === n1 + 1 && empSwitch.status === 403 && early.data.reason === 'not_applicable' && st === 'approved' && first.data.reason === 'sent' && second.data.reason === 'already' && /המסמך אושר ונשמר/.test(lastMsg) && driveMap.status === 200 && typeof driveMap.data.files === 'object' && figs === 5 && rowsAll >= rowsWa && rowsWa >= 1 && /אושר|נשמר ב-Drive/.test(pills) && opened, [recShot])
+}
+
 // PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the
 // system is a suspected duplicate; the supplier's own second receipt with another number is a separate purchase.
 {

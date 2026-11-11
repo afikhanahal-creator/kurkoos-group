@@ -2113,7 +2113,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-x-hero .fin-x-big { color: var(--ink); }
 .fin-x-hero .fin-x-label, .fin-x-hero__foot, .fin-x-kpis small { color: var(--text-2); }
 .fin-x-hero .fin-x-delta { color: var(--text-2); }
-.fin-x-hero .fin-x-delta.is-watch { color: var(--warn-ink, #8a5a00); }
+.fin-x-hero .fin-x-delta.is-watch { color: var(--warn); }
 .fin-x-hero .fin-x-delta.is-good { color: var(--ok); }
 .fin-x-kpis > * { border-color: var(--line) !important; }
 .fin-x-kpis > button:hover { background: var(--wash); }
@@ -3191,3 +3191,63 @@ button.fin-rbars__row { cursor: pointer; }
   .fin-rchart__head .fin-seg button { flex: 1; justify-content: center; min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) { .fin-rchart__col, .fin-rchart__bar, .fin-rbars__row { transition: none; } }
+/* the narrowest phones: the date moves above the name so the name keeps its width */
+@media (max-width: 400px) {
+  .fin-dassign li.fin-dassign__row { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .fin-dassign__date { grid-column: 2; grid-row: 1; justify-self: start; display: flex; align-items: baseline; gap: 5px; padding: 2px 8px; }
+  .fin-dassign__main { grid-column: 2; grid-row: 2; }
+  .fin-dassign__sum { grid-column: 2; grid-row: 3; }
+  .fin-dassign__acts { grid-column: 3; grid-row: 1 / span 3; }
+}
+
+/* receipts and invoices handed in by people (WhatsApp, upload) */
+.fin-receipts__figs > button { all: unset; direction: inherit; box-sizing: border-box; padding: 16px 20px; border-inline-start: 1px solid var(--line); margin-inline-start: -1px; min-width: 0; cursor: pointer; transition: background-color var(--dur) var(--ease); }
+.fin-receipts__figs > button:hover { background: var(--wash); }
+.fin-receipts__figs > button:focus-visible { outline: 2px solid var(--ocean); outline-offset: -2px; }
+.fin-receipts__figs > button.is-on { background: var(--ocean-wash); box-shadow: inset 0 -3px 0 var(--ocean); }
+.fin-receipts__figs dd { font-size: 1.6rem !important; }
+.fin-receipts__bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.fin-receipts__bar .fin-seg button { min-height: 40px; }
+.fin-receipts__bar .fin-btn.is-on { background: var(--wash); }
+.fin-receipts__more { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); }
+.fin-receipts__min { display: flex; align-items: center; gap: 8px; font-size: var(--t-sm); color: var(--text-2); }
+.fin-receipts__min input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); color: var(--ink); font: inherit; }
+.fin-receipts__table { font-size: var(--t-md); }
+.fin-receipts__table td { padding-block: 10px; vertical-align: middle; }
+.fin-receipts__thumb { width: 64px; }
+.fin-receipts__pic { display: block; width: 48px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: var(--wash); }
+.fin-receipts__pic > * { width: 100%; height: 100%; }
+.fin-receipts__sum { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-receipts__when { display: block; white-space: nowrap; }
+.fin-receipts__via, .fin-receipts__new { display: flex; align-items: center; gap: 4px; font-size: var(--t-xs); color: var(--text-2); }
+.fin-receipts__new { color: var(--ocean-2, var(--ocean)); }
+.fin-receipts__act { white-space: nowrap; text-align: end; }
+.fin-receipts__act > * { vertical-align: middle; margin-inline-start: 6px; }
+.fin-receipts__table tr.is-attn > td:first-child { box-shadow: inset -3px 0 0 var(--attn); }
+[dir="ltr"] .fin-receipts__table tr.is-attn > td:first-child { box-shadow: inset 3px 0 0 var(--attn); }
+.fin-receipts__cut { padding: 10px 14px; margin: 0; }
+.fin-wacheck__replies { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-m); cursor: pointer; }
+.fin-wacheck__replies input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ink); flex: none; }
+.fin-wacheck__replies span { display: grid; gap: 2px; }
+.fin-wacheck__replies small { color: var(--text-2); font-size: var(--t-sm); }
+@media (max-width: 760px) {
+  .fin-receipts__figs > button { padding: 12px 14px; border-top: 1px solid var(--line); margin-top: -1px; min-height: 44px; }
+  .fin-receipts__bar .fin-seg { width: 100%; }
+  .fin-receipts__bar .fin-seg button { flex: 1; justify-content: center; min-height: 44px; }
+  .fin-receipts__bar .fin-select, .fin-receipts__bar .fin-btn { flex: 1 1 140px; min-height: 44px; }
+  .fin-receipts__more { grid-template-columns: minmax(0, 1fr); }
+  .fin-receipts__table thead { display: none; }
+  .fin-receipts__table, .fin-receipts__table tbody { display: block; }
+  .fin-receipts__table tr { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); align-items: center; }
+  .fin-receipts__table td { padding: 0; border: 0; }
+  .fin-receipts__table td.fin-receipts__thumb { grid-row: 1 / span 3; width: auto; }
+  .fin-receipts__table td.fin-td-main { grid-column: 2; font-weight: 700; }
+  .fin-receipts__table td.fin-receipts__sum { grid-column: 3; grid-row: 1; text-align: end; }
+  .fin-receipts__table td[data-label="תאריך"] { grid-column: 2; grid-row: 2; color: var(--text-2); font-size: var(--t-sm); }
+  .fin-receipts__table td[data-label="סטטוס"] { grid-column: 3; grid-row: 2; text-align: end; }
+  .fin-receipts__table td[data-label="נקלט"] { grid-column: 2 / -1; grid-row: 3; font-size: var(--t-xs); color: var(--text-2); display: flex; gap: 8px; flex-wrap: wrap; }
+  .fin-receipts__table td[data-label="סוג"], .fin-receipts__table td[data-label="מספר"] { display: none; }
+  .fin-receipts__table td.fin-receipts__act { grid-column: 1 / -1; text-align: start; margin-top: 8px; }
+  .fin-receipts__table td.fin-receipts__act .fin-btn { min-height: 44px; width: 100%; justify-content: center; margin: 0; }
+  .fin-receipts__table td.fin-receipts__act .fin-icon-btn { display: none; }
+}

@@ -85,7 +85,16 @@ async function forward(body) {
 export default async function whatsappWebhook(req, res) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim()
   const want = process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN || ''
-  if (!want || token.length !== want.length || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(want))) { res.status(401).json({ error: 'unauthorized' }); return }
+  if (!want || token.length !== want.length || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(want))) {
+    // A delivery that carries the wrong code is the usual reason "nothing arrives": it is noted (once in ten minutes,
+    // nothing about the message itself) so the connection check can say so instead of staying silent.
+    if (req.headers['x-finance-probe']) { res.status(401).json({ error: 'unauthorized' }); return }   // the system asking its own address
+    try {
+      const since = new Date(Date.now() - 10 * 60_000).toISOString()
+      if (!(await one(`fin_whatsapp_inbox?outcome=eq.unauthorized&at=gt.${encodeURIComponent(since)}&select=id`))) await insert('fin_whatsapp_inbox', { kind: 'delivery', outcome: 'unauthorized', detail: token ? 'קוד האימות שנשלח לא תואם את זה שבשרת' : 'ההודעה הגיעה בלי קוד אימות' })
+    } catch { /* the refusal itself does not depend on the note */ }
+    res.status(401).json({ error: 'unauthorized' }); return
+  }
   let b = req.body
   if (typeof b === 'string') { try { b = JSON.parse(b) } catch { b = {} } }
   b = b || {}
@@ -194,7 +203,7 @@ const hookUrl = (origin) => `${String(origin || '').replace(/\/$/, '')}/api/fina
 async function finalHook(origin) {
   const want = hookUrl(origin)
   try {
-    const r = await fetch(want, { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(6000) })
+    const r = await fetch(want, { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/json', 'X-Finance-Probe': '1' }, body: '{}', signal: AbortSignal.timeout(6000) })
     const to = r.status >= 300 && r.status < 400 ? r.headers.get('location') : ''
     if (to) { const u = new URL(to, want); if (u.protocol === 'https:' && u.pathname === '/api/finance-whatsapp') return u.toString().replace(/\/$/, '') }
   } catch { /* the plain address stands */ }
@@ -244,8 +253,12 @@ export async function health(origin) {
   if (fwd) add('forward', true, 'העברה למערכת הקודמת', `כל הודעה שמגיעה מועברת גם ל-${bare(fwd)}`)
   const senders = (await sb('fin_whatsapp_senders?active=eq.true&select=id')) || []
   add('senders', senders.length > 0, 'טלפונים רשומים', senders.length ? `${senders.length} טלפונים יכולים לשלוח מסמכים` : 'עוד לא נרשם אף טלפון', senders.length ? '' : 'מוסיפים טלפון בכפתור "הוספת טלפון"')
-  const last = ((await sb('fin_whatsapp_inbox?select=outcome,at,kind&order=at.desc&limit=1')) || [])[0] || null
-  return { ok: steps.every((x) => x.ok), steps, last, replies: await repliesOn(), can_setup: hasInstance && hasToken && !!settings && !(urlOk && tokenOk && incomingOk), elsewhere: elsewhere && !fwdSame, other, forwarding: !!fwd }
+  const last = ((await sb('fin_whatsapp_inbox?outcome=neq.unauthorized&select=outcome,at,kind&order=at.desc&limit=1')) || [])[0] || null
+  // deliveries that were refused for a wrong code in the last day: the provider is sending, with a code this server does not accept
+  const dayAgo = new Date(Date.now() - 86400_000).toISOString()
+  const badCode = ((await sb(`fin_whatsapp_inbox?outcome=eq.unauthorized&at=gt.${encodeURIComponent(dayAgo)}&select=at,detail&order=at.desc&limit=1`).catch(() => [])) || [])[0] || null
+  if (badCode && (!last || badCode.at > last.at)) add('code', false, 'הודעות מגיעות ונדחות', `ההודעה האחרונה נדחתה: ${badCode.detail}`, 'לוחצים "הפעלת הקליטה" כדי לרשום מחדש את הכתובת ואת קוד האימות אצל ספק ה-WhatsApp')
+  return { ok: steps.every((x) => x.ok), steps, last, replies: await repliesOn(), can_setup: hasInstance && hasToken && !!settings && (!(urlOk && tokenOk && incomingOk) || !!(badCode && (!last || badCode.at > last.at))), elsewhere: elsewhere && !fwdSame, other, forwarding: !!fwd }
 }
 /* points the incoming messages of the office number at this system. A webhook that already goes somewhere else is
    replaced only when the person says so (force): another tool may be listening on it. */

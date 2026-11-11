@@ -970,7 +970,7 @@ const empToken = await login('worker@kurkoos.test', 'W0rker!xx')
     'הבדיקה קוראת את מצב המכשיר וההגדרות מהספק; לפני ההפעלה שלב ההודעות הנכנסות חסר; הפעלה לא דורסת כתובת של מערכת אחרת בלי אישור; אחריה הכול תקין; מכשיר מנותק מסומן; עובד לא בודק ולא מפעיל',
     `לפני: webhook ${step(c1, 'webhook')?.ok}, אפשר להפעיל ${c1.can_setup}; כתובת אחרת: ${taken.status}; הפעלה: ${on.status}, נשמר ${set.webhookUrl} / ${set.incomingWebhook} / טוקן ${set.webhookUrlToken === 'test-wa-hook'}; אחרי: ${c2.ok}; מנותק: phone ${step(c3, 'phone')?.ok}; עובד: ${empCheck.status},${empSetup.status}; מסך: ${uiSteps} שלבים, תקין ${uiOk}`,
     step(c1, 'webhook')?.ok === false && c1.can_setup === true && step(c1, 'phone')?.ok === true && taken.status === 409 && on.status === 200 && /\/api\/finance-whatsapp$/.test(set.webhookUrl || '') && set.incomingWebhook === 'yes' && set.webhookUrlToken === 'test-wa-hook'
-      && c2.ok === true && step(c3, 'phone')?.ok === false && c3.ok === false && empCheck.status === 403 && empSetup.status === 403 && uiSteps === 6 && uiOk === 1, [wcShot])
+      && c2.ok === true && step(c3, 'phone')?.ok === false && c3.ok === false && empCheck.status === 403 && empSetup.status === 403 && uiSteps === 7 && uiOk === 1, [wcShot])
 }
 const accDocs = await rest('fin_documents?select=status', accToken)
 const accEdit = await rest(`fin_documents?status=eq.sent`, accToken, { method: 'PATCH', body: JSON.stringify({ notes: 'x' }) })
@@ -2065,6 +2065,24 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   record('RECEIPTS', 'קבלות וחשבוניות: מסך, הודעות אוטומטיות והודעת אישור', 'המסך מציג חמישה מספרים ואת המסמכים שהגיעו ב-WhatsApp ובהעלאה, עם סטטוס לכל אחד, ושורה פותחת את המסמך; כשההודעות כבויות לא נשלחת הודעה והודעה נכנסת עדיין נרשמת; כשהן פועלות נשלחת; עובד לא משנה את ההגדרה; מסמך שאושר שולח לשולח הודעה אחת בלבד, ומסמך שלא אושר לא שולח; כל הודעה נכנסת מועברת גם לכתובת של המערכת הקודמת',
     `כיבוי: ${off.status}, הודעה נכנסת ${quiet.data.outcome}, נשלחו ${n1 - n0}; הפעלה: ${on.status}, ${loud.data.outcome}, נשלחו ${n2 - n1}; עובד: ${empSwitch.status}; לפני אישור: ${early.data.reason}; סטטוס: ${st}; אישור: ${first.data.reason}, שוב: ${second.data.reason}; הודעה: ${lastMsg.slice(0, 40)}; Drive: ${driveMap.status}/${typeof driveMap.data.files}; מסך: ${figs} מספרים, ${rowsAll} שורות, WhatsApp ${rowsWa}, סטטוסים ${pills}; נפתח: ${opened}; העברה למערכת הקודמת: ${passed.length} הודעות, עם הטוקן שלה ${passedQuiet?.auth === 'Bearer test-other-system'}, שלב בבדיקה ${fwdStep?.ok}`,
     off.status === 200 && quiet.data.outcome === 'duplicate' && n1 === n0 && on.status === 200 && n2 === n1 + 1 && empSwitch.status === 403 && early.data.reason === 'not_applicable' && st === 'approved' && first.data.reason === 'sent' && second.data.reason === 'already' && /המסמך אושר ונשמר/.test(lastMsg) && driveMap.status === 200 && typeof driveMap.data.files === 'object' && figs === 5 && rowsAll >= rowsWa && rowsWa >= 1 && /אושר|נשמר ב-Drive/.test(pills) && opened && passed.length >= 2 && passedQuiet?.auth === 'Bearer test-other-system' && fwdStep?.ok === true, [recShot])
+}
+
+// OFFICE: a receipt sent FROM the office phone. Only the note-to-self chat and a chat with a registered phone count;
+// a file the office sends to anybody else, and plain text, leave no trace.
+{
+  const own = '972501234567'
+  const outMsg = (id, to, text) => ({ typeWebhook: 'outgoingMessageReceived', idMessage: id, instanceData: { idInstance: 1101, wid: `${own}@c.us`, typeInstance: 'whatsapp' }, senderData: { chatId: `${to}@c.us`, sender: `${own}@c.us` }, messageData: text ? { typeMessage: 'textMessage', textMessageData: { textMessage: text } } : { typeMessage: 'imageMessage', fileMessageData: { downloadUrl: `${FAKES}/green/file/wa-receipt.png`, fileName: 'x.jpg', mimeType: 'image/png', caption: '' } } })
+  const rowsBefore = sql('select count(*) from fin_whatsapp_inbox')
+  const toSelf = await hook(outMsg('out-self-1', own))
+  const toScanner = await hook(outMsg('out-scan-1', '972543049491'))
+  const toClient = await hook(outMsg('out-client-1', '972521112222'))
+  const textSelf = await hook(outMsg('out-self-2', own, 'תזכורת'))
+  const apiEcho = await hook({ ...outMsg('out-api-1', own), typeWebhook: 'outgoingAPIMessageReceived' })
+  const rowsAfter = sql('select count(*) from fin_whatsapp_inbox')
+  const officeStep = (await api(adminToken, { action: 'whatsapp-check' })).data.steps?.find((x) => x.key === 'office')
+  record('OFFICE', 'קבלה שנשלחת מהטלפון של המשרד', 'תמונה שהטלפון של המשרד שולח לעצמו או לטלפון רשום נקלטת (כאן: אותו קובץ כבר במערכת); תמונה שנשלחת ללקוח, הודעת טקסט והודעות שהמערכת עצמה שלחה לא נרשמות בכלל; בדיקת החיבור מציגה את השלב',
+    `לעצמי: ${toSelf.data.outcome}; לטלפון רשום: ${toScanner.data.outcome}; ללקוח: ${toClient.data.ignored}; טקסט: ${textSelf.data.ignored}; הודעת מערכת: ${apiEcho.data.ignored}; שורות ביומן: ${Number(rowsAfter) - Number(rowsBefore)}; שלב: ${officeStep?.ok}`,
+    toSelf.data.outcome === 'duplicate' && toScanner.data.outcome === 'duplicate' && toClient.data.ignored === 'office_chat' && textSelf.data.ignored === 'office_chat' && apiEcho.data.ignored === 'outgoingAPIMessageReceived' && Number(rowsAfter) - Number(rowsBefore) === 2 && officeStep?.ok === true)
 }
 
 // PLACEHOLDER: a charge entered without its paper waits for it. When the paper arrives (same supplier, same total, the

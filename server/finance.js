@@ -81,6 +81,7 @@ const ROLES = {
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
   'whatsapp-check': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
+  'drive-forget': ['admin', 'finance_manager', 'employee'],
   'linked-links': ['admin', 'finance_manager', 'employee'],
   'linked-fetch': ['admin', 'finance_manager', 'employee'],
   'whatsapp-replies': ['admin', 'finance_manager'],
@@ -396,6 +397,16 @@ export default async function handler(req, res) {
       case 'drive-exclude': {
         const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
         res.status(200).json(await archive.exclude({ targetId: String(body.target_id || ''), ids, excluded: body.excluded !== false, user }))
+        return
+      }
+      case 'drive-forget': {
+        // before a document is deleted: its copy in Drive goes to the Drive trash. The same people who may delete it.
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        const mine = []
+        for (let i = 0; i < ids.length; i += 100) for (const d of (await sb(`fin_documents?id=in.(${ids.slice(i, i + 100).join(',')})&select=id,status,created_by`)) || []) {
+          if (user.role === 'admin' || (user.role === 'finance_manager' && !['approved', 'sent'].includes(d.status)) || (user.role === 'employee' && d.created_by === user.id && !['approved', 'sent'].includes(d.status))) mine.push(d.id)
+        }
+        res.status(200).json(mine.length ? await archive.removeFromDrive({ ids: mine, user }) : { trashed: 0, failed: [] })
         return
       }
       case 'drive-pause': {

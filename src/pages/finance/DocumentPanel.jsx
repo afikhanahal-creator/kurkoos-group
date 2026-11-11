@@ -3,6 +3,7 @@ import { HtmlPreview } from './DocPreview.jsx'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
+import { Slip } from './Thumbnail.jsx'
 import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf } from './format.js'
 import { saveBlob } from './zip.js'
 import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton, askConfirm } from './ui.jsx'
@@ -29,9 +30,9 @@ function NoFile({ doc, onSaved, canEdit }) {
   }
   return (
     <div className="fin-nofile">
-      <span className="fin-nofile__icon" aria-hidden="true"><Icon name="docs" size={28} /></span>
-      <h3>לרשומה הזו אין קובץ</h3>
-      <p>{doc.description || 'הפרטים נרשמו בלי קובץ מקור.'}</p>
+      <div className="fin-nofile__slip"><Slip doc={doc} /></div>
+      <h3>לרשומה הזו אין קובץ מקור</h3>
+      <p>מה שמוצג למעלה הוא מה שרשום במערכת, לא המסמך עצמו. כשמצרפים את הקובץ הוא מחליף את התצוגה הזו.</p>
       {canEdit && <label className={`fin-btn fin-btn--primary ${busy ? 'is-busy' : ''}`}><Icon name="upload" size={17} /> {busy ? 'מצרף…' : 'צירוף הקובץ (PDF או תמונה)'}<input type="file" accept="application/pdf,image/*" hidden disabled={busy} onChange={(e) => { pick(e.target.files?.[0]); e.target.value = '' }} /></label>}
       {canEdit && <small>הפרטים שכבר רשומים נשארים כמו שהם. אחרי הצירוף הקובץ עולה גם ל-Google Drive.</small>}
       {err && <p className="fin-error" role="alert">{err}</p>}

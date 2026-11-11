@@ -3087,9 +3087,27 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-nofile p { margin: 0; font-size: var(--t-sm); line-height: 1.6; }
 .fin-nofile small { font-size: var(--t-xs); color: var(--text-2); }
 .fin-nofile label.fin-btn { cursor: pointer; }
-.fin-thumb--nofile { place-items: center; border: 1px dashed var(--line-2); }
-.fin-thumb--nofile span { color: var(--text-2); font-size: var(--t-sm); font-weight: 700; }
-.fin-recent .fin-thumb--nofile span, .fin-picklist .fin-thumb--nofile span { display: none; }
+.fin-thumb--nofile { container-type: size; place-items: stretch; border: 1px dashed var(--line-2); background: var(--sheet); overflow: hidden; }
+.fin-slip { display: grid; align-content: start; gap: 6px; padding: 14px; text-align: start; color: var(--text-2); font-size: var(--t-sm); line-height: 1.4; height: 100%; box-sizing: border-box; overflow: hidden; }
+.fin-slip__tag { justify-self: start; padding: 2px 8px; border-radius: 999px; background: var(--warn-wash); color: var(--warn); font-size: var(--t-xs); font-weight: 700; }
+.fin-slip strong { color: var(--ink); font-size: var(--t-md); overflow-wrap: anywhere; }
+.fin-slip__type { font-size: var(--t-xs); overflow-wrap: anywhere; }
+.fin-slip__rows { display: grid; gap: 4px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.fin-slip__rows > span { display: flex; justify-content: space-between; gap: 10px; }
+.fin-slip__rows i, .fin-slip__rows em { font-style: normal; }
+.fin-slip__rows em { color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-slip__total { padding-top: 6px; border-top: 1px solid var(--line); font-weight: 700; }
+.fin-slip__total em { font-size: var(--t-md); }
+.fin-slip__note { font-size: var(--t-xs); }
+/* in a small frame only the lines of a page remain; the words would not be readable */
+@container (max-width: 150px) {
+  .fin-slip { padding: 6px 5px; gap: 3px; }
+  .fin-slip > * { display: none; }
+  .fin-slip::before, .fin-slip::after { content: ''; display: block; height: 3px; border-radius: 2px; background: var(--line-2); }
+  .fin-slip::before { width: 70%; box-shadow: 0 7px 0 var(--line), 0 14px 0 var(--line); }
+  .fin-slip::after { width: 45%; margin-top: 18px; background: var(--warn); opacity: 0.7; }
+}
+.fin-nofile__slip { width: min(100%, 340px); border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); box-shadow: 0 8px 24px rgba(7, 41, 58, 0.08); }
 /* tiny thumbnails (rows of a list): an email shows as a plain tile, the frame is for cards and previews */
 .fin-recent .fin-thumb__mail, .fin-picklist .fin-thumb__mail { display: none; }
 /* a card: the email scaled to the card's width */
@@ -3236,18 +3254,19 @@ button.fin-rbars__row { cursor: pointer; }
   .fin-receipts__bar .fin-seg button { flex: 1; justify-content: center; min-height: 44px; }
   .fin-receipts__bar .fin-select, .fin-receipts__bar .fin-btn { flex: 1 1 140px; min-height: 44px; }
   .fin-receipts__more { grid-template-columns: minmax(0, 1fr); }
-  .fin-receipts__table thead { display: none; }
-  .fin-receipts__table, .fin-receipts__table tbody { display: block; }
-  .fin-receipts__table tr { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); align-items: center; }
-  .fin-receipts__table td { padding: 0; border: 0; }
-  .fin-receipts__table td.fin-receipts__thumb { grid-row: 1 / span 3; width: auto; }
-  .fin-receipts__table td.fin-td-main { grid-column: 2; font-weight: 700; }
-  .fin-receipts__table td.fin-receipts__sum { grid-column: 3; grid-row: 1; text-align: end; }
-  .fin-receipts__table td[data-label="תאריך"] { grid-column: 2; grid-row: 2; color: var(--text-2); font-size: var(--t-sm); }
-  .fin-receipts__table td[data-label="סטטוס"] { grid-column: 3; grid-row: 2; text-align: end; }
-  .fin-receipts__table td[data-label="נקלט"] { grid-column: 2 / -1; grid-row: 3; font-size: var(--t-xs); color: var(--text-2); display: flex; gap: 8px; flex-wrap: wrap; }
-  .fin-receipts__table td[data-label="סוג"], .fin-receipts__table td[data-label="מספר"] { display: none; }
+  /* the phone card: picture, name and status on the first line, then the labelled facts, then one full-width button */
+  .fin-receipts__table td.fin-receipts__thumb { grid-column: 1 / 2 !important; grid-row: 1; width: 48px; min-width: 48px; }
+  .fin-receipts__table td.fin-receipts__thumb .fin-peek { display: block; width: 48px; }
+  .fin-receipts__table td.fin-td-total::before { font-size: var(--t-sm); font-weight: 400; }
+  .fin-receipts__table td.fin-td-main { min-width: 0; overflow-wrap: anywhere; }
+  .fin-receipts__table td.fin-td-main { font-weight: 700; font-size: var(--t-md); }
+  .fin-receipts__table td.fin-receipts__st { grid-column: 3; grid-row: 1; }
+  .fin-receipts__table td[data-label] { padding: 4px 0 !important; align-items: baseline; }
+  .fin-receipts__table td.fin-receipts__got > span { text-align: end; }
+  .fin-receipts__table td.fin-receipts__got .fin-receipts__via { justify-content: flex-end; }
   .fin-receipts__table td.fin-receipts__act { grid-column: 1 / -1; text-align: start; margin-top: 8px; }
   .fin-receipts__table td.fin-receipts__act .fin-btn { min-height: 44px; width: 100%; justify-content: center; margin: 0; }
   .fin-receipts__table td.fin-receipts__act .fin-icon-btn { display: none; }
+  .fin-receipts__table tr.is-attn > td:first-child { box-shadow: none; }
+  .fin-receipts__table tbody tr.is-attn { border-inline-start: 3px solid var(--attn); }
 }

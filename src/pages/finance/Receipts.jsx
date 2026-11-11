@@ -126,7 +126,7 @@ export default function Receipts() {
       ) : (
         <div className="fin-table-wrap">
           <table className="fin-table fin-table--plain fin-receipts__table">
-            <thead><tr><th aria-label="תצוגה מקדימה" /><th>תאריך</th><th>ספק</th><th>סוג מסמך</th><th>מספר</th><th className="fin-num">סכום כולל</th><th>נקלט</th><th>סטטוס</th><th aria-label="פעולות" /></tr></thead>
+            <thead><tr><th aria-label="תצוגה מקדימה" /><th>תאריך</th><th>ספק</th><th>סטטוס</th><th>סוג מסמך</th><th>מספר</th><th className="fin-num">סכום כולל</th><th>נקלט</th><th aria-label="פעולות" /></tr></thead>
             <tbody>
               {shown.slice(0, 300).map(({ d, stage: st, link }) => {
                 const s = STAGE[st]
@@ -135,12 +135,13 @@ export default function Receipts() {
                   <tr key={d.id} className={`is-link ${st === 'fix' || st === 'failed' ? 'is-attn' : ''}`} onClick={() => go(`/documents/${d.id}`)}>
                     <td className="fin-receipts__thumb"><Peek doc={d}><span className="fin-receipts__pic"><Thumbnail doc={d} /></span></Peek></td>
                     <td data-label="תאריך">{date(docDate(d)) || '—'}</td>
-                    <td className="fin-td-main" data-label="ספק">{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
+                    <td className="fin-td-main">{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
+                    <td className="fin-td-status fin-receipts__st"><span className={`fin-pill fin-pill--${s.tone}`} title={s.hint}>{s.label}</span></td>
                     <td data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td data-label="מספר" dir="ltr">{d.doc_number || '—'}</td>
-                    <td className="fin-num fin-receipts__sum" data-label="סכום כולל">{d.total_amount != null ? money(d.total_amount, d.currency) : '—'}</td>
-                    <td data-label="נקלט"><span className="fin-receipts__when">{dateTime(d.created_at)}</span><small className="fin-receipts__via"><Icon name={d.source === 'whatsapp' ? 'phone' : 'upload'} size={12} /> {d.source === 'whatsapp' ? `WhatsApp ${sender(d)}` : 'העלאה'}</small></td>
-                    <td data-label="סטטוס"><span className={`fin-pill fin-pill--${s.tone}`} title={s.hint}>{s.label}</span></td>
+                    <td className="fin-num fin-receipts__sum fin-td-total" data-label="סכום כולל">{d.total_amount != null ? money(d.total_amount, d.currency) : '—'}</td>
+                    <td data-label="נקלט" className="fin-receipts__got"><span><span className="fin-receipts__when">{dateTime(d.created_at)}</span><small className="fin-receipts__via"><Icon name={d.source === 'whatsapp' ? 'phone' : 'upload'} size={12} /> {d.source === 'whatsapp' ? `WhatsApp ${sender(d)}` : 'העלאה'}</small></span></td>
+                    
                     <td className="fin-receipts__act" onClick={(e) => e.stopPropagation()}>
                       {link && <a className="fin-icon-btn" href={link} target="_blank" rel="noreferrer" aria-label="פתיחה ב-Google Drive" title="פתיחה ב-Google Drive"><Icon name="folder" size={18} /></a>}
                       <button type="button" className="fin-btn fin-btn--sm" onClick={() => go(`/documents/${d.id}`)}>{st === 'ready' || st === 'fix' ? 'בדיקה ואישור' : 'פתיחה'}</button>

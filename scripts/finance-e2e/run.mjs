@@ -1718,9 +1718,9 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const chipPop = await page.locator('.fin-wachip__pop').innerText().catch(() => '')
   const chipShot = await shot('106-whatsapp-chip')
   await page.keyboard.press('Escape')
-  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, מספר לא רשום שניסה לשלוח מוצג עם "הוספה"; בפס העליון המספר עם הסבר וקישור לניהול',
+  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, על מספר שמשרת גם מערכת אחרת מספרים לא רשומים לא נרשמים ולא מוצגים; בפס העליון המספר עם הסבר וקישור לניהול',
     `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
-    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 1 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
+    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
 
   // 5. a document: attachment file and a linked document, paid state, open in a new window, delete for a finance manager
   const ronirInv = sql("select id from fin_documents where file_name='ronir-inv.pdf'")

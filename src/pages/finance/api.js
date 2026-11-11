@@ -212,7 +212,14 @@ export const loadSkipped = (limit = 50) => soft((async () => must(await supabase
 /* one line in the activity log for something done in the browser (an Excel file, a download). Never blocks the action. */
 export const logAction = (action, details = {}) => { supabase.rpc('fin_log', { p_action: action, p_details: details }).then(() => {}, () => {}) }
 /* my role, whether it requires the second step, and the idle timeout; null when I am not a member */
-export const mySecurity = async () => { try { return must(await supabase.rpc('fin_my_security')) } catch { return null } }
+// "no row" (null) means the person is not a member; a failed call is not an answer, so it is asked again before giving up
+export const mySecurity = async () => {
+  for (const wait of [0, 400, 1200]) {
+    if (wait) await new Promise((r) => setTimeout(r, wait))
+    try { return must(await supabase.rpc('fin_my_security')) } catch { /* asked again */ }
+  }
+  return null
+}
 export const loadLoginEvents = (limit = 100) => soft(all('fin_login_events', 'at', false, limit))
 export const finishOnboarding = async (name) => must(await supabase.rpc('fin_finish_onboarding', { p_name: name || null }))
 

@@ -9,7 +9,7 @@ import Select from './Select.jsx'
 import { normalizePhone, validMobile, prettyPhone as pretty, localPhone } from './phone.js'
 
 export { normalizePhone, validMobile }
-const OUTCOME = { imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], refused_unknown_number: ['attn', 'מספר לא רשום'], unsupported: ['warn', 'אין קובץ מצורף'], failed: ['bad', 'נכשל'] }
+const OUTCOME = { unauthorized: ['attn', 'נדחה: קוד אימות שגוי'], imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], refused_unknown_number: ['attn', 'מספר לא רשום'], unsupported: ['warn', 'אין קובץ מצורף'], failed: ['bad', 'נכשל'] }
 const initials = (t) => String(t || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
 /* The WhatsApp numbers that may send documents: the office number people send to, every registered phone with what

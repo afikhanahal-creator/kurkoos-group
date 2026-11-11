@@ -9,7 +9,8 @@ import * as api from './api.js'
 
 /* a report table as a real right-to-left workbook: numbers stay numbers, ISO dates become dates */
 const reportXlsx = (name, head, rows) => buildXlsx([{ name, columns: head.map((h, i) => { const col = rows.map((r) => r[i]).filter((v) => v !== '' && v !== null && v !== undefined); const isNum = col.length > 0 && col.every((v) => typeof v === 'number'); const isDate = col.length > 0 && col.every((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v))); return { header: String(h), type: isDate ? 'date' : isNum ? (col.every(Number.isInteger) && !/סה״כ|מע״מ|סכום|לפני/.test(h) ? 'int' : 'money') : 'text', width: Math.min(40, Math.max(10, String(h).length + 4)) } }), rows }], { title: name })
-import { Bars, Card, Empty, Icon, PageHead } from './ui.jsx'
+import { Card, Empty, Icon, PageHead } from './ui.jsx'
+import { MonthChart, RankBars, ReportFigures } from './ReportCharts.jsx'
 import Select from './Select.jsx'
 import Overview from './Overview.jsx'
 import { reportOf } from './CompanySettings.jsx'
@@ -108,8 +109,17 @@ export default function Reports() {
   const isMoney = (i) => !report.count && typeof report.rows[0]?.[i] === 'number' && report.head[i] !== 'מסמכים' && report.head[i] !== 'ניסיונות'
   const totals = report.rows.length && report.chart ? report.head.map((_, i) => (i === 0 ? 'סה״כ' : report.rows.reduce((a, r) => a + (typeof r[i] === 'number' ? r[i] : 0), 0))) : null
 
+  // the headline figures of the money reports: what the whole period adds up to
+  const figures = totals && report.head[4] === 'סה״כ' ? [
+    ['סה״כ הוצאות', money(totals[4]), `${monthLabel(from)} – ${monthLabel(to)}`],
+    ['מסמכים', totals[1].toLocaleString('he-IL'), totals[1] ? `ממוצע למסמך ${money(totals[4] / totals[1])}` : ''],
+    ['לפני מע״מ', money(totals[2])],
+    ['מע״מ', money(totals[3])],
+    ...(kind === 'monthly' ? [['ממוצע לחודש', money(totals[4] / span), span === 1 ? 'חודש אחד' : `${span} חודשים`]] : []),
+  ] : kind === 'vat' && totals ? [['מע״מ לקיזוז', money(totals[3]), `${monthLabel(from)} – ${monthLabel(to)}`], ['מע״מ במסמכים', money(totals[2])], ['לא לקיזוז', money(totals[4])], ['מסמכים', totals[1].toLocaleString('he-IL')]] : null
+
   return (
-    <div className="fin-stack">
+    <div className="fin-stack fin-report">
       <PageHead title="דוחות" sub={role === 'accountant' ? 'מבוסס על מסמכים מאושרים בלבד' : 'כל הסכומים מחושבים מהרשומות השמורות, לא ע״י AI'}>
         <button type="button" className="fin-btn" onClick={() => saveBlob(new Blob([toCsv(report.head, report.rows)], { type: 'text/csv;charset=utf-8' }), `${name}.csv`)} disabled={!report.rows.length}><Icon name="download" size={18} /> CSV</button>
         <button type="button" className="fin-btn" onClick={() => { saveBlob(new Blob([reportXlsx(name, report.head, report.rows)], { type: XLSX_MIME }), `${name}.xlsx`); api.logAction('exported_excel', { report: kind, rows: report.rows.length }) }} disabled={!report.rows.length}><Icon name="download" size={18} /> Excel</button>
@@ -125,27 +135,12 @@ export default function Reports() {
       </div>
       {report.note && <p className="fin-muted">{report.note}</p>}
       {!report.rows.length ? <Empty title="אין נתונים לדוח הזה" icon="reports">נסו טווח אחר או חברה אחרת.</Empty> : (
-        <div className="fin-grid fin-grid--report">
-          {report.monthKeys && (
-            <Card title="מסמכים לפי חודש">
-              <div className="fin-scroll-x fin-mcount-wrap" ref={(el) => { if (el && el.dataset.at !== String(report.monthKeys.length)) { el.dataset.at = String(report.monthKeys.length); el.scrollLeft = -el.scrollWidth } }}>
-                <div className="fin-mcount" style={{ '--n': report.monthKeys.length }}>
-                  {report.monthKeys.map((m, n) => {
-                    const c = report.lists[n].length; const max = Math.max(...report.lists.map((l) => l.length), 1)
-                    return (
-                      <button key={m} type="button" className={`fin-mcount__col ${c ? '' : 'is-zero'}`} disabled={!c} onClick={() => openRow(n)} aria-label={`${monthLabel(m)}: ${c} מסמכים${c ? ', פתיחת הרשימה' : ''}`}>
-                        <span className="fin-mcount__n">{c || ''}</span>
-                        <span className="fin-mcount__bar" style={{ height: `${c ? Math.max(4, (c / max) * 100) : 0}%` }} />
-                        <span className="fin-mcount__m">{new Date(`${m}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'short' })}{m.endsWith('-01') || n === 0 ? ` ${m.slice(2, 4)}` : ''}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <p className="fin-muted fin-small">לחיצה על חודש פותחת את המסמכים שלו, מסודרים לפי תאריך.</p>
-            </Card>
-          )}
-          {report.chart && <Card title={`${report.head[report.chart]} לפי ${report.head[0]}`}><Bars rows={shown.map(({ r }) => r).filter((r) => r[report.chart]).slice(0, 12).map((r) => ({ name: String(r[0]), value: r[report.chart] }))} format={report.count ? (v) => String(v) : money} /></Card>}
+        <>
+        {figures && <ReportFigures items={figures} />}
+        <div className={`fin-grid fin-grid--report ${report.monthKeys ? 'is-stacked' : ''}`}>
+          {report.monthKeys
+            ? <Card title="הוצאות לפי חודש" className="fin-report__wide"><MonthChart months={report.monthKeys} rows={report.rows} onOpen={openRow} /></Card>
+            : report.chart && <Card title={`${report.head[report.chart]} לפי ${report.head[0]}`}><RankBars rows={shown.filter(({ r }) => r[report.chart]).slice(0, 12).map(({ r, n }) => ({ key: n, n, name: String(r[0]), value: r[report.chart], count: typeof r[1] === 'number' ? r[1] : null, detail: report.head.slice(2).map((h, k) => [h, report.count ? String(r[k + 2]) : money(r[k + 2])]) }))} format={report.count ? (v) => String(v) : money} onPick={report.lists ? (r) => openRow(r.n) : undefined} /></Card>}
           <div className="fin-table-wrap">
             <table className="fin-table fin-table--plain">
               <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0][i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>
@@ -154,6 +149,7 @@ export default function Reports() {
             </table>
           </div>
         </div>
+        </>
       )}
       </>}
     </div>

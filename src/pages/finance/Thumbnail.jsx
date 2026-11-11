@@ -55,6 +55,8 @@ export function prefetchThumb(doc, size = 'lg') {
   if (!doc?.file_path) return
   const key = size === 'lg' ? `${doc.file_path}@lg` : doc.file_path
   if (!cache.has(key)) cache.set(key, render(doc, size === 'lg' ? 880 : 360).catch((e) => { cache.delete(key); throw e }))
+  // a file that cannot be drawn is reported where it is shown; a drawing started ahead of time fails quietly
+  cache.get(key).catch(() => {})
 }
 
 export default function Thumbnail({ doc, size }) {

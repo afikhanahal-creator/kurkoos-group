@@ -2962,3 +2962,19 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-alertgrid .fin-alertrow { margin: 0; text-align: start; }
 @media (max-width: 900px) { .fin-spend { grid-template-columns: minmax(0, 1fr); } .fin-spend__chart { border-inline-start: 0; padding-inline-start: 0; border-top: 1px solid var(--line); padding-top: 12px; min-height: 96px; } }
 
+
+/* ---------- round 5: phone details ---------- */
+@media (max-width: 700px) {
+  /* the document header: name and actions on one line, the facts under them across the full width (they were a tall stack) */
+  .fin-panel__head .fin-panel__title { display: contents; }
+  .fin-panel__head .fin-panel__title > h2 { grid-column: 1; grid-row: 1; min-width: 0; align-self: center; }
+  .fin-panel__head .fin-panel__title > :not(h2) { grid-column: 1 / -1; }
+  .fin-panel__head .fin-panel__meta { display: flex; flex-flow: row wrap; gap: 6px 10px; margin: 0; }
+  .fin-panel__head .fin-fixedbtn { justify-self: start; }
+  /* the viewer's tools: full-size touch targets, across the width of the screen. Eight tools fit one line on most
+     phones (the fit-to-screen toggle stays on wide screens); a narrower phone gets two even lines, not three */
+  .fin-viewer__bar { flex-wrap: wrap; inset-inline: 4px; transform: none; max-width: none; width: auto; justify-content: center; gap: 0; padding: 2px; border-radius: 26px; }
+  .fin-viewer__bar .fin-viewer__sep { display: none; }
+  /* overview: with an odd number of companies the group total takes the first line, so no chip is left alone */
+  .fin-x-cos button:first-child:nth-last-child(odd) { grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: space-between; }
+}

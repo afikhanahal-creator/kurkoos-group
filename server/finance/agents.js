@@ -184,7 +184,7 @@ export async function runDaily(origin) {
   out.push(await automation('daily_scan', () => syncAll({ trigger: 'cron', started })))
   out.push(await automation('retry_failed', () => retryFailed({ started, trigger: 'cron' })))
   // the scan engine runs every minute through pg_cron; if that is not set up yet, the night run moves active scans on too
-  try { const { tick, ensureCoverage } = await import('./scan.js'); out.push({ key: 'scan_coverage', result: await ensureCoverage({}) }); out.push({ key: 'scan_engine', result: await tick({ started, trigger: 'cron' }) }) } catch (e) { out.push({ key: 'scan_engine', error: String(e.message || e).slice(0, 200) }) }
+  try { const { tick, ensureCoverage, nightlyCheck } = await import('./scan.js'); out.push({ key: 'scan_coverage', result: await ensureCoverage({}) }); if (process.env.FINANCE_NIGHT_CHECK !== '0') out.push({ key: 'night_check', result: await nightlyCheck({}) }); out.push({ key: 'scan_engine', result: await tick({ started, trigger: 'cron' }) }) } catch (e) { out.push({ key: 'scan_engine', error: String(e.message || e).slice(0, 200) }) }
   out.push(await automation('connection_alerts', async () => {
     const bad = (await sb('fin_mailboxes?status=eq.error&select=email,last_error')) || []
     if (!bad.length) return { alerts: 0 }

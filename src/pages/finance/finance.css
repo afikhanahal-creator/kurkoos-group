@@ -3035,3 +3035,12 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-merge__card .fin-link { min-height: 44px; }
   .fin .fin-bulk__row > .fin-bulk__merge { grid-column: 1 / -1; }
 }
+
+/* the night's completeness check, on every mailbox of the scans screen */
+.fin-scan__night { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 12px; border-radius: var(--r-m); background: var(--wash); color: var(--text-2); font-size: var(--t-sm); line-height: 1.5; }
+.fin-scan__night svg { flex: none; margin-top: 3px; }
+.fin-scan__night strong { color: var(--ink); }
+.fin-scan__night.is-ok { background: var(--ok-wash); }
+.fin-scan__night.is-ok svg { color: var(--ok); }
+.fin-scan__night.is-open { background: var(--warn-wash); }
+.fin-scan__night.is-open svg { color: var(--warn); }

@@ -55,7 +55,7 @@ function Report({ r }) {
 }
 
 function MailboxScan({ row, documents, can, onAction, onStart, go }) {
-  const { mailbox: mb, job, progress, problems } = row
+  const { mailbox: mb, job, progress, problems, check } = row
   const [open, setOpen] = useState(false)
   const [tone, label] = job ? STATE[job.status] || ['muted', job.status] : ['muted', 'עוד לא נסרקה']
   const docs = useMemo(() => documents.filter((d) => d.mailbox_id === mb.id), [documents, mb.id])
@@ -108,6 +108,13 @@ function MailboxScan({ row, documents, can, onAction, onStart, go }) {
           <Report r={job.report} />
         </details>
       )}
+      {/* the night's completeness check: every message of the last days is listed again and anything unread is read */}
+      <p className={`fin-scan__night ${check?.open ? 'is-open' : check ? 'is-ok' : ''}`} role="status">
+        <Icon name={check?.open ? 'alert' : 'check'} size={15} />
+        {check
+          ? <span><strong>בדיקת שלמות לילית:</strong> {['queued', 'running'].includes(check.status) ? 'רצה עכשיו' : dateTime(check.at)} · {n(check.listed)} הודעות מ-{date(check.from)} · {check.missed + check.kept ? `${n(check.kept)} מסמכים שלא נקלטו קודם נמצאו ונקלטו` : 'לא נמצאה הודעה שלא נבדקה'}{check.open ? ` · ${n(check.open)} הודעות לא נפתחו` : ''}</span>
+          : <span><strong>בדיקת שלמות לילית:</strong> תרוץ הלילה. בכל לילה כל ההודעות של שלושת הימים האחרונים נבדקות שוב, כדי ששום חשבונית לא תישאר בחוץ.</span>}
+      </p>
       {can('operate') && (
         <div className="fin-scan__acts">
           {!job || ['done', 'incomplete', 'cancelled', 'failed'].includes(job.status) ? <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" onClick={() => onStart(mb)}><Icon name="search" size={15} /> {job ? 'סריקה של תקופה חדשה' : 'התחלת סריקה'}</button> : null}
@@ -157,6 +164,7 @@ export default function Scans() {
     })()
     return undefined
   }, [active]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [checking, setChecking] = useState(false)
   const act = async (job, op, messageId) => {
     setErr('')
     try {
@@ -180,7 +188,9 @@ export default function Scans() {
   }, [rows, documents])
   return (
     <div className="fin-stack">
-      <PageHead title="ניהול סריקות" sub="סריקה של כל תיבת מייל לתקופה שבוחרים, עם בקרה שכל הודעה נבדקה" />
+      <PageHead title="ניהול סריקות" sub="סריקה של כל תיבת מייל לתקופה שבוחרים, עם בקרה שכל הודעה נבדקה">
+        {can('operate') && (rows || []).length > 0 && <button type="button" className="fin-btn" disabled={checking} onClick={async () => { setChecking(true); setErr(''); try { await api.callServer('scan-night-check'); await load() } catch (e) { setErr(e.message) } finally { setChecking(false) } }}><Icon name="check" size={16} /> {checking ? 'מתחיל…' : 'בדיקת שלמות עכשיו'}</button>}
+      </PageHead>
       {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
       {rows === null ? <p className="fin-muted" aria-busy="true">טוען…</p> : !rows.length ? (
         <Empty title="עוד לא חוברה תיבת מייל" icon="mail" action={can('operate') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>אחרי החיבור בוחרים תקופה, והסוכן סורק אותה לבד.</Empty>

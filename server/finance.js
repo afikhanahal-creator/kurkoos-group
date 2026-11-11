@@ -9,7 +9,7 @@
 //
 // Environment (Vercel > Settings > Environment Variables, never in code): see docs/finance/README.md
 // ============================================================
-import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview, ensureCoverage } from './finance/scan.js'
+import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOverview, ensureCoverage, nightlyCheck } from './finance/scan.js'
 import * as archive from './finance/archive.js'
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
@@ -45,6 +45,7 @@ const ROLES = {
   'scan-overview': ['admin', 'finance_manager'],
   'scan-run': ['admin', 'finance_manager'],
   'scan-coverage': ['admin', 'finance_manager'],
+  'scan-night-check': ['admin', 'finance_manager'],
   'drive-overview': ['admin', 'finance_manager'],
   'drive-tree': ['admin', 'finance_manager'],
   'drive-run': ['admin', 'finance_manager'],
@@ -314,6 +315,11 @@ export default async function handler(req, res) {
       case 'scan-coverage': {
         // every active mailbox gets a scan of the last year if no scan covers it (the night run does this by itself)
         res.status(200).json({ results: await ensureCoverage({ user }) })
+        return
+      }
+      case 'scan-night-check': {
+        // the night's completeness check, on demand: a scan of the last days of every active mailbox through the scan engine
+        res.status(200).json({ results: await nightlyCheck({ days: Math.max(1, Math.min(7, Number(body.days) || 3)) }) })
         return
       }
       case 'scan-run': {

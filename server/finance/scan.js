@@ -117,6 +117,24 @@ async function knownOf(mailboxId, ids) {
 }
 const item = (row) => sb('fin_scan_items', { method: 'POST', body: row, prefer: 'resolution=merge-duplicates,return=minimal' })
 
+/* The night's second net. After the daily collection, every active mailbox gets a scan of its last days through the
+   same engine as the history scan: every message is listed by date (no search words), the work is checkpointed and
+   continues every minute until it is done, a second pass looks for anything the first one did not read, and a message
+   that cannot be read waits for a person. It does not depend on the night run's time budget or on the order of the
+   mailboxes, so the fourth mailbox is checked as fully as the first. On 10.11.2026 the daily collection did not get an
+   invoice that arrived four hours earlier; the scan found it at once. */
+export async function nightlyCheck({ days = 3 } = {}) {
+  const mbs = (await sb('fin_mailboxes?status=eq.active&select=id,email')) || []
+  const today = new Date().toISOString().slice(0, 10)
+  const from = new Date(Date.now() - days * DAY).toISOString().slice(0, 10)
+  const out = []
+  for (const mb of mbs) {
+    if (await one(`fin_scan_jobs?mailbox_id=eq.${mb.id}&status=in.(queued,running,paused)&select=id`)) { out.push({ mailbox: mb.email, started: false, reason: 'active' }); continue }
+    try { const job = await createJob({ mailboxId: mb.id, from, to: today }); out.push({ mailbox: mb.email, started: true, job: job.id }) } catch (e) { out.push({ mailbox: mb.email, started: false, error: String(e.message || e).slice(0, 160) }) }
+  }
+  return out
+}
+
 /* one segment until it is finished or the time is up. Returns 'done' | 'paused' | 'time' */
 async function runSegment(seg, started, runs, cache) {
   const job = await one(`fin_scan_jobs?id=eq.${seg.job_id}&select=*`)
@@ -287,8 +305,20 @@ export async function overview() {
   const boxes = (await sb('fin_mailboxes?status=neq.revoked&select=id,email,provider,status,business_id,last_scan_at,last_error,sync_from&order=created_at')) || []
   const out = []
   for (const mb of boxes) {
-    const jobs = (await sb(`fin_scan_jobs?mailbox_id=eq.${mb.id}&select=*&order=created_at.desc&limit=5`)) || []
-    const job = jobs[0] || null
+    const recent = (await sb(`fin_scan_jobs?mailbox_id=eq.${mb.id}&select=*&order=created_at.desc&limit=40`)) || []
+    // the screen's headline is the history scan (or whatever is running now); the short night checks are shown beside it
+    const span = (j) => Date.parse(j.date_to) - Date.parse(j.date_from)
+    const short = (j) => span(j) <= 7 * DAY
+    const running = recent.find((j) => ['queued', 'running', 'paused'].includes(j.status))
+    const job = (running && !short(running) ? running : recent.find((j) => !short(j))) || running || recent[0] || null
+    const jobs = [job, ...recent.filter((j) => j !== job && !short(j))].filter(Boolean).slice(0, 5)
+    const lastCheck = recent.find((j) => short(j) && j !== job) || null
+    let check = null
+    if (lastCheck) {
+      const cs = (await sb(`fin_scan_segments?job_id=eq.${lastCheck.id}&select=phase,listed,kept,missed,failed,unreadable`)) || []
+      const tot = (k, ph) => cs.filter((x) => !ph || x.phase === ph).reduce((a, x) => a + (x[k] || 0), 0)
+      check = { id: lastCheck.id, status: lastCheck.status, at: lastCheck.finished_at || lastCheck.started_at || lastCheck.created_at, from: lastCheck.date_from, to: lastCheck.date_to, listed: tot('listed', 'scan'), kept: tot('kept'), missed: tot('missed', 'verify'), open: tot('failed') + tot('unreadable') }
+    }
     let progress = null
     if (job) {
       const segs = (await sb(`fin_scan_segments?job_id=eq.${job.id}&select=phase,status,listed,processed,failed,unreadable,kept,skipped,missed,already,t_from,t_to`)) || []
@@ -298,7 +328,7 @@ export async function overview() {
       progress = { phase: job.phase, segments: cur.length, closed, pct: job.status === 'done' ? 100 : Math.round(((job.phase === 'verify' ? 0.9 : 0) + (cur.length ? closed / cur.length : 0) * (job.phase === 'verify' ? 0.1 : 0.9)) * 100), listed: sum('listed'), checked: sum('processed') + sum('already'), kept: sum('kept'), skipped: sum('skipped'), failed: sum('failed'), unreadable: sum('unreadable') }
     }
     const problems = (await sb(`fin_scan_items?mailbox_id=eq.${mb.id}&status=in.(failed,unreadable)&select=message_id,status,attempts,error,subject,email_from,email_date&order=at.desc&limit=50`)) || []
-    out.push({ mailbox: mb, job, jobs, progress, problems })
+    out.push({ mailbox: mb, job, jobs, progress, problems, check })
   }
   return out
 }

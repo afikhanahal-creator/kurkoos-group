@@ -4,7 +4,7 @@
 // Every message is logged in fin_whatsapp_inbox, accepted or refused; unknown numbers are refused with a reply.
 import crypto from 'node:crypto'
 import { env, MIME_OK, MAX_FILE, QUOTA_STOP } from './env.js'
-import { sb, one, insert, patch, upload, storageUsage } from './db.js'
+import { sb, one, insert, patch, upload, storageUsage, audit } from './db.js'
 import { processStored } from './pipeline.js'
 import { newDocRuns, closeRuns } from './agents.js'
 import { money as _m } from './format-server.js'
@@ -12,11 +12,37 @@ import { money as _m } from './format-server.js'
 export const officeNumber = () => String(process.env.FINANCE_WHATSAPP_NUMBER || '').replace(/\D/g, '')
 export const configured = () => !!(process.env.GREENAPI_ID_INSTANCE && process.env.GREENAPI_TOKEN && process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN)
 
+/* the automatic messages to the sender (received, approved, a problem) can be turned off in the WhatsApp screen.
+   Off means the document is still taken in, only nothing is written back. */
+export async function repliesOn() {
+  const row = await one('fin_settings?key=eq.whatsapp_auto_replies&select=value').catch(() => null)
+  return row?.value !== false
+}
+export async function setReplies(on, user) {
+  const body = { value: !!on, updated_by: user?.id || null, updated_at: new Date().toISOString() }
+  const done = await patch('fin_settings?key=eq.whatsapp_auto_replies', body).catch(() => null)
+  if (!done || (Array.isArray(done) && !done.length)) await insert('fin_settings', { key: 'whatsapp_auto_replies', ...body })
+  return { replies: !!on }
+}
 export async function reply(phone, message) {
-  if (!process.env.GREENAPI_ID_INSTANCE || !process.env.GREENAPI_TOKEN) return
-  await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/sendMessage/${process.env.GREENAPI_TOKEN}`, {
+  if (!process.env.GREENAPI_ID_INSTANCE || !process.env.GREENAPI_TOKEN) return false
+  if (!(await repliesOn())) return false
+  const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/sendMessage/${process.env.GREENAPI_TOKEN}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chatId: `${phone}@c.us`, message }),
-  }).catch(() => {})
+  }).catch(() => null)
+  return !!r?.ok
+}
+/* a document that came by WhatsApp was approved: its sender is told, once. The audit trail is the memory of "once". */
+export async function notifyApproved(documentId, user) {
+  const doc = await one(`fin_documents?id=eq.${encodeURIComponent(documentId)}&select=id,status,source,supplier_name,total_amount,currency,email_from`)
+  if (!doc) throw Object.assign(new Error('המסמך לא נמצא'), { status: 404 })
+  if (doc.source !== 'whatsapp' || !['approved', 'sent'].includes(doc.status)) return { sent: false, reason: 'not_applicable' }
+  const phone = String(doc.email_from || '').replace(/\D/g, '')
+  if (!phone) return { sent: false, reason: 'no_sender' }
+  if (await one(`fin_audit?entity_id=eq.${doc.id}&action=eq.whatsapp_approved_notice&select=id`)) return { sent: false, reason: 'already' }
+  const sent = await reply(phone, `המסמך אושר ונשמר בהצלחה במערכת.${doc.supplier_name ? `\n${doc.supplier_name}${doc.total_amount != null ? ` · ${_m(doc.total_amount)}` : ''}` : ''}`)
+  if (sent) await audit('document', doc.id, 'whatsapp_approved_notice', { phone: `…${phone.slice(-4)}` }, user)
+  return { sent, reason: sent ? 'sent' : 'off_or_failed' }
 }
 
 // Green API serves media from its own storage hosts. Anything else is refused (no fetching of internal URLs).
@@ -177,7 +203,7 @@ export async function health(origin) {
   const senders = (await sb('fin_whatsapp_senders?active=eq.true&select=id')) || []
   add('senders', senders.length > 0, 'טלפונים רשומים', senders.length ? `${senders.length} טלפונים יכולים לשלוח מסמכים` : 'עוד לא נרשם אף טלפון', senders.length ? '' : 'מוסיפים טלפון בכפתור "הוספת טלפון"')
   const last = ((await sb('fin_whatsapp_inbox?select=outcome,at,kind&order=at.desc&limit=1')) || [])[0] || null
-  return { ok: steps.every((x) => x.ok), steps, last, can_setup: hasInstance && hasToken && !!settings && !(urlOk && tokenOk && incomingOk), elsewhere }
+  return { ok: steps.every((x) => x.ok), steps, last, replies: await repliesOn(), can_setup: hasInstance && hasToken && !!settings && !(urlOk && tokenOk && incomingOk), elsewhere }
 }
 /* points the incoming messages of the office number at this system. A webhook that already goes somewhere else is
    replaced only when the person says so (force): another tool may be listening on it. */

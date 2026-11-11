@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, SOURCE, byDocDate, date, dateTime, docDate, money, monthLabel, thisMonth } from './format.js'
+import { DOC_TYPE, SOURCE, byDocDate, isFresh, date, dateTime, docDate, money, monthLabel, thisMonth } from './format.js'
 import Select from './Select.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import Peek from './Peek.jsx'
@@ -48,7 +48,7 @@ export default function Receipts() {
   // every receipt and invoice in the system, whatever way it came in (mail, WhatsApp, upload, camera), newest document first
   const MAIL = ['gmail', 'outlook', 'forward']
   const viaOf = (d) => (MAIL.includes(d.source) ? 'mail' : d.source === 'whatsapp' ? 'whatsapp' : 'upload')
-  const mine = useMemo(() => [...documents].sort(byDocDate), [documents])
+  const mine = useMemo(() => [...documents].sort((a, b) => (isFresh(b) - isFresh(a)) || (isFresh(a) && isFresh(b) ? String(b.created_at).localeCompare(String(a.created_at)) : 0) || byDocDate(a, b)), [documents])
   // the months that have documents, newest first, each with its count: the list a person picks a month and year from
   const monthsWith = useMemo(() => { const m = new Map(); for (const d of mine) { const k = String(docDate(d)).slice(0, 7); if (/^\d{4}-\d{2}$/.test(k)) m.set(k, (m.get(k) || 0) + 1) } return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0])) }, [mine])
   const [note, setNote] = useState('')
@@ -150,7 +150,7 @@ export default function Receipts() {
                 const s = STAGE[st]
                 const known = d.supplier_id && suppliers?.some((x) => x.id === d.supplier_id)
                 return (
-                  <tr key={d.id} className={`is-link ${st === 'fix' || st === 'failed' ? 'is-attn' : ''}`} onClick={() => go(`/documents/${d.id}`)}>
+                  <tr key={d.id} className={`is-link ${isFresh(d) ? 'is-fresh' : ''} ${st === 'fix' || st === 'failed' ? 'is-attn' : ''}`} onClick={() => go(`/documents/${d.id}`)}>
                     <td className="fin-receipts__thumb"><Peek doc={d}><span className="fin-receipts__pic"><Thumbnail doc={d} /></span></Peek></td>
                     <td data-label="תאריך" className="fin-td-date">{date(docDate(d)) || '—'}</td>
                     <td className="fin-td-main"><Peek doc={d}>{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}</Peek>{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>

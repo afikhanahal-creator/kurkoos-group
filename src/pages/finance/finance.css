@@ -3401,3 +3401,28 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
 .fin-wa__log li { align-items: center; }
 .fin-wa__log .fin-icon-btn--danger { color: var(--attn); }
 @media (max-width: 700px) { .fin-wacheck__steps li { grid-template-columns: 40px minmax(0, 1fr); } .fin-wacheck__state { grid-column: 2; justify-self: start; } .fin-wa__log .fin-icon-btn { width: 44px; height: 44px; } }
+
+/* column grips: a clear handle on every boundary, wider and coloured while the pointer is on the head row */
+.fin-table--resizable thead th::after { inset-block: 18%; width: 3px; border-radius: 2px; background: transparent; }
+.fin-table--resizable thead:hover th::after { background: var(--line-2); }
+.fin-table--resizable thead th:hover::after { background: var(--ocean); width: 4px; }
+.fin-table--resizable thead th { user-select: none; }
+.fin-colguide { position: fixed; width: 2px; margin-inline-start: -1px; background: var(--ocean); z-index: 90; pointer-events: none; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ocean) 25%, transparent); }
+/* a document handed in just now leads every list, with a mark that says so */
+.fin-table tr.is-fresh > td { background: color-mix(in srgb, var(--ocean-wash) 60%, var(--sheet)); }
+.fin-table tr.is-fresh td.fin-td-main::after, .fin-dlist__row.is-fresh strong::after { content: 'הועלה עכשיו'; display: inline-block; margin-inline-start: 8px; padding: 1px 8px; border-radius: 999px; background: var(--ocean); color: #fff; font-size: var(--t-xs); font-weight: 700; vertical-align: middle; }
+.fin-doccard.is-fresh { border-color: var(--ocean); box-shadow: 0 0 0 1px var(--ocean); }
+.fin-doccard.is-fresh::before { content: 'הועלה עכשיו'; position: absolute; top: 10px; inset-inline-start: 10px; z-index: 2; padding: 2px 10px; border-radius: 999px; background: var(--ocean); color: #fff; font-size: var(--t-xs); font-weight: 700; }
+.fin-dlist__row.is-fresh { background: color-mix(in srgb, var(--ocean-wash) 60%, var(--sheet)); }
+
+/* the strip above an email that is not the document: one line of text, a row of small buttons */
+.fin-linkedwrap { display: flex; flex-direction: column; min-width: 0; min-height: 0; width: 100%; height: 100%; }
+.fin-linkedwrap > .fin-htmlprev { flex: 1 1 auto; min-height: 0; }
+.fin-linked { display: grid; gap: 8px; margin: 0; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: var(--sheet); flex: none; }
+.fin-linked__text { display: block; margin: 0; font-size: var(--t-sm); line-height: 1.5; color: var(--text-2); }
+.fin-linked__text svg { vertical-align: -2px; color: var(--ocean); }
+.fin-linked__text strong { color: var(--ink); font-size: var(--t-sm); }
+.fin-linked__acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.fin-linked__acts .fin-btn { min-height: 34px; flex: none; cursor: pointer; }
+.fin-linked__msg { margin: 0; font-size: var(--t-sm); }
+@media (max-width: 700px) { .fin-linked { margin: 0; padding: 10px 12px; } .fin-linked__acts .fin-btn { flex: 1 1 calc(50% - 6px); min-height: 44px; justify-content: center; } }

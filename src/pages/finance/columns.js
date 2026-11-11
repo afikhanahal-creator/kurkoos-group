@@ -27,11 +27,24 @@ export function useResizableColumns(key) {
     table.classList.add('fin-table--resizable')
     let drag = null; let moved = false
     const rtl = () => getComputedStyle(table).direction === 'rtl'
+    // a boundary is grabbed from either side of it (12px each way): the column that ends there is the one that changes
+    const GRIP = 12
     const edge = (e) => {
       const th = e.target.closest?.('th')
       if (!th || th.parentNode !== table.tHead?.rows[0]) return null
-      const r = th.getBoundingClientRect()
-      return (rtl() ? e.clientX - r.left : r.right - e.clientX) <= 9 ? th : null
+      const r = th.getBoundingClientRect(); const ths = heads(table); const i = ths.indexOf(th)
+      const toEnd = rtl() ? e.clientX - r.left : r.right - e.clientX          // distance to this column's far edge
+      const toStart = rtl() ? r.right - e.clientX : e.clientX - r.left        // distance to its near edge (the previous column's far edge)
+      if (toEnd <= GRIP && i < ths.length - 1) return th
+      if (toStart <= GRIP && i > 0) return ths[i - 1]
+      return null
+    }
+    let line = null
+    const guide = (x) => {
+      if (x == null) { line?.remove(); line = null; return }
+      if (!line) { line = document.createElement('div'); line.className = 'fin-colguide'; document.body.appendChild(line) }
+      const wrap = table.closest('.fin-table-wrap') || table; const r = wrap.getBoundingClientRect()
+      Object.assign(line.style, { left: `${x}px`, top: `${Math.max(0, r.top)}px`, height: `${Math.min(innerHeight, r.bottom) - Math.max(0, r.top)}px` })
     }
     const down = (e) => {
       const th = edge(e)
@@ -39,17 +52,18 @@ export function useResizableColumns(key) {
       e.preventDefault()
       const ths = heads(table)
       drag = { i: ths.indexOf(th), x: e.clientX, w: ths.map((c) => Math.round(c.getBoundingClientRect().width)), dir: rtl() ? -1 : 1 }
-      moved = false; document.body.classList.add('fin-col-resizing')
+      moved = false; document.body.classList.add('fin-col-resizing'); try { table.setPointerCapture?.(e.pointerId) } catch { /* not a pointer */ }
     }
     const move = (e) => {
       if (!drag) { if (table.tHead) table.tHead.style.cursor = edge(e) ? 'col-resize' : ''; return }
       const w = [...drag.w]; w[drag.i] = Math.max(MIN, drag.w[drag.i] + (e.clientX - drag.x) * drag.dir)
       drag.now = w; moved = true; apply(table, w)
+      const r = heads(table)[drag.i].getBoundingClientRect(); guide(drag.dir < 0 ? r.left : r.right)
     }
     const up = () => {
       if (!drag) return
       if (drag.now) { try { localStorage.setItem(KEY(key), JSON.stringify(drag.now.map(Math.round))) } catch { /* private mode */ } }
-      drag = null; document.body.classList.remove('fin-col-resizing')
+      drag = null; guide(null); document.body.classList.remove('fin-col-resizing')
     }
     // a drag that ends on a sortable head must not also sort
     const click = (e) => { if (moved) { moved = false; e.stopPropagation(); e.preventDefault() } }

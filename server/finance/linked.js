@@ -85,14 +85,66 @@ export async function fetchLinked(documentId, url, user) {
   const kind = r.status === 200 && r.body?.length ? kindOf(r.body, r.type) : null
   if (!kind) return { fetched: false, open: r.url || link.url, reason: r.status === 200 ? 'הקישור פותח עמוד אינטרנט ולא קובץ. פותחים אותו, מורידים את המסמך ומעלים אותו כאן' : `האתר ענה ${r.status}. ייתכן שהקישור פג או דורש כניסה` }
   const [mime, ext] = kind
-  const hash = crypto.createHash('sha256').update(r.body).digest('hex')
-  const dup = await one(`fin_documents?file_hash=eq.${hash}&id=neq.${doc.id}&select=id,supplier_name,doc_number`)
-  if (dup) throw Object.assign(new Error(`המסמך שבקישור כבר נמצא במערכת${dup.supplier_name ? ` (${dup.supplier_name}${dup.doc_number ? ` ${dup.doc_number}` : ''})` : ''}`), { status: 409, duplicate: dup.id })
-  const path = `linked/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${ext}`
-  await upload(path, r.body, mime)
-  await insert('fin_document_attachments', { document_id: doc.id, kind: 'file', file_path: doc.file_path, file_name: doc.file_name || 'המייל המקורי.html', file_mime: 'text/html', file_size: doc.file_size || null, note: 'המייל שבו הגיע הקישור למסמך', created_by: user?.id || null }).catch(() => {})
   const name = (() => { try { const last = decodeURIComponent(new URL(r.url).pathname.split('/').pop() || ''); return /\.[a-z0-9]{2,5}$/i.test(last) ? last : `document.${ext}` } catch { return `document.${ext}` } })()
-  const saved = await patch(`fin_documents?id=eq.${doc.id}`, { file_path: path, file_name: name.slice(0, 200), file_mime: mime, file_size: r.body.length, file_hash: hash })
-  await audit('document', doc.id, 'linked_file_fetched', { host: link.host, mime, size: r.body.length }, user).catch(() => {})
+  const saved = await adopt(doc, r.body, mime, ext, name, user, { host: link.host })
   return { fetched: true, document: saved }
+}
+
+/* a file becomes the document's own file: refused when another document already holds it; the email it replaces stays
+   with the document as an attachment */
+async function adopt(doc, buf, mime, ext, name, user, detail) {
+  const hash = crypto.createHash('sha256').update(buf).digest('hex')
+  const dup = await one(`fin_documents?file_hash=eq.${hash}&id=neq.${doc.id}&select=id,supplier_name,doc_number`)
+  if (dup) throw Object.assign(new Error(`המסמך הזה כבר נמצא במערכת${dup.supplier_name ? ` (${dup.supplier_name}${dup.doc_number ? ` ${dup.doc_number}` : ''})` : ''}`), { status: 409, duplicate: dup.id })
+  const path = `linked/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${ext}`
+  await upload(path, buf, mime)
+  await insert('fin_document_attachments', { document_id: doc.id, kind: 'file', file_path: doc.file_path, file_name: doc.file_name || 'המייל המקורי.html', file_mime: 'text/html', file_size: doc.file_size || null, note: 'המייל שבו הגיע המסמך', created_by: user?.id || null }).catch(() => {})
+  const saved = await patch(`fin_documents?id=eq.${doc.id}`, { file_path: path, file_name: String(name).slice(0, 200), file_mime: mime, file_size: buf.length, file_hash: hash })
+  await audit('document', doc.id, 'linked_file_fetched', { ...detail, mime, size: buf.length }, user).catch(() => {})
+  return saved
+}
+
+/* The original message, read again from the mailbox it came from (the same connection that collected it): who it is
+   from, when, and the files attached to it. This is the document "as if in the original mail". */
+const READABLE = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+async function originalMessage(doc) {
+  if (!doc.mailbox_id || !doc.email_message_id) return { connected: false, reason: 'המסמך לא הגיע מתיבת מייל מחוברת' }
+  const mb = await one(`fin_mailboxes?id=eq.${doc.mailbox_id}&select=*`)
+  if (!mb) return { connected: false, reason: 'התיבה שממנה הגיע המסמך כבר לא מחוברת' }
+  const { accessTokenFor } = await import('./pipeline.js')
+  const provider = await import(`./providers/${mb.provider === 'outlook' ? 'outlook' : 'gmail'}.js`)
+  try {
+    const msg = await provider.getMessage(await accessTokenFor(mb), doc.email_message_id)
+    const open = mb.provider === 'outlook' ? '' : `https://mail.google.com/mail/?authuser=${encodeURIComponent(mb.email || '')}#all/${encodeURIComponent(doc.email_message_id)}`
+    return { connected: true, account: mb.email || '', subject: msg.subject || '', date: msg.date, open, msg }
+  } catch (e) { return { connected: false, account: mb.email || '', reason: e.auth ? 'החיבור לתיבה פג. מחברים אותה מחדש במסך "חשבונות אימייל"' : `המייל המקורי לא נקרא מהתיבה (${String(e.message || e).slice(0, 80)})` } }
+}
+export async function mailSource(documentId) {
+  const doc = await one(`fin_documents?id=eq.${encodeURIComponent(documentId)}&select=id,mailbox_id,email_message_id`)
+  if (!doc) return { connected: false, reason: 'המסמך לא נמצא' }
+  const m = await originalMessage(doc)
+  if (!m.connected) return m
+  return { connected: true, account: m.account, subject: m.subject, date: m.date, open: m.open, files: m.msg.files.map((f, i) => ({ i, name: f.name || `קובץ ${i + 1}`, mime: f.mime, size: f.size, readable: !!READABLE[f.mime] })).filter((f) => f.size > 0 || f.readable) }
+}
+/* one attached file of the original message: a link to download it, or (adopt) it becomes the document's file */
+export async function mailFile(documentId, index, { adoptIt = false, user } = {}) {
+  const doc = await one(`fin_documents?id=eq.${encodeURIComponent(documentId)}&select=*`)
+  if (!doc) throw Object.assign(new Error('המסמך לא נמצא'), { status: 404 })
+  const m = await originalMessage(doc)
+  if (!m.connected) throw Object.assign(new Error(m.reason), { status: 409 })
+  const f = m.msg.files[Number(index)]
+  if (!f) throw Object.assign(new Error('הקובץ לא נמצא במייל המקורי'), { status: 404 })
+  const buf = await f.load()
+  if (buf.length > MAX_FILE) throw Object.assign(new Error('הקובץ שבמייל גדול מדי'), { status: 413 })
+  if (adoptIt) {
+    if (['approved', 'sent'].includes(doc.status)) throw Object.assign(new Error('מסמך מאושר לא מוחלף. החזירו אותו לבדיקה קודם'), { status: 409 })
+    const kind = kindOf(buf, f.mime)
+    if (!kind) throw Object.assign(new Error('אפשר לקרוא רק PDF או תמונה'), { status: 400 })
+    return { adopted: true, document: await adopt(doc, buf, kind[0], kind[1], f.name || `document.${kind[1]}`, user, { from: 'mailbox' }) }
+  }
+  const safe = String(f.name || 'file').replace(/[^\w.\-\u0590-\u05ff ]+/g, '_').slice(0, 80)
+  const path = `mailfetch/${doc.id}/${crypto.createHash('sha256').update(buf).digest('hex').slice(0, 16)}-${safe}`
+  await upload(path, buf, f.mime || 'application/octet-stream')
+  const { signedUrl } = await import('./outbound.js')
+  return { url: await signedUrl(path, 600), name: f.name || 'file' }
 }

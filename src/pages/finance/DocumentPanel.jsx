@@ -18,7 +18,28 @@ const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'i
 const blank = (k) => (k === 'paid' ? false : '')
 const SOURCE_LABEL = { rule: 'כלל אוטומציה', supplier: 'ברירת מחדל של הספק', history: 'היסטוריית אישורים', document: 'מופיע במסמך', mailbox: 'לפי תיבת המייל', ai: 'הצעת AI' }
 
-function Preview({ doc }) {
+/* a record with no paper behind it: say so plainly, and let the person add the paper right here */
+function NoFile({ doc, onSaved, canEdit }) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const pick = async (file) => {
+    if (!file) return
+    setBusy(true); setErr('')
+    try { onSaved?.(await api.attachMainFile(doc, file)) } catch (e) { setErr(e.message) } finally { setBusy(false) }
+  }
+  return (
+    <div className="fin-nofile">
+      <span className="fin-nofile__icon" aria-hidden="true"><Icon name="docs" size={28} /></span>
+      <h3>לרשומה הזו אין קובץ</h3>
+      <p>{doc.description || 'הפרטים נרשמו בלי קובץ מקור.'}</p>
+      {canEdit && <label className={`fin-btn fin-btn--primary ${busy ? 'is-busy' : ''}`}><Icon name="upload" size={17} /> {busy ? 'מצרף…' : 'צירוף הקובץ (PDF או תמונה)'}<input type="file" accept="application/pdf,image/*" hidden disabled={busy} onChange={(e) => { pick(e.target.files?.[0]); e.target.value = '' }} /></label>}
+      {canEdit && <small>הפרטים שכבר רשומים נשארים כמו שהם. אחרי הצירוף הקובץ עולה גם ל-Google Drive.</small>}
+      {err && <p className="fin-error" role="alert">{err}</p>}
+    </div>
+  )
+}
+
+function Preview({ doc, onSaved, canEdit }) {
   const [src, setSrc] = useState(null)
   const [html, setHtml] = useState(null)
   const [err, setErr] = useState('')
@@ -35,7 +56,7 @@ function Preview({ doc }) {
     })()
     return () => { alive = false; if (url) URL.revokeObjectURL(url) }
   }, [doc.file_path, doc.file_mime])
-  if (!doc.file_path) return <div className="fin-msg">אין קובץ</div>
+  if (!doc.file_path) return <NoFile doc={doc} onSaved={onSaved} canEdit={canEdit} />
   if (err) return <p className="fin-error fin-error--block" role="alert">הקובץ לא נטען: {err}</p>
   if (html !== null) return <HtmlPreview html={html} />
   if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
@@ -232,7 +253,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
         {doc.status === 'duplicate' && original && <p className="fin-panel__banner" role="status"><Icon name="copy" size={16} /> סומן ככפול של <button type="button" className="fin-link" onClick={() => go(`/documents/${original.id}`)}>{original.supplier_name || original.file_name}{original.doc_number ? ` ${original.doc_number}` : ''}</button></p>}
 
         <div className="fin-panel__split">
-          <div className="fin-preview"><Preview doc={doc} /></div>
+          <div className="fin-preview"><Preview doc={doc} onSaved={onSaved} canEdit={can('edit') && !['approved', 'sent'].includes(doc.status)} /></div>
 
           <div className="fin-panel__side">
             <div className="fin-tabs fin-tabs--small" role="tablist" aria-label="פרטי המסמך">

@@ -12,6 +12,7 @@ import { ProviderLogo } from './logos.jsx'
 import { InviteWelcome, Login, SecondStep, linkType, useIdleSignOut, deviceId } from './auth.jsx'
 import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
+import Receipts from './Receipts.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
@@ -60,6 +61,7 @@ export const NAV = [
   { to: '', label: 'מרכז בקרה', icon: 'home', roles: ['employee', 'accountant'], el: <Dashboard />, group: 'מסמכים' },
   { to: '/today', label: 'מרכז בקרה', icon: 'home', roles: OPS, el: <Dashboard />, group: 'מסמכים' },
   { to: '/documents', label: 'כל המסמכים', accLabel: 'מסמכים מאושרים', icon: 'docs', roles: ALL, el: <Documents preset="all" />, group: 'מסמכים' },
+  { to: '/receipts', label: 'קבלות וחשבוניות', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Receipts />, group: 'מסמכים' },
   { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'מסמכים' },
   { to: '/pending', label: 'ממתינים לבדיקה', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'מסמכים' },
   { to: '/complete', label: 'השלמת פרטים', icon: 'edit', roles: OPS, el: <Complete />, badge: 'incomplete', group: 'מסמכים' },
@@ -357,7 +359,7 @@ export default function FinanceApp() {
   // the office WhatsApp number, for the top bar (one status call per sign-in)
   const [waNumber, setWaNumber] = useState('')
   useEffect(() => { if (!ready) return; api.callServer('status').then((r) => setWaNumber(r?.whatsapp?.configured ? r.whatsapp.number || '' : '')).catch(() => {}) }, [ready])
-  const ctx = useMemo(() => ({ ...data, role, can: (w) => can(role, w), go: (p) => navigate(`${BASE}${p}`) }), [data, role, navigate])
+  const ctx = useMemo(() => ({ ...data, role, can: (w) => can(role, w), go: (p) => navigate(`${BASE}${p}`), openUpload: () => setUploading(true) }), [data, role, navigate])
   const nav = NAV.filter((n) => role && n.roles.includes(role))
   const sub = pathname.slice(BASE.length).replace(/\/$/, '') || ''
   const active = nav.find((n) => (n.to === '' ? sub === '' : sub === n.to || sub.startsWith(`${n.to}/`))) || nav[0]

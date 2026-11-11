@@ -14,7 +14,7 @@ const OUT = process.env.OUT || '/var/tmp/fin-shots'
 const APP = 'http://127.0.0.1:5180/admin/finance'
 const sql = (q) => execSync(`psql -At -h 127.0.0.1 -p 54329 -U postgres -c ${JSON.stringify(q)}`, { encoding: 'utf8' }).trim()
 const one = (q) => sql(q) || 'none'
-const ROUTES = ['', '/today', '/assistant', '/documents', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`, '/new', '/pending', '/send', '/connections', '/reports', '/companies', `/companies/${one('select id from fin_businesses order by sort limit 1')}`, '/projects', '/suppliers', '/categories', '/data', '/automations', '/agents', '/mailboxes', '/scans', '/drive', '/complete', '/fixed', '/scanners', '/integrations', '/cloud', '/activity', '/delivery', '/exports', '/users', '/users?tab=security', '/settings']
+const ROUTES = ['', '/today', '/assistant', '/documents', '/receipts', `/documents/${one("select id from fin_documents where status='review' order by created_at limit 1")}`, '/new', '/pending', '/send', '/connections', '/reports', '/companies', `/companies/${one('select id from fin_businesses order by sort limit 1')}`, '/projects', '/suppliers', '/categories', '/data', '/automations', '/agents', '/mailboxes', '/scans', '/drive', '/complete', '/fixed', '/scanners', '/integrations', '/cloud', '/activity', '/delivery', '/exports', '/users', '/users?tab=security', '/settings']
 
 const AUDIT = `(() => {
   const SCALE = new Set([10.4, 11.2, 12, 12.8, 13, 13.6, 14, 14.4, 15, 15.2, 16, 17, 17.6, 18, 19.2, 20, 22, 22.4, 24, 25.6, 28, 30, 32, 33.6, 36, 40, 44.8, 48])

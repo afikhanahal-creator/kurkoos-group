@@ -82,7 +82,9 @@ export const storageUsage = async () => { try { return must(await supabase.rpc('
 
 // a status change may have queued automatic deliveries (webhook / email); ask the server to send them, without waiting
 export const flushOutbound = () => { callServer('outbound-flush').catch(() => {}) }
-const afterStatus = (patch, out) => { if (patch && 'status' in patch) flushOutbound(); return out }
+// a document that came by WhatsApp and was just approved: its sender gets one short message (the server decides whether)
+const tellSender = (out) => { for (const d of [].concat(out || [])) if (d?.source === 'whatsapp' && d.status === 'approved') callServer('whatsapp-approved', { document_id: d.id }).catch(() => {}) }
+const afterStatus = (patch, out) => { if (patch && 'status' in patch) { flushOutbound(); if (patch.status === 'approved') tellSender(out) } return out }
 // a company chosen by a person is marked "manual": the engine learns from it for the next document of that supplier
 const byPerson = (patch) => ('business_id' in patch ? { ...patch, business_source: patch.business_id ? 'manual' : null } : patch)
 export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).eq('id', id).select().single()))
@@ -138,6 +140,23 @@ export async function prepareImage(file) {
   const blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.86))
   if (!blob) return file
   return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'receipt'}.jpg`, { type: 'image/jpeg' })
+}
+
+/* A record that was entered without a file (a charge known from the supplier's billing log) gets its paper: the file is
+   stored and linked, the details already on the record stay as they are, and the "file missing" note is cleared. */
+export async function attachMainFile(doc, rawFile) {
+  const file = await prepareImage(rawFile)
+  if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)
+  if (file.size > 12 * 1024 * 1024) throw new Error(`${file.name}: הקובץ גדול מ-12MB`)
+  const hash = await sha256(file)
+  const { data: dup } = await supabase.from('fin_documents').select('id,supplier_name,doc_number').eq('file_hash', hash).maybeSingle()
+  if (dup) throw new Error(`הקובץ הזה כבר שייך למסמך אחר במערכת${dup.supplier_name ? ` (${dup.supplier_name}${dup.doc_number ? ` ${dup.doc_number}` : ''})` : ''}.`)
+  const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1]
+  const path = `uploads/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${ext}`
+  const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })
+  if (up.error && !/exists|duplicate/i.test(up.error.message)) throw new Error(up.error.message)
+  const issues = (doc.issues || []).filter((i) => i.code !== 'missing_file')
+  return must(await supabase.from('fin_documents').update({ file_path: path, file_name: file.name.slice(0, 200), file_mime: file.type, file_size: file.size, file_hash: hash, issues }).eq('id', doc.id).select().single())
 }
 
 export async function uploadFile(rawFile, { businessId, projectId, source = 'upload', wait = false, prepared = false } = {}) {

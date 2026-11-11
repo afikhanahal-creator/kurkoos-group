@@ -117,6 +117,12 @@ export default function Scanners() {
             </ul>
           )}
           {check?.can_setup && can('manage') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => turnOn(false)} disabled={!!checking}>{checking === 'setup' ? 'מפעיל…' : 'הפעלת הקליטה'}</button>}
+          {check && !check.error && typeof check.replies === 'boolean' && (
+            <label className="fin-wacheck__replies">
+              <input type="checkbox" checked={check.replies} disabled={!can('manage') || checking === 'replies'} onChange={async (e) => { const on = e.target.checked; setChecking('replies'); try { const r = await api.callServer('whatsapp-replies', { on }); setCheck((c) => ({ ...c, replies: r.replies })) } catch (er) { setMsg(er.message) } finally { setChecking('') } }} />
+              <span><strong>הודעות אוטומטיות לשולח</strong><small>"קיבלנו את המסמך", "המסמך אושר ונשמר" והודעה כשיש בעיה בקריאה. כשזה כבוי המסמכים נקלטים כרגיל ושום הודעה לא נשלחת.</small></span>
+            </label>
+          )}
           {check?.last && <p className="fin-muted fin-small">ההודעה האחרונה שהגיעה: {dateTime(check.last.at)} · {OUTCOME[check.last.outcome]?.[1] || check.last.outcome}</p>}
           {check && !check.last && check.ok && <p className="fin-muted fin-small">עוד לא הגיעה אף הודעה. שלחו צילום של קבלה למספר המשרד כדי לבדוק.</p>}
         </section>

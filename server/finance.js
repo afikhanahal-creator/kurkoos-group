@@ -20,7 +20,7 @@ import { ADAPTERS } from './finance/adapters.js'
 import { ask } from './finance/assistant.js'
 import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
-import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup } from './finance/whatsapp.js'
+import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup, setReplies as waSetReplies, notifyApproved as waNotifyApproved } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 import { sendToAccountant } from './finance/mailout.js'
 
@@ -80,6 +80,9 @@ const ROLES = {
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
   'whatsapp-check': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
+  'whatsapp-replies': ['admin', 'finance_manager'],
+  'whatsapp-approved': ['admin', 'finance_manager'],
+  'receipts-drive': ['admin', 'finance_manager', 'employee', 'accountant'],
 }
 
 // per-user rate limit (in memory, per instance): 120 calls in 10 minutes
@@ -560,6 +563,27 @@ export default async function handler(req, res) {
       }
       case 'whatsapp-check': {
         res.status(200).json(await waHealth(origin(req)))
+        return
+      }
+      case 'whatsapp-replies': {
+        const r = await waSetReplies(body.on !== false, user)
+        await audit('integration', null, 'integration_saved', { provider: 'whatsapp', auto_replies: r.replies }, user)
+        res.status(200).json(r)
+        return
+      }
+      case 'whatsapp-approved': {
+        try { res.status(200).json(await waNotifyApproved(String(body.document_id || ''), user)) } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e) }) }
+        return
+      }
+      case 'receipts-drive': {
+        // where each hand-delivered document (WhatsApp, upload) stands in the Drive archive: status and link only
+        const docs = (await sb("fin_documents?source=in.(whatsapp,upload)&select=id&order=created_at.desc&limit=1000")) || []
+        const out = {}
+        for (let i = 0; i < docs.length; i += 150) {
+          const ids = docs.slice(i, i + 150).map((d) => d.id).join(',')
+          for (const f of (await sb(`fin_drive_files?document_id=in.(${ids})&select=document_id,status,web_link,uploaded_at,verified_at`).catch(() => [])) || []) out[f.document_id] = { status: f.status, link: f.web_link, at: f.verified_at || f.uploaded_at }
+        }
+        res.status(200).json({ files: out })
         return
       }
       case 'whatsapp-setup': {

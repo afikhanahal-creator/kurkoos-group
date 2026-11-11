@@ -91,7 +91,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 29 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 29, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 30 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 30, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -1394,10 +1394,13 @@ record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא ש�
   await page.locator('.fin-x-monthsum__docs').click(); await page.waitForTimeout(1200)
   const monthList = `${page.url().includes('/documents?ids=1')}|${await page.locator('.fin-onlybar').innerText().catch(() => '')}`
   // reports: documents per month with the number on the bar; a month opens its documents oldest first
-  await go('/reports'); await page.getByRole('tab', { name: 'לפי חודש' }).click().catch(() => {}); await page.waitForSelector('.fin-mcount', { timeout: 15000 })
-  const counted = (await page.locator('.fin-mcount__col:not([disabled]) .fin-mcount__n').allInnerTexts()).join(',')
+  await go('/reports'); await page.getByRole('tab', { name: 'לפי חודש' }).click().catch(() => {}); await page.waitForSelector('.fin-rchart', { timeout: 15000 })
+  await page.locator('.fin-rchart__head').getByRole('button', { name: 'מספר מסמכים' }).click(); await page.waitForTimeout(300)
+  await page.locator('.fin-rchart__col:not(.is-zero)').last().hover(); await page.waitForTimeout(250)
+  const tipText = await page.locator('.fin-rtip').innerText().catch(() => '')
+  const counted = /מסמכים[\s\S]*סה״כ[\s\S]*מע״מ/.test(tipText) ? (await page.locator('.fin-rchart__col:not(.is-zero) .fin-rchart__n').allInnerTexts()).join(',') : `אין כרטיס ריחוף (${tipText.slice(0, 40)})`
   const repShot = await shot('126-report-month-counts')
-  await page.locator('.fin-mcount__col:not([disabled])').last().click(); await page.waitForTimeout(1500)
+  await page.locator('.fin-rchart__col:not(.is-zero)').last().click(); await page.waitForTimeout(1500)
   const chrono = await page.evaluate(() => { const th = [...document.querySelectorAll('th[aria-sort]')].find((x) => x.getAttribute('aria-sort') !== 'none'); return th ? `${th.innerText.replace(/[▲▼]/g, '').trim()}:${th.getAttribute('aria-sort')}` : 'list' })
   const listUrl = page.url().includes('/documents?ids=1')
   // a supplier's history from a document row
@@ -1988,6 +1991,76 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   record('MERGE', 'מיזוג שני מסמכים', 'שני מסמכים מסומנים פותחים חלון השוואה עם סימון ההבדלים; "להשאיר" סוגר את השני ככפול ומעביר פרט חסר (פרויקט) למסמך שנשאר; מסמך מאושר לא נסגר; אותו מסמך פעמיים נדחה; עובד לא ממזג; נרשם ביומן',
     `חלון: ${cards} מסמכים, ${diffs} הבדלים; עובד: ${emp.status}; אותו מסמך: ${same.status}; מאושר: ${lockedDrop.status}; מיזוג: ${done.status}, הועבר ${JSON.stringify(done.data.filled)}; אחרי: ${after}; יומן: ${logged}`,
     cards === 2 && diffs > 0 && emp.status === 403 && same.status === 400 && lockedDrop.status === 409 && done.status === 200 && (done.data.filled || []).includes('project_id') && after === 'duplicate|confirmed|true ; review|true' && logged === '1', [mergeShot])
+}
+
+// DRAGMERGE: in the card view one document is dragged onto another. Nothing is merged by the drop itself: the comparison
+// window opens and the person decides. ATTACH: a record with no file says so, and the file can be added from the document.
+{
+  await go('/documents')
+  await page.locator('button[title="כרטיסים"]').click(); await page.waitForSelector('.fin-doccard', { timeout: 10000 }).catch(() => {})
+  const before = sql("select count(*) from fin_documents where status='duplicate'")
+  const src = page.locator('.fin-doccard').nth(0); const dst = page.locator('.fin-doccard').nth(1)
+  const a = await src.boundingBox(); const b = await dst.boundingBox()
+  await page.mouse.move(a.x + a.width / 2, a.y + 60); await page.mouse.down()
+  await page.mouse.move(a.x + a.width / 2 - 20, a.y + 70, { steps: 4 }); await page.mouse.move(b.x + b.width / 2, b.y + 80, { steps: 12 }); await page.waitForTimeout(300)
+  const hint = await page.locator('.fin-draghint').count(); const target = await page.locator('.fin-doccard.is-droptarget').count()
+  const dragShot = await shot('122-drag-merge')
+  await page.mouse.up(); await page.waitForSelector('.fin-merge__card', { timeout: 8000 }).catch(() => {})
+  const cards = await page.locator('.fin-merge__card').count()
+  const untouched = sql("select count(*) from fin_documents where status='duplicate'") === before
+  await page.locator('.fin-modal__foot').getByRole('button', { name: 'סגירה' }).click().catch(() => {}); await page.waitForTimeout(300)
+  await page.locator('button[title="טבלה"]').click().catch(() => {})
+  record('DRAGMERGE', 'גרירת מסמך על מסמך אחר בתצוגת הכרטיסים', 'בזמן הגרירה מופיע הסבר והכרטיס שמתחת מסומן כיעד; השחרור פותח את חלון ההשוואה ושום דבר לא מתמזג לפני אישור',
+    `הסבר: ${hint}; יעד מסומן: ${target}; חלון: ${cards} מסמכים; בלי שינוי לפני אישור: ${untouched}`, hint === 1 && target === 1 && cards === 2 && untouched, [dragShot])
+
+  sql("insert into fin_documents (status, source, supplier_name, doc_type, doc_number, issue_date, currency, total_amount, description, issues) values ('review','upload','Meta Platforms, Inc.','receipt','E2E-NOFILE-1', current_date - 20, 'ILS', 500, 'חיוב לפי יומן החיובים. קובץ הקבלה חסר.', '[{\"code\":\"missing_file\",\"message\":\"חסר קובץ\"}]'::jsonb)")
+  const nf = sql("select id from fin_documents where doc_number='E2E-NOFILE-1'")
+  await go(`/documents/${nf}`); await page.waitForSelector('.fin-nofile', { timeout: 10000 }).catch(() => {})
+  const said = await page.locator('.fin-nofile').count()
+  const nofileShot = await shot('123-no-file')
+  const bytes = Buffer.concat([fs.readFileSync(`${FIX}/meta-ads.pdf`), Buffer.from(`\n%e2e ${Date.now()}\n`)])
+  await page.locator('.fin-nofile input[type=file]').setInputFiles({ name: 'meta-receipt-oct.pdf', mimeType: 'application/pdf', buffer: bytes })
+  await page.waitForFunction(() => !document.querySelector('.fin-nofile'), null, { timeout: 20000 }).catch(() => {})
+  const row = sql(`select (file_path is not null)||'|'||coalesce(file_name,'')||'|'||total_amount||'|'||doc_number||'|'||(issues::text like '%missing_file%') from fin_documents where id='${nf}'`)
+  const attachedShot = await shot('124-file-attached')
+  record('ATTACH', 'רשומה בלי קובץ: הודעה ברורה וצירוף הקובץ', 'מסמך בלי קובץ מציג "לרשומה הזו אין קובץ" במקום תצוגה ריקה; צירוף קובץ מקשר אותו לרשומה, הפרטים הרשומים נשארים והסימון "חסר קובץ" יורד',
+    `הודעה: ${said}; אחרי צירוף: ${row}`, said === 1 && row === 'true|meta-receipt-oct.pdf|500.00|E2E-NOFILE-1|false', [nofileShot, attachedShot])
+}
+
+// RECEIPTS: the "קבלות וחשבוניות" screen of documents handed in by people; the automatic WhatsApp messages can be turned
+// off (the document is still taken in); an approved WhatsApp document tells its sender once.
+{
+  const tokA = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const sentNow = async () => (await fetch(`${FAKES}/__log`).then((r) => r.json())).wa.length
+  const n0 = await sentNow()
+  const off = await api(tokA, { action: 'whatsapp-replies', on: false })
+  const quiet = await hook(imgMsg('wa-quiet-1', '972543049491'))
+  const n1 = await sentNow()
+  const on = await api(tokA, { action: 'whatsapp-replies', on: true })
+  const loud = await hook(imgMsg('wa-loud-1', '972543049491'))
+  const n2 = await sentNow()
+  const empSwitch = await api(tokE, { action: 'whatsapp-replies', on: false })
+  const waId = sql("select id from fin_documents where source='whatsapp' order by created_at limit 1")
+  sql(`update fin_documents set issues='[]'::jsonb where id='${waId}' and status='review'`)
+  const early = await api(tokA, { action: 'whatsapp-approved', document_id: waId })
+  await rest(`fin_documents?id=eq.${waId}`, tokA, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) })
+  const st = sql(`select status from fin_documents where id='${waId}'`)
+  const first = await api(tokA, { action: 'whatsapp-approved', document_id: waId })
+  const second = await api(tokA, { action: 'whatsapp-approved', document_id: waId })
+  const lastMsg = ((await fetch(`${FAKES}/__log`).then((r) => r.json())).wa.slice(-1)[0] || {}).message || ''
+  const driveMap = await api(tokA, { action: 'receipts-drive' })
+  await go('/receipts'); await page.waitForSelector('.fin-receipts__table', { timeout: 15000 }).catch(() => {})
+  const figs = await page.locator('.fin-receipts__figs > *').count()
+  const rowsAll = await page.locator('.fin-receipts__table tbody tr').count()
+  await page.locator('.fin-receipts__bar .fin-seg').getByRole('button', { name: 'WhatsApp' }).click(); await page.waitForTimeout(300)
+  const rowsWa = await page.locator('.fin-receipts__table tbody tr').count()
+  const pills = (await page.locator('.fin-receipts__table tbody tr .fin-pill').allInnerTexts()).join(',')
+  const recShot = await shot('125-receipts')
+  await page.locator('.fin-receipts__table tbody tr').first().click(); await page.waitForTimeout(1200)
+  const opened = /\/documents\//.test(page.url())
+  record('RECEIPTS', 'קבלות וחשבוניות: מסך, הודעות אוטומטיות והודעת אישור', 'המסך מציג חמישה מספרים ואת המסמכים שהגיעו ב-WhatsApp ובהעלאה, עם סטטוס לכל אחד, ושורה פותחת את המסמך; כשההודעות כבויות לא נשלחת הודעה והודעה נכנסת עדיין נרשמת; כשהן פועלות נשלחת; עובד לא משנה את ההגדרה; מסמך שאושר שולח לשולח הודעה אחת בלבד, ומסמך שלא אושר לא שולח',
+    `כיבוי: ${off.status}, הודעה נכנסת ${quiet.data.outcome}, נשלחו ${n1 - n0}; הפעלה: ${on.status}, ${loud.data.outcome}, נשלחו ${n2 - n1}; עובד: ${empSwitch.status}; לפני אישור: ${early.data.reason}; סטטוס: ${st}; אישור: ${first.data.reason}, שוב: ${second.data.reason}; הודעה: ${lastMsg.slice(0, 40)}; Drive: ${driveMap.status}/${typeof driveMap.data.files}; מסך: ${figs} מספרים, ${rowsAll} שורות, WhatsApp ${rowsWa}, סטטוסים ${pills}; נפתח: ${opened}`,
+    off.status === 200 && quiet.data.outcome === 'duplicate' && n1 === n0 && on.status === 200 && n2 === n1 + 1 && empSwitch.status === 403 && early.data.reason === 'not_applicable' && st === 'approved' && first.data.reason === 'sent' && second.data.reason === 'already' && /המסמך אושר ונשמר/.test(lastMsg) && driveMap.status === 200 && typeof driveMap.data.files === 'object' && figs === 5 && rowsAll >= rowsWa && rowsWa >= 1 && /אושר|נשמר ב-Drive/.test(pills) && opened, [recShot])
 }
 
 // PAYDUP: one charge, two papers. A payment service's receipt for a payment whose supplier receipt is already in the

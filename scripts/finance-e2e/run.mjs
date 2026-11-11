@@ -91,7 +91,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 29 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 29, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 30 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 30, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')

@@ -1394,10 +1394,13 @@ record('SEC-V10', 'הרשאות בפעולות החדשות', 'עובד לא ש�
   await page.locator('.fin-x-monthsum__docs').click(); await page.waitForTimeout(1200)
   const monthList = `${page.url().includes('/documents?ids=1')}|${await page.locator('.fin-onlybar').innerText().catch(() => '')}`
   // reports: documents per month with the number on the bar; a month opens its documents oldest first
-  await go('/reports'); await page.getByRole('tab', { name: 'לפי חודש' }).click().catch(() => {}); await page.waitForSelector('.fin-mcount', { timeout: 15000 })
-  const counted = (await page.locator('.fin-mcount__col:not([disabled]) .fin-mcount__n').allInnerTexts()).join(',')
+  await go('/reports'); await page.getByRole('tab', { name: 'לפי חודש' }).click().catch(() => {}); await page.waitForSelector('.fin-rchart', { timeout: 15000 })
+  await page.locator('.fin-rchart__head').getByRole('button', { name: 'מספר מסמכים' }).click(); await page.waitForTimeout(300)
+  await page.locator('.fin-rchart__col:not(.is-zero)').last().hover(); await page.waitForTimeout(250)
+  const tipText = await page.locator('.fin-rtip').innerText().catch(() => '')
+  const counted = /מסמכים[\s\S]*סה״כ[\s\S]*מע״מ/.test(tipText) ? (await page.locator('.fin-rchart__col:not(.is-zero) .fin-rchart__n').allInnerTexts()).join(',') : `אין כרטיס ריחוף (${tipText.slice(0, 40)})`
   const repShot = await shot('126-report-month-counts')
-  await page.locator('.fin-mcount__col:not([disabled])').last().click(); await page.waitForTimeout(1500)
+  await page.locator('.fin-rchart__col:not(.is-zero)').last().click(); await page.waitForTimeout(1500)
   const chrono = await page.evaluate(() => { const th = [...document.querySelectorAll('th[aria-sort]')].find((x) => x.getAttribute('aria-sort') !== 'none'); return th ? `${th.innerText.replace(/[▲▼]/g, '').trim()}:${th.getAttribute('aria-sort')}` : 'list' })
   const listUrl = page.url().includes('/documents?ids=1')
   // a supplier's history from a document row

@@ -1930,8 +1930,9 @@ await page.getByRole('button', { name: 'מצב כהה' }).click(); await page.wa
 await shot('27-dark')
 await page.getByRole('button', { name: 'מצב בהיר' }).click()
 
-// NIGHT: the night's completeness check. Every active mailbox gets a scan of its last three days through the scan
-// engine; a message that was never read is found and read; the history scan stays the headline of the scans screen.
+// NIGHT: the night's collection, once at night and once before morning. Every active mailbox gets one pass over its
+// last three days through the scan engine (no second pass of its own); a message that was never read is found and
+// read; the morning pass is the second look; the history scan stays the headline of the scans screen.
 {
   const inv = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
   sql("update fin_scan_jobs set status='cancelled' where status in ('queued','running','paused')")
@@ -1949,10 +1950,14 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const back = lost ? sql(`select count(*) from fin_scan_items where mailbox_id='${inv}' and message_id='${lost}'`) : 'no-recent-message'
   const ov = (await api(adminToken, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
   const headDays = ov.job ? Math.round((Date.parse(ov.job.date_to) - Date.parse(ov.job.date_from)) / 86400000) : -1
+  const phases = sql(`select string_agg(distinct phase, ',') from fin_scan_segments where job_id=(select id from fin_scan_jobs where mailbox_id='${inv}' order by created_at desc limit 1)`)
+  const m1 = await api(adminToken, { action: 'scan-night-check', pass: 2 })
+  for (let i = 0; i < 40; i++) { const r = await api(adminToken, { action: 'scan-run', max_segments: 6 }); if (!r.data?.more) break }
+  const ov2 = (await api(adminToken, { action: 'scan-overview' })).data.mailboxes?.find((m) => m.mailbox.id === inv) || {}
   const empNight = await api(empToken, { action: 'scan-night-check' })
-  record('NIGHT', 'בדיקת השלמות הלילית דרך מנוע הסריקה', 'לכל תיבה פעילה נפתחת סריקה של שלושת הימים האחרונים; הפעלה שנייה לא פותחת כפולה; הודעה שלא נקראה אף פעם נמצאת ונקראת; במסך הסריקות הכותרת נשארת סריקת ההיסטוריה והבדיקה הלילית מוצגת לצידה; עובד לא מפעיל',
-    `נפתחו: ${started} מתוך ${active} תיבות, טווח ${range} ימים; שנייה: ${again ? 'לא נפתחה' : 'נפתחה'}; סוף: ${jobEnd}; ההודעה שנמחקה חזרה: ${back}; כותרת המסך: סריקה של ${headDays} ימים; בדיקה לילית: ${JSON.stringify(ov.check || null).slice(0, 140)}; עובד: ${empNight.status}`,
-    started === Number(active) && started > 0 && range === '3' && again && ['done', 'incomplete'].includes(jobEnd) && (back === '1' || back === 'no-recent-message') && headDays > 7 && !!ov.check && ov.check.listed >= 0 && empNight.status === 403)
+  record('NIGHT', 'בדיקת השלמות הלילית דרך מנוע הסריקה', 'לכל תיבה פעילה נפתח מעבר אחד על שלושת הימים האחרונים (בלי מעבר שני משלו); הפעלה שנייה באמצע לא פותחת כפולה; הודעה שלא נקראה אף פעם נמצאת ונקראת; מעבר הבוקר הוא המבט השני; במסך הסריקות הכותרת נשארת סריקת ההיסטוריה; עובד לא מפעיל',
+    `נפתחו: ${started} מתוך ${active} תיבות, טווח ${range} ימים; שנייה: ${again ? 'לא נפתחה' : 'נפתחה'}; סוף: ${jobEnd}; ההודעה שנמחקה חזרה: ${back}; כותרת המסך: סריקה של ${headDays} ימים; שלבים: ${phases}; מעבר לילה: ${JSON.stringify(ov.check || null).slice(0, 120)}; מעבר בוקר: נפתח ${(m1.data.results || []).filter((r) => r.started).length}, pass ${ov2.check?.pass}; עובד: ${empNight.status}`,
+    started === Number(active) && started > 0 && range === '3' && again && ['done', 'incomplete'].includes(jobEnd) && (back === '1' || back === 'no-recent-message') && headDays > 7 && !!ov.check && ov.check.pass === 1 && phases === 'scan' && ov2.check?.pass === 2 && empNight.status === 403)
 }
 
 // MERGE: two documents are merged by a person. The dialog opens from two checked rows; keeping one closes the other as

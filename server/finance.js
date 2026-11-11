@@ -319,7 +319,7 @@ export default async function handler(req, res) {
       }
       case 'scan-night-check': {
         // the night's completeness check, on demand: a scan of the last days of every active mailbox through the scan engine
-        res.status(200).json({ results: await nightlyCheck({ days: Math.max(1, Math.min(7, Number(body.days) || 3)) }) })
+        res.status(200).json({ results: await nightlyCheck({ days: Math.max(1, Math.min(7, Number(body.days) || 3)), pass: body.pass === 2 ? 2 : 1 }) })
         return
       }
       case 'scan-run': {

@@ -181,10 +181,13 @@ export async function runDaily(origin) {
   await closeStaleRuns().catch(() => {})
   const started = Date.now()
   const out = []
-  out.push(await automation('daily_scan', () => syncAll({ trigger: 'cron', started })))
+  // The night pass: every mailbox, every message of the last days, once, through the scan engine (nightlyCheck in scan.js).
+  // FINANCE_NIGHT_CHECK=0 keeps the older collection (the e2e stack starts its scans by hand).
+  const engine = process.env.FINANCE_NIGHT_CHECK !== '0'
+  out.push(await automation('daily_scan', async () => (engine ? (await import('./scan.js')).nightlyCheck({ pass: 1 }) : syncAll({ trigger: 'cron', started }))))
   out.push(await automation('retry_failed', () => retryFailed({ started, trigger: 'cron' })))
   // the scan engine runs every minute through pg_cron; if that is not set up yet, the night run moves active scans on too
-  try { const { tick, ensureCoverage, nightlyCheck } = await import('./scan.js'); out.push({ key: 'scan_coverage', result: await ensureCoverage({}) }); if (process.env.FINANCE_NIGHT_CHECK !== '0') out.push({ key: 'night_check', result: await nightlyCheck({}) }); out.push({ key: 'scan_engine', result: await tick({ started, trigger: 'cron' }) }) } catch (e) { out.push({ key: 'scan_engine', error: String(e.message || e).slice(0, 200) }) }
+  try { const { tick, ensureCoverage } = await import('./scan.js'); out.push({ key: 'scan_coverage', result: await ensureCoverage({}) }); out.push({ key: 'scan_engine', result: await tick({ started, trigger: 'cron' }) }) } catch (e) { out.push({ key: 'scan_engine', error: String(e.message || e).slice(0, 200) }) }
   out.push(await automation('connection_alerts', async () => {
     const bad = (await sb('fin_mailboxes?status=eq.error&select=email,last_error')) || []
     if (!bad.length) return { alerts: 0 }
@@ -222,7 +225,9 @@ export async function runDaily(origin) {
 /* the morning: the report of what the night collected (in the app, and by email when enabled) */
 export async function morningReport(origin) {
   const started = Date.now()
-  // the report reads the database only: no mail scan and no AI in the morning
-  void started
+  // the second look of the night: what arrived since the night pass and what it could not finish, then the report
+  if (process.env.FINANCE_NIGHT_CHECK !== '0') {
+    try { const { nightlyCheck, tick } = await import('./scan.js'); await nightlyCheck({ pass: 2 }); await tick({ started, trigger: 'cron' }) } catch { /* the report still goes out; the minute run finishes the pass */ }
+  }
   return [await automation('morning_report', (cfg) => dailySummary({ origin, email: cfg.email !== false }))]
 }

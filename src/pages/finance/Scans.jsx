@@ -108,12 +108,12 @@ function MailboxScan({ row, documents, can, onAction, onStart, go }) {
           <Report r={job.report} />
         </details>
       )}
-      {/* the night's completeness check: every message of the last days is listed again and anything unread is read */}
+      {/* the night's collection: once at night, once before morning, every message of the last days */}
       <p className={`fin-scan__night ${check?.open ? 'is-open' : check ? 'is-ok' : ''}`} role="status">
         <Icon name={check?.open ? 'alert' : 'check'} size={15} />
         {check
-          ? <span><strong>בדיקת שלמות לילית:</strong> {['queued', 'running'].includes(check.status) ? 'רצה עכשיו' : dateTime(check.at)} · {n(check.listed)} הודעות מ-{date(check.from)} · {check.missed + check.kept ? `${n(check.kept)} מסמכים שלא נקלטו קודם נמצאו ונקלטו` : 'לא נמצאה הודעה שלא נבדקה'}{check.open ? ` · ${n(check.open)} הודעות לא נפתחו` : ''}</span>
-          : <span><strong>בדיקת שלמות לילית:</strong> תרוץ הלילה. בכל לילה כל ההודעות של שלושת הימים האחרונים נבדקות שוב, כדי ששום חשבונית לא תישאר בחוץ.</span>}
+          ? <span><strong>{check.pass === 2 ? 'מעבר הבוקר' : 'מעבר הלילה'}:</strong> {['queued', 'running'].includes(check.status) ? 'רץ עכשיו' : dateTime(check.at)} · נבדקו {n(check.listed)} הודעות מ-{date(check.from)} · {check.kept ? `${n(check.kept)} מסמכים חדשים נקלטו` : 'אין מסמך חדש'}{check.open ? ` · ${n(check.open)} הודעות לא נפתחו ומחכות לך` : ''}</span>
+          : <span><strong>האיסוף הלילי:</strong> פעם בלילה ופעם לפנות בוקר, כל ההודעות של שלושת הימים האחרונים נבדקות. כל הודעה נקראת פעם אחת בלבד.</span>}
       </p>
       {can('operate') && (
         <div className="fin-scan__acts">
@@ -189,7 +189,7 @@ export default function Scans() {
   return (
     <div className="fin-stack">
       <PageHead title="ניהול סריקות" sub="סריקה של כל תיבת מייל לתקופה שבוחרים, עם בקרה שכל הודעה נבדקה">
-        {can('operate') && (rows || []).length > 0 && <button type="button" className="fin-btn" disabled={checking} onClick={async () => { setChecking(true); setErr(''); try { await api.callServer('scan-night-check'); await load() } catch (e) { setErr(e.message) } finally { setChecking(false) } }}><Icon name="check" size={16} /> {checking ? 'מתחיל…' : 'בדיקת שלמות עכשיו'}</button>}
+        {can('operate') && (rows || []).length > 0 && <button type="button" className="fin-btn" disabled={checking} onClick={async () => { setChecking(true); setErr(''); try { await api.callServer('scan-night-check'); await load() } catch (e) { setErr(e.message) } finally { setChecking(false) } }}><Icon name="check" size={16} /> {checking ? 'מתחיל…' : 'איסוף עכשיו'}</button>}
       </PageHead>
       {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
       {rows === null ? <p className="fin-muted" aria-busy="true">טוען…</p> : !rows.length ? (

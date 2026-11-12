@@ -100,7 +100,7 @@ const inView = (page, sel) => page.evaluate((sel) => { const el = document.query
   sql("insert into fin_projects (name, code, business_id) select 'פרויקט עם שם ארוך במיוחד לבדיקת שבירת שורות ברשימה הנפתחת ' || g || ' ' || left(b.name, 6), 'QA-' || g || '-' || left(b.id::text, 4), b.id from generate_series(1, 14) g cross join fin_businesses b on conflict do nothing")
   await page.goto(`${APP}/projects`); await page.waitForTimeout(800)
   await page.reload(); await page.waitForTimeout(900)
-  await page.goto(`${APP}/documents/${one("select id from fin_documents where status='review' and business_id is not null order by created_at limit 1")}`); await page.waitForTimeout(1300)
+  await page.goto(`${APP}/documents/${one("select id from fin_documents d where status='review' and business_id is not null and not exists (select 1 from fin_document_allocations a where a.document_id=d.id) order by created_at limit 1")}`); await page.waitForTimeout(1300)
   const projSel = page.locator('.fin-panel .fin-sel').filter({ has: page.locator('option', { hasText: 'QA-' }) }).first()
   const hasProj = await projSel.count()
   if (hasProj) {

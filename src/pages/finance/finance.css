@@ -183,8 +183,24 @@
 .fin-search svg { position: absolute; inset-inline-start: 0.65rem; color: var(--muted); pointer-events: none; }
 .fin-search input { width: 100%; padding-inline-start: 2.2rem; }
 .fin-check { display: inline-flex; gap: 0.45rem; align-items: center; font-size: var(--t-md); cursor: pointer; min-height: 30px; color: var(--text-2); }
-.fin input[type='checkbox'], .fin input[type='radio'] { width: 17px; height: 17px; accent-color: var(--ink); flex: none; margin: 0; cursor: pointer; }
-.fin[data-theme='dark'] input[type='checkbox'] { accent-color: var(--ocean); }
+.fin input[type='radio'] { width: 17px; height: 17px; accent-color: var(--ink); flex: none; margin: 0; cursor: pointer; }
+/* Check boxes are drawn here, not by the phone: a hollow square, filled with a tick only when chosen. (The native box
+   follows the phone's own dark mode and showed as a black square on a light screen.) */
+.fin input[type='checkbox'], .fin-login input[type='checkbox'] {
+  -webkit-appearance: none; appearance: none; flex: none; margin: 0; cursor: pointer; box-sizing: border-box;
+  width: 20px; height: 20px; border: 1.75px solid var(--line-2); border-radius: 6px; background: var(--sheet) center / 13px 13px no-repeat;
+  transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease; vertical-align: middle;
+}
+.fin input[type='checkbox']:hover { border-color: var(--ocean); }
+.fin input[type='checkbox']:checked, .fin input[type='checkbox']:indeterminate { border-color: var(--ink); background-color: var(--ink); }
+.fin input[type='checkbox']:checked { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.8 7.4l2.8 2.8 5.6-6'/%3E%3C/svg%3E"); }
+.fin input[type='checkbox']:indeterminate { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M3.2 7h7.6'/%3E%3C/svg%3E"); }
+.fin input[type='checkbox']:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocean) 30%, transparent); border-color: var(--ocean); }
+.fin input[type='checkbox']:disabled { opacity: 0.45; cursor: default; }
+.fin[data-theme='dark'] input[type='checkbox']:checked, .fin[data-theme='dark'] input[type='checkbox']:indeterminate { border-color: var(--ocean); background-color: var(--ocean); }
+@media (max-width: 700px) { .fin input[type='checkbox'] { width: 22px; height: 22px; border-radius: 7px; } }
+/* the controls the phone still draws follow the app's theme, not the phone's */
+.fin, .fin-login { color-scheme: light; }
 .fin-inline-label { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--t-sm); color: var(--text-2); }
 .fin-toggle { width: 38px; height: 22px; border-radius: 99px; border: 0; background: var(--line-2); position: relative; cursor: pointer; flex: none; padding: 0; transition: background var(--dur); }
 .fin-toggle span { position: absolute; top: 3px; inset-inline-start: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transition: inset-inline-start var(--dur); }
@@ -3571,3 +3587,16 @@ html:has(.fin), html:has(.fin) body, html:has(.fin-login), html:has(.fin-login) 
 .fin-receipts__view > .fin-muted, .fin-receipts__view > .fin-slip { margin: auto; }
 @media (max-width: 700px) { .fin-receipts__name { display: inline-flex; align-items: center; min-height: 44px; } .fin-receipts__view { height: 58vh; } .fin-modal__foot .fin-btn { min-height: 44px; } }
 .fin-peek__about { display: block; margin-top: 8px; font-size: 13px; line-height: 1.4; color: var(--text-2); }
+
+/* the documents list on a phone: details are set apart by space, not by dots (a dot was left alone where a line wrapped); the date sits on its own
+   line under the details; the supplier's name may take two lines instead of being cut */
+@media (max-width: 560px) {
+  .fin-dlist__main { gap: 4px; }
+  .fin-dlist__main strong { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+  .fin-dlist__main small { gap: 3px 12px; }
+  .fin-dlist__main small > span + span:not(.fin-duppill)::before { content: none; }
+  .fin-dlist__main small > span { white-space: nowrap; }
+  .fin-dlist__main small > .fin-dlist__mdate { flex-basis: 100%; }
+  .fin-dlist__open { padding-block: 13px; }
+  .fin-dlist__icon { border-radius: 9px; }
+}

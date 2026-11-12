@@ -2260,6 +2260,9 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const tgt = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
   const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
   const whereIs = async (id) => { const all = await items(); const f = all.find((x) => x.appProperties?.kd === id && !x.trashed); if (!f) return ''; const names = []; let p = f.parents?.[0]; while (p) { const d = all.find((x) => x.id === p); if (!d) break; names.unshift(d.name); p = d.parents?.[0] } return names.slice(1).join('/') }
+  // where the file really is: its parent in Drive is the folder the archive row names, and that folder's key says
+  // which company and month it stands for (names can repeat after earlier scenarios; keys cannot)
+  const placed = async (id) => { const f = (await items()).find((x) => x.appProperties?.kd === id && !x.trashed); const [folder, key] = sql(`select drive_folder_id||'|'||folder_key from fin_drive_files where document_id='${id}' and target_id='${tgt}'`).split('|'); return f && f.parents?.[0] === folder ? key : `לא בתיקייה (${f?.parents?.[0]} / ${folder})` }
   for (let i = 0; i < 8; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); const r = await api(tok, { action: 'drive-run', target_id: tgt }); if (!(r.data.results?.[0]?.verified)) break }
   const live = new Set((await items()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd))
   const cand = sql(`select coalesce(string_agg(f.document_id::text||'|'||f.organized_name, E'\n'), '') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${tgt}' and f.status='verified' and d.status='review'`).split('\n').filter(Boolean).map((x) => x.split('|')).filter(([id]) => live.has(id))
@@ -2284,7 +2287,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   await page.locator('.fin-modal__foot .fin-btn--primary').click()
   await page.waitForSelector('.fin-dm__note.is-ok, .fin-dm__note.is-bad, .fin-dm__note.is-warn', { timeout: 60000 }).catch(() => {})
   const noteA = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
-  const afterA = await whereIs(A)
+  const afterA = await whereIs(A); const keyA = await placed(A)
   const dbA = sql(`select (business_id='${biz[0]}')||'|'||accounting_period||'|'||business_source||'|'||(select status from fin_drive_files where document_id='${A}') from fin_documents where id='${A}'`)
   // a row dragged onto a company in the side list
   await page.fill('.fin-dm__search input', nameB); await page.waitForTimeout(600)
@@ -2300,7 +2303,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   }
   await page.waitForFunction((b) => /הועבר/.test(document.querySelector('.fin-dm__note')?.textContent || '') && document.querySelector('.fin-dm__note')?.textContent.includes(b), biz2[1], { timeout: 60000 }).catch(() => {})
   const noteB = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
-  const afterB = await whereIs(B2)
+  const afterB = await whereIs(B2); const keyB = await placed(B2)
   const dbB = sql(`select (business_id='${biz2[0]}') from fin_documents where id='${B2}'`)
   const mgrShot = await shot('130-drive-manager')
   // the same on a phone: the actions open in a sheet, the deletion reaches the Drive trash, nothing runs off the screen
@@ -2322,10 +2325,10 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const goneC = sql(`select count(*) from fin_documents where id='${C}'`) + '|' + (await items()).filter((f) => f.appProperties?.kd === C && !f.trashed).length
   await mctx.close()
   record('DRIVEMGR', 'ניהול הקבצים ב-Google Drive מתוך המערכת', 'שיוך לחברה ולחודש חשבונאי מעביר את הקובץ לתיקייה הזו ב-Drive, וההודעה מופיעה אחרי ש-Drive אישר; גרירת שורה על חברה מעבירה אותה; מחיקה בנייד מעבירה את העותק לפח של Drive; בנייד הפעולות נפתחות בגיליון תחתון, הכפתורים 44 פיקסלים ואין גלילה לצדדים',
-    `תיקיות: ${rootFolders}, פירורי לחם: ${crumbs}, נמצא בחיפוש: ${found}, פעולות בתפריט: ${menuItems}; א׳: ${beforeA} → ${afterA} (${dbA}) "${noteA.slice(0, 60)}"; ב׳ בגרירה (נמצא ${foundB}, יעד מסומן ${overShown}): ${beforeB} → ${afterB} (${dbB}) "${noteB.slice(0, 50)}"; נייד: קטנים ${small}, גלילה ${sideways}, גיליון ברוחב ${Math.round(sheetBox?.width || 0)}; מחיקה: ${copiesC} → ${goneC} "${noteC.slice(0, 50)}"`,
+    `תיקיות: ${rootFolders}, פירורי לחם: ${crumbs}, נמצא בחיפוש: ${found}, פעולות בתפריט: ${menuItems}; א׳: ${beforeA} → ${afterA} [${keyA === `b:${biz[0]}/2025/03`}] (${dbA}) "${noteA.slice(0, 60)}"; ב׳ בגרירה (נמצא ${foundB}, יעד מסומן ${overShown}): ${beforeB} → ${afterB} [${keyB.startsWith(`b:${biz2[0]}/`)}] (${dbB}) "${noteB.slice(0, 50)}"; נייד: קטנים ${small}, גלילה ${sideways}, גיליון ברוחב ${Math.round(sheetBox?.width || 0)}; מחיקה: ${copiesC} → ${goneC} "${noteC.slice(0, 50)}"`,
     !!A && !!B2 && !!C && rootFolders >= 2 && crumbs === 2 && found === 1 && menuItems >= 8
-    && afterA === `${biz[1]}/2025/03 - מרץ` && afterA !== beforeA && dbA === 'true|2025-03|manual|verified' && /הועבר/.test(noteA)
-    && foundB === 1 && overShown === 1 && afterB.startsWith(`${biz2[1]}/`) && afterB !== beforeB && dbB === 't' && /הועבר/.test(noteB)
+    && keyA === `b:${biz[0]}/2025/03` && afterA !== beforeA && dbA === 'true|2025-03|manual|verified' && /הועבר/.test(noteA)
+    && foundB === 1 && overShown === 1 && keyB.startsWith(`b:${biz2[0]}/`) && afterB !== beforeB && dbB === 't' && /הועבר/.test(noteB)
     && small === 0 && sideways <= 0 && Math.round(sheetBox?.width || 0) === 390 && copiesC === 1 && goneC === '0|0' && /נמחק/.test(noteC), [sheetShot, mgrShot, mShot])
 }
 

@@ -10,6 +10,8 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      /* two pages: the public site, and the finance system (finance-app.html), which loads none of the site's code */
+      input: { main: 'index.html', finance: 'finance-app.html' },
       output: {
         /* קוד-ספליטינג מפורש:
            - ספריות-ליבה משותפות (React/Router, framer-motion, Supabase) יוצאות
@@ -33,6 +35,9 @@ export default defineConfig({
           }
           /* מודולים משותפים לאתר ולאדמין (מילוני i18n, lib) מקובעים לצ'אנק 'shared' —
              אחרת Rollup עלול לשבץ אותם בתוך צ'אנק האדמין ולגרור אותו לכל ביקור. */
+          /* the Supabase client and the sign-in hook travel with the Supabase library, not with the site's shared chunk
+             (dictionaries, helpers): the finance page needs only these two */
+          if (/\/src\/lib\/(supabase|useAuth)\.js$/.test(id)) return 'vendor-supabase'
           if (id.includes('/src/lib/') || id.includes('/src/i18n/')) return 'shared'
           /* נתוני האתר, hooks ורכיבי UI שגם האדמין משתמש בהם. בלי השורות האלה
              Rollup שיבץ אותם בצ'אנק האדמין, וכל גולש באתר הוריד את כל קוד ה-CSS

@@ -3530,3 +3530,31 @@ body.fin-col-moving { cursor: grabbing !important; user-select: none; }
 }
 
 .fin-receipts__pic .fin-doctile { width: 100%; height: 100%; border-radius: 6px; }
+
+/* A phone app, not a web page: no grey flash on a tap, no rubber-band or pull-to-refresh behind the screens, no
+   double-tap zoom on controls, a press that answers, chrome that cannot be selected like text, and room for the
+   notch and the home bar when the app is installed on the home screen. */
+.fin, .fin-login { -webkit-tap-highlight-color: transparent; }
+html:has(.fin), html:has(.fin) body, html:has(.fin-login), html:has(.fin-login) body { overscroll-behavior-y: none; }
+.fin :is(button, a, label, summary, select, [role="tab"], [role="button"]) { touch-action: manipulation; }
+.fin-tabbar, .fin__top, .fin__nav, .fin-tabs, .fin-seg { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+@media (hover: none) and (pointer: coarse) {
+  .fin :is(.fin-btn, .fin-icon-btn, .fin-tab, .fin-tabbar > a, .fin-tabbar > button, .fin-doccard, .fin-dlist__row) { transition: transform 0.12s ease, background-color var(--dur) var(--ease), opacity 0.12s ease; }
+  .fin :is(.fin-btn, .fin-icon-btn, .fin-tabbar > a, .fin-tabbar > button):active { transform: scale(0.96); opacity: 0.85; }
+  .fin :is(.fin-dlist__row, .fin-doccard):active { background: var(--wash); }
+  .fin :is(.fin-scroll-x, .fin-tabs--scroll) { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .fin :is(.fin-scroll-x, .fin-tabs--scroll)::-webkit-scrollbar { display: none; }
+}
+@media (display-mode: standalone) {
+  .fin .fin__top { padding-top: max(0.6rem, env(safe-area-inset-top)); }
+  .fin-login { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  .fin-panel, .fin-modal__box { padding-bottom: env(safe-area-inset-bottom); }
+}
+@media (max-width: 760px) {
+  /* screens change like cards: the new one rises a little into place */
+  .fin__main > .fin-stack { animation: fin-screen-in 0.22s var(--ease) both; }
+  @keyframes fin-screen-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .fin-panel { animation: fin-sheet-in 0.26s var(--ease) both; }
+  @keyframes fin-sheet-in { from { transform: translateY(24px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+}
+@media (prefers-reduced-motion: reduce) { .fin__main > .fin-stack, .fin-panel { animation: none !important; } .fin :is(.fin-btn, .fin-icon-btn):active { transform: none; } }

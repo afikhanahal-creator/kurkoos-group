@@ -1,0 +1,5 @@
+/* What the public site's stylesheet gave the finance app for free, now that the app has a page of its own. */
+html, body { margin: 0; width: 100%; max-width: 100%; overflow-x: clip; background: #f7f7f5; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+#root { min-height: 100vh; min-height: 100dvh; }
+@media (prefers-color-scheme: dark) { html:has(.fin[data-theme='dark']), html:has(.fin[data-theme='dark']) body { background: #0b1418; } }

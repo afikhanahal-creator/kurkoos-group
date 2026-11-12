@@ -5,7 +5,7 @@ import { useFinance } from './FinanceApp.jsx'
 import { reportOf } from './CompanySettings.jsx'
 import * as api from './api.js'
 import { ENTITIES, SUPPLIER_STATUS } from './entities.js'
-import { DOC_TYPE, PROJECT_STATUS, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedTotal, thisMonth } from './format.js'
+import { DOC_TYPE, PROJECT_STATUS, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedTotal, thisMonth, seriesColor } from './format.js'
 import { docsFor, summarize } from './stats.js'
 import { EntityForm } from './MasterData.jsx'
 import { Empty, Icon, Modal, Pill, StatusPill, useAsync } from './ui.jsx'
@@ -31,16 +31,27 @@ function Trend({ items }) {
   const months = all.slice(-keep); const vals = sums.slice(-keep)
   const max = Math.max(...vals, 1)
   const cnt = months.map((m) => items.filter(({ doc }) => counts(doc) && period(doc) === m).length)
-  const [tip, show, hide] = useTip(true)
+  const [tip, showTip, hide] = useTip(true)
+  // the floating card is for a pointer; under a finger the readout above the bars says the same and covers nothing
+  const show = (i) => (e) => { if (typeof matchMedia === 'function' && matchMedia('(hover: hover)').matches) showTip(i)(e) }
+  // the month in the readout: the one under the pointer or the finger; before that, the last month with money
+  const lastWith = vals.reduce((at, v, i) => (v ? i : at), keep - 1)
+  const [picked, setPicked] = useState(null)
+  const at = picked != null && picked < keep ? picked : lastWith
+  const total = vals.reduce((a, v) => a + v, 0)
   return (
     <figure className="fin-trend2" aria-label={`הוצאות לפי חודש, ${keep} חודשים`}>
-      <figcaption className="fin-trend2__hint">הסכום של כל חודש מופיע בריחוף או בנגיעה בעמודה.</figcaption>
-      <div className="fin-trend2__bars" style={{ gridTemplateColumns: `repeat(${keep}, minmax(0, 1fr))` }}>
+      <figcaption className="fin-trend2__read" aria-live="polite">
+        <span className="fin-trend2__readm">{monthLabel(months[at])}</span>
+        <strong>{money(vals[at])}</strong>
+        <small>{cnt[at] === 1 ? 'מסמך אחד' : `${cnt[at]} מסמכים`}{total > 0 && vals[at] > 0 ? ` · ${Math.round((vals[at] / total) * 100)}% מהתקופה` : ''}</small>
+      </figcaption>
+      <div className="fin-trend2__bars" style={{ gridTemplateColumns: `repeat(${keep}, minmax(0, 1fr))` }} onMouseLeave={() => setPicked(null)}>
         {vals.map((v, i) => (
-          <div key={months[i]} className="fin-trend2__col" tabIndex={0} onClick={show(i)} onMouseEnter={show(i)} onMouseLeave={hide} onFocus={show(i)} onBlur={hide} aria-label={`${monthLabel(months[i])}: ${money(v)}, ${cnt[i]} מסמכים`}>
+          <button type="button" key={months[i]} className={`fin-trend2__col ${i === at ? 'is-at' : ''}`} onClick={(e) => { setPicked(i); show(i)(e) }} onMouseEnter={(e) => { setPicked(i); show(i)(e) }} onMouseLeave={hide} onFocus={(e) => { setPicked(i); show(i)(e) }} onBlur={hide} aria-pressed={i === at} aria-label={`${monthLabel(months[i])}: ${money(v)}, ${cnt[i]} מסמכים`}>
             <span className={`fin-trend2__bar ${i === keep - 1 ? 'is-now' : ''}`} style={{ height: `${Math.max(v ? 4 : 1, (v / max) * 100)}%` }} />
             <span className="fin-trend2__m">{new Date(`${months[i]}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'short' })}</span>
-          </div>
+          </button>
         ))}
         {tip && <Tip tip={tip} title={monthLabel(months[tip.key])} rows={[['מסמכים', cnt[tip.key].toLocaleString('he-IL')], ['סה״כ', money(vals[tip.key])], ...(cnt[tip.key] ? [['ממוצע למסמך', money(vals[tip.key] / cnt[tip.key])]] : [])]} />}
       </div>
@@ -48,34 +59,44 @@ function Trend({ items }) {
   )
 }
 
-function Breakdown({ title, rows, onPick }) {
-  const max = Math.max(...rows.map((r) => Math.abs(r.value)), 1)
+/* A breakdown: one bar of the whole, cut by colour, and under it a line per part with its amount, its share and how
+   many documents. When the parts are not companies, each line also says how its money divides between the companies
+   (one supplier can serve several of them), in the hover card and under the line. */
+function Breakdown({ title, rows, onPick, split = true }) {
   const total = rows.reduce((a, r) => a + Math.abs(r.value), 0) || 1
   const [all, setAll] = useState(false)
   const shown = all ? rows : rows.slice(0, 6)
   const [rtip, rshow, rhide] = useTip(false)
+  const [hot, setHot] = useState(null)
+  const pct = (v) => Math.round((Math.abs(v) / total) * 100)
+  const parts = (r) => (split ? (r.parts || []).filter((x) => x.value) : [])
+  const docs = (c) => (c === 1 ? 'מסמך אחד' : `${c} מסמכים`)
   return (
-    <section className="fin-panel-block fin-rank">
-      <header className="fin-rank__head"><h3>{title}</h3>{rows.length > 0 && <small>{rows.length === 1 ? 'פריט אחד' : `${rows.length} פריטים`}</small>}</header>
+    <section className="fin-panel-block fin-rank fin-split">
+      <header className="fin-rank__head"><h3>{title}</h3>{rows.length > 0 && <small>{rows.length === 1 ? 'פריט אחד' : `${rows.length} פריטים`} · {money(rows.reduce((a, r) => a + r.value, 0))}</small>}</header>
       {!rows.length ? <p className="fin-muted">אין עדיין נתונים.</p> : (
-        <ol className="fin-rank__list">
-          {shown.map((r, i) => {
-            const share = Math.round((Math.abs(r.value) / total) * 100)
-            return (
+        <>
+          <div className="fin-split__bar" role="img" aria-label={rows.map((r) => `${r.name} ${pct(r.value)}%`).join(', ')}>
+            {rows.map((r, i) => <span key={r.key} className={hot === i ? 'is-hot' : ''} style={{ flexGrow: Math.max(Math.abs(r.value), total * 0.012), background: seriesColor(i) }} />)}
+          </div>
+          <ol className="fin-split__list">
+            {shown.map((r, i) => (
               <li key={r.key}>
-                <button type="button" className="fin-rank__row" onMouseEnter={rshow(i)} onMouseLeave={rhide} onFocus={rshow(i)} onBlur={rhide} onClick={r.id && onPick ? () => onPick(r.id) : undefined} aria-disabled={!r.id || !onPick}>
-                  <span className="fin-rank__n" aria-hidden="true">{i + 1}</span>
-                  <span className="fin-rank__name" title={r.name}>{r.name}</span>
-                  <span className="fin-rank__val">{money(r.value)}</span>
-                  <span className="fin-rank__bar" aria-hidden="true"><span style={{ width: `${Math.max(2, (Math.abs(r.value) / max) * 100)}%` }} /></span>
-                  <span className="fin-rank__share">{share}%</span>
+                <button type="button" className="fin-split__row" onMouseEnter={(e) => { setHot(i); rshow(i)(e) }} onMouseLeave={() => { setHot(null); rhide() }} onFocus={(e) => { setHot(i); rshow(i)(e) }} onBlur={() => { setHot(null); rhide() }} onClick={r.id && onPick ? () => onPick(r.id) : undefined} aria-disabled={!r.id || !onPick}>
+                  <span className="fin-split__dot" style={{ background: seriesColor(i) }} aria-hidden="true" />
+                  <span className="fin-split__name" title={r.name}>{r.name}</span>
+                  <span className="fin-split__val">{money(r.value)}</span>
+                  <span className="fin-split__track" aria-hidden="true"><span style={{ width: `${Math.max(2, pct(r.value))}%`, background: seriesColor(i) }} /></span>
+                  <span className="fin-split__share">{pct(r.value)}%</span>
+                  <span className="fin-split__meta">{docs(r.count || 0)}{parts(r).length > 1 ? ` · ${parts(r).length} חברות` : parts(r).length === 1 ? ` · ${parts(r)[0].name}` : ''}</span>
                 </button>
+                {parts(r).length > 1 && <p className="fin-split__cos">{parts(r).map((x) => <span key={x.key}><b>{x.name}</b> {money(x.value)}</span>)}</p>}
               </li>
-            )
-          })}
-        </ol>
+            ))}
+          </ol>
+        </>
       )}
-      {rtip && shown[rtip.key] && <Tip tip={rtip} title={shown[rtip.key].name} rows={[['סה״כ', money(shown[rtip.key].value)], ['חלק מהסך', `${Math.round((Math.abs(shown[rtip.key].value) / total) * 100)}%`], ...(shown[rtip.key].count != null ? [['מסמכים', String(shown[rtip.key].count)]] : []), ['מקום', `${rtip.key + 1} מתוך ${rows.length}`]]} />}
+      {rtip && shown[rtip.key] && <Tip tip={rtip} title={shown[rtip.key].name} rows={[['סה״כ', money(shown[rtip.key].value)], ['חלק מהסך', `${pct(shown[rtip.key].value)}%`], ['מסמכים', String(shown[rtip.key].count || 0)], ...(shown[rtip.key].count ? [['ממוצע למסמך', money(shown[rtip.key].value / shown[rtip.key].count)]] : []), ...parts(shown[rtip.key]).map((x) => [x.name, money(x.value)])]} />}
       {rows.length > 6 && <button type="button" className="fin-link fin-rank__more" onClick={() => setAll((v) => !v)}>{all ? 'הצגת 6 הראשונים' : `הצגת כל ה-${rows.length}`}</button>}
     </section>
   )
@@ -116,8 +137,14 @@ export default function EntityOverview({ kind }) {
   const s = useMemo(() => summarize(items, categories), [items, categories])
   const group = (keyFn, nameFn, idFn) => {
     const g = {}
-    for (const it of items) if (counts(it.doc)) { const k = keyFn(it.doc) || '__'; (g[k] ||= { key: k, name: nameFn(k), id: k !== '__' ? idFn?.(k) : null, value: 0 }).value += signedTotal(it.doc) * it.share }
-    return Object.values(g).sort((a, b) => b.value - a.value)
+    for (const it of items) if (counts(it.doc)) {
+      const k = keyFn(it.doc) || '__'; const v = signedTotal(it.doc) * it.share
+      const row = (g[k] ||= { key: k, name: nameFn(k), id: k !== '__' ? idFn?.(k) : null, value: 0, count: 0, co: {} })
+      row.value += v; row.count += 1
+      // how this part divides between the companies
+      const b = it.doc.business_id || '__'; (row.co[b] ||= { key: b, name: b === '__' ? 'לא משויך' : nameOf(businesses, b), value: 0 }).value += v
+    }
+    return Object.values(g).map((r) => ({ ...r, parts: Object.values(r.co).sort((x, y) => y.value - x.value) })).sort((a, b) => b.value - a.value)
   }
   if (!row) return <Empty title={`ה${def.one} לא נמצא`} icon={def.icon} action={<button type="button" className="fin-btn" onClick={() => go(def.path)}>לרשימת {def.title}</button>} />
 
@@ -206,7 +233,7 @@ export default function EntityOverview({ kind }) {
         {kind !== 'categories' && <Breakdown title="לפי קטגוריה" rows={byCat} onPick={(cid) => go(`/categories/${cid}`)} />}
         {kind !== 'suppliers' && <Breakdown title={kind === 'projects' ? 'ספקי הפרויקט' : 'ספקים'} rows={bySup} onPick={(sid) => go(`/suppliers/${sid}`)} />}
         {(kind === 'businesses' || kind === 'suppliers' || kind === 'categories') && <Breakdown title="לפי פרויקט" rows={byProj} onPick={(pid) => go(`/projects/${pid}`)} />}
-        {(kind === 'suppliers' || kind === 'categories') && <Breakdown title="לפי חברה" rows={byBiz} onPick={(bid) => go(`/companies/${bid}`)} />}
+        {(kind === 'suppliers' || kind === 'categories') && <Breakdown title="לפי חברה" rows={byBiz} split={false} onPick={(bid) => go(`/companies/${bid}`)} />}
       </div>
 
       <div className="fin-overview fin-overview--wide">

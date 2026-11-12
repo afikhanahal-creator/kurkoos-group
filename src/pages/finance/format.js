@@ -116,3 +116,7 @@ export function toExcel(sheet, head, rows) {
 
 /* the last n months, newest first, for month pickers */
 export const recentMonths = (n = 36) => Array.from({ length: n }, (_, i) => shiftMonth(thisMonth(), -i))
+
+// colours of a breakdown (a category, a company, a supplier): told apart on a light and on a dark surface, in this order
+export const SERIES = ['#16688c', '#c2571a', '#2f7d5b', '#8a4fa8', '#b8860b', '#c0395a', '#3b6fb6', '#5d6b78']
+export const seriesColor = (i) => SERIES[i % SERIES.length]

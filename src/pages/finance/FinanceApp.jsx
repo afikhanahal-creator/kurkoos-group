@@ -137,7 +137,13 @@ function useFinanceData(enabled, onChange) {
   useEffect(() => {
     if (!enabled) return undefined
     // before the first load ends (loadedAt 0) a focus is not a reason to load everything again
-    const on = () => { if (document.visibilityState === 'visible' && loadedAt.current && Date.now() - loadedAt.current > 20_000) reload() }
+    // coming back to the tab: one tiny question (how many documents, when the newest changed), and a reload when it moved,
+    // so what was deleted or added elsewhere is never left on the screen
+    const on = async () => {
+      if (document.visibilityState !== 'visible' || !loadedAt.current || inflight.current) return
+      const now = await api.docsStamp().catch(() => null)
+      if ((now && stamp.current && now !== stamp.current) || Date.now() - loadedAt.current > 60_000) reload()
+    }
     document.addEventListener('visibilitychange', on); window.addEventListener('focus', on)
     return () => { document.removeEventListener('visibilitychange', on); window.removeEventListener('focus', on) }
   }, [enabled, reload])
@@ -173,13 +179,22 @@ function useFinanceData(enabled, onChange) {
     }, 15_000)
     return () => clearInterval(t)
   }, [enabled, reading, reload])
+  // a deletion (from any screen, or from another open tab) leaves every list at once; the reload after it confirms
+  useEffect(() => api.onDocsRemoved((ids) => {
+    const gone = new Set(ids)
+    setState((s) => { const documents = s.documents.filter((d) => !gone.has(d.id)); prevDocs.current = documents; stamp.current = ''; return { ...s, documents, allocations: s.allocations.filter((a) => !gone.has(a.document_id)) } })
+    reload()
+  }), [reload])
   const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
   // only after a first load: this also runs when the app mounts, before anyone signed in
   const refreshIfStale = useCallback(() => { if (loadedAt.current && Date.now() - loadedAt.current > 20_000) reload() }, [reload])
   // the bookkeeping pass (ledger.js): receipts that pay an invoice, proformas replaced by an invoice. Every screen reads
   // the same flags, so no figure counts the same money twice.
-  const documents = useMemo(() => markLedger(state.documents), [state.documents])
-  return { ...state, documents, reload, patchDoc, refreshIfStale }
+  const allDocuments = useMemo(() => markLedger(state.documents), [state.documents])
+  // One rule for every screen: a document moved to the archive is out of the work. It is on no list, in no count and
+  // in no report; only the "ארכיון" tab of the documents screen (which reads allDocuments) shows it, to restore or delete.
+  const documents = useMemo(() => allDocuments.filter((d) => d.status !== 'archived'), [allDocuments])
+  return { ...state, documents, allDocuments, reload, patchDoc, refreshIfStale }
 }
 
 function NoAccess({ me, email, onClaimed }) {
@@ -299,10 +314,10 @@ export default function FinanceApp() {
   useEffect(() => {
     if (Date.now() - versionAt.current < 120_000) return
     versionAt.current = Date.now()
-    const mine = document.querySelector('script[type="module"][src*="/assets/index-"]')?.getAttribute('src')
+    const mine = document.querySelector('script[type="module"][src*="/assets/finance-"]')?.getAttribute('src')
     if (!mine) return
     fetch('/admin/finance', { cache: 'no-store', credentials: 'same-origin' }).then((r) => (r.ok ? r.text() : '')).then((html) => {
-      const live = /\/assets\/index-[^"']+\.js/.exec(html)?.[0]
+      const live = /\/assets\/finance-[^"']+\.js/.exec(html)?.[0]
       if (live && live !== mine && !document.querySelector('.fin-modal')) window.location.reload()
     }).catch(() => {})
   }, [pathname])

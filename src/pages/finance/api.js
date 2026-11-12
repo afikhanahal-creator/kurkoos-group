@@ -92,12 +92,33 @@ export const updateDocuments = async (ids, patch) => afterStatus(patch, must(awa
 export const loadDeliveries = (limit = 30) => soft((async () => (await all('fin_deliveries', 'created_at', false, limit * 2)).filter((d) => (d.kind || 'accountant') === 'accountant').slice(0, limit))())
 export const loadOutbound = () => soft(all('fin_outbound', 'created_at', true))
 export const loadOutboundQueue = (limit = 30) => soft(all('fin_outbound_queue', 'id', false, limit))
+/* The one deletion (server/finance/remove.js): the document, everything that hangs on it, its files and its copy in
+   Drive, checked by the server before it answers. Every screen deletes through here, and every screen (and every other
+   open tab) is told at once, so a deleted document is not left on any list. */
+const tabs = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('fin-docs') : null
+export const onDocsRemoved = (fn) => {
+  const local = (e) => fn(e.detail?.ids || [], false)
+  const remote = (e) => { if (e.data?.removed) fn(e.data.removed, true) }
+  window.addEventListener('fin:docs-removed', local); tabs?.addEventListener('message', remote)
+  return () => { window.removeEventListener('fin:docs-removed', local); tabs?.removeEventListener('message', remote) }
+}
+export async function deleteDocuments(docs) {
+  const ids = [...new Set(docs.map((d) => d.id))]
+  const out = { deleted: [], failed: [], pending: 0 }
+  for (let i = 0; i < ids.length; i += 50) {
+    const r = await callServer('documents-delete', { ids: ids.slice(i, i + 50) }, { timeout: 90000 })
+    for (const x of r.results || []) { if (x.ok) { out.deleted.push(x.id); if (x.pending?.length) out.pending++ } else out.failed.push(x) }
+  }
+  if (out.deleted.length) {
+    window.dispatchEvent(new CustomEvent('fin:docs-removed', { detail: { ids: out.deleted } }))
+    try { tabs?.postMessage({ removed: out.deleted }) } catch { /* another tab finds out on its next check */ }
+  }
+  return out
+}
 export async function deleteDocument(doc) {
-  // a deletion in the system is a deletion in Drive: the archive's copy goes to the Drive trash first. If Drive cannot
-  // be reached the document is still deleted, and the next check against Drive trashes the copy.
-  await callServer('drive-forget', { ids: [doc.id] }).catch(() => null)
-  must(await supabase.from('fin_documents').delete().eq('id', doc.id))
-  if (doc.file_path) await supabase.storage.from(BUCKET).remove([doc.file_path])
+  const r = await deleteDocuments([doc])
+  if (r.failed.length) throw new Error(r.failed[0].error || 'המחיקה לא הושלמה')
+  return r
 }
 
 export const saveRow = async (table, row) => must(row.id

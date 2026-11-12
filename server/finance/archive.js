@@ -645,25 +645,30 @@ export async function settings({ targetId, by_kind, auto, auto_correct, enabled,
 /* A document is about to be deleted from the system: its copy in Drive goes to the Drive trash first (30 days to
    restore there). Only the archive's own file is touched. A failure does not stop the deletion: the next check against
    Drive finds a file whose document no longer exists and trashes it then. */
-export async function removeFromDrive({ ids, user }) {
+// the archive's copies of these documents: read before a document is deleted, because the rows go with it
+export async function driveCopies(ids) {
+  const out = []
+  for (const id of ids) for (const r of (await sb(`fin_drive_files?document_id=eq.${q(id)}&select=target_id,document_id,drive_file_id,organized_name,folder_path,rendition_path`)) || []) out.push(r)
+  return out
+}
+// each copy goes to the Drive trash. Trashing a file that is already trashed or gone counts as done.
+export async function trashCopies(rows, user) {
   let trashed = 0; const failed = []
   const ctxs = new Map()
-  for (const id of ids) {
-    const rows = (await sb(`fin_drive_files?document_id=eq.${q(id)}&drive_file_id=not.is.null&select=target_id,drive_file_id,organized_name,folder_path`)) || []
-    for (const r of rows) {
-      try {
-        if (!ctxs.has(r.target_id)) { const t = await one(`fin_cloud_targets?id=eq.${q(r.target_id)}&select=*`); ctxs.set(r.target_id, t && t.status !== 'revoked' ? await context(t) : null) }
-        const ctx = ctxs.get(r.target_id)
-        if (!ctx) { failed.push(id); continue }
-        await driveTrash(ctx.token, r.drive_file_id)
-        await event(r.target_id, null, 'withdrawn', { why: 'המסמך נמחק מהמערכת', name: r.organized_name, path: r.folder_path, document: id }, user)
-        trashed++
-      } catch { failed.push(id) }
-    }
+  for (const r of rows.filter((x) => x.drive_file_id)) {
+    try {
+      if (!ctxs.has(r.target_id)) { const t = await one(`fin_cloud_targets?id=eq.${q(r.target_id)}&select=*`); ctxs.set(r.target_id, t && t.status !== 'revoked' ? await context(t).catch(() => null) : null) }
+      const ctx = ctxs.get(r.target_id)
+      if (!ctx) { failed.push(r.document_id); continue }
+      await driveTrash(ctx.token, r.drive_file_id).catch((e) => { if (e?.status !== 404) throw e })
+      await event(r.target_id, null, 'withdrawn', { why: 'המסמך נמחק מהמערכת', name: r.organized_name, path: r.folder_path, document: r.document_id }, user)
+      trashed++
+    } catch { failed.push(r.document_id) }
   }
-  if (trashed) await audit('cloud', null, 'archive_file_trashed', { documents: ids.slice(0, 50), trashed }, user).catch(() => {})
+  if (trashed) await audit('cloud', null, 'archive_file_trashed', { documents: [...new Set(rows.map((r) => r.document_id))].slice(0, 50), trashed }, user).catch(() => {})
   return { trashed, failed: [...new Set(failed)] }
 }
+export async function removeFromDrive({ ids, user }) { return trashCopies(await driveCopies(ids), user) }
 
 export async function exclude({ targetId, ids, excluded = true, user }) {
   for (const id of ids) {

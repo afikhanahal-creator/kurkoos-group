@@ -100,6 +100,39 @@ export const useFinance = () => useContext(Ctx)
 
 // the same "count|newest change" the server answers in api.docsStamp, computed from the rows already loaded
 const stampOf = (docs) => `${docs.length}|${docs.reduce((m, d) => (d.updated_at && d.updated_at > m ? d.updated_at : m), '')}`
+/* On a phone, pulling the screen down from its top reloads the data, like refreshing the page (an installed app has no
+   browser button for it, and the page no longer bounces). The data also refreshes by itself: a check every 15 seconds
+   and whenever the app comes back into view. */
+function PullRefresh({ onRefresh }) {
+  const [pull, setPull] = useState(0)
+  const [busy, setBusy] = useState(false)
+  const fn = useRef(onRefresh); fn.current = onRefresh
+  useEffect(() => {
+    if (typeof matchMedia !== 'function' || !matchMedia('(pointer: coarse)').matches) return undefined
+    let y0 = null; let d = 0; let running = false
+    const blocked = (t) => document.querySelector('.fin-modal, .fin-panel, .fin-viewer.is-max, .fin-dm__menuwrap') || t.closest?.('.fin-viewer__scroll, .fin-scroll-x, textarea, [draggable="true"]') || (t === document.activeElement && /^(INPUT|SELECT)$/.test(t.tagName))
+    const start = (e) => { d = 0; y0 = !running && e.touches.length === 1 && window.scrollY <= 0 && !blocked(e.target) ? e.touches[0].clientY : null }
+    const move = (e) => {
+      if (y0 == null) return
+      d = e.touches[0].clientY - y0
+      // the pull is ours from here: without this the browser takes the gesture for its own (empty) scroll and cancels it
+      if (d > 8 && window.scrollY <= 0) { if (e.cancelable) e.preventDefault(); setPull(Math.min(92, d * 0.5)) } else { setPull(0); if (d < -8) y0 = null }
+    }
+    const cancel = () => { y0 = null; setPull(0) }
+    const end = async () => {
+      if (y0 == null) return
+      y0 = null
+      if (d * 0.5 < 60) { setPull(0); return }
+      running = true; setBusy(true); setPull(56)
+      try { await fn.current?.() } finally { running = false; setBusy(false); setPull(0) }
+    }
+    window.addEventListener('touchstart', start, { passive: true }); window.addEventListener('touchmove', move, { passive: false }); window.addEventListener('touchend', end); window.addEventListener('touchcancel', cancel)
+    return () => { window.removeEventListener('touchstart', start); window.removeEventListener('touchmove', move); window.removeEventListener('touchend', end); window.removeEventListener('touchcancel', cancel) }
+  }, [])
+  if (!pull && !busy) return null
+  return <div className={`fin-pull ${busy ? 'is-busy' : pull >= 60 ? 'is-ready' : ''}`} style={{ '--pull': `${pull}px` }} role="status"><Icon name="refresh" size={16} /> {busy ? 'מרענן…' : pull >= 60 ? 'שחררו לרענון' : 'משכו לרענון'}</div>
+}
+
 function useFinanceData(enabled, onChange) {
   const [state, setState] = useState({ loading: true, error: '', me: null, documents: [], businesses: [], projects: [], categories: [], suppliers: [], mailboxes: [], members: [], allocations: [], settings: {} })
   const loadedAt = useRef(0)
@@ -536,6 +569,7 @@ export default function FinanceApp() {
         {uploading && <Modal title="העלאת מסמכים" onClose={() => setUploading(false)} footer={<><button type="button" className="fin-btn" onClick={() => { setUploading(false); navigate(`${BASE}/documents?status=new`) }}>למסמכים החדשים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setUploading(false)}>סגירה</button></>}><UploadZone onDone={data.reload} /><p className="fin-muted fin-small">PDF או תמונה, עד 12MB, אחד או כמה ביחד. המסמכים נקראים ברקע ומחכים לבדיקה ב"חשבוניות חדשות".</p></Modal>}
         <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav} />
         <ConfirmHost />
+        <PullRefresh onRefresh={data.reload} />
       </div>
     </Ctx.Provider>
   )

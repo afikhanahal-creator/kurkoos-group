@@ -34,10 +34,10 @@ function Trend({ items }) {
   const [tip, show, hide] = useTip(true)
   return (
     <figure className="fin-trend2" aria-label={`הוצאות לפי חודש, ${keep} חודשים`}>
+      <figcaption className="fin-trend2__hint">הסכום של כל חודש מופיע בריחוף או בנגיעה בעמודה.</figcaption>
       <div className="fin-trend2__bars" style={{ gridTemplateColumns: `repeat(${keep}, minmax(0, 1fr))` }}>
         {vals.map((v, i) => (
-          <div key={months[i]} className="fin-trend2__col" tabIndex={0} onMouseEnter={show(i)} onMouseLeave={hide} onFocus={show(i)} onBlur={hide} aria-label={`${monthLabel(months[i])}: ${money(v)}, ${cnt[i]} מסמכים`}>
-            <span className="fin-trend2__val">{v ? money(v).replace(/\.\d\d/, '') : ''}</span>
+          <div key={months[i]} className="fin-trend2__col" tabIndex={0} onClick={show(i)} onMouseEnter={show(i)} onMouseLeave={hide} onFocus={show(i)} onBlur={hide} aria-label={`${monthLabel(months[i])}: ${money(v)}, ${cnt[i]} מסמכים`}>
             <span className={`fin-trend2__bar ${i === keep - 1 ? 'is-now' : ''}`} style={{ height: `${Math.max(v ? 4 : 1, (v / max) * 100)}%` }} />
             <span className="fin-trend2__m">{new Date(`${months[i]}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'short' })}</span>
           </div>

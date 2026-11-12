@@ -3804,3 +3804,40 @@ html:has(.fin), html:has(.fin) body, html:has(.fin-login), html:has(.fin-login) 
 @media (max-width: 700px) { .fin .fin-viewer.is-max .fin-viewer__bar .fin-icon-btn { width: 40px; height: 44px; } .fin-viewer.is-max .fin-viewer__bar { width: auto; justify-content: space-between; } }
 .fin-viewer.is-max .fin-viewer__scroll { padding-top: 12px; }
 @media (max-width: 379px) { .fin-viewer.is-max .fin-viewer__bar { flex-wrap: wrap; justify-content: center; } }
+
+/* pull down to refresh (phones) */
+.fin-pull { position: fixed; top: calc(6px + env(safe-area-inset-top)); inset-inline-start: 50%; transform: translate(50%, var(--pull, 0px)); z-index: 90; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; background: var(--sheet); color: var(--ink); border: 1px solid var(--line-2); box-shadow: var(--float); font-size: var(--t-sm); font-weight: 700; white-space: nowrap; pointer-events: none; }
+.fin-pull.is-ready { background: var(--ink); color: #fff; border-color: var(--ink); }
+.fin-pull.is-busy svg { animation: fin-pull-spin 0.8s linear infinite; }
+@keyframes fin-pull-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fin-pull.is-busy svg { animation: none; } }
+
+/* the month chart of a company, a project or a supplier: no figures over the bars (they ran out of the narrow columns);
+   the figure of a month opens on hover, focus or a tap */
+.fin-trend2__hint { margin: 0 0 8px; font-size: var(--t-sm); color: var(--muted); }
+.fin-trend2__col { cursor: pointer; border-radius: 6px; grid-template-rows: 1fr auto; }
+.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; }
+.fin-trend2__col:hover .fin-trend2__bar, .fin-trend2__col:focus .fin-trend2__bar { background: var(--ocean); }
+@media (max-width: 700px) { .fin-rchart__n { display: none; } }
+
+/* the list of suppliers (and companies, projects) on a phone: a compact card. Name and state, then the amount with the
+   number of documents beside it, then the last document. */
+@media (max-width: 700px) {
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent tbody tr { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 12px 14px; align-items: center; }
+  .fin-table.fin-table--ent td.fin-td-main .fin-cell-main { font-size: var(--t-base); min-height: 0; padding-block: 4px; line-height: 1.3; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-td-total { grid-column: 1; grid-row: 2; min-width: 0; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-td-total::before { content: none; }
+  .fin-table.fin-table--ent td.fin-td-total strong { font-size: 1.2rem; overflow-wrap: anywhere; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-stat--wide { grid-column: 2; grid-row: 2; justify-self: end; font-size: var(--t-sm); gap: 5px; white-space: nowrap; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-stat--wide::before { order: 2; }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-last { grid-row: 3; font-size: var(--t-xs); }
+}
+/* money never runs out of its box: figures may shrink and break rather than overflow */
+.fin :is(.fin-ov__total, .fin-x-kpi, .fin-rfigs dd, .fin-figure, .fin-stat strong, .fin-kpi strong) { overflow-wrap: anywhere; min-width: 0; }
+/* phones: chart labels stay inside their column, and the small figures over the bars give way to a tap */
+@media (max-width: 760px) {
+  .fin-x-val { display: none; }
+  .fin-rchart__m { white-space: normal; text-align: center; line-height: 1.15; overflow-wrap: anywhere; max-width: 100%; }
+  .fin-rchart__sub { max-width: 100%; overflow: hidden; white-space: nowrap; }
+  .fin-rchart__sub i, .fin-rchart__sub b { display: none; }
+}

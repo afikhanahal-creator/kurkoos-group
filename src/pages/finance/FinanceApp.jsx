@@ -174,7 +174,8 @@ function useFinanceData(enabled, onChange) {
     return () => clearInterval(t)
   }, [enabled, reading, reload])
   const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
-  const refreshIfStale = useCallback(() => { if (Date.now() - loadedAt.current > 20_000) reload() }, [reload])
+  // only after a first load: this also runs when the app mounts, before anyone signed in
+  const refreshIfStale = useCallback(() => { if (loadedAt.current && Date.now() - loadedAt.current > 20_000) reload() }, [reload])
   // the bookkeeping pass (ledger.js): receipts that pay an invoice, proformas replaced by an invoice. Every screen reads
   // the same flags, so no figure counts the same money twice.
   const documents = useMemo(() => markLedger(state.documents), [state.documents])
@@ -378,7 +379,8 @@ export default function FinanceApp() {
     for (const k of Object.keys(window)) if (k.startsWith('ga-disable-')) window[k] = true
     return () => { cleanupInstall(); if (before) m.setAttribute('content', before); else m.remove() }
   }, [])
-  const [capture, setCapture] = useState(false)
+  // the home-screen shortcut "צילום קבלה" opens the camera dialog at once
+  const [capture, setCapture] = useState(() => typeof location !== 'undefined' && new URLSearchParams(location.search).get('capture') === '1')
   const [uploading, setUploading] = useState(false)
   // the office WhatsApp number, for the top bar (one status call per sign-in)
   const [waNumber, setWaNumber] = useState('')

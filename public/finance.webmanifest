@@ -12,16 +12,41 @@
   "theme_color": "#07293a",
   "icons": [
     {
-      "src": "/kurkoos-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/finance/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/kurkoos-groip-logo.png",
-      "sizes": "700x700",
+      "src": "/finance/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/finance/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "/admin/finance",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "shortcuts": [
+    {
+      "name": "צילום קבלה",
+      "url": "/admin/finance?capture=1"
+    },
+    {
+      "name": "קבלות וחשבוניות",
+      "url": "/admin/finance/receipts"
+    },
+    {
+      "name": "ממתינים לבדיקה",
+      "url": "/admin/finance/pending"
     }
   ]
 }

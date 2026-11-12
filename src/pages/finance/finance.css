@@ -3432,3 +3432,40 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
 .fin-table--resizable thead th.fin-table__check { cursor: default; }
 .fin-table--resizable thead th.is-moving { background: var(--ocean-wash); color: var(--ink); box-shadow: 0 6px 18px rgba(7, 41, 58, 0.18); opacity: 0.92; }
 body.fin-col-moving { cursor: grabbing !important; user-select: none; }
+
+/* phones, second pass: the list is what people came for, so what stands above it is made compact */
+@media (max-width: 700px) {
+  /* receipts: the five figures become one strip that slides sideways; the first is no longer a full row */
+  .fin-receipts__figs { display: flex; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; border-radius: var(--r-l); }
+  .fin-receipts__figs::-webkit-scrollbar { display: none; }
+  .fin-receipts__figs > :is(div, button) { flex: 0 0 auto; min-width: 9.6rem; padding: 10px 14px !important; border-top: 0 !important; margin-top: 0 !important; scroll-snap-align: start; grid-column: auto !important; }
+  .fin-receipts__figs dd, .fin-receipts__figs > div:first-child dd { font-size: 1.25rem !important; }
+  .fin-receipts__figs small { white-space: nowrap; }
+  /* receipts: search on its own row, then month and status side by side, the extra filter as an icon-wide button */
+  .fin-receipts__bar { gap: 8px; }
+  .fin-receipts__bar .fin-receipts__month, .fin-receipts__bar .fin-select { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .fin-receipts__bar > .fin-btn { flex: 1 1 100%; }
+  .fin-receipts__count { font-size: var(--t-sm); }
+  /* reports: the three choices share one row; months with nothing in them are left out of the cards */
+  .fin-report .fin-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .fin-report .fin-filters > * { min-width: 0; width: 100%; }
+  .fin-report .fin-filters .fin-sel__btn, .fin-report .fin-filters select { font-size: var(--t-sm); padding-inline: 8px; }
+  .fin-report .fin-table--plain tbody tr.is-zero { display: none; }
+  .fin-report .fin-table--plain tbody tr { padding: 12px 14px; }
+  .fin-report .fin-table--plain td.fin-td-main { font-size: var(--t-md); font-weight: 700; }
+  /* entity lists: a lone count is a line, not a tile */
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-stat--wide { display: flex; align-items: baseline; gap: 8px; padding: 0; background: none; font-size: var(--t-md); }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent td.fin-ent-stat--wide::before { order: 0; font-size: var(--t-sm); }
+  .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent tbody tr { gap: 6px 10px; padding: 14px; }
+  /* page heads: the explanation under a title is two lines at most */
+  .fin-pagehead__sub, .fin-pagehead p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+
+@media (max-width: 700px) {
+  /* entity lists: the three filters share one row under the search */
+  .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) > .fin-search { grid-column: 1 / -1; }
+  .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) > :is(.fin-select, .fin-sel, select) { min-width: 0; width: 100%; }
+  .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) .fin-sel__btn { font-size: var(--t-sm); padding-inline: 8px; }
+  .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) > label:not(.fin-search) { grid-column: 1 / -1; }
+}

@@ -2,7 +2,7 @@
 // (what to measure, for which period, company, project, category or supplier). The server then computes the answer from
 // the stored documents with the same code as the executive overview (src/pages/finance/insights.js + ledger.js),
 // and returns the number, the period, the scope, a short explanation and the ids of the documents behind it.
-import { env } from './env.js'
+import { env, cachedSystem } from './env.js'
 import { fetchRetry } from './http.js'
 import { sb, audit } from './db.js'
 import { markLedger } from '../../src/pages/finance/ledger.js'
@@ -46,10 +46,14 @@ async function plan(question, names, history = []) {
     ...(history.length ? ['Earlier in this conversation (use it for follow-ups such as "and last month?", "what about Ronir?", "and the suppliers?": keep what the new question does not change):', ...history.map((h, i) => `${i + 1}. "${h.q}" -> intent ${h.intent || '?'}, period ${h.period || '?'}, scope ${h.scope || 'all'}`)] : []),
     `Question: ${question}`,
   ].join('\n')
+  // The long, fixed part (what a query is, the intents) is a cached system prompt: a second question within five minutes
+  // reads it from the cache. What changes (today's date, the names, the conversation, the question) follows it.
+  const moves = (l) => /^(Today is |Companies: |Projects: |Categories: |Suppliers: |Earlier in this conversation|\d+\. "|Question: )/.test(l)
+  const all = text.split('\n'); const fixed = all.filter((l) => !moves(l)).join('\n'); const asked = all.filter(moves).join('\n')
   const r = await fetchRetry(`${env.anthropic()}/v1/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: env.model(), max_tokens: 1200, output_config: { effort: 'low', format: { type: 'json_schema', schema: PLAN } }, messages: [{ role: 'user', content: [{ type: 'text', text }] }] }),
+    body: JSON.stringify({ model: env.model(), max_tokens: 1200, output_config: { effort: 'low', format: { type: 'json_schema', schema: PLAN } }, system: cachedSystem(fixed), messages: [{ role: 'user', content: [{ type: 'text', text: asked }] }] }),
     // the function has 60 seconds: a slow or overloaded answer ends here with a clear message, not a silent cut-off
     signal: AbortSignal.timeout(40000),
   }, 2).catch((e) => { throw new Error(e.name === 'TimeoutError' ? 'Claude לא ענה בזמן (עומס זמני). אפשר לשלוח את השאלה שוב בעוד רגע.' : e.message) })

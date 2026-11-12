@@ -1,3 +1,4 @@
+import { moments } from './moments.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
@@ -193,6 +194,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
       await api.deleteDocument(d)
       setChosen((prev) => { const x = new Set(prev); x.delete(d.id); return x })
       await reloadDocs?.()
+      moments.remove({ title: 'המסמך נמחק', sub: 'העותק ב-Drive עבר לפח' })
       return 'המסמך נמחק, והקובץ שלו עבר לפח של Drive.'
     })
   }
@@ -279,7 +281,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
             const removeMany = async () => {
               const docs = picked.map((id) => docOf.get(id)).filter(Boolean)
               if (!docs.length || !(await askConfirm({ title: `מחיקת ${docs.length === 1 ? 'מסמך אחד' : `${n(docs.length)} מסמכים`}`, text: 'המסמכים יימחקו מהמערכת, והעותקים שלהם ב-Google Drive יעברו לפח של Drive. אי אפשר לבטל מכאן.', ok: 'מחיקה', danger: true }))) return
-              await act('delete', async () => { for (const d of docs) await api.deleteDocument(d); setChosen(new Set()); await reloadDocs?.(); return `${docs.length === 1 ? 'מסמך אחד נמחק' : `${n(docs.length)} מסמכים נמחקו`}, והעותקים ב-Drive עברו לפח.` })
+              await act('delete', async () => { for (const d of docs) await api.deleteDocument(d); setChosen(new Set()); await reloadDocs?.(); moments.remove({ title: docs.length === 1 ? 'מסמך אחד נמחק' : `${docs.length} מסמכים נמחקו`, sub: 'העותקים ב-Drive עברו לפח' }); return `${docs.length === 1 ? 'מסמך אחד נמחק' : `${n(docs.length)} מסמכים נמחקו`}, והעותקים ב-Drive עברו לפח.` })
             }
             return (
               <>

@@ -6,6 +6,38 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 const KEY = (k) => `fin-cols:${k}`
 const read = (k) => { try { const v = JSON.parse(localStorage.getItem(KEY(k)) || 'null'); return Array.isArray(v) && v.every((n) => Number.isFinite(n)) ? v : null } catch { return null } }
 const MIN = 56
+const OKEY = (k) => `fin-colorder:${k}`
+const readOrder = (k) => { try { const v = JSON.parse(localStorage.getItem(OKEY(k)) || 'null'); return Array.isArray(v) && v.every((n) => Number.isInteger(n)) ? v : null } catch { return null } }
+/* The order of the columns is kept as a list of the columns' own numbers. React draws the cells in its order and never
+   moves them afterwards, so after every render the cells of each row are put in the person's order. A cell is numbered
+   the first time it is seen; when the set of columns changes (another screen state) the order starts over. */
+const rowsOf = (table) => [...(table.tHead?.rows || []), ...[...table.tBodies].flatMap((b) => [...b.rows]), ...(table.tFoot?.rows || [])]
+function arrange(table, order, key) {
+  const n = table.tHead?.rows[0]?.cells.length || 0
+  if (!n) return
+  let fresh = false
+  for (const row of rowsOf(table)) {
+    const cells = [...row.cells]
+    if (cells.length !== n || cells.some((c) => c.colSpan > 1)) continue
+    const tagged = cells.filter((c) => c.dataset.ci !== undefined).length
+    if (tagged === 0) cells.forEach((c, i) => { c.dataset.ci = String(i) })
+    else if (tagged !== n) fresh = true
+  }
+  if (fresh || (order && (order.length !== n || [...order].sort((a, b) => a - b).some((v, i) => v !== i)))) {
+    // the columns are not the ones the order was made for: start over, in the screen's own order
+    try { localStorage.removeItem(OKEY(key)) } catch { /* noop */ }
+    for (const row of rowsOf(table)) [...row.cells].forEach((c) => { delete c.dataset.ci })
+    return
+  }
+  if (!order) return
+  const place = new Map(order.map((ci, at) => [String(ci), at]))
+  for (const row of rowsOf(table)) {
+    const cells = [...row.cells]
+    if (cells.length !== n || cells.some((c) => c.dataset.ci === undefined)) continue
+    const want = [...cells].sort((a, b) => place.get(a.dataset.ci) - place.get(b.dataset.ci))
+    if (want.some((c, i) => c !== cells[i])) want.forEach((c) => row.appendChild(c))
+  }
+}
 
 export function useResizableColumns(key) {
   const ref = useRef(null)
@@ -20,7 +52,7 @@ export function useResizableColumns(key) {
     table.classList.add('is-sized')
   }
   // after every render: the same widths go back on (rows and columns may have changed)
-  useLayoutEffect(() => { const t = ref.current; if (t) apply(t, read(key)) })
+  useLayoutEffect(() => { const t = ref.current; if (!t) return; if (t.tHead && getComputedStyle(t.tHead).display !== 'none') arrange(t, readOrder(key), key); apply(t, read(key)) })
   useEffect(() => {
     const table = ref.current
     if (!table) return undefined
@@ -30,7 +62,8 @@ export function useResizableColumns(key) {
     // a boundary is grabbed from either side of it (12px each way): the column that ends there is the one that changes
     const GRIP = 12
     const edge = (e) => {
-      const th = e.target.closest?.('th')
+      // the element under the pointer, not the event's target: while the pointer is captured the target is the table
+      const th = (document.elementFromPoint(e.clientX, e.clientY) || e.target).closest?.('th')
       if (!th || th.parentNode !== table.tHead?.rows[0]) return null
       const r = th.getBoundingClientRect(); const ths = heads(table); const i = ths.indexOf(th)
       const toEnd = rtl() ? e.clientX - r.left : r.right - e.clientX          // distance to this column's far edge
@@ -46,8 +79,15 @@ export function useResizableColumns(key) {
       const wrap = table.closest('.fin-table-wrap') || table; const r = wrap.getBoundingClientRect()
       Object.assign(line.style, { left: `${x}px`, top: `${Math.max(0, r.top)}px`, height: `${Math.min(innerHeight, r.bottom) - Math.max(0, r.top)}px` })
     }
+    let carry = null   // a head being carried to another place
+    const headAt = (x) => heads(table).find((h) => { const r = h.getBoundingClientRect(); return x >= r.left && x <= r.right }) || null
     const down = (e) => {
       const th = edge(e)
+      if (!th && e.button <= 0) {
+        const h = e.target.closest?.('th')
+        if (h && h.parentNode === table.tHead?.rows[0] && !h.classList.contains('fin-table__check') && !e.target.closest('input, select')) carry = { th: h, x: e.clientX, on: false }
+        return
+      }
       if (!th || e.button > 0) return
       e.preventDefault()
       const ths = heads(table)
@@ -55,19 +95,51 @@ export function useResizableColumns(key) {
       moved = false; document.body.classList.add('fin-col-resizing'); try { table.setPointerCapture?.(e.pointerId) } catch { /* not a pointer */ }
     }
     const move = (e) => {
+      if (carry) {
+        if (!carry.on && Math.abs(e.clientX - carry.x) < 10) return
+        if (!carry.on) { carry.on = true; carry.th.classList.add('is-moving'); document.body.classList.add('fin-col-moving') }
+        const over = headAt(e.clientX)
+        if (over) { const r = over.getBoundingClientRect(); const before = rtl() ? e.clientX > r.left + r.width / 2 : e.clientX < r.left + r.width / 2; carry.over = over; carry.before = before; guide(before ? (rtl() ? r.right : r.left) : (rtl() ? r.left : r.right)) }
+        return
+      }
       if (!drag) { if (table.tHead) table.tHead.style.cursor = edge(e) ? 'col-resize' : ''; return }
       const w = [...drag.w]; w[drag.i] = Math.max(MIN, drag.w[drag.i] + (e.clientX - drag.x) * drag.dir)
       drag.now = w; moved = true; apply(table, w)
       const r = heads(table)[drag.i].getBoundingClientRect(); guide(drag.dir < 0 ? r.left : r.right)
     }
     const up = () => {
+      if (carry) {
+        const c = carry; carry = null
+        c.th.classList.remove('is-moving'); document.body.classList.remove('fin-col-moving'); guide(null)
+        if (!c.on) return
+        moved = true
+        const ths = heads(table); const from = ths.indexOf(c.th); let to = c.over ? ths.indexOf(c.over) : from
+        if (c.over && !c.before) to += 1
+        if (to > from) to -= 1
+        if (to === from || from < 0) return
+        arrange(table, readOrder(key), key)   // every cell carries its number
+        const cur = heads(table).map((h) => Number(h.dataset.ci))
+        if (cur.some((v) => !Number.isInteger(v))) return
+        const next = [...cur]; next.splice(to, 0, next.splice(from, 1)[0])
+        const w = read(key); if (w && w.length === next.length) { const nw = [...w]; nw.splice(to, 0, nw.splice(from, 1)[0]); try { localStorage.setItem(KEY(key), JSON.stringify(nw)) } catch { /* noop */ } }
+        try { localStorage.setItem(OKEY(key), JSON.stringify(next)) } catch { /* private mode */ }
+        arrange(table, next, key); apply(table, read(key))
+        return
+      }
       if (!drag) return
       if (drag.now) { try { localStorage.setItem(KEY(key), JSON.stringify(drag.now.map(Math.round))) } catch { /* private mode */ } }
       drag = null; guide(null); document.body.classList.remove('fin-col-resizing')
     }
     // a drag that ends on a sortable head must not also sort
     const click = (e) => { if (moved) { moved = false; e.stopPropagation(); e.preventDefault() } }
-    const reset = (e) => { if (!edge(e)) return; try { localStorage.removeItem(KEY(key)) } catch { /* noop */ } clear(table) }
+    // a double click on a boundary returns the table to its own widths and its own order
+    const reset = (e) => {
+      if (!edge(e)) return
+      try { localStorage.removeItem(KEY(key)); localStorage.removeItem(OKEY(key)) } catch { /* noop */ }
+      clear(table)
+      const n = heads(table).length
+      arrange(table, Array.from({ length: n }, (_, i) => i), key)
+    }
     const onResize = () => apply(table, read(key))
     table.addEventListener('pointerdown', down); window.addEventListener('pointermove', move); window.addEventListener('pointerup', up)
     table.addEventListener('click', click, true); table.addEventListener('dblclick', reset); window.addEventListener('resize', onResize)

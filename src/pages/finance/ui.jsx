@@ -223,12 +223,13 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
   const [over, setOver] = useState(false)
   const [busy, setBusy] = useState(0)
   const [msg, setMsg] = useState('')
+  const [done, setDone] = useState(null)   // what the last drop brought: how many went in, their names, what was refused
   const zone = useRef(null)
 
   const send = async (files, source = 'upload') => {
     const list = [...files]
     if (!list.length) return
-    setBusy(list.length); setMsg('')
+    setBusy(list.length); setMsg(''); setDone(null)
     const notes = []
     let added = 0
     const names = []
@@ -241,6 +242,7 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
       setBusy((n) => n - 1)
     }
     setMsg([added ? `${added} קבצים הועלו וממתינים לקריאה` : '', ...notes].filter(Boolean).join(' · '))
+    setDone({ added, names, notes })
     if (added) moments.upload({ from: zone.current, count: added, names })
     else if (notes.length) moments.fail({ title: 'לא הועלו קבצים', sub: notes[0] })
     onDone?.()
@@ -265,7 +267,20 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
         <button type="button" className="fin-btn fin-btn--primary" onClick={() => pick.current?.click()} disabled={!!busy}><Icon name="file" size={18} /> בחירת קבצים</button>
         <button type="button" className="fin-btn" onClick={() => cam.current?.click()} disabled={!!busy}><Icon name="camera" size={18} /> צילום</button>
       </div>
-      {msg && <p className="fin-drop__msg" role="status">{msg}</p>}
+      {msg && (
+        <div className={`fin-drop__msg ${done?.added ? 'is-ok' : done ? 'is-bad' : ''}`} role="status">
+          {done?.added > 0 && (
+            <div className="fin-drop__count">
+              <Lottie name="upload" size={56} loop={false} />
+              <b>{done.added}</b>
+              <span><strong>{done.added === 1 ? 'מסמך אחד הועלה' : 'מסמכים הועלו'}</strong><small>{done.added === 1 ? 'נקרא עכשיו ויחכה לבדיקה' : 'נקראים עכשיו ויחכו לבדיקה'}</small></span>
+            </div>
+          )}
+          {done?.names?.length > 0 && <ul className="fin-drop__names">{done.names.slice(0, 4).map((n, i) => <li key={i}><Icon name="check" size={13} /> <bdi>{n}</bdi></li>)}{done.names.length > 4 && <li>ועוד {done.names.length - 4}</li>}</ul>}
+          {done?.notes?.length > 0 && <ul className="fin-drop__notes">{done.notes.map((n, i) => <li key={i}><Icon name="alert" size={13} /> {n}</li>)}</ul>}
+          <span className="fin-sr">{msg}</span>
+        </div>
+      )}
     </div>
   )
 }

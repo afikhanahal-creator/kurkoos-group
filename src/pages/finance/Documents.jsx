@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal } from './format.js'
+import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal, isFresh } from './format.js'
 import { makeZip, saveBlob } from './zip.js'
 import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZone, askConfirm, useAsync } from './ui.jsx'
 import ShareDialog from './ShareDialog.jsx'
@@ -101,7 +101,7 @@ export default function Documents({ preset = 'all' }) {
       && (!f.min || Math.abs(Number(d.total_amount) || 0) >= Number(f.min)) && (!f.max || Math.abs(Number(d.total_amount) || 0) <= Number(f.max))
       && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, d.category, nameOf(businesses, d.business_id), nameOf(projects, d.project_id), String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
     const key = SORTS[sort.key]
-    return list.sort((a, b) => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
+    return list.sort((a, b) => (isFresh(b) - isFresh(a)) || (isFresh(a) && isFresh(b) ? String(b.created_at).localeCompare(String(a.created_at)) : 0) || (() => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })())
   }, [documents, P, preset, tab, f, qd, sort, businesses, projects, allocations, dateBy, only])
 
   const total = rows.reduce((s, d) => s + signedTotal(d), 0)
@@ -392,11 +392,11 @@ export default function Documents({ preset = 'all' }) {
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : view === 'list' ? (
-        <DocList rowProps={dragProps} rowClass={(d) => [overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
+        <DocList rowProps={dragProps} rowClass={(d) => [isFresh(d) ? 'is-fresh' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (
-            <li key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-drop={overId === d.id ? 'שחררו כאן כדי למזג' : undefined} className={['fin-doccard', sel.has(d.id) ? 'is-selected' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : '', dragId && dragId !== d.id ? 'is-dropzone' : ''].filter(Boolean).join(' ')}>
+            <li key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-drop={overId === d.id ? 'שחררו כאן כדי למזג' : undefined} className={['fin-doccard', isFresh(d) ? 'is-fresh' : '', sel.has(d.id) ? 'is-selected' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : '', dragId && dragId !== d.id ? 'is-dropzone' : ''].filter(Boolean).join(' ')}>
               <button type="button" className="fin-doccard__open" onClick={() => go(link(d.id))} aria-label={`פתיחת ${d.supplier_name || d.file_name}`}><Thumbnail doc={d} /></button>
               <label className="fin-doccard__check"><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></label>
               <div className="fin-doccard__body">
@@ -462,7 +462,7 @@ export default function Documents({ preset = 'all' }) {
               {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
-                  <tr key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={[d.id === id ? 'is-current' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
+                  <tr key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={[d.id === id ? 'is-current' : '', isFresh(d) ? 'is-fresh' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>

@@ -40,40 +40,41 @@ function NoFile({ doc, onSaved, canEdit }) {
   )
 }
 
-/* An email that says "click here to view the document": the paper is behind a link. Two ways to bring it in, right
-   under the email: the system fetches the link, or the person opens it, saves the file and gives it here. Either way
-   the file is read like any upload and the document waits for approval. */
+/* An email that is not the document itself. A thin strip above it says so and offers, in small buttons, everything a
+   person would do in the mailbox: save the email, take a file attached to the original message (read again from the
+   connected mailbox), follow the link in the email, open the message in Gmail, or give the paper by hand. Whatever
+   comes in is read like any upload and waits for approval. */
 function LinkedDoc({ doc, onSaved }) {
-  const [links, setLinks] = useState(null)
+  const [info, setInfo] = useState(null)
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState(null)
-  useEffect(() => { let on = true; setLinks(null); setMsg(null); api.callServer('linked-links', { document_id: doc.id }).then((r) => { if (on) setLinks(r?.links || []) }).catch(() => { if (on) setLinks([]) }); return () => { on = false } }, [doc.id])
-  const fetchIt = async (url) => {
-    setBusy(url); setMsg(null)
-    try {
-      const r = await api.callServer('linked-fetch', { document_id: doc.id, url })
-      if (r.fetched && r.document) { onSaved?.(r.document); return }
-      setMsg({ tone: 'warn', text: r.reason || 'המסמך לא ירד מהקישור', open: r.open })
-    } catch (e) { setMsg({ tone: 'bad', text: e.message }) } finally { setBusy('') }
-  }
-  const give = async (file) => {
-    if (!file) return
-    setBusy('upload'); setMsg(null)
-    try { onSaved?.(await api.replaceMainFile(doc, file)) } catch (e) { setMsg({ tone: 'bad', text: e.message }) } finally { setBusy('') }
-  }
+  useEffect(() => { let on = true; setInfo(null); setMsg(null); api.callServer('linked-links', { document_id: doc.id }).then((r) => { if (on) setInfo(r || {}) }).catch(() => { if (on) setInfo({}) }); return () => { on = false } }, [doc.id])
+  const links = info?.links || []; const mail = info?.mail || null; const files = mail?.files || []
+  const run = async (key, fn) => { setBusy(key); setMsg(null); try { await fn() } catch (e) { setMsg({ tone: 'bad', text: e.message }) } finally { setBusy('') } }
+  const saveEmail = () => run('email', async () => saveBlob(await api.fileBlob(doc), doc.file_name || 'email.html'))
+  const fetchLink = (url) => run(url, async () => {
+    const r = await api.callServer('linked-fetch', { document_id: doc.id, url })
+    if (r.fetched && r.document) onSaved?.(r.document); else setMsg({ tone: 'warn', text: r.reason || 'המסמך לא ירד מהקישור', open: r.open })
+  })
+  const takeFile = (f, adopt) => run(`f${f.i}${adopt ? 'a' : 'd'}`, async () => {
+    const r = await api.callServer('mail-file', { document_id: doc.id, index: f.i, adopt })
+    if (r.adopted && r.document) onSaved?.(r.document)
+    else if (r.url) { const a = document.createElement('a'); a.href = r.url; a.download = r.name || f.name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove() }
+  })
+  const give = (file) => file && run('upload', async () => onSaved?.(await api.replaceMainFile(doc, file)))
   return (
     <section className="fin-linked" aria-label="המסמך שמאחורי המייל">
-      <div className="fin-linked__text">
-        <strong>זה המייל, לא המסמך עצמו</strong>
-        <span>{links === null ? 'מחפש במייל קישור למסמך…' : links.length ? 'המסמך נמצא מאחורי קישור במייל. אפשר להוריד אותו לכאן, והמערכת תקרא ממנו את כל הפרטים.' : 'לא נמצא במייל קישור למסמך. אם יש לכם את הקובץ, אפשר להעלות אותו כאן.'}</span>
-      </div>
+      <p className="fin-linked__text">
+        <Icon name="mail" size={15} /> <strong>זה המייל, לא המסמך עצמו.</strong>{' '}
+        {info === null ? 'בודק את המייל המקורי בתיבה…' : mail?.connected ? <>מחובר לתיבה <bdi>{mail.account}</bdi>{files.length ? `, ובמייל המקורי ${files.length === 1 ? 'קובץ מצורף אחד' : `${files.length} קבצים מצורפים`}` : ', ובמייל המקורי אין קובץ מצורף'}.</> : mail?.reason || 'המסמך נמצא מאחורי קישור או צריך להעלות אותו.'}
+      </p>
       <div className="fin-linked__acts">
-        {(links || []).slice(0, 2).map((l, i) => (
-          <button key={l.url} type="button" className={`fin-btn ${i === 0 ? 'fin-btn--primary' : ''}`} disabled={!!busy} onClick={() => fetchIt(l.url)} title={l.host}>
-            <Icon name="download" size={17} /> {busy === l.url ? 'מוריד וקורא…' : i === 0 ? 'הורדת המסמך מהמייל' : `קישור נוסף: ${l.text.slice(0, 24)}`}
-          </button>
-        ))}
-        <label className={`fin-btn ${busy === 'upload' ? 'is-busy' : ''}`}><Icon name="upload" size={17} /> {busy === 'upload' ? 'מעלה וקורא…' : 'העלאת המסמך עצמו'}<input type="file" accept="application/pdf,image/*" hidden disabled={!!busy} onChange={(e) => { give(e.target.files?.[0]); e.target.value = '' }} /></label>
+        {files.filter((f) => f.readable).map((f) => <button key={`a${f.i}`} type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={!!busy} onClick={() => takeFile(f, true)} title={`${f.name}: יהפוך לקובץ של המסמך וייקרא`}><Icon name="check" size={14} /> {busy === `f${f.i}a` ? 'קורא…' : `קליטת ${f.name.slice(0, 22)}`}</button>)}
+        {files.map((f) => <button key={`d${f.i}`} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => takeFile(f, false)} title={`הורדת ${f.name} מהמייל המקורי`}><Icon name="download" size={14} /> {busy === `f${f.i}d` ? 'מוריד…' : f.name.slice(0, 22)}</button>)}
+        {links.slice(0, 1).map((l) => <button key={l.url} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => fetchLink(l.url)} title={`${l.text} · ${l.host}`}><Icon name="external" size={14} /> {busy === l.url ? 'מוריד וקורא…' : 'הורדה מהקישור שבמייל'}</button>)}
+        <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={saveEmail}><Icon name="download" size={14} /> {busy === 'email' ? 'מוריד…' : 'הורדת המייל'}</button>
+        {mail?.open && <a className="fin-btn fin-btn--sm" href={mail.open} target="_blank" rel="noreferrer noopener"><Icon name="external" size={14} /> פתיחה ב-Gmail</a>}
+        <label className={`fin-btn fin-btn--sm ${busy === 'upload' ? 'is-busy' : ''}`}><Icon name="upload" size={14} /> {busy === 'upload' ? 'מעלה וקורא…' : 'העלאת מסמך'}<input type="file" accept="application/pdf,image/*" hidden disabled={!!busy} onChange={(e) => { give(e.target.files?.[0]); e.target.value = '' }} /></label>
       </div>
       {msg && <p className={`fin-linked__msg is-${msg.tone}`} role="alert">{msg.text}{msg.open && <> <a className="fin-link" href={msg.open} target="_blank" rel="noreferrer noopener">פתיחת הקישור בלשונית חדשה</a></>}</p>}
     </section>
@@ -99,7 +100,7 @@ function Preview({ doc, onSaved, canEdit }) {
   }, [doc.file_path, doc.file_mime])
   if (!doc.file_path) return <NoFile doc={doc} onSaved={onSaved} canEdit={canEdit} />
   if (err) return <p className="fin-error fin-error--block" role="alert">הקובץ לא נטען: {err}</p>
-  if (html !== null) return <><HtmlPreview html={html} />{canEdit && !['approved', 'sent'].includes(doc.status) && <LinkedDoc doc={doc} onSaved={onSaved} />}</>
+  if (html !== null) return <div className="fin-linkedwrap">{canEdit && !['approved', 'sent'].includes(doc.status) && <LinkedDoc doc={doc} onSaved={onSaved} />}<HtmlPreview html={html} /></div>
   if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
   return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} />
 }

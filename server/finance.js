@@ -20,7 +20,7 @@ import { ADAPTERS } from './finance/adapters.js'
 import { ask } from './finance/assistant.js'
 import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
-import { listLinks, fetchLinked } from './finance/linked.js'
+import { listLinks, fetchLinked, mailSource, mailFile } from './finance/linked.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup, setReplies as waSetReplies, notifyApproved as waNotifyApproved } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 import { sendToAccountant } from './finance/mailout.js'
@@ -85,6 +85,7 @@ const ROLES = {
   'drive-forget': ['admin', 'finance_manager', 'employee'],
   'linked-links': ['admin', 'finance_manager', 'employee'],
   'linked-fetch': ['admin', 'finance_manager', 'employee'],
+  'mail-file': ['admin', 'finance_manager', 'employee'],
   'whatsapp-replies': ['admin', 'finance_manager'],
   'whatsapp-approved': ['admin', 'finance_manager'],
   'receipts-drive': ['admin', 'finance_manager', 'employee', 'accountant'],
@@ -286,7 +287,21 @@ export default async function handler(req, res) {
         const d0 = await one(`fin_documents?id=eq.${q(body.document_id)}&select=id,created_by`)
         if (!d0) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
         if (user.role === 'employee' && d0.created_by !== user.id) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
-        res.status(200).json(await listLinks(d0.id))
+        res.status(200).json({ ...(await listLinks(d0.id)), mail: await mailSource(d0.id).catch((e) => ({ connected: false, reason: String(e.message || e).slice(0, 120) })) })
+        return
+      }
+      case 'mail-file': {
+        const d0 = await one(`fin_documents?id=eq.${q(body.document_id)}&select=id,created_by`)
+        if (!d0) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (user.role === 'employee' && d0.created_by !== user.id) { res.status(403).json({ error: 'אין לך הרשאה למסמך הזה' }); return }
+        try {
+          const r = await mailFile(d0.id, Number(body.index) || 0, { adoptIt: body.adopt === true, user })
+          if (!r.adopted) { res.status(200).json(r); return }
+          const runs = await newDocRuns('manual')
+          const updated = await processStored(r.document, runs, 'manual')
+          await closeRuns(runs)
+          res.status(200).json({ adopted: true, document: updated?.skipped ? await one(`fin_documents?id=eq.${d0.id}&select=*`) : updated })
+        } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e), duplicate: e.duplicate || null }) }
         return
       }
       case 'linked-fetch': {

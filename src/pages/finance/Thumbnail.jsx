@@ -102,7 +102,7 @@ export default function Thumbnail({ doc, size }) {
   if (!doc.file_path) return <div className="fin-thumb fin-thumb--nofile" aria-hidden="true"><Slip doc={doc} /></div>
   return (
     <div className="fin-thumb" ref={box} aria-hidden="true">
-      {src && typeof src === 'string' && <img src={src} alt="" />}
+      {src && typeof src === 'string' && <img src={src} alt="" decoding="async" />}
       {src && typeof src === 'object' && src.html && <span className="fin-thumb__mail"><iframe title="" sandbox="" srcDoc={src.html} tabIndex={-1} /></span>}
       {src && typeof src === 'object' && !src.html && <p className="fin-thumb__text">{src.text}</p>}
       {!src && <span className={`fin-thumb__ph ${failed ? 'is-failed' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : OFFICE(doc.file_mime) || (doc.file_mime === 'image/tiff' ? 'TIFF' : 'קובץ')}{failed && <small>אין תצוגה מקדימה</small>}</span>}

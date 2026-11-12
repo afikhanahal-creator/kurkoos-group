@@ -185,7 +185,8 @@ export async function uploadFile(rawFile, { businessId, projectId, source = 'upl
   const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })
   // the same file uploaded before and then removed from the list: the object is still there, reuse it
   if (up.error && !/exists|duplicate/i.test(up.error.message)) throw new Error(up.error.message)
-  const { data: { user } } = await supabase.auth.getUser()
+  // who is signed in is read from the session in the browser (asking the server cost a round trip per file)
+  const user = (await supabase.auth.getSession()).data?.session?.user || null
   let row
   try {
     row = must(await supabase.from('fin_documents').insert({
@@ -206,10 +207,24 @@ export async function uploadFile(rawFile, { businessId, projectId, source = 'upl
   return row
 }
 
-export async function fileBlob(doc) {
-  const { data, error } = await supabase.storage.from(BUCKET).download(doc.file_path)
-  if (error) throw new Error(error.message || 'הקובץ לא נטען')
-  return data
+/* A document's file is fetched once per visit: the thumbnail, the hover card and the full viewer share it. Kept in
+   memory only (never in the browser's storage), newest first, up to about 60 MB; a failed download is not kept. */
+const blobs = new Map(); let blobBytes = 0
+const BLOB_BUDGET = 60 * 1024 * 1024
+export function fileBlob(doc) {
+  const key = doc.file_path
+  const hit = blobs.get(key)
+  if (hit) { blobs.delete(key); blobs.set(key, hit); return hit.p }
+  const entry = { size: 0 }
+  entry.p = supabase.storage.from(BUCKET).download(key).then(({ data, error }) => {
+    if (error) throw new Error(error.message || 'הקובץ לא נטען')
+    entry.size = data.size || 0; blobBytes += entry.size
+    for (const [k, e] of blobs) { if (blobBytes <= BLOB_BUDGET || k === key) break; blobs.delete(k); blobBytes -= e.size }
+    return data
+  })
+  entry.p.catch(() => { if (blobs.get(key) === entry) blobs.delete(key) })
+  blobs.set(key, entry)
+  return entry.p
 }
 
 // ---- cloud copies (Drive / Dropbox): where each document was saved, saving now, and the connection test ----

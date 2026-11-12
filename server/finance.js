@@ -52,6 +52,7 @@ const ROLES = {
   'drive-run': ['admin', 'finance_manager'],
   'drive-requeue': ['admin', 'finance_manager'],
   'drive-rename': ['admin', 'finance_manager'],
+  'drive-move': ['admin', 'finance_manager'],
   'drive-settings': ['admin'],
   'drive-reconcile': ['admin', 'finance_manager'],
   'drive-exclude': ['admin', 'finance_manager'],
@@ -397,6 +398,12 @@ export default async function handler(req, res) {
       case 'drive-requeue': {
         const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
         res.status(200).json(await archive.requeue({ targetId: String(body.target_id || ''), ids, user }))
+        return
+      }
+      case 'drive-move': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        if (!ids.length) { res.status(400).json({ error: 'לא נבחרו מסמכים' }); return }
+        res.status(200).json(await archive.moveDocs({ targetId: String(body.target_id || ''), ids, businessId: body.business_id === undefined ? undefined : String(body.business_id || ''), period: body.period === undefined ? undefined : String(body.period), user }))
         return
       }
       case 'drive-rename': {

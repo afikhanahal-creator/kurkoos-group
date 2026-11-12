@@ -2252,6 +2252,83 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && !!D && saveAgain.data.results?.[0]?.ok === true && saveAgain.data.results?.[0]?.already === true && copies0 === 1 && copies1 === 0 && delD.data.results?.[0]?.drive === 'trashed' && rowsD === '0|0', [delShot])
 }
 
+// DRIVEMGR: the Drive screen is a file manager, and what is done in it is done in Drive. A document assigned to a company
+// and a month through the sheet is moved to that folder in Drive; a row dragged onto a company moves there; a deletion
+// sends the copy to the Drive trash; on a phone the same actions are in a sheet and nothing runs off the screen.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const tgt = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
+  const whereIs = async (id) => { const all = await items(); const f = all.find((x) => x.appProperties?.kd === id && !x.trashed); if (!f) return ''; const names = []; let p = f.parents?.[0]; while (p) { const d = all.find((x) => x.id === p); if (!d) break; names.unshift(d.name); p = d.parents?.[0] } return names.slice(1).join('/') }
+  for (let i = 0; i < 8; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); const r = await api(tok, { action: 'drive-run', target_id: tgt }); if (!(r.data.results?.[0]?.verified)) break }
+  const live = new Set((await items()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd))
+  const cand = sql(`select coalesce(string_agg(f.document_id::text||'|'||f.organized_name, E'\n'), '') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${tgt}' and f.status='verified' and d.status='review'`).split('\n').filter(Boolean).map((x) => x.split('|')).filter(([id]) => live.has(id))
+  const [A, nameA] = cand[0] || []; const [B2, nameB] = cand[1] || []; const [C, nameC] = cand[2] || []
+  const biz = sql(`select id||'|'||name from fin_businesses where id <> coalesce((select business_id from fin_documents where id='${A}'), '00000000-0000-0000-0000-000000000000') order by name limit 1`).split('|')
+  const biz2 = sql(`select id||'|'||name from fin_businesses where id <> coalesce((select business_id from fin_documents where id='${B2}'), '00000000-0000-0000-0000-000000000000') and id <> '${biz[0]}' order by name limit 1`).split('|')
+  const beforeA = await whereIs(A)
+  await go('/drive'); await page.waitForSelector('.fin-dm__folder', { timeout: 20000 })
+  const rootFolders = await page.locator('.fin-dm__folder').count()
+  await page.locator('.fin-dm__folder').first().click(); await page.waitForTimeout(400)
+  const crumbs = await page.locator('.fin-dm__crumb').count()
+  await page.locator('.fin-dm__view', { hasText: 'כל המסמכים' }).click(); await page.waitForSelector('.fin-dm__row:not(.is-head)')
+  await page.fill('.fin-dm__search input', nameA); await page.waitForTimeout(500)
+  const found = await page.locator('.fin-dm__row:not(.is-head)').count()
+  // the sheet: a company and an accounting month
+  await page.locator('.fin-dm__row:not(.is-head) .fin-dm__more').first().click()
+  const menuItems = await page.locator('.fin-dm__menu [role=menuitem]').count()
+  await page.locator('.fin-dm__menu button', { hasText: 'שינוי חברה או חודש' }).click(); await page.waitForSelector('.fin-modal')
+  const sel = page.locator('.fin-modal select')
+  await sel.nth(0).selectOption(biz[0]); await sel.nth(1).selectOption('2025'); await sel.nth(2).selectOption('03')
+  const sheetShot = await shot('129-drive-manager-assign')
+  await page.locator('.fin-modal__foot .fin-btn--primary').click()
+  await page.waitForSelector('.fin-dm__note.is-ok, .fin-dm__note.is-bad, .fin-dm__note.is-warn', { timeout: 60000 }).catch(() => {})
+  const noteA = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const afterA = await whereIs(A)
+  const dbA = sql(`select (business_id='${biz[0]}')||'|'||accounting_period||'|'||business_source||'|'||(select status from fin_drive_files where document_id='${A}') from fin_documents where id='${A}'`)
+  // a row dragged onto a company in the side list
+  await page.fill('.fin-dm__search input', nameB); await page.waitForTimeout(600)
+  const beforeB = await whereIs(B2)
+  const foundB = await page.locator('.fin-dm__row:not(.is-head)').count()
+  { // the browser's own drag events, one after another (the selection is carried by the page, as in a real drag)
+    const dt = await page.evaluateHandle(() => new DataTransfer())
+    const row = page.locator('.fin-dm__row:not(.is-head)').first(); const onto = page.locator('.fin-dm__cobtn', { hasText: biz2[1] }).first()
+    await row.dispatchEvent('dragstart', { dataTransfer: dt }, { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(200)
+    await onto.dispatchEvent('dragover', { dataTransfer: dt }, { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(200)
+    var overShown = await page.locator('.fin-dm__cobtn.is-over').count()
+    await onto.dispatchEvent('drop', { dataTransfer: dt }, { timeout: 10000 }).catch(() => {})
+  }
+  await page.waitForFunction((b) => /הועבר/.test(document.querySelector('.fin-dm__note')?.textContent || '') && document.querySelector('.fin-dm__note')?.textContent.includes(b), biz2[1], { timeout: 60000 }).catch(() => {})
+  const noteB = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const afterB = await whereIs(B2)
+  const dbB = sql(`select (business_id='${biz2[0]}') from fin_documents where id='${B2}'`)
+  const mgrShot = await shot('130-drive-manager')
+  // the same on a phone: the actions open in a sheet, the deletion reaches the Drive trash, nothing runs off the screen
+  const mctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'he-IL', hasTouch: true, isMobile: true })
+  const m = await mctx.newPage()
+  await m.goto(APP); await m.fill('input[type=email]', 'admin@kurkoos.test'); await m.fill('input[type=password]', 'Passw0rd!x'); await m.click('button[type=submit]'); await m.waitForSelector('.fin__main')
+  await go('/drive', m); await m.waitForSelector('.fin-dm__folder', { timeout: 20000 })
+  await m.locator('.fin-dm__view', { hasText: 'כל המסמכים' }).tap(); await m.waitForSelector('.fin-dm__row:not(.is-head)')
+  await m.fill('.fin-dm__search input', nameC); await m.waitForTimeout(600)
+  const small = await m.evaluate(() => [...document.querySelectorAll('.fin-dm__more, .fin-dm__view, .fin-dm__top .fin-btn, .fin-dm__pick')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && (r.width < 44 || r.height < 44) }).length)
+  const sideways = await m.evaluate(() => document.documentElement.scrollWidth - innerWidth)
+  await m.locator('.fin-dm__row:not(.is-head) .fin-dm__more').first().tap(); await m.waitForSelector('.fin-dm__menu')
+  const sheetBox = await m.locator('.fin-dm__menu').boundingBox()
+  const mShot = await shot('131-drive-manager-phone', m)
+  const copiesC = (await items()).filter((f) => f.appProperties?.kd === C && !f.trashed).length
+  await m.locator('.fin-dm__menu button', { hasText: 'מחיקה' }).tap(); await m.locator('.fin-modal .fin-btn--danger').last().tap()
+  await m.waitForSelector('.fin-dm__note.is-ok, .fin-dm__note.is-bad, .fin-dm__note.is-warn', { timeout: 60000 }).catch(() => {})
+  const noteC = await m.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const goneC = sql(`select count(*) from fin_documents where id='${C}'`) + '|' + (await items()).filter((f) => f.appProperties?.kd === C && !f.trashed).length
+  await mctx.close()
+  record('DRIVEMGR', 'ניהול הקבצים ב-Google Drive מתוך המערכת', 'שיוך לחברה ולחודש חשבונאי מעביר את הקובץ לתיקייה הזו ב-Drive, וההודעה מופיעה אחרי ש-Drive אישר; גרירת שורה על חברה מעבירה אותה; מחיקה בנייד מעבירה את העותק לפח של Drive; בנייד הפעולות נפתחות בגיליון תחתון, הכפתורים 44 פיקסלים ואין גלילה לצדדים',
+    `תיקיות: ${rootFolders}, פירורי לחם: ${crumbs}, נמצא בחיפוש: ${found}, פעולות בתפריט: ${menuItems}; א׳: ${beforeA} → ${afterA} (${dbA}) "${noteA.slice(0, 60)}"; ב׳ בגרירה (נמצא ${foundB}, יעד מסומן ${overShown}): ${beforeB} → ${afterB} (${dbB}) "${noteB.slice(0, 50)}"; נייד: קטנים ${small}, גלילה ${sideways}, גיליון ברוחב ${Math.round(sheetBox?.width || 0)}; מחיקה: ${copiesC} → ${goneC} "${noteC.slice(0, 50)}"`,
+    !!A && !!B2 && !!C && rootFolders >= 2 && crumbs === 2 && found === 1 && menuItems >= 8
+    && afterA === `${biz[1]}/2025/03 - מרץ` && afterA !== beforeA && dbA === 'true|2025-03|manual|verified' && /הועבר/.test(noteA)
+    && foundB === 1 && overShown === 1 && afterB.startsWith(`${biz2[1]}/`) && afterB !== beforeB && dbB === 't' && /הועבר/.test(noteB)
+    && small === 0 && sideways <= 0 && Math.round(sheetBox?.width || 0) === 390 && copiesC === 1 && goneC === '0|0' && /נמחק/.test(noteC), [sheetShot, mgrShot, mShot])
+}
+
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)
 fs.writeFileSync(`${OUT}/results.json`, JSON.stringify({ at: new Date().toISOString(), results, extra: { companiesShot, projectsShot, agentsShot, autoShot, dataShot, settingsShot } }, null, 1))
 console.log(`\n${results.filter((r) => r.pass).length}/${results.length} passed`)

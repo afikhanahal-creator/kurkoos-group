@@ -63,7 +63,10 @@ export function organizedName(doc, supplierName) {
 export function folderPlan(target, doc, businessName) {
   const ck = `b:${doc.business_id || 'none'}`
   const levels = [{ key: ck, name: businessName || NO_COMPANY }]
-  const { day } = dateOf(doc)
+  let { day } = dateOf(doc)
+  // a person may book a document in another month than the one printed on it: the folder follows the accounting month
+  // (the name keeps the printed date)
+  if (/^\d{4}-\d{2}$/.test(String(doc.accounting_period || '')) && day && String(doc.accounting_period) !== day.slice(0, 7)) day = `${doc.accounting_period}-01`
   if (!day) levels.push({ key: `${ck}/nodate`, name: 'ללא תאריך' })
   else {
     const [y, m] = day.split('-')
@@ -596,7 +599,7 @@ export async function overview({ user }) {
 }
 
 export async function tree({ targetId, user }) {
-  const rows = (await sb(`fin_drive_files?target_id=eq.${q(targetId)}&status=neq.withdrawn&select=document_id,business_id,status,folder_key,folder_path,organized_name,web_link,verified_at,error,duplicate_of&order=folder_path,organized_name&limit=5000`)) || []
+  const rows = (await sb(`fin_drive_files?target_id=eq.${q(targetId)}&status=neq.withdrawn&select=document_id,business_id,status,folder_key,folder_path,organized_name,web_link,verified_at,error,duplicate_of,uploaded_at,updated_at&order=folder_path,organized_name&limit=5000`)) || []
   const ok = (r) => !user?.business_ids?.length || (r.business_id && user.business_ids.includes(r.business_id))
   return rows.filter(ok)
 }
@@ -615,6 +618,44 @@ export async function renameDoc({ targetId, documentId, name, user }) {
   await audit('cloud', target.id, 'archive_renamed', { document: documentId, from: row.organized_name, to: full }, user)
   const [r] = await saveNow({ target, ids: [documentId], user })
   return { ...r, name: full }
+}
+
+/* A person moves documents: to another company, to another accounting month, or both. The document is changed first
+   (the database queues its file), then the file is moved in Drive now, and each answer says whether Drive confirmed it.
+   A document that is not in the archive (no file, or a kind that is not archived) is changed in the system only. */
+export async function moveDocs({ targetId, ids, businessId, period, user }) {
+  const target = await one(`fin_cloud_targets?id=eq.${q(targetId)}&select=*`)
+  if (!target || target.status === 'revoked') throw Object.assign(new Error('Google Drive לא מחובר'), { status: 409 })
+  if (period !== undefined && !/^\d{4}-(0[1-9]|1[0-2])$/.test(String(period))) throw Object.assign(new Error('חודש לא תקין'), { status: 400 })
+  if (businessId && !(await one(`fin_businesses?id=eq.${q(businessId)}&select=id`))) throw Object.assign(new Error('החברה לא נמצאה'), { status: 404 })
+  if (user?.business_ids?.length && businessId !== undefined && !(businessId && user.business_ids.includes(businessId))) throw Object.assign(new Error('אין לך הרשאה לחברה הזו'), { status: 403 })
+  const results = []; const moved = []
+  for (const id of ids) {
+    const doc = await one(`fin_documents?id=eq.${q(id)}&select=id,status,business_id,accounting_period,project_id`)
+    if (!doc) { results.push({ id, ok: false, error: 'המסמך לא נמצא' }); continue }
+    if (user?.business_ids?.length && doc.business_id && !user.business_ids.includes(doc.business_id)) { results.push({ id, ok: false, error: 'אין לך הרשאה למסמך הזה' }); continue }
+    if (['approved', 'sent'].includes(doc.status) && user?.role !== 'admin') { results.push({ id, ok: false, error: 'מסמך מאושר או שנשלח מועבר רק על ידי מנהל המערכת' }); continue }
+    const body = {}
+    if (businessId !== undefined && (businessId || null) !== (doc.business_id || null)) { body.business_id = businessId || null; body.business_source = businessId ? 'manual' : null }
+    if (period !== undefined && period !== doc.accounting_period) body.accounting_period = period
+    // a project belongs to one company: a document that moves to another company leaves the project of the old one
+    if ('business_id' in body && doc.project_id) { const pr = await one(`fin_projects?id=eq.${q(doc.project_id)}&select=business_id`); if (pr?.business_id && pr.business_id !== body.business_id) body.project_id = null }
+    if (!Object.keys(body).length) { results.push({ id, ok: true, same: true }); continue }
+    try { await patch(`fin_documents?id=eq.${q(id)}`, body); moved.push({ id, from: { business_id: doc.business_id, period: doc.accounting_period }, to: body }) } catch (e) { results.push({ id, ok: false, error: String(e.message || e).slice(0, 200) }) }
+  }
+  if (moved.length) {
+    const inDrive = new Set(((await sb(`fin_drive_files?target_id=eq.${q(targetId)}&document_id=in.(${moved.map((m) => q(m.id)).join(',')})&select=document_id,status`)) || []).filter((r) => r.status !== 'withdrawn').map((r) => r.document_id))
+    const saved = inDrive.size ? await saveNow({ target, ids: moved.filter((m) => inDrive.has(m.id)).map((m) => m.id), user }).catch((e) => moved.filter((m) => inDrive.has(m.id)).map((m) => ({ id: m.id, ok: false, error: String(e.message || e).slice(0, 200) }))) : []
+    const by = new Map(saved.map((r) => [r.id, r]))
+    for (const m of moved) {
+      const r = by.get(m.id)
+      // the document is already changed; when Drive did not confirm, the file stays queued and the next run moves it
+      results.push(!inDrive.has(m.id) ? { id: m.id, ok: true, drive: 'none' } : r?.ok ? { id: m.id, ok: true, drive: 'moved', path: r.path, link: r.link } : { id: m.id, ok: true, drive: 'pending', error: r?.error || 'Drive לא אישר את ההעברה' })
+      await event(targetId, m.id, 'moved_by_user', { from: m.from, to: m.to, drive: r?.ok ? 'moved' : inDrive.has(m.id) ? 'pending' : 'none' }, user).catch(() => {})
+    }
+    await audit('cloud', targetId, 'archive_moved', { documents: moved.map((m) => m.id).slice(0, 50), business_id: businessId, period }, user).catch(() => {})
+  }
+  return { results, moved: results.filter((r) => r.drive === 'moved').length, pending: results.filter((r) => r.drive === 'pending').length, failed: results.filter((r) => !r.ok).length }
 }
 
 /* upload again: a file that was deleted in Drive, or a failure, goes back to the queue now */

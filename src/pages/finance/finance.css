@@ -3435,12 +3435,14 @@ body.fin-col-moving { cursor: grabbing !important; user-select: none; }
 
 /* phones, second pass: the list is what people came for, so what stands above it is made compact */
 @media (max-width: 700px) {
-  /* receipts: the five figures become one strip that slides sideways; the first is no longer a full row */
-  .fin-receipts__figs { display: flex; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; border-radius: var(--r-l); }
-  .fin-receipts__figs::-webkit-scrollbar { display: none; }
-  .fin-receipts__figs > :is(div, button) { flex: 0 0 auto; min-width: 9.6rem; padding: 10px 14px !important; border-top: 0 !important; margin-top: 0 !important; scroll-snap-align: start; grid-column: auto !important; }
-  .fin-receipts__figs dd, .fin-receipts__figs > div:first-child dd { font-size: 1.25rem !important; }
-  .fin-receipts__figs small { white-space: nowrap; }
+  /* receipts: the five figures in a compact grid of three and two (nothing leaves the screen) */
+  .fin-receipts__figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: var(--r-l); }
+  .fin-receipts__figs > :is(div, button) { min-width: 0; padding: 10px 12px !important; grid-column: auto !important; }
+  .fin-receipts__figs > :is(div, button):nth-child(4) { grid-column: 1 / 2 !important; }
+  .fin-receipts__figs > :is(div, button):nth-child(5) { grid-column: 2 / -1 !important; }
+  .fin-receipts__figs dd, .fin-receipts__figs > div:first-child dd { font-size: 1.15rem !important; }
+  .fin-receipts__figs dt { font-size: var(--t-xs); }
+  .fin-receipts__figs small { font-size: 0.68rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* receipts: search on its own row, then month and status side by side, the extra filter as an icon-wide button */
   .fin-receipts__bar { gap: 8px; }
   .fin-receipts__bar .fin-receipts__month, .fin-receipts__bar .fin-select { flex: 1 1 calc(50% - 4px); min-width: 0; }
@@ -3468,4 +3470,61 @@ body.fin-col-moving { cursor: grabbing !important; user-select: none; }
   .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) > :is(.fin-select, .fin-sel, select) { min-width: 0; width: 100%; }
   .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) .fin-sel__btn { font-size: var(--t-sm); padding-inline: 8px; }
   .fin-filters:has(> .fin-search):not(:has(.fin-seg, .fin-datechip, .fin-btn)) > label:not(.fin-search) { grid-column: 1 / -1; }
+}
+
+/* after a drop: how many documents went in, large, with their names */
+.fin-drop__msg { display: grid; gap: 8px; margin-top: 12px; padding: 0; }
+.fin-drop__msg.is-ok { padding: 14px 16px; border-radius: var(--r-l); background: var(--ok-wash); border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent); }
+.fin-drop__msg.is-bad { padding: 12px 14px; border-radius: var(--r-l); background: var(--attn-wash); }
+.fin-drop__count { display: flex; align-items: center; gap: 12px; }
+.fin-drop__count > b { font-size: 2.4rem; line-height: 1; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-drop__count > span { display: grid; gap: 2px; }
+.fin-drop__count strong { font-size: var(--t-lg); color: var(--ink); }
+.fin-drop__count small { font-size: var(--t-sm); color: var(--text-2); }
+.fin-drop__names, .fin-drop__notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: var(--t-sm); color: var(--ink); }
+.fin-drop__names li { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.fin-drop__names li bdi { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-drop__names svg { color: var(--ok); flex: none; }
+.fin-drop__notes li { color: var(--attn); display: flex; gap: 6px; align-items: flex-start; }
+
+/* every category has its own colour, the same in the strip and in the list under it */
+.fin-x-stack i:nth-child(1), .fin-x-list li:nth-child(1) i { background: #16688c; }
+.fin-x-stack i:nth-child(2), .fin-x-list li:nth-child(2) i { background: #e9a23b; }
+.fin-x-stack i:nth-child(3), .fin-x-list li:nth-child(3) i { background: #2a9d8f; }
+.fin-x-stack i:nth-child(4), .fin-x-list li:nth-child(4) i { background: #d1495b; }
+.fin-x-stack i:nth-child(5), .fin-x-list li:nth-child(5) i { background: #6c5ce7; }
+.fin-x-stack i:nth-child(6), .fin-x-list li:nth-child(6) i { background: #07293a; }
+.fin-x-stack i:nth-child(n+7), .fin-x-list li:nth-child(n+7) i { background: #8a98a5; }
+.fin-x-stack { height: 16px; border-radius: 8px; gap: 3px; }
+.fin-x-list i { width: 12px; height: 12px; border-radius: 4px; }
+.fin-x-list b { font-variant-numeric: tabular-nums; }
+
+/* the month chart: rounded bars with depth, the picked month in ink with its figure in a chip, months that slide and
+   snap on a phone */
+.fin-x-trend__bars i.is-now { width: min(64%, 46px); border-radius: 10px 10px 4px 4px; background: linear-gradient(180deg, color-mix(in srgb, var(--ocean) 82%, #fff) 0%, var(--ocean) 70%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); transition: height 0.35s var(--ease), background-color var(--dur) var(--ease), opacity var(--dur) var(--ease), transform var(--dur) var(--ease); transform-origin: bottom; }
+.fin-x-trend__col:hover .is-now, .fin-x-trend__col.is-hover .is-now { transform: scaleX(1.08); background: var(--ocean-2, var(--ocean)); }
+.fin-x-trend__col.is-on .is-now { background: var(--ink); box-shadow: 0 6px 16px rgba(7, 41, 58, 0.25); }
+.fin-x-trend__col.is-now-month .is-now { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ocean) 70%, var(--sheet)) 0 6px, color-mix(in srgb, var(--ocean) 50%, var(--sheet)) 6px 12px); }
+.fin-x-trend__col.is-on .fin-x-val { background: var(--ink); color: #fff; padding: 2px 8px; border-radius: 999px; }
+.fin-x-trend__col { border-radius: 10px; transition: background-color var(--dur) var(--ease); }
+.fin-x-trend__col:hover, .fin-x-trend__col.is-on { background: color-mix(in srgb, var(--wash) 70%, transparent); }
+.fin-x-trend__col em { font-size: var(--t-sm); }
+@media (max-width: 760px) {
+  .fin-x-trend { min-width: max(100%, calc(var(--n, 12) * 56px)); gap: 8px; scroll-snap-type: x proximity; }
+  .fin-x-trend__col { scroll-snap-align: center; min-width: 48px; }
+  .fin-x-trend[style*="--n: 12"] .fin-x-val, .fin-x-trend[style*="--n:12"] .fin-x-val { display: block; font-size: var(--t-xs); }
+}
+@media (prefers-reduced-motion: reduce) { .fin-x-trend__bars i.is-now { transition: none; } .fin-x-trend__col:hover .is-now { transform: none; } }
+
+/* the strip above an email: two labelled groups, download and bringing the document in */
+.fin-linked__acts { gap: 8px 14px; }
+.fin-linked__group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border-radius: var(--r-m); background: var(--wash); }
+.fin-linked__group > b { display: inline-flex; align-items: center; gap: 5px; font-size: var(--t-xs); color: var(--text-2); font-weight: 700; padding-inline: 2px 4px; }
+.fin-linked__group .fin-btn { background: var(--sheet); }
+.fin-linked__group .fin-btn--primary { background: var(--ink); }
+@media (max-width: 700px) {
+  .fin-linked__group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .fin-linked__group > b { grid-column: 1 / -1; }
+  .fin-linked__acts .fin-linked__group .fin-btn { flex: none; width: 100%; min-height: 44px; justify-content: center; }
+  .fin-linked__group .fin-btn:only-of-type, .fin-linked__group > .fin-btn:nth-of-type(odd):last-of-type { grid-column: 1 / -1; }
 }

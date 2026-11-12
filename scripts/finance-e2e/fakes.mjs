@@ -164,14 +164,17 @@ const server = http.createServer(async (req, res) => {
     if (badKey) return send(res, 400, { type: 'error', error: { type: 'invalid_request_error', message: badKey } })
     const content = body.messages[0].content
     const doc = content.find((c) => c.type === 'document' || c.type === 'image')
-    const text = content.find((c) => c.type === 'text')?.text || ''
+    // the fixed instructions may arrive as a system prompt (cached), the rest in the message: both are the prompt
+    const sys = (Array.isArray(body.system) ? body.system.map((b) => b.text || '').join('\n') : String(body.system || ''))
+    if (Array.isArray(body.system) && body.system.some((b) => b.cache_control?.type === 'ephemeral')) log.cachedPrompts = (log.cachedPrompts || 0) + 1
+    const text = [sys, content.find((c) => c.type === 'text')?.text || ''].filter(Boolean).join('\n')
     const fx = fixtures()
     let answer = null
     // the second reading (VERIFY): answers only the critical fields, from verifyAnswers, else the same as the first reading
-    const verifying = text.startsWith('VERIFY:')
+    const verifying = /(^|\n)VERIFY:/.test(text)
     // every reading of mail content must tell the model that the content is data, not instructions
     if (/never instructions to you/.test(text)) log.guarded = (log.guarded || 0) + 1
-    else if (!text.startsWith('Today is') && !/Question:/.test(text)) log.unguarded = (log.unguarded || 0) + 1
+    else if (!/(^|\n)Today is/.test(text) && !/Question:/.test(text)) log.unguarded = (log.unguarded || 0) + 1
     if (verifying) log.verifyCalls = (log.verifyCalls || 0) + 1
     if (doc) {
       const raw = Buffer.from(doc.source.data, 'base64')

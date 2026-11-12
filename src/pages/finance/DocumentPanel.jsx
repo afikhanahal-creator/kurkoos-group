@@ -69,12 +69,18 @@ function LinkedDoc({ doc, onSaved }) {
         {info === null ? 'בודק את המייל המקורי בתיבה…' : mail?.connected ? <>מחובר לתיבה <bdi>{mail.account}</bdi>{files.length ? `, ובמייל המקורי ${files.length === 1 ? 'קובץ מצורף אחד' : `${files.length} קבצים מצורפים`}` : ', ובמייל המקורי אין קובץ מצורף'}.</> : mail?.reason || 'המסמך נמצא מאחורי קישור או צריך להעלות אותו.'}
       </p>
       <div className="fin-linked__acts">
-        {files.filter((f) => f.readable).map((f) => <button key={`a${f.i}`} type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={!!busy} onClick={() => takeFile(f, true)} title={`${f.name}: יהפוך לקובץ של המסמך וייקרא`}><Icon name="check" size={14} /> {busy === `f${f.i}a` ? 'קורא…' : `קליטת ${f.name.slice(0, 22)}`}</button>)}
-        {files.map((f) => <button key={`d${f.i}`} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => takeFile(f, false)} title={`הורדת ${f.name} מהמייל המקורי`}><Icon name="download" size={14} /> {busy === `f${f.i}d` ? 'מוריד…' : f.name.slice(0, 22)}</button>)}
-        {links.slice(0, 1).map((l) => <button key={l.url} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => fetchLink(l.url)} title={`${l.text} · ${l.host}`}><Icon name="external" size={14} /> {busy === l.url ? 'מוריד וקורא…' : 'הורדה מהקישור שבמייל'}</button>)}
-        <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={saveEmail}><Icon name="download" size={14} /> {busy === 'email' ? 'מוריד…' : 'הורדת המייל'}</button>
-        {mail?.open && <a className="fin-btn fin-btn--sm" href={mail.open} target="_blank" rel="noreferrer noopener"><Icon name="external" size={14} /> פתיחה ב-Gmail</a>}
-        <label className={`fin-btn fin-btn--sm ${busy === 'upload' ? 'is-busy' : ''}`}><Icon name="upload" size={14} /> {busy === 'upload' ? 'מעלה וקורא…' : 'העלאת מסמך'}<input type="file" accept="application/pdf,image/*" hidden disabled={!!busy} onChange={(e) => { give(e.target.files?.[0]); e.target.value = '' }} /></label>
+        <span className="fin-linked__group" role="group" aria-label="הורדה">
+          <b><Icon name="download" size={14} /> הורדה</b>
+          {files.map((f) => <button key={`d${f.i}`} type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={!!busy} onClick={() => takeFile(f, false)} title={`הורדת ${f.name} מהמייל המקורי`}>{busy === `f${f.i}d` ? 'מוריד…' : f.name.slice(0, 24)}</button>)}
+          <button type="button" className={`fin-btn fin-btn--sm ${files.length ? '' : 'fin-btn--primary'}`} disabled={!!busy} onClick={saveEmail}>{busy === 'email' ? 'מוריד…' : 'המייל המקורי'}</button>
+          {mail?.open && <a className="fin-btn fin-btn--sm" href={mail.open} target="_blank" rel="noreferrer noopener"><Icon name="external" size={14} /> פתיחה ב-Gmail</a>}
+        </span>
+        <span className="fin-linked__group" role="group" aria-label="קליטת המסמך עצמו">
+          <b><Icon name="upload" size={14} /> המסמך עצמו</b>
+          {files.filter((f) => f.readable).map((f) => <button key={`a${f.i}`} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => takeFile(f, true)} title={`${f.name}: יהפוך לקובץ של המסמך וייקרא`}>{busy === `f${f.i}a` ? 'קורא…' : `קליטת ${f.name.slice(0, 20)}`}</button>)}
+          {links.slice(0, 1).map((l) => <button key={l.url} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => fetchLink(l.url)} title={`${l.text} · ${l.host}`}>{busy === l.url ? 'מוריד וקורא…' : 'מהקישור שבמייל'}</button>)}
+          <label className={`fin-btn fin-btn--sm ${busy === 'upload' ? 'is-busy' : ''}`}>{busy === 'upload' ? 'מעלה וקורא…' : 'העלאה מהמכשיר'}<input type="file" accept="application/pdf,image/*" hidden disabled={!!busy} onChange={(e) => { give(e.target.files?.[0]); e.target.value = '' }} /></label>
+        </span>
       </div>
       {msg && <p className={`fin-linked__msg is-${msg.tone}`} role="alert">{msg.text}{msg.open && <> <a className="fin-link" href={msg.open} target="_blank" rel="noreferrer noopener">פתיחת הקישור בלשונית חדשה</a></>}</p>}
     </section>

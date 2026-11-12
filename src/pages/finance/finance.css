@@ -3558,3 +3558,16 @@ html:has(.fin), html:has(.fin) body, html:has(.fin-login), html:has(.fin-login) 
   @keyframes fin-sheet-in { from { transform: translateY(24px); opacity: 0.4; } to { transform: none; opacity: 1; } }
 }
 @media (prefers-reduced-motion: reduce) { .fin__main > .fin-stack, .fin-panel { animation: none !important; } .fin :is(.fin-btn, .fin-icon-btn):active { transform: none; } }
+
+/* receipts: the name opens the receipt itself, large, over the list */
+.fin-receipts__name { all: unset; direction: inherit; cursor: pointer; font: inherit; font-weight: 700; color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 28%, transparent); text-underline-offset: 3px; border-radius: 4px; }
+.fin-receipts__name:hover { color: var(--ocean); text-decoration-color: currentColor; }
+.fin-receipts__name:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; }
+.fin-receipts__thumb { cursor: zoom-in; }
+.fin-receipts__viewmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 15px; }
+.fin-receipts__viewmeta b { margin-inline-start: auto; font-size: 18px; font-variant-numeric: tabular-nums; }
+.fin-receipts__view { height: min(68vh, 820px); display: grid; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--wash); }
+.fin-receipts__view > * { min-height: 0; }
+.fin-receipts__view > .fin-muted, .fin-receipts__view > .fin-slip { margin: auto; }
+@media (max-width: 700px) { .fin-receipts__name { display: inline-flex; align-items: center; min-height: 44px; } .fin-receipts__view { height: 58vh; } .fin-modal__foot .fin-btn { min-height: 44px; } }
+.fin-peek__about { display: block; margin-top: 8px; font-size: 13px; line-height: 1.4; color: var(--text-2); }

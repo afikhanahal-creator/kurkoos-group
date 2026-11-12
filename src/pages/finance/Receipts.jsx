@@ -4,10 +4,11 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, SOURCE, byDocDate, isFresh, date, dateTime, docDate, money, monthLabel, thisMonth } from './format.js'
 import Select from './Select.jsx'
-import Thumbnail from './Thumbnail.jsx'
+import Thumbnail, { Slip } from './Thumbnail.jsx'
+import DocPreview from './DocPreview.jsx'
 import Peek from './Peek.jsx'
 import { useResizableColumns } from './columns.js'
-import { Empty, Icon, PageHead, askConfirm } from './ui.jsx'
+import { Empty, Icon, Modal, PageHead, StatusPill, askConfirm } from './ui.jsx'
 
 /* Receipts and invoices that people hand in themselves: a photo sent to the office WhatsApp number, or a file uploaded
    here. Each one is read, checked and waits for a person; nothing counts as final before somebody approves it, and
@@ -59,10 +60,13 @@ export default function Receipts() {
   // the months that have documents, newest first, each with its count: the list a person picks a month and year from
   const monthsWith = useMemo(() => { const m = new Map(); for (const d of mine) { const k = String(docDate(d)).slice(0, 7); if (/^\d{4}-\d{2}$/.test(k)) m.set(k, (m.get(k) || 0) + 1) } return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0])) }, [mine])
   const [note, setNote] = useState('')
+  // the receipt itself, large, without leaving the list: opened by its name or its picture
+  const [viewId, setViewId] = useState(null)
+  const view = viewId ? documents.find((d) => d.id === viewId) : null
   const canDelete = (d) => can('manage') || (can('operate') && !['approved', 'sent'].includes(d.status))
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. אי אפשר לבטל.`, ok: 'מחיקה', danger: true }))) return
-    try { await api.deleteDocument(d); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
+    try { await api.deleteDocument(d); setViewId(null); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
   }
   useEffect(() => { let on = true; api.callServer('receipts-drive').then((r) => { if (on) setDrive(r?.files || {}) }).catch(() => {}); return () => { on = false } }, [mine.length])
   const rows = useMemo(() => mine.map((d) => ({ d, stage: stageOf(d, drive[d.id]), link: drive[d.id]?.link })), [mine, drive])
@@ -158,11 +162,11 @@ export default function Receipts() {
                 const known = d.supplier_id && suppliers?.some((x) => x.id === d.supplier_id)
                 return (
                   <tr key={d.id} className={`is-link ${isFresh(d) ? 'is-fresh' : ''} ${st === 'fix' || st === 'failed' ? 'is-attn' : ''}`} onClick={() => go(`/documents/${d.id}`)}>
-                    <td className="fin-receipts__thumb"><Peek doc={d}><span className="fin-receipts__pic">{phone && d.file_path && !(d.file_mime || '').startsWith('image/')
+                    <td className="fin-receipts__thumb" onClick={(e) => { e.stopPropagation(); setViewId(d.id) }}><Peek doc={d}><span className="fin-receipts__pic">{phone && d.file_path && !(d.file_mime || '').startsWith('image/')
                       ? <span className={`fin-doctile ${(d.file_mime || '').includes('pdf') ? 'is-pdf' : (d.file_mime || '').startsWith('text/') ? 'is-mail' : ''}`} aria-hidden="true">{(d.file_mime || '').includes('pdf') ? <b>PDF</b> : <Icon name={(d.file_mime || '').startsWith('text/') ? 'mail' : 'file'} size={20} />}</span>
                       : <Thumbnail doc={d} />}</span></Peek></td>
                     <td data-label="תאריך" className="fin-td-date">{date(docDate(d)) || '—'}</td>
-                    <td className="fin-td-main"><Peek doc={d}>{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}</Peek>{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
+                    <td className="fin-td-main"><Peek doc={d}><button type="button" className="fin-receipts__name" onClick={(e) => { e.stopPropagation(); setViewId(d.id) }} aria-label={`הצגת ${d.supplier_name || d.file_name || 'המסמך'}`}>{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}</button></Peek>{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
                     <td className="fin-td-status fin-receipts__st"><span className={`fin-pill fin-pill--${s.tone}`} title={s.hint}>{s.label}</span></td>
                     <td data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td data-label="מספר"><bdi dir="ltr">{d.doc_number || '—'}</bdi></td>
@@ -181,6 +185,16 @@ export default function Receipts() {
           </table>
           {shown.length > limit && <p className="fin-receipts__cut"><button type="button" className="fin-btn" onClick={() => setLimit((n) => n + 80)}>הצגת עוד {Math.min(80, shown.length - limit)} מתוך {shown.length - limit} שנותרו</button></p>}
         </div>
+      )}
+      {view && (
+        <Modal wide title={view.supplier_name || view.file_name || 'מסמך'} onClose={() => setViewId(null)} footer={<>
+          <button type="button" className="fin-btn fin-btn--primary" onClick={() => go(`/documents/${view.id}`)}><Icon name="edit" size={16} /> פתיחה ועריכה</button>
+          {canDelete(view) && <button type="button" className="fin-btn fin-btn--danger" onClick={() => removeDoc(view)}><Icon name="trash" size={16} /> מחיקה</button>}
+          <button type="button" className="fin-btn fin-btn--ghost" onClick={() => setViewId(null)}>סגירה</button>
+        </>}>
+          <p className="fin-receipts__viewmeta"><StatusPill status={view.status} /><span>{[DOC_TYPE[view.doc_type], view.doc_number && `מס׳ ${view.doc_number}`, date(docDate(view))].filter(Boolean).join(' · ')}</span>{view.total_amount != null && <b>{money(view.total_amount, view.currency)}</b>}</p>
+          <div className="fin-receipts__view">{view.file_path ? <DocPreview doc={view} /> : <Slip doc={view} />}</div>
+        </Modal>
       )}
     </div>
   )

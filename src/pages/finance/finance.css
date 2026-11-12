@@ -3442,7 +3442,7 @@ body.fin-col-moving { cursor: grabbing !important; user-select: none; }
   .fin-receipts__figs > :is(div, button):nth-child(5) { grid-column: 2 / -1 !important; }
   .fin-receipts__figs dd, .fin-receipts__figs > div:first-child dd { font-size: 1.15rem !important; }
   .fin-receipts__figs dt { font-size: var(--t-xs); }
-  .fin-receipts__figs small { font-size: 0.68rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fin-receipts__figs small { font-size: var(--t-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* receipts: search on its own row, then month and status side by side, the extra filter as an icon-wide button */
   .fin-receipts__bar { gap: 8px; }
   .fin-receipts__bar .fin-receipts__month, .fin-receipts__bar .fin-select { flex: 1 1 calc(50% - 4px); min-width: 0; }

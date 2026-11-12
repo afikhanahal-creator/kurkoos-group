@@ -233,7 +233,8 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
     const notes = []
     let added = 0
     const names = []
-    for (const f of list) {
+    // three files travel at a time (one after another made ten receipts take ten times one)
+    const one = async (f) => {
       try {
         const r = await uploadFile(f, { businessId, projectId, source })
         if (r.duplicate) notes.push(`${f.name}: כפילות, הקובץ כבר קיים במערכת${r.of?.supplier_name ? ` (${r.of.supplier_name}${r.of.doc_number ? ` ${r.of.doc_number}` : ''})` : ''}`)
@@ -241,6 +242,8 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
       } catch (e) { notes.push(e.message) }
       setBusy((n) => n - 1)
     }
+    let next = 0
+    await Promise.all(Array.from({ length: Math.min(3, list.length) }, async () => { while (next < list.length) await one(list[next++]) }))
     setMsg([added ? `${added} קבצים הועלו וממתינים לקריאה` : '', ...notes].filter(Boolean).join(' · '))
     setDone({ added, names, notes })
     if (added) moments.upload({ from: zone.current, count: added, names })

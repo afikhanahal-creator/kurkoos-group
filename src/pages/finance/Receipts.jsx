@@ -45,6 +45,12 @@ export default function Receipts() {
   const [min, setMin] = useState('')
   const [more, setMore] = useState(false)
   const colsRef = useResizableColumns('receipts')
+  // 80 rows at a time: every row draws a picture of its document, and a phone should not start on 300 of them
+  const [limit, setLimit] = useState(80)
+  // on a phone a PDF or an email is shown in the list by its kind: drawing its first page meant downloading the whole
+  // file for a 48px picture, for every row. Photos keep their picture; the document itself opens with one tap.
+  const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 700px)').matches
+  useEffect(() => { setLimit(80) }, [q, via, stage, type, month, supplier, min])
 
   // every receipt and invoice in the system, whatever way it came in (mail, WhatsApp, upload, camera), newest document first
   const MAIL = ['gmail', 'outlook', 'forward']
@@ -147,12 +153,14 @@ export default function Receipts() {
           <table ref={colsRef} className="fin-table fin-table--plain fin-receipts__table">
             <thead><tr><th aria-label="תצוגה מקדימה" /><th>תאריך</th><th>ספק</th><th>סטטוס</th><th>סוג מסמך</th><th>מספר</th><th className="fin-num">סכום כולל</th><th>נקלט</th><th aria-label="פעולות" /></tr></thead>
             <tbody>
-              {shown.slice(0, 300).map(({ d, stage: st, link }) => {
+              {shown.slice(0, limit).map(({ d, stage: st, link }) => {
                 const s = STAGE[st]
                 const known = d.supplier_id && suppliers?.some((x) => x.id === d.supplier_id)
                 return (
                   <tr key={d.id} className={`is-link ${isFresh(d) ? 'is-fresh' : ''} ${st === 'fix' || st === 'failed' ? 'is-attn' : ''}`} onClick={() => go(`/documents/${d.id}`)}>
-                    <td className="fin-receipts__thumb"><Peek doc={d}><span className="fin-receipts__pic"><Thumbnail doc={d} /></span></Peek></td>
+                    <td className="fin-receipts__thumb"><Peek doc={d}><span className="fin-receipts__pic">{phone && d.file_path && !(d.file_mime || '').startsWith('image/')
+                      ? <span className={`fin-doctile ${(d.file_mime || '').includes('pdf') ? 'is-pdf' : (d.file_mime || '').startsWith('text/') ? 'is-mail' : ''}`} aria-hidden="true">{(d.file_mime || '').includes('pdf') ? <b>PDF</b> : <Icon name={(d.file_mime || '').startsWith('text/') ? 'mail' : 'file'} size={20} />}</span>
+                      : <Thumbnail doc={d} />}</span></Peek></td>
                     <td data-label="תאריך" className="fin-td-date">{date(docDate(d)) || '—'}</td>
                     <td className="fin-td-main"><Peek doc={d}>{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}</Peek>{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
                     <td className="fin-td-status fin-receipts__st"><span className={`fin-pill fin-pill--${s.tone}`} title={s.hint}>{s.label}</span></td>
@@ -171,7 +179,7 @@ export default function Receipts() {
               })}
             </tbody>
           </table>
-          {shown.length > 300 && <p className="fin-muted fin-small fin-receipts__cut">מוצגים 300 המסמכים האחרונים מתוך {shown.length}. סינון מצמצם את הרשימה.</p>}
+          {shown.length > limit && <p className="fin-receipts__cut"><button type="button" className="fin-btn" onClick={() => setLimit((n) => n + 80)}>הצגת עוד {Math.min(80, shown.length - limit)} מתוך {shown.length - limit} שנותרו</button></p>}
         </div>
       )}
     </div>

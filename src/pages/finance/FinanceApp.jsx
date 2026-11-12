@@ -113,11 +113,16 @@ function useFinanceData(enabled, onChange) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const load = async () => {
     try {
+      // "who am I" and the data are asked at the same time (one round trip less on every load); a person without a role
+      // gets empty answers from the database anyway, and they are dropped here
+      const all = Promise.all([
+        api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(), api.loadAllocations(), api.loadSettings(),
+      ]).then((v) => ({ v }), (err) => ({ err }))
       const me = await api.me()
       if (!me?.role) { setState((s) => ({ ...s, loading: false, error: '', me })); return }
-      const [documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = await Promise.all([
-        api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(), api.loadAllocations(), api.loadSettings(),
-      ])
+      const got = await all
+      if (got.err) throw got.err
+      const [documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = got.v
       loadedAt.current = Date.now()
       stamp.current = stampOf(documents)
       const before = prevDocs.current; prevDocs.current = documents
@@ -137,11 +142,26 @@ function useFinanceData(enabled, onChange) {
     return () => { document.removeEventListener('visibilitychange', on); window.removeEventListener('focus', on) }
   }, [enabled, reload])
   const reading = state.documents.some((d) => d.status === 'processing')
+  // While a document is being read only the documents are asked again, every 4 s (it used to reload all nine tables:
+  // heavy on a phone). When a reading ends, everything is loaded once, because it may have brought a new supplier.
   useEffect(() => {
     if (!reading) return undefined
-    const t = setInterval(reload, 4000)
+    let busy = false
+    const t = setInterval(async () => {
+      if (busy || inflight.current || document.visibilityState !== 'visible') return
+      busy = true
+      try {
+        const documents = await api.loadDocuments()
+        const was = (prevDocs.current || []).filter((d) => d.status === 'processing').length
+        if (documents.filter((d) => d.status === 'processing').length < was) { reload(); return }
+        stamp.current = stampOf(documents)
+        const before = prevDocs.current; prevDocs.current = documents
+        if (before) onChange.current?.(before, documents)
+        setState((s) => ({ ...s, documents }))
+      } catch { /* the next tick asks again */ } finally { busy = false }
+    }, 4000)
     return () => clearInterval(t)
-  }, [reading, reload])
+  }, [reading, reload]) // eslint-disable-line react-hooks/exhaustive-deps
   // invoices keep arriving (mail, WhatsApp, scanners, colleagues): a tiny check every 15 s while the tab is in view, and
   // a full reload only when something really changed. While documents are being read the 4 s loop above covers it.
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
+import { reportOf } from './CompanySettings.jsx'
 import * as api from './api.js'
 import { ENTITIES, SUPPLIER_STATUS } from './entities.js'
 import { DOC_TYPE, PROJECT_STATUS, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedTotal, thisMonth } from './format.js'
@@ -151,7 +152,13 @@ export default function EntityOverview({ kind }) {
     <div className="fin-stack">
       <nav className="fin-crumbs" aria-label="מיקום"><button type="button" className="fin-link" onClick={() => go(def.path)}>{def.title}</button><span aria-hidden="true">/</span><span>{row.name}</span></nav>
       <header className="fin-entity-head">
-        <div>
+        {kind === 'businesses' && (
+          /* the company's logo, or the place it will take once it is added in the company profile */
+          <button type="button" className={`fin-entity-logo ${reportOf(row).logo ? 'has-logo' : ''}`} onClick={() => go(`/settings?tab=companies&company=${row.id}`)} title={reportOf(row).logo ? 'הלוגו של החברה' : 'הוספת לוגו בפרופיל החברה'} aria-label={reportOf(row).logo ? 'הלוגו של החברה' : 'הוספת לוגו בפרופיל החברה'}>
+            {reportOf(row).logo ? <img src={reportOf(row).logo} alt="" /> : <><Icon name="company" size={22} /><small>לוגו</small></>}
+          </button>
+        )}
+        <div className="fin-entity-head__main">
           <h2>{row.name}</h2>
           <p className="fin-muted">
             {kind === 'suppliers' && <><Pill tone={row.status === 'pending' ? 'attn' : row.status === 'archived' ? 'muted' : 'ok'}>{SUPPLIER_STATUS[row.status]}</Pill> {row.trading_name || row.supplier_type || ''}</>}

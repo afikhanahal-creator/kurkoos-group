@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
+import { DOC_TYPE, date, docDate, money } from './format.js'
 
 /* The first page of the real document, drawn small. PDFs through pdf.js (loaded only when a card appears),
    images as they are, emails as a short text preview. Cached for the session. */
@@ -59,6 +60,25 @@ export function prefetchThumb(doc, size = 'lg') {
   cache.get(key).catch(() => {})
 }
 
+/* A record that has no file behind it still shows as a page: what the system holds about it (who, what, when, how
+   much), drawn as a slip and marked plainly as a record without its source file. It is never passed off as the paper. */
+export function Slip({ doc }) {
+  return (
+    <span className="fin-slip">
+      <span className="fin-slip__tag">רשומה בלי קובץ מקור</span>
+      <strong dir="auto">{doc.supplier_name || 'ספק לא ידוע'}</strong>
+      <span className="fin-slip__type">{[DOC_TYPE[doc.doc_type], doc.doc_number].filter(Boolean).join(' · ') || 'מסמך'}</span>
+      <span className="fin-slip__rows">
+        <span><i>תאריך</i><em>{date(docDate(doc)) || '—'}</em></span>
+        {doc.amount_before_vat != null && <span><i>לפני מע״מ</i><em>{money(doc.amount_before_vat, doc.currency)}</em></span>}
+        {doc.vat_amount != null && <span><i>מע״מ</i><em>{money(doc.vat_amount, doc.currency)}</em></span>}
+        <span className="fin-slip__total"><i>סה״כ</i><em>{doc.total_amount != null ? money(doc.total_amount, doc.currency) : '—'}</em></span>
+      </span>
+      {doc.description && <span className="fin-slip__note" dir="auto">{doc.description}</span>}
+    </span>
+  )
+}
+
 export default function Thumbnail({ doc, size }) {
   const key = size === 'lg' ? `${doc.file_path}@lg` : doc.file_path
   const box = useRef(null)
@@ -79,7 +99,7 @@ export default function Thumbnail({ doc, size }) {
     if (box.current) io.observe(box.current)
     return () => { alive = false; io.disconnect() }
   }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
-  if (!doc.file_path) return <div className="fin-thumb fin-thumb--nofile" aria-hidden="true"><span>אין קובץ מצורף</span></div>
+  if (!doc.file_path) return <div className="fin-thumb fin-thumb--nofile" aria-hidden="true"><Slip doc={doc} /></div>
   return (
     <div className="fin-thumb" ref={box} aria-hidden="true">
       {src && typeof src === 'string' && <img src={src} alt="" />}

@@ -1,3 +1,4 @@
+import Lottie from './lottie/play.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { placeNear, popRoot } from './Select.jsx'
@@ -108,7 +109,7 @@ export function Kpi({ label, value, hint, tone, onClick }) {
 export function Empty({ title, children, action, icon = 'docs' }) {
   return (
     <div className="fin-empty">
-      <span className="fin-empty__icon"><Icon name={icon} size={26} /></span>
+      <span className="fin-empty__icon has-lottie"><Lottie name="empty" size={96} /></span>
       <strong>{title}</strong>
       {children && <p>{children}</p>}
       {action}

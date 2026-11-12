@@ -78,6 +78,9 @@ export const monthLabel = (k) => (k ? new Date(`${k}-01T00:00:00`).toLocaleDateS
 // when the document reached the system: the email's time when it came by mail, else when it was added
 export const arrivedAt = (d) => d.email_date || d.created_at || ''
 // newest first, by a chosen time and then by the other (two documents that came in together keep a stable, sensible order)
+/* a document a person just handed in (upload, camera, WhatsApp) in the last half hour: it is shown first wherever
+   documents are listed, whatever the sort, so it never seems to vanish into its date */
+export const isFresh = (d) => ['upload', 'camera', 'whatsapp'].includes(d.source) && !d.email_date && Date.now() - new Date(d.created_at).getTime() < 30 * 60_000
 export const byArrival = (a, b) => String(arrivedAt(b)).localeCompare(String(arrivedAt(a))) || String(docDate(b)).localeCompare(String(docDate(a))) || String(b.id).localeCompare(String(a.id))
 export const byDocDate = (a, b) => String(docDate(b)).localeCompare(String(docDate(a))) || String(arrivedAt(b)).localeCompare(String(arrivedAt(a))) || String(b.id).localeCompare(String(a.id))
 export const docDate = (d) => d.issue_date || (d.email_date || d.created_at || '').slice(0, 10)

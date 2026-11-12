@@ -148,6 +148,10 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
   const docOf = useMemo(() => new Map(documents.map((d) => [d.id, d])), [documents])
   // in the archive without a company: they sit in "מסמכים ללא שיוך" until a person (or the learning) assigns them
   const unassigned = useMemo(() => (rows || []).filter((r) => !r.business_id && ['verified', 'uploaded', 'queued'].includes(r.status)), [rows])
+  // the waiting list reads newest first, and can be narrowed by a word or a month
+  const [waitQ, setWaitQ] = useState('')
+  const [waitMonth, setWaitMonth] = useState('')
+  const dayOfDoc = (d) => (d ? d.issue_date || String(d.email_date || d.created_at || '').slice(0, 10) : '')
   const bizName = (id) => businesses.find((b) => b.id === id)?.name
   const pickedRow = picked && (rows || []).find((r) => r.document_id === picked)
   const missing = Math.max(0, (c.expected || 0) - (c.verified || 0))
@@ -186,8 +190,6 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך יימחק מהמערכת, והקובץ שלו ב-Drive יעבור לפח של Drive.`, ok: 'מחיקה', danger: true }))) return
     await act('delete', async () => {
-      await api.callServer('drive-exclude', { target_id: t.id, ids: [d.id] })
-      await api.callServer('drive-run', { target_id: t.id }, { timeout: 70000 }).catch(() => null)
       await api.deleteDocument(d)
       setChosen((prev) => { const x = new Set(prev); x.delete(d.id); return x })
       await reloadDocs?.()
@@ -266,36 +268,59 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
             <h3>ממתינים לשיוך ({n(unassigned.length)})</h3>
             <p className="fin-muted fin-small">בחרו מסמכים וחברה. הקבצים יעברו מ"מסמכים ללא שיוך" לתיקיית החברה, והשיוך ילמד את הסוכן לפעם הבאה.</p>
           </header>
-          <ul>
-            {unassigned.slice(0, 200).map((r) => {
-              const d = docOf.get(r.document_id)
-              const day = d ? d.issue_date || String(d.created_at || '').slice(0, 10) : ''
-              const from = d?.email_from ? d.email_from.replace(/<[^>]*>/g, '').replace(/"/g, '').trim() || d.email_from : ''
-              const on = chosen.has(r.document_id)
-              return (
-                <li key={r.document_id} className={`fin-dassign__row ${on ? 'is-on' : ''}`}>
-                  <label className="fin-dassign__check"><input type="checkbox" checked={on} onChange={(e) => setChosen((prev) => { const x = new Set(prev); if (e.target.checked) x.add(r.document_id); else x.delete(r.document_id); return x })} aria-label={`סימון ${d?.supplier_name || d?.file_name || 'מסמך'}`} /></label>
-                  <time className="fin-dassign__date" dateTime={day || undefined}>{day ? <><b>{new Date(`${day}T00:00:00`).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' })}</b><small>{day.slice(0, 4)}</small></> : <small>בלי תאריך</small>}</time>
-                  <Peek doc={d} className="fin-dassign__main">
-                    <button type="button" className="fin-dassign__open" onClick={() => d && go(`/documents/${d.id}`)} title="פתיחת המסמך">
-                      <strong dir="auto">{d?.supplier_name || d?.file_name || 'מסמך'}</strong>
-                      <small>{[DOC_TYPE[d?.doc_type], d?.doc_number, from].filter(Boolean).join(' · ')}</small>
-                    </button>
-                  </Peek>
-                  <b className="fin-dassign__sum">{d?.total_amount != null ? money(d.total_amount, d.currency) : '—'}</b>
-                  <span className="fin-dassign__acts">
-                    <button type="button" className="fin-icon-btn" onClick={() => d && go(`/documents/${d.id}`)} aria-label={`פתיחת ${d?.supplier_name || 'המסמך'}`} title="פתיחה במסך מלא"><Icon name="external" size={16} /></button>
-                    {d && can('manage') && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={!!busy} onClick={() => removeDoc(d)} aria-label={`מחיקת ${d.supplier_name || d.file_name || 'המסמך'}`} title="מחיקת המסמך"><Icon name="trash" size={16} /></button>}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-          <div className="fin-dassign__bar">
-            <button type="button" className="fin-btn fin-btn--ghost fin-btn--sm" onClick={() => setChosen(chosen.size === unassigned.length ? new Set() : new Set(unassigned.map((r) => r.document_id)))}>{chosen.size === unassigned.length ? 'ניקוי הבחירה' : 'בחירת הכול'}</button>
-            <select value={bulkBiz} onChange={(e) => setBulkBiz(e.target.value)} aria-label="החברה לשיוך"><option value="">בחרו חברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
-            <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" disabled={!chosen.size || !bulkBiz || !!busy} onClick={() => assign([...chosen], bulkBiz)}>{busy === 'assign' ? 'משייך…' : `שיוך ${chosen.size ? n(chosen.size) : ''} והעברה`}</button>
-          </div>
+          {(() => {
+            const all = unassigned.map((r) => ({ r, d: docOf.get(r.document_id) })).map((x) => ({ ...x, day: dayOfDoc(x.d) })).sort((a, b) => String(b.day).localeCompare(String(a.day)))
+            const months = [...new Set(all.map((x) => String(x.day).slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m)))]
+            const word = waitQ.trim().toLowerCase()
+            const list = all.filter((x) => (!waitMonth || String(x.day).slice(0, 7) === waitMonth) && (!word || [x.d?.supplier_name, x.d?.file_name, x.d?.doc_number, x.d?.email_from, x.d?.total_amount != null ? String(x.d.total_amount) : ''].some((v) => String(v || '').toLowerCase().includes(word))))
+            const ids = list.map((x) => x.r.document_id)
+            const picked = ids.filter((id) => chosen.has(id))
+            const allOn = ids.length > 0 && picked.length === ids.length
+            const removeMany = async () => {
+              const docs = picked.map((id) => docOf.get(id)).filter(Boolean)
+              if (!docs.length || !(await askConfirm({ title: `מחיקת ${docs.length === 1 ? 'מסמך אחד' : `${n(docs.length)} מסמכים`}`, text: 'המסמכים יימחקו מהמערכת, והעותקים שלהם ב-Google Drive יעברו לפח של Drive. אי אפשר לבטל מכאן.', ok: 'מחיקה', danger: true }))) return
+              await act('delete', async () => { for (const d of docs) await api.deleteDocument(d); setChosen(new Set()); await reloadDocs?.(); return `${docs.length === 1 ? 'מסמך אחד נמחק' : `${n(docs.length)} מסמכים נמחקו`}, והעותקים ב-Drive עברו לפח.` })
+            }
+            return (
+              <>
+                <div className="fin-dassign__tools">
+                  <label className="fin-search"><Icon name="search" size={17} /><input type="search" value={waitQ} onChange={(e) => setWaitQ(e.target.value)} placeholder="ספק, מספר מסמך או סכום" aria-label="חיפוש ברשימה" /></label>
+                  <select value={waitMonth} onChange={(e) => setWaitMonth(e.target.value)} aria-label="חודש"><option value="">כל החודשים</option>{months.map((m) => <option key={m} value={m}>{new Date(`${m}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}</option>)}</select>
+                </div>
+                <div className="fin-dassign__bar">
+                  <label className="fin-dassign__all"><input type="checkbox" checked={allOn} onChange={() => setChosen(allOn ? new Set() : new Set(ids))} aria-label="בחירת כל המסמכים שברשימה" /> <span>{picked.length ? `${n(picked.length)} נבחרו` : `בחירת הכול (${n(ids.length)})`}</span></label>
+                  <select value={bulkBiz} onChange={(e) => setBulkBiz(e.target.value)} aria-label="החברה לשיוך"><option value="">בחרו חברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+                  <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" disabled={!picked.length || !bulkBiz || !!busy} onClick={() => assign(picked, bulkBiz)}>{busy === 'assign' ? 'משייך…' : `שיוך ${picked.length ? n(picked.length) : ''} והעברה`}</button>
+                  {can('manage') && <button type="button" className="fin-btn fin-btn--danger fin-btn--sm" disabled={!picked.length || !!busy} onClick={removeMany}><Icon name="trash" size={15} /> מחיקה</button>}
+                </div>
+                {!list.length ? <p className="fin-muted fin-dassign__none">אין מסמכים שמתאימים לחיפוש.</p> : (
+                  <ul>
+                    {list.slice(0, 300).map(({ r, d, day }) => {
+                      const from = d?.email_from ? d.email_from.replace(/<[^>]*>/g, '').replace(/"/g, '').trim() || d.email_from : ''
+                      const on = chosen.has(r.document_id)
+                      return (
+                        <li key={r.document_id} className={`fin-dassign__row ${on ? 'is-on' : ''}`}>
+                          <label className="fin-dassign__check"><input type="checkbox" checked={on} onChange={(e) => setChosen((prev) => { const x = new Set(prev); if (e.target.checked) x.add(r.document_id); else x.delete(r.document_id); return x })} aria-label={`סימון ${d?.supplier_name || d?.file_name || 'מסמך'}`} /></label>
+                          <time className="fin-dassign__date" dateTime={day || undefined}>{day ? <><b>{new Date(`${day}T00:00:00`).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' })}</b><small>{day.slice(0, 4)}</small></> : <small>בלי תאריך</small>}</time>
+                          <Peek doc={d} className="fin-dassign__main">
+                            <button type="button" className="fin-dassign__open" onClick={() => d && go(`/documents/${d.id}`)} title="פתיחת המסמך">
+                              <strong><bdi>{d?.supplier_name || d?.file_name || 'מסמך'}</bdi></strong>
+                              <small>{[DOC_TYPE[d?.doc_type], d?.doc_number, from].filter(Boolean).map((v, i) => <bdi key={i}>{i ? ' · ' : ''}{v}</bdi>)}</small>
+                            </button>
+                          </Peek>
+                          <b className="fin-dassign__sum">{d?.total_amount != null ? money(d.total_amount, d.currency) : '—'}</b>
+                          <span className="fin-dassign__acts">
+                            <button type="button" className="fin-icon-btn" onClick={() => d && go(`/documents/${d.id}`)} aria-label={`פתיחת ${d?.supplier_name || 'המסמך'}`} title="פתיחה במסך מלא"><Icon name="external" size={16} /></button>
+                            {d && can('manage') && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={!!busy} onClick={() => removeDoc(d)} aria-label={`מחיקת ${d.supplier_name || d.file_name || 'המסמך'}`} title="מחיקת המסמך"><Icon name="trash" size={16} /></button>}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </>
+            )
+          })()}
         </section>
       )}
 

@@ -30,7 +30,7 @@ export function privateIp(ip) {
 
 // the address is checked at connect time, so a name that resolves to a public address for the check and to a private
 // one for the request (DNS rebinding) is still refused
-function guardedLookup(host, opts, cb) {
+export function guardedLookup(host, opts, cb) {
   dns.lookup(host, { ...opts, all: true }).then((list) => {
     const bad = list.find((r) => privateIp(r.address))
     if (bad && !allowPrivate()) return cb(Object.assign(new Error('כתובת פנימית לא מותרת'), { code: 'EBLOCKED' }))

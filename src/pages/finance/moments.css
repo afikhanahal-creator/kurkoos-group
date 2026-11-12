@@ -42,3 +42,12 @@
   .fin-x-act:hover, .fin-doccard:hover, .fin-wa__phone:hover, .fin-settings__links button:hover, .fin-tile:hover, .fin-action:hover, .fin-drop.is-over { transform: none; }
   .fin-btn:active:not(:disabled), .fin-x-act:active, .fin-tile:active, .fin-action:active, .fin__upload:active { transform: none; }
 }
+
+/* Lottie: the action's own animation in the toast, and a large one in the middle of the screen for a batch */
+.fin-toast__icon.has-lottie { width: 40px; height: 40px; background: none; padding: 0; margin: -6px 0; }
+.fin-toast__icon.has-lottie svg { width: 100%; height: 100%; display: block; }
+.fin-moment__big { position: fixed; left: 50%; top: 42%; width: 180px; height: 180px; transform: translate(-50%, -50%); pointer-events: none; z-index: 9999; filter: drop-shadow(0 12px 28px rgba(7, 41, 58, 0.18)); }
+.fin-lottie { display: inline-block; line-height: 0; }
+.fin-lottie svg { width: 100%; height: 100%; display: block; }
+.fin-empty__icon.has-lottie { width: 96px; height: 96px; background: none; border: 0; }
+.fin-boot .fin-lottie { margin-top: -4px; }

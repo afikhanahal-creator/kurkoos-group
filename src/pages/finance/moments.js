@@ -32,6 +32,9 @@ const SVG = {
   cloud: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6.2 9.3 4.4 4.4 0 0 0 7 18z"/></svg>',
   alert: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
 }
+// every kind of moment has its own animation; the toast shows it where the still icon used to be
+const LOTTIE = { check: 'approve', plane: 'send', doc: 'upload', down: 'download', cloud: 'save', alert: 'fail', merge: 'merge', trash: 'remove', message: 'message' }
+const lottieInto = (node, name) => { if (!node || !name) return; import('./lottie/play.jsx').then(({ play }) => { if (!node.isConnected) return; node.textContent = ''; node.classList.add('has-lottie'); play(node, name) }).catch(() => {}) }
 const el = (cls, html) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; return d }
 const done = (anim, node) => anim.finished.then(() => node.remove(), () => node.remove())
 
@@ -39,13 +42,14 @@ const done = (anim, node) => anim.finished.then(() => node.remove(), () => node.
 export function toast({ title, sub = '', tone = 'ok', icon, action } = {}) {
   if (typeof document === 'undefined') return
   const r = toastRoot()
-  const t = el(`fin-toast is-${tone}`, `<span class="fin-toast__icon">${SVG[icon || (tone === 'attn' ? 'alert' : 'check')]}</span><span class="fin-toast__text"><strong></strong><small></small></span>`)
+  const t = el(`fin-toast is-${tone}`, `<span class="fin-toast__icon">${SVG[icon || (tone === 'attn' ? 'alert' : 'check')] || SVG.check}</span><span class="fin-toast__text"><strong></strong><small></small></span>`)
   t.querySelector('strong').textContent = title || ''
   t.querySelector('small').textContent = sub
   if (!sub) t.querySelector('small').remove()
   if (action) { const b = document.createElement('button'); b.type = 'button'; b.className = 'fin-toast__act'; b.textContent = action.label; b.onclick = () => { action.onClick(); close() }; t.appendChild(b) }
   const x = document.createElement('button'); x.type = 'button'; x.className = 'fin-toast__x'; x.setAttribute('aria-label', 'סגירה'); x.textContent = '×'; x.onclick = () => close(); t.appendChild(x)
   r.appendChild(t)
+  lottieInto(t.querySelector('.fin-toast__icon'), LOTTIE[icon || (tone === 'attn' ? 'alert' : 'check')])
   while (r.children.length > 3) r.firstChild.remove()
   if (!reduced()) t.animate([{ opacity: 0, transform: 'translateY(12px) scale(0.98)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: EASE_OUT })
   let timer = setTimeout(() => close(), 4500)
@@ -105,7 +109,7 @@ export const moments = {
     const r = rectOf(from) || { left: innerWidth / 2 - 10, top: innerHeight / 2 - 10, width: 20, height: 20 }
     const target = inbox()
     flyTo(r, target?.querySelector('em') || target, { count })
-    toast({ title: count === 1 ? 'המסמך התקבל' : `${count} מסמכים התקבלו`, sub: names.length === 1 ? `${names[0]} · נקרא עכשיו, ויחכה לבדיקה בחשבוניות חדשות` : 'נקראים עכשיו, ויחכו לבדיקה בחשבוניות חדשות', icon: 'doc' })
+    toast({ icon: 'doc', title: count === 1 ? 'המסמך התקבל' : `${count} מסמכים התקבלו`, sub: names.length === 1 ? `${names[0]} · נקרא עכשיו, ויחכה לבדיקה בחשבוניות חדשות` : 'נקראים עכשיו, ויחכו לבדיקה בחשבוניות חדשות', icon: 'doc' })
   },
   download({ from, name = '', count = 1 } = {}) {
     const f = from || document.activeElement
@@ -148,7 +152,7 @@ export const moments = {
         ], { duration: 700, easing: EASE_OUT, delay: 60 * i, fill: 'forwards' }), dot)
       }
     }
-    toast({ title, sub })
+    toast({ title, sub, icon: 'plane' })
   },
   save({ from, title = 'נשמר בענן', sub = '' } = {}) {
     const f = from || document.activeElement
@@ -172,4 +176,14 @@ export const moments = {
     toast({ title, sub })
   },
   fail({ title = 'הפעולה לא הצליחה', sub = '' } = {}) { toast({ title, sub, tone: 'attn' }) },
+  // a large animation in the middle of the screen for the few actions that deserve it (a batch approved, sent, merged)
+  big(name) {
+    if (reduced() || typeof document === 'undefined') return
+    const box = el('fin-moment__big', '')
+    root().appendChild(box)
+    import('./lottie/play.jsx').then(({ play }) => { play(box, name, { onDone: () => done(box.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }), box) }); setTimeout(() => box.remove(), 2600) }).catch(() => box.remove())
+  },
+  merge({ title = 'המסמכים מוזגו', sub = '' } = {}) { this.big('merge'); toast({ title, sub, icon: 'merge' }) },
+  remove({ title = 'נמחק', sub = '' } = {}) { toast({ title, sub, icon: 'trash' }) },
+  message({ title = 'התקבלה הודעה', sub = '' } = {}) { toast({ title, sub, icon: 'message' }) },
 }

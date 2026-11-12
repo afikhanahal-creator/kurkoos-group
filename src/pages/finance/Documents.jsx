@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal } from './format.js'
+import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal, isFresh } from './format.js'
 import { makeZip, saveBlob } from './zip.js'
 import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZone, askConfirm, useAsync } from './ui.jsx'
 import ShareDialog from './ShareDialog.jsx'
@@ -11,6 +11,7 @@ import Thumbnail, { prefetchThumb } from './Thumbnail.jsx'
 import { supplierHistory } from './links.js'
 import DocList from './DocList.jsx'
 import MergeDialog from './MergeDialog.jsx'
+import { useResizableColumns } from './columns.js'
 import { PeekCard } from './Peek.jsx'
 import DocumentPanel from './DocumentPanel.jsx'
 import Select from './Select.jsx'
@@ -100,7 +101,7 @@ export default function Documents({ preset = 'all' }) {
       && (!f.min || Math.abs(Number(d.total_amount) || 0) >= Number(f.min)) && (!f.max || Math.abs(Number(d.total_amount) || 0) <= Number(f.max))
       && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, d.category, nameOf(businesses, d.business_id), nameOf(projects, d.project_id), String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
     const key = SORTS[sort.key]
-    return list.sort((a, b) => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
+    return list.sort((a, b) => (isFresh(b) - isFresh(a)) || (isFresh(a) && isFresh(b) ? String(b.created_at).localeCompare(String(a.created_at)) : 0) || (() => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })())
   }, [documents, P, preset, tab, f, qd, sort, businesses, projects, allocations, dateBy, only])
 
   const total = rows.reduce((s, d) => s + signedTotal(d), 0)
@@ -123,6 +124,7 @@ export default function Documents({ preset = 'all' }) {
     return m
   }, [visible, sort.key])
   const listRef = useRef(null)
+  const colsRef = useResizableColumns(`documents-${preset || 'all'}`)
   // two documents that may be one: picked with the check boxes ("מיזוג"), or by dragging one row onto another
   const [merge, setMerge] = useState(null)
   const [dragId, setDragId] = useState(null)
@@ -377,17 +379,24 @@ export default function Documents({ preset = 'all' }) {
       )}
 
       {monthNow && <div className="fin-monthchip" aria-hidden="true"><span>{monthNow}</span></div>}
+      {/* cards and the list have no table head to tick: the same "all" lives in a bar above them */}
+      {rows.length > 0 && (
+        <div className={`fin-selall ${view === 'table' ? 'fin-selall--phone' : ''}`}>
+          <label><input type="checkbox" checked={allOn} ref={(el) => { if (el) el.indeterminate = !allOn && rows.some((d) => sel.has(d.id)) }} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="בחירת כל המסמכים שברשימה" /> <span>{allOn ? 'ניקוי הבחירה' : `בחירת הכול (${rows.length.toLocaleString('he-IL')})`}</span></label>
+          {sel.size > 0 && !allOn && <small>{sel.size.toLocaleString('he-IL')} נבחרו</small>}
+        </div>
+      )}
       <div className="fin-doclistbox" ref={listRef}>
       {rows.length === 0 ? (
         tab === 'numbers' && documents.length && !only && !q && !activeFilters ? <Empty title="מעולה, אין מספרים לבדוק" icon="check">כל הסכומים במסמכים שממתינים נקראו בביטחון ומסתדרים. מסמך שהמערכת לא בטוחה בסכומים שלו יופיע כאן.</Empty> : <Empty title={documents.length ? 'אין מסמכים שמתאימים' : 'עוד אין מסמכים'} icon="docs" action={!documents.length && can('connect') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/mailboxes')}>חיבור תיבת מייל</button>}>
           {documents.length ? 'נסו להסיר חלק מהמסננים או מהחיפוש.' : 'חברו תיבת מייל כדי שהחשבוניות ייאספו לבד, או העלו קבצים.'}
         </Empty>
       ) : view === 'list' ? (
-        <DocList rowProps={dragProps} rowClass={(d) => [overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
+        <DocList rowProps={dragProps} rowClass={(d) => [isFresh(d) ? 'is-fresh' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} marks={months} docs={visible.map((d) => ({ doc: d }))} onOpen={(d) => go(link(d.id))} businesses={businesses} sel={sel} onToggle={toggle} onSupplier={(d) => supplierHistory(go, d, documents)} />
       ) : view === 'cards' ? (
         <ul className="fin-doccards">
           {visible.map((d) => (
-            <li key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-drop={overId === d.id ? 'שחררו כאן כדי למזג' : undefined} className={['fin-doccard', sel.has(d.id) ? 'is-selected' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : '', dragId && dragId !== d.id ? 'is-dropzone' : ''].filter(Boolean).join(' ')}>
+            <li key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-drop={overId === d.id ? 'שחררו כאן כדי למזג' : undefined} className={['fin-doccard', isFresh(d) ? 'is-fresh' : '', sel.has(d.id) ? 'is-selected' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : '', dragId && dragId !== d.id ? 'is-dropzone' : ''].filter(Boolean).join(' ')}>
               <button type="button" className="fin-doccard__open" onClick={() => go(link(d.id))} aria-label={`פתיחת ${d.supplier_name || d.file_name}`}><Thumbnail doc={d} /></button>
               <label className="fin-doccard__check"><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></label>
               <div className="fin-doccard__body">
@@ -427,7 +436,7 @@ export default function Documents({ preset = 'all' }) {
         </ul>
       ) : (
         <div className="fin-table-wrap">
-          <table className="fin-table fin-table--docs">
+          <table ref={colsRef} className="fin-table fin-table--docs">
             <thead>
               <tr>
                 <th className="fin-table__check"><input type="checkbox" checked={allOn} onChange={() => setSel(allOn ? new Set() : new Set(rows.map((d) => d.id)))} aria-label="סימון הכול" /></th>
@@ -453,7 +462,7 @@ export default function Documents({ preset = 'all' }) {
               {visible.map((d) => {
                 const errs = issuesOf(d).filter((i) => i.level === 'error').length
                 return (
-                  <tr key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={[d.id === id ? 'is-current' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
+                  <tr key={d.id} {...dragProps(d)} data-month={months.get(d.id)} data-mime={d.file_mime || undefined} className={[d.id === id ? 'is-current' : '', isFresh(d) ? 'is-fresh' : '', overId === d.id ? 'is-droptarget' : '', dragId === d.id ? 'is-dragging' : ''].filter(Boolean).join(' ')} onClick={() => go(link(d.id))} onMouseEnter={() => { if (d.file_path && window.matchMedia('(hover: hover)').matches) prefetchThumb(d) }}>
                     <td className="fin-table__check" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name}`} /></td>
                     <td className="fin-td-main">
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
@@ -465,7 +474,7 @@ export default function Documents({ preset = 'all' }) {
                     <td className="fin-td-status"><StatusPill status={d.status} /></td>
                     <td className="fin-col-md" data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td className="fin-col-md fin-col-mid fin-ltr" data-label="מספר">{d.doc_number || '—'}</td>
-                    <td data-label="תאריך">{date(docDate(d))}</td>
+                    <td data-label="תאריך" className="fin-td-date">{date(docDate(d))}</td>
                     <td className="fin-col-lg" data-label="חברה">{nameOf(businesses, d.business_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="פרויקט">{nameOf(projects, d.project_id) || <span className="fin-muted">—</span>}</td>
                     <td className="fin-col-lg" data-label="קטגוריה">{d.category || '—'}</td>

@@ -2207,7 +2207,10 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   // an employee may not delete; the answer says so and nothing changes
   const emp = await api(tokE, { action: 'documents-delete', ids: [Y] })
   // the deletion itself, from the receipts screen
-  await p2.locator('button[aria-label="מחיקת ZZ-DELSYNC-X"]').first().click(); await p2.locator('.fin-modal .fin-btn--danger').click()
+  // (through the large view that the receipt's name opens: the receipt is shown, and deleted from there)
+  await p2.locator('button[aria-label="הצגת ZZ-DELSYNC-X"]').first().click(); await p2.waitForSelector('.fin-receipts__view')
+  const viewShown = await p2.locator('.fin-receipts__view .fin-viewer, .fin-receipts__view .fin-error').count()
+  await p2.locator('.fin-modal__foot .fin-btn--danger').first().click(); await p2.waitForTimeout(400); await p2.locator('.fin-modal .fin-btn--danger').last().click()
   await p2.waitForFunction(() => !document.body.innerText.includes('ZZ-DELSYNC-X'), null, { timeout: 15000 }).catch(() => {})
   const goneHere = !(await has(p2, 'ZZ-DELSYNC-X'))
   // the other tab was not touched: the list there drops the document by itself
@@ -2242,8 +2245,8 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   await p2.close()
   sql(`delete from fin_documents where id in ('${Y}','${Z}')`)
   record('DELSYNC', 'מחיקה אחת לכל המערכת', 'מסמך שנמחק במסך אחד נעלם מכל מסך אחר (גם בלשונית פתוחה אחרת, בלי רענון), מבסיס הנתונים, מהאחסון ומ-Drive; מחיקה חוזרת מצליחה ולא משנה דבר; עובד לא מוחק; מסמך בארכיון מופיע רק בלשונית הארכיון; קובץ שנשאר בלי מסמך מנוקה, וקובץ של מסמך קיים לא נוגעים בו',
-    `העלאות: ${up.join('/')}; לפני: ${JSON.stringify(seen)}, בית Z: ${homeZ}, ארכיון Z: ${archiveZ}; עובד: ${emp.status}; נעלם כאן: ${goneHere}, בלשונית השנייה: ${goneThere}; אחרי רענון: ${JSON.stringify(afterReload)}; בסיס נתונים: ${db}; קבצים שנשארו: ${filesLeft}; שוב: ${again.status}/${JSON.stringify((again.data.results || []).map((r) => [r.ok, !!r.already]))}; מסמכים: ${total0}→${total1}; ניקוי: יבש ${dry.data.orphans}/${dry.data.removed}, אמיתי ${swept.data.removed}, יתום נשאר ${orphanLeft}, קבצי מסמכים ${usedBefore}→${usedAfter}; Drive: שמירה חוזרת ${saveAgain.data.results?.[0]?.ok}/${saveAgain.data.results?.[0]?.already}, עותקים ${copies0}→${copies1}, ${delD.data.results?.[0]?.drive}, שורות ${rowsD}`,
-    up.every(Boolean) && seen.docsX && !seen.docsZ && seen.recX && !seen.recZ && !homeZ && archiveZ && emp.status === 403 && goneHere && goneThere && !afterReload.x && afterReload.y
+    `העלאות: ${up.join('/')}; לפני: ${JSON.stringify(seen)}, בית Z: ${homeZ}, ארכיון Z: ${archiveZ}; עובד: ${emp.status}; תצוגה גדולה: ${viewShown}; נעלם כאן: ${goneHere}, בלשונית השנייה: ${goneThere}; אחרי רענון: ${JSON.stringify(afterReload)}; בסיס נתונים: ${db}; קבצים שנשארו: ${filesLeft}; שוב: ${again.status}/${JSON.stringify((again.data.results || []).map((r) => [r.ok, !!r.already]))}; מסמכים: ${total0}→${total1}; ניקוי: יבש ${dry.data.orphans}/${dry.data.removed}, אמיתי ${swept.data.removed}, יתום נשאר ${orphanLeft}, קבצי מסמכים ${usedBefore}→${usedAfter}; Drive: שמירה חוזרת ${saveAgain.data.results?.[0]?.ok}/${saveAgain.data.results?.[0]?.already}, עותקים ${copies0}→${copies1}, ${delD.data.results?.[0]?.drive}, שורות ${rowsD}`,
+    up.every(Boolean) && seen.docsX && !seen.docsZ && seen.recX && !seen.recZ && !homeZ && archiveZ && emp.status === 403 && viewShown === 1 && goneHere && goneThere && !afterReload.x && afterReload.y
     && db === '0|0|0|null|1|1' && filesLeft === 0 && again.status === 200 && (again.data.results || []).every((r) => r.ok && r.already) && total1 === total0 - 1
     && dry.data.orphans >= 1 && dry.data.removed === 0 && swept.data.removed >= 1 && orphanLeft === 0 && usedBefore === usedAfter
     && !!D && saveAgain.data.results?.[0]?.ok === true && saveAgain.data.results?.[0]?.already === true && copies0 === 1 && copies1 === 0 && delD.data.results?.[0]?.drive === 'trashed' && rowsD === '0|0', [delShot])

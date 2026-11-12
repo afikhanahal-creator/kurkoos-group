@@ -83,6 +83,8 @@ const ROLES = {
   'whatsapp-setup': ['admin'],
   'whatsapp-inbox-delete': ['admin', 'finance_manager'],
   'drive-forget': ['admin', 'finance_manager', 'employee'],
+  'documents-delete': ['admin', 'finance_manager'],
+  'documents-sweep': ['admin'],
   'linked-links': ['admin', 'finance_manager', 'employee'],
   'linked-fetch': ['admin', 'finance_manager', 'employee'],
   'mail-file': ['admin', 'finance_manager', 'employee'],
@@ -415,6 +417,17 @@ export default async function handler(req, res) {
         res.status(200).json(await archive.exclude({ targetId: String(body.target_id || ''), ids, excluded: body.excluded !== false, user }))
         return
       }
+      case 'documents-delete': {
+        // the one deletion (server/finance/remove.js): the document, its files, its copy in Drive, and the check after
+        const { removeDocuments } = await import('./finance/remove.js')
+        res.status(200).json(await removeDocuments({ ids: body.ids, user }))
+        return
+      }
+      case 'documents-sweep': {
+        const { sweep } = await import('./finance/remove.js')
+        res.status(200).json(await sweep({ dry: body.dry === true, user }))
+        return
+      }
       case 'drive-forget': {
         // before a document is deleted: its copy in Drive goes to the Drive trash. The same people who may delete it.
         const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
@@ -564,16 +577,16 @@ export default async function handler(req, res) {
         return
       }
       case 'not-relevant': {
-        // a person says a document the conductor was unsure about is not an invoice: it leaves the documents, its file is
-        // removed, and it joins the skipped list so the same file is never read or imported again
-        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
-        if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        // a person says a document the conductor was unsure about is not an invoice: it is deleted like any other
+        // document (remove.js), and the note it leaves keeps the same file from being read or imported again
+        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=id,status,file_name,email_from`)
+        if (!doc) { res.status(200).json({ ok: true, already: true }); return }
         if (['approved', 'sent'].includes(doc.status)) { res.status(409).json({ error: 'מסמך מאושר לא נמחק כאן' }); return }
-        await insert('fin_skipped', { source: doc.source, mailbox_id: doc.mailbox_id, email_subject: doc.email_subject, email_from: doc.email_from, file_name: doc.file_name, file_hash: doc.file_hash, document_class: 'other', confidence: 1, reason: `סומן כלא רלוונטי ע״י ${user.email}` }, 'return=minimal').catch(() => {})
-        await sb(`fin_documents?id=eq.${doc.id}`, { method: 'DELETE', prefer: 'return=minimal' })
-        if (doc.file_path) await removeFile(doc.file_path).catch(() => {})
+        const { removeDocuments } = await import('./finance/remove.js')
+        const r = (await removeDocuments({ ids: [doc.id], user, reason: 'not_relevant' })).results[0]
+        if (!r?.ok) { res.status(409).json({ error: r?.error || 'המחיקה לא הושלמה' }); return }
         await audit('document', doc.id, 'not_relevant', { file_name: doc.file_name, email_from: doc.email_from }, user)
-        res.status(200).json({ ok: true })
+        res.status(200).json({ ok: true, pending: r.pending || [] })
         return
       }
       case 'merge-docs': {

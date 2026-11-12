@@ -2180,6 +2180,75 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     !!base && viaService.duplicate_state === 'suspected' && viaService.duplicate_of === base.id && viaSupplier.duplicate_state == null)
 }
 
+// DELSYNC: one deletion for the whole system. A document deleted on one screen leaves every other screen (also in another
+// open tab, without a refresh), the database, storage and Drive; the deletion is checked, repeatable and touches nothing
+// else. A document moved to the archive is on no screen but the archive tab. What a deletion left in storage is swept.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const put = (path) => fetch(`${SB}/storage/v1/object/finance-docs/${path}`, { method: 'POST', headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/pdf', 'x-upsert': 'true' }, body: Buffer.from('%PDF-1.4 delsync') }).then((r) => r.ok)
+  const objects = (like) => Number(sql(`select count(*) from storage.objects where bucket_id='finance-docs' and name like '${like}'`))
+  const stamp = Date.now().toString(36)
+  const fx = `e2e/delsync-${stamp}-x.pdf`; const fa = `e2e/delsync-${stamp}-att.pdf`; const fo = `e2e/delsync-${stamp}-orphan.pdf`
+  const up = [await put(fx), await put(fa), await put(fo)]
+  const one = (name, extra = {}) => sql(`insert into fin_documents (status, source, supplier_name, doc_type, currency, total_amount, issue_date, ${Object.keys(extra).join(', ') || 'notes'}) values ('review','upload','${name}','receipt','ILS', 77, current_date, ${Object.values(extra).join(', ') || "'-'"}) returning id`).split('\n')[0]
+  const X = one('ZZ-DELSYNC-X', { file_path: `'${fx}'`, file_name: "'x.pdf'", file_mime: "'application/pdf'", file_hash: `'delsync-${stamp}'` })
+  const Y = one('ZZ-DELSYNC-Y', { duplicate_of: `'${X}'` })
+  const Z = one('ZZ-DELSYNC-Z'); sql(`update fin_documents set status='archived', archived_at=now() where id='${Z}'`)
+  sql(`insert into fin_document_attachments (document_id, kind, file_path, file_name) values ('${X}','file','${fa}','att.pdf')`)
+  const total0 = Number(sql('select count(*) from fin_documents'))
+  // two open tabs of the same person: the documents list, and the receipts screen
+  const has = async (p, name) => (await p.locator(`text=${name}`).count()) > 0
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-DELSYNC').catch(() => {}); await page.waitForTimeout(900)
+  const p2 = await ctx.newPage(); await go('/receipts', p2)
+  const seen = { docsX: await has(page, 'ZZ-DELSYNC-X'), docsZ: await has(page, 'ZZ-DELSYNC-Z'), recX: await has(p2, 'ZZ-DELSYNC-X'), recZ: await has(p2, 'ZZ-DELSYNC-Z') }
+  await go('/', p2); const homeZ = await has(p2, 'ZZ-DELSYNC-Z')
+  await go('/documents?status=archived', p2); const archiveZ = await has(p2, 'ZZ-DELSYNC-Z')
+  await go('/receipts', p2)
+  // an employee may not delete; the answer says so and nothing changes
+  const emp = await api(tokE, { action: 'documents-delete', ids: [Y] })
+  // the deletion itself, from the receipts screen
+  await p2.locator('button[aria-label="מחיקת ZZ-DELSYNC-X"]').first().click(); await p2.locator('.fin-modal .fin-btn--danger').click()
+  await p2.waitForFunction(() => !document.body.innerText.includes('ZZ-DELSYNC-X'), null, { timeout: 15000 }).catch(() => {})
+  const goneHere = !(await has(p2, 'ZZ-DELSYNC-X'))
+  // the other tab was not touched: the list there drops the document by itself
+  await page.waitForFunction(() => !document.body.innerText.includes('ZZ-DELSYNC-X'), null, { timeout: 8000 }).catch(() => {})
+  const goneThere = !(await has(page, 'ZZ-DELSYNC-X'))
+  await page.reload(); await page.waitForLoadState('networkidle').catch(() => {}); await page.fill('input[type=search], .fin-search input', 'ZZ-DELSYNC').catch(() => {}); await page.waitForTimeout(900)
+  const afterReload = { x: await has(page, 'ZZ-DELSYNC-X'), y: await has(page, 'ZZ-DELSYNC-Y') }
+  const delShot = await shot('128-delete-everywhere')
+  const db = sql(`select (select count(*) from fin_documents where id='${X}')||'|'||(select count(*) from fin_document_attachments where document_id='${X}')||'|'||(select count(*) from fin_drive_files where document_id='${X}')||'|'||(select coalesce(duplicate_of::text,'null') from fin_documents where id='${Y}')||'|'||(select count(*) from fin_skipped where file_hash='delsync-${stamp}' and document_class='deleted')||'|'||(select count(*) from fin_audit where entity_id='${X}' and action='deleted_everywhere')`)
+  const filesLeft = objects(`e2e/delsync-${stamp}-x.pdf`) + objects(`e2e/delsync-${stamp}-att.pdf`)
+  // again, and with an id that never existed: a success that changes nothing
+  const again = await api(tok, { action: 'documents-delete', ids: [X, '00000000-0000-4000-8000-000000000001'] })
+  const total1 = Number(sql('select count(*) from fin_documents'))
+  // the sweep: a file no row points at goes (once it is old enough); nothing a row points at is touched
+  sql(`update storage.objects set created_at = now() - interval '3 days' where bucket_id='finance-docs' and name='${fo}'`)
+  const usedBefore = Number(sql("select count(*) from storage.objects o where bucket_id='finance-docs' and exists (select 1 from fin_documents d where d.file_path=o.name)"))
+  const dry = await api(tok, { action: 'documents-sweep', dry: true })
+  const swept = await api(tok, { action: 'documents-sweep' })
+  const usedAfter = Number(sql("select count(*) from storage.objects o where bucket_id='finance-docs' and exists (select 1 from fin_documents d where d.file_path=o.name)"))
+  const orphanLeft = objects(fo)
+  // Drive: a saved document is saved once, and its copy goes when the document is deleted
+  const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
+  const liveOf = async (id) => (await items()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
+  const tgt = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  let D = ''
+  for (let i = 0; i < 12 && !D; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await api(tok, { action: 'drive-run', target_id: tgt }); const live = new Set((await items()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd)); D = sql(`select coalesce(string_agg(f.document_id::text, ','), '') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${tgt}' and f.status='verified' and d.status='review'`).split(',').filter((id) => live.has(id))[0] || '' }
+  const saveAgain = D ? await api(tok, { action: 'cloud-save', ids: [D] }) : { data: {} }
+  const copies0 = D ? await liveOf(D) : -1
+  const delD = D ? await api(tok, { action: 'documents-delete', ids: [D] }) : { data: {} }
+  const copies1 = D ? await liveOf(D) : -1
+  const rowsD = D ? sql(`select (select count(*) from fin_documents where id='${D}')||'|'||(select count(*) from fin_drive_files where document_id='${D}')`) : ''
+  await p2.close()
+  sql(`delete from fin_documents where id in ('${Y}','${Z}')`)
+  record('DELSYNC', 'מחיקה אחת לכל המערכת', 'מסמך שנמחק במסך אחד נעלם מכל מסך אחר (גם בלשונית פתוחה אחרת, בלי רענון), מבסיס הנתונים, מהאחסון ומ-Drive; מחיקה חוזרת מצליחה ולא משנה דבר; עובד לא מוחק; מסמך בארכיון מופיע רק בלשונית הארכיון; קובץ שנשאר בלי מסמך מנוקה, וקובץ של מסמך קיים לא נוגעים בו',
+    `העלאות: ${up.join('/')}; לפני: ${JSON.stringify(seen)}, בית Z: ${homeZ}, ארכיון Z: ${archiveZ}; עובד: ${emp.status}; נעלם כאן: ${goneHere}, בלשונית השנייה: ${goneThere}; אחרי רענון: ${JSON.stringify(afterReload)}; בסיס נתונים: ${db}; קבצים שנשארו: ${filesLeft}; שוב: ${again.status}/${JSON.stringify((again.data.results || []).map((r) => [r.ok, !!r.already]))}; מסמכים: ${total0}→${total1}; ניקוי: יבש ${dry.data.orphans}/${dry.data.removed}, אמיתי ${swept.data.removed}, יתום נשאר ${orphanLeft}, קבצי מסמכים ${usedBefore}→${usedAfter}; Drive: שמירה חוזרת ${saveAgain.data.results?.[0]?.ok}/${saveAgain.data.results?.[0]?.already}, עותקים ${copies0}→${copies1}, ${delD.data.results?.[0]?.drive}, שורות ${rowsD}`,
+    up.every(Boolean) && seen.docsX && !seen.docsZ && seen.recX && !seen.recZ && !homeZ && archiveZ && emp.status === 403 && goneHere && goneThere && !afterReload.x && afterReload.y
+    && db === '0|0|0|null|1|1' && filesLeft === 0 && again.status === 200 && (again.data.results || []).every((r) => r.ok && r.already) && total1 === total0 - 1
+    && dry.data.orphans >= 1 && dry.data.removed === 0 && swept.data.removed >= 1 && orphanLeft === 0 && usedBefore === usedAfter
+    && !!D && saveAgain.data.results?.[0]?.ok === true && saveAgain.data.results?.[0]?.already === true && copies0 === 1 && copies1 === 0 && delD.data.results?.[0]?.drive === 'trashed' && rowsD === '0|0', [delShot])
+}
+
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)
 fs.writeFileSync(`${OUT}/results.json`, JSON.stringify({ at: new Date().toISOString(), results, extra: { companiesShot, projectsShot, agentsShot, autoShot, dataShot, settingsShot } }, null, 1))
 console.log(`\n${results.filter((r) => r.pass).length}/${results.length} passed`)

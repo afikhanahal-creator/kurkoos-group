@@ -139,6 +139,8 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
   const [chosen, setChosen] = useState(() => new Set())
   const loadTree = useCallback(async () => { try { const r = await api.callServer('drive-tree', { target_id: t.id }); setRows((r.rows || []).map((x) => ({ ...x, target_id: t.id }))) } catch (e) { setErr(e.message) } }, [t.id])
   useEffect(() => { loadTree() }, [loadTree, t.counts?.verified])
+  // a document deleted anywhere (this screen, another screen, another tab) leaves the archive's lists too
+  useEffect(() => api.onDocsRemoved((ids) => { const gone = new Set(ids); setRows((r) => r && r.filter((x) => !gone.has(x.document_id))); setChosen((c) => { const x = new Set(c); for (const id of ids) x.delete(id); return x }); loadTree() }), [loadTree])
   const c = t.counts || {}
   const shown = useMemo(() => {
     const qq = query.trim().toLowerCase()
@@ -387,7 +389,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
 }
 
 export default function Drive() {
-  const { documents, businesses, can, go, reload } = useFinance()
+  const { allDocuments: documents, businesses, can, go, reload } = useFinance()
   const [params, setParams] = useSearchParams()
   const [data, setData] = useState(null)
   const [err, setErr] = useState('')
@@ -397,6 +399,7 @@ export default function Drive() {
   const pumping = useRef(false)
   const load = useCallback(async () => { try { const r = await api.callServer('drive-overview'); if (alive.current) setData(r) } catch (e) { if (alive.current) setErr(e.message) } }, [])
   useEffect(() => { alive.current = true; load(); return () => { alive.current = false } }, [load])
+  useEffect(() => api.onDocsRemoved(() => { load() }), [load])
   useEffect(() => {
     const ok = params.get('connected'); const bad = params.get('error')
     if (ok) setMsg(`Google Drive של ${ok} חובר. הסוכן בודק עכשיו כל מסמך מול Drive: מה שחסר משוחזר, ושום דבר לא עולה פעמיים.`)

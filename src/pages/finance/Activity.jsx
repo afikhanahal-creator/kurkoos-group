@@ -38,7 +38,7 @@ const kindOf = (a) => {
   return 'review'
 }
 const who = (e) => (!e || e === 'agent' ? 'סוכן AI' : e.split('@')[0])
-const SKIP_LABEL = { quote: 'הצעת מחיר', purchase_order: 'הזמנת רכש', contract: 'חוזה', legal: 'מסמך משפטי', marketing: 'פרסום', correspondence: 'התכתבות', bank_statement: 'דף חשבון', personal: 'אישי', other: 'אחר' }
+const SKIP_LABEL = { quote: 'הצעת מחיר', purchase_order: 'הזמנת רכש', contract: 'חוזה', legal: 'מסמך משפטי', marketing: 'פרסום', correspondence: 'התכתבות', bank_statement: 'דף חשבון', personal: 'אישי', other: 'אחר', deleted: 'נמחק מהמערכת' }
 
 export default function Activity() {
   const { documents, go } = useFinance()

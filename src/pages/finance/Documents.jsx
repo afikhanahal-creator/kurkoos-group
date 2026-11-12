@@ -59,7 +59,7 @@ const EMPTY_F = { from: '', to: '', supplier: '', biz: '', project: '', cat: '',
 const VIEW_KEY = 'fin-doc-view'
 
 export default function Documents({ preset = 'all' }) {
-  const { documents, businesses, projects, categories, suppliers, mailboxes, allocations, role, can, reload, patchDoc, go } = useFinance()
+  const { allDocuments: documents, businesses, projects, categories, suppliers, mailboxes, allocations, role, can, reload, patchDoc, go } = useFinance()
   const { id } = useParams()
   const [params, setParams] = useSearchParams()
   const P = PRESET[preset]
@@ -197,9 +197,9 @@ export default function Documents({ preset = 'all' }) {
     const list = picked.filter(canDelete); const left = picked.length - list.length
     if (!list.length) return
     if (!(await askConfirm({ title: 'מחיקת מסמכים', text: `למחוק ${list.length === 1 ? 'מסמך אחד' : `${list.length} מסמכים`} יחד עם הקבצים שלהם?${left ? ` ${left} מאושרים או שנשלחו יישארו.` : ''} אי אפשר לבטל, והפעולה נרשמת ביומן.`, ok: 'מחיקה', danger: true }))) return
-    setBusy('delete'); let ok = 0; let firstErr = ''
-    for (const d of list) { try { await api.deleteDocument(d); ok++ } catch (e) { firstErr ||= e.message } }
-    setBusy(''); setSel(new Set()); setNote(firstErr ? `נמחקו ${ok} מתוך ${list.length}: ${firstErr}` : ok === 1 ? 'המסמך נמחק' : `${ok} מסמכים נמחקו`); await reload()
+    setBusy('delete'); let ok = 0; let firstErr = ''; let pending = 0
+    try { const r = await api.deleteDocuments(list); ok = r.deleted.length; firstErr = r.failed[0]?.error || ''; pending = r.pending } catch (e) { firstErr = e.message }
+    setBusy(''); setSel(new Set()); setNote(firstErr ? `נמחקו ${ok} מתוך ${list.length}: ${firstErr}` : `${ok === 1 ? 'המסמך נמחק' : `${ok} מסמכים נמחקו`} מכל המסכים${pending ? '. העותק ב-Drive יוסר בבדיקה הבאה מול Drive' : ''}`); await reload()
   }
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. הפעולה נרשמת בהיסטוריה.`, ok: 'מחיקה', danger: true }))) return

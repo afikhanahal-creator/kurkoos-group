@@ -209,6 +209,9 @@ export async function runDaily(origin) {
   // the archive's night check: everything that should be in Drive is there, or a person sees what is missing
   try { const { reconcile } = await import('./archive.js'); out.push({ key: 'drive_reconcile', result: await reconcile({ started, trigger: 'night' }) }) } catch (e) { out.push({ key: 'drive_reconcile', error: String(e.message || e).slice(0, 200) }) }
 
+  // what deletions left behind in storage (a file whose document is gone) is removed once a night
+  try { const { sweep } = await import('./remove.js'); out.push({ key: 'storage_sweep', result: await sweep({}) }) } catch (e) { out.push({ key: 'storage_sweep', error: String(e.message || e).slice(0, 200) }) }
+
   out.push(await automation('monthly_package', async () => {
     const prev = new Date(); prev.setUTCDate(1); prev.setUTCMonth(prev.getUTCMonth() - 1)
     const period = prev.toISOString().slice(0, 7)

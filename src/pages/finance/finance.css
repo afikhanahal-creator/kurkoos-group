@@ -3786,3 +3786,21 @@ html:has(.fin), html:has(.fin) body, html:has(.fin-login), html:has(.fin-login) 
 @media (prefers-reduced-motion: reduce) { .fin-dm__skel { animation: none; } }
 .fin-dm__below { margin: 22px 0 4px; font-size: var(--t-base); color: var(--ink); }
 @media (max-width: 767px) { .fin-dm__cos, .fin-dm__sidehead { display: none; } }
+
+/* the document over the whole screen (phones, where the browser has no full screen for a page) */
+.fin-viewer.is-max { position: fixed; inset: 0; z-index: 300; height: auto; background: var(--wash); padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); animation: fin-max-in 0.18s ease-out; }
+@keyframes fin-max-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+.fin-viewer.is-max .fin-viewer__scroll { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.fin-viewer__close { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom)); inset-inline-start: 50%; transform: translateX(50%); z-index: var(--z-raised); min-height: 46px; padding-inline: 18px; border-radius: 999px; background: var(--ink); color: #fff; border-color: var(--ink); box-shadow: var(--float); white-space: nowrap; }
+.fin-viewer--away { display: none; }
+@media (max-width: 700px) {
+  /* in the document's own screen the download and print buttons are in its header: the tools here are the view's own */
+  .fin-panel .fin-viewer__bar .fin-viewer__dl, .fin-panel .fin-viewer__bar .fin-viewer__print { display: none; }
+  .fin-viewer__bar .fin-viewer__full { background: var(--ocean-wash); color: var(--ocean-2); }
+}
+@media (prefers-reduced-motion: reduce) { .fin-viewer.is-max { animation: none; } }
+/* full screen: the tools sit above the document in one line, not over its first lines */
+.fin-viewer.is-max .fin-viewer__bar { position: static; transform: none; inset: auto; align-self: center; margin: 8px 6px 0; flex-wrap: nowrap; max-width: calc(100% - 12px); }
+@media (max-width: 700px) { .fin .fin-viewer.is-max .fin-viewer__bar .fin-icon-btn { width: 40px; height: 44px; } .fin-viewer.is-max .fin-viewer__bar { width: auto; justify-content: space-between; } }
+.fin-viewer.is-max .fin-viewer__scroll { padding-top: 12px; }
+@media (max-width: 379px) { .fin-viewer.is-max .fin-viewer__bar { flex-wrap: wrap; justify-content: center; } }

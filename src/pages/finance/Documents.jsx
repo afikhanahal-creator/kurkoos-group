@@ -333,7 +333,7 @@ export default function Documents({ preset = 'all' }) {
               { label: busy === 'zip' ? 'מכין…' : 'הורדת הקבצים (ZIP)', icon: 'download', onClick: downloadOriginals },
               { label: 'קובץ CSV', icon: 'download', onClick: () => sheet('csv') },
               can('upload') && { label: 'שליחה במייל', icon: 'mail', onClick: () => setSharing({ docs: picked, mode: 'email' }) },
-              picked.some(canDelete) && { label: 'מחיקת המסומנים (לא רלוונטיים)', icon: 'trash', danger: true, onClick: removePicked },
+              picked.some(canDelete) && { label: picked.length === 1 ? 'מחיקת המסמך שנבחר' : `מחיקת ${picked.length} המסמכים שנבחרו`, icon: 'trash', danger: true, onClick: removePicked },
               can('export') && { label: 'ייצוא לתוכנה או למערכת חיצונית', icon: 'plug', onClick: exportSelected },
               edit && { label: 'דחייה', icon: 'close', onClick: () => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status)) },
               edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },

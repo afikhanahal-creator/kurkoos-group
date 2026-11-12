@@ -203,7 +203,7 @@ export default function Documents({ preset = 'all' }) {
   }
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. הפעולה נרשמת בהיסטוריה.`, ok: 'מחיקה', danger: true }))) return
-    try { await api.deleteDocument(d); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
+    try { await api.deleteDocument(d); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
   }
   const downloadOriginals = async () => {
     setBusy('zip')
@@ -508,7 +508,7 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
       {dragId && <p className="fin-draghint" role="status"><Icon name="copy" size={16} /> גוררים את "{byId(dragId)?.supplier_name || byId(dragId)?.file_name || 'המסמך'}": משחררים על מסמך אחר כדי למזג. לפני המיזוג תתבקשו לאשר.</p>}
-      {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); setNote(text); await reload() }} />}
+      {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); if (/מוזגו/.test(text)) moments.merge({ title: 'המסמכים מוזגו', sub: text }); else if (/נמחק/.test(text)) moments.remove({ title: text }); setNote(text); await reload() }} />}
       {confirm && (
         <Modal title="אישור פעולה" onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
           <p>הפעולה תחול על {confirm.count} מסמכים{confirm.skipped ? ` (${confirm.skipped} דולגו כי הם לא מתאימים לה)` : ''}. כל שינוי נרשם ביומן.</p>

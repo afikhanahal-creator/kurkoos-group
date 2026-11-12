@@ -1,3 +1,4 @@
+import { useTip, Tip } from './ReportCharts.jsx'
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
@@ -29,16 +30,19 @@ function Trend({ items }) {
   const keep = Math.max(6, first < 0 ? 6 : 12 - first)
   const months = all.slice(-keep); const vals = sums.slice(-keep)
   const max = Math.max(...vals, 1)
+  const cnt = months.map((m) => items.filter(({ doc }) => counts(doc) && period(doc) === m).length)
+  const [tip, show, hide] = useTip(true)
   return (
     <figure className="fin-trend2" aria-label={`הוצאות לפי חודש, ${keep} חודשים`}>
       <div className="fin-trend2__bars" style={{ gridTemplateColumns: `repeat(${keep}, minmax(0, 1fr))` }}>
         {vals.map((v, i) => (
-          <div key={months[i]} className="fin-trend2__col" title={`${monthLabel(months[i])}: ${money(v)}`}>
+          <div key={months[i]} className="fin-trend2__col" tabIndex={0} onMouseEnter={show(i)} onMouseLeave={hide} onFocus={show(i)} onBlur={hide} aria-label={`${monthLabel(months[i])}: ${money(v)}, ${cnt[i]} מסמכים`}>
             <span className="fin-trend2__val">{v ? money(v).replace(/\.\d\d/, '') : ''}</span>
             <span className={`fin-trend2__bar ${i === keep - 1 ? 'is-now' : ''}`} style={{ height: `${Math.max(v ? 4 : 1, (v / max) * 100)}%` }} />
             <span className="fin-trend2__m">{new Date(`${months[i]}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'short' })}</span>
           </div>
         ))}
+        {tip && <Tip tip={tip} title={monthLabel(months[tip.key])} rows={[['מסמכים', cnt[tip.key].toLocaleString('he-IL')], ['סה״כ', money(vals[tip.key])], ...(cnt[tip.key] ? [['ממוצע למסמך', money(vals[tip.key] / cnt[tip.key])]] : [])]} />}
       </div>
     </figure>
   )
@@ -49,6 +53,7 @@ function Breakdown({ title, rows, onPick }) {
   const total = rows.reduce((a, r) => a + Math.abs(r.value), 0) || 1
   const [all, setAll] = useState(false)
   const shown = all ? rows : rows.slice(0, 6)
+  const [rtip, rshow, rhide] = useTip(false)
   return (
     <section className="fin-panel-block fin-rank">
       <header className="fin-rank__head"><h3>{title}</h3>{rows.length > 0 && <small>{rows.length === 1 ? 'פריט אחד' : `${rows.length} פריטים`}</small>}</header>
@@ -58,7 +63,7 @@ function Breakdown({ title, rows, onPick }) {
             const share = Math.round((Math.abs(r.value) / total) * 100)
             return (
               <li key={r.key}>
-                <button type="button" className="fin-rank__row" onClick={r.id && onPick ? () => onPick(r.id) : undefined} disabled={!r.id || !onPick}>
+                <button type="button" className="fin-rank__row" onMouseEnter={rshow(i)} onMouseLeave={rhide} onFocus={rshow(i)} onBlur={rhide} onClick={r.id && onPick ? () => onPick(r.id) : undefined} aria-disabled={!r.id || !onPick}>
                   <span className="fin-rank__n" aria-hidden="true">{i + 1}</span>
                   <span className="fin-rank__name" title={r.name}>{r.name}</span>
                   <span className="fin-rank__val">{money(r.value)}</span>
@@ -70,6 +75,7 @@ function Breakdown({ title, rows, onPick }) {
           })}
         </ol>
       )}
+      {rtip && shown[rtip.key] && <Tip tip={rtip} title={shown[rtip.key].name} rows={[['סה״כ', money(shown[rtip.key].value)], ['חלק מהסך', `${Math.round((Math.abs(shown[rtip.key].value) / total) * 100)}%`], ...(shown[rtip.key].count != null ? [['מסמכים', String(shown[rtip.key].count)]] : []), ['מקום', `${rtip.key + 1} מתוך ${rows.length}`]]} />}
       {rows.length > 6 && <button type="button" className="fin-link fin-rank__more" onClick={() => setAll((v) => !v)}>{all ? 'הצגת 6 הראשונים' : `הצגת כל ה-${rows.length}`}</button>}
     </section>
   )

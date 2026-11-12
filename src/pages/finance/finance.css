@@ -3426,3 +3426,9 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
 .fin-linked__acts .fin-btn { min-height: 34px; flex: none; cursor: pointer; }
 .fin-linked__msg { margin: 0; font-size: var(--t-sm); }
 @media (max-width: 700px) { .fin-linked { margin: 0; padding: 10px 12px; } .fin-linked__acts .fin-btn { flex: 1 1 calc(50% - 6px); min-height: 44px; justify-content: center; } }
+
+/* carrying a column to another place: the head lifts, the guide line shows where it will land */
+.fin-table--resizable thead th { cursor: grab; }
+.fin-table--resizable thead th.fin-table__check { cursor: default; }
+.fin-table--resizable thead th.is-moving { background: var(--ocean-wash); color: var(--ink); box-shadow: 0 6px 18px rgba(7, 41, 58, 0.18); opacity: 0.92; }
+body.fin-col-moving { cursor: grabbing !important; user-select: none; }

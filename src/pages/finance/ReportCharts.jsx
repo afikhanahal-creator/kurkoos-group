@@ -12,7 +12,7 @@ const compact = (v) => {
 const docsWord = (c) => (c === 1 ? 'מסמך אחד' : `${c.toLocaleString('he-IL')} מסמכים`)
 
 /* the floating card: placed on the page (not inside the scrolling chart), so nothing clips it */
-function useTip(side) {
+export function useTip(side) {
   const [tip, setTip] = useState(null)
   // beside a column (whichever side has room), under a row (above it when the screen ends)
   const show = (key) => (e) => {
@@ -22,7 +22,7 @@ function useTip(side) {
   const hide = () => setTip(null)
   return [tip, show, hide]
 }
-function Tip({ tip, title, rows }) {
+export function Tip({ tip, title, rows }) {
   return (
     <span className={`fin-rtip is-${tip.at}`} role="tooltip" style={{ left: tip.x, top: tip.y }}>
       <b>{title}</b>

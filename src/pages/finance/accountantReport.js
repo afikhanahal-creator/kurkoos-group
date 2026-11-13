@@ -115,8 +115,8 @@ export function accountantWorkbook(lines, opts = {}) {
   const cats = [...new Set(lines.map((l) => l.category))].sort((a, b) => a.localeCompare(b, 'he'))
   const catTag = (name) => TAG[CAT_PALETTE[cats.indexOf(name) % CAT_PALETTE.length]]
   const base = { border: C.line, color: C.ink }
-  const head = (h) => ({ v: h, bold: true, color: C.headText, fill: C.head, border: C.head, align: 'center', wrap: true })
-  const tag = (v, pair) => (v === '' || v === null || v === undefined ? { v: '', ...base } : { v, bold: true, fill: pair[0], color: pair[1], border: C.line, align: 'center' })
+  const head = (h) => ({ v: h, bold: true, color: C.headText, fill: C.head, border: C.head, wrap: true })
+  const tag = (v, pair) => (v === '' || v === null || v === undefined ? { v: '', ...base } : { v, bold: true, fill: pair[0], color: pair[1], border: C.line })
   const pctFmt = (v) => (Math.abs(v * 100 - Math.round(v * 100)) < 0.005 ? '0%' : '0.00%')
   const today = opts.today || new Date().toISOString().slice(0, 10)
 
@@ -138,12 +138,12 @@ export function accountantWorkbook(lines, opts = {}) {
       if (c.tag === 'counted') return tag(l.counted ? 'כן' : 'לא', TAG[l.counted ? 'green' : 'grey'])
       if (c.link) return l.link ? { v: `פתיחת המסמך (${l.linkKind})`, href: l.link, color: C.link, underline: true, border: C.line, ...(band ? { fill: band } : {}) } : { v: 'אין קובץ', ...look, color: C.muted }
       const v = l[c.k]
-      if (c.t === 'date') return { v, t: 'date', fmt: FMT.date, ...look, align: 'center' }
-      if (c.t === 'money') return { v, t: 'num', fmt: moneyFmt(l.cur), ...look, align: 'left', ...(l.credit ? { color: TAG.orange[1] } : {}) }
-      if (c.t === 'ils') return { v, t: 'num', fmt: moneyFmt('ILS'), ...look, align: 'left', ...(l.credit ? { color: TAG.orange[1] } : {}) }
-      if (c.t === 'pct') return v === null ? { v: '', ...look } : { v, t: 'num', fmt: pctFmt(v), ...look, align: 'center' }
-      if (c.t === 'rate') return v === null ? { v: l.cur === 'ILS' ? '' : 'לא ידוע', ...look, color: C.muted, align: 'center' } : { v, t: 'num', fmt: FMT.rate, ...look, align: 'center' }
-      return { v: v ?? '', ...look, ...(c.k === 'vatId' || c.k === 'number' || c.k === 'allocation' ? { align: 'center' } : {}) }
+      if (c.t === 'date') return { v, t: 'date', fmt: FMT.date, ...look }
+      if (c.t === 'money') return { v, t: 'num', fmt: moneyFmt(l.cur), ...look, ...(l.credit ? { color: TAG.orange[1] } : {}) }
+      if (c.t === 'ils') return { v, t: 'num', fmt: moneyFmt('ILS'), ...look, ...(l.credit ? { color: TAG.orange[1] } : {}) }
+      if (c.t === 'pct') return v === null ? { v: '', ...look } : { v, t: 'num', fmt: pctFmt(v), ...look }
+      if (c.t === 'rate') return v === null ? { v: l.cur === 'ILS' ? '' : 'לא ידוע', ...look, color: C.muted } : { v, t: 'num', fmt: FMT.rate, ...look }
+      return { v: v ?? '', ...look }
     }
     // the row is as tall as its longest wrapped text (about 95 characters to a line of notes, 55 of description)
     const rowsOfText = Math.max(1, Math.ceil(l.notes.length / 95), Math.ceil(l.description.length / 55))
@@ -159,7 +159,7 @@ export function accountantWorkbook(lines, opts = {}) {
       if (i === 0) return { v: 'סה״כ בשקלים (לפי הסינון)', ...look }
       if (!c.sum) return { v: '', ...look }
       const val = r2(cnt.reduce((a, l) => a + (Number(l[c.k]) || 0), 0))
-      return { f: `SUMPRODUCT(SUBTOTAL(109,OFFSET(${L}${first},ROW(${L}${first}:${L}${last})-ROW(${L}${first}),0))*(${countedCol}${first}:${countedCol}${last}="כן")*(${curCol}${first}:${curCol}${last}="${CUR_LABEL.ILS}"))`, v: val, fmt: moneyFmt('ILS'), ...look, align: 'left' }
+      return { f: `SUMPRODUCT(SUBTOTAL(109,OFFSET(${L}${first},ROW(${L}${first}:${L}${last})-ROW(${L}${first}),0))*(${countedCol}${first}:${countedCol}${last}="כן")*(${curCol}${first}:${curCol}${last}="${CUR_LABEL.ILS}"))`, v: val, fmt: moneyFmt('ILS'), ...look }
     }) })
   }
   const lastCol = colName(COLUMNS.length - 1)
@@ -176,7 +176,7 @@ export function accountantWorkbook(lines, opts = {}) {
   const sum = [{ height: 30, cells: [{ v: 'סיכום הוצאות', bold: true, size: 16, color: C.title }] }, { height: 20, cells: [{ v: `${title} · הסכומים בשקלים, כל רכישה פעם אחת${s.foreign ? ` · ${s.foreign} מסמכים במטבע זר אינם בסכומים` : ''}`, color: C.muted, size: 10 }] }, { height: 8, cells: [] }]
   const sumMerges = ['A1:F1', 'A2:F2']
   // the explanation of a figure runs over the four columns beside it
-  const fig = (label, v, fmt, note = '', pair = null) => { sumMerges.push(`C${sum.length + 1}:F${sum.length + 1}`); sum.push({ height: 24, cells: [{ v: label, bold: true, ...base, ...(pair ? { fill: pair[0], color: pair[1] } : {}) }, { v, t: 'num', fmt, bold: true, ...base, align: 'left' }, { v: note, color: C.muted, size: 10, border: C.line }, { v: '', border: C.line }, { v: '', border: C.line }, { v: '', border: C.line }] }) }
+  const fig = (label, v, fmt, note = '', pair = null) => { sumMerges.push(`C${sum.length + 1}:F${sum.length + 1}`); sum.push({ height: 24, cells: [{ v: label, bold: true, ...base, ...(pair ? { fill: pair[0], color: pair[1] } : {}) }, { v, t: 'num', fmt, bold: true, ...base }, { v: note, color: C.muted, size: 10, border: C.line }, { v: '', border: C.line }, { v: '', border: C.line }, { v: '', border: C.line }] }) }
   sumMerges.push('C4:F4')
   sum.push({ height: 28, cells: [head('הנתון'), head('הסכום'), head('הסבר'), head(''), head(''), head('')] })
   fig('מספר המסמכים', s.documents, FMT.int, s.notCounted ? `${s.notCounted} מהם אישורי תשלום של חשבונית שבמערכת, ואינם נספרים` : '')
@@ -193,8 +193,8 @@ export function accountantWorkbook(lines, opts = {}) {
   const block = (name, groups, tagOf) => {
     sum.push({ height: 14, cells: [] })
     sum.push({ height: 28, cells: [head(name), head('מסמכים'), head('לפני מע״מ'), head('מע״מ'), head('כולל מע״מ'), head('מע״מ לקיזוז')] })
-    groups.forEach((g, i) => { const band = i % 2 ? { fill: C.band } : {}; const mf = moneyFmt(g.cur && name === 'לפי מטבע' ? g.cur : 'ILS'); const n = (v) => ({ v, t: 'num', fmt: mf, ...base, ...band, align: 'left' })
-      sum.push({ height: 22, cells: [tagOf ? tag(g.name, tagOf(g)) : { v: g.name, ...base, ...band }, { v: g.docs, t: 'num', fmt: FMT.int, ...base, ...band, align: 'center' }, n(g.net), n(g.vat), n(g.total), n(g.allowed)] }) })
+    groups.forEach((g, i) => { const band = i % 2 ? { fill: C.band } : {}; const mf = moneyFmt(g.cur && name === 'לפי מטבע' ? g.cur : 'ILS'); const n = (v) => ({ v, t: 'num', fmt: mf, ...base, ...band })
+      sum.push({ height: 22, cells: [tagOf ? tag(g.name, tagOf(g)) : { v: g.name, ...base, ...band }, { v: g.docs, t: 'num', fmt: FMT.int, ...base, ...band }, n(g.net), n(g.vat), n(g.total), n(g.allowed)] }) })
   }
   const ilsLines = lines.filter((l) => l.cur === 'ILS'); const byTotal = (a, b) => Math.abs(b.total) - Math.abs(a.total)
   block('לפי ספק', groupBy(ilsLines, (l) => l.supplier).sort(byTotal))
@@ -212,7 +212,7 @@ export function accountantWorkbook(lines, opts = {}) {
   let n = 0
   for (const l of lines) for (const x of l.open) {
     const band = n++ % 2 ? { fill: C.band } : {}
-    chk.push({ height: Math.min(90, Math.max(26, Math.ceil(x.text.length / 105) * 14 + 8)), cells: [{ v: l.supplier, ...base, ...band }, { v: l.number, ...base, ...band, align: 'center' }, tag(l.type, TAG[TYPE_TAG[l.typeKey] || 'red']), { v: l.date, t: 'date', fmt: FMT.date, ...base, ...band, align: 'center' }, { v: l.total, t: 'num', fmt: moneyFmt(l.cur), ...base, ...band, align: 'left' },
+    chk.push({ height: Math.min(90, Math.max(26, Math.ceil(x.text.length / 105) * 14 + 8)), cells: [{ v: l.supplier, ...base, ...band }, { v: l.number, ...base, ...band }, tag(l.type, TAG[TYPE_TAG[l.typeKey] || 'red']), { v: l.date, t: 'date', fmt: FMT.date, ...base, ...band }, { v: l.total, t: 'num', fmt: moneyFmt(l.cur), ...base, ...band },
       tag(x.level === 'error' ? 'דורש תיקון' : 'ספק: לבדיקה', TAG[x.level === 'error' ? 'red' : 'yellow']), { v: AREA[x.area] || '', ...base, ...band }, { v: x.text, ...base, ...band, wrap: true }, { v: x.source ? `${x.source.name}${x.version ? ` (גרסה ${x.version})` : ''}` : '', ...base, ...band, wrap: true, color: C.muted },
       l.link ? { v: `פתיחת המסמך (${l.linkKind})`, href: l.link, color: C.link, underline: true, border: C.line, ...band } : { v: 'אין קובץ', ...base, ...band, color: C.muted }] })
   }
@@ -248,7 +248,7 @@ export function accountantHtml(lines, opts = {}) {
 h1{color:#07293a;font-size:18px;margin:0 0 2px}h2{color:#07293a;font-size:13px;margin:16px 0 6px}.sub{color:#5b6b7a;margin:0 0 10px}
 .figs{display:flex;gap:8px;margin:0 0 12px}.figs div{flex:1;border:1px solid #d5dee8;border-radius:8px;padding:6px 8px}.figs small{display:block;color:#5b6b7a}.figs b{font-size:13px}
 table{border-collapse:collapse;width:100%}th{background:#0b3a5b;color:#fff;padding:5px 4px;text-align:right;font-weight:700}td{border:1px solid #d5dee8;padding:4px;text-align:right;vertical-align:top}
-tr:nth-child(even) td{background:#f1f7fb}td.n{text-align:left;white-space:nowrap}.chip{display:inline-block;padding:1px 6px;border-radius:999px;font-weight:700;white-space:nowrap}tfoot td{background:#e3edf5!important;font-weight:700}
+tr:nth-child(even) td{background:#f1f7fb}td.n{text-align:right;white-space:nowrap}.chip{display:inline-block;padding:1px 6px;border-radius:999px;font-weight:700;white-space:nowrap}tfoot td{background:#e3edf5!important;font-weight:700}
 .note{color:#5b6b7a;margin-top:10px}thead{display:table-header-group}tr{break-inside:avoid}</style></head><body>
 <h1>${e(title)}</h1><p class="sub">הופק ב-${d(opts.today || new Date().toISOString().slice(0, 10))} · הסכומים בשקלים, כל רכישה פעם אחת · כלי בקרה והכנת חומר; אינו תחליף לאישור רואה החשבון</p>
 <div class="figs">${figs.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join('')}</div>

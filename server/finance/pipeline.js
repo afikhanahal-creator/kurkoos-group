@@ -249,10 +249,14 @@ export async function processStored(doc, runs, trigger = 'upload', started = Dat
   let legacy = false
   const claimed = await rpc('fin_doc_claim', { p_id: doc.id, p_next: nextRetry((doc.failures || 0) + 1) }).catch((e) => { if (/fin_doc_claim|schema cache/.test(String(e.message))) { legacy = true; return 0 } throw e })
   if (!legacy && (claimed === null || claimed === undefined || (Array.isArray(claimed) && !claimed.length))) return { skipped: 'busy' }
+  // the file, the counters and the category list are fetched together, before the reading (one after another before)
+  const file = download(doc.file_path).then((buf) => ({ buf }), (err) => ({ err }))
+  categories().catch(() => {})
   const cur = legacy ? { ...doc, attempts: (doc.attempts || 0) + 1, failures: (doc.failures || 0) + 1 } : await one(`fin_documents?id=eq.${doc.id}&select=attempts,failures,ai_tokens_in,ai_tokens_out,ai_calls`)
   let x = null
   try {
-    const buf = await download(doc.file_path)
+    const got = await file; if (got.err) throw got.err
+    const buf = got.buf
     const mime = doc.file_mime || 'application/pdf'
     const isText = mime.startsWith('text/')
     x = await readDocument(isText ? { text: buf.toString('utf8').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' '), categories: await categories() } : { ...readable(mime, buf), categories: await categories(), hint: `${trigger} file ${doc.file_name || ''}` }, runs, { deadline: started + 25_000 })

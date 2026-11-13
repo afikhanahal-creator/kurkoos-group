@@ -175,7 +175,7 @@ export default function Documents({ preset = 'all' }) {
       const approved = (out || []).filter((d) => d.status === 'approved').length
       setNote(`${targets.length} מסמכים עודכנו${skipped ? `, ${skipped} דולגו` : ''}`)
       if (label === 'approve' && approved) moments.approve({ from: document.querySelector('.fin-bulk .fin-btn--primary'), title: approved === 1 ? 'המסמך אושר' : `${approved} מסמכים אושרו`, sub: 'מוכנים לשליחה לרו״ח' })
-      setSel(new Set()); await reload()
+      setSel(new Set()); reload()
     } catch (e) { setNote(/SECOND_APPROVAL/.test(e.message) ? 'חלק מהמסמכים דורשים מאשר נוסף' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת מזו של המסמך' : e.message) } finally { setBusy('') }
   }
   // suspected duplicates: a pair is "certain" when the original has the same supplier, number and total; those can be merged
@@ -188,8 +188,8 @@ export default function Documents({ preset = 'all' }) {
   const mergeDups = async () => {
     if (!(await askConfirm({ title: 'מיזוג כפילויות', text: `${sureDups.length === 1 ? 'מסמך אחד זהה' : `${sureDups.length} מסמכים זהים`} למסמך שכבר במערכת (אותו ספק, מספר וסכום). העותק ייסגר ככפול של המקורי; שום דבר לא נמחק.`, ok: 'מיזוג' }))) return
     setBusy('dups'); let ok = 0
-    for (const d of sureDups) { try { await api.callServer('duplicate-decide', { document_id: d.id, decision: 'duplicate' }); ok++ } catch { /* the next */ } }
-    setBusy(''); setNote(ok === 1 ? 'כפילות אחת מוזגה' : `${ok} כפילויות מוזגו`); await reload()
+    { let next = 0; await Promise.all(Array.from({ length: Math.min(4, sureDups.length) }, async () => { while (next < sureDups.length) { const d = sureDups[next++]; try { await api.callServer('duplicate-decide', { document_id: d.id, decision: 'duplicate' }); ok++ } catch { /* the next */ } } })) }
+    setBusy(''); setNote(ok === 1 ? 'כפילות אחת מוזגה' : `${ok} כפילויות מוזגו`); reload()
   }
   const canDelete = (d) => can('manage') || (can('operate') && !['approved', 'sent'].includes(d.status))
   // several irrelevant documents at once; an approved or sent one is left out unless an admin deletes it
@@ -199,11 +199,11 @@ export default function Documents({ preset = 'all' }) {
     if (!(await askConfirm({ title: 'מחיקת מסמכים', text: `למחוק ${list.length === 1 ? 'מסמך אחד' : `${list.length} מסמכים`} יחד עם הקבצים שלהם?${left ? ` ${left} מאושרים או שנשלחו יישארו.` : ''} אי אפשר לבטל, והפעולה נרשמת ביומן.`, ok: 'מחיקה', danger: true }))) return
     setBusy('delete'); let ok = 0; let firstErr = ''; let pending = 0
     try { const r = await api.deleteDocuments(list); ok = r.deleted.length; firstErr = r.failed[0]?.error || ''; pending = r.pending } catch (e) { firstErr = e.message }
-    setBusy(''); setSel(new Set()); setNote(firstErr ? `נמחקו ${ok} מתוך ${list.length}: ${firstErr}` : `${ok === 1 ? 'המסמך נמחק' : `${ok} מסמכים נמחקו`} מכל המסכים${pending ? '. העותק ב-Drive יוסר בבדיקה הבאה מול Drive' : ''}`); await reload()
+    setBusy(''); setSel(new Set()); setNote(firstErr ? `נמחקו ${ok} מתוך ${list.length}: ${firstErr}` : `${ok === 1 ? 'המסמך נמחק' : `${ok} מסמכים נמחקו`} מכל המסכים${pending ? '. העותק ב-Drive יוסר בבדיקה הבאה מול Drive' : ''}`)
   }
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. הפעולה נרשמת בהיסטוריה.`, ok: 'מחיקה', danger: true }))) return
-    try { await api.deleteDocument(d); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
+    try { await api.deleteDocument(d); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק') } catch (e) { setNote(e.message) }
   }
   const downloadOriginals = async () => {
     setBusy('zip')
@@ -508,7 +508,7 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
       {dragId && <p className="fin-draghint" role="status"><Icon name="copy" size={16} /> גוררים את "{byId(dragId)?.supplier_name || byId(dragId)?.file_name || 'המסמך'}": משחררים על מסמך אחר כדי למזג. לפני המיזוג תתבקשו לאשר.</p>}
-      {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); if (/מוזגו/.test(text)) moments.merge({ title: 'המסמכים מוזגו', sub: text }); else if (/נמחק/.test(text)) moments.remove({ title: text }); setNote(text); await reload() }} />}
+      {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); if (/מוזגו/.test(text)) moments.merge({ title: 'המסמכים מוזגו', sub: text }); else if (/נמחק/.test(text)) moments.remove({ title: text }); setNote(text); reload() }} />}
       {confirm && (
         <Modal title="אישור פעולה" onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
           <p>הפעולה תחול על {confirm.count} מסמכים{confirm.skipped ? ` (${confirm.skipped} דולגו כי הם לא מתאימים לה)` : ''}. כל שינוי נרשם ביומן.</p>
@@ -521,7 +521,7 @@ export default function Documents({ preset = 'all' }) {
           doc={current}
           onClose={() => go(`${base}${tab ? `?status=${tab}` : ''}`)}
           onSaved={patchDoc}
-          onDeleted={async () => { await reload(); go(base) }}
+          onDeleted={() => { go(base); reload() }}
           onPrev={idx > 0 ? () => go(link(rows[idx - 1].id)) : null}
           onNext={idx >= 0 && idx < rows.length - 1 ? () => go(link(rows[idx + 1].id)) : null}
         />

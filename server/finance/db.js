@@ -56,15 +56,22 @@ export async function download(path) {
   return Buffer.from(await r.arrayBuffer())
 }
 
-/* the signed-in caller, with their finance role */
+/* the signed-in caller, with their finance role. The token is checked by the auth server (never trusted as read); the
+   member row is asked for at the same moment, by the id written in the token, and used only when the auth server
+   answered with that same id. One round trip per call instead of two. */
+const subOf = (token) => { try { const s = JSON.parse(Buffer.from(token.split('.')[1] || '', 'base64url').toString('utf8')).sub; return /^[0-9a-f-]{36}$/i.test(s) ? s : null } catch { return null } }
+const memberOf = (id) => one(`fin_members?user_id=eq.${id}&active=eq.true&select=*`)
 export async function caller(req) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim()
   if (!token || !env.sbUrl() || !env.sbKey()) return null
+  const sub = subOf(token)
+  const early = sub ? memberOf(sub).then((m) => ({ m }), (err) => ({ err })) : null
   const r = await fetch(`${env.sbUrl()}/auth/v1/user`, { headers: { apikey: env.sbKey(), Authorization: `Bearer ${token}` } }).catch(() => null)
   if (!r || !r.ok) return null
   const u = await r.json().catch(() => null)
   if (!u || !u.id) return null
-  const m = await one(`fin_members?user_id=eq.${u.id}&active=eq.true&select=*`)
+  let m
+  if (early && sub === u.id) { const got = await early; if (got.err) throw got.err; m = got.m } else m = await memberOf(u.id)
   return { id: u.id, email: u.email, token, role: m?.role || null, business_ids: m?.business_ids || null }
 }
 

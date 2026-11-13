@@ -141,6 +141,9 @@ function useFinanceData(enabled, onChange) {
   const loadedAt = useRef(0)
   const stamp = useRef(''); const prevDocs = useRef(null)
   const inflight = useRef(null)
+  // documents being deleted right now: off every list from the click, whatever a load that is already on its way brings
+  const hidden = useRef(new Set())
+  const shown = (list) => (hidden.current.size ? list.filter((d) => !hidden.current.has(d.id)) : list)
   // one load at a time: a second call while a load runs (focus, a timer, a screen's refresh) shares it
   const reload = useCallback(() => {
     if (inflight.current) return inflight.current
@@ -158,7 +161,8 @@ function useFinanceData(enabled, onChange) {
       if (!me?.role) { setState((s) => ({ ...s, loading: false, error: '', me })); return }
       const got = await all
       if (got.err) throw got.err
-      const [documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = got.v
+      const [docs0, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = got.v
+      const documents = shown(docs0)
       loadedAt.current = Date.now()
       stamp.current = stampOf(documents)
       const before = prevDocs.current; prevDocs.current = documents
@@ -193,7 +197,7 @@ function useFinanceData(enabled, onChange) {
       if (busy || inflight.current || document.visibilityState !== 'visible') return
       busy = true
       try {
-        const documents = await api.loadDocuments()
+        const documents = shown(await api.loadDocuments())
         const was = (prevDocs.current || []).filter((d) => d.status === 'processing').length
         if (documents.filter((d) => d.status === 'processing').length < was) { reload(); return }
         stamp.current = stampOf(documents)
@@ -215,13 +219,33 @@ function useFinanceData(enabled, onChange) {
     }, 15_000)
     return () => clearInterval(t)
   }, [enabled, reading, reload])
-  // a deletion (from any screen, or from another open tab) leaves every list at once; the reload after it confirms
-  useEffect(() => api.onDocsRemoved((ids) => {
-    const gone = new Set(ids)
-    setState((s) => { const documents = s.documents.filter((d) => !gone.has(d.id)); prevDocs.current = documents; stamp.current = ''; return { ...s, documents, allocations: s.allocations.filter((a) => !gone.has(a.document_id)) } })
-    reload()
-  }), [reload])
-  const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
+  // A deletion leaves every list at the click (api.deleteDocuments says "removing" before it asks the server). When the
+  // server confirms, the reload agrees with it; when it refuses, the documents come back and the screen that asked says why.
+  // A deletion made in another open tab arrives as "removed" only.
+  useEffect(() => {
+    const drop = (ids) => { const gone = new Set(ids); setState((s) => { const documents = s.documents.filter((d) => !gone.has(d.id)); prevDocs.current = documents; stamp.current = ''; return { ...s, documents } }) }
+    const removing = (e) => { const ids = e.detail?.ids || []; for (const id of ids) hidden.current.add(id); drop(ids) }
+    const kept = (e) => { for (const id of e.detail?.ids || []) hidden.current.delete(id); prevDocs.current = null; reload() }
+    window.addEventListener('fin:docs-removing', removing); window.addEventListener('fin:docs-kept', kept)
+    const off = api.onDocsRemoved((ids) => {
+      const gone = new Set(ids)
+      drop(ids); setState((s) => ({ ...s, allocations: s.allocations.filter((a) => !gone.has(a.document_id)) }))
+      reload().finally(() => { for (const id of ids) hidden.current.delete(id) })
+    })
+    return () => { off(); window.removeEventListener('fin:docs-removing', removing); window.removeEventListener('fin:docs-kept', kept) }
+  }, [reload])
+  // what a save or an upload answered goes on the screen at once (one row or several); a row that is not on the list yet
+  // is added at its top. The server's answer is the truth, so nothing waits for a reload of everything.
+  const patchDoc = useCallback((doc) => setState((s) => {
+    const list = [].concat(doc || []).filter((d) => d?.id && !hidden.current.has(d.id)); if (!list.length) return s
+    const by = new Map(list.map((d) => [d.id, d])); const seen = new Set()
+    const documents = s.documents.map((d) => { const x = by.get(d.id); if (!x) return d; seen.add(d.id); return { ...d, ...x } })
+    const fresh = list.filter((d) => !seen.has(d.id))
+    const next = fresh.length ? [...fresh, ...documents] : documents
+    prevDocs.current = next
+    return { ...s, documents: next }
+  }), [])
+  useEffect(() => { const on = (e) => patchDoc(e.detail?.docs); window.addEventListener('fin:docs-changed', on); return () => window.removeEventListener('fin:docs-changed', on) }, [patchDoc])
   // only after a first load: this also runs when the app mounts, before anyone signed in
   const refreshIfStale = useCallback(() => { if (loadedAt.current && Date.now() - loadedAt.current > 20_000) reload() }, [reload])
   // the bookkeeping pass (ledger.js): receipts that pay an invoice, proformas replaced by an invoice. Every screen reads
@@ -299,15 +323,14 @@ export default function FinanceApp() {
     try { const c = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); if (c) setSec(c) } catch { /* noop */ }
     const check = async () => {
       // the session itself: an admin who blocks someone deletes their sessions, and the auth server then refuses the token
-      const { error: gone } = await supabase.auth.getUser()
+      // asked together with the role (one after the other cost a round trip on every sign-in); an ended session wins
+      const [{ error: gone }, me, { data: lvl }] = await Promise.all([supabase.auth.getUser(), api.mySecurity(), supabase.auth.mfa.getAuthenticatorAssuranceLevel()])
       if (!alive) return
       if (gone && [401, 403].includes(gone.status)) {
         try { sessionStorage.removeItem(cacheKey) } catch { /* noop */ }
         await supabase.auth.signOut({ scope: 'local' })
         return
       }
-      const [me, { data: lvl }] = await Promise.all([api.mySecurity(), supabase.auth.mfa.getAuthenticatorAssuranceLevel()])
-      if (!alive) return
       const v = me ? { ...me, aal: lvl?.currentLevel || 'aal1', next: lvl?.nextLevel || 'aal1' } : false
       setSec(v)
       try { if (v && !(v.mfa_required && v.aal !== 'aal2') && !v.onboard) sessionStorage.setItem(cacheKey, JSON.stringify(v)); else sessionStorage.removeItem(cacheKey) } catch { /* noop */ }

@@ -66,7 +66,7 @@ export default function Receipts() {
   const canDelete = (d) => can('manage') || (can('operate') && !['approved', 'sent'].includes(d.status))
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. אי אפשר לבטל.`, ok: 'מחיקה', danger: true }))) return
-    try { await api.deleteDocument(d); setViewId(null); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
+    try { await api.deleteDocument(d); setViewId(null); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק') } catch (e) { setNote(e.message) }
   }
   useEffect(() => { let on = true; api.callServer('receipts-drive').then((r) => { if (on) setDrive(r?.files || {}) }).catch(() => {}); return () => { on = false } }, [mine.length])
   const rows = useMemo(() => mine.map((d) => ({ d, stage: stageOf(d, drive[d.id]), link: drive[d.id]?.link })), [mine, drive])

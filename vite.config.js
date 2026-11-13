@@ -26,6 +26,10 @@ export default defineConfig({
              לכל הצ'אנקים — מוצמדים ל-vendor-react (הצ'אנק העמוק ביותר שכולם
              מייבאים) כדי שלא ייווצר מעגל-ייבוא בין צ'אנקים (shared⇄vendor-react),
              שגורם לשגיאת אתחול (TDZ) ולמסך לבן. */
+          /* חוץ מהעטיפות ש-Vite יוצר לספריות CommonJS כבדות שנטענות רק לפי דרישה (lottie-web, utif ו-pako שלו):
+             העטיפה שלהן מתחילה גם היא ב-\0, והכלל הזה גרר את הספריות עצמן (כ-250KB) לתוך vendor-react,
+             כלומר לכל ביקור באתר ובמערכת הכספים. הן נשארות בצ'אנק העצל של מי שמייבא אותן. */
+          if (id.startsWith('\0') && /[\\/]node_modules[\\/](lottie-web|utif|pako)[\\/]/.test(id)) return undefined
           if (id.startsWith('\0') || id.includes('vite/preload-helper')) return 'vendor-react'
           if (id.includes('node_modules')) {
             if (id.includes('framer-motion')) return 'vendor-motion'

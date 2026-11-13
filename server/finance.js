@@ -17,6 +17,7 @@ import { sb, one, insert, patch, q, caller, audit, removeFile, rpc } from './fin
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
+import { publicProviders } from './finance/providers.js'
 import { ask } from './finance/assistant.js'
 import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
@@ -94,9 +95,11 @@ const ROLES = {
   'receipts-drive': ['admin', 'finance_manager', 'employee', 'accountant'],
 }
 
-// per-user rate limit (in memory, per instance): 120 calls in 10 minutes
+// per-user rate limit (in memory, per instance): 120 calls in 10 minutes. FINANCE_RATE_LIMIT changes the number
+// (the end-to-end suite runs one user through hundreds of calls); it is not set in production.
+const RATE = Math.max(20, Number(process.env.FINANCE_RATE_LIMIT) || 120)
 const _rl = new Map()
-function limited(key, max = 120, windowMs = 600_000) {
+function limited(key, max = RATE, windowMs = 600_000) {
   const now = Date.now()
   const e = _rl.get(key) || { n: 0, reset: now + windowMs }
   if (now > e.reset) { e.n = 0; e.reset = now + windowMs }
@@ -250,6 +253,7 @@ export default async function handler(req, res) {
           schedule: { night: '23 0 * * *', morning: '57 4 * * *', tz: 'UTC' },
           cloud: Object.fromEntries(Object.entries(CLOUD).map(([k, c]) => [k, c.configured()])),
           adapters: Object.values(ADAPTERS).map(({ id, label, kind, fields, secrets }) => ({ id, label, kind, fields, secrets })),
+          accounting: publicProviders(),
         })
         return
       }

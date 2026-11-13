@@ -197,6 +197,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ---------- Resend ----------
+  // Morning's sign-in, as its specification describes it: client credentials in, a one-hour token out, 401 for wrong keys
+  if (p === '/morning/idp/v1/oauth/token') {
+    const b = JSON.parse((await readBody(req)) || '{}')
+    if (b.grant_type !== 'client_credentials') return send(res, 400, { error: 'unsupported_grant_type' })
+    if (b.client_id !== 'morning-test-id' || b.client_secret !== 'morning-test-secret') return send(res, 401, { error: 'invalid_client', error_description: 'Invalid client credentials' })
+    return send(res, 200, { accessToken: 'eyJ.test.token', expiresIn: 3600 })
+  }
   if (p === '/resend/emails') {
     const body = JSON.parse(await readBody(req))
     log.emails.push({ to: body.to, subject: body.subject, attachments: (body.attachments || []).map((x) => ({ filename: x.filename, bytes: Buffer.from(x.content || '', 'base64').length })) })

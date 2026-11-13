@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, claimableVat, date, docDate, money, monthLabel, nameOf, period, recentMonths, shiftMonth, signedTotal, thisMonth } from './format.js'
+import { DOC_TYPE, claimableVat, date, dateTime, docDate, money, monthLabel, nameOf, period, recentMonths, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { buildPackage } from './exportPackage.js'
 import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, askConfirm } from './ui.jsx'
 import { VendorLogo } from './logos.jsx'
@@ -100,129 +100,230 @@ function ExportWizard({ onDone }) {
   )
 }
 
-const SOFTWARE = {
-  morning: { mono: 'M', tone: 'green', desc: 'העברת חשבוניות ספקים מאושרות ל-Morning (חשבונית ירוקה).' },
-  icount: { mono: 'iC', tone: 'ocean', desc: 'העברת מסמכי הוצאות מאושרים ל-iCount.' },
-  rivhit: { mono: 'ר', tone: 'red', desc: 'העברת הוצאות מאושרות לרווחית.' },
-  sumit: { mono: 'S', tone: 'ink', desc: 'העברת מסמכים מאושרים ל-SUMIT.' },
-  paperless: { mono: 'P', tone: 'ocean', desc: 'העברת מסמכים מאושרים ל-Paperless.' },
-  priority: { mono: 'Pr', tone: 'ink', desc: 'קליטת חשבוניות ספק ב-Priority ERP.' },
-  hashavshevet: { mono: 'ח', tone: 'green', desc: 'קובץ קליטה במבנה של חשבשבת, להורדה או לשליחה לרו״ח.' },
-  file: { mono: 'ZIP', tone: 'muted', desc: 'הקבצים המקוריים עם Excel ו-CSV, שכל תוכנה קולטת.' },
-}
-const STATUS_TXT = { ready: ['ok', 'מחובר'], not_active: ['warn', 'ממתין להפעלה'], error: ['bad', 'שגיאה'] }
+/* The directory of accounting software. What each card says comes from the server's registry (server/finance/providers.js),
+   which holds only what the vendor's own documentation says, and from what is really connected: a provider is "connected"
+   only after a real sign-in or a real delivery, never because it is listed. */
+const MONO = { morning: ['M', 'green'], icount: ['iC', 'ocean'], sumit: ['S', 'ink'], priority: ['Pr', 'ink'], sap_b1: ['SAP', 'ocean'], rivhit: ['ר', 'red'], ezcount: ['EZ', 'ocean'], invoice4u: ['i4U', 'ink'], accountit: ['Ac', 'ocean'], costapp: ['CA', 'green'], dokka: ['Dk', 'ink'], accountant_email: ['@', 'ocean'], smartbee: ['SB', 'red'], finbot: ['Fb', 'ocean'], paperless: ['P', 'muted'], hashavshevet: ['ח', 'green'], file: ['ZIP', 'muted'] }
+const CAP = { verified: ['ok', 'מאומת'], built: ['info', 'בנוי, עוד לא נבדק מול חשבון אמיתי'], documented: ['muted', 'מתועד אצל הספק, לא בנוי כאן'], none: ['muted', 'לא קיים ב-API הציבורי'], unknown: ['warn', 'לא נמצא מקור רשמי'] }
+const CAP_ROWS = [['auth', 'התחברות'], ['send', 'שליחת מסמכים'], ['attach', 'צירוף הקובץ'], ['read', 'קריאה חזרה וסטטוסים'], ['webhooks', 'התראות (Webhooks)'], ['sandbox', 'סביבת ניסיון']]
+const GROUPS = [['software', 'תוכנות הנהלת חשבונות'], ['intake', 'קליטת מסמכים אצל רו״ח'], ['file', 'ייצוא קבצים']]
+const TAG = /^\[([a-z0-9_]+)\]\s*/
+const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || '').trim())
 
 export default function Integrations() {
   const { businesses, can } = useFinance()
   const list = useAsync(() => api.loadIntegrations(), [])
+  const routes = useAsync(() => api.loadOutbound(), [])
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
-  const [edit, setEdit] = useState(null)
+  const [open, setOpen] = useState(null)        // provider id whose details are open
+  const [form, setForm] = useState(null)        // a connection being added
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState('')
   const [term, setTerm] = useState('')
-  const adapters = status.data?.adapters || []
+  const providers = status.data?.accounting || []
   const admin = can('manage')
-  const live = (list.data || []).filter((i) => i.enabled)
-  const match = (a) => !term.trim() || `${a.label} ${SOFTWARE[a.id]?.desc || ''}`.toLowerCase().includes(term.trim().toLowerCase())
-  const onFirst = (x, y) => Number(live.some((i) => i.provider === y.id)) - Number(live.some((i) => i.provider === x.id))
-  const apiApps = adapters.filter((a) => a.kind === 'api' && match(a)).sort(onFirst)
-  const fileApps = adapters.filter((a) => a.kind === 'file' && match(a))
+  const apiRows = (list.data || []).filter((i) => i.enabled)
+  // an email connection is an automatic delivery whose name carries the provider's tag
+  const mailRows = (routes.data || []).filter((o) => o.kind === 'email' && TAG.test(o.name || '')).map((o) => ({ ...o, provider: TAG.exec(o.name)[1], label: o.name.replace(TAG, '') }))
+  const bizName = (id) => (id ? nameOf(businesses, id) : 'כל החברות')
+  const reload = () => { list.reload(); routes.reload() }
 
-  const save = async (e) => {
-    e.preventDefault(); setErr('')
-    try { await api.callServer('integration-save', edit); setMsg(`${edit.name || adapters.find((a) => a.id === edit.provider)?.label} נשמר.`); setEdit(null); list.reload() } catch (e2) { setErr(e2.message) }
+  const stateOf = (p) => {
+    const mails = mailRows.filter((o) => o.provider === p.id); const apis = apiRows.filter((i) => i.provider === p.id)
+    const last = [...mails.map((o) => o.last_at), ...apis.map((i) => i.last_sync_at)].filter(Boolean).sort().pop() || null
+    const conns = mails.length + apis.length
+    let pill
+    if (p.route === 'file') pill = ['ok', 'זמין']
+    else if (mails.some((o) => o.enabled && o.last_status && o.last_status !== 'ok') || apis.some((i) => i.status === 'error')) pill = ['bad', mails.length ? 'שגיאת סנכרון' : 'שגיאת חיבור']
+    else if (mails.some((o) => o.enabled && o.sent_count > 0)) pill = ['ok', 'סונכרן']
+    else if (mails.some((o) => o.enabled) || apis.some((i) => i.status === 'ready')) pill = ['ok', 'מחובר']
+    else if (mails.length) pill = ['muted', 'מושהה']
+    else if (apis.length && p.cap.auth === 'built') pill = ['warn', 'נדרשת הגדרת API']
+    else if (p.route === 'email') pill = ['info', 'נדרש חיבור']
+    else if (p.api && p.cap.send === 'documented') pill = ['muted', 'בקרוב']
+    else pill = ['muted', 'אין חיבור ישיר']
+    return { mails, apis, conns, last, pill, sent: mails.reduce((a, o) => a + (o.sent_count || 0), 0), failed: mails.reduce((a, o) => a + (o.fail_count || 0), 0) }
   }
-  const test = async (it) => {
-    setMsg(''); setErr('')
-    try { const r = await api.callServer('integration-test', { id: it.id }); if (r.ok) setMsg(`${it.name}: החיבור תקין${r.note ? ` (${r.note})` : ''}`); else setErr(`${it.name}: ${r.error}`); list.reload() } catch (e) { setErr(e.message) }
-  }
-  const disconnect = async (it) => {
-    if (!(await askConfirm({ text: `לנתק את ${it.name}? מסמכים שכבר יוצאו לא משתנים.`, ok: 'ניתוק', danger: true }))) return
-    try { await api.callServer('integration-save', { ...it, enabled: false }); list.reload() } catch (e) { setErr(e.message) }
-  }
-  const open = (a, it) => { setErr(''); setEdit(it ? { ...it } : { provider: a.id, name: a.label, business_id: businesses.length === 1 ? businesses[0].id : '', config: {}, enabled: true }) }
+  const match = (p) => !term.trim() || `${p.label} ${p.about || ''}`.toLowerCase().includes(term.trim().toLowerCase())
+  const shown = providers.filter(match)
+  const all = providers.map((p) => stateOf(p))
+  const sum = { connected: all.filter((x) => x.conns && ['מחובר', 'סונכרן'].includes(x.pill[1])).length, sent: all.reduce((a, x) => a + x.sent, 0), failed: all.reduce((a, x) => a + x.failed, 0), errors: all.filter((x) => x.pill[0] === 'bad').length }
 
-  const card = (a) => {
-    const sw = SOFTWARE[a.id] || { mono: a.label.slice(0, 2), tone: 'ink', desc: '' }
-    const mine = live.filter((i) => i.provider === a.id)
+  const run = async (key, fn) => { setBusy(key); setErr(''); setMsg(''); try { const m = await fn(); if (m) setMsg(m); reload() } catch (e) { setErr(e.message) } finally { setBusy('') } }
+  const startForm = (p) => { setErr(''); setForm({ provider: p.id, mode: p.route === 'email' ? 'email' : 'api', business_id: businesses.length === 1 ? businesses[0].id : '', target: '', sandbox: false, secret: {} }) }
+  const saveForm = (e) => {
+    e.preventDefault()
+    const p = providers.find((x) => x.id === form.provider)
+    if (form.mode === 'email') {
+      if (!form.business_id) { setErr('בוחרים חברה: כל כתובת קליטה שייכת לחברה אחת, כדי שמסמך לא יגיע לחברה הלא נכונה.'); return }
+      if (!emailOk(form.target)) { setErr('כתובת המייל לא תקינה.'); return }
+      if (mailRows.some((o) => o.provider === p.id && o.business_id === form.business_id)) { setErr(`ל${bizName(form.business_id)} כבר מחוברת כתובת ב-${p.label}. מוחקים אותה קודם.`); return }
+      run('save', async () => {
+        await api.callServer('outbound-save', { kind: 'email', target: form.target.trim(), name: `[${p.id}] ${p.label}`, events: ['document.approved'], business_id: form.business_id, enabled: true })
+        setForm(null)
+        return `${p.label} חובר ל${bizName(form.business_id)}. כל מסמך שיאושר מעכשיו יישלח לכתובת עם הקובץ. מסמכים שכבר אושרו לא נשלחים למפרע.`
+      })
+    } else {
+      run('save', async () => {
+        const { integration } = await api.callServer('integration-save', { provider: p.id, name: p.label, business_id: form.business_id || '', config: { sandbox: !!form.sandbox }, secret: form.secret, enabled: true })
+        const r = await api.callServer('integration-test', { id: integration.id })
+        if (!r.ok) throw new Error(`המפתחות נשמרו, אבל ההתחברות נכשלה: ${r.error}`)
+        setForm(null)
+        return `${p.label}: ${r.note || 'ההתחברות אושרה'}.`
+      })
+    }
+  }
+  const testMail = async (o) => {
+    if (!(await askConfirm({ title: 'שליחת מייל בדיקה', text: `מייל בדיקה קצר, בלי מסמך, יישלח עכשיו ל-${o.target}. בתוכנה שקולטת כל מייל כמסמך הוא עלול להופיע כפריט ריק.`, ok: 'שליחה' }))) return
+    run(`t${o.id}`, async () => { const r = await api.callServer('outbound-test', { id: o.id }); if (!r.ok) throw new Error(`מייל הבדיקה לא נשלח: ${r.error}`); return 'מייל הבדיקה נשלח. זה מאשר שהמייל יצא מכאן; שהוא נקלט בתוכנה רואים רק בתוכנה עצמה.' })
+  }
+  const pauseMail = (o) => run(`p${o.id}`, async () => { await api.callServer('outbound-save', { id: o.id, kind: 'email', target: o.target, name: o.name, events: o.events, business_id: o.business_id, enabled: !o.enabled }); return o.enabled ? 'השליחה הושהתה.' : 'השליחה חודשה.' })
+  const removeMail = async (o) => {
+    if (!(await askConfirm({ title: 'ניתוק', text: `לנתק את ${o.label} מ${bizName(o.business_id)}? מסמכים שכבר נשלחו לא משתנים.`, ok: 'ניתוק', danger: true }))) return
+    run(`d${o.id}`, async () => { await api.callServer('outbound-delete', { id: o.id }); return 'החיבור נותק.' })
+  }
+  const testApi = (i) => run(`a${i.id}`, async () => { const r = await api.callServer('integration-test', { id: i.id }); if (!r.ok) throw new Error(`${i.name}: ${r.error}`); return `${i.name}: ${r.note || 'ההתחברות אושרה'}.` })
+  const removeApi = async (i) => {
+    if (!(await askConfirm({ title: 'ניתוק', text: `לנתק את ${i.name}?`, ok: 'ניתוק', danger: true }))) return
+    run(`x${i.id}`, async () => { await api.callServer('integration-save', { ...i, enabled: false }); return 'החיבור נותק.' })
+  }
+
+  const card = (p) => {
+    const st = stateOf(p); const [mono, tone] = MONO[p.id] || [p.label.slice(0, 2), 'ink']
+    const canConnect = admin && (p.route === 'email' || (p.route !== 'file' && (p.needs || []).length > 0) || (p.id === 'morning'))
     return (
-      <article key={a.id} className={`fin-app-card ${mine.length ? 'is-on' : ''}`}>
+      <article key={p.id} className={`fin-app-card fin-prov ${st.conns ? 'is-on' : ''}`}>
         <div className="fin-app-card__top">
-          <VendorLogo id={a.id} mono={sw.mono} tone={sw.tone} />
+          <VendorLogo id={p.id} mono={mono} tone={tone} />
           <div className="fin-app-card__head">
-            <h4>{a.label}</h4>
-            <span className="fin-muted">{mine.length ? mine.map((i) => (i.business_id ? nameOf(businesses, i.business_id) : 'כל החברות')).join(', ') : a.kind === 'file' ? 'זמין תמיד' : 'לא מחובר'}</span>
+            <h4>{p.label}</h4>
+            <Pill tone={st.pill[0]}>{st.pill[1]}</Pill>
           </div>
         </div>
-        <p>{sw.desc}</p>
-        {mine.map((i) => {
-          const [tone, label] = STATUS_TXT[i.status] || ['muted', i.status]
-          return (
-            <div key={i.id} className="fin-app-card__row">
-              <Pill tone={tone}>{label}</Pill>
-              {i.last_error && i.status === 'error' && <small className="fin-cell-err">{i.last_error}</small>}
-              <span className="fin-grow" />
-              <button type="button" className="fin-btn fin-btn--sm" onClick={() => test(i)}>בדיקת חיבור</button>
-              {admin && <MoreMenu label={`פעולות עבור ${i.name}`} items={[{ label: 'הגדרות', onClick: () => open(a, i) }, { label: 'ניתוק', onClick: () => disconnect(i), danger: true }]} />}
-            </div>
-          )
-        })}
-        {admin && (!mine.length || a.kind === 'file') && (
-          <button type="button" className={`fin-btn ${mine.length ? 'fin-btn--ghost' : ''} fin-app-card__cta`} onClick={() => open(a)}>
-            <Icon name={mine.length ? 'plus' : 'plug'} size={17} /> {mine.length ? 'חיבור לחברה נוספת' : `חיבור ${a.label}`}
-          </button>
-        )}
+        <p>{p.about}</p>
+        <dl className="fin-prov__facts">
+          <div><dt>כיוון</dt><dd>{p.route === 'file' ? 'קובץ להורדה' : p.route === 'none' ? '—' : 'מהמערכת לתוכנה'}</dd></div>
+          <div><dt>חברות מחוברות</dt><dd>{st.conns || '—'}</dd></div>
+          <div><dt>פעילות אחרונה</dt><dd>{st.last ? dateTime(st.last) : '—'}</dd></div>
+          {(st.sent > 0 || st.failed > 0) && <div><dt>נשלחו / נכשלו</dt><dd>{st.sent} / <span className={st.failed ? 'fin-cell-err' : ''}>{st.failed}</span></dd></div>}
+        </dl>
+        <div className="fin-prov__acts">
+          {canConnect && <button type="button" className={`fin-btn ${st.conns ? '' : 'fin-btn--primary'}`} onClick={() => startForm(p)}><Icon name={st.conns ? 'plus' : 'plug'} size={16} /> {st.conns ? 'חברה נוספת' : 'חיבור'}</button>}
+          <button type="button" className="fin-btn fin-btn--ghost" onClick={() => setOpen(p.id)}>{st.conns ? 'ניהול החיבור' : 'פרטים ויכולות'}</button>
+        </div>
       </article>
     )
   }
+  const openP = open ? providers.find((p) => p.id === open) : null
+  const openS = openP ? stateOf(openP) : null
+  const formP = form ? providers.find((p) => p.id === form.provider) : null
 
   return (
     <div className="fin-stack">
       <div className="fin-titlerow">
         <h2 className="fin-pagehead__title">חיבור תוכנת הנהלת החשבונות</h2>
-        <InfoTip label="על חיבור תוכנה">רק מסמכים מאושרים יוצאים, עם אישור לפני כל שליחה, ובלי כפילויות: מסמך שיוצא מסומן ולא יוצא שוב אלא אם מבקשים ייצוא חוזר. כל ייצוא נרשם בהיסטוריה.</InfoTip>
+        <InfoTip label="על החיבורים">רק מסמכים מאושרים יוצאים. תוכנה מסומנת "מחובר" רק אחרי התחברות אמיתית או שליחה אמיתית, ולכל תוכנה מוצג מה נבדק בפועל ומה רק מתועד אצל הספק.</InfoTip>
       </div>
-      <p className="fin-muted fin-lead">בחרו את התוכנה שרו״ח עובד איתה. לכל חברה אפשר לחבר תוכנה אחת, וייצוא קבצים זמין תמיד.</p>
+      <p className="fin-muted fin-lead">לכל תוכנה מוצג מה אפשר לעשות איתה היום באמת: שליחה לכתובת הקליטה שלה, התחברות ב-API, או ייצוא קבצים.</p>
       <label className="fin-search fin-search--wide">
         <Icon name="search" size={18} />
         <input type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="חיפוש תוכנת הנהלת חשבונות" aria-label="חיפוש תוכנת הנהלת חשבונות" />
       </label>
-      {adapters.length > 0 && (
+      {providers.length > 0 && (
         <div className="fin-app-sum" role="status">
-          <span><b>{new Set(live.map((i) => i.provider)).size}</b> תוכנות מחוברות</span>
-          <span><b>{live.filter((i) => i.status === 'ready').length}</b> פעילות</span>
-          <span className={live.some((i) => i.status === 'not_active') ? 'is-warn' : ''}><b>{live.filter((i) => i.status === 'not_active').length}</b> ממתינות להפעלה</span>
-          {live.some((i) => i.status === 'error') && <span className="is-bad"><b>{live.filter((i) => i.status === 'error').length}</b> בשגיאה</span>}
+          <span><b>{providers.length}</b> תוכנות ברשימה</span>
+          <span><b>{sum.connected}</b> מחוברות</span>
+          <span><b>{sum.sent}</b> מסמכים נשלחו</span>
+          {sum.failed > 0 && <span className="is-warn"><b>{sum.failed}</b> שליחות נכשלו</span>}
+          {sum.errors > 0 && <span className="is-bad"><b>{sum.errors}</b> בשגיאה</span>}
         </div>
       )}
       {msg && <p className="fin-note" role="status">{msg}</p>}
-      {err && !edit && <p className="fin-error fin-error--block" role="alert">{err}</p>}
+      {err && !form && <p className="fin-error fin-error--block" role="alert">{err}</p>}
 
-      {!adapters.length && !status.loading ? <Empty title="השרת לא זמין" icon="plug">רשימת התוכנות נטענת מהשרת.</Empty> : (
+      {!providers.length && !status.loading ? <Empty title="השרת לא זמין" icon="plug">רשימת התוכנות נטענת מהשרת.</Empty> : (
         <>
-          {apiApps.length > 0 && <section className="fin-app-section"><h3>תוכנות הנהלת חשבונות ישראליות</h3><div className="fin-app-grid">{apiApps.map(card)}</div></section>}
-          {fileApps.length > 0 && <section className="fin-app-section"><h3>ייצוא קבצים</h3><div className="fin-app-grid">{fileApps.map(card)}</div></section>}
-          {!apiApps.length && !fileApps.length && <Empty title={`לא מצאנו את "${term}"`} icon="search">אם התוכנה של רו״ח לא ברשימה, ייצוא הקבצים (ZIP, Excel, CSV) נקלט בכל תוכנה.</Empty>}
-          {apiApps.length > 0 && <p className="fin-muted fin-small">חיבור ישיר לתוכנה מופעל אחרי שרו״ח מאשר באיזו תוכנה הוא עובד ונותן מפתח API. עד אז המסמכים יוצאים בקבצים.</p>}
+          {GROUPS.map(([g, title]) => { const items = shown.filter((p) => p.group === g); return items.length ? <section key={g} className="fin-app-section"><h3>{title}</h3><div className="fin-app-grid">{items.map(card)}</div></section> : null })}
+          {!shown.length && <Empty title={`לא מצאנו את "${term}"`} icon="search">אם התוכנה של רו״ח לא ברשימה, אפשר לחבר כל כתובת מייל לקליטת מסמכים, וייצוא הקבצים נקלט בכל תוכנה.</Empty>}
         </>
       )}
 
       <ExportWizard onDone={list.reload} />
 
-      {edit && (() => {
-        const a = adapters.find((x) => x.id === edit.provider)
-        return (
-          <Modal title={edit.id ? `הגדרות ${edit.name}` : `חיבור ${a?.label || ''}`} onClose={() => setEdit(null)} footer={<><button type="submit" form="fin-int" className="fin-btn fin-btn--primary">{edit.id ? 'שמירה' : 'חיבור'}</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setEdit(null)}>ביטול</button></>}>
-            <form id="fin-int" className="fin-form__grid" onSubmit={save}>
-              <Field label="חברה" hint="התוכנה תקבל רק את המסמכים של החברה הזו"><Select value={edit.business_id || ''} onChange={(e) => setEdit({ ...edit, business_id: e.target.value })}><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>
-              <Field label="שם"><input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={a?.label} /></Field>
-              {(a?.secrets || []).map((s) => <Field key={s} label={s.replace(/_/g, ' ')} hint="נשמר בשרת בלבד, ולא מוצג שוב" wide><input type="password" autoComplete="off" onChange={(e) => setEdit({ ...edit, secret: { ...(edit.secret || {}), [s]: e.target.value } })} dir="ltr" /></Field>)}
-            </form>
-            {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
-            {a?.kind === 'api' && <p className="fin-callout">המפתחות נשמרים עכשיו, והשליחה הישירה תופעל אחרי בדיקה מול התוכנה. עד אז המסמכים יוצאים בקבצים, ושום דבר לא נשלח בלי אישור.</p>}
-          </Modal>
-        )
-      })()}
+      {openP && (
+        <Modal wide title={openP.label} onClose={() => setOpen(null)} footer={<>
+          {admin && (openP.route === 'email' || openP.id === 'morning') && <button type="button" className="fin-btn fin-btn--primary" onClick={() => { setOpen(null); startForm(openP) }}><Icon name="plug" size={16} /> {openS.conns ? 'חיבור חברה נוספת' : 'חיבור'}</button>}
+          {openP.docs && <a className="fin-btn" href={openP.docs} target="_blank" rel="noopener noreferrer"><Icon name="external" size={16} /> המקור אצל הספק</a>}
+          <button type="button" className="fin-btn fin-btn--ghost" onClick={() => setOpen(null)}>סגירה</button>
+        </>}>
+          <p className="fin-prov__about"><Pill tone={openS.pill[0]}>{openS.pill[1]}</Pill> {openP.about}</p>
+          {openP.intake && <p className="fin-callout">{openP.intake}</p>}
+          {openP.note && <p className="fin-muted">{openP.note}</p>}
+          {(openS.mails.length > 0 || openS.apis.length > 0) && (
+            <section className="fin-prov__conns" aria-label="חיבורים">
+              <h4>חברות מחוברות</h4>
+              <ul>
+                {openS.mails.map((o) => (
+                  <li key={o.id}>
+                    <div><strong>{bizName(o.business_id)}</strong><bdi dir="ltr">{o.target}</bdi>
+                      <small>{o.sent_count || 0} נשלחו · {o.fail_count || 0} נכשלו{o.last_at ? ` · אחרון ${dateTime(o.last_at)}` : ''}{o.last_status && o.last_status !== 'ok' ? ` · ${o.last_status}` : ''}</small></div>
+                    <Pill tone={!o.enabled ? 'muted' : o.last_status && o.last_status !== 'ok' ? 'bad' : o.sent_count ? 'ok' : 'info'}>{!o.enabled ? 'מושהה' : o.last_status && o.last_status !== 'ok' ? 'שגיאה' : o.sent_count ? 'סונכרן' : 'מחובר, עוד לא נשלח מסמך'}</Pill>
+                    {admin && <span className="fin-prov__rowacts">
+                      <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => testMail(o)}>מייל בדיקה</button>
+                      <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => pauseMail(o)}>{o.enabled ? 'השהיה' : 'חידוש'}</button>
+                      <button type="button" className="fin-btn fin-btn--sm fin-btn--danger" disabled={!!busy} onClick={() => removeMail(o)}>ניתוק</button>
+                    </span>}
+                  </li>
+                ))}
+                {openS.apis.map((i) => (
+                  <li key={i.id}>
+                    <div><strong>{bizName(i.business_id)}</strong><span>חיבור API{i.config?.sandbox ? ' · סביבת ניסיון' : ''}</span>
+                      <small>{i.last_sync_at ? `התחברות אחרונה ${dateTime(i.last_sync_at)}` : 'עוד לא נבדק'}{i.status === 'error' && i.last_error ? ` · ${i.last_error}` : ''}</small></div>
+                    <Pill tone={i.status === 'ready' ? 'ok' : i.status === 'error' ? 'bad' : 'warn'}>{i.status === 'ready' ? 'ההתחברות אושרה' : i.status === 'error' ? 'שגיאת חיבור' : 'נדרשת הגדרת API'}</Pill>
+                    <span className="fin-prov__rowacts">
+                      <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => testApi(i)}>בדיקת התחברות</button>
+                      {admin && <button type="button" className="fin-btn fin-btn--sm fin-btn--danger" disabled={!!busy} onClick={() => removeApi(i)}>ניתוק</button>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <section aria-label="יכולות">
+            <h4>מה נבדק ומה לא</h4>
+            <table className="fin-prov__caps">
+              <tbody>{CAP_ROWS.map(([k, label]) => { const [tone, text] = CAP[openP.cap?.[k]] || CAP.unknown; return <tr key={k}><th scope="row">{label}</th><td><Pill tone={tone}>{text}</Pill></td></tr> })}</tbody>
+            </table>
+            <p className="fin-muted fin-small">"מאומת" מסומן רק אחרי שהפעולה רצה מול חשבון אמיתי. קריאה חזרה מהתוכנה למערכת עוד לא בנויה לאף ספק.</p>
+          </section>
+          {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
+          {msg && <p className="fin-note" role="status">{msg}</p>}
+        </Modal>
+      )}
+
+      {formP && (
+        <Modal title={`חיבור ${formP.label}`} onClose={() => setForm(null)} footer={<><button type="submit" form="fin-prov-form" className="fin-btn fin-btn--primary" disabled={busy === 'save'}>{busy === 'save' ? 'מחבר…' : form.mode === 'email' ? 'חיבור' : 'שמירה ובדיקת התחברות'}</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setForm(null)}>ביטול</button></>}>
+          {formP.route === 'email' && (formP.needs || []).length > 0 && (
+            <div className="fin-seg fin-prov__mode" role="group" aria-label="אופן החיבור">
+              <button type="button" className={form.mode === 'email' ? 'is-on' : ''} aria-pressed={form.mode === 'email'} onClick={() => { setErr(''); setForm({ ...form, mode: 'email' }) }}>כתובת המייל להוצאות</button>
+              <button type="button" className={form.mode === 'api' ? 'is-on' : ''} aria-pressed={form.mode === 'api'} onClick={() => { setErr(''); setForm({ ...form, mode: 'api' }) }}>מפתחות API</button>
+            </div>
+          )}
+          <form id="fin-prov-form" className="fin-form__grid" onSubmit={saveForm}>
+            <Field label="חברה" hint={form.mode === 'email' ? 'המסמכים של החברה הזו בלבד יישלחו לכתובת' : 'החיבור ישמש את החברה הזו'} wide>
+              <Select value={form.business_id} onChange={(e) => setForm({ ...form, business_id: e.target.value })}><option value="">{form.mode === 'email' ? 'בחרו חברה…' : 'כל החברות'}</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>
+            </Field>
+            {form.mode === 'email' && <Field label="כתובת הקליטה" hint={formP.intake || 'הכתובת שהתוכנה או רו״ח נתנו לקליטת מסמכים'} wide><input type="email" dir="ltr" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="name@example.com" autoComplete="off" /></Field>}
+            {form.mode !== 'email' && <>
+              {(formP.needs || []).map((k) => <Field key={k} label={{ client_id: 'מזהה (Client ID)', client_secret: 'מפתח סודי (Client Secret)' }[k] || k} hint="נשמר בשרת בלבד, ולא מוצג שוב" wide><input type="password" autoComplete="off" dir="ltr" onChange={(e) => setForm({ ...form, secret: { ...form.secret, [k]: e.target.value } })} /></Field>)}
+              <label className="fin-check"><input type="checkbox" checked={form.sandbox} onChange={(e) => setForm({ ...form, sandbox: e.target.checked })} /> מפתחות של סביבת הניסיון (Sandbox)</label>
+            </>}
+          </form>
+          {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
+          <p className="fin-callout">{form.mode === 'email' ? 'מרגע החיבור, כל מסמך של החברה שמאושר נשלח לכתובת עם הקובץ המקורי, עם ניסיונות חוזרים אם השליחה נכשלת, וכל שליחה נרשמת. מסמך לא נשלח פעמיים.' : 'המפתחות נבדקים מיד בהתחברות אמיתית לספק. שליחת הוצאות ב-API עוד לא פעילה, ולכן שום מסמך לא נשלח דרך החיבור הזה.'}</p>
+        </Modal>
+      )}
     </div>
   )
 }

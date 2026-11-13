@@ -121,7 +121,7 @@ export default function Integrations() {
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState('')
   const [term, setTerm] = useState('')
-  const providers = status.data?.providers || []
+  const providers = status.data?.accounting || []
   const admin = can('manage')
   const apiRows = (list.data || []).filter((i) => i.enabled)
   // an email connection is an automatic delivery whose name carries the provider's tag

@@ -251,7 +251,7 @@ export default async function handler(req, res) {
           schedule: { night: '23 0 * * *', morning: '57 4 * * *', tz: 'UTC' },
           cloud: Object.fromEntries(Object.entries(CLOUD).map(([k, c]) => [k, c.configured()])),
           adapters: Object.values(ADAPTERS).map(({ id, label, kind, fields, secrets }) => ({ id, label, kind, fields, secrets })),
-          providers: publicProviders(),
+          accounting: publicProviders(),
         })
         return
       }

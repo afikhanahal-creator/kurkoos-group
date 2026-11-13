@@ -4016,3 +4016,53 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-vat__chip { min-height: 44px; }
   .fin-vat__head .fin-btn { min-height: 44px; }
 }
+
+/* ---------- the living mark, the loading screen, the sign-in entrance ---------- */
+/* the name is Latin and laid out by x coordinates: the page's right-to-left direction must not reach inside the drawing */
+.fin-brand { display: block; overflow: visible; color: var(--ink, #07293a); direction: ltr; unicode-bidi: isolate; }
+.fin-brand text { direction: ltr; text-anchor: start; }
+.fin-brand rect { fill: #14202b; transform-box: fill-box; transform-origin: 50% 100%; }
+.fin[data-theme='dark'] .fin-brand rect, .fin[data-theme='dark'] .fin-brand text { fill: #e8eef2; }
+.fin-brand.is-in rect:not(.fin-brand__base) { animation: fin-brand-rise 0.75s cubic-bezier(0.2, 0.9, 0.25, 1) both; animation-delay: calc(var(--i, 0) * 95ms + 80ms); }
+.fin-brand.is-loop rect { animation: fin-brand-build 1.9s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 120ms); }
+@keyframes fin-brand-rise { from { transform: scaleY(0); } 68% { transform: scaleY(1.07); } to { transform: scaleY(1); } }
+@keyframes fin-brand-build { 0%, 100% { transform: scaleY(0.18); opacity: 0.35; } 40%, 70% { transform: scaleY(1); opacity: 1; } }
+.fin-brand text { fill: #14202b; }
+.fin-brand .fin-brand__o1 { fill: #a90b0c; }
+.fin-brand .fin-brand__o2 { fill: #105572; }
+.fin-brand__name { animation: fin-brand-name 0.6s ease-out 0.5s both; }
+.fin-brand__group { animation: fin-brand-name 0.6s ease-out 0.75s both; }
+@keyframes fin-brand-name { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+.fin-brand__base { fill: #105572 !important; transform-box: fill-box; transform-origin: 0 50%; animation: fin-brand-base 0.5s ease-out both; }
+@keyframes fin-brand-base { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* a pointer over the logo: the towers answer once */
+@media (hover: hover) { .fin-brand--logo:hover .fin-brand__towers rect, .fin__brand:hover .fin-brand rect { animation: fin-brand-nod 0.6s ease-in-out both; animation-delay: calc(var(--i, 0) * 60ms); } }
+@keyframes fin-brand-nod { 0%, 100% { transform: scaleY(1); } 45% { transform: scaleY(0.82); } }
+.fin-auth__logo { width: auto; height: 64px; align-self: center; margin-bottom: 6px; object-fit: unset; }
+.fin-login__logo { display: inline-grid; width: auto; height: auto; }
+
+.fin-boot--brand { gap: 16px; }
+.fin-boot__bar { width: 132px; height: 3px; border-radius: 99px; background: linear-gradient(90deg, #e4e6e8 0%, #16688c 50%, #e4e6e8 100%); background-size: 200% 100%; animation: fin-boot-bar 1.4s linear infinite; }
+@keyframes fin-boot-bar { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.fin-boot__label { margin: 0; font-size: 0.9rem; color: #4b5761; animation: fin-brand-fade 0.4s ease-out 0.6s both; }
+@keyframes fin-brand-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* sign-in: the form arrives in order, the button shows it is working, a refusal is felt */
+.fin-auth__form > * { animation: fin-auth-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.fin-auth__form > :nth-child(1) { animation-delay: 0.18s; } .fin-auth__form > :nth-child(2) { animation-delay: 0.24s; } .fin-auth__form > :nth-child(3) { animation-delay: 0.3s; }
+.fin-auth__form > :nth-child(4) { animation-delay: 0.36s; } .fin-auth__form > :nth-child(5) { animation-delay: 0.42s; } .fin-auth__form > :nth-child(n + 6) { animation-delay: 0.48s; }
+@keyframes fin-auth-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.fin-auth__legal { animation: fin-brand-fade 0.5s ease-out 0.7s both; }
+.fin-auth__go { position: relative; overflow: hidden; gap: 10px; transition: transform 0.12s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
+@media (hover: hover) and (pointer: fine) { .fin-auth__go:hover:not(:disabled) { box-shadow: 0 8px 22px rgba(7, 41, 58, 0.22); transform: translateY(-1px); } }
+.fin-auth__go::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.16) 50%, transparent 70%); transform: translateX(120%); pointer-events: none; }
+@media (hover: hover) and (pointer: fine) { .fin-auth__go:hover:not(:disabled)::after { transform: translateX(-120%); transition: transform 0.7s ease; } }
+.fin-auth__spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; animation: fin-auth-spin 0.7s linear infinite; flex: none; }
+@keyframes fin-auth-spin { to { transform: rotate(360deg); } }
+.fin-auth__err { animation: fin-auth-shake 0.42s ease-in-out both !important; }
+@keyframes fin-auth-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(6px); } 40% { transform: translateX(-5px); } 60% { transform: translateX(3px); } 80% { transform: translateX(-2px); } }
+.fin-auth .fin-login__box input { transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .fin-brand rect, .fin-brand__name, .fin-brand__group, .fin-brand__base, .fin-boot__bar, .fin-boot__label, .fin-auth__form > *, .fin-auth__legal, .fin-auth__err, .fin-auth__spin { animation: none !important; }
+  .fin-auth__go, .fin-auth__go::after { transition: none; }
+}

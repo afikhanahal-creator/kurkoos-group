@@ -91,7 +91,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 30 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 30, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 30 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 31, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -1186,7 +1186,7 @@ const accAdminText = await acc.locator('body').innerText()
 const siteApi = async (t) => (await fetch('http://127.0.0.1:5180/api/claude', { method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ input: 'x' }) })).status
 const accClaude = await siteApi(accToken); const adminClaude = await siteApi(adminToken)
 record('SEC2', 'משתמש כספים לא נכנס לניהול האתר', 'רו״ח שנכנס ל-/admin מקבל הפניה למערכת הכספים; קריאה ל-API של האתר נחסמת (403), למנהל היא לא נחסמת', `/admin: ${/מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) ? 'הפניה' : accAdminText.slice(0, 60)}; /api/claude רו״ח=${accClaude}, מנהל=${adminClaude}`, /מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) && accClaude === 403 && adminClaude !== 403, [await shot('26b-accountant-site-admin', acc)])
-record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 6 && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
+record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מרכז המע״מ, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 7 && accNav.some((n) => /מרכז המע״מ/.test(n)) && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
 await accCtx.close()
 
 // ---------- T12: mobile ----------
@@ -2360,6 +2360,64 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && keyA === `b:${biz[0]}/2025/03` && afterA !== beforeA && dbA === 'true|2025-03|manual|verified' && /הועבר/.test(noteA)
     && foundB === 1 && overShown === 1 && keyB.startsWith(`b:${biz2[0]}/`) && afterB !== beforeB && dbB === 't' && /הועבר/.test(noteB)
     && small === 0 && sideways <= 0 && Math.round(sheetBox?.width || 0) === 390 && copiesC === 1 && goneC === '0|0' && /נמחק/.test(noteC), [sheetShot, mgrShot, mShot])
+}
+
+// VAT: one service decides, for every document, whether its VAT may be offset and what is missing; the nightly agent
+// records only what changed; the screen and the document panel show the same answer.
+{
+  const { assessVat, auditVat } = await import('../../src/pages/finance/vatRules.js')
+  const cats = [{ name: 'אחר', vat_deductible_pct: 100 }, { name: 'רכב ודלק', vat_deductible_pct: 66.67 }, { name: 'כיבוד ואירוח', vat_deductible_pct: 0 }]
+  const D = (o) => ({ status: 'approved', currency: 'ILS', business_id: 'b1', created_at: '2026-11-10', category: 'אחר', ...o })
+  const docs = [
+    D({ id: 'ok18', doc_type: 'invoice_receipt', total_amount: 295, amount_before_vat: 250, vat_amount: 45, supplier_id: 's', supplier_vat_id: '514920271', issue_date: '2026-05-10' }),
+    D({ id: 'old17', doc_type: 'invoice', total_amount: 1170, amount_before_vat: 1000, vat_amount: 170, supplier_id: 'o', supplier_vat_id: '511111111', issue_date: '2024-11-02' }),
+    D({ id: 'novat', doc_type: 'invoice', total_amount: 800, amount_before_vat: 800, vat_amount: 0, supplier_id: 'p', supplier_vat_id: '011111115', issue_date: '2026-09-02' }),
+    D({ id: 'rcpt', doc_type: 'receipt', total_amount: 590, supplier_id: 'r', supplier_vat_id: '511111116', supplier_name: 'ספק בלי חשבונית', issue_date: '2026-09-02' }),
+    D({ id: 'car', doc_type: 'invoice', total_amount: 590, amount_before_vat: 500, vat_amount: 90, supplier_id: 'c', supplier_vat_id: '511111112', issue_date: '2026-09-02', category: 'רכב ודלק' }),
+    D({ id: 'food', doc_type: 'invoice_receipt', total_amount: 118, amount_before_vat: 100, vat_amount: 18, supplier_id: 'f', supplier_vat_id: '511111113', issue_date: '2026-09-02', category: 'כיבוד ואירוח' }),
+    D({ id: 'crd', doc_type: 'credit', total_amount: 295, amount_before_vat: 250, vat_amount: 45, supplier_id: 's', supplier_vat_id: '514920271', issue_date: '2026-06-01' }),
+    D({ id: 'crd0', doc_type: 'credit', total_amount: 100, amount_before_vat: 84.75, vat_amount: 15.25, supplier_id: 'zz', supplier_vat_id: '511111119', issue_date: '2026-06-01' }),
+    D({ id: 'badsum', doc_type: 'invoice', total_amount: 1200, amount_before_vat: 1000, vat_amount: 180, supplier_id: 'x', supplier_vat_id: '511111114', issue_date: '2026-09-02' }),
+    D({ id: 'unread', status: 'review', doc_type: 'invoice', total_amount: 590, supplier_id: 'u', supplier_vat_id: '511111117', issue_date: '2026-09-02' }),
+    D({ id: 'dup', status: 'duplicate', doc_type: 'invoice', total_amount: 295, amount_before_vat: 250, vat_amount: 45, supplier_id: 's', supplier_vat_id: '514920271', issue_date: '2026-05-10' }),
+    D({ id: 'big', doc_type: 'invoice', total_amount: 33984, amount_before_vat: 28800, vat_amount: 5184, supplier_id: 'k', supplier_vat_id: '512676289', issue_date: '2026-01-25', doc_number: 'Y2' }),
+    D({ id: 'bigok', doc_type: 'invoice', total_amount: 14160, amount_before_vat: 12000, vat_amount: 2160, supplier_id: 'k2', supplier_vat_id: '512676280', issue_date: '2026-02-01', allocation_number: '123456789' }),
+    D({ id: 'part', doc_type: 'receipt', total_amount: 2832, amount_before_vat: 2400, supplier_id: 'k', supplier_vat_id: '512676289', issue_date: '2026-10-10' }),
+    D({ id: 'nobiz', business_id: null, doc_type: 'invoice', total_amount: 118, amount_before_vat: 100, vat_amount: 18, supplier_id: 'n', supplier_vat_id: '511111118', issue_date: '2026-09-02' }),
+    D({ id: 'meta', doc_type: 'receipt', total_amount: 500, supplier_id: 'm', supplier_name: 'Meta Platforms, Inc.', issue_date: '2026-08-12' }),
+    D({ id: 'muni', doc_type: 'supplier_bill', total_amount: 1929.6, supplier_id: 'h', supplier_name: 'עיריית הוד השרון', issue_date: '2026-07-27' }),
+  ]
+  const r = auditVat(docs, { categories: cats, today: '2026-11-14' })
+  const A = Object.fromEntries(r.rows.map((x) => [x.doc.id, x.a])); const codes = (id) => A[id].needs.map((n) => n.code).join(',')
+  const got = { ok18: `${A.ok18.cls}/${A.ok18.eligible}`, old17: `${A.old17.cls}/${A.old17.eligible}/${Math.round(A.old17.rate * 100)}`, novat: A.novat.cls, rcpt: `${A.rcpt.cls}/${A.rcpt.eligible}/${A.rcpt.potential}/${codes('rcpt')}`,
+    car: `${A.car.cls}/${A.car.eligible}/${A.car.blocked}`, food: `${A.food.cls}/${A.food.eligible}/${A.food.blocked}`, crd: `${A.crd.cls}/${A.crd.eligible}/${A.crd.creditOf}`, crd0: `${A.crd0.cls}/${codes('crd0')}`,
+    badsum: `${A.badsum.cls}/${A.badsum.eligible}/${codes('badsum')}`, unread: `${A.unread.cls}/${A.unread.eligible}/${codes('unread')}`, dup: A.dup.cls, big: `${A.big.cls}/${A.big.eligible}/${A.big.potential}/${codes('big')}`,
+    bigok: `${A.bigok.cls}/${A.bigok.eligible}`, part: `${A.part.cls}/${A.part.paysInvoice}/${A.part.potential}`, nobiz: `${A.nobiz.eligible}/${codes('nobiz')}`, meta: `${A.meta.cls}/${A.meta.potential}`, muni: A.muni.cls }
+  const want = { ok18: 'full/45', old17: 'full/170/17', novat: 'no_vat', rcpt: 'missing/0/90/tax_invoice', car: 'partial/60/30', food: 'none/0/18', crd: 'credit/-45/ok18', crd0: 'credit/credit_original',
+    badsum: 'review/0/sum', unread: 'missing/0/vat', dup: 'duplicate', big: 'review/0/5184/allocation', bigok: 'full/2160', part: 'none/big/0', nobiz: '0/company', meta: 'review/0', muni: 'no_vat' }
+  const wrong = Object.keys(want).filter((k) => got[k] !== want[k]).map((k) => `${k}: ${got[k]} (ציפינו ${want[k]})`)
+  const changedAfterApproval = assessVat({ ...docs[0], vat_amount: 60 }, { categories: cats, today: '2026-11-14' })
+  // the agent: a run records the state; a second run with nothing changed writes nothing; one changed document is recorded with before and after
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const run1 = await api(tok, { action: 'vat-audit' }); const run2 = await api(tok, { action: 'vat-audit' })
+  const target = sql("select id from fin_documents where status='review' and doc_type in ('invoice','invoice_receipt') and vat_amount > 0 and total_amount is not null and amount_before_vat is not null and category is not null and exists (select 1 from fin_categories c where c.name = fin_documents.category and c.vat_deductible_pct > 0) limit 1")
+  const before = sql(`select coalesce(category,'')||'|'||coalesce(category_id::text,'') from fin_documents where id='${target}'`).split('|')
+  const zero = sql("select id||'|'||name from fin_categories where vat_deductible_pct = 0 order by name limit 1").split('|')
+  sql(`update fin_documents set category='${zero[1]}', category_id='${zero[0]}' where id='${target}'`)
+  const run3 = await api(tok, { action: 'vat-audit' })
+  const logged = sql(`select count(*)||'|'||coalesce(max(changes->'previous'->>'cls'),'-')||'|'||coalesce(max(changes->'current'->>'cls'),'-') from fin_audit where action='vat_audited' and entity_id='${target}'`)
+  sql(`update fin_documents set category=${before[0] ? `'${before[0]}'` : 'null'}, category_id=${before[1] ? `'${before[1]}'` : 'null'} where id='${target}'`)
+  const emp = await api(tokE, { action: 'vat-audit' })
+  await go('/vat'); await page.waitForSelector('.fin-vat__figs', { timeout: 15000 })
+  const figs = await page.locator('.fin-vat__figs > div').count(); const queue = await page.locator('.fin-vat__item').count(); const lastLine = await page.locator('.fin-vat__last').innerText()
+  const vatShot = await shot('132-vat-centre')
+  await page.locator('.fin-vat__item').first().click(); await page.waitForSelector('.fin-vatnote', { timeout: 15000 }).catch(() => {})
+  const note = await page.locator('.fin-vatnote').count()
+  const noteShot = await shot('133-vat-in-document')
+  record('VAT', 'סוכן המע״מ: סיווג כל מסמך, ביקורת לילית ומסך המע״מ', 'חשבונית 18% ו-17% מקוזזות; בלי מע״מ; קבלה בלי חשבונית מס לא מקוזזת ומוצגת כהערכה; קיזוז חלקי ואפס לפי קטגוריה; זיכוי מקושר ולא מקושר; סכומים שלא מסתכמים; חשבונית שלא נקראה; כפילות; מספר הקצאה נדרש, חסר וקיים; קבלה שהיא תשלום על חשבונית קיימת; בלי חברה; ספק זר; רשות. הסוכן רושם רק שינויים, עם לפני ואחרי; עובד לא מריץ; המסך והמסמך מציגים את אותה תשובה',
+    `שגויים: ${wrong.length ? wrong.join(' ; ') : 'אין'}; שינוי אחרי אישור: ${changedAfterApproval.cls}/${changedAfterApproval.needs.map((n) => n.code)}; ריצות: ${run1.data.ok}/${run1.data.audited} → שנייה ${run2.data.changed} שינויים → אחרי שינוי קטגוריה ${run3.data.changed}; יומן: ${logged}; עובד: ${emp.status}; מסך: ${figs} מדדים, ${queue} בתור, "${lastLine.slice(0, 40)}"; במסמך: ${note}`,
+    wrong.length === 0 && changedAfterApproval.cls === 'review' && run1.data.ok === true && run1.data.audited > 5 && run2.data.changed === 0 && run3.data.changed === 1 && /^[1-9]\d*\|/.test(logged) && /\|none$/.test(logged) && emp.status === 403
+    && figs === 6 && queue >= 1 && /הביקורת האחרונה/.test(lastLine) && note === 1, [vatShot, noteShot])
 }
 
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)

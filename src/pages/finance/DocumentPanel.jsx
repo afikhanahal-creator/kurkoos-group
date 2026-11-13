@@ -8,6 +8,7 @@ import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf 
 import { saveBlob } from './zip.js'
 import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 import Attachments from './Attachments.jsx'
+import { VatNote } from './Vat.jsx'
 import { PAY_LABEL, payState } from './ledger.js'
 import Select from './Select.jsx'
 import { supplierHistory } from './links.js'
@@ -355,6 +356,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                     </dl>
                   )
                 })()}
+                <VatNote doc={doc} />
                 <div className="fin-form__grid">
                   <h4 className="fin-form__sec fin-field--wide">ספק</h4>
                   {F({ k: 'supplier_name', wide: true })}

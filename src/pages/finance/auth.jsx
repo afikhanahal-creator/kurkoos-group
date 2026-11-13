@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase.js'
 import * as api from './api.js'
 import { ProviderLogo } from './logos.jsx'
 import { Icon } from './ui.jsx'
-import { BrandLoader, BrandLogo } from './Brand.jsx'
+import { BrandLoader, LogoIntro } from './Brand.jsx'
 
 /* Sign-in for the finance system. The auth server (Supabase) hashes passwords, limits attempts and issues the session;
    this screen adds what a person needs: show the password, reset it, clear messages, sign-in with Google / Microsoft
@@ -22,7 +22,7 @@ export function AuthLayout({ children, aside = true }) {
   return (
     <div className="fin-login fin-auth" dir="rtl">
       <main className="fin-auth__pane">
-        <BrandLogo height={64} className="fin-auth__logo" />
+        <LogoIntro height={78} className="fin-auth__logo" />
         {children}
         <p className="fin-auth__legal">מערכת פרטית של קבוצת קורקוס. הכניסה למוזמנים בלבד, והכניסות נרשמות.</p>
       </main>

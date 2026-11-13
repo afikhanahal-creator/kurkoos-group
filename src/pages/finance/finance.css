@@ -4066,3 +4066,20 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-brand rect, .fin-brand__name, .fin-brand__group, .fin-brand__base, .fin-boot__bar, .fin-boot__label, .fin-auth__form > *, .fin-auth__legal, .fin-auth__err, .fin-auth__spin { animation: none !important; }
   .fin-auth__go, .fin-auth__go::after { transition: none; }
 }
+
+/* a large moment in the middle of the screen (after an upload, after a photo) */
+.fin-moments > .fin-moment__big { filter: none; position: fixed; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 400; pointer-events: none; display: grid; justify-items: center; gap: 6px; width: auto; height: auto; }
+.fin-moments > .fin-moment__big .fin-moment__art { display: block; width: 168px; height: 168px; }
+.fin-moments > .fin-moment__big.has-caption { padding: 14px 26px 18px; border-radius: 24px; background: color-mix(in srgb, var(--sheet, #fff) 94%, transparent); box-shadow: var(--float, 0 12px 32px rgba(7, 41, 58, 0.14)); border: 1px solid var(--line, #e4e6e8); backdrop-filter: blur(6px); }
+.fin-moment__caption { font-size: 1.05rem; font-weight: 700; color: var(--ink, #07293a); white-space: nowrap; }
+@media (max-width: 700px) { .fin-moment__big .fin-moment__art { width: 140px; height: 140px; } }
+
+/* the logo's entrance on the sign-in screen */
+.fin-logointro { position: relative; display: block; max-width: 100%; direction: ltr; }
+.fin-logointro.fin-auth__logo { height: auto; margin-bottom: 0; align-self: center; }
+.fin-logointro__lottie { position: absolute; inset: 0; display: block; }
+.fin-logointro__lottie svg { display: block; width: 100% !important; height: 100% !important; }
+.fin-logointro__still { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); animation: none !important; opacity: 0; }
+.fin-logointro__still rect, .fin-logointro__still g { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .fin-logointro__still { opacity: 1; } }
+@media (max-width: 700px) { .fin-logointro { transform: scale(0.86); transform-origin: 100% 50%; } }

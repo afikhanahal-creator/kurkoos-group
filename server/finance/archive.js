@@ -187,6 +187,19 @@ async function folderFor(ctx, doc) {
   return { id: parent, key: levels[levels.length - 1].key, path: `/${[ctx.target.root_name || 'ארכיון מסמכים עסקי', ...levels.map((l) => l.name)].join('/')}` }
 }
 
+/* the path of a folder key, by the names of the folders above it: "root/m:ab12" → /<root>/<name> */
+export function pathOfKey(ctx, key) {
+  const rootName = ctx.target.root_name || 'ארכיון מסמכים עסקי'
+  const segs = String(key || '').split('/'); const names = []
+  for (let i = 0; i < segs.length; i++) { const k = segs.slice(0, i + 1).join('/'); if (k === 'root') continue; names.push(ctx.folders.get(k)?.name || segs[i]) }
+  return `/${[rootName, ...names].join('/')}`
+}
+/* where a pinned document lives: a folder the system knows (its key is kept in the pin's name), or a folder made in Drive */
+function pinnedFolder(ctx, pin) {
+  const key = pin.name && pin.name !== 'ext' ? pin.name : null
+  return { id: pin.drive_folder_id, key: key || 'pin', path: key ? pathOfKey(ctx, key) : `/${ctx.target.root_name || 'ארכיון מסמכים עסקי'}/תיקייה שנוצרה ב-Drive` }
+}
+
 async function supplierName(ctx, doc) {
   if (!doc.supplier_id) return doc.supplier_name
   if (!ctx.suppliers.has(doc.supplier_id)) ctx.suppliers.set(doc.supplier_id, (await one(`fin_suppliers?id=eq.${doc.supplier_id}&select=name`))?.name || doc.supplier_name)
@@ -242,7 +255,10 @@ export async function processRow(ctx, row) {
     return { state: 'duplicate' }
   }
 
-  const folder = await folderFor(ctx, doc)
+  let folder = await folderFor(ctx, doc)
+  // a person put this document in a folder of their own choice (in the system, or by moving it in Drive): it stays there
+  const pin = ctx.folders.get(`pin:${row.document_id}`)
+  if (pin) folder = pinnedFolder(ctx, pin)
   const wanted = (row.name_override || organizedName(doc, await supplierName(ctx, doc))).replace(isBody(doc) ? /\.html?$/i : /$^/, '.pdf')
   const name = await uniqueName(ctx, folder.id, wanted, row.document_id)
 
@@ -265,6 +281,8 @@ export async function processRow(ctx, row) {
     try {
       file = await (buf.length > RESUMABLE_FROM ? driveUploadResumable : driveUpload)(ctx.token, { name, parent: folder.id, mime: fileMime, buf, props: { kd: row.document_id, kt: tag(row.target_id), ks: sha256 } })
     } catch (e) {
+      // the chosen folder is gone from Drive: the document returns to the folder its fields give
+      if (e.status === 404 && pin) { await forgetFolders(ctx, [`pin:${row.document_id}`]); await event(row.target_id, row.document_id, 'pin_lost', { path: folder.path }) }
       if (e.status === 404) { await forgetFolders(ctx, ['root', ...folderPlan(ctx.target, doc, '').map((l) => l.key)]); await patch(`fin_cloud_targets?id=eq.${ctx.target.id}`, { root_folder_id: null }); ctx.target.root_folder_id = null }
       throw e
     }
@@ -443,6 +461,7 @@ async function pagedAll(path, size = 1000) {
 
 async function compareStep(ctx, rec) {
   const t = ctx.target
+  const twoWay = await isTwoWay()
   const seen = await pagedAll(`fin_drive_seen?reconcile_id=eq.${rec.id}&select=drive_file_id,document_id,name,parent,size,md5,trashed&order=drive_file_id`)
   const rows = await pagedAll(`fin_drive_files?target_id=eq.${t.id}&select=document_id,status,excluded,drive_file_id,drive_folder_id,organized_name,file_md5,file_sha256,fin_documents!fin_drive_files_document_id_fkey(file_path)&order=document_id`)
   const byDoc = new Map()
@@ -466,6 +485,12 @@ async function compareStep(ctx, rec) {
     else if (own.parent !== r.drive_folder_id) kind = 'wrong_folder'
     else if (own.name !== r.organized_name) kind = 'wrong_name'
     if (!kind) { R.verified_ok++; ok.push(r.document_id); continue }
+    // two-way sync: a rename, a move or a trashing done in Drive is the person's wish, and the system follows it
+    if (twoWay && ['trashed', 'wrong_folder', 'wrong_name'].includes(kind)) {
+      const seenFile = own || files.find((f) => f.trashed)
+      const did = await adopt(ctx, await one(`fin_drive_files?target_id=eq.${t.id}&document_id=eq.${r.document_id}&select=*`), { id: seenFile.drive_file_id, name: seenFile.name, parents: [seenFile.parent], trashed: !!seenFile.trashed, md5Checksum: seenFile.md5 }, { via: 'reconcile' }).catch(() => null)
+      if (did) { R.adopted = (R.adopted || 0) + 1; R[`adopted_${did}`] = (R[`adopted_${did}`] || 0) + 1; if (did !== 'trashed') ok.push(r.document_id); continue }
+    }
     R[kind]++
     const noSource = ['missing', 'trashed', 'changed'].includes(kind) && !r.fin_documents?.file_path
     if (noSource) R.no_source++
@@ -603,6 +628,19 @@ export async function tree({ targetId, user }) {
   const ok = (r) => !user?.business_ids?.length || (r.business_id && user.business_ids.includes(r.business_id))
   return rows.filter(ok)
 }
+/* the folders a person made (also the empty ones), and what was taken out of the archive (the trash of this screen) */
+export async function extras({ targetId, user }) {
+  const target = await one(`fin_cloud_targets?id=eq.${q(targetId)}&select=*`)
+  if (!target) return { folders: [], trash: [] }
+  const all = (await sb(`fin_drive_folders?target_id=eq.${q(targetId)}&select=key,name,drive_folder_id,created_at&order=created_at`)) || []
+  const ctx = { target, folders: new Map(all.map((f) => [f.key, f])) }
+  const folders = all.filter((f) => /(^|\/)m:[0-9a-f]+$/.test(f.key)).map((f) => ({ key: f.key, name: f.name, path: pathOfKey(ctx, f.key), created_at: f.created_at }))
+  const limited = (r) => !user?.business_ids?.length || (r.business_id && user.business_ids.includes(r.business_id))
+  const trash = ((await sb(`fin_drive_files?target_id=eq.${q(targetId)}&status=eq.withdrawn&select=document_id,business_id,status,folder_path,organized_name,error,updated_at,drive_file_id&order=updated_at.desc&limit=500`)) || []).filter(limited).map(({ drive_file_id, ...r }) => ({ ...r, in_drive_trash: !!drive_file_id }))
+  return { folders, trash, two_way: await isTwoWay(), sync: ((await one(`fin_settings?key=eq.drive_sync_state&select=value`))?.value || {})[targetId] || null }
+}
+/* two-way sync is on unless it was turned off (fin_settings "drive_two_way") */
+export async function isTwoWay() { const v = (await one(`fin_settings?key=eq.drive_two_way&select=value`).catch(() => null))?.value; return v !== false }
 
 /* a person renames the archive copy: the file in Drive gets the name, and the name is kept for every later run */
 export async function renameDoc({ targetId, documentId, name, user }) {
@@ -644,6 +682,8 @@ export async function moveDocs({ targetId, ids, businessId, period, user }) {
     try { await patch(`fin_documents?id=eq.${q(id)}`, body); moved.push({ id, from: { business_id: doc.business_id, period: doc.accounting_period }, to: body }) } catch (e) { results.push({ id, ok: false, error: String(e.message || e).slice(0, 200) }) }
   }
   if (moved.length) {
+    // the person chose a company or a month: a folder chosen by hand before no longer holds the document
+    await sb(`fin_drive_folders?target_id=eq.${q(targetId)}&key=in.(${moved.map((m) => q(`pin:${m.id}`)).join(',')})`, { method: 'DELETE', prefer: 'return=minimal' }).catch(() => {})
     const inDrive = new Set(((await sb(`fin_drive_files?target_id=eq.${q(targetId)}&document_id=in.(${moved.map((m) => q(m.id)).join(',')})&select=document_id,status`)) || []).filter((r) => r.status !== 'withdrawn').map((r) => r.document_id))
     const saved = inDrive.size ? await saveNow({ target, ids: moved.filter((m) => inDrive.has(m.id)).map((m) => m.id), user }).catch((e) => moved.filter((m) => inDrive.has(m.id)).map((m) => ({ id: m.id, ok: false, error: String(e.message || e).slice(0, 200) }))) : []
     const by = new Map(saved.map((r) => [r.id, r]))
@@ -728,3 +768,69 @@ export async function exclude({ targetId, ids, excluded = true, user }) {
   await audit('cloud', targetId, excluded ? 'archive_excluded' : 'archive_included', { ids: ids.slice(0, 50) }, user)
   return { changed: ids.length }
 }
+
+// ---------- two-way sync: what a person did in Drive is followed by the system (driveSync.js runs it) ----------
+/* One file of ours as Drive holds it now, against the row. Returns what was adopted: 'trashed' | 'restored' | 'renamed' |
+   'moved' | null. Only a settled row is touched (verified, or taken out): a row the queue is working on is left to it. */
+export async function adopt(ctx, row, file, { via = 'changes' } = {}) {
+  if (!row || !file) return null
+  const t = ctx.target; const now = new Date().toISOString()
+  const TRASHED = 'הועבר לפח ב-Google Drive'
+  if (file.trashed) {
+    if (row.status === 'withdrawn' || !['verified', 'uploaded'].includes(row.status)) return null
+    // in the Drive trash: out of the archive here too, kept in this screen's trash, never uploaded again by itself
+    await setRow(row, { status: 'withdrawn', excluded: true, drive_file_id: file.id, locked_until: null, next_try_at: null, error: TRASHED, last_sync_at: now })
+    await event(t.id, row.document_id, 'trashed_in_drive', { name: row.organized_name, path: row.folder_path, via })
+    return 'trashed'
+  }
+  if (row.status === 'withdrawn') {
+    if (row.error !== TRASHED) return null
+    // taken back out of the Drive trash: back in the archive, and checked again
+    await setRow(row, { status: 'queued', excluded: false, drive_file_id: file.id, attempts: 0, next_try_at: null, error: null })
+    await event(t.id, row.document_id, 'restored_in_drive', { name: file.name, via })
+    return 'restored'
+  }
+  if (row.status !== 'verified') return null
+  let did = null
+  if (file.name && file.name !== row.organized_name) {
+    const was = row.organized_name
+    await setRow(row, { name_override: file.name, organized_name: file.name, last_sync_at: now })
+    await event(t.id, row.document_id, 'renamed_in_drive', { from: was, to: file.name, via })
+    did = 'renamed'
+  }
+  const parent = (file.parents || [])[0]
+  if (parent && parent !== row.drive_folder_id) {
+    const dest = [...ctx.folders.values()].find((f) => f.drive_folder_id === parent && !String(f.key).startsWith('pin:'))
+    const from = { path: row.folder_path }
+    const month = dest && /^b:([^/]+)\/(\d{4})\/(\d{2})(\/k:.+)?$/.exec(dest.key)
+    const doc = await one(`fin_documents?id=eq.${row.document_id}&select=id,status,business_id,accounting_period,project_id,issue_date`)
+    let path
+    if (month && doc && !['approved', 'sent'].includes(doc.status)) {
+      // into a company's month folder: the document is assigned to that company and month, exactly as a move in the system
+      const biz = month[1] === 'none' ? null : month[1]; const period = `${month[2]}-${month[3]}`
+      const body = {}
+      if ((biz || null) !== (doc.business_id || null)) { body.business_id = biz; body.business_source = biz ? 'manual' : null }
+      if (period !== (doc.accounting_period || String(doc.issue_date || '').slice(0, 7))) body.accounting_period = period
+      if ('business_id' in body && doc.project_id) { const pr = await one(`fin_projects?id=eq.${q(doc.project_id)}&select=business_id`); if (pr?.business_id && pr.business_id !== body.business_id) body.project_id = null }
+      if (Object.keys(body).length) await patch(`fin_documents?id=eq.${row.document_id}`, body)
+      await sb(`fin_drive_folders?target_id=eq.${t.id}&key=eq.${q(`pin:${row.document_id}`)}`, { method: 'DELETE', prefer: 'return=minimal' }).catch(() => {}); ctx.folders.delete(`pin:${row.document_id}`)
+      path = pathOfKey(ctx, dest.key)
+      await setRow(row, { drive_folder_id: parent, folder_key: dest.key, folder_path: path, business_id: biz, last_sync_at: now })
+      await audit('document', row.document_id, 'moved_in_drive', { to: body, path }, { email: 'Google Drive' }).catch(() => {})
+    } else {
+      // anywhere else (a folder a person made, a company's own folder, an approved document): the file stays where the
+      // person put it, and the system remembers the place; the document's own details are not changed
+      const pin = { target_id: t.id, key: `pin:${row.document_id}`, name: dest ? dest.key : 'ext', drive_folder_id: parent }
+      await sb('fin_drive_folders', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: pin })
+      ctx.folders.set(pin.key, pin)
+      const f = pinnedFolder(ctx, pin); path = f.path
+      await setRow(row, { drive_folder_id: parent, folder_key: f.key, folder_path: path, last_sync_at: now })
+    }
+    await event(t.id, row.document_id, 'moved_in_drive', { from, to: { path }, via })
+    did = 'moved'
+  }
+  return did
+}
+
+// what driveSync.js builds on (kept here so there is one place that talks to Drive)
+export const kit = { context, rootOf, ensure, driveGet, drivePatch, driveTrash, driveCreateFolder, event, setRow, tag, H, saveNow, FOLDER, FILE_FIELDS }

@@ -80,6 +80,9 @@ function gmailMessage(m) {
 }
 
 const taxWatch = {}
+// Drive's own list of changes: every difference between two readings of the files is one change (as the real list
+// reports the latest state of a file, not every step)
+const driveChanges = []; let driveSnap = new Map()
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`)
   const p = url.pathname
@@ -227,7 +230,28 @@ const server = http.createServer(async (req, res) => {
   // uploads are saved but answer 500, as when the answer is lost), trash / remove (a file of a document, as a person would).
   const dfile = (f) => ({ id: f.id, name: f.name, parents: f.parents, mimeType: f.folder ? 'application/vnd.google-apps.folder' : 'application/octet-stream', md5Checksum: f.folder || f.nomd5 ? undefined : f.md5, size: f.folder ? undefined : String(f.size || 0), trashed: !!f.trashed, appProperties: f.appProperties || {}, webViewLink: `https://drive.test/file/${f.id}` })
   const dpath = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${dpath(f.parents[0])}/${f.name}` : '' }
+  const driveFlush = () => {
+    const now = new Map(driveItems.map((f) => [f.id, `${f.name}|${(f.parents || []).join(',')}|${!!f.trashed}|${f.md5 || ''}`]))
+    for (const [id, sig] of now) if (driveSnap.get(id) !== sig) driveChanges.push({ fileId: id, removed: false })
+    for (const id of driveSnap.keys()) if (!now.has(id)) driveChanges.push({ fileId: id, removed: true })
+    driveSnap = now
+  }
+  if (p === '/drive/changes/startPageToken') { if (!String(auth).startsWith('Bearer ')) return send(res, 401, {}); driveFlush(); return send(res, 200, { startPageToken: String(driveChanges.length) }) }
+  if (p === '/drive/changes' && req.method === 'GET') {
+    if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
+    driveFlush()
+    const from = Number(url.searchParams.get('pageToken') || 0); const size = Math.min(Number(url.searchParams.get('pageSize') || 100), 3)   // small pages, so paging is always tested
+    const page = driveChanges.slice(from, from + size)
+    const more = from + page.length < driveChanges.length
+    return send(res, 200, { changes: page.map((c) => { const f = driveItems.find((x) => x.id === c.fileId); return f ? { fileId: c.fileId, removed: false, file: dfile(f) } : { fileId: c.fileId, removed: true } }), ...(more ? { nextPageToken: String(from + page.length) } : { newStartPageToken: String(driveChanges.length) }) })
+  }
+  if (p === '/drive/about') return send(res, 200, { storageQuota: { limit: String(15 * 1024 ** 3), usage: String(driveItems.reduce((a, f) => a + (f.size || 0), 0)) }, user: { displayName: 'חשבון בדיקה', emailAddress: mailbox } })
   if (p === '/__drive') {
+    // as a person would in Drive itself: a name of their own, a folder of their own (made there, unknown to the system), back from the trash
+    if (url.searchParams.get('rename_to')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('doc') && !x.trashed); if (f) f.name = url.searchParams.get('rename_to') }
+    if (url.searchParams.get('untrash')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('untrash') && x.trashed); if (f) f.trashed = false }
+    if (url.searchParams.get('move_to')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('doc') && !x.trashed); const want = url.searchParams.get('move_to'); let to = driveItems.find((x) => x.folder && !x.trashed && (x.id === want || dpath(x.id).endsWith(want))); if (!to && url.searchParams.has('make')) { to = { id: `fld${++driveSeq}`, name: want, parents: ['root'], folder: true, appProperties: {} }; driveItems.push(to) } if (f && to) f.parents = [to.id] }
+    if (url.searchParams.get('folder_rename')) { const f = driveItems.find((x) => x.folder && x.name === url.searchParams.get('folder_rename')); if (f) f.name = url.searchParams.get('to') }
     for (const k of ['upload503', 'lose', 'rate403', 'nomd5']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
     // as a person would in Drive: move a document's file to another folder, rename it, change its content
     const one = (doc) => driveItems.find((f) => f.appProperties?.kd === doc && !f.trashed)
@@ -283,6 +307,7 @@ const server = http.createServer(async (req, res) => {
     const b = JSON.parse(await readBody(req) || '{}')
     if (b.name) f.name = b.name
     if (b.trashed === true) { f.trashed = true; log.drive.push(`trash:${dpath(f.id)}`); return send(res, 200, dfile(f)) }
+    if (b.trashed === false) { f.trashed = false; log.drive.push(`untrash:${dpath(f.id)}`); return send(res, 200, dfile(f)) }
     const add = url.searchParams.get('addParents'); const rm = (url.searchParams.get('removeParents') || '').split(',').filter(Boolean)
     if (add) { if (!driveItems.some((x) => x.id === add && x.folder)) return send(res, 404, { error: { message: 'File not found: parent' } }); f.parents = [add, ...f.parents.filter((x) => !rm.includes(x) && x !== add)] }
     else if (rm.length) f.parents = f.parents.filter((x) => !rm.includes(x))
@@ -363,7 +388,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; driveFail.rate403 = 0; driveFail.nomd5 = 0; driveSeq = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { driveChanges.length = 0; driveSnap = new Map(); for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; driveFail.rate403 = 0; driveFail.nomd5 = 0; driveSeq = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

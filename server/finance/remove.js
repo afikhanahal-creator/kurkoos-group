@@ -13,21 +13,28 @@ const LOCKED = ['approved', 'sent']
 export const mayDelete = (user, d) => user?.role === 'admin' || (user?.role === 'finance_manager' && !LOCKED.includes(d.status))
 
 const gone = async (path) => { try { await removeFile(path); return true } catch { return false } }
+// several things at a time, never all at once (a selection can hold 200 documents)
+const pool = async (items, n, fn) => { let i = 0; const out = new Array(items.length); await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k], k) } })); return out }
 
+/* Three passes, each over all the documents together (it used to be one document after another, about fifteen calls
+   each): 1. the row, with what hangs on it read first and checked gone after; 2. the copies in Drive, in one go with one
+   sign-in; 3. the files. The order inside a document is the same as before: the row first, then Drive and storage. */
 export async function removeDocuments({ ids, user, reason = '' }) {
   const list = [...new Set((Array.isArray(ids) ? ids : []).map(String))].filter((x) => UUID.test(x)).slice(0, 200)
-  const results = []
   const archive = await import('./archive.js')
-  for (const id of list) {
+  // 1. the rows
+  const rows = await pool(list, 6, async (id) => {
     const out = { id, ok: false }
     try {
-      const doc = await one(`fin_documents?id=eq.${q(id)}&select=id,status,created_by,business_id,source,mailbox_id,email_subject,email_from,file_name,file_path,file_hash,supplier_name,total_amount`)
-      if (!doc) { results.push({ id, ok: true, already: true }); continue }
-      if (user && !mayDelete(user, doc)) { results.push({ ...out, error: LOCKED.includes(doc.status) ? 'מסמך מאושר או שנשלח נמחק רק על ידי מנהל המערכת' : 'אין לך הרשאה למחוק את המסמך הזה' }); continue }
-      if (user?.business_ids?.length && doc.business_id && !user.business_ids.includes(doc.business_id)) { results.push({ ...out, error: 'המסמך לא שייך לחברה שלך' }); continue }
       // everything that hangs on the row is read before the row goes
-      const copies = await archive.driveCopies([id]).catch(() => [])
-      const files = (await sb(`fin_document_attachments?document_id=eq.${q(id)}&kind=eq.file&file_path=not.is.null&select=file_path`).catch(() => [])) || []
+      const [doc, copies, files] = await Promise.all([
+        one(`fin_documents?id=eq.${q(id)}&select=id,status,created_by,business_id,source,mailbox_id,email_subject,email_from,file_name,file_path,file_hash,supplier_name,total_amount`),
+        archive.driveCopies([id]).catch(() => []),
+        sb(`fin_document_attachments?document_id=eq.${q(id)}&kind=eq.file&file_path=not.is.null&select=file_path`).then((r) => r || [], () => []),
+      ])
+      if (!doc) return { id, ok: true, already: true }
+      if (user && !mayDelete(user, doc)) return { ...out, error: LOCKED.includes(doc.status) ? 'מסמך מאושר או שנשלח נמחק רק על ידי מנהל המערכת' : 'אין לך הרשאה למחוק את המסמך הזה' }
+      if (user?.business_ids?.length && doc.business_id && !user.business_ids.includes(doc.business_id)) return { ...out, error: 'המסמך לא שייך לחברה שלך' }
       const paths = [...new Set([doc.file_path, ...copies.map((c) => c.rendition_path), ...files.map((f) => f.file_path)].filter(Boolean))]
       // the same file is not collected again from the mailbox (pipeline.js reads fin_skipped by the file's hash)
       if (doc.file_hash && !(await one(`fin_skipped?file_hash=eq.${q(doc.file_hash)}&select=id`).catch(() => null))) {
@@ -35,23 +42,33 @@ export async function removeDocuments({ ids, user, reason = '' }) {
       }
       await sb(`fin_documents?id=eq.${q(id)}`, { method: 'DELETE', prefer: 'return=minimal' })
       // the check: the row and everything that pointed at it are really gone
-      const left = []
-      if (await one(`fin_documents?id=eq.${q(id)}&select=id`)) left.push('המסמך')
-      for (const [table, col, name] of [['fin_document_allocations', 'document_id', 'חלוקה לפרויקטים'], ['fin_document_attachments', 'document_id', 'מצורפים'], ['fin_drive_files', 'document_id', 'רישום בארכיון'], ['fin_documents', 'duplicate_of', 'הפניית כפילות']]) {
-        if (await one(`${table}?${col}=eq.${q(id)}&select=${col}&limit=1`).catch(() => null)) left.push(name)
-      }
-      if (left.length) { results.push({ ...out, error: `המחיקה לא הושלמה, נשאר: ${left.join(', ')}` }); continue }
-      // after the row: the copy in Drive and the files. A step that fails now is finished later, and said so.
-      const drive = copies.some((c) => c.drive_file_id) ? await archive.trashCopies(copies, user).catch(() => ({ trashed: 0, failed: [id] })) : { trashed: 0, failed: [] }
-      const kept = []
-      for (const p of paths) if (!(await gone(p))) kept.push(p)
-      const pending = [...(drive.failed.length ? ['drive'] : []), ...(kept.length ? ['storage'] : [])]
-      await audit('document', id, 'deleted_everywhere', { supplier_name: doc.supplier_name, total_amount: doc.total_amount, file_name: doc.file_name, drive_trashed: drive.trashed, files_removed: paths.length - kept.length, ...(pending.length ? { pending } : {}), ...(reason ? { reason } : {}) }, user).catch(() => {})
-      results.push({ id, ok: true, drive: drive.failed.length ? 'pending' : drive.trashed ? 'trashed' : 'none', files: paths.length - kept.length, ...(pending.length ? { pending } : {}) })
+      const checks = await Promise.all([
+        one(`fin_documents?id=eq.${q(id)}&select=id`).then((r) => (r ? 'המסמך' : null)),
+        ...[['fin_document_allocations', 'document_id', 'חלוקה לפרויקטים'], ['fin_document_attachments', 'document_id', 'מצורפים'], ['fin_drive_files', 'document_id', 'רישום בארכיון'], ['fin_documents', 'duplicate_of', 'הפניית כפילות']]
+          .map(([table, col, name]) => one(`${table}?${col}=eq.${q(id)}&select=${col}&limit=1`).then((r) => (r ? name : null), () => null)),
+      ])
+      const left = checks.filter(Boolean)
+      if (left.length) return { ...out, error: `המחיקה לא הושלמה, נשאר: ${left.join(', ')}` }
+      return { id, ok: true, doc, copies, paths }
     } catch (e) {
-      results.push({ ...out, error: String(e.message || e).slice(0, 200) })
+      return { ...out, error: String(e.message || e).slice(0, 200) }
     }
-  }
+  })
+  // 2. after the rows: the copies in Drive, all of them in one pass. A step that fails now is finished later, and said so.
+  const done = rows.filter((r) => r.ok && r.doc)
+  const inDrive = done.flatMap((r) => r.copies.filter((c) => c.drive_file_id))
+  const drive = inDrive.length ? await archive.trashCopies(inDrive, user).catch(() => ({ trashed: 0, failed: [...new Set(inDrive.map((c) => c.document_id))], trashedOf: {} })) : { trashed: 0, failed: [], trashedOf: {} }
+  const driveFailed = new Set(drive.failed)
+  // 3. the files, then one line in the log per document
+  const results = await pool(rows, 6, async (r) => {
+    if (!r.ok || !r.doc) return r
+    const { id, doc, paths } = r
+    const kept = (await Promise.all(paths.map(async (p) => ((await gone(p)) ? null : p)))).filter(Boolean)
+    const trashed = drive.trashedOf?.[id] || 0
+    const pending = [...(driveFailed.has(id) ? ['drive'] : []), ...(kept.length ? ['storage'] : [])]
+    await audit('document', id, 'deleted_everywhere', { supplier_name: doc.supplier_name, total_amount: doc.total_amount, file_name: doc.file_name, drive_trashed: trashed, files_removed: paths.length - kept.length, ...(pending.length ? { pending } : {}), ...(reason ? { reason } : {}) }, user).catch(() => {})
+    return { id, ok: true, drive: driveFailed.has(id) ? 'pending' : trashed ? 'trashed' : 'none', files: paths.length - kept.length, ...(pending.length ? { pending } : {}) }
+  })
   return { results, deleted: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length, pending: results.filter((r) => r.pending).length }
 }
 

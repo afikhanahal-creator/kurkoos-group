@@ -19,7 +19,7 @@ import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, en
 import { ADAPTERS } from './finance/adapters.js'
 import { publicProviders } from './finance/providers.js'
 import { ask } from './finance/assistant.js'
-import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
+import { mfaBlock, mfaRoles, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
 import { listLinks, fetchLinked, mailSource, mailFile } from './finance/linked.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup, setReplies as waSetReplies, notifyApproved as waNotifyApproved } from './finance/whatsapp.js'
@@ -223,14 +223,15 @@ export default async function handler(req, res) {
     if (limited(`fail:${String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0]}`, 60)) { res.status(429).json({ error: 'יותר מדי ניסיונות' }); return }
     res.status(200).json(await loginFailed(req, body)); return
   }
-  const user = await caller(req)
+  // who is calling and which roles need the second step are asked together (two calls in a row on every action before)
+  const [user, mfaList] = await Promise.all([caller(req), mfaRoles()])
   if (!user) { res.status(401).json({ error: 'צריך להתחבר' }); return }
   const allowed = ROLES[body.action]
   if (!allowed) { res.status(400).json({ error: 'unknown action' }); return }
   if (!user.role || !allowed.includes(user.role)) { res.status(403).json({ error: 'אין לך הרשאה לפעולה הזו' }); return }
   // a role that requires the second step acts only after it (the database applies the same rule in fin_has_role)
   if (!['status', 'auth-event'].includes(body.action)) {
-    const why = await mfaBlock(user)
+    const why = await mfaBlock(user, mfaList)
     if (why) { res.status(403).json({ error: 'נדרש אימות דו-שלבי. התחברו מחדש עם הקוד מהאפליקציה', code: why }); return }
   }
   // the scan screen asks for the next step and the status again and again while a scan runs: its own, larger budget,

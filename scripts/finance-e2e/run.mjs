@@ -2420,6 +2420,53 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && figs === 6 && queue >= 1 && /הביקורת האחרונה/.test(lastLine) && note === 1, [vatShot, noteShot])
 }
 
+// FAST: what a person does is on the screen at once. A deleted document leaves the list at the click, before the server
+// answered; a deletion the server refuses comes back to the list and is said; many documents are deleted in one call and
+// every one of them is really gone; a call without a real token is still refused (the member row is asked for early).
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const mk = (name) => sql(`insert into fin_documents (status, source, supplier_name, doc_type, currency, total_amount, issue_date) values ('review','upload','${name}','receipt','ILS', 55, current_date) returning id`).split('\n')[0]
+  const A = mk('ZZ-FAST-A'); const C = mk('ZZ-FAST-C')
+  const inDb = (id) => sql(`select count(*) from fin_documents where id='${id}'`) === '1'
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-FAST').catch(() => {}); await page.waitForTimeout(900)
+  const row = (name) => page.locator('tbody tr', { hasText: name })
+  const before = (await row('ZZ-FAST-A').count()) === 1 && (await row('ZZ-FAST-C').count()) === 1
+  // 1. the server's answer is held for 3 s: the row must be gone long before it
+  let mode = 'hold'
+  await page.route('**/api/finance', async (route) => {
+    let b = {}; try { b = JSON.parse(route.request().postData() || '{}') } catch { /* not ours */ }
+    if (b.action !== 'documents-delete') return route.continue()
+    if (mode === 'hold') { await new Promise((r) => setTimeout(r, 3000)); return route.continue() }
+    await new Promise((r) => setTimeout(r, 1200))
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results: b.ids.map((id) => ({ id, ok: false, error: 'בדיקה: השרת סירב למחוק' })), deleted: 0, failed: b.ids.length, pending: 0 }) })
+  })
+  await row('ZZ-FAST-A').first().locator('.fin-icon-btn--danger').click(); await page.locator('.fin-modal .fin-btn--danger').click()
+  await page.waitForTimeout(800)
+  const goneAtOnce = (await row('ZZ-FAST-A').count()) === 0; const serverNotYet = inDb(A)
+  await page.waitForTimeout(4200)
+  const goneForGood = !inDb(A) && (await row('ZZ-FAST-A').count()) === 0
+  // 2. a refused deletion: off the list at the click, back on it after the answer, with the reason
+  mode = 'refuse'
+  await row('ZZ-FAST-C').first().locator('.fin-icon-btn--danger').click(); await page.locator('.fin-modal .fin-btn--danger').click()
+  await page.waitForTimeout(600)
+  const hiddenWhileAsking = (await row('ZZ-FAST-C').count()) === 0
+  await row('ZZ-FAST-C').first().waitFor({ timeout: 8000 }).catch(() => {})
+  const cameBack = (await row('ZZ-FAST-C').count()) === 1 && inDb(C)
+  const said = (await page.locator('text=השרת סירב למחוק').count()) > 0
+  const fastShot = await shot('134-fast-refused-delete')
+  await page.unroute('**/api/finance')
+  // 3. twelve documents in one call
+  const many = Array.from({ length: 12 }, (_, i) => mk(`ZZ-FAST-M${i}`))
+  const t0 = Date.now(); const del = await api(tok, { action: 'documents-delete', ids: [...many, C] }); const ms = Date.now() - t0
+  const left = Number(sql(`select count(*) from fin_documents where supplier_name like 'ZZ-FAST-%'`))
+  const logged = Number(sql(`select count(*) from fin_audit where action='deleted_everywhere' and entity_id in (${many.map((x) => `'${x}'`).join(',')})`))
+  // 4. no token, and a token that is not one
+  const none = await api('', { action: 'documents-delete', ids: [A] }); const junk = await api('aaa.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAifQ.zzz', { action: 'status' })
+  record('FAST', 'מהירות: מחיקה שנראית מיד, מחיקה שסורבה חוזרת, מחיקה מרובה בקריאה אחת', 'השורה נעלמת לפני שהשרת עונה ונמחקת באמת; מחיקה שהשרת סירב לה חוזרת לרשימה עם הסיבה; 13 מסמכים נמחקים בקריאה אחת ונרשמים ביומן; קריאה בלי טוקן אמיתי נדחית',
+    `לפני: ${before}; נעלמה מיד: ${goneAtOnce} (בשרת עדיין: ${serverNotYet}); נמחקה: ${goneForGood}; סירוב: הוסתרה ${hiddenWhileAsking}, חזרה ${cameBack}, נאמר ${said}; מרובה: ${del.data.deleted}/13 ב-${ms}ms, נשארו ${left}, ביומן ${logged}; בלי טוקן: ${none.status}/${junk.status}`,
+    before && goneAtOnce && serverNotYet && goneForGood && hiddenWhileAsking && cameBack && said && del.data.deleted === 13 && left === 0 && logged === 12 && none.status === 401 && junk.status === 401, [fastShot])
+}
+
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)
 fs.writeFileSync(`${OUT}/results.json`, JSON.stringify({ at: new Date().toISOString(), results, extra: { companiesShot, projectsShot, agentsShot, autoShot, dataShot, settingsShot } }, null, 1))
 console.log(`\n${results.filter((r) => r.pass).length}/${results.length} passed`)

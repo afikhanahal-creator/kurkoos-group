@@ -44,7 +44,7 @@ export default function CaptureReceipt({ onClose, onDone }) {
     try {
       const patch = { business_id: form.business_id || null, project_id: form.project_id || null, category_id: form.category_id || null }
       const row = await api.updateDocument(doc.id, patch)
-      patchDoc?.(row); await reload(); onDone?.(row)
+      patchDoc?.(row); reload(); onDone?.(row)
       if (open) go(`/documents/${doc.id}`); else onClose()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }

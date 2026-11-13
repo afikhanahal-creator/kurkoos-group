@@ -13,6 +13,8 @@
     <meta name="apple-mobile-web-app-title" content="Kurkoos Finance" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="apple-touch-icon" href="/finance/icon-180.png" />
+    <!-- the connection to the database opens while the code is still on its way (the script used to ask for it only after it had loaded) -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
     <title>Kurkoos Finance</title>
   </head>
   <body>

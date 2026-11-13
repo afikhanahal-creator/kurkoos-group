@@ -689,25 +689,34 @@ export async function settings({ targetId, by_kind, auto, auto_correct, enabled,
 // the archive's copies of these documents: read before a document is deleted, because the rows go with it
 export async function driveCopies(ids) {
   const out = []
-  for (const id of ids) for (const r of (await sb(`fin_drive_files?document_id=eq.${q(id)}&select=target_id,document_id,drive_file_id,organized_name,folder_path,rendition_path`)) || []) out.push(r)
+  // one question for up to 100 documents (it used to be one per document)
+  for (let i = 0; i < ids.length; i += 100) out.push(...((await sb(`fin_drive_files?document_id=in.(${ids.slice(i, i + 100).map(q).join(',')})&select=target_id,document_id,drive_file_id,organized_name,folder_path,rendition_path`)) || []))
   return out
 }
-// each copy goes to the Drive trash. Trashing a file that is already trashed or gone counts as done.
+// each copy goes to the Drive trash, four at a time. Trashing a file that is already trashed or gone counts as done.
 export async function trashCopies(rows, user) {
-  let trashed = 0; const failed = []
+  let trashed = 0; const failed = []; const trashedOf = {}
+  const mine = rows.filter((x) => x.drive_file_id)
+  // one sign-in per destination, before the files (asked once, not once per file)
   const ctxs = new Map()
-  for (const r of rows.filter((x) => x.drive_file_id)) {
-    try {
-      if (!ctxs.has(r.target_id)) { const t = await one(`fin_cloud_targets?id=eq.${q(r.target_id)}&select=*`); ctxs.set(r.target_id, t && t.status !== 'revoked' ? await context(t).catch(() => null) : null) }
-      const ctx = ctxs.get(r.target_id)
-      if (!ctx) { failed.push(r.document_id); continue }
-      await driveTrash(ctx.token, r.drive_file_id).catch((e) => { if (e?.status !== 404) throw e })
-      await event(r.target_id, null, 'withdrawn', { why: 'המסמך נמחק מהמערכת', name: r.organized_name, path: r.folder_path, document: r.document_id }, user)
-      trashed++
-    } catch { failed.push(r.document_id) }
+  for (const tid of new Set(mine.map((r) => r.target_id))) {
+    try { const t = await one(`fin_cloud_targets?id=eq.${q(tid)}&select=*`); ctxs.set(tid, t && t.status !== 'revoked' ? await context(t).catch(() => null) : null) } catch { ctxs.set(tid, null) }
   }
+  let next = 0
+  await Promise.all(Array.from({ length: Math.min(4, mine.length) }, async () => {
+    while (next < mine.length) {
+      const r = mine[next++]
+      try {
+        const ctx = ctxs.get(r.target_id)
+        if (!ctx) { failed.push(r.document_id); continue }
+        await driveTrash(ctx.token, r.drive_file_id).catch((e) => { if (e?.status !== 404) throw e })
+        await event(r.target_id, null, 'withdrawn', { why: 'המסמך נמחק מהמערכת', name: r.organized_name, path: r.folder_path, document: r.document_id }, user)
+        trashed++; trashedOf[r.document_id] = (trashedOf[r.document_id] || 0) + 1
+      } catch { failed.push(r.document_id) }
+    }
+  }))
   if (trashed) await audit('cloud', null, 'archive_file_trashed', { documents: [...new Set(rows.map((r) => r.document_id))].slice(0, 50), trashed }, user).catch(() => {})
-  return { trashed, failed: [...new Set(failed)] }
+  return { trashed, failed: [...new Set(failed)], trashedOf }
 }
 export async function removeFromDrive({ ids, user }) { return trashCopies(await driveCopies(ids), user) }
 

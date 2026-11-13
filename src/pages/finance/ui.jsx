@@ -238,7 +238,7 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
     const notes = []
     let added = 0
     const names = []
-    // three files travel at a time (one after another made ten receipts take ten times one)
+    // four files travel at a time (one after another made ten receipts take ten times one)
     const one = async (f) => {
       try {
         const r = await uploadFile(f, { businessId, projectId, source })
@@ -248,7 +248,7 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
       setBusy((n) => n - 1)
     }
     let next = 0
-    await Promise.all(Array.from({ length: Math.min(3, list.length) }, async () => { while (next < list.length) await one(list[next++]) }))
+    await Promise.all(Array.from({ length: Math.min(4, list.length) }, async () => { while (next < list.length) await one(list[next++]) }))
     setMsg([added ? `${added} קבצים הועלו וממתינים לקריאה` : '', ...notes].filter(Boolean).join(' · '))
     setDone({ added, names, notes })
     if (added) moments.upload({ from: zone.current, count: added, names })

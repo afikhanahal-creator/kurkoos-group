@@ -246,7 +246,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const remove = async () => {
     if (!(await askConfirm({ title: 'מחיקת המסמך', text: 'מסמך לא רלוונטי (לא חשבונית, נשלח בטעות, כפול לגמרי) נמחק יחד עם הקובץ והנספחים שלו. אי אפשר לבטל, והמחיקה נרשמת ביומן. מסמך שאולי עוד יידרש עדיף לדחות.', ok: 'מחיקה', danger: true }))) return
     setBusy('delete')
-    try { await api.deleteDocument(doc); onDeleted() } catch (e) { setErr(e.message); setBusy('') }
+    // the document leaves the lists at once, and this panel with it; a refusal brings it back and is said out loud
+    try { await api.deleteDocument(doc); onDeleted() } catch (e) { setErr(e.message); setBusy(''); moments.fail({ title: 'המחיקה לא הושלמה', sub: e.message }) }
   }
   const calc = () => {
     const t = Number(form.total_amount); const b = Number(form.amount_before_vat); const v = Number(form.vat_amount)

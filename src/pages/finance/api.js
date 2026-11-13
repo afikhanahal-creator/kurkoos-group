@@ -87,8 +87,11 @@ const tellSender = (out) => { for (const d of [].concat(out || [])) if (d?.sourc
 const afterStatus = (patch, out) => { if (patch && 'status' in patch) { flushOutbound(); if (patch.status === 'approved') tellSender(out) } return out }
 // a company chosen by a person is marked "manual": the engine learns from it for the next document of that supplier
 const byPerson = (patch) => ('business_id' in patch ? { ...patch, business_source: patch.business_id ? 'manual' : null } : patch)
-export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).eq('id', id).select().single()))
-export const updateDocuments = async (ids, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).in('id', ids).select()))
+// what the database answered is told to every screen at once (FinanceApp puts it on the lists), so a save shows without
+// waiting for everything to load again
+export const docsChanged = (docs) => { const list = [].concat(docs || []).filter((d) => d?.id); if (list.length && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('fin:docs-changed', { detail: { docs: list } })); return docs }
+export const updateDocument = async (id, patch) => docsChanged(afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).eq('id', id).select().single())))
+export const updateDocuments = async (ids, patch) => docsChanged(afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).in('id', ids).select())))
 export const loadDeliveries = (limit = 30) => soft((async () => (await all('fin_deliveries', 'created_at', false, limit * 2)).filter((d) => (d.kind || 'accountant') === 'accountant').slice(0, limit))())
 export const loadOutbound = () => soft(all('fin_outbound', 'created_at', true))
 export const loadOutboundQueue = (limit = 30) => soft(all('fin_outbound_queue', 'id', false, limit))
@@ -102,16 +105,24 @@ export const onDocsRemoved = (fn) => {
   window.addEventListener('fin:docs-removed', local); tabs?.addEventListener('message', remote)
   return () => { window.removeEventListener('fin:docs-removed', local); tabs?.removeEventListener('message', remote) }
 }
+const say = (name, ids) => { if (ids.length) window.dispatchEvent(new CustomEvent(name, { detail: { ids } })) }
 export async function deleteDocuments(docs) {
   const ids = [...new Set(docs.map((d) => d.id))]
   const out = { deleted: [], failed: [], pending: 0 }
-  for (let i = 0; i < ids.length; i += 50) {
-    const r = await callServer('documents-delete', { ids: ids.slice(i, i + 50) }, { timeout: 90000 })
-    for (const x of r.results || []) { if (x.ok) { out.deleted.push(x.id); if (x.pending?.length) out.pending++ } else out.failed.push(x) }
-  }
-  if (out.deleted.length) {
-    window.dispatchEvent(new CustomEvent('fin:docs-removed', { detail: { ids: out.deleted } }))
-    try { tabs?.postMessage({ removed: out.deleted }) } catch { /* another tab finds out on its next check */ }
+  // off the screen at the click; the server's answer confirms it, or brings back what it refused
+  say('fin:docs-removing', ids)
+  const settled = new Set()
+  try {
+    for (let i = 0; i < ids.length; i += 50) {
+      const r = await callServer('documents-delete', { ids: ids.slice(i, i + 50) }, { timeout: 90000 })
+      for (const x of r.results || []) { settled.add(x.id); if (x.ok) { out.deleted.push(x.id); if (x.pending?.length) out.pending++ } else out.failed.push(x) }
+    }
+  } finally {
+    say('fin:docs-kept', ids.filter((id) => !out.deleted.includes(id)))
+    if (out.deleted.length) {
+      say('fin:docs-removed', out.deleted)
+      try { tabs?.postMessage({ removed: out.deleted }) } catch { /* another tab finds out on its next check */ }
+    }
   }
   return out
 }
@@ -199,11 +210,15 @@ export async function uploadFile(rawFile, { businessId, projectId, source = 'upl
   if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)
   if (file.size > 12 * 1024 * 1024) throw new Error(`${file.name}: הקובץ גדול מ-12MB`)
   const hash = await sha256(file)
-  const { data: dup } = await supabase.from('fin_documents').select('id,supplier_name,doc_number').eq('file_hash', hash).maybeSingle()
-  if (dup) return { duplicate: true, id: dup.id, of: dup }
   const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1]
   const path = `uploads/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${ext}`
-  const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })
+  // "is this file already here?" and the file itself travel together (one after the other cost a round trip per file).
+  // A small file is not worth holding back; a large one waits for the answer, so a duplicate is not sent for nothing.
+  const asked = supabase.from('fin_documents').select('id,supplier_name,doc_number').eq('file_hash', hash).maybeSingle()
+  if (file.size > 1_500_000) { const { data: early } = await asked; if (early) return { duplicate: true, id: early.id, of: early } }
+  const [{ data: dup }, up] = await Promise.all([asked, supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })])
+  // a duplicate's file is the one the first document already holds (same name in the same month), or is cleared by the nightly sweep
+  if (dup) return { duplicate: true, id: dup.id, of: dup }
   // the same file uploaded before and then removed from the list: the object is still there, reuse it
   if (up.error && !/exists|duplicate/i.test(up.error.message)) throw new Error(up.error.message)
   // who is signed in is read from the session in the browser (asking the server cost a round trip per file)
@@ -219,10 +234,12 @@ export async function uploadFile(rawFile, { businessId, projectId, source = 'upl
     if (/duplicate key|unique/i.test(e.message)) return { duplicate: true, hidden: true }
     throw e
   }
+  // on the lists from this moment, as "being read"
+  docsChanged(row)
   // wait: the caller shows the result (receipt capture); otherwise the reading runs in the background
   if (wait) {
     // the reading can outlive the request (function limit): the receipt is saved either way and the agents finish it
-    try { return (await callServer('extract', { document_id: row.id, trigger: 'upload' })).document || row } catch { return { ...row, pending: true } }
+    try { return docsChanged((await callServer('extract', { document_id: row.id, trigger: 'upload' })).document) || row } catch { return { ...row, pending: true } }
   }
   callServer('extract', { document_id: row.id, trigger: 'upload' }).catch(() => {})
   return row

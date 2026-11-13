@@ -731,6 +731,7 @@ const swStates = await page.locator('.fin-app-card .fin-pill').allInnerTexts()
 // Morning: wrong keys are refused by the sign-in itself, and the card says so; the right keys make it "connected"
 const mCard = page.locator('.fin-app-card', { hasText: 'Morning' })
 await mCard.getByRole('button', { name: 'חיבור' }).click(); await page.waitForSelector('.fin-modal')
+await page.locator('.fin-prov__mode button', { hasText: 'מפתחות API' }).click()
 await page.locator('.fin-modal select').first().selectOption(bizExec)
 await page.locator('.fin-modal input[type=password]').nth(0).fill('wrong-id'); await page.locator('.fin-modal input[type=password]').nth(1).fill('wrong-secret')
 const swModalShot = await shot('57-connect-morning')

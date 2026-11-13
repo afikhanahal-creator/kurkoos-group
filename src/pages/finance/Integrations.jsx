@@ -151,11 +151,11 @@ export default function Integrations() {
   const sum = { connected: all.filter((x) => x.conns && ['מחובר', 'סונכרן'].includes(x.pill[1])).length, sent: all.reduce((a, x) => a + x.sent, 0), failed: all.reduce((a, x) => a + x.failed, 0), errors: all.filter((x) => x.pill[0] === 'bad').length }
 
   const run = async (key, fn) => { setBusy(key); setErr(''); setMsg(''); try { const m = await fn(); if (m) setMsg(m); reload() } catch (e) { setErr(e.message) } finally { setBusy('') } }
-  const startForm = (p) => { setErr(''); setForm({ provider: p.id, business_id: businesses.length === 1 ? businesses[0].id : '', target: '', sandbox: false, secret: {} }) }
+  const startForm = (p) => { setErr(''); setForm({ provider: p.id, mode: p.route === 'email' ? 'email' : 'api', business_id: businesses.length === 1 ? businesses[0].id : '', target: '', sandbox: false, secret: {} }) }
   const saveForm = (e) => {
     e.preventDefault()
     const p = providers.find((x) => x.id === form.provider)
-    if (p.route === 'email') {
+    if (form.mode === 'email') {
       if (!form.business_id) { setErr('בוחרים חברה: כל כתובת קליטה שייכת לחברה אחת, כדי שמסמך לא יגיע לחברה הלא נכונה.'); return }
       if (!emailOk(form.target)) { setErr('כתובת המייל לא תקינה.'); return }
       if (mailRows.some((o) => o.provider === p.id && o.business_id === form.business_id)) { setErr(`ל${bizName(form.business_id)} כבר מחוברת כתובת ב-${p.label}. מוחקים אותה קודם.`); return }
@@ -303,19 +303,25 @@ export default function Integrations() {
       )}
 
       {formP && (
-        <Modal title={`חיבור ${formP.label}`} onClose={() => setForm(null)} footer={<><button type="submit" form="fin-prov-form" className="fin-btn fin-btn--primary" disabled={busy === 'save'}>{busy === 'save' ? 'מחבר…' : formP.route === 'email' ? 'חיבור' : 'שמירה ובדיקת התחברות'}</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setForm(null)}>ביטול</button></>}>
+        <Modal title={`חיבור ${formP.label}`} onClose={() => setForm(null)} footer={<><button type="submit" form="fin-prov-form" className="fin-btn fin-btn--primary" disabled={busy === 'save'}>{busy === 'save' ? 'מחבר…' : form.mode === 'email' ? 'חיבור' : 'שמירה ובדיקת התחברות'}</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setForm(null)}>ביטול</button></>}>
+          {formP.route === 'email' && (formP.needs || []).length > 0 && (
+            <div className="fin-seg fin-prov__mode" role="group" aria-label="אופן החיבור">
+              <button type="button" className={form.mode === 'email' ? 'is-on' : ''} aria-pressed={form.mode === 'email'} onClick={() => { setErr(''); setForm({ ...form, mode: 'email' }) }}>כתובת המייל להוצאות</button>
+              <button type="button" className={form.mode === 'api' ? 'is-on' : ''} aria-pressed={form.mode === 'api'} onClick={() => { setErr(''); setForm({ ...form, mode: 'api' }) }}>מפתחות API</button>
+            </div>
+          )}
           <form id="fin-prov-form" className="fin-form__grid" onSubmit={saveForm}>
-            <Field label="חברה" hint={formP.route === 'email' ? 'המסמכים של החברה הזו בלבד יישלחו לכתובת' : 'החיבור ישמש את החברה הזו'} wide>
-              <Select value={form.business_id} onChange={(e) => setForm({ ...form, business_id: e.target.value })}><option value="">{formP.route === 'email' ? 'בחרו חברה…' : 'כל החברות'}</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>
+            <Field label="חברה" hint={form.mode === 'email' ? 'המסמכים של החברה הזו בלבד יישלחו לכתובת' : 'החיבור ישמש את החברה הזו'} wide>
+              <Select value={form.business_id} onChange={(e) => setForm({ ...form, business_id: e.target.value })}><option value="">{form.mode === 'email' ? 'בחרו חברה…' : 'כל החברות'}</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>
             </Field>
-            {formP.route === 'email' && <Field label="כתובת הקליטה" hint={formP.intake || 'הכתובת שהתוכנה או רו״ח נתנו לקליטת מסמכים'} wide><input type="email" dir="ltr" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="name@example.com" autoComplete="off" /></Field>}
-            {formP.route !== 'email' && <>
+            {form.mode === 'email' && <Field label="כתובת הקליטה" hint={formP.intake || 'הכתובת שהתוכנה או רו״ח נתנו לקליטת מסמכים'} wide><input type="email" dir="ltr" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="name@example.com" autoComplete="off" /></Field>}
+            {form.mode !== 'email' && <>
               {(formP.needs || []).map((k) => <Field key={k} label={{ client_id: 'מזהה (Client ID)', client_secret: 'מפתח סודי (Client Secret)' }[k] || k} hint="נשמר בשרת בלבד, ולא מוצג שוב" wide><input type="password" autoComplete="off" dir="ltr" onChange={(e) => setForm({ ...form, secret: { ...form.secret, [k]: e.target.value } })} /></Field>)}
               <label className="fin-check"><input type="checkbox" checked={form.sandbox} onChange={(e) => setForm({ ...form, sandbox: e.target.checked })} /> מפתחות של סביבת הניסיון (Sandbox)</label>
             </>}
           </form>
           {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
-          <p className="fin-callout">{formP.route === 'email' ? 'מרגע החיבור, כל מסמך של החברה שמאושר נשלח לכתובת עם הקובץ המקורי, עם ניסיונות חוזרים אם השליחה נכשלת, וכל שליחה נרשמת. מסמך לא נשלח פעמיים.' : 'המפתחות נבדקים מיד בהתחברות אמיתית לספק. שליחת הוצאות ב-API עוד לא פעילה, ולכן שום מסמך לא נשלח דרך החיבור הזה.'}</p>
+          <p className="fin-callout">{form.mode === 'email' ? 'מרגע החיבור, כל מסמך של החברה שמאושר נשלח לכתובת עם הקובץ המקורי, עם ניסיונות חוזרים אם השליחה נכשלת, וכל שליחה נרשמת. מסמך לא נשלח פעמיים.' : 'המפתחות נבדקים מיד בהתחברות אמיתית לספק. שליחת הוצאות ב-API עוד לא פעילה, ולכן שום מסמך לא נשלח דרך החיבור הזה.'}</p>
         </Modal>
       )}
     </div>

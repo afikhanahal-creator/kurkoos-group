@@ -3955,3 +3955,5 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-prov__rowacts .fin-btn { flex: 1; min-height: 44px; justify-content: center; }
   .fin-prov__caps th { width: 38%; font-size: var(--t-sm); }
 }
+.fin-prov__mode { margin-bottom: 12px; }
+.fin-prov__mode button { flex: 1; min-height: 40px; }

@@ -95,9 +95,11 @@ const ROLES = {
   'receipts-drive': ['admin', 'finance_manager', 'employee', 'accountant'],
 }
 
-// per-user rate limit (in memory, per instance): 120 calls in 10 minutes
+// per-user rate limit (in memory, per instance): 120 calls in 10 minutes. FINANCE_RATE_LIMIT changes the number
+// (the end-to-end suite runs one user through hundreds of calls); it is not set in production.
+const RATE = Math.max(20, Number(process.env.FINANCE_RATE_LIMIT) || 120)
 const _rl = new Map()
-function limited(key, max = 120, windowMs = 600_000) {
+function limited(key, max = RATE, windowMs = 600_000) {
   const now = Date.now()
   const e = _rl.get(key) || { n: 0, reset: now + windowMs }
   if (now > e.reset) { e.n = 0; e.reset = now + windowMs }

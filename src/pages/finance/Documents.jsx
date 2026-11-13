@@ -338,6 +338,7 @@ export default function Documents({ preset = 'all' }) {
               { label: 'קובץ CSV', icon: 'download', onClick: () => sheet('csv') },
               can('upload') && { label: 'שליחה במייל', icon: 'mail', onClick: () => setSharing({ docs: picked, mode: 'email' }) },
               picked.some(canDelete) && { label: picked.length === 1 ? 'מחיקת המסמך שנבחר' : `מחיקת ${picked.length} המסמכים שנבחרו`, icon: 'trash', danger: true, onClick: removePicked },
+              can('approve') && { label: 'דוח לרואה החשבון מהמסמכים שנבחרו', icon: 'table', onClick: () => { try { sessionStorage.setItem('fin-report-ids', JSON.stringify(picked.map((d) => d.id))) } catch { /* the report screen opens empty */ } go('/report') } },
               can('export') && { label: 'ייצוא לתוכנה או למערכת חיצונית', icon: 'plug', onClick: exportSelected },
               edit && { label: 'דחייה', icon: 'close', onClick: () => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status)) },
               edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },

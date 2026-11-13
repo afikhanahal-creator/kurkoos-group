@@ -91,7 +91,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 32 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 32, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 33 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 33, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -1186,7 +1186,7 @@ const accAdminText = await acc.locator('body').innerText()
 const siteApi = async (t) => (await fetch('http://127.0.0.1:5180/api/claude', { method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ input: 'x' }) })).status
 const accClaude = await siteApi(accToken); const adminClaude = await siteApi(adminToken)
 record('SEC2', 'משתמש כספים לא נכנס לניהול האתר', 'רו״ח שנכנס ל-/admin מקבל הפניה למערכת הכספים; קריאה ל-API של האתר נחסמת (403), למנהל היא לא נחסמת', `/admin: ${/מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) ? 'הפניה' : accAdminText.slice(0, 60)}; /api/claude רו״ח=${accClaude}, מנהל=${adminClaude}`, /מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) && accClaude === 403 && adminClaude !== 403, [await shot('26b-accountant-site-admin', acc)])
-record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מרכז המע״מ, ציות ומס, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 8 && accNav.some((n) => /ציות ומס/.test(n)) && accNav.some((n) => /מרכז המע״מ/.test(n)) && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
+record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מרכז המע״מ, ציות ומס, דוח לרואה החשבון, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 9 && accNav.some((n) => /דוח לרואה החשבון/.test(n)) && accNav.some((n) => /ציות ומס/.test(n)) && accNav.some((n) => /מרכז המע״מ/.test(n)) && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
 await accCtx.close()
 
 // ---------- T12: mobile ----------
@@ -2541,6 +2541,54 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && /מספר הקצאה/.test(qText) && /15\.0%/.test(qText) && /ביתר/.test(qText) && sheets === '10' && /מע״מ תשומות/.test(bookHas) && rules === 26 && /18%/.test(rateText) && /רשומות/.test(rateText) && confirmedUi && confirmedDb === 'admin@kurkoos.test'
     && w1.data.unchanged === 10 && st('vat_law_text') === 'changed' && st('vat_rate_order') === 'value_missing' && st('allocation_page') === 'unreachable' && /העמוד השתנה/.test(watchText) && /לא נקרא/.test(watchText) && rateMarked && Number(stillValue) >= 2
     && ackE.status === 403 && ack.data.ok === true && w3.data.unchanged === 10 && /מספר הקצאה/.test(note) && /גרסה/.test(report) && marks >= 2, [taxShot, rulesShot, watchShot, noteShot])
+}
+
+// REPORT: the report for the accountant. A person chooses documents (a filter, then "all shown"; or a selection made on
+// the documents screen), sees the figures before making the file, and downloads a right-to-left Hebrew workbook with
+// links to the originals, a CSV, and a page to print.
+{
+  sql(`delete from fin_documents where supplier_name like 'ZZ-REP%'`)   // what an interrupted run left behind
+  const biz = sql('select id from fin_businesses order by sort limit 1')
+  const mk = (name, o) => sql(`insert into fin_documents (status, source, supplier_name, supplier_vat_id, doc_type, doc_number, currency, issue_date, business_id, category, amount_before_vat, vat_amount, total_amount, description, confidence) values ('${o.status || 'approved'}','upload','${name}','514000009','${o.type || 'invoice'}','${o.num}','${o.cur || 'ILS'}','2026-08-10','${biz}','חומרי בניין', ${o.net ?? 'null'}, ${o.vat ?? 'null'}, ${o.total}, '${o.desc || ''}', 0.95) returning id`).split('\n')[0]
+  const A = mk('ZZ-REP ספק ראשון', { num: 'RP-1', net: 1000, vat: 180, total: 1180, desc: 'צבע "לבן" & שפכטל' })
+  const B = mk('ZZ-REP ספק ראשון', { num: 'RP-2', type: 'credit', net: 200, vat: 36, total: 236 })
+  const Cc = mk('ZZ-REP Foreign Ltd', { num: 'RP-3', type: 'receipt', cur: 'USD', total: 50 })
+  const D = mk('ZZ-REP ספק שני', { num: 'RP-4', net: 500, vat: 90, total: 590, status: 'review' })
+  await go('/report'); await page.waitForSelector('.fin-rep__list', { timeout: 15000 })
+  const emptyBar = await page.locator('.fin-rep__hint').count()
+  await page.fill('.fin-rep__search input', 'ZZ-REP'); await page.waitForTimeout(500)
+  const shownRows = await page.locator('.fin-rep__list > li').count()
+  await page.getByRole('button', { name: /בחירת כל ה/ }).click(); await page.waitForTimeout(400)
+  const bar = (await page.locator('.fin-rep__bar').innerText()).replace(/[‎‏]/g, '').replace(/\s+/g, ' ')
+  const repShot = await shot('139-accountant-report')
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /הפקת דוח לרואה החשבון/ }).click()])
+  const xl = `${OUT}/accountant-report.xlsx`; await dl.saveAs(xl); const fileName = dl.suggestedFilename()
+  const part = (p) => execSync(`unzip -p ${xl} ${p}`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+  const wbXml = part('xl/workbook.xml'); const s1 = part('xl/worksheets/sheet1.xml'); const s3 = part('xl/worksheets/sheet3.xml'); const rels = part('xl/worksheets/_rels/sheet1.xml.rels')
+  const sheetNames = [...wbXml.matchAll(/<sheet name="([^"]+)"/g)].map((m) => m[1])
+  const rtl = [1, 2, 3, 4].every((i) => /<sheetView rightToLeft="1"/.test(part(`xl/worksheets/sheet${i}.xml`)))
+  const linkTargets = [...rels.matchAll(/Target="([^"]+)"/g)].map((m) => m[1])
+  const linkOk = linkTargets.length === 4 && [A, B, Cc, D].every((id) => linkTargets.some((t) => t.endsWith(`/admin/finance/documents/${id}`)))
+  // a link from the file opens the document in the system
+  await go(linkTargets.find((t) => t.endsWith(A)).replace(/^https?:\/\/[^/]+\/admin\/finance/, '')); const opened = await page.locator('.fin-panel, .fin-docpanel, [class*="panel"]').first().innerText().catch(() => '')
+  await go('/report'); await page.fill('.fin-rep__search input', 'ZZ-REP'); await page.waitForTimeout(400); await page.getByRole('button', { name: /בחירת כל ה/ }).click()
+  const [cdl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'CSV', exact: true }).click()])
+  const csvPath = `${OUT}/accountant-report.csv`; await cdl.saveAs(csvPath); const csv = fs.readFileSync(csvPath, 'utf8')
+  await page.getByRole('button', { name: /PDF/ }).click(); await page.waitForTimeout(600)
+  const printFrame = await page.evaluate(() => { const f = [...document.querySelectorAll('iframe[srcdoc]')].pop(); return f ? /<html dir="rtl" lang="he">/.test(f.srcdoc) && /דוח הוצאות/.test(f.srcdoc) && /ZZ-REP ספק שני/.test(f.srcdoc) : false })
+  // a selection made on the documents screen arrives ticked
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-REP ספק ראשון').catch(() => {}); await page.waitForTimeout(900)
+  for (const r of await page.locator('tbody tr input[type=checkbox]').all()) await r.check()
+  await page.locator('.fin-bulk [aria-label="פעולות נוספות"]').click(); await page.getByText('דוח לרואה החשבון מהמסמכים שנבחרו').click(); await page.waitForSelector('.fin-rep__bar.is-on', { timeout: 10000 })
+  const fromDocs = (await page.locator('.fin-rep__bar > header strong').innerText()).trim()
+  const stored = await page.evaluate(() => sessionStorage.getItem('fin-report-ids'))
+  const logged = sql("select count(*) from fin_audit where action='exported_excel' and changes->>'report'='accountant'")
+  sql(`delete from fin_documents where supplier_name like 'ZZ-REP%'`)
+  record('REPORT', 'דוח לרואה החשבון: בחירת מסמכים, סיכום, Excel מימין לשמאל, CSV ו-PDF', 'בלי בחירה אין כפתורים; חיפוש מציג 4 ו"בחירת כל המוצגים" מסמנת אותם; הסיכום: 1,180 − 236 + 590 = 1,534 ₪ (הדולר לא בסכום), מע״מ 234, לקיזוז 234; קובץ עם שם לפי הפורמט, 3 גיליונות בעברית ורשימות מוסתרות, כולם RTL; כותרת ראשונה "ספק"; קישור לכל מסמך שנפתח במערכת; תווים מיוחדים נשמרים; CSV עם BOM; עמוד הדפסה RTL; בחירה ממסך המסמכים מגיעה מסומנת ואינה נשמרת בדפדפן; הפעולה ביומן',
+    `ריק: ${emptyBar}; שורות: ${shownRows}; סרגל: ${bar.slice(0, 150)}; קובץ: ${fileName}; גיליונות: ${sheetNames.join(' | ')}; RTL: ${rtl}; A3: ${/<c r="A3"[^>]*>.*?<t[^>]*>ספק<\/t>/.test(s1)}; קישורים: ${linkTargets.length} ${linkOk}; נפתח: ${/ZZ-REP ספק ראשון/.test(opened)}; תווים: ${/צבע &quot;לבן&quot; &amp; שפכטל/.test(s1)}; בדיקות: ${/ZZ-REP/.test(s3)}; CSV: ${csv.charCodeAt(0) === 0xfeff} ${csv.trim().split('\r\n').length} שורות; הדפסה: ${printFrame}; מהמסמכים: ${fromDocs}; באחסון: ${stored}; יומן: ${logged}`,
+    emptyBar === 1 && shownRows === 4 && /4 מסמכים נבחרו/.test(bar) && /1,534\.00/.test(bar) && /234\.00/.test(bar) && /דוח הוצאות/.test(bar) && /^דוח הוצאות – .+ – אוגוסט 2026\.xlsx$/.test(fileName)
+    && sheetNames.join('|') === 'דוח הוצאות לרואה החשבון|סיכום הוצאות|מסמכים לבדיקה|רשימות' && rtl && /<c r="A3"[^>]*>.*?<t[^>]*>ספק<\/t>/.test(s1) && linkOk && /ZZ-REP ספק ראשון/.test(opened) && /צבע &quot;לבן&quot; &amp; שפכטל/.test(s1) && !/�|\?\?\?/.test(s1)
+    && csv.charCodeAt(0) === 0xfeff && csv.trim().split('\r\n').length === 5 && printFrame && /^2 מסמכים נבחרו/.test(fromDocs) && stored === null && Number(logged) >= 1, [repShot])
 }
 
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)

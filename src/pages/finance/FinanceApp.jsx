@@ -15,6 +15,7 @@ import Documents from './Documents.jsx'
 import Receipts from './Receipts.jsx'
 import Vat from './Vat.jsx'
 import Compliance from './Compliance.jsx'
+const AccountantReport = lazy(() => import('./AccountantReport.jsx'))
 import { BrandLoader, BrandMark } from './Brand.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
@@ -63,6 +64,7 @@ export const NAV = [
   { to: '', label: 'סקירה פיננסית', icon: 'reports', roles: OPS, el: <Executive />, group: 'הנהלה' },
   { to: '/vat', label: 'מרכז המע״מ', icon: 'shield', roles: ['admin', 'finance_manager', 'accountant'], el: <Vat />, group: 'הנהלה' },
   { to: '/compliance', label: 'ציות ומס', icon: 'shield', roles: ['admin', 'finance_manager', 'accountant'], el: <Compliance />, group: 'הנהלה' },
+  { to: '/report', label: 'דוח לרואה החשבון', icon: 'table', roles: ['admin', 'finance_manager', 'accountant'], el: <AccountantReport />, group: 'הנהלה' },
   { to: '/assistant', label: 'שאלות על הנתונים', icon: 'sparkle', roles: [...OPS, 'accountant'], el: <Assistant />, group: 'הנהלה' },
   { to: '', label: 'מרכז בקרה', icon: 'home', roles: ['employee', 'accountant'], el: <Dashboard />, group: 'מסמכים' },
   { to: '/today', label: 'מרכז בקרה', icon: 'home', roles: OPS, el: <Dashboard />, group: 'מסמכים' },

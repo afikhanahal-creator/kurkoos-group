@@ -93,3 +93,14 @@ input VAT of a company with exempt transactions (residential letting: section 41
 - Per-year ceilings (gifts per recipient, mobile per year, travel days): the system flags, the accountant calculates.
 - A PDF of the per-document report and an export in a bookkeeping program's own format (the workbook is Excel).
 - Automatic entry of a change in the law: by design, a person enters it.
+
+## The report for the accountant (`/admin/finance/report`)
+
+`src/pages/finance/accountantReport.js` (the lines, the summary, the workbook, CSV, the page to print),
+`src/pages/finance/xlsxPro.js` (the styled workbook writer), `src/pages/finance/AccountantReport.jsx` (choosing the
+documents). Tests: `node scripts/finance-report-tests.mjs` (the file is built, unpacked and read back) and scenario
+`REPORT` in the e2e suite. Rules of the report: nothing is filled in that the system does not know (no exchange rate is
+held, so a foreign document has no shekel amount and is outside the totals); a credit note is a negative line; a receipt
+that pays a tax invoice already in the system is listed and marked "not counted"; only VAT printed on a tax invoice
+counts as allowed, an estimate is a note. Links go to the document's copy in Google Drive when there is one, otherwise to
+the document in the system (sign-in needed).

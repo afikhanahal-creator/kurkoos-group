@@ -20,6 +20,11 @@ const ACT = {
   merged_documents: 'מסמכים מוזגו', file_arrived_for_record: 'הגיע הקובץ של רשומה שחיכתה לו', whatsapp_approved_notice: 'נשלחה לשולח הודעת אישור', not_relevant: 'סומן כלא רלוונטי', uploaded: 'קובץ הועלה', corrected: 'תוקן',
   shared_whatsapp: 'נשלח בוואטסאפ', duplicate_confirmed: 'כפילות אושרה', duplicate_dismissed: 'כפילות נדחתה', attachment_added: 'נוסף נספח', attachment_removed: 'הוסר נספח',
 }
+// the nightly agents' lines: a re-check of one document (shown only under their own filter, so the day's work stays
+// readable), and the lines about a whole run or about an official source, which everybody sees
+Object.assign(ACT, { vat_audited: 'מע״מ נבדק מחדש', vat_audit_run: 'ביקורת מע״מ רצה', vat_audit_failed: 'ביקורת מע״מ נכשלה', tax_checked: 'בדיקת ציות: התשובה השתנתה', tax_check_run: 'בדיקת ציות רצה', tax_check_failed: 'בדיקת ציות נכשלה',
+  tax_watch_run: 'המקורות הרשמיים נבדקו', tax_source_changed: 'מקור רשמי השתנה: לבדוק את הכללים', tax_source_value_missing: 'ערך של כלל לא נמצא במקור הרשמי', tax_source_acknowledged: 'מקור שהשתנה נבדק ואושר', tax_rule_confirmed: 'כלל מס אושר על ידי רו״ח', tax_rule_unconfirmed: 'אישור של כלל מס בוטל' })
+const RECHECK = ['vat_audited', 'tax_checked']
 const OTHER_AGENTS = { cloud: 'סוכן הענן', outbound: 'שליחה אוטומטית' }
 const KINDS = [
   ['', 'הכול'],
@@ -27,10 +32,12 @@ const KINDS = [
   ['review', 'בדיקה ואישור'],
   ['out', 'ייצוא, שיתוף וענן'],
   ['connect', 'חיבורים'],
+  ['tax', 'ביקורת מע״מ וציות'],
   ['errors', 'שגיאות'],
 ]
 const kindOf = (a) => {
   if (a.kind === 'error') return 'errors'
+  if (/^(vat_audit|tax_)/.test(a.action || '')) return 'tax'
   if (['created', 'ai_processed'].includes(a.action)) return 'intake'
   if (['approved', 'rejected', 'updated', 'marked_duplicate', 'first_approval', 'split', 'archived', 'deleted', 'merged', 'duplicate_confirmed', 'duplicate_dismissed'].includes(a.action)) return 'review'
   if (['exported', 'sent_to_accountant', 'shared_by_email', 'exported_excel', 'exported_csv', 'downloaded_originals', 'printed', 'downloaded_document', 'saved_documents', 'shared_whatsapp'].includes(a.action)) return 'out'
@@ -59,7 +66,7 @@ export default function Activity() {
   const people = [...new Set(items.map((i) => who(i.user_email)))].sort()
   const needle = q.trim().toLowerCase()
   const docOf = (a) => (a.entity === 'document' ? documents.find((d) => d.id === a.entity_id) : null)
-  const shown = items.filter((a) => (!kind || kindOf(a) === kind) && (!person || who(a.user_email) === person)
+  const shown = items.filter((a) => (kind ? kindOf(a) === kind : !RECHECK.includes(a.action)) && (!person || who(a.user_email) === person)
     && (!needle || [ACT[a.action], a.action, docOf(a)?.supplier_name, a.user_email, JSON.stringify(a.changes || {})].some((v) => String(v || '').toLowerCase().includes(needle))))
 
   const describe = (a) => {

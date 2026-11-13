@@ -9,13 +9,14 @@ import { saveBlob } from './zip.js'
 import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 import Attachments from './Attachments.jsx'
 import { VatNote } from './Vat.jsx'
+import { ComplianceNote } from './Compliance.jsx'
 import { PAY_LABEL, payState } from './ledger.js'
 import Select from './Select.jsx'
 import { supplierHistory } from './links.js'
 import Viewer from './Viewer.jsx'
 import { moments } from './moments.js'
 
-const VAT = 0.18
+import { rateOn } from './vatRules.js'
 const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'category_id', 'business_id', 'project_id', 'description', 'payment_method', 'paid', 'notes']
 const blank = (k) => (k === 'paid' ? false : '')
 const SOURCE_LABEL = { rule: 'כלל אוטומציה', supplier: 'ברירת מחדל של הספק', history: 'היסטוריית אישורים', document: 'מופיע במסמך', mailbox: 'לפי תיבת המייל', ai: 'הצעת AI' }
@@ -251,6 +252,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   }
   const calc = () => {
     const t = Number(form.total_amount); const b = Number(form.amount_before_vat); const v = Number(form.vat_amount)
+    // the rate of the document's own date (it used to be 18% for every document, also for one from 2024)
+    const VAT = rateOn(/^\d{4}-\d{2}-\d{2}/.test(String(form.issue_date || '')) ? String(form.issue_date).slice(0, 10) : new Date().toISOString().slice(0, 10))
     if (t && !b && !v) setForm((f) => ({ ...f, amount_before_vat: (t / (1 + VAT)).toFixed(2), vat_amount: (t - t / (1 + VAT)).toFixed(2) }))
     else if (b && !t && !v) setForm((f) => ({ ...f, vat_amount: (b * VAT).toFixed(2), total_amount: (b * (1 + VAT)).toFixed(2) }))
     else if (t && b && !v) setForm((f) => ({ ...f, vat_amount: (t - b).toFixed(2) }))
@@ -358,6 +361,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                   )
                 })()}
                 <VatNote doc={doc} />
+                <ComplianceNote doc={doc} />
                 <div className="fin-form__grid">
                   <h4 className="fin-form__sec fin-field--wide">ספק</h4>
                   {F({ k: 'supplier_name', wide: true })}

@@ -79,6 +79,7 @@ function gmailMessage(m) {
   }
 }
 
+const taxWatch = {}
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`)
   const p = url.pathname
@@ -197,6 +198,15 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ---------- Resend ----------
+  // the official pages the compliance agent watches: a page per source, which a test can change, empty, or strip of the
+  // value a rule relies on (/__taxwatch?id=<source>&mode=ok|changed|blocked|novalue)
+  if (p === '/__taxwatch') { taxWatch[url.searchParams.get('id')] = url.searchParams.get('mode') || 'ok'; return send(res, 200, { ok: true }) }
+  if (p.startsWith('/taxwatch/')) {
+    const id = p.split('/').pop(); const mode = taxWatch[id] || 'ok'
+    if (mode === 'blocked') { res.writeHead(403, { 'Content-Type': 'text/html' }); return res.end('<html><body>Just a moment...</body></html>') }
+    const body = `<html><body><h1>נוסח מאוחד לבדיקה: ${id}</h1><p>${'מס ערך מוסף, חשבונית מס, מס תשומות, כיבוד, רכב, פנקס חשבונות, מספר הקצאה. LatestPublicationDate 2026-03-31. '.repeat(8)}</p><p>שיעור המס: ${mode === 'novalue' ? '19%' : '18%'}</p>${mode === 'changed' ? '<p>תיקון חדש פורסם ברשומות.</p>' : ''}</body></html>`
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(body)
+  }
   // Morning's sign-in, as its specification describes it: client credentials in, a one-hour token out, 401 for wrong keys
   if (p === '/morning/idp/v1/oauth/token') {
     const b = JSON.parse((await readBody(req)) || '{}')

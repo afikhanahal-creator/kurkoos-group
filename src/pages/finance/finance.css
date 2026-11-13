@@ -4083,3 +4083,43 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-logointro__still rect, .fin-logointro__still g { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .fin-logointro__still { opacity: 1; } }
 @media (max-width: 700px) { .fin-logointro { transform: scale(0.86); transform-origin: 100% 50%; } }
+
+/* ---- the compliance centre (ציות ומס) and the compliance note inside a document ---- */
+.fin-tax__figs { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.fin-tax .fin-vat__needs .is-bad svg { color: var(--attn); }
+.fin-tax .fin-vat__needs .is-bad { font-weight: 700; }
+.fin-tax__rules, .fin-tax__watch { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.fin-tax__rule { padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); display: grid; gap: 8px; min-width: 0; }
+.fin-tax__rule > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fin-tax__rule > header strong { font-size: var(--t-lg); color: var(--ink); }
+.fin-tax__pills { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.fin-tax__rule > p { margin: 0; color: var(--text); font-size: var(--t-md); max-width: 78ch; }
+.fin-tax__rule dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px 16px; }
+.fin-tax__rule dl > div { min-width: 0; }
+.fin-tax__rule dt { font-size: 12px; color: var(--muted); }
+.fin-tax__rule dd { margin: 2px 0 0; font-size: var(--t-sm); color: var(--ink); overflow-wrap: anywhere; }
+.fin-tax__rule dd small, .fin-tax__rule summary { font-size: 12px; color: var(--muted); }
+.fin-tax__rule dd a, .fin-tax__src a, .fin-taxnote__rules a { color: var(--ocean); text-decoration: underline; text-underline-offset: 3px; }
+.fin-tax__rule details { font-size: var(--t-sm); color: var(--text); }
+.fin-tax__rule summary { cursor: pointer; padding: 6px 0; font-size: var(--t-sm); }
+.fin-tax__rule details ul { margin: 4px 0 0; padding-inline-start: 18px; display: grid; gap: 3px; }
+.fin-tax__caveat { display: flex; gap: 6px; align-items: flex-start; font-size: var(--t-sm); color: var(--text-2); }
+.fin-tax__caveat svg { flex: none; margin-top: 3px; }
+.fin-tax__act { margin: 0; }
+.fin-tax__watch > li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); }
+.fin-tax__src, .fin-tax__when { display: grid; gap: 3px; min-width: 0; }
+.fin-tax__src a { font-weight: 700; overflow-wrap: anywhere; }
+.fin-tax__src small, .fin-tax__when small { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.fin-tax__when { justify-items: start; }
+@media (max-width: 760px) { .fin-tax__watch > li { grid-template-columns: minmax(0, 1fr); } }
+.fin-taxnote { margin-top: 8px; }
+.fin-taxnote__open li.is-bad { color: var(--attn); }
+.fin-taxnote__open small { color: var(--muted); font-size: 12px; }
+.fin-taxnote__more { margin-top: 6px; min-height: 44px; display: inline-flex; align-items: center; font-size: var(--t-sm); }
+.fin-taxnote__report { margin-top: 4px; display: grid; gap: 8px; font-size: var(--t-sm); color: var(--text); }
+.fin-taxnote__report ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fin-taxnote__rules { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.fin-taxnote__rules small, .fin-taxnote__meta { color: var(--muted); font-size: 12px; }
+.fin-taxnote__meta { margin: 0; }
+.fin-vatnote.is-bad { background: var(--attn-wash); border-color: color-mix(in srgb, var(--attn) 28%, var(--line)); }
+.fin-duppill.is-tax.is-fix { background: var(--attn-wash); color: var(--attn); }

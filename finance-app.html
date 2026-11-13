@@ -16,7 +16,15 @@
     <title>Kurkoos Finance</title>
   </head>
   <body>
-    <div id="root"><div class="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" width="46" height="46" /></div></div>
+    <style>
+      /* the first paint, before the app's code and styles arrive: the same building towers the app shows while loading */
+      .fin-boot0 { min-height: 100vh; min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 18px; background: #f7f7f5; }
+      .fin-boot0 rect { fill: #14202b; transform-box: fill-box; transform-origin: 50% 100%; animation: fin-boot0 1.9s ease-in-out infinite; }
+      .fin-boot0 rect:nth-child(2) { animation-delay: 0.12s; } .fin-boot0 rect:nth-child(3) { animation-delay: 0.24s; } .fin-boot0 rect:nth-child(4) { animation-delay: 0.36s; }
+      @keyframes fin-boot0 { 0%, 100% { transform: scaleY(0.18); opacity: 0.35; } 40%, 70% { transform: scaleY(1); opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .fin-boot0 rect { animation: none; } }
+    </style>
+    <div id="root"><div class="fin-boot0" role="status" aria-label="טוען"><svg viewBox="16 6 52 76" width="44" height="64" aria-hidden="true"><rect x="23" y="32" width="5" height="44" /><rect x="34" y="12" width="8" height="64" /><rect x="46" y="22" width="6" height="54" /><rect x="56" y="42" width="4" height="34" /></svg></div></div>
     <script type="module" src="/src/finance-main.jsx"></script>
   </body>
 </html>

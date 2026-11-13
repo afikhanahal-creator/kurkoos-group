@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase.js'
 import * as api from './api.js'
 import { ProviderLogo } from './logos.jsx'
 import { Icon } from './ui.jsx'
+import { BrandLoader, BrandLogo } from './Brand.jsx'
 
 /* Sign-in for the finance system. The auth server (Supabase) hashes passwords, limits attempts and issues the session;
    this screen adds what a person needs: show the password, reset it, clear messages, sign-in with Google / Microsoft
@@ -21,7 +22,7 @@ export function AuthLayout({ children, aside = true }) {
   return (
     <div className="fin-login fin-auth" dir="rtl">
       <main className="fin-auth__pane">
-        <img src="/kurkoos-logo-h.svg" alt="קבוצת קורקוס" className="fin-auth__logo" />
+        <BrandLogo height={64} className="fin-auth__logo" />
         {children}
         <p className="fin-auth__legal">מערכת פרטית של קבוצת קורקוס. הכניסה למוזמנים בלבד, והכניסות נרשמות.</p>
       </main>
@@ -171,9 +172,9 @@ export function Login({ onSignedIn }) {
         )}
         <label>אימייל<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" inputMode="email" dir="ltr" autoFocus placeholder="name@company.co.il" /></label>
         {mode === 'login' && <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} />}
-        {err && <p className="fin-error" role="alert">{err}</p>}
+        {err && <p key={err} className="fin-error fin-auth__err" role="alert">{err}</p>}
         {info && <p className="fin-note" role="status">{info}</p>}
-        <button type="submit" className="fin-btn fin-btn--primary" disabled={busy}>{busy ? 'רגע…' : mode === 'login' ? 'כניסה' : 'שליחת קישור לאיפוס'}</button>
+        <button type="submit" className={`fin-btn fin-btn--primary fin-auth__go ${busy ? 'is-busy' : ''}`} disabled={busy}>{busy ? <><span className="fin-auth__spin" aria-hidden="true" /> {mode === 'login' ? 'נכנסים…' : 'שולח…'}</> : mode === 'login' ? 'כניסה' : 'שליחת קישור לאיפוס'}</button>
         <button type="button" className="fin-link" onClick={() => { setMode((m) => (m === 'login' ? 'reset' : 'login')); setErr(''); setInfo('') }}>{mode === 'login' ? 'שכחתי את הסיסמה' : 'חזרה לכניסה'}</button>
         {mode === 'login' && <p className="fin-auth__invite">עוד אין לך חשבון? ההצטרפות היא בהזמנה ממנהל המערכת: קיבלת מייל הזמנה? פתח/י אותו ובחר/י סיסמה.</p>}
       </form>
@@ -252,7 +253,7 @@ export function SecondStep({ mfaRequired, onDone }) {
     onDone()
   }
   const signOut = () => supabase.auth.signOut()
-  if (factors === null) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
+  if (factors === null) return <BrandLoader />
   const hasFactor = factors.length > 0
   return (
     <AuthLayout>

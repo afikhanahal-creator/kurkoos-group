@@ -14,6 +14,7 @@ import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
 import Receipts from './Receipts.jsx'
 import Vat from './Vat.jsx'
+import { BrandLoader, BrandMark } from './Brand.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
@@ -253,11 +254,11 @@ function NoAccess({ me, email, onClaimed }) {
     setBusy(false); setFirst(false)
   }
   useEffect(() => { recheck() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  if (first) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><Lottie name="loading" size={64} /></div>
+  if (first) return <BrandLoader />
   return (
     <div className="fin-login" dir="rtl">
       <div className="fin-login__box">
-        <img src="/kurkoos-logo.svg" alt="קבוצת קורקוס" className="fin-login__logo" />
+        <span className="fin-login__logo" role="img" aria-label="קבוצת קורקוס"><BrandMark size={52} /></span>
         {me?.has_members ? (
           <>
             <h1>אין לך גישה למערכת</h1>
@@ -452,11 +453,11 @@ export default function FinanceApp() {
 
   if (!hasSupabase) return <p className="fin-msg">Supabase לא מוגדר בסביבה הזו.</p>
   if (!session && session !== undefined) return <Login />
-  if (session === undefined || (session && sec === null)) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><Lottie name="loading" size={64} /></div>
+  if (session === undefined || (session && sec === null)) return <BrandLoader />
   if (welcome && session) return <InviteWelcome email={session.user?.email || ''} onDone={() => setWelcome(false)} />
   if (mfaPending) return <SecondStep mfaRequired onDone={() => supabase.auth.refreshSession().then(() => setSec((x) => ({ ...x, aal: 'aal2' })))} />
   // while the membership answer is on its way nothing is said about access (a failed security check is not an answer)
-  if (data.loading && !data.me) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><Lottie name="loading" size={64} /></div>
+  if (data.loading && !data.me) return <BrandLoader />
   const email = session.user?.email || ''
   const myName = data.members.find((m) => m.user_id === session.user?.id)?.full_name || ''
   if (data.error && !data.me) return <div className="fin-login" dir="rtl"><div className="fin-login__box"><h1>שגיאה</h1><p className="fin-error" role="alert">{data.error}</p></div></div>

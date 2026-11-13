@@ -11,24 +11,26 @@
    confirmed: false is this system's reading of the law and of the owner's brief, to be confirmed by the accountant;
    the VAT screen shows that mark. Nothing here files a report or approves a deduction on its own: a deduction counts
    as confirmed only for a document a person approved. */
-export const VAT_VERSION = '2026-11-14.1'
+import { ruleOn, RULES as TAX } from './taxRules.js'
+
+export const VAT_VERSION = '2026-11-14.2'
 
 export const RULES = {
-  rate: { title: 'שיעור המע״מ לפי תאריך המסמך', text: '17% עד 31.12.2024, 18% מ-1.1.2025.', source: 'חוק מס ערך מוסף, צו שיעור המס', confirmed: false },
+  rate: { title: 'שיעור המע״מ לפי תאריך המסמך', text: '17% מ-1.10.2015 עד 31.12.2024, 18% מ-1.1.2025. שיעורים קודמים נמצאים במאגר הכללים.', source: 'חוק מס ערך מוסף, צו שיעור המס', confirmed: false },
   tax_invoice: { title: 'קיזוז רק לפי חשבונית מס', text: 'מע״מ תשומות מקוזז לפי חשבונית מס או חשבונית מס/קבלה שהוצאה על שם העסק. קבלה, אישור תשלום, חשבון עסקה והצעת מחיר אינם מספיקים.', source: 'חוק מס ערך מוסף, סעיף 38', confirmed: false },
   category: { title: 'שיעור הקיזוז לפי סוג ההוצאה', text: 'אחוז הקיזוז נקבע בקטגוריה של ההוצאה (למשל רכב ודלק 2/3, כיבוד 0, ביטוח ואגרות 0).', source: 'הגדרות הקטגוריות במערכת; תקנות מע״מ 14-18', confirmed: false },
   six_months: { title: 'קיזוז בתוך שישה חודשים', text: 'חשבונית מס מקוזזת בתוך שישה חודשים מיום הוצאתה.', source: 'חוק מס ערך מוסף, סעיף 38(א)', confirmed: false },
-  allocation: { title: 'מספר הקצאה (חשבוניות ישראל)', text: 'חשבונית מס מעל הסף צריכה מספר הקצאה כדי לקזז: מעל 25,000 ₪ לפני מע״מ מ-5.5.2024, מעל 20,000 ₪ מ-1.1.2025, מעל 10,000 ₪ מ-1.1.2026, מעל 5,000 ₪ מ-1.6.2026.', source: 'רשות המסים, מודל חשבוניות ישראל; הספים של 2026 לפי הנחיית הבעלים', confirmed: false },
+  allocation: { title: 'מספר הקצאה (חשבוניות ישראל)', text: 'חשבונית מס מעל הסף צריכה מספר הקצאה כדי לקזז: מעל 25,000 ₪ לפני מע״מ מ-5.5.2024, מעל 20,000 ₪ מ-1.1.2025, מעל 10,000 ₪ מ-1.1.2026, מעל 5,000 ₪ מ-1.6.2026.', source: 'חוק מס ערך מוסף, סעיף 38(א1); אומת מול נוסח רשומות', confirmed: false },
   credit: { title: 'חשבונית זיכוי מקטינה את הקיזוז', text: 'זיכוי מקטין את מע״מ התשומות שקוזז לפי החשבונית המקורית, פעם אחת.', source: 'חוק מס ערך מוסף', confirmed: false },
   foreign: { title: 'ספק זר', text: 'במסמך של ספק זר אין מע״מ ישראלי לקיזוז. החיוב במע״מ על יבוא שירותים נבדק מול רו״ח.', source: 'לבדיקת רו״ח', confirmed: false },
   no_vat_body: { title: 'גוף שאינו גובה מע״מ', text: 'אגרות, ארנונה ותשלומים לרשויות אינם כוללים מע״מ.', source: 'לבדיקת רו״ח', confirmed: false },
 }
 
-const RATES = [['2015-10-01', '2024-12-31', 0.17], ['2025-01-01', '9999-12-31', 0.18]]
-export const rateOn = (day) => (RATES.find(([a, b]) => day >= a && day <= b) || RATES[RATES.length - 1])[2]
-// the net amount above which a tax invoice needs an allocation number, by its date
-const ALLOCATION = [['2024-05-05', 25000], ['2025-01-01', 20000], ['2026-01-01', 10000], ['2026-06-01', 5000]]
-export const allocationFloor = (day) => { let v = null; for (const [from, floor] of ALLOCATION) if (day >= from) v = floor; return v }
+// the rate and the allocation threshold come from the one rules registry (taxRules.js), by the document's date; nothing
+// here holds a number of its own
+export const rateOn = (day) => (ruleOn('vat_rate', day) || TAX.vat_rate.versions[TAX.vat_rate.versions.length - 1]).value
+// the net amount above which a tax invoice needs an allocation number, by its date (null before the regime began)
+export const allocationFloor = (day) => ruleOn('vat_allocation', day)?.value ?? null
 
 export const CLASS = {
   full: ['ok', 'מקוזז במלואו'], partial: ['info', 'מקוזז חלקית'], none: ['muted', 'לא מקוזז'], no_vat: ['muted', 'בלי מע״מ'],
@@ -88,7 +90,7 @@ export function assessVat(doc, ctx = {}) {
     const inv = invoiceOf(doc, ctx, day, Math.abs(total))
     if (inv) { out.cls = 'none'; out.paysInvoice = inv.doc.id; why('tax_invoice', `${inv.parts > 1 ? `תשלום אחד מתוך ${inv.parts} על` : 'התשלום של'} חשבונית מס ${inv.doc.doc_number || ''} של אותו ספק (${r2(Math.abs(num(inv.doc.total_amount)))} ₪). המע״מ מקוזז לפי החשבונית עצמה, ולא שוב לפי הקבלה.`); return finish(out, doc) }
     // a receipt for a purchase that carries VAT: the money is real, the deduction waits for the tax invoice
-    const r = out.expectedRate || 0.18
+    const r = out.expectedRate || rateOn(today)
     const est = out.vat > 0 ? out.vat : r2(Math.abs(total) * r / (1 + r))
     const pct = pctOf(doc, ctx)
     out.cls = 'missing'; out.pct = pct
@@ -102,7 +104,7 @@ export function assessVat(doc, ctx = {}) {
   // ---- a tax invoice or a credit note ----
   if (vat === null) {
     if (foreign) { out.cls = 'review'; why('foreign', 'חשבונית של ספק זר בלי מע״מ ישראלי. לבדיקת רו״ח.'); need('foreign', 'ספק זר: לבדיקת רו״ח.'); return finish(out, doc) }
-    const r = out.expectedRate || 0.18; const est = r2(Math.abs(total) * r / (1 + r))
+    const r = out.expectedRate || rateOn(today); const est = r2(Math.abs(total) * r / (1 + r))
     out.cls = 'missing'; out.pct = pctOf(doc, ctx); out.estimate = { vat: est, net: r2(Math.abs(total) - est), rate: r, assumed: true }; out.potential = r2(est * out.pct / 100)
     why(null, `המע״מ והסכום לפני מע״מ לא נקראו מהחשבונית. אם הסכום כולל מע״מ בשיעור ${(r * 100).toFixed(0)}%, המע״מ הוא כ-${est} ₪ (הערכה, לא נתון מהמסמך).`)
     need('vat', 'לפתוח את המסמך ולהזין את המע״מ ואת הסכום לפני מע״מ כפי שהם מודפסים.')

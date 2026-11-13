@@ -91,7 +91,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 30 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 31, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 32 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 32, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -1186,7 +1186,7 @@ const accAdminText = await acc.locator('body').innerText()
 const siteApi = async (t) => (await fetch('http://127.0.0.1:5180/api/claude', { method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ input: 'x' }) })).status
 const accClaude = await siteApi(accToken); const adminClaude = await siteApi(adminToken)
 record('SEC2', 'משתמש כספים לא נכנס לניהול האתר', 'רו״ח שנכנס ל-/admin מקבל הפניה למערכת הכספים; קריאה ל-API של האתר נחסמת (403), למנהל היא לא נחסמת', `/admin: ${/מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) ? 'הפניה' : accAdminText.slice(0, 60)}; /api/claude רו״ח=${accClaude}, מנהל=${adminClaude}`, /מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) && accClaude === 403 && adminClaude !== 403, [await shot('26b-accountant-site-admin', acc)])
-record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מרכז המע״מ, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 7 && accNav.some((n) => /מרכז המע״מ/.test(n)) && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
+record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מרכז המע״מ, ציות ומס, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 8 && accNav.some((n) => /ציות ומס/.test(n)) && accNav.some((n) => /מרכז המע״מ/.test(n)) && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
 await accCtx.close()
 
 // ---------- T12: mobile ----------
@@ -2241,8 +2241,10 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   await p2.locator('button[aria-label="הצגת ZZ-DELSYNC-X"]').first().click(); await p2.waitForSelector('.fin-receipts__view')
   const viewShown = await p2.locator('.fin-receipts__view .fin-viewer, .fin-receipts__view .fin-error').count()
   await p2.locator('.fin-modal__foot .fin-btn--danger').first().click(); await p2.waitForTimeout(400); await p2.locator('.fin-modal .fin-btn--danger').last().click()
-  await p2.waitForFunction(() => !document.body.innerText.includes('ZZ-DELSYNC-X'), null, { timeout: 15000 }).catch(() => {})
-  const goneHere = !(await has(p2, 'ZZ-DELSYNC-X'))
+  // the list, not the whole page: the "deleted" toast names the document, and stays while the pointer rests on it
+  const inList = () => !(document.querySelector('.fin__content') || document.querySelector('.fin__main')).innerText.includes('ZZ-DELSYNC-X')
+  await p2.waitForFunction(inList, null, { timeout: 15000 }).catch(() => {})
+  const goneHere = await p2.evaluate(inList)
   // the other tab was not touched: the list there drops the document by itself
   await page.waitForFunction(() => !document.body.innerText.includes('ZZ-DELSYNC-X'), null, { timeout: 8000 }).catch(() => {})
   const goneThere = !(await has(page, 'ZZ-DELSYNC-X'))
@@ -2412,7 +2414,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const figs = await page.locator('.fin-vat__figs > div').count(); const queue = await page.locator('.fin-vat__item').count(); const lastLine = await page.locator('.fin-vat__last').innerText()
   const vatShot = await shot('132-vat-centre')
   await page.locator('.fin-vat__item').first().click(); await page.waitForSelector('.fin-vatnote', { timeout: 15000 }).catch(() => {})
-  const note = await page.locator('.fin-vatnote').count()
+  const note = await page.locator('.fin-vatnote:not(.fin-taxnote)').count()
   const noteShot = await shot('133-vat-in-document')
   record('VAT', 'סוכן המע״מ: סיווג כל מסמך, ביקורת לילית ומסך המע״מ', 'חשבונית 18% ו-17% מקוזזות; בלי מע״מ; קבלה בלי חשבונית מס לא מקוזזת ומוצגת כהערכה; קיזוז חלקי ואפס לפי קטגוריה; זיכוי מקושר ולא מקושר; סכומים שלא מסתכמים; חשבונית שלא נקראה; כפילות; מספר הקצאה נדרש, חסר וקיים; קבלה שהיא תשלום על חשבונית קיימת; בלי חברה; ספק זר; רשות. הסוכן רושם רק שינויים, עם לפני ואחרי; עובד לא מריץ; המסך והמסמך מציגים את אותה תשובה',
     `שגויים: ${wrong.length ? wrong.join(' ; ') : 'אין'}; שינוי אחרי אישור: ${changedAfterApproval.cls}/${changedAfterApproval.needs.map((n) => n.code)}; ריצות: ${run1.data.ok}/${run1.data.audited} → שנייה ${run2.data.changed} שינויים → אחרי שינוי קטגוריה ${run3.data.changed}; יומן: ${logged}; עובד: ${emp.status}; מסך: ${figs} מדדים, ${queue} בתור, "${lastLine.slice(0, 40)}"; במסמך: ${note}`,
@@ -2465,6 +2467,80 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   record('FAST', 'מהירות: מחיקה שנראית מיד, מחיקה שסורבה חוזרת, מחיקה מרובה בקריאה אחת', 'השורה נעלמת לפני שהשרת עונה ונמחקת באמת; מחיקה שהשרת סירב לה חוזרת לרשימה עם הסיבה; 13 מסמכים נמחקים בקריאה אחת ונרשמים ביומן; קריאה בלי טוקן אמיתי נדחית',
     `לפני: ${before}; נעלמה מיד: ${goneAtOnce} (בשרת עדיין: ${serverNotYet}); נמחקה: ${goneForGood}; סירוב: הוסתרה ${hiddenWhileAsking}, חזרה ${cameBack}, נאמר ${said}; מרובה: ${del.data.deleted}/13 ב-${ms}ms, נשארו ${left}, ביומן ${logged}; בלי טוקן: ${none.status}/${junk.status}`,
     before && goneAtOnce && serverNotYet && goneForGood && hiddenWhileAsking && cameBack && said && del.data.deleted === 13 && left === 0 && logged === 12 && none.status === 401 && junk.status === 401, [fastShot])
+}
+
+// TAX: the compliance agent. Every document is checked against the rules registry by its own date, a doubt becomes a
+// note (never a change), the nightly run writes what moved to the log with the rules' versions, the official sources are
+// watched (a changed page marks its rules, a blocked page is said, nothing is applied by itself), the accountant's
+// confirmation of a rule is kept, and the accountant's workbook holds every table.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const biz = sql('select id from fin_businesses order by sort limit 1')
+  // a clean start for the agent's own state (the settings table is not emptied between runs)
+  sql("delete from fin_settings where key in ('tax_watch_state','tax_rules_confirmed','tax_audit_state','tax_audit_last')"); for (const id of ['vat_law_text', 'vat_rate_order', 'allocation_page']) await fetch(`${FAKES}/__taxwatch?id=${id}&mode=ok`)
+  const mk = (name, o) => sql(`insert into fin_documents (status, source, supplier_name, supplier_vat_id, doc_type, doc_number, currency, issue_date, business_id, category, amount_before_vat, vat_amount, total_amount, description, confidence) values ('review','upload','${name}','514000009','${o.type || 'invoice'}','${o.num}','ILS','${o.day || '2026-09-10'}','${biz}','${o.cat || 'חומרי בניין'}', ${o.net}, ${o.vat}, ${o.total}, '${o.desc || ''}', 0.95) returning id`).split('\n')[0]
+  const A = mk('ZZ-TAX-ALLOC', { num: 'TX-1', net: 30000, vat: 5400, total: 35400 })
+  const B = mk('ZZ-TAX-RATE', { num: 'TX-2', net: 1000, vat: 150, total: 1150 })
+  const C = mk('ZZ-TAX-FUEL', { num: 'TX-3', net: 300, vat: 54, total: 354, cat: 'אחר', desc: 'תדלוק רכב' })
+  const D = mk('ZZ-TAX-OK', { num: 'TX-4', net: 1000, vat: 180, total: 1180 })
+  const run1 = await api(tok, { action: 'tax-audit' })
+  sql(`update fin_documents set vat_amount = 180, total_amount = 1180 where id='${B}'`)
+  const run2 = await api(tok, { action: 'tax-audit' })
+  const logged = sql(`select count(*) || '|' || coalesce(max(changes->'previous'->>'status'),'') || '>' || coalesce(max(changes->'current'->>'status'),'') || '|' || coalesce(max(changes->>'rules'),'') from fin_audit where action='tax_checked' and entity_id='${B}'`)
+  sql(`update fin_documents set vat_amount = 150, total_amount = 1150 where id='${B}'`)
+  const untouched = sql(`select amount_before_vat || '/' || vat_amount || '/' || total_amount || '/' || status from fin_documents where id='${A}'`)
+  const emp = await api(tokE, { action: 'tax-audit' })
+  // the screen
+  await go('/compliance'); await page.waitForSelector('.fin-tax__figs', { timeout: 15000 })
+  const figs = await page.locator('.fin-tax__figs > div').count()
+  const qText = await page.locator('.fin-vat__queue').innerText().catch(() => '')
+  const taxShot = await shot('135-compliance')
+  // the accountant's workbook
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /חבילה לרו״ח/ }).click()])
+  const bookPath = `${OUT}/tax-book.xlsx`; await dl.saveAs(bookPath)
+  const sheets = execSync(`unzip -l ${bookPath} | grep -c "xl/worksheets/sheet"`, { encoding: 'utf8' }).trim()
+  const bookHas = execSync(`unzip -p ${bookPath} xl/workbook.xml`, { encoding: 'utf8' })
+  // the rules registry, and the accountant's confirmation of one rule
+  await page.getByRole('tab', { name: /מאגר הכללים/ }).click(); await page.waitForSelector('.fin-tax__rule')
+  const rules = await page.locator('.fin-tax__rule').count()
+  const rateCard = page.locator('.fin-tax__rule[data-rule="vat_rate"]')
+  const rateText = await rateCard.innerText()
+  await rateCard.getByRole('button', { name: /אישור הכלל/ }).click(); await page.waitForTimeout(1500)
+  const confirmedUi = /אושר על ידי רו״ח/.test(await page.locator('.fin-tax__rule[data-rule="vat_rate"]').innerText())
+  const confirmedDb = sql(`select (value->'vat_rate'->>'by') from fin_settings where key='tax_rules_confirmed'`)
+  const rulesShot = await shot('136-compliance-rules')
+  // the watch: all read; then one page changes, one loses its value, one is blocked
+  const w1 = await api(tok, { action: 'tax-watch' })
+  await fetch(`${FAKES}/__taxwatch?id=vat_law_text&mode=changed`); await fetch(`${FAKES}/__taxwatch?id=vat_rate_order&mode=novalue`); await fetch(`${FAKES}/__taxwatch?id=allocation_page&mode=blocked`)
+  const w2 = await api(tok, { action: 'tax-watch' })
+  const st = (id) => w2.data.results.find((r) => r.id === id)?.status
+  await go('/compliance'); await page.getByRole('tab', { name: /מעקב/ }).click(); await page.waitForSelector('.fin-tax__watch')
+  const watchText = await page.locator('.fin-tax__watch').innerText()
+  const watchShot = await shot('137-compliance-watch')
+  await page.getByRole('tab', { name: /מאגר הכללים/ }).click()
+  const rateMarked = /דורש בדיקה/.test(await page.locator('.fin-tax__rule[data-rule="vat_rate"]').innerText())
+  const stillValue = sql(`select count(*) from fin_audit where action in ('tax_source_changed','tax_source_value_missing')`)
+  const ackE = await api(tokE, { action: 'tax-watch-ack', id: 'vat_law_text' })
+  const ack = await api(tok, { action: 'tax-watch-ack', id: 'vat_law_text' })
+  // the pages return to what they were: still marked until a person says "checked", then everything reads clean again
+  for (const id of ['vat_law_text', 'vat_rate_order', 'allocation_page']) await fetch(`${FAKES}/__taxwatch?id=${id}&mode=ok`)
+  await api(tok, { action: 'tax-watch' })
+  await api(tok, { action: 'tax-watch-ack', id: 'vat_law_text' }); await api(tok, { action: 'tax-watch-ack', id: 'vat_rate_order' }); const w3 = await api(tok, { action: 'tax-watch' })
+  // inside a document: the note, with the allocation number and the rule behind it
+  await go(`/documents/${A}`); await page.waitForSelector('.fin-taxnote', { timeout: 15000 })
+  const note = await page.locator('.fin-taxnote').innerText()
+  await page.locator('.fin-taxnote__more').click(); await page.waitForTimeout(400)
+  const report = await page.locator('.fin-taxnote__report').innerText().catch(() => '')
+  const noteShot = await shot('138-compliance-note')
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-TAX').catch(() => {}); await page.waitForTimeout(900)
+  const marks = await page.locator('tbody tr .fin-duppill.is-tax').count()
+  sql(`delete from fin_documents where supplier_name like 'ZZ-TAX-%'`)
+  record('TAX', 'סוכן הציות: בדיקת כל מסמך מול מאגר הכללים, הערות, מעקב אחרי המקורות וחבילה לרו״ח', 'ביקורת רושמת שינוי ביומן עם גרסאות הכללים ולא משנה מסמך; עובד נדחה; 8 מדדים; הערות על מספר הקצאה, שיעור מע״מ וקיזוז דלק; חוברת עם 10 גיליונות; 26 כללים עם מקור; אישור רו״ח נשמר; מעקב: עמוד שהשתנה, ערך שנעלם ועמוד חסום מסומנים, והכלל מסומן לבדיקה; אישור "בדקתי" רק למנהל; ההערה בתוך המסמך',
+    `ריצות: ${run1.data.ok}/${run1.data.checked} → ${run2.data.changed} שינויים; יומן: ${logged.slice(0, 90)}; המסמך: ${untouched}; עובד: ${emp.status}; מדדים: ${figs}; תור: ${/מספר הקצאה/.test(qText)}/${/15\.0%/.test(qText)}/${/ביתר/.test(qText)}; גיליונות: ${sheets} ${/מע״מ תשומות/.test(bookHas)}; כללים: ${rules} ${/18%/.test(rateText)} ${/רשומות/.test(rateText)}; אישור: ${confirmedUi}/${confirmedDb}; מעקב: ${w1.data.unchanged}/10 → ${st('vat_law_text')},${st('vat_rate_order')},${st('allocation_page')}; מסך: ${/העמוד השתנה/.test(watchText)}/${/לא נקרא/.test(watchText)}; כלל מסומן: ${rateMarked}; יומן מקורות: ${stillValue}; בדקתי: עובד ${ackE.status}, מנהל ${ack.data.ok}; אחרי: ${w3.data.unchanged}; הערה: ${/מספר הקצאה/.test(note)} ${/גרסה/.test(report)}; סימון ברשימה: ${marks}`,
+    run1.data.ok === true && run2.data.changed >= 1 && /^[1-9]\d*\|/.test(logged) && /vat_rate@2025-01/.test(logged) && untouched === '30000.00/5400.00/35400.00/review' && emp.status === 403 && figs === 8
+    && /מספר הקצאה/.test(qText) && /15\.0%/.test(qText) && /ביתר/.test(qText) && sheets === '10' && /מע״מ תשומות/.test(bookHas) && rules === 26 && /18%/.test(rateText) && /רשומות/.test(rateText) && confirmedUi && confirmedDb === 'admin@kurkoos.test'
+    && w1.data.unchanged === 10 && st('vat_law_text') === 'changed' && st('vat_rate_order') === 'value_missing' && st('allocation_page') === 'unreachable' && /העמוד השתנה/.test(watchText) && /לא נקרא/.test(watchText) && rateMarked && Number(stillValue) >= 2
+    && ackE.status === 403 && ack.data.ok === true && w3.data.unchanged === 10 && /מספר הקצאה/.test(note) && /גרסה/.test(report) && marks >= 2, [taxShot, rulesShot, watchShot, noteShot])
 }
 
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)

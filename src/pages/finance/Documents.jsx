@@ -1,3 +1,4 @@
+import { useCompliance } from './Compliance.jsx'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
@@ -158,6 +159,9 @@ export default function Documents({ preset = 'all' }) {
   }, [months, view])
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
   const toggle = (did) => setSel((s) => { const n = new Set(s); if (n.has(did)) n.delete(did); else n.add(did); return n })
+  // the compliance check's answer for each document: a document with an error or a question for the accountant is marked on the list
+  const tax = useCompliance()
+  const taxOf = useMemo(() => new Map(tax.rows.map((x) => [x.doc.id, x.c])), [tax])
   const picked = rows.filter((d) => sel.has(d.id))
   // a search or filter that hides selected documents drops them from the selection: the bar counts what the actions use
   useEffect(() => { setSel((s) => { const keep = new Set(rows.filter((d) => s.has(d.id)).map((d) => d.id)); return keep.size === s.size ? s : keep }) }, [rows])
@@ -468,7 +472,7 @@ export default function Documents({ preset = 'all' }) {
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
                       {peek?.id === d.id && <span className="fin-peek__pop" style={{ top: peek.top, right: peek.right }} aria-hidden="true"><PeekCard doc={d} /></span>}
                       <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>{d.supplier_name && <button type="button" className="fin-icon-btn fin-suphist" onClick={(e) => { e.stopPropagation(); supplierHistory(go, d, documents) }} aria-label={`כל ההיסטוריה עם ${d.supplier_name}`} title={`כל ההיסטוריה עם ${d.supplier_name}`}><Icon name="history" size={15} /></button>}{d.recurring_id && <span className="fin-fixedtag" title="הוצאה קבועה">קבועה</span>}</span>
-                      <small className="fin-cell-sub">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
+                      <small className="fin-cell-sub">{['fix', 'accountant'].includes(taxOf.get(d.id)?.status) && <span className={`fin-duppill is-tax ${taxOf.get(d.id).status === 'fix' ? 'is-fix' : ''}`} title={taxOf.get(d.id).summary}><Icon name="shield" size={11} /> {taxOf.get(d.id).status === 'fix' ? 'דורש תיקון' : 'לבדיקת רו״ח'}</span>}{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>
                     <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
                     <td className="fin-td-status"><StatusPill status={d.status} /></td>

@@ -211,6 +211,8 @@ export async function runDaily(origin) {
 
   // the VAT agent: after the night's documents are in, every document is assessed again and what changed is recorded
   try { const { vatAudit } = await import('./vat.js'); const r = await vatAudit({ trigger: 'night' }); out.push({ key: 'vat_audit', result: { ok: r.ok, audited: r.audited, changed: r.changed, error: r.error } }) } catch (e) { out.push({ key: 'vat_audit', error: String(e.message || e).slice(0, 200) }) }
+  // the compliance agent: every document against the rules of its own date, then the official sources the rules come from
+  try { const { complianceAudit, watchSources } = await import('./compliance.js'); const r = await complianceAudit({ trigger: 'night' }); out.push({ key: 'tax_check', result: { ok: r.ok, checked: r.checked, changed: r.changed, error: r.error } }); const w = await watchSources({ trigger: 'night' }); out.push({ key: 'tax_watch', result: { unchanged: w.unchanged, changed: w.changed, unreachable: w.unreachable } }) } catch (e) { out.push({ key: 'tax_check', error: String(e.message || e).slice(0, 200) }) }
   // what deletions left behind in storage (a file whose document is gone) is removed once a night
   try { const { sweep } = await import('./remove.js'); out.push({ key: 'storage_sweep', result: await sweep({}) }) } catch (e) { out.push({ key: 'storage_sweep', error: String(e.message || e).slice(0, 200) }) }
 

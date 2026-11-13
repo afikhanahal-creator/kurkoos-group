@@ -88,6 +88,10 @@ const ROLES = {
   'documents-delete': ['admin', 'finance_manager'],
   'documents-sweep': ['admin'],
   'vat-audit': ['admin', 'finance_manager'],
+  'tax-audit': ['admin', 'finance_manager'],
+  'tax-watch': ['admin', 'finance_manager'],
+  'tax-watch-ack': ['admin'],
+  'tax-rule-confirm': ['admin', 'accountant'],
   'linked-links': ['admin', 'finance_manager', 'employee'],
   'linked-fetch': ['admin', 'finance_manager', 'employee'],
   'mail-file': ['admin', 'finance_manager', 'employee'],
@@ -436,6 +440,12 @@ export default async function handler(req, res) {
         res.status(200).json(await removeDocuments({ ids: body.ids, user }))
         return
       }
+      // the compliance agent: the check over every document, the watch over the official sources, and the accountant's
+      // confirmation of a rule (server/finance/compliance.js)
+      case 'tax-audit': { const { complianceAudit } = await import('./finance/compliance.js'); res.status(200).json(await complianceAudit({ trigger: 'manual', user })); return }
+      case 'tax-watch': { const { watchSources } = await import('./finance/compliance.js'); res.status(200).json({ ok: true, ...(await watchSources({ trigger: 'manual', user })) }); return }
+      case 'tax-watch-ack': { const { ackSource } = await import('./finance/compliance.js'); res.status(200).json(await ackSource({ id: String(body.id || ''), user })); return }
+      case 'tax-rule-confirm': { const { confirmRule } = await import('./finance/compliance.js'); res.status(200).json(await confirmRule({ id: String(body.id || ''), confirmed: body.confirmed !== false, note: body.note, user })); return }
       case 'vat-audit': {
         // the VAT agent, on demand (it also runs every night): every document through the one VAT service, what changed is recorded
         const { vatAudit } = await import('./finance/vat.js')

@@ -17,6 +17,7 @@ import { sb, one, insert, patch, q, caller, audit, removeFile, rpc } from './fin
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
+import { publicProviders } from './finance/providers.js'
 import { ask } from './finance/assistant.js'
 import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
@@ -250,6 +251,7 @@ export default async function handler(req, res) {
           schedule: { night: '23 0 * * *', morning: '57 4 * * *', tz: 'UTC' },
           cloud: Object.fromEntries(Object.entries(CLOUD).map(([k, c]) => [k, c.configured()])),
           adapters: Object.values(ADAPTERS).map(({ id, label, kind, fields, secrets }) => ({ id, label, kind, fields, secrets })),
+          providers: publicProviders(),
         })
         return
       }

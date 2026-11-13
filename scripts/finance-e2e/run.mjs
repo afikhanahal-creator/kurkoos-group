@@ -726,12 +726,38 @@ await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').f
 const swNone = await page.locator('.fin-empty').count()
 await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill(''); await page.waitForTimeout(200)
 const swShot = await shot('56-accounting-software')
-await page.getByRole('button', { name: 'חיבור Morning (חשבונית ירוקה)' }).click(); await page.waitForTimeout(300)
 const bizExec = sql("select id from fin_businesses where name='קורקוס ביצוע'")
+const swStates = await page.locator('.fin-app-card .fin-pill').allInnerTexts()
+// Morning: wrong keys are refused by the sign-in itself, and the card says so; the right keys make it "connected"
+const mCard = page.locator('.fin-app-card', { hasText: 'Morning' })
+await mCard.getByRole('button', { name: 'חיבור' }).click(); await page.waitForSelector('.fin-modal')
 await page.locator('.fin-modal select').first().selectOption(bizExec)
-await page.locator('.fin-modal input[type=password]').first().fill('test-morning-key')
+await page.locator('.fin-modal input[type=password]').nth(0).fill('wrong-id'); await page.locator('.fin-modal input[type=password]').nth(1).fill('wrong-secret')
 const swModalShot = await shot('57-connect-morning')
-await modalSave()
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForSelector('.fin-modal .fin-error', { timeout: 15000 }).catch(() => {})
+const mBadErr = await page.locator('.fin-modal .fin-error').innerText().catch(() => '')
+const mBad = sql("select status from fin_integrations where provider='morning'")
+await page.locator('.fin-modal__foot .fin-btn--ghost').click(); await page.reload(); await page.waitForTimeout(900)
+const mBadPill = await page.locator('.fin-app-card', { hasText: 'Morning' }).locator('.fin-pill').first().innerText()
+const mRow = sql("select id from fin_integrations where provider='morning'")
+await api(adminToken, { action: 'integration-save', id: mRow, provider: 'morning', name: 'Morning', business_id: bizExec, config: {}, secret: { client_id: 'morning-test-id', client_secret: 'morning-test-secret' }, enabled: true })
+const mGood = await api(adminToken, { action: 'integration-test', id: mRow })
+// CostApp: an intake address for one company; from then on an approved document of that company is mailed there with its file
+await page.reload(); await page.waitForTimeout(900)
+const cCard = page.locator('.fin-app-card', { hasText: 'CostApp' })
+await cCard.getByRole('button', { name: 'חיבור' }).click(); await page.waitForSelector('.fin-modal')
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForTimeout(300)
+const cNeedsCompany = await page.locator('.fin-modal .fin-error').innerText().catch(() => '')
+await page.locator('.fin-modal select').first().selectOption(bizExec); await page.locator('.fin-modal input[type=email]').fill('kurkoos-bitzua@intake.costapp.test')
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 10000 }).catch(() => {})
+const cRow = sql("select kind||'|'||target||'|'||array_to_string(events, ',')||'|'||(business_id='" + bizExec + "')||'|'||enabled from fin_outbound where name like '[costapp]%'")
+await page.waitForTimeout(600)
+const cPill = await page.locator('.fin-app-card', { hasText: 'CostApp' }).locator('.fin-pill').first().innerText()
+await page.locator('.fin-app-card', { hasText: 'CostApp' }).getByRole('button', { name: 'ניהול החיבור' }).click(); await page.waitForSelector('.fin-prov__caps')
+const capRows = await page.locator('.fin-prov__caps tr').count()
+const swProvShot = await shot('59-accounting-provider')
+await page.locator('.fin-modal__foot .fin-btn--ghost').click()
+sql("delete from fin_outbound where name like '[costapp]%'")
 const morning = sql("select provider||'|'||status||'|'||enabled from fin_integrations where provider='morning'")
 const morningSecret = sql("select count(*) from fin_integration_secrets s join fin_integrations i on i.id=s.integration_id where i.provider='morning'")
 const swSecond = await api(adminToken, { action: 'integration-save', provider: 'icount', name: 'iCount', business_id: bizExec, enabled: true })
@@ -740,9 +766,12 @@ const allBiz = await api(adminToken, { action: 'integration-save', provider: 'ri
 const secretRead = await rest('fin_integration_secrets?select=*', adminToken)
 await page.reload(); await page.waitForTimeout(1000)
 const swAfterShot = await shot('58-accounting-connected')
-record('SW', 'חיבור תוכנת הנהלת חשבונות', 'חיפוש מסנן את הכרטיסים; חיבור Morning לחברה שומר את המפתח בשרת בלבד ומסמן "ממתין להפעלה"; תוכנה שנייה לאותה חברה נחסמת, לחברה אחרת מותרת',
-  `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, חיפוש ללא תוצאה: ${swNone}; Morning: ${morning}, מפתחות: ${morningSecret}; שנייה לאותה חברה: ${swSecond.status} ${swSecond.data.error || ''}; לחברה אחרת: ${otherBiz.status}; לכל החברות: ${allBiz.status}; קריאת מפתחות מהדפדפן: ${secretRead.status}`,
-  swAll === 8 && swOne === 1 && swNone === 1 && morning === 'morning|not_active|true' && morningSecret === '1' && swSecond.status === 409 && otherBiz.status === 200 && allBiz.status === 409 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swAfterShot])
+record('SW', 'חיבור תוכנת הנהלת חשבונות', 'הרשימה מציגה לכל תוכנה מצב אמיתי; מפתחות שגויים של Morning נדחים בהתחברות עצמה והכרטיס מציג שגיאה, מפתחות נכונים מאושרים; CostApp מתחבר בכתובת קליטה לחברה אחת (בלי חברה נחסם) ויוצר שליחה אוטומטית של מסמכים מאושרים; מפתחות לא נקראים מהדפדפן; תוכנה שנייה לאותה חברה נחסמת',
+  `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, ללא תוצאה: ${swNone}; מצבים: ${[...new Set(swStates)].join('/')}; Morning שגוי: ${mBad} "${mBadErr.slice(0, 60)}" כרטיס "${mBadPill}"; נכון: ${mGood.data.ok}; Morning: ${morning}, מפתחות: ${morningSecret}; CostApp בלי חברה: "${cNeedsCompany.slice(0, 30)}", שורה: ${cRow}, כרטיס "${cPill}", יכולות: ${capRows}; שנייה לאותה חברה: ${swSecond.status}; לחברה אחרת: ${otherBiz.status}; לכל החברות: ${allBiz.status}; קריאת מפתחות: ${secretRead.status}`,
+  swAll === 17 && swOne === 1 && swNone === 1 && swStates.includes('זמין') && swStates.includes('נדרש חיבור') && swStates.includes('בקרוב') && !swStates.includes('מחובר')
+  && mBad === 'error' && /Morning דחה/.test(mBadErr) && mBadPill === 'שגיאת חיבור' && mGood.data.ok === true && morning === 'morning|ready|true' && morningSecret === '1'
+  && /בוחרים חברה/.test(cNeedsCompany) && cRow === 'email|kurkoos-bitzua@intake.costapp.test|document.approved|true|true' && cPill === 'מחובר' && capRows === 6
+  && swSecond.status === 409 && otherBiz.status === 200 && allBiz.status === 409 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swProvShot, swAfterShot])
 
 // =================== AUTOMATIC DELIVERY ===================
 await fetch(`${FAKES}/__reset_hooks`).catch(() => {})

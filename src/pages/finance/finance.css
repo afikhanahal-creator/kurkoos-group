@@ -3928,3 +3928,30 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-receipts__pic { width: 64px; height: 84px; border-radius: 8px; position: relative; }
   .fin-receipts__thumb::after { content: 'הצגה'; display: block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--ocean-2); text-align: center; }
 }
+
+/* ---------- the accounting software directory ---------- */
+.fin-prov { display: grid; gap: 12px; align-content: start; }
+.fin-prov .fin-app-card__head { display: grid; gap: 6px; justify-items: start; }
+.fin-prov__facts { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.fin-prov__facts > div { display: grid; gap: 1px; min-width: 0; }
+.fin-prov__facts dt { font-size: 12px; color: var(--muted); }
+.fin-prov__facts dd { margin: 0; font-size: var(--t-sm); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.fin-prov__acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.fin-prov__about { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; color: var(--ink); }
+.fin-prov__conns h4, .fin-prov__caps + p, section > h4 { margin: 14px 0 8px; }
+.fin-prov__conns ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fin-prov__conns li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); }
+.fin-prov__conns li > div { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
+.fin-prov__conns li small { color: var(--text-2); font-size: var(--t-sm); overflow-wrap: anywhere; }
+.fin-prov__conns li bdi, .fin-prov__conns li span { font-size: var(--t-sm); color: var(--text-2); overflow-wrap: anywhere; }
+.fin-prov__rowacts { display: flex; flex-wrap: wrap; gap: 6px; }
+.fin-prov__caps { width: 100%; border-collapse: collapse; }
+.fin-prov__caps th { text-align: start; font-weight: 600; color: var(--ink); padding: 8px 0; font-size: var(--t-md); width: 44%; }
+.fin-prov__caps td { padding: 8px 0; }
+.fin-prov__caps tr + tr > * { border-top: 1px solid var(--line); }
+@media (max-width: 700px) {
+  .fin-prov__acts .fin-btn { flex: 1; justify-content: center; min-height: 44px; }
+  .fin-prov__rowacts { width: 100%; }
+  .fin-prov__rowacts .fin-btn { flex: 1; min-height: 44px; justify-content: center; }
+  .fin-prov__caps th { width: 38%; font-size: var(--t-sm); }
+}

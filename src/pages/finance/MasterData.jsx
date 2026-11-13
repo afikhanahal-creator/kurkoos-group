@@ -4,7 +4,7 @@ import { useFinance } from './FinanceApp.jsx'
 import { useResizableColumns } from './columns.js'
 import * as api from './api.js'
 import { ENTITIES, SUPPLIER_STATUS, toRow, validate } from './entities.js'
-import { PROJECT_STATUS, date, money, nameOf, toCsv } from './format.js'
+import { PROJECT_STATUS, date, money, nameOf, seriesColor, toCsv } from './format.js'
 import { entityStats } from './stats.js'
 import { saveBlob } from './zip.js'
 import { Empty, Icon, Modal, PageHead, Pill, Toggle } from './ui.jsx'
@@ -186,6 +186,12 @@ export default function MasterData({ kind }) {
       .sort((a, b) => { const x = a[sort.key] ?? ''; const y = b[sort.key] ?? ''; return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
   }, [list, filters, q, showArchived, stats, sort, def, kind, projects])
   const pending = kind === 'suppliers' ? list.filter((s) => s.status === 'pending').length : 0
+  // categories can be read as a list, as bars ranked by spending, or as tiles; the choice is kept on this device
+  const [catView, setCatView] = useState(() => { try { return ['bars', 'tiles'].includes(localStorage.getItem('fin-cat-view')) ? localStorage.getItem('fin-cat-view') : 'list' } catch { return 'list' } })
+  const setCat = (v) => { setCatView(v); try { localStorage.setItem('fin-cat-view', v) } catch { /* a preference only */ } }
+  const ranked = useMemo(() => (kind === 'categories' ? [...rows].sort((a, b) => (b.total || 0) - (a.total || 0)) : []), [rows, kind])
+  const rankTotal = ranked.reduce((a, r) => a + Math.abs(r.total || 0), 0) || 1
+  const rankMax = Math.max(...ranked.map((r) => Math.abs(r.total || 0)), 1)
 
   const exportCsv = () => {
     const head = [...def.fields.map((f) => f.label), 'מסמכים', 'סה״כ הוצאות']
@@ -232,6 +238,11 @@ export default function MasterData({ kind }) {
           </Select>
         ))}
         <label className="fin-check"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> כולל ארכיון</label>
+        {kind === 'categories' && (
+          <div className="fin-seg fin-catview" role="group" aria-label="תצוגת הקטגוריות">
+            {[['list', 'רשימה', 'list'], ['bars', 'עמודות', 'reports'], ['tiles', 'אריחים', 'grid']].map(([k, label, icon]) => <button key={k} type="button" className={catView === k ? 'is-on' : ''} aria-pressed={catView === k} onClick={() => setCat(k)}><Icon name={icon} size={16} /> {label}</button>)}
+          </div>
+        )}
       </div>
       {toast && <p className="fin-note" role="status">{toast}</p>}
 
@@ -239,6 +250,26 @@ export default function MasterData({ kind }) {
         <Empty title={list.length ? 'אין תוצאות' : `עוד אין ${def.title}`} icon={def.icon} action={!list.length && canWrite && <button type="button" className="fin-btn fin-btn--primary" onClick={() => setEdit({})}>{def.add}</button>}>
           {list.length ? 'נסו חיפוש אחר או הסירו סינון.' : `${def.add} כדי להתחיל לשייך אליו מסמכים.`}
         </Empty>
+      ) : kind === 'categories' && catView !== 'list' ? (
+        <section className={`fin-cats is-${catView}`} aria-label={catView === 'bars' ? 'הקטגוריות לפי הוצאות' : 'הקטגוריות באריחים'}>
+          <div className="fin-split__bar" role="img" aria-label="החלוקה בין הקטגוריות">{ranked.filter((r) => r.total).map((r, i) => <span key={r.id} style={{ flexGrow: Math.max(Math.abs(r.total), rankTotal * 0.012), background: seriesColor(i) }} title={`${r.name}: ${money(r.total)}`} />)}</div>
+          <ul className="fin-cats__list">
+            {ranked.map((r, i) => {
+              const share = Math.round((Math.abs(r.total || 0) / rankTotal) * 100)
+              return (
+                <li key={r.id}>
+                  <button type="button" className="fin-cats__item" style={{ '--c': seriesColor(i) }} onClick={() => go(`${def.path}/${r.id}`)} title={`${r.name}: ${money(r.total || 0)}, ${r.docs || 0} מסמכים, ${share}% מהסך`}>
+                    <span className="fin-cats__dot" aria-hidden="true" />
+                    <strong className="fin-cats__name">{r.name}</strong>
+                    <span className="fin-cats__val">{money(r.total || 0)}</span>
+                    <span className="fin-cats__track" aria-hidden="true"><span style={{ width: `${Math.max(r.total ? 2 : 0, (Math.abs(r.total || 0) / rankMax) * 100)}%` }} /></span>
+                    <span className="fin-cats__meta">{r.docs === 1 ? 'מסמך אחד' : `${r.docs || 0} מסמכים`} · {share}% מהסך{r.pendingDocs ? ` · ${r.pendingDocs} ממתינים` : ''}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
       ) : (
         <div className="fin-table-wrap">
           <table ref={colsRef} className="fin-table fin-table--ent">

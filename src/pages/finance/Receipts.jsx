@@ -101,7 +101,7 @@ export default function Receipts() {
   return (
     <div className="fin-stack fin-receipts">
       <PageHead title="קבלות וחשבוניות" sub="כל הקבלות והחשבוניות שבמערכת, מהמייל, מ-WhatsApp ומהעלאה, לפי חודש. שום דבר לא נרשם כסופי לפני אישור.">
-        {can('connect') && <button type="button" className="fin-btn" onClick={() => go('/scanners')}><Icon name="phone" size={18} /> מספרי WhatsApp</button>}
+        {can('connect') && <button type="button" className="fin-btn" onClick={() => go('/scanners')}><Icon name="whatsapp" size={18} /> מספרי WhatsApp</button>}
         {can('upload') && openUpload && <button type="button" className="fin-btn fin-btn--primary" onClick={openUpload}><Icon name="upload" size={18} /> העלאה מהמחשב</button>}
       </PageHead>
 
@@ -162,16 +162,14 @@ export default function Receipts() {
                 const known = d.supplier_id && suppliers?.some((x) => x.id === d.supplier_id)
                 return (
                   <tr key={d.id} className={`is-link ${isFresh(d) ? 'is-fresh' : ''} ${st === 'fix' || st === 'failed' ? 'is-attn' : ''}`} onClick={() => go(`/documents/${d.id}`)}>
-                    <td className="fin-receipts__thumb" onClick={(e) => { e.stopPropagation(); setViewId(d.id) }}><Peek doc={d}><span className="fin-receipts__pic">{phone && d.file_path && !(d.file_mime || '').startsWith('image/')
-                      ? <span className={`fin-doctile ${(d.file_mime || '').includes('pdf') ? 'is-pdf' : (d.file_mime || '').startsWith('text/') ? 'is-mail' : ''}`} aria-hidden="true">{(d.file_mime || '').includes('pdf') ? <b>PDF</b> : <Icon name={(d.file_mime || '').startsWith('text/') ? 'mail' : 'file'} size={20} />}</span>
-                      : <Thumbnail doc={d} />}</span></Peek></td>
+                    <td className="fin-receipts__thumb" onClick={(e) => { e.stopPropagation(); setViewId(d.id) }}><Peek doc={d}><span className="fin-receipts__pic"><Thumbnail doc={d} /></span></Peek></td>
                     <td data-label="תאריך" className="fin-td-date">{date(docDate(d)) || '—'}</td>
                     <td className="fin-td-main"><Peek doc={d}><button type="button" className="fin-receipts__name" onClick={(e) => { e.stopPropagation(); setViewId(d.id) }} aria-label={`הצגת ${d.supplier_name || d.file_name || 'המסמך'}`}>{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}</button></Peek>{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
                     <td className="fin-td-status fin-receipts__st"><span className={`fin-pill fin-pill--${s.tone}`} title={s.hint}>{s.label}</span></td>
                     <td data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td data-label="מספר"><bdi dir="ltr">{d.doc_number || '—'}</bdi></td>
                     <td className="fin-num fin-receipts__sum fin-td-total" data-label="סכום כולל">{d.total_amount != null ? money(d.total_amount, d.currency) : '—'}</td>
-                    <td data-label="נקלט" className="fin-receipts__got"><span><span className="fin-receipts__when">{dateTime(d.created_at)}</span><small className="fin-receipts__via"><Icon name={d.source === 'whatsapp' ? 'phone' : MAIL.includes(d.source) ? 'mail' : 'upload'} size={12} /> {d.source === 'whatsapp' ? `WhatsApp ${sender(d)}` : SOURCE[d.source] || 'העלאה'}</small></span></td>
+                    <td data-label="נקלט" className="fin-receipts__got"><span><span className="fin-receipts__when">{dateTime(d.created_at)}</span><small className="fin-receipts__via"><Icon name={d.source === 'whatsapp' ? 'whatsapp' : MAIL.includes(d.source) ? 'mail' : 'upload'} size={12} /> {d.source === 'whatsapp' ? `WhatsApp ${sender(d)}` : SOURCE[d.source] || 'העלאה'}</small></span></td>
                     
                     <td className="fin-receipts__act" onClick={(e) => e.stopPropagation()}>
                       {link && <a className="fin-icon-btn" href={link} target="_blank" rel="noreferrer" aria-label="פתיחה ב-Google Drive" title="פתיחה ב-Google Drive"><Icon name="folder" size={18} /></a>}

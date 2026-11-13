@@ -66,7 +66,7 @@ export default function Agents() {
       {msg && <p className="fin-note" role="status">{msg}</p>}
       <section className="fin-engine" aria-label="מצב המנוע">
         <ul className="fin-engine__agents">
-          {[['mail', 'איסוף ממייל', engine.email], ['phone', 'איסוף מ-WhatsApp', engine.whatsapp], ['sparkle', 'קריאה (OCR ו-AI)', engine.ocr]].map(([icon, name, [tone, state, note]]) => (
+          {[['mail', 'איסוף ממייל', engine.email], ['whatsapp', 'איסוף מ-WhatsApp', engine.whatsapp], ['sparkle', 'קריאה (OCR ו-AI)', engine.ocr]].map(([icon, name, [tone, state, note]]) => (
             <li key={name}><span className="fin-engine__icon"><Icon name={icon} size={18} /></span><span className="fin-engine__name"><strong>{name}</strong><small>{note}</small></span><Pill tone={tone}>{state}</Pill></li>
           ))}
         </ul>

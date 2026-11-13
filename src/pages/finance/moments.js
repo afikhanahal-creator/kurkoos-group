@@ -109,6 +109,7 @@ export const moments = {
     const r = rectOf(from) || { left: innerWidth / 2 - 10, top: innerHeight / 2 - 10, width: 20, height: 20 }
     const target = inbox()
     flyTo(r, target?.querySelector('em') || target, { count })
+    this.big('received', count === 1 ? 'המסמך עלה' : `${count} מסמכים עלו`)
     toast({ icon: 'doc', title: count === 1 ? 'המסמך התקבל' : `${count} מסמכים התקבלו`, sub: names.length === 1 ? `${names[0]} · נקרא עכשיו, ויחכה לבדיקה בחשבוניות חדשות` : 'נקראים עכשיו, ויחכו לבדיקה בחשבוניות חדשות', icon: 'doc' })
   },
   download({ from, name = '', count = 1 } = {}) {
@@ -177,12 +178,20 @@ export const moments = {
   },
   fail({ title = 'הפעולה לא הצליחה', sub = '' } = {}) { toast({ title, sub, tone: 'attn' }) },
   // a large animation in the middle of the screen for the few actions that deserve it (a batch approved, sent, merged)
-  big(name) {
+  // a large animation in the middle of the screen for a second or two, optionally with one line under it; it never
+  // takes a click (the screen under it stays usable)
+  big(name, caption = '') {
     if (reduced() || typeof document === 'undefined') return
-    const box = el('fin-moment__big', '')
+    const box = el(`fin-moment__big ${caption ? 'has-caption' : ''}`, '<span class="fin-moment__art"></span>')
+    if (caption) { const c = document.createElement('strong'); c.className = 'fin-moment__caption'; c.textContent = caption; box.appendChild(c) }
     root().appendChild(box)
-    import('./lottie/play.jsx').then(({ play }) => { play(box, name, { onDone: () => done(box.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }), box) }); setTimeout(() => box.remove(), 2600) }).catch(() => box.remove())
+    const art = box.querySelector('.fin-moment__art')
+    box.animate([{ opacity: 0, transform: 'translate(-50%, -50%) scale(0.86)' }, { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }], { duration: 260, easing: EASE_OUT })
+    const leave = () => { if (box.isConnected) done(box.animate([{ opacity: 1 }, { opacity: 0, transform: 'translate(-50%, -50%) scale(0.96)' }], { duration: 280, fill: 'forwards' }), box) }
+    import('./lottie/play.jsx').then(({ play }) => { play(art, name, { onDone: () => setTimeout(leave, caption ? 500 : 0) }); setTimeout(() => box.remove(), 3600) }).catch(() => box.remove())
   },
+  // a photo taken with the camera was received and read
+  capture({ name = '' } = {}) { this.big('snapped', name ? `${name} נקלט` : 'הצילום נקלט') },
   merge({ title = 'המסמכים מוזגו', sub = '' } = {}) { this.big('merge'); toast({ title, sub, icon: 'merge' }) },
   remove({ title = 'נמחק', sub = '' } = {}) { toast({ title, sub, icon: 'trash' }) },
   message({ title = 'התקבלה הודעה', sub = '' } = {}) { toast({ title, sub, icon: 'message' }) },

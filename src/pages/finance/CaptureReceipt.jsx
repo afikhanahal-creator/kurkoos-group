@@ -1,3 +1,4 @@
+import { moments } from './moments.js'
 import { useRef, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -33,6 +34,7 @@ export default function CaptureReceipt({ onClose, onDone }) {
       clearTimeout(t); clearTimeout(t2)
       if (row.duplicate) { setStep(''); setErr(`הקבלה הזו כבר במערכת${row.of?.supplier_name ? ` (${row.of.supplier_name}${row.of.doc_number ? ` ${row.of.doc_number}` : ''})` : ''}.`); return }
       setDoc(row); setStep('done')
+      moments.capture({ name: row.supplier_name || '' })
       setForm({ business_id: row.business_id || '', project_id: row.project_id || row.suggestions?.project_id?.value || '', category_id: row.category_id || categories.find((c) => c.name === (row.category || row.suggestions?.category?.value))?.id || '' })
       reload()
     } catch (e) { setStep(''); setErr(e.message) }

@@ -87,6 +87,7 @@ const ROLES = {
   'drive-forget': ['admin', 'finance_manager', 'employee'],
   'documents-delete': ['admin', 'finance_manager'],
   'documents-sweep': ['admin'],
+  'vat-audit': ['admin', 'finance_manager'],
   'linked-links': ['admin', 'finance_manager', 'employee'],
   'linked-fetch': ['admin', 'finance_manager', 'employee'],
   'mail-file': ['admin', 'finance_manager', 'employee'],
@@ -432,6 +433,12 @@ export default async function handler(req, res) {
         // the one deletion (server/finance/remove.js): the document, its files, its copy in Drive, and the check after
         const { removeDocuments } = await import('./finance/remove.js')
         res.status(200).json(await removeDocuments({ ids: body.ids, user }))
+        return
+      }
+      case 'vat-audit': {
+        // the VAT agent, on demand (it also runs every night): every document through the one VAT service, what changed is recorded
+        const { vatAudit } = await import('./finance/vat.js')
+        res.status(200).json(await vatAudit({ trigger: 'manual', user }))
         return
       }
       case 'documents-sweep': {

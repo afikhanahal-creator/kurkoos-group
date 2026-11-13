@@ -3957,3 +3957,62 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 }
 .fin-prov__mode { margin-bottom: 12px; }
 .fin-prov__mode button { flex: 1; min-height: 40px; }
+
+/* ---------- the VAT centre ---------- */
+.fin-vat__last { margin: 0; font-size: var(--t-sm); color: var(--text-2); }
+.fin-vat__figs { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.fin-vat__figs > div { display: grid; gap: 4px; align-content: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); min-width: 0; }
+.fin-vat__figs dt { font-size: var(--t-sm); color: var(--text-2); }
+.fin-vat__figs dd { margin: 0; font-size: 1.35rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fin-vat__figs small { font-size: 12px; color: var(--muted); }
+.fin-vat__figs .is-main { background: var(--ok-wash); border-color: color-mix(in srgb, var(--ok) 30%, var(--line)); }
+.fin-vat__figs .is-wait { background: var(--warn-wash); border-color: color-mix(in srgb, var(--warn) 30%, var(--line)); }
+.fin-vat__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.fin-vat__head h3 { margin: 0; }
+.fin-vat__head small { color: var(--muted); font-size: var(--t-sm); }
+.fin-vat__queue, .fin-vat__all { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fin-vat__item, .fin-vat__row { all: unset; direction: inherit; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'who sum pill' 'needs needs needs'; gap: 8px 14px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); }
+.fin-vat__row { grid-template-areas: 'who nums pill' 'why why why'; }
+.fin-vat__item:hover, .fin-vat__row:hover { border-color: var(--line-2); background: var(--sheet-2); }
+.fin-vat__item:focus-visible, .fin-vat__row:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; }
+.fin-vat__who { grid-area: who; min-width: 0; display: grid; gap: 2px; }
+.fin-vat__who strong { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-vat__who small { color: var(--text-2); font-size: var(--t-sm); }
+.fin-vat__sum { grid-area: sum; display: grid; justify-items: end; gap: 1px; }
+.fin-vat__sum b { color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-vat__sum small { color: var(--muted); font-size: 12px; }
+.fin-vat__item > .fin-pill, .fin-vat__row > .fin-pill { grid-area: pill; justify-self: end; }
+.fin-vat__needs { grid-area: needs; display: grid; gap: 4px; }
+.fin-vat__needs span { display: flex; align-items: flex-start; gap: 6px; font-size: var(--t-sm); color: var(--ink); }
+.fin-vat__needs svg { flex: none; margin-top: 3px; color: var(--warn); }
+.fin-vat__nums { grid-area: nums; display: flex; gap: 14px; font-variant-numeric: tabular-nums; font-size: var(--t-sm); color: var(--ink); white-space: nowrap; }
+.fin-vat__nums span { display: grid; justify-items: end; }
+.fin-vat__nums i { font-style: normal; font-size: 12px; color: var(--muted); }
+.fin-vat__why { grid-area: why; font-size: var(--t-sm); color: var(--text-2); }
+.fin-vat__more { margin: 10px 0 0; text-align: center; }
+.fin-vat__chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.fin-vat__chip { all: unset; direction: inherit; cursor: pointer; min-height: 32px; display: inline-flex; align-items: center; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); font-size: var(--t-sm); color: var(--text-2); }
+.fin-vat__chip.is-on { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 700; }
+.fin-vat__chip:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; }
+.fin-vat__rules { margin: 10px 0 0; display: grid; gap: 10px; }
+.fin-vat__rules > div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.fin-vat__rules dt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 700; color: var(--ink); }
+.fin-vat__rules dd { margin: 6px 0 0; color: var(--text); font-size: var(--t-md); }
+.fin-vat__rules dd small { display: block; margin-top: 4px; color: var(--muted); font-size: var(--t-sm); }
+.fin-vatnote { margin: 10px 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--sheet-2); display: grid; gap: 6px; }
+.fin-vatnote.is-ok { background: var(--ok-wash); border-color: color-mix(in srgb, var(--ok) 28%, var(--line)); }
+.fin-vatnote.is-warn { background: var(--warn-wash); border-color: color-mix(in srgb, var(--warn) 28%, var(--line)); }
+.fin-vatnote__top { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--ink); font-size: var(--t-md); }
+.fin-vatnote__why { margin: 0; font-size: var(--t-sm); color: var(--text); }
+.fin-vatnote__needs { margin: 0; padding-inline-start: 18px; font-size: var(--t-sm); color: var(--ink); }
+@media (max-width: 700px) {
+  .fin-vat__figs { grid-template-columns: 1fr 1fr; }
+  .fin-vat__figs dd { font-size: 1.1rem; }
+  .fin-vat__item { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'who sum' 'needs needs' 'pill pill'; min-height: 44px; }
+  .fin-vat__row { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'who' 'nums' 'why' 'pill'; min-height: 44px; }
+  .fin-vat__who strong { white-space: normal; }
+  .fin-vat__item > .fin-pill, .fin-vat__row > .fin-pill { justify-self: start; }
+  .fin-vat__nums { justify-content: space-between; }
+  .fin-vat__chip { min-height: 44px; }
+  .fin-vat__head .fin-btn { min-height: 44px; }
+}

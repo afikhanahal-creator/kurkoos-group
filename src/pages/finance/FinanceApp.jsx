@@ -13,6 +13,7 @@ import { InviteWelcome, Login, SecondStep, linkType, useIdleSignOut, deviceId } 
 import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
 import Receipts from './Receipts.jsx'
+import Vat from './Vat.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
@@ -58,6 +59,7 @@ export const NAV = [
   // daily work: what arrived, what needs a look, what goes to the accountant
   // management: the group's financial picture opens first for managers
   { to: '', label: 'סקירה פיננסית', icon: 'reports', roles: OPS, el: <Executive />, group: 'הנהלה' },
+  { to: '/vat', label: 'מרכז המע״מ', icon: 'shield', roles: ['admin', 'finance_manager', 'accountant'], el: <Vat />, group: 'הנהלה' },
   { to: '/assistant', label: 'שאלות על הנתונים', icon: 'sparkle', roles: [...OPS, 'accountant'], el: <Assistant />, group: 'הנהלה' },
   { to: '', label: 'מרכז בקרה', icon: 'home', roles: ['employee', 'accountant'], el: <Dashboard />, group: 'מסמכים' },
   { to: '/today', label: 'מרכז בקרה', icon: 'home', roles: OPS, el: <Dashboard />, group: 'מסמכים' },

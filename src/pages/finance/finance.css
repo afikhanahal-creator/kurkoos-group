@@ -3907,3 +3907,24 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent tbody tr:has(td.fin-ent-stat:not(.fin-ent-stat--wide)) td.fin-ent-last { grid-column: 1 / -1; grid-row: auto; }
   .fin-table-wrap:not(.fin-table-wrap--flat) .fin-table.fin-table--ent tbody tr { border: 1px solid var(--line-2); }
 }
+
+/* ---------- WhatsApp, everywhere ---------- */
+.fin-waicon { flex: none; display: inline-block; vertical-align: middle; overflow: visible; }
+.fin-wamark { display: inline-grid; place-items: center; flex: none; vertical-align: middle; line-height: 0; }
+.fin-wamark svg { display: block; }
+.fin-logo-tile--wa { background: color-mix(in srgb, #25d366 14%, var(--sheet)); border-color: color-mix(in srgb, #25d366 30%, var(--line)); }
+.fin-logo-tile--wa svg { width: 62% !important; height: 62% !important; }
+.fin-sources .fin-logo-tile--wa, .fin-conn .fin-logo-tile--wa { width: 40px !important; height: 40px !important; }
+.fin-wa__office-icon { background: color-mix(in srgb, #25d366 14%, var(--sheet)); box-shadow: none; border: 1px solid color-mix(in srgb, #25d366 30%, var(--line)); }
+.fin-wa__office-icon .fin-logo-tile--wa { border: 0; background: none; width: 100% !important; height: 100% !important; }
+.fin-action__icon--wa .fin-wamark, .fin-wachip__icon .fin-wamark { width: auto !important; height: auto !important; }
+.fin-wachip__icon { width: 30px; height: 30px; border-radius: 9px; background: color-mix(in srgb, #25d366 16%, var(--sheet)); border: 1px solid color-mix(in srgb, #25d366 28%, var(--line)); }
+.fin__nav-item .fin-waicon { margin-inline: -1px; }
+.fin-dlist__icon:has(.fin-waicon) { background: color-mix(in srgb, #25d366 14%, var(--sheet)); }
+
+/* receipts on a phone: the original document itself in the row, larger; a tap opens it full */
+@media (max-width: 700px) {
+  .fin-receipts__table td.fin-receipts__thumb, .fin-receipts__table td.fin-receipts__thumb .fin-peek { width: 64px !important; min-width: 64px !important; }
+  .fin-receipts__pic { width: 64px; height: 84px; border-radius: 8px; position: relative; }
+  .fin-receipts__thumb::after { content: 'הצגה'; display: block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--ocean-2); text-align: center; }
+}

@@ -77,7 +77,7 @@ export const NAV = [
   { to: '/connections', label: 'חיבורים', icon: 'plug', roles: ['admin', 'finance_manager', 'employee'], el: <Connections />, group: 'קליטה' },
   { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'קליטה' },
   { to: '/scans', label: 'ניהול סריקות', icon: 'history', roles: ['admin', 'finance_manager'], el: <Scans />, group: 'קליטה' },
-  { to: '/scanners', label: 'מספרי WhatsApp', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
+  { to: '/scanners', label: 'מספרי WhatsApp', icon: 'whatsapp', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
   // everything else, folded away until needed
   { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
   { to: '/fixed', label: 'הוצאות קבועות', icon: 'calendar', roles: OPS, el: <Fixed />, group: 'מתקדם' },

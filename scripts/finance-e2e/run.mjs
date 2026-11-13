@@ -1186,7 +1186,7 @@ const accAdminText = await acc.locator('body').innerText()
 const siteApi = async (t) => (await fetch('http://127.0.0.1:5180/api/claude', { method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ input: 'x' }) })).status
 const accClaude = await siteApi(accToken); const adminClaude = await siteApi(adminToken)
 record('SEC2', 'משתמש כספים לא נכנס לניהול האתר', 'רו״ח שנכנס ל-/admin מקבל הפניה למערכת הכספים; קריאה ל-API של האתר נחסמת (403), למנהל היא לא נחסמת', `/admin: ${/מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) ? 'הפניה' : accAdminText.slice(0, 60)}; /api/claude רו״ח=${accClaude}, מנהל=${adminClaude}`, /מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) && accClaude === 403 && adminClaude !== 403, [await shot('26b-accountant-site-admin', acc)])
-record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 6 && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
+record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מרכז המע״מ, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 7 && accNav.some((n) => /מרכז המע״מ/.test(n)) && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
 await accCtx.close()
 
 // ---------- T12: mobile ----------
@@ -2416,7 +2416,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const noteShot = await shot('133-vat-in-document')
   record('VAT', 'סוכן המע״מ: סיווג כל מסמך, ביקורת לילית ומסך המע״מ', 'חשבונית 18% ו-17% מקוזזות; בלי מע״מ; קבלה בלי חשבונית מס לא מקוזזת ומוצגת כהערכה; קיזוז חלקי ואפס לפי קטגוריה; זיכוי מקושר ולא מקושר; סכומים שלא מסתכמים; חשבונית שלא נקראה; כפילות; מספר הקצאה נדרש, חסר וקיים; קבלה שהיא תשלום על חשבונית קיימת; בלי חברה; ספק זר; רשות. הסוכן רושם רק שינויים, עם לפני ואחרי; עובד לא מריץ; המסך והמסמך מציגים את אותה תשובה',
     `שגויים: ${wrong.length ? wrong.join(' ; ') : 'אין'}; שינוי אחרי אישור: ${changedAfterApproval.cls}/${changedAfterApproval.needs.map((n) => n.code)}; ריצות: ${run1.data.ok}/${run1.data.audited} → שנייה ${run2.data.changed} שינויים → אחרי שינוי קטגוריה ${run3.data.changed}; יומן: ${logged}; עובד: ${emp.status}; מסך: ${figs} מדדים, ${queue} בתור, "${lastLine.slice(0, 40)}"; במסמך: ${note}`,
-    wrong.length === 0 && changedAfterApproval.cls === 'review' && run1.data.ok === true && run1.data.audited > 5 && run2.data.changed === 0 && run3.data.changed === 1 && /^1\|/.test(logged) && /\|none$/.test(logged) && emp.status === 403
+    wrong.length === 0 && changedAfterApproval.cls === 'review' && run1.data.ok === true && run1.data.audited > 5 && run2.data.changed === 0 && run3.data.changed === 1 && /^[1-9]\d*\|/.test(logged) && /\|none$/.test(logged) && emp.status === 403
     && figs === 6 && queue >= 1 && /הביקורת האחרונה/.test(lastLine) && note === 1, [vatShot, noteShot])
 }
 

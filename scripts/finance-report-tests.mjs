@@ -1,0 +1,58 @@
+// The accountant's report, checked as a file: the workbook is built from sample documents, unpacked, and read back.
+//   node scripts/finance-report-tests.mjs      (needs `unzip`)
+// Exits 1 when any check fails.
+import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import { execSync } from 'node:child_process'
+import { auditCompliance } from '../src/pages/finance/compliance.js'
+import { markLedger } from '../src/pages/finance/ledger.js'
+import { COLUMNS, accountantCsv, accountantHtml, accountantWorkbook, reportLine, reportName, reportSummary } from '../src/pages/finance/accountantReport.js'
+
+const results = []
+const check = (id, name, expected, actual, pass) => { results.push({ id, pass: !!pass }); console.log(`${pass ? 'PASS' : 'FAIL'}  ${id} ${name}\n      expected: ${expected}\n      actual:   ${actual}`) }
+const cats = [{ name: 'חומרי בניין', vat_deductible_pct: 100 }, { name: 'רכב ודלק', vat_deductible_pct: 66.67 }, { name: 'כיבוד ואירוח', vat_deductible_pct: 0 }, { name: 'קבלני משנה', vat_deductible_pct: 100 }, { name: 'פרסום ושיווק', vat_deductible_pct: 100 }]
+let n = 0
+const d = (o) => ({ id: `00000000-0000-4000-8000-0000000000${String(++n).padStart(2, '0')}`, status: 'approved', doc_type: 'invoice', supplier_vat_id: '514000009', supplier_id: `s${n}`, doc_number: String(4000 + n), issue_date: '2026-10-05', currency: 'ILS', business_id: 'b1', confidence: 0.95, ...o })
+const docs = markLedger([
+  d({ supplier_name: 'אלקטרה בנייה בע״מ', category: 'קבלני משנה', description: 'עבודות שלד, חשבון חלקי מס׳ 4', amount_before_vat: 30000, vat_amount: 5400, total_amount: 35400, allocation_number: '912345678', payment_method: 'העברה בנקאית', payment_date: '2026-10-20' }),
+  d({ supplier_name: 'טמבור בע״מ', category: 'חומרי בניין', description: 'צבע "סופרקריל" & שפכטל <לבן>', amount_before_vat: 3600, vat_amount: 648, total_amount: 4248, supplier_id: 'tam', doc_number: '77120' }),
+  d({ supplier_name: 'טמבור בע״מ', doc_type: 'receipt', category: 'חומרי בניין', total_amount: 4248, supplier_id: 'tam', doc_number: 'K-551', issue_date: '2026-10-09' }),
+  d({ supplier_name: 'טמבור בע״מ', doc_type: 'credit', category: 'חומרי בניין', amount_before_vat: 500, vat_amount: 90, total_amount: 590, supplier_id: 'tam', doc_number: 'Z-19', issue_date: '2026-10-15' }),
+  d({ supplier_name: 'פז חברת נפט', doc_type: 'invoice_receipt', category: 'רכב ודלק', description: 'תדלוק רכב', amount_before_vat: 300, vat_amount: 54, total_amount: 354 }),
+  d({ supplier_name: 'Meta Platforms Ireland Limited', supplier_vat_id: 'IE9692928F', doc_type: 'receipt', currency: 'USD', category: 'פרסום ושיווק', description: 'Ads campaign: Raita Villas', total_amount: 300, doc_number: 'FBADS-108' }),
+  d({ supplier_name: 'מכולת השכונה', supplier_vat_id: '', doc_type: 'receipt', status: 'review', category: 'חומרי בניין', total_amount: 590, doc_number: 'R-1' }),
+  d({ supplier_name: 'חשמל ישיר', status: 'review', category: 'חומרי בניין', amount_before_vat: 1000, vat_amount: 150, total_amount: 1150, file_path: null }),
+])
+const audit = auditCompliance(docs, { categories: cats, today: '2026-11-14' })
+const lines = audit.rows.map((x) => reportLine(x.doc, x.c, { businesses: [{ id: 'b1', name: 'קורקוס ביצוע בע״מ' }], links: { [docs[0].id]: 'https://drive.google.com/file/d/abc/view' }, origin: 'https://www.kurkoos-group.co.il' }))
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fin-report-')); const file = path.join(dir, 'report.xlsx')
+fs.writeFileSync(file, accountantWorkbook(lines, { today: '2026-11-14' }))
+const read = (p) => execSync(`unzip -p ${file} ${p}`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+const list = execSync(`unzip -l ${file}`, { encoding: 'utf8' })
+const book = read('xl/workbook.xml'); const s1 = read('xl/worksheets/sheet1.xml'); const s2 = read('xl/worksheets/sheet2.xml'); const s3 = read('xl/worksheets/sheet3.xml'); const s4 = read('xl/worksheets/sheet4.xml'); const styles = read('xl/styles.xml'); const rels1 = read('xl/worksheets/_rels/sheet1.xml.rels')
+const sum = reportSummary(lines); const by = (name) => lines.find((l) => l.supplier === name || l.number === name)
+
+{ const names = [...book.matchAll(/<sheet name="([^"]+)"/g)].map((m) => m[1])
+  check('X1', 'שמות הגיליונות בעברית, והרשימות מוסתרות', 'דוח הוצאות לרואה החשבון, סיכום הוצאות, מסמכים לבדיקה, רשימות (מוסתר)', `${names.join(' | ')}; מוסתר: ${/name="רשימות"[^>]*state="hidden"/.test(book)}`, names.join('|') === 'דוח הוצאות לרואה החשבון|סיכום הוצאות|מסמכים לבדיקה|רשימות' && /name="רשימות"[^>]*state="hidden"/.test(book)) }
+check('X2', 'כל גיליון מוגדר מימין לשמאל בהגדרות הקובץ', 'rightToLeft="1" בכל ארבעת הגיליונות; סדר קריאה מימין לשמאל בכל סגנון תא', `${[s1, s2, s3, s4].map((x) => /<sheetView rightToLeft="1"/.test(x)).join(',')}; סגנונות בלי readingOrder: ${(styles.match(/<xf [^>]*xfId="0"[^>]*>(?!<alignment[^>]*readingOrder="2")/g) || []).length}`, [s1, s2, s3, s4].every((x) => /<sheetView rightToLeft="1"/.test(x)) && !(styles.match(/<xf [^>]*xfId="0"[^>]*>(?!<alignment[^>]*readingOrder="2")/g) || []).length)
+{ const heads = [...s1.matchAll(/<row r="3"[^>]*>(.*?)<\/row>/gs)][0][1]; const texts = [...heads.matchAll(/<t xml:space="preserve">([^<]*)<\/t>/g)].map((m) => m[1].replace(/&quot;/g, '"'))
+  check('X3', 'העמודות לפי הסדר, העמודה הראשונה היא "ספק"', `${COLUMNS.length} כותרות בעברית, הראשונה "ספק" בתא A3`, `${texts.length}: ${texts.slice(0, 5).join(', ')} … ${texts[texts.length - 2]}`, texts.length === COLUMNS.length && texts[0] === 'ספק' && texts.join('|') === COLUMNS.map((c) => c.h).join('|') && /<c r="A3"[^>]*>.*?ספק/.test(heads)) }
+check('X4', 'עברית תקינה: בלי ג׳יבריש, בלי סימני שאלה, תווים מיוחדים נשמרים', 'אין תו החלפה ואין "???"; גרשיים, & ו-< נשמרים; שם ספק באנגלית נשמר כמו שהוא', `החלפה: ${/�/.test(s1 + s2 + s3)}; ???: ${/\?\?\?/.test(s1 + s2 + s3)}; ${/צבע &quot;סופרקריל&quot; &amp; שפכטל &lt;לבן&gt;/.test(s1)}; ${/Meta Platforms Ireland Limited/.test(s1)}; ${/Ads campaign: Raita Villas/.test(s1)}`, !/�/.test(s1 + s2 + s3) && !/\?\?\?/.test(s1 + s2 + s3) && /צבע &quot;סופרקריל&quot; &amp; שפכטל &lt;לבן&gt;/.test(s1) && /Meta Platforms Ireland Limited/.test(s1) && /Ads campaign: Raita Villas/.test(s1))
+check('X5', 'שורת הכותרות קפואה, מסננים בכל העמודות, רשימות נפתחות', 'הקפאה אחרי שורה 3; מסנן A3 עד העמודה האחרונה; 4 רשימות נפתחות', `${/<pane ySplit="3"[^>]*state="frozen"/.test(s1)}; ${s1.match(/<autoFilter ref="([^"]+)"/)?.[1]}; ${(s1.match(/<dataValidation /g) || []).length}`, /<pane ySplit="3"[^>]*state="frozen"/.test(s1) && s1.match(/<autoFilter ref="([^"]+)"/)?.[1] === `A3:AA${3 + lines.length}` && (s1.match(/<dataValidation /g) || []).length === 4 && /<autoFilter/.test(s3))
+{ const targets = [...rels1.matchAll(/Target="([^"]+)"/g)].map((m) => m[1]); const withLink = lines.filter((l) => l.link).length
+  check('X6', 'קישור אמיתי לכל מסמך', 'קישור לכל שורה: לעותק ב-Google Drive כשיש, אחרת למסמך במערכת; אין קישור ריק', `${targets.length}/${withLink}; Drive: ${targets.filter((t) => /drive\.google/.test(t)).length}; במערכת: ${targets.filter((t) => /kurkoos-group\.co\.il\/admin\/finance\/documents\/[0-9a-f-]{36}$/.test(t)).length}`, targets.length === withLink && withLink === lines.length && targets.filter((t) => /drive\.google/.test(t)).length === 1 && targets.every((t) => /^https:\/\//.test(t))) }
+{ const cr = by('Z-19'); const rc = by('K-551')
+  check('X7', 'זיכוי בשלילי; קבלה שמשלמת חשבונית לא נספרת פעמיים', 'זיכוי: -590; הקבלה K-551 מסומנת "לא נספר"; הסכום הכולל = 35,400 + 4,248 − 590 + 354 + 590 + 1,150 = 41,152', `זיכוי ${cr.total}/${cr.vat}; קבלה נספרת: ${rc.counted}; סה״כ ${sum.total}; לא נספרו ${sum.notCounted}`, cr.total === -590 && cr.vat === -90 && rc.counted === false && sum.total === 41152 && sum.notCounted === 1) }
+{ const fx = by('FBADS-108'); const rcp = by('R-1')
+  check('X8', 'מטבע זר ומע״מ משוער אינם בסכומים', 'מסמך בדולר: בלי שער ובלי סכום בשקלים, לא בסה״כ; קבלה בלי חשבונית מס: 0 ₪ מע״מ לניכוי, וההערכה רק בהערות; מע״מ לניכוי אינו עולה על המע״מ במסמכים', `דולר: שער ${fx.fx}, בשקלים ${fx.ils}; קבלה: ${rcp.vatAllowed} "${rcp.notes.match(/אם תתקבל[^|]*/)?.[0].slice(0, 40)}"; ${sum.vatAllowed} ≤ ${sum.vat}; זרים ${sum.foreign}`, fx.fx === null && fx.ils === null && rcp.vatAllowed === 0 && /אם תתקבל חשבונית מס/.test(rcp.notes) && sum.vatAllowed <= sum.vat && sum.foreign === 1) }
+{ const fuel = by('פז חברת נפט'); const rate = by('חשמל ישיר')
+  check('X9', 'מס הכנסה ומע״מ הם שתי תשובות; חריג לא מוצג כתקין', 'דלק: 45% הכרה (הערכה), 2/3 קיזוז = 36 ₪, 18 ₪ לא מותר; מע״מ 15% מסומן ונמצא בגיליון הבדיקות', `${fuel.incPct}/${fuel.vatAllowed}/${fuel.vatBlocked}; ${rate.statusKey}; בגיליון: ${/15\.0%/.test(s3)}`, fuel.incPct === 0.45 && fuel.vatAllowed === 36 && fuel.vatBlocked === 18 && rate.statusKey === 'accountant' && /15\.0%/.test(s3) && /חשמל ישיר/.test(s3)) }
+check('X10', 'גיליון הסיכום', 'כל אחד עשר הנתונים והפילוחים: ספק, קטגוריה, חודש, סוג מסמך, מטבע, סטטוס', ['מספר המסמכים', 'מספר הספקים', 'סך ההוצאות לפני מע״מ', 'סך המע״מ במסמכים', 'סך ההוצאות כולל מע״מ', 'סך המע״מ המותר לקיזוז', 'סך המע״מ שאינו מותר לקיזוז', 'סך ההוצאות המוכרות למס הכנסה', 'סך ההוצאות שאינן מוכרות', 'סך ההוצאות המוכרות באופן חלקי', 'מספר המסמכים הדורשים בדיקה', 'לפי ספק', 'לפי קטגוריית הוצאה', 'לפי חודש', 'לפי סוג מסמך', 'לפי מטבע', 'לפי סטטוס חשבונאי'].filter((t) => !s2.includes(t)).join(',') || 'הכול נמצא', ['מספר המסמכים', 'מספר הספקים', 'סך ההוצאות לפני מע״מ', 'סך המע״מ במסמכים', 'סך ההוצאות כולל מע״מ', 'סך המע״מ המותר לקיזוז', 'סך המע״מ שאינו מותר לקיזוז', 'סך ההוצאות המוכרות למס הכנסה', 'סך ההוצאות שאינן מוכרות', 'סך ההוצאות המוכרות באופן חלקי', 'מספר המסמכים הדורשים בדיקה', 'לפי ספק', 'לפי קטגוריית הוצאה', 'לפי חודש', 'לפי סוג מסמך', 'לפי מטבע', 'לפי סטטוס חשבונאי'].every((t) => s2.includes(t)))
+{ const tot = s1.match(/<f>(SUMPRODUCT[^<]*)<\/f><v>([^<]*)<\/v>/g) || []
+  check('X11', 'שורת הסיכום מחושבת בנוסחה שעוקבת אחרי הסינון', '7 נוסחאות SUBTOTAL עם ערך שמור; סכום כולל 41,152', `${tot.length}; ${tot.map((t) => t.match(/<v>([^<]*)/)[1]).join(',')}`, tot.length === 7 && tot.some((t) => /<v>41152<\/v>/.test(t)) && tot.every((t) => /SUBTOTAL\(109/.test(t))) }
+{ const csv = accountantCsv(lines); const html = accountantHtml(lines, { today: '2026-11-14' }); const nm = reportName(lines)
+  check('X12', 'CSV, PDF ושם הקובץ', 'CSV עם BOM וכותרות בעברית; עמוד ההדפסה dir="rtl" עם הטבלה והחריגים; שם: "דוח הוצאות – החברה – חודש ושנה"', `${csv.charCodeAt(0) === 0xfeff}; ${csv.split('\r\n')[0].slice(1, 30)}; שורות ${csv.trim().split('\r\n').length}; ${/<html dir="rtl" lang="he">/.test(html)}; ${nm.title}`, csv.charCodeAt(0) === 0xfeff && csv.split('\r\n')[0].slice(1).startsWith('ספק,מספר עוסק / ח.פ,מספר מסמך') && csv.trim().split('\r\n').length === lines.length + 1 && /<html dir="rtl" lang="he">/.test(html) && /מסמכים לבדיקה/.test(html) && nm.title === 'דוח הוצאות – קורקוס ביצוע בע״מ – אוקטובר 2026') }
+check('X13', 'מבנה הקובץ', 'כל החלקים של קובץ XLSX, כולל קישורים וסגנונות', list.split('\n').filter((l) => /xl\/|Content|_rels/.test(l)).length + ' חלקים', ['[Content_Types].xml', 'xl/workbook.xml', 'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/_rels/sheet1.xml.rels', 'xl/worksheets/sheet4.xml'].every((p) => list.includes(p)))
+
+fs.rmSync(dir, { recursive: true, force: true })
+const failed = results.filter((r) => !r.pass)
+console.log(`\n${results.length - failed.length}/${results.length} passed`)
+if (failed.length) { console.log('failed:', failed.map((r) => r.id).join(', ')); process.exit(1) }

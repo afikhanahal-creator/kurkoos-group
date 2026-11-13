@@ -229,7 +229,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
         )
       })()}
       <DriveManager t={t} rows={rows} documents={documents} businesses={businesses} can={can} go={go} openUpload={openUpload}
-        onReload={async () => { await Promise.all([reloadAll(), loadTree(), reloadDocs?.()]) }} onRename={(row) => setRenaming(row)} onSync={runNow} syncing={busy === 'run'} />
+        onReload={async () => { await Promise.all([reloadAll(), loadTree(), reloadDocs?.()]) }} onRename={(row) => setRenaming(row)} onSync={runNow} syncing={busy === 'run'} onConnect={can('manage') ? async () => { try { const { url } = await api.callServer('cloud-auth-url', { provider: 'gdrive', back: 'drive', choose: true }); window.location.assign(url) } catch (e) { setErr(e.message) } } : null} />
 
       <h3 className="fin-dm__below">מצב הארכיון והבדיקות</h3>
       <p className="fin-muted fin-small">עולות רק חשבוניות, חשבוניות-קבלה, קבלות, זיכויים ודרישות תשלום, כקובץ PDF או תמונה. גוף של מייל, אישור הזמנה, הצעת מחיר ואישור תשלום נשארים במערכת ולא עולים. בכל לילה הסוכן עובר על הארכיון: מה שלא שייך עובר לפח של Drive, ומה שחסר עולה.</p>
@@ -307,7 +307,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
           <summary>הגדרות הארכיון</summary>
           <Switch checked={t.auto} disabled={!!busy} onChange={(v) => setting({ auto: v })} label="כל מסמך חדש עולה לבד, כמה דקות אחרי שהוא נקרא" />
           <Switch checked={t.by_kind} disabled={!!busy} onChange={(v) => setting({ by_kind: v })} label="תת-תיקייה לפי סוג בתוך כל חודש (חשבוניות, קבלות, זיכויים)" />
-          <Switch checked={t.auto_correct !== false} disabled={!!busy} onChange={(v) => setting({ auto_correct: v })} label="קובץ של הארכיון שהוזז או ששמו שונה ב-Drive חוזר למקומו לבד" />
+          <Switch checked={t.auto_correct !== false} disabled={!!busy} onChange={(v) => setting({ auto_correct: v })} label="כשסנכרון דו-כיווני כבוי: קובץ של הארכיון שהוזז או ששמו שונה ב-Drive חוזר למקומו לבד" />
           <p className="fin-muted fin-small">המבנה: {t.root_name} › חברה › שנה › חודש{t.by_kind ? ' › סוג' : ''}. מסמך בלי חברה נכנס ל"מסמכים ללא שיוך", ועובר לתיקיית החברה ברגע שמשייכים אותו. שום קובץ לא נמחק מ-Drive.</p>
         </details>
       )}

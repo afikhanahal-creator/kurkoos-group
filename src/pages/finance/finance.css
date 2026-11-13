@@ -4185,3 +4185,70 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-rep__total { white-space: nowrap; font-size: var(--t-sm); }
   .fin-rep__more { white-space: nowrap; font-size: var(--t-sm); }
 }
+
+/* ---- the Drive manager, second round: Drive-like navigation, the live state, a person's own folders, accounts ---- */
+.fin-dm__view.is-sep { margin-top: 10px; position: relative; }
+.fin-dm__view.is-sep::before { content: ''; position: absolute; inset-inline: 10px; top: -6px; border-top: 1px solid var(--line); }
+.fin-dm__sort { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); color: var(--muted); }
+.fin-dm__sort select { border: 0; background: none; color: var(--ink); font: inherit; min-height: 42px; outline: none; cursor: pointer; }
+.fin-dm__sort:focus-within { border-color: var(--ocean); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocean) 18%, transparent); }
+.fin-dm__live { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-inline-start: auto; }
+.fin-dm__state { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: var(--t-sm); font-weight: 700; }
+.fin-dm__state small { font-weight: 400; color: var(--text-2); font-size: 12px; }
+.fin-dm__state.is-ok { color: var(--ok); background: var(--ok-wash); border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+.fin-dm__state.is-warn { color: var(--ink); background: var(--ocean-wash); border-color: color-mix(in srgb, var(--ocean) 35%, var(--line)); }
+.fin-dm__state.is-bad { color: var(--attn); background: var(--attn-wash); border-color: color-mix(in srgb, var(--attn) 35%, var(--line)); }
+.fin-dm__folders > li { position: relative; }
+.fin-dm__folder.is-manual .fin-dm__foldericon { color: var(--ocean); }
+.fin-dm__folder.is-manual { padding-inline-end: 96px; }
+.fin-dm__folderacts { position: absolute; inset-inline-end: 34px; top: 50%; transform: translateY(-50%); display: inline-flex; gap: 2px; }
+.fin-dm__panel { padding: 22px 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--sheet); max-width: 70ch; display: grid; gap: 10px; }
+.fin-dm__panel h4 { margin: 0; font-size: var(--t-lg); color: var(--ink); }
+.fin-dm__panel p { margin: 0; color: var(--text); font-size: var(--t-md); }
+.fin-dm__accounts { display: grid; gap: 12px; }
+.fin-dm__account { padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--sheet); display: grid; gap: 12px; }
+.fin-dm__account > header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.fin-dm__account > header > span:nth-child(2) { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.fin-dm__account > header strong { color: var(--ink); overflow-wrap: anywhere; text-align: start; }
+.fin-dm__account > header small { font-size: 12px; color: var(--muted); }
+.fin-dm__avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--ocean); color: #fff; font-weight: 700; flex: none; }
+.fin-dm__account dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 16px; }
+.fin-dm__account dt { font-size: 12px; color: var(--muted); }
+.fin-dm__account dd { margin: 2px 0 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-dm__account dd.is-bad { color: var(--attn); font-weight: 700; }
+.fin-dm__perm { margin: 0; display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: var(--text-2); }
+.fin-dm__perm svg { flex: none; margin-top: 2px; }
+.fin-dm__twoway { padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--sheet); }
+.fin-dm__twoway label { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; min-height: 44px; }
+.fin-dm__twoway input { margin-top: 4px; }
+.fin-dm__twoway span { display: grid; gap: 3px; }
+.fin-dm__twoway small, .fin-dm__connect small { font-size: 12px; color: var(--muted); }
+.fin-dm__connect { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.fin-dm__history { display: grid; gap: 6px; padding-top: 4px; }
+.fin-dm__history h4 { margin: 0; font-size: var(--t-sm); color: var(--text-2); }
+.fin-dm__history ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fin-dm__history li { display: grid; gap: 1px; padding-inline-start: 12px; border-inline-start: 2px solid var(--line); font-size: var(--t-sm); }
+.fin-dm__history li b { color: var(--ink); }
+.fin-dm__history li small { font-size: 12px; color: var(--muted); }
+.fin-dm__history li span { font-size: 12px; color: var(--text-2); overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .fin-dm__live { margin-inline-start: 0; width: 100%; justify-content: space-between; }
+  .fin-dm__state small { display: none; }
+  .fin-dm__sort { flex: 1 1 auto; }
+  .fin-dm__sort select { flex: 1; min-width: 0; min-height: 44px; }
+  .fin-dm__sort { min-height: 46px; }
+}
+/* on a phone the eleven views are one row that scrolls sideways, as in the Drive app (four rows of tiles pushed the files off the screen) */
+@media (max-width: 1023px) {
+  .fin-dm .fin-dm__views { display: flex; grid-template-columns: none; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; padding-bottom: 2px; margin-inline: -2px; padding-inline: 2px; }
+  .fin-dm .fin-dm__views::-webkit-scrollbar { display: none; }
+  .fin-dm .fin-dm__view { flex: 0 0 auto; flex-direction: row; gap: 6px; min-height: 44px; padding: 6px 14px; width: auto; border-radius: 999px; scroll-snap-align: start; font-size: var(--t-sm); margin-top: 0; }
+  .fin-dm .fin-dm__view > span { white-space: nowrap; flex: none; }
+  .fin-dm .fin-dm__view .fin-dm__badge { position: static; }
+  .fin-dm .fin-dm__view.is-sep::before { display: none; }
+}
+.fin-dm__folder.is-manual { padding-inline-end: 88px; }
+.fin-dm__folder.is-manual > svg:last-child { display: none; }
+.fin-dm__folderacts { inset-inline-end: 8px; }
+.fin-dm__folderacts .fin-icon-btn { min-width: 36px; min-height: 36px; }
+@media (max-width: 767px) { .fin-dm__folderacts .fin-icon-btn { min-width: 44px; min-height: 44px; } .fin-dm__folder.is-manual { padding-inline-end: 100px; } }

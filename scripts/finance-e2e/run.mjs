@@ -39,6 +39,9 @@ const api = async (token, body) => { const r = await fetch('http://127.0.0.1:518
 execSync(`psql -q -h 127.0.0.1 -p 54329 -U postgres -f ${new URL('./reset.sql', import.meta.url).pathname}`)
 const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); fx.mailboxes['broken@kurkoos.test'].failing = true; fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
 await fetch(`${FAKES}/__reset`)
+// the archive scenarios below test the one-way rules (a file moved or renamed in Drive returns to its place); the
+// two-way rules have their own scenario (SYNC2), which turns them on
+sql("insert into fin_settings (key, value) values ('drive_two_way', 'false') on conflict (key) do update set value = 'false'")
 await admin('admin/users', { email: 'admin@kurkoos.test', password: 'Passw0rd!x', email_confirm: true, user_metadata: { full_name: 'שלומי קורקוס' } })
 
 // a UTF-8 locale: without it Chromium on Linux saves a download with a Hebrew name as "download"
@@ -2306,7 +2309,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const rootFolders = await page.locator('.fin-dm__folder').count()
   await page.locator('.fin-dm__folder').first().click(); await page.waitForTimeout(400)
   const crumbs = await page.locator('.fin-dm__crumb').count()
-  await page.locator('.fin-dm__view', { hasText: 'כל המסמכים' }).click(); await page.waitForSelector('.fin-dm__row:not(.is-head)')
+  await page.locator('.fin-dm__view', { hasText: 'כל הקבצים' }).click(); await page.waitForSelector('.fin-dm__row:not(.is-head)')
   await page.fill('.fin-dm__search input', nameA); await page.waitForTimeout(500)
   const found = await page.locator('.fin-dm__row:not(.is-head)').count()
   // the sheet: a company and an accounting month
@@ -2343,7 +2346,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const m = await mctx.newPage()
   await m.goto(APP); await m.fill('input[type=email]', 'admin@kurkoos.test'); await m.fill('input[type=password]', 'Passw0rd!x'); await m.click('button[type=submit]'); await m.waitForSelector('.fin__main')
   await go('/drive', m); await m.waitForSelector('.fin-dm__folder', { timeout: 20000 })
-  await m.locator('.fin-dm__view', { hasText: 'כל המסמכים' }).tap(); await m.waitForSelector('.fin-dm__row:not(.is-head)')
+  await m.locator('.fin-dm__view', { hasText: 'כל הקבצים' }).tap(); await m.waitForSelector('.fin-dm__row:not(.is-head)')
   await m.fill('.fin-dm__search input', nameC); await m.waitForTimeout(600)
   const small = await m.evaluate(() => [...document.querySelectorAll('.fin-dm__more, .fin-dm__view, .fin-dm__top .fin-btn, .fin-dm__pick')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && (r.width < 44 || r.height < 44) }).length)
   const sideways = await m.evaluate(() => document.documentElement.scrollWidth - innerWidth)
@@ -2589,6 +2592,104 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     emptyBar === 1 && shownRows === 4 && /4 מסמכים נבחרו/.test(bar) && /1,534\.00/.test(bar) && /234\.00/.test(bar) && /דוח הוצאות/.test(bar) && /^דוח הוצאות – .+ – אוגוסט 2026\.xlsx$/.test(fileName)
     && sheetNames.join('|') === 'דוח הוצאות לרואה החשבון|סיכום הוצאות|מסמכים לבדיקה|רשימות' && rtl && /<c r="A3"[^>]*>.*?<t[^>]*>ספק<\/t>/.test(s1) && linkOk && /ZZ-REP ספק ראשון/.test(opened) && /צבע &quot;לבן&quot; &amp; שפכטל/.test(s1) && !/�|\?\?\?/.test(s1)
     && csv.charCodeAt(0) === 0xfeff && csv.trim().split('\r\n').length === 5 && printFrame && /^2 מסמכים נבחרו/.test(fromDocs) && stored === null && Number(logged) >= 1, [repShot])
+}
+
+// SYNC2: two-way sync with Google Drive. What a person does in Drive itself to the archive's files is followed by the
+// system (a rename, a trashing, a restore, a move to a month folder, a move to a folder of their own), a file that
+// vanished is put back, folders a person makes here exist in Drive, and nothing is followed when two-way sync is off.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  sql("insert into fin_settings (key, value) values ('drive_two_way', 'true') on conflict (key) do update set value = 'true'"); sql("delete from fin_settings where key = 'drive_sync_state'")
+  const T = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  const FN = `חוזים ${Date.now().toString(36)}`   // a folder name of this run only
+  const drive = async () => (await (await fetch(`${FAKES}/__drive`)).json()).items
+  const fileOf = async (doc, anyState = false) => (await drive()).find((f) => f.appProperties?.kd === doc && (anyState || !f.trashed))
+  const rowOf = (doc) => sql(`select status || '|' || excluded || '|' || coalesce(organized_name,'') || '|' || coalesce(folder_key,'') || '|' || coalesce(folder_path,'') || '|' || coalesce(error,'') from fin_drive_files where target_id='${T}' and document_id='${doc}'`).split('|')
+  const sync = async (extra = {}) => (await api(tok, { action: 'drive-sync', target_id: T, quick: true, ...extra })).data.from_drive[0]
+  // a clean, verified archive to start from, and the first reading of Drive's change list
+  for (let i = 0; i < 6; i++) { const r = await api(tok, { action: 'drive-reconcile', target_id: T }); if (r.data.results?.[0]?.status !== 'running') break }
+  await api(tok, { action: 'drive-run', target_id: T })
+  const first = await sync()
+  const pick = (where, n) => sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id = f.document_id where f.target_id='${T}' and f.status='verified' and ${where} order by f.document_id limit ${n}`).split('\n').filter(Boolean)
+  const [dRename, dTrash, dMonth, dOwn, dGone, dFolder] = pick("d.status = 'review'", 6); const [dApproved] = pick("d.status in ('approved','sent')", 1)
+  const enough = [dRename, dTrash, dMonth, dOwn, dGone, dFolder, dApproved].every(Boolean)
+  // 1. renamed in Drive
+  const nameBefore = rowOf(dRename)[2]
+  await fetch(`${FAKES}/__drive?doc=${dRename}&rename_to=${encodeURIComponent('שם שנתתי ב-Drive.pdf')}`)
+  // 2. trashed in Drive
+  const trashedFileId = (await fileOf(dTrash)).id
+  await fetch(`${FAKES}/__drive?trash=${dTrash}`)
+  // 3. moved in Drive into another company's month folder (a document in review), and an approved one too
+  const before3 = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dMonth}'`)
+  const dest = sql(`select key || '|' || drive_folder_id from fin_drive_folders where target_id='${T}' and key ~ '^b:[0-9a-f-]{36}/[0-9]{4}/[0-9]{2}$' and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dMonth}') and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dApproved}') limit 1`).split('|')
+  const destBiz = dest[0].slice(2, 38); const destPeriod = `${dest[0].split('/')[1]}-${dest[0].split('/')[2]}`
+  await fetch(`${FAKES}/__drive?doc=${dMonth}&move_to=${dest[1]}`); await fetch(`${FAKES}/__drive?doc=${dApproved}&move_to=${dest[1]}`)
+  const beforeApproved = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dApproved}'`)
+  // 4. moved in Drive into a folder the person made there (the system never saw it)
+  await fetch(`${FAKES}/__drive?doc=${dOwn}&move_to=${encodeURIComponent('תיקייה פרטית שלי')}&make=1`)
+  // 5. deleted for good in Drive
+  await fetch(`${FAKES}/__drive?remove=${dGone}`)
+  const s1 = await sync()
+  const r1 = rowOf(dRename); const r2 = rowOf(dTrash); const r3 = rowOf(dMonth); const r4 = rowOf(dOwn); const rA = rowOf(dApproved)
+  const after3 = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dMonth}'`)
+  const afterApproved = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dApproved}'`)
+  const docStill = sql(`select count(*) from fin_documents where id='${dTrash}'`)
+  await api(tok, { action: 'drive-run', target_id: T })
+  const goneBack = !!(await fileOf(dGone)); const trashStays = !(await fileOf(dTrash)) && rowOf(dTrash)[0] === 'withdrawn'
+  // the full check agrees with what was followed: nothing is "corrected" back
+  let rec = null; for (let i = 0; i < 6; i++) { rec = (await api(tok, { action: 'drive-reconcile', target_id: T })).data.results?.[0]; if (rec?.status !== 'running') break }
+  const kept = (await fileOf(dRename))?.name === 'שם שנתתי ב-Drive.pdf' && (await fileOf(dOwn))?.path.includes('תיקייה פרטית שלי') && (await fileOf(dMonth))?.parents[0] === dest[1]
+  const s2 = await sync()
+  // the screen: the trash, a restore from it, the activity of the renamed file, the accounts
+  await go('/drive'); await page.waitForSelector('.fin-dm__view', { timeout: 20000 })
+  const navViews = await page.locator('.fin-dm__view').allInnerTexts()
+  await page.locator('.fin-dm__view', { hasText: 'אשפה' }).click(); await page.waitForSelector('.fin-dm__row:not(.is-head)')
+  const trashRows = await page.locator('.fin-dm__row:not(.is-head)').count(); const trashText = await page.locator('.fin-dm__list').innerText()
+  const syncShot = await shot('140-drive-trash')
+  await page.locator('.fin-dm__row:not(.is-head) .fin-dm__more').first().click(); await page.locator('.fin-dm__menu button', { hasText: 'שחזור מהאשפה' }).click()
+  await page.waitForSelector('.fin-dm__note.is-ok, .fin-dm__note.is-warn, .fin-dm__note.is-bad', { timeout: 60000 }).catch(() => {})
+  const restoreNote = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const restored = await fileOf(dTrash); const rBack = rowOf(dTrash)
+  // a folder of the person's own, made on the screen: it exists in Drive; a document moved into it stays there with its company
+  await page.locator('.fin-dm__view', { hasText: 'התיקייה שלי' }).click(); await page.waitForTimeout(400)
+  await page.getByRole('button', { name: /תיקייה חדשה/ }).click(); await page.locator('.fin-modal input').fill(FN); await page.locator('.fin-modal .fin-btn--primary').click()
+  await page.waitForFunction(() => /נוצרה ב-Google Drive/.test(document.querySelector('.fin-dm__note')?.textContent || ''), null, { timeout: 30000 }).catch(() => {})
+  const madeInDrive = (await drive()).find((f) => f.name === FN && f.mimeType.includes('folder') && !f.trashed)
+  const folderTile = await page.locator('.fin-dm__folder.is-manual', { hasText: FN }).count()
+  const fkey = sql(`select key from fin_drive_folders where target_id='${T}' and name='${FN}' and key ~ 'm:[0-9a-f]+$' limit 1`)
+  const bizBefore = sql(`select coalesce(business_id::text,'') from fin_documents where id='${dFolder}'`)
+  const pin = await api(tok, { action: 'drive-pin', target_id: T, ids: [dFolder], folder: fkey })
+  const inFolder = (await fileOf(dFolder))?.parents[0] === madeInDrive?.id; const bizAfter = sql(`select coalesce(business_id::text,'') from fin_documents where id='${dFolder}'`)
+  const delFull = await api(tok, { action: 'drive-folder', target_id: T, op: 'delete', key: fkey })
+  await fetch(`${FAKES}/__drive?folder_rename=${encodeURIComponent(FN)}&to=${encodeURIComponent(`${FN} חדש`)}`)
+  const s3 = await sync(); const pathAfterRename = rowOf(dFolder)[4]
+  const unpin = await api(tok, { action: 'drive-pin', target_id: T, ids: [dFolder], folder: null }); const backHome = /\d{4}\//.test(rowOf(dFolder)[4]) && !rowOf(dFolder)[4].includes(FN)
+  const delEmpty = await api(tok, { action: 'drive-folder', target_id: T, op: 'delete', key: fkey }); const folderGone = !(await drive()).some((f) => f.id === madeInDrive?.id && !f.trashed)
+  // activity and accounts
+  await go('/drive'); await page.locator('.fin-dm__view', { hasText: 'כל הקבצים' }).click(); await page.fill('.fin-dm__search input', 'שם שנתתי'); await page.waitForTimeout(600)
+  await page.locator('.fin-dm__name').first().click(); await page.waitForSelector('.fin-dm__history ol', { timeout: 10000 }).catch(() => {})
+  const history = await page.locator('.fin-dm__history').innerText().catch(() => '')
+  await page.fill('.fin-dm__search input', ''); await page.locator('.fin-dm__view', { hasText: 'חשבונות מחוברים' }).click(); await page.waitForSelector('.fin-dm__account', { timeout: 10000 }).catch(() => {})
+  const accText = await page.locator('.fin-dm__accounts').innerText().catch(() => ''); const accShot = await shot('141-drive-accounts')
+  await page.locator('.fin-dm__view', { hasText: 'שותפו איתי' }).click(); const sharedText = await page.locator('.fin-dm__panel').innerText().catch(() => '')
+  // an employee may not sync or make folders
+  const empSync = await api(tokE, { action: 'drive-sync', target_id: T }); const empFolder = await api(tokE, { action: 'drive-folder', target_id: T, op: 'create', name: 'x' })
+  // two-way off: nothing is followed, and the full check puts the name back
+  await api(tok, { action: 'drive-two-way', on: false })
+  await fetch(`${FAKES}/__drive?doc=${dFolder}&rename_to=${encodeURIComponent('renamed-while-off.pdf')}`)
+  const sOff = await sync(); const nameOff = rowOf(dFolder)[2]
+  for (let i = 0; i < 6; i++) { const r = (await api(tok, { action: 'drive-reconcile', target_id: T })).data.results?.[0]; if (r?.status !== 'running') break }
+  await api(tok, { action: 'drive-run', target_id: T })
+  const putBack = (await fileOf(dFolder))?.name === nameOff
+  const logged = sql(`select string_agg(distinct action, ',' order by action) from fin_drive_events where target_id='${T}' and action in ('renamed_in_drive','moved_in_drive','trashed_in_drive','restored_by_user','folder_created','folder_renamed_in_drive','folder_deleted','missing')`)
+  record('SYNC2', 'סנכרון דו-כיווני עם Google Drive: שינויים שנעשו ב-Drive מתעדכנים במערכת', 'שינוי שם ב-Drive נשמר; קובץ שהועבר לפח ב-Drive יוצא לאשפה, המסמך נשאר ולא עולה שוב, ושחזור מחזיר את אותו קובץ; העברה לתיקיית חודש של חברה אחרת משנה חברה וחודש (מסמך מאושר רק נשאר במקומו); העברה לתיקייה פרטית נשמרת; קובץ שנמחק לצמיתות משוחזר; הבדיקה המלאה לא מחזירה כלום אחורה; תיקייה שנוצרת במסך קיימת ב-Drive, שינוי שמה ב-Drive מתעדכן, מחיקה רק כשהיא ריקה; היסטוריה, חשבונות והסבר על "שותפו איתי"; עובד נדחה; כשהסנכרון הדו-כיווני כבוי השם חוזר',
+    `מספיק מסמכים: ${enough}; קריאה ראשונה: ${first.first}; אחרי שינויים: ${s1.renamed}/${s1.trashed}/${s1.moved}/${s1.missing} (שגיאה: ${s1.error}); שם: ${r1[2]} (היה ${nameBefore.slice(0, 20)}…); פח: ${r2[0]}|${r2[1]}|${r2[5]} מסמך קיים ${docStill} נשאר בפח ${trashStays}; חודש: ${before3} → ${after3} (יעד ${destBiz.slice(0, 8)}|${destPeriod}, תיקייה ${r3[3] === dest[0]}); מאושר: ${beforeApproved === afterApproved} ${rA[3]}; פרטית: ${r4[3]} ${r4[4].slice(-28)}; נעלם ושוחזר: ${goneBack}; בדיקה מלאה: ${rec?.status} תוקנו ${rec?.corrected} נשמר ${kept}; קריאה חוזרת: ${s2.renamed + s2.moved + s2.trashed}; תצוגות: ${navViews.length}; אשפה: ${trashRows} ${/בפח של Drive/.test(trashText)}; שחזור: "${restoreNote.slice(0, 40)}" ${rBack[0]} אותו קובץ ${restored?.id === trashedFileId}; תיקייה: ב-Drive ${!!madeInDrive} אריח ${folderTile} העברה ${pin.data.moved} בתיקייה ${inFolder} חברה ${bizBefore === bizAfter}; מחיקה מלאה: ${delFull.status}; שינוי שם ב-Drive: ${s3.folders} "${pathAfterRename.slice(-12)}"; חזרה: ${unpin.data.moved} ${backHome}; מחיקה ריקה: ${delEmpty.data.ok} ${folderGone}; היסטוריה: ${/השם שונה ב-Google Drive/.test(history)}; חשבונות: ${/office@kurkoos\.test/.test(accText)} ${/סנכרון דו-כיווני/.test(accText)} ${/drive\.file/.test(accText)}; שותפו: ${/רק קבצים ותיקיות שהיא עצמה יצרה/.test(sharedText)}; עובד: ${empSync.status}/${empFolder.status}; כבוי: ${sOff.renamed} "${nameOff.slice(0, 12)}" חזר ${putBack}; יומן: ${logged}`,
+    enough && first.first === true && s1.renamed === 1 && s1.trashed === 1 && s1.moved === 3 && s1.missing === 1 && !s1.error && r1[2] === 'שם שנתתי ב-Drive.pdf' && r2[0] === 'withdrawn' && r2[1] === 'true' && /הועבר לפח ב-Google Drive/.test(r2[5]) && docStill === '1' && trashStays
+    && after3 === `${destBiz}|${destPeriod}` && after3 !== before3 && beforeApproved === afterApproved && r3[3] === dest[0] && /תיקייה שנוצרה ב-Drive/.test(r4[4]) && r4[3] === 'pin' && goneBack && rec?.status === 'completed' && !rec?.corrected && kept && s2.renamed + s2.moved + s2.trashed === 0
+    && navViews.length === 11 && trashRows >= 1 && /בפח של Drive/.test(trashText) && /שוחזר/.test(restoreNote) && rBack[0] === 'verified' && restored?.id === trashedFileId
+    && !!madeInDrive && folderTile === 1 && pin.data.moved === 1 && inFolder && bizBefore === bizAfter && delFull.status === 409 && s3.folders === 1 && pathAfterRename.endsWith(`${FN} חדש`) && unpin.data.moved === 1 && backHome && delEmpty.data.ok === true && folderGone
+    && /השם שונה ב-Google Drive/.test(history) && /office@kurkoos\.test/.test(accText) && /סנכרון דו-כיווני/.test(accText) && /drive\.file/.test(accText) && /רק קבצים ותיקיות שהיא עצמה יצרה/.test(sharedText) && empSync.status === 403 && empFolder.status === 403
+    && sOff.renamed === 0 && nameOff !== 'renamed-while-off.pdf' && putBack && ['renamed_in_drive', 'moved_in_drive', 'trashed_in_drive', 'restored_by_user', 'folder_created', 'folder_renamed_in_drive', 'folder_deleted', 'missing'].every((a) => String(logged).includes(a)), [syncShot, accShot])
 }
 
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)

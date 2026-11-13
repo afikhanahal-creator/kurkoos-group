@@ -58,6 +58,14 @@ const ROLES = {
   'drive-reconcile': ['admin', 'finance_manager'],
   'drive-exclude': ['admin', 'finance_manager'],
   'drive-pause': ['admin', 'finance_manager'],
+  'drive-sync': ['admin', 'finance_manager'],
+  'drive-extras': ['admin', 'finance_manager'],
+  'drive-folder': ['admin', 'finance_manager'],
+  'drive-pin': ['admin', 'finance_manager'],
+  'drive-restore': ['admin', 'finance_manager'],
+  'drive-activity': ['admin', 'finance_manager'],
+  'drive-accounts': ['admin', 'finance_manager'],
+  'drive-two-way': ['admin'],
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
@@ -204,6 +212,8 @@ export default async function handler(req, res) {
     try {
       const started = Date.now()
       // the Drive archive first (short: a few documents a minute is plenty), then the mail scan with the rest of the time
+      // what a person did in Drive since the last minute is followed first, then the queue goes up
+      await import('./finance/driveSync.js').then((ds) => ds.syncFromDrive({ trigger: 'scan', budgetMs: 8_000 })).catch(() => [])
       const drive = await archive.tick({ started, budgetMs: 15_000, trigger: 'scan' }).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
       await archive.reconcileStep({ started, budgetMs: 25_000 }).catch(() => [])
       res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
@@ -242,7 +252,7 @@ export default async function handler(req, res) {
   // so a long scan never uses up the person's budget for everything else (each step is already capped at ~45 s)
   // each polling screen has its own budget, so the Drive screen can never use up the scan screen's (or the other way round)
   const scanPoll = ['scan-run', 'scan-overview'].includes(body.action)
-  const drivePoll = ['drive-overview', 'drive-run', 'drive-reconcile', 'drive-tree'].includes(body.action)
+  const drivePoll = ['drive-overview', 'drive-run', 'drive-reconcile', 'drive-tree', 'drive-sync', 'drive-extras', 'drive-activity', 'drive-accounts'].includes(body.action)
   if (body.action !== 'status' && (scanPoll ? limited(`scan:${user.id}`, 600) : drivePoll ? limited(`drive:${user.id}`, 600) : limited(user.id))) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
 
   try {
@@ -429,6 +439,40 @@ export default async function handler(req, res) {
         res.status(200).json({ results: await archive.reconcile({ trigger: 'manual', targetId: body.target_id ? String(body.target_id) : null, user }) })
         return
       }
+      // two-way sync and the folders a person makes (server/finance/driveSync.js)
+      case 'drive-sync': {
+        // what was done in Drive is followed first, then what waits in the queue goes up
+        const ds = await import('./finance/driveSync.js'); const tid = body.target_id ? String(body.target_id) : null
+        const from = await ds.syncFromDrive({ targetId: tid, trigger: 'manual', budgetMs: 15_000 })
+        const to = body.quick ? [] : await archive.tick({ trigger: 'manual', targetId: tid, max: 60, budgetMs: 20_000 })
+        res.status(200).json({ ok: true, from_drive: from, to_drive: to })
+        return
+      }
+      case 'drive-extras': { res.status(200).json(await archive.extras({ targetId: String(body.target_id || ''), user })); return }
+      case 'drive-folder': {
+        const ds = await import('./finance/driveSync.js'); const base = { targetId: String(body.target_id || ''), user }
+        if (body.op === 'create') res.status(200).json(await ds.createFolder({ ...base, parentKey: String(body.parent || 'root'), name: body.name }))
+        else if (body.op === 'rename') res.status(200).json(await ds.renameFolder({ ...base, key: String(body.key || ''), name: body.name }))
+        else if (body.op === 'delete') res.status(200).json(await ds.deleteFolder({ ...base, key: String(body.key || '') }))
+        else res.status(400).json({ error: 'פעולה לא מוכרת' })
+        return
+      }
+      case 'drive-pin': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        if (!ids.length) { res.status(400).json({ error: 'לא נבחרו מסמכים' }); return }
+        const ds = await import('./finance/driveSync.js')
+        res.status(200).json(await ds.pinDocs({ targetId: String(body.target_id || ''), ids, folderKey: body.folder ? String(body.folder) : null, user }))
+        return
+      }
+      case 'drive-restore': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        const ds = await import('./finance/driveSync.js')
+        res.status(200).json(await ds.restoreDocs({ targetId: String(body.target_id || ''), ids, user }))
+        return
+      }
+      case 'drive-activity': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.activity({ targetId: String(body.target_id || ''), documentId: /^[0-9a-f-]{36}$/i.test(String(body.document_id || '')) ? String(body.document_id) : null, limit: Number(body.limit) || 60 })); return }
+      case 'drive-accounts': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.accounts()); return }
+      case 'drive-two-way': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.setTwoWay({ on: body.on !== false, user })); return }
       case 'drive-exclude': {
         const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
         res.status(200).json(await archive.exclude({ targetId: String(body.target_id || ''), ids, excluded: body.excluded !== false, user }))

@@ -186,6 +186,11 @@ export default [
     "date": "2026-10-18"
   },
   {
+    "path": "/constructions/mashkanta-livniyat-bayit-prati",
+    "lastmod": "2026-11-14",
+    "date": "2026-11-14"
+  },
+  {
     "path": "/constructions/mifrat-techni-mah-kovea",
     "lastmod": "2026-09-27",
     "date": "2026-09-27"
@@ -334,6 +339,11 @@ export default [
     "path": "/real-estate-guide/iskaot-noflot",
     "lastmod": "2026-06-07",
     "date": "2026-06-07"
+  },
+  {
+    "path": "/real-estate-guide/karka-chaklait-mul-karka-livniya",
+    "lastmod": "2026-11-14",
+    "date": "2026-11-14"
   },
   {
     "path": "/real-estate-guide/kniya-mekablan-mul-yad-shniya",

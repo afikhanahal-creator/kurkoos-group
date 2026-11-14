@@ -640,16 +640,16 @@
    "sub": {
     "family": "body",
     "weight": 400,
-    "min": 30,
-    "max": 40,
+    "min": 32,
+    "max": 42,
     "lineHeight": 1.3,
     "tracking": 0
    },
    "body": {
     "family": "body",
     "weight": 400,
-    "min": 26,
-    "max": 32,
+    "min": 28,
+    "max": 34,
     "lineHeight": 1.42,
     "tracking": 0
    },
@@ -672,8 +672,8 @@
    "caption": {
     "family": "body",
     "weight": 400,
-    "min": 20,
-    "max": 24,
+    "min": 22,
+    "max": 26,
     "lineHeight": 1.3,
     "tracking": 0.01
    }

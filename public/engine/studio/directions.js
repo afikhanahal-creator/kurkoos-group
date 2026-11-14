@@ -341,7 +341,8 @@ D('typographic', (c, F, o) => {
 // 8 · Property specification: the data, set like an architect's schedule
 D('specs', (c, F, o) => {
   const b = B(F, o), k = F.k, m = F.side
-  const items = (c.items || []).filter((i) => i.v || i.l).slice(0, 6)
+  // a value that is only the row's own number ("01", "2") repeats the red numbering: the label becomes the value
+  const items = (c.items || []).filter((i) => i.v || i.l).slice(0, 6).map((i) => /^0?\d\.?$/.test(String(i.v || '').trim()) && i.l ? { v: i.l } : i)
   b.rect(0, 0, F.w, F.h, 'paper', { name: 'רקע' })
   const bandH = Math.round(F.h * 0.31)
   b.rect(0, 0, F.w, bandH, 'navy', { name: 'פס כותרת' })
@@ -357,7 +358,7 @@ D('specs', (c, F, o) => {
     const y = y0 + i * rowH
     b.text('n' + i, 'label', String(i + 1).padStart(2, '0'), F.w - m - 70 * k, y + 8 * k, 70 * k, 30 * k, { color: 'red', maxLines: 1, weight: 800, name: 'מספור' })
     b.text('item' + i + 'v', 'title', it.v || it.l, m + F.w * 0.36, y, F.w - 2 * m - F.w * 0.36 - 100 * k, rowH - 30 * k, { color: 'navy', maxLines: 2, weight: 800, fit: { min: 30 * k, max: 46 * k }, name: 'שורה' })
-    if (it.v && it.l) b.text('item' + i + 'l', 'body', it.l, m, y + 4 * k, F.w * 0.34, rowH - 30 * k, { color: 'inkSoft', maxLines: 2, align: 'left', name: 'פירוט', fit: { min: 22 * k, max: 28 * k } })
+    if (it.v && it.l) b.text('item' + i + 'l', 'body', it.l, m, y + 4 * k, F.w * 0.34, rowH - 30 * k, { color: 'inkSoft', maxLines: 2, align: 'left', name: 'פירוט', fit: { min: 28 * k, max: 34 * k } })
     b.line(m, y + rowH - 12 * k, F.w - 2 * m, 'line', 2 * k, { dash: [6 * k, 8 * k] })
   })
   signature(b, F, c, false, sigY)
@@ -514,7 +515,11 @@ export function suitability(id, c) {
   if (id === 'launch') s += kind === 'render' ? 1 : 0
   if (id === 'fullbleed' && c.img && c.img.stats) s += c.img.stats.w >= 1400 ? 0.8 : -0.8
   if (id === 'typographic') s += words(c.headline) <= 7 ? 0.6 : -0.6
-  if (id === 'beforeafter') s += 1.5
+  // before and after only shows one place: two photos of different projects would tell a story that never happened
+  // (both photos must be tagged with the same project; untagged photos cannot prove it)
+  if (id === 'beforeafter') s = c.img2 && c.img.project && c.img.project === c.img2.project ? s + 1.5 : 0
+  // a lifestyle or full bleed post is a photograph of a real place; an illustration or a brand graphic cannot carry it
+  if ((id === 'lifestyle' || id === 'fullbleed') && ['drawing', 'brand', 'atmo', 'env'].includes(kind)) s = 0
   if (id === 'corporate') s += c.img ? -0.4 : 0.8
   if (c.division === 'afik' && ['realestate', 'lifestyle', 'launch'].includes(id)) s += 0.6
   if (c.division === 'raita' && ['progress', 'beforeafter'].includes(id)) s += 0.6

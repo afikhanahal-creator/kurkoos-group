@@ -17,11 +17,11 @@
     "hero":     { "family": "display", "weight": 900, "min": 96, "max": 168, "lineHeight": 0.98, "tracking": -0.025 },
     "headline": { "family": "display", "weight": 800, "min": 64, "max": 112, "lineHeight": 1.02, "tracking": -0.02 },
     "title":    { "family": "display", "weight": 700, "min": 40, "max": 64,  "lineHeight": 1.08, "tracking": -0.01 },
-    "sub":      { "family": "body", "weight": 400, "min": 30, "max": 40, "lineHeight": 1.3, "tracking": 0 },
-    "body":     { "family": "body", "weight": 400, "min": 26, "max": 32, "lineHeight": 1.42, "tracking": 0 },
+    "sub":      { "family": "body", "weight": 400, "min": 32, "max": 42, "lineHeight": 1.3, "tracking": 0 },
+    "body":     { "family": "body", "weight": 400, "min": 28, "max": 34, "lineHeight": 1.42, "tracking": 0 },
     "label":    { "family": "display", "weight": 700, "min": 20, "max": 24, "lineHeight": 1, "tracking": 0.08 },
     "number":   { "family": "display", "weight": 900, "min": 120, "max": 260, "lineHeight": 0.9, "tracking": -0.04 },
-    "caption":  { "family": "body", "weight": 400, "min": 20, "max": 24, "lineHeight": 1.3, "tracking": 0.01 }
+    "caption":  { "family": "body", "weight": 400, "min": 22, "max": 26, "lineHeight": 1.3, "tracking": 0.01 }
   },
   "rules": [
     "Hebrew is set RTL. Latin words and digits inside Hebrew keep their own order (bidi).",

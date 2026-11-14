@@ -53,6 +53,17 @@ check('X10', 'גיליון הסיכום', 'כל אחד עשר הנתונים ו�
 check('X14', 'בתוך כל תא הכול מיושר לימין', 'כל סגנון תא עם יישור אופקי לימין וסדר קריאה מימין לשמאל; אין יישור לשמאל או למרכז', `ימין: ${(styles.match(/horizontal="right"/g) || []).length}; אחר: ${(styles.match(/horizontal="(left|center)"/g) || []).length}`, (styles.match(/horizontal="right"/g) || []).length > 10 && !(styles.match(/horizontal="(left|center)"/g) || []).length)
 check('X13', 'מבנה הקובץ', 'כל החלקים של קובץ XLSX, כולל קישורים וסגנונות', list.split('\n').filter((l) => /xl\/|Content|_rels/.test(l)).length + ' חלקים', ['[Content_Types].xml', 'xl/workbook.xml', 'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/_rels/sheet1.xml.rels', 'xl/worksheets/sheet4.xml'].every((p) => list.includes(p)))
 
+// the older writer (the documents export, the monthly package, the mail to the accountant, the tax workbook, the reports)
+{ const { expenseWorkbook } = await import('../src/pages/finance/expenseReport.js'); const { buildXlsx } = await import('../src/pages/finance/xlsx.js')
+  const f2 = path.join(dir, 'export.xlsx'); fs.writeFileSync(f2, expenseWorkbook(docs, { businesses: { b1: 'קורקוס ביצוע בע״מ' }, projects: {} }, {}, { title: 'בדיקה' }))
+  const f3 = path.join(dir, 'plain.xlsx'); fs.writeFileSync(f3, buildXlsx([{ name: 'גיליון', columns: [{ header: 'שם', type: 'text' }, { header: 'סכום', type: 'money' }, { header: 'תאריך', type: 'date' }, { header: 'כמות', type: 'int' }, { header: 'אחוז', type: 'pct' }], rows: [['א', 10.5, '2026-11-01', 3, 0.5]], totals: [['סה״כ', 10.5, '', 3, 0.5]] }]))
+  const part = (f, p) => execSync(`unzip -p ${f} ${p}`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+  const sheets2 = [1, 2, 3].map((i) => part(f2, `xl/worksheets/sheet${i}.xml`)); const st2 = part(f2, 'xl/styles.xml'); const sh3 = part(f3, 'xl/worksheets/sheet1.xml')
+  const xfs = [...st2.slice(st2.indexOf('<cellXfs')).matchAll(/<xf [^>]*?(\/>|>.*?<\/xf>)/g)].map((m) => m[0])
+  const firstHead = sheets2[0].match(/<c r="A1"[^>]*>.*?<t[^>]*>([^<]*)<\/t>/)?.[1]
+  check('X15', 'גם קובצי הייצוא האחרים: מימין לשמאל, והכול בצד ימין של התא', 'כל גיליון rightToLeft; העמודה הראשונה (A) היא הכותרת הראשונה; לכל סגנון תא יישור לימין וסדר קריאה מימין לשמאל, גם למספרים, לתאריכים ולשורת הסיכום', `RTL: ${sheets2.map((x) => /<sheetView rightToLeft="1"/.test(x)).join(',')},${/<sheetView rightToLeft="1"/.test(sh3)}; A1: ${firstHead}; סגנונות: ${xfs.length}, בלי יישור לימין: ${xfs.filter((x) => !/horizontal="right"[^>]*readingOrder="2"/.test(x)).length}`,
+    sheets2.every((x) => /<sheetView rightToLeft="1"/.test(x)) && /<sheetView rightToLeft="1"/.test(sh3) && firstHead === 'תאריך המסמך' && xfs.length === 10 && xfs.every((x) => /horizontal="right"[^>]*readingOrder="2"/.test(x))) }
+
 fs.rmSync(dir, { recursive: true, force: true })
 const failed = results.filter((r) => !r.pass)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)

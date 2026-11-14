@@ -91,6 +91,7 @@ export const HOUSE_GUIDES = [
   { to: '/constructions/kablan-mafteach-o-nihul-atzmi', label: 'קבלן מפתח או ניהול עצמי' },
   { to: '/constructions/home-construction-contract', label: 'חוזה בנייה לבית פרטי: הסעיפים שחייבים להיות בו' },
   { to: '/constructions/loach-zmanim-bniyat-bayit', label: 'לוח זמנים לבניית בית' },
+  { to: '/constructions/mashkanta-livniyat-bayit-prati', label: 'משכנתא לבניית בית פרטי: איך הכסף משתחרר בשלבים' },
   { to: '/construction-supervision/construction-supervision-harigot-taktziv', label: 'תקציב בניית בית: איפה נוצרות החריגות' },
   { to: '/construction-supervision/mefakeach-bniya-bayit-prati', label: 'מה בודק מפקח בנייה בבית פרטי' },
   { to: '/divisions/execution', label: 'ביצוע ובנייה עם ראיתה' },
@@ -300,6 +301,7 @@ const LAND_ARMS = [
 const LAND_GUIDES = [
   { to: '/real-estate-guide/bdikot-lifnei-kniyat-migrash', label: 'מה בודקים לפני שקונים מגרש לבית: 12 בדיקות' },
   { to: '/real-estate-guide/yesh-li-migrash', label: 'יש לכם מגרש? לבנות, למכור או לעבוד עם יזם' },
+  { to: '/real-estate-guide/karka-chaklait-mul-karka-livniya', label: 'קרקע חקלאית או קרקע לבנייה: מה ההבדל' },
   { to: '/yazamut-nadlan/karka-meusheret-lo-dirot', label: 'קרקע להשקעה: למה תוכנית מאושרת עוד לא אומרת בנייה' },
   { to: '/madrich-yazamim/nesach-tabu-mi-baal-hakarka', label: 'איך קוראים נסח טאבו לפני עסקה' },
   { to: '/madrich-yazamim/zchuyot-bniya-ma-baamt-kniten', label: 'איך בודקים זכויות בנייה במגרש' },

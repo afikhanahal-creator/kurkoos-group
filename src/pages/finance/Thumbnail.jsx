@@ -34,10 +34,9 @@ async function render(doc, width = 360) {
   if (doc.file_mime === 'image/tiff') return tiffPreview(await blob.arrayBuffer(), width)
   if (OFFICE(doc.file_mime)) return { text: `${OFFICE(doc.file_mime)} · ${doc.file_name || ''}` }
   if ((doc.file_mime || '').startsWith('image/')) return URL.createObjectURL(blob)
-  // a receipt that is the body of an email: the large preview shows the email itself (in a frame that cannot run
-  // scripts or load anything by itself), the small one a few words of it
+  // a receipt that is the body of an email (Meta ads, online services): the email itself, drawn as a page in a frame
+  // that cannot run scripts, at every size down to the smallest icon
   if ((doc.file_mime || '').startsWith('text/')) return { html: await blob.text() }
-  if ((doc.file_mime || '').startsWith('text/')) return { text: (await blob.text()).replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220) }
   const lib = await loadPdf()
   const pdf = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise
   const page = await pdf.getPage(1)
@@ -79,6 +78,29 @@ export function Slip({ doc }) {
   )
 }
 
+/* An email drawn as a page. Emails are laid out for about 640px (a table that wide, with margins around it), so the frame
+   is always that wide and is scaled to the box it sits in: a 44px icon and the large hover card show the same page,
+   whole across, from its top. At the frame's own size a small box would show only an empty corner of the email. */
+const MAIL_W = 640
+function MailPage({ html }) {
+  const box = useRef(null)
+  const [fit, setFit] = useState(null)
+  useEffect(() => {
+    const el = box.current
+    if (!el) return undefined
+    const measure = () => { const w = el.clientWidth; const h = el.clientHeight; if (w && h) setFit((f) => (f && f.w === w && f.h === h ? f : { w, h })) }
+    measure()
+    const ro = new ResizeObserver(measure); ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const k = fit ? fit.w / MAIL_W : 0
+  return (
+    <span className="fin-thumb__mail" ref={box}>
+      {fit && <iframe title="" sandbox="" tabIndex={-1} srcDoc={`<style>html{overflow:hidden;background:#fff}body{margin:0}</style>${html}`} style={{ width: MAIL_W, height: Math.ceil(fit.h / k), transform: `scale(${k})` }} />}
+    </span>
+  )
+}
+
 export default function Thumbnail({ doc, size }) {
   const key = size === 'lg' ? `${doc.file_path}@lg` : doc.file_path
   const box = useRef(null)
@@ -103,7 +125,7 @@ export default function Thumbnail({ doc, size }) {
   return (
     <div className="fin-thumb" ref={box} aria-hidden="true">
       {src && typeof src === 'string' && <img src={src} alt="" decoding="async" />}
-      {src && typeof src === 'object' && src.html && <span className="fin-thumb__mail"><iframe title="" sandbox="" srcDoc={src.html} tabIndex={-1} /></span>}
+      {src && typeof src === 'object' && src.html && <MailPage html={src.html} />}
       {src && typeof src === 'object' && !src.html && <p className="fin-thumb__text">{src.text}</p>}
       {!src && <span className={`fin-thumb__ph ${failed ? 'is-failed' : 'is-loading'}`}>{(doc.file_mime || '').includes('pdf') ? 'PDF' : (doc.file_mime || '').startsWith('text/') ? 'מייל' : OFFICE(doc.file_mime) || (doc.file_mime === 'image/tiff' ? 'TIFF' : 'קובץ')}{failed && <small>אין תצוגה מקדימה</small>}</span>}
     </div>

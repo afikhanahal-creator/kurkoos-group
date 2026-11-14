@@ -1939,6 +1939,27 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
     [askShot])
 }
 
+// MAILTHUMB: a receipt that is the body of an email (Meta ads, online services) has no file of its own. It must still
+// be seen: as a whole page in the smallest icon (it used to be hidden there), in the hover card and in the control center.
+{
+  const measure = (m) => { const f = m.querySelector('iframe'); if (!f) return 'none'; const r = m.getBoundingClientRect(); const fr = f.getBoundingClientRect(); return `${Math.round(r.width)}x${Math.round(r.height)}|${Math.round(fr.width)}|${f.style.width}|${f.getAttribute('sandbox')}` }
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go('/receipts'); await page.waitForTimeout(1500)
+  const row = page.locator('.fin-table tbody tr', { hasText: 'פז חברת נפט' }).first()
+  await row.scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(1500)
+  const small = await row.locator('.fin-thumb__mail').evaluate(measure).catch(() => 'none')
+  await row.locator('.fin-receipts__pic').hover().catch(() => {}); await page.waitForTimeout(1500)
+  const big = await page.locator('.fin-peek__pop .fin-thumb__mail').evaluate(measure).catch(() => 'none')
+  const mtShot = await shot('119b-mail-thumb')
+  await page.mouse.move(5, 5)
+  const hidden = await page.evaluate(() => { const probe = document.createElement('div'); probe.className = 'fin-recent'; probe.innerHTML = '<div class="fin-thumb"><span class="fin-thumb__mail"></span></div>'; document.querySelector('.fin').appendChild(probe); const d = getComputedStyle(probe.querySelector('.fin-thumb__mail')).display; probe.remove(); return d })
+  const [sBox, sFrame, sCss, sSand] = small.split('|'); const [bBox, bFrame] = big.split('|')
+  record('MAILTHUMB', 'קבלה שהיא גוף של מייל נראית גם באייקון הקטן וגם בריחוף', 'המייל מצויר כעמוד שלם ברוחב 640 ומוקטן לגודל התיבה: באייקון של הרשימה, בכרטיס הריחוף וברשימת "מסמכים אחרונים"; המסגרת סגורה (בלי סקריפטים)',
+    `אייקון: ${sBox}, רוחב המסגרת על המסך ${sFrame}, רוחב העמוד ${sCss}, sandbox "${sSand}"; ריחוף: ${bBox}, מסגרת ${bFrame}; ברשימת האחרונים: ${hidden}`,
+    /^\d+x\d+$/.test(sBox || '') && Number(sFrame) > 20 && Number(sFrame) <= Number(sBox.split('x')[0]) + 1 && sCss === '640px' && sSand === '' && Number(bFrame) > 300 && Number(bFrame) <= Number((bBox || '0').split('x')[0]) + 1 && hidden !== 'none',
+    [mtShot])
+}
+
 // SCAN: the scan engine on a big mailbox and on invoices@ side by side. 1,502 messages (1,200 of them in one week, i.e.
 // three pages of 500), a 503 on listing, a message that fails once and then works, a damaged TIFF, the same invoice that
 // already came to invoices@, stop and resume, a message the first pass "missed", and the completeness rule: done only

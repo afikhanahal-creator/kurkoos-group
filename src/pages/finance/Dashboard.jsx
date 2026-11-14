@@ -158,7 +158,7 @@ export default function Dashboard() {
               {m.recent.map((d) => (
                 <li key={d.id}>
                   <button type="button" onClick={() => go(`/documents/${d.id}`)}>
-                    {(d.file_mime || '').startsWith('image/') ? <Thumbnail doc={d} /> : (
+                    {d.file_path && /^(image\/|text\/|application\/pdf)/.test(d.file_mime || '') ? <Thumbnail doc={d} /> : (
                       <span className={`fin-doctile ${(d.file_mime || '').startsWith('text/') ? 'is-mail' : (d.file_mime || '').includes('pdf') ? 'is-pdf' : ''}`} aria-hidden="true">
                         {(d.file_mime || '').startsWith('text/') ? <Icon name="mail" size={20} /> : (d.file_mime || '').includes('pdf') ? <b>PDF</b> : <Icon name="file" size={20} />}
                       </span>

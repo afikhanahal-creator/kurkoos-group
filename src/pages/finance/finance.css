@@ -3061,7 +3061,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 
 /* ---------- hover preview: every kind of document shows ---------- */
 .fin-thumb__mail { display: block; width: 100%; height: 100%; overflow: hidden; background: #fff; direction: ltr; }
-.fin-thumb__mail iframe { display: block; width: 182%; height: 182%; border: 0; transform: scale(0.55); transform-origin: 0 0; pointer-events: none; background: #fff; }
+.fin-thumb__mail iframe { display: block; max-width: none; border: 0; transform-origin: 0 0; pointer-events: none; background: #fff; }
 .fin-peek__nofile { display: grid; gap: 8px; place-content: center; justify-items: center; text-align: center; height: 100%; padding: 28px; color: var(--text-2); font-size: var(--t-sm); line-height: 1.5; white-space: normal; }
 .fin-peek__nofile svg { color: var(--warn); }
 .fin-peek__nofile b { color: var(--ink); font-size: var(--t-md); }
@@ -3124,10 +3124,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
   .fin-slip::after { width: 45%; margin-top: 18px; background: var(--warn); opacity: 0.7; }
 }
 .fin-nofile__slip { width: min(100%, 340px); border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); box-shadow: 0 8px 24px rgba(7, 41, 58, 0.08); }
-/* tiny thumbnails (rows of a list): an email shows as a plain tile, the frame is for cards and previews */
-.fin-recent .fin-thumb__mail, .fin-picklist .fin-thumb__mail { display: none; }
-/* a card: the email scaled to the card's width */
-.fin-doccard .fin-thumb__mail iframe, .fin-merge__thumb .fin-thumb__mail iframe { width: 250%; height: 250%; transform: scale(0.4); }
+/* an email is drawn as a whole page at every size (Thumbnail.jsx › MailPage sets the scale), small icons included */
+.fin-thumb:has(> .fin-thumb__mail) { place-items: stretch; }
 
 /* ---------- overview chart: the amount on every bar reads at a glance ---------- */
 .fin-x-val { font-size: 0.84rem; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--sheet) 92%, transparent); z-index: 3; line-height: 1.35; }

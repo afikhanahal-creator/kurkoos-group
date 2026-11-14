@@ -82,7 +82,7 @@ function gmailMessage(m) {
 const taxWatch = {}
 // Drive's own list of changes: every difference between two readings of the files is one change (as the real list
 // reports the latest state of a file, not every step)
-const driveChanges = []; let driveSnap = new Map()
+const driveChanges = []; let driveSnap = new Map(); let driveChannel = null
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`)
   const p = url.pathname
@@ -245,6 +245,15 @@ const server = http.createServer(async (req, res) => {
     const more = from + page.length < driveChanges.length
     return send(res, 200, { changes: page.map((c) => { const f = driveItems.find((x) => x.id === c.fileId); return f ? { fileId: c.fileId, removed: false, file: dfile(f) } : { fileId: c.fileId, removed: true } }), ...(more ? { nextPageToken: String(from + page.length) } : { newStartPageToken: String(driveChanges.length) }) })
   }
+  // immediate notices: Drive accepts a channel (or refuses it, when a test says so) and remembers where to call
+  if (p === '/drive/changes/watch' && req.method === 'POST') {
+    if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
+    if (driveFail.watch401) return send(res, 401, { error: { message: 'Unauthorized WebHook callback channel' } })
+    const b = JSON.parse(await readBody(req) || '{}'); driveChannel = { id: b.id, address: b.address, token: b.token, resourceId: `res${++driveSeq}`, expiration: b.expiration }
+    return send(res, 200, { kind: 'api#channel', id: b.id, resourceId: driveChannel.resourceId, expiration: b.expiration })
+  }
+  if (p === '/drive/channels/stop' && req.method === 'POST') { log.drive.push('channel-stop'); res.writeHead(204); res.end(); return }
+  if (p === '/__drive_channel') return send(res, 200, { channel: driveChannel })
   if (p === '/drive/about') return send(res, 200, { storageQuota: { limit: String(15 * 1024 ** 3), usage: String(driveItems.reduce((a, f) => a + (f.size || 0), 0)) }, user: { displayName: 'חשבון בדיקה', emailAddress: mailbox } })
   if (p === '/__drive') {
     // as a person would in Drive itself: a name of their own, a folder of their own (made there, unknown to the system), back from the trash
@@ -252,7 +261,7 @@ const server = http.createServer(async (req, res) => {
     if (url.searchParams.get('untrash')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('untrash') && x.trashed); if (f) f.trashed = false }
     if (url.searchParams.get('move_to')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('doc') && !x.trashed); const want = url.searchParams.get('move_to'); let to = driveItems.find((x) => x.folder && !x.trashed && (x.id === want || dpath(x.id).endsWith(want))); if (!to && url.searchParams.has('make')) { to = { id: `fld${++driveSeq}`, name: want, parents: ['root'], folder: true, appProperties: {} }; driveItems.push(to) } if (f && to) f.parents = [to.id] }
     if (url.searchParams.get('folder_rename')) { const f = driveItems.find((x) => x.folder && x.name === url.searchParams.get('folder_rename')); if (f) f.name = url.searchParams.get('to') }
-    for (const k of ['upload503', 'lose', 'rate403', 'nomd5']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
+    for (const k of ['upload503', 'lose', 'rate403', 'nomd5', 'watch401']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
     // as a person would in Drive: move a document's file to another folder, rename it, change its content
     const one = (doc) => driveItems.find((f) => f.appProperties?.kd === doc && !f.trashed)
     if (url.searchParams.get('move')) { const f = one(url.searchParams.get('move')); const to = driveItems.find((x) => x.folder && x.id !== f?.parents[0] && x.name !== 'בדיקת חיבור' && driveItems.some((y) => !y.folder && y.parents[0] === x.id)); if (f && to) f.parents = [to.id] }
@@ -272,13 +281,15 @@ const server = http.createServer(async (req, res) => {
   if (p === '/drive/files' && req.method === 'GET') {
     if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
     const qy = url.searchParams.get('q') || ''
+    // files others shared with the account (only the wide permission may list them)
+    if (/sharedWithMe/.test(qy)) return send(res, 200, { files: [{ id: 'sh1', name: 'חוזה שכירות משרד.pdf', mimeType: 'application/pdf', size: '20480', modifiedTime: '2026-11-01T08:00:00Z', webViewLink: 'https://drive.test/file/sh1', owners: [{ displayName: 'רואה החשבון', emailAddress: 'cpa@example.test' }] }, { id: 'sh2', name: 'מסמכי חברה', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-10-20T08:00:00Z', webViewLink: 'https://drive.test/folder/sh2', owners: [{ displayName: 'משרד עו״ד' }] }] })
     const name = (qy.match(/name='((?:[^'\\]|\\.)*)'/) || [])[1]?.replace(/\\'/g, "'").replace(/\\\\/g, '\\')
     const parent = (qy.match(/'([^']+)' in parents/) || [])[1]
-    const prop = qy.match(/appProperties has \{ key='([^']+)' and value='((?:[^'\\]|\\.)*)' \}/)
+    const props = [...qy.matchAll(/appProperties has \{ key='([^']+)' and value='((?:[^'\\]|\\.)*)' \}/g)]; const prop = props[0]   // every condition must hold, as in Drive
     const folderOnly = /mimeType='application\/vnd\.google-apps\.folder'/.test(qy); const filesOnly = qy.includes('mimeType!=')
     const noTrash = qy.includes('trashed=false')
     let list = driveItems.filter((f) => (!noTrash || !f.trashed) && (!folderOnly || f.folder) && (!filesOnly || !f.folder) && (!name || f.name === name) && (!parent || f.parents[0] === parent)
-      && (!prop || f.appProperties?.[prop[1]] === prop[2].replace(/\\'/g, "'")))
+      && props.every((pr) => f.appProperties?.[pr[1]] === pr[2].replace(/\\'/g, "'")))
     if (!prop && !name) list = []
     const size = Number(url.searchParams.get('pageSize') || 100); const from = Number(url.searchParams.get('pageToken') || 0)
     const page = list.slice(from, from + (list.length > 50 ? Math.min(size, 1000) : Math.min(size, 3)))   // small pages, so paging is always tested; a big archive pages by 1000 as Drive does

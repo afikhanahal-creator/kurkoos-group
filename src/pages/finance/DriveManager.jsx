@@ -137,6 +137,8 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
   const [folderDlg, setFolderDlg] = useState(null)     // { mode: 'create' | 'rename', parent, key, name }
   const [events, setEvents] = useState(null)           // the activity of the open document
   const [pulling, setPulling] = useState(false)
+  const [sharedFiles, setSharedFiles] = useState(null)   // files others shared with the account (the wide permission only)
+  const upHere = useRef(null)
   const loadExtras = useCallback(async () => { try { setExtras(await api.callServer('drive-extras', { target_id: t.id })) } catch { /* the list still works without them */ } }, [t.id])
   useEffect(() => { loadExtras() }, [loadExtras, rows])
   const press = useRef(null)
@@ -175,7 +177,7 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
     if (f.type && d.doc_type !== f.type) return false
     if (f.sync && (f.sync === 'ok' ? i.row.status !== 'verified' : f.sync === 'pending' ? !PENDING.includes(i.row.status) : !FAILED.includes(i.row.status))) return false
     if (!word) return true
-    return [i.name, i.company, d.supplier_name, d.doc_number, d.supplier_vat_id, d.file_name, i.period, DOC_TYPE[d.doc_type], d.total_amount, d.currency, d.issue_date, i.row.folder_path, d.description, t.account_email].filter((v) => v != null).join(' ').toLowerCase().includes(word)
+    return [i.name, i.company, d.supplier_name, d.doc_number, d.supplier_vat_id, d.file_name, i.period, DOC_TYPE[d.doc_type], d.total_amount, d.currency, d.issue_date, i.row.folder_path, d.description, d.notes, d.email_subject, d.email_from, d.payment_method, t.account_email].filter((v) => v != null).join(' ').toLowerCase().includes(word)
   }
   const browsing = view === 'drive' && !filtering
   const flat = useMemo(() => {
@@ -189,7 +191,9 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
     if (view === 'trash') return [...list].sort((a, b) => String(b.row.updated_at || '').localeCompare(String(a.row.updated_at || '')))
     return sorted(list)
   }, [browsing, here, items, trashItems, view, word, f, stars, sort]) // eslint-disable-line react-hooks/exhaustive-deps
-  const subfolders = browsing && here ? [...here.children.values()].sort((a, b) => (here.path.length === 0 ? (a.name === NONE ? -1 : b.name === NONE ? 1 : a.name.localeCompare(b.name, 'he')) : b.name.localeCompare(a.name, 'he'))) : []
+  // every folder in the tree, by its key (for the starred view)
+  const starredFolders = useMemo(() => { const out = []; const walk = (nd) => { for (const c of nd.children.values()) { if (c.key && stars.has(`f:${c.key}`)) out.push(c); walk(c) } }; walk(folders); return out }, [folders, stars])
+  const subfolders = view === 'starred' && !filtering ? starredFolders : browsing && here ? [...here.children.values()].sort((a, b) => (here.path.length === 0 ? (a.name === NONE ? -1 : b.name === NONE ? 1 : a.name.localeCompare(b.name, 'he')) : b.name.localeCompare(a.name, 'he'))) : []
   const months = useMemo(() => [...new Set(items.map((i) => i.period).filter(Boolean))].sort().reverse(), [items])
   const types = useMemo(() => [...new Set(items.map((i) => i.doc?.doc_type).filter(Boolean))], [items])
   const counts = useMemo(() => ({ all: items.length, unassigned: items.filter((i) => !i.row.business_id).length, review: items.filter((i) => !i.row.business_id || FAILED.includes(i.row.status) || i.doc?.status === 'review').length, pending: items.filter((i) => PENDING.includes(i.row.status)).length, failed: items.filter((i) => FAILED.includes(i.row.status)).length }), [items])
@@ -300,6 +304,17 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
     if (!(await askConfirm({ title: 'מחיקת תיקייה', text: `התיקייה "${node.name}" תימחק גם מ-Google Drive. אפשר למחוק רק תיקייה ריקה.`, ok: 'מחיקה', danger: true }))) return
     run('folder', async () => { await api.callServer('drive-folder', { target_id: t.id, op: 'delete', key: node.key }); await loadExtras(); if (path.join('/') === node.path.join('/')) setPath(node.path.slice(0, -1)); say('ok', `התיקייה "${node.name}" נמחקה, גם מ-Google Drive.`) })
   }
+  useEffect(() => { if (view === 'shared') { setSharedFiles(null); api.callServer('drive-shared', { target_id: t.id }).then(setSharedFiles).catch((e) => setSharedFiles({ available: false, error: e.message, files: [] })) } }, [view, t.id])
+  // files chosen while a folder of the person's own is open go up as usual, and their place in that folder is kept from
+  // the first moment: each file lands there when it has been read and archived
+  const uploadHere = (files) => run('upload', async () => {
+    const list = [...files]; if (!list.length || !here?.key) return
+    const ids = []; const refused = []
+    for (const file of list) { try { const r = await api.uploadFile(file, { source: 'upload' }); if (r.duplicate) refused.push(`${file.name}: כבר קיים במערכת`); else ids.push(r.id) } catch (e) { refused.push(e.message) } }
+    if (ids.length) await api.callServer('drive-pin', { target_id: t.id, ids, folder: here.key }, { timeout: 60000 })
+    if (ids.length) moments.upload?.({ count: ids.length, names: list.map((x) => x.name) })
+    say(refused.length && !ids.length ? 'bad' : refused.length ? 'warn' : 'ok', `${ids.length ? `${ids.length === 1 ? 'מסמך אחד הועלה' : `${n(ids.length)} מסמכים הועלו`}. אחרי הקריאה ${ids.length === 1 ? 'הוא ייכנס' : 'הם ייכנסו'} לתיקייה "${here.name}" ב-Google Drive.` : ''}${refused.length ? ` ${refused.join(' · ')}` : ''}`.trim())
+  })
   useEffect(() => { if (view === 'accounts') api.callServer('drive-accounts').then(setAccounts).catch(() => setAccounts({ accounts: [], error: true })) }, [view, extras.two_way])
   useEffect(() => { setEvents(null); if (detail) api.callServer('drive-activity', { target_id: t.id, document_id: detail, limit: 30 }).then((r) => setEvents(r.events || [])).catch(() => setEvents([])) }, [detail, t.id, rows])
   const download = (list) => run('download', async () => {
@@ -400,7 +415,9 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
           </div>
           <label className="fin-dm__sort"><Icon name="sort" size={16} /><select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="מיון לפי">{SORTS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}</select></label>
           {operate && <button type="button" className="fin-btn fin-dm__newfolder" onClick={() => { if (view !== 'drive') { setView('drive'); setPath([]) } setFolderDlg({ mode: 'create', parent: view === 'drive' && here?.key ? here.key : 'root', where: view === 'drive' && here?.path?.length ? here.path.join(' › ') : t.root_name || 'התיקייה שלי', name: '' }) }} disabled={view === 'drive' && !!here && !here.key}><Icon name="plus" size={17} /> תיקייה חדשה</button>}
-          <button type="button" className="fin-btn fin-btn--primary fin-dm__up" onClick={openUpload}><Icon name="upload" size={17} /> העלאה</button>
+          {view === 'drive' && here?.manual && operate
+            ? <><input ref={upHere} type="file" accept="application/pdf,image/*" multiple hidden data-testid="drive-upload-here" onChange={(e) => { uploadHere(e.target.files); e.target.value = '' }} /><button type="button" className="fin-btn fin-btn--primary fin-dm__up" disabled={!!working} onClick={() => upHere.current?.click()}><Icon name="upload" size={17} /> העלאה לתיקייה הזו</button></>
+            : <button type="button" className="fin-btn fin-btn--primary fin-dm__up" onClick={openUpload}><Icon name="upload" size={17} /> העלאה</button>}
         </div>
         {showFilters && (
           <div className="fin-dm__filters">
@@ -429,7 +446,7 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
         </div>
 
         {note && <p className={`fin-dm__note is-${note.tone}`} role={note.tone === 'bad' ? 'alert' : 'status'}><Icon name={note.tone === 'ok' ? 'check' : note.tone === 'bad' ? 'alert' : 'info'} size={16} /> <span>{note.text}</span><button type="button" className="fin-icon-btn" onClick={() => setNote(null)} aria-label="סגירה"><Icon name="x" size={14} /></button></p>}
-        {working && <p className="fin-dm__note is-info" role="status"><Icon name="sync" size={16} /> <span>{{ move: 'מעביר ב-Google Drive…', delete: 'מוחק, ומעביר לפח של Drive…', download: 'מוריד…', trash: 'מעביר לאשפה…', restore: 'משחזר מהאשפה…', sync: 'בודק מול Google Drive…', folder: 'מעדכן את התיקייה ב-Google Drive…' }[working]}</span></p>}
+        {working && <p className="fin-dm__note is-info" role="status"><Icon name="sync" size={16} /> <span>{{ upload: 'מעלה…', move: 'מעביר ב-Google Drive…', delete: 'מוחק, ומעביר לפח של Drive…', download: 'מוריד…', trash: 'מעביר לאשפה…', restore: 'משחזר מהאשפה…', sync: 'בודק מול Google Drive…', folder: 'מעדכן את התיקייה ב-Google Drive…' }[working]}</span></p>}
         {drag && <p className="fin-dm__draghint" role="status">משחררים על תיקייה או על חברה כדי להעביר {drag.length === 1 ? 'את המסמך' : `${n(drag.length)} מסמכים`} ב-Drive</p>}
 
         {subfolders.length > 0 && (
@@ -438,14 +455,15 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
               const key = `f:${node.path.join('/')}`
               return (
                 <li key={key}>
-                  <button type="button" className={`fin-dm__folder ${over === key ? 'is-over' : ''} ${node.name === NONE ? 'is-none' : ''} ${node.manual ? 'is-manual' : ''}`} {...dropOn(key, destOf(node))} onClick={() => { setPath(node.path); setSel(new Set()) }}>
+                  <button type="button" className={`fin-dm__folder ${over === key ? 'is-over' : ''} ${node.name === NONE ? 'is-none' : ''} ${node.manual ? 'is-manual' : ''} ${node.key ? 'is-keyed' : ''}`} {...dropOn(key, destOf(node))} onClick={() => { setView('drive'); setPath(node.path); setSel(new Set()) }}>
                     <span className="fin-dm__foldericon"><Icon name="folder" size={22} /></span>
                     <span className="fin-dm__foldertext"><strong dir="auto">{node.name}</strong><small>{node.count === 0 ? 'ריקה' : node.count === 1 ? 'מסמך אחד' : `${n(node.count)} מסמכים`}{node.manual ? ' · תיקייה שלך' : node.last ? ` · עודכן ${date(node.last)}` : ''}</small></span>
                     <Icon name="chev" size={16} />
                   </button>
-                  {node.manual && operate && <span className="fin-dm__folderacts">
-                    <button type="button" className="fin-icon-btn" onClick={() => setFolderDlg({ mode: 'rename', key: node.key, name: node.name })} aria-label={`שינוי שם התיקייה ${node.name}`} title="שינוי שם"><Icon name="edit" size={16} /></button>
-                    <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={() => removeFolder(node)} aria-label={`מחיקת התיקייה ${node.name}`} title="מחיקה"><Icon name="trash" size={16} /></button>
+                  {node.key && <span className="fin-dm__folderacts">
+                    <button type="button" className={`fin-icon-btn fin-dm__star ${stars.has(`f:${node.key}`) ? 'is-on' : ''}`} aria-pressed={stars.has(`f:${node.key}`)} onClick={() => star(`f:${node.key}`)} aria-label={`${stars.has(`f:${node.key}`) ? 'הסרת הכוכב מהתיקייה' : 'סימון התיקייה בכוכב'} ${node.name}`} title={stars.has(`f:${node.key}`) ? 'הסרת הכוכב' : 'סימון בכוכב'}><Icon name="sparkle" size={16} /></button>
+                    {node.manual && operate && <button type="button" className="fin-icon-btn" onClick={() => setFolderDlg({ mode: 'rename', key: node.key, name: node.name })} aria-label={`שינוי שם התיקייה ${node.name}`} title="שינוי שם"><Icon name="edit" size={16} /></button>}
+                    {node.manual && operate && <button type="button" className="fin-icon-btn fin-icon-btn--danger" onClick={() => removeFolder(node)} aria-label={`מחיקת התיקייה ${node.name}`} title="מחיקה"><Icon name="trash" size={16} /></button>}
                   </span>}
                 </li>
               )
@@ -460,12 +478,29 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
           </div>
         )}
 
-        {view === 'shared' ? (
+        {view === 'shared' ? (sharedFiles === null ? <p className="fin-muted" aria-busy="true">קורא מ-Google Drive…</p> : sharedFiles.available ? (
+          <div className="fin-dm__sharedwrap">
+            <p className="fin-dm__perm"><Icon name="shield" size={14} /> קבצים שאחרים שיתפו עם החשבון, כפי ש-Google Drive מציג אותם עכשיו. לצפייה בלבד: המערכת לא משנה ולא מוחקת קובץ שלא היא יצרה.</p>
+            {!sharedFiles.files.length ? <Empty title="לא שותפו קבצים עם החשבון" icon="share">אם ההרשאה הורחבה אחרי שהחשבון חובר, מחברים אותו מחדש במסך "חשבונות מחוברים" כדי שהרשימה תופיע.</Empty> : (
+              <ul className="fin-dm__list fin-dm__shared">
+                {sharedFiles.files.map((x) => (
+                  <li key={x.id} className="fin-dm__sharedrow">
+                    <span className={`fin-dm__ficon is-${x.folder ? 'other' : /\.pdf$/i.test(x.name) ? 'pdf' : 'other'}`} aria-hidden="true">{x.folder ? <Icon name="folder" size={17} /> : /\.pdf$/i.test(x.name) ? 'PDF' : <Icon name="file" size={17} />}</span>
+                    <span className="fin-dm__nametext"><strong><bdi>{x.name}</bdi></strong><small>{[x.owner && `שותף על ידי ${x.owner}`, x.modified && `עודכן ${date(x.modified)}`, x.size != null && size(x.size)].filter(Boolean).join(' · ')}</small></span>
+                    {x.link && <a className="fin-btn fin-btn--sm" href={x.link} target="_blank" rel="noopener noreferrer"><Icon name="external" size={15} /> פתיחה ב-Drive</a>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
           <div className="fin-dm__panel">
             <h4>קבצים ששותפו איתך לא מוצגים כאן</h4>
             <p>המערכת מחוברת ל-Google Drive בהרשאה המצומצמת ביותר: היא רואה ומנהלת רק קבצים ותיקיות שהיא עצמה יצרה. קבצים אחרים בחשבון, וקבצים שאחרים שיתפו איתך, אינם נגישים לה, ולכן גם לא יכולים להימחק או להשתנות בטעות.</p>
-            <p>כדי להציג ולנהל כאן את כל הקבצים שבחשבון צריך הרשאה רחבה יותר ל-Drive, ש-Google מאשרת רק אחרי תהליך אימות של האפליקציה. זו החלטה של הבעלים, ואפשר להוסיף אותה בנפרד.</p>
+            <p>כדי להציג כאן את הקבצים ששותפו צריך הרשאה רחבה יותר ל-Drive, ש-Google מאשרת רק אחרי תהליך אימות של האפליקציה. המערכת כבר מוכנה לכך: אחרי האישור מפעילים את ההרשאה הרחבה בהגדרות השרת ומחברים את החשבון מחדש.</p>
+            {sharedFiles.error && <p className="fin-error" role="alert">{sharedFiles.error}</p>}
           </div>
+        )
         ) : view === 'accounts' ? (
           <div className="fin-dm__accounts">
             {accounts === null ? <p className="fin-muted" aria-busy="true">טוען את החשבונות…</p> : <>
@@ -485,7 +520,8 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
                     <div><dt>בדיקה מלאה אחרונה</dt><dd>{a.last_reconcile_at ? dateTime(a.last_reconcile_at) : 'עוד לא'}</dd></div>
                   </dl>
                   {a.sync?.error && <p className="fin-error" role="alert">הקריאה האחרונה של השינויים מ-Drive נכשלה: {a.sync.error}</p>}
-                  <p className="fin-dm__perm"><Icon name="shield" size={14} /> הרשאה: קבצים ותיקיות שהמערכת יצרה בלבד (drive.file). שאר החשבון אינו נגיש לה.</p>
+                  <p className="fin-dm__perm"><Icon name="shield" size={14} /> {accounts.scope === 'drive' ? 'הרשאה: כל ה-Drive של החשבון (drive). המערכת משנה רק קבצים שהיא יצרה; את השאר היא רק מציגה.' : 'הרשאה: קבצים ותיקיות שהמערכת יצרה בלבד (drive.file). שאר החשבון אינו נגיש לה.'}</p>
+                  <p className="fin-dm__perm"><Icon name={a.push?.active ? 'check' : 'clock'} size={14} /> {a.push?.active ? `התראות מיידיות מ-Drive פעילות (עד ${date(new Date(a.push.expiration).toISOString())}); שינוי שם מתעדכן כאן בתוך שניות.` : `התראות מיידיות מ-Drive לא פעילות${a.push?.error ? ` (${a.push.error})` : ''}. השינויים נקראים פעם בדקה.`}</p>
                 </article>
               ))}
               {can('manage') && (

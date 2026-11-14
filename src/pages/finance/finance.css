@@ -4252,3 +4252,13 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-dm__folderacts { inset-inline-end: 8px; }
 .fin-dm__folderacts .fin-icon-btn { min-width: 36px; min-height: 36px; }
 @media (max-width: 767px) { .fin-dm__folderacts .fin-icon-btn { min-width: 44px; min-height: 44px; } .fin-dm__folder.is-manual { padding-inline-end: 100px; } }
+/* folders with a star button, the list of shared files */
+.fin-dm__folder.is-keyed { padding-inline-end: 56px; }
+.fin-dm__folder.is-keyed > svg:last-child { display: none; }
+.fin-dm__folder.is-manual { padding-inline-end: 128px; }
+.fin-dm__star { color: var(--muted); }
+.fin-dm__star.is-on { color: #b7791f; }
+.fin-dm__sharedwrap { display: grid; gap: 10px; }
+.fin-dm__sharedrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); min-height: 56px; }
+.fin-dm__sharedrow:last-child { border-bottom: 0; }
+@media (max-width: 767px) { .fin-dm__folder.is-keyed { padding-inline-end: 60px; } .fin-dm__folder.is-manual { padding-inline-end: 148px; } .fin-dm__sharedrow { grid-template-columns: auto minmax(0, 1fr); } .fin-dm__sharedrow > a { grid-column: 2; justify-self: start; } }

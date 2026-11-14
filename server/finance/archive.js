@@ -196,8 +196,11 @@ export function pathOfKey(ctx, key) {
 }
 /* where a pinned document lives: a folder the system knows (its key is kept in the pin's name), or a folder made in Drive */
 function pinnedFolder(ctx, pin) {
-  const key = pin.name && pin.name !== 'ext' ? pin.name : null
-  return { id: pin.drive_folder_id, key: key || 'pin', path: key ? pathOfKey(ctx, key) : `/${ctx.target.root_name || 'ארכיון מסמכים עסקי'}/תיקייה שנוצרה ב-Drive` }
+  // "ext" is a folder made in Drive whose name the connection cannot read; "ext:<name>" is one whose name it could
+  const ext = /^ext(:|$)/.test(String(pin.name || ''))
+  const key = pin.name && !ext ? pin.name : null
+  const extName = ext && String(pin.name).length > 4 ? String(pin.name).slice(4) : 'תיקייה שנוצרה ב-Drive'
+  return { id: pin.drive_folder_id, key: key || 'pin', path: key ? pathOfKey(ctx, key) : `/${ctx.target.root_name || 'ארכיון מסמכים עסקי'}/${extName}` }
 }
 
 async function supplierName(ctx, doc) {
@@ -264,7 +267,8 @@ export async function processRow(ctx, row) {
 
   // the file this document already has in Drive: by the id we kept, else by the document id it carries
   let file = row.drive_file_id ? await driveGet(ctx.token, row.drive_file_id) : null
-  if (!file) file = (await driveFind(ctx.token, `appProperties has { key='kd' and value='${row.document_id}' } and trashed=false`))[0] || null
+  // (only among this connection's own files: another connected account must never take this one's copy as its own)
+  if (!file) file = (await driveFind(ctx.token, `appProperties has { key='kd' and value='${row.document_id}' } and appProperties has { key='kt' and value='${tag(row.target_id)}' } and trashed=false`))[0] || null
   // in the Drive trash: the document still belongs in the archive, so a fresh copy is restored from our storage
   // (to keep a document out of the archive for good, a person takes it out on the screen)
   if (file && file.trashed) { await event(row.target_id, row.document_id, 'missing', { trashed: true }); file = null }
@@ -367,12 +371,13 @@ export async function tick({ started = Date.now(), budgetMs = TIME_BUDGET_MS, tr
           }
         }
       }
-      await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'active', last_error: null, last_sync_at: new Date().toISOString(), files_synced: (t.files_synced || 0) + res.verified, files_failed: res.failed })
+      // a connection that was disconnected while this run was working stays disconnected (the run must not bring it back)
+      await patch(`fin_cloud_targets?id=eq.${t.id}&status=neq.revoked`, { status: 'active', last_error: null, last_sync_at: new Date().toISOString(), files_synced: (t.files_synced || 0) + res.verified, files_failed: res.failed })
       // after a sync that uploaded files, the whole archive is checked against Drive (at most once in 6 hours; the night run does it anyway)
       if (res.verified && trigger !== 'repair' && trigger !== 'manual' && (!t.last_reconcile_at || Date.now() - new Date(t.last_reconcile_at).getTime() > 6 * 3600_000)) await startReconcile({ targetId: t.id, trigger: 'after_sync' }).catch(() => {})
     } catch (e) {
       res.error = String(e.message || e).slice(0, 300)
-      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'error', last_error: 'ההרשאה ל-Google Drive בוטלה או פגה. חברו מחדש' }).catch(() => {})
+      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}&status=neq.revoked`, { status: 'error', last_error: 'ההרשאה ל-Google Drive בוטלה או פגה. חברו מחדש' }).catch(() => {})
     } finally {
       await patch(`fin_cloud_targets?id=eq.${t.id}`, { syncing_until: null }).catch(() => {})
       if (run) { run.stat.details.drive = res; await run.done().catch(() => {}) }
@@ -572,7 +577,7 @@ export async function reconcileStep({ started = Date.now(), budgetMs = TIME_BUDG
     } catch (e) {
       // not the end: the next minute goes on from the checkpoint; a broken connection is the connection's error
       await patch(`fin_drive_reconciles?id=eq.${rec.id}`, { error: String(e.message || e).slice(0, 300), updated_at: new Date().toISOString() }).catch(() => {})
-      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'error', last_error: 'ההרשאה ל-Google Drive בוטלה או פגה. חברו מחדש' }).catch(() => {})
+      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}&status=neq.revoked`, { status: 'error', last_error: 'ההרשאה ל-Google Drive בוטלה או פגה. חברו מחדש' }).catch(() => {})
     }
     out.push({ reconcile: rec.id, target: rec.target_id, phase: rec.phase, status: rec.status, report: rec.report })
   }
@@ -820,7 +825,9 @@ export async function adopt(ctx, row, file, { via = 'changes' } = {}) {
     } else {
       // anywhere else (a folder a person made, a company's own folder, an approved document): the file stays where the
       // person put it, and the system remembers the place; the document's own details are not changed
-      const pin = { target_id: t.id, key: `pin:${row.document_id}`, name: dest ? dest.key : 'ext', drive_folder_id: parent }
+      // a folder made in Drive: its name is read when the connection may see it (the wide permission), else it stays unnamed
+      const seen = dest ? null : await driveGet(ctx.token, parent).catch(() => null)
+      const pin = { target_id: t.id, key: `pin:${row.document_id}`, name: dest ? dest.key : seen?.name ? `ext:${String(seen.name).slice(0, 100)}` : 'ext', drive_folder_id: parent }
       await sb('fin_drive_folders', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: pin })
       ctx.folders.set(pin.key, pin)
       const f = pinnedFolder(ctx, pin); path = f.path

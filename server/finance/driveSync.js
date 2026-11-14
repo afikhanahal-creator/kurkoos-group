@@ -34,7 +34,7 @@ const targetOf = async (id) => { const t = await one(`fin_cloud_targets?id=eq.${
 const cleanName = (name) => String(name || '').normalize('NFC').replace(/[\u0000-\u001f\u007f\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)
 
 // ---------- from Drive to the system ----------
-export async function syncFromDrive({ targetId = null, budgetMs = 20_000, trigger = 'manual' } = {}) {
+export async function syncFromDrive({ targetId = null, budgetMs = 20_000, trigger = 'manual', origin = null } = {}) {
   const started = Date.now()
   const targets = (await sb(`fin_cloud_targets?provider=eq.gdrive&enabled=eq.true&status=in.(active,error)${targetId ? `&id=eq.${q(targetId)}` : ''}&select=*`)) || []
   const all = (await setting('drive_sync_state')) || {}
@@ -66,6 +66,8 @@ export async function syncFromDrive({ targetId = null, budgetMs = 20_000, trigge
         }
       }
       st.at = new Date().toISOString(); st.ok_at = st.at; st.error = null
+      // immediate notices from Drive: asked for (and renewed a day before they end) whenever the system knows its public address
+      if (origin) await watch(ctx, st, origin).catch((e) => { st.push = { ...(st.push || {}), active: false, error: String(e.message || e).slice(0, 200), at: st.at } })
       st.last = { changes: res.changes, renamed: res.renamed, moved: res.moved, trashed: res.trashed, restored: res.restored, missing: res.missing, folders: res.folders }
       const followed = res.renamed + res.moved + res.trashed + res.restored + res.missing + res.folders
       if (followed) { st.followed_at = st.at; await audit('cloud', t.id, 'drive_changes_followed', { ...st.last, trigger }, null).catch(() => {}) }
@@ -73,7 +75,7 @@ export async function syncFromDrive({ targetId = null, budgetMs = 20_000, trigge
       res.error = String(e.message || e).slice(0, 300); st.at = new Date().toISOString(); st.error = res.error
       // a token Drive no longer accepts: start again from now, and let the full check cover the gap
       if (e.status === 400 || e.status === 410) { st.token = null; st.gap = true }
-      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}`, { status: 'error', last_error: 'ההרשאה ל-Google Drive בוטלה או פגה. חברו מחדש' }).catch(() => {})
+      if (e.auth || e.status === 401) await patch(`fin_cloud_targets?id=eq.${t.id}&status=neq.revoked`, { status: 'error', last_error: 'ההרשאה ל-Google Drive בוטלה או פגה. חברו מחדש' }).catch(() => {})
     }
     all[t.id] = st
     out.push(res)
@@ -187,7 +189,15 @@ export async function pinDocs({ targetId, ids, folderKey = null, user }) {
   const results = []; const go = []
   for (const id of ids) {
     const r = have.get(id)
-    if (!r || r.status === 'withdrawn') { results.push({ id, ok: false, error: 'המסמך לא נמצא בארכיון' }); continue }
+    if (r?.status === 'withdrawn') { results.push({ id, ok: false, error: 'המסמך באשפה. משחזרים אותו קודם' }); continue }
+    if (!r) {
+      // not in the archive yet (uploaded a moment ago, still being read): the place is kept now, and the file goes there when it goes up
+      if (!dest || !(await one(`fin_documents?id=eq.${q(id)}&select=id`))) { results.push({ id, ok: false, error: 'המסמך לא נמצא בארכיון' }); continue }
+      await sb('fin_drive_folders', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { target_id: t.id, key: `pin:${id}`, name: dest.key, drive_folder_id: dest.drive_folder_id } })
+      results.push({ id, ok: true, drive: 'later', path: pathOfKey(ctx, dest.key) })
+      await event(t.id, id, 'moved_by_user', { to: { path: pathOfKey(ctx, dest.key) }, drive: 'later', folder: dest.key }, user)
+      continue
+    }
     if (user?.business_ids?.length && r.business_id && !user.business_ids.includes(r.business_id)) { results.push({ id, ok: false, error: 'אין לך הרשאה למסמך הזה' }); continue }
     if (dest) await sb('fin_drive_folders', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { target_id: t.id, key: `pin:${id}`, name: dest.key, drive_folder_id: dest.drive_folder_id } })
     else await sb(`fin_drive_folders?target_id=eq.${t.id}&key=eq.${q(`pin:${id}`)}`, { method: 'DELETE', prefer: 'return=minimal' })
@@ -202,7 +212,7 @@ export async function pinDocs({ targetId, ids, folderKey = null, user }) {
     await event(t.id, g.id, 'moved_by_user', { from: { path: g.from }, to: { path: r?.path || (dest ? pathOfKey(ctx, dest.key) : 'לפי החברה והחודש') }, drive: r?.ok ? 'moved' : 'pending', folder: dest ? dest.key : null }, user)
   }
   if (go.length) await audit('cloud', t.id, 'archive_moved', { documents: go.map((g) => g.id).slice(0, 50), folder: dest ? pathOfKey(ctx, dest.key) : null }, user).catch(() => {})
-  return { results, moved: results.filter((r) => r.drive === 'moved').length, pending: results.filter((r) => r.drive === 'pending').length, failed: results.filter((r) => !r.ok).length }
+  return { results, moved: results.filter((r) => r.drive === 'moved').length, later: results.filter((r) => r.drive === 'later').length, pending: results.filter((r) => r.drive === 'pending').length, failed: results.filter((r) => !r.ok).length }
 }
 
 /* back from this screen's trash: the file comes out of the Drive trash (when it is still there) and the document
@@ -235,6 +245,7 @@ export async function activity({ targetId, documentId = null, limit = 60 }) {
 }
 
 /* the connected Google accounts, each on its own: who, state, what it holds, how much room Drive reports */
+const s0 = (s) => ({ active: !!(s?.push?.active && s.push.expiration > Date.now()), error: s?.push?.error || null, expiration: s?.push?.expiration || null })
 export async function accounts() {
   const targets = (await sb('fin_cloud_targets?provider=eq.gdrive&status=neq.revoked&select=id,account_email,status,enabled,business_id,root_name,last_sync_at,last_error,last_reconcile_at,last_reconcile,created_at&order=created_at')) || []
   const state = (await setting('drive_sync_state')) || {}
@@ -247,9 +258,10 @@ export async function accounts() {
       try { const ctx = await context(await one(`fin_cloud_targets?id=eq.${t.id}&select=*`)); const a = await json(await fetchRetry(`${env.driveApi()}/about?fields=${encodeURIComponent('storageQuota,user(displayName,emailAddress)')}`, { headers: H(ctx.token) }), 'drive about'); quota = { limit: a.storageQuota?.limit ? Number(a.storageQuota.limit) : null, usage: a.storageQuota?.usage ? Number(a.storageQuota.usage) : null, name: a.user?.displayName || null } } catch { quota = null }
     }
     const s = state[t.id] || {}
-    out.push({ ...t, files: { verified: by.verified || 0, pending: (by.queued || 0) + (by.uploading || 0) + (by.uploaded || 0), failed: (by.failed || 0) + (by.needs_review || 0), trash: by.withdrawn || 0, total: rows.length }, quota, sync: { at: s.at || null, ok_at: s.ok_at || null, followed_at: s.followed_at || null, error: s.error || null, last: s.last || null, started: !!s.token } })
+    const pu = s0(state[t.id])
+    out.push({ ...t, push: pu, files: { verified: by.verified || 0, pending: (by.queued || 0) + (by.uploading || 0) + (by.uploaded || 0), failed: (by.failed || 0) + (by.needs_review || 0), trash: by.withdrawn || 0, total: rows.length }, quota, sync: { at: s.at || null, ok_at: s.ok_at || null, followed_at: s.followed_at || null, error: s.error || null, last: s.last || null, started: !!s.token } })
   }
-  return { accounts: out, two_way: await isTwoWay(), scope: 'drive.file' }
+  return { accounts: out, two_way: await isTwoWay(), scope: env.driveScope() }
 }
 
 export async function setTwoWay({ on, user }) {
@@ -258,3 +270,50 @@ export async function setTwoWay({ on, user }) {
   return { ok: true, two_way: !!on }
 }
 export { exclude, requeue }
+
+// ---------- immediate notices from Drive (push), on top of the change list ----------
+/* Drive is asked to call our address when anything changes (changes.watch). A notice says only "something changed":
+   the change list is then read as always, so a notice that is lost, late or doubled changes nothing. A channel lives a
+   week at most and is renewed a day before it ends. When Drive refuses the address (a project that needs the address
+   verified, or a local address), the reading every minute goes on as before, and the screen says the notices are off. */
+const hookToken = (targetId, channelId) => `${targetId}.${crypto.createHmac('sha256', env.sbKey()).update(`${targetId}:${channelId}`).digest('hex').slice(0, 40)}`
+async function watch(ctx, st, origin) {
+  const local = /^https?:\/\/(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(origin)
+  if ((local || !/^https:/.test(origin)) && process.env.FINANCE_DRIVE_WATCH !== '1') return
+  const p = st.push || {}
+  if (p.active && p.address === origin && p.expiration - Date.now() > 24 * 3600_000) return
+  if (p.error && p.address === origin && Date.now() - new Date(p.at || 0).getTime() < 6 * 3600_000) return   // a refusal is not asked again for six hours
+  const id = crypto.randomUUID()
+  const r = await fetchRetry(`${env.driveApi()}/changes/watch?pageToken=${encodeURIComponent(st.token)}&spaces=drive`, { method: 'POST', headers: H(ctx.token, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id, type: 'web_hook', address: `${origin}/api/finance-drive-hook`, token: hookToken(ctx.target.id, id), expiration: String(Date.now() + 6 * 24 * 3600_000) }) })
+  if (!r.ok) { const d = await r.json().catch(() => ({})); st.push = { active: false, address: origin, error: String(d?.error?.message || `Drive ענה ${r.status}`).slice(0, 200), at: new Date().toISOString() }; return }
+  const ch = await r.json()
+  // the channel before this one is closed (a failure here only means two notices for a while)
+  if (p.id && p.resourceId) await fetch(`${env.driveApi()}/channels/stop`, { method: 'POST', headers: H(ctx.token, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id: p.id, resourceId: p.resourceId }) }).catch(() => {})
+  st.push = { active: true, id, resourceId: ch.resourceId, expiration: Number(ch.expiration) || Date.now() + 6 * 24 * 3600_000, address: origin, error: null, at: new Date().toISOString() }
+  await event(ctx.target.id, null, 'push_channel', { expiration: st.push.expiration })
+}
+/* a notice from Drive: checked by its token (made from the server's own key, so nobody else can make one), then the
+   change list of that connection is read. Always answers 200 or 401: Drive retries on other answers. */
+export async function driveHook(req) {
+  const id = String(req.headers['x-goog-channel-id'] || ''); const token = String(req.headers['x-goog-channel-token'] || ''); const state = String(req.headers['x-goog-resource-state'] || '')
+  const targetId = token.split('.')[0]
+  if (!UUID.test(targetId) || !id || token !== hookToken(targetId, id)) return { status: 401, body: { error: 'unauthorized' } }
+  if (state === 'sync') return { status: 200, body: { ok: true, hello: true } }   // Drive's first call on a new channel
+  const cur = ((await setting('drive_sync_state')) || {})[targetId]
+  if (cur?.push?.id && cur.push.id !== id) return { status: 200, body: { ok: true, old_channel: true } }
+  const [r] = await syncFromDrive({ targetId, trigger: 'push', budgetMs: 8_000 })
+  return { status: 200, body: { ok: true, followed: r ? r.renamed + r.moved + r.trashed + r.restored + r.missing + r.folders : 0 } }
+}
+
+// ---------- the rest of the account (only with the wide permission) ----------
+/* Files that others shared with this account, read live from Drive. With the narrow permission Google returns nothing
+   here, and the answer says so instead of an empty list that looks like "nothing is shared". Read only: the system
+   never changes a file it did not make. */
+export async function shared({ targetId }) {
+  const scope = env.driveScope()
+  if (scope !== 'drive') return { scope, files: [], available: false }
+  const t = await targetOf(targetId); const ctx = await context(t)
+  const p = new URLSearchParams({ q: 'sharedWithMe and trashed=false', pageSize: '100', orderBy: 'sharedWithMeTime desc', fields: 'files(id,name,mimeType,size,modifiedTime,webViewLink,owners(displayName,emailAddress))' })
+  const r = await json(await fetchRetry(`${env.driveApi()}/files?${p}`, { headers: H(ctx.token) }), 'drive list')
+  return { scope, available: true, files: (r.files || []).map((f) => ({ id: f.id, name: f.name, folder: f.mimeType === FOLDER, size: f.size ? Number(f.size) : null, modified: f.modifiedTime || null, link: f.webViewLink || null, owner: f.owners?.[0]?.displayName || f.owners?.[0]?.emailAddress || '' })) }
+}

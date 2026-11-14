@@ -43,6 +43,7 @@ const ROUTES = {
   finance: () => import('../server/finance.js'),
   'finance-oauth': () => import('../server/finance.js'),
   'finance-whatsapp': () => import('../server/finance.js'),
+  'finance-drive-hook': () => import('../server/finance.js'),
 }
 
 /* שם המטפל מגיע מהסגמנט הדינמי של הנתיב. יש גיבוי לקריאה מתוך
@@ -60,7 +61,7 @@ export function resolveRoute(req) {
 /* Members of the finance system other than admins (accountant, employee, finance manager) have a
    Supabase account, and the site's handlers trust any signed-in user. They are kept to /api/finance.
    Public routes (lead form, newsletter, sitemap) and cron calls are not affected. */
-const FINANCE_ONLY_OK = new Set(['finance', 'finance-oauth', 'finance-whatsapp', 'notify-lead', 'newsletter-subscribe', 'sitemap', 'indexnow'])
+const FINANCE_ONLY_OK = new Set(['finance', 'finance-oauth', 'finance-whatsapp', 'finance-drive-hook', 'notify-lead', 'newsletter-subscribe', 'sitemap', 'indexnow'])
 async function financeOnly(req) {
   const auth = String(req.headers?.authorization || '')
   const token = auth.replace(/^Bearer\s+/i, '').trim()

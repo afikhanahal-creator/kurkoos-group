@@ -66,6 +66,7 @@ const ROLES = {
   'drive-activity': ['admin', 'finance_manager'],
   'drive-accounts': ['admin', 'finance_manager'],
   'drive-two-way': ['admin'],
+  'drive-shared': ['admin', 'finance_manager'],
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
@@ -192,6 +193,12 @@ export default async function handler(req, res) {
   const url = new URL(req.url, 'http://x')
 
   if (url.pathname.endsWith('/finance-oauth')) return oauthCallback(req, res, url)
+  // a notice from Google Drive that something changed there (driveSync.js checks its token)
+  if (url.pathname.endsWith('/finance-drive-hook')) {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
+    try { const ds = await import('./finance/driveSync.js'); const out = await ds.driveHook(req); res.status(out.status).json(out.body) } catch { res.status(200).json({ ok: false }) }
+    return
+  }
   if (url.pathname.endsWith('/finance-whatsapp')) {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
     return whatsappWebhook(req, res)
@@ -213,7 +220,7 @@ export default async function handler(req, res) {
       const started = Date.now()
       // the Drive archive first (short: a few documents a minute is plenty), then the mail scan with the rest of the time
       // what a person did in Drive since the last minute is followed first, then the queue goes up
-      await import('./finance/driveSync.js').then((ds) => ds.syncFromDrive({ trigger: 'scan', budgetMs: 8_000 })).catch(() => [])
+      await import('./finance/driveSync.js').then((ds) => ds.syncFromDrive({ trigger: 'scan', budgetMs: 8_000, origin: origin(req) })).catch(() => [])
       const drive = await archive.tick({ started, budgetMs: 15_000, trigger: 'scan' }).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
       await archive.reconcileStep({ started, budgetMs: 25_000 }).catch(() => [])
       res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
@@ -443,7 +450,7 @@ export default async function handler(req, res) {
       case 'drive-sync': {
         // what was done in Drive is followed first, then what waits in the queue goes up
         const ds = await import('./finance/driveSync.js'); const tid = body.target_id ? String(body.target_id) : null
-        const from = await ds.syncFromDrive({ targetId: tid, trigger: 'manual', budgetMs: 15_000 })
+        const from = await ds.syncFromDrive({ targetId: tid, trigger: 'manual', budgetMs: 15_000, origin: origin(req) })
         const to = body.quick ? [] : await archive.tick({ trigger: 'manual', targetId: tid, max: 60, budgetMs: 20_000 })
         res.status(200).json({ ok: true, from_drive: from, to_drive: to })
         return
@@ -472,6 +479,7 @@ export default async function handler(req, res) {
       }
       case 'drive-activity': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.activity({ targetId: String(body.target_id || ''), documentId: /^[0-9a-f-]{36}$/i.test(String(body.document_id || '')) ? String(body.document_id) : null, limit: Number(body.limit) || 60 })); return }
       case 'drive-accounts': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.accounts()); return }
+      case 'drive-shared': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.shared({ targetId: String(body.target_id || '') })); return }
       case 'drive-two-way': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.setTwoWay({ on: body.on !== false, user })); return }
       case 'drive-exclude': {
         const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)

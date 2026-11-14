@@ -66,16 +66,35 @@ connected from there; every document's file belongs to the account it went up to
   `restored_in_drive`, `restored_by_user`, `folder_created`, `folder_renamed`, `folder_renamed_in_drive`,
   `folder_deleted`, `folder_trashed_in_drive`, `pin_lost`) and the larger ones also of `fin_audit`.
 
-## The limit that matters: what the connection can see
+## What the connection can see, and how to widen it
 
-The Google permission is `drive.file`: the system sees and manages only files and folders it created. So:
+The Google permission is set by the server variable `FINANCE_DRIVE_SCOPE`:
 
-- Files a person uploads straight into Drive, and files others shared, are not listed and cannot be changed or deleted
-  by the system. "שותפו איתי" explains this instead of showing a list.
-- A folder made in Drive is known only by its id: a document moved into it shows as "תיקייה שנוצרה ב-Drive".
-- To list and manage the whole Drive, the connection needs the full `drive` permission. Google treats it as a
-  restricted permission: an app that asks for it must pass Google's verification (and a security assessment for most
-  uses). That is the owner's decision and a change in the Google Cloud project, not in this code alone.
+- **not set (the default): `drive.file`.** The system sees and manages only files and folders it created. Files a person
+  uploads straight into Drive, and files others shared, are not listed. "שותפו איתי" explains this. A folder made in
+  Drive is known only by its id and shows as "תיקייה שנוצרה ב-Drive".
+- **`FINANCE_DRIVE_SCOPE=drive`: the whole Drive.** "שותפו איתי" lists the files others shared with the account, read
+  live from Drive (view only). A folder made in Drive shows with its real name. The system still changes only files it
+  made; nothing else in the account is renamed, moved or deleted by it.
+
+To turn the wide permission on (the owner's steps; none of them is in this code):
+
+1. Google Cloud Console → the project of the Google sign-in keys (`GOOGLE_CLIENT_ID`) → "OAuth consent screen" → add
+   the scope `https://www.googleapis.com/auth/drive`. Google lists it as a restricted scope.
+2. A project in "Testing" mode works at once for the test users listed there (up to 100), with a warning screen at
+   sign-in. A project in "Production" must pass Google's verification for a restricted scope (and usually a security
+   assessment) before others can connect.
+3. Vercel → the project → Environment Variables → `FINANCE_DRIVE_SCOPE` = `drive` → redeploy.
+4. In the system: Google Drive → חשבונות מחוברים → connect the account again, so Google asks for the wider permission.
+
+## Immediate notices from Drive (push)
+
+After every reading of the change list the system asks Drive to call `…/api/finance-drive-hook` when something changes
+(`changes.watch`). A notice carries no data: it only makes the system read the change list for that connection, so a
+notice that is lost, late or doubled changes nothing. Each notice is checked by a token made from the server's own key.
+A channel lives up to a week and is renewed a day before it ends. When Drive refuses the address, the reading every
+minute goes on and the accounts view says the notices are off, with Drive's reason. A refusal is asked again after six
+hours. The public address comes from `SITE_URL`, or from the request's own host.
 
 ## Tests
 
@@ -84,14 +103,22 @@ one (`scripts/finance-e2e/fakes.mjs`): each line of the table above, the full ch
 back), the screen (trash, restore, a new folder, history, accounts), an employee refused, and two-way sync off. The
 older archive scenarios run with two-way sync off, because they test the one-way rules.
 
-Not checked against the real Google Drive: no test here talks to Google.
+Not checked against the real Google Drive: no test here talks to Google. The stand-in runs with the wide permission,
+so the list of shared files and the name of a folder made in Drive are tested; the explanation shown under the narrow
+permission was tested in the round before.
+
+## Also on the screen
+
+- **Upload into a folder.** With a folder of the person's own open, "העלאה לתיקייה הזו" uploads as usual and keeps the
+  file's place in that folder from the first moment: it lands there when the document has been read and archived.
+- **Stars on folders** (a preference kept in the browser, like the stars on files), shown first in "מסומנים בכוכב".
+- **Search** also covers notes, the email's subject and sender, and the payment method.
 
 ## Not built
 
-- Listing files the system did not create, and "shared with me" (needs the wider permission above).
-- Push notifications from Drive.
+- Managing (renaming, moving, deleting) files the system did not create. With the wide permission they can be listed;
+  the system does not change them, on purpose.
 - Copying a file (a document has one file in Drive, by design: the same bytes never go up twice).
-- Uploading straight into a chosen folder (an upload goes to the company and month folder; it can be moved after).
-- Starring folders, and search inside the text of a document.
+- Search inside the text of a document (the text of a document is not kept, only the fields read from it).
 - A content conflict (the same file edited in Drive): as before, the changed copy goes to the Drive trash and the
   original is uploaded again; the event is recorded.

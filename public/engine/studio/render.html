@@ -11,6 +11,19 @@ window.studio = {
   directions: Object.keys(DIRECTIONS),
   async one(content, fmt, direction, opts) { const s = await buildReviewed(content, fmt, direction, opts || {}); return { scene: s, pngs: await Promise.all(s.pages.map((_, i) => png(s, i))) } },
   async redesign(post, photos, fmt, ctx) { const c = contentFromPost(post, photos); return { content: c, analysis: analyzePost(post, {}), concepts: await this.three(c, fmt, ctx) } },
+  // scripts/studio-batch.mjs: the three concepts for an existing post, the best approved one, every page as webp
+  async best(post, photos, ctx) {
+    const c = contentFromPost(post, photos)
+    if (post.division) c.division = post.division
+    if (!c.headline) return { skip: 'no headline' }
+    const r = await concepts(c, 'feed', ctx || {})
+    const ok = r.concepts.filter((s) => s.review.approved).sort((a, b) => b.review.total - a.review.total)
+    if (!ok.length) return { skip: 'no approved concept', scores: r.concepts.map((s) => [s.direction, s.review.total]) }
+    const s = ok[0]
+    const pages = []
+    for (let i = 0; i < s.pages.length; i++) { const cv = document.createElement('canvas'); await render({ w: s.w, h: s.h, layers: s.pages[i] }, cv); pages.push(cv.toDataURL('image/webp', 0.86)) }
+    return { scene: { ...s, review: undefined, content: { ...s.content, img: s.content.img && { src: s.content.img.src, key: s.content.img.key }, img2: s.content.img2 && { src: s.content.img2.src, key: s.content.img2.key } } }, review: { total: s.review.total, minContrast: s.review.minContrast }, pages, others: r.concepts.map((x) => [x.direction, x.review.total]) }
+  },
   async three(content, fmt, ctx) { const r = await concepts(content, fmt, ctx || {}); return Promise.all(r.concepts.map(async (s) => ({ scene: s, pngs: [await png(s, 0)] }))) },
 }
 window.studioReady = true

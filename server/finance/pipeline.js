@@ -4,7 +4,7 @@
 import crypto from 'node:crypto'
 import { env, costOf, MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.js'
 import { sb, one, insert, patch, q, rpc, upload, download, storageUsage, audit } from './db.js'
-import { extract, verify, needsVerify, crossCheck, relevanceOf, CLASS_LABEL } from './extract.js'
+import { extract, verify, needsVerify, crossCheck, relevanceOf, CLASS_LABEL, RELEVANT_CLASSES } from './extract.js'
 import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
 import { gate, triage } from './triage.js'
@@ -328,6 +328,11 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
     const files = msg.files.map((f) => ({ ...f, mime: mimeOf(f.name, f.mime) })).filter((f) => MAIL_OK.has(f.mime) && f.size <= MAX_FILE && !(f.mime.startsWith('image/') && f.mime !== TIFF && f.size < 15_000))
     let got = 0
 
+    // what this email's files turned out to be so far, and the files the short check hesitated about. A hesitant file
+    // is decided when the whole email has been seen: alone it waits for a person, next to files that are not expense
+    // documents (and with nothing accepted) it is skipped with them. One unsolicited email must not open documents.
+    const seen = { accepted: 0, notExpense: 0 }
+    const doubts = []
     const take = async (buf, mime, name, extractInput) => {
       const hash = sha(buf)
       if (await one(`fin_documents?file_hash=eq.${hash}&select=id`)) { stats.skipped++; runs.collector.stat.details.duplicates = (runs.collector.stat.details.duplicates || 0) + 1; return }
@@ -335,7 +340,7 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
       if (await one(`fin_skipped?file_hash=eq.${hash}&select=id`).catch(() => null)) { stats.skipped++; return }
       // gate 1 (rules, free) and gate 2 (a short question to a small model) decide whether the full reading is worth paying for
       const skipAs = async (cls, conf, reason, label) => {
-        tally(label); stats.skipped++
+        tally(label); stats.skipped++; seen.notExpense++
         runs.collector.stat.details.not_financial = [...(runs.collector.stat.details.not_financial || []), `${meta.email_subject} · ${name}`].slice(-20)
         await insert('fin_skipped', { source: mb.provider, mailbox_id: mb.id, email_subject: meta.email_subject, email_from: meta.email_from, file_name: String(name).slice(0, 200), file_hash: hash, document_class: cls, confidence: conf, reason }, 'return=minimal').catch(() => {})
       }
@@ -349,27 +354,22 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
           runs.ocr.stat.details.triage_tokens = (runs.ocr.stat.details.triage_tokens || 0) + (t.usage?.in || 0) + (t.usage?.out || 0)
           runs.collector.stat.details.triage_usd = (runs.collector.stat.details.triage_usd || 0) + costOf(env.modelTriage(), t.usage?.in, t.usage?.out)
           if (t.verdict === 'skip') { await skipAs(t.cls, t.conf, `בדיקה מקדימה: ${CLASS_LABEL[t.cls] || 'לא חשבונית או קבלה'}`, 'skipped_by_triage'); return }
+          // a hesitant "no" is still a no: without positive evidence a file does not become a document
+          if (t.verdict === 'unsure' && t.lean !== 'yes') { await skipAs(t.cls || 'other', t.conf, `בדיקה מקדימה: כנראה ${CLASS_LABEL[t.cls] || 'לא חשבונית או קבלה'}`, 'skipped_by_triage'); return }
           if (t.verdict === 'unsure') doubt = t; else tally('triage_keep')
         } catch { tally('triage_error') }   // a fault of the check is not a doubt about the file: the full reading decides, and it retries on its own
       }
-      if (doubt) {
-        // a doubt goes to a person, without paying for the reading: "yes, it is an invoice" reads it, "not relevant" lists it
-        tally('needs_confirmation')
-        const path = `${mb.provider}/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${extOf(mime)}`
-        await upload(path, buf, mime.startsWith('text/') ? 'text/html; charset=utf-8' : mime)
-        try {
-          await insert('fin_documents', { ...meta, file_path: path, file_name: String(name).slice(0, 200), file_mime: mime.startsWith('text/') ? 'text/html' : mime, file_size: buf.length, file_hash: hash, attempts: 0, status: 'review', confidence: doubt.conf,
-            issues: [{ level: 'warn', code: 'needs_confirmation', field: null, message: `המערכת לא בטוחה שזה חשבונית או קבלה${doubt.cls && CLASS_LABEL[doubt.cls] ? ` (נראה כמו ${CLASS_LABEL[doubt.cls]})` : ''}. אם זו חשבונית, לוחצים "כן, לקרוא"; אם לא, "לא רלוונטי".` }] })
-          stats.imported++; got++
-        } catch (e) { if (e.code === '23505') stats.skipped++; else throw e }
-        return
-      }
+      if (doubt) { doubts.push({ buf, mime, name, hash, doubt, skipAs }); return }   // decided after the email's other files
       let x = null; let failure = null
       try { x = await readDocument(extractInput, runs, { deadline: started + TIME_BUDGET_MS - 20_000 }); runs.ocr.stat.processed++ } catch (e) { failure = e; runs.ocr.stat.errors++ }
       // not an invoice or a receipt (quote, contract, newsletter, letter): no financial record, one line in the skip list.
       // Only a sure answer skips; an unsure one is kept and goes to a person.
-      const rel = x ? relevanceOf(x) : null
+      // From mail, a class that is not an expense document and that the reading itself did not call financial is skipped
+      // even when the reading was not sure of the class: it is not an invoice either way. (A person's own upload is kept.)
+      const rel0 = x ? relevanceOf(x) : null
+      const rel = rel0?.verdict === 'unsure' && rel0.cls && !RELEVANT_CLASSES.includes(rel0.cls) && x.is_financial_document !== true ? { ...rel0, verdict: 'skip' } : rel0
       if (rel?.verdict === 'skip') {
+        seen.notExpense++
         runs.collector.stat.details.not_financial = [...(runs.collector.stat.details.not_financial || []), `${meta.email_subject} · ${name}`].slice(-20)
         runs.collector.stat.details.skipped_by_class = { ...(runs.collector.stat.details.skipped_by_class || {}), [rel.cls || 'other']: ((runs.collector.stat.details.skipped_by_class || {})[rel.cls || 'other'] || 0) + 1 }
         await insert('fin_skipped', { source: mb.provider, mailbox_id: mb.id, email_subject: meta.email_subject, email_from: meta.email_from, file_name: String(name).slice(0, 200), file_hash: hash, document_class: rel.cls, confidence: rel.conf, reason: rel.cls ? `${CLASS_LABEL[rel.cls]}, לא חשבונית או קבלה` : 'לא מסמך כספי' }, 'return=minimal').catch(() => {})
@@ -388,7 +388,7 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
       await keepProjectInCompany(fields)
       const newSupplier = fields.suggestions?.supplier?.match === 'new' ? fields.supplier_id : null
       try {
-        const row = await insert('fin_documents', { ...base, ...fields }); stats.imported++; got++
+        const row = await insert('fin_documents', { ...base, ...fields }); stats.imported++; got++; seen.accepted++
         if (row) { await settlePlaceholder(row).catch(() => {}); await flushHits(row.id, pendingHits); if (fields.supplier_id) await patch(`fin_suppliers?id=eq.${fields.supplier_id}&suggested_from=is.null&status=eq.pending`, { suggested_from: row.id }).catch(() => {}) }
       } catch (e) {
         // the document was not stored: a supplier suggested only by it goes too
@@ -417,6 +417,23 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
         const buf = Buffer.from(msg.html || `<pre>${plain.replace(/</g, '&lt;')}</pre>`, 'utf8')
         await take(buf, 'text/html', `${meta.email_subject || 'email'}.html`, { text: `From: ${meta.email_from}\nSubject: ${meta.email_subject}\n\n${plain}`, categories: await categories() })
       }
+    }
+    // the hesitant files, now that the whole email was seen
+    for (const d of doubts) {
+      if (seen.notExpense > 0 && seen.accepted === 0) {
+        await d.skipAs(d.doubt.cls || 'other', d.doubt.conf, 'בדיקה מקדימה: לא ברור שזו חשבונית, ושאר הקבצים במייל אינם חשבוניות או קבלות', 'skipped_with_email')
+        continue
+      }
+      // alone (or next to a real invoice) it waits for a person, without paying for the reading: "yes, it is an invoice"
+      // reads it, "not relevant" lists it. Its type is "other" until then, so it is never copied to the cloud archive.
+      tally('needs_confirmation')
+      const path = `${mb.provider}/${new Date().toISOString().slice(0, 7)}/${d.hash.slice(0, 24)}.${extOf(d.mime)}`
+      await upload(path, d.buf, d.mime.startsWith('text/') ? 'text/html; charset=utf-8' : d.mime)
+      try {
+        await insert('fin_documents', { ...meta, file_path: path, file_name: String(d.name).slice(0, 200), file_mime: d.mime.startsWith('text/') ? 'text/html' : d.mime, file_size: d.buf.length, file_hash: d.hash, attempts: 0, status: 'review', doc_type: 'other', confidence: d.doubt.conf,
+          issues: [{ level: 'warn', code: 'needs_confirmation', field: null, message: `המערכת לא בטוחה שזה חשבונית או קבלה${d.doubt.cls && CLASS_LABEL[d.doubt.cls] ? ` (נראה כמו ${CLASS_LABEL[d.doubt.cls]})` : ''}. אם זו חשבונית, לוחצים "כן, לקרוא"; אם לא, "לא רלוונטי".` }] })
+        stats.imported++
+      } catch (e) { if (e.code === '23505') stats.skipped++; else throw e }
     }
     await sb('fin_mail_seen', { method: 'POST', body: { mailbox_id: mb.id, message_id: id }, prefer: 'resolution=ignore-duplicates,return=minimal' })
     return { files: files.length, kept: stats.imported - before.imported, skipped: stats.skipped - before.skipped, unreadable, subject: meta.email_subject, from: meta.email_from, date: meta.email_date }

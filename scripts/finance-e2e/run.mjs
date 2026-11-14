@@ -1876,6 +1876,69 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
     [fmtShot])
 }
 
+// INTAKE: what gets in from mail. The night of 2026-11-14 one unsolicited email (an investment offer with seven PDFs)
+// opened two documents that "waited for confirmation" and were copied to Drive. The rule now: a file becomes a document
+// only on positive evidence that it is an expense document.
+//   A. the same kind of email: one file a sure "no", one a hesitant "no", one a hesitant "yes" → nothing gets in
+//   B. a single file with a hesitant "yes" → waits for a person, is NOT queued for Drive; "yes, read it" makes it an invoice
+//   C. a file named like an invoice whose full reading says "a purchase order, not sure" → skipped, not kept "for review"
+{
+  const mk = async (html) => { await page.setContent(`<div style="font:16px sans-serif;padding:40px">${html}</div>`); return page.pdf({ format: 'A4' }) }
+  const files = {
+    'NG_Overview_Tier_1.pdf': await mk('<h1>150-Acre Portfolio Overview</h1><p>Confidential investor summary</p>'),
+    '3. NG_3_Acre_635K_Investor_Land_Valuation.pdf': await mk('<h1>Investor Land Valuation</h1><p>3 acres, appraised at $635,000</p>'),
+    '4.NG_50K_First_Domino_635K_Closing.pdf': await mk('<h1>First Domino</h1><p>$50,000 bridge financing toward a $635,000 closing</p>'),
+    'scan_7741.pdf': await mk('<div dir="rtl"><h1>נגריית האלון</h1><p>חשבונית מס 7741</p><p>ארונות למשרד</p><p>סה״כ לתשלום 2,360.00</p></div>'),
+    'חשבונית_הזמנה_55.pdf': await mk('<div dir="rtl"><h1>הזמנת רכש 55</h1><p>ברזל לאתר</p><p>סה״כ 9,000</p></div>'),
+  }
+  for (const [n, b] of Object.entries(files)) fs.writeFileSync(`${FIX}/${n}`, b)
+  const hashOf = (b) => crypto.createHash('sha256').update(b).digest('hex')
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
+  const saved = JSON.stringify(fx)
+  const base = fx.answers[Object.keys(fx.answers)[0]]
+  const ans = (o) => ({ ...base, supplier_vat_id: '', customer_name: '', customer_vat_id: '', category: 'אחר', vat_rate: 18, ...o })
+  const no = (o) => ans({ is_financial_document: false, document_class: 'other', doc_type: 'other', supplier_name: '', doc_number: '', amount_before_vat: null, vat_amount: null, total_amount: null, ...o })
+  fx.answers[hashOf(files['NG_Overview_Tier_1.pdf'])] = no({ document_class: 'marketing', relevance_confidence: 0.96 })
+  fx.answers[hashOf(files['3. NG_3_Acre_635K_Investor_Land_Valuation.pdf'])] = no({ relevance_confidence: 0.6 })                                   // a hesitant no
+  fx.answers[hashOf(files['4.NG_50K_First_Domino_635K_Closing.pdf'])] = no({ is_financial_document: true, relevance_confidence: 0.5 })            // a hesitant yes
+  fx.answers[hashOf(files['scan_7741.pdf'])] = ans({ is_financial_document: true, document_class: 'tax_invoice', relevance_confidence: 0.5, supplier_name: 'נגריית האלון', doc_number: '7741', issue_date: new Date().toISOString().slice(0, 10), amount_before_vat: 2000, vat_amount: 360, total_amount: 2360, description: 'ארונות למשרד' })
+  fx.answers[hashOf(files['חשבונית_הזמנה_55.pdf'])] = no({ document_class: 'purchase_order', doc_type: 'other', relevance_confidence: 0.6, supplier_name: 'ברזל הדרום', total_amount: 9000 })
+  const when = (h) => new Date(Date.now() - h * 3600_000).toISOString()
+  fx.mailboxes['invoices@kurkoos.test'].messages.push(
+    { id: 'm30', date: when(3), subject: 'Confidential Land Investment Opportunity | $50K Bridge Financing', from: 'Nick Sample <nick@invest.test>', text: 'Dear Sir, a confidential opportunity.', files: ['NG_Overview_Tier_1.pdf', '3. NG_3_Acre_635K_Investor_Land_Valuation.pdf', '4.NG_50K_First_Domino_635K_Closing.pdf'] },
+    { id: 'm31', date: when(2), subject: 'מסמך מצורף', from: 'דן <dan@alon.test>', text: 'מצורף', files: ['scan_7741.pdf'] },
+    { id: 'm32', date: when(1), subject: 'מסמך', from: 'רכש <orders@south.test>', text: 'מצורף', files: ['חשבונית_הזמנה_55.pdf'] })
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const boxId = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
+  await api(tok, { action: 'sync', mailbox_id: boxId })
+  const inA = sql("select count(*) from fin_documents where email_message_id='m30'")
+  const skA = sql("select coalesce(string_agg(left(file_name, 12)||'='||left(reason, 80), ' | ' order by file_name), '') from fin_skipped where email_subject like 'Confidential Land%'")
+  const docB = sql("select id||'|'||status||'|'||doc_type||'|'||(issues::text like '%needs_confirmation%') from fin_documents where email_message_id='m31'").split('|')
+  const inC = sql("select count(*) from fin_documents where email_message_id='m32'")
+  const skC = sql("select coalesce(max(document_class||': '||reason), '') from fin_skipped where file_name='חשבונית_הזמנה_55.pdf'")
+  // the cloud agent runs: the waiting document must not be queued or uploaded
+  const tgt = sql("select coalesce((select id::text from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1), '')")
+  if (tgt) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await api(tok, { action: 'drive-run', target_id: tgt }) }
+  const queuedB = docB[0] ? sql(`select count(*) from fin_drive_files where document_id='${docB[0]}'`) : '?'
+  const eligB = docB[0] ? sql(`select public.fin_drive_eligible(status, doc_type, file_mime, file_path) from fin_documents where id='${docB[0]}'`) : '?'
+  await go(`/documents/${docB[0]}`); await page.waitForTimeout(900)
+  const askText = await page.locator('.fin-panel__confirm').innerText().catch(() => '')
+  const askShot = await shot('119-intake-waits')
+  // a person says "yes, it is an invoice": now it is read and becomes an invoice like any other
+  await page.locator('.fin-panel__confirm').getByRole('button', { name: /כן, זו חשבונית/ }).click().catch(() => {})
+  let after = ''
+  for (let i = 0; i < 30 && !/נגריית האלון/.test(after); i++) { await page.waitForTimeout(500); after = sql(`select coalesce(supplier_name,'-')||'|'||doc_type||'|'||(issues::text like '%needs_confirmation%')||'|'||public.fin_drive_eligible(status, doc_type, file_mime, file_path) from fin_documents where id='${docB[0]}'`) }
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  const runLog = sql("select coalesce((select details->>'conductor' from fin_agent_runs where agent='collector' and details ? 'conductor' order by started_at desc limit 1), '')")
+  record('INTAKE', 'מה נכנס מהמייל: רק מסמך שיש ראיה שהוא חשבונית או קבלה', 'מייל של הצעת השקעה עם שלושה קבצים (לא בטוח, נוטה ללא, נוטה לכן): אף קובץ לא נהיה מסמך וכולם ברשימת הדילוגים עם סיבה; קובץ יחיד שהמערכת מהססת לגביו ממתין לאישור של אדם, לא נכנס לתור של Drive ולא מועלה, ואחרי "כן, זו חשבונית" נקרא ונהיה חשבונית; קובץ בשם של חשבונית שהקריאה המלאה אומרת שהוא הזמנת רכש מדולג',
+    `מייל ההשקעה: ${inA} מסמכים, דולגו: ${skA}; קובץ יחיד: ${docB.slice(1).join(',')}, מתאים ל-Drive: ${eligB}, שורות בתור: ${queuedB}${tgt ? '' : ' (אין חיבור פעיל)'}; במסך: "${askText.replace(/\s+/g, ' ').slice(0, 60)}"; אחרי אישור: ${after}; הזמנת רכש: ${inC} מסמכים, ${skC}; ריצה: ${runLog}`,
+    inA === '0' && (skA.match(/=/g) || []).length === 3 && /שאר הקבצים במייל/.test(skA) && /כנראה/.test(skA)
+      && docB[1] === 'review' && docB[2] === 'other' && docB[3] === 'true' && eligB === 'f' && queuedB === '0' && /האם זו חשבונית או קבלה/.test(askText)
+      && /^נגריית האלון\|invoice\|false\|true$/.test(after) && inC === '0' && /purchase_order/.test(skC) && /skipped_with_email/.test(runLog),
+    [askShot])
+}
+
 // SCAN: the scan engine on a big mailbox and on invoices@ side by side. 1,502 messages (1,200 of them in one week, i.e.
 // three pages of 500), a 503 on listing, a message that fails once and then works, a damaged TIFF, the same invoice that
 // already came to invoices@, stop and resume, a message the first pass "missed", and the completeness rule: done only

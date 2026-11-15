@@ -484,10 +484,12 @@ const w4 = await hook(imgMsg('wa-4', '972543049491'), 'wrong-token')
 const w5 = await hook({ typeWebhook: 'incomingMessageReceived', idMessage: 'wa-5', senderData: { chatId: '972543049491@c.us' }, messageData: { typeMessage: 'textMessage', textMessageData: { textMessage: 'שלום' } } })
 const waDoc = sql("select source||'|'||status||'|'||coalesce(supplier_name,'-')||'|'||total_amount||'|'||(created_by is not null) from fin_documents where file_name='wa-receipt.png'")
 const waLog = (await fetch(`${FAKES}/__log`).then((r) => r.json())).wa
+// a number that is not registered leaves no trace: not a row, not a phone number
+const waStranger = sql("select count(*) from fin_whatsapp_inbox where phone like '%529999999' or outcome='refused_unknown_number'")
 await page.reload(); await page.waitForTimeout(1200)
 const scannersShot = await shot('53-scanners')
-record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה בלי שום הודעה אליו (לקוחות כותבים לאותו מספר); טוקן שגוי ← 401; הודעת טקסט נרשמת ולא נענית', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}`,
-  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /נקלטה במערכת בהצלחה/.test(m.message) && /ספק: קפה לנדוור/.test(m.message) && /295/.test(m.message)) && !waLog.some((m) => /לא רשום|שלחו צילום/.test(m.message)), [scannersEmpty, scannersShot])
+record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה בלי שום הודעה אליו ובלי שום רישום (לקוחות כותבים לאותו מספר); טוקן שגוי ← 401; הודעת טקסט נרשמת ולא נענית', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}; שורות של מספר לא רשום: ${waStranger}`,
+  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && waStranger === '0' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /נקלטה במערכת בהצלחה/.test(m.message) && /ספק: קפה לנדוור/.test(m.message) && /295/.test(m.message)) && !waLog.some((m) => /לא רשום|שלחו צילום/.test(m.message)), [scannersEmpty, scannersShot])
 
 // CLOUD: Google Drive and Dropbox, through the real OAuth round trip and the real upload code
 await fetch(`${FAKES}/__next_account?email=office@kurkoos.test`)
@@ -1110,22 +1112,26 @@ record('SENDC', 'מרכז השליחה לרו״ח', 'מופיעים כל המס�
   [sendCenterShot, sentCenterShot])
 
 // =================== DATE RANGE + SEND TO THE ACCOUNTANT ===================
+// the range is the fixtures' own days (tambour = 6 days before they were made … electra = 3 days before), not fixed dates:
+// fixed dates emptied the range on any day the fixtures were made later, and the send button stayed disabled
+const RANGE = [meta.D.tambour, meta.D.electra]
+const dayHe = (iso) => `${Number(iso.slice(8, 10))} ב${['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'][Number(iso.slice(5, 7)) - 1]}`
 const auditBefore = Number(sql("select count(*) from fin_audit where action='sent_to_accountant'"))
 await nav('כל המסמכים'); await page.waitForTimeout(600)
 const totalRows = await page.locator('.fin-table tbody tr').count()
 await page.locator('.fin-datechip__main').click(); await page.waitForSelector('.fin-cal'); await page.waitForTimeout(250)
 const months = (await page.locator('.fin-cal__mname').allInnerTexts()).join(' | ')
-await page.locator('.fin-cal__day[data-date="2026-11-02"]').click()
+await page.locator(`.fin-cal__day[data-date="${RANGE[0]}"]`).click()
 const midTitle = await page.locator('.fin-cal__head strong').innerText()
-await page.locator('.fin-cal__day[data-date="2026-11-05"]').hover(); await page.waitForTimeout(150)
+await page.locator(`.fin-cal__day[data-date="${RANGE[1]}"]`).hover(); await page.waitForTimeout(150)
 const preview = await page.locator('.fin-cal__day.is-in').count()
-await page.locator('.fin-cal__day[data-date="2026-11-05"]').click()
+await page.locator(`.fin-cal__day[data-date="${RANGE[1]}"]`).click()
 const calShot = await shot('69-date-range')
 await page.getByRole('button', { name: 'החל', exact: true }).click(); await page.waitForTimeout(400)
 const chip = await page.locator('.fin-datechip__main').innerText()
 const inRange = await page.locator('.fin-table tbody tr').count()
 const barCount = await page.locator('.fin-rangebar__text strong').innerText()
-const expectRange = sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived','rejected')")
+const expectRange = sql(`select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '${RANGE[0]}' and '${RANGE[1]}' and status not in ('archived','rejected')`)
 const rangeShot = await shot('70-range-summary')
 await page.getByRole('button', { name: 'שליחה לרו״ח' }).first().click(); await page.waitForTimeout(300)
 const prefilled = await page.locator('.fin-modal input[type=email]').inputValue()
@@ -1138,7 +1144,7 @@ await page.waitForTimeout(500)
 const sentNote = await page.locator('.fin-note').first().innerText().catch(() => '')
 const lgS = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const mailS = [...lgS.emails].reverse().find((e) => /מסמכים לרו״ח/.test(e.subject || ''))
-const withFiles = Number(sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived','rejected','duplicate') and file_path is not null"))
+const withFiles = Number(sql(`select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '${RANGE[0]}' and '${RANGE[1]}' and status not in ('archived','rejected','duplicate') and file_path is not null`))
 const auditSend = String(Number(sql("select count(*) from fin_audit where action='sent_to_accountant'")) - auditBefore)
 // clearing the chip restores the full list
 await page.locator('.fin-datechip__x').click(); await page.waitForTimeout(300)
@@ -1147,7 +1153,7 @@ const cleared = await page.locator('.fin-table tbody tr').count()
 const empSend = await api(empToken, { action: 'send-to-accountant', ids: [sql("select id from fin_documents limit 1")], to: 'x@y.test' })
 record('SEND', 'סינון לפי טווח תאריכים ושליחה לרו״ח', 'לוח שנה של שני חודשים: לחיצה ראשונה מתחילה, השנייה מסיימת, הטווח מוצג מראש בריחוף; "החל" מסנן את הרשימה; "שליחה לרו״ח" שולחת מייל אחד עם כל הקבצים המקוריים וקובץ CSV; ניקוי מחזיר הכול; עובד לא יכול לשלוח',
   `חודשים: ${months}; אחרי לחיצה ראשונה: "${midTitle}"; תצוגה מקדימה: ${preview} ימים; צ׳יפ: "${chip}"; שורות: ${inRange}/${totalRows} (צפוי ${expectRange}), בסרגל: "${barCount}"; נמען מוצע: "${prefilled}"; מייל: ${mailS ? `"${mailS.subject}" אל ${mailS.to}, ${mailS.attachments.length} קבצים (${mailS.attachments.filter((a) => /\.csv$/.test(a.filename)).length} CSV, ${mailS.attachments.filter((a) => /\.xlsx$/.test(a.filename)).length} Excel)` : 'לא נשלח'}; הודעה: "${sentNote}"; יומן: ${auditSend}; אחרי ניקוי: ${cleared}; עובד: ${empSend.status}`,
-  /אוקטובר|נובמבר/.test(months) && /\?/.test(midTitle) && preview === 2 && /2 בנובמבר.*5 בנובמבר/.test(chip) && inRange === Number(expectRange) && inRange > 0 && inRange < totalRows && !!mailS && mailS.to.includes('cpa@accountants.test') && mailS.attachments.length === withFiles + 2 && mailS.attachments[0].filename.endsWith('.xlsx') && mailS.attachments[1].filename.endsWith('.csv') && auditSend === '1' && cleared === totalRows && empSend.status === 403 && /נשלח/.test(sentNote),
+  /אוקטובר|נובמבר/.test(months) && /\?/.test(midTitle) && preview === 2 && new RegExp(`${dayHe(RANGE[0])}.*${dayHe(RANGE[1])}`).test(chip) && inRange === Number(expectRange) && inRange > 0 && inRange < totalRows && !!mailS && mailS.to.includes('cpa@accountants.test') && mailS.attachments.length === withFiles + 2 && mailS.attachments[0].filename.endsWith('.xlsx') && mailS.attachments[1].filename.endsWith('.csv') && auditSend === '1' && cleared === totalRows && empSend.status === 403 && /נשלח/.test(sentNote),
   [calShot, rangeShot, sendShot])
 
 // =================== ORGANIZATION ===================
@@ -1164,7 +1170,7 @@ await page.getByLabel('סינון לפי תפקיד').selectOption('employee'); 
 const orgEmployees = await page.locator('.fin-member').count()
 await page.getByLabel('סינון לפי תפקיד').selectOption('')
 await page.getByRole('tab', { name: 'חברות' }).click(); await page.waitForTimeout(300)
-const orgCompanies = await page.locator('.fin-acc').count()
+const orgCompanies = await page.locator('.fin-cocard:not(.fin-cocard--add)').count()
 const orgCompaniesShot = await shot('64-organization-companies')
 await page.getByRole('tab', { name: 'שימוש' }).click(); await page.waitForTimeout(1200)
 const usageText = (await page.locator('.fin-org-panel').first().innerText()).replace(/\s+/g, ' ')
@@ -1741,22 +1747,28 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const homeNums = await page.locator('.fin-alertrow--warn').innerText().catch(() => '')
   record('NUMS', 'מסמכים שהמערכת לא בטוחה בסכומים שלהם', 'לשונית "מספרים לבדיקה" מראה מסמך שהסכומים בו לא מסתדרים; מרכז הבקרה מפנה אליה', `שורות: ${numRows}; בבית: "${homeNums}"`, numRows >= 1 && /אשרו את המספרים/.test(homeNums), [numShot])
 
-  // 4. the WhatsApp screen: office number, stats, an unknown sender can be added in one tap; the top-bar chip
-  // a message from a number that is not registered is in the log (and counted), but is not listed on the screen
+  // 4. the WhatsApp screen: office number, stats, the receipts handed in by hand; the top-bar chip.
+  // A number that is not registered is never logged now; a row an older version logged for one stays off the screen, and uncounted
   sql("insert into fin_whatsapp_inbox (message_id, phone, kind, outcome) values ('e2e-stranger-1', '972509916480', 'text', 'refused_unknown_number')")
   await go('/scanners'); await page.waitForTimeout(1200)
   const waStrangers = `${await page.locator('.fin-wa__log li', { hasText: 'מספר לא רשום' }).count()}/${await page.locator('.fin-wa__log').getByText('991-6480').count()}/${await page.locator('.fin-wa__log li').count()}`
   const waOffice = await page.locator('.fin-wa__office').innerText().catch(() => '')
   const waStats = await page.locator('.fin-wa__stats').innerText().catch(() => '')
-  const waUnknown = await page.locator('.fin-wa__unknown').count()
+  const waUnknown = await page.locator('.fin-wa__unknown').count() + await page.getByText('מספר לא רשום', { exact: false }).count()
+  // the receipts handed in by hand: listed with the document itself, opened large in one tap, closed again
+  const handRows = await page.locator('.fin-hand__list > li').count()
+  await page.locator('.fin-hand__list > li').first().getByRole('button', { name: 'הגדלה' }).click().catch(() => {}); await page.waitForTimeout(900)
+  const handBig = await page.locator('.fin-hand__big').count()
+  const handShot = await shot('105b-hand-receipt-large')
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300)
   const waShot = await shot('105-whatsapp-numbers')
   await page.locator('.fin-wachip__btn').click(); await page.waitForTimeout(300)
   const chipPop = await page.locator('.fin-wachip__pop').innerText().catch(() => '')
   const chipShot = await shot('106-whatsapp-chip')
   await page.keyboard.press('Escape')
-  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, על מספר שמשרת גם מערכת אחרת מספרים לא רשומים לא נרשמים; הודעה ממספר לא רשום שכן נרשמה נספרת אבל לא מוצגת ברשימה; בפס העליון המספר עם הסבר וקישור לניהול',
-    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; ברשימה (שורות "לא רשום"/המספר הזר/כל השורות): ${waStrangers}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
-    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && /^0\/0\/[1-9]\d*$/.test(waStrangers) && /ממספרים לא רשומים\s*[1-9]/.test(waStats) && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
+  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים; מספר לא רשום לא נרשם, לא נספר ולא מוצג, וגם שורה ישנה שנרשמה לפני כן לא מוצגת; הקבלות שהועלו ידנית מוצגות עם המסמך עצמו ונפתחות בהגדלה; בפס העליון המספר עם הסבר וקישור לניהול',
+    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; ברשימה (שורות "לא רשום"/המספר הזר/כל השורות): ${waStrangers}; קבלות ידניות: ${handRows}, בהגדלה: ${handBig}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
+    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && !/לא רשומים/.test(waStats) && waUnknown === 0 && /^0\/0\/[1-9]\d*$/.test(waStrangers) && handRows >= 1 && handBig === 1 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, handShot, chipShot])
 
   // 5. a document: attachment file and a linked document, paid state, open in a new window, delete for a finance manager
   const ronirInv = sql("select id from fin_documents where file_name='ronir-inv.pdf'")
@@ -2916,7 +2928,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const savedAfter = sql(`select coalesce(c.name, '') from fin_documents d left join fin_categories c on c.id = d.category_id where d.id='${target}'`)
   record('CATPICK', 'קטגוריה: בחירה מראש לפי הספק, סימון ברשימה והוספה מהשדה', 'מסמך בלי קטגוריה שלספק שלו יש מסמכים קודמים בקטגוריה: הקטגוריה נבחרת מראש עם הסבר ולא נשמרת עד שמירה; ברשימה היא ראשונה עם "2 מסמכים של הספק"; קטגוריה שלא ברשימה נוספת מהשדה ונשמרת במסמך',
     `מראש: "${note.replace(/\s+/g, ' ').slice(0, 90)}", בשדה ${shown}, במסד לפני שמירה "${savedBefore}"; ראשונה ברשימה: "${first.replace(/\s+/g, ' ')}"; שורת הוספה: "${createRow.replace(/\s+/g, ' ')}", נוצרה ${created}, נבחרה ${pickedNow}; אחרי שמירה: ${savedAfter}`,
-    /נבחרה מראש/.test(note) && /2 מ-2 המסמכים הקודמים של הספק/.test(note) && shown === 1 && savedBefore === '' && first.includes(cat[1]) && /2 מסמכים של הספק/.test(first)
+    /נבחרה מראש/.test(note) && /2 מתוך 2 המסמכים/.test(note) && shown === 1 && savedBefore === '' && first.includes(cat[1]) && /2 מסמכים של הספק/.test(first)
       && createRow.includes(fresh) && created === '1' && pickedNow === 1 && savedAfter === fresh, [listShot])
 }
 

@@ -1,7 +1,8 @@
 // Mobile scanners: a registered phone sends a photo or a PDF to the office WhatsApp number, and it enters the same
 // pipeline as an upload. Green API (already used for the lead alerts) posts each incoming message to
 // /api/finance-whatsapp with "Authorization: Bearer <FINANCE_WHATSAPP_WEBHOOK_TOKEN>" (the webhookUrlToken setting).
-// Every message is logged in fin_whatsapp_inbox, accepted or refused; unknown numbers are refused with a reply.
+// Every message of a registered phone is logged in fin_whatsapp_inbox, accepted or refused. A number that is not
+// registered leaves no trace: not logged, not shown, not answered.
 import crypto from 'node:crypto'
 import { env, MIME_OK, MAX_FILE, QUOTA_STOP } from './env.js'
 import { sb, one, insert, patch, upload, storageUsage, audit } from './db.js'
@@ -211,9 +212,10 @@ async function take(b, res) {
   }
   // a phone whose user was deactivated stops being a scanner
   if (sender?.user_id && !(await one(`fin_members?user_id=eq.${sender.user_id}&active=eq.true&select=user_id`))) sender = null
-  // On a number that also serves another system (clients write to it), a stranger's message leaves no trace here:
-  // it is not this system's business, and their phone numbers do not belong in the finance records.
-  if (!sender && forwardTo()) { res.status(200).json({ ok: true, outcome: 'refused_unknown_number' }); return }
+  // A stranger's message leaves no trace here, ever: the office number is the line clients and leads write to (every
+  // delivery of that line reaches this system), their messages are not this system's business, and their phone numbers
+  // do not belong in the finance records. Nothing is logged, nothing is shown, nothing is answered.
+  if (!sender) { res.status(200).json({ ok: true, outcome: 'refused_unknown_number' }); return }
   // the inbox row is claimed first: its unique message_id makes a Green API retry a no-op even while the first delivery is still being read
   let row
   try { row = await insert('fin_whatsapp_inbox', { message_id: messageId || null, phone, kind, outcome: 'received' }) } catch (e) {
@@ -225,11 +227,6 @@ async function take(b, res) {
   }
   const log = (r) => patch(`fin_whatsapp_inbox?id=eq.${row.id}`, r).catch(() => {})
 
-  if (!sender) {
-    // nothing is written back: the office number is also where clients write, and they must never hear from this system
-    await log({ outcome: 'refused_unknown_number' })
-    res.status(200).json({ ok: true, outcome: 'refused_unknown_number' }); return
-  }
   const out = await ingest({ phone, sender, kind, file: md.fileMessageData, log })
   res.status(200).json(out)
 }

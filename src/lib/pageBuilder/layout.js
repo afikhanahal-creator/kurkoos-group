@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { supabase } from '../supabase.js'
-import { cached, cachedSnapshot, invalidate } from '../cms.js'
+import { cached, cachedSnapshot, invalidate, FRESH_MS } from '../cms.js'
 import { saveHeading } from '../headings.js'
 
 /* ============================================================
@@ -66,7 +66,7 @@ export function useDraftStore() {
 }
 
 /* ---------- קריאה וכתיבה ---------- */
-const TTL = 5 * 60 * 1000
+const TTL = FRESH_MS
 
 export async function fetchPublished(slug) {
   if (!supabase) return null

@@ -16,7 +16,7 @@ import { env } from './finance/env.js'
 import { sb, one, insert, patch, q, caller, audit, removeFile, rpc } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
-import { ADAPTERS } from './finance/adapters.js'
+import { ADAPTERS, cleanConfig, deliveryOf, intakeOf } from './finance/adapters.js'
 import { ask } from './finance/assistant.js'
 import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
@@ -37,6 +37,7 @@ const ROLES = {
   invite: ['admin'],
   'integration-save': ['admin'],
   'integration-test': ['admin', 'finance_manager'],
+  'integration-send': ['admin', 'finance_manager'],
   status: ['admin', 'finance_manager', 'employee', 'accountant'],
   backfill: ['admin', 'finance_manager'],
   'scan-step': ['admin', 'finance_manager'],
@@ -699,17 +700,28 @@ export default async function handler(req, res) {
       case 'integration-save': {
         const ad = ADAPTERS[body.provider]
         if (!ad) { res.status(400).json({ error: 'יעד לא מוכר' }); return }
-        if (ad.kind === 'api' && body.enabled) {
+        const name = String(body.name || '').replace(/\s+/g, ' ').trim().slice(0, 80)
+        if (ad.kind === 'custom' && !name) { res.status(400).json({ error: 'צריך לכתוב את שם התוכנה' }); return }
+        const config = cleanConfig(body.provider, body.config)
+        if (body.config?.intake_email && !intakeOf(config)) { res.status(400).json({ error: 'כתובת הקליטה במייל לא תקינה' }); return }
+        if (config.contact_email && !emailOk(config.contact_email)) { res.status(400).json({ error: 'המייל של איש הקשר לא תקין' }); return }
+        const mode = deliveryOf(body.provider, config)
+        if ((ad.kind === 'email' || (ad.kind === 'custom' && config.mode !== 'files')) && body.enabled && !intakeOf(config)) { res.status(400).json({ error: 'צריך את כתובת הקליטה במייל שהתוכנה או רו״ח נתנו לכם' }); return }
+        if (ad.kind !== 'file' && body.enabled) {
           // one accounting system per company: a second one would receive the same documents twice
           const others = (await sb(`fin_integrations?enabled=eq.true&provider=not.in.(file,hashavshevet)&select=id,name,business_id${body.id ? `&id=neq.${q(body.id)}` : ''}`)) || []
           // "all companies" overlaps every company, so either side being empty is a clash too
           const clash = others.find((o) => !o.business_id || !body.business_id || o.business_id === body.business_id)
           if (clash) { res.status(409).json({ error: `${clash.business_id ? 'לחברה הזו' : 'לכל החברות'} כבר מחוברת תוכנה (${clash.name}). נתקו אותה קודם.` }); return }
         }
-        const row = { provider: body.provider, name: body.name || ad.label, business_id: body.business_id || null, config: body.config || {}, enabled: !!body.enabled, status: ad.kind === 'file' ? 'ready' : 'not_active' }
+        // "ready" is earned by a test that passed: a new or changed intake address waits for one
+        const before = body.id ? await one(`fin_integrations?id=eq.${q(body.id)}&select=status,config`) : null
+        const sameAddress = before && intakeOf(before.config) === intakeOf(config) && before.status === 'ready'
+        const status = mode === 'file' ? 'ready' : mode === 'email' ? (sameAddress ? 'ready' : 'not_tested') : 'not_active'
+        const row = { provider: body.provider, name: name || ad.label, business_id: body.business_id || null, config, enabled: !!body.enabled, status, ...(status === 'ready' ? {} : { last_error: null }) }
         const saved = body.id ? await patch(`fin_integrations?id=eq.${q(body.id)}`, row) : await insert('fin_integrations', row)
         if (body.secret && Object.keys(body.secret).length) await sb('fin_integration_secrets', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { integration_id: saved.id, secret: body.secret, updated_at: new Date().toISOString() } })
-        await audit('integration', saved.id, body.id ? 'updated' : 'created', { provider: body.provider, enabled: row.enabled }, user)
+        await audit('integration', saved.id, body.id ? 'updated' : 'created', { provider: body.provider, enabled: row.enabled, delivery: mode }, user)
         res.status(200).json({ integration: saved })
         return
       }
@@ -717,13 +729,31 @@ export default async function handler(req, res) {
         const it = await one(`fin_integrations?id=eq.${q(body.id)}&select=*`)
         if (!it) { res.status(404).json({ error: 'לא נמצא' }); return }
         const secret = (await one(`fin_integration_secrets?integration_id=eq.${it.id}&select=secret`))?.secret || {}
+        const business = it.business_id ? (await one(`fin_businesses?id=eq.${it.business_id}&select=name`))?.name : null
         try {
-          const r = await ADAPTERS[it.provider].test(it.config, secret)
+          const r = await ADAPTERS[it.provider].test(it.config, secret, { name: it.name, business, by: user.email })
           await patch(`fin_integrations?id=eq.${it.id}`, { status: 'ready', last_error: null, last_sync_at: new Date().toISOString() })
           res.status(200).json({ ok: true, ...r })
         } catch (e) {
           await patch(`fin_integrations?id=eq.${it.id}`, { status: e.code === 'NOT_ACTIVE' ? 'not_active' : 'error', last_error: e.message })
           res.status(200).json({ ok: false, error: e.message })
+        }
+        return
+      }
+      case 'integration-send': {
+        // approved documents to the software's intake address: the same mail (original files + Excel / CSV summary) and
+        // the same audited export record as "send to the accountant", tied to this connection
+        const it = await one(`fin_integrations?id=eq.${q(body.id)}&select=*`)
+        if (!it || !it.enabled) { res.status(404).json({ error: 'החיבור לא נמצא או מנותק' }); return }
+        const to = deliveryOf(it.provider, it.config) === 'email' ? intakeOf(it.config) : ''
+        if (!to) { res.status(400).json({ error: `ל-${it.name} אין כתובת קליטה במייל. מוסיפים אותה בהגדרות החיבור, או מייצאים קבצים.` }); return }
+        try {
+          const r = await sendToAccountant({ ids: body.ids, to: [to], note: String(body.note || '').slice(0, 2000), subject: null, ccMe: !!body.cc_me, period: String(body.period || '').slice(0, 60) || null, mark: true, user, integrationId: it.id, destination: `${it.name} (${to})` })
+          await patch(`fin_integrations?id=eq.${it.id}`, { status: 'ready', last_error: null, last_sync_at: new Date().toISOString() })
+          res.status(200).json({ ...r, software: it.name })
+        } catch (e) {
+          if (e.status === 502 || e.status === 503) await patch(`fin_integrations?id=eq.${it.id}`, { status: 'error', last_error: String(e.message).slice(0, 300) }).catch(() => {})
+          throw e
         }
         return
       }

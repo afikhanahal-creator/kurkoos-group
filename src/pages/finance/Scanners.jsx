@@ -6,15 +6,18 @@ import { ago, dateTime, nameOf } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
+import HandReceipts from './HandReceipts.jsx'
 import { normalizePhone, validMobile, prettyPhone as pretty, localPhone } from './phone.js'
 
 export { normalizePhone, validMobile }
-const OUTCOME = { unauthorized: ['attn', 'נדחה: קוד אימות שגוי'], imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], refused_unknown_number: ['attn', 'מספר לא רשום'], unsupported: ['warn', 'אין קובץ מצורף'], failed: ['bad', 'נכשל'] }
+const OUTCOME = { unauthorized: ['attn', 'נדחה: קוד אימות שגוי'], imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], unsupported: ['warn', 'אין קובץ מצורף'], failed: ['bad', 'נכשל'] }
+// a number that is not registered leaves no trace in this system; a line an older version logged for one is never shown
+const STRANGER = 'refused_unknown_number'
 const initials = (t) => String(t || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
 /* The WhatsApp numbers that may send documents: the office number people send to, every registered phone with what
-   it sent and when, and the last messages with their outcome. A number that is not registered is refused, and the
-   refusal shows here, so the fix ("add this number") is one tap away. */
+   it sent and when, and the receipts that were handed in by hand (HandReceipts). The office number is also the line
+   clients write to, so a number that is not registered is simply not this screen's business: never logged, never shown. */
 export default function Scanners() {
   const { businesses, members, can } = useFinance()
   const me = useSession()
@@ -58,10 +61,10 @@ export default function Scanners() {
       active: phones.filter((p) => p.active).length,
       docs: phones.reduce((s, p) => s + (p.docs_count || 0), 0),
       month: msgs.filter((m) => m.outcome === 'imported' && new Date(m.at).getTime() > month).length,
-      refused: msgs.filter((m) => m.outcome === 'refused_unknown_number' && new Date(m.at).getTime() > month),
     }
   }, [phones, inbox.data]) // eslint-disable-line react-hooks/exhaustive-deps
-  const unknown = [...new Set(stats.refused.map((m) => m.phone).filter(Boolean))].filter((p) => !phones.some((s) => s.phone === p))
+  // messages of registered phones that brought no document (not a file, a duplicate, a failed read): worth a look, and clearable
+  const missed = (inbox.data || []).filter((r) => r.outcome !== STRANGER && !r.document_id && r.outcome !== 'imported')
 
   const openAdd = (phone = '') => { setErr(''); setAdd({ phone: phone ? localPhone(phone) : '', label: '', business_id: '', user_id: me?.id || '' }) }
   const save = async (e) => {
@@ -83,7 +86,7 @@ export default function Scanners() {
     <div className="fin-stack fin-narrow fin-wa">
       <div className="fin-titlerow">
         <h2 className="fin-pagehead__title">מספרים מחוברים ב-WhatsApp</h2>
-        <InfoTip label="איך זה עובד">כל טלפון שרשום כאן יכול לשלוח צילום של קבלה או קובץ PDF למספר ה-WhatsApp של המשרד. המסמך נכנס למערכת, נקרא, ומחכה לבדיקה. הודעה ממספר שלא רשום לא נקלטת, ומופיעה כאן.</InfoTip>
+        <InfoTip label="איך זה עובד">כל טלפון שרשום כאן יכול לשלוח צילום של קבלה או קובץ PDF למספר ה-WhatsApp של המשרד. המסמך נכנס למערכת, נקרא, ומחכה לבדיקה. הודעה ממספר שלא רשום לא נקלטת ולא נרשמת בשום מקום.</InfoTip>
       </div>
 
       <section className={`fin-wa__office ${office ? '' : 'is-off'}`} aria-label="מספר ה-WhatsApp של המשרד">
@@ -138,16 +141,8 @@ export default function Scanners() {
         <div><dt>מספרים פעילים</dt><dd>{stats.active}</dd></div>
         <div><dt>מסמכים שנקלטו</dt><dd>{stats.docs.toLocaleString('he-IL')}</dd></div>
         <div><dt>ב-30 הימים האחרונים</dt><dd>{stats.month}</dd></div>
-        {can('operate') && <div className={stats.refused.length ? 'is-attn' : ''}><dt>ממספרים לא רשומים</dt><dd>{stats.refused.length}</dd></div>}
       </dl>
 
-      {unknown.length > 0 && can('operate') && (
-        <div className="fin-wa__unknown" role="status">
-          <Icon name="alert" size={18} />
-          <span>{unknown.length === 1 ? 'מספר אחד שלא רשום ניסה לשלוח מסמכים' : `${unknown.length} מספרים שלא רשומים ניסו לשלוח מסמכים`}. אם הם שלכם, הוסיפו אותם:</span>
-          <span className="fin-wa__unknown-list">{unknown.slice(0, 4).map((p) => <button key={p} type="button" className="fin-btn fin-btn--sm" onClick={() => openAdd(p)} dir="ltr"><Icon name="plus" size={14} /> {pretty(p)}</button>)}</span>
-        </div>
-      )}
       {msg && <p className="fin-note" role="status">{msg}</p>}
 
       <div className="fin-section-head">
@@ -185,26 +180,25 @@ export default function Scanners() {
         </ul>
       )}
 
-      {can('operate') && (inbox.data || []).length > 0 && (
-        <section className="fin-panelcard" aria-label="הודעות אחרונות">
-          <header>
-            <h3>הודעות אחרונות</h3>
-            {can('manage') && inbox.data.some((r) => !r.document_id && r.outcome !== 'imported') && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={busy} onClick={() => clearLog(inbox.data.filter((r) => !r.document_id && r.outcome !== 'imported').map((r) => r.id))}><Icon name="trash" size={15} /> ניקוי הודעות שלא נקלטו</button>}
-          </header>
+      <HandReceipts phones={phones} />
+
+      {can('operate') && missed.length > 0 && (
+        <details className="fin-panelcard fin-wa__missed">
+          <summary><span><strong>הודעות מטלפונים רשומים שלא הביאו מסמך</strong><small>{missed.length === 1 ? 'הודעה אחת' : `${missed.length} הודעות`}: בלי קובץ, כפילות או קריאה שנכשלה</small></span><Icon name="chev" size={18} /></summary>
+          {can('manage') && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost fin-wa__missed-clear" disabled={busy} onClick={() => clearLog(missed.map((r) => r.id))}><Icon name="trash" size={15} /> ניקוי הרשימה</button>}
           <ul className="fin-wa__log">
-            {inbox.data.slice(0, 20).map((r) => {
+            {missed.slice(0, 20).map((r) => {
               const [tone, label] = OUTCOME[r.outcome] || ['muted', r.outcome]
               return (
                 <li key={r.id}>
-                  <span className="fin-wa__log-main"><strong>{r.document_id ? <a className="fin-link" href={`/admin/finance/documents/${r.document_id}`}>{r.file_name || 'מסמך'}</a> : r.file_name || (r.kind === 'text' ? 'הודעת טקסט' : 'הודעה')}</strong><small><bdi dir="ltr">{pretty(r.phone || '')}</bdi> · {dateTime(r.at)}</small></span>
+                  <span className="fin-wa__log-main"><strong>{r.file_name || (r.kind === 'text' ? 'הודעת טקסט' : 'הודעה')}</strong><small><bdi dir="ltr">{pretty(r.phone || '')}</bdi> · {dateTime(r.at)}</small></span>
                   <Pill tone={tone}>{label}</Pill>
-                  {r.outcome === 'refused_unknown_number' && r.phone && !phones.some((s) => s.phone === r.phone) && <button type="button" className="fin-btn fin-btn--sm" onClick={() => openAdd(r.phone)}>הוספה</button>}
-                  {can('manage') && !r.document_id && r.outcome !== 'imported' && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={busy} onClick={() => clearLog([r.id])} aria-label="מחיקת השורה מהיומן" title="מחיקה מהיומן"><Icon name="trash" size={16} /></button>}
+                  {can('manage') && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={busy} onClick={() => clearLog([r.id])} aria-label="מחיקת השורה מהיומן" title="מחיקה מהיומן"><Icon name="trash" size={16} /></button>}
                 </li>
               )
             })}
           </ul>
-        </section>
+        </details>
       )}
 
       {add && (

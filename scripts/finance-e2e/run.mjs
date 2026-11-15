@@ -481,10 +481,12 @@ const w4 = await hook(imgMsg('wa-4', '972543049491'), 'wrong-token')
 const w5 = await hook({ typeWebhook: 'incomingMessageReceived', idMessage: 'wa-5', senderData: { chatId: '972543049491@c.us' }, messageData: { typeMessage: 'textMessage', textMessageData: { textMessage: 'שלום' } } })
 const waDoc = sql("select source||'|'||status||'|'||coalesce(supplier_name,'-')||'|'||total_amount||'|'||(created_by is not null) from fin_documents where file_name='wa-receipt.png'")
 const waLog = (await fetch(`${FAKES}/__log`).then((r) => r.json())).wa
+// a number that is not registered leaves no trace: not a row, not a phone number
+const waStranger = sql("select count(*) from fin_whatsapp_inbox where phone like '%529999999' or outcome='refused_unknown_number'")
 await page.reload(); await page.waitForTimeout(1200)
 const scannersShot = await shot('53-scanners')
-record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה בלי שום הודעה אליו (לקוחות כותבים לאותו מספר); טוקן שגוי ← 401; הודעת טקסט נרשמת ולא נענית', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}`,
-  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /נקלטה במערכת בהצלחה/.test(m.message) && /ספק: קפה לנדוור/.test(m.message) && /295/.test(m.message)) && !waLog.some((m) => /לא רשום|שלחו צילום/.test(m.message)), [scannersEmpty, scannersShot])
+record('WA', 'סורקים ניידים (WhatsApp)', 'מספר לא תקין נדחה בטופס; מספר רשום שולח צילום ← נכנס למערכת ונקרא, והשולח מקבל אישור; אותה הודעה פעמיים לא נכפלת; אותו קובץ שוב ← "כבר במערכת"; מספר לא רשום נדחה בלי שום הודעה אליו ובלי שום רישום (לקוחות כותבים לאותו מספר); טוקן שגוי ← 401; הודעת טקסט נרשמת ולא נענית', `טופס: "${badPhone}"; רשום: ${waRow}; מסמך: ${waDoc}; תוצאות: ${[w1, w1again, w2, w3, w4, w5].map((w) => w.data.outcome || (w.data.repeat ? 'repeat' : w.status)).join(', ')}; תשובות: ${waLog.map((m) => m.message.slice(0, 18)).join(' / ')}; שורות של מספר לא רשום: ${waStranger}`,
+  /לא תקין/.test(badPhone) && waRow === '972543049491|true' && /^whatsapp\|review\|קפה לנדוור\|295\.00\|true$/.test(waDoc) && w1.data.outcome === 'imported' && w1again.data.repeat && w2.data.outcome === 'duplicate' && w3.data.outcome === 'refused_unknown_number' && waStranger === '0' && w4.status === 401 && w5.data.outcome === 'unsupported' && waLog.some((m) => /נקלטה במערכת בהצלחה/.test(m.message) && /ספק: קפה לנדוור/.test(m.message) && /295/.test(m.message)) && !waLog.some((m) => /לא רשום|שלחו צילום/.test(m.message)), [scannersEmpty, scannersShot])
 
 // CLOUD: Google Drive and Dropbox, through the real OAuth round trip and the real upload code
 await fetch(`${FAKES}/__next_account?email=office@kurkoos.test`)
@@ -742,7 +744,33 @@ await page.reload(); await page.waitForTimeout(1000)
 const swAfterShot = await shot('58-accounting-connected')
 record('SW', 'חיבור תוכנת הנהלת חשבונות', 'חיפוש מסנן את הכרטיסים; חיבור Morning לחברה שומר את המפתח בשרת בלבד ומסמן "ממתין להפעלה"; תוכנה שנייה לאותה חברה נחסמת, לחברה אחרת מותרת',
   `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, חיפוש ללא תוצאה: ${swNone}; Morning: ${morning}, מפתחות: ${morningSecret}; שנייה לאותה חברה: ${swSecond.status} ${swSecond.data.error || ''}; לחברה אחרת: ${otherBiz.status}; לכל החברות: ${allBiz.status}; קריאת מפתחות מהדפדפן: ${secretRead.status}`,
-  swAll === 8 && swOne === 1 && swNone === 1 && morning === 'morning|not_active|true' && morningSecret === '1' && swSecond.status === 409 && otherBiz.status === 200 && allBiz.status === 409 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swAfterShot])
+  swAll === 16 && swOne === 1 && swNone === 1 && morning === 'morning|not_active|true' && morningSecret === '1' && swSecond.status === 409 && otherBiz.status === 200 && allBiz.status === 409 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swAfterShot])
+
+// SW2: a software that receives documents by mail. Connected from the screen by its intake address, a real test mail goes
+// out and only then it reads "מחובר"; a bad address and a second software for the same company are refused; a direct
+// API connection still says plainly that it is not active.
+const mailsNow = async () => (await fetch(`${FAKES}/__log`).then((r) => r.json())).emails
+const bizHs = sql("select id from fin_businesses where name like 'הנרייטה%'")
+const sw2Before = (await mailsNow()).length
+await page.getByRole('button', { name: 'חיבור CostApp' }).click(); await page.waitForTimeout(300)
+await page.locator('.fin-modal select').first().selectOption(bizHs)
+await page.locator('.fin-modal input[type=email]').first().fill('kurkoos-hs22@intake.costapp.test')
+await page.locator('.fin-modal__foot .fin-btn--primary').first().click(); await page.waitForTimeout(2500)
+const sw2Mails = (await mailsNow()).slice(sw2Before)
+const costapp = sql("select status||'|'||(config->>'intake_email')||'|'||(last_sync_at is not null) from fin_integrations where provider='costapp'")
+const sw2Shot = await shot('58b-accounting-by-mail')
+const sw2Bad = await api(adminToken, { action: 'integration-save', provider: 'smartbee', name: 'SmartBee', business_id: null, enabled: false, config: { intake_email: 'not-an-address' } })
+const sw2Clash = await api(adminToken, { action: 'integration-save', provider: 'custom', name: 'תוכנה של רו״ח', business_id: bizHs, enabled: true, config: { mode: 'files' } })
+const sw2NoName = await api(adminToken, { action: 'integration-save', provider: 'custom', name: '', business_id: null, enabled: false, config: { mode: 'files' } })
+const sw2Api = await api(adminToken, { action: 'integration-test', id: sql("select id from fin_integrations where provider='morning'") })
+await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill('smartbett'); await page.waitForTimeout(250)
+const sw2Find = (await page.locator('.fin-app-card h4').allInnerTexts()).join()
+await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill(''); await page.waitForTimeout(200)
+record('SW2', 'תוכנה שמקבלת מסמכים במייל, ותוכנה שלא ברשימה', 'חיבור CostApp לפי כתובת הקליטה שולח מייל בדיקה אמיתי, ורק אז מסומן "מחובר"; כתובת לא תקינה נדחית; תוכנה שנייה לאותה חברה (גם "תוכנה שלא ברשימה") נחסמת; תוכנה בלי שם נדחית; חיבור ישיר (API) אומר שהוא עוד לא פעיל; חיפוש בשם שגוי מוצא את התוכנה',
+  `מיילים: ${sw2Mails.map((m) => `${m.to?.[0]} · ${m.subject}`).join(' / ')}; CostApp: ${costapp}; כתובת שגויה: ${sw2Bad.status}; שנייה לאותה חברה: ${sw2Clash.status}; בלי שם: ${sw2NoName.status}; API: ${sw2Api.data.ok} ${String(sw2Api.data.error || '').slice(0, 50)}; חיפוש smartbett: ${sw2Find}`,
+  sw2Mails.length === 1 && sw2Mails[0].to?.[0] === 'kurkoos-hs22@intake.costapp.test' && /בדיקת חיבור/.test(sw2Mails[0].subject) && costapp === 'ready|kurkoos-hs22@intake.costapp.test|true' && sw2Bad.status === 400 && sw2Clash.status === 409 && sw2NoName.status === 400 && sw2Api.data.ok === false && /עוד לא הופעל/.test(sw2Api.data.error || '') && sw2Find === 'SmartBee', [sw2Shot])
+// the later scenarios start from the same connections as before this one
+sql("delete from fin_integrations where provider='costapp'")
 
 // =================== AUTOMATIC DELIVERY ===================
 await fetch(`${FAKES}/__reset_hooks`).catch(() => {})
@@ -1712,15 +1740,21 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   await go('/scanners'); await page.waitForTimeout(1200)
   const waOffice = await page.locator('.fin-wa__office').innerText().catch(() => '')
   const waStats = await page.locator('.fin-wa__stats').innerText().catch(() => '')
-  const waUnknown = await page.locator('.fin-wa__unknown').count()
+  const waUnknown = await page.locator('.fin-wa__unknown').count() + await page.getByText('מספר לא רשום', { exact: false }).count()
+  // the receipts handed in by hand: listed with the document itself, opened large in one tap, closed again
+  const handRows = await page.locator('.fin-hand__list > li').count()
+  await page.locator('.fin-hand__list > li').first().getByRole('button', { name: 'הגדלה' }).click().catch(() => {}); await page.waitForTimeout(900)
+  const handBig = await page.locator('.fin-hand__big').count()
+  const handShot = await shot('105b-hand-receipt-large')
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300)
   const waShot = await shot('105-whatsapp-numbers')
   await page.locator('.fin-wachip__btn').click(); await page.waitForTimeout(300)
   const chipPop = await page.locator('.fin-wachip__pop').innerText().catch(() => '')
   const chipShot = await shot('106-whatsapp-chip')
   await page.keyboard.press('Escape')
-  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, על מספר שמשרת גם מערכת אחרת מספרים לא רשומים לא נרשמים ולא מוצגים; בפס העליון המספר עם הסבר וקישור לניהול',
-    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
-    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
+  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, מספרים לא רשומים לא נרשמים ולא מוצגים; הקבלות שהועלו ידנית מוצגות עם המסמך עצמו ונפתחות בהגדלה; בפס העליון המספר עם הסבר וקישור לניהול',
+    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; קבלות ידניות: ${handRows}, בהגדלה: ${handBig}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
+    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && handRows >= 1 && handBig === 1 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, handShot, chipShot])
 
   // 5. a document: attachment file and a linked document, paid state, open in a new window, delete for a finance manager
   const ronirInv = sql("select id from fin_documents where file_name='ronir-inv.pdf'")

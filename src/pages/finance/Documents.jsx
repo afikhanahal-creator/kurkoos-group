@@ -18,6 +18,7 @@ import Select from './Select.jsx'
 import DateRange, { sayRange } from './DateRange.jsx'
 import SendToAccountant from './SendToAccountant.jsx'
 import { moments } from './moments.js'
+import { moveImpact, sayDocs } from './categorySuggest.js'
 
 const TABS = [
   { id: '', label: 'הכול' },
@@ -178,6 +179,19 @@ export default function Documents({ preset = 'all' }) {
       setSel(new Set()); await reload()
     } catch (e) { setNote(/SECOND_APPROVAL/.test(e.message) ? 'חלק מהמסמכים דורשים מאשר נוסף' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת מזו של המסמך' : e.message) } finally { setBusy('') }
   }
+  // one category for everything selected, said in numbers first: what moves and from where, what is already there, and
+  // what stays as it is (a document that was approved or sent to the accountant is not changed in bulk)
+  const bulkCategory = (cid) => {
+    const im = moveImpact(picked, cid, categories)
+    const to = categories.find((c) => c.id === cid)?.name || ''
+    const lines = [
+      ...im.from.map((x) => `${sayDocs(x.n)} ${x.n === 1 ? 'עובר' : 'עוברים'} ${x.category_id ? `מ"${categories.find((c) => c.id === x.category_id)?.name || 'קטגוריה אחרת'}"` : 'מ"בלי קטגוריה"'}`),
+      im.same ? `${sayDocs(im.same)} כבר ב"${to}"` : '',
+      im.locked.length ? (im.locked.length === 1 ? 'מסמך אחד שכבר אושר או נשלח לרו״ח לא ישתנה' : `${sayDocs(im.locked.length)} שכבר אושרו או נשלחו לרו״ח לא ישתנו`) : '',
+    ].filter(Boolean)
+    if (!im.move.length) { setNote(im.same === picked.length ? `כל המסומנים כבר ב"${to}"` : `אין מה לשנות: ${lines.join(', ')}`); return }
+    setConfirm({ label: 'cat', count: im.move.length, skipped: 0, title: `שיוך ל"${to}"`, lines, run: () => runBulk('cat', { category_id: cid }, im.move, picked.length - im.move.length) })
+  }
   // suspected duplicates: a pair is "certain" when the original has the same supplier, number and total; those can be merged
   // in one click (the copy is closed as a duplicate of the original, nothing is deleted), the rest are opened one by one
   const dups = useMemo(() => documents.filter((d) => d.duplicate_state === 'suspected' && d.status === 'review'), [documents])
@@ -245,6 +259,17 @@ export default function Documents({ preset = 'all' }) {
   const idx = rows.findIndex((d) => d.id === id)
   const current = id ? documents.find((d) => d.id === id) : null
   const link = (did) => `${base}/${did}${tab ? `?status=${tab}` : ''}`
+  /* A phone, after "אישור": the panel gives way by itself. The next document that waits for approval in this list (the
+     ones after it first, then from the top) opens in its place; when none is left the list comes back. The toast says
+     which, and offers to take the approval back (the same "החזרה לבדיקה" the panel has). */
+  const afterApprove = (saved, from) => {
+    const order = idx >= 0 ? [...rows.slice(idx + 1), ...rows.slice(0, idx)] : rows
+    const queue = order.filter((d) => d.id !== saved.id && d.status === 'review')
+    const next = queue[0]
+    const undo = can('edit') ? { label: 'ביטול', onClick: async () => { try { patchDoc(await api.updateDocument(saved.id, { status: 'review' })); go(link(saved.id)) } catch (e) { setNote(e.message) } } } : undefined
+    moments.approve({ from, title: 'המסמך אושר', sub: next ? `הבא בתור: ${next.supplier_name || next.file_name || 'מסמך'}${queue.length > 1 ? ` · נשארו ${queue.length}` : ''}` : 'אין עוד מסמכים לאישור ברשימה', action: undo, key: 'approve-next' })
+    if (next) go(link(next.id)); else { setNote('אין עוד מסמכים לאישור ברשימה הזו'); go(`${base}${tab ? `?status=${tab}` : ''}`) }
+  }
   const edit = can('edit')
 
   return (
@@ -344,7 +369,7 @@ export default function Documents({ preset = 'all' }) {
           {edit && (
             <div className="fin-bulk__row fin-bulk__assign">
               <span className="fin-bulk__label">שיוך<span className="fin-bulk__long"> לכל המסומנים</span>:</span>
-              <Select className="fin-select" value="" onChange={(e) => e.target.value && bulk('cat', { category_id: e.target.value })} aria-label="שינוי קטגוריה" disabled={!!busy}>
+              <Select className="fin-select" value="" onChange={(e) => e.target.value && bulkCategory(e.target.value)} aria-label="שינוי קטגוריה" disabled={!!busy}>
                 <option value="">קטגוריה</option>{categories.filter((c) => c.active !== false).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
               {businesses.length > 0 && (
@@ -510,8 +535,9 @@ export default function Documents({ preset = 'all' }) {
       {dragId && <p className="fin-draghint" role="status"><Icon name="copy" size={16} /> גוררים את "{byId(dragId)?.supplier_name || byId(dragId)?.file_name || 'המסמך'}": משחררים על מסמך אחר כדי למזג. לפני המיזוג תתבקשו לאשר.</p>}
       {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); setNote(text); await reload() }} />}
       {confirm && (
-        <Modal title="אישור פעולה" onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
+        <Modal title={confirm.title || 'אישור פעולה'} onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
           <p>הפעולה תחול על {confirm.count} מסמכים{confirm.skipped ? ` (${confirm.skipped} דולגו כי הם לא מתאימים לה)` : ''}. כל שינוי נרשם ביומן.</p>
+          {confirm.lines?.length > 0 && <ul className="fin-bulklines">{confirm.lines.map((l) => <li key={l}>{l}</li>)}</ul>}
           {confirm.label === 'approve' && <p className="fin-muted">מסמכים עם שגיאות בקרה לא נכללים. מסמך מעל סף האישור הכפול מחכה למאשר נוסף.</p>}
         </Modal>
       )}
@@ -524,6 +550,8 @@ export default function Documents({ preset = 'all' }) {
           onDeleted={async () => { await reload(); go(base) }}
           onPrev={idx > 0 ? () => go(link(rows[idx - 1].id)) : null}
           onNext={idx >= 0 && idx < rows.length - 1 ? () => go(link(rows[idx + 1].id)) : null}
+          onApproved={afterApprove}
+          waitingAfter={rows.filter((d) => d.status === 'review' && d.id !== current.id).length}
         />
       )}
       {sharing && <ShareDialog docs={sharing.docs} initial={sharing.mode} onClose={() => setSharing(null)} />}

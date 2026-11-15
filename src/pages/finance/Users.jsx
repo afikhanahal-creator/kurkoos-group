@@ -6,6 +6,7 @@ import * as api from './api.js'
 import { ROLE, ago, date, money, nameOf, thisMonth } from './format.js'
 import { Card, Empty, Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
+import { CompanyMark, reportOf } from './CompanySettings.jsx'
 
 const ROLE_DESC = {
   admin: 'הכול: הגדרות, משתמשים, חיבורים, אינטגרציות, מסמכים וייצוא',
@@ -26,6 +27,57 @@ const ROLE_PICK = [
   ['finance_manager', 'מנהל/ת כספים', 'בודק, מתקן ומאשר מסמכים, ומייצא לרו״ח.'],
   ['admin', 'מנהל מערכת', 'הכול, כולל משתמשים, חיבורים והגדרות.'],
 ]
+/* The companies of the group as cards: the company's own logo (or its initial until one is uploaded), who works on it,
+   how much it holds, who its accountant is and which accounting software its documents go to. The card opens the company. */
+function CompaniesGrid() {
+  const { members, businesses, mailboxes, documents, can, go } = useFinance()
+  const soft = useAsync(() => api.loadIntegrations().catch(() => []), [])
+  const manage = can('manage')
+  if (!businesses.length) return <Empty title="עוד אין חברות" icon="company" action={<button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/companies')}>הוספת חברה</button>}>החברות בקבוצה, עם ח.פ ומייל של רו״ח.</Empty>
+  const softwareOf = (b) => { const l = (soft.data || []).filter((i) => i.enabled && !['file', 'hashavshevet'].includes(i.provider)); return l.find((i) => i.business_id === b.id) || l.find((i) => !i.business_id) }
+  const many = (n, one, more) => (n === 1 ? one : more)
+  return (
+    <ul className="fin-cogrid">
+      {businesses.map((b) => {
+        const people = members.filter((m) => m.active && (!m.business_ids?.length || m.business_ids.includes(b.id))).length
+        const boxes = mailboxes.filter((x) => x.business_id === b.id && x.status !== 'revoked').length
+        const docs = documents.filter((d) => d.business_id === b.id && !['rejected', 'duplicate'].includes(d.status)).length
+        const sw = softwareOf(b); const logo = reportOf(b).logo; const off = b.active === false
+        return (
+          <li key={b.id} className={`fin-cocard ${off ? 'is-off' : ''}`}>
+            <button type="button" className="fin-cocard__open" onClick={() => go(`/companies/${b.id}`)} aria-label={`פתיחת ${b.name}`}>
+              <span className="fin-cocard__top">
+                <span className={`fin-cocard__logo ${logo ? '' : 'is-empty'}`}><CompanyMark b={b} size={64} /></span>
+                <span className="fin-cocard__name"><strong>{b.name}</strong><small>{b.vat_id ? <>ח.פ <bdi>{b.vat_id}</bdi></> : 'בלי ח.פ'}</small></span>
+                <Pill tone={off ? 'muted' : 'ok'}>{off ? 'בארכיון' : 'פעילה'}</Pill>
+              </span>
+              <span className="fin-cocard__figs">
+                <span><b>{people.toLocaleString('he-IL')}</b><small>{many(people, 'משתמש', 'משתמשים')}</small></span>
+                <span><b>{boxes.toLocaleString('he-IL')}</b><small>{many(boxes, 'תיבת מייל', 'תיבות מייל')}</small></span>
+                <span><b>{docs.toLocaleString('he-IL')}</b><small>{many(docs, 'מסמך', 'מסמכים')}</small></span>
+              </span>
+              <span className="fin-cocard__facts">
+                <span><Icon name="users" size={15} /><small>רו״ח</small><em>{b.accountant_name || b.accountant_email ? <>{b.accountant_name}{b.accountant_name && b.accountant_email ? ' · ' : ''}{b.accountant_email && <bdi dir="ltr">{b.accountant_email}</bdi>}</> : 'עוד לא הוגדר'}</em></span>
+                <span><Icon name="plug" size={15} /><small>תוכנה</small><em>{sw ? sw.name : 'ייצוא קבצים'}</em></span>
+              </span>
+            </button>
+            {manage && !logo && <button type="button" className="fin-link fin-cocard__addlogo" onClick={() => go('/settings?tab=companies')}>הוספת לוגו</button>}
+          </li>
+        )
+      })}
+      {manage && (
+        <li className="fin-cocard fin-cocard--add">
+          <button type="button" className="fin-cocard__open" onClick={() => go('/companies')}>
+            <span className="fin-cocard__plus" aria-hidden="true"><Icon name="plus" size={24} /></span>
+            <strong>הוספת חברה</strong>
+            <small>שם, ח.פ, לוגו ורואה החשבון של החברה</small>
+          </button>
+        </li>
+      )}
+    </ul>
+  )
+}
+
 function RolePick({ value, onChange }) {
   return (
     <fieldset className="fin-field fin-field--wide fin-rolepick"><legend className="fin-field__label">תפקיד</legend>
@@ -272,28 +324,7 @@ export default function Users() {
 
       {tab === 'security' && <SecurityTab members={members} seen={seen} />}
 
-      {tab === 'companies' && (
-        businesses.length ? (
-          <ul className="fin-acc-list">
-            {businesses.map((b) => {
-              const people = members.filter((m) => m.active && (!m.business_ids?.length || m.business_ids.includes(b.id))).length
-              const boxes = mailboxes.filter((x) => x.business_id === b.id && x.status !== 'revoked').length
-              const docs = documents.filter((d) => d.business_id === b.id && !['rejected', 'duplicate'].includes(d.status)).length
-              return (
-                <li key={b.id} className="fin-acc fin-acc--link">
-                  <span className="fin-avatar fin-avatar--square" aria-hidden="true"><Icon name="company" size={20} /></span>
-                  <button type="button" className="fin-acc__main fin-acc__btn" onClick={() => go(`/companies/${b.id}`)}>
-                    <strong>{b.name}</strong>
-                    <span className="fin-acc__sub">{b.vat_id ? `ח.פ ${b.vat_id} · ` : ''}{people === 1 ? 'משתמש אחד' : `${people} משתמשים`} · {boxes === 1 ? 'תיבה אחת' : `${boxes} תיבות`} · {docs === 1 ? 'מסמך אחד' : `${docs} מסמכים`}</span>
-                  </button>
-                  <Pill tone={b.active === false ? 'muted' : 'ok'}>{b.active === false ? 'בארכיון' : 'פעילה'}</Pill>
-                  <Icon name="next" size={18} />
-                </li>
-              )
-            })}
-          </ul>
-        ) : <Empty title="עוד אין חברות" icon="company" action={<button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/companies')}>הוספת חברה</button>}>החברות בקבוצה, עם ח.פ ומייל של רו״ח.</Empty>
-      )}
+      {tab === 'companies' && <CompaniesGrid />}
 
       {tab === 'usage' && <Usage />}
       {guide && <InviteGuide onClose={() => setGuide(false)} onInvite={newInvite} />}

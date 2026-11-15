@@ -115,13 +115,24 @@ function Preview({ doc, onSaved, canEdit }) {
 }
 
 export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext, onApproved, waitingAfter = 0 }) {
-  const { businesses, projects, categories, mailboxes, suppliers, allocations, can, go, reload } = useFinance()
+  const { businesses, projects, categories, mailboxes, suppliers, allocations, can, go, reload, documents } = useFinance()
   const supplierRow = suppliers.find((x) => x.id === doc.supplier_id)
   const myAlloc = allocations.filter((a) => a.document_id === doc.id)
   const [split, setSplit] = useState(() => (myAlloc.length ? myAlloc.map((a) => ({ project_id: a.project_id, amount: String(a.amount) })) : null))
   const [splitMsg, setSplitMsg] = useState('')
   const editable = can('edit') || (can('upload') && ['processing', 'review', 'failed'].includes(doc.status))
-  const [form, setForm] = useState(() => Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])))
+  // A document with no category opens with the likely one already chosen, so approving it accepts it (saved with "שמירה" or
+  // "אישור", never by opening the panel): a rule or the supplier's fixed category first, else what the office decided before
+  // for this document or this supplier (categorySuggest.js)
+  const [autoCat] = useState(() => {
+    if (doc.category_id || !editable || ['approved', 'sent'].includes(doc.status)) return null
+    const srv = doc.suggestions?.category
+    const byRule = srv?.value && ['rule', 'supplier'].includes(srv.source) ? categories.find((c) => c.name === srv.value && c.active !== false) : null
+    if (byRule) return { id: byRule.id, why: 'לפי כלל או הקטגוריה הקבועה של הספק' }
+    const s = suggestCategory(doc, documents, categories)
+    return s ? { id: s.category_id, sug: s } : null
+  })
+  const [form, setForm] = useState(() => ({ ...Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])), ...(autoCat ? { category_id: autoCat.id } : {}) }))
   const [busy, setBusy] = useState('')
   const [err, setErr] = useState('')
   const [tab, setTab] = useState('fields')
@@ -143,7 +154,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     if (Object.keys(change).length) setForm((cur) => ({ ...cur, ...change }))
   }, [doc])
   // leaving with typed changes asks first: a stray tap outside the panel or on an arrow must not throw the work away
-  const dirtyRef = useRef(false); dirtyRef.current = dirty
+  // a category chosen ahead of time is not "typed": closing the panel does not ask about it
+  const dirtyRef = useRef(false); dirtyRef.current = FIELDS.some((k) => !(k === 'category_id' && autoCat && !doc.category_id && form.category_id === autoCat.id) && String(form[k] ?? '') !== String(doc[k] ?? blank(k)))
   const leave = async (go) => { if (!go) return; if (dirtyRef.current && !(await askConfirm({ title: 'יש שינויים שלא נשמרו', text: 'מה שהוקלד במסמך הזה עוד לא נשמר. לצאת בלי לשמור?', ok: 'יציאה בלי שמירה', danger: true }))) return; go() }
   useEffect(() => {
     const warn = (e) => { if (dirtyRef.current) { e.preventDefault(); e.returnValue = '' } }
@@ -157,7 +169,6 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const issueFor = (k) => issues.filter((i) => i.field === k)
   const sug = doc.suggestions || {}
   const mailbox = mailboxes.find((m) => m.id === doc.mailbox_id)
-  const { documents } = useFinance()
   const [fixedBusy, setFixedBusy] = useState(false)
   // a phone: the panel is the whole screen, and "אישור" waits in a bar at its bottom edge instead of under the form
   const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches)
@@ -168,13 +179,21 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   /* The category, from what the office already decided (categorySuggest.js): where this supplier's documents sit, or an
      earlier copy of this very document. A rule or the supplier's fixed category (the server's suggestion) comes first. */
   const catName = (cid) => categories.find((c) => c.id === cid)?.name || ''
+  const catWhy = (cs) => (cs.reason === 'same_document' ? 'כך שויך אותו מסמך כשהגיע בפעם הקודמת'
+    : cs.reason === 'supplier' ? (cs.of === 1 ? `כך שויך המסמך הקודם של ${doc.supplier_name || 'הספק'}` : `כך שויכו ${cs.count} מתוך ${cs.of} המסמכים ${cs.decided ? 'המאושרים ' : ''}של ${doc.supplier_name || 'הספק'}`)
+      : 'השם או מילת זיהוי של הקטגוריה מופיעים במסמך')
   const catSug = useMemo(() => suggestCategory(doc, documents, categories), [doc, documents, categories])
   const catUsage = useMemo(() => supplierUsage(doc, documents, categories), [doc, documents, categories])
   const srvCat = sug.category?.value ? categories.find((c) => c.name === sug.category.value && c.active !== false)?.id || null : null
   const srvStrong = !!srvCat && ['rule', 'supplier'].includes(sug.category?.source)
   const catOffer = srvStrong ? srvCat : catSug?.category_id || srvCat
   const catCount = useMemo(() => { const m = {}; for (const d of documents) if (d.category_id && !['rejected', 'duplicate', 'archived'].includes(d.status)) m[d.category_id] = (m[d.category_id] || 0) + 1; return m }, [documents])
-  const catMeta = useMemo(() => Object.fromEntries(Object.entries(catCount).map(([k, n]) => [k, sayDocs(n)])), [catCount])
+  // beside each option: how many of THIS supplier's documents carry it (the useful number in this field), else how many in all
+  const catMeta = useMemo(() => {
+    const m = Object.fromEntries(Object.entries(catCount).map(([k, n]) => [k, sayDocs(n)]))
+    for (const u of catUsage) m[u.category_id] = u.n === 1 ? 'מסמך אחד של הספק' : `${u.n} מסמכים של הספק`
+    return m
+  }, [catCount, catUsage])
   const catSections = useMemo(() => [
     catOffer ? { label: 'מוצע', values: [catOffer] } : null,
     catUsage.some((u) => u.category_id !== catOffer) ? { label: 'בשימוש אצל הספק הזה', values: catUsage.map((u) => u.category_id).filter((c) => c !== catOffer) } : null,
@@ -444,13 +463,17 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                   <h4 className="fin-form__sec fin-field--wide">שיוך</h4>
                   {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><Select value={form.category_id || ''} onChange={(e) => pickCategory(e.target.value)} disabled={!editable || !!catBusy} sections={catSections} allLabel="כל הקטגוריות" meta={catMeta} onCreate={canNewCat ? createCategory : undefined} createLabel={(t) => `יצירת קטגוריה "${t}"`} extras={catExtras}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</Select></> })}
                   <div className="fin-field--wide fin-catbox">
-                    {(() => {
+                    {autoCat && !doc.category_id && form.category_id === autoCat.id ? (
+                      <p className="fin-catsug fin-autocat" data-reason={autoCat.sug?.reason || 'rule'}>
+                        <Icon name="sparkle" size={16} />
+                        <span className="fin-catsug__text"><span>נבחרה מראש: <strong>{catName(autoCat.id)}</strong></span><small>{autoCat.sug ? catWhy(autoCat.sug) : autoCat.why}. נשמרת בשמירה או באישור.</small></span>
+                        {editable && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => setForm((f) => ({ ...f, category_id: '' }))}>ביטול</button>}
+                      </p>
+                    ) : (() => {
                       // the office's own history speaks first; a rule or the supplier's fixed category keeps the line it always had
                       const low = !form.category_id || (form.category_id === (doc.category_id || '') && typeof fc.category === 'number' && fc.category < 0.85)
                       if (!editable || srvStrong || !catSug || !low || form.category_id === catSug.category_id) return Suggest({ k: 'category' })
-                      const why = catSug.reason === 'same_document' ? 'כך שויך אותו מסמך כשהגיע בפעם הקודמת'
-                        : catSug.reason === 'supplier' ? (catSug.of === 1 ? `כך שויך המסמך הקודם של ${doc.supplier_name || 'הספק'}` : `כך שויכו ${catSug.count} מתוך ${catSug.of} המסמכים ${catSug.decided ? 'המאושרים ' : ''}של ${doc.supplier_name || 'הספק'}`)
-                          : 'השם או מילת זיהוי של הקטגוריה מופיעים במסמך'
+                      const why = catWhy(catSug)
                       return (
                         <p className="fin-catsug" data-reason={catSug.reason}>
                           <Icon name="sparkle" size={16} />

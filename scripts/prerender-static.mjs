@@ -146,7 +146,7 @@ function loadCmsProjects() {
     try {
       const r = await fetch(
         `${SB_URL.replace(/\/$/, '')}/rest/v1/projects?is_published=eq.true&is_archived=eq.false` +
-        `&select=slug,name,location,subtitle,description,hero_image_url,status,address,seo_description&order=sort_order.asc`,
+        `&select=slug,name,location,subtitle,description,hero_image_url,status,address,seo_description,project_type,units,units_label,floors,floors_label,architects,year,amenities,environment&order=sort_order.asc`,
         { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
       )
       if (r.ok) return await r.json()
@@ -466,6 +466,12 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
      אותו מקור שהעמוד החי מרנדר, כך שאין שתי גרסאות. */
   {
     const { HOUSE_PAGES, HOUSE_STEPS, HOUSE_GUIDES, houseJsonLd } = await import(pathToFileURL(join(root, 'src/data/houseLanding.js')).href)
+    const houseCms = await loadCmsProjects()
+    const HOUSE_PROJECTS = [
+      ['yordei-hayam-3', 'יורדי הים 3, שכונת גרינברג, הוד השרון', 'שתי וילות פרטיות', 'בתכנון'],
+      ['henrietta-sald-22-24', 'הנרייטה סאלד 22-24, מערב הוד השרון', 'ארבע יחידות דו משפחתיות', 'בבנייה'],
+      ['project-hankin-41', 'חנקין 41, שכונת מגדיאל, הוד השרון', 'בניין בוטיק, שש דירות', 'בבנייה'],
+    ]
     for (const pg of HOUSE_PAGES) {
       /* עמודי נחיתה נמדדים על אורך הכותרת והתיאור שגוגל מציג */
       const fullLen = `${pg.title} | ${BRAND}`.length
@@ -490,9 +496,11 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
           `<h2>${esc(pg.stepsTitle)}</h2><ol>` +
           steps.map((st) => `<li><strong>${esc(st.t)}</strong> (${esc(st.who)}): ${esc(st.d)}</li>`).join('') + `</ol>` +
           `<h2>${esc(pg.projectsTitle)}</h2><ul>` +
-          `<li><a href="/villas-sharon">יורדי הים 3, שכונת גרינברג, הוד השרון</a>: שתי וילות פרטיות. בתכנון.</li>` +
-          `<li><a href="/villas-sharon">הנרייטה סאלד 22-24, מערב הוד השרון</a>: ארבע יחידות דו משפחתיות. בבנייה.</li>` +
-          `<li><a href="/villas-sharon">חנקין 41, שכונת מגדיאל, הוד השרון</a>: בניין בוטיק, שש דירות. בבנייה.</li></ul>` +
+          /* כמו בעמוד החי (HouseProjects): כרטיס פרויקט מקשר לעמוד הפרויקט, והסטטוס מה-CMS כשיש */
+          HOUSE_PROJECTS.map(([slug, name, d, st]) => {
+            const cp = houseCms.find((x) => x.slug === slug)
+            return `<li><a href="${cp ? `/projects/${slug}` : '/villas-sharon'}">${esc(name)}</a>: ${esc(d)}. ${esc((cp && FACTS.PROJECT_STATUS_HE[cp.status]) || st)}.</li>`
+          }).join('') + `</ul>` +
           `<h2>${esc(pg.check.title)}</h2><p>${esc(pg.check.lead)}</p><ul>` +
           pg.check.items.map(([t, d]) => `<li><strong>${esc(t)}</strong>: ${esc(d)}</li>`).join('') + `</ul>` +
           `<h2>${esc(pg.faqTitle)}</h2>` +
@@ -627,6 +635,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
      הגבוהה ביותר באתר: מי שמחפש "הנרייטה סאלד הוד השרון" נוחת בדיוק כאן,
      ועד היום סורק בלי JavaScript ראה בהם מעטפת ריקה. */
   const cmsProjects = await loadCmsProjects()
+  const { HOUSE_PAGES: HP } = await import(pathToFileURL(join(root, 'src/data/houseLanding.js')).href)
+  const CITY_PAGE = Object.fromEntries(HP.filter((x) => x.city).map((x) => [x.city, { path: x.path, label: `בניית בית פרטי ב${x.city}` }]))
 
   const txt = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
   /* שמות הפרויקטים מגיעים מהניהול, ואין שום דבר שמונע שני פרויקטים באותו
@@ -663,7 +673,27 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
         (sub ? `<p>${esc(sub)}</p>` : '') +
         (desc && desc !== sub ? `<p>${esc(desc)}</p>` : '') +
         (txt(p.address) ? `<p>כתובת: ${esc(txt(p.address))}</p>` : '') +
-        `<ul><li><a href="/projects">כל הפרויקטים</a></li><li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li></ul>`,
+        /* הנתונים שהעמוד החי מציג (ProjectDetail.jsx): סוג, יחידות, מפלסים, אדריכל, שנה, סטטוס, מה כולל והסביבה.
+           הכול מה-CMS, כך שסורק בלי JavaScript קורא את אותו עמוד ולא רק את התיאור. */
+        (() => {
+          const facts = [
+            txt(p.project_type) && ['סוג', txt(p.project_type)],
+            +p.units > 0 && ['יחידות', `${p.units}${txt(p.units_label) ? ` ${txt(p.units_label)}` : ''}`],
+            txt(p.floors) && [txt(p.floors_label) || 'קומות', txt(p.floors)],
+            txt(p.architects) && ['אדריכלות', txt(p.architects)],
+            +p.year > 0 && ['שנה', String(p.year)],
+            FACTS.PROJECT_STATUS_HE[p.status] && ['סטטוס', FACTS.PROJECT_STATUS_HE[p.status]],
+          ].filter(Boolean)
+          const am = (Array.isArray(p.amenities) ? p.amenities : []).map(txt).filter(Boolean)
+          const env = p.environment && typeof p.environment === 'object' ? p.environment : {}
+          return (facts.length ? `<h2>נתוני הפרויקט</h2><ul>` + facts.map(([k, v]) => `<li><strong>${esc(k)}</strong>: ${esc(v)}</li>`).join('') + `</ul>` : '') +
+            (am.length ? `<h2>מה כולל</h2><ul>` + am.map((x) => `<li>${esc(x)}</li>`).join('') + `</ul>` : '') +
+            (txt(env.text) ? `<h2>${esc(txt(env.title) || 'הסביבה')}</h2><p>${esc(txt(env.text))}</p>` : '')
+        })() +
+        `<ul><li><a href="/projects">כל הפרויקטים</a></li>` +
+        /* עמוד הנחיתה של העיר, כשיש כזה: קישור הקשרי בין הפרויקט לבין "בניית בית פרטי ב..." */
+        (CITY_PAGE[city] ? `<li><a href="${CITY_PAGE[city].path}">${esc(CITY_PAGE[city].label)}</a></li>` : '') +
+        `<li><a href="/divisions/execution">ביצוע ובנייה</a></li><li><a href="/divisions/supervision">ניהול ופיקוח פרויקטים</a></li></ul>`,
     }))
   }
 

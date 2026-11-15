@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { DocPic } from './Peek.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, date, money } from './format.js'
@@ -114,7 +115,7 @@ export default function AccountantReport() {
               <li key={l.id} className={sel.has(l.id) ? 'is-on' : ''}>
                 <label className="fin-rep__row">
                   <input type="checkbox" checked={sel.has(l.id)} onChange={() => toggle(l.id)} aria-label={`בחירת ${l.supplier}${l.number ? ` מספר ${l.number}` : ''}`} />
-                  <span className="fin-rep__who"><strong><bdi>{l.supplier}</bdi></strong><small>{[l.number && `מס׳ ${l.number}`, l.date ? date(l.date) : 'בלי תאריך', l.category, l.company].filter(Boolean).join(' · ')}</small></span>
+                  <span className="fin-rep__who has-pic"><DocPic doc={l.doc} /><span className="fin-who__text"><strong><bdi>{l.supplier}</bdi></strong><small>{[l.number && `מס׳ ${l.number}`, l.date ? date(l.date) : 'בלי תאריך', l.category, l.company].filter(Boolean).join(' · ')}</small></span></span>
                   <span className={`fin-rep__tag is-${TYPE_TAG[l.typeKey] || 'red'}`}>{l.type}</span>
                   <span className="fin-rep__sum"><b>{l.total === null ? '—' : money(l.total, l.cur)}</b>{!l.counted && <small>לא נספר: אישור תשלום</small>}</span>
                   <span className={`fin-rep__tag is-${STATUS_TAG[l.statusKey] || 'grey'}`}>{l.status}</span>

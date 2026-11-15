@@ -1,5 +1,5 @@
 // Upload captured Meta ads into the engine: one comp_shots row per unique creative (same page, picture and text),
-// with the card screenshot (webp, 1600px wide — 2026-11-06, was 2400; the free plan's 1 GB is shared by everything) and the creative itself (the 600px picture or the video frame).
+// with the card screenshot (webp, 1200px wide q70 — 2026-11-15, was 1600 q75 and before that 2400; the free plan's 1 GB is shared by everything) and the creative itself (the 600px picture or the video frame).
 // The 1080px preview is no longer made: the viewer shows the creative, and the card when asked for the whole ad.
 // node up.cjs [--per-comp 6] [--dry] [--only C001] [--budget-mb 550] [--cap-pct 75]
 // Stops before the whole project passes --cap-pct of the free plan's 1 GB (read from public.storage_usage(); the project was
@@ -10,7 +10,7 @@ const H=__dirname;const OUT=path.join(H,'out');const UP=path.join(H,'up');fs.mkd
 const PER=+A['per-comp']||0;const ONLY=A.only?String(A.only).split(','):null;const BUDGET=(+A['budget-mb']||0)*1048576;
 const KEY=(fs.readFileSync(path.join(H,'..','..','public','engine','bridge.js'),'utf8').match(/const KEY = '([^']+)'/)||[])[1];
 const SB='https://filnzlnvujnlazwcxbuq.supabase.co';const PUB=SB+'/storage/v1/object/public/engine-media/';
-const CARD_W=1600,CARD_Q=75;const QUOTA=1024*1048576;const CAP=QUOTA*(+A['cap-pct']||75)/100;
+const CARD_W=1200,CARD_Q=70;const QUOTA=1024*1048576;const CAP=QUOTA*(+A['cap-pct']||75)/100;
 const ads=Object.fromEntries(JSON.parse(fs.readFileSync(path.join(H,'ads.json'),'utf8')).map(a=>[a.id,a]));
 const log=s=>{const l=new Date().toISOString().slice(11,19)+' '+s;console.log(l);fs.appendFileSync(path.join(H,'up.log'),l+'\n')};
 const sh=(c)=>cp.execSync(c,{maxBuffer:64e6}).toString();

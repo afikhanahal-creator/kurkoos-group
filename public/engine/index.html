@@ -33249,7 +33249,9 @@ const addItems=()=>document.querySelectorAll('.v207menu').forEach(m=>{if(m.query
 new MutationObserver(addItems).observe(document.documentElement,{childList:true,subtree:true});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v242="open"]');if(!b)return;e.preventDefault();e.stopPropagation();open(b.dataset.id)},true);
 // messages from the studio
-const IMGS={};const imgOf=u=>{if(!IMGS[u]){const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{try{typeof render==='function'&&render()}catch(e){}};i.src=u;IMGS[u]=i}return IMGS[u]};
+// a loaded design is drawn straight onto the canvases that wait for it. Re-rendering the whole page on every load made
+// the posts page flicker without end: thousands of posts carry a design, and each load rebuilt every card.
+const IMGS={},WAIT={};const imgOf=u=>{if(!IMGS[u]){const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{const w=WAIT[u];delete WAIT[u];if(w)w.forEach(cv=>{try{if(cv.isConnected)cv.getContext('2d').drawImage(i,0,0,cv.width,cv.height)}catch(e){}})};i.onerror=()=>{delete WAIT[u]};i.src=u;IMGS[u]=i}return IMGS[u]};
 window.addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||!String(e.data.type||'').startsWith('kurkoos-studio:'))return;
  const d=e.data,reply=v=>{try{e.source.postMessage({re:d.id,value:v},location.origin)}catch(x){}};
  if(d.type==='kurkoos-studio:close'){close();return}
@@ -33261,7 +33263,7 @@ window.addEventListener('message',async e=>{if(e.origin!==location.origin||!e.da
 });
 // a post with a saved studio design shows that design (4:5 only); the original layout stays in the post untouched
 const orig=p=>{if(!p||!p.studio)return p;const q=Object.assign({},p);delete q.studio;return q};
-try{drawSlide=(f=>function(cv,p,i){const s=p&&p.studio;if(s&&s.use&&s.pages&&s.pages[i||0]&&cv.width*5===cv.height*4){const im=imgOf(s.pages[i||0]);if(im.complete&&im.naturalWidth){const c=cv.getContext('2d');c.drawImage(im,0,0,cv.width,cv.height);return}}return f.apply(this,arguments)})(drawSlide)}catch(e){}
+try{drawSlide=(f=>function(cv,p,i){const s=p&&p.studio;if(s&&s.use&&s.pages&&s.pages[i||0]&&cv.width*5===cv.height*4){const u=s.pages[i||0],im=imgOf(u);if(im.complete&&im.naturalWidth){const c=cv.getContext('2d');c.drawImage(im,0,0,cv.width,cv.height);return}if(!im.complete)(WAIT[u]=WAIT[u]||new Set()).add(cv)}return f.apply(this,arguments)})(drawSlide)}catch(e){}
 // the post as the engine draws it today (without a studio design), for the before and after view
 async function thumb(id){const p=posts().find(x=>x.id===id);if(!p)return null;try{const draw=()=>{const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;drawSlide(cv,orig(p),0);return cv};try{await preloadPosts([orig(p)])}catch(x){};draw();await new Promise(r=>setTimeout(r,900));return draw().toDataURL('image/jpeg',0.88)}catch(x){return null}}
 window.__v242={open,close,thumb};

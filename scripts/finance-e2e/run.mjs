@@ -1975,6 +1975,30 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
     [mtShot])
 }
 
+// HOVERPIC: every list of documents shows the document's small picture, and hovering it opens the large preview, so a
+// document can be looked at before it is opened: all documents (table and list), new, pending, VAT, the accountant
+// report and Google Drive.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const seen = []
+  const probe = async (label, path, pre) => {
+    await go(path); await page.waitForTimeout(1500); if (pre) await pre()
+    const pics = page.locator('.fin-docpic'); const n = await pics.count(); let pop = 0
+    if (n) { await pics.first().scrollIntoViewIfNeeded().catch(() => {}); await pics.first().hover().catch(() => {}); await page.waitForTimeout(700); pop = await page.locator('.fin-peek__pop .fin-thumb').count() }
+    await page.mouse.move(2, 2)
+    seen.push(`${label} ${n}/${pop}`)
+  }
+  await probe('כל המסמכים', '/documents')
+  const hpShot = await shot('119c-hover-pic')
+  await probe('רשימה', '/documents', async () => { await page.locator('button[title="רשימה"]').click().catch(() => {}); await page.waitForTimeout(600) })
+  await page.locator('button[title="טבלה"]').click().catch(() => {}); await page.waitForTimeout(300)   // back to the table, as the later scenarios expect
+  await probe('חדשות', '/new'); await probe('ממתינים', '/pending'); await probe('מע״מ', '/vat'); await probe('דוח לרו״ח', '/report')
+  await probe('Drive', '/drive', async () => { await page.getByRole('button', { name: /כל הקבצים/ }).first().click().catch(() => {}); await page.waitForTimeout(1200) })
+  record('HOVERPIC', 'תמונה קטנה של המסמך וריחוף בכל רשימות המסמכים', 'בכל המסמכים, חשבוניות חדשות, ממתינים לבדיקה, מרכז המע״מ, דוח לרואה החשבון ו-Google Drive: בכל שורה תמונה קטנה של המסמך, ובריחוף מעליה נפתחת תצוגה מקדימה גדולה',
+    `מסך תמונות/ריחוף: ${seen.join('; ')}`,
+    seen.length === 7 && seen.every((x) => /\s[1-9]\d*\/1$/.test(x)), [hpShot])
+}
+
 // SCAN: the scan engine on a big mailbox and on invoices@ side by side. 1,502 messages (1,200 of them in one week, i.e.
 // three pages of 500), a 503 on listing, a message that fails once and then works, a damaged TIFF, the same invoice that
 // already came to invoices@, stop and resume, a message the first pass "missed", and the completeness rule: done only

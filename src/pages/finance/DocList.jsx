@@ -1,5 +1,6 @@
 import { DOC_TYPE, date, docDate, money, nameOf } from './format.js'
 import { Icon, StatusPill } from './ui.jsx'
+import Peek, { DocPic } from './Peek.jsx'
 
 /* Documents as a compact list, one row each: what it is, from whom, when, how much, and where it stands. The same rows on
    a phone and on a desktop. A row opens the document; with `sel` it also has a check box for the bulk actions.
@@ -16,9 +17,9 @@ export default function DocList({ docs, onOpen, businesses, sel, onToggle, onSup
           <li key={d.id} {...(rowProps ? rowProps(d) : {})} data-month={marks?.get(d.id)} className={`fin-dlist__row ${sel?.has(d.id) ? 'is-selected' : ''} ${rowClass ? rowClass(d) : ''}`}>
             {onToggle && <label className="fin-dlist__check"><input type="checkbox" checked={!!sel?.has(d.id)} onChange={() => onToggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name || 'מסמך'}`} /></label>}
             <button type="button" className="fin-dlist__open" onClick={() => onOpen(d)}>
-              <span className={`fin-dlist__icon ${d.doc_type === 'credit' ? 'is-credit' : ''}`} aria-hidden="true"><Icon name={d.source === 'whatsapp' ? 'whatsapp' : d.source === 'upload' ? 'upload' : 'docs'} size={18} /></span>
+              <DocPic doc={d} className="fin-dlist__pic" />
               <span className="fin-dlist__main">
-                <strong>{d.supplier_name || d.file_name || 'מסמך'}</strong>
+                <Peek doc={d}><strong>{d.supplier_name || d.file_name || 'מסמך'}</strong></Peek>
                 <small>
                   {confirm && <span className="fin-duppill is-confirm">לאישור</span>}
                   {dup && <span className="fin-duppill">כפול?</span>}

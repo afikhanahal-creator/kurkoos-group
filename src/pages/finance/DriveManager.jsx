@@ -3,6 +3,7 @@ import * as api from './api.js'
 import { DOC_TYPE, date, dateTime, money, monthLabel } from './format.js'
 import { Empty, Field, Icon, Modal, Pill, askConfirm } from './ui.jsx'
 import Thumbnail from './Thumbnail.jsx'
+import Peek, { DocPic } from './Peek.jsx'
 import DocPreview from './DocPreview.jsx'
 import { moments } from './moments.js'
 
@@ -540,7 +541,7 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
             {flat.slice(0, limit).map((i) => (
               <li key={i.id} className={`fin-dm__card ${sel.has(i.id) ? 'is-sel' : ''} ${detail === i.id ? 'is-open' : ''}`} draggable={operate} onDragStart={dragStart(i)} onDragEnd={() => { setDrag(null); setOver('') }} onContextMenu={(e) => openMenu(i, e)} {...longPress(i)}>
                 {operate && <label className="fin-dm__check"><input type="checkbox" checked={sel.has(i.id)} onChange={() => toggle(i.id)} aria-label={`בחירת ${i.name}`} /></label>}
-                <button type="button" className="fin-dm__thumb" onClick={() => (picking ? toggle(i.id) : setPreview(i.id))} aria-label={`תצוגה מקדימה של ${i.name}`}><Thumbnail doc={i.doc || { id: i.id }} /></button>
+                <button type="button" className="fin-dm__thumb" onClick={() => (picking ? toggle(i.id) : setPreview(i.id))} aria-label={`תצוגה מקדימה של ${i.name}`}>{i.doc ? <Peek doc={i.doc} className="fin-dm__peek"><Thumbnail doc={i.doc} /></Peek> : <Thumbnail doc={{ id: i.id }} />}</button>
                 <button type="button" className="fin-dm__cardmain" onClick={() => (picking ? toggle(i.id) : setDetail(i.id))}>
                   <strong dir="auto">{i.name}</strong>
                   <small><Assigned i={i} />{i.period && <span>{monthLabel(i.period)}</span>}</small>
@@ -557,7 +558,7 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
               <li key={i.id} className={`fin-dm__row ${sel.has(i.id) ? 'is-sel' : ''} ${detail === i.id ? 'is-open' : ''}`} draggable={operate} onDragStart={dragStart(i)} onDragEnd={() => { setDrag(null); setOver('') }} onContextMenu={(e) => openMenu(i, e)} {...longPress(i)}>
                 {operate ? <label className="fin-dm__check"><input type="checkbox" checked={sel.has(i.id)} onChange={() => toggle(i.id)} aria-label={`בחירת ${i.name}`} /></label> : <span />}
                 <button type="button" className="fin-dm__name" onClick={() => (picking ? toggle(i.id) : setDetail(i.id))}>
-                  <span className={`fin-dm__ficon is-${kindOf(i.doc) === 'PDF' ? 'pdf' : kindOf(i.doc) === 'תמונה' ? 'img' : 'other'}`} aria-hidden="true">{kindOf(i.doc) === 'PDF' ? 'PDF' : <Icon name={kindOf(i.doc) === 'מייל' ? 'mail' : 'file'} size={17} />}</span>
+                  {i.doc ? <DocPic doc={i.doc} /> : <span className="fin-dm__ficon is-other" aria-hidden="true"><Icon name="file" size={17} /></span>}
                   <span className="fin-dm__nametext"><strong dir="auto">{stars.has(i.id) && <Icon name="sparkle" size={13} />} {i.name}</strong><small>{[i.doc?.supplier_name, i.doc?.total_amount != null && money(i.doc.total_amount, i.doc.currency)].filter(Boolean).join(' · ')}</small></span>
                 </button>
                 <span className="fin-dm__c is-co"><Assigned i={i} /></span>

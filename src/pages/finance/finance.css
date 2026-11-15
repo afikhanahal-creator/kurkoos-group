@@ -4284,3 +4284,40 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 }
 .fin-rowpic { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .fin-rowpic__text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+/* ---------- the dropdown: a note beside an option (e.g. the supplier's usual category) and "add new" ---------- */
+.fin-sel__mark { flex: none; padding: 1px 8px; border-radius: 999px; background: var(--ocean-wash); color: var(--ocean-2); font-size: var(--t-xs); font-weight: 700; white-space: nowrap; }
+.fin-sel__create { color: var(--ocean-2); font-weight: 700; border-top: 1px dashed var(--line-2); margin-top: 4px; }
+.fin-sel__create strong { color: var(--ink); }
+.fin-autocat { background: var(--ocean-wash); border-radius: var(--r-m); padding: 8px 10px; }
+
+/* ---------- Google Drive: folders in the brand's dark blues, for contrast (DriveManager.jsx) ----------
+   A company folder is navy, a folder a person made is ocean, "no company" keeps a red tab. Each tile carries a folder's
+   tab on top, so a folder never reads like a file. Text on the tiles is white (contrast 13:1 on navy, 7.6:1 on ocean). */
+.fin-dm { --fold: #07293a; --fold-hover: #0c3a50; --fold-manual: #105572; --fold-manual-hover: #16688c; --fold-ink: #ffffff; --fold-sub: rgba(255, 255, 255, 0.78); }
+.fin[data-theme='dark'] .fin-dm { --fold: #0f3b52; --fold-hover: #154b66; --fold-manual: #16688c; --fold-manual-hover: #1b7aa3; }
+.fin-dm__folders { gap: 14px; padding-top: 8px; }
+.fin-dm__folder { position: relative; min-height: 78px; padding: 14px 16px; border: 0; border-radius: 14px; border-start-start-radius: 4px; background: var(--fold); color: var(--fold-ink); box-shadow: 0 1px 2px rgba(7, 41, 58, 0.18), 0 6px 16px -8px rgba(7, 41, 58, 0.45); transition: background-color 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease; }
+.fin-dm__folder::before { content: ''; position: absolute; top: -7px; inset-inline-start: 0; width: 42%; max-width: 120px; height: 12px; border-radius: 8px 8px 0 0; background: inherit; }
+.fin-dm__folder:hover { background: var(--fold-hover); border-color: transparent; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(7, 41, 58, 0.2), 0 12px 24px -10px rgba(7, 41, 58, 0.5); }
+.fin-dm__folder.is-manual { background: var(--fold-manual); }
+.fin-dm__folder.is-manual:hover { background: var(--fold-manual-hover); }
+.fin-dm__folder.is-none::after { content: ''; position: absolute; top: -7px; inset-inline-start: 0; width: 42%; max-width: 120px; height: 4px; border-radius: 8px 8px 0 0; background: #e2595a; }
+.fin-dm__folder .fin-dm__foldericon, .fin-dm__folder.is-none .fin-dm__foldericon, .fin-dm__folder.is-manual .fin-dm__foldericon { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
+.fin-dm__folder .fin-dm__foldertext strong { color: var(--fold-ink); font-weight: 700; }
+.fin-dm__folder .fin-dm__foldertext small { color: var(--fold-sub); }
+.fin-dm__folder > svg { color: var(--fold-sub); }
+.fin-dm__folder.is-over, .fin-dm.is-dragging .fin-dm__folder.is-over { background: var(--fold-manual-hover); box-shadow: 0 0 0 3px #8cc4dc; color: var(--fold-ink); }
+.fin-dm.is-dragging .fin-dm__folder { box-shadow: 0 0 0 1px rgba(140, 196, 220, 0.6); }
+.fin-dm__folder:focus-visible { outline: 3px solid #8cc4dc; outline-offset: 2px; }
+.fin-dm__folderacts .fin-icon-btn { color: var(--fold-sub); background: transparent; }
+.fin-dm__folderacts .fin-icon-btn:hover { color: #ffffff; background: rgba(255, 255, 255, 0.14); }
+.fin-dm__folderacts .fin-dm__star.is-on { color: #f5c451; }
+.fin-dm__folderacts .fin-icon-btn--danger { color: #ffb3b3; }
+@media (prefers-reduced-motion: reduce) { .fin-dm__folder, .fin-dm__folder:hover { transition: none; transform: none; } }
+
+/* the place you are: the active view and the current folder in navy */
+.fin-dm__view.is-on, .fin-dm__cobtn.is-on { background: var(--fold); color: #ffffff; }
+.fin-dm__view.is-on svg, .fin-dm__cobtn.is-on svg { color: #ffffff; }
+.fin-dm__view.is-on .fin-dm__badge, .fin-dm__cobtn.is-on .fin-dm__badge { background: rgba(255, 255, 255, 0.18); color: #ffffff; }
+.fin-dm__crumb.is-here { color: var(--fold); }
+.fin[data-theme='dark'] .fin-dm__crumb.is-here { color: var(--ink); }

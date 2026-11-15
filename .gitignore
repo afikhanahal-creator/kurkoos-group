@@ -59,3 +59,7 @@ video/projects/_media/
 video/projects/*/out/
 video/projects/*/vo/
 /scripts/meta_capture/prune
+/scripts/storage/tmp
+/scripts/storage/tmp-img
+/scripts/storage/*.done
+/scripts/storage/*.log

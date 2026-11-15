@@ -19,6 +19,12 @@ export function PeekCard({ doc }) {
   )
 }
 
+/* The small picture of a document in a row of a list (its real first page), with the large preview on hover. The same in
+   every list of documents, so a document can be looked at before it is opened. */
+export function DocPic({ doc, className = '' }) {
+  return <Peek doc={doc} className={`fin-docpic ${className}`}><span className="fin-docpic__pic"><Thumbnail doc={doc} /></span></Peek>
+}
+
 export default function Peek({ doc, children, className = '' }) {
   const [pos, setPos] = useState(null)
   const enter = (e) => {

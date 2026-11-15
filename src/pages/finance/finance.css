@@ -4260,3 +4260,27 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-dm__sharedrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); min-height: 56px; }
 .fin-dm__sharedrow:last-child { border-bottom: 0; }
 @media (max-width: 767px) { .fin-dm__folder.is-keyed { padding-inline-end: 60px; } .fin-dm__folder.is-manual { padding-inline-end: 148px; } .fin-dm__sharedrow { grid-template-columns: auto minmax(0, 1fr); } .fin-dm__sharedrow > a { grid-column: 2; justify-self: start; } }
+
+/* ---------- the small picture of a document in every list, with the large preview on hover (Peek.jsx › DocPic) ---------- */
+.fin-docpic { display: block; flex: none; width: 40px; line-height: 0; }
+.fin-docpic__pic { display: block; width: 40px; height: 50px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: var(--wash); }
+.fin-docpic__pic > * { width: 100%; height: 100%; }
+.fin-docpic .fin-thumb { aspect-ratio: auto; place-items: center; }
+.fin-docpic .fin-thumb:has(> .fin-thumb__mail), .fin-docpic .fin-thumb--nofile { place-items: stretch; }
+.fin-docpic .fin-thumb img { width: 100%; height: 100%; margin: 0; object-fit: cover; object-position: top; box-shadow: none; }
+.fin-docpic .fin-thumb__ph { font-size: var(--t-xs); line-height: 1.2; text-align: center; }
+.fin-docpic .fin-thumb__ph small { display: none; }
+.fin-docpic .fin-thumb__text { margin: 0; padding: 4px 2px; font-size: var(--t-xs); line-height: 1.2; max-height: 100%; box-shadow: none; overflow-wrap: anywhere; }
+.fin-dlist__open { grid-template-columns: 40px minmax(0, 1fr) auto auto; }
+.fin-dlist__main .fin-peek { display: block; min-width: 0; }
+.fin-dlist__main .fin-peek > strong { display: block; }
+.fin-vat__who.has-pic, .fin-rep__who.has-pic { display: flex; flex-direction: row; align-items: center; gap: 10px; min-width: 0; }
+.fin-who__text { display: grid; gap: 2px; min-width: 0; }
+.fin-dm__peek { display: block; width: 100%; height: 100%; }
+.fin-dm__peek > .fin-thumb { width: 100%; height: 100%; }
+@media (max-width: 560px) {
+  .fin-dlist__open { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .fin-dlist__pic { grid-row: 1 / span 2; align-self: center; }
+}
+.fin-rowpic { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.fin-rowpic__text { display: grid; gap: 2px; min-width: 0; flex: 1; }

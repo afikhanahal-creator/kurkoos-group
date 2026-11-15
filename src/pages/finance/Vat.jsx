@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { DocPic } from './Peek.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, date, dateTime, money, monthLabel, nameOf, toCsv } from './format.js'
@@ -88,7 +89,7 @@ export default function Vat() {
             {queue.slice(0, limit).map(({ doc, a }) => (
               <li key={doc.id}>
                 <button type="button" className="fin-vat__item" onClick={() => go(`/documents/${doc.id}`)}>
-                  <span className="fin-vat__who"><strong dir="auto">{doc.supplier_name || doc.file_name || 'מסמך'}</strong><small>{[DOC_TYPE[doc.doc_type], doc.doc_number && `מס׳ ${doc.doc_number}`, a.day && date(a.day), nameOf(businesses, doc.business_id) || 'לא משויך'].filter(Boolean).join(' · ')}</small></span>
+                  <span className="fin-vat__who has-pic"><DocPic doc={doc} /><span className="fin-who__text"><strong dir="auto">{doc.supplier_name || doc.file_name || 'מסמך'}</strong><small>{[DOC_TYPE[doc.doc_type], doc.doc_number && `מס׳ ${doc.doc_number}`, a.day && date(a.day), nameOf(businesses, doc.business_id) || 'לא משויך'].filter(Boolean).join(' · ')}</small></span></span>
                   <span className="fin-vat__sum"><b>{a.potential ? money(a.potential) : a.total !== null ? money(a.total) : '—'}</b><small>{a.potential ? (a.estimate?.assumed ? 'מע״מ משוער' : 'מע״מ ממתין') : 'סכום המסמך'}</small></span>
                   <span className="fin-vat__needs">{a.needs.map((x) => <span key={x.code}><Icon name="alert" size={14} /> {x.text}</span>)}</span>
                   <Pill tone={CLASS[a.cls][0]}>{CLASS[a.cls][1]}</Pill>
@@ -127,7 +128,7 @@ export default function Vat() {
           {listed.slice(0, limit).map(({ doc, a }) => (
             <li key={doc.id}>
               <button type="button" className="fin-vat__row" onClick={() => go(`/documents/${doc.id}`)}>
-                <span className="fin-vat__who"><strong dir="auto">{doc.supplier_name || doc.file_name || 'מסמך'}</strong><small>{[DOC_TYPE[doc.doc_type], a.day && date(a.day), nameOf(businesses, doc.business_id) || 'לא משויך'].filter(Boolean).join(' · ')}</small></span>
+                <span className="fin-vat__who has-pic"><DocPic doc={doc} /><span className="fin-who__text"><strong dir="auto">{doc.supplier_name || doc.file_name || 'מסמך'}</strong><small>{[DOC_TYPE[doc.doc_type], a.day && date(a.day), nameOf(businesses, doc.business_id) || 'לא משויך'].filter(Boolean).join(' · ')}</small></span></span>
                 <span className="fin-vat__nums"><span><i>סכום</i>{a.total !== null ? money(a.total) : '—'}</span><span><i>מע״מ</i>{a.vat !== null ? money(a.vat) : '—'}</span><span><i>לקיזוז</i><b>{money(a.eligible + a.potential)}</b></span></span>
                 <Pill tone={CLASS[a.cls][0]}>{CLASS[a.cls][1]}</Pill>
                 <span className="fin-vat__why">{a.explain}</span>

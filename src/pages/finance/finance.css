@@ -4321,3 +4321,4 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-dm__view.is-on .fin-dm__badge, .fin-dm__cobtn.is-on .fin-dm__badge { background: rgba(255, 255, 255, 0.18); color: #ffffff; }
 .fin-dm__crumb.is-here { color: var(--fold); }
 .fin[data-theme='dark'] .fin-dm__crumb.is-here { color: var(--ink); }
+.fin-wa__link { min-width: 160px; }

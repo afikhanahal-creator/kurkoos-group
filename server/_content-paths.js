@@ -71,6 +71,11 @@ export default [
     "date": "2026-06-21"
   },
   {
+    "path": "/construction-supervision/progress-reporting-home-construction",
+    "lastmod": "2026-11-15",
+    "date": "2026-11-15"
+  },
+  {
     "path": "/construction-supervision/protokol-mesira-bayit-prati",
     "lastmod": "2026-09-27",
     "date": "2026-09-27"
@@ -196,6 +201,11 @@ export default [
     "date": "2026-09-27"
   },
   {
+    "path": "/constructions/service-after-handover",
+    "lastmod": "2026-11-15",
+    "date": "2026-11-15"
+  },
+  {
     "path": "/constructions/sherut-achrei-mesira",
     "lastmod": "2026-09-27",
     "date": "2026-09-27"
@@ -301,6 +311,11 @@ export default [
     "date": "2026-09-27"
   },
   {
+    "path": "/madrich-yazamim/zikaron-dvarim",
+    "lastmod": "2026-11-15",
+    "date": "2026-11-15"
+  },
+  {
     "path": "/real-estate-guide/bdikot-lifnei-kniyat-migrash",
     "lastmod": "2026-10-19",
     "date": "2026-10-18"
@@ -361,6 +376,11 @@ export default [
     "date": "2026-10-04"
   },
   {
+    "path": "/real-estate-guide/nesach-tabu-check",
+    "lastmod": "2026-11-15",
+    "date": "2026-11-15"
+  },
+  {
     "path": "/real-estate-guide/real-return-real-estate-investment",
     "lastmod": "2026-08-23",
     "date": "2026-08-23"
@@ -394,6 +414,11 @@ export default [
     "path": "/yazamut-nadlan/deferred-demand-subsidized-lottery",
     "lastmod": "2026-09-13",
     "date": "2026-09-13"
+  },
+  {
+    "path": "/yazamut-nadlan/esg-green-building-developer",
+    "lastmod": "2026-11-15",
+    "date": "2026-11-15"
   },
   {
     "path": "/yazamut-nadlan/highrise-towers-vs-low-city",

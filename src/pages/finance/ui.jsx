@@ -159,7 +159,12 @@ export function Bars({ rows, empty = 'אין נתונים לתקופה.', format
 /* a dialog: Escape closes, focus moves in and returns to the button that opened it */
 export function Modal({ title, onClose, children, wide, footer }) {
   const box = useRef(null)
+  // The caller usually passes a new onClose on every render (an arrow function). The effect below must run once, when
+  // the dialog opens: run again, it moved the cursor back to the first field on every keystroke. The latest onClose is
+  // read through a ref instead.
+  const closeRef = useRef(onClose); closeRef.current = onClose
   useEffect(() => {
+    const onClose = () => closeRef.current?.()
     const back = document.activeElement
     box.current?.querySelector('.fin-modal__body input:not([type="hidden"]), .fin-modal__body select, .fin-modal__body textarea, .fin-modal__body button, .fin-modal__foot button')?.focus({ preventScroll: true })
     const onKey = (e) => {
@@ -174,7 +179,7 @@ export function Modal({ title, onClose, children, wide, footer }) {
     }
     window.addEventListener('keydown', onKey)
     return () => { window.removeEventListener('keydown', onKey); back?.focus?.({ preventScroll: true }) }
-  }, [onClose])
+  }, [])
   return (
     <div className="fin-modal" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="fin-modal__scrim" aria-label="סגירה" tabIndex={-1} onClick={onClose} />

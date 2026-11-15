@@ -3689,7 +3689,7 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
 @media (max-width: 1100px) { .fin-syscheck__list { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) {
   .fin-settings { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
-  .fin-settings__nav ul { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--s-4) * -1); padding-inline: var(--s-4); }
+  .fin-settings__nav ul { flex-wrap: wrap; gap: var(--s-2); }   /* every topic on screen: chips that wrap, never a row that hides some off the edge */
   .fin-settings__nav button { min-height: 44px; padding: 0 var(--s-3); gap: var(--s-2); }
   .fin-settings__navicon { width: 28px; height: 28px; background: transparent; }
   .fin-settings__nav button.is-on .fin-settings__navicon { background: transparent; color: var(--ocean-2); }

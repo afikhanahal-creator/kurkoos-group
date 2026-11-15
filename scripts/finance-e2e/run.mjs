@@ -1112,22 +1112,26 @@ record('SENDC', 'מרכז השליחה לרו״ח', 'מופיעים כל המס�
   [sendCenterShot, sentCenterShot])
 
 // =================== DATE RANGE + SEND TO THE ACCOUNTANT ===================
+// the range is the fixtures' own days (tambour = 6 days before they were made … electra = 3 days before), not fixed dates:
+// fixed dates emptied the range on any day the fixtures were made later, and the send button stayed disabled
+const RANGE = [meta.D.tambour, meta.D.electra]
+const dayHe = (iso) => `${Number(iso.slice(8, 10))} ב${['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'][Number(iso.slice(5, 7)) - 1]}`
 const auditBefore = Number(sql("select count(*) from fin_audit where action='sent_to_accountant'"))
 await nav('כל המסמכים'); await page.waitForTimeout(600)
 const totalRows = await page.locator('.fin-table tbody tr').count()
 await page.locator('.fin-datechip__main').click(); await page.waitForSelector('.fin-cal'); await page.waitForTimeout(250)
 const months = (await page.locator('.fin-cal__mname').allInnerTexts()).join(' | ')
-await page.locator('.fin-cal__day[data-date="2026-11-02"]').click()
+await page.locator(`.fin-cal__day[data-date="${RANGE[0]}"]`).click()
 const midTitle = await page.locator('.fin-cal__head strong').innerText()
-await page.locator('.fin-cal__day[data-date="2026-11-05"]').hover(); await page.waitForTimeout(150)
+await page.locator(`.fin-cal__day[data-date="${RANGE[1]}"]`).hover(); await page.waitForTimeout(150)
 const preview = await page.locator('.fin-cal__day.is-in').count()
-await page.locator('.fin-cal__day[data-date="2026-11-05"]').click()
+await page.locator(`.fin-cal__day[data-date="${RANGE[1]}"]`).click()
 const calShot = await shot('69-date-range')
 await page.getByRole('button', { name: 'החל', exact: true }).click(); await page.waitForTimeout(400)
 const chip = await page.locator('.fin-datechip__main').innerText()
 const inRange = await page.locator('.fin-table tbody tr').count()
 const barCount = await page.locator('.fin-rangebar__text strong').innerText()
-const expectRange = sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived','rejected')")
+const expectRange = sql(`select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '${RANGE[0]}' and '${RANGE[1]}' and status not in ('archived','rejected')`)
 const rangeShot = await shot('70-range-summary')
 await page.getByRole('button', { name: 'שליחה לרו״ח' }).first().click(); await page.waitForTimeout(300)
 const prefilled = await page.locator('.fin-modal input[type=email]').inputValue()
@@ -1140,7 +1144,7 @@ await page.waitForTimeout(500)
 const sentNote = await page.locator('.fin-note').first().innerText().catch(() => '')
 const lgS = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const mailS = [...lgS.emails].reverse().find((e) => /מסמכים לרו״ח/.test(e.subject || ''))
-const withFiles = Number(sql("select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '2026-11-02' and '2026-11-05' and status not in ('archived','rejected','duplicate') and file_path is not null"))
+const withFiles = Number(sql(`select count(*) from fin_documents where coalesce(issue_date, (email_date)::date, created_at::date) between '${RANGE[0]}' and '${RANGE[1]}' and status not in ('archived','rejected','duplicate') and file_path is not null`))
 const auditSend = String(Number(sql("select count(*) from fin_audit where action='sent_to_accountant'")) - auditBefore)
 // clearing the chip restores the full list
 await page.locator('.fin-datechip__x').click(); await page.waitForTimeout(300)
@@ -1149,7 +1153,7 @@ const cleared = await page.locator('.fin-table tbody tr').count()
 const empSend = await api(empToken, { action: 'send-to-accountant', ids: [sql("select id from fin_documents limit 1")], to: 'x@y.test' })
 record('SEND', 'סינון לפי טווח תאריכים ושליחה לרו״ח', 'לוח שנה של שני חודשים: לחיצה ראשונה מתחילה, השנייה מסיימת, הטווח מוצג מראש בריחוף; "החל" מסנן את הרשימה; "שליחה לרו״ח" שולחת מייל אחד עם כל הקבצים המקוריים וקובץ CSV; ניקוי מחזיר הכול; עובד לא יכול לשלוח',
   `חודשים: ${months}; אחרי לחיצה ראשונה: "${midTitle}"; תצוגה מקדימה: ${preview} ימים; צ׳יפ: "${chip}"; שורות: ${inRange}/${totalRows} (צפוי ${expectRange}), בסרגל: "${barCount}"; נמען מוצע: "${prefilled}"; מייל: ${mailS ? `"${mailS.subject}" אל ${mailS.to}, ${mailS.attachments.length} קבצים (${mailS.attachments.filter((a) => /\.csv$/.test(a.filename)).length} CSV, ${mailS.attachments.filter((a) => /\.xlsx$/.test(a.filename)).length} Excel)` : 'לא נשלח'}; הודעה: "${sentNote}"; יומן: ${auditSend}; אחרי ניקוי: ${cleared}; עובד: ${empSend.status}`,
-  /אוקטובר|נובמבר/.test(months) && /\?/.test(midTitle) && preview === 2 && /2 בנובמבר.*5 בנובמבר/.test(chip) && inRange === Number(expectRange) && inRange > 0 && inRange < totalRows && !!mailS && mailS.to.includes('cpa@accountants.test') && mailS.attachments.length === withFiles + 2 && mailS.attachments[0].filename.endsWith('.xlsx') && mailS.attachments[1].filename.endsWith('.csv') && auditSend === '1' && cleared === totalRows && empSend.status === 403 && /נשלח/.test(sentNote),
+  /אוקטובר|נובמבר/.test(months) && /\?/.test(midTitle) && preview === 2 && new RegExp(`${dayHe(RANGE[0])}.*${dayHe(RANGE[1])}`).test(chip) && inRange === Number(expectRange) && inRange > 0 && inRange < totalRows && !!mailS && mailS.to.includes('cpa@accountants.test') && mailS.attachments.length === withFiles + 2 && mailS.attachments[0].filename.endsWith('.xlsx') && mailS.attachments[1].filename.endsWith('.csv') && auditSend === '1' && cleared === totalRows && empSend.status === 403 && /נשלח/.test(sentNote),
   [calShot, rangeShot, sendShot])
 
 // =================== ORGANIZATION ===================
@@ -1166,7 +1170,7 @@ await page.getByLabel('סינון לפי תפקיד').selectOption('employee'); 
 const orgEmployees = await page.locator('.fin-member').count()
 await page.getByLabel('סינון לפי תפקיד').selectOption('')
 await page.getByRole('tab', { name: 'חברות' }).click(); await page.waitForTimeout(300)
-const orgCompanies = await page.locator('.fin-acc').count()
+const orgCompanies = await page.locator('.fin-cocard:not(.fin-cocard--add)').count()
 const orgCompaniesShot = await shot('64-organization-companies')
 await page.getByRole('tab', { name: 'שימוש' }).click(); await page.waitForTimeout(1200)
 const usageText = (await page.locator('.fin-org-panel').first().innerText()).replace(/\s+/g, ' ')

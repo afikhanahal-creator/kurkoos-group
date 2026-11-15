@@ -2202,3 +2202,31 @@ end $$;
 drop function if exists public.fin_mail_kick();
 
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- v16 (2026-11-15): the minute run also wakes every five minutes, for WhatsApp
+-- ============================================================
+-- A WhatsApp delivery can be lost (a hidden sender id, the system that passes messages on was down). The server reads the
+-- provider's journal and takes in what never arrived (server/finance/whatsapp.js catchUp), but the minute run only called
+-- the server while a mail scan or the Drive archive had work. Now it also calls every fifth minute: 288 calls a day,
+-- each a few hundred milliseconds when there is nothing to do.
+do $$ begin
+  if exists (select 1 from pg_namespace where nspname = 'net') and exists (select 1 from pg_namespace where nspname = 'vault') then
+    execute $f$
+      create or replace function public.fin_scan_kick() returns void language plpgsql security definer set search_path = public as $k$
+      declare v_url text; v_secret text;
+      begin
+        if not exists (select 1 from public.fin_scan_segments s join public.fin_scan_jobs j on j.id = s.job_id
+                        where j.status in ('queued', 'running') and s.phase = j.phase and s.status in ('pending', 'retry', 'running')
+                          and coalesce(s.next_try_at, now()) <= now())
+           and not public.fin_drive_has_work()
+           and extract(minute from now())::int % 5 <> 0 then return; end if;
+        select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'finance_tick_secret';
+        select decrypted_secret into v_url from vault.decrypted_secrets where name = 'finance_tick_url';
+        if v_secret is null or v_url is null then return; end if;
+        perform net.http_get(url := v_url || '?action=scan-tick', headers := jsonb_build_object('Authorization', 'Bearer ' || v_secret), timeout_milliseconds := 65000);
+      end $k$
+    $f$;
+    execute 'revoke all on function public.fin_scan_kick() from public, anon, authenticated';
+  end if;
+end $$;

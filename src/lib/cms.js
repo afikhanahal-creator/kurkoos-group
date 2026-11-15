@@ -21,6 +21,22 @@ const _cache = new Map()
    שטעינה חוזרת/רענון תרנדר *מיד* מהמטמון, ואז תתרענן ברקע. גם פחות המתנה
    לרשת וגם פחות בקשות חוזרות ל-Supabase. */
 const LS_PREFIX = 'kc_cache_'
+
+/* כמה זמן עותק מקומי נחשב טרי (בלי לשאול את Supabase). היה 10 דקות, ולכן שינוי מהאדמין
+   לא הגיע למבקר שכבר היה באתר. דקה אחת: הטעינה עדיין מיידית, והתוכן מתעדכן תוך דקה. */
+export const FRESH_MS = 60_000
+
+/* העותקים המקומיים שייכים לגרסה של האתר. כל פריסה חדשה בונה את הקובץ הזה עם hash אחר
+   בשם, ולכן כתובת המודול משתנה: כשהיא שונה מזו שנשמרה, מוחקים את כל העותקים הישנים,
+   כדי שמבקר לא יקבל נתונים ישנים עם קוד חדש. */
+try {
+  const build = String(import.meta.url || '').split('/').pop()
+  if (build && localStorage.getItem(LS_PREFIX + '__build') !== build) {
+    for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(LS_PREFIX)) localStorage.removeItem(k) }
+    localStorage.setItem(LS_PREFIX + '__build', build)
+  }
+} catch { /* בלי localStorage (מצב פרטי, SSR): אין עותקים ואין מה לנקות */ }
+
 function lsGet(key) {
   try { const raw = localStorage.getItem(LS_PREFIX + key); return raw ? JSON.parse(raw) : null } catch { return null }
 }
@@ -216,7 +232,7 @@ export async function deleteMedia(url) {
 
 // ---------- Projects ----------
 export async function listProjects({ includeArchived = false } = {}) {
-  return cached(`projects:${includeArchived}`, 600_000, async () => {
+  return cached(`projects:${includeArchived}`, FRESH_MS, async () => {
     let q = supabase.from('projects').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
     if (!includeArchived) q = q.eq('is_archived', false)
     const { data, error } = await q
@@ -231,7 +247,7 @@ export async function listProjects({ includeArchived = false } = {}) {
    הכריכה נלקחת מ-hero_image_url. */
 const CARD_COLS = 'id, slug, name, location, subtitle, year, status, hero_image_url, pages, card_layout, is_published'
 export async function listProjectCards() {
-  return cached('projects:cards', 600_000, async () => {
+  return cached('projects:cards', FRESH_MS, async () => {
     const fetchCards = (cols) => supabase
       .from('projects').select(cols)
       .eq('is_archived', false)
@@ -248,7 +264,7 @@ export async function listProjectCards() {
 }
 
 export async function getProjectBySlug(slug) {
-  return cached(`projects:one:${slug}`, 600_000, async () => {
+  return cached(`projects:one:${slug}`, FRESH_MS, async () => {
     // קודם לפי slug; אם לפרויקט אין slug — מנסים לפי id (כך שהעמוד ייפתח תמיד)
     const { data, error } = await supabase.from('projects').select('*').eq('slug', slug).maybeSingle()
     if (error) throw error
@@ -378,7 +394,7 @@ export async function archiveProperty(id) {
 
 // ---------- Counters ----------
 export async function listCounters({ activeOnly = false } = {}) {
-  return cached(`counters:${activeOnly}`, 600_000, async () => {
+  return cached(`counters:${activeOnly}`, FRESH_MS, async () => {
     let q = supabase.from('site_counters').select('*').order('sort_order', { ascending: true })
     if (activeOnly) q = q.eq('is_active', true)
     const { data, error } = await q
@@ -406,7 +422,7 @@ export async function deleteCounter(id) {
 
 // ---------- Logos (carousel) ----------
 export async function listLogos({ activeOnly = false } = {}) {
-  return cached(`logos:${activeOnly}`, 600_000, async () => {
+  return cached(`logos:${activeOnly}`, FRESH_MS, async () => {
     let q = supabase.from('site_logos').select('*').order('sort_order', { ascending: true })
     if (activeOnly) q = q.eq('is_active', true)
     const { data, error } = await q
@@ -670,7 +686,7 @@ export async function fetchSettings() {
   if (!supabase) return {}
   // הגדרות האתר נקראות ע"י כמה רכיבים בו-זמנית (פונטים, לוגו, יומן, כותרות)
   // — המטמון מאחד אותן לבקשת רשת אחת. המפתחות הכבדים מוחרגים (ר' למעלה).
-  return cached('settings', 600_000, async () => {
+  return cached('settings', FRESH_MS, async () => {
     const { data, error } = await supabase
       .from('site_settings')
       .select('*')
@@ -683,7 +699,7 @@ export async function fetchSettings() {
 /* טעינת מפתח בודד (לרוב מפתח כבד של טור) — מטמון עצמאי, localStorage-first */
 export async function fetchSettingKey(key) {
   if (!supabase) return null
-  return cached(`setting:${key}`, 600_000, async () => {
+  return cached(`setting:${key}`, FRESH_MS, async () => {
     const { data, error } = await supabase
       .from('site_settings')
       .select('value')
@@ -755,7 +771,7 @@ export function useSettings() {
         .catch(() => {})
     }
     // רענון בחזרה ללשונית — רק אם תמונת-המצב כבר ישנה (חוסך בקשות ו-Egress)
-    const onFocus = () => { if (!cachedSnapshot('settings', 600_000)) { invalidate('settings'); load() } }
+    const onFocus = () => { if (!cachedSnapshot('settings', FRESH_MS)) { invalidate('settings'); load() } }
     if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
 
     return () => {

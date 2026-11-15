@@ -383,6 +383,10 @@ const server = http.createServer(async (req, res) => {
     return send(res, buf ? 200 : 400, buf ? { idMessage: `file${log.waFiles.length}` } : { error: 'download failed' })
   }
   // the instance: its state and settings, as getStateInstance / getSettings / setSettings answer
+  // the line's journal (lastIncomingMessages) and a fresh link for a file in it (downloadFile); a test fills the journal
+  if (p === '/__green_journal') { log.greenJournal = req.method === 'POST' ? JSON.parse(await readBody(req)) : []; return send(res, 200, { ok: true, n: log.greenJournal.length }) }
+  if (/^\/green\/waInstance[^/]+\/lastIncomingMessages\//.test(p)) { log.journalReads = (log.journalReads || 0) + 1; return send(res, 200, (log.greenJournal || []).map(({ fileOnly, ...m }) => m)) }
+  if (/^\/green\/waInstance[^/]+\/downloadFile\//.test(p)) { const b = JSON.parse(await readBody(req)); const m = (log.greenJournal || []).find((x) => x.idMessage === b.idMessage); return m ? send(res, 200, { downloadUrl: m.fileOnly || m.downloadUrl }) : send(res, 404, { error: 'not found' }) }
   if (/^\/green\/waInstance[^/]+\/getStateInstance\//.test(p)) return send(res, 200, { stateInstance: log.greenState || 'authorized' })
   if (/^\/green\/waInstance[^/]+\/getSettings\//.test(p)) return send(res, 200, { wid: '972501234567@c.us', webhookUrl: '', webhookUrlToken: '', incomingWebhook: 'no', outgoingWebhook: 'no', ...(log.greenSettings || {}) })
   if (/^\/green\/waInstance[^/]+\/setSettings\//.test(p)) { log.greenSettings = { ...(log.greenSettings || {}), ...JSON.parse(await readBody(req)) }; return send(res, 200, { saveSettings: true }) }

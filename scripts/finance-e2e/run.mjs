@@ -2848,6 +2848,53 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && sOff.renamed === 0 && nameOff !== 'renamed-while-off.pdf' && putBack && ['renamed_in_drive', 'moved_in_drive', 'trashed_in_drive', 'restored_by_user', 'folder_created', 'folder_renamed_in_drive', 'folder_deleted', 'missing'].every((a) => String(logged).includes(a)), [syncShot, accShot])
 }
 
+// WAJOURNAL: nothing sent from a registered phone is lost. (1) WhatsApp's private ids: a sender as "…@lid" with the
+// phone in another field is taken in; one with no phone anywhere is noted as "number hidden", and linking it to a
+// registered phone takes its file in from the journal. (2) A file the live delivery never brought (it is only in the
+// provider's journal) is taken in by the catch-up, once; a stranger's file in the journal leaves no trace.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const pic = async (name, text) => { await page.setContent(`<div dir="rtl" style="font:28px sans-serif;padding:40px;background:#fff">${text}</div>`); fs.writeFileSync(`${FIX}/${name}`, await page.screenshot({ type: 'png' })) }
+  const tag = Date.now().toString(36)
+  await pic('wa-lid-a.png', `קבלה ${tag} א׳`); await pic('wa-lid-b.png', `קבלה ${tag} ב׳`); await pic('wa-journal.png', `קבלה ${tag} ג׳`); await pic('wa-stranger.png', `קבלה ${tag} ד׳`)
+  const msg = (id, sd, file) => ({ typeWebhook: 'incomingMessageReceived', idMessage: id, senderData: sd, messageData: { typeMessage: 'imageMessage', fileMessageData: { downloadUrl: `${FAKES}/green/file/${file}`, fileName: file, mimeType: 'image/png' } } })
+  const reg = '972543049491'
+  // private ids of this run only: the links a person makes are kept in fin_settings, which the reset keeps
+  const lidA = `1${String(Date.now()).slice(-10)}1`; const lidB = `1${String(Date.now()).slice(-10)}2`
+  // (1a) a private id with the phone in another field of the sender
+  const la = await hook(msg(`wl-a-${tag}`, { chatId: `${lidA}@lid`, sender: `${lidA}@lid`, senderName: 'יוגב', senderPhoneNumber: `${reg}@c.us` }, 'wa-lid-a.png'))
+  // (1b) a private id and no phone anywhere
+  const lb = await hook(msg(`wl-b-${tag}`, { chatId: `${lidB}@lid`, sender: `${lidB}@lid`, senderName: 'שלומי בדיקה' }, 'wa-lid-b.png'))
+  const hiddenRow = sql(`select id||'|'||outcome||'|'||coalesce(detail,'') from fin_whatsapp_inbox where message_id='wl-b-${tag}'`).split('|')
+  // the journal holds: the hidden-id message, one the webhook never brought from a registered phone, and a stranger's
+  const jr = (id, chatId, file, extra = {}) => ({ type: 'incoming', idMessage: id, timestamp: Math.floor(Date.now() / 1000), typeMessage: 'imageMessage', chatId, senderId: chatId, senderName: '', fileName: file, mimeType: 'image/png', ...extra })
+  await fetch(`${FAKES}/__green_journal`, { method: 'POST', body: JSON.stringify([
+    jr(`wl-b-${tag}`, `${lidB}@lid`, 'wa-lid-b.png', { fileOnly: `${FAKES}/green/file/wa-lid-b.png` }),
+    jr(`wj-${tag}`, `${reg}@c.us`, 'wa-journal.png', { downloadUrl: `${FAKES}/green/file/wa-journal.png` }),
+    jr(`ws-${tag}`, '972529990000@c.us', 'wa-stranger.png', { downloadUrl: `${FAKES}/green/file/wa-stranger.png` }),
+  ]) })
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const c1 = await api(tok, { action: 'whatsapp-catchup' }); const c2 = await api(tok, { action: 'whatsapp-catchup' })
+  const journalDoc = sql(`select count(*) from fin_whatsapp_inbox i join fin_documents d on d.id = i.document_id where i.message_id='wj-${tag}' and d.source='whatsapp'`)
+  const strangerRows = sql(`select count(*) from fin_whatsapp_inbox where message_id='ws-${tag}' or phone='972529990000'`)
+  // the screen: the hidden row with its control, linked to the registered phone
+  await go('/scanners'); await page.waitForTimeout(1800)
+  const hiddenUi = await page.locator('.fin-wa__log li', { hasText: 'WhatsApp הסתיר את המספר' }).first().innerText().catch(() => '')
+  const waShot = await shot('119e-whatsapp-hidden')
+  const link = await api(tok, { action: 'whatsapp-link-hidden', inbox_id: hiddenRow[0], phone: reg })
+  const linkedDoc = sql(`select count(*) from fin_whatsapp_inbox i join fin_documents d on d.id = i.document_id where i.message_id='wl-b-${tag}'`)
+  const mapped = sql("select value::text from fin_settings where key='whatsapp_lid_map'")
+  // a later message from the same private id is now known
+  await pic('wa-lid-c.png', `קבלה ${tag} ה׳`)
+  const lc = await hook(msg(`wl-c-${tag}`, { chatId: `${lidB}@lid`, sender: `${lidB}@lid`, senderName: 'שלומי בדיקה' }, 'wa-lid-c.png'))
+  await fetch(`${FAKES}/__green_journal`, { method: 'POST', body: '[]' })
+  record('WAJOURNAL', 'WhatsApp: שום קובץ מטלפון רשום לא הולך לאיבוד', 'שולח עם מזהה פרטי (@lid) והמספר בשדה אחר נקלט; בלי מספר בכלל נרשם "WhatsApp הסתיר את המספר" עם שם השולח, ושיוך לטלפון רשום קולט את הקובץ מהיומן ומכאן כל הודעה ממנו; קובץ שרק ביומן של הספק נקלט פעם אחת; קובץ של זר לא משאיר שורה',
+    `@lid עם מספר: ${la.data.outcome}; בלי מספר: ${lb.data.outcome}, שורה ${hiddenRow[1]} "${hiddenRow[2]}"; השלמה: ${JSON.stringify(c1.data)} ואז ${JSON.stringify(c2.data)}; מהיומן: ${journalDoc}; זר: ${strangerRows}; במסך: "${hiddenUi.replace(/\s+/g, ' ').slice(0, 80)}"; שיוך: ${JSON.stringify(link.data).slice(0, 80)}, מסמך ${linkedDoc}, מפה ${mapped}; הודעה הבאה: ${lc.data.outcome}`,
+    la.data.outcome === 'imported' && lb.data.outcome === 'hidden_number' && hiddenRow[1] === 'hidden_number' && hiddenRow[2] === 'שלומי בדיקה'
+      && c1.data.imported === 1 && c2.data.imported === 0 && journalDoc === '1' && strangerRows === '0' && /שלומי בדיקה/.test(hiddenUi)
+      && link.data.linked === true && linkedDoc === '1' && mapped.includes(`"${lidB}": "${reg}"`) && lc.data.outcome === 'imported', [waShot])
+}
+
 // CATPICK: the category field. A document without a category whose supplier's earlier documents carry one gets that
 // category chosen ahead of time (saved only with "שמירה"/"אישור"), the list marks the supplier's usual category and puts
 // it first, and a category that is not on the list is added from the field itself.

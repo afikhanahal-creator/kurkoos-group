@@ -2836,6 +2836,38 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && sOff.renamed === 0 && nameOff !== 'renamed-while-off.pdf' && putBack && ['renamed_in_drive', 'moved_in_drive', 'trashed_in_drive', 'restored_by_user', 'folder_created', 'folder_renamed_in_drive', 'folder_deleted', 'missing'].every((a) => String(logged).includes(a)), [syncShot, accShot])
 }
 
+// CATPICK: the category field. A document without a category whose supplier's earlier documents carry one gets that
+// category chosen ahead of time (saved only with "שמירה"/"אישור"), the list marks the supplier's usual category and puts
+// it first, and a category that is not on the list is added from the field itself.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const cat = sql("select id||'|'||name from fin_categories where active is not false order by sort desc limit 1").split('|')
+  const sup = sql("insert into fin_suppliers (name) values ('נגריית הבדיקה בע״מ') returning id").split('\n')[0]
+  const mk = (num, withCat) => sql(`insert into fin_documents (status, source, doc_type, supplier_id, supplier_name, doc_number, issue_date, total_amount, currency${withCat ? ', category_id' : ''}) values ('${withCat ? 'approved' : 'review'}', 'upload', 'invoice', '${sup}', 'נגריית הבדיקה בע״מ', '${num}', '2026-11-01', 1180, 'ILS'${withCat ? `, '${cat[0]}'` : ''}) returning id`).split('\n')[0]
+  mk('CP-1', true); mk('CP-2', true); const target = mk('CP-3', false)
+  await go(`/documents/${target}`); await page.waitForTimeout(1500)
+  const note = await page.locator('.fin-autocat').innerText().catch(() => '')
+  const shown = await page.locator('.fin-panel .fin-sel__value').filter({ hasText: cat[1] }).count()
+  const savedBefore = sql(`select coalesce(category_id::text, '') from fin_documents where id='${target}'`)
+  // the list: the supplier's category first, with its note
+  const field = page.locator('.fin-panel label', { hasText: 'קטגוריה' }).locator('.fin-sel__btn').first()
+  await field.click(); await page.waitForTimeout(400)
+  const first = await page.locator('.fin-sel__pop .fin-sel__opt').first().innerText().catch(() => '')
+  const listShot = await shot('119d-category-list')
+  // a new category, typed and added from the list
+  await page.locator('.fin-sel__search input').fill('ציוד צילום לאתר'); await page.waitForTimeout(300)
+  const createRow = await page.locator('.fin-sel__create').innerText().catch(() => '')
+  await page.locator('.fin-sel__create').click(); await page.waitForTimeout(2500)
+  const created = sql("select count(*) from fin_categories where name='ציוד צילום לאתר'")
+  const pickedNow = await page.locator('.fin-panel .fin-sel__value').filter({ hasText: 'ציוד צילום לאתר' }).count()
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click().catch(() => {}); await page.waitForTimeout(2000)
+  const savedAfter = sql(`select coalesce(c.name, '') from fin_documents d left join fin_categories c on c.id = d.category_id where d.id='${target}'`)
+  record('CATPICK', 'קטגוריה: בחירה מראש לפי הספק, סימון ברשימה והוספה מהשדה', 'מסמך בלי קטגוריה שלספק שלו יש מסמכים קודמים בקטגוריה: הקטגוריה נבחרת מראש עם הסבר ולא נשמרת עד שמירה; ברשימה היא ראשונה עם "2 מסמכים של הספק"; קטגוריה שלא ברשימה נוספת מהשדה ונשמרת במסמך',
+    `מראש: "${note.replace(/\s+/g, ' ').slice(0, 90)}", בשדה ${shown}, במסד לפני שמירה "${savedBefore}"; ראשונה ברשימה: "${first.replace(/\s+/g, ' ')}"; שורת הוספה: "${createRow.replace(/\s+/g, ' ')}", נוצרה ${created}, נבחרה ${pickedNow}; אחרי שמירה: ${savedAfter}`,
+    /נבחרה מראש/.test(note) && /2 מ-2 המסמכים הקודמים של הספק/.test(note) && shown === 1 && savedBefore === '' && first.includes(cat[1]) && /2 מסמכים של הספק/.test(first)
+      && /ציוד צילום לאתר/.test(createRow) && created === '1' && pickedNow === 1 && savedAfter === 'ציוד צילום לאתר', [listShot])
+}
+
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)
 fs.writeFileSync(`${OUT}/results.json`, JSON.stringify({ at: new Date().toISOString(), results, extra: { companiesShot, projectsShot, agentsShot, autoShot, dataShot, settingsShot } }, null, 1))
 console.log(`\n${results.filter((r) => r.pass).length}/${results.length} passed`)

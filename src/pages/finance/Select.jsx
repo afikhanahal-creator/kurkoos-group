@@ -45,8 +45,13 @@ export function placeNear(anchor, { minWidth = 220, maxHeight = 360, gap = 6 } =
   return up ? { right, width, bottom: vh - r.top + gap, maxHeight: h } : { right, width, top: r.bottom + gap, maxHeight: h }
 }
 
-export default function Select({ children, className = '', value, defaultValue, onChange, onBlur, disabled, autoFocus, placeholder, searchable, ...rest }) {
-  const options = useMemo(() => optionsOf(children), [children])
+/* Optional: `marks` ({ value: short text }) shows a note beside an option and lists the marked ones first, e.g. "the
+   supplier's usual category"; `onCreate(text)` adds a row "add …" when the search finds no exact match, and resolves to
+   the new option's value (the caller adds it to the options). */
+export default function Select({ children, className = '', value, defaultValue, onChange, onBlur, disabled, autoFocus, placeholder, searchable, marks, onCreate, createLabel = 'הוספת', ...rest }) {
+  const options0 = useMemo(() => optionsOf(children), [children])
+  const options = useMemo(() => (marks && Object.keys(marks).length ? [...options0.filter((o) => marks[o.value]), ...options0.filter((o) => !marks[o.value])] : options0), [options0, marks])
+  const [creating, setCreating] = useState(false)
   const native = useRef(null)
   const btn = useRef(null)
   const panel = useRef(null)
@@ -60,7 +65,7 @@ export default function Select({ children, className = '', value, defaultValue, 
   const [q, setQ] = useState('')
   const [active, setActive] = useState(-1)
   const [pos, setPos] = useState(null)
-  const withSearch = searchable ?? options.length > 7
+  const withSearch = searchable ?? (options.length > 7 || !!onCreate)
   // every word of the query must appear, in any order ("ביצוע קורקוס" finds "קורקוס ביצוע")
   const shown = useMemo(() => {
     const words = q.trim().split(/\s+/).map(norm).filter(Boolean)
@@ -77,6 +82,17 @@ export default function Select({ children, className = '', value, defaultValue, 
   const hide = (refocus = true) => {
     setOpen(false)
     if (refocus) native.current?.focus({ preventScroll: true })
+  }
+  const exact = q.trim() && options.some((o) => norm(o.label) === norm(q.trim()))
+  const canCreate = !!onCreate && !!q.trim() && !exact
+  const create = async () => {
+    if (!canCreate || creating) return
+    setCreating(true)
+    try {
+      const v = await onCreate(q.trim())
+      if (v != null) { const el = native.current; if (value === undefined) setInner(String(v)); onChange?.({ target: { value: String(v) }, currentTarget: el, type: 'change', preventDefault() {}, stopPropagation() {} }) }
+      hide()
+    } finally { setCreating(false) }
   }
   const pick = (o) => {
     if (!o || o.disabled) return
@@ -113,7 +129,7 @@ export default function Select({ children, className = '', value, defaultValue, 
     else if (e.key === 'ArrowUp') { e.preventDefault(); step(-1) }
     else if (e.key === 'Home') { e.preventDefault(); setActive(0) }
     else if (e.key === 'End') { e.preventDefault(); setActive(shown.length - 1) }
-    else if (e.key === 'Enter') { e.preventDefault(); pick(shown[active]) }
+    else if (e.key === 'Enter') { e.preventDefault(); if (shown[active]) pick(shown[active]); else create() }
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hide() }
     else if (e.key === 'Tab') hide(false)
     else if (!withSearch && e.key.length === 1) {
@@ -156,10 +172,12 @@ export default function Select({ children, className = '', value, defaultValue, 
             onClick={() => pick(o)}
           >
             <span>{o.label || '—'}</span>
+            {marks?.[o.value] && <small className="fin-sel__mark">{marks[o.value]}</small>}
             {o.value === current && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg>}
           </li>
         ))}
-        {!shown.length && <li className="fin-sel__empty" role="presentation">{options.length ? 'אין תוצאות' : 'אין אפשרויות לבחירה'}</li>}
+        {!shown.length && !canCreate && <li className="fin-sel__empty" role="presentation">{options.length ? 'אין תוצאות' : 'אין אפשרויות לבחירה'}</li>}
+        {canCreate && <li role="option" aria-selected="false" className={`fin-sel__opt fin-sel__create ${!shown.length ? 'is-active' : ''}`} onClick={create}><span>{creating ? 'מוסיף…' : <>+ {createLabel} <strong>"{q.trim()}"</strong></>}</span></li>}
       </ul>
     </div>
   )

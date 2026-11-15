@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { HtmlPreview } from './DocPreview.jsx'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
@@ -114,13 +114,31 @@ function Preview({ doc, onSaved, canEdit }) {
 }
 
 export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext }) {
-  const { businesses, projects, categories, mailboxes, suppliers, allocations, can, go, reload } = useFinance()
+  const { businesses, projects, categories, mailboxes, suppliers, allocations, can, go, reload, documents } = useFinance()
+  // The category this document most likely belongs to: the one the supplier's earlier documents carry, else the
+  // system's own suggestion. Shown beside the options, and chosen ahead of time when the document has none, so the person
+  // only confirms it (it is saved with "שמירה" or "אישור", never by opening the panel).
+  const catRec = useMemo(() => {
+    const marks = {}; let auto = null; let note = ''
+    const sameSup = (d) => d.id !== doc.id && d.category_id && ((doc.supplier_id && d.supplier_id === doc.supplier_id) || (!doc.supplier_id && doc.supplier_name && d.supplier_name === doc.supplier_name))
+    const counts = new Map(); let total = 0
+    for (const d of documents || []) if (sameSup(d)) { counts.set(d.category_id, (counts.get(d.category_id) || 0) + 1); total++ }
+    const top = [...counts].sort((a, b) => b[1] - a[1])[0]
+    for (const [id, n] of counts) if (categories.some((c) => c.id === id)) marks[id] = n === 1 ? 'מסמך קודם של הספק' : `${n} מסמכים של הספק`
+    const ai = doc.suggestions?.category?.value ? categories.find((c) => c.name === doc.suggestions.category.value) : null
+    if (ai && !marks[ai.id]) marks[ai.id] = 'הצעת המערכת'
+    if (top && categories.some((c) => c.id === top[0]) && top[1] / total >= 0.6) { auto = top[0]; note = top[1] === 1 ? 'כך סווג המסמך הקודם של הספק' : `כך סווגו ${top[1]} מ-${total} המסמכים הקודמים של הספק` }
+    else if (ai && (doc.suggestions.category.confidence ?? 0) >= 0.7) { auto = ai.id; note = `הצעת המערכת${doc.suggestions.category.reason ? `: ${doc.suggestions.category.reason}` : ''}` }
+    return { marks, auto, note }
+  }, [documents, categories, doc.id, doc.supplier_id, doc.supplier_name, doc.suggestions]) // eslint-disable-line react-hooks/exhaustive-deps
   const supplierRow = suppliers.find((x) => x.id === doc.supplier_id)
   const myAlloc = allocations.filter((a) => a.document_id === doc.id)
   const [split, setSplit] = useState(() => (myAlloc.length ? myAlloc.map((a) => ({ project_id: a.project_id, amount: String(a.amount) })) : null))
   const [splitMsg, setSplitMsg] = useState('')
   const editable = can('edit') || (can('upload') && ['processing', 'review', 'failed'].includes(doc.status))
-  const [form, setForm] = useState(() => Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])))
+  const editable0 = can('edit') || (can('upload') && ['processing', 'review', 'failed'].includes(doc.status))
+  const [autoCat] = useState(() => (!doc.category_id && editable0 && !['approved', 'sent'].includes(doc.status) ? catRec.auto : null))
+  const [form, setForm] = useState(() => ({ ...Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])), ...(autoCat ? { category_id: autoCat } : {}) }))
   const [busy, setBusy] = useState('')
   const [err, setErr] = useState('')
   const [tab, setTab] = useState('fields')
@@ -142,7 +160,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     if (Object.keys(change).length) setForm((cur) => ({ ...cur, ...change }))
   }, [doc])
   // leaving with typed changes asks first: a stray tap outside the panel or on an arrow must not throw the work away
-  const dirtyRef = useRef(false); dirtyRef.current = dirty
+  // a category chosen ahead of time is not "typed": closing the panel does not ask about it
+  const dirtyRef = useRef(false); dirtyRef.current = FIELDS.some((k) => !(k === 'category_id' && autoCat && !doc.category_id && form.category_id === autoCat) && String(form[k] ?? '') !== String(doc[k] ?? blank(k)))
   const leave = async (go) => { if (!go) return; if (dirtyRef.current && !(await askConfirm({ title: 'יש שינויים שלא נשמרו', text: 'מה שהוקלד במסמך הזה עוד לא נשמר. לצאת בלי לשמור?', ok: 'יציאה בלי שמירה', danger: true }))) return; go() }
   useEffect(() => {
     const warn = (e) => { if (dirtyRef.current) { e.preventDefault(); e.returnValue = '' } }
@@ -156,7 +175,6 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const issueFor = (k) => issues.filter((i) => i.field === k)
   const sug = doc.suggestions || {}
   const mailbox = mailboxes.find((m) => m.id === doc.mailbox_id)
-  const { documents } = useFinance()
   const [fixedBusy, setFixedBusy] = useState(false)
   const original = doc.duplicate_of ? documents.find((d) => d.id === doc.duplicate_of) : null
   const decideDuplicate = async (decision) => {
@@ -212,6 +230,17 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     // a split document's projects live in its allocations: the single project field is not sent back
     if (myAlloc.length > 1 || (split && split.length > 1)) delete out.project_id
     return out
+  }
+  // a category that is not on the list yet is added from the field itself (admin and finance manager, like the
+  // categories screen); the document takes it at once
+  const addCategory = async (name) => {
+    const clash = categories.find((c) => c.name.trim() === name.trim())
+    if (clash) return clash.id
+    try {
+      const row = await api.saveRow('fin_categories', { name: name.trim().slice(0, 80), sort: Math.max(0, ...categories.map((c) => Number(c.sort) || 0)) + 1 })
+      await reload?.()
+      return row.id
+    } catch (e) { setErr(`הקטגוריה לא נוספה: ${e.message}`); return null }
   }
   const save = async (extra = {}) => {
     setBusy(extra.status || 'save'); setErr('')
@@ -387,7 +416,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                   {F({ k: 'vat_amount', type: 'number' })}
                   {F({ k: 'total_amount', type: 'number', wide: true })}
                   <h4 className="fin-form__sec fin-field--wide">שיוך</h4>
-                  {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><Select value={form.category_id || ''} onChange={set('category_id')} disabled={!editable}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</Select></> })}
+                  {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><Select value={form.category_id || ''} onChange={set('category_id')} disabled={!editable} marks={catRec.marks} onCreate={can('edit') ? addCategory : undefined} createLabel="קטגוריה חדשה:"><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</Select></> })}
+                  {autoCat && !doc.category_id && form.category_id === autoCat && <p className="fin-suggest fin-field--wide fin-autocat"><Icon name="sparkle" size={15} /> הקטגוריה נבחרה מראש: <strong>{nameOf(categories, autoCat)}</strong> <span className="fin-muted">({catRec.note}). נשמרת בשמירה או באישור.</span>{editable && <button type="button" className="fin-link" onClick={() => setForm((f) => ({ ...f, category_id: '' }))}>ביטול</button>}</p>}
                   <div className="fin-field--wide">{Suggest({ k: 'category' })}</div>
                   {F({ k: 'business_id', children: <><Select value={form.business_id || ''} onChange={set('business_id')} disabled={!editable}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></> })}
                   {F({ k: 'project_id', children: <><Select value={form.project_id || ''} onChange={set('project_id')} disabled={!editable || !!split}><option value="">{split ? 'מפוצל בין פרויקטים' : 'ללא פרויקט'}</option>{projects.filter((p) => !form.business_id || !p.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}{p.code ? ` (${p.code})` : ''}</option>)}</Select></> })}

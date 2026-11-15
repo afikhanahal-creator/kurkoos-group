@@ -188,7 +188,7 @@ alter table public.fin_documents add column if not exists export_id uuid;
 alter table public.fin_documents drop constraint if exists fin_documents_doc_type_check;
 alter table public.fin_documents add constraint fin_documents_doc_type_check check (doc_type in ('invoice', 'receipt', 'invoice_receipt', 'credit', 'supplier_bill', 'payment_confirmation', 'proforma', 'quote', 'other'));
 alter table public.fin_documents drop constraint if exists fin_documents_status_check;
-alter table public.fin_documents add constraint fin_documents_status_check check (status in ('processing', 'review', 'approved', 'sent', 'rejected', 'duplicate', 'failed'));
+alter table public.fin_documents add constraint fin_documents_status_check check (status in ('processing', 'review', 'approved', 'sent', 'rejected', 'duplicate', 'failed', 'archived'));
 alter table public.fin_documents drop constraint if exists fin_documents_source_check;
 alter table public.fin_documents add constraint fin_documents_source_check check (source in ('gmail', 'outlook', 'upload', 'camera', 'forward', 'whatsapp'));
 create unique index if not exists fin_documents_hash_uq on public.fin_documents (file_hash) where file_hash is not null;
@@ -2195,8 +2195,9 @@ notify pgrst, 'reload schema';
 -- The owner decided: one collection of new mail a day, at night. An hourly job that an earlier version of this file added
 -- is removed here if it exists. (History for a new mailbox does not wait for the night: it starts when the mailbox connects.)
 do $$ begin
-  if exists (select 1 from pg_namespace where nspname = 'cron') and exists (select 1 from cron.job where jobname = 'finance-mail-sync') then
-    perform cron.unschedule('finance-mail-sync');
+  -- nested: a condition that names cron.job is planned whole, and fails where pg_cron is not installed
+  if exists (select 1 from pg_namespace where nspname = 'cron') then
+    if exists (select 1 from cron.job where jobname = 'finance-mail-sync') then perform cron.unschedule('finance-mail-sync'); end if;
   end if;
 end $$;
 drop function if exists public.fin_mail_kick();

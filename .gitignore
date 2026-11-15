@@ -58,3 +58,4 @@ video/studio/*-out-stills/
 video/projects/_media/
 video/projects/*/out/
 video/projects/*/vo/
+/scripts/meta_capture/prune

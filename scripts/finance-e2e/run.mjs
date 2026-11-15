@@ -2841,8 +2841,11 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
 // it first, and a category that is not on the list is added from the field itself.
 {
   await page.setViewportSize({ width: 1440, height: 900 })
-  const cat = sql("select id||'|'||name from fin_categories where active is not false order by sort desc limit 1").split('|')
-  const sup = sql("insert into fin_suppliers (name) values ('נגריית הבדיקה בע״מ') returning id").split('\n')[0]
+  // a name of this run only: the reset keeps categories, so a fixed name would already exist the next time
+  const fresh = `ציוד צילום ${Date.now().toString(36).slice(-5)}`
+  sql("delete from fin_documents where doc_number in ('CP-1', 'CP-2', 'CP-3') and supplier_name = 'נגריית הבדיקה בע״מ'")
+  const cat = sql("select id||'|'||name from fin_categories where active is not false and name not like 'ציוד צילום%' order by sort desc limit 1").split('|')
+  const sup = sql("insert into fin_suppliers (name) values ('נגריית הבדיקה בע״מ') on conflict do nothing returning id").split('\n').find((l) => /^[0-9a-f-]{36}$/.test(l)) || sql("select id from fin_suppliers where name='נגריית הבדיקה בע״מ'")
   const mk = (num, withCat) => sql(`insert into fin_documents (status, source, doc_type, supplier_id, supplier_name, doc_number, issue_date, total_amount, currency${withCat ? ', category_id' : ''}) values ('${withCat ? 'approved' : 'review'}', 'upload', 'invoice', '${sup}', 'נגריית הבדיקה בע״מ', '${num}', '2026-11-01', 1180, 'ILS'${withCat ? `, '${cat[0]}'` : ''}) returning id`).split('\n')[0]
   mk('CP-1', true); mk('CP-2', true); const target = mk('CP-3', false)
   await go(`/documents/${target}`); await page.waitForTimeout(1500)
@@ -2857,17 +2860,17 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const first = await pop.locator('.fin-sel__opt').first().innerText().catch(() => '')
   const listShot = await shot('119d-category-list')
   // a new category, typed and added from the list
-  await pop.locator('.fin-sel__search input').fill('ציוד צילום לאתר', { timeout: 5000 }).catch(() => {}); await page.waitForTimeout(300)
+  await pop.locator('.fin-sel__search input').fill(fresh, { timeout: 5000 }).catch(() => {}); await page.waitForTimeout(300)
   const createRow = await pop.locator('.fin-sel__create').innerText({ timeout: 5000 }).catch(async () => `(אין שורת הוספה; חלוניות פתוחות ${await page.locator('.fin-sel__pop').count()}, משתמש ${await page.locator('.fin__user, .fin__me').first().innerText().catch(() => '?')})`)
   await pop.locator('.fin-sel__create').click({ timeout: 5000 }).catch(() => {}); await page.waitForTimeout(2500)
-  const created = sql("select count(*) from fin_categories where name='ציוד צילום לאתר'")
-  const pickedNow = await page.locator('.fin-panel .fin-sel__value').filter({ hasText: 'ציוד צילום לאתר' }).count()
+  const created = sql(`select count(*) from fin_categories where name='${fresh}'`)
+  const pickedNow = await page.locator('.fin-panel .fin-sel__value').filter({ hasText: fresh }).count()
   await page.getByRole('button', { name: 'שמירה', exact: true }).click().catch(() => {}); await page.waitForTimeout(2000)
   const savedAfter = sql(`select coalesce(c.name, '') from fin_documents d left join fin_categories c on c.id = d.category_id where d.id='${target}'`)
   record('CATPICK', 'קטגוריה: בחירה מראש לפי הספק, סימון ברשימה והוספה מהשדה', 'מסמך בלי קטגוריה שלספק שלו יש מסמכים קודמים בקטגוריה: הקטגוריה נבחרת מראש עם הסבר ולא נשמרת עד שמירה; ברשימה היא ראשונה עם "2 מסמכים של הספק"; קטגוריה שלא ברשימה נוספת מהשדה ונשמרת במסמך',
     `מראש: "${note.replace(/\s+/g, ' ').slice(0, 90)}", בשדה ${shown}, במסד לפני שמירה "${savedBefore}"; ראשונה ברשימה: "${first.replace(/\s+/g, ' ')}"; שורת הוספה: "${createRow.replace(/\s+/g, ' ')}", נוצרה ${created}, נבחרה ${pickedNow}; אחרי שמירה: ${savedAfter}`,
     /נבחרה מראש/.test(note) && /2 מ-2 המסמכים הקודמים של הספק/.test(note) && shown === 1 && savedBefore === '' && first.includes(cat[1]) && /2 מסמכים של הספק/.test(first)
-      && /ציוד צילום לאתר/.test(createRow) && created === '1' && pickedNow === 1 && savedAfter === 'ציוד צילום לאתר', [listShot])
+      && createRow.includes(fresh) && created === '1' && pickedNow === 1 && savedAfter === fresh, [listShot])
 }
 
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)

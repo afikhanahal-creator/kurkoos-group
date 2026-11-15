@@ -2708,7 +2708,9 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   await fetch(`${FAKES}/__drive?trash=${dTrash}`)
   // 3. moved in Drive into another company's month folder (a document in review), and an approved one too
   const before3 = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dMonth}'`)
-  const dest = sql(`select key || '|' || drive_folder_id from fin_drive_folders where target_id='${T}' and key ~ '^b:[0-9a-f-]{36}/[0-9]{4}/[0-9]{2}$' and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dMonth}') and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dApproved}') limit 1`).split('|')
+  // a month folder that is really in Drive now: a row whose folder was removed in Drive by an earlier scenario is not a place a person can move a file to
+  const liveFolders = new Set((await drive()).filter((f) => !f.trashed).map((f) => f.id))
+  const dest = sql(`select key || '|' || drive_folder_id from fin_drive_folders where target_id='${T}' and key ~ '^b:[0-9a-f-]{36}/[0-9]{4}/[0-9]{2}$' and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dMonth}') and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dApproved}') order by key`).split('\n').map((l) => l.split('|')).find((l) => liveFolders.has(l[1])) || []
   const destBiz = dest[0].slice(2, 38); const destPeriod = `${dest[0].split('/')[1]}-${dest[0].split('/')[2]}`
   await fetch(`${FAKES}/__drive?doc=${dMonth}&move_to=${dest[1]}`); await fetch(`${FAKES}/__drive?doc=${dApproved}&move_to=${dest[1]}`)
   const beforeApproved = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dApproved}'`)

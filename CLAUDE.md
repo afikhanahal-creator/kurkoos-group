@@ -10,6 +10,12 @@ that stopped running keeps only its creative (`scripts/meta_capture/prune.cjs`);
 in place by `scripts/storage/recompress-videos.cjs`; every upload carries `cache-control: max-age=31536000`. The Afik site's
 daily cron reads `storage_usage()` and texts the office once a day while this project passes 70%.
 
+**The owner stays on the free plan (2026-11-15), even while the organization is still on Pro.** `storage_usage()` reports a
+1 GB quota and must never be raised without the owner's decision. Work frugally: target under 750 MB, check
+`storage_usage()` before any bulk upload, and stop at 75%. Ad captures are now 1200px webp q70, and a running ad keeps no
+old preview (`prune.cjs --previews`). Engine photos and studio designs are re-encoded in place by
+`scripts/storage/recompress-images.cjs`. Every temporary anon policy (`policies_*_on.sql`) is dropped right after the run.
+
 ## Every page lives in the page editor
 
 The owner edits the site pages in the admin tab "עמודים", the visual page editor. **Every new page must be added to the editor in the same change that adds the page.** No exceptions without the owner's approval.

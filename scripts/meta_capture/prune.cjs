@@ -3,7 +3,9 @@
 // picture or the video frame, ~40 KB), and the big card screenshot (+ the old 1080px preview) is deleted from storage. The ad
 // text, CTA, landing page, dates and the creative stay; only the picture of the whole ad card goes.
 // Needs policies_on.sql (it includes "meta capture delete"); run policies_off.sql after.
-// node prune.cjs [--dry] [--limit 50] [--days 0]   (--days N: only ads inactive and captured more than N days ago)
+// node prune.cjs [--dry] [--limit 50] [--days 0] [--previews]   (--days N: only ads inactive and captured more than N days ago)
+// --previews (2026-11-15, the owner stays on the free plan): also drops the old 1080px preview of ads that still run. The card
+// itself stays, so the gallery loses nothing but a second, smaller copy of the same card.
 const fs=require('fs');const path=require('path');const cp=require('child_process');
 const A=Object.fromEntries(process.argv.slice(2).map((a,i,v)=>a.startsWith('--')?[a.slice(2),(v[i+1]&&!v[i+1].startsWith('--'))?v[i+1]:true]:[]).filter(x=>x.length));
 const H=__dirname;const TMP=path.join(H,'prune');fs.mkdirSync(TMP,{recursive:true});
@@ -25,7 +27,8 @@ const rows=readAll('collection=eq.comp_shots&id=like.meta_*&select=id,data&order
 const cut=DAYS?Date.now()-DAYS*864e5:Infinity;
 const todo=rows.filter(r=>{const d=r.data||{};const ad=String(d.ad_id||r.id.replace(/^meta_/,''));
  return status.get(ad)==='inactive'&&d.creative_blob&&d.blob!==d.creative_blob&&(!DAYS||Date.parse(d.captured||d.added||0)<cut)});
-log(`rows ${rows.length}, ads known ${status.size}, inactive with a card to drop ${todo.length}`);
+const prevs=A.previews?rows.filter(r=>{const d=r.data||{};return status.get(String(d.ad_id||r.id.replace(/^meta_/,'')))!=='inactive'&&d.prev_blob&&/^blob\/meta\//.test(d.prev_blob)&&d.prev_blob!==d.blob&&d.prev_blob!==d.creative_blob}):[];
+log(`rows ${rows.length}, ads known ${status.size}, inactive with a card to drop ${todo.length}, running ads with a preview to drop ${prevs.length}`);
 let n=0,freed=0;const batch=[],files=[];
 function flush(){if(!batch.length)return;if(A.dry){batch.length=0;files.length=0;return}
  // the row first (it then shows the creative), the files after: a failed delete only leaves a file behind, never a broken row
@@ -41,4 +44,7 @@ for(const row of todo){if(LIMIT&&n>=LIMIT)break;const d=row.data;
   prev:'',prev_blob:'',card_pruned:new Date().toISOString().slice(0,10),card_bytes:+d.bytes||0,bytes:0})});
  files.push(...drop);freed+=+d.bytes||0;n++;
  if(batch.length>=50){flush();log(`pruned ${n}, ~${(freed/1048576).toFixed(0)} MB of cards`)}}
+for(const row of prevs){if(LIMIT&&n>=LIMIT)break;const d=row.data;
+ batch.push({collection:'comp_shots',id:row.id,data:Object.assign({},d,{prev:'',prev_blob:'',prev_pruned:new Date().toISOString().slice(0,10)})});
+ files.push(d.prev_blob);n++;if(batch.length>=50){flush();log(`pruned ${n}`)}}
 flush();log(`done ${n}${A.dry?' (dry run, nothing changed)':''}, ~${(freed/1048576).toFixed(0)} MB of cards (+ the previews)`);

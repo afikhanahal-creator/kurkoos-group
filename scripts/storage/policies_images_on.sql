@@ -1,0 +1,4 @@
+-- Temporary write access for recompress-images.cjs (publishable key): replace engine images in place. Run policies_images_off.sql after.
+create policy "image recompress read" on storage.objects for select to anon using (bucket_id = 'engine-media' and name like 'blob/%' and name not like 'blob/meta/%' and metadata->>'mimetype' in ('image/jpeg','image/webp'));
+create policy "image recompress insert" on storage.objects for insert to anon with check (bucket_id = 'engine-media' and name like 'blob/%' and name not like 'blob/meta/%');
+create policy "image recompress replace" on storage.objects for update to anon using (bucket_id = 'engine-media' and name like 'blob/%' and name not like 'blob/meta/%' and metadata->>'mimetype' in ('image/jpeg','image/webp')) with check (bucket_id = 'engine-media' and name like 'blob/%' and name not like 'blob/meta/%');

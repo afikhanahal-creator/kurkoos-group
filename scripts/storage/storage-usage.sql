@@ -9,8 +9,9 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     'db_bytes', pg_database_size(current_database()),
     'storage_bytes', coalesce((select sum((metadata->>'size')::bigint) from storage.objects), 0),
     'storage_files', (select count(*) from storage.objects),
-    -- the organization's file quota: Pro includes 100 GB (it was 1 GB on the free plan). Change here if the plan changes.
-    'quota_bytes', 107374182400::bigint,
+    -- the free plan's 1 GB (2026-11-15: the owner stays on the free plan, so every guard counts against 1 GB even while
+    -- the organization is still on Pro). Never raise it without the owner's decision.
+    'quota_bytes', 1073741824::bigint,
     'buckets', (select coalesce(jsonb_object_agg(bucket_id, bytes), '{}'::jsonb) from (select bucket_id, sum((metadata->>'size')::bigint) bytes from storage.objects group by bucket_id) x)
   )
 $$;

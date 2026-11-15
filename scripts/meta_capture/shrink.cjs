@@ -1,11 +1,11 @@
 // Re-save the ad card screenshots already in storage at 1600px wide (webp q75; 2026-11-06 — was 2400 / q80, before that 4K),
 // to make room on the free plan. The ad picture on the card comes from a 600px original, so nothing is lost there; the text stays sharp.
 // Uses the original 4K capture from out/ when it is still on disk, otherwise the stored webp. Needs policies_on.sql.
-// node shrink.cjs [--dry] [--limit 20] [--width 1600] [--quality 75]
+// node shrink.cjs [--dry] [--limit 20] [--width 1200] [--quality 70]   (2026-11-15: 1200 q70, readable and ~60% smaller)
 const fs=require('fs');const path=require('path');const cp=require('child_process');
 const A=Object.fromEntries(process.argv.slice(2).map((a,i,v)=>a.startsWith('--')?[a.slice(2),(v[i+1]&&!v[i+1].startsWith('--'))?v[i+1]:true]:[]).filter(x=>x.length));
 const H=__dirname;const OUT=path.join(H,'out');const TMP=path.join(H,'shrink');fs.mkdirSync(TMP,{recursive:true});
-const W=+A.width||1600;const Q=+A.quality||75;const LIMIT=+A.limit||0;
+const W=+A.width||1200;const Q=+A.quality||70;const LIMIT=+A.limit||0;
 const KEY=(fs.readFileSync(path.join(H,'..','..','public','engine','bridge.js'),'utf8').match(/const KEY = '([^']+)'/)||[])[1];
 const SB='https://filnzlnvujnlazwcxbuq.supabase.co';const PUB=SB+'/storage/v1/object/public/engine-media/';
 const log=s=>{const l=new Date().toISOString().slice(11,19)+' '+s;console.log(l);fs.appendFileSync(path.join(H,'shrink.log'),l+'\n')};

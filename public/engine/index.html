@@ -33244,10 +33244,15 @@ function open(id){close(true);ov=document.createElement('div');ov.id='v242ov';ov
  try{history.pushState({v242:1},'')}catch(e){};setTimeout(()=>{try{ov.querySelector('iframe').focus()}catch(e){}},300)}
 function close(silent){if(!ov)return;ov.remove();ov=null;if(!silent&&history.state&&history.state.v242)try{history.back()}catch(e){}}
 window.addEventListener('popstate',()=>{if(ov)close(true)});
-// the redesign action in each card's ⋯ menu
-const addItems=()=>document.querySelectorAll('.v207menu').forEach(m=>{if(m.querySelector('[data-v242]'))return;const c=m.closest('[data-id]');const id=c&&c.dataset.id;if(!id)return;const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.dataset.v242='open';b.dataset.id=id;b.textContent='עיצוב מחדש במחלקת הקריאייטיב';m.insertBefore(b,m.firstChild)});
+// the card's ⋯ menu: redesign in the studio, and apply or undo a design already made for the post
+const canApply=p=>p&&p.studio&&Array.isArray(p.studio.pages)&&p.studio.pages.length===1&&p.studio.pages[0]&&!(p.studio.applied)&&p.brand!=='afik';
+const item=(id,act,label)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.dataset.v242=act;b.dataset.id=id;b.textContent=label;return b};
+const addItems=()=>document.querySelectorAll('.v207menu').forEach(m=>{if(m.querySelector('[data-v242]'))return;const c=m.closest('[data-id]');const id=c&&c.dataset.id;if(!id)return;const p=posts().find(x=>x.id===id);
+ const add=[item(id,'open','עיצוב מחדש במחלקת הקריאייטיב')];if(canApply(p))add.push(item(id,'apply','החלת העיצוב מהסטודיו'));if(p&&p.studio&&p.studio.applied)add.push(item(id,'undo','ביטול העיצוב מהסטודיו'));
+ add.reverse().forEach(b=>m.insertBefore(b,m.firstChild))});
 new MutationObserver(addItems).observe(document.documentElement,{childList:true,subtree:true});
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v242="open"]');if(!b)return;e.preventDefault();e.stopPropagation();open(b.dataset.id)},true);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-v242]');if(!b)return;e.preventDefault();e.stopPropagation();const p=posts().find(x=>x.id===b.dataset.id);
+ if(b.dataset.v242==='open')return open(b.dataset.id);if(b.dataset.v242==='apply')return apply(p);if(b.dataset.v242==='undo')return undo(p)},true);
 // messages from the studio
 // a loaded design is drawn straight onto the canvases that wait for it. Re-rendering the whole page on every load made
 // the posts page flicker without end: thousands of posts carry a design, and each load rebuilt every card.
@@ -33259,26 +33264,31 @@ window.addEventListener('message',async e=>{if(e.origin!==location.origin||!e.da
  const p=posts().find(x=>x.id===d.postId);
  if(d.type==='kurkoos-studio:post')return reply(p?JSON.parse(JSON.stringify(p)):null);
  if(d.type==='kurkoos-studio:thumb')return reply(p?await thumb(p.id):null);
- if(d.type==='kurkoos-studio:save'){if(!p)return reply(false);p.studio=d.design;p.upd=new Date().toISOString();try{saveAgent()}catch(x){};try{render()}catch(x){};return reply(true)}
+ if(d.type==='kurkoos-studio:save'){if(!p)return reply(false);const was=p.studio&&p.studio.applied;if(was)undo(p);p.studio=Object.assign({},d.design,{use:false});
+  if(canApply(p)){await apply(p);return reply(true)}p.upd=new Date().toISOString();try{saveAgent()}catch(x){};try{render()}catch(x){};return reply(true)}
 });
-// a post with a saved studio design shows that design (4:5 only); the original layout stays in the post untouched
-const orig=p=>{if(!p||!p.studio)return p;const q=Object.assign({},p);delete q.studio;return q};
-// The saved design is a picture of the post as it was: Kurkoos colors and logo, that headline, that photo. Once the post
-// moves to Afik Hanahal, or its headline, sub line or photo is edited, the picture is stale and the engine draws the post
-// itself again (the brand switch and the quick text edit looked as if they failed).
-const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
-// Designs from the bulk run (auto) are not drawn in the engine: a picture over the engine's own layout made the cards
-// flicker (layout first, picture later), showed another picture in the viewer and swapped the photo on a text edit.
-// They stay stored in the post. A design shows only when someone saved it to the post from the studio.
-const fresh=(p,s)=>{if(s.auto)return false;if(p.brand==='afik')return false;const c=s.source&&s.source.content;if(!c)return true;const v=p.visual||{},fx=p.fx||{};
- if(norm(c.headline)!==norm(v.headline||p.hook))return false;if(c.sub!=null&&norm(c.sub)!==norm(v.sub||fx.details))return false;
- if(c.img&&c.img.key&&p.photoKey&&String(c.img.key)!==String(p.photoKey))return false;return true};
-// a canvas can be drawn again for another post before a design finishes loading (the cards are reused): the late
-// design is painted only while the canvas still waits for it, otherwise a card showed one post and opened another.
-try{drawSlide=(f=>function(cv,p,i){if(cv)cv.__v242u=null;const s=p&&p.studio;if(s&&s.use&&s.pages&&s.pages[i||0]&&cv.width*5===cv.height*4&&fresh(p,s)){const u=s.pages[i||0],im=imgOf(u);if(im.complete&&im.naturalWidth){const c=cv.getContext('2d');c.drawImage(im,0,0,cv.width,cv.height);return}if(!im.complete){cv.__v242u=u;(WAIT[u]=WAIT[u]||new Set()).add(cv);try{const c=cv.getContext('2d');c.fillStyle='#f7f8fa';c.fillRect(0,0,cv.width,cv.height)}catch(e){}return}}return f.apply(this,arguments)})(drawSlide)}catch(e){}
+// Applying a design: the engine's own path for a ready image, the one a Canva import uses (layout x_t_cp22 with
+// fx.canvaFull). The picture becomes a photo in the library and the post draws it like any other post, so there is no
+// layer over the engine's drawing: no flicker, the viewer and the card show the same, and a text edit leaves it alone.
+// The post's layout before it is kept in studio.applied.backup, and "ביטול" puts it back.
+const toast_=m=>{try{toast(m)}catch(e){}};
+async function apply(p){if(!canApply(p))return toast_('לפוסט הזה אין עיצוב מוכן מהסטודיו');
+ const url=p.studio.pages[0];const pid='studio_'+String(p.id).replace(/[^A-Za-z0-9_-]/g,'_');
+ const meta={url,name:'סטודיו · '+String((p.visual&&p.visual.headline)||p.hook||'').replace(/\s+/g,' ').slice(0,40),src:'studio',t:Date.now()};
+ try{if(KC.db)await KC.db.collection('photos').doc(pid).set(meta)}catch(e){return toast_('השמירה נכשלה. נסו שוב')}
+ try{regUpload(pid,meta)}catch(e){}
+ const k='u_'+pid;const backup={layout:p.layout,vlayout:p.visual&&p.visual.layout,fx:p.fx?JSON.parse(JSON.stringify(p.fx)):null};
+ p.studio=Object.assign({},p.studio,{use:false,applied:{at:new Date().toISOString(),photo:pid,backup}});
+ p.layout='x_t_cp22';p.visual=Object.assign({},p.visual||{},{layout:'x_t_cp22'});p.fx={shot:{k,r:[0,0,1,1]},s:[k],logo:'none',canvaFull:1};
+ p.upd=new Date().toISOString();try{await preloadPosts([p])}catch(e){}try{saveAgent()}catch(e){}try{render()}catch(e){}toast_('העיצוב מהסטודיו הוחל. "ביטול העיצוב מהסטודיו" בתפריט ⋯ מחזיר את הקודם')}
+function undo(p){const a=p&&p.studio&&p.studio.applied;if(!a)return;const b=a.backup||{};
+ p.layout=b.layout||p.layout;p.visual=Object.assign({},p.visual||{});if(b.vlayout)p.visual.layout=b.vlayout;else delete p.visual.layout;if(b.fx)p.fx=b.fx;else delete p.fx;
+ const st=Object.assign({},p.studio);delete st.applied;p.studio=st;p.upd=new Date().toISOString();try{saveAgent()}catch(e){}try{render()}catch(e){}toast_('העיצוב הקודם חזר')}
+// the post without a studio design: for an applied design, its layout from before
+const orig=p=>{if(!p||!p.studio)return p;const q=Object.assign({},p);const a=p.studio.applied;delete q.studio;if(a&&a.backup){q.layout=a.backup.layout||q.layout;q.visual=Object.assign({},q.visual||{});if(a.backup.vlayout)q.visual.layout=a.backup.vlayout;if(a.backup.fx)q.fx=a.backup.fx}return q};
 // the post as the engine draws it today (without a studio design), for the before and after view
 async function thumb(id){const p=posts().find(x=>x.id===id);if(!p)return null;try{const draw=()=>{const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;drawSlide(cv,orig(p),0);return cv};try{await preloadPosts([orig(p)])}catch(x){};draw();await new Promise(r=>setTimeout(r,900));return draw().toDataURL('image/jpeg',0.88)}catch(x){return null}}
-window.__v242={open,close,thumb};
+window.__v242={open,close,thumb,apply,undo};
 })();
 
 })();

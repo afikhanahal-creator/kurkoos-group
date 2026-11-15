@@ -2848,6 +2848,20 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && sOff.renamed === 0 && nameOff !== 'renamed-while-off.pdf' && putBack && ['renamed_in_drive', 'moved_in_drive', 'trashed_in_drive', 'restored_by_user', 'folder_created', 'folder_renamed_in_drive', 'folder_deleted', 'missing'].every((a) => String(logged).includes(a)), [syncShot, accShot])
 }
 
+// MODALTYPE: typing in the second field of a dialog stays there. The dialog used to move the cursor back to its first
+// field on every keystroke (its focus effect ran on each render), so a name typed into "add phone" went into the number.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go('/scanners'); await page.waitForTimeout(1200)
+  await page.getByRole('button', { name: /הוספת טלפון/ }).first().click(); await page.waitForTimeout(500)
+  await page.locator('.fin-modal input[type=tel]').pressSequentially('0546753512', { delay: 20 })
+  await page.locator('.fin-modal input').nth(1).click(); await page.keyboard.type('שלומי קורקוס', { delay: 25 })
+  const vals = await page.locator('.fin-modal input').evaluateAll((els) => els.slice(0, 2).map((e) => e.value))
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300)
+  record('MODALTYPE', 'הקלדה בחלון נשארת בשדה שבו מקלידים', 'בחלון "הוספת טלפון": המספר בשדה הראשון, השם המלא בשדה השני, בלי קפיצה חזרה לשדה הראשון',
+    `מספר: "${vals[0]}"; שם: "${vals[1]}"`, vals[0] === '0546753512' && vals[1] === 'שלומי קורקוס')
+}
+
 // WAJOURNAL: nothing sent from a registered phone is lost. (1) WhatsApp's private ids: a sender as "…@lid" with the
 // phone in another field is taken in; one with no phone anywhere is noted as "number hidden", and linking it to a
 // registered phone takes its file in from the journal. (2) A file the live delivery never brought (it is only in the

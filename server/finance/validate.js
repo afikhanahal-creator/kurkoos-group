@@ -3,15 +3,13 @@
 
 /* Israeli VAT by date (חוק מע״מ, the standard rate). A rate is never hard-coded: the date on the document picks it.
    A change in the law is one new row here. */
-export const VAT_RATES = [
-  { from: '2012-09-01', to: '2013-06-01', rate: 0.17 },
-  { from: '2013-06-02', to: '2015-09-30', rate: 0.18 },
-  { from: '2015-10-01', to: '2024-12-31', rate: 0.17 },
-  { from: '2025-01-01', to: null, rate: 0.18 },
-]
+// the rates live in the one rules registry (src/pages/finance/taxRules.js); this list is that registry, in the shape the
+// checks below read
+import { RULES as TAX, ruleOn } from '../../src/pages/finance/taxRules.js'
+export const VAT_RATES = TAX.vat_rate.versions.map((v) => ({ from: v.from, to: v.to, rate: v.value }))
 export const vatRateOn = (iso) => {
   const d = /^\d{4}-\d{2}-\d{2}$/.test(String(iso || '')) ? iso : new Date().toISOString().slice(0, 10)
-  return (VAT_RATES.find((r) => d >= r.from && (!r.to || d <= r.to)) || VAT_RATES[VAT_RATES.length - 1]).rate
+  return (ruleOn('vat_rate', d) || TAX.vat_rate.versions[TAX.vat_rate.versions.length - 1]).value
 }
 
 /* Israeli company / person ID check digit (ת"ז, ח.פ, ע.מ: 9 digits) */

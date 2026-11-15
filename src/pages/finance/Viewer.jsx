@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { printImages, printPdf } from './print.js'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -34,6 +35,8 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
   }, [blobUrl, mime])
   const [share, setShare] = useState(false)
   const [full, setFull] = useState(false)
+  // a phone has no real full screen for a page (iOS gives it to videos only): there the viewer itself covers the screen
+  const [max, setMax] = useState(false)
   const [turn, setTurn] = useState(0)            // 0 / 90 / 180 / 270, the view only: the file is never changed
   const [page, setPage] = useState(1)
   const [drive, setDrive] = useState({ busy: false, link: '', msg: '', err: '' })
@@ -48,7 +51,13 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
     const ro = new ResizeObserver(([e]) => { setWidth(Math.floor(e.contentRect.width)); setHeight(Math.floor(e.contentRect.height)) })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [max])
+  useEffect(() => {
+    if (!max) return undefined
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); setMax(false) } }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [max])
 
   useEffect(() => {
     if (!pdf || !blobUrl) return undefined
@@ -111,7 +120,13 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
   const total = pdf ? pages?.list?.length || 0 : 1
   const pct = Math.round((w / fit) * 100)
   const zoomBy = (d) => { setFitPage(false); setZoom((z) => Math.max(0, Math.min(STEPS.length - 1, z + d))) }
-  const fullscreen = () => { if (document.fullscreenElement) document.exitFullscreen?.(); else box.current?.requestFullscreen?.().catch(() => {}) }
+  const fullscreen = () => {
+    if (max) { setMax(false); return }
+    if (document.fullscreenElement) { document.exitFullscreen?.(); return }
+    const small = typeof matchMedia === 'function' && matchMedia('(max-width: 700px)').matches
+    if (small || typeof box.current?.requestFullscreen !== 'function') setMax(true)
+    else box.current.requestFullscreen().catch(() => setMax(true))
+  }
   // pages that are already drawn print as images (this also works on a phone); a long PDF that is only partly drawn prints whole
   const print = () => {
     if (!pdf) return printImages([blobUrl], () => window.open(blobUrl, '_blank', 'noopener'))
@@ -125,7 +140,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       <button type="button" className="fin-icon-btn" onClick={() => zoomBy(1)} disabled={!fitPage && zoom === STEPS.length - 1} aria-label="הגדלה" title="הגדלה"><Icon name="plus" size={17} /></button>
       <span className="fin-viewer__sep" aria-hidden="true" />
       <button type="button" className={`fin-icon-btn fin-viewer__wide ${fitPage ? 'is-on' : ''}`} onClick={() => setFitPage((v) => !v)} aria-pressed={fitPage} aria-label="התאמה למסך" title="התאמה למסך"><Icon name="fitpage" size={17} /></button>
-      <button type="button" className="fin-icon-btn fin-viewer__wide" onClick={fullscreen} aria-label={full ? 'יציאה ממסך מלא' : 'מסך מלא'} title={full ? 'יציאה ממסך מלא' : 'מסך מלא'}><Icon name={full ? 'shrink' : 'expand'} size={17} /></button>
+      <button type="button" className={`fin-icon-btn fin-viewer__full ${max ? 'is-on' : ''}`} onClick={fullscreen} aria-pressed={full || max} aria-label={full || max ? 'יציאה ממסך מלא' : 'מסך מלא'} title={full || max ? 'יציאה ממסך מלא' : 'מסך מלא'}><Icon name={full || max ? 'shrink' : 'expand'} size={17} /></button>
       <button type="button" className="fin-icon-btn" onClick={() => setTurn((t) => (t + 90) % 360)} aria-label="סיבוב" title="סיבוב ב-90°"><Icon name="rotate" size={17} /></button>
       {total > 1 && (
         <span className="fin-viewer__pages" role="group" aria-label="עמודים">
@@ -136,16 +151,17 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       )}
       <span className="fin-viewer__sep" aria-hidden="true" />
       <a className="fin-icon-btn fin-viewer__wide" href={blobUrl} target="_blank" rel="noopener noreferrer" aria-label="פתיחה בחלון חדש" title="פתיחה בחלון חדש של הדפדפן"><Icon name="external" size={17} /></a>
-      <a className="fin-icon-btn" href={blobUrl} download={name || 'document'} onClick={(e) => moments.download({ from: e.currentTarget, name: name || 'document' })} aria-label="הורדה" title="הורדת הקובץ המקורי"><Icon name="download" size={17} /></a>
+      <a className="fin-icon-btn fin-viewer__dl" href={blobUrl} download={name || 'document'} onClick={(e) => moments.download({ from: e.currentTarget, name: name || 'document' })} aria-label="הורדה" title="הורדת הקובץ המקורי"><Icon name="download" size={17} /></a>
       <button type="button" className="fin-icon-btn fin-viewer__print" onClick={print} aria-label="הדפסה" title="הדפסה"><Icon name="print" size={17} /></button>
       {canSave && <button type="button" className="fin-icon-btn" onClick={saveDrive} disabled={drive.busy} aria-label="שמירה בדרייב" title="שמירה ב-Google Drive"><Icon name={drive.busy ? 'sync' : 'cloud'} size={17} /></button>}
       {doc && <button type="button" className="fin-icon-btn" onClick={() => setShare(true)} aria-label="שיתוף" title="שיתוף בוואטסאפ או במייל"><Icon name="share" size={17} /></button>}
     </div>
   )
 
-  return (
-    <div className="fin-viewer" ref={box}>
+  const view = (
+    <div className={`fin-viewer ${max ? 'is-max' : ''}`} ref={box} {...(max ? { role: 'dialog', 'aria-modal': true, 'aria-label': `${name || 'המסמך'} במסך מלא` } : {})}>
       {controls}
+      {max && <button type="button" className="fin-btn fin-viewer__close" onClick={() => setMax(false)}><Icon name="shrink" size={17} /> סגירת המסך המלא</button>}
       {(drive.msg || drive.err) && (
         <p className={`fin-viewer__toast ${drive.err ? 'is-err' : ''}`} role={drive.err ? 'alert' : 'status'}>
           <Icon name={drive.err ? 'alert' : 'check'} size={15} /> {drive.err || drive.msg}
@@ -170,4 +186,6 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       {share && <ShareDialog doc={doc} blobUrl={blobUrl} onClose={() => setShare(false)} />}
     </div>
   )
+  // over everything, from the app's root (the panel it sits in is animated, and would hold a fixed box inside itself)
+  return max ? <><div className="fin-viewer fin-viewer--away" aria-hidden="true" />{createPortal(view, document.querySelector('.fin') || document.body)}</> : view
 }

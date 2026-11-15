@@ -1253,8 +1253,7 @@ on conflict (key) do nothing;
 
 -- one accounting system per company (a second one would export the same documents twice)
 alter table public.fin_integrations drop constraint if exists fin_integrations_provider_check;
--- (2026-11-12) more software: products that take documents at an intake mailbox, and 'custom' for one that is not in the list
-alter table public.fin_integrations add constraint fin_integrations_provider_check check (provider in ('file', 'icount', 'morning', 'hashavshevet', 'rivhit', 'priority', 'sumit', 'paperless', 'costapp', 'smartbee', 'finbot', 'ezcount', 'invoice4u', 'cardcom', 'linet', 'wizcloud', 'custom'));
+alter table public.fin_integrations add constraint fin_integrations_provider_check check (provider in ('file', 'icount', 'morning', 'hashavshevet', 'rivhit', 'priority', 'sumit', 'paperless'));
 do $$ begin
   create unique index if not exists fin_integrations_one_api_per_business
     on public.fin_integrations (coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid))

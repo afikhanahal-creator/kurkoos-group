@@ -91,7 +91,10 @@ export const shiftMonth = (k, n) => { const d = new Date(`${k}-01T00:00:00Z`); d
 const sign = (d) => (d.doc_type === 'credit' ? -1 : 1)
 export const signedTotal = (d) => sign(d) * Math.abs(Number(d.total_amount) || 0)
 export const signedNet = (d) => sign(d) * Math.abs(Number(d.amount_before_vat) || 0)
+// the VAT that may be offset for a document, as the VAT service decides it (vatRules.js): only a tax invoice, a tax
+// invoice-receipt or a credit note carries deductible VAT; a receipt or a payment confirmation does not
 export function claimableVat(doc, categories) {
+  if (!['invoice', 'invoice_receipt', 'credit'].includes(doc.doc_type)) return 0
   const c = categories.find((x) => x.name === doc.category)
   const pct = c ? Number(c.vat_deductible_pct) : 100
   return sign(doc) * Math.abs(Number(doc.vat_amount) || 0) * pct / 100
@@ -116,3 +119,7 @@ export function toExcel(sheet, head, rows) {
 
 /* the last n months, newest first, for month pickers */
 export const recentMonths = (n = 36) => Array.from({ length: n }, (_, i) => shiftMonth(thisMonth(), -i))
+
+// colours of a breakdown (a category, a company, a supplier): told apart on a light and on a dark surface, in this order
+export const SERIES = ['#16688c', '#c2571a', '#2f7d5b', '#8a4fa8', '#b8860b', '#c0395a', '#3b6fb6', '#5d6b78']
+export const seriesColor = (i) => SERIES[i % SERIES.length]

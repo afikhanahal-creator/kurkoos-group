@@ -16,7 +16,7 @@ export default function DocList({ docs, onOpen, businesses, sel, onToggle, onSup
           <li key={d.id} {...(rowProps ? rowProps(d) : {})} data-month={marks?.get(d.id)} className={`fin-dlist__row ${sel?.has(d.id) ? 'is-selected' : ''} ${rowClass ? rowClass(d) : ''}`}>
             {onToggle && <label className="fin-dlist__check"><input type="checkbox" checked={!!sel?.has(d.id)} onChange={() => onToggle(d.id)} aria-label={`סימון ${d.supplier_name || d.file_name || 'מסמך'}`} /></label>}
             <button type="button" className="fin-dlist__open" onClick={() => onOpen(d)}>
-              <span className={`fin-dlist__icon ${d.doc_type === 'credit' ? 'is-credit' : ''}`} aria-hidden="true"><Icon name={d.source === 'whatsapp' ? 'phone' : d.source === 'upload' ? 'upload' : 'docs'} size={18} /></span>
+              <span className={`fin-dlist__icon ${d.doc_type === 'credit' ? 'is-credit' : ''}`} aria-hidden="true"><Icon name={d.source === 'whatsapp' ? 'whatsapp' : d.source === 'upload' ? 'upload' : 'docs'} size={18} /></span>
               <span className="fin-dlist__main">
                 <strong>{d.supplier_name || d.file_name || 'מסמך'}</strong>
                 <small>

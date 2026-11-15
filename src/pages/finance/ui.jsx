@@ -74,7 +74,12 @@ const P = {
   more: <><circle cx="5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="19" cy="12" r="1.2" /></>,
 }
 
+/* the WhatsApp mark: its own green, drawn whole at any size (it is not a line icon, and it never sits in a tile) */
+export function WaIcon({ size = 20, ...rest }) {
+  return <svg className="fin-waicon" viewBox="0 0 48 48" width={size} height={size} aria-hidden="true" focusable="false" {...rest}><path fill="#25D366" d="M24 4a20 20 0 0 0-17.3 30L4 44l10.3-2.7A20 20 0 1 0 24 4z" /><path fill="#fff" d="M34.5 29.3c-.5-.3-3-1.5-3.4-1.6s-.8-.3-1.1.3-1.3 1.6-1.6 1.9-.6.4-1.1.1a13.6 13.6 0 0 1-6.8-5.9c-.5-.9.5-.8 1.5-2.7a1 1 0 0 0 0-.9c-.1-.3-1.1-2.7-1.5-3.6s-.8-.8-1.1-.8h-.9a1.8 1.8 0 0 0-1.3.6 5.5 5.5 0 0 0-1.7 4.1 9.6 9.6 0 0 0 2 5.1 22 22 0 0 0 8.4 7.4c3.1 1.3 4.4 1.4 5.9 1.2a5 5 0 0 0 3.3-2.3 4.1 4.1 0 0 0 .3-2.3c-.1-.2-.4-.3-.9-.6z" /></svg>
+}
 export function Icon({ name, size = 20, ...rest }) {
+  if (name === 'whatsapp') return <WaIcon size={Math.round(size * 1.1)} {...rest} />
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...rest}>
       {P[name] || null}
@@ -223,16 +228,18 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
   const [over, setOver] = useState(false)
   const [busy, setBusy] = useState(0)
   const [msg, setMsg] = useState('')
+  const [done, setDone] = useState(null)   // what the last drop brought: how many went in, their names, what was refused
   const zone = useRef(null)
 
   const send = async (files, source = 'upload') => {
     const list = [...files]
     if (!list.length) return
-    setBusy(list.length); setMsg('')
+    setBusy(list.length); setMsg(''); setDone(null)
     const notes = []
     let added = 0
     const names = []
-    for (const f of list) {
+    // four files travel at a time (one after another made ten receipts take ten times one)
+    const one = async (f) => {
       try {
         const r = await uploadFile(f, { businessId, projectId, source })
         if (r.duplicate) notes.push(`${f.name}: כפילות, הקובץ כבר קיים במערכת${r.of?.supplier_name ? ` (${r.of.supplier_name}${r.of.doc_number ? ` ${r.of.doc_number}` : ''})` : ''}`)
@@ -240,7 +247,10 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
       } catch (e) { notes.push(e.message) }
       setBusy((n) => n - 1)
     }
+    let next = 0
+    await Promise.all(Array.from({ length: Math.min(4, list.length) }, async () => { while (next < list.length) await one(list[next++]) }))
     setMsg([added ? `${added} קבצים הועלו וממתינים לקריאה` : '', ...notes].filter(Boolean).join(' · '))
+    setDone({ added, names, notes })
     if (added) moments.upload({ from: zone.current, count: added, names })
     else if (notes.length) moments.fail({ title: 'לא הועלו קבצים', sub: notes[0] })
     onDone?.()
@@ -265,7 +275,20 @@ export function UploadZone({ businessId, projectId, onDone, compact }) {
         <button type="button" className="fin-btn fin-btn--primary" onClick={() => pick.current?.click()} disabled={!!busy}><Icon name="file" size={18} /> בחירת קבצים</button>
         <button type="button" className="fin-btn" onClick={() => cam.current?.click()} disabled={!!busy}><Icon name="camera" size={18} /> צילום</button>
       </div>
-      {msg && <p className="fin-drop__msg" role="status">{msg}</p>}
+      {msg && (
+        <div className={`fin-drop__msg ${done?.added ? 'is-ok' : done ? 'is-bad' : ''}`} role="status">
+          {done?.added > 0 && (
+            <div className="fin-drop__count">
+              <Lottie name="upload" size={56} loop={false} />
+              <b>{done.added}</b>
+              <span><strong>{done.added === 1 ? 'מסמך אחד הועלה' : 'מסמכים הועלו'}</strong><small>{done.added === 1 ? 'נקרא עכשיו ויחכה לבדיקה' : 'נקראים עכשיו ויחכו לבדיקה'}</small></span>
+            </div>
+          )}
+          {done?.names?.length > 0 && <ul className="fin-drop__names">{done.names.slice(0, 4).map((n, i) => <li key={i}><Icon name="check" size={13} /> <bdi>{n}</bdi></li>)}{done.names.length > 4 && <li>ועוד {done.names.length - 4}</li>}</ul>}
+          {done?.notes?.length > 0 && <ul className="fin-drop__notes">{done.notes.map((n, i) => <li key={i}><Icon name="alert" size={13} /> {n}</li>)}</ul>}
+          <span className="fin-sr">{msg}</span>
+        </div>
+      )}
     </div>
   )
 }

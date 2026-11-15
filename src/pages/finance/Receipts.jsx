@@ -1,12 +1,14 @@
+import { moments } from './moments.js'
 import { useEffect, useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { DOC_TYPE, SOURCE, byDocDate, isFresh, date, dateTime, docDate, money, monthLabel, thisMonth } from './format.js'
 import Select from './Select.jsx'
-import Thumbnail from './Thumbnail.jsx'
+import Thumbnail, { Slip } from './Thumbnail.jsx'
+import DocPreview from './DocPreview.jsx'
 import Peek from './Peek.jsx'
 import { useResizableColumns } from './columns.js'
-import { Empty, Icon, PageHead, askConfirm } from './ui.jsx'
+import { Empty, Icon, Modal, PageHead, StatusPill, askConfirm } from './ui.jsx'
 
 /* Receipts and invoices that people hand in themselves: a photo sent to the office WhatsApp number, or a file uploaded
    here. Each one is read, checked and waits for a person; nothing counts as final before somebody approves it, and
@@ -44,6 +46,12 @@ export default function Receipts() {
   const [min, setMin] = useState('')
   const [more, setMore] = useState(false)
   const colsRef = useResizableColumns('receipts')
+  // 80 rows at a time: every row draws a picture of its document, and a phone should not start on 300 of them
+  const [limit, setLimit] = useState(80)
+  // on a phone a PDF or an email is shown in the list by its kind: drawing its first page meant downloading the whole
+  // file for a 48px picture, for every row. Photos keep their picture; the document itself opens with one tap.
+  const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 700px)').matches
+  useEffect(() => { setLimit(80) }, [q, via, stage, type, month, supplier, min])
 
   // every receipt and invoice in the system, whatever way it came in (mail, WhatsApp, upload, camera), newest document first
   const MAIL = ['gmail', 'outlook', 'forward']
@@ -52,10 +60,13 @@ export default function Receipts() {
   // the months that have documents, newest first, each with its count: the list a person picks a month and year from
   const monthsWith = useMemo(() => { const m = new Map(); for (const d of mine) { const k = String(docDate(d)).slice(0, 7); if (/^\d{4}-\d{2}$/.test(k)) m.set(k, (m.get(k) || 0) + 1) } return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0])) }, [mine])
   const [note, setNote] = useState('')
+  // the receipt itself, large, without leaving the list: opened by its name or its picture
+  const [viewId, setViewId] = useState(null)
+  const view = viewId ? documents.find((d) => d.id === viewId) : null
   const canDelete = (d) => can('manage') || (can('operate') && !['approved', 'sent'].includes(d.status))
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. אי אפשר לבטל.`, ok: 'מחיקה', danger: true }))) return
-    try { await api.deleteDocument(d); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
+    try { await api.deleteDocument(d); setViewId(null); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק') } catch (e) { setNote(e.message) }
   }
   useEffect(() => { let on = true; api.callServer('receipts-drive').then((r) => { if (on) setDrive(r?.files || {}) }).catch(() => {}); return () => { on = false } }, [mine.length])
   const rows = useMemo(() => mine.map((d) => ({ d, stage: stageOf(d, drive[d.id]), link: drive[d.id]?.link })), [mine, drive])
@@ -90,7 +101,7 @@ export default function Receipts() {
   return (
     <div className="fin-stack fin-receipts">
       <PageHead title="קבלות וחשבוניות" sub="כל הקבלות והחשבוניות שבמערכת, מהמייל, מ-WhatsApp ומהעלאה, לפי חודש. שום דבר לא נרשם כסופי לפני אישור.">
-        {can('connect') && <button type="button" className="fin-btn" onClick={() => go('/scanners')}><Icon name="phone" size={18} /> מספרי WhatsApp</button>}
+        {can('connect') && <button type="button" className="fin-btn" onClick={() => go('/scanners')}><Icon name="whatsapp" size={18} /> מספרי WhatsApp</button>}
         {can('upload') && openUpload && <button type="button" className="fin-btn fin-btn--primary" onClick={openUpload}><Icon name="upload" size={18} /> העלאה מהמחשב</button>}
       </PageHead>
 
@@ -146,19 +157,19 @@ export default function Receipts() {
           <table ref={colsRef} className="fin-table fin-table--plain fin-receipts__table">
             <thead><tr><th aria-label="תצוגה מקדימה" /><th>תאריך</th><th>ספק</th><th>סטטוס</th><th>סוג מסמך</th><th>מספר</th><th className="fin-num">סכום כולל</th><th>נקלט</th><th aria-label="פעולות" /></tr></thead>
             <tbody>
-              {shown.slice(0, 300).map(({ d, stage: st, link }) => {
+              {shown.slice(0, limit).map(({ d, stage: st, link }) => {
                 const s = STAGE[st]
                 const known = d.supplier_id && suppliers?.some((x) => x.id === d.supplier_id)
                 return (
                   <tr key={d.id} className={`is-link ${isFresh(d) ? 'is-fresh' : ''} ${st === 'fix' || st === 'failed' ? 'is-attn' : ''}`} onClick={() => go(`/documents/${d.id}`)}>
-                    <td className="fin-receipts__thumb"><Peek doc={d}><span className="fin-receipts__pic"><Thumbnail doc={d} /></span></Peek></td>
+                    <td className="fin-receipts__thumb" onClick={(e) => { e.stopPropagation(); setViewId(d.id) }}><Peek doc={d}><span className="fin-receipts__pic"><Thumbnail doc={d} /></span></Peek></td>
                     <td data-label="תאריך" className="fin-td-date">{date(docDate(d)) || '—'}</td>
-                    <td className="fin-td-main"><Peek doc={d}>{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}</Peek>{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
+                    <td className="fin-td-main"><Peek doc={d}><button type="button" className="fin-receipts__name" onClick={(e) => { e.stopPropagation(); setViewId(d.id) }} aria-label={`הצגת ${d.supplier_name || d.file_name || 'המסמך'}`}>{d.supplier_name || <span className="fin-muted">{d.file_name || 'לא זוהה'}</span>}</button></Peek>{d.supplier_name && !known && <small className="fin-receipts__new">ספק חדש</small>}</td>
                     <td className="fin-td-status fin-receipts__st"><span className={`fin-pill fin-pill--${s.tone}`} title={s.hint}>{s.label}</span></td>
                     <td data-label="סוג">{DOC_TYPE[d.doc_type] || '—'}</td>
                     <td data-label="מספר"><bdi dir="ltr">{d.doc_number || '—'}</bdi></td>
                     <td className="fin-num fin-receipts__sum fin-td-total" data-label="סכום כולל">{d.total_amount != null ? money(d.total_amount, d.currency) : '—'}</td>
-                    <td data-label="נקלט" className="fin-receipts__got"><span><span className="fin-receipts__when">{dateTime(d.created_at)}</span><small className="fin-receipts__via"><Icon name={d.source === 'whatsapp' ? 'phone' : MAIL.includes(d.source) ? 'mail' : 'upload'} size={12} /> {d.source === 'whatsapp' ? `WhatsApp ${sender(d)}` : SOURCE[d.source] || 'העלאה'}</small></span></td>
+                    <td data-label="נקלט" className="fin-receipts__got"><span><span className="fin-receipts__when">{dateTime(d.created_at)}</span><small className="fin-receipts__via"><Icon name={d.source === 'whatsapp' ? 'whatsapp' : MAIL.includes(d.source) ? 'mail' : 'upload'} size={12} /> {d.source === 'whatsapp' ? `WhatsApp ${sender(d)}` : SOURCE[d.source] || 'העלאה'}</small></span></td>
                     
                     <td className="fin-receipts__act" onClick={(e) => e.stopPropagation()}>
                       {link && <a className="fin-icon-btn" href={link} target="_blank" rel="noreferrer" aria-label="פתיחה ב-Google Drive" title="פתיחה ב-Google Drive"><Icon name="folder" size={18} /></a>}
@@ -170,8 +181,18 @@ export default function Receipts() {
               })}
             </tbody>
           </table>
-          {shown.length > 300 && <p className="fin-muted fin-small fin-receipts__cut">מוצגים 300 המסמכים האחרונים מתוך {shown.length}. סינון מצמצם את הרשימה.</p>}
+          {shown.length > limit && <p className="fin-receipts__cut"><button type="button" className="fin-btn" onClick={() => setLimit((n) => n + 80)}>הצגת עוד {Math.min(80, shown.length - limit)} מתוך {shown.length - limit} שנותרו</button></p>}
         </div>
+      )}
+      {view && (
+        <Modal wide title={view.supplier_name || view.file_name || 'מסמך'} onClose={() => setViewId(null)} footer={<>
+          <button type="button" className="fin-btn fin-btn--primary" onClick={() => go(`/documents/${view.id}`)}><Icon name="edit" size={16} /> פתיחה ועריכה</button>
+          {canDelete(view) && <button type="button" className="fin-btn fin-btn--danger" onClick={() => removeDoc(view)}><Icon name="trash" size={16} /> מחיקה</button>}
+          <button type="button" className="fin-btn fin-btn--ghost" onClick={() => setViewId(null)}>סגירה</button>
+        </>}>
+          <p className="fin-receipts__viewmeta"><StatusPill status={view.status} /><span>{[DOC_TYPE[view.doc_type], view.doc_number && `מס׳ ${view.doc_number}`, date(docDate(view))].filter(Boolean).join(' · ')}</span>{view.total_amount != null && <b>{money(view.total_amount, view.currency)}</b>}</p>
+          <div className="fin-receipts__view">{view.file_path ? <DocPreview doc={view} /> : <Slip doc={view} />}</div>
+        </Modal>
       )}
     </div>
   )

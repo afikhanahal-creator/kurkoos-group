@@ -21,7 +21,7 @@ export const CLOUD = {
   gdrive: {
     label: 'Google Drive',
     configured: () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
-    authUrl: (state, redirectUri) => `${env.googleAuthorize()}?${new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', scope: 'https://www.googleapis.com/auth/drive.file openid email', access_type: 'offline', prompt: 'consent', state })}`,
+    authUrl: (state, redirectUri) => `${env.googleAuthorize()}?${new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', scope: `https://www.googleapis.com/auth/${env.driveScope()} openid email`, access_type: 'offline', prompt: 'consent', state })}`,
     async exchange(code, redirectUri) {
       const t = await json(await fetchRetry(`${env.googleOauth()}/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID, client_secret: process.env.GOOGLE_CLIENT_SECRET, grant_type: 'authorization_code', code, redirect_uri: redirectUri }) }), 'google token')
       const me = await json(await fetchRetry(env.googleUserinfo(), { headers: { Authorization: `Bearer ${t.access_token}` } }), 'google userinfo')
@@ -181,7 +181,8 @@ export async function syncCloud({ targetId, started = Date.now(), trigger = 'man
       authFailed = !!(e.auth || e.status === 401)
     }
     if (!error && failed) error = `${failed} מסמכים לא הועתקו (ינסו שוב בסנכרון הבא). ${lastFail}`.slice(0, 300)
-    await patch(`fin_cloud_targets?id=eq.${t.id}`, { syncing_until: null, last_sync_at: new Date().toISOString(), last_error: error, files_failed: failed, files_synced: (t.files_synced || 0) + copied, ...(authFailed ? { status: 'error' } : error && !failed ? {} : { status: 'active' }) }).catch(() => {})
+    // (a connection disconnected while this run worked stays disconnected)
+    await patch(`fin_cloud_targets?id=eq.${t.id}&status=neq.revoked`, { syncing_until: null, last_sync_at: new Date().toISOString(), last_error: error, files_failed: failed, files_synced: (t.files_synced || 0) + copied, ...(authFailed ? { status: 'error' } : error && !failed ? {} : { status: 'active' }) }).catch(() => {})
     results.push({ target: t.id, provider: t.provider, copied, failed, error })
   }
   run.stat.details.results = results

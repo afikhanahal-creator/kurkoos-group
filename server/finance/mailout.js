@@ -12,7 +12,7 @@ const MAX_ATTACH = 25 * 1024 * 1024
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 const safeName = (s) => String(s || '').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 60)
 
-export async function sendToAccountant({ ids, to, note, subject, ccMe, user, period, mark, kind = 'accountant', integrationId = null, destination = null }) {
+export async function sendToAccountant({ ids, to, note, subject, ccMe, user, period, mark, kind = 'accountant' }) {
   const share = kind === 'share'   // "share by email": any address, nothing is marked as sent to the accountant
   const list = [...new Set((Array.isArray(ids) ? ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x))
   if (!list.length) throw Object.assign(new Error('לא נבחרו מסמכים'), { status: 400 })
@@ -99,7 +99,7 @@ ${links.length ? `<p>קבצים שלא נכנסו למייל (גדולים מד�
   let marked = 0
   const approved = docs.filter((d) => d.status === 'approved' && !d.exported_at).map((d) => d.id)
   if (mark && !share && approved.length) {
-    try { await rpc('fin_record_export', { p_ids: approved, p_business_id: null, p_period: period || null, p_format: 'email', p_destination: destination || `email:${rcpt.join(',')}`, p_integration_id: integrationId || null, p_allow_reexport: false }, user.token); marked = approved.length } catch { marked = 0 }
+    try { await rpc('fin_record_export', { p_ids: approved, p_business_id: null, p_period: period || null, p_format: 'email', p_destination: `email:${rcpt.join(',')}`, p_integration_id: null, p_allow_reexport: false }, user.token); marked = approved.length } catch { marked = 0 }
   }
   await audit('mail', delivery?.id || null, share ? 'shared_by_email' : 'sent_to_accountant', { to: rcpt, documents: docs.map((d) => d.id), attached: attachments.length - SUMMARY_FILES, linked: links.length, total, provider_id: providerId, marked }, user)
   return { sent: docs.length, attached: attachments.length - SUMMARY_FILES, linked: links.length, total, notApproved, to: rcpt, marked, delivery: delivery?.id || null }

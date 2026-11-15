@@ -1,3 +1,4 @@
+import { useCompliance } from './Compliance.jsx'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
@@ -60,7 +61,7 @@ const EMPTY_F = { from: '', to: '', supplier: '', biz: '', project: '', cat: '',
 const VIEW_KEY = 'fin-doc-view'
 
 export default function Documents({ preset = 'all' }) {
-  const { documents, businesses, projects, categories, suppliers, mailboxes, allocations, role, can, reload, patchDoc, go } = useFinance()
+  const { allDocuments: documents, businesses, projects, categories, suppliers, mailboxes, allocations, role, can, reload, patchDoc, go } = useFinance()
   const { id } = useParams()
   const [params, setParams] = useSearchParams()
   const P = PRESET[preset]
@@ -159,6 +160,9 @@ export default function Documents({ preset = 'all' }) {
   }, [months, view])
   const allOn = rows.length > 0 && rows.every((d) => sel.has(d.id))
   const toggle = (did) => setSel((s) => { const n = new Set(s); if (n.has(did)) n.delete(did); else n.add(did); return n })
+  // the compliance check's answer for each document: a document with an error or a question for the accountant is marked on the list
+  const tax = useCompliance()
+  const taxOf = useMemo(() => new Map(tax.rows.map((x) => [x.doc.id, x.c])), [tax])
   const picked = rows.filter((d) => sel.has(d.id))
   // a search or filter that hides selected documents drops them from the selection: the bar counts what the actions use
   useEffect(() => { setSel((s) => { const keep = new Set(rows.filter((d) => s.has(d.id)).map((d) => d.id)); return keep.size === s.size ? s : keep }) }, [rows])
@@ -176,7 +180,7 @@ export default function Documents({ preset = 'all' }) {
       const approved = (out || []).filter((d) => d.status === 'approved').length
       setNote(`${targets.length} מסמכים עודכנו${skipped ? `, ${skipped} דולגו` : ''}`)
       if (label === 'approve' && approved) moments.approve({ from: document.querySelector('.fin-bulk .fin-btn--primary'), title: approved === 1 ? 'המסמך אושר' : `${approved} מסמכים אושרו`, sub: 'מוכנים לשליחה לרו״ח' })
-      setSel(new Set()); await reload()
+      setSel(new Set()); reload()
     } catch (e) { setNote(/SECOND_APPROVAL/.test(e.message) ? 'חלק מהמסמכים דורשים מאשר נוסף' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת מזו של המסמך' : e.message) } finally { setBusy('') }
   }
   // one category for everything selected, said in numbers first: what moves and from where, what is already there, and
@@ -202,8 +206,8 @@ export default function Documents({ preset = 'all' }) {
   const mergeDups = async () => {
     if (!(await askConfirm({ title: 'מיזוג כפילויות', text: `${sureDups.length === 1 ? 'מסמך אחד זהה' : `${sureDups.length} מסמכים זהים`} למסמך שכבר במערכת (אותו ספק, מספר וסכום). העותק ייסגר ככפול של המקורי; שום דבר לא נמחק.`, ok: 'מיזוג' }))) return
     setBusy('dups'); let ok = 0
-    for (const d of sureDups) { try { await api.callServer('duplicate-decide', { document_id: d.id, decision: 'duplicate' }); ok++ } catch { /* the next */ } }
-    setBusy(''); setNote(ok === 1 ? 'כפילות אחת מוזגה' : `${ok} כפילויות מוזגו`); await reload()
+    { let next = 0; await Promise.all(Array.from({ length: Math.min(4, sureDups.length) }, async () => { while (next < sureDups.length) { const d = sureDups[next++]; try { await api.callServer('duplicate-decide', { document_id: d.id, decision: 'duplicate' }); ok++ } catch { /* the next */ } } })) }
+    setBusy(''); setNote(ok === 1 ? 'כפילות אחת מוזגה' : `${ok} כפילויות מוזגו`); reload()
   }
   const canDelete = (d) => can('manage') || (can('operate') && !['approved', 'sent'].includes(d.status))
   // several irrelevant documents at once; an approved or sent one is left out unless an admin deletes it
@@ -211,13 +215,13 @@ export default function Documents({ preset = 'all' }) {
     const list = picked.filter(canDelete); const left = picked.length - list.length
     if (!list.length) return
     if (!(await askConfirm({ title: 'מחיקת מסמכים', text: `למחוק ${list.length === 1 ? 'מסמך אחד' : `${list.length} מסמכים`} יחד עם הקבצים שלהם?${left ? ` ${left} מאושרים או שנשלחו יישארו.` : ''} אי אפשר לבטל, והפעולה נרשמת ביומן.`, ok: 'מחיקה', danger: true }))) return
-    setBusy('delete'); let ok = 0; let firstErr = ''
-    for (const d of list) { try { await api.deleteDocument(d); ok++ } catch (e) { firstErr ||= e.message } }
-    setBusy(''); setSel(new Set()); setNote(firstErr ? `נמחקו ${ok} מתוך ${list.length}: ${firstErr}` : ok === 1 ? 'המסמך נמחק' : `${ok} מסמכים נמחקו`); await reload()
+    setBusy('delete'); let ok = 0; let firstErr = ''; let pending = 0
+    try { const r = await api.deleteDocuments(list); ok = r.deleted.length; firstErr = r.failed[0]?.error || ''; pending = r.pending } catch (e) { firstErr = e.message }
+    setBusy(''); setSel(new Set()); setNote(firstErr ? `נמחקו ${ok} מתוך ${list.length}: ${firstErr}` : `${ok === 1 ? 'המסמך נמחק' : `${ok} מסמכים נמחקו`} מכל המסכים${pending ? '. העותק ב-Drive יוסר בבדיקה הבאה מול Drive' : ''}`)
   }
   const removeDoc = async (d) => {
     if (!(await askConfirm({ title: 'מחיקת מסמך', text: `למחוק את "${d.supplier_name || d.file_name || 'המסמך'}"${d.total_amount != null ? ` (${money(d.total_amount, d.currency)})` : ''}? המסמך והקובץ שלו יימחקו מהמערכת. הפעולה נרשמת בהיסטוריה.`, ok: 'מחיקה', danger: true }))) return
-    try { await api.deleteDocument(d); setNote('המסמך נמחק'); await reload() } catch (e) { setNote(e.message) }
+    try { await api.deleteDocument(d); moments.remove({ title: 'המסמך נמחק', sub: d.supplier_name || d.file_name || '' }); setNote('המסמך נמחק') } catch (e) { setNote(e.message) }
   }
   const downloadOriginals = async () => {
     setBusy('zip')
@@ -358,7 +362,8 @@ export default function Documents({ preset = 'all' }) {
               { label: busy === 'zip' ? 'מכין…' : 'הורדת הקבצים (ZIP)', icon: 'download', onClick: downloadOriginals },
               { label: 'קובץ CSV', icon: 'download', onClick: () => sheet('csv') },
               can('upload') && { label: 'שליחה במייל', icon: 'mail', onClick: () => setSharing({ docs: picked, mode: 'email' }) },
-              picked.some(canDelete) && { label: 'מחיקת המסומנים (לא רלוונטיים)', icon: 'trash', danger: true, onClick: removePicked },
+              picked.some(canDelete) && { label: picked.length === 1 ? 'מחיקת המסמך שנבחר' : `מחיקת ${picked.length} המסמכים שנבחרו`, icon: 'trash', danger: true, onClick: removePicked },
+              can('approve') && { label: 'דוח לרואה החשבון מהמסמכים שנבחרו', icon: 'table', onClick: () => { try { sessionStorage.setItem('fin-report-ids', JSON.stringify(picked.map((d) => d.id))) } catch { /* the report screen opens empty */ } go('/report') } },
               can('export') && { label: 'ייצוא לתוכנה או למערכת חיצונית', icon: 'plug', onClick: exportSelected },
               edit && { label: 'דחייה', icon: 'close', onClick: () => bulk('reject', { status: 'rejected' }, (d) => !['approved', 'sent'].includes(d.status)) },
               edit && { label: 'סימון ככפול', icon: 'copy', onClick: () => bulk('dup', { status: 'duplicate' }, (d) => !['approved', 'sent'].includes(d.status)) },
@@ -493,7 +498,7 @@ export default function Documents({ preset = 'all' }) {
                       <span className="fin-peek" onMouseEnter={(e) => { if (!window.matchMedia('(hover: hover)').matches) return; const r = e.currentTarget.getBoundingClientRect(); const W = 440; const H = 640; const right = innerWidth - r.left + 16; setPeek({ id: d.id, right: right + W > innerWidth - 8 ? Math.max(8, innerWidth - r.right) : right, top: Math.max(12, Math.min(innerHeight - H - 12, r.top + r.height / 2 - H / 2)) }) }} onMouseLeave={() => setPeek((x) => (x?.id === d.id ? null : x))}>
                       {peek?.id === d.id && <span className="fin-peek__pop" style={{ top: peek.top, right: peek.right }} aria-hidden="true"><PeekCard doc={d} /></span>}
                       <button type="button" className="fin-cell-main fin-cell-btn" onClick={(e) => { e.stopPropagation(); go(link(d.id)) }}>{d.supplier_name || <em className="fin-muted">{d.file_name || 'לא זוהה'}</em>}</button>{d.supplier_name && <button type="button" className="fin-icon-btn fin-suphist" onClick={(e) => { e.stopPropagation(); supplierHistory(go, d, documents) }} aria-label={`כל ההיסטוריה עם ${d.supplier_name}`} title={`כל ההיסטוריה עם ${d.supplier_name}`}><Icon name="history" size={15} /></button>}{d.recurring_id && <span className="fin-fixedtag" title="הוצאה קבועה">קבועה</span>}</span>
-                      <small className="fin-cell-sub">{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
+                      <small className="fin-cell-sub">{['fix', 'accountant'].includes(taxOf.get(d.id)?.status) && <span className={`fin-duppill is-tax ${taxOf.get(d.id).status === 'fix' ? 'is-fix' : ''}`} title={taxOf.get(d.id).summary}><Icon name="shield" size={11} /> {taxOf.get(d.id).status === 'fix' ? 'דורש תיקון' : 'לבדיקת רו״ח'}</span>}{(d.issues || []).some((i) => i.code === 'needs_confirmation') && d.status === 'review' && <span className="fin-duppill is-confirm" title="מחכה לאישור שזו חשבונית"><Icon name="info" size={11} /> לאישור</span>}{d.duplicate_state === 'suspected' && d.status === 'review' && <span className="fin-duppill" title="נראה כפול של מסמך קיים"><Icon name="copy" size={11} /> כפול?</span>}{d.description || DOC_TYPE[d.doc_type]}{errs ? <span className="fin-cell-err"> · {errs} בעיות</span> : ''}</small>
                     </td>
                     <td className="fin-num fin-td-total" data-label="סה״כ"><strong>{money(d.total_amount, d.currency)}</strong></td>
                     <td className="fin-td-status"><StatusPill status={d.status} /></td>
@@ -533,7 +538,7 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
       {dragId && <p className="fin-draghint" role="status"><Icon name="copy" size={16} /> גוררים את "{byId(dragId)?.supplier_name || byId(dragId)?.file_name || 'המסמך'}": משחררים על מסמך אחר כדי למזג. לפני המיזוג תתבקשו לאשר.</p>}
-      {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); setNote(text); await reload() }} />}
+      {merge && <MergeDialog docs={merge} canDelete={canDelete} onClose={() => setMerge(null)} onDone={async (text) => { setMerge(null); setSel(new Set()); if (/מוזגו/.test(text)) moments.merge({ title: 'המסמכים מוזגו', sub: text }); else if (/נמחק/.test(text)) moments.remove({ title: text }); setNote(text); reload() }} />}
       {confirm && (
         <Modal title={confirm.title || 'אישור פעולה'} onClose={() => setConfirm(null)} footer={<><button type="button" className={`fin-btn ${confirm.label === 'archive' || confirm.label === 'reject' ? 'fin-btn--danger' : 'fin-btn--primary'}`} onClick={confirm.run}>{({ approve: 'אישור', reject: 'דחייה', dup: 'סימון ככפול', archive: 'העברה לארכיון', biz: 'שיוך לחברה', project: 'שיוך לפרויקט', cat: 'שיוך לקטגוריה' })[confirm.label] || 'ביצוע'} של {confirm.count} מסמכים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setConfirm(null)}>ביטול</button></>}>
           <p>הפעולה תחול על {confirm.count} מסמכים{confirm.skipped ? ` (${confirm.skipped} דולגו כי הם לא מתאימים לה)` : ''}. כל שינוי נרשם ביומן.</p>
@@ -547,7 +552,7 @@ export default function Documents({ preset = 'all' }) {
           doc={current}
           onClose={() => go(`${base}${tab ? `?status=${tab}` : ''}`)}
           onSaved={patchDoc}
-          onDeleted={async () => { await reload(); go(base) }}
+          onDeleted={() => { go(base); reload() }}
           onPrev={idx > 0 ? () => go(link(rows[idx - 1].id)) : null}
           onNext={idx >= 0 && idx < rows.length - 1 ? () => go(link(rows[idx + 1].id)) : null}
           onApproved={afterApprove}

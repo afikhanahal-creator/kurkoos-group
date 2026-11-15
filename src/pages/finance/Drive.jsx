@@ -1,3 +1,4 @@
+import { moments } from './moments.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
@@ -6,6 +7,7 @@ import { date, dateTime, money, DOC_TYPE } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { Empty, Field, Icon, Modal, Pill, PageHead, askConfirm } from './ui.jsx'
 import Peek from './Peek.jsx'
+import DriveManager from './DriveManager.jsx'
 
 // The Google Drive archive: every document that was read goes to "main folder / company / year / MM - month" under a clear
 // name, and counts as archived only after it was read back from Drive (server/finance/archive.js).
@@ -125,7 +127,7 @@ function RenameDialog({ row, onClose, onSaved }) {
   )
 }
 
-function Archive({ t, collected, documents, businesses, can, go, reloadAll, reloadDocs }) {
+function Archive({ t, collected, documents, businesses, can, go, reloadAll, reloadDocs, openUpload }) {
   const [rows, setRows] = useState(null)
   const [picked, setPicked] = useState(null)
   const [renaming, setRenaming] = useState(null)
@@ -138,6 +140,8 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
   const [chosen, setChosen] = useState(() => new Set())
   const loadTree = useCallback(async () => { try { const r = await api.callServer('drive-tree', { target_id: t.id }); setRows((r.rows || []).map((x) => ({ ...x, target_id: t.id }))) } catch (e) { setErr(e.message) } }, [t.id])
   useEffect(() => { loadTree() }, [loadTree, t.counts?.verified])
+  // a document deleted anywhere (this screen, another screen, another tab) leaves the archive's lists too
+  useEffect(() => api.onDocsRemoved((ids) => { const gone = new Set(ids); setRows((r) => r && r.filter((x) => !gone.has(x.document_id))); setChosen((c) => { const x = new Set(c); for (const id of ids) x.delete(id); return x }); loadTree() }), [loadTree])
   const c = t.counts || {}
   const shown = useMemo(() => {
     const qq = query.trim().toLowerCase()
@@ -193,6 +197,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
       await api.deleteDocument(d)
       setChosen((prev) => { const x = new Set(prev); x.delete(d.id); return x })
       await reloadDocs?.()
+      moments.remove({ title: 'המסמך נמחק', sub: 'העותק ב-Drive עבר לפח' })
       return 'המסמך נמחק, והקובץ שלו עבר לפח של Drive.'
     })
   }
@@ -223,6 +228,10 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
           </div>
         )
       })()}
+      <DriveManager t={t} rows={rows} documents={documents} businesses={businesses} can={can} go={go} openUpload={openUpload}
+        onReload={async () => { await Promise.all([reloadAll(), loadTree(), reloadDocs?.()]) }} onRename={(row) => setRenaming(row)} onSync={runNow} syncing={busy === 'run'} onConnect={can('manage') ? async () => { try { const { url } = await api.callServer('cloud-auth-url', { provider: 'gdrive', back: 'drive', choose: true }); window.location.assign(url) } catch (e) { setErr(e.message) } } : null} />
+
+      <h3 className="fin-dm__below">מצב הארכיון והבדיקות</h3>
       <p className="fin-muted fin-small">עולות רק חשבוניות, חשבוניות-קבלה, קבלות, זיכויים ודרישות תשלום, כקובץ PDF או תמונה. גוף של מייל, אישור הזמנה, הצעת מחיר ואישור תשלום נשארים במערכת ולא עולים. בכל לילה הסוכן עובר על הארכיון: מה שלא שייך עובר לפח של Drive, ומה שחסר עולה.</p>
 
       <dl className="fin-scan__totals" aria-label="מצב הארכיון">
@@ -262,67 +271,6 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
         </ul>
       )}
 
-      {operate && unassigned.length > 0 && (
-        <section className="fin-dassign" aria-label="מסמכים שממתינים לשיוך">
-          <header>
-            <h3>ממתינים לשיוך ({n(unassigned.length)})</h3>
-            <p className="fin-muted fin-small">בחרו מסמכים וחברה. הקבצים יעברו מ"מסמכים ללא שיוך" לתיקיית החברה, והשיוך ילמד את הסוכן לפעם הבאה.</p>
-          </header>
-          {(() => {
-            const all = unassigned.map((r) => ({ r, d: docOf.get(r.document_id) })).map((x) => ({ ...x, day: dayOfDoc(x.d) })).sort((a, b) => String(b.day).localeCompare(String(a.day)))
-            const months = [...new Set(all.map((x) => String(x.day).slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m)))]
-            const word = waitQ.trim().toLowerCase()
-            const list = all.filter((x) => (!waitMonth || String(x.day).slice(0, 7) === waitMonth) && (!word || [x.d?.supplier_name, x.d?.file_name, x.d?.doc_number, x.d?.email_from, x.d?.total_amount != null ? String(x.d.total_amount) : ''].some((v) => String(v || '').toLowerCase().includes(word))))
-            const ids = list.map((x) => x.r.document_id)
-            const picked = ids.filter((id) => chosen.has(id))
-            const allOn = ids.length > 0 && picked.length === ids.length
-            const removeMany = async () => {
-              const docs = picked.map((id) => docOf.get(id)).filter(Boolean)
-              if (!docs.length || !(await askConfirm({ title: `מחיקת ${docs.length === 1 ? 'מסמך אחד' : `${n(docs.length)} מסמכים`}`, text: 'המסמכים יימחקו מהמערכת, והעותקים שלהם ב-Google Drive יעברו לפח של Drive. אי אפשר לבטל מכאן.', ok: 'מחיקה', danger: true }))) return
-              await act('delete', async () => { for (const d of docs) await api.deleteDocument(d); setChosen(new Set()); await reloadDocs?.(); return `${docs.length === 1 ? 'מסמך אחד נמחק' : `${n(docs.length)} מסמכים נמחקו`}, והעותקים ב-Drive עברו לפח.` })
-            }
-            return (
-              <>
-                <div className="fin-dassign__tools">
-                  <label className="fin-search"><Icon name="search" size={17} /><input type="search" value={waitQ} onChange={(e) => setWaitQ(e.target.value)} placeholder="ספק, מספר מסמך או סכום" aria-label="חיפוש ברשימה" /></label>
-                  <select value={waitMonth} onChange={(e) => setWaitMonth(e.target.value)} aria-label="חודש"><option value="">כל החודשים</option>{months.map((m) => <option key={m} value={m}>{new Date(`${m}-01T00:00:00`).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}</option>)}</select>
-                </div>
-                <div className="fin-dassign__bar">
-                  <label className="fin-dassign__all"><input type="checkbox" checked={allOn} onChange={() => setChosen(allOn ? new Set() : new Set(ids))} aria-label="בחירת כל המסמכים שברשימה" /> <span>{picked.length ? `${n(picked.length)} נבחרו` : `בחירת הכול (${n(ids.length)})`}</span></label>
-                  <select value={bulkBiz} onChange={(e) => setBulkBiz(e.target.value)} aria-label="החברה לשיוך"><option value="">בחרו חברה…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
-                  <button type="button" className="fin-btn fin-btn--primary fin-btn--sm" disabled={!picked.length || !bulkBiz || !!busy} onClick={() => assign(picked, bulkBiz)}>{busy === 'assign' ? 'משייך…' : `שיוך ${picked.length ? n(picked.length) : ''} והעברה`}</button>
-                  {can('manage') && <button type="button" className="fin-btn fin-btn--danger fin-btn--sm" disabled={!picked.length || !!busy} onClick={removeMany}><Icon name="trash" size={15} /> מחיקה</button>}
-                </div>
-                {!list.length ? <p className="fin-muted fin-dassign__none">אין מסמכים שמתאימים לחיפוש.</p> : (
-                  <ul>
-                    {list.slice(0, 300).map(({ r, d, day }) => {
-                      const from = d?.email_from ? d.email_from.replace(/<[^>]*>/g, '').replace(/"/g, '').trim() || d.email_from : ''
-                      const on = chosen.has(r.document_id)
-                      return (
-                        <li key={r.document_id} className={`fin-dassign__row ${on ? 'is-on' : ''}`}>
-                          <label className="fin-dassign__check"><input type="checkbox" checked={on} onChange={(e) => setChosen((prev) => { const x = new Set(prev); if (e.target.checked) x.add(r.document_id); else x.delete(r.document_id); return x })} aria-label={`סימון ${d?.supplier_name || d?.file_name || 'מסמך'}`} /></label>
-                          <time className="fin-dassign__date" dateTime={day || undefined}>{day ? <><b>{new Date(`${day}T00:00:00`).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' })}</b><small>{day.slice(0, 4)}</small></> : <small>בלי תאריך</small>}</time>
-                          <Peek doc={d} className="fin-dassign__main">
-                            <button type="button" className="fin-dassign__open" onClick={() => d && go(`/documents/${d.id}`)} title="פתיחת המסמך">
-                              <strong><bdi>{d?.supplier_name || d?.file_name || 'מסמך'}</bdi></strong>
-                              <small>{[DOC_TYPE[d?.doc_type], d?.doc_number, from].filter(Boolean).map((v, i) => <bdi key={i}>{i ? ' · ' : ''}{v}</bdi>)}</small>
-                            </button>
-                          </Peek>
-                          <b className="fin-dassign__sum">{d?.total_amount != null ? money(d.total_amount, d.currency) : '—'}</b>
-                          <span className="fin-dassign__acts">
-                            <button type="button" className="fin-icon-btn" onClick={() => d && go(`/documents/${d.id}`)} aria-label={`פתיחת ${d?.supplier_name || 'המסמך'}`} title="פתיחה במסך מלא"><Icon name="external" size={16} /></button>
-                            {d && can('manage') && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={!!busy} onClick={() => removeDoc(d)} aria-label={`מחיקת ${d.supplier_name || d.file_name || 'המסמך'}`} title="מחיקת המסמך"><Icon name="trash" size={16} /></button>}
-                          </span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
-              </>
-            )
-          })()}
-        </section>
-      )}
 
       {rec && (
         <details className="fin-drep" open={rec.status !== 'completed'}>
@@ -353,28 +301,13 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
         </details>
       )}
 
-      <section className="fin-dexplorer" aria-label="סייר הארכיון">
-        <div className="fin-dexplorer__head">
-          <h3>סייר הארכיון</h3>
-          <input type="search" className="fin-dexplorer__search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="חיפוש לפי ספק, מספר, חודש…" aria-label="חיפוש בארכיון" />
-        </div>
-        {rows === null ? <p className="fin-muted" aria-busy="true">טוען…</p> : !tree.size ? <p className="fin-muted">{query ? 'לא נמצא קובץ שמתאים לחיפוש.' : 'עוד אין קבצים בארכיון. חשבוניות וקבלות חדשות עולות לבד כמה דקות אחרי שהן נקראות.'}</p> : (
-          <div className={`fin-dexplorer__body ${pickedRow ? 'has-panel' : ''}`}>
-            <div className="fin-dtree" dir="rtl">
-              <p className="fin-dtree__root"><Icon name="folder" size={16} /> {t.root_name}</p>
-              {[...tree.values()].sort((a, b) => a.name.localeCompare(b.name, 'he')).map((node) => <Folder key={node.name} node={node} depth={0} onPick={(f) => setPicked(f.document_id)} picked={picked} />)}
-            </div>
-            {pickedRow && <FilePanel row={pickedRow} doc={docOf.get(pickedRow.document_id)} business={bizName(pickedRow.business_id)} businesses={businesses} onAssign={assign} canEdit={operate} go={go} onClose={() => setPicked(null)} onRename={() => setRenaming(pickedRow)} onRequeue={() => requeue([pickedRow.document_id])} onExclude={() => exclude([pickedRow.document_id])} />}
-          </div>
-        )}
-      </section>
 
       {can('manage') && (
         <details className="fin-drive__settings">
           <summary>הגדרות הארכיון</summary>
           <Switch checked={t.auto} disabled={!!busy} onChange={(v) => setting({ auto: v })} label="כל מסמך חדש עולה לבד, כמה דקות אחרי שהוא נקרא" />
           <Switch checked={t.by_kind} disabled={!!busy} onChange={(v) => setting({ by_kind: v })} label="תת-תיקייה לפי סוג בתוך כל חודש (חשבוניות, קבלות, זיכויים)" />
-          <Switch checked={t.auto_correct !== false} disabled={!!busy} onChange={(v) => setting({ auto_correct: v })} label="קובץ של הארכיון שהוזז או ששמו שונה ב-Drive חוזר למקומו לבד" />
+          <Switch checked={t.auto_correct !== false} disabled={!!busy} onChange={(v) => setting({ auto_correct: v })} label="כשסנכרון דו-כיווני כבוי: קובץ של הארכיון שהוזז או ששמו שונה ב-Drive חוזר למקומו לבד" />
           <p className="fin-muted fin-small">המבנה: {t.root_name} › חברה › שנה › חודש{t.by_kind ? ' › סוג' : ''}. מסמך בלי חברה נכנס ל"מסמכים ללא שיוך", ועובר לתיקיית החברה ברגע שמשייכים אותו. שום קובץ לא נמחק מ-Drive.</p>
         </details>
       )}
@@ -385,7 +318,7 @@ function Archive({ t, collected, documents, businesses, can, go, reloadAll, relo
 }
 
 export default function Drive() {
-  const { documents, businesses, can, go, reload } = useFinance()
+  const { allDocuments: documents, businesses, can, go, reload, openUpload } = useFinance()
   const [params, setParams] = useSearchParams()
   const [data, setData] = useState(null)
   const [err, setErr] = useState('')
@@ -395,6 +328,7 @@ export default function Drive() {
   const pumping = useRef(false)
   const load = useCallback(async () => { try { const r = await api.callServer('drive-overview'); if (alive.current) setData(r) } catch (e) { if (alive.current) setErr(e.message) } }, [])
   useEffect(() => { alive.current = true; load(); return () => { alive.current = false } }, [load])
+  useEffect(() => api.onDocsRemoved(() => { load() }), [load])
   useEffect(() => {
     const ok = params.get('connected'); const bad = params.get('error')
     if (ok) setMsg(`Google Drive של ${ok} חובר. הסוכן בודק עכשיו כל מסמך מול Drive: מה שחסר משוחזר, ושום דבר לא עולה פעמיים.`)
@@ -434,7 +368,7 @@ export default function Drive() {
         <Empty title="עוד לא חובר Google Drive" icon="cloud" action={can('manage') && <button type="button" className="fin-btn fin-btn--primary" disabled={connecting} onClick={connect}>{connecting ? 'מעביר ל-Google…' : 'חיבור Google Drive'}</button>}>
           אחרי החיבור הסוכן יוצר תיקייה "ארכיון מסמכים עסקי", ובתוכה תיקייה לכל חברה, שנה וחודש. הוא מעלה לשם כל מסמך שנקרא, בשם כמו 2026-11-05_חשמל-ישיר_חשבונית-מס_12345_2450-שח.pdf. ההרשאה מאפשרת לו לראות רק את הקבצים שהוא עצמו יצר.
         </Empty>
-      ) : data.targets.map((t) => <Archive key={t.id} t={t} reloadDocs={reload} collected={data.collected} documents={documents} businesses={businesses} can={can} go={go} reloadAll={load} />)}
+      ) : data.targets.map((t) => <Archive key={t.id} t={t} reloadDocs={reload} openUpload={openUpload} collected={data.collected} documents={documents} businesses={businesses} can={can} go={go} reloadAll={load} />)}
     </div>
   )
 }

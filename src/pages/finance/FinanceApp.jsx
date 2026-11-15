@@ -13,9 +13,14 @@ import { InviteWelcome, Login, SecondStep, linkType, useIdleSignOut, deviceId } 
 import Dashboard from './Dashboard.jsx'
 import Documents from './Documents.jsx'
 import Receipts from './Receipts.jsx'
+import Vat from './Vat.jsx'
+import Compliance from './Compliance.jsx'
+const AccountantReport = lazy(() => import('./AccountantReport.jsx'))
+import { BrandLoader, BrandMark } from './Brand.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
 import './finance.css'
+import Lottie from './lottie/play.jsx'
 import './moments.css'
 import { toast } from './moments.js'
 import { money } from './format.js'
@@ -57,6 +62,9 @@ export const NAV = [
   // daily work: what arrived, what needs a look, what goes to the accountant
   // management: the group's financial picture opens first for managers
   { to: '', label: 'סקירה פיננסית', icon: 'reports', roles: OPS, el: <Executive />, group: 'הנהלה' },
+  { to: '/vat', label: 'מרכז המע״מ', icon: 'shield', roles: ['admin', 'finance_manager', 'accountant'], el: <Vat />, group: 'הנהלה' },
+  { to: '/compliance', label: 'ציות ומס', icon: 'shield', roles: ['admin', 'finance_manager', 'accountant'], el: <Compliance />, group: 'הנהלה' },
+  { to: '/report', label: 'דוח לרואה החשבון', icon: 'table', roles: ['admin', 'finance_manager', 'accountant'], el: <AccountantReport />, group: 'הנהלה' },
   { to: '/assistant', label: 'שאלות על הנתונים', icon: 'sparkle', roles: [...OPS, 'accountant'], el: <Assistant />, group: 'הנהלה' },
   { to: '', label: 'מרכז בקרה', icon: 'home', roles: ['employee', 'accountant'], el: <Dashboard />, group: 'מסמכים' },
   { to: '/today', label: 'מרכז בקרה', icon: 'home', roles: OPS, el: <Dashboard />, group: 'מסמכים' },
@@ -76,7 +84,7 @@ export const NAV = [
   { to: '/connections', label: 'חיבורים', icon: 'plug', roles: ['admin', 'finance_manager', 'employee'], el: <Connections />, group: 'קליטה' },
   { to: '/mailboxes', label: 'חשבונות אימייל', icon: 'mail', roles: ['admin', 'finance_manager', 'employee'], el: <Mailboxes />, group: 'קליטה' },
   { to: '/scans', label: 'ניהול סריקות', icon: 'history', roles: ['admin', 'finance_manager'], el: <Scans />, group: 'קליטה' },
-  { to: '/scanners', label: 'מספרי WhatsApp', icon: 'phone', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
+  { to: '/scanners', label: 'מספרי WhatsApp', icon: 'whatsapp', roles: ['admin', 'finance_manager', 'employee'], el: <Scanners />, group: 'קליטה' },
   // everything else, folded away until needed
   { to: '/reports', label: 'דוחות', icon: 'reports', roles: ['admin', 'finance_manager', 'accountant'], el: <Reports />, group: 'מתקדם' },
   { to: '/fixed', label: 'הוצאות קבועות', icon: 'calendar', roles: OPS, el: <Fixed />, group: 'מתקדם' },
@@ -99,11 +107,47 @@ export const useFinance = () => useContext(Ctx)
 
 // the same "count|newest change" the server answers in api.docsStamp, computed from the rows already loaded
 const stampOf = (docs) => `${docs.length}|${docs.reduce((m, d) => (d.updated_at && d.updated_at > m ? d.updated_at : m), '')}`
+/* On a phone, pulling the screen down from its top reloads the data, like refreshing the page (an installed app has no
+   browser button for it, and the page no longer bounces). The data also refreshes by itself: a check every 15 seconds
+   and whenever the app comes back into view. */
+function PullRefresh({ onRefresh }) {
+  const [pull, setPull] = useState(0)
+  const [busy, setBusy] = useState(false)
+  const fn = useRef(onRefresh); fn.current = onRefresh
+  useEffect(() => {
+    if (typeof matchMedia !== 'function' || !matchMedia('(pointer: coarse)').matches) return undefined
+    let y0 = null; let d = 0; let running = false
+    const blocked = (t) => document.querySelector('.fin-modal, .fin-panel, .fin-viewer.is-max, .fin-dm__menuwrap') || t.closest?.('.fin-viewer__scroll, .fin-scroll-x, textarea, [draggable="true"]') || (t === document.activeElement && /^(INPUT|SELECT)$/.test(t.tagName))
+    const start = (e) => { d = 0; y0 = !running && e.touches.length === 1 && window.scrollY <= 0 && !blocked(e.target) ? e.touches[0].clientY : null }
+    const move = (e) => {
+      if (y0 == null) return
+      d = e.touches[0].clientY - y0
+      // the pull is ours from here: without this the browser takes the gesture for its own (empty) scroll and cancels it
+      if (d > 8 && window.scrollY <= 0) { if (e.cancelable) e.preventDefault(); setPull(Math.min(92, d * 0.5)) } else { setPull(0); if (d < -8) y0 = null }
+    }
+    const cancel = () => { y0 = null; setPull(0) }
+    const end = async () => {
+      if (y0 == null) return
+      y0 = null
+      if (d * 0.5 < 60) { setPull(0); return }
+      running = true; setBusy(true); setPull(56)
+      try { await fn.current?.() } finally { running = false; setBusy(false); setPull(0) }
+    }
+    window.addEventListener('touchstart', start, { passive: true }); window.addEventListener('touchmove', move, { passive: false }); window.addEventListener('touchend', end); window.addEventListener('touchcancel', cancel)
+    return () => { window.removeEventListener('touchstart', start); window.removeEventListener('touchmove', move); window.removeEventListener('touchend', end); window.removeEventListener('touchcancel', cancel) }
+  }, [])
+  if (!pull && !busy) return null
+  return <div className={`fin-pull ${busy ? 'is-busy' : pull >= 60 ? 'is-ready' : ''}`} style={{ '--pull': `${pull}px` }} role="status"><Icon name="refresh" size={16} /> {busy ? 'מרענן…' : pull >= 60 ? 'שחררו לרענון' : 'משכו לרענון'}</div>
+}
+
 function useFinanceData(enabled, onChange) {
   const [state, setState] = useState({ loading: true, error: '', me: null, documents: [], businesses: [], projects: [], categories: [], suppliers: [], mailboxes: [], members: [], allocations: [], settings: {} })
   const loadedAt = useRef(0)
   const stamp = useRef(''); const prevDocs = useRef(null)
   const inflight = useRef(null)
+  // documents being deleted right now: off every list from the click, whatever a load that is already on its way brings
+  const hidden = useRef(new Set())
+  const shown = (list) => (hidden.current.size ? list.filter((d) => !hidden.current.has(d.id)) : list)
   // one load at a time: a second call while a load runs (focus, a timer, a screen's refresh) shares it
   const reload = useCallback(() => {
     if (inflight.current) return inflight.current
@@ -112,11 +156,17 @@ function useFinanceData(enabled, onChange) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const load = async () => {
     try {
+      // "who am I" and the data are asked at the same time (one round trip less on every load); a person without a role
+      // gets empty answers from the database anyway, and they are dropped here
+      const all = Promise.all([
+        api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(), api.loadAllocations(), api.loadSettings(),
+      ]).then((v) => ({ v }), (err) => ({ err }))
       const me = await api.me()
       if (!me?.role) { setState((s) => ({ ...s, loading: false, error: '', me })); return }
-      const [documents, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = await Promise.all([
-        api.loadDocuments(), api.loadBusinesses(), api.loadProjects(), api.loadCategories(), api.loadSuppliers(), api.loadMailboxes(), api.loadMembers(), api.loadAllocations(), api.loadSettings(),
-      ])
+      const got = await all
+      if (got.err) throw got.err
+      const [docs0, businesses, projects, categories, suppliers, mailboxes, members, allocations, settings] = got.v
+      const documents = shown(docs0)
       loadedAt.current = Date.now()
       stamp.current = stampOf(documents)
       const before = prevDocs.current; prevDocs.current = documents
@@ -131,16 +181,37 @@ function useFinanceData(enabled, onChange) {
   useEffect(() => {
     if (!enabled) return undefined
     // before the first load ends (loadedAt 0) a focus is not a reason to load everything again
-    const on = () => { if (document.visibilityState === 'visible' && loadedAt.current && Date.now() - loadedAt.current > 20_000) reload() }
+    // coming back to the tab: one tiny question (how many documents, when the newest changed), and a reload when it moved,
+    // so what was deleted or added elsewhere is never left on the screen
+    const on = async () => {
+      if (document.visibilityState !== 'visible' || !loadedAt.current || inflight.current) return
+      const now = await api.docsStamp().catch(() => null)
+      if ((now && stamp.current && now !== stamp.current) || Date.now() - loadedAt.current > 60_000) reload()
+    }
     document.addEventListener('visibilitychange', on); window.addEventListener('focus', on)
     return () => { document.removeEventListener('visibilitychange', on); window.removeEventListener('focus', on) }
   }, [enabled, reload])
   const reading = state.documents.some((d) => d.status === 'processing')
+  // While a document is being read only the documents are asked again, every 4 s (it used to reload all nine tables:
+  // heavy on a phone). When a reading ends, everything is loaded once, because it may have brought a new supplier.
   useEffect(() => {
     if (!reading) return undefined
-    const t = setInterval(reload, 4000)
+    let busy = false
+    const t = setInterval(async () => {
+      if (busy || inflight.current || document.visibilityState !== 'visible') return
+      busy = true
+      try {
+        const documents = shown(await api.loadDocuments())
+        const was = (prevDocs.current || []).filter((d) => d.status === 'processing').length
+        if (documents.filter((d) => d.status === 'processing').length < was) { reload(); return }
+        stamp.current = stampOf(documents)
+        const before = prevDocs.current; prevDocs.current = documents
+        if (before) onChange.current?.(before, documents)
+        setState((s) => ({ ...s, documents }))
+      } catch { /* the next tick asks again */ } finally { busy = false }
+    }, 4000)
     return () => clearInterval(t)
-  }, [reading, reload])
+  }, [reading, reload]) // eslint-disable-line react-hooks/exhaustive-deps
   // invoices keep arriving (mail, WhatsApp, scanners, colleagues): a tiny check every 15 s while the tab is in view, and
   // a full reload only when something really changed. While documents are being read the 4 s loop above covers it.
   useEffect(() => {
@@ -152,17 +223,49 @@ function useFinanceData(enabled, onChange) {
     }, 15_000)
     return () => clearInterval(t)
   }, [enabled, reading, reload])
-  const patchDoc = useCallback((doc) => setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) })), [])
-  const refreshIfStale = useCallback(() => { if (Date.now() - loadedAt.current > 20_000) reload() }, [reload])
+  // A deletion leaves every list at the click (api.deleteDocuments says "removing" before it asks the server). When the
+  // server confirms, the reload agrees with it; when it refuses, the documents come back and the screen that asked says why.
+  // A deletion made in another open tab arrives as "removed" only.
+  useEffect(() => {
+    const drop = (ids) => { const gone = new Set(ids); setState((s) => { const documents = s.documents.filter((d) => !gone.has(d.id)); prevDocs.current = documents; stamp.current = ''; return { ...s, documents } }) }
+    const removing = (e) => { const ids = e.detail?.ids || []; for (const id of ids) hidden.current.add(id); drop(ids) }
+    const kept = (e) => { for (const id of e.detail?.ids || []) hidden.current.delete(id); prevDocs.current = null; reload() }
+    window.addEventListener('fin:docs-removing', removing); window.addEventListener('fin:docs-kept', kept)
+    const off = api.onDocsRemoved((ids) => {
+      const gone = new Set(ids)
+      drop(ids); setState((s) => ({ ...s, allocations: s.allocations.filter((a) => !gone.has(a.document_id)) }))
+      reload().finally(() => { for (const id of ids) hidden.current.delete(id) })
+    })
+    return () => { off(); window.removeEventListener('fin:docs-removing', removing); window.removeEventListener('fin:docs-kept', kept) }
+  }, [reload])
+  // what a save or an upload answered goes on the screen at once (one row or several); a row that is not on the list yet
+  // is added at its top. The server's answer is the truth, so nothing waits for a reload of everything.
+  const patchDoc = useCallback((doc) => setState((s) => {
+    const list = [].concat(doc || []).filter((d) => d?.id && !hidden.current.has(d.id)); if (!list.length) return s
+    const by = new Map(list.map((d) => [d.id, d])); const seen = new Set()
+    const documents = s.documents.map((d) => { const x = by.get(d.id); if (!x) return d; seen.add(d.id); return { ...d, ...x } })
+    const fresh = list.filter((d) => !seen.has(d.id))
+    const next = fresh.length ? [...fresh, ...documents] : documents
+    prevDocs.current = next
+    return { ...s, documents: next }
+  }), [])
+  useEffect(() => { const on = (e) => patchDoc(e.detail?.docs); window.addEventListener('fin:docs-changed', on); return () => window.removeEventListener('fin:docs-changed', on) }, [patchDoc])
+  // only after a first load: this also runs when the app mounts, before anyone signed in
+  const refreshIfStale = useCallback(() => { if (loadedAt.current && Date.now() - loadedAt.current > 20_000) reload() }, [reload])
   // the bookkeeping pass (ledger.js): receipts that pay an invoice, proformas replaced by an invoice. Every screen reads
   // the same flags, so no figure counts the same money twice.
-  const documents = useMemo(() => markLedger(state.documents), [state.documents])
-  return { ...state, documents, reload, patchDoc, refreshIfStale }
+  const allDocuments = useMemo(() => markLedger(state.documents), [state.documents])
+  // One rule for every screen: a document moved to the archive is out of the work. It is on no list, in no count and
+  // in no report; only the "ארכיון" tab of the documents screen (which reads allDocuments) shows it, to restore or delete.
+  const documents = useMemo(() => allDocuments.filter((d) => d.status !== 'archived'), [allDocuments])
+  return { ...state, documents, allDocuments, reload, patchDoc, refreshIfStale }
 }
 
 function NoAccess({ me, email, onClaimed }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  // the first "no access" is checked once more before anybody sees it: right after sign-in it is often a stale answer
+  const [first, setFirst] = useState(true)
   const claim = async () => {
     setBusy(true); setErr('')
     try { await api.claimAdmin(); onClaimed() } catch (e) { setErr(e.message); setBusy(false) }
@@ -176,13 +279,14 @@ function NoAccess({ me, email, onClaimed }) {
     } catch { /* noop */ }
     await supabase.auth.refreshSession().catch(() => {})
     await Promise.resolve(onClaimed()).catch(() => {})
-    setBusy(false)
+    setBusy(false); setFirst(false)
   }
-  useEffect(() => { const t = setTimeout(recheck, 600); return () => clearTimeout(t) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { recheck() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  if (first) return <BrandLoader />
   return (
     <div className="fin-login" dir="rtl">
       <div className="fin-login__box">
-        <img src="/kurkoos-logo.svg" alt="קבוצת קורקוס" className="fin-login__logo" />
+        <span className="fin-login__logo" role="img" aria-label="קבוצת קורקוס"><BrandMark size={52} /></span>
         {me?.has_members ? (
           <>
             <h1>אין לך גישה למערכת</h1>
@@ -223,15 +327,14 @@ export default function FinanceApp() {
     try { const c = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); if (c) setSec(c) } catch { /* noop */ }
     const check = async () => {
       // the session itself: an admin who blocks someone deletes their sessions, and the auth server then refuses the token
-      const { error: gone } = await supabase.auth.getUser()
+      // asked together with the role (one after the other cost a round trip on every sign-in); an ended session wins
+      const [{ error: gone }, me, { data: lvl }] = await Promise.all([supabase.auth.getUser(), api.mySecurity(), supabase.auth.mfa.getAuthenticatorAssuranceLevel()])
       if (!alive) return
       if (gone && [401, 403].includes(gone.status)) {
         try { sessionStorage.removeItem(cacheKey) } catch { /* noop */ }
         await supabase.auth.signOut({ scope: 'local' })
         return
       }
-      const [me, { data: lvl }] = await Promise.all([api.mySecurity(), supabase.auth.mfa.getAuthenticatorAssuranceLevel()])
-      if (!alive) return
       const v = me ? { ...me, aal: lvl?.currentLevel || 'aal1', next: lvl?.nextLevel || 'aal1' } : false
       setSec(v)
       try { if (v && !(v.mfa_required && v.aal !== 'aal2') && !v.onboard) sessionStorage.setItem(cacheKey, JSON.stringify(v)); else sessionStorage.removeItem(cacheKey) } catch { /* noop */ }
@@ -274,10 +377,10 @@ export default function FinanceApp() {
   useEffect(() => {
     if (Date.now() - versionAt.current < 120_000) return
     versionAt.current = Date.now()
-    const mine = document.querySelector('script[type="module"][src*="/assets/index-"]')?.getAttribute('src')
+    const mine = document.querySelector('script[type="module"][src*="/assets/finance-"]')?.getAttribute('src')
     if (!mine) return
     fetch('/admin/finance', { cache: 'no-store', credentials: 'same-origin' }).then((r) => (r.ok ? r.text() : '')).then((html) => {
-      const live = /\/assets\/index-[^"']+\.js/.exec(html)?.[0]
+      const live = /\/assets\/finance-[^"']+\.js/.exec(html)?.[0]
       if (live && live !== mine && !document.querySelector('.fin-modal')) window.location.reload()
     }).catch(() => {})
   }, [pathname])
@@ -291,7 +394,7 @@ export default function FinanceApp() {
     const SRC = { gmail: 'מהמייל', outlook: 'מהמייל', forward: 'ממייל שהועבר', whatsapp: 'מ-WhatsApp', upload: 'מהעלאה', camera: 'מצילום' }
     if (arrived.length) {
       const from = [...new Set(arrived.map((d) => SRC[d.source] || '').filter(Boolean))].join(', ')
-      toast({ icon: 'doc', title: arrived.length === 1 ? 'מסמך חדש נקלט' : `${arrived.length} מסמכים חדשים נקלטו`, sub: [from, arrived.some((d) => d.status === 'processing') ? 'נקראים עכשיו' : ''].filter(Boolean).join(' · '),
+      toast({ icon: arrived.every((d) => d.source === 'whatsapp') ? 'message' : 'doc', title: arrived.length === 1 ? 'מסמך חדש נקלט' : `${arrived.length} מסמכים חדשים נקלטו`, sub: [from, arrived.some((d) => d.status === 'processing') ? 'נקראים עכשיו' : ''].filter(Boolean).join(' · '),
         action: { label: 'הצגה', onClick: () => navigate(`${BASE}/new`) } })
     }
     if (read.length === 1) {
@@ -354,7 +457,8 @@ export default function FinanceApp() {
     for (const k of Object.keys(window)) if (k.startsWith('ga-disable-')) window[k] = true
     return () => { cleanupInstall(); if (before) m.setAttribute('content', before); else m.remove() }
   }, [])
-  const [capture, setCapture] = useState(false)
+  // the home-screen shortcut "צילום קבלה" opens the camera dialog at once
+  const [capture, setCapture] = useState(() => typeof location !== 'undefined' && new URLSearchParams(location.search).get('capture') === '1')
   const [uploading, setUploading] = useState(false)
   // the office WhatsApp number, for the top bar (one status call per sign-in)
   const [waNumber, setWaNumber] = useState('')
@@ -376,10 +480,11 @@ export default function FinanceApp() {
 
   if (!hasSupabase) return <p className="fin-msg">Supabase לא מוגדר בסביבה הזו.</p>
   if (!session && session !== undefined) return <Login />
-  if (session === undefined || (session && sec === null)) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
+  if (session === undefined || (session && sec === null)) return <BrandLoader />
   if (welcome && session) return <InviteWelcome email={session.user?.email || ''} onDone={() => setWelcome(false)} />
   if (mfaPending) return <SecondStep mfaRequired onDone={() => supabase.auth.refreshSession().then(() => setSec((x) => ({ ...x, aal: 'aal2' })))} />
-  if (sec !== false && data.loading && !data.me) return <div className="fin-boot" role="status" aria-label="טוען"><img src="/kurkoos-logo.svg" alt="" /><span /></div>
+  // while the membership answer is on its way nothing is said about access (a failed security check is not an answer)
+  if (data.loading && !data.me) return <BrandLoader />
   const email = session.user?.email || ''
   const myName = data.members.find((m) => m.user_id === session.user?.id)?.full_name || ''
   if (data.error && !data.me) return <div className="fin-login" dir="rtl"><div className="fin-login__box"><h1>שגיאה</h1><p className="fin-error" role="alert">{data.error}</p></div></div>
@@ -494,6 +599,7 @@ export default function FinanceApp() {
         {uploading && <Modal title="העלאת מסמכים" onClose={() => setUploading(false)} footer={<><button type="button" className="fin-btn" onClick={() => { setUploading(false); navigate(`${BASE}/documents?status=new`) }}>למסמכים החדשים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setUploading(false)}>סגירה</button></>}><UploadZone onDone={data.reload} /><p className="fin-muted fin-small">PDF או תמונה, עד 12MB, אחד או כמה ביחד. המסמכים נקראים ברקע ומחכים לבדיקה ב"חשבוניות חדשות".</p></Modal>}
         <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav} />
         <ConfirmHost />
+        <PullRefresh onRefresh={data.reload} />
       </div>
     </Ctx.Provider>
   )

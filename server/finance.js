@@ -16,9 +16,10 @@ import { env } from './finance/env.js'
 import { sb, one, insert, patch, q, caller, audit, removeFile, rpc } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
-import { ADAPTERS, cleanConfig, deliveryOf, intakeOf } from './finance/adapters.js'
+import { ADAPTERS } from './finance/adapters.js'
+import { publicProviders } from './finance/providers.js'
 import { ask } from './finance/assistant.js'
-import { mfaBlock, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
+import { mfaBlock, mfaRoles, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
 import { listLinks, fetchLinked, mailSource, mailFile } from './finance/linked.js'
 import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup, setReplies as waSetReplies, notifyApproved as waNotifyApproved } from './finance/whatsapp.js'
@@ -37,7 +38,6 @@ const ROLES = {
   invite: ['admin'],
   'integration-save': ['admin'],
   'integration-test': ['admin', 'finance_manager'],
-  'integration-send': ['admin', 'finance_manager'],
   status: ['admin', 'finance_manager', 'employee', 'accountant'],
   backfill: ['admin', 'finance_manager'],
   'scan-step': ['admin', 'finance_manager'],
@@ -53,10 +53,20 @@ const ROLES = {
   'drive-run': ['admin', 'finance_manager'],
   'drive-requeue': ['admin', 'finance_manager'],
   'drive-rename': ['admin', 'finance_manager'],
+  'drive-move': ['admin', 'finance_manager'],
   'drive-settings': ['admin'],
   'drive-reconcile': ['admin', 'finance_manager'],
   'drive-exclude': ['admin', 'finance_manager'],
   'drive-pause': ['admin', 'finance_manager'],
+  'drive-sync': ['admin', 'finance_manager'],
+  'drive-extras': ['admin', 'finance_manager'],
+  'drive-folder': ['admin', 'finance_manager'],
+  'drive-pin': ['admin', 'finance_manager'],
+  'drive-restore': ['admin', 'finance_manager'],
+  'drive-activity': ['admin', 'finance_manager'],
+  'drive-accounts': ['admin', 'finance_manager'],
+  'drive-two-way': ['admin'],
+  'drive-shared': ['admin', 'finance_manager'],
   'cloud-auth-url': ['admin'],
   'cloud-sync': ['admin', 'finance_manager'],
   'cloud-disconnect': ['admin'],
@@ -84,6 +94,13 @@ const ROLES = {
   'whatsapp-setup': ['admin'],
   'whatsapp-inbox-delete': ['admin', 'finance_manager'],
   'drive-forget': ['admin', 'finance_manager', 'employee'],
+  'documents-delete': ['admin', 'finance_manager'],
+  'documents-sweep': ['admin'],
+  'vat-audit': ['admin', 'finance_manager'],
+  'tax-audit': ['admin', 'finance_manager'],
+  'tax-watch': ['admin', 'finance_manager'],
+  'tax-watch-ack': ['admin'],
+  'tax-rule-confirm': ['admin', 'accountant'],
   'linked-links': ['admin', 'finance_manager', 'employee'],
   'linked-fetch': ['admin', 'finance_manager', 'employee'],
   'mail-file': ['admin', 'finance_manager', 'employee'],
@@ -92,9 +109,11 @@ const ROLES = {
   'receipts-drive': ['admin', 'finance_manager', 'employee', 'accountant'],
 }
 
-// per-user rate limit (in memory, per instance): 120 calls in 10 minutes
+// per-user rate limit (in memory, per instance): 120 calls in 10 minutes. FINANCE_RATE_LIMIT changes the number
+// (the end-to-end suite runs one user through hundreds of calls); it is not set in production.
+const RATE = Math.max(20, Number(process.env.FINANCE_RATE_LIMIT) || 120)
 const _rl = new Map()
-function limited(key, max = 120, windowMs = 600_000) {
+function limited(key, max = RATE, windowMs = 600_000) {
   const now = Date.now()
   const e = _rl.get(key) || { n: 0, reset: now + windowMs }
   if (now > e.reset) { e.n = 0; e.reset = now + windowMs }
@@ -174,6 +193,12 @@ export default async function handler(req, res) {
   const url = new URL(req.url, 'http://x')
 
   if (url.pathname.endsWith('/finance-oauth')) return oauthCallback(req, res, url)
+  // a notice from Google Drive that something changed there (driveSync.js checks its token)
+  if (url.pathname.endsWith('/finance-drive-hook')) {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
+    try { const ds = await import('./finance/driveSync.js'); const out = await ds.driveHook(req); res.status(out.status).json(out.body) } catch { res.status(200).json({ ok: false }) }
+    return
+  }
   if (url.pathname.endsWith('/finance-whatsapp')) {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
     return whatsappWebhook(req, res)
@@ -194,6 +219,8 @@ export default async function handler(req, res) {
     try {
       const started = Date.now()
       // the Drive archive first (short: a few documents a minute is plenty), then the mail scan with the rest of the time
+      // what a person did in Drive since the last minute is followed first, then the queue goes up
+      await import('./finance/driveSync.js').then((ds) => ds.syncFromDrive({ trigger: 'scan', budgetMs: 8_000, origin: origin(req) })).catch(() => [])
       const drive = await archive.tick({ started, budgetMs: 15_000, trigger: 'scan' }).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
       await archive.reconcileStep({ started, budgetMs: 25_000 }).catch(() => [])
       res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
@@ -217,21 +244,22 @@ export default async function handler(req, res) {
     if (limited(`fail:${String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0]}`, 60)) { res.status(429).json({ error: 'יותר מדי ניסיונות' }); return }
     res.status(200).json(await loginFailed(req, body)); return
   }
-  const user = await caller(req)
+  // who is calling and which roles need the second step are asked together (two calls in a row on every action before)
+  const [user, mfaList] = await Promise.all([caller(req), mfaRoles()])
   if (!user) { res.status(401).json({ error: 'צריך להתחבר' }); return }
   const allowed = ROLES[body.action]
   if (!allowed) { res.status(400).json({ error: 'unknown action' }); return }
   if (!user.role || !allowed.includes(user.role)) { res.status(403).json({ error: 'אין לך הרשאה לפעולה הזו' }); return }
   // a role that requires the second step acts only after it (the database applies the same rule in fin_has_role)
   if (!['status', 'auth-event'].includes(body.action)) {
-    const why = await mfaBlock(user)
+    const why = await mfaBlock(user, mfaList)
     if (why) { res.status(403).json({ error: 'נדרש אימות דו-שלבי. התחברו מחדש עם הקוד מהאפליקציה', code: why }); return }
   }
   // the scan screen asks for the next step and the status again and again while a scan runs: its own, larger budget,
   // so a long scan never uses up the person's budget for everything else (each step is already capped at ~45 s)
   // each polling screen has its own budget, so the Drive screen can never use up the scan screen's (or the other way round)
   const scanPoll = ['scan-run', 'scan-overview'].includes(body.action)
-  const drivePoll = ['drive-overview', 'drive-run', 'drive-reconcile', 'drive-tree'].includes(body.action)
+  const drivePoll = ['drive-overview', 'drive-run', 'drive-reconcile', 'drive-tree', 'drive-sync', 'drive-extras', 'drive-activity', 'drive-accounts'].includes(body.action)
   if (body.action !== 'status' && (scanPoll ? limited(`scan:${user.id}`, 600) : drivePoll ? limited(`drive:${user.id}`, 600) : limited(user.id))) { res.status(429).json({ error: 'יותר מדי בקשות. נסו שוב בעוד כמה דקות' }); return }
 
   try {
@@ -248,6 +276,7 @@ export default async function handler(req, res) {
           schedule: { night: '23 0 * * *', morning: '57 4 * * *', tz: 'UTC' },
           cloud: Object.fromEntries(Object.entries(CLOUD).map(([k, c]) => [k, c.configured()])),
           adapters: Object.values(ADAPTERS).map(({ id, label, kind, fields, secrets }) => ({ id, label, kind, fields, secrets })),
+          accounting: publicProviders(),
         })
         return
       }
@@ -398,6 +427,12 @@ export default async function handler(req, res) {
         res.status(200).json(await archive.requeue({ targetId: String(body.target_id || ''), ids, user }))
         return
       }
+      case 'drive-move': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        if (!ids.length) { res.status(400).json({ error: 'לא נבחרו מסמכים' }); return }
+        res.status(200).json(await archive.moveDocs({ targetId: String(body.target_id || ''), ids, businessId: body.business_id === undefined ? undefined : String(body.business_id || ''), period: body.period === undefined ? undefined : String(body.period), user }))
+        return
+      }
       case 'drive-rename': {
         res.status(200).json(await archive.renameDoc({ targetId: String(body.target_id || ''), documentId: String(body.document_id || ''), name: String(body.name || ''), user }))
         return
@@ -411,9 +446,67 @@ export default async function handler(req, res) {
         res.status(200).json({ results: await archive.reconcile({ trigger: 'manual', targetId: body.target_id ? String(body.target_id) : null, user }) })
         return
       }
+      // two-way sync and the folders a person makes (server/finance/driveSync.js)
+      case 'drive-sync': {
+        // what was done in Drive is followed first, then what waits in the queue goes up
+        const ds = await import('./finance/driveSync.js'); const tid = body.target_id ? String(body.target_id) : null
+        const from = await ds.syncFromDrive({ targetId: tid, trigger: 'manual', budgetMs: 15_000, origin: origin(req) })
+        const to = body.quick ? [] : await archive.tick({ trigger: 'manual', targetId: tid, max: 60, budgetMs: 20_000 })
+        res.status(200).json({ ok: true, from_drive: from, to_drive: to })
+        return
+      }
+      case 'drive-extras': { res.status(200).json(await archive.extras({ targetId: String(body.target_id || ''), user })); return }
+      case 'drive-folder': {
+        const ds = await import('./finance/driveSync.js'); const base = { targetId: String(body.target_id || ''), user }
+        if (body.op === 'create') res.status(200).json(await ds.createFolder({ ...base, parentKey: String(body.parent || 'root'), name: body.name }))
+        else if (body.op === 'rename') res.status(200).json(await ds.renameFolder({ ...base, key: String(body.key || ''), name: body.name }))
+        else if (body.op === 'delete') res.status(200).json(await ds.deleteFolder({ ...base, key: String(body.key || '') }))
+        else res.status(400).json({ error: 'פעולה לא מוכרת' })
+        return
+      }
+      case 'drive-pin': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        if (!ids.length) { res.status(400).json({ error: 'לא נבחרו מסמכים' }); return }
+        const ds = await import('./finance/driveSync.js')
+        res.status(200).json(await ds.pinDocs({ targetId: String(body.target_id || ''), ids, folderKey: body.folder ? String(body.folder) : null, user }))
+        return
+      }
+      case 'drive-restore': {
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 200)
+        const ds = await import('./finance/driveSync.js')
+        res.status(200).json(await ds.restoreDocs({ targetId: String(body.target_id || ''), ids, user }))
+        return
+      }
+      case 'drive-activity': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.activity({ targetId: String(body.target_id || ''), documentId: /^[0-9a-f-]{36}$/i.test(String(body.document_id || '')) ? String(body.document_id) : null, limit: Number(body.limit) || 60 })); return }
+      case 'drive-accounts': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.accounts()); return }
+      case 'drive-shared': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.shared({ targetId: String(body.target_id || '') })); return }
+      case 'drive-two-way': { const ds = await import('./finance/driveSync.js'); res.status(200).json(await ds.setTwoWay({ on: body.on !== false, user })); return }
       case 'drive-exclude': {
         const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 500)
         res.status(200).json(await archive.exclude({ targetId: String(body.target_id || ''), ids, excluded: body.excluded !== false, user }))
+        return
+      }
+      case 'documents-delete': {
+        // the one deletion (server/finance/remove.js): the document, its files, its copy in Drive, and the check after
+        const { removeDocuments } = await import('./finance/remove.js')
+        res.status(200).json(await removeDocuments({ ids: body.ids, user }))
+        return
+      }
+      // the compliance agent: the check over every document, the watch over the official sources, and the accountant's
+      // confirmation of a rule (server/finance/compliance.js)
+      case 'tax-audit': { const { complianceAudit } = await import('./finance/compliance.js'); res.status(200).json(await complianceAudit({ trigger: 'manual', user })); return }
+      case 'tax-watch': { const { watchSources } = await import('./finance/compliance.js'); res.status(200).json({ ok: true, ...(await watchSources({ trigger: 'manual', user })) }); return }
+      case 'tax-watch-ack': { const { ackSource } = await import('./finance/compliance.js'); res.status(200).json(await ackSource({ id: String(body.id || ''), user })); return }
+      case 'tax-rule-confirm': { const { confirmRule } = await import('./finance/compliance.js'); res.status(200).json(await confirmRule({ id: String(body.id || ''), confirmed: body.confirmed !== false, note: body.note, user })); return }
+      case 'vat-audit': {
+        // the VAT agent, on demand (it also runs every night): every document through the one VAT service, what changed is recorded
+        const { vatAudit } = await import('./finance/vat.js')
+        res.status(200).json(await vatAudit({ trigger: 'manual', user }))
+        return
+      }
+      case 'documents-sweep': {
+        const { sweep } = await import('./finance/remove.js')
+        res.status(200).json(await sweep({ dry: body.dry === true, user }))
         return
       }
       case 'drive-forget': {
@@ -565,16 +658,16 @@ export default async function handler(req, res) {
         return
       }
       case 'not-relevant': {
-        // a person says a document the conductor was unsure about is not an invoice: it leaves the documents, its file is
-        // removed, and it joins the skipped list so the same file is never read or imported again
-        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
-        if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        // a person says a document the conductor was unsure about is not an invoice: it is deleted like any other
+        // document (remove.js), and the note it leaves keeps the same file from being read or imported again
+        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=id,status,file_name,email_from`)
+        if (!doc) { res.status(200).json({ ok: true, already: true }); return }
         if (['approved', 'sent'].includes(doc.status)) { res.status(409).json({ error: 'מסמך מאושר לא נמחק כאן' }); return }
-        await insert('fin_skipped', { source: doc.source, mailbox_id: doc.mailbox_id, email_subject: doc.email_subject, email_from: doc.email_from, file_name: doc.file_name, file_hash: doc.file_hash, document_class: 'other', confidence: 1, reason: `סומן כלא רלוונטי ע״י ${user.email}` }, 'return=minimal').catch(() => {})
-        await sb(`fin_documents?id=eq.${doc.id}`, { method: 'DELETE', prefer: 'return=minimal' })
-        if (doc.file_path) await removeFile(doc.file_path).catch(() => {})
+        const { removeDocuments } = await import('./finance/remove.js')
+        const r = (await removeDocuments({ ids: [doc.id], user, reason: 'not_relevant' })).results[0]
+        if (!r?.ok) { res.status(409).json({ error: r?.error || 'המחיקה לא הושלמה' }); return }
         await audit('document', doc.id, 'not_relevant', { file_name: doc.file_name, email_from: doc.email_from }, user)
-        res.status(200).json({ ok: true })
+        res.status(200).json({ ok: true, pending: r.pending || [] })
         return
       }
       case 'merge-docs': {
@@ -700,28 +793,17 @@ export default async function handler(req, res) {
       case 'integration-save': {
         const ad = ADAPTERS[body.provider]
         if (!ad) { res.status(400).json({ error: 'יעד לא מוכר' }); return }
-        const name = String(body.name || '').replace(/\s+/g, ' ').trim().slice(0, 80)
-        if (ad.kind === 'custom' && !name) { res.status(400).json({ error: 'צריך לכתוב את שם התוכנה' }); return }
-        const config = cleanConfig(body.provider, body.config)
-        if (body.config?.intake_email && !intakeOf(config)) { res.status(400).json({ error: 'כתובת הקליטה במייל לא תקינה' }); return }
-        if (config.contact_email && !emailOk(config.contact_email)) { res.status(400).json({ error: 'המייל של איש הקשר לא תקין' }); return }
-        const mode = deliveryOf(body.provider, config)
-        if ((ad.kind === 'email' || (ad.kind === 'custom' && config.mode !== 'files')) && body.enabled && !intakeOf(config)) { res.status(400).json({ error: 'צריך את כתובת הקליטה במייל שהתוכנה או רו״ח נתנו לכם' }); return }
-        if (ad.kind !== 'file' && body.enabled) {
+        if (ad.kind === 'api' && body.enabled) {
           // one accounting system per company: a second one would receive the same documents twice
           const others = (await sb(`fin_integrations?enabled=eq.true&provider=not.in.(file,hashavshevet)&select=id,name,business_id${body.id ? `&id=neq.${q(body.id)}` : ''}`)) || []
           // "all companies" overlaps every company, so either side being empty is a clash too
           const clash = others.find((o) => !o.business_id || !body.business_id || o.business_id === body.business_id)
           if (clash) { res.status(409).json({ error: `${clash.business_id ? 'לחברה הזו' : 'לכל החברות'} כבר מחוברת תוכנה (${clash.name}). נתקו אותה קודם.` }); return }
         }
-        // "ready" is earned by a test that passed: a new or changed intake address waits for one
-        const before = body.id ? await one(`fin_integrations?id=eq.${q(body.id)}&select=status,config`) : null
-        const sameAddress = before && intakeOf(before.config) === intakeOf(config) && before.status === 'ready'
-        const status = mode === 'file' ? 'ready' : mode === 'email' ? (sameAddress ? 'ready' : 'not_tested') : 'not_active'
-        const row = { provider: body.provider, name: name || ad.label, business_id: body.business_id || null, config, enabled: !!body.enabled, status, ...(status === 'ready' ? {} : { last_error: null }) }
+        const row = { provider: body.provider, name: body.name || ad.label, business_id: body.business_id || null, config: body.config || {}, enabled: !!body.enabled, status: ad.kind === 'file' ? 'ready' : 'not_active' }
         const saved = body.id ? await patch(`fin_integrations?id=eq.${q(body.id)}`, row) : await insert('fin_integrations', row)
         if (body.secret && Object.keys(body.secret).length) await sb('fin_integration_secrets', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { integration_id: saved.id, secret: body.secret, updated_at: new Date().toISOString() } })
-        await audit('integration', saved.id, body.id ? 'updated' : 'created', { provider: body.provider, enabled: row.enabled, delivery: mode }, user)
+        await audit('integration', saved.id, body.id ? 'updated' : 'created', { provider: body.provider, enabled: row.enabled }, user)
         res.status(200).json({ integration: saved })
         return
       }
@@ -729,31 +811,13 @@ export default async function handler(req, res) {
         const it = await one(`fin_integrations?id=eq.${q(body.id)}&select=*`)
         if (!it) { res.status(404).json({ error: 'לא נמצא' }); return }
         const secret = (await one(`fin_integration_secrets?integration_id=eq.${it.id}&select=secret`))?.secret || {}
-        const business = it.business_id ? (await one(`fin_businesses?id=eq.${it.business_id}&select=name`))?.name : null
         try {
-          const r = await ADAPTERS[it.provider].test(it.config, secret, { name: it.name, business, by: user.email })
+          const r = await ADAPTERS[it.provider].test(it.config, secret)
           await patch(`fin_integrations?id=eq.${it.id}`, { status: 'ready', last_error: null, last_sync_at: new Date().toISOString() })
           res.status(200).json({ ok: true, ...r })
         } catch (e) {
           await patch(`fin_integrations?id=eq.${it.id}`, { status: e.code === 'NOT_ACTIVE' ? 'not_active' : 'error', last_error: e.message })
           res.status(200).json({ ok: false, error: e.message })
-        }
-        return
-      }
-      case 'integration-send': {
-        // approved documents to the software's intake address: the same mail (original files + Excel / CSV summary) and
-        // the same audited export record as "send to the accountant", tied to this connection
-        const it = await one(`fin_integrations?id=eq.${q(body.id)}&select=*`)
-        if (!it || !it.enabled) { res.status(404).json({ error: 'החיבור לא נמצא או מנותק' }); return }
-        const to = deliveryOf(it.provider, it.config) === 'email' ? intakeOf(it.config) : ''
-        if (!to) { res.status(400).json({ error: `ל-${it.name} אין כתובת קליטה במייל. מוסיפים אותה בהגדרות החיבור, או מייצאים קבצים.` }); return }
-        try {
-          const r = await sendToAccountant({ ids: body.ids, to: [to], note: String(body.note || '').slice(0, 2000), subject: null, ccMe: !!body.cc_me, period: String(body.period || '').slice(0, 60) || null, mark: true, user, integrationId: it.id, destination: `${it.name} (${to})` })
-          await patch(`fin_integrations?id=eq.${it.id}`, { status: 'ready', last_error: null, last_sync_at: new Date().toISOString() })
-          res.status(200).json({ ...r, software: it.name })
-        } catch (e) {
-          if (e.status === 502 || e.status === 503) await patch(`fin_integrations?id=eq.${it.id}`, { status: 'error', last_error: String(e.message).slice(0, 300) }).catch(() => {})
-          throw e
         }
         return
       }

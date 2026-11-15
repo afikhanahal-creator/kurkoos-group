@@ -42,8 +42,11 @@ sure, completing a missing detail ("השלמת פרטים"), approving, and deci
 
 1. **Every message gets a verdict.** Kept as a document, or skipped with a class and a reason (`fin_skipped`). A sender is never
    blocked wholesale on the strength of a few irrelevant emails if any of its emails ever produced a document.
-2. **Cheap first, careful always.** Rules and the cheap model decide only when they are sure; anything unsure goes to the full
-   reading or to a person. Never lower the bar to save money on a message that might be an invoice.
+2. **Cheap first, careful always.** A file becomes a document only on positive evidence that it is an expense document. A
+   name, subject or known sender that says invoice goes to the full reading. The cheap model's "no", sure or hesitant, is
+   skipped and listed; only its hesitant "yes" waits for a person, and not when the rest of the same email was skipped as
+   not expense documents. A waiting document is never copied to the cloud archive. Never lower the bar to save money on a
+   message that might be an invoice; never open a document for a file nothing says is one.
 3. **An email can be the receipt itself.** No attachment and a subject that says receipt / קבלה (Meta ads, online services):
    it is a receipt (`bodyReceipt`), counted in reports, archived as a PDF.
 4. **The same document from two mailboxes is one document** (file hash, then supplier id + number). The second arrival is a

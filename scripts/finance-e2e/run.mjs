@@ -39,6 +39,9 @@ const api = async (token, body) => { const r = await fetch('http://127.0.0.1:518
 execSync(`psql -q -h 127.0.0.1 -p 54329 -U postgres -f ${new URL('./reset.sql', import.meta.url).pathname}`)
 const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); fx.mailboxes['broken@kurkoos.test'].failing = true; fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
 await fetch(`${FAKES}/__reset`)
+// the archive scenarios below test the one-way rules (a file moved or renamed in Drive returns to its place); the
+// two-way rules have their own scenario (SYNC2), which turns them on
+sql("insert into fin_settings (key, value) values ('drive_two_way', 'false') on conflict (key) do update set value = 'false'")
 await admin('admin/users', { email: 'admin@kurkoos.test', password: 'Passw0rd!x', email_confirm: true, user_metadata: { full_name: 'שלומי קורקוס' } })
 
 // a UTF-8 locale: without it Chromium on Linux saves a download with a Hebrew name as "download"
@@ -91,7 +94,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 30 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 30, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 33 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 33, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -728,12 +731,39 @@ await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').f
 const swNone = await page.locator('.fin-empty').count()
 await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill(''); await page.waitForTimeout(200)
 const swShot = await shot('56-accounting-software')
-await page.getByRole('button', { name: 'חיבור Morning (חשבונית ירוקה)' }).click(); await page.waitForTimeout(300)
 const bizExec = sql("select id from fin_businesses where name='קורקוס ביצוע'")
+const swStates = await page.locator('.fin-app-card .fin-pill').allInnerTexts()
+// Morning: wrong keys are refused by the sign-in itself, and the card says so; the right keys make it "connected"
+const mCard = page.locator('.fin-app-card', { hasText: 'Morning' })
+await mCard.getByRole('button', { name: 'חיבור' }).click(); await page.waitForSelector('.fin-modal')
+await page.locator('.fin-prov__mode button', { hasText: 'מפתחות API' }).click()
 await page.locator('.fin-modal select').first().selectOption(bizExec)
-await page.locator('.fin-modal input[type=password]').first().fill('test-morning-key')
+await page.locator('.fin-modal input[type=password]').nth(0).fill('wrong-id'); await page.locator('.fin-modal input[type=password]').nth(1).fill('wrong-secret')
 const swModalShot = await shot('57-connect-morning')
-await modalSave()
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForSelector('.fin-modal .fin-error', { timeout: 15000 }).catch(() => {})
+const mBadErr = await page.locator('.fin-modal .fin-error').innerText().catch(() => '')
+const mBad = sql("select status from fin_integrations where provider='morning'")
+await page.locator('.fin-modal__foot .fin-btn--ghost').click(); await page.reload(); await page.waitForTimeout(900)
+const mBadPill = await page.locator('.fin-app-card', { hasText: 'Morning' }).locator('.fin-pill').first().innerText()
+const mRow = sql("select id from fin_integrations where provider='morning'")
+await api(adminToken, { action: 'integration-save', id: mRow, provider: 'morning', name: 'Morning', business_id: bizExec, config: {}, secret: { client_id: 'morning-test-id', client_secret: 'morning-test-secret' }, enabled: true })
+const mGood = await api(adminToken, { action: 'integration-test', id: mRow })
+// CostApp: an intake address for one company; from then on an approved document of that company is mailed there with its file
+await page.reload(); await page.waitForTimeout(900)
+const cCard = page.locator('.fin-app-card', { hasText: 'CostApp' })
+await cCard.getByRole('button', { name: 'חיבור' }).click(); await page.waitForSelector('.fin-modal')
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForTimeout(300)
+const cNeedsCompany = await page.locator('.fin-modal .fin-error').innerText().catch(() => '')
+await page.locator('.fin-modal select').first().selectOption(bizExec); await page.locator('.fin-modal input[type=email]').fill('kurkoos-bitzua@intake.costapp.test')
+await page.locator('.fin-modal__foot .fin-btn--primary').click(); await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 10000 }).catch(() => {})
+const cRow = sql("select kind||'|'||target||'|'||array_to_string(events, ',')||'|'||(business_id='" + bizExec + "')||'|'||enabled from fin_outbound where name like '[costapp]%'")
+await page.waitForTimeout(600)
+const cPill = await page.locator('.fin-app-card', { hasText: 'CostApp' }).locator('.fin-pill').first().innerText()
+await page.locator('.fin-app-card', { hasText: 'CostApp' }).getByRole('button', { name: 'ניהול החיבור' }).click(); await page.waitForSelector('.fin-prov__caps')
+const capRows = await page.locator('.fin-prov__caps tr').count()
+const swProvShot = await shot('59-accounting-provider')
+await page.locator('.fin-modal__foot .fin-btn--ghost').click()
+sql("delete from fin_outbound where name like '[costapp]%'")
 const morning = sql("select provider||'|'||status||'|'||enabled from fin_integrations where provider='morning'")
 const morningSecret = sql("select count(*) from fin_integration_secrets s join fin_integrations i on i.id=s.integration_id where i.provider='morning'")
 const swSecond = await api(adminToken, { action: 'integration-save', provider: 'icount', name: 'iCount', business_id: bizExec, enabled: true })
@@ -742,35 +772,12 @@ const allBiz = await api(adminToken, { action: 'integration-save', provider: 'ri
 const secretRead = await rest('fin_integration_secrets?select=*', adminToken)
 await page.reload(); await page.waitForTimeout(1000)
 const swAfterShot = await shot('58-accounting-connected')
-record('SW', 'חיבור תוכנת הנהלת חשבונות', 'חיפוש מסנן את הכרטיסים; חיבור Morning לחברה שומר את המפתח בשרת בלבד ומסמן "ממתין להפעלה"; תוכנה שנייה לאותה חברה נחסמת, לחברה אחרת מותרת',
-  `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, חיפוש ללא תוצאה: ${swNone}; Morning: ${morning}, מפתחות: ${morningSecret}; שנייה לאותה חברה: ${swSecond.status} ${swSecond.data.error || ''}; לחברה אחרת: ${otherBiz.status}; לכל החברות: ${allBiz.status}; קריאת מפתחות מהדפדפן: ${secretRead.status}`,
-  swAll === 16 && swOne === 1 && swNone === 1 && morning === 'morning|not_active|true' && morningSecret === '1' && swSecond.status === 409 && otherBiz.status === 200 && allBiz.status === 409 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swAfterShot])
-
-// SW2: a software that receives documents by mail. Connected from the screen by its intake address, a real test mail goes
-// out and only then it reads "מחובר"; a bad address and a second software for the same company are refused; a direct
-// API connection still says plainly that it is not active.
-const mailsNow = async () => (await fetch(`${FAKES}/__log`).then((r) => r.json())).emails
-const bizHs = sql("select id from fin_businesses where name like 'הנרייטה%'")
-const sw2Before = (await mailsNow()).length
-await page.getByRole('button', { name: 'חיבור CostApp' }).click(); await page.waitForTimeout(300)
-await page.locator('.fin-modal select').first().selectOption(bizHs)
-await page.locator('.fin-modal input[type=email]').first().fill('kurkoos-hs22@intake.costapp.test')
-await page.locator('.fin-modal__foot .fin-btn--primary').first().click(); await page.waitForTimeout(2500)
-const sw2Mails = (await mailsNow()).slice(sw2Before)
-const costapp = sql("select status||'|'||(config->>'intake_email')||'|'||(last_sync_at is not null) from fin_integrations where provider='costapp'")
-const sw2Shot = await shot('58b-accounting-by-mail')
-const sw2Bad = await api(adminToken, { action: 'integration-save', provider: 'smartbee', name: 'SmartBee', business_id: null, enabled: false, config: { intake_email: 'not-an-address' } })
-const sw2Clash = await api(adminToken, { action: 'integration-save', provider: 'custom', name: 'תוכנה של רו״ח', business_id: bizHs, enabled: true, config: { mode: 'files' } })
-const sw2NoName = await api(adminToken, { action: 'integration-save', provider: 'custom', name: '', business_id: null, enabled: false, config: { mode: 'files' } })
-const sw2Api = await api(adminToken, { action: 'integration-test', id: sql("select id from fin_integrations where provider='morning'") })
-await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill('smartbett'); await page.waitForTimeout(250)
-const sw2Find = (await page.locator('.fin-app-card h4').allInnerTexts()).join()
-await page.getByPlaceholder('חיפוש תוכנת הנהלת חשבונות').fill(''); await page.waitForTimeout(200)
-record('SW2', 'תוכנה שמקבלת מסמכים במייל, ותוכנה שלא ברשימה', 'חיבור CostApp לפי כתובת הקליטה שולח מייל בדיקה אמיתי, ורק אז מסומן "מחובר"; כתובת לא תקינה נדחית; תוכנה שנייה לאותה חברה (גם "תוכנה שלא ברשימה") נחסמת; תוכנה בלי שם נדחית; חיבור ישיר (API) אומר שהוא עוד לא פעיל; חיפוש בשם שגוי מוצא את התוכנה',
-  `מיילים: ${sw2Mails.map((m) => `${m.to?.[0]} · ${m.subject}`).join(' / ')}; CostApp: ${costapp}; כתובת שגויה: ${sw2Bad.status}; שנייה לאותה חברה: ${sw2Clash.status}; בלי שם: ${sw2NoName.status}; API: ${sw2Api.data.ok} ${String(sw2Api.data.error || '').slice(0, 50)}; חיפוש smartbett: ${sw2Find}`,
-  sw2Mails.length === 1 && sw2Mails[0].to?.[0] === 'kurkoos-hs22@intake.costapp.test' && /בדיקת חיבור/.test(sw2Mails[0].subject) && costapp === 'ready|kurkoos-hs22@intake.costapp.test|true' && sw2Bad.status === 400 && sw2Clash.status === 409 && sw2NoName.status === 400 && sw2Api.data.ok === false && /עוד לא הופעל/.test(sw2Api.data.error || '') && sw2Find === 'SmartBee', [sw2Shot])
-// the later scenarios start from the same connections as before this one
-sql("delete from fin_integrations where provider='costapp'")
+record('SW', 'חיבור תוכנת הנהלת חשבונות', 'הרשימה מציגה לכל תוכנה מצב אמיתי; מפתחות שגויים של Morning נדחים בהתחברות עצמה והכרטיס מציג שגיאה, מפתחות נכונים מאושרים; CostApp מתחבר בכתובת קליטה לחברה אחת (בלי חברה נחסם) ויוצר שליחה אוטומטית של מסמכים מאושרים; מפתחות לא נקראים מהדפדפן; תוכנה שנייה לאותה חברה נחסמת',
+  `כרטיסים: ${swAll}, חיפוש icount: ${swOne}, ללא תוצאה: ${swNone}; מצבים: ${[...new Set(swStates)].join('/')}; Morning שגוי: ${mBad} "${mBadErr.slice(0, 60)}" כרטיס "${mBadPill}"; נכון: ${mGood.data.ok}; Morning: ${morning}, מפתחות: ${morningSecret}; CostApp בלי חברה: "${cNeedsCompany.slice(0, 30)}", שורה: ${cRow}, כרטיס "${cPill}", יכולות: ${capRows}; שנייה לאותה חברה: ${swSecond.status}; לחברה אחרת: ${otherBiz.status}; לכל החברות: ${allBiz.status}; קריאת מפתחות: ${secretRead.status}`,
+  swAll === 17 && swOne === 1 && swNone === 1 && swStates.includes('זמין') && swStates.includes('נדרש חיבור') && swStates.includes('בקרוב') && !swStates.includes('מחובר')
+  && mBad === 'error' && /Morning דחה/.test(mBadErr) && mBadPill === 'שגיאת חיבור' && mGood.data.ok === true && morning === 'morning|ready|true' && morningSecret === '1'
+  && /בוחרים חברה/.test(cNeedsCompany) && cRow === 'email|kurkoos-bitzua@intake.costapp.test|document.approved|true|true' && cPill === 'מחובר' && capRows === 6
+  && swSecond.status === 409 && otherBiz.status === 200 && allBiz.status === 409 && (secretRead.status >= 400 || (Array.isArray(secretRead.data) && !secretRead.data.length)), [swShot, swModalShot, swProvShot, swAfterShot])
 
 // =================== AUTOMATIC DELIVERY ===================
 await fetch(`${FAKES}/__reset_hooks`).catch(() => {})
@@ -1184,7 +1191,7 @@ const accAdminText = await acc.locator('body').innerText()
 const siteApi = async (t) => (await fetch('http://127.0.0.1:5180/api/claude', { method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ input: 'x' }) })).status
 const accClaude = await siteApi(accToken); const adminClaude = await siteApi(adminToken)
 record('SEC2', 'משתמש כספים לא נכנס לניהול האתר', 'רו״ח שנכנס ל-/admin מקבל הפניה למערכת הכספים; קריאה ל-API של האתר נחסמת (403), למנהל היא לא נחסמת', `/admin: ${/מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) ? 'הפניה' : accAdminText.slice(0, 60)}; /api/claude רו״ח=${accClaude}, מנהל=${adminClaude}`, /מורשה למערכת הנהלת החשבונות בלבד/.test(accAdminText) && accClaude === 403 && adminClaude !== 403, [await shot('26b-accountant-site-admin', acc)])
-record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 6 && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
+record('PORTAL', 'פורטל רואה החשבון', 'תפריט מצומצם (מרכז בקרה, מרכז המע״מ, ציות ומס, דוח לרואה החשבון, שאלות על הנתונים, מסמכים מאושרים, דוחות, היסטוריית ייצוא, הגדרות) ורק מסמכים מאושרים', `${accNav.join(' · ')} · ${accRows} מסמכים`, accNav.length === 9 && accNav.some((n) => /דוח לרואה החשבון/.test(n)) && accNav.some((n) => /ציות ומס/.test(n)) && accNav.some((n) => /מרכז המע״מ/.test(n)) && accNav.some((n) => /מסמכים מאושרים/.test(n)) && accRows === Number(sql("select count(*) from fin_documents where status in ('approved','sent')")), [accShot, accDocsShot])
 await accCtx.close()
 
 // ---------- T12: mobile ----------
@@ -1877,6 +1884,90 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
     [fmtShot])
 }
 
+// INTAKE: what gets in from mail. The night of 2026-11-14 one unsolicited email (an investment offer with seven PDFs)
+// opened two documents that "waited for confirmation" and were copied to Drive. The rule now: a file becomes a document
+// only on positive evidence that it is an expense document.
+//   A. the same kind of email: one file a sure "no", one a hesitant "no", one a hesitant "yes" → nothing gets in
+//   B. a single file with a hesitant "yes" → waits for a person, is NOT queued for Drive; "yes, read it" makes it an invoice
+//   C. a file named like an invoice whose full reading says "a purchase order, not sure" → skipped, not kept "for review"
+{
+  const mk = async (html) => { await page.setContent(`<div style="font:16px sans-serif;padding:40px">${html}</div>`); return page.pdf({ format: 'A4' }) }
+  const files = {
+    'NG_Overview_Tier_1.pdf': await mk('<h1>150-Acre Portfolio Overview</h1><p>Confidential investor summary</p>'),
+    '3. NG_3_Acre_635K_Investor_Land_Valuation.pdf': await mk('<h1>Investor Land Valuation</h1><p>3 acres, appraised at $635,000</p>'),
+    '4.NG_50K_First_Domino_635K_Closing.pdf': await mk('<h1>First Domino</h1><p>$50,000 bridge financing toward a $635,000 closing</p>'),
+    'scan_7741.pdf': await mk('<div dir="rtl"><h1>נגריית האלון</h1><p>חשבונית מס 7741</p><p>ארונות למשרד</p><p>סה״כ לתשלום 2,360.00</p></div>'),
+    'חשבונית_הזמנה_55.pdf': await mk('<div dir="rtl"><h1>הזמנת רכש 55</h1><p>ברזל לאתר</p><p>סה״כ 9,000</p></div>'),
+  }
+  for (const [n, b] of Object.entries(files)) fs.writeFileSync(`${FIX}/${n}`, b)
+  const hashOf = (b) => crypto.createHash('sha256').update(b).digest('hex')
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
+  const saved = JSON.stringify(fx)
+  const base = fx.answers[Object.keys(fx.answers)[0]]
+  const ans = (o) => ({ ...base, supplier_vat_id: '', customer_name: '', customer_vat_id: '', category: 'אחר', vat_rate: 18, ...o })
+  const no = (o) => ans({ is_financial_document: false, document_class: 'other', doc_type: 'other', supplier_name: '', doc_number: '', amount_before_vat: null, vat_amount: null, total_amount: null, ...o })
+  fx.answers[hashOf(files['NG_Overview_Tier_1.pdf'])] = no({ document_class: 'marketing', relevance_confidence: 0.96 })
+  fx.answers[hashOf(files['3. NG_3_Acre_635K_Investor_Land_Valuation.pdf'])] = no({ relevance_confidence: 0.6 })                                   // a hesitant no
+  fx.answers[hashOf(files['4.NG_50K_First_Domino_635K_Closing.pdf'])] = no({ is_financial_document: true, relevance_confidence: 0.5 })            // a hesitant yes
+  fx.answers[hashOf(files['scan_7741.pdf'])] = ans({ is_financial_document: true, document_class: 'tax_invoice', relevance_confidence: 0.5, supplier_name: 'נגריית האלון', doc_number: '7741', issue_date: new Date().toISOString().slice(0, 10), amount_before_vat: 2000, vat_amount: 360, total_amount: 2360, description: 'ארונות למשרד' })
+  fx.answers[hashOf(files['חשבונית_הזמנה_55.pdf'])] = no({ document_class: 'purchase_order', doc_type: 'other', relevance_confidence: 0.6, supplier_name: 'ברזל הדרום', total_amount: 9000 })
+  const when = (h) => new Date(Date.now() - h * 3600_000).toISOString()
+  fx.mailboxes['invoices@kurkoos.test'].messages.push(
+    { id: 'm30', date: when(3), subject: 'Confidential Land Investment Opportunity | $50K Bridge Financing', from: 'Nick Sample <nick@invest.test>', text: 'Dear Sir, a confidential opportunity.', files: ['NG_Overview_Tier_1.pdf', '3. NG_3_Acre_635K_Investor_Land_Valuation.pdf', '4.NG_50K_First_Domino_635K_Closing.pdf'] },
+    { id: 'm31', date: when(2), subject: 'מסמך מצורף', from: 'דן <dan@alon.test>', text: 'מצורף', files: ['scan_7741.pdf'] },
+    { id: 'm32', date: when(1), subject: 'מסמך', from: 'רכש <orders@south.test>', text: 'מצורף', files: ['חשבונית_הזמנה_55.pdf'] })
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const boxId = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
+  await api(tok, { action: 'sync', mailbox_id: boxId })
+  const inA = sql("select count(*) from fin_documents where email_message_id='m30'")
+  const skA = sql("select coalesce(string_agg(left(file_name, 12)||'='||left(reason, 80), ' | ' order by file_name), '') from fin_skipped where email_subject like 'Confidential Land%'")
+  const docB = sql("select id||'|'||status||'|'||doc_type||'|'||(issues::text like '%needs_confirmation%') from fin_documents where email_message_id='m31'").split('|')
+  const inC = sql("select count(*) from fin_documents where email_message_id='m32'")
+  const skC = sql("select coalesce(max(document_class||': '||reason), '') from fin_skipped where file_name='חשבונית_הזמנה_55.pdf'")
+  // the cloud agent runs: the waiting document must not be queued or uploaded
+  const tgt = sql("select coalesce((select id::text from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1), '')")
+  if (tgt) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await api(tok, { action: 'drive-run', target_id: tgt }) }
+  const queuedB = docB[0] ? sql(`select count(*) from fin_drive_files where document_id='${docB[0]}'`) : '?'
+  const eligB = docB[0] ? sql(`select public.fin_drive_eligible(status, doc_type, file_mime, file_path) from fin_documents where id='${docB[0]}'`) : '?'
+  await go(`/documents/${docB[0]}`); await page.waitForTimeout(900)
+  const askText = await page.locator('.fin-panel__confirm').innerText().catch(() => '')
+  const askShot = await shot('119-intake-waits')
+  // a person says "yes, it is an invoice": now it is read and becomes an invoice like any other
+  await page.locator('.fin-panel__confirm').getByRole('button', { name: /כן, זו חשבונית/ }).click().catch(() => {})
+  let after = ''
+  for (let i = 0; i < 30 && !/נגריית האלון/.test(after); i++) { await page.waitForTimeout(500); after = sql(`select coalesce(supplier_name,'-')||'|'||doc_type||'|'||(issues::text like '%needs_confirmation%')||'|'||public.fin_drive_eligible(status, doc_type, file_mime, file_path) from fin_documents where id='${docB[0]}'`) }
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  const runLog = sql("select coalesce((select details->>'conductor' from fin_agent_runs where agent='collector' and details ? 'conductor' order by started_at desc limit 1), '')")
+  record('INTAKE', 'מה נכנס מהמייל: רק מסמך שיש ראיה שהוא חשבונית או קבלה', 'מייל של הצעת השקעה עם שלושה קבצים (לא בטוח, נוטה ללא, נוטה לכן): אף קובץ לא נהיה מסמך וכולם ברשימת הדילוגים עם סיבה; קובץ יחיד שהמערכת מהססת לגביו ממתין לאישור של אדם, לא נכנס לתור של Drive ולא מועלה, ואחרי "כן, זו חשבונית" נקרא ונהיה חשבונית; קובץ בשם של חשבונית שהקריאה המלאה אומרת שהוא הזמנת רכש מדולג',
+    `מייל ההשקעה: ${inA} מסמכים, דולגו: ${skA}; קובץ יחיד: ${docB.slice(1).join(',')}, מתאים ל-Drive: ${eligB}, שורות בתור: ${queuedB}${tgt ? '' : ' (אין חיבור פעיל)'}; במסך: "${askText.replace(/\s+/g, ' ').slice(0, 60)}"; אחרי אישור: ${after}; הזמנת רכש: ${inC} מסמכים, ${skC}; ריצה: ${runLog}`,
+    inA === '0' && (skA.match(/=/g) || []).length === 3 && /שאר הקבצים במייל/.test(skA) && /כנראה/.test(skA)
+      && docB[1] === 'review' && docB[2] === 'other' && docB[3] === 'true' && eligB === 'f' && queuedB === '0' && /האם זו חשבונית או קבלה/.test(askText)
+      && /^נגריית האלון\|invoice\|false\|true$/.test(after) && inC === '0' && /purchase_order/.test(skC) && /skipped_with_email/.test(runLog),
+    [askShot])
+}
+
+// MAILTHUMB: a receipt that is the body of an email (Meta ads, online services) has no file of its own. It must still
+// be seen: as a whole page in the smallest icon (it used to be hidden there), in the hover card and in the control center.
+{
+  const measure = (m) => { const f = m.querySelector('iframe'); if (!f) return 'none'; const r = m.getBoundingClientRect(); const fr = f.getBoundingClientRect(); return `${Math.round(r.width)}x${Math.round(r.height)}|${Math.round(fr.width)}|${f.style.width}|${f.getAttribute('sandbox')}` }
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go('/receipts'); await page.waitForTimeout(1500)
+  const row = page.locator('.fin-table tbody tr', { hasText: 'פז חברת נפט' }).first()
+  await row.scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(1500)
+  const small = await row.locator('.fin-thumb__mail').evaluate(measure).catch(() => 'none')
+  await row.locator('.fin-receipts__pic').hover().catch(() => {}); await page.waitForTimeout(1500)
+  const big = await page.locator('.fin-peek__pop .fin-thumb__mail').evaluate(measure).catch(() => 'none')
+  const mtShot = await shot('119b-mail-thumb')
+  await page.mouse.move(5, 5)
+  const hidden = await page.evaluate(() => { const probe = document.createElement('div'); probe.className = 'fin-recent'; probe.innerHTML = '<div class="fin-thumb"><span class="fin-thumb__mail"></span></div>'; document.querySelector('.fin').appendChild(probe); const d = getComputedStyle(probe.querySelector('.fin-thumb__mail')).display; probe.remove(); return d })
+  const [sBox, sFrame, sCss, sSand] = small.split('|'); const [bBox, bFrame] = big.split('|')
+  record('MAILTHUMB', 'קבלה שהיא גוף של מייל נראית גם באייקון הקטן וגם בריחוף', 'המייל מצויר כעמוד שלם ברוחב 640 ומוקטן לגודל התיבה: באייקון של הרשימה, בכרטיס הריחוף וברשימת "מסמכים אחרונים"; המסגרת סגורה (בלי סקריפטים)',
+    `אייקון: ${sBox}, רוחב המסגרת על המסך ${sFrame}, רוחב העמוד ${sCss}, sandbox "${sSand}"; ריחוף: ${bBox}, מסגרת ${bFrame}; ברשימת האחרונים: ${hidden}`,
+    /^\d+x\d+$/.test(sBox || '') && Number(sFrame) > 20 && Number(sFrame) <= Number(sBox.split('x')[0]) + 1 && sCss === '640px' && sSand === '' && Number(bFrame) > 300 && Number(bFrame) <= Number((bBox || '0').split('x')[0]) + 1 && hidden !== 'none',
+    [mtShot])
+}
+
 // SCAN: the scan engine on a big mailbox and on invoices@ side by side. 1,502 messages (1,200 of them in one week, i.e.
 // three pages of 500), a 503 on listing, a message that fails once and then works, a damaged TIFF, the same invoice that
 // already came to invoices@, stop and resume, a message the first pass "missed", and the completeness rule: done only
@@ -2212,6 +2303,516 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   record('PAYDUP', 'אותו חיוב בשתי קבלות (שירות תשלומים וספק)', 'קבלה של שירות תשלומים על סכום ותאריך שכבר יש עליהם קבלה מהספק מסומנת "חשד לכפילות" ומקושרת למקור; קבלה נוספת מהספק עצמו עם מספר אחר היא רכישה נפרדת',
     `בסיס: ${base?.supplier_name} ${base?.total_amount} ${base?.issue_date}; דרך שירות תשלומים: ${viaService.duplicate_state}/${viaService.duplicate_of === base?.id}; מהספק: ${viaSupplier.duplicate_state}`,
     !!base && viaService.duplicate_state === 'suspected' && viaService.duplicate_of === base.id && viaSupplier.duplicate_state == null)
+}
+
+// DELSYNC: one deletion for the whole system. A document deleted on one screen leaves every other screen (also in another
+// open tab, without a refresh), the database, storage and Drive; the deletion is checked, repeatable and touches nothing
+// else. A document moved to the archive is on no screen but the archive tab. What a deletion left in storage is swept.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const put = (path) => fetch(`${SB}/storage/v1/object/finance-docs/${path}`, { method: 'POST', headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/pdf', 'x-upsert': 'true' }, body: Buffer.from('%PDF-1.4 delsync') }).then((r) => r.ok)
+  const objects = (like) => Number(sql(`select count(*) from storage.objects where bucket_id='finance-docs' and name like '${like}'`))
+  const stamp = Date.now().toString(36)
+  const fx = `e2e/delsync-${stamp}-x.pdf`; const fa = `e2e/delsync-${stamp}-att.pdf`; const fo = `e2e/delsync-${stamp}-orphan.pdf`
+  const up = [await put(fx), await put(fa), await put(fo)]
+  const one = (name, extra = {}) => sql(`insert into fin_documents (status, source, supplier_name, doc_type, currency, total_amount, issue_date, ${Object.keys(extra).join(', ') || 'notes'}) values ('review','upload','${name}','receipt','ILS', 77, current_date, ${Object.values(extra).join(', ') || "'-'"}) returning id`).split('\n')[0]
+  const X = one('ZZ-DELSYNC-X', { file_path: `'${fx}'`, file_name: "'x.pdf'", file_mime: "'application/pdf'", file_hash: `'delsync-${stamp}'` })
+  const Y = one('ZZ-DELSYNC-Y', { duplicate_of: `'${X}'` })
+  const Z = one('ZZ-DELSYNC-Z'); sql(`update fin_documents set status='archived', archived_at=now() where id='${Z}'`)
+  sql(`insert into fin_document_attachments (document_id, kind, file_path, file_name) values ('${X}','file','${fa}','att.pdf')`)
+  const total0 = Number(sql('select count(*) from fin_documents'))
+  // two open tabs of the same person: the documents list, and the receipts screen
+  const has = async (p, name) => (await p.locator(`text=${name}`).count()) > 0
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-DELSYNC').catch(() => {}); await page.waitForTimeout(900)
+  const p2 = await ctx.newPage(); await go('/receipts', p2)
+  const seen = { docsX: await has(page, 'ZZ-DELSYNC-X'), docsZ: await has(page, 'ZZ-DELSYNC-Z'), recX: await has(p2, 'ZZ-DELSYNC-X'), recZ: await has(p2, 'ZZ-DELSYNC-Z') }
+  await go('/', p2); const homeZ = await has(p2, 'ZZ-DELSYNC-Z')
+  await go('/documents?status=archived', p2); const archiveZ = await has(p2, 'ZZ-DELSYNC-Z')
+  await go('/receipts', p2)
+  // an employee may not delete; the answer says so and nothing changes
+  const emp = await api(tokE, { action: 'documents-delete', ids: [Y] })
+  // the deletion itself, from the receipts screen
+  // (through the large view that the receipt's name opens: the receipt is shown, and deleted from there)
+  await p2.locator('button[aria-label="הצגת ZZ-DELSYNC-X"]').first().click(); await p2.waitForSelector('.fin-receipts__view')
+  const viewShown = await p2.locator('.fin-receipts__view .fin-viewer, .fin-receipts__view .fin-error').count()
+  await p2.locator('.fin-modal__foot .fin-btn--danger').first().click(); await p2.waitForTimeout(400); await p2.locator('.fin-modal .fin-btn--danger').last().click()
+  // the list, not the whole page: the "deleted" toast names the document, and stays while the pointer rests on it
+  const inList = () => !(document.querySelector('.fin__content') || document.querySelector('.fin__main')).innerText.includes('ZZ-DELSYNC-X')
+  await p2.waitForFunction(inList, null, { timeout: 15000 }).catch(() => {})
+  const goneHere = await p2.evaluate(inList)
+  // the other tab was not touched: the list there drops the document by itself
+  await page.waitForFunction(() => !document.body.innerText.includes('ZZ-DELSYNC-X'), null, { timeout: 8000 }).catch(() => {})
+  const goneThere = !(await has(page, 'ZZ-DELSYNC-X'))
+  await page.reload(); await page.waitForLoadState('networkidle').catch(() => {}); await page.fill('input[type=search], .fin-search input', 'ZZ-DELSYNC').catch(() => {}); await page.waitForTimeout(900)
+  const afterReload = { x: await has(page, 'ZZ-DELSYNC-X'), y: await has(page, 'ZZ-DELSYNC-Y') }
+  const delShot = await shot('128-delete-everywhere')
+  const db = sql(`select (select count(*) from fin_documents where id='${X}')||'|'||(select count(*) from fin_document_attachments where document_id='${X}')||'|'||(select count(*) from fin_drive_files where document_id='${X}')||'|'||(select coalesce(duplicate_of::text,'null') from fin_documents where id='${Y}')||'|'||(select count(*) from fin_skipped where file_hash='delsync-${stamp}' and document_class='deleted')||'|'||(select count(*) from fin_audit where entity_id='${X}' and action='deleted_everywhere')`)
+  const filesLeft = objects(`e2e/delsync-${stamp}-x.pdf`) + objects(`e2e/delsync-${stamp}-att.pdf`)
+  // again, and with an id that never existed: a success that changes nothing
+  const again = await api(tok, { action: 'documents-delete', ids: [X, '00000000-0000-4000-8000-000000000001'] })
+  const total1 = Number(sql('select count(*) from fin_documents'))
+  // the sweep: a file no row points at goes (once it is old enough); nothing a row points at is touched
+  sql(`update storage.objects set created_at = now() - interval '3 days' where bucket_id='finance-docs' and name='${fo}'`)
+  const usedBefore = Number(sql("select count(*) from storage.objects o where bucket_id='finance-docs' and exists (select 1 from fin_documents d where d.file_path=o.name)"))
+  const dry = await api(tok, { action: 'documents-sweep', dry: true })
+  const swept = await api(tok, { action: 'documents-sweep' })
+  const usedAfter = Number(sql("select count(*) from storage.objects o where bucket_id='finance-docs' and exists (select 1 from fin_documents d where d.file_path=o.name)"))
+  const orphanLeft = objects(fo)
+  // Drive: a saved document is saved once, and its copy goes when the document is deleted
+  const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
+  const liveOf = async (id) => (await items()).filter((f) => f.appProperties?.kd === id && !f.trashed).length
+  const tgt = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  let D = ''
+  for (let i = 0; i < 12 && !D; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); await api(tok, { action: 'drive-run', target_id: tgt }); const live = new Set((await items()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd)); D = sql(`select coalesce(string_agg(f.document_id::text, ','), '') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${tgt}' and f.status='verified' and d.status='review'`).split(',').filter((id) => live.has(id))[0] || '' }
+  const saveAgain = D ? await api(tok, { action: 'cloud-save', ids: [D] }) : { data: {} }
+  const copies0 = D ? await liveOf(D) : -1
+  const delD = D ? await api(tok, { action: 'documents-delete', ids: [D] }) : { data: {} }
+  const copies1 = D ? await liveOf(D) : -1
+  const rowsD = D ? sql(`select (select count(*) from fin_documents where id='${D}')||'|'||(select count(*) from fin_drive_files where document_id='${D}')`) : ''
+  await p2.close()
+  sql(`delete from fin_documents where id in ('${Y}','${Z}')`)
+  record('DELSYNC', 'מחיקה אחת לכל המערכת', 'מסמך שנמחק במסך אחד נעלם מכל מסך אחר (גם בלשונית פתוחה אחרת, בלי רענון), מבסיס הנתונים, מהאחסון ומ-Drive; מחיקה חוזרת מצליחה ולא משנה דבר; עובד לא מוחק; מסמך בארכיון מופיע רק בלשונית הארכיון; קובץ שנשאר בלי מסמך מנוקה, וקובץ של מסמך קיים לא נוגעים בו',
+    `העלאות: ${up.join('/')}; לפני: ${JSON.stringify(seen)}, בית Z: ${homeZ}, ארכיון Z: ${archiveZ}; עובד: ${emp.status}; תצוגה גדולה: ${viewShown}; נעלם כאן: ${goneHere}, בלשונית השנייה: ${goneThere}; אחרי רענון: ${JSON.stringify(afterReload)}; בסיס נתונים: ${db}; קבצים שנשארו: ${filesLeft}; שוב: ${again.status}/${JSON.stringify((again.data.results || []).map((r) => [r.ok, !!r.already]))}; מסמכים: ${total0}→${total1}; ניקוי: יבש ${dry.data.orphans}/${dry.data.removed}, אמיתי ${swept.data.removed}, יתום נשאר ${orphanLeft}, קבצי מסמכים ${usedBefore}→${usedAfter}; Drive: שמירה חוזרת ${saveAgain.data.results?.[0]?.ok}/${saveAgain.data.results?.[0]?.already}, עותקים ${copies0}→${copies1}, ${delD.data.results?.[0]?.drive}, שורות ${rowsD}`,
+    up.every(Boolean) && seen.docsX && !seen.docsZ && seen.recX && !seen.recZ && !homeZ && archiveZ && emp.status === 403 && viewShown === 1 && goneHere && goneThere && !afterReload.x && afterReload.y
+    && db === '0|0|0|null|1|1' && filesLeft === 0 && again.status === 200 && (again.data.results || []).every((r) => r.ok && r.already) && total1 === total0 - 1
+    && dry.data.orphans >= 1 && dry.data.removed === 0 && swept.data.removed >= 1 && orphanLeft === 0 && usedBefore === usedAfter
+    && !!D && saveAgain.data.results?.[0]?.ok === true && saveAgain.data.results?.[0]?.already === true && copies0 === 1 && copies1 === 0 && delD.data.results?.[0]?.drive === 'trashed' && rowsD === '0|0', [delShot])
+}
+
+// DRIVEMGR: the Drive screen is a file manager, and what is done in it is done in Drive. A document assigned to a company
+// and a month through the sheet is moved to that folder in Drive; a row dragged onto a company moves there; a deletion
+// sends the copy to the Drive trash; on a phone the same actions are in a sheet and nothing runs off the screen.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const tgt = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  const items = async () => (await fetch(`${FAKES}/__drive`).then((r) => r.json())).items
+  const whereIs = async (id) => { const all = await items(); const f = all.find((x) => x.appProperties?.kd === id && !x.trashed); if (!f) return ''; const names = []; let p = f.parents?.[0]; while (p) { const d = all.find((x) => x.id === p); if (!d) break; names.unshift(d.name); p = d.parents?.[0] } return names.slice(1).join('/') }
+  // where the file really is: its parent in Drive is the folder the archive row names, and that folder's key says
+  // which company and month it stands for (names can repeat after earlier scenarios; keys cannot)
+  const placed = async (id) => { const f = (await items()).find((x) => x.appProperties?.kd === id && !x.trashed); const [folder, key] = sql(`select drive_folder_id||'|'||folder_key from fin_drive_files where document_id='${id}' and target_id='${tgt}'`).split('|'); return f && f.parents?.[0] === folder ? key : `לא בתיקייה (${f?.parents?.[0]} / ${folder})` }
+  for (let i = 0; i < 8; i++) { await api(tok, { action: 'drive-reconcile', target_id: tgt }); const r = await api(tok, { action: 'drive-run', target_id: tgt }); if (!(r.data.results?.[0]?.verified)) break }
+  const live = new Set((await items()).filter((f) => f.appProperties?.kd && !f.trashed).map((f) => f.appProperties.kd))
+  const cand = sql(`select coalesce(string_agg(f.document_id::text||'|'||f.organized_name, E'\n'), '') from fin_drive_files f join fin_documents d on d.id=f.document_id where f.target_id='${tgt}' and f.status='verified' and d.status='review'`).split('\n').filter(Boolean).map((x) => x.split('|')).filter(([id]) => live.has(id))
+  const [A, nameA] = cand[0] || []; const [B2, nameB] = cand[1] || []; const [C, nameC] = cand[2] || []
+  const biz = sql(`select id||'|'||name from fin_businesses where id <> coalesce((select business_id from fin_documents where id='${A}'), '00000000-0000-0000-0000-000000000000') order by name limit 1`).split('|')
+  const biz2 = sql(`select id||'|'||name from fin_businesses where id <> coalesce((select business_id from fin_documents where id='${B2}'), '00000000-0000-0000-0000-000000000000') and id <> '${biz[0]}' order by name limit 1`).split('|')
+  const beforeA = await whereIs(A)
+  await go('/drive'); await page.waitForSelector('.fin-dm__folder', { timeout: 20000 })
+  const rootFolders = await page.locator('.fin-dm__folder').count()
+  await page.locator('.fin-dm__folder').first().click(); await page.waitForTimeout(400)
+  const crumbs = await page.locator('.fin-dm__crumb').count()
+  await page.locator('.fin-dm__view', { hasText: 'כל הקבצים' }).click(); await page.waitForSelector('.fin-dm__row:not(.is-head)')
+  await page.fill('.fin-dm__search input', nameA); await page.waitForTimeout(500)
+  const found = await page.locator('.fin-dm__row:not(.is-head)').count()
+  // the sheet: a company and an accounting month
+  await page.locator('.fin-dm__row:not(.is-head) .fin-dm__more').first().click()
+  const menuItems = await page.locator('.fin-dm__menu [role=menuitem]').count()
+  await page.locator('.fin-dm__menu button', { hasText: 'שינוי חברה או חודש' }).click(); await page.waitForSelector('.fin-modal')
+  const sel = page.locator('.fin-modal select')
+  await sel.nth(0).selectOption(biz[0]); await sel.nth(1).selectOption('2025'); await sel.nth(2).selectOption('03')
+  const sheetShot = await shot('129-drive-manager-assign')
+  await page.locator('.fin-modal__foot .fin-btn--primary').click()
+  await page.waitForSelector('.fin-dm__note.is-ok, .fin-dm__note.is-bad, .fin-dm__note.is-warn', { timeout: 60000 }).catch(() => {})
+  const noteA = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const afterA = await whereIs(A); const keyA = await placed(A)
+  const dbA = sql(`select (business_id='${biz[0]}')||'|'||accounting_period||'|'||business_source||'|'||(select status from fin_drive_files where document_id='${A}') from fin_documents where id='${A}'`)
+  // a row dragged onto a company in the side list
+  await page.fill('.fin-dm__search input', nameB); await page.waitForTimeout(600)
+  const beforeB = await whereIs(B2)
+  const foundB = await page.locator('.fin-dm__row:not(.is-head)').count()
+  { // the browser's own drag events, one after another (the selection is carried by the page, as in a real drag)
+    const dt = await page.evaluateHandle(() => new DataTransfer())
+    const row = page.locator('.fin-dm__row:not(.is-head)').first(); const onto = page.locator('.fin-dm__cobtn', { hasText: biz2[1] }).first()
+    await row.dispatchEvent('dragstart', { dataTransfer: dt }, { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(200)
+    await onto.dispatchEvent('dragover', { dataTransfer: dt }, { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(200)
+    var overShown = await page.locator('.fin-dm__cobtn.is-over').count()
+    await onto.dispatchEvent('drop', { dataTransfer: dt }, { timeout: 10000 }).catch(() => {})
+  }
+  await page.waitForFunction((b) => /הועבר/.test(document.querySelector('.fin-dm__note')?.textContent || '') && document.querySelector('.fin-dm__note')?.textContent.includes(b), biz2[1], { timeout: 60000 }).catch(() => {})
+  const noteB = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const afterB = await whereIs(B2); const keyB = await placed(B2)
+  const dbB = sql(`select (business_id='${biz2[0]}') from fin_documents where id='${B2}'`)
+  const mgrShot = await shot('130-drive-manager')
+  // the same on a phone: the actions open in a sheet, the deletion reaches the Drive trash, nothing runs off the screen
+  const mctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'he-IL', hasTouch: true, isMobile: true })
+  const m = await mctx.newPage()
+  await m.goto(APP); await m.fill('input[type=email]', 'admin@kurkoos.test'); await m.fill('input[type=password]', 'Passw0rd!x'); await m.click('button[type=submit]'); await m.waitForSelector('.fin__main')
+  await go('/drive', m); await m.waitForSelector('.fin-dm__folder', { timeout: 20000 })
+  await m.locator('.fin-dm__view', { hasText: 'כל הקבצים' }).tap(); await m.waitForSelector('.fin-dm__row:not(.is-head)')
+  await m.fill('.fin-dm__search input', nameC); await m.waitForTimeout(600)
+  const small = await m.evaluate(() => [...document.querySelectorAll('.fin-dm__more, .fin-dm__view, .fin-dm__top .fin-btn, .fin-dm__pick')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && (r.width < 44 || r.height < 44) }).length)
+  const sideways = await m.evaluate(() => document.documentElement.scrollWidth - innerWidth)
+  await m.locator('.fin-dm__row:not(.is-head) .fin-dm__more').first().tap(); await m.waitForSelector('.fin-dm__menu')
+  const sheetBox = await m.locator('.fin-dm__menu').boundingBox()
+  const mShot = await shot('131-drive-manager-phone', m)
+  const copiesC = (await items()).filter((f) => f.appProperties?.kd === C && !f.trashed).length
+  await m.locator('.fin-dm__menu button', { hasText: 'מחיקה' }).tap(); await m.locator('.fin-modal .fin-btn--danger').last().tap()
+  await m.waitForSelector('.fin-dm__note.is-ok, .fin-dm__note.is-bad, .fin-dm__note.is-warn', { timeout: 60000 }).catch(() => {})
+  const noteC = await m.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const goneC = sql(`select count(*) from fin_documents where id='${C}'`) + '|' + (await items()).filter((f) => f.appProperties?.kd === C && !f.trashed).length
+  await mctx.close()
+  record('DRIVEMGR', 'ניהול הקבצים ב-Google Drive מתוך המערכת', 'שיוך לחברה ולחודש חשבונאי מעביר את הקובץ לתיקייה הזו ב-Drive, וההודעה מופיעה אחרי ש-Drive אישר; גרירת שורה על חברה מעבירה אותה; מחיקה בנייד מעבירה את העותק לפח של Drive; בנייד הפעולות נפתחות בגיליון תחתון, הכפתורים 44 פיקסלים ואין גלילה לצדדים',
+    `תיקיות: ${rootFolders}, פירורי לחם: ${crumbs}, נמצא בחיפוש: ${found}, פעולות בתפריט: ${menuItems}; א׳: ${beforeA} → ${afterA} [${keyA === `b:${biz[0]}/2025/03`}] (${dbA}) "${noteA.slice(0, 60)}"; ב׳ בגרירה (נמצא ${foundB}, יעד מסומן ${overShown}): ${beforeB} → ${afterB} [${keyB.startsWith(`b:${biz2[0]}/`)}] (${dbB}) "${noteB.slice(0, 50)}"; נייד: קטנים ${small}, גלילה ${sideways}, גיליון ברוחב ${Math.round(sheetBox?.width || 0)}; מחיקה: ${copiesC} → ${goneC} "${noteC.slice(0, 50)}"`,
+    !!A && !!B2 && !!C && rootFolders >= 2 && crumbs === 2 && found === 1 && menuItems >= 8
+    && keyA === `b:${biz[0]}/2025/03` && afterA !== beforeA && dbA === 'true|2025-03|manual|verified' && /הועבר/.test(noteA)
+    && foundB === 1 && overShown === 1 && keyB.startsWith(`b:${biz2[0]}/`) && afterB !== beforeB && dbB === 't' && /הועבר/.test(noteB)
+    && small === 0 && sideways <= 0 && Math.round(sheetBox?.width || 0) === 390 && copiesC === 1 && goneC === '0|0' && /נמחק/.test(noteC), [sheetShot, mgrShot, mShot])
+}
+
+// VAT: one service decides, for every document, whether its VAT may be offset and what is missing; the nightly agent
+// records only what changed; the screen and the document panel show the same answer.
+{
+  const { assessVat, auditVat } = await import('../../src/pages/finance/vatRules.js')
+  const cats = [{ name: 'אחר', vat_deductible_pct: 100 }, { name: 'רכב ודלק', vat_deductible_pct: 66.67 }, { name: 'כיבוד ואירוח', vat_deductible_pct: 0 }]
+  const D = (o) => ({ status: 'approved', currency: 'ILS', business_id: 'b1', created_at: '2026-11-10', category: 'אחר', ...o })
+  const docs = [
+    D({ id: 'ok18', doc_type: 'invoice_receipt', total_amount: 295, amount_before_vat: 250, vat_amount: 45, supplier_id: 's', supplier_vat_id: '514920271', issue_date: '2026-05-10' }),
+    D({ id: 'old17', doc_type: 'invoice', total_amount: 1170, amount_before_vat: 1000, vat_amount: 170, supplier_id: 'o', supplier_vat_id: '511111111', issue_date: '2024-11-02' }),
+    D({ id: 'novat', doc_type: 'invoice', total_amount: 800, amount_before_vat: 800, vat_amount: 0, supplier_id: 'p', supplier_vat_id: '011111115', issue_date: '2026-09-02' }),
+    D({ id: 'rcpt', doc_type: 'receipt', total_amount: 590, supplier_id: 'r', supplier_vat_id: '511111116', supplier_name: 'ספק בלי חשבונית', issue_date: '2026-09-02' }),
+    D({ id: 'car', doc_type: 'invoice', total_amount: 590, amount_before_vat: 500, vat_amount: 90, supplier_id: 'c', supplier_vat_id: '511111112', issue_date: '2026-09-02', category: 'רכב ודלק' }),
+    D({ id: 'food', doc_type: 'invoice_receipt', total_amount: 118, amount_before_vat: 100, vat_amount: 18, supplier_id: 'f', supplier_vat_id: '511111113', issue_date: '2026-09-02', category: 'כיבוד ואירוח' }),
+    D({ id: 'crd', doc_type: 'credit', total_amount: 295, amount_before_vat: 250, vat_amount: 45, supplier_id: 's', supplier_vat_id: '514920271', issue_date: '2026-06-01' }),
+    D({ id: 'crd0', doc_type: 'credit', total_amount: 100, amount_before_vat: 84.75, vat_amount: 15.25, supplier_id: 'zz', supplier_vat_id: '511111119', issue_date: '2026-06-01' }),
+    D({ id: 'badsum', doc_type: 'invoice', total_amount: 1200, amount_before_vat: 1000, vat_amount: 180, supplier_id: 'x', supplier_vat_id: '511111114', issue_date: '2026-09-02' }),
+    D({ id: 'unread', status: 'review', doc_type: 'invoice', total_amount: 590, supplier_id: 'u', supplier_vat_id: '511111117', issue_date: '2026-09-02' }),
+    D({ id: 'dup', status: 'duplicate', doc_type: 'invoice', total_amount: 295, amount_before_vat: 250, vat_amount: 45, supplier_id: 's', supplier_vat_id: '514920271', issue_date: '2026-05-10' }),
+    D({ id: 'big', doc_type: 'invoice', total_amount: 33984, amount_before_vat: 28800, vat_amount: 5184, supplier_id: 'k', supplier_vat_id: '512676289', issue_date: '2026-01-25', doc_number: 'Y2' }),
+    D({ id: 'bigok', doc_type: 'invoice', total_amount: 14160, amount_before_vat: 12000, vat_amount: 2160, supplier_id: 'k2', supplier_vat_id: '512676280', issue_date: '2026-02-01', allocation_number: '123456789' }),
+    D({ id: 'part', doc_type: 'receipt', total_amount: 2832, amount_before_vat: 2400, supplier_id: 'k', supplier_vat_id: '512676289', issue_date: '2026-10-10' }),
+    D({ id: 'nobiz', business_id: null, doc_type: 'invoice', total_amount: 118, amount_before_vat: 100, vat_amount: 18, supplier_id: 'n', supplier_vat_id: '511111118', issue_date: '2026-09-02' }),
+    D({ id: 'meta', doc_type: 'receipt', total_amount: 500, supplier_id: 'm', supplier_name: 'Meta Platforms, Inc.', issue_date: '2026-08-12' }),
+    D({ id: 'muni', doc_type: 'supplier_bill', total_amount: 1929.6, supplier_id: 'h', supplier_name: 'עיריית הוד השרון', issue_date: '2026-07-27' }),
+  ]
+  const r = auditVat(docs, { categories: cats, today: '2026-11-14' })
+  const A = Object.fromEntries(r.rows.map((x) => [x.doc.id, x.a])); const codes = (id) => A[id].needs.map((n) => n.code).join(',')
+  const got = { ok18: `${A.ok18.cls}/${A.ok18.eligible}`, old17: `${A.old17.cls}/${A.old17.eligible}/${Math.round(A.old17.rate * 100)}`, novat: A.novat.cls, rcpt: `${A.rcpt.cls}/${A.rcpt.eligible}/${A.rcpt.potential}/${codes('rcpt')}`,
+    car: `${A.car.cls}/${A.car.eligible}/${A.car.blocked}`, food: `${A.food.cls}/${A.food.eligible}/${A.food.blocked}`, crd: `${A.crd.cls}/${A.crd.eligible}/${A.crd.creditOf}`, crd0: `${A.crd0.cls}/${codes('crd0')}`,
+    badsum: `${A.badsum.cls}/${A.badsum.eligible}/${codes('badsum')}`, unread: `${A.unread.cls}/${A.unread.eligible}/${codes('unread')}`, dup: A.dup.cls, big: `${A.big.cls}/${A.big.eligible}/${A.big.potential}/${codes('big')}`,
+    bigok: `${A.bigok.cls}/${A.bigok.eligible}`, part: `${A.part.cls}/${A.part.paysInvoice}/${A.part.potential}`, nobiz: `${A.nobiz.eligible}/${codes('nobiz')}`, meta: `${A.meta.cls}/${A.meta.potential}`, muni: A.muni.cls }
+  const want = { ok18: 'full/45', old17: 'full/170/17', novat: 'no_vat', rcpt: 'missing/0/90/tax_invoice', car: 'partial/60/30', food: 'none/0/18', crd: 'credit/-45/ok18', crd0: 'credit/credit_original',
+    badsum: 'review/0/sum', unread: 'missing/0/vat', dup: 'duplicate', big: 'review/0/5184/allocation', bigok: 'full/2160', part: 'none/big/0', nobiz: '0/company', meta: 'review/0', muni: 'no_vat' }
+  const wrong = Object.keys(want).filter((k) => got[k] !== want[k]).map((k) => `${k}: ${got[k]} (ציפינו ${want[k]})`)
+  const changedAfterApproval = assessVat({ ...docs[0], vat_amount: 60 }, { categories: cats, today: '2026-11-14' })
+  // the agent: a run records the state; a second run with nothing changed writes nothing; one changed document is recorded with before and after
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const run1 = await api(tok, { action: 'vat-audit' }); const run2 = await api(tok, { action: 'vat-audit' })
+  const target = sql("select id from fin_documents where status='review' and doc_type in ('invoice','invoice_receipt') and vat_amount > 0 and total_amount is not null and amount_before_vat is not null and category is not null and exists (select 1 from fin_categories c where c.name = fin_documents.category and c.vat_deductible_pct > 0) limit 1")
+  const before = sql(`select coalesce(category,'')||'|'||coalesce(category_id::text,'') from fin_documents where id='${target}'`).split('|')
+  const zero = sql("select id||'|'||name from fin_categories where vat_deductible_pct = 0 order by name limit 1").split('|')
+  sql(`update fin_documents set category='${zero[1]}', category_id='${zero[0]}' where id='${target}'`)
+  const run3 = await api(tok, { action: 'vat-audit' })
+  const logged = sql(`select count(*)||'|'||coalesce(max(changes->'previous'->>'cls'),'-')||'|'||coalesce(max(changes->'current'->>'cls'),'-') from fin_audit where action='vat_audited' and entity_id='${target}'`)
+  sql(`update fin_documents set category=${before[0] ? `'${before[0]}'` : 'null'}, category_id=${before[1] ? `'${before[1]}'` : 'null'} where id='${target}'`)
+  const emp = await api(tokE, { action: 'vat-audit' })
+  await go('/vat'); await page.waitForSelector('.fin-vat__figs', { timeout: 15000 })
+  const figs = await page.locator('.fin-vat__figs > div').count(); const queue = await page.locator('.fin-vat__item').count(); const lastLine = await page.locator('.fin-vat__last').innerText()
+  const vatShot = await shot('132-vat-centre')
+  await page.locator('.fin-vat__item').first().click(); await page.waitForSelector('.fin-vatnote', { timeout: 15000 }).catch(() => {})
+  const note = await page.locator('.fin-vatnote:not(.fin-taxnote)').count()
+  const noteShot = await shot('133-vat-in-document')
+  record('VAT', 'סוכן המע״מ: סיווג כל מסמך, ביקורת לילית ומסך המע״מ', 'חשבונית 18% ו-17% מקוזזות; בלי מע״מ; קבלה בלי חשבונית מס לא מקוזזת ומוצגת כהערכה; קיזוז חלקי ואפס לפי קטגוריה; זיכוי מקושר ולא מקושר; סכומים שלא מסתכמים; חשבונית שלא נקראה; כפילות; מספר הקצאה נדרש, חסר וקיים; קבלה שהיא תשלום על חשבונית קיימת; בלי חברה; ספק זר; רשות. הסוכן רושם רק שינויים, עם לפני ואחרי; עובד לא מריץ; המסך והמסמך מציגים את אותה תשובה',
+    `שגויים: ${wrong.length ? wrong.join(' ; ') : 'אין'}; שינוי אחרי אישור: ${changedAfterApproval.cls}/${changedAfterApproval.needs.map((n) => n.code)}; ריצות: ${run1.data.ok}/${run1.data.audited} → שנייה ${run2.data.changed} שינויים → אחרי שינוי קטגוריה ${run3.data.changed}; יומן: ${logged}; עובד: ${emp.status}; מסך: ${figs} מדדים, ${queue} בתור, "${lastLine.slice(0, 40)}"; במסמך: ${note}`,
+    wrong.length === 0 && changedAfterApproval.cls === 'review' && run1.data.ok === true && run1.data.audited > 5 && run2.data.changed === 0 && run3.data.changed === 1 && /^[1-9]\d*\|/.test(logged) && /\|none$/.test(logged) && emp.status === 403
+    && figs === 6 && queue >= 1 && /הביקורת האחרונה/.test(lastLine) && note === 1, [vatShot, noteShot])
+}
+
+// FAST: what a person does is on the screen at once. A deleted document leaves the list at the click, before the server
+// answered; a deletion the server refuses comes back to the list and is said; many documents are deleted in one call and
+// every one of them is really gone; a call without a real token is still refused (the member row is asked for early).
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const mk = (name) => sql(`insert into fin_documents (status, source, supplier_name, doc_type, currency, total_amount, issue_date) values ('review','upload','${name}','receipt','ILS', 55, current_date) returning id`).split('\n')[0]
+  const A = mk('ZZ-FAST-A'); const C = mk('ZZ-FAST-C')
+  const inDb = (id) => sql(`select count(*) from fin_documents where id='${id}'`) === '1'
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-FAST').catch(() => {}); await page.waitForTimeout(900)
+  const row = (name) => page.locator('tbody tr', { hasText: name })
+  const before = (await row('ZZ-FAST-A').count()) === 1 && (await row('ZZ-FAST-C').count()) === 1
+  // 1. the server's answer is held for 3 s: the row must be gone long before it
+  let mode = 'hold'
+  await page.route('**/api/finance', async (route) => {
+    let b = {}; try { b = JSON.parse(route.request().postData() || '{}') } catch { /* not ours */ }
+    if (b.action !== 'documents-delete') return route.continue()
+    if (mode === 'hold') { await new Promise((r) => setTimeout(r, 3000)); return route.continue() }
+    await new Promise((r) => setTimeout(r, 1200))
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results: b.ids.map((id) => ({ id, ok: false, error: 'בדיקה: השרת סירב למחוק' })), deleted: 0, failed: b.ids.length, pending: 0 }) })
+  })
+  await row('ZZ-FAST-A').first().locator('.fin-icon-btn--danger').click(); await page.locator('.fin-modal .fin-btn--danger').click()
+  await page.waitForTimeout(800)
+  const goneAtOnce = (await row('ZZ-FAST-A').count()) === 0; const serverNotYet = inDb(A)
+  await page.waitForTimeout(4200)
+  const goneForGood = !inDb(A) && (await row('ZZ-FAST-A').count()) === 0
+  // 2. a refused deletion: off the list at the click, back on it after the answer, with the reason
+  mode = 'refuse'
+  await row('ZZ-FAST-C').first().locator('.fin-icon-btn--danger').click(); await page.locator('.fin-modal .fin-btn--danger').click()
+  await page.waitForTimeout(600)
+  const hiddenWhileAsking = (await row('ZZ-FAST-C').count()) === 0
+  await row('ZZ-FAST-C').first().waitFor({ timeout: 8000 }).catch(() => {})
+  const cameBack = (await row('ZZ-FAST-C').count()) === 1 && inDb(C)
+  const said = (await page.locator('text=השרת סירב למחוק').count()) > 0
+  const fastShot = await shot('134-fast-refused-delete')
+  await page.unroute('**/api/finance')
+  // 3. twelve documents in one call
+  const many = Array.from({ length: 12 }, (_, i) => mk(`ZZ-FAST-M${i}`))
+  const t0 = Date.now(); const del = await api(tok, { action: 'documents-delete', ids: [...many, C] }); const ms = Date.now() - t0
+  const left = Number(sql(`select count(*) from fin_documents where supplier_name like 'ZZ-FAST-%'`))
+  const logged = Number(sql(`select count(*) from fin_audit where action='deleted_everywhere' and entity_id in (${many.map((x) => `'${x}'`).join(',')})`))
+  // 4. no token, and a token that is not one
+  const none = await api('', { action: 'documents-delete', ids: [A] }); const junk = await api('aaa.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAifQ.zzz', { action: 'status' })
+  record('FAST', 'מהירות: מחיקה שנראית מיד, מחיקה שסורבה חוזרת, מחיקה מרובה בקריאה אחת', 'השורה נעלמת לפני שהשרת עונה ונמחקת באמת; מחיקה שהשרת סירב לה חוזרת לרשימה עם הסיבה; 13 מסמכים נמחקים בקריאה אחת ונרשמים ביומן; קריאה בלי טוקן אמיתי נדחית',
+    `לפני: ${before}; נעלמה מיד: ${goneAtOnce} (בשרת עדיין: ${serverNotYet}); נמחקה: ${goneForGood}; סירוב: הוסתרה ${hiddenWhileAsking}, חזרה ${cameBack}, נאמר ${said}; מרובה: ${del.data.deleted}/13 ב-${ms}ms, נשארו ${left}, ביומן ${logged}; בלי טוקן: ${none.status}/${junk.status}`,
+    before && goneAtOnce && serverNotYet && goneForGood && hiddenWhileAsking && cameBack && said && del.data.deleted === 13 && left === 0 && logged === 12 && none.status === 401 && junk.status === 401, [fastShot])
+}
+
+// TAX: the compliance agent. Every document is checked against the rules registry by its own date, a doubt becomes a
+// note (never a change), the nightly run writes what moved to the log with the rules' versions, the official sources are
+// watched (a changed page marks its rules, a blocked page is said, nothing is applied by itself), the accountant's
+// confirmation of a rule is kept, and the accountant's workbook holds every table.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  const biz = sql('select id from fin_businesses order by sort limit 1')
+  // a clean start for the agent's own state (the settings table is not emptied between runs)
+  sql("delete from fin_settings where key in ('tax_watch_state','tax_rules_confirmed','tax_audit_state','tax_audit_last')"); for (const id of ['vat_law_text', 'vat_rate_order', 'allocation_page']) await fetch(`${FAKES}/__taxwatch?id=${id}&mode=ok`)
+  const mk = (name, o) => sql(`insert into fin_documents (status, source, supplier_name, supplier_vat_id, doc_type, doc_number, currency, issue_date, business_id, category, amount_before_vat, vat_amount, total_amount, description, confidence) values ('review','upload','${name}','514000009','${o.type || 'invoice'}','${o.num}','ILS','${o.day || '2026-09-10'}','${biz}','${o.cat || 'חומרי בניין'}', ${o.net}, ${o.vat}, ${o.total}, '${o.desc || ''}', 0.95) returning id`).split('\n')[0]
+  const A = mk('ZZ-TAX-ALLOC', { num: 'TX-1', net: 30000, vat: 5400, total: 35400 })
+  const B = mk('ZZ-TAX-RATE', { num: 'TX-2', net: 1000, vat: 150, total: 1150 })
+  const C = mk('ZZ-TAX-FUEL', { num: 'TX-3', net: 300, vat: 54, total: 354, cat: 'אחר', desc: 'תדלוק רכב' })
+  const D = mk('ZZ-TAX-OK', { num: 'TX-4', net: 1000, vat: 180, total: 1180 })
+  const run1 = await api(tok, { action: 'tax-audit' })
+  sql(`update fin_documents set vat_amount = 180, total_amount = 1180 where id='${B}'`)
+  const run2 = await api(tok, { action: 'tax-audit' })
+  const logged = sql(`select count(*) || '|' || coalesce(max(changes->'previous'->>'status'),'') || '>' || coalesce(max(changes->'current'->>'status'),'') || '|' || coalesce(max(changes->>'rules'),'') from fin_audit where action='tax_checked' and entity_id='${B}'`)
+  sql(`update fin_documents set vat_amount = 150, total_amount = 1150 where id='${B}'`)
+  const untouched = sql(`select amount_before_vat || '/' || vat_amount || '/' || total_amount || '/' || status from fin_documents where id='${A}'`)
+  const emp = await api(tokE, { action: 'tax-audit' })
+  // the screen
+  await go('/compliance'); await page.waitForSelector('.fin-tax__figs', { timeout: 15000 })
+  const figs = await page.locator('.fin-tax__figs > div').count()
+  const qText = await page.locator('.fin-vat__queue').innerText().catch(() => '')
+  const taxShot = await shot('135-compliance')
+  // the accountant's workbook
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /חבילה לרו״ח/ }).click()])
+  const bookPath = `${OUT}/tax-book.xlsx`; await dl.saveAs(bookPath)
+  const sheets = execSync(`unzip -l ${bookPath} | grep -c "xl/worksheets/sheet"`, { encoding: 'utf8' }).trim()
+  const bookHas = execSync(`unzip -p ${bookPath} xl/workbook.xml`, { encoding: 'utf8' })
+  // the rules registry, and the accountant's confirmation of one rule
+  await page.getByRole('tab', { name: /מאגר הכללים/ }).click(); await page.waitForSelector('.fin-tax__rule')
+  const rules = await page.locator('.fin-tax__rule').count()
+  const rateCard = page.locator('.fin-tax__rule[data-rule="vat_rate"]')
+  const rateText = await rateCard.innerText()
+  await rateCard.getByRole('button', { name: /אישור הכלל/ }).click(); await page.waitForTimeout(1500)
+  const confirmedUi = /אושר על ידי רו״ח/.test(await page.locator('.fin-tax__rule[data-rule="vat_rate"]').innerText())
+  const confirmedDb = sql(`select (value->'vat_rate'->>'by') from fin_settings where key='tax_rules_confirmed'`)
+  const rulesShot = await shot('136-compliance-rules')
+  // the watch: all read; then one page changes, one loses its value, one is blocked
+  const w1 = await api(tok, { action: 'tax-watch' })
+  await fetch(`${FAKES}/__taxwatch?id=vat_law_text&mode=changed`); await fetch(`${FAKES}/__taxwatch?id=vat_rate_order&mode=novalue`); await fetch(`${FAKES}/__taxwatch?id=allocation_page&mode=blocked`)
+  const w2 = await api(tok, { action: 'tax-watch' })
+  const st = (id) => w2.data.results.find((r) => r.id === id)?.status
+  await go('/compliance'); await page.getByRole('tab', { name: /מעקב/ }).click(); await page.waitForSelector('.fin-tax__watch')
+  const watchText = await page.locator('.fin-tax__watch').innerText()
+  const watchShot = await shot('137-compliance-watch')
+  await page.getByRole('tab', { name: /מאגר הכללים/ }).click()
+  const rateMarked = /דורש בדיקה/.test(await page.locator('.fin-tax__rule[data-rule="vat_rate"]').innerText())
+  const stillValue = sql(`select count(*) from fin_audit where action in ('tax_source_changed','tax_source_value_missing')`)
+  const ackE = await api(tokE, { action: 'tax-watch-ack', id: 'vat_law_text' })
+  const ack = await api(tok, { action: 'tax-watch-ack', id: 'vat_law_text' })
+  // the pages return to what they were: still marked until a person says "checked", then everything reads clean again
+  for (const id of ['vat_law_text', 'vat_rate_order', 'allocation_page']) await fetch(`${FAKES}/__taxwatch?id=${id}&mode=ok`)
+  await api(tok, { action: 'tax-watch' })
+  await api(tok, { action: 'tax-watch-ack', id: 'vat_law_text' }); await api(tok, { action: 'tax-watch-ack', id: 'vat_rate_order' }); const w3 = await api(tok, { action: 'tax-watch' })
+  // inside a document: the note, with the allocation number and the rule behind it
+  await go(`/documents/${A}`); await page.waitForSelector('.fin-taxnote', { timeout: 15000 })
+  const note = await page.locator('.fin-taxnote').innerText()
+  await page.locator('.fin-taxnote__more').click(); await page.waitForTimeout(400)
+  const report = await page.locator('.fin-taxnote__report').innerText().catch(() => '')
+  const noteShot = await shot('138-compliance-note')
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-TAX').catch(() => {}); await page.waitForTimeout(900)
+  const marks = await page.locator('tbody tr .fin-duppill.is-tax').count()
+  sql(`delete from fin_documents where supplier_name like 'ZZ-TAX-%'`)
+  record('TAX', 'סוכן הציות: בדיקת כל מסמך מול מאגר הכללים, הערות, מעקב אחרי המקורות וחבילה לרו״ח', 'ביקורת רושמת שינוי ביומן עם גרסאות הכללים ולא משנה מסמך; עובד נדחה; 8 מדדים; הערות על מספר הקצאה, שיעור מע״מ וקיזוז דלק; חוברת עם 10 גיליונות; 26 כללים עם מקור; אישור רו״ח נשמר; מעקב: עמוד שהשתנה, ערך שנעלם ועמוד חסום מסומנים, והכלל מסומן לבדיקה; אישור "בדקתי" רק למנהל; ההערה בתוך המסמך',
+    `ריצות: ${run1.data.ok}/${run1.data.checked} → ${run2.data.changed} שינויים; יומן: ${logged.slice(0, 90)}; המסמך: ${untouched}; עובד: ${emp.status}; מדדים: ${figs}; תור: ${/מספר הקצאה/.test(qText)}/${/15\.0%/.test(qText)}/${/ביתר/.test(qText)}; גיליונות: ${sheets} ${/מע״מ תשומות/.test(bookHas)}; כללים: ${rules} ${/18%/.test(rateText)} ${/רשומות/.test(rateText)}; אישור: ${confirmedUi}/${confirmedDb}; מעקב: ${w1.data.unchanged}/10 → ${st('vat_law_text')},${st('vat_rate_order')},${st('allocation_page')}; מסך: ${/העמוד השתנה/.test(watchText)}/${/לא נקרא/.test(watchText)}; כלל מסומן: ${rateMarked}; יומן מקורות: ${stillValue}; בדקתי: עובד ${ackE.status}, מנהל ${ack.data.ok}; אחרי: ${w3.data.unchanged}; הערה: ${/מספר הקצאה/.test(note)} ${/גרסה/.test(report)}; סימון ברשימה: ${marks}`,
+    run1.data.ok === true && run2.data.changed >= 1 && /^[1-9]\d*\|/.test(logged) && /vat_rate@2025-01/.test(logged) && untouched === '30000.00/5400.00/35400.00/review' && emp.status === 403 && figs === 8
+    && /מספר הקצאה/.test(qText) && /15\.0%/.test(qText) && /ביתר/.test(qText) && sheets === '10' && /מע״מ תשומות/.test(bookHas) && rules === 26 && /18%/.test(rateText) && /רשומות/.test(rateText) && confirmedUi && confirmedDb === 'admin@kurkoos.test'
+    && w1.data.unchanged === 10 && st('vat_law_text') === 'changed' && st('vat_rate_order') === 'value_missing' && st('allocation_page') === 'unreachable' && /העמוד השתנה/.test(watchText) && /לא נקרא/.test(watchText) && rateMarked && Number(stillValue) >= 2
+    && ackE.status === 403 && ack.data.ok === true && w3.data.unchanged === 10 && /מספר הקצאה/.test(note) && /גרסה/.test(report) && marks >= 2, [taxShot, rulesShot, watchShot, noteShot])
+}
+
+// REPORT: the report for the accountant. A person chooses documents (a filter, then "all shown"; or a selection made on
+// the documents screen), sees the figures before making the file, and downloads a right-to-left Hebrew workbook with
+// links to the originals, a CSV, and a page to print.
+{
+  sql(`delete from fin_documents where supplier_name like 'ZZ-REP%'`)   // what an interrupted run left behind
+  const biz = sql('select id from fin_businesses order by sort limit 1')
+  const mk = (name, o) => sql(`insert into fin_documents (status, source, supplier_name, supplier_vat_id, doc_type, doc_number, currency, issue_date, business_id, category, amount_before_vat, vat_amount, total_amount, description, confidence) values ('${o.status || 'approved'}','upload','${name}','514000009','${o.type || 'invoice'}','${o.num}','${o.cur || 'ILS'}','2026-08-10','${biz}','חומרי בניין', ${o.net ?? 'null'}, ${o.vat ?? 'null'}, ${o.total}, '${o.desc || ''}', 0.95) returning id`).split('\n')[0]
+  const A = mk('ZZ-REP ספק ראשון', { num: 'RP-1', net: 1000, vat: 180, total: 1180, desc: 'צבע "לבן" & שפכטל' })
+  const B = mk('ZZ-REP ספק ראשון', { num: 'RP-2', type: 'credit', net: 200, vat: 36, total: 236 })
+  const Cc = mk('ZZ-REP Foreign Ltd', { num: 'RP-3', type: 'receipt', cur: 'USD', total: 50 })
+  const D = mk('ZZ-REP ספק שני', { num: 'RP-4', net: 500, vat: 90, total: 590, status: 'review' })
+  await go('/report'); await page.waitForSelector('.fin-rep__list', { timeout: 15000 })
+  const emptyBar = await page.locator('.fin-rep__hint').count()
+  await page.fill('.fin-rep__search input', 'ZZ-REP'); await page.waitForTimeout(500)
+  const shownRows = await page.locator('.fin-rep__list > li').count()
+  await page.getByRole('button', { name: /בחירת כל ה/ }).click(); await page.waitForTimeout(400)
+  const bar = (await page.locator('.fin-rep__bar').innerText()).replace(/[‎‏]/g, '').replace(/\s+/g, ' ')
+  const repShot = await shot('139-accountant-report')
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /הפקת דוח לרואה החשבון/ }).click()])
+  const xl = `${OUT}/accountant-report.xlsx`; await dl.saveAs(xl); const fileName = dl.suggestedFilename()
+  const part = (p) => execSync(`unzip -p ${xl} ${p}`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+  const wbXml = part('xl/workbook.xml'); const s1 = part('xl/worksheets/sheet1.xml'); const s3 = part('xl/worksheets/sheet3.xml'); const rels = part('xl/worksheets/_rels/sheet1.xml.rels')
+  const sheetNames = [...wbXml.matchAll(/<sheet name="([^"]+)"/g)].map((m) => m[1])
+  const rtl = [1, 2, 3, 4].every((i) => /<sheetView rightToLeft="1"/.test(part(`xl/worksheets/sheet${i}.xml`)))
+  const linkTargets = [...rels.matchAll(/Target="([^"]+)"/g)].map((m) => m[1])
+  const linkOk = linkTargets.length === 4 && [A, B, Cc, D].every((id) => linkTargets.some((t) => t.endsWith(`/admin/finance/documents/${id}`)))
+  // a link from the file opens the document in the system
+  await go(linkTargets.find((t) => t.endsWith(A)).replace(/^https?:\/\/[^/]+\/admin\/finance/, '')); const opened = await page.locator('.fin-panel, .fin-docpanel, [class*="panel"]').first().innerText().catch(() => '')
+  await go('/report'); await page.fill('.fin-rep__search input', 'ZZ-REP'); await page.waitForTimeout(400); await page.getByRole('button', { name: /בחירת כל ה/ }).click()
+  const [cdl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'CSV', exact: true }).click()])
+  const csvPath = `${OUT}/accountant-report.csv`; await cdl.saveAs(csvPath); const csv = fs.readFileSync(csvPath, 'utf8')
+  await page.getByRole('button', { name: /PDF/ }).click(); await page.waitForTimeout(600)
+  const printFrame = await page.evaluate(() => { const f = [...document.querySelectorAll('iframe[srcdoc]')].pop(); return f ? /<html dir="rtl" lang="he">/.test(f.srcdoc) && /דוח הוצאות/.test(f.srcdoc) && /ZZ-REP ספק שני/.test(f.srcdoc) : false })
+  // a selection made on the documents screen arrives ticked
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-REP ספק ראשון').catch(() => {}); await page.waitForTimeout(900)
+  for (const r of await page.locator('tbody tr input[type=checkbox]').all()) await r.check()
+  await page.locator('.fin-bulk [aria-label="פעולות נוספות"]').click(); await page.getByText('דוח לרואה החשבון מהמסמכים שנבחרו').click(); await page.waitForSelector('.fin-rep__bar.is-on', { timeout: 10000 })
+  const fromDocs = (await page.locator('.fin-rep__bar > header strong').innerText()).trim()
+  const stored = await page.evaluate(() => sessionStorage.getItem('fin-report-ids'))
+  const logged = sql("select count(*) from fin_audit where action='exported_excel' and changes->>'report'='accountant'")
+  sql(`delete from fin_documents where supplier_name like 'ZZ-REP%'`)
+  record('REPORT', 'דוח לרואה החשבון: בחירת מסמכים, סיכום, Excel מימין לשמאל, CSV ו-PDF', 'בלי בחירה אין כפתורים; חיפוש מציג 4 ו"בחירת כל המוצגים" מסמנת אותם; הסיכום: 1,180 − 236 + 590 = 1,534 ₪ (הדולר לא בסכום), מע״מ 234, לקיזוז 234; קובץ עם שם לפי הפורמט, 3 גיליונות בעברית ורשימות מוסתרות, כולם RTL; כותרת ראשונה "ספק"; קישור לכל מסמך שנפתח במערכת; תווים מיוחדים נשמרים; CSV עם BOM; עמוד הדפסה RTL; בחירה ממסך המסמכים מגיעה מסומנת ואינה נשמרת בדפדפן; הפעולה ביומן',
+    `ריק: ${emptyBar}; שורות: ${shownRows}; סרגל: ${bar.slice(0, 150)}; קובץ: ${fileName}; גיליונות: ${sheetNames.join(' | ')}; RTL: ${rtl}; A3: ${/<c r="A3"[^>]*>.*?<t[^>]*>ספק<\/t>/.test(s1)}; קישורים: ${linkTargets.length} ${linkOk}; נפתח: ${/ZZ-REP ספק ראשון/.test(opened)}; תווים: ${/צבע &quot;לבן&quot; &amp; שפכטל/.test(s1)}; בדיקות: ${/ZZ-REP/.test(s3)}; CSV: ${csv.charCodeAt(0) === 0xfeff} ${csv.trim().split('\r\n').length} שורות; הדפסה: ${printFrame}; מהמסמכים: ${fromDocs}; באחסון: ${stored}; יומן: ${logged}`,
+    emptyBar === 1 && shownRows === 4 && /4 מסמכים נבחרו/.test(bar) && /1,534\.00/.test(bar) && /234\.00/.test(bar) && /דוח הוצאות/.test(bar) && /^דוח הוצאות – .+ – אוגוסט 2026\.xlsx$/.test(fileName)
+    && sheetNames.join('|') === 'דוח הוצאות לרואה החשבון|סיכום הוצאות|מסמכים לבדיקה|רשימות' && rtl && /<c r="A3"[^>]*>.*?<t[^>]*>ספק<\/t>/.test(s1) && linkOk && /ZZ-REP ספק ראשון/.test(opened) && /צבע &quot;לבן&quot; &amp; שפכטל/.test(s1) && !/�|\?\?\?/.test(s1)
+    && csv.charCodeAt(0) === 0xfeff && csv.trim().split('\r\n').length === 5 && printFrame && /^2 מסמכים נבחרו/.test(fromDocs) && stored === null && Number(logged) >= 1, [repShot])
+}
+
+// SYNC2: two-way sync with Google Drive. What a person does in Drive itself to the archive's files is followed by the
+// system (a rename, a trashing, a restore, a move to a month folder, a move to a folder of their own), a file that
+// vanished is put back, folders a person makes here exist in Drive, and nothing is followed when two-way sync is off.
+{
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x'); const tokE = await login('worker@kurkoos.test', 'W0rker!xx')
+  sql("insert into fin_settings (key, value) values ('drive_two_way', 'true') on conflict (key) do update set value = 'true'"); sql("delete from fin_settings where key = 'drive_sync_state'")
+  const T = sql("select id from fin_cloud_targets where provider='gdrive' and status='active' order by created_at limit 1")
+  const FN = `חוזים ${Date.now().toString(36)}`   // a folder name of this run only
+  const drive = async () => (await (await fetch(`${FAKES}/__drive`)).json()).items
+  const fileOf = async (doc, anyState = false) => (await drive()).find((f) => f.appProperties?.kd === doc && (anyState || !f.trashed))
+  const rowOf = (doc) => sql(`select status || '|' || excluded || '|' || coalesce(organized_name,'') || '|' || coalesce(folder_key,'') || '|' || coalesce(folder_path,'') || '|' || coalesce(error,'') from fin_drive_files where target_id='${T}' and document_id='${doc}'`).split('|')
+  const sync = async (extra = {}) => (await api(tok, { action: 'drive-sync', target_id: T, quick: true, ...extra })).data.from_drive[0]
+  // a clean, verified archive to start from, and the first reading of Drive's change list
+  for (let i = 0; i < 6; i++) { const r = await api(tok, { action: 'drive-reconcile', target_id: T }); if (r.data.results?.[0]?.status !== 'running') break }
+  await api(tok, { action: 'drive-run', target_id: T })
+  const first = await sync()
+  const pick = (where, n) => sql(`select f.document_id from fin_drive_files f join fin_documents d on d.id = f.document_id where f.target_id='${T}' and f.status='verified' and ${where} order by f.document_id limit ${n}`).split('\n').filter(Boolean)
+  const [dRename, dTrash, dMonth, dOwn, dGone, dFolder] = pick("d.status = 'review'", 6); const [dApproved] = pick("d.status in ('approved','sent')", 1)
+  const enough = [dRename, dTrash, dMonth, dOwn, dGone, dFolder, dApproved].every(Boolean)
+  // 1. renamed in Drive
+  const nameBefore = rowOf(dRename)[2]
+  await fetch(`${FAKES}/__drive?doc=${dRename}&rename_to=${encodeURIComponent('שם שנתתי ב-Drive.pdf')}`)
+  // 2. trashed in Drive
+  const trashedFileId = (await fileOf(dTrash)).id
+  await fetch(`${FAKES}/__drive?trash=${dTrash}`)
+  // 3. moved in Drive into another company's month folder (a document in review), and an approved one too
+  const before3 = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dMonth}'`)
+  const dest = sql(`select key || '|' || drive_folder_id from fin_drive_folders where target_id='${T}' and key ~ '^b:[0-9a-f-]{36}/[0-9]{4}/[0-9]{2}$' and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dMonth}') and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dApproved}') limit 1`).split('|')
+  const destBiz = dest[0].slice(2, 38); const destPeriod = `${dest[0].split('/')[1]}-${dest[0].split('/')[2]}`
+  await fetch(`${FAKES}/__drive?doc=${dMonth}&move_to=${dest[1]}`); await fetch(`${FAKES}/__drive?doc=${dApproved}&move_to=${dest[1]}`)
+  const beforeApproved = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dApproved}'`)
+  // 4. moved in Drive into a folder the person made there (the system never saw it)
+  await fetch(`${FAKES}/__drive?doc=${dOwn}&move_to=${encodeURIComponent('תיקייה פרטית שלי')}&make=1`)
+  // 5. deleted for good in Drive
+  await fetch(`${FAKES}/__drive?remove=${dGone}`)
+  const s1 = await sync()
+  const r1 = rowOf(dRename); const r2 = rowOf(dTrash); const r3 = rowOf(dMonth); const r4 = rowOf(dOwn); const rA = rowOf(dApproved)
+  const after3 = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dMonth}'`)
+  const afterApproved = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dApproved}'`)
+  const docStill = sql(`select count(*) from fin_documents where id='${dTrash}'`)
+  await api(tok, { action: 'drive-run', target_id: T })
+  const goneBack = !!(await fileOf(dGone)); const trashStays = !(await fileOf(dTrash)) && rowOf(dTrash)[0] === 'withdrawn'
+  // the full check agrees with what was followed: nothing is "corrected" back
+  let rec = null; for (let i = 0; i < 6; i++) { rec = (await api(tok, { action: 'drive-reconcile', target_id: T })).data.results?.[0]; if (rec?.status !== 'running') break }
+  const kept = (await fileOf(dRename))?.name === 'שם שנתתי ב-Drive.pdf' && (await fileOf(dOwn))?.path.includes('תיקייה פרטית שלי') && (await fileOf(dMonth))?.parents[0] === dest[1]
+  const s2 = await sync()
+  // the screen: the trash, a restore from it, the activity of the renamed file, the accounts
+  await go('/drive'); await page.waitForSelector('.fin-dm__view', { timeout: 20000 })
+  const navViews = await page.locator('.fin-dm__view').allInnerTexts()
+  await page.locator('.fin-dm__view', { hasText: 'אשפה' }).click(); await page.waitForSelector('.fin-dm__row:not(.is-head)')
+  const trashRows = await page.locator('.fin-dm__row:not(.is-head)').count(); const trashText = await page.locator('.fin-dm__list').innerText()
+  const syncShot = await shot('140-drive-trash')
+  await page.locator('.fin-dm__row:not(.is-head) .fin-dm__more').first().click(); await page.locator('.fin-dm__menu button', { hasText: 'שחזור מהאשפה' }).click()
+  await page.waitForSelector('.fin-dm__note.is-ok, .fin-dm__note.is-warn, .fin-dm__note.is-bad', { timeout: 60000 }).catch(() => {})
+  const restoreNote = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const restored = await fileOf(dTrash); const rBack = rowOf(dTrash)
+  // a folder of the person's own, made on the screen: it exists in Drive; a document moved into it stays there with its company
+  await page.locator('.fin-dm__view', { hasText: 'התיקייה שלי' }).click(); await page.waitForTimeout(400)
+  await page.getByRole('button', { name: /תיקייה חדשה/ }).click(); await page.locator('.fin-modal input').fill(FN); await page.locator('.fin-modal .fin-btn--primary').click()
+  await page.waitForFunction(() => /נוצרה ב-Google Drive/.test(document.querySelector('.fin-dm__note')?.textContent || ''), null, { timeout: 30000 }).catch(() => {})
+  const madeInDrive = (await drive()).find((f) => f.name === FN && f.mimeType.includes('folder') && !f.trashed)
+  const folderTile = await page.locator('.fin-dm__folder.is-manual', { hasText: FN }).count()
+  const fkey = sql(`select key from fin_drive_folders where target_id='${T}' and name='${FN}' and key ~ 'm:[0-9a-f]+$' limit 1`)
+  const bizBefore = sql(`select coalesce(business_id::text,'') from fin_documents where id='${dFolder}'`)
+  const pin = await api(tok, { action: 'drive-pin', target_id: T, ids: [dFolder], folder: fkey })
+  const inFolder = (await fileOf(dFolder))?.parents[0] === madeInDrive?.id; const bizAfter = sql(`select coalesce(business_id::text,'') from fin_documents where id='${dFolder}'`)
+  const delFull = await api(tok, { action: 'drive-folder', target_id: T, op: 'delete', key: fkey })
+  // inside the folder: a file uploaded here keeps its place from the first moment; the folder gets a star
+  await page.locator('.fin-dm__folder.is-manual', { hasText: FN }).click(); await page.waitForSelector('[data-testid=drive-upload-here]', { state: 'attached', timeout: 10000 })
+  const upFile = `${OUT}/upload-into-folder-${Date.now()}.pdf`; fs.writeFileSync(upFile, `%PDF-1.4\n% a file for the folder test ${Date.now()}\n`)
+  await page.locator('[data-testid=drive-upload-here]').setInputFiles(upFile)
+  await page.waitForFunction(() => /ייכנס לתיקייה/.test(document.querySelector('.fin-dm__note')?.textContent || ''), null, { timeout: 30000 }).catch(() => {})
+  const upNote = await page.locator('.fin-dm__note').first().innerText().catch(() => '')
+  const upPinned = sql(`select count(*) from fin_drive_folders p join fin_documents d on p.key = 'pin:' || d.id where p.target_id='${T}' and p.name='${fkey}' and d.file_name like 'upload-into-folder-%'`)
+  await page.locator('.fin-dm__crumb').first().click(); await page.waitForTimeout(400)
+  await page.locator('.fin-dm__folders > li', { hasText: FN }).locator('.fin-dm__star').click()
+  await page.locator('.fin-dm__view', { hasText: 'מסומנים בכוכב' }).click(); await page.waitForTimeout(400)
+  const starredFolder = await page.locator('.fin-dm__folder', { hasText: FN }).count()
+  await page.locator('.fin-dm__folders > li', { hasText: FN }).locator('.fin-dm__star').click()
+  sql(`delete from fin_documents where file_name like 'upload-into-folder-%'`)
+  await fetch(`${FAKES}/__drive?folder_rename=${encodeURIComponent(FN)}&to=${encodeURIComponent(`${FN} חדש`)}`)
+  const s3 = await sync(); const pathAfterRename = rowOf(dFolder)[4]
+  const unpin = await api(tok, { action: 'drive-pin', target_id: T, ids: [dFolder], folder: null }); const backHome = /\d{4}\//.test(rowOf(dFolder)[4]) && !rowOf(dFolder)[4].includes(FN)
+  const delEmpty = await api(tok, { action: 'drive-folder', target_id: T, op: 'delete', key: fkey }); const folderGone = !(await drive()).some((f) => f.id === madeInDrive?.id && !f.trashed)
+  // activity and accounts
+  await go('/drive'); await page.locator('.fin-dm__view', { hasText: 'כל הקבצים' }).click(); await page.fill('.fin-dm__search input', 'שם שנתתי'); await page.waitForTimeout(600)
+  await page.locator('.fin-dm__name').first().click(); await page.waitForSelector('.fin-dm__history ol', { timeout: 10000 }).catch(() => {})
+  const history = await page.locator('.fin-dm__history').innerText().catch(() => '')
+  await page.fill('.fin-dm__search input', ''); await page.locator('.fin-dm__view', { hasText: 'חשבונות מחוברים' }).click(); await page.waitForSelector('.fin-dm__account', { timeout: 10000 }).catch(() => {})
+  const accText = await page.locator('.fin-dm__accounts').innerText().catch(() => ''); const accShot = await shot('141-drive-accounts')
+  await page.locator('.fin-dm__view', { hasText: 'שותפו איתי' }).click(); await page.waitForSelector('.fin-dm__sharedrow', { timeout: 10000 }).catch(() => {}); const sharedText = await page.locator('.fin-dm__sharedwrap').innerText().catch(() => '')
+  // an immediate notice from Drive: the channel the system opened is called, and the change is followed without anybody pressing anything
+  await go('/')   // away from the Drive screen, so its own once-a-minute reading is not what follows the change
+  await fetch(`${FAKES}/__drive?doc=${dOwn}&rename_to=${encodeURIComponent('שם שהגיע בהתראה.pdf')}`)
+  const ch = (await (await fetch(`${FAKES}/__drive_channel`)).json()).channel
+  const hook = (token) => fetch('http://127.0.0.1:5180/api/finance-drive-hook', { method: 'POST', headers: { 'x-goog-channel-id': ch?.id || '', 'x-goog-channel-token': token, 'x-goog-resource-state': 'change' } })
+  const badHook = await hook('not-the-token'); const goodHook = await hook(ch?.token || ''); const hookBody = await goodHook.json().catch(() => ({}))
+  const pushedName = rowOf(dOwn)[2]
+  // an employee may not sync or make folders
+  const empSync = await api(tokE, { action: 'drive-sync', target_id: T }); const empFolder = await api(tokE, { action: 'drive-folder', target_id: T, op: 'create', name: 'x' })
+  // two-way off: nothing is followed, and the full check puts the name back
+  await api(tok, { action: 'drive-two-way', on: false })
+  await fetch(`${FAKES}/__drive?doc=${dFolder}&rename_to=${encodeURIComponent('renamed-while-off.pdf')}`)
+  const sOff = await sync(); const nameOff = rowOf(dFolder)[2]
+  for (let i = 0; i < 6; i++) { const r = (await api(tok, { action: 'drive-reconcile', target_id: T })).data.results?.[0]; if (r?.status !== 'running') break }
+  await api(tok, { action: 'drive-run', target_id: T })
+  const putBack = (await fileOf(dFolder))?.name === nameOff
+  // a second Google account: connected from the accounts view, kept apart from the first, then disconnected
+  await fetch(`${FAKES}/__next_account?email=second@kurkoos.test`)
+  await go('/drive'); await page.locator('.fin-dm__view', { hasText: 'חשבונות מחוברים' }).first().click(); await page.waitForSelector('.fin-dm__account', { timeout: 10000 }).catch(() => {})
+  await page.getByRole('button', { name: /חיבור חשבון Google נוסף/ }).first().click()
+  await page.waitForURL(/drive(\?|$)/, { timeout: 20000 }).catch(() => {}); await page.waitForTimeout(1500)
+  await fetch(`${FAKES}/__next_account?email=`)
+  const twoTargets = sql("select string_agg(account_email, ',' order by created_at) from fin_cloud_targets where provider='gdrive' and status <> 'revoked'")
+  const T2 = sql("select id from fin_cloud_targets where provider='gdrive' and account_email='second@kurkoos.test' limit 1")
+  const acc2 = await api(tok, { action: 'drive-accounts' }); const mixed = sql(`select count(*) from fin_drive_files a join fin_drive_files b on a.drive_file_id = b.drive_file_id and a.target_id <> b.target_id where a.drive_file_id is not null`)
+  if (T2) await api(tok, { action: 'cloud-disconnect', target_id: T2 })
+  const afterDisconnect = sql("select count(*) from fin_cloud_targets where provider='gdrive' and status <> 'revoked'")
+  const logged = sql(`select string_agg(distinct action, ',' order by action) from fin_drive_events where target_id='${T}' and action in ('renamed_in_drive','moved_in_drive','trashed_in_drive','restored_by_user','folder_created','folder_renamed_in_drive','folder_deleted','missing')`)
+  record('SYNC2', 'סנכרון דו-כיווני עם Google Drive: שינויים שנעשו ב-Drive מתעדכנים במערכת', 'שינוי שם ב-Drive נשמר; קובץ שהועבר לפח ב-Drive יוצא לאשפה, המסמך נשאר ולא עולה שוב, ושחזור מחזיר את אותו קובץ; העברה לתיקיית חודש של חברה אחרת משנה חברה וחודש (מסמך מאושר רק נשאר במקומו); העברה לתיקייה פרטית נשמרת; קובץ שנמחק לצמיתות משוחזר; הבדיקה המלאה לא מחזירה כלום אחורה; תיקייה שנוצרת במסך קיימת ב-Drive, שינוי שמה ב-Drive מתעדכן, מחיקה רק כשהיא ריקה; היסטוריה, חשבונות ורשימת "שותפו איתי" (בהרשאה הרחבה); העלאה לתיקייה, כוכב לתיקייה, התראה מיידית מ-Drive, חשבון Google שני בנפרד; עובד נדחה; כשהסנכרון הדו-כיווני כבוי השם חוזר',
+    `מספיק מסמכים: ${enough}; קריאה ראשונה: ${first.first}; אחרי שינויים: ${s1.renamed}/${s1.trashed}/${s1.moved}/${s1.missing} (שגיאה: ${s1.error}); שם: ${r1[2]} (היה ${nameBefore.slice(0, 20)}…); פח: ${r2[0]}|${r2[1]}|${r2[5]} מסמך קיים ${docStill} נשאר בפח ${trashStays}; חודש: ${before3} → ${after3} (יעד ${destBiz.slice(0, 8)}|${destPeriod}, תיקייה ${r3[3] === dest[0]}); מאושר: ${beforeApproved === afterApproved} ${rA[3]}; פרטית: ${r4[3]} ${r4[4].slice(-28)}; נעלם ושוחזר: ${goneBack}; בדיקה מלאה: ${rec?.status} תוקנו ${rec?.corrected} נשמר ${kept}; קריאה חוזרת: ${s2.renamed + s2.moved + s2.trashed}; תצוגות: ${navViews.length}; אשפה: ${trashRows} ${/בפח של Drive/.test(trashText)}; שחזור: "${restoreNote.slice(0, 40)}" ${rBack[0]} אותו קובץ ${restored?.id === trashedFileId}; תיקייה: ב-Drive ${!!madeInDrive} אריח ${folderTile} העברה ${pin.data.moved} בתיקייה ${inFolder} חברה ${bizBefore === bizAfter}; מחיקה מלאה: ${delFull.status}; שינוי שם ב-Drive: ${s3.folders} "${pathAfterRename.slice(-12)}"; חזרה: ${unpin.data.moved} ${backHome}; מחיקה ריקה: ${delEmpty.data.ok} ${folderGone}; היסטוריה: ${/השם שונה ב-Google Drive/.test(history)}; חשבונות: ${/office@kurkoos\.test/.test(accText)} ${/סנכרון דו-כיווני/.test(accText)} ${/כל ה-Drive של החשבון/.test(accText)} התראות ${/התראות מיידיות מ-Drive פעילות/.test(accText)}; שותפו: ${/חוזה שכירות משרד/.test(sharedText)} ${/לצפייה בלבד/.test(sharedText)}; העלאה לתיקייה: "${upNote.slice(0, 30)}" ${upPinned}; כוכב: ${starredFolder}; התראה: ${badHook.status}/${goodHook.status} ${hookBody.followed} "${pushedName}"; חשבון שני: ${twoTargets} כרטיסים ${acc2.data.accounts?.length} מעורב ${mixed} אחרי ניתוק ${afterDisconnect}; עובד: ${empSync.status}/${empFolder.status}; כבוי: ${sOff.renamed} "${nameOff.slice(0, 12)}" חזר ${putBack}; יומן: ${logged}`,
+    enough && first.first === true && s1.renamed === 1 && s1.trashed === 1 && s1.moved === 3 && s1.missing === 1 && !s1.error && r1[2] === 'שם שנתתי ב-Drive.pdf' && r2[0] === 'withdrawn' && r2[1] === 'true' && /הועבר לפח ב-Google Drive/.test(r2[5]) && docStill === '1' && trashStays
+    && after3 === `${destBiz}|${destPeriod}` && after3 !== before3 && beforeApproved === afterApproved && r3[3] === dest[0] && /תיקייה פרטית שלי/.test(r4[4]) && r4[3] === 'pin' && goneBack && rec?.status === 'completed' && !rec?.corrected && kept && s2.renamed + s2.moved + s2.trashed === 0
+    && navViews.length === 11 && trashRows >= 1 && /בפח של Drive/.test(trashText) && /שוחזר/.test(restoreNote) && rBack[0] === 'verified' && restored?.id === trashedFileId
+    && !!madeInDrive && folderTile === 1 && pin.data.moved === 1 && inFolder && bizBefore === bizAfter && delFull.status === 409 && s3.folders === 1 && pathAfterRename.endsWith(`${FN} חדש`) && unpin.data.moved === 1 && backHome && delEmpty.data.ok === true && folderGone
+    && /השם שונה ב-Google Drive/.test(history) && /office@kurkoos\.test/.test(accText) && /סנכרון דו-כיווני/.test(accText) && /כל ה-Drive של החשבון/.test(accText) && /התראות מיידיות מ-Drive פעילות/.test(accText) && /חוזה שכירות משרד/.test(sharedText) && /לצפייה בלבד/.test(sharedText) && /ייכנס לתיקייה/.test(upNote) && upPinned === '1' && starredFolder === 1 && badHook.status === 401 && goodHook.status === 200 && hookBody.followed === 1 && pushedName === 'שם שהגיע בהתראה.pdf' && twoTargets === 'office@kurkoos.test,second@kurkoos.test' && acc2.data.accounts?.length === 2 && mixed === '0' && afterDisconnect === '1' && empSync.status === 403 && empFolder.status === 403
+    && sOff.renamed === 0 && nameOff !== 'renamed-while-off.pdf' && putBack && ['renamed_in_drive', 'moved_in_drive', 'trashed_in_drive', 'restored_by_user', 'folder_created', 'folder_renamed_in_drive', 'folder_deleted', 'missing'].every((a) => String(logged).includes(a)), [syncShot, accShot])
 }
 
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)

@@ -44,7 +44,7 @@ export const claimAdmin = async () => must(await supabase.rpc('fin_claim_admin')
 
 // the list reads every column except the raw reading (extraction, about a third of a row): the document panel and
 // the capture dialog get it with the document itself. A database that is not migrated yet falls back to all columns.
-const DOC_COLUMNS = 'id,business_id,project_id,supplier_id,supplier_name,supplier_vat_id,doc_type,doc_number,issue_date,due_date,payment_date,accounting_period,currency,amount_before_vat,vat_amount,total_amount,category,description,payment_method,paid,status,source,mailbox_id,email_message_id,email_subject,email_from,email_date,file_path,file_name,file_mime,file_size,file_hash,field_confidence,confidence,issues,suggestions,attempts,processed_at,approved_by,approved_at,exported_at,export_id,sent_at,notes,created_by,created_at,updated_at,category_id,supplier_email,ai_snapshot,requires_second_approval,first_approved_by,first_approved_at,archived_at,stage,stage_at,next_retry_at,duplicate_of,duplicate_state,quality,page_count,ai_tokens_in,ai_tokens_out,ai_calls,failures,document_class,relevance,business_source,recurring_id,recurring_off'
+const DOC_COLUMNS = 'id,business_id,project_id,supplier_id,supplier_name,supplier_vat_id,doc_type,doc_number,issue_date,due_date,payment_date,accounting_period,currency,amount_before_vat,vat_amount,total_amount,category,description,payment_method,paid,status,source,mailbox_id,email_message_id,email_subject,email_from,email_date,file_path,file_name,file_mime,file_size,file_hash,field_confidence,confidence,issues,suggestions,attempts,processed_at,approved_by,approved_at,exported_at,export_id,sent_at,notes,created_by,created_at,updated_at,category_id,supplier_email,ai_snapshot,requires_second_approval,first_approved_by,first_approved_at,archived_at,stage,stage_at,next_retry_at,duplicate_of,duplicate_state,quality,page_count,ai_tokens_in,ai_tokens_out,ai_calls,failures,document_class,relevance,business_source,recurring_id,recurring_off,allocation_number:extraction->>allocation_number'
 export const loadDocuments = async () => { try { return await all('fin_documents', 'created_at', false, 200000, DOC_COLUMNS, 'id') } catch { return all('fin_documents', 'created_at', false, 200000, '*', 'id') } }
 // one cheap row that changes whenever any visible document is added, changed or removed: how many there are, and the
 // newest change. The screen compares it every few seconds and reloads only when it moved.
@@ -87,17 +87,49 @@ const tellSender = (out) => { for (const d of [].concat(out || [])) if (d?.sourc
 const afterStatus = (patch, out) => { if (patch && 'status' in patch) { flushOutbound(); if (patch.status === 'approved') tellSender(out) } return out }
 // a company chosen by a person is marked "manual": the engine learns from it for the next document of that supplier
 const byPerson = (patch) => ('business_id' in patch ? { ...patch, business_source: patch.business_id ? 'manual' : null } : patch)
-export const updateDocument = async (id, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).eq('id', id).select().single()))
-export const updateDocuments = async (ids, patch) => afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).in('id', ids).select()))
+// what the database answered is told to every screen at once (FinanceApp puts it on the lists), so a save shows without
+// waiting for everything to load again
+export const docsChanged = (docs) => { const list = [].concat(docs || []).filter((d) => d?.id); if (list.length && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('fin:docs-changed', { detail: { docs: list } })); return docs }
+export const updateDocument = async (id, patch) => docsChanged(afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).eq('id', id).select().single())))
+export const updateDocuments = async (ids, patch) => docsChanged(afterStatus(patch, must(await supabase.from('fin_documents').update(byPerson(patch)).in('id', ids).select())))
 export const loadDeliveries = (limit = 30) => soft((async () => (await all('fin_deliveries', 'created_at', false, limit * 2)).filter((d) => (d.kind || 'accountant') === 'accountant').slice(0, limit))())
 export const loadOutbound = () => soft(all('fin_outbound', 'created_at', true))
 export const loadOutboundQueue = (limit = 30) => soft(all('fin_outbound_queue', 'id', false, limit))
+/* The one deletion (server/finance/remove.js): the document, everything that hangs on it, its files and its copy in
+   Drive, checked by the server before it answers. Every screen deletes through here, and every screen (and every other
+   open tab) is told at once, so a deleted document is not left on any list. */
+const tabs = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('fin-docs') : null
+export const onDocsRemoved = (fn) => {
+  const local = (e) => fn(e.detail?.ids || [], false)
+  const remote = (e) => { if (e.data?.removed) fn(e.data.removed, true) }
+  window.addEventListener('fin:docs-removed', local); tabs?.addEventListener('message', remote)
+  return () => { window.removeEventListener('fin:docs-removed', local); tabs?.removeEventListener('message', remote) }
+}
+const say = (name, ids) => { if (ids.length) window.dispatchEvent(new CustomEvent(name, { detail: { ids } })) }
+export async function deleteDocuments(docs) {
+  const ids = [...new Set(docs.map((d) => d.id))]
+  const out = { deleted: [], failed: [], pending: 0 }
+  // off the screen at the click; the server's answer confirms it, or brings back what it refused
+  say('fin:docs-removing', ids)
+  const settled = new Set()
+  try {
+    for (let i = 0; i < ids.length; i += 50) {
+      const r = await callServer('documents-delete', { ids: ids.slice(i, i + 50) }, { timeout: 90000 })
+      for (const x of r.results || []) { settled.add(x.id); if (x.ok) { out.deleted.push(x.id); if (x.pending?.length) out.pending++ } else out.failed.push(x) }
+    }
+  } finally {
+    say('fin:docs-kept', ids.filter((id) => !out.deleted.includes(id)))
+    if (out.deleted.length) {
+      say('fin:docs-removed', out.deleted)
+      try { tabs?.postMessage({ removed: out.deleted }) } catch { /* another tab finds out on its next check */ }
+    }
+  }
+  return out
+}
 export async function deleteDocument(doc) {
-  // a deletion in the system is a deletion in Drive: the archive's copy goes to the Drive trash first. If Drive cannot
-  // be reached the document is still deleted, and the next check against Drive trashes the copy.
-  await callServer('drive-forget', { ids: [doc.id] }).catch(() => null)
-  must(await supabase.from('fin_documents').delete().eq('id', doc.id))
-  if (doc.file_path) await supabase.storage.from(BUCKET).remove([doc.file_path])
+  const r = await deleteDocuments([doc])
+  if (r.failed.length) throw new Error(r.failed[0].error || 'המחיקה לא הושלמה')
+  return r
 }
 
 export const saveRow = async (table, row) => must(row.id
@@ -178,14 +210,19 @@ export async function uploadFile(rawFile, { businessId, projectId, source = 'upl
   if (!OK_TYPES.includes(file.type)) throw new Error(`${file.name}: רק PDF או תמונה`)
   if (file.size > 12 * 1024 * 1024) throw new Error(`${file.name}: הקובץ גדול מ-12MB`)
   const hash = await sha256(file)
-  const { data: dup } = await supabase.from('fin_documents').select('id,supplier_name,doc_number').eq('file_hash', hash).maybeSingle()
-  if (dup) return { duplicate: true, id: dup.id, of: dup }
   const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1]
   const path = `uploads/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${ext}`
-  const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })
+  // "is this file already here?" and the file itself travel together (one after the other cost a round trip per file).
+  // A small file is not worth holding back; a large one waits for the answer, so a duplicate is not sent for nothing.
+  const asked = supabase.from('fin_documents').select('id,supplier_name,doc_number').eq('file_hash', hash).maybeSingle()
+  if (file.size > 1_500_000) { const { data: early } = await asked; if (early) return { duplicate: true, id: early.id, of: early } }
+  const [{ data: dup }, up] = await Promise.all([asked, supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })])
+  // a duplicate's file is the one the first document already holds (same name in the same month), or is cleared by the nightly sweep
+  if (dup) return { duplicate: true, id: dup.id, of: dup }
   // the same file uploaded before and then removed from the list: the object is still there, reuse it
   if (up.error && !/exists|duplicate/i.test(up.error.message)) throw new Error(up.error.message)
-  const { data: { user } } = await supabase.auth.getUser()
+  // who is signed in is read from the session in the browser (asking the server cost a round trip per file)
+  const user = (await supabase.auth.getSession()).data?.session?.user || null
   let row
   try {
     row = must(await supabase.from('fin_documents').insert({
@@ -197,19 +234,35 @@ export async function uploadFile(rawFile, { businessId, projectId, source = 'upl
     if (/duplicate key|unique/i.test(e.message)) return { duplicate: true, hidden: true }
     throw e
   }
+  // on the lists from this moment, as "being read"
+  docsChanged(row)
   // wait: the caller shows the result (receipt capture); otherwise the reading runs in the background
   if (wait) {
     // the reading can outlive the request (function limit): the receipt is saved either way and the agents finish it
-    try { return (await callServer('extract', { document_id: row.id, trigger: 'upload' })).document || row } catch { return { ...row, pending: true } }
+    try { return docsChanged((await callServer('extract', { document_id: row.id, trigger: 'upload' })).document) || row } catch { return { ...row, pending: true } }
   }
   callServer('extract', { document_id: row.id, trigger: 'upload' }).catch(() => {})
   return row
 }
 
-export async function fileBlob(doc) {
-  const { data, error } = await supabase.storage.from(BUCKET).download(doc.file_path)
-  if (error) throw new Error(error.message || 'הקובץ לא נטען')
-  return data
+/* A document's file is fetched once per visit: the thumbnail, the hover card and the full viewer share it. Kept in
+   memory only (never in the browser's storage), newest first, up to about 60 MB; a failed download is not kept. */
+const blobs = new Map(); let blobBytes = 0
+const BLOB_BUDGET = 60 * 1024 * 1024
+export function fileBlob(doc) {
+  const key = doc.file_path
+  const hit = blobs.get(key)
+  if (hit) { blobs.delete(key); blobs.set(key, hit); return hit.p }
+  const entry = { size: 0 }
+  entry.p = supabase.storage.from(BUCKET).download(key).then(({ data, error }) => {
+    if (error) throw new Error(error.message || 'הקובץ לא נטען')
+    entry.size = data.size || 0; blobBytes += entry.size
+    for (const [k, e] of blobs) { if (blobBytes <= BLOB_BUDGET || k === key) break; blobs.delete(k); blobBytes -= e.size }
+    return data
+  })
+  entry.p.catch(() => { if (blobs.get(key) === entry) blobs.delete(key) })
+  blobs.set(key, entry)
+  return entry.p
 }
 
 // ---- cloud copies (Drive / Dropbox): where each document was saved, saving now, and the connection test ----

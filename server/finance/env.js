@@ -19,6 +19,9 @@ export const env = {
   msLogin: () => process.env.FINANCE_MS_LOGIN || `https://login.microsoftonline.com/${process.env.MS_TENANT_ID || 'common'}/oauth2/v2.0`,
   graphApi: () => process.env.FINANCE_GRAPH_API || 'https://graph.microsoft.com/v1.0/me',
   googleUserinfo: () => process.env.FINANCE_GOOGLE_USERINFO || 'https://openidconnect.googleapis.com/v1/userinfo',
+  // the Google permission the Drive connection asks for: 'drive.file' (only files this system made; the default), or the
+  // whole Drive ('drive') once the owner turned it on for a Google project that Google verified. FINANCE_DRIVE_SCOPE=drive
+  driveScope: () => (String(process.env.FINANCE_DRIVE_SCOPE || '').trim() === 'drive' ? 'drive' : 'drive.file'),
   driveApi: () => process.env.FINANCE_DRIVE_API || 'https://www.googleapis.com/drive/v3',
   driveUpload: () => process.env.FINANCE_DRIVE_UPLOAD || 'https://www.googleapis.com/upload/drive/v3',
   dropboxAuth: () => process.env.FINANCE_DROPBOX_AUTH || 'https://www.dropbox.com/oauth2/authorize',
@@ -38,3 +41,16 @@ export const DOC_TYPES = ['invoice', 'receipt', 'invoice_receipt', 'credit', 'su
 /* list prices per million tokens (input, output), to show what reading cost. An unknown model counts at the top price. */
 const PRICE = { 'claude-haiku-5-5': [0.1, 0.5], 'claude-sonnet-5-5': [2, 10], 'claude-opus-5-5': [4, 20] }
 export const costOf = (model, inTok = 0, outTok = 0) => { const [i, o] = PRICE[model] || [4, 20]; return (inTok * i + outTok * o) / 1e6 }
+/* What one answer cost, with prompt caching counted as it is billed: the part of the prompt that was read from the
+   cache costs a tenth of the input price (a twentieth on Opus 5.5), the part written to it a quarter more. `in` is the
+   whole prompt (fresh + written + read), so the token totals mean the same as before caching. */
+const CACHE_READ = { 'claude-opus-5-5': 0.05 }
+export function usageOf(d, fallbackModel) {
+  const u = d?.usage || {}; const model = d?.model || fallbackModel
+  const fresh = u.input_tokens || 0; const wrote = u.cache_creation_input_tokens || 0; const read = u.cache_read_input_tokens || 0; const out = u.output_tokens || 0
+  const [i, o] = PRICE[model] || [4, 20]
+  return { in: fresh + wrote + read, out, calls: 1, cached: read, usd: (fresh * i + wrote * i * 1.25 + read * i * (CACHE_READ[model] ?? 0.1) + out * o) / 1e6 }
+}
+/* the fixed instructions of a request, as a system prompt with a cache breakpoint: every request that starts with the
+   same instructions reads them from the cache (the documents and questions that follow are different every time) */
+export const cachedSystem = (text) => [{ type: 'text', text, cache_control: { type: 'ephemeral' } }]

@@ -105,6 +105,27 @@ export const ANIMS = {
     layer([group(circle([[0, [52, 8]], [90, [40, 6]], [180, [52, 8]]]), fill(SKY))], { p: [60, 100], o: [[0, 90], [90, 55], [180, 90]] }),
   ].map((l) => ({ ...l, ks: { ...l.ks, p: l.ks.p.a ? { ...l.ks.p, k: l.ks.p.k.map((k) => (k.i ? { ...k, ...SOFT } : k)) } : l.ks.p } }))),
   // waiting: three bars rise in turn, the brand's skyline (loop)
+  // a document landed: the sheet drops into the tray, a tick is stamped on it, and a few flecks fly out
+  received: () => file(120, [
+    layer([group(path(TICK), stroke(WHITE, 7), trim([[52, 0], [68, 100]]))], { p: [78, 68], s: [70, 70] }),
+    layer([group(circle(34), fill(OCEAN))], { p: [78, 68], s: [[44, [0, 0]], [56, [118, 118]], [66, [100, 100]]] }),
+    ...[[-46, -34, OCEAN], [44, -40, SKY], [-52, 10, SKY], [52, 6, INK], [-30, -52, INK], [30, -56, OCEAN], [0, -60, SKY]].map(([x, y, c], i) =>
+      layer([group(circle(i % 2 ? 7 : 9), fill(c))], { p: [[40 + i, [60, 50]], [74 + i * 2, [60 + x, 50 + y]]], s: [[40 + i, [0, 0]], [50 + i, [100, 100]], [84 + i * 2, [0, 0]]], o: [[40 + i, 100], [70 + i * 2, 100], [86 + i * 2, 0]] })),
+    layer(sheet(), { p: [[0, [60, -24]], [28, [60, 52]], [36, [60, 45]], [46, [60, 50]]], s: [[28, [100, 100]], [36, [105, 93]], [46, [100, 100]]], r: [[0, -10], [28, 0]], o: [[0, 0], [8, 100]] }),
+    layer([group(path([[-36, 4], [-36, 26], [36, 26], [36, 4]]), stroke(OCEAN, 6))], { p: [[28, [60, 68]], [36, [60, 74]], [48, [60, 68]]] }),
+    layer(burst(OCEAN, 38, 44, 56), { p: [60, 50], o: [[38, 100], [64, 100], [78, 0]] }),
+  ]),
+  // a photo was taken: the lens closes, a flash, and the tick is signed inside the lens
+  snapped: () => file(120, [
+    layer([group(path(TICK), stroke(WHITE, 7), trim([[50, 0], [66, 100]]))], { p: [60, 66], s: [72, 72] }),
+    layer([group(circle(36), fill(OCEAN))], { p: [60, 66], s: [[0, [100, 100]], [14, [60, 60]], [24, [112, 112]], [34, [100, 100]]] }),
+    layer([group(circle(52), stroke(INK, 5))], { p: [60, 66], s: [[0, [0, 0]], [12, [100, 100]]] }),
+    layer([group(circle(150), fill(WHITE))], { p: [60, 66], s: [[18, [20, 20]], [30, [120, 120]]], o: [[16, 0], [20, 85], [34, 0]] }),
+    layer([group(rect(84, 60, 12), fill(WHITE), stroke(INK, 5)), group(rect(26, 10, 4, [0, -34]), fill(INK))], { p: [60, 66], s: [[0, [80, 80]], [12, [104, 104]], [20, [100, 100]]], o: [[0, 0], [8, 100]] }),
+    layer(burst(OCEAN, 44, 52, 62), { p: [60, 66], o: [[44, 100], [70, 100], [84, 0]] }),
+    ...[[-50, -40, SKY], [50, -44, OCEAN], [-56, 20, OCEAN], [56, 16, SKY]].map(([x, y, c], i) =>
+      layer([group(circle(8), fill(c))], { p: [[46 + i, [60, 66]], [80 + i * 2, [60 + x, 66 + y]]], s: [[46 + i, [0, 0]], [56 + i, [100, 100]], [90 + i * 2, [0, 0]]] })),
+  ]),
   loading: () => file(72, [
     ...[[-22, 34], [0, 54], [22, 42]].map(([x, h], i) => layer([group(rect(14, h, 4, [0, -h / 2]), fill(i === 1 ? INK : OCEAN))], { p: [60 + x, 92], s: [[i * 8, [100, 30]], [i * 8 + 18, [100, 100]], [i * 8 + 40, [100, 30]], [72, [100, 30]]] })),
   ]),

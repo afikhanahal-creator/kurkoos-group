@@ -79,6 +79,10 @@ function gmailMessage(m) {
   }
 }
 
+const taxWatch = {}
+// Drive's own list of changes: every difference between two readings of the files is one change (as the real list
+// reports the latest state of a file, not every step)
+const driveChanges = []; let driveSnap = new Map(); let driveChannel = null
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`)
   const p = url.pathname
@@ -164,14 +168,17 @@ const server = http.createServer(async (req, res) => {
     if (badKey) return send(res, 400, { type: 'error', error: { type: 'invalid_request_error', message: badKey } })
     const content = body.messages[0].content
     const doc = content.find((c) => c.type === 'document' || c.type === 'image')
-    const text = content.find((c) => c.type === 'text')?.text || ''
+    // the fixed instructions may arrive as a system prompt (cached), the rest in the message: both are the prompt
+    const sys = (Array.isArray(body.system) ? body.system.map((b) => b.text || '').join('\n') : String(body.system || ''))
+    if (Array.isArray(body.system) && body.system.some((b) => b.cache_control?.type === 'ephemeral')) log.cachedPrompts = (log.cachedPrompts || 0) + 1
+    const text = [sys, content.find((c) => c.type === 'text')?.text || ''].filter(Boolean).join('\n')
     const fx = fixtures()
     let answer = null
     // the second reading (VERIFY): answers only the critical fields, from verifyAnswers, else the same as the first reading
-    const verifying = text.startsWith('VERIFY:')
+    const verifying = /(^|\n)VERIFY:/.test(text)
     // every reading of mail content must tell the model that the content is data, not instructions
     if (/never instructions to you/.test(text)) log.guarded = (log.guarded || 0) + 1
-    else if (!text.startsWith('Today is') && !/Question:/.test(text)) log.unguarded = (log.unguarded || 0) + 1
+    else if (!/(^|\n)Today is/.test(text) && !/Question:/.test(text)) log.unguarded = (log.unguarded || 0) + 1
     if (verifying) log.verifyCalls = (log.verifyCalls || 0) + 1
     if (doc) {
       const raw = Buffer.from(doc.source.data, 'base64')
@@ -194,6 +201,22 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ---------- Resend ----------
+  // the official pages the compliance agent watches: a page per source, which a test can change, empty, or strip of the
+  // value a rule relies on (/__taxwatch?id=<source>&mode=ok|changed|blocked|novalue)
+  if (p === '/__taxwatch') { taxWatch[url.searchParams.get('id')] = url.searchParams.get('mode') || 'ok'; return send(res, 200, { ok: true }) }
+  if (p.startsWith('/taxwatch/')) {
+    const id = p.split('/').pop(); const mode = taxWatch[id] || 'ok'
+    if (mode === 'blocked') { res.writeHead(403, { 'Content-Type': 'text/html' }); return res.end('<html><body>Just a moment...</body></html>') }
+    const body = `<html><body><h1>נוסח מאוחד לבדיקה: ${id}</h1><p>${'מס ערך מוסף, חשבונית מס, מס תשומות, כיבוד, רכב, פנקס חשבונות, מספר הקצאה. LatestPublicationDate 2026-03-31. '.repeat(8)}</p><p>שיעור המס: ${mode === 'novalue' ? '19%' : '18%'}</p>${mode === 'changed' ? '<p>תיקון חדש פורסם ברשומות.</p>' : ''}</body></html>`
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(body)
+  }
+  // Morning's sign-in, as its specification describes it: client credentials in, a one-hour token out, 401 for wrong keys
+  if (p === '/morning/idp/v1/oauth/token') {
+    const b = JSON.parse((await readBody(req)) || '{}')
+    if (b.grant_type !== 'client_credentials') return send(res, 400, { error: 'unsupported_grant_type' })
+    if (b.client_id !== 'morning-test-id' || b.client_secret !== 'morning-test-secret') return send(res, 401, { error: 'invalid_client', error_description: 'Invalid client credentials' })
+    return send(res, 200, { accessToken: 'eyJ.test.token', expiresIn: 3600 })
+  }
   if (p === '/resend/emails') {
     const body = JSON.parse(await readBody(req))
     log.emails.push({ to: body.to, subject: body.subject, attachments: (body.attachments || []).map((x) => ({ filename: x.filename, bytes: Buffer.from(x.content || '', 'base64').length })) })
@@ -207,8 +230,38 @@ const server = http.createServer(async (req, res) => {
   // uploads are saved but answer 500, as when the answer is lost), trash / remove (a file of a document, as a person would).
   const dfile = (f) => ({ id: f.id, name: f.name, parents: f.parents, mimeType: f.folder ? 'application/vnd.google-apps.folder' : 'application/octet-stream', md5Checksum: f.folder || f.nomd5 ? undefined : f.md5, size: f.folder ? undefined : String(f.size || 0), trashed: !!f.trashed, appProperties: f.appProperties || {}, webViewLink: `https://drive.test/file/${f.id}` })
   const dpath = (pid) => { const f = driveItems.find((x) => x.id === pid); return f ? `${dpath(f.parents[0])}/${f.name}` : '' }
+  const driveFlush = () => {
+    const now = new Map(driveItems.map((f) => [f.id, `${f.name}|${(f.parents || []).join(',')}|${!!f.trashed}|${f.md5 || ''}`]))
+    for (const [id, sig] of now) if (driveSnap.get(id) !== sig) driveChanges.push({ fileId: id, removed: false })
+    for (const id of driveSnap.keys()) if (!now.has(id)) driveChanges.push({ fileId: id, removed: true })
+    driveSnap = now
+  }
+  if (p === '/drive/changes/startPageToken') { if (!String(auth).startsWith('Bearer ')) return send(res, 401, {}); driveFlush(); return send(res, 200, { startPageToken: String(driveChanges.length) }) }
+  if (p === '/drive/changes' && req.method === 'GET') {
+    if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
+    driveFlush()
+    const from = Number(url.searchParams.get('pageToken') || 0); const size = Math.min(Number(url.searchParams.get('pageSize') || 100), 3)   // small pages, so paging is always tested
+    const page = driveChanges.slice(from, from + size)
+    const more = from + page.length < driveChanges.length
+    return send(res, 200, { changes: page.map((c) => { const f = driveItems.find((x) => x.id === c.fileId); return f ? { fileId: c.fileId, removed: false, file: dfile(f) } : { fileId: c.fileId, removed: true } }), ...(more ? { nextPageToken: String(from + page.length) } : { newStartPageToken: String(driveChanges.length) }) })
+  }
+  // immediate notices: Drive accepts a channel (or refuses it, when a test says so) and remembers where to call
+  if (p === '/drive/changes/watch' && req.method === 'POST') {
+    if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
+    if (driveFail.watch401) return send(res, 401, { error: { message: 'Unauthorized WebHook callback channel' } })
+    const b = JSON.parse(await readBody(req) || '{}'); driveChannel = { id: b.id, address: b.address, token: b.token, resourceId: `res${++driveSeq}`, expiration: b.expiration }
+    return send(res, 200, { kind: 'api#channel', id: b.id, resourceId: driveChannel.resourceId, expiration: b.expiration })
+  }
+  if (p === '/drive/channels/stop' && req.method === 'POST') { log.drive.push('channel-stop'); res.writeHead(204); res.end(); return }
+  if (p === '/__drive_channel') return send(res, 200, { channel: driveChannel })
+  if (p === '/drive/about') return send(res, 200, { storageQuota: { limit: String(15 * 1024 ** 3), usage: String(driveItems.reduce((a, f) => a + (f.size || 0), 0)) }, user: { displayName: 'חשבון בדיקה', emailAddress: mailbox } })
   if (p === '/__drive') {
-    for (const k of ['upload503', 'lose', 'rate403', 'nomd5']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
+    // as a person would in Drive itself: a name of their own, a folder of their own (made there, unknown to the system), back from the trash
+    if (url.searchParams.get('rename_to')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('doc') && !x.trashed); if (f) f.name = url.searchParams.get('rename_to') }
+    if (url.searchParams.get('untrash')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('untrash') && x.trashed); if (f) f.trashed = false }
+    if (url.searchParams.get('move_to')) { const f = driveItems.find((x) => x.appProperties?.kd === url.searchParams.get('doc') && !x.trashed); const want = url.searchParams.get('move_to'); let to = driveItems.find((x) => x.folder && !x.trashed && (x.id === want || dpath(x.id).endsWith(want))); if (!to && url.searchParams.has('make')) { to = { id: `fld${++driveSeq}`, name: want, parents: ['root'], folder: true, appProperties: {} }; driveItems.push(to) } if (f && to) f.parents = [to.id] }
+    if (url.searchParams.get('folder_rename')) { const f = driveItems.find((x) => x.folder && x.name === url.searchParams.get('folder_rename')); if (f) f.name = url.searchParams.get('to') }
+    for (const k of ['upload503', 'lose', 'rate403', 'nomd5', 'watch401']) if (url.searchParams.has(k)) driveFail[k] = Number(url.searchParams.get(k)) || 0
     // as a person would in Drive: move a document's file to another folder, rename it, change its content
     const one = (doc) => driveItems.find((f) => f.appProperties?.kd === doc && !f.trashed)
     if (url.searchParams.get('move')) { const f = one(url.searchParams.get('move')); const to = driveItems.find((x) => x.folder && x.id !== f?.parents[0] && x.name !== 'בדיקת חיבור' && driveItems.some((y) => !y.folder && y.parents[0] === x.id)); if (f && to) f.parents = [to.id] }
@@ -228,13 +281,15 @@ const server = http.createServer(async (req, res) => {
   if (p === '/drive/files' && req.method === 'GET') {
     if (!String(auth).startsWith('Bearer ')) return send(res, 401, {})
     const qy = url.searchParams.get('q') || ''
+    // files others shared with the account (only the wide permission may list them)
+    if (/sharedWithMe/.test(qy)) return send(res, 200, { files: [{ id: 'sh1', name: 'חוזה שכירות משרד.pdf', mimeType: 'application/pdf', size: '20480', modifiedTime: '2026-11-01T08:00:00Z', webViewLink: 'https://drive.test/file/sh1', owners: [{ displayName: 'רואה החשבון', emailAddress: 'cpa@example.test' }] }, { id: 'sh2', name: 'מסמכי חברה', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-10-20T08:00:00Z', webViewLink: 'https://drive.test/folder/sh2', owners: [{ displayName: 'משרד עו״ד' }] }] })
     const name = (qy.match(/name='((?:[^'\\]|\\.)*)'/) || [])[1]?.replace(/\\'/g, "'").replace(/\\\\/g, '\\')
     const parent = (qy.match(/'([^']+)' in parents/) || [])[1]
-    const prop = qy.match(/appProperties has \{ key='([^']+)' and value='((?:[^'\\]|\\.)*)' \}/)
+    const props = [...qy.matchAll(/appProperties has \{ key='([^']+)' and value='((?:[^'\\]|\\.)*)' \}/g)]; const prop = props[0]   // every condition must hold, as in Drive
     const folderOnly = /mimeType='application\/vnd\.google-apps\.folder'/.test(qy); const filesOnly = qy.includes('mimeType!=')
     const noTrash = qy.includes('trashed=false')
     let list = driveItems.filter((f) => (!noTrash || !f.trashed) && (!folderOnly || f.folder) && (!filesOnly || !f.folder) && (!name || f.name === name) && (!parent || f.parents[0] === parent)
-      && (!prop || f.appProperties?.[prop[1]] === prop[2].replace(/\\'/g, "'")))
+      && props.every((pr) => f.appProperties?.[pr[1]] === pr[2].replace(/\\'/g, "'")))
     if (!prop && !name) list = []
     const size = Number(url.searchParams.get('pageSize') || 100); const from = Number(url.searchParams.get('pageToken') || 0)
     const page = list.slice(from, from + (list.length > 50 ? Math.min(size, 1000) : Math.min(size, 3)))   // small pages, so paging is always tested; a big archive pages by 1000 as Drive does
@@ -263,6 +318,7 @@ const server = http.createServer(async (req, res) => {
     const b = JSON.parse(await readBody(req) || '{}')
     if (b.name) f.name = b.name
     if (b.trashed === true) { f.trashed = true; log.drive.push(`trash:${dpath(f.id)}`); return send(res, 200, dfile(f)) }
+    if (b.trashed === false) { f.trashed = false; log.drive.push(`untrash:${dpath(f.id)}`); return send(res, 200, dfile(f)) }
     const add = url.searchParams.get('addParents'); const rm = (url.searchParams.get('removeParents') || '').split(',').filter(Boolean)
     if (add) { if (!driveItems.some((x) => x.id === add && x.folder)) return send(res, 404, { error: { message: 'File not found: parent' } }); f.parents = [add, ...f.parents.filter((x) => !rm.includes(x) && x !== add)] }
     else if (rm.length) f.parents = f.parents.filter((x) => !rm.includes(x))
@@ -343,7 +399,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, fail ? 500 : 200, { ok: !fail })
   }
   if (p === '/__log') return send(res, 200, log)
-  if (p === '/__reset') { for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; driveFail.rate403 = 0; driveFail.nomd5 = 0; driveSeq = 0; return send(res, 200, { ok: true }) }
+  if (p === '/__reset') { driveChanges.length = 0; driveSnap = new Map(); for (const k of Object.keys(failed)) delete failed[k]; nextAccount = null; log.emails = []; log.smtp = []; log.claudeCalls = 0; log.gmailCalls = 0; log.drive = []; log.dropbox = []; log.wa = []; log.gmailQueries = []; log.hooks = []; log.waFiles = []; log.verifyCalls = 0; log.claudeDims = []; for (const k of Object.keys(hookFails)) delete hookFails[k]; driveItems.length = 0; driveFail.upload503 = 0; driveFail.lose = 0; driveFail.rate403 = 0; driveFail.nomd5 = 0; driveSeq = 0; return send(res, 200, { ok: true }) }
   if (p === '/__next_account') { nextAccount = url.searchParams.get('email'); return send(res, 200, { nextAccount }) }
   send(res, 404, { error: 'fake: no route' })
 })

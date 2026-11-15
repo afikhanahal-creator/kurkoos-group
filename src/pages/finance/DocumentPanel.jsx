@@ -8,6 +8,8 @@ import { DOC_TYPE, FIELD_LABEL, SOURCE, date, dateTime, issuesOf, money, nameOf 
 import { saveBlob } from './zip.js'
 import { Confidence, Icon, Pill, StatusPill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 import Attachments from './Attachments.jsx'
+import { VatNote } from './Vat.jsx'
+import { ComplianceNote } from './Compliance.jsx'
 import { PAY_LABEL, payState } from './ledger.js'
 import Select from './Select.jsx'
 import { supplierHistory } from './links.js'
@@ -15,7 +17,7 @@ import Viewer from './Viewer.jsx'
 import { moments } from './moments.js'
 import { categoryConflict, moveImpact, nameIdeas, sayDocs, suggestCategory, supplierUsage } from './categorySuggest.js'
 
-const VAT = 0.18
+import { rateOn } from './vatRules.js'
 const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'category_id', 'business_id', 'project_id', 'description', 'payment_method', 'paid', 'notes']
 const blank = (k) => (k === 'paid' ? false : '')
 const SOURCE_LABEL = { rule: 'כלל אוטומציה', supplier: 'ברירת מחדל של הספק', history: 'היסטוריית אישורים', document: 'מופיע במסמך', mailbox: 'לפי תיבת המייל', ai: 'הצעת AI' }
@@ -70,12 +72,18 @@ function LinkedDoc({ doc, onSaved }) {
         {info === null ? 'בודק את המייל המקורי בתיבה…' : mail?.connected ? <>מחובר לתיבה <bdi>{mail.account}</bdi>{files.length ? `, ובמייל המקורי ${files.length === 1 ? 'קובץ מצורף אחד' : `${files.length} קבצים מצורפים`}` : ', ובמייל המקורי אין קובץ מצורף'}.</> : mail?.reason || 'המסמך נמצא מאחורי קישור או צריך להעלות אותו.'}
       </p>
       <div className="fin-linked__acts">
-        {files.filter((f) => f.readable).map((f) => <button key={`a${f.i}`} type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={!!busy} onClick={() => takeFile(f, true)} title={`${f.name}: יהפוך לקובץ של המסמך וייקרא`}><Icon name="check" size={14} /> {busy === `f${f.i}a` ? 'קורא…' : `קליטת ${f.name.slice(0, 22)}`}</button>)}
-        {files.map((f) => <button key={`d${f.i}`} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => takeFile(f, false)} title={`הורדת ${f.name} מהמייל המקורי`}><Icon name="download" size={14} /> {busy === `f${f.i}d` ? 'מוריד…' : f.name.slice(0, 22)}</button>)}
-        {links.slice(0, 1).map((l) => <button key={l.url} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => fetchLink(l.url)} title={`${l.text} · ${l.host}`}><Icon name="external" size={14} /> {busy === l.url ? 'מוריד וקורא…' : 'הורדה מהקישור שבמייל'}</button>)}
-        <button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={saveEmail}><Icon name="download" size={14} /> {busy === 'email' ? 'מוריד…' : 'הורדת המייל'}</button>
-        {mail?.open && <a className="fin-btn fin-btn--sm" href={mail.open} target="_blank" rel="noreferrer noopener"><Icon name="external" size={14} /> פתיחה ב-Gmail</a>}
-        <label className={`fin-btn fin-btn--sm ${busy === 'upload' ? 'is-busy' : ''}`}><Icon name="upload" size={14} /> {busy === 'upload' ? 'מעלה וקורא…' : 'העלאת מסמך'}<input type="file" accept="application/pdf,image/*" hidden disabled={!!busy} onChange={(e) => { give(e.target.files?.[0]); e.target.value = '' }} /></label>
+        <span className="fin-linked__group" role="group" aria-label="הורדה">
+          <b><Icon name="download" size={14} /> הורדה</b>
+          {files.map((f) => <button key={`d${f.i}`} type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={!!busy} onClick={() => takeFile(f, false)} title={`הורדת ${f.name} מהמייל המקורי`}>{busy === `f${f.i}d` ? 'מוריד…' : f.name.slice(0, 24)}</button>)}
+          <button type="button" className={`fin-btn fin-btn--sm ${files.length ? '' : 'fin-btn--primary'}`} disabled={!!busy} onClick={saveEmail}>{busy === 'email' ? 'מוריד…' : 'המייל המקורי'}</button>
+          {mail?.open && <a className="fin-btn fin-btn--sm" href={mail.open} target="_blank" rel="noreferrer noopener"><Icon name="external" size={14} /> פתיחה ב-Gmail</a>}
+        </span>
+        <span className="fin-linked__group" role="group" aria-label="קליטת המסמך עצמו">
+          <b><Icon name="upload" size={14} /> המסמך עצמו</b>
+          {files.filter((f) => f.readable).map((f) => <button key={`a${f.i}`} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => takeFile(f, true)} title={`${f.name}: יהפוך לקובץ של המסמך וייקרא`}>{busy === `f${f.i}a` ? 'קורא…' : `קליטת ${f.name.slice(0, 20)}`}</button>)}
+          {links.slice(0, 1).map((l) => <button key={l.url} type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => fetchLink(l.url)} title={`${l.text} · ${l.host}`}>{busy === l.url ? 'מוריד וקורא…' : 'מהקישור שבמייל'}</button>)}
+          <label className={`fin-btn fin-btn--sm ${busy === 'upload' ? 'is-busy' : ''}`}>{busy === 'upload' ? 'מעלה וקורא…' : 'העלאה מהמכשיר'}<input type="file" accept="application/pdf,image/*" hidden disabled={!!busy} onChange={(e) => { give(e.target.files?.[0]); e.target.value = '' }} /></label>
+        </span>
       </div>
       {msg && <p className={`fin-linked__msg is-${msg.tone}`} role="alert">{msg.text}{msg.open && <> <a className="fin-link" href={msg.open} target="_blank" rel="noreferrer noopener">פתיחת הקישור בלשונית חדשה</a></>}</p>}
     </section>
@@ -294,10 +302,13 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const remove = async () => {
     if (!(await askConfirm({ title: 'מחיקת המסמך', text: 'מסמך לא רלוונטי (לא חשבונית, נשלח בטעות, כפול לגמרי) נמחק יחד עם הקובץ והנספחים שלו. אי אפשר לבטל, והמחיקה נרשמת ביומן. מסמך שאולי עוד יידרש עדיף לדחות.', ok: 'מחיקה', danger: true }))) return
     setBusy('delete')
-    try { await api.deleteDocument(doc); onDeleted() } catch (e) { setErr(e.message); setBusy('') }
+    // the document leaves the lists at once, and this panel with it; a refusal brings it back and is said out loud
+    try { await api.deleteDocument(doc); onDeleted() } catch (e) { setErr(e.message); setBusy(''); moments.fail({ title: 'המחיקה לא הושלמה', sub: e.message }) }
   }
   const calc = () => {
     const t = Number(form.total_amount); const b = Number(form.amount_before_vat); const v = Number(form.vat_amount)
+    // the rate of the document's own date (it used to be 18% for every document, also for one from 2024)
+    const VAT = rateOn(/^\d{4}-\d{2}-\d{2}/.test(String(form.issue_date || '')) ? String(form.issue_date).slice(0, 10) : new Date().toISOString().slice(0, 10))
     if (t && !b && !v) setForm((f) => ({ ...f, amount_before_vat: (t / (1 + VAT)).toFixed(2), vat_amount: (t - t / (1 + VAT)).toFixed(2) }))
     else if (b && !t && !v) setForm((f) => ({ ...f, vat_amount: (b * VAT).toFixed(2), total_amount: (b * (1 + VAT)).toFixed(2) }))
     else if (t && b && !v) setForm((f) => ({ ...f, vat_amount: (t - b).toFixed(2) }))
@@ -404,6 +415,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                     </dl>
                   )
                 })()}
+                <VatNote doc={doc} />
+                <ComplianceNote doc={doc} />
                 <div className="fin-form__grid">
                   <h4 className="fin-form__sec fin-field--wide">ספק</h4>
                   {F({ k: 'supplier_name', wide: true })}

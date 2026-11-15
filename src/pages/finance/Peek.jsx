@@ -13,6 +13,7 @@ export function PeekCard({ doc }) {
       <span className="fin-peek__doc">
         <Thumbnail doc={doc} size="lg" />
       </span>
+      {doc.description && <span className="fin-peek__about">{String(doc.description).slice(0, 110)}</span>}
       <span className="fin-peek__foot"><small>{[DOC_TYPE[doc.doc_type], doc.doc_number, date(docDate(doc))].filter(Boolean).join(' · ')}</small>{doc.total_amount != null && <b>{money(doc.total_amount, doc.currency)}</b>}</span>
     </>
   )

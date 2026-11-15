@@ -13,9 +13,9 @@ export async function mfaRoles() {
   return Array.isArray(row?.value) ? row.value : []
 }
 /* null when the caller may act; otherwise the reason */
-export async function mfaBlock(user) {
+export async function mfaBlock(user, known) {
   if (!user?.role) return null
-  const roles = await mfaRoles()
+  const roles = known || await mfaRoles()
   if (!roles.includes(user.role)) return null
   return claims(user.token).aal === 'aal2' ? null : 'MFA_REQUIRED'
 }

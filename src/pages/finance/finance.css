@@ -3775,10 +3775,6 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
 .fin-catsum > div.is-warn { border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); background: var(--warn-wash); }
 .fin-catsum__link { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .fin-catsum__link:focus-visible { outline: 2px solid var(--ocean); outline-offset: 2px; border-radius: var(--r-s); }
-.fin-catuse { display: flex; align-items: center; gap: var(--s-2); margin-top: 4px; max-width: 220px; }
-.fin-catuse__bar { flex: 1; height: 5px; border-radius: 99px; background: var(--wash); overflow: hidden; }
-.fin-catuse__bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ocean); }
-.fin-catuse small { flex: none; color: var(--text-2); font-size: var(--t-xs); font-variant-numeric: tabular-nums; min-width: 2.4em; text-align: end; }
 .fin-tidy { display: grid; gap: var(--s-4); padding: var(--s-4) var(--s-5); border: 1px solid color-mix(in srgb, var(--ocean) 25%, var(--line)); border-radius: var(--r-xl); background: var(--sheet); }
 .fin-tidy.is-clean { border-color: var(--line); }
 .fin-tidy__head { display: flex; align-items: center; gap: var(--s-3); }
@@ -3823,7 +3819,6 @@ body.fin-col-resizing { cursor: col-resize !important; user-select: none; }
   .fin-catsum { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
   .fin-catsum > div { padding: var(--s-3); }
   .fin-catsum dd { font-size: var(--t-lg); }
-  .fin-catuse { max-width: none; }
   .fin-tidy { padding: var(--s-3) var(--s-4); gap: var(--s-3); }
   .fin-tidy__head { flex-wrap: wrap; }
   .fin-tidy__head > .fin-btn { flex: 1 1 100%; min-height: 44px; justify-content: center; }
@@ -4677,3 +4672,9 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-dm__sharedrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); min-height: 56px; }
 .fin-dm__sharedrow:last-child { border-bottom: 0; }
 @media (max-width: 767px) { .fin-dm__folder.is-keyed { padding-inline-end: 60px; } .fin-dm__folder.is-manual { padding-inline-end: 148px; } .fin-dm__sharedrow { grid-template-columns: auto minmax(0, 1fr); } .fin-dm__sharedrow > a { grid-column: 2; justify-self: start; } }
+
+/* the hand-receipts list: the amount, the status and the actions sit in the same place on every row */
+@media (min-width: 761px) {
+  .fin-hand__list > li { grid-template-columns: 56px minmax(0, 1fr) 124px 132px 148px; }
+  .fin-hand__acts { justify-content: flex-end; }
+}

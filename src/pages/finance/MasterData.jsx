@@ -187,14 +187,14 @@ export default function MasterData({ kind }) {
       .sort((a, b) => { const x = a[sort.key] ?? ''; const y = b[sort.key] ?? ''; return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
   }, [list, filters, q, showArchived, stats, sort, def, kind, projects])
   const pending = kind === 'suppliers' ? list.filter((s) => s.status === 'pending').length : 0
-  // categories: the figures above the list, and each category's share of the spending (the bar under its name)
+  // categories: the figures above the list (the share of each category is main's "עמודות" view)
   const catSum = useMemo(() => {
     if (kind !== 'categories') return null
     const live = documents.filter((d) => !['rejected', 'duplicate', 'archived'].includes(d.status))
     const none = live.filter((d) => !d.category_id && !categories.some((c) => c.name === d.category))
     const tops = list.filter((c) => !c.parent_id)
     const spend = tops.reduce((a, c) => a + Math.max(0, stats[c.id]?.total || 0), 0)
-    return { active: list.filter((c) => c.active !== false).length, placed: live.length - none.length, none, spend, max: Math.max(1, ...list.map((c) => Math.abs(stats[c.id]?.total || 0))) }
+    return { active: list.filter((c) => c.active !== false).length, placed: live.length - none.length, none, spend }
   }, [kind, documents, categories, list, stats])
   const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }
   // categories can be read as a list, as bars ranked by spending, or as tiles; the choice is kept on this device
@@ -312,7 +312,6 @@ export default function MasterData({ kind }) {
                   <td className="fin-td-main">
                     <button type="button" className="fin-cell-btn fin-cell-main" onClick={(e) => { e.stopPropagation(); go(`${def.path}/${r.id}`) }}>{r.name}</button>
                     <small className="fin-cell-sub">{r.trading_name || r.commercial_name || r.name_en || r.location || r.description || ''}</small>
-                    {catSum && (r.total || 0) > 0 && <span className="fin-catuse" title={`${Math.round(((r.total || 0) / (catSum.spend || 1)) * 100)}% מההוצאות המשויכות`}><span className="fin-catuse__bar" aria-hidden="true"><span style={{ width: `${Math.max(2, Math.round((Math.abs(r.total || 0) / catSum.max) * 100))}%` }} /></span><small>{(r.total || 0) / (catSum.spend || 1) < 0.01 ? 'פחות מ-1%' : `${Math.round(((r.total || 0) / (catSum.spend || 1)) * 100)}%`}</small></span>}
                   </td>
                   {kind === 'suppliers' && <><td className="fin-col-md fin-ltr" data-label="ח.פ">{r.vat_id || <span className="fin-attn-text">חסר</span>}</td><td className="fin-col-lg" data-label="סוג">{r.supplier_type || '—'}</td><td className="fin-col-lg" data-label="קטגוריה">{r.default_category || '—'}</td></>}
                   {kind === 'categories' && <><td className="fin-col-md" data-label="אב">{nameOf(categories, r.parent_id) || '—'}</td><td className="fin-col-md fin-ltr" data-label="קוד">{r.accounting_code || '—'}</td><td className="fin-num fin-ent-stat" data-label="קיזוז">{Number(r.vat_deductible_pct)}%</td></>}

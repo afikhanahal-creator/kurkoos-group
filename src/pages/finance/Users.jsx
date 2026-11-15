@@ -31,10 +31,15 @@ const ROLE_PICK = [
    how much it holds, who its accountant is and which accounting software its documents go to. The card opens the company. */
 function CompaniesGrid() {
   const { members, businesses, mailboxes, documents, can, go } = useFinance()
-  const soft = useAsync(() => api.loadIntegrations().catch(() => []), [])
+  // what a company's documents go to: a direct connection (fin_integrations), or an intake address of a software, which is an
+  // automatic delivery whose name carries the software's tag ("[costapp] CostApp") — the same reading as the connections screen
+  const soft = useAsync(() => Promise.all([api.loadIntegrations().catch(() => []), api.loadOutbound().catch(() => [])]).then(([direct, routes]) => [
+    ...(direct || []).filter((i) => i.enabled && !['file', 'hashavshevet'].includes(i.provider)),
+    ...(routes || []).filter((o) => o.enabled && o.kind === 'email' && /^\[[a-z0-9_]+\]\s*/.test(o.name || '')).map((o) => ({ business_id: o.business_id, name: o.name.replace(/^\[[a-z0-9_]+\]\s*/, '') })),
+  ]), [])
   const manage = can('manage')
   if (!businesses.length) return <Empty title="עוד אין חברות" icon="company" action={<button type="button" className="fin-btn fin-btn--primary" onClick={() => go('/companies')}>הוספת חברה</button>}>החברות בקבוצה, עם ח.פ ומייל של רו״ח.</Empty>
-  const softwareOf = (b) => { const l = (soft.data || []).filter((i) => i.enabled && !['file', 'hashavshevet'].includes(i.provider)); return l.find((i) => i.business_id === b.id) || l.find((i) => !i.business_id) }
+  const softwareOf = (b) => { const l = soft.data || []; return l.find((i) => i.business_id === b.id) || l.find((i) => !i.business_id) }
   const many = (n, one, more) => (n === 1 ? one : more)
   return (
     <ul className="fin-cogrid">

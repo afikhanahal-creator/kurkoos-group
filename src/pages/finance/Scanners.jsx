@@ -19,7 +19,7 @@ export default function Scanners() {
   const { businesses, members, can } = useFinance()
   const me = useSession()
   const list = useAsync(() => api.loadWhatsappSenders(), [])
-  const inbox = useAsync(() => (can('operate') ? api.loadWhatsappInbox(60) : []), [list.data])
+  const inbox = useAsync(() => (can('operate') ? api.loadWhatsappInbox(200) : []), [list.data])
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
   const [add, setAdd] = useState(null)
   const [err, setErr] = useState('')
@@ -61,7 +61,11 @@ export default function Scanners() {
       refused: msgs.filter((m) => m.outcome === 'refused_unknown_number' && new Date(m.at).getTime() > month),
     }
   }, [phones, inbox.data]) // eslint-disable-line react-hooks/exhaustive-deps
-  const unknown = [...new Set(stats.refused.map((m) => m.phone).filter(Boolean))].filter((p) => !phones.some((s) => s.phone === p))
+  // Messages from numbers that are not registered here are not listed: the office number also gets messages that have
+  // nothing to do with invoices, and a list of strangers is only noise. They stay counted in "ממספרים לא רשומים", and
+  // "ניקוי הודעות שלא נקלטו" removes them from the log too. A number is added with "הוספת טלפון".
+  const log = (inbox.data || []).filter((r) => r.outcome !== 'refused_unknown_number' || phones.some((p) => p.phone === r.phone))
+  const stale = (inbox.data || []).filter((r) => !r.document_id && r.outcome !== 'imported')
 
   const openAdd = (phone = '') => { setErr(''); setAdd({ phone: phone ? localPhone(phone) : '', label: '', business_id: '', user_id: me?.id || '' }) }
   const save = async (e) => {
@@ -138,16 +142,9 @@ export default function Scanners() {
         <div><dt>מספרים פעילים</dt><dd>{stats.active}</dd></div>
         <div><dt>מסמכים שנקלטו</dt><dd>{stats.docs.toLocaleString('he-IL')}</dd></div>
         <div><dt>ב-30 הימים האחרונים</dt><dd>{stats.month}</dd></div>
-        {can('operate') && <div className={stats.refused.length ? 'is-attn' : ''}><dt>ממספרים לא רשומים</dt><dd>{stats.refused.length}</dd></div>}
+        {can('operate') && <div><dt>ממספרים לא רשומים</dt><dd>{stats.refused.length}</dd></div>}
       </dl>
 
-      {unknown.length > 0 && can('operate') && (
-        <div className="fin-wa__unknown" role="status">
-          <Icon name="alert" size={18} />
-          <span>{unknown.length === 1 ? 'מספר אחד שלא רשום ניסה לשלוח מסמכים' : `${unknown.length} מספרים שלא רשומים ניסו לשלוח מסמכים`}. אם הם שלכם, הוסיפו אותם:</span>
-          <span className="fin-wa__unknown-list">{unknown.slice(0, 4).map((p) => <button key={p} type="button" className="fin-btn fin-btn--sm" onClick={() => openAdd(p)} dir="ltr"><Icon name="plus" size={14} /> {pretty(p)}</button>)}</span>
-        </div>
-      )}
       {msg && <p className="fin-note" role="status">{msg}</p>}
 
       <div className="fin-section-head">
@@ -185,20 +182,20 @@ export default function Scanners() {
         </ul>
       )}
 
-      {can('operate') && (inbox.data || []).length > 0 && (
+      {can('operate') && (log.length > 0 || stale.length > 0) && (
         <section className="fin-panelcard" aria-label="הודעות אחרונות">
           <header>
             <h3>הודעות אחרונות</h3>
-            {can('manage') && inbox.data.some((r) => !r.document_id && r.outcome !== 'imported') && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={busy} onClick={() => clearLog(inbox.data.filter((r) => !r.document_id && r.outcome !== 'imported').map((r) => r.id))}><Icon name="trash" size={15} /> ניקוי הודעות שלא נקלטו</button>}
+            {can('manage') && stale.length > 0 && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={busy} onClick={() => clearLog(stale.map((r) => r.id))}><Icon name="trash" size={15} /> ניקוי הודעות שלא נקלטו</button>}
           </header>
           <ul className="fin-wa__log">
-            {inbox.data.slice(0, 20).map((r) => {
+            {!log.length && <li className="fin-muted fin-small">אין הודעות ממספרים רשומים. הודעות ממספרים שלא רשומים במערכת לא מוצגות כאן.</li>}
+            {log.slice(0, 20).map((r) => {
               const [tone, label] = OUTCOME[r.outcome] || ['muted', r.outcome]
               return (
                 <li key={r.id}>
                   <span className="fin-wa__log-main"><strong>{r.document_id ? <a className="fin-link" href={`/admin/finance/documents/${r.document_id}`}>{r.file_name || 'מסמך'}</a> : r.file_name || (r.kind === 'text' ? 'הודעת טקסט' : 'הודעה')}</strong><small><bdi dir="ltr">{pretty(r.phone || '')}</bdi> · {dateTime(r.at)}</small></span>
                   <Pill tone={tone}>{label}</Pill>
-                  {r.outcome === 'refused_unknown_number' && r.phone && !phones.some((s) => s.phone === r.phone) && <button type="button" className="fin-btn fin-btn--sm" onClick={() => openAdd(r.phone)}>הוספה</button>}
                   {can('manage') && !r.document_id && r.outcome !== 'imported' && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={busy} onClick={() => clearLog([r.id])} aria-label="מחיקת השורה מהיומן" title="מחיקה מהיומן"><Icon name="trash" size={16} /></button>}
                 </li>
               )

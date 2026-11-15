@@ -82,6 +82,86 @@ async function forward(body) {
   } catch (e) { console.warn('[finance-whatsapp] forward failed', String(e.message || e).slice(0, 120)) } finally { clearTimeout(t) }
 }
 
+/* ---------- who sent it ----------
+   WhatsApp is moving to private ids: a sender may arrive as "<digits>@lid" instead of "<phone>@c.us". Green API says
+   the phone is still included while it can be (docs/faq/lid-important-differences, beta), without naming the field, so
+   every field of the sender is looked at for a phone. When none is there, a link a person made in the WhatsApp screen
+   (fin_settings.whatsapp_lid_map: { lid: phone }) answers. Groups are never scanners. */
+const PN = /^(\d{8,15})@(?:c\.us|s\.whatsapp\.net)$/
+async function lidMap() { return (await one('fin_settings?key=eq.whatsapp_lid_map&select=value').catch(() => null))?.value || {} }
+export async function phoneOf(sd = {}) {
+  const chat = String(sd.chatId || sd.sender || sd.senderId || '')
+  if (chat.endsWith('@c.us')) return { phone: chat.split('@')[0].replace(/\D/g, '') }
+  if (!chat.endsWith('@lid')) return { group: true }
+  const lid = chat.split('@')[0].replace(/\D/g, '')
+  for (const v of Object.values(sd)) { const m = PN.exec(String(v ?? '')); if (m) return { phone: m[1], lid } }
+  for (const [k, v] of Object.entries(sd)) { const d = String(v ?? '').replace(/[\s+-]/g, ''); if (/phone|pn$/i.test(k) && /^\d{8,15}$/.test(d)) return { phone: d, lid } }
+  const map = await lidMap()
+  return map[lid] ? { phone: map[lid], lid } : { lid }
+}
+/* a file whose sender's number WhatsApp hid: one row, so the screen can ask whose phone it is */
+async function noteHidden({ lid, messageId, kind, name, file }) {
+  await insert('fin_whatsapp_inbox', { message_id: messageId || null, phone: `lid:${lid}`, kind, outcome: 'hidden_number', file_name: file ? String(file).slice(0, 200) : null, detail: String(name || '').slice(0, 80) || null }).catch(() => {})
+}
+/* the screen links a hidden id to a registered phone; that message (and every later one from the id) is taken in */
+export async function linkHidden({ inboxId, phone }, user) {
+  const row = await one(`fin_whatsapp_inbox?id=eq.${encodeURIComponent(inboxId)}&outcome=eq.hidden_number&select=*`)
+  if (!row) throw Object.assign(new Error('ההודעה לא נמצאה'), { status: 404 })
+  const sender = await one(`fin_whatsapp_senders?phone=eq.${encodeURIComponent(String(phone).replace(/\D/g, ''))}&active=eq.true&select=*`)
+  if (!sender) throw Object.assign(new Error('הטלפון הזה לא רשום'), { status: 400 })
+  const lid = String(row.phone).replace(/^lid:/, '')
+  const map = { ...(await lidMap()), [lid]: sender.phone }
+  const body = { value: map, updated_by: user?.id || null, updated_at: new Date().toISOString() }
+  const done = await patch('fin_settings?key=eq.whatsapp_lid_map', body).catch(() => null)
+  if (!done || (Array.isArray(done) && !done.length)) await insert('fin_settings', { key: 'whatsapp_lid_map', ...body })
+  await audit('settings', null, 'whatsapp_lid_linked', { phone: `…${sender.phone.slice(-4)}` }, user)
+  // the message itself: its file is asked from the provider again (a link in a webhook does not live long)
+  await sb(`fin_whatsapp_inbox?id=eq.${row.id}`, { method: 'DELETE', prefer: 'return=minimal' }).catch(() => {})
+  const caught = await catchUp({ minutes: 1440, only: row.message_id }).catch((e) => ({ error: String(e.message || e) }))
+  return { linked: true, ...caught }
+}
+
+/* ---------- nothing is lost: the provider's own journal ----------
+   A delivery can be lost (the other system that passes messages on was down, a hidden number, a timeout). Green API
+   keeps a journal of the line's incoming messages (lastIncomingMessages, last 24 h by default). Every few minutes, and
+   when the WhatsApp screen opens, the files in it from registered phones that have no row here are taken in like any
+   other. A message already handled is never taken twice: its id is the inbox row's unique key. */
+export async function catchUp({ minutes = 1440, only = null, trigger = 'tick' } = {}) {
+  if (!process.env.GREENAPI_ID_INSTANCE || !process.env.GREENAPI_TOKEN) return { skipped: 'not_configured' }
+  const list = await green('GET', `lastIncomingMessages`, null, `minutes=${Math.max(1, Math.min(1440, Number(minutes) || 1440))}`)
+  const files = (Array.isArray(list) ? list : []).filter((m) => ['imageMessage', 'documentMessage'].includes(m.typeMessage) && m.idMessage && (!only || m.idMessage === only))
+  const out = { seen: files.length, imported: 0, hidden: 0, other: 0 }
+  for (const m of files) {
+    if (await one(`fin_whatsapp_inbox?message_id=eq.${encodeURIComponent(m.idMessage)}&select=id`)) continue
+    const who = await phoneOf({ ...m, chatId: m.chatId, sender: m.senderId })
+    if (who.group) continue
+    if (!who.phone) { await noteHidden({ lid: who.lid, messageId: m.idMessage, kind: m.typeMessage, name: m.senderName || m.senderContactName, file: m.fileName }); out.hidden++; continue }
+    const sender = await one(`fin_whatsapp_senders?phone=eq.${who.phone}&active=eq.true&select=*`)
+    if (!sender || (sender.user_id && !(await one(`fin_members?user_id=eq.${sender.user_id}&active=eq.true&select=user_id`)))) continue   // a stranger leaves no trace
+    let row
+    try { row = await insert('fin_whatsapp_inbox', { message_id: m.idMessage, phone: who.phone, kind: m.typeMessage, outcome: 'received' }) } catch { continue }   // the webhook took it meanwhile
+    const log = (r) => patch(`fin_whatsapp_inbox?id=eq.${row.id}`, r).catch(() => {})
+    let url = m.downloadUrl
+    if (!url) { try { url = (await green('POST', 'downloadFile', { chatId: m.chatId, idMessage: m.idMessage }))?.downloadUrl } catch { url = '' } }
+    const r = await ingest({ phone: who.phone, sender, kind: m.typeMessage, file: { downloadUrl: url, fileName: m.fileName, mimeType: m.mimeType }, log, via: 'נקלט מהיומן של WhatsApp (המשלוח הישיר לא הגיע)' })
+    if (r.outcome === 'imported') out.imported++; else out.other++
+  }
+  if (out.imported || out.hidden || trigger !== 'tick') await audit('settings', null, 'whatsapp_catch_up', { trigger, ...out }, { email: 'agent' }).catch(() => {})
+  return out
+}
+/* at most every five minutes from the per-minute tick */
+export async function catchUpTick() {
+  if (!configured()) return null
+  const row = await one('fin_settings?key=eq.whatsapp_catchup_at&select=value').catch(() => null)
+  const last = Date.parse(row?.value || '') || 0
+  if (Date.now() - last < 5 * 60_000) return null
+  const at = { value: new Date().toISOString(), updated_at: new Date().toISOString() }
+  const done = await patch('fin_settings?key=eq.whatsapp_catchup_at', at).catch(() => null)
+  if (!done || (Array.isArray(done) && !done.length)) await insert('fin_settings', { key: 'whatsapp_catchup_at', ...at }).catch(() => {})
+  // the first run looks back a whole day (what was lost before this existed), then an hour each time
+  return catchUp({ minutes: last ? 60 : 1440, trigger: 'tick' })
+}
+
 export default async function whatsappWebhook(req, res) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim()
   const want = process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN || ''
@@ -107,12 +187,18 @@ async function take(b, res) {
   // API (outgoingAPIMessageReceived) are never read, so its own confirmations cannot loop back.
   const fromOffice = b.typeWebhook === 'outgoingMessageReceived'
   if (b.typeWebhook !== 'incomingMessageReceived' && !fromOffice) { res.status(200).json({ ok: true, ignored: b.typeWebhook || 'unknown' }); return }
-  const chat = String(b.senderData?.chatId || b.senderData?.sender || '')
-  if (!chat.endsWith('@c.us')) { res.status(200).json({ ok: true, ignored: 'group' }); return }   // groups are not scanners
-  const phone = chat.split('@')[0].replace(/\D/g, '')
+  const who = await phoneOf(b.senderData || {})
+  if (who.group) { res.status(200).json({ ok: true, ignored: 'group' }); return }   // groups are not scanners
   const messageId = String(b.idMessage || '')
   const md = b.messageData || {}
   const kind = md.typeMessage || 'unknown'
+  if (!who.phone) {
+    // WhatsApp hid the number behind a private id and nothing in the message gives it. A file is noted, so a person can
+    // say whose phone it is (the WhatsApp screen); after that this id is known and its files are taken in
+    if (['imageMessage', 'documentMessage'].includes(kind) && b.typeWebhook === 'incomingMessageReceived') await noteHidden({ lid: who.lid, messageId, kind, name: b.senderData?.senderName || b.senderData?.senderContactName || '', file: md.fileMessageData?.fileName })
+    res.status(200).json({ ok: true, outcome: 'hidden_number' }); return
+  }
+  const phone = who.phone
   let sender = await one(`fin_whatsapp_senders?phone=eq.${phone}&active=eq.true&select=*`)
   if (fromOffice) {
     // The office phone talks to clients all day, so only two chats count: the note-to-self chat (the office number
@@ -144,27 +230,33 @@ async function take(b, res) {
     await log({ outcome: 'refused_unknown_number' })
     res.status(200).json({ ok: true, outcome: 'refused_unknown_number' }); return
   }
-  const file = md.fileMessageData
+  const out = await ingest({ phone, sender, kind, file: md.fileMessageData, log })
+  res.status(200).json(out)
+}
+
+/* one file from a registered phone: checked, stored, read, answered. Used by the webhook and by the catch-up from the
+   provider's own journal. `log` writes the message's inbox row. Returns what happened. */
+async function ingest({ phone, sender, kind, file, log, via = '' }) {
   if (!['imageMessage', 'documentMessage'].includes(kind) || !file?.downloadUrl) {
     // an ordinary chat message from a registered phone is not a failed scan: logged, not answered
     await log({ sender_id: sender.id, outcome: 'unsupported' })
-    res.status(200).json({ ok: true, outcome: 'unsupported' }); return
+    return { ok: true, outcome: 'unsupported' }
   }
   try {
     const mime = MIME_OK.has(file.mimeType) ? file.mimeType : kind === 'imageMessage' ? 'image/jpeg' : file.mimeType
-    if (!MIME_OK.has(mime)) { await log({ sender_id: sender.id, outcome: 'unsupported', file_name: file.fileName, detail: mime }); await reply(phone, 'אפשר לשלוח רק תמונה או PDF.'); res.status(200).json({ ok: true, outcome: 'unsupported' }); return }
-    if (!mediaUrlOk(file.downloadUrl)) { await log({ sender_id: sender.id, outcome: 'failed', file_name: file.fileName, detail: `download host not allowed: ${(() => { try { return new URL(file.downloadUrl).hostname } catch { return 'unreadable address' } })()}` }); res.status(200).json({ ok: false, outcome: 'failed' }); return }
+    if (!MIME_OK.has(mime)) { await log({ sender_id: sender.id, outcome: 'unsupported', file_name: file.fileName, detail: mime }); await reply(phone, 'אפשר לשלוח רק תמונה או PDF.'); return { ok: true, outcome: 'unsupported' } }
+    if (!mediaUrlOk(file.downloadUrl)) { await log({ sender_id: sender.id, outcome: 'failed', file_name: file.fileName, detail: `download host not allowed: ${(() => { try { return new URL(file.downloadUrl).hostname } catch { return 'unreadable address' } })()}` }); return { ok: false, outcome: 'failed' } }
     const usage = await storageUsage()
     if (usage !== null && usage >= QUOTA_STOP) {
       await log({ sender_id: sender.id, outcome: 'refused_quota', file_name: file.fileName, detail: `storage ${Math.round(usage * 100)}%` })
       await reply(phone, 'המערכת לא יכולה לקבל קבצים כרגע (האחסון מלא). המשרד קיבל התראה. נסו שוב מחר.')
-      res.status(200).json({ ok: true, outcome: 'refused_quota' }); return
+      return { ok: true, outcome: 'refused_quota' }
     }
     const buf = await fetchMedia(file.downloadUrl)
-    if (!buf) { await log({ sender_id: sender.id, outcome: 'unsupported', file_name: file.fileName, detail: 'too large' }); await reply(phone, 'הקובץ גדול מ-12MB.'); res.status(200).json({ ok: true, outcome: 'too_large' }); return }
+    if (!buf) { await log({ sender_id: sender.id, outcome: 'unsupported', file_name: file.fileName, detail: 'too large' }); await reply(phone, 'הקובץ גדול מ-12MB.'); return { ok: true, outcome: 'too_large' } }
     const hash = crypto.createHash('sha256').update(buf).digest('hex')
     const dup = await one(`fin_documents?file_hash=eq.${hash}&select=id`)
-    if (dup) { await log({ sender_id: sender.id, outcome: 'duplicate', document_id: dup.id, file_name: file.fileName }); await reply(phone, 'המסמך הזה כבר במערכת. אין צורך לשלוח שוב.'); res.status(200).json({ ok: true, outcome: 'duplicate' }); return }
+    if (dup) { await log({ sender_id: sender.id, outcome: 'duplicate', document_id: dup.id, file_name: file.fileName }); await reply(phone, 'המסמך הזה כבר במערכת. אין צורך לשלוח שוב.'); return { ok: true, outcome: 'duplicate' } }
     const path = `whatsapp/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${extOf(mime)}`
     await upload(path, buf, mime)
     const doc = await insert('fin_documents', { status: 'processing', source: 'whatsapp', business_id: sender.business_id, created_by: sender.user_id, file_path: path, file_name: String(file.fileName || `whatsapp.${extOf(mime)}`).slice(0, 200), file_mime: mime, file_size: buf.length, file_hash: hash, email_from: `WhatsApp ${phone}`, email_subject: file.caption ? String(file.caption).slice(0, 300) : null })
@@ -172,7 +264,7 @@ async function take(b, res) {
     const done = await processStored(doc, runs, 'whatsapp')
     await closeRuns(runs)
     if (sender.id) await patch(`fin_whatsapp_senders?id=eq.${sender.id}`, { docs_count: (sender.docs_count || 0) + 1, last_received_at: new Date().toISOString() })
-    await log({ sender_id: sender.id, outcome: 'imported', document_id: doc.id, file_name: file.fileName })
+    await log({ sender_id: sender.id, outcome: 'imported', document_id: doc.id, file_name: file.fileName, ...(via ? { detail: via } : {}) })
     const site = String(process.env.SITE_URL || '').replace(/\/$/, '')
     const link = site ? `\n${site}/admin/finance/documents/${doc.id}` : ''
     const company = done?.business_id ? (await one(`fin_businesses?id=eq.${done.business_id}&select=name`))?.name : null
@@ -182,11 +274,11 @@ async function take(b, res) {
       : `החשבונית התקבלה ונקלטה במערכת בהצלחה.\n\nספק: ${done.supplier_name}\nסכום: ${_m(done.total_amount)}${company ? `\nחברה: ${company}` : ''}\n\nאפשר לצפות בה ב-Kurkoos Finance.${link}`)
     // the sender already has the confirmation; now the automatic deliveries (webhook / email) for the new document
     const { flushOutbound } = await import('./outbound.js'); await flushOutbound({ budgetMs: 6_000 }).catch(() => {})
-    res.status(200).json({ ok: true, outcome: 'imported', document_id: doc.id })
+    return { ok: true, outcome: 'imported', document_id: doc.id }
   } catch (e) {
     await log({ sender_id: sender.id, outcome: 'failed', file_name: file?.fileName, detail: String(e.message || e).slice(0, 300) })
     await reply(phone, 'משהו השתבש בקבלת הקובץ. נסו שוב בעוד כמה דקות.')
-    res.status(200).json({ ok: false, outcome: 'failed' })   // 200: a retry storm would not help
+    return { ok: false, outcome: 'failed' }   // answered 200: a retry storm would not help
   }
 }
 
@@ -222,8 +314,8 @@ async function finalHook(origin) {
   } catch { /* the plain address stands */ }
   return want
 }
-const green = async (method, path, body) => {
-  const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/${path}/${process.env.GREENAPI_TOKEN}`, {
+const green = async (method, path, body, query = '') => {
+  const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/${path}/${process.env.GREENAPI_TOKEN}${query ? `?${query}` : ''}`, {
     method, signal: AbortSignal.timeout(12_000), ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
   })
   const d = await r.json().catch(() => null)

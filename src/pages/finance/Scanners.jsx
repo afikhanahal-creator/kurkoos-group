@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
@@ -9,7 +9,7 @@ import Select from './Select.jsx'
 import { normalizePhone, validMobile, prettyPhone as pretty, localPhone } from './phone.js'
 
 export { normalizePhone, validMobile }
-const OUTCOME = { unauthorized: ['attn', 'נדחה: קוד אימות שגוי'], imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], refused_unknown_number: ['attn', 'מספר לא רשום'], unsupported: ['warn', 'אין קובץ מצורף'], failed: ['bad', 'נכשל'] }
+const OUTCOME = { unauthorized: ['attn', 'נדחה: קוד אימות שגוי'], imported: ['ok', 'נקלט'], duplicate: ['muted', 'כבר קיים'], refused_unknown_number: ['attn', 'מספר לא רשום'], hidden_number: ['warn', 'WhatsApp הסתיר את המספר'], unsupported: ['warn', 'אין קובץ מצורף'], failed: ['bad', 'נכשל'] }
 const initials = (t) => String(t || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
 /* The WhatsApp numbers that may send documents: the office number people send to, every registered phone with what
@@ -35,6 +35,23 @@ export default function Scanners() {
     if (!ids.length) return
     if (ids.length > 1 && !(await askConfirm({ title: 'ניקוי היומן', text: `למחוק מהיומן ${ids.length} הודעות שלא נקלטו? מסמכים שכבר במערכת לא מושפעים.`, ok: 'ניקוי', danger: true }))) return
     try { const r = await api.callServer('whatsapp-inbox-delete', { ids }); setMsg(r.removed === 1 ? 'שורה אחת נמחקה מהיומן' : `${r.removed} שורות נמחקו מהיומן`); inbox.reload?.() } catch (e) { setMsg(e.message) }
+  }
+  // files from registered phones that WhatsApp holds but the live delivery never brought: asked once when the screen
+  // opens (the server also asks every five minutes), and on the button
+  const [catching, setCatching] = useState(false)
+  const catchUp = async (quiet = false) => {
+    setCatching(true)
+    try {
+      const r = await api.callServer('whatsapp-catchup')
+      if (r.imported || r.hidden) inbox.reload?.()
+      if (!quiet || r.imported) setMsg(r.skipped ? 'החיבור ל-WhatsApp לא מוגדר בשרת' : r.imported ? `${r.imported === 1 ? 'מסמך אחד שלא הגיע נקלט עכשיו' : `${r.imported} מסמכים שלא הגיעו נקלטו עכשיו`} מהיומן של WhatsApp` : 'אין קבצים מטלפונים רשומים שלא הגיעו ב-24 השעות האחרונות')
+    } catch (e) { if (!quiet) setMsg(e.message) } finally { setCatching(false) }
+  }
+  useEffect(() => { if (can('operate')) catchUp(true) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const linkHidden = async (row, phone) => {
+    if (!phone) return
+    setBusy(true)
+    try { const r = await api.callServer('whatsapp-link-hidden', { inbox_id: row.id, phone }); setMsg(r.imported ? 'המספר שויך והמסמך נקלט' : 'המספר שויך. מעכשיו הקבצים ממנו נקלטים'); inbox.reload?.(); list.reload?.() } catch (e) { setMsg(e.message) } finally { setBusy(false) }
   }
   const runCheck = async () => { setChecking('check'); try { setCheck(await api.callServer('whatsapp-check')) } catch (e) { setCheck({ error: e.message, steps: [] }) } finally { setChecking('') } }
   const turnOn = async (force = false) => {
@@ -186,6 +203,7 @@ export default function Scanners() {
         <section className="fin-panelcard" aria-label="הודעות אחרונות">
           <header>
             <h3>הודעות אחרונות</h3>
+            <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={catching} onClick={() => catchUp(false)}><Icon name="refresh" size={15} /> {catching ? 'בודק…' : 'בדיקת הודעות שלא הגיעו'}</button>
             {can('manage') && stale.length > 0 && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={busy} onClick={() => clearLog(stale.map((r) => r.id))}><Icon name="trash" size={15} /> ניקוי הודעות שלא נקלטו</button>}
           </header>
           <ul className="fin-wa__log">
@@ -194,8 +212,9 @@ export default function Scanners() {
               const [tone, label] = OUTCOME[r.outcome] || ['muted', r.outcome]
               return (
                 <li key={r.id}>
-                  <span className="fin-wa__log-main"><strong>{r.document_id ? <a className="fin-link" href={`/admin/finance/documents/${r.document_id}`}>{r.file_name || 'מסמך'}</a> : r.file_name || (r.kind === 'text' ? 'הודעת טקסט' : 'הודעה')}</strong><small><bdi dir="ltr">{pretty(r.phone || '')}</bdi> · {dateTime(r.at)}</small></span>
+                  <span className="fin-wa__log-main"><strong>{r.document_id ? <a className="fin-link" href={`/admin/finance/documents/${r.document_id}`}>{r.file_name || 'מסמך'}</a> : r.file_name || (r.kind === 'text' ? 'הודעת טקסט' : 'הודעה')}</strong><small>{r.outcome === 'hidden_number' ? <>{r.detail || 'שולח לא ידוע'}</> : <bdi dir="ltr">{pretty(r.phone || '')}</bdi>} · {dateTime(r.at)}{r.outcome === 'imported' && r.detail ? ` · ${r.detail}` : ''}</small></span>
                   <Pill tone={tone}>{label}</Pill>
+                  {r.outcome === 'hidden_number' && can('operate') && phones.length > 0 && <Select className="fin-wa__link" value="" onChange={(e) => linkHidden(r, e.target.value)} disabled={busy} aria-label="של איזה טלפון ההודעה"><option value="">של מי הטלפון?</option>{phones.filter((p) => p.active).map((p) => <option key={p.id} value={p.phone}>{p.label || pretty(p.phone)}</option>)}</Select>}
                   {can('manage') && !r.document_id && r.outcome !== 'imported' && <button type="button" className="fin-icon-btn fin-icon-btn--danger" disabled={busy} onClick={() => clearLog([r.id])} aria-label="מחיקת השורה מהיומן" title="מחיקה מהיומן"><Icon name="trash" size={16} /></button>}
                 </li>
               )

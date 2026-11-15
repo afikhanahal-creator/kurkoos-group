@@ -22,7 +22,7 @@ import { ask } from './finance/assistant.js'
 import { mfaBlock, mfaRoles, loginFailed, authEvent, blockMember, endSessions, resetMfa, memberSecurity } from './finance/security.js'
 import { CLOUD, syncCloud, connectCloud, saveDocsToCloud, testCloud } from './finance/cloud.js'
 import { listLinks, fetchLinked, mailSource, mailFile } from './finance/linked.js'
-import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup, setReplies as waSetReplies, notifyApproved as waNotifyApproved } from './finance/whatsapp.js'
+import whatsappWebhook, { configured as waConfigured, officeNumber, sendDocument, health as waHealth, setup as waSetup, setReplies as waSetReplies, notifyApproved as waNotifyApproved, catchUp as waCatchUp, catchUpTick as waCatchUpTick, linkHidden as waLinkHidden } from './finance/whatsapp.js'
 import { EVENTS, checkUrl, emailOk, flushOutbound, testOutbound } from './finance/outbound.js'
 import { sendToAccountant } from './finance/mailout.js'
 
@@ -91,6 +91,8 @@ const ROLES = {
   'merge-docs': ['admin', 'finance_manager'],
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
   'whatsapp-check': ['admin', 'finance_manager'],
+  'whatsapp-catchup': ['admin', 'finance_manager'],
+  'whatsapp-link-hidden': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
   'whatsapp-inbox-delete': ['admin', 'finance_manager'],
   'drive-forget': ['admin', 'finance_manager', 'employee'],
@@ -223,6 +225,8 @@ export default async function handler(req, res) {
       await import('./finance/driveSync.js').then((ds) => ds.syncFromDrive({ trigger: 'scan', budgetMs: 8_000, origin: origin(req) })).catch(() => [])
       const drive = await archive.tick({ started, budgetMs: 15_000, trigger: 'scan' }).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
       await archive.reconcileStep({ started, budgetMs: 25_000 }).catch(() => [])
+      // WhatsApp files the live delivery missed, from the provider's journal (every five minutes)
+      await waCatchUpTick().catch(() => null)
       res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
     } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
@@ -709,6 +713,15 @@ export default async function handler(req, res) {
       }
       case 'whatsapp-check': {
         res.status(200).json(await waHealth(origin(req)))
+        return
+      }
+      case 'whatsapp-catchup': {
+        // files from registered phones that are in the provider's journal (last 24 h) and never arrived here
+        res.status(200).json(await waCatchUp({ minutes: 1440, trigger: 'manual' }))
+        return
+      }
+      case 'whatsapp-link-hidden': {
+        res.status(200).json(await waLinkHidden({ inboxId: String(body.inbox_id || ''), phone: String(body.phone || '') }, user))
         return
       }
       case 'whatsapp-inbox-delete': {

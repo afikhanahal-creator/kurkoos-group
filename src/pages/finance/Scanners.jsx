@@ -22,7 +22,7 @@ export default function Scanners() {
   const { businesses, members, can } = useFinance()
   const me = useSession()
   const list = useAsync(() => api.loadWhatsappSenders(), [])
-  const inbox = useAsync(() => (can('operate') ? api.loadWhatsappInbox(60) : []), [list.data])
+  const inbox = useAsync(() => (can('operate') ? api.loadWhatsappInbox(200) : []), [list.data])
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
   const [add, setAdd] = useState(null)
   const [err, setErr] = useState('')

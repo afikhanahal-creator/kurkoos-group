@@ -1747,8 +1747,11 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const homeNums = await page.locator('.fin-alertrow--warn').innerText().catch(() => '')
   record('NUMS', 'מסמכים שהמערכת לא בטוחה בסכומים שלהם', 'לשונית "מספרים לבדיקה" מראה מסמך שהסכומים בו לא מסתדרים; מרכז הבקרה מפנה אליה', `שורות: ${numRows}; בבית: "${homeNums}"`, numRows >= 1 && /אשרו את המספרים/.test(homeNums), [numShot])
 
-  // 4. the WhatsApp screen: office number, stats, an unknown sender can be added in one tap; the top-bar chip
+  // 4. the WhatsApp screen: office number, stats, the receipts handed in by hand; the top-bar chip.
+  // A number that is not registered is never logged now; a row an older version logged for one stays off the screen, and uncounted
+  sql("insert into fin_whatsapp_inbox (message_id, phone, kind, outcome) values ('e2e-stranger-1', '972509916480', 'text', 'refused_unknown_number')")
   await go('/scanners'); await page.waitForTimeout(1200)
+  const waStrangers = `${await page.locator('.fin-wa__log li', { hasText: 'מספר לא רשום' }).count()}/${await page.locator('.fin-wa__log').getByText('991-6480').count()}/${await page.locator('.fin-wa__log li').count()}`
   const waOffice = await page.locator('.fin-wa__office').innerText().catch(() => '')
   const waStats = await page.locator('.fin-wa__stats').innerText().catch(() => '')
   const waUnknown = await page.locator('.fin-wa__unknown').count() + await page.getByText('מספר לא רשום', { exact: false }).count()
@@ -1763,9 +1766,9 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const chipPop = await page.locator('.fin-wachip__pop').innerText().catch(() => '')
   const chipShot = await shot('106-whatsapp-chip')
   await page.keyboard.press('Escape')
-  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, מספרים לא רשומים לא נרשמים ולא מוצגים; הקבלות שהועלו ידנית מוצגות עם המסמך עצמו ונפתחות בהגדלה; בפס העליון המספר עם הסבר וקישור לניהול',
-    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; קבלות ידניות: ${handRows}, בהגדלה: ${handBig}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
-    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && handRows >= 1 && handBig === 1 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, handShot, chipShot])
+  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים; מספר לא רשום לא נרשם, לא נספר ולא מוצג, וגם שורה ישנה שנרשמה לפני כן לא מוצגת; הקבלות שהועלו ידנית מוצגות עם המסמך עצמו ונפתחות בהגדלה; בפס העליון המספר עם הסבר וקישור לניהול',
+    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; ברשימה (שורות "לא רשום"/המספר הזר/כל השורות): ${waStrangers}; קבלות ידניות: ${handRows}, בהגדלה: ${handBig}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
+    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && !/לא רשומים/.test(waStats) && waUnknown === 0 && /^0\/0\/[1-9]\d*$/.test(waStrangers) && handRows >= 1 && handBig === 1 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, handShot, chipShot])
 
   // 5. a document: attachment file and a linked document, paid state, open in a new window, delete for a finance manager
   const ronirInv = sql("select id from fin_documents where file_name='ronir-inv.pdf'")
@@ -2717,7 +2720,9 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   await fetch(`${FAKES}/__drive?trash=${dTrash}`)
   // 3. moved in Drive into another company's month folder (a document in review), and an approved one too
   const before3 = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dMonth}'`)
-  const dest = sql(`select key || '|' || drive_folder_id from fin_drive_folders where target_id='${T}' and key ~ '^b:[0-9a-f-]{36}/[0-9]{4}/[0-9]{2}$' and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dMonth}') and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dApproved}') limit 1`).split('|')
+  // a month folder that is really in Drive now: a row whose folder was removed in Drive by an earlier scenario is not a place a person can move a file to
+  const liveFolders = new Set((await drive()).filter((f) => !f.trashed).map((f) => f.id))
+  const dest = sql(`select key || '|' || drive_folder_id from fin_drive_folders where target_id='${T}' and key ~ '^b:[0-9a-f-]{36}/[0-9]{4}/[0-9]{2}$' and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dMonth}') and drive_folder_id <> (select drive_folder_id from fin_drive_files where target_id='${T}' and document_id='${dApproved}') order by key`).split('\n').map((l) => l.split('|')).find((l) => liveFolders.has(l[1])) || []
   const destBiz = dest[0].slice(2, 38); const destPeriod = `${dest[0].split('/')[1]}-${dest[0].split('/')[2]}`
   await fetch(`${FAKES}/__drive?doc=${dMonth}&move_to=${dest[1]}`); await fetch(`${FAKES}/__drive?doc=${dApproved}&move_to=${dest[1]}`)
   const beforeApproved = sql(`select coalesce(business_id::text,'') || '|' || coalesce(accounting_period,'') from fin_documents where id='${dApproved}'`)

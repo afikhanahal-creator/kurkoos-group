@@ -1742,7 +1742,10 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   record('NUMS', 'מסמכים שהמערכת לא בטוחה בסכומים שלהם', 'לשונית "מספרים לבדיקה" מראה מסמך שהסכומים בו לא מסתדרים; מרכז הבקרה מפנה אליה', `שורות: ${numRows}; בבית: "${homeNums}"`, numRows >= 1 && /אשרו את המספרים/.test(homeNums), [numShot])
 
   // 4. the WhatsApp screen: office number, stats, an unknown sender can be added in one tap; the top-bar chip
+  // a message from a number that is not registered is in the log (and counted), but is not listed on the screen
+  sql("insert into fin_whatsapp_inbox (message_id, phone, kind, outcome) values ('e2e-stranger-1', '972509916480', 'text', 'refused_unknown_number')")
   await go('/scanners'); await page.waitForTimeout(1200)
+  const waStrangers = `${await page.locator('.fin-wa__log li', { hasText: 'מספר לא רשום' }).count()}/${await page.locator('.fin-wa__log').getByText('991-6480').count()}/${await page.locator('.fin-wa__log li').count()}`
   const waOffice = await page.locator('.fin-wa__office').innerText().catch(() => '')
   const waStats = await page.locator('.fin-wa__stats').innerText().catch(() => '')
   const waUnknown = await page.locator('.fin-wa__unknown').count()
@@ -1751,9 +1754,9 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const chipPop = await page.locator('.fin-wachip__pop').innerText().catch(() => '')
   const chipShot = await shot('106-whatsapp-chip')
   await page.keyboard.press('Escape')
-  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, על מספר שמשרת גם מערכת אחרת מספרים לא רשומים לא נרשמים ולא מוצגים; בפס העליון המספר עם הסבר וקישור לניהול',
-    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
-    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
+  record('WA2', 'מספרים מחוברים ב-WhatsApp', 'מספר המשרד עם העתקה ופתיחת שיחה, מספרים מסכמים, על מספר שמשרת גם מערכת אחרת מספרים לא רשומים לא נרשמים; הודעה ממספר לא רשום שכן נרשמה נספרת אבל לא מוצגת ברשימה; בפס העליון המספר עם הסבר וקישור לניהול',
+    `משרד: ${waOffice.replace(/\s+/g, ' ').slice(0, 70)}; סיכום: ${waStats.replace(/\s+/g, ' ')}; לא רשומים: ${waUnknown}; ברשימה (שורות "לא רשום"/המספר הזר/כל השורות): ${waStrangers}; חלונית: ${chipPop.replace(/\s+/g, ' ').slice(0, 60)}`,
+    /972 50-123-4567|\+972/.test(waOffice) && /מספרים פעילים/.test(waStats) && waUnknown === 0 && /^0\/0\/[1-9]\d*$/.test(waStrangers) && /ממספרים לא רשומים\s*[1-9]/.test(waStats) && /ניהול מספרים מחוברים/.test(chipPop), [waShot, chipShot])
 
   // 5. a document: attachment file and a linked document, paid state, open in a new window, delete for a finance manager
   const ronirInv = sql("select id from fin_documents where file_name='ronir-inv.pdf'")

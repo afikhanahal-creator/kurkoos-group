@@ -39,7 +39,7 @@ const el = (cls, html) => { const d = document.createElement('div'); d.className
 const done = (anim, node) => anim.finished.then(() => node.remove(), () => node.remove())
 
 /* the toast: what happened, in words. A link-like action is optional. Stays 4.5s, or until closed. */
-export function toast({ title, sub = '', tone = 'ok', icon, action } = {}) {
+export function toast({ title, sub = '', tone = 'ok', icon, action, key, ms = 4500 } = {}) {
   if (typeof document === 'undefined') return
   const r = toastRoot()
   const t = el(`fin-toast is-${tone}`, `<span class="fin-toast__icon">${SVG[icon || (tone === 'attn' ? 'alert' : 'check')] || SVG.check}</span><span class="fin-toast__text"><strong></strong><small></small></span>`)
@@ -48,11 +48,13 @@ export function toast({ title, sub = '', tone = 'ok', icon, action } = {}) {
   if (!sub) t.querySelector('small').remove()
   if (action) { const b = document.createElement('button'); b.type = 'button'; b.className = 'fin-toast__act'; b.textContent = action.label; b.onclick = () => { action.onClick(); close() }; t.appendChild(b) }
   const x = document.createElement('button'); x.type = 'button'; x.className = 'fin-toast__x'; x.setAttribute('aria-label', 'סגירה'); x.textContent = '×'; x.onclick = () => close(); t.appendChild(x)
+  // a keyed toast replaces the one before it (a run of approvals on a phone shows one line, not a pile)
+  if (key) { r.querySelectorAll(`[data-key="${key}"]`).forEach((n) => n.remove()); t.dataset.key = key }
   r.appendChild(t)
   lottieInto(t.querySelector('.fin-toast__icon'), LOTTIE[icon || (tone === 'attn' ? 'alert' : 'check')])
   while (r.children.length > 3) r.firstChild.remove()
   if (!reduced()) t.animate([{ opacity: 0, transform: 'translateY(12px) scale(0.98)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: EASE_OUT })
-  let timer = setTimeout(() => close(), 4500)
+  let timer = setTimeout(() => close(), ms)
   t.addEventListener('pointerenter', () => clearTimeout(timer))
   t.addEventListener('pointerleave', () => { timer = setTimeout(() => close(), 2000) })
   function close() {
@@ -160,7 +162,7 @@ export const moments = {
     if (!reduced() && visible(f)) answer(f)
     toast({ title, sub, icon: 'cloud' })
   },
-  approve({ from, title = 'אושר', sub = '' } = {}) {
+  approve({ from, title = 'אושר', sub = '', action, key, ms } = {}) {
     const f = from || document.activeElement
     if (!reduced() && visible(f)) {
       const c = centre(rectOf(f))
@@ -174,7 +176,7 @@ export const moments = {
         { transform: 'translate(-50%, -50%) scale(1)', opacity: 0 },
       ], { duration: 820, easing: EASE_OUT, fill: 'forwards' }), stamp)
     }
-    toast({ title, sub })
+    toast({ title, sub, action, key, ms })
   },
   fail({ title = 'הפעולה לא הצליחה', sub = '' } = {}) { toast({ title, sub, tone: 'attn' }) },
   // a large animation in the middle of the screen for the few actions that deserve it (a batch approved, sent, merged)

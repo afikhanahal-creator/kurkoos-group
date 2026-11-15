@@ -5,6 +5,15 @@
 // screen-reader semantics and keyboard focus. Mouse and touch open our own list (searchable, RTL-aligned, kept inside
 // the viewport); on phones it opens as a bottom sheet. Keyboard: arrows/Enter/Space open it, arrows move, Enter picks,
 // Escape closes, typing searches.
+//
+// A list that knows more than its options (the category picker) may pass, all optional:
+//   sections    [{ label, values: [value…] }] — options repeated on top under a heading ("מוצע", "בשימוש אצל הספק הזה")
+//   allLabel    the heading of the full list under them
+//   meta        { [value]: text } — a quiet note at the end of a row (how many documents)
+//   onCreate    (text) => void — while a search matches no option exactly, a row offers to create what was typed
+//   createLabel (text) => string — that row's words
+//   extras      [{ label, run }] — rows of actions under the list (a new name taken from the document)
+// The native <select> and its <option>s stay exactly as the screen wrote them.
 import { Children, Fragment, isValidElement, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -45,13 +54,8 @@ export function placeNear(anchor, { minWidth = 220, maxHeight = 360, gap = 6 } =
   return up ? { right, width, bottom: vh - r.top + gap, maxHeight: h } : { right, width, top: r.bottom + gap, maxHeight: h }
 }
 
-/* Optional: `marks` ({ value: short text }) shows a note beside an option and lists the marked ones first, e.g. "the
-   supplier's usual category"; `onCreate(text)` adds a row "add …" when the search finds no exact match, and resolves to
-   the new option's value (the caller adds it to the options). */
-export default function Select({ children, className = '', value, defaultValue, onChange, onBlur, disabled, autoFocus, placeholder, searchable, marks, onCreate, createLabel = 'הוספת', ...rest }) {
-  const options0 = useMemo(() => optionsOf(children), [children])
-  const options = useMemo(() => (marks && Object.keys(marks).length ? [...options0.filter((o) => marks[o.value]), ...options0.filter((o) => !marks[o.value])] : options0), [options0, marks])
-  const [creating, setCreating] = useState(false)
+export default function Select({ children, className = '', value, defaultValue, onChange, onBlur, disabled, autoFocus, placeholder, searchable, sections, allLabel, meta, onCreate, createLabel, extras, ...rest }) {
+  const options = useMemo(() => optionsOf(children), [children])
   const native = useRef(null)
   const btn = useRef(null)
   const panel = useRef(null)
@@ -72,28 +76,36 @@ export default function Select({ children, className = '', value, defaultValue, 
     return words.length ? options.filter((o) => { const l = norm(o.label); return words.every((w) => l.includes(w)) }) : options
   }, [options, q])
 
+  // what the list draws: headings, options and action rows, in order. `active` is an index into it.
+  const rows = useMemo(() => {
+    const out = []; const typed = q.trim()
+    if (!typed && sections?.length) {
+      for (const sec of sections) {
+        const opts = (sec.values || []).map((v) => options.find((o) => o.value === String(v))).filter(Boolean)
+        if (!opts.length) continue
+        out.push({ head: sec.label })
+        for (const o of opts) out.push({ o, pinned: true })
+      }
+      if (out.length) out.push({ head: allLabel || 'כל האפשרויות' })
+    }
+    for (const o of shown) out.push({ o })
+    if (typed && onCreate && !options.some((o) => norm(o.label.replace(/^—\s*/, '')) === norm(typed))) out.push({ act: { label: createLabel ? createLabel(typed) : `יצירת "${typed}"`, run: () => onCreate(typed), create: true } })
+    if (!typed) for (const x of extras || []) out.push({ act: x })
+    return out
+  }, [options, shown, q, sections, allLabel, onCreate, createLabel, extras])
+  const usable = (r) => !!r && !r.head && !(r.o && r.o.disabled)
+
   const place = useCallback(() => { if (btn.current && !isPhone()) setPos(placeNear(btn.current, { minWidth: 240 })) }, [])
   const show = () => {
     if (disabled) return
     setSheet(isPhone()); setQ(''); place()
-    setActive(Math.max(0, options.findIndex((o) => o.value === current)))
     setOpen(true)
   }
   const hide = (refocus = true) => {
     setOpen(false)
     if (refocus) native.current?.focus({ preventScroll: true })
   }
-  const exact = q.trim() && options.some((o) => norm(o.label) === norm(q.trim()))
-  const canCreate = !!onCreate && !!q.trim() && !exact
-  const create = async () => {
-    if (!canCreate || creating) return
-    setCreating(true)
-    try {
-      const v = await onCreate(q.trim())
-      if (v != null) { const el = native.current; if (value === undefined) setInner(String(v)); onChange?.({ target: { value: String(v) }, currentTarget: el, type: 'change', preventDefault() {}, stopPropagation() {} }) }
-      hide()
-    } finally { setCreating(false) }
-  }
+  const pickRow = (r) => { if (!usable(r)) return; if (r.act) { hide(); r.act.run() } else pick(r.o) }
   const pick = (o) => {
     if (!o || o.disabled) return
     const el = native.current
@@ -104,6 +116,14 @@ export default function Select({ children, className = '', value, defaultValue, 
   }
 
   useLayoutEffect(() => { if (open) place() }, [open, place])
+  // opening lands on the chosen option; with nothing chosen, on the first row that can be picked (the suggestion, when there is one)
+  useEffect(() => {
+    if (!open) return
+    let i = -1
+    if (current) for (let k = rows.length - 1; k >= 0; k--) if (rows[k].o && !rows[k].pinned && rows[k].o.value === current) { i = k; break }
+    if (i < 0) i = rows.findIndex(usable)
+    setActive(Math.max(0, i))
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!open) return undefined
     const t = setTimeout(() => (withSearch ? search.current : panel.current)?.focus({ preventScroll: true }), 0)
@@ -114,26 +134,26 @@ export default function Select({ children, className = '', value, defaultValue, 
     window.addEventListener('scroll', move, true)
     return () => { clearTimeout(t); document.removeEventListener('pointerdown', away, true); window.removeEventListener('resize', move); window.removeEventListener('scroll', move, true) }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (active >= shown.length) setActive(shown.length ? 0 : -1) }, [shown, active])
+  useEffect(() => { if (active >= rows.length || (rows[active] && rows[active].head)) setActive(rows.findIndex(usable)) }, [rows, active])
   useEffect(() => { panel.current?.querySelector(`[data-i="${active}"]`)?.scrollIntoView({ block: 'nearest' }) }, [active, open])
   useEffect(() => { if (autoFocus && !isPhone()) show() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const step = (d) => {
-    if (!shown.length) return
+    if (!rows.some(usable)) return
     let i = active
-    for (let n = 0; n < shown.length; n++) { i = (i + d + shown.length) % shown.length; if (!shown[i].disabled) break }
+    for (let n = 0; n < rows.length; n++) { i = (i + d + rows.length) % rows.length; if (usable(rows[i])) break }
     setActive(i)
   }
   const onListKey = (e) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); step(1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); step(-1) }
-    else if (e.key === 'Home') { e.preventDefault(); setActive(0) }
-    else if (e.key === 'End') { e.preventDefault(); setActive(shown.length - 1) }
-    else if (e.key === 'Enter') { e.preventDefault(); if (shown[active]) pick(shown[active]); else create() }
+    else if (e.key === 'Home') { e.preventDefault(); setActive(rows.findIndex(usable)) }
+    else if (e.key === 'End') { e.preventDefault(); let i = rows.length - 1; while (i > 0 && !usable(rows[i])) i--; setActive(i) }
+    else if (e.key === 'Enter') { e.preventDefault(); pickRow(rows[active]) }
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hide() }
     else if (e.key === 'Tab') hide(false)
     else if (!withSearch && e.key.length === 1) {
-      const i = shown.findIndex((o) => norm(o.label).startsWith(norm(e.key)))
+      const i = rows.findIndex((r) => r.o && !r.pinned && norm(r.o.label).startsWith(norm(e.key)))
       if (i >= 0) setActive(i)
     }
   }
@@ -159,25 +179,31 @@ export default function Select({ children, className = '', value, defaultValue, 
         </div>
       )}
       <ul id={listId} role="listbox" className="fin-sel__list" aria-activedescendant={!withSearch && active >= 0 ? `${listId}-${active}` : undefined}>
-        {shown.map((o, i) => (
+        {rows.map((r, i) => (r.head ? (
+          <li key={`h-${i}`} className="fin-sel__head" role="presentation">{r.head}</li>
+        ) : r.act ? (
+          <li key={`a-${i}`} id={`${listId}-${i}`} data-i={i} role="option" aria-selected="false" className={`fin-sel__opt fin-sel__act${r.act.create ? ' fin-sel__create' : ''} ${i === active ? 'is-active' : ''}`} onPointerEnter={() => setActive(i)} onClick={() => pickRow(r)}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            <span>{r.act.label}</span>
+          </li>
+        ) : (
           <li
-            key={`${o.value}-${i}`}
+            key={`${r.pinned ? 'p' : 'o'}-${r.o.value}-${i}`}
             id={`${listId}-${i}`}
             data-i={i}
             role="option"
-            aria-selected={o.value === current}
-            aria-disabled={o.disabled || undefined}
-            className={`fin-sel__opt ${i === active ? 'is-active' : ''} ${o.value === current ? 'is-on' : ''} ${o.disabled ? 'is-off' : ''}`}
+            aria-selected={r.o.value === current}
+            aria-disabled={r.o.disabled || undefined}
+            className={`fin-sel__opt ${i === active ? 'is-active' : ''} ${r.o.value === current ? 'is-on' : ''} ${r.o.disabled ? 'is-off' : ''}`}
             onPointerEnter={() => setActive(i)}
-            onClick={() => pick(o)}
+            onClick={() => pick(r.o)}
           >
-            <span>{o.label || '—'}</span>
-            {marks?.[o.value] && <small className="fin-sel__mark">{marks[o.value]}</small>}
-            {o.value === current && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg>}
+            <span>{r.o.label || '—'}</span>
+            {meta?.[r.o.value] ? <small className="fin-sel__meta">{meta[r.o.value]}</small> : null}
+            {r.o.value === current && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg>}
           </li>
-        ))}
-        {!shown.length && !canCreate && <li className="fin-sel__empty" role="presentation">{options.length ? 'אין תוצאות' : 'אין אפשרויות לבחירה'}</li>}
-        {canCreate && <li role="option" aria-selected="false" className={`fin-sel__opt fin-sel__create ${!shown.length ? 'is-active' : ''}`} onClick={create}><span>{creating ? 'מוסיף…' : <>+ {createLabel} <strong>"{q.trim()}"</strong></>}</span></li>}
+        )))}
+        {!shown.length && <li className="fin-sel__empty" role="presentation">{options.length ? 'אין תוצאות' : 'אין אפשרויות לבחירה'}</li>}
       </ul>
     </div>
   )

@@ -6,7 +6,7 @@ import * as api from './api.js'
 import { supabase } from '../../lib/supabase.js'
 import { deviceId, qrSrc } from './auth.jsx'
 import { ROLE, nameOf } from './format.js'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Card, Icon, PageHead, Pill, useAsync, Skeleton, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
 
@@ -187,14 +187,89 @@ function SecurityPolicy() {
   )
 }
 
+/* One look at whether every part of the system works: each line is checked live (the server's connections, the office
+   WhatsApp line, the mailboxes, the accounting software, the companies' details, this account's protection), says what
+   it found in words, and leads to the screen where it is fixed. Nothing here changes anything. */
+function SystemCheck() {
+  const { businesses, mailboxes = [], go } = useFinance()
+  const [state, setState] = useState({ loading: true, at: null, status: null, wa: null, ints: null, mfa: null })
+  const run = useCallback(async () => {
+    setState((x) => ({ ...x, loading: true }))
+    const safe = (p) => p.then((v) => v, (e) => ({ error: String(e?.message || e) }))
+    const [status, wa, ints, mfa] = await Promise.all([
+      safe(api.callServer('status')),
+      safe(api.callServer('whatsapp-check')),
+      safe(api.loadIntegrations()),
+      safe(supabase.auth.mfa.listFactors().then(({ data }) => (data?.totp || []).some((f) => f.status === 'verified'))),
+    ])
+    setState({ loading: false, at: new Date(), status, wa, ints, mfa })
+  }, [])
+  useEffect(() => { run() }, [run])
+  const { status, wa, ints, mfa } = state
+  const down = !status || status.error
+  const boxes = mailboxes.filter((m) => m.status !== 'revoked')
+  const boxErr = boxes.filter((m) => m.status === 'error')
+  const waSteps = Array.isArray(wa?.steps) ? wa.steps : []
+  const waBad = waSteps.find((x) => !x.ok)
+  const live = Array.isArray(ints) ? ints.filter((i) => i.enabled) : []
+  const intErr = live.filter((i) => i.status === 'error')
+  const noVat = businesses.filter((b) => b.active !== false && !b.vat_id)
+  const noCpa = businesses.filter((b) => b.active !== false && !b.accountant_email)
+  const plural = (n, one, many) => (n === 1 ? one : `${n} ${many}`)
+  // state: ok (works) · warn (works, something to finish) · bad (does not work) · off (not set up, the system works without it)
+  const items = state.loading && !status ? [] : [
+    { key: 'claude', icon: 'sparkle', title: 'קריאת המסמכים', state: down ? 'bad' : status.claude ? 'ok' : 'bad', text: down ? 'השרת לא ענה לבדיקה' : status.claude ? 'כל מסמך שנכנס נקרא ומפוענח אוטומטית' : 'מנוע הקריאה לא מחובר: מסמכים נכנסים בלי פענוח', to: ['/settings?tab=server', 'חיבורי השרת'] },
+    { key: 'mail', icon: 'mail', title: 'תיבות מייל', state: boxErr.length ? 'bad' : boxes.length ? 'ok' : 'off', text: boxErr.length ? `${plural(boxErr.length, 'תיבה אחת', 'תיבות')} עם תקלה בחיבור: צריך לחבר מחדש` : boxes.length ? `${plural(boxes.length, 'תיבה אחת מחוברת', 'תיבות מחוברות')}, ונסרקות כל לילה` : 'עוד לא חוברה תיבת מייל לאיסוף חשבוניות', to: ['/mailboxes', boxes.length ? 'לתיבות' : 'חיבור תיבה'] },
+    { key: 'wa', icon: 'phone', title: 'קליטה ב-WhatsApp', state: wa?.error ? 'bad' : !waSteps.length ? 'off' : waBad ? (waBad.key === 'server' ? 'off' : 'bad') : 'ok', text: wa?.error ? 'בדיקת החיבור לא הצליחה' : !waSteps.length ? 'הקליטה מהטלפון לא הוגדרה' : waBad ? `${waBad.title}: ${waBad.detail || 'דורש טיפול'}` : 'הטלפון של המשרד מחובר, והודעות מטלפונים רשומים נקלטות', to: ['/scanners', 'למסך הסורקים'] },
+    { key: 'cron', icon: 'clock', title: 'האיסוף הלילי', state: down ? 'bad' : status.cron ? 'ok' : 'bad', text: down ? 'השרת לא ענה לבדיקה' : status.cron ? 'רץ כל לילה ושוב לפנות בוקר, בלי שמישהו צריך להפעיל' : 'הריצה האוטומטית לא מוגדרת בשרת: האיסוף רץ רק בלחיצה', to: ['/scans', 'ניהול סריקות'] },
+    { key: 'email', icon: 'send', title: 'מיילים יוצאים', state: down ? 'bad' : status.email ? 'ok' : 'warn', text: down ? 'השרת לא ענה לבדיקה' : status.email ? 'שליחה לרו״ח, סיכום יומי והתראות יוצאים במייל' : 'שליחת מיילים לא מוגדרת: שליחה לרו״ח והתראות לא ייצאו', to: ['/settings?tab=server', 'חיבורי השרת'] },
+    { key: 'acc', icon: 'plug', title: 'תוכנת הנהלת חשבונות', state: ints?.error ? 'warn' : intErr.length ? 'bad' : live.some((i) => i.status === 'ready' && i.provider !== 'file') ? 'ok' : 'off', text: ints?.error ? 'רשימת החיבורים לא נטענה' : intErr.length ? `${intErr[0].name}: ${intErr[0].last_error || 'שגיאה בחיבור'}` : live.some((i) => i.status === 'ready' && i.provider !== 'file') ? `${live.filter((i) => i.status === 'ready' && i.provider !== 'file').map((i) => i.name).join(', ')}: מחובר ונבדק` : 'לא חוברה תוכנה. המסמכים יוצאים לרו״ח בקבצים ובמייל', to: ['/integrations', 'לחיבור תוכנה'] },
+    { key: 'biz', icon: 'company', title: 'פרטי החברות', state: !businesses.length ? 'warn' : noVat.length || noCpa.length ? 'warn' : 'ok', text: !businesses.length ? 'עוד לא הוגדרה חברה' : noVat.length ? `${plural(noVat.length, 'לחברה אחת', 'חברות')} ${noVat.length === 1 ? 'חסר' : 'בלי'} ח.פ: ${noVat.slice(0, 2).map((b) => b.name).join(', ')}` : noCpa.length ? `${plural(noCpa.length, 'לחברה אחת', 'חברות')} ${noCpa.length === 1 ? 'חסר' : 'בלי'} מייל של רו״ח: ${noCpa.slice(0, 2).map((b) => b.name).join(', ')}` : `${plural(businesses.length, 'חברה אחת', 'חברות')} עם ח.פ ומייל של רו״ח`, to: ['/settings?tab=companies', 'חברות ודיווח'] },
+    { key: 'mfa', icon: 'shield', title: 'האבטחה של החשבון שלי', state: mfa === true ? 'ok' : 'warn', text: mfa === true ? 'אימות דו-שלבי פעיל' : 'אימות דו-שלבי כבוי: הכניסה בסיסמה בלבד', to: ['/settings?tab=account', 'החשבון שלי'] },
+  ]
+  const LABEL = { ok: ['ok', 'פועל'], warn: ['warn', 'להשלים'], bad: ['bad', 'לא פועל'], off: ['muted', 'לא הוגדר'] }
+  const okN = items.filter((x) => x.state === 'ok').length
+  const badN = items.filter((x) => x.state === 'bad').length
+  const todo = items.filter((x) => x.state === 'warn').length
+  const order = { bad: 0, warn: 1, off: 2, ok: 3 }
+  return (
+    <div className="fin-syscheck">
+      <section className={`fin-syscheck__sum ${badN ? 'is-bad' : todo ? 'is-warn' : 'is-ok'}`} aria-live="polite">
+        <div className="fin-syscheck__score" aria-hidden="true"><strong>{state.loading && !items.length ? '…' : okN}</strong><span>מתוך {items.length || 8}</span></div>
+        <div className="fin-syscheck__sumtext">
+          <strong>{state.loading && !items.length ? 'בודק את המערכת…' : badN ? `${plural(badN, 'חלק אחד לא פועל', 'חלקים לא פועלים')}` : todo ? 'המערכת פועלת, ויש מה להשלים' : 'הכול פועל'}</strong>
+          <span>{state.at ? `נבדק ${state.at.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}. הבדיקה רק קוראת מצב, ולא משנה דבר.` : 'בדיקה חיה של כל חלקי המערכת.'}</span>
+        </div>
+        <button type="button" className="fin-btn" onClick={run} disabled={state.loading}><Icon name="refresh" size={17} /> {state.loading ? 'בודק…' : 'בדיקה מחדש'}</button>
+      </section>
+      {state.loading && !items.length ? <Skeleton lines={6} /> : (
+        <ul className="fin-syscheck__list">
+          {[...items].sort((a, b) => order[a.state] - order[b.state]).map((x) => {
+            const [tone, label] = LABEL[x.state]
+            return (
+              <li key={x.key} className={`is-${x.state}`}>
+                <span className="fin-syscheck__icon" aria-hidden="true"><Icon name={x.icon} size={20} /></span>
+                <span className="fin-syscheck__text"><strong>{x.title}</strong><small>{x.text}</small></span>
+                <Pill tone={tone}>{label}</Pill>
+                <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => go(x.to[0])}>{x.to[1]} <Icon name="next" size={15} /></button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 const IDLE = [[0, 'ללא ניתוק (ברירת מחדל)'], [30, '30 דקות'], [60, 'שעה'], [240, '4 שעות'], [480, '8 שעות'], [1440, 'יום'], [10080, 'שבוע']]
 const SECTIONS = [
-  { id: 'account', label: 'החשבון שלי', icon: 'users', roles: null },
-  { id: 'companies', label: 'חברות ודיווח', icon: 'company', roles: ['admin', 'finance_manager'] },
-  { id: 'engine', label: 'זיהוי ושיוך', icon: 'sparkle', roles: ['admin', 'finance_manager'] },
-  { id: 'security', label: 'אבטחת המערכת', icon: 'shield', roles: ['admin'] },
-  { id: 'server', label: 'חיבורי השרת', icon: 'plug', roles: ['admin', 'finance_manager'] },
-  { id: 'more', label: 'עוד הגדרות', icon: 'settings', roles: ['admin', 'finance_manager'] },
+  { id: 'account', label: 'החשבון שלי', icon: 'users', roles: null, desc: 'הפרטים שלך, אימות דו-שלבי ויציאה מכל המכשירים' },
+  { id: 'health', label: 'בדיקת המערכת', icon: 'activity', roles: ['admin', 'finance_manager'], desc: 'בדיקה חיה שכל חלק במערכת מחובר ועובד' },
+  { id: 'companies', label: 'חברות ודיווח', icon: 'company', roles: ['admin', 'finance_manager'], desc: 'פרטי כל חברה, לוגו, רו״ח ותקופות הדיווח' },
+  { id: 'engine', label: 'זיהוי ושיוך', icon: 'sparkle', roles: ['admin', 'finance_manager'], desc: 'מתי המערכת משייכת לבד ומתי היא רק מציעה' },
+  { id: 'security', label: 'אבטחת המערכת', icon: 'shield', roles: ['admin'], desc: 'מדיניות הכניסה לכל המשתמשים' },
+  { id: 'server', label: 'חיבורי השרת', icon: 'plug', roles: ['admin', 'finance_manager'], desc: 'השירותים שהשרת מחובר אליהם' },
+  { id: 'more', label: 'עוד הגדרות', icon: 'settings', roles: ['admin', 'finance_manager'], desc: 'משתמשים, קטגוריות, כללים וחיבורים' },
 ]
 
 export default function Settings() {
@@ -213,23 +288,32 @@ export default function Settings() {
     <div className="fin-settings">
       <nav className="fin-settings__nav" aria-label="נושאי הגדרות">
         <h2 className="fin-pagehead__title">הגדרות</h2>
-        <ul role="tablist">{sections.map((x) => <li key={x.id}><button type="button" role="tab" aria-selected={tab === x.id} className={tab === x.id ? 'is-on' : ''} onClick={() => pick(x.id)}><Icon name={x.icon} size={18} /> {x.label}</button></li>)}</ul>
+        <ul role="tablist">{sections.map((x) => <li key={x.id}><button type="button" role="tab" aria-selected={tab === x.id} className={tab === x.id ? 'is-on' : ''} onClick={() => pick(x.id)}><span className="fin-settings__navicon" aria-hidden="true"><Icon name={x.icon} size={18} /></span><span className="fin-settings__navtext"><strong>{x.label}</strong><small>{x.desc}</small></span></button></li>)}</ul>
       </nav>
       <div className="fin-settings__main" role="tabpanel" aria-label={current?.label}>
-        <h3 className="fin-settings__title">{current?.label}</h3>
+        <header className="fin-settings__head">
+          <span className="fin-settings__headicon" aria-hidden="true"><Icon name={current?.icon || 'settings'} size={22} /></span>
+          <div><h3 className="fin-settings__title">{current?.label}</h3><p className="fin-muted">{current?.desc}</p></div>
+        </header>
         {tab === 'account' && (
           <div className="fin-stack">
             {recovery && <NewPassword />}
-            <Card title="פרטי החשבון">
-              <ul className="fin-kv">
-                <li><span>אימייל</span><strong dir="ltr">{u?.email}</strong></li>
-                <li><span>תפקיד</span><strong>{ROLE[role]}</strong></li>
-                <li><span>חברות</span><strong>{me?.business_ids?.length ? me.business_ids.map((b) => nameOf(businesses, b)).join(', ') : 'כולן'}</strong></li>
-              </ul>
-            </Card>
+            <section className="fin-card fin-profile" aria-label="פרטי החשבון">
+              <span className="fin-profile__avatar" aria-hidden="true">{String(me?.full_name || u?.email || '?').trim().slice(0, 1).toUpperCase()}</span>
+              <div className="fin-profile__who">
+                <h3 className="fin-card__title">פרטי החשבון</h3>
+                {me?.full_name && <strong className="fin-profile__name">{me.full_name}</strong>}
+                <span className="fin-profile__mail" dir="ltr">{u?.email}</span>
+              </div>
+              <dl className="fin-profile__facts">
+                <div><dt>תפקיד</dt><dd>{ROLE[role]}</dd></div>
+                <div><dt>חברות</dt><dd>{me?.business_ids?.length ? me.business_ids.map((b) => nameOf(businesses, b)).join(', ') : 'כולן'}</dd></div>
+              </dl>
+            </section>
             <MySecurity />
           </div>
         )}
+        {tab === 'health' && <SystemCheck />}
         {tab === 'companies' && <CompanySettings />}
         {tab === 'engine' && <div className="fin-stack"><SmartSettings /></div>}
         {tab === 'security' && <div className="fin-stack"><SecurityPolicy />

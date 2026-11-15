@@ -15,6 +15,7 @@ import Select from './Select.jsx'
 import { supplierHistory } from './links.js'
 import Viewer from './Viewer.jsx'
 import { moments } from './moments.js'
+import { categoryConflict, moveImpact, nameIdeas, sayDocs, suggestCategory, supplierUsage } from './categorySuggest.js'
 
 import { rateOn } from './vatRules.js'
 const FIELDS = ['supplier_name', 'supplier_vat_id', 'doc_type', 'doc_number', 'issue_date', 'due_date', 'payment_date', 'currency', 'amount_before_vat', 'vat_amount', 'total_amount', 'category_id', 'business_id', 'project_id', 'description', 'payment_method', 'paid', 'notes']
@@ -113,32 +114,25 @@ function Preview({ doc, onSaved, canEdit }) {
   return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} />
 }
 
-export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext }) {
+export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext, onApproved, waitingAfter = 0 }) {
   const { businesses, projects, categories, mailboxes, suppliers, allocations, can, go, reload, documents } = useFinance()
-  // The category this document most likely belongs to: the one the supplier's earlier documents carry, else the
-  // system's own suggestion. Shown beside the options, and chosen ahead of time when the document has none, so the person
-  // only confirms it (it is saved with "שמירה" or "אישור", never by opening the panel).
-  const catRec = useMemo(() => {
-    const marks = {}; let auto = null; let note = ''
-    const sameSup = (d) => d.id !== doc.id && d.category_id && ((doc.supplier_id && d.supplier_id === doc.supplier_id) || (!doc.supplier_id && doc.supplier_name && d.supplier_name === doc.supplier_name))
-    const counts = new Map(); let total = 0
-    for (const d of documents || []) if (sameSup(d)) { counts.set(d.category_id, (counts.get(d.category_id) || 0) + 1); total++ }
-    const top = [...counts].sort((a, b) => b[1] - a[1])[0]
-    for (const [id, n] of counts) if (categories.some((c) => c.id === id)) marks[id] = n === 1 ? 'מסמך קודם של הספק' : `${n} מסמכים של הספק`
-    const ai = doc.suggestions?.category?.value ? categories.find((c) => c.name === doc.suggestions.category.value) : null
-    if (ai && !marks[ai.id]) marks[ai.id] = 'הצעת המערכת'
-    if (top && categories.some((c) => c.id === top[0]) && top[1] / total >= 0.6) { auto = top[0]; note = top[1] === 1 ? 'כך סווג המסמך הקודם של הספק' : `כך סווגו ${top[1]} מ-${total} המסמכים הקודמים של הספק` }
-    else if (ai && (doc.suggestions.category.confidence ?? 0) >= 0.7) { auto = ai.id; note = `הצעת המערכת${doc.suggestions.category.reason ? `: ${doc.suggestions.category.reason}` : ''}` }
-    return { marks, auto, note }
-  }, [documents, categories, doc.id, doc.supplier_id, doc.supplier_name, doc.suggestions]) // eslint-disable-line react-hooks/exhaustive-deps
   const supplierRow = suppliers.find((x) => x.id === doc.supplier_id)
   const myAlloc = allocations.filter((a) => a.document_id === doc.id)
   const [split, setSplit] = useState(() => (myAlloc.length ? myAlloc.map((a) => ({ project_id: a.project_id, amount: String(a.amount) })) : null))
   const [splitMsg, setSplitMsg] = useState('')
   const editable = can('edit') || (can('upload') && ['processing', 'review', 'failed'].includes(doc.status))
-  const editable0 = can('edit') || (can('upload') && ['processing', 'review', 'failed'].includes(doc.status))
-  const [autoCat] = useState(() => (!doc.category_id && editable0 && !['approved', 'sent'].includes(doc.status) ? catRec.auto : null))
-  const [form, setForm] = useState(() => ({ ...Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])), ...(autoCat ? { category_id: autoCat } : {}) }))
+  // A document with no category opens with the likely one already chosen, so approving it accepts it (saved with "שמירה" or
+  // "אישור", never by opening the panel): a rule or the supplier's fixed category first, else what the office decided before
+  // for this document or this supplier (categorySuggest.js)
+  const [autoCat] = useState(() => {
+    if (doc.category_id || !editable || ['approved', 'sent'].includes(doc.status)) return null
+    const srv = doc.suggestions?.category
+    const byRule = srv?.value && ['rule', 'supplier'].includes(srv.source) ? categories.find((c) => c.name === srv.value && c.active !== false) : null
+    if (byRule) return { id: byRule.id, why: 'לפי כלל או הקטגוריה הקבועה של הספק' }
+    const s = suggestCategory(doc, documents, categories)
+    return s ? { id: s.category_id, sug: s } : null
+  })
+  const [form, setForm] = useState(() => ({ ...Object.fromEntries(FIELDS.map((k) => [k, doc[k] ?? blank(k)])), ...(autoCat ? { category_id: autoCat.id } : {}) }))
   const [busy, setBusy] = useState('')
   const [err, setErr] = useState('')
   const [tab, setTab] = useState('fields')
@@ -161,7 +155,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   }, [doc])
   // leaving with typed changes asks first: a stray tap outside the panel or on an arrow must not throw the work away
   // a category chosen ahead of time is not "typed": closing the panel does not ask about it
-  const dirtyRef = useRef(false); dirtyRef.current = FIELDS.some((k) => !(k === 'category_id' && autoCat && !doc.category_id && form.category_id === autoCat) && String(form[k] ?? '') !== String(doc[k] ?? blank(k)))
+  const dirtyRef = useRef(false); dirtyRef.current = FIELDS.some((k) => !(k === 'category_id' && autoCat && !doc.category_id && form.category_id === autoCat.id) && String(form[k] ?? '') !== String(doc[k] ?? blank(k)))
   const leave = async (go) => { if (!go) return; if (dirtyRef.current && !(await askConfirm({ title: 'יש שינויים שלא נשמרו', text: 'מה שהוקלד במסמך הזה עוד לא נשמר. לצאת בלי לשמור?', ok: 'יציאה בלי שמירה', danger: true }))) return; go() }
   useEffect(() => {
     const warn = (e) => { if (dirtyRef.current) { e.preventDefault(); e.returnValue = '' } }
@@ -176,6 +170,63 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   const sug = doc.suggestions || {}
   const mailbox = mailboxes.find((m) => m.id === doc.mailbox_id)
   const [fixedBusy, setFixedBusy] = useState(false)
+  // a phone: the panel is the whole screen, and "אישור" waits in a bar at its bottom edge instead of under the form
+  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches)
+  useEffect(() => { const m = window.matchMedia('(max-width: 700px)'); const on = () => setPhone(m.matches); m.addEventListener('change', on); return () => m.removeEventListener('change', on) }, [])
+  // the bar is far from the form's messages: whatever stops an approval is brought into view
+  useEffect(() => { if (phone && err) requestAnimationFrame(() => document.querySelector('.fin-panel .fin-form > .fin-error--block')?.scrollIntoView({ block: 'center', behavior: 'smooth' })) }, [phone, err])
+
+  /* The category, from what the office already decided (categorySuggest.js): where this supplier's documents sit, or an
+     earlier copy of this very document. A rule or the supplier's fixed category (the server's suggestion) comes first. */
+  const catName = (cid) => categories.find((c) => c.id === cid)?.name || ''
+  const catWhy = (cs) => (cs.reason === 'same_document' ? 'כך שויך אותו מסמך כשהגיע בפעם הקודמת'
+    : cs.reason === 'supplier' ? (cs.of === 1 ? `כך שויך המסמך הקודם של ${doc.supplier_name || 'הספק'}` : `כך שויכו ${cs.count} מתוך ${cs.of} המסמכים ${cs.decided ? 'המאושרים ' : ''}של ${doc.supplier_name || 'הספק'}`)
+      : 'השם או מילת זיהוי של הקטגוריה מופיעים במסמך')
+  const catSug = useMemo(() => suggestCategory(doc, documents, categories), [doc, documents, categories])
+  const catUsage = useMemo(() => supplierUsage(doc, documents, categories), [doc, documents, categories])
+  const srvCat = sug.category?.value ? categories.find((c) => c.name === sug.category.value && c.active !== false)?.id || null : null
+  const srvStrong = !!srvCat && ['rule', 'supplier'].includes(sug.category?.source)
+  const catOffer = srvStrong ? srvCat : catSug?.category_id || srvCat
+  const catCount = useMemo(() => { const m = {}; for (const d of documents) if (d.category_id && !['rejected', 'duplicate', 'archived'].includes(d.status)) m[d.category_id] = (m[d.category_id] || 0) + 1; return m }, [documents])
+  // beside each option: how many of THIS supplier's documents carry it (the useful number in this field), else how many in all
+  const catMeta = useMemo(() => {
+    const m = Object.fromEntries(Object.entries(catCount).map(([k, n]) => [k, sayDocs(n)]))
+    for (const u of catUsage) m[u.category_id] = u.n === 1 ? 'מסמך אחד של הספק' : `${u.n} מסמכים של הספק`
+    return m
+  }, [catCount, catUsage])
+  const catSections = useMemo(() => [
+    catOffer ? { label: 'מוצע', values: [catOffer] } : null,
+    catUsage.some((u) => u.category_id !== catOffer) ? { label: 'בשימוש אצל הספק הזה', values: catUsage.map((u) => u.category_id).filter((c) => c !== catOffer) } : null,
+  ].filter(Boolean), [catOffer, catUsage])
+  const canNewCat = can('edit')
+  const catIdeas = useMemo(() => (canNewCat ? nameIdeas(doc, categories, full.data?.extraction) : []), [canNewCat, doc, categories, full.data])
+  const [catWarn, setCatWarn] = useState(null)   // { to, prev, supplier, prior, others }: a change against what was already decided
+  const [catBusy, setCatBusy] = useState('')
+  const [catNote, setCatNote] = useState('')
+  const pickCategory = (cid) => {
+    const prev = formRef.current.category_id || ''
+    setForm((f) => ({ ...f, category_id: cid })); setCatNote('')
+    const c = cid && cid !== (doc.category_id || '') ? categoryConflict(doc, cid, documents, categories) : null
+    setCatWarn(c ? { to: cid, prev, ...c } : null)
+  }
+  const createCategory = async (name) => {
+    setCatBusy('create'); setErr(''); setCatNote('')
+    try {
+      const saved = await api.saveRow('fin_categories', { name, active: true, vat_deductible_pct: 100, keywords: [] })
+      await reload(); pickCategory(saved.id)
+      setCatNote(`הקטגוריה "${saved.name}" נוצרה ונבחרה. קיזוז המע״מ שלה 100%, ואפשר לשנות אותו במסך הקטגוריות.`)
+    } catch (e) { setErr(/unique|duplicate/i.test(e.message) ? `כבר קיימת קטגוריה בשם "${name}"` : e.message) } finally { setCatBusy('') }
+  }
+  const catExtras = useMemo(() => catIdeas.map((n) => ({ label: `קטגוריה חדשה מהמסמך: ${n}`, run: () => createCategory(n) })), [catIdeas]) // eslint-disable-line react-hooks/exhaustive-deps
+  const catImpact = catWarn ? moveImpact(catWarn.others, catWarn.to, categories) : null
+  const moveSupplier = async () => {
+    setCatBusy('move'); setErr('')
+    try {
+      await api.updateDocuments(catImpact.move.map((d) => d.id), { category_id: catWarn.to })
+      setCatNote(`${sayDocs(catImpact.move.length)} של ${doc.supplier_name || 'הספק'} ${catImpact.move.length === 1 ? 'עבר' : 'עברו'} ל"${catName(catWarn.to)}". המסמך הזה יעבור עם השמירה.`)
+      setCatWarn(null); await reload()
+    } catch (e) { setErr(e.message) } finally { setCatBusy('') }
+  }
   const original = doc.duplicate_of ? documents.find((d) => d.id === doc.duplicate_of) : null
   const decideDuplicate = async (decision) => {
     setBusy(`dup-${decision}`); setErr('')
@@ -231,17 +282,6 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     if (myAlloc.length > 1 || (split && split.length > 1)) delete out.project_id
     return out
   }
-  // a category that is not on the list yet is added from the field itself (admin and finance manager, like the
-  // categories screen); the document takes it at once
-  const addCategory = async (name) => {
-    const clash = categories.find((c) => c.name.trim() === name.trim())
-    if (clash) return clash.id
-    try {
-      const row = await api.saveRow('fin_categories', { name: name.trim().slice(0, 80), sort: Math.max(0, ...categories.map((c) => Number(c.sort) || 0)) + 1 })
-      await reload?.()
-      return row.id
-    } catch (e) { setErr(`הקטגוריה לא נוספה: ${e.message}`); return null }
-  }
   const save = async (extra = {}) => {
     setBusy(extra.status || 'save'); setErr('')
     try {
@@ -249,8 +289,8 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
       // the rules run again on what the person typed (sums, VAT, duplicates); confidence of edited fields becomes 100%
       if (dirty) { const r = await api.callServer('revalidate', { document_id: doc.id }).catch(() => null); if (r?.document) saved = r.document }
       onSaved(saved)
-      return saved
       if (extra.status === 'approved' && saved.status !== 'approved' && saved.first_approved_by) setErr('נרשמה חתימה ראשונה. מסמך מעל סף האישור הכפול מחכה למאשר נוסף.')
+      return saved
     } catch (e) { setErr(/SECOND_APPROVAL/.test(e.message) ? 'המסמך דורש מאשר שני, שונה ממי שאישר ראשון' : /PROJECT_COMPANY/.test(e.message) ? 'הפרויקט שייך לחברה אחרת. בחרו פרויקט של אותה חברה' : e.message) } finally { setBusy('') }
   }
   const approve = async () => {
@@ -258,8 +298,13 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
     if (!form.business_id) { setErr('לפני אישור צריך לשייך את המסמך לחברה'); return }
     if (errors.length && !(await askConfirm({ title: 'לאשר למרות הבעיות?', text: `יש במסמך ${errors.length === 1 ? 'בעיה אחת' : `${errors.length} בעיות`}:`, lines: errors.map((i) => `${FIELD_LABEL[i.field] || ''} ${i.message}`.trim()), ok: 'אישור בכל זאת', danger: true }))) return
     const btn = document.activeElement
+    // on a phone the panel is the whole screen: once the document is approved there is nothing left to do on it, so the
+    // list it was opened from takes over (the next document that waits, or back to the list). The handler is taken now,
+    // while the list still holds this document in its place.
+    const after = onApproved && phone ? onApproved : null
     const s = await save({ status: 'approved' })
-    if (s?.status === 'approved') moments.approve({ from: btn, title: 'המסמך אושר', sub: doc.supplier_name || '' })
+    if (s?.status !== 'approved') return
+    if (after) after(s, btn); else moments.approve({ from: btn, title: 'המסמך אושר', sub: doc.supplier_name || '' })
   }
   // the conductor's doubt answered "no": the document leaves the list and joins the skipped files, never imported again
   const notRelevant = async () => {
@@ -416,9 +461,46 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                   {F({ k: 'vat_amount', type: 'number' })}
                   {F({ k: 'total_amount', type: 'number', wide: true })}
                   <h4 className="fin-form__sec fin-field--wide">שיוך</h4>
-                  {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><Select value={form.category_id || ''} onChange={set('category_id')} disabled={!editable} marks={catRec.marks} onCreate={can('edit') ? addCategory : undefined} createLabel="קטגוריה חדשה:"><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</Select></> })}
-                  {autoCat && !doc.category_id && form.category_id === autoCat && <p className="fin-suggest fin-field--wide fin-autocat"><Icon name="sparkle" size={15} /> הקטגוריה נבחרה מראש: <strong>{nameOf(categories, autoCat)}</strong> <span className="fin-muted">({catRec.note}). נשמרת בשמירה או באישור.</span>{editable && <button type="button" className="fin-link" onClick={() => setForm((f) => ({ ...f, category_id: '' }))}>ביטול</button>}</p>}
-                  <div className="fin-field--wide">{Suggest({ k: 'category' })}</div>
+                  {F({ k: 'category_id', conf: 'category', label: 'קטגוריה', children: <><Select value={form.category_id || ''} onChange={(e) => pickCategory(e.target.value)} disabled={!editable || !!catBusy} sections={catSections} allLabel="כל הקטגוריות" meta={catMeta} onCreate={canNewCat ? createCategory : undefined} createLabel={(t) => `יצירת קטגוריה "${t}"`} extras={catExtras}><option value="">בחרו…</option>{categories.filter((c) => c.active !== false || c.id === form.category_id).map((c) => <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>)}</Select></> })}
+                  <div className="fin-field--wide fin-catbox">
+                    {autoCat && !doc.category_id && form.category_id === autoCat.id ? (
+                      <p className="fin-catsug fin-autocat" data-reason={autoCat.sug?.reason || 'rule'}>
+                        <Icon name="sparkle" size={16} />
+                        <span className="fin-catsug__text"><span>נבחרה מראש: <strong>{catName(autoCat.id)}</strong></span><small>{autoCat.sug ? catWhy(autoCat.sug) : autoCat.why}. נשמרת בשמירה או באישור.</small></span>
+                        {editable && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => setForm((f) => ({ ...f, category_id: '' }))}>ביטול</button>}
+                      </p>
+                    ) : (() => {
+                      // the office's own history speaks first; a rule or the supplier's fixed category keeps the line it always had
+                      const low = !form.category_id || (form.category_id === (doc.category_id || '') && typeof fc.category === 'number' && fc.category < 0.85)
+                      if (!editable || srvStrong || !catSug || !low || form.category_id === catSug.category_id) return Suggest({ k: 'category' })
+                      const why = catWhy(catSug)
+                      return (
+                        <p className="fin-catsug" data-reason={catSug.reason}>
+                          <Icon name="sparkle" size={16} />
+                          <span className="fin-catsug__text"><span>הצעה: <strong>{catName(catSug.category_id)}</strong></span><small>{why}</small></span>
+                          <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" onClick={() => pickCategory(catSug.category_id)}>אישור ההצעה</button>
+                        </p>
+                      )
+                    })()}
+                    {catWarn && catImpact && (
+                      <div className="fin-catwarn" role="alert">
+                        <p className="fin-catwarn__head"><Icon name="alert" size={17} /> <strong>רגע לפני שמשנים קטגוריה</strong></p>
+                        {catWarn.supplier && <p>המסמכים של {doc.supplier_name || 'הספק הזה'} משויכים ל"{catName(catWarn.supplier.category_id)}" ({catWarn.supplier.n} מתוך {catWarn.supplier.of}).</p>}
+                        {catWarn.prior && <p>המסמך הזה כבר שויך ל"{catName(catWarn.prior)}" בידי אדם.</p>}
+                        <p>{catImpact.move.length ? <>לשייך רק את המסמך הזה ל"{catName(catWarn.to)}", או להעביר גם את {catImpact.move.length === 1 ? 'המסמך האחר' : `${catImpact.move.length} המסמכים האחרים`} של הספק?</> : <>לשייך את המסמך הזה ל"{catName(catWarn.to)}"?</>}</p>
+                        {catImpact.locked.length > 0 && <p className="fin-catwarn__lock">{catImpact.locked.length === 1 ? 'מסמך אחד של הספק כבר אושר או נשלח לרו״ח, והוא לא ישתנה.' : `${sayDocs(catImpact.locked.length)} של הספק כבר אושרו או נשלחו לרו״ח, והם לא ישתנו.`}</p>}
+                        <div className="fin-catwarn__acts">
+                          <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={!!catBusy} onClick={() => setCatWarn(null)}>רק המסמך הזה</button>
+                          {catImpact.move.length > 0 && can('edit') && <button type="button" className="fin-btn fin-btn--sm" disabled={!!catBusy} onClick={moveSupplier}>{catBusy === 'move' ? 'מעביר…' : `להעביר את כל ${catImpact.move.length + 1}`}</button>}
+                          <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" disabled={!!catBusy} onClick={() => { setForm((f) => ({ ...f, category_id: catWarn.prev })); setCatWarn(null) }}>ביטול</button>
+                        </div>
+                      </div>
+                    )}
+                    {editable && canNewCat && !form.category_id && !catSug && !srvCat && catIdeas.length > 0 && (
+                      <p className="fin-catideas"><span>אין קטגוריה מתאימה? קטגוריה חדשה מהמסמך:</span>{catIdeas.map((n) => <button key={n} type="button" className="fin-chipbtn" disabled={!!catBusy} onClick={() => createCategory(n)}><Icon name="plus" size={14} /> {n}</button>)}</p>
+                    )}
+                    {catNote && <p className="fin-note" role="status">{catNote}</p>}
+                  </div>
                   {F({ k: 'business_id', children: <><Select value={form.business_id || ''} onChange={set('business_id')} disabled={!editable}><option value="">בחרו…</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></> })}
                   {F({ k: 'project_id', children: <><Select value={form.project_id || ''} onChange={set('project_id')} disabled={!editable || !!split}><option value="">{split ? 'מפוצל בין פרויקטים' : 'ללא פרויקט'}</option>{projects.filter((p) => !form.business_id || !p.business_id || p.business_id === form.business_id).map((p) => <option key={p.id} value={p.id}>{p.name}{p.code ? ` (${p.code})` : ''}</option>)}</Select></> })}
                   <div className="fin-field--wide">{Suggest({ k: 'business_id', list: businesses })}{Suggest({ k: 'project_id', list: projects })}</div>
@@ -460,7 +542,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
                 {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
                 {editable && (
                   <div className="fin-form__actions">
-                    {can('approve') && !['approved', 'sent'].includes(doc.status) && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy || doc.status === 'processing'} onClick={approve}><Icon name="check" size={18} /> {dirty ? 'שמירה ואישור' : 'אישור'}</button>}
+                    {!phone && can('approve') && !['approved', 'sent'].includes(doc.status) && <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy || doc.status === 'processing'} onClick={approve}><Icon name="check" size={18} /> {dirty ? 'שמירה ואישור' : 'אישור'}</button>}
                     <button type="submit" className={`fin-btn ${can('approve') && !['approved', 'sent'].includes(doc.status) ? '' : 'fin-btn--primary'}`} disabled={!!busy || !dirty}>שמירה</button>
                     {!['approved', 'sent'].includes(doc.status) && <button type="button" className="fin-btn" disabled={!!busy || !doc.file_path} onClick={reread}><Icon name="sparkle" size={18} /> {busy === 'extract' ? 'קורא…' : 'קריאה מחדש'}</button>}
                     {can('edit') && !['approved', 'sent', 'rejected'].includes(doc.status) && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => save({ status: 'rejected' })}><Icon name="x" size={18} /> דחייה</button>}
@@ -524,6 +606,18 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
             )}
           </div>
         </div>
+        {phone && editable && can('approve') && !['approved', 'sent'].includes(doc.status) && (() => {
+          const errs = issues.filter((i) => i.level === 'error' && i.code !== 'ai_note').length
+          return (
+            <div className="fin-approvebar">
+              <span className="fin-approvebar__sum">
+                <strong>{money(form.total_amount === '' || form.total_amount == null ? doc.total_amount : form.total_amount, form.currency || doc.currency)}</strong>
+                <small className={!form.business_id || errs ? 'is-warn' : ''}>{!form.business_id ? 'חסר שיוך לחברה' : errs ? (errs === 1 ? 'בעיה אחת לבדיקה' : `${errs} בעיות לבדיקה`) : onApproved && waitingAfter > 0 ? `אחרי האישור נפתח המסמך הבא · נשארו ${waitingAfter}` : onApproved ? 'המסמך האחרון לאישור ברשימה' : 'מוכן לאישור'}</small>
+              </span>
+              <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy || doc.status === 'processing'} onClick={approve}><Icon name="check" size={18} /> {busy === 'approved' ? 'מאשר…' : dirty ? 'שמירה ואישור' : 'אישור'}</button>
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

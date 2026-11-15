@@ -9,6 +9,7 @@ import { entityStats } from './stats.js'
 import { saveBlob } from './zip.js'
 import { Empty, Icon, Modal, PageHead, Pill, Toggle } from './ui.jsx'
 import Select from './Select.jsx'
+import CategoryTidy from './CategoryTidy.jsx'
 
 /* One input for a master-data field. Exported for the overview page's edit form. */
 export function FieldInput({ f, value, onChange, refs, selfId, error }) {
@@ -186,6 +187,16 @@ export default function MasterData({ kind }) {
       .sort((a, b) => { const x = a[sort.key] ?? ''; const y = b[sort.key] ?? ''; return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })
   }, [list, filters, q, showArchived, stats, sort, def, kind, projects])
   const pending = kind === 'suppliers' ? list.filter((s) => s.status === 'pending').length : 0
+  // categories: the figures above the list (the share of each category is main's "עמודות" view)
+  const catSum = useMemo(() => {
+    if (kind !== 'categories') return null
+    const live = documents.filter((d) => !['rejected', 'duplicate', 'archived'].includes(d.status))
+    const none = live.filter((d) => !d.category_id && !categories.some((c) => c.name === d.category))
+    const tops = list.filter((c) => !c.parent_id)
+    const spend = tops.reduce((a, c) => a + Math.max(0, stats[c.id]?.total || 0), 0)
+    return { active: list.filter((c) => c.active !== false).length, placed: live.length - none.length, none, spend }
+  }, [kind, documents, categories, list, stats])
+  const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }
   // categories can be read as a list, as bars ranked by spending, or as tiles; the choice is kept on this device
   const [catView, setCatView] = useState(() => { try { return ['bars', 'tiles'].includes(localStorage.getItem('fin-cat-view')) ? localStorage.getItem('fin-cat-view') : 'list' } catch { return 'list' } })
   const setCat = (v) => { setCatView(v); try { localStorage.setItem('fin-cat-view', v) } catch { /* a preference only */ } }
@@ -228,6 +239,16 @@ export default function MasterData({ kind }) {
           <span className="fin-attention__dot" aria-hidden="true" /> <strong>{pending} ספקים חדשים</strong> זוהו מחשבוניות וממתינים לאישור
         </button>
       )}
+
+      {catSum && (
+        <dl className="fin-catsum">
+          <div><dt>קטגוריות פעילות</dt><dd>{catSum.active.toLocaleString('he-IL')}</dd></div>
+          <div><dt>מסמכים משויכים</dt><dd>{catSum.placed.toLocaleString('he-IL')}</dd></div>
+          <div className={catSum.none.length ? 'is-warn' : ''}><dt>בלי קטגוריה</dt><dd>{catSum.none.length ? <button type="button" className="fin-catsum__link" onClick={() => openDocs(catSum.none.map((d) => d.id), 'מסמכים בלי קטגוריה')}>{catSum.none.length.toLocaleString('he-IL')}</button> : '0'}</dd></div>
+          <div><dt>סה״כ הוצאות משויכות</dt><dd>{money(catSum.spend)}</dd></div>
+        </dl>
+      )}
+      {kind === 'categories' && <CategoryTidy onDone={(text) => setToast(text)} />}
 
       <div className="fin-filters">
         <label className="fin-search"><Icon name="search" size={17} /><input type="search" placeholder={`חיפוש ${def.title}…`} value={q} onChange={(e) => setQ(e.target.value)} aria-label={`חיפוש ${def.title}`} /></label>

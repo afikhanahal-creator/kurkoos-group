@@ -10,7 +10,7 @@ import * as api from './api.js'
 /* a report table as a real right-to-left workbook: numbers stay numbers, ISO dates become dates */
 const reportXlsx = (name, head, rows) => buildXlsx([{ name, columns: head.map((h, i) => { const col = rows.map((r) => r[i]).filter((v) => v !== '' && v !== null && v !== undefined); const isNum = col.length > 0 && col.every((v) => typeof v === 'number'); const isDate = col.length > 0 && col.every((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v))); return { header: String(h), type: isDate ? 'date' : isNum ? (col.every(Number.isInteger) && !/סה״כ|מע״מ|סכום|לפני/.test(h) ? 'int' : 'money') : 'text', width: Math.min(40, Math.max(10, String(h).length + 4)) } }), rows }], { title: name })
 import { Card, Empty, Icon, PageHead } from './ui.jsx'
-import { MonthChart, RankBars, ReportFigures } from './ReportCharts.jsx'
+import { MonthChart, MonthStrip, RankBars, ReportFigures, StatementHero, TopExpenses } from './ReportCharts.jsx'
 import { useResizableColumns } from './columns.js'
 import Select from './Select.jsx'
 import Overview from './Overview.jsx'
@@ -29,6 +29,7 @@ export default function Reports() {
   const [biz, setBiz] = useState(params.get('company') || '')
   const [to, setTo] = useState(thisMonth())
   const [span, setSpan] = useState(12)
+  const [breakBy, setBreakBy] = useState('category')
   const colsRef = useResizableColumns(`report-${kind}`)
   const from = shiftMonth(to, -(span - 1))
   const months = Array.from({ length: span }, (_, i) => shiftMonth(from, i))
@@ -111,14 +112,47 @@ export default function Reports() {
   const isMoney = (i) => !report.count && typeof report.rows[0]?.[i] === 'number' && report.head[i] !== 'מסמכים' && report.head[i] !== 'ניסיונות'
   const totals = report.rows.length && report.chart ? report.head.map((_, i) => (i === 0 ? 'סה״כ' : report.rows.reduce((a, r) => a + (typeof r[i] === 'number' ? r[i] : 0), 0))) : null
 
-  // the headline figures of the money reports: what the whole period adds up to
-  const figures = totals && report.head[4] === 'סה״כ' ? [
-    ['סה״כ הוצאות', money(totals[4]), `${monthLabel(from)} – ${monthLabel(to)}`],
-    ['מסמכים', totals[1].toLocaleString('he-IL'), totals[1] ? `ממוצע למסמך ${money(totals[4] / totals[1])}` : ''],
-    ['לפני מע״מ', money(totals[2])],
-    ['מע״מ', money(totals[3])],
-    ...(kind === 'monthly' ? [['ממוצע לחודש', money(totals[4] / span), span === 1 ? 'חודש אחד' : `${span} חודשים`]] : []),
-  ] : kind === 'vat' && totals ? [['מע״מ לקיזוז', money(totals[3]), `${monthLabel(from)} – ${monthLabel(to)}`], ['מע״מ במסמכים', money(totals[2])], ['לא לקיזוז', money(totals[4])], ['מסמכים', totals[1].toLocaleString('he-IL')]] : null
+  /* The money reports open like a card statement: the period's total, how it compares with the period before, the
+     month strip, where the money went and the largest expenses. Everything is summed from the same `booked` records
+     the table below shows. */
+  const statement = !!totals && report.head[4] === 'סה״כ'
+  const rangeLabel = (a, b) => (a === b ? monthLabel(a) : `${monthLabel(a)} – ${monthLabel(b)}`)
+  const stmt = useMemo(() => {
+    if (!statement) return null
+    const mine = (d) => counts(d) && (role !== 'accountant' || ['approved', 'sent'].includes(d.status))
+    const total = booked.reduce((a, d) => a + signedTotal(d), 0)
+    const pFrom = shiftMonth(from, -span); const pTo = shiftMonth(to, -span)
+    const before = scoped.filter((d) => mine(d) && period(d) >= pFrom && period(d) <= pTo)
+    // nothing at all before this period (a new system): there is no "previous period" to compare with
+    const any = scoped.some((d) => mine(d) && period(d) <= pTo)
+    const claim = booked.reduce((a, d) => a + claimableVat(d, categories), 0)
+    // the strip: twelve months that end this month (or on the chosen month, when it is older than that)
+    const end = to >= shiftMonth(thisMonth(), -11) ? thisMonth() : to
+    const stripMonths = Array.from({ length: 12 }, (_, i) => shiftMonth(end, i - 11))
+    const strip = stripMonths.map((m) => { const l = scoped.filter((d) => mine(d) && period(d) === m); return { total: l.reduce((a, d) => a + signedTotal(d), 0), count: l.length } })
+    const by = { category: (d) => d.category || 'ללא קטגוריה', supplier: (d) => d.supplier_name || 'ספק לא ידוע', company: (d) => nameOf(businesses, d.business_id) || 'לא משויך' }[breakBy]
+    const g = {}
+    for (const d of booked) (g[by(d)] ||= []).push(d)
+    const groups = Object.entries(g).map(([name, list]) => ({ key: name, name, list, count: list.length, value: list.reduce((a, d) => a + signedTotal(d), 0), detail: [['סה״כ', money(list.reduce((a, d) => a + signedTotal(d), 0))], ['מע״מ', money(list.reduce((a, d) => a + (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.vat_amount) || 0), 0))]] })).filter((x) => x.value).sort((a, b) => b.value - a.value)
+    const top = [...booked].filter((d) => signedTotal(d) > 0).sort((a, b) => signedTotal(b) - signedTotal(a)).slice(0, 5)
+    return { total, prev: any ? before.reduce((a, d) => a + signedTotal(d), 0) : null, prevLabel: rangeLabel(pFrom, pTo), claim, stripMonths, strip, groups, top }
+  }, [statement, booked, scoped, from, to, span, role, categories, businesses, breakBy]) // eslint-disable-line react-hooks/exhaustive-deps
+  const pickMonth = (m) => { if (span === 1 && to === m) setSpan(12); else { setTo(m); setSpan(1) } }
+  const openGroup = (r) => openDocs(go, [...r.list].sort((a, b) => String(docDate(a)).localeCompare(String(docDate(b)))), `${r.name} · ${r.count === 1 ? 'מסמך אחד' : `${r.count} מסמכים`}`)
+  const BREAKS = [['category', 'קטגוריה'], ['supplier', 'ספק'], ...(businesses.length > 1 && !biz ? [['company', 'חברה']] : [])]
+
+  // the headline figures of the VAT report
+  const figures = kind === 'vat' && totals ? [['מע״מ לקיזוז', money(totals[3]), `${monthLabel(from)} – ${monthLabel(to)}`], ['מע״מ במסמכים', money(totals[2])], ['לא לקיזוז', money(totals[4])], ['מסמכים', totals[1].toLocaleString('he-IL')]] : null
+  const rankRows = () => shown.filter(({ r }) => r[report.chart]).slice(0, 12).map(({ r, n }) => ({ key: n, n, name: String(r[0]), value: r[report.chart], count: typeof r[1] === 'number' ? r[1] : null, detail: report.head.slice(2).map((h, k) => [h, report.count ? String(r[k + 2]) : money(r[k + 2])]) }))
+  const table = (
+    <div className="fin-table-wrap">
+      <table ref={colsRef} className={`fin-table fin-table--plain ${statement ? 'fin-table--stmt' : ''}`}>
+        <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0]?.[i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>
+        <tbody>{shown.map(({ r, n }) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : report.lists?.[n]?.length ? () => openRow(n) : undefined} className={[report.ids || report.lists?.[n]?.length ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
+        {totals && <tfoot><tr>{totals.map((t, i) => <td key={i} className={i ? 'fin-num' : 'fin-td-main'} data-label={i ? report.head[i] : undefined}>{typeof t === 'number' ? (isMoney(i) ? money(t) : t) : t}</td>)}</tr></tfoot>}
+      </table>
+    </div>
+  )
 
   return (
     <div className="fin-stack fin-report">
@@ -136,20 +170,38 @@ export default function Reports() {
         <Select className="fin-select" value={span} onChange={(e) => setSpan(Number(e.target.value))} aria-label="טווח"><option value={1}>חודש אחד</option><option value={3}>3 חודשים</option><option value={6}>6 חודשים</option><option value={12}>12 חודשים</option><option value={24}>24 חודשים</option></Select>
       </div>
       {report.note && <p className="fin-muted">{report.note}</p>}
-      {!report.rows.length ? <Empty title="אין נתונים לדוח הזה" icon="reports">נסו טווח אחר או חברה אחרת.</Empty> : (
+      {!report.rows.length ? <Empty title="אין נתונים לדוח הזה" icon="reports">נסו טווח אחר או חברה אחרת.</Empty> : statement ? (
+        <>
+        <StatementHero label="סה״כ הוצאות" period={rangeLabel(from, to)} total={stmt.total} prev={stmt.prev} prevLabel={stmt.prevLabel}
+          stats={[
+            ['מסמכים', totals[1].toLocaleString('he-IL'), totals[1] ? `ממוצע למסמך ${money(stmt.total / totals[1])}` : 'אין מסמכים בתקופה'],
+            ['מע״מ לקיזוז', money(stmt.claim), `מתוך ${money(totals[3])} מע״מ במסמכים`],
+            ['לפני מע״מ', money(totals[2])],
+            ...(span > 1 ? [['ממוצע לחודש', money(stmt.total / span), `${span} חודשים`]] : []),
+          ]}>
+          {kind !== 'monthly' && <MonthStrip months={stmt.stripMonths} rows={stmt.strip} from={from} to={to} onPick={pickMonth} />}
+        </StatementHero>
+        {report.monthKeys && <Card title="הוצאות לפי חודש" className="fin-report__wide"><MonthChart months={report.monthKeys} rows={report.rows} onOpen={openRow} current={to} /></Card>}
+        <div className="fin-stmt-grid">
+          {kind === 'monthly'
+            ? <Card title="לאן הלך הכסף" className="fin-stmt-card" actions={<div className="fin-seg" role="group" aria-label="חלוקה לפי">{BREAKS.map(([k, v]) => <button key={k} type="button" className={breakBy === k ? 'is-on' : ''} aria-pressed={breakBy === k} onClick={() => setBreakBy(k)}>{v}</button>)}</div>}>
+                <RankBars rows={stmt.groups.slice(0, 8)} onPick={openGroup} empty="אין הוצאות בתקופה הזו." />
+                {stmt.groups.length > 8 && <p className="fin-muted fin-small">מוצגים 8 הגדולים מתוך {stmt.groups.length}. הדוחות "לפי ספק" ו"לפי חברה" מציגים את כולם.</p>}
+              </Card>
+            : <Card title={`לאן הלך הכסף · לפי ${report.head[0]}`} className="fin-stmt-card"><RankBars rows={rankRows()} onPick={report.lists ? (r) => openRow(r.n) : undefined} empty="אין הוצאות בתקופה הזו." /></Card>}
+          <Card title="ההוצאות הגדולות" className="fin-stmt-card"><TopExpenses docs={stmt.top} total={stmt.total} onOpen={(d) => go(`/documents/${d.id}`)} /></Card>
+        </div>
+        <section className="fin-stmt-table" aria-label="פירוט מלא">
+          <header className="fin-stmt-table__head"><h3>פירוט מלא</h3><span>{byMonth ? `${report.rows.length} חודשים, מהחדש לישן` : `${report.rows.length.toLocaleString('he-IL')} שורות, מהגדול לקטן`} · שורה פותחת את המסמכים שלה</span></header>
+          {table}
+        </section>
+        </>
+      ) : (
         <>
         {figures && <ReportFigures items={figures} />}
-        <div className={`fin-grid fin-grid--report ${report.monthKeys ? 'is-stacked' : ''}`}>
-          {report.monthKeys
-            ? <Card title="הוצאות לפי חודש" className="fin-report__wide"><MonthChart months={report.monthKeys} rows={report.rows} onOpen={openRow} /></Card>
-            : report.chart && <Card title={`${report.head[report.chart]} לפי ${report.head[0]}`}><RankBars rows={shown.filter(({ r }) => r[report.chart]).slice(0, 12).map(({ r, n }) => ({ key: n, n, name: String(r[0]), value: r[report.chart], count: typeof r[1] === 'number' ? r[1] : null, detail: report.head.slice(2).map((h, k) => [h, report.count ? String(r[k + 2]) : money(r[k + 2])]) }))} format={report.count ? (v) => String(v) : money} onPick={report.lists ? (r) => openRow(r.n) : undefined} /></Card>}
-          <div className="fin-table-wrap">
-            <table ref={colsRef} className="fin-table fin-table--plain">
-              <thead><tr>{report.head.map((h, i) => <th key={h} className={i && typeof report.rows[0][i] === 'number' ? 'fin-num' : ''}>{h}</th>)}</tr></thead>
-              <tbody>{shown.map(({ r, n }) => <tr key={n} onClick={report.ids ? () => go(`/documents/${report.ids[n]}`) : report.lists?.[n]?.length ? () => openRow(n) : undefined} className={[report.ids || report.lists?.[n]?.length ? 'is-link' : '', r.some((c) => typeof c === 'number') && r.every((c) => typeof c !== 'number' || c === 0) ? 'is-zero' : ''].filter(Boolean).join(' ')}>{r.map((c, i) => <td key={i} className={i === 0 ? 'fin-td-main' : typeof c === 'number' ? 'fin-num' : ''} data-label={i ? report.head[i] : undefined}>{typeof c === 'number' && isMoney(i) ? money(c) : c}</td>)}</tr>)}</tbody>
-              {totals && <tfoot><tr>{totals.map((t, i) => <td key={i} className={i ? 'fin-num' : 'fin-td-main'} data-label={i ? report.head[i] : undefined}>{typeof t === 'number' ? (isMoney(i) ? money(t) : t) : t}</td>)}</tr></tfoot>}
-            </table>
-          </div>
+        <div className="fin-grid fin-grid--report">
+          {report.chart && <Card title={`${report.head[report.chart]} לפי ${report.head[0]}`}><RankBars rows={rankRows()} format={report.count ? (v) => String(v) : money} onPick={report.lists ? (r) => openRow(r.n) : undefined} /></Card>}
+          {table}
         </div>
         </>
       )}

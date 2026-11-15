@@ -45,7 +45,8 @@ const done = new Set(existsSync(join(OUT, 'done.txt')) ? readFileSync(join(OUT, 
 // a video or reel post keeps its own cover; carousels and stories are left to the owner
 const VIDEO = /רילס|וידאו|סטורי/
 const queue = posts
-  .filter((p) => p && p.id && !p.studio && !p.removed && !done.has(p.id) && !VIDEO.test(p.format || '') && ORDER.includes(p.status || 'none'))
+  // an Afik Hanahal post keeps its own brand: the studio designs only in the Kurkoos brand
+  .filter((p) => p && p.id && !p.studio && !p.removed && p.brand !== 'afik' && !done.has(p.id) && !VIDEO.test(p.format || '') && ORDER.includes(p.status || 'none'))
   .sort((a, b) => ORDER.indexOf(a.status || 'none') - ORDER.indexOf(b.status || 'none') || String(a.planAt || a.upd || '').localeCompare(String(b.planAt || b.upd || '')))
   .slice(0, +A.limit || Infinity)
 log(`batch ${BATCH}: ${queue.length} posts in the queue${TOKEN ? '' : ' (dry run: nothing is written)'}`)

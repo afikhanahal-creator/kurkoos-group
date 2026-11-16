@@ -56,7 +56,13 @@ export async function readDocument(input, runs, { deadline = Infinity } = {}) {
       first = await extract(input, { model: env.modelFirst() })
       add(first._usage)
       if (runs) runs.ocr.stat.details.first_usd = (runs.ocr.stat.details.first_usd || 0) + (first._usage?.usd || 0)
-    } catch { first = null }   // the small model failing is not the document failing: the mid model reads it
+    } catch (e) {
+      // the service itself failing (overloaded, down, the network) fails the reading: the mid model would meet the same
+      // service, and the night retry is the plan for that. An answer that could not be used (cut off, refused, not
+      // JSON) is the small model's limit: the mid model reads it
+      if (e?.status === 429 || e?.status >= 500 || /overload|timeout|ECONN|fetch failed|network/i.test(String(e?.message || e))) throw e
+      first = null
+    }
   }
   const verdict = first ? firstReadOk(first) : { ok: false, why: ['first_failed'] }
   if (first && verdict.ok) { x = first; x.reading = { tier: 'small', model: first._usage?.model || env.modelFirst() }; tally('tier_small') }

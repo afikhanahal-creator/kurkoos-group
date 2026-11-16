@@ -122,7 +122,7 @@ export async function extract({ buf, mime, text, categories, hint }, { model = e
     }),
   })
   const d = await r.json().catch(() => ({}))
-  if (!r.ok) throw new Error((d.error && d.error.message) || `claude ${r.status}`)
+  if (!r.ok) throw Object.assign(new Error((d.error && d.error.message) || `claude ${r.status}`), { status: r.status })
   if (d.stop_reason === 'refusal') throw new Error('Claude declined to read this document')
   if (d.stop_reason === 'max_tokens') throw new Error('Claude answer was cut off')
   const out = JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join(''))

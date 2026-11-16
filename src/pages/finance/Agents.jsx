@@ -3,6 +3,7 @@ import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { AGENTS, ago, dateTime } from './format.js'
 import { Card, Icon, PageHead, Pill, useAsync } from './ui.jsx'
+import AiCost from './AiCost.jsx'
 
 const TONE = { ok: 'ok', partial: 'warn', error: 'bad', running: 'info' }
 const LABEL = { ok: 'תקין', partial: 'חלקי', error: 'שגיאה', running: 'רץ' }
@@ -81,6 +82,7 @@ export default function Agents() {
         </dl>
         <p className="fin-muted fin-small">AI החודש: {engine.ai.docs} מסמכים, {engine.ai.calls} קריאות ({engine.ai.second} מהן קריאה שנייה לאימות), {engine.ai.tokens.toLocaleString('he-IL')} טוקנים. העלות לפי המחירון של Anthropic לטוקנים.</p>
       </section>
+      {can('operate') && <AiCost canEdit={can('manage')} />}
       <div className="fin-agent-grid">
         {cards.map((c) => (
           <article key={c.k} className="fin-agent">

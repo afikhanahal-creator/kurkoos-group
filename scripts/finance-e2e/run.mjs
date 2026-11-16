@@ -860,7 +860,7 @@ await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 15000 }).
 const capSaved = sql(`select coalesce((select name from fin_projects where id=d.project_id),'-')||'|'||coalesce(d.category,'-')||'|'||d.status from fin_documents d where supplier_vat_id='${meta.IDS.hasharon}'`)
 record('CAP', 'צילום קבלה: הכנה, קריאה, אימות ושיוך', 'התמונה (2400×3200) מוקטנת במכשיר ל-1650×2200 JPEG לפני ההעלאה; הסוכנים קוראים ספק, מספר, תאריך, לפני מע״מ, מע״מ וסה״כ; צילום מטושטש מקבל קריאה שנייה לאימות ואזהרה; משייכים לפרויקט ולקטגוריה ונשמר כהוצאה לבדיקה',
   `הוקטנה: ${logC1.claudeDims.includes('1650x2200')}, ${capRow[0]} ${Math.round(capRow[1] / 1024)}KB (המקור ${Math.round(origSize / 1024)}KB); במסך: "${capHead}" · ${capFacts}; קריאה שנייה: ${(logC1.verifyCalls || 0) - (logC0.verifyCalls || 0)}, אי-הסכמות: ${capRow[8]}; "${capCheck}"; אזהרה: "${capWarn.replace(/\s+/g, ' ')}"; קריאות AI: ${capRow[10]}, טוקנים: ${capRow[11]}; אחרי שמירה: ${capSaved}`,
-  logC1.claudeDims.includes('1650x2200') && capRow[0] === 'image/jpeg' && capRow[2] === 'review' && capRow[3] === 'חומרי בניין השרון' && capRow[4] === '755.20' && capRow[5] === '115.20' && capRow[6] === '24-7781' && capRow[8] === '[]' && capRow[9] === 'true' && capRow[10] === '2' && capRow[11] === 'true'
+  logC1.claudeDims.includes('1650x2200') && capRow[0] === 'image/jpeg' && capRow[2] === 'review' && capRow[3] === 'חומרי בניין השרון' && capRow[4] === '755.20' && capRow[5] === '115.20' && capRow[6] === '24-7781' && capRow[8] === '[]' && capRow[9] === 'true' && Number(capRow[10]) >= 2 && Number(capRow[10]) <= 3 && capRow[11] === 'true'
     && (logC1.verifyCalls || 0) - (logC0.verifyCalls || 0) === 1 && /755/.test(capHead) && /24-7781/.test(capFacts) && /תואמים/.test(capCheck) && /מטושטש/.test(capWarn) && capSaved === 'מוהליבר 17|חומרי בניין|review',
   [capStartShot, capShot])
 
@@ -2846,6 +2846,79 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && !!madeInDrive && folderTile === 1 && pin.data.moved === 1 && inFolder && bizBefore === bizAfter && delFull.status === 409 && s3.folders === 1 && pathAfterRename.endsWith(`${FN} חדש`) && unpin.data.moved === 1 && backHome && delEmpty.data.ok === true && folderGone
     && /השם שונה ב-Google Drive/.test(history) && /office@kurkoos\.test/.test(accText) && /סנכרון דו-כיווני/.test(accText) && /כל ה-Drive של החשבון/.test(accText) && /התראות מיידיות מ-Drive פעילות/.test(accText) && /חוזה שכירות משרד/.test(sharedText) && /לצפייה בלבד/.test(sharedText) && /ייכנס לתיקייה/.test(upNote) && upPinned === '1' && starredFolder === 1 && badHook.status === 401 && goodHook.status === 200 && hookBody.followed === 1 && pushedName === 'שם שהגיע בהתראה.pdf' && twoTargets === 'office@kurkoos.test,second@kurkoos.test' && acc2.data.accounts?.length === 2 && mixed === '0' && afterDisconnect === '1' && empSync.status === 403 && empFolder.status === 403
     && sOff.renamed === 0 && nameOff !== 'renamed-while-off.pdf' && putBack && ['renamed_in_drive', 'moved_in_drive', 'trashed_in_drive', 'restored_by_user', 'folder_created', 'folder_renamed_in_drive', 'folder_deleted', 'missing'].every((a) => String(logged).includes(a)), [syncShot, accShot])
+}
+
+// ECON: the economical reading. (1) a clean invoice is read by the small model only; (2) one whose small reading does
+// not add up goes to the mid model, which reads it from the start; (3) over the day's cap a file from mail is kept and
+// waits for the night, and a person's "read again" still reads it; (4) the agents screen shows the cost and the cap;
+// (5) the checks themselves, case by case.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const { firstReadOk, slim } = await import('../../server/finance/extract.js')
+  const today = new Date().toISOString().slice(0, 10)
+  const good = { is_financial_document: true, document_class: 'tax_invoice', supplier_name: 'ספק', doc_number: '12', issue_date: today, amount_before_vat: 100, vat_amount: 18, total_amount: 118, currency: 'ILS', supplier_vat_id: '', field_confidence: { total_amount: 0.98, issue_date: 0.95, supplier_name: 0.95, doc_number: 0.95 } }
+  const checks = [
+    firstReadOk(good).ok,
+    firstReadOk({ ...good, total_amount: 150 }).why.join(','),
+    firstReadOk({ ...good, is_financial_document: false, document_class: 'quote' }).why.includes('not_financial'),
+    firstReadOk({ ...good, supplier_vat_id: '123456789' }).why.join(','),
+    firstReadOk({ ...good, supplier_vat_id: '514920271' }).ok,
+    firstReadOk({ ...good, field_confidence: { ...good.field_confidence, total_amount: 0.6 } }).why.join(','),
+    firstReadOk({ ...good, issue_date: '2015-01-01' }).why.join(','),
+    firstReadOk({ ...good, doc_number: '' }).why.join(','),
+    firstReadOk({ ...good, vat_amount: 25, total_amount: 125 }).why.join(','),
+    slim('שלום\n\n\n\nמצורפת חשבונית' + ' '.repeat(50) + '\n'.repeat(5) + 'x'.repeat(500) + '\nOn Mon, 3 Nov 2026 at 10:00 Dan <d@x.test> wrote:\n' + 'ישן '.repeat(4000)).length < 700,
+  ].join(' | ')
+  const pdfOf = async (html) => { await page.setContent(`<div dir="rtl" style="font:18px sans-serif;padding:40px">${html}</div>`); return page.pdf({ format: 'A4' }) }
+  const tag = Date.now().toString(36)
+  const files = { [`חשבונית_${tag}_א.pdf`]: await pdfOf(`<h1>חשבונית מס ${tag}-1</h1><p>סה״כ 1,180</p>`), [`חשבונית_${tag}_ב.pdf`]: await pdfOf(`<h1>חשבונית מס ${tag}-2</h1><p>סה״כ 2,360</p>`), [`חשבונית_${tag}_ג.pdf`]: await pdfOf(`<h1>חשבונית מס ${tag}-3</h1><p>סה״כ 590</p>`) }
+  const names = Object.keys(files)
+  for (const [n, b] of Object.entries(files)) fs.writeFileSync(`${FIX}/${n}`, b)
+  const hashOf = (b) => crypto.createHash('sha256').update(b).digest('hex')
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); const saved = JSON.stringify(fx)
+  const base = fx.answers[Object.keys(fx.answers)[0]]
+  const ans = (o) => ({ ...base, is_financial_document: true, document_class: 'tax_invoice', relevance_confidence: 0.97, doc_type: 'invoice', supplier_vat_id: '', customer_name: '', customer_vat_id: '', category: 'אחר', vat_rate: 18, currency: 'ILS', issue_date: today, quality: { blurry: false, cropped: false }, field_confidence: { total_amount: 0.97, issue_date: 0.95, supplier_name: 0.95, doc_number: 0.95, vat_amount: 0.95 }, ...o })
+  fx.answers[hashOf(files[names[0]])] = ans({ supplier_name: 'חסכון אחד בע״מ', doc_number: `${tag}-1`, amount_before_vat: 1000, vat_amount: 180, total_amount: 1180 })
+  fx.answers[hashOf(files[names[1]])] = ans({ supplier_name: 'חסכון שתיים בע״מ', doc_number: `${tag}-2`, amount_before_vat: 2000, vat_amount: 360, total_amount: 2360 })
+  fx.smallAnswers = { ...(fx.smallAnswers || {}), [hashOf(files[names[1]])]: ans({ supplier_name: 'חסכון שתיים בע״מ', doc_number: `${tag}-2`, amount_before_vat: 2000, vat_amount: 360, total_amount: 2630 }) }   // the small model misread the total
+  fx.answers[hashOf(files[names[2]])] = ans({ supplier_name: 'חסכון שלוש בע״מ', doc_number: `${tag}-3`, amount_before_vat: 500, vat_amount: 90, total_amount: 590 })
+  const when = (h) => new Date(Date.now() - h * 60_000).toISOString()
+  fx.mailboxes['invoices@kurkoos.test'].messages.push(
+    { id: `e1-${tag}`, date: when(30), subject: `חשבונית ${tag}-1`, from: 'חסכון <a@econ.test>', text: 'מצורף', files: [names[0]] },
+    { id: `e2-${tag}`, date: when(20), subject: `חשבונית ${tag}-2`, from: 'חסכון <b@econ.test>', text: 'מצורף', files: [names[1]] })
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const boxId = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
+  await api(tok, { action: 'sync', mailbox_id: boxId })
+  const row = (n) => sql(`select coalesce(extraction->'reading'->>'tier','')||'|'||coalesce((extraction->'reading'->'why')::text,'')||'|'||ai_calls||'|'||coalesce(total_amount::text,'')||'|'||status from fin_documents where file_name='${n}'`).split('|')
+  const r1 = row(names[0]); const r2 = row(names[1])
+  // (3) the cap: none left for today
+  sql("insert into fin_settings (key, value) values ('ai_budget', '{\"day_usd\": 0, \"month_usd\": 20}') on conflict (key) do update set value = excluded.value")
+  await page.waitForTimeout(31_000)   // the spend is cached for 30 s in the server
+  const fx2 = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
+  fx2.mailboxes['invoices@kurkoos.test'].messages.push({ id: `e3-${tag}`, date: when(5), subject: `חשבונית ${tag}-3`, from: 'חסכון <c@econ.test>', text: 'מצורף', files: [names[2]] })
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx2, null, 1))
+  await api(tok, { action: 'sync', mailbox_id: boxId })
+  const r3 = sql(`select id||'|'||status||'|'||ai_calls||'|'||(issues::text like '%budget_wait%')||'|'||(next_retry_at is not null) from fin_documents where file_name='${names[2]}'`).split('|')
+  const cost = await api(tok, { action: 'ai-cost' })
+  await go('/agents'); await page.waitForTimeout(1500)
+  const card = await page.locator('.fin-aicost').innerText().catch(() => '')
+  const costShot = await shot('119f-ai-cost')
+  // a person reads it now, whatever the cap
+  const reread = await api(tok, { action: 'retry-doc', document_id: r3[0] })
+  const r3b = sql(`select status||'|'||ai_calls||'|'||coalesce(total_amount::text,'') from fin_documents where id='${r3[0]}'`)
+  const saveCap = await api(tok, { action: 'ai-budget-save', day_usd: 2, month_usd: 20 })
+  const empTok = await login('worker@kurkoos.test', 'W0rker!xx').catch(() => null)
+  const empSave = empTok ? (await api(empTok, { action: 'ai-budget-save', day_usd: 99, month_usd: 99 })).status : 'אין עובד'
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  record('ECON', 'קריאה חסכונית: מודל קטן קודם, הגדול רק כשצריך, ותקציב', 'חשבונית נקייה נקראת רק במודל הקטן (קריאה אחת); כשסכומי הקריאה הקטנה לא מסתדרים המודל הגדול קורא מחדש והסכום שלו נשמר; מעל התקציב היומי מסמך מהמייל נשמר בלי קריאה ומחכה ללילה, ו"קריאה מחדש" של אדם קוראת אותו; מסך הסוכנים מראה עלות ותקציב; רק מנהל משנה תקציב; הבדיקות של הקריאה הקטנה',
+    `בדיקות: ${checks}; נקייה: ${r1.join(',')}; לא מסתדרת: ${r2.join(',')}; מעל התקציב: ${r3.slice(1).join(',')}; אחרי קריאה ידנית: ${r3b}; עלות: ${JSON.stringify(cost.data).slice(0, 160)}; במסך: "${card.replace(/\s+/g, ' ').slice(0, 120)}"; שמירה: ${saveCap.status}, עובד: ${empSave}`,
+    checks === 'true | sum_off | true | vat_id_invalid | true | unsure_total_amount | date_out_of_range | no_number | vat_rate_odd | true'
+      && r1[0] === 'small' && r1[2] === '1' && r1[3] === '1180.00'
+      && r2[0] === 'escalated' && /sum_off/.test(r2[1]) && r2[2] === '2' && r2[3] === '2360.00'
+      && r3[1] === 'failed' && r3[2] === '0' && r3[3] === 'true' && r3[4] === 'true'
+      && /^review\|[12]\|590\.00$/.test(r3b) && cost.status === 200 && cost.data.caps.day_usd === 0 && cost.data.waiting >= 1 && /עלות הקריאה/.test(card) && /ממתינים לתקציב/.test(card)
+      && saveCap.status === 200 && empSave === 403, [costShot])
 }
 
 // MODALTYPE: typing in the second field of a dialog stays there. The dialog used to move the cursor back to its first

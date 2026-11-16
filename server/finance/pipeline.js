@@ -4,7 +4,8 @@
 import crypto from 'node:crypto'
 import { env, costOf, MIME_OK, MAX_FILE, QUOTA_STOP, TIME_BUDGET_MS, DOC_TYPES } from './env.js'
 import { sb, one, insert, patch, q, rpc, upload, download, storageUsage, audit } from './db.js'
-import { extract, verify, needsVerify, crossCheck, relevanceOf, CLASS_LABEL, RELEVANT_CLASSES } from './extract.js'
+import { noteSpend, overBudget } from './budget.js'
+import { extract, verify, needsVerify, crossCheck, relevanceOf, firstReadOk, CLASS_LABEL, RELEVANT_CLASSES } from './extract.js'
 import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
 import { gate, triage } from './triage.js'
@@ -38,9 +39,39 @@ export const mimeOf = (name, given) => {
 
 /* every source reads documents the same way: a full reading, then, when the reading is unsure, the arithmetic does
    not close or the image is poor, a second independent reading of the critical fields (validation layer 3) */
+/* The reading, in tiers (docs/finance/AI-COST.md):
+   1. the small model reads (about a twentieth of the mid model's price);
+   2. its reading is kept only when it passes firstReadOk (an expense document, a total, a supplier, a date in range,
+      a number on a tax document, sure of the key fields, the sums close, a VAT rate that exists, a valid company id);
+   3. otherwise the mid model reads it from the start, and the small reading is dropped;
+   4. the strongest model checks the critical fields only when the reading is still unsure (needsVerify), as before.
+   A small reading that fails is the price of the cascade: it is counted, so the screen shows whether it pays off. */
 export async function readDocument(input, runs, { deadline = Infinity } = {}) {
-  const x = await extract(input)
-  const usage = { ...(x._usage || { in: 0, out: 0, calls: 1 }) }
+  const tally = (k) => { if (runs) runs.ocr.stat.details[k] = (runs.ocr.stat.details[k] || 0) + 1 }
+  let x; const usage = { in: 0, out: 0, calls: 0, usd: 0 }
+  const add = (u) => { usage.in += u?.in || 0; usage.out += u?.out || 0; usage.calls += u?.calls || 1; usage.usd += u?.usd || 0 }
+  let first = null
+  if (env.tiered() && env.modelFirst() !== env.modelExtract()) {
+    try {
+      first = await extract(input, { model: env.modelFirst() })
+      add(first._usage)
+      if (runs) runs.ocr.stat.details.first_usd = (runs.ocr.stat.details.first_usd || 0) + (first._usage?.usd || 0)
+    } catch (e) {
+      // the service itself failing (overloaded, down, the network) fails the reading: the mid model would meet the same
+      // service, and the night retry is the plan for that. An answer that could not be used (cut off, refused, not
+      // JSON) is the small model's limit: the mid model reads it
+      if (e?.status === 429 || e?.status >= 500 || /overload|timeout|ECONN|fetch failed|network/i.test(String(e?.message || e))) throw e
+      first = null
+    }
+  }
+  const verdict = first ? firstReadOk(first) : { ok: false, why: ['first_failed'] }
+  if (first && verdict.ok) { x = first; x.reading = { tier: 'small', model: first._usage?.model || env.modelFirst() }; tally('tier_small') }
+  else {
+    x = await extract(input)
+    add(x._usage)
+    x.reading = { tier: first ? 'escalated' : 'mid', model: x._usage?.model || env.modelExtract(), ...(first ? { why: verdict.why } : {}) }
+    tally(first ? 'tier_escalated' : 'tier_mid')
+  }
   if (x.is_financial_document && needsVerify(x) && Date.now() > deadline) x.verification = { skipped: 'time' }
   else if (x.is_financial_document && needsVerify(x)) {
     try {
@@ -48,12 +79,13 @@ export async function readDocument(input, runs, { deadline = Infinity } = {}) {
       const cc = crossCheck(x, y)
       x.field_confidence = cc.field_confidence
       x.verification = { second: y, disagree: cc.disagree, at: new Date().toISOString() }
-      usage.in += y._usage?.in || 0; usage.out += y._usage?.out || 0; usage.calls += 1; usage.usd = (usage.usd || 0) + (y._usage?.usd || 0)
+      add(y._usage)
       if (runs) runs.validation.stat.details.verified = (runs.validation.stat.details.verified || 0) + 1
     } catch (e) { x.verification = { error: String(e.message || e).slice(0, 200) } }
   }
   Object.defineProperty(x, '_usage', { value: usage, enumerable: false, configurable: true, writable: true })
   if (runs) runs.ocr.stat.details.cost_usd = (runs.ocr.stat.details.cost_usd || 0) + (usage.usd || 0)
+  noteSpend(usage.usd)
   return x
 }
 const usageFields = (x, prev = {}) => ({ ai_tokens_in: (prev.ai_tokens_in || 0) + (x?._usage?.in || 0), ai_tokens_out: (prev.ai_tokens_out || 0) + (x?._usage?.out || 0), ai_calls: (prev.ai_calls || 0) + (x?._usage?.calls || 0) })
@@ -346,6 +378,20 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
       }
       const g = gate({ name: String(name).split(' › ').pop(), subject: meta.email_subject, from: meta.email_from }, gateCtx)   // a file inside a ZIP is judged by its own name
       if (g.verdict === 'noise') { await skipAs(g.cls, 1, `דולג בלי קריאה: ${g.reason}`, 'skipped_by_rule'); return }
+      // the automatic reading's spending cap (budget.js): the file is kept and read the next night, nothing is paid now
+      const cap = await overBudget().catch(() => ({ over: false }))
+      if (cap.over) {
+        tally('budget_wait')
+        const path = `${mb.provider}/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${extOf(mime)}`
+        await upload(path, buf, mime.startsWith('text/') ? 'text/html; charset=utf-8' : mime)
+        const which = cap.over === 'month' ? 'התקציב החודשי' : 'התקציב היומי'
+        try {
+          await insert('fin_documents', { ...meta, file_path: path, file_name: String(name).slice(0, 200), file_mime: mime.startsWith('text/') ? 'text/html' : mime, file_size: buf.length, file_hash: hash, attempts: 0, failures: 0, status: 'failed', stage: 'failed', stage_at: new Date().toISOString(), next_retry_at: new Date(nextNight().getTime() - 60_000).toISOString(),
+            issues: [{ level: 'warn', code: 'budget_wait', field: null, message: `${which} לקריאה האוטומטית נוצל (${cap.spent.toFixed(2)} מתוך ${cap.cap} דולר). המסמך נשמר וייקרא בלילה. אפשר לקרוא אותו עכשיו ב"קריאה מחדש".` }] })
+          stats.imported++; got++
+        } catch (e) { if (e.code === '23505') stats.skipped++; else throw e }
+        return
+      }
       let doubt = null
       if (g.verdict === 'invoice') tally('direct')
       else {
@@ -353,6 +399,7 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
           const t = await triage({ buf: extractInput.buf, mime: extractInput.mime || mime, text: extractInput.text, name, subject: meta.email_subject, from: meta.email_from })
           runs.ocr.stat.details.triage_tokens = (runs.ocr.stat.details.triage_tokens || 0) + (t.usage?.in || 0) + (t.usage?.out || 0)
           runs.collector.stat.details.triage_usd = (runs.collector.stat.details.triage_usd || 0) + costOf(env.modelTriage(), t.usage?.in, t.usage?.out)
+          noteSpend(costOf(env.modelTriage(), t.usage?.in, t.usage?.out))
           if (t.verdict === 'skip') { await skipAs(t.cls, t.conf, `בדיקה מקדימה: ${CLASS_LABEL[t.cls] || 'לא חשבונית או קבלה'}`, 'skipped_by_triage'); return }
           // a hesitant "no" is still a no: without positive evidence a file does not become a document
           if (t.verdict === 'unsure' && t.lean !== 'yes') { await skipAs(t.cls || 'other', t.conf, `בדיקה מקדימה: כנראה ${CLASS_LABEL[t.cls] || 'לא חשבונית או קבלה'}`, 'skipped_by_triage'); return }

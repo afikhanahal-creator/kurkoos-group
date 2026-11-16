@@ -92,6 +92,8 @@ const ROLES = {
   'whatsapp-send-doc': ['admin', 'finance_manager', 'employee'],
   'whatsapp-check': ['admin', 'finance_manager'],
   'whatsapp-catchup': ['admin', 'finance_manager'],
+  'ai-cost': ['admin', 'finance_manager'],
+  'ai-budget-save': ['admin'],
   'whatsapp-link-hidden': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
   'whatsapp-inbox-delete': ['admin', 'finance_manager'],
@@ -713,6 +715,18 @@ export default async function handler(req, res) {
       }
       case 'whatsapp-check': {
         res.status(200).json(await waHealth(origin(req)))
+        return
+      }
+      case 'ai-cost': {
+        const { report } = await import('./finance/budget.js')
+        res.status(200).json(await report())
+        return
+      }
+      case 'ai-budget-save': {
+        const { saveCaps } = await import('./finance/budget.js')
+        const v = await saveCaps({ day_usd: body.day_usd, month_usd: body.month_usd }, user)
+        await audit('settings', null, 'ai_budget_saved', v, user)
+        res.status(200).json({ caps: v })
         return
       }
       case 'whatsapp-catchup': {

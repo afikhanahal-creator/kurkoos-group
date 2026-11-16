@@ -10,6 +10,15 @@ import { processStored } from './pipeline.js'
 import { newDocRuns, closeRuns } from './agents.js'
 import { money as _m } from './format-server.js'
 
+/* a JPEG photo of a receipt, straightened (the same code as the upload in the browser); null when it is not a sheet on a background */
+async function straightenJpeg(buf) {
+  const jpeg = (await import('jpeg-js')).default
+  const { straighten } = await import('../../src/pages/finance/docscan.js')
+  const img = jpeg.decode(buf, { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 512 })
+  const r = straighten({ rgba: img.data, width: img.width, height: img.height })
+  if (r.skip) return null
+  return Buffer.from(jpeg.encode({ data: r.rgba, width: r.width, height: r.height }, 80).data)
+}
 export const officeNumber = () => String(process.env.FINANCE_WHATSAPP_NUMBER || '').replace(/\D/g, '')
 export const configured = () => !!(process.env.GREENAPI_ID_INSTANCE && process.env.GREENAPI_TOKEN && process.env.FINANCE_WHATSAPP_WEBHOOK_TOKEN)
 
@@ -251,12 +260,17 @@ async function ingest({ phone, sender, kind, file, log, via = '' }) {
     }
     const buf = await fetchMedia(file.downloadUrl)
     if (!buf) { await log({ sender_id: sender.id, outcome: 'unsupported', file_name: file.fileName, detail: 'too large' }); await reply(phone, 'הקובץ גדול מ-12MB.'); return { ok: true, outcome: 'too_large' } }
-    const hash = crypto.createHash('sha256').update(buf).digest('hex')
+    const hash = crypto.createHash('sha256').update(buf).digest('hex')   // of the photo as sent: the same photo twice is one document
     const dup = await one(`fin_documents?file_hash=eq.${hash}&select=id`)
     if (dup) { await log({ sender_id: sender.id, outcome: 'duplicate', document_id: dup.id, file_name: file.fileName }); await reply(phone, 'המסמך הזה כבר במערכת. אין צורך לשלוח שוב.'); return { ok: true, outcome: 'duplicate' } }
     const path = `whatsapp/${new Date().toISOString().slice(0, 7)}/${hash.slice(0, 24)}.${extOf(mime)}`
-    await upload(path, buf, mime)
-    const doc = await insert('fin_documents', { status: 'processing', source: 'whatsapp', business_id: sender.business_id, created_by: sender.user_id, file_path: path, file_name: String(file.fileName || `whatsapp.${extOf(mime)}`).slice(0, 200), file_mime: mime, file_size: buf.length, file_hash: hash, email_from: `WhatsApp ${phone}`, email_subject: file.caption ? String(file.caption).slice(0, 300) : null })
+    // a photographed receipt is made to look scanned (docscan.js); the photo as it was is kept as an attachment
+    const clean = mime === 'image/jpeg' ? await straightenJpeg(buf).catch(() => null) : null
+    await upload(path, clean || buf, mime)
+    const opath = clean ? path.replace(/\.[a-z0-9]+$/i, '-original.jpg') : null   // never the same path as the straightened file
+    if (opath) await upload(opath, buf, mime)
+    const doc = await insert('fin_documents', { status: 'processing', source: 'whatsapp', business_id: sender.business_id, created_by: sender.user_id, file_path: path, file_name: String(file.fileName || `whatsapp.${extOf(mime)}`).slice(0, 200), file_mime: mime, file_size: (clean || buf).length, file_hash: hash, email_from: `WhatsApp ${phone}`, email_subject: file.caption ? String(file.caption).slice(0, 300) : null })
+    if (opath) await insert('fin_document_attachments', { document_id: doc.id, kind: 'file', file_path: opath, file_name: `מקור-${String(file.fileName || 'whatsapp.jpg')}`.slice(0, 200), file_mime: mime, file_size: buf.length, note: 'הצילום המקורי, לפני חיתוך ויישור', created_by: sender.user_id || null }, 'return=minimal').catch(() => {})
     const runs = await newDocRuns('whatsapp')
     const done = await processStored(doc, runs, 'whatsapp')
     await closeRuns(runs)

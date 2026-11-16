@@ -4739,3 +4739,12 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-dm__crumb.is-here { color: var(--fold); }
 .fin[data-theme='dark'] .fin-dm__crumb.is-here { color: var(--ink); }
 .fin-wa__link { min-width: 160px; }
+/* ---------- the cost of the readings (AiCost.jsx) ---------- */
+.fin-aicost__nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin: 12px 0 0; }
+.fin-aicost__nums dt { font-size: var(--t-xs); color: var(--muted); }
+.fin-aicost__nums dd { margin: 2px 0 6px; color: var(--ink); font-weight: 700; font-size: var(--t-lg); font-variant-numeric: tabular-nums; }
+.fin-aicost__nums dd small { font-weight: 400; font-size: var(--t-xs); color: var(--text-2); }
+.fin-aicost__bar { display: block; height: 6px; border-radius: 999px; background: var(--wash); overflow: hidden; }
+.fin-aicost__bar i { display: block; height: 100%; background: var(--ocean-2); border-radius: inherit; }
+.fin-aicost__form { margin-top: 12px; align-items: end; }
+.fin-aicost__actions { display: flex; gap: 8px; align-items: center; }

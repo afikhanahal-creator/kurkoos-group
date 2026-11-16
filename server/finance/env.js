@@ -11,6 +11,10 @@ export const env = {
   modelExtract: () => process.env.FINANCE_MODEL_EXTRACT || 'claude-sonnet-5-5',
   modelVerify: () => process.env.FINANCE_MODEL_VERIFY || 'claude-opus-5-5',
   modelTriage: () => process.env.FINANCE_TRIAGE_MODEL || 'claude-haiku-5-5',
+  // the economical reading (pipeline.readDocument): the small model reads first, the mid model only when that reading
+  // fails the checks in firstReadOk. FINANCE_TIERED=0 turns it off (every document read by the mid model, as before)
+  modelFirst: () => process.env.FINANCE_MODEL_FIRST || 'claude-haiku-5-5',
+  tiered: () => process.env.FINANCE_TIERED !== '0',
   // low effort keeps one document at a few seconds inside the 60s function; raise it if mistakes show
   effort: () => process.env.FINANCE_EFFORT || 'low',
   googleOauth: () => process.env.FINANCE_GOOGLE_OAUTH || 'https://oauth2.googleapis.com',

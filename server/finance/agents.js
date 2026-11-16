@@ -80,6 +80,8 @@ export async function retryFailed({ max = MAX_ATTEMPTS, started = Date.now(), tr
   const stuckBefore = encodeURIComponent(new Date(Date.now() - 10 * 60_000).toISOString())
   const stuck = (await sb(`fin_documents?status=eq.processing&failures=lt.${MAX_ATTEMPTS}&file_path=not.is.null&or=(stage_at.lt.${stuckBefore},and(stage_at.is.null,created_at.lt.${stuckBefore}))&select=*&limit=20`)) || []
   if (!docs.length && !stuck.length) return { retried: 0, recovered: 0, stuck: 0 }
+  // the nightly retries are automatic readings too: over the cap they wait for the next night (a person's "read again" does not)
+  if (!force) { const { overBudget } = await import('./budget.js'); const cap = await overBudget().catch(() => ({ over: false })); if (cap.over) return { retried: 0, recovered: 0, stuck: stuck.length, budget: cap.over } }
   const runs = await newDocRuns(trigger)
   let ok = 0; let unstuck = 0
   for (const d of [...stuck, ...docs]) {

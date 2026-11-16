@@ -187,6 +187,8 @@ const server = http.createServer(async (req, res) => {
       const limit = fx.claudeFail?.[hash] || 0
       if ((failed[hash] || 0) < limit) { failed[hash] = (failed[hash] || 0) + 1; return send(res, 529, { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }) }
       answer = fx.answers[hash] || (dims && fx.dimAnswers?.[dims])
+      // the small model can be given its own (worse) reading of a file, to test that it is checked and sent up
+      if (/haiku/.test(body.model) && !/(^|\n)TRIAGE:/.test(text) && fx.smallAnswers?.[hash]) answer = fx.smallAnswers[hash]
       if (verifying) { const v = fx.verifyAnswers?.[hash] || (dims && fx.verifyAnswers?.[`dims:${dims}`]); answer = v || (answer && Object.fromEntries(['supplier_vat_id', 'doc_number', 'issue_date', 'amount_before_vat', 'vat_amount', 'total_amount'].map((k) => [k, answer[k]]))) }
       if (dims) log.claudeDims = [...(log.claudeDims || []), dims].slice(-10)
     } else {
@@ -194,6 +196,7 @@ const server = http.createServer(async (req, res) => {
       answer = key ? fx.textAnswers[key] : null
     }
     if (!answer) answer = { ...fx.notFinancial }
+    if (!/(^|\n)TRIAGE:/.test(text) && !verifying && !/Question:/.test(text)) log.readModels = [...(log.readModels || []), body.model].slice(-200)
     return send(res, 200, {
       id: `msg_${crypto.randomUUID()}`, type: 'message', role: 'assistant', model: body.model, stop_reason: 'end_turn',
       content: [{ type: 'text', text: JSON.stringify(answer) }], usage: { input_tokens: 1000, output_tokens: 300 },

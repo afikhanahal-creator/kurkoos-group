@@ -78,7 +78,16 @@ export const SCHEMA = {
   },
 }
 
-export async function extract({ buf, mime, text, categories, hint }) {
+/* The email text that goes with a reading, without what costs tokens and says nothing: blank runs, quoted earlier
+   messages ("On … wrote:", "-----Original Message-----", "בתאריך … נכתב:"), and anything past 12,000 characters (an
+   invoice email is short; a long one is a newsletter or a thread). Was 40,000. */
+export function slim(text) {
+  let t = String(text || '').replace(/\u00a0/g, ' ').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n')
+  const cut = t.search(/\n(?:On .{5,120} wrote:|-{3,} ?Original Message ?-{3,}|בתאריך .{5,120} (?:נכתב|כתב)\S*:|From: .+\nSent: )/i)
+  if (cut > 400) t = t.slice(0, cut)
+  return t.slice(0, 12_000)
+}
+export async function extract({ buf, mime, text, categories, hint }, { model = env.modelExtract() } = {}) {
   if (!env.anthropicKey()) throw new Error('ANTHROPIC_API_KEY לא הוגדר ב-Vercel')
   const content = []
   if (buf && mime === 'application/pdf') content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: buf.toString('base64') } })
@@ -98,15 +107,16 @@ export async function extract({ buf, mime, text, categories, hint }) {
       `category must be one of: ${categories.join(' | ')}.`,
       'field_confidence: how sure you are that each value is exactly what is printed (1 = printed clearly, below 0.7 = unsure or missing).',
     ].join('\n'))
-  content.push({ type: 'text', text: [hint ? `Context: ${hint}` : '', text ? `--- email ---\n${text.slice(0, 40_000)}` : '', 'Read the document above and fill the fields.'].filter(Boolean).join('\n') })
+  content.push({ type: 'text', text: [hint ? `Context: ${hint}` : '', text ? `--- email ---\n${slim(text)}` : '', 'Read the document above and fill the fields.'].filter(Boolean).join('\n') })
   const r = await fetchRetry(`${env.anthropic()}/v1/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
     body: JSON.stringify({
-      model: env.modelExtract(),
+      model,
       max_tokens: 4000,
       fallbacks: 'default',
-      output_config: { effort: env.effort(), format: { type: 'json_schema', schema: SCHEMA } },
+      // the small model takes no effort setting; the mid model reads at the configured effort
+      output_config: { ...(/haiku/.test(model) ? {} : { effort: env.effort() }), format: { type: 'json_schema', schema: SCHEMA } },
       system,
       messages: [{ role: 'user', content }],
     }),
@@ -117,7 +127,7 @@ export async function extract({ buf, mime, text, categories, hint }) {
   if (d.stop_reason === 'max_tokens') throw new Error('Claude answer was cut off')
   const out = JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join(''))
   // usage, kept per document so the cost of reading is visible (tokens, not a price guess)
-  Object.defineProperty(out, '_usage', { value: usageOf(d, env.modelExtract()), enumerable: false, configurable: true, writable: true })
+  Object.defineProperty(out, '_usage', { value: { ...usageOf(d, model), model: d.model || model }, enumerable: false, configurable: true, writable: true })
   return out
 }
 
@@ -158,6 +168,41 @@ const same = (k, a, b) => {
   const n = (v) => String(v ?? '').replace(/[\s\-/.]/g, '').toLowerCase()
   return n(a) === n(b)
 }
+/* ---------- the economical reading: is the small model's reading good enough to keep? ----------
+   Every check here is on what the document itself says, so a reading that passes all of them is one the mid model would
+   almost always give too. Anything else goes to the mid model (the small reading is thrown away, never mixed in).
+   Returns { ok, why: [reasons it failed] }. */
+const TAXDOCS = ['tax_invoice', 'invoice_receipt', 'credit_note', 'supplier_bill', 'transaction_invoice']
+const RATES = [0, 0.17, 0.18]
+const checkId = (id) => {
+  const s = String(id || '').replace(/\D/g, '')
+  if (s.length !== 9) return false
+  let sum = 0
+  for (let i = 0; i < 9; i++) { let d = Number(s[i]) * ((i % 2) + 1); if (d > 9) d -= 9; sum += d }
+  return sum % 10 === 0
+}
+export function firstReadOk(x, now = new Date()) {
+  const why = []
+  const fc = x?.field_confidence || {}
+  const conf = (k, min) => typeof fc[k] !== 'number' || fc[k] >= min
+  // a "not an invoice" from the small model is never final: a wrong skip would lose an expense
+  if (!x?.is_financial_document || !RELEVANT_CLASSES.includes(x.document_class)) why.push('not_financial')
+  if (!(typeof x?.total_amount === 'number' && x.total_amount !== 0)) why.push('no_total')
+  if (!String(x?.supplier_name || '').trim()) why.push('no_supplier')
+  const d = Date.parse(x?.issue_date || '')
+  if (!Number.isFinite(d)) why.push('no_date')
+  else if (d > now.getTime() + 3 * 86400_000 || d < now.getTime() - 7 * 365 * 86400_000) why.push('date_out_of_range')
+  if (TAXDOCS.includes(x?.document_class) && !String(x?.doc_number || '').trim()) why.push('no_number')
+  for (const [k, min] of [['total_amount', 0.85], ['issue_date', 0.8], ['supplier_name', 0.8], ['doc_number', 0.8], ['vat_amount', 0.8], ['supplier_vat_id', 0.8]]) if (x?.[k] !== null && x?.[k] !== undefined && x?.[k] !== '' && !conf(k, min)) why.push(`unsure_${k}`)
+  const b = x?.amount_before_vat; const v = x?.vat_amount; const t = x?.total_amount
+  if ([b, v, t].every((n) => typeof n === 'number') && Math.abs(b + v - t) > 1) why.push('sum_off')
+  const ils = !x?.currency || /^(ILS|NIS|₪)$/i.test(String(x.currency))
+  if (ils && typeof b === 'number' && typeof v === 'number' && b > 0 && !RATES.some((r) => Math.abs(v / b - r) <= 0.006)) why.push('vat_rate_odd')
+  if (ils && x?.supplier_vat_id && !checkId(x.supplier_vat_id)) why.push('vat_id_invalid')
+  if (x?.quality?.blurry || x?.quality?.cropped) why.push('poor_image')
+  return { ok: !why.length, why }
+}
+
 /* should the critical fields get a second reading? */
 export function needsVerify(x) {
   // only when something is really wrong: it doubles the cost of that document

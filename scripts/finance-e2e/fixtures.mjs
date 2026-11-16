@@ -101,12 +101,13 @@ const fixtures = {
   },
   // a resized phone photo has new bytes: the stand-in recognises it by its pixel size (1650 x 2200 after preparing)
   dimAnswers: {
-    '1650x2200': answer({ doc_type: 'invoice_receipt', supplier_name: 'חומרי בניין השרון', supplier_trading_name: 'השרון', supplier_vat_id: IDS.hasharon, doc_number: '24-7781', issue_date: D.photo, amount_before_vat: 640, vat_amount: 115.2, total_amount: 755.2, description: 'ברגים ודיבלים', category: 'חומרי בניין', project_hint: 'מוהליבר 17', quality: { readable: true, blurry: true, cropped: false, rotated: false, missing_pages: false, handwritten: false }, field_confidence: { supplier_name: 0.95, supplier_vat_id: 0.9, doc_type: 0.92, doc_number: 0.8, issue_date: 0.9, payment_date: 0.5, amount_before_vat: 0.88, vat_amount: 0.86, total_amount: 0.8, currency: 0.99, category: 0.8, description: 0.8, customer: 0.9 } }),
+    // the phone photo after straightening (docscan.js): the sheet only, 1372 × 569
+    '1372x569': answer({ doc_type: 'invoice_receipt', supplier_name: 'חומרי בניין השרון', supplier_trading_name: 'השרון', supplier_vat_id: IDS.hasharon, doc_number: '24-7781', issue_date: D.photo, amount_before_vat: 640, vat_amount: 115.2, total_amount: 755.2, description: 'ברגים ודיבלים', category: 'חומרי בניין', project_hint: 'מוהליבר 17', quality: { readable: true, blurry: true, cropped: false, rotated: false, missing_pages: false, handwritten: false }, field_confidence: { supplier_name: 0.95, supplier_vat_id: 0.9, doc_type: 0.92, doc_number: 0.8, issue_date: 0.9, payment_date: 0.5, amount_before_vat: 0.88, vat_amount: 0.86, total_amount: 0.8, currency: 0.99, category: 0.8, description: 0.8, customer: 0.9 } }),
   },
   // the second, focused reading (validation layer 3): what is really printed
   verifyAnswers: {
     [H.ace]: { supplier_vat_id: IDS.ace, doc_number: '5501', issue_date: D.ace, amount_before_vat: 200, vat_amount: 36, total_amount: 236 },
-    'dims:1650x2200': { supplier_vat_id: IDS.hasharon, doc_number: '24-7781', issue_date: D.photo, amount_before_vat: 640, vat_amount: 115.2, total_amount: 755.2 },
+    'dims:1372x569': { supplier_vat_id: IDS.hasharon, doc_number: '24-7781', issue_date: D.photo, amount_before_vat: 640, vat_amount: 115.2, total_amount: 755.2 },
   },
   textAnswers: {
     // the finance assistant: questions become queries (the server computes the numbers)

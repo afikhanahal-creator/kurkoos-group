@@ -166,7 +166,8 @@ export async function prepareImage(file) {
   }
   const MAX = 2200
   const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height))
-  if (scale === 1 && file.size < 600_000 && !/hei[cf]/i.test(file.type)) { bmp.close?.(); return file }
+  // a small picture is not re-encoded, unless it is a photographed sheet that straightening turns into a scan
+  const untouched = scale === 1 && file.size < 600_000 && !/hei[cf]/i.test(file.type)
   const c = document.createElement('canvas')
   c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale)
   const g = c.getContext('2d')
@@ -174,7 +175,40 @@ export async function prepareImage(file) {
   g.drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.()
   const blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.86))
   if (!blob) return file
-  return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'receipt'}.jpg`, { type: 'image/jpeg' })
+  const base = file.name.replace(/\.[^.]+$/, '') || 'receipt'
+  const shrunk = new File([blob], `${base}.jpg`, { type: 'image/jpeg' })
+  const done = await straightenFile(c, shrunk, base)
+  if (done === shrunk && untouched) return file
+  if (done.original && untouched) Object.defineProperty(done, 'original', { value: file })
+  return done
+}
+/* a photographed receipt made to look scanned (docscan.js): the table cut away, the angle straightened, the paper
+   whiter. The photo as it was rides along (file.original) and is kept with the document as an attachment. A picture
+   that is not a sheet on a background (a screenshot, a scan) is returned as it was. */
+async function straightenFile(canvas, shrunk, base) {
+  try {
+    const { straighten } = await import('./docscan.js')
+    const g = canvas.getContext('2d')
+    const r = straighten({ rgba: g.getImageData(0, 0, canvas.width, canvas.height).data, width: canvas.width, height: canvas.height })
+    if (r.skip) return shrunk
+    const o = document.createElement('canvas'); o.width = r.width; o.height = r.height
+    o.getContext('2d').putImageData(new ImageData(r.rgba, r.width, r.height), 0, 0)
+    const blob = await new Promise((ok) => o.toBlob(ok, 'image/jpeg', 0.85))
+    if (!blob) return shrunk
+    const clean = new File([blob], `${base}.jpg`, { type: 'image/jpeg' })
+    Object.defineProperty(clean, 'original', { value: shrunk, configurable: true })
+    return clean
+  } catch { return shrunk }
+}
+/* the photo as it was taken, next to the straightened one: an attachment of the document */
+const ORIGINAL_NOTE = 'הצילום המקורי, לפני חיתוך ויישור'
+async function keepOriginal(documentId, file, path) {
+  if (!file?.original) return
+  // attachments live under uploads/attachments/ (the storage and the attachments rules allow only that)
+  const opath = `uploads/attachments/${new Date().toISOString().slice(0, 7)}/${path.split('/').pop().replace(/\.[a-z0-9]+$/i, '')}-original.jpg`
+  const up = await supabase.storage.from(BUCKET).upload(opath, file.original, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false })
+  if (up.error && !/exists|duplicate/i.test(up.error.message)) return
+  await supabase.from('fin_document_attachments').insert({ document_id: documentId, kind: 'file', file_path: opath, file_name: `מקור-${file.name}`.slice(0, 200), file_mime: 'image/jpeg', file_size: file.original.size, note: ORIGINAL_NOTE })
 }
 
 /* A record that was entered without a file (a charge known from the supplier's billing log) gets its paper: the file is
@@ -191,7 +225,9 @@ export async function attachMainFile(doc, rawFile) {
   const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false })
   if (up.error && !/exists|duplicate/i.test(up.error.message)) throw new Error(up.error.message)
   const issues = (doc.issues || []).filter((i) => i.code !== 'missing_file')
-  return must(await supabase.from('fin_documents').update({ file_path: path, file_name: file.name.slice(0, 200), file_mime: file.type, file_size: file.size, file_hash: hash, issues }).eq('id', doc.id).select().single())
+  const saved = must(await supabase.from('fin_documents').update({ file_path: path, file_name: file.name.slice(0, 200), file_mime: file.type, file_size: file.size, file_hash: hash, issues }).eq('id', doc.id).select().single())
+  await keepOriginal(doc.id, file, path).catch(() => {})
+  return saved
 }
 
 /* the real paper replaces an email that only pointed at it: the email stays with the document as an attachment, the
@@ -236,6 +272,7 @@ export async function uploadFile(rawFile, { businessId, projectId, source = 'upl
   }
   // on the lists from this moment, as "being read"
   docsChanged(row)
+  await keepOriginal(row.id, file, path).catch(() => {})
   // wait: the caller shows the result (receipt capture); otherwise the reading runs in the background
   if (wait) {
     // the reading can outlive the request (function limit): the receipt is saved either way and the agents finish it

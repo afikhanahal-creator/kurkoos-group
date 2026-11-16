@@ -853,14 +853,15 @@ const capShot = await shot('81-capture-result')
 const logC1 = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const capRow = sql(`select file_mime||'|'||file_size||'|'||status||'|'||supplier_name||'|'||total_amount||'|'||vat_amount||'|'||doc_number||'|'||issue_date||'|'||(extraction->'verification'->'disagree')::text||'|'||coalesce(quality->>'blurry','-')||'|'||ai_calls||'|'||(ai_tokens_in>0) from fin_documents where supplier_vat_id='${meta.IDS.hasharon}'`).split('|')
 const origSize = fs.statSync(`${FIX}/receipt-photo.jpg`).size
+const capOrig = sql(`select count(*) from fin_document_attachments a join fin_documents d on d.id = a.document_id where d.supplier_vat_id='${meta.IDS.hasharon}' and a.note like 'הצילום המקורי%'`)
 await page.locator('.fin-modal').getByLabel(/^פרויקט/).first().selectOption({ label: 'מוהליבר 17' })
 await page.locator('.fin-modal').getByLabel(/^קטגוריה/).first().selectOption({ label: 'חומרי בניין' })
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
 await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 15000 }).catch(() => {})
 const capSaved = sql(`select coalesce((select name from fin_projects where id=d.project_id),'-')||'|'||coalesce(d.category,'-')||'|'||d.status from fin_documents d where supplier_vat_id='${meta.IDS.hasharon}'`)
-record('CAP', 'צילום קבלה: הכנה, קריאה, אימות ושיוך', 'התמונה (2400×3200) מוקטנת במכשיר ל-1650×2200 JPEG לפני ההעלאה; הסוכנים קוראים ספק, מספר, תאריך, לפני מע״מ, מע״מ וסה״כ; צילום מטושטש מקבל קריאה שנייה לאימות ואזהרה; משייכים לפרויקט ולקטגוריה ונשמר כהוצאה לבדיקה',
-  `הוקטנה: ${logC1.claudeDims.includes('1650x2200')}, ${capRow[0]} ${Math.round(capRow[1] / 1024)}KB (המקור ${Math.round(origSize / 1024)}KB); במסך: "${capHead}" · ${capFacts}; קריאה שנייה: ${(logC1.verifyCalls || 0) - (logC0.verifyCalls || 0)}, אי-הסכמות: ${capRow[8]}; "${capCheck}"; אזהרה: "${capWarn.replace(/\s+/g, ' ')}"; קריאות AI: ${capRow[10]}, טוקנים: ${capRow[11]}; אחרי שמירה: ${capSaved}`,
-  logC1.claudeDims.includes('1650x2200') && capRow[0] === 'image/jpeg' && capRow[2] === 'review' && capRow[3] === 'חומרי בניין השרון' && capRow[4] === '755.20' && capRow[5] === '115.20' && capRow[6] === '24-7781' && capRow[8] === '[]' && capRow[9] === 'true' && Number(capRow[10]) >= 2 && Number(capRow[10]) <= 3 && capRow[11] === 'true'
+record('CAP', 'צילום קבלה: הכנה, קריאה, אימות ושיוך', 'התמונה (2400×3200) נחתכת ומיושרת במכשיר לגיליון בלבד (1372×569 JPEG) לפני ההעלאה, והצילום המקורי נשמר כקובץ מצורף; הסוכנים קוראים ספק, מספר, תאריך, לפני מע״מ, מע״מ וסה״כ; צילום מטושטש מקבל קריאה שנייה לאימות ואזהרה; משייכים לפרויקט ולקטגוריה ונשמר כהוצאה לבדיקה',
+  `יושרה ונחתכה: ${logC1.claudeDims.includes('1372x569')}, מקור שמור: ${capOrig}, ${capRow[0]} ${Math.round(capRow[1] / 1024)}KB (המקור ${Math.round(origSize / 1024)}KB); במסך: "${capHead}" · ${capFacts}; קריאה שנייה: ${(logC1.verifyCalls || 0) - (logC0.verifyCalls || 0)}, אי-הסכמות: ${capRow[8]}; "${capCheck}"; אזהרה: "${capWarn.replace(/\s+/g, ' ')}"; קריאות AI: ${capRow[10]}, טוקנים: ${capRow[11]}; אחרי שמירה: ${capSaved}`,
+  logC1.claudeDims.includes('1372x569') && capOrig === '1' && capRow[0] === 'image/jpeg' && capRow[2] === 'review' && capRow[3] === 'חומרי בניין השרון' && capRow[4] === '755.20' && capRow[5] === '115.20' && capRow[6] === '24-7781' && capRow[8] === '[]' && capRow[9] === 'true' && Number(capRow[10]) >= 2 && Number(capRow[10]) <= 3 && capRow[11] === 'true'
     && (logC1.verifyCalls || 0) - (logC0.verifyCalls || 0) === 1 && /755/.test(capHead) && /24-7781/.test(capFacts) && /תואמים/.test(capCheck) && /מטושטש/.test(capWarn) && capSaved === 'מוהליבר 17|חומרי בניין|review',
   [capStartShot, capShot])
 
@@ -2846,6 +2847,42 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     && !!madeInDrive && folderTile === 1 && pin.data.moved === 1 && inFolder && bizBefore === bizAfter && delFull.status === 409 && s3.folders === 1 && pathAfterRename.endsWith(`${FN} חדש`) && unpin.data.moved === 1 && backHome && delEmpty.data.ok === true && folderGone
     && /השם שונה ב-Google Drive/.test(history) && /office@kurkoos\.test/.test(accText) && /סנכרון דו-כיווני/.test(accText) && /כל ה-Drive של החשבון/.test(accText) && /התראות מיידיות מ-Drive פעילות/.test(accText) && /חוזה שכירות משרד/.test(sharedText) && /לצפייה בלבד/.test(sharedText) && /ייכנס לתיקייה/.test(upNote) && upPinned === '1' && starredFolder === 1 && badHook.status === 401 && goodHook.status === 200 && hookBody.followed === 1 && pushedName === 'שם שהגיע בהתראה.pdf' && twoTargets === 'office@kurkoos.test,second@kurkoos.test' && acc2.data.accounts?.length === 2 && mixed === '0' && afterDisconnect === '1' && empSync.status === 403 && empFolder.status === 403
     && sOff.renamed === 0 && nameOff !== 'renamed-while-off.pdf' && putBack && ['renamed_in_drive', 'moved_in_drive', 'trashed_in_drive', 'restored_by_user', 'folder_created', 'folder_renamed_in_drive', 'folder_deleted', 'missing'].every((a) => String(logged).includes(a)), [syncShot, accShot])
+}
+
+// SCANCROP: a photographed receipt is made to look scanned. By WhatsApp (on the server): a real receipt on a dark table
+// and a made-up one at an angle on wood are cut to the paper, straightened and whitened, and the photo as it was is kept
+// as an attachment; a screenshot (a sheet that fills the picture) is left exactly as it was.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const tag = Date.now().toString(36)
+  // bytes after the end of a JPEG are ignored by every reader: a new file (hash) each run, the same picture
+  fs.writeFileSync(`${FIX}/sc-table-${tag}.jpg`, Buffer.concat([fs.readFileSync(new URL('./receipt-on-table.jpg', import.meta.url)), Buffer.from(tag)]))
+  const receipt = `<div dir="rtl" style="width:420px;padding:30px;background:#fbfaf6;font:20px monospace;color:#222"><h2 style="text-align:center">קפה הבדיקה ${tag}</h2><p>חשבונית מס/קבלה 4471</p><p>הפוך גדול ×2 36.00</p><hr><p><b>סה״כ לתשלום 54.00</b></p>${'<p>.</p>'.repeat(5)}</div>`
+  await page.setViewportSize({ width: 1200, height: 1600 })
+  await page.setContent(`<body style="margin:0;height:1600px;display:grid;place-items:center;background:linear-gradient(135deg,#6b4a2f,#3e2a1a)"><div style="transform:perspective(900px) rotateX(18deg) rotateZ(-7deg)">${receipt}</div></body>`)
+  fs.writeFileSync(`${FIX}/sc-wood-${tag}.jpg`, await page.screenshot({ type: 'jpeg', quality: 90 }))
+  await page.setContent(`<body style="margin:0;background:#fff">${receipt.replace('קפה הבדיקה', 'צילום מסך')}</body>`)
+  fs.writeFileSync(`${FIX}/sc-shot-${tag}.jpg`, await page.screenshot({ type: 'jpeg', quality: 90 }))
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const msg = (id, file) => ({ typeWebhook: 'incomingMessageReceived', idMessage: id, senderData: { chatId: '972543049491@c.us', sender: '972543049491@c.us' }, messageData: { typeMessage: 'imageMessage', fileMessageData: { downloadUrl: `${FAKES}/green/file/${file}`, fileName: file, mimeType: 'image/jpeg' } } })
+  const out = []
+  for (const k of ['table', 'wood', 'shot']) {
+    const file = `sc-${k}-${tag}.jpg`
+    const before = (await fetch(`${FAKES}/__log`).then((r) => r.json())).claudeDims || []
+    const r = await hook(msg(`sc-${k}-${tag}`, file))
+    const after = (await fetch(`${FAKES}/__log`).then((r) => r.json())).claudeDims || []
+    const dims = after.slice(before.length).concat(after).find(Boolean) || '?'
+    const id = r.data.document_id || ''
+    const att = id ? sql(`select count(*) from fin_document_attachments where document_id='${id}' and note like 'הצילום המקורי%'`) : '?'
+    const sizes = id ? sql(`select d.file_size||'/'||coalesce((select file_size from fin_document_attachments a where a.document_id=d.id and a.note like 'הצילום המקורי%' limit 1)::text, '-') from fin_documents d where d.id='${id}'`) : '?'
+    out.push({ k, outcome: r.data.outcome, dims: after[after.length - 1] || dims, att, sizes })
+  }
+  const [t, w, s2] = out
+  const wh = (d) => String(d).split('x').map(Number)
+  record('SCANCROP', 'צילום קבלה נחתך ומיושר כמו סריקה', 'קבלה אמיתית על שולחן כהה וקבלה בזווית על עץ: נחתכות לנייר בלבד, מיושרות ומולבנות, והצילום המקורי נשמר כקובץ מצורף; צילום מסך שכולו דף נשאר כמו שהוא, בלי קובץ מקור נוסף',
+    out.map((o) => `${o.k}: ${o.outcome}, נשלח לקריאה ${o.dims}, מקור ${o.att}, גודל ${o.sizes}`).join('; '),
+    t.outcome === 'imported' && t.att === '1' && wh(t.dims)[0] < 1224 && w.outcome === 'imported' && w.att === '1' && wh(w.dims)[0] < 900 && wh(w.dims)[1] < 1300
+      && s2.outcome === 'imported' && s2.att === '0' && s2.dims === '1200x1600')
 }
 
 // ECON: the economical reading. (1) a clean invoice is read by the small model only; (2) one whose small reading does

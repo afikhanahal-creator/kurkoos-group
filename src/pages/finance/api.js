@@ -204,7 +204,8 @@ async function straightenFile(canvas, shrunk, base) {
 const ORIGINAL_NOTE = 'הצילום המקורי, לפני חיתוך ויישור'
 async function keepOriginal(documentId, file, path) {
   if (!file?.original) return
-  const opath = path.replace(/\.[a-z0-9]+$/i, '-original.jpg')
+  // attachments live under uploads/attachments/ (the storage and the attachments rules allow only that)
+  const opath = `uploads/attachments/${new Date().toISOString().slice(0, 7)}/${path.split('/').pop().replace(/\.[a-z0-9]+$/i, '')}-original.jpg`
   const up = await supabase.storage.from(BUCKET).upload(opath, file.original, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false })
   if (up.error && !/exists|duplicate/i.test(up.error.message)) return
   await supabase.from('fin_document_attachments').insert({ document_id: documentId, kind: 'file', file_path: opath, file_name: `מקור-${file.name}`.slice(0, 200), file_mime: 'image/jpeg', file_size: file.original.size, note: ORIGINAL_NOTE })

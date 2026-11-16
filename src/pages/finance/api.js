@@ -335,6 +335,16 @@ export async function addAttachmentFile(documentId, rawFile) {
 }
 export const linkDocument = async (documentId, linkedId, note) => must(await supabase.from('fin_document_attachments').insert({ document_id: documentId, kind: 'link', linked_document_id: linkedId, note: note || null }).select().single())
 export const removeAttachment = async (id) => must(await supabase.from('fin_document_attachments').delete().eq('id', id))
+/* a crop made by hand (CropEditor.jsx): the new picture is uploaded, then the server makes it the document's file and keeps
+   the photo as it was taken as an attachment (once), and sends the new picture to Google Drive */
+export async function saveCrop(doc, blob) {
+  const path = `uploads/${new Date().toISOString().slice(0, 7)}/crop-${String(doc.id).slice(0, 8)}-${Date.now().toString(36)}.jpg`
+  const up = await supabase.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false })
+  if (up.error) throw new Error(up.error.message)
+  const r = await callServer('crop-save', { document_id: doc.id, path, size: blob.size })
+  blobs.delete(doc.file_path)
+  return docsChanged(r.document) || r.document
+}
 export const attachmentBlob = async (a) => { const { data, error } = await supabase.storage.from(BUCKET).download(a.file_path); if (error) throw new Error(error.message || 'הקובץ לא נטען'); return data }
 
 /* fixed (recurring) expenses: the list, marking a document's supplier as one, stopping one */

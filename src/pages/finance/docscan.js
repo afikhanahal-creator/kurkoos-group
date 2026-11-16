@@ -168,3 +168,38 @@ export function straighten({ rgba, width, height }) {
   const out = levels(warp(rgba, width, height, H, ow, oh))
   return { rgba: out, width: ow, height: oh, corners: found.corners, coverage: found.coverage }
 }
+
+/* ---------- the manual editor's looks (CropEditor.jsx), like a scanner app ----------
+   color: the paper whiter (levels); gray: the same in grey; bw: black print on white paper, each pixel compared with
+   the mean of its neighbourhood (so a shadow across the paper does not turn black); none: as photographed. */
+export function applyLook(rgba, w, h, look) {
+  if (look === 'none') return rgba
+  levels(rgba)
+  if (look === 'color') return rgba
+  const n = w * h; const g = new Float64Array(n)
+  for (let i = 0; i < n; i++) g[i] = rgba[i * 4] * 0.299 + rgba[i * 4 + 1] * 0.587 + rgba[i * 4 + 2] * 0.114
+  if (look === 'gray') { for (let i = 0; i < n; i++) rgba[i * 4] = rgba[i * 4 + 1] = rgba[i * 4 + 2] = g[i]; return rgba }
+  // bw: an integral image gives each pixel's neighbourhood mean in constant time
+  const S = new Float64Array((w + 1) * (h + 1))
+  for (let y = 0; y < h; y++) { let row = 0; for (let x = 0; x < w; x++) { row += g[y * w + x]; S[(y + 1) * (w + 1) + x + 1] = S[y * (w + 1) + x + 1] + row } }
+  const r = Math.max(8, Math.round(Math.max(w, h) / 40))
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.max(0, y - r); const y1 = Math.min(h, y + r + 1)
+    for (let x = 0; x < w; x++) {
+      const x0 = Math.max(0, x - r); const x1 = Math.min(w, x + r + 1)
+      const mean = (S[y1 * (w + 1) + x1] - S[y0 * (w + 1) + x1] - S[y1 * (w + 1) + x0] + S[y0 * (w + 1) + x0]) / ((x1 - x0) * (y1 - y0))
+      const v = g[y * w + x] < mean - 12 ? 0 : 255
+      rgba[(y * w + x) * 4] = rgba[(y * w + x) * 4 + 1] = rgba[(y * w + x) * 4 + 2] = v
+    }
+  }
+  return rgba
+}
+/* the flat page from four corners chosen by a person (in the picture's pixels): { rgba, width, height } */
+export function flatten(rgba, w, h, corners, maxSide = MAX_OUT) {
+  const [tl, tr, br, bl] = corners
+  let ow = Math.max(dist(tl, tr), dist(bl, br)); let oh = Math.max(dist(tl, bl), dist(tr, br))
+  const s = Math.min(1, maxSide / Math.max(ow, oh)); ow = Math.max(8, Math.round(ow * s)); oh = Math.max(8, Math.round(oh * s))
+  const H = homography([[0, 0], [ow - 1, 0], [ow - 1, oh - 1], [0, oh - 1]], corners)
+  return { rgba: warp(rgba, w, h, H, ow, oh), width: ow, height: oh }
+}
+export { convex }

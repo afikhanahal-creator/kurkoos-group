@@ -13,7 +13,7 @@ import { createJob, controlJob, acceptItem, tick as scanTick, overview as scanOv
 import * as archive from './finance/archive.js'
 import crypto from 'node:crypto'
 import { env } from './finance/env.js'
-import { sb, one, insert, patch, q, caller, audit, removeFile, rpc } from './finance/db.js'
+import { sb, one, insert, patch, q, caller, audit, removeFile, rpc, download } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
 import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
@@ -93,6 +93,7 @@ const ROLES = {
   'whatsapp-check': ['admin', 'finance_manager'],
   'whatsapp-catchup': ['admin', 'finance_manager'],
   'ai-cost': ['admin', 'finance_manager'],
+  'crop-save': ['admin', 'finance_manager', 'employee'],
   'ai-budget-save': ['admin'],
   'whatsapp-link-hidden': ['admin', 'finance_manager'],
   'whatsapp-setup': ['admin'],
@@ -715,6 +716,29 @@ export default async function handler(req, res) {
       }
       case 'whatsapp-check': {
         res.status(200).json(await waHealth(origin(req)))
+        return
+      }
+      case 'crop-save': {
+        // a picture cropped by hand becomes the document's file. The photo as it was taken is kept as an attachment
+        // (once: a later edit starts from it again); an earlier crop that nothing else uses is removed (storage budget)
+        const doc = await one(`fin_documents?id=eq.${q(body.document_id)}&select=*`)
+        if (!doc) { res.status(404).json({ error: 'המסמך לא נמצא' }); return }
+        if (user.role === 'employee' && (doc.created_by !== user.id || ['approved', 'sent'].includes(doc.status))) { res.status(403).json({ error: 'אין לך הרשאה לערוך את המסמך הזה' }); return }
+        const path = String(body.path || '')
+        if (!/^uploads\/\d{4}-\d{2}\/crop-[0-9a-f]{8}-[a-z0-9]+\.jpg$/.test(path) || !path.includes(`crop-${String(doc.id).slice(0, 8)}-`)) { res.status(400).json({ error: 'קובץ לא תקין' }); return }
+        const buf = await download(path).catch(() => null)
+        if (!buf || buf[0] !== 0xff || buf[1] !== 0xd8 || buf.length > 12 * 1024 * 1024) { res.status(400).json({ error: 'הקובץ החתוך לא הגיע או שאינו JPEG' }); return }
+        const atts = (await sb(`fin_document_attachments?document_id=eq.${doc.id}&kind=eq.file&select=id,file_path,note`)) || []
+        const hasOriginal = atts.some((a) => String(a.note || '').startsWith('הצילום המקורי'))
+        if (!hasOriginal && doc.file_path) await insert('fin_document_attachments', { document_id: doc.id, kind: 'file', file_path: doc.file_path, file_name: `מקור-${doc.file_name || 'צילום.jpg'}`.slice(0, 200), file_mime: doc.file_mime, file_size: doc.file_size, note: 'הצילום המקורי, לפני חיתוך ויישור', created_by: user.id }, 'return=minimal')
+        const was = doc.file_path
+        const saved = await patch(`fin_documents?id=eq.${doc.id}`, { file_path: path, file_mime: 'image/jpeg', file_size: buf.length })
+        // the earlier picture: kept when it is the original (or anything else points at it), else removed
+        if (hasOriginal && was && was !== path && !atts.some((a) => a.file_path === was)) await removeFile(was).catch(() => {})
+        // Google Drive gets the new picture on the next run of the archive
+        await patch(`fin_drive_files?document_id=eq.${doc.id}&status=in.(verified,uploaded,needs_review,failed)`, { status: 'queued', next_try_at: null, updated_at: new Date().toISOString() }).catch(() => {})
+        await audit('document', doc.id, 'file_cropped', { from: was, to: path, size: buf.length }, user)
+        res.status(200).json({ document: saved })
         return
       }
       case 'ai-cost': {

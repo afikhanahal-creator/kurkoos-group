@@ -2885,6 +2885,52 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
       && s2.outcome === 'imported' && s2.att === '0' && s2.dims === '1200x1600')
 }
 
+// CROPEDIT: the crop button, like the document scanner in iPhone Notes. On a photo that came by WhatsApp: the editor
+// opens with the corners on the paper, a corner is dragged (the magnifier shows), black and white is chosen, saved: the
+// new picture is the document's file, the photo as it was is still the one attachment, the change is in the history and
+// Google Drive gets the new picture. A bad path and an employee on someone else's document are refused.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const id = sql("select id from fin_documents where file_name like 'sc-table-%' order by created_at desc limit 1")
+  const before = sql(`select file_path from fin_documents where id='${id}'`)
+  const logged0 = Number(sql(`select count(*) from fin_audit where entity_id='${id}' and action='file_cropped'`))
+  await go(`/documents/${id}`); await page.waitForTimeout(1500)
+  await page.locator('.fin-viewer__crop').first().click()
+  await page.waitForSelector('.fin-crop__handle', { timeout: 15000 }).catch(() => {})
+  await page.waitForTimeout(600)
+  const handles = await page.locator('.fin-crop__handle').count()
+  const h = page.locator('.fin-crop__handle').nth(1); const bb = await h.boundingBox()
+  let loupe = 0
+  if (bb) {
+    await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down()
+    await page.mouse.move(bb.x + bb.width / 2 - 6, bb.y + bb.height / 2 + 4, { steps: 4 })
+    loupe = await page.locator('.fin-crop__loupe').count()
+    await page.mouse.up()
+  }
+  // keyboard: a corner moves with the arrows
+  await page.locator('.fin-crop__handle').nth(0).focus(); await page.keyboard.press('ArrowRight')
+  const editShot = await shot('119g-crop-corners')
+  await page.locator('.fin-crop__txt.is-main').click(); await page.waitForTimeout(700)
+  await page.getByRole('radio', { name: 'שחור-לבן' }).click(); await page.waitForTimeout(500)
+  const resultShot = await shot('119h-crop-result')
+  await page.locator('.fin-crop__txt.is-main').click()
+  await page.waitForSelector('.fin-crop', { state: 'detached', timeout: 20000 }).catch(() => {})
+  await page.waitForTimeout(800)
+  const after = sql(`select file_path||'|'||file_mime from fin_documents where id='${id}'`).split('|')
+  const originals = sql(`select count(*) from fin_document_attachments where document_id='${id}' and note like 'הצילום המקורי%'`)
+  const logged = String(Number(sql(`select count(*) from fin_audit where entity_id='${id}' and action='file_cropped'`)) - logged0)
+  const queued = sql(`select coalesce(string_agg(status, ','), '') from fin_drive_files where document_id='${id}'`)
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const bad = await api(tok, { action: 'crop-save', document_id: id, path: 'whatsapp/2026-11/x.jpg' })
+  const other = sql("select id from fin_documents where created_by is distinct from (select id from auth.users where email='worker@kurkoos.test') and status='review' limit 1")
+  const wTok = await login('worker@kurkoos.test', 'W0rker!xx').catch(() => null)
+  const emp = wTok ? (await api(wTok, { action: 'crop-save', document_id: other, path: `uploads/2026-11/crop-${other.slice(0, 8)}-abc.jpg` })).status : 'אין עובד'
+  record('CROPEDIT', 'כפתור חיתוך ויישור, כמו הסורק ב-Notes', 'העורך נפתח עם ארבע פינות על הנייר; גרירת פינה מציגה זכוכית מגדלת; החצים מזיזים פינה; שחור-לבן; שמירה הופכת את התמונה החדשה לקובץ המסמך, הצילום המקורי נשאר קובץ מצורף אחד, השינוי ביומן ו-Google Drive מקבל את החדשה; נתיב לא תקין ועובד על מסמך של אחר נדחים',
+    `פינות: ${handles}, זכוכית מגדלת: ${loupe}; לפני: ${before.split('/').pop()}, אחרי: ${after[0].split('/').pop()} ${after[1]}; מקור: ${originals}; ביומן: ${logged}; Drive: ${queued || 'אין'}; נתיב לא תקין: ${bad.status}; עובד: ${emp}`,
+    handles === 4 && loupe === 1 && /^uploads\/\d{4}-\d{2}\/crop-/.test(after[0]) && after[0] !== before && after[1] === 'image/jpeg' && originals === '1' && logged === '1' && !/verified/.test(queued) && bad.status === 400 && emp === 403,
+    [editShot, resultShot])
+}
+
 // ECON: the economical reading. (1) a clean invoice is read by the small model only; (2) one whose small reading does
 // not add up goes to the mid model, which reads it from the start; (3) over the day's cap a file from mail is kept and
 // waits for the night, and a person's "read again" still reads it; (4) the agents screen shows the cost and the cap;

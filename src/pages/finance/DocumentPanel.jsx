@@ -111,7 +111,7 @@ function Preview({ doc, onSaved, canEdit }) {
   if (err) return <p className="fin-error fin-error--block" role="alert">הקובץ לא נטען: {err}</p>
   if (html !== null) return <div className="fin-linkedwrap">{canEdit && !['approved', 'sent'].includes(doc.status) && <LinkedDoc doc={doc} onSaved={onSaved} />}<HtmlPreview html={html} /></div>
   if (!src) return <div className="fin-viewer"><div className="fin-viewer__scroll"><div className="fin-viewer__page fin-viewer__page--skel" aria-busy="true" aria-label="טוען את המסמך" /></div></div>
-  return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} />
+  return <Viewer blobUrl={src} mime={doc.file_mime} name={doc.file_name} doc={doc} onSaved={onSaved} />
 }
 
 export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev, onNext, onApproved, waitingAfter = 0 }) {
@@ -240,7 +240,7 @@ export default function DocumentPanel({ doc, onClose, onSaved, onDeleted, onPrev
   useEffect(() => {
     const onKey = (e) => {
       if (e.target.closest?.('input, select, textarea')) return
-      if (document.querySelector('.fin-modal')) return   // a dialog on top of the panel owns the keys
+      if (document.querySelector('.fin-modal, .fin-crop')) return   // a dialog or the crop editor on top of the panel owns the keys
       if (e.key === 'Escape') keys.current.leave(keys.current.onClose)
       if (e.key === 'ArrowLeft' && keys.current.onNext) keys.current.leave(keys.current.onNext)
       if (e.key === 'ArrowRight' && keys.current.onPrev) keys.current.leave(keys.current.onPrev)

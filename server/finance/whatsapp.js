@@ -188,8 +188,10 @@ export default async function whatsappWebhook(req, res) {
   let b = req.body
   if (typeof b === 'string') { try { b = JSON.parse(b) } catch { b = {} } }
   b = b || {}
-  // the other system gets the message whatever this one decides about it
-  await Promise.all([forward(b), take(b, res)])
+  // the other system gets the message whatever this one decides about it, unless the message came FROM it (the Afik site
+  // holds the line's webhook since 2026-11-15 and passes files on here, marked X-Kurkoos-Relay): sending it back would loop
+  const relayed = !!req.headers['x-kurkoos-relay']
+  await Promise.all([relayed ? null : forward(b), take(b, res)])
 }
 async function take(b, res) {
   // Two kinds of message bring a document: one that arrives at the office number, and one sent FROM the office phone

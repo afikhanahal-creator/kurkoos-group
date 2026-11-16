@@ -20,3 +20,23 @@ found, the folds stay), a receipt held in a hand over a light background.
 
 Tests: scenarios `SCANCROP` (WhatsApp: a real receipt on a dark table, a made-up one at an angle on wood, a screenshot)
 and `CAP` (a photo taken in the system) in `scripts/finance-e2e/run.mjs`.
+
+## Cropping by hand (the crop button)
+
+In the document viewer, a photo (JPEG, PNG, WebP) has a crop button (`CropEditor.jsx`), like the document scanner in
+iPhone Notes:
+
+1. **Corners.** The photo with four corners, placed on the paper by the same detection (or on the frame when none is
+   found). A corner is dragged by mouse or finger, with a magnifier that shows the spot under the finger; Tab reaches each
+   corner and the arrows move it (Shift: five times as far). "זיהוי אוטומטי" puts the corners back on the paper, "כל
+   התמונה" on the frame. Corners that cross are marked red and "המשך" waits.
+2. **Result.** The flat page in a look: colour (whiter paper), grey, black and white (each pixel against the mean of its
+   neighbourhood, so a shadow does not turn black), or as photographed; and a quarter turn.
+3. **Save** (`crop-save` on the server): the new picture becomes the document's file. The photo as it was taken is kept
+   as an attachment, once; every later edit starts again from it. An earlier crop that nothing else uses is deleted
+   (storage). Google Drive gets the new picture on the archive's next run. The change is in the document's history
+   (`file_cropped`). Admins and finance managers may crop any document; an employee only their own, before approval.
+
+While the editor is open it owns the keyboard (the document panel's arrows do not move to the next document).
+
+Test: scenario `CROPEDIT`.

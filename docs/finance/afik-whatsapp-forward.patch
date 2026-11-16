@@ -1,0 +1,31 @@
+diff --git a/api/meta.js b/api/meta.js
+index bc29374..043afc3 100644
+--- a/api/meta.js
++++ b/api/meta.js
+@@ -121,10 +121,26 @@ async function greenHookKeyValid(key) {
+   return !!v && a.length === b.length && crypto.timingSafeEqual(a, b)
+ }
+ const GREEN_HOOK_URL = 'https://www.afikhanahal.co.il/api/meta/green-hook'
++// FINANCE_WHATSAPP_URL = https://www.kurkoos-group.co.il/api/finance-whatsapp, FINANCE_WHATSAPP_TOKEN = the finance system's
++// FINANCE_WHATSAPP_WEBHOOK_TOKEN (the same value, set in both Vercel projects)
++function financeForward(body) {
++  const url = process.env.FINANCE_WHATSAPP_URL || ''; const token = process.env.FINANCE_WHATSAPP_TOKEN || ''
++  if (!url || !token || !body) return null
++  if (!['incomingMessageReceived', 'outgoingMessageReceived'].includes(body.typeWebhook)) return null
++  if (!['imageMessage', 'documentMessage'].includes(body.messageData?.typeMessage)) return null
++  return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'X-Kurkoos-Relay': 'afik' }, body: JSON.stringify(body), signal: AbortSignal.timeout(25_000) })
++    .then(r => { if (!r.ok) console.error('[green-hook] finance', r.status) })
++    .catch(e => console.error('[green-hook] finance', e.message))
++}
+ async function handleGreenHook(req, res) {
+   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+   const key = String((req.headers['authorization'] || '').replace(/^Bearer\s+/i, '') || req.query?.k || '')
+   if (!(await greenHookKeyValid(key))) return res.status(401).json({ error: 'Unauthorized' })
++  // Kurkoos Finance reads the receipts and invoices sent to this line. Since this site took the line's webhook (#292), every
++  // file (a photo or a document, received or sent from the office phone) is passed on to it as Green sent it, in the
++  // background; text, statuses and calls are not. Off until both variables are set in Vercel.
++  const fin = financeForward(req.body)
++  if (fin) waitUntil(fin)
+   const ev = parseGreenHook(req.body)
+   if (!SUPABASE_URL || !SUPABASE_KEY || (ev.kind !== 'message' && ev.kind !== 'status')) return res.status(200).json({ ok: true, kind: ev.kind })
+   // One round trip each (server/wa-fast-path-migration.sql): a message is stored / merged over the row the sender already

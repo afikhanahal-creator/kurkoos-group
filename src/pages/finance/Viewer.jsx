@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { printImages, printPdf } from './print.js'
 import { useFinance } from './FinanceApp.jsx'
@@ -7,6 +7,7 @@ import ShareDialog from './ShareDialog.jsx'
 import { loadPdf, tiffPreview } from './Thumbnail.jsx'
 import { Icon } from './ui.jsx'
 import { moments } from './moments.js'
+const CropEditor = lazy(() => import('./CropEditor.jsx'))
 
 const MAX_PAGES = 12
 const STEPS = [0.6, 0.8, 1, 1.25, 1.5, 2, 2.5]
@@ -14,7 +15,7 @@ const STEPS = [0.6, 0.8, 1, 1.25, 1.5, 2, 2.5]
 /* The original document, readable on any screen: PDF pages are drawn with pdf.js (an iframe shows only the first page
    on iPhone and nothing in some browsers), images and PDFs both zoom with the buttons, and the page scrolls inside the
    preview pane. */
-export default function Viewer({ blobUrl, mime, name, doc }) {
+export default function Viewer({ blobUrl, mime, name, doc, onSaved }) {
   const box = useRef(null)
   const [pages, setPages] = useState(null)
   const [err, setErr] = useState('')
@@ -37,6 +38,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
   const [full, setFull] = useState(false)
   // a phone has no real full screen for a page (iOS gives it to videos only): there the viewer itself covers the screen
   const [max, setMax] = useState(false)
+  const [crop, setCrop] = useState(false)
   const [turn, setTurn] = useState(0)            // 0 / 90 / 180 / 270, the view only: the file is never changed
   const [page, setPage] = useState(1)
   const [drive, setDrive] = useState({ busy: false, link: '', msg: '', err: '' })
@@ -44,6 +46,9 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
   const fin = useFinance()
   const canSave = !!doc && !!fin?.can?.('operate')
   const pdf = mime === 'application/pdf'
+  // a photo can be cropped and straightened by hand: admins and finance managers on any document, an employee on their own unapproved one
+  const role = fin?.role
+  const cropOk = !!doc?.id && ['image/jpeg', 'image/png', 'image/webp'].includes(mime) && (fin?.can?.('edit') || (role === 'employee' && doc.created_by === (fin?.me?.user_id || fin?.me?.id) && !['approved', 'sent'].includes(doc.status)))
 
   useEffect(() => {
     const el = box.current
@@ -142,6 +147,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
       <button type="button" className={`fin-icon-btn fin-viewer__wide ${fitPage ? 'is-on' : ''}`} onClick={() => setFitPage((v) => !v)} aria-pressed={fitPage} aria-label="התאמה למסך" title="התאמה למסך"><Icon name="fitpage" size={17} /></button>
       <button type="button" className={`fin-icon-btn fin-viewer__full ${max ? 'is-on' : ''}`} onClick={fullscreen} aria-pressed={full || max} aria-label={full || max ? 'יציאה ממסך מלא' : 'מסך מלא'} title={full || max ? 'יציאה ממסך מלא' : 'מסך מלא'}><Icon name={full || max ? 'shrink' : 'expand'} size={17} /></button>
       <button type="button" className="fin-icon-btn" onClick={() => setTurn((t) => (t + 90) % 360)} aria-label="סיבוב" title="סיבוב ב-90°"><Icon name="rotate" size={17} /></button>
+      {cropOk && <button type="button" className="fin-icon-btn fin-viewer__crop" onClick={() => setCrop(true)} aria-label="חיתוך ויישור" title="חיתוך ויישור, כמו סורק"><Icon name="crop" size={17} /></button>}
       {total > 1 && (
         <span className="fin-viewer__pages" role="group" aria-label="עמודים">
           <button type="button" className="fin-icon-btn" onClick={() => goPage(Math.max(1, page - 1))} disabled={page <= 1} aria-label="העמוד הקודם"><Icon name="chev" size={16} style={{ transform: 'rotate(180deg)' }} /></button>
@@ -184,6 +190,7 @@ export default function Viewer({ blobUrl, mime, name, doc }) {
         ) : <span className="fin-viewer__frame" data-page={1} style={pageBox(imgRatio)}><img className="fin-viewer__page" src={tiffSrc || blobUrl} alt={name || 'המסמך'} style={imgStyle(imgRatio)} onLoad={(e) => setImgRatio(e.currentTarget.naturalHeight / Math.max(1, e.currentTarget.naturalWidth))} /></span>}
       </div>
       {share && <ShareDialog doc={doc} blobUrl={blobUrl} onClose={() => setShare(false)} />}
+      {crop && <Suspense fallback={null}><CropEditor doc={doc} onClose={() => setCrop(false)} onSaved={onSaved} /></Suspense>}
     </div>
   )
   // over everything, from the app's root (the panel it sits in is animated, and would hold a fixed box inside itself)

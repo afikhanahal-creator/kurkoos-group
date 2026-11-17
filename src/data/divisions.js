@@ -100,8 +100,8 @@ export const divisions = [
     // השירות ניתן בכל רחבי ישראל (הבעלים, אוקטובר 2026): נכנס ל-areaServed של ה-Service
     nationwide: true,
     // כותרת ותיאור לחיפוש. התווית בתפריט נשארת קצרה, וזו הצורה שגוגל מציג
-    seoTitle: 'חברת בנייה לבתים פרטיים ווילות בכל הארץ',
-    seoDescription: 'ראיתה, זרוע הביצוע של קבוצת קורקוס, בונה בתים פרטיים ווילות על המגרש שלכם, בשרון ובכל הארץ, משלד ועד גימור, ובפיקוח נפרד מטעמכם. ספרו לנו על המגרש.',
+    seoTitle: 'קבלן ביצוע לבתים פרטיים ווילות בכל הארץ',
+    seoDescription: 'ראיתה, זרוע הביצוע של קבוצת קורקוס, היא קבלן ביצוע וחברת בנייה לבתים פרטיים ווילות על המגרש שלכם, בשרון ובכל הארץ, משלד ועד גימור. ספרו לנו על המגרש.',
     serviceName: 'ביצוע ובנייה: בניית בתים פרטיים, וילות ופרויקטים למגורים',
     /* משפט התשובה שפותח את העמוד, עם קישור לעמוד הבנייה והפיקוח בהוד השרון */
     answer: {
@@ -129,7 +129,7 @@ export const divisions = [
     name: { he: 'ראיתה. ביצוע מנצח.', en: 'Raita. Winning execution.' },
     menuTitle: { he: 'ביצוע', en: 'Execution' },
     hero: {
-      title: { he: 'ביצוע ובנייה לבתים פרטיים ווילות', en: 'Execution & Construction' },
+      title: { he: 'קבלן ביצוע ובנייה לבתים פרטיים ווילות', en: 'Execution & Construction' },
       subtitle: {
         he: 'מהיסודות ועד מסירת המפתח, בנייה איכותית, בזמן ובתקציב, עם צוותי שטח מהמנוסים בארץ.',
         en: 'From foundations to handover, quality construction, on time and on budget, with some of Israel’s most experienced field teams.',

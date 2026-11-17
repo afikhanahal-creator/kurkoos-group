@@ -157,6 +157,11 @@
       "source": "/yazamut-nadlan/rami-tender-floor-price-market-truth",
       "destination": "/yazamut-nadlan/rami-tender-land-floor-price",
       "permanent": true
+    },
+    {
+      "source": "/constructions/service-after-handover",
+      "destination": "/constructions/sherut-achrei-mesira",
+      "permanent": true
     }
   ],
   "git": {

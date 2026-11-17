@@ -792,6 +792,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
      קישורים. כאן נכתב הטקסט שמתאר את הקבוצה, רק עובדות שמופיעות באתר. */
   const { VILLAS_PROJECTS } = await import(pathToFileURL(join(root, 'src/data/villasPage.js')).href)
   const { HOME_FAQ_TITLE, HOME_FAQS } = await import(pathToFileURL(join(root, 'src/data/homeFaq.js')).href)
+  const { default: LATEST_ARTICLES } = await import(pathToFileURL(join(root, 'src/data/_latest-articles.js')).href)
   const projectsHtml = VILLAS_PROJECTS.map((p) =>
     `<li><strong>${esc(p.name)}</strong>: ${esc(p.kind)}. ${esc(p.tagline)}. סטטוס: ${esc(p.status)}.</li>`).join('')
   done.push(renderPage({
@@ -819,6 +820,10 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<li><a href="/real-estate-guide">המדריך לרוכש ולמוכר</a></li>` +
       `<li><a href="/madrich-yazamim">המדריך ליזמי נדל"ן צעירים</a></li>` +
       `</ul>` +
+      /* "מהמדריכים": אותה רשימה שהעמוד החי מציג (components/sections/LatestGuides.jsx) */
+      `<h2>מהמדריכים: הכתבות האחרונות</h2><ul>` +
+      LATEST_ARTICLES.filter((a) => String(a.date).slice(0, 10) <= TODAY).slice(0, 6)
+        .map((a) => `<li><a href="${esc(a.path)}">${esc(a.title)}</a></li>`).join('') + `</ul>` +
       `<h2>${esc(HOME_FAQ_TITLE)}</h2>` +
       HOME_FAQS.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)} <a href="${esc(f.to)}">${esc(f.more)}</a></p>`).join('\n') +
       `<h2>יצירת קשר</h2><p>רחוב הנגר 24, מגדלי Amy, הוד השרון. טלפון 055-981-1814. ימים א׳ עד ה׳, 9:00 עד 18:00. <a href="/contact">השארת פרטים</a></p>`,

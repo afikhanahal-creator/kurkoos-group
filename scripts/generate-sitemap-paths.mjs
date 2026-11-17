@@ -34,7 +34,10 @@ for (const [dir, route] of Object.entries(COLUMN_ROUTE)) {
     const updated = /["']?updated["']?\s*:\s*["']([^"']+)["']/.exec(src)?.[1]
     const published = !/["']?published["']?\s*:\s*false/.test(src)
     const lastmod = date && updated && updated > date ? updated : date || null
-    if (slug && published) out.push({ path: `${route}/${slug}`, lastmod, date: date || null, file: `${dir}/${f}` })
+    /* הכותרת, בשביל "הכתבות האחרונות" בעמוד הבית. \btitle לא תופס metaTitle */
+    const tm = /\btitle["']?\s*:\s*(['"])((?:\\.|(?!\1).)*)\1/.exec(src)
+    const title = tm ? tm[2].replace(/\\(["'\\])/g, '$1') : null
+    if (slug && published) out.push({ path: `${route}/${slug}`, lastmod, date: date || null, file: `${dir}/${f}`, title, column: dir })
   }
 }
 /* שתי כתבות עם אותו slug = כתובת אחת, והשנייה פשוט לא נגישה באתר
@@ -57,3 +60,13 @@ const banner = '/* קובץ שנוצר אוטומטית ע"י scripts/generate-s
 const emitted = out.map(({ path, lastmod, date }) => ({ path, lastmod, date }))
 writeFileSync(join(root, 'server', '_content-paths.js'), `${banner}export default ${JSON.stringify(emitted, null, 2)}\n`)
 console.log(`sitemap paths: ${out.length} article urls written to server/_content-paths.js`)
+
+/* 12 הכתבות האחרונות לפי תאריך, לסקשן "מהמדריכים" בעמוד הבית (צ'קליסט האינדוקס:
+   קישורים מדף הבית לפוסטים האחרונים). הרכיב מסנן כתבות עם תאריך עתידי בזמן ריצה,
+   ולכן נשמרות כאן 12 ולא 6. */
+const latest = out
+  .filter((a) => a.title && a.date)
+  .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+  .slice(0, 12)
+  .map(({ path, date, title, column }) => ({ path, date, title, column }))
+writeFileSync(join(root, 'src', 'data', '_latest-articles.js'), `${banner}export default ${JSON.stringify(latest, null, 2)}\n`)

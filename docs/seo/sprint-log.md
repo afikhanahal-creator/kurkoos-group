@@ -7,6 +7,15 @@
 - הספרינט השבועי פותח PR ל-main ולא ממזג. (הבעלים יכול לשנות כאן.)
 - שינוי במידע עסקי (כתובת, שעות, צוות, אזורי שירות, מחירים): רק עם אישור מפורש.
 
+## 17.11.2026, ספרינט 5d (כתבת מגרשים, וילות, בקשות אינדוקס)
+
+- **כתבה חדשה, `/real-estate-guide/timchur-migrash-lemchira`** ("כמה שווה מגרש? איך מתמחרים מגרש למכירה"), מהבקלוג של אשכול המגרשים. בלי מספרים. מקושרת מ-LAND_GUIDES (עמוד המגרשים) ומכתבת "יש לכם מגרש".
+- **`/villas-sharon`:** כותרת "חברה לבניית וילות ובתים פרטיים בהוד השרון" ("חברה לבניית וילות" 32 חשיפות במיקום 25, "קבלן וילה" 41 במיקום 24).
+- **בקשות אינדוקס ב-GSC (8), מתוך 36 "התגלה, לא נכלל":** `/hod-hasharon/bniya-vepikuach`, `/real-estate-glossary`, `/bniyat-bayit-prati/kfar-saba`, `/bniyat-bayit-prati/tel-aviv`, `/bniyat-bayit-prati/ramat-hasharon`, `/constructions/tichnun-bayit-prati`, `/constructions/heter-bniya-bayit-prati`, `/constructions/mamad-bayit-prati`. `/projects/henrietta-sald-22-24` כבר באינדקס (הדוח ישן). שלושה מהם מסומנים ב-GSC "לא ידוע לגוגל, אין מפת אתר מפנה", למרות שהם ב-sitemap-pages.xml.
+- **מפות האתר ב-GSC:** ארבע מפות, נקראו 10 עד 16.11, Success, 154 כתובות.
+- **אחרי המיזוג:** לבקש אינדוקס ל-`/projects`, `/mapat-atar` ולכתבה החדשה.
+- **רשימת 36 העמודים** שלא נסרקו: 5 עמודי ערים, 9 עמודי פרויקטים, `/hod-hasharon/bniya-vepikuach`, המילון, `/terms` וכ-19 כתבות.
+
 ## 17.11.2026, ספרינט 5c (כותרות לפי שאילתות Search Console)
 
 **נעשה:** 7 כותרות ותיאורים, כל אחד לפי שאילתה שכבר מביאה חשיפות (`gsc-2026-11-17.md`):

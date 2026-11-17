@@ -4,5 +4,5 @@ export default {
   group: 'main',
   label: 'בית',
   seo: true,
-  sections: ['hero', 'activities', 'story', 'projects', 'valueChain', 'stats', 'testimonials', 'partners', 'faq', 'contact'],
+  sections: ['hero', 'activities', 'story', 'projects', 'valueChain', 'stats', 'testimonials', 'partners', 'latestGuides', 'faq', 'contact'],
 }

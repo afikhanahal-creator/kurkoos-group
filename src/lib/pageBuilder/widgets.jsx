@@ -9,6 +9,7 @@ import Testimonials from '../../components/sections/Testimonials.jsx'
 import Partners from '../../components/sections/Partners.jsx'
 import Contact from '../../components/sections/Contact.jsx'
 import HomeFaq from '../../components/sections/HomeFaq.jsx'
+import LatestGuides from '../../components/sections/LatestGuides.jsx'
 import { HeadingW, TextW, ImageW, ButtonW, SpacerW, DividerW, VideoW, ChecklistW, ColumnsW, GalleryW } from './blocks.jsx'
 
 const WarrantyBanner = lazy(() => import('../../components/sections/WarrantyBanner.jsx'))
@@ -62,6 +63,8 @@ export const WIDGETS = {
     manage: { tab: 'testimonials', label: 'המלצות לקוחות' } },
   faq: { group: 'site', label: 'שאלות ותשובות', icon: 'faq', C: HomeFaq,
     note: 'השאלות של עמוד הבית נשמרות בקוד, כי הן גם הנתונים המובנים לגוגל.' },
+  latestGuides: { group: 'site', label: 'הכתבות האחרונות', icon: 'book', C: LatestGuides, once: true,
+    note: 'שש הכתבות האחרונות מכל המדריכים, מתעדכן לבד בכל פרסום. חשוב לאינדוקס בגוגל.' },
   contact: { group: 'site', label: 'צור קשר', icon: 'mail', C: Contact,
     texts: [T('contact.eyebrow', 'תווית עליונה'), T('contact.title', 'כותרת'), T('contact.lead', 'טקסט מוביל', true)] },
   warranty: { group: 'site', label: 'באנר אחריות', icon: 'shield', C: lazyW(WarrantyBanner),

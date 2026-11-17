@@ -82,7 +82,7 @@ export default [
   },
   {
     "path": "/construction-supervision/yoman-avoda-atar",
-    "lastmod": "2026-09-27",
+    "lastmod": "2026-11-17",
     "date": "2026-09-27"
   },
   {
@@ -112,7 +112,7 @@ export default [
   },
   {
     "path": "/constructions/bniyat-vila-mah-kolel",
-    "lastmod": "2026-10-19",
+    "lastmod": "2026-11-17",
     "date": "2026-10-18"
   },
   {
@@ -332,7 +332,7 @@ export default [
   },
   {
     "path": "/real-estate-guide/dmei-tivuch-zchuyot",
-    "lastmod": "2026-10-19",
+    "lastmod": "2026-11-17",
     "date": "2026-06-14"
   },
   {

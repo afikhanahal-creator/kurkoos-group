@@ -391,6 +391,11 @@ export default [
     "date": "2026-08-30"
   },
   {
+    "path": "/real-estate-guide/timchur-migrash-lemchira",
+    "lastmod": "2026-11-17",
+    "date": "2026-11-17"
+  },
+  {
     "path": "/real-estate-guide/yesh-li-migrash",
     "lastmod": "2026-10-19",
     "date": "2026-10-18"

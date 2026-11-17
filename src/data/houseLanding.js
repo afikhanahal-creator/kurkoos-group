@@ -302,6 +302,7 @@ const LAND_GUIDES = [
   { to: '/real-estate-guide/bdikot-lifnei-kniyat-migrash', label: 'מה בודקים לפני שקונים מגרש לבית: 12 בדיקות' },
   { to: '/real-estate-guide/yesh-li-migrash', label: 'יש לכם מגרש? לבנות, למכור או לעבוד עם יזם' },
   { to: '/real-estate-guide/karka-chaklait-mul-karka-livniya', label: 'קרקע חקלאית או קרקע לבנייה: מה ההבדל' },
+  { to: '/real-estate-guide/timchur-migrash-lemchira', label: 'כמה שווה מגרש? איך מתמחרים מגרש למכירה' },
   { to: '/yazamut-nadlan/karka-meusheret-lo-dirot', label: 'קרקע להשקעה: למה תוכנית מאושרת עוד לא אומרת בנייה' },
   { to: '/madrich-yazamim/nesach-tabu-mi-baal-hakarka', label: 'איך קוראים נסח טאבו לפני עסקה' },
   { to: '/madrich-yazamim/zchuyot-bniya-ma-baamt-kniten', label: 'איך בודקים זכויות בנייה במגרש' },

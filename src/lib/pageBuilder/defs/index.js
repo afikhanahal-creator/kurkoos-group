@@ -32,6 +32,7 @@ export const EXCLUDED = {
   '/construction-supervision/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
   '/real-estate-guide/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
   '/madrich-yazamim/:slug': 'כתבה, מנוהלת בלשונית "מאמרים ומדריכים"',
+  '/mapat-atar': 'מפת אתר, נבנית אוטומטית מ-data/siteMapPages.js ומהכתבות שפורסמו (כלי, לא עמוד תוכן)',
   '/style-guide': 'עמוד פנימי למעצבים',
   '*': 'עמוד 404',
 }

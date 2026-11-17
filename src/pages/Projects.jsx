@@ -92,7 +92,7 @@ export default function Projects() {
     <>
       {/* כותרת ה-SEO מתארת גם את האזור. הכותרת על המסך נשארת "כל הפרויקטים" */}
       <Seo
-        title='פרויקטים בהוד השרון ובאזור המרכז'
+        title='פרויקטים חדשים בהוד השרון ובאזור המרכז'
         description='הפרויקטים של קורקוס גרופ בהוד השרון ובאזור המרכז: בנייה למגורים, וילות ובתים פרטיים, ופרויקטים בליווי ובפיקוח הקבוצה, מקרקע ועד מסירת מפתח.'
       />
       <PageSections def={DEF} local={LOCAL} ctx={{ allTitle, lead, statItems, collageItems, cmsStatus }} />

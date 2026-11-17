@@ -107,6 +107,7 @@ export default function Footer() {
             <Link to="/accessibility">{t('footer.accessibility')}</Link>
             <Link to="/privacy">{t('footer.privacy')}</Link>
             <Link to="/terms">{t('footer.terms')}</Link>
+            <Link to="/mapat-atar">מפת האתר</Link>
           </div>
           <img
             src="/aminot-badge.webp"

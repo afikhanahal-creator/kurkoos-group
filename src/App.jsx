@@ -45,6 +45,7 @@ const RealEstateGuideArticle = lazy(() => import('./pages/RealEstateGuideArticle
 const Careers = lazy(() => import('./pages/Careers.jsx'))
 const ContactPage = lazy(() => import('./pages/ContactPage.jsx'))
 const Legal = lazy(() => import('./pages/Legal.jsx'))
+const SiteMap = lazy(() => import('./pages/SiteMap.jsx'))
 const Mentorship = lazy(() => import('./pages/Mentorship.jsx'))
 const MentorGuide = lazy(() => import('./pages/MentorGuide.jsx'))
 const MentorGuideArticle = lazy(() => import('./pages/MentorGuideArticle.jsx'))
@@ -223,6 +224,7 @@ export default function App() {
               <Route path="/accessibility" element={<Legal kind="accessibility" />} />
               <Route path="/privacy" element={<Legal kind="privacy" />} />
               <Route path="/terms" element={<Legal kind="terms" />} />
+              <Route path="/mapat-atar" element={<SiteMap />} />
               <Route path="/style-guide" element={<StyleGuide />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

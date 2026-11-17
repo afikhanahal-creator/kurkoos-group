@@ -66,6 +66,11 @@ export default [
     "date": "2026-10-18"
   },
   {
+    "path": "/construction-supervision/pikuach-elyon-o-tzamud",
+    "lastmod": "2026-11-17",
+    "date": "2026-11-17"
+  },
+  {
     "path": "/construction-supervision/pikuach-yetzikat-beton",
     "lastmod": "2026-06-21",
     "date": "2026-06-21"
@@ -114,6 +119,11 @@ export default [
     "path": "/constructions/bniyat-vila-mah-kolel",
     "lastmod": "2026-11-17",
     "date": "2026-10-18"
+  },
+  {
+    "path": "/constructions/breicha-bevila",
+    "lastmod": "2026-11-17",
+    "date": "2026-11-17"
   },
   {
     "path": "/constructions/concrete-cube-test-failure-beyetzika",
@@ -201,13 +211,13 @@ export default [
     "date": "2026-09-27"
   },
   {
-    "path": "/constructions/service-after-handover",
-    "lastmod": "2026-11-15",
-    "date": "2026-11-15"
+    "path": "/constructions/patish-schmidt-bdikat-beton",
+    "lastmod": "2026-11-17",
+    "date": "2026-11-17"
   },
   {
     "path": "/constructions/sherut-achrei-mesira",
-    "lastmod": "2026-09-27",
+    "lastmod": "2026-11-17",
     "date": "2026-09-27"
   },
   {

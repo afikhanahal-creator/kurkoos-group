@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
+import { projectSeoTitle } from '../data/projectSeo.js'
 import { videoSources } from '../lib/cms.js'
 import { useState, useEffect, useRef, useId, Fragment } from 'react'
 import { useI18n, useLocalized } from '../i18n/index.jsx'
@@ -424,7 +425,7 @@ export default function ProjectDetail() {
   const seoCity = L(project.city)
   /* הכותרת כוללת גם את היישוב, כמו בעמוד המרונדר מראש: מי שמחפש פרויקט
      מחפש אותו עם שם העיר, ושתי הגרסאות חייבות להיות זהות. */
-  const seoTitle = seoCity ? `${seoName}, ${seoCity}` : seoName
+  const seoTitle = projectSeoTitle(project.slug, seoName, seoCity)
   /* תיאור ה-SEO מהניהול משמש רק כשהוא בעברית ובאורך של משפט מלא, אחרת כותרת המשנה */
   const cmsSeo = String(project.seoDescription || '').replace(/\s+/g, ' ').trim()
   const seoDesc = (/[\u0590-\u05FF]/.test(cmsSeo) && cmsSeo.length >= 70 ? cmsSeo : '') ||

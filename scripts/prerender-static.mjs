@@ -670,6 +670,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
      הגבוהה ביותר באתר: מי שמחפש "הנרייטה סאלד הוד השרון" נוחת בדיוק כאן,
      ועד היום סורק בלי JavaScript ראה בהם מעטפת ריקה. */
   const cmsProjects = await loadCmsProjects()
+  const { projectSeoTitle } = await import(pathToFileURL(join(root, 'src/data/projectSeo.js')).href)
   const { HOUSE_PAGES: HP } = await import(pathToFileURL(join(root, 'src/data/houseLanding.js')).href)
   const CITY_PAGE = Object.fromEntries(HP.filter((x) => x.city).map((x) => [x.city, { path: x.path, label: `בניית בית פרטי ב${x.city}` }]))
 
@@ -695,7 +696,8 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     const lead = sub || desc || `פרויקט של קורקוס גרופ${city ? ` ב${city}` : ''}.`
     done.push(renderPage({
       path: `/projects/${slug}`,
-      title: heading,
+      /* כותרת לגוגל עם הסוג והשכונה (data/projectSeo.js). H1 נשאר שם ועיר */
+      title: heading === (city ? `${name}, ${city}` : name) ? projectSeoTitle(slug, name, city) : heading,
       /* תיאור ה-SEO מהניהול כשהוא בעברית ובאורך משפט מלא, כמו בעמוד החי */
       description: (() => { const s = txt(p.seo_description).replace(/\s+/g, ' ').trim(); return /[\u0590-\u05FF]/.test(s) && s.length >= 70 ? s : `${lead.replace(/[.\s]+$/, '')}. ${name} הוא פרויקט של ${BRAND}: יזמות, ביצוע ופיקוח מקרקע ועד מסירת מפתח.` })(),
       jsonLd: [breadcrumbLd([

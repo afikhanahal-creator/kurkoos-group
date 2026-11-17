@@ -56,6 +56,7 @@ export const STATIC = [
   { path: '/divisions/supervision', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/brokerage', changefreq: 'monthly', priority: '0.8' },
   { path: '/divisions/residential', changefreq: 'monthly', priority: '0.8' },
+  { path: '/mapat-atar', changefreq: 'weekly', priority: '0.4' },
   { path: '/accessibility', changefreq: 'yearly', priority: '0.3' },
   { path: '/privacy', changefreq: 'yearly', priority: '0.3' },
   { path: '/terms', changefreq: 'yearly', priority: '0.3' },

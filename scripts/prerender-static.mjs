@@ -217,6 +217,7 @@ const SITE_LINKS =
     ['/divisions/residential', 'מגורים'],
     ['/blog', 'הבלוג'],
     ['/careers', 'דרושים'],
+    ['/mapat-atar', 'מפת האתר'],
   ].map(([href, label]) => `<li><a href="${href}">${esc(label)}</a></li>`).join('') +
   `</ul></nav>`
 
@@ -262,6 +263,9 @@ const done = []
 
 /* ---------- 1. כתבות הטורים ---------- */
 
+/* הכתבות שפורסמו לפי טור, גם בשביל מפת האתר (/mapat-atar) */
+const ARTICLES_BY_COL = {}
+
 for (const [dirName, col] of Object.entries(COLUMNS)) {
   const colDir = join(root, 'src', 'content', dirName)
   let files = []
@@ -275,6 +279,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
     } catch { /* קובץ בעייתי, מדלגים */ }
   }
   articles.sort((a, b) => String(b.date).localeCompare(String(a.date)))
+  ARTICLES_BY_COL[dirName] = articles
 
   for (const a of articles) {
     const path = `${col.route}/${a.slug}`
@@ -328,6 +333,16 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
 /* ---------- 2. מילון המונחים ---------- */
 {
   const { glossaryGroups } = await import(pathToFileURL(join(root, 'src/data/glossary.js')).href)
+  /* הכותרת והתיאור של המילון ב-seo.js נוקבים במספר המונחים (מספר בכותרת מעלה CTR).
+     נוסף או הוסר מונח: הבנייה נכשלת כאן עד שמעדכנים את המספר ב-PAGE_META. */
+  {
+    const termCount = glossaryGroups.reduce((n, g) => n + (g.terms?.length || 0), 0)
+    const gm = meta('/real-estate-glossary')
+    if (!gm.title.includes(String(termCount)) || !gm.description.includes(String(termCount))) {
+      console.error(`prerender: במילון ${termCount} מונחים, אבל הכותרת או התיאור ב-PAGE_META['/real-estate-glossary'] נוקבים במספר אחר`)
+      process.exit(1)
+    }
+  }
   const terms = glossaryGroups.flatMap((g) => g.terms)
   const body =
     `<h1>מילון מונחי נדל"ן</h1>` +
@@ -458,6 +473,26 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
           g.items.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)} <a href="${esc(f.to)}">לתשובה המלאה: ${esc(f.more)}</a></p>`).join('\n')
         ).join('\n') +
         `<p>טלפון 055-981-1814. <a href="/contact">השארת פרטים</a></p>`,
+    }))
+  }
+
+  /* מפת האתר למשתמשים: העמודים הקבועים מ-data/siteMapPages.js וכל הכתבות
+     שפורסמו, לפי טור. אותו מקור ואותו סדר כמו העמוד החי (pages/SiteMap.jsx). */
+  {
+    const { SITE_MAP_PATH, SITE_MAP_TITLE, SITE_MAP_INTRO, SITE_MAP_GROUPS } = await import(pathToFileURL(join(root, 'src/data/siteMapPages.js')).href)
+    done.push(renderPage({
+      path: SITE_MAP_PATH,
+      ...meta(SITE_MAP_PATH),
+      jsonLd: [breadcrumbLd([HOME_CRUMB, { name: SITE_MAP_TITLE, path: SITE_MAP_PATH }])],
+      bodyHtml:
+        `<h1>${esc(SITE_MAP_TITLE)}</h1><p>${esc(SITE_MAP_INTRO)}</p>` +
+        SITE_MAP_GROUPS.map((g) =>
+          `<h2>${esc(g.title)}</h2><ul>` + g.links.map(([href, label]) => `<li><a href="${href}">${esc(label)}</a></li>`).join('') + `</ul>`
+        ).join('\n') +
+        Object.entries(COLUMNS).map(([key, col]) =>
+          `<h2><a href="${col.route}">${esc(col.index)}</a></h2><ul>` +
+          (ARTICLES_BY_COL[key] || []).map((a) => `<li><a href="${col.route}/${a.slug}">${esc(a.title)}</a></li>`).join('') + `</ul>`
+        ).join('\n'),
     }))
   }
 

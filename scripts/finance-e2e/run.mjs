@@ -174,8 +174,10 @@ await page.getByRole('button', { name: 'הוספת מסמכים' }).click()
 await page.locator('[data-testid=upload-input]').setInputFiles(`${FIX}/tambour-4521.pdf`)
 await page.waitForSelector('.fin-drop__msg', { timeout: 20000 })
 const dupMsg = await page.locator('.fin-drop__msg').innerText()
-const copyStatus = sql("select status from fin_documents where file_name='tambour-4521-copy.pdf'")
-record('T6', 'זיהוי כפילות במסמך שמועלה', 'העלאת אותו PDF נחסמת כ"כפילות"; עותק אחר עם אותו ספק ומספר מסומן "כפול"', `העלאה: "${dupMsg}"; העתק: ${copyStatus}`, /כפילות/.test(dupMsg) && copyStatus === 'duplicate', [await shot('09-upload-duplicate')])
+// an email copy of the same invoice (another file, the same supplier and number) is not a second document: it joins the original
+const copyStatus = sql("select count(*) from fin_documents where file_name='tambour-4521-copy.pdf'")
+const copyJoined = sql("select count(*) from fin_document_attachments a join fin_documents d on d.id=a.document_id where a.file_name='tambour-4521-copy.pdf' and d.file_name='tambour-4521.pdf' and a.note like 'אותו מסמך הגיע גם%'")
+record('T6', 'זיהוי כפילות במסמך שמועלה', 'העלאת אותו PDF נחסמת כ"כפילות"; עותק אחר במייל עם אותו ספק ומספר לא נהיה מסמך שני, הוא מצורף למקור', `העלאה: "${dupMsg}"; העתק: ${copyStatus} מסמכים, מצורף למקור: ${copyJoined}`, /כפילות/.test(dupMsg) && copyStatus === '0' && copyJoined === '1', [await shot('09-upload-duplicate')])
 
 // upload a real new receipt (photo) for the correction test
 await page.locator('[data-testid=upload-input]').setInputFiles(`${FIX}/ace-receipt.png`)
@@ -1953,6 +1955,72 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
       && docB[1] === 'review' && docB[2] === 'other' && docB[3] === 'true' && eligB === 'f' && queuedB === '0' && /האם זו חשבונית או קבלה/.test(askText)
       && /^נגריית האלון\|invoice\|false\|true$/.test(after) && inC === '0' && /purchase_order/.test(skC) && /skipped_with_email/.test(runLog),
     [askShot])
+}
+
+// MANUALDUP: a document uploaded by hand during the day must not come in again with the night's mail scan. The same
+// receipt (another file: the supplier's email copy) with its number written differently ("02/130603" on the paper,
+// "130603" in the email) joins the document already there as an attachment: no second document, nothing in the lists,
+// its fingerprint skipped next time. The very same file is skipped before it is read. Another receipt of the same
+// supplier and sum with another number is a new document (two coffees on one day are two purchases).
+{
+  const mk = async (html) => { await page.setContent(`<div dir="rtl" style="font:16px sans-serif;padding:40px">${html}</div>`); return page.pdf({ format: 'A4' }) }
+  const today = new Date().toISOString().slice(0, 10)
+  const tag = String(Date.now()).slice(-6)
+  const files = {
+    [`coffee-order-${tag}.pdf`]: await mk(`<h1>המרכז הארצי לקפה</h1><p>הזמנה 02/130603</p><p>סה״כ 310.00</p><p>${tag}</p>`),
+    [`invoice-130603-${tag}.pdf`]: await mk(`<h1>המרכז הארצי לקפה בע״מ</h1><p>חשבונית מס קבלה 130603</p><p>לתשלום 310.00 ₪</p><p>${tag}</p>`),
+    [`invoice-130604-${tag}.pdf`]: await mk(`<h1>המרכז הארצי לקפה בע״מ</h1><p>חשבונית מס קבלה 130604</p><p>לתשלום 310.00 ₪</p><p>${tag}</p>`),
+  }
+  const [manualName, mailName, otherName] = Object.keys(files)
+  for (const [n, b] of Object.entries(files)) fs.writeFileSync(`${FIX}/${n}`, b)
+  const hashOf = (b) => crypto.createHash('sha256').update(b).digest('hex')
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
+  const saved = JSON.stringify(fx)
+  const base = fx.answers[Object.keys(fx.answers)[0]]
+  const vatId = '302572714'
+  const ans = (o) => ({ ...base, is_financial_document: true, document_class: 'tax_invoice_receipt', relevance_confidence: 0.97, doc_type: 'invoice_receipt', supplier_name: 'המרכז הארצי לקפה', supplier_vat_id: vatId, customer_name: '', customer_vat_id: '', category: 'כיבוד', vat_rate: 18, issue_date: today, amount_before_vat: 262.71, vat_amount: 47.29, total_amount: 310, description: 'קפה למשרד', ...o })
+  fx.answers[hashOf(files[manualName])] = ans({ doc_number: '02/130603' })
+  fx.answers[hashOf(files[mailName])] = ans({ doc_number: '130603' })
+  fx.answers[hashOf(files[otherName])] = ans({ doc_number: '130604' })
+  const when = (h) => new Date(Date.now() - h * 3600_000).toISOString()
+  fx.mailboxes['invoices@kurkoos.test'].messages.push(
+    { id: `md1-${tag}`, date: when(0.3), subject: 'חשבונית מס קבלה 130603', from: 'המרכז הארצי לקפה <billing@coffee.test>', text: 'מצורפת חשבונית', files: [mailName] },
+    { id: `md2-${tag}`, date: when(0.2), subject: 'ההזמנה שלכם', from: 'המרכז הארצי לקפה <billing@coffee.test>', text: 'מצורף', files: [manualName] },
+    { id: `md3-${tag}`, date: when(0.1), subject: 'חשבונית מס קבלה 130604', from: 'המרכז הארצי לקפה <billing@coffee.test>', text: 'מצורפת חשבונית', files: [otherName] })
+  // by day: the paper uploaded by hand (the mail does not exist yet in the box's view: the fixtures are written after)
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go('/documents')
+  await page.getByRole('button', { name: 'הוספת מסמכים' }).click()
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  await page.locator('[data-testid=upload-input]').setInputFiles(`${FIX}/${manualName}`)
+  let manual = ''
+  for (let i = 0; i < 40 && !/^review/.test(manual); i++) { await page.waitForTimeout(500); manual = sql(`select status||'|'||coalesce(doc_number,'')||'|'||id from fin_documents where file_name='${manualName}'`) }
+  const manualId = manual.split('|')[2]
+  // by night: the mail scan
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const boxId = sql("select id from fin_mailboxes where email='invoices@kurkoos.test'")
+  await api(tok, { action: 'sync', mailbox_id: boxId })
+  const fromMail = sql(`select count(*) from fin_documents where email_message_id='md1-${tag}'`)
+  const sameFile = sql(`select count(*) from fin_documents where email_message_id='md2-${tag}'`)
+  const other = sql(`select coalesce(max(status||'|'||doc_number), '') from fin_documents where email_message_id='md3-${tag}'`)
+  const attached = manualId ? sql(`select count(*) from fin_document_attachments where document_id='${manualId}' and note like 'אותו מסמך הגיע גם במייל%'`) : '?'
+  const skipped = sql(`select count(*) from fin_skipped where file_name='${mailName}' and document_class='duplicate'`)
+  const logged = manualId ? sql(`select count(*) from fin_audit where entity_id='${manualId}' and action='duplicate_absorbed'`) : '?'
+  const docsOfSupplier = sql(`select count(*) from fin_documents where supplier_vat_id='${vatId}' and status not in ('rejected','archived') and (file_name like '%${tag}%')`)
+  // the next scan sees the same email again: nothing is read, nothing is added
+  await api(tok, { action: 'sync', mailbox_id: boxId })
+  const docsAfter = sql(`select count(*) from fin_documents where supplier_vat_id='${vatId}' and status not in ('rejected','archived') and (file_name like '%${tag}%')`)
+  const attachedAfter = manualId ? sql(`select count(*) from fin_document_attachments where document_id='${manualId}' and note like 'אותו מסמך הגיע גם במייל%'`) : '?'
+  // the panel of the hand-uploaded document shows the email copy among its attachments
+  await go(`/documents/${manualId}`); await page.waitForTimeout(1200)
+  await page.locator('.fin-attach').scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(600)
+  const panelText = await page.locator('.fin-attach').innerText().catch(() => '')
+  const panelShot = await shot('119k-manual-dup-absorbed')
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  record('MANUALDUP', 'מסמך שהועלה ידנית לא נכנס שוב בסריקת הלילה', 'קבלה שהועלתה ביד ("02/130603"), ובלילה אותה קבלה במייל כקובץ אחר עם המספר "130603": לא נוצר מסמך שני, הקובץ מהמייל מצורף למסמך הקיים, טביעת האצבע שלו ברשימת הדילוגים והשינוי ביומן; אותו קובץ בדיוק במייל מדולג לפני קריאה; סריקה נוספת לא מוסיפה כלום; קבלה אחרת של אותו ספק ואותו סכום עם מספר אחר נכנסת כמסמך חדש',
+    `ידני: ${manual.split('|').slice(0, 2).join(',')}; מהמייל (קובץ אחר): ${fromMail} מסמכים; אותו קובץ: ${sameFile}; צורף: ${attached} (אחרי סריקה נוספת: ${attachedAfter}); דילוג: ${skipped}; ביומן: ${logged}; מספר אחר: ${other || 'אין'}; מסמכים של הספק: ${docsOfSupplier} → ${docsAfter}`,
+    /^review\|02\/130603/.test(manual) && fromMail === '0' && sameFile === '0' && attached === '1' && attachedAfter === '1' && skipped === '1' && logged === '1' && /^review\|130604$/.test(other) && docsOfSupplier === '2' && docsAfter === '2' && /הגיע גם במייל/.test(panelText),
+    [panelShot])
 }
 
 // MAILTHUMB: a receipt that is the body of an email (Meta ads, online services) has no file of its own. It must still

@@ -88,7 +88,7 @@ export async function retryFailed({ max = MAX_ATTEMPTS, started = Date.now(), tr
     // a reading takes up to ~20 s: never start one that cannot finish inside the function limit
     if (Date.now() - started > TIME_BUDGET_MS - 20_000) break
     const r = await processStored(d, runs, 'retry', started)
-    if (r && r.status && r.status !== 'failed') { ok++; if (d.status === 'processing') unstuck++ }
+    if (r && ((r.status && r.status !== 'failed') || r.absorbed)) { ok++; if (d.status === 'processing') unstuck++ }
   }
   await closeRuns(runs)
   return { retried: docs.length, recovered: ok, stuck: stuck.length, unstuck }

@@ -111,6 +111,35 @@ const automation = async (key) => one(`fin_automations?key=eq.${key}&select=*`)
    of every report and of the archive, and the expense would be missed. */
 export const bodyReceipt = (docType, mime, subject) => docType === 'payment_confirmation' && String(mime || '').startsWith('text/') && /קבלה|receipt/i.test(String(subject || '')) && !/אישור הזמנה|order confirmation/i.test(String(subject || ''))
 
+/* Two printed document numbers that are the same number: equal as written, equal once only the digits are kept
+   ("2026-0012" / "2026/0012"), or one is the end of the other ("02/130603" / "130603", a branch or book prefix) when the
+   totals are also equal. Short numbers (under 4 digits) only count as written: "12" and "0012" may be two receipts. */
+const digitsOf = (s) => String(s ?? '').replace(/\D/g, '').replace(/^0+/, '')
+export function sameDocNumber(a, b, { total = null, otherTotal = null } = {}) {
+  const x = String(a ?? '').trim(); const y = String(b ?? '').trim()
+  if (!x || !y) return false
+  if (x === y) return true
+  const dx = digitsOf(x); const dy = digitsOf(y)
+  if (dx.length < 4 || dy.length < 4) return false
+  if (dx === dy) return true
+  const sameTotal = total !== null && total !== undefined && otherTotal !== null && otherTotal !== undefined && Number(total) === Number(otherTotal)
+  if (!sameTotal) return false
+  const [short, long] = dx.length < dy.length ? [dx, dy] : [dy, dx]
+  return short.length >= 5 && long.endsWith(short)
+}
+
+/* A document the mail scan (or a forward) brings in that is already in the system, uploaded by hand, by WhatsApp or by an
+   earlier email: no second document is made. The file joins the one already there as an attachment ("הגיע גם במייל"),
+   its fingerprint goes to the skipped list so the next scan passes it without reading it again, and the log says so. */
+const AUTOMATIC = new Set(['gmail', 'outlook', 'forward'])
+export const isAutomaticSource = (source) => AUTOMATIC.has(String(source || ''))
+export async function absorbDuplicate({ originalId, path, name, mime, size, hash, meta = {}, why = '' }) {
+  const from = meta.source === 'forward' ? 'בהעברה' : 'במייל'
+  await insert('fin_document_attachments', { document_id: originalId, kind: 'file', file_path: path, file_name: String(name || 'copy').slice(0, 200), file_mime: mime || null, file_size: size || null, note: `אותו מסמך הגיע גם ${from}${meta.email_from ? ` מ-${String(meta.email_from).slice(0, 120)}` : ''}`, created_by: null }, 'return=minimal').catch(() => {})
+  await insert('fin_skipped', { source: meta.source || null, mailbox_id: meta.mailbox_id || null, email_subject: meta.email_subject || null, email_from: meta.email_from || null, file_name: String(name || '').slice(0, 200), file_hash: hash || null, document_class: 'duplicate', reason: 'כבר במערכת, צורף למסמך הקיים' }, 'return=minimal').catch(() => {})
+  await audit('document', originalId, 'duplicate_absorbed', { file_name: name || null, from: meta.email_from || null, source: meta.source || null, why }, { email: 'agent' }).catch(() => {})
+}
+
 export async function analyze(x, { selfId = null, selfCreated = null, mailbox = null, fromEmail = '', subject = '', text = '', mime = '' } = {}, runs) {
   const vat = digits(x.supplier_vat_id)
   const fields = {
@@ -156,8 +185,20 @@ export async function analyze(x, { selfId = null, selfCreated = null, mailbox = 
   const dupCheck = await automation('duplicate_check')
   let duplicateOf = null; let possibleDuplicate = false
   if (dupCheck?.enabled !== false) {
-    // signal 1: the same issuer number and document number (any source, any file)
-    if (fields.doc_number && vat) duplicateOf = (await one(`fin_documents?supplier_vat_id=eq.${vat}&doc_number=eq.${q(fields.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id&order=created_at.asc`))?.id || null
+    // signal 1: the same issuer and the same document number (any source, any file). The issuer is its VAT number, or the
+    // supplier the reading matched when one of the two readings missed the VAT number; the number is compared written
+    // either way ("02/130603" on the paper a person uploaded, "130603" in the email), see sameDocNumber
+    if (fields.doc_number) {
+      const whos = [vat ? `supplier_vat_id=eq.${vat}` : null, fields.supplier_id ? `supplier_id=eq.${fields.supplier_id}` : null].filter(Boolean)
+      for (const who of whos) {
+        duplicateOf = (await one(`fin_documents?${who}&doc_number=eq.${q(fields.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id&order=created_at.asc`))?.id || null
+        if (!duplicateOf) {
+          const cands = (await sb(`fin_documents?${who}&doc_number=not.is.null&status=not.in.(rejected,duplicate,archived)${not}&select=id,doc_number,total_amount&order=created_at.asc&limit=300`)) || []
+          duplicateOf = cands.find((c) => sameDocNumber(c.doc_number, fields.doc_number, { total: fields.total_amount, otherTotal: c.total_amount }))?.id || null
+        }
+        if (duplicateOf) break
+      }
+    }
     // signal 2: the same supplier, total and date (±1 day): a photo of an invoice that also arrived by email
     if (!duplicateOf && fields.total_amount !== null && fields.issue_date && (fields.supplier_id || vat)) {
       const d0 = new Date(`${fields.issue_date}T00:00:00Z`); const lo = new Date(d0.getTime() - 86400_000).toISOString().slice(0, 10); const hi = new Date(d0.getTime() + 86400_000).toISOString().slice(0, 10)
@@ -304,6 +345,13 @@ export async function processStored(doc, runs, trigger = 'upload', started = Dat
     fields.next_retry_at = null
     Object.assign(fields, usageFields(x, cur))
     delete fields._pendingHits
+    // only the night retry joins it by itself; a person who asked for a new reading sees the result and decides
+    if (fields.status === 'duplicate' && fields.duplicate_of && isAutomaticSource(doc.source) && trigger === 'retry') {
+      await absorbDuplicate({ originalId: fields.duplicate_of, path: doc.file_path, name: doc.file_name, mime: doc.file_mime, size: doc.file_size, hash: doc.file_hash, meta: doc, why: 'same supplier and document number' })
+      await sb(`fin_documents?id=eq.${doc.id}`, { method: 'DELETE', prefer: 'return=minimal' })
+      if (fields.suggestions?.supplier?.match === 'new' && fields.supplier_id) await sb(`fin_suppliers?id=eq.${fields.supplier_id}&status=eq.pending`, { method: 'DELETE', prefer: 'return=minimal' }).catch(() => {})
+      return { absorbed: true, into: fields.duplicate_of }
+    }
     const saved = await patch(`fin_documents?id=eq.${doc.id}`, fields)
     const settled = saved ? await settlePlaceholder(saved).catch(() => null) : null
     return settled?.document || saved
@@ -434,6 +482,14 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
       const pendingHits = fields._pendingHits; delete fields._pendingHits
       await keepProjectInCompany(fields)
       const newSupplier = fields.suggestions?.supplier?.match === 'new' ? fields.supplier_id : null
+      // already in the system (uploaded by hand, by WhatsApp, or an earlier email): joins that document, no second one
+      if (fields.status === 'duplicate' && fields.duplicate_of) {
+        await absorbDuplicate({ originalId: fields.duplicate_of, path, name, mime: base.file_mime, size: buf.length, hash, meta, why: 'same supplier and document number' })
+        if (newSupplier) await sb(`fin_suppliers?id=eq.${newSupplier}&status=eq.pending`, { method: 'DELETE', prefer: 'return=minimal' }).catch(() => {})
+        stats.skipped++; got++; seen.accepted++
+        runs.collector.stat.details.duplicates = (runs.collector.stat.details.duplicates || 0) + 1
+        return
+      }
       try {
         const row = await insert('fin_documents', { ...base, ...fields }); stats.imported++; got++; seen.accepted++
         if (row) { await settlePlaceholder(row).catch(() => {}); await flushHits(row.id, pendingHits); if (fields.supplier_id) await patch(`fin_suppliers?id=eq.${fields.supplier_id}&suggested_from=is.null&status=eq.pending`, { suggested_from: row.id }).catch(() => {}) }

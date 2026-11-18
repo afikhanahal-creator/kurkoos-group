@@ -148,3 +148,44 @@ export async function mailFile(documentId, index, { adoptIt = false, user } = {}
   const { signedUrl } = await import('./outbound.js')
   return { url: await signedUrl(path, 600), name: f.name || 'file' }
 }
+
+/* The mail scan, for an email whose body only links to the document ("לצפייה במסמך לחץ כאן", Rivhit, iCount, Green
+   Invoice and the like): the document itself is fetched, so the file is read and kept, not the email around it. The
+   best link of the email is opened; a PDF or an image is taken; a viewer page is searched for the file it shows (a PDF
+   link, an iframe, an embed) one step further. Returns null when no file is reachable: the email body is then read and
+   shown as a page, the way receipts that live in the email itself are (Meta ads). Never throws. */
+const FILE_IN_PAGE = /(?:href|src|data)\s*=\s*["']([^"']+)["']/gi
+function filesInPage(html, base) {
+  const out = []; const seen = new Set(); let m
+  while ((m = FILE_IN_PAGE.exec(String(html || ''))) && out.length < 40) {
+    let u; try { u = new URL(m[1].replace(/&amp;/g, '&'), base) } catch { continue }
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') continue
+    const s = u.toString(); if (seen.has(s) || SKIP.test(s)) continue
+    seen.add(s)
+    const score = (/\.pdf(\?|#|$)/i.test(u.pathname + u.search) ? 3 : 0) + (/pdf|download|getfile|print|document|invoice|receipt/i.test(s) ? 1 : 0)
+    if (score > 0) out.push({ url: s, score })
+  }
+  return out.sort((a, b) => b.score - a.score).slice(0, 3)
+}
+const nameFrom = (url, ext) => { try { const last = decodeURIComponent(new URL(url).pathname.split('/').pop() || ''); return /\.[a-z0-9]{2,5}$/i.test(last) ? last : `document.${ext}` } catch { return `document.${ext}` } }
+export async function fetchFromEmail(html, { budgetMs = 20_000 } = {}) {
+  const until = Date.now() + budgetMs
+  const links = linksOf(html).slice(0, 2)
+  for (const link of links) {
+    if (Date.now() > until) break
+    let r
+    try { r = await get(link.url) } catch { continue }
+    if (r.status !== 200 || !r.body?.length) continue
+    const kind = kindOf(r.body, r.type)
+    if (kind) return { buf: r.body, mime: kind[0], ext: kind[1], name: nameFrom(r.url, kind[1]), host: link.host }
+    if (!/html/.test(r.type)) continue
+    for (const f of filesInPage(r.body.toString('utf8'), r.url || link.url)) {
+      if (Date.now() > until) break
+      let r2
+      try { r2 = await get(f.url) } catch { continue }
+      const k2 = r2.status === 200 && r2.body?.length ? kindOf(r2.body, r2.type) : null
+      if (k2) return { buf: r2.body, mime: k2[0], ext: k2[1], name: nameFrom(r2.url, k2[1]), host: link.host }
+    }
+  }
+  return null
+}

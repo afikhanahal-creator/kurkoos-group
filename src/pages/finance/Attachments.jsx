@@ -64,7 +64,7 @@ export default function Attachments({ doc }) {
                   {a.kind === 'link'
                     ? <button type="button" className="fin-link" onClick={() => go(`/documents/${a.linked_document_id}`)}>{other ? `${other.supplier_name || other.file_name || 'מסמך'}${other.doc_number ? ` ${other.doc_number}` : ''}` : 'מסמך מקושר'}</button>
                     : <button type="button" className="fin-link" onClick={() => open(a)}>{a.file_name || 'נספח'}</button>}
-                  <small>{a.kind === 'link' ? (other ? `${date(docDate(other))} · ${money(other.total_amount, other.currency)}` : 'מסמך שאין לך גישה אליו') : `$${a.note ? `${a.note} · ` : ''}${a.file_size ? `${Math.max(1, Math.round(a.file_size / 1024))}KB · ` : ''}נוסף ${date(a.created_at)}`}</small>
+                  <small>{a.kind === 'link' ? (other ? `${date(docDate(other))} · ${money(other.total_amount, other.currency)}` : 'מסמך שאין לך גישה אליו') : `${a.note ? `${a.note} · ` : ''}${a.file_size ? `${Math.max(1, Math.round(a.file_size / 1024))}KB · ` : ''}נוסף ${date(a.created_at)}`}</small>
                 </span>
                 {a.kind === 'file' && <button type="button" className="fin-icon-btn" onClick={() => download(a)} aria-label={`הורדת ${a.file_name}`} title="הורדה"><Icon name="download" size={16} /></button>}
                 {canAdd && <button type="button" className="fin-icon-btn" onClick={() => remove(a)} aria-label="הסרת הנספח" title="הסרה"><Icon name="trash" size={16} /></button>}

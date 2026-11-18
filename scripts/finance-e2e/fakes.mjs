@@ -395,6 +395,8 @@ const server = http.createServer(async (req, res) => {
   if (/^\/green\/waInstance[^/]+\/setSettings\//.test(p)) { log.greenSettings = { ...(log.greenSettings || {}), ...JSON.parse(await readBody(req)) }; return send(res, 200, { saveSettings: true }) }
   if (p === '/__green') { const u = new URL(req.url, 'http://x'); if (u.searchParams.has('state')) log.greenState = u.searchParams.get('state') || null; if (u.searchParams.has('webhook')) log.greenSettings = { ...(log.greenSettings || {}), webhookUrl: u.searchParams.get('webhook') }; if (u.searchParams.has('reset')) { log.greenSettings = null; log.greenState = null } return send(res, 200, { ok: true }) }
   if (/^\/green\/waInstance[^/]+\/sendMessage\//.test(p)) { const b = JSON.parse(await readBody(req)); log.wa.push({ to: b.chatId, message: b.message }); return send(res, 200, { idMessage: `out${log.wa.length}` }) }
+  // an invoice service's viewer page (Rivhit and the like): the document sits in an iframe, not behind the link itself
+  if (p.startsWith('/viewer/')) { const f = decodeURIComponent(p.slice('/viewer/'.length)); res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(`<!doctype html><html><body><h1>צפייה במסמך</h1><iframe src="/green/file/${encodeURIComponent(f)}"></iframe></body></html>`); return }
   if (p.startsWith('/green/file/')) { const f = decodeURIComponent(p.slice('/green/file/'.length)); res.writeHead(200, { 'Content-Type': f.endsWith('.pdf') ? 'application/pdf' : 'image/png' }); res.end(fs.readFileSync(`${FIX}/${f}`)); return }
   // a webhook receiver: records every delivery; ?fail=N answers 500 to the first N deliveries
   if (p === '/hook') {

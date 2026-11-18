@@ -2,7 +2,7 @@
 // last run, status and error in fin_automations, and each agent records its batch in fin_agent_runs.
 import { env, TIME_BUDGET_MS } from './env.js'
 import { rpc, sb, one, patch, insert, agentRun, audit } from './db.js'
-import { syncMailbox, processStored, MAX_ATTEMPTS } from './pipeline.js'
+import { syncMailbox, processStored, MAX_ATTEMPTS, sweepEmailDuplicates } from './pipeline.js'
 
 export function newRuns(trigger) {
   const make = async () => ({
@@ -54,8 +54,9 @@ async function automation(key, fn, { force = false } = {}) {
   return { key, status, error, result }
 }
 
-export async function syncAll({ mailboxId, trigger = 'manual', started = Date.now(), user, onlyBackfill = false } = {}) {
-  let boxes = (await sb(`fin_mailboxes?status=in.(active,error)${mailboxId ? `&id=eq.${mailboxId}` : ''}${onlyBackfill ? '&backfill_pending=is.true' : ''}&select=*&order=last_scan_at.asc.nullsfirst`)) || []
+export async function syncAll({ mailboxId, trigger = 'manual', started = Date.now(), user, onlyBackfill = false, recentOnly = false } = {}) {
+  // recentOnly (the quick collection): only mailboxes that already had their first scan and owe no history scan
+  let boxes = (await sb(`fin_mailboxes?status=in.(active,error)${mailboxId ? `&id=eq.${mailboxId}` : ''}${onlyBackfill ? '&backfill_pending=is.true' : ''}${recentOnly ? '&last_sync_at=not.is.null&or=(backfill_pending.is.null,backfill_pending.is.false)' : ''}&select=*&order=last_scan_at.asc.nullsfirst`)) || []
   if (user && user.role === 'employee') boxes = boxes.filter((b) => b.connected_by === user.id)
   const runs = await newRuns(trigger)
   const results = []
@@ -96,7 +97,9 @@ export async function retryFailed({ max = MAX_ATTEMPTS, started = Date.now(), tr
 
 /* the engine between the nightly runs: recover and retry, and when the last collection is older than the
    configured gap, a short incremental collection. Runs when the cron calls it or when someone opens the app. */
-export async function engineTick({ started = Date.now(), trigger = 'tick', force = false } = {}) {
+export async function engineTick({ started = Date.now(), trigger = 'tick', force = false, collect = false } = {}) {
+  // an admin's "check the mailboxes now" runs whatever the engine is doing
+  if (collect) return { collect: await quickCollectTick({ started, force: true }) }
   let claimed = force
   if (!claimed) {
     const r = await rpc('fin_engine_claim', { p_minutes: 5 }).catch((e) => (/fin_engine_claim|schema cache/.test(String(e.message)) ? 'missing' : false))
@@ -107,8 +110,39 @@ export async function engineTick({ started = Date.now(), trigger = 'tick', force
   // collection and retries happen once a night (runDaily). Between nights only documents a crashed function left
   // "in processing" are read again (an admin can force a full retry from the agents screen)
   const out = { retry: await retryFailed({ started, trigger, stuckOnly: !force }) }
+  // every 15 minutes: the connected mailboxes are checked for new mail, so an invoice is in the system minutes after it
+  // arrives (the night pass stays as the double check). Cheap: only messages never seen are read (fin_mail_seen), the
+  // same ones the night would read; nothing runs over the spending cap. FINANCE_QUICK_COLLECT=0 turns it off.
+  try { out.collect = await quickCollectTick({ started }) } catch (e) { out.collect = { error: String(e.message || e).slice(0, 200) } }
+  // once an hour: an email document that is the same as one already in the system joins it (no duplicate waits in the lists)
+  try { out.duplicates = await duplicateSweepTick({ force }) } catch { /* the next tick tries again */ }
   try { const { flushOutbound } = await import('./outbound.js'); out.outbound = await flushOutbound({ budgetMs: 8_000 }) } catch { /* optional */ }
   return out
+}
+
+export const QUICK_COLLECT_MINUTES = 15
+export async function quickCollectTick({ started = Date.now(), force = false } = {}) {
+  if (!force && process.env.FINANCE_QUICK_COLLECT === '0') return null
+  const row = await one('fin_settings?key=eq.quick_collect_at&select=value').catch(() => null)
+  const last = Date.parse(row?.value || '') || 0
+  if (!force && Date.now() - last < QUICK_COLLECT_MINUTES * 60_000) return null
+  const { overBudget } = await import('./budget.js'); const cap = await overBudget().catch(() => ({ over: false }))
+  if (cap.over) return { skipped: 'budget' }
+  const at = { value: new Date().toISOString(), updated_at: new Date().toISOString() }
+  const done = await patch('fin_settings?key=eq.quick_collect_at', at).catch(() => null)
+  if (!done || (Array.isArray(done) && !done.length)) await insert('fin_settings', { key: 'quick_collect_at', ...at }).catch(() => {})
+  const r = await syncAll({ trigger: 'quick', started, recentOnly: true })
+  return { mailboxes: r.length, imported: r.reduce((a, x) => a + (x.imported || 0), 0) }
+}
+
+export async function duplicateSweepTick({ force = false } = {}) {
+  const row = await one('fin_settings?key=eq.duplicate_sweep_at&select=value').catch(() => null)
+  const last = Date.parse(row?.value || '') || 0
+  if (!force && Date.now() - last < 60 * 60_000) return null
+  const at = { value: new Date().toISOString(), updated_at: new Date().toISOString() }
+  const done = await patch('fin_settings?key=eq.duplicate_sweep_at', at).catch(() => null)
+  if (!done || (Array.isArray(done) && !done.length)) await insert('fin_settings', { key: 'duplicate_sweep_at', ...at }).catch(() => {})
+  return sweepEmailDuplicates()
 }
 
 async function managers() {

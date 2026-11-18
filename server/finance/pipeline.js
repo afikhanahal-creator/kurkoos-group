@@ -10,6 +10,7 @@ import { validate, minConfidence } from './validate.js'
 import { assign, identifySupplier, settings, flushHits } from './assign.js'
 import { gate, triage } from './triage.js'
 import { expand, readable, mimeByName, ZIP, DOCX, XLSX, TIFF } from './unpack.js'
+import { fetchFromEmail } from './linked.js'
 import * as gmail from './providers/gmail.js'
 import * as outlook from './providers/outlook.js'
 
@@ -122,10 +123,48 @@ export function sameDocNumber(a, b, { total = null, otherTotal = null } = {}) {
   const dx = digitsOf(x); const dy = digitsOf(y)
   if (dx.length < 4 || dy.length < 4) return false
   if (dx === dy) return true
-  const sameTotal = total !== null && total !== undefined && otherTotal !== null && otherTotal !== undefined && Number(total) === Number(otherTotal)
+  // the totals agree, or one side has none (an email that only names the document and links to it)
+  const has = (v) => v !== null && v !== undefined && v !== ''
+  const sameTotal = !has(total) || !has(otherTotal) || Number(total) === Number(otherTotal)
   if (!sameTotal) return false
   const [short, long] = dx.length < dy.length ? [dx, dy] : [dy, dx]
   return short.length >= 5 && long.endsWith(short)
+}
+
+/* the document already in the system that is this one: the same issuer (VAT number, or the matched supplier when one of
+   the readings missed the VAT number) and the same document number (sameDocNumber). The earliest wins. */
+export async function sameDocumentIn({ doc_number, supplier_vat_id, supplier_id, total_amount }, { selfId = null } = {}) {
+  if (!doc_number) return null
+  const not = selfId ? `&id=neq.${selfId}` : ''
+  const whos = [supplier_vat_id ? `supplier_vat_id=eq.${supplier_vat_id}` : null, supplier_id ? `supplier_id=eq.${supplier_id}` : null].filter(Boolean)
+  for (const who of whos) {
+    const exact = (await one(`fin_documents?${who}&doc_number=eq.${q(doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id&order=created_at.asc`))?.id
+    if (exact) return exact
+    const cands = (await sb(`fin_documents?${who}&doc_number=not.is.null&status=not.in.(rejected,duplicate,archived)${not}&select=id,doc_number,total_amount&order=created_at.asc&limit=300`)) || []
+    const hit = cands.find((c) => sameDocNumber(c.doc_number, doc_number, { total: total_amount, otherTotal: c.total_amount }))?.id
+    if (hit) return hit
+  }
+  return null
+}
+
+/* The night sweep: an email document still waiting for a person (review / failed) that is the same document as one
+   already in the system is joined to it, the way the scan does it now. Cleans what came in before this rule, or what was
+   read before the paper was uploaded by hand. Only automatic sources; never an approved document. */
+export async function sweepEmailDuplicates({ days = 45, limit = 200 } = {}) {
+  const since = new Date(Date.now() - days * 86400_000).toISOString()
+  const open = (await sb(`fin_documents?source=in.(gmail,outlook,forward)&status=in.(review,failed)&doc_number=not.is.null&created_at=gte.${encodeURIComponent(since)}&select=id,file_path,file_name,file_mime,file_size,file_hash,doc_number,supplier_vat_id,supplier_id,total_amount,created_at,source,mailbox_id,email_subject,email_from&order=created_at.desc&limit=${limit}`)) || []
+  let joined = 0
+  for (const d of open) {
+    const into = await sameDocumentIn(d, { selfId: d.id })
+    if (!into || into === d.id) continue
+    // only into an earlier document, or into one a person brought (a hand upload / WhatsApp is the one that stays)
+    const orig = await one(`fin_documents?id=eq.${into}&select=id,created_at,source`)
+    if (!orig || (isAutomaticSource(orig.source) && String(orig.created_at) > String(d.created_at))) continue
+    await absorbDuplicate({ originalId: into, path: d.file_path, name: d.file_name, mime: d.file_mime, size: d.file_size, hash: d.file_hash, meta: d, why: 'night sweep: same supplier and document number' })
+    await sb(`fin_documents?id=eq.${d.id}`, { method: 'DELETE', prefer: 'return=minimal' })
+    joined++
+  }
+  return { checked: open.length, joined }
 }
 
 /* A document the mail scan (or a forward) brings in that is already in the system, uploaded by hand, by WhatsApp or by an
@@ -188,17 +227,7 @@ export async function analyze(x, { selfId = null, selfCreated = null, mailbox = 
     // signal 1: the same issuer and the same document number (any source, any file). The issuer is its VAT number, or the
     // supplier the reading matched when one of the two readings missed the VAT number; the number is compared written
     // either way ("02/130603" on the paper a person uploaded, "130603" in the email), see sameDocNumber
-    if (fields.doc_number) {
-      const whos = [vat ? `supplier_vat_id=eq.${vat}` : null, fields.supplier_id ? `supplier_id=eq.${fields.supplier_id}` : null].filter(Boolean)
-      for (const who of whos) {
-        duplicateOf = (await one(`fin_documents?${who}&doc_number=eq.${q(fields.doc_number)}&status=not.in.(rejected,duplicate,archived)${not}&select=id&order=created_at.asc`))?.id || null
-        if (!duplicateOf) {
-          const cands = (await sb(`fin_documents?${who}&doc_number=not.is.null&status=not.in.(rejected,duplicate,archived)${not}&select=id,doc_number,total_amount&order=created_at.asc&limit=300`)) || []
-          duplicateOf = cands.find((c) => sameDocNumber(c.doc_number, fields.doc_number, { total: fields.total_amount, otherTotal: c.total_amount }))?.id || null
-        }
-        if (duplicateOf) break
-      }
-    }
+    duplicateOf = await sameDocumentIn({ doc_number: fields.doc_number, supplier_vat_id: vat, supplier_id: fields.supplier_id, total_amount: fields.total_amount }, { selfId })
     // signal 2: the same supplier, total and date (±1 day): a photo of an invoice that also arrived by email
     if (!duplicateOf && fields.total_amount !== null && fields.issue_date && (fields.supplier_id || vat)) {
       const d0 = new Date(`${fields.issue_date}T00:00:00Z`); const lo = new Date(d0.getTime() - 86400_000).toISOString().slice(0, 10); const hi = new Date(d0.getTime() + 86400_000).toISOString().slice(0, 10)
@@ -517,8 +546,21 @@ export function messageProcessor({ mb, runs, stats, started, gateCtx, tally }) {
       const plain = msg.text || String(msg.html || '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
       // only a body with signs of money or of a document is worth a check (free; a full mailbox scan meets every letter)
       if (plain.length > 80 && MONEY_SIGNS.test(`${meta.email_subject} ${plain}`)) {
+        // an email that only links to the document ("לצפייה במסמך לחץ כאן"): the document itself is fetched and read, not
+        // the email around it. When no file is reachable the email is read and shown as a page (as Meta's receipts are).
+        const linked = msg.html && Date.now() - started < TIME_BUDGET_MS - 15_000 ? await fetchFromEmail(msg.html, { budgetMs: 12_000 }).catch(() => null) : null
+        let took = false
+        if (linked) {
+          let input = null
+          try { input = readable(linked.mime, linked.buf) } catch { input = null }
+          if (input) {
+            runs.collector.stat.details.linked = (runs.collector.stat.details.linked || 0) + 1
+            await take(linked.buf, linked.mime, linked.name, { ...input, categories: await categories(), hint: `email from ${meta.email_from}, subject "${meta.email_subject}", the document behind the email's link (${linked.host})` })
+            took = true
+          }
+        }
         const buf = Buffer.from(msg.html || `<pre>${plain.replace(/</g, '&lt;')}</pre>`, 'utf8')
-        await take(buf, 'text/html', `${meta.email_subject || 'email'}.html`, { text: `From: ${meta.email_from}\nSubject: ${meta.email_subject}\n\n${plain}`, categories: await categories() })
+        if (!took) await take(buf, 'text/html', `${meta.email_subject || 'email'}.html`, { text: `From: ${meta.email_from}\nSubject: ${meta.email_subject}\n\n${plain}`, categories: await categories() })
       }
     }
     // the hesitant files, now that the whole email was seen

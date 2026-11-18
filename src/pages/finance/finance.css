@@ -1100,24 +1100,24 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-datechip.is-on .fin-datechip__main { color: var(--ocean-2); font-weight: 700; }
 .fin-datechip__main svg { color: var(--ocean); flex: none; }
 .fin-datechip__x { display: inline-grid; place-items: center; width: 34px; border: 0; border-inline-start: 1px solid color-mix(in srgb, var(--ocean) 25%, transparent); background: none; color: var(--ocean-2); cursor: pointer; border-radius: 0; }
-.fin-cal { width: 640px; max-width: calc(100vw - 16px); padding: var(--s-5) var(--s-5) var(--s-4); gap: var(--s-3); overflow-y: auto; border-radius: var(--r-xl); }
+.fin-cal { width: 740px; max-width: calc(100vw - 16px); padding: var(--s-5) var(--s-5) var(--s-4); gap: var(--s-3); overflow-y: auto; border-radius: var(--r-xl); }
 .fin-cal__head { display: grid; justify-items: center; gap: 2px; text-align: center; }
 .fin-cal__head small { color: var(--muted); font-size: var(--t-sm); }
 .fin-cal__head strong { font-size: var(--t-xl); color: var(--ink); font-weight: 700; letter-spacing: -0.01em; }
 .fin-cal__by { margin-top: var(--s-2); }
 .fin-cal__presets { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); }
-.fin-cal__preset { min-height: 30px; padding: 0 0.75rem; border-radius: 99px; border: 1px solid var(--line); background: var(--sheet); color: var(--text-2); font-size: var(--t-sm); cursor: pointer; }
+.fin-cal__preset { min-height: 38px; padding: 0 1rem; font-weight: 600; border-radius: 99px; border: 1px solid var(--line); background: var(--sheet); color: var(--text-2); font-size: var(--t-sm); cursor: pointer; }
 .fin-cal__preset:hover { border-color: var(--line-2); color: var(--ink); }
 .fin-cal__preset.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
 .fin-cal__nav { display: flex; justify-content: space-between; margin-bottom: -40px; position: relative; z-index: var(--z-raised); pointer-events: none; }
 .fin-cal__nav .fin-icon-btn { pointer-events: auto; }
 .fin-cal__months { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6); }
 .fin-cal__month + .fin-cal__month { border-inline-start: 1px solid var(--line); padding-inline-start: var(--s-6); }
-.fin-cal__mname { text-align: center; font-weight: 700; color: var(--ink); font-size: var(--t-base); line-height: 34px; margin-bottom: var(--s-2); }
+.fin-cal__mname { text-align: center; font-weight: 700; color: var(--ink); font-size: var(--t-lg); line-height: 34px; margin-bottom: var(--s-2); }
 .fin-cal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; }
 .fin-cal__dow { text-align: center; font-size: var(--t-xs); color: var(--muted); padding-bottom: var(--s-1); }
-.fin-cal__day { position: relative; height: 38px; border: 0; background: none; padding: 0; cursor: pointer; color: var(--text); font-size: var(--t-md); font-variant-numeric: tabular-nums; }
-.fin-cal__day span { position: relative; z-index: var(--z-raised); display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; transition: background-color var(--dur-fast) var(--ease); }
+.fin-cal__day { position: relative; height: 46px; border: 0; background: none; padding: 0; cursor: pointer; color: var(--text); font-size: var(--t-md); font-variant-numeric: tabular-nums; }
+.fin-cal__day span { position: relative; z-index: var(--z-raised); display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; transition: background-color var(--dur-fast) var(--ease); }
 .fin-cal__day:hover span { background: var(--wash); }
 .fin-cal__day.is-today span { box-shadow: inset 0 0 0 1px var(--line-2); font-weight: 700; }
 .fin-cal__day.is-in::before, .fin-cal__day.is-start:not(.is-single)::before, .fin-cal__day.is-end:not(.is-single)::before { content: ''; position: absolute; inset: 1px 0; background: var(--ocean-wash); }
@@ -4540,7 +4540,7 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-rep__filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 10px; align-items: center; }
 .fin-rep__filters .fin-select, .fin-rep__filters .fin-sel { width: 100%; min-width: 0; }
 .fin-rep__search { grid-column: span 2; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); color: var(--muted); }
-.fin-rep__search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: inherit; outline: none; min-height: 42px; }
+.fin-rep__search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: inherit; outline: none; min-height: 44px; }
 .fin-rep__search:focus-within { border-color: var(--ocean); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocean) 18%, transparent); }
 .fin-rep__range { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 0; }
 .fin-rep__check { grid-column: span 2; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--t-md); color: var(--ink); cursor: pointer; }
@@ -4782,3 +4782,102 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-crop__looks button.is-on { background: #fff; color: #07293a; font-weight: 700; }
 .fin-crop__hint { color: #ffb3b3; font-size: var(--t-sm); }
 @media (prefers-reduced-motion: reduce) { .fin-crop__handle::after { transition: none; } }
+
+/* ---------- the accountant's report and its sending, one screen (AccountantReport.jsx) ---------- */
+.fin-rep__when { display: grid; gap: 18px; }
+.fin-rep__step { display: grid; gap: 10px; }
+.fin-rep__step h3 { margin: 0; display: flex; align-items: center; gap: 10px; font-size: var(--t-md); color: var(--ink); }
+.fin-rep__num { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: var(--t-sm); font-weight: 700; }
+.fin-rep__periods { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.fin-rep__period { all: unset; box-sizing: border-box; cursor: pointer; display: grid; align-content: center; gap: 3px; min-height: 68px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--sheet); color: var(--ink); transition: border-color 0.15s ease, background-color 0.15s ease; }
+.fin-rep__period strong { font-size: var(--t-md); }
+.fin-rep__period small { font-size: var(--t-xs); color: var(--text-2); }
+.fin-rep__period:hover { border-color: var(--ocean); }
+.fin-rep__period:focus-visible { outline: 3px solid color-mix(in srgb, var(--ocean) 45%, transparent); outline-offset: 2px; }
+.fin-rep__period.is-on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.fin-rep__period.is-on small { color: color-mix(in srgb, var(--paper) 82%, var(--ink)); }
+/* the custom range: the date chip fills its card, large, with the calendar icon */
+.fin-rep__period--range { padding: 0; }
+.fin-rep__period--range .fin-datechip { width: 100%; height: 100%; min-height: 64px; border: 0; background: none; }
+.fin-rep__period--range .fin-datechip__main { flex: 1; justify-content: center; font-size: var(--t-md); font-weight: 700; color: inherit; padding: 0 14px; }
+.fin-rep__period--range.is-on .fin-datechip__main, .fin-rep__period--range.is-on .fin-datechip__x { color: var(--paper); }
+.fin-rep__companies { display: flex; flex-wrap: wrap; gap: 8px; }
+.fin-rep__company { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--sheet); color: var(--ink); font-size: var(--t-md); font-weight: 600; }
+.fin-rep__company em { font-style: normal; font-size: var(--t-xs); font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--wash); color: var(--text-2); }
+.fin-rep__company:hover { border-color: var(--ocean); }
+.fin-rep__company:focus-visible { outline: 3px solid color-mix(in srgb, var(--ocean) 45%, transparent); outline-offset: 2px; }
+.fin-rep__company.is-on { background: var(--ocean-wash); border-color: var(--ocean); color: var(--ocean-2); }
+.fin-rep__company.is-on em { background: var(--ink); color: var(--paper); }
+.fin-rep__company.is-none:not(.is-on) { color: var(--text-2); }
+.fin-rep__tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.fin-rep__tools .fin-rep__search { flex: 1 1 280px; }
+.fin-rep__tools .fin-btn.is-on { border-color: var(--ocean); color: var(--ocean-2); }
+.fin-rep__ready { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 0; padding: 14px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--sheet); }
+.fin-rep__ready > div:not(.fin-rep__ready-acts) { flex: 1 1 280px; min-width: 0; }
+.fin-rep__ready strong { color: var(--ink); font-size: var(--t-md); }
+.fin-rep__ready p { margin: 2px 0 0; color: var(--text-2); font-size: var(--t-sm); }
+.fin-rep__ready.is-wait { background: var(--warn-wash); border-color: color-mix(in srgb, var(--warn) 35%, var(--line)); }
+.fin-rep__ready.is-wait .fin-rep__ready-icon { color: var(--warn); }
+.fin-rep__ready.is-ok { color: var(--ok); font-weight: 600; background: color-mix(in srgb, var(--ok) 8%, var(--sheet)); border-color: color-mix(in srgb, var(--ok) 30%, var(--line)); }
+.fin-rep__ready-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.fin-rep__ready-acts .fin-rep__check { grid-column: auto; }
+.fin-rep__summary .fin-rep__figs { margin-top: 10px; }
+.fin-rep__bycomp { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: var(--t-sm); }
+.fin-rep__bycomp th, .fin-rep__bycomp td { padding: 8px 10px; text-align: start; border-bottom: 1px solid var(--line); }
+.fin-rep__bycomp thead th { color: var(--text-2); font-weight: 600; font-size: var(--t-xs); }
+.fin-rep__bycomp tbody th { font-weight: 600; color: var(--ink); }
+.fin-rep__bycomp td { font-variant-numeric: tabular-nums; }
+.fin-rep__list > li { display: flex; align-items: center; }
+.fin-rep__list > li > .fin-rep__row { flex: 1; min-width: 0; }
+.fin-rep__list > li.is-waiting:not(.is-on) { background: color-mix(in srgb, var(--warn-wash) 60%, var(--sheet)); }
+.fin-rep__edit { flex: none; margin-inline-end: 8px; width: 44px; height: 44px; }
+.fin-rep__tag.is-yellow { background: #fef9c3; color: #854d0e; }
+.fin-rep__warn { font-style: normal; font-size: var(--t-xs); font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--warn-wash); color: var(--warn); }
+.fin-rep__split { grid-column: auto; margin-inline-start: 4px; }
+@media (max-width: 760px) {
+  .fin-rep__periods { grid-template-columns: 1fr 1fr; }
+  .fin-rep__period { min-height: 60px; }
+  .fin-rep__actions { flex-wrap: wrap; }
+  .fin-rep__actions .fin-btn--primary { flex: 1 1 100%; }
+  .fin-rep__split { display: none; }
+  .fin-rep__actions .fin-btn:not(.fin-btn--primary) { flex: 1 1 0; justify-content: center; min-width: 0; }
+  .fin-rep__bar { gap: 8px; padding: 10px 12px; }
+  .fin-rep__edit { margin-inline-end: 4px; }
+}
+
+/* ---------- scan management with several accounts: one line per account, the card of one at a time (Scans.jsx) ---------- */
+.fin-scanlist { display: grid; border: 1px solid var(--line); border-radius: 16px; background: var(--sheet); overflow: hidden; }
+.fin-scanlist__head, .fin-scanrow { display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(150px, 1.3fr) repeat(3, minmax(64px, 0.6fr)) 32px; align-items: center; gap: 12px; padding: 0 18px; }
+.fin-scanlist__head { min-height: 40px; background: var(--wash); color: var(--text-2); font-size: var(--t-xs); font-weight: 600; }
+.fin-scanlist__item + .fin-scanlist__item { border-top: 1px solid var(--line); }
+.fin-scanrow { all: unset; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(150px, 1.3fr) repeat(3, minmax(64px, 0.6fr)) 32px; align-items: center; gap: 12px; width: 100%; min-height: 68px; padding: 10px 18px; cursor: pointer; }
+.fin-scanrow:hover { background: color-mix(in srgb, var(--ocean-wash) 55%, var(--sheet)); }
+.fin-scanrow:focus-visible { outline: 3px solid color-mix(in srgb, var(--ocean) 45%, transparent); outline-offset: -3px; }
+.fin-scanrow.is-open { background: var(--ocean-wash); }
+.fin-scanrow__who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fin-scanrow__who > span { display: grid; gap: 2px; min-width: 0; }
+.fin-scanrow__who strong { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
+.fin-scanrow__who small { color: var(--text-2); font-size: var(--t-xs); }
+.fin-scanrow__state { display: grid; gap: 6px; justify-items: start; }
+.fin-scanrow__bar { display: block; width: 100%; height: 6px; border-radius: 99px; background: var(--wash); overflow: hidden; }
+.fin-scanrow__bar span { display: block; height: 100%; background: var(--ocean); border-radius: inherit; }
+.fin-scanrow.is-active .fin-scanrow__bar span { background: var(--ocean-2); }
+.fin-scanrow__num { display: grid; justify-items: start; gap: 1px; font-variant-numeric: tabular-nums; }
+.fin-scanrow__num b { font-size: var(--t-lg); color: var(--ink); }
+.fin-scanrow__num small { font-size: var(--t-xs); color: var(--text-2); }
+.fin-scanrow__num.is-attn b { color: var(--warn); }
+.fin-scanrow__num.is-bad b { color: var(--attn); }
+.fin-scanrow__chev { display: inline-grid; place-items: center; color: var(--text-2); transition: transform 0.15s ease; }
+.fin-scanrow.is-open .fin-scanrow__chev { transform: rotate(180deg); }
+.fin-scanlist__card { padding: 4px 16px 18px; background: color-mix(in srgb, var(--ocean-wash) 35%, var(--sheet)); }
+.fin-scanlist__card .fin-scan { box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .fin-scanrow__chev { transition: none; } }
+@media (max-width: 760px) {
+  .fin-scanlist__head { display: none; }
+  .fin-scanrow { grid-template-columns: repeat(3, minmax(0, 1fr)) 28px; padding: 12px 14px; gap: 10px 12px; }
+  .fin-scanrow__who { grid-column: 1 / -2; }
+  .fin-scanrow__state { grid-column: 1 / -1; grid-row: 2; }
+  .fin-scanrow__chev { grid-column: -2; grid-row: 1; }
+  .fin-scanrow__num { grid-row: 3; }
+  .fin-scanlist__card { padding: 4px 8px 12px; }
+}

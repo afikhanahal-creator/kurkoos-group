@@ -109,6 +109,23 @@ export const COLUMNS = [
   { k: 'status', h: 'סטטוס בדיקה חשבונאית', w: 24, tag: 'status' }, { k: 'allocation', h: 'מספר הקצאה', w: 15 }, { k: 'notes', h: 'הערות לרואה החשבון', w: 60, wrap: true }, { k: 'linkText', h: 'קישור למסמך המקורי', w: 20, link: true }, { k: 'countedText', h: 'נספר בסיכום', w: 12, tag: 'counted' },
 ]
 
+/* the selection by company, when it holds more than one: the tab name is the company's (Excel: 31 characters, none of
+   \\ / ? * [ ] :, unique), "לא משויך" last */
+const TAKEN = ['דוח הוצאות לרואה החשבון', 'סיכום הוצאות', 'מסמכים לבדיקה', 'רשימות']
+export function companyGroups(lines) {
+  const by = new Map()
+  for (const l of lines) { if (!by.has(l.company)) by.set(l.company, []); by.get(l.company).push(l) }
+  if (by.size < 2) return []
+  const used = new Set(TAKEN)
+  return [...by.entries()].sort((a, b) => (a[0] === 'לא משויך') - (b[0] === 'לא משויך') || a[0].localeCompare(b[0], 'he')).map(([name, list]) => {
+    const base = String(name).replace(/[\\/?*[\]:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 31).trim() || 'חברה'
+    let tab = base; let i = 2
+    while (used.has(tab)) { const suf = ` (${i++})`; tab = `${base.slice(0, 31 - suf.length)}${suf}` }
+    used.add(tab)
+    return { name, tab, lines: list }
+  })
+}
+
 export function accountantWorkbook(lines, opts = {}) {
   const { title } = reportName(lines, opts)
   const s = reportSummary(lines)
@@ -120,7 +137,10 @@ export function accountantWorkbook(lines, opts = {}) {
   const pctFmt = (v) => (Math.abs(v * 100 - Math.round(v * 100)) < 0.005 ? '0%' : '0.00%')
   const today = opts.today || new Date().toISOString().slice(0, 10)
 
-  // ---- 1. the report ----
+  // ---- 1. the report (and, when asked, the same sheet for each company) ----
+  const typeList = [...new Set(Object.values(DOC_TYPE))]; const statusList = [...new Set(Object.values(STATUS_LABEL))]; const payList = Object.values(PAY_LABEL).filter((x) => x !== '—')
+  const mainSheet = (lines, sheetName, title, tab) => {
+  const s = reportSummary(lines)
   const HEAD_ROW = 3; const first = HEAD_ROW + 1; const last = HEAD_ROW + lines.length
   const main = [
     { height: 30, cells: [{ v: title, bold: true, size: 16, color: C.title }] },
@@ -164,12 +184,15 @@ export function accountantWorkbook(lines, opts = {}) {
   }
   const lastCol = colName(COLUMNS.length - 1)
   const listRef = (col, n) => `'רשימות'!$${col}$1:$${col}$${Math.max(1, n)}`
-  const typeList = [...new Set(Object.values(DOC_TYPE))]; const statusList = [...new Set(Object.values(STATUS_LABEL))]; const payList = Object.values(PAY_LABEL).filter((x) => x !== '—')
   const colOf = (k) => colName(COLUMNS.findIndex((c) => c.k === k))
-  const sheets = [{
-    name: 'דוח הוצאות לרואה החשבון', tab: C.head, cols: COLUMNS.map((c) => c.w), rows: main, freeze: HEAD_ROW, filter: lines.length ? `A${HEAD_ROW}:${lastCol}${last}` : null, merges: [`A1:H1`, `A2:M2`],
+  return {
+    name: sheetName, tab, cols: COLUMNS.map((c) => c.w), rows: main, freeze: HEAD_ROW, filter: lines.length ? `A${HEAD_ROW}:${lastCol}${last}` : null, merges: [`A1:H1`, `A2:M2`],
     lists: lines.length ? [{ ref: `${colOf('type')}${first}:${colOf('type')}${last}`, source: listRef('A', typeList.length) }, { ref: `${colOf('category')}${first}:${colOf('category')}${last}`, source: listRef('B', cats.length) }, { ref: `${colOf('status')}${first}:${colOf('status')}${last}`, source: listRef('C', statusList.length) }, { ref: `${colOf('pay')}${first}:${colOf('pay')}${last}`, source: listRef('D', payList.length) }] : [],
-  }]
+  }
+  }
+  const sheets = [mainSheet(lines, 'דוח הוצאות לרואה החשבון', title, C.head)]
+  // documents of several companies: a sheet of its own for each company, named after it, the same columns and totals
+  if (opts.byCompany) for (const g of companyGroups(lines)) sheets.push(mainSheet(g.lines, g.tab, `${title} – ${g.name}`, '#16688c'))
 
   // ---- 2. the summary ----
   const M = moneyFmt('ILS')

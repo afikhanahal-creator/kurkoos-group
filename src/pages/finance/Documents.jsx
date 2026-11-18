@@ -80,6 +80,19 @@ export default function Documents({ preset = 'all' }) {
   const [sel, setSel] = useState(() => new Set())
   const [busy, setBusy] = useState('')
   const [note, setNote] = useState('')
+  const [printing, setPrinting] = useState('')
+  /* the marked documents printed one after another, every page on a page of its own, in the order of the list */
+  const printPicked = async () => {
+    if (!picked.length) return
+    setBusy('print'); setPrinting(`0/${picked.length}`)
+    try {
+      const { printDocs, printHtml } = await import('./print.js')
+      const r = await printDocs(picked, { fileBlob: api.fileBlob, onProgress: (d, t) => setPrinting(`${d}/${t}`) })
+      if (r.page) printHtml(r.page)
+      api.logAction('printed', { count: r.printed, ids: picked.slice(0, 200).map((d) => d.id) })
+      setNote(r.page ? `נפתח חלון ההדפסה עם ${r.printed === 1 ? 'מסמך אחד' : `${r.printed} מסמכים`}${r.skipped.length ? `. לא הודפסו: ${r.skipped.join(' · ')}` : ''}` : `אין מה להדפיס: ${r.skipped.join(' · ')}`)
+    } catch (e) { setNote(e.message || 'ההדפסה נכשלה') } finally { setBusy(''); setPrinting('') }
+  }
   const [peek, setPeek] = useState(null)   // the row whose document floats over its name
   const [showUpload, setShowUpload] = useState(false)
   const [dateBy, setDateBy] = useState('doc')            // filter by the date on the document, or by when it arrived
@@ -356,6 +369,7 @@ export default function Documents({ preset = 'all' }) {
             {can('approve') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSending(picked)}><Icon name="send" size={17} /> שליחה לרו״ח</button>}
             <button type="button" className="fin-btn" disabled={!!busy} onClick={() => sheet('excel')}><Icon name="table" size={17} /> Excel</button>
             <button type="button" className="fin-btn fin-col-md" disabled={!!busy} onClick={() => sheet('csv')}>CSV</button>
+            <button type="button" className="fin-btn" disabled={!!busy} onClick={printPicked} aria-label={`הדפסת ${picked.length === 1 ? 'המסמך' : `${picked.length} המסמכים`}, אחד אחרי השני`}><Icon name="print" size={17} /> {busy === 'print' ? `מכין ${printing}…` : 'הדפסה'}</button>
             {can('operate') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => toDrive(picked)}><Icon name="cloud" size={17} /> {busy === 'drive' ? 'שומר…' : <><span className="fin-bulk__long">שמירה ב</span>דרייב</>}</button>}
             {can('upload') && <button type="button" className="fin-btn" disabled={!!busy} onClick={() => setSharing({ docs: picked, mode: 'whatsapp' })}><Icon name="share" size={17} /> שיתוף</button>}
             <MoreMenu label="פעולות נוספות" items={[

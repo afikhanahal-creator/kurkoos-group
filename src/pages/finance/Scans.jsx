@@ -140,6 +140,28 @@ function MailboxScan({ row, documents, can, onAction, onStart, go }) {
   )
 }
 
+/* one connected account as one line of the accounts table: who, where its scan stands, what it brought, when it was last
+   looked at. A click opens its full card under it (progress, report, actions). With many accounts this keeps the screen
+   readable: every account on one screen, the details of one at a time. */
+function MailboxRow({ row, documents, open, onToggle }) {
+  const { mailbox: mb, job, progress, problems } = row
+  const [tone, label] = job ? STATE[job.status] || ['muted', job.status] : ['muted', 'עוד לא נסרקה']
+  const docs = useMemo(() => documents.filter((d) => d.mailbox_id === mb.id), [documents, mb.id])
+  const review = docs.filter((d) => d.status === 'review').length
+  const active = job && ['queued', 'running', 'paused'].includes(job.status)
+  const pct = progress ? progress.pct : job && ['done', 'incomplete'].includes(job.status) ? 100 : 0
+  return (
+    <button type="button" className={`fin-scanrow ${open ? 'is-open' : ''} ${active ? 'is-active' : ''}`} aria-expanded={open} onClick={onToggle}>
+      <span className="fin-scanrow__who"><ProviderLogo name={mb.provider} /><span><strong dir="ltr">{mb.email}</strong><small>{mb.status === 'error' ? 'החיבור דורש חידוש' : mb.last_scan_at ? `נבדקה ${dateTime(mb.last_scan_at)}` : 'עוד לא נבדקה'}</small></span></span>
+      <span className="fin-scanrow__state"><Pill tone={mb.status === 'error' ? 'bad' : tone}>{mb.status === 'error' ? 'מנותק' : label}</Pill>{job && <span className="fin-scanrow__bar" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>}</span>
+      <span className="fin-scanrow__num"><b>{n(docs.length)}</b><small>מסמכים</small></span>
+      <span className={`fin-scanrow__num ${review ? 'is-attn' : ''}`}><b>{n(review)}</b><small>לבדיקה</small></span>
+      <span className={`fin-scanrow__num ${problems.length ? 'is-bad' : ''}`}><b>{n(problems.length)}</b><small>לא עובדו</small></span>
+      <span className="fin-scanrow__chev" aria-hidden="true"><Icon name="chev" size={16} /></span>
+    </button>
+  )
+}
+
 export default function Scans() {
   const { documents, can, go, reload } = useFinance()
   const [rows, setRows] = useState(null)
@@ -165,6 +187,12 @@ export default function Scans() {
     return undefined
   }, [active]) // eslint-disable-line react-hooks/exhaustive-deps
   const [checking, setChecking] = useState(false)
+  // with several accounts: one opens at a time; the ones that need a look come first (scanning, disconnected, a problem)
+  const [openId, setOpenId] = useState(null)
+  const sorted = useMemo(() => {
+    const weight = (r) => (r.mailbox.status === 'error' ? 0 : r.job && ['queued', 'running', 'paused'].includes(r.job.status) ? 1 : r.problems.length ? 2 : 3)
+    return [...(rows || [])].sort((a, b) => weight(a) - weight(b) || String(a.mailbox.email).localeCompare(String(b.mailbox.email)))
+  }, [rows])
   const act = async (job, op, messageId) => {
     setErr('')
     try {
@@ -188,7 +216,8 @@ export default function Scans() {
   }, [rows, documents])
   return (
     <div className="fin-stack">
-      <PageHead title="ניהול סריקות" sub="סריקה של כל תיבת מייל לתקופה שבוחרים, עם בקרה שכל הודעה נבדקה">
+      <PageHead title="ניהול סריקות" sub="כל תיבת מייל מחוברת נבדקת כל 15 דקות ובלילה שוב, ואפשר לסרוק תקופה שלמה לאחור עם בקרה שכל הודעה נבדקה">
+        {can('operate') && (rows || []).length > 0 && <button type="button" className="fin-btn" onClick={() => go('/mailboxes')}><Icon name="plus" size={16} /> חיבור חשבון נוסף</button>}
         {can('operate') && (rows || []).length > 0 && <button type="button" className="fin-btn" disabled={checking} onClick={async () => { setChecking(true); setErr(''); try { await api.callServer('scan-night-check'); await load() } catch (e) { setErr(e.message) } finally { setChecking(false) } }}><Icon name="check" size={16} /> {checking ? 'מתחיל…' : 'איסוף עכשיו'}</button>}
       </PageHead>
       {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
@@ -204,9 +233,21 @@ export default function Scans() {
             <div><dt>דורשים בדיקה</dt><dd>{n(tot.review)}</dd></div>
             <div className={tot.problems ? 'is-bad' : ''}><dt>הודעות שלא עובדו</dt><dd>{n(tot.problems)}</dd></div>
           </dl>}
-          <div className={`fin-scan__grid ${rows.length === 1 ? 'is-single' : ''}`}>
-            {rows.map((r) => <MailboxScan key={r.mailbox.id} row={r} documents={documents} can={can} go={go} onAction={act} onStart={setStarting} />)}
-          </div>
+          {rows.length === 1 ? (
+            <div className="fin-scan__grid is-single">
+              <MailboxScan row={rows[0]} documents={documents} can={can} go={go} onAction={act} onStart={setStarting} />
+            </div>
+          ) : (
+            <section className="fin-scanlist" aria-label="החשבונות המחוברים">
+              <header className="fin-scanlist__head" aria-hidden="true"><span>חשבון</span><span>מצב הסריקה</span><span>מסמכים</span><span>לבדיקה</span><span>לא עובדו</span><span /></header>
+              {sorted.map((r) => (
+                <div key={r.mailbox.id} className="fin-scanlist__item">
+                  <MailboxRow row={r} documents={documents} open={openId === r.mailbox.id} onToggle={() => setOpenId((v) => (v === r.mailbox.id ? null : r.mailbox.id))} />
+                  {openId === r.mailbox.id && <div className="fin-scanlist__card"><MailboxScan row={r} documents={documents} can={can} go={go} onAction={act} onStart={setStarting} /></div>}
+                </div>
+              ))}
+            </section>
+          )}
         </>
       )}
       {starting && <PeriodDialog mailbox={starting} onClose={() => setStarting(null)} onStarted={() => { setStarting(null); load() }} />}

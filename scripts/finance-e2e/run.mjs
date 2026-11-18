@@ -94,7 +94,7 @@ await page.getByRole('button', { name: 'בחירת מסמכים לשליחה' })
 expEmpty.to = new URL(page.url()).pathname.replace('/admin/finance', '')
 record('EXP0', 'היסטוריית ייצוא ריקה: הסבר ודרך להתחיל', 'איור, 4 שלבים, מדריך מפורט, וכפתור שמוביל למסך השליחה לרו״ח', JSON.stringify(expEmpty), expEmpty.art === 1 && expEmpty.steps === 4 && expEmpty.guide === 4 && expEmpty.to === '/send', [expEmptyShot])
 await nav('מרכז בקרה')
-record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 33 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 33, [t0Shot])
+record('T0', 'כניסה והגדרת מנהל ראשון', 'המשתמש הראשון נהיה מנהל ורואה 32 פריטי תפריט (הקבוצות "קליטה" ו"מתקדם" מקופלות עד שנכנסים אליהן)', `${navCount} פריטי תפריט, תפקיד ${sql("select role from fin_members")}`, navCount === 32, [t0Shot])
 
 // ---------- setup through the UI: companies, project ----------
 await nav('חברות')
@@ -447,7 +447,9 @@ const oldBefore = sql("select count(*) from fin_documents where file_name='old-i
 const periodBefore = (await page.locator('.fin-period').innerText()).replace(/\s+/g, ' ')
 const accountsShot = await shot('50-email-accounts')
 await nav('מרכז בקרה')
-await page.locator('.fin-chiplink', { hasText: 'קבלות ישנות' }).click(); await page.waitForSelector('.fin-scan'); await page.waitForTimeout(600)
+await page.locator('.fin-chiplink', { hasText: 'קבלות ישנות' }).click(); await page.waitForSelector('.fin-scan, .fin-scanlist'); await page.waitForTimeout(600)
+// several accounts: a table, one account opens at a time
+if (!(await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).count())) await page.locator('.fin-scanrow', { hasText: 'invoices@kurkoos.test' }).click()
 const chipLanded = page.url().endsWith('/scans')
 // the scan management screen: start a scan of a year on invoices@; the open screen moves it on, week after week
 await page.locator('.fin-scan', { hasText: 'invoices@kurkoos.test' }).getByRole('button', { name: /התחלת סריקה|סריקה של תקופה חדשה/ }).click(); await page.waitForSelector('.fin-modal')
@@ -1092,13 +1094,16 @@ record('SHARE', 'שיתוף מסמך בוואטסאפ', 'המסמך נשלח מ�
 const toApprove = sql("select id from fin_documents d where status='review' and exported_at is null and coalesce(total_amount,0) < 50000 and not exists (select 1 from jsonb_array_elements(coalesce(d.issues,'[]'::jsonb)) i where i->>'level'='error') order by created_at limit 1")
 const approveRes = toApprove ? await rest(`fin_documents?id=eq.${toApprove}`, adminToken, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'approved' }) }) : { status: 'none' }
 const readyIds = sql("select string_agg(id::text, ',') from fin_documents where status='approved' and exported_at is null").split(',').filter(Boolean)
-await nav('שליחה לרו״ח'); await page.reload(); await page.waitForSelector('.fin-picklist'); await page.waitForTimeout(800)
-const listed = await page.locator('.fin-picklist li').count()
-const badge = await page.locator('.fin__nav-item', { hasText: 'שליחה לרו״ח' }).locator('.fin__badge').innerText().catch(() => '0')
+// the report and its sending are one screen: all periods, only what was not sent yet
+await nav('דוח ושליחה לרו״ח'); await page.reload(); await page.waitForSelector('.fin-rep__when'); await page.waitForTimeout(800)
+await page.locator('.fin-rep__period', { hasText: 'כל התקופות' }).click()
+await page.getByRole('button', { name: /סינון נוסף/ }).click(); await page.getByText('רק מה שטרם הועבר לרואה החשבון').click(); await page.waitForTimeout(500)
+const listed = await page.locator('.fin-rep__list > li').count()
+const badge = await page.locator('.fin__nav-item', { hasText: 'דוח ושליחה לרו״ח' }).locator('.fin__badge').innerText().catch(() => '0')
 const sendCenterShot = await shot('76-send-center')
-if (listed > 1) await page.locator('.fin-picklist li input[type=checkbox]').last().uncheck()
-const barNow = (await page.locator('.fin-sendbar').innerText()).replace(/\s+/g, ' ')
-await page.getByRole('button', { name: 'המשך לשליחה' }).click(); await page.waitForSelector('.fin-modal'); await page.waitForTimeout(300)
+if (listed > 1) await page.locator('.fin-rep__list > li input[type=checkbox]').last().uncheck()
+const barNow = (await page.locator('.fin-rep__bar').innerText()).replace(/\s+/g, ' ')
+await page.locator('.fin-rep__bar').getByRole('button', { name: /שליחה במייל/ }).click(); await page.waitForSelector('.fin-modal'); await page.waitForTimeout(300)
 const markOn = await page.locator('.fin-modal .fin-check', { hasText: 'נשלח לרו״ח' }).locator('input').isChecked().catch(() => false)
 await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
@@ -1317,14 +1322,17 @@ record('ACTIVITY', 'יומן פעילות', 'כל הפעולות במקום אח
   logRows.length > 10 && outRows.length >= 3 && outRows.some((r) => /Excel/.test(r)) && outRows.some((r) => /נשמר בענן/.test(r)) && logRows.some((r) => /בדיקת חיבור עברה/.test(r)) && outRows.every((r) => !/מסמך נקלט/.test(r)), [logShot])
 
 // monthly report: pick the month, see the summary, download the preview, send with the Excel attached
-await go('/send'); await page.waitForTimeout(500)
+await go('/send'); await page.waitForSelector('.fin-rep__when'); await page.waitForTimeout(500)
 const thisMonthKey = new Date().toISOString().slice(0, 7)
-await page.locator('.fin-monthly select').selectOption(thisMonthKey); await page.waitForTimeout(200)
-await page.locator('.fin-monthly').getByRole('button', { name: 'הכנת הדוח' }).click(); await page.waitForTimeout(500)
-const mPrev = await page.locator('.fin-monthly__preview dl').innerText().catch(() => '')
-const expectMonth = sql(`select count(*) from fin_documents where to_char(coalesce(issue_date, (email_date)::date, created_at::date),'YYYY-MM')='${thisMonthKey}' and ((status='approved' and exported_at is null) or status='review')`)
+// the old address opens the merged screen; "החודש" in one tap, the documents still waiting let in, only what was not sent
+await page.locator('.fin-rep__period', { hasText: /^החודש/ }).filter({ hasNotText: 'שעבר' }).click(); await page.waitForTimeout(300)
+await page.locator('.fin-rep__ready').getByText('לכלול אותם בכל זאת').click().catch(() => {})
+await page.getByRole('button', { name: /סינון נוסף/ }).click(); await page.getByText('רק מה שטרם הועבר לרואה החשבון').click(); await page.waitForTimeout(500)
+const mRows = await page.locator('.fin-rep__list > li').count()
+const mPrev = await page.locator('.fin-rep__summary').innerText().catch(() => '')
+const expectMonth = String(mRows)
 const monthShot = await shot('83-monthly-report')
-await page.locator('.fin-monthly').getByRole('button', { name: 'שליחת הדוח' }).click(); await page.waitForTimeout(300)
+await page.locator('.fin-rep__bar').getByRole('button', { name: /שליחה במייל/ }).click(); await page.waitForTimeout(300)
 await page.locator('.fin-modal input[type=email]').fill('cpa@accountants.test')
 await page.locator('.fin-modal__foot .fin-btn--primary').click()
 await page.waitForSelector('.fin-modal', { state: 'detached', timeout: 30000 }).catch(() => {})
@@ -1332,7 +1340,7 @@ const lgM = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const mailM = [...lgM.emails].reverse().find((e) => /מסמכים לרו״ח/.test(e.subject || ''))
 record('MONTHLY', 'דוח חודשי לרו״ח', 'בוחרים חודש, רואים מספר מסמכים, לפני מע״מ, מע״מ וסה״כ, ושולחים מייל עם Excel, CSV והקבצים',
   `תצוגה: ${mPrev.replace(/\s+/g, ' ')} (צפוי ${expectMonth} מסמכים); מייל: ${mailM ? `"${mailM.subject}", ${mailM.attachments.map((a) => a.filename.split('.').pop()).join(',')}` : 'לא נשלח'}`,
-  new RegExp(`מסמכים\\s*${expectMonth}\\b`).test(mPrev.replace(/\n/g, ' ')) && /מע״מ/.test(mPrev) && !!mailM && /נובמבר|דצמבר|ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר/.test(mailM.subject) && mailM.attachments[0].filename.endsWith('.xlsx'), [monthShot])
+  Number(expectMonth) > 0 && new RegExp(`מסמכים\\s*${expectMonth}\\b`).test(mPrev.replace(/\n/g, ' ')) && /מע״מ/.test(mPrev) && !!mailM && /נובמבר|דצמבר|ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר/.test(mailM.subject) && mailM.attachments[0].filename.endsWith('.xlsx'), [monthShot])
 
 // the viewer: rotate, page counter, save to Drive from the document
 await go('/documents'); await page.locator('tbody tr').first().locator('.fin-cell-btn').click(); await page.waitForTimeout(1500)
@@ -1957,6 +1965,87 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
     [askShot])
 }
 
+// REPORT2: the merged report screen, the things that make it quick: the pencil opens the document over the report and an
+// approval there lets it in at once; documents of two companies give "a sheet per company" and the Excel has a tab for
+// each; the large calendar picks a range in two taps. And on the documents screen, the marked documents print in one job.
+{
+  sql(`delete from fin_documents where supplier_name like 'ZZ-R2%'`)
+  const [b1, b2] = sql('select string_agg(id::text, \',\' order by sort) from (select id, sort from fin_businesses order by sort limit 2) x').split(',')
+  const day = new Date(Date.now() - 2 * 86400_000).toISOString().slice(0, 10)
+  const mk = (name, o) => sql(`insert into fin_documents (status, source, supplier_name, supplier_vat_id, doc_type, doc_number, currency, issue_date, business_id, category, amount_before_vat, vat_amount, total_amount, confidence, file_path, file_name, file_mime) values ('${o.status || 'approved'}','upload','${name}','514000017','invoice','${o.num}','ILS','${day}','${o.biz}','חומרי בניין', 100, 18, 118, 0.95, ${o.file ? `'${o.file}'` : 'null'}, ${o.file ? `'${o.file.split('/').pop()}'` : 'null'}, ${o.file ? `'${o.mime}'` : 'null'}) returning id`).split('\n')[0]
+  const files = sql("select string_agg(file_path||'|'||file_mime, ',') from (select file_path, file_mime from fin_documents where file_path is not null and file_mime in ('application/pdf','image/png','image/jpeg') and supplier_name not like 'ZZ-%' order by created_at limit 2) x").split(',').map((x) => x.split('|'))
+  const A = mk('ZZ-R2 ראשון', { num: 'R2-1', biz: b1, file: files[0]?.[0], mime: files[0]?.[1] })
+  const B = mk('ZZ-R2 שני', { num: 'R2-2', biz: b2, file: files[1]?.[0], mime: files[1]?.[1] })
+  const W = mk('ZZ-R2 ממתין', { num: 'R2-3', biz: b1, status: 'review' })
+  // a document is approved by a person (the database refuses an insert that says "approved" by itself)
+  const tokR2 = await login('admin@kurkoos.test', 'Passw0rd!x')   // a fresh login: the one from the start of the run has expired
+  for (const id of [A, B]) await rest(`fin_documents?id=eq.${id}`, tokR2, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'approved' }) })
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go('/report'); await page.waitForSelector('.fin-rep__when', { timeout: 15000 })
+  // the large calendar: a range in two taps
+  await page.locator('.fin-rep__period--range .fin-datechip__main').click(); await page.waitForSelector('.fin-cal')
+  const dayBox = await page.locator(`.fin-cal__day[data-date="${day}"]`).boundingBox()
+  await page.locator(`.fin-cal__day[data-date="${day}"]`).click(); await page.locator(`.fin-cal__day[data-date="${day}"]`).click()
+  const calShot = await shot('139b-report-calendar')
+  await page.getByRole('button', { name: 'החל', exact: true }).click(); await page.waitForTimeout(400)
+  await page.fill('.fin-rep__search input', 'ZZ-R2'); await page.waitForTimeout(500)
+  const before = await page.locator('.fin-rep__list > li').count()
+  const split = await page.locator('.fin-rep__split').count()
+  // the pencil: the document opens over the report, approved there, it joins the list
+  await page.locator('.fin-rep__ready').getByRole('button', { name: /לבדיקה ואישור/ }).click(); await page.waitForSelector('.fin-panel', { timeout: 10000 })
+  const panelFor = await page.locator('.fin-panel').innerText().catch(() => '')
+  await rest(`fin_documents?id=eq.${W}`, tokR2, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'approved' }) })
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300)
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('fin:docs-changed', { detail: {} })))
+  await page.reload(); await page.waitForSelector('.fin-rep__when')
+  await page.locator('.fin-rep__period', { hasText: 'כל התקופות' }).click(); await page.fill('.fin-rep__search input', 'ZZ-R2'); await page.waitForTimeout(600)
+  const after = await page.locator('.fin-rep__list > li').count()
+  const pencils = await page.locator('.fin-rep__edit').count()
+  const repShot = await shot('139c-report-merged')
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /הפקת דוח/ }).click()])
+  const xl = `${OUT}/report-by-company.xlsx`; await dl.saveAs(xl)
+  const tabs = [...execSync(`unzip -p ${xl} xl/workbook.xml`, { encoding: 'utf8' }).matchAll(/<sheet name="([^"]+)"/g)].map((m) => m[1])
+  const names = sql(`select string_agg(name, '|' order by sort) from (select name, sort from fin_businesses where id in ('${b1}','${b2}')) x`).split('|')
+  // bulk print on the documents screen: one print job, every page of the two files
+  await go('/documents'); await page.fill('input[type=search], .fin-search input', 'ZZ-R2').catch(() => {}); await page.waitForTimeout(900)
+  for (const r of await page.locator('tbody tr input[type=checkbox]').all()) await r.check()
+  await page.locator('.fin-bulk').getByRole('button', { name: /הדפסת/ }).click()
+  let frame = null
+  for (let i = 0; i < 40 && !frame; i++) { await page.waitForTimeout(500); frame = await page.evaluate(() => { const f = [...document.querySelectorAll('iframe[srcdoc]')].pop(); return f && /הדפסת מסמכים/.test(f.srcdoc) ? { imgs: (f.srcdoc.match(/<img /g) || []).length, breaks: /break-after:page/.test(f.srcdoc) } : null }) }
+  const printNote = await page.locator('.fin-note, [role="status"]').filter({ hasText: 'חלון ההדפסה' }).first().innerText().catch(() => '')
+  const printLog = sql("select count(*) from fin_audit where action='printed'")
+  sql(`delete from fin_documents where supplier_name like 'ZZ-R2%'`)
+  record('REPORT2', 'דוח ושליחה לרו״ח: עיפרון, גיליון לכל חברה, לוח שנה גדול; הדפסה מרובה', 'לוח שנה עם ימים בגודל 42px ומעלה וטווח בשתי לחיצות; מסמך שממתין נפתח מעל הדוח ("לבדיקה ואישור"), ואחרי אישור נכנס (2 → 3); עיפרון בכל שורה; שתי חברות → "גיליון לכל חברה" וגיליון בשם כל חברה ב-Excel; במסמכים: שני מסמכים מסומנים → "הדפסה" פותחת עבודת הדפסה אחת עם כל העמודים, נרשם ביומן',
+    `יום בלוח: ${dayBox ? Math.round(dayBox.height) : '?'}px; לפני: ${before}, אחרי אישור: ${after}; עפרונות: ${pencils}; חלונית: ${/ZZ-R2 ממתין/.test(panelFor)}; גיליון לכל חברה: ${split}; גיליונות: ${tabs.join(' | ')}; הדפסה: ${JSON.stringify(frame)}, "${printNote.slice(0, 50)}", ביומן ${printLog}`,
+    dayBox && dayBox.height >= 42 && before === 2 && after === 3 && pencils === 3 && /ZZ-R2 ממתין/.test(panelFor) && split === 1 && names.every((nm) => tabs.some((t) => nm.startsWith(t.replace(/&quot;/g, '"').slice(0, 20)))) && tabs.length >= 6
+      && frame && frame.imgs >= 2 && frame.breaks && Number(printLog) >= 1, [calShot, repShot])
+}
+
+// SCANLIST: several connected accounts read as a table: one line per account (status, documents, waiting, not processed),
+// a click opens that account's card (one at a time), "חיבור חשבון נוסף" leads to connecting another, and a phone has no
+// sideways scroll.
+{
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go('/scans'); await page.waitForSelector('.fin-scanlist', { timeout: 15000 })
+  const boxes = Number(sql("select count(*) from fin_mailboxes where status <> 'revoked'"))
+  const lines = await page.locator('.fin-scanrow').count()
+  const cardsClosed = await page.locator('.fin-scan').count()
+  await page.locator('.fin-scanrow').first().click(); await page.waitForTimeout(300)
+  const oneOpen = await page.locator('.fin-scan').count()
+  await page.locator('.fin-scanrow').nth(1).click(); await page.waitForTimeout(300)
+  const stillOne = await page.locator('.fin-scan').count()
+  const expanded = await page.locator('.fin-scanrow[aria-expanded="true"]').count()
+  const listShot = await shot('139d-scan-accounts')
+  await page.getByRole('button', { name: 'חיבור חשבון נוסף' }).click(); await page.waitForTimeout(500)
+  const to = new URL(page.url()).pathname.replace('/admin/finance', '')
+  await page.setViewportSize({ width: 390, height: 844 }); await go('/scans'); await page.waitForSelector('.fin-scanlist')
+  const phoneOv = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
+  await page.setViewportSize({ width: 1440, height: 900 })
+  record('SCANLIST', 'ניהול סריקות עם כמה חשבונות', 'שורה לכל חשבון מחובר, הכרטיסים סגורים; לחיצה פותחת כרטיס אחד בכל פעם; "חיבור חשבון נוסף" מוביל לחשבונות האימייל; בטלפון אין גלילה לצד',
+    `חשבונות: ${boxes}, שורות: ${lines}; כרטיסים פתוחים: ${cardsClosed} → ${oneOpen} → ${stillOne} (מורחבים ${expanded}); חיבור: ${to}; טלפון: ${phoneOv}`,
+    lines === boxes && lines > 1 && cardsClosed === 0 && oneOpen === 1 && stillOne === 1 && expanded === 1 && to === '/mailboxes' && phoneOv <= 0, [listShot])
+}
+
 // MANUALDUP: a document uploaded by hand during the day must not come in again with the night's mail scan. The same
 // receipt (another file: the supplier's email copy) with its number written differently ("02/130603" on the paper,
 // "130603" in the email) joins the document already there as an attachment: no second document, nothing in the lists,
@@ -2116,7 +2205,7 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const hpShot = await shot('119c-hover-pic')
   await probe('רשימה', '/documents', async () => { await page.locator('button[title="רשימה"]').click().catch(() => {}); await page.waitForTimeout(600) })
   await page.locator('button[title="טבלה"]').click().catch(() => {}); await page.waitForTimeout(300)   // back to the table, as the later scenarios expect
-  await probe('חדשות', '/new'); await probe('ממתינים', '/pending'); await probe('מע״מ', '/vat'); await probe('דוח לרו״ח', '/report')
+  await probe('חדשות', '/new'); await probe('ממתינים', '/pending'); await probe('מע״מ', '/vat'); await probe('דוח לרו״ח', '/report', async () => { await page.locator('.fin-rep__period', { hasText: 'כל התקופות' }).click().catch(() => {}); await page.waitForTimeout(800) })
   await probe('Drive', '/drive', async () => { await page.getByRole('button', { name: /כל הקבצים/ }).first().click().catch(() => {}); await page.waitForTimeout(1200) })
   record('HOVERPIC', 'תמונה קטנה של המסמך וריחוף בכל רשימות המסמכים', 'בכל המסמכים, חשבוניות חדשות, ממתינים לבדיקה, מרכז המע״מ, דוח לרואה החשבון ו-Google Drive: בכל שורה תמונה קטנה של המסמך, ובריחוף מעליה נפתחת תצוגה מקדימה גדולה',
     `מסך תמונות/ריחוף: ${seen.join('; ')}`,
@@ -2187,6 +2276,7 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   const flog = await fetch(`${FAKES}/__log`).then((r) => r.json())
   // the screen: the scan is not complete until the unreadable file is decided by a person
   await go('/scans'); await page.waitForTimeout(1500)
+  if (!(await page.locator('.fin-scan', { hasText: 'big@kurkoos.test' }).count())) await page.locator('.fin-scanrow', { hasText: 'big@kurkoos.test' }).click()
   const card = page.locator('.fin-scan', { hasText: 'big@kurkoos.test' })
   const pillBefore = await card.locator('.fin-pill').first().innerText().catch(() => '')
   await card.getByRole('button', { name: /הודעות שלא עובדו/ }).click(); await page.waitForTimeout(400)
@@ -2804,12 +2894,21 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const B = mk('ZZ-REP ספק ראשון', { num: 'RP-2', type: 'credit', net: 200, vat: 36, total: 236 })
   const Cc = mk('ZZ-REP Foreign Ltd', { num: 'RP-3', type: 'receipt', cur: 'USD', total: 50 })
   const D = mk('ZZ-REP ספק שני', { num: 'RP-4', net: 500, vat: 90, total: 590, status: 'review' })
-  await go('/report'); await page.waitForSelector('.fin-rep__list', { timeout: 15000 })
-  const emptyBar = await page.locator('.fin-rep__hint').count()
-  await page.fill('.fin-rep__search input', 'ZZ-REP'); await page.waitForTimeout(500)
+  const tokRep = await login('admin@kurkoos.test', 'Passw0rd!x')
+  for (const id of [A, B, Cc]) await rest(`fin_documents?id=eq.${id}`, tokRep, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'approved' }) })
+  // the merged screen opens on last month with approved documents only: all periods, and the one waiting for review let in on purpose
+  const openReport = async () => {
+    await go('/report'); await page.waitForSelector('.fin-rep__when', { timeout: 15000 })
+    await page.locator('.fin-rep__period', { hasText: 'כל התקופות' }).click()
+    await page.fill('.fin-rep__search input', 'ZZ-REP'); await page.waitForTimeout(500)
+  }
+  await openReport()
+  const approvedOnly = await page.locator('.fin-rep__list > li').count()
+  const waitingNote = (await page.locator('.fin-rep__ready').innerText().catch(() => '')).replace(/\s+/g, ' ')
+  await page.locator('.fin-rep__ready').getByText('לכלול אותם בכל זאת').click(); await page.waitForTimeout(400)
+  const emptyBar = approvedOnly === 3 && /מסמך אחד בתקופה עוד לא אושר/.test(waitingNote) ? 1 : 0
   const shownRows = await page.locator('.fin-rep__list > li').count()
-  await page.getByRole('button', { name: /בחירת כל ה/ }).click(); await page.waitForTimeout(400)
-  const bar = (await page.locator('.fin-rep__bar').innerText()).replace(/[‎‏]/g, '').replace(/\s+/g, ' ')
+  const bar = `${(await page.locator('.fin-rep__bar').innerText()).replace(/[‎‏]/g, '').replace(/\s+/g, ' ')} ${(await page.locator('.fin-rep__summary').innerText()).replace(/[‎‏]/g, '').replace(/\s+/g, ' ')}`
   const repShot = await shot('139-accountant-report')
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /הפקת דוח לרואה החשבון/ }).click()])
   const xl = `${OUT}/accountant-report.xlsx`; await dl.saveAs(xl); const fileName = dl.suggestedFilename()
@@ -2821,7 +2920,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const linkOk = linkTargets.length === 4 && [A, B, Cc, D].every((id) => linkTargets.some((t) => t.endsWith(`/admin/finance/documents/${id}`)))
   // a link from the file opens the document in the system
   await go(linkTargets.find((t) => t.endsWith(A)).replace(/^https?:\/\/[^/]+\/admin\/finance/, '')); const opened = await page.locator('.fin-panel, .fin-docpanel, [class*="panel"]').first().innerText().catch(() => '')
-  await go('/report'); await page.fill('.fin-rep__search input', 'ZZ-REP'); await page.waitForTimeout(400); await page.getByRole('button', { name: /בחירת כל ה/ }).click()
+  await openReport(); await page.locator('.fin-rep__ready').getByText('לכלול אותם בכל זאת').click(); await page.waitForTimeout(400)
   const [cdl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'CSV', exact: true }).click()])
   const csvPath = `${OUT}/accountant-report.csv`; await cdl.saveAs(csvPath); const csv = fs.readFileSync(csvPath, 'utf8')
   await page.getByRole('button', { name: /PDF/ }).click(); await page.waitForTimeout(600)
@@ -2834,7 +2933,7 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const stored = await page.evaluate(() => sessionStorage.getItem('fin-report-ids'))
   const logged = sql("select count(*) from fin_audit where action='exported_excel' and changes->>'report'='accountant'")
   sql(`delete from fin_documents where supplier_name like 'ZZ-REP%'`)
-  record('REPORT', 'דוח לרואה החשבון: בחירת מסמכים, סיכום, Excel מימין לשמאל, CSV ו-PDF', 'בלי בחירה אין כפתורים; חיפוש מציג 4 ו"בחירת כל המוצגים" מסמנת אותם; הסיכום: 1,180 − 236 + 590 = 1,534 ₪ (הדולר לא בסכום), מע״מ 234, לקיזוז 234; קובץ עם שם לפי הפורמט, 3 גיליונות בעברית ורשימות מוסתרות, כולם RTL; כותרת ראשונה "ספק"; קישור לכל מסמך שנפתח במערכת; תווים מיוחדים נשמרים; CSV עם BOM; עמוד הדפסה RTL; בחירה ממסך המסמכים מגיעה מסומנת ואינה נשמרת בדפדפן; הפעולה ביומן',
+  record('REPORT', 'דוח ושליחה לרו״ח: תקופה, מסמכים, סיכום, Excel מימין לשמאל, CSV ו-PDF', 'כברירת מחדל רק מאושרים (3) והודעה שמסמך אחד עוד לא אושר; "לכלול אותם בכל זאת" מציג 4, כולם מסומנים; הסיכום: 1,180 − 236 + 590 = 1,534 ₪ (הדולר לא בסכום), מע״מ 234, לקיזוז 234; קובץ עם שם לפי הפורמט, 3 גיליונות בעברית ורשימות מוסתרות, כולם RTL; כותרת ראשונה "ספק"; קישור לכל מסמך שנפתח במערכת; תווים מיוחדים נשמרים; CSV עם BOM; עמוד הדפסה RTL; בחירה ממסך המסמכים מגיעה מסומנת ואינה נשמרת בדפדפן; הפעולה ביומן',
     `ריק: ${emptyBar}; שורות: ${shownRows}; סרגל: ${bar.slice(0, 150)}; קובץ: ${fileName}; גיליונות: ${sheetNames.join(' | ')}; RTL: ${rtl}; A3: ${/<c r="A3"[^>]*>.*?<t[^>]*>ספק<\/t>/.test(s1)}; קישורים: ${linkTargets.length} ${linkOk}; נפתח: ${/ZZ-REP ספק ראשון/.test(opened)}; תווים: ${/צבע &quot;לבן&quot; &amp; שפכטל/.test(s1)}; בדיקות: ${/ZZ-REP/.test(s3)}; CSV: ${csv.charCodeAt(0) === 0xfeff} ${csv.trim().split('\r\n').length} שורות; הדפסה: ${printFrame}; מהמסמכים: ${fromDocs}; באחסון: ${stored}; יומן: ${logged}`,
     emptyBar === 1 && shownRows === 4 && /4 מסמכים נבחרו/.test(bar) && /1,534\.00/.test(bar) && /234\.00/.test(bar) && /דוח הוצאות/.test(bar) && /^דוח הוצאות – .+ – אוגוסט 2026\.xlsx$/.test(fileName)
     && sheetNames.join('|') === 'דוח הוצאות לרואה החשבון|סיכום הוצאות|מסמכים לבדיקה|רשימות' && rtl && /<c r="A3"[^>]*>.*?<t[^>]*>ספק<\/t>/.test(s1) && linkOk && /ZZ-REP ספק ראשון/.test(opened) && /צבע &quot;לבן&quot; &amp; שפכטל/.test(s1) && !/�|\?\?\?/.test(s1)

@@ -2010,7 +2010,7 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 }
 
 /* attachments in the document panel */
-.fin-attach { margin-top: 18px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); }
+.fin-attach { margin-top: 18px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--sheet); min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; }
 .fin-attach > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .fin-attach h3 { margin: 0; display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-md); color: var(--ink); }
 .fin-attach h3 em { font-style: normal; font-size: var(--t-xs); background: var(--wash); border-radius: 999px; padding: 1px 8px; color: var(--text-2); }
@@ -2025,7 +2025,9 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 .fin-attach__icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--wash); color: var(--text-2); flex: none; }
 .fin-attach__main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .fin-attach__main .fin-link { justify-self: start; text-align: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-.fin-attach__main small { color: var(--text-2); font-size: var(--t-xs); }
+.fin-attach__main small { color: var(--text-2); font-size: var(--t-xs); overflow-wrap: anywhere; }
+.fin-attach__list li > * { min-width: 0; }
+.fin-attach__list li > .fin-icon-btn { flex: none; }
 
 /* overview: three action cards and the recent feed */
 .fin-x-acts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }

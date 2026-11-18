@@ -1274,7 +1274,7 @@ const cPath = `${OUT}/export.csv`; await cDl.saveAs(cPath)
 const csvText = fs.readFileSync(cPath, 'utf8')
 const csvLines = csvText.replace(/^﻿/, '').split('\r\n').filter(Boolean)
 let xCheck = ''
-try { xCheck = execSync(`python3 -c "import openpyxl,sys;wb=openpyxl.load_workbook(sys.argv[1]);ws=wb['מסמכים'];print(wb.sheetnames==['מסמכים','לפי קטגוריה','לפי ספק'], ws.sheet_view.rightToLeft, ws['A1'].value, type(ws['A2'].value).__name__, isinstance(ws['K2'].value,(int,float)), ws.max_row-3)" ${xPath}`, { encoding: 'utf8' }).trim() } catch (e) { xCheck = `openpyxl: ${String(e.message).slice(0, 120)}` }
+try { xCheck = execSync(`python3 -c "import openpyxl,sys;wb=openpyxl.load_workbook(sys.argv[1]);ws=wb['מסמכים'];print(wb.sheetnames[0]=='מסמכים' and wb.sheetnames[-2:]==['לפי קטגוריה','לפי ספק'] and all(n not in ('סטטוס','מקור') for n in [c.value for c in ws[1]]), ws.sheet_view.rightToLeft, ws['A1'].value, type(ws['A2'].value).__name__, isinstance(ws['K2'].value,(int,float)), ws.max_row-3)" ${xPath}`, { encoding: 'utf8' }).trim() } catch (e) { xCheck = `openpyxl: ${String(e.message).slice(0, 120)}` }
 const logX = sql("select count(*) from fin_audit where action in ('exported_excel','exported_csv')")
 record('XLSX', 'ייצוא מסמכים מסומנים ל-Excel ו-CSV', 'קובץ xlsx אמיתי (מימין לשמאל, תאריכים ומספרים אמיתיים, גיליונות סיכום לפי קטגוריה וספק) וקובץ CSV ב-UTF-8 עם BOM; שורה לכל מסמך; כל הורדה נרשמת ביומן',
   `${pickedN} מסומנים; xlsx: ${xDl.suggestedFilename()} (${xBuf.length} בתים), ${xCheck}; csv: ${cDl.suggestedFilename()}, ${csvLines.length} שורות, BOM ${csvText.charCodeAt(0) === 0xFEFF}, כותרת "${csvLines[0].slice(0, 40)}"; ביומן: ${logX}`,
@@ -2011,16 +2011,71 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   await api(tok, { action: 'sync', mailbox_id: boxId })
   const docsAfter = sql(`select count(*) from fin_documents where supplier_vat_id='${vatId}' and status not in ('rejected','archived') and (file_name like '%${tag}%')`)
   const attachedAfter = manualId ? sql(`select count(*) from fin_document_attachments where document_id='${manualId}' and note like 'אותו מסמך הגיע גם במייל%'`) : '?'
+  // the email from the screenshot (2026-11-18): no file, only "לצפייה במסמך לחץ כאן". (a) the link opens a viewer page
+  // with the very file uploaded by hand inside it: the file is fetched, found to be the same, nothing comes in.
+  // (b) the link is dead, the email names the number without the prefix and with no sum: it joins the document.
+  const fx2 = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8'))
+  fx2.textAnswers = { ...(fx2.textAnswers || {}), [`ריווחית-${tag}`]: ans({ document_class: 'tax_invoice_receipt', doc_type: 'invoice_receipt', supplier_vat_id: '', doc_number: '130603', issue_date: null, amount_before_vat: null, vat_amount: null, total_amount: null }) }
+  const mailBody = (href) => `<div dir="rtl"><p>שלום אפיק הנחל בע״מ,</p><p>מצורף לדואר אלקטרוני זה קישור למסמך חשבונית מס קבלה מספר 130603</p><a href="${href}" style="background:#f90;color:#fff;padding:8px">לצפייה במסמך לחץ כאן</a><p>בכבוד רב, המרכז הארצי לקפה</p><p>ריווחית-${tag}</p></div>`
+  fx2.mailboxes['invoices@kurkoos.test'].messages.push(
+    { id: `md4-${tag}`, date: when(0.05), subject: 'המרכז הארצי לקפה - חשבונית מס קבלה מספר 130603', from: 'המרכז הארצי לקפה <docs@rivhit.test>', text: '', html: mailBody(`${FAKES}/viewer/${encodeURIComponent(manualName)}`), files: [] },
+    { id: `md5-${tag}`, date: when(0.04), subject: 'המרכז הארצי לקפה - חשבונית מס קבלה מספר 130603 (תזכורת)', from: 'המרכז הארצי לקפה <docs@rivhit.test>', text: '', html: mailBody(`${FAKES}/gone-${tag}.pdf`), files: [] })
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx2, null, 1))
+  await api(tok, { action: 'sync', mailbox_id: boxId })
+  const viaLink = sql(`select count(*) from fin_documents where email_message_id='md4-${tag}'`)
+  const deadLink = sql(`select count(*) from fin_documents where email_message_id='md5-${tag}'`)
+  const joinedAll = manualId ? sql(`select count(*) from fin_document_attachments where document_id='${manualId}' and note like 'אותו מסמך הגיע גם במייל%'`) : '?'
+  // the night sweep: an email document that came in before this rule (the one in the screenshot) joins the original
+  process.env.SUPABASE_URL = SB; process.env.SUPABASE_SERVICE_ROLE_KEY = SERVICE
+  const pl = await import('../../server/finance/pipeline.js'); const dbm2 = await import('../../server/finance/db.js')
+  await dbm2.upload(`e2e/old-link-${tag}.html`, Buffer.from(mailBody('https://x.example/doc')), 'text/html')
+  const supId = sql(`select coalesce(supplier_id::text, '') from fin_documents where id='${manualId}'`)
+  const oldId = sql(`insert into fin_documents (status, source, supplier_name, supplier_id, doc_type, currency, doc_number, file_path, file_name, file_mime, file_size, file_hash, email_from) values ('review','gmail','המרכז הארצי לקפה',${supId ? `'${supId}'` : 'null'},'invoice_receipt','ILS','130603','e2e/old-link-${tag}.html','old.html','text/html',300,'oldlink${tag}','docs@rivhit.test') returning id`).split('\n')[0]
+  const swept = await pl.sweepEmailDuplicates()
+  const oldLeft = sql(`select count(*) from fin_documents where id='${oldId}'`)
+  const joinedSweep = manualId ? sql(`select count(*) from fin_document_attachments where document_id='${manualId}' and note like 'אותו מסמך הגיע גם במייל%'`) : '?'
   // the panel of the hand-uploaded document shows the email copy among its attachments
   await go(`/documents/${manualId}`); await page.waitForTimeout(1200)
   await page.locator('.fin-attach').scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(600)
   const panelText = await page.locator('.fin-attach').innerText().catch(() => '')
   const panelShot = await shot('119k-manual-dup-absorbed')
   fs.writeFileSync(`${FIX}/fixtures.json`, saved)
-  record('MANUALDUP', 'מסמך שהועלה ידנית לא נכנס שוב בסריקת הלילה', 'קבלה שהועלתה ביד ("02/130603"), ובלילה אותה קבלה במייל כקובץ אחר עם המספר "130603": לא נוצר מסמך שני, הקובץ מהמייל מצורף למסמך הקיים, טביעת האצבע שלו ברשימת הדילוגים והשינוי ביומן; אותו קובץ בדיוק במייל מדולג לפני קריאה; סריקה נוספת לא מוסיפה כלום; קבלה אחרת של אותו ספק ואותו סכום עם מספר אחר נכנסת כמסמך חדש',
-    `ידני: ${manual.split('|').slice(0, 2).join(',')}; מהמייל (קובץ אחר): ${fromMail} מסמכים; אותו קובץ: ${sameFile}; צורף: ${attached} (אחרי סריקה נוספת: ${attachedAfter}); דילוג: ${skipped}; ביומן: ${logged}; מספר אחר: ${other || 'אין'}; מסמכים של הספק: ${docsOfSupplier} → ${docsAfter}`,
-    /^review\|02\/130603/.test(manual) && fromMail === '0' && sameFile === '0' && attached === '1' && attachedAfter === '1' && skipped === '1' && logged === '1' && /^review\|130604$/.test(other) && docsOfSupplier === '2' && docsAfter === '2' && /הגיע גם במייל/.test(panelText),
+  // the scenario leaves the system as it found it (later scenarios pick "the newest documents")
+  sql(`delete from fin_documents where file_name like '%${tag}%' or email_message_id like 'md_-${tag}'`)
+  record('MANUALDUP', 'מסמך שהועלה ידנית לא נכנס שוב בסריקת הלילה', 'מייל שרק מקשר למסמך ("לצפייה במסמך לחץ כאן"): המסמך עצמו מורד מהקישור (גם מתוך עמוד צפייה) ונמצא זהה, לא נוצר כלום; קישור מת ובלי סכום: מצורף למסמך הקיים; מסמך כזה שכבר נכנס בעבר מצורף בניקוי הלילה. קבלה שהועלתה ביד ("02/130603"), ובלילה אותה קבלה במייל כקובץ אחר עם המספר "130603": לא נוצר מסמך שני, הקובץ מהמייל מצורף למסמך הקיים, טביעת האצבע שלו ברשימת הדילוגים והשינוי ביומן; אותו קובץ בדיוק במייל מדולג לפני קריאה; סריקה נוספת לא מוסיפה כלום; קבלה אחרת של אותו ספק ואותו סכום עם מספר אחר נכנסת כמסמך חדש',
+    `ידני: ${manual.split('|').slice(0, 2).join(',')}; מהמייל (קובץ אחר): ${fromMail} מסמכים; אותו קובץ: ${sameFile}; צורף: ${attached} (אחרי סריקה נוספת: ${attachedAfter}); דילוג: ${skipped}; ביומן: ${logged}; מספר אחר: ${other || 'אין'}; מסמכים של הספק: ${docsOfSupplier} → ${docsAfter}; מייל עם קישור לעמוד צפייה: ${viaLink} מסמכים; קישור מת בלי סכום: ${deadLink} מסמכים, צורף (סה״כ ${joinedAll}); ניקוי הלילה: ${JSON.stringify(swept)}, נשאר: ${oldLeft}, צורף (סה״כ ${joinedSweep})`,
+    /^review\|02\/130603/.test(manual) && fromMail === '0' && sameFile === '0' && attached === '1' && attachedAfter === '1' && skipped === '1' && logged === '1' && /^review\|130604$/.test(other) && docsOfSupplier === '2' && docsAfter === '2' && /הגיע גם במייל/.test(panelText)
+      && viaLink === '0' && deadLink === '0' && joinedAll === '2' && swept.joined >= 1 && oldLeft === '0' && joinedSweep === '3',
     [panelShot])
+}
+
+// QUICK: a new invoice in a connected mailbox is in the system minutes after it arrives (the 15-minute check), not the
+// next morning; the night stays as the double check. Mail already read is not read again (no new reading is paid for).
+{
+  const tag = String(Date.now()).slice(-6)
+  const mk = async (html) => { await page.setContent(`<div dir="rtl" style="font:16px sans-serif;padding:40px">${html}</div>`); return page.pdf({ format: 'A4' }) }
+  const name = `quick-${tag}.pdf`; const buf = await mk(`<h1>מוסך השרון</h1><p>חשבונית מס ${tag}</p><p>סה״כ 590.00</p>`)
+  fs.writeFileSync(`${FIX}/${name}`, buf)
+  const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); const saved = JSON.stringify(fx)
+  const base = fx.answers[Object.keys(fx.answers)[0]]
+  fx.answers[crypto.createHash('sha256').update(buf).digest('hex')] = { ...base, is_financial_document: true, document_class: 'tax_invoice', relevance_confidence: 0.97, doc_type: 'invoice', supplier_name: 'מוסך השרון', supplier_vat_id: '', doc_number: tag, issue_date: new Date().toISOString().slice(0, 10), amount_before_vat: 500, vat_amount: 90, total_amount: 590, category: 'רכב' }
+  fx.mailboxes['invoices@kurkoos.test'].messages.push({ id: `mq-${tag}`, date: new Date(Date.now() - 60_000).toISOString(), subject: `חשבונית ${tag}`, from: 'מוסך השרון <office@garage.test>', text: 'מצורפת חשבונית', files: [name] })
+  fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
+  const tok = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const reads = () => Number(sql('select coalesce(sum(ai_calls), 0) from fin_documents')) + Number(sql('select count(*) from fin_skipped'))
+  const readsBefore = reads()
+  const t1 = await api(tok, { action: 'tick', collect: true })
+  const got = sql(`select count(*)||'|'||coalesce(max(status),'') from fin_documents where email_message_id='mq-${tag}'`)
+  const readsMid = reads()
+  // the next check: nothing new, nothing read again
+  await api(tok, { action: 'tick', collect: true })
+  const readsAfter = reads()
+  const again = sql(`select count(*) from fin_documents where email_message_id='mq-${tag}'`)
+  fs.writeFileSync(`${FIX}/fixtures.json`, saved)
+  sql(`delete from fin_documents where email_message_id='mq-${tag}'`)
+  record('QUICK', 'חשבונית חדשה בתיבה מחוברת נכנסת תוך דקות', 'בדיקת התיבות (כל 15 דקות) מכניסה חשבונית שהגיעה עכשיו, נקראת ומחכה לבדיקה; בדיקה נוספת לא קוראת שוב מה שכבר נקרא',
+    `ריצה: ${JSON.stringify(t1.data?.collect)}; המסמך: ${got}; קריאות: ${readsMid - readsBefore}, בבדיקה הבאה: ${readsAfter - readsMid}; פעמיים: ${again}`,
+    /^1\|review$/.test(got) && readsMid - readsBefore >= 1 && readsAfter === readsMid && again === '1' && t1.data?.collect?.imported >= 1)
 }
 
 // MAILTHUMB: a receipt that is the body of an email (Meta ads, online services) has no file of its own. It must still

@@ -3,8 +3,6 @@
 import { buildXlsx } from './xlsx.js'
 
 const TYPE = { invoice: 'חשבונית מס', invoice_receipt: 'חשבונית מס/קבלה', receipt: 'קבלה', credit: 'חשבונית זיכוי', supplier_bill: 'חשבון ספק', payment_confirmation: 'אישור תשלום', proforma: 'חשבון עסקה', quote: 'הצעת מחיר', other: 'אחר' }
-const SOURCE = { gmail: 'Gmail', outlook: 'Outlook', upload: 'העלאה ידנית', camera: 'צילום', forward: 'העברה במייל', whatsapp: 'WhatsApp', drive: 'Google Drive' }
-const STATUS = { processing: 'בעיבוד', review: 'לבדיקה', approved: 'מוכן לרו״ח', sent: 'נשלח לרו״ח', failed: 'לא נקרא', duplicate: 'כפול', rejected: 'נדחה', archived: 'בארכיון' }
 const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v))
 const sign = (d) => (d.doc_type === 'credit' ? -1 : 1)
 const IL_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -26,8 +24,6 @@ export const COLUMNS = [
   { header: 'סכום כולל', type: 'money', width: 14 },
   { header: 'מטבע', type: 'text', width: 8 },
   { header: 'אמצעי תשלום', type: 'text', width: 14 },
-  { header: 'מקור', type: 'text', width: 13 },
-  { header: 'סטטוס', type: 'text', width: 12 },
   { header: 'קישור ב-Google Drive', type: 'text', width: 40 },
 ]
 
@@ -40,7 +36,7 @@ export function expenseRows(docs, names = {}, links = {}) {
     num(d.amount_before_vat) === null ? null : r2(sign(d) * Math.abs(num(d.amount_before_vat))),
     num(d.vat_amount) === null ? null : r2(sign(d) * Math.abs(num(d.vat_amount))),
     num(d.total_amount) === null ? null : r2(sign(d) * Math.abs(num(d.total_amount))),
-    d.currency || 'ILS', d.payment_method || '', SOURCE[d.source] || d.source || '', STATUS[d.status] || d.status || '', links[d.id] || '',
+    d.currency || 'ILS', d.payment_method || '', links[d.id] || '',
   ])
 }
 
@@ -59,6 +55,23 @@ function groupBy(rows, key) {
   return [...m.values()].sort((a, b) => b.total - a.total)
 }
 
+/* one tab per company when the documents belong to more than one: the tab is named after the company (Excel allows 31
+   characters, no \\ / ? * [ ] :, and no two tabs with one name), documents without a company in "ללא חברה" */
+const RESERVED = new Set(['מסמכים', 'לפי קטגוריה', 'לפי ספק'])
+export function companySheets(rows) {
+  const by = new Map()
+  for (const r of rows) { const k = r[5] || 'ללא חברה'; if (!by.has(k)) by.set(k, []); by.get(k).push(r) }
+  if (by.size < 2) return []
+  const used = new Set(RESERVED)
+  return [...by.entries()].sort((a, b) => (a[0] === 'ללא חברה') - (b[0] === 'ללא חברה') || a[0].localeCompare(b[0], 'he')).map(([name, list]) => {
+    const base = String(name).replace(/[\\/?*[\]:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 31).trim() || 'חברה'
+    let tab = base; let i = 2
+    while (used.has(tab)) { const suf = ` (${i++})`; tab = `${base.slice(0, 31 - suf.length)}${suf}` }
+    used.add(tab)
+    return { name: tab, company: name, rows: list }
+  })
+}
+
 /* the workbook: documents (with totals), by category, by supplier */
 export function expenseWorkbook(docs, names, links, { title = 'הוצאות' } = {}) {
   const rows = expenseRows(docs, names, links)
@@ -66,8 +79,11 @@ export function expenseWorkbook(docs, names, links, { title = 'הוצאות' } =
   const cats = groupBy(rows, 7); const sups = groupBy(rows, 1)
   const sumCols = [{ header: 'קטגוריה', type: 'text', width: 24 }, { header: 'מסמכים', type: 'int', width: 10 }, { header: 'לפני מע״מ', type: 'money', width: 15 }, { header: 'מע״מ', type: 'money', width: 13 }, { header: 'סכום כולל', type: 'money', width: 15 }, { header: 'אחוז מההוצאות', type: 'pct', width: 14 }]
   const share = (g) => (t.total ? g.total / t.total : 0)
+  const totalRow = (x) => [['סה״כ בש״ח', '', '', '', '', '', '', `${x.count} מסמכים`, x.before, x.vat, x.total, 'ILS', '', otherNote(x) ? `במטבע אחר (לא בסה״כ): ${otherNote(x)}` : '']]
   return buildXlsx([
-    { name: 'מסמכים', columns: COLUMNS, rows, totals: [['סה״כ בש״ח', '', '', '', '', '', '', `${t.count} מסמכים`, t.before, t.vat, t.total, 'ILS', '', '', '', otherNote(t) ? `במטבע אחר (לא בסה״כ): ${otherNote(t)}` : '']] },
+    { name: 'מסמכים', columns: COLUMNS, rows, totals: totalRow(t) },
+    // documents of more than one company: a tab of its own for each company, named after it, with its own totals
+    ...companySheets(rows).map((c) => ({ name: c.name, columns: COLUMNS, rows: c.rows, totals: totalRow(totalsOf(c.rows)) })),
     { name: 'לפי קטגוריה', columns: sumCols, rows: cats.map((g) => [g.name, g.count, r2(g.before), r2(g.vat), r2(g.total), share(g)]), totals: [['סה״כ', t.count, t.before, t.vat, t.total, 1]] },
     { name: 'לפי ספק', columns: [{ header: 'ספק', type: 'text', width: 28 }, { header: 'ח.פ / עוסק', type: 'text', width: 13 }, { header: 'מסמכים', type: 'int', width: 10 }, { header: 'לפני מע״מ', type: 'money', width: 15 }, { header: 'מע״מ', type: 'money', width: 13 }, { header: 'סכום כולל', type: 'money', width: 15 }],
       rows: sups.map((g) => [g.name, g.vatId || '', g.count, r2(g.before), r2(g.vat), r2(g.total)]), totals: [['סה״כ', '', t.count, t.before, t.vat, t.total]] },

@@ -15,7 +15,7 @@ import crypto from 'node:crypto'
 import { env } from './finance/env.js'
 import { sb, one, insert, patch, q, caller, audit, removeFile, rpc, download } from './finance/db.js'
 import { PROVIDERS, processStored, revalidate } from './finance/pipeline.js'
-import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport } from './finance/agents.js'
+import { syncAll, retryFailed, dailySummary, runDaily, newDocRuns, closeRuns, engineTick, morningReport, quickCollectTick, duplicateSweepTick } from './finance/agents.js'
 import { ADAPTERS } from './finance/adapters.js'
 import { publicProviders } from './finance/providers.js'
 import { ask } from './finance/assistant.js'
@@ -230,7 +230,10 @@ export default async function handler(req, res) {
       await archive.reconcileStep({ started, budgetMs: 25_000 }).catch(() => [])
       // WhatsApp files the live delivery missed, from the provider's journal (every five minutes)
       await waCatchUpTick().catch(() => null)
-      res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive })
+      // new mail of the connected mailboxes (every 15 minutes) and email copies of documents already in the system (hourly)
+      const collect = await quickCollectTick({ started }).catch((e) => ({ error: String(e.message || e).slice(0, 200) }))
+      await duplicateSweepTick().catch(() => null)
+      res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive, collect })
     } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
   }
@@ -650,7 +653,7 @@ export default async function handler(req, res) {
       }
       case 'tick': {
         // someone opened the app: let the engine catch up (it decides itself whether anything is due)
-        res.status(200).json(await engineTick({ trigger: 'tick', force: !!body.force && user.role === 'admin' }))
+        res.status(200).json(await engineTick({ trigger: 'tick', force: !!body.force && user.role === 'admin', collect: !!body.collect && user.role === 'admin' }))
         return
       }
       case 'retry-doc': {

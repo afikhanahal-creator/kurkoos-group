@@ -64,6 +64,21 @@ check('X13', 'מבנה הקובץ', 'כל החלקים של קובץ XLSX, כו�
   check('X15', 'גם קובצי הייצוא האחרים: מימין לשמאל, והכול בצד ימין של התא', 'כל גיליון rightToLeft; העמודה הראשונה (A) היא הכותרת הראשונה; לכל סגנון תא יישור לימין וסדר קריאה מימין לשמאל, גם למספרים, לתאריכים ולשורת הסיכום', `RTL: ${sheets2.map((x) => /<sheetView rightToLeft="1"/.test(x)).join(',')},${/<sheetView rightToLeft="1"/.test(sh3)}; A1: ${firstHead}; סגנונות: ${xfs.length}, בלי יישור לימין: ${xfs.filter((x) => !/horizontal="right"[^>]*readingOrder="2"/.test(x)).length}`,
     sheets2.every((x) => /<sheetView rightToLeft="1"/.test(x)) && /<sheetView rightToLeft="1"/.test(sh3) && firstHead === 'תאריך המסמך' && xfs.length === 10 && xfs.every((x) => /horizontal="right"[^>]*readingOrder="2"/.test(x))) }
 
+// the expenses Excel: no status / source columns; documents of several companies → a tab named after each company
+{ const { expenseWorkbook, COLUMNS } = await import('../src/pages/finance/expenseReport.js')
+  const D = (id, biz, total) => ({ id, issue_date: '2026-11-0' + id, supplier_name: 'ספק ' + id, business_id: biz, total_amount: total, amount_before_vat: total, vat_amount: 0, doc_type: 'receipt', currency: 'ILS' })
+  const names = { businesses: { b1: 'אפיק הנחל', b2: 'ראיתה חברה לבניין והשקעות בע״מ', b3: 'קורקוס/ביצוע: [א]' }, projects: {} }
+  const f4 = path.join(dir, 'companies.xlsx'); fs.writeFileSync(f4, expenseWorkbook([D(1, 'b1', 100), D(2, 'b2', 50), D(3, 'b1', 20), D(4, 'b3', 5), D(5, null, 7)], names, {}))
+  const wb = execSync(`unzip -p ${f4} xl/workbook.xml`, { encoding: 'utf8' }); const tabs = [...wb.matchAll(/<sheet name="([^"]*)"/g)].map((m) => m[1].replace(/&quot;/g, '"'))
+  const sheetOf = (name) => execSync(`unzip -p ${f4} xl/worksheets/sheet${tabs.indexOf(name) + 1}.xml`, { encoding: 'utf8' })
+  const afik = sheetOf('אפיק הנחל'); const rowsIn = (x) => (x.match(/<row /g) || []).length
+  const single = path.join(dir, 'single.xlsx'); fs.writeFileSync(single, expenseWorkbook([D(1, 'b1', 100), D(3, 'b1', 20)], names, {}))
+  const tabs1 = [...execSync(`unzip -p ${single} xl/workbook.xml`, { encoding: 'utf8' }).matchAll(/<sheet name="([^"]*)"/g)].map((m) => m[1])
+  const heads = COLUMNS.map((c) => c.header)
+  check('X16', 'Excel ההוצאות: בלי סטטוס ומקור, טאב לכל חברה', 'אין עמודות "סטטוס" ו"מקור"; כשיש כמה חברות: טאב בשם של כל חברה (תווים אסורים מוחלפים), "ללא חברה" אחרון, בכל טאב רק המסמכים שלה עם סיכום; חברה אחת: בלי טאבים נוספים',
+    `עמודות: ${heads.length}; טאבים: ${tabs.join(' | ')}; באפיק הנחל: ${rowsIn(afik)} שורות, 120: ${/<v>120<\/v>/.test(afik)}; חברה אחת: ${tabs1.join(' | ')}`,
+    !heads.includes('סטטוס') && !heads.includes('מקור') && heads.length === 14 && tabs.join('|') === 'מסמכים|אפיק הנחל|קורקוס ביצוע א|ראיתה חברה לבניין והשקעות בע״מ|ללא חברה|לפי קטגוריה|לפי ספק' && /<v>120<\/v>/.test(afik) && tabs1.join('|') === 'מסמכים|לפי קטגוריה|לפי ספק') }
+
 fs.rmSync(dir, { recursive: true, force: true })
 const failed = results.filter((r) => !r.pass)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)

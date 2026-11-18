@@ -37,3 +37,10 @@ A change to the finance screens goes through `docs/finance/DESIGN-REVIEW-PROCESS
 (`node scripts/finance-e2e/review.mjs` after `run.mjs`) must exit 0 before you ask the owner to merge.
 Tax rules (VAT rate, allocation threshold, ceilings) live only in `src/pages/finance/taxRules.js`, as dated versions with a source: a change in the law is a new
 version, never an edit of an old one, and never from a news article (`docs/finance/TAX-RULES.md`). Run `node scripts/finance-tax-tests.mjs` after touching them.
+
+## Who may change the site (site_staff)
+
+Sign-up is open, so a signed-in account is not an admin by itself. Only accounts in `public.site_staff` (or finance admins) can
+change site tables, read leads, DMs and drafts, or upload and delete images. `supabase/site_staff.sql` adds RESTRICTIVE policies
+to every non-finance public table and to storage writes: re-run it after adding a site table. A new team member who edits the
+site needs one line: `insert into public.site_staff (user_id, email) select id, email from auth.users where email = '<email>';`

@@ -164,7 +164,16 @@ export default function Documents({ preset = 'all' }) {
       const line = 132                                   // just under the top bar and the chip itself
       let cur = ''
       for (const el of box.querySelectorAll('[data-month]')) { if (el.getBoundingClientRect().top - 34 <= line) cur = el.dataset.month; else break }
-      setMonthNow(box.getBoundingClientRect().bottom > line ? cur : '')
+      // shown only once the page has really scrolled (a phone's bounce at the top and the address bar folding moved the
+      // first month header across the line and back, and the chip blinked); a small band either way keeps it steady
+      const y = window.scrollY
+      setMonthNow((was) => {
+        const want = box.getBoundingClientRect().bottom > line ? cur : ''
+        if (!want) return ''
+        if (!was && y < 160) return ''
+        if (was && y < 110) return ''
+        return want
+      })
     }
     const on = () => { if (!raf) raf = requestAnimationFrame(read) }
     read()
@@ -422,7 +431,8 @@ export default function Documents({ preset = 'all' }) {
         </div>
       )}
 
-      {monthNow && <div className="fin-monthchip" aria-hidden="true"><span>{monthNow}</span></div>}
+      {/* always in the page (mounting and unmounting it on every scroll step made it blink); it fades in and out */}
+      <div className={`fin-monthchip ${monthNow ? 'is-on' : ''}`} aria-hidden="true"><span>{monthNow || ' '}</span></div>
       {/* cards and the list have no table head to tick: the same "all" lives in a bar above them */}
       {rows.length > 0 && (
         <div className={`fin-selall ${view === 'table' ? 'fin-selall--phone' : ''}`}>

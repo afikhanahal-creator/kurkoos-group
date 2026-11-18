@@ -204,10 +204,18 @@ function useFinanceData(enabled, onChange) {
         const documents = shown(await api.loadDocuments())
         const was = (prevDocs.current || []).filter((d) => d.status === 'processing').length
         if (documents.filter((d) => d.status === 'processing').length < was) { reload(); return }
+        // nothing changed since the last look: the screen is left alone (replacing every row every 4 s redrew the whole
+        // list on a phone while a document was being read)
+        const sig = (list) => list.map((d) => `${d.id}:${d.updated_at || ''}:${d.status}`).join(',')
+        if (prevDocs.current && sig(prevDocs.current) === sig(documents)) return
         stamp.current = stampOf(documents)
-        const before = prevDocs.current; prevDocs.current = documents
-        if (before) onChange.current?.(before, documents)
-        setState((s) => ({ ...s, documents }))
+        const before = prevDocs.current
+        // rows that did not change keep their object, so only the changed ones draw again
+        const old = new Map((before || []).map((d) => [d.id, d]))
+        const kept = documents.map((d) => { const o = old.get(d.id); return o && o.updated_at === d.updated_at && o.status === d.status ? o : d })
+        prevDocs.current = kept
+        if (before) onChange.current?.(before, kept)
+        setState((s) => ({ ...s, documents: kept }))
       } catch { /* the next tick asks again */ } finally { busy = false }
     }, 4000)
     return () => clearInterval(t)

@@ -2913,7 +2913,8 @@ button.fin-doccard__supplier:hover { color: var(--ocean); }
 @media (max-width: 760px) {
   /* the month on screen: a small chip under the top bar, at the start of the line, that follows the scroll */
   .fin-monthchip { display: block; position: sticky; top: 68px; z-index: var(--z-sticky); height: 0; pointer-events: none; }
-  .fin-monthchip span { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: var(--t-xs); font-weight: 700; box-shadow: 0 4px 12px rgba(7, 41, 58, 0.22); }
+  .fin-monthchip span { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: var(--t-xs); font-weight: 700; box-shadow: 0 4px 12px rgba(7, 41, 58, 0.22); opacity: 0; transform: translateY(-4px); transition: opacity 0.18s ease, transform 0.18s ease; }
+  .fin-monthchip.is-on span { opacity: 1; transform: none; }
   /* the first document of a month carries the month's name above it */
   .fin-doclistbox [data-month] { position: relative; margin-top: 2.1rem !important; }
   .fin-doclistbox [data-month]::before { content: attr(data-month); position: absolute; inset-inline-start: 4px; top: -1.65rem; font-size: var(--t-sm); font-weight: 700; color: var(--text-2); letter-spacing: 0; white-space: nowrap; }
@@ -4871,7 +4872,7 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-scanrow.is-open .fin-scanrow__chev { transform: rotate(180deg); }
 .fin-scanlist__card { padding: 4px 16px 18px; background: color-mix(in srgb, var(--ocean-wash) 35%, var(--sheet)); }
 .fin-scanlist__card .fin-scan { box-shadow: none; }
-@media (prefers-reduced-motion: reduce) { .fin-scanrow__chev { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .fin-scanrow__chev, .fin-monthchip span { transition: none; } }
 @media (max-width: 760px) {
   .fin-scanlist__head { display: none; }
   .fin-scanrow { grid-template-columns: repeat(3, minmax(0, 1fr)) 28px; padding: 12px 14px; gap: 10px 12px; }
@@ -4880,4 +4881,14 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-scanrow__chev { grid-column: -2; grid-row: 1; }
   .fin-scanrow__num { grid-row: 3; }
   .fin-scanlist__card { padding: 4px 8px 12px; }
+}
+/* a phone shows the table's rows as cards: the "just uploaded" tint is on the whole card, not in patches behind its cells */
+@media (max-width: 760px) {
+  .fin-table tr.is-fresh > td { background: transparent; }
+  .fin-table tr.is-fresh { background: color-mix(in srgb, var(--ocean-wash) 60%, var(--sheet)); }
+}
+/* Safari on a phone redrew the blurred top bar over a scrolling list of pictures and the screen flickered: on a phone the
+   bar is plain (the same colour, without the blur) */
+@media (max-width: 760px) {
+  .fin__top { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--paper); }
 }

@@ -80,7 +80,7 @@ export default function DateRange({ from, to, onChange, label = 'תאריך', by
     const base = from ? parse(from) : s
     setView(phone ? { y: base.y, m: base.m } : from ? { y: base.y, m: base.m } : addMonths({ y: base.y, m: base.m }, -1))
     setFocus(from || today())
-    if (!phone && btn.current) setPos(placeNear(btn.current, { minWidth: 640, maxHeight: 560 }))
+    if (!phone && btn.current) setPos(placeNear(btn.current, { minWidth: 740, maxHeight: 640 }))
     setOpen(true)
   }
   const close = (refocus = true) => { setOpen(false); if (refocus) btn.current?.focus({ preventScroll: true }) }
@@ -97,7 +97,7 @@ export default function DateRange({ from, to, onChange, label = 'תאריך', by
     if (!open) return undefined
     const t = setTimeout(() => pop.current?.querySelector('.fin-cal__day[tabindex="0"]')?.focus({ preventScroll: true }), 0)
     const away = (e) => { if (!pop.current?.contains(e.target) && !btn.current?.contains(e.target)) close(false) }
-    const move = () => { if (!sheet && btn.current) setPos(placeNear(btn.current, { minWidth: 640, maxHeight: 560 })) }
+    const move = () => { if (!sheet && btn.current) setPos(placeNear(btn.current, { minWidth: 740, maxHeight: 640 })) }
     document.addEventListener('pointerdown', away, true)
     window.addEventListener('resize', move); window.addEventListener('scroll', move, true)
     return () => { clearTimeout(t); document.removeEventListener('pointerdown', away, true); window.removeEventListener('resize', move); window.removeEventListener('scroll', move, true) }

@@ -79,6 +79,22 @@ check('X13', 'מבנה הקובץ', 'כל החלקים של קובץ XLSX, כו�
     `עמודות: ${heads.length}; טאבים: ${tabs.join(' | ')}; באפיק הנחל: ${rowsIn(afik)} שורות, 120: ${/<v>120<\/v>/.test(afik)}; חברה אחת: ${tabs1.join(' | ')}`,
     !heads.includes('סטטוס') && !heads.includes('מקור') && heads.length === 14 && tabs.join('|') === 'מסמכים|אפיק הנחל|קורקוס ביצוע א|ראיתה חברה לבניין והשקעות בע״מ|ללא חברה|לפי קטגוריה|לפי ספק' && /<v>120<\/v>/.test(afik) && tabs1.join('|') === 'מסמכים|לפי קטגוריה|לפי ספק') }
 
+// the accountant's workbook split by company: the report, then a sheet per company with only its documents, then the summary
+{ const biz = [{ id: 'b1', name: 'קורקוס ביצוע בע״מ' }, { id: 'b2', name: 'אפיק הנחל' }]
+  const docs2 = docs.map((x, i) => ({ ...x, business_id: i % 3 === 0 ? 'b2' : i % 3 === 1 ? 'b1' : null }))
+  const audit2 = auditCompliance(docs2, { categories: cats, today: '2026-11-14' })
+  const lines2 = audit2.rows.map((x) => reportLine(x.doc, x.c, { businesses: biz }))
+  const f5 = path.join(dir, 'by-company.xlsx'); fs.writeFileSync(f5, accountantWorkbook(lines2, { today: '2026-11-14', byCompany: true }))
+  const f6 = path.join(dir, 'one-sheet.xlsx'); fs.writeFileSync(f6, accountantWorkbook(lines2, { today: '2026-11-14' }))
+  const tabsOf = (f) => [...execSync(`unzip -p ${f} xl/workbook.xml`, { encoding: 'utf8' }).matchAll(/<sheet name="([^"]*)"/g)].map((m) => m[1].replace(/&quot;/g, '"'))
+  const t5 = tabsOf(f5); const t6 = tabsOf(f6)
+  const sheetRows = (f, i) => (execSync(`unzip -p ${f} xl/worksheets/sheet${i}.xml`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).match(/<row /g) || []).length
+  const want = { 'אפיק הנחל': lines2.filter((l) => l.company === 'אפיק הנחל').length, 'קורקוס ביצוע בע״מ': lines2.filter((l) => l.company === 'קורקוס ביצוע בע״מ').length }
+  const got = Object.fromEntries(Object.keys(want).map((n) => [n, sheetRows(f5, t5.indexOf(n) + 1) - 5]))
+  check('X17', 'דוח רואה החשבון: גיליון לכל חברה', 'בבחירה "גיליון לכל חברה": אחרי הדוח גיליון בשם כל חברה ("לא משויך" אחרון) עם המסמכים שלה בלבד, ואחריהם הסיכום והמסמכים לבדיקה; בלי הבחירה: כמו קודם',
+    `גיליונות: ${t5.join(' | ')}; שורות לחברה: ${JSON.stringify(got)} מתוך ${JSON.stringify(want)}; בלי: ${t6.join(' | ')}`,
+    t5.join('|') === 'דוח הוצאות לרואה החשבון|אפיק הנחל|קורקוס ביצוע בע״מ|לא משויך|סיכום הוצאות|מסמכים לבדיקה|רשימות' && JSON.stringify(got) === JSON.stringify(want) && t6.join('|') === 'דוח הוצאות לרואה החשבון|סיכום הוצאות|מסמכים לבדיקה|רשימות') }
+
 fs.rmSync(dir, { recursive: true, force: true })
 const failed = results.filter((r) => !r.pass)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)

@@ -29,7 +29,6 @@ const EntityOverview = lazy(() => import('./EntityOverview.jsx'))
 const Scanners = lazy(() => import('./Scanners.jsx'))
 const Cloud = lazy(() => import('./Cloud.jsx'))
 const Delivery = lazy(() => import('./Delivery.jsx'))
-const SendCenter = lazy(() => import('./SendCenter.jsx'))
 const Connections = lazy(() => import('./Connections.jsx'))
 const Reports = lazy(() => import('./Reports.jsx'))
 const DataManagement = lazy(() => import('./DataManagement.jsx'))
@@ -64,7 +63,6 @@ export const NAV = [
   { to: '', label: 'סקירה פיננסית', icon: 'reports', roles: OPS, el: <Executive />, group: 'הנהלה' },
   { to: '/vat', label: 'מרכז המע״מ', icon: 'shield', roles: ['admin', 'finance_manager', 'accountant'], el: <Vat />, group: 'הנהלה' },
   { to: '/compliance', label: 'ציות ומס', icon: 'shield', roles: ['admin', 'finance_manager', 'accountant'], el: <Compliance />, group: 'הנהלה' },
-  { to: '/report', label: 'דוח לרואה החשבון', icon: 'table', roles: ['admin', 'finance_manager', 'accountant'], el: <AccountantReport />, group: 'הנהלה' },
   { to: '/assistant', label: 'שאלות על הנתונים', icon: 'sparkle', roles: [...OPS, 'accountant'], el: <Assistant />, group: 'הנהלה' },
   { to: '', label: 'מרכז בקרה', icon: 'home', roles: ['employee', 'accountant'], el: <Dashboard />, group: 'מסמכים' },
   { to: '/today', label: 'מרכז בקרה', icon: 'home', roles: OPS, el: <Dashboard />, group: 'מסמכים' },
@@ -73,7 +71,9 @@ export const NAV = [
   { to: '/new', label: 'חשבוניות חדשות', icon: 'inbox', roles: ['admin', 'finance_manager', 'employee'], el: <Documents preset="new" />, badge: 'new', group: 'מסמכים' },
   { to: '/pending', label: 'ממתינים לבדיקה', icon: 'clock', roles: OPS, el: <Documents preset="pending" />, badge: 'pending', group: 'מסמכים' },
   { to: '/complete', label: 'השלמת פרטים', icon: 'edit', roles: OPS, el: <Complete />, badge: 'incomplete', group: 'מסמכים' },
-  { to: '/send', label: 'שליחה לרו״ח', icon: 'send', roles: OPS, el: <SendCenter />, badge: 'ready', group: 'מסמכים' },
+  // the report and its sending are one screen; /send (old links, bookmarks) opens it too, without a second menu item
+  { to: '/report', label: 'דוח ושליחה לרו״ח', accLabel: 'דוח לרואה החשבון', icon: 'send', roles: ['admin', 'finance_manager', 'accountant'], el: <AccountantReport />, badge: 'ready', group: 'מסמכים' },
+  { to: '/send', label: 'דוח ושליחה לרו״ח', icon: 'send', roles: OPS, el: <AccountantReport />, group: 'hidden' },
   { to: '/drive', label: 'Google Drive', icon: 'folder', roles: ['admin', 'finance_manager'], el: <Drive />, group: 'מסמכים' },
   { to: '/exports', label: 'היסטוריית ייצוא', icon: 'history', roles: ['admin', 'finance_manager', 'accountant'], el: <ExportHistory />, group: 'מסמכים' },
   { to: '/suppliers', label: 'ספקים', icon: 'suppliers', roles: OPS, el: <MasterData kind="suppliers" />, badge: 'suppliers', group: 'נתוני יסוד', detail: <EntityOverview kind="suppliers" /> },
@@ -597,7 +597,7 @@ export default function FinanceApp() {
         </nav>
         {capture && <Suspense fallback={null}><CaptureReceipt onClose={() => setCapture(false)} /></Suspense>}
         {uploading && <Modal title="העלאת מסמכים" onClose={() => setUploading(false)} footer={<><button type="button" className="fin-btn" onClick={() => { setUploading(false); navigate(`${BASE}/documents?status=new`) }}>למסמכים החדשים</button><button type="button" className="fin-btn fin-btn--ghost" onClick={() => setUploading(false)}>סגירה</button></>}><UploadZone onDone={data.reload} /><p className="fin-muted fin-small">PDF או תמונה, עד 12MB, אחד או כמה ביחד. המסמכים נקראים ברקע ומחכים לבדיקה ב"חשבוניות חדשות".</p></Modal>}
-        <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav} />
+        <CommandPalette open={cmd} onClose={() => setCmd(false)} nav={nav.filter((n) => n.group !== 'hidden')} />
         <ConfirmHost />
         <PullRefresh onRefresh={data.reload} />
       </div>

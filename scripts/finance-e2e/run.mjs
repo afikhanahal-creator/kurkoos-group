@@ -26,6 +26,8 @@ function record(id, name, expected, actual, pass, shots = []) {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${id} ${name}\n      expected: ${expected}\n      actual:   ${actual}`)
 }
 const sql = (q) => execSync(`psql -At -h 127.0.0.1 -p 54329 -U postgres -c ${JSON.stringify(q)}`, { encoding: 'utf8' }).trim()
+// a clean start for the morning report: no scheduled reports left over from an earlier run
+try { sql("update fin_automations set config = config - 'reports' - 'templates' where key='morning_report'"); sql("delete from fin_settings where key like 'report_sent:%'") } catch { /* the tables are created further down on a first run */ }
 const rest = async (path, token, init = {}) => {
   const r = await fetch(`${SB}/rest/v1/${path}`, { ...init, headers: { apikey: ANON, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Prefer: 'return=representation', ...(init.headers || {}) } })
   const t = await r.text(); let d; try { d = JSON.parse(t) } catch { d = t }
@@ -3372,6 +3374,100 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     `מראש: "${note.replace(/\s+/g, ' ').slice(0, 90)}", בשדה ${shown}, במסד לפני שמירה "${savedBefore}"; ראשונה ברשימה: "${first.replace(/\s+/g, ' ')}"; שורת הוספה: "${createRow.replace(/\s+/g, ' ')}", נוצרה ${created}, נבחרה ${pickedNow}; אחרי שמירה: ${savedAfter}`,
     /נבחרה מראש/.test(note) && /2 מתוך 2 המסמכים/.test(note) && shown === 1 && savedBefore === '' && first.includes(cat[1]) && /2 מסמכים של הספק/.test(first)
       && createRow.includes(fresh) && created === '1' && pickedNow === 1 && savedAfter === fresh, [listShot])
+}
+
+
+// EXEC2: the overview's second generation. Filters narrow every figure, companies sort, every figure explains itself on hover.
+{
+  await page.goto(APP); await page.waitForSelector('.fin-x-big'); await page.waitForTimeout(600)
+  await page.evaluate(() => { sessionStorage.removeItem('fin-x-cats'); sessionStorage.removeItem('fin-x-status') })
+  await page.selectOption('.fin-x__controls select >> nth=0', '12m'); await page.waitForTimeout(600)
+  const num = async () => Number((await page.locator('.fin-x-big').innerText()).replace(/[^\d.\-]/g, ''))
+  const all = await num()
+  const dbAll = Number(sql("select count(*) from fin_documents where status in ('approved','sent')"))
+  const firstBy = async (v) => { await page.selectOption('.fin-x-sort select >> nth=0', v); await page.waitForTimeout(300); return (await page.locator('.fin-x-rows li').first().innerText()).split('\n')[0] }
+  const high = await firstBy('high'); const low = await firstBy('low'); await firstBy('high')
+  const shares = (await page.locator('.fin-x-rows__share').allInnerTexts()).map((x) => Number(x.replace('%', '')))
+  await page.locator('.fin-x-rows button').first().hover(); await page.waitForTimeout(300)
+  const tipTxt = (await page.locator('.fin-tip').innerText().catch(() => '')).replace(/\s+/g, ' ')
+  const tipBox = await page.locator('.fin-tip').boundingBox().catch(() => null)
+  await page.mouse.move(5, 5); await page.waitForTimeout(200)
+  const segs = await page.locator('.fin-donut__seg').count(); const listed = await page.locator('.fin-x-donutwrap .fin-x-list li').count()
+  const centre = (await page.locator('.fin-donut__center').innerText()).replace(/\s+/g, ' ')
+  await page.locator('section[aria-label="לאן הכסף הולך"] .fin-seg button', { hasText: '%' }).click(); await page.waitForTimeout(200)
+  const pctFirst = await page.locator('.fin-x-donutwrap .fin-x-list li strong').first().innerText()
+  const lines = await page.locator('.fin-x-trends .fin-lines svg path').count()
+  await page.locator('.fin-x-trends .fin-seg button', { hasText: 'לפי חברה' }).click(); await page.waitForTimeout(300)
+  const linesCo = await page.locator('.fin-x-trends .fin-lines__legend li').count()
+  const levels = await page.locator('.fin-x-ins__lvl').allInnerTexts()
+  // a status filter: only approved documents; the headline follows, a chip shows it, "ניקוי הכול" brings everything back
+  await page.selectOption('.fin-x__controls select[aria-label="מצב המסמכים"]', 'processed'); await page.waitForTimeout(600)
+  const approved = await num(); const chips = (await page.locator('.fin-x-chips').innerText().catch(() => '')).replace(/\s+/g, ' ')
+  await page.locator('.fin-x-filter summary').click(); const firstCat = (await page.locator('.fin-x-filter__pop label').first().innerText()).trim(); await page.locator('.fin-x-filter__pop input').first().check(); await page.waitForTimeout(500)
+  const oneCat = await num(); const chips2 = (await page.locator('.fin-x-chips').innerText()).replace(/\s+/g, ' ')
+  const exec2Shot = await shot('exec2-filters')
+  await page.locator('.fin-x-chips .fin-link', { hasText: 'ניקוי הכול' }).click(); await page.waitForTimeout(600)
+  const back = await num(); const chipsGone = await page.locator('.fin-x-chips').count()
+  await page.selectOption('.fin-x__controls select >> nth=0', 'month'); await page.waitForTimeout(300)
+  record('EXEC2', 'סקירה פיננסית: מסננים, מיון, ריחוף, טבעת קטגוריות, מגמות ותובנות', 'מיון החברות משנה את הסדר; אחוזי החברות מסתכמים ל-100; ריחוף מציג חלונית עם הסכום, המסמכים והתקופה הקודמת, בתוך המסך; טבעת עם פלח לכל שורה והסכום במרכז; מעבר ל-% מציג אחוזים; גרף מגמות עם קו, ולפי חברה כמה קווים; לכל תובנה רמת חומרה; סינון "אושרו" מקטין את הסכום (כשיש מסמכים שלא אושרו), סינון קטגוריה מקטין עוד, שבבים מציגים את הסינון ו"ניקוי הכול" מחזיר',
+    `הכול ${all}; מיון: גבוה "${high}", נמוך "${low}"; אחוזים ${shares.join('+')}=${shares.reduce((a, b) => a + b, 0)}; חלונית: "${tipTxt.slice(0, 110)}" ב-${tipBox ? Math.round(tipBox.x) : '—'}; טבעת ${segs} פלחים, ${listed} שורות, מרכז "${centre}", ב-% "${pctFirst}"; קווים ${lines}, לפי חברה ${linesCo}; רמות: ${[...new Set(levels.map((x) => x.trim()))].join('/')}; אושרו ${approved} (${dbAll} במסד), "${chips}"; קטגוריה "${firstCat}": ${oneCat}, "${chips2.slice(0, 60)}"; אחרי ניקוי ${back}, שבבים ${chipsGone}`,
+    high !== low && Math.abs(shares.reduce((a, b) => a + b, 0) - 100) <= shares.length && /הוצאות בתקופה/.test(tipTxt) && /בתקופה הקודמת/.test(tipTxt) && tipBox && tipBox.x >= 0 && tipBox.x + tipBox.width <= 1441
+      && segs >= 2 && listed >= segs && /₪/.test(centre) && /%/.test(pctFirst) && lines >= 1 && linesCo >= 2 && levels.length >= 1 && levels.every((x) => /קריטי|דורש תשומת לב|לידיעה/.test(x))
+      && approved <= all && /אושרו/.test(chips) && oneCat <= approved && chips2.includes(firstCat.slice(0, 8)) && Math.abs(back - all) < 0.01 && chipsGone === 0, [exec2Shot])
+}
+
+// REPORTS: scheduled reports. An admin sets days, hours and recipients; a due slot goes out once, by email and WhatsApp.
+{
+  const tk = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const fmTok = await login('fm-exec@kurkoos.test', 'FmExec!xx1')
+  const logNow = async () => fetch(`${FAKES}/__log`).then((r) => r.json())
+  const view0 = (await api(tk, { action: 'reports-view' })).data
+  const fmSave = await api(fmTok, { action: 'reports', op: 'save', reports: [] })
+  const meId = sql("select user_id from fin_members where email='admin@kurkoos.test'")
+  const sender = sql("select id||'|'||phone from fin_whatsapp_senders where active order by created_at limit 1").split('|')
+  const bizId = sql('select id from fin_businesses order by sort, name limit 1')
+  const il = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', weekday: 'short' }).formatToParts(new Date(Date.now() - 60_000)).map((x) => [x.type, x.value]))
+  const dow = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(il.weekday)
+  const report = { id: 'e2erep', name: 'בדיקת הוצאות', template: 'expenses', period: 'this_month', companies: [bizId, '00000000-0000-0000-0000-000000000000'], tz: 'Asia/Jerusalem',
+    slots: [{ id: 'now', day: dow, time: `${il.hour}:${il.minute}`, enabled: true }, { id: 'off', day: dow, time: `${il.hour}:${il.minute}`, enabled: true }, { id: 'bad', day: 9, time: '25:00' }, { id: 'other', day: (dow + 3) % 7, time: '09:30', enabled: true }],
+    users: [meId, '00000000-0000-0000-0000-000000000000'], wa: [sender[0], '00000000-0000-0000-0000-000000000000'] }
+  const saved = (await api(tk, { action: 'reports', op: 'save', reports: [report] })).data
+  const kept = saved.reports?.[0] || {}
+  const before = await logNow()
+  const tick1 = (await api(tk, { action: 'reports', op: 'tick' })).data
+  const tick2 = (await api(tk, { action: 'reports', op: 'tick' })).data
+  const after = await logNow()
+  const mails = after.emails.slice(before.emails.length); const was = after.wa.slice(before.wa.length)
+  const test = (await api(tk, { action: 'reports', op: 'test', report: kept })).data
+  const after2 = await logNow()
+  const hist = (await api(tk, { action: 'reports-view', op: 'history' })).data.runs || []
+  const sched = hist.find((h) => h.trigger === 'schedule' && h.report_id === 'e2erep')
+  const opened = sched ? (await api(tk, { action: 'reports-view', op: 'open', id: sched.id })).data : {}
+  const morningMails = after2.emails.length
+  await fetch('http://127.0.0.1:5180/api/finance?action=morning', { headers: { Authorization: 'Bearer test-cron' } }).then((r) => r.json()).catch(() => null)
+  const afterMorning = (await logNow()).emails.slice(morningMails).filter((m) => /דוח בוקר/.test(m.subject || '')).length
+  await page.goto(`${APP}/automations`); await page.waitForSelector('.fin-rep'); await page.waitForTimeout(600)
+  const cardText = (await page.locator('.fin-rep').first().innerText()).replace(/\s+/g, ' ')
+  const kpis = await page.locator('.fin-auto-kpis .fin-kpi').count()
+  const histRows = await page.locator('section:has(h3:text-is("היסטוריית שליחות")) tbody tr').count()
+  await page.getByRole('button', { name: 'דוח חדש' }).click(); await page.waitForSelector('.fin-wiz')
+  const steps = await page.locator('.fin-wiz li').count()
+  await page.getByRole('button', { name: 'המשך' }).click(); await page.getByRole('button', { name: 'המשך' }).click()
+  const week = await page.locator('.fin-week__day').count()
+  await page.getByRole('button', { name: 'המשך' }).click(); await page.getByRole('button', { name: 'המשך' }).click()
+  const blocked = await page.locator('.fin-note--warn[role=alert]').innerText().catch(() => '')
+  const repShot = await shot('reports-wizard')
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300)
+  // back to the built-in morning report, so a second run of the suite starts the same way
+  sql("update fin_automations set config = config - 'reports' - 'templates' where key='morning_report'"); sql("delete from fin_settings where key like 'report_sent:%'")
+  record('REPORTS', 'דוחות מתוזמנים: ימים, שעות, נמענים, שליחה פעם אחת והיסטוריה', 'לפני הגדרה: דוח הבוקר המובנה; מנהל כספים לא שומר; נשמר רק מה שתקין (חברה, משתמש ומספר שקיימים, שעה כפולה ושעה שגויה נופלות); שעה שהגיעה: מייל אחד ווואטסאפ אחד למספר רשום, ובריצה שנייה כלום; בדיקה: רק למייל של המבקש; ההיסטוריה שומרת את הדוח; הקרון של הבוקר כבר לא שולח מייל; במסך: 5 נתוני מצב, כרטיס דוח, אשף 5 שלבים עם 7 ימים, ואי אפשר להמשיך בלי נמען',
+    `לפני: configured=${view0.configured}, ${view0.reports?.[0]?.name}; מנהל כספים: ${fmSave.status}; נשמר: ${kept.slots?.length} שעות, ${kept.users?.length} משתמשים, ${kept.wa?.length} מספרים, חברות ${JSON.stringify(kept.companies?.length)}; ריצה 1: ${JSON.stringify((tick1.sent || []).map((x) => [x.sent, x.failed]))}, ריצה 2: ${(tick2.sent || []).length}; מיילים ${mails.length} ("${mails[0]?.subject}" אל ${mails[0]?.to}), וואטסאפ ${was.length} אל ${was[0]?.to}; בדיקה: ${test.sent}/${test.recipients}; היסטוריה: ${sched?.status} ${sched?.slot}, נפתח ${String(opened.html || '').length} תווים; בוקר: ${afterMorning}; מסך: ${kpis} נתונים, "${cardText.slice(0, 60)}", ${histRows} שורות, ${steps} שלבים, ${week} ימים, "${blocked}"`,
+    view0.configured === false && view0.reports?.[0]?.template === 'morning' && fmSave.status === 403
+      && kept.slots?.length === 2 && kept.users?.length === 1 && kept.wa?.length === 1 && kept.companies?.length === 1
+      && (tick1.sent || []).length === 1 && tick1.sent[0].sent === 2 && tick1.sent[0].failed === 0 && (tick2.sent || []).length === 0
+      && mails.length === 1 && /בדיקת הוצאות/.test(mails[0].subject) && String(mails[0].to).includes('admin@kurkoos.test') && /סך ההוצאות/.test(mails[0].html || '') && was.length === 1 && was[0].to === `${sender[1]}@c.us` && /בדיקת הוצאות/.test(was[0].message)
+      && test.sent === 1 && test.recipients === 1 && sched?.status === 'ok' && String(opened.html || '').includes('בדיקת הוצאות') && afterMorning === 0
+      && kpis === 5 && /בדיקת הוצאות/.test(cardText) && histRows >= 2 && steps === 5 && week === 7 && /נמען/.test(blocked), [repShot])
 }
 
 record('UI', 'אין שגיאות JavaScript בדפדפן', '0 שגיאות', consoleErrors.length ? consoleErrors.slice(0, 5).join(' || ') : '0', consoleErrors.length === 0)

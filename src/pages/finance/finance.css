@@ -5159,3 +5159,18 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 @media (max-width: 767px) { .fin-dm__folder.is-manual, .fin-dm__folder.is-keyed { padding-inline-end: 100px; } .fin-dm__folderacts { inset-inline-end: 52px; } }
 .fin-app-tabs { flex-wrap: wrap; overflow: visible; }
 .fin-app-tabs button { flex: 0 1 auto; }
+
+/* figures read at a glance: the value is bold and its label is dark enough to read on a phone */
+.fin-kpi__value { font-weight: 700; }
+.fin-kpi__label { color: var(--text-2); font-weight: 700; }
+.fin-kpi__hint { color: var(--text-2); font-size: var(--t-sm); }
+/* the report set-up: "ביטול" stands alone at the far left, away from "המשך" and "חזרה" */
+.fin-modal__foot .fin-wiz-cancel { margin-inline-start: auto; flex: 0 0 auto; }
+.fin-week__day strong { font-weight: 700; font-size: var(--t-base); }
+.fin-week__times .fin-muted, .fin-wiz-row > .fin-muted { color: var(--text-2); font-size: var(--t-md); }
+.fin-week__acts .fin-link { font-weight: 700; }
+.fin-slot input[type='time'] { font-weight: 700; font-size: var(--t-base); }
+.fin-wiz button { font-weight: 700; }
+.fin-wiz li:not(.is-on) button { font-weight: 400; color: var(--text-2); }
+/* the step strip keeps its height inside the phone sheet (a scrolling flex child would otherwise shrink to nothing) */
+.fin-wiz { flex: none; min-height: 48px; }

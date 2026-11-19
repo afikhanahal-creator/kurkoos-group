@@ -123,3 +123,28 @@ export const recentMonths = (n = 36) => Array.from({ length: n }, (_, i) => shif
 // colours of a breakdown (a category, a company, a supplier): told apart on a light and on a dark surface, in this order
 export const SERIES = ['#16688c', '#c2571a', '#2f7d5b', '#8a4fa8', '#b8860b', '#c0395a', '#3b6fb6', '#5d6b78']
 export const seriesColor = (i) => SERIES[i % SERIES.length]
+
+/* ---- the VAT reporting period: the months a report to the accountant covers ----
+   Bimonthly (the default, the group's reporting): January–February, March–April, … November–December. Monthly when every
+   active company reports monthly (CompanySettings, "תדירות דיווח מע״מ"). "Ready for the accountant" means approved, not
+   yet sent, and dated inside the current reporting period; an older approved document is shown on request, never lost. */
+const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+export const periodKindOf = (businesses = []) => {
+  const live = businesses.filter((b) => b.active !== false && !b.archived_at)
+  return live.length && live.every((b) => (b.report_settings?.vat_period || 'bimonthly') === 'monthly') ? 'monthly' : 'bimonthly'
+}
+/* the period that holds `day` (YYYY-MM-DD), moved by `shift` periods: { key, from, to, label, short } */
+export function reportPeriod(kind = 'bimonthly', shift = 0, day = new Date().toISOString().slice(0, 10)) {
+  const span = kind === 'monthly' ? 1 : 2
+  const y0 = Number(day.slice(0, 4)); const m0 = Number(day.slice(5, 7)) - 1
+  const start = Math.floor(m0 / span) * span + shift * span
+  const y = y0 + Math.floor(start / 12); const m = ((start % 12) + 12) % 12
+  const endM = m + span - 1
+  const last = new Date(Date.UTC(y, endM + 1, 0)).getUTCDate()
+  const from = `${y}-${String(m + 1).padStart(2, '0')}-01`; const to = `${y}-${String(endM + 1).padStart(2, '0')}-${String(last).padStart(2, '0')}`
+  const label = span === 1 ? `${HE_MONTHS[m]} ${y}` : `${HE_MONTHS[m]}–${HE_MONTHS[endM]} ${y}`
+  return { key: from.slice(0, 7), from, to, label, kind }
+}
+export const inPeriod = (d, p) => { const day = String(docDate(d)).slice(0, 10); return !!day && day >= p.from && day <= p.to }
+/* approved, not sent, and in the current reporting period */
+export const readyNow = (d, p) => d.status === 'approved' && !d.exported_at && inPeriod(d, p)

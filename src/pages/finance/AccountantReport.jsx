@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { DocPic } from './Peek.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, date, dateTime, money } from './format.js'
+import { DOC_TYPE, date, dateTime, money, reportPeriod, periodKindOf } from './format.js'
 import { useCompliance } from './Compliance.jsx'
 import { STATUS } from './compliance.js'
 import { STATUS_TAG, TYPE_TAG, accountantCsv, accountantHtml, accountantWorkbook, reportLine, reportName, reportSummary } from './accountantReport.js'
@@ -31,17 +31,15 @@ const READY = (d) => ['approved', 'sent'].includes(d.status)
 const STATUS_LABEL = { ...Object.fromEntries(Object.entries(STATUS).map(([k, v]) => [k, v[1]])), partial: 'קיזוז חלקי' }
 const pad = (x) => String(x).padStart(2, '0')
 const isoOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-const lastOf = (y, m) => new Date(y, m + 1, 0).getDate()
-function periods(now = new Date()) {
+function periods(kind, now = new Date()) {
   const y = now.getFullYear(); const m = now.getMonth()
-  const pm = m === 0 ? 11 : m - 1; const py = m === 0 ? y - 1 : y
-  const q = Math.floor(m / 3) * 3
-  const pq = q === 0 ? 9 : q - 3; const pqy = q === 0 ? y - 1 : y
   const name = (mm, yy) => new Date(yy, mm, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
+  // the reporting period (two months, or one) comes first: a report to the accountant is per period of the VAT return
+  const cur = reportPeriod(kind, 0); const prev = reportPeriod(kind, -1)
   return [
-    { key: 'last', label: 'החודש שעבר', hint: name(pm, py), from: `${py}-${pad(pm + 1)}-01`, to: `${py}-${pad(pm + 1)}-${lastOf(py, pm)}` },
+    { key: 'rp', label: 'תקופת הדיווח', hint: cur.label, from: cur.from, to: cur.to },
+    { key: 'rpprev', label: 'התקופה הקודמת', hint: prev.label, from: prev.from, to: prev.to },
     { key: 'this', label: 'החודש', hint: name(m, y), from: `${y}-${pad(m + 1)}-01`, to: isoOf(now) },
-    { key: 'pq', label: 'הרבעון הקודם', hint: `${name(pq, pqy)} – ${name(pq + 2, pqy)}`, from: `${pqy}-${pad(pq + 1)}-01`, to: `${pqy}-${pad(pq + 3)}-${lastOf(pqy, pq + 2)}` },
     { key: 'year', label: 'השנה', hint: String(y), from: `${y}-01-01`, to: isoOf(now) },
     { key: 'all', label: 'כל התקופות', hint: 'בלי סינון לפי תאריך', from: '', to: '' },
   ]
@@ -62,7 +60,7 @@ export default function AccountantReport() {
   const handed = useMemo(() => { try { const v = JSON.parse(sessionStorage.getItem('fin-report-ids') || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } }, [])
   useEffect(() => { try { sessionStorage.removeItem('fin-report-ids') } catch { /* nothing to forget */ } }, [])
 
-  const P = useMemo(() => periods(), [])
+  const P = useMemo(() => periods(periodKindOf(businesses)), [businesses])
   // documents handed over from the documents screen are shown whatever their date
   const [period, setPeriod] = useState(handed.length ? { key: 'all', from: '', to: '' } : { key: P[0].key, from: P[0].from, to: P[0].to })
   const [company, setCompany] = useState('')

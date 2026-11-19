@@ -3,7 +3,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal, isFresh } from './format.js'
+import { DOC_TYPE, SOURCE, date, docDate, hasError, issuesOf, money, nameOf, signedTotal, isFresh, reportPeriod, periodKindOf, inPeriod } from './format.js'
 import { makeZip, saveBlob } from './zip.js'
 import { Confidence, Empty, Icon, Modal, MoreMenu, PageHead, StatusPill, UploadZone, askConfirm, useAsync } from './ui.jsx'
 import ShareDialog from './ShareDialog.jsx'
@@ -103,11 +103,18 @@ export default function Documents({ preset = 'all' }) {
   const setFilter = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }))
   const activeFilters = Object.values(f).filter(Boolean).length
 
+  // "ready for the accountant" is the current reporting period (two months, or one); earlier periods one tap away
+  const pKind = periodKindOf(businesses)
+  const [pShift, setPShift] = useState(0)
+  const [pAll, setPAll] = useState(false)
+  const rp = useMemo(() => reportPeriod(pKind, pShift), [pKind, pShift])
+  const nowP = useMemo(() => reportPeriod(pKind, 0), [pKind])
+  const olderReady = useMemo(() => documents.filter((d) => d.status === 'approved' && !d.exported_at && String(docDate(d)) < nowP.from).length, [documents, nowP])
   // typing stays instant: the list follows the search a frame later
   const qd = useDeferredValue(q)
   const rows = useMemo(() => {
     const needle = qd.trim().toLowerCase()
-    const list = documents.filter((d) => (only ? only.ids.has(d.id) : P.filter(d) && (preset !== 'all' || inTab(d, tab)))
+    const list = documents.filter((d) => (only ? only.ids.has(d.id) : P.filter(d) && (preset !== 'all' || (inTab(d, tab) && (tab !== 'approved' || pAll || inPeriod(d, rp)))))
       && (!f.from || String(dateBy === 'received' ? String(d.created_at).slice(0, 10) : docDate(d)) >= f.from) && (!f.to || String(dateBy === 'received' ? String(d.created_at).slice(0, 10) : docDate(d)) <= f.to)
       && (!f.supplier || d.supplier_id === f.supplier) && (!f.biz || (f.biz === 'none' ? !d.business_id : d.business_id === f.biz))
       && (!f.project || (f.project === 'none' ? !d.project_id && !allocations.some((a) => a.document_id === d.id) : d.project_id === f.project || allocations.some((a) => a.document_id === d.id && a.project_id === f.project))) && (!f.cat || d.category === f.cat)
@@ -117,7 +124,7 @@ export default function Documents({ preset = 'all' }) {
       && (!needle || [d.supplier_name, d.doc_number, d.description, d.file_name, d.email_subject, d.supplier_vat_id, d.category, nameOf(businesses, d.business_id), nameOf(projects, d.project_id), String(d.total_amount ?? '')].some((v) => String(v || '').toLowerCase().includes(needle))))
     const key = SORTS[sort.key]
     return list.sort((a, b) => (isFresh(b) - isFresh(a)) || (isFresh(a) && isFresh(b) ? String(b.created_at).localeCompare(String(a.created_at)) : 0) || (() => { const x = key(a); const y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * sort.dir })())
-  }, [documents, P, preset, tab, f, qd, sort, businesses, projects, allocations, dateBy, only])
+  }, [documents, P, preset, tab, f, qd, sort, businesses, projects, allocations, dateBy, only, rp, pAll])
 
   const total = rows.reduce((s, d) => s + signedTotal(d), 0)
   // draw 100 rows at a time (10,000 rows in the page took 17 seconds); totals, "select all" and exports use every row
@@ -304,13 +311,26 @@ export default function Documents({ preset = 'all' }) {
       {preset === 'all' && (
         <div className="fin-tabs" role="tablist" aria-label="סטטוס">
           {TABS.filter((t) => role !== 'accountant' || ['', 'approved', 'sent'].includes(t.id)).map((t) => {
-            const n = documents.filter((d) => inTab(d, t.id)).length
+            const n = documents.filter((d) => inTab(d, t.id) && (t.id !== 'approved' || inPeriod(d, nowP))).length
             return (
               <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={`fin-tab ${tab === t.id ? 'is-active' : ''}`} onClick={() => { const p = new URLSearchParams(params); if (t.id) p.set('status', t.id); else p.delete('status'); setParams(p); setSel(new Set()) }}>
                 {t.label} <em>{n}</em>
               </button>
             )
           })}
+        </div>
+      )}
+      {preset === 'all' && tab === 'approved' && (
+        <div className="fin-periodbar" role="group" aria-label="תקופת הדיווח">
+          <span className="fin-periodbar__label">תקופת הדיווח</span>
+          <span className="fin-periodbar__nav">
+            <button type="button" className="fin-icon-btn" onClick={() => { setPAll(false); setPShift((v) => v - 1) }} aria-label="התקופה הקודמת" title="התקופה הקודמת"><Icon name="back" size={17} /></button>
+            <strong aria-live="polite">{pAll ? 'כל התקופות' : rp.label}</strong>
+            <button type="button" className="fin-icon-btn" onClick={() => { setPAll(false); setPShift((v) => Math.min(0, v + 1)) }} disabled={!pAll && pShift >= 0} aria-label="התקופה הבאה" title="התקופה הבאה"><Icon name="next" size={17} /></button>
+          </span>
+          {(pAll || pShift !== 0) && <button type="button" className="fin-btn fin-btn--sm" onClick={() => { setPAll(false); setPShift(0) }}>לתקופה הנוכחית</button>}
+          {!pAll && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => setPAll(true)}>כל התקופות</button>}
+          {!pAll && pShift === 0 && olderReady > 0 && <span className="fin-periodbar__older"><Icon name="info" size={15} /> {olderReady === 1 ? 'מסמך מאושר אחד מתקופה קודמת עוד לא נשלח' : `${olderReady} מסמכים מאושרים מתקופות קודמות עוד לא נשלחו`} <button type="button" className="fin-link" onClick={() => setPShift(-1)}>הצגה</button></span>}
         </div>
       )}
 

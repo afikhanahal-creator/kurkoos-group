@@ -12,7 +12,7 @@ import { Empty, Icon, Pill, askConfirm, useAsync } from './ui.jsx'
    documents come from. Stored on the company (fin_businesses.report_settings, plus the existing columns), so every
    screen that reports on a company reads the same answers: the VAT report groups by the company's VAT period, the
    accountant mail goes to its accountant, the exported files follow its formats. */
-export const REPORT_DEFAULTS = { logo: '', deductions_file: '', incorporated_on: '', zip: '', website: '', entity_type: 'company', vat_period: 'monthly', fiscal_start: '01', currency: 'ILS', date_format: 'dd/mm/yyyy', send_format: 'both', include_originals: true, send_day: 15, accountant_office: '', accountant_phone: '' }
+export const REPORT_DEFAULTS = { logo: '', deductions_file: '', incorporated_on: '', zip: '', website: '', entity_type: 'company', vat_period: 'bimonthly', fiscal_start: '01', currency: 'ILS', date_format: 'dd/mm/yyyy', send_format: 'both', include_originals: true, send_day: 15, accountant_office: '', accountant_phone: '' }
 export const reportOf = (b) => ({ ...REPORT_DEFAULTS, ...(b?.report_settings || {}) })
 const ENTITY = { company: 'חברה בע״מ', licensed: 'עוסק מורשה', exempt: 'עוסק פטור', partnership: 'שותפות', nonprofit: 'עמותה / מלכ״ר' }
 const VAT_PERIOD = { monthly: 'חודשי', bimonthly: 'דו-חודשי', none: 'לא מדווח (פטור)' }

@@ -4,7 +4,7 @@ import CaptureReceipt from './CaptureReceipt.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
-import { byDocDate, ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth, byArrival } from './format.js'
+import { byDocDate, ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth, byArrival, reportPeriod, periodKindOf, readyNow } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { unsureNumbers } from './Documents.jsx'
@@ -22,7 +22,7 @@ const pretty = (p) => (p && p.startsWith('972') ? `0${p.slice(3, 5)}-${p.slice(5
 /* The home screen answers four questions: what arrived, what needs me, what is ready for the accountant, and is
    collection working. Everything else (spend, trends, AI accuracy) lives in דוחות › תמונת מצב. */
 export default function Dashboard() {
-  const { documents, mailboxes, members, role, can, reload, go } = useFinance()
+  const { documents, mailboxes, members, role, can, reload, go, businesses } = useFinance()
   const me = useSession()
   const ops = can('operate')
   const status = useAsync(() => api.callServer('status').catch(() => null), [])
@@ -36,7 +36,8 @@ export default function Dashboard() {
     return {
       fresh: live.filter((d) => new Date(d.created_at).getTime() > week && ['review', 'processing', 'failed'].includes(d.status)).length,
       review: live.filter((d) => d.status === 'review').length,
-      ready: live.filter((d) => d.status === 'approved' && !d.exported_at),
+      // ready for the accountant: approved, not sent, in the current reporting period
+      ready: live.filter((d) => readyNow(d, reportPeriod(periodKindOf(businesses)))),
       sent: live.filter((d) => d.status === 'sent' && d.exported_at && new Date(d.exported_at).getMonth() === new Date().getMonth()).length,
       numbers: live.filter(unsureNumbers).length,
       attention: live.filter((d) => d.status === 'failed' || d.status === 'duplicate' || (d.status === 'review' && hasError(d))).length,
@@ -44,7 +45,7 @@ export default function Dashboard() {
       // the latest documents by the date printed on them (a paper of last month that was added today is not "latest")
       recent: [...live].sort(byArrival).slice(0, 8),
     }
-  }, [documents])
+  }, [documents, businesses])
 
   // spend by the date on the document: this month, last month, the year, and six months for the chart
   const spend = useMemo(() => {
@@ -77,7 +78,7 @@ export default function Dashboard() {
   const tiles = [
     { k: 'fresh', label: 'חדשים השבוע', value: m.fresh, to: '/new', show: role !== 'accountant' },
     { k: 'review', label: 'ממתינים לבדיקה', value: m.review, to: '/pending', show: ops, attn: m.review > 0 },
-    { k: 'ready', label: 'מוכנים לרו״ח', value: m.ready.length, to: ops ? '/send' : '/documents?status=approved', show: true, sub: m.ready.length ? money(m.ready.reduce((s, d) => s + Number(d.total_amount || 0), 0)) : '' },
+    { k: 'ready', label: 'מוכנים לרו״ח', value: m.ready.length, to: ops ? '/report' : '/documents?status=approved', show: true, sub: [reportPeriod(periodKindOf(businesses)).label, m.ready.length ? money(m.ready.reduce((s, d) => s + Number(d.total_amount || 0), 0)) : ''].filter(Boolean).join(' · ') },
     { k: 'sent', label: 'נשלחו החודש', value: m.sent, to: '/exports', show: role !== 'employee' },
   ].filter((t) => t.show)
 

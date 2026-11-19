@@ -35,6 +35,11 @@ const admin = (path, body) => fetch(`${SB}/auth/v1/${path}`, { method: body ? 'P
 const login = async (email, password) => (await fetch(`${SB}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).then((r) => r.json())).access_token
 const api = async (token, body) => { const r = await fetch('http://127.0.0.1:5180/api/finance', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) } }
 
+// the reporting period "ready for the accountant" means (src/pages/finance/format.js), for the SQL of the checks below
+const fmt = await import('../../src/pages/finance/format.js')
+const nowPeriod = () => fmt.reportPeriod(fmt.periodKindOf(JSON.parse(sql("select coalesce(json_agg(json_build_object('active', active, 'archived_at', archived_at, 'report_settings', report_settings)), '[]') from fin_businesses") || '[]')))
+const inNowPeriod = () => { const p = nowPeriod(); return `coalesce(issue_date, (email_date)::date, created_at::date) between '${p.from}' and '${p.to}'` }
+
 // ---------- fresh state ----------
 execSync(`psql -q -h 127.0.0.1 -p 54329 -U postgres -f ${new URL('./reset.sql', import.meta.url).pathname}`)
 const fx = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); fx.mailboxes['broken@kurkoos.test'].failing = true; fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fx, null, 1))
@@ -162,7 +167,7 @@ await page.keyboard.press('Escape'); await page.waitForTimeout(400)
 await nav('מרכז בקרה')
 const tile = async (k) => Number((await page.locator(`.fin-tile[data-k="${k}"] .fin-tile__value`).innerText()).trim())
 const homeNums = { fresh: await tile('fresh'), review: await tile('review'), ready: await tile('ready') }
-const homeWant = { fresh: Number(sql("select count(*) from fin_documents where created_at > now() - interval '7 days' and status in ('review','processing','failed')")), review: Number(sql("select count(*) from fin_documents where status='review'")), ready: Number(sql("select count(*) from fin_documents where status='approved' and exported_at is null")) }
+const homeWant = { fresh: Number(sql("select count(*) from fin_documents where created_at > now() - interval '7 days' and status in ('review','processing','failed')")), review: Number(sql("select count(*) from fin_documents where status='review'")), ready: Number(sql(`select count(*) from fin_documents where status='approved' and exported_at is null and ${inNowPeriod()}`)) }
 const recentRows = await page.locator('.fin-recent li').count()
 const sources = (await page.locator('.fin-sources').innerText()).replace(/\s+/g, ' ')
 const homeShot = await shot('05-home')
@@ -1094,6 +1099,7 @@ record('SHARE', 'שיתוף מסמך בוואטסאפ', 'המסמך נשלח מ�
 const toApprove = sql("select id from fin_documents d where status='review' and exported_at is null and coalesce(total_amount,0) < 50000 and not exists (select 1 from jsonb_array_elements(coalesce(d.issues,'[]'::jsonb)) i where i->>'level'='error') order by created_at limit 1")
 const approveRes = toApprove ? await rest(`fin_documents?id=eq.${toApprove}`, adminToken, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'approved' }) }) : { status: 'none' }
 const readyIds = sql("select string_agg(id::text, ',') from fin_documents where status='approved' and exported_at is null").split(',').filter(Boolean)
+const readyNowCount = Number(sql(`select count(*) from fin_documents where status='approved' and exported_at is null and ${inNowPeriod()}`))   // what the menu badge counts
 // the report and its sending are one screen: all periods, only what was not sent yet
 await nav('דוח ושליחה לרו״ח'); await page.reload(); await page.waitForSelector('.fin-rep__when'); await page.waitForTimeout(800)
 await page.locator('.fin-rep__period', { hasText: 'כל התקופות' }).click()
@@ -1116,7 +1122,7 @@ const historyRow = await page.locator('.fin-deliveries li').first().innerText().
 const sentCenterShot = await shot('77-send-center-sent')
 record('SENDC', 'מרכז השליחה לרו״ח', 'מופיעים כל המסמכים המוכנים (גם בתג בתפריט); ביטול מסמך אחד מעדכן את הסיכום; אחרי שליחה רק המסמכים שנשלחו מסומנים "נשלח לרו״ח"; השליחה נרשמת עם מזהה משרת הדואר',
   `אישור נוסף: ${approveRes.status}; במסך: ${listed}, במסד: ${readyIds.length}, תג: ${badge}; סיכום: ${barNow.slice(0, 60)}; סימון ברירת מחדל: ${markOn}; הודעה: "${doneNote}"; סומנו: ${nowSent}/${expectSent}; משלוח: ${delivery}; היסטוריה: ${historyRow.replace(/\s+/g, ' ').slice(0, 70)}`,
-  listed === readyIds.length && listed >= 2 && Number(badge) === readyIds.length && markOn && Number(nowSent) === expectSent && /^sent\|\d+\|.+\|cpa@accountants\.test$/.test(delivery) && /נמסר לשרת הדואר/.test(historyRow),
+  listed === readyIds.length && listed >= 2 && Number(badge) === readyNowCount && markOn && Number(nowSent) === expectSent && /^sent\|\d+\|.+\|cpa@accountants\.test$/.test(delivery) && /נמסר לשרת הדואר/.test(historyRow),
   [sendCenterShot, sentCenterShot])
 
 // =================== DATE RANGE + SEND TO THE ACCOUNTANT ===================
@@ -2044,6 +2050,37 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   record('SCANLIST', 'ניהול סריקות עם כמה חשבונות', 'שורה לכל חשבון מחובר, הכרטיסים סגורים; לחיצה פותחת כרטיס אחד בכל פעם; "חיבור חשבון נוסף" מוביל לחשבונות האימייל; בטלפון אין גלילה לצד',
     `חשבונות: ${boxes}, שורות: ${lines}; כרטיסים פתוחים: ${cardsClosed} → ${oneOpen} → ${stillOne} (מורחבים ${expanded}); חיבור: ${to}; טלפון: ${phoneOv}`,
     lines === boxes && lines > 1 && cardsClosed === 0 && oneOpen === 1 && stillOne === 1 && expanded === 1 && to === '/mailboxes' && phoneOv <= 0, [listShot])
+}
+
+// PERIOD: "ready for the accountant" is the current VAT reporting period (two months: November–December, January–February…),
+// not every approved document ever. The tab, its count, the home tile and the menu badge agree; an approved document of
+// an earlier period is not lost: a note counts it and one tap shows that period.
+{
+  sql(`delete from fin_documents where supplier_name like 'ZZ-PER%'`)
+  const p = nowPeriod(); const prev = fmt.reportPeriod(p.kind, -1)
+  const tokP = await login('admin@kurkoos.test', 'Passw0rd!x')
+  const mk = (name, day) => sql(`insert into fin_documents (status, source, supplier_name, doc_type, doc_number, currency, issue_date, total_amount, amount_before_vat, vat_amount) values ('review','upload','${name}','invoice','${name.slice(-2)}','ILS','${day}', 118, 100, 18) returning id`).split('\n')[0]
+  const nowId = mk('ZZ-PER עכשיו-1', p.from); const oldId = mk('ZZ-PER קודם-2', prev.from)
+  for (const id of [nowId, oldId]) await rest(`fin_documents?id=eq.${id}`, tokP, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: 'approved' }) })
+  const want = Number(sql(`select count(*) from fin_documents where status='approved' and exported_at is null and ${inNowPeriod()}`))
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go('/documents?status=approved'); await page.waitForSelector('.fin-periodbar', { timeout: 15000 })
+  const label = (await page.locator('.fin-periodbar__nav strong').innerText()).trim()
+  const tabCount = Number((await page.locator('.fin-tab', { hasText: 'מוכנים לרו״ח' }).locator('em').innerText()).trim())
+  const hasNow = await page.locator('tbody tr', { hasText: 'ZZ-PER עכשיו' }).count()
+  const hasOld = await page.locator('tbody tr', { hasText: 'ZZ-PER קודם' }).count()
+  const older = await page.locator('.fin-periodbar__older').innerText().catch(() => '')
+  const perShot = await shot('139e-ready-period')
+  await page.locator('.fin-periodbar__older').getByRole('button', { name: 'הצגה' }).click(); await page.waitForTimeout(500)
+  const prevLabel = (await page.locator('.fin-periodbar__nav strong').innerText()).trim()
+  const oldShown = await page.locator('tbody tr', { hasText: 'ZZ-PER קודם' }).count()
+  const badge = Number(await page.locator('.fin__nav-item', { hasText: 'דוח ושליחה לרו״ח' }).locator('.fin__badge').innerText().catch(() => '0'))
+  await go('/today'); await page.waitForSelector('.fin-tile[data-k="ready"]', { timeout: 10000 }).catch(() => {})
+  const tile = Number((await page.locator('.fin-tile[data-k="ready"] .fin-tile__value').innerText().catch(() => '-1')).trim())
+  sql(`delete from fin_documents where supplier_name like 'ZZ-PER%'`)
+  record('PERIOD', '"מוכנים לרו״ח" לפי תקופת הדיווח', `התקופה: ${p.label}; בלשונית רק המסמך מהתקופה; המספר בלשונית, בתפריט ובמרכז הבקרה = המאושרים של התקופה; הודעה על מאושר מתקופה קודמת ו"הצגה" עוברת ל${prev.label}`,
+    `תווית: ${label}; בלשונית: עכשיו ${hasNow}, קודם ${hasOld}; ספירה: לשונית ${tabCount}, תפריט ${badge}, מרכז בקרה ${tile}, במסד ${want}; הודעה: "${older.replace(/\s+/g, ' ').slice(0, 70)}"; אחרי "הצגה": ${prevLabel}, ${oldShown}`,
+    label === p.label && hasNow === 1 && hasOld === 0 && tabCount === want && badge === want && tile === want && /מתקופה קודמת|מתקופות קודמות/.test(older) && prevLabel === prev.label && oldShown === 1, [perShot])
 }
 
 // MANUALDUP: a document uploaded by hand during the day must not come in again with the night's mail scan. The same

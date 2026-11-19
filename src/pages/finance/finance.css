@@ -4892,3 +4892,13 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 @media (max-width: 760px) {
   .fin__top { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--paper); }
 }
+
+/* "ready for the accountant": the reporting period the tab shows (Documents.jsx) */
+.fin-periodbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); }
+.fin-periodbar__label { font-size: var(--t-sm); color: var(--text-2); }
+.fin-periodbar__nav { display: inline-flex; align-items: center; gap: 4px; }
+.fin-periodbar__nav strong { min-width: 150px; text-align: center; font-size: var(--t-md); color: var(--ink); }
+.fin-periodbar__nav .fin-icon-btn { width: 44px; height: 44px; }
+.fin-periodbar__older { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--t-sm); color: var(--warn); }
+.fin-periodbar__older .fin-link { min-height: 44px; }
+@media (max-width: 760px) { .fin-periodbar__older { flex-basis: 100%; } }

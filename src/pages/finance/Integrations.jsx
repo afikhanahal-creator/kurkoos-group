@@ -50,6 +50,7 @@ function ExportWizard({ onDone }) {
     <Card title="ייצוא לרואה החשבון" className="fin-wizard">
       <ol className="fin-steps">
         <li><span>1</span><div className="fin-steps__body"><strong>חברה ותקופה</strong>
+          <p className="fin-hint">בוחרים חברה אחת או את כולן, ואת החודש שרו״ח מבקש. מוצגים רק מסמכים שאושרו.</p>
           {preset ? <p className="fin-muted">{preset.length} מסמכים שנבחרו ברשימת המסמכים. <button type="button" className="fin-link" onClick={() => { try { sessionStorage.removeItem('fin-export-ids') } catch { /* noop */ } go('/integrations') }}>בחירה לפי תקופה במקום</button></p> : (
             <div className="fin-filters">
               <Select className="fin-select" value={biz} onChange={(e) => { setBiz(e.target.value); setPicked(null) }} aria-label="חברה"><option value="">כל החברות</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>
@@ -57,8 +58,10 @@ function ExportWizard({ onDone }) {
             </div>
           )}
           <label className="fin-check"><input type="checkbox" checked={withExported} onChange={(e) => setWithExported(e.target.checked)} /> לכלול מסמכים שכבר יוצאו (ייצוא חוזר)</label>
+          <p className="fin-hint">מסמך שיוצא פעם אחת לא מוצע שוב, כדי שרו״ח לא יקבל אותו פעמיים. מסמנים רק כשצריך לשלוח שוב את אותה חבילה.</p>
         </div></li>
         <li><span>2</span><div className="fin-steps__body"><strong>מסמכים ({chosen.length} מתוך {candidates.length})</strong>
+          <p className="fin-hint">מסירים סימון ממסמך שלא צריך לצאת עכשיו. הסה״כ והמע״מ לקיזוז למטה מתעדכנים לפי מה שמסומן.</p>
           {notApproved > 0 && <p className="fin-note fin-note--warn"><Icon name="alert" size={16} /> {notApproved} מסמכים מהתקופה עוד לא אושרו ולא ייכללו. רק מסמכים מאושרים יוצאים. <button type="button" className="fin-link" onClick={() => go('/pending')}>לאישור</button></p>}
           {!candidates.length ? <p className="fin-muted">אין מסמכים מאושרים שעוד לא יוצאו לבחירה הזו.</p> : (
             <div className="fin-pick">
@@ -71,6 +74,7 @@ function ExportWizard({ onDone }) {
           )}
         </div></li>
         <li><span>3</span><div className="fin-steps__body"><strong>פורמט ויעד</strong>
+          <p className="fin-hint">ZIP כולל את הקבצים המקוריים עם טבלה, ומתאים לרוב משרדי רו״ח. Excel או CSV הם טבלה בלבד, לקליטה בתוכנה. שליחה ישירה זמינה לתוכנה שמחוברת למעלה.</p>
           <div className="fin-filters">
             <Select className="fin-select" value={format} onChange={(e) => setFormat(e.target.value)} aria-label="פורמט">{Object.entries(FORMATS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
             <Select className="fin-select" value={dest} onChange={(e) => setDest(e.target.value)} aria-label="יעד"><option value="download">הורדה למחשב</option><option value="email" disabled={!accountant}>מייל לרו״ח{accountant ? ` (${accountant})` : ' (אין מייל לחברה)'}</option><option value="api" disabled>חיבור API לתוכנה (לא הופעל)</option></Select>
@@ -121,6 +125,7 @@ export default function Integrations() {
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState('')
   const [term, setTerm] = useState('')
+  const [tab, setTab] = useState('all')
   const providers = status.data?.accounting || []
   const admin = can('manage')
   const apiRows = (list.data || []).filter((i) => i.enabled)
@@ -195,13 +200,19 @@ export default function Integrations() {
     return (
       <article key={p.id} className={`fin-app-card fin-prov ${st.conns ? 'is-on' : ''}`}>
         <div className="fin-app-card__top">
-          <VendorLogo id={p.id} mono={mono} tone={tone} />
+          <VendorLogo id={p.id} mono={mono} tone={tone} label={p.label} />
           <div className="fin-app-card__head">
             <h4>{p.label}</h4>
             <Pill tone={st.pill[0]}>{st.pill[1]}</Pill>
           </div>
         </div>
         <p>{p.about}</p>
+        {st.conns > 0 && (
+          <ul className="fin-prov__linked" aria-label="חברות מחוברות">
+            {st.mails.map((o) => <li key={o.id} className={o.enabled ? '' : 'is-off'}><Icon name="check" size={13} /><span>{bizName(o.business_id)}</span><em>מייל</em></li>)}
+            {st.apis.map((i) => <li key={i.id} className={i.status === 'ready' ? '' : 'is-off'}><Icon name="check" size={13} /><span>{bizName(i.business_id)}</span><em>API</em></li>)}
+          </ul>
+        )}
         <dl className="fin-prov__facts">
           <div><dt>כיוון</dt><dd>{p.route === 'file' ? 'קובץ להורדה' : p.route === 'none' ? '—' : 'מהמערכת לתוכנה'}</dd></div>
           <div><dt>חברות מחוברות</dt><dd>{st.conns || '—'}</dd></div>
@@ -244,7 +255,20 @@ export default function Integrations() {
 
       {!providers.length && !status.loading ? <Empty title="השרת לא זמין" icon="plug">רשימת התוכנות נטענת מהשרת.</Empty> : (
         <>
-          {GROUPS.map(([g, title]) => { const items = shown.filter((p) => p.group === g); return items.length ? <section key={g} className="fin-app-section"><h3>{title}</h3><div className="fin-app-grid">{items.map(card)}</div></section> : null })}
+          {(() => {
+            const linked = shown.filter((p) => stateOf(p).conns > 0)
+            const tabs = [['all', 'הכול', shown.length], ['connected', 'מחוברים', linked.length], ...GROUPS.map(([g, title]) => [g, title, shown.filter((p) => p.group === g).length])]
+            return (
+              <>
+                <div className="fin-app-tabs" role="tablist" aria-label="סוג החיבור">
+                  {tabs.map(([k, label, n]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}>{label}<b>{n}</b></button>)}
+                </div>
+                {(tab === 'all' || tab === 'connected') && linked.length > 0 && <section className="fin-app-section"><h3><Icon name="check" size={17} /> מחוברים כעת</h3><div className="fin-app-grid">{linked.map(card)}</div></section>}
+                {tab === 'connected' && !linked.length && <Empty title="עוד אין תוכנה מחוברת" icon="plug">בוחרים תוכנה מהרשימה ולוחצים "חיבור". תוכנה מסומנת כמחוברת רק אחרי התחברות או שליחה אמיתית.</Empty>}
+                {GROUPS.filter(([g]) => tab === 'all' || tab === g).map(([g, title]) => { const items = shown.filter((p) => p.group === g && (tab !== 'all' || !stateOf(p).conns)); return items.length ? <section key={g} className="fin-app-section"><h3>{title}</h3><div className="fin-app-grid">{items.map(card)}</div></section> : null })}
+              </>
+            )
+          })()}
           {!shown.length && <Empty title={`לא מצאנו את "${term}"`} icon="search">אם התוכנה של רו״ח לא ברשימה, אפשר לחבר כל כתובת מייל לקליטת מסמכים, וייצוא הקבצים נקלט בכל תוכנה.</Empty>}
         </>
       )}
@@ -311,13 +335,14 @@ export default function Integrations() {
             </div>
           )}
           <form id="fin-prov-form" className="fin-form__grid" onSubmit={saveForm}>
-            <Field label="חברה" hint={form.mode === 'email' ? 'המסמכים של החברה הזו בלבד יישלחו לכתובת' : 'החיבור ישמש את החברה הזו'} wide>
+            <Field label="חברה" hint={`${form.mode === 'email' ? 'המסמכים של החברה הזו בלבד יישלחו לכתובת.' : 'החיבור ישמש את החברה שנבחרה, או את כולן.'} ${form.business_id ? ([...mailRows, ...apiRows].some((x) => x.provider === formP.id && x.business_id === form.business_id) ? 'החברה הזו כבר מחוברת לתוכנה.' : 'החברה הזו עוד לא מחוברת לתוכנה.') : ''}`} wide>
               <Select value={form.business_id} onChange={(e) => setForm({ ...form, business_id: e.target.value })}><option value="">{form.mode === 'email' ? 'בחרו חברה…' : 'כל החברות'}</option>{businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select>
             </Field>
             {form.mode === 'email' && <Field label="כתובת הקליטה" hint={formP.intake || 'הכתובת שהתוכנה או רו״ח נתנו לקליטת מסמכים'} wide><input type="email" dir="ltr" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="name@example.com" autoComplete="off" /></Field>}
             {form.mode !== 'email' && <>
-              {(formP.needs || []).map((k) => <Field key={k} label={{ client_id: 'מזהה (Client ID)', client_secret: 'מפתח סודי (Client Secret)' }[k] || k} hint="נשמר בשרת בלבד, ולא מוצג שוב" wide><input type="password" autoComplete="off" dir="ltr" onChange={(e) => setForm({ ...form, secret: { ...form.secret, [k]: e.target.value } })} /></Field>)}
+              {(formP.needs || []).map((k) => <Field key={k} label={{ client_id: 'מזהה (Client ID)', client_secret: 'מפתח סודי (Client Secret)' }[k] || k} hint={`${k === 'client_secret' ? 'המפתח הסודי שמופיע פעם אחת כשיוצרים את המפתחות.' : 'המזהה שהתוכנה נותנת יחד עם המפתח הסודי.'} מוצאים אותם אצל הספק: הגדרות ← כלים למפתחים או API ← יצירת מפתחות. נשמר מוצפן בשרת בלבד ולא מוצג שוב. אחרי השמירה ההתחברות נבדקת מיד.`} wide><input type="password" autoComplete="off" dir="ltr" onChange={(e) => setForm({ ...form, secret: { ...form.secret, [k]: e.target.value } })} /></Field>)}
               <label className="fin-check"><input type="checkbox" checked={form.sandbox} onChange={(e) => setForm({ ...form, sandbox: e.target.checked })} /> מפתחות של סביבת הניסיון (Sandbox)</label>
+              <p className="fin-hint">מסמנים רק אם המפתחות נוצרו בסביבת הבדיקות של הספק. למסמכים אמיתיים של הנהלת החשבונות משאירים בלי סימון.</p>
             </>}
           </form>
           {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}

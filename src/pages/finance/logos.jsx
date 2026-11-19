@@ -1,3 +1,4 @@
+import { useState } from 'react'
 /* Provider marks, drawn small inside a neutral tile. Used only to identify the connected service. */
 export function ProviderLogo({ name, size = 26 }) {
   const s = { width: size, height: size }
@@ -29,14 +30,22 @@ export function Monogram({ text, tone = 'ink', size = 46 }) {
 
 /* accounting software: the vendor's own icon, as published on its website (public/finance/logos), only to name the
    service the documents are sent to. A vendor without a published icon keeps a neutral monogram. */
-const VENDOR = { morning: 'morning.webp', icount: 'icount.svg', rivhit: 'rivhit.webp', sumit: 'sumit.webp', priority: 'priority.webp', hashavshevet: 'hashavshevet.webp' }
-export function VendorLogo({ id, mono, tone = 'ink', size = 52 }) {
+const VENDOR = { morning: 'morning.webp', icount: 'icount.svg', rivhit: 'rivhit.webp', sumit: 'sumit.webp', priority: 'priority.webp', hashavshevet: 'hashavshevet.webp', ezcount: 'ezcount.webp', invoice4u: 'invoice4u.webp', accountit: 'accountit.webp', costapp: 'costapp.webp', dokka: 'dokka.webp', smartbee: 'smartbee.webp', finbot: 'finbot.svg' }
+/* file formats and plain email: a drawn mark, so no card is left with bare letters */
+const DRAWN = {
+  file: <svg viewBox="0 0 32 32" width="60%" height="60%" aria-hidden="true"><path d="M8 3h11l6 6v18a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="#eef3f7" stroke="#07293a" strokeWidth="1.6" /><path d="M19 3v6h6" fill="none" stroke="#07293a" strokeWidth="1.6" /><path d="M15 12h2v2h-2zm0 4h2v2h-2zm0 4h2v4h-2z" fill="#16688c" /></svg>,
+  accountant_email: <svg viewBox="0 0 32 32" width="60%" height="60%" aria-hidden="true"><rect x="4" y="7" width="24" height="18" rx="3" fill="#eef3f7" stroke="#07293a" strokeWidth="1.6" /><path d="m5 9 11 9 11-9" fill="none" stroke="#16688c" strokeWidth="1.8" strokeLinecap="round" /></svg>,
+}
+export function VendorLogo({ id, mono, tone = 'ink', size = 52, label }) {
   const file = VENDOR[id]
-  if (!file) return <Monogram text={mono} tone={tone} size={size} />
+  const [broken, setBroken] = useState(false)
+  if (DRAWN[id]) return <span className="fin-logo-tile fin-logo-tile--vendor" style={{ width: size, height: size }} title={label} aria-hidden="true">{DRAWN[id]}</span>
+  // no published icon, or it failed to load: a neutral monogram, never an empty box
+  if (!file || broken) return <span title={label}><Monogram text={mono} tone={tone} size={size} /></span>
   const inner = Math.round(size * 0.66)
   return (
-    <span className="fin-logo-tile fin-logo-tile--vendor" style={{ width: size, height: size }} aria-hidden="true">
-      <img src={`/finance/logos/${file}`} alt="" width={inner} height={inner} loading="lazy" decoding="async" />
+    <span className="fin-logo-tile fin-logo-tile--vendor" style={{ width: size, height: size }} title={label} aria-hidden="true">
+      <img src={`/finance/logos/${file}`} alt="" width={inner} height={inner} loading="lazy" decoding="async" onError={() => setBroken(true)} />
     </span>
   )
 }

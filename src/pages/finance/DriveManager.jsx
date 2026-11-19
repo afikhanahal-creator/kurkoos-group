@@ -367,6 +367,18 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
   const Assigned = ({ i }) => (i.row.business_id ? <span className="fin-dm__co" dir="auto">{i.company}</span> : <span className="fin-dm__co is-none">לא משויך</span>)
   const detailItem = detail ? byId.get(detail) : null
   const menuItem = menu ? byId.get(menu.id) : null
+  // a folder's own menu (right click, the ⋮ button, or Shift+F10), like in Google Drive
+  const [fmenu, setFmenu] = useState(null)
+  const allIn = (node) => [...(node.files || []), ...[...node.children.values()].flatMap(allIn)]
+  const openFolderMenu = (node, e) => { e.preventDefault(); e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); const x = e.type === 'contextmenu' && e.clientX ? e.clientX : r.left; const y = e.type === 'contextmenu' && e.clientY ? e.clientY : r.bottom + 4; setMenu(null); setFmenu({ node, x: Math.max(8, Math.min(innerWidth - 236, x)), y: Math.max(8, Math.min(innerHeight - 330, y)) }) }
+  const folderActs = (node) => { const inside = allIn(node); const withFile = inside.filter((i) => i.doc?.file_path); return [
+    ['folder', 'פתיחה', () => { setView('drive'); setPath(node.path); setSel(new Set()) }, true],
+    ['download', withFile.length === 1 ? 'הורדת המסמך' : `הורדת ${n(withFile.length)} המסמכים`, () => download(withFile), withFile.length > 0],
+    ['edit', 'שינוי שם', () => setFolderDlg({ mode: 'rename', key: node.key, name: node.name }), !!node.manual && operate],
+    ['company', 'העברת המסמכים לתיקייה אחרת', () => setSheet({ ids: inside.map((i) => i.id) }), operate && inside.length > 0 && !inside.some((i) => i.trash)],
+    ['sparkle', stars.has(`f:${node.key}`) ? 'הסרת הכוכב' : 'סימון בכוכב', () => star(`f:${node.key}`), !!node.key],
+    ['trash', 'מחיקת התיקייה', () => removeFolder(node), !!node.manual && operate, true],
+  ].filter((a) => a[3]) }
   const previewItem = preview ? byId.get(preview) : null
   const crumbs = [{ name: t.root_name || 'התיקייה שלי', path: [] }, ...path.map((p, i) => ({ name: p, path: path.slice(0, i + 1) }))]
   const title = filtering && !PANELS.includes(view) ? `תוצאות (${n(flat.length)})` : VIEWS.find((v) => v[0] === view)?.[1]
@@ -456,11 +468,12 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
               const key = `f:${node.path.join('/')}`
               return (
                 <li key={key}>
-                  <button type="button" className={`fin-dm__folder ${over === key ? 'is-over' : ''} ${node.name === NONE ? 'is-none' : ''} ${node.manual ? 'is-manual' : ''} ${node.key ? 'is-keyed' : ''}`} {...dropOn(key, destOf(node))} onClick={() => { setView('drive'); setPath(node.path); setSel(new Set()) }}>
+                  <button type="button" className={`fin-dm__folder ${over === key ? 'is-over' : ''} ${node.name === NONE ? 'is-none' : ''} ${node.manual ? 'is-manual' : ''} ${node.key ? 'is-keyed' : ''}`} {...dropOn(key, destOf(node))} onClick={() => { setView('drive'); setPath(node.path); setSel(new Set()) }} onContextMenu={(e) => openFolderMenu(node, e)}>
                     <span className="fin-dm__foldericon"><Icon name="folder" size={22} /></span>
                     <span className="fin-dm__foldertext"><strong dir="auto">{node.name}</strong><small>{node.count === 0 ? 'ריקה' : node.count === 1 ? 'מסמך אחד' : `${n(node.count)} מסמכים`}{node.manual ? ' · תיקייה שלך' : node.last ? ` · עודכן ${date(node.last)}` : ''}</small></span>
                     <Icon name="chev" size={16} />
                   </button>
+                  <button type="button" className="fin-icon-btn fin-dm__foldermore" onClick={(e) => openFolderMenu(node, e)} aria-haspopup="menu" aria-label={`פעולות על התיקייה ${node.name}`} title="פעולות"><Icon name="more" size={18} /></button>
                   {node.key && <span className="fin-dm__folderacts">
                     <button type="button" className={`fin-icon-btn fin-dm__star ${stars.has(`f:${node.key}`) ? 'is-on' : ''}`} aria-pressed={stars.has(`f:${node.key}`)} onClick={() => star(`f:${node.key}`)} aria-label={`${stars.has(`f:${node.key}`) ? 'הסרת הכוכב מהתיקייה' : 'סימון התיקייה בכוכב'} ${node.name}`} title={stars.has(`f:${node.key}`) ? 'הסרת הכוכב' : 'סימון בכוכב'}><Icon name="sparkle" size={16} /></button>
                     {node.manual && operate && <button type="button" className="fin-icon-btn" onClick={() => setFolderDlg({ mode: 'rename', key: node.key, name: node.name })} aria-label={`שינוי שם התיקייה ${node.name}`} title="שינוי שם"><Icon name="edit" size={16} /></button>}
@@ -522,7 +535,7 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
                   </dl>
                   {a.sync?.error && <p className="fin-error" role="alert">הקריאה האחרונה של השינויים מ-Drive נכשלה: {a.sync.error}</p>}
                   <p className="fin-dm__perm"><Icon name="shield" size={14} /> {accounts.scope === 'drive' ? 'הרשאה: כל ה-Drive של החשבון (drive). המערכת משנה רק קבצים שהיא יצרה; את השאר היא רק מציגה.' : 'הרשאה: קבצים ותיקיות שהמערכת יצרה בלבד (drive.file). שאר החשבון אינו נגיש לה.'}</p>
-                  <p className="fin-dm__perm"><Icon name={a.push?.active ? 'check' : 'clock'} size={14} /> {a.push?.active ? `התראות מיידיות מ-Drive פעילות (עד ${date(new Date(a.push.expiration).toISOString())}); שינוי שם מתעדכן כאן בתוך שניות.` : `התראות מיידיות מ-Drive לא פעילות${a.push?.error ? ` (${a.push.error})` : ''}. השינויים נקראים פעם בדקה.`}</p>
+                  <p className="fin-dm__perm"><Icon name={a.push?.active ? 'check' : 'clock'} size={14} /> {a.push?.active ? 'התראות מיידיות מ-Drive פעילות: שינוי שנעשה ב-Google Drive מופיע כאן בתוך שניות, והחיבור מתחדש לבד.' : `התראות מיידיות מ-Drive לא פעילות${a.push?.error ? ` (${a.push.error})` : ''}. השינויים נקראים פעם בדקה.`}</p>
                 </article>
               ))}
               {can('manage') && (
@@ -625,6 +638,15 @@ export default function DriveManager({ t, rows, documents, businesses, can, go, 
           <ul className="fin-dm__menu" role="menu" style={{ top: menu.y, left: menu.x }} aria-label={`פעולות על ${menuItem.name}`}>
             <li className="fin-dm__menuhead" dir="auto">{menuItem.name}</li>
             {acts(menuItem).map(([icon, label, fn, , danger]) => <li key={label} role="none"><button type="button" role="menuitem" className={danger ? 'is-danger' : ''} onClick={fn}><Icon name={icon} size={17} /> {label}</button></li>)}
+          </ul>
+        </div>
+      )}
+      {fmenu && (
+        <div className="fin-dm__menuwrap" onClick={() => setFmenu(null)} onContextMenu={(e) => { e.preventDefault(); setFmenu(null) }} onKeyDown={(e) => { if (e.key === 'Escape') setFmenu(null) }}>
+          <ul className="fin-dm__menu" role="menu" style={{ top: fmenu.y, left: fmenu.x }} aria-label={`פעולות על התיקייה ${fmenu.node.name}`}>
+            <li className="fin-dm__menuhead" dir="auto">{fmenu.node.name}</li>
+            {folderActs(fmenu.node).map(([icon, label, fn, , danger], k) => <li key={label} role="none"><button type="button" role="menuitem" autoFocus={k === 0} className={danger ? 'is-danger' : ''} onClick={fn}><Icon name={icon} size={17} /> {label}</button></li>)}
+            {!fmenu.node.manual && <li className="fin-dm__menunote">תיקייה של המערכת: השם והמיקום נקבעים לפי החברה והחודש.</li>}
           </ul>
         </div>
       )}

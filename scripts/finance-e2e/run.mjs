@@ -3377,6 +3377,72 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
 }
 
 
+// CATMERGE: several categories merged into one, with the numbers shown first. MARKET: the integrations marketplace.
+{
+  const ins = (n) => sql(`insert into fin_categories (name) values ('${n}') returning id`).split('\n')[0]
+  const [ca, cb, cc] = ['מיזוג בדיקה א', 'מיזוג בדיקה ב', 'מיזוג בדיקה ג'].map(ins)
+  const two = sql("select id||'|'||coalesce(category_id::text,'') from fin_documents where status='review' and total_amount is not null order by created_at limit 2").split('\n').map((x) => x.split('|'))
+  for (const [id] of two) sql(`update fin_documents set category_id='${cb}' where id='${id}'`)
+  await page.goto(`${APP}/categories`); await page.waitForSelector('.fin-catsum'); await page.waitForTimeout(800)
+  const figs = (await page.locator('.fin-catsum').innerText()).replace(/\s+/g, ' ')
+  const bars = await page.locator('.fin-catbar').count(); const dots = await page.locator('.fin-catdot').count()
+  await page.getByRole('button', { name: 'מיזוג קטגוריות' }).click(); await page.waitForSelector('.fin-cmerge')
+  const noPick = await page.getByRole('button', { name: 'בחרו לפחות שתי קטגוריות' }).isDisabled().catch(() => null)
+  await page.fill('.fin-cmerge input[type=search]', 'מיזוג בדיקה'); await page.waitForTimeout(200)
+  for (let i = 0; i < 3; i++) await page.locator('.fin-cmerge__list input[type=checkbox]').nth(i).check()
+  await page.locator('.fin-cmerge__keep label', { hasText: 'מיזוג בדיקה א' }).locator('input').check(); await page.waitForTimeout(200)
+  const plan = (await page.locator('.fin-cmerge .fin-bulklines').innerText()).replace(/\s+/g, ' ')
+  const mergeShot = await shot('category-merge')
+  await page.getByRole('button', { name: /מיזוג 2 קטגוריות לתוך/ }).click(); await page.waitForSelector('.fin-cmerge', { state: 'detached', timeout: 15000 }).catch(() => {}); await page.waitForTimeout(800)
+  const moved = sql(`select count(*) from fin_documents where category_id='${ca}'`); const closed = sql(`select count(*) from fin_categories where id in ('${cb}','${cc}') and active=false`); const kept = sql(`select active from fin_categories where id='${ca}'`)
+  const toast = (await page.locator('.fin-note').first().innerText().catch(() => '')).replace(/\s+/g, ' ')
+  for (const [id, old] of two) sql(`update fin_documents set category_id=${old ? `'${old}'` : 'null'} where id='${id}'`)
+  sql(`delete from fin_categories where id in ('${ca}','${cb}','${cc}')`)
+  record('CATMERGE', 'קטגוריות: מיזוג של כמה קטגוריות לאחת, עם המספרים לפני', 'מסך הקטגוריות מציג נתונים עם הקשר, נקודת צבע ופס היקף לכל קטגוריה; בחלון המיזוג בוחרים שלוש קטגוריות ואת זו שנשארת; מוצג כמה מסמכים יעברו; אחרי אישור שני המסמכים עוברים, שתי הקטגוריות בארכיון והשלישית פעילה',
+    `נתונים: "${figs.slice(0, 120)}"; פסים ${bars}, נקודות ${dots}; בלי בחירה הכפתור חסום: ${noPick}; תוכנית: "${plan.slice(0, 160)}"; עברו ${moved}, נסגרו ${closed}, נשארת פעילה: ${kept}; הודעה: "${toast.slice(0, 90)}"`,
+    /מכלל ההוצאות/.test(figs) && /הקטגוריות/.test(figs) && bars > 0 && dots > 0 && /2 מסמכים יעברו ל"מיזוג בדיקה א"/.test(plan) && /עוברת לארכיון/.test(plan) && moved === '2' && closed === '2' && kept === 't' && /מוזגו לתוך "מיזוג בדיקה א"/.test(toast), [mergeShot])
+
+  await page.goto(`${APP}/integrations`); await page.waitForSelector('.fin-app-card'); await page.waitForTimeout(1500)
+  const imgs = await page.evaluate(() => [...document.querySelectorAll('.fin-app-card img')].map((i) => i.complete && i.naturalWidth > 0))
+  const tabs = (await page.locator('.fin-app-tabs button').allInnerTexts()).map((t) => t.replace(/\s+/g, ' '))
+  const allCards = await page.locator('.fin-app-card').count()
+  await page.locator('.fin-app-tabs button', { hasText: 'מחוברים' }).click(); await page.waitForTimeout(300)
+  const linkedCards = await page.locator('.fin-app-card').count(); const linkedOn = await page.locator('.fin-app-card.is-on').count()
+  const chips = linkedCards ? (await page.locator('.fin-prov__linked').first().innerText()).replace(/\s+/g, ' ') : ''
+  await page.locator('.fin-app-tabs button', { hasText: 'הכול' }).click(); await page.waitForTimeout(300)
+  const wizHints = await page.locator('.fin-steps .fin-hint').count()
+  await page.locator('.fin-app-card', { hasText: 'Morning' }).first().locator('.fin-prov__acts button').first().click(); await page.waitForTimeout(400)
+  await page.locator('.fin-prov__mode button', { hasText: 'מפתחות API' }).click().catch(() => {}); await page.waitForTimeout(300)
+  const formHints = (await page.locator('#fin-prov-form').innerText().catch(() => '')).replace(/\s+/g, ' ')
+  const marketShot = await shot('integrations-market')
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300)
+  record('MARKET', 'תוכנות הנהלת חשבונות: לוגואים, לשוניות, "מחוברים כעת" והסברים ליד השדות', 'לפחות 12 תוכנות עם לוגו שנטען; חמש לשוניות עם מספרים; בלשונית "מחוברים" רק תוכנות מחוברות, עם שם החברה ואופן החיבור; ארבעה הסברים באשף הייצוא; בטופס החיבור הסבר היכן מוצאים את המפתחות, שהם נשמרים מוצפנים, ומתי מסמנים סביבת ניסיון',
+    `לוגואים ${imgs.filter(Boolean).length}/${imgs.length}; לשוניות: ${tabs.join(' | ')}; כרטיסים ${allCards}, מחוברים ${linkedCards} (מסומנים ${linkedOn}), "${chips}"; הסברים באשף ${wizHints}; טופס: "${formHints.slice(0, 200)}"`,
+    imgs.length >= 12 && imgs.every(Boolean) && tabs.length === 5 && /מחוברים \d+/.test(tabs[1]) && linkedCards === linkedOn && (linkedCards === 0 || /API|מייל/.test(chips)) && wizHints >= 4 && /מוצפן/.test(formHints) && /סביבת הבדיקות/.test(formHints) && /החברה הזו|כל החברות|נבחרה/.test(formHints), [marketShot])
+}
+
+// DRIVEMENU: a folder has a menu of its own (right click and the three dots), and the inspector never covers its own text.
+{
+  await page.goto(`${APP}/drive`); await page.waitForSelector('.fin-dm__folder', { timeout: 20000 }); await page.waitForTimeout(600)
+  await page.locator('.fin-dm__folder').first().click({ button: 'right' }); await page.waitForTimeout(300)
+  const byRight = (await page.locator('.fin-dm__menu').innerText().catch(() => '')).replace(/\s+/g, ' ')
+  const menuShot = await shot('drive-folder-menu')
+  await page.keyboard.press('Escape'); await page.waitForTimeout(200)
+  const closed = await page.locator('.fin-dm__menu').count()
+  await page.locator('.fin-dm__foldermore').first().click(); await page.waitForTimeout(300)
+  const byDots = (await page.locator('.fin-dm__menu').innerText().catch(() => '')).replace(/\s+/g, ' ')
+  await page.locator('.fin-dm__menu button', { hasText: 'פתיחה' }).click(); await page.waitForTimeout(500)
+  const crumbs = (await page.locator('.fin-dm__crumbs, .fin-dm__crumb').first().innerText().catch(() => '')).replace(/\s+/g, ' ')
+  await page.locator('.fin-dm__side button, .fin-dm__view', { hasText: 'כל הקבצים' }).first().click(); await page.waitForTimeout(500)
+  await page.locator('.fin-dm__name').first().click(); await page.waitForTimeout(1200)
+  const gap = await page.evaluate(() => { const t = document.querySelector('.fin-dm__detailthumb')?.getBoundingClientRect(); const m = document.querySelector('.fin-dm__meta')?.getBoundingClientRect(); return t && m ? Math.round(m.top - t.bottom) : null })
+  const nameW = await page.evaluate(() => Math.round(document.querySelector('.fin-dm__row:not(.is-head) > :nth-child(2)')?.getBoundingClientRect().width || 0))
+  await page.locator('.fin-dm__detail header .fin-icon-btn').click().catch(() => {})
+  record('DRIVEMENU', 'Google Drive: תפריט לתיקייה בלחיצה ימנית ובשלוש הנקודות, וחלונית מסמך בלי חפיפה', 'לחיצה ימנית על תיקייה פותחת תפריט עם פתיחה, הורדה, העברה וכוכב; Escape סוגר; שלוש הנקודות פותחות את אותו תפריט ו"פתיחה" נכנסת לתיקייה; בחלונית המסמך הפרטים מתחילים אחרי התצוגה המקדימה, ועמודת השם ברשימה נשארת קריאה',
+    `ימנית: "${byRight.slice(0, 120)}"; אחרי Escape: ${closed}; נקודות: "${byDots.slice(0, 60)}"; אחרי פתיחה: "${crumbs.slice(0, 60)}"; רווח בין התצוגה לפרטים ${gap}px; רוחב עמודת השם ${nameW}px`,
+    /פתיחה/.test(byRight) && /כוכב|הורדת/.test(byRight) && closed === 0 && /פתיחה/.test(byDots) && gap !== null && gap >= 0 && nameW >= 140, [menuShot])
+}
+
 // EXEC2: the overview's second generation. Filters narrow every figure, companies sort, every figure explains itself on hover.
 {
   await page.goto(APP); await page.waitForSelector('.fin-x-big'); await page.waitForTimeout(600)

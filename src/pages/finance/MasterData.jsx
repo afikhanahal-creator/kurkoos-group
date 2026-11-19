@@ -10,6 +10,7 @@ import { saveBlob } from './zip.js'
 import { Empty, Icon, Modal, PageHead, Pill, Toggle } from './ui.jsx'
 import Select from './Select.jsx'
 import CategoryTidy from './CategoryTidy.jsx'
+import { TipRows, categoryColor, useTip } from './execKit.jsx'
 
 /* One input for a master-data field. Exported for the overview page's edit form. */
 export function FieldInput({ f, value, onChange, refs, selfId, error }) {
@@ -194,15 +195,22 @@ export default function MasterData({ kind }) {
     const none = live.filter((d) => !d.category_id && !categories.some((c) => c.name === d.category))
     const tops = list.filter((c) => !c.parent_id)
     const spend = tops.reduce((a, c) => a + Math.max(0, stats[c.id]?.total || 0), 0)
-    return { active: list.filter((c) => c.active !== false).length, placed: live.length - none.length, none, spend }
+    const sumOf = (ds) => ds.reduce((a, d) => a + (d.currency && d.currency !== 'ILS' ? 0 : (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.total_amount) || 0)), 0)
+    return { active: list.filter((c) => c.active !== false).length, all: list.length, placed: live.length - none.length, docs: live.length, none, noneSum: sumOf(none), spend, allSpend: spend + Math.max(0, sumOf(none)) }
   }, [kind, documents, categories, list, stats])
   const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }
   // categories can be read as a list, as bars ranked by spending, or as tiles; the choice is kept on this device
   const [catView, setCatView] = useState(() => { try { return ['bars', 'tiles'].includes(localStorage.getItem('fin-cat-view')) ? localStorage.getItem('fin-cat-view') : 'list' } catch { return 'list' } })
   const setCat = (v) => { setCatView(v); try { localStorage.setItem('fin-cat-view', v) } catch { /* a preference only */ } }
+  const tip = useTip()
+  const [act, setAct] = useState('')
+  // how much of the spending a category carries: a neutral reading of volume, never a warning by itself
+  const levelOf = (r, sumAll) => (!(r.docs > 0) ? 'none' : sumAll > 0 && Math.abs(r.total || 0) / sumAll >= 0.15 ? 'high' : sumAll > 0 && Math.abs(r.total || 0) / sumAll >= 0.03 ? 'mid' : 'low')
+  const LEVELS = { high: 'פעילות גבוהה', mid: 'פעילות בינונית', low: 'פעילות נמוכה', none: 'בלי מסמכים', pending: 'ממתינים לבדיקה' }
   const ranked = useMemo(() => (kind === 'categories' ? [...rows].sort((a, b) => (b.total || 0) - (a.total || 0)) : []), [rows, kind])
   const rankTotal = ranked.reduce((a, r) => a + Math.abs(r.total || 0), 0) || 1
   const rankMax = Math.max(...ranked.map((r) => Math.abs(r.total || 0)), 1)
+  const viewRows = kind === 'categories' && act ? rows.filter((r) => (act === 'pending' ? r.pendingDocs > 0 : levelOf(r, rankTotal) === act)) : rows
 
   const exportCsv = () => {
     const head = [...def.fields.map((f) => f.label), 'מסמכים', 'סה״כ הוצאות']
@@ -240,14 +248,17 @@ export default function MasterData({ kind }) {
         </button>
       )}
 
-      {catSum && (
-        <dl className="fin-catsum">
-          <div><dt>קטגוריות פעילות</dt><dd>{catSum.active.toLocaleString('he-IL')}</dd></div>
-          <div><dt>מסמכים משויכים</dt><dd>{catSum.placed.toLocaleString('he-IL')}</dd></div>
-          <div className={catSum.none.length ? 'is-warn' : ''}><dt>בלי קטגוריה</dt><dd>{catSum.none.length ? <button type="button" className="fin-catsum__link" onClick={() => openDocs(catSum.none.map((d) => d.id), 'מסמכים בלי קטגוריה')}>{catSum.none.length.toLocaleString('he-IL')}</button> : '0'}</dd></div>
-          <div><dt>סה״כ הוצאות משויכות</dt><dd>{money(catSum.spend)}</dd></div>
-        </dl>
-      )}
+      {catSum && (() => {
+        const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—')
+        return (
+          <dl className="fin-catsum">
+            <div {...tip.on(() => <TipRows title="קטגוריות פעילות" rows={[['פעילות', catSum.active], ['בארכיון', catSum.all - catSum.active], ['סה״כ', catSum.all]]} note="קטגוריה בארכיון לא מוצעת בשיוך, והמסמכים שלה נשארים" />)}><dt>קטגוריות פעילות</dt><dd>{catSum.active.toLocaleString('he-IL')}</dd><small>{pct(catSum.active, catSum.all)} מ-{catSum.all} הקטגוריות</small></div>
+            <div {...tip.on(() => <TipRows title="מסמכים משויכים" rows={[['עם קטגוריה', catSum.placed], ['בלי קטגוריה', catSum.none.length], ['סה״כ מסמכים', catSum.docs]]} note="לא נספרים מסמכים שנדחו, כפולים או בארכיון" />)}><dt>מסמכים משויכים</dt><dd>{catSum.placed.toLocaleString('he-IL')}</dd><small>{pct(catSum.placed, catSum.docs)} מ-{catSum.docs.toLocaleString('he-IL')} המסמכים</small></div>
+            <div className={catSum.none.length ? 'is-warn' : ''}><dt>בלי קטגוריה</dt><dd>{catSum.none.length ? <button type="button" className="fin-catsum__link" onClick={() => openDocs(catSum.none.map((d) => d.id), 'מסמכים בלי קטגוריה')}>{catSum.none.length.toLocaleString('he-IL')}</button> : '0'}</dd><small>{catSum.none.length ? `${money(catSum.noneSum)} · לחיצה פותחת אותם לשיוך` : 'כל המסמכים משויכים'}</small></div>
+            <div {...tip.on(() => <TipRows title="הוצאות משויכות" rows={[['משויכות לקטגוריה', money(catSum.spend)], ['בלי קטגוריה', money(catSum.noneSum)], ['חלק משויך', pct(catSum.spend, catSum.allSpend)]]} note="בשקלים, מכל המסמכים שנספרים" />)}><dt>סה״כ הוצאות משויכות</dt><dd>{money(catSum.spend)}</dd><small>{pct(catSum.spend, catSum.allSpend)} מכלל ההוצאות</small></div>
+          </dl>
+        )
+      })()}
       {kind === 'categories' && <CategoryTidy onDone={(text) => setToast(text)} />}
 
       <div className="fin-filters">
@@ -259,6 +270,7 @@ export default function MasterData({ kind }) {
           </Select>
         ))}
         <label className="fin-check"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> כולל ארכיון</label>
+        {kind === 'categories' && <Select className="fin-select" value={act} onChange={(e) => setAct(e.target.value)} aria-label="היקף הפעילות"><option value="">פעילות: הכול</option>{Object.entries(LEVELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>}
         {kind === 'categories' && (
           <div className="fin-seg fin-catview" role="group" aria-label="תצוגת הקטגוריות">
             {[['list', 'רשימה', 'list'], ['bars', 'עמודות', 'reports'], ['tiles', 'אריחים', 'grid']].map(([k, label, icon]) => <button key={k} type="button" className={catView === k ? 'is-on' : ''} aria-pressed={catView === k} onClick={() => setCat(k)}><Icon name={icon} size={16} /> {label}</button>)}
@@ -266,8 +278,9 @@ export default function MasterData({ kind }) {
         )}
       </div>
       {toast && <p className="fin-note" role="status">{toast}</p>}
+      {tip.el}
 
-      {!rows.length ? (
+      {!viewRows.length ? (
         <Empty title={list.length ? 'אין תוצאות' : `עוד אין ${def.title}`} icon={def.icon} action={!list.length && canWrite && <button type="button" className="fin-btn fin-btn--primary" onClick={() => setEdit({})}>{def.add}</button>}>
           {list.length ? 'נסו חיפוש אחר או הסירו סינון.' : `${def.add} כדי להתחיל לשייך אליו מסמכים.`}
         </Empty>
@@ -307,18 +320,18 @@ export default function MasterData({ kind }) {
               <th>סטטוס</th>
             </tr></thead>
             <tbody>
-              {rows.map((r) => (
+              {viewRows.map((r) => (
                 <tr key={r.id} onClick={() => go(`${def.path}/${r.id}`)}>
                   <td className="fin-td-main">
-                    <button type="button" className="fin-cell-btn fin-cell-main" onClick={(e) => { e.stopPropagation(); go(`${def.path}/${r.id}`) }}>{r.name}</button>
-                    <small className="fin-cell-sub">{r.trading_name || r.commercial_name || r.name_en || r.location || r.description || ''}</small>
+                    <button type="button" className="fin-cell-btn fin-cell-main" onClick={(e) => { e.stopPropagation(); go(`${def.path}/${r.id}`) }}>{kind === 'categories' && <i className="fin-catdot" style={{ background: categoryColor(r.name) }} aria-hidden="true" />}{r.name}</button>
+                    <small className="fin-cell-sub">{kind === 'categories' ? [r.name_en, LEVELS[levelOf(r, rankTotal)]].filter(Boolean).join(' · ') : r.trading_name || r.commercial_name || r.name_en || r.location || r.description || ''}</small>
                   </td>
                   {kind === 'suppliers' && <><td className="fin-col-md fin-ltr" data-label="ח.פ">{r.vat_id || <span className="fin-attn-text">חסר</span>}</td><td className="fin-col-lg" data-label="סוג">{r.supplier_type || '—'}</td><td className="fin-col-lg" data-label="קטגוריה">{r.default_category || '—'}</td></>}
                   {kind === 'categories' && <><td className="fin-col-md" data-label="אב">{nameOf(categories, r.parent_id) || '—'}</td><td className="fin-col-md fin-ltr" data-label="קוד">{r.accounting_code || '—'}</td><td className="fin-num fin-ent-stat" data-label="קיזוז">{Number(r.vat_deductible_pct)}%</td></>}
                   {kind === 'projects' && <><td className="fin-col-md fin-ltr" data-label="קוד">{r.code || '—'}</td><td className="fin-col-md" data-label="חברה">{nameOf(businesses, r.business_id) || <span className="fin-attn-text">לא משויך</span>}</td><td className="fin-col-lg" data-label="סוג">{r.project_type || '—'}</td></>}
                   {kind === 'businesses' && <><td className="fin-col-md fin-ltr" data-label="עוסק">{r.vat_id || '—'}</td><td className="fin-col-lg" data-label="רו״ח">{r.accountant_name || r.accountant_email || '—'}</td><td className="fin-num fin-ent-stat" data-label="פרויקטים">{r.projects || 0}</td></>}
                   <td className={`fin-num fin-ent-stat ${kind === 'suppliers' || kind === 'projects' ? 'fin-ent-stat--wide' : ''}`} data-label="מסמכים"><span className="fin-ent-stat__n">{r.docs || 0}</span>{r.pendingDocs ? <small className="fin-warn-text fin-ent-stat__wait"> ({r.pendingDocs} ממתינים)</small> : null}</td>
-                  <td className="fin-num fin-td-total" data-label="הוצאות"><strong>{money(r.total || 0)}</strong></td>
+                  <td className="fin-num fin-td-total" data-label="הוצאות" {...(kind === 'categories' ? tip.on(() => <TipRows title={r.name} rows={[['סך ההוצאות', money(r.total || 0)], ['מסמכים', r.docs || 0], ['ממוצע למסמך', r.docs ? money((r.total || 0) / r.docs) : '—'], ['חלק מההוצאות ברשימה', `${((Math.abs(r.total || 0) / rankTotal) * 100).toFixed(1)}%`], r.pendingDocs ? ['ממתינים לבדיקה', r.pendingDocs] : null, ['מסמך אחרון', date(r.last) || '—']]} note="כל התקופות, מהמסמכים שנספרים" />) : {})}><strong>{money(r.total || 0)}</strong>{kind === 'categories' && <span className="fin-catbar" aria-hidden="true"><i style={{ width: `${r.total ? Math.max(3, (Math.abs(r.total) / rankMax) * 100) : 0}%`, background: categoryColor(r.name) }} /></span>}</td>
                   {kind === 'projects' && <td className="fin-col-md" data-label="תקציב">{r.budget ? <span className="fin-budget"><span style={{ width: `${Math.min(100, ((r.total || 0) / r.budget) * 100)}%` }} className={(r.total || 0) > r.budget ? 'is-over' : ''} />{Math.round(((r.total || 0) / r.budget) * 100)}%</span> : '—'}</td>}
                   <td className="fin-ent-last fin-td-date" data-label="אחרון">{date(r.last) || '—'}</td>
                   <td className="fin-td-status">{status(r)}</td>

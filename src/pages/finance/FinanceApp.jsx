@@ -3,7 +3,7 @@ import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, hasSupabase } from '../../lib/supabase.js'
 import { useAuth } from '../../lib/useAuth.js'
 import * as api from './api.js'
-import { ROLE, can } from './format.js'
+import { ROLE, can, reportPeriod, periodKindOf, readyNow } from './format.js'
 import { ConfirmHost, Icon, Modal, Skeleton, UploadZone } from './ui.jsx'
 import { markLedger } from './ledger.js'
 import Onboarding from './Onboarding.jsx'
@@ -482,7 +482,8 @@ export default function FinanceApp() {
       pending: data.documents.filter((d) => d.status === 'review').length,
       incomplete: data.documents.filter((d) => d.status === 'review' && (!d.supplier_name || !d.doc_type || d.doc_type === 'other' || !d.business_id || !d.issue_date || d.total_amount == null || !d.doc_number)).length,
       suppliers: data.suppliers.filter((x) => x.status === 'pending').length,
-      ready: data.documents.filter((d) => d.status === 'approved' && !d.exported_at).length,
+      // ready for the accountant: approved, not sent, in the current reporting period (two months, or one)
+      ready: (() => { const p = reportPeriod(periodKindOf(data.businesses)); return data.documents.filter((d) => readyNow(d, p)).length })(),
     }
   }, [data.documents, data.suppliers])
 

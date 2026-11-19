@@ -29,9 +29,14 @@ export function BrandLogo({ height = 56, className = '' }) {
 
 /* the loading screen: the towers keep building, with one quiet line under them */
 export function BrandLoader({ label = 'טוען את המערכת' }) {
+  // the same picture as the first paint in finance-app.html: towers on a base line, the system's name, a moving bar
   return (
     <div className="fin-boot fin-boot--brand" role="status" aria-label={label}>
-      <BrandMark size={64} loop />
+      <svg className="fin-boot__mark" viewBox="16 6 52 76" aria-hidden="true" focusable="false">
+        {TOWERS.map(([x, y, w, h], i) => <rect key={x} x={x} y={y} width={w} height={h} style={{ '--i': i }} />)}
+        <rect className="fin-boot__base" x="19" y="78.5" width="45" height="1.6" rx="0.8" />
+      </svg>
+      <strong className="fin-boot__name">Kurkoos Finance</strong>
       <span className="fin-boot__bar" aria-hidden="true" />
       <p className="fin-boot__label">{label}</p>
     </div>

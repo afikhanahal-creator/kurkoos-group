@@ -15,18 +15,32 @@
     <link rel="apple-touch-icon" href="/finance/icon-180.png" />
     <!-- the connection to the database opens while the code is still on its way (the script used to ask for it only after it had loaded) -->
     <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <link rel="preload" href="/fonts/almoni-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/almoni-700.woff2" as="font" type="font/woff2" crossorigin />
     <title>Kurkoos Finance</title>
   </head>
   <body>
     <style>
-      /* the first paint, before the app's code and styles arrive: the same building towers the app shows while loading */
-      .fin-boot0 { min-height: 100vh; min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 18px; background: #f7f7f5; }
-      .fin-boot0 rect { fill: #14202b; transform-box: fill-box; transform-origin: 50% 100%; animation: fin-boot0 1.9s ease-in-out infinite; }
-      .fin-boot0 rect:nth-child(2) { animation-delay: 0.12s; } .fin-boot0 rect:nth-child(3) { animation-delay: 0.24s; } .fin-boot0 rect:nth-child(4) { animation-delay: 0.36s; }
-      @keyframes fin-boot0 { 0%, 100% { transform: scaleY(0.18); opacity: 0.35; } 40%, 70% { transform: scaleY(1); opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .fin-boot0 rect { animation: none; } }
+      /* the first paint, before the app's code and styles arrive: the same loading screen the app shows (Brand.jsx),
+         in the system's own font, so nothing jumps when the code takes over */
+      @font-face { font-family: 'Almoni'; src: url('/fonts/almoni-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+      @font-face { font-family: 'Almoni'; src: url('/fonts/almoni-700.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+      body { margin: 0; }
+      .fin-boot0 { min-height: 100vh; min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 0; background: #f7f7f5; font-family: 'Almoni', 'Assistant', system-ui, sans-serif; }
+      .fin-boot0 svg { height: clamp(96px, 26vw, 124px); width: auto; display: block; }
+      .fin-boot0 rect { fill: #07293a; transform-box: fill-box; transform-origin: 50% 100%; animation: fin-boot0 2.2s cubic-bezier(0.3, 0.8, 0.3, 1) infinite; }
+      .fin-boot0 rect:nth-child(2) { animation-delay: 0.14s; } .fin-boot0 rect:nth-child(3) { animation-delay: 0.28s; } .fin-boot0 rect:nth-child(4) { animation-delay: 0.42s; }
+      .fin-boot0 rect.b { fill: #16688c; transform-origin: 50% 50%; animation: fin-boot0b 2.2s ease-in-out infinite; }
+      .fin-boot0 strong { margin-top: 22px; font-size: clamp(22px, 6vw, 26px); font-weight: 700; color: #07293a; letter-spacing: 0.01em; direction: ltr; }
+      .fin-boot0 i { margin-top: 20px; width: min(240px, 58vw); height: 5px; border-radius: 99px; background: #e1e6ea; overflow: hidden; position: relative; display: block; }
+      .fin-boot0 i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 42%; border-radius: 99px; background: #16688c; animation: fin-boot0bar 1.5s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+      .fin-boot0 p { margin: 16px 0 0; font-size: clamp(16px, 4.4vw, 18px); color: #3d4b57; }
+      @keyframes fin-boot0 { 0%, 100% { transform: scaleY(0.14); opacity: 0.3; } 32% { transform: scaleY(1.05); opacity: 1; } 42%, 74% { transform: scaleY(1); opacity: 1; } }
+      @keyframes fin-boot0b { 0%, 100% { transform: scaleX(0.2); opacity: 0.4; } 40%, 74% { transform: scaleX(1); opacity: 1; } }
+      @keyframes fin-boot0bar { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+      @media (prefers-reduced-motion: reduce) { .fin-boot0 rect, .fin-boot0 i::after { animation: none; } .fin-boot0 i::after { width: 100%; opacity: 0.5; } }
     </style>
-    <div id="root"><div class="fin-boot0" role="status" aria-label="טוען"><svg viewBox="16 6 52 76" width="44" height="64" aria-hidden="true"><rect x="23" y="32" width="5" height="44" /><rect x="34" y="12" width="8" height="64" /><rect x="46" y="22" width="6" height="54" /><rect x="56" y="42" width="4" height="34" /></svg></div></div>
+    <div id="root"><div class="fin-boot0" role="status" aria-label="טוען את המערכת"><svg viewBox="16 6 52 76" aria-hidden="true"><rect x="23" y="32" width="5" height="44" /><rect x="34" y="12" width="8" height="64" /><rect x="46" y="22" width="6" height="54" /><rect x="56" y="42" width="4" height="34" /><rect class="b" x="19" y="78.5" width="45" height="1.6" rx="0.8" /></svg><strong>Kurkoos Finance</strong><i aria-hidden="true"></i><p>טוען את המערכת</p></div></div>
     <script type="module" src="/src/finance-main.jsx"></script>
   </body>
 </html>

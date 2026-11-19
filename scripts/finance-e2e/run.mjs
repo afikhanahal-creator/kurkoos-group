@@ -962,6 +962,19 @@ const mails = await fetch(`${FAKES}/__log`).then((r) => r.json())
 const summary = JSON.parse(sql("select data::text from fin_summaries order by created_at desc limit 1") || '{}')
 const want24 = Number(sql("select count(*) from fin_documents where created_at > now() - interval '24 hours'"))
 record('A7', 'ריצת הלילה ודוח הבוקר', 'ה-cron של הלילה אוסף, מנסה שוב ומשחזר; ה-cron של הבוקר שומר דוח ושולח מייל "דוח בוקר" עם מה שבאמת נשמר (מייל, WhatsApp, לבדיקה, כפילויות, תקלות); בלי הסוד שניהם נדחים', `לילה: ${(cron.results || []).map((r) => `${r.key}:${r.status}`).join(', ')}; בוקר: ${(morningRun.results || []).map((r) => `${r.key}:${r.status || (r.retry ? 'tick' : '')}`).join(', ')}; דוח: נאספו ${summary.collected} (במסד ${want24}), מייל ${summary.by_email}, WhatsApp ${summary.by_whatsapp}, לבדיקה ${summary.review}, חשודים ככפולים ${summary.suspected_duplicates}; מיילים: ${mails.emails.map((m) => m.subject).join(' / ')}; בלי סוד: ${cronBad}`, (cron.results || []).find((r) => r.key === 'daily_scan')?.status === 'ok' && !(cron.results || []).some((r) => r.key === 'daily_summary') && (morningRun.results || []).find((r) => r.key === 'morning_report')?.status === 'ok' && summary.collected === want24 && summary.by_whatsapp >= 1 && summary.by_email >= 1 && mails.emails.some((m) => /דוח בוקר/.test(m.subject)) && cronBad === 401)
+// the morning report's look: sent as "Kurkoos Finance" (never the site's "Kurkoos Leads"), "ready" counts the reporting period
+{
+  const mail = [...mails.emails].reverse().find((m) => /דוח בוקר/.test(m.subject || ''))
+  const p = nowPeriod()
+  const wantReady = Number(sql(`select count(*) from fin_documents where status='approved' and exported_at is null and ${inNowPeriod()}`))
+  const html = mail?.html || ''
+  fs.writeFileSync(`${OUT}/morning-report.html`, html)
+  const mp = await ctx.newPage(); await mp.setViewportSize({ width: 390, height: 900 }); await mp.setContent(html); const mailShot = await shot('18b-morning-report', mp)
+  const over = await mp.evaluate(() => document.documentElement.scrollWidth - innerWidth); await mp.close()
+  record('MAILREP', 'דוח הבוקר במייל: מקצועי ולפי תקופת הדיווח', `נשלח מ-"Kurkoos Finance"; כותרת עם "לבדיקה" ו"מוכנים לרו״ח (${p.label})"; "מוכנים לרו״ח" = המאושרים של התקופה; כרטיסים וכפתורים לבדיקה ולדוח; מימין לשמאל, בלי גלילה לצד בטלפון`,
+    `מאת: ${mail?.from}; נושא: ${mail?.subject}; מוכנים: ${summary.ready_to_export} (במסד ${wantReady}); תקופה: ${summary.period?.label}; dir: ${/<html dir="rtl"/.test(html)}; כפתורים: ${(html.match(/admin\/finance\/(pending|report)/g) || []).length}; טלפון: ${over}`,
+    !!mail && /^Kurkoos Finance </.test(mail.from || '') && !/Leads/.test(mail.from || '') && summary.ready_to_export === wantReady && summary.period?.label === p.label && mail.subject.includes(`מוכנים לרו״ח (${p.label})`) && /<html dir="rtl"/.test(html) && /admin\/finance\/pending/.test(html) && /admin\/finance\/report/.test(html) && over <= 0, [mailShot])
+}
 await nav('סוכני AI')
 const agentsShot = await shot('18-agents')
 await nav('כללים ואוטומציה')

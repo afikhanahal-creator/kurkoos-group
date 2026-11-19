@@ -4902,3 +4902,8 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-periodbar__older { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--t-sm); color: var(--warn); }
 .fin-periodbar__older .fin-link { min-height: 44px; }
 @media (max-width: 760px) { .fin-periodbar__older { flex-basis: 100%; } }
+
+/* a supplier the reading did not know yet: its approval stands out in blue, so a new supplier is seen at a glance */
+.fin-btn--newsup { background: #16688c; border-color: #16688c; color: #ffffff; font-weight: 700; }
+.fin-btn--newsup:hover:not(:disabled) { background: #105572; border-color: #105572; }
+.fin[data-theme='dark'] .fin-btn--newsup { background: #1d6f94; border-color: #1d6f94; color: #ffffff; }

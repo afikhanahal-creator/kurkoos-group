@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { ago, dateTime, nameOf } from './format.js'
-import { Empty, Field, Icon, Modal, PageHead, Pill, Toggle, useAsync, askConfirm } from './ui.jsx'
+import { Empty, Field, Icon, Kpi, Modal, PageHead, Pill, Toggle, useAsync, askConfirm } from './ui.jsx'
+import ReportsCenter from './ReportsCenter.jsx'
 import Select from './Select.jsx'
 
 const FREQ = { daily: 'כל יום', weekly: 'כל שבוע', monthly: 'כל חודש', on_event: 'בכל מסמך' }
@@ -31,6 +32,7 @@ export default function Automations() {
   const [hist, setHist] = useState(null)
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
+  const [rep, setRep] = useState(null)   // the scheduled reports and their sending history, for the overview
   const admin = can('manage')
   const who = (uid) => members.find((m) => m.user_id === uid)?.full_name || members.find((m) => m.user_id === uid)?.email || ''
   const hitsOf = useMemo(() => { const o = {}; for (const h of hits.data || []) (o[h.rule_id] ||= []).push(h); return o }, [hits.data])
@@ -61,6 +63,27 @@ export default function Automations() {
         {admin && <button type="button" className="fin-btn fin-btn--primary" onClick={() => setEdit({ name: '', kind: 'supplier_category', enabled: true, priority: 100 })}><Icon name="plus" size={17} /> כלל חדש</button>}
       </PageHead>
       {msg && <p className="fin-note" role="status">{msg}</p>}
+
+      {(() => {
+        // the overview: the fixed automations and the scheduled reports together
+        const list = autos.data || []; const reports = rep?.data.configured ? rep.data.reports : []
+        const total = list.length + reports.length
+        const active = list.filter((a) => a.enabled).length + reports.filter((r) => r.enabled).length
+        const okAt = [...list.filter((a) => a.last_status === 'ok' && a.last_run_at).map((a) => a.last_run_at), ...(rep?.runs || []).filter((h) => h.status === 'ok').map((h) => h.at)].sort().pop()
+        const failed = list.filter((a) => a.enabled && a.last_status === 'error').length + (rep?.runs || []).filter((h) => h.failed > 0 && h.status !== 'ok' && Date.now() - new Date(h.at) < 7 * 86400_000).length
+        const next = (rep?.data.reports || []).filter((r) => r.next).sort((a, b) => a.next.in_days - b.next.in_days || a.next.time.localeCompare(b.next.time))[0]
+        return (
+          <div className="fin-kpis fin-auto-kpis">
+            <Kpi label="אוטומציות ודוחות" value={total} hint="כללים מתוזמנים ודוחות" />
+            <Kpi label="פעילות" value={active} hint={total - active ? `${total - active} מושבתות` : 'הכול פעיל'} />
+            <Kpi label="הצלחה אחרונה" value={okAt ? ago(okAt) : '—'} hint={okAt ? dateTime(okAt) : 'עוד לא רצה'} />
+            <Kpi label="נכשלו" value={failed} tone={failed ? 'bad' : undefined} hint={failed ? 'בשבוע האחרון, הפירוט למטה' : 'אין תקלות'} />
+            <Kpi label="השליחה הבאה" value={next ? `${next.next.in_days === 0 ? 'היום' : next.next.in_days === 1 ? 'מחר' : `יום ${next.next.day}`} ${next.next.time}` : '—'} hint={next ? next.name : 'אין דוח מתוזמן'} />
+          </div>
+        )
+      })()}
+
+      <ReportsCenter admin={admin} onChange={(data, runs) => { setRep({ data, runs }); autos.reload() }} />
 
       <section className="fin-panel-block">
         <div className="fin-panel-block__head"><h3>כללי שיוך ובקרה</h3><span className="fin-muted">{(rules.data || []).length} כללים</span></div>
@@ -101,6 +124,7 @@ export default function Automations() {
                   <td><Toggle checked={a.enabled} onChange={(v) => updateAuto(a, { enabled: v })} label={`הפעלת ${a.name}`} disabled={!admin} /></td>
                   <td className="fin-td-main"><span className="fin-cell-main">{a.name}</span><small className="fin-cell-sub fin-wrap">{a.description}</small>
                     {a.key === 'amount_flag' && <label className="fin-inline-label">סף: <input type="number" inputMode="decimal" className="fin-select fin-select--sm" defaultValue={a.config?.min_amount || 50000} disabled={!admin} onBlur={(e) => updateAuto(a, { config: { ...a.config, min_amount: Number(e.target.value) } })} /> ₪</label>}
+                    {a.key === 'morning_report' && <a className="fin-link fin-inline-label" href="#fin-reports">ימים, שעות ונמענים</a>}
                     {a.key === 'retry_failed' && <label className="fin-inline-label">ניסיונות: <input type="number" inputMode="decimal" min="1" max="10" className="fin-select fin-select--sm" defaultValue={a.config?.max_attempts || 3} disabled={!admin} onBlur={(e) => updateAuto(a, { config: { ...a.config, max_attempts: Number(e.target.value) } })} /></label>}
                   </td>
                   <td className="fin-col-md">{FREQ[a.frequency]}</td>

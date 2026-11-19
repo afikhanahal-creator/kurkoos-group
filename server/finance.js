@@ -33,6 +33,8 @@ const ROLES = {
   revalidate: ['admin', 'finance_manager', 'employee'],
   'retry-failed': ['admin', 'finance_manager'],
   'summary-now': ['admin', 'finance_manager'],
+  reports: ['admin'],
+  'reports-view': ['admin', 'finance_manager'],
   'run-daily': ['admin'],
   disconnect: ['admin', 'finance_manager', 'employee'],
   invite: ['admin'],
@@ -233,7 +235,9 @@ export default async function handler(req, res) {
       // new mail of the connected mailboxes (every 15 minutes) and email copies of documents already in the system (hourly)
       const collect = await quickCollectTick({ started }).catch((e) => ({ error: String(e.message || e).slice(0, 200) }))
       await duplicateSweepTick().catch(() => null)
-      res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive, collect })
+      // scheduled reports whose hour has come
+      const reports = await import('./finance/reports.js').then((r) => r.reportsTick({ origin: origin(req) })).catch((e) => [{ error: String(e.message || e).slice(0, 200) }])
+      res.status(200).json({ ...(await scanTick({ trigger: 'scan', started })), drive, collect, reports })
     } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
     return
   }
@@ -580,6 +584,31 @@ export default async function handler(req, res) {
       }
       case 'summary-now': {
         res.status(200).json({ summary: await dailySummary({ origin: origin(req), email: !!body.email }) })
+        return
+      }
+      case 'reports-view': {
+        const R = await import('./finance/reports.js')
+        const id = String(body.id || '')
+        if (body.op === 'history') { res.status(200).json({ runs: await R.history(Math.min(Number(body.limit) || 40, 100)) }); return }
+        if (body.op === 'open') { res.status(200).json(await R.openRun(id, origin(req))); return }
+        if (body.op === 'preview') { res.status(200).json(await R.previewReport(body.report || {}, origin(req))); return }
+        res.status(200).json(await R.screen())
+        return
+      }
+      case 'reports': {
+        const R = await import('./finance/reports.js')
+        if (body.op === 'save') { const out = await R.saveReports(body.reports, body.templates); await audit('automation', 'morning_report', 'reports_saved', { reports: out.reports.map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, slots: r.slots.length })) }, user); res.status(200).json(await R.screen()); return }
+        if (body.op === 'tick') { res.status(200).json({ sent: (await R.reportsTick({ origin: origin(req) })) || [] }); return }
+        if (body.op === 'retry') { res.status(200).json(await R.retryRun(String(body.id || ''), origin(req))); return }
+        if (body.op === 'send' || body.op === 'test') {
+          const cfg = await R.loadReports()
+          const report = body.report ? (await R.cleanOne(body.report)) : cfg.reports.find((r) => r.id === String(body.id || ''))
+          if (!report) { res.status(404).json({ error: 'הדוח לא נמצא' }); return }
+          const only = body.op === 'test' ? await R.testRecipients(user, body.wa) : null
+          res.status(200).json(await R.runReport(report, { trigger: body.op === 'test' ? 'test' : 'manual', origin: origin(req), only }))
+          return
+        }
+        res.status(400).json({ error: 'unknown op' })
         return
       }
       case 'run-daily': {

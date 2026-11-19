@@ -42,6 +42,20 @@ export async function reply(phone, message) {
   }).catch(() => null)
   return !!r?.ok
 }
+/* a message the admin asked for (a scheduled report): sent from the connected line whether or not the automatic
+   replies are on, and only to a number registered in fin_whatsapp_senders (the caller picks from that list). */
+export async function sendText(phone, message) {
+  if (!process.env.GREENAPI_ID_INSTANCE || !process.env.GREENAPI_TOKEN) return { ok: false, error: 'קו הוואטסאפ לא מחובר' }
+  const to = String(phone || '').replace(/\D/g, '')
+  if (!/^\d{9,15}$/.test(to)) return { ok: false, error: 'מספר לא תקין' }
+  try {
+    const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/sendMessage/${process.env.GREENAPI_TOKEN}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chatId: `${to}@c.us`, message, linkPreview: false }), signal: AbortSignal.timeout(12_000),
+    })
+    if (r.ok) return { ok: true }
+    return { ok: false, error: r.status === 466 ? 'מכסת ההודעות של הקו נגמרה' : `הקו סירב לשלוח (${r.status})` }
+  } catch { return { ok: false, error: 'הקו לא ענה' } }
+}
 /* a document that came by WhatsApp was approved: its sender is told, once. The audit trail is the memory of "once". */
 export async function notifyApproved(documentId, user) {
   const doc = await one(`fin_documents?id=eq.${encodeURIComponent(documentId)}&select=id,status,source,supplier_name,total_amount,currency,email_from`)

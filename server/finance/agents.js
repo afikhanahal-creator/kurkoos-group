@@ -343,5 +343,5 @@ export async function morningReport(origin) {
   if (process.env.FINANCE_NIGHT_CHECK !== '0') {
     try { const { nightlyCheck, tick } = await import('./scan.js'); await nightlyCheck({ pass: 2 }); await tick({ started, trigger: 'cron' }) } catch { /* the report still goes out; the minute run finishes the pass */ }
   }
-  return [await automation('morning_report', (cfg) => dailySummary({ origin, email: cfg.email !== false }))]
+  return [await automation('morning_report', (cfg) => dailySummary({ origin, email: cfg.email !== false && !Array.isArray(cfg.reports) }))]   // once reports are set up, the schedule sends them
 }

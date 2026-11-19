@@ -148,13 +148,20 @@ export async function duplicateSweepTick({ force = false } = {}) {
 async function managers() {
   return ((await sb("fin_members?active=eq.true&role=in.(admin,finance_manager)&select=email")) || []).map((m) => m.email).filter(Boolean)
 }
+/* the finance system's own sender: FINANCE_FROM, else the site's verified address under the name "Kurkoos Finance" (the
+   site's NOTIFY_FROM is "Kurkoos Leads <…>", the name of the lead notifications, and it signed the morning report) */
+export function financeFrom(e = process.env) {
+  if (e.FINANCE_FROM) return e.FINANCE_FROM
+  const addr = /<([^>]+)>/.exec(String(e.NOTIFY_FROM || ''))?.[1] || (/^[^\s<>]+@[^\s<>]+$/.test(String(e.NOTIFY_FROM || '').trim()) ? String(e.NOTIFY_FROM).trim() : '')
+  return `Kurkoos Finance <${addr || 'onboarding@resend.dev'}>`
+}
 export async function sendMail(to, subject, html) {
   const key = process.env.RESEND_API_KEY
   if (!key || !to.length) return { sent: false, reason: key ? 'no recipients' : 'RESEND_API_KEY missing' }
   const r = await fetch(`${env.resendApi()}/emails`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: process.env.FINANCE_FROM || process.env.NOTIFY_FROM || 'Kurkoos Finance <onboarding@resend.dev>', to, subject, html }),
+    body: JSON.stringify({ from: financeFrom(), to, subject, html }),
   })
   if (!r.ok) throw new Error(`resend ${r.status}: ${(await r.text()).slice(0, 200)}`)
   return { sent: true }
@@ -172,7 +179,6 @@ export async function buildSummary(now = new Date()) {
     duplicates: await count(`fin_documents?status=eq.duplicate&created_at=gte.${from}`),
     failed_docs: await count('fin_documents?status=eq.failed'),
     failed_mailboxes: ((await sb("fin_mailboxes?status=eq.error&select=email,last_error")) || []),
-    ready_to_export: await count('fin_documents?status=eq.approved&exported_at=is.null'),
     by_whatsapp: await count(`fin_documents?created_at=gte.${from}&source=eq.whatsapp`),
     by_email: await count(`fin_documents?created_at=gte.${from}&mailbox_id=not.is.null`),
     by_upload: await count(`fin_documents?created_at=gte.${from}&source=in.(upload,camera)`),
@@ -181,22 +187,68 @@ export async function buildSummary(now = new Date()) {
     verified: await count(`fin_documents?processed_at=gte.${from}&extraction->verification->second=not.is.null`),
     ai_tokens: ((await sb(`fin_documents?processed_at=gte.${from}&select=ai_tokens_in,ai_tokens_out`)) || []).reduce((a, d) => a + (d.ai_tokens_in || 0) + (d.ai_tokens_out || 0), 0),
   }
+  // ready for the accountant: approved, not sent, dated in the current reporting period (two months, or one), as on the screens
+  const { reportPeriod, periodKindOf, docDate } = await import('../../src/pages/finance/format.js')
+  const businesses = (await sb('fin_businesses?select=active,archived_at,report_settings')) || []
+  const p = reportPeriod(periodKindOf(businesses), 0, israelDay(now))
+  const approved = (await sb('fin_documents?status=eq.approved&exported_at=is.null&select=issue_date,email_date,created_at,total_amount,currency,doc_type')) || []
+  const inP = approved.filter((d) => { const day = String(docDate(d)).slice(0, 10); return day >= p.from && day <= p.to })
+  data.period = { label: p.label, from: p.from, to: p.to, kind: p.kind }
+  data.ready_to_export = inP.length
+  data.ready_total = Math.round(inP.filter((d) => (d.currency || 'ILS') === 'ILS').reduce((a, d) => a + (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.total_amount) || 0), 0) * 100) / 100
+  data.ready_older = approved.filter((d) => String(docDate(d)).slice(0, 10) < p.from).length
   return data
 }
+const israelDay = (t) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' }).format(t)
 
-const summaryHtml = (d, origin) => `<div dir="rtl" style="font-family:Arial,sans-serif;color:#1a1f2b">
-<h2 style="color:#07293a">KURKOOS FINANCE AI · דוח בוקר</h2>
-<table cellpadding="6" style="border-collapse:collapse">
-<tr><td>נאספו ב-24 השעות האחרונות</td><td><b>${d.collected}</b> (מייל ${d.by_email ?? 0}, WhatsApp ${d.by_whatsapp ?? 0}, העלאה וצילום ${d.by_upload ?? 0})</td></tr>
-<tr><td>עובדו בהצלחה</td><td><b>${d.processed}</b></td></tr>
-<tr><td>ממתינים לבדיקה</td><td><b>${d.review}</b></td></tr>
-<tr><td>כפילויות שזוהו</td><td><b>${d.duplicates}</b>${d.suspected_duplicates ? ` ועוד ${d.suspected_duplicates} חשודות לבדיקה` : ''}</td></tr>
-<tr><td>מסמכים שהקריאה שלהם נכשלה</td><td><b>${d.failed_docs}</b></td></tr>
-<tr><td>תיבות מייל עם תקלה</td><td><b>${d.failed_mailboxes.length}</b>${d.failed_mailboxes.map((m) => `<br><small>${m.email}: ${m.last_error || ''}</small>`).join('')}</td></tr>
-<tr><td>מאושרים ומוכנים לייצוא</td><td><b>${d.ready_to_export}</b></td></tr>
-</table>
-<p>כל המסמכים שבדוח נשמרו במערכת.${d.needs_person ? ` ${d.needs_person} מסמכים לא נקראו גם אחרי 3 ניסיונות ומחכים לטיפול ידני.` : ''}</p>
-<p><a href="${origin}/admin/finance">לכניסה למערכת</a></p></div>`
+/* the morning report: a professional email that reads right to left in every mail app (tables, inline styles, every cell
+   with its own direction; Gmail drops <body> styles), the three numbers that need someone first, then the night's detail */
+const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const nis = (v) => `₪${Number(v || 0).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+export function summaryHtml(d, origin, now = new Date()) {
+  const F = 'font-family:Arial,Helvetica,sans-serif'
+  const day = new Intl.DateTimeFormat('he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)
+  const link = (path) => `${esc(origin)}/admin/finance${path}`
+  const issues = [
+    d.failed_mailboxes.length ? `${d.failed_mailboxes.length === 1 ? 'תיבת מייל אחת מנותקת' : `${d.failed_mailboxes.length} תיבות מייל מנותקות`}: ${d.failed_mailboxes.map((m) => esc(m.email)).join(', ')}` : '',
+    d.needs_person ? `${d.needs_person} מסמכים לא נקראו גם אחרי 3 ניסיונות ומחכים לטיפול ידני` : '',
+    d.suspected_duplicates ? `${d.suspected_duplicates} מסמכים חשודים ככפילות מחכים להחלטה` : '',
+  ].filter(Boolean)
+  const kpi = (label, value, sub, tone, href) => `<td dir="rtl" width="33%" valign="top" style="padding:6px"><a href="${href}" style="text-decoration:none;display:block"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d5dee8;border-radius:12px;background:#ffffff"><tr><td dir="rtl" style="padding:14px 16px;text-align:right;${F}">
+    <div style="font-size:12px;color:#5b6b7a;${F}">${label}</div>
+    <div style="font-size:28px;font-weight:700;color:${tone};line-height:1.3;${F}">${value}</div>
+    <div style="font-size:12px;color:#5b6b7a;${F}">${sub}</div></td></tr></table></a></td>`
+  const row = (label, value) => `<tr><td dir="rtl" style="padding:9px 0;border-bottom:1px solid #e6ecf2;text-align:right;color:#5b6b7a;font-size:14px;${F}">${label}</td><td dir="rtl" style="padding:9px 0;border-bottom:1px solid #e6ecf2;text-align:left;color:#14202b;font-size:14px;font-weight:700;${F}">${value}</td></tr>`
+  const btn = (label, href, main) => `<a href="${href}" style="display:inline-block;margin:4px;padding:12px 22px;border-radius:10px;${main ? 'background:#07293a;color:#ffffff;' : 'background:#ffffff;color:#07293a;border:1px solid #c5d3df;'}font-size:14px;font-weight:700;text-decoration:none;${F}">${label}</a>`
+  return `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"></head>
+<body dir="rtl" style="margin:0;padding:0;background:#eef2f6;${F}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f6"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#f7f9fb;border-radius:16px;overflow:hidden">
+  <tr><td dir="rtl" style="background:#07293a;padding:22px 26px;text-align:right;${F}">
+    <div style="font-size:12px;letter-spacing:0.08em;color:#8cc4dc;font-weight:700;${F}">KURKOOS FINANCE</div>
+    <div style="font-size:22px;font-weight:700;color:#ffffff;margin-top:4px;${F}">דוח בוקר</div>
+    <div style="font-size:13px;color:#cfe3ec;margin-top:2px;${F}">${esc(day)}</div>
+  </td></tr>
+  <tr><td style="padding:16px 14px 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    ${kpi('ממתינים לבדיקה', d.review, d.review ? 'מסמכים שמחכים לאישור שלכם' : 'אין מה לאשר', d.review ? '#8a5a00' : '#1f6f4c', link('/pending'))}
+    ${kpi('מוכנים לרו״ח', d.ready_to_export, `${esc(d.period?.label || '')}${d.ready_to_export ? `<br><span dir="ltr" style="font-weight:700;color:#14202b">${nis(d.ready_total)}</span>` : ''}`, '#07293a', link('/report'))}
+    ${kpi('נאספו ב-24 שעות', d.collected, `מייל ${d.by_email ?? 0} · WhatsApp ${d.by_whatsapp ?? 0} · העלאה ${d.by_upload ?? 0}`, '#16688c', link('/new'))}
+  </tr></table></td></tr>
+  ${issues.length ? `<tr><td dir="rtl" style="padding:6px 20px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fbf2dc;border:1px solid #ecd9a6;border-radius:12px"><tr><td dir="rtl" style="padding:12px 16px;text-align:right;color:#6b4600;font-size:14px;${F}"><b>דורש תשומת לב</b>${issues.map((t) => `<div style="margin-top:4px;${F}">• ${t}</div>`).join('')}</td></tr></table></td></tr>` : ''}
+  <tr><td dir="rtl" style="padding:10px 26px 4px;text-align:right;${F}">
+    <div style="font-size:15px;font-weight:700;color:#07293a;margin-bottom:4px;${F}">מה קרה בלילה</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${row('מסמכים שנקראו בהצלחה', d.processed)}
+      ${row('כפילויות שזוהו וצורפו למקור', d.duplicates)}
+      ${row('מסמכים שהקריאה שלהם נכשלה', d.failed_docs)}
+      ${row('תיבות מייל עם תקלה', d.failed_mailboxes.length)}
+      ${d.ready_older ? row('מאושרים מתקופות קודמות שעוד לא נשלחו', d.ready_older) : ''}
+    </table>
+  </td></tr>
+  <tr><td align="center" style="padding:18px 20px 22px">${btn('לבדיקה ואישור', link('/pending'), true)}${btn('לדוח ולשליחה לרו״ח', link('/report'), false)}</td></tr>
+  <tr><td dir="rtl" style="padding:14px 26px;border-top:1px solid #e1e8ef;text-align:right;color:#8a97a3;font-size:12px;${F}">כל המסמכים שבדוח שמורים במערכת. "מוכנים לרו״ח" הם מסמכים מאושרים שעוד לא נשלחו, מתקופת הדיווח ${esc(d.period?.label || '')}.<br>Kurkoos Finance · קבוצת קורקוס</td></tr>
+</table></td></tr></table></body></html>`
+}
 
 export async function dailySummary({ origin = '', email = true } = {}) {
   const run = await agentRun('summary', 'cron')
@@ -204,7 +256,7 @@ export async function dailySummary({ origin = '', email = true } = {}) {
     const data = await buildSummary()
     const day = new Date().toISOString().slice(0, 10)
     let sentTo = []
-    if (email) { const to = await managers(); const s = await sendMail(to, `דוח בוקר · נאספו ${data.collected}, ${data.review} לבדיקה${data.failed_mailboxes.length ? `, ${data.failed_mailboxes.length} תיבות עם תקלה` : ''}`, summaryHtml(data, origin)); if (s.sent) sentTo = to; run.stat.details.email = s }
+    if (email) { const to = await managers(); const s = await sendMail(to, `דוח בוקר · ${data.review} לבדיקה · ${data.ready_to_export} מוכנים לרו״ח (${data.period?.label || ''})${data.failed_mailboxes.length ? ` · ${data.failed_mailboxes.length} תיבות עם תקלה` : ''}`, summaryHtml(data, origin)); if (s.sent) sentTo = to; run.stat.details.email = s }
     await sb('fin_summaries', { method: 'POST', body: { day, data, sent_to: sentTo }, prefer: 'resolution=merge-duplicates,return=minimal' })
     run.stat.processed = 1
     await run.done('ok')

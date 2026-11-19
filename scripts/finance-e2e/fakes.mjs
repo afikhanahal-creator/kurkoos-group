@@ -222,7 +222,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (p === '/resend/emails') {
     const body = JSON.parse(await readBody(req))
-    log.emails.push({ to: body.to, subject: body.subject, attachments: (body.attachments || []).map((x) => ({ filename: x.filename, bytes: Buffer.from(x.content || '', 'base64').length })) })
+    log.emails.push({ to: body.to, from: body.from, subject: body.subject, html: /דוח בוקר/.test(body.subject || '') ? body.html : undefined, attachments: (body.attachments || []).map((x) => ({ filename: x.filename, bytes: Buffer.from(x.content || '', 'base64').length })) })
     return send(res, 200, { id: crypto.randomUUID() })
   }
 

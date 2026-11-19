@@ -26,7 +26,12 @@ export default function Fixed() {
   const [msg, setMsg] = useState('')
   const [biz, setBiz] = useState('')
   const [busy, setBusy] = useState('')
-  const load = useCallback(async () => { try { setList(await api.loadRecurring()) } catch (e) { setErr(e.message) } }, [])
+  // a read that did not reach the server is tried once more before anything is shown; a later good read clears the message
+  const load = useCallback(async () => {
+    for (let n = 0; n < 2; n++) {
+      try { setList(await api.loadRecurring()); setErr((x) => (x === api.OFFLINE ? '' : x)); return } catch (e) { if (n === 0 && e.message === api.OFFLINE) { await new Promise((r) => setTimeout(r, 900)); continue } setErr(e.message); return }
+    }
+  }, [])
   useEffect(() => { load() }, [load])
   const now = thisMonth()
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => shiftMonth(now, i - 11)), [now])

@@ -224,25 +224,29 @@ export function summaryHtml(d, origin, now = new Date()) {
     d.needs_person ? `${d.needs_person} מסמכים לא נקראו גם אחרי 3 ניסיונות ומחכים לטיפול ידני` : '',
     d.suspected_duplicates ? `${d.suspected_duplicates} מסמכים חשודים ככפילות מחכים להחלטה` : '',
   ].filter(Boolean)
-  const kpi = (label, value, sub, tone, href) => `<td dir="rtl" width="33%" valign="top" style="padding:6px"><a href="${href}" style="text-decoration:none;display:block"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d5dee8;border-radius:12px;background:#ffffff"><tr><td dir="rtl" style="padding:14px 16px;text-align:right;${F}">
-    <div style="font-size:12px;color:#5b6b7a;${F}">${label}</div>
-    <div style="font-size:28px;font-weight:700;color:${tone};line-height:1.3;${F}">${value}</div>
-    <div style="font-size:12px;color:#5b6b7a;${F}">${sub}</div></td></tr></table></a></td>`
+  // a card: a colour bar on top, the label, the number large, then one or two short lines (equal height in a row)
+  const kpi = (label, value, lines, tone, href) => `<td dir="rtl" width="33%" valign="top" style="padding:5px"><a href="${href}" style="text-decoration:none;display:block;color:inherit"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #dbe3ea;border-top:4px solid ${tone};border-radius:12px"><tr><td dir="rtl" height="136" valign="top" style="padding:14px 12px 12px;text-align:right;${F}">
+    <div style="font-size:13px;font-weight:700;color:#3d4b57;${F}">${label}</div>
+    <div style="font-size:34px;font-weight:700;color:${tone};line-height:1.15;margin:6px 0 8px;${F}">${value}</div>
+    ${lines.filter(Boolean).map((t) => `<div style="font-size:12px;line-height:1.5;color:#5b6b7a;${F}">${t}</div>`).join('')}</td></tr></table></a></td>`
   const row = (label, value) => `<tr><td dir="rtl" style="padding:9px 0;border-bottom:1px solid #e6ecf2;text-align:right;color:#5b6b7a;font-size:14px;${F}">${label}</td><td dir="rtl" style="padding:9px 0;border-bottom:1px solid #e6ecf2;text-align:left;color:#14202b;font-size:14px;font-weight:700;${F}">${value}</td></tr>`
   const btn = (label, href, main) => `<a href="${href}" style="display:inline-block;margin:4px;padding:12px 22px;border-radius:10px;${main ? 'background:#07293a;color:#ffffff;' : 'background:#ffffff;color:#07293a;border:1px solid #c5d3df;'}font-size:14px;font-weight:700;text-decoration:none;${F}">${label}</a>`
   return `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"></head>
 <body dir="rtl" style="margin:0;padding:0;background:#eef2f6;${F}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f6"><tr><td align="center" style="padding:24px 12px">
-<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#f7f9fb;border-radius:16px;overflow:hidden">
-  <tr><td dir="rtl" style="background:#07293a;padding:22px 26px;text-align:right;${F}">
-    <div style="font-size:12px;letter-spacing:0.08em;color:#8cc4dc;font-weight:700;${F}">KURKOOS FINANCE</div>
-    <div style="font-size:22px;font-weight:700;color:#ffffff;margin-top:4px;${F}">דוח בוקר</div>
-    <div style="font-size:13px;color:#cfe3ec;margin-top:2px;${F}">${esc(day)}</div>
-  </td></tr>
+<table role="presentation" width="760" cellpadding="0" cellspacing="0" style="max-width:760px;width:100%;background:#f7f9fb;border-radius:16px;overflow:hidden">
+  <tr><td dir="rtl" style="background:#07293a;padding:20px 26px;${F}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td dir="rtl" valign="middle" style="text-align:right;${F}">
+      <div style="font-size:12px;letter-spacing:0.08em;color:#8cc4dc;font-weight:700;${F}">KURKOOS FINANCE</div>
+      <div style="font-size:22px;font-weight:700;color:#ffffff;margin-top:4px;${F}">דוח בוקר</div>
+      <div style="font-size:13px;color:#cfe3ec;margin-top:2px;${F}">${esc(day)}</div>
+    </td>
+    <td width="70" valign="middle" style="text-align:left"><img src="${esc(origin)}/finance/email-logo.png" width="55" height="64" alt="Kurkoos Group" style="display:block;border:0;width:55px;height:64px"></td>
+  </tr></table></td></tr>
   <tr><td style="padding:16px 14px 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    ${kpi('ממתינים לבדיקה', d.review, d.review ? 'מסמכים שמחכים לאישור שלכם' : 'אין מה לאשר', d.review ? '#8a5a00' : '#1f6f4c', link('/pending'))}
-    ${kpi('מוכנים לרו״ח', d.ready_to_export, `${esc(d.period?.label || '')}${d.ready_to_export ? `<br><span dir="ltr" style="font-weight:700;color:#14202b">${nis(d.ready_total)}</span>` : ''}`, '#07293a', link('/report'))}
-    ${kpi('נאספו ב-24 שעות', d.collected, `מייל ${d.by_email ?? 0} · WhatsApp ${d.by_whatsapp ?? 0} · העלאה ${d.by_upload ?? 0}`, '#16688c', link('/new'))}
+    ${kpi('ממתינים לבדיקה', d.review, [d.review ? 'מחכים לאישור שלכם' : 'אין מה לאשר'], d.review ? '#b7791f' : '#1f6f4c', link('/pending'))}
+    ${kpi('מוכנים לרו״ח', d.ready_to_export, [esc(String(d.period?.label || '').replace(/\s+\d{4}$/, '')), d.ready_to_export ? `<span dir="ltr" style="font-weight:700;color:#14202b">${nis(d.ready_total)}</span>` : 'אין מסמכים מאושרים'], '#07293a', link('/report'))}
+    ${kpi('נאספו ב-24 שעות', d.collected, [[['WhatsApp', d.by_whatsapp], ['מייל', d.by_email], ['העלאה וצילום', d.by_upload]].filter(([, v]) => v).map(([k, v]) => `<bdi>${k}</bdi> ${v}`).join(' · ') || 'לא נאספו מסמכים'], '#16688c', link('/new'))}
   </tr></table></td></tr>
   ${(d.by_company || []).length ? `<tr><td dir="rtl" style="padding:8px 26px 4px;text-align:right;${F}">
     <div style="font-size:15px;font-weight:700;color:#07293a;margin-bottom:6px;${F}">לפי חברה</div>
@@ -258,7 +262,6 @@ export function summaryHtml(d, origin, now = new Date()) {
       ${row('כפילויות שזוהו וצורפו למקור', d.duplicates)}
       ${row('מסמכים שהקריאה שלהם נכשלה', d.failed_docs)}
       ${row('תיבות מייל עם תקלה', d.failed_mailboxes.length)}
-      ${d.ready_older ? row('מאושרים מתקופות קודמות שעוד לא נשלחו', d.ready_older) : ''}
     </table>
   </td></tr>
   <tr><td align="center" style="padding:18px 20px 22px">${btn('לבדיקה ואישור', link('/pending'), true)}${btn('לדוח ולשליחה לרו״ח', link('/report'), false)}</td></tr>

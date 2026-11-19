@@ -9,18 +9,23 @@ async function token() {
 
 /* the server side (server/finance.js) */
 export async function callServer(action, payload = {}, { timeout } = {}) {
-  const r = await fetch('/api/finance', {
+  let r
+  try { r = await fetch('/api/finance', {
     method: 'POST',
     ...(timeout && typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? { signal: AbortSignal.timeout(timeout) } : {}),
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await token()}` },
     body: JSON.stringify({ action, ...payload }),
-  })
+  }) } catch (e) { throw new Error(isNetworkError(e) ? OFFLINE : e.message) }
   const d = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error(d.error || `שגיאה ${r.status}`)
   return d
 }
 
-const must = ({ data, error }) => { if (error) throw new Error(error.message); return data }
+/* a request that never reached the server (no signal, the phone just woke up, a deploy in the middle) reads as
+   "TypeError: Load failed" on iPhone and "Failed to fetch" elsewhere. People get one plain sentence instead. */
+export const OFFLINE = 'אין חיבור לשרת כרגע. בדקו את הרשת ונסו שוב.'
+export const isNetworkError = (m) => /Load failed|Failed to fetch|NetworkError|network connection was lost|fetch failed/i.test(String(m?.message || m || ''))
+const must = ({ data, error }) => { if (error) throw new Error(isNetworkError(error) ? OFFLINE : error.message); return data }
 // Supabase answers at most 1,000 rows per request: larger tables are read in pages, in parallel after the first
 const PAGE = 1000
 // tie: a unique column that keeps the pages stable when many rows share a timestamp (documents imported together)

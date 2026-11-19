@@ -5094,3 +5094,68 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-rep .fin-toggle, .fin-slot .fin-toggle { width: 52px; height: 32px; }
 .fin-rep .fin-toggle span, .fin-slot .fin-toggle span { width: 26px; height: 26px; }
 .fin-rep .fin-toggle.is-on span, .fin-slot .fin-toggle.is-on span { inset-inline-start: 23px; }
+
+/* categories list: figures with context, a colour per category, a volume bar under the amount */
+.fin-catsum small { font-size: var(--t-sm); color: var(--text-2); }
+.fin-catsum > div { transition: box-shadow 0.15s ease, border-color 0.15s ease; }
+.fin-catsum > div:hover { border-color: var(--line-2); box-shadow: 0 4px 14px rgba(7, 41, 58, 0.07); }
+.fin-catdot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 8px; vertical-align: baseline; }
+.fin-catbar { display: block; height: 4px; margin-top: 5px; border-radius: 2px; background: var(--wash); overflow: hidden; min-width: 90px; }
+.fin-catbar i { display: block; height: 100%; border-radius: 2px; margin-inline-start: auto; }
+.fin-tidy__pair .fin-tidy__parts i { font-style: normal; color: var(--text-2); }
+
+/* integrations as a marketplace: tabs with counts, a connected group, linked companies on the card, helper notes */
+.fin-hint { margin: 2px 0 0; font-size: var(--t-sm); line-height: 1.5; color: var(--text-2); }
+.fin-app-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.fin-app-tabs::-webkit-scrollbar { display: none; }
+.fin-app-tabs button { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--line-2); border-radius: 99px; background: var(--sheet); color: var(--text-2); font: inherit; font-size: var(--t-md); cursor: pointer; white-space: nowrap; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+.fin-app-tabs button b { font-weight: 700; font-size: var(--t-sm); font-variant-numeric: tabular-nums; padding: 1px 8px; border-radius: 99px; background: var(--wash); color: var(--ink); }
+.fin-app-tabs button:hover { border-color: var(--ink); color: var(--ink); }
+.fin-app-tabs button.is-on { background: var(--ink); border-color: var(--ink); color: var(--paper); font-weight: 700; }
+.fin-app-tabs button.is-on b { background: rgba(255, 255, 255, 0.18); color: var(--paper); }
+.fin-app-section h3 { display: flex; align-items: center; gap: 8px; }
+.fin-app-section h3 svg { color: var(--ok); }
+.fin-app-card.is-on { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); box-shadow: inset 0 3px 0 var(--ok); }
+.fin-app-card:hover { transform: translateY(-2px); }
+.fin-app-card { transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease); }
+@media (prefers-reduced-motion: reduce) { .fin-app-card:hover { transform: none; } }
+.fin-prov__linked { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.fin-prov__linked li { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px; border-radius: 99px; background: var(--ok-wash); color: var(--ok); font-size: var(--t-sm); font-weight: 700; max-width: 100%; }
+.fin-prov__linked li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 400; }
+.fin-prov__linked li em { font-style: normal; font-size: var(--t-xs, 12px); color: var(--text-2); font-weight: 400; }
+.fin-prov__linked li.is-off { background: var(--wash); color: var(--text-2); }
+
+/* Drive: a menu on every folder, names on two lines, an inspector whose parts never overlap */
+.fin-dm__folder { padding-inline-end: 46px; }
+.fin-dm__folder > svg:last-child { display: none; }
+.fin-dm__foldermore { position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; }
+.fin-dm__folderacts { inset-inline-end: 44px; }
+.fin-dm__folder.is-keyed { padding-inline-end: 84px; }
+.fin-dm__folder.is-manual { padding-inline-end: 156px; }
+.fin-dm__foldertext strong { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; overflow-wrap: anywhere; }
+.fin-dm__menunote { padding: 8px 10px 4px; margin-top: 4px; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.fin-dm__detail { display: flex; flex-direction: column; }
+.fin-dm__detail > * { flex: none; min-width: 0; }
+.fin-dm__detailthumb { aspect-ratio: auto; height: clamp(170px, 30vh, 280px); max-height: none; }
+.fin-dm__detailthumb > * { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; }
+.fin-dm__meta > div { grid-template-columns: minmax(84px, 38%) minmax(0, 1fr); align-items: baseline; }
+.fin-dm__meta dt { color: var(--text-2); }
+@media (max-width: 1023px) {
+  .fin-dm__detail { max-height: min(86vh, 86dvh); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .fin-dm__detail header { position: sticky; top: -14px; background: var(--sheet); padding-block: 6px; z-index: 1; }
+  .fin-dm__detail header .fin-icon-btn { min-width: 44px; min-height: 44px; }
+  .fin-dm__foldermore { width: 44px; height: 44px; }
+}
+@media (min-width: 1024px) {
+  /* with the inspector open the list keeps the name readable; company, month and type are in the inspector */
+  .fin-dm.has-detail .fin-dm__row { grid-template-columns: 40px minmax(0, 1fr) 112px 44px; }
+  .fin-dm.has-detail .fin-dm__row > :nth-child(3), .fin-dm.has-detail .fin-dm__row > :nth-child(4), .fin-dm.has-detail .fin-dm__row > :nth-child(5), .fin-dm.has-detail .fin-dm__row > :nth-child(6), .fin-dm.has-detail .fin-dm__row > :nth-child(7) { display: none; }
+}
+/* rename and delete of a folder live in its menu now; the card keeps the star and the three dots */
+.fin-dm__folderacts .fin-icon-btn:not(.fin-dm__star) { display: none; }
+.fin-dm__folder.is-manual, .fin-dm__folder.is-keyed { padding-inline-end: 86px; }
+.fin-dm__foldermore { color: var(--fold-sub); background: transparent; }
+.fin-dm__foldermore:hover, .fin-dm__foldermore:focus-visible { color: #ffffff; background: rgba(255, 255, 255, 0.14); }
+@media (max-width: 767px) { .fin-dm__folder.is-manual, .fin-dm__folder.is-keyed { padding-inline-end: 100px; } .fin-dm__folderacts { inset-inline-end: 52px; } }
+.fin-app-tabs { flex-wrap: wrap; overflow: visible; }
+.fin-app-tabs button { flex: 0 1 auto; }

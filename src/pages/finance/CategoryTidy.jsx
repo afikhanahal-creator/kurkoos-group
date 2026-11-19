@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { moveImpact, sayDid, sayDocs, similarCategories, supplierSpread, uncategorizedWithSuggestion } from './categorySuggest.js'
-import { Icon, Modal, askConfirm } from './ui.jsx'
+import { Icon, askConfirm } from './ui.jsx'
+import CategoryMerge from './CategoryMerge.jsx'
+import { money, signedTotal } from './format.js'
 import Select from './Select.jsx'
 
 /* "סידור קטגוריות": the screen finds the mess by itself and offers the fix, with the numbers first and a question before
@@ -20,12 +22,25 @@ export default function CategoryTidy({ onDone }) {
   // a supplier is listed only when something can really move to where most of its documents already are
   const spread = useMemo(() => supplierSpread(documents, categories).map((s) => ({ ...s, fix: moveImpact(s.docs, s.top, categories) })).filter((s) => s.fix.move.length > 0), [documents, categories])
   const loose = useMemo(() => uncategorizedWithSuggestion(documents, categories), [documents, categories])
-  const pairs = useMemo(() => similarCategories(categories), [categories])
+  // pairs the office already said are two different things stay out (the ids only, kept on this device)
+  const [skipped, setSkipped] = useState(() => { try { return JSON.parse(localStorage.getItem('fin-cat-notdup') || '[]') } catch { return [] } })
+  const skip = (ids) => { const keys = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => [a, b].sort().join('|'))); const next = [...skipped, ...keys].slice(-300); setSkipped(next); try { localStorage.setItem('fin-cat-notdup', JSON.stringify(next)) } catch { /* a preference only */ } }
+  // names that read as one, joined into groups: three spellings of one category are one suggestion, not three pairs
+  const pairs = useMemo(() => {
+    const raw = similarCategories(categories).filter(({ a, b }) => !skipped.includes([a.id, b.id].sort().join('|')))
+    const groups = []
+    for (const { a, b, why } of raw) {
+      const g = groups.find((x) => x.items.some((c) => c.id === a.id || c.id === b.id))
+      if (g) { for (const c of [a, b]) if (!g.items.some((x) => x.id === c.id)) g.items.push(c); if (!g.why.includes(why)) g.why.push(why) } else groups.push({ items: [a, b], why: [why] })
+    }
+    return groups
+  }, [categories, skipped])
+  const [openTidy, setOpenTidy] = useState(true)
   const docsOf = (cid) => documents.filter((d) => !OUT.includes(d.status) && (d.category_id || categories.find((c) => c.name === d.category)?.id) === cid)
   const [shown, setShown] = useState(STEP)
   const [busy, setBusy] = useState('')
   const [err, setErr] = useState('')
-  const [merge, setMerge] = useState(null)   // { a, b, keep }
+  const [merge, setMerge] = useState(null)   // the category ids the merge window opens with
   const [other, setOther] = useState({})     // supplier key → a category chosen instead of the most common one
   const total = spread.length + (loose.length ? 1 : 0) + pairs.length
   const run = async (key, fn, text) => { setBusy(key); setErr(''); try { await fn(); await reload(); onDone?.(text) } catch (e) { setErr(e.message) } finally { setBusy('') } }
@@ -43,19 +58,7 @@ export default function CategoryTidy({ onDone }) {
     if (!(await askConfirm({ title: 'שיוך לפי ההצעות', text: `${sayDocs(loose.length)} בלי קטגוריה ${loose.length === 1 ? 'ישויך' : 'ישויכו'} לפי המסמכים הקודמים של אותו ספק:`, lines: looseBy.map(([cid, docs]) => `${sayDocs(docs.length)} ל"${name(cid)}"`), ok: loose.length === 1 ? 'שיוך המסמך' : `שיוך ${loose.length} המסמכים` }))) return
     run('loose', async () => { for (const [cid, docs] of looseBy) await api.updateDocuments(docs.map((d) => d.id), { category_id: cid }) }, `${sayDid(loose.length, 'שויך', 'שויכו')} לפי ההצעות`)
   }
-  const doMerge = () => {
-    const keep = merge.keep === merge.b.id ? merge.b : merge.a; const drop = keep.id === merge.a.id ? merge.b : merge.a
-    const im = moveImpact(docsOf(drop.id), keep.id, categories)
-    run(`m-${drop.id}`, async () => {
-      if (im.move.length) await api.updateDocuments(im.move.map((d) => d.id), { category_id: keep.id })
-      // whatever pointed at the name that goes away now points at the one that stays
-      for (const s of suppliers.filter((x) => x.default_category === drop.name)) await api.saveRow('fin_suppliers', { id: s.id, default_category: keep.name })
-      for (const c of categories.filter((x) => x.parent_id === drop.id && x.id !== keep.id)) await api.saveRow('fin_categories', { id: c.id, parent_id: keep.id })
-      if (can('operate')) for (const r of (await api.loadRules()).filter((x) => x.action?.category === drop.name)) await api.saveRow('fin_rules', { id: r.id, action: { ...r.action, category: keep.name } })
-      await api.saveRow('fin_categories', { id: drop.id, active: false })
-      setMerge(null)
-    }, `"${drop.name}" מוזגה לתוך "${keep.name}": ${im.move.length ? sayDid(im.move.length, 'עבר', 'עברו') : 'לא היו מסמכים להעביר'}${im.locked.length ? `, ${sayDocs(im.locked.length)} שכבר אושרו נשארו כמו שדווחו` : ''}`)
-  }
+  const sumOf = (cid) => docsOf(cid).reduce((a, d) => a + signedTotal(d), 0)
 
   if (!edit) return null
   return (
@@ -63,11 +66,12 @@ export default function CategoryTidy({ onDone }) {
       <header className="fin-tidy__head">
         <span className="fin-tidy__icon" aria-hidden="true"><Icon name={total ? 'sparkle' : 'check'} size={20} /></span>
         <div><h3>סידור קטגוריות</h3><p>{total ? 'מצאנו מקומות שבהם השיוך לא עקבי. כל הצעה מציגה מספרים ושואלת לפני שמשהו משתנה.' : 'הכול מסודר: אין ספקים שהמסמכים שלהם מפוזרים, אין מסמכים בלי קטגוריה שאפשר לשייך, ואין קטגוריות כפולות.'}</p></div>
-        {active.length > 1 && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => setMerge({ a: null, b: null, keep: '' })}><Icon name="copy" size={15} /> מיזוג שתי קטגוריות</button>}
+        {active.length > 1 && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => setMerge([])}><Icon name="copy" size={15} /> מיזוג קטגוריות</button>}
+        {total > 0 && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" aria-expanded={openTidy} onClick={() => setOpenTidy((v) => !v)}>{openTidy ? 'הסתרה' : `הצגת ${total} ההצעות`}</button>}
       </header>
       {err && <p className="fin-error fin-error--block" role="alert">{err}</p>}
 
-      {loose.length > 0 && (
+      {openTidy && loose.length > 0 && (
         <div className="fin-tidy__block">
           <h4>{sayDocs(loose.length)} בלי קטגוריה, שאפשר לשייך לפי ההיסטוריה</h4>
           <div className="fin-tidy__row">
@@ -80,7 +84,7 @@ export default function CategoryTidy({ onDone }) {
         </div>
       )}
 
-      {spread.length > 0 && (
+      {openTidy && spread.length > 0 && (
         <div className="fin-tidy__block">
           <h4>{spread.length === 1 ? 'ספק אחד שהמסמכים שלו מפוזרים' : `${spread.length} ספקים שהמסמכים שלהם מפוזרים`} בין קטגוריות</h4>
           <ul className="fin-tidy__list">
@@ -110,54 +114,25 @@ export default function CategoryTidy({ onDone }) {
         </div>
       )}
 
-      {pairs.length > 0 && (
+      {openTidy && pairs.length > 0 && (
         <div className="fin-tidy__block">
-          <h4>{pairs.length === 1 ? 'שתי קטגוריות שנראות כמו אחת' : `${pairs.length} זוגות של קטגוריות שנראות כמו אחת`}</h4>
+          <h4>{pairs.length === 1 ? 'קטגוריות שנראות כמו אחת' : `${pairs.length} קבוצות של קטגוריות שנראות כמו אחת`}</h4>
           <ul className="fin-tidy__list">
-            {pairs.map(({ a, b, why }) => (
-              <li key={`${a.id}-${b.id}`} className="fin-tidy__pair">
-                <span className="fin-tidy__parts"><span className="is-main"><b>{docsOf(a.id).length}</b> {a.name}</span><span className="is-main"><b>{docsOf(b.id).length}</b> {b.name}</span><i>{why}</i></span>
-                <span className="fin-tidy__acts"><button type="button" className="fin-btn fin-btn--sm" disabled={!!busy} onClick={() => setMerge({ a, b, keep: docsOf(b.id).length > docsOf(a.id).length ? b.id : a.id })}>מיזוג</button></span>
+            {pairs.map(({ items, why }) => (
+              <li key={items.map((c) => c.id).join('-')} className="fin-tidy__pair">
+                <span className="fin-tidy__parts">{items.map((c) => <span key={c.id} className="is-main"><b>{docsOf(c.id).length}</b> {c.name} <i>· {money(sumOf(c.id))}</i></span>)}<i>{why.join(', ')}</i></span>
+                <span className="fin-tidy__acts">
+                  {items.some((c) => docsOf(c.id).length > 0) && <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => openDocs(items.flatMap((c) => docsOf(c.id).map((d) => d.id)), `המסמכים של ${items.map((c) => `"${c.name}"`).join(' ו-')}`)}>לצפות במסמכים</button>}
+                  <button type="button" className="fin-btn fin-btn--sm fin-btn--ghost" onClick={() => skip(items.map((c) => c.id))}>לא כפילות</button>
+                  <button type="button" className="fin-btn fin-btn--sm fin-btn--primary" disabled={!!busy} onClick={() => setMerge(items.map((c) => c.id))}>מיזוג</button>
+                </span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {merge && (() => {
-        const ready = merge.a && merge.b && merge.a.id !== merge.b.id && merge.keep
-        const keep = ready ? (merge.keep === merge.b.id ? merge.b : merge.a) : null; const drop = ready ? (keep.id === merge.a.id ? merge.b : merge.a) : null
-        const im = ready ? moveImpact(docsOf(drop.id), keep.id, categories) : null
-        const pick = (k) => (e) => { const c = categories.find((x) => x.id === e.target.value) || null; setMerge((m) => { const n = { ...m, [k]: c }; return { ...n, keep: n.a && n.b ? (n.keep && [n.a.id, n.b.id].includes(n.keep) ? n.keep : n.a.id) : '' } }) }
-        return (
-          <Modal title="מיזוג קטגוריות" onClose={() => setMerge(null)} footer={<>
-            <button type="button" className="fin-btn fin-btn--primary" disabled={!ready || !!busy} onClick={doMerge}>{busy ? 'ממזג…' : ready ? `מיזוג לתוך "${keep.name}"` : 'מיזוג'}</button>
-            <button type="button" className="fin-btn fin-btn--ghost" onClick={() => setMerge(null)}>ביטול</button>
-          </>}>
-            <div className="fin-form__grid">
-              <label className="fin-field"><span className="fin-field__label">קטגוריה אחת</span><Select value={merge.a?.id || ''} onChange={pick('a')}><option value="">בחרו…</option>{active.filter((c) => c.id !== merge.b?.id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></label>
-              <label className="fin-field"><span className="fin-field__label">קטגוריה שנייה</span><Select value={merge.b?.id || ''} onChange={pick('b')}><option value="">בחרו…</option>{active.filter((c) => c.id !== merge.a?.id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></label>
-            </div>
-            {merge.a && merge.b && (
-              <fieldset className="fin-tidy__keep">
-                <legend>איזו נשארת?</legend>
-                {[merge.a, merge.b].map((c) => (
-                  <label key={c.id} className={merge.keep === c.id ? 'is-on' : ''}><input type="radio" name="fin-tidy-keep" checked={merge.keep === c.id} onChange={() => setMerge((m) => ({ ...m, keep: c.id }))} /><strong>{c.name}</strong><small>{sayDocs(docsOf(c.id).length)} · קיזוז מע״מ {Number(c.vat_deductible_pct ?? 100)}%</small></label>
-                ))}
-              </fieldset>
-            )}
-            {ready && (
-              <ul className="fin-bulklines">
-                <li>{im.move.length ? `${sayDid(im.move.length, 'יעבור', 'יעברו')} מ"${drop.name}" ל"${keep.name}"` : `אין מסמכים להעביר מ"${drop.name}"`}</li>
-                {im.locked.length > 0 && <li>{sayDocs(im.locked.length)} שכבר אושרו או נשלחו לרו״ח {im.locked.length === 1 ? 'נשאר רשום' : 'נשארים רשומים'} תחת "{drop.name}", כמו שדווחו</li>}
-                <li>"{drop.name}" עוברת לארכיון ולא תוצע יותר. ספקים וכללים שהפנו אליה יפנו ל"{keep.name}"</li>
-                {Number(drop.vat_deductible_pct ?? 100) !== Number(keep.vat_deductible_pct ?? 100) && <li>שימו לב: אחוז קיזוז המע״מ שונה ({Number(drop.vat_deductible_pct ?? 100)}% לעומת {Number(keep.vat_deductible_pct ?? 100)}%). המסמכים שעוברים יחושבו לפי "{keep.name}"</li>}
-              </ul>
-            )}
-            {err && <p className="fin-error" role="alert">{err}</p>}
-          </Modal>
-        )
-      })()}
+      {merge && <CategoryMerge start={merge} onClose={() => setMerge(null)} onDone={(text) => onDone?.(text)} />}
     </section>
   )
 }

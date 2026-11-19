@@ -80,7 +80,7 @@ export default function ReportsCenter({ admin, onChange }) {
                 </header>
                 <dl className="fin-rep__facts">
                   <div><dt><Icon name="calendar" size={15} /> מתי</dt><dd>{scheduleText(r.slots)}{r.tz !== 'Asia/Jerusalem' && <small> · שעון {TZ[r.tz]}</small>}</dd></div>
-                  <div><dt><Icon name="company" size={15} /> מה</dt><dd>{r.template === 'morning' ? '24 השעות האחרונות ותקופת הדיווח' : data.defs.periods[r.period]} · {r.companies === 'all' ? 'כל החברות' : `${r.companies.length} חברות`}</dd></div>
+                  <div><dt><Icon name="company" size={15} /> מה</dt><dd>{r.template === 'morning' ? '24 השעות האחרונות ותקופת הדיווח' : r.period === 'days' ? `ימים ${(r.days || []).map((d) => DAY1[d]).join(', ')}` : data.defs.periods[r.period]} · {r.companies === 'all' ? 'כל החברות' : `${r.companies.length} חברות`}</dd></div>
                   <div><dt><Icon name="users" size={15} /> למי</dt><dd>{w.emails.length ? `${w.emails.length} במייל` : 'אין נמעני מייל'}{w.wa.length ? ` · ${w.wa.length} בוואטסאפ` : ''}{r.users === 'managers' && <small> · כל המנהלים</small>}</dd></div>
                   <div><dt><Icon name="clock" size={15} /> הבא</dt><dd>{r.next ? `${r.next.in_days === 0 ? 'היום' : r.next.in_days === 1 ? 'מחר' : `יום ${r.next.day}`} ב-${r.next.time}` : r.enabled ? 'לא נקבע' : 'מושבת'}</dd></div>
                 </dl>
@@ -168,6 +168,7 @@ function Wizard({ data, start, onClose, onSaved }) {
     if (r.template === 'custom' && !(r.fields || []).length) p[0] = 'בחרו לפחות נתון אחד לדוח'
     if (r.period === 'custom' && !morning && !(r.from && r.to)) p[1] = 'בחרו תאריך התחלה וסיום'
     if (r.period === 'custom' && r.from && r.to && r.to < r.from) p[1] = 'תאריך הסיום לפני תאריך ההתחלה'
+    if (r.period === 'days' && !morning && !(r.days || []).length) p[1] = 'בחרו לפחות יום אחד שהדוח יסכם'
     if (!r.slots.some((s) => s.enabled)) p[2] = 'בחרו לפחות יום ושעה אחד'
     if (!r.users.length && !r.wa.length) p[3] = 'בחרו לפחות נמען אחד'
     return p
@@ -251,6 +252,12 @@ function Wizard({ data, start, onClose, onSaved }) {
             {morning ? <p className="fin-muted">דוח הבוקר מציג את 24 השעות האחרונות ואת תקופת הדיווח הנוכחית למע״מ.</p> : (
               <>
                 <div className="fin-wiz-row">{Object.entries(data.defs.periods).map(([k, label]) => <button key={k} type="button" className={`fin-chip ${r.period === k ? 'is-on' : ''}`} aria-pressed={r.period === k} onClick={() => set({ period: k })}>{label}</button>)}</div>
+                {r.period === 'days' && (
+                  <>
+                    <div className="fin-wiz-row" role="group" aria-label="הימים שהדוח מסכם">{DAYS.map((name, d) => <button key={d} type="button" className={`fin-chip ${(r.days || []).includes(d) ? 'is-on' : ''}`} aria-pressed={(r.days || []).includes(d)} onClick={() => set({ days: (r.days || []).includes(d) ? r.days.filter((x) => x !== d) : [...(r.days || []), d].sort() })}>יום {name}</button>)}</div>
+                    <p className="fin-hint">הדוח מסכם כל יום שנבחר בתאריך האחרון שלו עד יום השליחה. לדוגמה: דוח שנשלח ביום חמישי עם שני, שלישי ורביעי מסכם את שלושת הימים האלה של אותו שבוע.</p>
+                  </>
+                )}
                 {r.period === 'custom' && <div className="fin-form__grid"><Field label="מתאריך"><input type="date" value={r.from || ''} onChange={(e) => set({ from: e.target.value })} /></Field><Field label="עד תאריך"><input type="date" value={r.to || ''} onChange={(e) => set({ to: e.target.value })} /></Field></div>}
                 <p className="fin-muted fin-small">התקופה נפרדת מהתזמון: דוח שנשלח כל בוקר יכול לסכם את אתמול, את השבוע או את החודש.</p>
               </>

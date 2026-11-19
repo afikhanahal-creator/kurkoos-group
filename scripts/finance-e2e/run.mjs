@@ -3509,6 +3509,8 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   const hist = (await api(tk, { action: 'reports-view', op: 'history' })).data.runs || []
   const sched = hist.find((h) => h.trigger === 'schedule' && h.report_id === 'e2erep')
   const opened = sched ? (await api(tk, { action: 'reports-view', op: 'open', id: sched.id })).data : {}
+  // a period of chosen weekdays: the report names the days it covers and keeps only valid ones
+  const daysPrev = (await api(tk, { action: 'reports-view', op: 'preview', report: { template: 'expenses', name: 'ימים נבחרים', period: 'days', days: [1, 2, 3, 9] } })).data
   const morningMails = after2.emails.length
   await fetch('http://127.0.0.1:5180/api/finance?action=morning', { headers: { Authorization: 'Bearer test-cron' } }).then((r) => r.json()).catch(() => null)
   const afterMorning = (await logNow()).emails.slice(morningMails).filter((m) => /דוח בוקר/.test(m.subject || '')).length
@@ -3527,12 +3529,13 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
   // back to the built-in morning report, so a second run of the suite starts the same way
   sql("update fin_automations set config = config - 'reports' - 'templates' where key='morning_report'"); sql("delete from fin_settings where key like 'report_sent:%'")
   record('REPORTS', 'דוחות מתוזמנים: ימים, שעות, נמענים, שליחה פעם אחת והיסטוריה', 'לפני הגדרה: דוח הבוקר המובנה; מנהל כספים לא שומר; נשמר רק מה שתקין (חברה, משתמש ומספר שקיימים, שעה כפולה ושעה שגויה נופלות); שעה שהגיעה: מייל אחד ווואטסאפ אחד למספר רשום, ובריצה שנייה כלום; בדיקה: רק למייל של המבקש; ההיסטוריה שומרת את הדוח; הקרון של הבוקר כבר לא שולח מייל; במסך: 5 נתוני מצב, כרטיס דוח, אשף 5 שלבים עם 7 ימים, ואי אפשר להמשיך בלי נמען',
-    `לפני: configured=${view0.configured}, ${view0.reports?.[0]?.name}; מנהל כספים: ${fmSave.status}; נשמר: ${kept.slots?.length} שעות, ${kept.users?.length} משתמשים, ${kept.wa?.length} מספרים, חברות ${JSON.stringify(kept.companies?.length)}; ריצה 1: ${JSON.stringify((tick1.sent || []).map((x) => [x.sent, x.failed]))}, ריצה 2: ${(tick2.sent || []).length}; מיילים ${mails.length} ("${mails[0]?.subject}" אל ${mails[0]?.to}), וואטסאפ ${was.length} אל ${was[0]?.to}; בדיקה: ${test.sent}/${test.recipients}; היסטוריה: ${sched?.status} ${sched?.slot}, נפתח ${String(opened.html || '').length} תווים; בוקר: ${afterMorning}; מסך: ${kpis} נתונים, "${cardText.slice(0, 60)}", ${histRows} שורות, ${steps} שלבים, ${week} ימים, "${blocked}"`,
+    `לפני: configured=${view0.configured}, ${view0.reports?.[0]?.name}; מנהל כספים: ${fmSave.status}; נשמר: ${kept.slots?.length} שעות, ${kept.users?.length} משתמשים, ${kept.wa?.length} מספרים, חברות ${JSON.stringify(kept.companies?.length)}; ריצה 1: ${JSON.stringify((tick1.sent || []).map((x) => [x.sent, x.failed]))}, ריצה 2: ${(tick2.sent || []).length}; מיילים ${mails.length} ("${mails[0]?.subject}" אל ${mails[0]?.to}), וואטסאפ ${was.length} אל ${was[0]?.to}; בדיקה: ${test.sent}/${test.recipients}; היסטוריה: ${sched?.status} ${sched?.slot}, נפתח ${String(opened.html || '').length} תווים; בוקר: ${afterMorning}; ימים נבחרים: "${daysPrev.subject}"; מסך: ${kpis} נתונים, "${cardText.slice(0, 60)}", ${histRows} שורות, ${steps} שלבים, ${week} ימים, "${blocked}"`,
     view0.configured === false && view0.reports?.[0]?.template === 'morning' && fmSave.status === 403
       && kept.slots?.length === 2 && kept.users?.length === 1 && kept.wa?.length === 1 && kept.companies?.length === 1
       && (tick1.sent || []).length === 1 && tick1.sent[0].sent === 2 && tick1.sent[0].failed === 0 && (tick2.sent || []).length === 0
       && mails.length === 1 && /בדיקת הוצאות/.test(mails[0].subject) && String(mails[0].to).includes('admin@kurkoos.test') && /סך ההוצאות/.test(mails[0].html || '') && was.length === 1 && was[0].to === `${sender[1]}@c.us` && /בדיקת הוצאות/.test(was[0].message)
       && test.sent === 1 && test.recipients === 1 && sched?.status === 'ok' && String(opened.html || '').includes('בדיקת הוצאות') && afterMorning === 0
+      && /יום שני, יום שלישי, יום רביעי/.test(daysPrev.subject || '') && !/יום ראשון|יום חמישי/.test(daysPrev.subject || '')
       && kpis === 5 && /בדיקת הוצאות/.test(cardText) && histRows >= 2 && steps === 5 && week === 7 && /נמען/.test(blocked), [repShot])
 }
 

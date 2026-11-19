@@ -24,7 +24,7 @@ export const FIELDS = {
   by_category: 'טבלה: הוצאות לפי קטגוריה', top_expenses: 'טבלה: ההוצאות הגבוהות', by_type: 'טבלה: לפי סוג מסמך',
   suspicious: 'חריגות וכפילויות אפשריות', pending: 'מה ממתין לטיפול', missing: 'ספקים קבועים שלא שלחו החודש', alerts: 'התראות',
 }
-export const PERIODS = { today: 'היום', yesterday: 'אתמול', last7: '7 הימים האחרונים', this_week: 'השבוע', prev_week: 'השבוע שעבר', this_month: 'החודש', prev_month: 'החודש שעבר', custom: 'טווח תאריכים' }
+export const PERIODS = { today: 'היום', yesterday: 'אתמול', last7: '7 הימים האחרונים', this_week: 'השבוע', prev_week: 'השבוע שעבר', this_month: 'החודש', prev_month: 'החודש שעבר', days: 'ימים בשבוע לבחירה', custom: 'טווח תאריכים' }
 export const TZS = ['Asia/Jerusalem', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'UTC']
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 const HE_M = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
@@ -51,6 +51,14 @@ export function periodOf(report, today) {
     case 'prev_week': to = addDays(today, -dow - 1); from = addDays(to, -6); label = `השבוע שעבר (${dmy(from)} – ${dmy(to)})`; break
     case 'this_month': from = month0; to = today; label = `${HE_M[Number(today.slice(5, 7)) - 1]} ${today.slice(0, 4)}`; break
     case 'prev_month': from = prevMonth0; to = prevMonthEnd; label = `${HE_M[Number(from.slice(5, 7)) - 1]} ${from.slice(0, 4)}`; break
+    case 'days': {
+      // the chosen weekdays, each at its latest date up to today: sent on Thursday with Monday to Wednesday chosen, it covers this week's three days
+      const chosen = [...new Set((Array.isArray(report.days) ? report.days : []).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))]
+      const dates = (chosen.length ? chosen : [(dow + 6) % 7]).map((d) => addDays(today, -((dow - d + 7) % 7))).sort()
+      from = dates[0]; to = dates[dates.length - 1]
+      label = `${dates.map((d) => `יום ${DAYS[new Date(`${d}T00:00:00Z`).getUTCDay()]}`).join(', ')} (${dates.length > 1 ? `${dmy(from)} – ${dmy(to)}` : dmy(from)})`
+      return { from, to, label, dates, prevFrom: addDays(from, -7), prevTo: addDays(to, -7), prevDates: dates.map((d) => addDays(d, -7)), days: dates.length }
+    }
     case 'custom': from = /^\d{4}-\d{2}-\d{2}$/.test(report.from || '') ? report.from : today; to = /^\d{4}-\d{2}-\d{2}$/.test(report.to || '') && report.to >= from ? report.to : from; label = from === to ? dmy(from) : `${dmy(from)} – ${dmy(to)}`; break
     default: from = to = addDays(today, -1); label = `אתמול, ${dmy(from)}`
   }
@@ -80,9 +88,12 @@ export function buildModel(report, { docs, businesses, today }) {
   const day = (d) => String(docDate(d)).slice(0, 10)
   const got = (d) => String(d.created_at || '').slice(0, 10)
   const counted = mine.filter((d) => !OUT.includes(d.status))
-  const cur = counted.filter((d) => day(d) >= p.from && day(d) <= p.to)
-  const prev = counted.filter((d) => day(d) >= p.prevFrom && day(d) <= p.prevTo)
-  const received = mine.filter((d) => got(d) >= p.from && got(d) <= p.to)
+  // a period of chosen weekdays is a list of dates, not a span: the days between them are left out
+  const inCur = (t) => t >= p.from && t <= p.to && (!p.dates || p.dates.includes(t))
+  const inPrev = (t) => t >= p.prevFrom && t <= p.prevTo && (!p.prevDates || p.prevDates.includes(t))
+  const cur = counted.filter((d) => inCur(day(d)))
+  const prev = counted.filter((d) => inPrev(day(d)))
+  const received = mine.filter((d) => inCur(got(d)))
   const waiting = mine.filter((d) => d.status === 'review')
   const lacking = waiting.filter(need)
   const failed = mine.filter((d) => d.status === 'failed')
@@ -109,7 +120,7 @@ export function buildModel(report, { docs, businesses, today }) {
   const bySupplier = new Map()
   for (const d of counted) if (d.supplier_name && ils(d) > 0 && day(d) < p.from) (bySupplier.get(d.supplier_name) || bySupplier.set(d.supplier_name, []).get(d.supplier_name)).push(ils(d))
   const suspicious = []
-  for (const d of mine.filter((x) => day(x) >= p.from && day(x) <= p.to)) {
+  for (const d of mine.filter((x) => inCur(day(x)))) {
     if (d.duplicate_state === 'suspected' && d.status === 'review') suspicious.push({ d, why: 'חשד לכפילות של מסמך קיים' })
     else if (!OUT.includes(d.status)) { const past = (bySupplier.get(d.supplier_name) || []).sort((a, b) => a - b); const med = past.length >= 3 ? past[Math.floor(past.length / 2)] : 0; if (med && ils(d) >= med * 3 && ils(d) - med >= 500) suspicious.push({ d, why: `גבוה פי ${Math.round(ils(d) / med)} מהרגיל אצל הספק (${nis(med)})` }) }
   }
@@ -244,6 +255,7 @@ export function cleanReports(input, { members = [], senders = [], businesses = [
       fields: template === 'custom' ? (Array.isArray(r.fields) ? r.fields.filter((f) => FIELDS[f]) : []).slice(0, 14) : undefined,
       companies: Array.isArray(companies) && companies.length ? companies : 'all', period: PERIODS[r.period] ? r.period : 'yesterday',
       from: r.period === 'custom' && /^\d{4}-\d{2}-\d{2}$/.test(r.from || '') ? r.from : undefined, to: r.period === 'custom' && /^\d{4}-\d{2}-\d{2}$/.test(r.to || '') ? r.to : undefined,
+      days: r.period === 'days' ? [...new Set((Array.isArray(r.days) ? r.days : []).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort() : undefined,
       tz: TZS.includes(r.tz) ? r.tz : 'Asia/Jerusalem', slots: uniq,
       users: r.users === 'managers' ? 'managers' : (Array.isArray(r.users) ? r.users.filter((id) => mem.has(id)) : []), wa: (Array.isArray(r.wa) ? r.wa.filter((id) => snd.has(id)) : []), ai: r.ai === true,
     }

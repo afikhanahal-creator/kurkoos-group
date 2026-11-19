@@ -14,6 +14,7 @@ go out by themselves. The server side is `server/finance/reports.js`.
 | `fields` | for `custom`: which figures and tables appear (`FIELDS`) |
 | `companies` | `'all'` or a list of company ids |
 | `period`, `from`, `to` | today, yesterday, last 7 days, this / previous week, this / previous month, custom dates |
+| `days` | for `period: 'days'`: the weekdays the report covers (0 = Sunday). Each is taken at its latest date up to the sending day, so a Thursday report with Monday to Wednesday covers those three days of the same week; the days between chosen days are left out, and the comparison is with the same days a week earlier |
 | `tz` | the time zone the hours are read in (default `Asia/Jerusalem`) |
 | `slots` | `[{ id, day 0–6 (Sunday = 0), time 'HH:MM', enabled }]`, several a day |
 | `users` | member ids who get the email (`'managers'` only in the built-in default) |

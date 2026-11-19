@@ -199,7 +199,7 @@ function Wizard({ data, start, onClose, onSaved }) {
         : <button type="button" className="fin-btn fin-btn--primary" disabled={!!busy || problems.some(Boolean)} onClick={finish}>{busy === 'save' ? 'שומר…' : 'שמירת הדוח'}</button>}
       {step === 4 && <button type="button" className="fin-btn fin-btn--ghost" disabled={!!busy} onClick={test}>{busy === 'test' ? 'שולח…' : 'שליחת בדיקה אליי'}</button>}
       {step > 0 && <button type="button" className="fin-btn fin-btn--ghost" onClick={() => { setErr(''); setStep(step - 1) }}>חזרה</button>}
-      <button type="button" className="fin-btn fin-btn--ghost" onClick={onClose}>ביטול</button>
+      <button type="button" className="fin-btn fin-btn--ghost fin-wiz-cancel" onClick={onClose}>ביטול</button>
     </>
   )
 

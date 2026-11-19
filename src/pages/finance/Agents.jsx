@@ -27,6 +27,7 @@ export default function Agents() {
     setBusy(action); setMsg('')
     try {
       const r = await api.callServer(action, payload)
+      if (action === 'summary-now' && payload?.email) { setMsg(r.summary?.sent_to?.length ? `דוח הבוקר נשלח אל ${r.summary.sent_to.join(', ')}` : 'דוח הבוקר הוכן אבל לא נשלח: אין שירות מייל מוגדר או אין מנהלים לשלוח אליהם'); runs.reload(); sums.reload(); sync.reload(); return }
       setMsg(action === 'sync' ? `נסרקו ${r.results.length} תיבות, ${r.results.reduce((a, x) => a + (x.imported || 0), 0)} מסמכים חדשים` : action === 'retry-failed' ? `נוסו ${r.retried || 0}, הצליחו ${r.recovered || 0}` : `${label} הושלם`)
       runs.reload(); sums.reload(); sync.reload()
     } catch (e) { setMsg(e.message) } finally { setBusy('') }
@@ -63,6 +64,7 @@ export default function Agents() {
         <button type="button" className="fin-btn" onClick={() => act('sync', 'סריקה')} disabled={!!busy || !mailboxes.some((m) => m.status !== 'revoked')}><Icon name="sync" size={18} /> {busy === 'sync' ? 'סורק…' : 'סריקת כל התיבות'}</button>
         <button type="button" className="fin-btn" onClick={() => act('retry-failed', 'ניסיון חוזר')} disabled={!!busy}><Icon name="refresh" size={18} /> ניסיון חוזר</button>
         <button type="button" className="fin-btn" onClick={() => act('summary-now', 'סיכום', { email: false })} disabled={!!busy}><Icon name="docs" size={18} /> סיכום עכשיו</button>
+        {can('manage') && <button type="button" className="fin-btn" onClick={() => act('summary-now', 'דוח בוקר', { email: true })} disabled={!!busy}><Icon name="mail" size={18} /> {busy === 'summary-now' ? 'שולח…' : 'שליחת דוח הבוקר עכשיו'}</button>}
       </PageHead>
       {msg && <p className="fin-note" role="status">{msg}</p>}
       <section className="fin-engine" aria-label="מצב המנוע">

@@ -971,9 +971,9 @@ record('A7', 'ריצת הלילה ודוח הבוקר', 'ה-cron של הלילה
   fs.writeFileSync(`${OUT}/morning-report.html`, html)
   const mp = await ctx.newPage(); await mp.setViewportSize({ width: 390, height: 900 }); await mp.setContent(html); const mailShot = await shot('18b-morning-report', mp)
   const over = await mp.evaluate(() => document.documentElement.scrollWidth - innerWidth); await mp.close()
-  record('MAILREP', 'דוח הבוקר במייל: מקצועי ולפי תקופת הדיווח', `נשלח מ-"Kurkoos Finance"; כותרת עם "לבדיקה" ו"מוכנים לרו״ח (${p.label})"; "מוכנים לרו״ח" = המאושרים של התקופה; כרטיסים וכפתורים לבדיקה ולדוח; מימין לשמאל, בלי גלילה לצד בטלפון`,
-    `מאת: ${mail?.from}; נושא: ${mail?.subject}; מוכנים: ${summary.ready_to_export} (במסד ${wantReady}); תקופה: ${summary.period?.label}; dir: ${/<html dir="rtl"/.test(html)}; כפתורים: ${(html.match(/admin\/finance\/(pending|report)/g) || []).length}; טלפון: ${over}`,
-    !!mail && /^Kurkoos Finance </.test(mail.from || '') && !/Leads/.test(mail.from || '') && summary.ready_to_export === wantReady && summary.period?.label === p.label && mail.subject.includes(`מוכנים לרו״ח (${p.label})`) && /<html dir="rtl"/.test(html) && /admin\/finance\/pending/.test(html) && /admin\/finance\/report/.test(html) && over <= 0, [mailShot])
+  record('MAILREP', 'דוח הבוקר במייל: מקצועי ולפי תקופת הדיווח', `נשלח מ-"Kurkoos Finance"; טבלה לפי חברה (לבדיקה, מוכנים, סכום) שמסתכמת לאותם מספרים; כותרת עם "לבדיקה" ו"מוכנים לרו״ח (${p.label})"; "מוכנים לרו״ח" = המאושרים של התקופה; כרטיסים וכפתורים לבדיקה ולדוח; מימין לשמאל, בלי גלילה לצד בטלפון`,
+    `מאת: ${mail?.from}; נושא: ${mail?.subject}; מוכנים: ${summary.ready_to_export} (במסד ${wantReady}); תקופה: ${summary.period?.label}; לפי חברה: ${JSON.stringify(summary.by_company || [])}; dir: ${/<html dir="rtl"/.test(html)}; כפתורים: ${(html.match(/admin\/finance\/(pending|report)/g) || []).length}; טלפון: ${over}`,
+    !!mail && /^Kurkoos Finance </.test(mail.from || '') && !/Leads/.test(mail.from || '') && summary.ready_to_export === wantReady && summary.period?.label === p.label && mail.subject.includes(`מוכנים לרו״ח (${p.label})`) && /<html dir="rtl"/.test(html) && /admin\/finance\/pending/.test(html) && /admin\/finance\/report/.test(html) && /לפי חברה/.test(html) && (summary.by_company || []).reduce((a, c) => a + c.ready, 0) === wantReady && (summary.by_company || []).reduce((a, c) => a + c.review, 0) === summary.review && over <= 0, [mailShot])
 }
 await nav('סוכני AI')
 const agentsShot = await shot('18-agents')

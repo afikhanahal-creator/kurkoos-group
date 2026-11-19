@@ -191,12 +191,22 @@ export async function buildSummary(now = new Date()) {
   const { reportPeriod, periodKindOf, docDate } = await import('../../src/pages/finance/format.js')
   const businesses = (await sb('fin_businesses?select=active,archived_at,report_settings')) || []
   const p = reportPeriod(periodKindOf(businesses), 0, israelDay(now))
-  const approved = (await sb('fin_documents?status=eq.approved&exported_at=is.null&select=issue_date,email_date,created_at,total_amount,currency,doc_type')) || []
+  const approved = (await sb('fin_documents?status=eq.approved&exported_at=is.null&select=issue_date,email_date,created_at,total_amount,currency,doc_type,business_id')) || []
   const inP = approved.filter((d) => { const day = String(docDate(d)).slice(0, 10); return day >= p.from && day <= p.to })
   data.period = { label: p.label, from: p.from, to: p.to, kind: p.kind }
   data.ready_to_export = inP.length
   data.ready_total = Math.round(inP.filter((d) => (d.currency || 'ILS') === 'ILS').reduce((a, d) => a + (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.total_amount) || 0), 0) * 100) / 100
   data.ready_older = approved.filter((d) => String(docDate(d)).slice(0, 10) < p.from).length
+  // by company: what waits for review, and what is ready for the accountant in the period with its total
+  const names = Object.fromEntries(((await sb('fin_businesses?select=id,name,sort&order=sort')) || []).map((b) => [b.id, b.name]))
+  const waiting = (await sb('fin_documents?status=eq.review&select=business_id')) || []
+  const signed = (d) => ((d.currency || 'ILS') === 'ILS' ? (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.total_amount) || 0) : 0)
+  const by = new Map()
+  const row = (id) => { const k = id && names[id] ? id : 'none'; if (!by.has(k)) by.set(k, { name: k === 'none' ? 'לא משויך לחברה' : names[k], review: 0, ready: 0, total: 0 }); return by.get(k) }
+  for (const d of waiting) row(d.business_id).review++
+  for (const d of inP) { const r = row(d.business_id); r.ready++; r.total += signed(d) }
+  data.by_company = [...by.values()].map((r) => ({ ...r, total: Math.round(r.total * 100) / 100 }))
+    .sort((a, b) => (a.name === 'לא משויך לחברה') - (b.name === 'לא משויך לחברה') || b.total - a.total || b.review - a.review)
   return data
 }
 const israelDay = (t) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' }).format(t)
@@ -234,6 +244,12 @@ export function summaryHtml(d, origin, now = new Date()) {
     ${kpi('מוכנים לרו״ח', d.ready_to_export, `${esc(d.period?.label || '')}${d.ready_to_export ? `<br><span dir="ltr" style="font-weight:700;color:#14202b">${nis(d.ready_total)}</span>` : ''}`, '#07293a', link('/report'))}
     ${kpi('נאספו ב-24 שעות', d.collected, `מייל ${d.by_email ?? 0} · WhatsApp ${d.by_whatsapp ?? 0} · העלאה ${d.by_upload ?? 0}`, '#16688c', link('/new'))}
   </tr></table></td></tr>
+  ${(d.by_company || []).length ? `<tr><td dir="rtl" style="padding:8px 26px 4px;text-align:right;${F}">
+    <div style="font-size:15px;font-weight:700;color:#07293a;margin-bottom:6px;${F}">לפי חברה</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d5dee8;border-radius:12px;background:#ffffff">
+      <tr>${[['חברה', '46%'], ['לבדיקה', '14%'], ['מוכנים', '14%'], ['סכום מוכן', '26%']].map(([h, w], i) => `<td dir="rtl" width="${w}" style="padding:9px 8px;background:#eef3f7;color:#5b6b7a;font-size:12px;font-weight:700;text-align:${i ? 'center' : 'right'};${F}">${h}</td>`).join('')}</tr>
+      ${d.by_company.map((c) => `<tr><td dir="rtl" style="padding:10px 8px 10px 4px;border-top:1px solid #e6ecf2;text-align:right;color:#14202b;font-size:13px;font-weight:700;line-height:1.35;${F}">${esc(c.name)}</td><td style="padding:10px 4px;border-top:1px solid #e6ecf2;text-align:center;color:${c.review ? '#8a5a00' : '#8a97a3'};font-size:14px;font-weight:700;${F}">${c.review}</td><td style="padding:10px 4px;border-top:1px solid #e6ecf2;text-align:center;color:#14202b;font-size:14px;${F}">${c.ready}</td><td dir="ltr" style="padding:10px 4px;border-top:1px solid #e6ecf2;text-align:center;color:#14202b;font-size:14px;font-weight:700;white-space:nowrap;${F}">${c.ready ? nis(c.total) : '—'}</td></tr>`).join('')}
+    </table></td></tr>` : ''}
   ${issues.length ? `<tr><td dir="rtl" style="padding:6px 20px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fbf2dc;border:1px solid #ecd9a6;border-radius:12px"><tr><td dir="rtl" style="padding:12px 16px;text-align:right;color:#6b4600;font-size:14px;${F}"><b>דורש תשומת לב</b>${issues.map((t) => `<div style="margin-top:4px;${F}">• ${t}</div>`).join('')}</td></tr></table></td></tr>` : ''}
   <tr><td dir="rtl" style="padding:10px 26px 4px;text-align:right;${F}">
     <div style="font-size:15px;font-weight:700;color:#07293a;margin-bottom:4px;${F}">מה קרה בלילה</div>
@@ -260,7 +276,7 @@ export async function dailySummary({ origin = '', email = true } = {}) {
     await sb('fin_summaries', { method: 'POST', body: { day, data, sent_to: sentTo }, prefer: 'resolution=merge-duplicates,return=minimal' })
     run.stat.processed = 1
     await run.done('ok')
-    return data
+    return { ...data, sent_to: sentTo }
   } catch (e) { run.stat.errors = 1; run.stat.details.error = String(e.message || e); await run.done('error'); throw e }
 }
 

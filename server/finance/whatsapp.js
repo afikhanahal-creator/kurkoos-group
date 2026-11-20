@@ -50,7 +50,7 @@ export async function sendText(phone, message) {
   if (!/^\d{9,15}$/.test(to)) return { ok: false, error: 'מספר לא תקין' }
   try {
     const r = await fetch(`${env.greenApi()}/waInstance${process.env.GREENAPI_ID_INSTANCE}/sendMessage/${process.env.GREENAPI_TOKEN}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chatId: `${to}@c.us`, message, linkPreview: false }), signal: AbortSignal.timeout(12_000),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chatId: `${to}@c.us`, message, linkPreview: true }), signal: AbortSignal.timeout(12_000),
     })
     if (r.ok) return { ok: true }
     return { ok: false, error: r.status === 466 ? 'מכסת ההודעות של הקו נגמרה' : `הקו סירב לשלוח (${r.status})` }

@@ -5197,3 +5197,8 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
 .fin-acc__acts { display: flex; gap: 8px; margin-top: 4px; }
 .fin-acc__acts .fin-btn { min-height: 44px; }
 .fin-acc-have { margin: 4px 0 6px; padding: 0; list-style: none; display: grid; gap: 2px; text-align: end; font-weight: 700; }
+
+/* phones: what is pinned to the bottom follows the real bottom edge when the browser's layout viewport is stale (viewportFix.js) */
+@media (max-width: 900px) {
+  .fin-tabbar, .fin .fin-bulk, .fin-dm__bulk, .fin-dpanel, .fin-dm__detail { translate: 0 calc(var(--fin-vv-fix, 0px) * -1); }
+}

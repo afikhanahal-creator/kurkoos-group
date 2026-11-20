@@ -3524,6 +3524,28 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
       && boxes1 === boxes0 + 1 && boxes2 === boxes1 && /כבר הייתה מחוברת/.test(msgSame) && /חיבור מחדש/.test(sumErr) && /second-box/.test(firstCard) && fixed === 'active' && boxes3 === boxes1, [multiShot])
 }
 
+// VVFIX: the bottom bar follows the real bottom edge when a phone browser leaves the layout viewport stale.
+{
+  const { bottomFix } = await import('../../src/pages/finance/viewportFix.js')
+  const calc = [bottomFix(500, 844, 0), bottomFix(844, 844, 0), bottomFix(844, 500, 0), bottomFix(500, 600, 100), bottomFix(500, 300, 0, 2)]
+  const phone = await browser.newContext({ ...devices['iPhone 13'], locale: 'he-IL' }); const pp2 = await phone.newPage()
+  await pp2.goto(APP); await pp2.fill('input[type=email]', 'admin@kurkoos.test'); await pp2.fill('input[type=password]', 'Passw0rd!x'); await pp2.click('button[type=submit]'); await pp2.waitForSelector('.fin-tabbar'); await pp2.waitForTimeout(600)
+  const rest = await pp2.evaluate(() => { const r = document.querySelector('.fin-tabbar').getBoundingClientRect(); return [Math.round(innerHeight - r.bottom), getComputedStyle(document.documentElement).getPropertyValue('--fin-vv-fix')] })
+  // the stale state, as the browser reports it: the visual viewport is 300px taller than the layout viewport
+  const moved = await pp2.evaluate(async () => {
+    const before = document.querySelector('.fin-tabbar').getBoundingClientRect().bottom
+    const vv = window.visualViewport; Object.defineProperty(vv, 'height', { configurable: true, get: () => window.innerHeight + 300 })
+    vv.dispatchEvent(new Event('resize')); await new Promise((r) => setTimeout(r, 200))
+    const after = document.querySelector('.fin-tabbar').getBoundingClientRect().bottom
+    delete vv.height; vv.dispatchEvent(new Event('resize')); await new Promise((r) => setTimeout(r, 200))
+    return [Math.round(after - before), Math.round(document.querySelector('.fin-tabbar').getBoundingClientRect().bottom - before)]
+  })
+  await phone.close()
+  record('VVFIX', 'סרגל התחתון בטלפון נשאר בתחתית המסך', 'החישוב: פער שלילי מזיז, מקלדת פתוחה (פער חיובי) וזום לא מזיזים; במצב רגיל הסרגל צמוד לתחתית ואין תיקון; כשהדפדפן מדווח שהאזור הנראה גבוה ב-300 פיקסלים מהפריסה, הסרגל יורד 300 פיקסלים, וחוזר כשהמצב מתיישר',
+    `חישוב: ${calc.join(', ')}; מנוחה: ${rest[0]}px מהתחתית, תיקון "${rest[1]}"; זז ${moved[0]}px, אחרי חזרה ${moved[1]}px`,
+    calc.join(',') === '-344,0,0,-200,0' && rest[0] === 0 && !rest[1] && moved[0] === 300 && moved[1] === 0)
+}
+
 // REPORTS: scheduled reports. An admin sets days, hours and recipients; a due slot goes out once, by email and WhatsApp.
 {
   const tk = await login('admin@kurkoos.test', 'Passw0rd!x')

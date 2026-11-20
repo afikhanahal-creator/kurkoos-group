@@ -16,6 +16,7 @@ import Receipts from './Receipts.jsx'
 import Vat from './Vat.jsx'
 import Compliance from './Compliance.jsx'
 const AccountantReport = lazy(() => import('./AccountantReport.jsx'))
+import { watchViewport } from './viewportFix.js'
 import { BrandLoader, BrandMark } from './Brand.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import '../../styles/fonts.css'
@@ -319,6 +320,8 @@ function NoAccess({ me, email, onClaimed }) {
 const THEME_KEY = 'kurkoos-adm-theme'
 
 export default function FinanceApp() {
+  // phones: keep the bottom bar on the real bottom edge when the browser's viewport goes stale (viewportFix.js)
+  useEffect(() => watchViewport(), [])
   const session = useAuth()
   // an invited person arrives signed in from the invitation link: they choose a password before anything else
   const [welcome, setWelcome] = useState(() => linkType === 'invite')

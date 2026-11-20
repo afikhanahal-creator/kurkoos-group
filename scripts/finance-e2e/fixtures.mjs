@@ -132,6 +132,7 @@ const fixtures = {
       ],
     },
     'broken@kurkoos.test': { failing: true, messages: [] },
+    'second-box@kurkoos.test': { messages: [] },
   },
 }
 fs.writeFileSync(`${OUT}/fixtures.json`, JSON.stringify(fixtures, null, 1))

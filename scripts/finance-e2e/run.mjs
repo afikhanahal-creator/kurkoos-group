@@ -132,6 +132,7 @@ record('S1', 'הקמת חברות ופרויקט מהממשק', 'שתי חברו
 // ---------- T1: connect Gmail (OAuth round trip) ----------
 await nav('חשבונות אימייל')
 await page.getByRole('button', { name: 'חיבור Gmail' }).click()
+await page.getByRole('button', { name: /המשך ל-Gmail/ }).click()
 await page.waitForURL(/mailboxes\?connected=|mailboxes$/, { timeout: 15000 }); await page.waitForTimeout(800)
 const t1 = sql("select email||'|'||status||'|'||(select count(*) from fin_mailbox_secrets) from fin_mailboxes")
 record('T1', 'חיבור חשבון Gmail', 'זרימת OAuth מלאה: התיבה נשמרת מחוברת, הטוקן נשמר בטבלת הסודות בלבד', t1, t1 === 'invoices@kurkoos.test|active|1', [await shot('03-mailbox-connected')])
@@ -403,6 +404,7 @@ record('H', 'קצה לקצה: ספק, קטגוריה, חברה ופרויקט ח
 await fetch(`${FAKES}/__next_account?email=broken@kurkoos.test`)
 await nav('חשבונות אימייל')
 await page.getByRole('button', { name: 'חיבור Gmail' }).click()
+await page.getByRole('button', { name: /המשך ל-Gmail/ }).click()
 await page.waitForSelector('text=broken@kurkoos.test', { timeout: 15000 }); await page.waitForTimeout(800)
 await fetch(`${FAKES}/__next_account?email=`)
 const brokenId = sql("select id from fin_mailboxes where email='broken@kurkoos.test'")
@@ -3480,6 +3482,46 @@ await page.getByRole('button', { name: 'מצב בהיר' }).click()
     high !== low && Math.abs(shares.reduce((a, b) => a + b, 0) - 100) <= shares.length && /הוצאות בתקופה/.test(tipTxt) && /בתקופה הקודמת/.test(tipTxt) && tipBox && tipBox.x >= 0 && tipBox.x + tipBox.width <= 1441
       && segs >= 2 && listed >= segs && /₪/.test(centre) && /%/.test(pctFirst) && lines >= 1 && linesCo >= 2 && levels.length >= 1 && levels.every((x) => /קריטי|דורש תשומת לב|לידיעה/.test(x))
       && approved <= all && /אושרו/.test(chips) && oneCat <= approved && chips2.includes(firstCat.slice(0, 8)) && Math.abs(back - all) < 0.01 && chipsGone === 0, [exec2Shot])
+}
+
+// MULTIBOX: several mailboxes. A company is chosen before connecting, the same account twice stays one mailbox, a reconnect goes to that address.
+{
+  { const fxm = JSON.parse(fs.readFileSync(`${FIX}/fixtures.json`, 'utf8')); fxm.mailboxes['second-box@kurkoos.test'] = { messages: [] }; fs.writeFileSync(`${FIX}/fixtures.json`, JSON.stringify(fxm, null, 1)) }
+  await fetch(`${FAKES}/__next_account?email=second-box@kurkoos.test`)
+  const boxes0 = Number(sql("select count(*) from fin_mailboxes where status<>'revoked'"))
+  const bizPick = sql('select id||chr(124)||name from fin_businesses order by sort, name limit 1').split('|')
+  await page.goto(`${APP}/mailboxes`); await page.waitForSelector('.fin-acc-sum'); await page.waitForTimeout(500)
+  const sum0 = (await page.locator('.fin-acc-sum').innerText()).replace(/\s+/g, ' ')
+  const cardSync = await page.locator('.fin-acc__acts .fin-btn').count()
+  await page.getByRole('button', { name: 'חיבור Gmail' }).click(); await page.waitForTimeout(300)
+  const dialog = (await page.locator('.fin-modal').innerText()).replace(/\s+/g, ' ')
+  await page.locator('.fin-modal select').selectOption(bizPick[0])
+  const multiShot = await shot('mailbox-connect')
+  await page.getByRole('button', { name: /המשך ל-Gmail/ }).click()
+  await page.waitForURL(/mailboxes/, { timeout: 15000 }); await page.waitForSelector('.fin-note'); await page.waitForTimeout(600)
+  const msgNew = (await page.locator('.fin-note').first().innerText()).replace(/\s+/g, ' ')
+  const row = sql("select business_id||chr(124)||status from fin_mailboxes where email='second-box@kurkoos.test'")
+  const boxes1 = Number(sql("select count(*) from fin_mailboxes where status<>'revoked'"))
+  // the same account again: no second mailbox, and the screen says so
+  await page.getByRole('button', { name: 'חיבור Gmail' }).click(); await page.getByRole('button', { name: /המשך ל-Gmail/ }).click()
+  await page.waitForURL(/mailboxes/, { timeout: 15000 }); await page.waitForSelector('.fin-note'); await page.waitForTimeout(600)
+  const msgSame = (await page.locator('.fin-note').first().innerText()).replace(/\s+/g, ' ')
+  const boxes2 = Number(sql("select count(*) from fin_mailboxes where status<>'revoked'"))
+  // a mailbox in error is reconnected by its own address; signing in with another account is called out
+  sql("update fin_mailboxes set status='error', last_error='ההרשאה פגה' where email='second-box@kurkoos.test'")
+  await fetch(`${FAKES}/__next_account?email=`)
+  await page.reload(); await page.waitForSelector('.fin-acc-sum'); await page.waitForTimeout(500)
+  const sumErr = (await page.locator('.fin-acc-sum').innerText()).replace(/\s+/g, ' ')
+  const firstCard = (await page.locator('.fin-acc').first().innerText()).replace(/\s+/g, ' ')
+  await page.locator('.fin-acc', { hasText: 'second-box@kurkoos.test' }).getByRole('button', { name: 'חיבור מחדש' }).click()
+  await page.waitForURL(/mailboxes/, { timeout: 15000 }); await page.waitForSelector('.fin-note'); await page.waitForTimeout(600)
+  const fixed = sql("select status from fin_mailboxes where email='second-box@kurkoos.test'")
+  const boxes3 = Number(sql("select count(*) from fin_mailboxes where status<>'revoked'"))
+  sql("update fin_mailboxes set status='revoked' where email='second-box@kurkoos.test'")
+  record('MULTIBOX', 'חיבור כמה תיבות מייל: חברה בזמן החיבור, בלי תיבה כפולה, חיבור מחדש לכתובת הנכונה', 'שורת סיכום וכפתור סנכרון בכל כרטיס; לפני המעבר לספק בוחרים חברה ורואים מה כבר מחובר; תיבה חדשה נשמרת עם החברה ומספר התיבות עולה באחת; אותו חשבון שוב: המספר לא משתנה וההודעה אומרת שההרשאה חודשה; תיבה בתקלה עולה לראש הרשימה ונספרת בסיכום, ו"חיבור מחדש" מחזיר אותה לפעילה בלי להוסיף תיבה',
+    `סיכום: "${sum0.slice(0, 70)}"; כפתורים בכרטיסים ${cardSync}; חלון: "${dialog.slice(0, 110)}"; חדשה: "${msgNew.slice(0, 70)}", ${row.split('|')[1]}, חברה ${row.split('|')[0] === bizPick[0]}; תיבות ${boxes0}→${boxes1}→${boxes2}→${boxes3}; שוב: "${msgSame.slice(0, 70)}"; תקלה: "${sumErr.slice(0, 80)}", ראשונה "${firstCard.slice(0, 40)}"; אחרי חיבור מחדש: ${fixed}`,
+    /תיב/.test(sum0) && cardSync >= 1 && /לאיזו חברה שייכת התיבה/.test(dialog) && /כבר מחוברות/.test(dialog) && /second-box@kurkoos\.test חוברה/.test(msgNew) && row === `${bizPick[0]}|active`
+      && boxes1 === boxes0 + 1 && boxes2 === boxes1 && /כבר הייתה מחוברת/.test(msgSame) && /חיבור מחדש/.test(sumErr) && /second-box/.test(firstCard) && fixed === 'active' && boxes3 === boxes1, [multiShot])
 }
 
 // REPORTS: scheduled reports. An admin sets days, hours and recipients; a due slot goes out once, by email and WhatsApp.

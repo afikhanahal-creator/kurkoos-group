@@ -181,15 +181,19 @@ async function oauthCallback(req, res, url) {
     const t = await prov.exchange(url.searchParams.get('code'), redirectUri(req))
     if (!t.email) return back('error=no_email')
     let mb = await one(`fin_mailboxes?provider=eq.${st.p}&email=eq.${q(t.email)}&select=*`)
+    // what happened, for the message on the screen: a new mailbox, one that was disconnected and is back, or one whose permission was renewed
+    const how = !mb ? 'new' : mb.status === 'revoked' ? 'back' : 'renewed'
     if (!mb) mb = await insert('fin_mailboxes', { provider: st.p, email: t.email, business_id: st.b || null, connected_by: st.u, sync_from: new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10) })
-    else await patch(`fin_mailboxes?id=eq.${mb.id}`, { status: 'active', last_error: null })
+    else await patch(`fin_mailboxes?id=eq.${mb.id}`, { status: 'active', last_error: null, ...(st.b && !mb.business_id ? { business_id: st.b } : {}) })
+    // a reconnect asked for one address and the person signed in with another: say so instead of leaving the first in error
+    const other = st.h && String(st.h).toLowerCase() !== String(t.email).toLowerCase() ? `&expected=${encodeURIComponent(st.h)}` : ''
     const existing = await one(`fin_mailbox_secrets?mailbox_id=eq.${mb.id}&select=refresh_token`)
     const refresh = t.refresh_token || existing?.refresh_token
     if (!refresh) return back('error=no_refresh')
     await sb('fin_mailbox_secrets', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { mailbox_id: mb.id, refresh_token: refresh, access_token: t.access_token, expires_at: new Date(Date.now() + (t.expires_in || 3600) * 1000).toISOString(), updated_at: new Date().toISOString() } })
     await audit('mailbox', mb.id, 'connected', { provider: st.p, email: t.email }, { id: st.u, email: st.e })
     if (process.env.FINANCE_SCAN_ON_CONNECT !== '0') await ensureCoverage({ user: { id: st.u, email: st.e } }).catch(() => {})
-    return back(`connected=${encodeURIComponent(t.email)}`)
+    return back(`connected=${encodeURIComponent(t.email)}&how=${how}${other}`)
   } catch (e) {
     return back(`error=${encodeURIComponent(String(e.message || e).slice(0, 120))}`)
   }
@@ -305,7 +309,7 @@ export default async function handler(req, res) {
           return
         }
         const hint = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(body.hint || '').trim()) ? String(body.hint).trim().toLowerCase() : ''
-        res.status(200).json({ url: prov.authUrl(signState({ u: user.id, e: user.email, b: body.business_id || null, p: body.provider, t: Date.now() }), redirectUri(req), { hint, choose: !!body.choose }) })
+        res.status(200).json({ url: prov.authUrl(signState({ u: user.id, e: user.email, b: body.business_id || null, p: body.provider, h: hint || null, t: Date.now() }), redirectUri(req), { hint, choose: !!body.choose }) })
         return
       }
       case 'sync': {

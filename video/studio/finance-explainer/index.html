@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Kurkoos Finance explainer</title>
+<!-- The explainer shown in the finance system after sign-in and sign-out. 1920x1080, 88 seconds, no sound.
+     Every position is a pure function of time (seek). The screens are screenshots of the local test system with
+     demo data (scripts in docs/finance/EXPLAINER-VIDEO.md); a small label says so on every screen scene.
+     Render: node engine/anim_render.cjs studio/finance-explainer/index.html --fps 30 --sub 2 -o out/finance-explainer.mp4 -->
+<link rel="icon" href="data:,">
+<style>
+  @font-face{font-family:"Almoni";font-weight:300;src:url(../../fonts/Almoni-300.ttf)}
+  @font-face{font-family:"Almoni";font-weight:400;src:url(../../fonts/Almoni-400.ttf)}
+  @font-face{font-family:"Almoni";font-weight:700;src:url(../../fonts/Almoni-700.ttf)}
+  html,body{margin:0;background:#07293a}
+  #stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:"Almoni";color:#f7f8fa;
+    background:radial-gradient(1400px 900px at 22% 30%, #12506c 0%, #0a3549 45%, #07293a 100%)}
+  .abs{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform,opacity}
+  .rtl{direction:rtl;text-align:right;unicode-bidi:plaintext}
+  /* the screen card */
+  #card{width:1140px;height:738px;border-radius:22px;overflow:hidden;background:#f3f5f7;box-shadow:0 40px 90px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.10)}
+  #card .bar{position:absolute;left:0;top:0;width:100%;height:44px;background:#e6eaee;border-bottom:1px solid #d4dae0}
+  #card .bar i{position:absolute;top:15px;width:14px;height:14px;border-radius:50%;background:#c4ccd4}
+  #view{position:absolute;left:0;top:44px;width:1140px;height:694px;overflow:hidden;background:#fff}
+  #view .shot{position:absolute;left:0;top:0;width:1440px;transform-origin:0 0}
+  #view .shot img{display:block;width:1440px;height:900px}
+  .ring{position:absolute;border:4px solid #a90b0c;border-radius:16px;box-shadow:0 0 0 6px rgba(169,11,12,.16);box-sizing:border-box}
+  #demo{font-weight:400;font-size:19px;color:#8fb6c8;white-space:nowrap}
+  /* the text column */
+  .step{font-weight:700;font-size:26px;color:#8fb6c8;white-space:nowrap}
+  .h{font-weight:700;font-size:64px;line-height:1.08;white-space:nowrap}
+  .b{font-weight:400;font-size:33px;line-height:1.3;color:#dbe7ee;white-space:nowrap}
+  .b::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#a90b0c;margin-inline-end:16px;vertical-align:middle}
+  .big{font-weight:700;font-size:104px;line-height:1.05;white-space:nowrap}
+  .sub{font-weight:300;font-size:44px;line-height:1.25;color:#dbe7ee;white-space:nowrap}
+  .chip{display:flex;align-items:center;gap:16px;flex-direction:row-reverse;padding:22px 34px;border-radius:999px;background:#f7f8fa;color:#07293a;font-weight:700;font-size:40px;white-space:nowrap;box-shadow:0 18px 40px rgba(0,0,0,.3)}
+  .chip svg{width:38px;height:38px;flex:none}
+  #hub{width:360px;height:220px;border-radius:28px;background:#f7f8fa;color:#07293a;box-shadow:0 30px 70px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+  #hub b{font-weight:700;font-size:40px}
+  #hub span{font-weight:400;font-size:25px;color:#105572}
+  .tick{display:flex;align-items:center;gap:20px;flex-direction:row-reverse;font-weight:400;font-size:42px;white-space:nowrap}
+  .tick svg{width:46px;height:46px;flex:none}
+  #phone{width:300px;height:620px;border-radius:44px;background:#0b1820;padding:12px;box-sizing:border-box;box-shadow:0 40px 80px rgba(0,0,0,.5)}
+  #phone div{width:100%;height:100%;border-radius:34px;overflow:hidden;background:#fff}
+  #phone img{display:block;width:100%}
+  #prog{left:0;top:1072px;height:8px;width:1920px;background:rgba(255,255,255,.10)}
+  #prog i{display:block;height:100%;width:100%;background:#8fb6c8;transform-origin:0 0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="intro" class="abs"></div>
+  <div id="flow" class="abs"></div>
+  <div id="card" class="abs"><div class="bar"><i style="left:22px"></i><i style="left:46px"></i><i style="left:70px"></i></div><div id="view"></div></div>
+  <div id="demo" class="abs rtl">המספרים במסכים להדגמה בלבד</div>
+  <div id="phone" class="abs"><div><img src="shots/phone.jpg" alt=""></div></div>
+  <div id="text" class="abs"></div>
+  <div id="outro" class="abs"></div>
+  <div id="prog" class="abs"><i></i></div>
+</div>
+<script src="../lib/studio.js"></script>
+<script>
+const { clamp, lerp, smooth, step, track } = Studio
+const W = 1920, H = 1080, DUR = 88
+const $ = (id) => document.getElementById(id)
+const el = (parent, cls, html, tag = 'div') => { const d = document.createElement(tag); d.className = cls; if (html != null) d.innerHTML = html; parent.appendChild(d); return d }
+const put = (node, x, y, o = 1, s = 1) => { node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${s.toFixed(4)})`; node.style.opacity = clamp(o).toFixed(3) }
+// in over 0.5 s from t0, out over 0.4 s before t1
+const vis = (t, t0, t1) => smooth((t - t0) / 0.5) * (1 - smooth((t - (t1 - 0.4)) / 0.4))
+const rise = (t, t0) => 26 * (1 - step(t - t0, { f: 1.6, z: 1 }))
+
+/* ---------- the screen scenes: text on the right, the screen on the left ----------
+   cam keys: [time, zoom, centre x, centre y] in the screenshot's own pixels (1440 x 900).
+   rings: [from, to, x, y, w, h] in the same pixels. */
+const SCENES = [
+  { t0: 17, t1: 30, shot: 'today', step: 'שלב 1', h: 'אוספת וקוראת לבד',
+    b: ['סורקת את המייל ואת הוואטסאפ', 'קוראת ספק, סכום, מע״מ ותאריך', 'משייכת לחברה ולפרויקט'],
+    cam: [[17, 1, 720, 425], [20.2, 1.5, 690, 250], [25, 1.55, 760, 720]],
+    rings: [[20.8, 24.6, 30, 164, 1134, 92], [25.6, 29.4, 476, 596, 688, 304]] },
+  { t0: 30, t1: 42, shot: 'documents', step: 'שלב 2', h: 'בודקים ומאשרים',
+    b: ['כל המסמכים ברשימה אחת', 'מה שלא ברור מחכה לבדיקה', 'מסמך שאושר נכנס לדוחות'],
+    cam: [[30, 1, 720, 425], [33.2, 1.45, 800, 470]],
+    rings: [[33.8, 41.2, 690, 250, 92, 630]] },
+  { t0: 42, t1: 57, shot: 'home', step: 'שלב 3', h: 'המנכ״ל רואה הכול',
+    b: ['הוצאות החודש של כל הקבוצה', 'כל חברה בנפרד, בלחיצה', 'השוואה לחודשים קודמים'],
+    cam: [[42, 1, 720, 425], [45, 1.6, 900, 380], [49, 1.45, 700, 230], [52.6, 1.45, 760, 700]],
+    rings: [[45.6, 48.6, 762, 274, 400, 236], [49.6, 52.2, 174, 176, 990, 76], [53.2, 56.4, 376, 540, 786, 360]] },
+  { t0: 57, t1: 69, shot: 'report', step: 'שלב 4', h: 'דוח לרואה החשבון',
+    b: ['בוחרים תקופה וחברה', 'דוח Excel עם הקבצים המקוריים', 'נשלח במייל בלחיצה אחת'],
+    cam: [[57, 1, 720, 425], [60, 1.45, 780, 300], [64.2, 1.5, 760, 760]],
+    rings: [[60.6, 63.8, 50, 222, 1092, 216], [64.8, 68.4, 50, 778, 1092, 112]] },
+  { t0: 69, t1: 79, shot: 'drive', step: 'שלב 5', h: 'הכול שמור ומסודר',
+    b: ['ארכיון ב-Google Drive', 'תיקייה לכל חברה, שנה וחודש', 'עובדת גם מהטלפון'],
+    cam: [[69, 1, 720, 425], [71.6, 1.35, 560, 600]],
+    rings: [[72.2, 75.4, 46, 458, 862, 372]] },
+]
+const CARD = { x: 84, y: 215, w: 1140, h: 694 }
+const TEXT = { right: 1836, top: 330 }
+
+const ICON = {
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="#105572" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="#1f8f4e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-12 7l-5 1 1-5a8 8 0 1 1 16-3z"/></svg>',
+  cam: '<svg viewBox="0 0 24 24" fill="none" stroke="#a90b0c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  tick: '<svg viewBox="0 0 24 24" fill="none" stroke="#8fb6c8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>',
+}
+const N = {}
+
+async function build() {
+  // intro
+  N.logo = el($('intro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:230px" alt="">')
+  N.title = el($('intro'), 'abs big', 'Kurkoos Finance')
+  N.tag = el($('intro'), 'abs sub rtl', 'כל ההוצאות של הקבוצה במקום אחד')
+  // the problem
+  N.q = el($('flow'), 'abs h rtl', 'חשבוניות מגיעות מכל מקום')
+  N.q2 = el($('flow'), 'abs sub rtl', 'וקל לאבד אחת בדרך')
+  N.chips = [['mail', 'מהמייל'], ['chat', 'מהוואטסאפ'], ['cam', 'מצילום בטלפון']].map(([i, s]) => el($('flow'), 'abs chip', ICON[i] + `<span class="rtl">${s}</span>`))
+  N.hub = el($('flow'), 'abs', '<div id="hub"><b>Kurkoos Finance</b><span class="rtl">אוספת את כולן לבד</span></div>')
+  // screens
+  for (const s of SCENES) {
+    s.node = el($('view'), 'shot', `<img src="shots/${s.shot}.jpg" alt="">`)
+    s.ringNodes = s.rings.map((r) => { const d = el(s.node, 'ring'); Object.assign(d.style, { left: r[2] + 'px', top: r[3] + 'px', width: r[4] + 'px', height: r[5] + 'px' }); return d })
+    s.stepNode = el($('text'), 'abs step rtl', s.step + ' מתוך 5')
+    s.hNode = el($('text'), 'abs h rtl', s.h)
+    s.bNodes = s.b.map((x) => el($('text'), 'abs b rtl', x))
+  }
+  // outro
+  N.end = el($('outro'), 'abs big rtl', 'פחות ניירת, יותר שליטה')
+  N.ticks = ['כל המסמכים במקום אחד', 'דוחות מוכנים לרואה החשבון', 'תמונת מצב למנכ״ל בכל רגע'].map((s) => el($('outro'), 'abs tick', ICON.tick + `<span class="rtl">${s}</span>`))
+  N.endLogo = el($('outro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:190px" alt="">')
+  // measure once: right-aligned text is placed by its own width
+  await Promise.all([...document.images].map((i) => i.decode().catch(() => {})))
+  for (const d of document.querySelectorAll('#stage .abs')) { d.style.transform = 'none'; d._w = d.offsetWidth; d._h = d.offsetHeight }
+}
+const centre = (n, y, o, dy = 0, s = 1) => put(n, (W - n._w * s) / 2, y + dy, o, s)
+const right = (n, y, o, dy = 0) => put(n, TEXT.right - n._w, y + dy, o)
+
+function seek(t) {
+  // ---- 0 to 6: the name ----
+  { const o = vis(t, 0.2, 6)
+    const top = (H - (N.logo._h + 56 + N.title._h + 26 + N.tag._h)) / 2
+    centre(N.logo, top, o, rise(t, 0.2))
+    centre(N.title, top + N.logo._h + 56, vis(t, 0.9, 6), rise(t, 0.9))
+    centre(N.tag, top + N.logo._h + 56 + N.title._h + 26, vis(t, 1.7, 6), rise(t, 1.7)) }
+  // ---- 6 to 17: where invoices come from ----
+  { centre(N.q, 190, vis(t, 6.2, 17), rise(t, 6.2))
+    centre(N.q2, 286, vis(t, 7.2, 12.4), rise(t, 7.2))
+    const hubIn = step(t - 11.6, { f: 1.8, z: 0.8 })
+    put(N.hub, (W - 360) / 2, 640 + 30 * (1 - hubIn), vis(t, 11.6, 17))
+    const from = [[1300, 520], [800, 470], [300, 540]]
+    N.chips.forEach((c, i) => {
+      const a = 8 + i * 0.7, pull = smooth((t - (12.6 + i * 0.5)) / 1.1)
+      const x = lerp(from[i][0], (W - c._w) / 2, pull), y = lerp(from[i][1] + 14 * Math.sin((t + i) * 1.1), 710, pull)
+      put(c, x, y + rise(t, a), vis(t, a, 17) * (1 - smooth((pull - 0.45) / 0.4)), lerp(1, 0.6, pull))
+    }) }
+  // ---- 17 to 79: the five screens ----
+  const live = SCENES.find((s) => t >= s.t0 - 0.01 && t < s.t1)
+  const first = SCENES[0], last = SCENES[SCENES.length - 1]
+  const cardO = smooth((t - first.t0) / 0.6) * (1 - smooth((t - (last.t1 - 0.5)) / 0.5))
+  put($('card'), CARD.x, CARD.y - 44 + 40 * (1 - step(t - first.t0, { f: 1.4, z: 1 })), cardO)
+  put($('demo'), CARD.x + CARD.w - $('demo')._w, CARD.y + CARD.h + 22, cardO * 0.9)
+  for (const s of SCENES) {
+    const o = smooth((t - s.t0) / 0.45) * (s === last ? 1 : 1 - smooth((t - (s.t1 - 0.45)) / 0.45))
+    s.node.style.opacity = (t >= s.t0 - 0.5 && t < s.t1 + 0.5 ? clamp(s === first ? 1 : o + (t >= s.t1 ? 0 : 0)) : 0).toFixed(3)
+    if (s !== first && t < s.t0) s.node.style.opacity = 0
+    if (t >= s.t1) s.node.style.opacity = s === last ? 1 : 0
+    const k = s.cam, soft = { f: 0.55, z: 1 }
+    const z = track(t, k.map((c) => [c[0], c[1]]), soft), cx = track(t, k.map((c) => [c[0], c[2]]), soft), cy = track(t, k.map((c) => [c[0], c[3]]), soft)
+    const sc = (CARD.w / 1440) * z
+    const x = clamp(CARD.w / 2 - cx * sc, CARD.w - 1440 * sc, 0), y = clamp(CARD.h / 2 - cy * sc, CARD.h - 900 * sc, 0)
+    s.node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${sc.toFixed(4)})`
+    s.ringNodes.forEach((d, i) => { const r = s.rings[i]; d.style.opacity = (smooth((t - r[0]) / 0.35) * (1 - smooth((t - (r[1] - 0.35)) / 0.35))).toFixed(3) })
+    const a = s.t0 + 0.3
+    right(s.stepNode, TEXT.top, vis(t, a, s.t1), rise(t, a))
+    right(s.hNode, TEXT.top + 46, vis(t, a + 0.25, s.t1), rise(t, a + 0.25))
+    s.bNodes.forEach((d, i) => right(d, TEXT.top + 168 + i * 72, vis(t, a + 1.6 + i * 2.2, s.t1), rise(t, a + 1.6 + i * 2.2)))
+  }
+  void live
+  // the phone slides in over the last screen
+  { const p = step(t - 75.6, { f: 1.3, z: 0.85 }); put($('phone'), 960, 300 + 520 * (1 - p), smooth((t - 75.6) / 0.4) * (1 - smooth((t - 78.5) / 0.5))) }
+  // ---- 79 to 88: what it gives ----
+  { centre(N.end, 200, vis(t, 79.4, 89), rise(t, 79.4))
+    N.ticks.forEach((d, i) => centre(d, 410 + i * 92, vis(t, 80.8 + i * 1.1, 89), rise(t, 80.8 + i * 1.1)))
+    centre(N.endLogo, 720, vis(t, 84.6, 89), rise(t, 84.6)) }
+  $('prog').firstChild.style.transform = `scaleX(${clamp(t / DUR).toFixed(4)})`
+}
+
+// every text stays inside the frame and the text column never touches the screen card
+function check(t) {
+  const bad = []
+  for (const d of document.querySelectorAll('#text .abs, #intro .abs, #outro .abs, #flow .abs')) {
+    if (+d.style.opacity < 0.05) continue
+    const r = d.getBoundingClientRect()
+    if (r.left < 40 || r.right > W - 40 || r.top < 30 || r.bottom > H - 30) bad.push(`out of frame: ${d.textContent.trim().slice(0, 24)}`)
+    if (d.parentNode.id === 'text' && r.left < CARD.x + CARD.w + 30) bad.push(`text over the screen: ${d.textContent.trim().slice(0, 24)} (${Math.round(r.left)})`)
+  }
+  return bad
+}
+
+Studio.define({ w: W, h: H, duration: DUR,
+  stages: [{ t: 3.5, label: 'name' }, { t: 9.6, label: 'sources' }, { t: 14.2, label: 'hub' }, { t: 23, label: 'collect' }, { t: 28, label: 'collect 2' }, { t: 37, label: 'approve' }, { t: 47, label: 'ceo number' }, { t: 51, label: 'ceo companies' }, { t: 55, label: 'ceo chart' }, { t: 62, label: 'report' }, { t: 67, label: 'report send' }, { t: 74, label: 'drive' }, { t: 77.5, label: 'phone' }, { t: 86, label: 'end' }],
+  fonts: ['700 78px "Almoni"', '400 33px "Almoni"', '300 44px "Almoni"'], build, seek, check })
+</script>
+</body>
+</html>

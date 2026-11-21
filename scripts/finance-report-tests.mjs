@@ -102,13 +102,38 @@ fs.rmSync(dir, { recursive: true, force: true })
   const { booked, overview, periodOf } = await import('../src/pages/finance/insights.js')
   const { buildModel } = await import('../server/finance/reports.js')
   const mk = (id, status, doc_type, total) => ({ id, status, doc_type, total_amount: total, currency: 'ILS', issue_date: '2026-10-15', created_at: '2026-10-15T08:00:00Z', business_id: 'b1', supplier_name: `ספק ${id}`, doc_number: String(id) })
-  const docs = [mk(1, 'approved', 'invoice', 1000), mk(2, 'archived', 'invoice', 500), mk(3, 'review', 'credit', 100), mk(4, 'approved', 'proforma', 700), mk(5, 'rejected', 'invoice', 50), mk(6, 'duplicate', 'receipt', 60)]
+  const docs = [mk(1, 'approved', 'invoice', 1000), mk(2, 'archived', 'invoice', 500), mk(3, 'review', 'credit', 100), mk(4, 'review', 'proforma', 700), mk(5, 'rejected', 'invoice', 50), mk(6, 'duplicate', 'receipt', 60)]
   const o = overview(docs, { businesses: [{ id: 'b1', name: 'חברה' }] }, periodOf('custom', new Date('2026-11-21'), { from: '2026-10-01', to: '2026-10-31' }))
   const m = buildModel({ template: 'daily', period: 'custom', from: '2026-10-01', to: '2026-10-31' }, { docs, businesses: [{ id: 'b1', name: 'חברה' }], today: '2026-11-21' })
   const row = m.tables.find((t) => t.title === 'לפי חברה')?.rows[0] || []
   check('X18', 'כלל אחד למה נספר: ארכיון לא נספר, חשבון עסקה אינו חשבונית', 'מסמך בארכיון, נדחה או כפול לא בסכום; הסקירה סופרת 900 (1,000 פחות זיכוי 100, בלי חשבון העסקה) ו-2 חשבוניות; הדוח המתוזמן מציג את אותו סכום, 900, ו-2 חשבוניות; אותה פונקציה בסקירה ובדוחות',
     `counts(ארכיון)=${counts(docs[1])}; booked===counts: ${booked === counts}; סקירה: ${o.kpi.spend}, חשבוניות ${o.kpi.invoices}; דוח מתוזמן: ${row.join(' | ')}; רשימות: ${NOT_COUNTED.join(',')} / ${INVOICE_TYPES.join(',')}`,
     counts(docs[1]) === false && booked === counts && o.kpi.spend === 900 && o.kpi.invoices === 2 && row[2] === '2' && row[4] === '₪900.00' && NOT_COUNTED.includes('archived') && !INVOICE_TYPES.includes('proforma') && INVOICE_TYPES.includes('credit'))
+}
+
+// X19: a document a person approved always counts, whatever its type; the same money is still never counted twice
+{
+  const { counts } = await import('../src/pages/finance/format.js')
+  const { overview, periodOf } = await import('../src/pages/finance/insights.js')
+  const { markLedger } = await import('../src/pages/finance/ledger.js')
+  const { buildModel } = await import('../server/finance/reports.js')
+  const mk = (id, status, doc_type, total, extra = {}) => ({ id, status, doc_type, total_amount: total, currency: 'ILS', issue_date: '2026-10-15', created_at: '2026-10-15T08:00:00Z', business_id: 'b1', supplier_name: `ספק ${id}`, doc_number: String(id), ...extra })
+  const make = () => [
+    mk(1, 'approved', 'payment_confirmation', 18), mk(2, 'sent', 'proforma', 700), mk(3, 'approved', 'quote', 40),      // approved: counted
+    mk(4, 'review', 'payment_confirmation', 25), mk(5, 'review', 'proforma', 300),                                          // not approved yet: by type, not counted
+    mk(6, 'approved', 'invoice', 1000, { supplier_id: 's1' }), mk(7, 'approved', 'receipt', 1000, { supplier_id: 's1', issue_date: '2026-10-20' }),   // the receipt pays the invoice: once
+    mk(8, 'approved', 'proforma', 500, { supplier_id: 's2', issue_date: '2026-10-02' }), mk(9, 'approved', 'invoice', 500, { supplier_id: 's2', issue_date: '2026-10-09' }),   // proforma replaced by its invoice: once
+  ]
+  const docs = markLedger(make())
+  const by = Object.fromEntries(docs.map((d) => [d.id, counts(d)]))
+  const o = overview(markLedger(make()),   // the app marks the ledger once, where the documents are loaded (data.jsx)
+    { businesses: [{ id: 'b1', name: 'חברה' }] }, periodOf('custom', new Date('2026-11-21'), { from: '2026-10-01', to: '2026-10-31' }))
+  const m = buildModel({ template: 'daily', period: 'custom', from: '2026-10-01', to: '2026-10-31' }, { docs: make(), businesses: [{ id: 'b1', name: 'חברה' }], today: '2026-11-21' })
+  const row = m.tables.find((t) => t.title === 'לפי חברה')?.rows[0] || []
+  const want = 18 + 700 + 40 + 1000 + 500
+  check('X19', 'מסמך שאושר תמיד נספר, ואותו כסף לא נספר פעמיים', `אישור תשלום, חשבון עסקה והצעת מחיר שאושרו נספרים; אותם סוגים בלי אישור לא; קבלה שמשלמת חשבונית וחשבון עסקה שהוחלף בחשבונית נספרים פעם אחת; סקירה ודוח מתוזמן: ${want}`,
+    `נספר: ${JSON.stringify(by)}; סקירה: ${o.kpi.spend}; דוח מתוזמן: ${row.join(' | ')}`,
+    by[1] && by[2] && by[3] && !by[4] && !by[5] && by[6] && !by[7] && !by[8] && by[9] && o.kpi.spend === want && row[4] === `₪${want.toLocaleString('en-US')}.00`)
 }
 
 const failed = results.filter((r) => !r.pass)

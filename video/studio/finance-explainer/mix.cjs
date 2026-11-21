@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The film's sound: the narrator's lines at their places on the clock (timeline.js) over a quiet bed of pure tones.
+// The film's sound: the narrator's lines at their places on the clock (timeline.js) over an upbeat track of pure tones.
 //   node studio/finance-explainer/mix.cjs                 voice + bed  -> out/finance-explainer-sound.wav
 //   node studio/finance-explainer/mix.cjs --no-voice      bed only     -> out/finance-explainer-bed.wav
 //   node studio/finance-explainer/mix.cjs --partial       the lines that exist; the others stay silent (a preview)
@@ -28,8 +28,10 @@ fs.writeFileSync(path.join(OUT, 'finance-explainer-config.json'), JSON.stringify
 const T = timeline({}, durations)
 
 // the bed: pure tones only (bed.py), as long as the film
-const bed = path.join(OUT, 'finance-explainer-bed-raw.wav')
-run('python3', [path.join(__dirname, 'bed.py'), String(T.duration), bed])
+// the music: pure tones only (bed.py), as long as the film, cut to the same beats as the picture
+const bed = path.join(OUT, 'finance-explainer-bed-raw.wav'), cues = path.join(OUT, 'finance-explainer-cues.json')
+fs.writeFileSync(cues, JSON.stringify({ beat: T.beat, problem: T.problem.t0, drop: T.answer.t0, features: T.features.map((f) => f.t0), outro: T.outro.t0, final: T.final }))
+run('python3', [path.join(__dirname, 'bed.py'), String(T.duration), bed, cues])
 
 const voice = has('--no-voice') ? [] : T.voice.filter((v) => made.includes(v.id))
 const out = path.join(OUT, has('--no-voice') ? 'finance-explainer-bed.wav' : 'finance-explainer-sound.wav')
@@ -38,9 +40,11 @@ voice.forEach((v, i) => { inputs.push('-i', path.join(VO, v.id + '.wav')); f.pus
 if (voice.length) {
   f.push(`${voice.map((_, i) => `[v${i}]`).join('')}amix=inputs=${voice.length}:normalize=0:duration=longest,apad=whole_dur=${T.duration},volume=1.6[voice]`)
   // the bed dips gently while the narrator speaks and comes back in the pauses: no jumps in level
-  f.push('[voice]asplit=2[vo][key]', `[0:a]volume=0.5[bedq]`, '[bedq][key]sidechaincompress=threshold=0.02:ratio=5:attack=120:release=900:makeup=1[duck]', '[vo][duck]amix=inputs=2:normalize=0:duration=first[mix]')
+  f.push('[voice]asplit=2[vo][key]', `[0:a]volume=0.55[bedq]`, '[bedq][key]sidechaincompress=threshold=0.02:ratio=4:attack=60:release=600:makeup=1[duck]', '[vo][duck]amix=inputs=2:normalize=0:duration=first[mix]')
 } else f.push('[0:a]volume=0.9[mix]')
-f.push(`[mix]loudnorm=I=-17:TP=-2:LRA=9,alimiter=limit=0.8,atrim=0:${T.duration},afade=t=out:st=${(T.duration - 2.5).toFixed(2)}:d=2.5[out]`)
+// the fade starts after the last word: the narrator speaks to the very end, then the last chord rings out
+const fadeAt = Math.max(T.v.v09.end + 0.15, T.duration - 2.0)
+f.push(`[mix]loudnorm=I=-17:TP=-2:LRA=9,alimiter=limit=0.8,atrim=0:${T.duration},afade=t=out:st=${fadeAt.toFixed(2)}:d=${(T.duration - fadeAt).toFixed(2)}[out]`)
 run('ffmpeg', ['-v', 'error', '-y', ...inputs, '-filter_complex', f.join(';'), '-map', '[out]', '-ar', '48000', out])
 // the rule of this film: no white noise, not for a fraction of a second
 run('python3', [path.join(ROOT, 'engine', 'kreel', 'vo_noise.py'), 'check', out])

@@ -8,6 +8,7 @@ import net from 'node:net'
 import http from 'node:http'
 import https from 'node:https'
 import { env, BUCKET } from './env.js'
+import { resendPost } from './http.js'
 import { sb, one, patch, download, agentRun, rpc } from './db.js'
 import { money } from './format-server.js'
 
@@ -110,10 +111,7 @@ async function deliverEmail(o, event, doc, data) {
   }
   const title = doc ? `${SUBJECT[event]}: ${doc.supplier_name || doc.file_name || 'מסמך'}${doc.total_amount ? ` · ${money(doc.total_amount)}` : ''}` : SUBJECT[event]
   const html = `<div dir="rtl" style="font-family:Arial,sans-serif">${doc ? `<p><b>${esc(doc.supplier_name || 'ספק לא מזוהה')}</b>${doc.doc_number ? ` · ${esc(doc.doc_number)}` : ''}</p><p>${doc.issue_date ? `תאריך: ${esc(doc.issue_date)}<br>` : ''}${doc.total_amount ? `סה״כ: ${esc(money(doc.total_amount))}<br>` : ''}${data?.company?.name ? `חברה: ${esc(data.company.name)}<br>` : ''}</p>${attachments.length ? '<p>הקובץ המקורי מצורף.</p>' : data?.file_url ? `<p><a href="${esc(data.file_url)}">להורדת הקובץ</a> (הקישור בתוקף 24 שעות)</p>` : ''}` : '<p>זו הודעת בדיקה ממערכת הנהלת החשבונות של קבוצת קורקוס. החיבור תקין.</p>'}</div>`
-  const r = await fetch(`${env.resendApi()}/emails`, {
-    method: 'POST', signal: AbortSignal.timeout(15_000), headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: process.env.FINANCE_FROM || process.env.NOTIFY_FROM || 'Kurkoos Finance <onboarding@resend.dev>', to: [o.target], subject: title, html, attachments }),
-  })
+  const r = await resendPost({ to: [o.target], subject: title, html, attachments })
   await r.arrayBuffer().catch(() => {})
   return r.status
 }

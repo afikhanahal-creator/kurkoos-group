@@ -15,19 +15,10 @@
 //   METRICOOL_BLOG_ID     לא חובה (ברירת מחדל: המותג קבוצת קורקוס)
 // ============================================================
 
+import { adminUser } from './_auth.js'
 const API = 'https://app.metricool.com/api'
 const NETWORKS = new Set(['facebook', 'instagram', 'tiktok', 'youtube', 'gmb', 'linkedin', 'twitter', 'pinterest', 'threads', 'bluesky'])
 
-async function adminUser(req) {
-  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
-  const token = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
-  if (!token || !SUPABASE_URL || !KEY) return null
-  const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, { headers: { apikey: KEY, Authorization: `Bearer ${token}` } }).catch(() => null)
-  if (!r || !r.ok) return null
-  const u = await r.json().catch(() => null)
-  return u && u.id ? u : null
-}
 
 function ids() {
   return {

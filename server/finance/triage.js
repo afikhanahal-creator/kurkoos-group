@@ -10,7 +10,7 @@
 // Nothing here ever drops a file silently: every skip is a line in fin_skipped with its reason.
 // The full rulebook: .claude/skills/kurkoos-finance-master/SKILL.md
 import { env } from './env.js'
-import { fetchRetry } from './http.js'
+import { claudePost, claudeText } from './http.js'
 import { RELEVANT_CLASSES } from './extract.js'
 
 // word boundaries that work for Hebrew and Latin together
@@ -59,14 +59,10 @@ export async function triage({ buf, mime, text, name, subject, from }) {
   const schema = { type: 'object', additionalProperties: false, required: ['is_financial_document', 'document_class', 'relevance_confidence'], properties: {
     is_financial_document: { type: 'boolean' }, document_class: { type: 'string' }, relevance_confidence: { type: 'number', description: '0 to 1' },
   } }
-  const r = await fetchRetry(`${env.anthropic()}/v1/messages`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: env.modelTriage(), max_tokens: 200, output_config: { format: { type: 'json_schema', schema } }, messages: [{ role: 'user', content }] }),
-  })
+  const r = await claudePost({ model: env.modelTriage(), max_tokens: 200, output_config: { format: { type: 'json_schema', schema } }, messages: [{ role: 'user', content }] })
   const d = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error((d.error && d.error.message) || `triage ${r.status}`)
-  const x = JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('') || '{}')
+  const x = JSON.parse(claudeText(d) || '{}')
   const yes = x.is_financial_document === true || RELEVANT_CLASSES.includes(x.document_class)
   // an answer without a confidence (an older or partial reply) counts as sure for a yes, never as sure for a no
   const conf = x.relevance_confidence !== undefined && x.relevance_confidence !== null && Number.isFinite(Number(x.relevance_confidence)) ? Number(x.relevance_confidence) : yes ? 0.9 : 0

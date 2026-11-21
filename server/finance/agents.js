@@ -3,6 +3,7 @@
 import { nis } from './format-server.js'
 import { escHtml as esc } from '../../src/pages/finance/format.js'
 import { env, TIME_BUDGET_MS } from './env.js'
+import { financeFrom, resendPost } from './http.js'
 import { rpc, sb, one, patch, insert, agentRun, audit } from './db.js'
 import { syncMailbox, processStored, MAX_ATTEMPTS, sweepEmailDuplicates } from './pipeline.js'
 
@@ -150,21 +151,11 @@ export async function duplicateSweepTick({ force = false } = {}) {
 async function managers() {
   return ((await sb("fin_members?active=eq.true&role=in.(admin,finance_manager)&select=email")) || []).map((m) => m.email).filter(Boolean)
 }
-/* the finance system's own sender: FINANCE_FROM, else the site's verified address under the name "Kurkoos Finance" (the
-   site's NOTIFY_FROM is "Kurkoos Leads <…>", the name of the lead notifications, and it signed the morning report) */
-export function financeFrom(e = process.env) {
-  if (e.FINANCE_FROM) return e.FINANCE_FROM
-  const addr = /<([^>]+)>/.exec(String(e.NOTIFY_FROM || ''))?.[1] || (/^[^\s<>]+@[^\s<>]+$/.test(String(e.NOTIFY_FROM || '').trim()) ? String(e.NOTIFY_FROM).trim() : '')
-  return `Kurkoos Finance <${addr || 'onboarding@resend.dev'}>`
-}
+export { financeFrom }
 export async function sendMail(to, subject, html) {
   const key = process.env.RESEND_API_KEY
   if (!key || !to.length) return { sent: false, reason: key ? 'no recipients' : 'RESEND_API_KEY missing' }
-  const r = await fetch(`${env.resendApi()}/emails`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: financeFrom(), to, subject, html }),
-  })
+  const r = await resendPost({ to, subject, html }, 30_000)
   if (!r.ok) throw new Error(`resend ${r.status}: ${(await r.text()).slice(0, 200)}`)
   return { sent: true }
 }

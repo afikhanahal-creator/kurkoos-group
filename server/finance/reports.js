@@ -8,6 +8,7 @@
 import { nis } from './format-server.js'
 import { sb, one, insert, patch, agentRun } from './db.js'
 import { env, costOf } from './env.js'
+import { claudePost, claudeText } from './http.js'
 import { DOC_TYPE, docDate, HE_MONTHS, escHtml as esc, INVOICE_TYPES, NOT_COUNTED, counts } from '../../src/pages/finance/format.js'
 import { markLedger } from '../../src/pages/finance/ledger.js'
 
@@ -228,14 +229,11 @@ async function aiInsights(m) {
     if ((await overBudget().catch(() => ({ over: false }))).over) return []
     const facts = JSON.stringify({ period: m.period.label, cards: m.cards.map((c) => [c.label, c.value, c.sub]), tables: m.tables.map((t) => ({ title: t.title, head: t.head, rows: t.rows.slice(0, 12) })), alerts: m.alerts })
     const schema = { type: 'object', additionalProperties: false, required: ['insights'], properties: { insights: { type: 'array', items: { type: 'string' } } } }
-    const r = await fetch(`${env.anthropic()}/v1/messages`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': env.anthropicKey(), 'anthropic-version': '2023-06-01' }, signal: AbortSignal.timeout(15_000),
-      body: JSON.stringify({ model: env.modelTriage(), max_tokens: 400, output_config: { format: { type: 'json_schema', schema } }, messages: [{ role: 'user', content: `REPORT INSIGHTS: אלה הנתונים של דוח כספי של קבוצת חברות, בפורמט JSON. כתוב עד שלוש תובנות קצרות בעברית (משפט אחד כל אחת) שמנהל יכול לפעול לפיהן: עלייה חדה בהוצאות של חברה, הוצאה חריגה, הרבה מסמכים שממתינים, חברה עם מסמכים חסרים. השתמש רק במספרים ובשמות שמופיעים בנתונים. אל תמציא נתון, חברה או מסמך. אם אין משהו ששווה לציין, החזר רשימה ריקה.\n\n${facts}` }] }),
-    })
+    const r = await claudePost({ model: env.modelTriage(), max_tokens: 400, output_config: { format: { type: 'json_schema', schema } }, messages: [{ role: 'user', content: `REPORT INSIGHTS: אלה הנתונים של דוח כספי של קבוצת חברות, בפורמט JSON. כתוב עד שלוש תובנות קצרות בעברית (משפט אחד כל אחת) שמנהל יכול לפעול לפיהן: עלייה חדה בהוצאות של חברה, הוצאה חריגה, הרבה מסמכים שממתינים, חברה עם מסמכים חסרים. השתמש רק במספרים ובשמות שמופיעים בנתונים. אל תמציא נתון, חברה או מסמך. אם אין משהו ששווה לציין, החזר רשימה ריקה.\n\n${facts}` }] }, { tries: 0, signal: AbortSignal.timeout(15_000) })
     const d = await r.json().catch(() => ({}))
     if (!r.ok) return []
     noteSpend(costOf(env.modelTriage(), d.usage?.input_tokens || 0, d.usage?.output_tokens || 0))
-    const x = JSON.parse((d.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('') || '{}')
+    const x = JSON.parse(claudeText(d) || '{}')
     return (Array.isArray(x.insights) ? x.insights : []).filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim().slice(0, 220)).slice(0, 3)
   } catch { return [] }
 }

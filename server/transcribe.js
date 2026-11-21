@@ -8,18 +8,9 @@
 // The key lives only in Vercel, never in code.
 // ============================================================
 
-async function adminUser(req) {
-  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
-  const token = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
-  if (!token || !SUPABASE_URL || !KEY) return null
-  const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, { headers: { apikey: KEY, Authorization: `Bearer ${token}` } }).catch(() => null)
-  if (!r || !r.ok) return null
-  const u = await r.json().catch(() => null)
-  return u && u.id ? u : null
-}
 
 // 120 chunks in 10 minutes per user: about 3 hours of audio
+import { adminUser } from './_auth.js'
 const _rl = new Map()
 function limited(key, max = 120, windowMs = 600_000) {
   const now = Date.now()

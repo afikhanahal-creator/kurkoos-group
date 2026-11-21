@@ -5,17 +5,8 @@
 // collapsed and cut to 15k characters. Only http(s) URLs; private and loopback hosts are refused.
 // ============================================================
 
-async function adminUser(req) {
-  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
-  const token = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
-  if (!token || !SUPABASE_URL || !KEY) return null
-  const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, { headers: { apikey: KEY, Authorization: `Bearer ${token}` } }).catch(() => null)
-  if (!r || !r.ok) return null
-  const u = await r.json().catch(() => null)
-  return u && u.id ? u : null
-}
 
+import { adminUser } from './_auth.js'
 function safeUrl(s) {
   let u
   try { u = new URL(String(s || '').trim()) } catch (e) { return null }

@@ -8,6 +8,7 @@
 // 🔐 את המפתח מגדירים רק ב-Vercel, לעולם לא בקוד.
 // ============================================================
 
+import { adminUser } from './_auth.js'
 const MODELS = {
   quick: process.env.CLAUDE_MODEL_QUICK || 'claude-haiku-4-5-20251001',
   default: process.env.CLAUDE_MODEL_DEFAULT || 'claude-sonnet-5-5',
@@ -26,16 +27,6 @@ function limited(key, max = 60, windowMs = 600_000) {
   return e.n > max
 }
 
-async function adminUser(req) {
-  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
-  const token = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
-  if (!token || !SUPABASE_URL || !KEY) return null
-  const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, { headers: { apikey: KEY, Authorization: `Bearer ${token}` } }).catch(() => null)
-  if (!r || !r.ok) return null
-  const u = await r.json().catch(() => null)
-  return u && u.id ? u : null
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }

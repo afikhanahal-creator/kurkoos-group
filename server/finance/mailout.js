@@ -3,6 +3,7 @@
 // Attachments stop at ~25MB (Resend takes 40MB after base64); the rest go as links valid for 7 days.
 import { escHtml as esc } from '../../src/pages/finance/format.js'
 import { env } from './env.js'
+import { resendPost } from './http.js'
 import { sb, download, audit, insert, rpc } from './db.js'
 import { signedUrl, emailOk } from './outbound.js'
 import { money } from './format-server.js'
@@ -79,11 +80,7 @@ ${docs.length > 120 ? `<p>ועוד ${docs.length - 120} מסמכים, כולם �
 ${links.length ? `<p>קבצים שלא נכנסו למייל (גדולים מדי), בקישורים בתוקף 7 ימים:</p><ul>${links.map(({ d, url }) => `<li>${url ? `<a href="${esc(url)}">${esc(d.supplier_name || d.file_name)} ${esc(d.doc_number || '')}</a>` : esc(d.file_name)}</li>`).join('')}</ul>` : ''}
 <p style="color:#6b7680;font-size:12px">נשלח ע״י ${esc(user.email)} ממערכת הנהלת החשבונות של קבוצת קורקוס. מצורפים קובץ Excel עם סיכום לפי קטגוריה וספק, וקובץ CSV לקליטה בתוכנה.</p></div>`
 
-  const r = await fetch(`${env.resendApi()}/emails`, {
-    method: 'POST', signal: AbortSignal.timeout(50_000),
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: process.env.FINANCE_FROM || process.env.NOTIFY_FROM || 'Kurkoos Finance <onboarding@resend.dev>', to: rcpt, ...(ccMe && emailOk(user.email) ? { cc: [user.email] } : {}), reply_to: emailOk(user.email) ? user.email : undefined, subject: title, html, attachments }),
-  })
+  const r = await resendPost({ to: rcpt, ...(ccMe && emailOk(user.email) ? { cc: [user.email] } : {}), reply_to: emailOk(user.email) ? user.email : undefined, subject: title, html, attachments }, 50_000)
   const body = await r.text()
   let providerId = null
   try { providerId = JSON.parse(body).id || null } catch { /* not json */ }

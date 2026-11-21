@@ -3,7 +3,7 @@ import { openIds } from './links.js'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { date, dateTime } from './format.js'
+import { date, dateTime, INVOICE_TYPES } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { Empty, Field, Icon, Modal, Pill, PageHead, askConfirm } from './ui.jsx'
 
@@ -80,7 +80,7 @@ function MailboxScan({ row, documents, can, onAction, onStart, go }) {
       )}
       {(() => {
         const checked = Number(job?.report?.checked ?? progress?.checked ?? 0)
-        const invoices = count((d) => ['invoice', 'invoice_receipt', 'supplier_bill', 'proforma'].includes(d.doc_type))
+        const invoices = count((d) => INVOICE_TYPES.includes(d.doc_type))
         const receipts = count((d) => d.doc_type === 'receipt')
         const others = docs.length - invoices - receipts
         const skipped = Number(job?.report?.not_relevant ?? progress?.skipped ?? 0)

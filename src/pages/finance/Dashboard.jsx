@@ -4,7 +4,7 @@ import CaptureReceipt from './CaptureReceipt.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
-import { byDocDate, ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth, byArrival, reportPeriod, periodKindOf, readyNow } from './format.js'
+import { byDocDate, ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth, byArrival, reportPeriod, periodKindOf, readyNow, NOT_COUNTED } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { unsureNumbers } from './Documents.jsx'
@@ -49,7 +49,7 @@ export default function Dashboard() {
 
   // spend by the date on the document: this month, last month, the year, and six months for the chart
   const spend = useMemo(() => {
-    const counted = documents.filter((d) => !['rejected', 'duplicate', 'archived', 'failed', 'processing'].includes(d.status))
+    const counted = documents.filter((d) => !NOT_COUNTED.includes(d.status))
     const now = thisMonth(); const year = now.slice(0, 4)
     const sum = (list, f) => list.reduce((a, d) => a + f(d), 0)
     const vatOf = (d) => (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.vat_amount) || 0)

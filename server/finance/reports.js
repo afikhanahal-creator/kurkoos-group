@@ -8,7 +8,8 @@
 import { nis } from './format-server.js'
 import { sb, one, insert, patch, agentRun } from './db.js'
 import { env, costOf } from './env.js'
-import { DOC_TYPE, docDate, HE_MONTHS, escHtml as esc } from '../../src/pages/finance/format.js'
+import { DOC_TYPE, docDate, HE_MONTHS, escHtml as esc, INVOICE_TYPES, NOT_COUNTED, counts } from '../../src/pages/finance/format.js'
+import { markLedger } from '../../src/pages/finance/ledger.js'
 
 export const TEMPLATES = {
   morning: { name: 'דוח בוקר', hint: 'מה נאסף ב-24 השעות האחרונות, מה ממתין לבדיקה ומה מוכן לרו״ח בתקופת הדיווח', fixedPeriod: true },
@@ -68,8 +69,8 @@ export function periodOf(report, today) {
 }
 
 // ---------- the figures ----------
-const INVOICE = ['invoice', 'invoice_receipt', 'supplier_bill', 'proforma']
-const OUT = ['rejected', 'duplicate', 'archived', 'failed', 'processing']
+const INVOICE = INVOICE_TYPES
+const OUT = NOT_COUNTED
 const r2 = (v) => Math.round(v * 100) / 100
 const ils = (d) => ((d.currency || 'ILS') === 'ILS' ? (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.total_amount) || 0) : 0)
 const int = (v) => Number(v || 0).toLocaleString('he-IL')
@@ -87,7 +88,9 @@ export function buildModel(report, { docs, businesses, today }) {
   const mine = docs.filter((d) => d.status !== 'archived' && (!chosen || chosen.has(d.business_id)))
   const day = (d) => String(docDate(d)).slice(0, 10)
   const got = (d) => String(d.created_at || '').slice(0, 10)
-  const counted = mine.filter((d) => !OUT.includes(d.status))
+  // the same rule as the screens: not counted statuses, no quotes or proformas, and a receipt that pays an invoice already counted is left out
+  markLedger(docs)
+  const counted = mine.filter(counts)
   // a period of chosen weekdays is a list of dates, not a span: the days between them are left out
   const inCur = (t) => t >= p.from && t <= p.to && (!p.dates || p.dates.includes(t))
   const inPrev = (t) => t >= p.prevFrom && t <= p.prevTo && (!p.prevDates || p.prevDates.includes(t))
@@ -290,8 +293,10 @@ async function modelOf(report, { origin = '', now = new Date() } = {}) {
   const today = clockIn(report.tz, now).date
   const p = periodOf(report, today)
   const back = new Date(`${today.slice(0, 7)}-01T00:00:00Z`); back.setUTCMonth(back.getUTCMonth() - 4)
-  const since = [p.prevFrom, back.toISOString().slice(0, 10)].sort()[0]
-  const docs = (await sb(`fin_documents?or=(issue_date.gte.${since},created_at.gte.${since})&select=id,business_id,supplier_name,doc_type,doc_number,issue_date,email_date,created_at,status,total_amount,currency,category,duplicate_state&limit=20000`)) || []
+  // far enough back for a receipt to find the invoice it pays (the ledger looks 180 days back)
+  const ledgerFrom = new Date(`${p.from}T00:00:00Z`); ledgerFrom.setUTCDate(ledgerFrom.getUTCDate() - 185)
+  const since = [p.prevFrom, back.toISOString().slice(0, 10), ledgerFrom.toISOString().slice(0, 10)].sort()[0]
+  const docs = (await sb(`fin_documents?or=(issue_date.gte.${since},created_at.gte.${since})&select=id,business_id,supplier_id,supplier_name,supplier_vat_id,doc_type,doc_number,issue_date,email_date,created_at,status,total_amount,currency,category,duplicate_state&limit=20000`)) || []
   const model = buildModel(report, { docs, businesses: w.businesses, today })
   if (report.ai) model.insights = await aiInsights(model)
   return { model, html: reportHtml(model, origin, now), text: reportText(model, origin), subject: `${model.title} · ${model.period.label}` }

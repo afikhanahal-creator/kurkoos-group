@@ -102,3 +102,11 @@ screenshot's 1440 x 900 pixels (`build()` and `PLAY` in the page), and a moved e
   again and look at the stills of features 3 to 5 and the name (word timing follows the real lengths by itself).
 - The count in feature 3 is set in Almoni, the screenshot's digits in the app's font; at the end of the count the
   screenshot's own figure takes over in one frame.
+
+## The music (2026-11-21, later the same day)
+The owner asked for the music of our other videos, "like the Raita video". The project has no track library: every
+Kurkoos reel carries music written in code. `bed.py` is now the Raita team reel's generator
+(`video/engine/brand_reel/music_beat.py`: D minor, Dm Bb F C, 120 BPM, pad, off-beat bass, kick, snare, hats) played to
+this film's clock, without the noise whoosh that reel had on its cuts, and with drum clicks of at most 20 ms so that no
+stretch of noise exists. The HeyGen music catalogue of the `media-use` skill is the other source a video can use; it
+needs a HeyGen sign-in, which this environment does not have.

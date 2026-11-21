@@ -8,6 +8,8 @@
 // 🔐 את המפתח מגדירים רק ב-Vercel, לעולם לא בקוד.
 // ============================================================
 
+import { isStaff } from './_auth.js'
+
 // Rate limiter — מגן מפני בזבוז קרדיטים (3 תמונות לכל IP כל 10 דקות)
 const _rl = new Map()
 function rateLimit(ip, max = 3, windowMs = 600_000) {
@@ -45,6 +47,10 @@ export default async function handler(req, res) {
       res.status(401).json({ error: 'Unauthorized — invalid or expired session' })
       return
     }
+  }
+  if (!(await isStaff(accessToken))) {
+    res.status(401).json({ error: 'Unauthorized — admin session required' })
+    return
   }
 
   const KEY = process.env.OPENAI_API_KEY

@@ -2,6 +2,7 @@
 // attempt, a mail on a sign-in from a new device, blocking a user, and ending every session of a user.
 // The same rules live in the database (fin_has_role): this file is the server's half, never the only check.
 import { env } from './env.js'
+import { resendPost } from './http.js'
 import { sb, one, insert, rpc, audit } from './db.js'
 
 /* the token's claims. The token was already verified by the auth server (caller() in db.js); this only reads it. */
@@ -63,14 +64,10 @@ export async function authEvent(req, body, user) {
 async function alertNewDevice(user, req) {
   if (!process.env.RESEND_API_KEY || !user.email) return
   const when = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })
-  await fetch(`${env.resendApi()}/emails`, {
-    method: 'POST', signal: AbortSignal.timeout(15_000),
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: process.env.FINANCE_FROM || process.env.NOTIFY_FROM || 'Kurkoos Finance <onboarding@resend.dev>', to: [user.email],
+  await resendPost({
+      to: [user.email],
       subject: 'כניסה חדשה ל-Kurkoos Finance ממכשיר שלא הכרנו',
       html: `<div dir="rtl" style="font-family:Arial,sans-serif;color:#1f2a33;line-height:1.6"><p>שלום,</p><p>החשבון שלך נכנס עכשיו למערכת הכספים ממכשיר חדש:</p><p><b>${device(uaOf(req))}</b><br>${when}<br>כתובת IP: ${ipOf(req) || 'לא ידועה'}</p><p>אם זה לא היית את/ה, היכנס/י למערכת ובחר/י בהגדרות "ניתוק מכל המכשירים", ושנה/י את הסיסמה.</p></div>`,
-    }),
   })
 }
 

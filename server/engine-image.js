@@ -8,6 +8,7 @@
 // אופציונלי: OPENAI_ENGINE_IMAGE_MODEL (ברירת מחדל gpt-image-1).
 // ============================================================
 
+import { adminUser } from './_auth.js'
 const _rl = new Map()
 // counts images, not requests: 60 images in 10 minutes per admin
 function limited(key, cost = 1, max = 60, windowMs = 600_000) {
@@ -20,16 +21,6 @@ function limited(key, cost = 1, max = 60, windowMs = 600_000) {
   return e.n > max
 }
 
-async function adminUser(req) {
-  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
-  const token = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
-  if (!token || !SUPABASE_URL || !KEY) return null
-  const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, { headers: { apikey: KEY, Authorization: `Bearer ${token}` } }).catch(() => null)
-  if (!r || !r.ok) return null
-  const u = await r.json().catch(() => null)
-  return u && u.id ? u : null
-}
 
 const SIZES = new Set(['1024x1024', '1024x1536', '1536x1024', 'auto'])
 const QUALS = new Set(['low', 'medium', 'high', 'auto'])

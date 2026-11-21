@@ -10,6 +10,7 @@
 // ההגדרות: site_settings.article_images_agent = { mode: 'off'|'library'|'ai'|'mix', body: 0..3, scope: 'new'|'all', since }
 // ============================================================
 
+import { isStaff } from './_auth.js'
 const SB = () => String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')
 const ANON = () => process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
 const SERVICE = () => process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -55,7 +56,7 @@ async function adminToken(req) {
   const tok = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim()
   if (!tok) return null
   const r = await fetch(`${SB()}/auth/v1/user`, { headers: { apikey: ANON() || SERVICE(), Authorization: `Bearer ${tok}` } }).catch(() => null)
-  return r && r.ok ? tok : null
+  return r && r.ok && (await isStaff(tok)) ? tok : null
 }
 
 /* ---------- הנתונים: הכתבות, העריכות שלהן, מאגר התמונות ---------- */

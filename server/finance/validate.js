@@ -5,6 +5,7 @@
    A change in the law is one new row here. */
 // the rates live in the one rules registry (src/pages/finance/taxRules.js); this list is that registry, in the shape the
 // checks below read
+import { INVOICE_TYPES } from '../../src/pages/finance/format.js'
 import { RULES as TAX, ruleOn } from '../../src/pages/finance/taxRules.js'
 export const VAT_RATES = TAX.vat_rate.versions.map((v) => ({ from: v.from, to: v.to, rate: v.value }))
 export const vatRateOn = (iso) => {
@@ -22,7 +23,6 @@ export function validIsraeliId(id) {
   return sum % 10 === 0
 }
 
-const INVOICE_TYPES = ['invoice', 'invoice_receipt', 'credit', 'supplier_bill']
 export const KEY_FIELDS = ['supplier_name', 'doc_number', 'issue_date', 'total_amount']
 
 export function validate(doc, ctx = {}) {

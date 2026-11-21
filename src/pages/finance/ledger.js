@@ -1,3 +1,4 @@
+import { NOT_COUNTED } from './format.js'
 // The bookkeeping rules every figure in the app follows, so the same money is never counted twice:
 //  - a receipt or payment confirmation that pays an invoice already in the system is proof of payment, not a second
 //    expense (same supplier, same total ±1 ₪, dated from 3 days before the invoice up to 180 days after it);
@@ -5,7 +6,7 @@
 //    with it. A person's "paid" tick is shown separately as "marked by hand", never as verified;
 //  - a proforma (חשבון עסקה) followed by the tax invoice for the same amount is replaced by the invoice.
 // Pure functions. markLedger sets three read-only flags on each document object: _proofFor, _paidBy, _replacedBy.
-const LIVE = (d) => !['rejected', 'duplicate', 'archived', 'failed', 'processing'].includes(d.status)
+const LIVE = (d) => !NOT_COUNTED.includes(d.status)
 const dateOf = (d) => d.issue_date || String(d.email_date || d.created_at || '').slice(0, 10)
 const days = (a, b) => (new Date(b) - new Date(a)) / 86400_000
 const who = (d) => d.supplier_id || (d.supplier_vat_id ? `vat:${d.supplier_vat_id}` : null)

@@ -1,7 +1,7 @@
 // Management figures for the group, computed from stored documents only. Used by the executive overview in the
 // browser and by the finance assistant on the server, so a number on the screen and in an answer is the same number.
 // Pure: no DOM, no network. Documents must have gone through markLedger (ledger.js) first.
-import { HE_MONTHS, israelDay } from './format.js'
+import { HE_MONTHS, israelDay, counts, INVOICE_TYPES } from './format.js'
 import { markLedger, payState } from './ledger.js'
 
 export { markLedger }
@@ -12,8 +12,8 @@ const pad = (n) => String(n).padStart(2, '0')
 // one formatter for every call (creating one per date was 90% of the overview's time at 10,000 documents)
 export const dayOf = (d) => d.issue_date || israelDay(d.email_date || d.created_at)
 /* in the books: not rejected, duplicate, unread, a quote, a proforma replaced or not, a payment proof of a counted invoice */
-export const booked = (d) => !['rejected', 'duplicate', 'failed', 'processing', 'archived'].includes(d.status) && !['quote', 'proforma', 'payment_confirmation'].includes(d.doc_type) && !d._proofFor
-const INVOICE = ['invoice', 'invoice_receipt', 'supplier_bill', 'credit']
+export const booked = counts   // the same rule as every other screen (format.js)
+const INVOICE = INVOICE_TYPES
 const RECEIPT = ['receipt', 'payment_confirmation']
 const MONTHS = HE_MONTHS
 export const monthName = (ym) => { const [y, m] = String(ym).split('-').map(Number); return `${MONTHS[m - 1]} ${y}` }

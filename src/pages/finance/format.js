@@ -100,7 +100,13 @@ export function claimableVat(doc, categories) {
   return sign(doc) * Math.abs(Number(doc.vat_amount) || 0) * pct / 100
 }
 /* documents that count in the books: not quotes, proformas, duplicates, rejected or unread */
-export const counts = (d) => !['rejected', 'duplicate', 'failed', 'processing'].includes(d.status) && !['quote', 'proforma', 'payment_confirmation'].includes(d.doc_type) && !d._proofFor   // a receipt that pays an invoice already counted (ledger.js)
+/* One rule for every screen, report and email (owner's decision, 2026-11-21):
+   - a document that is rejected, a duplicate, archived, unread or still being read is in no sum and no count;
+   - "invoices" in a count are tax invoices, invoice-receipts, supplier bills and credit notes. A proforma (חשבון עסקה)
+     is a request for payment, not an invoice. What may be deducted for VAT is a separate, stricter rule (vatRules.js). */
+export const NOT_COUNTED = ['rejected', 'duplicate', 'archived', 'failed', 'processing']
+export const INVOICE_TYPES = ['invoice', 'invoice_receipt', 'supplier_bill', 'credit']
+export const counts = (d) => !NOT_COUNTED.includes(d.status) && !['quote', 'proforma', 'payment_confirmation'].includes(d.doc_type) && !d._proofFor   // a receipt that pays an invoice already counted (ledger.js)
 export const issuesOf = (d) => (Array.isArray(d.issues) ? d.issues : [])
 export const hasError = (d) => issuesOf(d).some((i) => i.level === 'error')
 export const nameOf = (list, id) => list.find((x) => x.id === id)?.name || ''

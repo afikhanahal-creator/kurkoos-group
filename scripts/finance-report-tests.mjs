@@ -96,6 +96,21 @@ check('X13', 'מבנה הקובץ', 'כל החלקים של קובץ XLSX, כו�
     t5.join('|') === 'דוח הוצאות לרואה החשבון|אפיק הנחל|קורקוס ביצוע בע״מ|לא משויך|סיכום הוצאות|מסמכים לבדיקה|רשימות' && JSON.stringify(got) === JSON.stringify(want) && t6.join('|') === 'דוח הוצאות לרואה החשבון|סיכום הוצאות|מסמכים לבדיקה|רשימות') }
 
 fs.rmSync(dir, { recursive: true, force: true })
+// X18: one rule for what is counted, on every screen and in every report
+{
+  const { counts, NOT_COUNTED, INVOICE_TYPES } = await import('../src/pages/finance/format.js')
+  const { booked, overview, periodOf } = await import('../src/pages/finance/insights.js')
+  const { buildModel } = await import('../server/finance/reports.js')
+  const mk = (id, status, doc_type, total) => ({ id, status, doc_type, total_amount: total, currency: 'ILS', issue_date: '2026-10-15', created_at: '2026-10-15T08:00:00Z', business_id: 'b1', supplier_name: `ספק ${id}`, doc_number: String(id) })
+  const docs = [mk(1, 'approved', 'invoice', 1000), mk(2, 'archived', 'invoice', 500), mk(3, 'review', 'credit', 100), mk(4, 'approved', 'proforma', 700), mk(5, 'rejected', 'invoice', 50), mk(6, 'duplicate', 'receipt', 60)]
+  const o = overview(docs, { businesses: [{ id: 'b1', name: 'חברה' }] }, periodOf('custom', new Date('2026-11-21'), { from: '2026-10-01', to: '2026-10-31' }))
+  const m = buildModel({ template: 'daily', period: 'custom', from: '2026-10-01', to: '2026-10-31' }, { docs, businesses: [{ id: 'b1', name: 'חברה' }], today: '2026-11-21' })
+  const row = m.tables.find((t) => t.title === 'לפי חברה')?.rows[0] || []
+  check('X18', 'כלל אחד למה נספר: ארכיון לא נספר, חשבון עסקה אינו חשבונית', 'מסמך בארכיון, נדחה או כפול לא בסכום; הסקירה סופרת 900 (1,000 פחות זיכוי 100, בלי חשבון העסקה) ו-2 חשבוניות; הדוח המתוזמן מציג את אותו סכום, 900, ו-2 חשבוניות; אותה פונקציה בסקירה ובדוחות',
+    `counts(ארכיון)=${counts(docs[1])}; booked===counts: ${booked === counts}; סקירה: ${o.kpi.spend}, חשבוניות ${o.kpi.invoices}; דוח מתוזמן: ${row.join(' | ')}; רשימות: ${NOT_COUNTED.join(',')} / ${INVOICE_TYPES.join(',')}`,
+    counts(docs[1]) === false && booked === counts && o.kpi.spend === 900 && o.kpi.invoices === 2 && row[2] === '2' && row[4] === '₪900.00' && NOT_COUNTED.includes('archived') && !INVOICE_TYPES.includes('proforma') && INVOICE_TYPES.includes('credit'))
+}
+
 const failed = results.filter((r) => !r.pass)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)
 if (failed.length) { console.log('failed:', failed.map((r) => r.id).join(', ')); process.exit(1) }
